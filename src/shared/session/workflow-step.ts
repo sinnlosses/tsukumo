@@ -1,6 +1,7 @@
 // ワークフロースクリプトごとの、いちばん新しく始まった手順（`WorkflowStep`）と、SDK が運ぶ段と agent の写し（`WorkflowProgress`）。
 
 import type { BackgroundTask } from "../session-driver/background-task.ts"
+import type { TaskId } from "../session-driver/task-id.ts"
 import type { ToolUseId } from "./tool-use-id.ts"
 
 /**
@@ -8,7 +9,7 @@ import type { ToolUseId } from "./tool-use-id.ts"
  * `input` は要約に使う欄1つだけに絞った入力で、画面に出すだけでログにもファイルにも書かない。
  */
 export type WorkflowStep = {
-  readonly taskId: string
+  readonly taskId: TaskId
   readonly agentId: string
   readonly toolUseId: ToolUseId
   readonly name: string
@@ -35,7 +36,7 @@ export const WORKFLOW_AGENT_STATES = [
  * agent の `phaseTitle` はその agent が走る段の題で、欄が無いか文字列でなければ空の文字列。
  */
 export type WorkflowProgress = {
-  readonly taskId: string
+  readonly taskId: TaskId
   readonly phases: readonly { readonly index: number; readonly title: string }[]
   readonly agents: readonly {
     readonly index: number
@@ -46,7 +47,7 @@ export type WorkflowProgress = {
 }
 
 /** 顔ぶれに残っているワークフロースクリプトの手順・写しだけを残す。 */
-export function workflowItemsOfTasks<Item extends { readonly taskId: string }>(
+export function workflowItemsOfTasks<Item extends { readonly taskId: TaskId }>(
   items: readonly Item[],
   tasks: readonly BackgroundTask[],
 ): readonly Item[] {

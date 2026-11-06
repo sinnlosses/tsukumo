@@ -7,7 +7,9 @@ import type {
   BackgroundTask,
   BackgroundTaskKind,
 } from "../../../../shared/session-driver/background-task.ts"
+import { parseTaskId, type TaskId } from "../../../../shared/session-driver/task-id.ts"
 import type { SessionEvent } from "../../../../shared/session/session-event.ts"
+import { parseToolUseId } from "../../../../shared/session/tool-use-id.ts"
 import {
   WORKFLOW_AGENT_STATES,
   type WorkflowProgress,
@@ -18,7 +20,7 @@ import { optionalString } from "../../../../shared/utils/optional-string.ts"
 /**
  * `background_tasks_changed` の `tasks`（変わったあとの全員）を内部の型に写す。
  * `tasks` が配列でなければイベントを出さない（壊れた知らせで、動いているものを空に倒さない）。
- * 要素のうち `task_id` が文字列でないものと、`ambient` が true のもの（SDK が「活動の印から外せ」と言う見張り役など）は捨てる。
+ * 要素のうち `task_id` が空でない文字列でないものと、`ambient` が true のもの（SDK が「活動の印から外せ」と言う見張り役など）は捨てる。
  * `description` が無ければ空の文字列に畳む（描く側は種類だけ出す）。
  */
 export function backgroundTaskEvents(tasks: unknown): readonly SessionEvent[] {
@@ -30,18 +32,35 @@ export function backgroundTaskEvents(tasks: unknown): readonly SessionEvent[] {
     {
       kind: "background-tasks-changed",
       tasks: tasks.flatMap((task): readonly BackgroundTask[] =>
-        !isPlainObject(task) || typeof task.task_id !== "string" || task.ambient === true
-          ? []
-          : [
-              {
-                taskId: task.task_id,
-                kind: backgroundTaskKind(task.task_type),
-                description: optionalString(task.description) ?? "",
-              },
-            ],
+        !isPlainObject(task) || task.ambient === true ? [] : backgroundTask(task),
       ),
     },
   ]
+}
+
+/**
+ * `task_notification` から、Bash の背景実行の終わり（`tool_use_id` があるとき）と、タスクの完了の知らせ（`task_id` があるとき）を出す。
+ * どちらも無ければ空の並び。
+ */
+export function taskNotificationEvents(
+  message: Readonly<Record<string, unknown>>,
+): readonly SessionEvent[] {
+  const toolUseId = parseToolUseId(message.tool_use_id)
+  const taskId = parseTaskId(message.task_id)
+  return [
+    ...(toolUseId === undefined ? [] : [{ kind: "background-tool-finished", toolUseId } as const]),
+    ...(taskId === undefined ? [] : [{ kind: "task-notified", taskId } as const]),
+  ]
+}
+
+/** `task_started` のうち、`task_type` が `local_workflow` で `task_id` があるものだけ `workflow-started` にする。 */
+export function taskStartedEvents(
+  message: Readonly<Record<string, unknown>>,
+): readonly SessionEvent[] {
+  const taskId = parseTaskId(message.task_id)
+  return message.task_type === "local_workflow" && taskId !== undefined
+    ? [{ kind: "workflow-started", taskId }]
+    : []
 }
 
 /**
@@ -51,8 +70,8 @@ export function backgroundTaskEvents(tasks: unknown): readonly SessionEvent[] {
 export function taskProgressEvents(
   message: Readonly<Record<string, unknown>>,
 ): readonly SessionEvent[] {
-  const taskId = message.task_id
-  if (typeof taskId !== "string") {
+  const taskId = parseTaskId(message.task_id)
+  if (taskId === undefined) {
     return []
   }
 
@@ -63,11 +82,24 @@ export function taskProgressEvents(
   ]
 }
 
-function delegateProgressEvents(taskId: string, summary: string): readonly SessionEvent[] {
+function backgroundTask(task: Readonly<Record<string, unknown>>): readonly BackgroundTask[] {
+  const taskId = parseTaskId(task.task_id)
+  return taskId === undefined
+    ? []
+    : [
+        {
+          taskId,
+          kind: backgroundTaskKind(task.task_type),
+          description: optionalString(task.description) ?? "",
+        },
+      ]
+}
+
+function delegateProgressEvents(taskId: TaskId, summary: string): readonly SessionEvent[] {
   return [{ kind: "delegate-progress", taskId, summary }]
 }
 
-function workflowProgressEvents(taskId: string, elements: unknown): readonly SessionEvent[] {
+function workflowProgressEvents(taskId: TaskId, elements: unknown): readonly SessionEvent[] {
   if (!Array.isArray(elements)) {
     return []
   }

@@ -126,7 +126,7 @@ describe("findStrayTaskMentions", () => {
     expect(
       findStrayTaskMentions([
         {
-          sourcePath: "test/scripts/document/task-id.test.ts",
+          sourcePath: "test/scripts/document/stray-task-mention.test.ts",
           line: 1,
           id: SAMPLE_ID,
           context: "data",
@@ -137,7 +137,7 @@ describe("findStrayTaskMentions", () => {
 
   test("同じ許したファイルでも、コメントに書いた番号は迷子にする", () => {
     const mention = {
-      sourcePath: "test/scripts/document/task-id.test.ts",
+      sourcePath: "test/scripts/document/stray-task-mention.test.ts",
       line: 1,
       id: SAMPLE_ID,
       context: "comment",
@@ -147,7 +147,7 @@ describe("findStrayTaskMentions", () => {
 
   test("同じ許したファイルでも、テスト名に書いた番号は迷子にする", () => {
     const mention = {
-      sourcePath: "test/scripts/document/task-id.test.ts",
+      sourcePath: "test/scripts/document/stray-task-mention.test.ts",
       line: 1,
       id: SAMPLE_ID,
       context: "testName",

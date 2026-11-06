@@ -17,6 +17,7 @@ import { shownReaction, waitingLineDueAt } from "../../../src/shared/session/sho
 import { characterChangedEvent } from "../../fixture/character.ts"
 import { reportEvent } from "../../fixture/report-event.ts"
 import { requestEvent } from "../../fixture/session-event.ts"
+import { checkedTaskId } from "../../fixture/task-id.ts"
 
 /** ターンが閉じてから待ちの一言を出すまでの間（2分）。 */
 const WAITING_LINE_DELAY_MS = 120_000
@@ -309,7 +310,11 @@ describe("shownReaction", () => {
           {
             kind: "background-tasks-changed",
             tasks: [
-              { taskId: "架空の背景", kind: "shell", description: "架空のバックグラウンドタスク" },
+              {
+                taskId: checkedTaskId("架空の背景"),
+                kind: "shell",
+                description: "架空のバックグラウンドタスク",
+              },
             ],
           },
           COMPLETED,

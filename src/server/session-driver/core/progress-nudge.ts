@@ -10,6 +10,7 @@
 //
 // 要約は委譲先の会話から作られた字なので、ここから先は差し込む文面にだけ入れる。
 
+import type { TaskId } from "../../../shared/session-driver/task-id.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 
 /** 最後に描いたセリフ（か差し込み・委譲の始まり）から差し込むまでの黙っている時間。 */
@@ -39,8 +40,8 @@ type LatestSummary = { readonly kind: "none" } | { readonly kind: "fresh"; reado
 
 /** {@link ProgressNudge} を1つ作る。セッション1つに1つ。 */
 export function createProgressNudge(): ProgressNudge {
-  let delegates: ReadonlySet<string> = new Set()
-  let shells: ReadonlySet<string> = new Set()
+  let delegates: ReadonlySet<TaskId> = new Set()
+  let shells: ReadonlySet<TaskId> = new Set()
   let silentSince = 0
   let latest: LatestSummary = { kind: "none" }
   let inTurn = false
@@ -55,7 +56,7 @@ export function createProgressNudge(): ProgressNudge {
     observe: (event, at) => {
       switch (event.kind) {
         case "background-tasks-changed": {
-          const idsOf = (kind: "agent" | "shell"): ReadonlySet<string> =>
+          const idsOf = (kind: "agent" | "shell"): ReadonlySet<TaskId> =>
             new Set(event.tasks.filter((task) => task.kind === kind).map((task) => task.taskId))
           const nextDelegates = idsOf("agent")
           const nextShells = idsOf("shell")

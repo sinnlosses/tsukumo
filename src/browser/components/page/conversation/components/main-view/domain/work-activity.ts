@@ -7,6 +7,7 @@ import type {
   PendingAsk,
   StampedPendingAsk,
 } from "../../../../../../../shared/session-driver/pending-ask.ts"
+import type { TaskId } from "../../../../../../../shared/session-driver/task-id.ts"
 import {
   recordTimeAt,
   type SessionRecord,
@@ -138,7 +139,7 @@ function currentRequestTextOf(records: readonly SessionRecord[]): string {
 
 type SteppedBackground =
   | { readonly kind: "agent" }
-  | { readonly kind: "workflow"; readonly taskId: string; readonly step: WorkflowStep }
+  | { readonly kind: "workflow"; readonly taskId: TaskId; readonly step: WorkflowStep }
 
 /**
  * 手順を持つバックグラウンドタスク（ワークフロースクリプト・サブエージェント）のうち、いちばん新しく手順が始まったもの。同時刻なら顔ぶれの後ろの方。
@@ -178,7 +179,7 @@ function latestSteppedBackground(
 /**
  * 選んだワークフロースクリプトの中で、手順が1つでも始まったうえで走っている agent（start・progress）がいる（手順の合間に考えている）か。
  */
-function workflowThinking(workflowProgress: readonly WorkflowProgress[], taskId: string): boolean {
+function workflowThinking(workflowProgress: readonly WorkflowProgress[], taskId: TaskId): boolean {
   return (
     workflowProgress
       .find((progress) => progress.taskId === taskId)

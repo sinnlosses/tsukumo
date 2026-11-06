@@ -6,20 +6,21 @@ import { applySessionEvent } from "../../../src/shared/session/session-fold.ts"
 import { INITIAL_SESSION_STATE } from "../../../src/shared/session/session-state.ts"
 import type { WorkflowProgress } from "../../../src/shared/session/workflow-step.ts"
 import { apply } from "../../fixture/session-state.ts"
+import { checkedTaskId } from "../../fixture/task-id.ts"
 import { checkedToolUseId } from "../../fixture/tool-use-id.ts"
 
 const WORKFLOW_1 = {
-  taskId: "wf-1",
+  taskId: checkedTaskId("wf-1"),
   kind: "workflow",
   description: "架空の流れ1",
 } satisfies BackgroundTask
 const WORKFLOW_2 = {
-  taskId: "wf-2",
+  taskId: checkedTaskId("wf-2"),
   kind: "workflow",
   description: "架空の流れ2",
 } satisfies BackgroundTask
 const SHELL = {
-  taskId: "bash-1",
+  taskId: checkedTaskId("bash-1"),
   kind: "shell",
   description: "架空の待ち",
 } satisfies BackgroundTask
@@ -31,7 +32,7 @@ const tasksChanged = (...tasks: readonly BackgroundTask[]): SessionEvent => ({
 const progressOf = (taskId: string, ...agentIds: readonly string[]): SessionEvent => ({
   kind: "workflow-progress",
   progress: {
-    taskId,
+    taskId: checkedTaskId(taskId),
     phases: [{ index: 0, title: "架空の段" }],
     agents: agentIds.map((agentId, index) => ({
       index,
@@ -63,7 +64,11 @@ const agentStateOf = (
   state: "start" | "progress" | "done" | "error",
 ): SessionEvent => ({
   kind: "workflow-progress",
-  progress: { taskId, phases: [], agents: [{ index: 0, agentId, state, phaseTitle: "" }] },
+  progress: {
+    taskId: checkedTaskId(taskId),
+    phases: [],
+    agents: [{ index: 0, agentId, state, phaseTitle: "" }],
+  },
 })
 
 function runningOf(...events: readonly SessionEvent[]): readonly boolean[] {

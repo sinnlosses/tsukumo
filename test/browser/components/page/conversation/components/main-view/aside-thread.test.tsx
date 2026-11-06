@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it } from "vitest"
 
 import { AsideThread } from "../../../../../../../src/browser/components/page/conversation/components/main-view/aside-thread.tsx"
 import type { MainViewAside } from "../../../../../../../src/shared/session/main-view-shape.ts"
+import { checkedTaskId } from "../../../../../../fixture/task-id.ts"
 import { putState, putSession, stateWith } from "../../../../../session-store.ts"
 
 afterEach(() => {
@@ -16,7 +17,9 @@ const ASIDES: readonly MainViewAside[] = [
 
 const DELEGATING = stateWith({
   turn: { kind: "finished", startedAt: 0, finishedAt: 1, ending: { kind: "ended" } },
-  backgroundTasks: [{ taskId: "fictional-task", kind: "agent", description: "架空の委譲" }],
+  backgroundTasks: [
+    { taskId: checkedTaskId("fictional-task"), kind: "agent", description: "架空の委譲" },
+  ],
 })
 
 function details(): HTMLDetailsElement {

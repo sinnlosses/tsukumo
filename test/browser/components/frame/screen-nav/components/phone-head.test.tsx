@@ -16,6 +16,7 @@ import {
   toolRecord,
   workPlanRecord,
 } from "../../../../../fixture/session-record.ts"
+import { checkedTaskId } from "../../../../../fixture/task-id.ts"
 import { typedElement } from "../../../../../typed-element.ts"
 import { EMPTY_NAV_DRAWER_SLOTS } from "../../../../nav-drawer-slot.tsx"
 import { stubPhoneWidth } from "../../../../phone-width.ts"
@@ -275,7 +276,9 @@ describe("PhoneHead", () => {
   it("背景で作業中は「背景で作業中」", () => {
     renderHead({
       turn: { kind: "finished", startedAt: 0, finishedAt: 0, ending: { kind: "ended" } },
-      backgroundTasks: [{ taskId: "bg-1", kind: "shell", description: "架空の背景" }],
+      backgroundTasks: [
+        { taskId: checkedTaskId("bg-1"), kind: "shell", description: "架空の背景" },
+      ],
       records: [requestRecord()],
     })
 

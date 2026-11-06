@@ -17,6 +17,7 @@ import { reportDraftingOf } from "../../../src/shared/session/turn-progress.ts"
 import { STAGED_PARTS } from "../../fixture/a2ui-component.ts"
 import { reportEvent } from "../../fixture/report-event.ts"
 import { requestEvent } from "../../fixture/session-event.ts"
+import { checkedTaskId } from "../../fixture/task-id.ts"
 import { checkedToolUseId } from "../../fixture/tool-use-id.ts"
 
 const FIXTURE_STATE: SessionState = {
@@ -142,7 +143,7 @@ describe("mainViewTurnsOf（claude が自分で始めた続きのターン）", 
       { kind: "utterance", text: "架空の一言" },
       {
         kind: "background-tasks-changed",
-        tasks: [{ taskId: "task-1", kind: "agent", description: "架空の委譲" }],
+        tasks: [{ taskId: checkedTaskId("task-1"), kind: "agent", description: "架空の委譲" }],
       },
       finished,
     ])

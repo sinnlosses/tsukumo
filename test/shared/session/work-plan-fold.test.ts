@@ -16,6 +16,7 @@ import type {
   WorkPlanEntry,
 } from "../../../src/shared/session/work-plan.ts"
 import { reportEvent } from "../../fixture/report-event.ts"
+import { checkedTaskId } from "../../fixture/task-id.ts"
 import { next, PHASES, planned } from "../../fixture/work-plan-draft.ts"
 import { WORK_PLAN_SCENES } from "../../fixture/work-plan-scene.ts"
 
@@ -277,7 +278,7 @@ describe("nextWorkPlan（ワークフロースクリプトの写しで進める�
     nextWorkPlan(plan, {
       kind: "workflow-progress",
       progress: {
-        taskId: "wf-1",
+        taskId: checkedTaskId("wf-1"),
         phases: [],
         agents: agents.map(([phaseTitle, state], index) => ({
           index,

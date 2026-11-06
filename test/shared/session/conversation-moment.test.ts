@@ -11,6 +11,7 @@ import {
   type SessionState,
 } from "../../../src/shared/session/session-state.ts"
 import { detailRecord, requestRecord, speechRecord } from "../../fixture/session-record.ts"
+import { checkedTaskId } from "../../fixture/task-id.ts"
 
 const REQUESTED: SessionState = { ...INITIAL_SESSION_STATE, records: [requestRecord()] }
 
@@ -51,7 +52,9 @@ describe("conversationMoment", () => {
       {
         ...REQUESTED,
         turn: ENDED,
-        backgroundTasks: [{ taskId: "t1", kind: "shell", description: "架空の背景" }],
+        backgroundTasks: [
+          { taskId: checkedTaskId("t1"), kind: "shell", description: "架空の背景" },
+        ],
       },
       "work",
     ],
@@ -72,7 +75,7 @@ describe("conversationMoment", () => {
 })
 
 describe("isExchangeClosed と restartRefused は同じ状況を逆に言う", () => {
-  const TASK = { taskId: "t1", kind: "shell", description: "架空の背景" } as const
+  const TASK = { taskId: checkedTaskId("t1"), kind: "shell", description: "架空の背景" } as const
 
   it.each([
     ["走っている", { ...REQUESTED, turn: RUNNING }, false],

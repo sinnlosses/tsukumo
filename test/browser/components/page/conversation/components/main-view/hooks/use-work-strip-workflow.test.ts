@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest"
 
 import type { BackgroundTask } from "../../../../../../../../src/shared/session-driver/background-task.ts"
 import type { SessionEvent } from "../../../../../../../../src/shared/session/session-event.ts"
+import { checkedTaskId } from "../../../../../../../fixture/task-id.ts"
 import { checkedToolUseId } from "../../../../../../../fixture/tool-use-id.ts"
 import {
   foldTimed,
@@ -18,12 +19,12 @@ afterEach(() => {
 })
 
 const WORKFLOW = {
-  taskId: "wf-1",
+  taskId: checkedTaskId("wf-1"),
   kind: "workflow",
   description: "架空の流れ",
 } satisfies BackgroundTask
 const SHELL = {
-  taskId: "bash-1",
+  taskId: checkedTaskId("bash-1"),
   kind: "shell",
   description: "架空の待ち",
 } satisfies BackgroundTask
@@ -35,7 +36,7 @@ const tasksChanged = (...tasks: readonly BackgroundTask[]): SessionEvent => ({
 const progressOf = (taskId: string, ...agentIds: readonly string[]): SessionEvent => ({
   kind: "workflow-progress",
   progress: {
-    taskId,
+    taskId: checkedTaskId(taskId),
     phases: [],
     agents: agentIds.map((agentId, index) => ({
       index,
@@ -116,7 +117,7 @@ describe("useWorkStrip（ワークフロースクリプトの中の手順）", (
       activityAfter(...base, stepFinished("Bash"), {
         kind: "workflow-progress",
         progress: {
-          taskId: "wf-1",
+          taskId: checkedTaskId("wf-1"),
           phases: [],
           agents: [{ index: 0, agentId: "agent-1", state: "done", phaseTitle: "" }],
         },
@@ -162,7 +163,7 @@ describe("useWorkStrip（ワークフロースクリプトの中の手順）", (
 
   it("手順を持つワークフロースクリプトとサブエージェントがいれば、新しく始まった方を出す", () => {
     const agentTask = {
-      taskId: "agent-task-1",
+      taskId: checkedTaskId("agent-task-1"),
       kind: "agent",
       description: "架空の委譲",
     } satisfies BackgroundTask
@@ -189,7 +190,7 @@ describe("useWorkStrip（ワークフロースクリプトの中の手順）", (
 
   it("手順を持つワークフロースクリプトが2本あれば、新しく始まった方を出す", () => {
     const second = {
-      taskId: "wf-2",
+      taskId: checkedTaskId("wf-2"),
       kind: "workflow",
       description: "架空の別の流れ",
     } satisfies BackgroundTask
@@ -228,7 +229,9 @@ describe("useWorkStrip（ワークフロースクリプトの中の手順）", (
       activityAfter(
         {
           kind: "background-tasks-changed",
-          tasks: [{ taskId: "agent-task-1", kind: "agent", description: "架空の委譲" }],
+          tasks: [
+            { taskId: checkedTaskId("agent-task-1"), kind: "agent", description: "架空の委譲" },
+          ],
         },
         {
           kind: "tool-started",

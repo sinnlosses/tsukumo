@@ -22,6 +22,7 @@ import {
 } from "../../fixture/main-view-entry.ts"
 import { reportEvent } from "../../fixture/report-event.ts"
 import { requestEvent } from "../../fixture/session-event.ts"
+import { checkedTaskId } from "../../fixture/task-id.ts"
 import { checkedToolUseId } from "../../fixture/tool-use-id.ts"
 
 describe("mainViewEntries（記録ごとの結果の持ち回し）", () => {
@@ -276,7 +277,9 @@ describe("mainViewTurns（補足メッセージ）", () => {
     plan(1, "架空のまとめ。"),
     {
       kind: "background-tasks-changed",
-      tasks: [{ taskId: "fictional-task", kind: "agent", description: "架空の委譲" }],
+      tasks: [
+        { taskId: checkedTaskId("fictional-task"), kind: "agent", description: "架空の委譲" },
+      ],
     },
     { kind: "turn-finished", outcome: { kind: "completed" } },
   ]

@@ -87,6 +87,35 @@ describe("バックグラウンドタスク（実測で届いた順: background_
     ).toEqual([{ kind: "delegate-progress", taskId: "agent-1", summary: "架空の進み" }])
   })
 
+  it("task_id が空の文字列の知らせ（task_notification・task_started・background_tasks_changed の要素・task_progress）は捨てる", () => {
+    const emptyId = { task_id: "" }
+    expect(
+      toSessionEvents({ type: "system", subtype: "task_notification", ...emptyId }, EXPRESSIONS),
+    ).toEqual([])
+    expect(
+      toSessionEvents(
+        { type: "system", subtype: "task_started", task_type: "local_workflow", ...emptyId },
+        EXPRESSIONS,
+      ),
+    ).toEqual([])
+    expect(
+      toSessionEvents(
+        {
+          type: "system",
+          subtype: "background_tasks_changed",
+          tasks: [{ ...emptyId, task_type: "local_bash" }],
+        },
+        EXPRESSIONS,
+      ),
+    ).toEqual([{ kind: "background-tasks-changed", tasks: [] }])
+    expect(
+      toSessionEvents(
+        { type: "system", subtype: "task_progress", summary: "架空の進み", ...emptyId },
+        EXPRESSIONS,
+      ),
+    ).toEqual([])
+  })
+
   it("task_id の無い task_progress はイベントにしない", () => {
     expect(
       toSessionEvents(

@@ -9,11 +9,12 @@ import {
   type SessionState,
 } from "../../../src/shared/session/session-state.ts"
 import { apply } from "../../fixture/session-state.ts"
+import { checkedTaskId } from "../../fixture/task-id.ts"
 import { checkedToolUseId } from "../../fixture/tool-use-id.ts"
 
 describe("applySessionEvent（バックグラウンドタスク）", () => {
   const SHELL_TASK = {
-    taskId: "bash-1",
+    taskId: checkedTaskId("bash-1"),
     kind: "shell",
     description: "架空の待ち",
   } satisfies BackgroundTask

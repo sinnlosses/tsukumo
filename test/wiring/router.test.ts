@@ -15,6 +15,7 @@ import {
   startRouter,
 } from "../fixture/command-router.ts"
 import { createStubDriver } from "../fixture/session-driver.ts"
+import { checkedTaskId } from "../fixture/task-id.ts"
 
 describe("createSocketRouter（session）", () => {
   // 帯のドロップダウンはセッション限り（`docs/architecture/screen-design.md`「設定の置き場所」）。既定は書き換わらない。
@@ -47,7 +48,9 @@ describe("createSocketRouter（session）", () => {
     await prompt("架空の背景の無い問い", "aside-when-background")
     observe({
       kind: "background-tasks-changed",
-      tasks: [{ taskId: "fictional-task", kind: "agent", description: "架空の委譲" }],
+      tasks: [
+        { taskId: checkedTaskId("fictional-task"), kind: "agent", description: "架空の委譲" },
+      ],
     })
     await prompt("架空の委譲中の問い", "aside-when-background")
     await prompt("架空の新しい依頼", "new-request")

@@ -8,6 +8,7 @@ import {
 import type { SessionEvent } from "../../../../../../../../src/shared/session/session-event.ts"
 import { applySessionEvent } from "../../../../../../../../src/shared/session/session-fold.ts"
 import { reportEvent } from "../../../../../../../fixture/report-event.ts"
+import { checkedTaskId } from "../../../../../../../fixture/task-id.ts"
 import {
   foldTimed,
   plan,
@@ -56,7 +57,7 @@ describe("useWorkStrip（状態）", () => {
   it("ターンが終わってバックグラウンドタスクだけ残るあいだは背景で作業中、答え待ちがあれば答え待ち、背景が無ければ今までどおり", () => {
     const left: SessionEvent = {
       kind: "background-tasks-changed",
-      tasks: [{ taskId: "fake-bg-1", kind: "shell", description: "架空の待ち" }],
+      tasks: [{ taskId: checkedTaskId("fake-bg-1"), kind: "shell", description: "架空の待ち" }],
     }
     expect(resultAfter([workRequest, plan, left])).toBe("working")
     expect(resultAfter([workRequest, plan, left, completed])).toBe("background")
@@ -88,7 +89,9 @@ describe("useWorkStrip（状態）", () => {
           closed,
           {
             kind: "background-tasks-changed",
-            tasks: [{ taskId: "fictional-task", kind: "agent", description: "架空の委譲" }],
+            tasks: [
+              { taskId: checkedTaskId("fictional-task"), kind: "agent", description: "架空の委譲" },
+            ],
           },
           START + 5_000,
         ),
@@ -225,7 +228,9 @@ describe("useWorkStrip（回る弧）", () => {
         [
           {
             kind: "background-tasks-changed",
-            tasks: [{ taskId: "fictional-task", kind: "shell", description: "架空の待ち" }],
+            tasks: [
+              { taskId: checkedTaskId("fictional-task"), kind: "shell", description: "架空の待ち" },
+            ],
           },
           START + 2_000,
         ],

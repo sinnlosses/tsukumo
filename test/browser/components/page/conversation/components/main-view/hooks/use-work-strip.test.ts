@@ -9,6 +9,7 @@ import {
 } from "../../../../../../../../src/browser/stores/reading-section.ts"
 import type { SessionEvent } from "../../../../../../../../src/shared/session/session-event.ts"
 import { requestEvent } from "../../../../../../../fixture/session-event.ts"
+import { checkedTaskId } from "../../../../../../../fixture/task-id.ts"
 import { checkedToolUseId } from "../../../../../../../fixture/tool-use-id.ts"
 import {
   foldTimed,
@@ -228,7 +229,9 @@ describe("useWorkStrip（時刻に依るもの）", () => {
       [
         {
           kind: "background-tasks-changed",
-          tasks: [{ taskId: "fictional-task", kind: "agent", description: "架空の委譲" }],
+          tasks: [
+            { taskId: checkedTaskId("fictional-task"), kind: "agent", description: "架空の委譲" },
+          ],
         },
         START + 3_000,
       ],
@@ -254,7 +257,7 @@ describe("useWorkStrip（時刻に依るもの）", () => {
 describe("useWorkStrip（背景で動いているものの区画）", () => {
   const backgroundEvent: SessionEvent = {
     kind: "background-tasks-changed",
-    tasks: [{ taskId: "fictional-task", kind: "shell", description: "架空の常駐" }],
+    tasks: [{ taskId: checkedTaskId("fictional-task"), kind: "shell", description: "架空の常駐" }],
   }
 
   it("背景で動くものが1件以上あれば、ターンが走っていても区画を出す", () => {

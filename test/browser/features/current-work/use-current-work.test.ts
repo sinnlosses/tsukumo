@@ -13,6 +13,7 @@ import {
 import { characterInfo } from "../../../fixture/character.ts"
 import { dateKey } from "../../../fixture/date-key.ts"
 import { requestRecord, toolRecord, workPlanRecord } from "../../../fixture/session-record.ts"
+import { checkedTaskId } from "../../../fixture/task-id.ts"
 import { putSession } from "../../session-store.ts"
 
 afterEach(() => {
@@ -54,11 +55,15 @@ function questionPending(headers: readonly string[]): StampedPendingAsk {
 }
 
 const SHELL_TASK = {
-  taskId: "bash-1",
+  taskId: checkedTaskId("bash-1"),
   kind: "shell",
   description: "架空の待ち",
 } satisfies BackgroundTask
-const AGENT_TASK = { taskId: "agent-1", kind: "agent", description: "" } satisfies BackgroundTask
+const AGENT_TASK = {
+  taskId: checkedTaskId("agent-1"),
+  kind: "agent",
+  description: "",
+} satisfies BackgroundTask
 
 const WRITING_DIARY = {
   kind: "writing",

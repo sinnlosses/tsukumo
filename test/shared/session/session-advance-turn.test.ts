@@ -6,6 +6,7 @@ import { INITIAL_SESSION_STATE } from "../../../src/shared/session/session-state
 import { answeringAsideOf } from "../../../src/shared/session/turn-progress.ts"
 import { requestEvent } from "../../fixture/session-event.ts"
 import { apply } from "../../fixture/session-state.ts"
+import { checkedTaskId } from "../../fixture/task-id.ts"
 import { checkedToolUseId } from "../../fixture/tool-use-id.ts"
 
 describe("applySessionEvent", () => {
@@ -80,7 +81,7 @@ describe("applySessionEvent", () => {
       started,
       {
         kind: "background-tasks-changed",
-        tasks: [{ taskId: "task-1", kind: "agent", description: "架空の委譲" }],
+        tasks: [{ taskId: checkedTaskId("task-1"), kind: "agent", description: "架空の委譲" }],
       },
       150,
     )
@@ -96,7 +97,7 @@ describe("applySessionEvent", () => {
       ending: { kind: "ended" },
     })
     expect(finished.backgroundTasks).toEqual([
-      { taskId: "task-1", kind: "agent", description: "架空の委譲" },
+      { taskId: checkedTaskId("task-1"), kind: "agent", description: "架空の委譲" },
     ])
 
     // バックグラウンドタスクが終わり、claude が自分で始めた続きのターン（`turn-resumed`）が届く。

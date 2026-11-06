@@ -28,6 +28,7 @@ import {
   type TestReview,
   VALID,
 } from "../../../../fixture/report-review.ts"
+import { checkedTaskId } from "../../../../fixture/task-id.ts"
 import { checkedToolUseId } from "../../../../fixture/tool-use-id.ts"
 
 /** handler に届いた引数を、呼び出しをイベントに変える側と同じ形のイベントにする。 */
@@ -312,7 +313,7 @@ describe("createReportReview の judge（背景のシェルが残っている re
     taskId: string,
     kind: BackgroundTask["kind"],
     description = "架空の背景",
-  ): BackgroundTask => ({ taskId, kind, description })
+  ): BackgroundTask => ({ taskId: checkedTaskId(taskId), kind, description })
   const withTasks = (...tasks: readonly BackgroundTask[]): TestReview => {
     const review = createReportReview(noPlan)
     review.pass(SESSION_INFO)

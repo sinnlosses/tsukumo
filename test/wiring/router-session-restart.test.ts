@@ -13,6 +13,7 @@ import {
   startRouter,
 } from "../fixture/command-router.ts"
 import { checkedSessionId } from "../fixture/session-id.ts"
+import { checkedTaskId } from "../fixture/task-id.ts"
 
 const TURN_FINISHED_EVENT = {
   kind: "turn-finished",
@@ -239,7 +240,7 @@ describe("createSocketRouter（session）", () => {
   describe("ターンが終わっていても委譲先が動いている間", () => {
     const BACKGROUND_TASKS_EVENT = {
       kind: "background-tasks-changed",
-      tasks: [{ taskId: "t1", kind: "shell", description: "架空の背景" }],
+      tasks: [{ taskId: checkedTaskId("t1"), kind: "shell", description: "架空の背景" }],
     } satisfies SessionEvent
 
     it("駆動を起こし直す4つのコマンドは定型文の理由で受け付けず、駆動を閉じない", async () => {

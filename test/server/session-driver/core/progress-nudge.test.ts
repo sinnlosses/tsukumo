@@ -11,6 +11,7 @@ import {
 import type { BackgroundTaskKind } from "../../../../src/shared/session-driver/background-task.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import { requestEvent } from "../../../fixture/session-event.ts"
+import { checkedTaskId } from "../../../fixture/task-id.ts"
 
 /** 黙っているとみなす長さ（5分）。 */
 const PROGRESS_NUDGE_SILENCE_MS = 5 * 60 * 1000
@@ -22,11 +23,11 @@ const speech: SessionEvent = { kind: "speech", text: "架空のセリフ", expre
 const turnFinished: SessionEvent = { kind: "turn-finished", outcome: { kind: "completed" } }
 const tasks = (kind: BackgroundTaskKind): SessionEvent => ({
   kind: "background-tasks-changed",
-  tasks: [{ taskId: "task_a", kind, description: "" }],
+  tasks: [{ taskId: checkedTaskId("task_a"), kind, description: "" }],
 })
 const progress = (summary: string): SessionEvent => ({
   kind: "delegate-progress",
-  taskId: "task_a",
+  taskId: checkedTaskId("task_a"),
   summary,
 })
 

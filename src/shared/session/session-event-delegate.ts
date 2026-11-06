@@ -1,6 +1,7 @@
 // セッションの出来事（`SessionEvent`）のうち、ワークプラン・委譲先・ツール・バックグラウンドタスクに関するものの型。
 
 import type { BackgroundTask } from "../session-driver/background-task.ts"
+import type { TaskId } from "../session-driver/task-id.ts"
 import type { DelegateReturn } from "./delegate-return.ts"
 import type { ToolUseId } from "./tool-use-id.ts"
 import type { WorkPlan } from "./work-plan.ts"
@@ -40,13 +41,13 @@ export type DelegateEvent =
    * ワークフロースクリプト（`Workflow`）の走り出し（SDK の `system` / `task_started` のうち `task_type` が `local_workflow` のもの）。サーバの中だけで流れる。
    * `CallReview.pass` が `taskId` を覚え、同じ `taskId` の `task-notified` と対にしてワークフロースクリプトの完了を見分ける（畳み込み・ブラウザには届かない）。
    */
-  | { readonly kind: "workflow-started"; readonly taskId: string }
+  | { readonly kind: "workflow-started"; readonly taskId: TaskId }
   /**
    * バックグラウンドタスクの完了・失敗・停止の知らせが届いた（SDK の `system` / `task_notification` の `task_id`）。サーバの中だけで流れる。
    * `task_notification` に `task_type` は無いので、ワークフロースクリプトのものかは `workflow-started` の `taskId` との突き合わせで決める。
    * `CallReview.pass` が受けて捨てる（畳み込み・ブラウザには届かない）。
    */
-  | { readonly kind: "task-notified"; readonly taskId: string }
+  | { readonly kind: "task-notified"; readonly taskId: TaskId }
   /**
    * サブエージェントの中でツールを使い始めた（`PreToolUse` のフックのうち `agent_id` のあるもの）。
    * `agentId` はそのフックの `agent_id` で、ワークフロースクリプトの agent かとどのワークフロースクリプトに当てるかは `withWorkflowStep` が決める。
@@ -101,7 +102,7 @@ export type DelegateEvent =
    * `summary` は委譲先の会話から作られた字なので、畳み込み・記録・ログに写さない。
    * サーバの中だけで流れ、`ProgressNudge` が受けたら駆動が送り出す手前で捨てる（畳み込み・ブラウザには届かない）。
    */
-  | { readonly kind: "delegate-progress"; readonly taskId: string; readonly summary: string }
+  | { readonly kind: "delegate-progress"; readonly taskId: TaskId; readonly summary: string }
   /**
    * 駆動が委譲先の進みの1行をメインへ差し込んだ（`ProgressNudge`）。差し込んだ事実だけを運び、文面は持たない。
    * `CallReview.pass` が `speak` の新しい事実に数える。

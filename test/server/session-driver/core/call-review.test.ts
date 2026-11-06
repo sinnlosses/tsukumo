@@ -14,6 +14,7 @@ import type {
 import { reportDraft, reportEvent } from "../../../fixture/report-event.ts"
 import { FINISHED, REJECTION_PHRASE, SESSION_INFO } from "../../../fixture/report-review.ts"
 import { requestEvent } from "../../../fixture/session-event.ts"
+import { checkedTaskId } from "../../../fixture/task-id.ts"
 import { checkedOptionalToolUseId, checkedToolUseId } from "../../../fixture/tool-use-id.ts"
 import { next } from "../../../fixture/work-plan-draft.ts"
 
@@ -46,7 +47,7 @@ const toolStarted = (toolUseId: string, parentToolUseId?: string): SessionEvent 
   parentToolUseId: checkedOptionalToolUseId(parentToolUseId),
 })
 const backgroundTask = (taskId: string, kind: BackgroundTask["kind"]): BackgroundTask => ({
-  taskId,
+  taskId: checkedTaskId(taskId),
   kind,
   description: "架空の背景",
 })

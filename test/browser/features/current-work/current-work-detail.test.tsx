@@ -16,6 +16,7 @@ import {
   toolRecord,
   workPlanRecord,
 } from "../../../fixture/session-record.ts"
+import { checkedTaskId } from "../../../fixture/task-id.ts"
 import { checkedToolUseId } from "../../../fixture/tool-use-id.ts"
 import { typedElement } from "../../../typed-element.ts"
 import { putState } from "../../session-store.ts"
@@ -49,12 +50,12 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
 
   describe("バックグラウンドタスク", () => {
     const SHELL_TASK = {
-      taskId: "bash-1",
+      taskId: checkedTaskId("bash-1"),
       kind: "shell",
       description: "架空の待ち",
     } satisfies BackgroundTask
     const AGENT_TASK = {
-      taskId: "agent-1",
+      taskId: checkedTaskId("agent-1"),
       kind: "agent",
       description: "",
     } satisfies BackgroundTask

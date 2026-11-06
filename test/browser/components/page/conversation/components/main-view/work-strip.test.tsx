@@ -10,6 +10,7 @@ import {
   type SessionState,
 } from "../../../../../../../src/shared/session/session-state.ts"
 import { requestEvent } from "../../../../../../fixture/session-event.ts"
+import { checkedTaskId } from "../../../../../../fixture/task-id.ts"
 import { checkedToolUseId } from "../../../../../../fixture/tool-use-id.ts"
 import { putSession } from "../../../../../session-store.ts"
 
@@ -140,7 +141,7 @@ describe("WorkStrip", () => {
         plan(1),
         {
           kind: "background-tasks-changed",
-          tasks: [{ taskId: "fake-bg-1", kind: "shell", description: "架空の待ち" }],
+          tasks: [{ taskId: checkedTaskId("fake-bg-1"), kind: "shell", description: "架空の待ち" }],
         },
         { kind: "turn-finished", outcome: { kind: "completed" } },
       ]),

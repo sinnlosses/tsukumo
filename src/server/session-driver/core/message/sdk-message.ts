@@ -28,7 +28,12 @@ import {
 } from "../../../core/tsukumo-tool-name.ts"
 import { parsePhaseResult } from "../../../work-plan/core/phase-result.ts"
 import { apiErrorEvents, apiRetryEvents, rateLimitEvents } from "./sdk-api-trouble-message.ts"
-import { backgroundTaskEvents, taskProgressEvents } from "./sdk-background-message.ts"
+import {
+  backgroundTaskEvents,
+  taskNotificationEvents,
+  taskProgressEvents,
+  taskStartedEvents,
+} from "./sdk-background-message.ts"
 import { toCommandDescriptions } from "./sdk-query-reply.ts"
 import { reportEvents } from "./sdk-report-message.ts"
 import { speakToolFullName, speechEvents } from "./sdk-speech-message.ts"
@@ -109,20 +114,10 @@ export function toSessionEvents(
         return backgroundTaskEvents(message.tasks)
       }
       if (message.subtype === "task_notification") {
-        const toolUseId = parseToolUseId(message.tool_use_id)
-        return [
-          ...(toolUseId === undefined
-            ? []
-            : [{ kind: "background-tool-finished", toolUseId } as const]),
-          ...(typeof message.task_id === "string"
-            ? [{ kind: "task-notified", taskId: message.task_id } as const]
-            : []),
-        ]
+        return taskNotificationEvents(message)
       }
       if (message.subtype === "task_started") {
-        return message.task_type === "local_workflow" && typeof message.task_id === "string"
-          ? [{ kind: "workflow-started", taskId: message.task_id }]
-          : []
+        return taskStartedEvents(message)
       }
       if (message.subtype === "task_progress") {
         return taskProgressEvents(message)

@@ -7,6 +7,7 @@ import {
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../../../../../../src/shared/session/session-state.ts"
+import { checkedTaskId } from "../../../../../../fixture/task-id.ts"
 import { typedElement } from "../../../../../../typed-element.ts"
 import { type CommandSpy, putSession } from "../../../../../session-store.ts"
 
@@ -69,7 +70,9 @@ describe("PhoneTurnAction", () => {
   it("バックグラウンドタスクだけが残っているときは ↑ のまま", () => {
     renderAction({
       turn: { kind: "finished", startedAt: 0, finishedAt: 1000, ending: { kind: "ended" } },
-      backgroundTasks: [{ taskId: "task-1", kind: "agent", description: "架空の委譲" }],
+      backgroundTasks: [
+        { taskId: checkedTaskId("task-1"), kind: "agent", description: "架空の委譲" },
+      ],
     })
 
     expect(screen.getByRole("button", { name: "送信" })).toBeDefined()

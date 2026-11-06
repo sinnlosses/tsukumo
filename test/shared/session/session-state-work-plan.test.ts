@@ -13,6 +13,7 @@ import type { WorkPlan, WorkPlanClosing } from "../../../src/shared/session/work
 import { reportEvent } from "../../fixture/report-event.ts"
 import { requestEvent } from "../../fixture/session-event.ts"
 import { apply } from "../../fixture/session-state.ts"
+import { checkedTaskId } from "../../fixture/task-id.ts"
 import { checkedToolUseId } from "../../fixture/tool-use-id.ts"
 
 describe("applySessionEvent（委譲とワークプラン）", () => {
@@ -156,7 +157,7 @@ describe("applySessionEvent（ワークフロースクリプトの写しで進�
   const progress = (phaseTitle: string): SessionEvent => ({
     kind: "workflow-progress",
     progress: {
-      taskId: "wf-1",
+      taskId: checkedTaskId("wf-1"),
       phases: [],
       agents: [{ index: 0, agentId: "agent-1", state: "start", phaseTitle }],
     },

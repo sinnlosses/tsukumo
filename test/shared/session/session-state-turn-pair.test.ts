@@ -8,6 +8,7 @@ import {
 } from "../../../src/shared/session/session-state.ts"
 import { reportEvent } from "../../fixture/report-event.ts"
 import { requestEvent } from "../../fixture/session-event.ts"
+import { checkedTaskId } from "../../fixture/task-id.ts"
 import { checkedToolUseId } from "../../fixture/tool-use-id.ts"
 
 const TURN_FINISHED: SessionEvent = { kind: "turn-finished", outcome: { kind: "completed" } }
@@ -15,7 +16,7 @@ const SESSION_ENDED: SessionEvent = { kind: "session-ended", reason: "架空の�
 const CLEARED: SessionEvent = { kind: "conversation-cleared" }
 const BACKGROUND_STARTED: SessionEvent = {
   kind: "background-tasks-changed",
-  tasks: [{ taskId: "fictional-task", kind: "agent", description: "架空の委譲" }],
+  tasks: [{ taskId: checkedTaskId("fictional-task"), kind: "agent", description: "架空の委譲" }],
 }
 const DRAFTING: SessionEvent = { kind: "report-drafting", toolUseId: checkedToolUseId("toolu_r1") }
 

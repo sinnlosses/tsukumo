@@ -17,6 +17,7 @@
 
 import { isDeepEqual } from "remeda"
 
+import type { TaskId } from "../../../shared/session-driver/task-id.ts"
 import type { DelegateReturn } from "../../../shared/session/delegate-return.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import {
@@ -127,7 +128,7 @@ export function createWorkPlanReview(): WorkPlanReview {
   let resultMarks: readonly string[] = []
   let resultCallers: ReadonlySet<string> = new Set()
   // 走り出して、完了の知らせがまだ届いていないワークフロースクリプト（`Workflow`）の `task_id`。
-  let workflowTasks: ReadonlySet<string> = new Set()
+  let workflowTasks: ReadonlySet<TaskId> = new Set()
   // ワークフロースクリプトの写しで見えた agent の id と、いる段の題。
   const workflowAgentPhases = new Map<string, string>()
 

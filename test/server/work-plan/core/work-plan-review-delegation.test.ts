@@ -8,6 +8,7 @@ import {
 import { createWorkPlanReview } from "../../../../src/server/work-plan/core/work-plan-review.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import type { LatestWorkPlan } from "../../../../src/shared/session/work-plan.ts"
+import { checkedTaskId } from "../../../fixture/task-id.ts"
 import { checkedToolUseId } from "../../../fixture/tool-use-id.ts"
 import { handedBack, REQUEST, SUMMARY } from "../../../fixture/work-plan-review.ts"
 
@@ -46,9 +47,9 @@ describe("WorkPlanReview の委譲の返却", () => {
   it("ワークフロースクリプトの完了の知らせで委譲ゲートと注記が立ち、work_plan で下りる", () => {
     const review = started()
 
-    review.pass({ kind: "workflow-started", taskId: "wf-1" })
+    review.pass({ kind: "workflow-started", taskId: checkedTaskId("wf-1") })
     expect(review.gateRaised()).toBe(false)
-    review.pass({ kind: "task-notified", taskId: "wf-1" })
+    review.pass({ kind: "task-notified", taskId: checkedTaskId("wf-1") })
 
     expect(review.gateRaised()).toBe(true)
     expect(review.takeHandbackNote()).toContain(WORKFLOW_FINISHED_HANDBACK_LINE)
@@ -59,9 +60,9 @@ describe("WorkPlanReview の委譲の返却", () => {
   it("ワークフロースクリプトでないタスクの完了の知らせと、走り出しを見ていない知らせは委譲ゲートを立てない", () => {
     const review = started()
 
-    review.pass({ kind: "task-notified", taskId: "bash-1" })
-    review.pass({ kind: "workflow-started", taskId: "wf-1" })
-    review.pass({ kind: "task-notified", taskId: "wf-2" })
+    review.pass({ kind: "task-notified", taskId: checkedTaskId("bash-1") })
+    review.pass({ kind: "workflow-started", taskId: checkedTaskId("wf-1") })
+    review.pass({ kind: "task-notified", taskId: checkedTaskId("wf-2") })
 
     expect(review.gateRaised()).toBe(false)
     expect(review.handbackNotePending()).toBe(false)
@@ -429,7 +430,7 @@ describe("WorkPlanReview のワークフロースクリプトの写し", () => {
     const progress: SessionEvent = {
       kind: "workflow-progress",
       progress: {
-        taskId: "wf-1",
+        taskId: checkedTaskId("wf-1"),
         phases: [],
         agents: [{ index: 0, agentId: "agent-1", state: "start", phaseTitle: "accept" }],
       },
