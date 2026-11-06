@@ -164,6 +164,12 @@
 残る 37 件（report 30・work-plan 7）は、下の表の `server/report/…`・`server/work-plan/…` の行に1件ずつ載せた。戻り値は R1（探索・解析の失敗を返す）、局所の `let` は R4、`workflowAgentPhase` は R2（ワークフロースクリプトの写しに無いという外の値）。
 `work-plan-review.ts` の `returnedCount`・`confirmedRange`、`report-review.ts` の `handlerReasons`、`report-inheritance.ts` の `base` は、局所の `let` で「まだ決まっていない」が1つの意味しか持たない R4。
 `?? ""` は、正規表現の群・`split` の添字の `noUncheckedIndexedAccess` 由来と、`conclusionFirstSentence` の「要素なしなら空の文字列」という値としての `""` を据え置き、`figure` の `question` は番兵だったので、スキーマの検査に任せて消した。`claims` の `basis`・`howToVerify`（`claimNotes`、`body-fence-reader.ts:169・171`）と `readCode` の `path`（同 `:145`）は、いまは `=== undefined ? "" : …` の三項演算子の形で、空の文字列を「無い」の印にする書き方が残っている。`?? ""` の grep には掛からず、どのタスクにも載っていない。`grep -rn '?? ""' src/server/report src/server/work-plan` が返すのは 13 行で、上の据え置きの理由に当たるものと `work-plan-gate.ts:110` の表示用の文字列である。
+会話画面の `domain/`・`stores/`・`components/hooks/` の 20 件（`| undefined`）は、呼ぶ側を読んで全て本物と分かり、1件も消していない。
+戻り値の失敗を単一の「無い」で返す R1 が 15 件（`shrinkToThumbnail`・`decodeImage`・`graphFoldFigure`・`mainPathOf`・`sideAnchorsOf`・`laidOut`・`attachOf`・`cardChainOf`・`cardChainOrder`・`previousSessionOf`・`mainViewRootOf`・`rememberedPosition`・`loadSessionDraft`、図形の `toneOf`）。
+`graphFoldFigure` の `reduce` の蓄積値は、候補が 0 件の「当たらない」を表す R1。`mainViewRootOf` は `closest` の `null` を入口で畳んだ結果で、`useHeightVariableRef` が「根が無い」を `undefined` で受ける。
+`draftOnSessionChange` の戻り値（入力欄をそのままにする指示）は R10、引数の `previous`・`next`（セッション未確定）は入力欄の2件と同じ R4。`useWaitingLineDueAt` の `number | undefined` は、待ちの一言の期日が無いという `waitingLineDueAt` の値の写しで R2。`use-speech-press.ts` の `PressOrigin | undefined` は「押し始めていない」を持つ ref で R4。
+この20件（domain 17・stores 2・hooks 1）は、下の表の `conversation/domain/`・`stores/`・`components/hooks/` の行に1件ずつ載せた。
+`?? ""` の5件は、正規表現の群・配列の添字・`Map.get` の未登録の鍵の `noUncheckedIndexedAccess` 由来で、「空」と「無い」が DOM に出る文字列で同じ意味のもの（`stat-layout.ts` の `unit`・`report-diagram-markdown.ts` の系列名・`phase-recap.ts` の要約・`inquiry-answer.ts` の書いた答え2件）。番兵ではないので残す。
 
 | ファイル                                                                                     | 対象                           | 置き場     | 行  | 理由 |
 | -------------------------------------------------------------------------------------------- | ------------------------------ | ---------- | --- | ---- |
@@ -173,8 +179,8 @@
 | `browser/components/page/conversation/components/character-view/hooks/use-character-view.ts` | `useCharacterClock`            | 引数       | 304 | R4   |
 | `browser/components/page/conversation/components/character-view/hooks/use-speech-log.ts`     | `useSpeechLog`                 | 引数       | 83  | R4   |
 | `browser/components/page/conversation/components/chat-view/hooks/use-speech-reveal.ts`       | `advanceReveal`                | 引数       | 110 | R4   |
-| `browser/components/page/conversation/components/dispatch/domain/composer-draft-storage.ts`  | `draftOnSessionChange`         | 引数       | 44  | R4   |
-| `browser/components/page/conversation/components/dispatch/domain/composer-draft-storage.ts`  | `draftOnSessionChange`         | 引数       | 45  | R4   |
+| `browser/components/page/conversation/domain/composer-draft-storage.ts`                      | `draftOnSessionChange`         | 引数       | 45  | R4   |
+| `browser/components/page/conversation/domain/composer-draft-storage.ts`                      | `draftOnSessionChange`         | 引数       | 46  | R4   |
 | `scripts/hook/lib/shell-write-rule.ts`                                                       | `findDeniedBashRule`           | 引数       | 101 | R4   |
 | `scripts/hook/lib/shell-write-rule.ts`                                                       | `findDeniedCommandRule`        | 引数       | 115 | R4   |
 | `scripts/hook/lib/shell-write-rule.ts`                                                       | `isDeniedPythonCode`           | 引数       | 352 | R4   |
@@ -253,6 +259,24 @@
 | `server/work-plan/core/work-plan-review.ts`                                                  | `confirmedRange`               | 変数       | 122 | R4   |
 | `server/work-plan/core/work-plan-review.ts`                                                  | `judgeSkipMarks`               | 戻り値     | 153 | R1   |
 | `scripts/shared/ast-node.ts`                                                                 | `arrayField`                   | 引数       | 43  | R2   |
+| `browser/components/page/conversation/domain/composer-draft-storage.ts`                      | `draftOnSessionChange`         | 戻り値     | 48  | R10  |
+| `browser/components/page/conversation/domain/composer-draft-storage.ts`                      | `loadSessionDraft`             | 戻り値     | 68  | R1   |
+| `browser/components/page/conversation/domain/prompt-image-thumbnail.ts`                      | `shrinkToThumbnail`            | 戻り値     | 22  | R1   |
+| `browser/components/page/conversation/domain/prompt-image-thumbnail.ts`                      | `decodeImage`                  | 戻り値     | 49  | R1   |
+| `browser/components/page/conversation/domain/graph-fold.ts`                                  | `graphFoldFigure`              | 戻り値     | 43  | R1   |
+| `browser/components/page/conversation/domain/graph-fold.ts`                                  | `graphFoldFigure` の `reduce`  | 変数       | 67  | R1   |
+| `browser/components/page/conversation/domain/graph-fold.ts`                                  | `mainPathOf`                   | 戻り値     | 82  | R1   |
+| `browser/components/page/conversation/domain/graph-fold.ts`                                  | `sideAnchorsOf`                | 戻り値     | 135 | R1   |
+| `browser/components/page/conversation/domain/graph-fold-layout.ts`                           | `laidOut`                      | 戻り値     | 43  | R1   |
+| `browser/components/page/conversation/domain/graph-fold-layout.ts`                           | `attachOf`                     | 戻り値     | 230 | R1   |
+| `browser/components/page/conversation/domain/card-chain-markdown.ts`                         | `cardChainOf`                  | 戻り値     | 30  | R1   |
+| `browser/components/page/conversation/domain/card-chain-markdown.ts`                         | `cardChainOrder`               | 戻り値     | 89  | R1   |
+| `browser/components/page/conversation/domain/welcome-entry-list.ts`                          | `previousSessionOf`            | 戻り値     | 49  | R1   |
+| `browser/components/page/conversation/domain/main-view-focus.ts`                             | `mainViewRootOf`               | 戻り値     | 10  | R1   |
+| `browser/components/page/conversation/domain/report-diagram-markdown.ts`                     | `toneOf`                       | 戻り値     | 319 | R1   |
+| `browser/components/page/conversation/stores/reading-position.ts`                            | `rememberedPosition`           | 戻り値     | 45  | R1   |
+| `browser/components/page/conversation/stores/shown-reaction.ts`                              | `useWaitingLineDueAt`          | 戻り値     | 19  | R2   |
+| `browser/components/page/conversation/components/hooks/use-speech-press.ts`                  | `pressOriginRef`               | 変数       | 31  | R4   |     |
 
 ## 消せるもの
 
