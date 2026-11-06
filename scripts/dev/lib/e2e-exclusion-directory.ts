@@ -1,9 +1,11 @@
 // `pnpm run check --full` の E2E の段を、作業ツリーをまたいで同時に1本だけにする排他制御。
-// 共有の git dir の下のディレクトリを `mkdir` で作れた1本が占有し、消して解放する。持ち主の pid は見ず、古さだけで残りを消す。
+// 共有の git dir の下のディレクトリを `proper-lockfile` が占有し、持っている間は更新時刻を書き直し続ける。
+// 持ち主の pid は見ず、更新が止まって `staleMs` たった錠だけを、落ちた持ち主の残りとして奪う。
 
-import { mkdirSync, rmSync, statSync } from "node:fs"
 import { join } from "node:path"
 import process from "node:process"
+
+import { lock, unlockSync } from "proper-lockfile"
 
 import { hasErrorCode } from "../../../src/server/core/utils/error-code.ts"
 import { readGitCommonDirectory } from "../../shared/git-query.ts"
@@ -14,7 +16,7 @@ const MINUTE_MS = 60_000
 
 export type ExclusionOptions = {
   readonly waitLimitMs: number
-  /** これより古い排他制御ディレクトリは、持ち主が落ちた残りとみなして消す。 */
+  /** 更新が止まってからこれだけたつと、持ち主が落ちたとみなして奪われる。 */
   readonly staleMs: number
   readonly pollMs: number
   readonly notify: (line: string) => void
@@ -41,30 +43,45 @@ export async function occupyE2eExclusion(
   directory: string,
   options: ExclusionOptions,
 ): Promise<ExclusionResult> {
-  const startedAt = nowMs()
-  let lastNoticeAt = Number.NEGATIVE_INFINITY
-  while (true) {
-    if (tryCreate(directory)) {
-      return { kind: "occupied", release: releaseOnce(directory) }
+  const lockOptions = {
+    lockfilePath: directory,
+    realpath: false,
+    stale: options.staleMs,
+    update: Math.floor(options.staleMs / 2),
+    onCompromised: () =>
+      options.notify(
+        "E2E 全件の排他制御の更新ができず、錠を奪われた可能性がある。別の作業ツリーの E2E と重なっているかもしれない",
+      ),
+  }
+  const waitLimitMinutes = Math.round(options.waitLimitMs / MINUTE_MS)
+  try {
+    await lock(directory, { ...lockOptions, retries: 0 })
+  } catch (error) {
+    if (!hasErrorCode(error, "ELOCKED")) {
+      throw error
     }
-    if (removeIfStale(directory, options.staleMs)) {
-      continue
-    }
-    const waitLimitMinutes = Math.round(options.waitLimitMs / MINUTE_MS)
-    if (nowMs() - startedAt >= options.waitLimitMs) {
+    options.notify(`別の作業ツリーの E2E 全件が終わるのを待っている（最大 ${waitLimitMinutes} 分）`)
+    try {
+      await lock(directory, {
+        ...lockOptions,
+        retries: {
+          retries: Math.ceil(options.waitLimitMs / options.pollMs),
+          factor: 1,
+          minTimeout: options.pollMs,
+          maxTimeout: options.pollMs,
+        },
+      })
+    } catch (retryError) {
+      if (!hasErrorCode(retryError, "ELOCKED")) {
+        throw retryError
+      }
       return {
         kind: "timed-out",
         message: `別の作業ツリーの E2E 全件が ${waitLimitMinutes} 分たっても終わらないので、排他制御を占有せずに諦める。持ち主がもういないなら ${directory} を消す`,
       }
     }
-    if (nowMs() - lastNoticeAt >= MINUTE_MS) {
-      lastNoticeAt = nowMs()
-      options.notify(
-        `別の作業ツリーの E2E 全件が終わるのを待っている（最大 ${waitLimitMinutes} 分）`,
-      )
-    }
-    await new Promise((resolve) => setTimeout(resolve, options.pollMs))
   }
+  return { kind: "occupied", release: releaseOnce(directory) }
 }
 
 /** 2回目からは何もしない。解放のあとに別の1本が占有したディレクトリを消さないため。 */
@@ -75,40 +92,6 @@ function releaseOnce(directory: string): () => void {
       return
     }
     released = true
-    rmSync(directory, { recursive: true, force: true })
+    unlockSync(directory, { lockfilePath: directory, realpath: false })
   }
-}
-
-function tryCreate(directory: string): boolean {
-  try {
-    mkdirSync(directory)
-    return true
-  } catch (error) {
-    if (hasErrorCode(error, "EEXIST")) {
-      return false
-    }
-    throw error
-  }
-}
-
-/** 古ければ消して `true`。`stat` の前に消えていたときも、取り直せるので `true`。 */
-function removeIfStale(directory: string, staleMs: number): boolean {
-  let modifiedAt: number
-  try {
-    modifiedAt = statSync(directory).mtimeMs
-  } catch (error) {
-    if (hasErrorCode(error, "ENOENT")) {
-      return true
-    }
-    throw error
-  }
-  if (nowMs() - modifiedAt < staleMs) {
-    return false
-  }
-  rmSync(directory, { recursive: true, force: true })
-  return true
-}
-
-function nowMs(): number {
-  return Temporal.Now.instant().epochMilliseconds
 }

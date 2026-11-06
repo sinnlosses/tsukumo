@@ -28,6 +28,7 @@
 - **E2E 全件を何度も流す測定のタスクは、他の作業ツリーの全件と重ならないよう、計画に排他の掛け方を書く。**
   `docs/architecture/testing/e2e-run.md` の `--full` の項のとおり、共有の git dir の `e2e-full-lock` を
   `mkdir` で占有してから `TSUKUMO_E2E_FULL=1 pnpm run test:e2e` を打ち、終わったら `rmdir` で解放する。
+  手で作った錠は更新されず 15 分で奪われうるので、測定が 15 分を超えるなら 10 分ごとなど 15 分より短い間隔で `touch` する。
   重なると所要がぶれ、揺れる E2E が落ちる。
 - **描画を変えるタスクは、DOM に足す class・属性が、記法の語彙の検査と E2E の DOM の期待値にどう響くかを
   計画の段で先に確かめ、期待値の更新（`pnpm run test:e2e:update`）を1回にまとめる。**
