@@ -518,6 +518,98 @@ React の型が `null` と決める R5 は、`Ref<ComposerSurface | null>`・`Re
 | `browser/components/page/token-usage/components/context-usage-card/context-usage-card.tsx`      | `ItemTable`                                                            | 戻り値     | 232      | R1                                                   |
 | `browser/components/page/token-usage/components/context-usage-card/context-usage-card.tsx`      | `DeferredTable`                                                        | 戻り値     | 269      | R1                                                   |
 
+### `src/browser/components` の main-view（`| undefined` 52・`?? ""` 17・`| null` 14 の計83件、消せたのは0件）
+
+会話画面の `components/main-view/` の83件（2026-11-07）を呼ぶ側を読んで仕分けた。消せたものは無く、全件を残す。`| undefined` の上限は `src/browser/components` の 207 のまま。`hooks/` 24・`domain/` 22・直下の .tsx 37。
+
+理由の記号は上の R1（戻り値の「描かない・見つからない・解析に失敗」。呼ぶ側が値で受ける）・R4（まだ無い・何も持っていない状態が1つの意味）・R5（React の型が `null` と決める）。`?? ""` は、空と無いが DOM に出る文字列で同じ意味のもの（番兵ではない）。行は今のファイルの番号。
+
+| ファイル（`main-view/` から）     | 名前                                      | 行  | 種別           | 判定 | 理由                                                                |
+| --------------------------------- | ----------------------------------------- | --- | -------------- | ---- | ------------------------------------------------------------------- |
+| `phase-list.tsx`                  | `PhaseList`                               | 10  | `\| undefined` | 残す | R1。描かない                                                        |
+| `presentational-current-step.tsx` | `PresentationalCurrentStep`               | 11  | `\| undefined` | 残す | R1。描かない                                                        |
+| `presentational-work-strip.tsx`   | `PresentationalWorkStrip`                 | 28  | `\| undefined` | 残す | R1。描かない                                                        |
+| `presentational-work-strip.tsx`   | `trackRef`                                | 130 | `\| null`      | 残す | R5。React の `RefObject` の型                                       |
+| `presentational-work-strip.tsx`   | `SpanName`                                | 172 | `\| undefined` | 残す | R1。描かない                                                        |
+| `presentational-phase-list.tsx`   | `PresentationalPhaseList`                 | 25  | `\| undefined` | 残す | R1。描かない                                                        |
+| `note-leaf.tsx`                   | `REPORT_NOTE_KINDS.find(...)?.[1]`        | 50  | `?? ""`        | 残す | `noUncheckedIndexedAccess` 由来。空の札と札が無いが DOM で同じ      |
+| `main-view.tsx`                   | `rootRef`                                 | 236 | `\| null`      | 残す | R5。React の `RefObject` の型                                       |
+| `plot-leaf.tsx`                   | `plotFigureOf`                            | 54  | `\| undefined` | 残す | R1。図が描けない（呼ぶ側が描かない）                                |
+| `a2ui-surface.tsx`                | `ReportContext`                           | 103 | `\| undefined` | 残す | R4。面の外では値が無い                                              |
+| `a2ui-surface.tsx`                | `headingLine`                             | 236 | `?? ""`        | 残す | 見出しが無いと空の見出しが同じ意味                                  |
+| `a2ui-surface.tsx`                | `headingText`                             | 237 | `?? ""`        | 残す | 見出しが無いと空の見出しが同じ意味                                  |
+| `a2ui-surface.tsx`                | `markdownLeaves[props.id]`                | 297 | `?? ""`        | 残す | `noUncheckedIndexedAccess` 由来。空の本文と無いが同じ               |
+| `report-head-region.tsx`          | `REPORT_NOTE_KINDS.find(...)?.[1]`        | 73  | `?? ""`        | 残す | `noUncheckedIndexedAccess` 由来。空の札と無いが同じ                 |
+| `report-head.tsx`                 | `ReportHead`                              | 30  | `\| undefined` | 残す | R1。描かない                                                        |
+| `selection-ask.tsx`               | `SelectionAsk`                            | 19  | `\| undefined` | 残す | R1。描かない                                                        |
+| `mini-portrait.tsx`               | `MiniPortrait`                            | 50  | `\| undefined` | 残す | R1。描かない                                                        |
+| `mini-portrait.tsx`               | `arrivedCount`                            | 110 | `\| undefined` | 残す | R4。まだ着いていない                                                |
+| `direct-leaf-view.tsx`            | `directLeafViewOf`                        | 68  | `\| undefined` | 残す | R1。直接描く部品が無い（Markdown の描画に通す）                     |
+| `parameter-knob.tsx`              | `useReevaluatedLeaves` の引数 `dataModel` | 33  | `\| undefined` | 残す | R4。面が作れない間は値が無い                                        |
+| `parameter-knob.tsx`              | 内容部品を描く関数（戻り値）              | 69  | `\| undefined` | 残す | R1。描かない                                                        |
+| `a2ui-interactive-view.tsx`       | `useDataPath` の戻り値                    | 149 | `\| undefined` | 残す | R4。値が書かれるまで無い                                            |
+| `a2ui-interactive-view.tsx`       | `dataModel.get<Value \| undefined>`       | 157 | `\| undefined` | 残す | R4。値が書かれるまで無い                                            |
+| `a2ui-interactive-view.tsx`       | `nextSort`                                | 164 | `\| undefined` | 残す | R1。並べ替えが決まらない                                            |
+| `inquiry-jump-float.tsx`          | `InquiryJumpFloat`                        | 15  | `\| undefined` | 残す | R1。描かない                                                        |
+| `request-block.tsx`               | `styles["is-command"]`                    | 56  | `?? ""`        | 残す | `noUncheckedIndexedAccess` 由来。class が無いと空の class が同じ    |
+| `table-leaf.tsx`                  | `totals.columns[...]`                     | 130 | `?? ""`        | 残す | `noUncheckedIndexedAccess` 由来。空の合計と無いが同じ               |
+| `table-leaf.tsx`                  | `totals.rows[position]`                   | 213 | `?? ""`        | 残す | `noUncheckedIndexedAccess` 由来。空の合計と無いが同じ               |
+| `compare-leaf.tsx`                | `sides[index]?.heading`                   | 70  | `?? ""`        | 残す | `noUncheckedIndexedAccess` 由来。空の見出しと無いが同じ             |
+| `compare-leaf.tsx`                | `labels[0]`                               | 96  | `?? ""`        | 残す | `noUncheckedIndexedAccess` 由来。空の札と無いが同じ                 |
+| `compare-leaf.tsx`                | `labels[1]`                               | 110 | `?? ""`        | 残す | `noUncheckedIndexedAccess` 由来。空の札と無いが同じ                 |
+| `compare-leaf.tsx`                | `lineDiffsOf`                             | 130 | `\| undefined` | 残す | R1。行の差分が取れない（呼ぶ側が描かない）                          |
+| `hooks/use-report-outline.ts`     | `frameRef`                                | 109 | `\| null`      | 残す | R5。React の `RefObject` の型                                       |
+| `hooks/use-report-outline.ts`     | `contentRef`                              | 111 | `\| null`      | 残す | R5。React の `RefObject` の型                                       |
+| `hooks/use-report-outline.ts`     | `navRef`                                  | 113 | `\| null`      | 残す | R5。React の `RefObject` の型                                       |
+| `hooks/use-report-outline.ts`     | `listRef`                                 | 114 | `\| null`      | 残す | R5。React の `RefObject` の型                                       |
+| `hooks/use-report-outline.ts`     | `pinnedRef`                               | 141 | `\| undefined` | 残す | R4。まだ留めていない                                                |
+| `hooks/use-report-outline.ts`     | `headingObserver`                         | 185 | `\| undefined` | 残す | R4。まだ作っていない                                                |
+| `turn.tsx`                        | `turn.request?.text`                      | 95  | `?? ""`        | 残す | 依頼の本文が無いと空の依頼が同じ意味                                |
+| `turn.tsx`                        | `Step`                                    | 202 | `\| undefined` | 残す | R1。描かない                                                        |
+| `turn.tsx`                        | `StepReport`                              | 324 | `\| undefined` | 残す | R1。描かない                                                        |
+| `turn.tsx`                        | `finalReportStep`                         | 502 | `\| undefined` | 残す | R1。最終の報告の段が無い                                            |
+| `current-step.tsx`                | `CurrentStep`                             | 8   | `\| undefined` | 残す | R1。描かない                                                        |
+| `hooks/use-steps-landing.ts`      | `useStepsLanding` の戻り値                | 13  | `\| null`      | 残す | R5。React の `RefObject` の型                                       |
+| `hooks/use-draft-pen.ts`          | `ref`                                     | 19  | `\| null`      | 残す | R5。React の `RefObject` の型                                       |
+| `hooks/scroll-frame.ts`           | `frame`                                   | 6   | `\| undefined` | 残す | R4。予約したフレームが無い                                          |
+| `hooks/use-draft-pop.ts`          | `ref`                                     | 21  | `\| null`      | 残す | R5。React の `RefObject` の型                                       |
+| `hooks/use-active-turn-scroll.ts` | `scrollerRef`                             | 31  | `\| null`      | 残す | R5。React の `RefObject` の型                                       |
+| `hooks/use-active-turn-scroll.ts` | `currentRef`                              | 35  | `\| undefined` | 残す | R4。まだ読み位置を持たない                                          |
+| `hooks/use-active-turn-scroll.ts` | `geometryRef`                             | 36  | `\| undefined` | 残す | R4。まだ解いていない                                                |
+| `hooks/use-active-turn-scroll.ts` | `measure` の引数 `geometryRef`            | 117 | `\| undefined` | 残す | R4。まだ解いていない                                                |
+| `hooks/use-active-turn-scroll.ts` | `measure` の戻り値                        | 118 | `\| undefined` | 残す | R4。読み位置が測れない                                              |
+| `hooks/use-active-turn-scroll.ts` | `restore` の引数 `geometryRef`            | 126 | `\| undefined` | 残す | R4。まだ解いていない                                                |
+| `hooks/use-active-turn-scroll.ts` | `baselineOf` の引数 `geometryRef`         | 154 | `\| undefined` | 残す | R4。まだ解いていない（無ければここで解く）                          |
+| `hooks/use-work-strip.ts`         | `trackRef`                                | 157 | `\| null`      | 残す | R5。React の `RefObject` の型                                       |
+| `hooks/use-work-strip.ts`         | `trackRef`                                | 169 | `\| null`      | 残す | R5。React の `RefObject` の型                                       |
+| `hooks/use-work-strip.ts`         | `stripResultOf`                           | 334 | `\| undefined` | 残す | R1。チップを出さない                                                |
+| `hooks/use-work-strip.ts`         | `spanOf`                                  | 357 | `\| undefined` | 残す | R1。通し番号の幅が無い                                              |
+| `hooks/use-phase-popover.ts`      | `trackRef`                                | 24  | `\| null`      | 残す | R5。React の `RefObject` の型                                       |
+| `hooks/use-phase-popover.ts`      | `placeBelowDot` の引数 `node`             | 80  | `\| null`      | 残す | R5。ref コールバックの引数                                          |
+| `hooks/use-selection-ask.ts`      | `selection`                               | 20  | `\| undefined` | 残す | R4。選択が無い                                                      |
+| `domain/headed-section.ts`        | `shownTextStepOf`                         | 23  | `\| undefined` | 残す | R1。見つからない                                                    |
+| `domain/block-split.ts`           | `tag[2]`                                  | 88  | `?? ""`        | 残す | `noUncheckedIndexedAccess` 由来。空のタグ名と無いが同じ             |
+| `domain/split-conclusion.ts`      | `firstSentenceEnd`                        | 18  | `\| undefined` | 残す | R1。文の終わりが見つからない                                        |
+| `domain/draft-reveal.ts`          | `revealStepIdOf`                          | 20  | `\| undefined` | 残す | R1。見つからない                                                    |
+| `domain/work-activity.ts`         | `records.findLast(...)?.text`             | 137 | `?? ""`        | 残す | 依頼の本文が無いと空の依頼が同じ意味                                |
+| `domain/work-activity.ts`         | `steppedBackground`                       | 153 | `\| undefined` | 残す | R1。見つからない                                                    |
+| `domain/work-activity.ts`         | `candidates.reduce`                       | 172 | `\| undefined` | 残す | R1。候補が無い                                                      |
+| `domain/outline-panel.ts`         | `collapseChoiceOf`                        | 75  | `\| undefined` | 残す | R1。解析に失敗（呼ぶ側が既定に倒す）                                |
+| `domain/request-chip-split.ts`    | `command`                                 | 32  | `\| undefined` | 残す | R4。まだ見つけていない                                              |
+| `domain/request-chip-split.ts`    | `commandMatch[1]`                         | 36  | `?? ""`        | 残す | `noUncheckedIndexedAccess` 由来。正規表現の群が無いと空の名前が同じ |
+| `domain/turn-title.ts`            | `turn.request?.text`                      | 21  | `?? ""`        | 残す | 依頼の本文が無いと空の依頼が同じ意味                                |
+| `domain/turn-title.ts`            | `firstReportLine`                         | 51  | `\| undefined` | 残す | R1。見つからない                                                    |
+| `domain/turn-title.ts`            | `firstLineOf`                             | 67  | `\| undefined` | 残す | R1。見つからない                                                    |
+| `domain/a2ui-table-view.ts`       | `tableCellTexts(cell).at(-1)`             | 167 | `?? ""`        | 残す | `noUncheckedIndexedAccess` 由来。空のセルと無いが同じ               |
+| `domain/a2ui-table-view.ts`       | `dateTime`                                | 173 | `\| undefined` | 残す | R1。解析に失敗                                                      |
+| `domain/reading-position.ts`      | `readingPositionOf`                       | 12  | `\| undefined` | 残す | R1。最初の見出しより上では読み位置が無い                            |
+| `domain/reading-position.ts`      | `scrollDeltaToRestore`                    | 26  | `\| undefined` | 残す | R1。戻す位置が無い                                                  |
+| `domain/turn-step-key.ts`         | `turnStepOf`                              | 21  | `\| undefined` | 残す | R1。対応する段のキーでない                                          |
+| `domain/turn-step-key.ts`         | `headingStepOf`                           | 29  | `\| undefined` | 残す | R1。対応する段のキーでない                                          |
+| `domain/turn-step-key.ts`         | `neighborTurnId`                          | 41  | `\| undefined` | 残す | R1。隣のターンが無い                                                |
+| `domain/welcome-key.ts`           | `welcomeKeyOf`                            | 20  | `\| undefined` | 残す | R1。対応するキーでない                                              |
+| `domain/selection-range.ts`       | `reportSelectionOf`                       | 13  | `\| undefined` | 残す | R1。選択が無い・範囲外                                              |
+
 ## 消せるもの
 
 領域ごとの対象。ドラフトはこの単位で割る。「入口で畳む」は、呼び出し側で分岐するか `??` で既定値にして、関数を必ずある値で受ける形にすること。「（広い）」は呼び出し側が 25 を超えるもので、ドラフトにする前に畳み方の優先を決める。
