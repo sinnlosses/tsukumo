@@ -6,19 +6,17 @@
 import { isPlainObject } from "remeda"
 import { z } from "zod"
 
+import {
+  type A2uiWrittenComponent,
+  a2uiWrittenComponentSchema,
+} from "../../../../shared/report/a2ui-report-catalog.ts"
 import { compareSideSchema } from "../../../../shared/report/report-block-diagram.ts"
 import { aside, fold, inlineText } from "../../../../shared/report/report-block-field.ts"
 
-/**
- * 旧い部品 `{component: "BeforeAfter", …}` を `Compare` の `before-after` の生の値にする。
- * 旧い部品でない値と、旧い形に合わない値はそのまま返す（後ろの parse が落として数える）。
- */
-export function compareOfLegacyComponent(raw: unknown): unknown {
-  if (!isPlainObject(raw) || raw.component !== "BeforeAfter") {
-    return raw
-  }
-  const fields = compareFieldsOf(raw)
-  return fields === undefined ? raw : { id: raw.id, component: "Compare", ...fields }
+/** 書き手が書いた部品1つを、旧い `BeforeAfter` を書き換えてから読む。読めれば1件、形に合わなければ0件。 */
+export function readWrittenComponent(raw: unknown): readonly A2uiWrittenComponent[] {
+  const parsed = a2uiWrittenComponentSchema.safeParse(compareOfLegacyComponent(raw))
+  return parsed.success ? [parsed.data] : []
 }
 
 /**
@@ -44,6 +42,18 @@ export function compareOfLegacyRetrospective(raw: unknown): unknown {
   return isPlainObject(raw) && Array.isArray(raw.blocks)
     ? { ...raw, blocks: raw.blocks.map(compareOfLegacyBlock) }
     : raw
+}
+
+/**
+ * 旧い部品 `{component: "BeforeAfter", …}` を `Compare` の `before-after` の生の値にする。
+ * 旧い部品でない値と、旧い形に合わない値はそのまま返す（後ろの parse が落とす）。
+ */
+function compareOfLegacyComponent(raw: unknown): unknown {
+  if (!isPlainObject(raw) || raw.component !== "BeforeAfter") {
+    return raw
+  }
+  const fields = compareFieldsOf(raw)
+  return fields === undefined ? raw : { id: raw.id, component: "Compare", ...fields }
 }
 
 /** 旧い `BeforeAfter` の欄。側は `Compare` の側から見出しを除いた形。 */

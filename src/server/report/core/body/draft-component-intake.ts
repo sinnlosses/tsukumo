@@ -7,11 +7,10 @@
 
 import { isPlainObject } from "remeda"
 
-import { a2uiWrittenComponentSchema } from "../../../../shared/report/a2ui-report-catalog.ts"
 import type { SessionEvent } from "../../../../shared/session/session-event.ts"
 import { REPORT_TOOL_NAME, tsukumoToolFullName } from "../../../core/tsukumo-tool-name.ts"
 import { INITIAL_SPLIT_STATE, splitComponents, type SplitState } from "./a2ui-component-splitter.ts"
-import { compareOfLegacyComponent } from "./legacy-before-after.ts"
+import { readWrittenComponent } from "./legacy-before-after.ts"
 
 /** 開いている `report` の塊 1 つ分（`index` は塊の位置）。 */
 type OpenBlock = { readonly toolUseId: string; readonly split: SplitState }
@@ -76,18 +75,13 @@ export function createReportDraftIntake(): ReportDraftIntake {
     try {
       const step = splitComponents(open.split, fragment)
       blocks = new Map([...blocks, [index, { ...open, split: step.state }]])
-      return step.components.flatMap((component): readonly SessionEvent[] => {
-        const parsed = a2uiWrittenComponentSchema.safeParse(compareOfLegacyComponent(component))
-        return parsed.success
-          ? [
-              {
-                kind: "report-draft-component",
-                toolUseId: open.toolUseId,
-                component: parsed.data,
-              },
-            ]
-          : []
-      })
+      return step.components.flatMap((component) =>
+        readWrittenComponent(component).map((written): SessionEvent => ({
+          kind: "report-draft-component",
+          toolUseId: open.toolUseId,
+          component: written,
+        })),
+      )
     } catch {
       // 読み取りで投げた欄は、受け取れなかったものとして欄ごと外す
       blocks = withoutBlock(blocks, index)

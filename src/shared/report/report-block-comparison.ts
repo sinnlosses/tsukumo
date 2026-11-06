@@ -54,16 +54,20 @@ export function tableRowDepth(row: TableRow): number {
   return "depth" in row ? (row.depth ?? 0) : 0
 }
 
+export const MIN_TABLE_COLUMNS = 2
+
+export const MIN_TABLE_ROWS = 1
+
 export const tableBlockSchema = z
   .object({
     kind: z.literal("table"),
     title: inlineText.describe(
       "セルに無いことだけ: 何を並べた表か・並べた基準・数の出どころ。数と向きで主張を言う1文。評価語なし",
     ),
-    columns: z.array(inlineText).min(2).describe("列は5つまで"),
+    columns: z.array(inlineText).min(MIN_TABLE_COLUMNS).describe("列は5つまで"),
     rows: z
       .array(tableRowSchema)
-      .min(1)
+      .min(MIN_TABLE_ROWS)
       .describe("行ごとのセル。数は columns と揃える。セルは1行、空にせず「なし」と書く"),
     rest: omittable(inlineText, ""),
     emphasisColumn: z

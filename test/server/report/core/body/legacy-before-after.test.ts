@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest"
 import { a2uiReportInput } from "../../../../../src/server/report/core/body/a2ui-report-message.ts"
 import {
   compareOfLegacyBlock,
-  compareOfLegacyComponent,
+  readWrittenComponent,
 } from "../../../../../src/server/report/core/body/legacy-before-after.ts"
 import { legacyReportComponents } from "../../../../../src/server/report/core/body/legacy-report-component-list.ts"
 
@@ -27,10 +27,9 @@ const EXPECTED = {
 
 describe("旧い BeforeAfter の受け口", () => {
   it("部品は Compare の before-after に組み直し、側の見出しは空になる", () => {
-    expect(compareOfLegacyComponent({ id: "ba", component: "BeforeAfter", ...FIELDS })).toEqual({
-      id: "ba",
-      ...EXPECTED,
-    })
+    expect(readWrittenComponent({ id: "ba", component: "BeforeAfter", ...FIELDS })).toEqual([
+      { id: "ba", ...EXPECTED },
+    ])
   })
 
   it("塊は compare の塊に組み直し、row の中の塊も同じ", () => {
@@ -45,12 +44,12 @@ describe("旧い BeforeAfter の受け口", () => {
     ).toMatchObject({ blocks: [{ kind: "compare", relation: "before-after" }] })
   })
 
-  it("旧い形に合わない値と、旧い形でない値はそのまま返す", () => {
+  it("旧い形に合わない部品は読まず、旧い形でない部品と値はそのまま読む", () => {
     const broken = { id: "ba", component: "BeforeAfter", title: "t", before: { kind: "text" } }
     const other = { id: "p", component: "Paragraph", text: "架空" }
 
-    expect(compareOfLegacyComponent(broken)).toBe(broken)
-    expect(compareOfLegacyComponent(other)).toBe(other)
+    expect(readWrittenComponent(broken)).toEqual([])
+    expect(readWrittenComponent(other)).toMatchObject([other])
     expect(compareOfLegacyBlock("架空")).toBe("架空")
   })
 

@@ -49,6 +49,12 @@ export const listBlockSchema = z.object({
 
 const REPORT_NOTE_TONES = ["info", "warn", "ng", "ask", "memo"] as const
 
+type ReportNoteTone = (typeof REPORT_NOTE_TONES)[number]
+
+export function isReportNoteTone(value: string): value is ReportNoteTone {
+  return REPORT_NOTE_TONES.some((tone) => tone === value)
+}
+
 export const noteBlockSchema = z.object({
   kind: z.literal("note"),
   tone: z
@@ -105,6 +111,21 @@ export const codeBlockSchema = z
 
 const REPORT_CLAIM_CERTAINTIES = ["confirmed", "inferred", "unverified"] as const
 
+type ReportClaimCertainty = (typeof REPORT_CLAIM_CERTAINTIES)[number]
+
+export function isReportClaimCertainty(value: string): value is ReportClaimCertainty {
+  return REPORT_CLAIM_CERTAINTIES.some((certainty) => certainty === value)
+}
+
+export const MIN_CLAIM_ITEMS = 1
+
+export function hasRequiredHowToVerify(item: {
+  readonly certainty: ReportClaimCertainty
+  readonly howToVerify: string
+}): boolean {
+  return item.certainty === "confirmed" || item.howToVerify.trim() !== ""
+}
+
 export const claimsBlockSchema = z
   .object({
     kind: z.literal("claims"),
@@ -119,12 +140,12 @@ export const claimsBlockSchema = z
               "確定でなければ必須。繰り返せる手順を1文で",
             ),
           })
-          .refine((item) => item.certainty === "confirmed" || item.howToVerify.trim() !== "", {
+          .refine(hasRequiredHowToVerify, {
             message: "確定でない項目は howToVerify に確かめ方を書く",
             path: ["howToVerify"],
           }),
       )
-      .min(1)
+      .min(MIN_CLAIM_ITEMS)
       .describe("10件まで"),
     fold,
     aside,

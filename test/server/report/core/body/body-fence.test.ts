@@ -1,6 +1,18 @@
 import { describe, expect, it } from "vitest"
+import type { z } from "zod"
 
 import { parseReportBody } from "../../../../../src/server/report/core/body/body-fence.ts"
+import { tableBlockSchema } from "../../../../../src/shared/report/report-block-comparison.ts"
+import {
+  graphBlockSchema,
+  imageBlockSchema,
+  mermaidBlockSchema,
+} from "../../../../../src/shared/report/report-block-diagram.ts"
+import {
+  claimsBlockSchema,
+  codeBlockSchema,
+  noteBlockSchema,
+} from "../../../../../src/shared/report/report-block-prose.ts"
 
 const FENCE = "```"
 
@@ -72,6 +84,74 @@ describe("parseReportBody", () => {
 
     expect(brokenFenceCount).toBe(8)
     expect(blocks.every((block) => block.kind === "code")).toBe(true)
+  })
+
+  it("塊の schema の中身の制約に外れるフェンスも素のコードブロックに落とす", () => {
+    const body = [
+      fence("claims", "架空の確度 | 主張 | 根拠 | 確かめ方"),
+      fence("claims", ""),
+      fence("table", "| a |", "| --- |", "| 1 |"),
+      fence("table", "| a | b |", "| --- | --- |"),
+      fence("graph", ""),
+    ].join("\n")
+
+    const { blocks, brokenFenceCount } = parseReportBody(body)
+
+    expect(brokenFenceCount).toBe(5)
+    expect(blocks.every((block) => block.kind === "code")).toBe(true)
+  })
+
+  it("確定の主張は確かめ方が無くても読む", () => {
+    const { blocks, brokenFenceCount } = parseReportBody(fence("claims", "confirmed | 主張"))
+
+    expect(brokenFenceCount).toBe(0)
+    expect(blocks).toEqual([
+      {
+        kind: "claims",
+        items: [{ claim: "主張", certainty: "confirmed", basis: "", howToVerify: "" }],
+        fold: "",
+        aside: "",
+      },
+    ])
+  })
+
+  it("読めたフェンスの塊は、塊の schema に通した値と同じ（省いた欄の既定値を含む）", () => {
+    const schemas: readonly (readonly [string, z.ZodType])[] = [
+      ["graph", graphBlockSchema],
+      ["mermaid", mermaidBlockSchema],
+      ["table", tableBlockSchema],
+      ["code", codeBlockSchema],
+      ["note", noteBlockSchema],
+      ["claims", claimsBlockSchema],
+      ["image", imageBlockSchema],
+    ]
+    const body = [
+      ALL_KINDS_BODY,
+      fence("code ts"),
+      fence("claims", "confirmed | 主張 | 根拠"),
+    ].join("\n")
+    const { blocks } = parseReportBody(body)
+
+    const checked = schemas.flatMap(([kind, schema]) =>
+      blocks
+        .filter((block) => block.kind === kind)
+        .map((block) => ({ block, parsed: schema.parse(block) })),
+    )
+
+    expect(checked.map(({ block }) => block.kind)).toEqual([
+      "graph",
+      "mermaid",
+      "table",
+      "code",
+      "code",
+      "note",
+      "claims",
+      "claims",
+      "image",
+    ])
+    for (const { block, parsed } of checked) {
+      expect(block).toEqual(parsed)
+    }
   })
 
   it("型の無いフェンスは散文のまま残し、数えない", () => {
