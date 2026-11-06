@@ -8,6 +8,21 @@ export const DOM_TEST_FILES = [
   "test/server/report/core/prompt/report-notation.test.ts",
 ]
 
+// どのテストからも import されない準備のファイル。`forceRerunTriggers` にも載せ、変えたときの関連の絞り込み（`vitest related`）を全件に戻す。
+const GLOBAL_SETUP_FILES = [
+  "./test/tsukumo-home-setup.ts",
+  "./test/beads-template-setup.ts",
+  "./test/architecture/source-table-setup.ts",
+]
+const DOM_SETUP_FILES = ["./test/dom-setup.ts"]
+
+// 指定すると既定の2つ（package.json・vitest/vite の設定）が上書きされるので、先頭に書き足す。
+const FORCE_RERUN_TRIGGERS = [
+  "**/package.json",
+  "**/{vitest,vite}.config.*",
+  ...[...GLOBAL_SETUP_FILES, ...DOM_SETUP_FILES].map((file) => `**/${file.replace("./", "")}`),
+]
+
 // `test/e2e/` は playwright.config.ts で走らせる。
 // 日付の境目を見るテストが UTC を前提にしているので、ホストが JST でも `TZ` を固定する。
 // React Compiler は足さない。`@vitejs/plugin-react` の `compiler` は consumer が `client` の環境にだけ効き、
@@ -21,11 +36,8 @@ export default defineConfig({
     environment: "node",
     // hook を起こすテストが、実物の拒否の記録に足さないようにする。
     env: { TZ: "UTC", TSUKUMO_HOOK_DENIAL_RECORD: "off" },
-    globalSetup: [
-      "./test/tsukumo-home-setup.ts",
-      "./test/beads-template-setup.ts",
-      "./test/architecture/source-table-setup.ts",
-    ],
+    globalSetup: GLOBAL_SETUP_FILES,
+    forceRerunTriggers: FORCE_RERUN_TRIGGERS,
     maxWorkers: "40%",
     projects: [
       {
@@ -37,7 +49,7 @@ export default defineConfig({
           environmentOptions: {
             happyDOM: { url: "http://127.0.0.1/", settings: { disableCSSFileLoading: true } },
           },
-          setupFiles: ["./test/dom-setup.ts"],
+          setupFiles: DOM_SETUP_FILES,
         },
       },
       {

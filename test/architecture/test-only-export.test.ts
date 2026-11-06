@@ -175,12 +175,12 @@ function vitestSetupFiles(): readonly string[] {
     descendants(parseSourceProgram(readFileSync(`${REPOSITORY_ROOT}/${configPath}`, "utf8")))
       .filter(
         (node) =>
-          stringField(node, "type") === "Property" &&
-          ["globalSetup", "setupFiles"].includes(
-            stringField(objectField(node, "key"), "name") ?? "",
+          stringField(node, "type") === "VariableDeclarator" &&
+          ["GLOBAL_SETUP_FILES", "DOM_SETUP_FILES"].includes(
+            stringField(objectField(node, "id"), "name") ?? "",
           ),
       )
-      .flatMap((property) => arrayField(objectField(property, "value"), "elements"))
+      .flatMap((declarator) => arrayField(objectField(declarator, "init"), "elements"))
       .flatMap((element) => stringField(element, "value") ?? [])
       .map((path) => posix.normalize(path)),
   )

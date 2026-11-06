@@ -74,7 +74,6 @@ import {
   withDroppedStages,
 } from "./lib/stage-verdict.ts"
 import { alignSubmodules } from "./lib/submodule-drift.ts"
-import { collectSetupFiles } from "./lib/vitest-setup-file.ts"
 import { workerBudget, workersPerStage } from "./lib/worker-budget.ts"
 
 const CHECK_USAGE = `使い方:
@@ -89,7 +88,7 @@ const forceFull = readForceFull(process.argv.slice(2))
 alignSubmodulesOrExit()
 
 const changedPaths = await collectPathsForPlan()
-const stagePlan = planStages(changedPaths, chooseE2eStages, forceFull, await readSetupFiles())
+const stagePlan = planStages(changedPaths, chooseE2eStages, forceFull)
 if (stagePlan.notice !== "") {
   process.stdout.write(`${stagePlan.notice}\n`)
 }
@@ -297,17 +296,6 @@ async function collectPathsForPlan(): Promise<readonly string[]> {
       return []
     }
     throw error
-  }
-}
-
-/** 読めない・空のときは、変えたファイルすべてを準備のファイルとして返し、単体を全件に戻す側に倒す。 */
-async function readSetupFiles(): Promise<readonly string[]> {
-  try {
-    const { default: config } = await import("../../vitest.config.ts")
-    const files = collectSetupFiles(config)
-    return files.length > 0 ? files : changedPaths
-  } catch {
-    return changedPaths
   }
 }
 

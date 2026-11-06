@@ -53,14 +53,11 @@ const CODE_DIRECTORIES = ["src/", "test/", "scripts/"]
 /**
  * `changedPaths` が空なら変えたファイルを集められなかったものとして扱う。
  * `chooseE2eStages` は E2E の段を選ぶ呼び出しで、文書だけの変更では呼ばない。
- * `setupFiles` は Vitest の設定に挙がる準備のファイル。どのテストからも import されず関連で辿れないので、
- * 変えたときは単体を全件に戻す。
  */
 export function planStages(
   changedPaths: readonly string[],
   chooseE2eStages: () => readonly Stage[],
   forceFull: boolean,
-  setupFiles: readonly string[],
 ): StagePlan {
   if (isDocumentOnlyChange(changedPaths)) {
     return {
@@ -72,8 +69,7 @@ export function planStages(
       notice: "文書だけの変更のため format:check・token-limit と文書の検査だけを打つ",
     }
   }
-  const touchesSetup = changedPaths.some((path) => setupFiles.includes(path))
-  const codePaths = forceFull || touchesSetup ? [] : changedPaths.filter(isCodePath)
+  const codePaths = forceFull ? [] : changedPaths.filter(isCodePath)
   const narrowed = codePaths.length > 0
   return {
     stages: [

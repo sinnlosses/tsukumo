@@ -12,7 +12,6 @@ import {
   e2eStage,
   planStages,
 } from "../../../scripts/dev/lib/check-stage.ts"
-import { collectSetupFiles } from "../../../scripts/dev/lib/vitest-setup-file.ts"
 import { collectChangedPaths } from "../../../scripts/shared/changed-path-repository.ts"
 import { isDocumentOnlyChange, isDocumentPath } from "../../../scripts/shared/document-change.ts"
 import { runSubprocessOrThrow } from "../../fixture/subprocess.ts"
@@ -60,12 +59,6 @@ describe("E2E の bail", () => {
 describe("planStages", () => {
   const chosenStage = { name: "test:e2e", args: [], heavy: true }
   const choose = () => [chosenStage]
-  const SETUP_FILES = [
-    "test/tsukumo-home-setup.ts",
-    "test/beads-template-setup.ts",
-    "test/architecture/source-table-setup.ts",
-    "test/dom-setup.ts",
-  ]
 
   test("文書だけの変更は E2E を選ばず、format:check・token-limit と文書の検査だけ", () => {
     const plan = planStages(
@@ -74,7 +67,6 @@ describe("planStages", () => {
         throw new Error("E2E は選ばない")
       },
       false,
-      SETUP_FILES,
     )
     expect(plan.stages).toEqual([
       { name: "format:check", args: [], heavy: false },
@@ -85,7 +77,7 @@ describe("planStages", () => {
   })
 
   test("変えたファイルが空なら token-limit を含む6段すべて", () => {
-    expect(planStages([], choose, false, SETUP_FILES).stages.map((stage) => stage.name)).toEqual([
+    expect(planStages([], choose, false).stages.map((stage) => stage.name)).toEqual([
       "typecheck",
       "lint",
       "format:check",
@@ -100,42 +92,41 @@ describe("planStages", () => {
   }
 
   test("--full なら変えたファイルがあっても単体は全件", () => {
-    const plan = planStages(["src/cli.ts"], choose, true, SETUP_FILES)
+    const plan = planStages(["src/cli.ts"], choose, true)
     expect(unitStage(plan)?.args).toEqual([])
     expect(plan.notice).toBe("")
   })
 
   test("変えたファイルが src・test・scripts にあれば、それらに関連する単体だけ", () => {
-    const plan = planStages(
-      ["src/cli.ts", "docs/workflow.md", "test/cli.test.ts"],
-      choose,
-      false,
-      SETUP_FILES,
-    )
+    const plan = planStages(["src/cli.ts", "docs/workflow.md", "test/cli.test.ts"], choose, false)
     expect(unitStage(plan)?.args).toEqual(["--related", "src/cli.ts", "test/cli.test.ts"])
     expect(plan.notice).toBe("単体は変えたファイルに関連するものだけ")
   })
 
   test("設定だけの変更は単体を全件に戻す", () => {
-    const plan = planStages(["package.json", "vitest.config.ts"], choose, false, SETUP_FILES)
+    const plan = planStages(["package.json", "vitest.config.ts"], choose, false)
     expect(unitStage(plan)?.args).toEqual([])
     expect(plan.notice).toBe("")
   })
 
-  test("Vitest の準備のファイルを含む変更は、ほかに src があっても単体を全件に戻す", () => {
-    const plan = planStages(["src/cli.ts", "test/dom-setup.ts"], choose, false, SETUP_FILES)
-    expect(unitStage(plan)?.args).toEqual([])
-    expect(plan.notice).toBe("")
-  })
-
-  test("準備のファイルは vitest.config.ts の globalSetup と projects 内の setupFiles から読める", async () => {
+  test("準備のファイルは forceRerunTriggers に全部入っている", async () => {
     const { default: config } = await import("../../../vitest.config.ts")
-    expect(collectSetupFiles(config)).toEqual(SETUP_FILES)
+    const vitestOptions = config.test
+    const setupFiles = [
+      ...(vitestOptions?.globalSetup ?? []),
+      ...(vitestOptions?.projects ?? []).flatMap((project) =>
+        typeof project === "object" && "test" in project ? (project.test?.setupFiles ?? []) : [],
+      ),
+    ]
+    expect(setupFiles.length).toBeGreaterThan(0)
+    for (const file of setupFiles) {
+      expect(vitestOptions?.forceRerunTriggers).toContain(`**/${String(file).replace("./", "")}`)
+    }
   })
 
   test("並べて走らせる重い段は、文書だけの変更には無く、通常の組み立てにはある", () => {
-    const documentOnly = planStages(["docs/history/decision.md"], choose, false, SETUP_FILES)
-    const regular = planStages(["src/cli.ts"], choose, false, SETUP_FILES)
+    const documentOnly = planStages(["docs/history/decision.md"], choose, false)
+    const regular = planStages(["src/cli.ts"], choose, false)
     expect(documentOnly.stages.some((stage) => stage.heavy)).toBe(false)
     expect(regular.stages.filter((stage) => stage.heavy).map((stage) => stage.name)).toEqual([
       "test",
