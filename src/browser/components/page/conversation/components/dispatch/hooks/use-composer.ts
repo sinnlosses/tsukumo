@@ -117,7 +117,8 @@ export function useComposer(): ComposerModel {
   const slashCommands = useSession((session) => session.state.slashCommands)
   const commandDescriptions = useSession((session) => session.state.commandDescriptions)
   const draft = useComposerDraft((state) => state.draft)
-  const setDraft = useComposerDraft((state) => state.setDraft)
+  const typeDraft = useComposerDraft((state) => state.typeDraft)
+  const replaceDraft = useComposerDraft((state) => state.replaceDraft)
   // `/clear` の続きがあって送らなかった文。下書きがこの文のままのあいだだけ帯を出す。
   const [blockedClearText, setBlockedClearText] = useState<string | undefined>(undefined)
   const surfaceRef = useRef<ComposerSurface | null>(null)
@@ -142,9 +143,9 @@ export function useComposer(): ComposerModel {
     shownSessionId.current = sessionId
     const shown = draftOnSessionChange(previous, sessionId, useComposerDraft.getState().draft)
     if (shown !== undefined) {
-      setDraft(shown)
+      replaceDraft(shown)
     }
-  }, [sessionId, setDraft])
+  }, [sessionId, replaceDraft])
 
   const suggestion = useSuggestion({
     draft,
@@ -152,7 +153,7 @@ export function useComposer(): ComposerModel {
     slashCommands,
     commandDescriptions,
     onConfirmed: (confirmed) => {
-      setDraft(confirmed)
+      replaceDraft(confirmed)
       surfaceRef.current?.focus()
     },
   })
@@ -161,15 +162,6 @@ export function useComposer(): ComposerModel {
       surfaceRef.current?.focus()
     },
   })
-
-  // 面が文面を書き直したあと、キャレットは文面の末尾へ飛ぶことがある。
-  // 文の途中で `@` を確定したときは差し込んだ直後へ戻す（打っている間は位置が一致するので何もしない）。
-  useExternalSync(() => {
-    const surface = surfaceRef.current
-    if (surface !== null && surface.caret() !== draft.caret) {
-      surface.placeCaret(draft.caret)
-    }
-  }, [draft])
 
   const submit = (routing: PromptRouting): void => {
     if (!connected || endedReason !== undefined) {
@@ -188,7 +180,7 @@ export function useComposer(): ComposerModel {
     } else {
       dispatch.session.prompt({ text: trimmed, images: promptImage.images, routing })
     }
-    setDraft(EMPTY_DRAFT)
+    replaceDraft(EMPTY_DRAFT)
     if (sessionId !== undefined) {
       saveDraftLater(sessionId, EMPTY_DRAFT)
       clearSessionDraft(sessionId)
@@ -201,7 +193,7 @@ export function useComposer(): ComposerModel {
   const insertTrigger = (trigger: CompletionTrigger): void => {
     // ボタンを押した時点で入力欄のフォーカスは外れているが、選択の位置は残っている。
     // 打っていない間にキャレットを動かしただけでは下書きの `caret` は追いつかないので、入力欄から読めるならそちらを使う。
-    setDraft(insertedTrigger(draft, surfaceRef.current?.caret() ?? draft.caret, trigger))
+    replaceDraft(insertedTrigger(draft, surfaceRef.current?.caret() ?? draft.caret, trigger))
     suggestion.reset()
     surfaceRef.current?.focus()
   }
@@ -240,7 +232,7 @@ export function useComposer(): ComposerModel {
       label: inquiry.kind === "question" ? ANSWER_LABEL : REQUEST_LABEL,
       draft,
       onChange: (changed) => {
-        setDraft(changed)
+        typeDraft(changed)
         if (sessionId !== undefined) {
           saveDraftLater(sessionId, changed)
         }
@@ -272,7 +264,7 @@ export function useComposer(): ComposerModel {
       mode,
       onToggle: () => {
         // 打たずに動かしたキャレットは下書きに入っていないので、いまの面から読んで次の面へ渡す。
-        setDraft({ text: draft.text, caret: surfaceRef.current?.caret() ?? draft.caret })
+        replaceDraft({ text: draft.text, caret: surfaceRef.current?.caret() ?? draft.caret })
         const next = mode === "plain" ? "markdown" : "plain"
         setMode(next)
         saveComposerMode(next)

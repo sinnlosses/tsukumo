@@ -166,7 +166,7 @@ describe("useComposer の Escape（フォーカスを外す）", () => {
         blurred += 1
       },
       caret: () => 0,
-      placeCaret: () => {},
+      replace: () => {},
     }
     return () => blurred
   }

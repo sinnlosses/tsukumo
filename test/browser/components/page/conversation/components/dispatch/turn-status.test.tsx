@@ -148,7 +148,7 @@ describe("TurnStatus", () => {
     expect(screen.getByRole("button").dataset["emphasis"]).toBe("quiet")
 
     act(() => {
-      useComposerDraft.getState().setDraft({ text: "架空の自由な答え", caret: 8 })
+      useComposerDraft.getState().replaceDraft({ text: "架空の自由な答え", caret: 8 })
     })
 
     expect(screen.getByRole("button").dataset["emphasis"]).toBe("solid")

@@ -70,7 +70,7 @@ describe("引いて聞く", () => {
 
   it("押すと下書きの頭に引用が入り、入力欄へフォーカスを送って口が消える", () => {
     const { inside } = renderPage()
-    useComposerDraft.getState().setDraft({ text: "打ちかけ", caret: 0 })
+    useComposerDraft.getState().replaceDraft({ text: "打ちかけ", caret: 0 })
     select(inside)
     releasePointer()
     fireEvent.click(screen.getByRole("button", { name: "引いて聞く" }))

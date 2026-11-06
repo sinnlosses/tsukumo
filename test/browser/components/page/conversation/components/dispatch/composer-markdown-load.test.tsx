@@ -29,7 +29,7 @@ vi.mock(
             },
             blur: () => {},
             caret: () => 0,
-            placeCaret: () => {},
+            replace: () => {},
           }),
           [],
         )

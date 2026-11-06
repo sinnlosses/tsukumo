@@ -1,7 +1,7 @@
 // `<Composer>` の `/` と `@` 補完。出している候補・選んでいる位置・閉じたかどうかを持つ。
 //
 // 下書きそのもの（`Draft`）は呼び出し側が持ったまま渡してくる。
-// ここは受け取った下書きから候補を畳み、確定したときの下書きを `onConfirmed` で返すだけで、`setDraft` もフォーカスの戻しも呼び出し側の役目。
+// ここは受け取った下書きから候補を畳み、確定したときの下書きを `onConfirmed` で返すだけで、`replaceDraft` もフォーカスの戻しも呼び出し側の役目。
 //
 // `/` と `@` の候補は同時に出ない。
 // どちらを出しているかは1つの判別可能な合併型（`ActiveSuggestions`）に畳んであり、選択位置と閉じたかどうかはその1つに対して持つ。
@@ -37,7 +37,7 @@ type UseSuggestionArgs = {
   readonly pendingActive: boolean
   readonly slashCommands: readonly string[]
   readonly commandDescriptions: readonly CommandDescription[]
-  /** 候補を確定した下書き。`setDraft` とフォーカスの戻しは呼び出し側で行う。 */
+  /** 候補を確定した下書き。`replaceDraft` とフォーカスの戻しは呼び出し側で行う。 */
   readonly onConfirmed: (draft: Draft) => void
 }
 

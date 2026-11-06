@@ -386,7 +386,7 @@ describe("useInquiryAnswer と入力欄の字", () => {
   })
 
   function write(text: string): void {
-    act(() => useComposerDraft.getState().setDraft({ text, caret: text.length }))
+    act(() => useComposerDraft.getState().typeDraft({ text, caret: text.length }))
   }
 
   it("単一選択は、字があるあいだ writing で、選択が外れ、字を消すと writing だけ戻って選択は戻らない", () => {

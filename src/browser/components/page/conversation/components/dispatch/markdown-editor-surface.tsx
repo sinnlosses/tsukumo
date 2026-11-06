@@ -6,7 +6,7 @@
 // 面の上に書式のボタンの行を持ち、範囲を選んで URL を貼ると選んだ字をリンクにする。
 //
 // 下書きの持ち主はこの外にある。
-// 打った結果は `onChange` で外へ返し、外で変わった下書き（補完の確定・送信後の空）は文面が違うときだけ書き写す。
+// 打った結果は `onChange` で外へ返し、外で変わった下書き（補完の確定・送信後の空）は `replace` の命令で受ける。
 
 import { defaultKeymap, history, historyKeymap } from "@codemirror/commands"
 import { markdownLanguage } from "@codemirror/lang-markdown"
@@ -28,10 +28,17 @@ import {
   type DecorationSet,
 } from "@codemirror/view"
 import { tags } from "@lezer/highlight"
-import { useEffectEvent, useImperativeHandle, useRef, type ReactElement, type Ref } from "react"
+import {
+  useEffectEvent,
+  useImperativeHandle,
+  useRef,
+  useState,
+  type ReactElement,
+  type Ref,
+} from "react"
 
 import { useExternalSync } from "../../../../../hooks/use-external-sync.ts"
-import type { Draft } from "../../stores/composer-draft.ts"
+import { useComposerDraft, type Draft } from "../../stores/composer-draft.ts"
 import styles from "./dispatch.module.css"
 import type {
   ComposerKey,
@@ -45,14 +52,15 @@ import { FormatBar, type FormatBarProps } from "./format-bar.tsx"
 
 type MarkdownEditorSurfaceProps = ComposerSurfaceHandlers & {
   readonly ref: Ref<ComposerSurface | null>
-  readonly draft: Draft
+  /** マウント時に1回だけ読む。以後の書き換えは `ComposerSurface.replace` で受ける。 */
+  readonly initialDraft: Draft
   readonly placeholder: string
   readonly label: string
 }
 
 export function MarkdownEditorSurface({
   ref,
-  draft,
+  initialDraft,
   placeholder,
   label,
   onChange,
@@ -64,7 +72,7 @@ export function MarkdownEditorSurface({
   const hostRef = useRef<HTMLDivElement | null>(null)
   const viewRef = useRef<EditorView | undefined>(undefined)
 
-  const initialDraft = useEffectEvent(() => ({ draft, placeholder, label }))
+  const mounted = useEffectEvent(() => ({ draft: initialDraft, placeholder, label }))
   const changed = useEffectEvent((next: Draft) => {
     onChange(next)
   })
@@ -93,28 +101,26 @@ export function MarkdownEditorSurface({
     onDrop(event)
   })
 
-  useImperativeHandle(
-    ref,
-    () => ({
-      focus: () => {
-        viewRef.current?.focus()
-      },
-      blur: () => {
-        viewRef.current?.contentDOM.blur()
-      },
-      caret: () => viewRef.current?.state.selection.main.head ?? 0,
-      placeCaret: (caret) => {
-        const view = viewRef.current
-        if (view !== undefined) {
-          view.dispatch({
-            selection: { anchor: Math.min(caret, view.state.doc.length) },
-            annotations: FROM_DRAFT.of(true),
-          })
-        }
-      },
-    }),
-    [],
-  )
+  const [surface] = useState<ComposerSurface>(() => ({
+    focus: () => {
+      viewRef.current?.focus()
+    },
+    blur: () => {
+      viewRef.current?.contentDOM.blur()
+    },
+    caret: () => viewRef.current?.state.selection.main.head ?? 0,
+    replace: (text, caret) => {
+      const view = viewRef.current
+      if (view !== undefined) {
+        view.dispatch({
+          changes: { from: 0, to: view.state.doc.length, insert: text },
+          selection: { anchor: Math.min(caret, text.length) },
+          annotations: FROM_DRAFT.of(true),
+        })
+      }
+    },
+  }))
+  useImperativeHandle(ref, () => surface, [surface])
 
   // ref コールバックにはできない（下の `useEffectEvent` を ref コールバックの中から呼べない）。
   // `useMountEffect` でもできない（lint が呼び出しを effect の中と数えない）。マウント時の1回なので `deps` は空。
@@ -123,7 +129,7 @@ export function MarkdownEditorSurface({
     if (host === null) {
       return
     }
-    const initial = initialDraft()
+    const initial = mounted()
     const view = new EditorView({
       parent: host,
       state: EditorState.create({
@@ -199,17 +205,7 @@ export function MarkdownEditorSurface({
     }
   }, [])
 
-  useExternalSync(() => {
-    const view = viewRef.current
-    if (view === undefined || view.state.doc.toString() === draft.text) {
-      return
-    }
-    view.dispatch({
-      changes: { from: 0, to: view.state.doc.length, insert: draft.text },
-      selection: { anchor: Math.min(draft.caret, draft.text.length) },
-      annotations: FROM_DRAFT.of(true),
-    })
-  }, [draft.text, draft.caret])
+  useExternalSync(() => useComposerDraft.getState().attachSurface(surface), [surface])
 
   useExternalSync(() => {
     viewRef.current?.dispatch({
@@ -250,7 +246,7 @@ function pasteAsLink(event: ClipboardEvent, view: EditorView): boolean {
   return true
 }
 
-/** 外の下書きを書き写した変更。`onChange` へ返すと往復になるので、印を付けて見分ける。 */
+/** `replace` による変更。`onChange` へ返すと往復になるので、印を付けて見分ける。 */
 const FROM_DRAFT = Annotation.define<boolean>()
 
 /** 質問の間だけ差し替わるプレースホルダ。 */

@@ -37,7 +37,7 @@ function renderWhileRunning(): () => number {
       focused += 1
     },
     caret: () => 0,
-    placeCaret: () => {},
+    replace: () => {},
     blur: () => {},
   }
   putSession({ ...INITIAL_SESSION_STATE, turn: RUNNING })

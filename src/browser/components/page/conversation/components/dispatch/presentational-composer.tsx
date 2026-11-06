@@ -154,7 +154,7 @@ export function PresentationalComposer({
           {(mode === "plain" || phone) && (
             <TextAreaSurface
               ref={surfaceRef}
-              draft={draft}
+              initialDraft={draft}
               placeholder={placeholder}
               label={label}
               onChange={onChange}
@@ -167,7 +167,7 @@ export function PresentationalComposer({
           {mode === "markdown" && !phone && (
             <MarkdownSurface
               ref={surfaceRef}
-              draft={draft}
+              initialDraft={draft}
               placeholder={placeholder}
               label={label}
               onChange={onChange}

@@ -60,7 +60,7 @@ describe("PhoneTurnAction", () => {
     expect(screen.queryByRole("button", { name: "中断する" })).toBeNull()
 
     act(() => {
-      useComposerDraft.getState().setDraft({ text: "架空の依頼", caret: 5 })
+      useComposerDraft.getState().replaceDraft({ text: "架空の依頼", caret: 5 })
     })
 
     expect(send.disabled).toBe(false)

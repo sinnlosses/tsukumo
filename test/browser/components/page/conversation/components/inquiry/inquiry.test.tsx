@@ -343,7 +343,7 @@ describe("Inquiry の添え書きと詳細のサーフェス", () => {
   it("単一選択は入力欄に字があるあいだ、案内の1行を出して選択肢を薄くし、字を消すと戻る", () => {
     renderBriefed([brief])
 
-    act(() => useComposerDraft.getState().setDraft({ text: "架空", caret: 2 }))
+    act(() => useComposerDraft.getState().replaceDraft({ text: "架空", caret: 2 }))
     expect(screen.getByText("入力欄の答えで答えます")).toBeDefined()
     expect(card().querySelectorAll('li[class*="is-dimmed"]')).toHaveLength(2)
 

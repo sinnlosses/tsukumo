@@ -3,6 +3,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { Composer } from "../../../../../../../src/browser/components/page/conversation/components/dispatch/composer.tsx"
+import { saveSessionDraft } from "../../../../../../../src/browser/components/page/conversation/components/dispatch/domain/composer-draft-storage.ts"
 import { useComposerDraft } from "../../../../../../../src/browser/components/page/conversation/stores/composer-draft.ts"
 import { useInquiryDraft } from "../../../../../../../src/browser/components/page/conversation/stores/inquiry-draft.ts"
 import { useInquiryJump } from "../../../../../../../src/browser/stores/inquiry-jump.ts"
@@ -14,6 +15,7 @@ import {
   type SessionState,
 } from "../../../../../../../src/shared/session/session-state.ts"
 import { characterInfo } from "../../../../../../fixture/character.ts"
+import { checkedSessionId } from "../../../../../../fixture/session-id.ts"
 import { typedElement } from "../../../../../../typed-element.ts"
 import { createTestQueryClient } from "../../../../../query-client.tsx"
 import { rpcOutput, stubRpcFetch, type RpcFetchStub } from "../../../../../rpc-fetch-stub.ts"
@@ -431,6 +433,12 @@ describe("Composer", () => {
     fireEvent.click(button)
 
     expect(calls).toEqual([])
+  })
+
+  it("保存済みの下書きがある会話でマウントすると、欄にその文面が出る", () => {
+    saveSessionDraft(checkedSessionId("a"), { text: "保存済みの文面", caret: 3 })
+    renderComposer({ session: { kind: "identified", sessionId: checkedSessionId("a") } })
+    expect(textArea().value).toBe("保存済みの文面")
   })
 
   it("質問に答えている間に入力欄へ字が入ると、単一選択で選んでいた札の選択が外れる", () => {

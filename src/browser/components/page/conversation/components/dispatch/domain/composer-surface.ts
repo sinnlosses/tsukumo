@@ -1,16 +1,9 @@
 // 入力欄のサーフェス（`<textarea>` とマークダウンエディタ）と、サーフェスが映す下書き・サーフェスから届くキーの形。
 // どちらの面も DOM の型をここへ持ち込まない。
 
-import type { Draft } from "../../../stores/composer-draft.ts"
+import type { ComposerSurface, Draft } from "../../../stores/composer-draft.ts"
 
-/** 下書きのほかに、入力欄のロジックが面に触るのはこの4つだけ。 */
-export type ComposerSurface = {
-  readonly focus: () => void
-  readonly blur: () => void
-  /** いまの選択の位置。打たずにキャレットだけ動かしたぶんは下書きの `caret` に入っていないので、ここから読む。 */
-  readonly caret: () => number
-  readonly placeCaret: (caret: number) => void
-}
+export type { ComposerSurface }
 
 /** キーの読み替えに使う値。React の合成イベントとエディタの素の `KeyboardEvent` のどちらからも作る。 */
 export type ComposerKey = {
