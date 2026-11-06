@@ -5,6 +5,10 @@ import { unique } from "remeda"
 import { markFitsLines, sourceLineCount } from "../../../../shared/report/code-mark.ts"
 import { isEmphasisRow } from "../../../../shared/report/report-block-comparison.ts"
 import {
+  MAX_CHART_GRID_PANELS,
+  MIN_CHART_GRID_PANELS,
+} from "../../../../shared/report/report-block-diagram.ts"
+import {
   MAX_EMPHASIS_ROWS,
   MAX_LIST_ITEMS,
   MAX_PLAIN_CODE_LINES,
@@ -31,6 +35,7 @@ import {
   hasUnknownEmphasis,
   isBadHeat,
   isBadRowDepth,
+  isBadChartGrid,
   isEmphasisColumnOutOfRange,
   isRaggedChart,
   isRaggedTable,
@@ -79,6 +84,8 @@ export type BlockViolation =
   | { readonly kind: "long-code"; readonly count: number }
   /** `series` の `values` の数が `labels` と揃わない、または `arrow`・`slope`・`span` の `series` が2つでない `chart` の塊がある。`count` は塊の数。 */
   | { readonly kind: "ragged-chart"; readonly count: number }
+  /** `panels` が 2〜6 の外、`values` の数が `labels` と揃わない系列がある、または `panels` の間で系列の `name` の組が違う `chartGrid` の塊がある。`count` は塊の数。 */
+  | { readonly kind: "chart-grid-shape"; readonly count: number }
   /** `emphasis` に `labels` に無い名前がある `chart` の塊がある。`count` は塊の数。 */
   | { readonly kind: "unknown-emphasis"; readonly count: number }
   /** `references` を `line` 以外に、`annotations` を `line`・`bar`・`share`・`arrow` 以外に付けた、または `annotations` の `label` が `series` に無いか `index` が `labels` の外の `chart` の塊がある。`count` は塊の数。 */
@@ -172,6 +179,7 @@ export function detectBlockViolations(
       ).length,
     },
     { kind: "ragged-chart", count: drawn.filter((leaf) => isRaggedChart(leaf)).length },
+    { kind: "chart-grid-shape", count: drawn.filter((leaf) => isBadChartGrid(leaf)).length },
     {
       kind: "unknown-emphasis",
       count: drawn.filter((leaf) => hasUnknownEmphasis(leaf)).length,
@@ -216,6 +224,7 @@ const BLOCK_KINDS: ReadonlySet<string> = new Set<BlockViolation["kind"]>([
   "bad-cards",
   "long-code",
   "ragged-chart",
+  "chart-grid-shape",
   "unknown-emphasis",
   "chart-annotation-range",
   "chart-tone-range",
@@ -264,6 +273,8 @@ export function blockViolationMessage(violation: BlockViolation): string {
       return `\`marks\` が無く${String(MAX_PLAIN_CODE_LINES + 1)}行以上の \`Code\` が${violation.count}個ある。要る範囲だけを引く（${String(MAX_PLAIN_CODE_LINES)}行まで）`
     case "ragged-chart":
       return `\`series\` の \`values\` の数が \`labels\` と揃わない、または \`arrow\`・\`slope\`・\`span\` の \`series\` が前と後（span は始まりと終わり）の2つでない \`Chart\` が${violation.count}個ある。数を揃える`
+    case "chart-grid-shape":
+      return `\`panels\` が${String(MIN_CHART_GRID_PANELS)}〜${String(MAX_CHART_GRID_PANELS)}個の外、\`values\` の数が \`labels\` と揃わない系列がある、または \`panels\` の間で系列の \`name\` の組が違う \`ChartGrid\` が${violation.count}個ある。図を${String(MIN_CHART_GRID_PANELS)}〜${String(MAX_CHART_GRID_PANELS)}個にし、どの図も同じ名前の系列を \`labels\` と同じ数の値で書く`
     case "emphasis-column-range":
       return `\`emphasisColumn\` が列の数以上の表（\`Matrix\` を含む）が${violation.count}個ある。列の数より小さい位置（0 始まり）にする`
     case "heat-range":

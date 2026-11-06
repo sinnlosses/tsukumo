@@ -94,6 +94,12 @@
 検証の結果は `checks` に書き、`Trace` の行に同じ検証を書いて二重にしない。`Trace` は入れ子を持たず、深い経過は `Section` を分けるか `fold` で畳む。
 `Trace` は `Section.children` に置け、`Report.figure` には置けない。
 
+## 小さな図の並びの部品
+
+- `ChartGrid`: 同じ物差しで測った図（`bar` か `line`）を 2〜6 個、目盛りを揃えて格子に並べる。図ごとの大小を形で比べるのが中身で、
+  `Row` に `chart` を並べると目盛りが揃わないため部品に上げた（梯子の 4。理由は `section-and-block.md` の `ChartGrid` の項）。
+  `Section.children` に置け、`Report.figure` には置けない。見え方は疑似セッションの場面 `a2ui-chart-grid` で撮る
+
 ## 図の値と本文の数の照合
 
 `plot` の `Q` 列の値と、同じレポートの本文の数（`conclusion`・`keyFigures` の `before`・`value`・`total`・セクションの `text` の部品）のずれを、

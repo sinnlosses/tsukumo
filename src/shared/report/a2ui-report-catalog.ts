@@ -16,6 +16,7 @@ import {
 } from "./report-block-comparison.ts"
 import {
   chartBlockSchema,
+  chartGridBlockSchema,
   graphBlockSchema,
   imageBlockSchema,
   mermaidBlockSchema,
@@ -38,6 +39,7 @@ import {
   parameterSliderSchema,
   reportDefsSchema,
   writtenChartBlockSchema,
+  writtenChartGridBlockSchema,
   writtenStatsBlockSchema,
   writtenTextBlockSchema,
 } from "./report-expression-block.ts"
@@ -53,7 +55,7 @@ import { reportTaskSchema } from "./report-task.ts"
 import { timelineBlockSchema } from "./timeline-block.ts"
 import { traceBlockSchema } from "./trace-block.ts"
 
-/** 部品名と schema。`writerBlockBranches` の 21 種と対応する。 */
+/** 部品名と schema。`writerBlockBranches` の 22 種と対応する。 */
 const LEAF_COMPONENTS = {
   Paragraph: leafComponent("Paragraph", textBlockSchema),
   ItemList: leafComponent("ItemList", listBlockSchema),
@@ -80,6 +82,7 @@ const LEAF_COMPONENTS = {
   Mermaid: leafComponent("Mermaid", mermaidBlockSchema),
   Graph: leafComponent("Graph", graphBlockSchema),
   Chart: leafComponent("Chart", chartBlockSchema),
+  ChartGrid: leafComponent("ChartGrid", chartGridBlockSchema),
   Svg: leafComponent("Svg", svgBlockSchema),
   Timeline: leafComponent("Timeline", timelineBlockSchema),
   Options: leafComponent("Options", optionsBlockSchema),
@@ -106,6 +109,7 @@ export const LEAF_COMPONENT_KINDS = {
   Mermaid: mermaidBlockSchema.shape.kind.value,
   Graph: graphBlockSchema.shape.kind.value,
   Chart: chartBlockSchema.shape.kind.value,
+  ChartGrid: chartGridBlockSchema.shape.kind.value,
   Svg: svgBlockSchema.shape.kind.value,
   Timeline: timelineBlockSchema.shape.kind.value,
   Options: optionsBlockSchema.shape.kind.value,
@@ -217,12 +221,13 @@ const reportComponentSchema = z.object({
 /** 書き手が書く根。静的な一覧の根に、名前つきの式 `defs` を足した形。 */
 const writtenReportComponentSchema = reportComponentSchema.extend({ defs: reportDefsSchema })
 
-/** 書き手が書く内容部品。式を結べる 3 部品だけ、静的な一覧の形と違う。 */
+/** 書き手が書く内容部品。式を結べる 4 部品だけ、静的な一覧の形と違う。 */
 const WRITTEN_LEAF_COMPONENTS = {
   ...LEAF_COMPONENTS,
   Paragraph: leafComponent("Paragraph", writtenTextBlockSchema),
   Stats: leafComponent("Stats", writtenStatsBlockSchema),
   Chart: leafComponent("Chart", writtenChartBlockSchema),
+  ChartGrid: leafComponent("ChartGrid", writtenChartGridBlockSchema),
 } as const
 
 const OWN_COMPONENT_SCHEMAS = {
@@ -233,7 +238,7 @@ const OWN_COMPONENT_SCHEMAS = {
   ParameterCheckBox: parameterCheckBoxSchema,
 } as const
 
-/** 部品名と書き手が書く形。根・節・内容部品 21 種・つまみ 2 種・基本 6 部品の 31。 */
+/** 部品名と書き手が書く形。根・節・内容部品 22 種・つまみ 2 種・基本 6 部品の 32。 */
 export const REPORT_COMPONENT_SCHEMAS = {
   ...OWN_COMPONENT_SCHEMAS,
   ...BASIC_PART_SCHEMAS,
@@ -241,7 +246,7 @@ export const REPORT_COMPONENT_SCHEMAS = {
 
 /**
  * 静的な一覧（式を初期値で評価した後）の部品 1 つの受理の形。
- * 式もつまみも持たず、塊の形は今のまま（29 部品のどれか）。
+ * 式もつまみも持たず、塊の形は今のまま（30 部品のどれか）。
  * 受け口で静的にする前の、書き手が書いた形は {@link REPORT_COMPONENT_SCHEMAS}。
  */
 export const a2uiReportComponentSchema = z.discriminatedUnion("component", [

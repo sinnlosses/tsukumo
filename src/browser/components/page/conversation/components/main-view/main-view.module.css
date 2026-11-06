@@ -18,6 +18,7 @@
 @import "./turn-card/quote-leaf.css";
 @import "./turn-card/description-list-leaf.css";
 @import "./turn-card/trace-leaf.css";
+@import "./turn-card/chart-grid-leaf.css";
 @import "./turn-card/table-badge.css";
 @import "./turn-card/table-detail.css";
 @import "./turn-card/verdict-badge.css";

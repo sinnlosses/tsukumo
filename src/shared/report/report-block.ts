@@ -13,6 +13,7 @@ import {
 } from "./report-block-comparison.ts"
 import {
   chartBlockSchema,
+  chartGridBlockSchema,
   graphBlockSchema,
   imageBlockSchema,
   mermaidBlockSchema,
@@ -38,6 +39,7 @@ const namedStats = statsBlockSchema.meta({ id: "StatsBlock" })
 const namedMermaid = mermaidBlockSchema.meta({ id: "MermaidBlock" })
 const namedGraph = graphBlockSchema.meta({ id: "GraphBlock" })
 const namedChart = chartBlockSchema.meta({ id: "ChartBlock" })
+const namedChartGrid = chartGridBlockSchema.meta({ id: "ChartGridBlock" })
 const namedSvg = svgBlockSchema.meta({ id: "SvgBlock" })
 const namedImage = imageBlockSchema.meta({ id: "ImageBlock" })
 const namedTimeline = timelineBlockSchema.meta({ id: "TimelineBlock" })
@@ -55,6 +57,7 @@ const writerBlockBranches = [
   namedMermaid,
   namedGraph,
   namedChart,
+  namedChartGrid,
   namedSvg,
   namedTimeline,
   optionsBlockSchema,

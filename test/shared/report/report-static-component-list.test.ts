@@ -68,6 +68,29 @@ describe("staticReportComponents", () => {
     expect(chart?.component === "Chart" && chart.series[0]?.values).toEqual([4, 8])
   })
 
+  it("ChartGrid の labels と図ごとの values が並びになり、長さが違う図があれば部品ごと落とす", () => {
+    const grid = (second: string) => ({
+      id: "g",
+      component: "ChartGrid",
+      chartKind: "line",
+      labels: expr('["a", "b"]'),
+      panels: [
+        { heading: "甲", series: [{ name: "s", values: expr("[n, n * 2]") }] },
+        { heading: "乙", series: [{ name: "s", values: expr(second) }] },
+      ],
+    })
+    const { components } = staticReportComponents(written(slider, grid("[1, n]")))
+    const drawn = components.find((c) => c.component === "ChartGrid")
+    expect(drawn).toMatchObject({ labels: ["a", "b"] })
+    expect(
+      drawn?.component === "ChartGrid" && drawn.panels.map((panel) => panel.series[0]?.values),
+    ).toEqual([
+      [4, 8],
+      [1, 4],
+    ])
+    expect(staticReportComponents(written(slider, grid("[n]"))).droppedIds).toEqual(["g"])
+  })
+
   it("つまみが Paragraph になり defs が外れる", () => {
     const { components } = staticReportComponents(written(root, slider))
     expect(components[0]).not.toHaveProperty("defs")
@@ -159,6 +182,25 @@ describe("reevaluatedReportLeaves", () => {
     expect(statValues(leaves.st)).toEqual(["—", "10", "1"])
     expect(leaves.c).toMatchObject({ kind: "chart-failed", component: { title: "n=5" } })
     expect(Object.keys(leaves)).toEqual(["p", "st", "c"])
+  })
+
+  it("ChartGrid は1つの図の値が誤れば格子ぜんたいを chart-failed にする", () => {
+    const input = written(slider, {
+      id: "g",
+      component: "ChartGrid",
+      chartKind: "bar",
+      title: format("n=${n}"),
+      labels: ["a", "b"],
+      panels: [
+        { heading: "甲", series: [{ name: "s", values: [1, 2] }] },
+        { heading: "乙", series: [{ name: "s", values: expr("[at([1, 2], n), 3]") }] },
+      ],
+    })
+    expect(reevaluatedReportLeaves(input, { n: 1 }).g).toMatchObject({ kind: "drawn" })
+    expect(reevaluatedReportLeaves(input, { n: 5 }).g).toMatchObject({
+      kind: "chart-failed",
+      component: { title: "n=5", labels: [], panels: [] },
+    })
   })
 })
 

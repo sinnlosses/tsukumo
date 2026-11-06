@@ -37,11 +37,12 @@ export type WrittenReportView =
 
 /**
  * 振った値で評価し直した内容部品。
- * `chart-failed` は `labels`・`series[].values`・`emphasis` に誤りがあり、図の代わりに「—」を描く `Chart`（`labels`・`series`・`emphasis` は空）。
+ * `chart-failed` は `labels`・`series[].values`・`emphasis` に誤りがあり、図の代わりに「—」を描く `Chart`（`labels`・`series`・`emphasis` は空）
+ * か、`labels`・`panels[].series[].values` に誤りがあり、格子ぜんたいの代わりに「—」を描く `ChartGrid`（`labels`・`panels` は空）。
  */
 export type ReevaluatedLeaf =
   | { readonly kind: "drawn"; readonly component: A2uiReportComponent }
-  | { readonly kind: "chart-failed"; readonly component: ReportOf<"Chart"> }
+  | { readonly kind: "chart-failed"; readonly component: ReportOf<"Chart" | "ChartGrid"> }
 
 /** 誤りの出た値を描く字。 */
 export const FAILED_VALUE_TEXT = "—"
@@ -83,7 +84,7 @@ export function writtenReportView(
 }
 
 /**
- * 式を持つ `Stats`・`Paragraph`・`Chart` を、振った値で評価し直して部品の ID で引けるようにする。
+ * 式を持つ `Stats`・`Paragraph`・`Chart`・`ChartGrid` を、振った値で評価し直して部品の ID で引けるようにする。
  * `params` に無いつまみは初期値で読む。誤りの値は「—」にし、ほかの部品の評価は続ける。
  */
 export function reevaluatedReportLeaves(
@@ -143,6 +144,13 @@ function reevaluatedLeaf(
             component: { ...component, title, labels: [], series: [], emphasis: [] },
           }
     }
+    case "ChartGrid": {
+      const title = orFailedText(resolveText(component.title, evaluator))
+      const data = chartGridData(component, evaluator)
+      return data.ok
+        ? { kind: "drawn", component: { ...component, title, ...data.value } }
+        : { kind: "chart-failed", component: { ...component, title, labels: [], panels: [] } }
+    }
     default:
       return undefined
   }
@@ -179,6 +187,12 @@ function staticComponent(
       return staticStats(component, evaluator)
     case "Chart":
       return staticChart(component, evaluator)
+    case "ChartGrid": {
+      const title = resolveText(component.title, evaluator)
+      const data = chartGridData(component, evaluator)
+      if (!title.ok || !data.ok) return FAILED
+      return { ok: true, value: { ...component, title: title.value, ...data.value } }
+    }
     default:
       return { ok: true, value: component }
   }
@@ -217,14 +231,43 @@ function chartData(
   const labels = resolveTexts(component.labels, evaluator)
   const emphasis = resolveTexts(component.emphasis, evaluator)
   if (!labels.ok || !emphasis.ok) return FAILED
+  const series = resolveSeries(component.series, labels.value.length, evaluator)
+  if (!series.ok) return FAILED
+  if (emphasis.value.some((name) => !labels.value.includes(name))) return FAILED
+  return {
+    ok: true,
+    value: { labels: labels.value, series: series.value, emphasis: emphasis.value },
+  }
+}
+
+/** `ChartGrid` の `labels`・`panels`。どれかの系列の長さが `labels` と違えば誤り。 */
+function chartGridData(
+  component: WrittenOf<"ChartGrid">,
+  evaluator: ExpressionEvaluator,
+): Resolved<Pick<ReportOf<"ChartGrid">, "labels" | "panels">> {
+  const labels = resolveTexts(component.labels, evaluator)
+  if (!labels.ok) return FAILED
+  const panels = []
+  for (const panel of component.panels) {
+    const series = resolveSeries(panel.series, labels.value.length, evaluator)
+    if (!series.ok) return FAILED
+    panels.push({ ...panel, series: series.value })
+  }
+  return { ok: true, value: { labels: labels.value, panels } }
+}
+
+function resolveSeries<Entry extends { readonly values: readonly number[] | object }>(
+  entries: readonly Entry[],
+  length: number,
+  evaluator: ExpressionEvaluator,
+): Resolved<(Omit<Entry, "values"> & { values: number[] })[]> {
   const series = []
-  for (const entry of component.series) {
+  for (const entry of entries) {
     const values = resolveNumbers(entry.values, evaluator)
-    if (!values.ok || values.value.length !== labels.value.length) return FAILED
+    if (!values.ok || values.value.length !== length) return FAILED
     series.push({ ...entry, values: values.value })
   }
-  if (emphasis.value.some((name) => !labels.value.includes(name))) return FAILED
-  return { ok: true, value: { labels: labels.value, series, emphasis: emphasis.value } }
+  return { ok: true, value: series }
 }
 
 /** 欄の値が式の呼び出しなら評価した値、リテラルなら `undefined`。 */

@@ -7,6 +7,10 @@ import {
   tableRowCells,
   tableRowDepth,
 } from "../../../../../shared/report/report-block-comparison.ts"
+import {
+  MAX_CHART_GRID_PANELS,
+  MIN_CHART_GRID_PANELS,
+} from "../../../../../shared/report/report-block-diagram.ts"
 import { SENTENCE_CELL_LENGTH } from "../../../../../shared/report/report-limit.ts"
 import {
   comparisonSidesOf,
@@ -179,6 +183,24 @@ export function isRaggedChart(leaf: ReportOutlineLeaf): boolean {
     (leaf.series.some((series) => series.values.length !== leaf.labels.length) ||
       ((leaf.chartKind === "arrow" || leaf.chartKind === "slope" || leaf.chartKind === "span") &&
         leaf.series.length !== 2))
+  )
+}
+
+/**
+ * 図の数が {@link MIN_CHART_GRID_PANELS}〜{@link MAX_CHART_GRID_PANELS} の外、系列の値の数が labels と揃わない、
+ * または図の間で系列の名前の組が違う ChartGrid か。
+ */
+export function isBadChartGrid(leaf: ReportOutlineLeaf): boolean {
+  if (leaf.component !== "ChartGrid") return false
+  const { panels, labels } = leaf
+  if (panels.length < MIN_CHART_GRID_PANELS || panels.length > MAX_CHART_GRID_PANELS) return true
+  const namesOf = (panel: (typeof panels)[number]): string =>
+    JSON.stringify(panel.series.map((series) => series.name).toSorted())
+  const firstNames = panels[0] === undefined ? "" : namesOf(panels[0])
+  return panels.some(
+    (panel) =>
+      namesOf(panel) !== firstNames ||
+      panel.series.some((series) => series.values.length !== labels.length),
   )
 }
 

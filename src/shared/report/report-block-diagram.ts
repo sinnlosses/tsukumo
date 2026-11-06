@@ -203,6 +203,31 @@ export const chartBlockSchema = z
     "数の推移・割合。数が3つ以上で大小や傾きそのものを見せるとき（正確な値を読ませたいなら表）",
   )
 
+const CHART_GRID_KINDS = ["bar", "line"] as const
+
+export const MIN_CHART_GRID_PANELS = 2
+
+export const MAX_CHART_GRID_PANELS = 6
+
+export const chartGridBlockSchema = z
+  .object({
+    kind: z.literal("chartGrid"),
+    title: omittable(inlineText, "").describe("並びの題。数と向きで主張を言う1文。評価語なし"),
+    chartKind: z.enum(CHART_GRID_KINDS),
+    labels: inlineText.array().min(1).describe("全部の図に共通の項目"),
+    panels: z
+      .array(z.object({ heading: inlineText, series: z.array(chartSeriesSchema).min(1) }))
+      .min(1)
+      .describe(
+        `${String(MIN_CHART_GRID_PANELS)}〜${String(MAX_CHART_GRID_PANELS)}個。heading は図の小見出し。どの図も系列の name の組を揃え、values は labels と同じ数`,
+      ),
+    fold,
+    aside,
+  })
+  .describe(
+    "同じ物差しで測った図を目盛りを揃えて格子に並べる（観点ごとの前後・複数の対象の推移）。範囲・列の数・色は tsukumo が決める",
+  )
+
 export const svgBlockSchema = z
   .object({
     kind: z.literal("svg"),

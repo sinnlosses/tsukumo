@@ -135,6 +135,25 @@ const EXPRESSION_EXAMPLES: ReadonlyMap<string, readonly unknown[]> = new Map([
       },
     ],
   ],
+  [
+    "ChartGrid",
+    [
+      reportRoot({ ...WORKER_DEFS, lint: "ws * 0 + 30", test: "times / 2" }),
+      { id: "s1", component: "Section", heading: "段ごとの所要", children: ["w1", "cg1"] },
+      WORKER_SLIDER,
+      {
+        id: "cg1",
+        component: "ChartGrid",
+        chartKind: "line",
+        title: format("w = ${w} のときの段ごとの所要（秒）"),
+        labels: expr('text(ws, "本")'),
+        panels: [
+          { heading: "lint", series: [{ name: "所要（秒）", values: expr("lint") }] },
+          { heading: "test", series: [{ name: "所要（秒）", values: expr("test") }] },
+        ],
+      },
+    ],
+  ],
 ])
 
 const COMPONENT_NAMES = Object.keys(REPORT_COMPONENT_SCHEMAS)

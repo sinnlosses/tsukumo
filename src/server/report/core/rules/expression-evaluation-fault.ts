@@ -1,5 +1,5 @@
 // 触れるレポートの式を、初期値とつまみを 1 つずつ端に振った値で評価して見る検査。
-// 評価の誤り・値の形の違い・`Chart` の `labels` と `values` の長さ・`emphasis` を見る。
+// 評価の誤り・値の形の違い・`Chart`・`ChartGrid` の `labels` と `values` の長さ・`emphasis` を見る。
 
 import {
   createExpressionEvaluator,
@@ -79,6 +79,9 @@ export function evaluationFaults(
       if (props.component === "Chart") {
         chartFaults(props, `/components/${String(index)}`, evaluator, config, add)
       }
+      if (props.component === "ChartGrid") {
+        chartGridFaults(props, `/components/${String(index)}`, evaluator, config, add)
+      }
     }
   }
   return faults
@@ -134,29 +137,10 @@ function chartFaults(
   config: Config,
   add: (fault: A2uiExpressionFault) => void,
 ): void {
-  const resolve = (value: unknown): ExprValue | readonly unknown[] | undefined => {
-    const call = expressionCall(value)
-    if (call === undefined) {
-      return typeof value === "string" || Array.isArray(value) ? value : undefined
-    }
-    const result =
-      call.call === "expr" ? evaluator.evaluate(call.text) : evaluator.format(call.text)
-    return result.kind === "ok" ? result.value : undefined
-  }
+  const resolve = resolverOf(evaluator)
   const labels = resolve(props.labels)
   if (!Array.isArray(labels)) return
-  arrayOf(props.series).forEach((series, position) => {
-    const raw = recordOf(series).values
-    const values = resolve(raw)
-    const bound = expressionCall(props.labels) !== undefined || expressionCall(raw) !== undefined
-    if (bound && Array.isArray(values) && values.length !== labels.length) {
-      add({
-        kind: "chart-length-mismatch",
-        pointer: `${base}/series/${String(position)}/values`,
-        reason: `labels（${String(labels.length)} 個）と values（${String(values.length)} 個）の長さが違う（${config.label}）`,
-      })
-    }
-  })
+  seriesLengthFaults(props.labels, labels, props.series, `${base}/series`, resolve, config, add)
   const emphasis = resolve(props.emphasis)
   const picked = typeof emphasis === "string" ? [emphasis] : Array.isArray(emphasis) ? emphasis : []
   const emphasisBound =
@@ -168,4 +152,65 @@ function chartFaults(
       reason: `emphasis が labels に無い（${config.label}）`,
     })
   }
+}
+
+function chartGridFaults(
+  props: Readonly<Record<string, unknown>>,
+  base: string,
+  evaluator: ExpressionEvaluator,
+  config: Config,
+  add: (fault: A2uiExpressionFault) => void,
+): void {
+  const resolve = resolverOf(evaluator)
+  const labels = resolve(props.labels)
+  if (!Array.isArray(labels)) return
+  arrayOf(props.panels).forEach((panel, position) => {
+    seriesLengthFaults(
+      props.labels,
+      labels,
+      recordOf(panel).series,
+      `${base}/panels/${String(position)}/series`,
+      resolve,
+      config,
+      add,
+    )
+  })
+}
+
+type Resolve = (value: unknown) => ExprValue | readonly unknown[] | undefined
+
+function resolverOf(evaluator: ExpressionEvaluator): Resolve {
+  return (value) => {
+    const call = expressionCall(value)
+    if (call === undefined) {
+      return typeof value === "string" || Array.isArray(value) ? value : undefined
+    }
+    const result =
+      call.call === "expr" ? evaluator.evaluate(call.text) : evaluator.format(call.text)
+    return result.kind === "ok" ? result.value : undefined
+  }
+}
+
+/** 式を結んだ `labels` か `values` で、系列の値の数が `labels` と違うものを指す。 */
+function seriesLengthFaults(
+  rawLabels: unknown,
+  labels: readonly unknown[],
+  seriesList: unknown,
+  seriesBase: string,
+  resolve: Resolve,
+  config: Config,
+  add: (fault: A2uiExpressionFault) => void,
+): void {
+  arrayOf(seriesList).forEach((series, position) => {
+    const raw = recordOf(series).values
+    const values = resolve(raw)
+    const bound = expressionCall(rawLabels) !== undefined || expressionCall(raw) !== undefined
+    if (bound && Array.isArray(values) && values.length !== labels.length) {
+      add({
+        kind: "chart-length-mismatch",
+        pointer: `${seriesBase}/${String(position)}/values`,
+        reason: `labels（${String(labels.length)} 個）と values（${String(values.length)} 個）の長さが違う（${config.label}）`,
+      })
+    }
+  })
 }

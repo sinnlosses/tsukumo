@@ -1,0 +1,99 @@
+{
+  "name": "a2ui-chart-grid",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "架空の4つの観点の前後と、3つの窓口の所要の推移を見比べたい（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 1500,
+      "event": {
+        "kind": "report",
+        "toolUseId": "fake-a2ui-chart-grid",
+        "components": [
+          {
+            "id": "root",
+            "component": "Report",
+            "conclusion": [
+              "架空の結論: 4つの観点のうち3つが上がり、所要が減り続けたのは窓口Aだけだった。"
+            ],
+            "figureNone": "no-material",
+            "children": ["sec-before-after", "sec-trend"],
+            "closing": {
+              "text": "並べて比べたよ！",
+              "expression": "proud"
+            }
+          },
+          {
+            "id": "sec-before-after",
+            "component": "Section",
+            "heading": "架空の観点の前後",
+            "children": ["grid-bar"]
+          },
+          {
+            "id": "grid-bar",
+            "component": "ChartGrid",
+            "title": "架空の4つの観点のうち3つで点が上がった",
+            "chartKind": "bar",
+            "labels": ["前", "後"],
+            "panels": [
+              { "heading": "読みやすさ", "series": [{ "name": "点", "values": [52, 78] }] },
+              { "heading": "速さ", "series": [{ "name": "点", "values": [64, 81] }] },
+              { "heading": "誤りの少なさ", "series": [{ "name": "点", "values": [70, 66] }] },
+              { "heading": "手数の少なさ", "series": [{ "name": "点", "values": [18, 35] }] }
+            ]
+          },
+          {
+            "id": "sec-trend",
+            "component": "Section",
+            "heading": "架空の窓口ごとの推移",
+            "children": ["grid-line"]
+          },
+          {
+            "id": "grid-line",
+            "component": "ChartGrid",
+            "title": "架空の所要が5週続けて減ったのは窓口Aだけ",
+            "chartKind": "line",
+            "labels": ["1週", "2週", "3週", "4週", "5週"],
+            "panels": [
+              {
+                "heading": "窓口A",
+                "series": [{ "name": "所要（分）", "values": [48, 42, 37, 31, 26] }]
+              },
+              {
+                "heading": "窓口B",
+                "series": [{ "name": "所要（分）", "values": [30, 33, 29, 34, 31] }]
+              },
+              {
+                "heading": "窓口C",
+                "series": [{ "name": "所要（分）", "values": [22, 24, 27, 25, 28] }]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "afterMs": 1550,
+      "event": {
+        "kind": "tool-finished",
+        "toolUseId": "fake-a2ui-chart-grid",
+        "content": "ok",
+        "isError": false
+      }
+    },
+    {
+      "afterMs": 2300,
+      "event": {
+        "kind": "turn-finished",
+        "outcome": {
+          "kind": "completed"
+        }
+      }
+    }
+  ]
+}

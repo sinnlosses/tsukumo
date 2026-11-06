@@ -257,6 +257,25 @@ describe("a2uiStructureFaults の式の検査", () => {
       faults: [{ kind: "chart-length-mismatch", pointer: "/components/4/series/0/values" }],
     },
     {
+      name: "評価: ChartGrid の2つ目の図の values が labels と長さが違う",
+      components: touchable([
+        {
+          id: "g",
+          component: "ChartGrid",
+          chartKind: "bar",
+          labels: expr('text(range(1, 3), "本")'),
+          panels: [
+            { heading: "甲", series: [{ name: "所要", values: expr("range(1, 3) * w") }] },
+            { heading: "乙", series: [{ name: "所要", values: expr("range(1, 4) * w") }] },
+          ],
+        },
+        filler("u"),
+      ]),
+      faults: [
+        { kind: "chart-length-mismatch", pointer: "/components/4/panels/1/series/0/values" },
+      ],
+    },
+    {
       name: "評価: Chart の emphasis が labels に無い",
       components: touchable([chart({ emphasis: expr('"9本"') }), filler("u")]),
       faults: [{ kind: "chart-emphasis-missing", pointer: "/components/4/emphasis" }],

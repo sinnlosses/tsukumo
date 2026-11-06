@@ -456,6 +456,48 @@ describe("reportViolations", () => {
     )
   })
 
+  describe("chartGrid は図の数・値の数・系列の名前を揃える", () => {
+    type Panel = {
+      readonly heading: string
+      readonly series: readonly { name: string; values: readonly number[] }[]
+    }
+    const panel = (
+      heading: string,
+      values: readonly number[] = [1, 2],
+      name = "架空系列",
+    ): Panel => ({
+      heading,
+      series: [{ name, values }],
+    })
+    const gridOf = (panels: readonly Panel[]): LeafComponent => ({
+      kind: "chartGrid",
+      title: "",
+      chartKind: "bar",
+      labels: ["架空A", "架空B"],
+      panels,
+      fold: "",
+      aside: "",
+    })
+
+    it("図が2〜6個で値の数と系列の名前が揃えば違反にしない", () => {
+      expect(kinds(draft([gridOf([panel("甲"), panel("乙")])]))).toEqual([])
+      expect(kinds(draft([gridOf(Array.from({ length: 6 }, (_, i) => panel(String(i))))]))).toEqual(
+        [],
+      )
+    })
+
+    it.each([
+      ["図が1つ", [panel("甲")]],
+      ["図が7つ", Array.from({ length: 7 }, (_, i) => panel(String(i)))],
+      ["values の数が labels と違う", [panel("甲"), panel("乙", [1])]],
+      ["系列の名前の組が違う", [panel("甲"), panel("乙", [1, 2], "別の系列")]],
+    ])("%s なら chart-grid-shape で差し戻し、文面に上限を載せる", (_, panels) => {
+      const violations = reportViolations(draft([gridOf(panels)]))
+      expect(violations).toEqual([{ kind: "chart-grid-shape", count: 1 }])
+      expect(reportRejectionText(violations)).toContain("図を2〜6個にし")
+    })
+  })
+
   describe("chart の emphasis は labels の部分集合", () => {
     const chartOf = (emphasis: readonly string[]): LeafComponent => ({
       kind: "chart",

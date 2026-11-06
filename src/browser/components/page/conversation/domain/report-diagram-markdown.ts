@@ -1,4 +1,4 @@
-// 図の部品（`chart`・`svg`・`mermaid`）の本体の値を組む。Chart.js の設定・SVG の図形の並び・時系列の図の通し番号を持つ（`graph` は `graphSource`）。
+// 図の部品（`chart`・`chartGrid`・`svg`・`mermaid`）の本体の値を組む。Chart.js の設定・SVG の図形の並び・時系列の図の通し番号を持つ（`graph` は `graphSource`）。
 
 import { sumBy } from "remeda"
 
@@ -229,6 +229,40 @@ export function chartConfigOf(
     data,
     options: { ...seriesAndMarksOf(block) },
   }
+}
+
+type ChartGridBlock = Extract<LeafComponent, { readonly kind: "chartGrid" }>
+
+type ChartValueRange = { readonly min: number; readonly max: number }
+
+/** 格子の図1つの設定。値の軸（`y`）の範囲は格子で共通。 */
+type ChartGridPanelConfig = {
+  readonly heading: string
+  readonly config: Omit<ChartBody, "options"> & {
+    readonly options: { readonly scales: { readonly y: ChartValueRange } }
+  }
+}
+
+const CHART_GRID_TICK_COUNT = 5
+const CHART_LINE_PADDING_RATE = 0.08
+
+/** `chartGrid` の塊から、図ごとの Chart.js の設定を組む。値の軸の範囲は {@link sharedValueRange} で揃える。 */
+export function chartGridConfigsOf(block: ChartGridBlock): readonly ChartGridPanelConfig[] {
+  const range = sharedValueRange(block.chartKind, block.panels)
+  return block.panels.map((panel) => {
+    const { type, data } = chartConfigOf({
+      kind: "chart",
+      title: panel.heading,
+      chartKind: block.chartKind,
+      labels: block.labels,
+      series: panel.series,
+      horizontal: false,
+      emphasis: [],
+      fold: "",
+      aside: "",
+    })
+    return { heading: panel.heading, config: { type, data, options: { scales: { y: range } } } }
+  })
 }
 
 type SvgFigure = {
@@ -470,4 +504,47 @@ function seriesAndMarksOf(
 ): { readonly plugins: SeriesPlugins & Partial<MarksPlugins> } | Record<string, never> {
   const plugins = { ...seriesPluginsOf(block).plugins, ...marksPluginsOf(block).plugins }
   return Object.keys(plugins).length === 0 ? {} : { plugins }
+}
+
+/**
+ * 格子の全部の図の値から、値の軸の範囲を1つに決める。
+ * `bar` は 0 を含め、`line` は最小〜最大に幅の 8% の余白を足す。どちらも目盛りの刻みの倍数へ外側に丸め、幅を 0 にしない。
+ */
+function sharedValueRange(
+  chartKind: ChartGridBlock["chartKind"],
+  panels: ChartGridBlock["panels"],
+): ChartValueRange {
+  const values = panels.flatMap((panel) => panel.series.flatMap((series) => series.values))
+  if (values.length === 0) {
+    return { min: 0, max: 1 }
+  }
+  const low = Math.min(...values)
+  const high = Math.max(...values)
+  const [from, to] =
+    chartKind === "bar"
+      ? [Math.min(0, low), Math.max(0, high)]
+      : paddedRange(low, high, CHART_LINE_PADDING_RATE)
+  const width = to - from === 0 ? Math.max(Math.abs(to), 1) : to - from
+  const step = niceStep(width / CHART_GRID_TICK_COUNT)
+  const min = roundedTick(Math.floor(from / step) * step)
+  const max = roundedTick(Math.ceil(to / step) * step)
+  return { min, max: max > min ? max : roundedTick(min + step) }
+}
+
+function paddedRange(low: number, high: number, rate: number): readonly [number, number] {
+  const padding = high === low ? Math.max(Math.abs(high), 1) * rate : (high - low) * rate
+  return [low - padding, high + padding]
+}
+
+/** 刻みを 1・2・5 の 10 の冪倍に丸める。 */
+function niceStep(raw: number): number {
+  const exponent = 10 ** Math.floor(Math.log10(raw))
+  const fraction = raw / exponent
+  const nice = fraction <= 1 ? 1 : fraction <= 2 ? 2 : fraction <= 5 ? 5 : 10
+  return nice * exponent
+}
+
+/** 刻みの掛け算で出る 0.30000000000000004 のような端数を落とす。 */
+function roundedTick(value: number): number {
+  return Number(value.toPrecision(12))
 }

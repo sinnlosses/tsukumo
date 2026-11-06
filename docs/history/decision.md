@@ -199,6 +199,7 @@
 - `unknown-emphasis`: 導入時は数えていない（GH-1439・2026-10-24）
 - `chart-annotation-range`: 導入時は数えていない（GH-2085・2026-11-04）
 - `chart-tone-range`: 導入時は数えていない（GH-2091・2026-11-04）
+- `chart-grid-shape`: 導入時は数えていない（GH-2214・2026-11-07）
 - `short-series`: 導入時は数えていない（GH-1072・2026-10-17）
 - `untitled-section`: 導入時は数えていない（T-705・2026-09-27）
 - `markdown-notation`: 導入時は数えていない（T-705・2026-09-27）

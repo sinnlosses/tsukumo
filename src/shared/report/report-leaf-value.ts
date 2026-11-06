@@ -158,6 +158,7 @@ function captionKindOf(block: LeafComponent): CaptionKind | undefined {
     case "mermaid":
     case "graph":
     case "chart":
+    case "chartGrid":
     case "svg":
     case "timeline":
     case "stats":

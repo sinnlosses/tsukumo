@@ -5,7 +5,7 @@
 import { z } from "zod"
 
 import { statItemsSchema, statsBlockSchema } from "./report-block-comparison.ts"
-import { chartBlockSchema } from "./report-block-diagram.ts"
+import { chartBlockSchema, chartGridBlockSchema } from "./report-block-diagram.ts"
 import { inlineText, omittable } from "./report-block-field.ts"
 import { textBlockSchema } from "./report-block-prose.ts"
 
@@ -68,6 +68,31 @@ export const writtenChartBlockSchema = described(
     ),
   }),
   chartBlockSchema,
+)
+
+/** `ChartGrid` の塊で、`title`・`labels`・`panels[].series[].values` に式を結べる形。 */
+export const writtenChartGridBlockSchema = described(
+  chartGridBlockSchema.extend({
+    title: described(omittable(orExpression(inlineText), ""), chartGridBlockSchema.shape.title),
+    labels: described(orExpression(inlineText.array().min(1)), chartGridBlockSchema.shape.labels),
+    panels: described(
+      z
+        .array(
+          chartGridBlockSchema.shape.panels.element.extend({
+            series: z
+              .array(
+                chartGridBlockSchema.shape.panels.element.shape.series.element.extend({
+                  values: orExpression(z.array(z.number()).min(1)),
+                }),
+              )
+              .min(1),
+          }),
+        )
+        .min(1),
+      chartGridBlockSchema.shape.panels,
+    ),
+  }),
+  chartGridBlockSchema,
 )
 
 const PARAMETER_NAME_PATTERN = /^[A-Za-z_][A-Za-z0-9_]*$/

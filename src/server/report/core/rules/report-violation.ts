@@ -74,6 +74,7 @@ const VIOLATION_THRESHOLDS = {
   "bad-cards": 0,
   "long-code": 0,
   "ragged-chart": 0,
+  "chart-grid-shape": 0,
   "unknown-emphasis": 0,
   "chart-annotation-range": 0,
   "chart-tone-range": 0,

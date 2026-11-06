@@ -83,6 +83,17 @@ const LEAF_BLOCK_EXAMPLES = {
     labels: ["1日目", "2日目", "3日目"],
     series: [{ name: "待ち時間（秒）", values: [40, 30, 20] }],
   },
+  chartGrid: {
+    kind: "chartGrid",
+    title: "架空の3つの窓口のうち待ち時間が減ったのは2つ",
+    chartKind: "bar",
+    labels: ["1日目", "2日目", "3日目"],
+    panels: [
+      { heading: "窓口A", series: [{ name: "待ち時間（秒）", values: [40, 30, 20] }] },
+      { heading: "窓口B", series: [{ name: "待ち時間（秒）", values: [35, 25, 15] }] },
+      { heading: "窓口C", series: [{ name: "待ち時間（秒）", values: [20, 22, 21] }] },
+    ],
+  },
   svg: {
     kind: "svg",
     title: "架空の2つの枠の重なり",

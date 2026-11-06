@@ -26,7 +26,7 @@ type Knob = Extract<
 type ReevaluatedLeaves = Readonly<Record<string, ReevaluatedLeaf>>
 
 /**
- * つまみの値を購読し、式を持つ `Stats`・`Paragraph`・`Chart` を評価し直して部品の ID で返す。
+ * つまみの値を購読し、式を持つ `Stats`・`Paragraph`・`Chart`・`ChartGrid` を評価し直して部品の ID で返す。
  * 面が作れず `dataModel` が無いとき・つまみも式も無い一覧では空。
  */
 export function useReevaluatedLeaves(
@@ -53,7 +53,7 @@ export function useReevaluatedLeaves(
 }
 
 /**
- * 面の部品 1 つを、つまみか図の代わりに「—」を描く `Chart` として描く。
+ * 面の部品 1 つを、つまみか図の代わりに「—」を描く `Chart`・`ChartGrid` として描く。
  * どちらでもなければ undefined（ほかの部品の描き方に任せる）。
  */
 export function liveLeafElement(

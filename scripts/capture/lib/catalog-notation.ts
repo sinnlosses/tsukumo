@@ -160,6 +160,16 @@ export const NOTATION_ENTRIES: readonly CatalogEntry[] = [
     settle: SCENE_END_SETTLE,
   },
   {
+    name: "a2ui-chart-grid",
+    scene: "a2ui-chart-grid",
+    label: "目盛りを揃えた小さな図の格子（ChartGrid の bar・line）",
+    homeSetup: { kind: "default" },
+    workspaceSetup: { kind: "repository" },
+    prepare: [],
+    skipReveal: true,
+    settle: SCENE_END_SETTLE,
+  },
+  {
     name: "a2ui-row-card-status",
     scene: "a2ui-row-card-status",
     label: "数とコマンドの左右を 1 枚の枠に入れ、区分の下に表（a2ui）",

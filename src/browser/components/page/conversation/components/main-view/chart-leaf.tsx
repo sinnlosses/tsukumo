@@ -26,9 +26,9 @@ export function ChartLeaf(props: {
   )
 }
 
-/** 振った値で `labels`・`series[].values`・`emphasis` に誤りが出た `Chart`。題と枠は残し、図の代わりに「—」を描く。 */
+/** 振った値で値の欄に誤りが出た `Chart`・`ChartGrid`。題と枠は残し、図の代わりに「—」を描く。 */
 export function FailedChartLeaf(props: {
-  readonly part: A2uiReportPart<"Chart">
+  readonly part: A2uiReportPart<"Chart" | "ChartGrid">
   readonly value: LeafValue
 }): ReactElement {
   const { part, value } = props

@@ -176,6 +176,20 @@ function slotsOfPart(props: Readonly<Record<string, unknown>>, base: string): re
         ),
         ...slotOf(props.emphasis, `${base}/emphasis`, "emphasis"),
       ]
+    case "ChartGrid":
+      return [
+        ...slotOf(props.title, `${base}/title`, "text"),
+        ...slotOf(props.labels, `${base}/labels`, "labels"),
+        ...arrayOf(props.panels).flatMap((panel, panelPosition) =>
+          arrayOf(recordOf(panel).series).flatMap((series, position) =>
+            slotOf(
+              recordOf(series).values,
+              `${base}/panels/${String(panelPosition)}/series/${String(position)}/values`,
+              "values",
+            ),
+          ),
+        ),
+      ]
     default:
       return []
   }

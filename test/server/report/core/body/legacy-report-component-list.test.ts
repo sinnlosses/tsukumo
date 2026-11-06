@@ -51,6 +51,15 @@ const LEAVES: Readonly<Record<string, unknown>> = {
     labels: ["架空の一"],
     series: [{ name: "架空の系列", values: [1] }],
   },
+  chartGrid: {
+    kind: "chartGrid",
+    chartKind: "bar",
+    labels: ["架空の一"],
+    panels: [
+      { heading: "架空の甲", series: [{ name: "架空の系列", values: [1] }] },
+      { heading: "架空の乙", series: [{ name: "架空の系列", values: [2] }] },
+    ],
+  },
   svg: {
     kind: "svg",
     width: 200,

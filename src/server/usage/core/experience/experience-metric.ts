@@ -239,6 +239,7 @@ const DIAGRAM_BLOCK_KINDS: ReadonlySet<string> = new Set([
   "mermaid",
   "graph",
   "chart",
+  "chartGrid",
   "svg",
   "timeline",
   "image",

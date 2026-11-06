@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest"
 
-import { chartConfigOf } from "../../../../../../src/browser/components/page/conversation/domain/report-diagram-markdown.ts"
+import {
+  chartConfigOf,
+  chartGridConfigsOf,
+} from "../../../../../../src/browser/components/page/conversation/domain/report-diagram-markdown.ts"
 import type { LeafComponent } from "../../../../../../src/shared/report/report-block.ts"
 import { fencedFigureCaptioned, markdownOf } from "../../../../../fixture/report-markdown.ts"
 
@@ -369,5 +372,67 @@ describe("chartConfigOf", () => {
         annotations: [{ series: 1, index: 1, text: "架空の注記" }],
       })
     })
+  })
+})
+
+describe("chartGrid の値の軸", () => {
+  type GridKind = "bar" | "line"
+  const gridOf = (chartKind: GridKind, valuesList: readonly (readonly number[])[]) =>
+    ({
+      kind: "chartGrid",
+      title: "",
+      chartKind,
+      labels: ["架空1", "架空2", "架空3"],
+      panels: valuesList.map((values, index) => ({
+        heading: `架空の図${String(index)}`,
+        series: [{ name: "架空系列", values }],
+      })),
+      fold: "",
+      aside: "",
+    }) as const
+  const allValues = (valuesList: readonly (readonly number[])[]) => valuesList.flat()
+  const rangeOf = (chartKind: GridKind, valuesList: readonly (readonly number[])[]) => {
+    const [first] = chartGridConfigsOf(gridOf(chartKind, valuesList))
+    return first?.config.options.scales.y ?? { min: Number.NaN, max: Number.NaN }
+  }
+
+  it("どの図の範囲も同じで、全部の図の値を含む", () => {
+    const valuesList = [
+      [3, 1, 2],
+      [40, 35, 50],
+      [12, 18, 9],
+    ]
+    for (const chartKind of ["bar", "line"] as const) {
+      const configs = chartGridConfigsOf(gridOf(chartKind, valuesList))
+      const ranges = configs.map((panel) => panel.config.options.scales.y)
+      expect(new Set(ranges.map((range) => JSON.stringify(range))).size).toBe(1)
+      const [range] = ranges
+      expect(range?.min).toBeLessThanOrEqual(Math.min(...allValues(valuesList)))
+      expect(range?.max).toBeGreaterThanOrEqual(Math.max(...allValues(valuesList)))
+      expect(configs.map((panel) => panel.heading)).toEqual(["架空の図0", "架空の図1", "架空の図2"])
+    }
+  })
+
+  it("bar は 0 を含み、line は最小値の手前から始まる", () => {
+    const valuesList = [
+      [40, 45, 50],
+      [42, 48, 55],
+    ]
+    expect(rangeOf("bar", valuesList).min).toBe(0)
+    const line = rangeOf("line", valuesList)
+    expect(line.min).toBeGreaterThan(0)
+    expect(line.min).toBeLessThan(40)
+    expect(line.max).toBeGreaterThan(55)
+  })
+
+  it("全部の値が同じでも、全部が 0 でも幅は 0 にならない", () => {
+    for (const chartKind of ["bar", "line"] as const) {
+      for (const value of [7, 0]) {
+        const range = rangeOf(chartKind, [[value, value, value]])
+        expect(range.max).toBeGreaterThan(range.min)
+        expect(range.min).toBeLessThanOrEqual(value)
+        expect(range.max).toBeGreaterThanOrEqual(value)
+      }
+    }
   })
 })

@@ -56,11 +56,11 @@ describe("partCardOf", () => {
     },
   )
 
-  it("引ける名前は 31 部品", () => {
-    expect(NAMES).toHaveLength(31)
+  it("引ける名前は 32 部品", () => {
+    expect(NAMES).toHaveLength(32)
   })
 
-  it.each(["ParameterSlider", "ParameterCheckBox", "Stats", "Paragraph", "Chart"])(
+  it.each(["ParameterSlider", "ParameterCheckBox", "Stats", "Paragraph", "Chart", "ChartGrid"])(
     "%s のカードに、式を結ぶ例が載り、構造の検査に通る",
     (name) => {
       const text = cardText(name)

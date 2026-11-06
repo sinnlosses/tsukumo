@@ -40,6 +40,7 @@ export const REPORT_REJECTION_MODES = {
   "bad-cards": "reject",
   "long-code": "reject",
   "ragged-chart": "reject",
+  "chart-grid-shape": "reject",
   "unknown-emphasis": "reject",
   "chart-annotation-range": "reject",
   "chart-tone-range": "reject",

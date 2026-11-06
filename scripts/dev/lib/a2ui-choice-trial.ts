@@ -26,6 +26,7 @@ const LAYOUT_COMPONENTS: readonly string[] = ["Row", "Column", "Card", "Tabs"]
 const FIGURE_COMPONENTS: readonly string[] = [
   "Graph",
   "Chart",
+  "ChartGrid",
   "Picture",
   "Compare",
   "Stats",

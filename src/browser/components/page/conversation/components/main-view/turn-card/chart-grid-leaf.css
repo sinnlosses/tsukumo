@@ -1,0 +1,28 @@
+/* 目盛りを揃えた小さな図の格子。列の数は器（`report-body`）の幅で 1→2→3 に増やし、書き手は選ばない。
+   小見出しは図の上に置き、図より先に読ませる。 */
+[data-report-region] .chart-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-lg);
+  inline-size: 100%;
+}
+@container report-body (min-width: 560px) {
+  [data-report-region] .chart-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@container report-body (min-width: 900px) {
+  [data-report-region] .chart-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+[data-report-region] .chart-grid-panel {
+  min-inline-size: 0;
+  margin: 0;
+}
+[data-report-region] .chart-grid-heading {
+  margin: 0 0 var(--space-xs);
+  color: var(--ink-soft);
+  font-size: var(--font-secondary);
+  font-weight: 600;
+}

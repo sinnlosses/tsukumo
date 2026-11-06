@@ -108,6 +108,7 @@ const COMPONENT_PURPOSES = {
   Mermaid: "sequenceDiagram か stateDiagram-v2 の図",
   Graph: "矢印でつないだ図",
   Chart: "棒などの図",
+  ChartGrid: "目盛りを揃えた小さな図の格子",
   Svg: "図形の図",
   Timeline: "時間の流れ",
   Options: "候補の並び",

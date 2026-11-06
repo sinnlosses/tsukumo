@@ -26,6 +26,7 @@ const KIND_TO_COMPONENT = {
   mermaid: "Mermaid",
   graph: "Graph",
   chart: "Chart",
+  chartGrid: "ChartGrid",
   svg: "Svg",
   timeline: "Timeline",
   options: "Options",
@@ -107,8 +108,8 @@ describe("A2UI のカタログ文書", () => {
     )
   })
 
-  it("根・節・内容部品 21 種・つまみ 2 種・基本 6 部品の 31 部品が全部残る", () => {
-    expect(expected).toHaveLength(31)
+  it("根・節・内容部品 22 種・つまみ 2 種・基本 6 部品の 32 部品が全部残る", () => {
+    expect(expected).toHaveLength(32)
     expect(findMissingComponents(document, expected)).toEqual([])
   })
 
@@ -261,7 +262,7 @@ describe("A2UI のカタログ文書", () => {
     expect(leaf).not.toContain('"kind"')
   })
 
-  it("受理の形の表は文書と同じ 31 部品を持つ", () => {
+  it("受理の形の表は文書と同じ 32 部品を持つ", () => {
     expect(Object.keys(REPORT_COMPONENT_SCHEMAS).toSorted()).toEqual(expected.toSorted())
   })
 
