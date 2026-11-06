@@ -50,11 +50,12 @@ function holdsFocusElsewhere(): boolean {
   return (
     isFocusWithinMainView(document.activeElement ?? undefined) ||
     isOverlayOpen() ||
-    isTypingElement(document.activeElement)
+    isTypingElement()
   )
 }
 
-function isTypingElement(element: Element | null): boolean {
+function isTypingElement(): boolean {
+  const element = document.activeElement
   return (
     element instanceof HTMLInputElement ||
     element instanceof HTMLTextAreaElement ||

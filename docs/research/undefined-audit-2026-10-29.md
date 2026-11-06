@@ -186,6 +186,79 @@
 `diffLineSide`・`shellLineKinds`・`findCodeChild`・`codeFileName`・`codeLanguage`・`diffLines`・`CompareLineMark` を返す関数は探索・解析の失敗の R1、`classNames` は `properties.className` の写しで R2。`CodeLineDiffContext` の `undefined` は差分の無い塊という 1 つの意味の R4、`useCodeStartLine` の答えは問いの答えが来るまでの R4 で、戻り値は「始まりの行が分からない」の R1。`fenceMeta` は hast の `data.meta` が許す `string | null | undefined` を入口で畳んだ結果で R2。
 `?? ""` は `lines[removed]`・`rows[index - 1]` の `noUncheckedIndexedAccess` 由来で、空の行と無い行が同じ意味のもの。`markdown-renderer.tsx` の `language ?? ""` は、`useCodeStartLine` の `language` がサーバへ渡る問い（`codeBlockStart`）の必須の欄で、言語の無い塊は空の言語と同じ扱いなので残す。
 
+会話画面の `components/` の `markdown/`・`main-view/`・`hooks/` 以外の8ディレクトリ（`dispatch`・`character-view`・`chat-view`・`inquiry`・`repository-link`・`prompt-image`・`conversation-layout`・`pending-ask-card`）は、`| undefined`・`?? ""`・`| null` の計62件を呼ぶ側を読んで仕分け、`dispatch` の `originalTitleRef`（`useState(() => document.title)` で読み、効果の外へ出した）1件だけを消した。`isTypingElement` の `Element | null` の引数は、`document.activeElement` を関数の中で読むことで書かずに済ませた（`| null` も1件減った。8ディレクトリの今の総数は60件で、62から消した2件を引いた数）。`| undefined` の上限は `src/browser/components` が208から207になった。残りは本物。
+戻り値の「描かない・見つからない・解析に失敗」を返す R1 が、`ReactElement | undefined`（`FileSuggestions`・`CommandSuggestions`・`ChatTime`・`PromptImageChips` ほか。呼ぶ側が「描かない」を値で受ける）と `filePathQuery`・`confirmedDraft`・`readPromptImage`・`leadingMarkEnd`・`pinnedSpeechOf`・`pastTurnSpeech`・`speechesOfTurn`・`pinnedSpeechIndex`・`lastSpeechIndex`・`anchorOf`・`repository-link.tsx` の戻り値。
+「まだ無い」が1つの意味しか持たない R4 が、`viewRef`・`blockedClearText`（`""` に畳むと空の下書きと一致して帯が出る）・`logRef`・`timer`・`useCharacterClock` の局所 `timer`・`lastRevealAt`・`pinnedSpeech`・`zoomedIndex`。
+React の型が `null` と決める R5 は、`Ref<ComposerSurface | null>`・`RefObject<… | null>`・ref コールバックの引数・`blurOnEscape` の `surface`・`writeFraction` の `element`・`placeNearAnchor` の `node`。`inEmptyQuoteLine` の `SyntaxNode | null` は lezer の `parent` が返す `null` を辿るループの変数で R2。
+`?? ""` は、`clipboardData?.getData(...)`（貼る物が無いと空の貼り付けが同じ意味）・`candidate` を探す `find`（空の行しか無い本文は空の文字列）・`option.byAxis[index]`（`noUncheckedIndexedAccess` 由来で、空と無いが DOM に出る文字列で同じ）の3件で、番兵ではないので残す。
+
+この8ディレクトリの62件を 1 件ずつ並べる（消した2件と残した60件。行は消したあとの番号で、消した2件は直す前の形）。
+
+| ファイル（`components/` から）                         | 対象                                                | 行  | 種別           | 結果 | 理由                                                      |
+| ------------------------------------------------------ | --------------------------------------------------- | --- | -------------- | ---- | --------------------------------------------------------- |
+| `dispatch/dispatch.tsx`                                | `originalTitleRef`（`useRef<string \| undefined>`） | 15  | `\| undefined` | 消す | `useState(() => document.title)` で読み、効果の外へ出した |
+| `dispatch/hooks/use-composer-focus.ts`                 | `isTypingElement` の引数 `Element \| null`          | 58  | `\| null`      | 消す | 関数の中で `document.activeElement` を読む                |
+| `dispatch/text-area-surface.tsx`                       | `ref: Ref<ComposerSurface \| null>`                 | 18  | `\| null`      | 残す | R5（React の型）                                          |
+| `dispatch/text-area-surface.tsx`                       | `useRef<HTMLTextAreaElement \| null>`               | 36  | `\| null`      | 残す | R5                                                        |
+| `dispatch/file-suggestion-list.tsx`                    | `filePathQuery`                                     | 32  | `\| undefined` | 残す | R1（候補を出さない）                                      |
+| `dispatch/file-suggestion-list.tsx`                    | `FileSuggestions`                                   | 61  | `\| undefined` | 残す | R1（描かない）                                            |
+| `dispatch/markdown-editor-surface.tsx`                 | `ref: Ref<ComposerSurface \| null>`                 | 54  | `\| null`      | 残す | R5                                                        |
+| `dispatch/markdown-editor-surface.tsx`                 | `useRef<HTMLDivElement \| null>`                    | 72  | `\| null`      | 残す | R5                                                        |
+| `dispatch/markdown-editor-surface.tsx`                 | `viewRef`                                           | 73  | `\| undefined` | 残す | R4（まだ作っていない）                                    |
+| `dispatch/markdown-editor-surface.tsx`                 | `clipboardData?.getData(...) ?? ""`                 | 235 | `?? ""`        | 残す | 貼る物が無いと空の貼り付けが同じ意味                      |
+| `dispatch/command-suggestion-list.tsx`                 | `CommandSuggestions`                                | 57  | `\| undefined` | 残す | R1（描かない）                                            |
+| `dispatch/presentational-composer.tsx`                 | `ref: RefObject<ComposerSurface \| null>`           | 285 | `\| null`      | 残す | R5                                                        |
+| `dispatch/hooks/use-prompt-image.ts`                   | `imageInputRef` の型                                | 24  | `\| null`      | 残す | R5                                                        |
+| `dispatch/hooks/use-prompt-image.ts`                   | `useRef<HTMLInputElement \| null>`                  | 41  | `\| null`      | 残す | R5                                                        |
+| `dispatch/hooks/use-suggestion.ts`                     | `confirmedDraft`（`Draft \| undefined`）            | 165 | `\| undefined` | 残す | R1（確定する下書きが無い）                                |
+| `dispatch/hooks/use-composer.ts`                       | `surfaceRef` の型                                   | 61  | `\| null`      | 残す | R5                                                        |
+| `dispatch/hooks/use-composer.ts`                       | `blockedClearText`                                  | 119 | `\| undefined` | 残す | R4（`""` に畳むと空の下書きと一致して帯が出る）           |
+| `dispatch/hooks/use-composer.ts`                       | `useRef<ComposerSurface \| null>`                   | 120 | `\| null`      | 残す | R5                                                        |
+| `dispatch/hooks/use-composer-focus.ts`                 | `useComposerFocusTiming` の `surfaceRef`            | 16  | `\| null`      | 残す | R5                                                        |
+| `dispatch/hooks/use-composer-focus.ts`                 | `blurOnEscape` の `surface`                         | 34  | `\| null`      | 残す | R5                                                        |
+| `dispatch/domain/markdown-newline-continuation.ts`     | `let node: SyntaxNode \| null`                      | 34  | `\| null`      | 残す | R2（lezer の `parent` が返す `null` を辿るループの変数）  |
+| `dispatch/domain/markdown-mark-concealment.ts`         | `leadingMarkEnd`                                    | 151 | `\| undefined` | 残す | R1（印が無い）                                            |
+| `dispatch/domain/prompt-image.ts`                      | `readPromptImage`                                   | 42  | `\| undefined` | 残す | R1（読めない画像）                                        |
+| `character-view/item-seat-list.tsx`                    | `ItemSeatList` の戻り値                             | 32  | `\| undefined` | 残す | R1（描かない）                                            |
+| `character-view/hooks/use-speech-log.ts`               | `scrollerRef`                                       | 75  | `\| null`      | 残す | R5                                                        |
+| `character-view/hooks/use-speech-log.ts`               | `pinnedSpeech`                                      | 89  | `\| undefined` | 残す | R4（何も留めていない。畳むと型が名指しの外へ広がる）      |
+| `character-view/hooks/use-speech-log.ts`               | `find(...) ?? ""`                                   | 240 | `?? ""`        | 残す | 空の行しか無い本文は空の文字列                            |
+| `character-view/hooks/use-character-view.ts`           | `speechesOfTurn`                                    | 138 | `\| undefined` | 残す | R1（そのターンのセリフが無い）                            |
+| `character-view/hooks/use-character-view.ts`           | `pastTurnSpeech`                                    | 301 | `\| undefined` | 残す | R1                                                        |
+| `character-view/hooks/use-character-view.ts`           | `useCharacterClock` の局所 `timer`                  | 328 | `\| undefined` | 残す | R4（まだ張っていない）                                    |
+| `character-view/domain/pinned-speech.ts`               | `pinnedSpeechOf`                                    | 46  | `\| undefined` | 残す | R1                                                        |
+| `character-view/domain/pinned-speech.ts`               | `speechesOfTurn` の型                               | 57  | `\| undefined` | 残す | R1（上と同じ値の写し）                                    |
+| `character-view/domain/pinned-speech.ts`               | 戻り値 `Speech \| undefined`                        | 58  | `\| undefined` | 残す | R1                                                        |
+| `character-view/domain/pinned-speech.ts`               | `pinnedSpeechIndex` 系の戻り値                      | 86  | `\| undefined` | 残す | R1                                                        |
+| `chat-view/chat-time.tsx`                              | `ChatTime`                                          | 11  | `\| undefined` | 残す | R1（描かない）                                            |
+| `chat-view/hooks/use-speech-reveal.ts`                 | `lastRevealAt` の `useState`                        | 43  | `\| undefined` | 残す | R4（まだ吹き出しを出していない）                          |
+| `chat-view/hooks/use-speech-reveal.ts`                 | `lastRevealAt` の引数                               | 111 | `\| undefined` | 残す | R4（上の値の続き。`Infinity` で畳むと挙動が変わる）       |
+| `chat-view/hooks/use-stick-to-bottom.ts`               | `logRef`                                            | 22  | `\| undefined` | 残す | R4（まだ付いていない）                                    |
+| `chat-view/hooks/use-stick-to-bottom.ts`               | ref コールバックの引数 `HTMLDivElement \| null`     | 53  | `\| null`      | 残す | R5                                                        |
+| `chat-view/hooks/use-chat-view.ts`                     | `pinnedSpeechIndex`                                 | 230 | `\| undefined` | 残す | R1                                                        |
+| `chat-view/hooks/use-chat-view.ts`                     | `lastSpeechIndex`                                   | 241 | `\| undefined` | 残す | R1                                                        |
+| `chat-view/hooks/use-chat-view.ts`                     | `Expression \| undefined` を返す関数                | 253 | `\| undefined` | 残す | R1                                                        |
+| `inquiry/inquiry.tsx`                                  | `Inquiry`                                           | 68  | `\| undefined` | 残す | R1（描かない）                                            |
+| `inquiry/inquiry.tsx`                                  | プレゼンテーションの戻り値                          | 80  | `\| undefined` | 残す | R1                                                        |
+| `inquiry/inquiry-detail.tsx`                           | `option.byAxis[index] ?? ""`                        | 158 | `?? ""`        | 残す | `noUncheckedIndexedAccess` 由来。空と無いが DOM で同じ    |
+| `inquiry/inquiry-detail.tsx`                           | 詳細の戻り値                                        | 188 | `\| undefined` | 残す | R1                                                        |
+| `inquiry/hooks/use-inquiry-scroll.ts`                  | 戻り値 `RefObject<HTMLElement \| null>`             | 23  | `\| null`      | 残す | R5                                                        |
+| `repository-link/repository-link.tsx`                  | `RepositoryFileTarget \| undefined`                 | 60  | `\| undefined` | 残す | R1（解析に失敗）                                          |
+| `repository-link/file-excerpt-peek.tsx`                | `placeNearAnchor` の `node`                         | 100 | `\| null`      | 残す | R5                                                        |
+| `repository-link/hooks/use-file-excerpt-peek.ts`       | `anchorRef`                                         | 42  | `\| null`      | 残す | R5                                                        |
+| `repository-link/hooks/use-file-excerpt-peek.ts`       | `timer`                                             | 63  | `\| undefined` | 残す | R4                                                        |
+| `repository-link/hooks/use-file-excerpt-peek.ts`       | `anchorOf`                                          | 141 | `\| undefined` | 残す | R1（`\| null` の入力は ref の値）                         |
+| `prompt-image/prompt-image.tsx`                        | `PromptImageChips`                                  | 51  | `\| undefined` | 残す | R1（描かない）                                            |
+| `prompt-image/prompt-image.tsx`                        | `zoomedIndex`（チップ）                             | 52  | `\| undefined` | 残す | R4（開いていない）                                        |
+| `prompt-image/prompt-image.tsx`                        | `PromptImageThumbnails`                             | 127 | `\| undefined` | 残す | R1                                                        |
+| `prompt-image/prompt-image.tsx`                        | `zoomedIndex`（サムネイル）                         | 130 | `\| undefined` | 残す | R4                                                        |
+| `prompt-image/prompt-image.tsx`                        | 部品の戻り値                                        | 213 | `\| undefined` | 残す | R1                                                        |
+| `conversation-layout/hooks/use-conversation-layout.ts` | `ref: RefObject<HTMLDivElement \| null>`            | 27  | `\| null`      | 残す | R5                                                        |
+| `conversation-layout/hooks/use-conversation-layout.ts` | `rootRef`                                           | 47  | `\| null`      | 残す | R5                                                        |
+| `conversation-layout/hooks/use-conversation-layout.ts` | `writeFraction` の `element`                        | 167 | `\| null`      | 残す | R5                                                        |
+| `pending-ask-card/pending-ask-card.tsx`                | `PendingAskCard`                                    | 15  | `\| undefined` | 残す | R1（描かない）                                            |
+| `pending-ask-card/presentational-pending-ask-card.tsx` | 戻り値                                              | 158 | `\| undefined` | 残す | R1                                                        |
+
 `components/markdown/` の 4 群の仕分け（`| undefined` と `?? ""` と `| null` を数えた対象）を 1 件ずつ並べる。`| null` の 2 件は `report-image.tsx` の `useRef` の型引数（消した）と `readCaption` の引数（残した）。
 
 | ファイル（`markdown/` から）            | 対象                                             | 行      | 種別           | 結果   | 理由                                                                                                                       |

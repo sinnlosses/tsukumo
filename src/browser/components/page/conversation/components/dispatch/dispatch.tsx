@@ -1,7 +1,7 @@
 // 入力欄一式（<Composer>）。
 // 答え待ちの印（タブのタイトルの先頭の「● 」・枠の色）は `state.pending` からここが出す。
 
-import { useRef, type ReactElement } from "react"
+import { useState, type ReactElement } from "react"
 
 import { useExternalSync } from "../../../../../hooks/use-external-sync.ts"
 import { useSession } from "../../../../../stores/session.ts"
@@ -12,15 +12,11 @@ import styles from "./dispatch.module.css"
 export function Dispatch(): ReactElement {
   const pendingActive = useSession((session) => session.state.pending.length > 0)
   // 最初に読んだ元のタイトルへ戻す（読むのは1回だけ）。
-  const originalTitleRef = useRef<string | undefined>(undefined)
+  const [originalTitle] = useState(() => document.title)
 
   useExternalSync(() => {
-    if (originalTitleRef.current === undefined) {
-      originalTitleRef.current = document.title
-    }
-    const originalTitle = originalTitleRef.current
     document.title = pendingActive ? `● ${originalTitle}` : originalTitle
-  }, [pendingActive])
+  }, [pendingActive, originalTitle])
 
   return (
     <VStack
