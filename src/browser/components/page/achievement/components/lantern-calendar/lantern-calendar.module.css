@@ -1,12 +1,10 @@
 /* 灯りの暦。 */
 .achievement-calendar {
+  composes: surface-edge-rule surface-radius-xl surface-tone-surface from "../../../../ui/surface/surface-face.module.css";
   display: flex;
   flex-direction: column;
   gap: var(--space-md);
   padding: var(--space-lg) calc(var(--space-lg) + var(--space-2xs));
-  border: 1px solid var(--rule);
-  border-radius: var(--radius-xl);
-  background: var(--surface);
 }
 /* 字の段・色は `Text` が持つ。margin だけここに置く。 */
 .achievement-calendar-note {

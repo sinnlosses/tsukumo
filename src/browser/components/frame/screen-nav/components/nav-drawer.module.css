@@ -71,14 +71,12 @@
     padding: 0 var(--space-lg);
   }
   .nav-drawer-tabs {
+    composes: surface-edge-rule surface-radius-lg surface-tone-ground from "../../../ui/surface/surface-face.module.css";
     display: flex;
     flex: none;
     gap: var(--space-xs);
     margin: 0 var(--space-lg);
     padding: var(--space-xs);
-    border: 1px solid var(--rule);
-    border-radius: var(--radius-lg);
-    background: var(--ground);
   }
   .nav-drawer-tab {
     flex: 1 1 0;

@@ -1,5 +1,6 @@
 /* 押せるパスの近くに浮かせる抜き書き。ビューポートの座標で置くので fixed。 */
 .file-excerpt-peek {
+  composes: surface-edge-rule surface-radius-md surface-tone-surface from "../../../../ui/surface/surface-face.module.css";
   position: fixed;
   z-index: 3;
   box-sizing: border-box;
@@ -7,9 +8,6 @@
   max-height: calc(100vh - 16px);
   overflow: auto;
   padding: var(--space-sm) 0;
-  border: 1px solid var(--rule);
-  border-radius: var(--radius-md);
-  background: var(--surface);
   box-shadow: var(--shadow-raised);
   pointer-events: none;
 }

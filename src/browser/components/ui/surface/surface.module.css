@@ -1,15 +1,6 @@
 .surface {
   border: 1px solid var(--rule-soft);
 }
-.surface-tone-surface {
-  background: var(--surface);
-}
-.surface-tone-raised {
-  background: var(--surface-raised);
-}
-.surface-tone-accent {
-  background: var(--surface-accent);
-}
 .surface-space-none {
   padding: 0;
 }
@@ -30,18 +21,6 @@
 }
 .surface-space-2xl {
   padding: var(--space-2xl);
-}
-.surface-radius-sm {
-  border-radius: var(--radius-sm);
-}
-.surface-radius-md {
-  border-radius: var(--radius-md);
-}
-.surface-radius-lg {
-  border-radius: var(--radius-lg);
-}
-.surface-radius-xl {
-  border-radius: var(--radius-xl);
 }
 .surface-shadow-none {
   box-shadow: none;

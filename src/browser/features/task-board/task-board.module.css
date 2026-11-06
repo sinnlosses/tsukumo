@@ -103,15 +103,13 @@
 
 /* 箱。見本は 1320x780 で、帯の下に少し空けて横の中央に置く。ビューポートより大きくしない。 */
 .task-board {
+  composes: surface-edge-rule surface-radius-xl surface-tone-surface from "../../components/ui/surface/surface-face.module.css";
   box-sizing: border-box;
   width: min(1320px, calc(100vw - 2rem));
   height: min(780px, calc(100dvh - 84px - 1rem));
   margin: 84px auto auto;
   padding: 0;
   overflow: hidden;
-  border: 1px solid var(--rule);
-  border-radius: var(--radius-xl);
-  background: var(--surface);
   box-shadow: var(--shadow-overlay);
   color: var(--ink);
 }
@@ -170,6 +168,7 @@
 }
 /* 一覧に無い依存（押せない）は `<li>` に直接、押せる札は中の `<button>` に付く。 */
 .task-detail-dependency {
+  composes: surface-edge-rule surface-radius-md surface-tone-ground from "../../components/ui/surface/surface-face.module.css";
   box-sizing: border-box;
   display: flex;
   align-items: center;
@@ -177,9 +176,6 @@
   gap: var(--space-md);
   min-height: 38px;
   padding: var(--space-sm) var(--space-md);
-  border: 1px solid var(--rule);
-  border-radius: var(--radius-md);
-  background: var(--ground);
   color: inherit;
   font: inherit;
   text-align: left;

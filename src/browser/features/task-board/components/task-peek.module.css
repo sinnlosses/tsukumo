@@ -3,6 +3,7 @@
    見本で 12px を割る字（状態の語・ID・関わるタスク 11.5px）は --font-label へ上げてある。
    left・top・尾の高さと出すかどうかは `placeBesideRow` が style の変数へ書く。 */
 .task-peek {
+  composes: surface-edge-rule surface-radius-xl surface-tone-surface from "../../../components/ui/surface/surface-face.module.css";
   position: fixed;
   top: var(--task-peek-top, 0);
   left: var(--task-peek-left, 0);
@@ -18,9 +19,6 @@
   padding: var(--space-lg) calc(var(--space-lg) + var(--space-2xs))
     calc(var(--space-md) + var(--space-2xs));
   overflow: visible;
-  border: 1px solid var(--rule);
-  border-radius: var(--radius-xl);
-  background: var(--surface);
   box-shadow: var(--shadow-overlay);
   color: var(--ink);
   text-decoration: none;

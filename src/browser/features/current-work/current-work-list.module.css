@@ -2,11 +2,9 @@
 
 /* 超えたら内側でスクロールする（高さの上限は置く側が決める）。 */
 .current-work-list {
+  composes: surface-edge-rule surface-radius-md surface-tone-surface from "../../components/ui/surface/surface-face.module.css";
   overflow-y: auto;
   padding: var(--space-sm) var(--space-md);
-  border: 1px solid var(--rule);
-  border-radius: var(--radius-md);
-  background: var(--surface);
   font-size: var(--font-secondary);
 }
 /* 字の太さ・色は `Text` が持つ。margin だけ残す。 */

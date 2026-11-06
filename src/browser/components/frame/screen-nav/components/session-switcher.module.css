@@ -4,15 +4,13 @@
 
 /* 箱。見本は 1040x600 で、帯の下に少し空けて横の中央に置く。ビューポートより大きくしない。 */
 .session-switcher {
+  composes: surface-edge-rule surface-radius-xl surface-tone-surface from "../../../ui/surface/surface-face.module.css";
   box-sizing: border-box;
   width: min(65rem, calc(100vw - 2rem));
   height: min(37.5rem, calc(100dvh - 4rem));
   margin: 6rem auto auto;
   padding: 0;
   overflow: hidden;
-  border: 1px solid var(--rule);
-  border-radius: var(--radius-xl);
-  background: var(--surface);
   box-shadow: var(--shadow-overlay);
   color: var(--ink);
 }

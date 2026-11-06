@@ -312,15 +312,13 @@
 
 /* 目次。見開きの上に重ねる。 */
 .diary-book-toc {
+  composes: surface-edge-rule surface-radius-xl surface-tone-surface from "../../../../ui/surface/surface-face.module.css";
   position: absolute;
   inset: 0;
   margin: auto;
   width: min(90vw, 26rem);
   max-height: 80%;
   padding: var(--space-xl);
-  border: 1px solid var(--rule);
-  border-radius: var(--radius-xl);
-  background: var(--surface);
   box-shadow: var(--shadow-overlay);
   overflow-y: auto;
   z-index: 1;

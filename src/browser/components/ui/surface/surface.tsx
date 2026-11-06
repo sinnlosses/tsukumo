@@ -4,6 +4,7 @@
 import clsx from "clsx"
 import type { ReactElement, ReactNode } from "react"
 
+import faceStyles from "./surface-face.module.css"
 import styles from "./surface.module.css"
 
 type SurfaceElement = "div" | "section"
@@ -25,9 +26,9 @@ export type SurfaceProps = {
 }
 
 const TONE_CLASS = {
-  surface: styles["surface-tone-surface"],
-  raised: styles["surface-tone-raised"],
-  accent: styles["surface-tone-accent"],
+  surface: faceStyles["surface-tone-surface"],
+  raised: faceStyles["surface-tone-raised"],
+  accent: faceStyles["surface-tone-accent"],
 } satisfies Record<SurfaceTone, string>
 
 const SPACE_CLASS = {
@@ -41,10 +42,10 @@ const SPACE_CLASS = {
 } satisfies Record<SurfaceSpace, string>
 
 const RADIUS_CLASS = {
-  sm: styles["surface-radius-sm"],
-  md: styles["surface-radius-md"],
-  lg: styles["surface-radius-lg"],
-  xl: styles["surface-radius-xl"],
+  sm: faceStyles["surface-radius-sm"],
+  md: faceStyles["surface-radius-md"],
+  lg: faceStyles["surface-radius-lg"],
+  xl: faceStyles["surface-radius-xl"],
 } satisfies Record<SurfaceRadius, string>
 
 const SHADOW_CLASS = {

@@ -1,0 +1,27 @@
+.surface-edge-rule {
+  border: 1px solid var(--rule);
+}
+.surface-tone-ground {
+  background: var(--ground);
+}
+.surface-tone-surface {
+  background: var(--surface);
+}
+.surface-tone-raised {
+  background: var(--surface-raised);
+}
+.surface-tone-accent {
+  background: var(--surface-accent);
+}
+.surface-radius-sm {
+  border-radius: var(--radius-sm);
+}
+.surface-radius-md {
+  border-radius: var(--radius-md);
+}
+.surface-radius-lg {
+  border-radius: var(--radius-lg);
+}
+.surface-radius-xl {
+  border-radius: var(--radius-xl);
+}

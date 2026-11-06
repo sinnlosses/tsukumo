@@ -173,15 +173,13 @@
 
 /* ---- 作るダイアログ（キャラクター画面の上に重なる） ---- */
 .character-create-dialog {
+  composes: surface-edge-rule surface-radius-xl surface-tone-surface from "../../ui/surface/surface-face.module.css";
   box-sizing: border-box;
   width: min(45rem, calc(100vw - 2rem));
   max-height: calc(100vh - 4rem);
   margin: auto;
   padding: var(--space-2xl) 1.75rem;
-  background: var(--surface);
   color: var(--ink);
-  border: 1px solid var(--rule);
-  border-radius: var(--radius-xl);
   overflow: auto;
 }
 /* 字の段・色・太さは `Heading` が持つ。字間だけここに置く。 */

@@ -132,13 +132,11 @@
   gap: var(--space-lg);
 }
 .achievement-card {
+  composes: surface-edge-rule surface-radius-lg surface-tone-surface from "../../../../ui/surface/surface-face.module.css";
   display: flex;
   flex-direction: column;
   gap: var(--space-2xs);
   padding: var(--space-md) var(--space-lg);
-  border: 1px solid var(--rule);
-  border-radius: var(--radius-lg);
-  background: var(--surface);
   min-width: 0;
 }
 /* 字の段・色は `Text` が持つ。書体・桁揃えだけここに置く。 */

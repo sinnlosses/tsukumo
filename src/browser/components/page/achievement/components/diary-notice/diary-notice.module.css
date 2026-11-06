@@ -2,6 +2,7 @@
    `--screen-nav` の帯（z-index 20）より上に出す。 */
 
 .diary-notice {
+  composes: surface-edge-rule surface-radius-xl surface-tone-surface from "../../../../ui/surface/surface-face.module.css";
   position: fixed;
   left: 50%;
   bottom: 40px;
@@ -13,9 +14,6 @@
   justify-content: center;
   gap: var(--space-lg);
   padding: var(--space-md) var(--space-lg) var(--space-md) var(--space-xl);
-  border-radius: var(--radius-xl);
-  background: var(--surface);
-  border: 1px solid var(--rule);
   box-shadow: var(--shadow-overlay);
   box-sizing: border-box;
   max-width: calc(100vw - 32px);

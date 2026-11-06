@@ -16,6 +16,7 @@
 }
 /* `position: fixed` で、面を包むスクロールの箱に切られずに出る。下に入りきらないときは上へ開く。 */
 .menu-panel {
+  composes: surface-edge-rule surface-radius-lg surface-tone-surface from "../surface/surface-face.module.css";
   position: fixed;
   position-anchor: --menu-trigger;
   position-area: bottom span-left;
@@ -27,9 +28,6 @@
   min-width: 13rem;
   margin: var(--space-xs) 0;
   padding: var(--space-xs);
-  border: 1px solid var(--rule);
-  border-radius: var(--radius-lg);
-  background: var(--surface);
   box-shadow: var(--shadow-raised);
 }
 .menu-panel:focus {

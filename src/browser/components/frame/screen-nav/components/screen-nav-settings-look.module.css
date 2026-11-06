@@ -51,10 +51,8 @@
   border-radius: var(--radius-sm);
 }
 .hex {
+  composes: surface-edge-rule surface-radius-md surface-tone-ground from "../../../ui/surface/surface-face.module.css";
   padding: var(--space-xs) var(--space-md);
-  border: 1px solid var(--rule);
-  border-radius: var(--radius-md);
-  background: var(--ground);
   color: var(--ink-quiet);
   font-family: var(--font-mono);
   font-size: var(--font-label);

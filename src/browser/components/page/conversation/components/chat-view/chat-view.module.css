@@ -28,11 +28,9 @@
    左右に寄せるのは外側の行（`.chat-row`）（LINE / Discord と同じ読み方）。
    どちらの話者も `<div>`（押せるキャラクターの側も `role="button"` の `<div>`。理由は `ChatSpeech`）なので、地の見た目は話者で変わらない。 */
 .chat-entry {
+  composes: surface-edge-rule surface-radius-xl surface-tone-surface from "../../../../ui/surface/surface-face.module.css";
   max-width: 80%;
   padding: var(--space-sm) var(--space-lg);
-  border: 1px solid var(--rule);
-  border-radius: var(--radius-xl);
-  background: var(--surface);
   /* セリフの文字は `ink`（長い往復でも濃さを変えない）。 */
   color: var(--ink);
   font-size: var(--font-body);
@@ -44,7 +42,7 @@
    行そのものが押せる（押すとその時の表情へ立ち絵が遡る）。
    操作子も枠も増やさないので、行の外に印や矢印は足さない。
    文字はドラッグで選べる（セリフをコピーできること）ので、押せることを示すのは指の形だけにし、選ぶのを妨げる `user-select` は当てない。 */
-.chat-entry-character {
+.chat-entry.chat-entry-character {
   border-color: var(--accent);
   background: var(--surface-accent);
   border-bottom-left-radius: var(--radius-sm);
@@ -65,7 +63,7 @@
 }
 /* 返事を待っている間・まだ出していない吹き出しが控えている間、末尾に出す「...」（`ChatTyping`）。
    キャラクター側の吹き出しとして出すが、押せない・選べる文字を持たないので `.chat-entry-character` の cursor と hover は乗せない。 */
-.chat-entry-typing {
+.chat-entry.chat-entry-typing {
   display: flex;
   align-items: center;
   gap: var(--space-xs);
@@ -76,7 +74,7 @@
 }
 /* 利用者の発言（右へ寄せるのは `.chat-row-user`）。
    差し色は使わない（色が現れるのはキャラクターが居る場所だけ）ので、地の濃さだけで区別する。 */
-.chat-entry-user {
+.chat-entry.chat-entry-user {
   background: color-mix(in srgb, var(--surface), var(--ink) 8%);
   border-bottom-right-radius: var(--radius-sm);
 }

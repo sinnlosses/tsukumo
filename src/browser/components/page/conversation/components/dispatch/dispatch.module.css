@@ -42,6 +42,7 @@
    textarea の上に出すと領域（.layout-region の overflow-y: auto）の外に出て切られる。
    max-height の % は包み（＝textarea の高さ）基準なので、打っている文字がある上半分は隠れない。 */
 .dispatch-suggestions {
+  composes: surface-edge-rule surface-radius-md surface-tone-ground from "../../../../ui/surface/surface-face.module.css";
   position: absolute;
   left: 0;
   right: 0;
@@ -52,9 +53,6 @@
   max-height: 50%;
   overflow-y: auto;
   list-style: none;
-  background: var(--ground);
-  border: 1px solid var(--rule);
-  border-radius: var(--radius-md);
 }
 /* 1件は「名前＋説明」の1行。説明は薄い色で、幅が足りなければ省略記号で切る（候補一覧そのものを横に広げない）。 */
 .dispatch-suggestion-item {

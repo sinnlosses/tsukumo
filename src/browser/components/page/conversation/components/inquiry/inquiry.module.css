@@ -109,11 +109,9 @@
 }
 /* 許可要求の対象の全文。等幅で折り返す。 */
 .inquiry-target {
+  composes: surface-edge-rule surface-radius-md surface-tone-surface from "../../../../ui/surface/surface-face.module.css";
   margin: 0 0 var(--space-md);
   padding: var(--space-sm) var(--space-md);
-  border: 1px solid var(--rule);
-  border-radius: var(--radius-md);
-  background: var(--surface);
   font-family: var(--font-mono);
   font-size: var(--font-secondary);
   white-space: pre-wrap;
@@ -154,11 +152,9 @@
 }
 /* フォーカスした選択肢の詳細。高さは切らない（札の本文が転がる）。 */
 .inquiry-detail {
+  composes: surface-edge-rule surface-radius-md surface-tone-surface from "../../../../ui/surface/surface-face.module.css";
   min-width: 0;
   padding: var(--space-sm) var(--space-md);
-  border: 1px solid var(--rule);
-  border-radius: var(--radius-md);
-  background: var(--surface);
 }
 .inquiry-detail-title {
   margin: 0;
@@ -197,11 +193,9 @@
   cursor: pointer;
 }
 .inquiry-option {
+  composes: surface-edge-rule surface-radius-md surface-tone-surface from "../../../../ui/surface/surface-face.module.css";
   min-width: 0;
   padding: var(--space-sm) var(--space-md);
-  border: 1px solid var(--rule);
-  border-radius: var(--radius-md);
-  background: var(--surface);
 }
 /* 選んだカード。枠の色と太さで示す（色だけに頼らない）。 */
 .inquiry-option.is-selected {

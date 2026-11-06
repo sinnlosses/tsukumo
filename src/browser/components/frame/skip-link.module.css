@@ -1,14 +1,12 @@
 /* 画面の外に置き、フォーカスが来たときだけ左上へ出す。 */
 .skip-link {
+  composes: surface-edge-rule surface-radius-md surface-tone-ground from "../ui/surface/surface-face.module.css";
   position: fixed;
   top: 0.5rem;
   left: 0.5rem;
   z-index: 100;
   padding: var(--space-sm) var(--space-md);
-  background: var(--ground);
   color: var(--ink);
-  border: 1px solid var(--rule);
-  border-radius: var(--radius-md);
   transform: translateY(-300%);
 }
 .skip-link:focus-visible {

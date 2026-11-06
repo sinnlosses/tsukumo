@@ -51,6 +51,7 @@
 }
 /* 選択メニュー。顔の真下に、左端を揃えて重ねる（下の領域を押し下げない）。 */
 .screen-nav-character-picker-panel {
+  composes: surface-edge-rule surface-radius-md surface-tone-surface from "../../../ui/surface/surface-face.module.css";
   position: absolute;
   top: calc(100% + 0.4rem);
   left: 0;
@@ -65,9 +66,6 @@
   overflow-y: auto;
   margin: 0;
   padding: var(--space-sm);
-  border: 1px solid var(--rule);
-  border-radius: var(--radius-md);
-  background: var(--surface);
   list-style: none;
 }
 .screen-nav-character-picker-option {

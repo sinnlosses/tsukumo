@@ -1,12 +1,10 @@
 /* モデル・effort・許可モードの操作子の組。3つの絵の口を1つの枠に並べ、細い仕切りで分ける。 */
 .run-setting-group {
+  composes: surface-edge-rule surface-radius-lg surface-tone-ground from "../../components/ui/surface/surface-face.module.css";
   display: flex;
   flex: none;
   align-items: center;
   padding: 0 var(--space-2xs);
-  border: 1px solid var(--rule);
-  border-radius: var(--radius-lg);
-  background: var(--ground);
 }
 .run-setting-divider {
   flex: none;

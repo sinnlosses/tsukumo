@@ -44,14 +44,12 @@
 
 /* 消す前の確認。`showModal()` は top layer に積むので、サイドバーの上に必ず重なる。 */
 .sidebar-persona-memory-confirm {
+  composes: surface-edge-rule surface-radius-lg surface-tone-surface from "../../../ui/surface/surface-face.module.css";
   box-sizing: border-box;
   width: min(24rem, calc(100vw - 2rem));
   margin: auto;
   padding: var(--space-lg);
-  background: var(--surface);
   color: var(--ink);
-  border: 1px solid var(--rule);
-  border-radius: var(--radius-lg);
   font-size: var(--font-secondary);
 }
 .sidebar-persona-memory-confirm-question {

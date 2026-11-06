@@ -32,20 +32,18 @@
    高さで揃え、横は絵の比率のまま（並べたときに底が揃う）。
    器より広い絵は幅で頭打ちにして、領域を横へ押し広げない（`<li>` 側の `max-width` が前提）。 */
 .prompt-image {
+  composes: surface-edge-rule surface-radius-md surface-tone-surface from "../../../../ui/surface/surface-face.module.css";
   display: block;
   max-width: 100%;
   height: 4rem;
   width: auto;
   object-fit: contain;
-  border: 1px solid var(--rule);
-  border-radius: var(--radius-md);
-  background: var(--surface);
 }
 /* 札の列に並ぶ控え。下の余白は札の列が持つ。 */
 .prompt-images-chip {
   margin: 0;
 }
-.prompt-image-small {
+.prompt-image.prompt-image-small {
   height: 30px;
   border-radius: var(--radius-sm);
 }

@@ -1,13 +1,11 @@
 /* タスクを実行する確認。`showModal()` は top layer に積むので、下のモーダルより必ず上に出る。 */
 .task-run-confirm {
+  composes: surface-edge-rule surface-radius-lg surface-tone-surface from "../../../components/ui/surface/surface-face.module.css";
   box-sizing: border-box;
   width: min(28rem, calc(100vw - 2rem));
   margin: auto;
   padding: var(--space-lg);
-  background: var(--surface);
   color: var(--ink);
-  border: 1px solid var(--rule);
-  border-radius: var(--radius-lg);
   font-size: var(--font-secondary);
 }
 /* 送る文面（または送れない理由）。問いより弱い濃さで、問いの下に1行だけ置く。色は `Text` が持つ。 */

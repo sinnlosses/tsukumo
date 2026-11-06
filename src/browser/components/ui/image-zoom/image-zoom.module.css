@@ -1,6 +1,7 @@
 /* 絵を原寸で拡大して見る面。
    面も絵も画面の内側に収める。横にはみ出す絵は幅で頭打ちにして縮め、面の中で横スクロールを起こさない（狭い画面 390x844 でも）。 */
 .image-zoom {
+  composes: surface-edge-rule surface-radius-lg surface-tone-surface from "../surface/surface-face.module.css";
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -10,10 +11,7 @@
   max-height: calc(100vh - 2rem);
   margin: auto;
   padding: var(--space-md);
-  background: var(--surface);
   color: var(--ink);
-  border: 1px solid var(--rule);
-  border-radius: var(--radius-lg);
   overflow: hidden;
 }
 /* 絵そのもの。器（.image-zoom）の内側に収まるところまでしか広がらない。 */

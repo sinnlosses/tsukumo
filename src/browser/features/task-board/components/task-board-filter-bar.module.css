@@ -8,15 +8,13 @@
   border-bottom: 1px solid var(--rule-quiet);
 }
 .task-board-search {
+  composes: surface-edge-rule surface-radius-md surface-tone-ground from "../../../components/ui/surface/surface-face.module.css";
   box-sizing: border-box;
   display: flex;
   align-items: center;
   gap: var(--space-sm);
   height: 36px;
   padding: 0 var(--space-md);
-  border: 1px solid var(--rule);
-  border-radius: var(--radius-md);
-  background: var(--ground);
   color: var(--ink-quiet);
 }
 .task-board-search-input {
