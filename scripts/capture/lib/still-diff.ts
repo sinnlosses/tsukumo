@@ -1,5 +1,7 @@
 // 静止しなかったときに、最後の2枚の撮影のどこが違ったかを言葉にする。
 
+import pixelmatch from "pixelmatch"
+
 import { decodePng } from "./png-pixel.ts"
 
 /** 違った画素を囲む箱（撮った範囲の左上を 0 とする px）。 */
@@ -20,33 +22,30 @@ export function describeStillDiff(before: Buffer, after: Buffer): string {
   if (a.width !== b.width || a.height !== b.height) {
     return `大きさが違う（${String(a.width)}x${String(a.height)} → ${String(b.width)}x${String(b.height)}）`
   }
-  let count = 0
-  let box: DiffBox | undefined
+  // 閾値 0・縁のなだらかさの見逃し無しで、1 画素でも違えば数える。
+  // diffMask では違った画素だけが不透明で出力に描かれる。
+  const mask = new Uint8Array(a.width * a.height * 4)
+  const count = pixelmatch(a.pixels, b.pixels, mask, a.width, a.height, {
+    threshold: 0,
+    includeAA: true,
+    diffMask: true,
+  })
+  if (count === 0) {
+    return "画素は同じでバイトだけ違う"
+  }
+  let box: DiffBox = { left: a.width, top: a.height, right: -1, bottom: -1 }
   for (let index = 0; index < a.width * a.height; index++) {
-    const offset = index * 4
-    const same =
-      a.pixels[offset] === b.pixels[offset] &&
-      a.pixels[offset + 1] === b.pixels[offset + 1] &&
-      a.pixels[offset + 2] === b.pixels[offset + 2] &&
-      a.pixels[offset + 3] === b.pixels[offset + 3]
-    if (same) {
+    if (mask[index * 4 + 3] === 0) {
       continue
     }
-    count += 1
     const x = index % a.width
     const y = Math.floor(index / a.width)
-    box =
-      box === undefined
-        ? { left: x, top: y, right: x, bottom: y }
-        : {
-            left: Math.min(box.left, x),
-            top: Math.min(box.top, y),
-            right: Math.max(box.right, x),
-            bottom: Math.max(box.bottom, y),
-          }
-  }
-  if (box === undefined) {
-    return "画素は同じでバイトだけ違う"
+    box = {
+      left: Math.min(box.left, x),
+      top: Math.min(box.top, y),
+      right: Math.max(box.right, x),
+      bottom: Math.max(box.bottom, y),
+    }
   }
   return `${String(count)} 画素が違う（x ${String(box.left)}-${String(box.right)}、y ${String(box.top)}-${String(box.bottom)}、領域 ${String(a.width)}x${String(a.height)}）`
 }

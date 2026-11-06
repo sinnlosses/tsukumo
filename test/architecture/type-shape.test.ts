@@ -98,7 +98,7 @@ const UNDEFINED_UNION_CEILING = {
   "src/shared/report": 34,
   "src/shared/character-pack": 32,
   "src/server/report": 30,
-  "scripts/capture": 30,
+  "scripts/capture": 29,
   "src/server/character-pack": 26,
   "scripts/shared": 20,
   "src/server/session": 18,
