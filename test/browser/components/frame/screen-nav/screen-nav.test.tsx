@@ -158,7 +158,7 @@ describe("ScreenNav", () => {
       const sent: SentCommand[] = []
       renderScreenNav(
         {
-          character: characterInfo({ pack: "fictional", name: "架空の精霊" }),
+          character: characterInfo({ name: "架空の精霊" }),
           characterPacks: PACKS.map((pack) => ({ ...pack, inUse: pack.name === "fictional" })),
         },
         (command) => sent.push(command),
@@ -182,7 +182,7 @@ describe("ScreenNav", () => {
       const sent: SentCommand[] = []
       renderScreenNav(
         {
-          character: characterInfo({ pack: "fictional", name: "架空の精霊" }),
+          character: characterInfo({ name: "架空の精霊" }),
           characterPacks: PACKS.map((pack) => ({ ...pack, inUse: pack.name === "fictional" })),
           turn: { kind: "running", startedAt: 0 },
         },

@@ -12,6 +12,7 @@
 // キャラクター画面で選んでいるパック（`#character?pack=<名前>`）と、成果の画面で見ている日（`#achievement?date=<日付>`）も hash に持つ。
 // 前後の日の計算は呼ぶ側が持ち、ここは hash の読み書きだけ。
 
+import type { CharacterPackName } from "../../shared/character-pack/character-pack-name.ts"
 import type { DateKey } from "../../shared/diary/date-key.ts"
 import {
   readHashRoute,
@@ -46,13 +47,13 @@ export function useScreenHref(): (screen: Screen) => string {
 
 /** キャラクター画面で選んでいるパック（hash の `pack`）。 */
 export function usePackSelection(): PackSelection {
-  // スナップショットはプリミティブに限るので名前だけを読む。空文字は「選んでいない」（パックの名前は空にならない）。
+  // スナップショットはプリミティブに限るので名前だけを読む。
   const name = useHashRoute((route) => (route.pack.kind === "named" ? route.pack.name : ""))
   return name === "" ? IN_USE : { kind: "named", name }
 }
 
 /** キャラクター画面でそのパックを選ぶ `<a href>` を作る関数。見ているターンは運ぶ。 */
-export function usePackHref(): (pack: string) => string {
+export function usePackHref(): (pack: CharacterPackName) => string {
   const turn = useHashRoute((route) => route.turn)
   return (pack) =>
     formatHash({
@@ -67,7 +68,7 @@ export function usePackHref(): (pack: string) => string {
  * 一覧でそのパックを選んだ状態にする（切り替えはしない）。作るダイアログで作れたパックを、閉じたあと一覧で選ぶために呼ぶ。
  * リンクではなく呼び出しなのは、作った直後というコマンドを送ったあとの合図で移すため。
  */
-export function selectPack(pack: string): void {
+export function selectPack(pack: CharacterPackName): void {
   writeHashRoute({ ...readHashRoute(), screen: "character", pack: { kind: "named", name: pack } })
 }
 

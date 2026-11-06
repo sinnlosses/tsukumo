@@ -6,7 +6,6 @@ import { describe, expect, it } from "vitest"
 import {
   createChatSummary,
   discardChatSummary,
-  UNAVAILABLE_CHAT_SUMMARY,
 } from "../../../../src/server/chat/adapter/chat-summary.ts"
 import { CHAT_MEMORY_BUDGET } from "../../../../src/server/chat/core/memory/chat-memory-budget.ts"
 import { characterPackName } from "../../../fixture/character.ts"
@@ -232,15 +231,6 @@ describe("createChatSummary", () => {
 
       expect(result).toEqual({ kind: "written", droppedLines: 0 })
       expect(record?.summary).toBe(hugeSingleLine)
-    })
-  })
-
-  describe("UNAVAILABLE_CHAT_SUMMARY", () => {
-    it("読み書きとも何もしない", () => {
-      expect(UNAVAILABLE_CHAT_SUMMARY.write(SUMMARY, [], FOLDED_AT)).toEqual({ kind: "failed" })
-      expect(UNAVAILABLE_CHAT_SUMMARY.read()).toBeUndefined()
-      expect(UNAVAILABLE_CHAT_SUMMARY.readTopics()).toEqual([])
-      expect(UNAVAILABLE_CHAT_SUMMARY.readFold()).toEqual({ kind: "unknown" })
     })
   })
 })

@@ -3,8 +3,8 @@ import { join } from "node:path"
 
 import { describe, expect, it } from "vitest"
 
-import { readCharacterPack } from "../../../../src/server/character-pack/adapter/character-pack.ts"
 import { createPersonaMemory } from "../../../../src/server/chat/adapter/persona-memory.ts"
+import { readPackAt } from "../../../fixture/character-pack-dir.ts"
 import { useTempDir } from "../../../fixture/temp-dir.ts"
 
 const LINE = "苦いお茶より甘いお茶が好き"
@@ -26,7 +26,7 @@ describe("persona.md の置き換え", () => {
     writeFileSync(join(bundled, "persona.md"), "# 架空の精霊\n")
     writeFileSync(join(bundled, "default.svg"), '<svg xmlns="http://www.w3.org/2000/svg"/>')
     const home = join(dir(), "home")
-    const pack = readCharacterPack(bundled)
+    const pack = readPackAt(bundled)
     const memory = createPersonaMemory(pack, dir(), home)
     memory.remember(LINE)
     memory.finishTurn()

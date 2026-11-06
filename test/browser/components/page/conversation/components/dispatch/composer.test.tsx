@@ -14,7 +14,7 @@ import {
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../../../../../../src/shared/session/session-state.ts"
-import { characterInfo } from "../../../../../../fixture/character.ts"
+import { characterInfo, characterPackName } from "../../../../../../fixture/character.ts"
 import { checkedSessionId } from "../../../../../../fixture/session-id.ts"
 import { typedElement } from "../../../../../../typed-element.ts"
 import { createTestQueryClient } from "../../../../../query-client.tsx"
@@ -22,7 +22,7 @@ import { rpcOutput, stubRpcFetch, type RpcFetchStub } from "../../../../../rpc-f
 import { type CommandSpy, putSession } from "../../../../../session-store.ts"
 
 const FIXTURE_CHARACTER: CharacterInfo = characterInfo({
-  pack: "架空パック",
+  pack: characterPackName("fictional-pack"),
   name: "架空の名前",
   expressions: [],
   editable: false,

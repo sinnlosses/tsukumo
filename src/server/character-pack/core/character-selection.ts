@@ -2,6 +2,8 @@
 //
 // 名前で引くのは、名前をパスとして組み立てないため。一覧に無い名前は必ず既定へ落ちる。
 
+import type { CharacterPackName } from "../../../shared/character-pack/character.ts"
+
 /** 名前で選べるもの。選ぶのに要る一片だけを見る。 */
 export type NamedCharacterPack = { readonly name: string }
 
@@ -13,7 +15,7 @@ export type CharacterSelection =
   /** 起動時の初期パック（順位は {@link selectInitialCharacterPack}）。 */
   | { readonly by: "initial" }
   /** 画面から選ばれた名前。覚えるのはこれだけ（`writeRememberedCharacter`）。 */
-  | { readonly by: "name"; readonly name: string }
+  | { readonly by: "name"; readonly name: CharacterPackName }
   /** いま出しているパックのまま起こし直す（モードの切り替え）。名前は運ばない。 */
   | { readonly by: "current" }
 

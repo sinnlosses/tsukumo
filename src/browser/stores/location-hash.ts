@@ -22,6 +22,10 @@
 
 import { useSyncExternalStore } from "react"
 
+import {
+  type CharacterPackName,
+  parseCharacterPackName,
+} from "../../shared/character-pack/character-pack-name.ts"
 import { dateKeyOf, parseDateKey, type DateKey } from "../../shared/diary/date-key.ts"
 
 /**
@@ -65,7 +69,7 @@ export type ViewedTurn = "newest" | number
  */
 export type PackSelection =
   | { readonly kind: "in-use" }
-  | { readonly kind: "named"; readonly name: string }
+  | { readonly kind: "named"; readonly name: CharacterPackName }
 
 /**
  * 成果の画面で見ている日。`"today"` は今日を見る（`date` が無いとき）。
@@ -167,9 +171,10 @@ function turnOf(value: string | null): ViewedTurn {
   return Number(value)
 }
 
-/** 空の `pack` は「選んでいない」に畳む（パックの名前は空にならない）。 */
+/** `pack` が無い・パックの名前として通らない値は「選んでいない」に畳む。 */
 function packOf(value: string | null): PackSelection {
-  return value === null || value === "" ? IN_USE : { kind: "named", name: value }
+  const name = value === null ? undefined : parseCharacterPackName(value)
+  return name === undefined ? IN_USE : { kind: "named", name }
 }
 
 /**

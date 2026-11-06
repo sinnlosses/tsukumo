@@ -11,6 +11,7 @@ import {
   readDiaryDay,
 } from "../../../../src/server/diary/adapter/diary.ts"
 import type { DateKey } from "../../../../src/shared/diary/date-key.ts"
+import { characterPackName } from "../../../fixture/character.ts"
 import { dateKey } from "../../../fixture/date-key.ts"
 import { initGitRepository } from "../../../fixture/git-repository.ts"
 import { useTempDir } from "../../../fixture/temp-dir.ts"
@@ -32,7 +33,7 @@ beforeEach(async () => {
   await initGitRepository(repository)
 })
 
-const WRITER = { pack: "tsukumo", name: "つくも" }
+const WRITER = { pack: characterPackName("tsukumo"), name: "つくも" }
 
 function paragraphInput(date: DateKey, body: string) {
   return {

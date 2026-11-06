@@ -7,6 +7,7 @@ import {
   type Diary,
   type DiaryWriting,
 } from "../../../src/shared/diary/diary.ts"
+import { characterPackName } from "../../fixture/character.ts"
 import { dateKey } from "../../fixture/date-key.ts"
 
 const FIXTURE_DIARY = {
@@ -17,7 +18,7 @@ const FIXTURE_DIARY = {
       writtenAt: "2026-09-23T21:00:00+09:00",
       body: "架空の本文。",
       expression: "proud",
-      writer: { pack: "tsukumo", name: "つくも" },
+      writer: { pack: characterPackName("tsukumo"), name: "つくも" },
     },
   ],
   bookmark: {
@@ -31,6 +32,19 @@ const FIXTURE_DIARY = {
 describe("readDiary", () => {
   it("正しい形はそのまま読む", () => {
     expect(readDiary(FIXTURE_DIARY)).toEqual(FIXTURE_DIARY)
+  })
+
+  it("書き手のパックが名前として通らない段落は、pack の欄を落として読む", () => {
+    const [paragraph] = FIXTURE_DIARY.paragraphs
+    const stored = {
+      ...FIXTURE_DIARY,
+      paragraphs: [{ ...paragraph, writer: { pack: "架空 パック", name: "つくも" } }],
+    }
+
+    const read = readDiary(stored)
+
+    expect(read?.paragraphs[0]?.writer.name).toBe("つくも")
+    expect(read?.paragraphs[0]?.writer.pack).toBeUndefined()
   })
 
   it("しおりが無い形もそのまま読む", () => {

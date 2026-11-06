@@ -7,9 +7,11 @@ import {
   setSeat,
 } from "../../../../src/server/item/core/item-edit.ts"
 import type { ItemsFile } from "../../../../src/server/item/core/items-file.ts"
+import { characterPackName } from "../../../fixture/character.ts"
 import { itemId } from "../../../fixture/item-id.ts"
 
-const PACKS = ["fictional-a", "fictional-b"]
+const FICTIONAL_A = characterPackName("fictional-a")
+const PACKS = [FICTIONAL_A, characterPackName("fictional-b")]
 
 function file(count: number): ItemsFile {
   return {
@@ -64,23 +66,25 @@ describe("removeItem", () => {
 
 describe("setSeat / clearSeat", () => {
   it("置く・差し替える・空ける", () => {
-    const placed = setSeat(file(2), "fictional-a", "topLeft", itemId("1"), PACKS)
+    const placed = setSeat(file(2), FICTIONAL_A, "topLeft", itemId("1"), PACKS)
     expect(placed?.seats).toEqual({ "fictional-a": { topLeft: "1" } })
-    const swapped = placed && setSeat(placed, "fictional-a", "topLeft", itemId("2"), PACKS)
+    const swapped = placed && setSeat(placed, FICTIONAL_A, "topLeft", itemId("2"), PACKS)
     expect(swapped?.seats).toEqual({ "fictional-a": { topLeft: "2" } })
-    const cleared = swapped && clearSeat(swapped, "fictional-a", "topLeft", PACKS)
+    const cleared = swapped && clearSeat(swapped, FICTIONAL_A, "topLeft", PACKS)
     expect(cleared?.seats).toEqual({})
   })
 
   it("知らないパックと一覧に無い id は断る", () => {
-    expect(setSeat(file(1), "unknown", "topLeft", itemId("1"), PACKS)).toBeUndefined()
-    expect(setSeat(file(1), "fictional-a", "topLeft", itemId("9"), PACKS)).toBeUndefined()
-    expect(clearSeat(file(1), "unknown", "topLeft", PACKS)).toBeUndefined()
+    expect(
+      setSeat(file(1), characterPackName("unknown"), "topLeft", itemId("1"), PACKS),
+    ).toBeUndefined()
+    expect(setSeat(file(1), FICTIONAL_A, "topLeft", itemId("9"), PACKS)).toBeUndefined()
+    expect(clearSeat(file(1), characterPackName("unknown"), "topLeft", PACKS)).toBeUndefined()
   })
 
   it("入力を書き換えない", () => {
     const base = file(1)
-    setSeat(base, "fictional-a", "topLeft", itemId("1"), PACKS)
+    setSeat(base, FICTIONAL_A, "topLeft", itemId("1"), PACKS)
     expect(base.seats).toEqual({})
   })
 })

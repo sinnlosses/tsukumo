@@ -27,7 +27,10 @@ describe("isBatched", () => {
 
 describe("consolidationPackToStart", () => {
   it("ターンの終わり以外では起こさない", () => {
-    const state = { ...INITIAL_SESSION_STATE, character: characterInfo({ pack: "a" }) }
+    const state = {
+      ...INITIAL_SESSION_STATE,
+      character: characterInfo({ pack: characterPackName("a") }),
+    }
 
     expect(consolidationPackToStart(SPEAK_DRAWN, state)).toBe(undefined)
   })
@@ -37,7 +40,10 @@ describe("consolidationPackToStart", () => {
   })
 
   it("ターンの終わりで、パックがあれば起こす", () => {
-    const state = { ...INITIAL_SESSION_STATE, character: characterInfo({ pack: "a" }) }
+    const state = {
+      ...INITIAL_SESSION_STATE,
+      character: characterInfo({ pack: characterPackName("a") }),
+    }
 
     expect(consolidationPackToStart(TURN_FINISHED, state)).toBe(characterPackName("a"))
   })
@@ -55,7 +61,7 @@ describe("mayFlowTopics", () => {
   const chatting = (packName: string, chatMode: boolean): SessionState => ({
     ...INITIAL_SESSION_STATE,
     chatMode,
-    character: characterInfo({ pack: packName }),
+    character: characterInfo({ pack: characterPackName(packName) }),
   })
 
   it("書けていて、開いていて、雑談で同じパックのときだけ流す", () => {

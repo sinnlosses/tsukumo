@@ -3,7 +3,12 @@ import type { SessionLaunchPorts } from "../../src/server/session/core/session-l
 import type { DiagnosticEntry } from "../../src/shared/diagnostic/diagnostic-record.ts"
 import { BUILTIN_SESSION_DEFAULT } from "../../src/shared/session/session-default.ts"
 import type { RestoredEvent, SessionEvent } from "../../src/shared/session/session-event.ts"
-import { characterChangedEvent, characterPackEntry, shownPortraits } from "./character.ts"
+import {
+  characterChangedEvent,
+  characterPackEntry,
+  characterPackName,
+  shownPortraits,
+} from "./character.ts"
 import { knownRestored } from "./restored-event.ts"
 import { createStubDriver, type StubDriver } from "./session-driver.ts"
 import { ITEMS_EVENT } from "./session-event.ts"
@@ -90,7 +95,7 @@ export function createHarness(overrides: Partial<SessionLaunchPorts<Pack>> = {})
     characterEvent: (pack: Pack) =>
       characterChangedEvent(
         {
-          pack: pack.name,
+          pack: characterPackName(pack.name),
           name: pack.name,
           editable: false,
           ...shownPortraits({ default: `/character/${pack.name}.png` }),

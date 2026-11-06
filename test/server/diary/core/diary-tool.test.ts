@@ -6,6 +6,7 @@ import {
   type DiaryDay,
 } from "../../../../src/server/diary/core/diary-tool.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
+import { characterPackName } from "../../../fixture/character.ts"
 import { dateKey } from "../../../fixture/date-key.ts"
 
 // 保存の成否だけ差し替えられる偽の `save` を使い、実際のファイル I/O は別のテストで
@@ -21,7 +22,7 @@ const DAY: DiaryDay = {
 
 const NO_TASK_DAY: DiaryDay = { date: dateKey("2026-09-24"), doneTasks: [] }
 
-const WRITER = { pack: "tsukumo", name: "つくも" }
+const WRITER = { pack: characterPackName("tsukumo"), name: "つくも" }
 
 function intakeOf(day: DiaryDay = DAY, saveResult = true) {
   const events: SessionEvent[] = []

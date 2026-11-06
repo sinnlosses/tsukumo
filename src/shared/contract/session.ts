@@ -3,7 +3,7 @@
 
 import { z } from "zod"
 
-import { MAX_CHARACTER_PACK_NAME_LENGTH } from "../character-pack/character.ts"
+import { characterPackNameSchema } from "../character-pack/character.ts"
 import { EXPRESSIONS } from "../character-pack/expression.ts"
 import { commandBase } from "../command.ts"
 import { dateKeySchema } from "../diary/date-key.ts"
@@ -99,7 +99,7 @@ export const sessionContract = {
   /** キャラクターパックを切り替える（駆動の起こし直し）。 */
   switchCharacter: commandBase
     .meta({ chatOnly: false, idleTurn: FRAME_ERROR_REASON.switchDuringTurn, restarts: true })
-    .input(z.object({ name: z.string().min(1).max(MAX_CHARACTER_PACK_NAME_LENGTH) })),
+    .input(z.object({ name: characterPackNameSchema })),
   /**
    * 雑談モードへ入る／出る。駆動の起こし直しになる
    * （`systemPrompt` はセッションを起こすときに固定されるので、レポートの記法を外すには起こし直すしかない）。

@@ -1,7 +1,6 @@
 // 駆動から届いたイベントと、定着の結果に対する、セッションを持つ係の判断。
 
 import type { CharacterPackName } from "../../../../shared/character-pack/character.ts"
-import { shownCharacterPackName } from "../../../../shared/character-pack/character.ts"
 import type { SessionEvent } from "../../../../shared/session/session-event.ts"
 import type { SessionState } from "../../../../shared/session/session-state.ts"
 import type { ChatConsolidationOutcome } from "../../../chat/core/consolidation/chat-consolidation-writer.ts"
@@ -16,7 +15,7 @@ export function consolidationPackToStart(
   event: SessionEvent,
   state: SessionState,
 ): CharacterPackName | undefined {
-  return event.kind === "turn-finished" ? shownCharacterPackName(state.character) : undefined
+  return event.kind === "turn-finished" ? state.character?.pack : undefined
 }
 
 /**

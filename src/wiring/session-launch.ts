@@ -3,7 +3,7 @@
 // 起こす順序そのものは `createSessionLaunch` に任せる（起動時も起こし直しも同じ関数を通る）。
 
 import type { CharacterPack } from "../server/character-pack/adapter/character-pack.ts"
-import { createChatSummary, UNAVAILABLE_CHAT_SUMMARY } from "../server/chat/adapter/chat-summary.ts"
+import { createChatSummary } from "../server/chat/adapter/chat-summary.ts"
 import { createPersonaMemory, readRememberedLines } from "../server/chat/adapter/persona-memory.ts"
 import type { ReadRecent } from "../server/chat/core/archive/chat-memory-prompt.ts"
 import { readChatTopics } from "../server/chat/core/consolidation/chat-consolidation.ts"
@@ -46,7 +46,6 @@ import {
   takeSystemPromptAppend,
   toSystemPromptMode,
 } from "../server/system-prompt/core/system-prompt.ts"
-import { parseCharacterPackName } from "../shared/character-pack/character.ts"
 import { expressionChoices, expressionNames } from "../shared/character-pack/expression-choice.ts"
 import type { DiagnosticEntry } from "../shared/diagnostic/diagnostic-record.ts"
 import type { SwallowedFailurePlace } from "../shared/diagnostic/swallowed-failure.ts"
@@ -336,20 +335,10 @@ type ChatMemoryPorts = {
   readonly readRecent: ReadRecent
 }
 
-/**
- * パックの記憶（あらすじ・直近の逐語）の口を、パックの名前を検査して1か所で決める。
- * 名前が `CharacterPackName` にならないパックには、どれも何もしない口を渡す。
- */
+/** パックの記憶（あらすじ・直近の逐語）の口を、パックの名前で決める。 */
 function chatMemoryOf(pack: CharacterPack, context: WiringContext): ChatMemoryPorts {
-  const packName = parseCharacterPackName(pack.name)
-  if (packName === undefined) {
-    return {
-      chatSummary: UNAVAILABLE_CHAT_SUMMARY,
-      readRecent: () => [],
-    }
-  }
   return {
-    chatSummary: createChatSummary(packName),
-    readRecent: (limits) => context.chatArchive.readRecent(packName, limits),
+    chatSummary: createChatSummary(pack.name),
+    readRecent: (limits) => context.chatArchive.readRecent(pack.name, limits),
   }
 }

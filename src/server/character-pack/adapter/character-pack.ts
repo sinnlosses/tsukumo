@@ -5,7 +5,7 @@
 // ブラウザは `/character/<pack>/<file>` から取りに行く。
 
 import { readdirSync, statSync } from "node:fs"
-import { basename, join } from "node:path"
+import { join } from "node:path"
 
 import { unique } from "remeda"
 
@@ -20,7 +20,9 @@ import {
 import { diaryFontMimeType } from "../../../shared/character-pack/character-diary-font.ts"
 import {
   type CharacterPackEntry,
+  type CharacterPackName,
   type CharacterPackRemoval,
+  parseCharacterPackName,
   toCharacterInfo,
 } from "../../../shared/character-pack/character.ts"
 import { personaBody } from "../../../shared/character-pack/persona-section.ts"
@@ -62,7 +64,7 @@ export const DEFAULT_CHARACTER_DIR_RELATIVE_PATH: readonly string[] = [
 /** キャラクターパック1つ分。定義・人格が無い・壊れているときはそれぞれ undefined。 */
 export type CharacterPack = {
   /** ディレクトリ名（`session.switchCharacter` の鍵）。 */
-  readonly name: string
+  readonly name: CharacterPackName
   readonly dir: string
   readonly definition?: CharacterDefinition
   /**
@@ -81,16 +83,21 @@ export type CharacterPack = {
  * パック1つを読む（`character.json` と `persona.md`）。
  * 無い・壊れているときは `definition: undefined`（立ち絵なしにフォールバック。そのまま {@link characterChangedEvent} へ渡してよい）。
  */
-export function readCharacterPack(dir: string): CharacterPack {
-  const content = readOptionalFile(join(dir, CHARACTER_DEFINITION_FILE_NAME))
-  const definition = content === undefined ? undefined : parseCharacterDefinition(content)
+export function readCharacterPack(dir: string, name: CharacterPackName): CharacterPack {
+  const definition = readCharacterPackDefinition(dir)
   return {
-    name: basename(dir),
+    name,
     dir,
     definition,
     persona: readOptionalFile(join(dir, PERSONA_FILE_NAME)),
     revision: readPackRevision(dir, definition),
   }
+}
+
+/** パックのディレクトリの `character.json` だけを読む。無い・壊れているときは undefined。 */
+export function readCharacterPackDefinition(dir: string) {
+  const content = readOptionalFile(join(dir, CHARACTER_DEFINITION_FILE_NAME))
+  return content === undefined ? undefined : parseCharacterDefinition(content)
 }
 
 /** パックの探し先3箇所。`local` の1つ固定は起動先の側だけ。 */
@@ -150,20 +157,23 @@ export function characterPackRemoval(
  * 読めないディレクトリは黙って飛ばす（一覧が短くなるだけで、起動は止めない）。
  *
  * `roots` は同梱とホームの置き場（既定は {@link defaultCharacterPackRoots}）。
+ * `warnSkipped` は名前の検査で落とした名前の警告の出し方。引き直す側が {@link createSkippedPackWarner} を1つ持ち回ると、同じ名前の警告は1回になる。
  */
 export function listCharacterPacks(
   cwd: string,
   roots: CharacterPackRoots = defaultCharacterPackRoots(),
+  warnSkipped: (name: string) => void = createSkippedPackWarner(),
 ): readonly CharacterPack[] {
   const local = localPackDir(cwd)
+  const localName = parseCharacterPackName(LOCAL_PACK_NAME)
   const dirs = [
-    ...listPackDirs(roots.bundled),
-    ...listPackDirs(roots.home),
-    ...(hasDefinition(local) ? [local] : []),
+    ...listPackDirs(roots.bundled, warnSkipped),
+    ...listPackDirs(roots.home, warnSkipped),
+    ...(hasDefinition(local) && localName !== undefined ? [{ dir: local, name: localName }] : []),
   ]
 
   // 同名は後勝ち。同梱 → ホーム → 起動先の順に並べてあるので、これがそのまま優先順になる。
-  const packs = dirs.map(readCharacterPack)
+  const packs = dirs.map(({ dir, name }) => readCharacterPack(dir, name))
   const lastOfEachName = [...new Map(packs.map((pack) => [pack.name, pack] as const)).values()]
   return [
     ...lastOfEachName.filter((pack) => pack.name === LEADING_PACK_NAME),
@@ -231,9 +241,24 @@ export function readCharacterAsset(
 export function findCharacterPack(
   current: CharacterPack,
   packs: readonly CharacterPack[],
-  name: string,
+  name: CharacterPackName,
 ): CharacterPack | undefined {
   return withCurrentPack(current, packs).find((listed) => listed.name === name)
+}
+
+/** 一覧から落とした名前を警告する関数を作る。一覧は何度も引き直すので、同じ名前の警告は作った関数ごとに1回だけにする。 */
+export function createSkippedPackWarner(): (name: string) => void {
+  const warned = new Set<string>()
+  return (name) => {
+    if (warned.has(name)) {
+      return
+    }
+
+    warned.add(name)
+    process.stderr.write(
+      `tsukumo: キャラクターパック「${name}」は名前が半角英数字と . _ - だけではないので、一覧に載せません\n`,
+    )
+  }
 }
 
 /**
@@ -323,7 +348,10 @@ function isDefined<T>(value?: T): value is T {
  * 置き場の直下で、`character.json` を持つディレクトリだけを、名前順に返す。読めなければ空。
  * `readdirSync` の順はファイルシステム任せなので、並べないと `<select>` の並びが環境によって変わる。
  */
-function listPackDirs(root: string): readonly string[] {
+function listPackDirs(
+  root: string,
+  warnSkipped: (name: string) => void,
+): readonly { readonly dir: string; readonly name: CharacterPackName }[] {
   let names: readonly string[]
   try {
     names = readdirSync(root)
@@ -334,8 +362,16 @@ function listPackDirs(root: string): readonly string[] {
 
   return names
     .toSorted((a, b) => a.localeCompare(b))
-    .map((name) => join(root, name))
-    .filter(hasDefinition)
+    .filter((name) => hasDefinition(join(root, name)))
+    .flatMap((name) => {
+      const parsed = parseCharacterPackName(name)
+      if (parsed === undefined) {
+        warnSkipped(name)
+        return []
+      }
+
+      return [{ dir: join(root, name), name: parsed }]
+    })
 }
 
 /** 起動先のパックの置き場（`<cwd>/characters/local`）。ここだけは1つ固定。 */

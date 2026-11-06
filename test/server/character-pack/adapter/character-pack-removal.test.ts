@@ -7,16 +7,14 @@ import {
   deleteCharacterPack,
   editCharacterPack,
 } from "../../../../src/server/character-pack/adapter/character-edit.ts"
-import {
-  listCharacterPacks,
-  readCharacterPack,
-} from "../../../../src/server/character-pack/adapter/character-pack.ts"
+import { listCharacterPacks } from "../../../../src/server/character-pack/adapter/character-pack.ts"
 import type { CharacterDelete } from "../../../../src/shared/contract/character-pack.ts"
 import {
   PERSONA,
   PLAUSIBLE_SVG,
   writeBundledPackUnder,
 } from "../../../fixture/bundled-character-pack.ts"
+import { readPackAt } from "../../../fixture/character-pack-dir.ts"
 import { characterPackName } from "../../../fixture/character.ts"
 import { useTempDir } from "../../../fixture/temp-dir.ts"
 
@@ -84,7 +82,7 @@ describe("deleteCharacterPack", () => {
     writeBundledPack("tsukumo")
     writeBundledPack("spirit")
     // 同梱の tsukumo を画面で直す（ホームへ写ってから書かれる）。
-    const spirit = readCharacterPack(join(dir(), "bundled", "spirit"))
+    const spirit = readPackAt(join(dir(), "bundled", "spirit"))
     editCharacterPack(
       spirit,
       listCharacterPacks(cwd(), roots()),

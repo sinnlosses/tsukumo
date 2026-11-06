@@ -2,6 +2,8 @@
 // 切り替えと画面からの編集で入れ替わるので、可変なのはこのファイルの中だけにする。
 // 呼ぶ側は「いま出しているもの」を関数越しに引くだけで、いつ入れ替わったかを知らなくてよい。
 
+import { basename } from "node:path"
+
 import { resolveBundledDir } from "../server/adapter/bundled-path.ts"
 import {
   createCharacterPack,
@@ -11,6 +13,7 @@ import {
 import {
   type CharacterPack,
   characterChangedEvent,
+  createSkippedPackWarner,
   DEFAULT_CHARACTER_DIR_RELATIVE_PATH,
   listCharacterPacks,
   readCharacterAsset,
@@ -34,6 +37,7 @@ import {
   writeRememberedCharacter,
 } from "../server/session/adapter/remembered-default.ts"
 import type { CharacterAssetLocation } from "../shared/character-pack/character-asset.ts"
+import { parseCharacterPackName } from "../shared/character-pack/character.ts"
 import type {
   CharacterCreate,
   CharacterDelete,
@@ -100,15 +104,13 @@ export function createCurrentCharacter(
   cwd: string,
   onPersonaFailure: PersonaMemoryFailureReport,
 ): CurrentCharacter {
-  const defaultPack = readCharacterPack(
-    resolveBundledDir(
-      config.character.kind === "directory" ? config.character.path : undefined,
-      cwd,
-      DEFAULT_CHARACTER_DIR_RELATIVE_PATH,
-    ),
+  const defaultPack = readStartupPack(
+    cwd,
+    config.character.kind === "directory" ? config.character.path : undefined,
   )
+  const warnSkipped = createSkippedPackWarner()
   const findPacks = (): readonly CharacterPack[] => {
-    const found = listCharacterPacks(cwd)
+    const found = listCharacterPacks(cwd, undefined, warnSkipped)
     // 既定のパックが一覧に無いとき（`TSUKUMO_CHARACTER` で別の場所を指したとき）も選択肢に足す
     // （いま出しているものが `<select>` に無いと、選択の表示がずれる）。
     return found.some((pack) => pack.name === defaultPack.name) ? found : [...found, defaultPack]
@@ -195,4 +197,27 @@ export function createCurrentCharacter(
     },
     serveAsset: (location, version) => readCharacterAsset(current, packs, location, version),
   }
+}
+
+/**
+ * 起動の指定（`TSUKUMO_CHARACTER`）か同梱の既定のディレクトリを、パックとして読む。
+ * 指したディレクトリの名前がパックの名前として通らないときは、警告を1行出して同梱の既定を使う。
+ */
+function readStartupPack(cwd: string, specifiedPath?: string): CharacterPack {
+  const specifiedDir = resolveBundledDir(specifiedPath, cwd, DEFAULT_CHARACTER_DIR_RELATIVE_PATH)
+  const specifiedName = parseCharacterPackName(basename(specifiedDir))
+  if (specifiedName !== undefined) {
+    return readCharacterPack(specifiedDir, specifiedName)
+  }
+
+  process.stderr.write(
+    `tsukumo: TSUKUMO_CHARACTER の「${basename(specifiedDir)}」は名前が半角英数字と . _ - だけではないので、同梱の既定を使います\n`,
+  )
+  const defaultDir = resolveBundledDir(undefined, cwd, DEFAULT_CHARACTER_DIR_RELATIVE_PATH)
+  const defaultName = parseCharacterPackName(basename(defaultDir))
+  if (defaultName === undefined) {
+    throw new Error(`同梱の既定のパックの名前が不正です: ${basename(defaultDir)}`)
+  }
+
+  return readCharacterPack(defaultDir, defaultName)
 }

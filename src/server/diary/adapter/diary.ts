@@ -12,6 +12,7 @@ import { basename, dirname, join } from "node:path"
 
 import { identity, sortBy } from "remeda"
 
+import type { CharacterPackName } from "../../../shared/character-pack/character-pack-name.ts"
 import { parseDateKey, type DateKey } from "../../../shared/diary/date-key.ts"
 import {
   DIARY_VERSION,
@@ -39,7 +40,7 @@ export type DiaryParagraphInput = {
   readonly writtenAtEpochMilliseconds: number
   readonly body: string
   readonly expression: string
-  readonly writer: { readonly pack: string; readonly name: string }
+  readonly writer: { readonly pack: CharacterPackName; readonly name: string }
   readonly bookmark: DiaryBookmark
 }
 

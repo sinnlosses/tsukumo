@@ -7,6 +7,7 @@
 import { mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 
+import type { CharacterPackName } from "../../../shared/character-pack/character-pack-name.ts"
 import { type ItemId, parseItemImage, type SeatKey } from "../../../shared/item/item.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import { writeFileAtomic } from "../../adapter/lib/atomic-file.ts"
@@ -75,8 +76,8 @@ export function removeItemFromHome(
 }
 
 export function setSeatInHome(
-  input: { readonly pack: string; readonly seat: SeatKey; readonly id: ItemId },
-  knownPacks: readonly string[],
+  input: { readonly pack: CharacterPackName; readonly seat: SeatKey; readonly id: ItemId },
+  knownPacks: readonly CharacterPackName[],
   dir: string = tsukumoHomePath("items"),
 ): SessionEvent | undefined {
   const file = writableItemsFile(dir)
@@ -90,8 +91,8 @@ export function setSeatInHome(
 }
 
 export function clearSeatInHome(
-  input: { readonly pack: string; readonly seat: SeatKey },
-  knownPacks: readonly string[],
+  input: { readonly pack: CharacterPackName; readonly seat: SeatKey },
+  knownPacks: readonly CharacterPackName[],
   dir: string = tsukumoHomePath("items"),
 ): SessionEvent | undefined {
   const file = writableItemsFile(dir)

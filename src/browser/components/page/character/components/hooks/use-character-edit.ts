@@ -16,6 +16,7 @@
 import { useState } from "react"
 
 import type { AccentTarget } from "../../../../../../shared/character-pack/character-definition.ts"
+import type { CharacterPackName } from "../../../../../../shared/character-pack/character-pack-name.ts"
 import { resolveExpressionLabel } from "../../../../../../shared/character-pack/expression-choice.ts"
 import type { Expression } from "../../../../../../shared/character-pack/expression.ts"
 import { readAccentColor } from "../../../../../stores/appearance-color-root.ts"
@@ -271,11 +272,11 @@ type ImageTarget =
 /** 断られた画像と、そのときのパック（一覧で別のパックを選んだら出さない）。 */
 type RejectedImage =
   | { readonly kind: "none" }
-  | { readonly kind: "rejected"; readonly pack: string; readonly target: ImageTarget }
+  | { readonly kind: "rejected"; readonly pack: CharacterPackName; readonly target: ImageTarget }
 
 function rejectedTargetIn(
   rejected: RejectedImage,
-  pack: string,
+  pack: CharacterPackName,
 ): ImageTarget | { readonly kind: "none" } {
   return rejected.kind === "rejected" && rejected.pack === pack ? rejected.target : { kind: "none" }
 }

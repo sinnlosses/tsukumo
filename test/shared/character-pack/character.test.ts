@@ -6,11 +6,10 @@ import {
   type CharacterInfoSource,
   effectiveAccent,
   parseCharacterPackName,
-  shownCharacterPackName,
   toCharacterInfo,
 } from "../../../src/shared/character-pack/character.ts"
 import { EXPRESSIONS } from "../../../src/shared/character-pack/expression.ts"
-import { characterInfo, FULL_DEFINITION_JSON } from "../../fixture/character.ts"
+import { characterInfo, characterPackName, FULL_DEFINITION_JSON } from "../../fixture/character.ts"
 
 /** 定義ファイルの JSON から、画面に渡る姿を作る。 */
 function infoOf(
@@ -20,7 +19,12 @@ function infoOf(
   const definition = parseCharacterDefinition(json)
   return definition === undefined
     ? undefined
-    : toCharacterInfo({ definition, pack: "fictional", revision, editable: true })
+    : toCharacterInfo({
+        definition,
+        pack: characterPackName("fictional"),
+        revision,
+        editable: true,
+      })
 }
 
 describe("toCharacterInfo の畳み方", () => {
@@ -88,8 +92,18 @@ describe("toCharacterInfo", () => {
       return
     }
 
-    const before = toCharacterInfo({ definition, pack: "same", revision: "1", editable: true })
-    const after = toCharacterInfo({ definition, pack: "same", revision: "2", editable: true })
+    const before = toCharacterInfo({
+      definition,
+      pack: characterPackName("same"),
+      revision: "1",
+      editable: true,
+    })
+    const after = toCharacterInfo({
+      definition,
+      pack: characterPackName("same"),
+      revision: "2",
+      editable: true,
+    })
 
     expect(before.portraits?.default).not.toBe(after.portraits?.default)
   })
@@ -160,7 +174,7 @@ describe("toCharacterInfo", () => {
   it("定義が無いときは、立ち絵なし・default だけの形にする", () => {
     const info = toCharacterInfo({
       definition: undefined,
-      pack: "fictional",
+      pack: characterPackName("fictional"),
       revision: undefined,
       editable: false,
     })
@@ -211,13 +225,5 @@ describe("parseCharacterPackName", () => {
     for (const name of ["../evil", "a/b", ".hidden", "", "架空", "a b", "a".repeat(201)]) {
       expect(parseCharacterPackName(name)).toBeUndefined()
     }
-  })
-})
-
-describe("shownCharacterPackName", () => {
-  it("出しているパックの名前を検査して返し、無い・通らないときは undefined", () => {
-    expect(shownCharacterPackName(characterInfo({ pack: "fictional" }))).toBe("fictional")
-    expect(shownCharacterPackName(characterInfo({ pack: "架空" }))).toBeUndefined()
-    expect(shownCharacterPackName(undefined)).toBeUndefined()
   })
 })

@@ -11,11 +11,13 @@ import {
   removeItemFromHome,
   setSeatInHome,
 } from "../../../../src/server/item/adapter/item-store.ts"
+import { characterPackName } from "../../../fixture/character.ts"
 import { itemId } from "../../../fixture/item-id.ts"
 import { useTempDir } from "../../../fixture/temp-dir.ts"
 
 const PNG = "data:image/png;base64,iVBORw0KGgo="
-const PACKS = ["fictional-a"]
+const FICTIONAL_A = characterPackName("fictional-a")
+const PACKS = [FICTIONAL_A]
 
 describe("item-store", () => {
   const home = useTempDir("item-store")
@@ -55,9 +57,9 @@ describe("item-store", () => {
     expect(addItemToHome({ name: "提灯", image: PNG }, dir())).toBeUndefined()
     expect(removeItemFromHome(itemId("1"), dir())).toBeUndefined()
     expect(
-      setSeatInHome({ pack: "fictional-a", seat: "topLeft", id: itemId("1") }, PACKS, dir()),
+      setSeatInHome({ pack: FICTIONAL_A, seat: "topLeft", id: itemId("1") }, PACKS, dir()),
     ).toBeUndefined()
-    expect(clearSeatInHome({ pack: "fictional-a", seat: "topLeft" }, PACKS, dir())).toBeUndefined()
+    expect(clearSeatInHome({ pack: FICTIONAL_A, seat: "topLeft" }, PACKS, dir())).toBeUndefined()
     expect(readFileSync(itemsFile(), "utf8")).toBe(raw)
     expect(readdirSync(dir())).toEqual(["items.json"])
     expect(itemsChangedEvent(dir())).toEqual({ kind: "items-changed", items: [], seats: {} })
@@ -71,7 +73,7 @@ describe("item-store", () => {
 
   it("別の呼び出しで読み直しても席が残る", () => {
     addItemToHome({ name: "提灯", image: PNG }, dir())
-    setSeatInHome({ pack: "fictional-a", seat: "belowRight", id: itemId("1") }, PACKS, dir())
+    setSeatInHome({ pack: FICTIONAL_A, seat: "belowRight", id: itemId("1") }, PACKS, dir())
     const event = itemsChangedEvent(dir())
     expect(event).toMatchObject({
       seats: { "fictional-a": { belowRight: { id: "1" }, topLeft: undefined } },
@@ -80,7 +82,7 @@ describe("item-store", () => {
 
   it("消すと画像が消え、置いていた席が空く", () => {
     addItemToHome({ name: "提灯", image: PNG }, dir())
-    setSeatInHome({ pack: "fictional-a", seat: "topLeft", id: itemId("1") }, PACKS, dir())
+    setSeatInHome({ pack: FICTIONAL_A, seat: "topLeft", id: itemId("1") }, PACKS, dir())
     const event = removeItemFromHome(itemId("1"), dir())
     expect(existsSync(join(dir(), "1.png"))).toBe(false)
     expect(event).toEqual({ kind: "items-changed", items: [], seats: {} })
@@ -93,7 +95,7 @@ describe("item-store", () => {
     chmodSync(dir(), 0o500)
     try {
       expect(() =>
-        setSeatInHome({ pack: "fictional-a", seat: "topLeft", id: itemId("1") }, PACKS, dir()),
+        setSeatInHome({ pack: FICTIONAL_A, seat: "topLeft", id: itemId("1") }, PACKS, dir()),
       ).toThrow("EACCES")
     } finally {
       chmodSync(dir(), 0o700)

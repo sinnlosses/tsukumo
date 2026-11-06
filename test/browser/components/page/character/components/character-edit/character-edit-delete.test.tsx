@@ -3,7 +3,11 @@ import { describe, expect, it } from "vitest"
 
 import type { CharacterPackEntry } from "../../../../../../../src/shared/character-pack/character.ts"
 import type { SessionState } from "../../../../../../../src/shared/session/session-state.ts"
-import { characterInfo, characterPackEntry } from "../../../../../../fixture/character.ts"
+import {
+  characterInfo,
+  characterPackEntry,
+  characterPackName,
+} from "../../../../../../fixture/character.ts"
 import {
   deleteConfirmDialog,
   FIXTURE_CHARACTER,
@@ -37,7 +41,7 @@ describe("CharacterEdit のキャラクターを消す", () => {
     // 使用中以外のパックを詳しい設定に出すには、一覧にもう1件（`other`）を足し、hash でそれを
     // 選ぶ（`docs/architecture/screen-design/character-screen.md`「選んでいるパックは hash に持つ」）。
     const OTHER_CHARACTER: NonNullable<SessionState["character"]> = characterInfo({
-      pack: "other",
+      pack: characterPackName("other"),
       name: "別の精霊",
     })
     const OTHER_PACKS: readonly CharacterPackEntry[] = [

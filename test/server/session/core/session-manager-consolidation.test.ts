@@ -9,7 +9,7 @@ import type { DiagnosticEntry } from "../../../../src/shared/diagnostic/diagnost
 import { swallowedFailureFootprintSchema } from "../../../../src/shared/diagnostic/swallowed-failure.ts"
 import type { ServerFrame } from "../../../../src/shared/frame.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
-import { characterChangedEvent } from "../../../fixture/character.ts"
+import { characterChangedEvent, characterPackName } from "../../../fixture/character.ts"
 import { createStubDriver } from "../../../fixture/session-driver.ts"
 import { CHARACTER_EVENT } from "../../../fixture/session-event.ts"
 import { createSessionManager, waitForBatch } from "../../../fixture/session-manager.ts"
@@ -350,7 +350,7 @@ describe("createSessionManager", () => {
 
         await started.manager.commands.session.switchCharacter({ name: "fictional" })
         started.stub.emit(CHARACTER_EVENT)
-        started.stub.emit(characterChangedEvent({ pack: "another-fictional" }))
+        started.stub.emit(characterChangedEvent({ pack: characterPackName("another-fictional") }))
         started.stub.emit(TURN_FINISHED)
         expect(started.consolidation.calls).toHaveLength(3)
       })
@@ -392,7 +392,7 @@ describe("createSessionManager", () => {
       const { stub, consolidation, frames } = await startInChat()
 
       stub.emit(TURN_FINISHED)
-      stub.emit(characterChangedEvent({ pack: "another-fictional" }))
+      stub.emit(characterChangedEvent({ pack: characterPackName("another-fictional") }))
       consolidation.finish({
         kind: "written",
         topics: ["架空の話題"],

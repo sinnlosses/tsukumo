@@ -5,6 +5,7 @@ import {
   readHashRoute,
   SCREEN_NAV_ITEMS,
 } from "../../../src/browser/stores/location-hash.ts"
+import { characterPackName } from "../../fixture/character.ts"
 import { dateKey } from "../../fixture/date-key.ts"
 
 type HashRoute = ReturnType<typeof readHashRoute>
@@ -59,9 +60,17 @@ describe("readHashRoute", () => {
   // 選んでいるパックはキャラクター画面のときだけ読む（docs/architecture/screen-design.md「設定の置き場所」）。
   it("キャラクター画面の pack は選んでいるパック、ほかの画面では読まない", () => {
     expect(readHash("#character?pack=other&turn=2")).toEqual(
-      route({ screen: "character", turn: 2, pack: { kind: "named", name: "other" } }),
+      route({
+        screen: "character",
+        turn: 2,
+        pack: { kind: "named", name: characterPackName("other") },
+      }),
     )
     expect(readHash("#character?pack=")).toEqual(route({ screen: "character" }))
+    expect(readHash(`#character?pack=${encodeURIComponent("日本語")}`)).toEqual(
+      route({ screen: "character" }),
+    )
+    expect(readHash("#character?pack=..")).toEqual(route({ screen: "character" }))
   })
 
   // 見ている日は成果の画面のときだけ読む（docs/architecture/screen-design.md「成果の画面」）。
@@ -98,7 +107,7 @@ describe("formatHash", () => {
 
   // `#character/<名前>` にせず `pack` に持つのは、`turn` と同じく画面の上に乗る付随情報だから。
   it("選んでいるパックは pack に書き、キャラクター画面以外では落とす", () => {
-    const named = { kind: "named", name: "new" } as const
+    const named = { kind: "named", name: characterPackName("new") } as const
     expect(formatHash(route({ screen: "character", turn: 3, pack: named }))).toBe(
       "#character?pack=new&turn=3",
     )

@@ -1,6 +1,8 @@
 // `/character/<pack>/<file>` で配るキャラクターの素材（立ち絵・顔・背景）の、URL の作り方と読み方・拡張子による仕分け。
 // 素材そのものは持たない。読む側・配る側・画面に載せる側が同じ経路名と同じ仕分けを見るための契約。
 
+import { type CharacterPackName, parseCharacterPackName } from "./character-pack-name.ts"
+
 export const CHARACTER_ASSET_PATH_PREFIX = "/character/"
 
 /**
@@ -12,21 +14,25 @@ export const CHARACTER_ASSET_PATH_PREFIX = "/character/"
  * 画面から立ち絵を差し替えるとファイル名が同じまま中身だけが変わるので、素材の版（更新時刻）を混ぜる。
  * 配る側はこの値を見ない（`?` 以降を落としてから配信ファイルを決める）。無ければ付けない。
  */
-export function characterAssetPath(pack: string, fileName: string, revision?: string): string {
+export function characterAssetPath(
+  pack: CharacterPackName,
+  fileName: string,
+  revision?: string,
+): string {
   const path = `${CHARACTER_ASSET_PATH_PREFIX}${encodeURIComponent(pack)}/${encodeURIComponent(fileName)}`
   return revision === undefined ? path : `${path}?v=${encodeURIComponent(revision)}`
 }
 
 /** {@link readCharacterAssetPath} が読み出したもの。どちらもデコード済み。 */
 export type CharacterAssetLocation = {
-  readonly pack: string
+  readonly pack: CharacterPackName
   readonly fileName: string
 }
 
 /**
  * {@link CHARACTER_ASSET_PATH_PREFIX} より後ろ（問い合わせ文字列を落としたもの）を、パック名とファイル名に読み分ける。
  * 区切りの `/` がちょうど1つでないもの・どちらかが空のもの・デコードできないものは undefined（配る側が 404 にする）。
- * デコードした名前が `..` などでもここでは弾かない。
+ * デコードしたパックの名前が {@link parseCharacterPackName} を通らないもの（`..`・日本語など）も undefined。
  * 配ってよいかは一覧と定義との突き合わせが決める（パスを組み立てないので、載っていない名前は自然に「無い」に落ちる）。
  */
 export function readCharacterAssetPath(rest: string): CharacterAssetLocation | undefined {
@@ -43,7 +49,8 @@ export function readCharacterAssetPath(rest: string): CharacterAssetLocation | u
   ) {
     return undefined
   }
-  const pack = decodeSegment(packSegment)
+  const decodedPack = decodeSegment(packSegment)
+  const pack = decodedPack === undefined ? undefined : parseCharacterPackName(decodedPack)
   const fileName = decodeSegment(fileSegment)
   return pack === undefined || fileName === undefined ? undefined : { pack, fileName }
 }

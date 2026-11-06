@@ -9,6 +9,7 @@ import {
   useScreen,
   useScreenHref,
 } from "../../../src/browser/stores/screen.tsx"
+import { characterPackName } from "../../fixture/character.ts"
 
 /**
  * hash を書き換えて `hashchange` を流す。happy-dom が `location.hash` の代入でイベントを
@@ -95,7 +96,7 @@ describe("usePackHref", () => {
     window.location.hash = "#character?turn=3"
     const { result } = renderHook(() => usePackHref())
 
-    expect(result.current("other")).toBe("#character?pack=other&turn=3")
+    expect(result.current(characterPackName("other"))).toBe("#character?pack=other&turn=3")
   })
 })
 
@@ -105,7 +106,7 @@ describe("selectPack", () => {
   it("キャラクター画面でそのパックを選んだ状態に書き換える", () => {
     window.location.hash = "#character?turn=3"
 
-    selectPack("fictional-2")
+    selectPack(characterPackName("fictional-2"))
 
     expect(window.location.hash).toBe("#character?pack=fictional-2&turn=3")
   })
@@ -113,7 +114,7 @@ describe("selectPack", () => {
   it("会話の画面にいても、キャラクター画面へ移してパックを選ぶ", () => {
     window.location.hash = "#?turn=3"
 
-    selectPack("fictional-2")
+    selectPack(characterPackName("fictional-2"))
 
     expect(window.location.hash).toBe("#character?pack=fictional-2&turn=3")
   })

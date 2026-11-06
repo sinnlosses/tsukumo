@@ -3,6 +3,7 @@
 
 import { omit } from "remeda"
 
+import type { CharacterPackName } from "../../../shared/character-pack/character-pack-name.ts"
 import type { PortraitFormat } from "../../../shared/character-pack/portrait-image.ts"
 import {
   itemFileName,
@@ -64,10 +65,10 @@ export function removeItem(file: ItemsFile, id: ItemId): ItemRemoved | undefined
 /** 席に一覧のアイテムを置く（差し替えを含む）。知らないパック・一覧に無い id は undefined。 */
 export function setSeat(
   file: ItemsFile,
-  pack: string,
+  pack: CharacterPackName,
   seat: SeatKey,
   id: ItemId,
-  knownPacks: readonly string[],
+  knownPacks: readonly CharacterPackName[],
 ): ItemsFile | undefined {
   if (!knownPacks.includes(pack) || !file.items.some((item) => item.id === id)) {
     return undefined
@@ -78,9 +79,9 @@ export function setSeat(
 /** 席を空ける。知らないパックは undefined。行が空になったらパックの行ごと落とす。 */
 export function clearSeat(
   file: ItemsFile,
-  pack: string,
+  pack: CharacterPackName,
   seat: SeatKey,
-  knownPacks: readonly string[],
+  knownPacks: readonly CharacterPackName[],
 ): ItemsFile | undefined {
   if (!knownPacks.includes(pack)) {
     return undefined

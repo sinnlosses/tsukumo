@@ -1,5 +1,6 @@
 // `<CharacterEdit>` が画面に出す形。フックが畳み、presenter と部品が `kind` で出し分けて置く。
 
+import type { CharacterPackName } from "../../../../../shared/character-pack/character-pack-name.ts"
 import type { Expression } from "../../../../../shared/character-pack/expression.ts"
 import type { AccentSwatchModel } from "./accent-swatch-model.ts"
 import type { ItemSectionModel } from "./item-edit-model.ts"
@@ -120,7 +121,7 @@ export type CharacterDeleteBandModel =
   | {
       readonly kind: "shown"
       /** 確かめの入力と突き合わせる id（＝パックの名前）。 */
-      readonly pack: string
+      readonly pack: CharacterPackName
       readonly heading: string
       readonly note: string
       /** 帯のボタンの字（「<名前> を消す」／「<名前> を同梱に戻す」）。 */

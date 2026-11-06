@@ -43,6 +43,8 @@ characters/<name>/
 | 2   | `~/.tsukumo/characters/*`         | **画面から作ったパック**（全プロジェクト共通）              |
 | 3   | 起動先の `<cwd>/characters/local` | そのプロジェクトで用意した素材（1つ固定のまま）             |
 
+名前が `parseCharacterPackName` を通らないディレクトリ（日本語・空白入りなど）は一覧に載せず、警告を1行出す。`session.switchCharacter` も同じ規則で見る。
+
 **`systemPrompt` の append を組むのは `system-prompt/core/system-prompt.ts` の `takeSystemPromptAppend` 1つだけ**
 （寄せた理由は `docs/architecture.md`「新しいコードを置く場所」）。**`persona.md` の全文を fs から
 読むのは adapter（`character-pack.ts`）で、組み立てには文字列で渡す**ので、`core` はパックの型も fs

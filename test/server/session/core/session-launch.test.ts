@@ -8,6 +8,7 @@ import {
   type SessionLaunchPorts,
 } from "../../../../src/server/session/core/session-launch.ts"
 import type { RestoredEvent, SessionEvent } from "../../../../src/shared/session/session-event.ts"
+import { characterPackName } from "../../../fixture/character.ts"
 import { knownRestored } from "../../../fixture/restored-event.ts"
 import { createStubDriver } from "../../../fixture/session-driver.ts"
 import { checkedSessionId } from "../../../fixture/session-id.ts"
@@ -115,7 +116,7 @@ describe("createSessionLaunch", () => {
     const harness = createHarness()
 
     await createSessionLaunch(harness.ports)(harness.receive, harness.receiveRestored, {
-      selection: { by: "name", name: "kagami" },
+      selection: { by: "name", name: characterPackName("kagami") },
       chat: false,
       resume: PREVIOUS_WORK,
     })

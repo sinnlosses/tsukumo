@@ -14,7 +14,7 @@ import {
   parseCharacterDefinition,
 } from "../../../src/shared/character-pack/character-definition.ts"
 import { toCharacterInfo } from "../../../src/shared/character-pack/character.ts"
-import { FULL_DEFINITION_JSON } from "../../fixture/character.ts"
+import { characterPackName, FULL_DEFINITION_JSON } from "../../fixture/character.ts"
 
 describe("parseCharacterDefinition", () => {
   it("あるものだけの portraits をそのまま持つ", () => {
@@ -48,7 +48,7 @@ describe("parseCharacterDefinition", () => {
     }
     const info = toCharacterInfo({
       definition,
-      pack: "fictional",
+      pack: characterPackName("fictional"),
       revision: undefined,
       editable: true,
     })

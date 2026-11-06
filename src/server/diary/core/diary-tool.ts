@@ -6,6 +6,7 @@
 //
 // 3段目の合図（引数の断片から最上位の鍵 `bookmark` を見つける純関数）もここに持つ。
 
+import type { CharacterPackName } from "../../../shared/character-pack/character-pack-name.ts"
 import type { Expression } from "../../../shared/character-pack/expression.ts"
 import type { DateKey } from "../../../shared/diary/date-key.ts"
 import type { DiaryBookmark } from "../../../shared/diary/diary.ts"
@@ -58,7 +59,7 @@ export type SaveDiaryParagraph = (params: {
   readonly body: string
   readonly expression: Expression
   /** 書いたときのパック（ディレクトリ名と表示名）。窓口を作るときに1回だけ受け取る。 */
-  readonly writer: { readonly pack: string; readonly name: string }
+  readonly writer: { readonly pack: CharacterPackName; readonly name: string }
   readonly bookmark: DiaryBookmark
 }) => Promise<boolean>
 
@@ -74,7 +75,7 @@ export type DiaryIntake = {
  */
 export function createDiaryIntake(
   day: DiaryDay,
-  writer: { readonly pack: string; readonly name: string },
+  writer: { readonly pack: CharacterPackName; readonly name: string },
   now: () => number,
   save: SaveDiaryParagraph,
   onEvent: (event: SessionEvent) => void,

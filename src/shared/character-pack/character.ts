@@ -3,11 +3,11 @@
 // 立ち絵の中身は持たない（`portraits` の値は `/character/<pack>/<file>` の URL）。
 
 import { fromKeys } from "remeda"
-import { z } from "zod"
 
 import { characterAssetPath } from "./character-asset.ts"
 import type { CharacterBackground } from "./character-background.ts"
 import type { CharacterDefinition } from "./character-definition.ts"
+import type { CharacterPackName } from "./character-pack-name.ts"
 import { type ExpressionChoice, expressionChoices } from "./expression-choice.ts"
 import { type Expression, EXPRESSIONS } from "./expression.ts"
 
@@ -20,7 +20,7 @@ export type CharacterInfo = {
    * いま出しているキャラクターパックの名前（`characters/<pack>` のディレクトリ名）。
    * `session.switchCharacter` の鍵で、素材の URL の `<pack>` の区間もこれ。
    */
-  readonly pack: string
+  readonly pack: CharacterPackName
   readonly name?: string
   /** {@link CharacterDefinition.accent} をそのまま持つ。ブラウザ側は `--accent` に流す。 */
   readonly accent?: string
@@ -82,7 +82,7 @@ export type CharacterInfo = {
  * `name` は `characters/<name>` のディレクトリ名で、`label` は画面に出す名前（`character.json` の `name`。無ければ `name`）。
  */
 export type CharacterPackChoice = {
-  readonly name: string
+  readonly name: CharacterPackName
   readonly label: string
 }
 
@@ -115,40 +115,17 @@ export type CharacterPackEntry = CharacterPackChoice & {
  */
 export type CharacterPackRemoval = "delete" | "revert-to-bundled" | "none"
 
-/**
- * キャラクターパックの名前（`characters/<name>` のディレクトリ名）として受け付ける長さの上限。
- * 切り替えのときは長さしか見ない（名前をパスとして組み立てず、一覧にある名前とだけ突き合わせるので、`..` のような値は自然に「見つからない」に落ちる）。
- */
-export const MAX_CHARACTER_PACK_NAME_LENGTH = 200
-
-/** パスに組んでよいと検査したパックの名前。作れるのは {@link parseCharacterPackName} と {@link characterPackNameSchema} だけ。 */
-export type CharacterPackName = string & { readonly __brand: "CharacterPackName" }
-
-/**
- * パックの名前として受け付ける形なら、検査済みの型にして返す（通らなければ undefined）。
- * 受け取った文字列がディレクトリ名になる場面（作る・書き込む・会話の記録の置き場を組む）で、切り替えより厳しく見る。
- *
- * - 使えるのは半角英数字と `.` `_` `-` だけ（パスの区切り・空白・非 ASCII は入らない）
- * - `.` で始まらない（`.` `..` と隠しディレクトリが名前として通らないので、パストラバーサルの経路が生まれない）
- *
- * 表示名（`character.json` の `name`）はここでは見ない（文字種を縛らないので日本語も使える）。
- */
-export function parseCharacterPackName(value: string): CharacterPackName | undefined {
-  return hasPackNameShape(value) ? value : undefined
-}
-
-/** いま出しているキャラクターのパックの名前。まだ決まっていない・名前として通らないときは undefined。 */
-export function shownCharacterPackName(character?: CharacterInfo): CharacterPackName | undefined {
-  return character === undefined ? undefined : parseCharacterPackName(character.pack)
-}
-
-export const characterPackNameSchema = z.string().refine(hasPackNameShape)
+export {
+  type CharacterPackName,
+  characterPackNameSchema,
+  parseCharacterPackName,
+} from "./character-pack-name.ts"
 
 /** {@link toCharacterInfo} に渡すもの。パックそのもの（`adapter` の型）はここでは知らない。 */
 export type CharacterInfoSource = {
   readonly definition?: CharacterDefinition
   /** `characters/<name>` のディレクトリ名。素材の URL の `<pack>` の区間にもなる。 */
-  readonly pack: string
+  readonly pack: CharacterPackName
   /** 素材の版（素材の URL に付ける取り直しの印 `?v=`。無ければ付けない）。 */
   readonly revision?: string
   readonly editable: boolean
@@ -226,9 +203,3 @@ function portraitUrls(
   const fallback = files.default
   return fromKeys(EXPRESSIONS, (expression) => assetUrl(files[expression] ?? fallback))
 }
-
-function hasPackNameShape(value: string): value is CharacterPackName {
-  return value.length <= MAX_CHARACTER_PACK_NAME_LENGTH && CHARACTER_PACK_NAME_PATTERN.test(value)
-}
-
-const CHARACTER_PACK_NAME_PATTERN = /^[A-Za-z0-9_-][A-Za-z0-9._-]*$/

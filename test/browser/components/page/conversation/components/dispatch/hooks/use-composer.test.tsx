@@ -17,7 +17,7 @@ import {
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../../../../../../../src/shared/session/session-state.ts"
-import { characterInfo } from "../../../../../../../fixture/character.ts"
+import { characterInfo, characterPackName } from "../../../../../../../fixture/character.ts"
 import { checkedSessionId } from "../../../../../../../fixture/session-id.ts"
 import { queryClientWrapper } from "../../../../../../query-client.tsx"
 import {
@@ -114,7 +114,7 @@ describe("useComposer のプレースホルダ", () => {
   it("キャラクターの名前があれば依頼先に入れ、無ければ名前を使わない", () => {
     const named = renderUseComposer({
       character: characterInfo({
-        pack: "架空パック",
+        pack: characterPackName("fictional-pack"),
         name: "架空の名前",
         expressions: [],
         editable: false,

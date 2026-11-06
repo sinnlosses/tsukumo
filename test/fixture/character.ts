@@ -43,7 +43,7 @@ export function characterPackName(value: string): CharacterPackName {
 /** 画面に渡る姿（`SessionState.character` と `character-changed` の中身）。 */
 export function characterInfo(overrides: Partial<CharacterInfo> = {}): CharacterInfo {
   return {
-    pack: "fictional",
+    pack: characterPackName("fictional"),
     name: "架空の精霊",
     accent: undefined,
     chatAccent: undefined,
@@ -85,10 +85,11 @@ export function characterPackEntry(
   label: string,
   overrides: Partial<Omit<CharacterPackEntry, "name" | "label">> = {},
 ): CharacterPackEntry {
+  const packName = characterPackName(name)
   return {
-    name,
+    name: packName,
     label,
-    character: characterInfo({ pack: name, name: label }),
+    character: characterInfo({ pack: packName, name: label }),
     inUse: false,
     removal: "none",
     personaBody: "",

@@ -3,6 +3,10 @@
 
 import { z } from "zod"
 
+import {
+  type CharacterPackName,
+  characterPackNameSchema,
+} from "../character-pack/character-pack-name.ts"
 import { dateKeySchema, type DateKey } from "./date-key.ts"
 
 /** 保存の形の版。読めた版はこれだけで、違えば「読めなかった」に倒す（読み手の {@link readDiary}）。 */
@@ -26,8 +30,11 @@ export type DiaryParagraph = {
   readonly body: string
   /** 書いたときの表情名。パックを替えても読めるよう、`speak` と同じ列挙ではなく文字列で持つ。 */
   readonly expression: string
-  /** 書いたパック（ディレクトリ名と表示名）。あとでキャラクターを替えても誰が書いたかが残る。 */
-  readonly writer: { readonly pack: string; readonly name: string }
+  /**
+   * 書いたパック（ディレクトリ名と表示名）。あとでキャラクターを替えても誰が書いたかが残る。
+   * 保存済みのファイルのディレクトリ名が名前として通らないときは `pack` を落とす（立ち絵なしで読める）。
+   */
+  readonly writer: { readonly pack?: CharacterPackName; readonly name: string }
 }
 
 /** ある1日ぶんの日記。同じ日に2回振り返ると段落が末尾に足され、しおりは新しいほうに差し替わる。 */
@@ -87,7 +94,7 @@ const diaryParagraphSchema = z.object({
   writtenAt: z.string(),
   body: z.string(),
   expression: z.string(),
-  writer: z.object({ pack: z.string(), name: z.string() }),
+  writer: z.object({ pack: characterPackNameSchema.optional().catch(undefined), name: z.string() }),
 })
 
 const diarySchema = z.object({

@@ -60,6 +60,7 @@ import {
   isEditableCharacterPack,
   PERSONA_FILE_NAME,
   readCharacterPack,
+  readCharacterPackDefinition,
 } from "./character-pack.ts"
 
 /** 表情ごとの立ち絵のほかに1つのパックが持てる画像（ミニ立ち絵1・背景1・顔1）。 */
@@ -96,7 +97,7 @@ export function editCharacterPack(
   const dir = join(root, pack.name)
   try {
     copyPackOnce(pack, dir)
-    return applyEdit(dir, edit) ? readCharacterPack(dir) : undefined
+    return applyEdit(dir, edit) ? readCharacterPack(dir, pack.name) : undefined
   } catch {
     // 書き換えに失敗したことは undefined で返し、呼び出し側が利用者へ拒否として伝える
     return undefined
@@ -135,7 +136,7 @@ export function createCharacterPack(
       writeFileAtomic(join(dir, PERSONA_FILE_NAME), personaWithBody("", create.persona))
     }
     writeFileAtomic(join(dir, CHARACTER_DEFINITION_FILE_NAME), newDefinitionJson(create, fileNames))
-    return readCharacterPack(dir)
+    return readCharacterPack(dir, create.id)
   } catch {
     // 作りかけのディレクトリを捨てて、失敗を undefined で返す
     discardDir(dir)
@@ -297,7 +298,7 @@ function removeUnreferencedImage(dir: string, fileName?: string): void {
     return
   }
 
-  const definition = readCharacterPack(dir).definition
+  const definition = readCharacterPackDefinition(dir)
   if (referencedImageFileNames(definition).includes(fileName)) {
     return
   }

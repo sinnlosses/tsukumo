@@ -81,7 +81,7 @@ const accentColorSchema = z.string().refine(isAccentColor)
 
 /**
  * 新しく作るパックの名前。
- * 受け取った文字列がディレクトリ名になるので、切り替え（`session.switchCharacter`）の「長さだけ」より厳しく {@link characterPackNameSchema} で見る。
+ * 受け取った文字列がディレクトリ名になるので {@link characterPackNameSchema} で見る（切り替え `session.switchCharacter` も同じ規則）。
  */
 const newCharacterPackNameSchema = characterPackNameSchema
 

@@ -12,6 +12,7 @@ import {
 import {
   characterInfo,
   characterPackEntry,
+  characterPackName,
   shownPortraits,
 } from "../../../../../../fixture/character.ts"
 import { type CommandSpy, putSession } from "../../../../../session-store.ts"
@@ -229,7 +230,7 @@ describe("useCharacterEdit", () => {
         [
           characterPackEntry("fictional", "架空の精霊", { inUse: true, removal: "none" }),
           characterPackEntry("other", "別の精霊", {
-            character: characterInfo({ pack: "other", name: "別の精霊" }),
+            character: characterInfo({ pack: characterPackName("other"), name: "別の精霊" }),
             inUse: false,
             removal: "revert-to-bundled",
           }),

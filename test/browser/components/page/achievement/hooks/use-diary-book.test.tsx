@@ -13,6 +13,7 @@ import {
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../../../../../src/shared/session/session-state.ts"
+import { characterPackName } from "../../../../../fixture/character.ts"
 import { dateKey } from "../../../../../fixture/date-key.ts"
 import { createTestQueryClient, queryClientWrapper } from "../../../../query-client.tsx"
 import {
@@ -86,13 +87,13 @@ const WRITTEN_DIARY: Diary = {
       writtenAt: "2026-09-16T21:40:00+09:00",
       body: "架空の日記の本文1。",
       expression: "proud",
-      writer: { pack: "fixture", name: "架空の名前" },
+      writer: { pack: characterPackName("fixture"), name: "架空の名前" },
     },
     {
       writtenAt: "2026-09-16T22:10:00+09:00",
       body: "架空の日記の本文2（書き足し）。",
       expression: "proud",
-      writer: { pack: "fixture", name: "架空の名前" },
+      writer: { pack: characterPackName("fixture"), name: "架空の名前" },
     },
   ],
   bookmark: { kind: "placed", taskId: "T-1", summary: "架空のタスク", reason: "架空の理由" },

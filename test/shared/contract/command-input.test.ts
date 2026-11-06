@@ -4,7 +4,6 @@ import {
   MAX_CHARACTER_NAME_LENGTH,
   MAX_CHARACTER_TAGLINE_LENGTH,
 } from "../../../src/shared/character-pack/character-definition.ts"
-import { MAX_CHARACTER_PACK_NAME_LENGTH } from "../../../src/shared/character-pack/character.ts"
 import { MAX_PERSONA_BODY_LENGTH } from "../../../src/shared/character-pack/persona-section.ts"
 import { MAX_REMEMBERED_LINE_LENGTH } from "../../../src/shared/chat/persona-memory.ts"
 import { MAX_SHOWN_WELCOME_GREETING_LENGTH } from "../../../src/shared/recommendation/welcome-greeting.ts"
@@ -247,7 +246,7 @@ describe("コマンドの契約の入力（落とす形）", () => {
       "空白 入り",
       "日本語",
       "",
-      "a".repeat(MAX_CHARACTER_PACK_NAME_LENGTH + 1),
+      "a".repeat(201),
     ].map(
       (id) =>
         [
@@ -255,6 +254,10 @@ describe("コマンドの契約の入力（落とす形）", () => {
           "characterPack.create",
           createCharacter({ id }),
         ] as const,
+    ),
+    ...["日本語", "空白 入り", "../escape"].map(
+      (name) =>
+        [`switchCharacter のパックの名前 ${name}`, "session.switchCharacter", { name }] as const,
     ),
     [
       "generateFromPortrait の svg",

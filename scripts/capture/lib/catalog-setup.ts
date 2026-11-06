@@ -6,6 +6,7 @@ import path from "node:path"
 import { tsukumoHomePath } from "../../../src/server/adapter/tsukumo-home.ts"
 import { appendDiaryParagraph } from "../../../src/server/diary/adapter/diary.ts"
 import { FAKE_BEADS_ISSUES_PATH } from "../../../src/server/repository/adapter/beads/fake-beads.ts"
+import { characterPackNameSchema } from "../../../src/shared/character-pack/character-pack-name.ts"
 import { parseDateKey } from "../../../src/shared/diary/date-key.ts"
 import { fictionalPng } from "../../shared/fictional-png.ts"
 import { REPOSITORY_ROOT } from "../../shared/repository-root.ts"
@@ -100,7 +101,7 @@ export async function applyHomeSetup(setup: HomeSetup, homeDir: string): Promise
       writtenAtEpochMilliseconds: diaryEpochMilliseconds(setup.date),
       body: setup.body,
       expression: "proud",
-      writer: { pack: "tsukumo", name: "tsukumo" },
+      writer: { pack: characterPackNameSchema.parse("tsukumo"), name: "tsukumo" },
       bookmark: {
         kind: "placed",
         // `T-` + 数字にしない（`docs/coding-standards.md`

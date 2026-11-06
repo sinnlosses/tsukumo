@@ -7,7 +7,12 @@ import {
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../../../../src/shared/session/session-state.ts"
-import { characterInfo, characterPackEntry, shownPortraits } from "../../../../fixture/character.ts"
+import {
+  characterInfo,
+  characterPackEntry,
+  characterPackName,
+  shownPortraits,
+} from "../../../../fixture/character.ts"
 import { typedElement } from "../../../../typed-element.ts"
 import { createTestQueryClient } from "../../../query-client.tsx"
 import { type CommandSpy, putState, putSession } from "../../../session-store.ts"
@@ -19,7 +24,7 @@ const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = characterInfo(
 })
 
 const OTHER_CHARACTER: NonNullable<SessionState["character"]> = characterInfo({
-  pack: "other",
+  pack: characterPackName("other"),
   name: "別の精霊",
   expressions: [
     { name: "default", label: "ふつう" },
@@ -187,7 +192,7 @@ describe("Character", () => {
       expect(calls).toEqual([
         {
           procedure: "characterPack.setPortrait",
-          pack: "other",
+          pack: characterPackName("other"),
           expression: "proud",
           image: `data:image/png;base64,${Buffer.from("png").toString("base64")}`,
         },

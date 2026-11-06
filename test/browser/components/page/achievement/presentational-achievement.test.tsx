@@ -10,6 +10,7 @@ import {
   PresentationalAchievement,
   type PresentationalAchievementProps,
 } from "../../../../../src/browser/components/page/achievement/presentational-achievement.tsx"
+import { characterPackName } from "../../../../fixture/character.ts"
 import { dateKey } from "../../../../fixture/date-key.ts"
 
 /**
@@ -137,7 +138,7 @@ describe("PresentationalAchievement", () => {
                 writtenAt: "2026-09-24T21:40:00+09:00",
                 body: "架空の本文。",
                 expression: "proud",
-                writer: { pack: "fixture", name: "架空の名前" },
+                writer: { pack: characterPackName("fixture"), name: "架空の名前" },
               },
             ],
             bookmark: {

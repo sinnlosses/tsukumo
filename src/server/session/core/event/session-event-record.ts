@@ -2,7 +2,6 @@
 // どのイベントをどの記録口へ、どちらのモード・セッションIDが決まったあとかで渡すかの門がここにある。
 // 復元した再生はここを通らない（呼ぶ側が呼ばない）。
 
-import { shownCharacterPackName } from "../../../../shared/character-pack/character.ts"
 import { swallowedFailureFootprint } from "../../../../shared/diagnostic/swallowed-failure.ts"
 import { conclusionWithTaskName } from "../../../../shared/report/report-task.ts"
 import type { SessionEvent } from "../../../../shared/session/session-event.ts"
@@ -40,7 +39,7 @@ export function recordSessionEvent(
   at: number,
 ): void {
   // 会話のアーカイブへ1行足す。パックがまだ決まっていない・名前が検査を通らないときは足さない。
-  const packName = shownCharacterPackName(state.character)
+  const packName = state.character?.pack
   if (packName !== undefined) {
     const mode = state.chatMode ? "chat" : "work"
     ports.archiveOrder.run(() =>

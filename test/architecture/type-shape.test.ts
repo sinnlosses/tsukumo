@@ -96,7 +96,7 @@ const UNDEFINED_UNION_CEILING = {
   "src/server/session-driver": 49,
   "scripts/hook": 39,
   "src/shared/report": 34,
-  "src/shared/character-pack": 33,
+  "src/shared/character-pack": 32,
   "src/server/report": 30,
   "scripts/capture": 30,
   "src/server/character-pack": 26,

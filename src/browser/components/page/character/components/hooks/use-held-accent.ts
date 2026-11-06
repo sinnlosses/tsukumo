@@ -6,6 +6,7 @@
 import { useState } from "react"
 import { omitBy } from "remeda"
 
+import type { CharacterPackName } from "../../../../../../shared/character-pack/character-pack-name.ts"
 import { useDebouncedCallback } from "../../../../../hooks/use-debounced-callback.ts"
 
 /** 差し色の送信をまとめる間隔。ドラッグ中の1回1回を送らず、離れてから1回にする。 */
@@ -16,7 +17,7 @@ const ACCENT_DEBOUNCE_MS = 200
  * 書き込む先のパックは引きずった時点のものを値と一緒に持つ（まとめている間に一覧で別のパックを選んでも、別のパックへ書かない）。
  */
 type PendingAccent<Target> = {
-  readonly pack: string
+  readonly pack: CharacterPackName
   readonly target: Target
   readonly color: string
 }
@@ -34,8 +35,8 @@ type HeldAccentChange =
 
 type HeldAccent<Target extends string> = {
   /** パックの上書き（引きずっていない欄は入っていない）。 */
-  readonly heldOf: (pack: string) => Partial<Record<Target, string>>
-  readonly hold: (pack: string, target: Target, change: HeldAccentChange) => void
+  readonly heldOf: (pack: CharacterPackName) => Partial<Record<Target, string>>
+  readonly hold: (pack: CharacterPackName, target: Target, change: HeldAccentChange) => void
 }
 
 export function useHeldAccent<Target extends string>(

@@ -145,7 +145,8 @@ export function useCharacterCreate(open: boolean, onClose: () => void): Characte
   }
 
   const taken = id !== "" && characterPacks.some((pack) => pack.name === id)
-  const validFormat = parseCharacterPackName(id) !== undefined
+  const packName = parseCharacterPackName(id)
+  const validFormat = packName !== undefined
   const canSubmit = validFormat && !taken && portraitImage !== undefined && !sending && !generating
   const canGenerate = portraitImage !== undefined && !generating && !sending
 
@@ -188,7 +189,7 @@ export function useCharacterCreate(open: boolean, onClose: () => void): Characte
   }
 
   async function create(): Promise<void> {
-    if (!canSubmit || portraitImage === undefined) {
+    if (!canSubmit || portraitImage === undefined || packName === undefined) {
       return
     }
 
@@ -207,7 +208,7 @@ export function useCharacterCreate(open: boolean, onClose: () => void): Characte
       setSubmit({ kind: "failed" })
       return
     }
-    selectPack(id)
+    selectPack(packName)
     onClose()
   }
 

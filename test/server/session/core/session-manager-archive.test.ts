@@ -8,7 +8,6 @@ import type {
 import { createPromptImageShelf } from "../../../../src/server/session-driver/core/prompt-image-shelf.ts"
 import type { DiagnosticEntry } from "../../../../src/shared/diagnostic/diagnostic-record.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
-import { characterChangedEvent } from "../../../fixture/character.ts"
 import { NOOP_CHAT_ARCHIVE } from "../../../fixture/chat.ts"
 import { reportOfDrawn } from "../../../fixture/report-event.ts"
 import { createStubDriver } from "../../../fixture/session-driver.ts"
@@ -353,18 +352,6 @@ describe("createSessionManager", () => {
       const { stub, appended, consolidated } = startCountingManager()
       await waitForBatch()
 
-      emitTurns(stub)
-      await waitForBatch()
-
-      expect(appended).toEqual([])
-      expect(consolidated).toEqual([])
-    })
-
-    it("検査を通らない名前のパックのときは、アーカイブへ何も足さず、定着も起こさない", async () => {
-      const { stub, appended, consolidated } = startCountingManager()
-      await waitForBatch()
-
-      stub.emit(characterChangedEvent({ pack: "架空" }))
       emitTurns(stub)
       await waitForBatch()
 

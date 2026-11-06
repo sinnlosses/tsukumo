@@ -11,7 +11,11 @@ import {
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../../../../src/shared/session/session-state.ts"
-import { characterInfo, characterPackEntry } from "../../../../fixture/character.ts"
+import {
+  characterInfo,
+  characterPackEntry,
+  characterPackName,
+} from "../../../../fixture/character.ts"
 import { checkedSessionId } from "../../../../fixture/session-id.ts"
 import { knownTaskSummary, taskStatusOfWord } from "../../../../fixture/session-state.ts"
 import { createTestQueryClient } from "../../../query-client.tsx"
@@ -139,7 +143,7 @@ const CHAT_STATE: Partial<SessionState> = {
   chatMode: true,
   characterPacks: [characterPackEntry("tsukumo-spirit", "つくもの精霊")],
   character: characterInfo({
-    pack: "tsukumo-spirit",
+    pack: characterPackName("tsukumo-spirit"),
     name: "架空の精霊",
     tagline: "窓辺に棲む架空の精霊",
   }),

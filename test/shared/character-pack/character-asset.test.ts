@@ -5,33 +5,34 @@ import {
   portraitImageMimeType,
   readCharacterAssetPath,
 } from "../../../src/shared/character-pack/character-asset.ts"
+import { characterPackName } from "../../fixture/character.ts"
 
 describe("characterAssetPath", () => {
   it("/character/<pack>/<file> の形にする", () => {
-    expect(characterAssetPath("tsukumo", "default.svg", undefined)).toBe(
+    expect(characterAssetPath(characterPackName("tsukumo"), "default.svg", undefined)).toBe(
       "/character/tsukumo/default.svg",
     )
   })
 
   it("素材の版があれば問い合わせ文字列 ?v=<版> を付ける", () => {
-    expect(characterAssetPath("tsukumo", "default.svg", "1700000000000")).toBe(
+    expect(characterAssetPath(characterPackName("tsukumo"), "default.svg", "1700000000000")).toBe(
       "/character/tsukumo/default.svg?v=1700000000000",
     )
   })
 
-  it("パック名とファイル名はそれぞれ1つの区間としてエンコードする（区切りがずれない）", () => {
-    expect(characterAssetPath("my pack", "sub/立ち絵.png", undefined)).toBe(
-      "/character/my%20pack/sub%2F%E7%AB%8B%E3%81%A1%E7%B5%B5.png",
+  it("ファイル名は1つの区間としてエンコードする（区切りがずれない）", () => {
+    expect(characterAssetPath(characterPackName("my-pack"), "sub/立ち絵.png", undefined)).toBe(
+      "/character/my-pack/sub%2F%E7%AB%8B%E3%81%A1%E7%B5%B5.png",
     )
   })
 })
 
 describe("readCharacterAssetPath", () => {
   it("characterAssetPath が組んだ経路を、パック名とファイル名に読み戻す", () => {
-    const path = characterAssetPath("my pack", "sub/立ち絵.png", undefined)
+    const path = characterAssetPath(characterPackName("my-pack"), "sub/立ち絵.png", undefined)
 
     expect(readCharacterAssetPath(path.slice("/character/".length))).toEqual({
-      pack: "my pack",
+      pack: "my-pack",
       fileName: "sub/立ち絵.png",
     })
   })
@@ -45,6 +46,12 @@ describe("readCharacterAssetPath", () => {
 
   it("デコードできない % の並びは読まない", () => {
     expect(readCharacterAssetPath("tsukumo/%E0%A4%A.svg")).toBeUndefined()
+  })
+
+  it("デコードしたパック名が名前として通らない（.. ・日本語・空白）ものは読まない", () => {
+    expect(readCharacterAssetPath("%2E%2E/default.svg")).toBeUndefined()
+    expect(readCharacterAssetPath(`${encodeURIComponent("架空")}/default.svg`)).toBeUndefined()
+    expect(readCharacterAssetPath("my%20pack/default.svg")).toBeUndefined()
   })
 })
 
@@ -65,10 +72,14 @@ describe("portraitImageMimeType", () => {
   )
 
   it("characterAssetPath が返した URL（?v= 付き）でも拡張子を見失わない", () => {
-    expect(portraitImageMimeType(characterAssetPath("tsukumo-spirit", "default.svg", "1"))).toBe(
-      "image/svg+xml; charset=utf-8",
-    )
-    expect(portraitImageMimeType(characterAssetPath("local", "default.png", "1"))).toBe("image/png")
+    expect(
+      portraitImageMimeType(
+        characterAssetPath(characterPackName("tsukumo-spirit"), "default.svg", "1"),
+      ),
+    ).toBe("image/svg+xml; charset=utf-8")
+    expect(
+      portraitImageMimeType(characterAssetPath(characterPackName("local"), "default.png", "1")),
+    ).toBe("image/png")
   })
 
   it("知らない拡張子・拡張子が無いときは undefined（立ち絵なしにフォールバック）", () => {

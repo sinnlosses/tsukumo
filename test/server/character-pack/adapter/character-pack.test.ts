@@ -9,9 +9,14 @@ import {
   isEditableCharacterPack,
   listCharacterPacks,
   readCharacterAsset,
-  readCharacterPack,
 } from "../../../../src/server/character-pack/adapter/character-pack.ts"
-import { characterInfo, characterPackEntry, shownPortraits } from "../../../fixture/character.ts"
+import { readPackAt } from "../../../fixture/character-pack-dir.ts"
+import {
+  characterInfo,
+  characterPackEntry,
+  characterPackName,
+  shownPortraits,
+} from "../../../fixture/character.ts"
 import { useTempDir } from "../../../fixture/temp-dir.ts"
 
 // フィクスチャは characters/tsukumo-spirit/character.json と同じ形の、手で書いた架空の定義。
@@ -37,19 +42,19 @@ describe("readCharacterPack", () => {
   it("character.json を読んでパースする", () => {
     writeFileSync(join(dir(), "character.json"), DEFINITION_JSON)
 
-    const pack = readCharacterPack(dir())
+    const pack = readPackAt(dir())
 
     expect(pack.definition?.name).toBe("架空の精霊")
   })
 
   it("character.json が無ければ definition が undefined", () => {
-    expect(readCharacterPack(dir()).definition).toBeUndefined()
+    expect(readPackAt(dir()).definition).toBeUndefined()
   })
 
   it("character.json が壊れていれば definition が undefined", () => {
     writeFileSync(join(dir(), "character.json"), "{壊れた json")
 
-    expect(readCharacterPack(dir()).definition).toBeUndefined()
+    expect(readPackAt(dir()).definition).toBeUndefined()
   })
 })
 
@@ -57,13 +62,13 @@ describe("characterChangedEvent", () => {
   it("portraits の値をファイル名でなく /character/<pack>/<file> の URL にする", () => {
     writeFileSync(join(dir(), "character.json"), DEFINITION_JSON)
 
-    const pack = readCharacterPack(dir())
+    const pack = readPackAt(dir())
     const event = characterChangedEvent(pack, [pack], dir())
     // パックの名前は経路に入り、取り直しの印は素材の版（更新時刻）だけ。
     const base = `/character/${encodeURIComponent(basename(dir()))}`
     const version = `?v=${String(pack.revision)}`
     const character = characterInfo({
-      pack: basename(dir()),
+      pack: characterPackName(basename(dir())),
       expressions: [
         { name: "default", label: "通常" },
         { name: "thinking", label: "作業中" },
@@ -84,7 +89,7 @@ describe("characterChangedEvent", () => {
   })
 
   it("定義が無くても、立ち絵なしの形で流せる", () => {
-    const pack = readCharacterPack(dir())
+    const pack = readPackAt(dir())
     const event = characterChangedEvent(pack, [], dir())
 
     expect(event).toMatchObject({
@@ -104,7 +109,7 @@ describe("characterChangedEvent", () => {
         JSON.stringify({ portraits: { default: "default.svg" }, [key]: fileName }),
       )
 
-      const pack = readCharacterPack(dir())
+      const pack = readPackAt(dir())
       const event = characterChangedEvent(pack, [], dir())
 
       expect(event).toMatchObject({
@@ -115,7 +120,7 @@ describe("characterChangedEvent", () => {
     it(`無いパックでは undefined のまま（${absent}）`, () => {
       writeFileSync(join(dir(), "character.json"), DEFINITION_JSON)
 
-      const event = characterChangedEvent(readCharacterPack(dir()), [], dir())
+      const event = characterChangedEvent(readPackAt(dir()), [], dir())
 
       expect(event).toMatchObject({ [key]: undefined })
     })
@@ -154,7 +159,7 @@ describe("characterChangedEvent の一覧（packs）", () => {
     })
   }
 
-  function currentByName(name: string): ReturnType<typeof readCharacterPack> {
+  function currentByName(name: string): ReturnType<typeof readPackAt> {
     const found = listCharacterPacks(cwd(), roots()).find((pack) => pack.name === name)
     if (found === undefined) {
       throw new Error(`テストの前提: ${name} が一覧に無い`)
@@ -268,7 +273,7 @@ describe("characterChangedEvent の一覧（packs）", () => {
     writeThreePacks()
     const packs = listCharacterPacks(cwd(), roots())
     // 一覧に無い場所を直に指したパック（`TSUKUMO_CHARACTER` のとき）。
-    const elsewhere = readCharacterPack(
+    const elsewhere = readPackAt(
       writePack(join(dir(), "elsewhere"), "wanderer", { portraits: { default: "w.svg" } }),
     )
 
@@ -309,7 +314,7 @@ describe("persona.md", () => {
     writeFileSync(join(dir(), "character.json"), DEFINITION_JSON)
     writeFileSync(join(dir(), "persona.md"), PERSONA)
 
-    const pack = readCharacterPack(dir())
+    const pack = readPackAt(dir())
 
     expect(pack.persona).toBe(PERSONA)
   })
@@ -317,7 +322,7 @@ describe("persona.md", () => {
   it("persona.md が無いパックでも読める（人格は undefined。append が規約だけになる）", () => {
     writeFileSync(join(dir(), "character.json"), DEFINITION_JSON)
 
-    const pack = readCharacterPack(dir())
+    const pack = readPackAt(dir())
 
     expect(pack.persona).toBeUndefined()
   })
@@ -408,7 +413,7 @@ describe("isEditableCharacterPack", () => {
     mkdirSync(join(cwd, "characters", "local"), { recursive: true })
     writeFileSync(join(cwd, "characters", "local", "character.json"), DEFINITION_JSON)
 
-    const local = readCharacterPack(join(cwd, "characters", "local"))
+    const local = readPackAt(join(cwd, "characters", "local"))
 
     expect(isEditableCharacterPack(local, cwd)).toBe(false)
   })
@@ -418,7 +423,7 @@ describe("isEditableCharacterPack", () => {
     mkdirSync(join(dir(), "home", "local"), { recursive: true })
     writeFileSync(join(dir(), "home", "local", "character.json"), DEFINITION_JSON)
 
-    const fromHome = readCharacterPack(join(dir(), "home", "local"))
+    const fromHome = readPackAt(join(dir(), "home", "local"))
 
     expect(isEditableCharacterPack(fromHome, cwd)).toBe(true)
   })
@@ -427,7 +432,7 @@ describe("isEditableCharacterPack", () => {
     mkdirSync(join(dir(), "bundled", "tsukumo"), { recursive: true })
     writeFileSync(join(dir(), "bundled", "tsukumo", "character.json"), DEFINITION_JSON)
 
-    const bundled = readCharacterPack(join(dir(), "bundled", "tsukumo"))
+    const bundled = readPackAt(join(dir(), "bundled", "tsukumo"))
 
     expect(isEditableCharacterPack(bundled, join(dir(), "cwd"))).toBe(true)
   })
@@ -438,7 +443,7 @@ describe("素材の版（revision）", () => {
   const PAST = 1_700_000_000
 
   /** 全素材の更新時刻を同じ過去に揃え、パックを読む。 */
-  function readPackWithAllFilesAt(past: number): ReturnType<typeof readCharacterPack> {
+  function readPackWithAllFilesAt(past: number): ReturnType<typeof readPackAt> {
     writeFileSync(
       join(dir(), "character.json"),
       JSON.stringify({
@@ -462,7 +467,7 @@ describe("素材の版（revision）", () => {
     ]) {
       utimesSync(join(dir(), name), past, past)
     }
-    return readCharacterPack(dir())
+    return readPackAt(dir())
   }
 
   it.each(["default.svg", "mini.svg", "face.svg", "bg.png", "shodo.woff2"])(
@@ -472,7 +477,7 @@ describe("素材の版（revision）", () => {
 
       utimesSync(join(dir(), name), PAST + 50, PAST + 50)
 
-      expect(readCharacterPack(dir()).revision).not.toBe(before.revision)
+      expect(readPackAt(dir()).revision).not.toBe(before.revision)
     },
   )
 
@@ -480,13 +485,13 @@ describe("素材の版（revision）", () => {
     const before = readPackWithAllFilesAt(PAST)
     writeFileSync(join(dir(), "unlisted.svg"), PLAUSIBLE_SVG)
 
-    expect(readCharacterPack(dir()).revision).toBe(before.revision)
+    expect(readPackAt(dir()).revision).toBe(before.revision)
   })
 })
 
 describe("readCharacterAsset のファイル名の判断", () => {
   function readFileOf(fileName: string): ReturnType<typeof readCharacterAsset> {
-    const pack = readCharacterPack(dir())
+    const pack = readPackAt(dir())
     return readCharacterAsset(pack, [pack], { pack: pack.name, fileName }, undefined)
   }
 
@@ -551,8 +556,8 @@ describe("readCharacterAsset のファイル名の判断", () => {
 describe("readCharacterAsset", () => {
   /** 使用中（current）と、使用中以外（other）の2つのパックを置く。 */
   function writeTwoPacks(): {
-    readonly current: ReturnType<typeof readCharacterPack>
-    readonly other: ReturnType<typeof readCharacterPack>
+    readonly current: ReturnType<typeof readPackAt>
+    readonly other: ReturnType<typeof readPackAt>
   } {
     const currentDir = join(dir(), "current")
     const otherDir = join(dir(), "other")
@@ -565,7 +570,7 @@ describe("readCharacterAsset", () => {
       JSON.stringify({ portraits: { default: "other.svg" } }),
     )
     writeFileSync(join(otherDir, "other.svg"), PLAUSIBLE_SVG)
-    return { current: readCharacterPack(currentDir), other: readCharacterPack(otherDir) }
+    return { current: readPackAt(currentDir), other: readPackAt(otherDir) }
   }
 
   it("使用中以外のパックの素材も、一覧にある名前なら読める", () => {
@@ -574,7 +579,7 @@ describe("readCharacterAsset", () => {
     const file = readCharacterAsset(
       current,
       [current, other],
-      { pack: "other", fileName: "other.svg" },
+      { pack: characterPackName("other"), fileName: "other.svg" },
       undefined,
     )
 
@@ -583,7 +588,7 @@ describe("readCharacterAsset", () => {
 
   it("`?v=` がそのパックの今の版と一致したときだけ versioned", () => {
     const { current, other } = writeTwoPacks()
-    const location = { pack: "other", fileName: "other.svg" }
+    const location = { pack: characterPackName("other"), fileName: "other.svg" }
     const versionedFor = (version?: string): boolean | undefined =>
       readCharacterAsset(current, [current, other], location, version)?.versioned
 
@@ -600,7 +605,7 @@ describe("readCharacterAsset", () => {
       readCharacterAsset(
         noRevision,
         [noRevision],
-        { pack: "current", fileName: "default.svg" },
+        { pack: characterPackName("current"), fileName: "default.svg" },
         undefined,
       )?.versioned,
     ).toBe(false)
@@ -613,28 +618,20 @@ describe("readCharacterAsset", () => {
       readCharacterAsset(
         current,
         [current, other],
-        { pack: "other", fileName: "default.svg" },
+        { pack: characterPackName("other"), fileName: "default.svg" },
         undefined,
       ),
     ).toBeUndefined()
   })
 
-  it("一覧に無いパック名・`..` は undefined（名前をパスに使わない）", () => {
+  it("一覧に無いパック名は undefined（名前をパスに使わない）", () => {
     const { current, other } = writeTwoPacks()
 
     expect(
       readCharacterAsset(
         current,
         [current, other],
-        { pack: "missing", fileName: "default.svg" },
-        undefined,
-      ),
-    ).toBeUndefined()
-    expect(
-      readCharacterAsset(
-        current,
-        [current, other],
-        { pack: "..", fileName: "default.svg" },
+        { pack: characterPackName("missing"), fileName: "default.svg" },
         undefined,
       ),
     ).toBeUndefined()
@@ -649,7 +646,7 @@ describe.each([
 ])("同梱パック $dirName（characters/$dirName/）", ({ dirName, name }) => {
   it("character.json が読め、portraits と face に挙げたファイルが実在する", () => {
     const packDir = bundledFilePath("characters", dirName)
-    const pack = readCharacterPack(packDir)
+    const pack = readPackAt(packDir)
 
     expect(pack.definition?.name).toBe(name)
     expect(pack.definition?.portraits.default).toBe("default.png")

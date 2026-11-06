@@ -5,14 +5,12 @@ import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { useAchievement } from "../../../../../../src/browser/components/page/achievement/hooks/use-achievement.ts"
 import type { DailyAchievement } from "../../../../../../src/shared/achievement/achievement.ts"
-import type {
-  CharacterInfo,
-  CharacterPackEntry,
-} from "../../../../../../src/shared/character-pack/character.ts"
+import type { CharacterPackEntry } from "../../../../../../src/shared/character-pack/character.ts"
 import {
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../../../../../src/shared/session/session-state.ts"
+import { characterInfo, characterPackName } from "../../../../../fixture/character.ts"
 import { dateKey } from "../../../../../fixture/date-key.ts"
 import { createTestQueryClient, queryClientWrapper } from "../../../../query-client.tsx"
 import {
@@ -73,7 +71,7 @@ const WRITTEN_TODAY: DailyAchievement = {
           writtenAt: "2026-09-24T21:40:00+09:00",
           body: "架空の日記の本文。",
           expression: "proud",
-          writer: { pack: "fixture-pack", name: "架空の名前" },
+          writer: { pack: characterPackName("fixture-pack"), name: "架空の名前" },
         },
       ],
       bookmark: { kind: "none" },
@@ -81,24 +79,11 @@ const WRITTEN_TODAY: DailyAchievement = {
   },
 }
 
-const FIXTURE_CHARACTER: CharacterInfo = {
-  pack: "fixture-pack",
+const FIXTURE_CHARACTER = characterInfo({
+  pack: characterPackName("fixture-pack"),
   name: "架空のいまの名前",
-  accent: undefined,
-  chatAccent: undefined,
   expressions: [],
-  portraits: undefined,
-  expressionsWithPortrait: [],
-  mini: undefined,
-  hasOwnMini: false,
-  face: undefined,
-  tagline: undefined,
-  userCall: undefined,
-  miniCall: undefined,
-  background: undefined,
-  diaryFont: undefined,
-  editable: false,
-}
+})
 
 describe("useAchievement", () => {
   it("date が無ければ今日を取りに行く（日付を送らない）", async () => {
@@ -542,7 +527,7 @@ describe("useAchievement（書き上げの演出）", () => {
               writtenAt: `2026-09-24T${time}+09:00`,
               body: "架空の日記の本文。",
               expression: "proud",
-              writer: { pack: "fixture-pack", name: "架空の名前" },
+              writer: { pack: characterPackName("fixture-pack"), name: "架空の名前" },
             },
           ],
           bookmark: { kind: "none" },

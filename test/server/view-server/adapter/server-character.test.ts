@@ -33,15 +33,15 @@ describe("startViewServer", () => {
     })
     const origin = viewOrigin(server)
 
-    const response = await fetch(`${origin}/character/my%20pack/default.svg?v=1700000000000`)
-    await fetch(`${origin}/character/my%20pack/default.svg`)
+    const response = await fetch(`${origin}/character/my-pack/default.svg?v=1700000000000`)
+    await fetch(`${origin}/character/my-pack/default.svg`)
 
     expect(response.status).toBe(200)
     expect(response.headers.get("content-type")).toContain("image/svg+xml")
     expect(await response.text()).toBe("<svg></svg>")
     expect(asked).toEqual([
-      { pack: "my pack", fileName: "default.svg" },
-      { pack: "my pack", fileName: "default.svg" },
+      { pack: "my-pack", fileName: "default.svg" },
+      { pack: "my-pack", fileName: "default.svg" },
     ])
     expect(versions).toEqual(["1700000000000", undefined])
   })
