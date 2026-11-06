@@ -19,7 +19,7 @@ export function ProfileCard(): ReactElement {
 
   return (
     <section className={styles["profile-card"]} aria-label="プロフィール">
-      <CharacterFace url={faceUrl} alt={name ?? ""} className={styles["profile-card-face"]} />
+      <CharacterFace url={faceUrl} alt={name} className={styles["profile-card-face"]} />
       <VStack
         element="div"
         name={{ kind: "none" }}

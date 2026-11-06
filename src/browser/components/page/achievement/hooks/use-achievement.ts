@@ -247,7 +247,7 @@ function diarySectionOf(view: AchievementView, writing: AchievementWriting): Dia
     reviewedLabel:
       latest.kind === "none"
         ? { kind: "none" }
-        : { kind: "shown", label: `振り返り [${writtenTimeOf(latest.writtenAt) ?? ""}]` },
+        : { kind: "shown", label: reviewLabelOf(latest.writtenAt) },
     canOpenBook: latest.kind === "shown",
     bubble: bubbleOf(view, writing, latest),
     doneTaskCount: view.kind === "ready" ? String(view.doneTasks.length) : LOADING_VALUE,
@@ -263,6 +263,11 @@ type LatestParagraph =
       readonly writtenAt: string
       readonly body: string
     }
+
+function reviewLabelOf(writtenAt: string): string {
+  const time = writtenTimeOf(writtenAt)
+  return time === undefined ? "振り返り" : `振り返り [${time}]`
+}
 
 function latestParagraphOf(view: AchievementView): LatestParagraph {
   if (view.kind !== "ready" || view.diary.kind !== "written") {

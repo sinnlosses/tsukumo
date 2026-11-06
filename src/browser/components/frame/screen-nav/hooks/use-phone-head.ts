@@ -167,8 +167,8 @@ function titleOf(
     const phase = currentPhaseOf(turnStepList.plan)
     return phase.kind === "phase" ? phase.name : completionText(turnStepList.plan)
   }
-  const request = records.findLast((record) => record.kind === "request")?.text ?? ""
-  const firstLine = request.split("\n").find((line) => line.trim() !== "")
+  const request = records.findLast((record) => record.kind === "request")
+  const firstLine = request?.text.split("\n").find((line) => line.trim() !== "")
   return firstLine ?? roomName
 }
 

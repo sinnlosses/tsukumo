@@ -11,8 +11,8 @@ import type { ReactElement } from "react"
 type CharacterFaceProps = {
   /** `/character/<pack>/<file>` の URL。無ければ顔を出さない。 */
   readonly url?: string
-  /** 読み上げに渡す名前（パックの `name`）。無ければ空文字。 */
-  readonly alt: string
+  /** 読み上げに渡す名前（パックの `name`）。定義が届く前は顔の URL も無いので、省略できる。 */
+  readonly alt?: string
   readonly className: string
 }
 
