@@ -252,7 +252,7 @@ export function ReportImage(props: ReportImageProps): ReactElement {
   const [zoomed, setZoomed] = useState(false)
   const { reportMissing, reportImage, reportSize, zoom } = use(CompareSwapContext)
   const sideScope = use(SwapSideContext)
-  const imageRef = useRef<HTMLImageElement | null>(null)
+  const imageRef = useRef<HTMLImageElement>(null)
   const alt = props.alt ?? ""
   const side = sideScope === "by-alt" ? sideOfAlt(alt) : sideScope
 
