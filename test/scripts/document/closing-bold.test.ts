@@ -33,6 +33,10 @@ describe("findUnclosedBold", () => {
     expect(findUnclosedBold("**一行目\n二行目。** 三\n`a\nb` **c**\n")).toEqual([])
   })
 
+  it("バックスラッシュでエスケープした `**` は拾わない", () => {
+    expect(findUnclosedBold("文中の \\*\\*語\\*\\* は記号\n")).toEqual([])
+  })
+
   it("コードのフェンスの中は見ない", () => {
     expect(findUnclosedBold("```\n**ない。**正典\n```\n")).toEqual([])
   })

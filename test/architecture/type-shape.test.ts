@@ -114,7 +114,7 @@ const UNDEFINED_UNION_CEILING = {
   "src/server/core": 10,
   "src/server/usage": 10,
   "src/shared/session": 10,
-  "scripts/document": 10,
+  "scripts/document": 7,
   "src/browser/domain": 8,
   "src/server/work-plan": 7,
   "src/browser/stores": 7,

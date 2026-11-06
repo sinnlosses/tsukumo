@@ -1,13 +1,13 @@
-// 閉じの `**` の直前が約物で、直後が空白でも約物でも行末でもない行を拾う純粋関数。
-// CommonMark では、その形の `**` は太字を閉じない。
-// 開きの `**` の直前が約物でも空白でもなく、直後が約物の行も拾う（太字が開かない）。
-// 開きと閉じは、段落の中で `**` が出てきた順に対にする（段落は空行・見出し・箇条書きの項・表の行で切る）。
-// コードのフェンスの中と inline code の中の `**` は数えない。
+// CommonMark の構文木で、太字にならずに文字のまま残った `**` の行を拾う純粋関数。
+// コードのフェンス・inline code の中の `**` と、`\*\*` と書いたエスケープは拾わない。
+// remark-cjk-friendly は付けず、GitHub 相当の読み方で判定する。
 
-const PUNCTUATION = /[\p{P}\p{S}]/u
-const WHITESPACE = /\s/u
-const FENCE = /^\s*(?:```|~~~)/u
-const PARAGRAPH_START = /^\s*(?:$|#|\||[-*+] |\d+[.)] )/u
+import remarkGfm from "remark-gfm"
+import remarkParse from "remark-parse"
+import { unified } from "unified"
+import { visit } from "unist-util-visit"
+
+const UNESCAPED_BOLD_MARK = /(?<!\\)\*\*/gu
 
 /** 太字が閉じない行1つ。 */
 export type UnclosedBold = {
@@ -17,81 +17,26 @@ export type UnclosedBold = {
   readonly text: string
 }
 
-type Paragraph = { readonly firstLine: number; readonly lines: readonly string[] }
+const processor = unified().use(remarkParse).use(remarkGfm)
 
 /** 本文から、太字が閉じない行をすべて拾う。 */
 export function findUnclosedBold(text: string): UnclosedBold[] {
-  return splitParagraphs(text).flatMap(unclosedBoldInParagraph)
+  const lines = text.split("\n")
+  const badLines = new Set<number>()
+  visit(processor.parse(text), "text", (node) => {
+    const { start, end } = node.position ?? {}
+    if (start?.offset === undefined || end?.offset === undefined) return
+    const raw = text.slice(start.offset, end.offset)
+    for (const match of raw.matchAll(UNESCAPED_BOLD_MARK)) {
+      badLines.add(start.line + raw.slice(0, match.index).split("\n").length - 1)
+    }
+  })
+  return [...badLines]
+    .toSorted((a, b) => a - b)
+    .map((line) => ({ line, text: lines[line - 1] ?? "" }))
 }
 
 /** 太字が閉じない行1つを、一覧に出す1行にする。 */
 export function formatUnclosedBold(path: string, found: UnclosedBold): string {
   return `${path}:${found.line}: ${found.text.trim()}`
-}
-
-function splitParagraphs(text: string): Paragraph[] {
-  const paragraphs: { firstLine: number; lines: string[] }[] = []
-  let inFence = false
-  let current: { firstLine: number; lines: string[] } | undefined
-  text.split("\n").forEach((lineText, index) => {
-    if (FENCE.test(lineText)) {
-      inFence = !inFence
-      current = undefined
-      return
-    }
-    if (inFence) return
-    if (current === undefined || PARAGRAPH_START.test(lineText)) {
-      current = { firstLine: index + 1, lines: [] }
-      paragraphs.push(current)
-    }
-    current.lines.push(lineText)
-  })
-  return paragraphs
-}
-
-function unclosedBoldInParagraph(paragraph: Paragraph): UnclosedBold[] {
-  const visible = paragraph.lines
-    .join("\n")
-    .replace(/(`+)[^`]*?\1/gu, (code) => "`".repeat(code.length))
-  const positions = [...visible.matchAll(/\*\*/gu)].map((match) => match.index)
-  const lineStarts = paragraph.lines.map((_, index) =>
-    paragraph.lines.slice(0, index).reduce((sum, line) => sum + line.length + 1, 0),
-  )
-  const badLines = new Set(
-    positions
-      .filter((position, order) =>
-        order % 2 === 1 ? closesWrongly(visible, position) : opensWrongly(visible, position),
-      )
-      .map((position) => lineStarts.findLastIndex((start) => start <= position)),
-  )
-  return [...badLines].map((index) => ({
-    line: paragraph.firstLine + index,
-    text: paragraph.lines[index] ?? "",
-  }))
-}
-
-function opensWrongly(visible: string, position: number): boolean {
-  const [before, after] = neighbours(visible, position)
-  if (before === undefined || after === undefined) return false
-  return (
-    !PUNCTUATION.test(before) &&
-    !WHITESPACE.test(before) &&
-    PUNCTUATION.test(after) &&
-    !WHITESPACE.test(after)
-  )
-}
-
-function closesWrongly(visible: string, position: number): boolean {
-  const [before, after] = neighbours(visible, position)
-  if (before === undefined || after === undefined) return false
-  return (
-    PUNCTUATION.test(before) &&
-    !WHITESPACE.test(before) &&
-    !WHITESPACE.test(after) &&
-    !PUNCTUATION.test(after)
-  )
-}
-
-function neighbours(visible: string, position: number): [string | undefined, string | undefined] {
-  return [Array.from(visible.slice(0, position)).at(-1), Array.from(visible.slice(position + 2))[0]]
 }
