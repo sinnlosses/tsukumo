@@ -204,3 +204,12 @@
     border-radius: 0;
   }
 }
+
+/* 枠・角丸・地の `composes` の参照先の相対パスは `@import` した先のファイルでは解けないので、入口のここに置く。
+   狭い画面の外では `display: none` か描かれないので、見た目は変わらない。 */
+.phone-attach-sheet {
+  composes: surface-edge-rule surface-radius-xl surface-tone-surface from "../../../../ui/surface/surface-face.module.css";
+}
+.phone-turn-confirm {
+  composes: surface-edge-rule surface-radius-xl surface-tone-surface from "../../../../ui/surface/surface-face.module.css";
+}

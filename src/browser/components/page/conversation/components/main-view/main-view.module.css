@@ -36,3 +36,16 @@
 .request-label {
   composes: visually-hidden from "../../../../ui/visually-hidden/visually-hidden.module.css";
 }
+/* 枠・角丸・地も同じく、`composes` の参照先を解ける入口に置く。 */
+.main-step {
+  composes: surface-edge-rule surface-radius-md surface-tone-surface from "../../../../ui/surface/surface-face.module.css";
+}
+.question-previews {
+  composes: surface-edge-rule surface-radius-md surface-tone-ground from "../../../../ui/surface/surface-face.module.css";
+}
+.tool-block {
+  composes: surface-edge-rule surface-radius-md surface-tone-surface from "../../../../ui/surface/surface-face.module.css";
+}
+.work-strip-pop {
+  composes: surface-edge-rule surface-radius-md surface-tone-surface from "../../../../ui/surface/surface-face.module.css";
+}

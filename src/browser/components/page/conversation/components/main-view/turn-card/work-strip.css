@@ -204,9 +204,6 @@
   box-sizing: border-box;
   width: min(18.75rem, calc(100% - 1rem));
   padding: var(--space-md) var(--space-lg);
-  border: 1px solid var(--rule);
-  border-radius: var(--radius-md);
-  background: var(--surface);
   box-shadow: var(--shadow-raised);
   color: var(--ink-soft);
   cursor: auto;

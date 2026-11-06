@@ -141,9 +141,6 @@
     z-index: 10;
     min-width: 200px;
     padding: var(--space-xs);
-    border: 1px solid var(--rule);
-    border-radius: var(--radius-xl);
-    background: var(--surface);
   }
   .phone-attach-sheet button {
     height: 44px;

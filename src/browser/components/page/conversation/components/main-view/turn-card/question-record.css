@@ -39,9 +39,6 @@
 .question-previews {
   margin: var(--space-sm) 0 0;
   padding: var(--space-sm) var(--space-md);
-  border: 1px solid var(--rule);
-  border-radius: var(--radius-md);
-  background: var(--ground);
 }
 /* 字の段・色は `Text` が描く `<summary>` に、この要素選択子で開閉のカーソルだけ残す。 */
 .question-previews > summary {
@@ -59,7 +56,4 @@
 .tool-block {
   margin: 0 0 var(--space-lg);
   padding: var(--space-md);
-  border: 1px solid var(--rule);
-  border-radius: var(--radius-md);
-  background: var(--surface);
 }

@@ -98,9 +98,6 @@
     bottom: 100%;
     z-index: 10;
     padding: var(--space-sm);
-    border: 1px solid var(--rule);
-    border-radius: var(--radius-xl);
-    background: var(--surface);
   }
   .phone-turn-confirm-stop,
   .phone-turn-confirm-keep {
