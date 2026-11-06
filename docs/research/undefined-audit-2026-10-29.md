@@ -98,7 +98,7 @@
 | `src/browser/components`      | 197  | R1 88（例 `browser/components/domain/sidebar/components/task-doing-count.tsx:10`）、R4 67（例 `browser/components/domain/character-face.tsx:13`）、R3 20（例 `browser/components/domain/portrait.tsx:30`）、R6 7（例 `browser/components/ui/button/button.tsx:109`）、R5 6（例 `browser/components/page/achievement/hooks/use-achievement.ts:169`）、R8 4（例 `browser/components/domain/screen-nav/hooks/use-screen-nav.ts:197`）、R2 3（例 `browser/components/domain/portrait.tsx:41`）、R10 2（例 `browser/components/page/conversation/components/markdown/renderer/report-image.tsx:62`） |
 | `src/server/session-driver`   | 68   | R1 43（例 `server/session-driver/core/aside-prompt.ts:18`）、R2 24（例 `server/session-driver/core/pending-answer.ts:37`）、R10 1（例 `server/session-driver/core/prompt-delay.ts:14`）                                                                                                                                                                                                                                                                                                                                                                                                         |
 | `src/shared/character-pack`   | 68   | R2 46（例 `shared/character-pack/character-asset.ts:18`）、R1 20（例 `shared/character-pack/character-asset.ts:36`）、R4 2（例 `shared/character-pack/character.ts:142`）                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| `scripts/hook`                | 62   | R1 38（例 `scripts/hook/bash-guard.ts:24`）、R2 3（例 `scripts/hook/lib/bash-hook-call.ts:8`）、R8 3（例 `scripts/hook/lib/shell-write-rule.ts:153`）、R4 18（例 `scripts/hook/lib/shell-write-rule.ts:166`）                                                                                                                                                                                                                                                                                                                                                                                   |
+| `scripts/hook`                | 62   | R1 38（例 `scripts/hook/bash-guard.ts:24`）、R2 3（例 `scripts/hook/lib/bash-hook-call.ts:8`）、R8 3（例 `scripts/hook/bash-guard.ts:24`）、R4 18（例 `scripts/hook/lib/shell-write-rule.ts:101`）                                                                                                                                                                                                                                                                                                                                                                                              |
 | `scripts/capture`             | 56   | R1 25（例 `scripts/capture/capture-catalog.ts:262`）、R2 26（例 `scripts/capture/capture-catalog.ts:82`）、R10 5（例 `scripts/capture/lib/scene-end.ts:26`）                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | `src/shared/report`           | 52   | R1 31（例 `shared/report/a2ui-report-outline.ts:82`）、R4 15（例 `shared/report/code-mark.ts:51`）、R8 2（例 `shared/report/graph-fold.ts:64`）、R7 2（例 `shared/report/timeline-scale.ts:26`）、R3 1（例 `shared/report/graph-fold-html.ts:43`）、R10 1（例 `shared/report/table-view.ts:25`）                                                                                                                                                                                                                                                                                                |
 | `src/server/character-pack`   | 9    | R2 4（例 `server/character-pack/core/character-generation.ts:41`）、R9 3（例 `server/character-pack/core/character-pack-command.ts:22`）、R1 2（例 `server/character-pack/core/character-generation.ts:76`）                                                                                                                                                                                                                                                                                                                                                                                    |
@@ -175,23 +175,14 @@
 | `browser/components/page/conversation/components/chat-view/hooks/use-speech-reveal.ts`       | `advanceReveal`                | 引数       | 110 | R4   |
 | `browser/components/page/conversation/components/dispatch/domain/composer-draft-storage.ts`  | `draftOnSessionChange`         | 引数       | 44  | R4   |
 | `browser/components/page/conversation/components/dispatch/domain/composer-draft-storage.ts`  | `draftOnSessionChange`         | 引数       | 45  | R4   |
-| `scripts/hook/lib/shell-write-rule.ts`                                                       | `findDeniedBashRule`           | 引数       | 112 | R4   |
-| `scripts/hook/lib/shell-write-rule.ts`                                                       | `findDeniedCommandRule`        | 引数       | 125 | R4   |
-| `scripts/hook/lib/shell-write-rule.ts`                                                       | `writeRuleOf`                  | 引数       | 166 | R4   |
-| `scripts/hook/lib/shell-write-rule.ts`                                                       | `copiesIntoWorkTree`           | 引数       | 262 | R4   |
-| `scripts/hook/lib/shell-write-rule.ts`                                                       | `isDirectory`                  | 引数       | 295 | R4   |
-| `scripts/hook/lib/shell-write-rule.ts`                                                       | `nodeCodes`                    | 引数       | 327 | R4   |
-| `scripts/hook/lib/shell-write-rule.ts`                                                       | `readScriptAt`                 | 引数       | 353 | R4   |
-| `scripts/hook/lib/shell-write-rule.ts`                                                       | `directoryAfter`               | 引数       | 362 | R4   |
-| `scripts/hook/lib/shell-write-rule.ts`                                                       | `directoryAfterUnsure`         | 引数       | 383 | R4   |
-| `scripts/hook/lib/shell-write-rule.ts`                                                       | `locatePath`                   | 引数       | 388 | R4   |
-| `scripts/hook/lib/shell-write-rule.ts`                                                       | `isDeniedPythonCode`           | 引数       | 412 | R4   |
-| `scripts/hook/lib/shell-write-rule.ts`                                                       | `hasUnsafeWrite`               | 引数       | 420 | R4   |
-| `scripts/hook/lib/shell-write-rule.ts`                                                       | `isLiteralOutsideWorkTree`     | 引数       | 430 | R4   |
-| `scripts/hook/lib/shell-write-rule.ts`                                                       | `readPythonScripts`            | 引数       | 449 | R4   |
-| `scripts/hook/lib/shell-write-rule.ts`                                                       | `readPythonScripts`            | 引数       | 450 | R4   |
-| `scripts/hook/lib/shell-write-rule.ts`                                                       | `readScriptFile`               | 引数       | 506 | R4   |
-| `scripts/hook/lib/shell-write-rule.ts`                                                       | `absoluteScriptPath`           | 引数       | 511 | R4   |
+| `scripts/hook/lib/shell-write-rule.ts`                                                       | `findDeniedBashRule`           | 引数       | 101 | R4   |
+| `scripts/hook/lib/shell-write-rule.ts`                                                       | `findDeniedCommandRule`        | 引数       | 115 | R4   |
+| `scripts/hook/lib/shell-write-rule.ts`                                                       | `isDeniedPythonCode`           | 引数       | 352 | R4   |
+| `scripts/hook/lib/shell-write-rule.ts`                                                       | `hasUnsafeWrite`               | 引数       | 357 | R4   |
+| `scripts/hook/lib/shell-write-rule.ts`                                                       | `isLiteralOutsideWorkTree`     | 引数       | 366 | R4   |
+| `scripts/hook/lib/python-script-read.ts`                                                     | `readPythonScripts`            | 引数       | 40  | R4   |
+| `scripts/hook/lib/python-script-read.ts`                                                     | `readPythonScripts`            | 引数       | 41  | R4   |
+| `scripts/hook/lib/working-directory.ts`                                                      | `directoryOfCwd`               | 引数       | 16  | R4   |
 | `scripts/hook/lib/worktree-shell-write.ts`                                                   | `findWorktreeShellWriteDenial` | 引数       | 25  | R4   |
 | `scripts/capture/lib/capture-source.ts`                                                      | `Source`                       | プロパティ | 12  | R10  |
 | `scripts/capture/lib/capture-source.ts`                                                      | `Source`                       | プロパティ | 16  | R10  |
@@ -332,8 +323,8 @@
 | ファイル                                   | 対象                  | 置き場 | 件  | 行  | 消し方     | 呼び出し側の数 |
 | ------------------------------------------ | --------------------- | ------ | --- | --- | ---------- | -------------- |
 | `scripts/hook/lib/foreign-restore.ts`      | `createWorktreeProbe` | 引数   | 1   | 61  | 入口で畳む | 1              |
-| `scripts/hook/lib/shell-write-rule.ts`     | `startDirectory`      | 引数   | 1   | 407 | 入口で畳む | 2              |
-| `scripts/hook/lib/shell-write-rule.ts`     | `isCommandBoundary`   | 引数   | 1   | 569 | 入口で畳む | 1              |
+| `scripts/hook/lib/working-directory.ts`    | `startDirectory`      | 引数   | 1   | 21  | 入口で畳む | 2              |
+| `scripts/hook/lib/shell-write-rule.ts`     | `isCommandBoundary`   | 引数   | 1   | 394 | 入口で畳む | 1              |
 | `scripts/hook/lib/worktree-shell-write.ts` | `readWorkRoot`        | 引数   | 1   | 32  | 入口で畳む | 1              |
 
 ### `scripts/shared`（消せる 13 件）
@@ -505,3 +496,76 @@
 | undefined を畳む: 起動依頼の chat と配信の版       | `src/server/session`・`src/(root)`                                                                                   | 2          |                          |
 
 括弧なしの消せる件数の合計は 154 件で、領域の表の合計と一致する。`ast-node.ts` の 4 件は、方針を決めるドラフトでは括弧に入れ、実装のドラフトで数えた。
+
+## `scripts/` の `?? ""` の仕分け（2026-11-06）
+
+63 件を呼び出し側を読んで分け、消せる 6 件（`shell-write-rule.ts` の `directoryAfterUnsure`、`e2e-scenario.ts` の 4 件、`python-script-read.ts` の `findPythonScriptPaths`）を直した。残りは 57 件で、次の理由で本物として据え置く。
+
+- `noUncheckedIndexedAccess` の穴埋め（`array[index] ?? ""`・`match[n] ?? ""`・`split(...)[0] ?? ""`・`node.textContent ?? ""`）。範囲の検査を済ませた添字・必ず参加する正規表現の群で、「無い」を運ぶ値ではない。`shell-command.ts`・`git-diff-output.ts`・`broad-kill.ts`・`git-subcommand.ts`・`document/` の各ファイルが当たる。
+- 外の値の入口で「無い」を空の文字列として扱う（`queryGit(...) ?? ""`・`readText(...) ?? ""`・`values.tasks ?? ""`・`request.url ?? "/"` など）。読めなかったときに空の入力として先へ進めるのが、その呼び出し側の仕様。
+- `stringField(...) ?? ""`（`export-symbol.ts`・`e2e-scenario.ts` の `templateHead`）と `getAttribute(...) ?? ""`（`reveal-snapshot.ts`）は、結果が文字列の値として使われ「無い」と「空」を区別しない。
+- 文字列の連結・比較・ハッシュの入力に空を入れて先へ進める（`submodule-drift.ts`・`build-ui-skip.ts`・`shell-write-rule.ts`・`python-script-read.ts`・`foreign-restore.ts`・`hook-mode.ts`・`bash-hook-call.ts`・`ship.ts`・`feature-edge-table.ts`・`document-index.ts`・`document-index-repository.ts`・`e2e-selection.ts`・`repo-map.ts`）。「無い」が空の入力と同じ結果になるので、区別する値ではない。
+
+### 63 件の仕分けの表
+
+分類は A 穴埋め・B 外の値の入口・C 結果が文字列の値・D 連結や比較の入力・E 消せる。
+
+| 件    | ファイル（行）                                              | 分類 |
+| ----- | ----------------------------------------------------------- | ---- |
+| 1     | `capture/mockup-font-floor.ts:60`                           | A    |
+| 2     | `capture/open-room-grid.ts:122`（`method`）                 | B    |
+| 3     | `capture/lib/reveal-snapshot.ts:55`                         | C    |
+| 4     | `capture/lib/reveal-snapshot.ts:58`                         | C    |
+| 5     | `capture/lib/reveal-snapshot.ts:59`                         | C    |
+| 6     | `capture/lib/wrap-metric.ts:30`                             | A    |
+| 7     | `capture/lib/text-length.ts:12`                             | A    |
+| 8     | `shared/e2e-selection.ts:162`                               | D    |
+| 9     | `shared/repo-map.ts:30`                                     | D    |
+| 10    | `shared/e2e-scenario.ts:311`                                | C    |
+| 11    | `shared/changed-path-repository.ts:17`                      | B    |
+| 12    | `shared/changed-path-repository.ts:19`                      | B    |
+| 13-15 | `shared/git-diff-output.ts:16,21,22`                        | A    |
+| 16-17 | `shared/git-diff-output.ts:36,42`                           | A    |
+| 18    | `shared/export-symbol.ts:43`                                | C    |
+| 19    | `shared/replay-option.ts:20`                                | B    |
+| 20    | `document/section-reference.ts:303`                         | A    |
+| 21    | `document/feature-edge-table.ts:98`                         | D    |
+| 22    | `document/task-mention.ts:240`                              | A    |
+| 23-24 | `document/command-reference.ts:26,32`                       | A    |
+| 25    | `document/undefined-audit-count.ts:122`                     | A    |
+| 26    | `document/undefined-audit-count.ts:136`                     | A    |
+| 27    | `document/document-index.ts:49`                             | D    |
+| 28    | `document/document-index.ts:110`                            | A    |
+| 29    | `document/lib/document-index-repository.ts:153`             | A    |
+| 30    | `document/lib/document-index-repository.ts:154`             | D    |
+| 31    | `document/closing-bold.ts:69`                               | A    |
+| 32    | `dev/a2ui-write-trial.ts:105`                               | B    |
+| 33    | `dev/ship.ts:334`                                           | D    |
+| 34-35 | `dev/lib/expected-diff-repository.ts:18,20`                 | B    |
+| 36    | `dev/lib/submodule-drift.ts:67`                             | D    |
+| 37    | `dev/lib/submodule-drift.ts:126`                            | D    |
+| 38    | `dev/lib/build-ui-skip.ts:47`                               | D    |
+| 39    | `dev/lib/ship-queue.ts:156`                                 | B    |
+| 40    | `dev/lib/ship-queue.ts:192`                                 | B    |
+| 41    | `dev/lib/ship-queue.ts:204`                                 | B    |
+| 42-43 | `hook/lib/git-subcommand.ts:14,15`                          | A    |
+| 44    | `hook/lib/shell-write-rule.ts:360`                          | D    |
+| 45    | `hook/lib/broad-kill.ts:86`                                 | A    |
+| 46-47 | `hook/lib/broad-kill.ts:123,124`                            | A    |
+| 48    | `hook/lib/foreign-restore.ts:54`                            | D    |
+| 49    | `hook/lib/shell-command.ts:114`                             | A    |
+| 50    | `hook/lib/shell-command.ts:187`                             | A    |
+| 51    | `hook/lib/shell-command.ts:222`                             | A    |
+| 52    | `hook/lib/shell-command.ts:319`                             | A    |
+| 53    | `hook/lib/shell-command.ts:348`                             | A    |
+| 54    | `hook/lib/shell-command.ts:397`                             | A    |
+| 55    | `hook/lib/python-script-read.ts:135`                        | D    |
+| 56    | `hook/lib/hook-mode.ts:13`                                  | D    |
+| 57    | `hook/lib/bash-hook-call.ts:48`                             | D    |
+| 58    | `hook/lib/shell-write-rule.ts` の `directoryAfterUnsure`    | E    |
+| 59-62 | `shared/e2e-scenario.ts` の4件                              | E    |
+| 63    | `hook/lib/python-script-read.ts` の `findPythonScriptPaths` | E    |
+
+E は消せた 6 件（58・59-62・63）。直して消えたので行番号は今のコードに無い。A〜D は 57 件で、`git grep -o '?? ""' -- scripts` の実数（`python-script-read.ts` の 1 件を含めて 57 件）と一致する。
+
+`workRoot` の `| undefined`・`?:`（`shell-write-rule.ts`・`python-script-read.ts`）は、遷移しない固定の入力なので合併型にしない。`WorkingDirectory` に畳んだのは、遷移して「根が決まらない」を運ぶ作業ディレクトリだけ。

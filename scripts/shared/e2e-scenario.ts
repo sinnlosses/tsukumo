@@ -78,8 +78,10 @@ function nameExpressions(nodes: readonly AstNode[]): readonly AstNode[] {
       return []
     }
     const name = calleeName(callee)
-    const isLocal = stringField(callee, "type") === "Identifier" && localFunctions.has(name ?? "")
-    if (name === undefined || !ROOM_OPENER.test(name) || isLocal) {
+    if (name === undefined || !ROOM_OPENER.test(name)) {
+      return []
+    }
+    if (stringField(callee, "type") === "Identifier" && localFunctions.has(name)) {
       return []
     }
     const [first, second] = arrayField(node, "arguments")
@@ -113,8 +115,10 @@ function isTraceable(expression: AstNode, nodes: readonly AstNode[], depth: numb
       const inner = objectField(expression, "expression")
       return inner !== undefined && isTraceable(inner, nodes, depth - 1)
     }
-    case "Identifier":
-      return isIdentifierTraceable(stringField(expression, "name") ?? "", nodes, depth - 1)
+    case "Identifier": {
+      const name = stringField(expression, "name")
+      return name !== undefined && isIdentifierTraceable(name, nodes, depth - 1)
+    }
     default:
       return false
   }
@@ -206,7 +210,10 @@ function isLiteralTable(expression: AstNode, nodes: readonly AstNode[], depth: n
       return inner !== undefined && isLiteralTable(inner, nodes, depth - 1)
     }
     case "Identifier": {
-      const name = stringField(expression, "name") ?? ""
+      const name = stringField(expression, "name")
+      if (name === undefined) {
+        return false
+      }
       const declarators = nodes.filter((node) => isDeclaratorOf(node, name))
       return (
         !isReassignable(name, nodes) &&
@@ -277,8 +284,10 @@ function functionName(fn: AstNode, nodes: readonly AstNode[]): string | undefine
 }
 
 function isFunction(node: AstNode): boolean {
-  return ["FunctionDeclaration", "ArrowFunctionExpression", "FunctionExpression"].includes(
-    stringField(node, "type") ?? "",
+  const type = stringField(node, "type")
+  return (
+    type !== undefined &&
+    ["FunctionDeclaration", "ArrowFunctionExpression", "FunctionExpression"].includes(type)
   )
 }
 
