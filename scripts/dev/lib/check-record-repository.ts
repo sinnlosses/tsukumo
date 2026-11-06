@@ -114,7 +114,7 @@ function parseStage(value: unknown): RecordedStage | undefined {
     !isPlainObject(value) ||
     typeof value.name !== "string" ||
     !isStringArray(value.args) ||
-    !isStringArray(value.retryFiles)
+    typeof value.retryLastFailed !== "boolean"
   ) {
     return undefined
   }
@@ -127,7 +127,7 @@ function parseStage(value: unknown): RecordedStage | undefined {
         name: value.name,
         args: value.args,
         result,
-        retryFiles: value.retryFiles,
+        retryLastFailed: value.retryLastFailed,
         failedTests,
         count,
       }

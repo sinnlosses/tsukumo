@@ -103,18 +103,22 @@ describe("planRerun と nextRecord", () => {
     expect(other.notices).toEqual([])
   })
 
-  test("E2E だけが1ファイル落ちた控えなら、軽い段と単体を飛ばし、E2E はそのファイルと bail だけ", () => {
+  test("E2E だけが落ちた控えなら、軽い段と単体を飛ばし、E2E は計画の引数に --last-failed を足して流す", () => {
     const first = recordAfter(EMPTY_CHECK_RECORD, [
       ...ALL_PASSED.slice(0, 4),
       result("test:e2e", 1, ["test/e2e/b.test.ts"]),
     ])
     const second = planRerun(STAGES, first, TREE)
     expect(runStages(second)).toEqual([
-      { name: "test:e2e", args: ["test/e2e/b.test.ts", "--max-failures=3"], heavy: true },
+      {
+        name: "test:e2e",
+        args: ["test/e2e/a.test.ts", "test/e2e/b.test.ts", "--max-failures=3", "--last-failed"],
+        heavy: true,
+      },
     ])
     expect(second.notices).toEqual([
       "同じ木で前回通った段を飛ばす（次の回は流す）: typecheck, lint, format:check, test",
-      "E2E は同じ木で前回落ちたファイルだけ流す: test/e2e/b.test.ts",
+      "E2E は同じ木で前回落ちたテストだけ流す（--last-failed）",
     ])
   })
 

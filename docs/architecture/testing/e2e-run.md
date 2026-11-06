@@ -81,8 +81,11 @@
   - どれにも当たらないパスは全件。見張りの表に載せる E2E の領域が足りないと取りこぼすが、送る直前の全件で拾う。
     **E2E のファイルを足したら表に足す**（載っていないと単体テストが落ちる）
   - 期待値を撮り直す `pnpm run test:e2e:update` も既定は同じ選び方で、`--full` で全件、ファイルを渡せばそのファイルだけ
-- **同じ木で `pnpm run check` を打ち直すと（`--full` も）、前回通った段を1回だけ飛ばし、E2E は前回落ちたファイルだけを流す**
-  （控えはリポジトリの根の `.check-record.json`。鍵は作業ツリーの木と段の引数で、飛ばした次の回は流す。`--max-failures=3` が発火した回は、打ち切られたファイルも「通った」と記録されるので絞らない）
+- **同じ木で `pnpm run check` を打ち直すと（`--full` も）、前回通った段を1回だけ飛ばし、E2E は前回落ちたテストだけを流す**
+  （控えはリポジトリの根の `.check-record.json`。鍵は作業ツリーの木と段の引数で、飛ばした次の回は流す。E2E の絞り込みは Playwright の `--last-failed` に任せ、
+  テスト単位で絞る。`.last-run.json` は手で打つ `pnpm run test:e2e <別ファイル>` に上書きされて控えとずれるので、
+  `check` の E2E の段だけ `PLAYWRIGHT_LAST_RUN_OUTPUT_FILE` で専用の `.check-last-run.json`〔`.gitignore` 対象〕に分ける。
+  `--max-failures=3` が発火した回は、JSON の結果側で打ち切られたテストが「通った」ように見えるので絞らない）
 - **flaky の台帳**: 同じ木の打ち直しで、前回落ちたテストが今回通ると、リポジトリの根の `flaky-ledger.jsonl`
   （`.gitignore` 対象、追記のみ）に1件1行の JSON `{at, tree, stage, test}` で足す。`test` は `<ファイル> > <テスト名>`。
   数えるには `jq -r .test flaky-ledger.jsonl | sort | uniq -c | sort -rn | head`。台帳に載ることは「打ち直したら通った」であって

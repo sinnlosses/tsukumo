@@ -374,7 +374,12 @@ function runBuffered(stage: Stage, control: StopControl): Promise<BufferedResult
     const child = spawn("pnpm", ["run", stage.name, ...stageArgs], {
       cwd: ROOT,
       env: isE2e
-        ? { ...process.env, ...E2E_FULL_ENVIRONMENT, PLAYWRIGHT_JSON_OUTPUT_FILE: reportPath }
+        ? {
+            ...process.env,
+            ...E2E_FULL_ENVIRONMENT,
+            PLAYWRIGHT_JSON_OUTPUT_FILE: reportPath,
+            PLAYWRIGHT_LAST_RUN_OUTPUT_FILE: join(ROOT, ".check-last-run.json"),
+          }
         : process.env,
       stdio: ["ignore", "pipe", "pipe"],
     })

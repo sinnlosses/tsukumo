@@ -81,18 +81,31 @@ describe("readCheckRecord と writeCheckRecord", () => {
             name: "lint",
             args: [],
             result: "passed",
-            retryFiles: [],
+            retryLastFailed: false,
             failedTests: [],
             count: undefined,
           },
-          { name: "test", args: [], result: "passed", retryFiles: [], failedTests: [], count: 12 },
+          {
+            name: "test",
+            args: [],
+            result: "passed",
+            retryLastFailed: false,
+            failedTests: [],
+            count: 12,
+          },
         ],
       } as const
       writeCheckRecord(root, record)
       expect(readCheckRecord(root)).toEqual(record)
 
       // count の無い旧い控えも読める
-      const old = { name: "test", args: [], result: "passed", retryFiles: [], failedTests: [] }
+      const old = {
+        name: "test",
+        args: [],
+        result: "passed",
+        retryLastFailed: false,
+        failedTests: [],
+      }
       writeFileSync(
         join(root, ".check-record.json"),
         JSON.stringify({ tree: "abc", stages: [old] }),

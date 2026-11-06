@@ -5,7 +5,10 @@
 import { isDeepEqual } from "remeda"
 
 import type { FailedFiles } from "./check-failure.ts"
-import { E2E_BAIL_COUNT, e2eStage, type Stage } from "./check-stage.ts"
+import { E2E_BAIL_COUNT, type Stage } from "./check-stage.ts"
+
+/** Playwright が前回の実行結果の控えから、前回落ちたテストだけを流す。 */
+const LAST_FAILED_FLAG = "--last-failed"
 
 /** `carried` は控えで飛ばした段か、落ちたファイルだけに絞って通した段。次の回は計画どおり流す。 */
 export type RecordedResult = "passed" | "carried" | "failed"
@@ -15,8 +18,8 @@ export type RecordedStage = {
   /** 計画の引数（絞る前）。 */
   readonly args: readonly string[]
   readonly result: RecordedResult
-  /** 次の回に絞って流すファイル。空なら絞らない。 */
-  readonly retryFiles: readonly string[]
+  /** 次の回に前回落ちたテストだけに絞るか。打ち切られた回・落ちた記録の無い段は絞らない。 */
+  readonly retryLastFailed: boolean
   /** 落ちたテストの `<ファイル> > <テスト名>`。次の回で通ったら flaky として台帳に残す。 */
   readonly failedTests: readonly string[]
   /** その木で通ったテストの全数。数えない段・絞って通した段・落ちた段は undefined（JSON には書かない）。 */
@@ -38,7 +41,6 @@ export type PlannedStage =
       readonly kind: "narrowed"
       readonly planned: Stage
       readonly run: Stage
-      readonly files: readonly string[]
     }
 
 export type RerunPlan = {
@@ -103,12 +105,11 @@ export function planRerun(stages: readonly Stage[], record: CheckRecord, tree: s
     if (recorded?.result === "passed") {
       return { kind: "skip", planned: stage }
     }
-    if (recorded?.result === "failed" && recorded.retryFiles.length > 0) {
+    if (recorded?.result === "failed" && recorded.retryLastFailed) {
       return {
         kind: "narrowed",
         planned: stage,
-        run: e2eStage(recorded.retryFiles),
-        files: recorded.retryFiles,
+        run: { ...stage, args: [...stage.args, LAST_FAILED_FLAG] },
       }
     }
     return { kind: "run", planned: stage }
@@ -130,7 +131,7 @@ export function nextRecord(
         {
           ...key,
           result: "carried",
-          retryFiles: [],
+          retryLastFailed: false,
           failedTests: [],
           count: previous.stages.find((recorded) => isSameStage(recorded, entry.planned))?.count,
         },
@@ -145,7 +146,7 @@ export function nextRecord(
         {
           ...key,
           result: entry.kind === "narrowed" ? "carried" : "passed",
-          retryFiles: [],
+          retryLastFailed: false,
           failedTests: [],
           count:
             entry.kind === "narrowed" || result.passedTests.length === 0
@@ -158,7 +159,7 @@ export function nextRecord(
       {
         ...key,
         result: "failed",
-        retryFiles: retryFilesOf(result),
+        retryLastFailed: canRetryLastFailed(result),
         failedTests: result.failedTests,
         count: undefined,
       },
@@ -176,21 +177,19 @@ function isSameStage(recorded: RecordedStage, stage: Stage): boolean {
 }
 
 /** bail が発火した回は、打ち切られたファイルが通ったと書かれるので絞らない。 */
-function retryFilesOf(result: StageRunResult): readonly string[] {
-  return result.name === "test:e2e" && !isBailed(result) ? result.failed.files : []
+function canRetryLastFailed(result: StageRunResult): boolean {
+  return result.name === "test:e2e" && !isBailed(result) && result.failed.files.length > 0
 }
 
 function describeRerun(planned: readonly PlannedStage[]): readonly string[] {
   const skipped = planned
     .filter((entry) => entry.kind === "skip")
     .map((entry) => entry.planned.name)
-  const narrowedFiles = planned.flatMap((entry) => (entry.kind === "narrowed" ? entry.files : []))
+  const narrowed = planned.some((entry) => entry.kind === "narrowed")
   return [
     ...(skipped.length > 0
       ? [`同じ木で前回通った段を飛ばす（次の回は流す）: ${skipped.join(", ")}`]
       : []),
-    ...(narrowedFiles.length > 0
-      ? [`E2E は同じ木で前回落ちたファイルだけ流す: ${narrowedFiles.join(", ")}`]
-      : []),
+    ...(narrowed ? [`E2E は同じ木で前回落ちたテストだけ流す（${LAST_FAILED_FLAG}）`] : []),
   ]
 }
