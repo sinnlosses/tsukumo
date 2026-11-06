@@ -35,10 +35,10 @@ export function decisionRows(adrs: readonly TitledFile[]): TableRow[] {
   ])
 }
 
-const ADR_STATUS_PATTERN = /^ステータス: (採用|置き換え済み（→ \d{4}）|廃止)$/u
+const ADR_STATUS_PATTERN = /^ステータス: (提案|採用|置き換え済み（→ \d{4}）|廃止)$/u
 
 /**
- * ADR の題の次の空でない行のステータスの値（`採用`・`置き換え済み（→ 00NN）`・`廃止`）。
+ * ADR の題の次の空でない行のステータスの値（`提案`・`採用`・`置き換え済み（→ 00NN）`・`廃止`）。
  * 整形が題の直後に空行を入れるので、空行は読み飛ばす。その行が無い・形が違えば `undefined`。
  */
 export function readAdrStatus(text: string): string | undefined {

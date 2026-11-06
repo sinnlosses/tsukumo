@@ -39,6 +39,7 @@ describe("readAdrStatus", () => {
 
   it("題の次の空でない行の `ステータス: ` の値を返す（整形が入れる空行は読み飛ばす）", () => {
     expect(readAdrStatus(["# 題", "", "ステータス: 採用", "", "本文"].join("\n"))).toBe("採用")
+    expect(readAdrStatus(adr("ステータス: 提案"))).toBe("提案")
     expect(readAdrStatus(adr("ステータス: 採用"))).toBe("採用")
     expect(readAdrStatus(adr("ステータス: 廃止"))).toBe("廃止")
     expect(readAdrStatus(adr("ステータス: 置き換え済み（→ 0034）"))).toBe("置き換え済み（→ 0034）")

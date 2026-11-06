@@ -72,56 +72,58 @@
 ## 設計判断（なぜ今の形なのか）
 
 この表は `pnpm run format` が ADR の1行目の題とその次のステータスの行から書き直すので、手で直さない。
-各 ADR の題の次の空でない行は `ステータス: 採用` か `置き換え済み（→ 00NN）` か `廃止`。採用後の ADR は凍結し、
+各 ADR の題の次の空でない行は `ステータス: 提案` か `採用` か `置き換え済み（→ 00NN）` か `廃止`。
+`提案` は利用者の決定を待つ ADR で、決まったら `採用` に書き換えるか、採らないなら `廃止` にする。採用後の ADR は凍結し、
 判断を改めるときは本文を書き換えず新しい番号で書いて、古いほうのステータスを `置き換え済み（→ 新しい番号）` にする。
 
-| ファイル                                                              | 判断                                                                                                  | ステータス             |
-| --------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | ---------------------- |
-| `docs/architecture/adr/0001-render-in-browser.md`                     | 描く層をブラウザ側へ移す                                                                              | 採用                   |
-| `docs/architecture/adr/0002-render-migration-tech-choice.md`          | 描く層の移行で決めた技術選択                                                                          | 採用                   |
-| `docs/architecture/adr/0003-orca-owns-worktree.md`                    | worktree を用意するのは orca で、tsukumo はやらない                                                   | 採用                   |
-| `docs/architecture/adr/0004-turn-number-from-record.md`               | ターンの通し番号は記録が持ち、位置では決めない                                                        | 採用                   |
-| `docs/architecture/adr/0005-css-module-output-in-temp.md`             | CSS Modules の成果物は一時ディレクトリへ出して読み、すぐ消す                                          | 置き換え済み（→ 0006） |
-| `docs/architecture/adr/0006-prebuild-browser.md`                      | ブラウザ側は事前に組み立てて置く                                                                      | 採用                   |
-| `docs/architecture/adr/0007-vite-build-cli.md`                        | 組み立ては `vite build` の CLI を子プロセスで起こす                                                   | 採用                   |
-| `docs/architecture/adr/0008-sdk-instead-of-tui.md`                    | Claude Code の TUI を捨て、SDK で動かす                                                               | 採用                   |
-| `docs/architecture/adr/0009-speech-via-tool.md`                       | セリフはテキストの規約ではなく、ツール呼び出しで受け取る                                              | 採用                   |
-| `docs/architecture/adr/0010-report-via-tool.md`                       | レポートはテキストではなく `report` ツールで受け取る                                                  | 採用                   |
-| `docs/architecture/adr/0011-separate-shell-and-app.md`                | ホスト（Orca か既定のブラウザ）と中身（Web アプリ）を分ける                                           | 採用                   |
-| `docs/architecture/adr/0012-bundle-vendor-library.md`                 | 外部ライブラリは CDN から読まず、同梱して自分で配る                                                   | 採用                   |
-| `docs/architecture/adr/0013-tolerate-missing-display.md`              | 表示物が1つ欠けても起動失敗にしない                                                                   | 採用                   |
-| `docs/architecture/adr/0014-no-bundled-character-asset.md`            | キャラクター素材はリポジトリに同梱しない                                                              | 採用                   |
-| `docs/architecture/adr/0015-single-host-port.md`                      | ホスト依存の操作は1つのポートにまとめる                                                               | 採用                   |
-| `docs/architecture/adr/0016-html-instead-of-terminal.md`              | 表示はターミナル描画をやめて、すべて HTML にした                                                      | 採用                   |
-| `docs/architecture/adr/0017-serve-from-local-http.md`                 | HTML はローカルの HTTP サーバから配る（ファイルに書き出さない）                                       | 採用                   |
-| `docs/architecture/adr/0018-single-page-view.md`                      | ビューは1枚のページにまとめる                                                                         | 採用                   |
-| `docs/architecture/adr/0019-layer-as-directory.md`                    | 層をディレクトリで表し、依存の向きをテストで縛る                                                      | 置き換え済み（→ 0037） |
-| `docs/architecture/adr/0020-mixed-purity-in-adapter-file.md`          | 境界のファイルの中に、外の世界に触らない関数が混じっていてよい                                        | 採用                   |
-| `docs/architecture/adr/0021-feature-state-fold-in-feature.md`         | 機能だけが動かす状態の畳み方は、その機能の shared に置く                                              | 採用                   |
-| `docs/architecture/adr/0022-three-setting-homes.md`                   | 設定は誰の・何に属する値かで3つの置き場に割る                                                         | 置き換え済み（→ 0025） |
-| `docs/architecture/adr/0023-local-diagnostic-log.md`                  | 不具合の経緯は手元の1本の JSONL に、決まった語だけで残す                                              | 採用                   |
-| `docs/architecture/adr/0024-no-skill-dependency.md`                   | tsukumo はワークフローの契約だけを定め、特定のスキルに依存しない                                      | 採用                   |
-| `docs/architecture/adr/0025-no-project-settings.md`                   | プロジェクトの設定を無くし、Beads を前提にする                                                        | 採用                   |
-| `docs/architecture/adr/0026-session-claim-file.md`                    | 使用中のセッションは占有ファイルとプロセスの生存で知る                                                | 採用                   |
-| `docs/architecture/adr/0027-markdown-component-entry.md`              | 会話の画面の Markdown を部品に上げるときは、遅延読み込みの口を入口にする                              | 採用                   |
-| `docs/architecture/adr/0028-report-block-priority.md`                 | レポートの塊は、内容の形で並べた1本の梯子を上から試して選ぶ                                           | 置き換え済み（→ 0038） |
-| `docs/architecture/adr/0029-usage-review-own-query.md`                | トークン消費の見直しは、会話とは別の使い捨ての `query()` で走らせる                                   | 採用                   |
-| `docs/architecture/adr/0030-workflow-as-skill-sequence.md`            | ワークフローを、契約を満たすスキルの並びにする                                                        | 採用                   |
-| `docs/architecture/adr/0031-report-body-as-regions.md`                | レポートの本文は欄の構造のままブラウザへ渡し、欄ごとに独立して描く                                    | 採用                   |
-| `docs/architecture/adr/0032-free-html-block.md`                       | モデルが自由に書いた HTML を、レポートに載せる口は持たない                                            | 採用                   |
-| `docs/architecture/adr/0033-timeline-block.md`                        | 時刻の軸に行ごとの帯を並べる図は、`timeline` の塊として HTML で描く                                   | 採用                   |
-| `docs/architecture/adr/0034-figure-description-drawn-by-tsukumo.md`   | 図は書き手が構造を記述し、tsukumo が決まった配色と配置規則で描く                                      | 採用                   |
-| `docs/architecture/adr/0035-optional-figure-plugin.md`                | 既存の塊で描けない図は、任意の同梱プラグインのスキルが撮った PNG を `image` の塊で載せる              | 採用                   |
-| `docs/architecture/adr/0036-optional-figure-and-preference.md`        | `report` の `figure` は省ける欄にし、図を置くかの既定は利用者の設定に持つ                             | 採用                   |
-| `docs/architecture/adr/0037-dependency-cruiser-edge-check.md`         | 層と機能の辺の検査を dependency-cruiser の宣言に移す                                                  | 採用                   |
-| `docs/architecture/adr/0038-declare-then-decide-form.md`              | `report` は問いと数を申告させて形は決定表が決め、本文は `body` で受け、差し戻しは文法と数の整合に絞る | 採用                   |
-| `docs/architecture/adr/0039-report-via-a2ui-catalog.md`               | `report` を A2UI のカタログとメッセージで受けて描く                                                   | 採用                   |
-| `docs/architecture/adr/0040-report-staged-drawing.md`                 | `report` の `a2ui` の版を、部品が閉じるたびに草稿として描く                                           | 採用                   |
-| `docs/architecture/adr/0041-design-system-tokens-and-gallery.md`      | 画面全体のデザインシステム: 余白・角丸・影・動きのトークンと見本帳                                    | 採用                   |
-| `docs/architecture/adr/0042-report-leaf-direct-react.md`              | `report` の内容部品を、Markdown に戻さず React の部品で直接描く                                       | 採用                   |
-| `docs/architecture/adr/0043-report-internal-on-components.md`         | `report` の内部の表現を `components` に一本化する                                                     | 採用                   |
-| `docs/architecture/adr/0044-e2e-runner-playwright-test.md`            | E2E のランナーを `@playwright/test` に移し、撮影の道具は待ちの部品だけ借りる                          | 採用                   |
-| `docs/architecture/adr/0045-workflow-script-orchestration.md`         | タスクの段の進め方を、plugin の dynamic workflows のワークフロースクリプトに移す                      | 採用                   |
-| `docs/architecture/adr/0046-verification-stages-from-check-record.md` | 作業の記録の「確かめたこと」の段と件数を、検証の控え `.check-record.json` から木の SHA で照らして運ぶ | 採用                   |
-| `docs/architecture/adr/0047-compare-relation.md`                      | 見比べの部品を `Compare` 1つにまとめ、側の中身と `relation` で対等と前後を描き分ける                  | 採用                   |
-| `docs/architecture/adr/0048-report-parameters-and-expressions.md`     | 触れるレポート: つまみの部品と、独自関数 `expr` の中置の式・名前つきの式で値を結ぶ                    | 採用                   |
+| ファイル                                                                        | 判断                                                                                                  | ステータス             |
+| ------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | ---------------------- |
+| `docs/architecture/adr/0001-render-in-browser.md`                               | 描く層をブラウザ側へ移す                                                                              | 採用                   |
+| `docs/architecture/adr/0002-render-migration-tech-choice.md`                    | 描く層の移行で決めた技術選択                                                                          | 採用                   |
+| `docs/architecture/adr/0003-orca-owns-worktree.md`                              | worktree を用意するのは orca で、tsukumo はやらない                                                   | 採用                   |
+| `docs/architecture/adr/0004-turn-number-from-record.md`                         | ターンの通し番号は記録が持ち、位置では決めない                                                        | 採用                   |
+| `docs/architecture/adr/0005-css-module-output-in-temp.md`                       | CSS Modules の成果物は一時ディレクトリへ出して読み、すぐ消す                                          | 置き換え済み（→ 0006） |
+| `docs/architecture/adr/0006-prebuild-browser.md`                                | ブラウザ側は事前に組み立てて置く                                                                      | 採用                   |
+| `docs/architecture/adr/0007-vite-build-cli.md`                                  | 組み立ては `vite build` の CLI を子プロセスで起こす                                                   | 採用                   |
+| `docs/architecture/adr/0008-sdk-instead-of-tui.md`                              | Claude Code の TUI を捨て、SDK で動かす                                                               | 採用                   |
+| `docs/architecture/adr/0009-speech-via-tool.md`                                 | セリフはテキストの規約ではなく、ツール呼び出しで受け取る                                              | 採用                   |
+| `docs/architecture/adr/0010-report-via-tool.md`                                 | レポートはテキストではなく `report` ツールで受け取る                                                  | 採用                   |
+| `docs/architecture/adr/0011-separate-shell-and-app.md`                          | ホスト（Orca か既定のブラウザ）と中身（Web アプリ）を分ける                                           | 採用                   |
+| `docs/architecture/adr/0012-bundle-vendor-library.md`                           | 外部ライブラリは CDN から読まず、同梱して自分で配る                                                   | 採用                   |
+| `docs/architecture/adr/0013-tolerate-missing-display.md`                        | 表示物が1つ欠けても起動失敗にしない                                                                   | 採用                   |
+| `docs/architecture/adr/0014-no-bundled-character-asset.md`                      | キャラクター素材はリポジトリに同梱しない                                                              | 採用                   |
+| `docs/architecture/adr/0015-single-host-port.md`                                | ホスト依存の操作は1つのポートにまとめる                                                               | 採用                   |
+| `docs/architecture/adr/0016-html-instead-of-terminal.md`                        | 表示はターミナル描画をやめて、すべて HTML にした                                                      | 採用                   |
+| `docs/architecture/adr/0017-serve-from-local-http.md`                           | HTML はローカルの HTTP サーバから配る（ファイルに書き出さない）                                       | 採用                   |
+| `docs/architecture/adr/0018-single-page-view.md`                                | ビューは1枚のページにまとめる                                                                         | 採用                   |
+| `docs/architecture/adr/0019-layer-as-directory.md`                              | 層をディレクトリで表し、依存の向きをテストで縛る                                                      | 置き換え済み（→ 0037） |
+| `docs/architecture/adr/0020-mixed-purity-in-adapter-file.md`                    | 境界のファイルの中に、外の世界に触らない関数が混じっていてよい                                        | 採用                   |
+| `docs/architecture/adr/0021-feature-state-fold-in-feature.md`                   | 機能だけが動かす状態の畳み方は、その機能の shared に置く                                              | 採用                   |
+| `docs/architecture/adr/0022-three-setting-homes.md`                             | 設定は誰の・何に属する値かで3つの置き場に割る                                                         | 置き換え済み（→ 0025） |
+| `docs/architecture/adr/0023-local-diagnostic-log.md`                            | 不具合の経緯は手元の1本の JSONL に、決まった語だけで残す                                              | 採用                   |
+| `docs/architecture/adr/0024-no-skill-dependency.md`                             | tsukumo はワークフローの契約だけを定め、特定のスキルに依存しない                                      | 採用                   |
+| `docs/architecture/adr/0025-no-project-settings.md`                             | プロジェクトの設定を無くし、Beads を前提にする                                                        | 採用                   |
+| `docs/architecture/adr/0026-session-claim-file.md`                              | 使用中のセッションは占有ファイルとプロセスの生存で知る                                                | 採用                   |
+| `docs/architecture/adr/0027-markdown-component-entry.md`                        | 会話の画面の Markdown を部品に上げるときは、遅延読み込みの口を入口にする                              | 採用                   |
+| `docs/architecture/adr/0028-report-block-priority.md`                           | レポートの塊は、内容の形で並べた1本の梯子を上から試して選ぶ                                           | 置き換え済み（→ 0038） |
+| `docs/architecture/adr/0029-usage-review-own-query.md`                          | トークン消費の見直しは、会話とは別の使い捨ての `query()` で走らせる                                   | 採用                   |
+| `docs/architecture/adr/0030-workflow-as-skill-sequence.md`                      | ワークフローを、契約を満たすスキルの並びにする                                                        | 採用                   |
+| `docs/architecture/adr/0031-report-body-as-regions.md`                          | レポートの本文は欄の構造のままブラウザへ渡し、欄ごとに独立して描く                                    | 採用                   |
+| `docs/architecture/adr/0032-free-html-block.md`                                 | モデルが自由に書いた HTML を、レポートに載せる口は持たない                                            | 採用                   |
+| `docs/architecture/adr/0033-timeline-block.md`                                  | 時刻の軸に行ごとの帯を並べる図は、`timeline` の塊として HTML で描く                                   | 採用                   |
+| `docs/architecture/adr/0034-figure-description-drawn-by-tsukumo.md`             | 図は書き手が構造を記述し、tsukumo が決まった配色と配置規則で描く                                      | 採用                   |
+| `docs/architecture/adr/0035-optional-figure-plugin.md`                          | 既存の塊で描けない図は、任意の同梱プラグインのスキルが撮った PNG を `image` の塊で載せる              | 採用                   |
+| `docs/architecture/adr/0036-optional-figure-and-preference.md`                  | `report` の `figure` は省ける欄にし、図を置くかの既定は利用者の設定に持つ                             | 採用                   |
+| `docs/architecture/adr/0037-dependency-cruiser-edge-check.md`                   | 層と機能の辺の検査を dependency-cruiser の宣言に移す                                                  | 採用                   |
+| `docs/architecture/adr/0038-declare-then-decide-form.md`                        | `report` は問いと数を申告させて形は決定表が決め、本文は `body` で受け、差し戻しは文法と数の整合に絞る | 採用                   |
+| `docs/architecture/adr/0039-report-via-a2ui-catalog.md`                         | `report` を A2UI のカタログとメッセージで受けて描く                                                   | 採用                   |
+| `docs/architecture/adr/0040-report-staged-drawing.md`                           | `report` の `a2ui` の版を、部品が閉じるたびに草稿として描く                                           | 採用                   |
+| `docs/architecture/adr/0041-design-system-tokens-and-gallery.md`                | 画面全体のデザインシステム: 余白・角丸・影・動きのトークンと見本帳                                    | 採用                   |
+| `docs/architecture/adr/0042-report-leaf-direct-react.md`                        | `report` の内容部品を、Markdown に戻さず React の部品で直接描く                                       | 採用                   |
+| `docs/architecture/adr/0043-report-internal-on-components.md`                   | `report` の内部の表現を `components` に一本化する                                                     | 採用                   |
+| `docs/architecture/adr/0044-e2e-runner-playwright-test.md`                      | E2E のランナーを `@playwright/test` に移し、撮影の道具は待ちの部品だけ借りる                          | 採用                   |
+| `docs/architecture/adr/0045-workflow-script-orchestration.md`                   | タスクの段の進め方を、plugin の dynamic workflows のワークフロースクリプトに移す                      | 採用                   |
+| `docs/architecture/adr/0046-verification-stages-from-check-record.md`           | 作業の記録の「確かめたこと」の段と件数を、検証の控え `.check-record.json` から木の SHA で照らして運ぶ | 採用                   |
+| `docs/architecture/adr/0047-compare-relation.md`                                | 見比べの部品を `Compare` 1つにまとめ、側の中身と `relation` で対等と前後を描き分ける                  | 採用                   |
+| `docs/architecture/adr/0048-report-parameters-and-expressions.md`               | 触れるレポート: つまみの部品と、独自関数 `expr` の中置の式・名前つきの式で値を結ぶ                    | 採用                   |
+| `docs/architecture/adr/0049-sdk-tool-boundary-and-shared-drawing-vocabulary.md` | SDK の道具の境界と、ブラウザだけが読むように見える shared の描画の語彙の置き場                        | 提案                   |
