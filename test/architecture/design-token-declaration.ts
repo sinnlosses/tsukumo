@@ -51,6 +51,13 @@ export function rawScaleReferenceCount(css: string): number {
   ).length
 }
 
+export function marginDeclarationCount(css: string): number {
+  const withoutComments = css.replace(/\/\*[\s\S]*?\*\//g, "")
+  return [...withoutComments.matchAll(/(?<![\w-])margin(?:-[a-z]+)*\s*:\s*([^;{}]+)/g)].filter(
+    (match) => (match[1] ?? "").trim() !== "0",
+  ).length
+}
+
 export function isAllowedSpace(value: string): boolean {
   return splitTopLevel(value, /\s/).every(isAllowedSpaceToken)
 }

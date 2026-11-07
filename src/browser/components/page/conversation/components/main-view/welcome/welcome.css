@@ -1,19 +1,24 @@
 .welcome {
+  display: flex;
+  flex-direction: column;
+  gap: var(--stack-section);
   container-type: inline-size;
   padding: var(--space-sm) 0;
 }
-.title {
-  margin: var(--space-sm) 0 var(--space-xs);
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
 }
-.lead {
-  margin: 0 0 var(--stack-section);
+.title {
+  margin-top: var(--space-sm);
 }
 
 .cards {
   display: grid;
   grid-template-columns: 1.3fr 1fr 1fr;
   gap: var(--stack-group) var(--inline-group);
-  margin: 0 0 var(--stack-section);
+  margin: 0;
   padding: 0;
   list-style: none;
 }
@@ -203,13 +208,14 @@
    ほかの始め方は見出しを1行に置き、その下にボタンを同じ幅で横1列に並べる（2つでも3つでも1行）。 */
 @media (max-width: 760px) {
   .welcome {
+    gap: var(--space-md);
     padding: 0;
   }
-  .title {
-    margin: 0 0 var(--space-2xs);
+  .head {
+    gap: var(--space-2xs);
   }
-  .lead {
-    margin: 0 0 var(--space-md);
+  .title {
+    margin-top: 0;
   }
   /* 札は頭と題を幅いっぱいに置き、その下の行に理由（左）と足（右）を並べる格子にする。 */
   .card {
@@ -293,11 +299,12 @@
   .lead {
     display: none;
   }
-  .title {
-    margin: 0 0 var(--space-xs);
+  /* 題と札の間は xs のまま、札とほかの始め方の間は md（xs + sm）に保つ。 */
+  .welcome {
+    gap: var(--stack-tight);
   }
   .cards {
-    margin: 0 0 var(--space-md);
+    padding-bottom: var(--stack-block);
   }
   .card {
     padding: var(--space-xs) var(--space-md) var(--space-xs) var(--space-lg);

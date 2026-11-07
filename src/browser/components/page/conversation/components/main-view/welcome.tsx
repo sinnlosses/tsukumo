@@ -28,18 +28,20 @@ export function Welcome(): ReactElement {
 
   return (
     <div className={styles["welcome"]}>
-      <Heading level={2} size="heading" tone="ink" weight="bold" className={styles["title"]}>
-        {TITLE}
-      </Heading>
-      <Text
-        element="p"
-        size="subheading"
-        tone="ink-quiet"
-        weight="inherit"
-        className={styles["lead"]}
-      >
-        {hasCards ? LEAD_WITH_CARDS : LEAD_WITHOUT_CARDS}
-      </Text>
+      <div className={styles["head"]}>
+        <Heading level={2} size="heading" tone="ink" weight="bold" className={styles["title"]}>
+          {TITLE}
+        </Heading>
+        <Text
+          element="p"
+          size="subheading"
+          tone="ink-quiet"
+          weight="inherit"
+          className={styles["lead"]}
+        >
+          {hasCards ? LEAD_WITH_CARDS : LEAD_WITHOUT_CARDS}
+        </Text>
+      </div>
       {hasCards && (
         <ul className={styles["cards"]} data-count={model.cards.length}>
           {model.cards.map((card, index) => (
