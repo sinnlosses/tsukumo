@@ -1,22 +1,21 @@
 // 常設の文章（AGENTS.md と .claude/rules/*.md）の字数が上限以内であること
-// （docs/coding-standards.md「常設の文章の字数」）。
+// （docs/coding-standards/format-and-always-on-text.md「常設の文章の字数」）。
 
 import { readdirSync, readFileSync } from "node:fs"
 
 import { describe, expect, it } from "vitest"
 
 import {
+  AGENTS_MD_LIMIT,
+  IMPLEMENTER_BRIEF_LIMIT,
+  RULES_TOTAL_LIMIT,
   SYSTEM_PROMPT_TEXTS,
   SYSTEM_PROMPT_TOTAL_LIMIT,
+  TASK_WRITING_LIMIT,
 } from "../../scripts/shared/addition-budget.ts"
 import { REPOSITORY_ROOT } from "../../scripts/shared/repository-root.ts"
 
 const RULES_DIR = `${REPOSITORY_ROOT}/.claude/rules`
-
-const AGENTS_MD_LIMIT = 4000
-const RULES_TOTAL_LIMIT = 2400
-const IMPLEMENTER_BRIEF_LIMIT = 9623
-const TASK_WRITING_LIMIT = 9220
 
 const IMPLEMENTER_BRIEF_PATH = `${REPOSITORY_ROOT}/vendor/tsukumo-plugins/skills/task-workflow/parts/implementer/implementer-brief.md`
 
