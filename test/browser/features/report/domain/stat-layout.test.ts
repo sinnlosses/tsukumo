@@ -17,6 +17,29 @@ describe("statLayoutOf", () => {
   })
 
   it.each([
+    ["up", "5", "8", "up", "better"],
+    ["up", "8", "5", "down", "worse"],
+    ["down", "8", "5", "down", "better"],
+    ["", "5", "8", "up", "plain"],
+    ["up", "約5", "8", "none", "plain"],
+  ] as const)(
+    "差の字があるとき better=%s の前 %s → %s は arrow=%s・tone=%s",
+    (better, before, value, arrow, tone) => {
+      expect(statLayoutOf({ ...statItem, better, before, value, change: "差" }).change).toEqual({
+        kind: "change",
+        arrow,
+        tone,
+      })
+    },
+  )
+
+  it("差の字が空なら差の印の値を持たない", () => {
+    expect(statLayoutOf({ ...statItem, better: "up", before: "5", value: "8" }).change).toEqual({
+      kind: "none",
+    })
+  })
+
+  it.each([
     ["up", "99.95%", "99.9%", "met"],
     ["down", "420ms", "500ms", "met"],
     ["up", "99.9%", "99.9%", "met"],

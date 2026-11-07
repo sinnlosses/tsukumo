@@ -115,7 +115,15 @@ const EXPRESSION_EXAMPLES: ReadonlyMap<string, readonly unknown[]> = new Map([
       {
         id: "st1",
         component: "Stats",
-        items: [{ label: "所要（秒）", before: "240", value: expr("cur"), better: "down" }],
+        items: [
+          {
+            label: "所要（秒）",
+            before: "240",
+            value: expr("cur"),
+            better: "down",
+            change: "−156（−65%）",
+          },
+        ],
       },
     ],
   ],

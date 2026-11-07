@@ -191,6 +191,9 @@ export const statItemsSchema = z
       targetGap: omittable(z.string(), "").describe(
         "目標との差（例: −0.08pt）。書き手が書き、tsukumo は計算しない。省いてよい",
       ),
+      change: omittable(z.string(), "").describe(
+        "前との差の字（例 −5件（−11.9%））。向きは better で付く",
+      ),
     }),
   )
   .min(3)

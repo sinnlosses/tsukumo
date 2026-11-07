@@ -190,6 +190,9 @@ export const statsLeafClassNames = {
   statVerdict: notationStyles["report-stat-verdict"],
   statVerdictMet: notationStyles["report-stat-verdict-met"],
   statVerdictMissed: notationStyles["report-stat-verdict-missed"],
+  statChange: notationStyles["report-stat-change"],
+  statChangeBetter: notationStyles["report-stat-change-better"],
+  statChangeWorse: notationStyles["report-stat-change-worse"],
   statMissed: notationStyles["report-stat-missed"],
 } as const
 

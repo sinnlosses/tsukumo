@@ -20,6 +20,13 @@ export type StatLayout = {
   readonly target:
     | { readonly kind: "none" }
     | { readonly kind: "target"; readonly verdict: "met" | "missed" | "unknown" }
+  readonly change:
+    | { readonly kind: "none" }
+    | {
+        readonly kind: "change"
+        readonly arrow: "up" | "down" | "none"
+        readonly tone: "plain" | "better" | "worse"
+      }
 }
 
 export const STAT_SPARK_WIDTH = 48
@@ -34,21 +41,38 @@ export function statLayoutOf(item: StatItem): StatLayout {
     spark: sparkOf(item.series),
     meter: meterOf(item.value, item.total),
     target: targetOf(item),
+    change: changeOf(item),
   }
 }
 
-/** 前と後がどちらも数で `better` があるときだけ、増減が良い向きなら `better`・逆なら `worse`。差は計算しない。 */
-function beforeToneOf({ before, value, better }: StatItem): StatLayout["beforeTone"] {
-  if (better === "" || !NUMERIC_CELL_PATTERN.test(before) || !NUMERIC_CELL_PATTERN.test(value)) {
-    return "plain"
+/** 前と後がどちらも数のときだけ、増えたか減ったか。 */
+function movementOf({ before, value }: StatItem): "up" | "down" | "none" {
+  if (!NUMERIC_CELL_PATTERN.test(before) || !NUMERIC_CELL_PATTERN.test(value)) {
+    return "none"
   }
   const from = numericCellMagnitude(before)
   const to = numericCellMagnitude(value)
   if (from === to) {
+    return "none"
+  }
+  return to > from ? "up" : "down"
+}
+
+/** 前と後がどちらも数で `better` があるときだけ、増減が良い向きなら `better`・逆なら `worse`。差は計算しない。 */
+function beforeToneOf(item: StatItem): StatLayout["beforeTone"] {
+  const movement = movementOf(item)
+  if (item.better === "" || movement === "none") {
     return "plain"
   }
-  const improved = better === "up" ? to > from : to < from
-  return improved ? "better" : "worse"
+  return movement === item.better ? "better" : "worse"
+}
+
+/** 差の字があるときだけ、増減の記号と `beforeToneOf` と同じ向きの色を決める。 */
+function changeOf(item: StatItem): StatLayout["change"] {
+  if (item.change.trim() === "") {
+    return { kind: "none" }
+  }
+  return { kind: "change", arrow: movementOf(item), tone: beforeToneOf(item) }
 }
 
 /** 3つ以上の数の並びを、語の高さの折れ線（最新の点だけ円）にする。最大が上、全部同じなら中央。座標は小数 1 桁に丸める。 */

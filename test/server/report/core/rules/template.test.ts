@@ -46,6 +46,7 @@ describe("依頼の型の雛形", () => {
             better: "",
             target: "",
             targetGap: "",
+            change: "",
           },
           {
             value: "2",
@@ -56,6 +57,7 @@ describe("依頼の型の雛形", () => {
             better: "",
             target: "",
             targetGap: "",
+            change: "",
           },
           {
             value: "5",
@@ -66,6 +68,7 @@ describe("依頼の型の雛形", () => {
             better: "",
             target: "",
             targetGap: "",
+            change: "",
           },
         ],
         task: taskOf("diagnosis"),

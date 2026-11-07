@@ -69,6 +69,7 @@ describe("report の keyFigures のイベントへの変換と引き継ぎ", () 
       better: "up",
       target: "25",
       targetGap: "−5",
+      change: "",
     }
 
     expect(convert({ conclusion: "架空の結論。" })?.keyFigures).toEqual([])
@@ -87,6 +88,7 @@ describe("report の keyFigures のイベントへの変換と引き継ぎ", () 
       series: [],
       better: "up",
       targetGap: "",
+      change: "",
     }
     const items = [
       { ...base, target: "未定" },

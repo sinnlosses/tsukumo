@@ -3,7 +3,7 @@
    数そのものが結論になる値（件数・前後の差）を、地の文に埋めずに並べる塊。
    `.report-card` と違って中身は1つの数とそのラベルだけなので、器は `.report-cols` より狭く取り、3〜4枚が1行に収まるようにする。
    札は左から並べる。数は札の字（--font-secondary）の 2 倍で、段は増やさない。
-   数そのものも前の数も良し悪しの色を持たない。色を持つのは目標の達否の印と、未達の札の枠だけで、印は「✓ 達成」「✕ 未達」の字でも読める。 */
+   数そのものも前の数も良し悪しの色を持たない。色を持つのは差の印・目標の達否の印と、未達の札の枠だけで、印は「▲」「▼」「✓ 達成」「✕ 未達」の字でも読める。 */
   & .report-stats {
     display: grid;
     grid-template-columns: minmax(min-content, max-content);
@@ -148,6 +148,25 @@
     background: color-mix(in srgb, var(--state-ok) 14%, transparent);
   }
   & .report-stat-verdict-missed {
+    color: var(--state-ng);
+    background: color-mix(in srgb, var(--state-ng) 14%, transparent);
+  }
+  /* `stats` の前との差の印。値の下に置き、向きが判定できるときだけ良い向きは state-ok・悪い向きは state-ng の字と地を持つ。 */
+  & .report-stat-change {
+    display: block;
+    inline-size: fit-content;
+    margin-block-start: var(--space-xs);
+    padding: var(--space-2xs) var(--space-sm);
+    border-radius: var(--radius-sm);
+    font-weight: 500;
+    white-space: nowrap;
+    color: var(--ink-quiet);
+  }
+  & .report-stat-change-better {
+    color: var(--state-ok);
+    background: color-mix(in srgb, var(--state-ok) 14%, transparent);
+  }
+  & .report-stat-change-worse {
     color: var(--state-ng);
     background: color-mix(in srgb, var(--state-ng) 14%, transparent);
   }

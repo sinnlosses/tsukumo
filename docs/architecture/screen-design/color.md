@@ -234,7 +234,7 @@
 `hr`・`details` の枠・`panel` など `cards` 以外のカードの枠・引用の縦罫は `rule` のまま。`report-stat` の枠は `rule-quiet`。
 
 **数の系統（`Chart`・`Plot`・`Stats`・`Timeline`）の色。** 見る項目・区間だけ `chart-series-1`、ほかは `ink` の 26%（`Chart`・`Plot`）か 30%（`Timeline`）で、`accent` は使わない。
-`Stats` の前の数は良し悪しを字の色で言わず、`ink-quiet` に統一した（`better` で色を変えると、色だけが意味を運び、同じ塊の `Badge` の語と二重になるため）。
+`Stats` の前の数の字は `ink-quiet` のまま据え置く。差の印（`change`）だけが、良い向きなら `state-ok`・悪い向きなら `state-ng` の地と字を持ち、記号（▲・▼と符号）が意味を運ぶので色だけに頼らない。向きが判定できないときは字だけを描く。
 延びた分の斜線は `state-warn`、割合の帯の埋めは `chart-series-1`、溝は `surface-raised`。`Chart` には単位を渡す欄が無いので、単位は軸の端に出ない（`Chart` の部品が単位を持つ変更は別の件）。
 
 **採らなかった案**（つまみを足す・行を塗る印を記法に足す・`highlight.js` のテーマを作り直す・

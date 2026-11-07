@@ -57,6 +57,7 @@ export const statItem: StatItem = {
   better: "",
   target: "",
   targetGap: "",
+  change: "",
 }
 export const captionNumbers = (
   sections: readonly { readonly heading: string; readonly blocks: readonly FigureBlock[] }[],

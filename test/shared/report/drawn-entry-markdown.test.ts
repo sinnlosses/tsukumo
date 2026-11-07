@@ -150,6 +150,7 @@ const ROWS: readonly (readonly [
             better: "",
             target: "",
             targetGap: "",
+            change: "",
           },
         ],
         ...PLAIN,

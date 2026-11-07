@@ -5,7 +5,10 @@ import {
   DirectLeaf,
   directLeafViewOf,
 } from "../../../../../src/browser/features/report/leaf/direct-leaf-view.tsx"
-import { loadMarkdown } from "../../../../../src/browser/features/report/markdown.tsx"
+import {
+  loadMarkdown,
+  statsLeafClassNames,
+} from "../../../../../src/browser/features/report/markdown.tsx"
 import type { A2uiReportComponent } from "../../../../../src/shared/report/a2ui-report-catalog.ts"
 import type { LeafValue } from "../../../../../src/shared/report/report-leaf-value.ts"
 
@@ -21,7 +24,16 @@ type StatsPart = Extract<A2uiReportComponent, { readonly component: "Stats" }>
 type Item = StatsPart["items"][number]
 
 function item(fields: Partial<Item> & { readonly label: string; readonly value: string }): Item {
-  return { before: "", total: "", series: [], better: "", target: "", targetGap: "", ...fields }
+  return {
+    before: "",
+    total: "",
+    series: [],
+    better: "",
+    target: "",
+    targetGap: "",
+    change: "",
+    ...fields,
+  }
 }
 
 function partOf(items: StatsPart["items"]): StatsPart {
@@ -85,7 +97,7 @@ describe("Stats の部品", () => {
     expect(nodeTexts("div > span:first-child")).toEqual(["12 →"])
   })
 
-  it("目標のある札は達否の印を、目標の無い札は「目標なし」を、札ごとの字に持つ", () => {
+  it("目標のある札は達否の印を持ち、目標の無い札は目標の行を出さない", () => {
     const texts = cardTextsOf([
       item({
         value: "99.82%",
@@ -101,7 +113,7 @@ describe("Stats の部品", () => {
     expect(texts).toEqual([
       "99.82%架空の率目標 99.9% 以上✕ 未達 −0.08pt",
       "420ms架空の所要目標 500ms 以下✓ 達成",
-      "312 件架空の件数目標なし",
+      "312 件架空の件数",
     ])
   })
 
@@ -113,6 +125,44 @@ describe("Stats の部品", () => {
     ])
 
     expect(texts[0]).toBe("99.82%架空の率目標 99.9%")
+  })
+
+  it("差の印は増減の記号と字を出し、向きの class を better に従って付ける", () => {
+    const container = renderStats([
+      item({
+        value: "34.5",
+        before: "32.3",
+        better: "up",
+        label: "架空の売上",
+        change: "+6.9%",
+      }),
+      item({
+        value: "37",
+        before: "42",
+        better: "down",
+        label: "架空の件数",
+        change: "−5件（−11.9%）",
+      }),
+      item({ value: "9", before: "5", better: "down", label: "架空の失敗", change: "+4件" }),
+      item({ value: "3件", before: "3件", better: "", label: "架空の保留", change: "変化なし" }),
+    ])
+    const changes = [...container.querySelectorAll("b + span")].map((node) => ({
+      text: node.textContent,
+      better: node.classList.contains(statsLeafClassNames.statChangeBetter ?? "?"),
+      worse: node.classList.contains(statsLeafClassNames.statChangeWorse ?? "?"),
+      base: node.classList.contains(statsLeafClassNames.statChange ?? "?"),
+    }))
+
+    expect(changes).toEqual([
+      { text: "▲ +6.9%", better: true, worse: false, base: true },
+      { text: "▼ −5件（−11.9%）", better: true, worse: false, base: true },
+      { text: "▲ +4件", better: false, worse: true, base: true },
+      { text: "変化なし", better: false, worse: false, base: true },
+    ])
+  })
+
+  it("差の字が空なら差の印を出さない", () => {
+    expect(renderStats(THREE).querySelectorAll("b + span")).toHaveLength(0)
   })
 
   it("どの項目にも目標が無ければ、目標の行を出さない", () => {

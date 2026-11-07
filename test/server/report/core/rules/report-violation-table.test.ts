@@ -560,7 +560,14 @@ describe("reportViolations", () => {
   })
 
   describe("stats の series は3つ以上", () => {
-    const EMPTY = { before: "", total: "", better: "", target: "", targetGap: "" } as const
+    const EMPTY = {
+      before: "",
+      total: "",
+      better: "",
+      target: "",
+      targetGap: "",
+      change: "",
+    } as const
     const statsOf = (series: readonly number[]): LeafComponent => ({
       kind: "stats",
       items: [

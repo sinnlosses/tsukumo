@@ -26,6 +26,14 @@ const BEFORE_CLASS_NAMES = {
   worse: clsx(statsLeafClassNames.statBefore, statsLeafClassNames.statWorse),
 } as const satisfies Record<StatLayout["beforeTone"], string>
 
+const CHANGE_CLASS_NAMES = {
+  plain: statsLeafClassNames.statChange,
+  better: clsx(statsLeafClassNames.statChange, statsLeafClassNames.statChangeBetter),
+  worse: clsx(statsLeafClassNames.statChange, statsLeafClassNames.statChangeWorse),
+} as const satisfies Record<StatLayout["beforeTone"], string>
+
+const CHANGE_ARROWS = { up: "▲ ", down: "▼ ", none: "" } as const
+
 /** 項目数（3 か 4）の class。列数が項目数の全部か約数になる。 */
 const COUNT_CLASS_NAMES = new Map([
   [3, statsLeafClassNames.statsOf3],
@@ -48,17 +56,16 @@ export function StatsLeaf(props: {
 }
 
 export function StatCards(props: { readonly items: readonly StatItem[] }): ReactElement {
-  const targeted = props.items.some((item) => item.target.trim() !== "")
   return (
     <div className={clsx(statsLeafClassNames.stats, COUNT_CLASS_NAMES.get(props.items.length))}>
       {props.items.map((item, index) => (
-        <Stat key={`${String(index)}:${item.label}`} item={item} targeted={targeted} />
+        <Stat key={`${String(index)}:${item.label}`} item={item} />
       ))}
     </div>
   )
 }
 
-function Stat(props: { readonly item: StatItem; readonly targeted: boolean }): ReactElement {
+function Stat(props: { readonly item: StatItem }): ReactElement {
   const { item } = props
   const layout = statLayoutOf(item)
   const missed = layout.target.kind === "target" && layout.target.verdict === "missed"
@@ -85,6 +92,11 @@ function Stat(props: { readonly item: StatItem; readonly targeted: boolean }): R
           </span>
         )}
       </b>
+      {layout.change.kind === "change" && (
+        <span className={CHANGE_CLASS_NAMES[layout.change.tone]}>
+          <AffixedCodeText lead={CHANGE_ARROWS[layout.change.arrow]} text={item.change} tail="" />
+        </span>
+      )}
       {layout.meter.kind === "meter" && (
         <span className={statsLeafClassNames.statMeter} aria-hidden="true">
           <span
@@ -94,7 +106,7 @@ function Stat(props: { readonly item: StatItem; readonly targeted: boolean }): R
         </span>
       )}
       <InlineCodeText text={item.label} />
-      {props.targeted && <TargetLine item={item} target={layout.target} />}
+      {layout.target.kind === "target" && <TargetLine item={item} target={layout.target} />}
     </div>
   )
 }
@@ -110,15 +122,12 @@ const VERDICT_MARKS = {
   missed: { lead: "✕ 未達", className: statsLeafClassNames.statVerdictMissed },
 } as const
 
-/** label の下の目標の行と、比べられたときの達否の印。目標の無い札は「目標なし」。 */
+/** label の下の目標の行と、比べられたときの達否の印。 */
 function TargetLine(props: {
   readonly item: StatItem
-  readonly target: StatLayout["target"]
+  readonly target: Extract<StatLayout["target"], { kind: "target" }>
 }): ReactElement {
   const { item, target } = props
-  if (target.kind === "none") {
-    return <div className={statsLeafClassNames.statTarget}>目標なし</div>
-  }
   const { verdict } = target
   return (
     <div className={statsLeafClassNames.statTarget}>

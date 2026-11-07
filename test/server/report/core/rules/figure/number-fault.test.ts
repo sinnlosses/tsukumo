@@ -29,6 +29,7 @@ const keyFigureOf = (value: string, target = "", targetGap = "") => ({
   better: "" as const,
   target,
   targetGap,
+  change: "",
 })
 
 const sectionOf = (...blocks: LeafComponent[]) => ({ heading: "", blocks }) as const

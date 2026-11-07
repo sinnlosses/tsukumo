@@ -13,6 +13,7 @@ const keyFigures = ["A", "B", "C"].map((label, index) => ({
   better: "" as const,
   target: "",
   targetGap: "",
+  change: "",
 }))
 
 function usageOf(conclusion: string, withKeyFigures: boolean) {
