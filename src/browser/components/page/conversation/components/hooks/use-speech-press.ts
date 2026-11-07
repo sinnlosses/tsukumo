@@ -3,7 +3,7 @@
 
 import { useRef, type KeyboardEvent, type MouseEvent } from "react"
 
-import { isActivationKey } from "./activation-key.ts"
+import { isActivationKey } from "../../../../../utils/activation-key.ts"
 
 /**
  * 「押した」ではなく「ドラッグで文字を選んだ」とみなす、押し始めからの距離（px）。

@@ -31,7 +31,7 @@ import {
 import { withOccurrenceKeys } from "../../../../../domain/occurrence-key.ts"
 import { rpc } from "../../../../../stores/rpc.ts"
 import { useSession } from "../../../../../stores/session.ts"
-import { isActivationKey } from "../hooks/activation-key.ts"
+import { isActivationKey } from "../../../../../utils/activation-key.ts"
 import { useRepositoryFilePaths } from "../hooks/use-repository-file-path-list.ts"
 import type { PointedLines } from "./domain/pointed-line-range.ts"
 import { FileExcerptPeek } from "./file-excerpt-peek.tsx"
