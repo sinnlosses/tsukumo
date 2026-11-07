@@ -19,6 +19,16 @@
   line-height: 1.5rem;
   cursor: pointer;
 }
+@media (max-width: 760px) {
+  .progress-fold > summary {
+    position: relative;
+  }
+  .progress-fold > summary::before {
+    content: "";
+    position: absolute;
+    inset: -10px 0;
+  }
+}
 .progress-fold-steps {
   margin-top: var(--space-md);
 }

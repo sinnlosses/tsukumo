@@ -59,6 +59,16 @@
   padding: var(--space-2xs) var(--space-sm);
   border-radius: var(--radius-sm);
 }
+@media (max-width: 760px) {
+  .report-expand {
+    position: relative;
+  }
+  .report-expand::before {
+    content: "";
+    position: absolute;
+    inset: -10px 0;
+  }
+}
 /* 広げた板。ビューポートいっぱいに取り、レポートは板の内側で転がる。 */
 .report-board {
   box-sizing: border-box;

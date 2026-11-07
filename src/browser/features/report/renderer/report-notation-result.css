@@ -333,6 +333,16 @@
     color: var(--ink);
     text-decoration: none;
   }
+  @media (max-width: 760px) {
+    & .report-checks-summary-favor > a {
+      position: relative;
+    }
+    & .report-checks-summary-favor > a::before {
+      content: "";
+      position: absolute;
+      inset: -10px 0;
+    }
+  }
   & .report-checks-summary-favor-mark {
     font-size: var(--font-label);
     color: var(--accent);
