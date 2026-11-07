@@ -7,7 +7,7 @@
   gap: var(--space-xl);
   max-width: 60rem;
   margin: 0 auto;
-  padding: 0 var(--space-xs) 2rem;
+  padding: 0 var(--space-xs) var(--space-3xl);
 }
 .token-usage-title {
   margin: 0;

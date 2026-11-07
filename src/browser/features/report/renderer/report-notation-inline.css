@@ -112,7 +112,7 @@
     & .report-with-gutter {
       display: grid;
       grid-template-columns: minmax(0, 63em) minmax(0, 1fr);
-      column-gap: 28px;
+      column-gap: var(--space-3xl);
       align-items: start;
       margin: var(--report-block-gap) 0;
     }

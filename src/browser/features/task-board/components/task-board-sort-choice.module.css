@@ -12,8 +12,9 @@
 .task-board-sort-button {
   min-width: 24px;
   min-height: 28px;
-  /* 横 10px は元の値のまま（12px に丸めると 360px で行の「ドラフト」が「ドラ…」に省かれる） */
-  padding: var(--space-xs) calc(var(--space-sm) + var(--space-2xs));
+  --task-board-sort-button-pad: 10px;
+  /* 12px に丸めると 360px で行の「ドラフト」が「ドラ…」に省かれる */
+  padding: var(--space-xs) var(--task-board-sort-button-pad);
   border: none;
   border-left: 1px solid var(--rule-soft);
   background: transparent;

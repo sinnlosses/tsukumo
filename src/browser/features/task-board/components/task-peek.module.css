@@ -15,9 +15,10 @@
   width: min(400px, calc(100vw - 16px));
   max-height: calc(100dvh - 16px);
   margin: 0;
-  /* 右 18px・下 14px は元の値のまま（左右・上下で 2px ずつ違う） */
-  padding: var(--space-lg) calc(var(--space-lg) + var(--space-2xs))
-    calc(var(--space-md) + var(--space-2xs));
+  --task-peek-pad-inline: 18px;
+  --task-peek-pad-bottom: 14px;
+  /* 左右・上下で 2px ずつ違う */
+  padding: var(--space-lg) var(--task-peek-pad-inline) var(--task-peek-pad-bottom);
   overflow: visible;
   box-shadow: var(--shadow-overlay);
   color: var(--ink);

@@ -9,11 +9,11 @@
 /* 詳しい中身のある行を持つ表で、無い行の1列目を押しボタンの幅だけ右へ寄せて揃える。 */
 .table-detail-spacer {
   display: inline-block;
-  inline-size: calc(var(--space-xl) + var(--space-xs));
+  inline-size: var(--space-2xl);
 }
 
 .table-detail-row > .table-detail-cell {
-  padding: var(--space-xs) 0 var(--space-md) calc(var(--space-xl) + var(--space-xs));
+  padding: var(--space-xs) 0 var(--space-md) var(--space-2xl);
   color: var(--ink-soft);
   font-size: var(--font-secondary);
   line-height: 1.7;

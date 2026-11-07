@@ -38,8 +38,9 @@
   align-items: stretch;
   gap: var(--space-sm);
   width: 100%;
-  /* 左右は 14px のまま（上下 12px と 2px 違う） */
-  padding: var(--space-md) calc(var(--space-md) + var(--space-2xs));
+  --task-running-card-pad-inline: 14px;
+  /* 左右は上下 12px より 2px 広い */
+  padding: var(--space-md) var(--task-running-card-pad-inline);
   border-radius: var(--radius-lg);
   background: var(--surface-accent);
   /* 差し色寄りの枠（素の accent ではなく rule に6割混ぜる）。 */

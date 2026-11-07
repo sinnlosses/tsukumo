@@ -4,7 +4,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-xl);
-  padding: var(--space-2xl) 1.75rem;
+  padding: var(--space-2xl) var(--space-3xl);
   border: 1px solid var(--usage-rule);
   border-radius: var(--radius-xl);
   background: var(--usage-card);
@@ -91,7 +91,7 @@
 .context-legend {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  column-gap: 2rem;
+  column-gap: var(--space-3xl);
   margin: 0;
 }
 /* 1行が1分類。上の罫線で区切る（3列のどの列でも行の高さが揃うので、横にも読める）。 */

@@ -50,7 +50,8 @@
     align-items: center;
     gap: var(--space-sm);
     /* 上 6px: グリップの下 4px と足して見出しまでを 10px に保つ。 */
-    padding: calc(var(--space-xs) + var(--space-2xs)) var(--space-lg) var(--space-md);
+    --bottom-sheet-head-pad-top: 6px;
+    padding: var(--bottom-sheet-head-pad-top) var(--space-lg) var(--space-md);
     border-bottom: 1px solid var(--rule);
   }
   .bottom-sheet-body {
@@ -60,7 +61,8 @@
     gap: var(--space-md);
     min-height: 0;
     /* 上下 14px は見本の値。12px・16px のどちらへ丸めても本文の位置が 2px ずれる。 */
-    padding: calc(var(--space-md) + var(--space-2xs)) var(--space-lg);
+    --bottom-sheet-body-pad-block: 14px;
+    padding: var(--bottom-sheet-body-pad-block) var(--space-lg);
     overflow-y: auto;
     font-size: var(--font-subheading);
     line-height: 1.85;

@@ -5,10 +5,11 @@
   flex: none;
   flex-wrap: wrap;
   align-items: center;
-  /* 横 10px は元の値のまま（12px に丸めると 360px で「tsukumo に頼む」が 2 行目へ落ちる） */
-  gap: calc(var(--space-sm) + var(--space-2xs));
+  --task-board-action-gap: 10px;
+  /* 12px に丸めると 360px で「tsukumo に頼む」が 2 行目へ落ちる */
+  gap: var(--task-board-action-gap);
   min-height: 64px;
-  padding: var(--space-md) 28px;
+  padding: var(--space-md) var(--space-3xl);
   border-top: 1px solid var(--rule-quiet);
   background: color-mix(in srgb, var(--surface), var(--ground) 40%);
 }
@@ -45,8 +46,9 @@
   gap: var(--space-sm);
   height: 40px;
   margin-left: auto;
-  /* 横 18px は元の値のまま（20px に丸めると 360px で「tsukumo に頼む」が 2 行目へ落ちる） */
-  padding: 0 calc(var(--space-lg) + var(--space-2xs));
+  --task-board-run-pad: 18px;
+  /* 20px に丸めると 360px で「tsukumo に頼む」が 2 行目へ落ちる */
+  padding: 0 var(--task-board-run-pad);
   border-radius: var(--radius-lg);
 }
 /* ドラフトの「却下する」は右寄せの組の左端（箱は「ID をコピー」と同じ）、「計画する」は「tsukumo に頼む」と同じ箱で右端。 */
@@ -64,7 +66,8 @@
   align-items: center;
   gap: var(--space-sm);
   height: 40px;
-  padding: 0 calc(var(--space-lg) + var(--space-2xs));
+  --task-board-run-plan-pad: 18px;
+  padding: 0 var(--task-board-run-plan-pad);
   border-radius: var(--radius-lg);
 }
 .task-board-run-reason {

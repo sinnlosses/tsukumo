@@ -96,6 +96,8 @@ export const THEME_TOKEN_NAMES: ReadonlySet<string> = new Set([
   "shadow-ring",
   "space-2xl",
   "space-2xs",
+  "space-3xl",
+  "space-4xl",
   "space-lg",
   "space-md",
   "space-sm",

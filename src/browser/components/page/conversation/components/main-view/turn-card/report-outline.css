@@ -135,7 +135,8 @@
   align-items: center;
   gap: var(--space-sm);
   width: 100%;
-  padding: var(--space-xs) var(--space-md) var(--space-xs) 2.5rem;
+  --outline-row-indent: 2.5rem;
+  padding: var(--space-xs) var(--space-md) var(--space-xs) var(--outline-row-indent);
   border: none;
   border-radius: var(--radius-md);
   background: transparent;

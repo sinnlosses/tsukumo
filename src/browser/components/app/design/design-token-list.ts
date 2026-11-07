@@ -40,6 +40,8 @@ export const SPACE_TOKENS = [
   { name: "--space-lg", use: "区画のあいだ" },
   { name: "--space-xl", use: "大きな区画のあいだ" },
   { name: "--space-2xl", use: "領域と領域のあいだ" },
+  { name: "--space-3xl", use: "画面の区切り・大きな領域の内側" },
+  { name: "--space-4xl", use: "ページの上下の余白" },
 ] as const satisfies readonly TokenEntry[]
 
 export const RADIUS_TOKENS = [
