@@ -6,14 +6,14 @@
   margin: var(--space-sm) 0 var(--space-xs);
 }
 .lead {
-  margin: 0 0 var(--space-xl);
+  margin: 0 0 var(--stack-section);
 }
 
 .cards {
   display: grid;
   grid-template-columns: 1.3fr 1fr 1fr;
-  gap: var(--space-md);
-  margin: 0 0 var(--space-xl);
+  gap: var(--stack-group) var(--inline-group);
+  margin: 0 0 var(--stack-section);
   padding: 0;
   list-style: none;
 }
@@ -39,10 +39,10 @@
   display: flex;
   flex: 1;
   flex-direction: column;
-  gap: var(--space-md);
+  gap: var(--stack-block);
   min-width: 0;
   min-height: 196px;
-  padding: var(--space-lg) var(--space-xl) var(--space-lg);
+  padding: var(--inset-card);
   border: 1px solid var(--rule);
   border-radius: var(--radius-xl);
   background: var(--surface-raised);
@@ -55,7 +55,7 @@
 .card-head {
   display: flex;
   align-items: center;
-  gap: var(--space-sm);
+  gap: var(--inline-control);
   min-width: 0;
 }
 .card-id {
@@ -94,7 +94,7 @@
 .card-reason {
   display: flex;
   align-items: flex-start;
-  gap: var(--space-sm);
+  gap: var(--inline-tight);
   color: var(--ink-quiet);
   font-size: var(--font-secondary);
   line-height: 1.6;
@@ -135,7 +135,7 @@
 .card-foot {
   display: flex;
   align-items: center;
-  gap: var(--space-sm);
+  gap: var(--inline-control);
   margin-top: auto;
   padding-top: var(--space-md);
   border-top: 1px solid var(--rule-quiet);
@@ -159,7 +159,7 @@
 .card-start {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-sm);
+  gap: var(--inline-tight);
   height: 32px;
   margin-left: auto;
   padding: 0 var(--space-lg);
@@ -175,10 +175,10 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-sm);
+  gap: var(--inline-control);
 }
 .others-label {
-  margin-right: var(--space-xs);
+  margin-right: var(--inline-tight);
 }
 /* 広い画面では並びの箱を持たず、ボタンは見出しと同じ折り返しの行に並ぶ。 */
 .other-list {
@@ -187,7 +187,7 @@
 .other {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-sm);
+  gap: var(--inline-tight);
   height: 34px;
   padding: 0 var(--space-md);
   border-radius: var(--radius-md);
@@ -212,7 +212,7 @@
     margin: 0 0 var(--space-md);
   }
   .cards {
-    gap: var(--space-sm);
+    gap: var(--stack-group);
     margin: 0 0 var(--space-lg);
   }
   /* 札は頭と題を幅いっぱいに置き、その下の行に理由（左）と足（右）を並べる格子にする。 */
@@ -233,6 +233,10 @@
     -webkit-line-clamp: 2;
     line-clamp: 2;
     line-height: 1.55;
+  }
+  /* 理由の無い札は足を題の右に置き、足だけの行を作らない。 */
+  .card:not(:has(.card-reason)) .card-title {
+    grid-column: 1;
   }
   .card-request,
   .card-key {
@@ -261,19 +265,19 @@
   .others {
     flex-direction: column;
     align-items: stretch;
-    gap: var(--space-xs);
+    gap: var(--stack-tight);
   }
   .other-list {
     display: grid;
     grid-auto-columns: 1fr;
     grid-auto-flow: column;
-    gap: var(--space-sm);
+    gap: var(--inline-control);
   }
   .other,
   .others-large .other:first-of-type {
     flex-direction: column;
     justify-content: center;
-    gap: var(--space-xs);
+    gap: var(--stack-tight);
     height: auto;
     min-height: 56px;
     padding: var(--space-sm) var(--space-xs);

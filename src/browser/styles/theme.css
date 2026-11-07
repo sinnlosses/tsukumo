@@ -188,9 +188,11 @@
   --inset-card: var(--space-md) var(--space-lg);
   --stack-tight: var(--space-xs);
   --stack-block: var(--space-sm);
-  --stack-section: var(--space-md);
+  --stack-group: var(--space-lg);
+  --stack-section: var(--space-2xl);
   --inline-tight: var(--space-xs);
   --inline-control: var(--space-sm);
+  --inline-group: var(--space-lg);
   --gutter-region: var(--space-md);
   --gutter-page: var(--space-lg);
 

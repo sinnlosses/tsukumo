@@ -47,7 +47,7 @@
 }
 /* お伺いのカードの入れ物。札は領域の縁まで広がらず、領域の余白のぶん内側に置く。 */
 .turn-card-inquiry {
-  padding-top: var(--space-md);
+  padding-top: var(--stack-group);
   padding-inline: var(--region-padding);
 }
 /* レポート本文の余白。 */
@@ -123,7 +123,7 @@
   cursor: pointer;
 }
 .main-step.is-interim[open] > summary {
-  margin-bottom: var(--space-sm);
+  margin-bottom: var(--stack-block);
 }
 
 /* 狭い画面では中間レポートの本文を出さず、一覧の行を押して板で読む(`display: none` は読み上げからも外れる)。 */
