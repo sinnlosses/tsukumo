@@ -14,6 +14,10 @@
     gap: var(--space-md);
     min-width: 0;
   }
+  /* 2行目が出ていないあいだも高さ（「手順 n」の口の 26px）を取っておく。 */
+  .phone-head-line-reserved {
+    height: 26px;
+  }
   /* 顔の丸の二重の輪（地の色の 2px と差し色の 1.5px）。 */
   .phone-head-face {
     flex: none;

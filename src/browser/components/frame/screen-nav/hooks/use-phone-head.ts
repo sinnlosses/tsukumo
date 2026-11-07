@@ -68,11 +68,13 @@ type PhoneHeadDot = {
  * 2行目。
  *
  * - `none`: 出さない（依頼待ち・雑談中・会話の画面でないとき）
+ * - `reserved`: 会話の画面で2行目の中身が無いあいだ（待っているとき・手順がまだ無いとき）。中身は出さず、行の高さだけ取っておく（走り出しと終わりで頭の高さが変わり、本文がずれるのを防ぐ）
  * - `steps`: ワークプランの無いターン。「手順 n」だけ
  * - `planned`: 段の点・「手順 n」
  */
 export type PhoneHeadProgress =
   | { readonly kind: "none" }
+  | { readonly kind: "reserved" }
   | { readonly kind: "steps"; readonly stepCount: number }
   | {
       readonly kind: "planned"
@@ -141,7 +143,7 @@ export function usePhoneHead(source: PhoneHeadSource): PhoneHead {
     lead: { kind: "face", face: source.face },
     status,
     title: chatMode ? CHAT_TITLE : titleOf(turnStepList, work.state, records, source.roomName),
-    progress: chatMode || work.state === "idle" ? { kind: "none" } : progressOf(turnStepList),
+    progress: progressWhenConversing(turnStepList, chatMode, work.state),
   }
 }
 
@@ -172,9 +174,23 @@ function titleOf(
   return firstLine ?? roomName
 }
 
+function progressWhenConversing(
+  turnStepList: TurnStepList,
+  chatMode: boolean,
+  state: CurrentWorkState,
+): PhoneHeadProgress {
+  if (chatMode) {
+    return { kind: "none" }
+  }
+  if (state === "idle") {
+    return { kind: "reserved" }
+  }
+  return progressOf(turnStepList)
+}
+
 function progressOf(turnStepList: TurnStepList): PhoneHeadProgress {
   if (turnStepList.kind !== "turn") {
-    return { kind: "none" }
+    return { kind: "reserved" }
   }
   const stepCount = turnStepList.steps.length
   const { plan } = turnStepList

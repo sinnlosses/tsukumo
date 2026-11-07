@@ -77,10 +77,13 @@ export function PhoneHead(props: PhoneHeadProps): ReactElement {
         </div>
         {props.drawerToggle}
       </div>
-      {head.progress.kind !== "none" && (
+      {head.progress.kind === "reserved" && (
+        <div className={styles["phone-head-line-reserved"]} aria-hidden="true" />
+      )}
+      {(head.progress.kind === "steps" || head.progress.kind === "planned") && (
         <PhoneHeadProgressLine progress={head.progress} work={work} listId={listId} />
       )}
-      {head.progress.kind !== "none" && (
+      {(head.progress.kind === "steps" || head.progress.kind === "planned") && (
         <BottomSheet
           open={work.open}
           contentKey="steps"
@@ -97,7 +100,7 @@ export function PhoneHead(props: PhoneHeadProps): ReactElement {
 }
 
 function PhoneHeadProgressLine(props: {
-  readonly progress: Exclude<PhoneHeadProgress, { readonly kind: "none" }>
+  readonly progress: Exclude<PhoneHeadProgress, { readonly kind: "none" | "reserved" }>
   readonly work: CurrentWork
   readonly listId: string
 }): ReactElement {
