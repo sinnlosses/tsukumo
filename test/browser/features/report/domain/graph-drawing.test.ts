@@ -135,7 +135,7 @@ describe("svgDrawingOf", () => {
         dashed: true,
         tone: "none",
       },
-      { kind: "text", x: 5, y: 6, text: "字" },
+      { kind: "text", x: 5, y: 6, text: "字", anchor: "start" },
     ],
   } as const
 
@@ -158,6 +158,33 @@ describe("svgDrawingOf", () => {
     expect(
       drawing.primitives.flatMap((primitive) => ("tone" in primitive ? [primitive.tone] : [])),
     ).toEqual(["a", undefined])
+  })
+
+  it("text の揃えを渡し、rect の中央の題は middle、top-left の題は start になる", () => {
+    const anchors = (labelAt: "center" | "top-left", anchor: "end" | "start") =>
+      svgDrawingOf({
+        width: 100,
+        height: 50,
+        legend: [],
+        shapes: [
+          {
+            kind: "rect",
+            x: 0,
+            y: 0,
+            width: 30,
+            height: 20,
+            label: "架空",
+            sub: "",
+            labelAt,
+            tone: "none",
+            emphasis: false,
+          },
+          { kind: "text", x: 5, y: 6, text: "字", anchor },
+        ],
+      }).primitives.flatMap((primitive) => (primitive.kind === "text" ? [primitive.anchor] : []))
+
+    expect(anchors("center", "end")).toEqual(["middle", "end"])
+    expect(anchors("top-left", "start")).toEqual(["start", "start"])
   })
 })
 

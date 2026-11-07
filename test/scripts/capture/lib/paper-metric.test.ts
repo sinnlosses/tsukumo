@@ -19,6 +19,7 @@ const EMPTY: PaperMetric = {
   figures: 0,
   oversizedFigures: 0,
   diagramText: { kind: "absent" },
+  svgText: { kind: "absent" },
   stackedBlocks: {
     stats: { total: 0, stacked: 0 },
     compare: { total: 0, stacked: 0 },
@@ -51,6 +52,17 @@ describe("formatPaperMetric", () => {
     expect(valueOf(rows, "色相の族の内訳")).toBe("-")
     expect(valueOf(rows, "svg の文字の最小 px")).toBe("-")
     expect(valueOf(rows, "11px 未満の図")).toBe("-")
+    expect(valueOf(rows, "svg の字の重なり")).toBe("-")
+    expect(valueOf(rows, "svg の字のはみ出し")).toBe("-")
+  })
+
+  test("svg の字の重なりとはみ出しは図の数と並べる", () => {
+    const rows = formatPaperMetric({
+      ...EMPTY,
+      svgText: { kind: "at", figures: 3, overlapping: 2, outside: 0 },
+    })
+    expect(valueOf(rows, "svg の字の重なり")).toBe("2 / 3")
+    expect(valueOf(rows, "svg の字のはみ出し")).toBe("0 / 3")
   })
 
   test("図の文字の最小 px は小数 1 桁で、11px 未満の図は総数と並べる", () => {

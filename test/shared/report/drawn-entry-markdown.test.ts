@@ -225,7 +225,7 @@ const ROWS: readonly (readonly [
         title: "",
         width: 10,
         height: 10,
-        shapes: [{ kind: "text", x: 1, y: 1, text: "架空" }],
+        shapes: [{ kind: "text", x: 1, y: 1, text: "架空", anchor: "start" }],
         legend: [],
         ...PLAIN,
       },

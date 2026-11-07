@@ -96,7 +96,7 @@ describe("reportRejectionText", () => {
       const report = draft([
         svg([rect(0, 0, 10, 10)]),
         svg([
-          { kind: "text", x: 5, y: 5, text: "架空の秘密" },
+          { kind: "text", x: 5, y: 5, text: "架空の秘密", anchor: "start" },
           rect(90, 0, 20, 10),
           {
             kind: "line",
@@ -213,7 +213,7 @@ describe("reportRejectionText", () => {
         kind: "svg",
         width: 10,
         height: 10,
-        shapes: [{ kind: "text", x: 11, y: 0, text: "架空" }],
+        shapes: [{ kind: "text", x: 11, y: 0, text: "架空", anchor: "start" }],
         legend: [],
       } as const
       const report = draft([
@@ -270,7 +270,7 @@ describe("reportRejectionText", () => {
         title: "",
         width: 10,
         height: 10,
-        shapes: [{ kind: "text", x: 11, y: 0, text: "架空" }],
+        shapes: [{ kind: "text", x: 11, y: 0, text: "架空", anchor: "start" }],
         legend: [],
         fold: "",
         aside: "",

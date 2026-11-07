@@ -104,7 +104,7 @@ describe("reportUsageEntryOf", () => {
         1_000,
         false,
       ).hasFigure
-    const svgShape = { kind: "text", x: 1, y: 1, text: "架空" } as const
+    const svgShape = { kind: "text", x: 1, y: 1, text: "架空", anchor: "start" } as const
     const codeSide = { kind: "code", language: "ts", source: "x" } as const
     const pointsSide: z.output<typeof compareSideSchema> = { kind: "points", points: ["架空の点"] }
     type Side = z.output<typeof compareSideSchema>

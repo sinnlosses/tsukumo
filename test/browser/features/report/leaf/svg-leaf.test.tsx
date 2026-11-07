@@ -54,7 +54,7 @@ const SHAPES = [
     dashed: true,
     tone: "b",
   },
-  { kind: "text", x: 12, y: 95, text: "架空の注釈" },
+  { kind: "text", x: 12, y: 95, text: "架空の注釈", anchor: "start" },
 ] as const
 
 describe("Svg の部品", () => {
@@ -163,6 +163,43 @@ describe("Svg の部品", () => {
     expect(
       [...container.querySelectorAll("[data-tone]")].map((el) => el.getAttribute("data-tone")),
     ).toEqual(["ok", "ng", "warn", "ng"])
+  })
+
+  it("text の揃えは middle・end が text-anchor に出て、start では属性を出さない", () => {
+    const part = {
+      id: "s3",
+      component: "Svg",
+      title: "架空の揃え",
+      width: 340,
+      height: 110,
+      shapes: [
+        { kind: "text", x: 10, y: 10, text: "左", anchor: "start" },
+        { kind: "text", x: 100, y: 10, text: "中", anchor: "middle" },
+        { kind: "text", x: 200, y: 10, text: "右", anchor: "end" },
+      ],
+      legend: [],
+      fold: "",
+      aside: "",
+    } satisfies Extract<A2uiReportComponent, { readonly component: "Svg" }>
+    const view = directLeafViewOf(part)
+    if (view === undefined) throw new Error("一覧に Svg が無い")
+    const { container } = render(
+      <DirectLeaf
+        part={part}
+        value={{
+          captionNumber: { kind: "figure", ordinal: 1 },
+          tagTones: {},
+          gutterNotes: [],
+          mergedIntoPrevious: false,
+        }}
+        imageSource={{ kind: "none" }}
+        view={view}
+      />,
+    )
+
+    expect(
+      [...container.querySelectorAll("svg text")].map((el) => el.getAttribute("text-anchor")),
+    ).toEqual([null, "middle", "end"])
   })
 
   it.each(["ok", "warn", "ng"])(

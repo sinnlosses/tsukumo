@@ -296,7 +296,7 @@ describe("parseLeafComponents", () => {
           shapes: [
             { ...rect, label: "", sub: "", emphasis: false, labelAt: "center", tone: "none" },
             { ...line, arrow: false, label: "", dashed: false, tone: "none" },
-            textShape,
+            { ...textShape, anchor: "start" },
           ],
         },
       ])

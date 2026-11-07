@@ -111,7 +111,7 @@ function Primitive(props: {
           x={primitive.x}
           y={primitive.y}
           fontSize={primitive.fontSize}
-          textAnchor={primitive.centered ? "middle" : undefined}
+          textAnchor={primitive.anchor === "start" ? undefined : primitive.anchor}
           dominantBaseline={primitive.centered ? "middle" : undefined}
           data-sub={primitive.sub ? "" : undefined}
         >

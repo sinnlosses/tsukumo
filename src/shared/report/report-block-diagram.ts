@@ -70,7 +70,15 @@ const svgShapeSchema = z
       dashed: omittable(z.boolean(), false),
       tone: omittable(z.enum(["none", ...SVG_TONES, ...SVG_STATE_TONES]), "none"),
     }),
-    z.object({ kind: z.literal("text"), x: z.number(), y: z.number(), text: inlineText }),
+    z.object({
+      kind: z.literal("text"),
+      x: z.number(),
+      y: z.number(),
+      text: inlineText,
+      anchor: omittable(z.enum(["start", "middle", "end"]), "start").describe(
+        "揃え。右端の字は end",
+      ),
+    }),
   ])
   .meta({ id: "SvgShape" })
 

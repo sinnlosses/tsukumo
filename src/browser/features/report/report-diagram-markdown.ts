@@ -323,6 +323,7 @@ export type SvgPrimitive =
       readonly text: string
       readonly fontSize: number
       readonly centered: boolean
+      readonly anchor: "start" | "middle" | "end"
       readonly sub: boolean
     }
 
@@ -383,11 +384,16 @@ function svgShapePrimitives(shape: SvgShape): readonly SvgPrimitive[] {
         const labelY = shape.y + SVG_LABEL_FONT_SIZE + SVG_LABEL_TOP_GAP
         return [
           rect,
-          svgText(shape.x + SVG_LABEL_INSET, labelY, shape.label, { centered: false, sub: false }),
+          svgText(shape.x + SVG_LABEL_INSET, labelY, shape.label, {
+            centered: false,
+            anchor: "start",
+            sub: false,
+          }),
           ...(hasSub
             ? [
                 svgText(shape.x + SVG_LABEL_INSET, labelY + SVG_SUB_LINE_GAP, shape.sub, {
                   centered: false,
+                  anchor: "start",
                   sub: true,
                 }),
               ]
@@ -397,15 +403,23 @@ function svgShapePrimitives(shape: SvgShape): readonly SvgPrimitive[] {
       const centerX = shape.x + shape.width / 2
       const centerY = shape.y + shape.height / 2
       if (!hasSub) {
-        return [rect, svgText(centerX, centerY, shape.label, { centered: true, sub: false })]
+        return [
+          rect,
+          svgText(centerX, centerY, shape.label, { centered: true, anchor: "middle", sub: false }),
+        ]
       }
       return [
         rect,
         svgText(centerX, centerY - SVG_SUB_LABEL_SHIFT, shape.label, {
           centered: true,
+          anchor: "middle",
           sub: false,
         }),
-        svgText(centerX, centerY + SVG_SUB_DROP, shape.sub, { centered: true, sub: true }),
+        svgText(centerX, centerY + SVG_SUB_DROP, shape.sub, {
+          centered: true,
+          anchor: "middle",
+          sub: true,
+        }),
       ]
     }
     case "line": {
@@ -425,12 +439,19 @@ function svgShapePrimitives(shape: SvgShape): readonly SvgPrimitive[] {
             line,
             svgText((shape.x1 + shape.x2) / 2, (shape.y1 + shape.y2) / 2 - 6, shape.label, {
               centered: true,
+              anchor: "middle",
               sub: false,
             }),
           ]
     }
     case "text":
-      return [svgText(shape.x, shape.y, shape.text, { centered: false, sub: false })]
+      return [
+        svgText(shape.x, shape.y, shape.text, {
+          centered: false,
+          anchor: shape.anchor,
+          sub: false,
+        }),
+      ]
   }
 }
 
@@ -439,7 +460,15 @@ function svgText(
   x: number,
   y: number,
   text: string,
-  { centered, sub }: { readonly centered: boolean; readonly sub: boolean },
+  {
+    centered,
+    anchor,
+    sub,
+  }: {
+    readonly centered: boolean
+    readonly anchor: "start" | "middle" | "end"
+    readonly sub: boolean
+  },
 ): SvgPrimitive {
   return {
     kind: "text",
@@ -448,6 +477,7 @@ function svgText(
     text,
     fontSize: sub ? SVG_SUB_FONT_SIZE : SVG_LABEL_FONT_SIZE,
     centered,
+    anchor,
     sub,
   }
 }

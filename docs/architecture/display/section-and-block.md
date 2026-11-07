@@ -147,6 +147,7 @@
   書き手は題・viewBox の大きさ・図形（`rect`・`line`・`text`）を渡し、SVG の文字列は書かず、描く側が図形から組む。
   `rect` の題は既定で枠の中心、`labelAt: "top-left"` で左上の内側に左寄せで置く（入れ子の外側の枠は `top-left` にして、子の枠・矢印の題と重ねない）。
   `sub`（題の下の説明1行。既定は空）は題より小さい `--ink-quiet` の字で、`center` なら中心を挟んで題の下、`top-left` なら題の下に同じ左端で置く（`label` が空なら描かない。2行以上は `text` を並べる。枠より長い字のはみ出しは検査しない）。
+  `text` の `anchor`（`start`・`middle`・`end`。省けば `start`）で字の揃えを選ぶ。字の幅は描くまで分からないので、右端に寄せる字は `end`、点の上に置く字は `middle` で書く。描く側は字を動かして避けないので、重なりは書き手が座標で避ける（重なりと viewBox からのはみ出しは `capture-view.ts --paper-metric` の「svg の字の重なり」「svg の字のはみ出し」で数える）。
   `line` の `label` は線の中点の上に中央寄せで固定で、位置は選べない。12px ほどの間隔の線に付けた語は重なって読めない（見え方は疑似セッションの場面 `svg-line-label` で撮る）ので、近い線に語を付けるときは `label` を空にして `text` を並べる。
   色そのものは書けず、`rect`・`line` の `tone`（`a`〜`e` と状態の `ok`・`warn`・`ng`。既定 `none`）で意味の目印だけ書く（`line` は `dashed: true` で点線にもでき、矢じりは線の色に合う）。描く側が `a`〜`e` を `--chart-series-1`〜`--chart-series-5` に、`ok`・`warn`・`ng` を `--state-ok`・`--state-warn`・`--state-ng`（Table の状態セルと同じ色）に当て（`data-tone` が目印）、
   図の `legend`（`tone` と名前の並び。`a`〜`e`・`ok`・`warn`・`ng` を受ける）を図の下に色見本つきで出す。**色だけで意味を言わない**ので、使った `tone`（状態の `tone` も）が `legend` に無い図は差し戻し、文面は何個目の部品のどの `tone` かだけを返す（見え方は疑似セッションの場面 `report-svg-tone` で撮る）。図形が viewBox の外に出れば差し戻し、文面は何個目の部品の何番目の図形かだけを返す。

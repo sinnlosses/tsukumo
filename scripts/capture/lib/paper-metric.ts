@@ -6,12 +6,20 @@ import type { Page } from "playwright-core"
 import { MAIN_REGION_SELECTOR } from "./capture-page.ts"
 import { FIGURE_SELECTOR } from "./paper-figure-selector.ts"
 import { hueFamilies } from "./paper-hue.ts"
+import {
+  collectSvgFigureTexts,
+  svgSmallestTextPx,
+  svgTextMetricOf,
+  type SvgTextMetric,
+} from "./paper-svg-text.ts"
 import { decodePng } from "./png-pixel.ts"
 
 /** 高さがこの割合を超える図を「読む面を超える図」に数える。 */
 const OVERSIZED_FIGURE_RATIO = 0.7
 
 const DETAIL_BLOCK_SELECTOR = '[data-main-view-content] [class*="detail-block_"]'
+
+const SVG_FIGURE_SELECTOR = `${DETAIL_BLOCK_SELECTOR} [class*="report-svg-figure_"] svg`
 
 type StackedCount = { readonly total: number; readonly stacked: number }
 
@@ -23,7 +31,7 @@ type FirstFigure =
   | { readonly kind: "absent" }
   | { readonly kind: "at"; readonly top: number; readonly inFirstScreen: boolean }
 
-/** mermaid の svg の文字（自然な大きさ 16px × 縮尺）の最小 px と、`SMALL_TEXT_PX` 未満の図の数。 */
+/** svg の文字（mermaid は自然な大きさ 16px × 縮尺、Svg の部品は図ごとの最小の font-size × 縮尺）の最小 px と、`SMALL_TEXT_PX` 未満の図の数。 */
 type DiagramText =
   | { readonly kind: "absent" }
   | {
@@ -51,6 +59,7 @@ export type PaperMetric = {
   readonly figures: number
   readonly oversizedFigures: number
   readonly diagramText: DiagramText
+  readonly svgText: SvgTextMetric
   readonly stackedBlocks: {
     readonly stats: StackedCount
     readonly compare: StackedCount
@@ -185,11 +194,14 @@ export async function measurePaperMetric(page: Page): Promise<PaperMetric> {
   )
 
   const families = await hueFamiliesOfReport(page)
-  const { verdictTops, firstFigureTops, diagramTextPx, ...counts } = dom
+  const svgFigures = await collectSvgFigureTexts(page, SVG_FIGURE_SELECTOR)
+  const { verdictTops, firstFigureTops, diagramTextPx: mermaidTextPx, ...counts } = dom
+  const diagramTextPx = [...mermaidTextPx, ...svgSmallestTextPx(svgFigures)]
   const verdictTop = verdictTops[0]
   const figureTop = firstFigureTops[0]
   return {
     ...counts,
+    svgText: svgTextMetricOf(svgFigures),
     diagramText:
       diagramTextPx.length === 0
         ? { kind: "absent" }
@@ -262,6 +274,8 @@ export function formatPaperMetric(metric: PaperMetric): readonly string[] {
         ? `${String(metric.diagramText.belowSmall)} / ${String(metric.diagramText.count)}`
         : "-",
     ],
+    ["svg の字の重なり", svgTextText(metric.svgText, "overlapping")],
+    ["svg の字のはみ出し", svgTextText(metric.svgText, "outside")],
     ["縦落ち stats", stackedText(stacked.stats)],
     ["縦落ち compare", stackedText(stacked.compare)],
     ["縦落ち compareFigure", stackedText(stacked.compareFigure)],
@@ -277,6 +291,10 @@ export function formatPaperMetric(metric: PaperMetric): readonly string[] {
 
 function heightText(value: number): string {
   return `${String(Math.round(value))}px`
+}
+
+function svgTextText(metric: SvgTextMetric, key: "overlapping" | "outside"): string {
+  return metric.kind === "at" ? `${String(metric[key])} / ${String(metric.figures)}` : "-"
 }
 
 function stackedText(count: StackedCount): string {

@@ -127,7 +127,9 @@
                   { "kind": "text", "x": 270, "y": 44, "text": "架空の上の余白 8px" },
                   { "kind": "text", "x": 270, "y": 58, "text": "架空の左右の余白 16px" },
                   { "kind": "text", "x": 270, "y": 72, "text": "架空の行間 4px" },
-                  { "kind": "text", "x": 430, "y": 70, "text": "架空の高さ 90px" }
+                  { "kind": "text", "x": 430, "y": 70, "text": "架空の高さ 90px" },
+                  { "kind": "text", "x": 420, "y": 14, "text": "架空の点", "anchor": "middle" },
+                  { "kind": "text", "x": 550, "y": 124, "text": "架空の右端の字", "anchor": "end" }
                 ],
                 "legend": [],
                 "fold": "",

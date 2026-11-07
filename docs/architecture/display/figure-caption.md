@@ -39,7 +39,7 @@
   `scroll` で自然幅が読む面の内幅を超えるとき、内幅まで縮めて文字が 12px 以上なら内幅に縮め、下回るなら自然寸法のまま `pre` の中で横にスクロールする（`Row` のセルの中では読む面がセルになる）。
   拡大のボタンは変えない。全部の段の外枠を本文の列の左端から始める（`body`・`natural` も中央には置かない。題は図の下・図の幅の中で中央。`screen-design/layout.md`「文字の揃え」）。
   段は描いた時点の幅で決め、ビューポートの幅が変わっても測り直さない。前後の部品の側の図は側の幅に収めるので段を当てない。
-  確かめる場面は `report-graph-wide`（LR・12 ノード）・`report-graph-scroll`（横にスクロールする TD）、数は `capture-view.ts --paper-metric` の「svg の文字の最小 px」と「11px 未満の図」（差し戻しにはしない）
+  確かめる場面は `report-graph-wide`（LR・12 ノード）・`report-graph-scroll`（横にスクロールする TD）、数は `capture-view.ts --paper-metric` の「svg の文字の最小 px」と「11px 未満の図」（差し戻しにはしない）。`Svg` の部品の字は「svg の字の重なり」（重なる組の数）と「svg の字のはみ出し」（viewBox の外へ出た字の数）を図の数と並べて出し、最小 px にも入る（これも差し戻しにはしない。場面は `svg-line-label`）
 - **主経路の長い `graph` は、tsukumo が行を折り返して座標を決める**（`docs/architecture/adr/0034-figure-description-drawn-by-tsukumo.md`）。
   主経路は戻り道でないエッジで辿る最長の一本道で、**6 ノード以上**の図を `src/browser/features/report/domain/graph-fold.ts` が蛇行の行（偶数行は左から右、奇数行は右から左）に並べ、
   `svg` の部品と同じ外枠（拡大・縮み方も同じ）で描く。1行の数は 3〜6 個から、図を器（1440x900 のレポートの幅と図の高さの上限）に縦横比を保って収めたとき
