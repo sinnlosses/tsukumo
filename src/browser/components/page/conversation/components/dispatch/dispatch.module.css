@@ -178,7 +178,7 @@
   }
   .dispatch-text {
     box-sizing: border-box;
-    min-height: 40px;
+    min-height: 44px;
     max-height: 30dvh;
     padding: var(--space-sm) var(--space-lg);
     border-radius: var(--radius-xl);
