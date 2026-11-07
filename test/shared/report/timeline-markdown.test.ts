@@ -117,7 +117,10 @@ describe("timelineLayoutOf の待つ行の矢印と止まりうる区間", () =>
     expect(uncertain?.kind === "shown" && uncertain.label).toBe("架空の承認待ち")
     expect(uncertain?.kind === "shown" && uncertain.width).toBeCloseTo(13.33)
     expect(plan.axis.at(-1)?.label).toBe("12/3")
-    expect(plan.legend).toEqual([{ swatch: "uncertain", label: "止まりうる分" }])
+    expect(plan.legend).toEqual([
+      { swatch: "uncertain", label: "止まりうる分" },
+      { swatch: "wait", label: "待ち" },
+    ])
   })
 
   it("レーンを跨ぐ矢印は見出しの数を数え、待たれる行が下なら負の向きにする", () => {
@@ -153,5 +156,94 @@ describe("timelineLayoutOf の待つ行の矢印と止まりうる区間", () =>
     )
 
     expect(layout.lanes.flatMap((lane) => lane.rows.flatMap((row) => row.arrows))).toEqual([])
+  })
+})
+
+const tracksOf = (rows: readonly Record<string, unknown>[]) =>
+  timelineLayoutOf(timelineBlockSchema.parse({ kind: "timeline", rows })).lanes.flatMap((lane) =>
+    lane.rows.map((row) => [row.name, row.track] as const),
+  )
+
+const durationsOf = (rows: readonly Record<string, unknown>[]) =>
+  tracksOf(rows).map(([, track]) => (track.kind === "bar" ? track.duration : undefined))
+
+const waitsOf = (rows: readonly Record<string, unknown>[]) =>
+  tracksOf(rows).map(([name, track]) => [
+    name,
+    track.kind === "bar" && track.wait.kind === "shown" ? track.wait.label : undefined,
+  ])
+
+describe("timelineLayoutOf の所要の字", () => {
+  it("clock は時間と分、分の尺度は分、ISO は日と時間で書く", () => {
+    expect(durationsOf([{ name: "甲", start: "14:00", end: "15:05" }])).toEqual(["1時間5分"])
+    expect(durationsOf([{ name: "甲", start: "14:00", end: "14:25" }])).toEqual(["25分"])
+    expect(durationsOf([{ name: "甲", start: 10, end: 35 }])).toEqual(["25分"])
+    expect(durationsOf([{ name: "甲", start: "2026-11-20", end: "2026-11-22T03:00" }])).toEqual([
+      "2日3時間",
+    ])
+  })
+
+  it("延びた分があれば最後までの長さにし、一点の行には付けない", () => {
+    expect(
+      durationsOf([
+        { name: "甲", start: "14:00", end: "14:10", extra: ["14:30"] },
+        { name: "乙", start: "14:40" },
+      ]),
+    ).toEqual(["30分", undefined])
+  })
+})
+
+describe("timelineLayoutOf の待ちの区間", () => {
+  const parallel = [
+    { name: "型検査", start: "02:10", end: "03:00", lane: "検査" },
+    { name: "テスト", start: "02:10", end: "04:30", lane: "検査" },
+    { name: "ビルド", start: "04:30", end: "05:00", lane: "出荷", after: ["型検査", "テスト"] },
+  ]
+
+  it("並列の2行を待つ行があるとき、先に終わる側だけに出て、待つ相手の無い行には出ない", () => {
+    expect(waitsOf(parallel)).toEqual([
+      ["型検査", "1時間30分"],
+      ["テスト", undefined],
+      ["ビルド", undefined],
+    ])
+  })
+
+  it("延びた分があれば、その最後から測る", () => {
+    expect(
+      waitsOf([
+        { name: "甲", start: "14:00", end: "14:10", extra: ["14:20"] },
+        { name: "乙", start: "14:50", end: "15:00", after: ["甲"] },
+      ]),
+    ).toEqual([
+      ["甲", "30分"],
+      ["乙", undefined],
+    ])
+  })
+
+  it("止まりうる区間のある行には出さず、凡例の待ちも出ない", () => {
+    const rows = [
+      {
+        name: "甲",
+        start: "14:00",
+        end: "14:10",
+        uncertain: { until: "14:20", label: "承認待ち" },
+      },
+      { name: "乙", start: "14:50", end: "15:00", after: ["甲"] },
+    ]
+
+    expect(waitsOf(rows).map(([, wait]) => wait)).toEqual([undefined, undefined])
+    expect(
+      timelineLayoutOf(timelineBlockSchema.parse({ kind: "timeline", rows })).legend.map(
+        (item) => item.swatch,
+      ),
+    ).not.toContain("wait")
+  })
+
+  it("待ちがあれば凡例に待ちを足す", () => {
+    const { legend } = timelineLayoutOf(
+      timelineBlockSchema.parse({ kind: "timeline", rows: parallel }),
+    )
+
+    expect(legend).toContainEqual({ swatch: "wait", label: "待ち" })
   })
 })

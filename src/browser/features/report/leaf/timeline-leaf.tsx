@@ -230,6 +230,17 @@ function TrackView(props: { readonly track: TimelineTrackLayout }): ReactElement
           style={{ width: percent(track.uncertain.width) }}
         />
       )}
+      {track.wait.kind === "shown" && (
+        <span
+          className={figureClassName("timeline-wait")}
+          title={`待ち ${plainInline(track.wait.label)}`}
+          style={{ width: percent(track.wait.width) }}
+        />
+      )}
+      <span className={figureClassName("timeline-duration")}>
+        {track.wait.kind === "shown" && `待ち ${plainInline(track.wait.label)}・`}
+        {plainInline(track.duration)}
+      </span>
     </>
   )
 }

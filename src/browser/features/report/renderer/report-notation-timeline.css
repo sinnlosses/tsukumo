@@ -5,7 +5,7 @@
 .detail-block {
   & .report-timeline {
     --timeline-name-width: 0px;
-    --timeline-end-gutter: 3.5em;
+    --timeline-end-gutter: 6em;
     --timeline-track-height: 32px;
     --timeline-name-height: 18px;
     --timeline-row-height: calc(var(--timeline-name-height) + var(--timeline-track-height));
@@ -42,12 +42,16 @@
     box-sizing: border-box;
     block-size: var(--timeline-lane-height);
     padding-block: var(--space-xs);
-    font-weight: 600;
-    line-height: calc(var(--timeline-lane-height) - 2 * var(--space-xs));
+    padding-inline-start: var(--space-sm);
+    border-block-start: 2px solid var(--rule);
+    border-inline-start: 4px solid var(--ink-quiet);
+    font-size: var(--font-secondary);
+    font-weight: 700;
+    line-height: calc(var(--timeline-lane-height) - 2 * var(--space-xs) - 2px);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    color: var(--ink-quiet);
+    color: var(--ink);
   }
   & .report-timeline-row {
     display: grid;
@@ -112,6 +116,23 @@
     line-height: var(--timeline-label-height);
     white-space: nowrap;
     color: var(--state-warn);
+  }
+  & .report-timeline-wait {
+    box-sizing: border-box;
+    flex: 0 0 auto;
+    block-size: 10px;
+    background: repeating-linear-gradient(
+      45deg,
+      color-mix(in srgb, var(--ink) 35%, transparent) 0 2px,
+      transparent 2px 6px
+    );
+  }
+  & .report-timeline-duration {
+    flex: 0 0 auto;
+    margin-inline-start: 0.5em;
+    white-space: nowrap;
+    font-size: var(--font-label);
+    color: var(--ink-quiet);
   }
   & .report-timeline-arrow,
   & .report-timeline-arrow-head {
@@ -200,6 +221,13 @@
       color-mix(in srgb, var(--ink) 30%, transparent) 3px 6px
     );
   }
+  & .report-timeline-legend-swatch-wait {
+    background: repeating-linear-gradient(
+      45deg,
+      color-mix(in srgb, var(--ink) 35%, transparent) 0 2px,
+      transparent 2px 6px
+    );
+  }
   & .report-timeline-legend-swatch-point {
     inline-size: 0.75em;
     rotate: 45deg;
@@ -222,9 +250,6 @@
     }
     & .report-timeline-row {
       grid-template-columns: var(--timeline-name-width) minmax(0, 1fr);
-    }
-    & .report-timeline-lane {
-      padding-inline-start: 0;
     }
   }
 }

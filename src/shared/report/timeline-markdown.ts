@@ -3,7 +3,13 @@
 import { sumBy, unique } from "remeda"
 
 import type { ReportTimeline } from "./timeline-block.ts"
-import { readTimeline, type TimelineRowReading, timelineTicks } from "./timeline-scale.ts"
+import {
+  readTimeline,
+  type TimelineRowReading,
+  type TimelineScale,
+  timelineDurationLabel,
+  timelineTicks,
+} from "./timeline-scale.ts"
 
 /** 時間の図の部品が付ける class の名前。描く側はこの名前に見た目を当てる。 */
 export const TIMELINE_MARK_NAMES = [
@@ -20,6 +26,8 @@ export const TIMELINE_MARK_NAMES = [
   "timeline-extra",
   "timeline-uncertain",
   "timeline-uncertain-label",
+  "timeline-duration",
+  "timeline-wait",
   "timeline-arrow",
   "timeline-arrow-head",
   "timeline-point",
@@ -33,6 +41,7 @@ export const TIMELINE_MARK_NAMES = [
   "timeline-legend-swatch-plain",
   "timeline-legend-swatch-extra",
   "timeline-legend-swatch-uncertain",
+  "timeline-legend-swatch-wait",
   "timeline-legend-swatch-point",
   "timeline-legend-swatch-event",
 ] as const
@@ -54,7 +63,15 @@ export type TimelineTrackLayout =
       /** 延びた分の幅（%）の並び。 */
       readonly extras: readonly number[]
       readonly uncertain: TimelineUncertainLayout
+      /** 始まりから帯の終わり（延びた分があればその最後）までの長さの字。 */
+      readonly duration: string
+      readonly wait: TimelineWaitLayout
     }
+
+/** 帯の終わりから、この行を `after` で待つ行の最も早い始まりまでの待ち。`width` は %、`label` は長さの字。 */
+export type TimelineWaitLayout =
+  | { readonly kind: "none" }
+  | { readonly kind: "shown"; readonly width: number; readonly label: string }
 
 /** 延びた分の後ろに続く止まりうる区間。`width` は %。 */
 export type TimelineUncertainLayout =
@@ -85,7 +102,14 @@ export type TimelineLaneLayout = {
   readonly rows: readonly TimelineRowLayout[]
 }
 
-export type TimelineLegendSwatch = "emphasis" | "plain" | "extra" | "uncertain" | "point" | "event"
+export type TimelineLegendSwatch =
+  | "emphasis"
+  | "plain"
+  | "extra"
+  | "uncertain"
+  | "wait"
+  | "point"
+  | "event"
 
 export type TimelineLayout = {
   /** 目盛りの字と、次の目盛りまでの幅（%）。最後の目盛りは 0。 */
@@ -134,6 +158,7 @@ export function timelineLayoutOf(block: ReportTimeline): TimelineLayout {
   const laneNames = unique(["", ...drawn.map(({ row }) => row.lane)])
   const ordered = laneNames.flatMap((lane) => drawn.filter(({ row }) => row.lane === lane))
   const arrowsOf = arrowLayoutOf(block, ordered, percent)
+  const waitOf = waitLayoutOf(block, ordered, percent, reading.scale)
   const rowLayout = (item: DrawnRow, position: number): TimelineRowLayout => {
     const { row, shape } = item
     return {
@@ -146,7 +171,10 @@ export function timelineLayoutOf(block: ReportTimeline): TimelineLayout {
               emphasized: emphasized.has(row.name),
               marginLeft: percent(shape.start),
             }
-          : barLayout(row, shape, emphasized.has(row.name), percent),
+          : barLayout(row, shape, emphasized.has(row.name), percent, {
+              scale: reading.scale,
+              wait: waitOf(position),
+            }),
       arrows: arrowsOf(position),
     }
   }
@@ -173,7 +201,12 @@ export function timelineLayoutOf(block: ReportTimeline): TimelineLayout {
         marginLeft: percent(at),
       })),
     ),
-    legend: legendOf(block, drawn, events.length > 0),
+    legend: legendOf(
+      block,
+      drawn,
+      events.length > 0,
+      rowLayouts.some(({ track }) => track.kind === "bar" && track.wait.kind === "shown"),
+    ),
   }
 }
 
@@ -267,6 +300,7 @@ function barLayout(
   shape: Extract<RowShape, { readonly kind: "bar" }>,
   emphasized: boolean,
   percent: (at: number) => number,
+  { scale, wait }: { readonly scale: TimelineScale; readonly wait: TimelineWaitLayout },
 ): TimelineTrackLayout {
   const [end, ...extraEnds] = shape.ends
   const lastEnd = extraEnds.at(-1) ?? end
@@ -292,6 +326,40 @@ function barLayout(
             width: percent(shape.uncertain.at) - percent(lastEnd),
             label: uncertainLabelOf(row, shape),
           },
+    duration: timelineDurationLabel(lastEnd - shape.start, scale),
+    wait,
+  }
+}
+
+/** 描く順の位置ごとに、その行の待ちを返す関数。待つ行が無い・一点の行・止まりうる区間のある行は `none`。 */
+function waitLayoutOf(
+  block: ReportTimeline,
+  ordered: readonly DrawnRow[],
+  percent: (at: number) => number,
+  scale: TimelineScale,
+): (position: number) => TimelineWaitLayout {
+  return (position) => {
+    const item = ordered[position]
+    if (
+      item === undefined ||
+      item.shape.kind === "point" ||
+      item.shape.uncertain.kind === "until"
+    ) {
+      return { kind: "none" }
+    }
+    const { name } = item.row
+    if (block.rows.filter((row) => row.name === name).length !== 1) return { kind: "none" }
+    const lastEnd = item.shape.ends.at(-1) ?? item.shape.start
+    const starts = ordered.flatMap((other) =>
+      other.row.after.includes(name) ? [other.shape.start] : [],
+    )
+    const earliest = Math.min(...starts)
+    if (starts.length === 0 || earliest <= lastEnd) return { kind: "none" }
+    return {
+      kind: "shown",
+      width: percent(earliest) - percent(lastEnd),
+      label: timelineDurationLabel(earliest - lastEnd, scale),
+    }
   }
 }
 
@@ -344,6 +412,7 @@ function legendOf(
   block: ReportTimeline,
   drawn: readonly DrawnRow[],
   hasEvents: boolean,
+  hasWait: boolean,
 ): TimelineLayout["legend"] {
   const emphasized = drawn.some(({ row }) => block.emphasis.includes(row.name))
   const items: readonly {
@@ -362,6 +431,11 @@ function legendOf(
       swatch: "uncertain",
       label: "止まりうる分",
       shown: drawn.some(({ shape }) => shape.kind === "bar" && shape.uncertain.kind === "until"),
+    },
+    {
+      swatch: "wait",
+      label: "待ち",
+      shown: hasWait,
     },
     { swatch: "point", label: "一点", shown: drawn.some(({ shape }) => shape.kind === "point") },
     { swatch: "event", label: "出来事", shown: hasEvents },

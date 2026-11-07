@@ -4,7 +4,11 @@ import {
   type ReportTimeline,
   timelineBlockSchema,
 } from "../../../src/shared/report/timeline-block.ts"
-import { readTimeline, timelineTicks } from "../../../src/shared/report/timeline-scale.ts"
+import {
+  readTimeline,
+  timelineDurationLabel,
+  timelineTicks,
+} from "../../../src/shared/report/timeline-scale.ts"
 
 type Row = {
   readonly name?: string
@@ -276,5 +280,15 @@ describe("timelineTicks", () => {
 
   it("範囲が0でも区間を1つ持つ", () => {
     expect(timelineTicks(30, 30, "minutes").ticks.length).toBe(2)
+  })
+})
+
+describe("timelineDurationLabel", () => {
+  it("尺度ごとに、大きい単位から2つまでで書く", () => {
+    expect(timelineDurationLabel(150, "minutes")).toBe("150分")
+    expect(timelineDurationLabel(25, "clock")).toBe("25分")
+    expect(timelineDurationLabel(60, "clock")).toBe("1時間")
+    expect(timelineDurationLabel(65, "clock")).toBe("1時間5分")
+    expect(timelineDurationLabel(1440 * 2 + 180, "iso")).toBe("2日3時間")
   })
 })

@@ -184,6 +184,33 @@ export function timelineTicks(
   }
 }
 
+/**
+ * 分の長さの字。分の尺度は分のまま、`clock` と ISO は大きい単位から2つまで（0 の下位は省く）。
+ */
+export function timelineDurationLabel(minutes: number, scale: TimelineScale): string {
+  if (scale === "minutes") return `${String(Math.round(minutes * 100) / 100)}分`
+  const total = Math.round(minutes)
+  const days = Math.floor(total / MINUTES_PER_DAY)
+  const hours = Math.floor((total % MINUTES_PER_DAY) / 60)
+  const rest = total % 60
+  const parts: readonly (readonly [number, string])[] =
+    days > 0
+      ? [
+          [days, "日"],
+          [hours, "時間"],
+        ]
+      : hours > 0
+        ? [
+            [hours, "時間"],
+            [rest, "分"],
+          ]
+        : [[rest, "分"]]
+  return parts
+    .filter(([count], index) => index === 0 || count > 0)
+    .map(([count, unit]) => `${String(count)}${unit}`)
+    .join("")
+}
+
 type ValueKind = "clock" | "minutes" | `iso${string}`
 
 type ReadValue = { readonly kind: ValueKind; readonly minutes: number }

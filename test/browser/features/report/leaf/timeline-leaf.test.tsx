@@ -92,4 +92,33 @@ describe("Timeline の部品", () => {
     expect(html.match(/<svg[^>]*report-timeline-arrow"/g)).toHaveLength(2)
     expect(html).toMatch(/report-timeline-uncertain-label[^>]*>架空の承認待ち</)
   })
+
+  it("区間の行には所要の字を出し、一点の行には出さない", () => {
+    const { block, part } = pair(ROWS, EVENTS)
+    const html = newLeafHtml(block, part)
+
+    expect(html.match(/report-timeline-duration/g)).toHaveLength(3)
+    expect(html).toMatch(/report-timeline-duration[^>]*>12分</)
+    expect(html).toMatch(/report-timeline-duration[^>]*>38分</)
+  })
+
+  it("待たれる行の終わりから待つ行の始まりまでを、待ちの区間として幅の style つきで出す", () => {
+    const rows = [
+      ...ROWS,
+      {
+        name: "架空の公開",
+        start: "15:20",
+        end: "15:30",
+        extra: [],
+        uncertain: NO_UNCERTAIN,
+        after: ["架空の検証"],
+        lane: "架空の役B",
+      },
+    ]
+    const { block, part } = pair(rows, EVENTS)
+    const html = newLeafHtml(block, part)
+
+    expect(html).toMatch(/report-timeline-wait" style="width: [\d.]+%;"/)
+    expect(html).toContain("待ち 20分")
+  })
 })
