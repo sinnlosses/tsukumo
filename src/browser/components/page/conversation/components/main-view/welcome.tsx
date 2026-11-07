@@ -119,22 +119,30 @@ function Others(props: { readonly model: WelcomeModel; readonly primary: boolean
           {OTHERS_LABEL}
         </Text>
       )}
-      <OtherButton primary={primary} onClick={model.onWrite}>
-        <PencilIcon />
-        自分で書く
-        <kbd className={styles["card-key"]}>/</kbd>
-      </OtherButton>
-      <OtherButton primary={false} onClick={model.onPickTask}>
-        <ListIcon />
-        タスクの一覧から選ぶ
-      </OtherButton>
-      {model.hasOtherSessions && (
-        <OtherButton primary={false} onClick={model.onSeePrevious}>
-          <HistoryIcon />
-          前のやり取りを見る
-          <kbd className={styles["card-key"]}>←</kbd>
+      <div className={styles["other-list"]}>
+        <OtherButton primary={primary} onClick={model.onWrite}>
+          <PencilIcon />
+          自分で書く
+          <kbd className={styles["card-key"]}>/</kbd>
         </OtherButton>
-      )}
+        <OtherButton primary={false} onClick={model.onPickTask}>
+          <ListIcon />
+          <span>
+            <span className={styles["other-phrase"]}>タスクの一覧</span>
+            <span className={styles["other-phrase"]}>から選ぶ</span>
+          </span>
+        </OtherButton>
+        {model.hasOtherSessions && (
+          <OtherButton primary={false} onClick={model.onSeePrevious}>
+            <HistoryIcon />
+            <span>
+              <span className={styles["other-phrase"]}>前のやり取り</span>
+              <span className={styles["other-phrase"]}>を見る</span>
+            </span>
+            <kbd className={styles["card-key"]}>←</kbd>
+          </OtherButton>
+        )}
+      </div>
     </div>
   )
 }

@@ -14,8 +14,8 @@
       ] },
       "ほかの始め方",
       { "tag": "button", "children": ["自分で書く"] },
-      { "tag": "button", "children": ["タスクの一覧から選ぶ"] },
-      { "tag": "button", "children": ["前のやり取りを見る"] }
+      { "tag": "button", "children": ["タスクの一覧", "から選ぶ"] },
+      { "tag": "button", "children": ["前のやり取り", "を見る"] }
     ] }
   ]
 }

@@ -18,6 +18,9 @@ afterEach(() => {
   useSessionSwitcherRequest.setState(useSessionSwitcherRequest.getInitialState(), true)
 })
 
+// ラベルは句ごとの要素に分かれていて、jsdom は要素の境目に空白を挟んで名前を作る。
+const PREVIOUS_LABEL = /前のやり取り\s*を見る/
+
 const READY_TASK: TaskSummaryItem = {
   id: "X-1",
   summary: "架空のタスク",
@@ -88,7 +91,7 @@ describe("Welcome（ほかの始め方）", () => {
   it("「前のやり取りを見る」で切り替え画面を開く", () => {
     renderWelcome(FILLED)
 
-    fireEvent.click(screen.getByRole("button", { name: /前のやり取りを見る/ }))
+    fireEvent.click(screen.getByRole("button", { name: PREVIOUS_LABEL }))
 
     expect(useSessionSwitcherRequest.getState().open).toBe(true)
   })
@@ -101,7 +104,7 @@ describe("Welcome（ほかの始め方）", () => {
     })
 
     expect(document.body.querySelector("ul")).toBeNull()
-    expect(screen.getByRole("button", { name: /前のやり取りを見る/ })).toBeTruthy()
+    expect(screen.getByRole("button", { name: PREVIOUS_LABEL })).toBeTruthy()
   })
 
   it("空の帳面（タスク0件・続き無し）では札が出ず、「自分で書く」だけが大きく出て、前のやり取りの口も無い", () => {
@@ -111,6 +114,6 @@ describe("Welcome（ほかの始め方）", () => {
     expect(
       screen.getByRole("button", { name: /自分で書く/ }).closest(".others-large"),
     ).not.toBeNull()
-    expect(screen.queryByRole("button", { name: /前のやり取りを見る/ })).toBeNull()
+    expect(screen.queryByRole("button", { name: PREVIOUS_LABEL })).toBeNull()
   })
 })
