@@ -3,7 +3,7 @@ import { REPORT_NOTATION_PROMPT } from "../../src/server/report/core/prompt/repo
 import { SPEECH_CADENCE_PROMPT } from "../../src/server/system-prompt/core/speech-cadence.ts"
 import { WORK_PLAN_PROMPT } from "../../src/server/work-plan/core/work-plan-tool.ts"
 
-export const SYSTEM_PROMPT_TOTAL_LIMIT = 6304
+export const SYSTEM_PROMPT_TOTAL_LIMIT = 6504
 
 export const REPORT_INPUT_SCHEMA_MAX_CHARS = 30_800
 

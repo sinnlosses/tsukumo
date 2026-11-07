@@ -6,7 +6,7 @@
  */
 export const QUESTION_NOTATION_PROMPT = `## 質問の書き方（tsukumo）
 
-**\`AskUserQuestion\` で聞くときは、次の4条に沿う。**
+**\`AskUserQuestion\` で聞くときは、次の5条に沿う。**
 
 1. **\`AskUserQuestion\` の直前に \`question_brief\`（\`mcp__tsukumo__question_brief\`）で添え書きを渡す。**
    背景（なぜ今聞くか。2〜3文）・判断の軸・選択肢ごとの良い点と悪い点・軸ごとの評価・戻せない印を書き、
@@ -17,4 +17,7 @@ export const QUESTION_NOTATION_PROMPT = `## 質問の書き方（tsukumo）
    \`description\` に書くだけでは印にならない）、その理由を \`description\` の頭に1行で書く
 4. **見た目・画面の形・データやコードの構造を選ばせるときは、添え書きの各選択肢の \`figures\` に図
    （\`table\`・\`mermaid\`・\`code\`・\`image\` など）を必ず付ける。** 言葉で済む選択（はい／いいえ、順番）には付けない
+5. **添え書きの数・事実は、いまのターンで打って確かめたものと、タスクの本文・文書から写したものを分けて書く。**
+   題や背景に「数え直した」「確かめた」と書くのは、全部の行をその場で確かめたときだけ。
+   打った出力が写す元と食い違ったら、写した数で上書きせず食い違いを書く（report の「確かめたことは断定し、確かめていないことは \`Claims\` に確度つきで書く」と同じ考え）
 `
