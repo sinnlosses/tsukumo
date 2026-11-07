@@ -114,6 +114,33 @@
   & .table-scroll > table {
     margin-block: 0;
   }
+  /* 横に転がせる表だけ、右端を薄く消して続きがあると示す。末尾まで送ると消える。
+   転がらない表は走査の時間軸が働かず、--table-scroll-fade が 0 のままなので何も掛からない。 */
+  @supports (animation-timeline: scroll()) {
+    & .table-scroll {
+      animation: table-scroll-fade linear both;
+      animation-timeline: scroll(self inline);
+      mask-image: linear-gradient(
+        to right,
+        black calc(100% - 2rem * var(--table-scroll-fade)),
+        transparent
+      );
+    }
+  }
+}
+@property --table-scroll-fade {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0;
+}
+@keyframes table-scroll-fade {
+  0%,
+  90% {
+    --table-scroll-fade: 1;
+  }
+  100% {
+    --table-scroll-fade: 0;
+  }
 }
 /* 10 件で切った表・一覧の末尾の「ほか n 件」。ボタンの顔は `<Button variant="link">` が持ち、ここは行の見え方だけ。 */
 .report-fold-more {
