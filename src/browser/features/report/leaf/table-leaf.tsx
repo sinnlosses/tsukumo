@@ -9,6 +9,7 @@ import type { A2uiReportPart } from "../../../../shared/report/a2ui-report-outli
 import {
   isEmphasisRow,
   type TableCell,
+  tableRowBest,
   tableRowCells,
   tableRowDepth,
   tableRowDetail,
@@ -179,6 +180,7 @@ function bodyRows(
     if (row === undefined) {
       return []
     }
+    const best = tableRowBest(row)
     const drawn = tableRowCells(row).map((cell, column) => {
       const content = (
         <CellContent
@@ -193,6 +195,11 @@ function bodyRows(
           key={`${String(column)}:${tableCellTexts(cell).join("|")}`}
           marked={column === part.emphasisColumn}
         >
+          {column === best && (
+            <span className={tableLeafClassNames.bestMark} role="img" aria-label="最良">
+              ◆
+            </span>
+          )}
           {heat.kind === "heat" && isHeatColumn(heat, column) ? (
             <span
               className={clsx(

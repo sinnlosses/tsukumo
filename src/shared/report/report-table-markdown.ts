@@ -5,6 +5,7 @@ import { unique } from "remeda"
 import {
   isEmphasisRow,
   type TableCell,
+  tableRowBest,
   tableRowCells,
   tableRowDepth,
   tableRowDetail,
@@ -26,6 +27,8 @@ const EMPHASIS_ROW_MARK = '<span class="row-emphasis-mark" aria-hidden="true"></
 const DEPTH_INDENT = "　"
 
 const EMPHASIS_COLUMN_MARK = '<span class="column-emphasis-mark" aria-hidden="true"></span>'
+
+const BEST_MARK = '<span class="cell-best-mark" role="img" aria-label="最良">◆</span>'
 
 const TAG_TONE_COUNT = 5
 const TAG_TONE_NONE = "tag-none"
@@ -83,16 +86,19 @@ function tableRowMarkdowns(
   tagTones: TagTones,
 ): readonly string[] {
   const { bars, statusColumns } = tableLayoutOf(table)
-  const bodyCellMarkdown = (cell: TableCell, index: number): string =>
+  const bodyCellMarkdown = (cell: TableCell, index: number, best?: number): string =>
     columnMarked(
-      statusColumns[index] === true && typeof cell === "string"
-        ? `<span class="cell-status-none">${cellTextMarkdown(cell)}</span>`
-        : cellMarkdown(cell, bars[index] ?? NO_BAR, tagTones),
+      `${index === best ? BEST_MARK : ""}${
+        statusColumns[index] === true && typeof cell === "string"
+          ? `<span class="cell-status-none">${cellTextMarkdown(cell)}</span>`
+          : cellMarkdown(cell, bars[index] ?? NO_BAR, tagTones)
+      }`,
       index,
       table.emphasisColumn,
     )
   return table.rows.map((row) => {
-    const cells = tableRowCells(row).map(bodyCellMarkdown)
+    const best = tableRowBest(row)
+    const cells = tableRowCells(row).map((cell, index) => bodyCellMarkdown(cell, index, best))
     const [first = "", ...rest] = cells
     const indented = `${DEPTH_INDENT.repeat(tableRowDepth(row))}${first}`
     return markdownRow([isEmphasisRow(row) ? `${EMPHASIS_ROW_MARK}${indented}` : indented, ...rest])

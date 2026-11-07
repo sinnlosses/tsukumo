@@ -32,6 +32,7 @@ const tableRowSchema = z.union([
       .max(3)
       .optional()
       .describe("1列目の字下げの段。親の行の直下に1段深く置く"),
+    best: z.number().int().min(0).optional().describe("この行で最良のセルの列（0始まり）"),
   }),
 ])
 
@@ -52,6 +53,10 @@ export function tableRowDetail(row: TableRow): string | undefined {
 
 export function tableRowDepth(row: TableRow): number {
   return "depth" in row ? (row.depth ?? 0) : 0
+}
+
+export function tableRowBest(row: TableRow) {
+  return "best" in row ? row.best : undefined
 }
 
 export const MIN_TABLE_COLUMNS = 2

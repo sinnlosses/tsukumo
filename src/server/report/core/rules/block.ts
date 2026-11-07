@@ -36,6 +36,7 @@ import {
   isBadHeat,
   isBadRowDepth,
   isBadChartGrid,
+  isBestColumnOutOfRange,
   isEmphasisColumnOutOfRange,
   isRaggedChart,
   isRaggedTable,
@@ -66,6 +67,8 @@ export type BlockViolation =
   | { readonly kind: "many-emphasis-rows"; readonly count: number }
   /** `emphasisColumn` が列の数以上の `table`・`matrix` がある。`count` は表の数。 */
   | { readonly kind: "emphasis-column-range"; readonly count: number }
+  /** 行の `best` が列の数以上の `table` がある。`count` は表の数。 */
+  | { readonly kind: "best-column-range"; readonly count: number }
   /** `heat` の範囲が列の外か範囲に 0 以上の数でないセルがある、または `totals` に `heat` が無いか範囲に `%` のセルがある `table` がある。`count` は表の数。 */
   | { readonly kind: "heat-range"; readonly count: number }
   /** 最初の行の `depth` が 0 でないか前の行より2段以上深い行がある、または `depth` のある行と `totals` を持つ `table` がある。`count` は表の数。 */
@@ -159,6 +162,10 @@ export function detectBlockViolations(
       kind: "emphasis-column-range",
       count: leaves.filter((leaf) => isEmphasisColumnOutOfRange(leaf)).length,
     },
+    {
+      kind: "best-column-range",
+      count: leaves.filter((leaf) => isBestColumnOutOfRange(leaf)).length,
+    },
     { kind: "heat-range", count: leaves.filter((leaf) => isBadHeat(leaf)).length },
     { kind: "row-depth", count: leaves.filter((leaf) => isBadRowDepth(leaf)).length },
     { kind: "sentence-table", count: leaves.filter((leaf) => isSentenceTable(leaf)).length },
@@ -217,6 +224,7 @@ const BLOCK_KINDS: ReadonlySet<string> = new Set<BlockViolation["kind"]>([
   "long-table",
   "many-emphasis-rows",
   "emphasis-column-range",
+  "best-column-range",
   "heat-range",
   "row-depth",
   "sentence-table",
@@ -277,6 +285,8 @@ export function blockViolationMessage(violation: BlockViolation): string {
       return `\`panels\` が${String(MIN_CHART_GRID_PANELS)}〜${String(MAX_CHART_GRID_PANELS)}個の外、\`values\` の数が \`labels\` と揃わない系列がある、または \`panels\` の間で系列の \`name\` の組が違う \`ChartGrid\` が${violation.count}個ある。図を${String(MIN_CHART_GRID_PANELS)}〜${String(MAX_CHART_GRID_PANELS)}個にし、どの図も同じ名前の系列を \`labels\` と同じ数の値で書く`
     case "emphasis-column-range":
       return `\`emphasisColumn\` が列の数以上の表（\`Matrix\` を含む）が${violation.count}個ある。列の数より小さい位置（0 始まり）にする`
+    case "best-column-range":
+      return `行の \`best\` が列の数以上（\`totals\` の計の列を含む）の表が${violation.count}個ある。\`columns\` の列の数より小さい位置（0 始まり）にする`
     case "heat-range":
       return `\`heat\` の範囲が列の外か範囲に数でないセルがある、または \`totals\` に \`heat\` が無いか範囲に % のセルがある表が${violation.count}個ある。\`heat\` は 0 以上の数だけの列（0 始まり・from ≦ to）に当て、\`totals\` は % でない数の範囲に付ける`
     case "row-depth":

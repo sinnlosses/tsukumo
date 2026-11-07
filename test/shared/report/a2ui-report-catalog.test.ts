@@ -195,6 +195,21 @@ describe("A2UI のカタログ文書", () => {
     expect(JSON.stringify(document.components.Table)).toContain("emphasisColumn")
   })
 
+  it("Table の行の best は 0 以上の整数だけ受ける", () => {
+    const table = (best: number) => ({
+      id: "t",
+      component: "Table",
+      title: "件数",
+      columns: ["名前", "数"],
+      rows: [{ cells: ["a", "1"], best }],
+    })
+    const schema = REPORT_COMPONENT_SCHEMAS.Table
+
+    expect(schema.safeParse(table(1)).success).toBe(true)
+    expect(schema.safeParse(table(-1)).success).toBe(false)
+    expect(schema.safeParse(table(1.5)).success).toBe(false)
+  })
+
   it("Matrix はセルの補足・emphasisColumn・footer を任意で受け、13字の補足と4行の footer は拒む", () => {
     const base = {
       id: "m",

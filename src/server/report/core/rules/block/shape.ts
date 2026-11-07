@@ -4,6 +4,7 @@ import { sumBy } from "remeda"
 
 import {
   type TableCell,
+  tableRowBest,
   tableRowCells,
   tableRowDepth,
 } from "../../../../../shared/report/report-block-comparison.ts"
@@ -124,6 +125,16 @@ export function isEmphasisColumnOutOfRange(leaf: ReportOutlineLeaf): boolean {
     leaf.emphasisColumn !== undefined &&
     leaf.emphasisColumn >= leaf.columns.length
   )
+}
+
+/** どれかの行の `best` が列の数以上の `Table` か。 */
+export function isBestColumnOutOfRange(leaf: ReportOutlineLeaf): boolean {
+  if (leaf.component !== "Table") return false
+  const columns = leaf.columns.length
+  return leaf.rows.some((row) => {
+    const best = tableRowBest(row)
+    return best !== undefined && best >= columns
+  })
 }
 
 /**

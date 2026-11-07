@@ -4,6 +4,23 @@ import { reportSectionsMarkdown } from "../../../src/browser/features/report/rep
 import type { FigureBlock, LeafComponent } from "../../../src/shared/report/report-block.ts"
 import { markdownOf, NO_IMAGES, section, tableCaptioned } from "../../fixture/report-markdown.ts"
 
+describe("表の行の best", () => {
+  it("best の列のセルの前に最良の印を置き、ほかのセルと best の無い行には置かない", () => {
+    const table: FigureBlock = {
+      kind: "table",
+      title: "",
+      columns: ["機種", "評価"],
+      rows: [{ cells: ["架空のA", "高い"], best: 1 }, ["架空のB", "低い"]],
+      rest: "",
+      fold: "",
+      aside: "",
+    }
+    const mark = '<span class="cell-best-mark" role="img" aria-label="最良">◆</span>'
+
+    expect(markdownOf(table)).toContain(`| 架空のA | ${mark}高い |\n| 架空のB | 低い |`)
+  })
+})
+
 describe("表の tag と強調の行", () => {
   const tableOf = (
     rows: Extract<LeafComponent, { readonly kind: "table" }>["rows"],

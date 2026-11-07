@@ -266,6 +266,14 @@
   & tbody tr:has(.report-row-emphasis-mark) td:has(.report-column-emphasis-mark) .report-cell-bar {
     background: color-mix(in srgb, var(--accent) 48%, transparent);
   }
+  /* 行ごとの最良のセルの印。セルの字の色と太さは変えない。 */
+  & .report-cell-best-mark {
+    /* 数の列のセルは block なので、float で字や棒の行を押し下げずに左へ置く。 */
+    float: left;
+    color: var(--state-ok);
+    font-size: var(--font-label);
+    margin-inline-end: 0.3em;
+  }
   /* 数の列の濃淡（6段）。セルの中の段の印でセルの地を塗り、濃い2段は字を地の色に沈めて読ませる。凡例の見本も同じ段の印を持つ。 */
   & td:has(> .report-heat-0),
   & .report-heat-legend-swatch.report-heat-0 {

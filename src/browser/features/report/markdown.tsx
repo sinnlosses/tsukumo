@@ -129,6 +129,7 @@ export const tableLeafClassNames = {
   tag: notationStyles["report-tag"],
   rowEmphasisMark: notationStyles["report-row-emphasis-mark"],
   columnEmphasisMark: notationStyles["report-column-emphasis-mark"],
+  bestMark: notationStyles["report-cell-best-mark"],
   heatLevels: [
     notationStyles["report-heat-0"],
     notationStyles["report-heat-1"],

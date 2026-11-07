@@ -31,7 +31,7 @@ const LEAF_BLOCK_EXAMPLES = {
     title: "架空の設定の上限を 30 から 60 にすると、切れる件数が 8 から 0 に減る",
     columns: ["上限", "切れた件数", "状態"],
     rows: [
-      ["30", "8", { status: "ng", text: "切れる" }],
+      { cells: ["30", "8", { status: "ng", text: "切れる" }], best: 1 },
       { cells: ["60", { from: "8", to: "0" }, { status: "ok", text: "切れない" }], emphasis: true },
     ],
   },

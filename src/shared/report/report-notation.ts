@@ -94,6 +94,7 @@ const LEAF_COMPONENT_MARK_NAMES = [
   "tag-none",
   "row-emphasis-mark",
   "column-emphasis-mark",
+  "cell-best-mark",
   "heat-0",
   "heat-1",
   "heat-2",

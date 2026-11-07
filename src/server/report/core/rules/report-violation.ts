@@ -67,6 +67,7 @@ const VIOLATION_THRESHOLDS = {
   "long-table": 0,
   "many-emphasis-rows": 0,
   "emphasis-column-range": 0,
+  "best-column-range": 0,
   "heat-range": 0,
   "row-depth": 0,
   "sentence-table": 0,
