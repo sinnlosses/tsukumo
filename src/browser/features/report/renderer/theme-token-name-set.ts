@@ -41,6 +41,7 @@ export const THEME_TOKEN_NAMES: ReadonlySet<string> = new Set([
   "font-heading-1",
   "font-heading-2",
   "font-heading-3",
+  "font-input",
   "font-label",
   "font-mono",
   "font-sans",
