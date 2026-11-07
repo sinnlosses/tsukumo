@@ -211,10 +211,6 @@
   .lead {
     margin: 0 0 var(--space-md);
   }
-  .cards {
-    gap: var(--stack-group);
-    margin: 0 0 var(--space-lg);
-  }
   /* 札は頭と題を幅いっぱいに置き、その下の行に理由（左）と足（右）を並べる格子にする。 */
   .card {
     display: grid;

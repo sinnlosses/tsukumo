@@ -236,6 +236,13 @@
   }
 }
 
+/* 狭い画面は外側の間（stack-section）だけを縮め、内側（inset）と触る的の大きさは変えない。 */
+@media (max-width: 760px) {
+  :root {
+    --stack-section: var(--space-lg);
+  }
+}
+
 body {
   margin: 0;
   padding: var(--page-padding);

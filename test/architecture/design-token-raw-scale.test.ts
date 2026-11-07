@@ -108,7 +108,7 @@ const RAW_SCALE_REFERENCE_LIMITS: Readonly<Record<string, number>> = {
   "browser/components/page/conversation/components/main-view/turn-card/turn-failure-block.css": 4,
   "browser/components/page/conversation/components/main-view/turn-card/turn.css": 5,
   "browser/components/page/conversation/components/main-view/turn-card/work-strip.css": 15,
-  "browser/components/page/conversation/components/main-view/welcome/welcome.css": 20,
+  "browser/components/page/conversation/components/main-view/welcome/welcome.css": 19,
   "browser/components/page/conversation/components/pending-ask-card/pending-ask-card.module.css": 12,
   "browser/components/page/conversation/components/prompt-image/prompt-image.module.css": 2,
   "browser/components/page/token-usage/components/barred-value/barred-value.module.css": 1,
