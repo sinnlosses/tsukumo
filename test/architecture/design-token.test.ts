@@ -1,52 +1,35 @@
-import { readFileSync } from "node:fs"
-
 import { describe, expect, it } from "vitest"
 
 import { REPOSITORY_SCAN_TIMEOUT_MS } from "../fixture/repository-scan-timeout.ts"
 import {
+  compareWithLimits,
+  countByBrowserCss,
   hardcodedDeclarations,
   isAllowedRadius,
   isAllowedShadow,
   isAllowedSpace,
   isAllowedTransition,
 } from "./design-token-declaration.ts"
-import { listSourceFiles, SRC_ROOT } from "./source-file.ts"
 
 describe("design-token", () => {
   it(
     "src/browser/ の *.css で、theme.css 以外の余白・角丸・影・transition の時間の直書きが、除外の一覧の件数を超えない",
     () => {
-      const actual = Object.fromEntries(
-        listSourceFiles(SRC_ROOT, SRC_ROOT, [".css"])
-          .filter(
-            (relPath) => relPath.startsWith("browser/") && relPath !== "browser/styles/theme.css",
-          )
-          .flatMap((relPath) => {
-            const count = hardcodedDeclarations(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8"))
-            return count.length > 0 ? [[relPath, count.length] as const] : []
-          }),
+      const { increased, decreased } = compareWithLimits(
+        countByBrowserCss((css) => hardcodedDeclarations(css).length),
+        EXCLUDED_DECLARATION_COUNTS,
       )
 
-      const increased = Object.entries(actual)
-        .filter(([relPath, count]) => count > (EXCLUDED_DECLARATION_COUNTS[relPath] ?? 0))
-        .map(
-          ([relPath, count]) =>
-            `${relPath}: ${count}（一覧 ${EXCLUDED_DECLARATION_COUNTS[relPath] ?? 0}）`,
-        )
-      const decreased = Object.entries(EXCLUDED_DECLARATION_COUNTS)
-        .filter(([relPath, count]) => (actual[relPath] ?? 0) < count)
-        .map(([relPath, count]) => `${relPath}: ${actual[relPath] ?? 0}（一覧 ${count}）`)
-
-      expect(increased.join("\n"), "直書きを増やしている。トークン（theme.css）を使う").toBe("")
+      expect(increased, "直書きを増やしている。トークン（theme.css）を使う").toBe("")
       expect(
-        decreased.join("\n"),
+        decreased,
         "直書きが減った。EXCLUDED_DECLARATION_COUNTS の件数を減らす（0 になったら行を消す）",
       ).toBe("")
     },
     REPOSITORY_SCAN_TIMEOUT_MS,
   )
 
-  it("余白の判定は、0・auto・トークン・局所のつまみ・em・%・28px 以上・それらだけの calc を通し、小さな px・rem を拒む", () => {
+  it("余白の判定は、0・auto・トークン・局所のつまみ・em・%・尺度に乗る calc・env() を含む値を通し、px・rem の直書きと尺度の外の calc を拒む", () => {
     const allowed = [
       "0",
       "auto",
@@ -54,20 +37,32 @@ describe("design-token", () => {
       "var(--report-block-gap)",
       "0.5em",
       "50%",
-      "28px",
-      "2rem",
       "0 var(--space-sm)",
       "calc(-1 * var(--space-xs))",
       "calc(var(--space-sm) + 0.5em)",
+      "calc(var(--space-sm) * 2)",
+      "calc(var(--space-sm) + var(--space-md))",
+      "calc(var(--space-sm) + env(safe-area-inset-top))",
+      "calc(env(safe-area-inset-top) + var(--space-lg))",
+      "calc(var(--turn-card-head-height, 0px) + var(--space-sm))",
       "var(--report-block-gap, var(--space-md)) 0",
     ]
     const rejected = [
       "6px",
       "0.5rem",
       "4px 8px",
+      "28px",
+      "2rem",
       "calc(1rem + 2px)",
+      "calc(var(--space-2xs) / 2)",
+      "calc(1.5 * var(--space-2xs))",
+      "calc(var(--space-sm) + var(--space-2xs))",
       "var(--space-sm) 6px",
       "10px",
+      "calc(env(safe-area-inset-top) + 30px)",
+      "calc(env(safe-area-inset-top) + 13px)",
+      "calc(var(--space-sm) + env(safe-area-inset-top) + 30px)",
+      "calc(var(--space-5xl) * 3)",
       "var(--report-block-gap, 12px) 0",
     ]
 
@@ -179,6 +174,17 @@ describe("design-token", () => {
 const EXCLUDED_DECLARATION_COUNTS: Readonly<Record<string, number>> = {
   "browser/components/app/screen-boundary.module.css": 1,
   "browser/components/frame/protocol-mismatch.module.css": 1,
-  "browser/components/page/conversation/components/character-view/stage/speech-log.css": 1,
+  "browser/components/frame/screen-nav/components/session-switcher.module.css": 1,
+  "browser/components/frame/sidebar/components/plan-usage-row.module.css": 1,
+  "browser/components/page/achievement/components/diary-book/diary-book.module.css": 3,
+  "browser/components/page/conversation/components/character-view/stage/speech-log.css": 2,
   "browser/components/page/conversation/components/dispatch/dispatch.module.css": 1,
+  "browser/components/page/conversation/components/main-view/turn-card/report-outline.css": 1,
+  "browser/components/page/conversation/components/main-view/turn-card/work-strip.css": 1,
+  "browser/components/page/token-usage/components/period-choice-list/period-choice-list.module.css": 1,
+  "browser/components/page/token-usage/components/period-usage-card/period-usage-card.module.css": 1,
+  "browser/components/ui/bottom-sheet/bottom-sheet.module.css": 1,
+  "browser/features/report/renderer/report-notation-prose.css": 1,
+  "browser/features/task-board/components/task-detail.module.css": 1,
+  "browser/features/task-board/task-board.module.css": 2,
 }
