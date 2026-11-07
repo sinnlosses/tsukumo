@@ -4,13 +4,17 @@ import clsx from "clsx"
 import type { ReactElement } from "react"
 
 import type { ReportImageSource } from "../../../../../../shared/report/report-image-markdown.ts"
+import {
+  detailBlockClassName,
+  Markdown,
+  QuestionPreviewMarkdown,
+} from "../../../../../features/report/markdown.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
 import { reportSectionsMarkdown } from "../../domain/report-markdown.ts"
 import type {
   InquiryBrief as InquiryBriefModel,
   InquiryOptionRow,
 } from "../../stores/inquiry-answer.ts"
-import { detailBlockClassName, Markdown, QuestionPreviewMarkdown } from "../markdown/markdown.tsx"
 import styles from "./inquiry.module.css"
 
 export type ShelvedSource = Extract<ReportImageSource, { readonly kind: "shelved" }>

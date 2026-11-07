@@ -5,10 +5,13 @@
 import clsx from "clsx"
 import type { ReactElement } from "react"
 
+import {
+  detailBlockClassName,
+  QuestionPreviewMarkdown,
+} from "../../../../../features/report/markdown.tsx"
 import { Heading } from "../../../../ui/heading/heading.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
 import { hasDetail, InquiryBrief, InquiryCompare, InquiryDetail } from "../inquiry/inquiry.tsx"
-import { detailBlockClassName, QuestionPreviewMarkdown } from "../markdown/markdown.tsx"
 import type {
   QuestionRecordAnswerRow,
   QuestionRecordBriefModel,

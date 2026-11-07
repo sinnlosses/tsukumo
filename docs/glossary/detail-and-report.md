@@ -108,7 +108,7 @@
 - **定義**: **キャラクターから利用者への1件**。利用者にしか決められない・できないこと
   （判断・作業・情報）を、`report` の `favor` に1つだけ入れる。**作業を終えた・止めたあとに残るものに限り**、
   作業の途中で利用者の手が要るときは `report` を呼ばず `AskUserQuestion` で聞く。レポートの最後に印を付けた部品で描かれ、
-  「お願い」のラベルは tsukumo 側（`src/browser/components/page/conversation/components/markdown/renderer/notation.tsx`）が
+  「お願い」のラベルは tsukumo 側（`src/browser/features/report/renderer/notation.tsx`）が
   文字として付ける
 - **注記**: **向きが「依頼」と逆。** 依頼は利用者からキャラクターへ、お願いは
   キャラクターから利用者へ向く

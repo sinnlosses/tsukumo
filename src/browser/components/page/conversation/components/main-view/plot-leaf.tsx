@@ -6,8 +6,8 @@ import type { A2uiReportComponent } from "../../../../../../shared/report/a2ui-r
 import { plotRows } from "../../../../../../shared/report/figure-grammar.ts"
 import { plotDrawingOf, type PlotDrawing } from "../../../../../../shared/report/plot-drawing.ts"
 import type { LeafValue } from "../../../../../../shared/report/report-leaf-value.ts"
-import { chartConfigOf } from "../../domain/report-diagram-markdown.ts"
-import { FigureFence } from "../markdown/markdown.tsx"
+import { FigureFence } from "../../../../../features/report/markdown.tsx"
+import { chartConfigOf } from "../../../../../features/report/report-diagram-markdown.ts"
 import { FoldedLeafFrame } from "./report-leaf-frame.tsx"
 import { TableFigure } from "./table-leaf.tsx"
 

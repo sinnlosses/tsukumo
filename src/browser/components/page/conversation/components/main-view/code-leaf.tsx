@@ -4,7 +4,7 @@ import type { ReactElement } from "react"
 
 import type { A2uiReportComponent } from "../../../../../../shared/report/a2ui-report-catalog.ts"
 import type { LeafValue } from "../../../../../../shared/report/report-leaf-value.ts"
-import { CodeFence } from "../markdown/markdown.tsx"
+import { CodeFence } from "../../../../../features/report/markdown.tsx"
 import { FoldedLeafFrame } from "./report-leaf-frame.tsx"
 
 export function CodeLeaf(props: {

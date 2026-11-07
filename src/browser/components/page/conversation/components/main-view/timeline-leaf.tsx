@@ -12,7 +12,7 @@ import {
   type TimelineTrackLayout,
   timelineLayoutOf,
 } from "../../../../../../shared/report/timeline-markdown.ts"
-import { figureClassName } from "../markdown/markdown.tsx"
+import { figureClassName } from "../../../../../features/report/markdown.tsx"
 import { FoldedLeafFrame } from "./report-leaf-frame.tsx"
 
 const LEVEL_HEIGHT_EM = 1.3

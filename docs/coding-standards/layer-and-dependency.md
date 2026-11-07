@@ -43,7 +43,7 @@ import してよい先が決まっている**（表は二重に書かず `docs/a
 
 **ディレクトリ名には単数形の縛りを掛けない**（外した）。置き場所のディレクトリは
 bullet-proof-react の名前（`features/` `components/` `lib/` `stores/` `styles/` `types/`）をそのまま使い、
-機能・領域のディレクトリは `components/page/conversation/components/markdown/renderer/` のように
+機能・領域のディレクトリは `features/report/renderer/` のように
 **概念の名前**を付ける。**置き場所を名前にしたディレクトリのうち、`lib/` と `utils/` はどの層の中にも作ってよく、
 `helpers/` と `common/` は作らない**（どちらの箱に置くかの判定手順・`utils/` を
 受け皿にしないための歯止め・層ごとの読み方は二重に書かず `docs/architecture.md`「全体構成」

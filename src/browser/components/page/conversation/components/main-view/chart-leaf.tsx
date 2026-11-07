@@ -6,8 +6,8 @@ import type { A2uiReportComponent } from "../../../../../../shared/report/a2ui-r
 import type { A2uiReportPart } from "../../../../../../shared/report/a2ui-report-outline.ts"
 import type { LeafValue } from "../../../../../../shared/report/report-leaf-value.ts"
 import { FAILED_VALUE_TEXT } from "../../../../../../shared/report/report-static-component-list.ts"
-import { chartConfigOf } from "../../domain/report-diagram-markdown.ts"
-import { FigureFence } from "../markdown/markdown.tsx"
+import { FigureFence } from "../../../../../features/report/markdown.tsx"
+import { chartConfigOf } from "../../../../../features/report/report-diagram-markdown.ts"
 import { FoldedLeafFrame } from "./report-leaf-frame.tsx"
 
 export function ChartLeaf(props: {

@@ -1,14 +1,14 @@
 import { cleanup } from "@testing-library/react"
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest"
 
-import { loadMarkdown } from "../../../../../../../src/browser/components/page/conversation/components/markdown/markdown.tsx"
+import { loadMarkdown } from "../../../../../../../src/browser/features/report/markdown.tsx"
 import { newLeafHtml, oldLeafHtml } from "../../../../../../fixture/direct-leaf-compare.tsx"
 import { stubIntersectionObserver } from "../../../../../../fixture/intersection.ts"
 
-vi.mock(
-  "../../../../../../../src/browser/components/page/conversation/components/markdown/renderer/vendor-script.ts",
-  () => ({ loadVendorScript: () => new Promise(() => {}), preloadVendorScript: () => {} }),
-)
+vi.mock("../../../../../../../src/browser/features/report/renderer/vendor-script.ts", () => ({
+  loadVendorScript: () => new Promise(() => {}),
+  preloadVendorScript: () => {},
+}))
 
 beforeAll(async () => {
   stubIntersectionObserver(false)

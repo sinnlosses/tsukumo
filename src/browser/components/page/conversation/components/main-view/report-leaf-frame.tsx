@@ -14,7 +14,7 @@ import {
   InlineMarkdown,
   leafFrameClassNames,
   type SwapSettings,
-} from "../markdown/markdown.tsx"
+} from "../../../../../features/report/markdown.tsx"
 
 const CAPTION_LABELS = { figure: "図", table: "表" } as const
 

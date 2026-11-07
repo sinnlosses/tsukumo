@@ -1,5 +1,5 @@
 /* 作業でした手の並びの置き方。状態の丸を縦の線 `--rule-soft` でつなぎ、枠と地は持たない。
-   欄の中の `details`・`summary`・`pre`・`li` には Markdown 向けの規則（markdown/renderer/report-notation-prose.css・report-notation-body.css）が当たるので、
+   欄の中の `details`・`summary`・`pre`・`li` には Markdown 向けの規則（features/report/renderer/report-notation-prose.css・report-notation-body.css）が当たるので、
    枠・地・余白を、欄の中に限って同じ要素より強い組み合わせで打ち消す。 */
 [data-report-region] .trace-leaf {
   max-inline-size: min(100%, var(--report-measure-wide));

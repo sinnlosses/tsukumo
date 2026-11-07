@@ -10,7 +10,7 @@ import type {
   PhaseTimesView,
   PhaseWaterfallGroupItemView,
 } from "../../../../../../shared/report/report-phase-time.ts"
-import { phaseTimesClassName } from "../markdown/markdown.tsx"
+import { phaseTimesClassName } from "../../../../../features/report/markdown.tsx"
 
 type Times = Extract<PhaseTimesView, { readonly kind: "times" }>
 

@@ -7,8 +7,8 @@ import {
   DirectLeaf,
   directLeafViewOf,
 } from "../../src/browser/components/page/conversation/components/main-view/direct-leaf-view.tsx"
-import { Markdown } from "../../src/browser/components/page/conversation/components/markdown/renderer/markdown-renderer.tsx"
 import { reportSectionsMarkdown } from "../../src/browser/components/page/conversation/domain/report-markdown.ts"
+import { Markdown } from "../../src/browser/features/report/renderer/markdown-renderer.tsx"
 import type { A2uiReportComponent } from "../../src/shared/report/a2ui-report-catalog.ts"
 import type { FigureBlock, LeafComponent } from "../../src/shared/report/report-block.ts"
 import type { ReportImageSource } from "../../src/shared/report/report-image-markdown.ts"

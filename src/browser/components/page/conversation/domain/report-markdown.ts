@@ -20,11 +20,11 @@ import {
   reportLeafLayoutOf,
 } from "../../../../../shared/report/report-leaf-value.ts"
 import { type TagTones, tableMarkdown } from "../../../../../shared/report/report-table-markdown.ts"
+import { withSequenceAutonumber } from "../../../../features/report/report-diagram-markdown.ts"
 import { cardChainHtml } from "./card-chain-markdown.ts"
 import { graphDrawingOf } from "./graph-drawing.ts"
 import { graphFoldHtml } from "./graph-fold-html.ts"
 import { compareMarkdown } from "./report-comparison-markdown.ts"
-import { withSequenceAutonumber } from "./report-diagram-markdown.ts"
 import { graphLegendMarkdown } from "./report-graph-markdown.ts"
 import { listMarkdown } from "./report-list-markdown.ts"
 

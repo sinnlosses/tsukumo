@@ -92,6 +92,7 @@ const BROWSER_PLACED_FEATURES = [
   "features/task-board",
   "features/current-work",
   "features/run-setting",
+  "features/report",
 ]
 
 const BROWSER_BOX_PATHS = {

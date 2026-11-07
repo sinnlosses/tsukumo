@@ -16,11 +16,11 @@ import { truncateForDisplay } from "../../../../../features/current-work/current
 import { usePhoneWidth } from "../../../../../hooks/use-phone-width.ts"
 import { useNowWhile } from "../../../../../stores/clock.ts"
 import { useInquiryJump } from "../../../../../stores/inquiry-jump.ts"
+import { mergeRefs } from "../../../../../utils/merge-ref.ts"
 import { Button } from "../../../../ui/button/button.tsx"
 import { Dialog } from "../../../../ui/dialog/dialog.tsx"
 import { HStack } from "../../../../ui/h-stack/h-stack.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
-import { mergeRefs } from "../../domain/merge-ref.ts"
 import {
   useInquiryAnswer,
   type InquiryModel,

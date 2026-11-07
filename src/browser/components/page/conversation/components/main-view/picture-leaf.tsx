@@ -11,7 +11,11 @@ import {
 } from "../../../../../../shared/report/report-image-markdown.ts"
 import { plainInline } from "../../../../../../shared/report/report-inline-markdown.ts"
 import type { LeafValue } from "../../../../../../shared/report/report-leaf-value.ts"
-import { figureClassName, InlineCodeText, ReportImage } from "../markdown/markdown.tsx"
+import {
+  figureClassName,
+  InlineCodeText,
+  ReportImage,
+} from "../../../../../features/report/markdown.tsx"
 import { FoldedLeafFrame } from "./report-leaf-frame.tsx"
 
 export function PictureLeaf(props: {

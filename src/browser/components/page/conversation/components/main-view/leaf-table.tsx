@@ -5,8 +5,8 @@ import clsx from "clsx"
 import { type ReactElement, type ReactNode, useState } from "react"
 
 import type { ColumnAlign } from "../../../../../../shared/report/table-layout.ts"
+import { FoldedTableBody, tableLeafClassNames } from "../../../../../features/report/markdown.tsx"
 import { Button } from "../../../../ui/button/button.tsx"
-import { FoldedTableBody, tableLeafClassNames } from "../markdown/markdown.tsx"
 import styles from "./main-view.module.css"
 
 export type LeafTableAlign = ColumnAlign | "center"

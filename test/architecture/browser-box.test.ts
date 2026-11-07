@@ -45,6 +45,7 @@ const BROWSER_PLACED_FEATURES = [
   "features/task-board",
   "features/current-work",
   "features/run-setting",
+  "features/report",
 ] as const
 
 type BrowserFeature = {

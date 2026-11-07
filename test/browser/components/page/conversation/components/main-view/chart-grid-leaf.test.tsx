@@ -5,7 +5,7 @@ import {
   DirectLeaf,
   directLeafViewOf,
 } from "../../../../../../../src/browser/components/page/conversation/components/main-view/direct-leaf-view.tsx"
-import { loadMarkdown } from "../../../../../../../src/browser/components/page/conversation/components/markdown/markdown.tsx"
+import { loadMarkdown } from "../../../../../../../src/browser/features/report/markdown.tsx"
 import type { LeafValue } from "../../../../../../../src/shared/report/report-leaf-value.ts"
 import { stubIntersectionObserver } from "../../../../../../fixture/intersection.ts"
 

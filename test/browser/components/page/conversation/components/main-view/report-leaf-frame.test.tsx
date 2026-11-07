@@ -8,7 +8,7 @@ import {
 import {
   leafFrameClassNames,
   loadMarkdown,
-} from "../../../../../../../src/browser/components/page/conversation/components/markdown/markdown.tsx"
+} from "../../../../../../../src/browser/features/report/markdown.tsx"
 import type { LeafValue } from "../../../../../../../src/shared/report/report-leaf-value.ts"
 
 const CAPTION_SELECTOR = `.${leafFrameClassNames.caption}`

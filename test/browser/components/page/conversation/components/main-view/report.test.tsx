@@ -7,23 +7,20 @@ import type { MainViewReportBody } from "../../../../../../../src/shared/session
 // 差し替える。塊ごとに何を渡したかを直接数える。
 let calls: string[] = []
 
-vi.mock(
-  "../../../../../../../src/browser/components/page/conversation/components/markdown/markdown.tsx",
-  () => ({
-    detailBlockClassName: "detail-block",
-    textLeafClassNames: {},
-    noteLeafClassNames: {},
-    tableLeafClassNames: {},
-    matrixLeafClassNames: {},
-    compareLeafClassNames: {},
-    statsLeafClassNames: {},
-    checksClassName: () => undefined,
-    Markdown: (props: { readonly text: string }) => {
-      calls.push(props.text)
-      return <div data-markdown-stub="yes">{props.text}</div>
-    },
-  }),
-)
+vi.mock("../../../../../../../src/browser/features/report/markdown.tsx", () => ({
+  detailBlockClassName: "detail-block",
+  textLeafClassNames: {},
+  noteLeafClassNames: {},
+  tableLeafClassNames: {},
+  matrixLeafClassNames: {},
+  compareLeafClassNames: {},
+  statsLeafClassNames: {},
+  checksClassName: () => undefined,
+  Markdown: (props: { readonly text: string }) => {
+    calls.push(props.text)
+    return <div data-markdown-stub="yes">{props.text}</div>
+  },
+}))
 
 const { Report } =
   await import("../../../../../../../src/browser/components/page/conversation/components/main-view/report.tsx")

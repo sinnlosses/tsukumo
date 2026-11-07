@@ -2,7 +2,7 @@
 // 見出しの一覧と読み位置が同じ見出しの並びを数えるために、拾い方を1か所に置く。
 
 import { REVEAL_PENDING_ATTRIBUTE } from "../../../../../../domain/reveal/start-pop.ts"
-import { detailBlockClassName } from "../../markdown/markdown.tsx"
+import { detailBlockClassName } from "../../../../../../features/report/markdown.tsx"
 
 const HEADING_SELECTOR = `.${detailBlockClassName} :is(h4, h5)`
 

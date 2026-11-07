@@ -12,8 +12,8 @@ import {
   type ReportChecksView,
 } from "../../../../../../shared/report/report-check-view.ts"
 import { plainInline } from "../../../../../../shared/report/report-inline-markdown.ts"
+import { checksClassName } from "../../../../../features/report/markdown.tsx"
 import { Badge } from "../../../../ui/badge/badge.tsx"
-import { checksClassName } from "../markdown/markdown.tsx"
 import styles from "./main-view.module.css"
 
 type Checks = Extract<ReportChecksView, { readonly kind: "checks" }>

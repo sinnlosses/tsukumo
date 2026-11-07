@@ -1,8 +1,8 @@
 import { act, cleanup, fireEvent, screen, waitFor } from "@testing-library/react"
 import { afterEach, beforeAll, describe, expect, it } from "vitest"
 
-import { loadMarkdown } from "../../../../../../../src/browser/components/page/conversation/components/markdown/markdown.tsx"
 import { useInquiryDraft } from "../../../../../../../src/browser/components/page/conversation/stores/inquiry-draft.ts"
+import { loadMarkdown } from "../../../../../../../src/browser/features/report/markdown.tsx"
 import type { SessionRecord } from "../../../../../../../src/shared/session/session-record.ts"
 import type { SessionState } from "../../../../../../../src/shared/session/session-state.ts"
 import {

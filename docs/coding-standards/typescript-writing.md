@@ -95,7 +95,7 @@ prototype を持つものを見るときだけ `isObjectType` で、`code` の�
 `description` を添えて投げる。前提（「この要素は `<select>` になっている」）が崩れたときに
 `undefined` のまま先へ進んで**黙って通る**のではなく、その場で落ちて教える。
 
-**`src/` にはこの規則を掛けていない。** `src/browser/components/page/conversation/components/markdown/renderer/` の `children as ReactNode`（react-markdown の型定義が要求する形）や
+**`src/` にはこの規則を掛けていない。** `src/browser/features/report/renderer/` の `children as ReactNode`（react-markdown の型定義が要求する形）や
 `src/shared/character-pack/character-background.ts` の `value as Record<string, unknown>`
 （境界での検証はこの節の上の「唯一の逃げ道」どおりに1関数へ封じ込めてある）は、DOM 要素の
 キャストとは性質が違う別の関心事なので、直す量に対して1つの規則で縛る効果が薄いと判断した。

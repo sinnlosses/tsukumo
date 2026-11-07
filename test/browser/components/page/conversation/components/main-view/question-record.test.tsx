@@ -5,8 +5,8 @@ import { act, cleanup, render, screen } from "@testing-library/react"
 import { afterEach, beforeAll, describe, expect, it } from "vitest"
 
 import { QuestionRecord } from "../../../../../../../src/browser/components/page/conversation/components/main-view/question-record.tsx"
-import { loadMarkdown } from "../../../../../../../src/browser/components/page/conversation/components/markdown/markdown.tsx"
 import { TEXT_TONE_CLASS } from "../../../../../../../src/browser/components/ui/text/text.tsx"
+import { loadMarkdown } from "../../../../../../../src/browser/features/report/markdown.tsx"
 import type { MainViewQuestion } from "../../../../../../../src/shared/session/main-view-shape.ts"
 
 /**

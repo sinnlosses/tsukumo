@@ -6,7 +6,11 @@ import type { ReactElement } from "react"
 import type { A2uiReportComponent } from "../../../../../../shared/report/a2ui-report-catalog.ts"
 import type { LeafValue } from "../../../../../../shared/report/report-leaf-value.ts"
 import { REPORT_NOTE_KINDS } from "../../../../../../shared/report/report-notation.ts"
-import { InlineMarkdown, NoteLabel, noteLeafClassNames } from "../markdown/markdown.tsx"
+import {
+  InlineMarkdown,
+  NoteLabel,
+  noteLeafClassNames,
+} from "../../../../../features/report/markdown.tsx"
 import { LeafFold, ReportLeafFrame } from "./report-leaf-frame.tsx"
 
 type NoteTone = Exclude<Extract<A2uiReportComponent, { component: "Note" }>["tone"], "memo">

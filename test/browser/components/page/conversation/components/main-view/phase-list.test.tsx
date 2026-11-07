@@ -10,20 +10,17 @@ import { queryClientWrapper } from "../../../../../query-client.tsx"
 import { putSession } from "../../../../../session-store.ts"
 
 // 本物の Markdown は遅延で読み込まれる重い部品なので、本文の字をそのまま出す代役に差し替える。
-vi.mock(
-  "../../../../../../../src/browser/components/page/conversation/components/markdown/markdown.tsx",
-  () => ({
-    detailBlockClassName: "detail-block",
-    textLeafClassNames: {},
-    noteLeafClassNames: {},
-    tableLeafClassNames: {},
-    matrixLeafClassNames: {},
-    compareLeafClassNames: {},
-    statsLeafClassNames: {},
-    checksClassName: () => undefined,
-    Markdown: (props: { readonly text: string }) => <div>{props.text}</div>,
-  }),
-)
+vi.mock("../../../../../../../src/browser/features/report/markdown.tsx", () => ({
+  detailBlockClassName: "detail-block",
+  textLeafClassNames: {},
+  noteLeafClassNames: {},
+  tableLeafClassNames: {},
+  matrixLeafClassNames: {},
+  compareLeafClassNames: {},
+  statsLeafClassNames: {},
+  checksClassName: () => undefined,
+  Markdown: (props: { readonly text: string }) => <div>{props.text}</div>,
+}))
 
 const { PhaseList } =
   await import("../../../../../../../src/browser/components/page/conversation/components/main-view/phase-list.tsx")

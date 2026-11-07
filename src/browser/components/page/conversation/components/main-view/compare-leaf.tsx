@@ -11,7 +11,6 @@ import type { ReportImageSource } from "../../../../../../shared/report/report-i
 import { formatImageRegion } from "../../../../../../shared/report/report-image.ts"
 import { fencedMarkdown } from "../../../../../../shared/report/report-inline-markdown.ts"
 import type { LeafValue } from "../../../../../../shared/report/report-leaf-value.ts"
-import { comparisonImageAltOf } from "../../domain/report-comparison-markdown.ts"
 import {
   CodeFence,
   compareLeafClassNames,
@@ -25,7 +24,8 @@ import {
   sideLines,
   type SwapSettings,
   SwapSideContext,
-} from "../markdown/markdown.tsx"
+} from "../../../../../features/report/markdown.tsx"
+import { comparisonImageAltOf } from "../../domain/report-comparison-markdown.ts"
 import { PictureImage } from "./picture-leaf.tsx"
 import { FoldedLeafFrame } from "./report-leaf-frame.tsx"
 import { SvgFigureView } from "./svg-leaf.tsx"

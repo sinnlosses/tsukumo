@@ -16,7 +16,7 @@ ADR 0039 の論点 4（内容部品の実装は塊 → Markdown の変換を `Ma
 
 ### 内容部品ごとの経路
 
-塊 → Markdown の関数は `src/shared/report/` の `report-markdown.ts` の `blockMarkdown` が入口で、部品ごとの組み立ては同じディレクトリの `report-*-markdown.ts` が持つ。描画は `src/browser/components/page/conversation/components/markdown/` の下（以下 `markdown/`）が受け持つ。
+塊 → Markdown の関数は `src/shared/report/` の `report-markdown.ts` の `blockMarkdown` が入口で、部品ごとの組み立ては同じディレクトリの `report-*-markdown.ts` が持つ。描画は `src/browser/features/report/` の下（以下 `markdown/`）が受け持つ。
 
 | 部品          | Markdown になる形                                                    | 描画を受け持つ `markdown/` の下                                               | 番号 | 生 HTML の許可に頼る点                  |
 | ------------- | -------------------------------------------------------------------- | ----------------------------------------------------------------------------- | ---- | --------------------------------------- |

@@ -4,8 +4,8 @@ import type { ReactElement } from "react"
 
 import type { A2uiReportComponent } from "../../../../../../shared/report/a2ui-report-catalog.ts"
 import type { LeafValue } from "../../../../../../shared/report/report-leaf-value.ts"
-import { withSequenceAutonumber } from "../../domain/report-diagram-markdown.ts"
-import { MermaidFigure } from "../markdown/markdown.tsx"
+import { MermaidFigure } from "../../../../../features/report/markdown.tsx"
+import { withSequenceAutonumber } from "../../../../../features/report/report-diagram-markdown.ts"
 import { FoldedLeafFrame } from "./report-leaf-frame.tsx"
 
 export function MermaidLeaf(props: {

@@ -28,13 +28,13 @@ import {
   tableLayoutOf,
 } from "../../../../../../shared/report/table-layout.ts"
 import { tableCellTexts } from "../../../../../../shared/report/table-view.ts"
-import { Badge } from "../../../../ui/badge/badge.tsx"
 import {
   InlineCodeText,
   InlineMarkdown,
   tableLeafClassNames,
   tagToneClassName,
-} from "../markdown/markdown.tsx"
+} from "../../../../../features/report/markdown.tsx"
+import { Badge } from "../../../../ui/badge/badge.tsx"
 import { visibleTableTotals } from "./domain/a2ui-table-view.ts"
 import { ColumnMarked, LeafTable, type LeafTableRow } from "./leaf-table.tsx"
 import styles from "./main-view.module.css"

@@ -10,7 +10,7 @@
   箇条書きが使えなくなる。縛る代わりに、塊に割る側が閉じタグまで割らない。
   どちらの経路も**通すのは許可リストに載った要素・属性だけ**で、
   `script` / `style` / `iframe` は中身ごと、`on*` と `javascript:` は属性ごと落とす
-  （許可リストは `src/browser/components/page/conversation/components/markdown/renderer/sanitize-schema.ts` の1箇所に集約）。ただし**コードスパン
+  （許可リストは `src/browser/features/report/renderer/sanitize-schema.ts` の1箇所に集約）。ただし**コードスパン
   （`` `code` ``）の中に書いた HTML はタグにせず、文字のまま出す**。
   `style` 属性は、**tsukumo が棒・目盛・点に付ける形（`width` / `margin-left` の割合と `flex` の数値3つ）だけを通し、
   それ以外は属性ごと落とす**。

@@ -6,7 +6,7 @@ import {
   directLeafViewOf,
 } from "../../../../../../../src/browser/components/page/conversation/components/main-view/direct-leaf-view.tsx"
 import { TableFigure } from "../../../../../../../src/browser/components/page/conversation/components/main-view/table-leaf.tsx"
-import { loadMarkdown } from "../../../../../../../src/browser/components/page/conversation/components/markdown/markdown.tsx"
+import { loadMarkdown } from "../../../../../../../src/browser/features/report/markdown.tsx"
 import type { A2uiReportComponent } from "../../../../../../../src/shared/report/a2ui-report-catalog.ts"
 import type { LeafValue } from "../../../../../../../src/shared/report/report-leaf-value.ts"
 import { tableCellTexts } from "../../../../../../../src/shared/report/table-view.ts"

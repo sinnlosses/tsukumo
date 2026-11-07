@@ -1,0 +1,151 @@
+// Chart.js（同梱のライブラリ）を読む口。
+// tsukumo 自身のサーバから配り、グラフが実際に要るときだけ `<script>` で読み込む（束ねには入れない）。
+// 描く config は読み手が持つ。
+
+import { z } from "zod"
+
+import {
+  REPORT_CHART_TONES,
+  type ReportChartTone,
+} from "../../../../shared/report/report-block-diagram.ts"
+import { vendorAssetPath } from "../../../../shared/view-server/vendor-asset.ts"
+import { directLabelPlugin } from "./chart-direct-label.ts"
+import {
+  colorsForDataset,
+  emphasisColorsForDataset,
+  tonedColorsForDataset,
+  type ChartPalette,
+  type EmphasisAxis,
+} from "./chart-palette.ts"
+import { resolveColor, resolveColorMix } from "./theme-color.ts"
+import { loadVendorScript } from "./vendor-script.ts"
+
+const CHART_SRC = vendorAssetPath("chart.umd.min.js")
+
+const MAX_BAR_THICKNESS = 56
+const BAR_RADIUS = 3
+const MUTED_BAR_PERCENT = 26
+
+const seriesOptionsSchema = z.object({
+  plugins: z.object({
+    "tsukumo-series": z.union([
+      z.object({ emphasis: z.array(z.number()) }),
+      z.object({ tones: z.array(z.enum(REPORT_CHART_TONES)) }),
+    ]),
+    "tsukumo-direct-label": z.object({ mode: z.string() }).optional(),
+  }),
+})
+
+type SeriesColoring =
+  | {
+      readonly kind: "emphasis"
+      readonly positions: readonly number[]
+      readonly axis: EmphasisAxis
+    }
+  | { readonly kind: "tones"; readonly tones: readonly ReportChartTone[] }
+
+const SERIES_PROPERTIES = [
+  "--chart-series-1",
+  "--chart-series-2",
+  "--chart-series-3",
+  "--chart-series-4",
+  "--chart-series-5",
+  "--chart-series-6",
+] as const satisfies readonly string[]
+
+let latestPalette: ChartPalette | undefined
+
+/**
+ * Chart.js を読み込み、暗い配色へ寄せた既定値を入れる。
+ * 解決したあとは `Chart` がグローバルに居るので、読み手はそのまま `new Chart(canvas, config)` を書ける。
+ *
+ * `element` は色のトークンを解決するためだけに使う（描く先とは限らない）。
+ */
+export function loadChart(element: HTMLElement): Promise<void> {
+  return loadVendorScript(CHART_SRC).then(() => {
+    // Chart.js の既定は明るい背景向けで、目盛りの文字も目盛り線もこの配色では読めない。
+    // 色は書かずにトークンの実効値を読んで渡す。
+    //
+    // 線は `defaults.borderColor` ではなく目盛りの側（`defaults.scale`）へ書く。
+    // chart.js 4.5.0 以降の colors プラグインは「`defaults.borderColor` か `defaults.backgroundColor` が既定から動いていたら色を配らない」。
+    // `borderColor` へ書くと系列の色が付かないまま（`undefined`）になり、棒も線も透明で描かれる（4.4.1 と 4.5.1 を並べて実測）。
+    // 補助線は値を読む軸（linear）だけに引く。項目の軸（category）は線を引かない。
+    Chart.defaults.color = resolveColor(element, "--ink-soft")
+    Chart.defaults.scale.grid.color = resolveColor(element, "--rule-quiet")
+    Chart.defaults.scale.border.color = resolveColor(element, "--rule")
+    Chart.defaults.scale.ticks.color = resolveColor(element, "--ink-quiet")
+    Chart.defaults.plugins.legend.display = false
+    Chart.defaults.scale.grid.display = false
+    Chart.defaults.set("scales.linear", { grid: { display: true } })
+    Chart.defaults.set("datasets.bar", {
+      maxBarThickness: MAX_BAR_THICKNESS,
+      borderRadius: BAR_RADIUS,
+    })
+    // アスペクト比を保つ既定だと、pie は入れ物の全幅を高さにも使おうとして縦に伸びすぎる。
+    // `.chart-block` の高さ（CSS）に合わせるだけにする。
+    Chart.defaults.maintainAspectRatio = false
+
+    // 系列の色は内蔵の colors プラグイン（明度がばらつく固定の並び）に任せず、自前のプラグインが配る。
+    const palette = {
+      series: SERIES_PROPERTIES.map((property) => resolveColor(element, property)),
+      other: resolveColor(element, "--chart-series-other"),
+      muted: resolveColorMix(element, "--ink", MUTED_BAR_PERCENT),
+      states: {
+        ok: resolveColor(element, "--state-ok"),
+        warn: resolveColor(element, "--state-warn"),
+        ng: resolveColor(element, "--state-ng"),
+        info: resolveColor(element, "--state-info"),
+      },
+    } satisfies ChartPalette
+    Chart.defaults.plugins.colors.enabled = false
+    registerSeriesPlugin(palette)
+  })
+}
+
+// プラグインは1度だけ登録し、色の並びはその都度読み直した最新の値で配る。
+function registerSeriesPlugin(palette: ChartPalette): void {
+  const first = latestPalette === undefined
+  latestPalette = palette
+  if (!first) {
+    return
+  }
+  Chart.register(directLabelPlugin)
+  Chart.register({
+    id: "tsukumo-series",
+    beforeUpdate: (chart) => {
+      if (latestPalette === undefined) {
+        return
+      }
+      const current = latestPalette
+      const coloring = seriesColoringOf(chart.config.options)
+      chart.config.data?.datasets?.forEach((dataset, index) => {
+        const colors =
+          coloring === undefined
+            ? colorsForDataset(dataset, chart.config.type ?? "", index, current)
+            : coloring.kind === "tones"
+              ? tonedColorsForDataset(dataset, index, current, coloring.tones)
+              : emphasisColorsForDataset(dataset, index, current, coloring)
+        if (colors !== undefined) {
+          dataset.backgroundColor = colors.backgroundColor
+          dataset.borderColor = colors.borderColor
+        }
+      })
+    },
+  })
+}
+
+function seriesColoringOf(options: unknown): SeriesColoring | undefined {
+  const parsed = seriesOptionsSchema.safeParse(options)
+  if (!parsed.success) {
+    return undefined
+  }
+  const { plugins } = parsed.data
+  const series = plugins["tsukumo-series"]
+  return "tones" in series
+    ? { kind: "tones", tones: series.tones }
+    : {
+        kind: "emphasis",
+        positions: series.emphasis,
+        axis: plugins["tsukumo-direct-label"]?.mode === "share" ? "series" : "point",
+      }
+}

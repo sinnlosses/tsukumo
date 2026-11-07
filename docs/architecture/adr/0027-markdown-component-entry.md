@@ -2,7 +2,10 @@
 
 ステータス: 採用
 
-**`main-view/markdown/` の読み手がメインビューの外の部品にまたがったら、`conversation/components/markdown/` の
+追記（2026-11-07）: 上げ先は会話の画面の部品から置かれる機能 `src/browser/features/report/` へ移った。
+入口 `markdown.tsx` と `renderer/` の形・遅延読み込みの口はそのまま。以下の `conversation/components/` の部品の木は、移す前の形の記録。
+
+**`main-view/markdown/` の読み手がメインビューの外の部品にまたがったら、会話の画面の
 部品に上げ、外から引く口 `markdown.tsx` を遅延読み込みの口にする。** `import()` で読む描画一式は、部品の中の
 概念のディレクトリ `renderer/` に入れる。外の読み手が直に引いていたものは、読み手を数え直して置き直す。
 遅延読み込みの方式（`deferredModule`・`main.tsx` が最初の描画の前に `loadMarkdown()` を起こす・`React.lazy` を
@@ -13,7 +16,7 @@
 `main-view/markdown/` はメインビューの中の概念のディレクトリで、読み手はいまどれもメインビューの中にある
 （`main-view.tsx`・`report/`・`question-record/`・`report-outline/`・`inquiry/`）。お伺いの札（`inquiry/`）を
 答え待ちの札と共有するために会話の画面の部品へ上げると、`markdown/` の読み手が2つの部品にまたがり、
-`docs/architecture.md`「全体構成」の置き場の表では `conversation/components/markdown/` の部品になる。
+`docs/architecture.md`「全体構成」の置き場の表では、会話の画面の `components/` の下の部品になる。
 
 部品の外から引いてよいのは `<部品>.tsx` だけなので、入口は描画一式の本体の `markdown.tsx` になる。
 一方 `docs/architecture/browser.md`「重いライブラリ」は、使い手は `deferred-markdown.tsx` を使い
@@ -35,11 +38,11 @@
 
 - **上げる引き金は、`markdown/` の読み手がメインビューの外の部品にまたがったとき。** それまではメインビューの中の
   概念のディレクトリのまま置く
-- **上げ先は置き場の表の「`components/` の下の2つ以上の部品」の行の「部品」**（`conversation/components/markdown/`）。
+- **上げ先は置き場の表の「`components/` の下の2つ以上の部品」の行の「部品」**（当時は `conversation/components/` の下の `markdown/`）。
   表に行は足さない。上げたあとの木:
 
   ```
-  conversation/components/markdown/
+  markdown/
     markdown.tsx              入口。いまの deferred-markdown.tsx の中身（loadMarkdown・Markdown・QuestionPreviewMarkdown）と、
                               外の読み手が使う .detail-block の class 名
     markdown.module.css       いまの deferred-markdown.module.css
@@ -57,7 +60,7 @@
 - **外の読み手が直に引いていたものは、読み手を数え直して置き直す**:
   - `block-split.ts` は読み手が `report/` だけなので `main-view/components/report/domain/block-split.ts`
   - `repository-link.tsx` は読み手が `main-view.tsx` と描画一式の2つの部品なので、
-    `conversation/components/repository-link/repository-link.tsx` の部品
+    会話の画面の `components/` の下の `repository-link/` の部品（のちに `features/report/repository-link.tsx` へ）
   - `report-notation.module.css` の規則は `.detail-block` を除いてすべて `.detail-block` の子孫の選択子で、
     外の4つの読み手が使う class は `.detail-block` だけ。入口の `markdown.tsx` がその class 名を名前を付けて
     公開し、外の読み手は CSS を import しない。ファイルは `renderer/` に入れる

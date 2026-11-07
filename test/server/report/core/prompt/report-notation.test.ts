@@ -5,7 +5,7 @@ import { cleanup, render } from "@testing-library/react"
 import { createElement } from "react"
 import { afterEach, describe, expect, it } from "vitest"
 
-import { NotationBlock } from "../../../../../src/browser/components/page/conversation/components/markdown/renderer/notation.tsx"
+import { NotationBlock } from "../../../../../src/browser/features/report/renderer/notation.tsx"
 import { REPORT_NOTATION_PROMPT } from "../../../../../src/server/report/core/prompt/report-notation.ts"
 import { REPORT_MERMAID_KINDS } from "../../../../../src/shared/report/report-block-diagram.ts"
 import {
@@ -39,10 +39,7 @@ const namedClasses = [...REPORT_NOTATION_PROMPT.matchAll(/class="([^"]+)"/g)].fl
 // テストの中では class 名が CSS に書いた綴りのまま届く（`classNameStrategy: "non-scoped"`）ので、
 // 部品が付け直した名前をそれらのファイルの選択子とそのまま突き合わせられる。
 const STYLE_SHEET_DIRECTORY = fileURLToPath(
-  new NodeURL(
-    "../../../../../src/browser/components/page/conversation/components/markdown/renderer/",
-    import.meta.url,
-  ),
+  new NodeURL("../../../../../src/browser/features/report/renderer/", import.meta.url),
 )
 const STYLE_SHEET_FILES = [
   "report-notation.module.css",

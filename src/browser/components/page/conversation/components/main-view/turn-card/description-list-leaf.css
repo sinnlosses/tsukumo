@@ -1,6 +1,6 @@
 /* 名前と値の対の部品の置き方。罫 `--rule-quiet` だけで区切り、地は持たない。
    行は <div> で包み、名前の列の幅を行どうしで揃えるために subgrid を使う。
-   Markdown の `dl` に当たる `.detail-block dl`・`dt`・`dd` の規則（markdown/renderer/report-notation-inline.css）を
+   Markdown の `dl` に当たる `.detail-block dl`・`dt`・`dd` の規則（features/report/renderer/report-notation-inline.css）を
    打ち消すため、欄の中に限って同じ要素より強い組み合わせで書く。 */
 [data-report-region] .description-list-leaf {
   display: grid;

@@ -10,7 +10,7 @@ import { createContext, type ReactElement, type ReactNode, use } from "react"
 
 import { isBlankText } from "../../../../../../shared/utils/blank-text.ts"
 import { useReportReveal } from "../../../../../domain/reveal/use-report-reveal.ts"
-import { detailBlockClassName, Markdown } from "../markdown/markdown.tsx"
+import { detailBlockClassName, Markdown } from "../../../../../features/report/markdown.tsx"
 import { splitReportBlocks } from "./domain/block-split.ts"
 import styles from "./main-view.module.css"
 

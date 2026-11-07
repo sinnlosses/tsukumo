@@ -4,8 +4,8 @@ import type { ReactElement } from "react"
 
 import type { A2uiReportComponent } from "../../../../../../shared/report/a2ui-report-catalog.ts"
 import type { LeafValue } from "../../../../../../shared/report/report-leaf-value.ts"
+import { InlineMarkdown, textLeafClassNames } from "../../../../../features/report/markdown.tsx"
 import { Badge } from "../../../../ui/badge/badge.tsx"
-import { InlineMarkdown, textLeafClassNames } from "../markdown/markdown.tsx"
 import styles from "./main-view.module.css"
 import { LeafFold, ReportLeafFrame } from "./report-leaf-frame.tsx"
 

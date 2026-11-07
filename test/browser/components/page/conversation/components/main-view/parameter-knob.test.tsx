@@ -2,8 +2,8 @@ import { DataModel } from "@a2ui/web_core/v0_9"
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
-import { chartConfigOf } from "../../../../../../../src/browser/components/page/conversation/domain/report-diagram-markdown.ts"
 import { mainViewDraftOf } from "../../../../../../../src/browser/domain/main-view/a2ui-draft-view.ts"
+import { chartConfigOf } from "../../../../../../../src/browser/features/report/report-diagram-markdown.ts"
 import { reportEvents } from "../../../../../../../src/server/session-driver/core/message/sdk-report-message.ts"
 import { a2uiWrittenComponentSchema } from "../../../../../../../src/shared/report/a2ui-report-catalog.ts"
 import { staticReportComponents } from "../../../../../../../src/shared/report/report-static-component-list.ts"
@@ -14,24 +14,21 @@ import { INITIAL_SESSION_STATE } from "../../../../../../../src/shared/session/s
 import { checkedToolUseId } from "../../../../../../fixture/tool-use-id.ts"
 
 // `Markdown` 一式は重いので、塊の文字列と図の設定をそのまま出す代役に差し替える。
-vi.mock(
-  "../../../../../../../src/browser/components/page/conversation/components/markdown/markdown.tsx",
-  () => ({
-    detailBlockClassName: "detail-block",
-    arrangedBlockClassNames: { row: "", rowCell: "", panel: "" },
-    leafFrameClassNames: {},
-    textLeafClassNames: {},
-    noteLeafClassNames: {},
-    statsLeafClassNames: {},
-    checksClassName: () => undefined,
-    tagToneClassName: () => "",
-    InlineCodeText: (props: { readonly text: string }) => <>{props.text}</>,
-    InlineMarkdown: (props: { readonly text: string }) => <>{props.text}</>,
-    NoteLabel: (props: { readonly label: string }) => <span>{props.label}</span>,
-    FigureFence: (props: { readonly spec: string }) => <pre data-figure-spec="">{props.spec}</pre>,
-    Markdown: (props: { readonly text: string }) => <div>{props.text}</div>,
-  }),
-)
+vi.mock("../../../../../../../src/browser/features/report/markdown.tsx", () => ({
+  detailBlockClassName: "detail-block",
+  arrangedBlockClassNames: { row: "", rowCell: "", panel: "" },
+  leafFrameClassNames: {},
+  textLeafClassNames: {},
+  noteLeafClassNames: {},
+  statsLeafClassNames: {},
+  checksClassName: () => undefined,
+  tagToneClassName: () => "",
+  InlineCodeText: (props: { readonly text: string }) => <>{props.text}</>,
+  InlineMarkdown: (props: { readonly text: string }) => <>{props.text}</>,
+  NoteLabel: (props: { readonly label: string }) => <span>{props.label}</span>,
+  FigureFence: (props: { readonly spec: string }) => <pre data-figure-spec="">{props.spec}</pre>,
+  Markdown: (props: { readonly text: string }) => <div>{props.text}</div>,
+}))
 
 const { Report } =
   await import("../../../../../../../src/browser/components/page/conversation/components/main-view/report.tsx")

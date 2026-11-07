@@ -8,6 +8,7 @@ import type { A2uiReportComponent } from "../../../../../../shared/report/a2ui-r
 import { htmlInlineSegments } from "../../../../../../shared/report/report-inline-markdown.ts"
 import type { LeafValue } from "../../../../../../shared/report/report-leaf-value.ts"
 import type { MainViewKeyFigure } from "../../../../../../shared/session/main-view-shape.ts"
+import { InlineCodeText, statsLeafClassNames } from "../../../../../features/report/markdown.tsx"
 import {
   STAT_SPARK_HEIGHT,
   STAT_SPARK_RADIUS,
@@ -15,7 +16,6 @@ import {
   type StatLayout,
   statLayoutOf,
 } from "../../domain/stat-layout.ts"
-import { InlineCodeText, statsLeafClassNames } from "../markdown/markdown.tsx"
 import { FoldedLeafFrame } from "./report-leaf-frame.tsx"
 
 type StatItem = MainViewKeyFigure

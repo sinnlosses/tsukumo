@@ -17,7 +17,7 @@ import type {
 } from "../../../../../../shared/report/report-verification.ts"
 import type { MainViewSurfaceHead } from "../../../../../../shared/session/main-view-shape.ts"
 import { isBlankText } from "../../../../../../shared/utils/blank-text.ts"
-import { InlineMarkdown, workRecordClassName } from "../markdown/markdown.tsx"
+import { InlineMarkdown, workRecordClassName } from "../../../../../features/report/markdown.tsx"
 import { ChangedFilesFold } from "./changed-files-fold.tsx"
 import { FavorJump } from "./checks-verdict.tsx"
 import styles from "./main-view.module.css"

@@ -8,7 +8,11 @@ import type { ChangedFile } from "../../../../../../shared/report/changed-file.t
 import { FILE_CHANGE_BADGES } from "../../../../../../shared/report/report-file-markdown.ts"
 import type { FileTreeRow } from "../../../../../../shared/report/report-file-tree.ts"
 import { plainInline } from "../../../../../../shared/report/report-inline-markdown.ts"
-import { CodeSpan, filesClassName, workRecordClassName } from "../markdown/markdown.tsx"
+import {
+  CodeSpan,
+  filesClassName,
+  workRecordClassName,
+} from "../../../../../features/report/markdown.tsx"
 
 type Files = Extract<ChangedFilesView, { readonly kind: "files" }>
 export function ChangedFilesFold(props: { readonly view: Files }): ReactElement {

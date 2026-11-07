@@ -5,13 +5,13 @@ import type { ReactElement, ReactNode } from "react"
 
 import type { A2uiReportComponent } from "../../../../../../shared/report/a2ui-report-catalog.ts"
 import type { LeafValue } from "../../../../../../shared/report/report-leaf-value.ts"
-import { flowFitsRow, hasFlowDetail } from "../../domain/report-list-markdown.ts"
 import {
   FoldedList,
   InlineCodeText,
   InlineMarkdown,
   textLeafClassNames,
-} from "../markdown/markdown.tsx"
+} from "../../../../../features/report/markdown.tsx"
+import { flowFitsRow, hasFlowDetail } from "../../domain/report-list-markdown.ts"
 import { LeafFold, ReportLeafFrame } from "./report-leaf-frame.tsx"
 
 type ItemListPart = Extract<A2uiReportComponent, { readonly component: "ItemList" }>

@@ -42,7 +42,7 @@
 **`location.hash` を正典にする状態は zustand に写さない**（`useHashRoute` が `useSyncExternalStore` で直接
 購読する。写すと hash と store の2か所に持つことになる）。
 
-### Markdown（`components/page/conversation/components/markdown/renderer/markdown-renderer.tsx`）
+### Markdown（`features/report/renderer/markdown-renderer.tsx`）
 
 ```
 react-markdown
@@ -51,12 +51,12 @@ react-markdown
   components: { code: フェンスの言語で FenceFigure（MermaidBlock / ChartBlock など）/ 通常 に振り分け, a: 許可スキームだけ }
 ```
 
-- Markdown 一式は**会話の画面の部品 `conversation/components/markdown/`** に置く（読み手が `<Report>`・
-  お伺いのカード・質問の記録・タスク見出し行で、お伺いのカードが答え待ちのカードと共有されメインビューの外の部品にまたがるため。
+- Markdown 一式は**置かれる機能 `features/report/`** に置く（`shared/report/`・`server/report/` と同じ名前の語彙の塊で、
+  画面の中の他の部品を import せずに書ける。読み手は `<Report>`・お伺いのカード・質問の記録・タスク見出し行。
   形は `docs/architecture/adr/0027-markdown-component-entry.md`）。外から引く入口は `markdown.tsx` で、
   `import()` で読む描画一式は `renderer/` に入る。`.detail-block` の class 名は入口が `detailBlockClassName` で公開し、
   外の部品は CSS を import しない。`block-split.ts` は `report/domain/`、`repository-link.tsx` は
-  `conversation/components/repository-link/` の部品
+  `features/report/` の直下
 - **`schema` は許可リスト**（Markdown が作る要素と、tsukumo が部品から組む HTML の要素・属性）。SVG は tsukumo が組む要素と座標の属性だけで、色・変形・`g` は通さない。`style` 属性は
   `schema` の外の `style-allowlist.ts`（`rehypeStyleAllowlist`。`rehypeSanitize` の直前に差す）が、
   tsukumo が棒・目盛・点に付ける形（`width` / `margin-left` の割合と `flex` の数値3つ）だけを残し、

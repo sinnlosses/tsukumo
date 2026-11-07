@@ -8,7 +8,7 @@ import { SRC_ROOT } from "./source-file.ts"
 // レポートの字の色が、字の4段と印の色の名前だけであること
 // （docs/architecture/screen-design/color.md「レポートの字の色」）。生の色と `color-mix` で字を作る書き方を落とす。
 
-const RENDERER_DIRECTORY = `${SRC_ROOT}/browser/components/page/conversation/components/markdown/renderer`
+const RENDERER_DIRECTORY = `${SRC_ROOT}/browser/features/report/renderer`
 const REPORT_CSS_FILES = [
   "report-notation.module.css",
   ...readdirSync(RENDERER_DIRECTORY).filter(

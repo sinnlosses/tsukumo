@@ -10,8 +10,8 @@ import {
   matrixCellOf,
   matrixLegendStatuses,
 } from "../../../../../../shared/report/table-layout.ts"
+import { InlineMarkdown, matrixLeafClassNames } from "../../../../../features/report/markdown.tsx"
 import { Badge } from "../../../../ui/badge/badge.tsx"
-import { InlineMarkdown, matrixLeafClassNames } from "../markdown/markdown.tsx"
 import { ColumnMarked, LeafTable, type LeafTableRow } from "./leaf-table.tsx"
 import styles from "./main-view.module.css"
 import { FoldedLeafFrame } from "./report-leaf-frame.tsx"

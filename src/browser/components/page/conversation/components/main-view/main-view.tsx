@@ -23,6 +23,7 @@ import {
   plannedPhasesOf,
   type WorkPhase,
 } from "../../../../../../shared/session/work-plan.ts"
+import { RepositoryFileLinkProvider } from "../../../../../features/report/repository-link.tsx"
 import { useBeforePaintSync } from "../../../../../hooks/use-before-paint-sync.ts"
 import { usePhoneWidth } from "../../../../../hooks/use-phone-width.ts"
 import { useCurrentTurnSteps } from "../../../../../stores/current-turn-step-list.ts"
@@ -33,7 +34,6 @@ import { useSession } from "../../../../../stores/session.ts"
 import { useTurnSelection } from "../../../../../stores/turn-selection.ts"
 import { type MainViewContent, useMainViewContent } from "../../stores/main-view-content.ts"
 import { Inquiry } from "../inquiry/inquiry.tsx"
-import { RepositoryFileLinkProvider } from "../repository-link/repository-link.tsx"
 import { CurrentStep } from "./current-step.tsx"
 import { headNoticeOf, type HeadNoticeAction } from "./domain/head-notice.ts"
 import { headingStepOf, neighborTurnId, turnStepOf } from "./domain/turn-step-key.ts"

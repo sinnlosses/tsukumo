@@ -63,7 +63,7 @@ Beads アダプタ（`server/**/adapter/` の Beads を読むファイル）が�
 `features/` `hooks/` `domain/` `lib/` `utils/` `stores/` `styles/` `types/`）は bullet-proof-react の名前を
 そのまま採る（`components/` の下の3つは利用者の Next.js の雛形の名前）。機能・領域の名前は用語集の語に、
 画面の名前は `stores/location-hash.ts` の `Screen` の値に合わせる。**画面の部品は `components/page/` に置く。**
-`features/` には枠・画面に置かれる機能（2つ以上の枠・画面から置かれるもの）だけを置き、ページの部品を置かない。**手本から採るのはディレクトリの形だけ**で、
+`features/` には枠・画面に置かれる機能（2つ以上の枠・画面から置かれるものと、`shared/` に同じ名前の機能を持つ語彙の塊で画面の中の他の部品を import せずに書けるもの）だけを置き、ページの部品を置かない。**手本から採るのはディレクトリの形だけ**で、
 kebab-case のファイル名・barrel file を作らない・`@/` を使わない相対 import はそのまま（PascalCase・
 1部品1フォルダは真似しない）。**例外は `components/ui/` と、ページの `components/` の2つだけ**で、
 部品と CSS の対が平たく並ぶと見づらいので部品ごとに `<部品>/<部品>.tsx`・`<部品>.module.css` の

@@ -1,7 +1,7 @@
 import { cleanup } from "@testing-library/react"
 import { afterEach, beforeAll, describe, expect, it } from "vitest"
 
-import { loadMarkdown } from "../../../../../../../src/browser/components/page/conversation/components/markdown/markdown.tsx"
+import { loadMarkdown } from "../../../../../../../src/browser/features/report/markdown.tsx"
 import type { A2uiReportComponent } from "../../../../../../../src/shared/report/a2ui-report-catalog.ts"
 import type { LeafComponent } from "../../../../../../../src/shared/report/report-block.ts"
 import type { ReportImageSource } from "../../../../../../../src/shared/report/report-image-markdown.ts"

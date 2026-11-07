@@ -5,7 +5,7 @@ import {
   DirectLeaf,
   directLeafViewOf,
 } from "../../../../../../../src/browser/components/page/conversation/components/main-view/direct-leaf-view.tsx"
-import { loadMarkdown } from "../../../../../../../src/browser/components/page/conversation/components/markdown/markdown.tsx"
+import { loadMarkdown } from "../../../../../../../src/browser/features/report/markdown.tsx"
 import type { A2uiReportComponent } from "../../../../../../../src/shared/report/a2ui-report-catalog.ts"
 
 beforeAll(async () => {

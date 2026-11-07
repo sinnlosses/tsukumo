@@ -24,11 +24,11 @@ import type {
   MainViewReportRegions,
   MainViewSurfaceLeafRegion,
 } from "../../../../../../shared/session/main-view-shape.ts"
+import { arrangedBlockClassNames } from "../../../../../features/report/markdown.tsx"
 import { useExternalSync } from "../../../../../hooks/use-external-sync.ts"
 import { reportBrowserError } from "../../../../../stores/browser-error-report.ts"
 import { Button } from "../../../../ui/button/button.tsx"
 import { Divider } from "../../../../ui/divider/divider.tsx"
-import { arrangedBlockClassNames } from "../markdown/markdown.tsx"
 import { ChoicePicker, InteractiveTable } from "./a2ui-interactive-view.tsx"
 import { RegionBox, RegionChunks, ReportFrame } from "./body-region.tsx"
 import { DirectLeaf, directLeafViewOf } from "./direct-leaf-view.tsx"

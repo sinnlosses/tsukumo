@@ -1,8 +1,8 @@
 import { cleanup } from "@testing-library/react"
 import { afterEach, beforeAll, describe, expect, it } from "vitest"
 
-import { loadMarkdown } from "../../../../../../../src/browser/components/page/conversation/components/markdown/markdown.tsx"
-import { chartConfigOf } from "../../../../../../../src/browser/components/page/conversation/domain/report-diagram-markdown.ts"
+import { loadMarkdown } from "../../../../../../../src/browser/features/report/markdown.tsx"
+import { chartConfigOf } from "../../../../../../../src/browser/features/report/report-diagram-markdown.ts"
 import { newLeafHtml } from "../../../../../../fixture/direct-leaf-compare.tsx"
 import { stubIntersectionObserver } from "../../../../../../fixture/intersection.ts"
 

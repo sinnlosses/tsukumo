@@ -1,8 +1,8 @@
 import { act, cleanup, fireEvent, screen, within } from "@testing-library/react"
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest"
 
-import { loadMarkdown } from "../../../../../../../src/browser/components/page/conversation/components/markdown/markdown.tsx"
 import { useInquiryDraft } from "../../../../../../../src/browser/components/page/conversation/stores/inquiry-draft.ts"
+import { loadMarkdown } from "../../../../../../../src/browser/features/report/markdown.tsx"
 import type {
   LeafComponent,
   ReportSection,

@@ -4,7 +4,7 @@
 import { QueryClientProvider } from "@tanstack/react-query"
 import type { ReactElement, ReactNode } from "react"
 
-import { RepositoryFileLinkProvider } from "../../src/browser/components/page/conversation/components/repository-link/repository-link.tsx"
+import { RepositoryFileLinkProvider } from "../../src/browser/features/report/repository-link.tsx"
 import { rpc } from "../../src/browser/stores/rpc.ts"
 import {
   type CodeBlockStart,

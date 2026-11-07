@@ -4,8 +4,8 @@ import type { ReactElement } from "react"
 
 import type { A2uiReportComponent } from "../../../../../../shared/report/a2ui-report-catalog.ts"
 import type { LeafValue } from "../../../../../../shared/report/report-leaf-value.ts"
-import { chartGridConfigsOf } from "../../domain/report-diagram-markdown.ts"
-import { FigureFence, InlineCodeText } from "../markdown/markdown.tsx"
+import { FigureFence, InlineCodeText } from "../../../../../features/report/markdown.tsx"
+import { chartGridConfigsOf } from "../../../../../features/report/report-diagram-markdown.ts"
 import styles from "./main-view.module.css"
 import { FoldedLeafFrame } from "./report-leaf-frame.tsx"
 

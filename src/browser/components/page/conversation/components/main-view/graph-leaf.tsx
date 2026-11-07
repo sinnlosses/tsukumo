@@ -6,6 +6,11 @@ import { Fragment, type ReactElement } from "react"
 import type { A2uiReportComponent } from "../../../../../../shared/report/a2ui-report-catalog.ts"
 import { plainInline } from "../../../../../../shared/report/report-inline-markdown.ts"
 import type { LeafValue } from "../../../../../../shared/report/report-leaf-value.ts"
+import {
+  figureClassName,
+  MermaidFigure,
+  ZoomableSvgFigure,
+} from "../../../../../features/report/markdown.tsx"
 import type { CardChainItem } from "../../domain/card-chain-markdown.ts"
 import { graphDrawingOf } from "../../domain/graph-drawing.ts"
 import {
@@ -14,7 +19,6 @@ import {
   graphFoldDrawingOf,
 } from "../../domain/graph-fold-html.ts"
 import { graphLegendItemsOf } from "../../domain/report-graph-markdown.ts"
-import { figureClassName, MermaidFigure, ZoomableSvgFigure } from "../markdown/markdown.tsx"
 import { FoldedLeafFrame } from "./report-leaf-frame.tsx"
 
 type GraphPart = Extract<A2uiReportComponent, { readonly component: "Graph" }>

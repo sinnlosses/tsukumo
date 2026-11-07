@@ -14,7 +14,7 @@ import {
   noteLeafClassNames,
   statsLeafClassNames,
   textLeafClassNames,
-} from "../markdown/markdown.tsx"
+} from "../../../../../features/report/markdown.tsx"
 import { RegionBox, RegionChunks } from "./body-region.tsx"
 import { ChangedFilesFold } from "./changed-files-fold.tsx"
 import { ChecksVerdict } from "./checks-verdict.tsx"

@@ -21,7 +21,7 @@
   英語のまま残してよいのは識別子・パス・コマンド・コード・エラー文・原文の引用だけ
 - **HTML・mermaid・chart の規約は tsukumo が持つ。** `query()` の
   `systemPrompt: { type: "preset", preset: "claude_code", append }` で足す。正典がリポジトリ内に
-  来るので、**描ける記法の一覧が `src/browser/components/page/conversation/components/markdown/renderer/sanitize-schema.ts` と同じコミットで動く**
+  来るので、**描ける記法の一覧が `src/browser/features/report/renderer/sanitize-schema.ts` と同じコミットで動く**
   （レンダラを直したのに規約が古いまま、が起きない）
 - **`~/.claude/settings.json` には触らない**（`outputStyle` も、orca が専有する hooks /
   statusLine も無傷のまま）。書き換えるのは `asuna.md` 1ファイルだけ

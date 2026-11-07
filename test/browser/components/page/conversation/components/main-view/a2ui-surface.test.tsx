@@ -14,36 +14,33 @@ import { checkedToolUseId } from "../../../../../../fixture/tool-use-id.ts"
 
 // `Markdown`（本物は react-markdown 一式で重い）を、渡された塊の文字列をそのまま出す代役に差し替える。
 // 2つの描き方が同じ塊を同じ入れ子で渡すかは、代役の DOM の一致で確かめられる。
-vi.mock(
-  "../../../../../../../src/browser/components/page/conversation/components/markdown/markdown.tsx",
-  () => ({
-    detailBlockClassName: "detail-block",
-    arrangedBlockClassNames: {
-      row: "report-block-row",
-      rowCell: "report-block-row-cell",
-      panel: "report-block-panel",
-    },
-    leafFrameClassNames: {},
-    textLeafClassNames: {},
-    noteLeafClassNames: {},
-    tableLeafClassNames: {},
-    matrixLeafClassNames: {},
-    compareLeafClassNames: {},
-    statsLeafClassNames: {},
-    checksClassName: () => undefined,
-    tagToneClassName: () => "",
-    FoldedTableBody: (props: { readonly children: ReactNode }) => <tbody>{props.children}</tbody>,
-    InlineCodeText: (props: { readonly text: string }) => <>{props.text}</>,
-    InlineMarkdown: (props: { readonly text: string }) => <>{props.text}</>,
-    NoteLabel: (props: { readonly label: string }) => <span>{props.label}</span>,
-    Markdown: (props: { readonly text: string }) =>
-      props.text.startsWith("## ") ? (
-        <h4>{props.text.slice(3)}</h4>
-      ) : (
-        <div data-markdown-stub="yes">{props.text}</div>
-      ),
-  }),
-)
+vi.mock("../../../../../../../src/browser/features/report/markdown.tsx", () => ({
+  detailBlockClassName: "detail-block",
+  arrangedBlockClassNames: {
+    row: "report-block-row",
+    rowCell: "report-block-row-cell",
+    panel: "report-block-panel",
+  },
+  leafFrameClassNames: {},
+  textLeafClassNames: {},
+  noteLeafClassNames: {},
+  tableLeafClassNames: {},
+  matrixLeafClassNames: {},
+  compareLeafClassNames: {},
+  statsLeafClassNames: {},
+  checksClassName: () => undefined,
+  tagToneClassName: () => "",
+  FoldedTableBody: (props: { readonly children: ReactNode }) => <tbody>{props.children}</tbody>,
+  InlineCodeText: (props: { readonly text: string }) => <>{props.text}</>,
+  InlineMarkdown: (props: { readonly text: string }) => <>{props.text}</>,
+  NoteLabel: (props: { readonly label: string }) => <span>{props.label}</span>,
+  Markdown: (props: { readonly text: string }) =>
+    props.text.startsWith("## ") ? (
+      <h4>{props.text.slice(3)}</h4>
+    ) : (
+      <div data-markdown-stub="yes">{props.text}</div>
+    ),
+}))
 
 const reportBrowserError = vi.hoisted(() => vi.fn<(route: string, error: unknown) => void>())
 vi.mock("../../../../../../../src/browser/stores/browser-error-report.ts", () => ({

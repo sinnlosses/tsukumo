@@ -4,7 +4,7 @@ import {
   readableHeadings,
   REPORT_DRAFT_ATTRIBUTE,
 } from "../../../../../../../../src/browser/components/page/conversation/components/main-view/domain/report-heading.ts"
-import { detailBlockClassName } from "../../../../../../../../src/browser/components/page/conversation/components/markdown/markdown.tsx"
+import { detailBlockClassName } from "../../../../../../../../src/browser/features/report/markdown.tsx"
 
 function sectionWith(heading: string, attribute?: string): HTMLElement {
   const section = document.createElement("section")
