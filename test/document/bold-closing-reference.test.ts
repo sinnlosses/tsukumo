@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest"
 
 import { findUnclosedBold, formatUnclosedBold } from "../../scripts/document/closing-bold.ts"
 import { REPOSITORY_ROOT } from "../../scripts/shared/repository-root.ts"
+import { REPOSITORY_SCAN_TIMEOUT_MS } from "../fixture/repository-scan-timeout.ts"
 
 // 太字の閉じの直後に空白も約物も無いと、Markdown が太字を閉じない。
 // docs/history/ は凍結した記録なので見ない。
@@ -21,12 +22,16 @@ function listMarkdown(directory: string): readonly string[] {
 }
 
 describe("太字の閉じ", () => {
-  it("docs・README.md・AGENTS.md に、太字が閉じない行は無い", () => {
-    const violations = [...listMarkdown("docs"), "README.md", "AGENTS.md"].flatMap((path) =>
-      findUnclosedBold(readFileSync(join(REPOSITORY_ROOT, path), "utf8")).map((found) =>
-        formatUnclosedBold(path, found),
-      ),
-    )
-    expect(violations).toEqual([])
-  })
+  it(
+    "docs・README.md・AGENTS.md に、太字が閉じない行は無い",
+    () => {
+      const violations = [...listMarkdown("docs"), "README.md", "AGENTS.md"].flatMap((path) =>
+        findUnclosedBold(readFileSync(join(REPOSITORY_ROOT, path), "utf8")).map((found) =>
+          formatUnclosedBold(path, found),
+        ),
+      )
+      expect(violations).toEqual([])
+    },
+    REPOSITORY_SCAN_TIMEOUT_MS,
+  )
 })
