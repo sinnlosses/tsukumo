@@ -142,7 +142,7 @@
   padding: var(--space-md) var(--space-lg);
   background: var(--ground);
   color: inherit;
-  border: 1px solid color-mix(in srgb, var(--rule) 70%, transparent);
+  border: 1px solid var(--rule-control);
   border-radius: var(--radius-md);
 }
 /* マークダウンエディタを読み込む間の素の面。枠は箱を作らず、中の textarea が今までどおり欄を埋める。 */
@@ -183,7 +183,7 @@
     padding: var(--space-sm) var(--space-lg);
     border-radius: var(--radius-xl);
     background: var(--surface);
-    border-color: var(--rule);
+    border-color: var(--rule-control);
     font-size: var(--font-input);
     field-sizing: content;
     overflow-y: auto;

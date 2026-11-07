@@ -20,6 +20,9 @@
   /* レポートの拾う字（見出し・太字・`stats` の数）。`surface` 上で約 15:1。 */
   --ink-bright: #f7f6f8;
   --rule: color-mix(in srgb, var(--surface), var(--ink) 32%);
+  /* 枠だけで部品と分かる操作子（入力欄・＋・≡）の縁。`surface` 上で 3:1 以上（WCAG 1.4.11）。
+     `--rule` は区切り線にも使う（約 140 箇所）ので、濃くせずに別に持つ。 */
+  --rule-control: color-mix(in srgb, var(--surface), var(--ink) 44%);
   /* 読む面の静かな罫線。カードの枠や表の行のように、線そのものは意味を持たず「ここで切れている」とだけ言えばよい場所に使う。
      `--rule` は押せる部品の縁のように、線が輪郭を担う場所。 */
   --rule-quiet: color-mix(in srgb, var(--surface), var(--ink) 6%);

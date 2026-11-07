@@ -85,6 +85,7 @@ export const THEME_TOKEN_NAMES: ReadonlySet<string> = new Set([
   "report-outcome-finished",
   "report-sequence-ink",
   "rule",
+  "rule-control",
   "rule-quiet",
   "rule-soft",
   "screen-nav-gap",
