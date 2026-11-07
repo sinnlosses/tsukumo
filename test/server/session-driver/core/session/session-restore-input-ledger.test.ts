@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import { asidePromptText } from "../../../../../src/server/session-driver/core/aside-prompt.ts"
-import { progressNudgePromptText } from "../../../../../src/server/session-driver/core/progress-nudge.ts"
+import { progressNudgeSendText } from "../../../../../src/server/session-driver/core/progress-nudge.ts"
 import { inputLedgerOf } from "../../../../../src/server/session-driver/core/session/input-ledger.ts"
 import { assistantMessage, userMessage } from "../../../../fixture/sdk-message.ts"
 import { requestEvent } from "../../../../fixture/session-event.ts"
@@ -24,7 +24,7 @@ function reply(text: string, uuid: string): unknown {
 describe("toRestoredEvents（入力の控えのあるセッション）", () => {
   it("控えで依頼と分かる入力は、補足メッセージや差し込みの包みで始まっても依頼のまま残る", () => {
     const aside = asidePromptText("架空の依頼A")
-    const progress = progressNudgePromptText("架空の依頼B")
+    const progress = progressNudgeSendText({ kind: "nudge", summary: "架空の依頼B" }, "")
     const ledger = inputLedgerOf([
       { kind: "input", uuid: FIRST, input: "request" },
       { kind: "input", uuid: SECOND, input: "request" },
@@ -50,7 +50,7 @@ describe("toRestoredEvents（入力の控えのあるセッション）", () => 
         [
           sent("架空の依頼", FIRST),
           sent(asidePromptText("架空の問い"), SECOND),
-          sent(progressNudgePromptText("架空の進み"), THIRD),
+          sent(progressNudgeSendText({ kind: "nudge", summary: "架空の進み" }, ""), THIRD),
         ],
         ledger,
       ).map((event) => event.kind),

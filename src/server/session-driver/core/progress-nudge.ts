@@ -1,8 +1,10 @@
 // 進みの差し込み。委譲中に吹き出しが黙り続けたとき、委譲先の進みの1行（`delegate-progress`）をメインへ差し込む。
 // 背景のサブエージェントがいなくて背景の Bash だけを待っているときは、要約の代わりに待っている件数だけを差し込む。
-// 差し込むかは3つの状態だけで決め、要約の文面は見ない:
+// 5分の黙りで差し込むかは3つの状態だけで決め、要約の文面は見ない:
 // 委譲中か（背景のサブエージェントか Bash が顔ぶれにいる）、最後に描いたセリフからの経過、
 // そのあとに新しい要約が届いたか（背景の Bash だけの待ちでは要らない）。
+// これとは別に、`phase_result` が帯を動かしたとき（`delegate-returned` の `phase-done`・`phase-skipped`）は黙りを待たずに差し込む。
+// 預けているあいだに何度進んでも最新の1通だけで、`stopped` は差し込まない。
 //
 // 時計もタイマーも持たない。時刻は `observe` と `take` の引数で受け、待つのは呼び手が `due` の時刻まで。
 // メインがターンの途中のあいだは差し込まず、ターンが終わるまで預ける。
@@ -24,6 +26,13 @@ export type ProgressNudgeTake =
   | { readonly kind: "none" }
   | { readonly kind: "nudge"; readonly summary: string }
   | { readonly kind: "shell-wait"; readonly count: number }
+  | {
+      readonly kind: "phase-advanced"
+      readonly phase: number
+      readonly count: number
+      readonly summary: string
+      readonly skipped: boolean
+    }
 
 export type ProgressNudgeSend = Exclude<ProgressNudgeTake, { readonly kind: "none" }>
 
@@ -38,6 +47,14 @@ export type ProgressNudge = {
 
 type LatestSummary = { readonly kind: "none" } | { readonly kind: "fresh"; readonly text: string }
 
+type PhaseAdvanced =
+  | { readonly kind: "none" }
+  | (Extract<ProgressNudgeTake, { readonly kind: "phase-advanced" }> & {
+      readonly observedAt: number
+    })
+
+const NO_PHASE_ADVANCED: PhaseAdvanced = { kind: "none" }
+
 /** {@link ProgressNudge} を1つ作る。セッション1つに1つ。 */
 export function createProgressNudge(): ProgressNudge {
   let delegates: ReadonlySet<TaskId> = new Set()
@@ -45,13 +62,23 @@ export function createProgressNudge(): ProgressNudge {
   let silentSince = 0
   let latest: LatestSummary = { kind: "none" }
   let inTurn = false
+  let phaseAdvanced: PhaseAdvanced = NO_PHASE_ADVANCED
 
   const waitingOnShellsOnly = (): boolean => shells.size > 0 && delegates.size === 0
-  const due = (): ProgressNudgeDue =>
-    !inTurn && ((delegates.size > 0 && latest.kind === "fresh") || waitingOnShellsOnly())
-      ? { kind: "at", at: silentSince + PROGRESS_NUDGE_SILENCE_MS }
-      : { kind: "none" }
-
+  const due = (): ProgressNudgeDue => {
+    if (inTurn) {
+      return { kind: "none" }
+    }
+    const silent = (delegates.size > 0 && latest.kind === "fresh") || waitingOnShellsOnly()
+    const silentAt = silentSince + PROGRESS_NUDGE_SILENCE_MS
+    if (phaseAdvanced.kind === "phase-advanced") {
+      return {
+        kind: "at",
+        at: silent ? Math.min(silentAt, phaseAdvanced.observedAt) : phaseAdvanced.observedAt,
+      }
+    }
+    return silent ? { kind: "at", at: silentAt } : { kind: "none" }
+  }
   return {
     observe: (event, at) => {
       switch (event.kind) {
@@ -66,6 +93,9 @@ export function createProgressNudge(): ProgressNudge {
           if (nextDelegates.size === 0) {
             latest = { kind: "none" }
           }
+          if (event.tasks.length === 0) {
+            phaseAdvanced = NO_PHASE_ADVANCED
+          }
           delegates = nextDelegates
           shells = nextShells
           return
@@ -75,9 +105,26 @@ export function createProgressNudge(): ProgressNudge {
             latest = { kind: "fresh", text: event.summary }
           }
           return
+        case "delegate-returned": {
+          const handback = event.handback
+          if (handback.kind === "stopped") {
+            return
+          }
+          const done = handback.kind === "phase-done"
+          phaseAdvanced = {
+            kind: "phase-advanced",
+            phase: handback.phase,
+            count: handback.count,
+            summary: done ? handback.summary : "",
+            skipped: !done,
+            observedAt: at,
+          }
+          return
+        }
         case "speech":
           silentSince = at
           latest = { kind: "none" }
+          phaseAdvanced = NO_PHASE_ADVANCED
           return
         case "request":
         case "aside":
@@ -93,6 +140,7 @@ export function createProgressNudge(): ProgressNudge {
           delegates = new Set()
           shells = new Set()
           latest = { kind: "none" }
+          phaseAdvanced = NO_PHASE_ADVANCED
           inTurn = false
           return
         default:
@@ -104,6 +152,12 @@ export function createProgressNudge(): ProgressNudge {
       const scheduled = due()
       if (scheduled.kind === "none" || at < scheduled.at) {
         return { kind: "none" }
+      }
+      if (phaseAdvanced.kind === "phase-advanced") {
+        const { observedAt: _observedAt, ...advanced } = phaseAdvanced
+        phaseAdvanced = NO_PHASE_ADVANCED
+        silentSince = at
+        return advanced
       }
       if (latest.kind === "none") {
         if (!waitingOnShellsOnly()) {
@@ -135,14 +189,27 @@ const BACKGROUND_WAIT_NOTE =
 const STEP_LIMIT_NOTE =
   "tsukumo の差し込み。1 ターンのツール呼び出しが多い。`speak` を 1 回で、いまの様子を知らせ、`report` は呼ばない"
 
-/** 差し込む要約を、メインへ送る文面に包む。 */
-export function progressNudgePromptText(summary: string): string {
-  return wrapProgress(PROGRESS_NOTE, summary)
-}
+const PHASE_ADVANCED_NOTE =
+  "tsukumo の差し込み。委譲先のフェーズが進んだ。`speak` を 1 回で言い直し、`report` は呼ばない"
 
-/** 要約の無い背景 Bash の待ちを、件数だけの事実でメインへ送る文面に包む。 */
-export function backgroundWaitPromptText(count: number): string {
-  return wrapProgress(BACKGROUND_WAIT_NOTE, `背景の Bash を ${count} 件待っている`)
+/** 取り出した差し込みを、種類に応じてメインへ送る文面にする。`bandPosition` は帯の今の位置（無ければ空）。 */
+export function progressNudgeSendText(taken: ProgressNudgeSend, bandPosition: string): string {
+  switch (taken.kind) {
+    case "nudge":
+      return progressNudgePromptText(taken.summary)
+    case "shell-wait":
+      return backgroundWaitPromptText(taken.count)
+    case "phase-advanced": {
+      const lines = [
+        taken.skipped
+          ? `フェーズ ${taken.phase}/${taken.count} は飛ばした`
+          : `フェーズ ${taken.phase}/${taken.count} が済んだ`,
+        ...(taken.summary === "" ? [] : [`まとめ: ${taken.summary}`]),
+        ...(bandPosition === "" ? [] : [bandPosition]),
+      ]
+      return wrapProgress(PHASE_ADVANCED_NOTE, lines.join("\n"))
+    }
+  }
 }
 
 /** 歩数の上限を超えたことを、メインへ送る文面に包む。 */
@@ -153,6 +220,16 @@ export function stepLimitPromptText(limit: number): string {
 /** transcript の `user` の文面が差し込みの包みか。入力の控え（`InputLedger`）の無い入力を、組み直しが利用者の依頼と見分ける手がかり。 */
 export function isProgressNudgePrompt(raw: string): boolean {
   return PROGRESS_PROMPT.test(raw.trim())
+}
+
+/** 差し込む要約を、メインへ送る文面に包む。 */
+function progressNudgePromptText(summary: string): string {
+  return wrapProgress(PROGRESS_NOTE, summary)
+}
+
+/** 要約の無い背景 Bash の待ちを、件数だけの事実でメインへ送る文面に包む。 */
+function backgroundWaitPromptText(count: number): string {
+  return wrapProgress(BACKGROUND_WAIT_NOTE, `背景の Bash を ${count} 件待っている`)
 }
 
 function wrapProgress(note: string, body: string): string {

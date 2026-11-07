@@ -20,6 +20,7 @@ import {
   type ReportDraftIntake,
 } from "../../../report/core/body/draft-component-intake.ts"
 import { createReportGate, type ReportGate } from "../../../report/core/prompt/report-tool.ts"
+import { bandPositionText } from "../../../work-plan/core/band-position.ts"
 import { asidePromptText } from "../../core/aside-prompt.ts"
 import { type CallReview, createCallReview, passRelayedEvents } from "../../core/call-review.ts"
 import { createExternalToolMark } from "../../core/external-tool-mark.ts"
@@ -27,10 +28,9 @@ import { createInterruptMark, type InterruptMark } from "../../core/interrupt-ma
 import { isSubagentMessage, toSessionEvents } from "../../core/message/sdk-message.ts"
 import { createPendingAnswerQueue, type PendingAnswerQueue } from "../../core/pending-answer.ts"
 import {
-  backgroundWaitPromptText,
   createProgressNudge,
   type ProgressNudgeSend,
-  progressNudgePromptText,
+  progressNudgeSendText,
   stepLimitPromptText,
 } from "../../core/progress-nudge.ts"
 import { createPromptDelayWatch, type PromptDelayWatch } from "../../core/prompt-delay.ts"
@@ -106,11 +106,7 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
     failedWithError("event-handler", error)
   })
   const progressNudge = watchProgressNudge(given.now, (taken) => {
-    sendProgressNudge(
-      taken.kind === "nudge"
-        ? progressNudgePromptText(taken.summary)
-        : backgroundWaitPromptText(taken.count),
-    )
+    sendProgressNudge(progressNudgeSendText(taken, bandPositionText(callReview.latestPlan())))
   })
   const stepWatch = createStepWatch(given.turnStepLimit)
   const deliver = (event: SessionEvent): void => {

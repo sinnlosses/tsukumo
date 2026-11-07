@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest"
 
 import { mainViewTurns } from "../../../../../src/browser/domain/main-view/main-view.ts"
 import { asidePromptText } from "../../../../../src/server/session-driver/core/aside-prompt.ts"
-import { progressNudgePromptText } from "../../../../../src/server/session-driver/core/progress-nudge.ts"
+import { progressNudgeSendText } from "../../../../../src/server/session-driver/core/progress-nudge.ts"
 import { EMPTY_INPUT_LEDGER } from "../../../../../src/server/session-driver/core/session/input-ledger.ts"
 import { toRestoredEvents } from "../../../../../src/server/session-driver/core/session/session-restore.ts"
 import { applyRestoredEvents } from "../../../../../src/server/session/core/event/restored-event.ts"
@@ -264,7 +264,7 @@ describe("toRestoredEvents", () => {
   it("進みの差し込みの包みは依頼に戻さず、続きのターンの始まりにする", () => {
     const messages = [
       withFields(userMessage("架空の依頼"), { origin: { kind: "human" } }),
-      withFields(userMessage(progressNudgePromptText("架空の進み")), {
+      withFields(userMessage(progressNudgeSendText({ kind: "nudge", summary: "架空の進み" }, "")), {
         origin: { kind: "human" },
       }),
     ]
