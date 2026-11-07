@@ -1,8 +1,8 @@
 import { cleanup, render } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
-import { reportSectionsMarkdown } from "../../../../../src/browser/components/page/conversation/domain/report-markdown.ts"
 import { Markdown } from "../../../../../src/browser/features/report/renderer/markdown-renderer.tsx"
+import { reportSectionsMarkdown } from "../../../../../src/browser/features/report/report-markdown.ts"
 import type { FigureBlock } from "../../../../../src/shared/report/report-block.ts"
 import { typedElement } from "../../../../typed-element.ts"
 

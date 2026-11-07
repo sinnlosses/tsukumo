@@ -1,4 +1,4 @@
-import { reportSectionsMarkdown } from "../../src/browser/components/page/conversation/domain/report-markdown.ts"
+import { reportSectionsMarkdown } from "../../src/browser/features/report/report-markdown.ts"
 import type { FigureBlock, LeafComponent } from "../../src/shared/report/report-block.ts"
 import type { ReportImageSource } from "../../src/shared/report/report-image-markdown.ts"
 

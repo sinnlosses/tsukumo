@@ -7,12 +7,12 @@
 import clsx from "clsx"
 import type { ReactElement } from "react"
 
+import { Report } from "../../../../../features/report/report.tsx"
 import { BottomSheet } from "../../../../ui/bottom-sheet/bottom-sheet.tsx"
 import type { PhaseRow } from "./domain/phase-row.ts"
 import type { PhaseListModel, PhaseMove } from "./hooks/use-phase-list.ts"
 import styles from "./main-view.module.css"
 import { ReportHead } from "./report-head.tsx"
-import { Report } from "./report.tsx"
 
 const HEADING = "済んだフェーズ · 中間レポート"
 const SHEET_LABEL = "中間レポート"
@@ -84,6 +84,8 @@ export function PresentationalPhaseList(props: {
               reveal={false}
               turnId={props.turnId}
               className=""
+              revealClassName={styles["draft-pop"]}
+              blockClassName={styles["detail-block"]}
             />
           </>
         )}

@@ -4,7 +4,7 @@ import type { ReactElement } from "react"
 
 import type { A2uiReportComponent } from "../../../../shared/report/a2ui-report-catalog.ts"
 import { mainViewDraftOf } from "../../../domain/main-view/a2ui-draft-view.ts"
-import { A2uiReport } from "../../page/conversation/components/main-view/a2ui-surface.tsx"
+import { A2uiReport } from "../../../features/report/a2ui-surface.tsx"
 import { Heading } from "../../ui/heading/heading.tsx"
 import { Surface } from "../../ui/surface/surface.tsx"
 import { Text } from "../../ui/text/text.tsx"
@@ -58,6 +58,8 @@ function CatalogPart(props: {
             reveal={false}
             turnId={0}
             className=""
+            revealClassName=""
+            blockClassName=""
           />
         ) : (
           <Text element="p" size="body" tone="ink-quiet" weight="normal" className="">

@@ -17,20 +17,17 @@ let revealed: {
   readonly turnId: number
 }[] = []
 
-vi.mock(
-  "../../../../../../../src/browser/components/page/conversation/components/main-view/report.tsx",
-  () => ({
-    Report: (props: {
-      readonly body: MainViewReportBody
-      readonly reveal: boolean
-      turnId: number
-    }) => {
-      const markdown = bodyTextOf(props.body)
-      revealed.push({ markdown, reveal: props.reveal, turnId: props.turnId })
-      return <div data-report-stub="yes">{markdown}</div>
-    },
-  }),
-)
+vi.mock("../../../../../../../src/browser/features/report/report.tsx", () => ({
+  Report: (props: {
+    readonly body: MainViewReportBody
+    readonly reveal: boolean
+    turnId: number
+  }) => {
+    const markdown = bodyTextOf(props.body)
+    revealed.push({ markdown, reveal: props.reveal, turnId: props.turnId })
+    return <div data-report-stub="yes">{markdown}</div>
+  },
+}))
 
 const { Turn } =
   await import("../../../../../../../src/browser/components/page/conversation/components/main-view/turn.tsx")

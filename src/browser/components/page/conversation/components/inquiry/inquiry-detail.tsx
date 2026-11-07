@@ -9,8 +9,8 @@ import {
   Markdown,
   QuestionPreviewMarkdown,
 } from "../../../../../features/report/markdown.tsx"
+import { reportSectionsMarkdown } from "../../../../../features/report/report-markdown.ts"
 import { Text } from "../../../../ui/text/text.tsx"
-import { reportSectionsMarkdown } from "../../domain/report-markdown.ts"
 import type {
   InquiryBrief as InquiryBriefModel,
   InquiryOptionRow,

@@ -27,7 +27,7 @@ const TOOLS_LIST_REPLY = z.object({
 
 const LARGE_FILES = [
   "scripts/dev/lib/a2ui-write-trial.ts",
-  "test/browser/components/page/conversation/components/main-view/a2ui-surface.test.tsx",
+  "test/browser/features/report/a2ui-surface.test.tsx",
 ] as const
 
 const reply = await mcpRequest(workServer(), "tools/list", {}, TOOLS_LIST_REPLY)

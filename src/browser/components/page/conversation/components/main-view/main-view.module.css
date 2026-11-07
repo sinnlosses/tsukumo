@@ -14,14 +14,6 @@
 @import "./turn-card/report-outline.css";
 @import "./turn-card/request-block.css";
 @import "./turn-card/selection-ask.css";
-@import "./turn-card/interactive-view.css";
-@import "./turn-card/quote-leaf.css";
-@import "./turn-card/description-list-leaf.css";
-@import "./turn-card/trace-leaf.css";
-@import "./turn-card/chart-grid-leaf.css";
-@import "./turn-card/table-badge.css";
-@import "./turn-card/table-detail.css";
-@import "./turn-card/verdict-badge.css";
 @import "./turn-card/turn-card-head.css";
 @import "./turn-card/aside-thread.css";
 @import "./turn-card/question-record.css";
@@ -30,7 +22,6 @@
 @import "./turn-card/report-draft.css";
 @import "./welcome/welcome.css";
 @import "./turn-card/work-strip.css";
-@import "./turn-card/work-record-stages.css";
 
 /* 依頼の塊の見出しの字は目に見えなくてよい。`h2` は読み上げの見出しとして残す。
    `composes` の参照先の相対パスは `@import` した先のファイルでは解けないので、入口のここに置く。 */

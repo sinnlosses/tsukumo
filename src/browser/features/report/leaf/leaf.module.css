@@ -1,0 +1,12 @@
+/* レポートの内容部品（A2UI の面の葉・作業記録の欄）の見た目。
+   子部品ごとの `*.css` をここで `@import` する。並びは規則の重なり順なので、入れ替えると同じ詳細度の規則の勝ち負けが変わる。 */
+
+@import "./interactive-view.css";
+@import "./quote-leaf.css";
+@import "./description-list-leaf.css";
+@import "./trace-leaf.css";
+@import "./chart-grid-leaf.css";
+@import "./table-badge.css";
+@import "./table-detail.css";
+@import "./verdict-badge.css";
+@import "./work-record-stages.css";

@@ -1,4 +1,4 @@
-import { reportSectionsMarkdown as reportSectionsMarkdownFrom } from "../../src/browser/components/page/conversation/domain/report-markdown.ts"
+import { reportSectionsMarkdown as reportSectionsMarkdownFrom } from "../../src/browser/features/report/report-markdown.ts"
 import type { FigureBlock } from "../../src/shared/report/report-block.ts"
 
 /** 描いた `report` の本文と同じく、画像を置き場から引く本文に組む。 */

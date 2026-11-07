@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { reportSectionsMarkdown } from "../../../src/browser/components/page/conversation/domain/report-markdown.ts"
+import { reportSectionsMarkdown } from "../../../src/browser/features/report/report-markdown.ts"
 import type { FigureBlock, LeafComponent } from "../../../src/shared/report/report-block.ts"
 import { markdownOf, NO_IMAGES, section, tableCaptioned } from "../../fixture/report-markdown.ts"
 

@@ -10,14 +10,11 @@ import { bodyTextOf } from "../../../../../../fixture/main-view-entry.ts"
 import { step, turn } from "../../../../../../fixture/turn.ts"
 import { putSession } from "../../../../../session-store.ts"
 
-vi.mock(
-  "../../../../../../../src/browser/components/page/conversation/components/main-view/report.tsx",
-  () => ({
-    Report: (props: { readonly body: MainViewReportBody }) => (
-      <div data-report-stub="yes">{bodyTextOf(props.body)}</div>
-    ),
-  }),
-)
+vi.mock("../../../../../../../src/browser/features/report/report.tsx", () => ({
+  Report: (props: { readonly body: MainViewReportBody }) => (
+    <div data-report-stub="yes">{bodyTextOf(props.body)}</div>
+  ),
+}))
 
 const { Turn } =
   await import("../../../../../../../src/browser/components/page/conversation/components/main-view/turn.tsx")

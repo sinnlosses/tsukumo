@@ -27,7 +27,7 @@ describe("addition-margin", () => {
       "systemPrompt の規約 4 本の合計（字）",
       "report の引数の schema（字）",
       "scripts/dev/lib/a2ui-write-trial.ts（トークン）",
-      "test/browser/components/page/conversation/components/main-view/a2ui-surface.test.tsx（トークン）",
+      "test/browser/features/report/a2ui-surface.test.tsx（トークン）",
     ])
     expect(rows.map((row) => Number(row[2])).slice(0, 2)).toEqual([
       SYSTEM_PROMPT_TOTAL_LIMIT,

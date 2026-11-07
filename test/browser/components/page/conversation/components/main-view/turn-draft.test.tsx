@@ -15,14 +15,11 @@ import { step, turn, turnBodyText } from "../../../../../../fixture/turn.ts"
 import { putSession } from "../../../../../session-store.ts"
 
 // 本物の `Report`（react-markdown 一式と演出の配線を持つ）ではなく、本文だけを描く代役に差し替える。
-vi.mock(
-  "../../../../../../../src/browser/components/page/conversation/components/main-view/report.tsx",
-  () => ({
-    Report: (props: { readonly body: MainViewReportBody }) => (
-      <div data-report-stub="yes">{bodyTextOf(props.body)}</div>
-    ),
-  }),
-)
+vi.mock("../../../../../../../src/browser/features/report/report.tsx", () => ({
+  Report: (props: { readonly body: MainViewReportBody }) => (
+    <div data-report-stub="yes">{bodyTextOf(props.body)}</div>
+  ),
+}))
 
 const { Turn } =
   await import("../../../../../../../src/browser/components/page/conversation/components/main-view/turn.tsx")

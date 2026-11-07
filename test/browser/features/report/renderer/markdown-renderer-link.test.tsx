@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
-import { ChangedFilesFold } from "../../../../../src/browser/components/page/conversation/components/main-view/changed-files-fold.tsx"
+import { ChangedFilesFold } from "../../../../../src/browser/features/report/leaf/changed-files-fold.tsx"
 import { Markdown } from "../../../../../src/browser/features/report/renderer/markdown-renderer.tsx"
 import { changedFilesView } from "../../../../../src/shared/report/changed-file-section.ts"
 import type { ChangedFile } from "../../../../../src/shared/report/changed-file.ts"

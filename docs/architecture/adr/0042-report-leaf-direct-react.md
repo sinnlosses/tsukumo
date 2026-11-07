@@ -134,7 +134,7 @@ CSS 宣言のうち、内容部品専用と言い切れるのは `report-notatio
 ## 影響
 
 - `src/shared/session/a2ui-report-view.ts` が持つ `leaves` が、内容部品ごとの値（図表番号・札の色・傍注）に置き換わる。`MainViewA2uiReport` の形が変わるので、`pnpm run test:e2e:update` が要る。
-- `src/browser/components/page/conversation/domain/report-markdown.ts` の畳み込みから、番号・札の色・傍注を取り出す。質問の詳細が使う Markdown を組む部分は変えない。
+- `src/browser/features/report/report-markdown.ts` の畳み込みから、番号・札の色・傍注を取り出す。質問の詳細が使う Markdown を組む部分は変えない。
 - 内容部品の React の部品が `src/browser/components/` の下に増え、`ui/` の部品（`Surface`・`Badge`・`Divider`）とデザイントークンで組む。
 - `markdown/` の描画は、内容部品を移しても、頭・振り返り・お願い・質問の詳細・`Markdown` の内容部品・旧い記録・面が作れなかったときの代替から使われ続ける。CSS の削減は、未決 1 が決まるまで限られる。
 - ADR 0039 の論点 4 の「内容部品の実装は塊 → Markdown の変換を `Markdown` に通して再利用する」は、この ADR で置き換わる。未決 3 は閉じる。ADR 0040（草稿の描画）は変わらず、番号の振り直しは草稿が伸びるたびの view の作り直しで効く。
