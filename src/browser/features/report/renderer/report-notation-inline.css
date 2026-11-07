@@ -103,15 +103,15 @@
     font-weight: 600;
     color: var(--ink-soft);
   }
-  /* 本文の列（42em）の右に 160px 以上空くときだけ、欄外注を本文の列の右の欄外注の列に出す（器はメインビューの本文）。
+  /* 本文の列（63em）の右に 160px 以上空くときだけ、欄外注を本文の列の右の欄外注の列に出す（器はメインビューの本文）。
    包みを2列の grid にし、欄外注の列は塊と同じ行に置いて上端を揃える（行は高いほうに伸び、次の塊に重ならない）。
    grid の中では margin が相殺しないので、塊の上下のあきは包みが持ち、中の塊と欄外注の列の上下の margin は落とす。
    欄外注の列を持つ塊は、表と図でも本文の列に収まる。欄外注の列は 1920 幅でも本文の列のすぐ右に置く。
    `body.css` の `:is(.detail-block, …) > .report-with-gutter > :is(p, ul, ol)` と同じ詳細度なので、勝たせるために末尾に置く。 */
-  @container report-gutter (min-width: calc(42em + 160px)) {
+  @container report-gutter (min-width: calc(63em + 160px)) {
     & .report-with-gutter {
       display: grid;
-      grid-template-columns: minmax(0, 42em) minmax(0, 1fr);
+      grid-template-columns: minmax(0, 63em) minmax(0, 1fr);
       column-gap: 28px;
       align-items: start;
       margin: var(--report-block-gap) 0;

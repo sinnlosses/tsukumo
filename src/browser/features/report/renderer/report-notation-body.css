@@ -29,7 +29,7 @@
   container: report-body / inline-size;
 
   & :is(p, li, blockquote, .report-note, .report-note-favor, .report-checks) {
-    max-inline-size: var(--report-measure);
+    max-inline-size: min(100%, var(--report-measure-wide));
     text-wrap: pretty;
   }
 }
@@ -69,7 +69,7 @@
 }
 .detail-block {
   & .report-with-gutter > * {
-    max-inline-size: var(--report-measure);
+    max-inline-size: min(100%, var(--report-measure-wide));
   }
   & :is(h4, h5),
   & .report-conclusion,
@@ -346,7 +346,7 @@
     display: flex;
     flex-wrap: wrap;
     justify-content: flex-start;
-    max-inline-size: var(--report-measure);
+    max-inline-size: min(100%, var(--report-measure-wide));
     gap: var(--space-xs) var(--space-lg);
     margin-bottom: var(--space-xs);
     font-size: var(--font-label);

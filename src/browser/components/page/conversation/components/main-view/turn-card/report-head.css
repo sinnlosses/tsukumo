@@ -89,7 +89,7 @@
   padding: var(--space-xs) var(--space-sm);
   border-radius: var(--radius-md);
 }
-/* 板の中だけ、レポートの列を 63em で中央に置く（段落は 42em のまま、表と図は列の幅まで）。 */
+/* 板の中だけ、レポートの列を 63em で中央に置く（段落・表・図とも列の幅まで）。 */
 .report-board-column {
   box-sizing: border-box;
   max-inline-size: 63em;

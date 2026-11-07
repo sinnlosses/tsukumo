@@ -6,7 +6,7 @@
   display: grid;
   grid-template-columns: minmax(7em, max-content) 1fr;
   gap: 0;
-  max-inline-size: var(--report-measure);
+  max-inline-size: min(100%, var(--report-measure-wide));
   margin: var(--report-block-gap) 0;
   border-top: 1px solid var(--rule-quiet);
 }

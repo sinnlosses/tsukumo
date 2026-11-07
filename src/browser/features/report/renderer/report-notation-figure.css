@@ -309,7 +309,7 @@
     max-width: 100%;
     margin: var(--report-figure-gap) auto;
   }
-  /* 縮めた包みは本体の幅まで縮むが、本文の列（42em）より狭くはならない。
+  /* 縮めた包みは本体の幅まで縮むが、縮尺の本文の段（42em）より狭くはならない。
    図を持つ包みと表の包みは本文の列の左端から始める。画像の包みは画像の幅まで縮め、題はその幅の中で中央にする。 */
   & .report-captioned-fit {
     inline-size: max-content;
@@ -348,7 +348,7 @@
     inline-size: min(100%, var(--figure-measure, var(--report-measure)));
   }
   /* mermaid の図の幅の段は `<pre>` の `data-measure`（`MermaidBlock` が字の大きさを測って決める）。
-   無いとき（描き終わる前）と body は本文の列（42em）で、wide と full は本文の列の左端から始める。
+   無いとき（描き終わる前）と body は縮尺の本文の段（42em）で、wide と full は本文の列の左端から始める。
    題と凡例の幅は `--figure-measure` で包みの段にそろう。 */
   & .report-captioned:has(pre:global(.mermaid)) {
     inline-size: min(100%, var(--figure-measure, var(--report-measure)));

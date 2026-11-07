@@ -133,7 +133,7 @@
     color: var(--ink-bright);
   }
   & h5 {
-    max-inline-size: var(--report-measure);
+    max-inline-size: min(100%, var(--report-measure-wide));
     margin: var(--space-2xl) 0 var(--report-heading-gap);
     font-size: var(--report-heading-3);
     font-weight: 700;
