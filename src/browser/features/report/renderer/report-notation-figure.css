@@ -232,7 +232,7 @@
     stroke: var(--accent);
     stroke-width: 1.5px;
   }
-  /* `tone` の5色。系列色を枠にし、地は面の色へ薄く混ぜる。凡例の見本（`report-svg-legend`）も同じ規則で描く。 */
+  /* `tone` の5色と状態の3色。a〜e は系列色・ok・warn・ng は Table の状態セルと同じ色を枠にし、地は面の色へ薄く混ぜる。凡例の見本（`report-svg-legend`）も同じ規則で描く。 */
   & .report-svg-figure svg rect[data-tone],
   & .report-svg-legend svg rect[data-tone] {
     fill: color-mix(in srgb, var(--tone-color) 12%, var(--surface-raised));
@@ -256,6 +256,15 @@
   }
   & svg [data-tone="e"] {
     --tone-color: var(--chart-series-5);
+  }
+  & svg [data-tone="ok"] {
+    --tone-color: var(--state-ok);
+  }
+  & svg [data-tone="warn"] {
+    --tone-color: var(--state-warn);
+  }
+  & svg [data-tone="ng"] {
+    --tone-color: var(--state-ng);
   }
   & .report-svg-legend {
     display: flex;

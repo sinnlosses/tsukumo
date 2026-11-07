@@ -147,6 +147,402 @@
                 ],
                 "fold": "",
                 "aside": ""
+              },
+              {
+                "kind": "svg",
+                "title": "架空の14日の稼働は、3部品の42マスのうち停止1・遅延1",
+                "width": 570,
+                "height": 140,
+                "shapes": [
+                  { "kind": "text", "x": 10, "y": 62, "text": "架空の画面" },
+                  {
+                    "kind": "rect",
+                    "x": 110,
+                    "y": 44,
+                    "width": 28,
+                    "height": 24,
+                    "tone": "ok",
+                    "emphasis": false
+                  },
+                  {
+                    "kind": "rect",
+                    "x": 142,
+                    "y": 44,
+                    "width": 28,
+                    "height": 24,
+                    "tone": "ok",
+                    "emphasis": false
+                  },
+                  {
+                    "kind": "rect",
+                    "x": 174,
+                    "y": 44,
+                    "width": 28,
+                    "height": 24,
+                    "tone": "ok",
+                    "emphasis": false
+                  },
+                  {
+                    "kind": "rect",
+                    "x": 206,
+                    "y": 44,
+                    "width": 28,
+                    "height": 24,
+                    "tone": "ok",
+                    "emphasis": false
+                  },
+                  {
+                    "kind": "rect",
+                    "x": 238,
+                    "y": 44,
+                    "width": 28,
+                    "height": 24,
+                    "tone": "ok",
+                    "emphasis": false
+                  },
+                  {
+                    "kind": "rect",
+                    "x": 270,
+                    "y": 44,
+                    "width": 28,
+                    "height": 24,
+                    "tone": "ok",
+                    "emphasis": false
+                  },
+                  {
+                    "kind": "rect",
+                    "x": 302,
+                    "y": 44,
+                    "width": 28,
+                    "height": 24,
+                    "tone": "ok",
+                    "emphasis": false
+                  },
+                  {
+                    "kind": "rect",
+                    "x": 334,
+                    "y": 44,
+                    "width": 28,
+                    "height": 24,
+                    "tone": "ok",
+                    "emphasis": false
+                  },
+                  {
+                    "kind": "rect",
+                    "x": 366,
+                    "y": 44,
+                    "width": 28,
+                    "height": 24,
+                    "tone": "ok",
+                    "emphasis": false
+                  },
+                  {
+                    "kind": "rect",
+                    "x": 398,
+                    "y": 44,
+                    "width": 28,
+                    "height": 24,
+                    "tone": "ok",
+                    "emphasis": false
+                  },
+                  {
+                    "kind": "rect",
+                    "x": 430,
+                    "y": 44,
+                    "width": 28,
+                    "height": 24,
+                    "tone": "ok",
+                    "emphasis": false
+                  },
+                  {
+                    "kind": "rect",
+                    "x": 462,
+                    "y": 44,
+                    "width": 28,
+                    "height": 24,
+                    "tone": "ok",
+                    "emphasis": false
+                  },
+                  {
+                    "kind": "rect",
+                    "x": 494,
+                    "y": 44,
+                    "width": 28,
+                    "height": 24,
+                    "tone": "ok",
+                    "emphasis": false
+                  },
+                  {
+                    "kind": "rect",
+                    "x": 526,
+                    "y": 44,
+                    "width": 28,
+                    "height": 24,
+                    "tone": "ok",
+                    "emphasis": false
+                  },
+                  { "kind": "text", "x": 10, "y": 92, "text": "架空のサーバ" },
+                  {
+                    "kind": "rect",
+                    "x": 110,
+                    "y": 74,
+                    "width": 28,
+                    "height": 24,
+                    "tone": "ok",
+                    "emphasis": false
+                  },
+                  {
+                    "kind": "rect",
+                    "x": 142,
+                    "y": 74,
+                    "width": 28,
+                    "height": 24,
+                    "tone": "ok",
+                    "emphasis": false
+                  },
+                  {
+                    "kind": "rect",
+                    "x": 174,
+                    "y": 74,
+                    "width": 28,
+                    "height": 24,
+                    "tone": "ok",
+                    "emphasis": false
+                  },
+                  {
+                    "kind": "rect",
+                    "x": 206,
+                    "y": 74,
+                    "width": 28,
+                    "height": 24,
+                    "tone": "ok",
+                    "emphasis": false
+                  },
+                  {
+                    "kind": "rect",
+                    "x": 238,
+                    "y": 74,
+                    "width": 28,
+                    "height": 24,
+                    "tone": "ok",
+                    "emphasis": false
+                  },
+                  {
+                    "kind": "rect",
+                    "x": 270,
+                    "y": 74,
+                    "width": 28,
+                    "height": 24,
+                    "tone": "ok",
+                    "emphasis": false
+                  },
+                  {
+                    "kind": "rect",
+                    "x": 302,
+                    "y": 74,
+                    "width": 28,
+                    "height": 24,
+                    "tone": "ok",
+                    "emphasis": false
+                  },
+                  {
+                    "kind": "rect",
+                    "x": 334,
+                    "y": 74,
+                    "width": 28,
+                    "height": 24,
+                    "tone": "ok",
+                    "emphasis": false
+                  },
+                  {
+                    "kind": "rect",
+                    "x": 366,
+                    "y": 74,
+                    "width": 28,
+                    "height": 24,
+                    "tone": "ok",
+                    "emphasis": false
+                  },
+                  {
+                    "kind": "rect",
+                    "x": 398,
+                    "y": 74,
+                    "width": 28,
+                    "height": 24,
+                    "tone": "ng",
+                    "emphasis": false
+                  },
+                  {
+                    "kind": "rect",
+                    "x": 430,
+                    "y": 74,
+                    "width": 28,
+                    "height": 24,
+                    "tone": "ok",
+                    "emphasis": false
+                  },
+                  {
+                    "kind": "rect",
+                    "x": 462,
+                    "y": 74,
+                    "width": 28,
+                    "height": 24,
+                    "tone": "ok",
+                    "emphasis": false
+                  },
+                  {
+                    "kind": "rect",
+                    "x": 494,
+                    "y": 74,
+                    "width": 28,
+                    "height": 24,
+                    "tone": "ok",
+                    "emphasis": false
+                  },
+                  {
+                    "kind": "rect",
+                    "x": 526,
+                    "y": 74,
+                    "width": 28,
+                    "height": 24,
+                    "tone": "ok",
+                    "emphasis": false
+                  },
+                  { "kind": "text", "x": 10, "y": 122, "text": "架空の共有" },
+                  {
+                    "kind": "rect",
+                    "x": 110,
+                    "y": 104,
+                    "width": 28,
+                    "height": 24,
+                    "tone": "ok",
+                    "emphasis": false
+                  },
+                  {
+                    "kind": "rect",
+                    "x": 142,
+                    "y": 104,
+                    "width": 28,
+                    "height": 24,
+                    "tone": "ok",
+                    "emphasis": false
+                  },
+                  {
+                    "kind": "rect",
+                    "x": 174,
+                    "y": 104,
+                    "width": 28,
+                    "height": 24,
+                    "tone": "ok",
+                    "emphasis": false
+                  },
+                  {
+                    "kind": "rect",
+                    "x": 206,
+                    "y": 104,
+                    "width": 28,
+                    "height": 24,
+                    "tone": "ok",
+                    "emphasis": false
+                  },
+                  {
+                    "kind": "rect",
+                    "x": 238,
+                    "y": 104,
+                    "width": 28,
+                    "height": 24,
+                    "tone": "warn",
+                    "emphasis": false
+                  },
+                  {
+                    "kind": "rect",
+                    "x": 270,
+                    "y": 104,
+                    "width": 28,
+                    "height": 24,
+                    "tone": "ok",
+                    "emphasis": false
+                  },
+                  {
+                    "kind": "rect",
+                    "x": 302,
+                    "y": 104,
+                    "width": 28,
+                    "height": 24,
+                    "tone": "ok",
+                    "emphasis": false
+                  },
+                  {
+                    "kind": "rect",
+                    "x": 334,
+                    "y": 104,
+                    "width": 28,
+                    "height": 24,
+                    "tone": "ok",
+                    "emphasis": false
+                  },
+                  {
+                    "kind": "rect",
+                    "x": 366,
+                    "y": 104,
+                    "width": 28,
+                    "height": 24,
+                    "tone": "ok",
+                    "emphasis": false
+                  },
+                  {
+                    "kind": "rect",
+                    "x": 398,
+                    "y": 104,
+                    "width": 28,
+                    "height": 24,
+                    "tone": "ok",
+                    "emphasis": false
+                  },
+                  {
+                    "kind": "rect",
+                    "x": 430,
+                    "y": 104,
+                    "width": 28,
+                    "height": 24,
+                    "tone": "ok",
+                    "emphasis": false
+                  },
+                  {
+                    "kind": "rect",
+                    "x": 462,
+                    "y": 104,
+                    "width": 28,
+                    "height": 24,
+                    "tone": "ok",
+                    "emphasis": false
+                  },
+                  {
+                    "kind": "rect",
+                    "x": 494,
+                    "y": 104,
+                    "width": 28,
+                    "height": 24,
+                    "tone": "ok",
+                    "emphasis": false
+                  },
+                  {
+                    "kind": "rect",
+                    "x": 526,
+                    "y": 104,
+                    "width": 28,
+                    "height": 24,
+                    "tone": "ok",
+                    "emphasis": false
+                  }
+                ],
+                "legend": [
+                  { "tone": "ok", "label": "正常" },
+                  { "tone": "warn", "label": "遅延" },
+                  { "tone": "ng", "label": "停止" }
+                ],
+                "fold": "",
+                "aside": ""
               }
             ]
           }

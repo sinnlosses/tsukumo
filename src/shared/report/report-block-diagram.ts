@@ -14,11 +14,17 @@ import {
 
 const SVG_TONES = ["a", "b", "c", "d", "e"] as const
 
+const SVG_STATE_TONES = ["ok", "warn", "ng"] as const
+
 const svgToneSchema = z.enum(SVG_TONES)
 
 const toneLegendSchema = z
   .array(z.object({ tone: svgToneSchema, label: inlineText }))
   .meta({ id: "ToneLegend" })
+
+const svgToneLegendSchema = z
+  .array(z.object({ tone: z.enum([...SVG_TONES, ...SVG_STATE_TONES]), label: inlineText }))
+  .meta({ id: "SvgToneLegend" })
 
 export function hasGraphNode(source: string): boolean {
   return readGraphSource(source).nodes.length > 0
@@ -49,7 +55,9 @@ const svgShapeSchema = z
       labelAt: omittable(z.enum(["center", "top-left"]), "center").describe(
         "枠の題の位置。入れ子の外側の枠は top-left",
       ),
-      tone: omittable(z.enum(["none", ...SVG_TONES]), "none"),
+      tone: omittable(z.enum(["none", ...SVG_TONES, ...SVG_STATE_TONES]), "none").describe(
+        "a〜e は区別の色、ok・warn・ng は状態の色",
+      ),
     }),
     z.object({
       kind: z.literal("line"),
@@ -60,7 +68,7 @@ const svgShapeSchema = z
       arrow: omittable(z.boolean(), false),
       label: omittable(inlineText, ""),
       dashed: omittable(z.boolean(), false),
-      tone: omittable(z.enum(["none", ...SVG_TONES]), "none"),
+      tone: omittable(z.enum(["none", ...SVG_TONES, ...SVG_STATE_TONES]), "none"),
     }),
     z.object({ kind: z.literal("text"), x: z.number(), y: z.number(), text: inlineText }),
   ])
@@ -70,7 +78,7 @@ const svgFields = {
   width: positiveNumber,
   height: positiveNumber,
   shapes: z.array(svgShapeSchema).min(1),
-  legend: omittable(toneLegendSchema, []),
+  legend: omittable(svgToneLegendSchema, []),
 }
 
 /** 見比べの側の中身（`Compare` の側の見出しを除いた欄）。 */

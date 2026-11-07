@@ -102,7 +102,12 @@ const LEAF_BLOCK_EXAMPLES = {
     shapes: [
       { kind: "rect", x: 10, y: 10, width: 80, height: 60, label: "手元" },
       { kind: "rect", x: 60, y: 30, width: 80, height: 60, label: "共有", tone: "a" },
+      { kind: "rect", x: 150, y: 30, width: 40, height: 60, label: "停止", tone: "ng" },
       { kind: "line", x1: 90, y1: 40, x2: 140, y2: 40, arrow: true, label: "写す" },
+    ],
+    legend: [
+      { tone: "a", label: "共有の層" },
+      { tone: "ng", label: "止まった層" },
     ],
   },
   timeline: {

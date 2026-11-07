@@ -144,7 +144,7 @@ describe("reportRejectionText", () => {
 
     it("legend に無い tone を、何個目の部品のどの tone かだけで言い、legend にあれば通す", () => {
       const toned = (
-        tone: "a" | "b",
+        tone: "a" | "b" | "ng",
         legend: Extract<LeafComponent, { kind: "svg" }>["legend"],
       ): LeafComponent => svg([{ ...rect(0, 0, 10, 10), label: "架空の秘密", tone }], legend)
       const report = draft([toned("a", [{ tone: "a", label: "層" }]), toned("b", [])])
@@ -156,6 +156,10 @@ describe("reportRejectionText", () => {
         "- `Svg` の `rect` の `tone` が `legend` に無い（2個目の b）。`legend` に `tone` と名前を足す（色だけで意味を言わない）",
       ])
       expect(kinds(draft([toned("a", [{ tone: "a", label: "層" }])]))).toEqual([])
+      expect(reportViolations(draft([toned("ng", [])]))).toEqual([
+        { kind: "unlegended-svg-tone", count: 1, faults: [{ block: 1, tone: "ng" }] },
+      ])
+      expect(kinds(draft([toned("ng", [{ tone: "ng", label: "停止" }])]))).toEqual([])
     })
 
     it("graph の色の目印も legend に無ければ、何個目の部品のどの tone かだけで言って差し戻す", () => {

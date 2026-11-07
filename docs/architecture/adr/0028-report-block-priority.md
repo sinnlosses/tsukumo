@@ -88,7 +88,7 @@
 ### SVG（論点3）
 
 **SVG は新しい `svg` の塊に上げ、座標つきの図形の並びで書く。** 書き手は SVG の文字列を書かず、
-描画の側が図形から SVG を組む。色は書けない（`chart` と同じく、テーマの色を描画の側が当てる。2026-10-21 の改訂で `tone` の5値だけ書ける）。
+描画の側が図形から SVG を組む。色は書けない（`chart` と同じく、テーマの色を描画の側が当てる。2026-10-21 の改訂で `tone` の5値と状態の3値だけ書ける）。
 
 ```ts
 {
@@ -96,11 +96,11 @@
   title: string,
   width: number, height: number,       // viewBox の大きさ
   shapes: Array<
-    | { kind: "rect", x, y, width, height, label: string, emphasis: boolean, tone: "none" | "a".."e" }
+    | { kind: "rect", x, y, width, height, label: string, emphasis: boolean, tone: "none" | "a".."e" | "ok" | "warn" | "ng" }
     | { kind: "line", x1, y1, x2, y2, arrow: boolean, label: string }
     | { kind: "text", x, y, text: string }
   >,
-  legend: Array<{ tone: "a".."e", label: string }>,
+  legend: Array<{ tone: "a".."e" | "ok" | "warn" | "ng", label: string }>,
   fold,
 }
 ```
@@ -109,8 +109,8 @@
   `svg` は試さない（段1の並びの最後）
 - 図形が `width` × `height` の外にはみ出すのは描き損じとして、`broken-mermaid` と同じく初めから差し戻す
   （順位の違反ではなく、描いた図が崩れる）
-- **改訂（2026-10-21）: 「色は書けない」を `tone` の5値に改める。** 書けるのは色の名前でなく意味の目印
-  `rect`・`line` の `tone`（`a`〜`e`。描く側が系列色 `--chart-series-1`〜`5` に当てる）と
+- **改訂（2026-10-21）: 「色は書けない」を `tone` の5値と状態の3値に改める。** 書けるのは色の名前でなく意味の目印
+  `rect`・`line` の `tone`（`a`〜`e` は描く側が系列色 `--chart-series-1`〜`5` に、`ok`・`warn`・`ng` は `--state-ok`・`--state-warn`・`--state-ng` に当てる）と
   `line` の `dashed`（点線）だけで、色そのものは書き手が持たない。
   色だけで意味を言わない（`docs/research/report-block-craft.md` の C4）ので、`tone` を使う図は
   `legend`（`tone` と名前の並び）を必ず付け、`legend` に無い `tone` は差し戻す

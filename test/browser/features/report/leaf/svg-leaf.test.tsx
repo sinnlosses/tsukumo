@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs"
+
 import { cleanup, render } from "@testing-library/react"
 import { afterEach, beforeAll, describe, expect, it } from "vitest"
 
@@ -93,4 +95,87 @@ describe("Svg の部品", () => {
     )
     expect(container.textContent).toContain("図 1")
   })
+
+  it("状態の tone は rect・line・凡例の見本に値のまま付く", () => {
+    const part = {
+      id: "s2",
+      component: "Svg",
+      title: "架空の稼働",
+      width: 340,
+      height: 110,
+      shapes: [
+        {
+          kind: "rect",
+          x: 0,
+          y: 0,
+          width: 20,
+          height: 20,
+          label: "",
+          sub: "",
+          labelAt: "center",
+          tone: "ok",
+          emphasis: false,
+        },
+        {
+          kind: "rect",
+          x: 30,
+          y: 0,
+          width: 20,
+          height: 20,
+          label: "",
+          sub: "",
+          labelAt: "center",
+          tone: "ng",
+          emphasis: false,
+        },
+        {
+          kind: "line",
+          x1: 0,
+          y1: 40,
+          x2: 50,
+          y2: 40,
+          label: "",
+          arrow: false,
+          dashed: false,
+          tone: "warn",
+        },
+      ],
+      legend: [{ tone: "ng", label: "停止" }],
+      fold: "",
+      aside: "",
+    } satisfies Extract<A2uiReportComponent, { readonly component: "Svg" }>
+    const view = directLeafViewOf(part)
+    if (view === undefined) throw new Error("一覧に Svg が無い")
+    const { container } = render(
+      <DirectLeaf
+        part={part}
+        value={{
+          captionNumber: { kind: "figure", ordinal: 1 },
+          tagTones: {},
+          gutterNotes: [],
+          mergedIntoPrevious: false,
+        }}
+        imageSource={{ kind: "none" }}
+        view={view}
+      />,
+    )
+
+    expect(
+      [...container.querySelectorAll("[data-tone]")].map((el) => el.getAttribute("data-tone")),
+    ).toEqual(["ok", "ng", "warn", "ng"])
+  })
+
+  it.each(["ok", "warn", "ng"])(
+    "状態の tone %s は Table の状態セルと同じ --state-ok・warn・ng の対応で描かれる",
+    (tone) => {
+      const css = readFileSync(
+        `${process.cwd()}/src/browser/features/report/renderer/report-notation-figure.css`,
+        "utf8",
+      )
+      const rule = new RegExp(
+        `svg \\[data-tone="${tone}"\\]\\s*\\{[^}]*--tone-color:\\s*var\\(--state-${tone}\\)`,
+      )
+      expect(css).toMatch(rule)
+    },
+  )
 })
