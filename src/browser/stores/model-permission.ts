@@ -71,21 +71,21 @@ export function useModelPermission(): ModelPermissionControl {
     permissionModeDot,
     onSetModel: (value) => {
       if (isModelAlias(value)) {
-        dispatch.session.setModel({ model: value })
+        void dispatch.session.setModel({ model: value })
       }
     },
     effort: resolveEffortSelect(shownModel, modelEffortSupport, effort),
     modelEffortSupport,
     onSetEffort: (value) => {
       if (isEffortLevel(value)) {
-        dispatch.session.setEffort({ effort: value })
+        void dispatch.session.setEffort({ effort: value })
       }
     },
     permissionMode: shownPermissionMode,
     permissionModeDangerous: isDangerousPermissionMode(shownPermissionMode),
     onSetPermissionMode: (value) => {
       if (isPermissionMode(value)) {
-        dispatch.session.setPermissionMode({ mode: value })
+        void dispatch.session.setPermissionMode({ mode: value })
       }
     },
   }

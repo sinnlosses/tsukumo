@@ -219,7 +219,7 @@ export function useScreenNav(): ScreenNavView {
       title: blocked ? FRAME_ERROR_REASON.chatModeSwitchDuringTurn : undefined,
       onGo: () => {
         if (modeDiffers && !restartRefused) {
-          dispatch.session.setChatMode({ chat: entry.chat })
+          void dispatch.session.setChatMode({ chat: entry.chat })
         }
       },
     }
@@ -265,7 +265,7 @@ export function useScreenNav(): ScreenNavView {
             return
           }
           closeDrawer()
-          dispatch.session.startNewSession()
+          void dispatch.session.startNewSession()
         },
       },
       face: drawerFace,

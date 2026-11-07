@@ -169,7 +169,7 @@ export function useSessionSwitcher(room: string, project: string): SessionSwitch
           return
         }
         onClose()
-        dispatch.session.startNewSession()
+        void dispatch.session.startNewSession()
       },
     },
   }

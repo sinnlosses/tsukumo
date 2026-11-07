@@ -111,7 +111,9 @@ export function useTurnStatus(): TurnStatusModel {
         ? {
             kind: "interrupt",
             label: INTERRUPT_LABEL,
-            onInterrupt: () => dispatch.session.interrupt(),
+            onInterrupt: () => {
+              void dispatch.session.interrupt()
+            },
           }
         : {
             kind: "send",

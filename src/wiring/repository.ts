@@ -123,7 +123,7 @@ export function wireRepository(
           ),
           close: () => {
             recommender.close()
-            return watcher.close()
+            void watcher.close()
           },
         }
       },

@@ -63,13 +63,14 @@ export function createOpenTaskReader(run: TwClaimsRunner): OpenTaskReader {
         return
       }
       running = true
-      run()
-        // tw が無い・失敗したときは、着手中のタスクが無いものとして扱う
-        .catch(() => undefined)
-        .then((output) => {
-          cached = { readAt: now, task: parseOpenTask(output) }
-          running = false
-        })
+      const settle = (output?: string): void => {
+        cached = { readAt: now, task: parseOpenTask(output) }
+        running = false
+      }
+      // tw が無い・失敗したときは、着手中のタスクが無いものとして扱う
+      void run().then(settle, () => {
+        settle()
+      })
     },
     read: () => cached?.task,
   }

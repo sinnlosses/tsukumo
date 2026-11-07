@@ -67,7 +67,7 @@ export function useCharacterPicker(
       close()
       const picked = packs.find((pack) => pack.name === name)
       if (!restartRefused && picked !== undefined && !picked.inUse) {
-        dispatch.session.switchCharacter({ name })
+        void dispatch.session.switchCharacter({ name })
       }
     },
     toggleRef,

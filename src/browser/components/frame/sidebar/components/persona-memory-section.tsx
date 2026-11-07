@@ -111,7 +111,7 @@ function PersonaMemoryForgetConfirm(props: PersonaMemoryForgetConfirmProps): Rea
   const dispatch = useSession((session) => session.dispatch)
 
   const forget = (): void => {
-    dispatch.chat.forgetRememberedLine({ line: props.line })
+    void dispatch.chat.forgetRememberedLine({ line: props.line })
     props.onClose()
   }
 

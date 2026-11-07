@@ -159,7 +159,7 @@ export function useComposer(): ComposerModel {
       setBlockedClearText(trimmed)
       return
     } else {
-      dispatch.session.prompt({ text: trimmed, images: promptImage.images, routing })
+      void dispatch.session.prompt({ text: trimmed, images: promptImage.images, routing })
     }
     replaceDraft(EMPTY_DRAFT)
     if (sessionId !== undefined) {
@@ -187,7 +187,9 @@ export function useComposer(): ComposerModel {
       return {
         kind: "ended",
         text: `会話が終了しました（理由: ${endedReason}）。新しく始めると、また頼めます`,
-        onRestart: () => dispatch.session.startNewSession(),
+        onRestart: () => {
+          void dispatch.session.startNewSession()
+        },
       }
     }
     if (inquiry.kind !== "question" && blockedClearText === draft.text.trim()) {
@@ -270,7 +272,9 @@ export function useComposer(): ComposerModel {
     newSession: {
       disabled: restartRefused,
       title: restartRefused ? FRAME_ERROR_REASON.sessionSwitchDuringTurn : NEW_SESSION_LABEL,
-      onStart: () => dispatch.session.startNewSession(),
+      onStart: () => {
+        void dispatch.session.startNewSession()
+      },
     },
   }
 }

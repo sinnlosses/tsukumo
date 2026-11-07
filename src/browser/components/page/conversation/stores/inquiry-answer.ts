@@ -221,7 +221,7 @@ function permissionModel(
       draft.setAnswer({ ...draft.answer, selections: [[label]] })
     },
     onChoose: (label) => {
-      dispatch.session.answer({
+      void dispatch.session.answer({
         id: pending.id,
         answer: { kind: label === ALLOW_LABEL ? "allow" : "deny" },
       })
@@ -230,7 +230,7 @@ function permissionModel(
       if (chosen === undefined) {
         return
       }
-      dispatch.session.answer({
+      void dispatch.session.answer({
         id: pending.id,
         answer: { kind: chosen === ALLOW_LABEL ? "allow" : "deny" },
       })
@@ -275,7 +275,7 @@ function questionModel(
       })
       return
     }
-    dispatch.session.answer({
+    void dispatch.session.answer({
       id: pending.id,
       answer: {
         kind: "answers",

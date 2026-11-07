@@ -144,7 +144,7 @@ export function useChatView(): ChatViewModel {
       if (turnInProgress) {
         return
       }
-      dispatch.session.nudge()
+      void dispatch.session.nudge()
     },
     logRef,
     // 日の境目と行ごとの時刻は、画面を見ている人のタイムゾーンで決める。

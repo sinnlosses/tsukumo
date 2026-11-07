@@ -97,7 +97,7 @@ export function useSettings(): ScreenNavSettings {
 
   /** 4つで1組なので、変えた1つに、ほかの3つはいまの値を写して送る。 */
   function sendSessionDefault(change: Partial<SessionDefault>): void {
-    dispatch.session.setSessionDefault({
+    void dispatch.session.setSessionDefault({
       model: sessionDefault.model,
       effort: sessionDefault.effort,
       permissionMode: sessionDefault.permissionMode,

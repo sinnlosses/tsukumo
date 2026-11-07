@@ -40,7 +40,7 @@ export function TaskRunConfirm(props: TaskRunConfirmProps): ReactElement {
   const prompt = requestPromptOf(target, loadLaunchSkill())
 
   const run = (): void => {
-    dispatch.session.prompt({ text: prompt, images: [] })
+    void dispatch.session.prompt({ text: prompt, images: [] })
     props.onClose("sent")
   }
   const dismiss = (): void => {

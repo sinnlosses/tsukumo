@@ -348,7 +348,7 @@ function reviewButtonOf(
       if (availability.kind !== "available") {
         return
       }
-      dispatch.session.reflectAchievement({ date: daySwitch.date })
+      void dispatch.session.reflectAchievement({ date: daySwitch.date })
     },
   }
 }

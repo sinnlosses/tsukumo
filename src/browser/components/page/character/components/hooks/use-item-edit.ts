@@ -73,7 +73,7 @@ export function useItemEdit(): ItemSectionModel | undefined {
             .flatMap((seats) => SEAT_KEYS.map((key) => seats[key]))
             .filter((placed) => placed?.id === removing.id).length,
           onConfirm: () => {
-            dispatch.item.remove({ id: removing.id })
+            void dispatch.item.remove({ id: removing.id })
             setRemovingId(undefined)
           },
           onCancel: () => {
@@ -91,9 +91,9 @@ export function useItemEdit(): ItemSectionModel | undefined {
       options: items,
       onPick: (id) => {
         if (id === "") {
-          dispatch.item.clearSeat({ pack, seat })
+          void dispatch.item.clearSeat({ pack, seat })
         } else {
-          dispatch.item.setSeat({ pack, seat, id })
+          void dispatch.item.setSeat({ pack, seat, id })
         }
       },
     })),

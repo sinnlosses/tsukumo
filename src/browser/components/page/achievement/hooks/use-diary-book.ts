@@ -339,7 +339,7 @@ function blankReviewOf(
       if (availability.kind !== "available") {
         return
       }
-      dispatch.session.reflectAchievement({ date })
+      void dispatch.session.reflectAchievement({ date })
       onDateSelected(date)
       onClose()
     },

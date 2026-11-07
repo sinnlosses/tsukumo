@@ -55,7 +55,7 @@ export function useCharacterEdit(): CharacterEditModel {
   const selected = useSelectedPack()
   const restartRefused = useRestartRefused()
   const screenAccent = useHeldAccent<AccentTarget>(({ pack, target, color }) => {
-    dispatch.characterPack.setAccent({ pack, target, color })
+    void dispatch.characterPack.setAccent({ pack, target, color })
   })
   // 差し色が定義に無いパックの初期値（`--accent`）。読みは描画の外（マウント時の1回）に置く。
   const [accentFallback] = useState(readAccentColor)
@@ -96,7 +96,7 @@ export function useCharacterEdit(): CharacterEditModel {
       )
     },
     clear: (expression) => {
-      dispatch.characterPack.clearPortrait({ pack, expression })
+      void dispatch.characterPack.clearPortrait({ pack, expression })
     },
   })
 
@@ -127,7 +127,7 @@ export function useCharacterEdit(): CharacterEditModel {
         kind: "shown",
         onClick: () => {
           screenAccent.hold(pack, "chat", { kind: "reset" })
-          dispatch.characterPack.clearChatAccent({ pack })
+          void dispatch.characterPack.clearChatAccent({ pack })
         },
       }
     : { kind: "hidden" }
@@ -149,7 +149,7 @@ export function useCharacterEdit(): CharacterEditModel {
       })
     },
     onClear: () => {
-      dispatch.characterPack.clearFace({ pack })
+      void dispatch.characterPack.clearFace({ pack })
     },
   }
 
@@ -173,7 +173,7 @@ export function useCharacterEdit(): CharacterEditModel {
       })
     },
     onClear: () => {
-      dispatch.characterPack.clearMini({ pack })
+      void dispatch.characterPack.clearMini({ pack })
     },
   }
 
@@ -198,7 +198,7 @@ export function useCharacterEdit(): CharacterEditModel {
       })
     },
     onClear: () => {
-      dispatch.characterPack.clearBackground({ pack })
+      void dispatch.characterPack.clearBackground({ pack })
     },
   }
 
@@ -225,7 +225,7 @@ export function useCharacterEdit(): CharacterEditModel {
           disabled: restartRefused,
           title: restartRefused ? SWITCH_BLOCKED_TITLE : undefined,
           onSwitch: () => {
-            dispatch.session.switchCharacter({ name: pack })
+            void dispatch.session.switchCharacter({ name: pack })
           },
         },
     editProfile: disabled
@@ -235,7 +235,7 @@ export function useCharacterEdit(): CharacterEditModel {
           name: character.definedName ?? "",
           tagline: character.tagline ?? "",
           onSubmit: (name, tagline) => {
-            dispatch.characterPack.setProfile({ pack, name, tagline })
+            void dispatch.characterPack.setProfile({ pack, name, tagline })
           },
         },
     editPersona: disabled

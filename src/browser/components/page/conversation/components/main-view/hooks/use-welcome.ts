@@ -43,7 +43,7 @@ export function useWelcome(): WelcomeModel {
 
   function onStart(card: WelcomeCard): void {
     void dispatch.diagnostic.reportRecommendationPressed({ kind: card.kind })
-    dispatch.session.prompt({ text: card.request, images: [] })
+    void dispatch.session.prompt({ text: card.request, images: [] })
   }
 
   useEventListener(document, "keydown", (event) => {

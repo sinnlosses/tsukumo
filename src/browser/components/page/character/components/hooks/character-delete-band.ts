@@ -34,7 +34,7 @@ export function deleteBandOf(
     disabled: inUse,
     title: inUse ? copy.blockedTitle : undefined,
     onSubmit: () => {
-      dispatch.characterPack.delete({ pack: character.pack })
+      void dispatch.characterPack.delete({ pack: character.pack })
     },
   }
 }

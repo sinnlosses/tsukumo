@@ -202,7 +202,7 @@ export function RepositoryFileLinkProvider(props: RepositoryFileLinkProviderProp
   const link: RepositoryFileLink = {
     files,
     open: (path) => {
-      dispatch.host.openFile({ path })
+      void dispatch.host.openFile({ path })
     },
     readExcerpt: (request) => rpc.repository.fileExcerpt.call(request),
     codeBlockStart: (request) => rpc.repository.codeBlockStart.call(request),

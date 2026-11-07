@@ -56,7 +56,7 @@ describe("appendChatArchiveEntry", () => {
   it("雑談の依頼はそのままの文面で渡る（project は持たない）", () => {
     const { archive, calls } = recordingChatArchive()
 
-    appendEntryWithoutShelf(archive, PACK, "chat", FICTIONAL_PROJECT, 1_000, {
+    void appendEntryWithoutShelf(archive, PACK, "chat", FICTIONAL_PROJECT, 1_000, {
       kind: "request",
       text: "架空の依頼",
       images: [],
@@ -80,7 +80,7 @@ describe("appendChatArchiveEntry", () => {
   it("雑談のセリフは表情つきで渡る", () => {
     const { archive, calls } = recordingChatArchive()
 
-    appendEntryWithoutShelf(archive, PACK, "chat", FICTIONAL_PROJECT, 1_000, {
+    void appendEntryWithoutShelf(archive, PACK, "chat", FICTIONAL_PROJECT, 1_000, {
       kind: "speech",
       text: "架空のセリフ",
       expression: "proud",
@@ -104,7 +104,7 @@ describe("appendChatArchiveEntry", () => {
     const { archive, calls } = recordingChatArchive()
     const text = "あ".repeat(CHAT_MEMORY_BUDGET.workExcerptChars)
 
-    appendEntryWithoutShelf(archive, PACK, "work", FICTIONAL_PROJECT, 1_000, {
+    void appendEntryWithoutShelf(archive, PACK, "work", FICTIONAL_PROJECT, 1_000, {
       kind: "request",
       text,
       images: [],
@@ -129,7 +129,7 @@ describe("appendChatArchiveEntry", () => {
     const { archive, calls } = recordingChatArchive()
     const text = "あ".repeat(CHAT_MEMORY_BUDGET.workExcerptChars + 1)
 
-    appendEntryWithoutShelf(archive, PACK, "work", FICTIONAL_PROJECT, 1_000, {
+    void appendEntryWithoutShelf(archive, PACK, "work", FICTIONAL_PROJECT, 1_000, {
       kind: "request",
       text,
       images: [],
@@ -143,7 +143,7 @@ describe("appendChatArchiveEntry", () => {
     // 各絵文字は UTF-16 で2コード単位だが、コードポイントとしては1文字。
     const text = "😀".repeat(CHAT_MEMORY_BUDGET.workExcerptChars + 1)
 
-    appendEntryWithoutShelf(archive, PACK, "work", FICTIONAL_PROJECT, 1_000, {
+    void appendEntryWithoutShelf(archive, PACK, "work", FICTIONAL_PROJECT, 1_000, {
       kind: "request",
       text,
       images: [],
@@ -156,7 +156,7 @@ describe("appendChatArchiveEntry", () => {
     const { archive, calls } = recordingChatArchive()
     const text = "あ".repeat(CHAT_MEMORY_BUDGET.workExcerptChars + 1)
 
-    appendEntryWithoutShelf(archive, PACK, "work", FICTIONAL_PROJECT, 1_000, {
+    void appendEntryWithoutShelf(archive, PACK, "work", FICTIONAL_PROJECT, 1_000, {
       kind: "speech",
       text,
       expression: "default",
@@ -192,11 +192,11 @@ describe("appendChatArchiveEntry", () => {
   it("依頼・セリフ以外のイベントは渡さない", () => {
     const { archive, calls } = recordingChatArchive()
 
-    appendEntryWithoutShelf(archive, PACK, "chat", FICTIONAL_PROJECT, 1_000, {
+    void appendEntryWithoutShelf(archive, PACK, "chat", FICTIONAL_PROJECT, 1_000, {
       kind: "turn-finished",
       outcome: { kind: "completed" },
     })
-    appendEntryWithoutShelf(archive, PACK, "chat", FICTIONAL_PROJECT, 1_000, {
+    void appendEntryWithoutShelf(archive, PACK, "chat", FICTIONAL_PROJECT, 1_000, {
       kind: "utterance",
       text: "本文はここに出ない",
     })

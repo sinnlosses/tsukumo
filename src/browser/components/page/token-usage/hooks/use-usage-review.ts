@@ -187,10 +187,10 @@ export function useUsageReview(): UseUsageReviewResult {
   const face = characterFaceInfo(character)
   const start = () => {
     setViewingPrevious(false)
-    dispatch.usageReview.start()
+    void dispatch.usageReview.start()
   }
   const interrupt = () => {
-    dispatch.usageReview.interrupt()
+    void dispatch.usageReview.interrupt()
   }
   const elapsedText = (startedAt: number): string =>
     formatElapsed(Math.max(0, Math.floor((now - startedAt) / 1000)))
