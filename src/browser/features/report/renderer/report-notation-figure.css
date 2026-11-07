@@ -48,7 +48,7 @@
   }
   & .report-compare-figure-side {
     min-width: 0;
-    padding: var(--space-sm) var(--space-md) var(--space-md);
+    padding: var(--space-sm) var(--space-md);
     border: 1px solid var(--report-chunk-rule, var(--rule-soft));
     border-radius: var(--radius-md);
     background: var(--surface-raised);

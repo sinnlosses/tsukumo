@@ -293,7 +293,7 @@
     margin: var(--report-block-gap) 0;
     font-family: var(--font-code);
     font-size-adjust: none;
-    padding: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
     background: var(--ground);
     border-radius: var(--radius-md);
     white-space: pre-wrap;
@@ -327,7 +327,7 @@
     display: flex;
     align-items: center;
     gap: var(--space-sm);
-    padding: var(--space-xs) var(--space-sm) var(--space-xs) var(--space-sm);
+    padding: var(--space-xs) var(--space-md);
     border-bottom: 1px solid var(--rule-quiet);
     font-family: var(--font-code);
     font-size: var(--font-label);
