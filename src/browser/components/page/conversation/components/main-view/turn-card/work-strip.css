@@ -203,7 +203,7 @@
   z-index: 2;
   box-sizing: border-box;
   width: min(18.75rem, calc(100% - 1rem));
-  padding: var(--space-md) var(--space-lg);
+  padding: var(--inset-card);
   box-shadow: var(--shadow-raised);
   color: var(--ink-soft);
   cursor: auto;

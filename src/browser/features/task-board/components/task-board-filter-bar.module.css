@@ -5,7 +5,7 @@
   --task-board-filter-gap: 10px;
   /* 12px に丸めると 360px で一覧の欄に収まる行が減る */
   gap: var(--task-board-filter-gap);
-  padding: var(--space-md) var(--space-lg);
+  padding: var(--inset-card);
   border-bottom: 1px solid var(--rule-quiet);
 }
 .task-board-search {

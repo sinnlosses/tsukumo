@@ -83,7 +83,7 @@
   flex-shrink: 0;
 }
 .usage-review-stop {
-  padding: var(--space-sm) var(--space-md);
+  padding: var(--inset-control);
   border: 1px solid var(--usage-rule);
   border-radius: var(--radius-md);
   background: none;
@@ -221,7 +221,7 @@
 /* 「もう一度見てもらう」。
    中立の枠にする。押せる区画の染めはすでに区画全体が持っているので、ここまで `accent` を足すと強すぎる。 */
 .usage-review-retry {
-  padding: var(--space-sm) var(--space-md);
+  padding: var(--inset-control);
   border: 1px solid var(--usage-rule);
   border-radius: var(--radius-md);
   background: none;
@@ -341,7 +341,7 @@
 }
 /* 主ボタン。`--usage-rule` に `--accent` を重ねるだけ（素の16進は増やさない）。 */
 .usage-review-proposal-primary {
-  padding: var(--space-sm) var(--space-md);
+  padding: var(--inset-control);
   border: 1px solid color-mix(in srgb, var(--usage-rule), var(--accent) 45%);
   border-radius: var(--radius-md);
   background: none;

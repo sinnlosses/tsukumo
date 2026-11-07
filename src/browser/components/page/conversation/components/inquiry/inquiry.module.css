@@ -9,7 +9,7 @@
   flex-direction: column;
   max-height: calc(100cqh - var(--turn-card-head-height, 0px) - 1.5rem);
   margin: var(--space-md) 0 0;
-  padding: var(--space-md) var(--space-lg);
+  padding: var(--inset-card);
   border: 1px solid var(--state-warn);
   border-radius: var(--radius-lg);
   /* 地は塗りつぶさず、面の色に警告色をごく薄く混ぜる。 */
@@ -36,7 +36,7 @@
   height: calc(100vh - 2rem);
   max-height: none;
   margin: auto;
-  padding: var(--space-md) var(--space-lg);
+  padding: var(--inset-card);
   border: 1px solid var(--state-warn);
   border-radius: var(--radius-lg);
   background: color-mix(in srgb, var(--surface), var(--state-warn) 6%);
@@ -195,7 +195,7 @@
 .inquiry-option {
   composes: surface-edge-rule surface-radius-md surface-tone-surface from "../../../../ui/surface/surface-face.module.css";
   min-width: 0;
-  padding: var(--space-sm) var(--space-md);
+  padding: var(--inset-control);
 }
 /* 選んだカード。枠の色と太さで示す（色だけに頼らない）。 */
 .inquiry-option.is-selected {

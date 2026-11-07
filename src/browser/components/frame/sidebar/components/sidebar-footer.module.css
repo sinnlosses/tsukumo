@@ -41,7 +41,7 @@
   bottom: calc(100% + 0.4rem);
   left: 0.75rem;
   z-index: 2;
-  padding: var(--space-md) var(--space-lg);
+  padding: var(--inset-card);
   box-shadow: var(--shadow-overlay);
   container-type: inline-size;
 }

@@ -79,7 +79,7 @@
   height: calc(100vh - 2rem);
   max-height: none;
   margin: auto;
-  padding: var(--space-md) var(--space-lg);
+  padding: var(--inset-card);
   border: 1px solid var(--rule-soft);
   border-radius: var(--radius-lg);
   background: var(--surface);

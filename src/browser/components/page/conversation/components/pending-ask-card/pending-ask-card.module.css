@@ -120,7 +120,7 @@
   gap: var(--space-sm);
   min-width: 0;
   min-height: 44px;
-  padding: var(--space-sm) var(--space-md);
+  padding: var(--inset-control);
   border: 1px solid var(--rule);
   border-radius: var(--radius-lg);
   background: transparent;

@@ -61,7 +61,7 @@
 /* ステップは縦に1本で積む（Z字に読ませない）。カードの枠は「ひとかたまり」の区切りを見せるためだけに使い、番号は振らない。 */
 .main-step {
   margin: 0;
-  padding: var(--space-md) var(--space-lg);
+  padding: var(--inset-card);
   min-width: 0;
 }
 .main-step {

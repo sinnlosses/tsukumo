@@ -46,7 +46,7 @@
   composes: surface-edge-rule surface-radius-lg surface-tone-surface from "../../../../ui/surface/surface-face.module.css";
   /* 中身の側が「領域の内側の余白」を知るための変数。
      メインビューのカードの頭（`position: sticky`）はこれだけ上へずらして、転がっても余白の帯から本文が覗かないようにする（`main-view.module.css`）。 */
-  --region-padding: 0.75rem;
+  --region-padding: var(--gutter-region);
   min-width: 0;
   min-height: 0;
   padding: var(--region-padding);

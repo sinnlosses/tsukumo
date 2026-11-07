@@ -183,6 +183,17 @@
   --space-3xl: 2rem;
   --space-4xl: 3rem;
 
+  /* 余白の意味のトークン。inset は部品の内側、stack は縦に並ぶものの間隔、inline は横に並ぶものの間隔、gutter は領域・ページの縁の余白。 */
+  --inset-control: var(--space-sm) var(--space-md);
+  --inset-card: var(--space-md) var(--space-lg);
+  --stack-tight: var(--space-xs);
+  --stack-block: var(--space-sm);
+  --stack-section: var(--space-md);
+  --inline-tight: var(--space-xs);
+  --inline-control: var(--space-sm);
+  --gutter-region: var(--space-md);
+  --gutter-page: var(--space-lg);
+
   --radius-sm: 0.25rem;
   --radius-md: 0.5rem;
   --radius-lg: 0.75rem;
@@ -199,7 +210,7 @@
 
   /* 画面の縁の余白（body の padding）。
      帯はこの余白の外へはみ出して画面の端から端まで出るので、帯（screen-nav.module.css）と会話の画面の grid（layout.module.css）も読む。 */
-  --page-padding: 1rem;
+  --page-padding: var(--gutter-page);
 
   /* 画面のナビの帯が最上部で奪う高さ。帯の外寸は帯の地 + 下の罫線の2つの和。
      帯（screen-nav.module.css）と、そのぶん縮む会話の画面の grid（layout.module.css）の両方が読むので、値はここに1つだけ置く（狭い画面では帯を出さず、下の @media の縦の flex が grid の高さを決める）。
