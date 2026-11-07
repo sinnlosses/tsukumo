@@ -4,8 +4,6 @@
 import { createRef } from "react"
 
 import { parseSessionId } from "../../../../shared/session/session-id.ts"
-import type { CurrentWork } from "../../../features/current-work/use-current-work.ts"
-import type { ModelPermissionControl } from "../../../stores/model-permission.ts"
 import type {
   ScreenNavGate,
   ScreenNavParts,
@@ -42,43 +40,11 @@ function gate(
     icon,
     href: "#design",
     active,
-    returnMark: false,
+    returnMark: undefined,
     disabled: false,
     title: undefined,
     onGo: noop,
   }
-}
-
-const WORK: CurrentWork = {
-  state: "running",
-  wordLabel: "作業中",
-  mark: "●",
-  chatIdle: false,
-  pendingHint: { kind: "none" },
-  phase: { kind: "shown", label: "2/4 実装" },
-  summary: { kind: "text", label: "READMEを編集している" },
-  runningStep: { kind: "none" },
-  backgroundList: { kind: "none" },
-  plan: { kind: "none" },
-  stepList: { kind: "no-request" },
-  open: false,
-  onToggle: noop,
-  onClose: noop,
-  toggleRef: noop,
-}
-
-const MODEL_PERMISSION: ModelPermissionControl = {
-  model: "sonnet",
-  modelDot: "none",
-  effortDot: "none",
-  permissionModeDot: "none",
-  onSetModel: noop,
-  effort: { kind: "known", value: "medium", options: ["low", "medium", "high"] },
-  modelEffortSupport: [],
-  onSetEffort: noop,
-  permissionMode: "default",
-  permissionModeDangerous: false,
-  onSetPermissionMode: noop,
 }
 
 const PARTS: ScreenNavParts = {
@@ -115,8 +81,6 @@ const PARTS: ScreenNavParts = {
     gate("トークン消費", "token", "token-usage", false),
     gate("実績", "achievement", "achievement", true),
   ],
-  modelPermission: MODEL_PERMISSION,
-  work: WORK,
   settings: {
     open: false,
     onOpen: noop,

@@ -8,7 +8,7 @@ import {
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../../../src/shared/session/session-state.ts"
-import { renderScreenNav, workToggle } from "../../../fixture/current-work.tsx"
+import { renderCurrentWork, workToggle } from "../../../fixture/current-work.tsx"
 import { requestEvent } from "../../../fixture/session-event.ts"
 import {
   finishedToolStatus,
@@ -39,9 +39,9 @@ function listLines(selector: string): (string | null)[] {
   return [...workList().querySelectorAll(selector)].map((node) => node.textContent)
 }
 
-describe("いまの作業（帯の札と、押すと開く依頼の手順の一覧）。語・要約・段の出し分けは hooks/use-current-work.test.ts", () => {
+describe("いまの作業（押すと開く依頼の手順の一覧）。語・要約・段の出し分けは hooks/use-current-work.test.ts", () => {
   it("依頼が一度も無ければ、開くと「まだ依頼が無い」と出る", () => {
-    renderScreenNav()
+    renderCurrentWork()
 
     fireEvent.click(workToggle())
 
@@ -67,7 +67,7 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
     } satisfies SessionState["turn"]
 
     it("開くと「背景で動いているもの」に種類と説明が並び、終わると札の要約と一覧から消える", () => {
-      renderScreenNav({
+      renderCurrentWork({
         turn: FINISHED_TURN,
         records: [requestRecord()],
         backgroundTasks: [SHELL_TASK, AGENT_TASK],
@@ -96,7 +96,7 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
     })
 
     it("ターンが走っている間も、一覧にはバックグラウンドタスクが出る", () => {
-      renderScreenNav({
+      renderCurrentWork({
         turn: { kind: "running", startedAt: 0 },
         records: [requestRecord()],
         backgroundTasks: [SHELL_TASK],
@@ -110,7 +110,7 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
 
   it("押すと一覧が開き、実行中の手順の全文（切り詰めない）が出る", () => {
     const longCommand = `echo ${"a".repeat(200)}`
-    renderScreenNav({
+    renderCurrentWork({
       turn: { kind: "running", startedAt: 0 },
       records: [
         requestRecord(),
@@ -125,7 +125,7 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
   })
 
   it("一覧に済み・実行中が新しい→古いの順で並び、済んだ手順には所要時間が付く", () => {
-    renderScreenNav({
+    renderCurrentWork({
       turn: { kind: "running", startedAt: 0 },
       records: [
         requestRecord(),
@@ -167,7 +167,7 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
     ]
 
     it("飛ばした段は「/」と取り消し線の class を持ち、済んだ段は「✓」のまま", () => {
-      renderScreenNav({
+      renderCurrentWork({
         turn: { kind: "running", startedAt: 0 },
         records: [
           requestRecord(),
@@ -194,7 +194,7 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
     })
 
     it("一覧の頭に全部の段が ✓・番号で並び、手順は始まったときの段ごとに区切られる", () => {
-      renderScreenNav({ turn: { kind: "running", startedAt: 0 }, records: PLANNED_RECORDS })
+      renderCurrentWork({ turn: { kind: "running", startedAt: 0 }, records: PLANNED_RECORDS })
 
       fireEvent.click(workToggle())
 
@@ -210,7 +210,7 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
     })
 
     it("委譲先のフェーズの範囲があれば、前・本・後の群ごとの行に群の中の番号で並ぶ", () => {
-      renderScreenNav({
+      renderCurrentWork({
         turn: { kind: "running", startedAt: 0 },
         records: [
           requestRecord(),
@@ -241,7 +241,7 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
       const bash = (id: string) =>
         toolRecord({ toolUseId: id, name: "Bash", input: { command: `echo ${id}` } })
       const phases = ["架空の段A", "架空の段B"]
-      renderScreenNav({
+      renderCurrentWork({
         turn: { kind: "running", startedAt: 0 },
         records: [
           requestRecord(),
@@ -271,7 +271,7 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
     })
 
     it("ターンが終わると、一覧には前の依頼のワークプランが残る", () => {
-      renderScreenNav({
+      renderCurrentWork({
         turn: { kind: "finished", startedAt: 0, finishedAt: 1, ending: { kind: "ended" } },
         records: [...PLANNED_RECORDS, workPlanRecord({ phases: PHASES, current: 3 })],
       })
@@ -283,7 +283,7 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
   })
 
   it("復元した手順（開始・終了が restored）は所要時間を出さない", () => {
-    renderScreenNav({
+    renderCurrentWork({
       turn: { kind: "running", startedAt: 0 },
       records: [
         requestRecord(),
@@ -318,7 +318,7 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
         }),
       ),
     ]
-    renderScreenNav({ turn: { kind: "running", startedAt: 0 }, records })
+    renderCurrentWork({ turn: { kind: "running", startedAt: 0 }, records })
 
     fireEvent.click(workToggle())
 
@@ -354,7 +354,7 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
         }),
       ),
     ]
-    renderScreenNav({ records })
+    renderCurrentWork({ records })
 
     fireEvent.click(workToggle())
 
@@ -364,7 +364,7 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
   })
 
   it("失敗した手順は開くと出力・引数の順に読める（レポートには出さないため）", () => {
-    renderScreenNav({
+    renderCurrentWork({
       records: [
         requestRecord(),
         toolRecord({
@@ -410,7 +410,7 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
       (current, event) => applySessionEvent(current, event, 0),
       INITIAL_SESSION_STATE,
     )
-    renderScreenNav({ records: state.records })
+    renderCurrentWork({ records: state.records })
 
     fireEvent.click(workToggle())
 
@@ -420,7 +420,7 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
   })
 
   it("結果が届いていない手順は、ターンが終わっていても実行中のまま出す", () => {
-    renderScreenNav({
+    renderCurrentWork({
       turn: { kind: "finished", startedAt: 0, finishedAt: 100, ending: { kind: "ended" } },
       records: [
         requestRecord(),
@@ -434,7 +434,7 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
   })
 
   it("セッションが終わると、実行中だった手順は一覧から消える", () => {
-    renderScreenNav({
+    renderCurrentWork({
       endedReason: "セッションが終了した",
       records: [
         requestRecord(),

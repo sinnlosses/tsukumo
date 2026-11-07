@@ -57,7 +57,7 @@ Network タブで `/ws` の upgrade が101を返し、`hello` フレーム（購
    `node scripts/capture/open-view.ts <URL>` で開き直せる
 3. **画面の入力欄から依頼を打つ**。送信できること、実行中に中断できること
 4. **再読み込みなしに**吹き出しにセリフが出て、メインビューにレポートが流れること
-5. ツールを使う依頼で、**帯の「いまの作業」のカードに進行が出て、押すと依頼の手順の一覧が開く**こと
+5. ツールを使う依頼で、**会話の画面の進み具合のバーに進行が出て、狭い画面では頭の「手順 n」を押すと依頼の手順の一覧が開く**こと
 6. 許可の要る操作を頼み、**メインビューのプログレスバーの下にお伺いのカードが出て、タブのタイトルが変わり、
    カードを選んで「これで答える」を押すか、入力欄の帯の「お伺いへ」から 1 と Enter で答えると作業が続く**こと
 7. ウィンドウの幅を変えて、**折り返しがブラウザ側で追従する**こと
@@ -117,13 +117,13 @@ node scripts/capture/capture-view.ts --scene report --size 1400x900 --hash '#tok
 押したあと、見開きの本文が現れるまで待ってから撮る（`achievement.day` が返るまで見開きは
 「…」のまま。本文が現れなければ撮らずに落ちる）。
 
-**帯の「いまの作業」の実行中・失敗・バックグラウンドタスク、表情やキャラクターを消す確認のモーダル、
+**いまの作業の実行中・失敗・バックグラウンドタスク、表情やキャラクターを消す確認のモーダル、
 日記帳の見開きは、`capture-catalog.ts` に専用の件があるのでそれぞれ手で操作を当てなくてよい**
 （`--only <名前>` で1件だけ撮れる）。`current-work-running` / `current-work-failed` は、
 名指しで直接起こしても状態が出るよう**自分の `request` を持つ場面**
 （`fixture/fake-session/` の同名の場面のファイル）を使う——`request` の無い場面は
 `src/shared/session/turn-step.ts` の `currentTurnSteps` が「依頼が一度も無い」に畳んで、途中の
-`tool-started` があっても帯の一覧に出ない。`current-work-background` は既存の `background-task`
+`tool-started` があっても一覧に出ない。`current-work-background` は既存の `background-task`
 場面をそのまま使う。`portrait-clear-confirm` / `character-delete-confirm` /
 `diary-book` は**件専用の隔離ホーム**（`--out` の下の `home/`）を使う——`HomeSetup`
 （`scripts/capture/capture-catalog.ts`）が、消せるキャラクターパック（同梱の `chou` を別名でコピー）や

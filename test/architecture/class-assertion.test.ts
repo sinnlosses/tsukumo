@@ -22,7 +22,7 @@ import { listSourceFiles, parseSourceProgram } from "./source-file.ts"
 // 既存はファイルごとの現在の件数を上限に固定し、増やさない。減らしたら上限も下げる。
 const ALLOWED_COUNTS: Readonly<Record<string, number>> = {
   "test/browser/components/frame/screen-nav/components/phone-head.test.tsx": 18,
-  "test/browser/components/frame/screen-nav/screen-nav.test.tsx": 17,
+  "test/browser/components/frame/screen-nav/screen-nav.test.tsx": 16,
   "test/browser/components/page/achievement/components/day-switch/day-switch.test.tsx": 3,
   "test/browser/components/page/achievement/components/diary-book/diary-book.test.tsx": 2,
   "test/browser/components/page/achievement/components/diary-section/diary-section.test.tsx": 4,
@@ -55,7 +55,7 @@ const ALLOWED_COUNTS: Readonly<Record<string, number>> = {
   "test/browser/components/ui/stack/stack.test.tsx": 1,
   "test/browser/components/ui/text/text.test.tsx": 1,
   "test/browser/features/current-work/current-work-detail.test.tsx": 17,
-  "test/browser/features/current-work/current-work.test.tsx": 18,
+  "test/browser/features/current-work/current-work.test.tsx": 11,
   "test/browser/features/report/renderer/markdown-renderer-code.test.tsx": 27,
   "test/browser/features/report/renderer/markdown-renderer-html.test.tsx": 1,
   "test/browser/features/report/renderer/markdown-renderer-image.test.tsx": 10,

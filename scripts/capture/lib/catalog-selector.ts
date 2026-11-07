@@ -67,13 +67,6 @@ export const DRAWER_TASKS_TAB_SELECTOR = '[role="tab"]:has-text("タスク")'
 export const TASK_BOARD_SELECTOR = 'button:has-text("一覧を見る")'
 
 /**
- * 帯の「いまの作業」の外枠（`data-work-state` を持つ div）の中のボタン（`CurrentWorkPill`）。
- * 見えているものだけを `:visible` で絞る。狭い画面には帯の札が無いので、この手は空振りする
- * （`applyPreparations` の `continue` が当たらなかった手を飛ばす）。
- */
-export const WORK_TOGGLE_SELECTOR = "[data-work-state] button[aria-controls]:visible"
-
-/**
  * 書き終わりの知らせ（`DiaryNotice`）の「日記帳で開く」。成果の画面（`#achievement`）
  * だけに出る（`App` の `<Activity>`）。
  */

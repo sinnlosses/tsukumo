@@ -1,8 +1,8 @@
 // Claude Code のモデルのエイリアス（`MODEL_ALIASES`）を、画面に出す日本語ラベルにする。
 
-import { sameModel } from "../../shared/session/model-name.ts"
-import type { ModelAlias } from "../../shared/session/run-setting-value.ts"
-import type { ModelEffortSupport } from "../../shared/session/session-event-setting.ts"
+import { sameModel } from "../../../shared/session/model-name.ts"
+import type { ModelAlias } from "../../../shared/session/run-setting-value.ts"
+import type { ModelEffortSupport } from "../../../shared/session/session-event-setting.ts"
 
 /**
  * モデルのエイリアスと、日本語ラベル。

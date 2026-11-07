@@ -5,7 +5,7 @@
       "afterMs": 0,
       "event": {
         "kind": "request",
-        "text": "帯の「失敗」を確かめたい（架空の依頼）",
+        "text": "「失敗」を確かめたい（架空の依頼）",
         "images": []
       }
     },
@@ -49,7 +49,7 @@
       "afterMs": 600,
       "event": {
         "kind": "utterance",
-        "text": "## 帯の「失敗」を確かめる場面\n\nこれは架空の本文で、実物の会話ではない。**自分の `request` を持つ**ので `TSUKUMO_FAKE_SCENE` で直接起こしても、ターンが終わったあとの「前の依頼での手順」に失敗した1件が残る（`scripts/capture/capture-catalog.ts` の `current-work-failed`）。\n"
+        "text": "## 「失敗」を確かめる場面\n\nこれは架空の本文で、実物の会話ではない。**自分の `request` を持つ**ので `TSUKUMO_FAKE_SCENE` で直接起こしても、ターンが終わったあとの「前の依頼での手順」に失敗した1件が残る（`scripts/capture/capture-catalog.ts` の `current-work-failed`）。\n"
       }
     },
     {

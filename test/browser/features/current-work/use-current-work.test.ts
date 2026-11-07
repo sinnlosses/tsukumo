@@ -261,3 +261,13 @@ describe("useCurrentWork の札の今の段", () => {
     )
   })
 })
+
+describe("useCurrentWork の chatIdle", () => {
+  it("雑談中の依頼待ちだけが真になる", () => {
+    expect(renderCurrentWork({ chatMode: true }).chatIdle).toBe(true)
+    expect(renderCurrentWork({ chatMode: false }).chatIdle).toBe(false)
+    expect(
+      renderCurrentWork({ chatMode: true, turn: RUNNING, records: [requestRecord()] }).chatIdle,
+    ).toBe(false)
+  })
+})

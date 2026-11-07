@@ -26,12 +26,12 @@ import {
   modelEffortNote,
   type EffortSelect,
 } from "../../domain/effort-label.ts"
-import { MODEL_LABELS, modelDescription } from "../../domain/model-label.ts"
+import { MODEL_LABELS, modelDescription } from "./model-label.ts"
 import {
   BYPASS_PERMISSIONS_NOTICE,
   PERMISSION_MODE_LABELS,
   permissionModeShieldFill,
-} from "../../domain/permission-mode-label.ts"
+} from "./permission-mode-label.ts"
 import styles from "./run-setting-option.module.css"
 import selectStyles from "./run-setting-select.module.css"
 import type { RunSettingSelectOption } from "./run-setting-select.tsx"

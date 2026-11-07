@@ -53,3 +53,13 @@
   border-radius: 50%;
   background: var(--accent);
 }
+/* 点の色だけを作業の状態で変える（依頼待ちは上の差し色のまま）。 */
+.screen-nav-gate.has-return-mark[data-return-tone="working"]::after {
+  background: var(--state-info);
+}
+.screen-nav-gate.has-return-mark[data-return-tone="pending"]::after {
+  background: var(--state-warn);
+}
+.screen-nav-gate.has-return-mark[data-return-tone="stopped"]::after {
+  background: var(--state-ng);
+}

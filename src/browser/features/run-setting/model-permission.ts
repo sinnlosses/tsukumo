@@ -9,16 +9,16 @@ import {
   isEffortLevel,
   isModelAlias,
   isPermissionMode,
-} from "../../shared/session/run-setting-value.ts"
-import type { ModelEffortSupport } from "../../shared/session/session-event-setting.ts"
-import type { ReportedPermissionMode } from "../../shared/session/session-info.ts"
-import type { SettingMark } from "../../shared/session/setting-mark.ts"
-import { resolveEffortSelect, type EffortSelect } from "../domain/effort-label.ts"
-import { resolveShownModel } from "../domain/model-label.ts"
-import { isDangerousPermissionMode } from "../domain/permission-mode-label.ts"
-import { useExternalSync } from "../hooks/use-external-sync.ts"
-import { nowEpochMilliseconds } from "../utils/clock.ts"
-import { useSession } from "./session.ts"
+} from "../../../shared/session/run-setting-value.ts"
+import type { ModelEffortSupport } from "../../../shared/session/session-event-setting.ts"
+import type { ReportedPermissionMode } from "../../../shared/session/session-info.ts"
+import type { SettingMark } from "../../../shared/session/setting-mark.ts"
+import { resolveEffortSelect, type EffortSelect } from "../../domain/effort-label.ts"
+import { useExternalSync } from "../../hooks/use-external-sync.ts"
+import { useSession } from "../../stores/session.ts"
+import { nowEpochMilliseconds } from "../../utils/clock.ts"
+import { resolveShownModel } from "./model-label.ts"
+import { isDangerousPermissionMode } from "./permission-mode-label.ts"
 
 /** 口の右肩の点。`accepted` は空洞（受け付けた）、`confirmed` は塗り（効いたのを見届けた）、`none` は点なし。 */
 export type SettingDot = "none" | "accepted" | "confirmed"

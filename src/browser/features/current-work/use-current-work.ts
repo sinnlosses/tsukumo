@@ -29,7 +29,7 @@ import { useInquiryJump } from "../../stores/inquiry-jump.ts"
 import { navigateTo, useScreen } from "../../stores/screen.tsx"
 import { useSession, useTurnRunning } from "../../stores/session.ts"
 import { useTurnSelection } from "../../stores/turn-selection.ts"
-import type { CurrentWorkState } from "./current-work-state.ts"
+import { WORK_WORD_LABEL, type CurrentWorkState } from "./current-work-state.ts"
 import {
   backgroundSummaryLabel,
   currentWorkStepGroups,
@@ -47,15 +47,6 @@ import {
 
 /** 閉じている間に出す手順の件数（これより多いと「すべて見る」の口が出る）。 */
 const MAX_COLLAPSED_STEPS = 5
-
-const WORK_WORD_LABEL = {
-  stopped: "止まっている",
-  pending: "答え待ち",
-  running: "作業中",
-  diary: "振り返り中",
-  background: "背景で作業中",
-  idle: "依頼待ち",
-} satisfies Record<CurrentWorkState, string>
 
 /**
  * 札に出す今の段（`.current-work-phase`）。作業中・答え待ちで、その依頼にワークプランがあるときだけ `shown`。

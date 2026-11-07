@@ -5,15 +5,12 @@ import { ScreenNav } from "../../../../../src/browser/components/frame/screen-na
 import { useNavDrawer } from "../../../../../src/browser/stores/nav-drawer.ts"
 import { FRAME_ERROR_REASON } from "../../../../../src/shared/frame-error-reason.ts"
 import type { StampedPendingAsk } from "../../../../../src/shared/session-driver/pending-ask.ts"
-import { MODEL_ALIASES } from "../../../../../src/shared/session/run-setting-value.ts"
-import type { SessionInfo } from "../../../../../src/shared/session/session-info.ts"
 import {
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../../../../src/shared/session/session-state.ts"
 import { setPageUrl } from "../../../../dom-setup.ts"
 import { characterInfo, characterPackEntry } from "../../../../fixture/character.ts"
-import { checkedSessionId } from "../../../../fixture/session-id.ts"
 import { typedElement } from "../../../../typed-element.ts"
 import { MARKED_NAV_DRAWER_SLOTS } from "../../../nav-drawer-slot.tsx"
 import { stubPhoneWidth } from "../../../phone-width.ts"
@@ -44,17 +41,6 @@ afterEach(() => {
   setPageUrl(DEFAULT_PAGE_URL)
   window.location.hash = ""
 })
-
-/**
- * `init` が届いたあと（`running`）の架空の土台。`permissionMode` だけ変えて使う。
- * `model` は `session` と独立なので `renderScreenNav` の第一引数に渡す。
- * 既定値は `PERMISSION_MODE_FALLBACK` と同じ。
- */
-const RUNNING_SESSION: Extract<SessionInfo, { kind: "running" }> = {
-  kind: "running",
-  sessionId: checkedSessionId("s-fixture"),
-  permissionMode: "auto",
-}
 
 function renderScreenNav(state: Partial<SessionState> = {}, spy: CommandSpy = () => {}): void {
   putSession({ ...INITIAL_SESSION_STATE, ...state }, spy)
@@ -87,7 +73,7 @@ describe("ScreenNav", () => {
     renderScreenNav()
 
     expect(screen.getByRole("link", { name: "トークン" }).className).toContain("is-active")
-    expect(screen.getByRole("link", { name: "仕事" }).className).not.toContain("is-active")
+    expect(screen.getByRole("link", { name: /^仕事/ }).className).not.toContain("is-active")
     expect(screen.getByRole("link", { name: "トークン" }).getAttribute("aria-current")).toBe("page")
   })
 
@@ -395,7 +381,7 @@ describe("ScreenNav", () => {
 
   describe("仕事・雑談の門", () => {
     function gate(name: string): HTMLElement {
-      return screen.getByRole("link", { name })
+      return screen.getByRole("link", { name: new RegExp(`^${name}`) })
     }
 
     // 帯の操作子が送るコマンドは、いままでサイドバーの <select> が送っていたものと同じ
@@ -456,6 +442,32 @@ describe("ScreenNav", () => {
       expect(gate("雑談").getAttribute("aria-current")).toBeNull()
     })
 
+    it.each([
+      ["依頼待ち", "idle", {}],
+      ["作業中", "working", { turn: { kind: "running", startedAt: 0 } }],
+      ["答え待ち", "pending", { pending: [FIXTURE_PENDING] }],
+      ["止まっている", "stopped", { endedReason: "架空の終了理由" }],
+    ] as const satisfies readonly (readonly [string, string, Partial<SessionState>])[])(
+      "戻り先の門の名前とツールチップに状態の語（%s）が入り、点の色の種類が %s になる",
+      (word, tone, state) => {
+        window.location.hash = "#character"
+        renderScreenNav({ chatMode: false, ...state })
+
+        const returnGate = screen.getByRole("link", { name: `仕事（${word}）` })
+        expect(returnGate.getAttribute("title")).toBe(`仕事（${word}）`)
+        expect(returnGate.getAttribute("data-return-tone")).toBe(tone)
+      },
+    )
+
+    it("会話以外の画面では、戻り先でない門に状態の語も点の色も付かない", () => {
+      window.location.hash = "#character"
+      renderScreenNav({ chatMode: false })
+
+      const other = screen.getByRole("link", { name: "雑談" })
+      expect(other.getAttribute("data-return-tone")).toBeNull()
+      expect(other.getAttribute("title")).toBeNull()
+    })
+
     it("会話の画面では戻り先の印を付けず、モードの門がいまの印を持つ", () => {
       renderScreenNav({ chatMode: true })
 
@@ -464,132 +476,12 @@ describe("ScreenNav", () => {
     })
   })
 
-  describe("モデル・許可モードのドロップダウン", () => {
-    // 会話の画面の帯にはドロップダウンが無い（サイドバーの下端の帯が持つ）ので、ほかの画面で見る。
-    beforeEach(() => {
-      window.location.hash = "#character"
-    })
+  it("会話以外の画面の帯に、いまの作業の札もモデル・effort・許可モードの操作子も出ない", () => {
+    window.location.hash = "#character"
+    renderScreenNav()
 
-    it("モデルの選択肢は MODEL_ALIASES と過不足なく一致する（片方だけの追加漏れを防ぐ）", () => {
-      renderScreenNav()
-
-      const select = typedElement(
-        screen.getByLabelText("モデル"),
-        HTMLSelectElement,
-        "モデルの<select>",
-      )
-      const optionValues = Array.from(select.options).map((option) => option.value)
-
-      expect(optionValues.toSorted()).toEqual(MODEL_ALIASES.toSorted())
-    })
-
-    it("モデルを変更すると session.setModel を送る", () => {
-      const calls: unknown[] = []
-      renderScreenNav({ model: "claude-sonnet-5" }, (command) => {
-        calls.push(command)
-      })
-
-      fireEvent.change(screen.getByLabelText("モデル"), { target: { value: "opus" } })
-
-      expect(calls).toEqual([{ procedure: "session.setModel", model: "opus" }])
-    })
-
-    it("許可モードを変更すると session.setPermissionMode を送る", () => {
-      const calls: unknown[] = []
-      renderScreenNav({ session: { ...RUNNING_SESSION, permissionMode: "auto" } }, (command) => {
-        calls.push(command)
-      })
-
-      fireEvent.change(screen.getByLabelText("許可モード"), { target: { value: "plan" } })
-
-      expect(calls).toEqual([{ procedure: "session.setPermissionMode", mode: "plan" }])
-    })
-
-    it("ターン進行中も無効にならない（起こし直さないため）", () => {
-      renderScreenNav({ turn: { kind: "running", startedAt: 0 } })
-
-      expect(
-        typedElement(screen.getByLabelText("モデル"), HTMLSelectElement, "モデルの<select>")
-          .disabled,
-      ).toBe(false)
-      expect(
-        typedElement(screen.getByLabelText("許可モード"), HTMLSelectElement, "許可モードの<select>")
-          .disabled,
-      ).toBe(false)
-    })
-
-    // 「全部許す」だけ字に意味の色を載せる（ラベルの文字が必ず付くので色だけに頼らない。13.1 原則5）。
-    it("許可モードが「全部許す」のとき is-danger が付く", () => {
-      renderScreenNav({ session: { ...RUNNING_SESSION, permissionMode: "bypassPermissions" } })
-      expect(screen.getByLabelText("許可モード").className).toContain("is-danger")
-    })
-  })
-
-  // モデルの隣、モデル → effort → 許可モードの並び（13.9「動き方の操作子」）。
-  describe("effort のドロップダウン", () => {
-    // 会話の画面の帯にはドロップダウンが無い（サイドバーの下端の帯が持つ）ので、ほかの画面で見る。
-    beforeEach(() => {
-      window.location.hash = "#character"
-    })
-
-    const OPUS_SUPPORT = {
-      model: "opus",
-      resolvedModel: "claude-opus-5",
-      supportsEffort: true,
-      effortLevels: ["low", "medium", "high", "xhigh", "max"],
-    } as const
-
-    it("対応表も読み取った値もまだ届いていないうちは選べず、title に理由が出る", () => {
-      renderScreenNav()
-
-      const select = typedElement(
-        screen.getByLabelText("effort"),
-        HTMLSelectElement,
-        "effortの<select>",
-      )
-      expect(select.disabled).toBe(true)
-      expect(select.title.length).toBeGreaterThan(0)
-    })
-
-    it("対応表が届き effort も読めたら、選べる段だけを選択肢にして読んだ値を選択する", () => {
-      renderScreenNav({
-        model: "claude-opus-5",
-        modelEffortSupport: [OPUS_SUPPORT],
-        effort: "high",
-      })
-
-      const select = typedElement(
-        screen.getByLabelText("effort"),
-        HTMLSelectElement,
-        "effortの<select>",
-      )
-      expect(select.disabled).toBe(false)
-      expect(select.value).toBe("high")
-      expect(Array.from(select.options).map((option) => option.value)).toEqual([
-        "low",
-        "medium",
-        "high",
-        "xhigh",
-        "max",
-      ])
-    })
-
-    it("押した値へ先に倒さない：session.setEffort を送ってもすぐには表示が変わらない", () => {
-      const calls: unknown[] = []
-      renderScreenNav(
-        { model: "claude-opus-5", modelEffortSupport: [OPUS_SUPPORT], effort: "low" },
-        (command) => {
-          calls.push(command)
-        },
-      )
-
-      fireEvent.change(screen.getByLabelText("effort"), { target: { value: "high" } })
-
-      expect(calls).toEqual([{ procedure: "session.setEffort", effort: "high" }])
-      // 状態の effort をまだ変えていないので、表示は送る前の値のまま。
-      expect(
-        typedElement(screen.getByLabelText("effort"), HTMLSelectElement, "effortの<select>").value,
-      ).toBe("low")
-    })
+    expect(screen.queryByLabelText("モデル")).toBeNull()
+    expect(screen.queryByLabelText("effort")).toBeNull()
+    expect(screen.queryByLabelText("許可モード")).toBeNull()
   })
 })

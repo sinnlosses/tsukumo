@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest"
 
-import { modelLabel, resolveShownModel } from "../../../src/browser/domain/model-label.ts"
+import {
+  modelLabel,
+  resolveShownModel,
+} from "../../../../src/browser/features/run-setting/model-label.ts"
 
 const entry = (model: string, resolvedModel: string) =>
   ({ model, resolvedModel, supportsEffort: true, effortLevels: ["low"] }) as const

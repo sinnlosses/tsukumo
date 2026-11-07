@@ -8,9 +8,9 @@ import { useId, type ReactElement } from "react"
 import { isModelAlias } from "../../../shared/session/run-setting-value.ts"
 import { permissionModeValue } from "../../../shared/session/session-info.ts"
 import { EFFORT_PLACEHOLDER_VALUE, effortLabel } from "../../domain/effort-label.ts"
-import { modelLabel } from "../../domain/model-label.ts"
-import { PERMISSION_MODE_LABELS, permissionModeLabel } from "../../domain/permission-mode-label.ts"
-import { type SettingDot, useModelPermission } from "../../stores/model-permission.ts"
+import { modelLabel } from "./model-label.ts"
+import { type SettingDot, useModelPermission } from "./model-permission.ts"
+import { PERMISSION_MODE_LABELS, permissionModeLabel } from "./permission-mode-label.ts"
 import styles from "./run-setting-group.module.css"
 import {
   effortSelectOptions,

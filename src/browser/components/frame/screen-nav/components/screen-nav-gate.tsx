@@ -40,18 +40,23 @@ export function ScreenNavGate(props: ScreenNavGateProps): ReactElement {
     props.onSelect()
   }
 
+  const markedLabel =
+    gate.returnMark === undefined ? undefined : `${gate.label}（${gate.returnMark.word}）`
+
   return (
     <a
       className={clsx(
         styles["screen-nav-gate"],
         gate.active && styles["is-active"],
         gate.disabled && styles["is-disabled"],
-        gate.returnMark && styles["has-return-mark"],
+        gate.returnMark !== undefined && styles["has-return-mark"],
       )}
       href={gate.href}
       aria-current={gate.active ? "page" : undefined}
       aria-disabled={gate.disabled ? true : undefined}
-      title={gate.title}
+      aria-label={markedLabel}
+      title={gate.title ?? markedLabel}
+      data-return-tone={gate.returnMark?.tone}
       onClick={onClick}
     >
       <span className={styles["screen-nav-gate-icon"]} aria-hidden="true">

@@ -47,15 +47,6 @@
   gap: var(--space-2xs);
   min-width: 0;
 }
-/* いまの作業のカードを置く箱。口の右に置き、幅が足りないときに最初に縮む。
-   モデル・許可モードは `margin-left: auto` で右端へ寄せるだけで縮めない。 */
-.screen-nav-work-slot {
-  display: flex;
-  flex: 1 1 auto;
-  justify-content: center;
-  min-width: 0;
-}
-
 @media (max-width: 760px) {
   /* 帯は頭（`<PhoneHead>`）の入れ物になる。画面の端から端まで出し、下に罫線を引く。
      会話以外の画面は body の余白の中に居るので、帯と同じく負の margin で端まで出す。
@@ -74,11 +65,9 @@
     flex: none;
     margin: 0;
   }
-  /* 口・仕切り・ドロップダウン・左端の名乗りは引き出しへ、いまの作業のカードは頭へ移る。 */
+  /* 口・仕切り・左端の名乗りは引き出しへ移る。 */
   .screen-nav-gates,
   .screen-nav > .screen-nav-identity,
-  .screen-nav > .screen-nav-work-slot,
-  .screen-nav > .screen-nav-model-permission,
   .screen-nav > .screen-nav-settings {
     display: none;
   }

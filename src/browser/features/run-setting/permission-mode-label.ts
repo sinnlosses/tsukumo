@@ -1,7 +1,7 @@
 // Claude Code の許可モード（`PERMISSION_MODES`）を、画面に出す日本語ラベルにする。
 
-import type { PermissionMode } from "../../shared/session/run-setting-value.ts"
-import type { ReportedPermissionMode } from "../../shared/session/session-info.ts"
+import type { PermissionMode } from "../../../shared/session/run-setting-value.ts"
+import type { ReportedPermissionMode } from "../../../shared/session/session-info.ts"
 
 /** 許可モードの値と、日本語ラベル。並びは `<select>` に出す順（緩い側が下）。 */
 export const PERMISSION_MODE_LABELS = [
@@ -17,13 +17,6 @@ export function permissionModeLabel(mode: ReportedPermissionMode): string {
   return typeof mode === "string"
     ? (PERMISSION_MODE_LABELS.find(([value]) => value === mode)?.[1] ?? mode)
     : mode.raw
-}
-
-export function permissionModeChoices(
-  mode: ReportedPermissionMode,
-): readonly { readonly value: string; readonly label: string }[] {
-  const known = PERMISSION_MODE_LABELS.map(([value, label]) => ({ value, label }))
-  return typeof mode === "string" ? known : [...known, { value: mode.raw, label: mode.raw }]
 }
 
 /** 「全部許す」かどうか。この1つだけは字に意味の色を載せる。 */

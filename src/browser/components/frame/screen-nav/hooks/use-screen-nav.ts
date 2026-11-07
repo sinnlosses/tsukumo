@@ -11,15 +11,13 @@ import { useRef, type RefObject } from "react"
 
 import { FRAME_ERROR_REASON } from "../../../../../shared/frame-error-reason.ts"
 import {
-  useCurrentWork,
-  type CurrentWork,
-} from "../../../../features/current-work/use-current-work.ts"
+  WORK_WORD_LABEL,
+  workToneOf,
+  type WorkTone,
+} from "../../../../features/current-work/current-work-state.ts"
+import { useCurrentWork } from "../../../../features/current-work/use-current-work.ts"
 import { usePhoneWidth } from "../../../../hooks/use-phone-width.ts"
 import { SCREEN_NAV_ITEMS, type NavScreen, type Screen } from "../../../../stores/location-hash.ts"
-import {
-  useModelPermission,
-  type ModelPermissionControl,
-} from "../../../../stores/model-permission.ts"
 import {
   useNavDrawer,
   type NavDrawerFace,
@@ -51,8 +49,14 @@ export type ScreenNavGate = {
   readonly icon: ScreenNavGateIcon
   readonly href: string
   readonly active: boolean
-  /** 会話の画面にいないあいだ、裏で生きているセッションのモードの口に付く戻り先の印。 */
-  readonly returnMark: boolean
+  /**
+   * 会話の画面にいないあいだ、裏で生きているセッションのモードの口に付く戻り先の印。
+   * 点の色の種類と状態の語を持つ（色だけで伝えないため、語は読み上げ名とツールチップに出す）。
+   */
+  readonly returnMark?: {
+    readonly tone: WorkTone
+    readonly word: string
+  }
   /** `restartRefused` の間の、いまと違うモードの口。 */
   readonly disabled: boolean
   /**
@@ -73,8 +77,6 @@ export type ScreenNavParts = {
   readonly character: ScreenNavCharacterPicker
   readonly sessionTag: ScreenNavSessionTag
   readonly gates: readonly ScreenNavGate[]
-  readonly modelPermission: ModelPermissionControl
-  readonly work: CurrentWork
   readonly settings: ScreenNavSettings
   /** 口を押したあとに引き出しを閉じる呼び先（広い画面では開いていないので何も起きない）。 */
   readonly onSelect: () => void
@@ -188,7 +190,6 @@ export function useScreenNav(): ScreenNavView {
   const ref = useRef<HTMLElement>(null)
   const drawerToggleRef = useRef<HTMLButtonElement>(null)
   const work = useCurrentWork(ref)
-  const modelPermission = useModelPermission()
   const settings = useSettings()
   const character = useCharacterPicker(ref)
   const currentRoom = currentRoomName()
@@ -214,7 +215,10 @@ export function useScreenNav(): ScreenNavView {
       icon: entry.icon,
       href: screenHref(entry.screen),
       active: entry.screen === current && !modeDiffers,
-      returnMark: isConversation && current !== "conversation" && !modeDiffers,
+      returnMark:
+        isConversation && current !== "conversation" && !modeDiffers
+          ? { tone: workToneOf(work.state), word: WORK_WORD_LABEL[work.state] }
+          : undefined,
       disabled: blocked,
       title: blocked ? FRAME_ERROR_REASON.chatModeSwitchDuringTurn : undefined,
       onGo: () => {
@@ -239,8 +243,6 @@ export function useScreenNav(): ScreenNavView {
       character,
       sessionTag,
       gates,
-      modelPermission,
-      work,
       settings,
       onSelect: closeDrawer,
     },
