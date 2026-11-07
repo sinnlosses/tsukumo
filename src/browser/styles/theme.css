@@ -148,6 +148,8 @@
   --font-action: var(--font-label);
   --font-secondary: 0.8125rem;
   --font-subheading: 0.875rem;
+  /* iOS Safari は 16px 未満の入力欄にフォーカスすると画面を拡大するので、入力欄の字は 1rem を下げない。 */
+  --font-input: 1rem;
   --font-body: 0.9375rem;
   --font-heading: 1.125rem;
   --font-heading-3: 1.0625rem;

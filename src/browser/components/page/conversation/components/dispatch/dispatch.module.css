@@ -184,7 +184,7 @@
     border-radius: var(--radius-xl);
     background: var(--surface);
     border-color: var(--rule);
-    font-size: var(--font-subheading);
+    font-size: var(--font-input);
     field-sizing: content;
     overflow-y: auto;
   }
