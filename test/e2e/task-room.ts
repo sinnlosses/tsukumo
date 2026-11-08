@@ -278,3 +278,11 @@ export async function writeWelcomeTasks(room: ScenarioRoom): Promise<void> {
     task(BLOCKED_TASK_ID.toLowerCase(), "架空のタスク（依存で止まる）", "todo", [ready]),
   ])
 }
+
+/** 前回の続きの札と合わせて札が3枚になるよう、着手できるタスクを2件置く足場。 */
+export async function writeWelcomeTasksForThreeCards(room: ScenarioRoom): Promise<void> {
+  await placeTasks(room, [
+    task(READY_TASK_ID.toLowerCase(), "架空のタスク（着手できる）", "todo"),
+    task(BLOCKED_TASK_ID.toLowerCase(), "架空のタスク（これも着手できる）", "todo"),
+  ])
+}

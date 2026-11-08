@@ -1,7 +1,12 @@
 import type { Locator, Page } from "playwright-core"
 
 import { expect, type ScenarioRun, test, VIEWPORTS } from "./room-fixture.ts"
-import { BLOCKED_TASK_ID, READY_TASK_ID, writeWelcomeTasks } from "./task-room.ts"
+import {
+  BLOCKED_TASK_ID,
+  READY_TASK_ID,
+  writeWelcomeTasks,
+  writeWelcomeTasksForThreeCards,
+} from "./task-room.ts"
 
 // 依頼前のメインビューの始め方の一覧（docs/architecture/testing.md「E2E のシナリオの一覧」）。
 // 札の並びと理由は疑似セッションの場面 `welcome-recommendation`、続きの要約は `sessionDigests`、タスクは cwd の `FAKE_BEADS_ISSUES_PATH` に架空の課題を置いて用意する。
@@ -12,14 +17,22 @@ const ELAPSED_MS = 60_000
 const RESUME_CARD = "架空の成果の画面に振り返りの口を置きたい"
 const READY_CARD = new RegExp(`${READY_TASK_ID} を始める`)
 
-async function openWelcomeRoom(run: ScenarioRun, scenario: string, viewport: "wide" | "medium") {
+async function openWelcomeRoom(
+  run: ScenarioRun,
+  scenario: string,
+  viewport: "wide" | "medium" | "phone",
+  setup: { scene: string; writeTasks: typeof writeWelcomeTasks } = {
+    scene: "welcome-recommendation",
+    writeTasks: writeWelcomeTasks,
+  },
+) {
   const room = await run.open({
     scenario,
-    scene: "welcome-recommendation",
+    scene: setup.scene,
     viewport,
     domRoots: ["main"],
   })
-  await writeWelcomeTasks(room)
+  await setup.writeTasks(room)
   await room.waitForEvent("sessions-changed")
   const resume = mainView(room.page).getByRole("button", { name: new RegExp(RESUME_CARD) })
   await room.revealAfterResponse(resume, {
@@ -66,6 +79,21 @@ test.describe("始め方の一覧", () => {
     await mainView(page).getByRole("button", { name: READY_CARD }).waitFor()
     const mediumOverflow = await mainView(page).evaluate((el) => el.scrollWidth - el.clientWidth)
     expect(mediumOverflow).toBeLessThanOrEqual(0)
+  })
+
+  test("390x844 で理由の無い札を含む3枚が並んでも、メインビューは縦にはみ出さない", async ({
+    run,
+  }) => {
+    const room = await openWelcomeRoom(run, "welcome-unreasoned-cards", "phone", {
+      scene: "welcome-unreasoned-cards",
+      writeTasks: writeWelcomeTasksForThreeCards,
+    })
+    const page = room.page
+    await mainView(page).getByRole("button", { name: READY_CARD }).waitFor()
+    expect(await welcome(page).locator("ul > li").count()).toBe(3)
+    expect(await welcome(page).getByText("架空のつながり").count()).toBe(1)
+    const overflow = await mainView(page).evaluate((el) => el.scrollHeight - el.clientHeight)
+    expect(overflow).toBe(0)
   })
 
   test("「始める」を押すと、入力欄を経由せず依頼が送られ、下書きは残る", async ({ run }) => {
