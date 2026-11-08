@@ -1,7 +1,9 @@
-import { act, cleanup, render, waitFor } from "@testing-library/react"
+import { act, cleanup, fireEvent, render, waitFor } from "@testing-library/react"
+import { createRef, type Ref } from "react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { ChartBlock } from "../../../../../src/browser/features/report/renderer/chart-block.tsx"
+import type { ChartTooltipControl } from "../../../../../src/browser/features/report/renderer/chart-tooltip.ts"
 import { stubIntersectionObserver } from "../../../../fixture/intersection.ts"
 
 // jsdom には canvas が無く、色のトークンも解けない。
@@ -15,9 +17,17 @@ vi.mock("../../../../../src/browser/features/report/renderer/theme-color.ts", ()
 const SPEC_A = '{"type":"bar","data":{}}'
 const SPEC_B = '{"type":"line","data":{}}'
 
-type Instance = { readonly destroy: ReturnType<typeof vi.fn> }
+const SPEC_ITEMS =
+  '{"type":"bar","data":{"labels":["A","B"],"datasets":[{"label":"x","data":[1,2]},{"label":"y","data":[3,4]}]}}'
+
+type Instance = {
+  readonly destroy: ReturnType<typeof vi.fn>
+  readonly setActiveElements: ReturnType<typeof vi.fn>
+  readonly update: ReturnType<typeof vi.fn>
+}
 
 const instances: Instance[] = []
+const activeCalls: unknown[] = []
 const scripts: Node[] = []
 
 class FakeChart implements Instance {
@@ -31,8 +41,15 @@ class FakeChart implements Instance {
   }
   static readonly register = vi.fn<() => void>()
   readonly destroy = vi.fn<() => void>()
+  readonly data: { labels?: unknown[]; datasets: { label?: string; data: unknown[] }[] }
+  readonly tooltip = { setActiveElements: vi.fn<(active: unknown, position: unknown) => void>() }
+  readonly setActiveElements = vi.fn<(active: unknown) => void>((active) => {
+    activeCalls.push(active)
+  })
+  readonly update = vi.fn<() => void>()
 
-  constructor() {
+  constructor(_canvas?: unknown, config?: { data?: FakeChart["data"] }) {
+    this.data = config?.data ?? { datasets: [] }
     instances.push(this)
   }
 }
@@ -40,6 +57,7 @@ class FakeChart implements Instance {
 beforeEach(() => {
   stubIntersectionObserver(true)
   instances.length = 0
+  activeCalls.length = 0
   scripts.length = 0
   vi.stubGlobal("Chart", FakeChart)
   // jsdom は <script> を読まないので、足された script の読み込み完了はテストが送る。
@@ -89,8 +107,8 @@ describe("ChartBlock の入れ物", () => {
     vi.stubGlobal(
       "Chart",
       class extends FakeChart {
-        constructor(_canvas: unknown, config: unknown) {
-          super()
+        constructor(canvas: unknown, config: { data?: FakeChart["data"] }) {
+          super(canvas, config)
           created.push(config)
         }
       },
@@ -166,5 +184,87 @@ describe("ChartBlock の後片付け", () => {
       expect(view.container.querySelector("[data-chart-failed='yes']")).not.toBeNull()
     })
     expect(instances).toHaveLength(0)
+  })
+})
+
+describe("ChartBlock のキーボード操作", () => {
+  async function renderItems(controlRef?: Ref<ChartTooltipControl>) {
+    const view = render(<ChartBlock spec={SPEC_ITEMS} controlRef={controlRef} />)
+    finishLoading()
+    await waitFor(() => {
+      expect(instances).toHaveLength(1)
+    })
+    const block = view.container.querySelector<HTMLElement>(".chart-block")
+    if (block === null) {
+      throw new Error("chart-block が無い")
+    }
+    return { block, view }
+  }
+
+  const lastActive = () => activeCalls.at(-1)
+
+  function press(target: HTMLElement, event: string): void {
+    if (event === "blur") {
+      fireEvent.blur(target)
+    } else {
+      fireEvent.keyDown(target, { key: event })
+    }
+  }
+
+  it("入れ物に tabIndex と aria-label が付く", async () => {
+    const { block } = await renderItems()
+
+    expect(block.tabIndex).toBe(0)
+    expect(block.getAttribute("aria-label")).toContain("矢印")
+  })
+
+  it("ArrowRight で 0 番目の札が出て、続けて 1 番目へ移る", async () => {
+    const { block } = await renderItems()
+
+    press(block, "ArrowRight")
+    expect(lastActive()).toEqual([
+      { datasetIndex: 0, index: 0 },
+      { datasetIndex: 1, index: 0 },
+    ])
+    press(block, "ArrowRight")
+    expect(lastActive()).toEqual([
+      { datasetIndex: 0, index: 1 },
+      { datasetIndex: 1, index: 1 },
+    ])
+  })
+
+  it("Escape と blur で札を消す", async () => {
+    const { block } = await renderItems()
+
+    press(block, "ArrowRight")
+    press(block, "Escape")
+    expect(lastActive()).toEqual([])
+
+    press(block, "ArrowRight")
+    press(block, "blur")
+    expect(lastActive()).toEqual([])
+  })
+
+  it("読み上げの領域に札と同じ字が入る", async () => {
+    const { block } = await renderItems()
+
+    press(block, "ArrowRight")
+
+    expect(block.querySelector("[role='status']")?.textContent).toBe("A\nx 1\ny 3")
+  })
+
+  it("controlRef から頼むと同じ札が出る", async () => {
+    const control = createRef<ChartTooltipControl>()
+    const { block } = await renderItems(control)
+
+    act(() => {
+      control.current?.show(1)
+    })
+
+    expect(lastActive()).toEqual([
+      { datasetIndex: 0, index: 1 },
+      { datasetIndex: 1, index: 1 },
+    ])
+    expect(block.querySelector("[role='status']")?.textContent).toBe("B\nx 2\ny 4")
   })
 })

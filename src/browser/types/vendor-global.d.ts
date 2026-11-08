@@ -50,6 +50,18 @@ declare global {
      * 同じ `<canvas>` に描き直す前に必ず呼ぶ（Chart.js は使用中の canvas に二度目を描こうとすると例外を投げる）。
      */
     readonly destroy: () => void
+    readonly data: {
+      readonly labels?: readonly unknown[]
+      readonly datasets: readonly { readonly label?: string; readonly data: readonly unknown[] }[]
+    }
+    readonly tooltip?: {
+      readonly setActiveElements: (
+        active: readonly { datasetIndex: number; index: number }[],
+        position: { x: number; y: number },
+      ) => void
+    }
+    readonly setActiveElements: (active: readonly { datasetIndex: number; index: number }[]) => void
+    readonly update: () => void
   }) & {
     readonly defaults: {
       color: string
