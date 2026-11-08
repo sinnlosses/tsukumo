@@ -128,3 +128,4 @@
 | `docs/architecture/adr/0048-report-parameters-and-expressions.md`               | 触れるレポート: つまみの部品と、独自関数 `expr` の中置の式・名前つきの式で値を結ぶ                    | 採用                   |
 | `docs/architecture/adr/0049-sdk-tool-boundary-and-shared-drawing-vocabulary.md` | SDK の道具の境界と、ブラウザだけが読むように見える shared の描画の語彙の置き場                        | 提案                   |
 | `docs/architecture/adr/0050-eperm-is-alive.md`                                  | 別の利用者のプロセス（`EPERM`）は生きている扱いに揃え、生死の判定を1つにする                          | 採用                   |
+| `docs/architecture/adr/0051-report-reply-layer.md`                              | 返す層: レポートの部品を指して「聞く」「頼む」、末尾から「続き」を選ぶ                                | 採用                   |
