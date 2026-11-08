@@ -124,6 +124,18 @@ describe("操作できる Table", () => {
     expect(heading().textContent).not.toMatch(/[▲▼]/)
   })
 
+  it("6 行の表は sortable を書かなくても見出しのボタンで並べ替えられ、false なら付かない", () => {
+    const rows = ["ぼ", "あ", "ん", "う", "え", "お"].map((name, i) => [name, "甲", String(i)])
+    const { container } = renderRegions(regionsOf(reportParts({ rows }, false)))
+
+    fireEvent.click(screen.getByRole("button", { name: "架空の名" }))
+    expect(names(container)).toEqual(["あ", "う", "え", "お", "ぼ", "ん"])
+    cleanup()
+
+    renderRegions(regionsOf(reportParts({ rows, sortable: false }, false)))
+    expect(screen.queryAllByRole("button")).toEqual([])
+  })
+
   it("並べ替えられない表の見出しには aria-sort もボタンも付けない", () => {
     const { container } = renderRegions(regionsOf(reportParts({ filterable: true }, false)))
 

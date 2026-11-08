@@ -3,6 +3,7 @@
 import type { A2uiReportComponent } from "../../../../shared/report/a2ui-report-catalog.ts"
 import type { A2uiReportPart } from "../../../../shared/report/a2ui-report-outline.ts"
 import {
+  isEmphasisRow,
   type TableCell as Cell,
   tableRowCells,
   tableRowDepth,
@@ -33,6 +34,15 @@ export function filteredRowOrder(part: TablePart, filter: readonly string[]): re
 
 const MIN_BADGES = 2
 const MAX_BADGES = 6
+const AUTO_SORTABLE_MIN_ROWS = 6
+
+/** 並べ替えを受ける表か。`sortable: true`、または `false` でなく行が 6 行以上（字下げの子も数える）。 */
+export function isSortableTable(part: TablePart): boolean {
+  return (
+    part.sortable === true ||
+    (part.sortable !== false && part.rows.length >= AUTO_SORTABLE_MIN_ROWS)
+  )
+}
 
 export type FilterBadge = { readonly value: string; readonly count: number }
 
@@ -71,6 +81,7 @@ export function hasBoundChoicePicker(
 /**
  * 絞り込んだ行を `sort` の順に並べた、元の添字。セルが無い行は昇順で最後。
  * 字下げのある表は同じ親の子どうしの中だけで並べ、子は部分木ごと親の直下に付く。
+ * 強調した行は向きに依らず同じ親の子どうしの先頭に置き、強調した行どうしは元の順。
  */
 export function visibleRowOrder(
   part: TablePart,
@@ -81,6 +92,9 @@ export function visibleRowOrder(
   const parents = parentIndexes(part)
   const kept = keptRows(part, filter)
   const compare = (a: KeptRow, b: KeptRow): number => {
+    if (a.emphasis || b.emphasis) {
+      return a.emphasis && b.emphasis ? a.index - b.index : Number(b.emphasis) - Number(a.emphasis)
+    }
     const left = a.cells[sort.column]
     const right = b.cells[sort.column]
     const order =
@@ -112,7 +126,11 @@ export function visibleTableTotals(part: TablePart, rowOrder: readonly number[])
   })
 }
 
-type KeptRow = { readonly index: number; readonly cells: readonly Cell[] }
+type KeptRow = {
+  readonly index: number
+  readonly cells: readonly Cell[]
+  readonly emphasis: boolean
+}
 
 /** 選びに合う行と、その祖先（字下げの親をたどった行）を元の順で返す。 */
 function keptRows(part: TablePart, filter: readonly string[]): readonly KeptRow[] {
@@ -125,7 +143,7 @@ function keptRows(part: TablePart, filter: readonly string[]): readonly KeptRow[
   )
   const kept = new Set(matched.flatMap((index) => [index, ...ancestorsOf(index, parents)]))
   return part.rows.flatMap((row, index) =>
-    kept.has(index) ? [{ index, cells: tableRowCells(row) }] : [],
+    kept.has(index) ? [{ index, cells: tableRowCells(row), emphasis: isEmphasisRow(row) }] : [],
   )
 }
 

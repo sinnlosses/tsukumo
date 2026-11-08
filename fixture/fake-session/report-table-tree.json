@@ -41,7 +41,7 @@
               { "cells": ["ui/", "31,200", "39%"], "depth": 1 },
               { "cells": ["components/", "18,600", "24%"], "depth": 2 },
               { "cells": ["table.tsx", "2,900", "4%"], "depth": 3 },
-              { "cells": ["server/", "19,400", "25%"], "depth": 1 },
+              { "cells": ["server/", "19,400", "25%"], "depth": 1, "emphasis": true },
               { "cells": ["shared/", "6,300", "8%"], "depth": 1 },
               ["test/", "15,900", "20%"],
               { "cells": ["unit/", "9,800", "12%"], "depth": 1 },

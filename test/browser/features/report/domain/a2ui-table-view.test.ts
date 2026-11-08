@@ -4,6 +4,7 @@ import {
   filteredRowOrder,
   filterBadges,
   hasBoundChoicePicker,
+  isSortableTable,
   visibleRowOrder,
   visibleTableTotals,
 } from "../../../../../src/browser/features/report/domain/a2ui-table-view.ts"
@@ -24,6 +25,20 @@ function table(cells: readonly string[]): A2uiReportPart<"Table"> {
     sortable: true,
   }
 }
+
+describe("isSortableTable", () => {
+  const sized = (count: number, sortable?: boolean) => ({
+    ...table(Array.from({ length: count }, (_, i) => String(i))),
+    sortable,
+  })
+
+  it("6 行以上は書かなくても並べ替えられ、false で打ち消せ、5 行以下は true のときだけ", () => {
+    expect(isSortableTable(sized(5, undefined))).toBe(false)
+    expect(isSortableTable(sized(6, undefined))).toBe(true)
+    expect(isSortableTable(sized(6, false))).toBe(false)
+    expect(isSortableTable(sized(5, true))).toBe(true)
+  })
+})
 
 describe("visibleRowOrder の絞り込み", () => {
   it("filterColumn の列だけを見て、選びが空なら全行を残す", () => {
@@ -75,6 +90,31 @@ describe("visibleRowOrder の並べ替え", () => {
   })
 })
 
+describe("強調した行", () => {
+  const emphasized = (): A2uiReportPart<"Table"> => ({
+    ...table([]),
+    rows: [
+      ["5", "x"],
+      { cells: ["9", "x"], emphasis: true },
+      ["1", "x"],
+      { cells: ["3", "x"], emphasis: true },
+    ],
+  })
+
+  it("昇順でも降順でも先頭に残り、強調した行どうしは書き手の順", () => {
+    expect(visibleRowOrder(emphasized(), { column: 0, direction: "asc" }, [])).toEqual([1, 3, 2, 0])
+    expect(visibleRowOrder(emphasized(), { column: 0, direction: "desc" }, [])).toEqual([
+      1, 3, 0, 2,
+    ])
+  })
+
+  it("絞り込みで外れた強調した行は出さない", () => {
+    const part = { ...emphasized(), filterColumn: 0 }
+
+    expect(visibleRowOrder(part, { column: 0, direction: "asc" }, ["1", "5"])).toEqual([2, 0])
+  })
+})
+
 describe("字下げのある表", () => {
   const treeTable = (): A2uiReportPart<"Table"> => ({
     ...table([]),
@@ -101,6 +141,22 @@ describe("字下げのある表", () => {
     ])
     expect(visibleRowOrder(part, { column: 1, direction: "desc" }, [])).toEqual([
       0, 1, 2, 3, 4, 5, 6, 7, 8,
+    ])
+  })
+
+  it("強調した行は字下げの子の中でも、並べる向きに依らず先頭に残る", () => {
+    const part = treeTable()
+    const rows: TableRows = [
+      ...part.rows.slice(0, 5),
+      { cells: ["shared/", "6,300", "8%"], depth: 1, emphasis: true },
+      ...part.rows.slice(6),
+    ]
+
+    expect(visibleRowOrder({ ...part, rows }, { column: 1, direction: "asc" }, [])).toEqual([
+      6, 8, 7, 0, 5, 4, 1, 2, 3,
+    ])
+    expect(visibleRowOrder({ ...part, rows }, { column: 1, direction: "desc" }, [])).toEqual([
+      0, 5, 1, 2, 3, 4, 6, 7, 8,
     ])
   })
 

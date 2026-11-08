@@ -11,6 +11,7 @@ import { Button } from "../../../components/ui/button/button.tsx"
 import {
   type FilterBadge,
   filteredRowOrder,
+  isSortableTable,
   type TableSort,
   visibleRowOrder,
 } from "../domain/a2ui-table-view.ts"
@@ -74,7 +75,7 @@ export function InteractiveTable(props: InteractiveTableProps): ReactElement {
         rowOrder={order}
         captionAside={badgeGroup}
         sorting={
-          part.sortable === true
+          isSortableTable(part)
             ? {
                 sort,
                 onSort: (column) => {

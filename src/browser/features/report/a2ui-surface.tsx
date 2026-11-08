@@ -29,7 +29,7 @@ import { Divider } from "../../components/ui/divider/divider.tsx"
 import { useExternalSync } from "../../hooks/use-external-sync.ts"
 import { reportBrowserError } from "../../stores/browser-error-report.ts"
 import { loadReportCatalogApis } from "./domain/a2ui-catalog-load.ts"
-import { filterBadges, hasBoundChoicePicker } from "./domain/a2ui-table-view.ts"
+import { filterBadges, hasBoundChoicePicker, isSortableTable } from "./domain/a2ui-table-view.ts"
 import { isPlainHeadingText } from "./domain/plain-heading.ts"
 import { ChoicePicker, InteractiveTable } from "./leaf/a2ui-interactive-view.tsx"
 import { RegionBox, RegionChunks, ReportFrame } from "./leaf/body-region.tsx"
@@ -291,7 +291,7 @@ function runIds(ids: readonly string[], report: ReportContextValue): readonly st
 
 /** 並べ替えか絞り込みを受ける `Table`。使わない `Table` は欄の Markdown のまま描く。 */
 function isInteractiveTable(part: A2uiReportComponent): part is A2uiReportPart<"Table"> {
-  return part.component === "Table" && (part.sortable === true || part.filterable === true)
+  return part.component === "Table" && (isSortableTable(part) || part.filterable === true)
 }
 
 function PartView(props: { readonly id: string }): ReactElement {

@@ -61,7 +61,10 @@ const LEAF_COMPONENTS = {
   Paragraph: leafComponent("Paragraph", textBlockSchema),
   ItemList: leafComponent("ItemList", listBlockSchema),
   Table: leafComponent("Table", tableBlockSchema).extend({
-    sortable: partCardNote(z.boolean().optional(), "true で列の見出しを押して並べ替えられる"),
+    sortable: partCardNote(
+      z.boolean().optional(),
+      "true で列の見出しを押して並べ替えられる。6 行以上は書かなくても付き、false で打ち消す",
+    ),
     filterable: partCardNote(
       z.boolean().optional(),
       'true と filterColumn で、その列の値と件数のバッジ（2〜6 種類）が出て押すと絞れる。ChoicePicker の value を {path: "/view/<この表のID>/filter"} に結ぶとバッジは出ず、そちらで絞る',
