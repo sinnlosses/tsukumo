@@ -1,0 +1,47 @@
+---
+id: GH-1636
+summary: 既定のブラウザが Temporal を持たないとき（Safari）に案内を出し、要件に対応ブラウザの前提を 1 行書く
+status: done
+difficulty: haiku
+loopable: Y
+dependencies: []
+created: 2026-10-26 21:36
+updated: 2026-10-26 21:49
+---
+
+## 目的・背景
+
+`.oxlintrc.json` が `Date` を落とし、`src/browser/utils/clock.ts` が `Temporal.Now` を呼ぶ（browser 側 16 ファイル）。polyfill は無い。一方 `docs/requirements/purpose-and-scope.md`（2026-10-24）はホストに「macOS の既定のブラウザ」を足し、`src/server/host/adapter/browser-host.ts` は `open <url>` で開く。Safari は Temporal を持たないので、既定が Safari だと初回描画で止まる（文献からの推定。実機未確認）。
+
+## 決まっていること（蒸し返さない）
+
+- polyfill は同梱しない。`index.html` の最初で `globalThis.Temporal` が無ければ「このブラウザでは動きません。Chromium 系か Firefox 139 以降で開いてください」を出す
+- `purpose-and-scope.md` の 2.3 に前提を 1 行書く
+
+## 解くべき論点
+
+なし
+
+## やること
+
+### 1. 案内と前提を書く
+`src/browser/` の入口（`main.tsx`）で `Temporal` の有無を見る。無いときは `src/browser/utils/check-temporal-support.ts` の `showUnsupportedBrowserNotice` で「このブラウザでは動きません。Chromium 系か Firefox 139 以降で開いてください。」を出し、描画の続き（テーマ・ログ・`createRoot`）へ進まない。判定は `isTemporalSupported(scope)` に分けて、単体テストで `Temporal` の無い環境を作る。`docs/requirements/purpose-and-scope.md` の 2.3 に前提を1行足す。
+- 満たす完了条件: 1, 2, 3
+### 名指すファイル
+- `src/browser/`
+- `docs/requirements/purpose-and-scope.md`
+
+## 完了条件
+
+1. `Temporal` が無いとき案内が出る（単体テスト）
+2. 要件に前提の 1 行がある
+3. 検証コマンドを通す
+
+## 注意
+
+なし
+
+## 参考情報
+
+- `~/Downloads/tsukumo-audit-2026-10-26.html` 指摘 3-12
+- https://nodesource.com/blog/javascript-temporal-history-nodejs-26

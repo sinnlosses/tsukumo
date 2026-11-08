@@ -1,0 +1,15 @@
+{
+  "id": "GH-1191",
+  "difficulty": "opus",
+  "kind": "bug",
+  "base": "80ce9510e568e59cad839fe242e57ca84d66b24e",
+  "after": "4d8aecfc1bc041f86dcbb0ec9fdf8178a1f94f82",
+  "checkFiles": ["test/server/recommendation/core/kept-welcome.test.ts"],
+  "command": [
+    "pnpm",
+    "exec",
+    "vitest",
+    "run",
+    "test/server/recommendation/core/kept-welcome.test.ts"
+  ]
+}

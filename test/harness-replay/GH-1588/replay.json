@@ -1,0 +1,9 @@
+{
+  "id": "GH-1588",
+  "difficulty": "sonnet",
+  "kind": "feature",
+  "base": "33d2658fae474b8db12e577bfef9dff2ee3ea784",
+  "after": "4c0e1b0d2e27f587e79a932b70d750a443b8ef9c",
+  "checkFiles": ["test/scripts/dev/lib/stage-verdict.test.ts"],
+  "command": ["pnpm", "exec", "vitest", "run", "test/scripts/dev/lib/stage-verdict.test.ts"]
+}

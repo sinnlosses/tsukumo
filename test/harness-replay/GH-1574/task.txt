@@ -1,0 +1,54 @@
+---
+id: GH-1574
+summary: Bash の結果を hook で既定の行数に切り、全文はファイルに落としてパスを返す
+status: done
+difficulty: sonnet
+loopable: N
+dependencies: [GH-1578]
+created: 2026-10-25 20:08
+updated: 2026-11-02 13:00
+---
+
+## 目的・背景
+
+戦略 3.5.2。Bash の結果を既定200行に切り、全文はファイルに落としてパスを返す。直近28日の委譲先の Bash の結果は探索 114MB・その他 82MB・git 46MB。新しい hook なので log-only で7日走らせてから block に上げる（戦略 3.7.1）。
+
+## 決まっていること（蒸し返さない）
+
+- 新しい hook は log-only で7日走らせ、誤って切る形が無いことを見てから block に上げる
+- 切った事実は記録に残す
+- Claude Code の PostToolUse は組み込みの Bash の出力を差し替えられない（差し替えられるのは MCP のツールの `updatedMCPToolOutput` だけ）。block の段は PreToolUse の `updatedInput` でコマンドを包み直し、全文を `.tw/local/` の下へ落として先頭200行だけを返す形にする（2026-11-02 に利用者が決定）
+- このタスクは段1（log-only）だけで送り出す。block に上げる段は別のタスクに分けた（2026-11-02 に利用者が決定）
+
+## 解くべき論点
+
+なし
+
+## やること
+
+### 1. log-only の hook を足す
+
+- `scripts/hook/` に Bash の PostToolUse の hook を足し、結果が200行を超えた件数と、切ったであろう行数を `hook-denials/` と同じ置き場・同じ流儀（時刻・hook の名前・規則のキー・呼び手・数だけ。コマンドの全文と出力の中身は入れない）で記録する。まだ切らない
+- 同じ行に、そのコマンドが PreToolUse で包み直せる形か（heredoc・バックグラウンド・対話を待つコマンドなど包むと壊れる形でないか）の判定を規則のキーとして残す。後続の block の段で、7日分を再生して誤って切る形を見るための材料にする
+- `.claude/settings.json` に PostToolUse の Bash の hook を登録する（既存のエントリを壊さず追記）
+- 満たす完了条件: 1
+
+### 名指すファイル
+- `scripts/hook/bash-guard.ts`
+- `scripts/hook/lib/hook-denial-record.ts`
+- `scripts/hook/lib/hook-mode.ts`
+- `.claude/settings.json`
+- `docs/coding-standards.md`
+
+## 完了条件
+
+1. 200行を超える Bash の結果の記録が、包み直せる形かの判定つきで log-only で残る（Bash の結果は変えない）
+
+## 注意
+
+settings.json は orca が hooks を専有しているので、追記のみ（AGENTS.md）。承認が要る変更は着手前に聞く。
+block に上げる段（PreToolUse で包み直して切り、末尾に全文のパスを付ける）は、log-only を7日走らせたあとの別のタスクで行う。
+
+## 参考情報
+
+- `docs/research/harness-strategy.md`

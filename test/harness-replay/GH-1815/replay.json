@@ -1,0 +1,9 @@
+{
+  "id": "GH-1815",
+  "difficulty": "sonnet",
+  "kind": "feature",
+  "base": "662a0c7e11cb52510a7eedb32c8c83cf145ee702",
+  "after": "f278d69b969cdde86ac046e0161495a51b0a1eae",
+  "checkFiles": ["test/scripts/dev/token-budget.test.ts"],
+  "command": ["pnpm", "exec", "vitest", "run", "test/scripts/dev/token-budget.test.ts"]
+}

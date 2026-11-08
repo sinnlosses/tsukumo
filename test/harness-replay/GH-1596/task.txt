@@ -1,0 +1,63 @@
+---
+id: GH-1596
+summary: `pnpm run ship` が、この作業ツリーに着手中のタスクがあるときは送らずに拒み、`tw finish` を案内する
+status: done
+difficulty: sonnet
+loopable: Y
+dependencies: []
+created: 2026-10-26 14:12
+updated: 2026-10-26 14:33
+---
+
+## 目的・背景
+
+タスクに紐付かない作業の入口 `scripts/dev/ship.ts`（`pnpm run ship`）は、この作業ツリーに `tw claim` 済みのタスクがあっても main へ送れる。GH-1592 で、着手中のまま先に `ship.ts` で送ったため、後に打った `tw done` の「ship で閉じる」を受ける送りが残らず、タスクが着手中のまま残った（`tw ship` を打ち直して閉じた）。着手中のタスクは `tw finish` で送る約束なので、`ship.ts` の入口で機械的に拒む。
+
+いまの形: `scripts/dev/lib/ship-plan.ts` の `runShipPlan` が `ShipPlanHooks`（`isOwnWorktreeClean` など）を決まった順に呼び、`scripts/dev/ship.ts` が `git`・`pnpm` を呼ぶ hook を渡す。`tw` は `test/architecture/outside-world.test.ts` の `ALLOWED_COMMANDS` に既にある（足さない）。
+
+着手中の判定は、`tw status` の `CLAIMED` の行の印の列（作業ツリー名）が自分の作業ツリー名（`path.basename(ROOT)`）と一致するか、で見る。tw 側（tsukumo-plugins）は変えない。
+
+## 決まっていること（蒸し返さない）
+
+- 拒む位置は `runShipPlan` の先頭（作業ツリーの clean の確かめより前）。検証・rebase・merge は走らせない
+- 拒む文面で `tw finish` を案内する。`--force` のような逃げ道は足さない
+- `tw status` が読めない（終了コードが 0 以外）ときは拒まず、`tw` が読めなかった旨を stderr に出して先へ進める
+
+## 解くべき論点
+
+なし
+
+## やること
+
+### 1. 着手中の判定を `ShipPlanHooks` に足す
+`scripts/dev/lib/ship-plan.ts` の `ShipPlanHooks` に `hasOpenClaim: () => boolean` を足し、`ShipPlanResult` に `{ outcome: "task-claimed" }` を足して、`runShipPlan` の先頭で `hasOpenClaim()` が真なら返す。
+- 満たす完了条件: 1, 2
+### 2. `ship.ts` で `tw status` から判定し、拒む文面を出す
+`scripts/dev/ship.ts` に `hasOpenClaim` を渡す（`tw status` の出力から `CLAIMED` の行を読み、印の列が `path.basename(ROOT)` と一致するものがあれば真）。`describeFailure` に `task-claimed` の文を足し、`tw finish` を案内する。
+- 満たす完了条件: 1, 3
+### 3. テストを足す
+`test/scripts/dev/lib/ship-plan.test.ts` に、着手中なら `task-claimed` で返り、clean の確かめ・rebase・verify・merge が呼ばれないことを足す。
+- 満たす完了条件: 2
+### 4. 文書を揃える
+`docs/workflow/worktree-and-ship.md` の「タスクに紐付かない作業を main へ送る」に、着手中のタスクがあると `ship` が拒むことを1文足す。
+- 満たす完了条件: 4
+### 名指すファイル
+- `scripts/dev/lib/ship-plan.ts`
+- `scripts/dev/ship.ts`
+- `test/scripts/dev/lib/ship-plan.test.ts`
+- `docs/workflow/worktree-and-ship.md`
+
+## 完了条件
+
+1. この作業ツリーに着手中のタスクがあるとき、`pnpm run ship` は検証・rebase・merge を走らせずに非0で終わり、`tw finish` を案内する
+2. 着手中のタスクが無いときの `ship` の動きは変わらない（既存のテストが通り、着手中の分岐のテストが足されている）
+3. `tw status` が読めないときは拒まず先へ進む
+4. `docs/workflow/worktree-and-ship.md` に拒むことが書かれている。検証コマンド（`pnpm run check`）が通る
+
+## 注意
+
+調べて前提が成り立たなければ `dropped` で閉じてよい。
+
+## 参考情報
+
+- GH-1592（着手中のまま `ship.ts` で送って閉じ忘れた事例）

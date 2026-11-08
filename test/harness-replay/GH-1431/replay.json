@@ -1,0 +1,15 @@
+{
+  "id": "GH-1431",
+  "difficulty": "haiku",
+  "kind": "feature",
+  "base": "6290fd9bb8afe127865858229b1baa38a06f5154",
+  "after": "de4187bcc4cfd53aa682792b5aa4249feac6a993",
+  "checkFiles": ["test/server/session-driver/adapter/rtk-rewrite.test.ts"],
+  "command": [
+    "pnpm",
+    "exec",
+    "vitest",
+    "run",
+    "test/server/session-driver/adapter/rtk-rewrite.test.ts"
+  ]
+}

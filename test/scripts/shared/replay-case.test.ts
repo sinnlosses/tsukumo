@@ -9,8 +9,8 @@ import { REPOSITORY_ROOT } from "../../../scripts/shared/repository-root.ts"
 const frozenIds = readdirSync(join(REPOSITORY_ROOT, "test/harness-replay"))
 
 describe("readReplayCase", () => {
-  test("凍結したタスクの再試集の10件が読め、command は pnpm で始まる", () => {
-    expect(frozenIds).toHaveLength(10)
+  test("凍結したタスクの再試集が読め、command は pnpm で始まる", () => {
+    expect(frozenIds).toHaveLength(30)
     for (const id of frozenIds) {
       const replayCase = readReplayCase(REPOSITORY_ROOT, id)
 

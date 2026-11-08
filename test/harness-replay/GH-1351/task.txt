@@ -1,0 +1,69 @@
+---
+id: GH-1351
+summary: report の Stop の関所を、本文の改行・100字でなく背景の仕事の有無で決める
+status: done
+difficulty: opus
+loopable: Y
+dependencies: []
+created: 2026-10-22 17:14
+updated: 2026-10-23 01:31
+---
+
+## 目的・背景
+
+- 出どころ: GH-1321 の棚卸し（モデルの出力を字面で判定している検査）
+- 棚卸しの行（Stop の関所。`src/server/report/core/report-tool.ts` の `ONE_LINE_MAX_CHARS`）: 改行を含むか100字を超える本文を、レポートにすべき本文とみなす。背景の仕事を待つ2行の一言は止められる。逆に100字以内の1行の本文は止められず、画面に出ない（関所の理由文が言うとおり、`report` を通らない本文は画面に出ない）。止めた回数は記録していないので、件数は記録から読めない。方針は構造の印に置き換える: 背景の仕事が走っているかで決め、走っていなければ、`report` の無い本文が1字でもあれば止める
+- 出し先: 背景の仕事の有無は、`src/server/report/core/report-review.ts` が background-running の差し戻しに使っている `news.backgroundTasks()` から取れる。関所（`createReportGate`）にその問い合わせを渡す。`src/server/session-driver/adapter/sdk-driver.ts`・`src/server/session-driver/adapter/sdk-query-seed.ts` で関所を組む所も合わせる。100字という閾の根拠だった `docs/research/report-tool-trial.md` の試行（通ってよい1行は64字以下）は、背景の待ちの一言を通すためのものだったので、印に置き換えれば閾は要らなくなる
+- 変えるファイル: `src/server/report/core/report-tool.ts`、`src/server/session-driver/adapter/sdk-driver.ts`、`src/server/session-driver/adapter/sdk-query-seed.ts`。止めた回数を診断か使用量の記録に足すかも決める
+- GH-1076・GH-1275・GH-993 との重なり: なし（report の schema も差し戻しの条も変えない）
+
+## 決まっていること（蒸し返さない）
+
+- report の schema も差し戻しの条（`CallReview.judgeReport` の判定）も変えない。変えるのは Stop の関所の止める条件だけ
+
+## 解くべき論点
+
+**背景の仕事に、shell だけでなくサブエージェントの委譲も含めるか。** `report-review.ts` の background-running は shell だけを見ている。委譲中の待ちの一言を止めないために、台帳が委譲を数えているかを段1で読んで決め、数えていないなら委譲を足すか今の範囲で済ませるかを報告に理由つきで書く。
+**背景の仕事が無いのに、短い一言だけで止まりたい正当な場面が残るか。** 確認の問いかけは `AskUserQuestion` を通る前提だが、通らない場面（例: 許可待ちの直前の一言）が無いかを `sdk-query-seed-stop-hook.test.ts` の既存の場面から読んで決める。
+
+## やること
+
+### 1. 前提の裏取り
+| 前提 | 確かめた場所 | 結果 |
+| --- | --- | --- |
+| 関所は本文の改行か100字超で止める | `src/server/report/core/report-tool.ts:173-212` の `ONE_LINE_MAX_CHARS`・`exceedsOneLine`・`createReportGate` | 確認済み |
+| 関所は `createReportGate(callReview.nothingNewRejected)` で組まれる | `src/server/session-driver/adapter/sdk-driver.ts:125`（`sdk-query-seed.ts` は `stopHooks` の注記のみ） | 確認済み |
+| 背景の仕事の有無は `callReview` の台帳から取れる | `src/server/session-driver/core/call-review.ts:88,132,161-171` の `backgroundTasks`、`report-review.ts:197` の background-running の差し戻し | 確認済み。台帳は `background-tasks-changed` の全件（`shell`・`agent`〔`local_agent`＝背景のサブエージェント〕・`other`）を持ち、shell に絞っているのは `report-review.ts` の差し戻しだけ。関所は種類で絞らず全件を見る。`CallReview` の型は `backgroundTasks` を出していないので口を足す |
+| 100字の根拠 | `docs/research/report-tool-trial.md:44-45`（通ってよい1行は64字以下。`report` → 締めの `speak` → 1行、または背景の委譲を待つ一言） | 確認済み |
+- 満たす完了条件: 1
+### 2. 関所を背景の仕事の有無で決める
+`createReportGate` に「背景の仕事が走っているか」の問い合わせ（`() => boolean`）を渡す。背景の仕事が走っていれば `report` の無い本文を通し、走っていなければ、`report` の無い本文が1字でもあれば止める。`ONE_LINE_MAX_CHARS` と `exceedsOneLine` は消し、`sdk-driver.ts` の組み立てで `callReview` の台帳の `backgroundTasks` から問い合わせを渡す。止めた回数を診断か使用量の記録に足すかは、既存の足跡の置き場（`swallowed-failure` など）を読んで決め、足すなら理由を報告に書く。
+- 満たす完了条件: 1, 2, 3
+### 3. テストと文書を合わせて検証する
+`test/server/report/core/report-tool.test.ts` に、背景の仕事が走っているとき短い本文を通す・走っていなければ短い1行でも止める・`stopHookActive` と `nothingNewRejected` は今のとおり通すことを足す。`sdk-query-seed-stop-hook.test.ts` の「1行以内なら何も返さない」の場面と、`createReportGate` を1引数で呼ぶテストを新しい形に合わせる。`docs/research/report-tool-trial.md` の閾の根拠と `docs/glossary/conversation-tool.md` の関所の説明（「1行を超える本文」）が食い違えば現状に合わせる。検証コマンドを通す。
+- 満たす完了条件: 4
+### 名指すファイル
+- `src/server/report/core/report-tool.ts`
+- `src/server/session-driver/adapter/sdk-driver.ts`
+- `src/server/session-driver/adapter/sdk-query-seed.ts`
+- `src/server/session-driver/core/call-review.ts`
+- `docs/research/report-tool-trial.md`
+- `test/server/report/core/report-tool.test.ts`
+- `test/server/session-driver/adapter/sdk-query-seed-stop-hook.test.ts`
+- `docs/glossary/conversation-tool.md`
+
+## 完了条件
+
+1. 関所が本文の改行・字数でなく、背景の仕事の有無で止めるかを決め、`ONE_LINE_MAX_CHARS` がコードに残らない
+2. 背景の仕事が走っていないとき、`report` の無い本文が1字でもあれば止まる。100字以内の1行も止まる（単体テスト）
+3. 背景の仕事が走っているあいだの短い待ちの一言は止まらない。`stopHookActive`・`nothingNewRejected` のときの通しは変わらない（単体テスト）
+4. 検証コマンドが通る
+
+## 注意
+
+- basename が `report` で始まる既存ファイル（`report-violation-check.ts`・`report-rejection.ts`・`report-prose-rule.ts`・`report-violation.ts` など）は、委譲先が Write/Edit できないことがある。拒まれたら直す内容を返却に入れ、メインが置く
+- 調べて成り立たなければ `dropped` で閉じてよい
+
+## 参考情報
+
+- GH-1321（棚卸しの表）・`docs/research/report-tool-trial.md`

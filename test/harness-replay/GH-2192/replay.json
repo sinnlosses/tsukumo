@@ -1,0 +1,9 @@
+{
+  "id": "GH-2192",
+  "difficulty": "sonnet",
+  "kind": "refactor",
+  "base": "0b5060f1461b13112800c3edb6c9cd41272e637c",
+  "after": "1402499b959b86c73032acf2f88bfab8764533fc",
+  "checkFiles": ["test/server/adapter/lib/dated-record-log.test.ts"],
+  "command": ["pnpm", "exec", "vitest", "run", "test/server/adapter/lib/dated-record-log.test.ts"]
+}

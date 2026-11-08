@@ -1,0 +1,61 @@
+---
+id: GH-1836
+summary: 面の図・振り返り・頭の欄を、欄の Markdown に頼らず DrawnSection から直接描く
+status: done
+difficulty: opus
+loopable: Y
+dependencies: [GH-1796]
+created: 2026-10-29 13:38
+updated: 2026-10-29 14:22
+---
+
+## 目的・背景
+
+ADR 0043 論点 6 の順 10。面は図・振り返り・頭の欄を `components` から直接描かず、`reportSectionPieces` が作る欄の Markdown（`regions.sections[].markdown`・`retrospective`・`markdownLeaves`・`leafValues`）に頼っている。この欄を `DrawnSection` から直接描く形に替え、順 9（面だけが使う Markdown 化を外す）が通れるようにする。
+
+## 決まっていること（蒸し返さない）
+
+- 質問の添え書き（`question-brief.ts`・`inquiry-answer.ts`）が使う `FigureBlock` と塊 → Markdown の関数は残す（ADR 0042 の未決 1 が決まるまで）
+- 面・目次・演出の DOM は変えない（見た目の差は E2E と目視で確かめる）
+- 頭・振り返り・お願いの欄の並びと、`Markdown` の葉の描画は変えない
+
+## 解くべき論点
+
+- 欄ごとの描画の入力を `DrawnSection` のどの形にするか（欄の種類ごとに `DrawnSection` を持つか、`reportOutline` の葉から作るか）。`reportRegionsOf`・`draftRegions`・`ReportRoot`・`orderedReportRegions`・先頭欄の取り出しの 5 か所が同じ入力を読む形にする。決めた形は ADR 0043 の論点 6 の順 10 に書き足す
+
+## やること
+
+### 1. 欄の Markdown に頼る読み先を数える
+
+`regions.sections[].markdown`・`retrospective`・`markdownLeaves`・`leafValues` を読む箇所を `rg` で数え、図・振り返り・頭の欄のどれが何に頼っているかを表にする。
+- 満たす完了条件: 1
+- 確かめ方: 表を `## 結果` に書く
+
+### 2. 図・振り返りを `DrawnSection` の塊の並びから直接描く
+
+面の値に `figure`・`retrospective`（塊の並び）を足し、`ReportRoot` が欄の Markdown を読まずに並べる。頭とお願いは `report` の引数から組んだ Markdown のまま。旧い経路・先頭欄の取り出し・「描く欄があるか」の判定・`bodyChars` は替えない（続きの課題）。形は ADR 0043 論点 6 順 10 に書いた。
+- 満たす完了条件: 2
+- 確かめ方: 面・草稿の単体テストと E2E（期待値の差は 0）が通り、疑似セッションの面で図・振り返り・頭の欄が前と同じに見える
+
+### 名指すファイル
+
+- `src/shared/session/main-view-entry.ts`
+- `src/shared/session/main-view-shape.ts`
+- `src/shared/session/a2ui-report-view.ts`
+- `src/browser/domain/main-view/a2ui-draft-view.ts`
+- `src/browser/domain/main-view/main-view-step.ts`
+- `src/browser/components/page/conversation/components/main-view/a2ui-surface.tsx`
+
+## 完了条件
+
+1. 欄の Markdown に頼る読み先が、欄の種類ごとの表で分かれている
+2. 面の図・振り返り・頭の欄が欄の Markdown を読まずに描かれ、見た目が変わらない。検証コマンドが通る
+
+## 注意
+
+- 面の描画の入力を替えるので、演出（筆の動き）がマウント時の DOM だけを見る点に気をつける。本文が後から伸びる経路を変えない
+
+## 参考情報
+
+- `docs/architecture/adr/0043-report-internal-on-components.md` 論点 5・論点 6 順 10
+- `docs/architecture/adr/0031-report-body-as-regions.md`（欄ごとの描画と演出・目次の区切り）

@@ -1,0 +1,65 @@
+---
+id: GH-1724
+summary: 依頼の型ごとに、最初の 1 画面の並びを tsukumo が決める雛形を持つ
+status: done
+difficulty: opus
+loopable: N
+dependencies: [GH-1721]
+created: 2026-10-28 01:15
+updated: 2026-10-28 14:27
+---
+
+## 目的・背景
+
+2026-10-28 の 9 本の比べ（`/tmp/report-compare/result.html`）で、Claude の HTML は 9 本とも、依頼の型に合わせて最初の 1 画面の骨が揃っていた（結論の下に数の札、その下に型に合う図）。tsukumo は、数の帯（`keyFigures`）・時刻の軸（`timeline`）・横並びの区画（`list` の `cards`）が足されたあとも、書き手が毎回その場で並べを決める。書き手が型に合う並びを選び損ねると、最初の 1 画面に数も図も入らない（比べでは P1・P3・P4 がそうだった）。
+いまの手がかりは 2 つ。(1) `src/server/report/core/report-notation.ts` の `REPORT_NOTATION_PROMPT` の条 8 にある「依頼の型 → 図 1」の表（原因の診断・時間の内訳・構成の説明・画面の変更・判断・調べもの・一覧と状態・作業の完了の 8 行）。(2) `src/shared/report/figure-decision.ts` の決定表（データの形から図の形を引く）。型を引く口は文面だけで、機械が型を知らない。
+この課題が決めるのは、型の申告の口と、型ごとの雛形（数の帯を置くか・図 1 の第一候補・検証の置き場所）で、後ろの節の組み立ては書き手の自由のまま。これは判定の仕組みではなく、描き方の規則と申告の口の設計。
+ADR 0039（`docs/architecture/adr/0039-report-via-a2ui-catalog.md`）で `report` の引数は `components`（部品の平らな一覧）になる。雛形は `Report`・`Stats`・`Row` などの部品の並びとして書く（数の帯は `Report.keyFigures`、図 1 は `Report.figure`）。型の申告の口と雛形は、その `components` の形に載せる。
+
+## 決まっていること（蒸し返さない）
+
+- 型に合わない依頼は、いまの並び（結論 → checks → figure → sections）のまま。雛形は足し算で、書き手が型を申告しなければ何も変わらない
+- 後ろの節の並び・部品は書き手の自由（ADR 0028 の梯子は変えない）
+- 書き手が書くのは型の名前 1 つだけ。色・幅・余白は tsukumo が決める（ADR 0034）
+- `keyFigures` は雛形が数の帯を求める型でも、結論に効く数が 3 つに満たなければ省ける
+- 型は、依頼の型の表の 8 つ（原因の診断・時間の内訳・構成の説明・画面の変更・判断・調べもの・一覧と状態・作業の完了）から始め、足すかは 14 日の記録を見てから決める
+
+## 解くべき論点
+
+- 型の申告の口をどうするか。候補: (a) `report` に省ける欄（例 `intent`）を足す、(b) 今ある `task.genre`（work・decision・research）を 8 つに広げる、(c) 書き手に申告させず、`figure` の種類と `sections` の `shapeTag` から tsukumo が型を推す。申告させる字数と、推し間違いの害（雛形を外すだけで済むか）で比べ、選んだ理由を ADR 0028 の追記に 5 行以内で書く
+- 型の表（条 8）と雛形が重複しないよう、どちらを正典にするか。雛形を正典にして条 8 の表を消す形か、条 8 の表を残して雛形が型の名前だけ使う形かを決める
+
+## やること
+
+### 1. 申告の口と雛形の形を決める
+論点 2 つの答えを決め、ADR 0028 に追記する。雛形の中身（型ごとの数の帯の要否・図 1 の第一候補・並び）は、`/tmp/report-compare/result.html` の 6 章「型ごとの最初の 1 画面と並びの設計」の表を出発点にして書く（消えていたら条 8 の表と `docs/architecture/display/conclusion.md` から組む）。
+- 満たす完了条件: 1
+### 2. 雛形を実装する
+雛形の定義（型 → 数の帯の要否・図 1 の第一候補）を 1 つの表に置き、申告された型から `report` の呼び出しを検査する（型が数の帯を求めるのに結論の数が 3 つ以上あって `keyFigures` が無い、など）。検査は差し戻さず数えるだけ（記録に残す）にして、14 日後に差し戻しにするかを決められるようにする。
+- 満たす完了条件: 2
+### 3. 規約を寄せる
+`REPORT_NOTATION_PROMPT` の条 8 の型の表を、論点の答えに合わせて消すか雛形の名前だけに縮める。定義の字数を `scripts/runtime/definition-size.ts` で前後に測って報告に書く。そのあと `pnpm run check` を通す。
+- 満たす完了条件: 3, 4
+### 名指すファイル
+- `src/server/report/core/report-notation.ts`
+- `src/shared/report/figure-decision.ts`
+- `docs/architecture/adr/0028-report-block-priority.md`
+- `docs/architecture/display/conclusion.md`
+
+## 完了条件
+
+1. 論点 2 つの答えが ADR 0028 の追記に書かれている
+2. 申告された型に雛形の検査が掛かり、外れた数が記録に残る（単体テスト。差し戻しにはしない）
+3. 条 8 の型の表と雛形が重複せず、`REPORT_NOTATION_PROMPT` の字数が前後の数で報告に書かれている（増えていない）
+4. `pnpm run check` を通す。調べて成り立たないと分かったときは、理由を書いて `dropped` で閉じてよい
+
+## 注意
+
+- 前段（GH-1721 の `row`・`panel`）が `main` に入ってから着手する。雛形が `row`・`panel` を使う型（判断・一覧と状態）があれば、その型の雛形に含める
+- `report` で始まる名のファイルは、委譲先の Write がハーネスに拒まれる。新しい処理は `report` で始まらない名前のファイルに置き、既存の `report-*` への繋ぎ込みは差分の形で報告に返してメインが置く
+- 登録時に見込む除外の上限件数: 検査を足すが、除外の一覧は持たない（0 件）
+
+## 参考情報
+
+- `/tmp/report-compare/result.html` の 5 章（改善の提案）と 6 章（型ごとの最初の 1 画面）
+- `docs/architecture/display/conclusion.md`・`docs/architecture/display/section-and-block.md`

@@ -1,0 +1,19 @@
+{
+  "id": "GH-1596",
+  "difficulty": "sonnet",
+  "kind": "feature",
+  "base": "35318613ee4612fd6163bb7adb33ef15ea3400b5",
+  "after": "12189a702018a3730aea3df027316010e78c2cf4",
+  "checkFiles": [
+    "test/scripts/dev/lib/open-claim.test.ts",
+    "test/scripts/dev/lib/ship-plan.test.ts"
+  ],
+  "command": [
+    "pnpm",
+    "exec",
+    "vitest",
+    "run",
+    "test/scripts/dev/lib/open-claim.test.ts",
+    "test/scripts/dev/lib/ship-plan.test.ts"
+  ]
+}

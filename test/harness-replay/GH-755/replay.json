@@ -1,0 +1,15 @@
+{
+  "id": "GH-755",
+  "difficulty": "opus",
+  "kind": "feature",
+  "base": "985c9904a8c41e6d667f6acf5a8fb97ad3788644",
+  "after": "3de91e1003a7fd22a2c0c97906d5c0efe93be991",
+  "checkFiles": ["test/server/session-driver/adapter/sdk-tool.test.ts"],
+  "command": [
+    "pnpm",
+    "exec",
+    "vitest",
+    "run",
+    "test/server/session-driver/adapter/sdk-tool.test.ts"
+  ]
+}

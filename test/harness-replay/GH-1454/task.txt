@@ -1,0 +1,62 @@
+---
+id: GH-1454
+summary: タスクの一覧に、未完了のタスクが依存で指す完了タスクを直近の上限の外でも出す
+status: done
+difficulty: sonnet
+loopable: Y
+dependencies: []
+created: 2026-10-24 17:15
+updated: 2026-10-24 17:46
+---
+
+## 目的・背景
+
+タスクの一覧は、閉じた課題を閉じた時刻の新しい `CLOSED_TASK_DISPLAY_LIMIT`（10）件だけ出す（`src/server/repository/adapter/beads-task.ts` の `taskSummaryItemsOfBeadsIssues`）。そのため、未完了のタスクが依存（`blockedBy`）で指す完了タスクが11件目より古いと一覧に無く、詳細の依存の札（`src/browser/features/task-board/components/task-detail.tsx` の `TaskDependency`）が「一覧に無い」になって開けない。
+
+依存の札は一覧に ID があれば押せる札で描くので、サーバ側で一覧に入れればブラウザ側は直さなくてよい。
+
+いまの読み（`src/server/repository/adapter/beads.ts` の `listAllBeadsIssues`）は `bd list` を3本並べる: 全件の本文なし（`--all -n 0 --brief`）・未完了の本文つき（`-n 0`）・閉じた直近10件の本文つき。本文なしの全件にも `dependencies` は入っている（1450件中322件が持つ。2026-10-24 に確かめた）。
+
+### 実測の内訳
+2026-10-24、1450件の Beads で `bd list --json --flat` を3回ずつ測った中央値: 全件の本文なし 0.14秒（1.48MB）・未完了の本文つき 0.10秒・閉じた直近10件の本文つき 0.11秒。3本は `Promise.all` で並び、`readBeadsIssues` は `memoizeByStamp` で Dolt の HEAD が変わったときだけ読み直す。
+
+## 決まっていること（蒸し返さない）
+
+- 閉じた直近10件の上限と、それ以外の完了タスクを一覧に出さない決まりは残す。足すのは「閉じていない課題の `blockedBy` に入っている閉じた課題」だけ
+- 足した完了タスクの本文は、未完了の本文つきの読みが返ってから、その `blockedBy` のうち直近10件の外の閉じた課題の ID を `bd list --json --flat --all -n 0 --id <カンマ区切り>` で1本足して読む（全件の読みと重ねて走らせる）。`--all` を付けないと閉じた課題を返さない（2026-10-24 に `bd list --id gh-1437` で確かめた）
+- 足す ID が無ければ4本目は起こさない
+- ブラウザ側は直さない
+
+## 解くべき論点
+
+なし
+
+## やること
+
+### 1. 一覧に依存先の完了タスクを足す
+`src/server/repository/adapter/beads-task.ts` に `shownClosedIssues` を足し、閉じた直近 `CLOSED_TASK_DISPLAY_LIMIT` 件に、閉じていない課題の `blockedBy` に入っている閉じた課題を重複なく足す。`taskSummaryItemsOfBeadsIssues` と `knownTaskSummaryOfBeadsIssues` の `omittedClosedCount`（閉じた総数から出した閉じた課題の数を引く）がこれを使う。`test/server/repository/adapter/beads-task.test.ts` に、古い依存先が出ること・指されない古い完了タスクは出ないこと・`omittedClosedCount` が合うことを足した。
+- 満たす完了条件: 1, 3
+
+### 2. 足した完了タスクの本文を読む
+`src/server/repository/adapter/beads.ts` の `listAllBeadsIssues` で、全件と閉じた直近10件の読みを未完了の読みと重ねて走らせ、未完了の `blockedBy` のうち全件の読みで閉じていて直近10件に無い ID があるときだけ `bd list --json --flat --all -n 0 --id …` を1本足し、`withBody` に加える。ID が無ければ起こさない（3本のまま）。`failed`・`timed-out` の扱いは今の3本と揃える。`BeadsIssue` の doc コメントも合わせた。`test/server/repository/adapter/beads-issues-reader.test.ts` に、本物の `bd` で足した課題に本文が付くことと、`execFile` を数えて指す先が無ければ `list` が3本・有れば4本になることを足した。
+- 満たす完了条件: 2, 3
+
+### 名指すファイル
+- `src/server/repository/adapter/beads-task.ts`
+- `src/server/repository/adapter/beads.ts`
+- `test/server/repository/adapter/beads-task.test.ts`
+- `test/server/repository/adapter/beads-issues-reader.test.ts`
+
+## 完了条件
+
+1. 閉じていない課題の `blockedBy` に入っている閉じた課題が、閉じた直近10件に入らなくてもタスクの一覧の要約に出て、そうでない古い閉じた課題は出ない。`omittedClosedCount` は出さなかった閉じた課題の数と一致する
+2. 足した閉じた課題にも本文（`description`・`acceptance_criteria`・`notes`）が付く。足す ID が無いときは `bd` を3本しか起こさない
+3. 検証コマンドが通る
+
+## 注意
+
+委譲先に頼む記録は `## 結果` に書かせず、報告に記させる。
+
+## 参考情報
+
+なし

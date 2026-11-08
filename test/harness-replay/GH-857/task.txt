@@ -1,0 +1,49 @@
+---
+id: GH-857
+summary: 撮影カタログの「当てられなかった」の行に、件の名前と窓の名前を付ける（全件一括・--only の出力でどの件のどの窓の失敗か読めるように）
+status: done
+difficulty: haiku
+loopable: Y
+dependencies: []
+created: 2026-10-15 06:48
+updated: 2026-10-16 08:38
+---
+
+## 目的・背景
+
+- 出どころ: 振り返り: GH-843
+- 観点: 黄 情報への手の届き
+- 根拠: GH-843 の実装役が `--only question-preview-image` の出力を読み違え、失敗が narrow の撮影のものだと気づくのに 1 往復かかった。受け入れ役も、全件一括の出力に残る「当てられなかった」の行がどの件のものか突き合わせられなかった（行に件の名前も窓の名前も付かない）
+- いまの形: `scripts/capture/capture-catalog.ts` の 183〜184 行が `当てられなかった: ${describePreparation(missed)}` だけを出す
+
+## 決まっていること（蒸し返さない）
+
+- 行の形は純粋な関数に切り出し、件の名前と窓の名前（wide・narrow）を前置きする。`capture-view.ts` の同じ文言（単発の撮影。件の名前が無い）は変えない
+
+## 解くべき論点
+
+なし
+
+## やること
+
+### 1. 件と窓の名前を行に付ける
+`scripts/capture/capture-catalog.ts` の「当てられなかった」を出す箇所で、件の名前と窓の名前を前置きした行を出す。行の組み立てを関数に切り出し、`test/scripts/capture/capture-preparation.test.ts` で行の形を確かめる。（完了条件1・2）
+- 触るファイル: `scripts/capture/capture-catalog.ts`, `test/scripts/capture/capture-preparation.test.ts`
+
+### 名指すファイル
+- `scripts/capture/capture-catalog.ts`
+- `test/scripts/capture/capture-preparation.test.ts`
+
+## 完了条件
+
+1. 全件一括・`--only` の出力で、「当てられなかった」の行から件の名前と窓の名前が読める
+2. 行の形が単体テストで確かめられている
+3. 検証コマンドを通す
+
+## 注意
+
+- 調べて、すでに件と窓の名前が付いていると分かれば `dropped` で閉じてよい
+
+## 参考情報
+
+なし

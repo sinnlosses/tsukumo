@@ -1,0 +1,69 @@
+---
+id: GH-2192
+summary: `createDatedRecordLog` を包むログの `flush`・`close`・`pruneExpired` の転送の行を `lifecycle` の1行にする
+status: done
+difficulty: sonnet
+loopable: Y
+dependencies: [GH-2189]
+created: 2026-11-06 00:14
+updated: 2026-11-06 06:56
+---
+
+## 目的・背景
+
+`src/server/adapter/lib/dated-record-log.ts` の `createDatedRecordLog` は、日付ごとの JSONL に積む口（`append`・`flush`・`close`・`readRange`・`pruneExpired`）を返す。それを包む各機能のログは、自分の `append` や `readRange` だけを作り直し、残りの `flush`・`close`・`pruneExpired` を `log.flush` と書いて転送するだけの行を持つ。戻り値の型にも `Pick<DatedRecordLog<R>, "flush" | "close" | "pruneExpired">` を各所で書く。
+
+いまの転送（2026-11-06 に main で数えた）:
+- `flush: log.flush, close: log.close, pruneExpired: log.pruneExpired` の3行を持つ: `src/server/diagnostic/adapter/diagnostic-log.ts`（49〜51行目）・`src/server/usage/adapter/token-usage-log.ts`（44〜46）・`context-usage-log.ts`（48〜50）・`experience-metric-log.ts`（46〜48）・`throwaway-query-log.ts`（38〜40）の5か所。
+- `src/server/report/adapter/report-usage-log.ts` は `flush`・`close` を自前の関数（書く前後に別の処理を挟む）で包み、`pruneExpired: log.pruneExpired` だけを転送する（103〜111行目）。
+
+## 決まっていること（蒸し返さない）
+
+- `createDatedRecordLog` の戻り値に、`flush`・`close`・`pruneExpired` をまとめた `lifecycle` の欄を足す（型は `DatedRecordLifecycle = Pick<DatedRecordLog<R>, "flush" | "close" | "pruneExpired">` を export する。`R` に依らないので `Pick<JsonLinesAppender, "flush" | "close"> & { pruneExpired: … }` の形でよい）。`flush`・`close`・`pruneExpired` の欄そのものは `DatedRecordLog` に残す（既存の使い手が外から直に呼んでいる）。
+- 包む側は `...log.lifecycle` と書き、3行を1行にする。戻り値の型の `Pick<…, "flush" | "close" | "pruneExpired">` は `DatedRecordLifecycle` に置き換える。
+- `report-usage-log.ts` は `...log.lifecycle` のあとに `flush`・`close` を自前の関数で上書きする形にする（挙動は変えない）。
+- 挙動を変えない。各ログの公開の形（`flush`・`close`・`pruneExpired` を持つこと）は同じ。
+- 依存: GH-2189（`src/server/adapter/lib/` の `json-file.ts` の改修と同じディレクトリで作業が重ならないよう、あとに続く）。
+
+## 解くべき論点
+
+なし
+
+## やること
+
+### 1. `lifecycle` を足し、6か所の転送を直す
+`dated-record-log.ts` に `lifecycle` と `DatedRecordLifecycle` を足し（`test/server/adapter/lib/dated-record-log.test.ts` に、`lifecycle.flush`・`close`・`pruneExpired` が口そのものと同じ働きをする1行を足す）、6か所の転送の3行を `...log.lifecycle` にして、戻り値の型を `DatedRecordLifecycle` に置き換える。
+前提の裏取り: 転送の行は6ファイル | `rg "flush: log.flush" src` | 着手時に数え直す。
+- 満たす完了条件: 1, 2, 3
+- 確かめ方: `rg "flush: log.flush|close: log.close" src` が 0 件。`pnpm run test -- test/server/adapter/lib/dated-record-log.test.ts test/server/usage test/server/diagnostic test/server/report` が通る。
+
+### 2. 検証を通す
+`tw verify`。
+- 満たす完了条件: 4
+- 確かめ方: `tw verify`
+
+### 名指すファイル
+- `src/server/adapter/lib/dated-record-log.ts`
+- `test/server/adapter/lib/dated-record-log.test.ts`
+- `src/server/diagnostic/adapter/diagnostic-log.ts`
+- `src/server/usage/adapter/token-usage-log.ts`
+- `src/server/usage/adapter/context-usage-log.ts`
+- `src/server/usage/adapter/experience-metric-log.ts`
+- `src/server/usage/adapter/throwaway-query-log.ts`
+- `src/server/report/adapter/report-usage-log.ts`
+
+## 完了条件
+
+1. `createDatedRecordLog` の戻り値に `lifecycle`（`flush`・`close`・`pruneExpired`）があり、テストがある
+2. 6か所の `flush: log.flush`・`close: log.close`・`pruneExpired: log.pruneExpired` の転送の行が消え、`...log.lifecycle` になっている（`report-usage-log.ts` は自前の `flush`・`close` で上書き）
+3. 各ログの公開の形が変わらず、既存のテストが通る
+4. 検証コマンドが通る
+
+## 注意
+
+- 調べて成り立たなければ `dropped` で閉じてよい。
+- 委譲先は記録を `## 結果` に書かず、報告に記す。
+
+## 参考情報
+
+- 材料は 2026-11-06 の調査。

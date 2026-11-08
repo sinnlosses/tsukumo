@@ -1,0 +1,15 @@
+{
+  "id": "GH-1839",
+  "difficulty": "opus",
+  "kind": "refactor",
+  "base": "c63d39cdf36fd9cd2c6dc78b75967120c5d15f59",
+  "after": "d92c0258cdca65ed22de29a65a72bd196a9f677c",
+  "checkFiles": ["test/browser/domain/main-view/main-view-report-body.test.ts"],
+  "command": [
+    "pnpm",
+    "exec",
+    "vitest",
+    "run",
+    "test/browser/domain/main-view/main-view-report-body.test.ts"
+  ]
+}

@@ -1,0 +1,60 @@
+---
+id: GH-1815
+summary: tsukumo の設定に size_budget を置き、名指すファイルのトークン上限までの残りを出すスクリプトを足す
+status: done
+difficulty: sonnet
+loopable: Y
+dependencies: [GH-1749]
+created: 2026-10-29 01:51
+updated: 2026-10-29 06:33
+---
+
+## 目的・背景
+
+GH-1749 が tsukumo-plugins の `tw plan-check` に、設定の `size_budget`（名指すファイルを引数に足して打つコマンド。1行に `パス<TAB>残り<TAB>上限`）を読んで `SIZE_BUDGET` の行を出す口を足す。tsukumo は 1 ファイル 5000 トークンの上限（`scripts/shared/token-limit.ts` の `TOKEN_LIMIT`）を `tw step` で検査するが、計画の時点ではファイルの残りが分からず、上限ぎりぎりのファイルに足す計画が段の途中で別ファイルへ移す計画外の変更を生んだ。tsukumo の側で口に応えるコマンドを置き、`.tw/config.toml` に `size_budget` を書く。
+
+## 決まっていること（蒸し返さない）
+
+- 数え方は既存の `countTokens`（`scripts/shared/token-limit.ts`）と除外 `EXEMPT_PATH_PATTERNS` に合わせる。別の数え方を作らない
+- 出力の形は GH-1749 が決めた `パス<TAB>残り<TAB>上限`（1ファイル1行。除外のファイルは出さない）
+
+## 解くべき論点
+
+なし
+
+## やること
+
+### 1. 残りを出すスクリプトを足す
+
+`scripts/dev/token-budget.ts`（新規）を足す。引数のファイルごとに、`scripts/shared/token-limit.ts` の `countTokens` で数えたトークン数と `TOKEN_LIMIT` から `パス<TAB>残り<TAB>5000` を1行出す。`EXEMPT_PATH_PATTERNS` に当たるファイル・実在しないファイルは出さない。終了コードは常に 0。`test/scripts/dev/token-budget.test.ts`（新規）に、残りが正しく出る・除外と実在しないファイルは出ない、を書く。
+- 満たす完了条件: 1, 3
+- 確かめ方: `node scripts/dev/token-budget.ts src/main.ts` が `src/main.ts<TAB>…<TAB>5000` を出し、`pnpm exec vitest run test/scripts/dev/token-budget.test.ts` が通る
+
+### 2. 設定に置く
+
+`.tw/config.toml` に `size_budget = "node scripts/dev/token-budget.ts"` を足す。前提の裏取り: GH-1749 が入った `tw`（`vendor/tsukumo-plugins` を新しくしたもの）で `tw config` が `size_budget` を読めること。読めなければ `vendor/tsukumo-plugins` の submodule を新しくしてから足す。
+- 満たす完了条件: 2, 3
+- 確かめ方: 名指すファイルを持つ任意のタスクの `tw plan-check <ID>` が `SIZE_BUDGET\t<ID>\t<パス>\t<残り>\t5000` を出す
+
+### 名指すファイル
+
+- `scripts/shared/token-limit.ts`
+- `scripts/dev/token-limit.ts`
+- `scripts/dev/`（`token-budget.ts` を置く）
+- `test/scripts/dev/`（テストを置く）
+- `.tw/config.toml`
+
+## 完了条件
+
+1. `scripts/dev/token-budget.ts` が、引数のファイルごとに `パス<TAB>残り<TAB>上限` を1行出す（除外・実在しないファイルは出さず、終了コードは 0）
+2. `.tw/config.toml` の `size_budget` がそれを指し、`tw plan-check` が `SIZE_BUDGET` の行を出す
+3. 単体テストが足され、検証コマンドが通る
+
+## 注意
+
+- GH-1749 が送られるまで着手しない（依存に入れてある）
+- `vendor/tsukumo-plugins` の submodule の更新が要るときは、`tw ship` が止まったら submodule を新しくして送り直してよい
+
+## 参考情報
+
+- GH-1749

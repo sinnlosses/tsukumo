@@ -1,0 +1,19 @@
+{
+  "id": "GH-1351",
+  "difficulty": "opus",
+  "kind": "bug",
+  "base": "ebd2c3f4612e6b6861284194c0f4542998e7407a",
+  "after": "15f433348cd182e96f635a6d7f65ed080e4bdd89",
+  "checkFiles": [
+    "test/server/report/core/report-tool.test.ts",
+    "test/server/session-driver/adapter/sdk-query-seed-stop-hook.test.ts"
+  ],
+  "command": [
+    "pnpm",
+    "exec",
+    "vitest",
+    "run",
+    "test/server/report/core/report-tool.test.ts",
+    "test/server/session-driver/adapter/sdk-query-seed-stop-hook.test.ts"
+  ]
+}

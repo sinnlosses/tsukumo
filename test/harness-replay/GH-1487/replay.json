@@ -1,0 +1,19 @@
+{
+  "id": "GH-1487",
+  "difficulty": "haiku",
+  "kind": "refactor",
+  "base": "d4009e84c06e5831fd5c3b5ca55437e710a0f06e",
+  "after": "85c10daa90bc2db8c922822c04cd0f7a6645123d",
+  "checkFiles": [
+    "test/browser/components/page/conversation/components/main-view/components/work-strip/hooks/use-work-strip.test.ts",
+    "test/browser/domain/phase-mark.test.ts"
+  ],
+  "command": [
+    "pnpm",
+    "exec",
+    "vitest",
+    "run",
+    "test/browser/components/page/conversation/components/main-view/components/work-strip/hooks/use-work-strip.test.ts",
+    "test/browser/domain/phase-mark.test.ts"
+  ]
+}

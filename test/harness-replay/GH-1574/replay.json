@@ -1,0 +1,19 @@
+{
+  "id": "GH-1574",
+  "difficulty": "sonnet",
+  "kind": "feature",
+  "base": "c94271f12bd698d6b46d2c1f03e74a698a75facd",
+  "after": "b544fec2495aea63bc9707ccaba82935bc573cfe",
+  "checkFiles": [
+    "test/scripts/hook/lib/bash-output-overflow.test.ts",
+    "test/scripts/hook/truncate-bash-output.test.ts"
+  ],
+  "command": [
+    "pnpm",
+    "exec",
+    "vitest",
+    "run",
+    "test/scripts/hook/lib/bash-output-overflow.test.ts",
+    "test/scripts/hook/truncate-bash-output.test.ts"
+  ]
+}

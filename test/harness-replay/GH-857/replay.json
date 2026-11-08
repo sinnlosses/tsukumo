@@ -1,0 +1,9 @@
+{
+  "id": "GH-857",
+  "difficulty": "haiku",
+  "kind": "feature",
+  "base": "87975125c187fae6791379438e9a272cc4d085af",
+  "after": "27b1e53064ed895ca472861661842dc8c385418a",
+  "checkFiles": ["test/scripts/capture/capture-preparation.test.ts"],
+  "command": ["pnpm", "exec", "vitest", "run", "test/scripts/capture/capture-preparation.test.ts"]
+}

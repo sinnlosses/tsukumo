@@ -1,0 +1,9 @@
+{
+  "id": "GH-2070",
+  "difficulty": "sonnet",
+  "kind": "feature",
+  "base": "f82d07c9f6d34fee538657ec1a8bbfdd161f3da5",
+  "after": "61167d2d93ea7e16a916855b38ce78cbe01a2ed9",
+  "checkFiles": ["test/shared/session/a2ui-report-view.test.ts"],
+  "command": ["pnpm", "exec", "vitest", "run", "test/shared/session/a2ui-report-view.test.ts"]
+}

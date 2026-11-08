@@ -1,0 +1,9 @@
+{
+  "id": "GH-736",
+  "difficulty": "haiku",
+  "kind": "refactor",
+  "base": "4a9f0a183e952e7bc675e9d88d357178037bbc55",
+  "after": "2df30a79121e2d5052db1a00d143c92116ebda06",
+  "checkFiles": ["test/scripts/convention-test.test.ts"],
+  "command": ["pnpm", "exec", "vitest", "run", "test/scripts/convention-test.test.ts"]
+}

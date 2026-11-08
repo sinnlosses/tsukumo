@@ -1,0 +1,19 @@
+{
+  "id": "GH-1454",
+  "difficulty": "sonnet",
+  "kind": "feature",
+  "base": "cbab88010bdb5150d2d4f313f6e6a6bcbaa247c7",
+  "after": "2d6443f47a8c3bf082325bfaa99b53976a6a2973",
+  "checkFiles": [
+    "test/server/repository/adapter/beads-issues-reader.test.ts",
+    "test/server/repository/adapter/beads-task.test.ts"
+  ],
+  "command": [
+    "pnpm",
+    "exec",
+    "vitest",
+    "run",
+    "test/server/repository/adapter/beads-issues-reader.test.ts",
+    "test/server/repository/adapter/beads-task.test.ts"
+  ]
+}

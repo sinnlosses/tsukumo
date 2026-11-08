@@ -1,0 +1,61 @@
+---
+id: GH-1989
+summary: decision-reference.test.ts が e2e の出力ディレクトリを走査して ENOENT で落ちる競合をなくす
+status: done
+difficulty: haiku
+loopable: Y
+dependencies: []
+created: 2026-11-01 22:41
+updated: 2026-11-02 01:39
+---
+
+## 目的・背景
+
+- 出どころ: 振り返り: GH-1969
+- 観点: 黄 機械の検査
+- 根拠: `tw verify` の test 段で `test/scripts/document/decision-reference.test.ts` が `test/e2e/output/playwright/.playwright-artifacts-2/traces/resources/….json` の ENOENT で1回落ち、打ち直すと通った（e2e の出力が走査中に消えた競合。差分とは無関係）
+- 出し先: `test/scripts/document/decision-reference.test.ts` の走査の対象から `test/e2e/output/` を外す（検査）
+
+## 決まっていること（蒸し返さない）
+
+## 解くべき論点
+
+## やること
+
+### 1. 走査から `test/e2e/output/` を外す
+前提の裏取り:
+- `test/e2e/output/` は `.gitignore:22` の `/test/e2e/output/` で無視される。確かめた場所は `.gitignore` | 結果: 無視される
+- `scripts/document/lib/source-file-list.ts` の `listSourcePaths` は git を見ず `globSync` で歩き、外すのはディレクトリ名（`node_modules`・`dist`・`.git`・`vendor`）だけ。確かめた場所は同ファイル | 結果: 外れていない
+- E2E の出力が列挙されたあと、読む前に消えると `readFileSync` が ENOENT で落ちる。確かめた場所は GH-1969 の `tw verify` の1回の失敗（`.playwright-artifacts-2/traces/resources/*.json` の ENOENT。打ち直すと通った） | 結果: 推測（再現は測っていない）
+- 使い手は `repository-reference.ts`・`task-mention-repository.ts`・`decision-reference-repository.ts` の3つ。確かめた場所は `rg listSourcePaths scripts` | 結果: どれも出力ディレクトリの中は読む意味がない
+
+`source-file-list.ts` に、ディレクトリ名と別に「リポジトリ直下からの相対パスで外すディレクトリ」の定数（`test/e2e/output` 1つ）を足し、`skipped` がその相対パスに一致するか、その下にあるエントリも外すようにする。
+- 満たす完了条件: 1
+- 確かめ方: `pnpm exec vitest run test/scripts/document/lib/source-file-list.test.ts` が通る（段2で足す）
+
+### 2. 単体テストを足す
+`test/scripts/document/lib/source-file-list.test.ts` を新設する。一時ディレクトリ（既存のテストの `tempDir()` と同じ作り方。`test/scripts/document/section-reference-repository.test.ts` を見る）に `test/e2e/output/playwright/a.json`・`test/e2e/other/b.json`・`docs/c.md` を置き、`listSourcePaths` の戻りに `a.json` が無く、`b.json`・`c.md` があることを `toEqual` で見る。
+- 満たす完了条件: 2
+- 確かめ方: `pnpm exec vitest run test/scripts/document/lib/source-file-list.test.ts`。段1の定数を一時的に空にして同じテストが落ちることも確かめて戻す
+
+### 3. 検証を通す
+- 満たす完了条件: 3
+- 確かめ方: `tw verify` が `VERIFIED` を返す
+
+### 名指すファイル
+- `scripts/document/lib/source-file-list.ts`
+- `test/scripts/document/lib/`（`source-file-list.test.ts` を新しく置く）
+- `test/scripts/document/section-reference-repository.test.ts`
+
+## 完了条件
+
+1. 文書の検査が読むファイルの一覧（`listSourcePaths`）に、`test/e2e/output/` 以下のファイルが載らない
+2. 一覧に載らないことを確かめる単体テストがある（一時ディレクトリの `test/e2e/output/` に置いたファイルは返らず、`test/` の別の場所のファイルは返る）
+3. 検証コマンド（`pnpm run check`・`tw verify`）が通る
+
+## 注意
+
+- 外すのは `test/e2e/output` だけ。ほかの無視されるディレクトリへ広げない。
+- 調べて成り立たない（すでに外れている）と分かったときは、理由を書いて `dropped` で閉じてよい。
+
+## 参考情報

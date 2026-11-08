@@ -1,0 +1,15 @@
+{
+  "id": "GH-1724",
+  "difficulty": "opus",
+  "kind": "feature",
+  "base": "131381211b5e71fbbbec0dd4b6152c7db0fd1e80",
+  "after": "f8407198648fbaf53779e211b33949d8b7cb2b45",
+  "checkFiles": ["test/server/report/core/template-miss-fault.test.ts"],
+  "command": [
+    "pnpm",
+    "exec",
+    "vitest",
+    "run",
+    "test/server/report/core/template-miss-fault.test.ts"
+  ]
+}

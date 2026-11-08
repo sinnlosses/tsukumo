@@ -1,0 +1,62 @@
+---
+id: GH-1839
+summary: 面の結論・数の札・お願いを、欄の Markdown に頼らず部品から直接描く
+status: done
+difficulty: opus
+loopable: Y
+dependencies: [GH-1836]
+created: 2026-10-29 14:42
+updated: 2026-10-29 15:14
+---
+
+## 目的・背景
+
+ADR 0043 の順 10 の一部。面の頭とお願いは `reportRegionsOf` が引数から Markdown に組み、`regions.head`・`finalHead`・`favor` として持っている。頭の 4 部品（数の札・検証の合図・段ごとの所要時間・変更ファイル）は計約 585 行の HTML 文字列の組み立てなので、3 課題に分けて React の部品で直接描く。この課題はその 1 つ目で、結論の包み・数の札・お願いの包みを部品にする。
+
+## 決まっていること（蒸し返さない）
+
+- 頭とお願いの見た目と DOM（class 名を含む）は変えない（前後の画で確かめる）
+- 旧い記録（`a2ui` が `none`）の経路（`MarkdownReport`）は変えない。質問の添え書きが使う塊 → Markdown の関数は残す
+- 合図の行・所要時間・変更ファイルは次の課題で扱い、この課題では欄の Markdown のまま残す（頭の一部だけを部品にした状態で面が崩れないようにする）
+
+## 解くべき論点
+
+頭を「部品で描く部分」と「欄の Markdown のままの部分」が混ざる間、面の値（`MainViewA2uiReport`）が頭の入力をどう持つか。結論・数の札・お願いは値で持ち、残りの部分は従来の Markdown 欄を残すか、頭を部分ごとの値の並びに替えるか。決めた形は ADR 0043 論点 6 の順 10 に書き足す。
+
+## やること
+
+### 1. 結論・数の札・お願いが頼る入力を数える
+
+`reportRegionsOf` の `head` の結論の包み・`keyFiguresMarkdown`・お願いの包み（`favorRegionOf`）が、どの引数から組まれ、どこで読まれるかを `rg` で数えて表にした（済み。表は段1の返却）。
+- 満たす完了条件: 1
+- 確かめ方: 表を返却に書いた
+
+### 2. 結論・数の札・お願いを部品から直接描く
+
+面の値に `head`（`MainViewSurfaceHead`: 結論 `lead`・数の札 `keyFigures`・残りの `status`/`finalStatus`）を足し、結論・数の札は `HeadRegion`、お願いは `FavorRegion` が値から直接描く。旧い経路が読む `head`/`finalHead` は残す。ADR 0043 論点 6 の順 10 に形を書き足した（済み）。
+- 満たす完了条件: 2
+- 確かめ方: 面・草稿の単体テストと `tw verify` が通り、疑似セッションの面で前後の画と DOM が同じ
+
+### 名指すファイル
+
+- `src/shared/session/main-view-entry.ts`
+- `src/shared/session/main-view-shape.ts`
+- `src/shared/session/a2ui-report-view.ts`
+- `src/shared/report/report-stat-markdown.ts`
+- `src/browser/domain/main-view/main-view-report-body.ts`
+- `src/browser/components/page/conversation/components/main-view/a2ui-surface.tsx`
+
+## 完了条件
+
+1. 結論・数の札・お願いが頼る入力が、部分ごとの表で分かれている
+2. 面の結論・数の札・お願いが欄の Markdown を読まずに描かれ、見た目が変わらない。検証コマンドが通る
+
+## 注意
+
+- 数の札は SVG の折れ線（スパーク）と棒（メーター）を含む。見た目の差は 420 幅の画で確かめる
+- 頭は最終レポートのときだけ所要時間と変更ファイルを足す（`finalHead`）。草稿と最終の描き分けを壊さない
+- 本文の領域は内側でスクロールするので、画は `--scroll-to` などで末尾まで送ったものも撮る
+
+## 参考情報
+
+- `docs/architecture/adr/0043-report-internal-on-components.md` 論点 5・論点 6 順 10

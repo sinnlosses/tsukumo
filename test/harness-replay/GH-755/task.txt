@@ -1,0 +1,64 @@
+---
+id: GH-755
+summary: `report` ツールの JSON Schema で塊の定義が `figure` と `sections` に複製される約1.15万字を `$defs` 化で減らせるか調べる
+status: done
+difficulty: opus
+loopable: N
+dependencies: []
+created: 2026-10-13 21:57
+updated: 2026-10-13 22:26
+---
+
+## 目的・背景
+
+- 出どころ: 振り返り: GH-748
+- 観点: 黄 道具の経済
+- 根拠: SDK が `z.toJSONSchema` を inline で使うため、`figure` の欄（約11,500字。`sections` の配列は約17,700字）の分だけ `report` のツール定義が毎ターン約1.15万字増える。塊に `.meta({ id })` を付けて `$defs` で参照させる手があるが、全ツールのスキーマの形が変わる。
+- 出し先: まず `.meta({ id })` を付けたときの JSON Schema の字数と、SDK がそれを受け付けるかを測るタスク。減らせるなら全ツールへの影響を見て採否を決める
+
+## 決まっていること（蒸し返さない）
+
+- 測る量は、SDK が `report` の入力スキーマをモデルへ渡すときの JSON Schema の文字数。GH-748 の実測は `figure` が約11,500字、`sections` の配列が約17,700字
+- 採る条件: 字数が `report` のツール定義で1万字以上減る／SDK が受け付ける／実セッションで `report` が図の塊付きで通る、の3つがそろうこと。1つでも欠けたら採らず、測った数と理由を結果に書いて `dropped` で閉じる
+- 減らす手は、塊に名前（`.meta({ id })`）を付けて `$defs` と `$ref` で参照させる形を第一候補にする。ほかに有効な手が測って見つかったときは、その字数と一緒に報告して採ってよい
+- `describe` の文面（`REPORT_FIGURE_DESCRIPTION`・`REPORT_SECTIONS_DESCRIPTION`）は削らない。削ると書き手への指示が減る
+- `report` 以外のツール（`question_brief` の `figures` など）の入力の形は、`$ref` を受け付けると確かめられたものだけ同じ形にする。確かめられないものは触らない
+
+## 解くべき論点
+
+- SDK が使う zod（`sdk.mjs` に同梱）と、リポジトリの `zod`（^4.6.5）が別の実体のとき、`.meta({ id })` を付けた塊が `$defs` に出るか。出ないなら `reused: "ref"` 相当を SDK 側に渡せるか
+- `$defs` と `$ref` を含むスキーマを、モデルが正しく読んで `report` を呼べるか（図の塊を `figure` と `sections` の両方に入れた呼び出しで確かめる）
+- 塊の名前（`id`）が、モデルから見える定義名として衝突・紛らわしさを生まないか
+
+## やること
+
+### 1. いまの字数を内訳つきで測る
+リポジトリの外（`/tmp`）の使い捨てスクリプトで、`src/server/session-driver/adapter/sdk-tool.ts` の `report` の入力スキーマを `z.toJSONSchema` にかけ、全体・`figure`・`sections`・塊の種類ごとの文字数を出す。続けて、SDK が実際にモデルへ渡す形（`sdk.mjs` の変換の呼び方）で同じ数が出ることを確かめる。ほかのツール（`question_brief` の `figures` ほか）の字数も並べる。→ 完了条件1
+### 2. 名前付きにして測り直し、受け入れ可否を確かめる
+`src/shared/report/report-block.ts` の塊の schema（`reportBlockSchema` の各枝）に `.meta({ id })` を付けた版を作業ツリーの外で試し、`$defs` で参照される形の字数を測る。SDK がその形を受け付けるか、実セッションで図の塊付きの `report` が通るかを確かめる。採る条件（決まっていること）を満たさなければ、測った数を結果に書いて `dropped` で閉じる。→ 完了条件2・3
+### 3. 採るときだけ実装し、検証を通す
+`report-block.ts` に `.meta({ id })` を入れ、`test/server/session-driver/adapter/sdk-tool.test.ts` に「`report` の JSON Schema に塊が `$defs` で1回だけ出る」「字数が上限以内」の検査を足す。`docs/architecture/display.md` か `workflow-contract.md` の `report` の欄の記述に、スキーマの形が変わったことがあれば追随する。`pnpm run test:e2e:update` が要るかは検証で判断し、動いたら `git diff test/e2e/expected/` を読む。→ 完了条件4・5
+### 名指すファイル
+- `src/shared/report/report-block.ts`
+- `src/server/session-driver/adapter/sdk-tool.ts`
+- `src/server/report/core/report-tool.ts`
+- `test/server/session-driver/adapter/sdk-tool.test.ts`
+- `docs/architecture/display.md`
+- `docs/architecture/workflow-contract.md`
+
+## 完了条件
+
+1. `report` の入力スキーマの字数を、全体・`figure`・`sections`・塊の種類ごと・ほかのツールで測った表が結果にある
+2. 名前付きにした版の字数と、SDK が受け付けたか・実セッションで図付きの `report` が通ったかが結果にある
+3. 採る条件の3つがそろわなければ、測った数と理由を結果に書いて `dropped` で閉じる（調べて成り立たなければ `dropped` で閉じてよい）
+4. 採るとき: `report` のツール定義の字数が1万字以上減り、新しい検査が `$defs` の1回出しと字数の上限を見る（テスト）
+5. 検証コマンドを通す
+
+## 注意
+
+- スキーマの形を変えるのは全ツールの入力に響く。`report` 以外は、`$ref` を受け付けると確かめられたものだけ触る
+- 実セッションで確かめるときは、会話の実物を保存・複製しない（`docs/coding-standards.md`「会話内容の扱い」）。呼び出しの入力は架空の文面にする
+
+## 参考情報
+
+- 出どころ: GH-748 の受け入れの申し送り（`figure` の JSON Schema が約11,500字、`sections` の配列が約17,700字。SDK が `z.toJSONSchema` を inline で使う）

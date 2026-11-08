@@ -1,0 +1,9 @@
+{
+  "id": "GH-1212",
+  "difficulty": "sonnet",
+  "kind": "feature",
+  "base": "3b9b17346754ac86d947f1ffd0a237f601e77a4b",
+  "after": "c15640297169ac523fbc32f16d3c427b40810a16",
+  "checkFiles": ["test/server/report/core/report-violation.test.ts"],
+  "command": ["pnpm", "exec", "vitest", "run", "test/server/report/core/report-violation.test.ts"]
+}

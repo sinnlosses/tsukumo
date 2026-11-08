@@ -1,0 +1,9 @@
+{
+  "id": "GH-1836",
+  "difficulty": "opus",
+  "kind": "refactor",
+  "base": "805f3cc6feedd5ccd7ca4ab82eb5e6e14dd9c6fd",
+  "after": "4c01a1ce0c78b8033493779371a926a16193f28a",
+  "checkFiles": ["test/shared/session/a2ui-report-view.test.ts"],
+  "command": ["pnpm", "exec", "vitest", "run", "test/shared/session/a2ui-report-view.test.ts"]
+}

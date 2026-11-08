@@ -24,7 +24,7 @@
 | `docs/architecture/testing/e2e-scenario-conversation-state.md`    | E2E のシナリオの一覧のうち、押す的と字・始め方の一覧・失敗の表示・会話が終わったあとの入力欄・読み上げとフォーカス・トークンの画面の見直し・タスクの作業のレポートの結論部のシナリオの行。     |
 | `docs/architecture/testing/e2e-scenario-task-chat-and-setting.md` | E2E のシナリオの一覧のうち、タスクの一覧とモーダル・雑談・覚えていること・セッションの切り替え・操作子・歯車の設定・途中のちらつきのシナリオの行と、まだ無いシナリオ。                         |
 | `docs/architecture/testing/e2e-scenario-turn-and-input.md`        | E2E のシナリオの一覧の前置き（1本目と2本目の条件・表の読み方）と、ターン・入力欄・吹き出し・反応・レポート・狭い画面のシナリオの行。                                                           |
-| `docs/architecture/testing/harness-replay.md`                     | ハーネス（CLAUDE.md・rules・スキル・hook・モデルの割り当て）を変えたとき前後を比べる、凍結したタスク10件の置き場・形・選び方・会話の実物を入れない規則と、タスクの再試の走らせ方・費用を持つ。 |
+| `docs/architecture/testing/harness-replay.md`                     | ハーネス（CLAUDE.md・rules・スキル・hook・モデルの割り当て）を変えたとき前後を比べる、凍結したタスク30件の置き場・形・選び方・会話の実物を入れない規則と、タスクの再試の走らせ方・費用を持つ。 |
 | `docs/architecture/testing/method-and-fixture.md`                 | 対象ごとのテストの方法と置き場所、E2E と単体と目視の分担、フィクスチャの作法、E2E に任せず単体テストに残すもの。                                                                               |
 | `docs/architecture/testing/visual-check-interaction.md`           | 手で確かめることの中ほど。                                                                                                                                                                     |
 | `docs/architecture/testing/visual-check-revision-and-scene.md`    | 手で確かめることの後半。                                                                                                                                                                       |

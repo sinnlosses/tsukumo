@@ -1,0 +1,51 @@
+---
+id: GH-1487
+summary: 段の印（✓・/・序数・…）を browser/domain/phase-mark.ts の1箇所で決める
+status: done
+difficulty: haiku
+loopable: Y
+dependencies: []
+created: 2026-10-24 20:38
+updated: 2026-10-24 22:18
+---
+
+## 目的・背景
+
+段の印（✓・/・序数・…）を決める判定が複製されている: `src/browser/features/current-work/hooks/use-current-work.ts` の `planMarkOf`、`components/page/conversation/components/main-view/components/work-strip/hooks/use-work-strip.ts`（独自に `?`・`・` も持つ）、`components/domain/screen-nav/components/phone-head.tsx`（部品の中で算出。`container-presenter.md` の「部品に算出を残さない」にも反する）、`main-view/components/phase-list/presentational-phase-list.tsx` と `pending-ask-card/presentational-pending-ask-card.tsx` の `CHECK_MARK`。番号の無い段の印が帯では `・`/`…`、札では `…` と既にずれている。
+
+## 決まっていること（蒸し返さない）
+
+- `src/browser/domain/phase-mark.ts` に `phaseMarkOf(plan, phase)` を置き、4箇所はそこから引く。印の語は今の帯の `✓`・`/`・序数・`…` に揃える（`・` は `…` に寄せる）
+
+## 解くべき論点
+
+なし
+
+## やること
+
+### 1. 1箇所に寄せる
+`src/browser/domain/phase-mark.ts` に `phaseMarkOf(plan, phase)`（済んだ段は `doneMarkOf` の「✓」か「/」、番号を持つ段は序数、番号を持たない段は「…」）と `doneMarkOf`・定数を置き、`planMarkOf`（札）・`use-work-strip`（帯。`・` は `…` へ寄せ、範囲の先頭から後ろの「・」を消す）・`phone-head`（点の字は算出を hook の `mark` へ出す）・`phase-row` の `mark`（一覧と板の印）・お伺いの札の `CHECK_MARK` をそこから引く。単体テストは `test/browser/domain/phase-mark.test.ts` に足し、帯の pending の期待値を「…」に直す。E2E の期待値には「・」の字が無いので撮り直しは要らない見込み。
+- 満たす完了条件: 1, 2, 3
+### 名指すファイル
+- `src/browser/domain/phase-mark.ts`（新規）
+- `src/browser/features/current-work/hooks/use-current-work.ts`
+- `src/browser/components/page/conversation/components/main-view/components/work-strip/hooks/use-work-strip.ts`
+- `src/browser/components/domain/screen-nav/components/phone-head.tsx`
+- `src/browser/components/domain/screen-nav/hooks/use-phone-head.ts`
+- `src/browser/components/page/conversation/components/main-view/domain/phase-row.ts`
+- `src/browser/components/page/conversation/components/main-view/components/phase-list/presentational-phase-list.tsx`
+- `src/browser/components/page/conversation/components/pending-ask-card/presentational-pending-ask-card.tsx`
+
+## 完了条件
+
+1. 段の印を決める関数が `src/browser/domain/phase-mark.ts` の1つで、`planMarkOf`・`CHECK_MARK` の定義が他に無い
+2. 帯と札の番号の無い段の印が同じ字になっている
+3. `tw verify`（設定の検証コマンド）が通る
+
+## 注意
+
+なし
+
+## 参考情報
+
+- `src/shared/session/work-plan-phase-number.ts`（序数の正典）

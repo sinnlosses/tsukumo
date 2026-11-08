@@ -1,0 +1,57 @@
+---
+id: GH-1431
+summary: rtk の有無を起動時に1回だけ確かめ、無ければ Bash ごとの `rtk rewrite` を起こさない
+status: done
+difficulty: haiku
+loopable: Y
+direct: Y
+dependencies: []
+created: 2026-10-24 12:22
+updated: 2026-10-24 15:30
+---
+
+## 目的・背景
+
+`src/server/session-driver/adapter/sdk-query-seed.ts` の `PreToolUse` の hook は、Bash のたびに `src/server/session-driver/adapter/rtk-rewrite.ts` の `rewriteWithRtk` で `execFile("rtk", ["rewrite", cmd])`（timeout 2 秒）を待ってから応答する。rtk が入っていない環境でも毎回 spawn して `ENOENT` で失敗する。Bash は 1 日 900〜1500 回（`tool-started` の数）起きるので、委譲先が並ぶときは Bash の手前に数十 ms ずつ足される。
+
+### 実測の内訳
+
+- `tool-started` 939〜1504 件/日（`~/.tsukumo/diagnostic/` の集計。Bash はこの一部）
+- `rewriteWithRtk` 1 回の所要: 未計測（子プロセスの起動が主で、`node -e 0` が 20ms の機械）。入っていなければ `ENOENT` まで
+
+## 決まっていること（蒸し返さない）
+
+- 起動時（`sdk-query-seed.ts` が hook を組む所）に 1 回だけ `rtk --version`（か `which` 相当の `execFile`）で有無を確かめ、無ければ hook から `rewriteWithRtk` を呼ばない
+- 同じコマンド文字列の結果の控えは入れない（委譲先の提案だが、Bash のコマンドは毎回違うことが多く、控えの効きが見込めない）
+
+## 解くべき論点
+
+なし
+
+## やること
+
+### 1. 有無を 1 回だけ確かめる
+
+前提の裏取り: Bash のたびに `rtk` を起こす | `src/server/session-driver/adapter/sdk-query-seed.ts` の `PreToolUse` と `rtk-rewrite.ts` の `rewriteWithRtk` | 毎回 `execFile("rtk", ["rewrite", cmd])`
+
+`rtk-rewrite.ts` に `probeRtk(): Promise<boolean>` を足し、`sdk-query-seed.ts` で hook を組むときに 1 回だけ呼んで結果を閉じ込める。無ければ `rewriteWithRtk` を呼ばずコマンドをそのまま通す。単体（`test/server/session-driver/adapter/`）に「無いときは `execFile` が呼ばれない」「あるときは今までどおり」を足す。`pnpm run check` を通す。
+
+- 満たす完了条件: 1, 2
+
+### 名指すファイル
+
+- `src/server/session-driver/adapter/rtk-rewrite.ts`
+- `src/server/session-driver/adapter/sdk-query-seed.ts`
+
+## 完了条件
+
+1. rtk が無い環境で、Bash の hook が子プロセスを起こさない（単体で確かめる）
+2. 検証コマンドが通る
+
+## 注意
+
+なし
+
+## 参考情報
+
+なし

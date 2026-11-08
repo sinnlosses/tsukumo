@@ -1,0 +1,44 @@
+---
+id: GH-736
+summary: `CONVENTION_TEST_FILES` を中身（ファイルとディレクトリの混在）を言う名前に改める
+status: done
+difficulty: haiku
+loopable: Y
+dependencies: []
+created: 2026-10-12 22:58
+updated: 2026-10-13 00:00
+---
+
+## 目的・背景
+
+- 出どころ: 振り返り: GH-729（利用者の依頼: 分けたあとに気づいた削れる点はタスクにする）
+- 観点: 黄 コーディング規約
+- 根拠: `test/architecture/` を指す形にしたので名前が中身を言わなくなった（`scripts/lib/convention-test.ts`・`scripts/test.ts`・`test/scripts/convention-test.test.ts`・`docs/architecture/testing.md`）
+- 出し先: scripts/lib/convention-test.ts
+
+## 決まっていること（蒸し返さない）
+
+## 解くべき論点
+
+## やること
+
+### 1. 名前を替える
+`scripts/lib/convention-test.ts` の `CONVENTION_TEST_FILES` を `CONVENTION_TEST_PATHS` に替え、呼び元（`scripts/test.ts`・`test/scripts/convention-test.test.ts`）と、文書の言及（`docs/architecture/testing.md` の「`pnpm run test <ファイル>` は、渡したファイルに加えて規約のテスト（`CONVENTION_TEST_FILES`）も走らせる」ほか、`grep -rn CONVENTION_TEST_FILES --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=history --exclude-dir=research .` に当たるもの）を揃える（完了条件の1行目）。`withConventionTests` の JSDoc とファイル先頭の責務の1行が、ファイルとディレクトリの混在を言えているかも見る。
+### 2. 検証する
+`node scripts/find-stray-reference.ts` が迷子の参照0件であること、`pnpm run test test/task-id.test.ts` が規約のテストを重ねて走らせること、検証コマンドが通ることを確かめる（3行目）。
+### 名指すファイル
+- `scripts/lib/convention-test.ts`
+- `scripts/test.ts`
+- `test/scripts/convention-test.test.ts`
+- `docs/architecture/testing.md`
+
+## 完了条件
+
+- `CONVENTION_TEST_FILES` が、ファイルとディレクトリの両方を指す中身を言う名前（`CONVENTION_TEST_PATHS`）に変わり、`grep -rn CONVENTION_TEST_FILES --exclude-dir=node_modules --exclude-dir=.git .` が `docs/history/` と `docs/research/` を除いて0件
+- `DOCUMENT_CHECK_TEST_FILES`（ファイルだけ）は変えない
+- 検証コマンドを通す
+- 調べて成り立たなければ、`dropped` で閉じてよい
+
+## 注意
+
+## 参考情報

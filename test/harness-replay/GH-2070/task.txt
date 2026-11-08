@@ -1,0 +1,53 @@
+---
+id: GH-2070
+summary: report に「したこと」の欄（作業の中身を1段落）を足し、面の頭まで運ぶ
+status: done
+difficulty: sonnet
+loopable: Y
+dependencies: []
+created: 2026-11-03 13:21
+updated: 2026-11-03 14:12
+---
+
+## 目的・背景
+
+最終レポートの結論の直後に「作業の記録」（したこと／変えたファイル／確かめたこと／かかった時間の4行）を置く（2026-11-03 に利用者と合意。見本は `docs/research/report-work-record-2026-11-03/mock.html`・`mock.png`）。このタスクはその1行目「したこと」の値を、書き手から画面の手前まで運ぶ。並べて描くのは後段のタスク。
+
+いまタスクで実施した中身は、書き手が `Section` の中の段落に書いていて（例: GH-2068 の最終レポートの「`report-head.tsx` の `TaskId` は…」）、置き場が決まっていない。`report` の a2ui の根 `Report` の props は `src/shared/report/a2ui-report-catalog.ts` が定め、欄の説明は `src/server/report/core/prompt/report-tool.ts`、書き方の条は `src/server/report/core/prompt/report-notation.ts` にある。似た欄の `retrospective` は Report の props から `src/shared/session/a2ui-report-view.ts` を通って面の値になる。
+
+## 決まっていること（蒸し返さない）
+
+- 「したこと」は Report の新しい欄（1段落の文字列。インラインの記法 inline code・太字・リンクだけ効く）にする。`phaseSummary` を並べて代わりにはしない（2026-11-03 利用者決定）
+- 書くのは `task` を渡すレポートのとき。省いてよく、省いたら記録の行は出さない
+- 見本と言葉の説明が食い違ったら見本が勝つ
+
+## 解くべき論点
+
+なし
+
+## やること
+
+### 1. 欄を受け、面の値まで運ぶ
+`a2ui-report-catalog.ts` の Report の props に欄を足し（識別子は `docs/glossary.md` の「英語識別子」に合わせ、無ければ用語集に先に足す）、`a2ui-report-view.ts` が面の頭の値（`src/shared/session/main-view-shape.ts` の `MainViewSurfaceHead`）に載せる。`report-tool.ts` の欄の説明に「タスクで実際にしたことを、読み手が知っている語（ファイル名・関数名）から1段落で。結論の言い直しにしない」を書き、`report-notation.ts` の条に置き場を1行足す。描画はこのタスクでは足さない（後段）。単体テストに、欄が面の頭の値まで運ばれる例と、省いたとき空になる例を足す。手続き応答の型・セッションイベントが変わるなら `pnpm run test:e2e:update` を打つ。
+- 満たす完了条件: 1, 2, 3
+### 名指すファイル
+- `src/shared/report/a2ui-report-catalog.ts`
+- `src/shared/session/a2ui-report-view.ts`
+- `src/shared/session/main-view-shape.ts`
+- `src/server/report/core/prompt/report-tool.ts`
+- `src/server/report/core/prompt/report-notation.ts`
+- `test/`（テストを置く）
+
+## 完了条件
+
+1. `report` の Report に「したこと」の欄を渡すと、面の頭の値にその文字列が載る。省くと載らない
+2. 欄の説明と記法の条に、書く中身と置き場が書かれている
+3. 検証コマンドが通る
+
+## 注意
+
+調べて、既存の欄で同じ役が果たせると分かったら、その理由を報告に書いて `dropped` で閉じてよい。
+
+## 参考情報
+
+- 見本: `docs/research/report-work-record-2026-11-03/mock.html`（画は同じ場所の `mock.png`）

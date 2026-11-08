@@ -1,0 +1,9 @@
+{
+  "id": "GH-1636",
+  "difficulty": "haiku",
+  "kind": "feature",
+  "base": "097cc0e7b01a34e7901c2081975f1c993d5bacbd",
+  "after": "a4d2520247d231ac7ad3b2d093bbc61f5d7e96b4",
+  "checkFiles": ["test/browser/utils/check-temporal-support.test.ts"],
+  "command": ["pnpm", "exec", "vitest", "run", "test/browser/utils/check-temporal-support.test.ts"]
+}

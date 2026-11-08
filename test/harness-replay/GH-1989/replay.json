@@ -1,0 +1,9 @@
+{
+  "id": "GH-1989",
+  "difficulty": "haiku",
+  "kind": "bug",
+  "base": "38a9e1c064b5bbf8eaf7a930c20a4aab1d1496ec",
+  "after": "10c710cf0d2acc8dff08e4083aba30c7ccb80e6d",
+  "checkFiles": ["test/scripts/document/lib/source-file-list.test.ts"],
+  "command": ["pnpm", "exec", "vitest", "run", "test/scripts/document/lib/source-file-list.test.ts"]
+}

@@ -1,0 +1,69 @@
+---
+id: GH-1191
+summary: 仕事モードと雑談の行き来で、同じセッションの迎えの挨拶と反応の行を書き直さず、前に出したものをそのまま出す
+status: done
+difficulty: opus
+loopable: Y
+dependencies: []
+created: 2026-10-18 09:53
+updated: 2026-10-20 03:32
+---
+
+## 目的・背景
+
+雑談モードから仕事モードへ切り替えるたびに、セッションが変わっていなくても迎えの挨拶（と反応の行）が新しく書かれて出る。行き来ではセリフが保存されていて同じものが出るべき。
+
+いまの形:
+- `setChatMode`（`src/server/session/core/session-command.ts:126-160`）は戻す先に直前のセッションがあれば `resume:{by:"id"}`、なければ `{by:"new"}` で `session.restart` する。どちらでも駆動が起き直る。
+- `src/wiring/welcome-greeting.ts` の `noteLaunched` は、仕事側の代を起こすたび `createWelcomeGreeter` で新しい書き手を作り、`seed.start.kind` が `new` なら `greeter.start(START_VISIT)`、`resume` なら履歴を組み直して `greeter.start(resumedWelcome(...))` を呼ぶ。「同じセッションなら再生成しない」判定が無い。
+- `welcome-greeting-memory.ts` が保存するのは直近の文（被らない文を書かせる用）で、キーはキャラ名だけ。再表示用ではない。
+- 画面の状態は `welcome-greeting-changed`（`src/shared/session/session-state.ts:931`）だけが源。
+
+方針: 保存はプロセスの中（`wireWelcomeGreeting` の閉包）に持つ。目的は雑談との行き来であり、tsukumo を落として起こし直した続きの再開は従来どおり書き直す（そのとき経過の帯が挨拶の材料になる）。ディスクへは書かない（会話内容の規約のため）。
+
+## 決まっていること（蒸し返さない）
+
+- 再利用は同じプロセスの中の、同じセッションへ戻る場合だけ。再起動後の続き・新しく始める代・`/clear` は今のまま書く。
+- 挨拶だけでなく反応の行（`reactions-written`）も、出したものをそのまま出し直す。
+- 保存した文はそのまま出す（経過の帯の差し替えはしない。行き来は短く、古くならない）。
+- ディスクには書かない。
+
+## 解くべき論点
+
+- キャッシュのキー。`new` で起きた代は起動時にセッションIDが無く、戻るときは `resume:{by:"id"}` のIDで来る。書けた時点で何のIDに結ぶか（駆動が決めるIDを受ける口があるか、`setChatMode` が覚えている直前のセッションと結ぶか）を、実物を読んで決める。
+- 書いている最中（`writing`）に雑談へ切り替えた場合、書き終えた結果をどこへ入れるか（捨てるか、キャッシュに入れるか）。
+
+## やること
+
+### 1. 同じセッションの挨拶と反応の行を覚える口を足す
+`src/wiring/welcome-greeting.ts` の `wireWelcomeGreeting` の閉包に、セッションに結ばれた「出した挨拶・反応の行」を持たせる。書けたとき（`written` / `reactions-written`）にそこへ入れ、`noteLaunched` の `resume` 分岐で、結ばれたものがあれば `greeter.start` を呼ばず `onEvent` へ同じ出来事を流し直す。キーの決め方は論点のとおり実物を読んで決める。
+- 満たす完了条件: 1, 2, 3
+- 決めたこと: 覚える口は自分たちのモジュールをモックせずに試せるよう core の `src/server/recommendation/core/kept-welcome.ts`（`createWelcomeKeeper`）に置き、閉包は1つ持つだけ。キーはその代の受け取り口に流れる `session-info` のセッションID（続きからの代は起こすときのID）。`setChatMode` が覚える直前のセッションも同じ `session-info` 由来の `state.session.sessionId` なので一致する。書いている最中に雑談へ切り替えた代の書けた結果は、受け取り口が捨ててもキャッシュには入れる。`/clear` で覚えた挨拶は外す。
+### 2. テストと文書を揃える
+`test/server/recommendation/core/kept-welcome.test.ts`（`createWelcomeKeeper` の単体）に、行き来で書き直さない（覚えたものを流し直す）・`/clear` は書き直す・新しく始める代と覚えていないセッション（再起動後と同じ）は書き直す、を足す。`docs/architecture/chat-mode.md`「切り替え方」に、行き来で挨拶を保つことを1〜2行足し、`test/e2e/welcome.test.ts` の期待値が動くなら `pnpm run test:e2e:update` で更新する。
+- 満たす完了条件: 4, 5
+### 名指すファイル
+- `src/wiring/welcome-greeting.ts`
+- `src/server/recommendation/core/kept-welcome.ts`
+- `src/server/session/core/session-command.ts`
+- `src/server/recommendation/core/welcome-greeter.ts`
+- `test/server/recommendation/core/kept-welcome.test.ts`
+- `test/server/recommendation/core/welcome-greeter.test.ts`
+- `test/e2e/welcome.test.ts`
+- `docs/architecture/chat-mode.md`
+
+## 完了条件
+
+1. 仕事モード→雑談→同じ仕事セッションへ戻したとき、挨拶と反応の行が書き直されず、前に出したものがそのまま出る（`greeter.start` が呼ばれない）。
+2. `/clear` のときは今までどおり挨拶が書き直される。
+3. tsukumo を起こし直した続きの再開・新しく始める代では、今までどおり書かれる。
+4. 1〜3 を確かめる単体テストがある。
+5. `docs/architecture/chat-mode.md` に行き来で挨拶を保つことが書いてある。検証コマンドを通す。調べて成り立たなければ（すでに行き来で保たれていると分かった場合など）根拠を添えて `dropped` で閉じてよい。
+
+## 注意
+
+なし
+
+## 参考情報
+
+なし
