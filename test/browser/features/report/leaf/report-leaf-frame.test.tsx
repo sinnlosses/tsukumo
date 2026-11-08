@@ -1,6 +1,12 @@
-import { cleanup, render } from "@testing-library/react"
-import { afterEach, beforeAll, describe, expect, it } from "vitest"
+import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { afterEach, beforeAll, describe, expect, it, vi } from "vitest"
 
+import {
+  type LeafIdentity,
+  LeafIdentityContext,
+  type SectionPoint,
+  SectionPointContext,
+} from "../../../../../src/browser/features/report/leaf-point-context.ts"
 import {
   LeafFold,
   FoldedLeafFrame,
@@ -9,6 +15,11 @@ import {
   leafFrameClassNames,
   loadMarkdown,
 } from "../../../../../src/browser/features/report/markdown.tsx"
+import {
+  type ReplyPort,
+  ReplyPortContext,
+  type ReplyPortSlot,
+} from "../../../../../src/browser/features/report/reply-port.ts"
 import type { LeafValue } from "../../../../../src/shared/report/report-leaf-value.ts"
 
 const CAPTION_SELECTOR = `.${leafFrameClassNames.caption}`
@@ -171,6 +182,89 @@ describe("FoldedLeafFrame", () => {
     expect(outer?.children).toHaveLength(2)
     expect(outer?.firstElementChild?.querySelector(CAPTION_SELECTOR)).not.toBeNull()
     expect(outer?.lastElementChild?.classList.contains(leafFrameClassNames.gutter)).toBe(true)
+  })
+})
+
+describe("FoldedLeafFrame の「聞く」", () => {
+  const VALUE: FrameValue = { captionNumber: NO_CAPTION, gutterNotes: [] }
+
+  function askFrame(options: {
+    readonly slot: ReplyPortSlot
+    readonly section: SectionPoint
+    readonly leaf: LeafIdentity
+  }) {
+    return render(
+      <ReplyPortContext value={options.slot}>
+        <SectionPointContext value={options.section}>
+          <LeafIdentityContext value={options.leaf}>
+            <div data-report-region="section">
+              <FoldedLeafFrame value={VALUE} title="架空の題" fit={false} fold="" swap={false}>
+                <p>架空の本体</p>
+              </FoldedLeafFrame>
+            </div>
+          </LeafIdentityContext>
+        </SectionPointContext>
+      </ReplyPortContext>,
+    )
+  }
+
+  function idlePort(): ReplyPort {
+    return {
+      appendDraft: vi.fn<ReplyPort["appendDraft"]>(),
+      ask: vi.fn<ReplyPort["ask"]>(),
+    }
+  }
+
+  const SECTION: SectionPoint = { kind: "section", reportToolUseId: "toolu_1", heading: "架空の節" }
+  const LEAF: LeafIdentity = { kind: "leaf", componentId: "p1", componentKind: "Paragraph" }
+
+  it("口があり節の中の内容部品なら「聞く」が出て、押して書いて送ると指した所つきで ask を呼ぶ", () => {
+    const ask = vi.fn<ReplyPort["ask"]>()
+    askFrame({
+      slot: { kind: "open", port: { appendDraft: vi.fn<ReplyPort["appendDraft"]>(), ask } },
+      section: SECTION,
+      leaf: LEAF,
+    })
+
+    fireEvent.click(screen.getByRole("button", { name: "聞く" }))
+    const field = screen.getByRole("textbox")
+    fireEvent.change(field, { target: { value: "なぜ？" } })
+    fireEvent.keyDown(field, { key: "Enter", metaKey: true })
+
+    expect(ask).toHaveBeenCalledExactlyOnceWith(
+      {
+        label: { section: "架空の節", component: "架空の題" },
+        key: { reportToolUseId: "toolu_1", componentId: "p1" },
+      },
+      "なぜ？",
+    )
+    expect(screen.queryByRole("textbox")).toBeNull()
+  })
+
+  it("口が無ければ出ない", () => {
+    askFrame({ slot: { kind: "none" }, section: SECTION, leaf: LEAF })
+
+    expect(screen.queryByRole("button", { name: "聞く" })).toBeNull()
+  })
+
+  it("指す位置が節の外（図・振り返り・頭の欄）なら出ない", () => {
+    askFrame({
+      slot: { kind: "open", port: idlePort() },
+      section: { kind: "none" },
+      leaf: LEAF,
+    })
+
+    expect(screen.queryByRole("button", { name: "聞く" })).toBeNull()
+  })
+
+  it("内容部品の外（配置の部品の枠）では出ない", () => {
+    askFrame({
+      slot: { kind: "open", port: idlePort() },
+      section: SECTION,
+      leaf: { kind: "none" },
+    })
+
+    expect(screen.queryByRole("button", { name: "聞く" })).toBeNull()
   })
 })
 

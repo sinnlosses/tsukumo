@@ -53,6 +53,26 @@ test.describe("report → メインビュー", () => {
     await room.settleAndMatchPicked(ELAPSED_MS)
   })
 
+  test("表の行の「聞く」を押すとその場の入力欄が開き、Esc で閉じる", async ({ run }) => {
+    const room = await run.open({
+      scenario: "a2ui-interactive",
+      scene: "a2ui-interactive-sample",
+      viewport: "wide",
+      domRoots: ["main"],
+    })
+
+    await room.waitForEvent("turn-finished")
+    const row = room.page.locator("[data-report-body] tbody tr").first()
+    await row.hover()
+    await row.getByRole("button", { name: /について聞く$/ }).click()
+    const field = room.page.getByRole("textbox", { name: /指した所/ })
+    await expect(field).toBeFocused()
+    await expect(room.page.getByText("答えはこの下に返る。作業は始めない")).toBeVisible()
+
+    await room.page.keyboard.press("Escape")
+    await expect(field).toBeHidden()
+  })
+
   test("触れるレポートは、つまみを振ると数・文・図の強調が変わり、開き直すと初期値に戻る", async ({
     run,
   }) => {

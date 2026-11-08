@@ -1,0 +1,89 @@
+/* 内容部品の右上の「聞く」と、部品の下に開くその場の入力欄。ボタンは重ねたとき・フォーカスしたときだけ見える。 */
+.ask-frame {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--stack-block);
+}
+.ask-button-slot {
+  position: absolute;
+  top: var(--stack-tight);
+  right: var(--stack-tight);
+  clip-path: inset(50%);
+}
+.ask-frame:hover > .ask-button-slot,
+.ask-button-slot:focus-within {
+  clip-path: none;
+}
+@media (hover: none) {
+  .ask-button-slot {
+    clip-path: none;
+  }
+}
+.ask-button {
+  min-height: 1.5rem;
+  padding: var(--inset-control);
+  border-radius: var(--radius-pill);
+}
+/* 表の行の右端の「聞く」。重ねた行・フォーカスした行にだけ見える。 */
+.ask-row-cell {
+  text-align: right;
+  white-space: nowrap;
+}
+.ask-row-slot {
+  display: inline-block;
+  clip-path: inset(50%);
+}
+tr:hover .ask-row-slot,
+tr:focus-within .ask-row-slot {
+  clip-path: none;
+}
+@media (hover: none) {
+  .ask-row-slot {
+    clip-path: none;
+  }
+}
+/* 入力欄を開いている行は地を変えて目立たせる。 */
+.ask-row-active > td {
+  background: var(--surface-accent);
+}
+.ask-row-button {
+  min-height: 1.5rem;
+  padding: var(--inset-control);
+}
+.ask-box {
+  display: flex;
+  flex-direction: column;
+  gap: var(--stack-block);
+  padding: var(--inset-card);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+.ask-target {
+  color: var(--ink-soft);
+  font-size: var(--font-secondary);
+  overflow-wrap: anywhere;
+}
+.ask-field {
+  min-height: 4rem;
+  padding: var(--inset-control);
+  resize: vertical;
+}
+.ask-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--inline-control);
+}
+.ask-note {
+  flex: 1 1 auto;
+  color: var(--ink-quiet);
+  font-size: var(--font-secondary);
+}
+.ask-cancel,
+.ask-send {
+  min-height: 1.75rem;
+  padding: var(--inset-control);
+  border-radius: var(--radius-pill);
+}

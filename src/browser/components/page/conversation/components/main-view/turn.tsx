@@ -18,18 +18,17 @@ import { formatMeasured } from "../../../../../../shared/utils/elapsed-time.ts"
 import { ReplyPortContext } from "../../../../../features/report/reply-port.ts"
 import { Report } from "../../../../../features/report/report.tsx"
 import { useExternalSync } from "../../../../../hooks/use-external-sync.ts"
-import { Button } from "../../../../ui/button/button.tsx"
-import { Dialog } from "../../../../ui/dialog/dialog.tsx"
-import { MaximizeIcon } from "../../../../ui/icon/icon.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
 import { VStack } from "../../../../ui/v-stack/v-stack.tsx"
 import { useComposerDraft } from "../../stores/composer-draft.ts"
 import { useDraftedReports } from "../../stores/drafted-report.ts"
+import { useAskSend } from "../hooks/use-ask-send.ts"
 import { AsideThread } from "./aside-thread.tsx"
 import { revealStepIdOf } from "./domain/draft-reveal.ts"
 import { REPORT_STEP_ATTRIBUTE } from "./domain/outline-report-head.ts"
 import { arrangeTurn, progressFoldSummary, type ProgressEntry } from "./domain/turn-arrangement.ts"
 import { DraftReport } from "./draft-report.tsx"
+import { ExpandableHead } from "./expandable-head.tsx"
 import styles from "./main-view.module.css"
 import { QuestionRecord } from "./question-record.tsx"
 import { ReportHead, type ReportLabel } from "./report-head.tsx"
@@ -66,9 +65,10 @@ export function Turn(props: TurnProps): ReactElement {
   const arrangement = arrangeTurn(turn)
   const latestStepId = props.newest ? finalStep?.id : undefined
   const appendParagraphToDraft = useComposerDraft((state) => state.appendParagraphToDraft)
+  const ask = useAskSend()
 
   return (
-    <ReplyPortContext value={{ kind: "open", port: { appendDraft: appendParagraphToDraft } }}>
+    <ReplyPortContext value={{ kind: "open", port: { appendDraft: appendParagraphToDraft, ask } }}>
       <div>
         {turn.droppedCount > 0 && (
           <Text
@@ -320,7 +320,12 @@ function StepReport(props: StepReportProps): ReactElement | undefined {
   return (
     <>
       {label === "final" && !props.phoneHidden ? (
-        <ExpandableHead body={step.body} turnId={props.turnId} head={head} />
+        <ExpandableHead
+          body={step.body}
+          turnId={props.turnId}
+          head={head}
+          reportClassNames={REPORT_CLASS_NAMES}
+        />
       ) : (
         head
       )}
@@ -329,6 +334,7 @@ function StepReport(props: StepReportProps): ReactElement | undefined {
         reveal={props.reveal}
         turnId={props.turnId}
         className={phoneHidden}
+        reportToolUseId={step.origin.kind === "tool-report" ? step.origin.toolUseId : undefined}
         nextSteps={
           props.latest && !props.phoneHidden
             ? {
@@ -339,77 +345,6 @@ function StepReport(props: StepReportProps): ReactElement | undefined {
         }
         {...REPORT_CLASS_NAMES}
       />
-    </>
-  )
-}
-
-const EXPAND_LABEL = "広げる"
-const COLLAPSE_LABEL = "閉じる"
-const BOARD_LABEL = "最終レポート"
-
-type ExpandableHeadProps = {
-  readonly turnId: number
-  readonly body: Extract<MainViewStepBody, { readonly kind: "text" }>
-  readonly head: ReactElement
-}
-
-/** 最終レポートの見出しの行の右上に「広げる」を置き、押すと同じレポートを画面いっぱいの板で出す。板に書き上げの演出は掛けない。 */
-function ExpandableHead(props: ExpandableHeadProps): ReactElement {
-  const [expanded, setExpanded] = useState(false)
-  const { body } = props
-  const close = (): void => setExpanded(false)
-  return (
-    <>
-      <div className={styles["report-head-frame"]}>
-        {props.head}
-        <Button
-          variant="ghost-hover-rule-soft"
-          size="label"
-          pressed="none"
-          disabled={false}
-          disclosure={{ kind: "dialog" }}
-          className={styles["report-expand"]}
-          onClick={() => setExpanded(true)}
-        >
-          <MaximizeIcon /> {EXPAND_LABEL}
-        </Button>
-      </div>
-      {expanded && (
-        <Dialog
-          open={true}
-          ariaLabel={BOARD_LABEL}
-          backdrop="dim"
-          placement={{ kind: "auto" }}
-          onClose={close}
-          className={styles["report-board"]}
-        >
-          <div className={styles["report-board-body"]}>
-            <div className={styles["report-board-column"]}>
-              {props.head}
-              <Report
-                body={body.report}
-                reveal={false}
-                turnId={props.turnId}
-                className=""
-                {...REPORT_CLASS_NAMES}
-              />
-            </div>
-          </div>
-          <div className={styles["report-board-bar"]}>
-            <Button
-              variant="outline-surface"
-              size="secondary"
-              pressed="none"
-              disabled={false}
-              disclosure={{ kind: "none" }}
-              className={styles["report-board-close"]}
-              onClick={close}
-            >
-              {COLLAPSE_LABEL}
-            </Button>
-          </div>
-        </Dialog>
-      )}
     </>
   )
 }

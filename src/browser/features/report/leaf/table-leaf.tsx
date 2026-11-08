@@ -2,7 +2,7 @@
 // 列の揃え・数の棒・状態の凡例・濃淡の段は全行から決め、札の色は内容部品の値から受ける。数えない。
 
 import clsx from "clsx"
-import { Fragment, type ReactElement, type ReactNode } from "react"
+import { type ComponentProps, Fragment, type ReactElement, type ReactNode, use } from "react"
 
 import type { A2uiReportComponent } from "../../../../shared/report/a2ui-report-catalog.ts"
 import type { A2uiReportPart } from "../../../../shared/report/a2ui-report-outline.ts"
@@ -38,6 +38,7 @@ import {
   tableLeafClassNames,
   tagToneClassName,
 } from "../markdown.tsx"
+import { type RowAsk, RowAskContext } from "./ask-frame.tsx"
 import { ColumnMarked, type HeadSort, LeafTable, type LeafTableRow } from "./leaf-table.tsx"
 import styles from "./leaf.module.css"
 import { FoldedLeafFrame } from "./report-leaf-frame.tsx"
@@ -108,7 +109,7 @@ export function TableFigure(props: {
           })}
         </div>
       )}
-      <LeafTable
+      <TableGrid
         head={
           totalled
             ? [...headCells(part, value, sorting), TOTAL_LABEL]
@@ -116,8 +117,11 @@ export function TableFigure(props: {
         }
         headSorts={sorting === undefined ? undefined : headSortsOf(part, sorting, totalled)}
         aligns={totalled ? [...layout.aligns, "right"] : layout.aligns}
-        rows={bodyRows(part, { layout, heat, totals }, value, rowOrder)}
         foot={totals.kind === "totals" ? footRows(part.columns.length, heat, totals) : []}
+        part={part}
+        figure={{ layout, heat, totals }}
+        value={value}
+        rowOrder={rowOrder}
       />
       {heat.kind === "heat" && <HeatLegend part={part} heat={heat} />}
       {part.rest.trim() !== "" && (
@@ -127,6 +131,20 @@ export function TableFigure(props: {
       )}
     </FoldedLeafFrame>
   )
+}
+
+/** 外枠の中で「聞く」の口を読み、行ごとのボタンを付けた表を描く。 */
+function TableGrid(
+  props: Omit<ComponentProps<typeof LeafTable>, "rows"> & {
+    readonly part: TablePart
+    readonly figure: FigureLayout
+    readonly value: LeafValue
+    readonly rowOrder: readonly number[]
+  },
+): ReactElement {
+  const { part, figure, value, rowOrder, ...tableProps } = props
+  const rowAsk = use(RowAskContext)
+  return <LeafTable {...tableProps} rows={bodyRows(part, figure, value, rowOrder, rowAsk)} />
 }
 
 function headCells(
@@ -236,6 +254,7 @@ function bodyRows(
   figure: FigureLayout,
   value: LeafValue,
   rowOrder: readonly number[],
+  rowAsk: RowAsk,
 ): readonly LeafTableRow[] {
   const { layout, heat, totals } = figure
   return rowOrder.flatMap((index, position) => {
@@ -284,15 +303,26 @@ function bodyRows(
         : drawn
     const [first, ...rest] = cells
     const detail = tableRowDetail(row)
+    const firstCell = tableCellTexts(tableRowCells(row)[0]).join(" ")
     return [
       {
         key: String(index),
         depth: tableRowDepth(row),
+        ask:
+          rowAsk.kind === "none"
+            ? undefined
+            : {
+                label: firstCell,
+                onAsk: () => {
+                  rowAsk.openRow(index, firstCell)
+                },
+                active: rowAsk.isOpen(index),
+              },
         detail:
           detail === undefined
             ? undefined
             : {
-                label: tableCellTexts(tableRowCells(row)[0]).join(" "),
+                label: firstCell,
                 content: <InlineMarkdown text={detail} />,
               },
         cells:

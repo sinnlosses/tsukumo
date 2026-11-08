@@ -677,6 +677,12 @@
                                                               "children": [
                                                                 "状態"
                                                               ]
+                                                            },
+                                                            {
+                                                              "tag": "th",
+                                                              "attributes": {
+                                                                "aria-hidden": "true"
+                                                              }
                                                             }
                                                           ]
                                                         }
@@ -729,6 +735,22 @@
                                                                   ]
                                                                 }
                                                               ]
+                                                            },
+                                                            {
+                                                              "tag": "td",
+                                                              "children": [
+                                                                {
+                                                                  "tag": "button",
+                                                                  "attributes": {
+                                                                    "aria-disabled": "false",
+                                                                    "aria-label": "`a.ts`について聞く",
+                                                                    "type": "button"
+                                                                  },
+                                                                  "children": [
+                                                                    "聞く"
+                                                                  ]
+                                                                }
+                                                              ]
                                                             }
                                                           ]
                                                         },
@@ -773,6 +795,22 @@
                                                                       ]
                                                                     },
                                                                     "キャッシュが古いまま"
+                                                                  ]
+                                                                }
+                                                              ]
+                                                            },
+                                                            {
+                                                              "tag": "td",
+                                                              "children": [
+                                                                {
+                                                                  "tag": "button",
+                                                                  "attributes": {
+                                                                    "aria-disabled": "false",
+                                                                    "aria-label": "`b.ts`について聞く",
+                                                                    "type": "button"
+                                                                  },
+                                                                  "children": [
+                                                                    "聞く"
                                                                   ]
                                                                 }
                                                               ]
@@ -823,11 +861,37 @@
                                                                   ]
                                                                 }
                                                               ]
+                                                            },
+                                                            {
+                                                              "tag": "td",
+                                                              "children": [
+                                                                {
+                                                                  "tag": "button",
+                                                                  "attributes": {
+                                                                    "aria-disabled": "false",
+                                                                    "aria-label": "`c.ts`について聞く",
+                                                                    "type": "button"
+                                                                  },
+                                                                  "children": [
+                                                                    "聞く"
+                                                                  ]
+                                                                }
+                                                              ]
                                                             }
                                                           ]
                                                         }
                                                       ]
                                                     }
+                                                  ]
+                                                },
+                                                {
+                                                  "tag": "button",
+                                                  "attributes": {
+                                                    "aria-disabled": "false",
+                                                    "type": "button"
+                                                  },
+                                                  "children": [
+                                                    "聞く"
                                                   ]
                                                 },
                                                 "表 2",
@@ -858,6 +922,12 @@
                                                               "children": [
                                                                 "後"
                                                               ]
+                                                            },
+                                                            {
+                                                              "tag": "th",
+                                                              "attributes": {
+                                                                "aria-hidden": "true"
+                                                              }
                                                             }
                                                           ]
                                                         }
@@ -886,6 +956,22 @@
                                                               "children": [
                                                                 "24"
                                                               ]
+                                                            },
+                                                            {
+                                                              "tag": "td",
+                                                              "children": [
+                                                                {
+                                                                  "tag": "button",
+                                                                  "attributes": {
+                                                                    "aria-disabled": "false",
+                                                                    "aria-label": "帯について聞く",
+                                                                    "type": "button"
+                                                                  },
+                                                                  "children": [
+                                                                    "聞く"
+                                                                  ]
+                                                                }
+                                                              ]
                                                             }
                                                           ]
                                                         },
@@ -909,6 +995,22 @@
                                                               "children": [
                                                                 "12"
                                                               ]
+                                                            },
+                                                            {
+                                                              "tag": "td",
+                                                              "children": [
+                                                                {
+                                                                  "tag": "button",
+                                                                  "attributes": {
+                                                                    "aria-disabled": "false",
+                                                                    "aria-label": "札について聞く",
+                                                                    "type": "button"
+                                                                  },
+                                                                  "children": [
+                                                                    "聞く"
+                                                                  ]
+                                                                }
+                                                              ]
                                                             }
                                                           ]
                                                         }
@@ -917,6 +1019,16 @@
                                                   ]
                                                 },
                                                 "ほか 3 件（一覧は省略）",
+                                                {
+                                                  "tag": "button",
+                                                  "attributes": {
+                                                    "aria-disabled": "false",
+                                                    "type": "button"
+                                                  },
+                                                  "children": [
+                                                    "聞く"
+                                                  ]
+                                                },
                                                 "src/a.ts",
                                                 {
                                                   "tag": "button",

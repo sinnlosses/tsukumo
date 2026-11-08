@@ -22,6 +22,8 @@ type ReportProps = {
   /** 本文の根に重ねて付ける class。 */
   readonly blockClassName: string
   readonly nextSteps?: NextStepsOrigin
+  /** この本文を書いた `report` の呼び出しの id。渡すと節の中の内容部品が「聞く」で指せる。 */
+  readonly reportToolUseId?: string
 }
 
 export function Report(props: ReportProps): ReactElement {
@@ -49,6 +51,7 @@ export function Report(props: ReportProps): ReactElement {
         revealClassName={props.revealClassName}
         blockClassName={props.blockClassName}
         nextSteps={props.nextSteps}
+        reportToolUseId={props.reportToolUseId}
       />
     )
   }

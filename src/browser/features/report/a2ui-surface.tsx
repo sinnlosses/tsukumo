@@ -31,6 +31,11 @@ import { reportBrowserError } from "../../stores/browser-error-report.ts"
 import { loadReportCatalogApis } from "./domain/a2ui-catalog-load.ts"
 import { filterBadges, hasBoundChoicePicker, isSortableTable } from "./domain/a2ui-table-view.ts"
 import { isPlainHeadingText } from "./domain/plain-heading.ts"
+import {
+  LeafIdentityContext,
+  type SectionPoint,
+  SectionPointContext,
+} from "./leaf-point-context.ts"
 import { ChoicePicker, InteractiveTable } from "./leaf/a2ui-interactive-view.tsx"
 import { RegionBox, RegionChunks, ReportFrame } from "./leaf/body-region.tsx"
 import { ChartTermLinkScope, chartLinkInputsOf } from "./leaf/chart-term-link.tsx"
@@ -54,6 +59,7 @@ type A2uiReportProps = {
   /** 本文の根に重ねて付ける class（置く側のステップの末尾の余白の打ち消しが指す綴り）。 */
   readonly blockClassName: string
   readonly nextSteps?: NextStepsOrigin
+  readonly reportToolUseId?: string
 }
 
 /**
@@ -262,12 +268,18 @@ function SectionContent(props: { readonly id: string }): ReactElement {
   const headingText = report.body.sections.find((s) => s.id === section?.regionId)?.heading ?? ""
   const drawnDirectly = headingLine !== "" && isPlainHeadingText(headingText)
   const ids = part?.component === "Section" ? part.children : [props.id]
+  const point: SectionPoint =
+    report.reportToolUseId === undefined
+      ? { kind: "none" }
+      : { kind: "section", reportToolUseId: report.reportToolUseId, heading: headingText }
   return (
     <>
       {drawnDirectly && <h4>{headingText}</h4>}
-      <ChartTermLinkScope charts={chartLinkInputsOf(ids, report.parts, report.leaves)}>
-        <PartRun lead={drawnDirectly ? "" : headingLine} ids={ids} />
-      </ChartTermLinkScope>
+      <SectionPointContext value={point}>
+        <ChartTermLinkScope charts={chartLinkInputsOf(ids, report.parts, report.leaves)}>
+          <PartRun lead={drawnDirectly ? "" : headingLine} ids={ids} />
+        </ChartTermLinkScope>
+      </SectionPointContext>
     </>
   )
 }
@@ -374,12 +386,18 @@ function LayoutPart(props: { readonly id: string }): ReactElement {
     default: {
       if (part !== undefined && isInteractiveTable(part)) {
         return (
-          <InteractiveTable
-            dataModel={report.dataModel}
-            part={part}
-            value={report.view.leafValues[part.id]}
-            badges={hasBoundChoicePicker(report.parts.values(), part.id) ? [] : filterBadges(part)}
-          />
+          <LeafIdentityContext
+            value={{ kind: "leaf", componentId: part.id, componentKind: part.component }}
+          >
+            <InteractiveTable
+              dataModel={report.dataModel}
+              part={part}
+              value={report.view.leafValues[part.id]}
+              badges={
+                hasBoundChoicePicker(report.parts.values(), part.id) ? [] : filterBadges(part)
+              }
+            />
+          </LeafIdentityContext>
         )
       }
       const view = part === undefined ? undefined : directLeafViewOf(part)

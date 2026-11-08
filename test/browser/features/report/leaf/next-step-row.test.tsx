@@ -35,7 +35,10 @@ const COMPONENTS: readonly A2uiReportComponent[] = [
 const ORIGIN = { sessionRemaining: { kind: "none" }, outcome: "stopped" } as const
 
 function renderRow(withPort: boolean) {
-  const port = { appendDraft: useComposerDraft.getState().appendParagraphToDraft }
+  const port = {
+    appendDraft: useComposerDraft.getState().appendParagraphToDraft,
+    ask: () => undefined,
+  }
   return render(
     <ReplyPortContext value={withPort ? { kind: "open", port } : { kind: "none" }}>
       <NextStepRow origin={ORIGIN} components={COMPONENTS} />

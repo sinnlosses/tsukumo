@@ -6,6 +6,7 @@ import type { ReactElement } from "react"
 import type { A2uiReportComponent } from "../../../../shared/report/a2ui-report-catalog.ts"
 import type { ReportImageSource } from "../../../../shared/report/report-image-markdown.ts"
 import type { LeafValue } from "../../../../shared/report/report-leaf-value.ts"
+import { LeafIdentityContext } from "../leaf-point-context.ts"
 import { ChartGridLeaf } from "./chart-grid-leaf.tsx"
 import { ChartLeaf } from "./chart-leaf.tsx"
 import { ClaimsLeaf } from "./claims-leaf.tsx"
@@ -80,6 +81,10 @@ export function DirectLeaf(props: {
   return props.value === undefined ? (
     <></>
   ) : (
-    <View part={props.part} value={props.value} imageSource={props.imageSource} />
+    <LeafIdentityContext
+      value={{ kind: "leaf", componentId: props.part.id, componentKind: props.part.component }}
+    >
+      <View part={props.part} value={props.value} imageSource={props.imageSource} />
+    </LeafIdentityContext>
   )
 }

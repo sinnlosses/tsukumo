@@ -15,6 +15,7 @@ import {
   leafFrameClassNames,
   type SwapSettings,
 } from "../markdown.tsx"
+import { AskFrame } from "./ask-frame.tsx"
 import styles from "./leaf.module.css"
 
 const CAPTION_LABELS = { figure: "図", table: "表" } as const
@@ -77,24 +78,26 @@ export function FoldedLeafFrame(
     </LeafFold>
   )
   if (gutterNotes.length === 0) {
-    return <>{captioned}</>
+    return <AskFrame title={props.title}>{captioned}</AskFrame>
   }
   return (
-    <div className={leafFrameClassNames.withGutter}>
-      {captioned}
-      <div className={leafFrameClassNames.gutter}>
-        {gutterNotes.map((note, index) => (
-          <aside key={`${String(index)}:${note.text}`} className={leafFrameClassNames.gutterNote}>
-            <p>
-              {note.label !== "" && (
-                <span className={leafFrameClassNames.gutterNoteLabel}>{note.label}</span>
-              )}
-              <InlineMarkdown text={note.text} />
-            </p>
-          </aside>
-        ))}
+    <AskFrame title={props.title}>
+      <div className={leafFrameClassNames.withGutter}>
+        {captioned}
+        <div className={leafFrameClassNames.gutter}>
+          {gutterNotes.map((note, index) => (
+            <aside key={`${String(index)}:${note.text}`} className={leafFrameClassNames.gutterNote}>
+              <p>
+                {note.label !== "" && (
+                  <span className={leafFrameClassNames.gutterNoteLabel}>{note.label}</span>
+                )}
+                <InlineMarkdown text={note.text} />
+              </p>
+            </aside>
+          ))}
+        </div>
       </div>
-    </div>
+    </AskFrame>
   )
 }
 

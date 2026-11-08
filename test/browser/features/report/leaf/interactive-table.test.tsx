@@ -1,7 +1,12 @@
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react"
-import { afterEach, beforeAll, describe, expect, it } from "vitest"
+import { afterEach, beforeAll, describe, expect, it, vi } from "vitest"
 
 import { loadMarkdown } from "../../../../../src/browser/features/report/markdown.tsx"
+import {
+  type ReplyPort,
+  ReplyPortContext,
+  type ReplyPortSlot,
+} from "../../../../../src/browser/features/report/reply-port.ts"
 import { Report } from "../../../../../src/browser/features/report/report.tsx"
 import { reportEvents } from "../../../../../src/server/session-driver/core/message/sdk-report-message.ts"
 import { mainViewEntries } from "../../../../../src/shared/session/main-view-entry.ts"
@@ -85,6 +90,88 @@ function names(container: HTMLElement): readonly string[] {
     (row) => row.firstElementChild?.textContent ?? "",
   )
 }
+
+function renderAskable(options: { readonly port: boolean; readonly reportToolUseId?: string }) {
+  const ask = vi.fn<ReplyPort["ask"]>()
+  const slot: ReplyPortSlot = options.port
+    ? { kind: "open", port: { appendDraft: vi.fn<ReplyPort["appendDraft"]>(), ask } }
+    : { kind: "none" }
+  const body = regionsOf(reportParts(INTERACTIVE, false))
+  const view = render(
+    <ReplyPortContext value={slot}>
+      <Report
+        reveal={false}
+        turnId={1}
+        className=""
+        revealClassName=""
+        blockClassName=""
+        body={body}
+        reportToolUseId={options.reportToolUseId}
+      />
+    </ReplyPortContext>,
+  )
+  return { ask, ...view }
+}
+
+describe("表の行の「聞く」", () => {
+  it("口と report の id があれば本体の行ごとに出て、見出しの行には出ない", () => {
+    const { container } = renderAskable({ port: true, reportToolUseId: "toolu_1" })
+
+    expect(screen.getAllByRole("button", { name: /について聞く$/ })).toHaveLength(ROWS.length)
+    expect(container.querySelectorAll("thead button[aria-label$='について聞く']")).toHaveLength(0)
+    expect(container.querySelectorAll("thead th")).toHaveLength(4)
+  })
+
+  it("口が無いか、report の id が無ければ出ない", () => {
+    renderAskable({ port: false, reportToolUseId: "toolu_1" })
+    expect(screen.queryAllByRole("button", { name: /聞く/ })).toHaveLength(0)
+    cleanup()
+
+    renderAskable({ port: true })
+    expect(screen.queryAllByRole("button", { name: /聞く/ })).toHaveLength(0)
+  })
+
+  it("並べ替えたあとの行を押しても、行の添字は書いた並びのまま届き、1列目の字が label.row に入る", () => {
+    const { ask } = renderAskable({ port: true, reportToolUseId: "toolu_1" })
+
+    fireEvent.click(screen.getByRole("button", { name: /架空の数/ }))
+    fireEvent.click(screen.getByRole("button", { name: "あについて聞く" }))
+    const field = screen.getByRole("textbox")
+    fireEvent.change(field, { target: { value: "なぜ？" } })
+    fireEvent.keyDown(field, { key: "Enter", metaKey: true })
+
+    expect(ask).toHaveBeenCalledExactlyOnceWith(
+      {
+        label: { section: "架空の操作", component: "架空の表", row: "あ" },
+        key: { reportToolUseId: "toolu_1", componentId: "t1", rowIndex: 1 },
+      },
+      "なぜ？",
+    )
+  })
+
+  it("入力欄は表の中で1つだけ開く（部品全体の欄と行の欄が取り合う）", () => {
+    renderAskable({ port: true, reportToolUseId: "toolu_1" })
+
+    fireEvent.click(screen.getByRole("button", { name: "聞く" }))
+    expect(screen.getAllByRole("textbox")).toHaveLength(1)
+    fireEvent.click(screen.getByRole("button", { name: "ぼについて聞く" }))
+
+    expect(screen.getAllByRole("textbox")).toHaveLength(1)
+    expect(screen.getByText(/指した所: .* › ぼ$/)).toBeTruthy()
+  })
+
+  it("行の欄は表の下に開き、表は割れず、指した行に印が付く", () => {
+    const { container } = renderAskable({ port: true, reportToolUseId: "toolu_1" })
+
+    fireEvent.click(screen.getByRole("button", { name: "ぼについて聞く" }))
+
+    const field = screen.getByRole("textbox")
+    const table = container.querySelector("table")
+    expect(table?.contains(field)).toBe(false)
+    expect(table?.compareDocumentPosition(field)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+    expect(container.querySelectorAll("tbody tr[class*='ask-row-active']")).toHaveLength(1)
+  })
+})
 
 describe("操作できる Table", () => {
   it("全行を見せているときの表は、操作できない Table と同じ DOM", () => {
