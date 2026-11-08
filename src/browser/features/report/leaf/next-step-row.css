@@ -1,0 +1,28 @@
+/* レポート末尾の次の一手の行。ボタンを横に並べ、字は1行に収めてはみ出す分は省略記号で切る。 */
+.next-step {
+  display: flex;
+  flex-direction: column;
+  gap: var(--stack-tight);
+}
+.next-step-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--inline-control);
+}
+.next-step-title {
+  color: var(--ink-soft);
+  font-size: var(--font-secondary);
+}
+.next-step-button {
+  min-height: 1.75rem;
+  max-width: 100%;
+  padding: var(--inset-control);
+  border-radius: var(--radius-pill);
+}
+.next-step-label {
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}

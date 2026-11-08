@@ -373,6 +373,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
       task,
       finishedPhase: { kind: "none" },
       changeSummary: { kind: "none" },
+      sessionRemaining: { kind: "unrecorded" },
     })
   })
 
@@ -430,6 +431,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
       task: { kind: "none" },
       finishedPhase: { kind: "none" },
       changeSummary: { kind: "none" },
+      sessionRemaining: { kind: "unrecorded" },
     })
   })
 
@@ -468,6 +470,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
       task: { kind: "none" },
       finishedPhase: { kind: "none" },
       changeSummary: { kind: "none" },
+      sessionRemaining: { kind: "unrecorded" },
     })
   })
 

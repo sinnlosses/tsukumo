@@ -132,6 +132,7 @@ function toMainViewEntries(record: SessionRecord, context: TurnContext): readonl
         regions: reportRegionsOf(record, context),
         conclusion: record.conclusion,
         task: record.task,
+        sessionRemaining: record.sessionRemaining,
         changeSummary: record.changeSummary,
       },
     ]

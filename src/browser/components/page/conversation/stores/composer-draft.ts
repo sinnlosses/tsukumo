@@ -32,6 +32,8 @@ type ComposerDraftState = {
   readonly replaceDraft: (draft: Draft) => void
   /** 字がある下書きは上書きせず、改行1つを挟んで末尾に足す。キャレットは足した字の末尾へ置く。 */
   readonly appendToDraft: (text: string) => void
+  /** 字がある下書きは上書きせず、空行1つを挟んで末尾に足し、入力欄へフォーカスを送る。キャレットは足した字の末尾へ置く。 */
+  readonly appendParagraphToDraft: (text: string) => void
   /** 引用を空行1つ挟んで下書きの頭に入れ、今の下書きはその後ろに残す。キャレットは下書き全体の末尾へ置く。 */
   readonly prependToDraft: (quote: string) => void
 }
@@ -68,6 +70,12 @@ export const useComposerDraft = create<ComposerDraftState>()((set, get) => {
       const current = get().draft.text
       const joined = current === "" ? text : `${current}\n${text}`
       replaceDraft({ text: joined, caret: joined.length })
+    },
+    appendParagraphToDraft: (text) => {
+      const current = get().draft.text
+      const joined = current === "" ? text : `${current}\n\n${text}`
+      replaceDraft({ text: joined, caret: joined.length })
+      get().surface?.focus()
     },
     prependToDraft: (quote) => {
       const joined = `${quote}\n\n${get().draft.text}`

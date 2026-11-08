@@ -6,6 +6,7 @@ import type { ReactElement } from "react"
 import type { MainViewReportBody } from "../../../shared/session/main-view-shape.ts"
 import { A2uiReport } from "./a2ui-surface.tsx"
 import { MarkdownReport, ReportFrame } from "./leaf/body-region.tsx"
+import { NextStepRow, type NextStepsOrigin } from "./leaf/next-step-row.tsx"
 import { FavorRegion, HeadRegion } from "./leaf/report-head-region.tsx"
 
 type ReportProps = {
@@ -20,6 +21,7 @@ type ReportProps = {
   readonly revealClassName: string
   /** 本文の根に重ねて付ける class。 */
   readonly blockClassName: string
+  readonly nextSteps?: NextStepsOrigin
 }
 
 export function Report(props: ReportProps): ReactElement {
@@ -46,6 +48,7 @@ export function Report(props: ReportProps): ReactElement {
         className={props.className}
         revealClassName={props.revealClassName}
         blockClassName={props.blockClassName}
+        nextSteps={props.nextSteps}
       />
     )
   }
@@ -59,6 +62,7 @@ export function Report(props: ReportProps): ReactElement {
     >
       <HeadRegion head={body.a2ui.head} />
       <FavorRegion id={body.a2ui.favor.id} text={body.a2ui.favor.text} />
+      {props.nextSteps !== undefined && <NextStepRow origin={props.nextSteps} components={[]} />}
     </ReportFrame>
   )
 }

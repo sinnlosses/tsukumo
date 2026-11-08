@@ -15,6 +15,7 @@ import {
   type MainViewTurn,
 } from "../../../../../../shared/session/main-view-shape.ts"
 import { formatMeasured } from "../../../../../../shared/utils/elapsed-time.ts"
+import { ReplyPortContext } from "../../../../../features/report/reply-port.ts"
 import { Report } from "../../../../../features/report/report.tsx"
 import { useExternalSync } from "../../../../../hooks/use-external-sync.ts"
 import { Button } from "../../../../ui/button/button.tsx"
@@ -22,6 +23,7 @@ import { Dialog } from "../../../../ui/dialog/dialog.tsx"
 import { MaximizeIcon } from "../../../../ui/icon/icon.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
 import { VStack } from "../../../../ui/v-stack/v-stack.tsx"
+import { useComposerDraft } from "../../stores/composer-draft.ts"
 import { useDraftedReports } from "../../stores/drafted-report.ts"
 import { AsideThread } from "./aside-thread.tsx"
 import { revealStepIdOf } from "./domain/draft-reveal.ts"
@@ -62,85 +64,91 @@ export function Turn(props: TurnProps): ReactElement {
     draftedToolUseIds,
   })
   const arrangement = arrangeTurn(turn)
+  const latestStepId = props.newest ? finalStep?.id : undefined
+  const appendParagraphToDraft = useComposerDraft((state) => state.appendParagraphToDraft)
 
   return (
-    <div>
-      {turn.droppedCount > 0 && (
-        <Text
-          element="p"
-          size="secondary"
-          tone="ink-quiet"
-          weight="inherit"
-          className={styles["turn-dropped"]}
-        >
-          これ以前の {turn.droppedCount} 件は省略した
-        </Text>
-      )}
-      {(turn.steps.length > 0 || turn.drafts.length > 0 || turn.failure.kind === "failed") && (
-        <VStack
-          element="div"
-          name={{ kind: "none" }}
-          gap="md"
-          align="stretch"
-          justify="start"
-          wrap="nowrap"
-          className=""
-        >
-          {turn.failure.kind === "failed" && (
-            <TurnFailureBlock
-              failure={turn.failure.failure}
-              requestText={turn.request?.text ?? ""}
-              newest={props.newest}
-            />
-          )}
-          {/* `key` は配列の添字ではなく `step.id`（`MainViewStep.id`。古いステップを落とす前に振った通し番号）を使う。
+    <ReplyPortContext value={{ kind: "open", port: { appendDraft: appendParagraphToDraft } }}>
+      <div>
+        {turn.droppedCount > 0 && (
+          <Text
+            element="p"
+            size="secondary"
+            tone="ink-quiet"
+            weight="inherit"
+            className={styles["turn-dropped"]}
+          >
+            これ以前の {turn.droppedCount} 件は省略した
+          </Text>
+        )}
+        {(turn.steps.length > 0 || turn.drafts.length > 0 || turn.failure.kind === "failed") && (
+          <VStack
+            element="div"
+            name={{ kind: "none" }}
+            gap="md"
+            align="stretch"
+            justify="start"
+            wrap="nowrap"
+            className=""
+          >
+            {turn.failure.kind === "failed" && (
+              <TurnFailureBlock
+                failure={turn.failure.failure}
+                requestText={turn.request?.text ?? ""}
+                newest={props.newest}
+              />
+            )}
+            {/* `key` は配列の添字ではなく `step.id`（`MainViewStep.id`。古いステップを落とす前に振った通し番号）を使う。
               添字だと、古いステップが落ちて残りの添字が1つずつ前へずれた瞬間に React が別のステップの DOM を使い回してしまい、`<details>` の `open` のような制御されていない DOM の状態が別のステップへ乗り移って見える。 */}
-          {arrangement.kind === "arrival" &&
-            turn.steps.map((step) => (
-              <Step
-                step={step}
+            {arrangement.kind === "arrival" &&
+              turn.steps.map((step) => (
+                <Step
+                  step={step}
+                  turnId={turn.id}
+                  reveal={step.id === revealStepId}
+                  latest={step.id === latestStepId}
+                  hasInterimReport={turn.hasInterimReport}
+                  showQuestions
+                  key={step.id}
+                />
+              ))}
+            {arrangement.kind === "final-first" && (
+              <>
+                <Step
+                  step={arrangement.final}
+                  turnId={turn.id}
+                  reveal={arrangement.final.id === revealStepId}
+                  latest={arrangement.final.id === latestStepId}
+                  hasInterimReport={turn.hasInterimReport}
+                  showQuestions={false}
+                  key={arrangement.final.id}
+                />
+                {arrangement.progress.length > 0 && (
+                  <ProgressFold
+                    progress={arrangement.progress}
+                    turnId={turn.id}
+                    hasInterimReport={turn.hasInterimReport}
+                    newest={props.newest}
+                  />
+                )}
+              </>
+            )}
+            {/* `key` を `toolUseId` にするので、書いている途中の部品から記録の部品へ移っても面を作り直さない。 */}
+            {turn.drafts.map((draft, index) => (
+              <DraftReport
+                draft={draft}
                 turnId={turn.id}
-                reveal={step.id === revealStepId}
-                hasInterimReport={turn.hasInterimReport}
-                showQuestions
-                key={step.id}
+                waiting={index === turn.drafts.length - 1}
+                key={`draft:${draft.toolUseId}`}
               />
             ))}
-          {arrangement.kind === "final-first" && (
-            <>
-              <Step
-                step={arrangement.final}
-                turnId={turn.id}
-                reveal={arrangement.final.id === revealStepId}
-                hasInterimReport={turn.hasInterimReport}
-                showQuestions={false}
-                key={arrangement.final.id}
-              />
-              {arrangement.progress.length > 0 && (
-                <ProgressFold
-                  progress={arrangement.progress}
-                  turnId={turn.id}
-                  hasInterimReport={turn.hasInterimReport}
-                  newest={props.newest}
-                />
-              )}
-            </>
-          )}
-          {/* `key` を `toolUseId` にするので、書いている途中の部品から記録の部品へ移っても面を作り直さない。 */}
-          {turn.drafts.map((draft, index) => (
-            <DraftReport
-              draft={draft}
-              turnId={turn.id}
-              waiting={index === turn.drafts.length - 1}
-              key={`draft:${draft.toolUseId}`}
-            />
-          ))}
-          {arrangement.kind === "arrival" && arrangement.asides.length > 0 && (
-            <AsideThread asides={arrangement.asides} newest={props.newest} />
-          )}
-        </VStack>
-      )}
-    </div>
+            {arrangement.kind === "arrival" && arrangement.asides.length > 0 && (
+              <AsideThread asides={arrangement.asides} newest={props.newest} />
+            )}
+          </VStack>
+        )}
+      </div>
+    </ReplyPortContext>
   )
 }
 
@@ -155,6 +163,8 @@ type StepProps = {
   /** このステップが載っているやり取り（`<Report>` から筆先へ渡る）。 */
   readonly turnId: number
   readonly reveal: boolean
+  /** いちばん新しいやり取りの最後のレポートか。末尾に次の一手の行を出す。 */
+  readonly latest: boolean
   /** このステップが載っているやり取りに中間レポートがあるか（`MainViewTurn.hasInterimReport`）。 */
   readonly hasInterimReport: boolean
   /** このステップの質問の記録を札のそばに出すか。経過の畳みに入れるやり取りの最終のステップでは出さない。 */
@@ -211,6 +221,7 @@ function StepCard(props: StepProps): ReactElement {
           step={step}
           turnId={props.turnId}
           reveal={props.reveal}
+          latest={props.latest}
           hasInterimReport={props.hasInterimReport}
           folded={false}
           phoneHidden={isInterimStep(step)}
@@ -270,6 +281,7 @@ function FoldedStep(props: FoldedStepProps): ReactElement {
           step={props.step}
           turnId={props.turnId}
           reveal={false}
+          latest={false}
           hasInterimReport={props.hasInterimReport}
           folded
           phoneHidden={props.phoneHidden}
@@ -283,6 +295,7 @@ type StepReportProps = {
   readonly step: MainViewStep
   readonly turnId: number
   readonly reveal: boolean
+  readonly latest: boolean
   readonly hasInterimReport: boolean
   readonly folded: boolean
   /** 狭い画面で本文を隠すか。隠すのは本文の側だけで、質問の記録は残す。 */
@@ -316,6 +329,14 @@ function StepReport(props: StepReportProps): ReactElement | undefined {
         reveal={props.reveal}
         turnId={props.turnId}
         className={phoneHidden}
+        nextSteps={
+          props.latest && !props.phoneHidden
+            ? {
+                sessionRemaining: step.body.sessionRemaining ?? { kind: "unrecorded" },
+                ...(step.body.task.kind === "task" ? { outcome: step.body.task.outcome } : {}),
+              }
+            : undefined
+        }
         {...REPORT_CLASS_NAMES}
       />
     </>

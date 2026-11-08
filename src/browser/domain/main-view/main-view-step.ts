@@ -24,7 +24,6 @@ import type { MeasuredTime } from "../../../shared/utils/elapsed-time.ts"
 const NO_PHASE_LABEL = { kind: "none" } as const satisfies MainViewPhaseLabel
 
 const OTHER_ORIGIN = { kind: "other" } as const satisfies MainViewStepOrigin
-
 /**
  * まとめたやり取りと、その中で `report` ツールから来たステップの id（呼ばれた順）。id の並びは
  * 描く側へ渡さない（どの本文を出すかを決めるまでの材料で、決めたあとは本文の有無と印に畳まれる）。
@@ -100,6 +99,7 @@ function groupIntoSteps(entries: readonly StepEntry[]): GroupedSteps {
           task,
           finishedPhase: NO_PHASE_LABEL,
           changeSummary: entry.kind === "report" ? entry.changeSummary : NO_REPORT_CHANGE_SUMMARY,
+          ...(entry.kind === "report" ? { sessionRemaining: entry.sessionRemaining } : {}),
         } as const satisfies MainViewStepBody
         const origin: MainViewStepOrigin =
           entry.kind === "report"

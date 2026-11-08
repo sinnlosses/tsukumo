@@ -113,6 +113,7 @@ export const toolReport = (markdown: string, toolUseId = "toolu_fictional"): Mai
   },
   conclusion: markdown,
   task: { kind: "none" },
+  sessionRemaining: { kind: "unrecorded" },
   changeSummary: { kind: "none" },
   toolUseId,
 })

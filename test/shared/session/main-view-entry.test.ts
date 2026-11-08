@@ -90,6 +90,25 @@ describe("mainViewEntries（記録ごとの結果の持ち回し）", () => {
     ])
   })
 
+  it("report の sessionRemaining は entry の写しに入る", () => {
+    const entries = mainViewEntries(
+      foldTimed([
+        [ask, 0],
+        [
+          reportEvent({
+            toolUseId: "toolu_r1",
+            sessionRemaining: { kind: "remaining", text: "架空の残り" },
+          }),
+          1_000,
+        ],
+      ]),
+    )
+
+    expect(
+      entries.flatMap((entry) => (entry.kind === "report" ? [entry.sessionRemaining] : [])),
+    ).toEqual([{ kind: "remaining", text: "架空の残り" }])
+  })
+
   it("記録を足しても、前からある記録の結果は同じ参照のまま返る", () => {
     const before: readonly Timed[] = [
       [ask, 0],

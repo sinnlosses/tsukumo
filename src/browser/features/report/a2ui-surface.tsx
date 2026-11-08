@@ -35,6 +35,7 @@ import { ChoicePicker, InteractiveTable } from "./leaf/a2ui-interactive-view.tsx
 import { RegionBox, RegionChunks, ReportFrame } from "./leaf/body-region.tsx"
 import { ChartTermLinkScope, chartLinkInputsOf } from "./leaf/chart-term-link.tsx"
 import { DirectLeaf, directLeafViewOf } from "./leaf/direct-leaf-view.tsx"
+import { NextStepRow, type NextStepsOrigin } from "./leaf/next-step-row.tsx"
 import { NoteBody } from "./leaf/note-leaf.tsx"
 import { liveLeafElement, useReevaluatedLeaves } from "./leaf/parameter-knob.tsx"
 import { FavorRegion, HeadRegion } from "./leaf/report-head-region.tsx"
@@ -52,6 +53,7 @@ type A2uiReportProps = {
   readonly revealClassName: string
   /** 本文の根に重ねて付ける class（置く側のステップの末尾の余白の打ち消しが指す綴り）。 */
   readonly blockClassName: string
+  readonly nextSteps?: NextStepsOrigin
 }
 
 /**
@@ -99,6 +101,9 @@ function FailedReport(props: A2uiReportProps & { readonly error: unknown }): Rea
       <HeadRegion head={view.head} />
       <NoteBody tone="ng" text="本文を描けませんでした。" />
       <FavorRegion id={view.favor.id} text={view.favor.text} />
+      {props.nextSteps !== undefined && (
+        <NextStepRow origin={props.nextSteps} components={view.components} />
+      )}
     </ReportFrame>
   )
 }
@@ -220,6 +225,9 @@ function ReportRoot(): ReactElement {
         </RegionBox>
       )}
       <FavorRegion id={view.favor.id} text={view.favor.text} />
+      {report.nextSteps !== undefined && (
+        <NextStepRow origin={report.nextSteps} components={view.components} />
+      )}
     </ReportFrame>
   )
 }

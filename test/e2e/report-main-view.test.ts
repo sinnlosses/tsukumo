@@ -154,6 +154,28 @@ test.describe("report → メインビュー", () => {
     await room.settleAndMatchPicked(ELAPSED_MS)
   })
 
+  test("末尾の次の一手を押すと、入力欄に下書きが入ってフォーカスが移り、会話へは送られない", async ({
+    run,
+  }) => {
+    const room = await run.open({
+      scenario: "report-reply-next",
+      scene: "reply-next",
+      viewport: "wide",
+      domRoots: ["main"],
+    })
+
+    await room.waitForEvent("turn-finished")
+    const button = room.page.getByRole("button", { name: "続ける: 案Aの移行の手順を書く" })
+    await button.waitFor()
+    await button.click()
+
+    const textArea = room.page.locator("textarea")
+    await expect.poll(() => textArea.inputValue()).toBe("続けて。案Aの移行の手順を書く")
+    await expect
+      .poll(() => room.page.evaluate(() => document.activeElement?.tagName))
+      .toBe("TEXTAREA")
+  })
+
   test("レポートの本文の字を選ぶと口が出て、押すと入力欄の頭に引用が入ってフォーカスが移る", async ({
     run,
   }) => {

@@ -57,6 +57,7 @@ export function advanceByReport(
         conclusion: event.conclusion,
         keyFigures: event.keyFigures,
         favor: event.favor,
+        sessionRemaining: event.sessionRemaining,
         checks: event.checks,
         task: event.task,
         workPlanClosing: event.workPlanClosing,

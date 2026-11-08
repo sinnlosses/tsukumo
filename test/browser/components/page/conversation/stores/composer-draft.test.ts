@@ -20,6 +20,29 @@ describe("入力欄の下書きへ足す", () => {
   })
 })
 
+describe("入力欄の下書きへ段落として足す", () => {
+  it("字がある下書きは上書きせず、空行を挟んで末尾に足す", () => {
+    useComposerDraft.getState().replaceDraft({ text: "打ちかけ", caret: 2 })
+    useComposerDraft.getState().appendParagraphToDraft("続けて。")
+    expect(useComposerDraft.getState().draft).toEqual({ text: "打ちかけ\n\n続けて。", caret: 10 })
+  })
+
+  it("空の下書きには字だけが入り、入力欄へフォーカスを送る", () => {
+    let focused = 0
+    useComposerDraft.getState().attachSurface({
+      focus: () => {
+        focused += 1
+      },
+      blur: () => {},
+      caret: () => 0,
+      replace: () => {},
+    })
+    useComposerDraft.getState().appendParagraphToDraft("続けて。")
+    expect(useComposerDraft.getState().draft).toEqual({ text: "続けて。", caret: 4 })
+    expect(focused).toBe(1)
+  })
+})
+
 describe("入力欄の下書きの頭へ引用を入れる", () => {
   it("空の下書きには引用と空行が入り、キャレットは末尾に置かれる", () => {
     useComposerDraft.getState().prependToDraft("> 引く字")

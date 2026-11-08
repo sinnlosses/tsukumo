@@ -83,6 +83,7 @@ export function reportRecord(conclusion = "架空の結論"): SessionRecord {
     conclusion,
     keyFigures: [],
     favor: "",
+    sessionRemaining: { kind: "unrecorded" },
     checks: [],
     task: { kind: "none" },
     workPlanClosing: "none",

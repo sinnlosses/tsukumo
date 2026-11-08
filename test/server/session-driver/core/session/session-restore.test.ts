@@ -322,6 +322,7 @@ describe("toRestoredEvents", () => {
         },
         conclusion: "架空の結論。",
         task: { kind: "none" },
+        sessionRemaining: { kind: "unrecorded" },
         changeSummary: { kind: "none" },
         toolUseId: "r-1",
       },

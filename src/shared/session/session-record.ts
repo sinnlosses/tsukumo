@@ -14,6 +14,7 @@ import type { QuestionBrief } from "../session-driver/question-brief.ts"
 import type { Question, QuestionAnswer } from "../session-driver/question.ts"
 import type { TurnFailure } from "../session-driver/turn-failure.ts"
 import type { ClippedText } from "../utils/clip-text.ts"
+import type { SessionRemaining } from "./session-digest.ts"
 import type { ReportWaitingLine } from "./session-event-report.ts"
 import type { WorkPlan, WorkPlanClosing } from "./work-plan.ts"
 
@@ -120,6 +121,8 @@ export type SessionRecord =
       readonly conclusion: string
       readonly keyFigures: KeyFigures
       readonly favor: string
+      /** 残っていること。本文には描かず、末尾の次の一手の元になる。 */
+      readonly sessionRemaining: SessionRemaining
       readonly checks: readonly ReportCheck[]
       readonly task: ReportTask
       /** `report` が渡したフェーズの閉じ方。段ごとの所要時間で、後の段を呼ばなかった段を「未着手」と見分ける。 */

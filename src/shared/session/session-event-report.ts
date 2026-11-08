@@ -49,7 +49,7 @@ export type ReportEvent =
    * `droppedCount` は部品の形に合わず境界で落とした部品と、式を評価できず静的な一覧から外した部品（`components` には書いたまま残る）の数（旧い版の呼び出しでは知らない種類で落とした塊の数）で、画面の状態は読まない。
    * `brokenFenceCount` は `body` の型つきフェンスのうち読めずに素のコードブロックへ落とした数で、画面の状態は読まない。
    * `sessionSummary` はセッション全体の要約で、書かれていなければ undefined。レポートには描かず、切り替え画面が transcript から読み戻す。
-   * `sessionRemaining`（残っていること）も同じく描かず、切り替え画面と始め方の一覧の「前回の続き」が transcript から読み戻す。
+   * `sessionRemaining`（残っていること）も本文に描かず、末尾の次の一手の元にする。切り替え画面と始め方の一覧の「前回の続き」は transcript から読み戻す。
    * `argumentChars` は渡した引数だけの字数で、使われ方の記録だけが読む。
    * `inheritedFields` は渡さずに、同じターンで直前に差し戻した呼び出しから値を引き継いだ欄の名前（`ReportInheritance` が埋める）。使われ方の記録だけが読む。
    * `conclusion` を渡さず引き継ぐ土台も無い呼び出しは、`conclusion` が空の文字列になる。

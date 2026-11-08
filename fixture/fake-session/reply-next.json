@@ -1,0 +1,104 @@
+{
+  "name": "reply-next",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "架空の置き場の案を比べて、続きの進め方も見えるようにしてほしい（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 1200,
+      "event": {
+        "kind": "report",
+        "toolUseId": "fake-reply-next-1",
+        "components": [
+          {
+            "id": "root",
+            "component": "Report",
+            "task": {
+              "id": "X-1",
+              "name": "架空の置き場を決める",
+              "outcome": "stopped",
+              "genre": "decision"
+            },
+            "favor": "架空の設定を入れた状態で、移行を手元でも一度打って結果を見てほしい。",
+            "sessionRemaining": "案Aの移行の手順を書く",
+            "conclusion": ["架空の結論: 置き場は案Aに寄せたが、移行の確認の途中で止めた。"],
+            "children": ["s1"],
+            "closing": {
+              "text": "ここまでにしておくね",
+              "expression": "default"
+            }
+          },
+          {
+            "id": "s1",
+            "component": "Section",
+            "heading": "架空の比べ方",
+            "children": ["o1", "c1"]
+          },
+          {
+            "id": "o1",
+            "component": "Options",
+            "title": "架空の案の判定",
+            "items": [
+              {
+                "name": "架空の案A",
+                "verdict": "adopt",
+                "reason": "手順が短く、読み手が止まらなかった"
+              },
+              {
+                "name": "架空の案B",
+                "verdict": "consider",
+                "reason": "準備の説明を足せば戻せる"
+              },
+              {
+                "name": "架空の案C",
+                "verdict": "reject",
+                "reason": "前提が重く、途中で離れる人が出た"
+              }
+            ]
+          },
+          {
+            "id": "c1",
+            "component": "Claims",
+            "items": [
+              {
+                "claim": "架空の移行は既存の設定を壊さない",
+                "certainty": "inferred",
+                "basis": "差分の読みだけで確かめた",
+                "howToVerify": "架空の設定を入れた状態で移行を打つ"
+              },
+              {
+                "claim": "架空の案Aは大きい入力でも遅くならない",
+                "certainty": "unverified",
+                "basis": "",
+                "howToVerify": "架空の大きい入力で所要を測る"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "afterMs": 1250,
+      "event": {
+        "kind": "tool-finished",
+        "toolUseId": "fake-reply-next-1",
+        "content": "ok",
+        "isError": false
+      }
+    },
+    {
+      "afterMs": 2000,
+      "event": {
+        "kind": "turn-finished",
+        "outcome": {
+          "kind": "completed"
+        }
+      }
+    }
+  ]
+}
