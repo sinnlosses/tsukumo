@@ -7,7 +7,7 @@ export const AGENTS_MD_LIMIT = 4000
 
 export const RULES_TOTAL_LIMIT = 2400
 
-export const SYSTEM_PROMPT_TOTAL_LIMIT = 6504
+export const SYSTEM_PROMPT_TOTAL_LIMIT = 4871
 
 export const IMPLEMENTER_BRIEF_LIMIT = 9623
 

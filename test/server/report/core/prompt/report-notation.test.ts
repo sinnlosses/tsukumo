@@ -138,7 +138,7 @@ describe("REPORT_NOTATION_PROMPT", () => {
   })
 
   it("文面の字数は上限以下に収まり、条を足すと落ちる", () => {
-    const limit = 2400
+    const limit = 1625
     const length = REPORT_NOTATION_PROMPT.length
 
     expect(
