@@ -69,6 +69,37 @@ describe("FoldedLeafFrame", () => {
     expect(caption?.textContent).toBe("表 1")
   })
 
+  it("題の行の右端の子は表の題の中に置き、欄が無い題は子を足さず1つの div のまま", () => {
+    const value: FrameValue = {
+      captionNumber: { kind: "table", ordinal: 1 },
+      gutterNotes: [],
+    }
+    const { container } = render(
+      <div data-report-region="section">
+        <FoldedLeafFrame
+          value={value}
+          title="架空の題"
+          fit={false}
+          fold=""
+          swap={false}
+          captionAside={<button type="button">架空のバッジ</button>}
+        >
+          <p>架空の本体</p>
+        </FoldedLeafFrame>
+      </div>,
+    )
+
+    const caption = container.querySelector(CAPTION_SELECTOR)
+    expect(caption?.lastElementChild?.tagName).toBe("BUTTON")
+    expect(caption?.textContent).toBe("表 1架空の題架空のバッジ")
+    cleanup()
+
+    const plain = frame(value, "架空の題")
+    const plainCaption = plain.container.querySelector(CAPTION_SELECTOR)
+    expect(plainCaption?.children).toHaveLength(2)
+    expect(plainCaption?.querySelector("span > span")).toBeNull()
+  })
+
   it("欄外注は欄外注の列の外枠に、ラベルと字をテキストとして出し、本体と並べる", () => {
     const { container } = frame(
       {

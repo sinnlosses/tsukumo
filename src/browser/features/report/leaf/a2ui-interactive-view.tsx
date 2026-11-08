@@ -27,7 +27,7 @@ type InteractiveTableProps = {
   readonly badges: readonly FilterBadge[]
 }
 
-/** 見出しごとの並べ替えの押しボタンと、並べ替え・絞り込みを当てた表。使わない `Table` はここを通らない。 */
+/** 見出しのボタンで並べ替え、バッジで絞り込む表。使わない `Table` はここを通らない。 */
 export function InteractiveTable(props: InteractiveTableProps): ReactElement {
   const { dataModel, part, value, badges } = props
   const sort = useDataPath<TableSort>(dataModel, partViewPath(part.id, "sort"))
@@ -38,65 +38,55 @@ export function InteractiveTable(props: InteractiveTableProps): ReactElement {
   if (value === undefined) {
     return <></>
   }
+  const badgeGroup =
+    badges.length === 0 ? undefined : (
+      <div role="group" aria-label="絞り込み" className={styles["interactive-view-group"]}>
+        {badges.map((badge) => {
+          const on = filter.includes(badge.value)
+          return (
+            <Button
+              key={badge.value}
+              variant={on ? "tinted-accent" : "outline"}
+              size="action"
+              pressed={on ? "on" : "off"}
+              disabled={false}
+              disclosure={{ kind: "none" }}
+              className={styles["interactive-view-button"]}
+              onClick={() => {
+                dataModel.set(
+                  partViewPath(part.id, "filter"),
+                  nextSelection(filter, badge.value, false),
+                )
+              }}
+            >
+              {badge.value}
+              <span className={styles["interactive-view-count"]}>{badge.count}件</span>
+            </Button>
+          )
+        })}
+      </div>
+    )
   return (
     <div>
-      {part.sortable === true && (
-        <div role="group" aria-label="並べ替え" className={styles["interactive-view-group"]}>
-          {part.columns.map((column, index) => {
-            const active = sort?.column === index
-            return (
-              <Button
-                key={column}
-                variant={active ? "tinted-accent" : "outline"}
-                size="action"
-                pressed={active ? "on" : "off"}
-                disabled={false}
-                disclosure={{ kind: "none" }}
-                className={styles["interactive-view-button"]}
-                onClick={() => {
+      <TableFigure
+        part={part}
+        value={value}
+        rowOrder={order}
+        captionAside={badgeGroup}
+        sorting={
+          part.sortable === true
+            ? {
+                sort,
+                onSort: (column) => {
                   dataModel.set(
                     partViewPath(part.id, "sort"),
-                    sort === undefined
-                      ? { column: index, direction: "asc" }
-                      : nextSort(sort, index),
+                    sort === undefined ? { column, direction: "asc" } : nextSort(sort, column),
                   )
-                }}
-              >
-                {column}
-                {active && (sort.direction === "asc" ? " ▲" : " ▼")}
-              </Button>
-            )
-          })}
-        </div>
-      )}
-      {badges.length > 0 && (
-        <div role="group" aria-label="絞り込み" className={styles["interactive-view-group"]}>
-          {badges.map((badge) => {
-            const on = filter.includes(badge.value)
-            return (
-              <Button
-                key={badge.value}
-                variant={on ? "tinted-accent" : "outline"}
-                size="action"
-                pressed={on ? "on" : "off"}
-                disabled={false}
-                disclosure={{ kind: "none" }}
-                className={styles["interactive-view-button"]}
-                onClick={() => {
-                  dataModel.set(
-                    partViewPath(part.id, "filter"),
-                    nextSelection(filter, badge.value, false),
-                  )
-                }}
-              >
-                {badge.value}
-                <span className={styles["interactive-view-count"]}>{badge.count}件</span>
-              </Button>
-            )
-          })}
-        </div>
-      )}
-      <TableFigure part={part} value={value} rowOrder={order} />
+                },
+              }
+            : undefined
+        }
+      />
       {order.length === 0 && <p>該当する行はありません</p>}
     </div>
   )

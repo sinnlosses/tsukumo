@@ -26,7 +26,11 @@ type LeafTableProps = {
   readonly rows: readonly LeafTableRow[]
   /** 本体の 10 行の切りに入らない末尾の行（合計の行・値の行）。空なら `tfoot` を出さない。 */
   readonly foot: readonly (readonly ReactNode[])[]
+  /** 見出しのセルごとの `aria-sort`。渡さないと付けない。 */
+  readonly headSorts?: readonly HeadSort[]
 }
+
+export type HeadSort = "ascending" | "descending" | "none"
 
 /** 左揃えは何も付けない（旧い GFM の表は、右と中央を `style` の `text-align` で出す）。 */
 const ALIGN_ATTRIBUTES = {
@@ -44,7 +48,11 @@ export function LeafTable(props: LeafTableProps): ReactElement {
         <thead>
           <tr>
             {props.head.map((cell, index) => (
-              <th key={`head-${String(index)}`} {...attributesOf(index)}>
+              <th
+                key={`head-${String(index)}`}
+                {...attributesOf(index)}
+                aria-sort={props.headSorts?.[index]}
+              >
                 {cell}
               </th>
             ))}

@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react"
 import { afterEach, beforeAll, describe, expect, it } from "vitest"
 
 import { loadMarkdown } from "../../../../../src/browser/features/report/markdown.tsx"
@@ -88,7 +88,7 @@ function names(container: HTMLElement): readonly string[] {
 
 describe("操作できる Table", () => {
   it("全行を見せているときの表は、操作できない Table と同じ DOM", () => {
-    const interactive = renderRegions(regionsOf(reportParts(INTERACTIVE, false)))
+    const interactive = renderRegions(regionsOf(reportParts({ filterable: true }, false)))
     const shown = interactive.container.querySelector(
       "[data-report-region] .table-scroll",
     )?.outerHTML
@@ -104,15 +104,31 @@ describe("操作できる Table", () => {
   it("見出しを押すと昇順 → 降順 → 元の順に並ぶ", () => {
     const { container } = renderRegions(regionsOf(reportParts(INTERACTIVE)))
     expect(names(container)).toEqual(["ぼ", "あ", "ん"])
+    expect(screen.queryByRole("group", { name: "並べ替え" })).toBeNull()
+    const heading = () => screen.getByRole("columnheader", { name: /架空の数/ })
+    expect(heading().getAttribute("aria-sort")).toBe("none")
 
-    fireEvent.click(screen.getByRole("button", { name: "架空の数" }))
+    fireEvent.click(within(heading()).getByRole("button"))
     expect(names(container)).toEqual(["あ", "ぼ", "ん"])
+    expect(heading().getAttribute("aria-sort")).toBe("ascending")
+    expect(heading().textContent).toContain("▲")
 
-    fireEvent.click(screen.getByRole("button", { name: /架空の数/ }))
+    fireEvent.click(within(heading()).getByRole("button"))
     expect(names(container)).toEqual(["ん", "ぼ", "あ"])
+    expect(heading().getAttribute("aria-sort")).toBe("descending")
+    expect(heading().textContent).toContain("▼")
 
-    fireEvent.click(screen.getByRole("button", { name: /架空の数/ }))
+    fireEvent.click(within(heading()).getByRole("button"))
     expect(names(container)).toEqual(["ぼ", "あ", "ん"])
+    expect(heading().getAttribute("aria-sort")).toBe("none")
+    expect(heading().textContent).not.toMatch(/[▲▼]/)
+  })
+
+  it("並べ替えられない表の見出しには aria-sort もボタンも付けない", () => {
+    const { container } = renderRegions(regionsOf(reportParts({ filterable: true }, false)))
+
+    expect(container.querySelector("thead th[aria-sort]")).toBeNull()
+    expect(container.querySelector("thead button")).toBeNull()
   })
 
   it("絞り込んでも、数の棒は全行の最大値に照らしたまま", () => {
@@ -147,7 +163,10 @@ describe("操作できる Table", () => {
     const { container } = renderRegions(
       regionsOf(reportParts({ ...INTERACTIVE, rows, filterColumn: 1 }, false)),
     )
-    expect(screen.getByRole("group", { name: "絞り込み" })).toBeTruthy()
+    const badges = screen.getByRole("group", { name: "絞り込み" })
+    const caption = badges.parentElement
+    expect(caption?.textContent).toContain("架空の表")
+    expect(container.querySelector("table")?.parentElement?.previousElementSibling).toBe(caption)
 
     fireEvent.click(screen.getByRole("button", { name: "甲 2件" }))
     expect(names(container)).toEqual(["ぼ", "ん"])

@@ -15,6 +15,20 @@
   border-radius: var(--radius-md);
 }
 
+/* 操作できる表の見出しの並べ替えボタン。見出しの字をそのまま押せるようにし、箱は字の周りだけ取る。 */
+.table-sort-button {
+  padding: 0;
+}
+
+/* 表の題の行。題を左に、絞り込みのバッジを右の端に置く。 */
+.caption-with-aside {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--inline-control);
+}
+
 /* 触れるレポートのつまみ。名札・今の値・入力を1行に並べ、狭い幅では入力が次の行へ折り返す。 */
 .parameter-knob {
   display: flex;

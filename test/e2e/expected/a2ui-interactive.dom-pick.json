@@ -8,12 +8,16 @@
           { "tag": "button", "attributes": { "aria-pressed": "true" }, "children": ["乙"] },
           { "tag": "button", "attributes": { "aria-pressed": "false" }, "children": ["丙"] }
         ] },
-        { "tag": "div", "attributes": { "role": "group", "aria-label": "並べ替え" }, "children": [
-          { "tag": "button", "attributes": { "aria-pressed": "false" }, "children": ["案件"] },
-          { "tag": "button", "attributes": { "aria-pressed": "true" }, "children": ["件数"] }
-        ] },
         "表 1",
         { "tag": "table", "children": [
+          { "tag": "thead", "children": [
+            { "tag": "tr", "children": [
+              { "tag": "th", "attributes": { "aria-sort": "none" }, "children": [{ "tag": "button", "children": ["案件"] }] },
+              { "tag": "th", "attributes": { "aria-sort": "none" }, "children": [{ "tag": "button", "children": ["種別"] }] },
+              { "tag": "th", "attributes": { "aria-sort": "none" }, "children": [{ "tag": "button", "children": ["状態"] }] },
+              { "tag": "th", "attributes": { "aria-sort": "ascending" }, "children": [{ "tag": "button", "children": ["件数"] }] }
+            ] }
+          ] },
           { "tag": "tbody", "children": [
             { "tag": "tr", "children": [{ "tag": "td", "children": ["架空の案件 あ"] }] },
             { "tag": "tr", "children": [{ "tag": "td", "children": ["架空の案件 さ"] }] }

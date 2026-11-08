@@ -30,20 +30,27 @@ import {
 } from "../../../../shared/report/table-layout.ts"
 import { tableCellTexts } from "../../../../shared/report/table-view.ts"
 import { Badge } from "../../../components/ui/badge/badge.tsx"
-import { visibleTableTotals } from "../domain/a2ui-table-view.ts"
+import { Button } from "../../../components/ui/button/button.tsx"
+import { type TableSort, visibleTableTotals } from "../domain/a2ui-table-view.ts"
 import {
   InlineCodeText,
   InlineMarkdown,
   tableLeafClassNames,
   tagToneClassName,
 } from "../markdown.tsx"
-import { ColumnMarked, LeafTable, type LeafTableRow } from "./leaf-table.tsx"
+import { ColumnMarked, type HeadSort, LeafTable, type LeafTableRow } from "./leaf-table.tsx"
 import styles from "./leaf.module.css"
 import { FoldedLeafFrame } from "./report-leaf-frame.tsx"
 
 type TablePart = A2uiReportPart<"Table">
 
 const NO_BAR: ColumnBar = { kind: "none" }
+
+/** 見出しのボタンで並べ替える表の、今の並べ替えと列を押したときの手続き。 */
+export type TableSorting = {
+  readonly sort?: TableSort
+  readonly onSort: (column: number) => void
+}
 
 export function TableLeaf(props: {
   readonly part: A2uiReportComponent
@@ -64,14 +71,24 @@ export function TableFigure(props: {
   readonly part: TablePart
   readonly value: LeafValue
   readonly rowOrder: readonly number[]
+  readonly sorting?: TableSorting
+  /** 題の行の右端に置く子。 */
+  readonly captionAside?: ReactNode
 }): ReactElement {
-  const { part, value, rowOrder } = props
+  const { part, value, rowOrder, sorting, captionAside } = props
   const layout = tableLayoutOf(part)
   const heat = tableHeatOf(part)
   const totals = visibleTableTotals(part, rowOrder)
   const totalled = totals.kind === "totals"
   return (
-    <FoldedLeafFrame value={value} title={part.title} fit fold={part.fold} swap={false}>
+    <FoldedLeafFrame
+      value={value}
+      title={part.title}
+      fit
+      fold={part.fold}
+      swap={false}
+      captionAside={captionAside}
+    >
       {layout.legendStatuses.length > 0 && (
         <div className={tableLeafClassNames.tableStatusLegend}>
           {layout.legendStatuses.map((status) => {
@@ -92,7 +109,12 @@ export function TableFigure(props: {
         </div>
       )}
       <LeafTable
-        head={totalled ? [...headCells(part, value), TOTAL_LABEL] : headCells(part, value)}
+        head={
+          totalled
+            ? [...headCells(part, value, sorting), TOTAL_LABEL]
+            : headCells(part, value, sorting)
+        }
+        headSorts={sorting === undefined ? undefined : headSortsOf(part, sorting, totalled)}
         aligns={totalled ? [...layout.aligns, "right"] : layout.aligns}
         rows={bodyRows(part, { layout, heat, totals }, value, rowOrder)}
         foot={totals.kind === "totals" ? footRows(part.columns.length, heat, totals) : []}
@@ -107,12 +129,53 @@ export function TableFigure(props: {
   )
 }
 
-function headCells(part: TablePart, value: LeafValue): readonly ReactNode[] {
-  return part.columns.map((column, index) => (
-    <ColumnMarked key={`${String(index)}:${column}`} marked={index === part.emphasisColumn}>
-      <CellContent cell={column} bar={NO_BAR} statusColumn={false} value={value} />
-    </ColumnMarked>
-  ))
+function headCells(
+  part: TablePart,
+  value: LeafValue,
+  sorting?: TableSorting,
+): readonly ReactNode[] {
+  return part.columns.map((column, index) => {
+    const label = <CellContent cell={column} bar={NO_BAR} statusColumn={false} value={value} />
+    const direction = sorting?.sort?.column === index ? sorting.sort.direction : undefined
+    return (
+      <ColumnMarked key={`${String(index)}:${column}`} marked={index === part.emphasisColumn}>
+        {sorting === undefined ? (
+          label
+        ) : (
+          <Button
+            variant="ghost"
+            size="label"
+            pressed="none"
+            disabled={false}
+            disclosure={{ kind: "none" }}
+            className={styles["table-sort-button"]}
+            onClick={() => {
+              sorting.onSort(index)
+            }}
+          >
+            {label}
+            {direction !== undefined && (
+              <span aria-hidden="true">{direction === "asc" ? " ▲" : " ▼"}</span>
+            )}
+          </Button>
+        )}
+      </ColumnMarked>
+    )
+  })
+}
+
+function headSortsOf(
+  part: TablePart,
+  sorting: TableSorting,
+  totalled: boolean,
+): readonly HeadSort[] {
+  const sorts = part.columns.map((_, index): HeadSort => {
+    if (sorting.sort?.column !== index) {
+      return "none"
+    }
+    return sorting.sort.direction === "asc" ? "ascending" : "descending"
+  })
+  return totalled ? [...sorts, "none"] : sorts
 }
 
 const TOTAL_LABEL = "計"

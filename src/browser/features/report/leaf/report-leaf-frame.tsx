@@ -15,6 +15,7 @@ import {
   leafFrameClassNames,
   type SwapSettings,
 } from "../markdown.tsx"
+import styles from "./leaf.module.css"
 
 const CAPTION_LABELS = { figure: "図", table: "表" } as const
 
@@ -25,6 +26,8 @@ type ReportLeafFrameProps = {
   readonly title: string
   /** 本体の幅に題の包みを縮めるか（本体が親の幅を取らない塊）。 */
   readonly fit: boolean
+  /** 題の行の右端に置く子（表だけ。図の題には置かない）。 */
+  readonly captionAside?: ReactNode
   /** 本体。 */
   readonly children: ReactNode
 }
@@ -51,6 +54,7 @@ export function FoldedLeafFrame(
       <LeafCaption
         label={`${CAPTION_LABELS[captionNumber.kind]} ${String(captionNumber.ordinal)}`}
         title={props.title}
+        aside={captionNumber.kind === "table" ? props.captionAside : undefined}
       />
     )
   const captionedClassName = clsx(
@@ -128,15 +132,28 @@ function CaptionedBox(props: {
   )
 }
 
-function LeafCaption(props: { readonly label: string; readonly title: string }): ReactElement {
-  return (
-    <div className={leafFrameClassNames.caption}>
+function LeafCaption(props: {
+  readonly label: string
+  readonly title: string
+  readonly aside?: ReactNode
+}): ReactElement {
+  const heading = (
+    <>
       <span className={leafFrameClassNames.captionNumber}>{props.label}</span>
       {props.title !== "" && (
         <span className={leafFrameClassNames.captionText}>
           <InlineCodeText text={props.title} />
         </span>
       )}
+    </>
+  )
+  if (props.aside === undefined) {
+    return <div className={leafFrameClassNames.caption}>{heading}</div>
+  }
+  return (
+    <div className={clsx(leafFrameClassNames.caption, styles["caption-with-aside"])}>
+      <span>{heading}</span>
+      {props.aside}
     </div>
   )
 }
