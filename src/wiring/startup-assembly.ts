@@ -8,7 +8,7 @@ import {
   millisecondsUntilNextLocalDay,
   todayLocalDateKey,
 } from "../server/adapter/local-time.ts"
-import { createChatArchive, pruneChatImages } from "../server/chat/adapter/chat-archive.ts"
+import { pruneChatImages } from "../server/chat/adapter/chat-archive.ts"
 import type { Config } from "../server/core/config.ts"
 import type { Host } from "../server/host/core/host.ts"
 import { readItemAsset } from "../server/item/adapter/item-asset.ts"
@@ -25,6 +25,7 @@ import {
 import { createOpenTaskReader, twClaimsRunner } from "../server/usage/adapter/tw-claim-list.ts"
 import type { SwallowedFailurePlace } from "../shared/diagnostic/swallowed-failure.ts"
 import { wireAchievement } from "./achievement.ts"
+import { switchedChatArchive } from "./chat-archive.ts"
 import { createCurrentCharacter, type CurrentCharacter } from "./current-character.ts"
 import { failureDiagnostic } from "./failure-diagnostic.ts"
 import { createHost } from "./host.ts"
@@ -92,7 +93,7 @@ export function assembleStartup(
     now: clock,
     inheritedEnv: config.inheritedEnv,
     driver,
-    chatArchive: createChatArchive(),
+    chatArchive: switchedChatArchive(driver),
     throwawayQuery: usageLogs.throwawayQuery.record,
   }
   const achievement = wireAchievement(context, achievementCache, usageLogs.diagnostic)
