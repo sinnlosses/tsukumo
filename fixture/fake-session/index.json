@@ -104,6 +104,8 @@
     "background-task-short",
     "aside-delegating",
     "aside-answer",
+    "report-ask-waiting",
+    "report-ask-answered",
     "current-work-running",
     "current-work-failed",
     "resumed-report",

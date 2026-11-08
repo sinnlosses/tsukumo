@@ -34,6 +34,7 @@ import { useSession } from "../../../../../stores/session.ts"
 import { useTurnSelection } from "../../../../../stores/turn-selection.ts"
 import { type MainViewContent, useMainViewContent } from "../../stores/main-view-content.ts"
 import { Inquiry } from "../inquiry/inquiry.tsx"
+import { AskThreadProvider } from "./ask-thread-provider.tsx"
 import { CurrentStep } from "./current-step.tsx"
 import { headNoticeOf, type HeadNoticeAction } from "./domain/head-notice.ts"
 import { headingStepOf, neighborTurnId, turnStepOf } from "./domain/turn-step-key.ts"
@@ -184,23 +185,25 @@ export function MainView(): ReactElement {
                   </div>
                 )}
                 <div className={styles["turn-card-body"]}>
-                  {/* 狭い画面の一覧と「いまの段」。広い画面では CSS で消える。
+                  <AskThreadProvider turn={cardTurn.turn} turns={turns}>
+                    {/* 狭い画面の一覧と「いまの段」。広い画面では CSS で消える。
                       一覧の板の中の本文を、`<Turn>` が隠した同じ本文より DOM の前に置くため、`<Turn>` の前に並べる。 */}
-                  <PhaseList
-                    turn={cardTurn.turn}
-                    planCount={viewingPast ? 0 : planCountOf(turnStepList)}
-                    turnId={cardTurn.turn.id}
-                    key={`phase-list:${String(cardTurn.turn.id)}`}
-                  />
-                  {phoneWidth && !viewingPast && view.kind === "work" && <CurrentStep />}
-                  {/* `key` にターンの番号を渡す。
+                    <PhaseList
+                      turn={cardTurn.turn}
+                      planCount={viewingPast ? 0 : planCountOf(turnStepList)}
+                      turnId={cardTurn.turn.id}
+                      key={`phase-list:${String(cardTurn.turn.id)}`}
+                    />
+                    {phoneWidth && !viewingPast && view.kind === "work" && <CurrentStep />}
+                    {/* `key` にターンの番号を渡す。
                     前後へ移っても同じ位置の `<Turn>` を使い回すと、「このターンを出し始めた時点で既にあった本文」（演出の対象を決める材料）が最初のターンのものに留まってしまう。 */}
-                  <Turn
-                    turn={cardTurn.turn}
-                    newest={cardTurn.turn.id === newestTurnId}
-                    freshReport={cardTurn.fresh}
-                    key={cardTurn.turn.id}
-                  />
+                    <Turn
+                      turn={cardTurn.turn}
+                      newest={cardTurn.turn.id === newestTurnId}
+                      freshReport={cardTurn.fresh}
+                      key={cardTurn.turn.id}
+                    />
+                  </AskThreadProvider>
                 </div>
                 {!viewingPast && (
                   <div className={styles["turn-card-inquiry"]}>

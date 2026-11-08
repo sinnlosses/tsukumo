@@ -255,7 +255,11 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
       const items = readableOutlineItems(content, headedIds)
       itemsRef.current = items
       showHeadings(
-        items.map((item): ReportOutlineEntry => ({ level: item.level, text: item.text })),
+        items.map((item): ReportOutlineEntry => ({
+          level: item.level,
+          text: item.text,
+          ...(item.askCount > 0 ? { askCount: item.askCount } : {}),
+        })),
       )
       observeHeadings(false)
       updateActive()

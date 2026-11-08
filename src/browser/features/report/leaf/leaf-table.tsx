@@ -23,6 +23,8 @@ export type LeafTableRow = {
     readonly label: string
     readonly onAsk: () => void
     readonly active: boolean
+    /** この行について聞いたことがあるか（行の左に印の線を付ける）。 */
+    readonly asked: boolean
   }
 }
 
@@ -132,7 +134,14 @@ function BodyRow(props: {
   const { detail } = row
   return (
     <>
-      <tr className={row.ask?.active === true ? styles["ask-row-active"] : undefined}>
+      <tr
+        className={
+          clsx(
+            row.ask?.active === true && styles["ask-row-active"],
+            row.ask?.asked === true && styles["ask-row-asked"],
+          ) || undefined
+        }
+      >
         {row.cells.map((cell, index) => (
           <td
             key={`${row.key}-${String(index)}`}

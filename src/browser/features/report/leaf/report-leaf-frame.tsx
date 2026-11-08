@@ -7,6 +7,7 @@ import type { ReactElement, ReactNode } from "react"
 
 import { foldInlineMarks } from "../../../../shared/report/inline-mark.ts"
 import type { LeafValue } from "../../../../shared/report/report-leaf-value.ts"
+import { type LeafAskSlot, useLeafAskThread } from "../ask-thread-context.ts"
 import {
   CompareSwap,
   figureClassName,
@@ -16,6 +17,7 @@ import {
   type SwapSettings,
 } from "../markdown.tsx"
 import { AskFrame } from "./ask-frame.tsx"
+import { AskBadge } from "./ask-thread-view.tsx"
 import styles from "./leaf.module.css"
 
 const CAPTION_LABELS = { figure: "図", table: "表" } as const
@@ -50,12 +52,16 @@ export function FoldedLeafFrame(
   props: ReportLeafFrameProps & { readonly fold: string; readonly swap: false | SwapSettings },
 ): ReactElement {
   const { captionNumber, gutterNotes } = props.value
+  const askThread = useLeafAskThread()
   const caption =
     captionNumber.kind === "none" ? undefined : (
       <LeafCaption
         label={`${CAPTION_LABELS[captionNumber.kind]} ${String(captionNumber.ordinal)}`}
         title={props.title}
-        aside={captionNumber.kind === "table" ? props.captionAside : undefined}
+        aside={captionAsideOf(
+          captionNumber.kind === "table" ? props.captionAside : undefined,
+          askThread,
+        )}
       />
     )
   const captionedClassName = clsx(
@@ -77,11 +83,16 @@ export function FoldedLeafFrame(
       )}
     </LeafFold>
   )
+  const hasCaption = captionNumber.kind !== "none"
   if (gutterNotes.length === 0) {
-    return <AskFrame title={props.title}>{captioned}</AskFrame>
+    return (
+      <AskFrame title={props.title} captioned={hasCaption}>
+        {captioned}
+      </AskFrame>
+    )
   }
   return (
-    <AskFrame title={props.title}>
+    <AskFrame title={props.title} captioned={hasCaption}>
       <div className={leafFrameClassNames.withGutter}>
         {captioned}
         <div className={leafFrameClassNames.gutter}>
@@ -132,6 +143,18 @@ function CaptionedBox(props: {
     </CompareSwap>
   ) : (
     <div className={props.className}>{props.children}</div>
+  )
+}
+
+function captionAsideOf(aside: ReactNode, askThread: LeafAskSlot): ReactNode {
+  if (askThread.kind === "none") {
+    return aside
+  }
+  return (
+    <span className={styles["ask-caption-aside"]}>
+      {aside}
+      <AskBadge thread={askThread.thread} />
+    </span>
   )
 }
 

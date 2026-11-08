@@ -28,6 +28,7 @@ import { Button } from "../../components/ui/button/button.tsx"
 import { Divider } from "../../components/ui/divider/divider.tsx"
 import { useExternalSync } from "../../hooks/use-external-sync.ts"
 import { reportBrowserError } from "../../stores/browser-error-report.ts"
+import { AskThreadContext, type AskThreadSlot, sectionAskCount } from "./ask-thread-context.ts"
 import { loadReportCatalogApis } from "./domain/a2ui-catalog-load.ts"
 import { filterBadges, hasBoundChoicePicker, isSortableTable } from "./domain/a2ui-table-view.ts"
 import { isPlainHeadingText } from "./domain/plain-heading.ts"
@@ -203,6 +204,7 @@ function useReport(): ReportContextValue {
 function ReportRoot(): ReactElement {
   const report = useReport()
   const { view } = report
+  const askThreads = use(AskThreadContext)
   const bodySections = Object.entries(view.sections).toSorted(
     ([, left], [, right]) => left.regionId - right.regionId,
   )
@@ -216,12 +218,19 @@ function ReportRoot(): ReactElement {
     >
       <HeadRegion head={view.head} />
       {view.figure.kind === "leaves" && (
-        <RegionBox region={{ kind: "section", id: view.figure.regionId }}>
+        <RegionBox region={{ kind: "section", id: view.figure.regionId, askCount: 0 }}>
           <LeafRegionContent region={view.figure} />
         </RegionBox>
       )}
       {bodySections.map(([componentId, section]) => (
-        <RegionBox key={section.regionId} region={{ kind: "section", id: section.regionId }}>
+        <RegionBox
+          key={section.regionId}
+          region={{
+            kind: "section",
+            id: section.regionId,
+            askCount: askCountOf(report, askThreads, componentId),
+          }}
+        >
           <SectionContent id={componentId} />
         </RegionBox>
       ))}
@@ -298,6 +307,15 @@ function PartRun(props: { readonly lead: string; readonly ids: readonly string[]
       ))}
     </>
   )
+}
+
+function askCountOf(report: ReportContextValue, threads: AskThreadSlot, sectionId: string): number {
+  if (report.reportToolUseId === undefined) {
+    return 0
+  }
+  const part = report.parts.get(sectionId)
+  const ids = part?.component === "Section" ? part.children : [sectionId]
+  return sectionAskCount(threads, report.reportToolUseId, runIds(ids, report))
 }
 
 function runIds(ids: readonly string[], report: ReportContextValue): readonly string[] {

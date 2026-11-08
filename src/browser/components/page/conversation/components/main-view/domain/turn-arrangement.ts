@@ -7,22 +7,23 @@ import { sum } from "remeda"
 import {
   isInterimStep,
   type MainViewAction,
-  type MainViewAside,
   type MainViewPhaseLabel,
   type MainViewQuestion,
   type MainViewStep,
   type MainViewTurn,
+  turnAsides,
 } from "../../../../../../../shared/session/main-view-shape.ts"
 import {
   formatMeasured,
   type MeasuredTime,
 } from "../../../../../../../shared/utils/elapsed-time.ts"
+import type { RemainingAside } from "../../../../../../features/report/ask-thread-context.ts"
 
 /** 経過の畳みの中の1件。中間レポートのステップか、質問の記録か、やり取り全体の補足メッセージ（末尾に1項だけ）。 */
 export type ProgressEntry =
   | { readonly kind: "interim"; readonly step: MainViewStep }
   | { readonly kind: "question"; readonly entry: MainViewQuestion }
-  | { readonly kind: "asides"; readonly asides: readonly MainViewAside[] }
+  | { readonly kind: "asides"; readonly asides: readonly RemainingAside[] }
 
 /**
  * 札の中の並び。補足メッセージはどちらも、やり取りの全ステップ分を送った順に1つへまとめる。
@@ -30,16 +31,21 @@ export type ProgressEntry =
  * - `final-first`: 最終レポート → 経過の畳み（`progress`。届いた順で、末尾に補足メッセージの項。空なら畳みを出さない）
  */
 type TurnArrangement =
-  | { readonly kind: "arrival"; readonly asides: readonly MainViewAside[] }
+  | { readonly kind: "arrival"; readonly asides: readonly RemainingAside[] }
   | {
       readonly kind: "final-first"
       readonly final: MainViewStep
       readonly progress: readonly ProgressEntry[]
     }
 
-/** 最終レポートの印（`MainViewStep.mark` が `final`）の付いたステップがあるときだけ `final-first` にする。 */
-export function arrangeTurn(turn: MainViewTurn): TurnArrangement {
-  const asides = turn.steps.flatMap((step) => step.asides)
+/**
+ * 最終レポートの印（`MainViewStep.mark` が `final`）の付いたステップがあるときだけ `final-first` にする。
+ * `asides` は親のカードの欄に出す補足。省くと、やり取りの補足を指した所なしで全部出す。
+ */
+export function arrangeTurn(
+  turn: MainViewTurn,
+  asides: readonly RemainingAside[] = turnAsides(turn).map((aside) => ({ aside })),
+): TurnArrangement {
   const final = turn.steps.find((step) => step.mark === "final")
   if (final === undefined) {
     return { kind: "arrival", asides }

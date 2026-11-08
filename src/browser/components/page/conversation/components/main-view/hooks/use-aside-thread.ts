@@ -3,13 +3,15 @@
 import { useState, type ToggleEvent } from "react"
 
 import { isExchangeClosed } from "../../../../../../../shared/session/conversation-moment.ts"
-import type { MainViewAside } from "../../../../../../../shared/session/main-view-shape.ts"
+import type { RemainingAside } from "../../../../../../features/report/ask-thread-context.ts"
 import { useSession } from "../../../../../../stores/session.ts"
 
 type AsideThreadRow = {
   readonly key: string
   readonly text: string
   readonly answer: string
+  /** 鍵の部品が画面に無い補足だけが持つ、指した所の字。 */
+  readonly pointed?: string
 }
 
 export type AsideThreadModel = {
@@ -27,7 +29,7 @@ type OpenChoice =
 const WAITING_ANSWER = "…"
 
 export function useAsideThread(
-  asides: readonly MainViewAside[],
+  asides: readonly RemainingAside[],
   newest: boolean,
 ): AsideThreadModel {
   const sessionClosed = useSession((session) => isExchangeClosed(session.state))
@@ -39,10 +41,11 @@ export function useAsideThread(
   return {
     summary: `補足メッセージ ${String(asides.length)}件`,
     open,
-    rows: asides.map((aside, index) => ({
+    rows: asides.map(({ aside, pointed }, index) => ({
       key: String(index),
       text: aside.text,
       answer: aside.answer.kind === "answered" ? aside.answer.text : WAITING_ANSWER,
+      ...(pointed === undefined ? {} : { pointed }),
     })),
     onToggle: (event) => {
       const toggled = event.currentTarget.open

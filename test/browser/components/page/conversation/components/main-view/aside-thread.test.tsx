@@ -2,7 +2,7 @@ import { act, cleanup, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
 import { AsideThread } from "../../../../../../../src/browser/components/page/conversation/components/main-view/aside-thread.tsx"
-import type { MainViewAside } from "../../../../../../../src/shared/session/main-view-shape.ts"
+import type { RemainingAside } from "../../../../../../../src/browser/features/report/ask-thread-context.ts"
 import { checkedTaskId } from "../../../../../../fixture/task-id.ts"
 import { putState, putSession, stateWith } from "../../../../../session-store.ts"
 
@@ -10,9 +10,9 @@ afterEach(() => {
   cleanup()
 })
 
-const ASIDES: readonly MainViewAside[] = [
-  { text: "架空の問い", answer: { kind: "answered", text: "架空の答え" } },
-  { text: "架空の頼み", answer: { kind: "waiting" } },
+const ASIDES: readonly RemainingAside[] = [
+  { aside: { text: "架空の問い", answer: { kind: "answered", text: "架空の答え" } } },
+  { aside: { text: "架空の頼み", answer: { kind: "waiting" } } },
 ]
 
 const DELEGATING = stateWith({
@@ -31,6 +31,26 @@ function details(): HTMLDetailsElement {
 }
 
 describe("AsideThread", () => {
+  it("欄の件数は渡された並びの数で、指した所の1行つきの補足にはその字が付く", () => {
+    putSession(DELEGATING)
+    render(
+      <AsideThread
+        asides={[
+          {
+            aside: { text: "架空の問い", answer: { kind: "answered", text: "架空の答え" } },
+            pointed: "架空の表 甲",
+          },
+        ]}
+        newest={true}
+      />,
+    )
+
+    expect(screen.getByText(/^補足メッセージ 1件/)).toBeTruthy()
+    expect(screen.getByRole("listitem").textContent).toBe(
+      "↳ 架空の表 甲について きみ: 架空の問い → 架空の答え",
+    )
+  })
+
   it("言葉と答えを古い順に対で並べ、答えがまだ無ければ「…」を出す", () => {
     putSession(DELEGATING)
     render(<AsideThread asides={ASIDES} newest={true} />)

@@ -317,6 +317,7 @@ function bodyRows(
                   rowAsk.openRow(index, firstCell)
                 },
                 active: rowAsk.isOpen(index),
+                asked: rowAsk.isAsked(index),
               },
         detail:
           detail === undefined

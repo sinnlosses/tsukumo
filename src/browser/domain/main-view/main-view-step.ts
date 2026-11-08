@@ -120,6 +120,7 @@ function groupIntoSteps(entries: readonly StepEntry[]): GroupedSteps {
       if (entry.kind === "aside") {
         const aside = {
           text: entry.text,
+          ...(entry.target === undefined ? {} : { target: entry.target }),
           answer: { kind: "waiting" },
         } as const satisfies MainViewAside
         const last = steps.at(-1)
@@ -166,7 +167,7 @@ function answerLastAside(steps: readonly MainViewStep[], text: string): readonly
     ...step,
     asides: [
       ...step.asides.slice(0, -1),
-      { text: last.text, answer: { kind: "answered", text: answered } },
+      { ...last, answer: { kind: "answered", text: answered } },
     ],
   })
 }

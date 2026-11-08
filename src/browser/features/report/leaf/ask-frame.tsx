@@ -6,10 +6,12 @@ import { createContext, type ReactElement, type ReactNode, use, useState } from 
 
 import type { ReplyTarget } from "../../../../shared/session/reply-target.ts"
 import { Button } from "../../../components/ui/button/button.tsx"
+import { useLeafAskThread } from "../ask-thread-context.ts"
 import { replyTargetOf } from "../domain/reply-target.ts"
 import { LeafIdentityContext, SectionPointContext } from "../leaf-point-context.ts"
 import { ReplyPortContext } from "../reply-port.ts"
 import { AskBox } from "./ask-box.tsx"
+import { AskThreadView } from "./ask-thread-view.tsx"
 import styles from "./leaf.module.css"
 
 /** 表が行ごとに「聞く」を出すための口。`none` の表は行のボタンを出さない。 */
@@ -21,6 +23,8 @@ export type RowAsk =
       readonly openRow: (index: number, firstCell: string) => void
       /** その行について欄が開いているか（欄は表の下に出し、行には印を付ける）。 */
       readonly isOpen: (index: number) => boolean
+      /** その行について聞いたことがあるか（行に印の線を付ける）。 */
+      readonly isAsked: (index: number) => boolean
     }
 
 export const RowAskContext = createContext<RowAsk>({ kind: "none" })
@@ -32,11 +36,14 @@ type OpenAsk =
 
 export function AskFrame(props: {
   readonly title: string
+  /** 題の行を持つ部品か。持たない部品は、答えの欄の頭にバッジを置く。 */
+  readonly captioned: boolean
   readonly children: ReactNode
 }): ReactElement {
   const slot = use(ReplyPortContext)
   const section = use(SectionPointContext)
   const leaf = use(LeafIdentityContext)
+  const thread = useLeafAskThread()
   const [open, setOpen] = useState<OpenAsk>({ kind: "closed" })
   if (slot.kind === "none" || section.kind === "none" || leaf.kind === "none") {
     return <>{props.children}</>
@@ -68,11 +75,26 @@ export function AskFrame(props: {
       setOpen({ kind: "row", index, firstCell })
     },
     isOpen: (index) => open.kind === "row" && open.index === index,
+    isAsked: (index) =>
+      thread.kind === "asked" && thread.thread.pairs.some((pair) => pair.row?.index === index),
   }
   return (
     <RowAskContext value={rowAsk}>
       <div className={styles["ask-frame"]}>
         {props.children}
+        {thread.kind === "asked" && (
+          <AskThreadView
+            thread={thread.thread}
+            captioned={props.captioned}
+            onContinue={(pair) => {
+              setOpen(
+                pair.row === undefined
+                  ? { kind: "leaf" }
+                  : { kind: "row", index: pair.row.index, firstCell: pair.row.label },
+              )
+            }}
+          />
+        )}
         {open.kind !== "leaf" && (
           <span className={styles["ask-button-slot"]}>
             <Button

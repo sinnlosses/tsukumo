@@ -1,6 +1,11 @@
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react"
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest"
 
+import { AskThreadContext } from "../../../../../src/browser/features/report/ask-thread-context.ts"
+import {
+  askLeafKey,
+  type LeafAskThread,
+} from "../../../../../src/browser/features/report/domain/ask-thread.ts"
 import { loadMarkdown } from "../../../../../src/browser/features/report/markdown.tsx"
 import {
   type ReplyPort,
@@ -170,6 +175,55 @@ describe("表の行の「聞く」", () => {
     expect(table?.contains(field)).toBe(false)
     expect(table?.compareDocumentPosition(field)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
     expect(container.querySelectorAll("tbody tr[class*='ask-row-active']")).toHaveLength(1)
+  })
+})
+
+describe("表の行に聞いた印", () => {
+  it("聞いた行にだけ印の線が付き、その行の対が表の下に出る", () => {
+    const thread: LeafAskThread = {
+      pairs: [
+        {
+          question: "なぜ？",
+          answer: { kind: "answered", text: "架空の理由。" },
+          row: { index: 1, label: "あ" },
+        },
+      ],
+      waiting: false,
+      count: 1,
+    }
+    const body = regionsOf(reportParts(INTERACTIVE, false))
+    const { container } = render(
+      <ReplyPortContext
+        value={{
+          kind: "open",
+          port: { appendDraft: vi.fn<ReplyPort["appendDraft"]>(), ask: vi.fn<ReplyPort["ask"]>() },
+        }}
+      >
+        <AskThreadContext
+          value={{
+            kind: "grouped",
+            byLeaf: new Map([[askLeafKey("toolu_1", "t1"), thread]]),
+            remaining: [],
+          }}
+        >
+          <Report
+            reveal={false}
+            turnId={1}
+            className=""
+            revealClassName=""
+            blockClassName=""
+            body={body}
+            reportToolUseId="toolu_1"
+          />
+        </AskThreadContext>
+      </ReplyPortContext>,
+    )
+
+    const asked = container.querySelectorAll("tbody tr[class*='ask-row-asked']")
+    expect(asked).toHaveLength(1)
+    expect(asked[0]?.firstElementChild?.textContent).toBe("あ")
+    expect(screen.getByText("なぜ？")).toBeTruthy()
+    expect(container.textContent).toContain("聞 1・答えた")
   })
 })
 

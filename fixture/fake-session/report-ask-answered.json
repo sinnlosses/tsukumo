@@ -1,0 +1,98 @@
+{
+  "name": "report-ask-answered",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "検証を速くしたい（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 300,
+      "event": {
+        "kind": "report",
+        "toolUseId": "fake-ask-2",
+        "components": [
+          {
+            "id": "root",
+            "component": "Report",
+            "conclusion": ["架空の検証は worker を 6 本にすると 246 秒から 76 秒に縮む。"],
+            "children": ["s1", "s2"]
+          },
+          {
+            "id": "s1",
+            "component": "Section",
+            "heading": "検査ごとの所要",
+            "children": ["t1"]
+          },
+          {
+            "id": "t1",
+            "component": "Table",
+            "title": "架空の検査ごとの所要（worker 6 本）",
+            "columns": ["検査", "種類", "秒", "状態"],
+            "rows": [
+              ["E2E（会話）", "E2E", "92", { "status": "warn", "text": "遅い" }],
+              ["単体（core）", "単体", "64", { "status": "ok", "text": "通過" }],
+              ["単体（browser）", "単体", "58", { "status": "ok", "text": "通過" }],
+              ["E2E（設定）", "E2E", "31", { "status": "ok", "text": "通過" }]
+            ]
+          },
+          {
+            "id": "s2",
+            "component": "Section",
+            "heading": "進め方の案",
+            "children": ["p1"]
+          },
+          {
+            "id": "p1",
+            "component": "Paragraph",
+            "text": "起こし直しを 1 回にまとめる案を試す。"
+          }
+        ]
+      }
+    },
+    {
+      "afterMs": 400,
+      "event": {
+        "kind": "tool-finished",
+        "toolUseId": "fake-ask-2",
+        "content": "ok",
+        "isError": false
+      }
+    },
+    {
+      "afterMs": 500,
+      "event": { "kind": "turn-finished", "outcome": { "kind": "completed" } }
+    },
+    {
+      "afterMs": 600,
+      "event": {
+        "kind": "aside",
+        "text": "なぜ E2E（会話）だけ遅いの？",
+        "images": [],
+        "target": {
+          "label": {
+            "section": "検査ごとの所要",
+            "component": "架空の検査ごとの所要（worker 6 本）",
+            "row": "E2E（会話）"
+          },
+          "key": { "reportToolUseId": "fake-ask-2", "componentId": "t1", "rowIndex": 0 }
+        }
+      }
+    },
+    {
+      "afterMs": 800,
+      "event": {
+        "kind": "speech",
+        "text": "会話の E2E は画面を 12 回起こし直していて、1 回に 6 秒かかるの。まとめれば 30 秒台に縮むはずよ。",
+        "expression": "default"
+      }
+    },
+    {
+      "afterMs": 900,
+      "event": { "kind": "turn-finished", "outcome": { "kind": "completed" } }
+    }
+  ]
+}

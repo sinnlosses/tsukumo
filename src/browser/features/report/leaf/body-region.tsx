@@ -82,7 +82,7 @@ export function MarkdownReport(
 /** 欄の入れ物が持つ印。 */
 export type RegionMark =
   | { readonly kind: "head" | "retrospective" | "markdown" }
-  | { readonly kind: "section"; readonly id: number }
+  | { readonly kind: "section"; readonly id: number; readonly askCount: number }
   | { readonly kind: "favor"; readonly id: string }
 
 /**
@@ -98,6 +98,9 @@ export function RegionBox(props: {
     <div
       data-report-region={region.kind}
       data-report-section={region.kind === "section" ? String(region.id) : undefined}
+      data-ask-count={
+        region.kind === "section" && region.askCount > 0 ? region.askCount : undefined
+      }
       id={region.kind === "favor" ? region.id : undefined}
     >
       {props.children}

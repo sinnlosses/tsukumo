@@ -111,7 +111,7 @@ describe("arrangeTurn", () => {
           step(1, { kind: "interim", ...PLAIN, asides: [second] }),
         ]),
       ),
-    ).toEqual({ kind: "arrival", asides: [first, second] })
+    ).toEqual({ kind: "arrival", asides: [{ aside: first }, { aside: second }] })
   })
 
   it("最終レポートの無いまま失敗で閉じたやり取りも届いた順のまま", () => {
@@ -169,7 +169,7 @@ describe("arrangeTurn", () => {
       final,
       progress: [
         { kind: "interim", step: interim },
-        { kind: "asides", asides: [first, second] },
+        { kind: "asides", asides: [{ aside: first }, { aside: second }] },
       ],
     })
   })
@@ -180,7 +180,28 @@ describe("arrangeTurn", () => {
     expect(arrangeTurn(turn([final]))).toEqual({
       kind: "final-first",
       final,
-      progress: [{ kind: "asides", asides: [only] }],
+      progress: [{ kind: "asides", asides: [{ aside: only }] }],
+    })
+  })
+
+  it("親のカードの欄に残す並びを渡すと、補足メッセージの項はその並びになり、空なら項を出さない", () => {
+    const stays = aside("残る問い")
+    const moved = aside("部品の下へ移る問い")
+    const final = step(0, { kind: "final", ...PLAIN, asides: [stays, moved] })
+    const remaining = [{ aside: stays, pointed: "架空の表 甲" }]
+    expect(arrangeTurn(turn([final]), remaining)).toEqual({
+      kind: "final-first",
+      final,
+      progress: [{ kind: "asides", asides: remaining }],
+    })
+    expect(arrangeTurn(turn([final]), [])).toEqual({
+      kind: "final-first",
+      final,
+      progress: [],
+    })
+    expect(arrangeTurn(turn([step(0, { kind: "interim", ...PLAIN })]), remaining)).toEqual({
+      kind: "arrival",
+      asides: remaining,
     })
   })
 
@@ -238,7 +259,10 @@ describe("progressFoldSummary", () => {
   })
 
   it("補足メッセージがあれば、件数は欄の中の件数で「 · 補足 k 件」が付く", () => {
-    const asides: ProgressEntry = { kind: "asides", asides: [aside("a"), aside("b")] }
+    const asides: ProgressEntry = {
+      kind: "asides",
+      asides: [{ aside: aside("a") }, { aside: aside("b") }],
+    }
     expect(progressFoldSummary([asides])).toBe("経過 0 件 · 補足 2 件")
     expect(
       progressFoldSummary([

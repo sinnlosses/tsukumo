@@ -365,6 +365,37 @@ describe("mainViewTurns（補足メッセージ）", () => {
     expect(steps.map(reportOf)).toEqual(["架空の1段目のまとめ。", "架空の2段目のまとめ。"])
   })
 
+  it("指した所つきの補足は target を持ったままステップに入り、無い補足は欄を持たない", () => {
+    const target = {
+      label: { component: "架空の表" },
+      key: { reportToolUseId: "toolu_r1", componentId: "tbl" },
+    }
+    const turns = turnsOf([
+      requestEvent(),
+      { kind: "aside", text: "架空の問い", images: [], target },
+      { kind: "aside", text: "架空の頼み", images: [] },
+    ])
+
+    expect(turns[0]?.steps[0]?.asides.map((aside) => aside.target)).toEqual([target, undefined])
+    expect(turns[0]?.steps[0]?.asides[1]).not.toHaveProperty("target")
+  })
+
+  it("答えたあとも補足の target は残る", () => {
+    const target = {
+      label: { component: "架空の表" },
+      key: { reportToolUseId: "toolu_r1", componentId: "tbl" },
+    }
+    const turns = turnsOf([
+      requestEvent(),
+      { kind: "aside", text: "架空の問い", images: [], target },
+      { kind: "speech", text: "架空の答え。", expression: "default" },
+    ])
+
+    expect(turns[0]?.steps[0]?.asides).toEqual([
+      { text: "架空の問い", target, answer: { kind: "answered", text: "架空の答え。" } },
+    ])
+  })
+
   it("何も出ていない依頼の直後の補足メッセージは、本文なしのステップに入る", () => {
     const turns = turnsOf([requestEvent(), { kind: "aside", text: "架空の問い", images: [] }])
 

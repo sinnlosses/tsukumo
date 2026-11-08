@@ -47,6 +47,46 @@ tr:focus-within .ask-row-slot {
 .ask-row-active > td {
   background: var(--surface-accent);
 }
+/* 聞いたことのある行は左に印の線を付ける。 */
+.ask-row-asked > td:first-child {
+  padding-left: var(--inline-control);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+/* 聞いた部品の下の、問いと答えの対。 */
+.ask-thread {
+  display: flex;
+  flex-direction: column;
+  gap: var(--stack-block);
+  padding-left: var(--gutter-region);
+  border-left: 3px solid var(--accent);
+}
+.ask-pair {
+  display: flex;
+  flex-direction: column;
+  gap: var(--stack-tight);
+}
+.ask-pair > p {
+  margin: 0;
+}
+.ask-pointed {
+  color: var(--ink-quiet);
+  font-size: var(--font-secondary);
+}
+.ask-speaker {
+  color: var(--ink-soft);
+  font-size: var(--font-secondary);
+}
+.ask-continue {
+  align-self: flex-start;
+  min-height: 1.5rem;
+  padding: var(--inset-control);
+}
+.ask-caption-aside {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--inline-control);
+}
 .ask-row-button {
   min-height: 1.5rem;
   padding: var(--inset-control);

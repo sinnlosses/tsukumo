@@ -4,7 +4,7 @@
 // 失敗で終わったやり取りは、頭に失敗の表示を出す（色だけでなく字で成功と見分ける）。
 
 import clsx from "clsx"
-import { useState, type ReactElement } from "react"
+import { use, useState, type ReactElement } from "react"
 
 import type { ReportTask } from "../../../../../../shared/report/report-task.ts"
 import {
@@ -15,6 +15,7 @@ import {
   type MainViewTurn,
 } from "../../../../../../shared/session/main-view-shape.ts"
 import { formatMeasured } from "../../../../../../shared/utils/elapsed-time.ts"
+import { AskThreadContext } from "../../../../../features/report/ask-thread-context.ts"
 import { ReplyPortContext } from "../../../../../features/report/reply-port.ts"
 import { Report } from "../../../../../features/report/report.tsx"
 import { useExternalSync } from "../../../../../hooks/use-external-sync.ts"
@@ -62,7 +63,9 @@ export function Turn(props: TurnProps): ReactElement {
     stepIdAtMount,
     draftedToolUseIds,
   })
-  const arrangement = arrangeTurn(turn)
+  const askSlot = use(AskThreadContext)
+  const arrangement =
+    askSlot.kind === "grouped" ? arrangeTurn(turn, askSlot.remaining) : arrangeTurn(turn)
   const latestStepId = props.newest ? finalStep?.id : undefined
   const appendParagraphToDraft = useComposerDraft((state) => state.appendParagraphToDraft)
   const ask = useAskSend()

@@ -73,6 +73,40 @@ test.describe("report → メインビュー", () => {
     await expect(field).toBeHidden()
   })
 
+  test("聞いた表の行の下に問いと答えの対と「聞 1・答えた」が出て、やり取りの列の節の行に「聞 1」が出る", async ({
+    run,
+  }) => {
+    const room = await run.open({
+      scenario: "report-ask-answered",
+      scene: "report-ask-answered",
+      viewport: "wide",
+      domRoots: ["main"],
+    })
+
+    await room.waitForEvent("turn-finished")
+    const thread = room.page.getByRole("group", { name: "聞いたこと" })
+    await expect(thread.getByText("E2E（会話）の行について")).toBeVisible()
+    await expect(thread.getByText("なぜ E2E（会話）だけ遅いの？")).toBeVisible()
+    await expect(room.page.getByText("聞 1・答えた")).toBeVisible()
+    await expect(room.page.getByRole("button", { name: "続けて聞く" })).toBeVisible()
+    await expect(room.page.getByText("聞 1", { exact: true })).toBeVisible()
+  })
+
+  test("答えがまだ無い問いは、答えの場所に「作業は始めていない」が出て、バッジは答え待ち", async ({
+    run,
+  }) => {
+    const room = await run.open({
+      scenario: "report-ask-waiting",
+      scene: "report-ask-waiting",
+      viewport: "wide",
+      domRoots: ["main"],
+    })
+
+    await room.waitForEvent("turn-finished")
+    await expect(room.page.getByText("（作業は始めていない）", { exact: false })).toBeVisible()
+    await expect(room.page.getByText("聞 1・答え待ち")).toBeVisible()
+  })
+
   test("触れるレポートは、つまみを振ると数・文・図の強調が変わり、開き直すと初期値に戻る", async ({
     run,
   }) => {

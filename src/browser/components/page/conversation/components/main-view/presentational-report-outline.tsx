@@ -248,6 +248,14 @@ function HeadingRows(props: {
           >
             <span className={styles["outline-row-mark"]} aria-hidden="true" />
             <span className={styles["outline-row-text"]}>{row.text}</span>
+            {row.askCount !== undefined && (
+              <span
+                className={styles["outline-row-ask"]}
+                aria-label={`聞いたこと ${String(row.askCount)}件`}
+              >
+                {`聞 ${String(row.askCount)}`}
+              </span>
+            )}
           </button>
         ),
       )}

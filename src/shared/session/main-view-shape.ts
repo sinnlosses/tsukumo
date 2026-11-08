@@ -292,6 +292,8 @@ export const NO_BODY = { kind: "none" } as const satisfies MainViewStepBody
 
 export type MainViewAside = {
   readonly text: string
+  /** 部品や表の行を指して聞いたときだけ持つ。 */
+  readonly target?: ReplyTarget
   readonly answer:
     | { readonly kind: "waiting" }
     | { readonly kind: "answered"; readonly text: string }

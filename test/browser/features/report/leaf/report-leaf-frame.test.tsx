@@ -2,6 +2,15 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest"
 
 import {
+  AskThreadContext,
+  type AskThreadSlot,
+} from "../../../../../src/browser/features/report/ask-thread-context.ts"
+import {
+  type AskPair,
+  askLeafKey,
+  type LeafAskThread,
+} from "../../../../../src/browser/features/report/domain/ask-thread.ts"
+import {
   type LeafIdentity,
   LeafIdentityContext,
   type SectionPoint,
@@ -265,6 +274,130 @@ describe("FoldedLeafFrame の「聞く」", () => {
     })
 
     expect(screen.queryByRole("button", { name: "聞く" })).toBeNull()
+  })
+})
+
+describe("FoldedLeafFrame の聞いた問いと答え", () => {
+  const SECTION: SectionPoint = { kind: "section", reportToolUseId: "toolu_1", heading: "架空の節" }
+  const LEAF: LeafIdentity = { kind: "leaf", componentId: "p1", componentKind: "Paragraph" }
+  const KEY = askLeafKey("toolu_1", "p1")
+  const answeredPair: AskPair = {
+    question: "なぜ？",
+    answer: { kind: "answered", text: "架空の理由だから。" },
+  }
+  const waitingPair: AskPair = { question: "いつ？", answer: { kind: "waiting" } }
+
+  function threadsOf(...pairs: readonly AskPair[]): AskThreadSlot {
+    const thread: LeafAskThread = {
+      pairs,
+      waiting: pairs.some((pair) => pair.answer.kind === "waiting"),
+      count: pairs.length,
+    }
+    return { kind: "grouped", byLeaf: new Map([[KEY, thread]]), remaining: [] }
+  }
+
+  function threadFrame(
+    threads: AskThreadSlot,
+    captionNumber: FrameValue["captionNumber"] = NO_CAPTION,
+    ask?: ReplyPort["ask"],
+  ) {
+    return render(
+      <ReplyPortContext
+        value={{
+          kind: "open",
+          port: {
+            appendDraft: vi.fn<ReplyPort["appendDraft"]>(),
+            ask: ask ?? vi.fn<ReplyPort["ask"]>(),
+          },
+        }}
+      >
+        <AskThreadContext value={threads}>
+          <SectionPointContext value={SECTION}>
+            <LeafIdentityContext value={LEAF}>
+              <div data-report-region="section">
+                <FoldedLeafFrame
+                  value={{ captionNumber, gutterNotes: [] }}
+                  title="架空の題"
+                  fit={false}
+                  fold=""
+                  swap={false}
+                >
+                  <p>架空の本体</p>
+                </FoldedLeafFrame>
+              </div>
+            </LeafIdentityContext>
+          </SectionPointContext>
+        </AskThreadContext>
+      </ReplyPortContext>,
+    )
+  }
+
+  it("答えた対は問いと答えを出し、題の行にバッジ「聞 1・答えた」が付く", () => {
+    const { container } = threadFrame(threadsOf(answeredPair), { kind: "table", ordinal: 1 })
+
+    expect(screen.getByText("なぜ？")).toBeTruthy()
+    expect(screen.getByText(/架空の理由だから。/)).toBeTruthy()
+    expect(container.querySelector(CAPTION_SELECTOR)?.textContent).toContain("聞 1・答えた")
+  })
+
+  it("答え待ちの対は「作業は始めていない」を出し、バッジは答え待ち、続けて聞くは出ない", () => {
+    threadFrame(threadsOf(answeredPair, waitingPair), { kind: "table", ordinal: 1 })
+
+    expect(screen.getByText(/作業は始めていない/)).toBeTruthy()
+    expect(screen.getByText("聞 2・答え待ち")).toBeTruthy()
+    expect(screen.getAllByRole("button", { name: "続けて聞く" })).toHaveLength(1)
+  })
+
+  it("題の行を持たない部品は、バッジを答えの欄の頭に置く", () => {
+    const { container } = threadFrame(threadsOf(answeredPair))
+
+    expect(container.querySelector(CAPTION_SELECTOR)).toBeNull()
+    expect(screen.getByText("聞 1・答えた")).toBeTruthy()
+  })
+
+  it("続けて聞くで、同じ指した所のその場の入力欄が開く", () => {
+    const ask = vi.fn<ReplyPort["ask"]>()
+    threadFrame(threadsOf(answeredPair), NO_CAPTION, ask)
+
+    fireEvent.click(screen.getByRole("button", { name: "続けて聞く" }))
+    const field = screen.getByRole("textbox")
+    fireEvent.change(field, { target: { value: "もっと？" } })
+    fireEvent.keyDown(field, { key: "Enter", metaKey: true })
+
+    expect(ask).toHaveBeenCalledExactlyOnceWith(
+      {
+        label: { section: "架空の節", component: "架空の題" },
+        key: { reportToolUseId: "toolu_1", componentId: "p1" },
+      },
+      "もっと？",
+    )
+  })
+
+  it("行を指した対の続けて聞くは、同じ行の入力欄を開く", () => {
+    const ask = vi.fn<ReplyPort["ask"]>()
+    threadFrame(
+      threadsOf({ ...answeredPair, row: { index: 2, label: "架空の行" } }),
+      NO_CAPTION,
+      ask,
+    )
+
+    fireEvent.click(screen.getByRole("button", { name: "続けて聞く" }))
+    const field = screen.getByRole("textbox")
+    fireEvent.change(field, { target: { value: "もっと？" } })
+    fireEvent.keyDown(field, { key: "Enter", metaKey: true })
+
+    expect(ask.mock.calls[0]?.[0].key).toEqual({
+      reportToolUseId: "toolu_1",
+      componentId: "p1",
+      rowIndex: 2,
+    })
+  })
+
+  it("束の口が無い描画では何も増えない", () => {
+    threadFrame({ kind: "none" }, { kind: "table", ordinal: 1 })
+
+    expect(screen.queryByText(/聞 \d/)).toBeNull()
+    expect(screen.queryByRole("button", { name: "続けて聞く" })).toBeNull()
   })
 })
 

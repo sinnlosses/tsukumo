@@ -115,6 +115,14 @@
   font-size: var(--font-action);
   font-weight: normal;
 }
+/* 節の行の右端に添える「聞 n」。 */
+.outline-row-ask {
+  flex: 1 0 auto;
+  text-align: right;
+  color: var(--ink-quiet);
+  font-size: var(--font-action);
+  font-weight: normal;
+}
 .outline-turn-mark {
   flex: none;
   width: 1em;

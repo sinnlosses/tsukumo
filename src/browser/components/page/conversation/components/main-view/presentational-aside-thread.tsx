@@ -21,6 +21,11 @@ export function PresentationalAsideThread(props: PresentationalAsideThreadProps)
       <ul className={styles["aside-rows"]}>
         {props.rows.map((row) => (
           <li className={styles["aside-row"]} key={row.key}>
+            {row.pointed !== undefined && (
+              <Text element="span" size="inherit" tone="ink-quiet" weight="inherit" className="">
+                ↳ {row.pointed}について{" "}
+              </Text>
+            )}
             <Text element="span" size="inherit" tone="ink-quiet" weight="inherit" className="">
               きみ:
             </Text>{" "}

@@ -12,6 +12,8 @@ export type ReadingSection =
 export type ReportOutlineEntry = {
   readonly level: "section" | "sub"
   readonly text: string
+  /** その節で聞いた数。節の行で、聞いたときだけ付く。 */
+  readonly askCount?: number
 }
 
 export type HeadingStep = "older" | "newer"
