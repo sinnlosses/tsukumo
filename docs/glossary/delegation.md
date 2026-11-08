@@ -13,7 +13,7 @@
 - **英語識別子**: `DelegateReturn`（**`phase_result` ツール**の結果を読んだ形。`skipped` は `phase-skipped`）、`delegate-returned`（`phase_result` がプログレスバーを動かしたときの内部のイベント）、`delegate-handed-back`（`SubagentHandback` が届いた事実を運ぶ、サーバの中だけのイベント）
 - **定義**: 背景で委譲したサブエージェントがメインへ返す報告。委譲先が `phase_result` でフェーズの結果を返し、`SubagentHandback` の本文は読まない。
   `phase` に当たるプログレスバーのフェーズが今のフェーズの集合に入っているときだけ、そのフェーズを済ませる（一足飛び・もう済んだフェーズ・範囲の無い依頼・`count` が宣言した**委譲先のフェーズの範囲**のフェーズの数と違う呼び出しではプログレスバーは動かない）
-- **注記**: 規則の正典は `docs/architecture/workflow-contract.md`「委譲の返却」で、スキルの依頼文は参照するだけ
+- **注記**: 規則の正典は `docs/architecture/workflow-contract.md`「委譲の返却」で、段の依頼文は参照するだけ
   （`docs/architecture/adr/0024-no-skill-dependency.md`）。
   ワークプランを渡した仕事の依頼では、返却が届いたらメインが `work_plan` を呼ぶまで作業のツールを拒む委譲ゲートが立つ。
   委譲先が途中で `SendMessage({ to: "main" })` で送る1行は吹き出しの材料で、プログレスバーを動かさない
