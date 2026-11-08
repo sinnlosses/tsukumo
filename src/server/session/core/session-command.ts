@@ -78,6 +78,7 @@ export function sessionCommands(ports: SessionCommandPorts): SessionCommandTable
             input.text,
             ports.promptImageShelf.shelve(input.images),
             promptOpening(input.routing, session.state()),
+            input.routing === "ask" ? input.target : undefined,
           )
           return ACCEPTED
         }),
@@ -203,8 +204,14 @@ export function sessionCommands(ports: SessionCommandPorts): SessionCommandTable
   }
 }
 
-function promptOpening(routing: PromptRouting, state: SessionState): PromptOpening {
-  return routing === "aside-when-background" && !state.chatMode && state.backgroundTasks.length > 0
+function promptOpening(routing: PromptRouting | "ask", state: SessionState): PromptOpening {
+  if (state.chatMode) {
+    return "request"
+  }
+  if (routing === "ask") {
+    return "aside"
+  }
+  return routing === "aside-when-background" && state.backgroundTasks.length > 0
     ? "aside"
     : "request"
 }

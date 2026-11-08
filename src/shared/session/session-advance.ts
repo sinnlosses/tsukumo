@@ -185,7 +185,13 @@ const SESSION_EVENT_FOLDS = {
     ...beginAside(state, at),
     records: [
       ...state.records,
-      { kind: "aside", text: event.text, images: event.images, time: { kind: "stamped", at } },
+      {
+        kind: "aside",
+        text: event.text,
+        images: event.images,
+        ...(event.target === undefined ? {} : { target: event.target }),
+        time: { kind: "stamped", at },
+      },
     ],
   }),
   // 記録を持たないターンの始まり。積むものが無いだけで、吹き出し・表情・進行中の印は `request` と同じに動かす。

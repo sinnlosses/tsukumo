@@ -111,6 +111,25 @@ describe("startFakeSession", () => {
     })
   })
 
+  it("待ちのときに指した所つきの補足メッセージを渡すと、aside が target を持って流れ、ターンは差し戻されずに閉じる", async () => {
+    const sink = collect()
+    const driver = startWithoutScene(FAKE_SESSION, sink.onEvent)
+    await tick()
+    const target = {
+      label: { component: "架空の部品", row: "架空の行" },
+      key: { reportToolUseId: "架空の呼び出し", componentId: "架空の部品ID", rowIndex: 2 },
+    }
+
+    driver.prompt("架空の問い", [], "aside", target)
+    await tick()
+    driver.close()
+
+    expect(sink.events).toContainEqual({ kind: "aside", text: "架空の問い", images: [], target })
+    expect(sink.events.some((event) => event.kind === "request")).toBe(false)
+    expect(sink.events.some((event) => event.kind === "report-rejected")).toBe(false)
+    expect(sink.events).toContainEqual({ kind: "turn-finished", outcome: { kind: "completed" } })
+  })
+
   it("切り替えで流す session-info は、場面が流したスキルとエージェントの名前を保つ", async () => {
     const sink = collect()
     const driver = startWithoutScene(

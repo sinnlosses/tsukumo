@@ -18,6 +18,7 @@ import type { QuestionBrief } from "../session-driver/question-brief.ts"
 import type { Question, QuestionAnswer } from "../session-driver/question.ts"
 import type { TurnFailure } from "../session-driver/turn-failure.ts"
 import type { MeasuredTime } from "../utils/elapsed-time.ts"
+import type { ReplyTarget } from "./reply-target.ts"
 import type { SessionRemaining } from "./session-digest.ts"
 import type { ToolRunStatus } from "./session-record.ts"
 import type { PhaseShift } from "./work-plan-shift.ts"
@@ -93,7 +94,7 @@ export type MainViewEntry =
    * 脇の話と、それへの答えのセリフ（`answersAside` の `speech`）。
    * `groupIntoSteps` が対にして、届いた時点で最後のステップの `MainViewStep.asides` に移す。
    */
-  | { readonly kind: "aside"; readonly text: string }
+  | { readonly kind: "aside"; readonly text: string; readonly target?: ReplyTarget }
   | { readonly kind: "aside-answer"; readonly text: string }
 
 /**

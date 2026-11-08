@@ -76,6 +76,17 @@ describe("コマンドの契約の入力（受け付ける形）", () => {
     ).toMatchObject({ routing: "aside-when-background" })
   })
 
+  it("送り方 ask は指した所を伴うときだけ受け付ける", () => {
+    const target = {
+      label: { section: "架空の節", component: "架空の表", row: "架空の行" },
+      key: { reportToolUseId: "toolu_fictional", componentId: "c1", rowIndex: 2 },
+    }
+    expect(
+      parseInput("session.prompt", { text: "架空の問い", routing: "ask", target }),
+    ).toMatchObject({ routing: "ask", target })
+    expect(parseInput("session.prompt", { text: "架空の問い", routing: "ask" })).toBeUndefined()
+  })
+
   it("nudge・interrupt は入力を持たない（押した事実だけが届く）", () => {
     // 文面の欄が無いのが nudge の形そのもの（送る一言は
     // `CHAT_NUDGE_PROMPT` が持つ。docs/architecture/screen-design.md「雑談モードの画面」）。

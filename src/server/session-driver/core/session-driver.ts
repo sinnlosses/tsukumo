@@ -8,6 +8,7 @@ import type { ExpressionChoice } from "../../../shared/character-pack/expression
 import type { PromptDelayFootprint } from "../../../shared/diagnostic/diagnostic-record.ts"
 import type { SwallowedFailurePlace } from "../../../shared/diagnostic/swallowed-failure.ts"
 import type { Answer, PendingAsk } from "../../../shared/session-driver/pending-ask.ts"
+import type { ReplyTarget } from "../../../shared/session/reply-target.ts"
 import type {
   EffortLevel,
   ModelAlias,
@@ -140,6 +141,7 @@ export type SessionDriver = {
     text: string,
     images: readonly ShelvedPromptImage[],
     opening: PromptOpening,
+    target?: ReplyTarget,
   ) => void
   /**
    * 依頼を1つ送るが、記録に残さない。

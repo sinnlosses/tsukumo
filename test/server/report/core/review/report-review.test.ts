@@ -307,6 +307,22 @@ describe("createReportReview の judge（差し戻しの種類）", () => {
   })
 })
 
+describe("createReportReview の judge（待ちのときの補足メッセージのターン）", () => {
+  const PLANNED = (): { kind: "planned"; remaining: number } => ({ kind: "planned", remaining: 1 })
+  const ANSWER: ReportDraft = reportDraft({ conclusion: "架空の答え。" })
+
+  it("バックグラウンドのタスクが無くても、補足メッセージで始まったターンはフェーズの閉じ方を求めない", () => {
+    const plain = createReportReview(PLANNED)
+    plain.pass(SESSION_INFO)
+    const aside = createReportReview(PLANNED)
+    aside.pass({ kind: "aside", text: "架空の問い", images: [] })
+    aside.pass(SESSION_INFO)
+
+    expect(plain.judge(ANSWER).kind).toBe("rejected")
+    expect(aside.judge(ANSWER)).toEqual({ kind: "accepted" })
+  })
+})
+
 describe("createReportReview の judge（背景のシェルが残っている report）", () => {
   const OTHER: ReportDraft = reportDraft({ conclusion: "別の架空の結論。" })
   const backgroundTask = (

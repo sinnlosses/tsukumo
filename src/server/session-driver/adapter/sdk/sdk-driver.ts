@@ -36,6 +36,7 @@ import {
 import { createPromptDelayWatch, type PromptDelayWatch } from "../../core/prompt-delay.ts"
 import { handOffPrompt } from "../../core/prompt-handoff.ts"
 import { recordedPromptImages } from "../../core/prompt-image-shelf.ts"
+import { promptOpeningEvent } from "../../core/prompt-opening-event.ts"
 import { withSelfStartedTurns } from "../../core/self-started-turn.ts"
 import type {
   SessionDriver,
@@ -207,6 +208,8 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
   const emitTurnOpening = (event: SessionEvent): void => {
     interruptMark.observe(event)
     externalToolMark.observe(event)
+    // 関所には、補足メッセージ・依頼の始まりも見せる（メインのメッセージからは届かない）。
+    reportGate.observe(event)
     for (const passed of callReview.pass(event)) {
       options.onEvent(passed)
     }
@@ -250,17 +253,20 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
   options.onEvent({ kind: "effort-changed", effort: options.effort })
 
   return {
-    prompt: (text, images, opening) => {
+    prompt: (text, images, opening, target) => {
       // 控えと id だけが記録（`request` / `aside`）へ行き、原寸は入力のストリームへ流れる（棚の分は棚の寿命で捨てる）。
       const uuid = handOffPrompt({
         now: options.now,
         watch: delayWatch,
         push: () =>
-          push(opening === "aside" ? asidePromptText(text) : text, images.flatMap(toImageBlocks)),
+          push(
+            opening === "aside" ? asidePromptText(text, target?.label) : text,
+            images.flatMap(toImageBlocks),
+          ),
         record: () =>
-          emitTurnOpening({ kind: opening, text, images: recordedPromptImages(images) }),
+          emitTurnOpening(promptOpeningEvent(opening, text, recordedPromptImages(images), target)),
       })
-      ledgerIntake.noteSent(uuid, opening)
+      ledgerIntake.noteSent(uuid, opening, target?.key)
     },
     promptWithoutRecord: (text) => {
       // `request` を流さない（送った文面をログにも記録にも残さない）。

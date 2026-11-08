@@ -14,6 +14,7 @@ import { isSessionId, type SessionId } from "../../../../shared/session/session-
 import { createCallReview } from "../../core/call-review.ts"
 import { reportEvents } from "../../core/message/sdk-report-message.ts"
 import { recordedPromptImages } from "../../core/prompt-image-shelf.ts"
+import { promptOpeningEvent } from "../../core/prompt-opening-event.ts"
 import type { SessionDriver } from "../../core/session-driver.ts"
 import {
   FAKE_CONTEXT_USAGE,
@@ -216,9 +217,9 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
   }
 
   return {
-    prompt: (text, images, opening) => {
+    prompt: (text, images, opening, target) => {
       // 疑似セッションを流すだけの駆動でも、控えと id だけを記録へ渡すのは本物と同じ。
-      emit({ kind: opening, text, images: recordedPromptImages(images) })
+      emit(promptOpeningEvent(opening, text, recordedPromptImages(images), target))
       playNextTurn()
     },
     promptWithoutRecord: () => {

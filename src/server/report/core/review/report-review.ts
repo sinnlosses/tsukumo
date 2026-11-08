@@ -45,6 +45,7 @@ import type {
 } from "../../../../shared/session/session-event.ts"
 import { bashCommandOf } from "../../../../shared/session/turn-step.ts"
 import type { WorkPlanStanding } from "../../../../shared/session/work-plan.ts"
+import { INITIAL_ASIDE_TURN, nextAsideTurn } from "../aside/aside-turn.ts"
 import type { ReportDraft } from "../rules/draft.ts"
 import {
   REPORT_FINISHED_WITH_NG_REJECTION_TEXT,
@@ -108,8 +109,8 @@ export function createReportReview(
   let handlerDroppedIds: readonly string[] = []
   // このターンで出した（描いた）`report`。送り直しの判定にだけ使う。
   let drawn: readonly ReportCalledEvent[] = []
-  // 補足メッセージ（`aside`）で始まったターンか。ターンの頭の `session-info` は補足メッセージのターンの頭にも届くので、そこでは戻さない。
-  let asideTurn = false
+  // 補足メッセージ（`aside`）で始まったターンか（走っているターンに届いた `aside` は保留。決まりは `nextAsideTurn`）。
+  let asideTurn = INITIAL_ASIDE_TURN
   // このターンにメインが打った Bash のコマンド（`checks` の `command` との突き合わせにだけ使う）。
   let bashCommandsInTurn: readonly string[] = []
 
@@ -185,7 +186,7 @@ export function createReportReview(
         return unanswered
       }
       const closing: ClosingFit =
-        standing.kind === "planned" && !asideTurn
+        standing.kind === "planned" && !asideTurn.aside
           ? judgeWorkPlanClosing(report, standing.remaining)
           : { kind: "fit" }
       const closingVerdict =
@@ -202,7 +203,7 @@ export function createReportReview(
       }
       const shells = news.backgroundTasks().filter((task) => task.kind === "shell")
       const backgroundRunning =
-        shells.length > 0 && !asideTurn
+        shells.length > 0 && !asideTurn.aside
           ? settle(
               "background-running",
               "background-running",
@@ -309,13 +310,10 @@ export function createReportReview(
           return [event]
         case "request":
         case "turn-started":
-          asideTurn = false
-          return [event]
         case "aside":
-          asideTurn = true
-          return [event]
         case "turn-resumed":
-          asideTurn = false
+        case "speech":
+          asideTurn = nextAsideTurn(asideTurn, event)
           return [event]
         case "session-info":
           startTurn()
@@ -324,7 +322,7 @@ export function createReportReview(
           const unsettled = held.flatMap((report) => [report, ...closingSpeech(report)])
           held = []
           malformed = []
-          asideTurn = false
+          asideTurn = nextAsideTurn(asideTurn, event)
           startTurn()
           return [...unsettled, event]
         }

@@ -82,6 +82,45 @@ describe("toRestoredEvents（入力の控えのあるセッション）", () => 
     ).toEqual({ kind: "aside", text: "架空の問い", images: [] })
   })
 
+  it("指した所つきの補足メッセージは、字を包みから・鍵を控えから読んで戻る（部品だけ・節つき・行つき）", () => {
+    const key = { reportToolUseId: "toolu_fictional", componentId: "c1" }
+    const rowKey = { ...key, rowIndex: 3 }
+    const cases = [
+      {
+        label: { component: "架空の表" },
+        key,
+      },
+      {
+        label: { section: "架空の節", component: "架空の表" },
+        key,
+      },
+      {
+        label: { component: "架空の表", row: "架空の行" },
+        key: rowKey,
+      },
+      {
+        label: { section: "架空の節", component: "架空の表", row: "架空の行" },
+        key: rowKey,
+      },
+    ]
+    for (const target of cases) {
+      const ledger = inputLedgerOf([
+        { kind: "input", uuid: FIRST, input: "aside", target: target.key },
+      ])
+      expect(
+        eventsOf([sent(asidePromptText("架空の問い", target.label), FIRST)], ledger)[0],
+      ).toEqual({ kind: "aside", text: "架空の問い", images: [], target })
+    }
+  })
+
+  it("target の無い古い控えの補足メッセージは、指した所の行があっても target を戻さない", () => {
+    const ledger = inputLedgerOf([{ kind: "input", uuid: FIRST, input: "aside" }])
+
+    expect(
+      eventsOf([sent(asidePromptText("架空の問い", { component: "架空の表" }), FIRST)], ledger)[0],
+    ).toEqual({ kind: "aside", text: "架空の問い", images: [] })
+  })
+
   it("控えにあるターンの終わり方（中断・失敗）で閉じ、引けないターンは完了で閉じる", () => {
     const ledger = inputLedgerOf([
       { kind: "input", uuid: FIRST, input: "request" },

@@ -38,10 +38,11 @@ const SERVER_FEATURE_IMPORTS = {
 const SERVER_CHILD_IMPORTS = {
   "report/core": {
     rules: [],
-    review: ["rules"],
+    aside: [],
+    review: ["rules", "aside"],
     usage: ["rules", "image"],
     image: ["rules"],
-    prompt: [],
+    prompt: ["aside"],
     body: [],
   },
   "session-driver/core": {

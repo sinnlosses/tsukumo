@@ -10,6 +10,7 @@ import type { FigurePreference } from "../../../../shared/session/session-defaul
 import { MAX_SESSION_SUMMARY_LENGTH } from "../../../../shared/session/session-digest.ts"
 import type { SessionEvent } from "../../../../shared/session/session-event.ts"
 import { PART_CARD_TOOL_NAME } from "../../../core/tsukumo-tool-name.ts"
+import { INITIAL_ASIDE_TURN, nextAsideTurn } from "../aside/aside-turn.ts"
 
 /**
  * モデルに見せる `report` ツールの説明。記法の条はここに書かず、規約の節を1行で指す。
@@ -180,13 +181,19 @@ export function createReportGate(
   backgroundRunning: () => boolean,
 ): ReportGate {
   let unreported: readonly string[] = []
+  let asideTurn = INITIAL_ASIDE_TURN
 
   return {
     observe: (event) => {
       unreported = nextUnreported(unreported, event)
+      asideTurn = nextAsideTurn(asideTurn, event)
     },
     verdict: (stopHookActive) =>
-      stopHookActive || nothingNewRejected() || backgroundRunning() || !hasText(unreported)
+      stopHookActive ||
+      nothingNewRejected() ||
+      backgroundRunning() ||
+      asideTurn.aside ||
+      !hasText(unreported)
         ? { kind: "pass" }
         : { kind: "block", reason: REPORT_GATE_REASON },
   }

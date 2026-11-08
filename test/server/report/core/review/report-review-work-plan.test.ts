@@ -7,6 +7,7 @@ import type {
   WorkPlanClosing,
   WorkPlanStanding,
 } from "../../../../../src/shared/session/work-plan.ts"
+import { reportEvent } from "../../../../fixture/report-event.ts"
 import {
   createReportReview,
   FINISHED,
@@ -16,6 +17,7 @@ import {
   SESSION_INFO,
   VALID,
 } from "../../../../fixture/report-review.ts"
+import { checkedToolUseId } from "../../../../fixture/tool-use-id.ts"
 
 const MISSING_WORK_PLAN_CLOSING_TEXT = expect.stringContaining(
   REJECTION_PHRASE.missingWorkPlanClosing,
@@ -148,6 +150,70 @@ describe("createReportReview の judge（ワークプランの残った report�
       kind: "rejected",
       text: MISSING_WORK_PLAN_CLOSING_TEXT,
       reasons: ["missing-work-plan-closing"],
+    })
+  })
+
+  describe("作業のターンに補足メッセージが届いたとき", () => {
+    const request: SessionEvent = { kind: "request", text: "架空の依頼", images: [] }
+    const aside: SessionEvent = { kind: "aside", text: "架空の問い", images: [] }
+    const resumed: SessionEvent = { kind: "turn-resumed" }
+    const speech: SessionEvent = { kind: "speech", text: "架空の答え", expression: "default" }
+    const missingClosing = {
+      kind: "rejected",
+      text: MISSING_WORK_PLAN_CLOSING_TEXT,
+      reasons: ["missing-work-plan-closing"],
+    }
+
+    it("別のターンで答えるなら、作業のターンはフェーズの閉じ方を求め、続きのターンは求めない", () => {
+      const { review } = reviewWith({ kind: "planned", remaining: 2 })
+
+      ;[request, SESSION_INFO, aside].forEach((event) => review.pass(event))
+      expect(review.judge(VALID)).toEqual(missingClosing)
+
+      ;[FINISHED, resumed, SESSION_INFO, speech].forEach((event) => review.pass(event))
+      expect(review.judge({ ...VALID, conclusion: "架空の別の結論。" })).toEqual({
+        kind: "accepted",
+      })
+    })
+
+    it("作業のターンが report と締めのセリフで閉じたあとの続きのターンも、補足のターンとして読む", () => {
+      const { review } = reviewWith({ kind: "planned", remaining: 2 })
+      const toolUseId = checkedToolUseId("toolu_work")
+      const report = reportEvent({
+        toolUseId,
+        closing: { kind: "speech", text: "架空の締め", expression: "default" },
+      })
+      const reportResult: SessionEvent = {
+        kind: "tool-finished",
+        toolUseId,
+        content: "ok",
+        isError: false,
+      }
+
+      ;[
+        request,
+        SESSION_INFO,
+        aside,
+        report,
+        reportResult,
+        FINISHED,
+        resumed,
+        SESSION_INFO,
+      ].forEach((event) => review.pass(event))
+      review.raiseNews()
+      expect(review.judge({ ...VALID, conclusion: "架空の別の結論。" })).toEqual({
+        kind: "accepted",
+      })
+    })
+
+    it("取り込まれて答えたなら、作業のターンはフェーズの閉じ方を求め、続きのターンも補足にならない", () => {
+      const { review } = reviewWith({ kind: "planned", remaining: 2 })
+
+      ;[request, SESSION_INFO, aside, speech].forEach((event) => review.pass(event))
+      expect(review.judge(VALID)).toEqual(missingClosing)
+
+      ;[FINISHED, resumed, SESSION_INFO].forEach((event) => review.pass(event))
+      expect(review.judge({ ...VALID, conclusion: "架空の別の結論。" })).toEqual(missingClosing)
     })
   })
 })

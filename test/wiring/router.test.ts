@@ -65,6 +65,33 @@ describe("createSocketRouter（session）", () => {
     ])
   })
 
+  it("送り方 ask は、待ち・委譲中のどちらでも補足メッセージにし、雑談では依頼にする", async () => {
+    const { commands, stub, observe } = startRouter()
+    const target = {
+      label: { component: "架空の表" },
+      key: { reportToolUseId: "toolu_fictional", componentId: "c1" },
+    }
+    const ask = (text: string) =>
+      commands.session.prompt({ text, images: [], routing: "ask", target })
+
+    await ask("架空の待ちの問い")
+    observe({
+      kind: "background-tasks-changed",
+      tasks: [
+        { taskId: checkedTaskId("fictional-task"), kind: "agent", description: "架空の委譲" },
+      ],
+    })
+    await ask("架空の委譲中の問い")
+    observe({ kind: "chat-mode-changed", chat: true })
+    await ask("架空の雑談の問い")
+
+    expect(stub.calls).toEqual([
+      "prompt:aside:架空の待ちの問い",
+      "prompt:aside:架空の委譲中の問い",
+      "prompt:request:架空の雑談の問い",
+    ])
+  })
+
   it("終わった会話への依頼は、定型文の理由で受け付けず駆動へ積まない", async () => {
     const { commands, stub } = startRouter()
     stub.ended = true

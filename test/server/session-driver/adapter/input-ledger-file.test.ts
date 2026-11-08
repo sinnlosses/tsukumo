@@ -32,9 +32,9 @@ describe("入力の控えのファイル", () => {
     )
 
     const ledger = readInputLedger(SESSION, dir())
-    expect(ledger.inputKindOf(REQUEST)).toBe("aside")
+    expect(ledger.inputOf(REQUEST)?.kind).toBe("aside")
     expect(ledger.turnOf(REQUEST)).toEqual({ outcome: { kind: "interrupted" } })
-    expect(readInputLedger(OTHER_SESSION, dir()).inputKindOf(REQUEST)).toBeUndefined()
+    expect(readInputLedger(OTHER_SESSION, dir()).inputOf(REQUEST)).toBeUndefined()
   })
 
   it("更新時刻が14日を過ぎた控えだけを消し、控えの名前でないファイルには触らない", () => {

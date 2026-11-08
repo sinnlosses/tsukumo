@@ -14,6 +14,7 @@ import type { QuestionBrief } from "../session-driver/question-brief.ts"
 import type { Question, QuestionAnswer } from "../session-driver/question.ts"
 import type { TurnFailure } from "../session-driver/turn-failure.ts"
 import type { ClippedText } from "../utils/clip-text.ts"
+import type { ReplyTarget } from "./reply-target.ts"
 import type { SessionRemaining } from "./session-digest.ts"
 import type { ReportWaitingLine } from "./session-event-report.ts"
 import type { WorkPlan, WorkPlanClosing } from "./work-plan.ts"
@@ -106,6 +107,7 @@ export type SessionRecord =
       readonly kind: "aside"
       readonly text: string
       readonly images: readonly RecordedPromptImage[]
+      readonly target?: ReplyTarget
       readonly time: RecordTime
     }
   | { readonly kind: "detail"; readonly markdown: string }

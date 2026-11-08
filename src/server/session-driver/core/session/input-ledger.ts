@@ -6,6 +6,10 @@ import { isPlainObject } from "remeda"
 import { z } from "zod"
 
 import type { TurnOutcome } from "../../../../shared/session-driver/turn-failure.ts"
+import {
+  replyTargetKeySchema,
+  type ReplyTargetKey,
+} from "../../../../shared/session/reply-target.ts"
 import type { SessionId } from "../../../../shared/session/session-id.ts"
 
 /** 控えに残す入力の種類。 */
@@ -32,7 +36,13 @@ const turnOutcomeSchema = z.discriminatedUnion("kind", [
  * （ターンが受け取った入力の uuid と、ターンの最後のメインの `assistant` の uuid）。
  */
 export const inputLedgerLineSchema = z.discriminatedUnion("kind", [
-  z.object({ kind: z.literal("input"), uuid: z.guid(), input: z.enum(LEDGERED_INPUT_KINDS) }),
+  z.object({
+    kind: z.literal("input"),
+    uuid: z.guid(),
+    input: z.enum(LEDGERED_INPUT_KINDS),
+    // 指した所の鍵だけ。字（`label`）は控えに書かず、transcript の包みから読む。
+    target: replyTargetKeySchema.optional(),
+  }),
   z.object({
     kind: z.literal("turn-end"),
     uuids: z.array(z.guid()).min(1),
@@ -45,22 +55,39 @@ export type InputLedgerLine = Readonly<z.infer<typeof inputLedgerLineSchema>>
 /** 控えから引いたターン1つ。同じターンに結べる鍵は同じものを返す。 */
 export type LedgeredTurn = { readonly outcome: TurnOutcome }
 
+/** 控えから引いた入力1件。`target` は指した所の鍵（字は持たない）。 */
+export type LedgeredInput = {
+  readonly kind: LedgeredInputKind
+  readonly target?: ReplyTargetKey
+}
+
 /** 組み直しが引く控え。 */
 export type InputLedger = {
-  readonly inputKindOf: (uuid: string) => LedgeredInputKind | undefined
+  readonly inputOf: (uuid: string) => LedgeredInput | undefined
   readonly turnOf: (uuid: string) => LedgeredTurn | undefined
 }
 
 /** 控えの無いセッションの控え。何も引けない。 */
 export const EMPTY_INPUT_LEDGER: InputLedger = {
-  inputKindOf: () => undefined,
+  inputOf: () => undefined,
   turnOf: () => undefined,
 }
 
 /** 読んだ控えの行を、引ける形にする。同じ鍵が2度出たら後の行を採る。 */
 export function inputLedgerOf(lines: readonly InputLedgerLine[]): InputLedger {
-  const kinds: ReadonlyMap<string, LedgeredInputKind> = new Map(
-    lines.flatMap((line) => (line.kind === "input" ? [[line.uuid, line.input] as const] : [])),
+  const inputs: ReadonlyMap<string, LedgeredInput> = new Map(
+    lines.flatMap((line) =>
+      line.kind === "input"
+        ? [
+            [
+              line.uuid,
+              line.target === undefined
+                ? { kind: line.input }
+                : { kind: line.input, target: line.target },
+            ] as const,
+          ]
+        : [],
+    ),
   )
   const turns: ReadonlyMap<string, LedgeredTurn> = new Map(
     lines.flatMap((line) => {
@@ -72,7 +99,7 @@ export function inputLedgerOf(lines: readonly InputLedgerLine[]): InputLedger {
     }),
   )
   return {
-    inputKindOf: (uuid) => kinds.get(uuid),
+    inputOf: (uuid) => inputs.get(uuid),
     turnOf: (uuid) => turns.get(uuid),
   }
 }
@@ -90,7 +117,7 @@ export type InputLedgerEntry = {
  */
 export type InputLedgerIntake = {
   /** 送った入力1件の uuid と種類を預ける。 */
-  readonly noteSent: (uuid: string, kind: LedgeredInputKind) => void
+  readonly noteSent: (uuid: string, kind: LedgeredInputKind, target?: ReplyTargetKey) => void
   /** メインのメッセージを見せる（ターンの最後のメインの `assistant` の uuid を覚える）。 */
   readonly observe: (message: unknown) => void
   /** `result` と、それを畳んだ終わり方から控えの行を作る。ターンに結べる鍵が無ければ空。 */
@@ -99,12 +126,15 @@ export type InputLedgerIntake = {
 
 /** {@link InputLedgerIntake} を1つ作る。 */
 export function createInputLedgerIntake(): InputLedgerIntake {
-  let pending: ReadonlyMap<string, LedgeredInputKind> = new Map()
+  let pending: ReadonlyMap<
+    string,
+    { readonly kind: LedgeredInputKind; readonly target?: ReplyTargetKey }
+  > = new Map()
   let lastAssistant: string | undefined = undefined
 
   return {
-    noteSent: (uuid, kind) => {
-      pending = new Map([...pending, [uuid, kind]])
+    noteSent: (uuid, kind, target) => {
+      pending = new Map([...pending, [uuid, target === undefined ? { kind } : { kind, target }]])
     },
     observe: (message) => {
       if (
@@ -121,8 +151,17 @@ export function createInputLedgerIntake(): InputLedgerIntake {
       const keys = lastAssistant === undefined ? consumed : [...consumed, lastAssistant]
       lastAssistant = undefined
       const inputs = consumed.flatMap((uuid): readonly InputLedgerLine[] => {
-        const kind = pending.get(uuid)
-        return kind === undefined ? [] : [{ kind: "input", uuid, input: kind }]
+        const sent = pending.get(uuid)
+        return sent === undefined
+          ? []
+          : [
+              {
+                kind: "input",
+                uuid,
+                input: sent.kind,
+                ...(sent.target === undefined ? {} : { target: sent.target }),
+              },
+            ]
       })
       pending = new Map([...pending].filter(([uuid]) => !consumed.includes(uuid)))
       return keys.length === 0 ? [] : [...inputs, { kind: "turn-end", uuids: [...keys], outcome }]

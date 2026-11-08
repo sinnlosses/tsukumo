@@ -107,6 +107,43 @@ function blocks(
 }
 
 describe("createReportGate（Stop の関所）", () => {
+  it("補足メッセージのターンは、背景の仕事が無くても report の無い本文を通し、次の依頼で戻る", () => {
+    const aside: SessionEvent = { kind: "aside", text: "架空の問い", images: [] }
+    const request: SessionEvent = { kind: "request", text: "架空の依頼", images: [] }
+
+    expect(blocks([aside, INIT, LONG_BODY])).toBe(false)
+    expect(blocks([aside, INIT, LONG_BODY, FINISHED, INIT, LONG_BODY])).toBe(true)
+    expect(blocks([aside, request, INIT, LONG_BODY])).toBe(true)
+  })
+
+  it("作業のターンに届いた補足メッセージは、作業のターンの関所を外さず、続きのターンだけ通す", () => {
+    const request: SessionEvent = { kind: "request", text: "架空の依頼", images: [] }
+    const aside: SessionEvent = { kind: "aside", text: "架空の問い", images: [] }
+    const resumed: SessionEvent = { kind: "turn-resumed" }
+    const speech: SessionEvent = { kind: "speech", text: "架空の答え", expression: "default" }
+
+    expect(blocks([request, INIT, aside, LONG_BODY])).toBe(true)
+    expect(blocks([request, INIT, aside, LONG_BODY, FINISHED, resumed, INIT, LONG_BODY])).toBe(
+      false,
+    )
+    expect(
+      blocks([request, INIT, aside, speech, LONG_BODY, FINISHED, resumed, INIT, LONG_BODY]),
+    ).toBe(true)
+    expect(
+      blocks([
+        request,
+        INIT,
+        aside,
+        REPORT,
+        { kind: "speech", text: "架空の締め", expression: "default" },
+        FINISHED,
+        resumed,
+        INIT,
+        LONG_BODY,
+      ]),
+    ).toBe(false)
+  })
+
   it("背景の仕事が無ければ、report の無い本文は短い1行でも差し戻す", () => {
     expect(blocks([INIT, LONG_BODY])).toBe(true)
     expect(blocks([INIT, ONE_LINE])).toBe(true)

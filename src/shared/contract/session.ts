@@ -17,6 +17,7 @@ import {
   parsePromptImage,
   parsePromptImageThumbnail,
 } from "../session-driver/prompt-image.ts"
+import { replyTargetSchema } from "../session/reply-target.ts"
 import { EFFORT_LEVELS, MODEL_ALIASES, PERMISSION_MODES } from "../session/run-setting-value.ts"
 import { FIGURE_PREFERENCES, SESSION_DEFAULT_PERMISSION_MODES } from "../session/session-default.ts"
 import { sessionIdSchema } from "../session/session-id.ts"
@@ -51,18 +52,25 @@ const promptImageSchema = z.object({
     .refine((value) => parsePromptImageThumbnail(value) !== undefined),
 })
 
+/** 指した所つきで問いを送る送り方。作業は始めず、待ちのときにも補足メッセージになる。`target` が要る。 */
+const ASK_ROUTING = "ask"
+
+const promptBase = z.object({
+  text: z
+    .string()
+    .max(MAX_PROMPT_TEXT_LENGTH)
+    .refine((text) => text.trim() !== ""),
+  // 1枚も無いのが普通なので、field ごと省いた形も受け取って空に畳む（画像を知らない送り手から届いても弾かない）。
+  images: z.array(promptImageSchema).max(MAX_PROMPT_IMAGES).readonly().default([]),
+})
+
 export const sessionContract = {
   /** 依頼を送る。 */
   prompt: commandBase.input(
-    z.object({
-      text: z
-        .string()
-        .max(MAX_PROMPT_TEXT_LENGTH)
-        .refine((text) => text.trim() !== ""),
-      // 1枚も無いのが普通なので、field ごと省いた形も受け取って空に畳む（画像を知らない送り手から届いても弾かない）。
-      images: z.array(promptImageSchema).max(MAX_PROMPT_IMAGES).readonly().default([]),
-      routing: z.enum(PROMPT_ROUTINGS).default("new-request"),
-    }),
+    z.union([
+      promptBase.extend({ routing: z.enum(PROMPT_ROUTINGS).default("new-request") }),
+      promptBase.extend({ routing: z.literal(ASK_ROUTING), target: replyTargetSchema }),
+    ]),
   ),
   /** いまのターンを中断する。 */
   interrupt: commandBase,

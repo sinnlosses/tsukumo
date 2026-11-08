@@ -13,6 +13,7 @@ import type { QuestionBrief } from "../session-driver/question-brief.ts"
 import type { Question, QuestionAnswer } from "../session-driver/question.ts"
 import type { UsageReviewEvent } from "../usage/usage-review.ts"
 import type { CommandDescription } from "./command-description.ts"
+import type { ReplyTarget } from "./reply-target.ts"
 import type { DelegateEvent } from "./session-event-delegate.ts"
 import type { ReportEvent } from "./session-event-report.ts"
 import type { SettingEvent } from "./session-event-setting.ts"
@@ -86,6 +87,7 @@ export type SessionEvent =
       readonly kind: "aside"
       readonly text: string
       readonly images: readonly RecordedPromptImage[]
+      readonly target?: ReplyTarget
     }
   /**
    * 記録を持たないターンの始まり（キャラクターから話しかけてもらう）。

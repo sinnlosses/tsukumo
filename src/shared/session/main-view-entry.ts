@@ -105,7 +105,13 @@ function toMainViewEntries(record: SessionRecord, context: TurnContext): readonl
     return []
   }
   if (record.kind === "aside") {
-    return [{ kind: "aside", text: record.text }]
+    return [
+      {
+        kind: "aside",
+        text: record.text,
+        ...(record.target === undefined ? {} : { target: record.target }),
+      },
+    ]
   }
   if (record.kind === "work-plan") {
     const shift = phaseShiftOf(latestWorkPlanOf(context), record)

@@ -223,7 +223,10 @@ describe("toRestoredEvents", () => {
     const messages = [
       userMessage("架空の依頼"),
       speak("t-1", "任せてくるね"),
-      userMessage(asidePromptText("架空の問い")),
+      // 説明が「委譲中」に限っていた頃の包みも読める。
+      userMessage(
+        "<tsukumo-aside>\ntsukumo の差し込み。委譲中に利用者が送った補足メッセージ。`speak` を 1 回で答え、`report` は呼ばない\n架空の問い\n</tsukumo-aside>",
+      ),
       speak("t-2", "架空の答え"),
       withFields(
         userMessage("<task-notification>\n<task-id>架空のID</task-id>\n</task-notification>"),

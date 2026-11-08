@@ -9,9 +9,10 @@ import { isPlainObject } from "remeda"
 import type { Expression } from "../../../../shared/character-pack/expression.ts"
 import { parsePromptImage } from "../../../../shared/session-driver/prompt-image.ts"
 import type { TurnOutcome } from "../../../../shared/session-driver/turn-failure.ts"
+import type { ReplyTarget, ReplyTargetKey } from "../../../../shared/session/reply-target.ts"
 import type { RestoredEvent, SessionEvent } from "../../../../shared/session/session-event.ts"
 import { nonBlankString } from "../../../../shared/utils/non-blank-string.ts"
-import { asideTextOf } from "../aside-prompt.ts"
+import { asideReadingOf } from "../aside-prompt.ts"
 import { createCallReview } from "../call-review.ts"
 import { toSessionEvents } from "../message/sdk-message.ts"
 import { isProgressNudgePrompt } from "../progress-nudge.ts"
@@ -29,7 +30,7 @@ const UNLEDGERED_TURN_OUTCOME: TurnOutcome = { kind: "completed" }
  *
  * - 委譲先の返却（`origin.handback` が真の `user` メッセージ）: 依頼にもイベントにもしない（`phase_result` で進んだ帯は戻さない）
  * - 利用者の依頼（`request`）と脇の話（`aside`）: 欄で利用者の入力と分かる `user` のテキストブロックから起こす（{@link requestText}）。
- *   依頼・脇の話・進みの差し込みのどれかは、メッセージの `uuid` で控えを引いて決め、控えに無ければ包み（`asideTextOf`・`isProgressNudgePrompt`）で見分ける。
+ *   依頼・脇の話・進みの差し込みのどれかは、メッセージの `uuid` で控えを引いて決め、控えに無ければ包み（`asideReadingOf`・`isProgressNudgePrompt`）で見分ける。
  *   添えてあった画像の原寸は `promptImages` に載せる（{@link restoredPromptImages}）
  * - 続きのターンの始まり（`turn-resumed`）: バックグラウンドタスクの知らせの `user` メッセージと、進みの差し込みから起こす。差し込みは依頼にしない
  * - ターンの境目（`turn-finished`）: `result` が残らないので、次の依頼・脇の話・続きのターンの手前と並びの末尾で区切る（{@link boundedTurns}）。時刻は直前の出来事のものを引き継ぐ
@@ -81,15 +82,44 @@ export function restoredMessageEvents(
   }
   // 添えてあった画像は `images` に載せない（棚の id がまだ無い）。原寸は `RestoredEvent.promptImages` で別に運ぶ。
   const uuid = messageUuid(message)
-  const ledgered = uuid === undefined ? undefined : ledger.inputKindOf(uuid)
-  switch (ledgered ?? kindByWrapping(text)) {
+  const ledgered = uuid === undefined ? undefined : ledger.inputOf(uuid)
+  switch (ledgered?.kind ?? kindByWrapping(text)) {
     case "progress-nudge":
       return [{ kind: "turn-resumed" }]
-    case "aside":
-      return [{ kind: "aside", text: asideTextOf(text) ?? text, images: [] }]
+    case "aside": {
+      const reading = asideReadingOf(text)
+      const key = ledgered?.target
+      return [
+        {
+          kind: "aside",
+          text: reading?.text ?? text,
+          images: [],
+          ...(reading?.targetParts === undefined || key === undefined
+            ? {}
+            : { target: restoredTarget(reading.targetParts, key) }),
+        },
+      ]
+    }
     case "request":
       return [{ kind: "request", text, images: [] }]
   }
+}
+
+/**
+ * 指した所を、字（包みの行）と鍵（控え）から戻す。鍵が無ければ戻さない。
+ * 字が2つのときは、行を指していれば（鍵に `rowIndex` があれば）部品と行、なければ節と部品。
+ */
+function restoredTarget(parts: readonly string[], key: ReplyTargetKey): ReplyTarget {
+  const [first = "", second, third] = parts
+  if (third !== undefined && second !== undefined) {
+    return { label: { section: first, component: second, row: third }, key }
+  }
+  if (second !== undefined) {
+    return key.rowIndex === undefined
+      ? { label: { section: first, component: second }, key }
+      : { label: { component: first, row: second }, key }
+  }
+  return { label: { component: first }, key }
 }
 
 /** 組み直しの途中の出来事1件。`turn` は元のメッセージの uuid で控えから引いたターン。 */
@@ -141,7 +171,7 @@ function kindByWrapping(text: string): LedgeredInputKind {
   if (isProgressNudgePrompt(text)) {
     return "progress-nudge"
   }
-  return asideTextOf(text) === undefined ? "request" : "aside"
+  return asideReadingOf(text) === undefined ? "request" : "aside"
 }
 
 function messageUuid(message: unknown): string | undefined {

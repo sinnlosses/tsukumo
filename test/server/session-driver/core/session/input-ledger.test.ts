@@ -89,8 +89,8 @@ describe("inputLedgerOf", () => {
       { kind: "turn-end", uuids: [REQUEST, ASSISTANT], outcome: { kind: "interrupted" } },
     ])
 
-    expect(ledger.inputKindOf(REQUEST)).toBe("request")
-    expect(ledger.inputKindOf(ASIDE)).toBeUndefined()
+    expect(ledger.inputOf(REQUEST)?.kind).toBe("request")
+    expect(ledger.inputOf(ASIDE)).toBeUndefined()
     expect(ledger.turnOf(REQUEST)).toEqual({ outcome: { kind: "interrupted" } })
     expect(ledger.turnOf(REQUEST)).toBe(ledger.turnOf(ASSISTANT))
     expect(EMPTY_INPUT_LEDGER.turnOf(REQUEST)).toBeUndefined()
