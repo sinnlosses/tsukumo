@@ -14,6 +14,7 @@
   - `task.txt`: `tw show` の出力から `## 結果`・`## 介入` を除いた本文の写し。Beads の課題の本文だけで、会話の実物は入れない。拡張子を `.md` にしないのは、凍結した写しを整形とタスク番号の検査（`src/`・`test/`・`scripts/`・`docs/` の `.md` を読む）に当てないため
   - `replay.json`: `base`（着手前の木。送り出したコミットの親）・`after`（送り出したコミット）・`checkFiles`（`after` から取り出して `base` の木へ置くテスト）・`command`（判定コマンド。`checkFiles` を `vitest run` する配列）・`difficulty`・`kind`
 - **判定コマンドの確かめ**: `base` の木へ `checkFiles` を `after` から置いて `command` を打つと落ち、`after` の木で打つと通る。10件すべてでこれを確かめて凍結した（落ちるテストは1〜4件。実装のファイルを新しく足す件は、テストの import が解けずファイルごと落ちる）
+- **一時の木の決まり**: 一時の木へ共有の `node_modules` を張らない。張った木で `pnpm` を打つと古い base のロックファイルで install が走り、`node_modules/playwright-core` が古い版に差し替わって本体の `tsc --noEmit` が落ちる。張るなら `pnpm` を打たず `node node_modules/vitest/vitest.mjs run <checkFiles>` のように実行ファイルを直に呼ぶ。止まったら本体で `pnpm install --frozen-lockfile --force` で戻す
 - **着手時のコミット**: 台帳の `claim` の記録はコミットを持たないので、送り出したコミットの親（`git log --first-parent`）で代える。着手から送り出しの間に main が進んだ件でも、親は main の直前の状態なので判定コマンドの結果は変わらない
 - **会話の実物を入れない**: SDK のイベント・transcript・画面の会話の抜粋は1件も入れない（`docs/coding-standards.md`「会話内容の扱い」）。入れるのは課題の本文とテストのファイルだけ
 
