@@ -4,6 +4,7 @@ import { isPlainObject } from "remeda"
 import { z } from "zod"
 
 import { foldInlineMarks } from "./inline-mark.ts"
+import { partCardNote } from "./part-card-note.ts"
 import { nonEmpty } from "./report-block-field.ts"
 
 /** 作業の終わり方。`finished` は作業を終えた、`stopped` は止めた、`awaiting-answer` は利用者の答え待ち。 */
@@ -25,16 +26,16 @@ export const REPORT_GENRES = [
 export type ReportGenre = (typeof REPORT_GENRES)[number]
 
 export const reportTaskSchema = z.object({
-  id: nonEmpty(z.string().trim()).describe("タスクID（タスクの一覧に出る ID そのまま）"),
-  name: nonEmpty(z.string().trim()).describe(
-    "作業の名前だけを1行で（見出しに描く）。したこと・結果・これから変わることを混ぜない",
+  id: partCardNote(nonEmpty(z.string().trim()), "タスクID（タスクの一覧に出る ID そのまま）"),
+  name: partCardNote(
+    nonEmpty(z.string().trim()).describe("作業の名前だけを1行で"),
+    "見出しに描く。したこと・結果・これから変わることを混ぜない",
   ),
-  outcome: z
-    .enum(REPORT_TASK_OUTCOMES)
-    .describe(
-      "finished（作業を終えた）/ stopped（止めた）/ awaiting-answer（利用者の答え待ち）。checks に ng の行がある間は finished にしない",
-    ),
-  genre: z.enum(REPORT_GENRES).optional().describe("報告の種類"),
+  outcome: partCardNote(
+    z.enum(REPORT_TASK_OUTCOMES).describe("checks に ng の行がある間は finished にしない"),
+    "finished（作業を終えた）/ stopped（止めた）/ awaiting-answer（利用者の答え待ち）",
+  ),
+  genre: partCardNote(z.enum(REPORT_GENRES).optional(), "報告の種類"),
 })
 
 /** レポートが載せるタスク。タスクに紐付かないレポートと、`task` を持たなかったころの記録は `none`。 */

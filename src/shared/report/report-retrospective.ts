@@ -4,13 +4,15 @@
 import { isPlainObject } from "remeda"
 import { z } from "zod"
 
+import { partCardNote } from "./part-card-note.ts"
 import { nonEmpty, omittable } from "./report-block-field.ts"
 import { namedWriterBlockSchema, parseLeafComponents, type LeafComponent } from "./report-block.ts"
 
 export const reportRetrospectiveSchema = z.object({
-  summary: nonEmpty(z.string().trim()).describe("結果を1〜2文で"),
-  drafts: omittable(z.array(nonEmpty(z.string().trim())), []).describe("積んだドラフトのID"),
-  blocks: omittable(z.array(namedWriterBlockSchema), []).describe(
+  summary: partCardNote(nonEmpty(z.string().trim()), "結果を1〜2文で"),
+  drafts: partCardNote(omittable(z.array(nonEmpty(z.string().trim())), []), "積んだドラフトのID"),
+  blocks: partCardNote(
+    omittable(z.array(namedWriterBlockSchema), []),
     "結果の根拠に図・表・コードが要るときだけ。sections の blocks と同じ部品",
   ),
 })

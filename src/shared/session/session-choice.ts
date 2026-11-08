@@ -14,7 +14,7 @@ export const MAX_SESSION_CHOICES = 10
 
 /**
  * tsukumo が題を付けるとき（`decideSessionTitle`）に切り詰める文字数。
- * モデルに指示する長さ（`REPORT_TITLE_DESCRIPTION`）も同じ値を指す。
+ * モデルに指示する長さ（`REPORT_FIELD_DESCRIPTIONS` の `title`）も同じ値を指す。
  */
 export const MAX_SESSION_HEADING_LENGTH = 24
 

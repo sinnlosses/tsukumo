@@ -9,77 +9,105 @@ import { MAX_SESSION_HEADING_LENGTH } from "../../../../shared/session/session-c
 import type { FigurePreference } from "../../../../shared/session/session-default.ts"
 import { MAX_SESSION_SUMMARY_LENGTH } from "../../../../shared/session/session-digest.ts"
 import type { SessionEvent } from "../../../../shared/session/session-event.ts"
-import { REPORT_CALL_EXAMPLES_TEXT } from "./call-example.ts"
-
-/** 触れるレポート（つまみと式）の書き方。ツールの説明に載せる分量はここで抑える。 */
-const REPORT_PARAMETER_GUIDE =
-  "触れるレポート: 読み手が前提の値を振って結果の変わり方を比べたい問い（どの値がよいか・しきい値で何が変わるか・条件を足すとどうなるか）のときだけ、" +
-  "ParameterSlider（name・label・min・max・step・initial）か ParameterCheckBox（name・label・initial）を置く。つまみは4個まで。結論の文は初期値のまま読めるように書く。\n" +
-  '値はリテラル、{call:"expr",args:{source:式}}、{call:"format",args:{template:"…${式}…"}} のどれか。式を結べるのは Paragraph.text・Stats の value/before/target・Chart の title/labels/values/emphasis だけ。\n' +
-  '式: つまみの name と Report.defs（名前→式の文字列）の名前、数・"文字"・true/false・[1,2]、+ - * / %、比較、&& || !、条件 ? A : B（並びとの演算は要素ごと）。' +
-  "関数: range(a,b) min max round(x,d) fixed(x,d) sum len minOf maxOf argmin argmax at(list,i) text(list,suffix)。\n" +
-  "数を文字にすると整数はそのまま、それ以外は小数1桁。桁を変えるなら fixed(x, 桁)。" +
-  "文を条件で切り替えるときは defs の式に文字を返させ、${…} の中は名前か短い式だけにする。" +
-  "差の向きは引き算で書かず、Stats の before と value を結んで better で言う。\n"
+import { PART_CARD_TOOL_NAME } from "../../../core/tsukumo-tool-name.ts"
 
 /**
  * モデルに見せる `report` ツールの説明。記法の条はここに書かず、規約の節を1行で指す。
  * MCP ツールの説明文は既定で 2048 字までしか渡らず、規約の全文は入らない。
  */
 export const REPORT_TOOL_DESCRIPTION =
-  "ターンのレポートをメインビューに出す。task（タスク見出し行と見出し）→ conclusion → keyFigures（数のカード）→ checks（検証結果の表）→ figure → sections → retrospective → favor の順に描かれ、" +
+  "ターンのレポートをメインビューに出す。task → conclusion → keyFigures → checks → figure → sections → retrospective → favor の順に描き、" +
   "そのあと closing のセリフが吹き出しに出る。" +
-  "差し戻されたあとの呼び出しで省いた Report の欄は、同じターンで直前に差し戻した呼び出しの値を引き継ぐ。" +
+  "差し戻しのあとで省いた Report の欄は、同じターンの直前の呼び出しの値を引き継ぐ。" +
   "書き方は「レポートの記法（tsukumo）」の節に従う。" +
   "本文は日本語で書く（識別子・パス・コマンド・コードは英語のままでよい）。\n" +
-  REPORT_PARAMETER_GUIDE +
-  REPORT_CALL_EXAMPLES_TEXT
+  `部品（Report・Section を含む）の欄の細かい書き方と例は ${PART_CARD_TOOL_NAME} のカードにだけ載る。` +
+  "このセッションで初めて使う部品は、置く前に部品の名前を渡してカードを引く。"
 
 /**
- * `report` の任意の `checks` 引数の説明。
+ * `report` の定義に載せる `Report` の欄の説明。毎ターン文脈に入るので、書き損じると差し戻しが増える条だけを短く持つ。
+ * 細かい書き方は {@link REPORT_FIELD_CARD_NOTES} に置き、`Report` の部品カードにだけ載せる。
  * 結果を `conclusion` と `sections` に書かない条は `REPORT_NOTATION_PROMPT` の「結論は `conclusion` に1〜2文で書く」が持つ。
+ * `report` はターンを閉じるので、締めの一言はあとから `speak` で言えず、`closing` で受け取る。
  */
-export const REPORT_CHECKS_DESCRIPTION =
-  "検証の結果。結論の下に総括行と、落ちた・確かめていない項目の行で描かれ、通った項目は畳む。" +
-  "検証をしていないターンでは省く。結果の数は figure に、打ったコマンドは command に分ける。" +
-  "label・figure・detail・howToVerify は素の文字で描かれるので、記法を使わない。"
+export const REPORT_FIELD_DESCRIPTIONS = {
+  task: "タスクの作業のときだけ渡す。渡したら conclusion に作業の名前・タスクID・変更の量を書かない",
+  retrospective: "振り返りの結果。sections に混ぜない",
+  favor: "利用者が取る行動が残るときだけ1つ。取る手段まで書く",
+  checks: "検証の結果。検証していないターンでは省く。文字に記法を使わない",
+  title: `セッション一覧の題（${String(MAX_SESSION_HEADING_LENGTH)}字以内）。話題が変わったときだけ`,
+  sessionSummary: `セッション全体の要約。変えたいときだけ（${String(MAX_SESSION_SUMMARY_LENGTH)}字以内）`,
+  sessionRemaining: "残っている作業を1〜2文で。無ければ空文字",
+  closing: "締めのセリフ（1〜2文）。レポートの中身を言い直さない",
+  waitingLine: "待ちの一言（1〜2文）。言いたいときだけ",
+} as const
 
 /**
- * `report` の任意の `retrospective` 引数の説明。
- * どのワークフローのフェーズかは見ず、欄があるときだけ描く。欠けても差し戻さない。
+ * `Report` の欄の細かい書き方。`Report` の部品カードにだけ、{@link REPORT_FIELD_DESCRIPTIONS} のあとに載る。
+ * 報告の種類ごとの既定の節の並び（`task`）と、利用者へのお願いの書き方（`favor`）はここだけが持つ。
+ * `retrospective` はどのワークフローのフェーズかは見ず、欄があるときだけ描く。
+ * `waitingLine` を出す時刻と回数は tsukumo が決める（`waitingLineDueAt`）ので、ここでは何を言うかだけを言う。
+ * `title` で利用者の `/rename` を上書きしない判断はモデルに任せず、`decideSessionTitle` が持つ。
+ * `sessionSummary` の値は transcript の `report` の入力に残り、切り替え画面はそれを読み戻す（tsukumo は別の場所へ書き出さない）。
  */
-export const REPORT_RETROSPECTIVE_DESCRIPTION =
-  "振り返りのフェーズがあったときだけ、その結果を渡す（sections に混ぜない。見出し「振り返り」のセクションとして最後に描く）。"
-
-/**
- * `report` の任意の `task` 引数の説明。`conclusion` との書き分けと、報告の種類ごとの既定の節の並びはここだけが持つ。
- */
-export const REPORT_TASK_DESCRIPTION =
-  "タスクの作業のレポートのときだけ渡す（タスクID・作業の名前・終わり方・種類）。結論の上にタスク見出し行と作業の名前の見出しが描かれる。" +
-  "渡したら conclusion に作業の名前やタスクID、変更の量（tsukumo が git から数える）を書かない。" +
-  "genre を入れると、sections のセクションをその種類の既定の並びで書く（セクションの数は縛らない）。" +
-  "work: 変化 → 証拠 → 変更の要所 → 限界と変えていないもの → お願い。" +
-  "decision: 決めたこと → 理由と採らなかった案（options）→ 結果 → 未決。" +
-  "research: 分かったこと → 根拠（出典か path:line）→ 何を意味するか → 確かめていないこと（claims）→ 次。" +
-  "status は research、diagnosis・timeline・structure・screen は work の並び。" +
-  "stopped は種類によらず: どこで止まったか → 原因 → 残したものと戻したもの → 再開に要るもの（favor）。" +
-  "genre を省くと並びは縛らない。タスクに紐付かないターンでは task を省く。"
-
-/** `report` の任意の `workPlanClosing` 引数（フェーズの閉じ方）の説明。 */
-export const REPORT_WORK_PLAN_CLOSING_DESCRIPTION =
-  "フェーズの閉じ方。同じ依頼で work_plan を渡したときは必ず入れる。" +
-  "finished（全部終えた。最後のフェーズにいるときに渡すと tsukumo がプログレスバーを全部済みにする）/ " +
-  "stopped（途中で止めた。プログレスバーは今のフェーズのまま残る）。ワークプランの無い依頼では省く。"
+export const REPORT_FIELD_CARD_NOTES = {
+  task:
+    "タスクID・作業の名前・終わり方・種類を渡すと、結論の上にタスク見出し行と作業の名前の見出しが描かれる（変更の量は tsukumo が git から数える）。" +
+    "genre を入れると、sections のセクションをその種類の既定の並びで書く（セクションの数は縛らない）。" +
+    "work: 変化 → 証拠 → 変更の要所 → 限界と変えていないもの → お願い。" +
+    "decision: 決めたこと → 理由と採らなかった案（options）→ 結果 → 未決。" +
+    "research: 分かったこと → 根拠（出典か path:line）→ 何を意味するか → 確かめていないこと（claims）→ 次。" +
+    "status は research、diagnosis・timeline・structure・screen は work の並び。" +
+    "stopped は種類によらず: どこで止まったか → 原因 → 残したものと戻したもの → 再開に要るもの（favor）。" +
+    "genre を省くと並びは縛らない。タスクに紐付かないターンでは task を省く。",
+  workPlanClosing:
+    "フェーズの閉じ方。同じ依頼で work_plan を渡したときは必ず入れる。" +
+    "finished（全部終えた。最後のフェーズにいるときに渡すと tsukumo がプログレスバーを全部済みにする）/ " +
+    "stopped（途中で止めた。プログレスバーは今のフェーズのまま残る）。ワークプランの無い依頼では省く。",
+  keyFigures:
+    "結論に効く数（件数・割合・前後の差）を3〜4個、結論の直下にカードで並べる。3つに満たなければ省いて結論の文に入れる。" +
+    "項目の形と欄の書き方は Stats の items と同じ（Stats のカードに載る）。目標があれば target と better、差は targetGap。",
+  figure:
+    "checks の下・sections の上に「図 1」として描かれ、sections の図の番号はそのあとに続く。" +
+    "作業のレポートの最小の形は、ここに図1つと、sections に表か箇条書き。",
+  retrospective:
+    "振り返りのフェーズがあったときだけ渡す。見出し「振り返り」のセクションとして最後に描く。",
+  favor:
+    "行動は作業を終えた・止めたあとに残る、書き手が代わりにできないことに限る（2件あってもまとめる）。報告・感想・提案は書かず、行動が無ければ省く。" +
+    "打つコマンドはそのコマンドを inline code で、開く場所・押す操作は場所と名前を書く。" +
+    "順番があるときは「1. …　2. …」と番号を振って順に並べる。",
+  checks:
+    "結論の下に総括行と、落ちた・確かめていない項目の行で描かれ、通った項目は畳む。" +
+    "結果の数は figure に、打ったコマンドは command に分ける。" +
+    "label・figure・detail・howToVerify は素の文字で描かれる。",
+  title:
+    "セッションの中心の話題が変わったときだけ新しい題を渡し、変わっていなければ省く。" +
+    "/clear のあとの新しいセッションには前の題が残っていることがあるので、要約の中心と違うなら付け直す。",
+  sessionSummary:
+    "このセッションでここまでにしたことの要約で、セッションの切り替え画面に出る（レポートには描かれない）。" +
+    "変えたいときだけ、前の要約を踏まえて全体を書く。一度も書かないうちは、省くと直近5ターンの結論の1文目の箇条が要約になる。" +
+    "書くなら中立の文体の日本語で2〜3段落、段落は空行で区切る。残っていることは要約に書かず sessionRemaining に書く。",
+  sessionRemaining:
+    "次のセッションで続ける作業を書く。書き出しに「残り：」は付けない。" +
+    "始め方の一覧の「前回の続き」のカードの題と、次のセッションへ送る依頼の文になる。",
+  closing: "speak と同じ text と expression。レポートを描いたあとに吹き出しに出る。",
+  waitingLine:
+    "speak と同じ text と expression。利用者が次の依頼を送らないまましばらく経ったら、吹き出しに1回だけ出る。" +
+    "次の依頼を待っていることを言う一言にし、closing とレポートの中身を言い直さない。" +
+    "省くと書かせた待ちの行、それも無ければ tsukumo の既定の1文が出る。",
+} as const satisfies Record<
+  keyof typeof REPORT_FIELD_DESCRIPTIONS | "figure" | "workPlanClosing" | "keyFigures",
+  string
+>
 
 /**
  * `report` の `figure` 引数（レポートの図1つか、置かない理由）の説明。
- * 図を置く条件と作業のレポートの最小形はここだけが持つ。図の部品ごとの使いどころは各部品の `describe` が持つ。
+ * 図を置く条件はここだけが持つ。描かれる位置と作業のレポートの最小形は {@link REPORT_FIELD_CARD_NOTES} が持つ。
+ * 図の部品ごとの使いどころは部品カード（`partCardOf`）が持つ。
  */
 export function reportFigureDescription(preference: FigurePreference): string {
-  const head =
-    "レポートの図1つ。checks の下・sections の上に「図 1」として描かれ、sections の図の番号はそのあとに続く。"
-  const parts =
-    "図の部品（image / mermaid / graph / svg / timeline / compare / chart / stats / plot）"
+  const head = "図1つ（図の部品の ID）。"
+  const parts = "図の部品（image・mermaid・graph・svg・timeline・compare・chart・stats・plot）"
   const conditions =
     "名前が3つ以上出てきてつながる・流れや分岐がある・構造の前後がある・数が3つ以上ある"
   if (preference === "text") {
@@ -88,83 +116,25 @@ export function reportFigureDescription(preference: FigurePreference): string {
       `あるセクションには${parts}を置いてよい。`
     )
   }
-  return (
-    `${head}次のどれかがあれば${parts}を置く: ${conditions}。` +
-    "作業のレポートの最小の形は、ここに図1つと、sections に表か箇条書き。" +
-    "どれにも当たらないときは figure を省く（省くと何も描かれない）。"
-  )
+  return `${head}次のどれかがあれば${parts}を置く: ${conditions}。無ければ省く。`
 }
 
-/** `report` の任意の `favor` 引数（利用者へのお願い）の説明。出す条件と書き方はここだけが持つ。 */
-export const REPORT_FAVOR_DESCRIPTION =
-  "作業を終えた・止めたあとに、利用者が取る行動が残るときだけ1つ（2件あってもまとめる）。報告・感想・提案は書かず、行動が無ければ省く。" +
-  "行動は書き手が代わりにできないことで、取る手段まで書く（打つコマンドはそのコマンドを inline code で、開く場所・押す操作は場所と名前を）。" +
-  "順番があるときは「1. …　2. …」と番号を振って順に並べる。"
-
-/** `report` の任意の `keyFigures` 引数（結論の直下に並べる数）の説明。使いどころの条はここだけが持つ。 */
-export const REPORT_KEY_FIGURES_DESCRIPTION =
-  "結論に効く数を3〜4個（件数・割合・前後の差）。結論の直下にカードで並ぶ。" +
-  "3つに満たなければ省いて結論の文に入れる。項目の形は stats の items と同じ。" +
-  "目標があれば target と better、差は targetGap。"
-
 /**
- * `report` の任意の `sections` 引数（本文。セクションと部品の並び）の説明。
- * 部品の種類ごとの使いどころは各部品の `describe`（`leafComponentSchema`）が持つので、ここに書かない。
+ * `report` の `Section` の部品の説明。
+ * 部品の種類ごとの使いどころは部品カード（`partCardOf`）が持つので、ここに書かない。
  */
 export const REPORT_SECTIONS_DESCRIPTION =
-  "結論のあとの根拠・比較・手順。セクションの並びで、セクションごとに部品を並べる。" +
-  "部品の文字で効くのはインラインの記法（inline code・太字・リンク）だけ。" +
+  "結論のあとの根拠・比較・手順。部品の文字で効くのはインラインの記法だけ"
+
+/** `Section` の部品カードにだけ載せる、部品の fold・aside の書き方。 */
+export const REPORT_SECTIONS_CARD_NOTE =
   "部品の fold に見出しを書くと畳んで描く（畳んでも結論が通る部品だけ）。" +
   "部品の aside に出典・どこを見るかを1行で書くと、本文の流れの外（本文の右の余白）に置く。"
 
 /** `a2ui` の版の `components` 引数（A2UI のカタログの部品の平らな一覧）の説明。 */
 export const REPORT_A2UI_COMPONENTS_DESCRIPTION =
-  "レポートを A2UI の部品の平らな一覧で書く。根は id が root の Report で、結論ほかの欄は Report の props に書き、Report.children に Section の ID を並べる。" +
-  "Section.children は内容部品か配置の部品（Row・Column・Card・Tabs・ChoicePicker・Divider）の ID、図は Report.figure に図の部品の ID を置く。呼び直すときも一覧を全部渡す。"
-
-/**
- * `report` の `closing` 引数（締めのセリフ）の説明。
- * `report` はターンを閉じるので、締めの一言はあとから `speak` で言えず、ここで受け取る。
- * 何を言うかは `REPORT_NOTATION_PROMPT` が持つ。
- */
-export const REPORT_CLOSING_DESCRIPTION =
-  "締めのセリフ（speak と同じ text と expression）。レポートを描いたあとに吹き出しに出る。" +
-  "レポートの中身を言い直さない。"
-
-/**
- * `report` の `waitingLine` 引数（待ちの一言）の説明。
- * 出す時刻と回数は tsukumo が決める（`waitingLineDueAt`）ので、ここでは何を言うかだけを言う。
- */
-export const REPORT_WAITING_LINE_DESCRIPTION =
-  "待ちの一言（speak と同じ text と expression）。利用者が次の依頼を送らないまましばらく経ったら、吹き出しに1回だけ出る。" +
-  "次の依頼を待っていることを言う一言にし、closing とレポートの中身を言い直さない。" +
-  "言いたい一言があるときだけ書く。省くと書かせた待ちの行、それも無ければ tsukumo の既定の1文が出る。"
-
-/**
- * `report` の任意の `title` 引数の説明。セッション一覧の見出しにする題を付けさせる条はここだけ。
- * 利用者の `/rename` を上書きしない判断はモデルに任せず、`decideSessionTitle` が持つ。
- */
-export const REPORT_TITLE_DESCRIPTION =
-  `セッション一覧の見出しにする短い題（${String(MAX_SESSION_HEADING_LENGTH)}字以内）。` +
-  "セッションの中心の話題が変わったときだけ新しい題を渡し、変わっていなければ省く。" +
-  "/clear のあとの新しいセッションには前の題が残っていることがあるので、要約の中心と違うなら付け直す。"
-
-/**
- * `report` の `sessionSummary` 引数の説明。
- * 切り替え画面に出すセッション全体の要約の書き方はここだけが持つ。
- * 書いた値は transcript の `report` の入力に残り、切り替え画面はそれを読み戻す（tsukumo は別の場所へ書き出さない）。
- */
-export const REPORT_SESSION_SUMMARY_DESCRIPTION =
-  "このセッションでここまでにしたことの要約（セッションの切り替え画面に出る。レポートには描かれない）。" +
-  "変えたいときだけ、前の要約を踏まえて全体を書く。一度も書かないうちは、省くと直近5ターンの結論の1文目の箇条が要約になる。" +
-  `書くなら中立の文体の日本語で2〜3段落・${String(MAX_SESSION_SUMMARY_LENGTH)}字以内、段落は空行で区切る。` +
-  "残っていることは要約に書かず sessionRemaining に書く。"
-
-/** `report` の `sessionRemaining` 引数の説明。 */
-export const REPORT_SESSION_REMAINING_DESCRIPTION =
-  "このセッションで残っていること（次のセッションで続ける作業）を1〜2文で。書き出しに「残り：」は付けない。" +
-  "始め方の一覧の「前回の続き」のカードの題と、次のセッションへ送る依頼の文になる。" +
-  "残っていることが無ければ空の文字列にする。"
+  "レポートを A2UI の部品の平らな一覧で書く。根は id が root の Report で、結論ほかの欄は Report の props に書き、children に Section の ID を並べる。" +
+  "Section.children は内容部品か配置の部品の ID。呼び直すときも一覧を全部渡す。"
 
 /**
  * `Stop` の関所が差し戻すときにモデルへ返す理由。

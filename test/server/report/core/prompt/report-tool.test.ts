@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
 
+import { PART_CARD_TOOL_NAME } from "../../../../../src/server/core/tsukumo-tool-name.ts"
 import {
   createReportGate,
   reportFigureDescription,
@@ -17,6 +18,12 @@ describe("REPORT_TOOL_DESCRIPTION", () => {
   it("MCP ツールの説明文の既定の上限（2048字）に収まり、記法は規約の節を指すだけ", () => {
     expect(REPORT_TOOL_DESCRIPTION.length).toBeLessThan(2048)
     expect(REPORT_TOOL_DESCRIPTION).toContain("「レポートの記法（tsukumo）」の節")
+  })
+
+  it("部品の欄ごとの書き方と式の書き方は載せず、部品カードを引くよう指す", () => {
+    expect(REPORT_TOOL_DESCRIPTION).toContain(PART_CARD_TOOL_NAME)
+    expect(REPORT_TOOL_DESCRIPTION).not.toContain("触れるレポート:")
+    expect(REPORT_TOOL_DESCRIPTION).not.toContain("呼び出しの例")
   })
 })
 

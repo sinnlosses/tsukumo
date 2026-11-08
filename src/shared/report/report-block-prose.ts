@@ -2,12 +2,14 @@
 
 import { z } from "zod"
 
+import { partCardNote } from "./part-card-note.ts"
 import { aside, fold, inlineText, omittable } from "./report-block-field.ts"
 import { MAX_ITEM_LABEL } from "./report-limit.ts"
 
 export const textBlockSchema = z.object({
   kind: z.literal("text"),
-  text: inlineText.describe(
+  text: partCardNote(
+    inlineText,
     "地の文。1段落1話題。結論に効く数が3つ以上並び前後か推移を見せるなら stats",
   ),
   fold,
@@ -16,28 +18,31 @@ export const textBlockSchema = z.object({
 
 export const listBlockSchema = z.object({
   kind: z.literal("list"),
-  style: z
-    .enum(["bullet", "ordered", "check", "flow", "cards"])
-    .describe(
-      "bullet は発見の一覧（項目ごとに言うことが2つ以上なら表）/ ordered は順番に意味がある手順 / check は済み（done）と未了が混じる並び / " +
-        "flow は段ごとに文が要る一本道（A → B → C と書かず項目を段にする。段の名前が短い一本道・分岐・合流・戻りがあるなら graph）/ " +
-        "cards は読む順・因果の無い2〜4枚の並列（label 必須）",
-    ),
+  style: partCardNote(
+    z.enum(["bullet", "ordered", "check", "flow", "cards"]),
+    "bullet は発見の一覧（項目ごとに言うことが2つ以上なら表）/ ordered は順番に意味がある手順 / check は済み（done）と未了が混じる並び / " +
+      "flow は段ごとに文が要る一本道（A → B → C と書かず項目を段にする。段の名前が短い一本道・分岐・合流・戻りがあるなら graph）/ " +
+      "cards は読む順・因果の無い2〜4枚の並列（label 必須）",
+  ),
   items: z
     .array(
       z.object({
-        label: omittable(inlineText, "").describe(
+        label: partCardNote(
+          omittable(inlineText, ""),
           `箇条の中の名前（「名前: 説明」と text に書かず、名前をここに分ける。${String(MAX_ITEM_LABEL)}字以内）。名前と値だけの並びは descriptionList`,
         ),
         text: inlineText,
         done: omittable(z.boolean(), false),
-        source: omittable(inlineText, "").describe(
+        source: partCardNote(
+          omittable(inlineText, ""),
           "flow のみ。段の出どころの1行（ファイル名・コマンド名など。80字以内）",
         ),
-        branch: omittable(inlineText, "").describe(
+        branch: partCardNote(
+          omittable(inlineText, ""),
           "flow のみ。段の分岐の1文（「違反あり → 差し戻し」など。120字以内）",
         ),
-        branchTone: omittable(z.enum(["ok", "warn", "ng"]), "warn").describe(
+        branchTone: partCardNote(
+          omittable(z.enum(["ok", "warn", "ng"]), "warn"),
           "flow のみ。branch の判定（ok は通る・warn は注意・ng は止まる。省略は warn）",
         ),
       }),
@@ -57,12 +62,12 @@ export function isReportNoteTone(value: string): value is ReportNoteTone {
 
 export const noteBlockSchema = z.object({
   kind: z.literal("note"),
-  tone: z
-    .enum(REPORT_NOTE_TONES)
-    .describe(
-      "info は結論 / warn は注意 / ng は異常 / ask は答えの出ていない問い（確かめていないことは claims） / memo は覚え書き",
-    ),
-  text: inlineText.describe(
+  tone: partCardNote(
+    z.enum(REPORT_NOTE_TONES),
+    "info は結論 / warn は注意 / ng は異常 / ask は答えの出ていない問い（確かめていないことは claims） / memo は覚え書き",
+  ),
+  text: partCardNote(
+    inlineText,
     "読み飛ばされると困る一文。種別を言う語（「注意:」など）は書かない。1つのレポートに2個まで・隣接させない・見出しの直後に置かない（戻せない操作の warn / ng は隣接と見出しの直後が例外）",
   ),
   fold,
@@ -95,7 +100,8 @@ export const codeBlockSchema = z
   .object({
     kind: z.literal("code"),
     language: z.string(),
-    path: omittable(z.string(), "").describe(
+    path: partCardNote(
+      omittable(z.string(), ""),
       "実物の一部を引くときだけ付ける（cwd からの相対パスか絶対パス。`~` は使わない）。" +
         "中身がそのファイルの連続した一部と一致しないと差し戻される。案には付けない",
     ),
@@ -129,24 +135,27 @@ export function hasRequiredHowToVerify(item: {
 export const claimsBlockSchema = z
   .object({
     kind: z.literal("claims"),
-    items: z
-      .array(
-        z
-          .object({
-            claim: inlineText,
-            certainty: z.enum(REPORT_CLAIM_CERTAINTIES),
-            basis: omittable(inlineText, ""),
-            howToVerify: omittable(inlineText, "").describe(
-              "確定でなければ必須。繰り返せる手順を1文で",
-            ),
-          })
-          .refine(hasRequiredHowToVerify, {
-            message: "確定でない項目は howToVerify に確かめ方を書く",
-            path: ["howToVerify"],
-          }),
-      )
-      .min(MIN_CLAIM_ITEMS)
-      .describe("10件まで"),
+    items: partCardNote(
+      z
+        .array(
+          z
+            .object({
+              claim: inlineText,
+              certainty: z.enum(REPORT_CLAIM_CERTAINTIES),
+              basis: omittable(inlineText, ""),
+              howToVerify: partCardNote(
+                omittable(inlineText, ""),
+                "確定でなければ必須。繰り返せる手順を1文で",
+              ),
+            })
+            .refine(hasRequiredHowToVerify, {
+              message: "確定でない項目は howToVerify に確かめ方を書く",
+              path: ["howToVerify"],
+            }),
+        )
+        .min(MIN_CLAIM_ITEMS),
+      "10件まで",
+    ),
     fold,
     aside,
   })
@@ -164,28 +173,27 @@ export const quoteBlockSchema = z.object({
 
 export const descriptionListBlockSchema = z.object({
   kind: z.literal("descriptionList"),
-  items: z
-    .array(
-      z.object({
-        term: inlineText.describe("名前"),
-        description: inlineText.describe("値"),
-      }),
-    )
-    .min(1)
-    .describe(
-      "見出し行の要らない名前と値の対（設定・環境・前提）。列が3つ以上か見出し行が要るなら table",
-    ),
+  items: partCardNote(
+    z
+      .array(
+        z.object({
+          term: partCardNote(inlineText, "名前"),
+          description: partCardNote(inlineText, "値"),
+        }),
+      )
+      .min(1),
+    "見出し行の要らない名前と値の対（設定・環境・前提）。列が3つ以上か見出し行が要るなら table",
+  ),
   fold,
   aside,
 })
 
 export const markdownBlockSchema = z.object({
   kind: z.literal("markdown"),
-  markdown: z
-    .string()
-    .describe(
-      "どの部品にも当てはまらない記法（svg・区切り線・区画の格子 cols / card・ラベル badge）だけ",
-    ),
+  markdown: partCardNote(
+    z.string(),
+    "どの部品にも当てはまらない記法（svg・区切り線・区画の格子 cols / card・ラベル badge）だけ",
+  ),
   fold,
   aside,
 })

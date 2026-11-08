@@ -6,6 +6,7 @@ import { z } from "zod"
 
 import { BASIC_PART_DEFS, BASIC_PART_SCHEMAS, BASIC_PARTS } from "./a2ui-basic-part-list.ts"
 import { addPlotDataIssues, plotBlockSchema } from "./figure-grammar.ts"
+import { partCardNote } from "./part-card-note.ts"
 import {
   compareBlockSchema,
   keyFiguresSchema,
@@ -60,19 +61,15 @@ const LEAF_COMPONENTS = {
   Paragraph: leafComponent("Paragraph", textBlockSchema),
   ItemList: leafComponent("ItemList", listBlockSchema),
   Table: leafComponent("Table", tableBlockSchema).extend({
-    sortable: z.boolean().optional().describe("true で列の見出しを押して並べ替えられる"),
-    filterable: z
-      .boolean()
-      .optional()
-      .describe(
-        'true と filterColumn で、その列の値と件数のバッジ（2〜6 種類）が出て押すと絞れる。ChoicePicker の value を {path: "/view/<この表のID>/filter"} に結ぶとバッジは出ず、そちらで絞る',
-      ),
-    filterColumn: z
-      .number()
-      .int()
-      .min(0)
-      .optional()
-      .describe("絞り込みで見る列の位置（0 始まり）。省略すると全列でバッジは出ない"),
+    sortable: partCardNote(z.boolean().optional(), "true で列の見出しを押して並べ替えられる"),
+    filterable: partCardNote(
+      z.boolean().optional(),
+      'true と filterColumn で、その列の値と件数のバッジ（2〜6 種類）が出て押すと絞れる。ChoicePicker の value を {path: "/view/<この表のID>/filter"} に結ぶとバッジは出ず、そちらで絞る',
+    ),
+    filterColumn: partCardNote(
+      z.number().int().min(0).optional(),
+      "絞り込みで見る列の位置（0 始まり）。省略すると全列でバッジは出ない",
+    ),
   }),
   Matrix: leafComponent("Matrix", matrixBlockSchema),
   Compare: leafComponent("Compare", compareBlockSchema),
@@ -178,8 +175,11 @@ const speechSchema = z.object({ text: z.string(), expression: z.string() })
 const sectionComponentSchema = z.object({
   id: z.string(),
   component: z.literal("Section"),
-  heading: omittable(z.string(), "").describe(
-    `そのセクションの結論を言う語（「変更点」「まとめ」のようなどのレポートにも当てはまる語にしない）。${String(MAX_HEADING)}字以内で、疑問文にしない。セクションが1つなら省いてよく、2つ以上なら全部に付ける`,
+  heading: partCardNote(
+    omittable(z.string(), "").describe(
+      `セクションの結論を言う語（${String(MAX_HEADING)}字以内・疑問文にしない）。2つ以上なら全部に付ける`,
+    ),
+    "「変更点」「まとめ」のようなどのレポートにも当てはまる語にしない。セクションが1つなら省いてよい",
   ),
   children: z.array(z.string()).min(1),
 })
@@ -190,23 +190,26 @@ const reportComponentSchema = z.object({
   component: z.literal("Report"),
   task: reportTaskSchema.optional(),
   workPlanClosing: z.enum(["finished", "stopped"]).optional(),
-  conclusion: z
-    .array(z.string())
-    .optional()
-    .describe(
-      `結論。レポートの冒頭の文を1要素1文（句点まで）で1〜${String(MAX_CONCLUSION_SENTENCES)}要素。1文目は全角${String(MAX_FIRST_SENTENCE)}字以内（目安は${String(FIRST_SENTENCE_TARGET)}字、読点は${String(FIRST_SENTENCE_TARGET_COMMAS)}つまで）。悪い例: 「設定の読み込みを共通化し、型を整理し、テストも足して、起動の流れを書き換えた」（変更の列挙）。良い例: 「次から設定の書き間違いが起動時に分かる」（読み手から見た変化）。2文目は「それで何が良いか」か「変えていないもの」。例: ["…分かる。", "読み方は変えていない。"]`,
-    ),
+  conclusion: partCardNote(
+    z
+      .array(z.string())
+      .optional()
+      .describe(
+        `結論。1要素1文で1〜${String(MAX_CONCLUSION_SENTENCES)}要素。1文目は全角${String(MAX_FIRST_SENTENCE)}字以内（目安は${String(FIRST_SENTENCE_TARGET)}字、読点は${String(FIRST_SENTENCE_TARGET_COMMAS)}つまで）で、変更の列挙でなく読み手から見た変化を書く`,
+      ),
+    `悪い例: 「設定の読み込みを共通化し、型を整理し、テストも足して、起動の流れを書き換えた」（変更の列挙）。良い例: 「次から設定の書き間違いが起動時に分かる」（読み手から見た変化）。2文目は「それで何が良いか」か「変えていないもの」。例: ["…分かる。", "読み方は変えていない。"]`,
+  ),
   keyFigures: keyFiguresSchema.optional(),
-  workDone: z.string().optional().describe("task時のしたこと1段落"),
+  workDone: partCardNote(z.string().optional(), "task時のしたこと1段落"),
   figure: z.string().optional(),
   figureNone: z.enum(REPORT_FIGURE_NONE_REASONS).optional(),
   children: z.array(z.string()).min(1),
   retrospective: reportRetrospectiveSchema
     .extend({
-      blocks: z
-        .array(z.string())
-        .optional()
-        .describe("結果の根拠に図・表・コードが要るときだけ。部品の ID"),
+      blocks: partCardNote(
+        z.array(z.string()).optional(),
+        "結果の根拠に図・表・コードが要るときだけ。部品の ID",
+      ),
     })
     .optional(),
   favor: z.string().optional(),

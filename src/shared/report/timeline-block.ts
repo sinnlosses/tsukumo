@@ -2,6 +2,7 @@
 
 import { z } from "zod"
 
+import { partCardNote } from "./part-card-note.ts"
 import { aside, type DeepReadonly, fold, inlineText, omittable } from "./report-block-field.ts"
 
 const timeValue = z.union([z.string(), z.number()])
@@ -10,19 +11,19 @@ const timelineRowSchema = z.object({
   name: inlineText,
   start: timeValue,
   end: omittable(timeValue, ""),
-  extra: omittable(timeValue.array(), []).describe("end より後へ延びた区切りの時刻"),
-  uncertain: omittable(z.object({ until: timeValue, label: inlineText }), {
-    until: "",
-    label: "",
-  }).describe("終わり（extra の最後）より後ろの止まりうる区間"),
-  after: omittable(inlineText.array(), []).describe("待つ行の name"),
-  lane: omittable(inlineText, "").describe("役ごとのまとまりの名前"),
+  extra: partCardNote(omittable(timeValue.array(), []), "end より後へ延びた区切りの時刻"),
+  uncertain: partCardNote(
+    omittable(z.object({ until: timeValue, label: inlineText }), { until: "", label: "" }),
+    "終わり（extra の最後）より後ろの止まりうる区間",
+  ),
+  after: partCardNote(omittable(inlineText.array(), []), "待つ行の name"),
+  lane: partCardNote(omittable(inlineText, ""), "役ごとのまとまりの名前"),
 })
 
 export const timelineBlockSchema = z
   .object({
     kind: z.literal("timeline"),
-    title: omittable(inlineText, "").describe("数と向きで主張を言う1文。評価語なし"),
+    title: partCardNote(omittable(inlineText, ""), "数と向きで主張を言う1文。評価語なし"),
     rows: z.array(timelineRowSchema).min(1),
     events: omittable(z.array(z.object({ at: timeValue, label: inlineText })), []),
     emphasis: omittable(inlineText.array(), []),

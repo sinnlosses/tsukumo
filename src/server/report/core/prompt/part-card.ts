@@ -5,12 +5,19 @@ import { omit } from "remeda"
 import { z } from "zod"
 
 import { REPORT_COMPONENT_SCHEMAS } from "../../../../shared/report/a2ui-report-catalog.ts"
+import { PART_CARD_NOTES, partCardNote } from "../../../../shared/report/part-card-note.ts"
 import { PART_EXAMPLES } from "../../../../shared/report/part-example-list.ts"
+import {
+  REPORT_FIELD_CARD_NOTES,
+  REPORT_FIELD_DESCRIPTIONS,
+  REPORT_SECTIONS_CARD_NOTE,
+  REPORT_SECTIONS_DESCRIPTION,
+} from "./report-tool.ts"
 
 /** `report_part_card` ツールの説明文。 */
 export const PART_CARD_TOOL_DESCRIPTION =
   "report の components に置く部品の JSON Schema と、components の例1つを、部品の名前を渡して引く。" +
-  "JSON Schema は report の定義の部品と同じ。部品の書き方に迷ったときに、使う前に引く"
+  "JSON Schema は report の定義の部品と同じ形で、欄ごとの書き方の説明はこのカードにだけ載る。部品を初めて使う前に引く"
 
 /** `report_part_card` の `component` の欄の説明。 */
 export const PART_CARD_COMPONENT_DESCRIPTION =
@@ -31,11 +38,9 @@ export function partCardOf(component: string): PartCard {
   return {
     kind: "card",
     text: [
-      `部品 ${component} の文法（report の定義の部品と同じ JSON Schema）`,
+      `部品 ${component} の文法（report の定義の部品と同じ形の JSON Schema に、欄の書き方の説明を足したもの）`,
       "JSON Schema:",
-      JSON.stringify(
-        omit(z.toJSONSchema(REPORT_COMPONENT_SCHEMAS[component], { io: "input" }), ["$schema"]),
-      ),
+      JSON.stringify(omit(cardJsonSchema(CARD_SCHEMAS[component]), ["$schema"])),
       "例（components の要素。id は例の中で閉じている）:",
       JSON.stringify(PART_EXAMPLES[component]),
       ...expressionExampleLines(component),
@@ -43,12 +48,81 @@ export function partCardOf(component: string): PartCard {
   }
 }
 
+/** カードの JSON Schema。`report` の定義と同じ形に、カードにだけ載せる欄の説明（`PART_CARD_NOTES`）を定義の説明のあとへ足す。 */
+function cardJsonSchema(schema: z.ZodType) {
+  return z.toJSONSchema(schema, {
+    io: "input",
+    override: ({ zodSchema, jsonSchema }) => {
+      const note = PART_CARD_NOTES.get(zodSchema)
+      if (note !== undefined) {
+        const own = jsonSchema.description
+        jsonSchema.description =
+          own === undefined
+            ? note.description
+            : `${own}${own.endsWith("。") ? "" : "。"}${note.description}`
+      }
+    },
+  })
+}
+
+/**
+ * `Report` と `Section` のカードの形。`report` の定義で付ける欄の説明に、カードにだけ載せる細かい書き方を足す。
+ * 図の説明は利用者の既定で変わるので、カードには位置と最小形だけを載せる。
+ */
+function reportCardSchemas() {
+  const { Report, Section } = REPORT_COMPONENT_SCHEMAS
+  const { shape } = Report
+  return {
+    Report: Report.extend({
+      figure: partCardNote(shape.figure, REPORT_FIELD_CARD_NOTES.figure),
+      workPlanClosing: partCardNote(shape.workPlanClosing, REPORT_FIELD_CARD_NOTES.workPlanClosing),
+      keyFigures: partCardNote(shape.keyFigures, REPORT_FIELD_CARD_NOTES.keyFigures),
+      task: noted(shape.task, "task"),
+      retrospective: noted(shape.retrospective, "retrospective"),
+      favor: noted(shape.favor, "favor"),
+      checks: noted(shape.checks, "checks"),
+      title: noted(shape.title, "title"),
+      sessionSummary: noted(shape.sessionSummary, "sessionSummary"),
+      sessionRemaining: noted(shape.sessionRemaining, "sessionRemaining"),
+      closing: noted(shape.closing, "closing"),
+      waitingLine: noted(shape.waitingLine, "waitingLine"),
+    }),
+    Section: partCardNote(Section.describe(REPORT_SECTIONS_DESCRIPTION), REPORT_SECTIONS_CARD_NOTE),
+  }
+}
+
+/** `Report` の欄に、定義と同じ説明とカードにだけ載せる細かい書き方を付ける。 */
+function noted<Schema extends z.ZodType>(
+  schema: Schema,
+  field: keyof typeof REPORT_FIELD_DESCRIPTIONS,
+): Schema {
+  return partCardNote(
+    schema.describe(REPORT_FIELD_DESCRIPTIONS[field]),
+    REPORT_FIELD_CARD_NOTES[field],
+  )
+}
+
+const CARD_SCHEMAS = { ...REPORT_COMPONENT_SCHEMAS, ...reportCardSchemas() }
+
+/** 触れるレポート（つまみと式）の書き方。式を結べる部品とつまみの部品のカードにだけ載せる。 */
+const EXPRESSION_GUIDE =
+  "触れるレポート: 読み手が前提の値を振って結果の変わり方を比べたい問い（どの値がよいか・しきい値で何が変わるか・条件を足すとどうなるか）のときだけ、" +
+  "ParameterSlider（name・label・min・max・step・initial）か ParameterCheckBox（name・label・initial）を置く。つまみは4個まで。結論の文は初期値のまま読めるように書く。\n" +
+  '値はリテラル、{call:"expr",args:{source:式}}、{call:"format",args:{template:"…${式}…"}} のどれか。式を結べるのは Paragraph.text・Stats の value/before/target・Chart の title/labels/values/emphasis だけ。\n' +
+  '式: つまみの name と Report.defs（名前→式の文字列）の名前、数・"文字"・true/false・[1,2]、+ - * / %、比較、&& || !、条件 ? A : B（並びとの演算は要素ごと）。' +
+  "関数: range(a,b) min max round(x,d) fixed(x,d) sum len minOf maxOf argmin argmax at(list,i) text(list,suffix)。\n" +
+  "数を文字にすると整数はそのまま、それ以外は小数1桁。桁を変えるなら fixed(x, 桁)。" +
+  "文を条件で切り替えるときは defs の式に文字を返させ、${…} の中は名前か短い式だけにする。" +
+  "差の向きは引き算で書かず、Stats の before と value を結んで better で言う。"
+
 const EXPRESSION_EXAMPLE_HEADING =
   "式を結ぶ例（つまみの name と defs の名前を式で読む。format の ${…} には名前か短い式だけを書き、文字のリテラルは書かない）:"
 
 function expressionExampleLines(component: string): readonly string[] {
   const example = EXPRESSION_EXAMPLES.get(component)
-  return example === undefined ? [] : [EXPRESSION_EXAMPLE_HEADING, JSON.stringify(example)]
+  return example === undefined
+    ? []
+    : [EXPRESSION_GUIDE, EXPRESSION_EXAMPLE_HEADING, JSON.stringify(example)]
 }
 
 const expr = (source: string) => ({ call: "expr", args: { source } })

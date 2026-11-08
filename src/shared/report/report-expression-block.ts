@@ -4,6 +4,7 @@
 
 import { z } from "zod"
 
+import { PART_CARD_NOTES, partCardNote } from "./part-card-note.ts"
 import { statItemsSchema, statsBlockSchema } from "./report-block-comparison.ts"
 import { chartBlockSchema, chartGridBlockSchema } from "./report-block-diagram.ts"
 import { inlineText, omittable } from "./report-block-field.ts"
@@ -30,6 +31,10 @@ function orExpression<S extends z.ZodType>(schema: S) {
 }
 
 function described<S extends z.ZodType>(schema: S, source: z.ZodType): S {
+  const note = PART_CARD_NOTES.get(source)
+  if (note !== undefined) {
+    return partCardNote(schema, note.description)
+  }
   return source.description === undefined ? schema : schema.describe(source.description)
 }
 
@@ -97,13 +102,13 @@ export const writtenChartGridBlockSchema = described(
 
 const PARAMETER_NAME_PATTERN = /^[A-Za-z_][A-Za-z0-9_]*$/
 
-const parameterName = z
-  .string()
-  .regex(PARAMETER_NAME_PATTERN)
-  .describe("式から読む名前。ほかのつまみ・defs の名前や関数の名前と重ねない")
+const parameterName = partCardNote(
+  z.string().regex(PARAMETER_NAME_PATTERN),
+  "式から読む名前。ほかのつまみ・defs の名前や関数の名前と重ねない",
+)
 
-export const parameterSliderSchema = z
-  .object({
+export const parameterSliderSchema = partCardNote(
+  z.object({
     id: z.string(),
     component: z.literal("ParameterSlider"),
     name: parameterName,
@@ -112,20 +117,20 @@ export const parameterSliderSchema = z
     max: z.number(),
     step: z.number(),
     initial: z.number(),
-  })
-  .describe(
-    "読み手が振る数のつまみ。min < max、step > 0。initial は min から step の倍数の位置で、目盛りは101個まで。Section か配置の部品の子に置く（Report.figure には置けない）。式が読まないつまみは置かない",
-  )
+  }),
+  "読み手が振る数のつまみ。min < max、step > 0。initial は min から step の倍数の位置で、目盛りは101個まで。Section か配置の部品の子に置く（Report.figure には置けない）。式が読まないつまみは置かない",
+)
 
-export const parameterCheckBoxSchema = z
-  .object({
+export const parameterCheckBoxSchema = partCardNote(
+  z.object({
     id: z.string(),
     component: z.literal("ParameterCheckBox"),
     name: parameterName,
     label: z.string(),
     initial: z.boolean(),
-  })
-  .describe("読み手が切り替える真偽のつまみ。置き場は ParameterSlider と同じ")
+  }),
+  "読み手が切り替える真偽のつまみ。置き場は ParameterSlider と同じ",
+)
 
 /** 静的な一覧に載らないので、見本帳にまだ並べないつまみの部品名。 */
 export const PARAMETER_COMPONENT_NAMES: readonly string[] = [
@@ -133,9 +138,7 @@ export const PARAMETER_COMPONENT_NAMES: readonly string[] = [
   parameterCheckBoxSchema.shape.component.value,
 ]
 
-export const reportDefsSchema = z
-  .record(z.string(), z.string())
-  .optional()
-  .describe(
-    "名前つきの式（名前 → 式）。同じ計算を2か所以上で使うなら、ここに名前を付けて一度だけ書く。つまみの name と、ほかの defs の名前を式から読める",
-  )
+export const reportDefsSchema = partCardNote(
+  z.record(z.string(), z.string()).optional(),
+  "名前つきの式（名前 → 式）。同じ計算を2か所以上で使うなら、ここに名前を付けて一度だけ書く。つまみの name と、ほかの defs の名前を式から読める",
+)

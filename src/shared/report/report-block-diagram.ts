@@ -3,6 +3,7 @@
 import { z } from "zod"
 
 import { readGraphSource } from "./graph-source.ts"
+import { partCardNote } from "./part-card-note.ts"
 import {
   aside,
   type DeepReadonly,
@@ -32,12 +33,10 @@ export function hasGraphNode(source: string): boolean {
 
 const graphFields = {
   direction: z.enum(["TD", "LR"]),
-  source: z
-    .string()
-    .refine(hasGraphNode, "source に箱が1つも無い")
-    .describe(
-      "1行1矢印。`A -> B: 語`（`: 語` は矢印のラベル。省ける。点線は `A -.> B`。前の箱へ戻る矢印は `A <- B: 語` で、B から A へ戻る戻り道に描く）。`(始点)` は始点・終点、`{分岐?}` は分岐、括弧が無ければ処理。同じ名前は同じ箱（括弧は最初の1回だけでよい）。`->` の無い行は箱だけの宣言（`名前 | 説明` で説明の1行を足せる。矢印の端の名前には書けない）。変更の前後は行頭に `+ `（足した）・`- `（消した）・`~ `（変えた）を付ける（矢印の行は矢印に、箱だけの行は箱に掛かる。同じ箱に違う印は付けない）。色は行末に ` @a`〜` @e`（箱・矢印・囲みの行。名前に ` @` は書かない）。囲みは `[群の名]` だけの行で始め `[]` だけの行で閉じる（間の行の箱がその群。1階層で入れ子は不可）",
-    ),
+  source: partCardNote(
+    z.string().refine(hasGraphNode, "source に箱が1つも無い"),
+    "1行1矢印。`A -> B: 語`（`: 語` は矢印のラベル。省ける。点線は `A -.> B`。前の箱へ戻る矢印は `A <- B: 語` で、B から A へ戻る戻り道に描く）。`(始点)` は始点・終点、`{分岐?}` は分岐、括弧が無ければ処理。同じ名前は同じ箱（括弧は最初の1回だけでよい）。`->` の無い行は箱だけの宣言（`名前 | 説明` で説明の1行を足せる。矢印の端の名前には書けない）。変更の前後は行頭に `+ `（足した）・`- `（消した）・`~ `（変えた）を付ける（矢印の行は矢印に、箱だけの行は箱に掛かる。同じ箱に違う印は付けない）。色は行末に ` @a`〜` @e`（箱・矢印・囲みの行。名前に ` @` は書かない）。囲みは `[群の名]` だけの行で始め `[]` だけの行で閉じる（間の行の箱がその群。1階層で入れ子は不可）",
+  ),
   legend: omittable(toneLegendSchema, []),
 }
 
@@ -52,10 +51,12 @@ const svgShapeSchema = z
       label: omittable(inlineText, ""),
       sub: omittable(inlineText, ""),
       emphasis: omittable(z.boolean(), false),
-      labelAt: omittable(z.enum(["center", "top-left"]), "center").describe(
+      labelAt: partCardNote(
+        omittable(z.enum(["center", "top-left"]), "center"),
         "枠の題の位置。入れ子の外側の枠は top-left",
       ),
-      tone: omittable(z.enum(["none", ...SVG_TONES, ...SVG_STATE_TONES]), "none").describe(
+      tone: partCardNote(
+        omittable(z.enum(["none", ...SVG_TONES, ...SVG_STATE_TONES]), "none"),
         "a〜e は区別の色、ok・warn・ng は状態の色",
       ),
     }),
@@ -75,7 +76,8 @@ const svgShapeSchema = z
       x: z.number(),
       y: z.number(),
       text: inlineText,
-      anchor: omittable(z.enum(["start", "middle", "end"]), "start").describe(
+      anchor: partCardNote(
+        omittable(z.enum(["start", "middle", "end"]), "start"),
         "揃え。右端の字は end",
       ),
     }),
@@ -96,15 +98,17 @@ export const compareSideSchema = z
     z.object({ kind: z.literal("mermaid"), source: z.string() }),
     z.object({
       kind: z.literal("image"),
-      path: z.string().describe("撮った画像のファイル（絶対か cwd から）"),
-      region: z
-        .object({ left: z.number(), top: z.number(), width: z.number(), height: z.number() })
-        .optional()
-        .describe("変わった場所の枠（画像に対する%）"),
+      path: partCardNote(z.string(), "撮った画像のファイル（絶対か cwd から）"),
+      region: partCardNote(
+        z
+          .object({ left: z.number(), top: z.number(), width: z.number(), height: z.number() })
+          .optional(),
+        "変わった場所の枠（画像に対する%）",
+      ),
     }),
     z.object({
       kind: z.literal("code"),
-      language: z.string().describe("言語名（diff にせず、その側の中身をそのまま書く）"),
+      language: partCardNote(z.string(), "言語名（diff にせず、その側の中身をそのまま書く）"),
       source: z.string(),
     }),
     z.object({ kind: z.literal("points"), points: z.array(inlineText).min(1) }),
@@ -114,9 +118,10 @@ export const compareSideSchema = z
 export const imageBlockSchema = z
   .object({
     kind: z.literal("image"),
-    path: z.string().describe("撮った画像のファイル（絶対か cwd から）"),
-    caption: inlineText.describe("何が見えるかの1行。数と向きで主張を言う1文。評価語なし"),
-    notes: omittable(z.array(inlineText), []).describe(
+    path: partCardNote(z.string(), "撮った画像のファイル（絶対か cwd から）"),
+    caption: partCardNote(inlineText, "何が見えるかの1行。数と向きで主張を言う1文。評価語なし"),
+    notes: partCardNote(
+      omittable(z.array(inlineText), []),
       `画像のどこを見るか・何が変わったか。1項目1文で、場所の言葉（左上の帯・2行目のラベル）から書く。番号は書かない（並びの順に振って描く）`,
     ),
     fold,
@@ -135,13 +140,12 @@ export const REPORT_MERMAID_KINDS = ["sequenceDiagram", "stateDiagram-v2"] as co
 export const mermaidBlockSchema = z
   .object({
     kind: z.literal("mermaid"),
-    title: omittable(inlineText, "").describe("数と向きで主張を言う1文。評価語なし"),
-    source: z
-      .string()
-      .describe(
-        `図のソース。種類は ${REPORT_MERMAID_KINDS.join(" / ")} の${String(REPORT_MERMAID_KINDS.length)}種だけ。` +
-          "ラベルの引用符・バッククォートは #quot; / #96; と書く",
-      ),
+    title: partCardNote(omittable(inlineText, ""), "数と向きで主張を言う1文。評価語なし"),
+    source: partCardNote(
+      z.string(),
+      `図のソース。種類は ${REPORT_MERMAID_KINDS.join(" / ")} の${String(REPORT_MERMAID_KINDS.length)}種だけ。` +
+        "ラベルの引用符・バッククォートは #quot; / #96; と書く",
+    ),
     fold,
     aside,
   })
@@ -152,7 +156,7 @@ export const mermaidBlockSchema = z
 export const graphBlockSchema = z
   .object({
     kind: z.literal("graph"),
-    title: omittable(inlineText, "").describe("数と向きで主張を言う1文。評価語なし"),
+    title: partCardNote(omittable(inlineText, ""), "数と向きで主張を言う1文。評価語なし"),
     ...graphFields,
     fold,
     aside,
@@ -177,41 +181,38 @@ const chartSeriesSchema = z.object({
 export const chartBlockSchema = z
   .object({
     kind: z.literal("chart"),
-    title: omittable(inlineText, "").describe("数と向きで主張を言う1文。評価語なし"),
-    chartKind: z
-      .enum(REPORT_CHART_KINDS)
-      .describe(
-        "bar は棒・line は折れ線・pie は円（series の先頭だけを描く）。前後の差が主役なら arrow（項目ごとの前→後の矢印）、2時点の多項目は slope（項目ごとの2点の線）。arrow・slope は series を前と後の2つにし、labels を項目にする。段の所要と重なりのように項目ごとの始まり〜終わりの区間は span（series は始まりと終わりの2つ、labels が項目。時刻の目盛り・延び・出来事が要るなら timeline）、全体に占める割合の内訳は share（100% の横棒1本。labels が部分の名前で、series の先頭だけを描く）",
-      ),
+    title: partCardNote(omittable(inlineText, ""), "数と向きで主張を言う1文。評価語なし"),
+    chartKind: partCardNote(
+      z.enum(REPORT_CHART_KINDS),
+      "bar は棒・line は折れ線・pie は円（series の先頭だけを描く）。前後の差が主役なら arrow（項目ごとの前→後の矢印）、2時点の多項目は slope（項目ごとの2点の線）。arrow・slope は series を前と後の2つにし、labels を項目にする。段の所要と重なりのように項目ごとの始まり〜終わりの区間は span（series は始まりと終わりの2つ、labels が項目。時刻の目盛り・延び・出来事が要るなら timeline）、全体に占める割合の内訳は share（100% の横棒1本。labels が部分の名前で、series の先頭だけを描く）",
+    ),
     labels: inlineText.array().min(1),
     series: z.array(chartSeriesSchema).min(1),
     horizontal: omittable(z.boolean(), false),
-    emphasis: omittable(inlineText.array(), []).describe(
+    emphasis: partCardNote(
+      omittable(inlineText.array(), []),
       "題の主語だけ（labels の一部）。bar・pie・share で差し色",
     ),
-    references: z
-      .array(z.object({ value: z.number(), label: inlineText }))
-      .optional()
-      .describe(
-        "line だけ。目標・上限の水平の基準線（label は右端の名前）。目標を全部同じ値の2本目の series で書かず、ここに書く",
-      ),
-    annotations: z
-      .array(
-        z.object({
-          label: inlineText,
-          index: z.number().int().min(0),
-          text: inlineText,
-        }),
-      )
-      .optional()
-      .describe(
-        "line・bar・share・arrow。目立たせる1点の注記（label は series の name、index は labels の 0 始まりの位置、text は一言。share の label は先頭の系列、arrow の矢じり側は後の系列の名前）",
-      ),
-    tones: z
-      .enum(REPORT_CHART_TONES)
-      .array()
-      .optional()
-      .describe("share だけ。labels と同じ長さで部分ごとの状態の色。emphasis とは併せない"),
+    references: partCardNote(
+      z.array(z.object({ value: z.number(), label: inlineText })).optional(),
+      "line だけ。目標・上限の水平の基準線（label は右端の名前）。目標を全部同じ値の2本目の series で書かず、ここに書く",
+    ),
+    annotations: partCardNote(
+      z
+        .array(
+          z.object({
+            label: inlineText,
+            index: z.number().int().min(0),
+            text: inlineText,
+          }),
+        )
+        .optional(),
+      "line・bar・share・arrow。目立たせる1点の注記（label は series の name、index は labels の 0 始まりの位置、text は一言。share の label は先頭の系列、arrow の矢じり側は後の系列の名前）",
+    ),
+    tones: partCardNote(
+      z.enum(REPORT_CHART_TONES).array().optional(),
+      "share だけ。labels と同じ長さで部分ごとの状態の色。emphasis とは併せない",
+    ),
     fold,
     aside,
   })
@@ -228,15 +229,13 @@ export const MAX_CHART_GRID_PANELS = 6
 export const chartGridBlockSchema = z
   .object({
     kind: z.literal("chartGrid"),
-    title: omittable(inlineText, "").describe("並びの題。数と向きで主張を言う1文。評価語なし"),
+    title: partCardNote(omittable(inlineText, ""), "並びの題。数と向きで主張を言う1文。評価語なし"),
     chartKind: z.enum(CHART_GRID_KINDS),
-    labels: inlineText.array().min(1).describe("全部の図に共通の項目"),
-    panels: z
-      .array(z.object({ heading: inlineText, series: z.array(chartSeriesSchema).min(1) }))
-      .min(1)
-      .describe(
-        `${String(MIN_CHART_GRID_PANELS)}〜${String(MAX_CHART_GRID_PANELS)}個。heading は図の小見出し。どの図も系列の name の組を揃え、values は labels と同じ数`,
-      ),
+    labels: partCardNote(inlineText.array().min(1), "全部の図に共通の項目"),
+    panels: partCardNote(
+      z.array(z.object({ heading: inlineText, series: z.array(chartSeriesSchema).min(1) })).min(1),
+      `${String(MIN_CHART_GRID_PANELS)}〜${String(MAX_CHART_GRID_PANELS)}個。heading は図の小見出し。どの図も系列の name の組を揃え、values は labels と同じ数`,
+    ),
     fold,
     aside,
   })

@@ -3,6 +3,7 @@
 
 import { z } from "zod"
 
+import { partCardNote } from "./part-card-note.ts"
 import { aside, type DeepReadonly, fold, inlineText, omittable } from "./report-block-field.ts"
 
 /** 決定表が返す形。`form` の欄で書き手が選べる値でもある。 */
@@ -51,18 +52,19 @@ type PlotColumn = DeepReadonly<z.infer<typeof plotColumnSchema>>
 export const plotBlockSchema = z
   .object({
     kind: z.literal("plot"),
-    question: inlineText
-      .refine((text) => text.trim() !== "" && [...text].length <= MAX_PLOT_QUESTION, {
+    question: partCardNote(
+      inlineText.refine((text) => text.trim() !== "" && [...text].length <= MAX_PLOT_QUESTION, {
         message: `question は読者がこの図で決めることを1文（${String(MAX_PLOT_QUESTION)}字以内）で書く`,
-      })
-      .describe("この図で読者が決めること。1文"),
+      }),
+      "この図で読者が決めること。1文",
+    ),
     data: z.array(plotColumnSchema).min(1),
-    relation: z
-      .enum(PLOT_RELATIONS)
-      .describe(
-        "目標・上限に対する値は compare で N 1列・Q 2列（値・目標。値の列の名前が単位になる）。合計は書き手が足して値の1行にする",
-      ),
-    form: omittable(z.enum(["auto", ...FIGURE_FORMS]), "auto").describe(
+    relation: partCardNote(
+      z.enum(PLOT_RELATIONS),
+      "目標・上限に対する値は compare で N 1列・Q 2列（値・目標。値の列の名前が単位になる）。合計は書き手が足して値の1行にする",
+    ),
+    form: partCardNote(
+      omittable(z.enum(["auto", ...FIGURE_FORMS]), "auto"),
       "省けば決定表が形を決める。置いてはならない形は採らない",
     ),
     fold,

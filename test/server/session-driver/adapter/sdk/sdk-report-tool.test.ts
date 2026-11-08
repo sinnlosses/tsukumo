@@ -236,7 +236,32 @@ describe("report の本文（components）", () => {
     expect(JSON.stringify(inputSchema).length).toBeLessThan(REPORT_INPUT_SCHEMA_MAX_CHARS)
   })
 
-  it("Report の conclusion の説明に、目安の字数・読点の数・悪い例と良い例がある", async () => {
+  it("内容部品の欄ごとの書き方は report の定義に載らず、部品カードにだけ載る", async () => {
+    const reply = await mcpRequest(workServer(), "tools/list", {}, TOOLS_WHOLE_SCHEMA_REPLY)
+    const definition = JSON.stringify(
+      reply.result.tools.find((tool) => tool.name === "report")?.inputSchema,
+    )
+    const card = await callTool(workServer(), "report_part_card", { component: "Graph" })
+
+    expect(definition).toContain('"const":"Graph"')
+    expect(definition).not.toContain("1行1矢印")
+    expect(card.text).toContain("1行1矢印")
+  })
+
+  it("Report の欄の細かい書き方は report の定義に載らず、Report のカードにだけ載る", async () => {
+    const reply = await mcpRequest(workServer(), "tools/list", {}, TOOLS_WHOLE_SCHEMA_REPLY)
+    const definition = JSON.stringify(
+      reply.result.tools.find((tool) => tool.name === "report")?.inputSchema,
+    )
+    const card = await callTool(workServer(), "report_part_card", { component: "Report" })
+
+    for (const detail of ["decision: 決めたこと", "悪い例", "前回の続き", "直近5ターン"]) {
+      expect(definition).not.toContain(detail)
+      expect(card.text).toContain(detail)
+    }
+  })
+
+  it("Report の conclusion の説明に、目安の字数と読点の数がある", async () => {
     const reply = await mcpRequest(workServer(), "tools/list", {}, TOOLS_WHOLE_SCHEMA_REPLY)
     const schema = z
       .object({
@@ -262,8 +287,6 @@ describe("report の本文（components）", () => {
 
     expect(conclusion.description).toContain(`目安は${String(FIRST_SENTENCE_TARGET)}字`)
     expect(conclusion.description).toContain("読点は1つまで")
-    expect(conclusion.description).toContain("悪い例")
-    expect(conclusion.description).toContain("良い例")
   })
 
   it("schema から外した制約も検査には残り、空白だけの ID と0の幅の report は差し戻す", async () => {

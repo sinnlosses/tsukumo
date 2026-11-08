@@ -2,33 +2,29 @@
 
 import { z } from "zod"
 
+import { partCardNote } from "./part-card-note.ts"
 import { REPORT_CHECK_STATUSES } from "./report-check-view.ts"
 
 export const reportCheckSchema = z.object({
   status: z.enum(REPORT_CHECK_STATUSES),
-  label: z.string().describe("何で確かめたか（コマンド・テスト・手で見た場面）"),
-  figure: z
-    .string()
-    .describe(
-      "結果を1つの数で言う短い文字列（例: 単体 2855・E2E 57、56 件中 1 件、ずれ 2px）。" +
-        "数だけを書き、「が通過」のような述語は付けない。「2849 / 56」のような割り算や分数に見える" +
-        "書き方はしない。行の右に描く。数で言えなければ空文字",
-    ),
-  command: z
-    .string()
-    .describe(
-      "確かめるのに打った Bash のコマンドを、打った文字列のまま（tsukumo が同じターンの呼び出しと完全一致で突き合わせ、測った所要時間を添える）。コマンドでない確認は空文字",
-    ),
-  detail: z
-    .string()
-    .describe(
-      "ng・unobserved は理由、blocked は止めている前提を1文で。ok の行には描かないので書かない。直した経緯や打ち直した回数は書かない。無ければ空文字",
-    ),
-  howToVerify: z
-    .string()
-    .describe(
-      "unobserved のとき必須。知らない人が繰り返せる確かめ方を1〜2文で（何を開いて・何をして・何が見えれば良いか）。ok・ng・blocked は空文字",
-    ),
+  label: partCardNote(z.string(), "何で確かめたか（コマンド・テスト・手で見た場面）"),
+  figure: partCardNote(
+    z.string().describe("結果を1つの数で（例: 単体 2855・E2E 57）。無ければ空文字"),
+    "56 件中 1 件・ずれ 2px のように数だけを書き、「が通過」のような述語は付けない。" +
+      "「2849 / 56」のような割り算や分数に見える書き方はしない。行の右に描く",
+  ),
+  command: partCardNote(
+    z.string(),
+    "確かめるのに打った Bash のコマンドを、打った文字列のまま（tsukumo が同じターンの呼び出しと完全一致で突き合わせ、測った所要時間を添える）。コマンドでない確認は空文字",
+  ),
+  detail: partCardNote(
+    z.string().describe("ng・unobserved は理由、blocked は前提を1文で。ok は空文字"),
+    "ok の行には描かない。直した経緯や打ち直した回数は書かない",
+  ),
+  howToVerify: partCardNote(
+    z.string(),
+    "unobserved のとき必須。知らない人が繰り返せる確かめ方を1〜2文で（何を開いて・何をして・何が見えれば良いか）。ok・ng・blocked は空文字",
+  ),
 })
 
 export type ReportCheck = z.infer<typeof reportCheckSchema>

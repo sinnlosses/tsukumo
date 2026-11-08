@@ -2,6 +2,7 @@ import { keys } from "remeda"
 import { describe, expect, it } from "vitest"
 import type { z } from "zod"
 
+import { partCardOf } from "../../../src/server/report/core/prompt/part-card.ts"
 import { BASIC_PART_SCHEMAS, BASIC_PARTS } from "../../../src/shared/report/a2ui-basic-part-list.ts"
 import {
   a2uiReportComponentSchema,
@@ -261,9 +262,7 @@ describe("A2UI のカタログ文書", () => {
     expect(
       schema.safeParse({ ...base, annotations: [{ ...annotation, index: 0.5 }] }).success,
     ).toBe(false)
-    expect(JSON.stringify(document.components.Chart)).toContain(
-      "目標を全部同じ値の2本目の series で書かず",
-    )
+    expect(partCardOf("Chart").text).toContain("目標を全部同じ値の2本目の series で書かず")
   })
 
   it("元の zod の説明が部品の props に運ばれる", () => {

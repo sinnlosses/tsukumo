@@ -16,20 +16,10 @@ import { REPORT_TOOL_NAME } from "../../../core/tsukumo-tool-name.ts"
 import { readLeafComponentFiles } from "../../../report/adapter/report-file.ts"
 import {
   REPORT_A2UI_COMPONENTS_DESCRIPTION,
-  REPORT_CHECKS_DESCRIPTION,
-  REPORT_CLOSING_DESCRIPTION,
-  REPORT_FAVOR_DESCRIPTION,
-  REPORT_KEY_FIGURES_DESCRIPTION,
+  REPORT_FIELD_DESCRIPTIONS,
   reportFigureDescription,
-  REPORT_RETROSPECTIVE_DESCRIPTION,
   REPORT_SECTIONS_DESCRIPTION,
-  REPORT_SESSION_REMAINING_DESCRIPTION,
-  REPORT_SESSION_SUMMARY_DESCRIPTION,
-  REPORT_TASK_DESCRIPTION,
-  REPORT_TITLE_DESCRIPTION,
   REPORT_TOOL_DESCRIPTION,
-  REPORT_WAITING_LINE_DESCRIPTION,
-  REPORT_WORK_PLAN_CLOSING_DESCRIPTION,
 } from "../../../report/core/prompt/report-tool.ts"
 import { hasReportField } from "../../../report/core/review/report-inheritance.ts"
 import { REPORT_CHANGED_FIELDS_ONLY_TEXT } from "../../../report/core/rules/procedure-rejection.ts"
@@ -168,7 +158,7 @@ function missingFieldsText(missing: readonly ReportArgumentField[]): string {
 
 /**
  * モデルに渡す引数の形。`Report` の欄に説明を付け、締めのセリフと待ちの一言だけ、表情を選べる名前に絞る。
- * 結論の説明は `Report` の部品の定義が持つ。
+ * 結論の説明は `Report` の部品の定義が持つ。セリフの長さは欄の説明が言うので、`text` には説明を付けない。
  */
 function a2uiInputShape(
   expressions: readonly ExpressionChoice[],
@@ -176,27 +166,20 @@ function a2uiInputShape(
 ) {
   const { Report, Section, ...others } = REPORT_COMPONENT_SCHEMAS
   const { shape } = Report
+  const described = REPORT_FIELD_DESCRIPTIONS
+  const speech = z.object({ ...speechShape(expressions), text: z.string() }).optional()
   const report = Report.extend({
-    figure: shape.figure.describe(
-      `${reportFigureDescription(figurePreference)}ここには図の部品の ID を置く。`,
-    ),
-    task: shape.task.describe(REPORT_TASK_DESCRIPTION),
-    workPlanClosing: z
-      .enum(WORK_PLAN_CLOSINGS)
-      .optional()
-      .describe(REPORT_WORK_PLAN_CLOSING_DESCRIPTION),
-    keyFigures: shape.keyFigures.describe(REPORT_KEY_FIGURES_DESCRIPTION),
-    retrospective: shape.retrospective.describe(REPORT_RETROSPECTIVE_DESCRIPTION),
-    favor: shape.favor.describe(REPORT_FAVOR_DESCRIPTION),
-    checks: shape.checks.describe(REPORT_CHECKS_DESCRIPTION),
-    title: shape.title.describe(REPORT_TITLE_DESCRIPTION),
-    sessionSummary: shape.sessionSummary.describe(REPORT_SESSION_SUMMARY_DESCRIPTION),
-    sessionRemaining: shape.sessionRemaining.describe(REPORT_SESSION_REMAINING_DESCRIPTION),
-    closing: z.object(speechShape(expressions)).optional().describe(REPORT_CLOSING_DESCRIPTION),
-    waitingLine: z
-      .object(speechShape(expressions))
-      .optional()
-      .describe(REPORT_WAITING_LINE_DESCRIPTION),
+    figure: shape.figure.describe(reportFigureDescription(figurePreference)),
+    task: shape.task.describe(described.task),
+    workPlanClosing: z.enum(WORK_PLAN_CLOSINGS).optional(),
+    retrospective: shape.retrospective.describe(described.retrospective),
+    favor: shape.favor.describe(described.favor),
+    checks: shape.checks.describe(described.checks),
+    title: shape.title.describe(described.title),
+    sessionSummary: shape.sessionSummary.describe(described.sessionSummary),
+    sessionRemaining: shape.sessionRemaining.describe(described.sessionRemaining),
+    closing: speech.describe(described.closing),
+    waitingLine: speech.describe(described.waitingLine),
   })
   return {
     components: z

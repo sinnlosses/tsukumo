@@ -40,7 +40,7 @@ tsukumo は推し量らない。
 tsukumo はプログレスバーのフェーズの名前を見ず、欄があるときだけ描く（フェーズの名前を契約にすると他のワークフローを縛るため）。欄が欠けても差し戻さず、数えない。
 
 `task.outcome` はタスク見出し行の終わり方で、プログレスバーは閉じない。どこへ送ったかは tsukumo の関心にしない。
-`task.genre` は種類ごとの既定のセクションの並びを選ぶだけで、描き方も差し戻しも変えない（並びの正典は `REPORT_TASK_DESCRIPTION`）。
+`task.genre` は種類ごとの既定のセクションの並びを選ぶだけで、描き方も差し戻しも変えない（並びの正典は `REPORT_FIELD_CARD_NOTES` の `task`）。
 `checks` に `ng` の行がある `report` の `finished` は差し戻す（`docs/architecture/display.md`「出力の分離（セリフと詳細）」）。
 
 ## 委譲の返却

@@ -62,7 +62,7 @@
 
 - **英語識別子**: `genre`（`report` の `task` の欄）。型は `ReportGenre`、値は `work`（作業）・`decision`（判断）・
   `research`（調べもの）。無い・読めないときは `unspecified`
-- **定義**: **終わった仕事の報告の型**。種類ごとに既定のセクションの並びを選ぶ（並びの正典は `REPORT_TASK_DESCRIPTION`）。
+- **定義**: **終わった仕事の報告の型**。種類ごとに既定のセクションの並びを選ぶ（並びの正典は `REPORT_FIELD_CARD_NOTES` の `task`）。
   省略できる。止めた報告（`outcome` の `stopped`）は種類によらず中断の型で、この欄とは別
 - **避ける言い方**: 報告の kind、type（`kind` は `ReportTask` の判別子）
 

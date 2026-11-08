@@ -3,6 +3,7 @@
 import { isPlainObject } from "remeda"
 import { z } from "zod"
 
+import { partCardNote } from "./part-card-note.ts"
 import { compareSideSchema } from "./report-block-diagram.ts"
 import { aside, type DeepReadonly, fold, inlineText, omittable } from "./report-block-field.ts"
 
@@ -10,12 +11,14 @@ export const REPORT_CELL_STATUSES = ["ok", "warn", "ng"] as const
 
 const cellSchema = z.union([
   inlineText,
-  z
-    .object({ status: z.enum(REPORT_CELL_STATUSES), text: inlineText })
-    .describe("状態のセル。記号付きの印で描くので、状態を言う文字も text に書く"),
-  z
-    .object({ from: inlineText, to: inlineText })
-    .describe("変わったセル（A → B と書かず前と後に分ける。状態は隣の列に置く）"),
+  partCardNote(
+    z.object({ status: z.enum(REPORT_CELL_STATUSES), text: inlineText }),
+    "状態のセル。記号付きの印で描くので、状態を言う文字も text に書く",
+  ),
+  partCardNote(
+    z.object({ from: inlineText, to: inlineText }),
+    "変わったセル（A → B と書かず前と後に分ける。状態は隣の列に置く）",
+  ),
   z.object({ tag: inlineText }),
 ])
 
@@ -24,15 +27,12 @@ const tableRowSchema = z.union([
   z.object({
     cells: z.array(cellSchema),
     emphasis: z.literal(true).optional(),
-    detail: inlineText.optional().describe("セルに入らない行ごとの詳しい中身。開いて読む"),
-    depth: z
-      .number()
-      .int()
-      .min(1)
-      .max(3)
-      .optional()
-      .describe("1列目の字下げの段。親の行の直下に1段深く置く"),
-    best: z.number().int().min(0).optional().describe("この行で最良のセルの列（0始まり）"),
+    detail: partCardNote(inlineText.optional(), "セルに入らない行ごとの詳しい中身。開いて読む"),
+    depth: partCardNote(
+      z.number().int().min(1).max(3).optional(),
+      "1列目の字下げの段。親の行の直下に1段深く置く",
+    ),
+    best: partCardNote(z.number().int().min(0).optional(), "この行で最良のセルの列（0始まり）"),
   }),
 ])
 
@@ -66,26 +66,28 @@ export const MIN_TABLE_ROWS = 1
 export const tableBlockSchema = z
   .object({
     kind: z.literal("table"),
-    title: inlineText.describe(
+    title: partCardNote(
+      inlineText,
       "セルに無いことだけ: 何を並べた表か・並べた基準・数の出どころ。数と向きで主張を言う1文。評価語なし",
     ),
-    columns: z.array(inlineText).min(MIN_TABLE_COLUMNS).describe("列は5つまで"),
-    rows: z
-      .array(tableRowSchema)
-      .min(MIN_TABLE_ROWS)
-      .describe("行ごとのセル。数は columns と揃える。セルは1行、空にせず「なし」と書く"),
+    columns: partCardNote(z.array(inlineText).min(MIN_TABLE_COLUMNS), "列は5つまで"),
+    rows: partCardNote(
+      z.array(tableRowSchema).min(MIN_TABLE_ROWS),
+      "行ごとのセル。数は columns と揃える。セルは1行、空にせず「なし」と書く",
+    ),
     rest: omittable(inlineText, ""),
-    emphasisColumn: z
-      .number()
-      .int()
-      .min(0)
-      .optional()
-      .describe("案を列に並べた表で採った案の列（0始まり）"),
-    heat: z
-      .object({ from: z.number().int().min(0), to: z.number().int().min(0) })
-      .optional()
-      .describe("数の列の範囲（0始まり・両端含む）を濃淡で塗る。範囲は0以上の数だけ"),
-    totals: z.literal(true).optional().describe("heat の範囲の行と列の合計「計」を描く側が足す"),
+    emphasisColumn: partCardNote(
+      z.number().int().min(0).optional(),
+      "案を列に並べた表で採った案の列（0始まり）",
+    ),
+    heat: partCardNote(
+      z.object({ from: z.number().int().min(0), to: z.number().int().min(0) }).optional(),
+      "数の列の範囲（0始まり・両端含む）を濃淡で塗る。範囲は0以上の数だけ",
+    ),
+    totals: partCardNote(
+      z.literal(true).optional(),
+      "heat の範囲の行と列の合計「計」を描く側が足す",
+    ),
     fold,
     aside,
   })
@@ -110,17 +112,17 @@ export const matrixBlockSchema = z
     title: inlineText,
     columns: z.array(inlineText).min(1),
     rows: z.array(z.object({ name: inlineText, cells: z.array(matrixCellSchema) })).min(1),
-    emphasisColumn: z
-      .number()
-      .int()
-      .min(0)
-      .optional()
-      .describe("採った列（0始まり）。見出しに「推奨」"),
-    footer: z
-      .array(z.object({ name: inlineText, cells: z.array(inlineText) }))
-      .max(3)
-      .optional()
-      .describe("末尾の値の行（月額・印の数）"),
+    emphasisColumn: partCardNote(
+      z.number().int().min(0).optional(),
+      "採った列（0始まり）。見出しに「推奨」",
+    ),
+    footer: partCardNote(
+      z
+        .array(z.object({ name: inlineText, cells: z.array(inlineText) }))
+        .max(3)
+        .optional(),
+      "末尾の値の行（月額・印の数）",
+    ),
     fold,
     aside,
   })
@@ -180,23 +182,29 @@ export const statItemsSchema = z
     z.object({
       before: omittable(z.string(), ""),
       value: z.string(),
-      total: omittable(z.string(), "").describe(
+      total: partCardNote(
+        omittable(z.string(), ""),
         "全体の数（割合を帯で添える。value が全体のうちの数のとき）",
       ),
       label: inlineText,
-      series: omittable(z.array(z.number()), []).describe(
+      series: partCardNote(
+        omittable(z.array(z.number()), []),
         "推移の数の並び（3つ以上。省いてよい）。value の左に折れ線で添える",
       ),
-      better: omittable(z.enum(["up", "down", ""]), "").describe(
+      better: partCardNote(
+        omittable(z.enum(["up", "down", ""]), ""),
         "before と value が数のとき、増えて良いなら up・減って良いなら down",
       ),
-      target: omittable(z.string(), "").describe(
+      target: partCardNote(
+        omittable(z.string(), ""),
         "目標の値（value と同じ単位の数だけ。例: 99.9%）。以上か以下かは better が言う（up は以上、down は以下）。達否は tsukumo が value と比べて印にする",
       ),
-      targetGap: omittable(z.string(), "").describe(
+      targetGap: partCardNote(
+        omittable(z.string(), ""),
         "目標との差（例: −0.08pt）。書き手が書き、tsukumo は計算しない。省いてよい",
       ),
-      change: omittable(z.string(), "").describe(
+      change: partCardNote(
+        omittable(z.string(), ""),
         "前との差の字（例 −5件（−11.9%））。向きは better で付く",
       ),
     }),

@@ -29,14 +29,32 @@ describe("partCardOf", () => {
 
   it("説明の照合は、説明を1つ消したカードの欠けを見つける", () => {
     const descriptions = descriptionsIn(
-      z.toJSONSchema(REPORT_COMPONENT_SCHEMAS.Graph, { io: "input" }),
+      z.toJSONSchema(REPORT_COMPONENT_SCHEMAS.Report, { io: "input" }),
     )
     const removed = descriptions[0] ?? ""
-    const text = cardText("Graph").replace(JSON.stringify(removed).slice(1, -1), "")
+    const text = cardText("Report").replace(JSON.stringify(removed).slice(1, -1), "")
 
     expect(removed).not.toBe("")
     expect(missing(descriptions, text)).toContain(removed)
   })
+
+  it.each([
+    { name: "Graph", note: "1行1矢印。" },
+    { name: "Table", note: "true で列の見出しを押して並べ替えられる" },
+    { name: "Svg", note: "a〜e は区別の色、ok・warn・ng は状態の色" },
+    { name: "ParameterSlider", note: "読み手が振る数のつまみ。" },
+    { name: "Stats", note: "目標の値（value と同じ単位の数だけ。" },
+  ] as const)(
+    "$name の欄の書き方は、定義の JSON Schema に無くカードにだけ載る",
+    ({ name, note }) => {
+      const definition = JSON.stringify(
+        z.toJSONSchema(REPORT_COMPONENT_SCHEMAS[name], { io: "input" }),
+      )
+
+      expect(definition).not.toContain(note)
+      expect(cardText(name)).toContain(note)
+    },
+  )
 
   it("$defs を持つ部品のカードは $defs ごと載せる", () => {
     for (const name of ["Compare", "Graph", "Svg"]) {
@@ -61,20 +79,22 @@ describe("partCardOf", () => {
   })
 
   it.each(["ParameterSlider", "ParameterCheckBox", "Stats", "Paragraph", "Chart", "ChartGrid"])(
-    "%s のカードに、式を結ぶ例が載り、構造の検査に通る",
+    "%s のカードに、式の書き方と式を結ぶ例が載り、例は構造の検査に通る",
     (name) => {
       const text = cardText(name)
       const heading = text.split("\n").findIndex((line) => line.startsWith("式を結ぶ例"))
       const parts = z.array(z.unknown()).parse(JSON.parse(text.split("\n")[heading + 1] ?? ""))
 
+      expect(text).toContain("触れるレポート:")
       expect(heading).toBeGreaterThan(0)
       expect(JSON.stringify(parts)).toMatch(/"call":"(expr|format)"/)
       expect(a2uiStructureFaults(parts)).toEqual([])
     },
   )
 
-  it("式を結ぶ例の無い部品のカードに、式の例の節は載らない", () => {
+  it("式を結ぶ例の無い部品のカードに、式の書き方と例の節は載らない", () => {
     expect(cardText("Table")).not.toContain("式を結ぶ例")
+    expect(cardText("Table")).not.toContain("触れるレポート:")
   })
 
   it("Trace のカードに、状態と出力の欄と例が載る", () => {
