@@ -33,6 +33,7 @@ import { filterBadges, hasBoundChoicePicker, isSortableTable } from "./domain/a2
 import { isPlainHeadingText } from "./domain/plain-heading.ts"
 import { ChoicePicker, InteractiveTable } from "./leaf/a2ui-interactive-view.tsx"
 import { RegionBox, RegionChunks, ReportFrame } from "./leaf/body-region.tsx"
+import { ChartTermLinkScope, chartLinkInputsOf } from "./leaf/chart-term-link.tsx"
 import { DirectLeaf, directLeafViewOf } from "./leaf/direct-leaf-view.tsx"
 import { NoteBody } from "./leaf/note-leaf.tsx"
 import { liveLeafElement, useReevaluatedLeaves } from "./leaf/parameter-knob.tsx"
@@ -252,13 +253,13 @@ function SectionContent(props: { readonly id: string }): ReactElement {
   const headingLine = section?.heading ?? ""
   const headingText = report.body.sections.find((s) => s.id === section?.regionId)?.heading ?? ""
   const drawnDirectly = headingLine !== "" && isPlainHeadingText(headingText)
+  const ids = part?.component === "Section" ? part.children : [props.id]
   return (
     <>
       {drawnDirectly && <h4>{headingText}</h4>}
-      <PartRun
-        lead={drawnDirectly ? "" : headingLine}
-        ids={part?.component === "Section" ? part.children : [props.id]}
-      />
+      <ChartTermLinkScope charts={chartLinkInputsOf(ids, report.parts, report.leaves)}>
+        <PartRun lead={drawnDirectly ? "" : headingLine} ids={ids} />
+      </ChartTermLinkScope>
     </>
   )
 }

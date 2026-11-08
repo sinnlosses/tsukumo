@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { ChartBlock } from "../../../../../src/browser/features/report/renderer/chart-block.tsx"
 import type { ChartTooltipControl } from "../../../../../src/browser/features/report/renderer/chart-tooltip.ts"
+import { FenceFigure } from "../../../../../src/browser/features/report/renderer/fence-figure.tsx"
 import { stubIntersectionObserver } from "../../../../fixture/intersection.ts"
 
 // jsdom には canvas が無く、色のトークンも解けない。
@@ -184,6 +185,26 @@ describe("ChartBlock の後片付け", () => {
       expect(view.container.querySelector("[data-chart-failed='yes']")).not.toBeNull()
     })
     expect(instances).toHaveLength(0)
+  })
+})
+
+describe("FenceFigure 経由の controlRef", () => {
+  it("chart のフェンスでも controlRef から札を頼める", async () => {
+    const control = createRef<ChartTooltipControl>()
+    render(<FenceFigure language="chart" spec={SPEC_ITEMS} controlRef={control} />)
+    finishLoading()
+    await waitFor(() => {
+      expect(instances).toHaveLength(1)
+    })
+
+    act(() => {
+      control.current?.show(0)
+    })
+
+    expect(activeCalls.at(-1)).toEqual([
+      { datasetIndex: 0, index: 0 },
+      { datasetIndex: 1, index: 0 },
+    ])
   })
 })
 

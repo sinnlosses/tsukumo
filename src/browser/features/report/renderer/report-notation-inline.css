@@ -133,6 +133,17 @@
       margin: 0 0 var(--space-2xs);
     }
   }
+  & [data-chart-term] {
+    text-decoration: underline dashed;
+    text-decoration-color: var(--ink-soft);
+    text-underline-offset: 0.25em;
+    cursor: help;
+    &:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+      border-radius: var(--radius-sm);
+    }
+  }
   & a.report-source {
     padding: 0 0.35em;
     border: 1px solid var(--rule);

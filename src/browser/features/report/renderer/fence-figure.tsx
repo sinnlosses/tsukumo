@@ -1,8 +1,9 @@
 // フェンスの言語（mermaid・chart・number-line・bullet・scatter・histogram）から、図・グラフの部品を選ぶ。
 
-import type { ReactElement } from "react"
+import type { ReactElement, Ref } from "react"
 
 import { ChartBlock } from "./chart-block.tsx"
+import type { ChartTooltipControl } from "./chart-tooltip.ts"
 import { GaugeBlock } from "./gauge-block.tsx"
 import { HistogramBlock } from "./histogram-block.tsx"
 import { MermaidBlock } from "./mermaid-block.tsx"
@@ -28,12 +29,14 @@ export function isFenceFigureLanguage(language: string): language is FenceFigure
 export function FenceFigure(props: {
   readonly language: FenceFigureLanguage
   readonly spec: string
+  /** `chart` のときだけ、図の札を外から出す手続きの受け口。 */
+  readonly controlRef?: Ref<ChartTooltipControl>
 }): ReactElement {
   switch (props.language) {
     case "mermaid":
       return <MermaidBlock key={props.spec} code={props.spec} />
     case "chart":
-      return <ChartBlock spec={props.spec} />
+      return <ChartBlock spec={props.spec} controlRef={props.controlRef} />
     case "number-line":
     case "bullet":
       return <GaugeBlock spec={props.spec} />

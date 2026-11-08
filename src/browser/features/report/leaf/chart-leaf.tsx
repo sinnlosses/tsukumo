@@ -8,6 +8,7 @@ import type { LeafValue } from "../../../../shared/report/report-leaf-value.ts"
 import { FAILED_VALUE_TEXT } from "../../../../shared/report/report-static-component-list.ts"
 import { FigureFence } from "../markdown.tsx"
 import { chartConfigOf } from "../report-diagram-markdown.ts"
+import { useChartTermLink } from "./chart-term-link.tsx"
 import { FoldedLeafFrame } from "./report-leaf-frame.tsx"
 
 export function ChartLeaf(props: {
@@ -15,13 +16,14 @@ export function ChartLeaf(props: {
   readonly value: LeafValue
 }): ReactElement {
   const { part, value } = props
+  const link = useChartTermLink()
   if (part.component !== "Chart") {
     return <></>
   }
   const spec = JSON.stringify(chartConfigOf({ ...part, kind: "chart" }))
   return (
     <FoldedLeafFrame value={value} title={part.title} fit={false} fold={part.fold} swap={false}>
-      <FigureFence language="chart" spec={spec} />
+      <FigureFence language="chart" spec={spec} controlRef={link.register(part.id)} />
     </FoldedLeafFrame>
   )
 }

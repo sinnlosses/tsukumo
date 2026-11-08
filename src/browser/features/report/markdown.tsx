@@ -4,7 +4,7 @@
 // 読み終わるまでは高さを持たない空の器に `aria-busy="true"` を出す。
 // 読めなかったときは本文を字のまま出し、`aria-busy` を出さない。
 
-import type { ReactElement } from "react"
+import type { ReactElement, Ref } from "react"
 
 import type {
   REPORT_DRAWN_MARK_NAMES,
@@ -13,6 +13,7 @@ import type {
 import type { TIMELINE_MARK_NAMES } from "../../../shared/report/timeline-markdown.ts"
 import { deferredModule } from "../../stores/deferred-module.ts"
 import styles from "./markdown.module.css"
+import type { ChartTooltipControl } from "./renderer/chart-tooltip.ts"
 import type { FenceFigureLanguage } from "./renderer/fence-figure.tsx"
 import { ZoomableSvgFigure } from "./renderer/figure-zoom.tsx"
 import { diffLines, sideLines, type SideLineDiff } from "./renderer/line-diff.ts"
@@ -334,6 +335,7 @@ export function Markdown(props: MarkdownProps): ReactElement {
 export function FigureFence(props: {
   readonly language: FenceFigureLanguage
   readonly spec: string
+  readonly controlRef?: Ref<ChartTooltipControl>
 }): ReactElement {
   const state = markdownRenderer.useLoadState()
   switch (state.kind) {
@@ -342,7 +344,13 @@ export function FigureFence(props: {
     case "failed":
       return <pre>{props.spec}</pre>
     case "ready":
-      return <state.module.FenceFigure language={props.language} spec={props.spec} />
+      return (
+        <state.module.FenceFigure
+          language={props.language}
+          spec={props.spec}
+          controlRef={props.controlRef}
+        />
+      )
   }
 }
 
@@ -368,7 +376,7 @@ export function InlineMarkdown(props: MarkdownProps): ReactElement {
     case "failed":
       return <>{props.text}</>
     case "ready":
-      return <state.module.InlineMarkdown text={props.text} />
+      return <state.module.InlineMarkdown text={props.text} chartTerms={props.chartTerms} />
   }
 }
 

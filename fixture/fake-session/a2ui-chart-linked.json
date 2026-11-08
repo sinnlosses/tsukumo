@@ -1,0 +1,74 @@
+{
+  "name": "a2ui-chart-linked",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "地の文の語と同じ節の図の項目を結んで見たい（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 1500,
+      "event": {
+        "kind": "report",
+        "toolUseId": "fake-a2ui-chart-linked-1",
+        "components": [
+          {
+            "id": "root",
+            "component": "Report",
+            "conclusion": ["架空の結論: 地の文の語に重ねると、同じ節の図の項目に札が出る。"],
+            "children": ["s1"],
+            "closing": {
+              "text": "重ねてみて！",
+              "expression": "proud"
+            }
+          },
+          {
+            "id": "s1",
+            "component": "Section",
+            "heading": "架空の件数",
+            "children": ["p1", "c1"]
+          },
+          {
+            "id": "p1",
+            "component": "Paragraph",
+            "text": "架空1月は件数が多く、架空2月でいったん減り、架空3月に戻った。"
+          },
+          {
+            "id": "c1",
+            "component": "Chart",
+            "title": "架空の件数の推移",
+            "chartKind": "bar",
+            "labels": ["架空1月", "架空2月", "架空3月"],
+            "series": [
+              {
+                "name": "架空系列A",
+                "values": [12, 6, 9]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "afterMs": 1550,
+      "event": {
+        "kind": "tool-finished",
+        "toolUseId": "fake-a2ui-chart-linked-1",
+        "content": "ok",
+        "isError": false
+      }
+    },
+    {
+      "afterMs": 2300,
+      "event": {
+        "kind": "turn-finished",
+        "outcome": {
+          "kind": "completed"
+        }
+      }
+    }
+  ]
+}
