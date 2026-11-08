@@ -27,6 +27,7 @@ import type { ComposerSurface } from "./domain/composer-surface.ts"
 import { FileSuggestions } from "./file-suggestion-list.tsx"
 import { NEW_SESSION_LABEL, type ComposerModel } from "./hooks/use-composer.ts"
 import type { CompletionTrigger } from "./hooks/use-suggestion.ts"
+import { ReplyNoteQueue } from "./reply-note-queue.tsx"
 import { TextAreaSurface } from "./text-area-surface.tsx"
 import { PhoneTurnAction, TurnStatus } from "./turn-status.tsx"
 
@@ -55,6 +56,7 @@ export function PresentationalComposer({
   band,
   answering,
   onSubmit,
+  replyNotes,
   onInsertTrigger,
   newSession,
 }: PresentationalComposerProps): ReactElement {
@@ -64,6 +66,7 @@ export function PresentationalComposer({
       className={clsx(styles["dispatch-form"], answering && styles["is-answering"])}
       onSubmit={onSubmit}
     >
+      <ReplyNoteQueue {...replyNotes} />
       {(band.kind === "disconnected" || band.kind === "clear-dropped") && (
         <Text
           element="p"

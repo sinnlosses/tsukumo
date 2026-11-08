@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest"
 
-import { headedSectionIdsOfTurn } from "../../../../../../../../src/browser/components/page/conversation/components/main-view/domain/headed-section.ts"
+import { headedSectionIdsOfTurn } from "../../../../../../src/browser/components/page/conversation/domain/headed-section.ts"
 import {
   isInterimStep,
   type MainViewStep,
   type MainViewTurn,
-} from "../../../../../../../../src/shared/session/main-view-shape.ts"
-import { noRootA2ui } from "../../../../../../../fixture/main-view-entry.ts"
+} from "../../../../../../src/shared/session/main-view-shape.ts"
+import { noRootA2ui } from "../../../../../fixture/main-view-entry.ts"
 
 /** 見出しが空文字の節は、見出しの無いセクションの欄（ID は並びの位置のまま）。 */
 function textStep(

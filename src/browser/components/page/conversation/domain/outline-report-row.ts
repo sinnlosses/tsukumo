@@ -1,6 +1,6 @@
 // やり取りの列のレポートの行（見ているやり取りの行の下、節の行の上）に出すラベルと題。
 
-import type { MainViewTurn } from "../../../../../../../shared/session/main-view-shape.ts"
+import type { MainViewTurn } from "../../../../../shared/session/main-view-shape.ts"
 import { shownTextStepOf } from "./headed-section.ts"
 
 /**

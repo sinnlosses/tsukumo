@@ -22,16 +22,19 @@ import type { SessionId } from "../../../../../../../shared/session/session-id.t
 import { useDebouncedCallback } from "../../../../../../hooks/use-debounced-callback.ts"
 import { usePhoneWidth } from "../../../../../../hooks/use-phone-width.ts"
 import { useInquiryJump } from "../../../../../../stores/inquiry-jump.ts"
+import { useReplySessionKey } from "../../../../../../stores/reply-note-list.ts"
 import { useRestartRefused, useSession, useTurnRunning } from "../../../../../../stores/session.ts"
 import { clearSessionDraft, saveSessionDraft } from "../../../domain/composer-draft-storage.ts"
 import { isClearWithArgs } from "../../../domain/slash-clear.ts"
 import "../../../stores/composer-draft-session.ts"
 import { EMPTY_DRAFT, useComposerDraft, type Draft } from "../../../stores/composer-draft.ts"
 import { useInquiryAnswer } from "../../../stores/inquiry-answer.ts"
+import { lastTurnId, settleBatchSent, useReplyBatch } from "../../../stores/reply-batch.ts"
 import { loadComposerMode, saveComposerMode, type ComposerMode } from "../domain/composer-mode.ts"
 import type { ComposerKey, ComposerSurface } from "../domain/composer-surface.ts"
 import { blurOnEscape, useComposerFocusTiming } from "./use-composer-focus.ts"
 import { usePromptImage, type PromptImageModel } from "./use-prompt-image.ts"
+import { useReplyNoteQueue, type ReplyNoteQueueModel } from "./use-reply-note-queue.ts"
 import {
   insertedTrigger,
   useSuggestion,
@@ -85,6 +88,8 @@ export type ComposerModel = {
   /** 質問に答えている間か（枠を `--state-warn` にし、送るボタンの字を変える）。 */
   readonly answering: boolean
   readonly onSubmit: (event: { readonly preventDefault: () => void }) => void
+  /** 入力欄の上の「頼みごと」の列。 */
+  readonly replyNotes: ReplyNoteQueueModel
   /** `/` / `@` のボタン。キャレットの位置にその文字を打ち、入力欄へフォーカスを戻す。 */
   readonly onInsertTrigger: (trigger: CompletionTrigger) => void
   /** 道具の行の「＋ 新規」。ターンの最中は塞ぎ、理由を `title` に持たせる。 */
@@ -117,6 +122,10 @@ export function useComposer(): ComposerModel {
   const replaceDraft = useComposerDraft((state) => state.replaceDraft)
   // `/clear` の続きがあって送らなかった文。下書きがこの文のままのあいだだけ帯を出す。
   const [blockedClearText, setBlockedClearText] = useState<string | undefined>(undefined)
+  const replyNotes = useReplyNoteQueue()
+  const replySessionKey = useReplySessionKey()
+  const batchNoteIds = useReplyBatch((state) => state.noteIds)
+  const dispatchAwaited = useSession((session) => session.dispatchAwaited)
   const surfaceRef = useRef<ComposerSurface | null>(null)
   const [mode, setMode] = useState<ComposerMode>(loadComposerMode)
   useComposerFocusTiming(surfaceRef)
@@ -158,9 +167,26 @@ export function useComposer(): ComposerModel {
     } else if (isClearWithArgs(trimmed)) {
       setBlockedClearText(trimmed)
       return
+    } else if (batchNoteIds.length > 0) {
+      // まとめた下書きは、受け付けられたと分かってから空にする（断られたら下書きと組を残す）。
+      const previousLastTurnId = lastTurnId()
+      const sendBatch = async (): Promise<void> => {
+        const result = await dispatchAwaited((client) =>
+          client.session.prompt({ text: trimmed, images: promptImage.images, routing }),
+        )
+        if (result.kind !== "ok") return
+        settleBatchSent(replySessionKey, batchNoteIds, previousLastTurnId)
+        clearAfterSend()
+      }
+      void sendBatch()
+      return
     } else {
       void dispatch.session.prompt({ text: trimmed, images: promptImage.images, routing })
     }
+    clearAfterSend()
+  }
+
+  const clearAfterSend = (): void => {
     replaceDraft(EMPTY_DRAFT)
     if (sessionId !== undefined) {
       saveDraftLater(sessionId, EMPTY_DRAFT)
@@ -268,6 +294,7 @@ export function useComposer(): ComposerModel {
       }
       submit("aside-when-background")
     },
+    replyNotes,
     onInsertTrigger: insertTrigger,
     newSession: {
       disabled: restartRefused,

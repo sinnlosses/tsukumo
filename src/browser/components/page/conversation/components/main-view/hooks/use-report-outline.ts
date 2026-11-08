@@ -23,6 +23,7 @@ import {
   useReadingSection,
   type ReportOutlineEntry,
 } from "../../../../../../stores/reading-section.ts"
+import type { OutlineReport } from "../../../domain/outline-report-row.ts"
 import type { TurnResult } from "../../../domain/turn-result.ts"
 import type { HeadNotice, HeadNoticeAction } from "../domain/head-notice.ts"
 import {
@@ -39,7 +40,6 @@ import {
   type OutlinePanel,
 } from "../domain/outline-panel.ts"
 import { outlineReportHeadOf } from "../domain/outline-report-head.ts"
-import type { OutlineReport } from "../domain/outline-report-row.ts"
 import { isScrolledToEnd, readHeadingIndexOf } from "../domain/reading-section.ts"
 import { readableOutlineItems, type OutlineItem } from "../domain/report-heading.ts"
 import { subscribeScrollFrame } from "./scroll-frame.ts"

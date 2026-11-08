@@ -205,6 +205,76 @@
   }
 }
 
+/* 入力欄の上の「頼みごと n 件」の列。まだ送っていない付箋を番号順に並べる。 */
+.reply-queue-slot {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 auto;
+  max-height: 9rem;
+  padding-bottom: var(--stack-block);
+}
+/* 下書きが入っているときだけ、下書きの欄を読める高さ（数行）より縮めない。付箋だけのときは列を縮めない。 */
+.reply-queue-slot ~ .dispatch-text-wrap:has(textarea:not(:placeholder-shown)) {
+  min-height: 11rem;
+}
+.reply-queue-draft {
+  flex: 0 0 auto;
+  border-radius: var(--radius-md);
+}
+.reply-queue {
+  display: flex;
+  flex-direction: column;
+  gap: var(--stack-tight);
+  min-height: 0;
+  padding: var(--inset-control);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-lg);
+}
+.reply-queue-head,
+.reply-queue-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--inline-control);
+  font-size: var(--font-secondary);
+}
+.reply-queue-head strong {
+  color: var(--accent);
+}
+.reply-queue-hint {
+  color: var(--ink-quiet);
+}
+.reply-queue-list {
+  min-height: 0;
+  overflow-y: auto;
+  margin: 0;
+  padding-left: calc(var(--inline-group) * 2);
+  list-style: decimal outside;
+}
+.reply-queue-item {
+  display: list-item;
+  list-style: decimal;
+  padding-block: var(--stack-tight);
+  cursor: grab;
+}
+.reply-queue-item::marker {
+  color: var(--accent);
+}
+.reply-queue-item:focus-visible {
+  outline: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+}
+.reply-queue-body {
+  display: block;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+.reply-queue-place {
+  display: block;
+  color: var(--ink-quiet);
+  font-size: var(--font-secondary);
+}
+
 /* 枠・角丸・地の `composes` の参照先の相対パスは `@import` した先のファイルでは解けないので、入口のここに置く。
    狭い画面の外では `display: none` か描かれないので、見た目は変わらない。 */
 .phone-attach-sheet {

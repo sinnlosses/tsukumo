@@ -1,10 +1,7 @@
 // 見出しのある節の欄の ID（`MainViewReportSection.id`）を数える。
 
-import type {
-  MainViewStep,
-  MainViewTurn,
-} from "../../../../../../../shared/session/main-view-shape.ts"
-import { reportHeadedSections } from "../../../../../../domain/main-view/main-view-report-body.ts"
+import type { MainViewStep, MainViewTurn } from "../../../../../shared/session/main-view-shape.ts"
+import { reportHeadedSections } from "../../../../domain/main-view/main-view-report-body.ts"
 
 const HEADED_SECTION_IDS_BY_TURN = new WeakMap<MainViewTurn, readonly number[]>()
 

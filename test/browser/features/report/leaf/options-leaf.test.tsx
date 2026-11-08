@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, screen } from "@testing-library/react"
+import { act, cleanup, fireEvent, screen } from "@testing-library/react"
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest"
 
 import {
@@ -112,6 +112,24 @@ describe("Options の「この案で進める」", () => {
     fireEvent.click(screen.getByRole("button", { name: "付箋を外す" }))
 
     expect(container.querySelector(`.${leafFrameClassNames.gutter}`)).toBeNull()
+    expect(screen.getAllByRole("button", { name: "この案で進める" })).toHaveLength(ITEMS.length)
+  })
+
+  it("送った付箋は欄外に「送った → やり取り n で作業中」と残り、外すボタンは出ない", () => {
+    const { container } = renderNoteLeaf(part, { port: true })
+    clickNthButton("この案で進める", 1)
+    const [note] = Object.entries(useReplyNotes.getState().notesBySession).flatMap(
+      ([sessionKey, notes]) => notes.map((candidate) => ({ sessionKey, id: candidate.id })),
+    )
+    if (note === undefined) throw new Error("付箋が無い")
+
+    act(() => {
+      useReplyNotes.getState().markSent(note.sessionKey, [note.id], 3)
+    })
+
+    const card = container.querySelector(`.${leafFrameClassNames.gutterNote}`)
+    expect(card?.textContent).toContain("送った → やり取り 3 で作業中")
+    expect(screen.queryByRole("button", { name: "付箋を外す" })).toBeNull()
     expect(screen.getAllByRole("button", { name: "この案で進める" })).toHaveLength(ITEMS.length)
   })
 

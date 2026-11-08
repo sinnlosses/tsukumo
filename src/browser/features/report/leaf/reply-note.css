@@ -33,6 +33,9 @@
   color: var(--ink);
   overflow-wrap: anywhere;
 }
+.note-card.is-sent {
+  border-left-color: var(--state-ok);
+}
 .note-card-head {
   display: flex;
   align-items: baseline;

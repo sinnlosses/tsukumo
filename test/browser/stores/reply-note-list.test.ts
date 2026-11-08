@@ -61,6 +61,55 @@ describe("useReplyNotes", () => {
     expect(notesIn("s1")).toHaveLength(1)
   })
 
+  describe("moveNote", () => {
+    function threeNotes(): readonly string[] {
+      return [0, 1, 2]
+        .map((index) => useReplyNotes.getState().addNote("s1", targetAt(index), String(index)))
+        .map((note) => note.id)
+    }
+    const order = () => notesIn("s1").map((note) => note.body)
+
+    it("先頭へ動かせる", () => {
+      const ids = threeNotes()
+      useReplyNotes.getState().moveNote("s1", ids[2] ?? "", 0)
+      expect(order()).toEqual(["2", "0", "1"])
+    })
+
+    it("末尾へ動かせる", () => {
+      const ids = threeNotes()
+      useReplyNotes.getState().moveNote("s1", ids[0] ?? "", 2)
+      expect(order()).toEqual(["1", "2", "0"])
+    })
+
+    it("範囲の外は端に収める", () => {
+      const ids = threeNotes()
+      useReplyNotes.getState().moveNote("s1", ids[0] ?? "", 99)
+      expect(order()).toEqual(["1", "2", "0"])
+      useReplyNotes.getState().moveNote("s1", ids[0] ?? "", -5)
+      expect(order()).toEqual(["0", "1", "2"])
+    })
+
+    it("送った付箋は動かさず、動かそうとしても何も変わらない", () => {
+      const ids = threeNotes()
+      useReplyNotes.getState().markSent("s1", [ids[0] ?? ""], 4)
+      useReplyNotes.getState().moveNote("s1", ids[0] ?? "", 2)
+      expect(order()).toEqual(["0", "1", "2"])
+      useReplyNotes.getState().moveNote("s1", ids[2] ?? "", 0)
+      expect(order()).toEqual(["0", "2", "1"])
+    })
+  })
+
+  it("markSent は組の付箋だけを送ったにして番号を書く", () => {
+    const a = useReplyNotes.getState().addNote("s1", targetAt(0), "a")
+    const b = useReplyNotes.getState().addNote("s1", targetAt(1), "b")
+    useReplyNotes.getState().markSent("s1", [a.id], 7)
+    expect(notesIn("s1").map((note) => note.state)).toEqual([
+      { kind: "sent", turn: 7 },
+      { kind: "unsent" },
+    ])
+    expect(notesIn("s1")[1]?.id).toBe(b.id)
+  })
+
   it("unsentNotesAt は送信済みの付箋を含めない", () => {
     const note = useReplyNotes.getState().addNote("s1", targetAt(0), "a")
     expect(unsentNotesAt(notesIn("s1"), note.target.key)).toEqual([note])

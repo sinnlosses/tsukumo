@@ -1,16 +1,16 @@
 import { describe, expect, it } from "vitest"
 
-import { outlineReportOf } from "../../../../../../../../src/browser/components/page/conversation/components/main-view/domain/outline-report-row.ts"
-import { mainViewDraftOf } from "../../../../../../../../src/browser/domain/main-view/a2ui-draft-view.ts"
-import type { ReportTask } from "../../../../../../../../src/shared/report/report-task.ts"
+import { outlineReportOf } from "../../../../../../src/browser/components/page/conversation/domain/outline-report-row.ts"
+import { mainViewDraftOf } from "../../../../../../src/browser/domain/main-view/a2ui-draft-view.ts"
+import type { ReportTask } from "../../../../../../src/shared/report/report-task.ts"
 import {
   isInterimStep,
   type MainViewDraft,
   type MainViewStep,
   type MainViewTurn,
-} from "../../../../../../../../src/shared/session/main-view-shape.ts"
-import { STAGED_PARTS } from "../../../../../../../fixture/a2ui-component.ts"
-import { noRootA2ui } from "../../../../../../../fixture/main-view-entry.ts"
+} from "../../../../../../src/shared/session/main-view-shape.ts"
+import { STAGED_PARTS } from "../../../../../fixture/a2ui-component.ts"
+import { noRootA2ui } from "../../../../../fixture/main-view-entry.ts"
 
 function textStep(id: number, firstLine: string, task: ReportTask, final: boolean): MainViewStep {
   return {

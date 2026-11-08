@@ -21,7 +21,7 @@ export type NumberedNote = {
   readonly note: ReplyNote
 }
 
-/** この部品に付いた未送信の付箋。口・節・部品がそろわない描画では何も読まない。 */
+/** この部品に付いた付箋（送った付箋も欄外に残す）。口・節・部品がそろわない描画では何も読まない。 */
 export function useLeafNotes(): readonly NumberedNote[] {
   const slot = use(ReplyPortContext)
   const section = use(SectionPointContext)
@@ -35,7 +35,6 @@ export function useLeafNotes(): readonly NumberedNote[] {
     .map((note, index): NumberedNote => ({ number: index + 1, note }))
     .filter(
       ({ note }) =>
-        note.state.kind === "unsent" &&
         note.target.key.reportToolUseId === section.reportToolUseId &&
         note.target.key.componentId === leaf.componentId,
     )
@@ -47,27 +46,39 @@ export function ReplyNoteCard(props: { readonly numbered: NumberedNote }): React
   const removeNote = useReplyNotes((state) => state.removeNote)
   const { component, row } = note.target.label
   return (
-    <aside className={clsx(leafFrameClassNames.gutterNote, styles["note-card"])}>
+    <aside
+      className={clsx(
+        leafFrameClassNames.gutterNote,
+        styles["note-card"],
+        note.state.kind === "sent" && styles["is-sent"],
+      )}
+    >
       <p className={styles["note-card-head"]}>
         <span className={styles["note-card-mark"]}>頼 {number}</span>
         <span className={styles["note-card-target"]}>{row ?? component}</span>
-        <Button
-          variant="ghost"
-          size="label"
-          pressed="none"
-          disabled={false}
-          ariaLabel="付箋を外す"
-          disclosure={{ kind: "none" }}
-          className={styles["note-card-remove"]}
-          onClick={() => {
-            removeNote(sessionKey, note.id)
-          }}
-        >
-          ×
-        </Button>
+        {note.state.kind === "unsent" && (
+          <Button
+            variant="ghost"
+            size="label"
+            pressed="none"
+            disabled={false}
+            ariaLabel="付箋を外す"
+            disclosure={{ kind: "none" }}
+            className={styles["note-card-remove"]}
+            onClick={() => {
+              removeNote(sessionKey, note.id)
+            }}
+          >
+            ×
+          </Button>
+        )}
       </p>
       <p>{note.body}</p>
-      <p className={styles["note-card-state"]}>まだ送っていない</p>
+      <p className={styles["note-card-state"]}>
+        {note.state.kind === "sent"
+          ? `送った → やり取り ${String(note.state.turn)} で作業中`
+          : "まだ送っていない"}
+      </p>
     </aside>
   )
 }

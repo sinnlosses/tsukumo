@@ -36,6 +36,14 @@ const COMPOSER: ComposerModel = {
   band: { kind: "none" },
   answering: false,
   onSubmit: noop,
+  replyNotes: {
+    notes: [],
+    guide: "",
+    draftLabel: "まとめて頼む",
+    draftDisabled: false,
+    onMove: noop,
+    onDraft: noop,
+  },
   onInsertTrigger: noop,
   newSession: { disabled: false, title: "新しいやり取りを始める", onStart: noop },
 }
