@@ -28,6 +28,12 @@ import { Button } from "../../components/ui/button/button.tsx"
 import { Divider } from "../../components/ui/divider/divider.tsx"
 import { useExternalSync } from "../../hooks/use-external-sync.ts"
 import { reportBrowserError } from "../../stores/browser-error-report.ts"
+import {
+  notesOf,
+  type ReplyNote,
+  useReplyNotes,
+  useReplySessionKey,
+} from "../../stores/reply-note-list.ts"
 import { AskThreadContext, type AskThreadSlot, sectionAskCount } from "./ask-thread-context.ts"
 import { loadReportCatalogApis } from "./domain/a2ui-catalog-load.ts"
 import { filterBadges, hasBoundChoicePicker, isSortableTable } from "./domain/a2ui-table-view.ts"
@@ -46,6 +52,7 @@ import { NoteBody } from "./leaf/note-leaf.tsx"
 import { liveLeafElement, useReevaluatedLeaves } from "./leaf/parameter-knob.tsx"
 import { FavorRegion, HeadRegion } from "./leaf/report-head-region.tsx"
 import { arrangedBlockClassNames } from "./markdown.tsx"
+import { ReplyPortContext, type ReplyPortSlot } from "./reply-port.ts"
 
 type SurfaceView = Extract<MainViewA2uiReport, { readonly kind: "surface" }>
 
@@ -205,6 +212,12 @@ function ReportRoot(): ReactElement {
   const report = useReport()
   const { view } = report
   const askThreads = use(AskThreadContext)
+  const replyPort = use(ReplyPortContext)
+  const sessionKey = useReplySessionKey()
+  const notes = notesOf(
+    useReplyNotes((state) => state.notesBySession),
+    sessionKey,
+  )
   const bodySections = Object.entries(view.sections).toSorted(
     ([, left], [, right]) => left.regionId - right.regionId,
   )
@@ -218,7 +231,9 @@ function ReportRoot(): ReactElement {
     >
       <HeadRegion head={view.head} />
       {view.figure.kind === "leaves" && (
-        <RegionBox region={{ kind: "section", id: view.figure.regionId, askCount: 0 }}>
+        <RegionBox
+          region={{ kind: "section", id: view.figure.regionId, askCount: 0, noteCount: 0 }}
+        >
           <LeafRegionContent region={view.figure} />
         </RegionBox>
       )}
@@ -229,6 +244,7 @@ function ReportRoot(): ReactElement {
             kind: "section",
             id: section.regionId,
             askCount: askCountOf(report, askThreads, componentId),
+            noteCount: noteCountOf(report, replyPort, notes, componentId),
           }}
         >
           <SectionContent id={componentId} />
@@ -316,6 +332,26 @@ function askCountOf(report: ReportContextValue, threads: AskThreadSlot, sectionI
   const part = report.parts.get(sectionId)
   const ids = part?.component === "Section" ? part.children : [sectionId]
   return sectionAskCount(threads, report.reportToolUseId, runIds(ids, report))
+}
+
+/** 節の中の内容部品に付いた未送信の付箋の数。口が無い描画は付箋を読まない。 */
+function noteCountOf(
+  report: ReportContextValue,
+  port: ReplyPortSlot,
+  notes: readonly ReplyNote[],
+  sectionId: string,
+): number {
+  if (port.kind === "none" || report.reportToolUseId === undefined) {
+    return 0
+  }
+  const part = report.parts.get(sectionId)
+  const ids = runIds(part?.component === "Section" ? part.children : [sectionId], report)
+  return notes.filter(
+    (note) =>
+      note.state.kind === "unsent" &&
+      note.target.key.reportToolUseId === report.reportToolUseId &&
+      ids.includes(note.target.key.componentId),
+  ).length
 }
 
 function runIds(ids: readonly string[], report: ReportContextValue): readonly string[] {

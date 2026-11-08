@@ -256,6 +256,14 @@ function HeadingRows(props: {
                 {`聞 ${String(row.askCount)}`}
               </span>
             )}
+            {row.noteCount !== undefined && (
+              <span
+                className={styles["outline-row-note"]}
+                aria-label={`頼みごと ${String(row.noteCount)}件`}
+              >
+                {`頼 ${String(row.noteCount)}`}
+              </span>
+            )}
           </button>
         ),
       )}

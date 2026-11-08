@@ -13,6 +13,7 @@ import {
   type ReplyPortSlot,
 } from "../../../../../src/browser/features/report/reply-port.ts"
 import { Report } from "../../../../../src/browser/features/report/report.tsx"
+import { useReplyNotes } from "../../../../../src/browser/stores/reply-note-list.ts"
 import { reportEvents } from "../../../../../src/server/session-driver/core/message/sdk-report-message.ts"
 import { mainViewEntries } from "../../../../../src/shared/session/main-view-entry.ts"
 import type { MainViewReportRegions } from "../../../../../src/shared/session/main-view-shape.ts"
@@ -125,6 +126,25 @@ describe("表の行の「聞く」", () => {
     expect(screen.getAllByRole("button", { name: /について聞く$/ })).toHaveLength(ROWS.length)
     expect(container.querySelectorAll("thead button[aria-label$='について聞く']")).toHaveLength(0)
     expect(container.querySelectorAll("thead th")).toHaveLength(4)
+  })
+
+  it("行の「頼む」で頼むの欄が開き、送ると付箋が増えて ask は呼ばれない", () => {
+    const { ask } = renderAskable({ port: true, reportToolUseId: "toolu_1" })
+
+    fireEvent.click(screen.getByRole("button", { name: "あについて頼む" }))
+    const field = screen.getByRole("textbox")
+    fireEvent.change(field, { target: { value: "この行を直して" } })
+    fireEvent.keyDown(field, { key: "Enter", metaKey: true })
+
+    const notes = Object.values(useReplyNotes.getState().notesBySession).flat()
+    expect(notes).toHaveLength(1)
+    expect(notes[0]?.target.key).toEqual({
+      reportToolUseId: "toolu_1",
+      componentId: "t1",
+      rowIndex: 1,
+    })
+    expect(ask).not.toHaveBeenCalled()
+    useReplyNotes.setState(useReplyNotes.getInitialState(), true)
   })
 
   it("口が無いか、report の id が無ければ出ない", () => {

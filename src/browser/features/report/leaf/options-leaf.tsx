@@ -6,8 +6,10 @@ import type { ReactElement } from "react"
 import type { A2uiReportComponent } from "../../../../shared/report/a2ui-report-catalog.ts"
 import type { LeafValue } from "../../../../shared/report/report-leaf-value.ts"
 import { Badge } from "../../../components/ui/badge/badge.tsx"
+import { optionNoteBody } from "../domain/reply-note.ts"
 import { InlineCodeText, InlineMarkdown, noteLeafClassNames } from "../markdown.tsx"
 import styles from "./leaf.module.css"
+import { ReplyNoteButton } from "./reply-note-button.tsx"
 import { LeafFold, ReportLeafFrame } from "./report-leaf-frame.tsx"
 
 type OptionsPart = Extract<A2uiReportComponent, { readonly component: "Options" }>
@@ -52,7 +54,12 @@ export function OptionsLeaf(props: {
         )}
         <div className={noteLeafClassNames.options}>
           {part.items.map((item, index) => (
-            <OptionRow key={`${String(index)}:${item.name}`} item={item} />
+            <OptionRow
+              key={`${String(index)}:${item.name}`}
+              item={item}
+              index={index}
+              title={part.title}
+            />
           ))}
         </div>
       </LeafFold>
@@ -60,7 +67,11 @@ export function OptionsLeaf(props: {
   )
 }
 
-function OptionRow(props: { readonly item: Option }): ReactElement {
+function OptionRow(props: {
+  readonly item: Option
+  readonly index: number
+  readonly title: string
+}): ReactElement {
   const { name, verdict, reason } = props.item
   const { className, mark, label, tone } = VERDICTS[verdict]
   return (
@@ -83,6 +94,12 @@ function OptionRow(props: { readonly item: Option }): ReactElement {
             </span>
           </>
         )}
+        <ReplyNoteButton
+          title={props.title}
+          row={{ index: props.index, firstCell: name }}
+          label="この案で進める"
+          body={optionNoteBody()}
+        />
       </span>
     </div>
   )

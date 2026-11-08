@@ -56,6 +56,27 @@ describe("readableOutlineItems の聞いた数", () => {
   })
 })
 
+describe("readableOutlineItems の付箋の数", () => {
+  it("節の行は欄の持つ付箋の数（data-note-count）を読み、持たない節と2つ目の見出しは 0", () => {
+    const block = document.createElement("div")
+    block.className = detailBlockClassName
+    const region = document.createElement("div")
+    region.setAttribute("data-report-section", "1")
+    region.setAttribute("data-note-count", "2")
+    for (const text of ["架空の節", "架空の余分な見出し"]) {
+      const h4 = document.createElement("h4")
+      h4.textContent = text
+      region.append(h4)
+    }
+    block.append(region)
+
+    expect(readableOutlineItems(block, [1]).map((item) => [item.level, item.noteCount])).toEqual([
+      ["section", 2],
+      ["sub", 0],
+    ])
+  })
+})
+
 describe("readableHeadings", () => {
   it("草稿の面の中の見出しは拾わない", () => {
     const content = document.createElement("div")

@@ -32,3 +32,11 @@ export const replyTargetSchema = z.object({
 export type ReplyTargetKey = z.infer<typeof replyTargetKeySchema>
 
 export type ReplyTarget = z.infer<typeof replyTargetSchema>
+
+export function sameReplyKey(a: ReplyTargetKey, b: ReplyTargetKey): boolean {
+  return (
+    a.reportToolUseId === b.reportToolUseId &&
+    a.componentId === b.componentId &&
+    a.rowIndex === b.rowIndex
+  )
+}

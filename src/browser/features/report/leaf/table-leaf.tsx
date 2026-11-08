@@ -316,6 +316,9 @@ function bodyRows(
                 onAsk: () => {
                   rowAsk.openRow(index, firstCell)
                 },
+                onNote: () => {
+                  rowAsk.openRowNote(index, firstCell)
+                },
                 active: rowAsk.isOpen(index),
                 asked: rowAsk.isAsked(index),
               },

@@ -123,6 +123,17 @@
   font-size: var(--font-action);
   font-weight: normal;
 }
+/* 節の行の右端に添える「頼 n」。「聞 n」があるときはその右に並ぶ。 */
+.outline-row-note {
+  flex: 1 0 auto;
+  text-align: right;
+  color: var(--accent);
+  font-size: var(--font-action);
+  font-weight: normal;
+}
+.outline-row-ask + .outline-row-note {
+  flex: 0 0 auto;
+}
 .outline-turn-mark {
   flex: none;
   width: 1em;

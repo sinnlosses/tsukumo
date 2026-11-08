@@ -12,6 +12,9 @@ const SECTION_ATTRIBUTE = "data-report-section"
 /** 節の欄の入れ物が、その節で聞いた数を持つ属性（聞いたときだけ付く）。 */
 const ASK_COUNT_ATTRIBUTE = "data-ask-count"
 
+/** 節の欄の入れ物が、その節の未送信の付箋の数を持つ属性（付箋があるときだけ付く）。 */
+const NOTE_COUNT_ATTRIBUTE = "data-note-count"
+
 /** 草稿の面の入れ物が付ける属性。草稿の見出しは目次にも読み位置にも数えない。 */
 export const REPORT_DRAFT_ATTRIBUTE = "data-report-draft"
 
@@ -22,6 +25,8 @@ export type OutlineItem = {
   readonly text: string
   /** 節の欄が持つ聞いた数（`data-ask-count`）。節の行にだけ付く。 */
   readonly askCount: number
+  /** 節の欄が持つ未送信の付箋の数（`data-note-count`）。節の行にだけ付く。 */
+  readonly noteCount: number
 }
 
 /** 畳んだ `<details>` の中と、演出がまだ出していない節の中と、草稿の面の中を除いた見出し。 */
@@ -50,7 +55,13 @@ export function readableOutlineItems(
     const region = element.closest<HTMLElement>(`[${SECTION_ATTRIBUTE}]`)
     const id = Number(region?.getAttribute(SECTION_ATTRIBUTE))
     if (region === null || !headedSectionIds.includes(id)) {
-      items.push({ element, level: isSection ? "section" : "sub", text, askCount: 0 })
+      items.push({
+        element,
+        level: isSection ? "section" : "sub",
+        text,
+        askCount: 0,
+        noteCount: 0,
+      })
       continue
     }
     const isFirst = !seenRegions.has(region)
@@ -61,6 +72,7 @@ export function readableOutlineItems(
       level: isSectionRow ? "section" : "sub",
       text,
       askCount: isSectionRow ? Number(region.getAttribute(ASK_COUNT_ATTRIBUTE) ?? 0) : 0,
+      noteCount: isSectionRow ? Number(region.getAttribute(NOTE_COUNT_ATTRIBUTE) ?? 0) : 0,
     })
   }
   return items

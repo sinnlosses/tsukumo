@@ -19,6 +19,7 @@ import {
 import { AskFrame } from "./ask-frame.tsx"
 import { AskBadge } from "./ask-thread-view.tsx"
 import styles from "./leaf.module.css"
+import { ReplyNoteCard, useLeafNotes } from "./reply-note-card.tsx"
 
 const CAPTION_LABELS = { figure: "図", table: "表" } as const
 
@@ -53,6 +54,7 @@ export function FoldedLeafFrame(
 ): ReactElement {
   const { captionNumber, gutterNotes } = props.value
   const askThread = useLeafAskThread()
+  const replyNotes = useLeafNotes()
   const caption =
     captionNumber.kind === "none" ? undefined : (
       <LeafCaption
@@ -84,7 +86,7 @@ export function FoldedLeafFrame(
     </LeafFold>
   )
   const hasCaption = captionNumber.kind !== "none"
-  if (gutterNotes.length === 0) {
+  if (gutterNotes.length === 0 && replyNotes.length === 0) {
     return (
       <AskFrame title={props.title} captioned={hasCaption}>
         {captioned}
@@ -105,6 +107,9 @@ export function FoldedLeafFrame(
                 <InlineMarkdown text={note.text} />
               </p>
             </aside>
+          ))}
+          {replyNotes.map((numbered) => (
+            <ReplyNoteCard key={numbered.note.id} numbered={numbered} />
           ))}
         </div>
       </div>

@@ -24,6 +24,8 @@ type AskThreadViewProps = {
   readonly captioned: boolean
   /** 「続けて聞く」。同じ指した所でその場の入力欄を開く。 */
   readonly onContinue: (pair: AskPair) => void
+  /** 「これを頼む」。答えの字を下書きにして、同じ指した所で頼むの入力欄を開く。 */
+  readonly onRequest: (pair: AskPair) => void
 }
 
 export function AskThreadView(props: AskThreadViewProps): ReactElement {
@@ -49,6 +51,21 @@ export function AskThreadView(props: AskThreadViewProps): ReactElement {
               `${characterName}が調べています…（作業は始めていない）`
             )}
           </p>
+          {pair.answer.kind === "answered" && (
+            <Button
+              variant="ghost"
+              size="label"
+              pressed="none"
+              disabled={false}
+              disclosure={{ kind: "none" }}
+              className={styles["ask-continue"]}
+              onClick={() => {
+                props.onRequest(pair)
+              }}
+            >
+              これを頼む
+            </Button>
+          )}
           {pair.answer.kind === "answered" && (
             <Button
               variant="ghost"

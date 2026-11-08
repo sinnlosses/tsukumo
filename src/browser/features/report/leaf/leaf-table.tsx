@@ -22,6 +22,8 @@ export type LeafTableRow = {
   readonly ask?: {
     readonly label: string
     readonly onAsk: () => void
+    /** 同じ行について頼む（付箋にする）の入力欄を開く。 */
+    readonly onNote: () => void
     readonly active: boolean
     /** この行について聞いたことがあるか（行の左に印の線を付ける）。 */
     readonly asked: boolean
@@ -188,6 +190,18 @@ function BodyRow(props: {
                 onClick={row.ask.onAsk}
               >
                 聞く
+              </Button>{" "}
+              <Button
+                variant="ghost"
+                size="label"
+                pressed="none"
+                disabled={false}
+                ariaLabel={`${row.ask.label}について頼む`}
+                disclosure={{ kind: "none" }}
+                className={styles["ask-row-button"]}
+                onClick={row.ask.onNote}
+              >
+                頼む
               </Button>
             </span>
           </td>

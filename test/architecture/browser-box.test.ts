@@ -70,6 +70,8 @@ const SHARED_BROWSER_BOXES = ["lib", "domain", "stores", "hooks"] as const
 /** 1つの機能しか読まなくても共有モジュールに残すファイルと、その理由。 */
 const KEPT_SHARED_FILES = {
   "browser/hooks/use-before-paint-sync.ts": "包みの置き場として規約が名指ししている",
+  "browser/stores/reply-note-list.ts":
+    "レポートの部品と会話ページの入力欄の両方が読む（入力欄の読み手は、まとめて頼むタスクで付く）",
 } as const satisfies Record<string, string>
 
 describe("browser/ の機能をまたぐ箱", () => {

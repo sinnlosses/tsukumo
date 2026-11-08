@@ -17,11 +17,21 @@ const TARGET = replyTargetOf({
   row: { index: 2, firstCell: "架空の行" },
 })
 
-function open() {
+function open(mode: "ask" | "request" = "ask", initialText = "") {
   const onSend = vi.fn<(text: string) => void>()
+  const onNote = vi.fn<(text: string) => void>()
   const onClose = vi.fn<() => void>()
-  render(<AskBox target={TARGET} onSend={onSend} onClose={onClose} />)
-  return { onSend, onClose, field: screen.getByRole("textbox") }
+  render(
+    <AskBox
+      target={TARGET}
+      initialMode={mode}
+      initialText={initialText}
+      onSend={onSend}
+      onNote={onNote}
+      onClose={onClose}
+    />,
+  )
+  return { onSend, onNote, onClose, field: screen.getByRole("textbox") }
 }
 
 describe("AskBox", () => {
@@ -61,5 +71,26 @@ describe("AskBox", () => {
 
     expect(onSend).not.toHaveBeenCalled()
     expect(screen.getByRole("button", { name: /^聞く/ }).getAttribute("aria-disabled")).toBe("true")
+  })
+
+  it("頼むに切り替えると案内と送るボタンの字が変わる", () => {
+    open()
+
+    fireEvent.click(screen.getByRole("radio", { name: "頼む" }))
+
+    expect(screen.getByText("付箋にして、あとでまとめて頼む")).toBeTruthy()
+    expect(screen.getByRole("button", { name: "付箋にする ⌘⏎" })).toBeTruthy()
+    expect(screen.queryByText("答えはこの下に返る。作業は始めない")).toBeNull()
+  })
+
+  it("頼むで ⌘⏎ すると onNote を呼び、会話への onSend は呼ばない", () => {
+    const { onSend, onNote, onClose, field } = open("request", "下書き")
+
+    expect(screen.getByDisplayValue("下書き")).toBe(field)
+    fireEvent.keyDown(field, { key: "Enter", metaKey: true })
+
+    expect(onNote).toHaveBeenCalledExactlyOnceWith("下書き")
+    expect(onSend).not.toHaveBeenCalled()
+    expect(onClose).toHaveBeenCalledOnce()
   })
 })

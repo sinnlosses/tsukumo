@@ -42,6 +42,40 @@ describe("ReportOutline の節の行", () => {
 
     expect(screen.getAllByText(/^聞 \d+$/).map((node) => node.textContent)).toEqual(["聞 2"])
   })
+
+  it("付箋の数を持つ節の行に「頼 n」を出し、付箋のない節の行には出さない", () => {
+    localStorage.setItem("tsukumo-outline-panel:v1", JSON.stringify({ collapse: "open" }))
+    render(
+      <ReportOutline
+        turns={[
+          {
+            id: 0,
+            title: "架空の依頼",
+            result: "done",
+            asideCount: 0,
+            headedSectionIds: [1, 2],
+            report: { kind: "none" },
+          },
+        ]}
+        activeTurnId={0}
+        onSelectTurn={() => undefined}
+        notice={{ kind: "none" }}
+        onNotice={() => undefined}
+      >
+        <div className={detailBlockClassName}>
+          <div data-report-section="1" data-note-count="3">
+            <h4>架空の頼んだ節</h4>
+          </div>
+          <div data-report-section="2">
+            <h4>架空の頼んでいない節</h4>
+          </div>
+        </div>
+      </ReportOutline>,
+    )
+
+    expect(screen.getAllByText(/^頼 \d+$/).map((node) => node.textContent)).toEqual(["頼 3"])
+    expect(screen.getByLabelText("頼みごと 3件")).toBeTruthy()
+  })
 })
 
 describe("ReportOutline のやり取りの行", () => {

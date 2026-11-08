@@ -749,6 +749,17 @@
                                                                   "children": [
                                                                     "聞く"
                                                                   ]
+                                                                },
+                                                                {
+                                                                  "tag": "button",
+                                                                  "attributes": {
+                                                                    "aria-disabled": "false",
+                                                                    "aria-label": "`a.ts`について頼む",
+                                                                    "type": "button"
+                                                                  },
+                                                                  "children": [
+                                                                    "頼む"
+                                                                  ]
                                                                 }
                                                               ]
                                                             }
@@ -811,6 +822,17 @@
                                                                   },
                                                                   "children": [
                                                                     "聞く"
+                                                                  ]
+                                                                },
+                                                                {
+                                                                  "tag": "button",
+                                                                  "attributes": {
+                                                                    "aria-disabled": "false",
+                                                                    "aria-label": "`b.ts`について頼む",
+                                                                    "type": "button"
+                                                                  },
+                                                                  "children": [
+                                                                    "頼む"
                                                                   ]
                                                                 }
                                                               ]
@@ -875,6 +897,17 @@
                                                                   "children": [
                                                                     "聞く"
                                                                   ]
+                                                                },
+                                                                {
+                                                                  "tag": "button",
+                                                                  "attributes": {
+                                                                    "aria-disabled": "false",
+                                                                    "aria-label": "`c.ts`について頼む",
+                                                                    "type": "button"
+                                                                  },
+                                                                  "children": [
+                                                                    "頼む"
+                                                                  ]
                                                                 }
                                                               ]
                                                             }
@@ -892,6 +925,16 @@
                                                   },
                                                   "children": [
                                                     "聞く"
+                                                  ]
+                                                },
+                                                {
+                                                  "tag": "button",
+                                                  "attributes": {
+                                                    "aria-disabled": "false",
+                                                    "type": "button"
+                                                  },
+                                                  "children": [
+                                                    "頼む"
                                                   ]
                                                 },
                                                 "表 2",
@@ -970,6 +1013,17 @@
                                                                   "children": [
                                                                     "聞く"
                                                                   ]
+                                                                },
+                                                                {
+                                                                  "tag": "button",
+                                                                  "attributes": {
+                                                                    "aria-disabled": "false",
+                                                                    "aria-label": "帯について頼む",
+                                                                    "type": "button"
+                                                                  },
+                                                                  "children": [
+                                                                    "頼む"
+                                                                  ]
                                                                 }
                                                               ]
                                                             }
@@ -1009,6 +1063,17 @@
                                                                   "children": [
                                                                     "聞く"
                                                                   ]
+                                                                },
+                                                                {
+                                                                  "tag": "button",
+                                                                  "attributes": {
+                                                                    "aria-disabled": "false",
+                                                                    "aria-label": "札について頼む",
+                                                                    "type": "button"
+                                                                  },
+                                                                  "children": [
+                                                                    "頼む"
+                                                                  ]
                                                                 }
                                                               ]
                                                             }
@@ -1027,6 +1092,16 @@
                                                   },
                                                   "children": [
                                                     "聞く"
+                                                  ]
+                                                },
+                                                {
+                                                  "tag": "button",
+                                                  "attributes": {
+                                                    "aria-disabled": "false",
+                                                    "type": "button"
+                                                  },
+                                                  "children": [
+                                                    "頼む"
                                                   ]
                                                 },
                                                 "src/a.ts",

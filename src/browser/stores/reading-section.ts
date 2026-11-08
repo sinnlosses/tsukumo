@@ -14,6 +14,8 @@ export type ReportOutlineEntry = {
   readonly text: string
   /** その節で聞いた数。節の行で、聞いたときだけ付く。 */
   readonly askCount?: number
+  /** その節の未送信の付箋の数。節の行で、付箋があるときだけ付く。 */
+  readonly noteCount?: number
 }
 
 export type HeadingStep = "older" | "newer"

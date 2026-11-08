@@ -29,6 +29,7 @@ import {
   ReplyPortContext,
   type ReplyPortSlot,
 } from "../../../../../src/browser/features/report/reply-port.ts"
+import { useReplyNotes } from "../../../../../src/browser/stores/reply-note-list.ts"
 import type { LeafValue } from "../../../../../src/shared/report/report-leaf-value.ts"
 
 const CAPTION_SELECTOR = `.${leafFrameClassNames.caption}`
@@ -39,6 +40,7 @@ beforeAll(async () => {
 
 afterEach(() => {
   cleanup()
+  useReplyNotes.setState(useReplyNotes.getInitialState(), true)
 })
 
 type FrameValue = Pick<LeafValue, "captionNumber" | "gutterNotes">
@@ -250,10 +252,33 @@ describe("FoldedLeafFrame の「聞く」", () => {
     expect(screen.queryByRole("textbox")).toBeNull()
   })
 
+  it("部品の「頼む」で頼むの欄が開き、送ると付箋が増えて ask は呼ばれない", () => {
+    const ask = vi.fn<ReplyPort["ask"]>()
+    askFrame({
+      slot: { kind: "open", port: { appendDraft: vi.fn<ReplyPort["appendDraft"]>(), ask } },
+      section: SECTION,
+      leaf: LEAF,
+    })
+
+    fireEvent.click(screen.getByRole("button", { name: "頼む" }))
+    expect(screen.getByText("付箋にして、あとでまとめて頼む")).toBeTruthy()
+    const field = screen.getByRole("textbox")
+    fireEvent.change(field, { target: { value: "ここを直して" } })
+    fireEvent.keyDown(field, { key: "Enter", metaKey: true })
+
+    const notes = Object.values(useReplyNotes.getState().notesBySession).flat()
+    expect(notes).toHaveLength(1)
+    expect(notes[0]?.body).toBe("ここを直して")
+    expect(notes[0]?.target.key).toEqual({ reportToolUseId: "toolu_1", componentId: "p1" })
+    expect(ask).not.toHaveBeenCalled()
+    expect(screen.queryByRole("textbox")).toBeNull()
+  })
+
   it("口が無ければ出ない", () => {
     askFrame({ slot: { kind: "none" }, section: SECTION, leaf: LEAF })
 
     expect(screen.queryByRole("button", { name: "聞く" })).toBeNull()
+    expect(screen.queryByRole("button", { name: "頼む" })).toBeNull()
   })
 
   it("指す位置が節の外（図・振り返り・頭の欄）なら出ない", () => {
@@ -371,6 +396,25 @@ describe("FoldedLeafFrame の聞いた問いと答え", () => {
       },
       "もっと？",
     )
+  })
+
+  it("これを頼むで、答えの字が入った頼むの欄が開く。付箋は欄で送るまで作らない", () => {
+    threadFrame(threadsOf(answeredPair))
+
+    fireEvent.click(screen.getByRole("button", { name: "これを頼む" }))
+
+    expect(screen.getByDisplayValue("架空の理由だから。")).toBeTruthy()
+    expect(screen.getByRole("radio", { name: "頼む" })).toHaveProperty("checked", true)
+    expect(Object.values(useReplyNotes.getState().notesBySession).flat()).toHaveLength(0)
+  })
+
+  it("答え待ちの対にも、口が無い描画にも、これを頼むは出ない", () => {
+    threadFrame(threadsOf(waitingPair))
+    expect(screen.queryByRole("button", { name: "これを頼む" })).toBeNull()
+    cleanup()
+
+    threadFrame({ kind: "none" })
+    expect(screen.queryByRole("button", { name: "これを頼む" })).toBeNull()
   })
 
   it("行を指した対の続けて聞くは、同じ行の入力欄を開く", () => {

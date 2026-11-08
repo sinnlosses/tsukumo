@@ -1,0 +1,55 @@
+/* 案・主張の行の「この案で進める」「確かめて」。 */
+.note-button {
+  min-height: 1.5rem;
+  padding: var(--inset-control);
+  border-radius: var(--radius-pill);
+}
+/* 主張の行の本文の列の末尾に置く（確度の列の右。器が狭いときは1列に積まれる）。 */
+.claim-note {
+  grid-column: -2 / -1;
+  justify-self: start;
+}
+/* その場の入力欄の頭の、聞く／頼むの切り替え。 */
+.ask-mode {
+  display: flex;
+  gap: var(--inline-control);
+  font-size: var(--font-secondary);
+}
+.ask-mode-option {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--stack-tight);
+}
+/* 本文の右の欄外に出す付箋の札。 */
+.note-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--stack-tight);
+  padding: var(--inset-control);
+  border: 1px solid var(--rule-soft);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+.note-card-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--inline-control);
+}
+.note-card-mark {
+  color: var(--accent);
+  font-weight: 600;
+}
+.note-card-target {
+  flex: 1 1 auto;
+  color: var(--ink-soft);
+}
+.note-card-remove {
+  min-height: 1.25rem;
+  padding: var(--inset-control);
+}
+.note-card-state {
+  color: var(--ink-quiet);
+}
