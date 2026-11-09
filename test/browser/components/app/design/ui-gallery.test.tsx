@@ -10,6 +10,7 @@ afterEach(cleanup)
 /** 見本帳に並べない `ui/` の部品と、その理由。 */
 const EXCLUDED: Readonly<Record<string, string>> = {
   "layout-resizer": "動かす対象（親の配置）が無いと意味を持たない仕切りで、単独では何も見えない",
+  "theme-root": "画面全体を包む根で、見本帳そのものがこの下に描かれ、単独では何も見えない",
 }
 
 function uiPartDirectories(): readonly string[] {
