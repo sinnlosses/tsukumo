@@ -1,4 +1,6 @@
 allowBuilds:
+  "@astryxdesign/cli": false
+  "@astryxdesign/core": false
   "@swc/core": false
   esbuild: false
 overrides:

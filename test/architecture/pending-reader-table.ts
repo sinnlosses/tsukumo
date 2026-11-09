@@ -33,6 +33,14 @@ export const PENDING_READERS: readonly PendingReader[] = [
     removeWhen:
       "browser がアイテムの素材の URL を組む・読む場面を持つ、または server 専用の置き場に戻す",
   },
+  {
+    file: "src/browser/components/ui/theme-root/tsukumo-theme.ts",
+    missingReader: "production",
+    exportName: "tsukumoTheme",
+    reason:
+      "読むのは `astryx theme build`（`theme:build` と lint の `--check`）で、`src/`・`scripts/` の import には現れない",
+    removeWhen: "外部の道具が読む export を、この検査が読み手として数える",
+  },
 ]
 
 /** `"production"` の行から、`<パス>#<名前>` と理由の対応を作る。 */

@@ -13,8 +13,12 @@ export const SRC_ROOT = `${REPOSITORY_ROOT}/src`
 /** `src/` からの相対パスから本文への表。globalSetup が実行ごとに1回読み、`inject("sourceTable")` で配る。 */
 export type SourceTable = Readonly<Record<string, string>>
 
-// 並んで走る e2e が書いて消す生成物。走査で拾うと stat の前にファイルが消えて落ちる。
-const GENERATED_DIRECTORIES = [`${REPOSITORY_ROOT}/test/e2e/output`]
+// 並んで走る e2e が書いて消す生成物と、`astryx theme build` の組み立て物。
+// e2e の生成物は走査で拾うと stat の前にファイルが消えて落ちる。組み立て物は `--check` が見張る。
+const GENERATED_DIRECTORIES = [
+  `${REPOSITORY_ROOT}/test/e2e/output`,
+  `${SRC_ROOT}/browser/components/ui/theme-root/built`,
+]
 
 // `sourceTable` に入れる拡張子。これに収まる拡張子での `src/` の列挙だけが表から引ける。
 const TABLE_EXTENSIONS = [".ts", ".tsx", ".css"] as const

@@ -62,8 +62,11 @@ import するので、食い違うと入口を別のモジュールとして読�
 だけ**を領域・機能・ページの1枚（`<領域>/<領域>.module.css`・`features/<機能>/<機能>.module.css`・
 `<ページ>.module.css`）に置く。部品が平たく並ぶ `components/`（`features/<機能>/components/` など）でも、
 部品の `.tsx` の隣に同じ名前で置く（container / presenter の対は対の名前）。自分の見た目を持つ共有部品も
-隣に置く（`components/frame/portrait.module.css`）。**グローバルなのは `styles/theme.css`（`fade-in`）と `ui/spinner/spinner.css`（`spinner-turn`）だけ**で、
-`theme.css` はトークン（`:root`）・`body`・フォーカスの輪・`prefers-reduced-motion`・リンクを持つ。共有する `@keyframes` は CSS Modules が名前を付け替えるので、名前ごと `var()`（`--fade-in-name`・`--spinner-animation`）で渡す。
+隣に置く（`components/frame/portrait.module.css`）。**tsukumo が書くグローバルな CSS は `styles/layer-order.css`（層の順の宣言だけ）・`styles/theme.css`（`fade-in`）・`ui/spinner/spinner.css`（`spinner-turn`）の3つだけ**
+（Astryx の `astryx.css` と組み立て済みのテーマの CSS を除く）で、
+`theme.css` はトークン（`:root`）・`body`・`prefers-reduced-motion` と、`@layer tsukumo-base` に入れた要素への規則
+（フォーム部品の書体・フォーカスの輪・リンク・見出しと段落の既定の打ち消し）を持つ。層の順は `reset`・`tsukumo-base`・`astryx-base`・`astryx-theme` で、
+層なしの CSS（トークン・`*.module.css`）はどの層にも勝つ。共有する `@keyframes` は CSS Modules が名前を付け替えるので、名前ごと `var()`（`--fade-in-name`・`--spinner-animation`）で渡す。
 **16進の色を書いてよいのもそこだけ**（`docs/architecture/screen-design.md` 13.2）。同居に移した理由は `docs/history/decision.md`
 「design.md 6.6 CSS（機能と同居させる形に移した理由）」。
 
@@ -161,8 +164,8 @@ CSS に無い名前は `undefined` のままなので、**綴りを間違える�
   `docs/architecture/screen-design.md` の段を直す
 - **上書きは `className` の1つ**。**部品の CSS で `:where()` の外に書いた property は部品のもの**で、
   呼び出し側は同じ property を書かない。呼び出し側に譲る既定（`margin: 0` など）は `:where()` の中に書く
-  （詳細度0なので読み込み順に関係なく呼び出し側が勝つ。`theme.css` が要素の選択子で書く property は
-  入れない）。呼び出し側が渡すのは**置き方**と**語彙に無い見た目**だけ。**`className` に渡すのは
+  （詳細度0なので読み込み順に関係なく呼び出し側が勝つ。`theme.css` の要素への規則は `tsukumo-base`
+  の層に入れてあるので、層なしの `:where()` の既定にも負ける）。呼び出し側が渡すのは**置き方**と**語彙に無い見た目**だけ。**`className` に渡すのは
   `styles["…"]`（2枚読むときは `<箱の名前>Styles["…"]`）の字面だけ**で、重なりは `test/architecture/style.test.ts`「components/ui/ の部品の className」が見る
 - **画面固有の値を持つもの（`--usage-*`・`--diary-gold-*`）は部品を使わず、機能の CSS のまま残す**
   （部品の語彙と画面の語彙が1つの要素の上で競る）。**段に乗らない値も丸めない**——部品に置き換えても

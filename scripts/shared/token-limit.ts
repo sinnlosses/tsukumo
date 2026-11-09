@@ -13,6 +13,7 @@ const EXEMPT_PATH_PATTERNS = [
   "docs/history/",
   "docs/research/",
   "vendor/",
+  "src/browser/components/ui/theme-root/built/",
 ] as const satisfies readonly string[]
 
 export type StagedChange = {

@@ -62,6 +62,15 @@ describe("buildUiBundle", () => {
       new RegExp(`["'\`]${hashedName}["'\`]`),
     )
   })
+
+  it("styleSheet の最初の @layer が、Astryx と tsukumo の層の順の宣言になる", () => {
+    const sheet = built.kind === "ok" ? built.bundle.styleSheet : ""
+    const first = /@layer[^;{]*[;{]/.exec(sheet)?.[0] ?? "（CSS に @layer が無い）"
+
+    expect(first.replaceAll(/\s*,\s*/g, ",")).toBe(
+      "@layer reset,tsukumo-base,astryx-base,astryx-theme;",
+    )
+  })
 })
 
 describe("readUiBundle", () => {

@@ -4,12 +4,15 @@ import { QueryClientProvider } from "@tanstack/react-query"
 import type { ReactElement } from "react"
 
 import { Root } from "./components/app/root.tsx"
+import { ThemeRoot } from "./components/ui/theme-root/theme-root.tsx"
 import { queryClient } from "./lib/query-client.ts"
 
 export function App(): ReactElement {
   return (
     <QueryClientProvider client={queryClient}>
-      <Root />
+      <ThemeRoot>
+        <Root />
+      </ThemeRoot>
     </QueryClientProvider>
   )
 }

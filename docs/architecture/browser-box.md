@@ -26,7 +26,7 @@
 | `lib/`                 | **固有のライブラリ**（`orpc` のように特定用途のパッケージ）を包む道具                                                | `utils` / `shared`                                                                                                                 |
 | `utils/`               | **それ以外**の汎用の道具（実行環境の API・`react` / `remeda` / `zod` を含む。下の「`lib/` と `utils/` に置く基準」） | —（`utils` の中だけ）                                                                                                              |
 | `stores/`              | **画面全体で共有する状態**の store・Context と、それを読む hook                                                      | `domain` / `hooks` / `lib` / `utils` / `shared`                                                                                    |
-| `styles/`              | **グローバルな CSS だけ**（`theme.css`。領域・機能の見た目はその中）                                                 | —                                                                                                                                  |
+| `styles/`              | **グローバルな CSS だけ**（`theme.css`・`layer-order.css`。領域・機能の見た目はその中）                              | —                                                                                                                                  |
 | `types/`               | **ambient 宣言だけ**（`*.d.ts`。`css-variable.d.ts` など。どの箱にも属さず、import では辿らない）                    | —                                                                                                                                  |
 
 - **部品の箱の向きは `app.tsx` → `components/app` → `components/page` → `components/frame` → `features` →

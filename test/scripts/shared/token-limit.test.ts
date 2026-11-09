@@ -13,6 +13,7 @@ const EXEMPT_PATH_PATTERNS = [
   "docs/history/",
   "docs/research/",
   "vendor/",
+  "src/browser/components/ui/theme-root/built/",
 ] as const
 
 /** 実在しない文書のパスを `docs/…` の字面で書くと節の参照の検査が拾うので、組み立てて作る。 */

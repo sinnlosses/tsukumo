@@ -1,170 +1,264 @@
 {
   "page": [
     {
-      "tag": "button",
+      "tag": "div",
       "attributes": {
-        "type": "button"
+        "data-astryx-theme": "tsukumo",
+        "data-theme": "dark"
       },
       "children": [
-        "入力欄へ移る"
-      ]
-    },
-    {
-      "tag": "nav",
-      "attributes": {
-        "aria-label": "画面",
-        "data-screen": "conversation"
-      },
-      "children": [
-        {
-          "tag": "img",
-          "attributes": {
-            "alt": "つくもの精霊",
-            "src": "/character/tsukumo-spirit/face.svg"
-          }
-        },
-        {
-          "tag": "div",
-          "attributes": {
-            "data-work-state": "idle",
-            "data-chat-idle": "false"
-          },
-          "children": [
-            {
-              "tag": "span",
-              "attributes": {
-                "aria-hidden": "true"
-              },
-              "children": [
-                "○"
-              ]
-            },
-            "依頼待ち"
-          ]
-        },
-        "<port>",
         {
           "tag": "button",
           "attributes": {
-            "aria-label": "やり取りとタスクを開く",
-            "aria-expanded": "false",
-            "aria-haspopup": "dialog",
             "type": "button"
           },
           "children": [
+            "入力欄へ移る"
+          ]
+        },
+        {
+          "tag": "nav",
+          "attributes": {
+            "aria-label": "画面",
+            "data-screen": "conversation"
+          },
+          "children": [
             {
-              "tag": "svg"
+              "tag": "img",
+              "attributes": {
+                "alt": "つくもの精霊",
+                "src": "/character/tsukumo-spirit/face.svg"
+              }
+            },
+            {
+              "tag": "div",
+              "attributes": {
+                "data-work-state": "idle",
+                "data-chat-idle": "false"
+              },
+              "children": [
+                {
+                  "tag": "span",
+                  "attributes": {
+                    "aria-hidden": "true"
+                  },
+                  "children": [
+                    "○"
+                  ]
+                },
+                "依頼待ち"
+              ]
+            },
+            "<port>",
+            {
+              "tag": "button",
+              "attributes": {
+                "aria-label": "やり取りとタスクを開く",
+                "aria-expanded": "false",
+                "aria-haspopup": "dialog",
+                "type": "button"
+              },
+              "children": [
+                {
+                  "tag": "svg"
+                }
+              ]
+            },
+            {
+              "tag": "div",
+              "attributes": {
+                "aria-hidden": "true"
+              }
             }
           ]
         },
         {
           "tag": "div",
           "attributes": {
-            "aria-hidden": "true"
-          }
-        }
-      ]
-    },
-    {
-      "tag": "div",
-      "attributes": {
-        "data-collapse-character": "false"
-      },
-      "children": [
-        {
-          "tag": "div",
-          "attributes": {
-            "data-sidebar-open": "false"
+            "data-collapse-character": "false"
           },
           "children": [
             {
-              "tag": "main",
+              "tag": "div",
               "attributes": {
-                "data-region": "main",
-                "aria-label": "メインビュー"
+                "data-sidebar-open": "false"
               },
               "children": [
                 {
-                  "tag": "div",
+                  "tag": "main",
                   "attributes": {
-                    "data-brush-origin": "",
-                    "data-main-view": ""
+                    "data-region": "main",
+                    "aria-label": "メインビュー"
                   },
                   "children": [
                     {
                       "tag": "div",
                       "attributes": {
-                        "data-main-view-content": "welcome"
+                        "data-brush-origin": "",
+                        "data-main-view": ""
                       },
                       "children": [
                         {
-                          "tag": "h2",
-                          "children": [
-                            "何から始める？"
-                          ]
-                        },
-                        {
-                          "tag": "p",
-                          "children": [
-                            "tsukumo のおすすめ。「始める」を押すと、カードに書いた依頼がそのまま送られて作業が始まる。"
-                          ]
-                        },
-                        {
-                          "tag": "ul",
+                          "tag": "div",
                           "attributes": {
-                            "data-count": "1"
+                            "data-main-view-content": "welcome"
                           },
                           "children": [
                             {
-                              "tag": "li",
+                              "tag": "h2",
                               "children": [
-                                "T-001",
-                                "いちばんのおすすめ",
-                                "架空のタスク（未着手）",
+                                "何から始める？"
+                              ]
+                            },
+                            {
+                              "tag": "p",
+                              "children": [
+                                "tsukumo のおすすめ。「始める」を押すと、カードに書いた依頼がそのまま送られて作業が始まる。"
+                              ]
+                            },
+                            {
+                              "tag": "ul",
+                              "attributes": {
+                                "data-count": "1"
+                              },
+                              "children": [
                                 {
-                                  "tag": "button",
-                                  "attributes": {
-                                    "aria-disabled": "false",
-                                    "aria-label": "T-001 を始める（すぐ送る）",
-                                    "type": "button"
-                                  },
+                                  "tag": "li",
                                   "children": [
-                                    "始める",
+                                    "T-001",
+                                    "いちばんのおすすめ",
+                                    "架空のタスク（未着手）",
                                     {
-                                      "tag": "svg"
+                                      "tag": "button",
+                                      "attributes": {
+                                        "aria-disabled": "false",
+                                        "aria-label": "T-001 を始める（すぐ送る）",
+                                        "type": "button"
+                                      },
+                                      "children": [
+                                        "始める",
+                                        {
+                                          "tag": "svg"
+                                        }
+                                      ]
                                     }
                                   ]
                                 }
                               ]
+                            },
+                            "ほかの始め方",
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "aria-disabled": "false",
+                                "type": "button"
+                              },
+                              "children": [
+                                {
+                                  "tag": "svg"
+                                },
+                                "自分で書く"
+                              ]
+                            },
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "aria-disabled": "false",
+                                "type": "button"
+                              },
+                              "children": [
+                                {
+                                  "tag": "svg"
+                                },
+                                "タスクの一覧",
+                                "から選ぶ"
+                              ]
                             }
                           ]
-                        },
-                        "ほかの始め方",
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "tag": "div",
+              "attributes": {
+                "data-collapse-character": "false"
+              },
+              "children": [
+                {
+                  "tag": "section",
+                  "attributes": {
+                    "data-region": "character",
+                    "aria-label": "キャラクター"
+                  },
+                  "children": [
+                    {
+                      "tag": "img",
+                      "attributes": {
+                        "alt": "つくもの精霊",
+                        "src": "/character/tsukumo-spirit/face.svg"
+                      }
+                    },
+                    {
+                      "tag": "button",
+                      "attributes": {
+                        "type": "button"
+                      },
+                      "children": [
+                        "疑似セッションの駆動で立ち上がったよ。ここはぜんぶ作り物の会話。"
+                      ]
+                    },
+                    {
+                      "tag": "time",
+                      "attributes": {
+                        "dateTime": "2026-01-15T10:00+09:00"
+                      },
+                      "children": [
+                        "10:00"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "tag": "section",
+                  "attributes": {
+                    "data-region": "dispatch",
+                    "aria-label": "入力欄"
+                  },
+                  "children": [
+                    {
+                      "tag": "form",
+                      "children": [
                         {
                           "tag": "button",
                           "attributes": {
-                            "aria-disabled": "false",
+                            "aria-label": "添える",
+                            "aria-expanded": "false",
                             "type": "button"
                           },
                           "children": [
-                            {
-                              "tag": "svg"
-                            },
-                            "自分で書く"
+                            "＋"
                           ]
                         },
                         {
+                          "tag": "textarea",
+                          "attributes": {
+                            "aria-label": "依頼を書く",
+                            "value": ""
+                          }
+                        },
+                        {
                           "tag": "button",
                           "attributes": {
-                            "aria-disabled": "false",
-                            "type": "button"
+                            "aria-label": "送信",
+                            "type": "submit",
+                            "disabled": true
                           },
                           "children": [
-                            {
-                              "tag": "svg"
-                            },
-                            "タスクの一覧",
-                            "から選ぶ"
+                            "↑"
                           ]
                         }
                       ]
@@ -178,103 +272,18 @@
         {
           "tag": "div",
           "attributes": {
-            "data-collapse-character": "false"
+            "role": "status",
+            "aria-live": "polite",
+            "aria-atomic": "false",
+            "data-live-announcer": ""
           },
           "children": [
             {
-              "tag": "section",
-              "attributes": {
-                "data-region": "character",
-                "aria-label": "キャラクター"
-              },
+              "tag": "p",
               "children": [
-                {
-                  "tag": "img",
-                  "attributes": {
-                    "alt": "つくもの精霊",
-                    "src": "/character/tsukumo-spirit/face.svg"
-                  }
-                },
-                {
-                  "tag": "button",
-                  "attributes": {
-                    "type": "button"
-                  },
-                  "children": [
-                    "疑似セッションの駆動で立ち上がったよ。ここはぜんぶ作り物の会話。"
-                  ]
-                },
-                {
-                  "tag": "time",
-                  "attributes": {
-                    "dateTime": "2026-01-15T10:00+09:00"
-                  },
-                  "children": [
-                    "10:00"
-                  ]
-                }
-              ]
-            },
-            {
-              "tag": "section",
-              "attributes": {
-                "data-region": "dispatch",
-                "aria-label": "入力欄"
-              },
-              "children": [
-                {
-                  "tag": "form",
-                  "children": [
-                    {
-                      "tag": "button",
-                      "attributes": {
-                        "aria-label": "添える",
-                        "aria-expanded": "false",
-                        "type": "button"
-                      },
-                      "children": [
-                        "＋"
-                      ]
-                    },
-                    {
-                      "tag": "textarea",
-                      "attributes": {
-                        "aria-label": "依頼を書く",
-                        "value": ""
-                      }
-                    },
-                    {
-                      "tag": "button",
-                      "attributes": {
-                        "aria-label": "送信",
-                        "type": "submit",
-                        "disabled": true
-                      },
-                      "children": [
-                        "↑"
-                      ]
-                    }
-                  ]
-                }
+                "疑似セッションの駆動で立ち上がったよ。ここはぜんぶ作り物の会話。"
               ]
             }
-          ]
-        }
-      ]
-    },
-    {
-      "tag": "div",
-      "attributes": {
-        "role": "status",
-        "aria-live": "polite",
-        "aria-atomic": "false",
-        "data-live-announcer": ""
-      },
-      "children": [
-        {
-          "tag": "p",
-          "children": [
-            "疑似セッションの駆動で立ち上がったよ。ここはぜんぶ作り物の会話。"
           ]
         }
       ]

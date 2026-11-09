@@ -71,7 +71,15 @@
 
 置き換えが済んだあとも一覧に残してよい例外は、トークンにすると意味が変わる 2 つ。領域の寸法として使う `100vh`（`stage/speech-log.css` の `padding-top`）と、親の角丸に追従させる `border-radius: inherit`（`dispatch/dispatch.module.css`）。どちらも件数 1 で載せ、検査の許す値は広げない。
 
+`astryx theme build` が書く組み立て物の置き場 `src/browser/components/ui/theme-root/built/` は、手で書かない生成物なので、`test/architecture/source-file.ts` の `GENERATED_DIRECTORIES` に載せて、この検査を含む構造の検査から外す。
+
 ### 13.16 `ui/` の箱の部品
+
+`ui/` の部品の中身は Astryx（ADR 0052）の部品で、props は tsukumo の語彙のまま変えない。`@astryxdesign/*` と `@stylexjs/stylex` を import できるのは `src/browser/components/ui/` だけで、`.dependency-cruiser.cjs` の `astryx-reader` が外からの import を止める。Astryx に当てない例外は `typing-dot-list` で、Astryx に入力中の点の部品が無いので、今の CSS のまま残す。`layout-resizer` は、移すときに Astryx の `ResizeHandle` が当たるかを確かめ、当たらなければ例外に足す。
+
+根の `ThemeRoot`（`ui/theme-root/`）は、`App` の `QueryClientProvider` の内側・`Root` の外側で、`InternationalizationProvider`（`locale="ja-JP"`）と `Theme`（テーマ `tsukumo`・`mode="dark"`）を重ねて子を包む。テーマの定義 `tsukumo-theme.ts` は、値を tsukumo のトークンの `var()` とそれを組んだ式だけで書く。パックの accent は `usePackAppearance` が `<html>` の `--accent` に書き、テーマの `--color-accent` がそれに追随する。
+
+CSS の層の順は、`styles/layer-order.css` が `@layer reset, tsukumo-base, astryx-base, astryx-theme;` と宣言し、`main.tsx` が `./app.tsx` より前に読む。`theme.css` の要素への規則は `tsukumo-base` の層に置き、CSS Modules は層に入れない。層に入っていない `ui/` の部品の CSS は、Astryx のどの層にも勝つ。`reset.css` は読まないので、`box-sizing` は `content-box` のまま残り、見出しの `margin` もブラウザの既定のまま残る。`astryx-heading` の `margin` は、`ui/` の側で `0` に戻す。
 
 `ui/` の部品は、持つのは顔（地・枠・字の色・振る舞い）で、置き方（margin・flex・align-self）は呼び出し側が `className` で渡す。箱の語彙を持つ 3 つを足す。props は全部必須で、型で縛る（`ui/stack` と同じ）。
 

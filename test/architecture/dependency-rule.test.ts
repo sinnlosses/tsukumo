@@ -368,6 +368,22 @@ describe(".dependency-cruiser.cjs の規則", () => {
     expect(pattern.test("@orpc/server-extra")).toBe(false)
   })
 
+  it("Astryx を読む規則は、`@astryxdesign/*` と `@stylexjs/stylex` の名前と解決先に当たり、`@stylexjs/babel-plugin` には当たらない", () => {
+    const pattern = pathPatternOf("astryx-reader")
+    const resolved = (directory: string, name: string): string =>
+      `node_modules/.pnpm/${directory}/node_modules/${name}/dist/index.js`
+
+    expect(pattern.test("@astryxdesign/core")).toBe(true)
+    expect(pattern.test("@stylexjs/stylex")).toBe(true)
+    expect(
+      pattern.test(resolved("@astryxdesign+core@0.7.11_react@19.3.1", "@astryxdesign/core")),
+    ).toBe(true)
+    expect(pattern.test(resolved("@stylexjs+stylex@0.19.1", "@stylexjs/stylex"))).toBe(true)
+    expect(pattern.test(resolved("@stylexjs+babel-plugin@0.19.1", "@stylexjs/babel-plugin"))).toBe(
+      false,
+    )
+  })
+
   it("shared の外部パッケージの規則は、解決できない名前も落とし、許した3つは通す", () => {
     const rule = config.forbidden.find((candidate) => candidate.name === "shared-packages")
     const target = new RegExp(rule?.to.path ?? "(?!)")

@@ -212,6 +212,11 @@ const layerRules = [
     { path: "^src/", pathNot: "^src/server/[^/]+/adapter/|^src/wiring/router\\.ts$" },
     { path: packagePath(["@orpc/server"]) },
   ),
+  rule(
+    "astryx-reader",
+    { path: "^src/", pathNot: "^src/browser/components/ui/" },
+    { path: packagePath(["@astryxdesign/[^/]+", "@stylexjs/stylex"]) },
+  ),
 ]
 
 const sharedRules = [

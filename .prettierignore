@@ -9,6 +9,9 @@ vendor/
 # 過去の記録。oxfmt の折り返しが強調記法とコード中の `*` を壊すので整形しない
 docs/history/
 
+# `astryx theme build` の組み立て物。整形すると `--check` との比べが落ちる
+src/browser/components/ui/theme-root/built/
+
 # E2E の期待値。足場（test/e2e/artifact.ts）が書いたままの形にし、走らせた結果
 # （/tmp/tsukumo-e2e/）とそのまま diff できるようにする
 test/e2e/expected/

@@ -5,6 +5,8 @@
 
 // zod のスキーマが作られる前に評価されないと効かないので、ほかのどの import よりも前に置く。
 import "./lib/zod-jitless.ts"
+// 層の順の宣言。ほかの CSS より先に評価されないと順が決まらないので、`App` の import より前に置く。
+import "./styles/layer-order.css"
 import { createRoot } from "react-dom/client"
 
 import { App } from "./app.tsx"
@@ -13,7 +15,7 @@ import { loadMarkdown } from "./features/report/markdown.tsx"
 import { loadTaskBody } from "./features/task-board/deferred-task-body.tsx"
 import { applyAppearanceColorOverride } from "./stores/appearance-color-root.ts"
 import { reportBrowserError } from "./stores/browser-error-report.ts"
-// ページ全体の下地（トークン・body・リンク）。グローバルな CSS はこれだけ。
+// ページ全体の下地（トークン・body・要素への規則）。
 import "./styles/theme.css"
 import {
   isTemporalSupported,
