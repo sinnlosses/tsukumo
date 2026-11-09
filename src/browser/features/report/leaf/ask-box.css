@@ -1,24 +1,28 @@
-/* 内容部品の右上の「聞く」と、部品の下に開くその場の入力欄。ボタンは重ねたとき・フォーカスしたときだけ見える。 */
+/* 内容部品の「聞く」「頼む」と、部品の下に開くその場の入力欄。ボタンは重ねたとき・フォーカスしたときだけ見える。 */
 .ask-frame {
   position: relative;
   display: flex;
   flex-direction: column;
   gap: var(--stack-block);
 }
-.ask-button-slot {
-  position: absolute;
-  top: var(--stack-tight);
-  right: var(--stack-tight);
+.ask-buttons {
+  display: inline-flex;
+  gap: var(--inline-control);
   clip-path: inset(50%);
 }
-.ask-frame:hover > .ask-button-slot,
-.ask-button-slot:focus-within {
+.ask-frame:hover .ask-buttons,
+.ask-buttons:focus-within {
   clip-path: none;
 }
 @media (hover: none) {
-  .ask-button-slot {
+  .ask-buttons {
     clip-path: none;
   }
+}
+/* 部品の上の自前の行。題の行が無い部品と、題の行が畳みの中に隠れる部品が使う。 */
+.ask-bar {
+  display: flex;
+  justify-content: flex-end;
 }
 .ask-button {
   min-height: 1.5rem;

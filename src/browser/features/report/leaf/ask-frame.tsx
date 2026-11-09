@@ -1,4 +1,4 @@
-// 内容部品の外枠に「聞く」を足す。口が渡され、節の中の内容部品のときだけ包んで右上にボタンを出す。
+// 内容部品の外枠に「聞く」を足す。口が渡され、節の中の内容部品のときだけ包んでボタンの口を子に渡す。
 // それ以外は子をそのまま返す（包みの要素を足さない）。
 // 開いている入力欄は部品の中で1つ。部品全体の欄と表の行の欄は、同じ状態を取り合う。
 
@@ -85,6 +85,8 @@ export function AskFrame(props: {
   readonly title: string
   /** 題の行を持つ部品か。持たない部品は、答えの欄の頭にバッジを置く。 */
   readonly captioned: boolean
+  /** 「聞く」「頼む」の置き場。`caption` は題の行の右端（呼び出し側が `AskButtons` を置く）、`bar` は部品の上の自前の行。 */
+  readonly buttons: "caption" | "bar"
   readonly children: ReactNode
 }): ReactElement {
   const slot = use(ReplyPortContext)
@@ -138,60 +140,98 @@ export function AskFrame(props: {
       thread.kind === "asked" && thread.thread.pairs.some((pair) => pair.row?.index === index),
   }
   const leafBoxOpen = open.kind === "open" && open.scope.kind === "leaf"
+  const opener: LeafAskOpener = leafBoxOpen
+    ? { kind: "none" }
+    : {
+        kind: "available",
+        open: (mode) => {
+          openAt({ kind: "leaf" }, mode, "")
+        },
+      }
   return (
     <RowAskContext value={rowAsk}>
-      <div className={styles["ask-frame"]}>
-        {props.children}
-        {thread.kind === "asked" && (
-          <AskThreadView
-            thread={thread.thread}
-            captioned={props.captioned}
-            onContinue={(pair) => {
-              openAt(scopeOf(pair), "ask", "")
-            }}
-            onRequest={(pair) => {
-              openAt(
-                scopeOf(pair),
-                "request",
-                pair.answer.kind === "answered" ? pair.answer.text : "",
-              )
-            }}
-          />
-        )}
-        {!leafBoxOpen && (
-          <span className={styles["ask-button-slot"]}>
-            <Button
-              variant="outline"
-              size="label"
-              pressed="none"
-              disabled={false}
-              disclosure={{ kind: "none" }}
-              className={styles["ask-button"]}
-              onClick={() => {
-                openAt({ kind: "leaf" }, "ask", "")
+      <LeafAskOpenerContext value={opener}>
+        <div className={styles["ask-frame"]}>
+          {props.buttons === "bar" && <AskButtons bar />}
+          {props.children}
+          {thread.kind === "asked" && (
+            <AskThreadView
+              thread={thread.thread}
+              captioned={props.captioned}
+              onContinue={(pair) => {
+                openAt(scopeOf(pair), "ask", "")
               }}
-            >
-              聞く
-            </Button>{" "}
-            <Button
-              variant="outline"
-              size="label"
-              pressed="none"
-              disabled={false}
-              disclosure={{ kind: "none" }}
-              className={styles["ask-button"]}
-              onClick={() => {
-                openAt({ kind: "leaf" }, "request", "")
+              onRequest={(pair) => {
+                openAt(
+                  scopeOf(pair),
+                  "request",
+                  pair.answer.kind === "answered" ? pair.answer.text : "",
+                )
               }}
-            >
-              頼む
-            </Button>
-          </span>
-        )}
-        {open.kind === "open" && boxOf(open)}
-      </div>
+            />
+          )}
+          {open.kind === "open" && boxOf(open)}
+        </div>
+      </LeafAskOpenerContext>
     </RowAskContext>
   )
+}
+
+/** 部品の「聞く」「頼む」を開く口。`AskFrame` が子に渡す。 */
+type LeafAskOpener =
+  | { readonly kind: "none" }
+  | { readonly kind: "available"; readonly open: (mode: AskMode) => void }
+
+const LeafAskOpenerContext = createContext<LeafAskOpener>({ kind: "none" })
+
+/** 「聞く」「頼む」を出せる部品か（口・節・部品がそろっているか）。 */
+export function useAskAvailable(title: string): boolean {
+  const slot = use(ReplyPortContext)
+  const rowTarget = useRowTarget(title)
+  return slot.kind !== "none" && rowTarget.kind !== "none"
+}
+
+/**
+ * 部品の「聞く」「頼む」。流れの中に置き、重ねたとき・フォーカスしたときだけ見せる（隠れていても場所は取る）。
+ * `bar` は部品の上の自前の行で、題の行が無い部品と、題の行が畳みの中に隠れる部品（畳みが空でない）が使う。
+ * 題の行が畳みの外に出ている部品は、題の行の右端の並びに子として置く。
+ */
+export function AskButtons(props: { readonly bar?: boolean }): ReactElement {
+  const opener = use(LeafAskOpenerContext)
+  if (opener.kind === "none") {
+    return <></>
+  }
+  const buttons = (
+    <span className={styles["ask-buttons"]}>
+      <Button
+        variant="outline"
+        size="label"
+        pressed="none"
+        disabled={false}
+        disclosure={{ kind: "none" }}
+        className={styles["ask-button"]}
+        onClick={() => {
+          opener.open("ask")
+        }}
+      >
+        聞く
+      </Button>
+      <Button
+        variant="outline"
+        size="label"
+        pressed="none"
+        disabled={false}
+        disclosure={{ kind: "none" }}
+        className={styles["ask-button"]}
+        onClick={() => {
+          opener.open("request")
+        }}
+      >
+        頼む
+      </Button>
+    </span>
+  )
+  return props.bar === true ? <div className={styles["ask-bar"]}>{buttons}</div> : buttons
 }
 
 function scopeOf(pair: AskPair): AskScope {

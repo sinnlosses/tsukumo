@@ -595,6 +595,26 @@
                                                 "表 1",
                                                 "直したファイルと結果（架空の数）",
                                                 {
+                                                  "tag": "button",
+                                                  "attributes": {
+                                                    "aria-disabled": "false",
+                                                    "type": "button"
+                                                  },
+                                                  "children": [
+                                                    "聞く"
+                                                  ]
+                                                },
+                                                {
+                                                  "tag": "button",
+                                                  "attributes": {
+                                                    "aria-disabled": "false",
+                                                    "type": "button"
+                                                  },
+                                                  "children": [
+                                                    "頼む"
+                                                  ]
+                                                },
+                                                {
                                                   "tag": "span",
                                                   "attributes": {
                                                     "aria-hidden": "true"
@@ -917,6 +937,8 @@
                                                     }
                                                   ]
                                                 },
+                                                "表 2",
+                                                "目盛りの数（架空の数）",
                                                 {
                                                   "tag": "button",
                                                   "attributes": {
@@ -937,8 +959,6 @@
                                                     "頼む"
                                                   ]
                                                 },
-                                                "表 2",
-                                                "目盛りの数（架空の数）",
                                                 {
                                                   "tag": "table",
                                                   "children": [
@@ -1084,26 +1104,6 @@
                                                   ]
                                                 },
                                                 "ほか 3 件（一覧は省略）",
-                                                {
-                                                  "tag": "button",
-                                                  "attributes": {
-                                                    "aria-disabled": "false",
-                                                    "type": "button"
-                                                  },
-                                                  "children": [
-                                                    "聞く"
-                                                  ]
-                                                },
-                                                {
-                                                  "tag": "button",
-                                                  "attributes": {
-                                                    "aria-disabled": "false",
-                                                    "type": "button"
-                                                  },
-                                                  "children": [
-                                                    "頼む"
-                                                  ]
-                                                },
                                                 "src/a.ts",
                                                 {
                                                   "tag": "button",

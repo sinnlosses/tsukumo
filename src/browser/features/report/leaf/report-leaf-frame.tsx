@@ -16,7 +16,7 @@ import {
   leafFrameClassNames,
   type SwapSettings,
 } from "../markdown.tsx"
-import { AskFrame } from "./ask-frame.tsx"
+import { AskButtons, AskFrame, useAskAvailable } from "./ask-frame.tsx"
 import { AskBadge } from "./ask-thread-view.tsx"
 import styles from "./leaf.module.css"
 import { ReplyNoteCard, useLeafNotes } from "./reply-note-card.tsx"
@@ -55,6 +55,10 @@ export function FoldedLeafFrame(
   const { captionNumber, gutterNotes } = props.value
   const askThread = useLeafAskThread()
   const replyNotes = useLeafNotes()
+  const hasCaption = captionNumber.kind !== "none"
+  const askAvailable = useAskAvailable(props.title)
+  // 題の行が畳みの外にあるときだけ、そこへ置く。畳むと題の行ごと隠れるので、自前の行にする。
+  const buttonsInCaption = askAvailable && hasCaption && props.fold.trim() === ""
   const caption =
     captionNumber.kind === "none" ? undefined : (
       <LeafCaption
@@ -63,6 +67,7 @@ export function FoldedLeafFrame(
         aside={captionAsideOf(
           captionNumber.kind === "table" ? props.captionAside : undefined,
           askThread,
+          buttonsInCaption,
         )}
       />
     )
@@ -85,16 +90,16 @@ export function FoldedLeafFrame(
       )}
     </LeafFold>
   )
-  const hasCaption = captionNumber.kind !== "none"
+  const buttons = buttonsInCaption ? "caption" : "bar"
   if (gutterNotes.length === 0 && replyNotes.length === 0) {
     return (
-      <AskFrame title={props.title} captioned={hasCaption}>
+      <AskFrame title={props.title} captioned={hasCaption} buttons={buttons}>
         {captioned}
       </AskFrame>
     )
   }
   return (
-    <AskFrame title={props.title} captioned={hasCaption}>
+    <AskFrame title={props.title} captioned={hasCaption} buttons={buttons}>
       <div className={leafFrameClassNames.withGutter}>
         {captioned}
         <div className={leafFrameClassNames.gutter}>
@@ -151,14 +156,15 @@ function CaptionedBox(props: {
   )
 }
 
-function captionAsideOf(aside: ReactNode, askThread: LeafAskSlot): ReactNode {
-  if (askThread.kind === "none") {
+function captionAsideOf(aside: ReactNode, askThread: LeafAskSlot, withButtons: boolean): ReactNode {
+  if (askThread.kind === "none" && !withButtons) {
     return aside
   }
   return (
     <span className={styles["ask-caption-aside"]}>
       {aside}
-      <AskBadge thread={askThread.thread} />
+      {askThread.kind === "asked" && <AskBadge thread={askThread.thread} />}
+      {withButtons && <AskButtons />}
     </span>
   )
 }
