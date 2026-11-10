@@ -3,5 +3,7 @@ allowBuilds:
   "@astryxdesign/core": false
   "@swc/core": false
   esbuild: false
+# 公開から3日（分で数える）たっていない版は入れない
+minimumReleaseAge: 4320
 overrides:
   lodash-es: "^4.18.1"
