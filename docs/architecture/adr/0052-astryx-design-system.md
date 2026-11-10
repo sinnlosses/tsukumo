@@ -1,6 +1,6 @@
 # デザインシステムを Astryx へ移す: テーマの組み立て・CSS の層・`ui/` の部品の当て方（2026-11-09）
 
-ステータス: 採用
+ステータス: 置き換え済み（→ 0053）
 
 **画面とレポートの部品を、Astryx（`@astryxdesign/core`）の部品か、Astryx の部品を組み合わせた部品でそろえる。Astryx を読むのは `src/browser/components/ui/` だけで、ほかの場所は `ui/` の部品を経て使う。テーマは tsukumo のトークン（`theme.css`）を `var()` で写した `defineTheme` の定義を `astryx theme build` で組み立て、組み立てた物をリポジトリに置く。CSS は `astryx.css` を丸ごと読み、層の順を tsukumo が先に宣言する。`reset.css` は読ませない。テーマが見出しと段落に当てる既定は、tsukumo の層で打ち消す。`ui/` の部品の props は変えず、中身だけを Astryx に替える。**
 

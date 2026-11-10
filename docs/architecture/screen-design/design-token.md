@@ -75,7 +75,7 @@
 
 ### 13.16 `ui/` の箱の部品
 
-`ui/` の部品の中身は Astryx（ADR 0052）の部品で、props は tsukumo の語彙のまま変えない。`@astryxdesign/*` と `@stylexjs/stylex` を import できるのは `src/browser/components/ui/` だけで、`.dependency-cruiser.cjs` の `astryx-reader` が外からの import を止める。Astryx に当てない例外は `typing-dot-list` で、Astryx に入力中の点の部品が無いので、今の CSS のまま残す。`layout-resizer` は、移すときに Astryx の `ResizeHandle` が当たるかを確かめ、当たらなければ例外に足す。
+`ui/` の部品の中身は Astryx（ADR 0053）の部品で、props は tsukumo の語彙のまま変えない。`@astryxdesign/*` と `@stylexjs/stylex` を import できるのは `src/browser/components/ui/` だけで、`.dependency-cruiser.cjs` の `astryx-reader` が外からの import を止める。Astryx に当てない例外は `typing-dot-list` で、Astryx に入力中の点の部品が無いので、今の CSS のまま残す。`layout-resizer` は、移すときに Astryx の `ResizeHandle` が当たるかを確かめ、当たらなければ例外に足す。
 
 根の `ThemeRoot`（`ui/theme-root/`）は、`App` の `QueryClientProvider` の内側・`Root` の外側で、`InternationalizationProvider`（`locale="ja-JP"`）と `Theme`（テーマ `tsukumo`・`mode="dark"`）を重ねて子を包む。テーマの定義 `tsukumo-theme.ts` は、値を tsukumo のトークンの `var()` とそれを組んだ式だけで書く。パックの accent は `usePackAppearance` が `<html>` の `--accent` に書き、テーマの `--color-accent` がそれに追随する。
 
