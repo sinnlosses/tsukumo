@@ -9,6 +9,7 @@
   box-sizing: border-box;
   width: 100%;
   min-width: 0;
+  height: auto;
   padding: var(--space-md);
   font-family: var(--font-mono);
 }

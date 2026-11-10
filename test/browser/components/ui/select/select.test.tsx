@@ -2,14 +2,13 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
 import { Select } from "../../../../../src/browser/components/ui/select/select.tsx"
-import { typedElement } from "../../../../typed-element.ts"
 
 afterEach(() => {
   cleanup()
 })
 
 describe("Select", () => {
-  it("選択肢を出し、value を選択する", () => {
+  it("開く口の名前は ariaLabel で、字は選んでいる選択肢の名前。押すと選択肢が並ぶ", () => {
     render(
       <Select
         id="dummy-select"
@@ -26,18 +25,15 @@ describe("Select", () => {
       />,
     )
 
-    const select = typedElement(
-      screen.getByLabelText("ダミー"),
-      HTMLSelectElement,
-      "ダミーの <select>",
-    )
-    expect(select.value).toBe("b")
-    expect(select.hasAttribute("title")).toBe(false)
-    expect(screen.getByText("A")).toBeDefined()
-    expect(screen.getByText("B")).toBeDefined()
+    const trigger = screen.getByRole("combobox", { name: "ダミー" })
+    expect(trigger.textContent).toContain("B")
+
+    fireEvent.click(trigger)
+
+    expect(screen.getAllByRole("option").map((option) => option.textContent)).toEqual(["A", "B"])
   })
 
-  it("disabled のとき title を渡すと属性に出る（常設の枠を増やさず理由を見せる）", () => {
+  it("disabled のときは開く口が押せない状態（aria-disabled）になり、理由の字が付く", () => {
     render(
       <Select
         id="dummy-select"
@@ -52,16 +48,12 @@ describe("Select", () => {
       />,
     )
 
-    const select = typedElement(
-      screen.getByLabelText("ダミー"),
-      HTMLSelectElement,
-      "ダミーの <select>",
-    )
-    expect(select.disabled).toBe(true)
-    expect(select.title).toBe("架空の理由")
+    const trigger = screen.getByRole("combobox", { name: "ダミー" })
+    expect(trigger.getAttribute("aria-disabled")).toBe("true")
+    expect(document.body.textContent).toContain("架空の理由")
   })
 
-  it("変更で onChange に選ばれた値を渡す", () => {
+  it("選択肢を押すと onChange に選ばれた値を渡す", () => {
     const calls: string[] = []
     render(
       <Select
@@ -80,7 +72,8 @@ describe("Select", () => {
       />,
     )
 
-    fireEvent.change(screen.getByLabelText("ダミー"), { target: { value: "b" } })
+    fireEvent.click(screen.getByRole("combobox", { name: "ダミー" }))
+    fireEvent.click(screen.getByRole("option", { name: "B" }))
 
     expect(calls).toEqual(["b"])
   })

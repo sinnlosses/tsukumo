@@ -145,13 +145,12 @@ CSS に無い名前は `undefined` のままなので、**綴りを間違える�
 検査は掛けない）。**`components/ui/` はストアを読めない**。
 
 - **variant 部品**（`Text` / `Heading` / `Stack`（と `VStack` / `HStack`）/ `Button` / `Dialog`）は見た目を
-  部品が持つ。**形だけの部品**（`Select`）は寸法・枠・地・字の段を呼び出し側が `className` で渡し、
-  **variant を持たない**（プルダウンは置き場所ごとに寸法がまるで違う）。`TextField`（1行の `input` と
-  複数行の `textarea`）は variant を持たない部品で、地・色・枠の線・角丸・字の段を部品が持ち、寸法・余白・
-  枠の色は呼び出し側が `className` で渡す。`Field`（名札・入力欄・ヒントを縦に積む欄）は `variant`
-  （`form`＝入力の名札、`confirm`＝確かめの問いかけ。名札の字の組が違う）で名札の字を決め、`id` を名札の
-  `htmlFor` に渡して入力欄（`TextField` を `children` で受ける）と結ぶ。ヒントの無い欄は `hint` に
-  `undefined` を渡す。**差し込み部分を持つ部品**
+  部品が持つ。`Select`・`TextField`・`Field` は Astryx の部品に替えてあり、見た目は Astryx のもの。
+  `Select`（`Selector`。開く口は `combobox`、選択肢は `option`）と `TextField`（`TextInput`・`TextArea`）は
+  variant を持たず、寸法・余白は呼び出し側が `className` で渡す。`Field`（名札・入力欄・ヒントを縦に積む欄）は
+  `id` を名札の `htmlFor`（Astryx の `inputID`）に渡して入力欄（`TextField` を `children` で受ける）と結ぶ。
+  `variant` の `form`・`confirm` の字の違いは見た目だけの区別なので Astryx の見た目に任せる。ヒントの無い欄は
+  `hint` に `undefined` を渡す。**差し込み部分を持つ部品**
   （`BottomSheet`。狭い画面の板）は面の形と閉じ方を部品が持ち、頭・中・下端は props の `ReactNode` で受ける。
   `Menu`（「…」のボタンから開く操作の一覧）は開閉・キーボード・位置・顔を部品が持ち、行（名前・`danger` の顔・
   押せない・前の区切り・選んだときの処理）は props で受ける
@@ -174,7 +173,7 @@ CSS に無い名前は `undefined` のままなので、**綴りを間違える�
   prop（`Heading` の `level`・`Stack` の `element`）だけ。`Stack` は `data-*` とイベントの props を持たない
 - **Text と Heading の境目**: 見出しの意味（`level`）と見た目（`size`）を別の props にする。対応表は
   `ui/text/` の1つを読む（二重に持たない）。`<h*>` でない「見出しに見える字」は `Heading` にしない
-- **Astryx に替えた部品**（`Text`・`Heading` など）は、tsukumo の props を Astryx の props へ写す対応表を
+- **Astryx に替えた部品**（`Text`・`Heading`・`Field`・`TextField`・`Select` など）は、tsukumo の props を Astryx の props へ写す対応表を
   `satisfies Record<合併型, …>` で縛って部品の1か所に置く。Astryx に口が無い意味の区別（`Text` の
   `state-*` の色）は、テーマの `components`（`ui/theme-root/tsukumo-component-override.ts`）と型の拡張で足し、
   見た目だけの区別は落とす（`Heading` の `size` は `level` の段に落ちる）。単体テストは付く class でなく、

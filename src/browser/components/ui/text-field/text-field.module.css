@@ -1,11 +1,30 @@
-.text-field {
-  background: var(--ground);
-  color: inherit;
-  border-style: solid;
-  border-width: 1px;
-  border-radius: var(--radius-md);
-  font-size: var(--font-secondary);
+/* Astryx の 1 行入力は字体を中の input に直に持つので、呼び出し側が箱に渡した font-family を継がせる。 */
+:where(.text-field-control input) {
+  font-family: inherit;
 }
-:where(.text-field) {
-  border-color: var(--rule);
+
+/*
+ * Astryx の複数行入力は呼び出し側の class を外の箱に付け、中の textarea は rows の高さのまま残る。
+ * 箱に渡した高さを中の textarea が埋め、字体と行の高さも箱から継ぐ。
+ */
+:where(.text-field-textarea-control) {
+  display: flex;
+  flex-direction: column;
+}
+:where(.text-field-textarea-control textarea) {
+  flex: 1 1 auto;
+  font-family: inherit;
+  line-height: inherit;
+}
+/*
+ * 字数の表示は箱の下端に重ねて置かれる。textarea の内側の余白で避けると、スクロールした本文が表示の下に潜る。
+ * textarea の下に字数の表示ぶんの空きを列の要素として置いて避ける。
+ */
+:where(.text-field-textarea-control textarea:not(:last-child)) {
+  padding-bottom: 0;
+}
+:where(.text-field-textarea-control:has(> textarea:not(:last-child)))::after {
+  content: "";
+  flex: none;
+  height: var(--spacing-7);
 }

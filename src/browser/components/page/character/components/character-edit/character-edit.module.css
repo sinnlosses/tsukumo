@@ -320,21 +320,6 @@
   box-sizing: border-box;
   width: 100%;
   height: 2rem;
-  padding: 0 var(--space-3xl) 0 var(--space-sm);
-  border: 1px solid var(--rule-quiet);
-  border-radius: var(--radius-md);
-  background: var(--ground);
-  color: var(--ink);
-  font-size: var(--font-secondary);
-  cursor: pointer;
-}
-.item-seat-select:hover {
-  border-color: var(--accent);
-}
-/* 開いた一覧の地はブラウザが描くので、選択肢の地と字は明示する。 */
-.item-seat-select option {
-  background: var(--surface);
-  color: var(--ink);
 }
 
 /* 一覧の格子。 */

@@ -42,6 +42,22 @@ describe("Field", () => {
     expect(label.control).toBe(input)
   })
 
+  it("複数行の入力欄でも、名前が二重にならず名札の字でちょうど1件当たる", () => {
+    render(
+      <Field {...BASE_PROPS}>
+        <TextField
+          element="textarea"
+          id={BASE_PROPS.id}
+          className=""
+          value=""
+          onChange={() => undefined}
+        />
+      </Field>,
+    )
+
+    expect(screen.getAllByRole("textbox", { name: "ダミーの名札" })).toHaveLength(1)
+  })
+
   it("ヒントを渡すと描き、undefined のときは描かない", () => {
     renderField({ ...BASE_PROPS, hint: <span>ダミーのヒント</span> })
     expect(screen.getByText("ダミーのヒント")).toBeTruthy()

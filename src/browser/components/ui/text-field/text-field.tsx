@@ -1,7 +1,9 @@
-// 領域をまたいで使う入力欄（1行の `<input>` と複数行の `<textarea>`）。
-// 持つ見た目は、どの入力欄でも同じになる分だけ（地・字の色・枠の線・角丸・字の段）。
-// 寸法・余白・`resize`・行間と、枠の色を変えたいときの色は呼び出し側が `className` で渡す。
+// 領域をまたいで使う入力欄（1行と複数行）。中身は Astryx の `TextInput`・`TextArea`。
+// 名札は外の `Field`・`<label htmlFor>` が持つので、入力欄の側の名札は隠す（同じ字を渡すと名前が二重になる）。
+// 寸法・余白・`resize` などは呼び出し側が `className`（Astryx の `controlClassName`）で渡す。
 
+import { TextArea } from "@astryxdesign/core/TextArea"
+import { TextInput } from "@astryxdesign/core/TextInput"
 import clsx from "clsx"
 import type { ReactElement } from "react"
 
@@ -19,30 +21,34 @@ type TextFieldProps = {
 }
 
 export function TextField(props: TextFieldProps): ReactElement {
-  const className = clsx(styles["text-field"], props.className)
   if (props.element === "textarea") {
     return (
-      <textarea
+      <TextArea
+        label=""
+        isLabelHidden
         id={props.id}
-        className={className}
+        controlClassName={clsx(styles["text-field-textarea-control"], props.className)}
         value={props.value}
         maxLength={props.maxLength}
         placeholder={props.placeholder}
-        disabled={props.disabled}
-        onChange={(event) => props.onChange(event.target.value)}
+        isDisabled={props.disabled}
+        onChange={(value) => props.onChange(value)}
       />
     )
   }
+  // `TextInput` の型に `maxLength` は無いが、残りの props として入力欄へ通る。
+  const passedToInput = { maxLength: props.maxLength }
   return (
-    <input
+    <TextInput
+      {...passedToInput}
+      label=""
+      isLabelHidden
       id={props.id}
-      type="text"
-      className={className}
+      controlClassName={clsx(styles["text-field-control"], props.className)}
       value={props.value}
-      maxLength={props.maxLength}
       placeholder={props.placeholder}
-      disabled={props.disabled}
-      onChange={(event) => props.onChange(event.target.value)}
+      isDisabled={props.disabled}
+      onChange={(value) => props.onChange(value)}
     />
   )
 }

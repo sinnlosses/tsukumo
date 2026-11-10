@@ -1,9 +1,9 @@
-// 名札・入力欄・ヒントを縦に積む欄。`label` の `htmlFor` は `id` から付け、入力欄（`children`）には同じ `id` を渡す。
+// 名札・入力欄・ヒントを縦に積む欄。中身は Astryx の `Field`。
+// 名札の `htmlFor` は `id`（Astryx の `inputID`）から付け、入力欄（`children`）には同じ `id` を渡す。
+// ヒントは Astryx の `description`（字だけで入力欄の上に置く）を使わず、入力欄の後ろに並べる。
 
-import clsx from "clsx"
+import { Field as AstryxField } from "@astryxdesign/core/Field"
 import type { ReactElement, ReactNode } from "react"
-
-import styles from "./field.module.css"
 
 type FieldVariant = "form" | "confirm"
 
@@ -16,24 +16,11 @@ export type FieldProps = {
   readonly children: ReactNode
 }
 
-const FIELD_BOX_CLASS = {
-  form: styles["field-form"],
-  confirm: undefined,
-} satisfies Record<FieldVariant, string | undefined>
-
-const FIELD_LABEL_CLASS = {
-  form: styles["field-label-form"],
-  confirm: styles["field-label-confirm"],
-} satisfies Record<FieldVariant, string | undefined>
-
 export function Field(props: FieldProps): ReactElement {
   return (
-    <div className={clsx(styles["field"], FIELD_BOX_CLASS[props.variant])}>
-      <label className={FIELD_LABEL_CLASS[props.variant]} htmlFor={props.id}>
-        {props.label}
-      </label>
+    <AstryxField label={props.label} inputID={props.id}>
       {props.children}
       {props.hint}
-    </div>
+    </AstryxField>
   )
 }

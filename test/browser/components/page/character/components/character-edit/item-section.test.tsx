@@ -1,5 +1,5 @@
 import { QueryClientProvider } from "@tanstack/react-query"
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
 import { CharacterEdit } from "../../../../../../../src/browser/components/page/character/components/character-edit/character-edit.tsx"
@@ -35,12 +35,22 @@ function renderEdit(
   )
 }
 
-function seatSelect(label: string): HTMLSelectElement {
-  const select = screen.getByLabelText(`${label}に置くアイテム`)
-  if (!(select instanceof HTMLSelectElement)) {
-    throw new Error("席の選択メニューが select ではない")
+function seatSelect(label: string): HTMLElement {
+  return screen.getByRole("combobox", { name: `${label}に置くアイテム` })
+}
+
+function seatValue(label: string): string {
+  return seatSelect(label).textContent
+}
+
+function pickSeat(label: string, optionName: string): void {
+  const trigger = seatSelect(label)
+  fireEvent.click(trigger)
+  const listbox = document.getElementById(trigger.getAttribute("aria-controls") ?? "")
+  if (listbox === null) {
+    throw new Error("席の選択メニューの一覧が開いていない")
   }
-  return select
+  fireEvent.click(within(listbox).getByRole("option", { name: optionName }))
 }
 
 describe("アイテムの区画", () => {
@@ -52,17 +62,16 @@ describe("アイテムの区画", () => {
       },
     })
 
-    expect(seatSelect("左上").value).toBe(HAT.id)
-    expect(seatSelect("キャラの左下").value).toBe("")
-    expect(seatSelect("キャラの右下").value).toBe("")
-    expect(screen.getAllByRole("option", { name: "置かない" })).toHaveLength(3)
+    expect(seatValue("左上")).toContain(HAT.name)
+    expect(seatValue("キャラの左下")).toContain("置かない")
+    expect(seatValue("キャラの右下")).toContain("置かない")
   })
 
   it("席にアイテムを選ぶと、選んでいるパックの席として送る", () => {
     const sent: SentCommand[] = []
     renderEdit({ items: [HAT, CUP] }, (command) => sent.push(command))
 
-    fireEvent.change(seatSelect("キャラの左下"), { target: { value: CUP.id } })
+    pickSeat("キャラの左下", CUP.name)
 
     expect(sent).toEqual([
       { procedure: "item.setSeat", pack: FIXTURE_CHARACTER.pack, seat: "belowLeft", id: CUP.id },
@@ -81,7 +90,7 @@ describe("アイテムの区画", () => {
       (command) => sent.push(command),
     )
 
-    fireEvent.change(seatSelect("左上"), { target: { value: "" } })
+    pickSeat("左上", "置かない")
 
     expect(sent).toEqual([
       { procedure: "item.clearSeat", pack: FIXTURE_CHARACTER.pack, seat: "topLeft" },
@@ -95,7 +104,7 @@ describe("アイテムの区画", () => {
       editable: false,
     })
 
-    fireEvent.change(seatSelect("左上"), { target: { value: HAT.id } })
+    pickSeat("左上", HAT.name)
 
     expect(sent).toHaveLength(1)
   })

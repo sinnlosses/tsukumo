@@ -219,7 +219,7 @@ describe("設定のダイアログの「ワークフロー」の面（選択と�
     fireEvent.click(bandButton("保存"))
 
     await waitFor(() => {
-      expect(commandBox().disabled).toBe(true)
+      expect(commandBox().getAttribute("aria-disabled")).toBe("true")
     })
   })
 

@@ -95,9 +95,10 @@ function SeatCard(props: { readonly seat: SeatPickModel }): ReactElement {
       ) : (
         <img className={styles["item-seat-thumb"]} src={seat.current.url} alt="" />
       )}
-      <label htmlFor={selectId} className={styles["item-seat-label"]}>
+      {/* 名前は Select の ariaLabel が持つ。label で結ぶと名札の字が名前に二重に入る */}
+      <span aria-hidden="true" className={styles["item-seat-label"]}>
         {seat.label}
-      </label>
+      </span>
       <Select
         id={selectId}
         ariaLabel={`${seat.label}に置くアイテム`}
