@@ -128,7 +128,8 @@
 | `docs/architecture/adr/0048-report-parameters-and-expressions.md`               | 触れるレポート: つまみの部品と、独自関数 `expr` の中置の式・名前つきの式で値を結ぶ                    | 採用                   |
 | `docs/architecture/adr/0049-sdk-tool-boundary-and-shared-drawing-vocabulary.md` | SDK の道具の境界と、ブラウザだけが読むように見える shared の描画の語彙の置き場                        | 提案                   |
 | `docs/architecture/adr/0050-eperm-is-alive.md`                                  | 別の利用者のプロセス（`EPERM`）は生きている扱いに揃え、生死の判定を1つにする                          | 採用                   |
-| `docs/architecture/adr/0051-report-reply-layer.md`                              | 返す層: レポートの部品を指して「聞く」「頼む」、末尾から「続き」を選ぶ                                | 採用                   |
+| `docs/architecture/adr/0051-report-reply-layer.md`                              | 返す層: レポートの部品を指して「聞く」「頼む」、末尾から「続き」を選ぶ                                | 置き換え済み（→ 0055） |
 | `docs/architecture/adr/0052-astryx-design-system.md`                            | デザインシステムを Astryx へ移す: テーマの組み立て・CSS の層・`ui/` の部品の当て方                    | 置き換え済み（→ 0053） |
 | `docs/architecture/adr/0053-astryx-look.md`                                     | デザインシステムを Astryx の見た目に寄せる: 色は tsukumo から写し、形と大きさは Astryx に従う         | 採用                   |
 | `docs/architecture/adr/0054-question-design-human-ai-guidelines.md`             | 質問の設計を Guidelines for Human-AI Interaction の則から決める                                       | 採用                   |
+| `docs/architecture/adr/0055-report-reply-margin-notes.md`                       | 返す層の見た目: 選んだ所の横の余白に「聞く・頼む」を1つ出し、欄と答えは余白の札にする                 | 採用                   |
