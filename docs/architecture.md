@@ -131,3 +131,4 @@
 | `docs/architecture/adr/0051-report-reply-layer.md`                              | 返す層: レポートの部品を指して「聞く」「頼む」、末尾から「続き」を選ぶ                                | 採用                   |
 | `docs/architecture/adr/0052-astryx-design-system.md`                            | デザインシステムを Astryx へ移す: テーマの組み立て・CSS の層・`ui/` の部品の当て方                    | 置き換え済み（→ 0053） |
 | `docs/architecture/adr/0053-astryx-look.md`                                     | デザインシステムを Astryx の見た目に寄せる: 色は tsukumo から写し、形と大きさは Astryx に従う         | 採用                   |
+| `docs/architecture/adr/0054-question-design-human-ai-guidelines.md`             | 質問の設計を Guidelines for Human-AI Interaction の則から決める                                       | 採用                   |
