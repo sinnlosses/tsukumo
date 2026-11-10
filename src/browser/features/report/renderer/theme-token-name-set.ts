@@ -71,6 +71,7 @@ export const THEME_TOKEN_NAMES: ReadonlySet<string> = new Set([
   "ink-quiet",
   "ink-soft",
   "line-height-body",
+  "line-height-reading",
   "motion-base",
   "motion-fast",
   "page-padding",
