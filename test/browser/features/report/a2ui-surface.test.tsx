@@ -212,11 +212,11 @@ describe("Divider", () => {
       <Report reveal={false} turnId={1} {...NO_CLASS_NAMES} body={body} />,
     )
 
-    const rules = [...container.querySelectorAll("[data-report-region] hr")]
+    const rules = [...container.querySelectorAll('[data-report-region] [role="separator"]')]
     expect(rules).toHaveLength(1)
     expect(rules[0]?.previousElementSibling?.textContent).toBe("架空の前。")
     expect(rules[0]?.nextElementSibling?.textContent).toBe("架空の後ろ。")
-    expect(rules[0]?.getAttribute("aria-orientation")).toBeNull()
+    expect(rules[0]?.getAttribute("aria-orientation")).toBe("horizontal")
   })
 
   it("axis が vertical なら縦の罫になる", () => {
@@ -225,7 +225,9 @@ describe("Divider", () => {
       <Report reveal={false} turnId={1} {...NO_CLASS_NAMES} body={body} />,
     )
 
-    expect(container.querySelector("hr")?.getAttribute("aria-orientation")).toBe("vertical")
+    expect(container.querySelector('[role="separator"]')?.getAttribute("aria-orientation")).toBe(
+      "vertical",
+    )
   })
 })
 

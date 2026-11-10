@@ -23,31 +23,35 @@ function renderedElement(props: Omit<TextProps, "children">): Element {
 }
 
 describe("Text", () => {
-  it("size・tone・weight は対応表の class を付ける", () => {
+  it("size・tone・weight は Astryx の type・color・weight へ写る", () => {
     const element = renderedElement({
       ...BASE_PROPS,
       size: "heading",
-      tone: "accent",
+      tone: "state-ok",
       weight: "bold",
     })
-    expect(element.className.split(" ")).toEqual(
-      expect.arrayContaining(["text-size-heading", "text-tone-accent", "text-weight-bold"]),
-    )
+    expect(element.getAttribute("data-type")).toBe("large")
+    expect(element.getAttribute("data-color")).toBe("state-ok")
   })
 
-  it("inherit は size・tone・weight の class を付けない", () => {
+  it("inherit は type・color を inherit にする", () => {
     const element = renderedElement({
       ...BASE_PROPS,
       size: "inherit",
       tone: "inherit",
       weight: "inherit",
     })
-    const classNames = element.className.split(" ")
-    expect(classNames.some((name) => /^text-(size|tone|weight)-/.test(name))).toBe(false)
+    expect(element.getAttribute("data-type")).toBe("inherit")
+    expect(element.getAttribute("data-color")).toBe("inherit")
   })
 
   it("element で描く要素を選ぶ", () => {
-    const element = renderedElement({ ...BASE_PROPS, element: "summary" })
-    expect(element.tagName).toBe("SUMMARY")
+    expect(renderedElement({ ...BASE_PROPS, element: "p" }).tagName).toBe("P")
+    cleanup()
+    expect(renderedElement({ ...BASE_PROPS, element: "span" }).tagName).toBe("SPAN")
+    cleanup()
+    const inSummary = renderedElement({ ...BASE_PROPS, element: "summary", size: "heading" })
+    expect(inSummary.parentElement?.tagName).toBe("SUMMARY")
+    expect(inSummary.getAttribute("data-type")).toBe("large")
   })
 })

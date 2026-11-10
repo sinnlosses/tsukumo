@@ -52,8 +52,26 @@
                 }
               ]
             },
-            "<project>",
-            "<port>",
+            {
+              "tag": "span",
+              "attributes": {
+                "data-type": "large",
+                "data-color": "primary"
+              },
+              "children": [
+                "<project>"
+              ]
+            },
+            {
+              "tag": "span",
+              "attributes": {
+                "data-type": "supporting",
+                "data-color": "disabled"
+              },
+              "children": [
+                "<port>"
+              ]
+            },
             {
               "tag": "span",
               "attributes": {
@@ -217,133 +235,152 @@
                   },
                   "children": [
                     {
-                      "tag": "button",
+                      "tag": "div",
                       "attributes": {
-                        "aria-disabled": "false",
-                        "type": "button"
+                        "data-direction": "horizontal",
+                        "data-gap": "4",
+                        "data-wrap": "nowrap"
                       },
                       "children": [
                         {
-                          "tag": "div",
+                          "tag": "button",
                           "attributes": {
-                            "role": "img",
-                            "aria-label": "つくもの精霊（どや顔）",
-                            "data-expression": "proud",
-                            "data-motion": "reading"
+                            "aria-disabled": "false",
+                            "type": "button"
                           },
                           "children": [
                             {
-                              "tag": "img",
+                              "tag": "div",
                               "attributes": {
-                                "alt": "つくもの精霊（どや顔）",
-                                "src": "/character/tsukumo-spirit/proud.svg"
-                              }
+                                "role": "img",
+                                "aria-label": "つくもの精霊（どや顔）",
+                                "data-expression": "proud",
+                                "data-motion": "reading"
+                              },
+                              "children": [
+                                {
+                                  "tag": "img",
+                                  "attributes": {
+                                    "alt": "つくもの精霊（どや顔）",
+                                    "src": "/character/tsukumo-spirit/proud.svg"
+                                  }
+                                }
+                              ]
+                            },
+                            {
+                              "tag": "span",
+                              "attributes": {
+                                "data-type": "supporting",
+                                "data-color": "disabled"
+                              },
+                              "children": [
+                                "話しかけてもらう"
+                              ]
                             }
                           ]
                         },
-                        "話しかけてもらう"
-                      ]
-                    },
-                    {
-                      "tag": "div",
-                      "attributes": {
-                        "data-speaker": "character",
-                        "role": "button",
-                        "aria-pressed": "false"
-                      },
-                      "children": [
-                        "疑似セッションの駆動で立ち上がったよ。ここはぜんぶ作り物の会話。"
-                      ]
-                    },
-                    {
-                      "tag": "time",
-                      "attributes": {
-                        "dateTime": "2026-01-15T10:00+09:00"
-                      },
-                      "children": [
-                        "10:00"
-                      ]
-                    },
-                    {
-                      "tag": "div",
-                      "attributes": {
-                        "data-speaker": "user"
-                      },
-                      "children": [
-                        "架空の雑談その1（区切りより前）"
-                      ]
-                    },
-                    {
-                      "tag": "time",
-                      "attributes": {
-                        "dateTime": "2026-01-15T10:00+09:00"
-                      },
-                      "children": [
-                        "10:00"
-                      ]
-                    },
-                    {
-                      "tag": "div",
-                      "attributes": {
-                        "data-speaker": "character",
-                        "role": "button",
-                        "aria-pressed": "false"
-                      },
-                      "children": [
-                        "区切りより前のセリフだよ。"
-                      ]
-                    },
-                    {
-                      "tag": "time",
-                      "attributes": {
-                        "dateTime": "2026-01-15T10:00+09:00"
-                      },
-                      "children": [
-                        "10:00"
-                      ]
-                    },
-                    {
-                      "tag": "hr",
-                      "attributes": {
-                        "data-speaker": "boundary"
-                      }
-                    },
-                    {
-                      "tag": "div",
-                      "attributes": {
-                        "data-speaker": "user"
-                      },
-                      "children": [
-                        "架空の雑談その2（区切りより後）"
-                      ]
-                    },
-                    {
-                      "tag": "time",
-                      "attributes": {
-                        "dateTime": "2026-01-15T10:00+09:00"
-                      },
-                      "children": [
-                        "10:00"
-                      ]
-                    },
-                    {
-                      "tag": "div",
-                      "attributes": {
-                        "data-speaker": "character",
-                        "role": "button",
-                        "aria-pressed": "true"
-                      },
-                      "children": [
-                        "区切りより後のセリフだよ。"
-                      ]
-                    },
-                    {
-                      "tag": "time",
-                      "attributes": {
-                        "dateTime": "2026-01-15T10:00+09:00"
-                      },
-                      "children": [
-                        "10:00"
+                        {
+                          "tag": "div",
+                          "attributes": {
+                            "data-speaker": "character",
+                            "role": "button",
+                            "aria-pressed": "false"
+                          },
+                          "children": [
+                            "疑似セッションの駆動で立ち上がったよ。ここはぜんぶ作り物の会話。"
+                          ]
+                        },
+                        {
+                          "tag": "time",
+                          "attributes": {
+                            "dateTime": "2026-01-15T10:00+09:00"
+                          },
+                          "children": [
+                            "10:00"
+                          ]
+                        },
+                        {
+                          "tag": "div",
+                          "attributes": {
+                            "data-speaker": "user"
+                          },
+                          "children": [
+                            "架空の雑談その1（区切りより前）"
+                          ]
+                        },
+                        {
+                          "tag": "time",
+                          "attributes": {
+                            "dateTime": "2026-01-15T10:00+09:00"
+                          },
+                          "children": [
+                            "10:00"
+                          ]
+                        },
+                        {
+                          "tag": "div",
+                          "attributes": {
+                            "data-speaker": "character",
+                            "role": "button",
+                            "aria-pressed": "false"
+                          },
+                          "children": [
+                            "区切りより前のセリフだよ。"
+                          ]
+                        },
+                        {
+                          "tag": "time",
+                          "attributes": {
+                            "dateTime": "2026-01-15T10:00+09:00"
+                          },
+                          "children": [
+                            "10:00"
+                          ]
+                        },
+                        {
+                          "tag": "hr",
+                          "attributes": {
+                            "data-speaker": "boundary"
+                          }
+                        },
+                        {
+                          "tag": "div",
+                          "attributes": {
+                            "data-speaker": "user"
+                          },
+                          "children": [
+                            "架空の雑談その2（区切りより後）"
+                          ]
+                        },
+                        {
+                          "tag": "time",
+                          "attributes": {
+                            "dateTime": "2026-01-15T10:00+09:00"
+                          },
+                          "children": [
+                            "10:00"
+                          ]
+                        },
+                        {
+                          "tag": "div",
+                          "attributes": {
+                            "data-speaker": "character",
+                            "role": "button",
+                            "aria-pressed": "true"
+                          },
+                          "children": [
+                            "区切りより後のセリフだよ。"
+                          ]
+                        },
+                        {
+                          "tag": "time",
+                          "attributes": {
+                            "dateTime": "2026-01-15T10:00+09:00"
+                          },
+                          "children": [
+                            "10:00"
+                          ]
+                        }
                       ]
                     }
                   ]
@@ -377,15 +414,33 @@
                           }
                         },
                         {
-                          "tag": "p",
+                          "tag": "div",
+                          "attributes": {
+                            "data-direction": "vertical",
+                            "data-gap": "1",
+                            "data-wrap": "nowrap"
+                          },
                           "children": [
-                            "つくもの精霊"
-                          ]
-                        },
-                        {
-                          "tag": "p",
-                          "children": [
-                            "ターミナルという道具に宿った小さな精霊"
+                            {
+                              "tag": "p",
+                              "attributes": {
+                                "data-type": "large",
+                                "data-color": "primary"
+                              },
+                              "children": [
+                                "つくもの精霊"
+                              ]
+                            },
+                            {
+                              "tag": "p",
+                              "attributes": {
+                                "data-type": "supporting",
+                                "data-color": "disabled"
+                              },
+                              "children": [
+                                "ターミナルという道具に宿った小さな精霊"
+                              ]
+                            }
                           ]
                         }
                       ]
@@ -404,14 +459,32 @@
                           "children": [
                             {
                               "tag": "h2",
+                              "attributes": {
+                                "data-level": "2",
+                                "data-color": "primary",
+                                "data-weight": "bold"
+                              },
                               "children": [
-                                "最近の話題"
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "data-type": "inherit",
+                                    "data-color": "inherit"
+                                  },
+                                  "children": [
+                                    "最近の話題"
+                                  ]
+                                }
                               ]
                             }
                           ]
                         },
                         {
                           "tag": "p",
+                          "attributes": {
+                            "data-type": "inherit",
+                            "data-color": "disabled"
+                          },
                           "children": [
                             "まだ話題が無い（話が積もると、ここに並ぶ）"
                           ]
@@ -432,14 +505,32 @@
                           "children": [
                             {
                               "tag": "h2",
+                              "attributes": {
+                                "data-level": "2",
+                                "data-color": "primary",
+                                "data-weight": "bold"
+                              },
                               "children": [
-                                "覚えていること"
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "data-type": "inherit",
+                                    "data-color": "inherit"
+                                  },
+                                  "children": [
+                                    "覚えていること"
+                                  ]
+                                }
                               ]
                             }
                           ]
                         },
                         {
                           "tag": "p",
+                          "attributes": {
+                            "data-type": "inherit",
+                            "data-color": "disabled"
+                          },
                           "children": [
                             "まだ覚えていることが無い"
                           ]
@@ -647,99 +738,156 @@
                   },
                   "children": [
                     {
-                      "tag": "form",
+                      "tag": "div",
+                      "attributes": {
+                        "data-direction": "vertical",
+                        "data-gap": "2",
+                        "data-wrap": "nowrap"
+                      },
                       "children": [
                         {
-                          "tag": "textarea",
-                          "attributes": {
-                            "aria-label": "依頼を書く",
-                            "value": ""
-                          }
-                        },
-                        {
-                          "tag": "button",
-                          "attributes": {
-                            "aria-disabled": "false",
-                            "aria-label": "画像を添える",
-                            "type": "button"
-                          },
+                          "tag": "form",
                           "children": [
                             {
-                              "tag": "svg"
-                            }
-                          ]
-                        },
-                        {
-                          "tag": "button",
-                          "attributes": {
-                            "aria-disabled": "false",
-                            "aria-label": "コマンドを補完する",
-                            "type": "button"
-                          },
-                          "children": [
-                            {
-                              "tag": "svg"
-                            }
-                          ]
-                        },
-                        {
-                          "tag": "button",
-                          "attributes": {
-                            "aria-disabled": "false",
-                            "aria-label": "ファイルを補完する",
-                            "type": "button"
-                          },
-                          "children": [
-                            {
-                              "tag": "svg"
-                            }
-                          ]
-                        },
-                        {
-                          "tag": "button",
-                          "attributes": {
-                            "aria-pressed": "false",
-                            "aria-disabled": "false",
-                            "aria-label": "マークダウンエディタで書く",
-                            "type": "button"
-                          },
-                          "children": [
-                            {
-                              "tag": "svg"
-                            }
-                          ]
-                        },
-                        {
-                          "tag": "span",
-                          "attributes": {
-                            "aria-hidden": "true"
-                          }
-                        },
-                        "所要",
-                        "0秒",
-                        {
-                          "tag": "button",
-                          "attributes": {
-                            "aria-disabled": "false",
-                            "aria-label": "新しいセッションを始める",
-                            "type": "button"
-                          },
-                          "children": [
-                            {
-                              "tag": "svg"
+                              "tag": "div",
+                              "attributes": {
+                                "data-direction": "vertical",
+                                "data-gap": "0",
+                                "data-wrap": "nowrap"
+                              },
+                              "children": [
+                                {
+                                  "tag": "textarea",
+                                  "attributes": {
+                                    "aria-label": "依頼を書く",
+                                    "value": ""
+                                  }
+                                }
+                              ]
                             },
-                            "新規"
-                          ]
-                        },
-                        {
-                          "tag": "button",
-                          "attributes": {
-                            "data-shortcut": "⌘⏎",
-                            "data-emphasis": "solid",
-                            "type": "submit"
-                          },
-                          "children": [
-                            "送信"
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "aria-disabled": "false",
+                                "aria-label": "画像を添える",
+                                "type": "button"
+                              },
+                              "children": [
+                                {
+                                  "tag": "svg"
+                                }
+                              ]
+                            },
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "aria-disabled": "false",
+                                "aria-label": "コマンドを補完する",
+                                "type": "button"
+                              },
+                              "children": [
+                                {
+                                  "tag": "svg"
+                                }
+                              ]
+                            },
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "aria-disabled": "false",
+                                "aria-label": "ファイルを補完する",
+                                "type": "button"
+                              },
+                              "children": [
+                                {
+                                  "tag": "svg"
+                                }
+                              ]
+                            },
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "aria-pressed": "false",
+                                "aria-disabled": "false",
+                                "aria-label": "マークダウンエディタで書く",
+                                "type": "button"
+                              },
+                              "children": [
+                                {
+                                  "tag": "svg"
+                                }
+                              ]
+                            },
+                            {
+                              "tag": "span",
+                              "attributes": {
+                                "aria-hidden": "true"
+                              }
+                            },
+                            {
+                              "tag": "div",
+                              "attributes": {
+                                "data-direction": "horizontal",
+                                "data-gap": "3",
+                                "data-wrap": "nowrap"
+                              },
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "data-type": "supporting",
+                                    "data-color": "disabled"
+                                  },
+                                  "children": [
+                                    {
+                                      "tag": "span",
+                                      "attributes": {
+                                        "data-type": "inherit",
+                                        "data-color": "inherit"
+                                      },
+                                      "children": [
+                                        "所要"
+                                      ]
+                                    },
+                                    {
+                                      "tag": "span",
+                                      "attributes": {
+                                        "data-type": "inherit",
+                                        "data-color": "primary"
+                                      },
+                                      "children": [
+                                        "0秒"
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "tag": "button",
+                                  "attributes": {
+                                    "aria-disabled": "false",
+                                    "aria-label": "新しいセッションを始める",
+                                    "type": "button"
+                                  },
+                                  "children": [
+                                    {
+                                      "tag": "svg"
+                                    },
+                                    "新規"
+                                  ]
+                                },
+                                {
+                                  "tag": "button",
+                                  "attributes": {
+                                    "data-shortcut": "⌘⏎",
+                                    "data-emphasis": "solid",
+                                    "type": "submit"
+                                  },
+                                  "children": [
+                                    "送信"
+                                  ]
+                                }
+                              ]
+                            }
                           ]
                         }
                       ]

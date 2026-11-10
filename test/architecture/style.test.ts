@@ -42,6 +42,27 @@ describe("16進の色", () => {
 const CLASSNAME_PROP_PATTERN = /readonly className: string/
 const UI_COMPONENT_FILE_PATTERN = /^browser\/components\/ui\/([^/]+)\/\1\.tsx$/
 
+const STACK_DECLARATIONS = [
+  "display",
+  "flex-direction",
+  "gap",
+  "align-items",
+  "justify-content",
+  "flex-wrap",
+]
+
+const TEXT_DECLARATIONS = ["font-size", "font-weight", "color"]
+
+/** Astryx の部品に替えた部品（ディレクトリ名）ごとの、同じ DOM ノードの上で Astryx が当てる宣言。CSS Modules には書かれない。 */
+const ASTRYX_OWNED_DECLARATIONS: Readonly<Record<string, readonly string[]>> = {
+  stack: STACK_DECLARATIONS,
+  "h-stack": STACK_DECLARATIONS,
+  "v-stack": STACK_DECLARATIONS,
+  divider: ["display", "background-color"],
+  text: TEXT_DECLARATIONS,
+  heading: TEXT_DECLARATIONS,
+}
+
 /** `.module.css` を import した名前と、その CSS の `src/` 相対パスの対応。 */
 type CssModuleImports = ReadonlyMap<string, string>
 
@@ -126,7 +147,12 @@ function classNameCheckedUiComponents(): readonly {
     }))
 
   const checked = new Set(
-    entries.filter(({ content }) => CLASSNAME_PROP_PATTERN.test(content)).map((e) => e.dirName),
+    entries
+      .filter(
+        ({ dirName, content }) =>
+          CLASSNAME_PROP_PATTERN.test(content) || dirName in ASTRYX_OWNED_DECLARATIONS,
+      )
+      .map((e) => e.dirName),
   )
   for (let grown = true; grown;) {
     grown = false
@@ -247,16 +273,21 @@ function propertiesOfClass(cssContent: string, className: string): readonly stri
 
 /**
  * 部品が `:where()` の外に持つ property（呼び出し側の class と競ってはいけないもの）。
- * 自分の CSS を持たない部品（`VStack` / `HStack`）は、レンダーする先の部品名を `.tsx` から辿って
+ * Astryx の部品に替えた部品は、Astryx が同じ DOM ノードに当てる宣言（`ASTRYX_OWNED_DECLARATIONS`）も
+ * 持ち物に数える。自分の CSS を持たない部品は、レンダーする先の部品名を `.tsx` から辿って
  * その CSS を見る（同じ DOM ノードに乗るため。`visited` は辿りが循環しないための歯止め）。
  * `::backdrop` などの疑似要素の規則は別の持ち物として数え、ここには含めない
  * （`docs/architecture/browser.md`「`components/ui/` の部品」の検査の注記。別の要素に描くので、呼び出し側の
  * class が同じ property 名を持っていても競らない）。
  */
-function ownExternalProperties(
-  dirName: string,
-  visited: ReadonlySet<string> = new Set(),
-): readonly string[] {
+function ownExternalProperties(dirName: string): readonly string[] {
+  const astryxOwned = (ASTRYX_OWNED_DECLARATIONS[dirName] ?? []).flatMap(
+    (name) => SHORTHAND_LONGHAND[name] ?? [name],
+  )
+  return [...new Set([...astryxOwned, ...cssOwnedProperties(dirName, new Set())])]
+}
+
+function cssOwnedProperties(dirName: string, visited: ReadonlySet<string>): readonly string[] {
   if (visited.has(dirName)) {
     return []
   }
@@ -286,7 +317,7 @@ function ownExternalProperties(
   )?.dirName
   return renderedDirName === undefined
     ? []
-    : ownExternalProperties(renderedDirName, new Set([...visited, dirName]))
+    : cssOwnedProperties(renderedDirName, new Set([...visited, dirName]))
 }
 
 /** `.tsx` のソースから、`<部品名 ... className={式} ...>` の使用箇所をすべて拾う。 */

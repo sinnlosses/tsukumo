@@ -124,7 +124,6 @@ const RAW_SCALE_REFERENCE_LIMITS: Readonly<Record<string, number>> = {
   "browser/components/ui/field/field.module.css": 1,
   "browser/components/ui/image-zoom/image-zoom.module.css": 3,
   "browser/components/ui/menu/menu.module.css": 4,
-  "browser/components/ui/stack/stack.module.css": 5,
   "browser/components/ui/surface/surface.module.css": 6,
   "browser/components/ui/typing-dot-list/typing-dot-list.module.css": 1,
   "browser/components/ui/visually-hidden/visually-hidden.module.css": 1,

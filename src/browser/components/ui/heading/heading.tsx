@@ -1,18 +1,16 @@
-// 見出しの部品。字の段・色・太さの対応表は `Text` のものを読み、二重に持たない。
-// `Text` との違いは要素が `<h1>`〜`<h4>` になることと、`margin: 0` を既定に持つことだけ（見出しの意味〔`level`〕と見た目〔`size`〕は別の props）。
+// 見出しの部品。中身は Astryx の `Heading`。
+// 字の段は `level` が決め、`size` の区別は持たない（props には残す）。色・太さの対応表は `Text` のものを読む。
 
-import clsx from "clsx"
+import { Heading as AstryxHeading } from "@astryxdesign/core/Text"
 import type { ReactElement, ReactNode } from "react"
 
 import {
-  TEXT_SIZE_CLASS,
-  TEXT_TONE_CLASS,
-  TEXT_WEIGHT_CLASS,
+  TEXT_COLOR,
+  TEXT_WEIGHT,
   type TextSize,
   type TextTone,
   type TextWeight,
 } from "../text/text.tsx"
-import styles from "./heading.module.css"
 
 type HeadingLevel = 1 | 2 | 3 | 4
 type HeadingSize = Exclude<TextSize, "inherit">
@@ -29,22 +27,15 @@ export type HeadingProps = {
   readonly children: ReactNode
 }
 
-const HEADING_ELEMENT = {
-  1: "h1",
-  2: "h2",
-  3: "h3",
-  4: "h4",
-} as const satisfies Record<HeadingLevel, "h1" | "h2" | "h3" | "h4">
-
 export function Heading(props: HeadingProps): ReactElement {
-  const className = clsx(
-    styles["heading"],
-    TEXT_SIZE_CLASS[props.size],
-    TEXT_TONE_CLASS[props.tone],
-    TEXT_WEIGHT_CLASS[props.weight],
-    props.className,
+  return (
+    <AstryxHeading
+      level={props.level}
+      color={TEXT_COLOR[props.tone]}
+      weight={TEXT_WEIGHT[props.weight]}
+      className={props.className}
+    >
+      {props.children}
+    </AstryxHeading>
   )
-
-  const Element = HEADING_ELEMENT[props.level]
-  return <Element className={className}>{props.children}</Element>
 }

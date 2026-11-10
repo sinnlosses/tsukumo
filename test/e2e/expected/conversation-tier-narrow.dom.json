@@ -106,12 +106,21 @@
                           "children": [
                             {
                               "tag": "h2",
+                              "attributes": {
+                                "data-level": "2",
+                                "data-color": "primary",
+                                "data-weight": "bold"
+                              },
                               "children": [
                                 "何から始める？"
                               ]
                             },
                             {
                               "tag": "p",
+                              "attributes": {
+                                "data-type": "label",
+                                "data-color": "disabled"
+                              },
                               "children": [
                                 "tsukumo のおすすめ。「始める」を押すと、カードに書いた依頼がそのまま送られて作業が始まる。"
                               ]
@@ -146,7 +155,16 @@
                                 }
                               ]
                             },
-                            "ほかの始め方",
+                            {
+                              "tag": "span",
+                              "attributes": {
+                                "data-type": "supporting",
+                                "data-color": "disabled"
+                              },
+                              "children": [
+                                "ほかの始め方"
+                              ]
+                            },
                             {
                               "tag": "button",
                               "attributes": {
@@ -196,28 +214,38 @@
                   },
                   "children": [
                     {
-                      "tag": "img",
+                      "tag": "div",
                       "attributes": {
-                        "alt": "つくもの精霊",
-                        "src": "/character/tsukumo-spirit/face.svg"
-                      }
-                    },
-                    {
-                      "tag": "button",
-                      "attributes": {
-                        "type": "button"
+                        "data-direction": "vertical",
+                        "data-gap": "2",
+                        "data-wrap": "nowrap"
                       },
                       "children": [
-                        "疑似セッションの駆動で立ち上がったよ。ここはぜんぶ作り物の会話。"
-                      ]
-                    },
-                    {
-                      "tag": "time",
-                      "attributes": {
-                        "dateTime": "2026-01-15T10:00+09:00"
-                      },
-                      "children": [
-                        "10:00"
+                        {
+                          "tag": "img",
+                          "attributes": {
+                            "alt": "つくもの精霊",
+                            "src": "/character/tsukumo-spirit/face.svg"
+                          }
+                        },
+                        {
+                          "tag": "button",
+                          "attributes": {
+                            "type": "button"
+                          },
+                          "children": [
+                            "疑似セッションの駆動で立ち上がったよ。ここはぜんぶ作り物の会話。"
+                          ]
+                        },
+                        {
+                          "tag": "time",
+                          "attributes": {
+                            "dateTime": "2026-01-15T10:00+09:00"
+                          },
+                          "children": [
+                            "10:00"
+                          ]
+                        }
                       ]
                     }
                   ]
@@ -230,35 +258,63 @@
                   },
                   "children": [
                     {
-                      "tag": "form",
+                      "tag": "div",
+                      "attributes": {
+                        "data-direction": "vertical",
+                        "data-gap": "2",
+                        "data-wrap": "nowrap"
+                      },
                       "children": [
                         {
-                          "tag": "button",
-                          "attributes": {
-                            "aria-label": "添える",
-                            "aria-expanded": "false",
-                            "type": "button"
-                          },
+                          "tag": "form",
                           "children": [
-                            "＋"
-                          ]
-                        },
-                        {
-                          "tag": "textarea",
-                          "attributes": {
-                            "aria-label": "依頼を書く",
-                            "value": ""
-                          }
-                        },
-                        {
-                          "tag": "button",
-                          "attributes": {
-                            "aria-label": "送信",
-                            "type": "submit",
-                            "disabled": true
-                          },
-                          "children": [
-                            "↑"
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "aria-label": "添える",
+                                "aria-expanded": "false",
+                                "type": "button"
+                              },
+                              "children": [
+                                "＋"
+                              ]
+                            },
+                            {
+                              "tag": "div",
+                              "attributes": {
+                                "data-direction": "vertical",
+                                "data-gap": "0",
+                                "data-wrap": "nowrap"
+                              },
+                              "children": [
+                                {
+                                  "tag": "textarea",
+                                  "attributes": {
+                                    "aria-label": "依頼を書く",
+                                    "value": ""
+                                  }
+                                }
+                              ]
+                            },
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "aria-label": "送信",
+                                "type": "submit",
+                                "disabled": true
+                              },
+                              "children": [
+                                "↑"
+                              ]
+                            },
+                            {
+                              "tag": "div",
+                              "attributes": {
+                                "data-direction": "horizontal",
+                                "data-gap": "3",
+                                "data-wrap": "nowrap"
+                              }
+                            }
                           ]
                         }
                       ]

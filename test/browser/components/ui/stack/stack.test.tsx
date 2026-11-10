@@ -35,22 +35,14 @@ function renderedElement(props: Omit<StackProps, "children">): Element {
 }
 
 describe("Stack", () => {
-  it("gap・align・justify・wrap は対応表の class を付ける", () => {
-    const element = renderedElement({
-      ...BASE_PROPS,
-      gap: "md",
-      align: "center",
-      justify: "between",
-      wrap: "wrap",
-    })
-    expect(element.className.split(" ")).toEqual(
-      expect.arrayContaining([
-        "stack-gap-md",
-        "stack-align-center",
-        "stack-justify-between",
-        "stack-wrap-wrap",
-      ]),
-    )
+  it("向きは Astryx の direction へ写る", () => {
+    const element = renderedElement({ ...BASE_PROPS, direction: "column" })
+    expect(element.getAttribute("data-direction")).toBe("vertical")
+  })
+
+  it("baseline の揃えだけは配置の class で足す", () => {
+    const element = renderedElement({ ...BASE_PROPS, align: "baseline" })
+    expect(element.className).toContain("stack-align-baseline")
   })
 
   it("element で描く要素を選ぶ", () => {

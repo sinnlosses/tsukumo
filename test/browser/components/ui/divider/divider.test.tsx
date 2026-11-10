@@ -22,20 +22,27 @@ function renderedDivider(props: DividerProps): HTMLElement {
 }
 
 describe("Divider", () => {
-  it("hr を描く", () => {
-    expect(renderedDivider(BASE_PROPS).tagName).toBe("HR")
+  it("separator の役の div を描く", () => {
+    expect(renderedDivider(BASE_PROPS).tagName).toBe("DIV")
+  })
+
+  it.each([
+    ["strong", "strong"],
+    ["soft", "subtle"],
+    ["quiet", "subtle"],
+  ] as const)("tone: %s は Astryx の variant: %s へ写る", (tone, variant) => {
+    expect(renderedDivider({ ...BASE_PROPS, tone }).dataset["variant"]).toBe(variant)
   })
 
   it.each(["strong", "soft", "quiet"] as const)("tone: %s を data-tone に出す", (tone) => {
     expect(renderedDivider({ ...BASE_PROPS, tone }).dataset["tone"]).toBe(tone)
   })
 
-  it("vertical は aria-orientation を付ける", () => {
-    const element = renderedDivider({ ...BASE_PROPS, orientation: "vertical" })
-    expect(element.getAttribute("aria-orientation")).toBe("vertical")
-  })
-
-  it("horizontal は aria-orientation を付けない", () => {
-    expect(renderedDivider(BASE_PROPS).hasAttribute("aria-orientation")).toBe(false)
-  })
+  it.each(["horizontal", "vertical"] as const)(
+    "%s は向きを aria-orientation に出す",
+    (orientation) => {
+      const element = renderedDivider({ ...BASE_PROPS, orientation })
+      expect(element.getAttribute("aria-orientation")).toBe(orientation)
+    },
+  )
 })

@@ -4,6 +4,7 @@ import { isDeepStrictEqual } from "node:util"
 import { neutralTheme } from "@astryxdesign/theme-neutral"
 import { describe, expect, it } from "vitest"
 
+import { tsukumoComponentOverride } from "../../../../../src/browser/components/ui/theme-root/tsukumo-component-override.ts"
 import { tsukumoTheme } from "../../../../../src/browser/components/ui/theme-root/tsukumo-theme.ts"
 
 const THEME_CSS = readFileSync(`${process.cwd()}/src/browser/styles/theme.css`, "utf8")
@@ -44,17 +45,26 @@ function tokenValuesIn(node: unknown): readonly unknown[] {
   )
 }
 
+function overrideValues(node: unknown): readonly unknown[] {
+  if (typeof node !== "object" || node === null) {
+    return [node]
+  }
+  return Object.values(node).flatMap(overrideValues)
+}
+
 /** tsukumo のトークンの `var()` と、それを組む `color-mix()`・`inset`・割合だけでできていない値。 */
 function foreignValues(definition: unknown): readonly string[] {
-  return tokenValuesIn(definition)
-    .map(String)
-    .filter((value) => {
-      const names = [...value.matchAll(REFERENCE)].map((match) => match[1] ?? "")
-      const rest = value
-        .replaceAll(REFERENCE, "")
-        .replaceAll(/\b(?:color-mix|in|srgb|transparent|inset)\b/g, "")
-      return !names.every((name) => DECLARED_TOKENS.has(name)) || !/^[\s,()\d.%]*$/.test(rest)
-    })
+  return foreignAmong(tokenValuesIn(definition))
+}
+
+function foreignAmong(values: readonly unknown[]): readonly string[] {
+  return values.map(String).filter((value) => {
+    const names = [...value.matchAll(REFERENCE)].map((match) => match[1] ?? "")
+    const rest = value
+      .replaceAll(REFERENCE, "")
+      .replaceAll(/\b(?:color-mix|in|srgb|transparent|inset)\b/g, "")
+    return !names.every((name) => DECLARED_TOKENS.has(name)) || !/^[\s,()\d.%]*$/.test(rest)
+  })
 }
 
 describe("tsukumo のテーマの定義", () => {
@@ -64,6 +74,17 @@ describe("tsukumo のテーマの定義", () => {
     expect(Object.keys(definition.tokens)).not.toEqual([])
     expect(definition.adaptations.rules).not.toEqual([])
     expect(foreignValues(definition)).toEqual([])
+  })
+
+  it("components の上書きの値も、theme.css が宣言したトークンの var() だけでできている", () => {
+    expect(overrideValues(tsukumoComponentOverride)).not.toEqual([])
+    expect(foreignAmong(overrideValues(tsukumoComponentOverride))).toEqual([])
+    expect(
+      foreignAmong(overrideValues({ text: { "color:x": { color: "var(--no-such-token)" } } })),
+    ).toEqual(["var(--no-such-token)"])
+    expect(foreignAmong(overrideValues({ text: { "color:x": { color: "#f00" } } }))).toEqual([
+      "#f00",
+    ])
   })
 
   it("写すのは色・コードの書体・本文の行の高さだけで、字の段・本文の書体・余白・角丸・影は Astryx の値のまま", () => {

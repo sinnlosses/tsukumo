@@ -1,9 +1,7 @@
-// 字の段・色・太さだけを表す variant 部品。
+// 字の段・色・太さだけを表す variant 部品。中身は Astryx の `Text`。
 // 文字の組み（1行で切る・字間・桁揃え・書体）と margin は呼び出し側が `className` で渡す。
-//
-// 対応表は `Heading` と共有し、ここに1つだけ置く（`Heading` は `TEXT_SIZE_CLASS` / `TEXT_TONE_CLASS` / `TEXT_WEIGHT_CLASS` をそのまま import する）。
 
-import clsx from "clsx"
+import { Text as AstryxText, type TextType } from "@astryxdesign/core/Text"
 import type { ReactElement, ReactNode } from "react"
 
 import styles from "./text.module.css"
@@ -48,33 +46,49 @@ export const TEXT_SIZE_CLASS = {
   inherit: undefined,
 } satisfies Record<TextSize, string | undefined>
 
-export const TEXT_TONE_CLASS = {
-  ink: styles["text-tone-ink"],
-  "ink-quiet": styles["text-tone-ink-quiet"],
-  accent: styles["text-tone-accent"],
-  "state-ok": styles["text-tone-state-ok"],
-  "state-warn": styles["text-tone-state-warn"],
-  "state-ng": styles["text-tone-state-ng"],
-  "state-ask": styles["text-tone-state-ask"],
-  inherit: undefined,
-} satisfies Record<TextTone, string | undefined>
+/** 字の段は Astryx の `type` の段へ落ちる。`label` と `action` は同じ段になる。 */
+const TEXT_TYPE = {
+  label: "supporting",
+  action: "supporting",
+  secondary: "supporting",
+  subheading: "label",
+  body: "body",
+  heading: "large",
+  inherit: "inherit",
+} satisfies Record<TextSize, TextType>
 
-export const TEXT_WEIGHT_CLASS = {
-  normal: styles["text-weight-normal"],
-  semibold: styles["text-weight-semibold"],
-  bold: styles["text-weight-bold"],
+export const TEXT_COLOR = {
+  ink: "primary",
+  "ink-quiet": "disabled",
+  accent: "accent",
+  "state-ok": "state-ok",
+  "state-warn": "state-warn",
+  "state-ng": "state-ng",
+  "state-ask": "state-ask",
+  inherit: "inherit",
+} as const satisfies Record<TextTone, string>
+
+/** `inherit` は Astryx に口が無く、字の段の既定の太さになる。 */
+export const TEXT_WEIGHT = {
+  normal: "normal",
+  semibold: "semibold",
+  bold: "bold",
   inherit: undefined,
-} satisfies Record<TextWeight, string | undefined>
+} as const satisfies Record<TextWeight, string | undefined>
 
 export function Text(props: TextProps): ReactElement {
-  const className = clsx(
-    styles["text"],
-    TEXT_SIZE_CLASS[props.size],
-    TEXT_TONE_CLASS[props.tone],
-    TEXT_WEIGHT_CLASS[props.weight],
-    props.className,
+  const text = (
+    <AstryxText
+      as={props.element === "summary" ? "span" : props.element}
+      type={TEXT_TYPE[props.size]}
+      color={TEXT_COLOR[props.tone]}
+      weight={TEXT_WEIGHT[props.weight]}
+      display={props.element === "p" ? "block" : "inline"}
+      className={props.element === "summary" ? undefined : props.className}
+    >
+      {props.children}
+    </AstryxText>
   )
-
-  const Element = props.element
-  return <Element className={className}>{props.children}</Element>
+  // Astryx の `Text` は `summary` を描けないので、`summary` が字を持たず中の `Text` が描く。
+  return props.element === "summary" ? <summary className={props.className}>{text}</summary> : text
 }

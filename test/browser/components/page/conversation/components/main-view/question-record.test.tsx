@@ -1,21 +1,16 @@
 // 色そのものはテストしない（`AGENTS.md`「見た目（色・崩れ）は目視で確かめる」）。
-// 差し色が当たる側の class を持つことまでを測る。
+// 差し色が当たる側の配線（`data-color`）までを測る。
 
 import { act, cleanup, render, screen } from "@testing-library/react"
 import { afterEach, beforeAll, describe, expect, it } from "vitest"
 
 import { QuestionRecord } from "../../../../../../../src/browser/components/page/conversation/components/main-view/question-record.tsx"
-import { TEXT_TONE_CLASS } from "../../../../../../../src/browser/components/ui/text/text.tsx"
 import { loadMarkdown } from "../../../../../../../src/browser/features/report/markdown.tsx"
 import type { MainViewQuestion } from "../../../../../../../src/shared/session/main-view-shape.ts"
 
 /**
  * 印（●/○/■/□）は `<QuestionMark>` が描く、`.question-option` / `.question-preview-label` の
- * 直下の唯一の `<span>`（`Text`）。選んだ側だけ `TEXT_TONE_CLASS.accent` を持つ。 */
-const ACCENT_CLASS = TEXT_TONE_CLASS.accent
-if (ACCENT_CLASS === undefined) {
-  throw new Error("TEXT_TONE_CLASS.accent が無い")
-}
+ * 直下の唯一の `<span>`（`Text`）。選んだ側だけ Astryx が出す `data-color="accent"` を持つ。 */
 
 beforeAll(async () => {
   await loadMarkdown()
@@ -59,8 +54,8 @@ describe("QuestionRecord（選んだ印の色）", () => {
     const chosenMark = marks.find((mark) => mark.textContent === "●")
     const unchosenMark = marks.find((mark) => mark.textContent === "○")
 
-    expect(chosenMark?.className.split(" ")).toContain(ACCENT_CLASS)
-    expect(unchosenMark?.className.split(" ")).not.toContain(ACCENT_CLASS)
+    expect(chosenMark?.getAttribute("data-color")).toBe("accent")
+    expect(unchosenMark?.getAttribute("data-color")).not.toBe("accent")
   })
 })
 

@@ -9,6 +9,8 @@ import {
 } from "@astryxdesign/core/theme"
 import { neutralTheme } from "@astryxdesign/theme-neutral"
 
+import { tsukumoComponentOverride } from "./tsukumo-component-override.ts"
+
 const stateMuted = (state: string): string =>
   `color-mix(in srgb, var(--surface), var(${state}) 13%)`
 
@@ -97,4 +99,5 @@ export const tsukumoTheme = defineTheme({
   extends: neutralTheme,
   tokens: tsukumoTokens,
   adaptations: tsukumoAdaptations,
+  components: tsukumoComponentOverride,
 })

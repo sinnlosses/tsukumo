@@ -1,9 +1,4 @@
-/* 字の段・色・太さの対応表。値の名前はトークン名そのまま。 */
-
-/* 既定の margin: 0。呼び出し側の class（margin を持つもの）が常に勝つよう :where() に書く。 */
-:where(.text) {
-  margin: 0;
-}
+/* Astryx を通らない部品へ字の段だけを渡す class。値の名前はトークン名そのまま。 */
 
 .text-size-label {
   font-size: var(--font-label);
@@ -22,36 +17,4 @@
 }
 .text-size-heading {
   font-size: var(--font-heading);
-}
-
-.text-tone-ink {
-  color: var(--ink);
-}
-.text-tone-ink-quiet {
-  color: var(--ink-quiet);
-}
-.text-tone-accent {
-  color: var(--accent);
-}
-.text-tone-state-ok {
-  color: var(--state-ok);
-}
-.text-tone-state-warn {
-  color: var(--state-warn);
-}
-.text-tone-state-ng {
-  color: var(--state-ng);
-}
-.text-tone-state-ask {
-  color: var(--state-ask);
-}
-
-.text-weight-normal {
-  font-weight: 400;
-}
-.text-weight-semibold {
-  font-weight: 600;
-}
-.text-weight-bold {
-  font-weight: 700;
 }

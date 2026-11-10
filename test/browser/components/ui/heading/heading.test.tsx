@@ -29,5 +29,12 @@ describe("Heading", () => {
   it("level で見出しの段の要素を描く", () => {
     const element = renderedElement({ ...BASE_PROPS, level: 3 })
     expect(element.tagName).toBe("H3")
+    expect(element.getAttribute("data-level")).toBe("3")
+  })
+
+  it("tone・weight は Astryx の color・weight へ写る", () => {
+    const element = renderedElement({ ...BASE_PROPS, tone: "state-ng", weight: "bold" })
+    expect(element.getAttribute("data-color")).toBe("state-ng")
+    expect(element.getAttribute("data-weight")).toBe("bold")
   })
 })

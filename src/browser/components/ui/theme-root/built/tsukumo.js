@@ -279,6 +279,21 @@ export const tsukumoTheme = {
         "fontFamily": "var(--font-family-heading)",
         "fontSize": "var(--text-display-3-size)",
         "lineHeight": "var(--text-display-3-leading)"
+      },
+      "base": {
+        "margin": "0"
+      },
+      "color:state-ok": {
+        "color": "var(--state-ok)"
+      },
+      "color:state-warn": {
+        "color": "var(--state-warn)"
+      },
+      "color:state-ng": {
+        "color": "var(--state-ng)"
+      },
+      "color:state-ask": {
+        "color": "var(--state-ask)"
       }
     },
     "text": {
@@ -321,6 +336,21 @@ export const tsukumoTheme = {
         "fontFamily": "var(--font-family-heading)",
         "fontSize": "var(--text-display-3-size)",
         "lineHeight": "var(--text-display-3-leading)"
+      },
+      "base": {
+        "margin": "0"
+      },
+      "color:state-ok": {
+        "color": "var(--state-ok)"
+      },
+      "color:state-warn": {
+        "color": "var(--state-warn)"
+      },
+      "color:state-ng": {
+        "color": "var(--state-ng)"
+      },
+      "color:state-ask": {
+        "color": "var(--state-ask)"
       }
     },
     "item": {

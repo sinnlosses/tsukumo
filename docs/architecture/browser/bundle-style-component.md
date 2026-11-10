@@ -174,6 +174,11 @@ CSS に無い名前は `undefined` のままなので、**綴りを間違える�
   prop（`Heading` の `level`・`Stack` の `element`）だけ。`Stack` は `data-*` とイベントの props を持たない
 - **Text と Heading の境目**: 見出しの意味（`level`）と見た目（`size`）を別の props にする。対応表は
   `ui/text/` の1つを読む（二重に持たない）。`<h*>` でない「見出しに見える字」は `Heading` にしない
+- **Astryx に替えた部品**（`Text`・`Heading` など）は、tsukumo の props を Astryx の props へ写す対応表を
+  `satisfies Record<合併型, …>` で縛って部品の1か所に置く。Astryx に口が無い意味の区別（`Text` の
+  `state-*` の色）は、テーマの `components`（`ui/theme-root/tsukumo-component-override.ts`）と型の拡張で足し、
+  見た目だけの区別は落とす（`Heading` の `size` は `level` の段に落ちる）。単体テストは付く class でなく、
+  Astryx が出す `data-*`（`data-color`・`data-level` など）で配線を見る
 - **`VStack` / `HStack`** は向きの決まった並べで、向きを値で切り替える箇所だけ `Stack` を直接使う
 - **`Button`**: 押せないは **`aria-disabled` の1通り**。押せないときの見た目は既定で透かし、字や地を
   沈める顔が要るときは**押せないときの顔ごと variant の1つの値にする**（押せないを別の prop の軸にしない）。**押せる行・押せる文字**（タスクの ID・件数の

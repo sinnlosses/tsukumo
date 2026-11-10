@@ -1,10 +1,12 @@
-// 並べるための規則（`display: flex` + 向き・間隔・揃え・折り返し）を寄せる variant 部品。
+// 並べるための variant 部品。Astryx の `Stack` で描き、Astryx に無い値（`baseline` の揃え）だけ class で足す。
 // 寸法・枠・地・置き方（margin・flex・align-self など）は呼び出し側が `className` で渡す。
 //
+// Astryx の props への写し方は `astryxStackProps` の1か所に置く。
 // `Stack` を直に使うのは、向きを値で切り替える箇所だけ。向きの決まった並べは `VStack`・`HStack` で書く。
 
+import { Stack as AstryxStack, type StackProps as AstryxStackProps } from "@astryxdesign/core/Stack"
 import clsx from "clsx"
-import { createElement, type ReactElement, type ReactNode, type Ref } from "react"
+import type { ReactElement, ReactNode, Ref } from "react"
 
 import styles from "./stack.module.css"
 
@@ -35,61 +37,53 @@ export type StackProps = {
   readonly children: ReactNode
 }
 
-const DIRECTION_CLASS = {
-  row: styles["stack-direction-row"],
-  column: styles["stack-direction-column"],
-} satisfies Record<StackDirection, string>
+type AstryxStackShared = Pick<
+  AstryxStackProps,
+  | "as"
+  | "ref"
+  | "gap"
+  | "align"
+  | "justify"
+  | "wrap"
+  | "className"
+  | "aria-label"
+  | "aria-labelledby"
+>
 
-const GAP_CLASS = {
-  none: styles["stack-gap-none"],
-  xs: styles["stack-gap-xs"],
-  sm: styles["stack-gap-sm"],
-  md: styles["stack-gap-md"],
-  lg: styles["stack-gap-lg"],
-  xl: styles["stack-gap-xl"],
-} satisfies Record<StackGap, string>
+const STACK_DIRECTION_PROP = {
+  row: "horizontal",
+  column: "vertical",
+} satisfies Record<StackDirection, NonNullable<AstryxStackProps["direction"]>>
 
-const ALIGN_CLASS = {
-  start: styles["stack-align-start"],
-  center: styles["stack-align-center"],
-  end: styles["stack-align-end"],
-  baseline: styles["stack-align-baseline"],
-  stretch: styles["stack-align-stretch"],
-} satisfies Record<StackAlign, string>
-
-const JUSTIFY_CLASS = {
-  start: styles["stack-justify-start"],
-  center: styles["stack-justify-center"],
-  end: styles["stack-justify-end"],
-  between: styles["stack-justify-between"],
-} satisfies Record<StackJustify, string>
-
-const WRAP_CLASS = {
-  nowrap: styles["stack-wrap-nowrap"],
-  wrap: styles["stack-wrap-wrap"],
-} satisfies Record<StackWrap, string>
+const STACK_GAP_PROP = {
+  none: 0,
+  xs: 1,
+  sm: 2,
+  md: 3,
+  lg: 4,
+  xl: 5,
+} satisfies Record<StackGap, NonNullable<AstryxStackProps["gap"]>>
 
 export function Stack(props: StackProps): ReactElement {
-  const className = clsx(
-    styles["stack"],
-    DIRECTION_CLASS[props.direction],
-    GAP_CLASS[props.gap],
-    ALIGN_CLASS[props.align],
-    JUSTIFY_CLASS[props.justify],
-    WRAP_CLASS[props.wrap],
-    props.className,
+  return (
+    <AstryxStack {...astryxStackProps(props)} direction={STACK_DIRECTION_PROP[props.direction]}>
+      {props.children}
+    </AstryxStack>
   )
+}
 
-  // JSX（`<Element ref={…}>`）で書くと、要素の合併型のぶん ref の型が交差になり、`HTMLElement` の ref を渡せない。
-  // `createElement` は要素を `HTMLElement` として受ける。
-  return createElement(
-    props.element,
-    {
-      ref: props.ref,
-      className,
-      "aria-label": props.name.kind === "label" ? props.name.label : undefined,
-      "aria-labelledby": props.name.kind === "labelledby" ? props.name.id : undefined,
-    },
-    props.children,
-  )
+export function astryxStackProps(
+  props: Omit<StackProps, "direction" | "children">,
+): AstryxStackShared {
+  return {
+    as: props.element,
+    ref: props.ref,
+    gap: STACK_GAP_PROP[props.gap],
+    align: props.align === "baseline" ? undefined : props.align,
+    justify: props.justify,
+    wrap: props.wrap,
+    className: clsx(props.align === "baseline" && styles["stack-align-baseline"], props.className),
+    "aria-label": props.name.kind === "label" ? props.name.label : undefined,
+    "aria-labelledby": props.name.kind === "labelledby" ? props.name.id : undefined,
+  }
 }

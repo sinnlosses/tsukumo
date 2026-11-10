@@ -1,5 +1,6 @@
-// 罫の部品。持つのは線の濃さ（`tone`）と向きだけで、置き方は呼び出し側が `className` で渡す。
+// 罫の部品。Astryx の `Divider` で描く。持つのは線の濃さ（`tone`）と向きだけで、置き方は呼び出し側が `className` で渡す。
 
+import { Divider as AstryxDivider, type DividerVariant } from "@astryxdesign/core/Divider"
 import clsx from "clsx"
 import type { ReactElement } from "react"
 
@@ -15,29 +16,23 @@ export type DividerProps = {
   readonly className: string
 }
 
-const TONE_CLASS = {
-  strong: styles["divider-tone-strong"],
-  soft: styles["divider-tone-soft"],
-  quiet: styles["divider-tone-quiet"],
-} satisfies Record<DividerTone, string>
-
-const ORIENTATION_CLASS = {
-  horizontal: styles["divider-orientation-horizontal"],
-  vertical: styles["divider-orientation-vertical"],
-} satisfies Record<DividerOrientation, string>
+const DIVIDER_VARIANT_PROP = {
+  strong: "strong",
+  soft: "subtle",
+  quiet: "subtle",
+} satisfies Record<DividerTone, DividerVariant>
 
 export function Divider(props: DividerProps): ReactElement {
-  const className = clsx(
-    styles["divider"],
-    TONE_CLASS[props.tone],
-    ORIENTATION_CLASS[props.orientation],
-    props.className,
-  )
   return (
-    <hr
-      className={className}
+    <AstryxDivider
+      variant={DIVIDER_VARIANT_PROP[props.tone]}
+      orientation={props.orientation}
       data-tone={props.tone}
-      aria-orientation={props.orientation === "vertical" ? "vertical" : undefined}
+      className={clsx(
+        styles["divider"],
+        props.orientation === "vertical" && styles["divider-orientation-vertical"],
+        props.className,
+      )}
     />
   )
 }

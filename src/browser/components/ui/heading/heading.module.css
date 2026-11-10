@@ -1,5 +1,0 @@
-/* 見出しの既定 margin: 0。呼び出し側の class（margin を持つもの）が常に勝つよう :where() に書く。
-   字の段・色・太さの規則は `text.module.css` 側にあり、ここには持たない。 */
-:where(.heading) {
-  margin: 0;
-}

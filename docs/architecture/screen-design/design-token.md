@@ -90,17 +90,17 @@ Astryx のトークンは `<html>` に置かれる（`Theme` が `data-astryx-th
 
 `ui/` の部品の中身は Astryx（ADR 0053）の部品で、props は tsukumo の語彙のまま変えない。`@astryxdesign/*` と `@stylexjs/stylex` を import できるのは `src/browser/components/ui/` だけで、`.dependency-cruiser.cjs` の `astryx-reader` が外からの import を止める。Astryx に当てない例外は `typing-dot-list` で、Astryx に入力中の点の部品が無いので、今の CSS のまま残す。`layout-resizer` は、移すときに Astryx の `ResizeHandle` が当たるかを確かめ、当たらなければ例外に足す。
 
-根の `ThemeRoot`（`ui/theme-root/`）は、`App` の `QueryClientProvider` の内側・`Root` の外側で、`InternationalizationProvider`（`locale="ja-JP"`）と `Theme`（テーマ `tsukumo`・`mode="dark"`）を重ねて子を包む。テーマの定義 `tsukumo-theme.ts` は、値を tsukumo のトークンの `var()` とそれを組んだ式だけで書き、写すのは色・コードの書体・本文の行の高さ（触る画面の `adaptations` も同じ値）の 3 種類に限る（上の「向き」）。パックの accent は `usePackAppearance` が `<html>` の `--accent` に書き、テーマの `--color-accent` がそれに追随する。
+根の `ThemeRoot`（`ui/theme-root/`）は、`App` の `QueryClientProvider` の内側・`Root` の外側で、`InternationalizationProvider`（`locale="ja-JP"`）と `Theme`（テーマ `tsukumo`・`mode="dark"`）を重ねて子を包む。テーマの定義 `tsukumo-theme.ts` は、値を tsukumo のトークンの `var()` とそれを組んだ式だけで書き、写すのは色・コードの書体・本文の行の高さ（触る画面の `adaptations` も同じ値）の 3 種類に限る（上の「向き」）。Astryx の `color` に口が無い状態の色（`state-ok` など）は、隣の `tsukumo-component-override.ts` の `components` で `var()` の値として足す。パックの accent は `usePackAppearance` が `<html>` の `--accent` に書き、テーマの `--color-accent` がそれに追随する。
 
 CSS の層の順は、`styles/layer-order.css` が `@layer reset, tsukumo-base, astryx-base, astryx-theme;` と宣言し、`main.tsx` が `./app.tsx` より前に読む。`theme.css` の要素への規則（フォーム部品の継承・フォーカスの輪・リンク）は `tsukumo-base` の層に置き、CSS Modules は層に入れない。テーマが見出しと段落に当てる既定は打ち消さず、素の見出しと段落も Astryx の段になる。層に入っていない `ui/` の部品の CSS は、Astryx のどの層にも勝つ。`reset.css` は読まないので、`box-sizing` は `content-box` のまま残り、見出しの `margin` もブラウザの既定のまま残る。`astryx-heading` の `margin` は、`ui/` の側で `0` に戻す。
 
 `ui/` の部品は、持つのは顔（地・枠・字の色・振る舞い）で、置き方（margin・flex・align-self）は呼び出し側が `className` で渡す。箱の語彙を持つ 3 つを足す。props は全部必須で、型で縛る（`ui/stack` と同じ）。
 
-| 部品      | 持つもの                                                                                                                                                                                                              |
-| --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Surface` | 地（`tone`: `--surface`・`--surface-raised`・`--surface-accent`）・枠（`--rule-soft` の 1px で固定）・角丸（`radius`: `--radius-*`）・内側の余白（`space`: `--space-*`）・影（`shadow`: `none`・`raised`・`overlay`） |
-| `Badge`   | 小さな印。`tone`（`neutral`・`ok`・`warn`・`ng`・`accent`）・`shape`（`pill`＝`--radius-pill`・`square`＝`--radius-sm`）・字は `--font-label`。`data-tone`・`data-shape` を出す                                       |
-| `Divider` | 罫（`<hr>`）。`tone`（`strong`＝`--rule`・`soft`＝`--rule-soft`・`quiet`＝`--rule-quiet`）・`orientation`（`horizontal`・`vertical`）。`data-tone` を出し、縦のときだけ `aria-orientation="vertical"` を付ける        |
+| 部品      | 持つもの                                                                                                                                                                                                                                       |
+| --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Surface` | 地（`tone`: `--surface`・`--surface-raised`・`--surface-accent`）・枠（`--rule-soft` の 1px で固定）・角丸（`radius`: `--radius-*`）・内側の余白（`space`: `--space-*`）・影（`shadow`: `none`・`raised`・`overlay`）                          |
+| `Badge`   | 小さな印。`tone`（`neutral`・`ok`・`warn`・`ng`・`accent`）・`shape`（`pill`＝`--radius-pill`・`square`＝`--radius-sm`）・字は `--font-label`。`data-tone`・`data-shape` を出す                                                                |
+| `Divider` | 罫。Astryx の `Divider`（`role="separator"` の `div`）で描く。`tone` は `strong`→`strong`、`quiet`・`soft`→`subtle` に写し（`soft` の区別は落ちる）、`orientation`（`horizontal`・`vertical`）は `aria-orientation` に出る。`data-tone` を出す |
 
 カタログの部品（`report` の a2ui の面）は、枠を `Surface`・見出しを `Heading`・並べる入れ物を `Stack` 系・印を `Badge` で組む。
 
