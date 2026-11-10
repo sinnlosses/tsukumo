@@ -1,0 +1,1440 @@
+<!doctype html>
+<!--
+  PROTOTYPE（使い捨て）: レポートの「聞く」「頼む」の出し方と、入力欄・答えの置き場の3案。
+  問い: ボタンを並べずに指した所を示し、本文を押し下げずに答えを見返せる形はどれか。
+  開き方: このファイルをブラウザで開き、?variant=a|b|c&scene=idle|pointed|open|answered|notes で切り替える。
+  上の帯の ← → と 1〜5 のキーでも切り替わる。中身は架空のレポート1本で、送る・答えるは動かない（画を見るための試作）。
+-->
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PROTOTYPE: 聞く・頼むの出し方と答えの置き場（3案）</title>
+    <style>
+      :root {
+        --ground: #191720;
+        --surface: #221f2b;
+        --ink: #e8e3ea;
+        --accent: #6fe3cd;
+        --ink-quiet: color-mix(in srgb, var(--ink) 60%, transparent);
+        --ink-soft: color-mix(in srgb, var(--ink) 72%, transparent);
+        --ink-bright: #f7f6f8;
+        --rule: color-mix(in srgb, var(--surface), var(--ink) 32%);
+        --rule-soft: color-mix(in srgb, var(--surface), var(--ink) 12%);
+        --rule-quiet: color-mix(in srgb, var(--surface), var(--ink) 6%);
+        --surface-accent: color-mix(in srgb, var(--surface), var(--accent) 12%);
+        --surface-raised: color-mix(in srgb, var(--ink) 10%, transparent);
+        --state-ok: #7ee081;
+        --state-warn: #e3c766;
+        --state-ng: #f2a0a0;
+        --state-ask: #c7aef0;
+        --on-accent: #12201d;
+        --radius-lg: 12px;
+        --radius-pill: 999px;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+      }
+      body {
+        display: grid;
+        grid-template-rows: auto minmax(0, 1fr);
+        overflow: hidden;
+        background: var(--ground);
+        color: var(--ink);
+        font:
+          15px/1.6 Figtree,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Hiragino Sans",
+          "Noto Sans JP",
+          sans-serif;
+      }
+      button {
+        font: inherit;
+        color: inherit;
+        cursor: pointer;
+      }
+      kbd {
+        font:
+          11px/1 ui-monospace,
+          SFMono-Regular,
+          monospace;
+        color: var(--ink-quiet);
+      }
+      .send kbd {
+        color: inherit;
+        opacity: 0.7;
+      }
+
+      /* 試作の帯（評価する画面の外） */
+      .proto {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 6px 14px;
+        padding: 6px 16px;
+        border-bottom: 1px dashed var(--state-ask);
+        background: color-mix(in srgb, var(--ground) 88%, var(--state-ask));
+        color: var(--state-ask);
+        font-size: 12px;
+      }
+      .proto-tag {
+        padding: 1px 8px;
+        border: 1px dashed var(--state-ask);
+        border-radius: var(--radius-pill);
+      }
+      .proto-variant {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--ink-bright);
+        font-weight: 600;
+      }
+      .proto button {
+        padding: 1px 8px;
+        border: 1px solid color-mix(in srgb, var(--state-ask) 50%, transparent);
+        border-radius: var(--radius-pill);
+        background: transparent;
+        color: var(--state-ask);
+        font-size: 12px;
+      }
+      .proto button[aria-pressed="true"] {
+        background: var(--state-ask);
+        color: var(--ground);
+      }
+      .proto-refs {
+        color: var(--ink-soft);
+      }
+      .proto-count {
+        margin-left: auto;
+        color: var(--ink-soft);
+      }
+
+      /* アプリの枠（今の画面の形に寄せる） */
+      .app {
+        position: relative;
+        display: grid;
+        grid-template-rows: 52px minmax(0, 1fr) 236px;
+        gap: 12px;
+        min-height: 0;
+        padding: 0 16px 16px;
+      }
+      .app-head {
+        display: flex;
+        align-items: center;
+        gap: 28px;
+        border-bottom: 1px solid var(--rule-soft);
+        margin: 0 -16px;
+        padding: 0 24px;
+      }
+      .brand {
+        color: var(--ink-bright);
+        font-size: 19px;
+        font-weight: 700;
+      }
+      .tabs {
+        display: flex;
+        gap: 22px;
+        color: var(--ink-quiet);
+      }
+      .tabs .on {
+        color: var(--ink-bright);
+        box-shadow: 0 17px 0 -15px var(--accent);
+      }
+      .phone-head {
+        display: none;
+      }
+      .app-top {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 336px;
+        gap: 24px;
+        min-height: 0;
+      }
+      .panel {
+        min-height: 0;
+        border: 1px solid var(--rule-soft);
+        border-radius: var(--radius-lg);
+        background: var(--surface);
+      }
+      .report-panel {
+        display: grid;
+        grid-template-columns: 208px minmax(0, 1fr);
+        overflow: hidden;
+      }
+      .toc {
+        padding: 16px 12px;
+        border-right: 1px solid var(--rule-soft);
+        color: var(--ink-quiet);
+        font-size: 13px;
+      }
+      .toc-title {
+        margin: 0 8px 12px;
+      }
+      .toc-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 5px 10px;
+        border-radius: 8px;
+      }
+      .toc-item.on {
+        background: var(--surface-raised);
+        color: var(--ink-bright);
+      }
+      .toc-mark {
+        color: var(--accent);
+      }
+      .report-col {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+      }
+      .status-line {
+        display: flex;
+        flex: none;
+        align-items: center;
+        gap: 8px;
+        height: 50px;
+        padding: 0 22px;
+        border-bottom: 1px solid var(--rule-soft);
+        font-size: 13px;
+      }
+      .status-line::before {
+        content: "";
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--state-ok);
+      }
+      .report-scroll {
+        position: relative;
+        flex: 1;
+        min-height: 0;
+        overflow: auto;
+        padding: 20px 22px 160px;
+      }
+      .report-grid {
+        position: relative;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 24px;
+      }
+      .with-margin .report-grid {
+        grid-template-columns: minmax(0, 1fr) 248px;
+      }
+      .margin {
+        position: relative;
+        display: none;
+      }
+      .with-margin .margin {
+        display: block;
+      }
+      .work-panel {
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        padding: 12px;
+      }
+      .meters {
+        padding: 10px 14px;
+        border: 1px solid var(--rule-soft);
+        border-radius: var(--radius-lg);
+        color: var(--ink-quiet);
+        font-size: 12px;
+      }
+      .app-bottom {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 24px;
+        min-height: 0;
+      }
+      .stage {
+        position: relative;
+        overflow: hidden;
+        background: linear-gradient(180deg, #1d1b26, #15131b);
+      }
+      .figure {
+        position: absolute;
+        left: 40px;
+        bottom: 16px;
+        display: grid;
+        place-items: center;
+        width: 130px;
+        height: 196px;
+        border: 1px dashed var(--rule);
+        border-radius: 70px 70px 16px 16px;
+        color: var(--ink-quiet);
+        font-size: 12px;
+      }
+      .bubble {
+        position: absolute;
+        left: 200px;
+        right: 24px;
+        bottom: 40px;
+        padding: 12px 16px;
+        border: 1px solid var(--accent);
+        border-radius: 14px;
+        background: color-mix(in srgb, var(--surface), var(--accent) 10%);
+        font-size: 14px;
+      }
+      .bubble-name {
+        color: var(--accent);
+        font-size: 12px;
+        font-weight: 600;
+      }
+      .bubble-quote {
+        margin: 2px 0 4px;
+        color: var(--ink-quiet);
+        font-size: 12px;
+      }
+      .composer {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        padding: 12px;
+      }
+      .field {
+        flex: 1;
+        min-height: 60px;
+        padding: 12px 16px;
+        border: 1px solid var(--rule);
+        border-radius: 10px;
+        color: var(--ink-quiet);
+      }
+      .field.typed {
+        color: var(--ink);
+        border-color: var(--accent);
+      }
+      .composer-foot {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 10px;
+      }
+      .send {
+        padding: 6px 18px;
+        border: 0;
+        border-radius: var(--radius-pill);
+        background: var(--accent);
+        color: var(--on-accent);
+        font-weight: 600;
+      }
+      .ghost {
+        padding: 4px 12px;
+        border: 1px solid transparent;
+        border-radius: var(--radius-pill);
+        background: transparent;
+        color: var(--ink-soft);
+        font-size: 13px;
+      }
+      .outline {
+        padding: 4px 12px;
+        border: 1px solid var(--rule);
+        border-radius: var(--radius-pill);
+        background: var(--surface-raised);
+        color: var(--ink);
+        font-size: 13px;
+      }
+
+      /* レポートの本文 */
+      .request {
+        margin: 0 0 8px;
+        color: var(--ink-soft);
+        font-size: 13px;
+      }
+      .conclusion {
+        margin: 0 0 8px;
+        color: var(--ink-bright);
+        font-size: 18px;
+        font-weight: 600;
+      }
+      h2 {
+        margin: 28px 0 14px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--rule-soft);
+        color: var(--ink-bright);
+        font-size: 21px;
+      }
+      .caption {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 6px;
+        color: var(--ink-soft);
+      }
+      .caption b {
+        color: var(--ink-quiet);
+        font-size: 12px;
+      }
+      h2.caption {
+        margin-bottom: 14px;
+        color: var(--ink-bright);
+      }
+      .chips {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 6px;
+      }
+      .chip {
+        padding: 0 8px;
+        border-radius: var(--radius-pill);
+        font-size: 12px;
+        font-weight: 600;
+      }
+      .chip.ok {
+        background: var(--state-ok);
+        color: #10230f;
+      }
+      .chip.warn {
+        background: var(--state-warn);
+        color: #2a2208;
+      }
+      .table-wrap {
+        position: relative;
+      }
+      table {
+        width: 100%;
+        max-width: 520px;
+        border-collapse: collapse;
+      }
+      th {
+        padding: 4px 8px 6px 0;
+        border-bottom: 1px solid var(--rule);
+        color: var(--ink-soft);
+        font-size: 13px;
+        font-weight: 400;
+        text-align: left;
+      }
+      td {
+        padding: 8px 8px 8px 0;
+        border-bottom: 1px solid var(--rule-quiet);
+        white-space: nowrap;
+      }
+      td.num,
+      th.num {
+        text-align: right;
+      }
+      .bar {
+        display: inline-block;
+        height: 14px;
+        margin-right: 6px;
+        border-radius: 4px;
+        background: var(--rule-soft);
+        vertical-align: -2px;
+      }
+      .pill {
+        padding: 1px 8px;
+        border-radius: var(--radius-pill);
+        font-size: 12px;
+        font-weight: 600;
+      }
+      .pill.ok {
+        background: var(--state-ok);
+        color: #10230f;
+      }
+      .pill.warn {
+        background: var(--state-warn);
+        color: #2a2208;
+      }
+      .options,
+      .claims {
+        display: flex;
+        flex-direction: column;
+      }
+      .item {
+        position: relative;
+        display: grid;
+        grid-template-columns: 64px minmax(0, 1fr);
+        gap: 4px 14px;
+        padding: 8px 0;
+        border-bottom: 1px solid var(--rule-quiet);
+      }
+      .badge {
+        align-self: start;
+        justify-self: start;
+        padding: 0 8px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        line-height: 22px;
+      }
+      .badge.adopt,
+      .badge.confirmed {
+        background: color-mix(in srgb, var(--state-ok) 20%, transparent);
+        color: var(--state-ok);
+      }
+      .badge.consider {
+        background: color-mix(in srgb, var(--state-warn) 20%, transparent);
+        color: var(--state-warn);
+      }
+      .badge.reject {
+        background: var(--surface-raised);
+        color: var(--ink-quiet);
+      }
+      .badge.inferred {
+        border: 1px solid var(--state-ask);
+        color: var(--state-ask);
+      }
+      .item-name {
+        color: var(--ink-bright);
+      }
+      .item-sub {
+        color: var(--ink-soft);
+        font-size: 13px;
+      }
+
+      /* 指した所・聞いた所・付箋の印（3案で共通の語彙） */
+      .is-pointed > td {
+        background: var(--surface-accent);
+      }
+      .is-pointed > td:first-child {
+        box-shadow: inset 3px 0 0 var(--accent);
+        padding-left: 8px;
+      }
+      .item.is-pointed {
+        background: var(--surface-accent);
+        box-shadow: inset 3px 0 0 var(--accent);
+      }
+      .mark {
+        display: inline-block;
+        margin-left: 6px;
+        padding: 0 6px;
+        border-radius: var(--radius-pill);
+        background: var(--surface-accent);
+        color: var(--accent);
+        font-size: 11px;
+        font-weight: 600;
+        vertical-align: 1px;
+      }
+      .mark.note {
+        background: color-mix(in srgb, var(--state-warn) 18%, transparent);
+        color: var(--state-warn);
+      }
+      .target-line {
+        color: var(--ink-quiet);
+        font-size: 12px;
+      }
+
+      /* 案 A: 余白の注釈 */
+      .m-item {
+        position: absolute;
+        left: 0;
+        right: 0;
+      }
+      .m-hint {
+        padding: 8px 10px;
+        border: 1px dashed var(--rule-soft);
+        border-radius: 10px;
+        color: var(--ink-quiet);
+        font-size: 12px;
+      }
+      .m-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 4px 12px;
+        border: 1px solid var(--accent);
+        border-radius: var(--radius-pill);
+        background: var(--surface);
+        color: var(--accent);
+        font-size: 13px;
+        box-shadow: 0 4px 14px rgb(0 0 0 / 0.35);
+      }
+      .card {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding: 10px 12px;
+        border: 1px solid var(--rule-soft);
+        border-left: 3px solid var(--accent);
+        border-radius: 10px;
+        background: var(--surface);
+        font-size: 13px;
+        box-shadow: 0 6px 18px rgb(0 0 0 / 0.3);
+      }
+      .card.note {
+        border-left-color: var(--state-warn);
+      }
+      .card.active {
+        border-color: var(--accent);
+      }
+      .seg {
+        display: inline-flex;
+        align-self: flex-start;
+        padding: 2px;
+        border: 1px solid var(--rule-soft);
+        border-radius: var(--radius-pill);
+        font-size: 12px;
+      }
+      .seg span {
+        padding: 1px 10px;
+        border-radius: var(--radius-pill);
+        color: var(--ink-quiet);
+      }
+      .seg .on {
+        background: var(--surface-accent);
+        color: var(--accent);
+      }
+      .card-field {
+        min-height: 54px;
+        padding: 6px 8px;
+        border: 1px solid var(--accent);
+        border-radius: 8px;
+      }
+      .card-foot {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 6px;
+      }
+      .card .send {
+        padding: 3px 12px;
+        font-size: 12px;
+      }
+      .who {
+        margin-right: 6px;
+        color: var(--ink-quiet);
+        font-size: 11px;
+      }
+      .card p {
+        margin: 0;
+      }
+      .card-links {
+        display: flex;
+        gap: 12px;
+        color: var(--accent);
+        font-size: 12px;
+      }
+      .sheet {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 20;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        padding: 10px 16px 16px;
+        border-top: 1px solid var(--accent);
+        border-radius: 16px 16px 0 0;
+        background: var(--surface);
+        box-shadow: 0 -10px 30px rgb(0 0 0 / 0.45);
+        font-size: 14px;
+      }
+      .sheet-grip {
+        align-self: center;
+        width: 40px;
+        height: 4px;
+        border-radius: 2px;
+        background: var(--rule);
+      }
+      .sheet p {
+        margin: 0;
+      }
+      .float {
+        position: absolute;
+        z-index: 5;
+      }
+
+      /* 案 B: 行の印とまとめて頼む */
+      .gutter {
+        width: 30px;
+        padding: 0 6px 0 0;
+        border-bottom-color: transparent;
+      }
+      .item.has-gutter {
+        grid-template-columns: 30px 64px minmax(0, 1fr);
+      }
+      .plus {
+        display: inline-grid;
+        place-items: center;
+        width: 22px;
+        height: 22px;
+        padding: 0;
+        border: 0;
+        border-radius: 6px;
+        background: var(--accent);
+        color: var(--on-accent);
+        font-size: 16px;
+        font-weight: 700;
+        line-height: 1;
+      }
+      .plus.quiet {
+        border: 1px solid var(--rule);
+        background: transparent;
+        color: var(--ink-quiet);
+      }
+      .caption .plus {
+        margin-left: -2px;
+      }
+      .inline-row > td {
+        padding: 6px 0 10px;
+        white-space: normal;
+      }
+      .inline-row > td > * {
+        width: 0;
+        min-width: 100%;
+      }
+      .inline-box {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        padding: 8px 10px;
+        border: 1px solid var(--accent);
+        border-radius: 10px;
+        background: var(--surface);
+      }
+      .inline-input {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .inline-input .text {
+        flex: 1;
+        min-width: 0;
+        padding: 4px 10px;
+        border: 1px solid var(--rule);
+        border-radius: 8px;
+      }
+      .inline-input .send {
+        padding: 3px 12px;
+        font-size: 12px;
+      }
+      .inline-answer,
+      .inline-pending {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 3px 10px;
+        border-left: 3px solid var(--accent);
+        font-size: 13px;
+      }
+      .inline-pending {
+        border-left-color: var(--state-warn);
+      }
+      .inline-answer .text,
+      .inline-pending .text {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .pending-tag {
+        padding: 0 6px;
+        border: 1px dashed var(--state-warn);
+        border-radius: 6px;
+        color: var(--state-warn);
+        font-size: 11px;
+      }
+      .open-link {
+        color: var(--accent);
+        font-size: 12px;
+        white-space: nowrap;
+      }
+      .review-bar {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 8px 22px;
+        border-bottom: 1px solid var(--state-warn);
+        background: color-mix(in srgb, var(--surface), var(--state-warn) 8%);
+        font-size: 13px;
+      }
+      .review-bar .grow {
+        flex: 1;
+      }
+      .review-bar .send {
+        padding: 4px 14px;
+        font-size: 13px;
+      }
+
+      /* 案 C: 入力欄へ引用 */
+      .quote-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 3px 12px;
+        border: 0;
+        border-radius: var(--radius-pill);
+        background: var(--ink-bright);
+        color: var(--ground);
+        font-size: 13px;
+        font-weight: 600;
+        box-shadow: 0 6px 16px rgb(0 0 0 / 0.4);
+      }
+      .quote {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 6px 10px;
+        border-left: 3px solid var(--accent);
+        border-radius: 6px;
+        background: var(--surface-raised);
+        font-size: 13px;
+      }
+      .quote .text {
+        flex: 1;
+        min-width: 0;
+      }
+      .quote .close {
+        color: var(--ink-quiet);
+      }
+      .quote.one-line .text {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .tray {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        padding: 8px 10px;
+        border: 1px solid var(--rule-soft);
+        border-radius: 10px;
+        font-size: 13px;
+      }
+      .tray-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        color: var(--ink-soft);
+      }
+      .tray-head b {
+        color: var(--state-warn);
+      }
+      .tray-row {
+        display: flex;
+        gap: 8px;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+      }
+      .tray-row .where {
+        color: var(--ink-quiet);
+      }
+      .tray .send {
+        padding: 3px 12px;
+        font-size: 12px;
+      }
+      .numbered {
+        display: inline-grid;
+        place-items: center;
+        width: 18px;
+        height: 18px;
+        margin-left: 6px;
+        border: 1px solid var(--accent);
+        border-radius: 50%;
+        color: var(--accent);
+        font-size: 11px;
+        font-weight: 700;
+        vertical-align: 1px;
+      }
+
+      /* 狭い幅（700px）: 今の画面の電話の並びに寄せる */
+      @media (max-width: 760px) {
+        .app {
+          grid-template-rows: 64px minmax(0, 1fr) auto;
+          gap: 0;
+          padding: 0;
+        }
+        .app-head {
+          display: none;
+        }
+        .phone-head {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 0 16px;
+          border-bottom: 1px solid var(--rule-soft);
+        }
+        .avatar {
+          width: 32px;
+          height: 32px;
+          border: 1px solid var(--rule);
+          border-radius: 50%;
+          background: var(--surface-raised);
+        }
+        .phone-title {
+          flex: 1;
+          font-size: 13px;
+        }
+        .phone-title small {
+          display: block;
+          color: var(--ink-quiet);
+          font-size: 11px;
+        }
+        .menu {
+          padding: 6px 12px;
+          border: 1px solid var(--rule);
+          border-radius: 10px;
+        }
+        .app-top {
+          grid-template-columns: minmax(0, 1fr);
+        }
+        .work-panel,
+        .toc,
+        .status-line {
+          display: none;
+        }
+        .panel.report-panel {
+          grid-template-columns: minmax(0, 1fr);
+          border: 0;
+          border-radius: 0;
+          background: var(--ground);
+        }
+        .with-margin .report-grid {
+          grid-template-columns: minmax(0, 1fr);
+        }
+        .with-margin .margin {
+          display: none;
+        }
+        .app-bottom {
+          grid-template-columns: minmax(0, 1fr);
+          gap: 8px;
+          padding: 8px 12px 12px;
+          border-top: 1px solid var(--rule-soft);
+        }
+        .stage {
+          display: flex;
+          align-items: flex-end;
+          gap: 10px;
+          overflow: visible;
+          background: none;
+          border: 0;
+        }
+        .figure {
+          display: none;
+        }
+        .bubble {
+          position: static;
+          flex: 1;
+          padding: 8px 12px;
+          font-size: 13px;
+        }
+        .bubble-name {
+          display: none;
+        }
+        .composer {
+          flex-flow: row wrap;
+          align-items: center;
+          gap: 8px;
+          padding: 0;
+          border: 0;
+          background: none;
+        }
+        .composer > .tray,
+        .composer > .quote {
+          flex-basis: 100%;
+        }
+        .field {
+          min-height: 40px;
+          padding: 8px 14px;
+          border-radius: 20px;
+        }
+        .composer-foot .ghost,
+        .composer-foot .who,
+        .composer-foot kbd {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="proto" id="proto"></div>
+    <div class="app" id="app"></div>
+    <script>
+      const VARIANTS = {
+        a: {
+          label: "A 余白の注釈",
+          refs: "下敷き: Google ドキュメントのコメント（選んだ所の横に1つのボタン・余白の欄）と Hypothesis（選んだ所にだけ出す口・a / h のキー）",
+        },
+        b: {
+          label: "B 行の印とまとめて頼む",
+          refs: "下敷き: GitHub のプルリクエストのレビュー（行の横の「＋」1つ・積んでおく pending のコメント・Submit review でまとめて送る）",
+        },
+        c: {
+          label: "C 入力欄へ引用",
+          refs: "下敷き: ChatGPT の「Ask ChatGPT」・Claude の Reply・assistant-ui の引用（選んだ所を入力欄へ引用）と Linear（字に結んだコメント）",
+        },
+      }
+      const SCENES = {
+        idle: "何も押していない",
+        pointed: "指した",
+        open: "欄を開いた",
+        answered: "答えが返った",
+        notes: "付箋がある",
+      }
+      const ROWS = [
+        ["E2E（会話）", "E2E", 92, "warn", "遅い"],
+        ["単体（core）", "単体", 64, "ok", "通過"],
+        ["単体（browser）", "単体", 58, "ok", "通過"],
+        ["E2E（設定）", "E2E", 31, "ok", "通過"],
+        ["型検査", "静的", 28, "ok", "通過"],
+        ["lint", "静的", 22, "ok", "通過"],
+        ["規約のテスト", "単体", 19, "ok", "通過"],
+        ["E2E（成果）", "E2E", 17, "ok", "通過"],
+        ["依存の検査", "静的", 9, "ok", "通過"],
+        ["整形", "静的", 6, "ok", "通過"],
+      ]
+      const OPTIONS = [
+        [
+          "adopt",
+          "採る",
+          "案 A: 起こし直しを 1 回にまとめる",
+          "会話の E2E が 92 秒から 30 秒台に縮む見込み",
+        ],
+        [
+          "consider",
+          "検討",
+          "案 B: worker を 8 本に増やす",
+          "CI では速いが、手元の 4 コアでは遅くなる",
+        ],
+        ["reject", "見送り", "案 C: E2E を夜に回す", "崩れに気づくのが翌朝になる"],
+      ]
+      const CLAIMS = [
+        ["confirmed", "確認済み", "worker 6 本で 76 秒に縮む", "根拠: 架空の手元で 3 回測った"],
+        [
+          "inferred",
+          "推測",
+          "会話の E2E が遅いのは画面を起こし直しているから",
+          "根拠: 所要の内訳を読んだだけ ／ 確かめ方: 起こし直しの回数を数える",
+        ],
+      ]
+      const QUESTION = "なぜ E2E（会話）だけ遅いの？"
+      const ANSWER =
+        "会話の E2E は画面を 12 回起こし直していて、1 回に 6 秒かかるの。まとめれば 30 秒台に縮むはずよ。"
+      const TARGET = "検査ごとの所要 › 表 1 › E2E（会話）"
+      const NOTES = [
+        { where: "進め方の案 › 案 A", text: "この案で進めて。", anchor: "option-0" },
+        {
+          where: "確かめていないこと › 推測",
+          text: "確かめて。確かめ方: 起こし直しの回数を数える",
+          anchor: "claim-1",
+        },
+      ]
+
+      const params = new URLSearchParams(location.search)
+      let variant = VARIANTS[params.get("variant")] ? params.get("variant") : "a"
+      let scene = SCENES[params.get("scene")] ? params.get("scene") : "idle"
+
+      function narrow() {
+        return matchMedia("(max-width: 760px)").matches
+      }
+
+      function state() {
+        return {
+          pointed: scene === "pointed" || scene === "open",
+          open: scene === "open",
+          answered: scene === "answered" || scene === "notes",
+          notes: scene === "notes",
+        }
+      }
+
+      /* 返す層のボタン（聞く・頼むを始める口）には data-reply を付け、上の帯で見えている数を数える。 */
+      function reply(html) {
+        return html.replace(/^<(\w+)/, '<$1 data-reply=""')
+      }
+
+      function renderProto() {
+        const keys = Object.keys(VARIANTS)
+        document.getElementById("proto").innerHTML = `
+          <span class="proto-tag">試作・架空の内容</span>
+          <span class="proto-variant">
+            <button data-step="-1" aria-label="前の案">←</button>
+            案 ${VARIANTS[variant].label}
+            <button data-step="1" aria-label="次の案">→</button>
+          </span>
+          <span>${Object.entries(SCENES)
+            .map(
+              ([key, label], index) =>
+                `<button data-scene="${key}" aria-pressed="${key === scene}">${index + 1} ${label}</button>`,
+            )
+            .join(" ")}</span>
+          <span class="proto-count" id="count"></span>
+          <span class="proto-refs">${VARIANTS[variant].refs}</span>`
+        document.querySelectorAll("[data-step]").forEach((button) => {
+          button.onclick = () => {
+            const index = keys.indexOf(variant) + Number(button.dataset.step)
+            variant = keys[(index + keys.length) % keys.length]
+            update()
+          }
+        })
+        document.querySelectorAll("[data-scene]").forEach((button) => {
+          button.onclick = () => {
+            scene = button.dataset.scene
+            update()
+          }
+        })
+      }
+
+      function update() {
+        history.replaceState(null, "", `?variant=${variant}&scene=${scene}`)
+        render()
+      }
+
+      document.addEventListener("keydown", (event) => {
+        const keys = Object.keys(VARIANTS)
+        const scenes = Object.keys(SCENES)
+        if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+          const index = keys.indexOf(variant) + (event.key === "ArrowRight" ? 1 : -1)
+          variant = keys[(index + keys.length) % keys.length]
+          update()
+        } else if (/^[1-5]$/.test(event.key)) {
+          scene = scenes[Number(event.key) - 1]
+          update()
+        }
+      })
+      addEventListener("resize", () => render())
+
+      /* ---- 本文 ---- */
+
+      function rowHtml(row, index, s) {
+        const [name, kind, seconds, tone, status] = row
+        const first = index === 0
+        const classes = []
+        if (first && s.pointed) classes.push("is-pointed")
+        let lead = ""
+        if (variant === "b") {
+          const showPlus = first && s.pointed && !s.open
+          lead = `<td class="gutter">${showPlus ? reply(`<button class="plus" aria-label="${name}について書く">＋</button>`) : ""}</td>`
+        }
+        let mark = ""
+        if (first && s.answered) {
+          mark =
+            variant === "c"
+              ? `<span class="numbered" title="答えを吹き出しとやり取りの列に出した">1</span>`
+              : `<span class="mark">聞 1</span>`
+        }
+        let html = `<tr class="${classes.join(" ")}" id="row-${index}">${lead}
+          <td>${name}${mark}</td><td>${kind}</td>
+          <td class="num"><span class="bar" style="width:${seconds * 0.9}px"></span>${seconds}</td>
+          <td><span class="pill ${tone}">${tone === "ok" ? "✓" : "!"}${status}</span></td></tr>`
+        if (variant === "b" && first) {
+          if (s.open) {
+            html += `<tr class="inline-row"><td></td><td colspan="4">
+              <div class="inline-box">
+                <span class="target-line">指した所: ${TARGET}</span>
+                <div class="inline-input">
+                  <span class="text">${QUESTION}</span>
+                  <button class="outline">付箋に積む</button>
+                  <button class="send">いま聞く <kbd>⌘⏎</kbd></button>
+                </div>
+              </div></td></tr>`
+          } else if (s.answered) {
+            html += `<tr class="inline-row"><td></td><td colspan="4">
+              <div class="inline-answer"><span class="who">つくも</span><span class="text">${ANSWER}</span><span class="open-link">開く ▾</span></div></td></tr>`
+          }
+        }
+        return html
+      }
+
+      function optionHtml(option, index, s) {
+        const [verdict, label, name, reason] = option
+        const noted = s.notes && index === 0
+        let mark = ""
+        if (noted) mark = `<span class="mark note">${variant === "b" ? "保留" : "頼 1"}</span>`
+        const lead = variant === "b" ? `<span></span>` : ""
+        let html = `<div class="item ${variant === "b" ? "has-gutter" : ""}" id="option-${index}">${lead}
+          <span class="badge ${verdict}">${label}</span>
+          <span><span class="item-name">${name}</span>${mark}<br /><span class="item-sub">${reason}</span></span></div>`
+        if (variant === "b" && noted) {
+          html += pendingHtml(NOTES[0].text)
+        }
+        return html
+      }
+
+      function claimHtml(claim, index, s) {
+        const [certainty, label, text, sub] = claim
+        const noted = s.notes && index === 1
+        let mark = ""
+        if (noted) mark = `<span class="mark note">${variant === "b" ? "保留" : "頼 2"}</span>`
+        const lead = variant === "b" ? `<span></span>` : ""
+        let html = `<div class="item ${variant === "b" ? "has-gutter" : ""}" id="claim-${index}">${lead}
+          <span class="badge ${certainty}">${label}</span>
+          <span><span class="item-name">${text}</span>${mark}<br /><span class="item-sub">${sub}</span></span></div>`
+        if (variant === "b" && noted) {
+          html += pendingHtml(NOTES[1].text)
+        }
+        return html
+      }
+
+      function pendingHtml(text) {
+        return `<div class="inline-pending" style="margin-left:30px"><span class="pending-tag">保留</span><span class="text">${text}</span><span class="who">まだ送っていない</span></div>`
+      }
+
+      function captionLead(label) {
+        return variant === "b"
+          ? reply(`<button class="plus quiet" aria-label="${label}について書く">＋</button>`)
+          : ""
+      }
+
+      function reportHtml(s) {
+        const rows = ROWS.map((row, index) => rowHtml(row, index, s)).join("")
+        const headLead = variant === "b" ? "<th></th>" : ""
+        return `
+          <p class="request">検証を速くしたい（架空の依頼）</p>
+          <p class="conclusion">架空の検証は worker を 6 本にすると 246 秒から 76 秒に縮む。</p>
+          <h2 id="s1">検査ごとの所要</h2>
+          <div class="caption">${captionLead("表 1")}<b>表 1</b>架空の検査ごとの所要（worker 6 本）</div>
+          <div class="chips"><span class="chip ok">✓ OK</span><span class="chip warn">! 要注意</span></div>
+          <div class="table-wrap" id="table-wrap">
+            <table><thead><tr>${headLead}<th>検査</th><th>種類</th><th class="num">秒</th><th>状態</th></tr></thead>
+            <tbody>${rows}</tbody></table>
+          </div>
+          <h2 id="s2">進め方の案</h2>
+          <div class="caption" id="cap-options">${captionLead("進め方の案")}<b>案</b>架空の進め方</div>
+          <div class="options">${OPTIONS.map((option, index) => optionHtml(option, index, s)).join("")}</div>
+          <h2 id="s3" class="${variant === "b" ? "caption" : ""}">${captionLead("確かめていないこと")}確かめていないこと</h2>
+          <div class="claims">${CLAIMS.map((claim, index) => claimHtml(claim, index, s)).join("")}</div>`
+      }
+
+      function reviewBarHtml() {
+        return `<div class="review-bar"><span class="pending-tag">保留 2</span>
+          <span class="grow">頼みごと 2 件は、まだ送っていない（自分にだけ見える）</span>
+          <button class="ghost">捨てる</button><button class="send">まとめて頼む <kbd>⌘⏎</kbd></button></div>`
+      }
+
+      /* ---- 案 A の余白と、狭い幅のシート ---- */
+
+      function marginItems(s) {
+        const items = []
+        if (scene === "idle") {
+          items.push({
+            anchor: "row-0",
+            html: `<div class="m-hint">字・行・案を選ぶと、ここに「聞く・頼む」が1つ出る（<kbd>⌘⌥M</kbd>）</div>`,
+          })
+        }
+        if (scene === "pointed") {
+          items.push({
+            anchor: "row-0",
+            html: reply(`<button class="m-button">聞く・頼む <kbd>⌘⌥M</kbd></button>`),
+          })
+        }
+        if (s.open) {
+          items.push({ anchor: "row-0", html: askCardHtml() })
+        }
+        if (s.answered) {
+          items.push({ anchor: "row-0", html: threadCardHtml() })
+        }
+        if (s.notes) {
+          NOTES.forEach((note, index) => {
+            items.push({
+              anchor: note.anchor,
+              html: `<div class="card note"><span class="target-line"><b style="color:var(--state-warn)">頼 ${index + 1}</b> ${note.where}</span><p>${note.text}</p><span class="who">まだ送っていない</span></div>`,
+            })
+          })
+        }
+        return items
+      }
+
+      function askCardHtml() {
+        return `<div class="card active">
+          <span class="target-line">指した所: ${TARGET}</span>
+          <span class="seg"><span class="on">聞く</span><span>頼む</span></span>
+          <div class="card-field">${QUESTION}</div>
+          <span class="who">答えはこの札と吹き出しに出る。作業は始めない</span>
+          <div class="card-foot"><button class="ghost">やめる</button><button class="send">聞く <kbd>⌘⏎</kbd></button></div>
+        </div>`
+      }
+
+      function threadCardHtml() {
+        return `<div class="card">
+          <span class="target-line">${TARGET}</span>
+          <p><span class="who">あなた</span>${QUESTION}</p>
+          <p><span class="who">つくも</span>${ANSWER}</p>
+          <span class="card-links"><span>続けて聞く</span><span>これを頼む</span></span>
+        </div>`
+      }
+
+      function layoutMargin(grid, margin, items) {
+        margin.innerHTML = items.map((item) => `<div class="m-item">${item.html}</div>`).join("")
+        const gridTop = grid.getBoundingClientRect().top
+        let floor = 0
+        margin.querySelectorAll(".m-item").forEach((element, index) => {
+          const anchor = document.getElementById(items[index].anchor)
+          const top = Math.max(anchor.getBoundingClientRect().top - gridTop, floor)
+          element.style.top = `${top}px`
+          floor = top + element.offsetHeight + 8
+        })
+      }
+
+      function narrowOverlayA() {
+        if (scene === "pointed") {
+          return {
+            anchor: "row-0",
+            html: reply(`<button class="m-button">聞く・頼む</button>`),
+          }
+        }
+        return undefined
+      }
+
+      function sheetHtmlA(s) {
+        if (s.open) {
+          return `<div class="sheet"><span class="sheet-grip"></span>
+            <span class="target-line">指した所: ${TARGET}</span>
+            <span class="seg"><span class="on">聞く</span><span>頼む</span></span>
+            <div class="card-field">${QUESTION}</div>
+            <div class="card-foot"><button class="ghost">やめる</button><button class="send">聞く</button></div></div>`
+        }
+        if (scene === "answered") {
+          return `<div class="sheet"><span class="sheet-grip"></span>
+            <span class="target-line">${TARGET}</span>
+            <p><span class="who">あなた</span>${QUESTION}</p>
+            <p><span class="who">つくも</span>${ANSWER}</p>
+            <span class="card-links"><span>続けて聞く</span><span>これを頼む</span><span style="margin-left:auto;color:var(--ink-quiet)">下へ引くと閉じる</span></span></div>`
+        }
+        return ""
+      }
+
+      /* ---- 下の段（立ち絵・吹き出し・入力欄） ---- */
+
+      function bubbleHtml(s) {
+        if (scene === "answered") {
+          const quote = variant === "c" ? `<div class="bubble-quote">❝ ${TARGET}</div>` : ""
+          return `<div class="bubble"><div class="bubble-name">つくも</div>${quote}${ANSWER}</div>`
+        }
+        if (scene === "notes") {
+          return `<div class="bubble"><div class="bubble-name">つくも</div>頼みごとは付箋にしておいたわ。まとめて頼む前に、順番だけ見てね。</div>`
+        }
+        return ""
+      }
+
+      function trayHtml() {
+        return `<div class="tray"><div class="tray-head"><span>頼みごと <b>2 件</b>（まだ送っていない）</span><button class="send">まとめて頼む</button></div>
+          ${NOTES.map(
+            (note, index) =>
+              `<div class="tray-row"><b style="color:var(--state-warn)">${index + 1}.</b><span>${note.text}</span><span class="where">${note.where}</span></div>`,
+          ).join("")}</div>`
+      }
+
+      function composerHtml(s) {
+        let top = ""
+        let text = `<div class="field">つくも への依頼を書く</div>`
+        let foot = `<div class="composer-foot"><button class="ghost">＋ 新規</button><button class="send">送信 <kbd>⌘⏎</kbd></button></div>`
+        if (variant === "a" && s.notes) {
+          top = trayHtml()
+        }
+        if (variant === "c" && s.notes) {
+          top = NOTES.map(
+            (note, index) =>
+              `<div class="quote one-line"><span class="text"><span class="target-line">頼む ${index + 1} ・ ❝ ${note.where}</span>　${note.text}</span><span class="close">×</span></div>`,
+          ).join("")
+          foot = `<div class="composer-foot"><span class="who" style="flex:1">引用した頼みごと 2 件を1つの依頼にして送る</span><button class="send">まとめて頼む <kbd>⌘⏎</kbd></button></div>`
+        }
+        if (variant === "c" && s.open) {
+          top = `<div class="quote"><span class="text"><span class="target-line">引用</span><br />❝ ${TARGET}　E2E ・ 92 秒 ・ 遅い</span><span class="close">×</span></div>`
+          text = `<div class="field typed">${QUESTION}</div>`
+          foot = `<div class="composer-foot"><span class="seg"><span class="on">聞く</span><span>頼む</span></span><span class="who" style="flex:1">聞くは作業を始めない。答えは吹き出しに出る</span><button class="send">聞く <kbd>⌘⏎</kbd></button></div>`
+        }
+        return `${top}${text}${foot}`
+      }
+
+      /* ---- 組み立て ---- */
+
+      function render() {
+        renderProto()
+        const s = state()
+        const isNarrow = narrow()
+        const tocMark = (label, mark) =>
+          `<div class="toc-item"><span>${label}</span>${mark ? `<span class="toc-mark">${mark}</span>` : ""}</div>`
+        document.getElementById("app").innerHTML = `
+          <header class="app-head"><span class="brand">tsukumo-task</span>
+            <nav class="tabs"><span class="on">仕事</span><span>雑談</span><span>キャラ</span><span>トークン</span><span>成果</span></nav></header>
+          <header class="phone-head"><span class="avatar"></span>
+            <span class="phone-title"><small>○ 依頼待ち</small>検証を速くしたい（架空の依頼）</span><span class="menu">≡</span></header>
+          <div class="app-top">
+            <section class="panel report-panel ${variant === "a" ? "with-margin" : ""}">
+              <nav class="toc"><div class="toc-title">やり取り</div>
+                ${tocMark("検証を速くしたい", s.answered ? "脇 1" : "")}
+                <div class="toc-item on"><span>最終 架空の検証は…</span></div>
+                ${tocMark("検査ごとの所要", s.answered ? "聞 1" : "")}
+                ${tocMark("進め方の案", s.notes ? "頼 1" : "")}
+                ${tocMark("確かめていないこと", s.notes ? "頼 1" : "")}
+              </nav>
+              <div class="report-col">
+                <div class="status-line">完了</div>
+                ${variant === "b" && s.notes ? reviewBarHtml() : ""}
+                <div class="report-scroll" id="scroll" data-region="main">
+                  <div class="report-grid" id="grid">
+                    <article id="report">${reportHtml(s)}</article>
+                    <aside class="margin" id="margin"></aside>
+                  </div>
+                </div>
+              </div>
+            </section>
+            <section class="panel work-panel"><div class="meters">文脈 61% ・ 5h 34% ・ 7d 61%（飾り）</div></section>
+          </div>
+          <div class="app-bottom">
+            <section class="panel stage"><div class="figure">立ち絵</div>${isNarrow ? '<span class="avatar"></span>' : ""}${bubbleHtml(s)}</section>
+            <section class="panel composer">${composerHtml(s)}</section>
+          </div>
+          ${variant === "a" && isNarrow ? sheetHtmlA(s) : ""}`
+        place()
+        document.fonts.ready.then(place)
+      }
+
+      /* 字の読み込みで高さが変わるので、読み込みのあとにもう一度置き直す。 */
+      function place() {
+        const s = state()
+        const isNarrow = narrow()
+        const scroll = document.getElementById("scroll")
+        const notesTarget = variant === "b" ? "option-0" : "cap-options"
+        const target =
+          scene === "idle"
+            ? undefined
+            : document.getElementById(scene === "notes" ? notesTarget : "s1")
+        scroll.scrollTop = 0
+        if (target !== undefined) {
+          const gap = scene === "notes" ? 4 : 12
+          scroll.scrollTop =
+            target.getBoundingClientRect().top - scroll.getBoundingClientRect().top - gap
+        }
+
+        document.querySelectorAll(".float").forEach((element) => element.remove())
+        const grid = document.getElementById("grid")
+        if (variant === "a" && !isNarrow) {
+          layoutMargin(grid, document.getElementById("margin"), marginItems(s))
+        }
+        const floating =
+          variant === "a" && isNarrow
+            ? narrowOverlayA()
+            : variant === "c" && scene === "pointed"
+              ? {
+                  anchor: "row-0",
+                  html: reply(`<button class="quote-pill">❝ 引用して聞く</button>`),
+                }
+              : undefined
+        if (floating !== undefined) {
+          const anchor = document.getElementById(floating.anchor)
+          const wrap = document.getElementById("table-wrap")
+          const box = anchor.getBoundingClientRect()
+          const base = wrap.getBoundingClientRect()
+          const element = document.createElement("div")
+          element.className = "float"
+          element.innerHTML = floating.html
+          wrap.appendChild(element)
+          element.style.top = `${box.top - base.top + (box.height - element.offsetHeight) / 2}px`
+          element.style.left = `${Math.min(box.right - base.left + 8, wrap.clientWidth - element.offsetWidth)}px`
+        }
+        countReplyButtons()
+      }
+
+      function countReplyButtons() {
+        const visible = [...document.querySelectorAll("[data-reply]")].filter((element) => {
+          const box = element.getBoundingClientRect()
+          return box.width > 0 && box.height > 0
+        }).length
+        document.getElementById("count").textContent = `見えている「聞く・頼む」の口 ${visible} 個`
+      }
+
+      render()
+    </script>
+  </body>
+</html>
