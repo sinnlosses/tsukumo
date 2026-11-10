@@ -1,12 +1,18 @@
-// ボタンの部品。持つのは顔（枠・地・字の色と hover・focus-visible・押せないとき・押されたとき）だけで、箱（高さ・余白・角丸）は呼び出し側が `className` で渡す。
+// ボタンの部品。中身は Astryx の `Button`（押された状態を持つときは `ToggleButton`）で、顔は Astryx の variant に写して決める。
+// 箱の置き方は呼び出し側が `className` で渡す。
 //
 // 押せないは `aria-disabled` の1通り（`disabled` を使わない。フォーカスは残るので `title` の理由が読める）。
 // 押されても `onClick` を呼ばない。
 
+import {
+  Button as AstryxButton,
+  type ButtonVariant as AstryxVariant,
+} from "@astryxdesign/core/Button"
+import { ToggleButton } from "@astryxdesign/core/ToggleButton"
 import clsx from "clsx"
-import type { ReactElement, ReactNode, Ref } from "react"
+import { isValidElement, type ReactElement, type ReactNode, type Ref } from "react"
 
-import { TEXT_SIZE_CLASS, type TextSize } from "../text/text.tsx"
+import type { TextSize } from "../text/text.tsx"
 import styles from "./button.module.css"
 
 type ButtonVariant =
@@ -74,50 +80,46 @@ export type ButtonProps = {
   readonly children: ReactNode
 }
 
-const BUTTON_VARIANT_CLASS = {
-  outline: styles["button-variant-outline"],
-  "outline-dashed": styles["button-variant-outline-dashed"],
-  "outline-hover-warn": styles["button-variant-outline-hover-warn"],
-  "outline-hover-danger": styles["button-variant-outline-hover-danger"],
-  "outline-accent": styles["button-variant-outline-accent"],
-  "outline-accent-tinted": styles["button-variant-outline-accent-tinted"],
-  "tinted-accent": styles["button-variant-tinted-accent"],
-  "outline-warn": styles["button-variant-outline-warn"],
-  "outline-ground": styles["button-variant-outline-ground"],
-  "outline-surface": styles["button-variant-outline-surface"],
-  "outline-faint-ground": styles["button-variant-outline-faint-ground"],
-  "outline-ok-surface": styles["button-variant-outline-ok-surface"],
-  "outline-danger-surface": styles["button-variant-outline-danger-surface"],
-  "outline-soft-danger": styles["button-variant-outline-soft-danger"],
-  "outline-soft-danger-veil": styles["button-variant-outline-soft-danger-veil"],
-  "outline-dashed-accent-ink": styles["button-variant-outline-dashed-accent-ink"],
-  "solid-accent": styles["button-variant-solid-accent"],
-  "solid-accent-static": styles["button-variant-solid-accent-static"],
-  "solid-danger": styles["button-variant-solid-danger"],
-  "solid-warn": styles["button-variant-solid-warn"],
-  "solid-ink": styles["button-variant-solid-ink"],
-  ghost: styles["button-variant-ghost"],
-  "ghost-hover-accent": styles["button-variant-ghost-hover-accent"],
-  "ghost-hover-outline": styles["button-variant-ghost-hover-outline"],
-  "ghost-hover-rule-soft": styles["button-variant-ghost-hover-rule-soft"],
-  link: styles["button-variant-link"],
-  "text-accent": styles["button-variant-text-accent"],
-} satisfies Record<ButtonVariant, string>
+/** 27 の語は Astryx の 4 つと、テーマで足した `warning` に落ちる。枠の点線・hover の色・地の違いは落とす。 */
+const ASTRYX_VARIANT = {
+  outline: "secondary",
+  "outline-dashed": "secondary",
+  "outline-hover-warn": "secondary",
+  "outline-hover-danger": "destructive",
+  "outline-accent": "secondary",
+  "outline-accent-tinted": "secondary",
+  "tinted-accent": "secondary",
+  "outline-warn": "warning",
+  "outline-ground": "secondary",
+  "outline-surface": "secondary",
+  "outline-faint-ground": "secondary",
+  "outline-ok-surface": "secondary",
+  "outline-danger-surface": "destructive",
+  "outline-soft-danger": "destructive",
+  "outline-soft-danger-veil": "destructive",
+  "outline-dashed-accent-ink": "secondary",
+  "solid-accent": "primary",
+  "solid-accent-static": "primary",
+  "solid-danger": "destructive",
+  "solid-warn": "warning",
+  "solid-ink": "primary",
+  ghost: "ghost",
+  "ghost-hover-accent": "ghost",
+  "ghost-hover-outline": "ghost",
+  "ghost-hover-rule-soft": "ghost",
+  link: "ghost",
+  "text-accent": "ghost",
+} satisfies Record<ButtonVariant, AstryxVariant>
 
-const BUTTON_PRESSED_ARIA = {
-  none: undefined,
-  on: "true",
-  off: "false",
-} satisfies Record<ButtonPressed, "true" | "false" | undefined>
+const ASTRYX_SIZE = {
+  label: "sm",
+  action: "sm",
+  secondary: "sm",
+  subheading: "md",
+  body: "lg",
+} as const satisfies Record<ButtonSize, "sm" | "md" | "lg">
 
 export function Button(props: ButtonProps): ReactElement {
-  const className = clsx(
-    styles["button"],
-    BUTTON_VARIANT_CLASS[props.variant],
-    TEXT_SIZE_CLASS[props.size],
-    props.className,
-  )
-
   const handleClick = (): void => {
     // `aria-disabled` は native の `disabled` と違いクリックを止めないので、ここで読み替える。
     if (props.disabled) {
@@ -127,28 +129,50 @@ export function Button(props: ButtonProps): ReactElement {
   }
 
   const { disclosure } = props
+  const common = {
+    ref: disclosure.kind === "popover" ? disclosure.ref : undefined,
+    label: props.ariaLabel ?? visibleText(props.children),
+    size: ASTRYX_SIZE[props.size],
+    className: clsx(styles.button, props.className),
+    "aria-disabled": props.disabled,
+    "aria-haspopup": popupOf(disclosure),
+    "aria-expanded":
+      disclosure.kind === "expander" || disclosure.kind === "popover"
+        ? disclosure.expanded
+        : undefined,
+    "aria-controls": disclosure.kind === "popover" ? disclosure.controls : undefined,
+    title: props.title,
+    onClick: handleClick,
+    children: props.children,
+  }
 
-  return (
-    <button
-      type="button"
-      ref={disclosure.kind === "popover" ? disclosure.ref : undefined}
-      className={className}
-      aria-pressed={BUTTON_PRESSED_ARIA[props.pressed]}
-      aria-disabled={props.disabled}
-      aria-label={props.ariaLabel}
-      aria-haspopup={popupOf(disclosure)}
-      aria-expanded={
-        disclosure.kind === "expander" || disclosure.kind === "popover"
-          ? disclosure.expanded
-          : undefined
-      }
-      aria-controls={disclosure.kind === "popover" ? disclosure.controls : undefined}
-      title={props.title}
-      onClick={handleClick}
-    >
-      {props.children}
-    </button>
-  )
+  if (props.pressed === "none") {
+    return <AstryxButton {...common} variant={ASTRYX_VARIANT[props.variant]} type="button" />
+  }
+  return <ToggleButton {...common} isPressed={props.pressed === "on"} />
+}
+
+/**
+ * 見える字（`aria-hidden` の枝は除く）を集める。Astryx の `label` がアクセシブルネームになるため。
+ * 中の要素は行内（`span` など）として前後の字へそのままつなぎ、連なる空白は1つに畳む。
+ */
+function visibleText(node: ReactNode): string {
+  return wordsOf(node).replaceAll(/\s+/g, " ").trim()
+}
+
+function wordsOf(node: ReactNode): string {
+  if (typeof node === "string" || typeof node === "number") {
+    return String(node)
+  }
+  if (Array.isArray(node)) {
+    return node.map(wordsOf).join("")
+  }
+  if (isValidElement<{ children?: ReactNode; "aria-hidden"?: unknown }>(node)) {
+    return node.props["aria-hidden"] === undefined || node.props["aria-hidden"] === false
+      ? wordsOf(node.props.children)
+      : ""
+  }
+  return ""
 }
 
 function popupOf(disclosure: ButtonDisclosure): "dialog" | "menu" | undefined {

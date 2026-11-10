@@ -467,6 +467,16 @@
     color: var(--color-on-error-muted);
   }
 
+  .astryx-button:is([aria-disabled="true"]) {
+    background-color: var(--surface-raised);
+    color: var(--ink-quiet);
+  }
+
+  .astryx-button[data-variant="warning"] {
+    background-color: color-mix(in srgb, var(--surface), var(--state-warn) 13%);
+    color: var(--state-warn);
+  }
+
   .astryx-badge[data-variant="neutral"] {
     background-color: var(--color-background-gray);
     color: var(--color-text-gray);
@@ -520,6 +530,11 @@
   .astryx-badge[data-variant="gray"] {
     background-color: var(--color-background-gray);
     color: var(--color-text-gray);
+  }
+
+  .astryx-badge[data-variant="accent"] {
+    background-color: var(--surface-accent);
+    color: var(--accent);
   }
 
   .astryx-segmented-control {

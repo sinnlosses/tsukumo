@@ -26,9 +26,13 @@
             {
               "tag": "button",
               "attributes": {
-                "aria-disabled": "false",
-                "aria-label": "キャラクターを選ぶ（いまは つくもの精霊）",
+                "data-variant": "ghost",
+                "data-size": "lg",
+                "data-elevation": "none",
+                "data-astryx-pressable": "",
                 "aria-expanded": "false",
+                "aria-label": "キャラクターを選ぶ（いまは つくもの精霊）",
+                "data-astryx-edge-comp": "",
                 "type": "button"
               },
               "children": [
@@ -49,6 +53,13 @@
                       "tag": "svg"
                     }
                   ]
+                },
+                {
+                  "tag": "span",
+                  "attributes": {
+                    "role": "status",
+                    "aria-live": "polite"
+                  }
                 }
               ]
             },
@@ -106,7 +117,11 @@
                   },
                   "children": [
                     {
-                      "tag": "svg"
+                      "tag": "svg",
+                      "attributes": {
+                        "data-size": "sm",
+                        "data-color": "inherit"
+                      }
                     }
                   ]
                 },
@@ -127,7 +142,11 @@
                   },
                   "children": [
                     {
-                      "tag": "svg"
+                      "tag": "svg",
+                      "attributes": {
+                        "data-size": "sm",
+                        "data-color": "inherit"
+                      }
                     }
                   ]
                 },
@@ -153,7 +172,11 @@
                   },
                   "children": [
                     {
-                      "tag": "svg"
+                      "tag": "svg",
+                      "attributes": {
+                        "data-size": "sm",
+                        "data-color": "inherit"
+                      }
                     }
                   ]
                 },
@@ -173,7 +196,11 @@
                   },
                   "children": [
                     {
-                      "tag": "svg"
+                      "tag": "svg",
+                      "attributes": {
+                        "data-size": "sm",
+                        "data-color": "inherit"
+                      }
                     }
                   ]
                 },
@@ -193,7 +220,11 @@
                   },
                   "children": [
                     {
-                      "tag": "svg"
+                      "tag": "svg",
+                      "attributes": {
+                        "data-size": "sm",
+                        "data-color": "inherit"
+                      }
                     }
                   ]
                 },
@@ -768,53 +799,109 @@
                             {
                               "tag": "button",
                               "attributes": {
-                                "aria-disabled": "false",
+                                "data-variant": "ghost",
+                                "data-size": "sm",
+                                "data-elevation": "none",
+                                "data-astryx-pressable": "",
                                 "aria-label": "画像を添える",
+                                "data-astryx-edge-comp": "",
                                 "type": "button"
                               },
                               "children": [
                                 {
                                   "tag": "svg"
+                                },
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "role": "status",
+                                    "aria-live": "polite"
+                                  }
                                 }
                               ]
                             },
                             {
                               "tag": "button",
                               "attributes": {
-                                "aria-disabled": "false",
+                                "data-variant": "ghost",
+                                "data-size": "sm",
+                                "data-elevation": "none",
+                                "data-astryx-pressable": "",
                                 "aria-label": "コマンドを補完する",
+                                "data-astryx-edge-comp": "",
                                 "type": "button"
                               },
                               "children": [
                                 {
                                   "tag": "svg"
+                                },
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "role": "status",
+                                    "aria-live": "polite"
+                                  }
                                 }
                               ]
                             },
                             {
                               "tag": "button",
                               "attributes": {
-                                "aria-disabled": "false",
+                                "data-variant": "ghost",
+                                "data-size": "sm",
+                                "data-elevation": "none",
+                                "data-astryx-pressable": "",
                                 "aria-label": "ファイルを補完する",
+                                "data-astryx-edge-comp": "",
                                 "type": "button"
                               },
                               "children": [
                                 {
                                   "tag": "svg"
+                                },
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "role": "status",
+                                    "aria-live": "polite"
+                                  }
                                 }
                               ]
                             },
                             {
                               "tag": "button",
                               "attributes": {
+                                "data-variant": "ghost",
+                                "data-size": "sm",
+                                "data-elevation": "none",
+                                "data-astryx-pressable": "",
+                                "data-is-pressed": "false",
                                 "aria-pressed": "false",
-                                "aria-disabled": "false",
                                 "aria-label": "マークダウンエディタで書く",
+                                "data-astryx-edge-comp": "",
                                 "type": "button"
                               },
                               "children": [
                                 {
                                   "tag": "svg"
+                                },
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  },
+                                  "children": [
+                                    {
+                                      "tag": "svg"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "role": "status",
+                                    "aria-live": "polite"
+                                  }
                                 }
                               ]
                             },
@@ -864,7 +951,10 @@
                                 {
                                   "tag": "button",
                                   "attributes": {
-                                    "aria-disabled": "false",
+                                    "data-variant": "secondary",
+                                    "data-size": "sm",
+                                    "data-elevation": "none",
+                                    "data-astryx-pressable": "",
                                     "aria-label": "新しいセッションを始める",
                                     "type": "button"
                                   },
@@ -872,7 +962,14 @@
                                     {
                                       "tag": "svg"
                                     },
-                                    "新規"
+                                    "新規",
+                                    {
+                                      "tag": "span",
+                                      "attributes": {
+                                        "role": "status",
+                                        "aria-live": "polite"
+                                      }
+                                    }
                                   ]
                                 },
                                 {

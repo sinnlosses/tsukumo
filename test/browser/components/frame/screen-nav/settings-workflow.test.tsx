@@ -216,7 +216,11 @@ function grip(title: string): HTMLElement {
 }
 
 function announcement(): string | null {
-  return within(dialog()).getByRole("status").textContent
+  // Astryx のボタンが置く空の `status`（読み上げ用の領域）は数えない。
+  const notice = within(dialog())
+    .getAllByRole("status")
+    .find((live) => live.textContent !== "")
+  return notice?.textContent ?? null
 }
 
 /** 行を高さ 40・間 10 で縦に並べた矩形に差し替える（中点は 20・70・120…）。 */
@@ -389,7 +393,7 @@ describe("設定のダイアログの「ワークフロー」の面（リポジ�
     expect(typedElement(dialog().querySelector("footer"), HTMLElement, "下の帯").textContent).toBe(
       `● ${text}やめる保存`,
     )
-    expect(bandButton("保存").getAttribute("aria-disabled")).toBe("false")
+    expect(bandButton("保存").getAttribute("aria-disabled")).toBeNull()
   })
 
   it("保存すると返った面の並びを出し、「保存」がまた押せなくなる", async () => {
@@ -424,7 +428,7 @@ describe("設定のダイアログの「ワークフロー」の面（リポジ�
 
     expect(await within(dialog()).findByText("架空の断りの理由")).toBeTruthy()
     expect(stepTexts(list)).toHaveLength(2)
-    expect(bandButton("保存").getAttribute("aria-disabled")).toBe("false")
+    expect(bandButton("保存").getAttribute("aria-disabled")).toBeNull()
   })
 
   it("「やめる」で今の値の並びに戻り、断りの理由も消える", async () => {

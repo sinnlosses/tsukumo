@@ -162,7 +162,7 @@ describe("アイテムの区画", () => {
     fireEvent.change(screen.getByLabelText("画像"), {
       target: { files: [new File(["x"], "hat.png", { type: "image/png" })] },
     })
-    expect(submit.getAttribute("aria-disabled")).toBe("false")
+    expect(submit.getAttribute("aria-disabled")).toBeNull()
     fireEvent.click(submit)
 
     await waitFor(() => {

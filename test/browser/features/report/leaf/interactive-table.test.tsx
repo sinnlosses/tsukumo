@@ -341,10 +341,10 @@ describe("操作できる Table", () => {
     expect(caption?.textContent).toContain("架空の表")
     expect(container.querySelector("table")?.parentElement?.previousElementSibling).toBe(caption)
 
-    fireEvent.click(screen.getByRole("button", { name: "甲 2件" }))
+    fireEvent.click(screen.getByRole("button", { name: "甲2件" }))
     expect(names(container)).toEqual(["ぼ", "ん"])
 
-    fireEvent.click(screen.getByRole("button", { name: "甲 2件" }))
+    fireEvent.click(screen.getByRole("button", { name: "甲2件" }))
     expect(names(container)).toEqual(["ぼ", "あ", "ん"])
   })
 

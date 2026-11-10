@@ -312,7 +312,7 @@ describe("設定の歯車（帯の右端）", () => {
     fireEvent.click(gear())
 
     fireEvent.change(colorInput("地の色"), { target: { value: "#101010" } })
-    expect(resetButton().getAttribute("aria-disabled")).toBe("false")
+    expect(resetButton().getAttribute("aria-disabled")).toBeNull()
 
     fireEvent.click(resetButton())
 

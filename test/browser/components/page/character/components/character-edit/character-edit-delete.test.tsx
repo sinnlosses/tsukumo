@@ -85,7 +85,7 @@ describe("CharacterEdit のキャラクターを消す", () => {
         target: { value: "other" },
       })
       const okButton = screen.getByRole("button", { name: "消す" })
-      expect(okButton.getAttribute("aria-disabled")).toBe("false")
+      expect(okButton.getAttribute("aria-disabled")).toBeNull()
 
       fireEvent.click(okButton)
 

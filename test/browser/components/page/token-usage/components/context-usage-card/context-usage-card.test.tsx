@@ -147,12 +147,7 @@ describe("ContextUsageCard", () => {
     const blocks = container.querySelectorAll('[aria-hidden="true"]')
     // 自動圧縮まで(1)・更新時刻(1)・使っている量/コンテキストウィンドウの大きさ/割合(3)・横棒(1)・凡例8行の値(8)で14個。
     expect(blocks).toHaveLength(14)
-    // 横棒だけは中身が無い空の塊（高さは親の `stretch` が決めるので `&nbsp;` を持たない）。
-    // それ以外は、行の高さを実物の文字と揃えるための `&nbsp;` を持つ（見た目には出ない）。
-    const withText = [...blocks].filter((block) => block.textContent !== "")
-    expect(withText).toHaveLength(13)
-    for (const block of withText) {
-      expect(block.textContent).toBe("\u00a0")
-    }
+    // Astryx の `Skeleton` は中身を持たないので、どの塊も字を持たない（字の行の高さは `1lh` で揃える）。
+    expect([...blocks].every((block) => block.textContent === "")).toBe(true)
   })
 })

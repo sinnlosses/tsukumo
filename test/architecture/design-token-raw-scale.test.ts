@@ -119,7 +119,6 @@ const RAW_SCALE_REFERENCE_LIMITS: Readonly<Record<string, number>> = {
   "browser/components/page/token-usage/components/tool-usage-card/tool-usage-card.module.css": 1,
   "browser/components/page/token-usage/components/usage-review-card/usage-review-card.module.css": 23,
   "browser/components/page/token-usage/token-usage.module.css": 9,
-  "browser/components/ui/badge/badge.module.css": 1,
   "browser/components/ui/bottom-sheet/bottom-sheet.module.css": 7,
   "browser/components/ui/field/field.module.css": 1,
   "browser/components/ui/image-zoom/image-zoom.module.css": 3,

@@ -171,7 +171,7 @@ describe("DiarySection", () => {
 
     expect(screen.getByText("日記を書けなかった。もう一度押すと書き直す。")).toBeDefined()
     const button = screen.getByRole("button", { name: "架空の名前と振り返る" })
-    expect(button.getAttribute("aria-disabled")).toBe("false")
+    expect(button.getAttribute("aria-disabled")).toBeNull()
   })
 
   it("日を切り替えている間は薄く残す", () => {

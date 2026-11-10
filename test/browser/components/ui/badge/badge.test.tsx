@@ -2,6 +2,7 @@ import { cleanup, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
 import { Badge, type BadgeProps } from "../../../../../src/browser/components/ui/badge/badge.tsx"
+import { typedElement } from "../../../../typed-element.ts"
 
 afterEach(() => {
   cleanup()
@@ -15,7 +16,8 @@ const BASE_PROPS = {
 
 function renderedBadge(props: Omit<BadgeProps, "children">): HTMLElement {
   render(<Badge {...props}>dummy-label</Badge>)
-  return screen.getByText("dummy-label")
+  // Astryx の `Badge` は字を内側の span に入れるので、`data-*` と `className` が付く外側を返す。
+  return typedElement(screen.getByText("dummy-label").parentElement, HTMLElement, "印")
 }
 
 describe("Badge", () => {

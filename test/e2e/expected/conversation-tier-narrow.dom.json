@@ -140,14 +140,28 @@
                                     {
                                       "tag": "button",
                                       "attributes": {
-                                        "aria-disabled": "false",
+                                        "data-variant": "primary",
+                                        "data-size": "sm",
+                                        "data-elevation": "none",
+                                        "data-astryx-pressable": "",
                                         "aria-label": "T-001 を始める（すぐ送る）",
                                         "type": "button"
                                       },
                                       "children": [
                                         "始める",
                                         {
-                                          "tag": "svg"
+                                          "tag": "svg",
+                                          "attributes": {
+                                            "data-size": "sm",
+                                            "data-color": "inherit"
+                                          }
+                                        },
+                                        {
+                                          "tag": "span",
+                                          "attributes": {
+                                            "role": "status",
+                                            "aria-live": "polite"
+                                          }
                                         }
                                       ]
                                     }
@@ -168,28 +182,58 @@
                             {
                               "tag": "button",
                               "attributes": {
-                                "aria-disabled": "false",
+                                "data-variant": "secondary",
+                                "data-size": "md",
+                                "data-elevation": "none",
+                                "data-astryx-pressable": "",
+                                "aria-label": "自分で書く/",
                                 "type": "button"
                               },
                               "children": [
                                 {
-                                  "tag": "svg"
+                                  "tag": "svg",
+                                  "attributes": {
+                                    "data-size": "sm",
+                                    "data-color": "inherit"
+                                  }
                                 },
-                                "自分で書く"
+                                "自分で書く",
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "role": "status",
+                                    "aria-live": "polite"
+                                  }
+                                }
                               ]
                             },
                             {
                               "tag": "button",
                               "attributes": {
-                                "aria-disabled": "false",
+                                "data-variant": "secondary",
+                                "data-size": "md",
+                                "data-elevation": "none",
+                                "data-astryx-pressable": "",
+                                "aria-label": "タスクの一覧から選ぶ",
                                 "type": "button"
                               },
                               "children": [
                                 {
-                                  "tag": "svg"
+                                  "tag": "svg",
+                                  "attributes": {
+                                    "data-size": "sm",
+                                    "data-color": "inherit"
+                                  }
                                 },
                                 "タスクの一覧",
-                                "から選ぶ"
+                                "から選ぶ",
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "role": "status",
+                                    "aria-live": "polite"
+                                  }
+                                }
                               ]
                             }
                           ]

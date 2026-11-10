@@ -377,6 +377,16 @@ export const tsukumoTheme = {
       "variant:destructive": {
         "backgroundColor": "var(--color-error-muted)",
         "color": "var(--color-on-error-muted)"
+      },
+      "base": {
+        ":is([aria-disabled=\"true\"])": {
+          "backgroundColor": "var(--surface-raised)",
+          "color": "var(--ink-quiet)"
+        }
+      },
+      "variant:warning": {
+        "backgroundColor": "color-mix(in srgb, var(--surface), var(--state-warn) 13%)",
+        "color": "var(--state-warn)"
       }
     },
     "badge": {
@@ -423,6 +433,10 @@ export const tsukumoTheme = {
       "variant:gray": {
         "backgroundColor": "var(--color-background-gray)",
         "color": "var(--color-text-gray)"
+      },
+      "variant:accent": {
+        "backgroundColor": "var(--surface-accent)",
+        "color": "var(--accent)"
       }
     },
     "segmented-control": {

@@ -114,7 +114,7 @@ describe("CharacterCreate", () => {
     expect(screen.getByText(/保存するフォルダの名前になります/u)).toBeDefined()
 
     await pickPortrait()
-    expect(submitButton().getAttribute("aria-disabled")).toBe("false")
+    expect(submitButton().getAttribute("aria-disabled")).toBeNull()
   })
 
   it("2 MiB を超える立ち絵は置かず、上限を言う一言を枠の下に出す。選び直すと消える", async () => {
@@ -227,7 +227,7 @@ describe("CharacterCreate", () => {
     await screen.findByText(/作れなかった/u)
     expect(closed).toEqual([])
     expect(window.location.hash).toBe("")
-    expect(submitButton().getAttribute("aria-disabled")).toBe("false")
+    expect(submitButton().getAttribute("aria-disabled")).toBeNull()
 
     fireEvent.change(screen.getByLabelText("id"), { target: { value: "fictional-3" } })
     expect(screen.queryByText(/作れなかった/u)).toBeNull()
@@ -267,7 +267,7 @@ describe("CharacterCreate", () => {
 
     await pickPngPortrait()
 
-    expect(generateButton().getAttribute("aria-disabled")).toBe("false")
+    expect(generateButton().getAttribute("aria-disabled")).toBeNull()
     expect(calls).toEqual([])
   })
 
@@ -354,8 +354,8 @@ describe("CharacterCreate", () => {
     expect(inputValue("名前")).toBe("架空の2号")
     expect(inputValue("id")).toBe("fictional-2")
     expect(screen.getByLabelText("いつもの顔の立ち絵を差し替える")).toBeDefined()
-    expect(generateButton().getAttribute("aria-disabled")).toBe("false")
-    expect(submitButton().getAttribute("aria-disabled")).toBe("false")
+    expect(generateButton().getAttribute("aria-disabled")).toBeNull()
+    expect(submitButton().getAttribute("aria-disabled")).toBeNull()
   })
 
   it("「やめる」で閉じる", () => {

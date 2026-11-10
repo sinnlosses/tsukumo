@@ -1,6 +1,7 @@
-// 操作の口に添える線のアイコン。絵は lucide-react で、大きさと線の太さをここで揃える。
+// 操作の口に添える線のアイコン。絵は lucide-react で、描くのは Astryx の `Icon`。大きさ（sm）と線の太さをここで揃える。
 // 読み上げの名前は口の側が持つので、ここは絵だけ。線の色は読み手の `currentColor`。
 
+import { Icon } from "@astryxdesign/core/Icon"
 import {
   ArrowLeftRight,
   ArrowRight,
@@ -22,77 +23,77 @@ import type { ReactElement } from "react"
 
 /** 差し替える（上向きの矢印と下の線）。 */
 export function UploadIcon(): ReactElement {
-  return <Upload {...ICON_ATTRIBUTES} />
+  return <Icon icon={Upload} {...ICON_ATTRIBUTES} />
 }
 
 /** 消す（くず入れ）。 */
 export function TrashIcon(): ReactElement {
-  return <Trash2 {...ICON_ATTRIBUTES} />
+  return <Icon icon={Trash2} {...ICON_ATTRIBUTES} />
 }
 
 /** 足す・作る（十字）。 */
 export function PlusIcon(): ReactElement {
-  return <Plus {...ICON_ATTRIBUTES} />
+  return <Icon icon={Plus} {...ICON_ATTRIBUTES} />
 }
 
 /** 切り替える（左右の矢印）。 */
 export function SwitchIcon(): ReactElement {
-  return <ArrowLeftRight {...ICON_ATTRIBUTES} />
+  return <Icon icon={ArrowLeftRight} {...ICON_ATTRIBUTES} />
 }
 
 /** 名乗りを変える（鉛筆）。 */
 export function PencilIcon(): ReactElement {
-  return <Pencil {...ICON_ATTRIBUTES} />
+  return <Icon icon={Pencil} {...ICON_ATTRIBUTES} />
 }
 
 /** 取り直す（円を巡る矢印）。 */
 export function RefreshIcon(): ReactElement {
-  return <RefreshCw {...ICON_ATTRIBUTES} />
+  return <Icon icon={RefreshCw} {...ICON_ATTRIBUTES} />
 }
 
 /** 始める・進む（右向きの矢印）。 */
 export function ArrowRightIcon(): ReactElement {
-  return <ArrowRight {...ICON_ATTRIBUTES} />
+  return <Icon icon={ArrowRight} {...ICON_ATTRIBUTES} />
 }
 
 /** 広げる（四隅を指す矢印）。 */
 export function MaximizeIcon(): ReactElement {
-  return <Maximize2 {...ICON_ATTRIBUTES} />
+  return <Icon icon={Maximize2} {...ICON_ATTRIBUTES} />
 }
 
 /** 一覧から選ぶ（行の並び）。 */
 export function ListIcon(): ReactElement {
-  return <List {...ICON_ATTRIBUTES} />
+  return <Icon icon={List} {...ICON_ATTRIBUTES} />
 }
 
 /** 前のやり取りへ戻る（左回りの矢印）。 */
 export function HistoryIcon(): ReactElement {
-  return <RotateCcw {...ICON_ATTRIBUTES} />
+  return <Icon icon={RotateCcw} {...ICON_ATTRIBUTES} />
 }
 
 /** 仕事の口（かばん）。 */
 export function WorkIcon(): ReactElement {
-  return <Briefcase {...ICON_ATTRIBUTES} />
+  return <Icon icon={Briefcase} {...ICON_ATTRIBUTES} />
 }
 
 /** 雑談の口（吹き出し）。 */
 export function ChatIcon(): ReactElement {
-  return <MessageCircle {...ICON_ATTRIBUTES} />
+  return <Icon icon={MessageCircle} {...ICON_ATTRIBUTES} />
 }
 
 /** キャラクターの口（人影）。 */
 export function CharacterIcon(): ReactElement {
-  return <UserRound {...ICON_ATTRIBUTES} />
+  return <Icon icon={UserRound} {...ICON_ATTRIBUTES} />
 }
 
 /** トークンの口（硬貨）。 */
 export function TokenIcon(): ReactElement {
-  return <Coins {...ICON_ATTRIBUTES} />
+  return <Icon icon={Coins} {...ICON_ATTRIBUTES} />
 }
 
 /** 成果の口（トロフィー）。 */
 export function AchievementIcon(): ReactElement {
-  return <Trophy {...ICON_ATTRIBUTES} />
+  return <Icon icon={Trophy} {...ICON_ATTRIBUTES} />
 }
 
-const ICON_ATTRIBUTES = { size: 15, strokeWidth: 1.9 } as const
+const ICON_ATTRIBUTES = { size: "sm", strokeWidth: 1.9 } as const

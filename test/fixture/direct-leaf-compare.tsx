@@ -32,8 +32,12 @@ function foldIntendedDifferences(html: string): string {
   for (const element of root.querySelectorAll(".report-captioned-table")) {
     element.classList.remove("report-captioned-table")
   }
+  // Astryx の `Badge` は字を内側の1つの span で包むので、その包みも外す。
+  for (const element of root.querySelectorAll(".astryx-badge")) {
+    element.replaceChildren(...(element.firstElementChild?.childNodes ?? []))
+  }
   for (const element of root.querySelectorAll(
-    ".report-change-to, .report-table-status-legend .badge",
+    ".report-change-to, .report-table-status-legend .astryx-badge",
   )) {
     element.replaceWith(...element.childNodes)
   }
@@ -46,12 +50,12 @@ function foldIntendedDifferences(html: string): string {
   for (const element of root.querySelectorAll(".report-table-status-legend[aria-hidden]")) {
     element.removeAttribute("aria-hidden")
   }
-  for (const element of root.querySelectorAll(".badge")) {
+  for (const element of root.querySelectorAll(".astryx-badge")) {
     const isCellBadge = [...element.classList].some((name) => name.includes("table-cell-badge"))
     element.classList.remove(
       ...[...element.classList].filter(
         (name) =>
-          name === "badge" || name.startsWith("badge-") || name.includes("table-cell-badge"),
+          name === "astryx-badge" || /^x[0-9a-z]+$/.test(name) || name.includes("table-cell-badge"),
       ),
     )
     if (isCellBadge) {
@@ -59,6 +63,7 @@ function foldIntendedDifferences(html: string): string {
     }
     element.removeAttribute("data-tone")
     element.removeAttribute("data-shape")
+    element.removeAttribute("data-variant")
   }
   for (const element of root.querySelectorAll("[class*='report-cell-status-']")) {
     element.classList.remove(

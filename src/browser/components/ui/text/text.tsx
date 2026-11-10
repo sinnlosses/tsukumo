@@ -4,8 +4,6 @@
 import { Text as AstryxText, type TextType } from "@astryxdesign/core/Text"
 import type { ReactElement, ReactNode } from "react"
 
-import styles from "./text.module.css"
-
 type TextElement = "p" | "span" | "summary"
 export type TextSize =
   | "label"
@@ -35,16 +33,6 @@ export type TextProps = {
   readonly className: string
   readonly children: ReactNode
 }
-
-export const TEXT_SIZE_CLASS = {
-  label: styles["text-size-label"],
-  action: styles["text-size-action"],
-  secondary: styles["text-size-secondary"],
-  subheading: styles["text-size-subheading"],
-  body: styles["text-size-body"],
-  heading: styles["text-size-heading"],
-  inherit: undefined,
-} satisfies Record<TextSize, string | undefined>
 
 /** 字の段は Astryx の `type` の段へ落ちる。`label` と `action` は同じ段になる。 */
 const TEXT_TYPE = {

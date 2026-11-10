@@ -37,9 +37,7 @@ describe("DaySwitch", () => {
   it("今日を見ているときは次の日が aria-disabled で、今日へは出ない", () => {
     renderSwitch(KNOWN_TODAY)
 
-    expect(screen.getByRole("button", { name: "前の日" }).getAttribute("aria-disabled")).toBe(
-      "false",
-    )
+    expect(screen.getByRole("button", { name: "前の日" }).getAttribute("aria-disabled")).toBeNull()
     expect(screen.getByRole("button", { name: "次の日" }).getAttribute("aria-disabled")).toBe(
       "true",
     )
@@ -49,9 +47,7 @@ describe("DaySwitch", () => {
   it("今日以外を見ているときは今日へが出て、次の日も押せる", () => {
     renderSwitch(KNOWN_YESTERDAY)
 
-    expect(screen.getByRole("button", { name: "次の日" }).getAttribute("aria-disabled")).toBe(
-      "false",
-    )
+    expect(screen.getByRole("button", { name: "次の日" }).getAttribute("aria-disabled")).toBeNull()
     expect(screen.getByRole("button", { name: "今日へ" })).toBeDefined()
   })
 

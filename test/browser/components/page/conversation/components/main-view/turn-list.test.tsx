@@ -87,7 +87,7 @@ describe("TurnList", () => {
 
     const [row] = rows()
     expect(row?.className).toContain("is-working")
-    expect(row?.querySelector(".spinner")).not.toBeNull()
+    expect(row?.querySelector('[role="progressbar"]')).not.toBeNull()
     expect(row?.querySelector(".turn-list-span")?.textContent).toMatch(/^作業中 1:0[5-7]$/u)
   })
 

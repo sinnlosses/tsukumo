@@ -58,7 +58,8 @@ test.describe("ワークフローの設定", () => {
         .evaluateAll((items) =>
           items.map((item) => item.querySelector("p span")?.textContent ?? ""),
         )
-    const announcement = dialog.getByRole("status")
+    // Astryx のボタンが置く空の `status`（読み上げ用の領域）は数えない。
+    const announcement = dialog.getByRole("status").filter({ hasText: /\S/u })
     const scrolled = (): Promise<number> =>
       room.page.evaluate(
         () =>

@@ -194,7 +194,7 @@ describe("DiaryBook", () => {
     renderBook(openModel({ page: pressable }))
     expect(screen.getByText("このページは、まだ白紙。")).toBeDefined()
     const button = screen.getByRole("button", { name: "この日を振り返る" })
-    expect(button.getAttribute("aria-disabled")).toBe("false")
+    expect(button.getAttribute("aria-disabled")).toBeNull()
     fireEvent.click(button)
     expect(calls).toBe(1)
   })

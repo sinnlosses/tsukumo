@@ -44,12 +44,13 @@ describe("ScreenBoundary", () => {
 
   it("読み込み直すボタンを押すとページを読み込み直す", () => {
     const reload = vi.fn<() => void>()
-    vi.stubGlobal("window", { location: { reload } })
     render(
       <ScreenBoundary>
         <Thrower />
       </ScreenBoundary>,
     )
+    // Astryx のボタンは `window` の全体を読むので、`window` ごとは差し替えず `reload` だけを差し替える。
+    vi.spyOn(window.location, "reload").mockImplementation(reload)
 
     fireEvent.click(screen.getByRole("button", { name: "読み込み直す" }))
 

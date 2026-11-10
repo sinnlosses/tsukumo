@@ -1,16 +1,16 @@
-// 回る輪。読み上げには出さない（意味は隣の文字が持つ）。語彙を持たない。
+// 回る輪。中身は Astryx の `Spinner`。読み上げには出さない（意味は隣の文字が持つ）。語彙を持たない。
+// `spinner.css` は、輪を自前で描く部品（`--spinner-animation` を読む側）へ回転の `@keyframes` を渡す唯一の置き場所。
 
-import clsx from "clsx"
+import { Spinner as AstryxSpinner } from "@astryxdesign/core/Spinner"
 import type { ReactElement } from "react"
 
 import "./spinner.css"
-import styles from "./spinner.module.css"
 
 export type SpinnerProps = {
-  /** 置き方と、トラックの色（`--spinner-track`）だけを渡す。 */
+  /** 置き方だけを渡す。 */
   readonly className: string
 }
 
 export function Spinner(props: SpinnerProps): ReactElement {
-  return <span className={clsx(styles["spinner"], props.className)} aria-hidden="true" />
+  return <AstryxSpinner size="sm" className={props.className} aria-hidden="true" />
 }

@@ -27,8 +27,15 @@ declare module '@astryxdesign/core/Text' {
   }
 }
 
+declare module '@astryxdesign/core/Button' {
+  interface ButtonVariantMap {
+    'warning': true;
+  }
+}
+
 declare module '@astryxdesign/core/Badge' {
   interface BadgeVariantMap {
     'gray': true;
+    'accent': true;
   }
 }

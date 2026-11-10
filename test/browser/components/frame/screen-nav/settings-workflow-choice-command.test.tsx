@@ -206,7 +206,7 @@ describe("設定のダイアログの「ワークフロー」の面（選択と�
       fireEvent.change(commandBox(), { target: { value: text } })
 
       expect(isSaveDisabled()).toBe(true)
-      expect(bandButton("やめる").getAttribute("aria-disabled")).toBe("false")
+      expect(bandButton("やめる").getAttribute("aria-disabled")).toBeNull()
       expect(dialog().textContent).toContain("空にして保存はできない")
     },
   )

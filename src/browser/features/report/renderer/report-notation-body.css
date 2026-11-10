@@ -240,7 +240,7 @@
     color: var(--state-ng);
   }
   & .report-cell-status-text {
-    color: var(--ink);
+    min-width: 0;
   }
   /* 列挙型のバッジ。同じ字は同じ色（tsukumo が出現順に 1〜5 を当て、6 種目以降は灰）。字が常に見えるので色だけで意味を言わない。 */
   & .report-tag {

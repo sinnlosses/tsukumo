@@ -140,7 +140,7 @@ describe("Character", () => {
     // FileReader は非同期なので、立ち絵が読み込めて「作る」が押せるようになるまでポーリングで待つ。
     const submitButton = screen.getByRole("button", { name: "作る" })
     await waitFor(() => {
-      expect(submitButton.getAttribute("aria-disabled")).toBe("false")
+      expect(submitButton.getAttribute("aria-disabled")).toBeNull()
     })
 
     fireEvent.click(submitButton)

@@ -26,9 +26,13 @@
             {
               "tag": "button",
               "attributes": {
-                "aria-disabled": "false",
-                "aria-label": "キャラクターを選ぶ（いまは つくもの精霊）",
+                "data-variant": "ghost",
+                "data-size": "lg",
+                "data-elevation": "none",
+                "data-astryx-pressable": "",
                 "aria-expanded": "false",
+                "aria-label": "キャラクターを選ぶ（いまは つくもの精霊）",
+                "data-astryx-edge-comp": "",
                 "type": "button"
               },
               "children": [
@@ -49,6 +53,13 @@
                       "tag": "svg"
                     }
                   ]
+                },
+                {
+                  "tag": "span",
+                  "attributes": {
+                    "role": "status",
+                    "aria-live": "polite"
+                  }
                 }
               ]
             },
@@ -107,7 +118,11 @@
                   },
                   "children": [
                     {
-                      "tag": "svg"
+                      "tag": "svg",
+                      "attributes": {
+                        "data-size": "sm",
+                        "data-color": "inherit"
+                      }
                     }
                   ]
                 },
@@ -127,7 +142,11 @@
                   },
                   "children": [
                     {
-                      "tag": "svg"
+                      "tag": "svg",
+                      "attributes": {
+                        "data-size": "sm",
+                        "data-color": "inherit"
+                      }
                     }
                   ]
                 },
@@ -153,7 +172,11 @@
                   },
                   "children": [
                     {
-                      "tag": "svg"
+                      "tag": "svg",
+                      "attributes": {
+                        "data-size": "sm",
+                        "data-color": "inherit"
+                      }
                     }
                   ]
                 },
@@ -173,7 +196,11 @@
                   },
                   "children": [
                     {
-                      "tag": "svg"
+                      "tag": "svg",
+                      "attributes": {
+                        "data-size": "sm",
+                        "data-color": "inherit"
+                      }
                     }
                   ]
                 },
@@ -193,7 +220,11 @@
                   },
                   "children": [
                     {
-                      "tag": "svg"
+                      "tag": "svg",
+                      "attributes": {
+                        "data-size": "sm",
+                        "data-color": "inherit"
+                      }
                     }
                   ]
                 },
@@ -267,14 +298,25 @@
                                         {
                                           "tag": "button",
                                           "attributes": {
-                                            "aria-disabled": "false",
-                                            "aria-label": "やり取りを畳む",
+                                            "data-variant": "ghost",
+                                            "data-size": "sm",
+                                            "data-elevation": "none",
+                                            "data-astryx-pressable": "",
                                             "aria-expanded": "true",
+                                            "aria-label": "やり取りを畳む",
+                                            "data-astryx-edge-comp": "",
                                             "type": "button"
                                           },
                                           "children": [
                                             {
                                               "tag": "svg"
+                                            },
+                                            {
+                                              "tag": "span",
+                                              "attributes": {
+                                                "role": "status",
+                                                "aria-live": "polite"
+                                              }
                                             }
                                           ]
                                         },
@@ -415,12 +457,22 @@
                                         {
                                           "tag": "button",
                                           "attributes": {
-                                            "aria-disabled": "false",
+                                            "data-variant": "secondary",
+                                            "data-size": "sm",
+                                            "data-elevation": "none",
+                                            "data-astryx-pressable": "",
                                             "aria-expanded": "false",
                                             "type": "button"
                                           },
                                           "children": [
-                                            "手順 3 ▾"
+                                            "手順 3 ▾",
+                                            {
+                                              "tag": "span",
+                                              "attributes": {
+                                                "role": "status",
+                                                "aria-live": "polite"
+                                              }
+                                            }
                                           ]
                                         }
                                       ]
@@ -484,15 +536,31 @@
                                             {
                                               "tag": "button",
                                               "attributes": {
-                                                "aria-disabled": "false",
+                                                "data-variant": "ghost",
+                                                "data-size": "sm",
+                                                "data-elevation": "none",
+                                                "data-astryx-pressable": "",
                                                 "aria-haspopup": "dialog",
+                                                "aria-label": "広げる",
+                                                "data-astryx-edge-comp": "",
                                                 "type": "button"
                                               },
                                               "children": [
                                                 {
-                                                  "tag": "svg"
+                                                  "tag": "svg",
+                                                  "attributes": {
+                                                    "data-size": "sm",
+                                                    "data-color": "inherit"
+                                                  }
                                                 },
-                                                "広げる"
+                                                "広げる",
+                                                {
+                                                  "tag": "span",
+                                                  "attributes": {
+                                                    "role": "status",
+                                                    "aria-live": "polite"
+                                                  }
+                                                }
                                               ]
                                             },
                                             {
@@ -533,6 +601,7 @@
                                                             {
                                                               "tag": "span",
                                                               "attributes": {
+                                                                "data-variant": "success",
                                                                 "data-tone": "ok",
                                                                 "data-shape": "square"
                                                               },
@@ -543,6 +612,7 @@
                                                             {
                                                               "tag": "span",
                                                               "attributes": {
+                                                                "data-variant": "warning",
                                                                 "data-tone": "warn",
                                                                 "data-shape": "square"
                                                               },
@@ -553,6 +623,7 @@
                                                             {
                                                               "tag": "span",
                                                               "attributes": {
+                                                                "data-variant": "error",
                                                                 "data-tone": "ng",
                                                                 "data-shape": "square"
                                                               },
@@ -587,6 +658,7 @@
                                                                     {
                                                                       "tag": "span",
                                                                       "attributes": {
+                                                                        "data-variant": "error",
                                                                         "data-tone": "ng",
                                                                         "data-shape": "square"
                                                                       },
@@ -608,6 +680,7 @@
                                                                     {
                                                                       "tag": "span",
                                                                       "attributes": {
+                                                                        "data-variant": "warning",
                                                                         "data-tone": "warn",
                                                                         "data-shape": "square"
                                                                       },
@@ -632,6 +705,7 @@
                                                                     {
                                                                       "tag": "span",
                                                                       "attributes": {
+                                                                        "data-variant": "success",
                                                                         "data-tone": "ok",
                                                                         "data-shape": "square"
                                                                       },
@@ -660,21 +734,41 @@
                                                         {
                                                           "tag": "button",
                                                           "attributes": {
-                                                            "aria-disabled": "false",
+                                                            "data-variant": "secondary",
+                                                            "data-size": "sm",
+                                                            "data-elevation": "none",
+                                                            "data-astryx-pressable": "",
                                                             "type": "button"
                                                           },
                                                           "children": [
-                                                            "聞く"
+                                                            "聞く",
+                                                            {
+                                                              "tag": "span",
+                                                              "attributes": {
+                                                                "role": "status",
+                                                                "aria-live": "polite"
+                                                              }
+                                                            }
                                                           ]
                                                         },
                                                         {
                                                           "tag": "button",
                                                           "attributes": {
-                                                            "aria-disabled": "false",
+                                                            "data-variant": "secondary",
+                                                            "data-size": "sm",
+                                                            "data-elevation": "none",
+                                                            "data-astryx-pressable": "",
                                                             "type": "button"
                                                           },
                                                           "children": [
-                                                            "頼む"
+                                                            "頼む",
+                                                            {
+                                                              "tag": "span",
+                                                              "attributes": {
+                                                                "role": "status",
+                                                                "aria-live": "polite"
+                                                              }
+                                                            }
                                                           ]
                                                         },
                                                         {
@@ -686,6 +780,7 @@
                                                             {
                                                               "tag": "span",
                                                               "attributes": {
+                                                                "data-variant": "success",
                                                                 "data-tone": "ok",
                                                                 "data-shape": "square"
                                                               },
@@ -705,6 +800,7 @@
                                                             {
                                                               "tag": "span",
                                                               "attributes": {
+                                                                "data-variant": "warning",
                                                                 "data-tone": "warn",
                                                                 "data-shape": "square"
                                                               },
@@ -724,6 +820,7 @@
                                                             {
                                                               "tag": "span",
                                                               "attributes": {
+                                                                "data-variant": "error",
                                                                 "data-tone": "ng",
                                                                 "data-shape": "square"
                                                               },
@@ -800,6 +897,7 @@
                                                                         {
                                                                           "tag": "span",
                                                                           "attributes": {
+                                                                            "data-variant": "success",
                                                                             "data-tone": "ok",
                                                                             "data-shape": "square"
                                                                           },
@@ -825,23 +923,45 @@
                                                                         {
                                                                           "tag": "button",
                                                                           "attributes": {
-                                                                            "aria-disabled": "false",
+                                                                            "data-variant": "ghost",
+                                                                            "data-size": "sm",
+                                                                            "data-elevation": "none",
+                                                                            "data-astryx-pressable": "",
                                                                             "aria-label": "`a.ts`について聞く",
+                                                                            "data-astryx-edge-comp": "",
                                                                             "type": "button"
                                                                           },
                                                                           "children": [
-                                                                            "聞く"
+                                                                            "聞く",
+                                                                            {
+                                                                              "tag": "span",
+                                                                              "attributes": {
+                                                                                "role": "status",
+                                                                                "aria-live": "polite"
+                                                                              }
+                                                                            }
                                                                           ]
                                                                         },
                                                                         {
                                                                           "tag": "button",
                                                                           "attributes": {
-                                                                            "aria-disabled": "false",
+                                                                            "data-variant": "ghost",
+                                                                            "data-size": "sm",
+                                                                            "data-elevation": "none",
+                                                                            "data-astryx-pressable": "",
                                                                             "aria-label": "`a.ts`について頼む",
+                                                                            "data-astryx-edge-comp": "",
                                                                             "type": "button"
                                                                           },
                                                                           "children": [
-                                                                            "頼む"
+                                                                            "頼む",
+                                                                            {
+                                                                              "tag": "span",
+                                                                              "attributes": {
+                                                                                "role": "status",
+                                                                                "aria-live": "polite"
+                                                                              }
+                                                                            }
                                                                           ]
                                                                         }
                                                                       ]
@@ -874,6 +994,7 @@
                                                                         {
                                                                           "tag": "span",
                                                                           "attributes": {
+                                                                            "data-variant": "warning",
                                                                             "data-tone": "warn",
                                                                             "data-shape": "square"
                                                                           },
@@ -899,23 +1020,45 @@
                                                                         {
                                                                           "tag": "button",
                                                                           "attributes": {
-                                                                            "aria-disabled": "false",
+                                                                            "data-variant": "ghost",
+                                                                            "data-size": "sm",
+                                                                            "data-elevation": "none",
+                                                                            "data-astryx-pressable": "",
                                                                             "aria-label": "`b.ts`について聞く",
+                                                                            "data-astryx-edge-comp": "",
                                                                             "type": "button"
                                                                           },
                                                                           "children": [
-                                                                            "聞く"
+                                                                            "聞く",
+                                                                            {
+                                                                              "tag": "span",
+                                                                              "attributes": {
+                                                                                "role": "status",
+                                                                                "aria-live": "polite"
+                                                                              }
+                                                                            }
                                                                           ]
                                                                         },
                                                                         {
                                                                           "tag": "button",
                                                                           "attributes": {
-                                                                            "aria-disabled": "false",
+                                                                            "data-variant": "ghost",
+                                                                            "data-size": "sm",
+                                                                            "data-elevation": "none",
+                                                                            "data-astryx-pressable": "",
                                                                             "aria-label": "`b.ts`について頼む",
+                                                                            "data-astryx-edge-comp": "",
                                                                             "type": "button"
                                                                           },
                                                                           "children": [
-                                                                            "頼む"
+                                                                            "頼む",
+                                                                            {
+                                                                              "tag": "span",
+                                                                              "attributes": {
+                                                                                "role": "status",
+                                                                                "aria-live": "polite"
+                                                                              }
+                                                                            }
                                                                           ]
                                                                         }
                                                                       ]
@@ -948,6 +1091,7 @@
                                                                         {
                                                                           "tag": "span",
                                                                           "attributes": {
+                                                                            "data-variant": "error",
                                                                             "data-tone": "ng",
                                                                             "data-shape": "square"
                                                                           },
@@ -973,23 +1117,45 @@
                                                                         {
                                                                           "tag": "button",
                                                                           "attributes": {
-                                                                            "aria-disabled": "false",
+                                                                            "data-variant": "ghost",
+                                                                            "data-size": "sm",
+                                                                            "data-elevation": "none",
+                                                                            "data-astryx-pressable": "",
                                                                             "aria-label": "`c.ts`について聞く",
+                                                                            "data-astryx-edge-comp": "",
                                                                             "type": "button"
                                                                           },
                                                                           "children": [
-                                                                            "聞く"
+                                                                            "聞く",
+                                                                            {
+                                                                              "tag": "span",
+                                                                              "attributes": {
+                                                                                "role": "status",
+                                                                                "aria-live": "polite"
+                                                                              }
+                                                                            }
                                                                           ]
                                                                         },
                                                                         {
                                                                           "tag": "button",
                                                                           "attributes": {
-                                                                            "aria-disabled": "false",
+                                                                            "data-variant": "ghost",
+                                                                            "data-size": "sm",
+                                                                            "data-elevation": "none",
+                                                                            "data-astryx-pressable": "",
                                                                             "aria-label": "`c.ts`について頼む",
+                                                                            "data-astryx-edge-comp": "",
                                                                             "type": "button"
                                                                           },
                                                                           "children": [
-                                                                            "頼む"
+                                                                            "頼む",
+                                                                            {
+                                                                              "tag": "span",
+                                                                              "attributes": {
+                                                                                "role": "status",
+                                                                                "aria-live": "polite"
+                                                                              }
+                                                                            }
                                                                           ]
                                                                         }
                                                                       ]
@@ -1005,21 +1171,41 @@
                                                         {
                                                           "tag": "button",
                                                           "attributes": {
-                                                            "aria-disabled": "false",
+                                                            "data-variant": "secondary",
+                                                            "data-size": "sm",
+                                                            "data-elevation": "none",
+                                                            "data-astryx-pressable": "",
                                                             "type": "button"
                                                           },
                                                           "children": [
-                                                            "聞く"
+                                                            "聞く",
+                                                            {
+                                                              "tag": "span",
+                                                              "attributes": {
+                                                                "role": "status",
+                                                                "aria-live": "polite"
+                                                              }
+                                                            }
                                                           ]
                                                         },
                                                         {
                                                           "tag": "button",
                                                           "attributes": {
-                                                            "aria-disabled": "false",
+                                                            "data-variant": "secondary",
+                                                            "data-size": "sm",
+                                                            "data-elevation": "none",
+                                                            "data-astryx-pressable": "",
                                                             "type": "button"
                                                           },
                                                           "children": [
-                                                            "頼む"
+                                                            "頼む",
+                                                            {
+                                                              "tag": "span",
+                                                              "attributes": {
+                                                                "role": "status",
+                                                                "aria-live": "polite"
+                                                              }
+                                                            }
                                                           ]
                                                         },
                                                         {
@@ -1089,23 +1275,45 @@
                                                                         {
                                                                           "tag": "button",
                                                                           "attributes": {
-                                                                            "aria-disabled": "false",
+                                                                            "data-variant": "ghost",
+                                                                            "data-size": "sm",
+                                                                            "data-elevation": "none",
+                                                                            "data-astryx-pressable": "",
                                                                             "aria-label": "帯について聞く",
+                                                                            "data-astryx-edge-comp": "",
                                                                             "type": "button"
                                                                           },
                                                                           "children": [
-                                                                            "聞く"
+                                                                            "聞く",
+                                                                            {
+                                                                              "tag": "span",
+                                                                              "attributes": {
+                                                                                "role": "status",
+                                                                                "aria-live": "polite"
+                                                                              }
+                                                                            }
                                                                           ]
                                                                         },
                                                                         {
                                                                           "tag": "button",
                                                                           "attributes": {
-                                                                            "aria-disabled": "false",
+                                                                            "data-variant": "ghost",
+                                                                            "data-size": "sm",
+                                                                            "data-elevation": "none",
+                                                                            "data-astryx-pressable": "",
                                                                             "aria-label": "帯について頼む",
+                                                                            "data-astryx-edge-comp": "",
                                                                             "type": "button"
                                                                           },
                                                                           "children": [
-                                                                            "頼む"
+                                                                            "頼む",
+                                                                            {
+                                                                              "tag": "span",
+                                                                              "attributes": {
+                                                                                "role": "status",
+                                                                                "aria-live": "polite"
+                                                                              }
+                                                                            }
                                                                           ]
                                                                         }
                                                                       ]
@@ -1139,23 +1347,45 @@
                                                                         {
                                                                           "tag": "button",
                                                                           "attributes": {
-                                                                            "aria-disabled": "false",
+                                                                            "data-variant": "ghost",
+                                                                            "data-size": "sm",
+                                                                            "data-elevation": "none",
+                                                                            "data-astryx-pressable": "",
                                                                             "aria-label": "札について聞く",
+                                                                            "data-astryx-edge-comp": "",
                                                                             "type": "button"
                                                                           },
                                                                           "children": [
-                                                                            "聞く"
+                                                                            "聞く",
+                                                                            {
+                                                                              "tag": "span",
+                                                                              "attributes": {
+                                                                                "role": "status",
+                                                                                "aria-live": "polite"
+                                                                              }
+                                                                            }
                                                                           ]
                                                                         },
                                                                         {
                                                                           "tag": "button",
                                                                           "attributes": {
-                                                                            "aria-disabled": "false",
+                                                                            "data-variant": "ghost",
+                                                                            "data-size": "sm",
+                                                                            "data-elevation": "none",
+                                                                            "data-astryx-pressable": "",
                                                                             "aria-label": "札について頼む",
+                                                                            "data-astryx-edge-comp": "",
                                                                             "type": "button"
                                                                           },
                                                                           "children": [
-                                                                            "頼む"
+                                                                            "頼む",
+                                                                            {
+                                                                              "tag": "span",
+                                                                              "attributes": {
+                                                                                "role": "status",
+                                                                                "aria-live": "polite"
+                                                                              }
+                                                                            }
                                                                           ]
                                                                         }
                                                                       ]
@@ -1171,14 +1401,26 @@
                                                         {
                                                           "tag": "button",
                                                           "attributes": {
-                                                            "aria-disabled": "false",
+                                                            "data-variant": "ghost",
+                                                            "data-size": "sm",
+                                                            "data-elevation": "none",
+                                                            "data-astryx-pressable": "",
+                                                            "aria-label": "コピー",
+                                                            "data-astryx-edge-comp": "",
                                                             "type": "button"
                                                           },
                                                           "children": [
                                                             {
                                                               "tag": "svg"
                                                             },
-                                                            "コピー"
+                                                            "コピー",
+                                                            {
+                                                              "tag": "span",
+                                                              "attributes": {
+                                                                "role": "status",
+                                                                "aria-live": "polite"
+                                                              }
+                                                            }
                                                           ]
                                                         },
                                                         {
@@ -1515,15 +1757,26 @@
                         {
                           "tag": "button",
                           "attributes": {
-                            "aria-disabled": "false",
+                            "data-variant": "secondary",
+                            "data-size": "sm",
+                            "data-elevation": "none",
+                            "data-astryx-pressable": "",
                             "aria-expanded": "false",
+                            "aria-label": "ログ",
                             "type": "button"
                           },
                           "children": [
                             {
                               "tag": "svg"
                             },
-                            "ログ"
+                            "ログ",
+                            {
+                              "tag": "span",
+                              "attributes": {
+                                "role": "status",
+                                "aria-live": "polite"
+                              }
+                            }
                           ]
                         },
                         {
@@ -1707,53 +1960,109 @@
                             {
                               "tag": "button",
                               "attributes": {
-                                "aria-disabled": "false",
+                                "data-variant": "ghost",
+                                "data-size": "sm",
+                                "data-elevation": "none",
+                                "data-astryx-pressable": "",
                                 "aria-label": "画像を添える",
+                                "data-astryx-edge-comp": "",
                                 "type": "button"
                               },
                               "children": [
                                 {
                                   "tag": "svg"
+                                },
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "role": "status",
+                                    "aria-live": "polite"
+                                  }
                                 }
                               ]
                             },
                             {
                               "tag": "button",
                               "attributes": {
-                                "aria-disabled": "false",
+                                "data-variant": "ghost",
+                                "data-size": "sm",
+                                "data-elevation": "none",
+                                "data-astryx-pressable": "",
                                 "aria-label": "コマンドを補完する",
+                                "data-astryx-edge-comp": "",
                                 "type": "button"
                               },
                               "children": [
                                 {
                                   "tag": "svg"
+                                },
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "role": "status",
+                                    "aria-live": "polite"
+                                  }
                                 }
                               ]
                             },
                             {
                               "tag": "button",
                               "attributes": {
-                                "aria-disabled": "false",
+                                "data-variant": "ghost",
+                                "data-size": "sm",
+                                "data-elevation": "none",
+                                "data-astryx-pressable": "",
                                 "aria-label": "ファイルを補完する",
+                                "data-astryx-edge-comp": "",
                                 "type": "button"
                               },
                               "children": [
                                 {
                                   "tag": "svg"
+                                },
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "role": "status",
+                                    "aria-live": "polite"
+                                  }
                                 }
                               ]
                             },
                             {
                               "tag": "button",
                               "attributes": {
+                                "data-variant": "ghost",
+                                "data-size": "sm",
+                                "data-elevation": "none",
+                                "data-astryx-pressable": "",
+                                "data-is-pressed": "false",
                                 "aria-pressed": "false",
-                                "aria-disabled": "false",
                                 "aria-label": "マークダウンエディタで書く",
+                                "data-astryx-edge-comp": "",
                                 "type": "button"
                               },
                               "children": [
                                 {
                                   "tag": "svg"
+                                },
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  },
+                                  "children": [
+                                    {
+                                      "tag": "svg"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "role": "status",
+                                    "aria-live": "polite"
+                                  }
                                 }
                               ]
                             },
@@ -1774,7 +2083,10 @@
                                 {
                                   "tag": "button",
                                   "attributes": {
-                                    "aria-disabled": "false",
+                                    "data-variant": "secondary",
+                                    "data-size": "sm",
+                                    "data-elevation": "none",
+                                    "data-astryx-pressable": "",
                                     "aria-label": "新しいセッションを始める",
                                     "type": "button"
                                   },
@@ -1782,7 +2094,14 @@
                                     {
                                       "tag": "svg"
                                     },
-                                    "新規"
+                                    "新規",
+                                    {
+                                      "tag": "span",
+                                      "attributes": {
+                                        "role": "status",
+                                        "aria-live": "polite"
+                                      }
+                                    }
                                   ]
                                 },
                                 {

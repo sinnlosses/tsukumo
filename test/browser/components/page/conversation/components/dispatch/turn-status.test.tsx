@@ -20,6 +20,12 @@ afterEach(() => {
   useComposerDraft.setState(useComposerDraft.getInitialState(), true)
 })
 
+/** 知らせの `status`。Astryx のボタンが置く空の `status`（読み上げ用の領域）は数えない。 */
+function statusNotice(): HTMLElement {
+  const found = screen.queryAllByRole("status").find((live) => live.textContent !== "")
+  return typedElement(found ?? null, HTMLElement, "知らせ")
+}
+
 /** 架空の質問（答え待ち）。 */
 const QUESTION_PENDING = {
   kind: "question",
@@ -74,7 +80,7 @@ describe("TurnStatus", () => {
     })
 
     expect(screen.queryByText("経過")).toBeNull()
-    expect(screen.queryByRole("status")).toBeNull()
+    expect(screen.queryAllByRole("status").filter((live) => live.textContent !== "")).toEqual([])
   })
 
   it("(5) 経過時間は running の起点から数え、ラベルは「経過」（進行中）", () => {
@@ -187,7 +193,7 @@ describe("TurnStatus", () => {
 
       expect(screen.getByText("失敗")).toBeDefined()
       expect(screen.queryByText("所要")).toBeNull()
-      const notice = screen.getByRole("status")
+      const notice = statusNotice()
       expect(notice.textContent).toBe("API が混んでいて受け付けなかった")
       expect(notice.title).toBe("失敗で終わった: API が混んでいて受け付けなかった（overloaded）")
     })
@@ -202,7 +208,7 @@ describe("TurnStatus", () => {
         },
       })
 
-      expect(screen.queryByRole("status")).toBeNull()
+      expect(screen.queryAllByRole("status").filter((live) => live.textContent !== "")).toEqual([])
     })
 
     it("雑談のとき、進行中に呼び直しを待っているあいだは「再試行中 n/m」を出し、理由と待ち時間は title で読ませる", () => {
@@ -220,7 +226,7 @@ describe("TurnStatus", () => {
         },
       })
 
-      const notice = screen.getByRole("status")
+      const notice = statusNotice()
       expect(notice.textContent).toBe("再試行中 2/10")
       expect(notice.title).toBe("API が混んでいる（529）。4秒おいて呼び直す")
     })
@@ -245,7 +251,7 @@ describe("TurnStatus", () => {
           },
         })
 
-        const notice = screen.getByRole("status")
+        const notice = statusNotice()
         expect(notice.textContent).toBe("利用上限 18:00まで")
         expect(notice.title).toBe("5時間枠の利用上限に達した。18:00に戻る")
         expect(screen.getByText("失敗")).toBeDefined()

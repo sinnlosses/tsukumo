@@ -50,7 +50,7 @@ describe("Markdown（image の塊の画像）", () => {
       const { container } = render(<Markdown text={text} />)
 
       const image = typedElement(
-        container.querySelector("div.report-captioned > button > img"),
+        container.querySelector("div.report-captioned > button img"),
         HTMLImageElement,
         "画像",
       )
@@ -165,7 +165,7 @@ describe("Markdown（image の塊の画像）", () => {
 
     function button(container: HTMLElement, name: string): HTMLElement {
       const found = [...container.querySelectorAll("button")].find(
-        (candidate) => candidate.textContent === name,
+        (candidate) => (candidate.getAttribute("aria-label") ?? candidate.textContent) === name,
       )
       return typedElement(found ?? null, HTMLElement, name)
     }
@@ -294,7 +294,7 @@ describe("Markdown（image の塊の画像）", () => {
 
       function pairPressed(dialog: HTMLElement, name: string): string | null {
         const found = [...dialog.querySelectorAll("button")].find(
-          (candidate) => candidate.textContent === name,
+          (candidate) => (candidate.getAttribute("aria-label") ?? candidate.textContent) === name,
         )
         return found?.getAttribute("aria-pressed") ?? null
       }

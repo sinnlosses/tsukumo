@@ -43,7 +43,9 @@ describe("DiaryNotice", () => {
       }),
     )
 
-    expect(screen.getByRole("status")).toBeDefined()
+    expect(
+      screen.getAllByRole("status").some((live) => live.textContent?.includes("ができました")),
+    ).toBe(true)
     expect(screen.getByText("9月20日のページができました")).toBeDefined()
     expect(screen.getByRole("button", { name: "日記帳で開く" })).toBeDefined()
     expect(screen.getByRole("button", { name: "知らせを消す" })).toBeDefined()
