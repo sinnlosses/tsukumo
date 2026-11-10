@@ -27,6 +27,13 @@
   }
   & :is(.report-conclusion, .report-conclusion-lead) p {
     margin: 0;
+    font: inherit;
+  }
+  & .report-conclusion p {
+    color: var(--ink-soft);
+  }
+  & .report-conclusion-lead p {
+    color: var(--ink);
   }
   & :is(.report-conclusion, .report-conclusion-lead) :not(pre) > code {
     font-size: 0.86em;

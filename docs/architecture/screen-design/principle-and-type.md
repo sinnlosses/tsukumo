@@ -68,32 +68,31 @@
   `--font-mono` が指す ID・ツール名・キーなど機械のラベルの書体は変えない。コードの中では
   `font-size-adjust` を打ち消す
 
-| 役割                                     | 寸法                                                       | 書体     |
-| ---------------------------------------- | ---------------------------------------------------------- | -------- |
-| 印・小さなラベル                         | 0.75rem（12px）                                            | 本文書体 |
-| 枠なしの入口（リンク風の操作）           | 0.75rem（12px）                                            | 本文書体 |
-| 出典のバッジ（字がホスト名と同じリンク） | 12px                                                       | 等幅     |
-| 補助・サイドバーの本文                   | 0.8125rem（13px）                                          | 本文書体 |
-| 区画の見出し・強調した要約               | 0.875rem（14px）                                           | 本文書体 |
-| 本文（レポート・セリフ）                 | 0.9375rem（15px）                                          | 本文書体 |
-| 作業の名前（結論部の頭の行）             | 0.9375rem（15px）・600・`ink-bright`                       | 本文書体 |
-| 結論の1文目                              | `--report-heading-2`（21px）・行間 32px・700・`ink-bright` | 本文書体 |
-| 図表の題                                 | 0.875rem（14px）・`ink-soft`                               | 本文書体 |
-| 図表の番号（「図 n」「表 n」）           | 0.8125rem（13px）・600・`ink-quiet`                        | 本文書体 |
-| 大きな見出し（画面・ダイアログの題）     | 1.125rem（18px）                                           | 本文書体 |
-| 入力欄の見出し3段目（`###`）             | 1.0625rem（17px）                                          | 本文書体 |
-| 入力欄の見出し2段目（`##`）              | 1.1875rem（19px）                                          | 本文書体 |
-| 入力欄の見出し1段目（`#`）               | 1.3125rem（21px）                                          | 本文書体 |
-| ID・ツール名・キー                       | 0.8125rem（13px）。サイドバーのタスクのIDは印の段（12px）  | 等幅     |
+字の段は Astryx のトークンを引く（ADR 0053。向きは `design-token.md`「向き（tsukumo と Astryx）」）。下の寸法は広い画面の値で、括弧の中は触る画面（`pointer: coarse` かつ幅が `lg` 未満）で Astryx が組み直した値。
+
+| 役割                                     | 寸法（引く先）                                                                     | 書体     |
+| ---------------------------------------- | ---------------------------------------------------------------------------------- | -------- |
+| 印・小さなラベル                         | 12px（`--font-label` ← `--font-size-sm`。14px）                                    | 本文書体 |
+| 枠なしの入口（リンク風の操作）           | 12px（`--font-action` ← `--font-label`。14px）                                     | 本文書体 |
+| 出典のバッジ（字がホスト名と同じリンク） | 12px                                                                               | 等幅     |
+| 補助・サイドバーの本文                   | 12px（`--font-secondary` ← `--text-supporting-size`。14px）                        | 本文書体 |
+| 区画の見出し・強調した要約               | 14px（`--font-subheading` ← `--font-size-base`。16px）                             | 本文書体 |
+| 本文（レポート・セリフ）                 | 14px（`--font-body` ← `--text-body-size`。16px）・行の高さ `--line-height-reading` | 本文書体 |
+| 作業の名前（結論部の頭の行）             | `--font-body`（14px）・600・`ink-bright`                                           | 本文書体 |
+| 結論の1文目                              | `--report-heading-2`（21px）・行間 32px・700・`ink-bright`                         | 本文書体 |
+| 図表の題                                 | 14px（`--font-subheading`）・`ink-soft`                                            | 本文書体 |
+| 図表の番号（「図 n」「表 n」）           | 12px（`--font-secondary`）・600・`ink-quiet`                                       | 本文書体 |
+| 大きな見出し（画面・ダイアログの題）     | 17px（`--font-heading` ← `--text-heading-3-size`。19px）                           | 本文書体 |
+| 入力欄の見出し3段目（`###`）             | 17px（`--font-heading-3` ← `--text-heading-3-size`。19px）                         | 本文書体 |
+| 入力欄の見出し2段目（`##`）              | 20px（`--font-heading-2` ← `--text-heading-2-size`。22px）                         | 本文書体 |
+| 入力欄の見出し1段目（`#`）               | 24px（`--font-heading-1` ← `--text-heading-1-size`。26px）                         | 本文書体 |
+| ID・ツール名・キー                       | 12px（`--font-secondary`）。サイドバーのタスクのIDは印の段（12px）                 | 等幅     |
 
 - **字の下限は 12px**（旧い決定は
-  `docs/history/decision.md`「screen-design.md 13.3 Type」）。これを割る字を足さない。印と入口は
-  役が違うので `--font-label` と `--font-action` に分けたまま、値は同じ 12px にしてある
-- **狭い画面（760px 以下）だけ、本文 `--font-body` を 1rem（16px）、印 `--font-label`（と、それを参照する `--font-action`）を 0.8125rem（13px）に上げる**（`theme.css` の `@media`）。
-  印は補助の段（13px）より大きくすると補足の文と大小が逆になるので、14px にはしない。ほかの段は広い画面と同じ値のまま
-- 大きさは**この9つだけ**（12・13・14・15・16・17・18・19・21px。役の行は上の表のとおり複数の役が同じ大きさを使う。16px は狭い画面の本文と、入力欄の字 `--font-input`（1rem。iOS Safari がフォーカスで画面を拡大しない下限）だけが使う）。これ以外の寸法を足さない。**同じ mock で 14px が出ても、機械のラベルに近い字（`dispatch` の送信ボタン）は
-  新しい段を使わず既存の 13px に寄せた**（採らなかった理由は
-  `src/browser/components/page/conversation/components/dispatch/dispatch.module.css` の該当コメント）——段を増やすのは
+  `docs/history/decision.md`「screen-design.md 13.3 Type」）。これを割る字を足さない。Astryx の `--font-size-xs`（10px）より下の段は引かない。印と入口は
+  役が違うので `--font-label` と `--font-action` に分けたまま、値は同じ段にしてある
+- **本文の行の高さだけは Astryx の値（広い画面 1.4286・触る画面 1.5）を使わず、`--line-height-reading`（1.7）で上書きする。** 長い日本語の段落が詰まるため。見出し・名札・ボタンの行の高さは Astryx のまま。狭い画面での字の引き上げは、触る画面の Astryx の組み直しに従い、`theme.css` に `@media (max-width: 760px)` で字の大きさを上げる規則は無い
+- 大きさは**この段だけ**（広い画面で 12・14・17・20・24px。触る画面で 14・16・19・22・26px。`--report-heading-2`（21px）と `--report-heading-3`（17px）は別のつまみで、入力欄の字 `--font-input`（1rem。iOS Safari がフォーカスで画面を拡大しない下限）は Astryx を引かない）。役の行は上の表のとおり複数の役が同じ大きさを使う。これ以外の寸法を足さない。段を増やすのは
   「差をはっきり見せたい」という要求があるときだけで、寄せられるところは寄せる。
   **`test/architecture/font-size.test.ts` が、`theme.css` 以外の `*.css` の `font-size` を `var(--font-*)`・`var(--report-heading-*)`・
   `em`・`%`・`inherit` と、部品の中で `--font-*` から導いた局所のつまみ（日記の `--diary-text`・`--diary-title` は `--font-heading`・`--font-heading-1` に縮める倍率 `--diary-scale` を掛けた値、
@@ -107,7 +106,7 @@
   `--report-heading-2`（21px）・`--report-heading-3`（17px）は `--font-heading-2`/`-3` を参照せず
   値を直に持つので、入力欄のマークダウンエディタの見出しとは別に動く（`theme.css`）。`##` は 21px・700・行間 1.4・字間 0.01em・`palt`・`ink-bright`、
   `###` は `--report-heading-3`（17px）・700・罫なし。
-  **結論の1文目も `--report-heading-2`（21px）で、行間 32px・700・`ink-bright`**（結論部の大胆さはここ1か所。作業の名前は 15px・600 に下げてタスクの ID・状態のバッジと同じ行に置き、2文目は 15px・`ink-soft`。13.2）
+  **結論の1文目も `--report-heading-2`（21px）で、行間 32px・700・`ink-bright`**（結論部の大胆さはここ1か所。作業の名前は `--font-body`（14px）・600 に下げてタスクの ID・状態のバッジと同じ行に置き、2文目は `--font-body`・`ink-soft`。13.2）
 - **依頼の全文（`RequestBlock`）は、見出し「依頼」を `--font-secondary`・`ink-quiet`、依頼の行を
   `--font-secondary`・`--ink-soft` で、baseline をそろえた1行に置く**（カードの頭に題の行は置かず本文の頭へ置き、畳みは1行。見本は
   `docs/history/mockup/report-reading-tool-2026-10-18/after-first-w1400.png`）。
@@ -120,17 +119,17 @@
   落ちる）。**外部フォントは取らない**——ネットワークへ出るのを避ける理由は変わらないが、
   **キャラクターパックに同梱した書体ファイル（`woff2` / `woff` / `ttf` / `otf`）だけは配ってよい**
   （`character.json` の `diaryFont`。`docs/architecture/character-pack.md`）。書体を持たない
-  パックはいままでどおり `--font-serif`（端末の明朝体）のまま。寸法は上の段のまま（本文の 15px）
+  パックはいままでどおり `--font-serif`（端末の明朝体）のまま。寸法は上の段のまま（本文の `--font-body`）
   で、新しい段は足さない
-- **本文の行間は 26px**（15px の字で `calc(26 / 15)`。`--line-height-body`。
+- **本文の行間は `--line-height-reading`（1.7）**（`--line-height-body` がテーマの `--text-body-leading` 経由で引く。
   レポートの部品のあきは縦の格子 12 / 24 / 36px。日本語で長時間読むため、行間は欧文の既定より広く取る）
 - **幅は2段**（13.1 原則4）。広 `min(内幅, 63em)` は地の文・`note`・お願い・`checks`・`###` と `##` の見出し（罫も）・図・表・コード・数のカード・`cards`・候補・ファイル、全は見比べ・前後の見比べと、
   列が 7 以上の表・`matrix`（CSS では入りきるかを測れないので、列の数で代える）。
   欄外注の列を持つ部品は、表と図でも 63em に収まる（13.4「欄外注の列」）
-- **図は左に置き、題は図の下・図の幅の中で中央**（図の幅なり。図を囲む沈んだ暗い枠は持たない）。番号（「図 n」）は 13px・600・`ink-quiet` で、題は 14px・`ink-soft`
+- **図は左に置き、題は図の下・図の幅の中で中央**（図の幅なり。図を囲む沈んだ暗い枠は持たない）。番号（「図 n」）は 12px・600・`ink-quiet` で、題は 14px・`ink-soft`
 - **表は左に置き、題と凡例も左に揃える**。表は中身なりの幅で組む（`max-width: 100%` で、幅いっぱいには広げない）。
-  題（「表 n」）は表の上・左で、番号は 13px・600・`ink-quiet`、題の字は 14px・`ink-soft`。凡例は題の下・左。
-  字は14px（`--font-subheading`）・行間20px、見出し行は13px（`--font-secondary`）・500・`ink-soft`。
+  題（「表 n」）は表の上・左で、番号は 12px・600・`ink-quiet`、題の字は 14px・`ink-soft`。凡例は題の下・左。
+  字は14px（`--font-subheading`）・行間20px、見出し行は12px（`--font-secondary`）・500・`ink-soft`。
   **見出しの揃えは列の中身に合わせ、数の列は右揃えで `font-variant-numeric: tabular-nums`**（文字の列は左）。
   見出し行の下は `rule`、行の区切りは `rule-quiet`。
   **状態のセルはセル全体のタイルをやめ、セルの中に `Badge`（記号＋語）を置く**（13.1 原則5）。状態の列の、状態の無いセルは

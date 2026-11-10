@@ -18,6 +18,8 @@
 }
 .task-body p {
   margin: 0 0 var(--space-md);
+  font: inherit;
+  color: inherit;
 }
 .task-body-section {
   margin: var(--space-2xl) 0 var(--space-sm);

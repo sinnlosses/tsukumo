@@ -66,6 +66,14 @@ describe("tsukumo のテーマの定義", () => {
     expect(foreignValues(definition)).toEqual([])
   })
 
+  it("写すのは色・コードの書体・本文の行の高さだけで、字の段・本文の書体・余白・角丸・影は Astryx の値のまま", () => {
+    const { tokens, adaptations } = ownDefinition()
+    const mirrored = /^--(?:color-|shadow-inset-)|^--font-family-code$|^--text-body-leading$/
+
+    expect(Object.keys(tokens).filter((name) => !mirrored.test(name))).toEqual([])
+    expect(tokenValuesIn(adaptations)).toEqual(["var(--line-height-reading)"])
+  })
+
   it("16 進の色・長さの数・宣言の無いトークンを書いた値は、tokens でも adaptations の中でも拾う", () => {
     expect(foreignValues({ tokens: { "--color-accent": "#ff0000" } })).toEqual(["#ff0000"])
     expect(foreignValues({ tokens: { "--spacing-1": "4px" } })).toEqual(["4px"])

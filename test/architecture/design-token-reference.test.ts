@@ -16,8 +16,12 @@ describe("design-token-reference", () => {
           relPath.startsWith("browser/"),
         )
       const cssByFile = new Map(browser([".css"]).map((relPath) => [relPath, read(relPath)]))
+      const astryxCss = [
+        `${SRC_ROOT}/browser/components/ui/theme-root/built/tsukumo.css`,
+        `${SRC_ROOT}/../node_modules/@astryxdesign/core/dist/astryx.css`,
+      ].map((file) => readFileSync(file, "utf8"))
       const definitions = new Set([
-        ...[...cssByFile.values()].flatMap(cssDefinitions),
+        ...[...cssByFile.values(), ...astryxCss].flatMap(cssDefinitions),
         ...browser([".ts", ".tsx"]).flatMap((relPath) => tsDefinitions(read(relPath))),
       ])
 

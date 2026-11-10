@@ -217,6 +217,7 @@
 /* ボタン（番号・印・ラベル・バッジ）。ラベルが折り返すので、印は行の中央ではなく1行目の文字に揃える（baseline）。 */
 .inquiry-option-choose {
   min-width: 0;
+  min-height: 1.5rem;
   cursor: pointer;
 }
 /* 数字キーで選ぶときの番号。 */

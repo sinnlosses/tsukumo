@@ -12,21 +12,34 @@
 
 **色は `color.md`、字の大きさは `principle-and-type.md`「13.3 Type」が持つ。ここは残りの 4 つ。** 値は `src/browser/styles/theme.css` が持ち、CSS からは `var()` で読む。決めた理由・今の直書きの分布・採らなかった案・置き換えの順は `docs/architecture/adr/0041-design-system-tokens-and-gallery.md`。この文書で「デザイントークン」と書くのは CSS のカスタムプロパティのことで、LLM のトークン消費とは別。
 
+#### 向き（tsukumo と Astryx）
+
+トークンの値の正典は種類で分かれる（ADR 0053 の論点 1）。
+
+| 種類                                                                                       | 正典    | 向き                                                                                                                                                    |
+| ------------------------------------------------------------------------------------------ | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 色・コードの書体（`--font-code`）                                                          | tsukumo | テーマの定義（`ui/theme-root/tsukumo-theme.ts`）が Astryx の `--color-*`・`--font-family-code` へ写す。選択と状態の内側の輪（`--shadow-inset-*`）も同じ |
+| 本文の行の高さ                                                                             | tsukumo | `--line-height-reading`（`theme.css`）を、テーマの定義が `--text-body-leading` へ写す。`--line-height-body` はそれを引く                                |
+| 字の段・本文の書体・余白・角丸・影                                                         | Astryx  | `theme.css` の `--font-*`・`--font-sans`・`--space-*`・`--radius-*`・`--shadow-raised`・`--shadow-overlay` が、Astryx のトークンを `var()` で引く       |
+| キャラクターの書体・動き（`--motion-*`）・`--radius-xl`・`--radius-round`・`--shadow-ring` | tsukumo | Astryx に対応が無く、`theme.css` の値のまま                                                                                                             |
+
+Astryx のトークンは `<html>` に置かれる（`Theme` が `data-astryx-theme` を `<html>` に写す）ので、`:root` の `theme.css` から `var()` で引ける。テーマの定義には、Astryx が正典の種類の写しを書かない（書くと値が循環する）。
+
 #### 余白
 
-名前は大きさの語で、`ui/stack` の `gap` の語と同じ。**同じ値を 2 つの名前で持たない。**
+名前は大きさの語で、`ui/stack` の `gap` の語と同じ。**同じ値を 2 つの名前で持たない。** 値は Astryx の `--spacing-*` を引き、rem の値は同じ。
 
-| トークン      | 値       | 使う場面                                    |
-| ------------- | -------- | ------------------------------------------- |
-| `--space-2xs` | 0.125rem | 罫と字のあいだ・印の上下の細い余白          |
-| `--space-xs`  | 0.25rem  | 字と字・小さな部品の内側                    |
-| `--space-sm`  | 0.5rem   | 部品の内側の標準・同じ群の部品のあいだ      |
-| `--space-md`  | 0.75rem  | 箱（`Surface`）の内側の標準・群と群のあいだ |
-| `--space-lg`  | 1rem     | 区画のあいだ・ダイアログの内側              |
-| `--space-xl`  | 1.25rem  | 大きな区画のあいだ                          |
-| `--space-2xl` | 1.5rem   | 領域と領域のあいだ                          |
-| `--space-3xl` | 2rem     | 画面の区切り・大きな領域の内側              |
-| `--space-4xl` | 3rem     | ページの上下の余白                          |
+| トークン      | 引く先          | 値       | 使う場面                                    |
+| ------------- | --------------- | -------- | ------------------------------------------- |
+| `--space-2xs` | `--spacing-0-5` | 0.125rem | 罫と字のあいだ・印の上下の細い余白          |
+| `--space-xs`  | `--spacing-1`   | 0.25rem  | 字と字・小さな部品の内側                    |
+| `--space-sm`  | `--spacing-2`   | 0.5rem   | 部品の内側の標準・同じ群の部品のあいだ      |
+| `--space-md`  | `--spacing-3`   | 0.75rem  | 箱（`Surface`）の内側の標準・群と群のあいだ |
+| `--space-lg`  | `--spacing-4`   | 1rem     | 区画のあいだ・ダイアログの内側              |
+| `--space-xl`  | `--spacing-5`   | 1.25rem  | 大きな区画のあいだ                          |
+| `--space-2xl` | `--spacing-6`   | 1.5rem   | 領域と領域のあいだ                          |
+| `--space-3xl` | `--spacing-8`   | 2rem     | 画面の区切り・大きな領域の内側              |
+| `--space-4xl` | `--spacing-12`  | 3rem     | ページの上下の余白                          |
 
 - 寄せ方は「近い段へ。同点は大きい段へ」（6px は `sm`・10px は `md`）。
 - 32px・48px は `3xl`・`4xl`。その間（28px・40px など）で段に寄せると 4px を超えてずれるものは、部品の CSS に名前のある局所のつまみを置く。負の余白は `calc(-1 * var(--space-xs))`。
@@ -35,22 +48,22 @@
 
 #### 角丸
 
-| トークン         | 値      | 使う場面                           |
-| ---------------- | ------- | ---------------------------------- |
-| `--radius-sm`    | 0.25rem | 印・コードの欄・小さな枠           |
-| `--radius-md`    | 0.5rem  | ボタン・入力欄・カードの標準       |
-| `--radius-lg`    | 0.75rem | 箱（`Surface`）・区画              |
-| `--radius-xl`    | 1rem    | ダイアログ・重なる面               |
-| `--radius-pill`  | 999px   | 丸いバッジ・状態のチップ           |
-| `--radius-round` | 50%     | 丸（点・アイコンの枠・立ち絵の枠） |
+| トークン         | 引く先               | 値       | 使う場面                           |
+| ---------------- | -------------------- | -------- | ---------------------------------- |
+| `--radius-sm`    | `--radius-inner`     | 0.375rem | 印・コードの欄・小さな枠           |
+| `--radius-md`    | `--radius-element`   | 0.625rem | ボタン・入力欄・カードの標準       |
+| `--radius-lg`    | `--radius-container` | 0.75rem  | 箱（`Surface`）・区画              |
+| `--radius-xl`    | （直書き）           | 1rem     | ダイアログ・重なる面               |
+| `--radius-pill`  | `--radius-full`      | 9999px   | 丸いバッジ・状態のチップ           |
+| `--radius-round` | （直書き）           | 50%      | 丸（点・アイコンの枠・立ち絵の枠） |
 
 #### 影
 
-| トークン           | 値                                                               | 使う場面                 |
-| ------------------ | ---------------------------------------------------------------- | ------------------------ |
-| `--shadow-raised`  | `0 8px 24px rgb(0 0 0 / 0.3)`                                    | メニュー・浮かぶカード   |
-| `--shadow-overlay` | `0 20px 50px color-mix(in srgb, var(--ground) 80%, transparent)` | ダイアログ・引き出し・板 |
-| `--shadow-ring`    | `0 0 0 2px var(--accent)`                                        | 選んでいる・目印の輪     |
+| トークン           | 引く先          | 値                                                 | 使う場面                 |
+| ------------------ | --------------- | -------------------------------------------------- | ------------------------ |
+| `--shadow-raised`  | `--shadow-med`  | 2 層の影と、暗い面で 1px の明るい縁（Astryx の値） | メニュー・浮かぶカード   |
+| `--shadow-overlay` | `--shadow-high` | 2 層の影と、暗い面で 1px の明るい縁（Astryx の値） | ダイアログ・引き出し・板 |
+| `--shadow-ring`    | （直書き）      | `0 0 0 2px var(--accent)`                          | 選んでいる・目印の輪     |
 
 - ぼかしのある影（ぼかし 1px 以上で `inset` でないもの）はトークンを使う。向きのある影と、色・幅が部品ごとに違う輪・内側の線（`inset`）は直書きのまま許す。
 
@@ -77,9 +90,9 @@
 
 `ui/` の部品の中身は Astryx（ADR 0053）の部品で、props は tsukumo の語彙のまま変えない。`@astryxdesign/*` と `@stylexjs/stylex` を import できるのは `src/browser/components/ui/` だけで、`.dependency-cruiser.cjs` の `astryx-reader` が外からの import を止める。Astryx に当てない例外は `typing-dot-list` で、Astryx に入力中の点の部品が無いので、今の CSS のまま残す。`layout-resizer` は、移すときに Astryx の `ResizeHandle` が当たるかを確かめ、当たらなければ例外に足す。
 
-根の `ThemeRoot`（`ui/theme-root/`）は、`App` の `QueryClientProvider` の内側・`Root` の外側で、`InternationalizationProvider`（`locale="ja-JP"`）と `Theme`（テーマ `tsukumo`・`mode="dark"`）を重ねて子を包む。テーマの定義 `tsukumo-theme.ts` は、値を tsukumo のトークンの `var()` とそれを組んだ式だけで書く。パックの accent は `usePackAppearance` が `<html>` の `--accent` に書き、テーマの `--color-accent` がそれに追随する。
+根の `ThemeRoot`（`ui/theme-root/`）は、`App` の `QueryClientProvider` の内側・`Root` の外側で、`InternationalizationProvider`（`locale="ja-JP"`）と `Theme`（テーマ `tsukumo`・`mode="dark"`）を重ねて子を包む。テーマの定義 `tsukumo-theme.ts` は、値を tsukumo のトークンの `var()` とそれを組んだ式だけで書き、写すのは色・コードの書体・本文の行の高さ（触る画面の `adaptations` も同じ値）の 3 種類に限る（上の「向き」）。パックの accent は `usePackAppearance` が `<html>` の `--accent` に書き、テーマの `--color-accent` がそれに追随する。
 
-CSS の層の順は、`styles/layer-order.css` が `@layer reset, tsukumo-base, astryx-base, astryx-theme;` と宣言し、`main.tsx` が `./app.tsx` より前に読む。`theme.css` の要素への規則は `tsukumo-base` の層に置き、CSS Modules は層に入れない。層に入っていない `ui/` の部品の CSS は、Astryx のどの層にも勝つ。`reset.css` は読まないので、`box-sizing` は `content-box` のまま残り、見出しの `margin` もブラウザの既定のまま残る。`astryx-heading` の `margin` は、`ui/` の側で `0` に戻す。
+CSS の層の順は、`styles/layer-order.css` が `@layer reset, tsukumo-base, astryx-base, astryx-theme;` と宣言し、`main.tsx` が `./app.tsx` より前に読む。`theme.css` の要素への規則（フォーム部品の継承・フォーカスの輪・リンク）は `tsukumo-base` の層に置き、CSS Modules は層に入れない。テーマが見出しと段落に当てる既定は打ち消さず、素の見出しと段落も Astryx の段になる。層に入っていない `ui/` の部品の CSS は、Astryx のどの層にも勝つ。`reset.css` は読まないので、`box-sizing` は `content-box` のまま残り、見出しの `margin` もブラウザの既定のまま残る。`astryx-heading` の `margin` は、`ui/` の側で `0` に戻す。
 
 `ui/` の部品は、持つのは顔（地・枠・字の色・振る舞い）で、置き方（margin・flex・align-self）は呼び出し側が `className` で渡す。箱の語彙を持つ 3 つを足す。props は全部必須で、型で縛る（`ui/stack` と同じ）。
 

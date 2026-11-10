@@ -97,6 +97,8 @@
   }
   & .report-gutter-note > p {
     margin: 0;
+    font: inherit;
+    color: var(--ink-quiet);
   }
   & .report-gutter-note-label {
     margin-right: 0.5em;

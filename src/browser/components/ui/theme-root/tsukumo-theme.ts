@@ -18,22 +18,9 @@ const stateRing = (state: string): string =>
 const inkTint = (percent: number): string =>
   `color-mix(in srgb, var(--ink) ${String(percent)}%, transparent)`
 
-// neutral は触る画面で `lg` より狭いときに字の段を組み直すので、同じ条件で同じ写しを書き直す。
-const typographyTokens = {
-  "--text-body-size": "var(--font-body)",
-  "--text-body-leading": "var(--line-height-body)",
-  "--text-label-size": "var(--font-label)",
-  "--text-label-leading": "var(--line-height-body)",
-  "--text-supporting-size": "var(--font-secondary)",
-  "--text-supporting-leading": "var(--line-height-body)",
-  "--text-heading-1-size": "var(--font-heading-1)",
-  "--text-heading-1-leading": "var(--line-height-body)",
-  "--text-heading-2-size": "var(--font-heading-2)",
-  "--text-heading-2-leading": "var(--line-height-body)",
-  "--text-heading-3-size": "var(--font-heading-3)",
-  "--text-heading-3-leading": "var(--line-height-body)",
-  "--text-heading-4-size": "var(--font-heading)",
-  "--text-heading-4-leading": "var(--line-height-body)",
+// neutral は触る画面で `lg` より狭いときに字の段を組み直すので、本文の行の高さも同じ条件で書き直す。
+const readingLeadingTokens = {
+  "--text-body-leading": "var(--line-height-reading)",
 } satisfies Partial<Record<TokenName, TokenValue>>
 
 const tsukumoTokens = {
@@ -86,29 +73,10 @@ const tsukumoTokens = {
   "--color-tint-hover": "var(--ink)",
   "--color-neutral": inkTint(10),
 
-  "--font-family-body": "var(--font-sans)",
-  "--font-family-heading": "var(--font-sans)",
   "--font-family-code": "var(--font-code)",
 
-  ...typographyTokens,
+  ...readingLeadingTokens,
 
-  "--spacing-0-5": "var(--space-2xs)",
-  "--spacing-1": "var(--space-xs)",
-  "--spacing-2": "var(--space-sm)",
-  "--spacing-3": "var(--space-md)",
-  "--spacing-4": "var(--space-lg)",
-  "--spacing-5": "var(--space-xl)",
-  "--spacing-6": "var(--space-2xl)",
-  "--spacing-8": "var(--space-3xl)",
-  "--spacing-12": "var(--space-4xl)",
-
-  "--radius-inner": "var(--radius-sm)",
-  "--radius-element": "var(--radius-md)",
-  "--radius-container": "var(--radius-lg)",
-  "--radius-full": "var(--radius-pill)",
-
-  "--shadow-med": "var(--shadow-raised)",
-  "--shadow-high": "var(--shadow-overlay)",
   "--shadow-inset-selected": "inset var(--shadow-ring)",
   "--shadow-inset-success": stateRing("--state-ok"),
   "--shadow-inset-warning": stateRing("--state-warn"),
@@ -119,7 +87,7 @@ const tsukumoAdaptations = {
   rules: [
     {
       when: { pointer: "coarse", width: { below: "lg" } },
-      value: { tokens: typographyTokens },
+      value: { tokens: readingLeadingTokens },
     },
   ],
 } satisfies ThemeAdaptations

@@ -135,12 +135,26 @@ function isAllowedSpaceToken(token: string): boolean {
   return false
 }
 
-/** theme.css の --space-* 宣言（rem × 16）から読んだ、段の名前から px への表。 */
+/**
+ * theme.css の --space-* 宣言が引く Astryx の --spacing-*（astryx.css の rem × 16）から読んだ、段の名前から px への表。
+ */
 function readSpaceScalePx(): Readonly<Record<string, number>> {
   const theme = readFileSync(`${SRC_ROOT}/browser/styles/theme.css`, "utf8")
-  return Object.fromEntries(
-    [...theme.matchAll(/(--space-[\w-]+)\s*:\s*([\d.]+)rem\s*;/g)].map(
+  const astryx = readFileSync(
+    `${SRC_ROOT}/../node_modules/@astryxdesign/core/dist/astryx.css`,
+    "utf8",
+  )
+  const spacing = new Map(
+    [...astryx.matchAll(/(--spacing-[\w-]+):\s*([\d.]+)rem;/g)].map(
       (match) => [match[1] ?? "", Number(match[2]) * 16] as const,
+    ),
+  )
+  return Object.fromEntries(
+    [...theme.matchAll(/(--space-[\w-]+)\s*:\s*var\((--spacing-[\w-]+)\)\s*;/g)].flatMap(
+      (match) => {
+        const px = spacing.get(match[2] ?? "")
+        return px === undefined ? [] : [[match[1] ?? "", px] as const]
+      },
     ),
   )
 }

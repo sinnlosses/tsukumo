@@ -48,6 +48,8 @@
   overflow: hidden;
   overflow-wrap: anywhere;
   white-space: pre-wrap;
+  font: inherit;
+  color: inherit;
   line-height: 20px;
   display: -webkit-box;
   -webkit-box-orient: vertical;
