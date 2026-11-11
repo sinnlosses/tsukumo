@@ -1,0 +1,105 @@
+{
+  "name": "report-reply-margin",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "架空の手順の所要を表と案にまとめて（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 1500,
+      "event": {
+        "kind": "report",
+        "toolUseId": "fake-reply-margin-1",
+        "components": [
+          {
+            "id": "root",
+            "component": "Report",
+            "conclusion": ["架空の結論: 遅いのは架空の手順 け と こ で、案Aで半分に縮む見込み。"],
+            "children": ["s1", "s2"],
+            "closing": { "text": "気になる行があれば聞いてね！", "expression": "proud" }
+          },
+          {
+            "id": "s1",
+            "component": "Section",
+            "heading": "架空の手順の所要",
+            "children": ["p1", "t1"]
+          },
+          {
+            "id": "p1",
+            "component": "Paragraph",
+            "text": "架空の手順を10個、所要の長い順に並べた。数は架空の値。"
+          },
+          {
+            "id": "t1",
+            "component": "Table",
+            "title": "架空の手順の所要。長い順",
+            "columns": ["手順", "所要", "回数", "メモ"],
+            "rows": [
+              ["架空の手順 け", "48秒", "12", "待ちが長い"],
+              ["架空の手順 こ", "41秒", "9", "読み込みが重い"],
+              ["架空の手順 あ", "22秒", "30", ""],
+              ["架空の手順 い", "18秒", "14", ""],
+              ["架空の手順 う", "15秒", "8", "外の呼び出しを含む"],
+              ["架空の手順 え", "11秒", "21", ""],
+              ["架空の手順 お", "9秒", "5", ""],
+              ["架空の手順 か", "6秒", "40", "毎回走る"],
+              ["架空の手順 き", "4秒", "3", ""],
+              ["架空の手順 く", "2秒", "60", ""]
+            ]
+          },
+          {
+            "id": "s2",
+            "component": "Section",
+            "heading": "架空の縮め方",
+            "children": ["o1", "c1"]
+          },
+          {
+            "id": "o1",
+            "component": "Options",
+            "title": "架空の縮め方の判定",
+            "items": [
+              { "name": "架空の案A", "verdict": "adopt", "reason": "待ちを並べるだけで済む" },
+              { "name": "架空の案B", "verdict": "consider", "reason": "読み込みを分ければ効く" },
+              { "name": "架空の案C", "verdict": "reject", "reason": "毎回走る手順を消すと壊れる" }
+            ]
+          },
+          {
+            "id": "c1",
+            "component": "Claims",
+            "items": [
+              {
+                "claim": "架空の案Aで所要が半分になる",
+                "certainty": "inferred",
+                "basis": "待ちの合計から見積もった",
+                "howToVerify": "架空の案Aを入れて所要を測り直す"
+              },
+              {
+                "claim": "架空の手順 か は省けない",
+                "certainty": "unverified",
+                "basis": "",
+                "howToVerify": "架空の手順 か を外して打ってみる"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "afterMs": 1900,
+      "event": {
+        "kind": "tool-finished",
+        "toolUseId": "fake-reply-margin-1",
+        "content": "ok",
+        "isError": false
+      }
+    },
+    {
+      "afterMs": 2300,
+      "event": { "kind": "turn-finished", "outcome": { "kind": "completed" } }
+    }
+  ]
+}

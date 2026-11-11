@@ -14,6 +14,8 @@ type AskBoxProps = {
   readonly target: ReplyTarget
   readonly initialMode: AskMode
   readonly initialText: string
+  /** 頼むに切り替えたときの書き始めの字（案・主張の定型）。空なら切り替えても字を変えない。 */
+  readonly requestText: string
   readonly onSend: (text: string) => void
   /** 頼むで送ったとき。会話へは送らず、付箋にする。 */
   readonly onNote: (text: string) => void
@@ -68,6 +70,7 @@ export function AskBox(props: AskBoxProps): ReactElement {
               checked={mode === candidate}
               onChange={() => {
                 setMode(candidate)
+                setText(textOnSwitch(text, candidate, props.requestText))
               }}
             />
             {MODE_LABELS[candidate]}
@@ -113,6 +116,14 @@ export function AskBox(props: AskBoxProps): ReactElement {
       </div>
     </div>
   )
+}
+
+/** 書いていない欄だけ、頼むに切り替えたら定型を入れ、聞くに戻したら定型を外す。 */
+function textOnSwitch(text: string, mode: AskMode, requestText: string): string {
+  if (mode === "request") {
+    return text.trim() === "" ? requestText : text
+  }
+  return text === requestText ? "" : text
 }
 
 function targetCaption(target: ReplyTarget): string {

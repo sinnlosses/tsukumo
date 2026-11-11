@@ -7,8 +7,8 @@ import type { LeafValue } from "../../../../shared/report/report-leaf-value.ts"
 import { Badge } from "../../../components/ui/badge/badge.tsx"
 import { claimNoteBody } from "../domain/reply-note.ts"
 import { InlineMarkdown, textLeafClassNames } from "../markdown.tsx"
+import { ReplyUnitRow } from "./ask-frame.tsx"
 import styles from "./leaf.module.css"
-import { ReplyNoteButton } from "./reply-note-button.tsx"
 import { LeafFold, ReportLeafFrame } from "./report-leaf-frame.tsx"
 
 type ClaimsPart = Extract<A2uiReportComponent, { readonly component: "Claims" }>
@@ -47,7 +47,12 @@ function ClaimRow(props: {
   const { claim, certainty, basis, howToVerify } = props.item
   const { mark, label, tone } = CERTAINTIES[certainty]
   return (
-    <div className={textLeafClassNames.claim}>
+    <ReplyUnitRow
+      index={props.index}
+      label={claim}
+      requestText={claimNoteBody(howToVerify)}
+      className={textLeafClassNames.claim}
+    >
       <p>
         <span className={textLeafClassNames.claimCertainty}>
           <Badge tone={tone} shape="square" className={styles["verdict-badge"]}>
@@ -62,18 +67,8 @@ function ClaimRow(props: {
         </span>
         <ClaimField className={textLeafClassNames.claimBasis} name="根拠" text={basis} />
         <ClaimField className={textLeafClassNames.claimHow} name="確かめ方" text={howToVerify} />
-        {certainty !== "confirmed" && (
-          <span className={styles["claim-note"]}>
-            <ReplyNoteButton
-              title=""
-              row={{ index: props.index, firstCell: claim }}
-              label="確かめて"
-              body={claimNoteBody(howToVerify)}
-            />
-          </span>
-        )}
       </p>
-    </div>
+    </ReplyUnitRow>
   )
 }
 

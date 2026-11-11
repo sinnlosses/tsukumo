@@ -1,14 +1,3 @@
-/* 案・主張の行の「この案で進める」「確かめて」。 */
-.note-button {
-  min-height: 1.5rem;
-  padding: var(--inset-control);
-  border-radius: var(--radius-pill);
-}
-/* 主張の行の本文の列の末尾に置く（確度の列の右。器が狭いときは1列に積まれる）。 */
-.claim-note {
-  grid-column: -2 / -1;
-  justify-self: start;
-}
 /* その場の入力欄の頭の、聞く／頼むの切り替え。 */
 .ask-mode {
   display: flex;

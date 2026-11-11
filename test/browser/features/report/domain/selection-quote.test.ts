@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { quoteOf } from "../../../../../../../../src/browser/components/page/conversation/components/main-view/domain/selection-quote.ts"
+import { quoteOf } from "../../../../../src/browser/features/report/domain/selection-quote.ts"
 
 describe("選んだ字を引用に整える", () => {
   it("1行は頭に > を付ける", () => {

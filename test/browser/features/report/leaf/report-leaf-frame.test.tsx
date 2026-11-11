@@ -1,4 +1,5 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { createRef } from "react"
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest"
 
 import {
@@ -24,10 +25,10 @@ import {
   leafFrameClassNames,
   loadMarkdown,
 } from "../../../../../src/browser/features/report/markdown.tsx"
+import { ReplyPointScope } from "../../../../../src/browser/features/report/reply-point.tsx"
 import {
   type ReplyPort,
   ReplyPortContext,
-  type ReplyPortSlot,
 } from "../../../../../src/browser/features/report/reply-port.ts"
 import { useReplyNotes } from "../../../../../src/browser/stores/reply-note-list.ts"
 import type { LeafValue } from "../../../../../src/shared/report/report-leaf-value.ts"
@@ -196,112 +197,6 @@ describe("FoldedLeafFrame", () => {
   })
 })
 
-describe("FoldedLeafFrame の「聞く」", () => {
-  const VALUE: FrameValue = { captionNumber: NO_CAPTION, gutterNotes: [] }
-
-  function askFrame(options: {
-    readonly slot: ReplyPortSlot
-    readonly section: SectionPoint
-    readonly leaf: LeafIdentity
-  }) {
-    return render(
-      <ReplyPortContext value={options.slot}>
-        <SectionPointContext value={options.section}>
-          <LeafIdentityContext value={options.leaf}>
-            <div data-report-region="section">
-              <FoldedLeafFrame value={VALUE} title="架空の題" fit={false} fold="" swap={false}>
-                <p>架空の本体</p>
-              </FoldedLeafFrame>
-            </div>
-          </LeafIdentityContext>
-        </SectionPointContext>
-      </ReplyPortContext>,
-    )
-  }
-
-  function idlePort(): ReplyPort {
-    return {
-      appendDraft: vi.fn<ReplyPort["appendDraft"]>(),
-      ask: vi.fn<ReplyPort["ask"]>(),
-    }
-  }
-
-  const SECTION: SectionPoint = { kind: "section", reportToolUseId: "toolu_1", heading: "架空の節" }
-  const LEAF: LeafIdentity = { kind: "leaf", componentId: "p1", componentKind: "Paragraph" }
-
-  it("口があり節の中の内容部品なら「聞く」が出て、押して書いて送ると指した所つきで ask を呼ぶ", () => {
-    const ask = vi.fn<ReplyPort["ask"]>()
-    askFrame({
-      slot: { kind: "open", port: { appendDraft: vi.fn<ReplyPort["appendDraft"]>(), ask } },
-      section: SECTION,
-      leaf: LEAF,
-    })
-
-    fireEvent.click(screen.getByRole("button", { name: "聞く" }))
-    const field = screen.getByRole("textbox")
-    fireEvent.change(field, { target: { value: "なぜ？" } })
-    fireEvent.keyDown(field, { key: "Enter", metaKey: true })
-
-    expect(ask).toHaveBeenCalledExactlyOnceWith(
-      {
-        label: { section: "架空の節", component: "架空の題" },
-        key: { reportToolUseId: "toolu_1", componentId: "p1" },
-      },
-      "なぜ？",
-    )
-    expect(screen.queryByRole("textbox")).toBeNull()
-  })
-
-  it("部品の「頼む」で頼むの欄が開き、送ると付箋が増えて ask は呼ばれない", () => {
-    const ask = vi.fn<ReplyPort["ask"]>()
-    askFrame({
-      slot: { kind: "open", port: { appendDraft: vi.fn<ReplyPort["appendDraft"]>(), ask } },
-      section: SECTION,
-      leaf: LEAF,
-    })
-
-    fireEvent.click(screen.getByRole("button", { name: "頼む" }))
-    expect(screen.getByText("付箋にして、あとでまとめて頼む")).toBeTruthy()
-    const field = screen.getByRole("textbox")
-    fireEvent.change(field, { target: { value: "ここを直して" } })
-    fireEvent.keyDown(field, { key: "Enter", metaKey: true })
-
-    const notes = Object.values(useReplyNotes.getState().notesBySession).flat()
-    expect(notes).toHaveLength(1)
-    expect(notes[0]?.body).toBe("ここを直して")
-    expect(notes[0]?.target.key).toEqual({ reportToolUseId: "toolu_1", componentId: "p1" })
-    expect(ask).not.toHaveBeenCalled()
-    expect(screen.queryByRole("textbox")).toBeNull()
-  })
-
-  it("口が無ければ出ない", () => {
-    askFrame({ slot: { kind: "none" }, section: SECTION, leaf: LEAF })
-
-    expect(screen.queryByRole("button", { name: "聞く" })).toBeNull()
-    expect(screen.queryByRole("button", { name: "頼む" })).toBeNull()
-  })
-
-  it("指す位置が節の外（図・振り返り・頭の欄）なら出ない", () => {
-    askFrame({
-      slot: { kind: "open", port: idlePort() },
-      section: { kind: "none" },
-      leaf: LEAF,
-    })
-
-    expect(screen.queryByRole("button", { name: "聞く" })).toBeNull()
-  })
-
-  it("内容部品の外（配置の部品の枠）では出ない", () => {
-    askFrame({
-      slot: { kind: "open", port: idlePort() },
-      section: SECTION,
-      leaf: { kind: "none" },
-    })
-
-    expect(screen.queryByRole("button", { name: "聞く" })).toBeNull()
-  })
-})
-
 describe("FoldedLeafFrame の聞いた問いと答え", () => {
   const SECTION: SectionPoint = { kind: "section", reportToolUseId: "toolu_1", heading: "架空の節" }
   const LEAF: LeafIdentity = { kind: "leaf", componentId: "p1", componentKind: "Paragraph" }
@@ -332,26 +227,29 @@ describe("FoldedLeafFrame の聞いた問いと答え", () => {
           kind: "open",
           port: {
             appendDraft: vi.fn<ReplyPort["appendDraft"]>(),
+            prependDraft: vi.fn<ReplyPort["prependDraft"]>(),
             ask: ask ?? vi.fn<ReplyPort["ask"]>(),
           },
         }}
       >
         <AskThreadContext value={threads}>
-          <SectionPointContext value={SECTION}>
-            <LeafIdentityContext value={LEAF}>
-              <div data-report-region="section">
-                <FoldedLeafFrame
-                  value={{ captionNumber, gutterNotes: [] }}
-                  title="架空の題"
-                  fit={false}
-                  fold=""
-                  swap={false}
-                >
-                  <p>架空の本体</p>
-                </FoldedLeafFrame>
-              </div>
-            </LeafIdentityContext>
-          </SectionPointContext>
+          <ReplyPointScope rootRef={createRef<HTMLElement>()}>
+            <SectionPointContext value={SECTION}>
+              <LeafIdentityContext value={LEAF}>
+                <div data-report-region="section">
+                  <FoldedLeafFrame
+                    value={{ captionNumber, gutterNotes: [] }}
+                    title="架空の題"
+                    fit={false}
+                    fold=""
+                    swap={false}
+                  >
+                    <p>架空の本体</p>
+                  </FoldedLeafFrame>
+                </div>
+              </LeafIdentityContext>
+            </SectionPointContext>
+          </ReplyPointScope>
         </AskThreadContext>
       </ReplyPortContext>,
     )

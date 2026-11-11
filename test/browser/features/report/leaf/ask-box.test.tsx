@@ -17,7 +17,7 @@ const TARGET = replyTargetOf({
   row: { index: 2, firstCell: "架空の行" },
 })
 
-function open(mode: "ask" | "request" = "ask", initialText = "") {
+function open(mode: "ask" | "request" = "ask", initialText = "", requestText = "") {
   const onSend = vi.fn<(text: string) => void>()
   const onNote = vi.fn<(text: string) => void>()
   const onClose = vi.fn<() => void>()
@@ -26,6 +26,7 @@ function open(mode: "ask" | "request" = "ask", initialText = "") {
       target={TARGET}
       initialMode={mode}
       initialText={initialText}
+      requestText={requestText}
       onSend={onSend}
       onNote={onNote}
       onClose={onClose}

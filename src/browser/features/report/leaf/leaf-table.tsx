@@ -18,12 +18,13 @@ export type LeafTableRow = {
   readonly detail?: { readonly label: string; readonly content: ReactNode }
   /** 1列目の字下げの段（0 は寄せない）。 */
   readonly depth: number
-  /** 行の右端に「聞く」を出す行。`label` はボタンの名前に使う行の名前、`active` はこの行について入力欄を開いているか。 */
-  readonly ask?: {
+  /** 押すと指せる行。`index` は書いた並びの添字、`label` は1列目の字、`active` はこの行について入力欄を開いているか。 */
+  readonly unit?: {
+    readonly index: number
     readonly label: string
-    readonly onAsk: () => void
-    /** 同じ行について頼む（付箋にする）の入力欄を開く。 */
-    readonly onNote: () => void
+    readonly pointed: boolean
+    /** 部品の中の Tab の止まり場なら 0、ほかは -1。 */
+    readonly tabIndex: 0 | -1
     readonly active: boolean
     /** この行について聞いたことがあるか（行の左に印の線を付ける）。 */
     readonly asked: boolean
@@ -52,8 +53,6 @@ const ALIGN_ATTRIBUTES = {
 /** 行が 0 件なら `tbody` を出さない。 */
 export function LeafTable(props: LeafTableProps): ReactElement {
   const attributesOf = (index: number) => ALIGN_ATTRIBUTES[props.aligns[index] ?? "left"]
-  const askable = props.rows.some((row) => row.ask !== undefined)
-  const askColumn = askable ? 1 : 0
   return (
     <div className={tableLeafClassNames.tableScroll}>
       <table>
@@ -68,13 +67,12 @@ export function LeafTable(props: LeafTableProps): ReactElement {
                 {cell}
               </th>
             ))}
-            {askable && <th aria-hidden="true" />}
           </tr>
         </thead>
         {props.rows.length > 0 && (
           <FoldedTableBody
             bodyProps={{}}
-            columnCount={Math.max(1, ...props.rows.map((row) => row.cells.length)) + askColumn}
+            columnCount={Math.max(1, ...props.rows.map((row) => row.cells.length))}
           >
             {props.rows.map((row) => (
               <BodyRow
@@ -82,7 +80,6 @@ export function LeafTable(props: LeafTableProps): ReactElement {
                 row={row}
                 attributesOf={attributesOf}
                 spaced={props.rows.some((other) => other.detail !== undefined)}
-                askable={askable}
               />
             ))}
           </FoldedTableBody>
@@ -96,7 +93,6 @@ export function LeafTable(props: LeafTableProps): ReactElement {
                     {cell}
                   </td>
                 ))}
-                {askable && <td aria-hidden="true" />}
               </tr>
             ))}
           </tfoot>
@@ -127,22 +123,25 @@ function BodyRow(props: {
   readonly attributesOf: (index: number) => object
   /** 表のどこかに詳しい中身のある行があるか。無い行の1列目を押しボタンの幅だけ寄せる。 */
   readonly spaced: boolean
-  /** 表のどこかの行に「聞く」があるか（無い行にも空のセルを足して列を揃える）。 */
-  readonly askable: boolean
 }): ReactElement {
-  const { row, attributesOf, spaced, askable } = props
-  const askColumn = askable ? 1 : 0
+  const { row, attributesOf, spaced } = props
   const [open, setOpen] = useState(false)
-  const { detail } = row
+  const { detail, unit } = row
   return (
     <>
       <tr
         className={
           clsx(
-            row.ask?.active === true && styles["ask-row-active"],
-            row.ask?.asked === true && styles["ask-row-asked"],
+            unit !== undefined && styles["reply-unit"],
+            unit?.active === true && styles["ask-row-active"],
+            unit?.asked === true && styles["ask-row-asked"],
           ) || undefined
         }
+        data-reply-unit={unit === undefined ? undefined : "row"}
+        data-reply-row={unit?.index}
+        data-reply-label={unit?.label}
+        data-pointed={unit?.pointed === true ? "" : undefined}
+        tabIndex={unit?.tabIndex}
       >
         {row.cells.map((cell, index) => (
           <td
@@ -176,44 +175,10 @@ function BodyRow(props: {
             {cell}
           </td>
         ))}
-        {row.ask !== undefined && (
-          <td className={styles["ask-row-cell"]}>
-            <span className={styles["ask-row-slot"]}>
-              <Button
-                variant="ghost"
-                size="label"
-                pressed="none"
-                disabled={false}
-                ariaLabel={`${row.ask.label}について聞く`}
-                disclosure={{ kind: "none" }}
-                className={styles["ask-row-button"]}
-                onClick={row.ask.onAsk}
-              >
-                聞く
-              </Button>{" "}
-              <Button
-                variant="ghost"
-                size="label"
-                pressed="none"
-                disabled={false}
-                ariaLabel={`${row.ask.label}について頼む`}
-                disclosure={{ kind: "none" }}
-                className={styles["ask-row-button"]}
-                onClick={row.ask.onNote}
-              >
-                頼む
-              </Button>
-            </span>
-          </td>
-        )}
-        {row.ask === undefined && askable && <td aria-hidden="true" />}
       </tr>
       {detail !== undefined && open && (
         <tr className={clsx(styles["table-detail-row"], tableLeafClassNames.tableDetailRow)}>
-          <td
-            colSpan={Math.max(1, row.cells.length) + askColumn}
-            className={styles["table-detail-cell"]}
-          >
+          <td colSpan={Math.max(1, row.cells.length)} className={styles["table-detail-cell"]}>
             {detail.content}
           </td>
         </tr>

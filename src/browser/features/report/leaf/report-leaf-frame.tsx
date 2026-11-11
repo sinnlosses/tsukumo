@@ -3,7 +3,7 @@
 // 図表番号と欄外注は組み立ての段が振った値（`LeafValue`）を描くだけで、数えない。
 
 import clsx from "clsx"
-import type { ReactElement, ReactNode } from "react"
+import { type ReactElement, type ReactNode, use } from "react"
 
 import { foldInlineMarks } from "../../../../shared/report/inline-mark.ts"
 import type { LeafValue } from "../../../../shared/report/report-leaf-value.ts"
@@ -16,7 +16,7 @@ import {
   leafFrameClassNames,
   type SwapSettings,
 } from "../markdown.tsx"
-import { AskButtons, AskFrame, useAskAvailable } from "./ask-frame.tsx"
+import { AskFrame, RowAskContext } from "./ask-frame.tsx"
 import { AskBadge } from "./ask-thread-view.tsx"
 import styles from "./leaf.module.css"
 import { ReplyNoteCard, useLeafNotes } from "./reply-note-card.tsx"
@@ -56,18 +56,17 @@ export function FoldedLeafFrame(
   const askThread = useLeafAskThread()
   const replyNotes = useLeafNotes()
   const hasCaption = captionNumber.kind !== "none"
-  const askAvailable = useAskAvailable(props.title)
-  // 題の行が畳みの外にあるときだけ、そこへ置く。畳むと題の行ごと隠れるので、自前の行にする。
-  const buttonsInCaption = askAvailable && hasCaption && props.fold.trim() === ""
+  // 題の行が畳みの外にあるときだけ、題の行が部品全体を指す単位になる。畳むと題の行ごと隠れるので、本体の全体を単位にする。
+  const unit = hasCaption && props.fold.trim() === "" ? "caption" : "body"
   const caption =
     captionNumber.kind === "none" ? undefined : (
       <LeafCaption
         label={`${CAPTION_LABELS[captionNumber.kind]} ${String(captionNumber.ordinal)}`}
         title={props.title}
+        unit={unit === "caption"}
         aside={captionAsideOf(
           captionNumber.kind === "table" ? props.captionAside : undefined,
           askThread,
-          buttonsInCaption,
         )}
       />
     )
@@ -90,16 +89,15 @@ export function FoldedLeafFrame(
       )}
     </LeafFold>
   )
-  const buttons = buttonsInCaption ? "caption" : "bar"
   if (gutterNotes.length === 0 && replyNotes.length === 0) {
     return (
-      <AskFrame title={props.title} captioned={hasCaption} buttons={buttons}>
+      <AskFrame title={props.title} captioned={hasCaption} unit={unit}>
         {captioned}
       </AskFrame>
     )
   }
   return (
-    <AskFrame title={props.title} captioned={hasCaption} buttons={buttons}>
+    <AskFrame title={props.title} captioned={hasCaption} unit={unit}>
       <div className={leafFrameClassNames.withGutter}>
         {captioned}
         <div className={leafFrameClassNames.gutter}>
@@ -156,15 +154,14 @@ function CaptionedBox(props: {
   )
 }
 
-function captionAsideOf(aside: ReactNode, askThread: LeafAskSlot, withButtons: boolean): ReactNode {
-  if (askThread.kind === "none" && !withButtons) {
+function captionAsideOf(aside: ReactNode, askThread: LeafAskSlot): ReactNode {
+  if (askThread.kind === "none") {
     return aside
   }
   return (
     <span className={styles["ask-caption-aside"]}>
       {aside}
-      {askThread.kind === "asked" && <AskBadge thread={askThread.thread} />}
-      {withButtons && <AskButtons />}
+      <AskBadge thread={askThread.thread} />
     </span>
   )
 }
@@ -172,8 +169,17 @@ function captionAsideOf(aside: ReactNode, askThread: LeafAskSlot, withButtons: b
 function LeafCaption(props: {
   readonly label: string
   readonly title: string
+  /** 題の行が部品全体を指す単位か。 */
+  readonly unit: boolean
   readonly aside?: ReactNode
 }): ReactElement {
+  const rowAsk = use(RowAskContext)
+  const unit = props.unit && rowAsk.kind === "available"
+  const unitAttributes = {
+    "data-reply-unit": unit ? "leaf" : undefined,
+    "data-pointed": unit && rowAsk.isPointed() ? "" : undefined,
+    tabIndex: unit ? rowAsk.tabIndexOf() : undefined,
+  }
   const heading = (
     <>
       <span className={leafFrameClassNames.captionNumber}>{props.label}</span>
@@ -185,10 +191,24 @@ function LeafCaption(props: {
     </>
   )
   if (props.aside === undefined) {
-    return <div className={leafFrameClassNames.caption}>{heading}</div>
+    return (
+      <div
+        className={clsx(leafFrameClassNames.caption, unit && styles["reply-unit"])}
+        {...unitAttributes}
+      >
+        {heading}
+      </div>
+    )
   }
   return (
-    <div className={clsx(leafFrameClassNames.caption, styles["caption-with-aside"])}>
+    <div
+      className={clsx(
+        leafFrameClassNames.caption,
+        styles["caption-with-aside"],
+        unit && styles["reply-unit"],
+      )}
+      {...unitAttributes}
+    >
       <span>{heading}</span>
       {props.aside}
     </div>

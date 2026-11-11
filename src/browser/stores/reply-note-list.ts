@@ -119,9 +119,6 @@ export function notesOf(
 }
 
 /** 同じ所の未送信の付箋（同じ所には1件までなので、あっても長さ1）。 */
-export function unsentNotesAt(
-  notes: readonly ReplyNote[],
-  key: ReplyTargetKey,
-): readonly ReplyNote[] {
+function unsentNotesAt(notes: readonly ReplyNote[], key: ReplyTargetKey): readonly ReplyNote[] {
   return notes.filter((note) => note.state.kind === "unsent" && sameReplyKey(note.target.key, key))
 }

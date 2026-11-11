@@ -7,7 +7,7 @@ import {
 } from "../../../../../src/browser/features/report/markdown.tsx"
 import { useReplyNotes } from "../../../../../src/browser/stores/reply-note-list.ts"
 import { newLeafHtml, renderDirectLeaf } from "../../../../fixture/direct-leaf-compare.tsx"
-import { clickNthButton, renderNoteLeaf } from "../../../../fixture/reply-note-leaf.tsx"
+import { openRequestAt, renderNoteLeaf } from "../../../../fixture/reply-note-leaf.tsx"
 
 beforeAll(async () => {
   await loadMarkdown()
@@ -54,7 +54,7 @@ describe("Options の部品", () => {
   })
 })
 
-describe("Options の「この案で進める」", () => {
+describe("Options の案を指して頼む", () => {
   const part = {
     id: "o1",
     component: "Options",
@@ -68,38 +68,55 @@ describe("Options の「この案で進める」", () => {
     useReplyNotes.setState(useReplyNotes.getInitialState(), true)
   })
 
-  it("採らなかった案を含む全部の案に出る", () => {
+  /** 案乙を指して頼むの欄を開き、書き始めの字のまま付箋にする。 */
+  function noteSecondOption(): void {
+    const field = openRequestAt("架空の案乙")
+    fireEvent.keyDown(field, { key: "Enter", metaKey: true })
+  }
+
+  it("何も押していないときはボタンが無く、採らなかった案も押すと「聞く・頼む」が1つ出る", () => {
     renderNoteLeaf(part, { port: true })
-    expect(screen.getAllByRole("button", { name: "この案で進める" })).toHaveLength(ITEMS.length)
+    expect(screen.queryAllByRole("button")).toHaveLength(0)
+
+    fireEvent.click(screen.getByText("架空の案丙"))
+
+    expect(screen.getAllByRole("button").map((button) => button.textContent)).toEqual([
+      "聞く・頼む",
+    ])
   })
 
-  it("押すと定型の付箋が1件でき、その案のボタンだけ「付箋にした」に変わり、二度目は増えない", () => {
+  it("頼むに切り替えると欄の書き始めが「この案で進めて。」になり、送ると案を指した付箋が1件でき ask は呼ばれない", () => {
     const { ask } = renderNoteLeaf(part, { port: true })
-    clickNthButton("この案で進める", 1)
+
+    expect(openRequestAt("架空の案乙")).toHaveProperty("value", "この案で進めて。")
+    fireEvent.keyDown(screen.getByRole("textbox"), { key: "Enter", metaKey: true })
 
     const notes = Object.values(useReplyNotes.getState().notesBySession).flat()
     expect(notes).toHaveLength(1)
     expect(notes[0]?.body).toBe("この案で進めて。")
-    expect(notes[0]?.target.label.row).toBe("架空の案乙")
+    expect(notes[0]?.target.label).toEqual({
+      section: "架空の節",
+      component: "架空の題",
+      row: "架空の案乙",
+    })
     expect(notes[0]?.target.key.rowIndex).toBe(1)
-    expect(screen.getAllByRole("button", { name: "この案で進める" })).toHaveLength(3)
-    fireEvent.click(screen.getByRole("button", { name: "付箋にした" }))
-    expect(Object.values(useReplyNotes.getState().notesBySession).flat()).toHaveLength(1)
     expect(ask).not.toHaveBeenCalled()
   })
 
-  it("付箋を外すとボタンが戻る", () => {
+  it("聞くに戻すと書き始めの字を外す", () => {
     renderNoteLeaf(part, { port: true })
-    clickNthButton("この案で進める", 0)
-    fireEvent.click(screen.getByRole("button", { name: "付箋を外す" }))
-    expect(screen.getAllByRole("button", { name: "この案で進める" })).toHaveLength(ITEMS.length)
+    openRequestAt("架空の案乙")
+
+    fireEvent.click(screen.getByRole("radio", { name: "聞く" }))
+
+    expect(screen.getByRole("textbox")).toHaveProperty("value", "")
   })
 
-  it("付箋は欄外注が無い部品でも欄外に札で出て、× で外すとボタンが戻る", () => {
+  it("付箋は欄外注が無い部品でも欄外に札で出て、× で外せる", () => {
     const { container } = renderNoteLeaf(part, { port: true })
     expect(container.querySelector(`.${leafFrameClassNames.gutter}`)).toBeNull()
 
-    clickNthButton("この案で進める", 1)
+    noteSecondOption()
 
     const gutter = container.querySelector(`.${leafFrameClassNames.gutter}`)
     expect(gutter).not.toBeNull()
@@ -112,12 +129,11 @@ describe("Options の「この案で進める」", () => {
     fireEvent.click(screen.getByRole("button", { name: "付箋を外す" }))
 
     expect(container.querySelector(`.${leafFrameClassNames.gutter}`)).toBeNull()
-    expect(screen.getAllByRole("button", { name: "この案で進める" })).toHaveLength(ITEMS.length)
   })
 
   it("送った付箋は欄外に「送った → やり取り n で作業中」と残り、外すボタンは出ない", () => {
     const { container } = renderNoteLeaf(part, { port: true })
-    clickNthButton("この案で進める", 1)
+    noteSecondOption()
     const [note] = Object.entries(useReplyNotes.getState().notesBySession).flatMap(
       ([sessionKey, notes]) => notes.map((candidate) => ({ sessionKey, id: candidate.id })),
     )
@@ -130,11 +146,11 @@ describe("Options の「この案で進める」", () => {
     const card = container.querySelector(`.${leafFrameClassNames.gutterNote}`)
     expect(card?.textContent).toContain("送った → やり取り 3 で作業中")
     expect(screen.queryByRole("button", { name: "付箋を外す" })).toBeNull()
-    expect(screen.getAllByRole("button", { name: "この案で進める" })).toHaveLength(ITEMS.length)
   })
 
-  it("口が無い描画には出ない", () => {
+  it("口が無い描画では押してもボタンが出ない", () => {
     renderNoteLeaf(part, { port: false })
+    fireEvent.click(screen.getByText("架空の案乙"))
     expect(screen.queryAllByRole("button")).toHaveLength(0)
   })
 })

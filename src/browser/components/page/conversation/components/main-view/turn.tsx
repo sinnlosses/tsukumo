@@ -21,15 +21,14 @@ import { Report } from "../../../../../features/report/report.tsx"
 import { useExternalSync } from "../../../../../hooks/use-external-sync.ts"
 import { Text } from "../../../../ui/text/text.tsx"
 import { VStack } from "../../../../ui/v-stack/v-stack.tsx"
-import { useComposerDraft } from "../../stores/composer-draft.ts"
 import { useDraftedReports } from "../../stores/drafted-report.ts"
-import { useAskSend } from "../hooks/use-ask-send.ts"
 import { AsideThread } from "./aside-thread.tsx"
 import { revealStepIdOf } from "./domain/draft-reveal.ts"
 import { REPORT_STEP_ATTRIBUTE } from "./domain/outline-report-head.ts"
 import { arrangeTurn, progressFoldSummary, type ProgressEntry } from "./domain/turn-arrangement.ts"
 import { DraftReport } from "./draft-report.tsx"
 import { ExpandableHead } from "./expandable-head.tsx"
+import { useReplyPort } from "./hooks/use-reply-port.ts"
 import styles from "./main-view.module.css"
 import { QuestionRecord } from "./question-record.tsx"
 import { ReportHead, type ReportLabel } from "./report-head.tsx"
@@ -67,11 +66,10 @@ export function Turn(props: TurnProps): ReactElement {
   const arrangement =
     askSlot.kind === "grouped" ? arrangeTurn(turn, askSlot.remaining) : arrangeTurn(turn)
   const latestStepId = props.newest ? finalStep?.id : undefined
-  const appendParagraphToDraft = useComposerDraft((state) => state.appendParagraphToDraft)
-  const ask = useAskSend()
+  const port = useReplyPort()
 
   return (
-    <ReplyPortContext value={{ kind: "open", port: { appendDraft: appendParagraphToDraft, ask } }}>
+    <ReplyPortContext value={{ kind: "open", port }}>
       <div>
         {turn.droppedCount > 0 && (
           <Text

@@ -46,7 +46,6 @@ import { MiniPortrait } from "./mini-portrait.tsx"
 import { PhaseList } from "./phase-list.tsx"
 import { ReportOutline } from "./report-outline.tsx"
 import { RequestBlock } from "./request-block.tsx"
-import { SelectionAsk } from "./selection-ask.tsx"
 import { TurnCardHead } from "./turn-card-head.tsx"
 import { Turn } from "./turn.tsx"
 import { Welcome } from "./welcome.tsx"
@@ -215,7 +214,6 @@ export function MainView(): ReactElement {
           )}
         </ContentFrame>
         {!viewingPast && <InquiryJumpFloat />}
-        <SelectionAsk />
         {/* 筆先に添うミニ立ち絵。この入れ物の原点を基準に置く（`position: absolute`）ので、書き上げたあと残っているあいだも本文と一緒に転がる。
             出ているやり取りを渡すのは、残った筆先が別のやり取りのものなら引っ込ませるため。 */}
         {cardTurn !== undefined && <MiniPortrait shownTurnId={cardTurn.turn.id} />}

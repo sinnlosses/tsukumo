@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react"
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react"
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest"
 
 import { AskThreadContext } from "../../../../../src/browser/features/report/ask-thread-context.ts"
@@ -100,7 +100,14 @@ function names(container: HTMLElement): readonly string[] {
 function renderAskable(options: { readonly port: boolean; readonly reportToolUseId?: string }) {
   const ask = vi.fn<ReplyPort["ask"]>()
   const slot: ReplyPortSlot = options.port
-    ? { kind: "open", port: { appendDraft: vi.fn<ReplyPort["appendDraft"]>(), ask } }
+    ? {
+        kind: "open",
+        port: {
+          appendDraft: vi.fn<ReplyPort["appendDraft"]>(),
+          prependDraft: vi.fn<ReplyPort["prependDraft"]>(),
+          ask,
+        },
+      }
     : { kind: "none" }
   const body = regionsOf(reportParts(INTERACTIVE, false))
   const view = render(
@@ -119,19 +126,48 @@ function renderAskable(options: { readonly port: boolean; readonly reportToolUse
   return { ask, ...view }
 }
 
-describe("表の行の「聞く」", () => {
-  it("口と report の id があれば本体の行ごとに出て、見出しの行には出ない", () => {
-    const { container } = renderAskable({ port: true, reportToolUseId: "toolu_1" })
+function askButtonCount(): number {
+  return screen.queryAllByRole("button", { name: /聞く|頼む/ }).length
+}
 
-    expect(screen.getAllByRole("button", { name: /について聞く$/ })).toHaveLength(ROWS.length)
-    expect(container.querySelectorAll("thead button[aria-label$='について聞く']")).toHaveLength(0)
-    expect(container.querySelectorAll("thead th")).toHaveLength(4)
+/** 行の1列目の字を押して行を指し、余白の「聞く・頼む」で欄を開く。 */
+function openRow(firstCell: string): void {
+  fireEvent.click(screen.getByText(firstCell))
+  fireEvent.click(screen.getByRole("button", { name: "聞く・頼む" }))
+}
+
+describe("表の行の「聞く・頼む」", () => {
+  it("何も押していないときは「聞く」「頼む」のボタンが無く、行を押すと「聞く・頼む」が1つ出て行に印が付く", () => {
+    const { container } = renderAskable({ port: true, reportToolUseId: "toolu_1" })
+    expect(askButtonCount()).toBe(0)
+    expect(container.querySelectorAll("thead th")).toHaveLength(3)
+
+    fireEvent.click(screen.getByText("あ"))
+
+    expect(askButtonCount()).toBe(1)
+    expect(container.querySelectorAll("tbody tr[data-pointed]")).toHaveLength(1)
+    expect(container.querySelector("tbody tr[data-pointed]")?.firstElementChild?.textContent).toBe(
+      "あ",
+    )
   })
 
-  it("行の「頼む」で頼むの欄が開き、送ると付箋が増えて ask は呼ばれない", () => {
+  it("別の行を押すと指す行が移り、「聞く・頼む」は1つのまま", () => {
+    const { container } = renderAskable({ port: true, reportToolUseId: "toolu_1" })
+
+    fireEvent.click(screen.getByText("あ"))
+    fireEvent.click(screen.getByText("ん"))
+
+    expect(askButtonCount()).toBe(1)
+    expect(container.querySelector("tbody tr[data-pointed]")?.firstElementChild?.textContent).toBe(
+      "ん",
+    )
+  })
+
+  it("行の欄を頼むに切り替えて送ると付箋が増えて ask は呼ばれない", () => {
     const { ask } = renderAskable({ port: true, reportToolUseId: "toolu_1" })
 
-    fireEvent.click(screen.getByRole("button", { name: "あについて頼む" }))
+    openRow("あ")
+    fireEvent.click(screen.getByRole("radio", { name: "頼む" }))
     const field = screen.getByRole("textbox")
     fireEvent.change(field, { target: { value: "この行を直して" } })
     fireEvent.keyDown(field, { key: "Enter", metaKey: true })
@@ -147,20 +183,22 @@ describe("表の行の「聞く」", () => {
     useReplyNotes.setState(useReplyNotes.getInitialState(), true)
   })
 
-  it("口が無いか、report の id が無ければ出ない", () => {
+  it("口が無いか、report の id が無ければ行を押しても出ない", () => {
     renderAskable({ port: false, reportToolUseId: "toolu_1" })
-    expect(screen.queryAllByRole("button", { name: /聞く/ })).toHaveLength(0)
+    fireEvent.click(screen.getByText("あ"))
+    expect(askButtonCount()).toBe(0)
     cleanup()
 
     renderAskable({ port: true })
-    expect(screen.queryAllByRole("button", { name: /聞く/ })).toHaveLength(0)
+    fireEvent.click(screen.getByText("あ"))
+    expect(askButtonCount()).toBe(0)
   })
 
   it("並べ替えたあとの行を押しても、行の添字は書いた並びのまま届き、1列目の字が label.row に入る", () => {
     const { ask } = renderAskable({ port: true, reportToolUseId: "toolu_1" })
 
     fireEvent.click(screen.getByRole("button", { name: /架空の数/ }))
-    fireEvent.click(screen.getByRole("button", { name: "あについて聞く" }))
+    openRow("あ")
     const field = screen.getByRole("textbox")
     fireEvent.change(field, { target: { value: "なぜ？" } })
     fireEvent.keyDown(field, { key: "Enter", metaKey: true })
@@ -177,9 +215,9 @@ describe("表の行の「聞く」", () => {
   it("入力欄は表の中で1つだけ開く（部品全体の欄と行の欄が取り合う）", () => {
     renderAskable({ port: true, reportToolUseId: "toolu_1" })
 
-    fireEvent.click(screen.getByRole("button", { name: "聞く" }))
+    openRow("架空の表")
     expect(screen.getAllByRole("textbox")).toHaveLength(1)
-    fireEvent.click(screen.getByRole("button", { name: "ぼについて聞く" }))
+    openRow("ぼ")
 
     expect(screen.getAllByRole("textbox")).toHaveLength(1)
     expect(screen.getByText(/指した所: .* › ぼ$/)).toBeTruthy()
@@ -188,13 +226,58 @@ describe("表の行の「聞く」", () => {
   it("行の欄は表の下に開き、表は割れず、指した行に印が付く", () => {
     const { container } = renderAskable({ port: true, reportToolUseId: "toolu_1" })
 
-    fireEvent.click(screen.getByRole("button", { name: "ぼについて聞く" }))
+    openRow("ぼ")
 
     const field = screen.getByRole("textbox")
     const table = container.querySelector("table")
     expect(table?.contains(field)).toBe(false)
     expect(table?.compareDocumentPosition(field)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
     expect(container.querySelectorAll("tbody tr[class*='ask-row-active']")).toHaveLength(1)
+  })
+})
+
+describe("表の行をキーボードで指して開く", () => {
+  function focused(): Element {
+    if (document.activeElement === null) throw new Error("フォーカスが無い")
+    return document.activeElement
+  }
+
+  it("Tab の止まり場は表で1つ（題の行）で、↓ で次の行へ動くと行を指して「聞く・頼む」が出る", () => {
+    const { container } = renderAskable({ port: true, reportToolUseId: "toolu_1" })
+    const stops = container.querySelectorAll<HTMLElement>("[data-reply-unit][tabindex='0']")
+    expect(stops).toHaveLength(1)
+    expect(stops[0]?.textContent).toContain("架空の表")
+    expect(container.querySelectorAll("tbody tr[tabindex='-1']")).toHaveLength(ROWS.length)
+
+    act(() => {
+      stops[0]?.focus()
+    })
+    fireEvent.keyDown(focused(), { key: "ArrowDown" })
+
+    expect(focused().firstElementChild?.textContent).toBe("ぼ")
+    expect(focused().getAttribute("data-pointed")).toBe("")
+    expect(focused().getAttribute("tabindex")).toBe("0")
+    expect(container.querySelectorAll("[data-reply-unit][tabindex='0']")).toHaveLength(1)
+    expect(askButtonCount()).toBe(1)
+  })
+
+  it("Enter で欄が開き、Esc で閉じてフォーカスが行へ戻り、⌘⌥M でも開く", () => {
+    const { container } = renderAskable({ port: true, reportToolUseId: "toolu_1" })
+    const row = container.querySelector<HTMLElement>("tbody tr[data-reply-row='1']")
+    if (row === null) throw new Error("行が無い")
+
+    act(() => {
+      row.focus()
+    })
+    fireEvent.keyDown(row, { key: "Enter" })
+    expect(screen.getByText(/指した所: .* › あ$/)).toBeTruthy()
+
+    fireEvent.keyDown(screen.getByRole("textbox"), { key: "Escape" })
+    expect(screen.queryByRole("textbox")).toBeNull()
+    expect(focused()).toBe(row)
+
+    fireEvent.keyDown(row, { key: "µ", code: "KeyM", metaKey: true, altKey: true })
+    expect(screen.getByRole("textbox")).toBeTruthy()
   })
 })
 
@@ -216,7 +299,11 @@ describe("表の行に聞いた印", () => {
       <ReplyPortContext
         value={{
           kind: "open",
-          port: { appendDraft: vi.fn<ReplyPort["appendDraft"]>(), ask: vi.fn<ReplyPort["ask"]>() },
+          port: {
+            appendDraft: vi.fn<ReplyPort["appendDraft"]>(),
+            prependDraft: vi.fn<ReplyPort["prependDraft"]>(),
+            ask: vi.fn<ReplyPort["ask"]>(),
+          },
         }}
       >
         <AskThreadContext

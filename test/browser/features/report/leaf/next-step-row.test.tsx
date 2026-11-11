@@ -37,6 +37,7 @@ const ORIGIN = { sessionRemaining: { kind: "none" }, outcome: "stopped" } as con
 function renderRow(withPort: boolean) {
   const port = {
     appendDraft: useComposerDraft.getState().appendParagraphToDraft,
+    prependDraft: useComposerDraft.getState().prependToDraft,
     ask: () => undefined,
   }
   return render(

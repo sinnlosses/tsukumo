@@ -12,6 +12,7 @@ import { isBlankText } from "../../../../shared/utils/blank-text.ts"
 import { useReportReveal } from "../../../domain/reveal/use-report-reveal.ts"
 import { splitReportBlocks } from "../domain/block-split.ts"
 import { detailBlockClassName, Markdown } from "../markdown.tsx"
+import { ReplyPointScope } from "../reply-point.tsx"
 
 type ReportFrameProps = {
   /** 書き上げていくように見せるか。見るのはマウントした時点の値だけ。 */
@@ -30,7 +31,7 @@ type ReportFrameProps = {
 
 const RevealingContext = createContext(false)
 
-/** 本文の根（`data-report-body`）。書き上げの演出の最中かを子へ配る。 */
+/** 本文の根（`data-report-body`）。書き上げの演出の最中かと、指している単位を子へ配る。 */
 export function ReportFrame(props: ReportFrameProps): ReactElement {
   const { rootRef, revealing } = useReportReveal(
     props.reveal,
@@ -48,7 +49,9 @@ export function ReportFrame(props: ReportFrameProps): ReactElement {
       ref={rootRef}
       data-report-body=""
     >
-      <RevealingContext value={revealing}>{props.children}</RevealingContext>
+      <RevealingContext value={revealing}>
+        <ReplyPointScope rootRef={rootRef}>{props.children}</ReplyPointScope>
+      </RevealingContext>
     </div>
   )
 }

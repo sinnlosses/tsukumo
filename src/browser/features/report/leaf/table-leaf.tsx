@@ -133,7 +133,7 @@ export function TableFigure(props: {
   )
 }
 
-/** 外枠の中で「聞く」の口を読み、行ごとのボタンを付けた表を描く。 */
+/** 外枠の中で単位の口を読み、行を指せる単位にした表を描く。 */
 function TableGrid(
   props: Omit<ComponentProps<typeof LeafTable>, "rows"> & {
     readonly part: TablePart
@@ -308,17 +308,14 @@ function bodyRows(
       {
         key: String(index),
         depth: tableRowDepth(row),
-        ask:
+        unit:
           rowAsk.kind === "none"
             ? undefined
             : {
+                index,
                 label: firstCell,
-                onAsk: () => {
-                  rowAsk.openRow(index, firstCell)
-                },
-                onNote: () => {
-                  rowAsk.openRowNote(index, firstCell)
-                },
+                pointed: rowAsk.isPointed(index),
+                tabIndex: rowAsk.tabIndexOf(index),
                 active: rowAsk.isOpen(index),
                 asked: rowAsk.isAsked(index),
               },

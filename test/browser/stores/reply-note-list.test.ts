@@ -1,10 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest"
 
-import {
-  notesOf,
-  unsentNotesAt,
-  useReplyNotes,
-} from "../../../src/browser/stores/reply-note-list.ts"
+import { notesOf, useReplyNotes } from "../../../src/browser/stores/reply-note-list.ts"
 import type { ReplyTarget } from "../../../src/shared/session/reply-target.ts"
 
 function targetAt(rowIndex: number): ReplyTarget {
@@ -108,12 +104,5 @@ describe("useReplyNotes", () => {
       { kind: "unsent" },
     ])
     expect(notesIn("s1")[1]?.id).toBe(b.id)
-  })
-
-  it("unsentNotesAt は送信済みの付箋を含めない", () => {
-    const note = useReplyNotes.getState().addNote("s1", targetAt(0), "a")
-    expect(unsentNotesAt(notesIn("s1"), note.target.key)).toEqual([note])
-    const sent = { ...note, state: { kind: "sent", turn: 1 } as const }
-    expect(unsentNotesAt([sent], note.target.key)).toEqual([])
   })
 })

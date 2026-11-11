@@ -5,8 +5,15 @@ const REPORT_BODY_ATTRIBUTE = "data-report-body"
 
 export type ReportSelection = {
   readonly text: string
-  /** 選択の最後の行の左端と下端（ビューポートの座標）。 */
-  readonly anchor: { readonly left: number; readonly bottom: number }
+  /** 選んだ範囲を含むいちばん内側の要素。 */
+  readonly element: Element
+  /** 選択の最後の行の矩形（ビューポートの座標）。 */
+  readonly anchor: {
+    readonly left: number
+    readonly right: number
+    readonly top: number
+    readonly bottom: number
+  }
 }
 
 /** 折りたたまれておらず、空白だけでもなく、全体がレポートの本文の中にある選択だけを返す。 */
@@ -17,7 +24,7 @@ export function reportSelectionOf(selection?: Selection): ReportSelection | unde
   const range = selection.getRangeAt(0)
   const container = range.commonAncestorContainer
   const element = container instanceof Element ? container : container.parentElement
-  if ((element?.closest(`[${REPORT_BODY_ATTRIBUTE}]`) ?? undefined) === undefined) {
+  if (element === null || element.closest(`[${REPORT_BODY_ATTRIBUTE}]`) === null) {
     return undefined
   }
   const text = selection.toString()
@@ -28,5 +35,9 @@ export function reportSelectionOf(selection?: Selection): ReportSelection | unde
   if (last === undefined) {
     return undefined
   }
-  return { text, anchor: { left: last.left, bottom: last.bottom } }
+  return {
+    text,
+    element,
+    anchor: { left: last.left, right: last.right, top: last.top, bottom: last.bottom },
+  }
 }

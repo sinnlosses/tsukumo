@@ -53,7 +53,9 @@ test.describe("report → メインビュー", () => {
     await room.settleAndMatchPicked(ELAPSED_MS)
   })
 
-  test("表の行の「聞く」を押すとその場の入力欄が開き、Esc で閉じる", async ({ run }) => {
+  test("表の行を押すと余白に「聞く・頼む」が1つ出て、押すとその場の入力欄が開き、Esc で閉じる", async ({
+    run,
+  }) => {
     const room = await run.open({
       scenario: "a2ui-interactive",
       scene: "a2ui-interactive-sample",
@@ -63,8 +65,10 @@ test.describe("report → メインビュー", () => {
 
     await room.waitForEvent("turn-finished")
     const row = room.page.locator("[data-report-body] tbody tr").first()
-    await row.hover()
-    await row.getByRole("button", { name: /について聞く$/ }).click()
+    await row.click()
+    const port = room.page.getByRole("button", { name: "聞く・頼む" })
+    await expect(port).toHaveCount(1)
+    await port.click()
     const field = room.page.getByRole("textbox", { name: /指した所/ })
     await expect(field).toBeFocused()
     await expect(room.page.getByText("答えはこの下に返る。作業は始めない")).toBeVisible()
@@ -230,28 +234,32 @@ test.describe("report → メインビュー", () => {
       .toBe("TEXTAREA")
   })
 
-  test("レポートの本文の字を選ぶと口が出て、押すと入力欄の頭に引用が入ってフォーカスが移る", async ({
+  test("部品の外の字（頭の欄）を選ぶと「聞く・頼む」が出て、押すと入力欄の頭に引用が入ってフォーカスが移る", async ({
     run,
   }) => {
     const room = await run.open({
-      scenario: "report-selection-ask",
-      scene: "notation",
+      scenario: "report-selection-point",
+      scene: "report-reply-margin",
       viewport: "wide",
       domRoots: ["main"],
     })
 
     await room.waitForEvent("turn-finished")
-    const paragraph = room.page.locator("[data-report-body] p").filter({ visible: true }).first()
-    await paragraph.waitFor()
-    await paragraph.click({ clickCount: 3 })
+    const conclusion = room.page
+      .locator("[data-report-body]")
+      .getByText(/^架空の結論/)
+      .filter({ visible: true })
+      .first()
+    await conclusion.waitFor()
+    await conclusion.click({ clickCount: 3 })
 
-    const ask = room.page.getByRole("button", { name: "引いて聞く" })
+    const ask = room.page.getByRole("button", { name: "聞く・頼む" })
     await ask.waitFor()
     await ask.click()
 
     const textArea = room.page.locator("textarea")
-    await textArea.waitFor()
-    await expect.poll(() => textArea.inputValue()).toMatch(/^> .+\n\n$/)
+    await expect(textArea).toHaveCount(1)
+    await expect.poll(() => textArea.inputValue()).toMatch(/^> 架空の結論.*\n\n$/)
     await expect
       .poll(() => room.page.evaluate(() => document.activeElement?.tagName))
       .toBe("TEXTAREA")

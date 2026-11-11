@@ -9,6 +9,8 @@ export type ReplyPort = {
   readonly ask: (target: ReplyTarget, text: string) => void
   /** 入力欄の後ろへ空行を挟んで下書きを足し、入力欄へフォーカスを送る。送りはしない。 */
   readonly appendDraft: (text: string) => void
+  /** 入力欄の頭へ空行を挟んで引用を入れ、入力欄へフォーカスを送る。送りはしない。 */
+  readonly prependDraft: (text: string) => void
 }
 
 /** 口が渡されていない描画は `none`。次の一手の行は出さない。 */

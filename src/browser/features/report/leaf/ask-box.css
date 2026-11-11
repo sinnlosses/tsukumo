@@ -1,51 +1,116 @@
-/* 内容部品の「聞く」「頼む」と、部品の下に開くその場の入力欄。ボタンは重ねたとき・フォーカスしたときだけ見える。 */
+/* 内容部品の指せる単位と余白の「聞く・頼む」と、部品の下に開くその場の入力欄。
+   余白（248px、本文との間 24px）は、本文の容器から引いても本文が 30em 以上残るときだけ右の列に出す。
+   出さない幅では、余白の口を外枠の右端に重ね、指した単位の右に出す。 */
 .ask-frame {
+  --reply-margin-width: 248px;
+  --reply-margin-gap: 24px;
   position: relative;
+}
+.ask-main,
+.ask-body {
   display: flex;
   flex-direction: column;
   gap: var(--stack-block);
+  min-width: 0;
 }
-.ask-buttons {
-  display: inline-flex;
-  gap: var(--inline-control);
-  clip-path: inset(50%);
-}
-.ask-frame:hover .ask-buttons,
-.ask-buttons:focus-within {
-  clip-path: none;
-}
-@media (hover: none) {
-  .ask-buttons {
-    clip-path: none;
-  }
-}
-/* 部品の上の自前の行。題の行が無い部品と、題の行が畳みの中に隠れる部品が使う。 */
-.ask-bar {
-  display: flex;
-  justify-content: flex-end;
-}
-.ask-button {
-  min-height: 1.5rem;
+.reply-port {
+  position: absolute;
+  top: var(--reply-unit-top);
+  width: max-content;
+  min-height: 1.75rem;
   padding: var(--inset-control);
   border-radius: var(--radius-pill);
-}
-/* 表の行の右端の「聞く」。重ねた行・フォーカスした行にだけ見える。 */
-.ask-row-cell {
-  text-align: right;
   white-space: nowrap;
 }
-.ask-row-slot {
-  display: inline-block;
-  clip-path: inset(50%);
+/* 単位の外で選んだ字の横に出す口。ビューポートの座標で置くので fixed。 */
+.selection-port {
+  position: fixed;
+  z-index: 3;
+  display: flex;
+  border-radius: var(--radius-pill);
+  background: var(--surface);
 }
-tr:hover .ask-row-slot,
-tr:focus-within .ask-row-slot {
-  clip-path: none;
+.selection-port-button {
+  min-height: 1.75rem;
+  padding: var(--inset-control);
+  border-radius: var(--radius-pill);
+  white-space: nowrap;
 }
-@media (hover: none) {
-  .ask-row-slot {
-    clip-path: none;
+.reply-hint {
+  margin: 0;
+  padding: var(--inset-control);
+  border: 1px dashed var(--rule-soft);
+  border-radius: var(--radius-lg);
+  color: var(--ink-quiet);
+  font-size: var(--font-secondary);
+}
+@container report-body (min-width: calc(30em + 248px + 24px)) {
+  .ask-frame {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) var(--reply-margin-width);
+    column-gap: var(--reply-margin-gap);
   }
+  .ask-main {
+    container: report-gutter / inline-size;
+  }
+  .ask-margin {
+    position: relative;
+    inset: auto;
+    width: auto;
+  }
+  .reply-port {
+    left: 0;
+    right: auto;
+  }
+  .reply-hint {
+    display: block;
+    position: absolute;
+    top: var(--reply-hint-top);
+    left: 0;
+    right: 0;
+  }
+}
+@container report-body (max-width: calc(30em + 248px + 24px - 0.02px)) {
+  .ask-frame {
+    display: block;
+    grid-template-columns: none;
+    column-gap: 0;
+  }
+  .ask-main {
+    container: none;
+  }
+  /* 高さを持たない重ねの列。幅は口の字が折れない分だけ取る。 */
+  .ask-margin {
+    position: absolute;
+    inset: 0 0 auto auto;
+    width: var(--reply-margin-width);
+  }
+  .reply-port {
+    left: auto;
+    right: 0;
+  }
+  .reply-hint {
+    display: none;
+    position: static;
+    top: auto;
+    left: auto;
+    right: auto;
+  }
+}
+/* 押すと指せる単位。指した単位は左端に差し色の線を引き、地を差し色で染める。 */
+.reply-unit {
+  cursor: pointer;
+}
+.ask-frame [data-pointed]:not(tr) {
+  background: var(--surface-accent);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+.ask-frame tr[data-pointed] > td {
+  background: var(--surface-accent);
+}
+.ask-frame tr[data-pointed] > td:first-child {
+  padding-left: var(--inline-control);
+  box-shadow: inset 3px 0 0 var(--accent);
 }
 /* 入力欄を開いている行は地を変えて目立たせる。 */
 .ask-row-active > td {
@@ -90,10 +155,6 @@ tr:focus-within .ask-row-slot {
   flex-wrap: wrap;
   align-items: center;
   gap: var(--inline-control);
-}
-.ask-row-button {
-  min-height: 1.5rem;
-  padding: var(--inset-control);
 }
 .ask-box {
   display: flex;

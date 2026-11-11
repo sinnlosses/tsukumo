@@ -8,8 +8,8 @@ import type { LeafValue } from "../../../../shared/report/report-leaf-value.ts"
 import { Badge } from "../../../components/ui/badge/badge.tsx"
 import { optionNoteBody } from "../domain/reply-note.ts"
 import { InlineCodeText, InlineMarkdown, noteLeafClassNames } from "../markdown.tsx"
+import { ReplyUnitRow } from "./ask-frame.tsx"
 import styles from "./leaf.module.css"
-import { ReplyNoteButton } from "./reply-note-button.tsx"
 import { LeafFold, ReportLeafFrame } from "./report-leaf-frame.tsx"
 
 type OptionsPart = Extract<A2uiReportComponent, { readonly component: "Options" }>
@@ -43,7 +43,7 @@ export function OptionsLeaf(props: {
     return <></>
   }
   return (
-    <ReportLeafFrame value={value} title="" fit={false}>
+    <ReportLeafFrame value={value} title={part.title} fit={false}>
       <LeafFold fold={part.fold} empty={false}>
         {part.title.trim() !== "" && (
           <p>
@@ -54,12 +54,7 @@ export function OptionsLeaf(props: {
         )}
         <div className={noteLeafClassNames.options}>
           {part.items.map((item, index) => (
-            <OptionRow
-              key={`${String(index)}:${item.name}`}
-              item={item}
-              index={index}
-              title={part.title}
-            />
+            <OptionRow key={`${String(index)}:${item.name}`} item={item} index={index} />
           ))}
         </div>
       </LeafFold>
@@ -67,15 +62,16 @@ export function OptionsLeaf(props: {
   )
 }
 
-function OptionRow(props: {
-  readonly item: Option
-  readonly index: number
-  readonly title: string
-}): ReactElement {
+function OptionRow(props: { readonly item: Option; readonly index: number }): ReactElement {
   const { name, verdict, reason } = props.item
   const { className, mark, label, tone } = VERDICTS[verdict]
   return (
-    <div className={clsx(noteLeafClassNames.option, className)}>
+    <ReplyUnitRow
+      index={props.index}
+      label={name}
+      requestText={optionNoteBody()}
+      className={clsx(noteLeafClassNames.option, className)}
+    >
       <span>
         <Badge tone={tone} shape="square" className={styles["verdict-badge"]}>
           <span aria-hidden="true">{mark}</span>
@@ -94,13 +90,7 @@ function OptionRow(props: {
             </span>
           </>
         )}
-        <ReplyNoteButton
-          title={props.title}
-          row={{ index: props.index, firstCell: name }}
-          label="この案で進める"
-          body={optionNoteBody()}
-        />
       </span>
-    </div>
+    </ReplyUnitRow>
   )
 }
