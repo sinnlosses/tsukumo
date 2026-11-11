@@ -1,4 +1,4 @@
-import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { ScreenNav } from "../../../../../src/browser/components/frame/screen-nav/screen-nav.tsx"
@@ -126,6 +126,7 @@ describe("設定の歯車（帯の右端）", () => {
 
     expect(settingsDialog()).toBeNull()
 
+    gear().focus()
     fireEvent.click(gear())
 
     expect(settingsDialog()).not.toBeNull()
@@ -138,25 +139,24 @@ describe("設定の歯車（帯の右端）", () => {
 
   it("背景（`<dialog>` 自身）を押すと閉じ、歯車へフォーカスが戻る", () => {
     renderScreenNav()
+    gear().focus()
     fireEvent.click(gear())
 
-    fireEvent.click(openedSettingsDialog())
+    const dialog = openedSettingsDialog()
+    fireEvent.pointerDown(dialog)
+    fireEvent.pointerUp(dialog)
+    fireEvent.click(dialog)
 
     expect(settingsDialog()).toBeNull()
     expect(document.activeElement).toBe(gear())
   })
 
-  // Esc で `<dialog>` を閉じるのはブラウザなので、閉じたあとに届く `close` から先を見る。
-  it("`<dialog>` が閉じると（Esc）歯車へフォーカスが戻る", () => {
+  it("Esc で閉じて歯車へフォーカスが戻る", () => {
     renderScreenNav()
+    gear().focus()
     fireEvent.click(gear())
-    const dialog = openedSettingsDialog()
 
-    act(() => {
-      if (dialog instanceof window.HTMLDialogElement) {
-        dialog.close()
-      }
-    })
+    fireEvent.keyDown(document, { key: "Escape" })
 
     expect(settingsDialog()).toBeNull()
     expect(document.activeElement).toBe(gear())

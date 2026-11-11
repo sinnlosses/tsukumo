@@ -138,6 +138,7 @@ describe("いまの作業（押すと開く依頼の手順の一覧）。語・�
       useNavDrawer.getState().close()
     })
 
+    steps.focus()
     fireEvent.click(steps)
     expect(document.querySelectorAll(".current-work-list")).toHaveLength(1)
 

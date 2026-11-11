@@ -32,14 +32,6 @@ function dialogIsOpen(): boolean {
   return document.querySelector("dialog.character-create-dialog")?.hasAttribute("open") === true
 }
 
-function dialog(): Element {
-  const found = document.querySelector("dialog.character-create-dialog")
-  if (found === null) {
-    throw new Error("ダイアログが描かれていない")
-  }
-  return found
-}
-
 function submitButton(): HTMLButtonElement {
   return typedElement(screen.getByRole("button", { name: "作る" }), HTMLButtonElement, "作るボタン")
 }
@@ -379,9 +371,7 @@ describe("CharacterCreate", () => {
       }),
     )
 
-    // happy-dom はキーの既定の動作を持たないので、その結果の close を直接起こす
-    //
-    fireEvent(dialog(), new Event("close"))
+    fireEvent.keyDown(document, { key: "Escape" })
 
     expect(closed).toEqual(["closed"])
   })

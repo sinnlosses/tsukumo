@@ -312,7 +312,7 @@ describe("Markdown（image の塊の画像）", () => {
         expect(pairPressed(dialog, "前")).toBe("false")
         expect(dialog.textContent).toContain("図 1")
         expect(dialog.textContent).toContain("架空の前後")
-        expect(document.querySelector("dialog.image-zoom")).toBeNull()
+        expect(document.querySelector("dialog[aria-label='画像の拡大']")).toBeNull()
       })
 
       it("前の画像を押すと前から開く", () => {
@@ -358,7 +358,7 @@ describe("Markdown（image の塊の画像）", () => {
 
         fireEvent.click(typedElement(zoomButtons(container)[0] ?? null, HTMLElement, "読めた画像"))
 
-        expect(document.querySelector("dialog.image-zoom")).not.toBeNull()
+        expect(document.querySelector("dialog[aria-label='画像の拡大']")).not.toBeNull()
         expect(document.querySelector("dialog.compare-zoom")).toBeNull()
       })
     })
@@ -414,7 +414,7 @@ describe("Markdown（image の塊の画像）", () => {
 
       fireEvent.click(zoomButton(container))
 
-      const dialog = document.querySelector("dialog.image-zoom")
+      const dialog = document.querySelector("dialog[aria-label='画像の拡大']")
       expect(dialog?.hasAttribute("open")).toBe(true)
       expect(dialog?.querySelector("img")?.getAttribute("src")).toBe(small.getAttribute("src"))
     })
@@ -424,14 +424,13 @@ describe("Markdown（image の塊の画像）", () => {
       fireEvent.click(zoomButton(container))
 
       const close = typedElement(
-        document.querySelector("dialog.image-zoom button:last-of-type"),
+        document.querySelector("dialog[aria-label='画像の拡大'] button[aria-label='Close']"),
         HTMLButtonElement,
         "閉じるボタン",
       )
-      expect(close.textContent).toBe("閉じる")
       fireEvent.click(close)
 
-      expect(document.querySelector("dialog.image-zoom")).toBeNull()
+      expect(document.querySelector("dialog[aria-label='画像の拡大']")).toBeNull()
     })
 
     it("読めなかった画像には拡大の入口が出ない", () => {
@@ -484,17 +483,17 @@ describe("Svg の部品の拡大", () => {
 
     fireEvent.click(figure)
 
-    const dialog = document.querySelector("dialog.image-zoom")
+    const dialog = document.querySelector("dialog[aria-label='画像の拡大']")
     expect(dialog?.querySelector("img")?.getAttribute("src")).toContain("data:image/svg+xml")
 
     fireEvent.click(
       typedElement(
-        document.querySelector("dialog.image-zoom button:last-of-type"),
+        document.querySelector("dialog[aria-label='画像の拡大'] button[aria-label='Close']"),
         HTMLButtonElement,
         "閉じるボタン",
       ),
     )
-    expect(document.querySelector("dialog.image-zoom")).toBeNull()
+    expect(document.querySelector("dialog[aria-label='画像の拡大']")).toBeNull()
   })
 
   it("Enter でも開く", () => {
@@ -507,6 +506,6 @@ describe("Svg の部品の拡大", () => {
 
     fireEvent.keyDown(figure, { key: "Enter" })
 
-    expect(document.querySelector("dialog.image-zoom")).not.toBeNull()
+    expect(document.querySelector("dialog[aria-label='画像の拡大']")).not.toBeNull()
   })
 })

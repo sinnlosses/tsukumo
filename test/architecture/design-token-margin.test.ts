@@ -115,8 +115,6 @@ const MARGIN_DECLARATION_LIMITS: Readonly<Record<string, number>> = {
   "browser/components/page/token-usage/components/tool-usage-card/tool-usage-card.module.css": 1,
   "browser/components/page/token-usage/components/usage-review-card/usage-review-card.module.css": 2,
   "browser/components/page/token-usage/token-usage.module.css": 1,
-  "browser/components/ui/image-zoom/image-zoom.module.css": 1,
-  "browser/components/ui/menu/menu.module.css": 2,
   "browser/components/ui/visually-hidden/visually-hidden.module.css": 1,
   "browser/features/current-work/current-work-background.module.css": 2,
   "browser/features/current-work/current-work-list.module.css": 9,

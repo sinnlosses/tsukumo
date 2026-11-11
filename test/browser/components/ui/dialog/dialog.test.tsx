@@ -53,16 +53,18 @@ describe("Dialog", () => {
     expect(dialog.hasAttribute("open")).toBe(true)
   })
 
-  it("Esc（<dialog> の close イベント）で onClose を呼ぶ", () => {
+  it("Esc で onClose を呼ぶ", () => {
     const onClose = vi.fn<() => void>()
-    const dialog = renderDialog({ ...BASE_PROPS, onClose })
-    fireEvent(dialog, new Event("close"))
+    renderDialog({ ...BASE_PROPS, onClose })
+    fireEvent.keyDown(document, { key: "Escape" })
     expect(onClose).toHaveBeenCalledTimes(1)
   })
 
   it("外側（backdrop）のクリックで onClose を呼ぶ", () => {
     const onClose = vi.fn<() => void>()
     const dialog = renderDialog({ ...BASE_PROPS, onClose })
+    fireEvent.pointerDown(dialog)
+    fireEvent.pointerUp(dialog)
     fireEvent.click(dialog)
     expect(onClose).toHaveBeenCalledTimes(1)
   })
@@ -76,11 +78,6 @@ describe("Dialog", () => {
     }
     fireEvent.click(button)
     expect(onClose).not.toHaveBeenCalled()
-  })
-
-  it("backdrop は対応表の class を付ける", () => {
-    const dialog = renderDialog({ ...BASE_PROPS, backdrop: "deep" })
-    expect(dialog.className.split(" ")).toContain("dialog-backdrop-deep")
   })
 
   it('placement: "at" は top/left を inline style に置く', () => {

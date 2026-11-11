@@ -39,3 +39,9 @@ declare module '@astryxdesign/core/Badge' {
     'accent': true;
   }
 }
+
+declare module '@astryxdesign/core/Dialog' {
+  interface DialogVariantMap {
+    'clear': true;
+  }
+}

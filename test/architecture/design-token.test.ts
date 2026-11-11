@@ -183,7 +183,6 @@ const EXCLUDED_DECLARATION_COUNTS: Readonly<Record<string, number>> = {
   "browser/components/page/conversation/components/main-view/turn-card/work-strip.css": 1,
   "browser/components/page/token-usage/components/period-choice-list/period-choice-list.module.css": 1,
   "browser/components/page/token-usage/components/period-usage-card/period-usage-card.module.css": 1,
-  "browser/components/ui/bottom-sheet/bottom-sheet.module.css": 1,
   "browser/features/report/renderer/report-notation-prose.css": 1,
   "browser/features/task-board/components/task-detail.module.css": 1,
   "browser/features/task-board/task-board.module.css": 2,

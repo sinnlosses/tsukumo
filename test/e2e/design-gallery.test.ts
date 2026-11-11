@@ -33,4 +33,48 @@ test.describe("見本帳", () => {
     )
     expect(await page.locator("[data-catalog-part] [data-report-body]").count()).toBe(galleryCount)
   })
+
+  test("Menu は Enter で選んでも Esc でも、もう一度ボタンを押しても閉じ、焦点がボタンへ戻る", async ({
+    run,
+  }) => {
+    const room = await run.open({
+      scenario: "design-gallery",
+      scene: "report-blocks",
+      viewport: "wide",
+      domRoots: [],
+    })
+    await room.waitForEvent("turn-finished")
+    const { page } = room
+    await page.evaluate(() => {
+      window.location.hash = "#design"
+    })
+
+    const trigger = page.getByRole("button", { name: "見本のメニュー" })
+    await trigger.waitFor()
+    const row = page.getByRole("menuitem", { name: "操作その1" })
+    const focusIsOnTrigger = (): Promise<boolean> =>
+      trigger.evaluate((element) => element === document.activeElement)
+
+    await trigger.click()
+    await row.waitFor()
+    expect(await trigger.getAttribute("aria-expanded")).toBe("true")
+    await row.focus()
+    await page.keyboard.press("Enter")
+    await row.waitFor({ state: "hidden" })
+    expect(await trigger.getAttribute("aria-expanded")).toBe("false")
+    expect(await focusIsOnTrigger()).toBe(true)
+
+    await trigger.click()
+    await row.waitFor()
+    await page.keyboard.press("Escape")
+    await row.waitFor({ state: "hidden" })
+    expect(await trigger.getAttribute("aria-expanded")).toBe("false")
+    expect(await focusIsOnTrigger()).toBe(true)
+
+    await trigger.click()
+    await row.waitFor()
+    await trigger.click()
+    await row.waitFor({ state: "hidden" })
+    expect(await trigger.getAttribute("aria-expanded")).toBe("false")
+  })
 })

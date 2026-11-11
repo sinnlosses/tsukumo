@@ -99,13 +99,13 @@ describe("設定のダイアログの「ワークフロー」の面（スキル�
     expect(
       within(firstMenu)
         .getAllByRole("menuitem")
-        .map((item) => [item.textContent, item.getAttribute("aria-disabled")]),
+        .map((item) => [item.textContent, item.getAttribute("aria-disabled") === "true"]),
     ).toEqual([
-      ["いちばん上へ", "true"],
-      ["ひとつ上へ", "true"],
-      ["ひとつ下へ", "false"],
-      ["いちばん下へ", "false"],
-      ["並びから外す", "false"],
+      ["いちばん上へ", true],
+      ["ひとつ上へ", true],
+      ["ひとつ下へ", false],
+      ["いちばん下へ", false],
+      ["並びから外す", false],
     ])
     fireEvent.click(within(firstMenu).getByRole("menuitem", { name: "ひとつ上へ" }))
     fireEvent.keyDown(firstMenu, { key: "Escape" })

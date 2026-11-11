@@ -121,14 +121,10 @@ describe("DiaryBook", () => {
     expect(calls).toBe(1)
   })
 
-  it("Esc（<dialog> の close イベント）でも onClose が呼ばれる", () => {
+  it("Esc でも onClose が呼ばれる", () => {
     let calls = 0
     renderBook(openModel({ onClose: () => (calls += 1) }))
-    const dialog = document.querySelector("dialog")
-    if (dialog === null) {
-      throw new Error("<dialog> が無い")
-    }
-    fireEvent(dialog, new Event("close"))
+    fireEvent.keyDown(document, { key: "Escape" })
     expect(calls).toBe(1)
   })
 

@@ -351,7 +351,7 @@ describe("MermaidBlock の拡大", () => {
     expect(pre?.getAttribute("role")).toBe("button")
 
     fireEvent.click(pre ?? view.container)
-    expect(document.querySelector("dialog.image-zoom")).toBeNull()
+    expect(document.querySelector("dialog[aria-label='画像の拡大']")).toBeNull()
 
     await finishLoading()
     await waitFor(() => {
@@ -359,9 +359,9 @@ describe("MermaidBlock の拡大", () => {
     })
     fireEvent.click(pre ?? view.container)
 
-    expect(document.querySelector("dialog.image-zoom img")?.getAttribute("src")).toContain(
-      "data:image/svg+xml",
-    )
+    expect(
+      document.querySelector("dialog[aria-label='画像の拡大'] img")?.getAttribute("src"),
+    ).toContain("data:image/svg+xml")
   })
 })
 

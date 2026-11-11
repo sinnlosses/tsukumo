@@ -127,11 +127,7 @@ describe("CompareZoom", () => {
     fireEvent.click(screen.getByRole("button", { name: "閉じる" }))
     expect(onClose).toHaveBeenCalledTimes(1)
 
-    const dialog = document.querySelector("dialog")
-    if (dialog === null) {
-      throw new Error("<dialog> が無い")
-    }
-    fireEvent(dialog, new Event("close"))
+    fireEvent.keyDown(document, { key: "Escape" })
     expect(onClose).toHaveBeenCalledTimes(2)
   })
 

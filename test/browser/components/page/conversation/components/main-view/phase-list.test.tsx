@@ -145,10 +145,10 @@ describe("PhaseList", () => {
     expect(next.getAttribute("aria-disabled")).toBe("true")
   })
 
-  it("Esc(close イベント)で板が閉じる", () => {
+  it("Esc で板が閉じる", () => {
     renderList()
     fireEvent.click(screen.getByRole("button", { name: /段A/u }))
-    fireEvent(sheet(), new Event("close"))
+    fireEvent.keyDown(document, { key: "Escape" })
 
     expect(sheet().hasAttribute("open")).toBe(false)
   })

@@ -1,18 +1,15 @@
-// 絵を原寸で拡大して見るダイアログ。呼び出し側が開いている状態を持ち、開いている間だけこの部品を描く。
-// 画面より大きい絵は面の内側に収めて縮め、面の中で横スクロールはしない。
+// 絵を拡大して見るダイアログ。中身は Astryx の `Lightbox` で、呼び出し側が開いている状態を持ち、開いている間だけこの部品を描く。
 //
-// 絵が読めなかったとき（`<img>` の `error`）に何を出すかは呼び出し側が渡す（`ImageZoomFallback`）。
+// 絵が読めなかったときに何を出すかは呼び出し側が渡す（`ImageZoomFallback`）。
+// `Lightbox` は `<img>` の `error` を渡さないので、開くときに別の `Image` で読めるかを確かめる。
 // この部品は代わりの絵と1行を出し分けるだけで、なぜ読めないかは知らない。
 
-import clsx from "clsx"
+import { Lightbox } from "@astryxdesign/core/Lightbox"
 import { type ReactElement, useState } from "react"
 
-import { Button } from "../button/button.tsx"
-import { Dialog } from "../dialog/dialog.tsx"
-import styles from "./image-zoom.module.css"
+import { useExternalSync } from "../../../hooks/use-external-sync.ts"
 
 const HEADING = "画像の拡大"
-const CLOSE_LABEL = "閉じる"
 
 /**
  * 絵が読めなかったときに代わりに出すもの。
@@ -28,12 +25,9 @@ type ImageZoomProps = {
   /** 拡大して見せる原寸（data URL か、原寸を配る経路の URL）。 */
   readonly src: string
   readonly alt: string
-  /**
-   * `original` は画面に収まる限り原寸。`modest` は原寸が大きすぎる絵を控えめな大きさで見せる。
-   * `width` は原寸を上限に面の幅へ合わせ、縦に長ければ面が縦に流れる（図の字を読む用）。
-   */
+  /** 呼ぶ側の意図（原寸・控えめ・幅に合わせる）。大きさは `Lightbox` の拡大に任せ、見た目には使わない。 */
   readonly size: "original" | "modest" | "width"
-  /** {@link src} が読めなかったときに代わりに出すもの。 */
+  /** `src` が読めなかったときに代わりに出すもの。 */
   readonly fallback: ImageZoomFallback
   /** `×`・背景のクリック・Esc のいずれでも呼ばれる（開いているかどうかは呼び出し側が持つ）。 */
   readonly onClose: () => void
@@ -44,38 +38,32 @@ export function ImageZoom(props: ImageZoomProps): ReactElement {
   // 読めなかったか。開くたびに組み立て直す部品なので、閉じて開き直せばまた原寸を取りに行く。
   const [failed, setFailed] = useState(false)
   const substitute = failed && props.fallback.kind === "substitute" ? props.fallback : undefined
+  const hasSubstitute = props.fallback.kind === "substitute"
+
+  useExternalSync(() => {
+    if (!hasSubstitute) {
+      return
+    }
+    const probe = new Image()
+    probe.addEventListener("error", () => setFailed(true))
+    probe.src = props.src
+  }, [hasSubstitute, props.src])
 
   return (
-    <Dialog
-      open={true}
-      ariaLabel={HEADING}
-      backdrop="dim"
-      placement={{ kind: "auto" }}
-      onClose={props.onClose}
-      className={styles["image-zoom"]}
-    >
-      <img
-        className={clsx(
-          styles["image-zoom-image"],
-          props.size === "modest" && styles["image-zoom-image-modest"],
-          props.size === "width" && styles["image-zoom-image-width"],
-        )}
-        src={substitute?.src ?? props.src}
-        alt={props.alt}
-        onError={() => setFailed(true)}
-      />
-      {substitute !== undefined && <p className={styles["image-zoom-note"]}>{substitute.note}</p>}
-      <Button
-        variant="outline-surface"
-        size="secondary"
-        pressed="none"
-        disabled={false}
-        disclosure={{ kind: "none" }}
-        className={styles["image-zoom-close"]}
-        onClick={props.onClose}
-      >
-        {CLOSE_LABEL}
-      </Button>
-    </Dialog>
+    <Lightbox
+      isOpen={true}
+      onOpenChange={(isOpen) => {
+        if (!isOpen) {
+          props.onClose()
+        }
+      }}
+      media={{
+        src: substitute?.src ?? props.src,
+        alt: props.alt,
+        caption: substitute?.note,
+      }}
+      hasZoom={true}
+      aria-label={HEADING}
+    />
   )
 }

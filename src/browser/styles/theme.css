@@ -299,7 +299,8 @@ body {
   *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+    /* 計算値が `1e-05s` と指数で出る長さだと、Astryx の `BottomSheet` が閉じ待ちの長さを読めず、閉じたあとも `:modal` のまま残る。 */
+    transition-duration: 1ms !important;
   }
 }
 

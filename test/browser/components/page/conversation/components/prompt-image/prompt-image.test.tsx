@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 import {
@@ -34,9 +34,12 @@ function renderChips(
   render(<PromptImageChips images={images} onRemove={onRemove} />)
 }
 
+/** `ThemeRoot` の外で描くので、閉じるボタンの名前は Astryx の英語の文言のまま。 */
+const CLOSE_NAME = "Close"
+
 /** 拡大の面（開いているときだけ木に居る）。 */
 function zoomDialog(): Element | null {
-  return document.querySelector("dialog.image-zoom")
+  return document.querySelector("dialog[aria-label='画像の拡大']")
 }
 
 describe("PromptImageChips", () => {
@@ -78,7 +81,7 @@ describe("PromptImageChips", () => {
     fireEvent.click(screen.getByRole("button", { name: "この画像を拡大" }))
     expect(zoomDialog()).not.toBeNull()
 
-    fireEvent.click(screen.getByRole("button", { name: "閉じる" }))
+    fireEvent.click(screen.getByRole("button", { name: CLOSE_NAME }))
     expect(zoomDialog()).toBeNull()
   })
 })
@@ -100,14 +103,20 @@ describe("PromptImageThumbnails", () => {
     return zoomDialog()?.querySelector("img") ?? null
   }
 
-  /** 拡大した絵が `<img>` の読み込みに失敗した（置き場から消えていて 404 だった）ことにする。 */
-  function failZoomedImage(): void {
-    const image = zoomedImage()
-    if (image === null) {
-      throw new Error("拡大した絵が見つからない")
-    }
-    fireEvent(image, new Event("error"))
+  /** 拡大の面が原寸を読めるか確かめる `Image` の読み込みが失敗した（置き場から消えていて 404 だった）ことにする。 */
+  async function failZoomedImage(): Promise<void> {
+    await waitFor(() => expect(zoomedImage()?.getAttribute("src")).toBe(RECORDED_A.thumbnail))
   }
+
+  class UnreadableProbe extends EventTarget {
+    set src(_value: string) {
+      queueMicrotask(() => this.dispatchEvent(new Event("error")))
+    }
+  }
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
 
   it("1枚も無ければ何も描かない", () => {
     render(<PromptImageThumbnails images={[]} size="compact" />)
@@ -134,23 +143,25 @@ describe("PromptImageThumbnails", () => {
     )
   })
 
-  it("原寸を読めなかった（置き場から消えていた）ときは、控えを出して手放したことを1行添える", () => {
+  it("原寸を読めなかった（置き場から消えていた）ときは、控えを出して手放したことを1行添える", async () => {
+    vi.stubGlobal("Image", UnreadableProbe)
     render(<PromptImageThumbnails images={[RECORDED_A]} size="compact" />)
 
     fireEvent.click(screen.getByRole("button", { name: "この画像を拡大" }))
-    failZoomedImage()
+    await failZoomedImage()
 
     expect(zoomDialog()?.hasAttribute("open")).toBe(true)
     expect(zoomedImage()?.getAttribute("src")).toBe(RECORDED_A.thumbnail)
     expect(zoomDialog()?.textContent).toContain("原寸はもう手放した")
   })
 
-  it("閉じてから開き直すと、また原寸を取りに行く", () => {
+  it("閉じてから開き直すと、また原寸を取りに行く", async () => {
+    vi.stubGlobal("Image", UnreadableProbe)
     render(<PromptImageThumbnails images={[RECORDED_A]} size="compact" />)
 
     fireEvent.click(screen.getByRole("button", { name: "この画像を拡大" }))
-    failZoomedImage()
-    fireEvent.click(screen.getByRole("button", { name: "閉じる" }))
+    await failZoomedImage()
+    fireEvent.click(screen.getByRole("button", { name: CLOSE_NAME }))
     expect(zoomDialog()).toBeNull()
 
     fireEvent.click(screen.getByRole("button", { name: "この画像を拡大" }))

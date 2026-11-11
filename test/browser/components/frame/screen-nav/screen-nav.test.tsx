@@ -1,4 +1,4 @@
-import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { ScreenNav } from "../../../../../src/browser/components/frame/screen-nav/screen-nav.tsx"
@@ -56,14 +56,16 @@ function openedDrawer(): HTMLElement {
   return screen.getByRole("dialog", { name: "引き出し" })
 }
 
-/** Esc を押したときと同じく、開いている `<dialog>` を閉じる（`close` が届く）。 */
 function closeDrawerDialog(): void {
+  fireEvent.keyDown(document, { key: "Escape" })
+}
+
+/** 覆い（`<dialog>` 自身）を押す。 */
+function pressDrawerBackdrop(): void {
   const dialog = openedDrawer()
-  act(() => {
-    if (dialog instanceof window.HTMLDialogElement) {
-      dialog.close()
-    }
-  })
+  fireEvent.pointerDown(dialog)
+  fireEvent.pointerUp(dialog)
+  fireEvent.click(dialog)
 }
 
 describe("ScreenNav", () => {
@@ -287,19 +289,20 @@ describe("ScreenNav", () => {
     it("覆いを押すと閉じ、≡ へフォーカスが戻る", () => {
       renderScreenNav()
       const toggle = drawerToggle()
+      toggle.focus()
       fireEvent.click(toggle)
 
-      fireEvent.click(openedDrawer())
+      pressDrawerBackdrop()
 
       expect(screen.queryByRole("dialog", { name: "引き出し" })).toBeNull()
       expect(toggle.getAttribute("aria-expanded")).toBe("false")
       expect(document.activeElement).toBe(toggle)
     })
 
-    // Esc で `<dialog>` を閉じるのはブラウザなので、ここでは閉じたあとに届く `close` から先を見る（Esc そのものは E2E）。
-    it("`<dialog>` が閉じると（Esc）引き出しが閉じ、≡ へフォーカスが戻る", () => {
+    it("Esc で引き出しが閉じ、≡ へフォーカスが戻る", () => {
       renderScreenNav()
       const toggle = drawerToggle()
+      toggle.focus()
       fireEvent.click(toggle)
 
       closeDrawerDialog()
@@ -319,7 +322,7 @@ describe("ScreenNav", () => {
       fireEvent.click(face)
       expect(openedDrawer().querySelector(".screen-nav-character-picker-panel")).not.toBeNull()
 
-      fireEvent.click(openedDrawer())
+      pressDrawerBackdrop()
       fireEvent.click(drawerToggle())
 
       expect(openedDrawer().querySelector(".screen-nav-character-picker-panel")).toBeNull()

@@ -4,6 +4,7 @@ import type { ComponentStyleMap } from "@astryxdesign/core/theme"
 
 import { tsukumoBadgeOverride } from "./tsukumo-badge-override.ts"
 import { tsukumoButtonOverride } from "./tsukumo-button-override.ts"
+import { tsukumoDialogOverride } from "./tsukumo-dialog-override.ts"
 
 const stateColors = {
   "color:state-ok": { color: "var(--state-ok)" },
@@ -15,6 +16,7 @@ const stateColors = {
 export const tsukumoComponentOverride = {
   ...tsukumoButtonOverride,
   ...tsukumoBadgeOverride,
+  ...tsukumoDialogOverride,
   text: {
     base: { margin: "0" },
     ...stateColors,

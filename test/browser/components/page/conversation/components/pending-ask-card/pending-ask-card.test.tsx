@@ -216,10 +216,10 @@ describe("PendingAskCard（狭い画面の答え待ちのカード）", () => {
     fireEvent.click(screen.getByRole("button", { name: "詳しく" }))
     const sheet = within(openDialog())
     expect(sheet.getByText("架空の背景")).toBeDefined()
-    expect(sheet.queryByRole("group", { name: /の詳細$/ })).toBeNull()
+    expect(sheet.queryByRole("group", { name: / の詳細$/ })).toBeNull()
     // 押した瞬間には答えない。
     fireEvent.click(sheet.getByRole("radio", { name: /B案/ }))
-    expect(sheet.getByRole("group", { name: /の詳細$/ })).toBeDefined()
+    expect(sheet.getByRole("group", { name: / の詳細$/ })).toBeDefined()
     expect(calls).toEqual([])
 
     fireEvent.click(sheet.getByRole("button", { name: "これで答える" }))

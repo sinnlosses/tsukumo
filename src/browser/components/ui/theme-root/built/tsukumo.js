@@ -477,6 +477,13 @@ export const tsukumoTheme = {
       "base": {
         "padding": "var(--spacing-3)"
       }
+    },
+    "dialog": {
+      "variant:clear": {
+        "::backdrop": {
+          "backgroundColor": "transparent"
+        }
+      }
     }
   },
   __onDark: {

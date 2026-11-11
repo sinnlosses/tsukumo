@@ -14,7 +14,7 @@ const GLOBAL_SETUP_FILES = [
   "./test/beads-template-setup.ts",
   "./test/architecture/source-table-setup.ts",
 ]
-const DOM_SETUP_FILES = ["./test/dom-setup.ts"]
+const DOM_SETUP_FILES = ["./test/dom-setup.ts", "./test/popover-setup.ts"]
 
 // 指定すると既定の2つ（package.json・vitest/vite の設定）が上書きされるので、先頭に書き足す。
 const FORCE_RERUN_TRIGGERS = [

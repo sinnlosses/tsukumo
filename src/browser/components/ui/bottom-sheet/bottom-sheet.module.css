@@ -1,77 +1,27 @@
-/* 狭い画面の板。値は見本 `docs/history/mockup/phone-layout-2026-10-09/PHONE-1.dc.html` の3枚目の inline style。
-   覆いは `<Dialog backdrop="sheet">` が持つ。 */
+/* 板の中の並べ方。面・つまみ・覆いは Astryx の `BottomSheet` が持つ。 */
 
-.bottom-sheet {
-  display: none;
+.bottom-sheet-frame {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
-
-@media (max-width: 760px) {
-  .bottom-sheet[open] {
-    display: block;
-    position: fixed;
-    inset: auto 0 0;
-    box-sizing: border-box;
-    width: 100%;
-    max-width: none;
-    height: min(600px, 100dvh - var(--phone-head-height, 0px));
-    max-height: none;
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
-    border: none;
-    border-top: 1px solid var(--rule);
-    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
-    background: var(--surface);
-    box-shadow: 0 -20px 50px rgb(0 0 0 / 0.5);
-    color: var(--ink);
-  }
-  .bottom-sheet-frame {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-  }
-  /* 払う手の当たりを広く取り、縦の動きをブラウザの転がしに取られない。 */
-  .bottom-sheet-grip {
-    display: flex;
-    flex: none;
-    justify-content: center;
-    padding: var(--space-sm) 0 var(--space-xs);
-    touch-action: none;
-  }
-  .bottom-sheet-grip-bar {
-    width: 40px;
-    height: 4px;
-    border-radius: var(--radius-sm);
-    background: var(--rule);
-  }
-  .bottom-sheet-head {
-    display: flex;
-    flex: none;
-    align-items: center;
-    gap: var(--space-sm);
-    /* 上 6px: グリップの下 4px と足して見出しまでを 10px に保つ。 */
-    --bottom-sheet-head-pad-top: 6px;
-    padding: var(--bottom-sheet-head-pad-top) var(--space-lg) var(--space-md);
-    border-bottom: 1px solid var(--rule);
-  }
-  .bottom-sheet-body {
-    display: flex;
-    flex: 1;
-    flex-direction: column;
-    gap: var(--space-md);
-    min-height: 0;
-    /* 上下 14px は見本の値。12px・16px のどちらへ丸めても本文の位置が 2px ずれる。 */
-    --bottom-sheet-body-pad-block: 14px;
-    padding: var(--bottom-sheet-body-pad-block) var(--space-lg);
-    overflow-y: auto;
-    font-size: var(--font-subheading);
-    line-height: 1.85;
-  }
-  .bottom-sheet-foot {
-    display: flex;
-    flex: none;
-    gap: var(--space-sm);
-    padding: var(--space-md) var(--space-lg) 30px;
-    border-top: 1px solid var(--rule);
-  }
+.bottom-sheet-head {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--inline-control);
+  padding: var(--stack-block) 0 var(--gutter-region);
+  border-bottom: 1px solid var(--rule);
+}
+.bottom-sheet-foot {
+  display: flex;
+  flex: none;
+  gap: var(--inline-control);
+  padding: var(--gutter-region) 0 var(--stack-group);
+  border-top: 1px solid var(--rule);
+}
+.bottom-sheet-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
 }

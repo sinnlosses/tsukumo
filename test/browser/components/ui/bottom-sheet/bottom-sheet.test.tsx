@@ -32,14 +32,6 @@ function renderSheet(props: Omit<BottomSheetProps, "children">): HTMLDialogEleme
   return dialog
 }
 
-function grip(): HTMLElement {
-  const element = document.querySelector<HTMLElement>("[data-bottom-sheet-grip]")
-  if (element === null) {
-    throw new Error("つまみが無い")
-  }
-  return element
-}
-
 describe("BottomSheet", () => {
   it("開いているあいだだけ頭・中身を描き、閉じると描かない", () => {
     const { rerender } = render(
@@ -58,10 +50,10 @@ describe("BottomSheet", () => {
     expect(document.body.textContent).toContain("架空の中身")
   })
 
-  it("Esc（<dialog> の close イベント）で onClose を呼ぶ", () => {
+  it("Esc で onClose を呼ぶ", () => {
     const onClose = vi.fn<() => void>()
-    const dialog = renderSheet({ ...BASE_PROPS, onClose })
-    fireEvent(dialog, new Event("close"))
+    renderSheet({ ...BASE_PROPS, onClose })
+    fireEvent.keyDown(document, { key: "Escape" })
     expect(onClose).toHaveBeenCalledTimes(1)
   })
 
@@ -70,21 +62,9 @@ describe("BottomSheet", () => {
     const dialog = renderSheet({ ...BASE_PROPS, onClose })
     fireEvent.click(document.querySelector("p") ?? dialog)
     expect(onClose).not.toHaveBeenCalled()
+    fireEvent.pointerDown(dialog)
+    fireEvent.pointerUp(dialog)
     fireEvent.click(dialog)
-    expect(onClose).toHaveBeenCalledTimes(1)
-  })
-
-  it("つまみを一定以上下へ払うと onClose を呼び、わずかな動きでは呼ばない", () => {
-    const onClose = vi.fn<() => void>()
-    renderSheet({ ...BASE_PROPS, onClose })
-    const element = grip()
-    element.setPointerCapture = () => {}
-
-    fireEvent.pointerDown(element, { clientY: 100, pointerId: 1 })
-    fireEvent.pointerMove(element, { clientY: 110, pointerId: 1 })
-    expect(onClose).not.toHaveBeenCalled()
-
-    fireEvent.pointerMove(element, { clientY: 160, pointerId: 1 })
     expect(onClose).toHaveBeenCalledTimes(1)
   })
 

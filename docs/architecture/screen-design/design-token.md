@@ -76,7 +76,7 @@ Astryx のトークンは `<html>` に置かれる（`Theme` が `data-astryx-th
 
 - `transition` の時間だけをトークンにする。緩急は `ease-out` を基本にし、キーワードのまま書く。
 - `animation`（吹き出し・立ち絵・読み込みの回転）は部品ごとの局所のつまみ（`--portrait-*-duration` など）が持つ。
-- `prefers-reduced-motion: reduce` のときは、`theme.css` の全要素への規則が時間を `0.01ms` にするので、トークンの側では何もしない。
+- `prefers-reduced-motion: reduce` のときは、`theme.css` の全要素への規則が animation の時間を `0.01ms`、transition の時間を `1ms` にするので、トークンの側では何もしない。
 
 ### 13.15 直書きを止める検査
 

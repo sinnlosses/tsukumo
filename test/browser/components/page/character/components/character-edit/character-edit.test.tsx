@@ -182,17 +182,15 @@ describe("CharacterEdit", () => {
     expect(clearConfirmDialog()).toBeNull()
   })
 
-  // Esc は `<dialog>` を閉じて `close` イベントを出す（ブラウザの既定の振る舞い）。
   it("Esc で閉じたときも何も送らない", () => {
     const calls: unknown[] = []
     renderCharacterEdit(FIXTURE_CHARACTER, (command) => calls.push(command))
 
     fireEvent.click(screen.getByRole("button", { name: "どや顔を消す" }))
-    const dialog = clearConfirmDialog()
-    if (dialog === null) {
+    if (clearConfirmDialog() === null) {
       throw new Error("確かめが開いていない")
     }
-    fireEvent(dialog, new Event("close"))
+    fireEvent.keyDown(document, { key: "Escape" })
 
     expect(calls).toEqual([])
     expect(clearConfirmDialog()).toBeNull()

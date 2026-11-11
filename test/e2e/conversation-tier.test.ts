@@ -50,6 +50,17 @@ async function scrollWidth(page: Page): Promise<number> {
   return page.evaluate(() => document.documentElement.scrollWidth)
 }
 
+/**
+ * 下から上がる板を閉じ、背後が押せる（`:modal` が消える）まで待つ。
+ * 板は閉じ待ちを動きの終わりかタイマーで受けるが、E2E は時計を止めていて動きを減らす設定でもあるので、閉じる間だけ動きを戻す。
+ */
+async function closeWhileMotionPlays(page: Page, close: () => Promise<void>): Promise<void> {
+  await page.emulateMedia({ reducedMotion: "no-preference" })
+  await close()
+  await page.waitForFunction(() => document.querySelector("dialog:modal") === null)
+  await page.emulateMedia({ reducedMotion: "reduce" })
+}
+
 /** `match` は部屋につき1回だけ真にする（`settleAndMatch` は時計を止める）。 */
 async function expectRailOverlay(room: ScenarioRoom, match: boolean): Promise<void> {
   const { page } = room
@@ -262,10 +273,12 @@ test.describe("会話の画面の段", () => {
 
     await rows.nth(1).click()
     await sheet.waitFor()
-    const sheetBox = await sheet.evaluate((element) => {
-      const rect = element.getBoundingClientRect()
-      return { bottom: rect.bottom, height: rect.height }
-    })
+    const sheetBox = await sheet
+      .getByRole("group", { name: "中間レポート" })
+      .evaluate((element) => {
+        const rect = element.getBoundingClientRect()
+        return { bottom: rect.bottom, height: rect.height }
+      })
     expect(sheetBox.bottom).toBe(844)
     expect(sheetBox.height).toBeLessThanOrEqual(600)
     expect(await scrollWidth(page)).toBeLessThanOrEqual(390)
@@ -278,20 +291,17 @@ test.describe("会話の画面の段", () => {
       await sheet.getByRole("button", { name: /^前のフェーズ/u }).getAttribute("aria-disabled"),
     ).toBe("true")
 
-    await page.keyboard.press("Escape")
-    await sheet.waitFor({ state: "hidden" })
+    await closeWhileMotionPlays(page, () => page.keyboard.press("Escape"))
     expect(await rows.nth(1).evaluate((element) => element === document.activeElement)).toBe(true)
 
     await rows.nth(0).click()
     await sheet.waitFor()
-    await page.mouse.click(195, 40)
-    await sheet.waitFor({ state: "hidden" })
+    await closeWhileMotionPlays(page, () => page.mouse.click(195, 40))
 
     await page.locator('nav[aria-label="画面"]').getByRole("button", { name: /^手順/u }).click()
     await page.getByRole("dialog", { name: "依頼の手順" }).waitFor()
     expect(await scrollWidth(page)).toBeLessThanOrEqual(390)
-    await page.keyboard.press("Escape")
-    await page.getByRole("dialog", { name: "依頼の手順" }).waitFor({ state: "hidden" })
+    await closeWhileMotionPlays(page, () => page.keyboard.press("Escape"))
     await room.settleAndMatchPicked(PHONE_ELAPSED_MS)
 
     await rows.nth(0).click()

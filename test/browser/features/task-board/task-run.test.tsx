@@ -122,13 +122,12 @@ describe("タスクの実行を頼む", () => {
   it.each([
     ["「キャンセル」", () => fireEvent.click(screen.getByRole("button", { name: "キャンセル" }))],
     [
-      "Esc（ブラウザが流す close）",
+      "Esc",
       () => {
-        const dialog = confirmDialog()
-        if (dialog === null) {
+        if (confirmDialog() === null) {
           throw new Error("確認が開いていない")
         }
-        fireEvent(dialog, new Event("close"))
+        fireEvent.keyDown(document, { key: "Escape" })
       },
     ],
   ])(
@@ -169,6 +168,8 @@ describe("タスクの実行を頼む", () => {
     if (dialog === null) {
       throw new Error("確認が開いていない")
     }
+    fireEvent.pointerDown(dialog)
+    fireEvent.pointerUp(dialog)
     fireEvent.click(dialog)
 
     expect(closed).toEqual([])

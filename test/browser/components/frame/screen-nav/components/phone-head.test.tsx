@@ -325,7 +325,7 @@ describe("PhoneHead", () => {
     )
     expect(list.textContent).toContain("架空のエラー出力")
 
-    fireEvent(sheet, new Event("close"))
+    fireEvent.keyDown(document, { key: "Escape" })
 
     expect(toggle.getAttribute("aria-expanded")).toBe("false")
     expect(sheet.hasAttribute("open")).toBe(false)

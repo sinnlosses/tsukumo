@@ -1,18 +1,18 @@
-// ダイアログの部品。持つのは振る舞い（開閉・Esc・外側クリック）と背景（`backdrop`）と置き方（`placement`）だけで、顔と箱は呼び出し側が `className` で渡す。
+// ダイアログの部品。中身は Astryx の `Dialog` で、持つのは開閉の写しと置き方（`placement`）と覆いの種類（`backdrop`）だけ。顔と箱は呼び出し側が `className` で渡す。
 //
-// Esc の `close`・backdrop のクリックの読み替え（`event.target` が `<dialog>` 自身のときだけ）はどれも `onClose` を呼ぶ。
+// Esc・外側のクリックはどちらも `onClose` を呼ぶ。
 
-import clsx from "clsx"
-import type { CSSProperties, MouseEvent, ReactElement, ReactNode } from "react"
+import { Dialog as AstryxDialog, type DialogVariant } from "@astryxdesign/core/Dialog"
+import type { ReactElement, ReactNode } from "react"
 
-import styles from "./dialog.module.css"
-import { useModalDialog } from "./hooks/use-modal-dialog.ts"
+import { acquireOverlay } from "../../../hooks/open-overlay.ts"
+import { useExternalSync } from "../../../hooks/use-external-sync.ts"
 
 type DialogBackdrop = "dim" | "deep" | "veil" | "sheet" | "clear"
 
 /**
- * 置き方。`auto` は部品が置き方を持たない（ブラウザ既定の中央寄せか、`className` の CSS で置く）。
- * `at` は押した位置などから決めた座標を inline で置く（`position` 自体は `className` 側が持つ）。
+ * 置き方。`auto` は部品が置き方を持たない（中央寄せか、`className` の CSS で置く）。
+ * `at` は押した位置などから決めた座標で置く。
  */
 export type DialogPlacement =
   | { readonly kind: "auto" }
@@ -28,41 +28,37 @@ export type DialogProps = {
   readonly children: ReactNode
 }
 
-const DIALOG_BACKDROP_CLASS = {
-  dim: styles["dialog-backdrop-dim"],
-  deep: styles["dialog-backdrop-deep"],
-  veil: styles["dialog-backdrop-veil"],
-  sheet: styles["dialog-backdrop-sheet"],
-  clear: styles["dialog-backdrop-clear"],
-} satisfies Record<DialogBackdrop, string>
+// 覆いの濃さだけの違い（deep・veil・sheet）は Astryx の覆いに寄せる。覆わない `clear` だけがテーマの variant。
+const BACKDROP_VARIANT = {
+  dim: "standard",
+  deep: "standard",
+  veil: "standard",
+  sheet: "standard",
+  clear: "clear",
+} satisfies Record<DialogBackdrop, DialogVariant>
 
 export function Dialog(props: DialogProps): ReactElement {
-  const dialogRef = useModalDialog(props.open)
-
-  // backdrop のクリックは `<dialog>` 自身が受け取る（中身は子要素が受け取るので target がずれる）。
-  const handleClick = (event: MouseEvent<HTMLDialogElement>): void => {
-    if (event.target === dialogRef.current) {
-      props.onClose()
-    }
-  }
-
-  const className = clsx(DIALOG_BACKDROP_CLASS[props.backdrop], props.className)
-
-  const style: CSSProperties =
-    props.placement.kind === "at"
-      ? { top: `${String(props.placement.top)}px`, left: `${String(props.placement.left)}px` }
-      : {}
+  useExternalSync(() => (props.open ? acquireOverlay() : undefined), [props.open])
 
   return (
-    <dialog
-      ref={dialogRef}
-      className={className}
-      style={style}
+    <AstryxDialog
+      isOpen={props.open}
+      onOpenChange={(isOpen) => {
+        if (!isOpen) {
+          props.onClose()
+        }
+      }}
+      variant={BACKDROP_VARIANT[props.backdrop]}
+      style={
+        props.placement.kind === "at"
+          ? { top: `${String(props.placement.top)}px`, left: `${String(props.placement.left)}px` }
+          : {}
+      }
+      padding={0}
       aria-label={props.ariaLabel}
-      onClose={props.onClose}
-      onClick={handleClick}
+      className={props.className}
     >
       {props.children}
-    </dialog>
+    </AstryxDialog>
   )
 }
