@@ -413,10 +413,12 @@
     border: 1px solid var(--rule);
     border-radius: var(--radius-md);
   }
-  /* 画像を押すと拡大するボタン。箱は画像そのもの（画像の幅・枠を変えない）。 */
+  /* 画像を押すと拡大するボタン。箱は画像そのもの（画像の幅・枠を変えない）。
+   ボタンの部品は大きさの段ごとに高さを決め打つので、画像の高さに戻す。 */
   & .report-image-zoom {
     display: block;
     max-width: 100%;
+    height: auto;
     padding: 0;
   }
   /* 質問の選択肢の preview に Markdown で書いた画像（`shelvedPreviewMarkdown`）。`image` の塊の画像は `figure` の中なので当たらない。
