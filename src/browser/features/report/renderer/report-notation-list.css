@@ -1,0 +1,15 @@
+/* `reset.css` が消す箇条の印と字下げを、本文の箇条書きにだけ戻す。 */
+:is(.detail-block, [data-report-region]) > ul,
+:is(.detail-block, [data-report-region]) > .report-with-gutter > ul {
+  padding-inline-start: 2em;
+  list-style: disc;
+}
+:is(.detail-block, [data-report-region]) > ol,
+:is(.detail-block, [data-report-region]) > .report-with-gutter > ol {
+  padding-inline-start: 2em;
+  list-style: decimal;
+}
+:is(.detail-block, [data-report-region]) :is(li, blockquote) > :is(ul, ol) {
+  padding-inline-start: 2em;
+  list-style: revert;
+}

@@ -280,9 +280,6 @@ export const tsukumoTheme = {
         "fontSize": "var(--text-display-3-size)",
         "lineHeight": "var(--text-display-3-leading)"
       },
-      "base": {
-        "margin": "0"
-      },
       "color:state-ok": {
         "color": "var(--state-ok)"
       },
@@ -336,9 +333,6 @@ export const tsukumoTheme = {
         "fontFamily": "var(--font-family-heading)",
         "fontSize": "var(--text-display-3-size)",
         "lineHeight": "var(--text-display-3-leading)"
-      },
-      "base": {
-        "margin": "0"
       },
       "color:state-ok": {
         "color": "var(--state-ok)"

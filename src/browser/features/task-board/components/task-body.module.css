@@ -38,10 +38,12 @@
 .task-body ul {
   margin: 0 0 var(--space-md);
   padding-left: var(--space-xl);
+  list-style: disc;
 }
 .task-body ol {
   margin: 0 0 var(--space-md);
   padding-left: var(--space-2xl);
+  list-style: decimal;
 }
 .task-body li > ul,
 .task-body li > ol {

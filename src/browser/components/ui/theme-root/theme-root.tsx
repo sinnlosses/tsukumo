@@ -1,5 +1,6 @@
 // 画面全体を Astryx のテーマ（tsukumo）と日本語の文言で包む根の部品。
 
+import "@astryxdesign/core/reset.css"
 import "@astryxdesign/core/astryx.css"
 import { InternationalizationProvider } from "@astryxdesign/core/i18n"
 import jaJP from "@astryxdesign/core/locales/ja-JP.generated.js"

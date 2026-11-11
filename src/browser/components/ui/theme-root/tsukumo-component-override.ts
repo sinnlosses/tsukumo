@@ -19,12 +19,6 @@ export const tsukumoComponentOverride = {
   ...tsukumoBadgeOverride,
   ...tsukumoCardOverride,
   ...tsukumoDialogOverride,
-  text: {
-    base: { margin: "0" },
-    ...stateColors,
-  },
-  heading: {
-    base: { margin: "0" },
-    ...stateColors,
-  },
+  text: stateColors,
+  heading: stateColors,
 } satisfies ComponentStyleMap

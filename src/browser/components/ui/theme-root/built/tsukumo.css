@@ -358,10 +358,6 @@
     line-height: var(--text-display-3-leading);
   }
 
-  .astryx-heading {
-    margin: 0;
-  }
-
   .astryx-heading[data-color="state-ok"] {
     color: var(--state-ok);
   }
@@ -424,10 +420,6 @@
     font-family: var(--font-family-heading);
     font-size: var(--text-display-3-size);
     line-height: var(--text-display-3-leading);
-  }
-
-  .astryx-text {
-    margin: 0;
   }
 
   .astryx-text[data-color="state-ok"] {

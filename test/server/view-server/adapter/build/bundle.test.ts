@@ -71,6 +71,12 @@ describe("buildUiBundle", () => {
       "@layer reset,tsukumo-base,astryx-base,astryx-theme;",
     )
   })
+
+  it("styleSheet に reset の層の塊があり、その中に reset.css の box-sizing: border-box が入っている", () => {
+    const sheet = built.kind === "ok" ? built.bundle.styleSheet : ""
+
+    expect(sheet).toMatch(/@layer\s+reset\s*\{[^}]*box-sizing:\s*border-box/)
+  })
 })
 
 describe("readUiBundle", () => {
