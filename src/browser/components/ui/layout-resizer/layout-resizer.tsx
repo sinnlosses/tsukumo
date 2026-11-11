@@ -1,9 +1,17 @@
 // 仕切り1本ぶんのドラッグ配線。素の `pointerdown` / `pointermove` / `pointerup` で書く。
+// 見た目と `separator` の役は Astryx の `ResizeHandle`。`resizable` は渡さない（ドラッグはここで配線する）。
 
+import { ResizeHandle } from "@astryxdesign/core/Resizable"
 import clsx from "clsx"
 import { useEffectEvent, type PointerEvent, type ReactElement, type RefObject } from "react"
 
 import styles from "./layout-resizer.module.css"
+
+// `ResizeHandle` の `direction` は並べる向きで、仕切りの線の向き（`orientation`）と逆。
+const ORIENTATION_DIRECTION = {
+  vertical: "horizontal",
+  horizontal: "vertical",
+} satisfies Record<"horizontal" | "vertical", "horizontal" | "vertical">
 
 type LayoutResizerProps = {
   readonly orientation: "horizontal" | "vertical"
@@ -71,15 +79,11 @@ export function LayoutResizer(props: LayoutResizerProps): ReactElement {
   }
 
   return (
-    <div
-      className={clsx(
-        styles["layout-resizer"],
-        styles[`layout-resizer-${props.orientation}`],
-        props.className,
-      )}
-      role="separator"
-      aria-orientation={props.orientation}
-      aria-label={props.ariaLabel}
+    <ResizeHandle
+      className={clsx(styles[`layout-resizer-${props.orientation}`], props.className)}
+      direction={ORIENTATION_DIRECTION[props.orientation]}
+      label={props.ariaLabel}
+      tabIndex={-1}
       onPointerDown={onPointerDown}
     />
   )

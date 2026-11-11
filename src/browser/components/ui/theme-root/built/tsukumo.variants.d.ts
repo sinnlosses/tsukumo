@@ -40,6 +40,12 @@ declare module '@astryxdesign/core/Badge' {
   }
 }
 
+declare module '@astryxdesign/core/Card' {
+  interface CardVariantMap {
+    'accent': true;
+  }
+}
+
 declare module '@astryxdesign/core/Dialog' {
   interface DialogVariantMap {
     'clear': true;

@@ -471,6 +471,9 @@ export const tsukumoTheme = {
     "card": {
       "base": {
         "padding": "var(--spacing-3)"
+      },
+      "variant:accent": {
+        "backgroundColor": "var(--surface-accent)"
       }
     },
     "section": {

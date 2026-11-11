@@ -570,6 +570,10 @@
     --astryx-card-padding: var(--spacing-3);
   }
 
+  .astryx-card[data-variant="accent"] {
+    background-color: var(--surface-accent);
+  }
+
   .astryx-section {
     --astryx-section-padding: var(--spacing-3);
   }

@@ -88,7 +88,7 @@ Astryx のトークンは `<html>` に置かれる（`Theme` が `data-astryx-th
 
 ### 13.16 `ui/` の箱の部品
 
-`ui/` の部品の中身は Astryx（ADR 0053）の部品で、props は tsukumo の語彙のまま変えない。`@astryxdesign/*` と `@stylexjs/stylex` を import できるのは `src/browser/components/ui/` だけで、`.dependency-cruiser.cjs` の `astryx-reader` が外からの import を止める。Astryx に当てない例外は `typing-dot-list` で、Astryx に入力中の点の部品が無いので、今の CSS のまま残す。`layout-resizer` は、移すときに Astryx の `ResizeHandle` が当たるかを確かめ、当たらなければ例外に足す。
+`ui/` の部品の中身は Astryx（ADR 0053）の部品で、props は tsukumo の語彙のまま変えない。`@astryxdesign/*` と `@stylexjs/stylex` を import できるのは `src/browser/components/ui/` だけで、`.dependency-cruiser.cjs` の `astryx-reader` が外からの import を止める。Astryx に当てない例外は `typing-dot-list` で、Astryx に入力中の点の部品が無いので、今の CSS のまま残す。`layout-resizer` は、`ResizeHandle` の見た目と `separator` の役だけを使う。`useResizable` は大きさを自分で持ち、呼ぶ側の単位（比率・px）への `toValue` と「動かしたときだけ確定する」配線が写せないので、`resizable` は渡さず、ドラッグの配線は今の `pointerdown` のまま `ResizeHandle` に載せる。例外にはしない。
 
 根の `ThemeRoot`（`ui/theme-root/`）は、`App` の `QueryClientProvider` の内側・`Root` の外側で、`InternationalizationProvider`（`locale="ja-JP"`）と `Theme`（テーマ `tsukumo`・`mode="dark"`）を重ねて子を包む。テーマの定義 `tsukumo-theme.ts` は、値を tsukumo のトークンの `var()` とそれを組んだ式だけで書き、写すのは色・コードの書体・本文の行の高さ（触る画面の `adaptations` も同じ値）の 3 種類に限る（上の「向き」）。Astryx の `color` に口が無い状態の色（`state-ok` など）は、隣の `tsukumo-component-override.ts` の `components` で `var()` の値として足す。パックの accent は `usePackAppearance` が `<html>` の `--accent` に書き、テーマの `--color-accent` がそれに追随する。
 

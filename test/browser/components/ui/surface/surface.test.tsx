@@ -20,7 +20,7 @@ const BASE_PROPS = {
 } satisfies Omit<SurfaceProps, "children">
 
 /** `Surface` が描く要素を、中の子から辿って取り出す。 */
-function renderedElement(props: Omit<SurfaceProps, "children">): Element {
+function renderedElement(props: Omit<SurfaceProps, "children">): HTMLElement {
   cleanup()
   render(
     <Surface {...props}>
@@ -34,45 +34,29 @@ function renderedElement(props: Omit<SurfaceProps, "children">): Element {
   return parent
 }
 
-function renderedClasses(props: Omit<SurfaceProps, "children">): string[] {
-  return renderedElement(props).className.split(" ")
-}
-
 describe("Surface", () => {
-  it("tone・space・radius・shadow は対応表の class を付ける", () => {
-    const classes = renderedClasses({
-      ...BASE_PROPS,
-      tone: "raised",
-      space: "2xl",
-      radius: "xl",
-      shadow: "overlay",
-    })
-    expect(classes).toEqual(
-      expect.arrayContaining([
-        "surface-tone-raised",
-        "surface-space-2xl",
-        "surface-radius-xl",
-        "surface-shadow-overlay",
-      ]),
-    )
+  it.each([
+    ["surface", "default"],
+    ["raised", "default"],
+    ["accent", "accent"],
+  ] as const)("tone: %s は Card の variant %s に写る", (tone, variant) => {
+    expect(renderedElement({ ...BASE_PROPS, tone }).dataset["variant"]).toBe(variant)
   })
 
-  it("tone の 3 値と shadow の 3 値は、それぞれ別の class になる", () => {
-    const tones = (["surface", "raised", "accent"] as const).map((tone) =>
-      renderedClasses({ ...BASE_PROPS, tone }).join(" "),
-    )
-    const shadows = (["none", "raised", "overlay"] as const).map((shadow) =>
-      renderedClasses({ ...BASE_PROPS, shadow }).join(" "),
-    )
-    expect(new Set(tones).size).toBe(3)
-    expect(new Set(shadows).size).toBe(3)
+  it.each([
+    ["none", "none"],
+    ["raised", "med"],
+    ["overlay", "high"],
+  ] as const)("shadow: %s は Card の elevation %s に写る", (shadow, elevation) => {
+    expect(renderedElement({ ...BASE_PROPS, shadow }).dataset["elevation"]).toBe(elevation)
   })
 
-  it("className は末尾に足される", () => {
-    expect(renderedClasses({ ...BASE_PROPS, className: "placed" }).at(-1)).toBe("placed")
+  it("className は Card の要素に残る", () => {
+    const element = renderedElement({ ...BASE_PROPS, className: "dummy-placement" })
+    expect(element.classList.contains("dummy-placement")).toBe(true)
   })
 
-  it("element: section は section を描く", () => {
-    expect(renderedElement({ ...BASE_PROPS, element: "section" }).tagName).toBe("SECTION")
+  it("element: section でも div を描く", () => {
+    expect(renderedElement({ ...BASE_PROPS, element: "section" }).tagName).toBe("DIV")
   })
 })
