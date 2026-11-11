@@ -88,7 +88,7 @@ sequenceDiagram
   driver->>driver: pending の列に積む
   driver-->>card: pending-changed（状態の pending に載る）
   card->>user: 許可・質問のカードを出す
-  user->>card: ボタンか入力欄で答える
+  user->>card: ボタンか入力欄で答える（質問は問ごとに「任せる」も選べる）
   card->>server: session.answer（id と answer）
   server->>driver: 列の待ちを解決する
   driver->>claude: canUseTool の戻り値として返す

@@ -118,7 +118,7 @@ export type SessionEvent =
    * 質問（`AskUserQuestion`）に利用者が答えた。答えが確定した時点で1回だけ流す。
    * `pending-changed` は列が空になったことしか伝えないので、「何を聞いて、どう答えたか」を残せるのはこの経路だけ。
    *
-   * `answers[i]` は `questions[i]` に対して選んだ答えの並び（{@link QuestionAnswer}）。
+   * `answers[i]` は `questions[i]` に対する答え（{@link QuestionAnswer}。選んだか任せたか）。
    * 質問文も答えも会話の内容なので、ログに出さない・外へ出さない。
    * `toolUseId` は答え待ちのときの `PendingAsk` の `id` と同じで、preview と添え書きの図の画像の置き場の鍵になる。
    *

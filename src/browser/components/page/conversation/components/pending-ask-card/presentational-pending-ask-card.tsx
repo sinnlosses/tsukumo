@@ -12,6 +12,7 @@ const HEAD_LABEL = "？ 答え待ち"
 const SUBJECT_SEPARATOR = "· "
 const ANSWER_LABEL = "これで答える"
 const NEXT_LABEL = "次へ"
+const ENTRUST_LABEL = "任せる"
 const OMITTED_PREFIX = "ほか"
 const DETAIL_LABEL = "詳しく"
 const BRIEF_SHEET_LABEL = "お伺いの詳細"
@@ -38,6 +39,8 @@ export function PresentationalPendingAskCard(props: {
   const question =
     inquiry.kind === "permission" ? `${inquiry.toolName} を実行してよい？` : inquiry.text
   const hasBrief = inquiry.kind === "question" && inquiry.brief !== undefined
+  const recommendedReason =
+    inquiry.kind === "question" ? inquiry.brief?.recommended?.reason : undefined
 
   return (
     <>
@@ -61,7 +64,12 @@ export function PresentationalPendingAskCard(props: {
               <Progress inquiry={inquiry} pushed={false} />
             </span>
           </header>
-          <p className={styles["pending-ask-card-question"]}>{question}</p>
+          <div className={styles["pending-ask-card-ask"]}>
+            <p className={styles["pending-ask-card-question"]}>{question}</p>
+            {recommendedReason !== undefined && (
+              <p className={styles["pending-ask-card-reason"]}>{recommendedReason}</p>
+            )}
+          </div>
           {chips.shown.length > 0 && (
             <ul className={styles["pending-ask-card-chips"]} data-pending-ask-chips="">
               {chips.shown.map((chip) => (
@@ -106,18 +114,21 @@ export function PresentationalPendingAskCard(props: {
             ? {
                 kind: "shown",
                 node: (
-                  <button
-                    type="button"
-                    className={clsx(
-                      styles["pending-ask-card-button"],
-                      styles["pending-ask-card-sheet-answer"],
-                      styles["is-recommended"],
-                    )}
-                    aria-disabled={!inquiry.canAnswer}
-                    onClick={inquiry.onAnswer}
-                  >
-                    {inquiry.last ? ANSWER_LABEL : NEXT_LABEL}
-                  </button>
+                  <>
+                    <EntrustButton onEntrust={inquiry.onEntrust} />
+                    <button
+                      type="button"
+                      className={clsx(
+                        styles["pending-ask-card-button"],
+                        styles["pending-ask-card-sheet-answer"],
+                        styles["is-recommended"],
+                      )}
+                      aria-disabled={!inquiry.canAnswer}
+                      onClick={inquiry.onAnswer}
+                    >
+                      {inquiry.last ? ANSWER_LABEL : NEXT_LABEL}
+                    </button>
+                  </>
                 ),
               }
             : { kind: "none" }
@@ -216,6 +227,7 @@ function Answers(props: { readonly inquiry: ActiveInquiry }): ReactElement {
         >
           {inquiry.last ? ANSWER_LABEL : NEXT_LABEL}
         </button>
+        <EntrustButton onEntrust={inquiry.onEntrust} />
       </div>
     )
   }
@@ -231,7 +243,20 @@ function Answers(props: { readonly inquiry: ActiveInquiry }): ReactElement {
           key={option.label}
         />
       ))}
+      <EntrustButton onEntrust={inquiry.onEntrust} />
     </div>
+  )
+}
+
+function EntrustButton(props: { readonly onEntrust: () => void }): ReactElement {
+  return (
+    <button
+      type="button"
+      className={clsx(styles["pending-ask-card-button"], styles["pending-ask-card-entrust"])}
+      onClick={props.onEntrust}
+    >
+      {ENTRUST_LABEL}
+    </button>
   )
 }
 

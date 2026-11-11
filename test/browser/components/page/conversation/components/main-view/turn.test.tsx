@@ -439,7 +439,7 @@ describe("Turn（経過の畳み）", () => {
           options: [{ label: "選んだ答え", description: "", preview: undefined }],
         },
       ],
-      answers: [["選んだ答え"]],
+      answers: [{ kind: "chosen", labels: ["選んだ答え"] }],
       briefs: [],
       imageSizes: [],
       unshelvedImages: [],

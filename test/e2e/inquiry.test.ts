@@ -91,6 +91,23 @@ test.describe("お伺い", () => {
     await expect.poll(() => inquiry.count()).toBe(0)
   })
 
+  test("質問は、「任せる」で1問ずつ任せて答えられる（マウス）", async ({ run }) => {
+    const room = await run.open({
+      scenario: "inquiry-question-entrust",
+      scene: "question-pair",
+      viewport: "wide",
+      domRoots: ["main"],
+    })
+    const inquiry = inquiryOf(room.page)
+
+    await inquiry.getByRole("button", { name: "任せる" }).click()
+    await expect.poll(() => inquiry.textContent()).toContain("2 / 2")
+    await inquiry.getByRole("button", { name: "任せる" }).click()
+
+    await room.waitForEvent("question-answered")
+    await expect.poll(() => inquiry.count()).toBe(0)
+  })
+
   for (const [scenario, scene] of [
     ["inquiry-question-long-medium", "question-long"],
     ["inquiry-question-preview-medium", "question-preview"],
@@ -147,10 +164,10 @@ test.describe("お伺い", () => {
       await expect(inquiry.getByText(mark, { exact: true })).toBeVisible()
     }
 
-    await inquiry.getByRole("radio", { name: /B に置く/ }).click()
+    await inquiry.getByRole("radio", { name: /A に置く/ }).click()
     await expect.poll(() => detail.count()).toBe(1)
     const [options, panel] = await Promise.all([
-      inquiry.getByRole("radio", { name: /B に置く/ }).boundingBox(),
+      inquiry.getByRole("radio", { name: /A に置く/ }).boundingBox(),
       detail.boundingBox(),
     ])
     expect(options !== null && panel !== null && panel.x > options.x + options.width).toBe(true)
@@ -162,8 +179,12 @@ test.describe("お伺い", () => {
       .toBe(true)
 
     expect(await inquiry.locator("details table").count()).toBe(0)
+    await expect.poll(() => detail.getAttribute("aria-label")).toBe("A に置く の詳細")
+    // 図も preview も無い選択肢には詳細の欄が無く、説明は選択肢の行に出ている。
     await inquiry.getByRole("radio", { name: /C に移す/ }).click()
-    await expect.poll(() => detail.getAttribute("aria-label")).toBe("C に移す の詳細")
+    await expect.poll(() => detail.count()).toBe(0)
+    await expect(inquiry.getByText("架空の説明C")).toBeVisible()
+    await inquiry.getByRole("radio", { name: /A に置く/ }).click()
 
     await room.resize(VIEWPORTS.compact)
     await expect.poll(() => detail.count()).toBe(1)

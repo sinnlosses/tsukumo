@@ -62,11 +62,24 @@
   font-family: var(--font-mono);
 }
 .pending-ask-card-question {
-  margin: var(--space-sm) 0 0;
+  margin: 0;
   font-size: var(--font-subheading);
   font-weight: 700;
   line-height: 1.7;
   color: var(--ink);
+}
+/* 問いとおすすめの理由の1行。間は gap が決める。 */
+.pending-ask-card-ask {
+  display: flex;
+  flex-direction: column;
+  gap: var(--stack-tight);
+  margin: var(--space-sm) 0 0;
+}
+/* 長ければ折り返して、問いと同じく転がす側に含める。 */
+.pending-ask-card-reason {
+  margin: 0;
+  color: var(--ink-quiet);
+  font-size: var(--font-secondary);
 }
 .pending-ask-card-chips {
   display: flex;
@@ -127,6 +140,11 @@
   color: var(--ink);
   font-size: var(--font-subheading);
   cursor: pointer;
+}
+/* 「任せる」は選択肢と区別して、並びの最後に1行ぶん取る。 */
+.pending-ask-card-entrust {
+  grid-column: 1 / -1;
+  color: var(--ink-quiet);
 }
 .pending-ask-card-button.is-recommended {
   border-color: var(--state-warn);

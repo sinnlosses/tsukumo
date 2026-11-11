@@ -167,7 +167,7 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
         kind: "question-answered",
         toolUseId: ask.id,
         questions: ask.questions,
-        answers: answer.labels,
+        answers: answer.answers,
         briefs: ask.briefs,
         imageSizes: [],
         unshelvedImages: [],

@@ -483,7 +483,7 @@ describe("createSessionManager", () => {
               options: [{ label: "架空の選択肢", description: "", preview: undefined }],
             },
           ],
-          answers: [["架空の答え"]],
+          answers: [{ kind: "chosen", labels: ["架空の答え"] }],
           briefs: [],
           imageSizes: [],
           unshelvedImages: [],

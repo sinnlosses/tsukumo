@@ -154,14 +154,14 @@
 .inquiry-brief-certainty {
   vertical-align: baseline;
 }
-/* 左に選択肢の縦の並び、右に詳細。札の幅が 44rem に満たなければ1列にして、詳細を選択肢の下へ回す。 */
+/* 左に選択肢の縦の並び、右に詳細。2列にするのは図か preview のある質問（is-detailed）で、札の幅が 44rem に満たなければ1列にして、詳細を選択肢の下へ回す。 */
 .inquiry-choose {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: var(--space-md);
 }
 @container (min-width: 44rem) {
-  .inquiry-choose {
+  .inquiry-choose.is-detailed {
     grid-template-columns: 16rem minmax(0, 1fr);
     align-items: start;
   }
@@ -183,8 +183,15 @@
 .inquiry-detail-title {
   margin: 0;
 }
-.inquiry-detail-description {
+/* 選択肢の行の下の description の1行。 */
+.inquiry-option-description {
   margin: var(--space-xs) 0 0;
+  overflow-wrap: anywhere;
+}
+/* 記録の畳みの読み専用の行（label ではないので手のカーソルは出さない）。 */
+.inquiry-option-choose-static {
+  min-width: 0;
+  min-height: 1.5rem;
 }
 /* 何も触っていないあいだの案内の1行。詳細の枠と同じ位置に置く。 */
 .inquiry-detail-hint {

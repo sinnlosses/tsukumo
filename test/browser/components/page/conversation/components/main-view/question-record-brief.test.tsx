@@ -37,7 +37,7 @@ function entryOf(overrides: Partial<MainViewQuestion>): MainViewQuestion {
         ],
       },
     ],
-    answers: [["案B"]],
+    answers: [{ kind: "chosen", labels: ["案B"] }],
     briefs: [],
     imageSizes: [],
     unshelvedImages: [],
@@ -89,7 +89,7 @@ describe("QuestionRecord（質問のときの詳細）", () => {
     expect(screen.queryByText(/架空の聞く理由の文/)).toBeNull()
   })
 
-  it("開くと、聞く理由と、説明か図か preview を持つ選択肢ごとの詳細が出て、比べる表は出ない", () => {
+  it("開くと、選択肢の行（description の1行つき）が並び、図も preview も無い選択肢の詳細は出ない", () => {
     const entry = entryOf({
       briefs: [BRIEF],
       questions: [
@@ -100,6 +100,30 @@ describe("QuestionRecord（質問のときの詳細）", () => {
           options: [
             { label: "案A", description: "架空の説明A", preview: undefined },
             { label: "案B", description: "架空の説明B", preview: undefined },
+          ],
+        },
+      ],
+    })
+    const { container } = render(<QuestionRecord entry={entry} />)
+
+    toggle(container, BRIEF_SUMMARY, true)
+
+    expect(screen.getByText("架空の説明A")).toBeDefined()
+    expect(screen.getByText("架空の説明B")).toBeDefined()
+    expect(screen.queryByRole("group", { name: /の詳細$/ })).toBeNull()
+  })
+
+  it("開くと、聞く理由と、図か preview を持つ選択肢ごとの詳細が出て、比べる表は出ない", () => {
+    const entry = entryOf({
+      briefs: [BRIEF],
+      questions: [
+        {
+          header: "確認",
+          text: "どちらにする？",
+          multiSelect: false,
+          options: [
+            { label: "案A", description: "架空の説明A", preview: "### 案Aの下書き" },
+            { label: "案B", description: "架空の説明B", preview: "### 案Bの下書き" },
           ],
         },
       ],
@@ -123,7 +147,7 @@ describe("QuestionRecord（質問のときの詳細）", () => {
           text: "どちらにする？",
           multiSelect: false,
           options: [
-            { label: "案A", description: "架空の説明A", preview: undefined },
+            { label: "案A", description: "架空の説明A", preview: "### 案Aの下書き" },
             { label: "案B", description: "", preview: undefined },
           ],
         },

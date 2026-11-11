@@ -5,7 +5,7 @@
 // 許可要求は選択肢「許可」「拒否」の1問として同じ形で持つ。
 // 答え待ちそのものは `SessionState` から来るので、それを読んで画面に出す形へ畳むのは `useInquiryAnswer`。
 //
-// `answer.labels[i]` は `questions[i]` に対して選んだ答えの並び（`PendingAsk` の契約）。
+// `answer.answers[i]` は `questions[i]` に対する答え（`PendingAsk` の契約。選んだか任せたか）。
 // 複数選択で2つ以上選んだときはそのまま複数の要素として送り、入力欄に書いた文字列は同じ並びの末尾に足す。
 // SDK が求める「質問1件に対して1つの文字列」へ畳むのはサーバの役目で、ここで畳むとメインビューに残す記録の側で選択肢と突き合わせられなくなる。
 
@@ -23,6 +23,7 @@ import {
   isRecommendedLabel,
   sortQuestionOptions,
   type Question,
+  type QuestionAnswer,
   withoutRecommendedMark,
 } from "../../../../../shared/session-driver/question.ts"
 import { toolInputText } from "../../../../domain/tool-summary.ts"
@@ -115,6 +116,8 @@ export type InquiryModel =
       readonly writing: boolean
       /** 入力欄に書いた字でこの問に答える（最後の1問なら全問ぶんを送る）。 */
       readonly onAnswerWithText: (text: string) => void
+      /** この問の判断を任せて確定し、次の問へ進む（最後の1問なら全問ぶんを送る）。入力欄の字は使わず残す。 */
+      readonly onEntrust: () => void
     })
 
 export function useInquiryAnswer(): InquiryModel {
@@ -177,7 +180,12 @@ export function inquiryBriefOf(brief: QuestionBrief): InquiryBrief {
 const ALLOW_LABEL = "許可"
 const DENY_LABEL = "拒否"
 
-const EMPTY_DRAFT_ANSWER: DraftAnswer = { index: 0, selections: [], writtenAnswers: [] }
+const EMPTY_DRAFT_ANSWER: DraftAnswer = {
+  index: 0,
+  selections: [],
+  writtenAnswers: [],
+  entrusted: [],
+}
 
 type InquiryDraft = {
   readonly answer: DraftAnswer
@@ -258,20 +266,29 @@ function questionModel(
   const writtenAnswer = draft.answer.writtenAnswers[index] ?? ""
   const last = index === questions.length - 1
 
-  /** `target` 番目の答えだけ差し替えて `labels` を組む。 */
-  const labelsWith = (answer: readonly string[]): string[][] =>
-    questions.map((_, i) => (i === index ? [...answer] : [...answerFor(draft.answer, i)]))
+  const answersWith = (current: QuestionAnswer) =>
+    questions.map((_, i) => {
+      const answer = i === index ? current : savedAnswer(draft.answer, i)
+      return answer.kind === "chosen"
+        ? { kind: "chosen" as const, labels: [...answer.labels] }
+        : answer
+    })
 
   /**
-   * この問の答え（選んだラベルと、入力欄に書いた答え）を確定して次へ進む。
+   * この問の答え（選んだラベルと、入力欄に書いた答え。または任せた）を確定して次へ進む。
    * 最後の1問なら全問ぶんを1回で送る。
    */
-  const advance = (choices: readonly string[], written: string): void => {
+  const advance = (choices: readonly string[], written: string, entrust = false): void => {
     if (!last) {
       draft.setAnswer({
         index: index + 1,
-        selections: replaced(draft.answer.selections, index, choices, []),
-        writtenAnswers: replaced(draft.answer.writtenAnswers, index, written, ""),
+        selections: entrust
+          ? draft.answer.selections
+          : replaced(draft.answer.selections, index, choices, []),
+        writtenAnswers: entrust
+          ? draft.answer.writtenAnswers
+          : replaced(draft.answer.writtenAnswers, index, written, ""),
+        entrusted: replaced(draft.answer.entrusted, index, entrust, false),
       })
       return
     }
@@ -279,7 +296,11 @@ function questionModel(
       id: pending.id,
       answer: {
         kind: "answers",
-        labels: labelsWith(written === "" ? choices : [...choices, written]),
+        answers: answersWith(
+          entrust
+            ? { kind: "entrusted" }
+            : { kind: "chosen", labels: written === "" ? choices : [...choices, written] },
+        ),
       },
     })
   }
@@ -331,6 +352,7 @@ function questionModel(
         writtenAnswers: question.multiSelect
           ? draft.answer.writtenAnswers
           : replaced(draft.answer.writtenAnswers, index, "", ""),
+        entrusted: replaced(draft.answer.entrusted, index, false, false),
       })
     },
     onChoose: (label) => {
@@ -348,6 +370,9 @@ function questionModel(
     onBack: () => {
       draft.setAnswer({ ...draft.answer, index: Math.max(0, index - 1) })
     },
+    onEntrust: () => {
+      advance([], "", true)
+    },
     onAnswerWithText: (written) => {
       const trimmed = written.trim()
       if (trimmed === "") {
@@ -363,11 +388,13 @@ function focusedLabelOf(label?: string): InquiryFocusedLabel {
   return label === undefined ? { kind: "none" } : { kind: "option", label }
 }
 
-/** `target` 番目の答え（選んだラベル + 入力欄に書いた答え）。 */
-function answerFor(answer: DraftAnswer, target: number): readonly string[] {
+function savedAnswer(answer: DraftAnswer, target: number): QuestionAnswer {
+  if (answer.entrusted[target] === true) {
+    return { kind: "entrusted" }
+  }
   const written = answer.writtenAnswers[target] ?? ""
   const selected = answer.selections[target] ?? []
-  return written === "" ? selected : [...selected, written]
+  return { kind: "chosen", labels: written === "" ? selected : [...selected, written] }
 }
 
 /**

@@ -37,7 +37,7 @@ export type MainViewEntry =
     }
   /**
    * キャラクターからの質問（AskUserQuestion）と、それに対する答え。`answers[i]` は
-   * `questions[i]` に対して選んだ答えの並び（{@link QuestionAnswer}。選ばなかった質問は空）。
+   * `questions[i]` に対する答え（{@link QuestionAnswer}。選んだか任せたか。選ばなかった質問は `labels` が空）。
    * `toolUseId` は preview と添え書きの図の画像の置き場を引く鍵。
    * `briefs` は答え待ちのときの添え書き（無ければ空）で、`imageSizes`・`unshelvedImages` はその図の寸法と置けなかったパス。
    */

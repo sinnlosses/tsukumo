@@ -38,6 +38,7 @@ export type QuestionRecordAnswerRow = {
   readonly label: string
   readonly chosen: boolean
   readonly isFreeText: boolean
+  readonly isEntrusted: boolean
 }
 
 /** 比べた `preview` の1件。 */
@@ -83,7 +84,7 @@ export function useQuestionRecord(props: QuestionRecordProps): QuestionRecordMod
   return {
     toolUseId: props.entry.toolUseId,
     questions: props.entry.questions.map((question, index) => {
-      const answer = props.entry.answers[index] ?? []
+      const answer = props.entry.answers[index] ?? NO_ANSWER
       const brief = props.entry.briefs.find((candidate) => candidate.header === question.header)
       return {
         brief:
@@ -128,7 +129,7 @@ function briefModel(given: {
 }): QuestionRecordBriefModel {
   return {
     brief: inquiryBriefOf(given.brief),
-    options: optionRows(given.question, given.answer, given.brief.options),
+    options: optionRows(given.question, chosenLabels(given.answer), given.brief.options),
     imageSource: {
       kind: "shelved",
       toolUseId: given.entry.toolUseId,
@@ -149,16 +150,37 @@ function answerRows(
   question: Question,
   answer: QuestionAnswer,
 ): readonly QuestionRecordAnswerRow[] {
+  const labels = chosenLabels(answer)
   const choiceRows = sortQuestionOptions(question.options).map((option) => ({
     key: option.label,
     label: option.label,
-    chosen: answer.includes(option.label),
+    chosen: labels.includes(option.label),
     isFreeText: false,
+    isEntrusted: false,
   }))
-  const freeTextRows = answer
+  const freeTextRows = labels
     .filter((value) => !question.options.some((option) => option.label === value))
-    .map((text) => ({ key: text, label: text, chosen: true, isFreeText: true }))
-  return [...choiceRows, ...freeTextRows]
+    .map((text) => ({ key: text, label: text, chosen: true, isFreeText: true, isEntrusted: false }))
+  const entrustedRows =
+    answer.kind === "entrusted"
+      ? [
+          {
+            key: ENTRUSTED_LABEL,
+            label: ENTRUSTED_LABEL,
+            chosen: true,
+            isFreeText: false,
+            isEntrusted: true,
+          },
+        ]
+      : []
+  return [...choiceRows, ...freeTextRows, ...entrustedRows]
+}
+
+const ENTRUSTED_LABEL = "任せた"
+const NO_ANSWER: QuestionAnswer = { kind: "chosen", labels: [] }
+
+function chosenLabels(answer: QuestionAnswer): readonly string[] {
+  return answer.kind === "chosen" ? answer.labels : []
 }
 
 /** 比べた `preview` を持つ選択肢だけ、選択肢と同じ並びで残す。 */
@@ -169,6 +191,12 @@ function previewRows(
   return sortQuestionOptions(question.options).flatMap((option) =>
     option.preview === undefined
       ? []
-      : [{ label: option.label, preview: option.preview, chosen: answer.includes(option.label) }],
+      : [
+          {
+            label: option.label,
+            preview: option.preview,
+            chosen: chosenLabels(answer).includes(option.label),
+          },
+        ],
   )
 }

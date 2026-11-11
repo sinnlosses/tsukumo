@@ -115,6 +115,18 @@ describe("コマンドの契約の入力（受け付ける形）", () => {
     })
   })
 
+  it("session.answer は選んだ答えと任せた答えの混在を受け付ける", () => {
+    const answer = {
+      kind: "answers",
+      answers: [{ kind: "chosen", labels: ["架空の案"] }, { kind: "entrusted" }],
+    }
+
+    expect(parseInput("session.answer", { id: "toolu_1", answer })).toEqual({
+      id: "toolu_1",
+      answer,
+    })
+  })
+
   it("session.switchSession を受け付ける", () => {
     expect(parseInput("session.switchSession", { sessionId: "s-fictional" })).toEqual({
       sessionId: "s-fictional",
@@ -319,10 +331,16 @@ describe("コマンドの契約の入力（落とす形）", () => {
     ["一覧に無い effort", "session.setEffort", { effort: "ultra" }],
     ["形の合わない答え", "session.answer", { id: "toolu_1", answer: { kind: "??" } }],
     ...[
-      ["labels が数の配列", { kind: "answers", labels: [1, 2] }],
-      ["labels が文字列の配列（配列の配列でない）", { kind: "answers", labels: ["答え"] }],
-      ["labels が文字列", { kind: "answers", labels: "答え" }],
-      ["labels が無い", { kind: "answers" }],
+      ["古い形（labels の配列の配列）", { kind: "answers", labels: [["答え"]] }],
+      ["answers が文字列の配列", { kind: "answers", answers: ["答え"] }],
+      ["answers が文字列", { kind: "answers", answers: "答え" }],
+      ["answers が無い", { kind: "answers" }],
+      [
+        "chosen の labels が数の配列",
+        { kind: "answers", answers: [{ kind: "chosen", labels: [1] }] },
+      ],
+      ["chosen の labels が無い", { kind: "answers", answers: [{ kind: "chosen" }] }],
+      ["知らない kind の答え", { kind: "answers", answers: [{ kind: "unknown" }] }],
     ].map(
       ([name, answer]) =>
         [`answers の${String(name)}`, "session.answer", { id: "toolu_1", answer }] as const,

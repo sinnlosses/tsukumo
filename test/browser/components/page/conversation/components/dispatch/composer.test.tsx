@@ -446,7 +446,7 @@ describe("Composer", () => {
     useInquiryDraft.setState({
       draft: {
         pendingId: "ask-question",
-        answer: { index: 0, selections: [["A案"]], writtenAnswers: [] },
+        answer: { index: 0, selections: [["A案"]], writtenAnswers: [], entrusted: [] },
       },
     })
 
@@ -477,7 +477,7 @@ describe("Composer", () => {
       {
         procedure: "session.answer",
         id: "ask-question",
-        answer: { kind: "answers", labels: [["架空の自由な答え"]] },
+        answer: { kind: "answers", answers: [{ kind: "chosen", labels: ["架空の自由な答え"] }] },
       },
     ])
     expect(answerArea.value).toBe("")

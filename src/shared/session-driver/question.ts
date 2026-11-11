@@ -3,6 +3,7 @@
 // 質問文と選択肢は会話の内容そのものなので、ログや状態ファイルには書かず、画面に出す経路だけで扱う。
 
 import { isPlainObject } from "remeda"
+import { z } from "zod"
 
 /**
  * 1つの選択肢。
@@ -22,11 +23,19 @@ export type Question = {
 }
 
 /**
- * 質問1件に対して利用者が選んだ答え。複数選択のときは選んだぶんだけ要素が並ぶ。
+ * 質問1件に対して利用者が出した答え。`chosen` は選んだ答えで、複数選択のときは選んだぶんだけ `labels` に並ぶ。
  * 選択肢のラベルと、自由入力に打った文字列が同じ並びに混ざる（自由入力は `options` のどれとも一致しないので、突き合わせる側はそれで見分ける）。
+ * `entrusted` は判断を任せた答え（何を選んだかは持たない）。
  * SDK へ返すときに1つの文字列へ畳むのは駆動の側で、画面側はこの形のまま送る。
  */
-export type QuestionAnswer = readonly string[]
+export type QuestionAnswer =
+  | { readonly kind: "chosen"; readonly labels: readonly string[] }
+  | { readonly kind: "entrusted" }
+
+export const questionAnswerSchema = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal("chosen"), labels: z.array(z.string()) }),
+  z.object({ kind: z.literal("entrusted") }),
+])
 
 /**
  * `AskUserQuestion` の自由入力の選択肢のラベル。

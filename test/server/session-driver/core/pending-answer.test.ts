@@ -157,7 +157,7 @@ describe("createPendingAnswerQueue", () => {
     const request = questionRequest()
 
     const asked = queue.ask(request)
-    queue.answer("toolu_q", { kind: "answers", labels: [["あっち"]] })
+    queue.answer("toolu_q", { kind: "answers", answers: [{ kind: "chosen", labels: ["あっち"] }] })
 
     expect(await asked).toEqual({
       behavior: "allow",
@@ -169,18 +169,78 @@ describe("createPendingAnswerQueue", () => {
     const queue = briefedQueue()
 
     const asked = queue.ask(questionRequest())
-    queue.answer("toolu_q", { kind: "answers", labels: [["こっち", "あっち"]] })
+    queue.answer("toolu_q", {
+      kind: "answers",
+      answers: [{ kind: "chosen", labels: ["こっち", "あっち"] }],
+    })
 
     expect(await asked).toMatchObject({
       updatedInput: { answers: { "どちらにする？": "こっち、あっち" } },
     })
   })
 
+  it("任せた問には、判断を任せる旨の文を入れる", async () => {
+    const queue = briefedQueue()
+
+    const asked = queue.ask(questionRequest())
+    queue.answer("toolu_q", { kind: "answers", answers: [{ kind: "entrusted" }] })
+
+    expect(await asked).toMatchObject({
+      updatedInput: {
+        answers: {
+          "どちらにする？": expect.stringContaining("判断を任せる"),
+        },
+      },
+    })
+  })
+
+  it("任せた問と選んだ問は、問ごとに文を分けて組み、記録の合図には任せたを写す", async () => {
+    const answered: unknown[] = []
+    const queue = createPendingAnswerQueue({
+      onChange: () => {},
+      onAnswered: (_, __, answers) => answered.push(answers),
+    })
+    const request = questionRequest({
+      input: {
+        questions: [
+          {
+            header: "一",
+            question: "一つ目？",
+            multiSelect: false,
+            options: [{ label: "甲", description: "架空" }],
+          },
+          {
+            header: "二",
+            question: "二つ目？",
+            multiSelect: false,
+            options: [{ label: "乙", description: "架空" }],
+          },
+        ],
+      },
+    })
+
+    const asked = queue.ask(request)
+    queue.answer("toolu_q", {
+      kind: "answers",
+      answers: [{ kind: "entrusted" }, { kind: "chosen", labels: ["乙"] }],
+    })
+
+    expect(await asked).toMatchObject({
+      updatedInput: {
+        answers: {
+          "一つ目？": expect.stringContaining("判断を任せる"),
+          "二つ目？": "乙",
+        },
+      },
+    })
+    expect(answered).toEqual([[{ kind: "entrusted" }, { kind: "chosen", labels: ["乙"] }]])
+  })
+
   it("何も選ばれていない質問は SDK へ返す answers に入れない", async () => {
     const queue = briefedQueue()
 
     const asked = queue.ask(questionRequest())
-    queue.answer("toolu_q", { kind: "answers", labels: [[]] })
+    queue.answer("toolu_q", { kind: "answers", answers: [{ kind: "chosen", labels: [] }] })
 
     expect(await asked).toMatchObject({ updatedInput: { answers: {} } })
   })
@@ -194,9 +254,12 @@ describe("createPendingAnswerQueue", () => {
     })
 
     void queue.ask(questionRequest())
-    queue.answer("toolu_q", { kind: "answers", labels: [["こっち", "自由入力の答え（架空）"]] })
+    queue.answer("toolu_q", {
+      kind: "answers",
+      answers: [{ kind: "chosen", labels: ["こっち", "自由入力の答え（架空）"] }],
+    })
     // 解決済みの id にもう一度答えても二度目は流れない。
-    queue.answer("toolu_q", { kind: "answers", labels: [["あっち"]] })
+    queue.answer("toolu_q", { kind: "answers", answers: [{ kind: "chosen", labels: ["あっち"] }] })
 
     expect(answered).toEqual([
       {
@@ -212,7 +275,7 @@ describe("createPendingAnswerQueue", () => {
             ],
           },
         ],
-        answers: [["こっち", "自由入力の答え（架空）"]],
+        answers: [{ kind: "chosen", labels: ["こっち", "自由入力の答え（架空）"] }],
         briefs: [BRIEF],
       },
     ])
@@ -239,7 +302,12 @@ describe("createPendingAnswerQueue", () => {
     expect(queue.answer("toolu_q", { kind: "allow" })).toBe(false)
 
     void queue.ask(permissionRequest())
-    expect(queue.answer("toolu_1", { kind: "answers", labels: [["こっち"]] })).toBe(false)
+    expect(
+      queue.answer("toolu_1", {
+        kind: "answers",
+        answers: [{ kind: "chosen", labels: ["こっち"] }],
+      }),
+    ).toBe(false)
 
     expect(queue.list().map((ask) => ask.id)).toEqual(["toolu_q", "toolu_1"])
   })
@@ -493,7 +561,7 @@ describe("選択肢が2つ以上の質問は添え書きが無いと断る", () 
     })
 
     void queue.ask(requestOf(SINGLE_OPTION_QUESTION))
-    queue.answer("toolu_q", { kind: "answers", labels: [["こっち"]] })
+    queue.answer("toolu_q", { kind: "answers", answers: [{ kind: "chosen", labels: ["こっち"] }] })
 
     expect(briefs).toEqual([[]])
   })

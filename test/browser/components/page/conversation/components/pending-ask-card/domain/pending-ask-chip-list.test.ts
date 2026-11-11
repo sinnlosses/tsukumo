@@ -48,6 +48,7 @@ function question(figures: Parameters<typeof row>[0]): InquiryModel {
     writtenAnswer: "",
     writing: false,
     onAnswerWithText: () => {},
+    onEntrust: () => {},
     options: [row(figures)],
   }
 }

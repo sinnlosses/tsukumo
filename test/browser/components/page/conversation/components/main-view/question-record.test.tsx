@@ -44,7 +44,7 @@ describe("QuestionRecord（選んだ印の色）", () => {
       kind: "question",
       toolUseId: "toolu_fictional",
       questions: [question("確認", "どちらにする？")],
-      answers: [["案B"]],
+      answers: [{ kind: "chosen", labels: ["案B"] }],
       ...NO_BRIEF,
     }
 
@@ -56,6 +56,24 @@ describe("QuestionRecord（選んだ印の色）", () => {
 
     expect(chosenMark?.getAttribute("data-color")).toBe("accent")
     expect(unchosenMark?.getAttribute("data-color")).not.toBe("accent")
+  })
+})
+
+describe("QuestionRecord（任せた問）", () => {
+  it("任せた問は、どの選択肢も選んだ印にせず、末尾に「任せた」の行を出す", () => {
+    const entry: MainViewQuestion = {
+      kind: "question",
+      toolUseId: "toolu_fictional",
+      questions: [question("確認", "どちらにする？")],
+      answers: [{ kind: "entrusted" }],
+      ...NO_BRIEF,
+    }
+
+    const { container } = render(<QuestionRecord entry={entry} />)
+
+    const rows = [...container.querySelectorAll(".question-option")].map((row) => row.textContent)
+    expect(rows.at(-1)).toContain("任せた")
+    expect(rows.slice(0, -1).every((text) => text?.includes("○") === true)).toBe(true)
   })
 })
 
@@ -75,7 +93,7 @@ describe("QuestionRecord（単一選択と複数選択で印が変わる）", ()
           ],
         },
       ],
-      answers: [["案B"]],
+      answers: [{ kind: "chosen", labels: ["案B"] }],
       ...NO_BRIEF,
     }
 
@@ -115,7 +133,7 @@ describe("QuestionRecord（答えの突き合わせ）", () => {
           })),
         },
       ],
-      answers: [["案A", "案C"]],
+      answers: [{ kind: "chosen", labels: ["案A", "案C"] }],
       ...NO_BRIEF,
     }
 
@@ -133,7 +151,7 @@ describe("QuestionRecord（答えの突き合わせ）", () => {
       kind: "question",
       toolUseId: "toolu_fictional",
       questions: [question("確認", "どちらにする？")],
-      answers: [["どちらでもない架空の答え"]],
+      answers: [{ kind: "chosen", labels: ["どちらでもない架空の答え"] }],
       ...NO_BRIEF,
     }
 
@@ -161,7 +179,7 @@ describe("QuestionRecord（答えの突き合わせ）", () => {
           })),
         },
       ],
-      answers: [["案B"]],
+      answers: [{ kind: "chosen", labels: ["案B"] }],
       ...NO_BRIEF,
     }
 
@@ -182,7 +200,10 @@ describe("QuestionRecord（答えの突き合わせ）", () => {
           options: ["案A", "案C"].map((label) => ({ label, description: "", preview: undefined })),
         },
       ],
-      answers: [["案B"], ["案A"]],
+      answers: [
+        { kind: "chosen", labels: ["案B"] },
+        { kind: "chosen", labels: ["案A"] },
+      ],
       ...NO_BRIEF,
     }
 
@@ -209,7 +230,7 @@ describe("QuestionRecord（残す preview）", () => {
           ],
         },
       ],
-      answers: [["案B"]],
+      answers: [{ kind: "chosen", labels: ["案B"] }],
       ...NO_BRIEF,
     }
   }
@@ -230,7 +251,7 @@ describe("QuestionRecord（残す preview）", () => {
       kind: "question",
       toolUseId: "toolu_fictional",
       questions: [question("確認", "どちらにする？")],
-      answers: [["案B"]],
+      answers: [{ kind: "chosen", labels: ["案B"] }],
       ...NO_BRIEF,
     }
 

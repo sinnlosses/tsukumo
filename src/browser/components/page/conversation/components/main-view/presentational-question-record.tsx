@@ -11,7 +11,7 @@ import {
 } from "../../../../../features/report/markdown.tsx"
 import { Heading } from "../../../../ui/heading/heading.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
-import { hasDetail, InquiryBrief, InquiryDetail } from "../inquiry/inquiry.tsx"
+import { hasDetail, InquiryBrief, InquiryDetail, InquiryOptionList } from "../inquiry/inquiry.tsx"
 import type {
   QuestionRecordAnswerRow,
   QuestionRecordBriefModel,
@@ -22,6 +22,7 @@ import type {
 import styles from "./main-view.module.css"
 
 const FREE_TEXT_SUFFIX = "（自由入力）"
+const ENTRUSTED_MARK = "→"
 const PREVIEWS_SUMMARY = "比べた内容"
 const BRIEF_SUMMARY = "質問のときの詳細"
 
@@ -99,6 +100,7 @@ function BriefDetails(props: {
       {brief.opened && (
         <>
           <InquiryBrief brief={brief.brief} />
+          <InquiryOptionList options={brief.options} />
           {brief.options.filter(hasDetail).map((option) => (
             <InquiryDetail
               askId={props.toolUseId}
@@ -118,6 +120,17 @@ function AnswerRow(props: {
   readonly multiSelect: boolean
 }): ReactElement {
   const { row, multiSelect } = props
+
+  if (row.isEntrusted) {
+    return (
+      <li className={clsx(styles["question-option"], styles["is-chosen"])}>
+        <Text element="span" size="inherit" tone="accent" weight="inherit" className="">
+          {ENTRUSTED_MARK}
+        </Text>{" "}
+        {row.label}
+      </li>
+    )
+  }
 
   return (
     <li

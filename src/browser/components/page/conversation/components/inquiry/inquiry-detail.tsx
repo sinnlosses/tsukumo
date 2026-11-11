@@ -15,6 +15,7 @@ import {
 } from "../../../../../features/report/markdown.tsx"
 import { reportSectionsMarkdown } from "../../../../../features/report/report-markdown.ts"
 import { Badge } from "../../../../ui/badge/badge.tsx"
+import { HStack } from "../../../../ui/h-stack/h-stack.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
 import { VStack } from "../../../../ui/v-stack/v-stack.tsx"
 import type {
@@ -27,6 +28,8 @@ export type ShelvedSource = Extract<ReportImageSource, { readonly kind: "shelved
 
 const DETAIL_SUFFIX = " の詳細"
 const DETAIL_HINT = "選択肢を押すと詳細が出ます"
+const RECOMMENDED_BADGE = "おすすめ"
+const IRREVERSIBLE_BADGE = "⚠ 戻せない"
 const WHY_ASK_LABEL = "聞く理由"
 const FACTS_LABEL = "事実"
 const RECOMMENDED_LABEL = "おすすめの理由"
@@ -127,9 +130,102 @@ export function InquiryBrief(props: { readonly brief: InquiryBriefModel }): Reac
   )
 }
 
-/** 詳細のサーフェスに出すものがあるか（許可の「許可」「拒否」には無い）。 */
+/** 詳細の欄に出すものがあるか（図か `preview`。`description` は選択肢の行に出す）。 */
 export function hasDetail(option: InquiryOptionRow): boolean {
-  return option.description !== "" || option.preview !== undefined || option.figures.length > 0
+  return option.preview !== undefined || option.figures.length > 0
+}
+
+/** 選択肢の行の中身（番号・印・ラベル・バッジ）。操作できる行と読み専用の行が同じ見た目になるよう共用する。 */
+export function InquiryOptionContent(props: {
+  readonly option: InquiryOptionRow
+  readonly mark?: ReactElement
+}): ReactElement {
+  const { option } = props
+
+  return (
+    <>
+      <span className={styles["inquiry-option-number"]} aria-hidden="true">
+        {option.number}
+      </span>
+      {props.mark}
+      <Text
+        element="span"
+        size="inherit"
+        tone="inherit"
+        weight="bold"
+        className={styles["inquiry-option-label"]}
+      >
+        {option.text}
+      </Text>
+      {option.recommended && (
+        <Text
+          element="span"
+          size="label"
+          tone="state-warn"
+          weight="inherit"
+          className={styles["inquiry-option-badge"]}
+        >
+          {RECOMMENDED_BADGE}
+        </Text>
+      )}
+      {option.irreversible && (
+        <Text
+          element="span"
+          size="label"
+          tone="state-ng"
+          weight="bold"
+          className={styles["inquiry-badge"]}
+        >
+          {IRREVERSIBLE_BADGE}
+        </Text>
+      )}
+    </>
+  )
+}
+
+export function InquiryOptionDescription(props: {
+  readonly option: InquiryOptionRow
+}): ReactElement {
+  return (
+    <>
+      {props.option.description !== "" && (
+        <Text
+          element="p"
+          size="secondary"
+          tone="ink-quiet"
+          weight="inherit"
+          className={styles["inquiry-option-description"]}
+        >
+          {props.option.description}
+        </Text>
+      )}
+    </>
+  )
+}
+
+export function InquiryOptionList(props: {
+  readonly options: readonly InquiryOptionRow[]
+}): ReactElement {
+  return (
+    <ul className={styles["inquiry-options"]}>
+      {props.options.map((option) => (
+        <li className={styles["inquiry-option"]} key={option.label}>
+          <HStack
+            element="div"
+            name={{ kind: "none" }}
+            gap="sm"
+            align="baseline"
+            justify="start"
+            wrap="nowrap"
+            className={styles["inquiry-option-choose-static"]}
+          >
+            <InquiryOptionContent option={option} />
+          </HStack>
+          <InquiryOptionDescription option={option} />
+        </li>
+      ))}
+    </ul>
+  )
 }
 
 /** フォーカスした選択肢の詳細のサーフェス。高さは切らず、札の本文が内側で転がる。 */
@@ -160,17 +256,6 @@ export function InquiryDetail(props: {
         {option.text}
         {DETAIL_SUFFIX}
       </Text>
-      {option.description !== "" && (
-        <Text
-          element="p"
-          size="secondary"
-          tone="ink-quiet"
-          weight="inherit"
-          className={styles["inquiry-detail-description"]}
-        >
-          {option.description}
-        </Text>
-      )}
       {option.preview !== undefined && (
         <div className={clsx(detailBlockClassName, styles["detail-block"])}>
           <QuestionPreviewMarkdown text={option.preview} toolUseId={props.askId} />

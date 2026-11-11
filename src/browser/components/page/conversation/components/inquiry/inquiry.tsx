@@ -33,6 +33,9 @@ import {
   InquiryBrief,
   InquiryDetail,
   InquiryDetailHint,
+  InquiryOptionContent,
+  InquiryOptionDescription,
+  InquiryOptionList,
   type ShelvedSource,
 } from "./inquiry-detail.tsx"
 import styles from "./inquiry.module.css"
@@ -43,18 +46,17 @@ const KIND_LABEL = {
   question: "質問",
 } satisfies Record<Exclude<InquiryModel["kind"], "none">, string>
 const BACK_LABEL = "戻る"
+const ENTRUST_LABEL = "任せる"
 const EXPAND_LABEL = "広げる"
 const COLLAPSE_LABEL = "閉じる"
 const BOARD_LABEL = "お伺い（広げた板）"
 const FREE_TEXT_HINT = "選択肢にない答えは、下の入力欄に書いて送れます"
 const WRITING_NOTE = "入力欄の答えで答えます"
-const RECOMMENDED_BADGE = "おすすめ"
 const ANSWER_LABEL = "これで答える"
 const NEXT_LABEL = "次へ"
 /** ボタンに添えるキーの字。 */
 const ENTER_KEY_HINT = "⏎"
 const WAITED_PREFIX = "待って"
-const IRREVERSIBLE_BADGE = "⚠ 戻せない"
 /** 単一選択の radio をひとまとまりにする名前（札は1問ずつしか出ないので1つで足りる）。 */
 const OPTION_GROUP_NAME = "inquiry-option"
 /** 入力欄に書いて記録した答え（まだ送っていない問のぶん）の前置き。 */
@@ -62,7 +64,7 @@ const WRITTEN_ANSWER_PREFIX = "入力欄に書いた答え: "
 /** 数字キーで選べる選択肢の数字。 */
 const CHOICE_KEY = /^[1-9]$/
 
-export { hasDetail, InquiryBrief, InquiryDetail, type ShelvedSource }
+export { hasDetail, InquiryBrief, InquiryDetail, InquiryOptionList, type ShelvedSource }
 
 export function Inquiry(): ReactElement | undefined {
   const phone = usePhoneWidth()
@@ -97,6 +99,15 @@ export function InquiryCard(props: {
       closeBoard()
     }
   }
+  const entrustOnBoard = (): void => {
+    if (inquiry.kind !== "question") {
+      return
+    }
+    inquiry.onEntrust()
+    if (inquiry.last) {
+      closeBoard()
+    }
+  }
 
   return (
     <>
@@ -121,6 +132,11 @@ export function InquiryCard(props: {
               : { kind: "none" }
           }
           onAnswer={inquiry.onAnswer}
+          onEntrust={() => {
+            if (inquiry.kind === "question") {
+              inquiry.onEntrust()
+            }
+          }}
         />
       </section>
       {expanded && (
@@ -149,6 +165,7 @@ export function InquiryCard(props: {
               layout="board"
               expand={{ kind: "close", onClose: closeBoard }}
               onAnswer={answerOnBoard}
+              onEntrust={entrustOnBoard}
             />
           </section>
         </Dialog>
@@ -197,6 +214,7 @@ function InquiryFace(props: {
   readonly layout: "card" | "sheet" | "board"
   readonly expand: InquiryExpand
   readonly onAnswer: () => void
+  readonly onEntrust: () => void
 }): ReactElement {
   const { inquiry, now } = props
   const focusedLabel = inquiry.focusedLabel
@@ -205,6 +223,7 @@ function InquiryFace(props: {
       ? inquiry.options.find((option) => option.label === focusedLabel.label)
       : undefined
   const untouched = focusedLabel.kind === "none"
+  const detailed = inquiry.options.some(hasDetail)
 
   return (
     <>
@@ -303,7 +322,7 @@ function InquiryFace(props: {
             {WRITING_NOTE}
           </Text>
         )}
-        <div className={styles["inquiry-choose"]}>
+        <div className={clsx(styles["inquiry-choose"], detailed && styles["is-detailed"])}>
           <ul className={styles["inquiry-options"]}>
             {inquiry.options.map((option) => (
               <InquiryOption
@@ -323,7 +342,7 @@ function InquiryFace(props: {
               option={focused}
             />
           )}
-          {untouched && inquiry.options.some(hasDetail) && <InquiryDetailHint />}
+          {untouched && detailed && <InquiryDetailHint />}
         </div>
         {inquiry.kind === "question" && inquiry.writtenAnswer !== "" && (
           <Text
@@ -370,6 +389,19 @@ function InquiryFace(props: {
               onClick={inquiry.onBack}
             >
               {BACK_LABEL}
+            </Button>
+          )}
+          {inquiry.kind === "question" && (
+            <Button
+              variant="outline-hover-warn"
+              size="secondary"
+              pressed="none"
+              disabled={false}
+              disclosure={{ kind: "none" }}
+              className={styles["inquiry-back"]}
+              onClick={props.onEntrust}
+            >
+              {ENTRUST_LABEL}
             </Button>
           )}
           <Button
@@ -436,49 +468,21 @@ function InquiryOption(props: {
         wrap="nowrap"
         className={styles["inquiry-option-choose"]}
       >
-        <span className={styles["inquiry-option-number"]} aria-hidden="true">
-          {option.number}
-        </span>
-        <input
-          type={props.multiSelect ? "checkbox" : "radio"}
-          name={props.multiSelect ? undefined : OPTION_GROUP_NAME}
-          className={styles["inquiry-option-mark"]}
-          checked={option.selected}
-          onChange={() => props.onToggle(option.label)}
-          onFocus={() => props.onFocus(option.label)}
+        <InquiryOptionContent
+          option={option}
+          mark={
+            <input
+              type={props.multiSelect ? "checkbox" : "radio"}
+              name={props.multiSelect ? undefined : OPTION_GROUP_NAME}
+              className={styles["inquiry-option-mark"]}
+              checked={option.selected}
+              onChange={() => props.onToggle(option.label)}
+              onFocus={() => props.onFocus(option.label)}
+            />
+          }
         />
-        <Text
-          element="span"
-          size="inherit"
-          tone="inherit"
-          weight="bold"
-          className={styles["inquiry-option-label"]}
-        >
-          {option.text}
-        </Text>
-        {option.recommended && (
-          <Text
-            element="span"
-            size="label"
-            tone="state-warn"
-            weight="inherit"
-            className={styles["inquiry-option-badge"]}
-          >
-            {RECOMMENDED_BADGE}
-          </Text>
-        )}
-        {option.irreversible && (
-          <Text
-            element="span"
-            size="label"
-            tone="state-ng"
-            weight="bold"
-            className={styles["inquiry-badge"]}
-          >
-            {IRREVERSIBLE_BADGE}
-          </Text>
-        )}
       </HStack>
+      <InquiryOptionDescription option={option} />
     </li>
   )
 }

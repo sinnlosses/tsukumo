@@ -76,7 +76,7 @@ test.describe("狭い画面の答え待ちのカード", () => {
 
     const detail = sheet.getByRole("group", { name: / の詳細$/ })
     expect(await detail.count()).toBe(0)
-    await sheet.getByRole("radio", { name: /1件ずつ確かめる/ }).click()
+    await sheet.getByRole("radio", { name: /まとめて張り替える/ }).click()
     await detail.waitFor()
     const [last, panel] = await Promise.all([
       sheet.getByRole("radio", { name: /やめておく/ }).boundingBox(),

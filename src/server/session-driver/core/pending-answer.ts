@@ -21,6 +21,9 @@ const DENY_MESSAGE = "利用者が実行を許可しなかった"
 /** SDK へ返す `answers` は質問1件に対して1つの文字列なので、複数選んだ答えはこれでつなぐ。 */
 const ANSWER_SEPARATOR = "、"
 
+const ENTRUSTED_ANSWER =
+  "判断を任せる。おすすめの選択肢があればそれを、無ければあとで戻せる選択肢を選んで進め、何を選んだかを伝えてほしい"
+
 /**
  * `canUseTool` の戻り値に渡せる形。
  * SDK の `PermissionResult` と同じ構造に保つ（SDK の型は import せず、駆動がそのまま返す）。
@@ -174,7 +177,7 @@ export function createPendingAnswerQueue(handlers: PendingAnswerHandlers): Pendi
       // 質問の記録は答えが確定したここ1回だけ知らせる（未回答のまま終わった質問は残さない）。
       // 解決より先に知らせるので、答えを受けて動き出したツールのイベントより前に記録が積まれる。
       if (entry.ask.kind === "question" && answer.kind === "answers") {
-        handlers.onAnswered(id, entry.ask.questions, answer.labels, entry.ask.briefs)
+        handlers.onAnswered(id, entry.ask.questions, answer.answers, entry.ask.briefs)
       }
 
       settle(id, entry, result)
@@ -236,22 +239,30 @@ function toAnswerResult(entry: Entry, answer: Answer): AnswerResult | undefined 
 
   return {
     behavior: "allow",
-    updatedInput: { ...entry.input, answers: answersRecord(entry.ask.questions, answer.labels) },
+    updatedInput: { ...entry.input, answers: answersRecord(entry.ask.questions, answer.answers) },
   }
 }
 
 /**
- * SDK へ返す `answers`（質問文 → 答えの文字列）。複数選んだ答えは {@link ANSWER_SEPARATOR} でつなぐ。
+ * SDK へ返す `answers`（質問文 → 答えの文字列）。複数選んだ答えは {@link ANSWER_SEPARATOR} でつなぎ、任せた問は {@link ENTRUSTED_ANSWER} を入れる。
  * 何も選ばれていない質問は入れない（空の答えを送らない）。
  */
 function answersRecord(
   questions: readonly Question[],
-  labels: readonly QuestionAnswer[],
+  answers: readonly QuestionAnswer[],
 ): Readonly<Record<string, string>> {
   return Object.fromEntries(
     questions.flatMap((question, index) => {
-      const answer = labels[index] ?? []
-      return answer.length === 0 ? [] : [[question.text, answer.join(ANSWER_SEPARATOR)] as const]
+      const answer = answers[index]
+      if (answer === undefined) {
+        return []
+      }
+      if (answer.kind === "entrusted") {
+        return [[question.text, ENTRUSTED_ANSWER] as const]
+      }
+      return answer.labels.length === 0
+        ? []
+        : [[question.text, answer.labels.join(ANSWER_SEPARATOR)] as const]
     }),
   )
 }

@@ -50,7 +50,7 @@ describe("applySessionEvent（質問の記録）", () => {
       kind: "question-answered",
       toolUseId: "toolu_q",
       questions: [singleQuestion],
-      answers: [["案B"]],
+      answers: [{ kind: "chosen", labels: ["案B"] }],
       ...NO_BRIEF,
     })
 
@@ -59,7 +59,7 @@ describe("applySessionEvent（質問の記録）", () => {
         kind: "question",
         toolUseId: "toolu_q",
         questions: [singleQuestion],
-        answers: [["案B"]],
+        answers: [{ kind: "chosen", labels: ["案B"] }],
         ...NO_BRIEF,
       },
     ])
@@ -71,7 +71,7 @@ describe("applySessionEvent（質問の記録）", () => {
       kind: "question-answered",
       toolUseId: "toolu_q",
       questions: [singleQuestion],
-      answers: [["案A"]],
+      answers: [{ kind: "chosen", labels: ["案A"] }],
       briefs: [brief],
       imageSizes,
       unshelvedImages: ["fictional/b.png"],
@@ -87,7 +87,7 @@ describe("applySessionEvent（質問の記録）", () => {
       kind: "question-answered",
       toolUseId: "toolu_q",
       questions: [multiQuestion],
-      answers: [["案A", "案C"]],
+      answers: [{ kind: "chosen", labels: ["案A", "案C"] }],
       ...NO_BRIEF,
     })
 
@@ -96,7 +96,7 @@ describe("applySessionEvent（質問の記録）", () => {
         kind: "question",
         toolUseId: "toolu_q",
         questions: [multiQuestion],
-        answers: [["案A", "案C"]],
+        answers: [{ kind: "chosen", labels: ["案A", "案C"] }],
         ...NO_BRIEF,
       },
     ])
@@ -118,7 +118,7 @@ describe("applySessionEvent（質問の記録）", () => {
         kind: "question-answered",
         toolUseId: "toolu_q",
         questions: [singleQuestion],
-        answers: [["案A"]],
+        answers: [{ kind: "chosen", labels: ["案A"] }],
         ...NO_BRIEF,
       },
       requestEvent("架空の依頼2"),

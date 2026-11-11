@@ -39,6 +39,13 @@ const PERMISSION_PENDING = {
   askedAt: 0,
 } satisfies StampedPendingAsk
 
+const chosen = (...labels: string[]) => ({ kind: "chosen" as const, labels })
+const answered = (...answers: unknown[]) => ({
+  procedure: "session.answer",
+  id: "ask-1",
+  answer: { kind: "answers", answers },
+})
+
 function option(label: string, extra: Partial<QuestionOption> = {}): QuestionOption {
   return { label, description: `架空の説明（${label}）`, preview: undefined, ...extra }
 }
@@ -169,13 +176,7 @@ describe("useInquiryAnswer の押した瞬間に答える口", () => {
 
     act(() => asking(result.current).onChoose("B案"))
 
-    expect(calls).toEqual([
-      {
-        procedure: "session.answer",
-        id: "ask-1",
-        answer: { kind: "answers", labels: [["B案"]] },
-      },
-    ])
+    expect(calls).toEqual([answered(chosen("B案"))])
   })
 
   it("2問のとき、1問目は次の問いへ進むだけで送らず、2問目で全問ぶんを送る", () => {
@@ -186,13 +187,7 @@ describe("useInquiryAnswer の押した瞬間に答える口", () => {
     expect(asking(result.current).header).toBe("2問目")
 
     act(() => asking(result.current).onChoose("D案"))
-    expect(calls).toEqual([
-      {
-        procedure: "session.answer",
-        id: "ask-1",
-        answer: { kind: "answers", labels: [["A案"], ["D案"]] },
-      },
-    ])
+    expect(calls).toEqual([answered(chosen("A案"), chosen("D案"))])
   })
 
   it("複数選択では何もしない", () => {
@@ -252,9 +247,7 @@ describe("useInquiryAnswer の質問の答え方", () => {
 
     act(() => asking(result.current).onAnswer())
 
-    expect(calls).toEqual([
-      { procedure: "session.answer", id: "ask-1", answer: { kind: "answers", labels: [["B案"]] } },
-    ])
+    expect(calls).toEqual([answered(chosen("B案"))])
   })
 
   it("単一選択は選び直すと前の選択が外れる", () => {
@@ -294,25 +287,13 @@ describe("useInquiryAnswer の質問の答え方", () => {
       name: "単一選択では選択と排他で、前後の空白を落として送る",
       multiSelect: false,
       written: "  架空の自由な答え  ",
-      calls: [
-        {
-          procedure: "session.answer",
-          id: "ask-1",
-          answer: { kind: "answers", labels: [["架空の自由な答え"]] },
-        },
-      ],
+      calls: [answered(chosen("架空の自由な答え"))],
     },
     {
       name: "複数選択では選んだラベルの末尾に足す",
       multiSelect: true,
       written: "架空の補足",
-      calls: [
-        {
-          procedure: "session.answer",
-          id: "ask-1",
-          answer: { kind: "answers", labels: [["A案", "架空の補足"]] },
-        },
-      ],
+      calls: [answered(chosen("A案", "架空の補足"))],
     },
     { name: "空白だけの答えでは何も送らない", multiSelect: false, written: "   ", calls: [] },
   ])("入力欄に書いた答え: $name", ({ multiSelect, written, calls: expected }) => {
@@ -348,13 +329,7 @@ describe("useInquiryAnswer の質問の答え方", () => {
     act(() => asking(result.current).onToggle("D案"))
     act(() => asking(result.current).onAnswer())
 
-    expect(calls).toEqual([
-      {
-        procedure: "session.answer",
-        id: "ask-1",
-        answer: { kind: "answers", labels: [["B案"], ["D案"]] },
-      },
-    ])
+    expect(calls).toEqual([answered(chosen("B案"), chosen("D案"))])
   })
 
   it("1問目を入力欄に書いて答えると、2問目へ進み、書いた答えが札に残る", () => {
@@ -370,13 +345,7 @@ describe("useInquiryAnswer の質問の答え方", () => {
     act(() => asking(result.current).onToggle("C案"))
     act(() => asking(result.current).onAnswer())
 
-    expect(calls).toEqual([
-      {
-        procedure: "session.answer",
-        id: "ask-1",
-        answer: { kind: "answers", labels: [["架空の自由な答え"], ["C案"]] },
-      },
-    ])
+    expect(calls).toEqual([answered(chosen("架空の自由な答え"), chosen("C案"))])
   })
 })
 
@@ -410,13 +379,7 @@ describe("useInquiryAnswer と入力欄の字", () => {
     expect(asking(result.current).options.map((row) => row.selected)).toEqual([false, true])
 
     act(() => asking(result.current).onAnswerWithText("架空の答え"))
-    expect(calls).toEqual([
-      {
-        procedure: "session.answer",
-        id: "ask-1",
-        answer: { kind: "answers", labels: [["架空の答え"]] },
-      },
-    ])
+    expect(calls).toEqual([answered(chosen("架空の答え"))])
   })
 
   it("書いているあいだに押して付けた選択は、部品の付け直し・答え待ちの作り直し・板の開閉のどれでも、入力欄を空に戻すまで残る", () => {

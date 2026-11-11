@@ -1,4 +1,4 @@
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { Inquiry } from "../../../../../../../src/browser/components/page/conversation/components/inquiry/inquiry.tsx"
@@ -197,9 +197,40 @@ describe("Inquiry（メインビューのお伺いのカード）", () => {
       {
         procedure: "session.answer",
         id: "ask-1",
-        answer: { kind: "answers", labels: [["A案 (Recommended)"]] },
+        answer: { kind: "answers", answers: [{ kind: "chosen", labels: ["A案 (Recommended)"] }] },
       },
     ])
+  })
+
+  it("質問の操作の行に「任せる」を出し、押すと任せた答えを送る。許可要求には出さない", () => {
+    const calls: unknown[] = []
+    renderInquiry([questionPending([question()])], (command) => calls.push(command))
+
+    fireEvent.click(screen.getByRole("button", { name: "任せる" }))
+
+    expect(calls).toEqual([
+      {
+        procedure: "session.answer",
+        id: "ask-1",
+        answer: { kind: "answers", answers: [{ kind: "entrusted" }] },
+      },
+    ])
+    cleanup()
+
+    renderInquiry([PERMISSION_PENDING])
+    expect(screen.queryByRole("button", { name: "任せる" })).toBeNull()
+  })
+
+  it("広げた板で最後の問を「任せる」と、答えを送って板が閉じる", () => {
+    const calls: unknown[] = []
+    renderInquiry([questionPending([question()])], (command) => calls.push(command))
+
+    fireEvent.click(screen.getByRole("button", { name: "広げる" }))
+    const board = screen.getByRole("dialog", { name: "お伺い（広げた板）" })
+    fireEvent.click(within(board).getByRole("button", { name: "任せる" }))
+
+    expect(calls).toHaveLength(1)
+    expect(screen.queryByRole("dialog", { name: "お伺い（広げた板）" })).toBeNull()
   })
 
   it("質問が2件あると1問ずつ出し、「戻る」と「次へ」で行き来する", () => {
@@ -322,14 +353,21 @@ describe("Inquiry の添え書きと詳細のサーフェス", () => {
     ],
   } satisfies QuestionBrief
 
-  function renderBriefed(briefs: readonly QuestionBrief[]): void {
+  const previewed = question({
+    options: [
+      option("A案", { preview: "架空のプレビューA" }),
+      option("B案", { preview: "架空のプレビューB" }),
+    ],
+  })
+
+  function renderBriefed(briefs: readonly QuestionBrief[], shown: Question = previewed): void {
     putSession({
       ...INITIAL_SESSION_STATE,
       pending: [
         {
           kind: "question",
           id: "ask-1",
-          questions: [question()],
+          questions: [shown],
           briefs,
           imageSizes: [],
           unshelvedImages: [],
@@ -339,6 +377,17 @@ describe("Inquiry の添え書きと詳細のサーフェス", () => {
     })
     render(<Inquiry />)
   }
+
+  it("選択肢の行に description の1行を出し、図も preview も無い質問では詳細の欄も案内も2列も出さない", () => {
+    renderBriefed([brief], question())
+
+    expect(screen.getByText("架空の説明（A案）")).toBeDefined()
+    expect(screen.getByText("架空の説明（B案）")).toBeDefined()
+    expect(screen.queryByText("選択肢を押すと詳細が出ます")).toBeNull()
+    expect(card().querySelector('div[class*="is-detailed"]')).toBeNull()
+    fireEvent.click(screen.getByRole("radio", { name: /A案/ }))
+    expect(screen.queryByRole("group", { name: /の詳細$/ })).toBeNull()
+  })
 
   it("触る前は詳細を出さず、聞く理由と案内の1行を出し、比べる表は出さない", () => {
     renderBriefed([brief])
@@ -398,8 +447,9 @@ describe("Inquiry の添え書きと詳細のサーフェス", () => {
 
     fireEvent.click(screen.getByRole("radio", { name: /A案/ }))
 
-    expect(screen.getByText("架空の説明（A案）")).toBeDefined()
-    expect(screen.queryByText("架空の説明（B案）")).toBeNull()
+    expect(screen.getByRole("group", { name: "A案 の詳細" })).toBeDefined()
+    expect(screen.queryByRole("group", { name: "B案 の詳細" })).toBeNull()
+    expect(card().querySelector('div[class*="is-detailed"]')).not.toBeNull()
     expect(screen.queryByText("良い点")).toBeNull()
     expect(screen.queryByText("悪い点")).toBeNull()
     expect(card().querySelector("table")).toBeNull()
@@ -410,8 +460,8 @@ describe("Inquiry の添え書きと詳細のサーフェス", () => {
 
     fireEvent.click(screen.getByRole("radio", { name: /B案/ }))
 
-    expect(screen.getByText("架空の説明（B案）")).toBeDefined()
-    expect(screen.queryByText("架空の説明（A案）")).toBeNull()
+    expect(screen.getByRole("group", { name: "B案 の詳細" })).toBeDefined()
+    expect(screen.queryByRole("group", { name: "A案 の詳細" })).toBeNull()
   })
 
   it("数字キーで選んでも、詳細が替わる", () => {
@@ -419,18 +469,18 @@ describe("Inquiry の添え書きと詳細のサーフェス", () => {
 
     fireEvent.keyDown(card(), { key: "2" })
 
-    expect(screen.getByText("架空の説明（B案）")).toBeDefined()
+    expect(screen.getByRole("group", { name: "B案 の詳細" })).toBeDefined()
   })
 
-  it("添え書きが無い質問は、聞く理由を出さず、触る前は案内の1行、押したあとは説明を出す", () => {
+  it("添え書きが無い質問は、聞く理由を出さず、触る前は案内の1行、押したあとはプレビューを出す", () => {
     renderBriefed([])
 
     expect(screen.queryByText("聞く理由")).toBeNull()
     expect(card().querySelector("details")).toBeNull()
     expect(screen.getByText("選択肢を押すと詳細が出ます")).toBeDefined()
-    expect(screen.queryByText("架空の説明（A案）")).toBeNull()
+    expect(screen.queryByRole("group", { name: "A案 の詳細" })).toBeNull()
     fireEvent.click(screen.getByRole("radio", { name: /A案/ }))
-    expect(screen.getByText("架空の説明（A案）")).toBeDefined()
+    expect(screen.getByRole("group", { name: "A案 の詳細" })).toBeDefined()
     expect(screen.queryByText("選択肢を押すと詳細が出ます")).toBeNull()
     expect(screen.queryByText("⚠ 戻せない")).toBeNull()
   })

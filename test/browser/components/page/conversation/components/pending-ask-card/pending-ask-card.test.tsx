@@ -131,6 +131,23 @@ function gridOf(): HTMLElement {
 }
 
 describe("PendingAskCard（狭い画面の答え待ちのカード）", () => {
+  it("recommended のある質問は、問いのすぐ下におすすめの理由を1行出し、聞く理由と事実は出さない", () => {
+    renderCard([BRIEFED_PENDING])
+
+    const card = screen.getByRole("region", { name: "答え待ち" })
+    expect(within(card).getByText("架空の根拠")).toBeDefined()
+    expect(within(card).queryByText("架空の聞く理由")).toBeNull()
+    expect(within(card).queryByText("架空の事実")).toBeNull()
+  })
+
+  it("recommended の無い質問と許可要求には理由の行を出さない", () => {
+    renderCard([questionPending([question()])])
+    expect(document.querySelector("[class*='reason']")).toBeNull()
+    cleanup()
+    renderCard([PERMISSION_PENDING])
+    expect(document.querySelector("[class*='reason']")).toBeNull()
+  })
+
   it("答え待ちが無いとき、広い画面のときは何も描かない", () => {
     expect(renderCard([]).innerHTML).toBe("")
     cleanup()
@@ -156,6 +173,32 @@ describe("PendingAskCard（狭い画面の答え待ちのカード）", () => {
     expect(calls).toEqual([
       { procedure: "session.answer", id: "ask-perm", answer: { kind: "deny" } },
     ])
+  })
+
+  it("単一選択と複数選択の答えのボタンの並びに「任せる」を足し、押すと任せた答えを送る", () => {
+    const calls: unknown[] = []
+    renderCard([questionPending([question()])], (command) => calls.push(command))
+
+    fireEvent.click(within(gridOf()).getByRole("button", { name: "任せる" }))
+    expect(calls).toEqual([
+      {
+        procedure: "session.answer",
+        id: "ask-1",
+        answer: { kind: "answers", answers: [{ kind: "entrusted" }] },
+      },
+    ])
+    cleanup()
+
+    renderCard([questionPending([question({ multiSelect: true })])])
+    expect(within(gridOf()).getByRole("button", { name: "任せる" })).toBeDefined()
+  })
+
+  it("「詳しく」の板の下端にも「任せる」を置く", () => {
+    renderCard([BRIEFED_PENDING])
+
+    fireEvent.click(screen.getByRole("button", { name: "詳しく" }))
+
+    expect(within(openDialog()).getByRole("button", { name: "任せる" })).toBeDefined()
   })
 
   it("2択は2列、3択は番号つきの1列", () => {
@@ -202,7 +245,13 @@ describe("PendingAskCard（狭い画面の答え待ちのカード）", () => {
       {
         procedure: "session.answer",
         id: "ask-1",
-        answer: { kind: "answers", labels: [["A案"], ["B案"]] },
+        answer: {
+          kind: "answers",
+          answers: [
+            { kind: "chosen", labels: ["A案"] },
+            { kind: "chosen", labels: ["B案"] },
+          ],
+        },
       },
     ])
   })
@@ -219,7 +268,7 @@ describe("PendingAskCard（狭い画面の答え待ちのカード）", () => {
     expect(sheet.getByText("確度 高")).toBeDefined()
     expect(sheet.queryByRole("group", { name: / の詳細$/ })).toBeNull()
     // 押した瞬間には答えない。
-    fireEvent.click(sheet.getByRole("radio", { name: /B案/ }))
+    fireEvent.click(sheet.getByRole("radio", { name: /A案/ }))
     expect(sheet.getByRole("group", { name: / の詳細$/ })).toBeDefined()
     expect(calls).toEqual([])
 
@@ -228,7 +277,7 @@ describe("PendingAskCard（狭い画面の答え待ちのカード）", () => {
       {
         procedure: "session.answer",
         id: "ask-1",
-        answer: { kind: "answers", labels: [["B案"]] },
+        answer: { kind: "answers", answers: [{ kind: "chosen", labels: ["A案"] }] },
       },
     ])
   })
@@ -272,7 +321,7 @@ describe("PendingAskCard（狭い画面の答え待ちのカード）", () => {
       {
         procedure: "session.answer",
         id: "ask-1",
-        answer: { kind: "answers", labels: [["A案"]] },
+        answer: { kind: "answers", answers: [{ kind: "chosen", labels: ["A案"] }] },
       },
     ])
   })

@@ -7,12 +7,14 @@ import { useSession } from "../../../../stores/session.ts"
 
 /**
  * 組み立て中の答え。問ごとに持ち続ける（「戻る」で前の問に戻ったとき、選んだものが残っているように）。
- * `selections[i]` / `writtenAnswers[i]` は `questions[i]` に対応し、まだ触っていない問の位置は空のまま（読む側が `?? []` / `?? ""` で受ける）。
+ * `selections[i]` / `writtenAnswers[i]` / `entrusted[i]` は `questions[i]` に対応し、まだ触っていない問の位置は空のまま（読む側が `?? []` / `?? ""` / `?? false` で受ける）。
+ * `entrusted[i]` は判断を任せて確定した問。選んだラベルと入力欄の字は残すが、答えには使わない。
  */
 export type DraftAnswer = {
   readonly index: number
   readonly selections: readonly (readonly string[])[]
   readonly writtenAnswers: readonly string[]
+  readonly entrusted: readonly boolean[]
 }
 
 type InquiryDraftState = {

@@ -6,7 +6,7 @@ import { z } from "zod"
 
 import type { ReportImageSize } from "../report/report-image.ts"
 import type { QuestionBrief } from "./question-brief.ts"
-import type { Question, QuestionAnswer } from "./question.ts"
+import { questionAnswerSchema, type Question, type QuestionAnswer } from "./question.ts"
 
 /** 答え待ち1件。`id` は SDK の `toolUseID`（1つのツール呼び出しに1つ）。 */
 export type PendingAsk =
@@ -37,17 +37,17 @@ export type Answer =
   /** 拒否する（許可要求・質問のどちらにも使える）。 */
   | { readonly kind: "deny" }
   /**
-   * 質問に答える。`labels[i]` が `questions[i]` に対して選んだ答えの並び（{@link QuestionAnswer}。複数選択は選んだぶんだけ、自由入力はその文字列が入る）。
+   * 質問に答える。`answers[i]` が `questions[i]` に対する答え（{@link QuestionAnswer}。選んだ答えか、任せたか）。
    * 1つの文字列に畳まない（畳むと記録 `question-answered` の側で選択肢と突き合わせられなくなる。SDK へ渡す形へ畳むのは駆動の側）。
    */
-  | { readonly kind: "answers"; readonly labels: readonly QuestionAnswer[] }
+  | { readonly kind: "answers"; readonly answers: readonly QuestionAnswer[] }
 
 /**
  * 画面から届いた答えのスキーマ。書き込みの経路なので zod で厳密に見る。
- * `labels` は自由入力の文字列も受け取れる（選択肢との一致は要求しない）。
+ * `chosen` の `labels` は自由入力の文字列も受け取れる（選択肢との一致は要求しない）。
  */
 export const answerSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("allow") }),
   z.object({ kind: z.literal("deny") }),
-  z.object({ kind: z.literal("answers"), labels: z.array(z.array(z.string())) }),
+  z.object({ kind: z.literal("answers"), answers: z.array(questionAnswerSchema) }),
 ])
