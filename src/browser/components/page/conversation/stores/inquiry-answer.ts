@@ -12,7 +12,12 @@
 import type { FigureBlock } from "../../../../../shared/report/report-block.ts"
 import type { ReportImageSize } from "../../../../../shared/report/report-image.ts"
 import type { StampedPendingAsk } from "../../../../../shared/session-driver/pending-ask.ts"
-import type { QuestionBriefOption } from "../../../../../shared/session-driver/question-brief.ts"
+import type {
+  QuestionBrief,
+  QuestionBriefFact,
+  QuestionBriefOption,
+  QuestionBriefRecommended,
+} from "../../../../../shared/session-driver/question-brief.ts"
 import {
   FREE_TEXT_OPTION_LABEL,
   isRecommendedLabel,
@@ -45,17 +50,14 @@ export type InquiryOptionRow = {
   readonly selected: boolean
   /** 選ぶとあとで戻せないか（添え書きが無ければ false）。 */
   readonly irreversible: boolean
-  readonly pros: readonly string[]
-  readonly cons: readonly string[]
-  /** 判断の軸ごとの評価。`InquiryBrief.axes` と同じ並び（添え書きが無ければ空）。 */
-  readonly byAxis: readonly string[]
   readonly figures: readonly FigureBlock[]
 }
 
 /** 質問の添え書きのうち、選択肢の外に出す分。選択肢ごとの分は {@link InquiryOptionRow} が持つ。 */
 export type InquiryBrief = {
-  readonly background: string
-  readonly axes: readonly string[]
+  readonly whyAsk: string
+  readonly facts: readonly QuestionBriefFact[]
+  readonly recommended?: QuestionBriefRecommended
 }
 
 export type InquiryFocusedLabel =
@@ -162,12 +164,13 @@ export function optionRows(
         preview: option.preview,
         selected: selected.includes(option.label),
         irreversible: briefed?.irreversible ?? false,
-        pros: briefed?.pros ?? [],
-        cons: briefed?.cons ?? [],
-        byAxis: briefed?.byAxis ?? [],
         figures: briefed?.figures ?? [],
       }
     })
+}
+
+export function inquiryBriefOf(brief: QuestionBrief): InquiryBrief {
+  return { whyAsk: brief.whyAsk, facts: brief.facts, recommended: brief.recommended }
 }
 
 /** 許可要求の選択肢のラベル。並びがそのまま番号になる。 */
@@ -211,9 +214,6 @@ function permissionModel(
       preview: undefined,
       selected: chosen === label,
       irreversible: false,
-      pros: [],
-      cons: [],
-      byAxis: [],
       figures: [],
     })),
     canAnswer: chosen !== undefined,
@@ -300,7 +300,7 @@ function questionModel(
     id: pending.id,
     askedAt: pending.askedAt,
     header: question.header,
-    brief: brief === undefined ? undefined : { background: brief.background, axes: brief.axes },
+    brief: brief === undefined ? undefined : inquiryBriefOf(brief),
     imageSizes: pending.imageSizes,
     unshelvedImages: pending.unshelvedImages,
     text: question.text,

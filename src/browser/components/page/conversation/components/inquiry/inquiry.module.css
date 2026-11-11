@@ -117,18 +117,42 @@
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
-/* 背景と判断の軸の塊。 */
+/* 添え書きの塊（聞く理由・事実・おすすめの理由）。行と行の間は VStack の gap が持つ。 */
 .inquiry-brief {
   margin: 0 0 var(--space-md);
-  padding: var(--space-sm) var(--space-md);
+  padding: var(--inset-control);
   border: 1px dashed var(--rule);
   border-radius: var(--radius-md);
 }
 .inquiry-brief-line {
   margin: 0;
+  overflow-wrap: anywhere;
 }
-.inquiry-brief-line + .inquiry-brief-line {
-  margin-top: var(--space-xs);
+/* 事実の並び。1件は出どころの印と文を、印の列の幅を揃えて置き、文が折り返しても印は1行目の字に揃える。 */
+.inquiry-facts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--stack-tight);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.inquiry-fact {
+  display: grid;
+  grid-template-columns: 5rem minmax(0, 1fr);
+  align-items: baseline;
+  gap: var(--inline-control);
+  min-width: 0;
+}
+.inquiry-fact-basis {
+  justify-self: start;
+}
+.inquiry-fact-text {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.inquiry-brief-certainty {
+  vertical-align: baseline;
 }
 /* 左に選択肢の縦の並び、右に詳細。札の幅が 44rem に満たなければ1列にして、詳細を選択肢の下へ回す。 */
 .inquiry-choose {
@@ -167,30 +191,12 @@
   margin: 0;
   padding: var(--space-sm) var(--space-md);
 }
-.inquiry-points {
-  margin-top: var(--space-sm);
-}
-.inquiry-points-list {
-  margin: var(--space-2xs) 0 0;
-  padding: 0;
-  list-style: none;
-}
-.inquiry-points-list li {
-  overflow-wrap: anywhere;
-}
 /* 戻せない選択肢の印。色に加えて字で示す。 */
 .inquiry-badge {
   flex: 0 0 auto;
   padding: var(--space-2xs) var(--space-sm);
   border: 1px solid currentcolor;
   border-radius: var(--radius-sm);
-}
-/* 並べて比べる表。畳めて、開くと表だけが横に転がる（表の器は `Table`）。 */
-.inquiry-compare {
-  margin-top: var(--space-md);
-}
-.inquiry-compare > summary {
-  cursor: pointer;
 }
 .inquiry-option {
   composes: surface-edge-rule surface-radius-md surface-tone-surface from "../../../../ui/surface/surface-face.module.css";
@@ -245,8 +251,7 @@
   border-radius: var(--radius-sm);
 }
 /* 詳細のサーフェスの preview と図の Markdown。レポートと同じ語彙（`.detail-block`）に乗せ、余白の打ち消しだけここに置く。 */
-.inquiry-detail .detail-block,
-.inquiry-compare .detail-block {
+.inquiry-detail .detail-block {
   margin-top: var(--space-sm);
 }
 /* 入力欄に書いて記録した答え（まだ送っていない問のぶん）。 */

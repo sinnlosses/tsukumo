@@ -49,14 +49,24 @@
             "briefs": [
               {
                 "header": "張り替え",
-                "background": "架空の背景。張り替える置き場が8件あり、どれも同じ形をしている。",
-                "axes": ["速さ", "戻しやすさ"],
+                "whyAsk": "架空の置き場を一度に張り替えてよいかが分からない。張り替えの範囲は書き手だけでは決められない。",
+                "facts": [
+                  {
+                    "text": "張り替える置き場は8件あり、どれも同じ形をしている。",
+                    "basis": "checked"
+                  },
+                  {
+                    "text": "架空のタスクの本文には、置き場を順に張り替えると書いてある。",
+                    "basis": "copied"
+                  }
+                ],
+                "recommended": {
+                  "reason": "8件とも同じ形なので、まとめて張り替えても外れにくい。",
+                  "certainty": "medium"
+                },
                 "options": [
                   {
                     "label": "まとめて張り替える",
-                    "pros": ["架空の良い点A。"],
-                    "cons": ["架空の悪い点A。"],
-                    "byAxis": ["速い", "戻せる"],
                     "irreversible": false,
                     "figures": [
                       {
@@ -135,17 +145,11 @@
                   },
                   {
                     "label": "1件ずつ確かめる",
-                    "pros": ["架空の良い点B。"],
-                    "cons": ["架空の悪い点B。"],
-                    "byAxis": ["遅い", "戻せる"],
                     "irreversible": false,
                     "figures": []
                   },
                   {
                     "label": "やめておく",
-                    "pros": [],
-                    "cons": ["架空の悪い点C。"],
-                    "byAxis": ["速い", "戻せない"],
                     "irreversible": true,
                     "figures": []
                   }

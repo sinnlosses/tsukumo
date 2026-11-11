@@ -20,9 +20,6 @@ function option(number: number, text: string, description: string): InquiryOptio
     preview: undefined,
     selected: false,
     irreversible: false,
-    pros: [],
-    cons: [],
-    byAxis: [],
     figures: [],
   }
 }

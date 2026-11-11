@@ -1,16 +1,22 @@
-// お伺いの、フォーカスした選択肢の詳細と、軸 × 選択肢の比べる表。札と広げた板が同じ部品で描く。
+// お伺いの、フォーカスした選択肢の詳細。札と広げた板が同じ部品で描く。
 
 import clsx from "clsx"
 import type { ReactElement } from "react"
 
 import type { ReportImageSource } from "../../../../../../shared/report/report-image-markdown.ts"
+import type {
+  QuestionBriefCertainty,
+  QuestionBriefFactBasis,
+} from "../../../../../../shared/session-driver/question-brief.ts"
 import {
   detailBlockClassName,
   Markdown,
   QuestionPreviewMarkdown,
 } from "../../../../../features/report/markdown.tsx"
 import { reportSectionsMarkdown } from "../../../../../features/report/report-markdown.ts"
+import { Badge } from "../../../../ui/badge/badge.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
+import { VStack } from "../../../../ui/v-stack/v-stack.tsx"
 import type {
   InquiryBrief as InquiryBriefModel,
   InquiryOptionRow,
@@ -19,18 +25,43 @@ import styles from "./inquiry.module.css"
 
 export type ShelvedSource = Extract<ReportImageSource, { readonly kind: "shelved" }>
 
-const PROS_LABEL = "良い点"
-const CONS_LABEL = "悪い点"
 const DETAIL_SUFFIX = " の詳細"
-const COMPARE_SUMMARY = "並べて比べる"
 const DETAIL_HINT = "選択肢を押すと詳細が出ます"
-const BACKGROUND_LABEL = "背景"
-const AXES_LABEL = "判断の軸"
-const AXES_SEPARATOR = " / "
+const WHY_ASK_LABEL = "聞く理由"
+const FACTS_LABEL = "事実"
+const RECOMMENDED_LABEL = "おすすめの理由"
+const BASIS_LABEL = {
+  checked: "確かめた",
+  copied: "写した",
+} satisfies Record<QuestionBriefFactBasis, string>
+const BASIS_TONE = { checked: "ok", copied: "neutral" } satisfies Record<
+  QuestionBriefFactBasis,
+  "ok" | "neutral"
+>
+const CERTAINTY_LABEL = {
+  high: "確度 高",
+  medium: "確度 中",
+  low: "確度 低",
+} satisfies Record<QuestionBriefCertainty, string>
+const CERTAINTY_TONE = { high: "ok", medium: "neutral", low: "warn" } satisfies Record<
+  QuestionBriefCertainty,
+  "ok" | "neutral" | "warn"
+>
 
+/** 出どころと確度は印の字で読めるようにし、色だけで分けない。 */
 export function InquiryBrief(props: { readonly brief: InquiryBriefModel }): ReactElement {
+  const { whyAsk, facts, recommended } = props.brief
+
   return (
-    <div className={styles["inquiry-brief"]}>
+    <VStack
+      element="div"
+      name={{ kind: "none" }}
+      gap="sm"
+      align="stretch"
+      justify="start"
+      wrap="nowrap"
+      className={styles["inquiry-brief"]}
+    >
       <Text
         element="p"
         size="secondary"
@@ -38,12 +69,42 @@ export function InquiryBrief(props: { readonly brief: InquiryBriefModel }): Reac
         weight="inherit"
         className={styles["inquiry-brief-line"]}
       >
-        <Text element="span" size="label" tone="ink-quiet" weight="bold" className="">
-          {BACKGROUND_LABEL}
-        </Text>{" "}
-        {props.brief.background}
+        <BriefLabel text={WHY_ASK_LABEL} /> {whyAsk}
       </Text>
-      {props.brief.axes.length > 0 && (
+      <VStack
+        element="div"
+        name={{ kind: "none" }}
+        gap="xs"
+        align="stretch"
+        justify="start"
+        wrap="nowrap"
+        className=""
+      >
+        <BriefLabel text={FACTS_LABEL} />
+        <ul className={styles["inquiry-facts"]}>
+          {facts.map((fact) => (
+            <li className={styles["inquiry-fact"]} key={`${fact.basis}-${fact.text}`}>
+              <Badge
+                tone={BASIS_TONE[fact.basis]}
+                shape="square"
+                className={styles["inquiry-fact-basis"]}
+              >
+                {BASIS_LABEL[fact.basis]}
+              </Badge>
+              <Text
+                element="span"
+                size="secondary"
+                tone="inherit"
+                weight="inherit"
+                className={styles["inquiry-fact-text"]}
+              >
+                {fact.text}
+              </Text>
+            </li>
+          ))}
+        </ul>
+      </VStack>
+      {recommended !== undefined && (
         <Text
           element="p"
           size="secondary"
@@ -51,25 +112,24 @@ export function InquiryBrief(props: { readonly brief: InquiryBriefModel }): Reac
           weight="inherit"
           className={styles["inquiry-brief-line"]}
         >
-          <Text element="span" size="label" tone="ink-quiet" weight="bold" className="">
-            {AXES_LABEL}
-          </Text>{" "}
-          {props.brief.axes.join(AXES_SEPARATOR)}
+          <BriefLabel text={RECOMMENDED_LABEL} />{" "}
+          <Badge
+            tone={CERTAINTY_TONE[recommended.certainty]}
+            shape="square"
+            className={styles["inquiry-brief-certainty"]}
+          >
+            {CERTAINTY_LABEL[recommended.certainty]}
+          </Badge>{" "}
+          {recommended.reason}
         </Text>
       )}
-    </div>
+    </VStack>
   )
 }
 
 /** 詳細のサーフェスに出すものがあるか（許可の「許可」「拒否」には無い）。 */
 export function hasDetail(option: InquiryOptionRow): boolean {
-  return (
-    option.description !== "" ||
-    option.preview !== undefined ||
-    option.pros.length > 0 ||
-    option.cons.length > 0 ||
-    option.figures.length > 0
-  )
+  return option.description !== "" || option.preview !== undefined || option.figures.length > 0
 }
 
 /** フォーカスした選択肢の詳細のサーフェス。高さは切らず、札の本文が内側で転がる。 */
@@ -111,8 +171,6 @@ export function InquiryDetail(props: {
           {option.description}
         </Text>
       )}
-      <InquiryPoints label={PROS_LABEL} mark="＋" tone="state-ok" items={option.pros} />
-      <InquiryPoints label={CONS_LABEL} mark="－" tone="state-ng" items={option.cons} />
       {option.preview !== undefined && (
         <div className={clsx(detailBlockClassName, styles["detail-block"])}>
           <QuestionPreviewMarkdown text={option.preview} toolUseId={props.askId} />
@@ -142,72 +200,10 @@ export function InquiryDetailHint(): ReactElement {
   )
 }
 
-export function InquiryCompare(props: {
-  readonly open: boolean
-  readonly imageSource: ShelvedSource
-  readonly brief: InquiryBriefModel
-  readonly options: readonly InquiryOptionRow[]
-}): ReactElement {
-  const table = reportSectionsMarkdown(
-    [
-      {
-        heading: "",
-        blocks: [
-          {
-            kind: "table",
-            title: "",
-            columns: ["", ...props.options.map((option) => option.text)],
-            rows: props.brief.axes.map((axis, index) => [
-              axis,
-              ...props.options.map((option) => option.byAxis[index] ?? ""),
-            ]),
-            rest: "",
-            fold: "",
-            aside: "",
-          },
-        ],
-      },
-    ],
-    props.imageSource,
-  )
-
+function BriefLabel(props: { readonly text: string }): ReactElement {
   return (
-    <details className={styles["inquiry-compare"]} open={props.open}>
-      <Text element="summary" size="secondary" tone="ink-quiet" weight="bold" className="">
-        {COMPARE_SUMMARY}
-      </Text>
-      <div className={clsx(detailBlockClassName, styles["detail-block"])}>
-        <Markdown text={table} />
-      </div>
-    </details>
-  )
-}
-
-/** 良い点・悪い点の箇条書き。字の前の記号は色が見えなくても読める。 */
-function InquiryPoints(props: {
-  readonly label: string
-  readonly mark: string
-  readonly tone: "state-ok" | "state-ng"
-  readonly items: readonly string[]
-}): ReactElement | undefined {
-  if (props.items.length === 0) {
-    return undefined
-  }
-  return (
-    <div className={styles["inquiry-points"]}>
-      <Text element="p" size="label" tone={props.tone} weight="bold" className="">
-        {props.label}
-      </Text>
-      <ul className={styles["inquiry-points-list"]}>
-        {props.items.map((item) => (
-          <li key={item}>
-            <Text element="span" size="inherit" tone={props.tone} weight="bold" className="">
-              {props.mark}
-            </Text>{" "}
-            {item}
-          </li>
-        ))}
-      </ul>
-    </div>
+    <Text element="span" size="label" tone="ink-quiet" weight="bold" className="">
+      {props.text}
+    </Text>
   )
 }

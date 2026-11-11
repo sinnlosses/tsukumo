@@ -4,18 +4,28 @@ import {
   answerQuestionBriefCall,
   reviewQuestionBriefing,
 } from "../../../../src/server/question/core/question-brief.ts"
+import type { FigureBlock } from "../../../../src/shared/report/report-block.ts"
 import type {
   QuestionBrief,
+  QuestionBriefFact,
   QuestionBriefOption,
+  QuestionBriefRecommended,
 } from "../../../../src/shared/session-driver/question-brief.ts"
 import type { Question } from "../../../../src/shared/session-driver/question.ts"
+
+const FACT: QuestionBriefFact = { text: "架空の事実。", basis: "checked" }
+const RECOMMENDED: QuestionBriefRecommended = { reason: "架空の勧める理由。", certainty: "high" }
+const FIGURE: FigureBlock = {
+  kind: "mermaid",
+  title: "",
+  source: "flowchart LR\n  W[架空の書き手] --> A[架空の置き場]",
+  fold: "",
+  aside: "",
+}
 
 function option(label: string, overrides: Partial<QuestionBriefOption> = {}): QuestionBriefOption {
   return {
     label,
-    pros: ["架空の良い点。"],
-    cons: ["架空の悪い点。"],
-    byAxis: ["速い", "戻せる"],
     irreversible: false,
     figures: [],
     ...overrides,
@@ -25,8 +35,8 @@ function option(label: string, overrides: Partial<QuestionBriefOption> = {}): Qu
 function brief(overrides: Partial<QuestionBrief> = {}): QuestionBrief {
   return {
     header: "架空の見出し",
-    background: "架空の背景の1文目。架空の背景の2文目。",
-    axes: ["速さ", "戻しやすさ"],
+    whyAsk: "架空の理由。利用者の好みが分からない。",
+    facts: [FACT],
     options: [option("A案"), option("B案")],
     ...overrides,
   }
@@ -52,16 +62,47 @@ describe("answerQuestionBriefCall", () => {
     expect(held).toEqual([briefs])
   })
 
-  it.each<readonly [string, string]>([
-    ["句点の無い短い背景", "（前提は下の表）"],
-    ["4文の背景", "架空の1。架空の2。架空の3。架空の4。"],
-  ])("%s は差し戻さない", (_, background) => {
+  it.each<readonly [string, readonly QuestionBrief[]]>([
+    ["facts が1件", [brief({ facts: [FACT] })]],
+    ["facts が5件", [brief({ facts: [FACT, FACT, FACT, FACT, FACT] })]],
+    ["recommended の省略", [brief({ recommended: undefined })]],
+    ["recommended の指定", [brief({ recommended: RECOMMENDED })]],
+    [
+      "選択肢の figures が2つ",
+      [brief({ options: [option("A案", { figures: [FIGURE, FIGURE] }), option("B案")] })],
+    ],
+  ])("%s は差し戻さずに預ける", (_, briefs) => {
     const held: (readonly QuestionBrief[])[] = []
 
-    const answer = answerQuestionBriefCall([brief({ background })], (given) => held.push(given))
+    const answer = answerQuestionBriefCall(briefs, (given) => held.push(given))
 
-    expect(answer.isError).toBe(false)
-    expect(held).toHaveLength(1)
+    expect(answer).toEqual({ text: "ok", isError: false })
+    expect(held).toEqual([briefs])
+  })
+
+  it.each<readonly [string, readonly QuestionBrief[], string]>([
+    ["空白だけの whyAsk", [brief({ whyAsk: " 　" })], "whyAsk"],
+    ["facts が0件", [brief({ facts: [] })], "facts は1〜5件"],
+    ["facts が6件", [brief({ facts: [FACT, FACT, FACT, FACT, FACT, FACT] })], "facts は1〜5件"],
+    ["facts の空の text", [brief({ facts: [{ ...FACT, text: " " }] })], "facts に空の text"],
+    [
+      "recommended の空の reason",
+      [brief({ recommended: { ...RECOMMENDED, reason: " " } })],
+      "recommended の reason",
+    ],
+    [
+      "選択肢の figures が3つ",
+      [brief({ options: [option("A案", { figures: [FIGURE, FIGURE, FIGURE] }), option("B案")] })],
+      "選択肢「A案」のfigures は2つまで",
+    ],
+  ])("%s は預けず、header と欄の名前で直す箇所を言って差し戻す", (_, briefs, field) => {
+    const held: (readonly QuestionBrief[])[] = []
+
+    const answer = answerQuestionBriefCall(briefs, (given) => held.push(given))
+
+    expect(answer.isError).toBe(true)
+    expect(answer.text).toContain(`「架空の見出し」の${field}`)
+    expect(held).toEqual([])
   })
 
   it.each<readonly [string, readonly QuestionBrief[]]>([
@@ -69,27 +110,8 @@ describe("answerQuestionBriefCall", () => {
     ["質問が5件", ["1", "2", "3", "4", "5"].map((header) => brief({ header }))],
     ["header の重なり", [brief(), brief()]],
     ["空の header", [brief({ header: " " })]],
-    ["空の背景", [brief({ background: " " })]],
-    [
-      "軸が0個",
-      [
-        brief({
-          axes: [],
-          options: [option("A案", { byAxis: [] }), option("B案", { byAxis: [] })],
-        }),
-      ],
-    ],
-    ["軸の重なり", [brief({ axes: ["速さ", "速さ"] })]],
     ["選択肢が1件", [brief({ options: [option("A案")] })]],
     ["label の重なり", [brief({ options: [option("A案"), option("A案")] })]],
-    [
-      "byAxis の数が軸と違う",
-      [brief({ options: [option("A案", { byAxis: ["速い"] }), option("B案")] })],
-    ],
-    [
-      "良い点も悪い点も無い",
-      [brief({ options: [option("A案", { pros: [], cons: [] }), option("B案")] })],
-    ],
   ])("%s は預けずに理由つきで差し戻す", (_, briefs) => {
     const held: (readonly QuestionBrief[])[] = []
 
@@ -113,7 +135,41 @@ describe("reviewQuestionBriefing", () => {
   it("おすすめの印と自由入力の選択肢を除いて突き合わせる", () => {
     const questions = [question("架空の見出し", ["A案 (推奨)", "B案", "その他"])]
 
+    expect(reviewQuestionBriefing(questions, [brief({ recommended: RECOMMENDED })]).kind).toBe(
+      "accepted",
+    )
+  })
+
+  it.each<readonly [string, string, QuestionBrief, string]>([
+    ["印があり recommended が無い", "A案 (推奨)", brief(), "recommended が無い"],
+    [
+      "印が無く recommended がある",
+      "A案",
+      brief({ recommended: RECOMMENDED }),
+      "recommended を外す",
+    ],
+  ])("%s と、header と欠けている側だけを言って断る", (_, firstLabel, given, expected) => {
+    const result = reviewQuestionBriefing([question("架空の見出し", [firstLabel, "B案"])], [given])
+
+    expect(result.kind).toBe("rejected")
+    const message = result.kind === "rejected" ? result.message : ""
+    expect(message).toContain("「架空の見出し」")
+    expect(message).toContain(expected)
+    for (const secret of ["A案", "B案", "架空の勧める理由", "架空の質問文"]) {
+      expect(message).not.toContain(secret)
+    }
+  })
+
+  it("印の有る無しと recommended の有る無しが揃っていれば、印が無くても載せる", () => {
+    const questions = [question("架空の見出し", ["A案", "B案"])]
+
     expect(reviewQuestionBriefing(questions, [brief()]).kind).toBe("accepted")
+  })
+
+  it("選択肢が1つの質問では、印と recommended が合わない添え書きを断らず捨てる", () => {
+    const questions = [question("架空の見出し", ["A案 (推奨)"])]
+
+    expect(reviewQuestionBriefing(questions, [brief()])).toEqual({ kind: "accepted", briefs: [] })
   })
 
   it("header が質問に当たらなければ断る", () => {

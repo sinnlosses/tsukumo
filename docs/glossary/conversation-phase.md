@@ -88,16 +88,20 @@
 
 ### 添え書き
 
-- **英語識別子**: `QuestionBrief`（1問ぶん。選択肢1件は `QuestionBriefOption`。`src/shared/session-driver/question-brief.ts`）/
+- **英語識別子**: `QuestionBrief`（1問ぶん。選択肢1件は `QuestionBriefOption`、事実1件は `QuestionBriefFact`、
+  おすすめの理由と確度は `QuestionBriefRecommended`。`src/shared/session-driver/question-brief.ts`）/
   `FigureBlock`（図に使える部品。`src/shared/report/report-block.ts` の `figureBlockSchema`）
-- **定義**: `question_brief` ツールで質問の前に渡す、1問ぶんの判断の材料。背景 `background`（なぜ今聞くか。2〜3文）・
-  判断の軸 `axes`（短い語。1〜5個）・選択肢ごとの良い点 `pros`・悪い点 `cons`・軸ごとの評価 `byAxis`・
-  戻せない印 `irreversible`・図 `figures`（`list`・`table`・`compare`・`mermaid`・`code`・`image` の部品。2つまで）。
-  形は MADR（背景・判断の軸・候補ごとの良い点と悪い点）に寄せた
+- **定義**: `question_brief` ツールで質問の前に渡す、1問ぶんの判断の材料。聞く理由 `whyAsk`（書き手だけで決められない理由。1〜2文）・
+  事実 `facts`（利用者がまだ見ていない事実。1〜5件。1件は `text` と、出どころ `basis`〔`checked`＝このターンで打って確かめた・
+  `copied`＝文書やタスクの本文から写した〕）・おすすめの理由 `recommended`（`reason` と、確度 `certainty`〔`high`・`medium`・`low`〕。
+  おすすめが無ければ省く）・選択肢ごとの戻せない印 `irreversible`・図 `figures`（`list`・`table`・`compare`・`mermaid`・`code`・
+  `image` の部品。2つまで）
 - **注記**: 選択肢は `label`（末尾のおすすめの印を外した字。「その他」は除く）で質問の選択肢と突き合わせ、
   合ったときだけ答え待ちの `PendingAsk.briefs` に載ってお伺いのカードに出る。合わない添え書きは捨てて、質問は
-  添え書き無しで出す。軸 × 選択肢の表はモデルに書かせず、`axes` と `byAxis` から画面が組む。
-  答えたあとの質問の記録には畳んで残す（「質問のときの詳細」）
+  添え書き無しで出す。どの選択肢を勧めるかは `label` 末尾のおすすめの印だけが持ち、`recommended` は選択肢を名指さない。
+  答えたあとの質問の記録には畳んで残す（「質問のときの詳細」）。
+  `recommended` は、おすすめのカードの `recommendation`（始め方の一覧の機能・状態の欄・イベント）とは別のもの。
+  `facts` の `basis` と `recommended` の `certainty` は、確度つきの主張（`docs/glossary/block.md`）の同じ名の欄とは値が違う
 - **避ける言い方**: 補足、プレビュー（`preview` は選択肢の Markdown の本文で別物）、説明（`description` と紛れる）
 
 ### 始め方の一覧

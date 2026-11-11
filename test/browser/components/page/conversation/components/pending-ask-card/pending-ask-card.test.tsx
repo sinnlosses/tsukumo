@@ -75,14 +75,12 @@ const BRIEFED_PENDING = {
   briefs: [
     {
       header: "架空の選択",
-      background: "架空の背景",
-      axes: ["速さ"],
+      whyAsk: "架空の聞く理由",
+      facts: [{ text: "架空の事実", basis: "checked" }],
+      recommended: { reason: "架空の根拠", certainty: "high" },
       options: [
         {
           label: "A案",
-          pros: ["架空の良い点"],
-          cons: [],
-          byAxis: ["速い"],
           irreversible: false,
           figures: [
             {
@@ -101,7 +99,7 @@ const BRIEFED_PENDING = {
             },
           ],
         },
-        { label: "B案", pros: [], cons: [], byAxis: ["遅い"], irreversible: false, figures: [] },
+        { label: "B案", irreversible: false, figures: [] },
       ],
     },
   ],
@@ -215,7 +213,10 @@ describe("PendingAskCard（狭い画面の答え待ちのカード）", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "詳しく" }))
     const sheet = within(openDialog())
-    expect(sheet.getByText("架空の背景")).toBeDefined()
+    expect(sheet.getByText("架空の聞く理由")).toBeDefined()
+    expect(sheet.getByText("架空の事実")).toBeDefined()
+    expect(sheet.getByText("確かめた")).toBeDefined()
+    expect(sheet.getByText("確度 高")).toBeDefined()
     expect(sheet.queryByRole("group", { name: / の詳細$/ })).toBeNull()
     // 押した瞬間には答えない。
     fireEvent.click(sheet.getByRole("radio", { name: /B案/ }))

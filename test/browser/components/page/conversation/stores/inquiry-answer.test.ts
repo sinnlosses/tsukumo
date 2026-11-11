@@ -472,18 +472,12 @@ describe("useInquiryAnswer と入力欄の字", () => {
 describe("useInquiryAnswer の添え書き", () => {
   const brief = {
     header: "架空の選択",
-    background: "架空の背景",
-    axes: ["速さ"],
+    whyAsk: "架空の聞く理由",
+    facts: [{ text: "架空の事実", basis: "copied" }],
+    recommended: { reason: "架空の勧める理由", certainty: "low" },
     options: [
-      {
-        label: "A案",
-        pros: ["良い"],
-        cons: ["悪い"],
-        byAxis: ["速い"],
-        irreversible: false,
-        figures: [],
-      },
-      { label: "B案", pros: [], cons: [], byAxis: ["遅い"], irreversible: true, figures: [] },
+      { label: "A案", irreversible: false, figures: [] },
+      { label: "B案", irreversible: true, figures: [] },
     ],
   } satisfies QuestionBrief
 
@@ -499,21 +493,22 @@ describe("useInquiryAnswer の添え書き", () => {
     }
   }
 
-  it("header が合う添え書きを、背景と軸は質問に、良い点・悪い点・戻せない印は選択肢の行に載せる", () => {
+  it("header が合う添え書きを、聞く理由・事実・おすすめの理由は質問に、戻せない印は選択肢の行に載せる", () => {
     const model = asking(renderModel([briefedPending([brief])]).current)
 
-    expect(model.brief).toEqual({ background: "架空の背景", axes: ["速さ"] })
-    expect(model.options.map((row) => [row.pros, row.irreversible, row.byAxis])).toEqual([
-      [["良い"], false, ["速い"]],
-      [[], true, ["遅い"]],
-    ])
+    expect(model.brief).toEqual({
+      whyAsk: "架空の聞く理由",
+      facts: [{ text: "架空の事実", basis: "copied" }],
+      recommended: { reason: "架空の勧める理由", certainty: "low" },
+    })
+    expect(model.options.map((row) => row.irreversible)).toEqual([false, true])
   })
 
   it("添え書きが無い、または header が合わないときは添え書き無しの形", () => {
     for (const briefs of [[], [{ ...brief, header: "別の質問" }]]) {
       const model = asking(renderModel([briefedPending(briefs)]).current)
       expect(model.brief).toBeUndefined()
-      expect(model.options.every((row) => !row.irreversible && row.pros.length === 0)).toBe(true)
+      expect(model.options.every((row) => !row.irreversible)).toBe(true)
     }
   })
 

@@ -48,14 +48,24 @@
             "briefs": [
               {
                 "header": "架空の保存先",
-                "background": "架空の背景の1文目。架空の背景の2文目で、なぜ今聞くかを言う。",
-                "axes": ["速さ", "戻しやすさ", "依存の数"],
+                "whyAsk": "架空の置き場の好みが分からない。書き手が決めると、あとで張り替えることになりやすい。",
+                "facts": [
+                  {
+                    "text": "架空の置き場は今3か所に分かれていて、どれも同じ形をしている。",
+                    "basis": "checked"
+                  },
+                  {
+                    "text": "架空の方針の文書には、置き場を1か所にまとめたいと書いてある。",
+                    "basis": "copied"
+                  }
+                ],
+                "recommended": {
+                  "reason": "架空の方針に合うのは A で、あとから B や C へ移すのも難しくない。",
+                  "certainty": "high"
+                },
                 "options": [
                   {
                     "label": "A に置く",
-                    "pros": ["架空の良い点A。"],
-                    "cons": ["架空の悪い点A。"],
-                    "byAxis": ["速い", "戻せる", "0"],
                     "irreversible": false,
                     "figures": [
                       {
@@ -69,9 +79,6 @@
                   },
                   {
                     "label": "B に置く",
-                    "pros": ["架空の良い点B。"],
-                    "cons": ["架空の悪い点B。", "架空の悪い点B2。"],
-                    "byAxis": ["ふつう", "戻せる", "1"],
                     "irreversible": false,
                     "figures": [
                       {
@@ -90,9 +97,6 @@
                   },
                   {
                     "label": "C に移す",
-                    "pros": ["架空の良い点C。"],
-                    "cons": ["架空の悪い点C。"],
-                    "byAxis": ["遅い", "戻せない", "2"],
                     "irreversible": true,
                     "figures": []
                   }

@@ -1,5 +1,5 @@
 // お伺いのカード（答え待ちの許可要求と質問。メインビューの、いまのやり取りの本文の末尾）。
-// 頭に「お伺い」のチップ・種類・`header` かツール名・「n / N」と待っている時間、本文に問いの文か対象の全文・添え書きの背景と軸・左に選択肢の縦の並びと右にフォーカスした選択肢の詳細・畳める比較表、下端に操作の行を置く。
+// 頭に「お伺い」のチップ・種類・`header` かツール名・「n / N」と待っている時間、本文に問いの文か対象の全文・添え書きの塊（聞く理由・事実・おすすめの理由）・左に選択肢の縦の並びと右にフォーカスした選択肢の詳細、下端に操作の行を置く。
 // 操作の行は札の下端に残り、本文と選択肢の側が札の内側で転がる。
 //
 // 数字キーと Enter が効くのは、札の中にフォーカスがあるときだけ。
@@ -31,7 +31,6 @@ import { useInquiryVisibility } from "./hooks/use-inquiry-visibility.ts"
 import {
   hasDetail,
   InquiryBrief,
-  InquiryCompare,
   InquiryDetail,
   InquiryDetailHint,
   type ShelvedSource,
@@ -63,7 +62,7 @@ const WRITTEN_ANSWER_PREFIX = "入力欄に書いた答え: "
 /** 数字キーで選べる選択肢の数字。 */
 const CHOICE_KEY = /^[1-9]$/
 
-export { hasDetail, InquiryBrief, InquiryCompare, InquiryDetail, type ShelvedSource }
+export { hasDetail, InquiryBrief, InquiryDetail, type ShelvedSource }
 
 export function Inquiry(): ReactElement | undefined {
   const phone = usePhoneWidth()
@@ -205,7 +204,6 @@ function InquiryFace(props: {
     focusedLabel.kind === "option"
       ? inquiry.options.find((option) => option.label === focusedLabel.label)
       : undefined
-  const axes = inquiry.kind === "question" ? (inquiry.brief?.axes ?? []) : []
   const untouched = focusedLabel.kind === "none"
 
   return (
@@ -325,32 +323,8 @@ function InquiryFace(props: {
               option={focused}
             />
           )}
-          {untouched &&
-            inquiry.kind === "question" &&
-            inquiry.brief !== undefined &&
-            axes.length > 0 && (
-              <InquiryCompare
-                imageSource={imageSourceOf(inquiry)}
-                brief={inquiry.brief}
-                options={inquiry.options}
-                open={true}
-              />
-            )}
-          {untouched && axes.length === 0 && inquiry.options.some(hasDetail) && (
-            <InquiryDetailHint />
-          )}
+          {untouched && inquiry.options.some(hasDetail) && <InquiryDetailHint />}
         </div>
-        {!untouched &&
-          inquiry.kind === "question" &&
-          inquiry.brief !== undefined &&
-          axes.length > 0 && (
-            <InquiryCompare
-              imageSource={imageSourceOf(inquiry)}
-              brief={inquiry.brief}
-              options={inquiry.options}
-              open={false}
-            />
-          )}
         {inquiry.kind === "question" && inquiry.writtenAnswer !== "" && (
           <Text
             element="p"

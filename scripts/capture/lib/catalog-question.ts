@@ -48,7 +48,7 @@ export const QUESTION_ENTRIES: readonly CatalogEntry[] = [
   {
     name: "question-brief",
     scene: "question-brief",
-    label: "質問（背景と判断の軸・左に選択肢・右に詳細・下に畳める比較表）",
+    label: "質問（聞く理由・事実・おすすめの理由の塊・左に選択肢・右に詳細）",
     homeSetup: { kind: "default" },
     workspaceSetup: { kind: "repository" },
     prepare: [],

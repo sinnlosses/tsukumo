@@ -16,16 +16,15 @@ describe("question_brief", () => {
     questions: [
       {
         header: "架空の見出し",
-        background: "架空の背景。",
-        axes: ["速さ"],
+        whyAsk: "架空の理由。利用者の好みが分からない。",
+        facts: [{ text: "架空の事実。", basis: "checked" }],
+        recommended: { reason: "架空の勧める理由。", certainty: "medium" },
         options: [
           {
             label: "A案",
-            pros: ["架空の良い点。"],
-            byAxis: ["速い"],
             figures: [{ kind: "mermaid", source: "sequenceDiagram\n  A ->> B: x" }],
           },
-          { label: "B案", cons: ["架空の悪い点。"], byAxis: ["遅い"], irreversible: true },
+          { label: "B案", irreversible: true },
         ],
       },
     ],
@@ -45,14 +44,12 @@ describe("question_brief", () => {
       [
         {
           header: "架空の見出し",
-          background: "架空の背景。",
-          axes: ["速さ"],
+          whyAsk: "架空の理由。利用者の好みが分からない。",
+          facts: [{ text: "架空の事実。", basis: "checked" }],
+          recommended: { reason: "架空の勧める理由。", certainty: "medium" },
           options: [
             {
               label: "A案",
-              pros: ["架空の良い点。"],
-              cons: [],
-              byAxis: ["速い"],
               irreversible: false,
               figures: [
                 {
@@ -66,9 +63,6 @@ describe("question_brief", () => {
             },
             {
               label: "B案",
-              pros: [],
-              cons: ["架空の悪い点。"],
-              byAxis: ["遅い"],
               irreversible: true,
               figures: [],
             },
@@ -82,7 +76,7 @@ describe("question_brief", () => {
     const held: (readonly QuestionBrief[])[] = []
 
     const reply = await callTool(workServer([], [], createCallReview(), held), "question_brief", {
-      questions: [{ ...BRIEF_ARGS.questions[0], background: "" }],
+      questions: [{ ...BRIEF_ARGS.questions[0], options: [{ label: "A案" }] }],
     })
 
     expect(reply.isError).toBe(true)

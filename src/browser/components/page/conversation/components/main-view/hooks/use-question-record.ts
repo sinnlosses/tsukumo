@@ -21,6 +21,7 @@ import {
 } from "../../../../../../../shared/session-driver/question.ts"
 import type { MainViewQuestion } from "../../../../../../../shared/session/main-view-shape.ts"
 import {
+  inquiryBriefOf,
   optionRows,
   type InquiryBrief,
   type InquiryOptionRow,
@@ -126,7 +127,7 @@ function briefModel(given: {
   readonly onToggle: (event: ToggleEvent<HTMLDetailsElement>) => void
 }): QuestionRecordBriefModel {
   return {
-    brief: { background: given.brief.background, axes: given.brief.axes },
+    brief: inquiryBriefOf(given.brief),
     options: optionRows(given.question, given.answer, given.brief.options),
     imageSource: {
       kind: "shelved",

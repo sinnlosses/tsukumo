@@ -127,10 +127,25 @@ test.describe("お伺い", () => {
     const inquiry = inquiryOf(room.page)
     const detail = inquiry.getByRole("group", { name: /の詳細$/ })
 
-    // 触る前は詳細を出さず、軸があるので比べる表が開いて出る。
-    await expect.poll(() => inquiry.locator("details table").count()).toBe(1)
+    // 触る前は詳細を出さず、比べる表も出さず、案内の1行だけを出す。
+    await expect(inquiry.getByText("選択肢を押すと詳細が出ます")).toBeVisible()
+    expect(await inquiry.locator("details table").count()).toBe(0)
     expect(await detail.count()).toBe(0)
     expect(await inquiry.getByText("⚠ 戻せない").count()).toBe(1)
+
+    const tops = await Promise.all(
+      ["聞く理由", "事実", "おすすめの理由"].map(async (label) => {
+        const box = await inquiry.getByText(label, { exact: true }).boundingBox()
+        return box === null ? -1 : box.y
+      }),
+    )
+    expect(tops.every((top) => top >= 0)).toBe(true)
+    expect(tops).toEqual(tops.toSorted((a, b) => a - b))
+    const firstOption = await inquiry.getByRole("radio", { name: /A に置く/ }).boundingBox()
+    expect(firstOption !== null && firstOption.y > (tops[2] ?? Infinity)).toBe(true)
+    for (const mark of ["確かめた", "写した", "確度 高"]) {
+      await expect(inquiry.getByText(mark, { exact: true })).toBeVisible()
+    }
 
     await inquiry.getByRole("radio", { name: /B に置く/ }).click()
     await expect.poll(() => detail.count()).toBe(1)
@@ -139,9 +154,14 @@ test.describe("お伺い", () => {
       detail.boundingBox(),
     ])
     expect(options !== null && panel !== null && panel.x > options.x + options.width).toBe(true)
+    // 詳細が出て札が伸びても、札は見える範囲に収まり、「次へ」は転がさずに押せる。
+    const main = room.page.locator('[data-region="main"]')
+    await expect.poll(() => insideOf(inquiry, main)).toBe(true)
+    await expect
+      .poll(() => insideOf(inquiry.getByRole("button", { name: /次へ/ }), main))
+      .toBe(true)
 
-    await inquiry.getByText("並べて比べる").click()
-    await expect.poll(() => inquiry.locator("details table").count()).toBe(1)
+    expect(await inquiry.locator("details table").count()).toBe(0)
     await inquiry.getByRole("radio", { name: /C に移す/ }).click()
     await expect.poll(() => detail.getAttribute("aria-label")).toBe("C に移す の詳細")
 

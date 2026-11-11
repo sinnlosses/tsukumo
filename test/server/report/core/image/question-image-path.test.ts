@@ -34,14 +34,11 @@ describe("questionImagePaths", () => {
   it("添え書きの選択肢の図の image の塊のパスも、preview と重ねずに拾う", () => {
     const brief: QuestionBrief = {
       header: "架空の選択",
-      background: "架空の背景。",
-      axes: ["架空の軸"],
+      whyAsk: "架空の理由。",
+      facts: [{ text: "架空の事実。", basis: "checked" }],
       options: [
         {
           label: "架空の案0",
-          pros: ["架空の良い点。"],
-          cons: [],
-          byAxis: ["架空"],
           irreversible: false,
           figures: [
             { kind: "image", path: "shot/a.png", caption: "架空", notes: [], fold: "", aside: "" },

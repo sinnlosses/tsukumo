@@ -10,25 +10,15 @@ const BRIEF_SUMMARY = "質問のときの詳細"
 
 const BRIEF: QuestionBrief = {
   header: "確認",
-  background: "架空の背景の文。",
-  axes: ["速さ", "戻しやすさ"],
+  whyAsk: "架空の聞く理由の文。",
+  facts: [
+    { text: "架空の数の話。", basis: "checked" },
+    { text: "架空の本文の話。", basis: "copied" },
+  ],
+  recommended: { reason: "架空の根拠の文。", certainty: "low" },
   options: [
-    {
-      label: "案A",
-      pros: ["架空の良い点A。"],
-      cons: [],
-      byAxis: ["速い", "戻せる"],
-      irreversible: false,
-      figures: [],
-    },
-    {
-      label: "案B",
-      pros: [],
-      cons: ["架空の悪い点B。"],
-      byAxis: ["遅い", "戻せない"],
-      irreversible: true,
-      figures: [],
-    },
+    { label: "案A", irreversible: false, figures: [] },
+    { label: "案B", irreversible: true, figures: [] },
   ],
 }
 
@@ -96,21 +86,66 @@ describe("QuestionRecord（質問のときの詳細）", () => {
 
     expect(container.querySelectorAll("summary")).toHaveLength(1)
     expect(summaryOf(container, BRIEF_SUMMARY)).toBeDefined()
-    expect(screen.queryByText(/架空の背景の文/)).toBeNull()
+    expect(screen.queryByText(/架空の聞く理由の文/)).toBeNull()
   })
 
-  it("開くと、背景・判断の軸・選択肢ごとの詳細・比べる表が出る", () => {
-    const { container } = render(<QuestionRecord entry={entryOf({ briefs: [BRIEF] })} />)
+  it("開くと、聞く理由と、説明か図か preview を持つ選択肢ごとの詳細が出て、比べる表は出ない", () => {
+    const entry = entryOf({
+      briefs: [BRIEF],
+      questions: [
+        {
+          header: "確認",
+          text: "どちらにする？",
+          multiSelect: false,
+          options: [
+            { label: "案A", description: "架空の説明A", preview: undefined },
+            { label: "案B", description: "架空の説明B", preview: undefined },
+          ],
+        },
+      ],
+    })
+    const { container } = render(<QuestionRecord entry={entry} />)
 
     toggle(container, BRIEF_SUMMARY, true)
 
-    expect(screen.getByText(/架空の背景の文/)).toBeDefined()
-    expect(screen.getByText(/速さ \/ 戻しやすさ/)).toBeDefined()
+    expect(screen.getByText(/架空の聞く理由の文/)).toBeDefined()
     expect(screen.getByRole("group", { name: "案A の詳細" })).toBeDefined()
     expect(screen.getByRole("group", { name: "案B の詳細" })).toBeDefined()
-    expect(screen.getByText("架空の良い点A。")).toBeDefined()
-    expect(screen.getByText("架空の悪い点B。")).toBeDefined()
-    expect(screen.getByText("並べて比べる")).toBeDefined()
+    expect(container.querySelector("details table")).toBeNull()
+  })
+
+  it("開くと、聞く理由 → 事実（出どころの印つき）→ おすすめの理由と確度 → 選択肢ごとの詳細の順に出す", () => {
+    const entry = entryOf({
+      briefs: [BRIEF],
+      questions: [
+        {
+          header: "確認",
+          text: "どちらにする？",
+          multiSelect: false,
+          options: [
+            { label: "案A", description: "架空の説明A", preview: undefined },
+            { label: "案B", description: "", preview: undefined },
+          ],
+        },
+      ],
+    })
+    const { container } = render(<QuestionRecord entry={entry} />)
+
+    toggle(container, BRIEF_SUMMARY, true)
+
+    const text = summaryOf(container, BRIEF_SUMMARY).parentElement?.textContent ?? ""
+    const positions = [
+      "聞く理由",
+      "事実",
+      "確かめた",
+      "写した",
+      "おすすめの理由",
+      "確度 低",
+      "架空の根拠の文",
+      "案A の詳細",
+    ].map((part) => text.indexOf(part))
+    expect(positions).toEqual(positions.toSorted((a, b) => a - b))
+    expect(positions.every((position) => position >= 0)).toBe(true)
   })
 
   it("1回開いたあと閉じても、中身は描いたまま", () => {
@@ -119,7 +154,7 @@ describe("QuestionRecord（質問のときの詳細）", () => {
     toggle(container, BRIEF_SUMMARY, true)
     toggle(container, BRIEF_SUMMARY, false)
 
-    expect(screen.getByText(/架空の背景の文/)).toBeDefined()
+    expect(screen.getByText(/架空の聞く理由の文/)).toBeDefined()
   })
 
   it("比べた内容の畳みとは独立に開閉する", () => {
@@ -141,7 +176,7 @@ describe("QuestionRecord（質問のときの詳細）", () => {
 
     toggle(container, BRIEF_SUMMARY, true)
 
-    expect(screen.getByText(/架空の背景の文/)).toBeDefined()
+    expect(screen.getByText(/架空の聞く理由の文/)).toBeDefined()
     expect(summaryOf(container, "比べた内容").parentElement?.children).toHaveLength(1)
   })
 

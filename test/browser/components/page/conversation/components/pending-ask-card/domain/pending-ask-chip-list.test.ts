@@ -32,9 +32,6 @@ function row(figures: Extract<InquiryModel, { kind: "question" }>["options"][num
     preview: undefined,
     selected: false,
     irreversible: false,
-    pros: [],
-    cons: [],
-    byAxis: [],
     figures,
   }
 }

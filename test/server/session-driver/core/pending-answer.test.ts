@@ -48,13 +48,10 @@ function questionRequest(overrides: Partial<AskRequest> = {}): AskRequest {
 /** `questionRequest()` の質問に合う添え書き。 */
 const BRIEF: QuestionBrief = {
   header: "選択",
-  background: "架空の背景。",
-  axes: ["架空の軸"],
+  whyAsk: "架空の理由。",
+  facts: [{ text: "架空の事実。", basis: "checked" }],
   options: ["こっち", "あっち"].map((label) => ({
     label,
-    pros: ["架空の良い点。"],
-    cons: [],
-    byAxis: ["架空"],
     irreversible: label === "あっち",
     figures: [],
   })),
@@ -427,7 +424,7 @@ describe("選択肢が2つ以上の質問は添え書きが無いと断る", () 
 
     expect(result.behavior).toBe("deny")
     const message = result.behavior === "deny" ? result.message : ""
-    for (const secret of ["どちらにする？", "こっち", "あっち", "架空の背景", "架空の良い点"]) {
+    for (const secret of ["どちらにする？", "こっち", "あっち", "架空の理由", "架空の事実"]) {
       expect(message).not.toContain(secret)
     }
   })

@@ -6,16 +6,18 @@ import { unique } from "remeda"
 import type { QuestionBrief } from "../../../shared/session-driver/question-brief.ts"
 import {
   FREE_TEXT_OPTION_LABEL,
+  isRecommendedLabel,
   type Question,
   withoutRecommendedMark,
 } from "../../../shared/session-driver/question.ts"
 
 /** `AskUserQuestion` が1回に持てる質問の数と同じ。 */
 const MAX_BRIEF_QUESTIONS = 4
-const MAX_BRIEF_AXES = 5
 /** `AskUserQuestion` が1問に持てる選択肢の数と同じ。 */
 const MIN_BRIEF_OPTIONS = 2
 const MAX_BRIEF_OPTIONS = 4
+const MIN_BRIEF_FACTS = 1
+const MAX_BRIEF_FACTS = 5
 const MAX_OPTION_FIGURES = 2
 
 /** 選択肢が2つ以上の質問に添え書きを求める。自由入力の選択肢は数えない。 */
@@ -60,7 +62,7 @@ export function answerQuestionBriefCall(
 /**
  * 届いた質問と預かった添え書きから、積むか断るかを決める。
  * 選択肢が2つ以上の質問に合う添え書きが無ければ断る。そうした質問が無ければ必ず積み、合わない添え書きは捨てる。
- * 断る文には質問文・ラベル・添え書きの字を入れず、header と数だけを言う。
+ * 断る文には質問文・ラベル・添え書きの字を入れず、header と数と、印か recommended のどちらが欠けているかだけを言う。
  */
 export function reviewQuestionBriefing(
   questions: readonly Question[],
@@ -106,7 +108,8 @@ function reviewQuestionBrief(briefs: readonly QuestionBrief[]): readonly string[
 
 /**
  * 添え書きを質問の並びと突き合わせる。
- * 各件の `header` が質問1つにだけ当たり、選択肢の `label` の集合がその質問の選択肢と同じなら合う。
+ * 各件の `header` が質問1つにだけ当たり、選択肢の `label` の集合がその質問の選択肢と同じで、
+ * 質問の選択肢におすすめの印が付いているかと `recommended` の有る無しが揃っているなら合う。
  * `label` は末尾のおすすめの印を外して比べ、自由入力の選択肢は両側から除く。
  */
 function pairQuestionBrief(
@@ -121,12 +124,14 @@ function briefReasons(brief: QuestionBrief): readonly string[] {
   const at = `「${brief.header}」の`
   return [
     ...(brief.header.trim() === "" ? ["header を空にしない"] : []),
-    ...(brief.background.trim() === "" ? [`${at}background を空にしない`] : []),
-    ...(brief.axes.length === 0 || brief.axes.length > MAX_BRIEF_AXES
-      ? [`${at}axes は1〜${String(MAX_BRIEF_AXES)}個にする`]
+    ...(brief.whyAsk.trim() === "" ? [`${at}whyAsk を空にしない`] : []),
+    ...(brief.facts.length < MIN_BRIEF_FACTS || brief.facts.length > MAX_BRIEF_FACTS
+      ? [`${at}facts は${String(MIN_BRIEF_FACTS)}〜${String(MAX_BRIEF_FACTS)}件にする`]
       : []),
-    ...(brief.axes.some((axis) => axis.trim() === "") ? [`${at}axes に空の軸を入れない`] : []),
-    ...duplicateReasons(brief.axes, `${at}axes`),
+    ...(brief.facts.some((fact) => fact.text.trim() === "")
+      ? [`${at}facts に空の text を入れない`]
+      : []),
+    ...(brief.recommended?.reason.trim() === "" ? [`${at}recommended の reason を空にしない`] : []),
     ...(brief.options.length < MIN_BRIEF_OPTIONS || brief.options.length > MAX_BRIEF_OPTIONS
       ? [`${at}options は${String(MIN_BRIEF_OPTIONS)}〜${String(MAX_BRIEF_OPTIONS)}件にする`]
       : []),
@@ -138,12 +143,6 @@ function briefReasons(brief: QuestionBrief): readonly string[] {
       const of = `${at}選択肢「${option.label}」の`
       return [
         ...(option.label.trim() === "" ? [`${at}options の label を空にしない`] : []),
-        ...(option.byAxis.length === brief.axes.length
-          ? []
-          : [`${of}byAxis は axes と同じ${String(brief.axes.length)}個にする`]),
-        ...(option.pros.length === 0 && option.cons.length === 0
-          ? [`${of}pros と cons の少なくとも一方を書く`]
-          : []),
         ...(option.figures.length > MAX_OPTION_FIGURES
           ? [`${of}figures は${String(MAX_OPTION_FIGURES)}つまでにする`]
           : []),
@@ -152,22 +151,30 @@ function briefReasons(brief: QuestionBrief): readonly string[] {
   ]
 }
 
-/** 理由に質問文・ラベル・添え書きの字は入れず、header と数だけを言う。 */
+/** 理由に質問文・ラベル・添え書きの字は入れず、header と数と、印か recommended のどちらが欠けているかだけを言う。 */
 function pairingReasons(questions: readonly Question[], brief: QuestionBrief): readonly string[] {
   const matched = questions.filter((question) => question.header === brief.header)
   const [question] = matched
   if (matched.length !== 1 || question === undefined) {
     return [`添え書きの header「${brief.header}」に当たる質問が1つに決まらない`]
   }
+  const at = `「${brief.header}」の添え書き`
   const asked = new Set(comparableLabels(question.options.map((option) => option.label)))
   const briefed = new Set(comparableLabels(brief.options.map((option) => option.label)))
   const missing = [...asked].filter((label) => !briefed.has(label)).length
   const extra = [...briefed].filter((label) => !asked.has(label)).length
-  return missing === 0 && extra === 0
-    ? []
-    : [
-        `「${brief.header}」の添え書きの選択肢が質問と合わない（足りない${String(missing)}個・余る${String(extra)}個）`,
-      ]
+  const marked = question.options.some((option) => isRecommendedLabel(option.label))
+  return [
+    ...(missing === 0 && extra === 0
+      ? []
+      : [`${at}の選択肢が質問と合わない（足りない${String(missing)}個・余る${String(extra)}個）`]),
+    ...(marked && brief.recommended === undefined
+      ? [`${at}に recommended が無い（質問の選択肢におすすめの印がある）`]
+      : []),
+    ...(!marked && brief.recommended !== undefined
+      ? [`${at}の recommended を外す（質問の選択肢におすすめの印が無い）`]
+      : []),
+  ]
 }
 
 function duplicateReasons(values: readonly string[], name: string): readonly string[] {

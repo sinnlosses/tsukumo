@@ -32,13 +32,10 @@ describe("applySessionEvent（質問の記録）", () => {
 
   const brief: QuestionBrief = {
     header: "確認",
-    background: "架空の背景。",
-    axes: ["架空の軸"],
+    whyAsk: "架空の理由。",
+    facts: [{ text: "架空の事実。", basis: "checked" }],
     options: ["案A", "案B"].map((label) => ({
       label,
-      pros: ["架空の良い点。"],
-      cons: [],
-      byAxis: ["架空"],
       irreversible: false,
       figures: [],
     })),

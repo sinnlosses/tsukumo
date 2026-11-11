@@ -11,7 +11,7 @@ import {
 } from "../../../../../features/report/markdown.tsx"
 import { Heading } from "../../../../ui/heading/heading.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
-import { hasDetail, InquiryBrief, InquiryCompare, InquiryDetail } from "../inquiry/inquiry.tsx"
+import { hasDetail, InquiryBrief, InquiryDetail } from "../inquiry/inquiry.tsx"
 import type {
   QuestionRecordAnswerRow,
   QuestionRecordBriefModel,
@@ -107,14 +107,6 @@ function BriefDetails(props: {
               key={option.label}
             />
           ))}
-          {brief.brief.axes.length > 0 && (
-            <InquiryCompare
-              open={false}
-              imageSource={brief.imageSource}
-              brief={brief.brief}
-              options={brief.options}
-            />
-          )}
         </>
       )}
     </details>
