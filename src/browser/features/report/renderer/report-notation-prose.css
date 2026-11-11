@@ -147,20 +147,21 @@
     line-height: 1.4;
     color: var(--ink-bright);
   }
-  & blockquote {
+  /* 旧い Markdown の引用だけ。直に描く引用は Astryx の `Blockquote`（stable class は astryx-blockquote）が罫・余白・字を持つ。 */
+  & blockquote:not(:global(.astryx-blockquote)) {
     margin: var(--report-block-gap) 0;
     padding-left: var(--space-md);
     border-left: 2px solid var(--rule);
     color: var(--ink-quiet);
   }
   /* 引用の中の段落の既定 margin（1em）は引用の外へ抜けて引用の上下を 15px にするので、塊のあきに揃え、先頭と末尾は 0 にする。 */
-  & blockquote > :is(p, ul, ol) {
+  & blockquote:not(:global(.astryx-blockquote)) > :is(p, ul, ol) {
     margin: var(--report-block-gap) 0;
   }
-  & blockquote > :first-child {
+  & blockquote:not(:global(.astryx-blockquote)) > :first-child {
     margin-top: 0;
   }
-  & blockquote > :last-child {
+  & blockquote:not(:global(.astryx-blockquote)) > :last-child {
     margin-bottom: 0;
   }
   /* レポートの中の <details>（記法が「長い根拠・ログ・脇道」に勧める畳み方）。

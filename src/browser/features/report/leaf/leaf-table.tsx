@@ -6,6 +6,14 @@ import { type ReactElement, type ReactNode, useState } from "react"
 
 import type { ColumnAlign } from "../../../../shared/report/table-layout.ts"
 import { Button } from "../../../components/ui/button/button.tsx"
+import {
+  Table,
+  TableCell,
+  TableFoot,
+  TableHead,
+  TableHeaderCell,
+  TableRow,
+} from "../../../components/ui/table/table.tsx"
 import { FoldedTableBody, tableLeafClassNames } from "../markdown.tsx"
 import styles from "./leaf.module.css"
 
@@ -43,34 +51,29 @@ type LeafTableProps = {
 
 export type HeadSort = "ascending" | "descending" | "none"
 
-/** 左揃えは何も付けない（旧い GFM の表は、右と中央を `style` の `text-align` で出す）。 */
-const ALIGN_ATTRIBUTES = {
-  left: {},
-  right: { style: { textAlign: "right" } },
-  center: { style: { textAlign: "center" } },
-} as const satisfies Record<LeafTableAlign, object>
-
-/** 行が 0 件なら `tbody` を出さない。 */
+/** 行が 0 件なら本体を出さない。 */
 export function LeafTable(props: LeafTableProps): ReactElement {
-  const attributesOf = (index: number) => ALIGN_ATTRIBUTES[props.aligns[index] ?? "left"]
+  const alignOf = (index: number): LeafTableAlign => props.aligns[index] ?? "left"
   return (
     <div className={tableLeafClassNames.tableScroll}>
-      <table>
-        <thead>
-          <tr>
+      <Table>
+        <TableHead>
+          <TableRow className="" header>
             {props.head.map((cell, index) => (
-              <th
+              <TableHeaderCell
                 key={`head-${String(index)}`}
-                {...attributesOf(index)}
-                aria-sort={props.headSorts?.[index]}
+                align={alignOf(index)}
+                sort={props.headSorts?.[index] ?? "unspecified"}
+                hidden={false}
               >
                 {cell}
-              </th>
+              </TableHeaderCell>
             ))}
-          </tr>
-        </thead>
+          </TableRow>
+        </TableHead>
         {props.rows.length > 0 && (
           <FoldedTableBody
+            ui
             bodyProps={{}}
             columnCount={Math.max(1, ...props.rows.map((row) => row.cells.length))}
           >
@@ -78,26 +81,32 @@ export function LeafTable(props: LeafTableProps): ReactElement {
               <BodyRow
                 key={row.key}
                 row={row}
-                attributesOf={attributesOf}
+                alignOf={alignOf}
                 spaced={props.rows.some((other) => other.detail !== undefined)}
               />
             ))}
           </FoldedTableBody>
         )}
         {props.foot.length > 0 && (
-          <tfoot>
+          <TableFoot>
             {props.foot.map((cells, rowIndex) => (
-              <tr key={`foot-${String(rowIndex)}`}>
+              <TableRow key={`foot-${String(rowIndex)}`} className="" header={false}>
                 {cells.map((cell, index) => (
-                  <td key={`foot-${String(rowIndex)}-${String(index)}`} {...attributesOf(index)}>
+                  <TableCell
+                    key={`foot-${String(rowIndex)}-${String(index)}`}
+                    align={alignOf(index)}
+                    className=""
+                    hidden={false}
+                    span={1}
+                  >
                     {cell}
-                  </td>
+                  </TableCell>
                 ))}
-              </tr>
+              </TableRow>
             ))}
-          </tfoot>
+          </TableFoot>
         )}
-      </table>
+      </Table>
     </div>
   )
 }
@@ -120,37 +129,34 @@ export function ColumnMarked(props: {
 /** 開け閉めの状態はこの部品が持つので、`row.key` は並べ替えで変わらない元の行の添字にする。 */
 function BodyRow(props: {
   readonly row: LeafTableRow
-  readonly attributesOf: (index: number) => object
+  readonly alignOf: (index: number) => LeafTableAlign
   /** 表のどこかに詳しい中身のある行があるか。無い行の1列目を押しボタンの幅だけ寄せる。 */
   readonly spaced: boolean
 }): ReactElement {
-  const { row, attributesOf, spaced } = props
+  const { row, alignOf, spaced } = props
   const [open, setOpen] = useState(false)
   const { detail, unit } = row
   return (
     <>
-      <tr
-        className={
-          clsx(
-            unit !== undefined && styles["reply-unit"],
-            unit?.active === true && styles["ask-row-active"],
-            unit?.asked === true && styles["ask-row-asked"],
-          ) || undefined
-        }
-        data-reply-unit={unit === undefined ? undefined : "row"}
-        data-reply-row={unit?.index}
-        data-reply-label={unit?.label}
-        data-pointed={unit?.pointed === true ? "" : undefined}
-        tabIndex={unit?.tabIndex}
+      <TableRow
+        header={false}
+        className={clsx(
+          unit !== undefined && styles["reply-unit"],
+          unit?.active === true && styles["ask-row-active"],
+          unit?.asked === true && styles["ask-row-asked"],
+        )}
+        {...(unit !== undefined && { point: unit })}
       >
         {row.cells.map((cell, index) => (
-          <td
+          <TableCell
             key={`${row.key}-${String(index)}`}
-            {...attributesOf(index)}
+            align={alignOf(index)}
+            hidden={false}
+            span={1}
             className={
               index === 0 && row.depth > 0
-                ? tableLeafClassNames.tableDepths[row.depth - 1]
-                : undefined
+                ? (tableLeafClassNames.tableDepths[row.depth - 1] ?? "")
+                : ""
             }
           >
             {index === 0 && detail !== undefined && (
@@ -173,15 +179,23 @@ function BodyRow(props: {
               <span className={styles["table-detail-spacer"]} aria-hidden="true" />
             )}
             {cell}
-          </td>
+          </TableCell>
         ))}
-      </tr>
+      </TableRow>
       {detail !== undefined && open && (
-        <tr className={clsx(styles["table-detail-row"], tableLeafClassNames.tableDetailRow)}>
-          <td colSpan={Math.max(1, row.cells.length)} className={styles["table-detail-cell"]}>
+        <TableRow
+          header={false}
+          className={clsx(styles["table-detail-row"], tableLeafClassNames.tableDetailRow)}
+        >
+          <TableCell
+            align="left"
+            hidden={false}
+            span={Math.max(1, row.cells.length)}
+            className={styles["table-detail-cell"] ?? ""}
+          >
             {detail.content}
-          </td>
-        </tr>
+          </TableCell>
+        </TableRow>
       )}
     </>
   )

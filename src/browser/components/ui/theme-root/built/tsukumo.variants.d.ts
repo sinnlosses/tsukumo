@@ -46,6 +46,12 @@ declare module '@astryxdesign/core/Card' {
   }
 }
 
+declare module '@astryxdesign/core/Banner' {
+  interface BannerStatusMap {
+    'ask': true;
+  }
+}
+
 declare module '@astryxdesign/core/Dialog' {
   interface DialogVariantMap {
     'clear': true;

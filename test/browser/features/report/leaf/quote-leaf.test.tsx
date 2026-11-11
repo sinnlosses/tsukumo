@@ -56,32 +56,33 @@ describe("Quote の部品", () => {
   it("文のインラインの記法（inline code・太字・リンク）が要素になる", () => {
     const container = drawn({ text: "架空の `a.ts` と **太字** と [出典](https://example.com/a)" })
 
-    expect(container.querySelector("p code")?.textContent).toBe("a.ts")
-    expect(container.querySelector("p strong")?.textContent).toBe("太字")
-    expect(container.querySelector("p a")?.getAttribute("href")).toBe("https://example.com/a")
+    expect(container.querySelector("blockquote code")?.textContent).toBe("a.ts")
+    expect(container.querySelector("blockquote strong")?.textContent).toBe("太字")
+    expect(container.querySelector("blockquote a")?.getAttribute("href")).toBe(
+      "https://example.com/a",
+    )
   })
 
-  it("出典があれば 2 つ目の段落に「—」つきで出て、無ければ出ない", () => {
-    const withSource = [...drawn({ source: "架空の出典" }).querySelectorAll("p")]
+  it("出典があれば cite に「—」つきで出て、無ければ出ない", () => {
+    const withSource = drawn({ source: "架空の出典" })
+    expect(withSource.querySelector("blockquote")?.firstChild?.textContent).toBe("架空の引用")
+    expect(withSource.querySelector("cite")?.textContent).toBe("— 架空の出典")
     cleanup()
-    const without = [...drawn({}).querySelectorAll("p")]
 
-    expect(withSource.map((paragraph) => paragraph.textContent)).toEqual([
-      "架空の引用",
-      "— 架空の出典",
-    ])
-    expect(without.map((paragraph) => paragraph.textContent)).toEqual(["架空の引用"])
+    expect(drawn({}).querySelector("cite")).toBeNull()
   })
 
   it("文が空白だけなら何も描かない", () => {
-    expect(drawn({ text: "  ", source: "架空の出典" }).querySelector("p")).toBeNull()
+    expect(drawn({ text: "  ", source: "架空の出典" }).querySelector("blockquote")).toBeNull()
   })
 
   it("fold があれば details で畳む", () => {
     const container = drawn({ fold: "架空の根拠" })
 
     expect(container.querySelector("details > summary")?.textContent).toBe("架空の根拠")
-    expect(container.querySelector("details p")?.textContent).toBe("架空の引用")
+    expect(container.querySelector("details blockquote")?.firstChild?.textContent).toBe(
+      "架空の引用",
+    )
   })
 
   it("欄外注があれば欄外注の列に欄外注が付く", () => {

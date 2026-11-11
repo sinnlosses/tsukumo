@@ -397,7 +397,9 @@ describe("操作できる Table", () => {
     fireEvent.click(screen.getByRole("button", { name: "乙" }))
 
     expect(names(container)).toEqual(["あ"])
-    expect(container.querySelector("tbody [style*='width']")?.getAttribute("style")).toContain("9%")
+    expect(container.querySelector("tbody span[style*='width']")?.getAttribute("style")).toContain(
+      "9%",
+    )
   })
 
   it("どの行にも当たらなければ、見出しの行だけの表と「該当する行はありません」が出る", () => {

@@ -245,10 +245,9 @@ describe("Quote", () => {
       <Report reveal={false} turnId={1} {...NO_CLASS_NAMES} body={body} />,
     )
 
-    const paragraphs = [...container.querySelectorAll('[data-report-region="section"] p')].map(
-      (paragraph) => paragraph.textContent,
-    )
-    expect(paragraphs).toEqual(["架空の引用の一文", "— 架空の出典"])
+    const quote = container.querySelector('[data-report-region="section"] blockquote')
+    expect(quote?.firstChild?.textContent).toBe("架空の引用の一文")
+    expect(quote?.querySelector("cite")?.textContent).toBe("— 架空の出典")
     expect(
       [...container.querySelectorAll("[data-markdown-stub]")].some((stub) =>
         stub.textContent.includes("架空の引用の一文"),

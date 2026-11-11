@@ -816,18 +816,27 @@
                                                                       "children": [
                                                                         {
                                                                           "tag": "th",
+                                                                          "attributes": {
+                                                                            "data-density": "compact"
+                                                                          },
                                                                           "children": [
                                                                             "ファイル"
                                                                           ]
                                                                         },
                                                                         {
                                                                           "tag": "th",
+                                                                          "attributes": {
+                                                                            "data-density": "compact"
+                                                                          },
                                                                           "children": [
                                                                             "変えたこと"
                                                                           ]
                                                                         },
                                                                         {
                                                                           "tag": "th",
+                                                                          "attributes": {
+                                                                            "data-density": "compact"
+                                                                          },
                                                                           "children": [
                                                                             "状態"
                                                                           ]
@@ -849,6 +858,9 @@
                                                                       "children": [
                                                                         {
                                                                           "tag": "td",
+                                                                          "attributes": {
+                                                                            "data-density": "compact"
+                                                                          },
                                                                           "children": [
                                                                             {
                                                                               "tag": "code",
@@ -860,12 +872,18 @@
                                                                         },
                                                                         {
                                                                           "tag": "td",
+                                                                          "attributes": {
+                                                                            "data-density": "compact"
+                                                                          },
                                                                           "children": [
                                                                             "目盛りを 12 から 24 へ"
                                                                           ]
                                                                         },
                                                                         {
                                                                           "tag": "td",
+                                                                          "attributes": {
+                                                                            "data-density": "compact"
+                                                                          },
                                                                           "children": [
                                                                             {
                                                                               "tag": "span",
@@ -902,6 +920,9 @@
                                                                       "children": [
                                                                         {
                                                                           "tag": "td",
+                                                                          "attributes": {
+                                                                            "data-density": "compact"
+                                                                          },
                                                                           "children": [
                                                                             {
                                                                               "tag": "code",
@@ -913,12 +934,18 @@
                                                                         },
                                                                         {
                                                                           "tag": "td",
+                                                                          "attributes": {
+                                                                            "data-density": "compact"
+                                                                          },
                                                                           "children": [
                                                                             "読むだけなので変えない"
                                                                           ]
                                                                         },
                                                                         {
                                                                           "tag": "td",
+                                                                          "attributes": {
+                                                                            "data-density": "compact"
+                                                                          },
                                                                           "children": [
                                                                             {
                                                                               "tag": "span",
@@ -955,6 +982,9 @@
                                                                       "children": [
                                                                         {
                                                                           "tag": "td",
+                                                                          "attributes": {
+                                                                            "data-density": "compact"
+                                                                          },
                                                                           "children": [
                                                                             {
                                                                               "tag": "code",
@@ -966,12 +996,18 @@
                                                                         },
                                                                         {
                                                                           "tag": "td",
+                                                                          "attributes": {
+                                                                            "data-density": "compact"
+                                                                          },
                                                                           "children": [
                                                                             "型の食い違いが残る"
                                                                           ]
                                                                         },
                                                                         {
                                                                           "tag": "td",
+                                                                          "attributes": {
+                                                                            "data-density": "compact"
+                                                                          },
                                                                           "children": [
                                                                             {
                                                                               "tag": "span",
@@ -1048,18 +1084,27 @@
                                                                       "children": [
                                                                         {
                                                                           "tag": "th",
+                                                                          "attributes": {
+                                                                            "data-density": "compact"
+                                                                          },
                                                                           "children": [
                                                                             "場所"
                                                                           ]
                                                                         },
                                                                         {
                                                                           "tag": "th",
+                                                                          "attributes": {
+                                                                            "data-density": "compact"
+                                                                          },
                                                                           "children": [
                                                                             "前"
                                                                           ]
                                                                         },
                                                                         {
                                                                           "tag": "th",
+                                                                          "attributes": {
+                                                                            "data-density": "compact"
+                                                                          },
                                                                           "children": [
                                                                             "後"
                                                                           ]
@@ -1081,18 +1126,27 @@
                                                                       "children": [
                                                                         {
                                                                           "tag": "td",
+                                                                          "attributes": {
+                                                                            "data-density": "compact"
+                                                                          },
                                                                           "children": [
                                                                             "帯"
                                                                           ]
                                                                         },
                                                                         {
                                                                           "tag": "td",
+                                                                          "attributes": {
+                                                                            "data-density": "compact"
+                                                                          },
                                                                           "children": [
                                                                             "12"
                                                                           ]
                                                                         },
                                                                         {
                                                                           "tag": "td",
+                                                                          "attributes": {
+                                                                            "data-density": "compact"
+                                                                          },
                                                                           "children": [
                                                                             "24"
                                                                           ]
@@ -1109,18 +1163,27 @@
                                                                       "children": [
                                                                         {
                                                                           "tag": "td",
+                                                                          "attributes": {
+                                                                            "data-density": "compact"
+                                                                          },
                                                                           "children": [
                                                                             "札"
                                                                           ]
                                                                         },
                                                                         {
                                                                           "tag": "td",
+                                                                          "attributes": {
+                                                                            "data-density": "compact"
+                                                                          },
                                                                           "children": [
                                                                             "6"
                                                                           ]
                                                                         },
                                                                         {
                                                                           "tag": "td",
+                                                                          "attributes": {
+                                                                            "data-density": "compact"
+                                                                          },
                                                                           "children": [
                                                                             "12"
                                                                           ]

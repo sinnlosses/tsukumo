@@ -155,63 +155,6 @@
   margin-inline: 0 auto;
 }
 .detail-block {
-  & table {
-    border-collapse: collapse;
-    max-width: 100%;
-    margin: var(--report-block-gap) 0;
-    font-size: var(--font-subheading);
-    line-height: 20px;
-  }
-  /* 横の線だけの表（縦の罫線・見出し行の地は持たない）。
-   列の揃えは `columnAlign` の GFM の記法から style 属性で届き、ここの left に勝つ。
-   数だけの列で桁が縦に揃うよう、数字は等幅にする。
-   1列目の左と最終列の右は余白 0 で、本文の左端に揃える。 */
-  & th,
-  & td {
-    padding: var(--space-sm) var(--space-xl) var(--space-sm) 0;
-    border-bottom: 1px solid var(--rule-quiet);
-    text-align: left;
-    font-variant-numeric: tabular-nums;
-  }
-  & :is(th, td):last-child {
-    padding-right: 0;
-  }
-  & tbody tr:last-child td {
-    border-bottom: none;
-  }
-  /* 切った残りの行（`.report-table-rest`）が続く表は、最後のデータ行の下の罫を残して残りの行を表の最終行に見せる。 */
-  & .table-scroll:has(+ .report-table-rest) tbody tr:last-child td {
-    border-bottom: 1px solid var(--rule-quiet);
-  }
-  /* 6行以上の表は、5行ごとに行の下へ 6px の隙間を入れる（その行の罫は透かす）。
-     開いた詳しい中身の行は行に数えず、開いた5行目の隙間は詳しい中身の行の下に置く。 */
-  &
-    table
-    tbody:has(tr:nth-child(6 of :not(.report-table-detail-row)))
-    tr:nth-child(5n of :not(.report-table-detail-row)):not(
-      :last-child,
-      :has(+ .report-table-detail-row)
-    )
-    td {
-    padding-bottom: var(--space-md);
-    border-bottom-color: transparent;
-  }
-  &
-    table
-    tbody:has(tr:nth-child(6 of :not(.report-table-detail-row)))
-    tr:nth-child(5n of :not(.report-table-detail-row))
-    + .report-table-detail-row:not(:last-child)
-    td {
-    border-bottom-color: transparent;
-  }
-  /* 見出し行の下だけ素の `rule`。文字は本文より小さく、読ませる補助の色にする。 */
-  & th {
-    padding-top: 0;
-    border-bottom: 1px solid var(--rule);
-    font-size: var(--font-secondary);
-    font-weight: 500;
-    color: var(--ink-soft);
-  }
   /* 状態の列にある、状態を持たないセル。読ませる補助の字にする。 */
   & .report-cell-status-none {
     display: block;

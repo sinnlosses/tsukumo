@@ -10,6 +10,7 @@ import {
   oldLeafHtml,
   oldLeafTextNodes,
 } from "../../../../fixture/direct-leaf-compare.tsx"
+import { tableShapeOf } from "../../../../fixture/table-shape.ts"
 
 beforeAll(async () => {
   await loadMarkdown()
@@ -83,6 +84,6 @@ describe("2つの内容部品は、旧い描画と同じ text ノードの割れ
     ["改行・前後の空白を含む Table", MESSY_TABLE],
   ] as const)("%s", (_name, { block, part }) => {
     expect(newLeafTextNodes(block, part)).toEqual(oldLeafTextNodes(block))
-    expect(newLeafHtml(block, part)).toEqual(oldLeafHtml(block))
+    expect(tableShapeOf(newLeafHtml(block, part))).toEqual(tableShapeOf(oldLeafHtml(block)))
   })
 })

@@ -8,6 +8,7 @@ import { Children, isValidElement, useState } from "react"
 import type { JSX, ReactElement, ReactNode } from "react"
 
 import { Button } from "../../../components/ui/button/button.tsx"
+import { TableCell, TableRow, TableRows } from "../../../components/ui/table/table.tsx"
 import styles from "./report-notation.module.css"
 
 /** 切らずに全部出す件数の上限。これを超えたら、この件数で切る。 */
@@ -18,11 +19,27 @@ export type FoldedTableBodyProps = {
   /** 「ほか n 件」の行が横に渡る列数。 */
   readonly columnCount: number
   readonly children: ReactNode
+  /** 直に描く内容部品の表（`ui/` の表の部品）の本体にするか。旧い Markdown の表は素の `tbody`。 */
+  readonly ui?: boolean
 }
 
 /** 本体の行が FOLD_LIMIT を超える表の `tbody`。 */
 export function FoldedTableBody(props: FoldedTableBodyProps): ReactElement {
   const { items, hiddenCount, expand } = useFoldedItems(props.children)
+  if (props.ui === true) {
+    return (
+      <TableRows>
+        {items}
+        {hiddenCount > 0 && (
+          <TableRow className={styles["report-fold-more"] ?? ""} header={false}>
+            <TableCell align="left" className="" hidden={false} span={props.columnCount}>
+              <MoreButton hiddenCount={hiddenCount} onClick={expand} />
+            </TableCell>
+          </TableRow>
+        )}
+      </TableRows>
+    )
+  }
   return (
     <tbody {...props.bodyProps}>
       {items}

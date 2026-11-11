@@ -85,6 +85,6 @@ const REPORT_NOTATION_CLASS_NAMES: ReadonlySet<string> = new Set(
   [...REPORT_NOTATION_NAMES, ...REPORT_DRAWN_MARK_NAMES].map((name) => `report-${name}`),
 )
 
-// tsx 以外（rehype・CodeMirror）が付ける class と、domain/reveal が生の class 名で選ぶために
+// tsx 以外（rehype・CodeMirror・Astryx の stable class）が付ける class と、domain/reveal が生の class 名で選ぶために
 // styles を介さず literal で付ける class の接頭辞。
-const FOREIGN_CSS_CLASS_PREFIXES = ["cm-", "chart-block", "mermaid"] as const
+const FOREIGN_CSS_CLASS_PREFIXES = ["cm-", "chart-block", "mermaid", "astryx-"] as const

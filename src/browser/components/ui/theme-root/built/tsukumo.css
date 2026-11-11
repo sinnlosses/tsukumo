@@ -570,6 +570,10 @@
     --astryx-section-padding: var(--spacing-3);
   }
 
+  .astryx-banner[data-status="ask"] {
+    background-color: color-mix(in srgb, var(--surface), var(--state-ask) 18%);
+  }
+
   .astryx-dialog[data-variant="clear"]::backdrop {
     background-color: transparent;
   }

@@ -11,6 +11,7 @@ import type { A2uiReportComponent } from "../../../../../src/shared/report/a2ui-
 import type { LeafValue } from "../../../../../src/shared/report/report-leaf-value.ts"
 import { tableCellTexts } from "../../../../../src/shared/report/table-view.ts"
 import { newLeafHtml, oldLeafHtml } from "../../../../fixture/direct-leaf-compare.tsx"
+import { tableShapeOf } from "../../../../fixture/table-shape.ts"
 
 beforeAll(async () => {
   await loadMarkdown()
@@ -133,10 +134,10 @@ describe("Table の部品", () => {
       ],
       {},
     ],
-  ])("%s は旧い描き方と同じ DOM", (_, rows, fields) => {
+  ])("%s は旧い描き方と同じ区画・行・セルの字・揃え・印", (_, rows, fields) => {
     const { fresh, old } = both(rows, fields)
 
-    expect(fresh).toBe(old)
+    expect(tableShapeOf(fresh)).toEqual(tableShapeOf(old))
   })
 
   it("強調の列は見出しと各データセルに印を1つずつ置き、欄を書かない表には置かない", () => {

@@ -26,7 +26,7 @@ function pair(tone: Tone, text: string) {
 }
 
 describe("Note の部品", () => {
-  it("ラベルの字は本物のテキストノードで出る", () => {
+  it("種類の名前が題の字として出る", () => {
     const labels = (["info", "warn", "ng", "ask"] as const).map((tone) => {
       const { block, part } = pair(tone, "架空")
       const view = directLeafViewOf(part)
@@ -43,7 +43,7 @@ describe("Note の部品", () => {
           )}
         </div>,
       )
-      const text = container.querySelector("[data-report-region] > div")?.firstChild?.textContent
+      const text = container.querySelector("[data-status]")?.textContent
       cleanup()
       expect(block.kind).toBe("note")
       return text

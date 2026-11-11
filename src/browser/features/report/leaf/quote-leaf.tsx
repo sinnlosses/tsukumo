@@ -4,7 +4,7 @@ import type { ReactElement } from "react"
 
 import type { A2uiReportComponent } from "../../../../shared/report/a2ui-report-catalog.ts"
 import type { LeafValue } from "../../../../shared/report/report-leaf-value.ts"
-import { Text } from "../../../components/ui/text/text.tsx"
+import { Quote } from "../../../components/ui/quote/quote.tsx"
 import { InlineMarkdown } from "../markdown.tsx"
 import styles from "./leaf.module.css"
 import { LeafFold, ReportLeafFrame } from "./report-leaf-frame.tsx"
@@ -22,27 +22,20 @@ export function QuoteLeaf(props: {
     <ReportLeafFrame value={value} title="" fit={false}>
       <LeafFold fold={part.fold} empty={empty}>
         {!empty && (
-          <div className={styles["quote-leaf"]}>
-            <Text
-              element="p"
-              size="body"
-              tone="ink"
-              weight="normal"
-              className={styles["quote-leaf-text"]}
+          <div className={styles["quote-block"]}>
+            <Quote
+              source={
+                part.source.trim() === "" ? (
+                  ""
+                ) : (
+                  <>
+                    — <InlineMarkdown text={part.source} />
+                  </>
+                )
+              }
             >
               <InlineMarkdown text={part.text} />
-            </Text>
-            {part.source.trim() !== "" && (
-              <Text
-                element="p"
-                size="secondary"
-                tone="ink-quiet"
-                weight="normal"
-                className={styles["quote-leaf-source"]}
-              >
-                — <InlineMarkdown text={part.source} />
-              </Text>
-            )}
+            </Quote>
           </div>
         )}
       </LeafFold>

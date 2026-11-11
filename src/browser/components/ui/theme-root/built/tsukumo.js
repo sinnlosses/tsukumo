@@ -475,6 +475,11 @@ export const tsukumoTheme = {
         "padding": "var(--spacing-3)"
       }
     },
+    "banner": {
+      "status:ask": {
+        "backgroundColor": "color-mix(in srgb, var(--surface), var(--state-ask) 18%)"
+      }
+    },
     "dialog": {
       "variant:clear": {
         "::backdrop": {

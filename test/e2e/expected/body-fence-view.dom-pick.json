@@ -12,7 +12,7 @@
         { "tag": "td", "children": ["2"] }
       ] },
       "注意",
-      { "tag": "p", "children": ["架空の注意の一文。"] },
+      "架空の注意の一文。",
       { "tag": "ol", "attributes": { "aria-label": "連鎖" } },
       "図 2",
       { "tag": "pre", "children": [

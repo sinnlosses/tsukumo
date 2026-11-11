@@ -104,9 +104,6 @@ export const textLeafClassNames = {
 /** 内容部品を直接描く注記・候補の部品が付ける class 名（Markdown の `note`・`options` などと同じ見た目）。 */
 export const noteLeafClassNames = {
   note: notationStyles["report-note"],
-  noteWarn: notationStyles["report-note-warn"],
-  noteNg: notationStyles["report-note-ng"],
-  noteAsk: notationStyles["report-note-ask"],
   noteFavor: notationStyles["report-note-favor"],
   options: notationStyles["report-options"],
   option: notationStyles["report-option"],
