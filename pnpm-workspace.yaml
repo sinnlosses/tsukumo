@@ -5,5 +5,9 @@ allowBuilds:
   esbuild: false
 # 公開から3日（分で数える）たっていない版は入れない
 minimumReleaseAge: 4320
+# Fable 5.2 を試すため、Agent SDK だけ公開3日の待ちを外す（試し終えたら消す）
+minimumReleaseAgeExclude:
+  - "@anthropic-ai/claude-agent-sdk"
+  - "@anthropic-ai/claude-agent-sdk-*"
 overrides:
   lodash-es: "^4.18.1"
