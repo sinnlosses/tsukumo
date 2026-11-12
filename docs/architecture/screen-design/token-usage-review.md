@@ -21,7 +21,7 @@
 **段の印は `current-work-step-group.tsx`（「いまの作業」の一覧の段）と同じ文字**（済 = ✓、進行中は
 回る「…」、未着手は ○）にする。見本は SVG のチェック・スピナー・丸だが、新しい絵を増やさず
 帯と同じ読み方に揃えた。回る印は `current-work-spin` と同じ仕組み（`animation` を
-`prefers-reduced-motion: reduce` で止める `theme.css` の全体規則に乗る）なので、動きを減らす
+`prefers-reduced-motion: reduce` で止める `page-base.css` の全体規則に乗る）なので、動きを減らす
 設定のための分岐は要らない（「解くべき論点」の回答）。**経過の書式も見本の `M:SS` ではなく
 `<TurnStatus>` と同じ「N秒」「M分SS秒」** にする（`dispatch/hooks/use-turn-status.ts` から
 `browser/domain/elapsed-time.ts` の `formatElapsed` へ出し、2つの機能で共有）——アプリの中で

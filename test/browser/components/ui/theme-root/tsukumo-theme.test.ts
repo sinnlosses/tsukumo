@@ -87,12 +87,16 @@ describe("tsukumo のテーマの定義", () => {
     ])
   })
 
-  it("写すのは色・コードの書体・本文の行の高さだけで、字の段・本文の書体・余白・角丸・影は Astryx の値のまま", () => {
+  it("写すのは色・書体・字の役の大きさ・角丸・影・動きで、余白と字の大きさの段は Astryx の値のまま", () => {
     const { tokens, adaptations } = ownDefinition()
-    const mirrored = /^--(?:color-|shadow-inset-)|^--font-family-code$|^--text-body-leading$/
+    const mirrored =
+      /^--(?:color-|shadow-|font-family-|radius-|duration-|ease-)|^--text-[\w-]+-(?:size|leading)$/
+    const typeValues = Object.entries(tokens)
+      .filter(([name]) => /^--text-|^--font-family-(?:body|heading)$/.test(name))
+      .map(([, value]) => String(value))
 
     expect(Object.keys(tokens).filter((name) => !mirrored.test(name))).toEqual([])
-    expect(tokenValuesIn(adaptations)).toEqual(["var(--line-height-reading)"])
+    expect(tokenValuesIn(adaptations).map(String).toSorted()).toEqual(typeValues.toSorted())
   })
 
   it("16 進の色・長さの数・宣言の無いトークンを書いた値は、tokens でも adaptations の中でも拾う", () => {

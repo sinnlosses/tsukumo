@@ -41,6 +41,59 @@
   border-radius: var(--radius-sm);
 }
 
+.design-tone-cell {
+  display: inline-flex;
+  padding: var(--inset-control);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.design-paper-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: var(--stack-group);
+  padding: var(--gutter-page);
+  border-radius: var(--radius-lg);
+  background: var(--ground);
+}
+
+.design-paper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--stack-block);
+  height: 100%;
+  padding: var(--inset-card);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow-sheet);
+  font-family: var(--font-sans);
+  line-height: var(--line-height-reading);
+}
+
+.design-ink-soft {
+  color: var(--ink-soft);
+  font-size: var(--font-secondary);
+}
+
+.design-float {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--inline-control);
+  padding: var(--inset-control);
+  border-radius: var(--radius-xl);
+  background: var(--surface-float);
+  box-shadow: var(--shadow-raised);
+}
+
+.design-voice {
+  font-family: var(--font-voice);
+  font-size: var(--font-subheading);
+  font-weight: 600;
+}
+
 .design-space-bar {
   display: block;
   height: 0.75rem;

@@ -28,7 +28,7 @@
   なので、待っていること自体を文字で伝える `<TurnStatus>` の経過表示と役割が重ならないよう
   `aria-hidden` で支援技術の木から外す
 - 色は accent（13.1 原則1「色を持ってよいのはキャラクターが居る場所」——現れる吹き出しの弾みと
-  同じ立場）。`prefers-reduced-motion` は `styles/theme.css` の全体規則がアニメーションの
+  同じ立場）。`prefers-reduced-motion` は `styles/page-base.css` の全体規則がアニメーションの
   duration を潰すので、CSS の animation を使うここは個別の対応が要らない
 
 #### 会話を遡る

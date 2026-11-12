@@ -68,24 +68,24 @@
   `--font-mono` が指す ID・ツール名・キーなど機械のラベルの書体は変えない。コードの中では
   `font-size-adjust` を打ち消す
 
-字の段は Astryx のトークンを引く（ADR 0053。向きは `design-token.md`「向き（tsukumo と Astryx）」）。下の寸法は広い画面の値で、括弧の中は触る画面（`pointer: coarse` かつ幅が `lg` 未満）で Astryx が組み直した値。
+旧い器の字の段は Astryx の大きさの段（`--font-size-*`）を引き、テーマが字の役の大きさへ写す（向きと新しい器「舞台と紙」の値は `design-token.md`「向き（tsukumo と Astryx）」「字」）。下の寸法は旧い器の広い画面の値で、括弧の中は触る画面（`pointer: coarse` かつ幅が `lg` 未満）で Astryx が組み直した値。
 
 | 役割                                     | 寸法（引く先）                                                                     | 書体     |
 | ---------------------------------------- | ---------------------------------------------------------------------------------- | -------- |
 | 印・小さなラベル                         | 12px（`--font-label` ← `--font-size-sm`。14px）                                    | 本文書体 |
 | 枠なしの入口（リンク風の操作）           | 12px（`--font-action` ← `--font-label`。14px）                                     | 本文書体 |
 | 出典のバッジ（字がホスト名と同じリンク） | 12px                                                                               | 等幅     |
-| 補助・サイドバーの本文                   | 12px（`--font-secondary` ← `--text-supporting-size`。14px）                        | 本文書体 |
+| 補助・サイドバーの本文                   | 12px（`--font-secondary` ← `--font-size-sm`。14px）                                | 本文書体 |
 | 区画の見出し・強調した要約               | 14px（`--font-subheading` ← `--font-size-base`。16px）                             | 本文書体 |
-| 本文（レポート・セリフ）                 | 14px（`--font-body` ← `--text-body-size`。16px）・行の高さ `--line-height-reading` | 本文書体 |
+| 本文（レポート・セリフ）                 | 14px（`--font-body` ← `--font-size-base`。16px）・行の高さ `--line-height-reading` | 本文書体 |
 | 作業の名前（結論部の頭の行）             | `--font-body`（14px）・600・`ink-bright`                                           | 本文書体 |
 | 結論の1文目                              | `--report-heading-2`（21px）・行間 32px・700・`ink-bright`                         | 本文書体 |
 | 図表の題                                 | 14px（`--font-subheading`）・`ink-soft`                                            | 本文書体 |
 | 図表の番号（「図 n」「表 n」）           | 12px（`--font-secondary`）・600・`ink-quiet`                                       | 本文書体 |
-| 大きな見出し（画面・ダイアログの題）     | 17px（`--font-heading` ← `--text-heading-3-size`。19px）                           | 本文書体 |
-| 入力欄の見出し3段目（`###`）             | 17px（`--font-heading-3` ← `--text-heading-3-size`。19px）                         | 本文書体 |
-| 入力欄の見出し2段目（`##`）              | 20px（`--font-heading-2` ← `--text-heading-2-size`。22px）                         | 本文書体 |
-| 入力欄の見出し1段目（`#`）               | 24px（`--font-heading-1` ← `--text-heading-1-size`。26px）                         | 本文書体 |
+| 大きな見出し（画面・ダイアログの題）     | 17px（`--font-heading` ← `--font-heading-3`。19px）                                | 本文書体 |
+| 入力欄の見出し3段目（`###`）             | 17px（`--font-heading-3` ← `--font-size-lg`。19px）                                | 本文書体 |
+| 入力欄の見出し2段目（`##`）              | 20px（`--font-heading-2` ← `--font-size-xl`。22px）                                | 本文書体 |
+| 入力欄の見出し1段目（`#`）               | 24px（`--font-heading-1` ← `--font-size-2xl`。26px）                               | 本文書体 |
 | ID・ツール名・キー                       | 12px（`--font-secondary`）。サイドバーのタスクのIDは印の段（12px）                 | 等幅     |
 
 - **字の下限は 12px**（旧い決定は
@@ -138,7 +138,7 @@
   ページ全体は横スクロールさせない）。**表のセルは最低4全角を1行で出す**（`min-width: 4em`）。
   この下限が無いと列の数だけ詰まってセルが1〜2字ずつの折り返しになり、
   表が器に収まってしまうので横スクロールも働かない
-- **フォーム部品（`button` / `input` / `select` / `textarea`）の書体は `theme.css` が継がせる。**
-  ブラウザの既定では親の書体を継がないので、`theme.css` の `@layer tsukumo-base` の1か所だけが継がせる
+- **フォーム部品（`button` / `input` / `select` / `textarea`）の書体は `page-base.css` が継がせる。**
+  ブラウザの既定では親の書体を継がないので、`page-base.css` の `@layer tsukumo-base` の1か所だけが継がせる
   （大きさ・行の高さ・太さも一緒に継ぐ。層なしの機能の CSS が書く値が勝つ）。機能の CSS には書かない——書くのは大きさなど、既定から
   変える値だけ

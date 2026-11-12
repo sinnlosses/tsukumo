@@ -98,6 +98,6 @@ react-markdown
 - **`<Portrait>` の動きは領域の外へ出さない。** **レポートの上に出てよいのはミニ立ち絵だけ**
   （`docs/requirements.md` 4.3）で、メインビュー側の別の部品が矩形を描く `components/frame/portrait.tsx` を
   共有する（「1枚の矩形しか動かさない」原則は崩れない）
-- `prefers-reduced-motion: reduce` を尊重する（`src/browser/styles/theme.css`）
+- `prefers-reduced-motion: reduce` を尊重する（`src/browser/styles/page-base.css`）
 - 動きは CSS の `@keyframes` と `transform` で足りる。**`<canvas>` もアニメーションの
   ライブラリも要らない**（矩形しか動かさないため）
