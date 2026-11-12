@@ -129,7 +129,7 @@ describe("parseAgentDefinition", () => {
       "name: reviewer",
       'description: "架空の説明"',
       "model: opus",
-      "disallowedTools: Agent, Edit",
+      "tools: Bash, Read",
       "---",
       "",
       "架空の本文",
@@ -139,7 +139,7 @@ describe("parseAgentDefinition", () => {
         description: "架空の説明",
         prompt: "架空の本文",
         model: "opus",
-        disallowedTools: ["Agent", "Edit"],
+        tools: ["Bash", "Read"],
       },
     })
   })
@@ -155,7 +155,7 @@ describe("parseAgentDefinition", () => {
     )
     expect(parseAgentDefinition(markdown)["acceptor"]).toMatchObject({
       model: "opus",
-      disallowedTools: expect.arrayContaining(["Edit", "Write"]),
+      tools: expect.arrayContaining(["Read", "StructuredOutput"]),
     })
   })
 })

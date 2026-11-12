@@ -17,7 +17,7 @@ import { REPOSITORY_ROOT } from "../../scripts/shared/repository-root.ts"
 
 const RULES_DIR = `${REPOSITORY_ROOT}/.claude/rules`
 
-const IMPLEMENTER_BRIEF_PATH = `${REPOSITORY_ROOT}/vendor/tsukumo-plugins/skills/task-workflow/parts/implementer/implementer-brief.md`
+const IMPLEMENTER_BRIEF_PATH = `${REPOSITORY_ROOT}/vendor/tsukumo-plugins/workflow-briefs/implementer-brief.md`
 
 const REMEDY =
   "足すなら何かを削る（上限は上げない。値を上げる変更は人の承認を要する）。出し先の梯子は hook・検査 → スクリプト → スキル → サブエージェント → 常設の文章。直しの確かめは検証全体でなく単体で打つ: pnpm run test test/architecture/always-on-budget.test.ts"

@@ -61,7 +61,7 @@ export type AgentDefinition = {
   readonly description: string
   readonly prompt: string
   readonly model: string
-  readonly disallowedTools: readonly string[]
+  readonly tools: readonly string[]
 }
 
 /** 差分のパスと印から、受け入れ役を起こすかを決め、判定を印に残す。 */
@@ -119,7 +119,7 @@ export function parseAgentDefinition(markdown: string): Record<string, AgentDefi
       description: requireField(fields, "description"),
       prompt: body.trim(),
       model: requireField(fields, "model"),
-      disallowedTools: requireField(fields, "disallowedTools")
+      tools: requireField(fields, "tools")
         .split(",")
         .map((tool) => tool.trim())
         .filter((tool) => tool !== ""),
@@ -139,7 +139,7 @@ export function buildAcceptorPrompt(base: string, criteria: AcceptorCriteria): s
   return [
     "タスクに紐付かない作業を main へ送る前の受け入れの判定を頼む。",
     `差分は \`git diff ${base}..HEAD\`、コミットは \`git log ${base}..HEAD\` で読む。`,
-    "`vendor/tsukumo-plugins/skills/task-workflow/review-criteria.md` の観点と、`.claude/rules/` の規約で点検する。",
+    "`vendor/tsukumo-plugins/workflow-briefs/review-criteria.md` の観点と、`.claude/rules/` の規約で点検する。",
     "`acceptor-brief.md` は `tw accept` 用なので読まない。ファイルを書き換えない。",
     "",
     ...criteriaLines,

@@ -25,52 +25,31 @@ const SUBAGENT_START_INPUT = {
   agent_type: "general-purpose",
 }
 
-const SKILL_INPUT = {
-  session_id: "s-1",
-  transcript_path: "/tmp/tsukumo-test/fake.jsonl",
-  cwd: "/tmp/tsukumo-test",
-  hook_event_name: "PreToolUse",
-  tool_name: "Skill",
-  tool_input: { skill: "retrospect" },
-  tool_use_id: "t-1",
-}
-
 const DENY = JSON.stringify({
   hookSpecificOutput: { hookEventName: "PreToolUse", permissionDecision: "deny" },
 })
 
 async function callWith(
   run: (stdin: string) => Promise<WorkflowTwResult>,
-  event: "SubagentStart" | "PreToolUse",
   input: unknown,
   report: (place: WorkflowTwFailurePlace) => void = () => {},
 ): Promise<unknown> {
   const hooks = withLapHook({}, false, run, report)
-  const matcher =
-    event === "SubagentStart"
-      ? hooks.SubagentStart?.[0]
-      : hooks.PreToolUse?.find((entry) => entry.matcher === "Skill")
+  const matcher = hooks.SubagentStart?.[0]
   expect(matcher).toBeDefined()
   // @ts-expect-error テストでは最小の入力だけを渡す
   return matcher?.hooks[0]?.(input, "t-1", { signal: new AbortController().signal })
 }
 
 describe("withLapHook の hook", () => {
-  it.each([
-    ["SubagentStart", SUBAGENT_START_INPUT],
-    ["PreToolUse", SKILL_INPUT],
-  ] as const)("%s の入力 JSON がそのまま子に渡り、結果は空", async (event, input) => {
+  it("SubagentStart の入力 JSON がそのまま子に渡り、結果は空", async () => {
     const received: string[] = []
-    const result = await callWith(
-      async (stdin) => {
-        received.push(stdin)
-        return ok("")
-      },
-      event,
-      input,
-    )
+    const result = await callWith(async (stdin) => {
+      received.push(stdin)
+      return ok("")
+    }, SUBAGENT_START_INPUT)
     expect(result).toEqual({})
-    expect(received.map((stdin) => JSON.parse(stdin))).toEqual([input])
+    expect(received.map((stdin) => JSON.parse(stdin))).toEqual([SUBAGENT_START_INPUT])
   })
 
   it("deny の形の出力でも結果は空で、子の出力を写さず、足跡も残さない", async () => {
@@ -78,10 +57,7 @@ describe("withLapHook の hook", () => {
     const report = (place: WorkflowTwFailurePlace) => {
       reported.push(place)
     }
-    expect(
-      await callWith(async () => ok(DENY), "SubagentStart", SUBAGENT_START_INPUT, report),
-    ).toEqual({})
-    expect(await callWith(async () => ok(DENY), "PreToolUse", SKILL_INPUT, report)).toEqual({})
+    expect(await callWith(async () => ok(DENY), SUBAGENT_START_INPUT, report)).toEqual({})
     expect(reported).toEqual([])
   })
 
@@ -106,7 +82,7 @@ describe("withLapHook の hook", () => {
     ],
   ])("%sでも結果は空で、足跡が1件残る", async (_name, run, place) => {
     const reported: WorkflowTwFailurePlace[] = []
-    const result = await callWith(run, "SubagentStart", SUBAGENT_START_INPUT, (reportedPlace) => {
+    const result = await callWith(run, SUBAGENT_START_INPUT, (reportedPlace) => {
       reported.push(reportedPlace)
     })
     expect(result).toEqual({})
@@ -121,19 +97,22 @@ describe("withLapHook", () => {
   }
   const run = async () => ok("")
 
-  it("載せるときは表を変えず、SubagentStart も Skill の matcher も足さない", () => {
+  it("載せるときは表を変えず、SubagentStart も足さない", () => {
     const merged = withLapHook(base, true, run, () => {})
     expect(merged).toBe(base)
     expect(merged.SubagentStart).toBeUndefined()
-    expect(merged.PreToolUse?.map((entry) => entry.matcher)).toEqual(["AskUserQuestion"])
   })
 
-  it("載せないときは PreToolUse の後ろに Skill の matcher を、SubagentStart に matcher なしの1件を足し、他のキーと元の表は変えない", () => {
+  it("載せないときは SubagentStart・SubagentStop に matcher つきの1件を足し、PreToolUse など他のキーと元の表は変えない", () => {
     const merged = withLapHook(base, false, run, () => {})
-    expect(merged.PreToolUse?.map((entry) => entry.matcher)).toEqual(["AskUserQuestion", "Skill"])
-    expect(merged.SubagentStart?.map((entry) => entry.matcher)).toEqual([undefined])
+    expect(merged.SubagentStart?.map((entry) => entry.matcher)).toEqual([
+      "(^|:)(general-purpose|no-delegate|retrospector)$",
+    ])
+    expect(merged.SubagentStop?.map((entry) => entry.matcher)).toEqual([
+      "(^|:)(acceptor|retrospector)$",
+    ])
+    expect(merged.PreToolUse).toBe(base.PreToolUse)
     expect(merged.Stop).toBe(base.Stop)
-    expect(base.PreToolUse).toHaveLength(1)
     expect(base).not.toHaveProperty("SubagentStart")
   })
 })
@@ -146,13 +125,7 @@ describe("withLapHook と plugin の hooks.json", () => {
       async () => ok(""),
       () => {},
     )
-    // plugin は SubagentStart・SubagentStop を委譲先の種類で絞るが、どの入力で段を書くかは tw lap-hook が決めるので、
-    // こちらは matcher なしで全件を渡す。イベントの組だけを比べる。
-    const withoutSubagentMatcher = (pairs: string[]) =>
-      pairs.map((pair) => pair.replace(/^(Subagent(?:Start|Stop)):.*$/, "$1:"))
-    expect(withoutSubagentMatcher(registeredHookPairs(table))).toEqual(
-      withoutSubagentMatcher(workflowHookPairs("lap-hook")),
-    )
+    expect(registeredHookPairs(table)).toEqual(workflowHookPairs("lap-hook"))
   })
 })
 
