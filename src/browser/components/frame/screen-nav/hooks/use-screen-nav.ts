@@ -289,7 +289,7 @@ const DEFAULT_HTTP_PORT = 80
  *
  * 購読はしない（ポートはページの一生の間変わらない）。
  */
-function currentRoomName(): string {
+export function currentRoomName(): string {
   const port = window.location.port
   return roomName(port === "" ? DEFAULT_HTTP_PORT : Number(port))
 }

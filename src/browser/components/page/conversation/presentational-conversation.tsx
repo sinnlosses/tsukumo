@@ -25,11 +25,11 @@ import { Stage, type StagePosture } from "./components/stage/stage.tsx"
 
 /**
  * 描く器。
- * 新しい器の欄外に置くやり取りの並びは、ほかの画面の部品の中身なので、画面の登録表から受け取る。
+ * 新しい器の欄外に置くやり取りの並びと、舞台の左上に置く部屋の頭は、ほかの画面の部品の中身なので、画面の登録表から受け取る。
  */
 export type ConversationShell =
   | { readonly kind: "classic" }
-  | { readonly kind: "stage"; readonly margin: ReactNode }
+  | { readonly kind: "stage"; readonly margin: ReactNode; readonly head: ReactNode }
 
 const MARGIN_TITLE = "この部屋のやり取り"
 
@@ -40,6 +40,10 @@ type PresentationalConversationProps = {
   readonly posture: StagePosture
   /** 新しい器で、入力欄の場所にお伺いを出すか（働くあいだの答え待ち）。旧い器は読まない。 */
   readonly asking: boolean
+  /** 新しい器で、ほかの画面の紙が重なっているか。旧い器は読まない。 */
+  readonly covered: boolean
+  /** 新しい器で、紙の左に見えている会話の紙の端（覆い）を押したとき。 */
+  readonly onUncover: () => void
 }
 
 export function PresentationalConversation(props: PresentationalConversationProps): ReactElement {
@@ -63,10 +67,13 @@ export function PresentationalConversation(props: PresentationalConversationProp
         <Stage
           posture={props.posture}
           chatMode={props.chatMode}
+          covered={props.covered}
+          onUncover={props.onUncover}
           figure={
             <CharacterView
               hands={<PhoneActivity />}
               stageHands={<StageActivity />}
+              roomHead={props.shell.head}
               placement="stage"
             />
           }

@@ -13,6 +13,8 @@ export function CharacterView(props: {
   readonly hands?: ReactNode
   /** 舞台の吹き出しの下に出す「手元」「待ち」の行。 */
   readonly stageHands?: ReactNode
+  /** 舞台のいちばん上の段に置く部屋の頭。 */
+  readonly roomHead?: ReactNode
   readonly placement?: CharacterViewPlacement
 }): ReactElement {
   return (
@@ -20,6 +22,7 @@ export function CharacterView(props: {
       {...useCharacterView()}
       hands={props.hands}
       stageHands={props.stageHands}
+      roomHead={props.roomHead}
       placement={props.placement}
     />
   )

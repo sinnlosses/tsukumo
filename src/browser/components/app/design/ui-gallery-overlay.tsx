@@ -47,9 +47,9 @@ const MENU_ITEMS = [
 ] as const satisfies readonly MenuItem[]
 
 const COMMAND_ITEMS = [
-  { key: "tasks", label: "タスク", hint: "移る" },
-  { key: "achievement", label: "成果", hint: "移る" },
-  { key: "settings", label: "設定", hint: "" },
+  { key: "tasks", group: "移る", label: "タスク", hint: "" },
+  { key: "achievement", group: "移る", label: "成果", hint: "" },
+  { key: "compact", group: "コマンド", label: "/compact", hint: "会話をまとめる" },
 ] as const satisfies readonly CommandItem[]
 
 export function OverlayGroups(): ReactElement {
@@ -114,7 +114,9 @@ export function OverlayGroups(): ReactElement {
         <div className={styles["design-input"]}>
           <CommandList
             ariaLabel="見本の一覧"
+            search={{ kind: "none" }}
             items={COMMAND_ITEMS}
+            empty="当てはまるものが無い"
             onSelect={(key) => setPicked(key)}
           />
           <Text element="span" size="secondary" tone="ink-quiet" weight="normal" className="">

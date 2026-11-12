@@ -1,0 +1,62 @@
+/* セッションの一覧。値は見本 `docs/history/mockup/ui-rebuild-2026-11-12/whole.html` の `.pop`。
+   部屋の名前のすぐ下（舞台の左上）に置く。 */
+.room-session-menu {
+  position: fixed;
+  inset: auto;
+  top: 44px;
+  left: 14px;
+  box-sizing: border-box;
+  width: min(336px, calc(100vw - 28px));
+  max-height: calc(100dvh - 64px);
+  margin: 0;
+  padding: 0;
+  overflow: auto;
+  border-radius: var(--radius-xl);
+  background: var(--surface-float);
+  box-shadow: var(--shadow-overlay);
+  color: var(--ink);
+}
+.room-session-menu-body {
+  display: grid;
+  padding: var(--stack-tight);
+}
+.room-session-menu-group {
+  margin: 0;
+  padding: var(--stack-block) var(--inline-control) 0;
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+  font-weight: 500;
+}
+.room-session-menu-empty {
+  margin: 0;
+  padding: var(--stack-tight) var(--inline-control);
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+}
+.room-session-menu-row {
+  display: block;
+  width: 100%;
+  padding: var(--inset-control);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: none;
+  color: inherit;
+  font-size: var(--font-body);
+  line-height: 1.5;
+  text-align: left;
+  cursor: pointer;
+}
+.room-session-menu-row small {
+  display: block;
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+}
+.room-session-menu-row:hover,
+.room-session-menu-row:focus-visible,
+.room-session-menu-row[aria-current="true"] {
+  background: var(--surface-raised);
+}
+.room-session-menu-row:disabled {
+  color: var(--ink-quiet);
+  cursor: not-allowed;
+}

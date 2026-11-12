@@ -2,7 +2,9 @@
 // 画面どうしの import を避けるため、すべての画面を知ってよいこのディレクトリが持つ。
 
 import { RunSettingGroup } from "../../features/run-setting/run-setting-group.tsx"
+import { RoomHead } from "../frame/screen-nav/room-head.tsx"
 import { ScreenNav } from "../frame/screen-nav/screen-nav.tsx"
+import { SettingsScreen } from "../frame/screen-nav/settings-screen.tsx"
 import { SidebarTaskPane } from "../frame/sidebar/components/sidebar-task-pane.tsx"
 import { UsagePane } from "../frame/sidebar/components/usage-pane.tsx"
 import { SkipLink } from "../frame/skip-link.tsx"
@@ -23,7 +25,10 @@ const Achievement = deferredScreen(
 )
 const Design = deferredScreen(async () => (await import("./design/design.tsx")).Design)
 
-/** 狭い画面の引き出しと新しい器の欄外に差し込む中身は、サイドバーと会話の画面の部品を含むので、ここで渡す。 */
+/**
+ * 狭い画面の引き出しと新しい器の欄外・部屋の頭に差し込む中身は、枠と会話の画面の部品を含むので、ここで渡す。
+ * タスクの画面の中身は、いまはサイドバーのタスクの区画を借りる。
+ */
 export const LAYOUT_SCREENS = {
   skipLink: <SkipLink />,
   nav: (
@@ -39,12 +44,14 @@ export const LAYOUT_SCREENS = {
   diaryNotice: <DiaryNotice />,
   conversation: {
     classic: <Conversation shell={{ kind: "classic" }} />,
-    stage: <Conversation shell={{ kind: "stage", margin: <TurnList /> }} />,
+    stage: <Conversation shell={{ kind: "stage", margin: <TurnList />, head: <RoomHead /> }} />,
   },
   overlay: {
     character: <Character />,
     "token-usage": <TokenUsage />,
     achievement: <Achievement />,
+    tasks: <SidebarTaskPane />,
+    settings: <SettingsScreen />,
     design: <Design />,
   },
 } satisfies LayoutScreens

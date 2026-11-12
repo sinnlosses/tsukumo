@@ -35,13 +35,16 @@
       color-mix(in srgb, var(--ground) 90%, transparent) calc(var(--stage-width) + 140px)
     );
 }
+/* 覆いを紙の場所に重ねるので、舞台と紙の場所の升目も名指す（自動の配置に任せると、紙の場所が2行目へ押し出される）。 */
 .stage-figure {
+  grid-area: 1 / 1;
   position: relative;
   z-index: 1;
   min-width: 0;
   min-height: 0;
 }
 .stage-desk {
+  grid-area: 1 / 2;
   position: relative;
   z-index: 1;
   display: flex;
@@ -49,6 +52,12 @@
   min-width: 0;
   min-height: 0;
   padding-top: var(--stage-desk-top);
+}
+/* 紙が重なっているあいだ、紙の場所を暗くする覆い。値は見本の `.over-veil`。 */
+.stage-veil {
+  grid-area: 1 / 2;
+  z-index: 2;
+  background: rgb(12 10 16 / 0.52);
 }
 /* 狭い画面（760px 以下）。舞台は出さず、縦1列に積む。
    上から紙（残りの高さ）・キャラクターの行・入力欄。迎えるでは、キャラクターの行を紙の上に置く。
@@ -71,5 +80,8 @@
   }
   .stage-desk {
     display: contents;
+  }
+  .stage-veil {
+    display: none;
   }
 }

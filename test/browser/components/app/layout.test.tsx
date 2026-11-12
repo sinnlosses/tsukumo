@@ -50,6 +50,8 @@ function stubScreens(): LayoutScreens {
       character: deferredStub("character"),
       "token-usage": deferredStub("token-usage"),
       achievement: deferredStub("achievement"),
+      tasks: stubElement("tasks"),
+      settings: stubElement("settings"),
       design: deferredStub("design"),
     },
   }
@@ -84,17 +86,51 @@ describe("Layout の器の切り替え", () => {
     expect(screen.getByRole("navigation", { name: "画面のナビ" })).toBeDefined()
   })
 
-  it("印が stage のときは、新しい器の会話の画面を出し、会話の画面では帯を出さない", async () => {
+  it("印が stage のときは、新しい器の会話の画面を出し、帯を出さない", () => {
     document.documentElement.dataset["shell"] = "stage"
     render(<Layout screens={stubScreens()} />)
 
     expect(screen.getByTestId("stage-conversation")).toBeDefined()
     expect(screen.queryByTestId("conversation")).toBeNull()
     expect(screen.queryByRole("navigation", { name: "画面のナビ" })).toBeNull()
+  })
 
-    await moveTo("#token-usage")
+  it("印が stage のときは、ほかの画面を会話の画面の上に紙で重ね、紙を閉じると会話の画面へ戻る", async () => {
+    document.documentElement.dataset["shell"] = "stage"
+    render(<Layout screens={stubScreens()} />)
 
+    await moveTo("#settings")
+
+    expect(screen.getByTestId("settings").closest("dialog")?.getAttribute("aria-label")).toBe(
+      "設定",
+    )
+    expect(screen.getByTestId("stage-conversation")).toBeDefined()
+    expect(screen.queryByRole("navigation", { name: "画面のナビ" })).toBeNull()
+
+    await act(async () => {
+      screen.getByRole("button", { name: /閉じる/, hidden: true }).click()
+      await new Promise((resolve) => setTimeout(resolve, 0))
+    })
+
+    expect(window.location.hash).toBe("")
+  })
+
+  it("印が stage でも、見本帳は紙にせず帯を残す", async () => {
+    document.documentElement.dataset["shell"] = "stage"
+    render(<Layout screens={stubScreens()} />)
+
+    await moveTo("#design")
+
+    expect((await screen.findByTestId("design")).closest("dialog")).toBeNull()
     expect(screen.getByRole("navigation", { name: "画面のナビ" })).toBeDefined()
+  })
+
+  it("印が無いときは、タスクと設定の画面も全面に出す", async () => {
+    render(<Layout screens={stubScreens()} />)
+
+    await moveTo("#tasks")
+
+    expect(screen.getByTestId("tasks").closest("dialog")).toBeNull()
   })
 })
 

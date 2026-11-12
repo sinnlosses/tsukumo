@@ -47,6 +47,10 @@
   display: flex;
   flex-direction: column;
 }
+/* 部屋の頭の段。舞台の左上からの距離は見本の `.A-stage .room`。 */
+.stage-figure-room-head {
+  padding: var(--gutter-region) var(--gutter-region) 0 var(--gutter-page);
+}
 .stage-figure-room-head,
 .stage-figure-today,
 .stage-figure-balloon {
@@ -56,8 +60,17 @@
 .stage-figure-balloon {
   padding: 0 var(--balloon-right-gap) 0 var(--gutter-region);
 }
+/* 「ログ」の口は、旧い器では領域の右上だが、舞台の上端は部屋の頭が使うので、やり取りの流れの左上（部屋の頭のすぐ下）へ移す。
+   口は舞台の外（`.character-region` の直下）にあるので、流れの段を anchor で引く。 */
+.character-region:has(.stage-figure) .speech-log-open {
+  position-anchor: --stage-figure-thread;
+  top: anchor(top);
+  right: auto;
+  left: anchor(left);
+}
 /* やり取りの流れが残りの高さを受け持つ。中身は下に寄せ、溢れた古い行は上へ押し出す。 */
 .stage-figure-thread {
+  anchor-name: --stage-figure-thread;
   display: flex;
   flex: 1;
   flex-direction: column;

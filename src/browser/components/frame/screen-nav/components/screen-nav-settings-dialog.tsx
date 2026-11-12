@@ -55,11 +55,52 @@ export function ScreenNavSettingsGear(props: ScreenNavSettingsProps): ReactEleme
   )
 }
 
-function ScreenNavSettingsDialogBody(props: ScreenNavSettingsProps): ReactElement {
+/** 設定の左のナビと右の面。 */
+export function ScreenNavSettingsFaces(props: ScreenNavSettingsProps): ReactElement {
   const { settings } = props
   const [selectedKey, setSelectedKey] = useState<string>(FACES[0].key)
   const selected: Face = FACES.find((face) => face.key === selectedKey) ?? FACES[0]
 
+  return (
+    <div className={styles["main"]}>
+      <nav className={styles["nav"]} aria-label="設定の項目">
+        <Text
+          element="p"
+          size="label"
+          tone="ink-quiet"
+          weight="inherit"
+          className={styles["nav-group"]}
+        >
+          {NAV_GROUP_LABEL}
+        </Text>
+        {FACES.map((face) => {
+          const Icon = face.icon
+          const isSelected = face.key === selected.key
+          return (
+            <button
+              type="button"
+              key={face.key}
+              className={clsx(styles["nav-item"], isSelected && styles["nav-item-selected"])}
+              aria-current={isSelected ? "page" : undefined}
+              onClick={() => {
+                setSelectedKey(face.key)
+              }}
+            >
+              <Icon size={16} strokeWidth={1.8} />
+              {face.label}
+            </button>
+          )
+        })}
+      </nav>
+      <section className={styles["face"]} aria-label={selected.label}>
+        <SelectedFace face={selected} settings={settings} />
+      </section>
+    </div>
+  )
+}
+
+function ScreenNavSettingsDialogBody(props: ScreenNavSettingsProps): ReactElement {
+  const { settings } = props
   return (
     <>
       <header className={styles["head"]}>
@@ -82,40 +123,7 @@ function ScreenNavSettingsDialogBody(props: ScreenNavSettingsProps): ReactElemen
           <X size={18} strokeWidth={1.8} />
         </button>
       </header>
-      <div className={styles["main"]}>
-        <nav className={styles["nav"]} aria-label="設定の項目">
-          <Text
-            element="p"
-            size="label"
-            tone="ink-quiet"
-            weight="inherit"
-            className={styles["nav-group"]}
-          >
-            {NAV_GROUP_LABEL}
-          </Text>
-          {FACES.map((face) => {
-            const Icon = face.icon
-            const isSelected = face.key === selected.key
-            return (
-              <button
-                type="button"
-                key={face.key}
-                className={clsx(styles["nav-item"], isSelected && styles["nav-item-selected"])}
-                aria-current={isSelected ? "page" : undefined}
-                onClick={() => {
-                  setSelectedKey(face.key)
-                }}
-              >
-                <Icon size={16} strokeWidth={1.8} />
-                {face.label}
-              </button>
-            )
-          })}
-        </nav>
-        <section className={styles["face"]} aria-label={selected.label}>
-          <SelectedFace face={selected} settings={settings} />
-        </section>
-      </div>
+      <ScreenNavSettingsFaces settings={settings} />
     </>
   )
 }

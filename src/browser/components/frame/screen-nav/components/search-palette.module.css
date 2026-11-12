@@ -1,0 +1,17 @@
+/* 探すの1枚。値は見本 `docs/history/mockup/ui-rebuild-2026-11-12/whole.html` の `.pal`。 */
+.search-palette {
+  position: fixed;
+  inset: auto;
+  top: 12vh;
+  left: 50%;
+  translate: -50% 0;
+  box-sizing: border-box;
+  width: min(640px, calc(100vw - 32px));
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border-radius: var(--radius-xl);
+  background: var(--surface-float);
+  box-shadow: var(--shadow-overlay);
+  color: var(--ink);
+}

@@ -1,4 +1,5 @@
-// 全画面の外枠（`<Layout>`）。最上部に画面のナビの帯を置き、その下に出している画面を選んで描く。
+// 全画面の外枠（`<Layout>`）。旧い器では最上部に画面のナビの帯を置き、その下に出している画面を選んで描く。
+// 新しい器「舞台と紙」では帯を出さず、ほかの画面は会話の画面を隠さずに右から重ねる紙（`<Sheet>`）で描く。
 //
 // 画面の入れ替えを画面の側に持たせると画面どうしの import になり、構造の検査「browser/ の機能どうしの import」が落とす。
 // だから、すべての画面を知ってよい画面の登録表（`LAYOUT_SCREENS`）が登録表を作り、ここは表を受けて選ぶだけにする。
@@ -6,10 +7,13 @@
 
 import { Activity, type ReactElement } from "react"
 
-import type { Screen } from "../../stores/location-hash.ts"
-import { useScreen } from "../../stores/screen.tsx"
+import { SHEET_TITLES, type Screen, type SheetScreen } from "../../stores/location-hash.ts"
+import { navigateTo, useScreen } from "../../stores/screen.tsx"
 import { shownShell, type Shell } from "../../stores/shell-mark.ts"
+import { Sheet } from "../ui/sheet/sheet.tsx"
 import { ScreenBoundary } from "./screen-boundary.tsx"
+
+type OverlayScreen = Exclude<Screen, "conversation">
 
 /**
  * 画面の登録表。会話の画面は常にマウントしたまま `Layout` が隠すので、`overlay` には乗らない。
@@ -22,7 +26,7 @@ export type LayoutScreens = {
   readonly diaryNotice: ReactElement
   /** 会話の画面。器の印（`shownShell`）が `classic` なら旧い器、`stage` なら新しい器「舞台と紙」で描く。 */
   readonly conversation: Record<Shell, ReactElement>
-  readonly overlay: Record<Exclude<Screen, "conversation">, ReactElement>
+  readonly overlay: Record<OverlayScreen, ReactElement>
 }
 
 /**
@@ -31,13 +35,18 @@ export type LayoutScreens = {
  * 入力欄の下書き・選んでいるターン・スクロール位置はどれも部品のローカル状態なので、外すと戻ったときに失われる。
  * サーバとの接続は `<Root>` が持つので、会話そのものは隠れている間も進み続ける。
  * `hidden` 属性と違い描画も止まるので、ほかの画面を開いている間の再描画が減る。
+ *
+ * 新しい器では、紙を開いているあいだも会話の画面を出したままにする（舞台と部屋の頭から紙を切り替えるため）。
+ * `<Sheet>` は閉じたときに開いた入口へフォーカスを戻すので、紙の画面の外でも外さずに置く。
  */
 export function Layout(props: { readonly screens: LayoutScreens }): ReactElement {
   const screen = useScreen()
   const shell = shownShell(document.documentElement)
   const { screens } = props
-  // 新しい器は会話の画面に帯を出さない。ほかの画面から戻る口が要るので、ほかの画面では帯を残す。
-  const showNav = shell === "classic" || screen !== "conversation"
+  const sheetScreen = shell === "stage" && isSheetScreen(screen) ? screen : undefined
+  const conversationShown = screen === "conversation" || sheetScreen !== undefined
+  // 新しい器は帯を出さない。見本帳だけは戻る口が要るので帯を残す。
+  const showNav = shell === "classic" || screen === "design"
   return (
     <>
       {screen === "conversation" && screens.skipLink}
@@ -49,12 +58,31 @@ export function Layout(props: { readonly screens: LayoutScreens }): ReactElement
       <Activity mode={screen === "achievement" ? "visible" : "hidden"}>
         <ScreenBoundary>{screens.diaryNotice}</ScreenBoundary>
       </Activity>
-      <Activity mode={screen === "conversation" ? "visible" : "hidden"}>
+      <Activity mode={conversationShown ? "visible" : "hidden"}>
         <ScreenBoundary>{screens.conversation[shell]}</ScreenBoundary>
       </Activity>
-      {screen !== "conversation" && (
+      {shell === "stage" && (
+        <Sheet
+          open={sheetScreen !== undefined}
+          title={sheetScreen === undefined ? "" : SHEET_TITLES[sheetScreen]}
+          sub={{ kind: "none" }}
+          flush={false}
+          onClose={() => {
+            navigateTo("conversation")
+          }}
+        >
+          {sheetScreen !== undefined && (
+            <ScreenBoundary key={sheetScreen}>{screens.overlay[sheetScreen]}</ScreenBoundary>
+          )}
+        </Sheet>
+      )}
+      {screen !== "conversation" && sheetScreen === undefined && (
         <ScreenBoundary key={screen}>{screens.overlay[screen]}</ScreenBoundary>
       )}
     </>
   )
+}
+
+function isSheetScreen(screen: Screen): screen is SheetScreen {
+  return screen !== "conversation" && screen !== "design"
 }
