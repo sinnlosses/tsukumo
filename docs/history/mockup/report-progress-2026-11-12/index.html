@@ -1725,7 +1725,13 @@
             : `<p class="lg-label">確かめた ― 4件</p>${lg("ok", "型の検査・lint・単体 <b>3,156</b>・E2E <b>71</b>・画 2枚", "開くと1件ずつ", "記録あり 3 ・ 申告 1", "", false)}`
         return `<div class="ledger wide">${failed}${unknown}${passed}</div>`
       }
-      function route(open) {
+      function route(open, again) {
+        if (again)
+          return `<details class="route wide" ${open ? "open" : ""}><summary>この結論に至った道筋 ― 3段 ・ 9分05秒 ・ 道具 23 回</summary><ol class="plan">
+          ${ph({ k: "lit", t: "前のレポートの指摘を読み直す", time: "1分10秒", note: "指摘は 2 件。どちらも幅 720 の話だった。", diff: "変更なし" })}
+          ${ph({ k: "lit", t: "間引きの規則を直す", time: "4分35秒", note: "幅 720 より狭いとき、目盛りの本数を半分にした。", diff: "3ファイル +41 −12" })}
+          ${ph({ k: "lit", t: "3つの幅で確かめる", time: "3分20秒", note: "幅 390 で2か所の重なりが残ると分かった。" })}
+        </ol><p class="quiet">生の記録（道具の呼び出し 23 回）は、段を押すと開く。</p></details>`
         return `<details class="route wide" ${open ? "open" : ""}><summary>この結論に至った道筋 ― 4段 ・ 14分20秒 ・ 道具 41 回</summary><ol class="plan">
           ${ph({ k: "lit", t: "今の形を調べる", time: "1分40秒", note: "目盛りの数は <code>axis.ts</code> の定数 12 から来ていた。", diff: "変更なし" })}
           ${ph({ k: "lit", t: "目盛りを設定から読む", time: "3分02秒", note: "設定に <code>ticks</code> を足し、既定を 12 のまま残した。", diff: "2ファイル +38 −6" })}
@@ -1739,7 +1745,7 @@
           ? `${vd("part")}<span>前回から <b>2件解決 ・ 1件新しく</b></span>${lamps(rep("lit", 3), "3段とも済んだ")}<span>3段 ・ 9分05秒</span>`
           : `${vd("ok")}${lamps(rep("lit", 4), "4段とも済んだ")}<span>4段 ・ 14分20秒</span>`
         const head = `${paperTop(`頼んだこと: ${again ? "前のレポートの指摘を直して" : TASK}`, true)}
-          <div class="stamp wide">${stamp}<span><b class="add">+90</b> <b class="del">−37</b> ・ 8ファイル</span><span>${again ? '<b class="g-ng">✕1</b> ' : ""}<b class="g-un">?1</b> <b class="g-ok">✓4</b></span></div>
+          <div class="stamp wide">${stamp}<span>${again ? '<b class="add">+41</b> <b class="del">−12</b> ・ 3ファイル' : '<b class="add">+90</b> <b class="del">−37</b> ・ 8ファイル'}</span><span>${again ? '<b class="g-ng">✕1</b> ' : ""}<b class="g-un">?1</b> <b class="g-ok">✓4</b></span></div>
           <h1 class="concl wide">${again ? "幅 720 の重なりは消えた。幅 390 では、まだ2か所重なる。" : "グラフの目盛りの数を、設定の <code>ticks</code> で 4〜48 本に変えられるようになった。"}</h1>
           <p class="sub wide">${again ? "前回の指摘2件は直した。間引きの規則が幅 720 を境にしているため、もっと狭い幅では効いていない。" : "既定は今と同じ 12 本で、設定を変えない人の画面は変わらない。"}</p>
           ${again ? `<div class="delta wide"><section><h3 class="g-ok">✓ 解決 ― 2件</h3><ul><li>幅 720 で数字が重なる</li><li>既定の 12 が設定に出ていない</li></ul></section><section><h3 class="g-ng">✕ 新しく ― 1件</h3><ul><li>幅 390 で2か所重なる</li></ul></section><section><h3 class="g-un">? 残っている ― 1件</h3><ul><li>Safari で見ていない</li></ul></section></div>` : ""}
@@ -1768,7 +1774,7 @@
           ${fig("設定を 24 にすると、目盛りは倍の細かさになる（幅 1400）", `<div class="cmp" data-mode="side"><figure>${shot(false)}<figcaption>前 ― 12 本</figcaption></figure><figure>${shot(true)}<figcaption>後 ― 24 本</figcaption></figure></div>`, "")}
           <h2>置いた前提</h2>
           <ul class="ul"><li>目盛りの数は 4〜48 の範囲だけ受け付ける。範囲は頼まれていなかったので、今の最小と最大の比から置いた。</li></ul>
-          ${route(d === 3)}
+          ${route(d === 3, again)}
           <div class="foot-tools wide"><button class="tool" type="button">前のレポートと比べる</button><button class="tool" type="button">HTML で保存</button><span class="quiet" style="align-self:center">キー: <kbd>{</kbd> <kbd>}</kbd> で見出しを移る ・ <kbd>d</kbd> で読む深さ ・ <kbd>o</kbd> で節を畳む</span></div>
         </article>`
       }
