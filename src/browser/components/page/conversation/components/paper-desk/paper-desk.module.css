@@ -63,6 +63,29 @@
   padding: var(--paper-margin-padding);
   overflow-y: auto;
 }
+/* 迎える。紙を出さず、舞台の右の地に入力欄と始め方を縦に並べる。値は見本の `.A-home`。 */
+.paper-home {
+  --region-padding: 0px;
+  --paper-home-padding: 0 36px 7vh 12px;
+  display: flex;
+  flex: 0 1 680px;
+  flex-direction: column;
+  gap: var(--stack-block);
+  align-self: center;
+  min-width: 0;
+  max-height: 100%;
+  padding: var(--paper-home-padding);
+  overflow-y: auto;
+}
+.paper-home-dock {
+  padding: var(--inset-control);
+  border-radius: var(--radius-xl);
+  background: var(--surface-float);
+  box-shadow: var(--shadow-raised);
+}
+.paper-home-body {
+  min-width: 0;
+}
 .paper-margin-title {
   margin: 0;
   color: var(--ink-quiet);

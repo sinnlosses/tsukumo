@@ -17,7 +17,7 @@ import styles from "./main-view.module.css"
 const TITLE = "何から始める？"
 const LEAD_WITH_CARDS =
   "tsukumo のおすすめ。「始める」を押すと、カードに書いた依頼がそのまま送られて作業が始まる。"
-const LEAD_WITHOUT_CARDS = "下の入力欄から頼める。"
+const LEAD_WITHOUT_CARDS = "入力欄から頼める。"
 const TOP_BADGE = "いちばんのおすすめ"
 const OTHERS_LABEL = "ほかの始め方"
 const REQUEST_LABEL = "送られる依頼"

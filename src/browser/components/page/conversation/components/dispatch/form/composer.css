@@ -88,6 +88,28 @@
     padding: 0 var(--space-sm);
   }
 }
+/* 新しい器の「働く」姿勢。補足を送る1行に畳み、欄の右に経過時間と中断を置く。補完の口は隠す。 */
+@media (min-width: 761px) {
+  [data-posture="work"] .dispatch-form {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: var(--inline-control);
+  }
+  [data-posture="work"] .dispatch-toolbar {
+    padding-top: 0;
+  }
+  [data-posture="work"] .dispatch-tool {
+    display: none;
+  }
+  [data-posture="work"] .dispatch-text-wrap {
+    flex: 1 1 0;
+  }
+  [data-posture="work"] .dispatch-text {
+    field-sizing: content;
+    max-height: 38vh;
+  }
+}
 /* 狭い画面（760px 以下）。左に ＋、まん中に丸い欄、右に丸ボタン（<PhoneTurnAction>）。
    道具の行は API の知らせだけを残して欄の上に置く。 */
 @media (max-width: 760px) {

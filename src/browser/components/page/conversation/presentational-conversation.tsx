@@ -14,12 +14,13 @@ import { CharacterView } from "./components/character-view/character-view.tsx"
 import { ChatView } from "./components/chat-view/chat-view.tsx"
 import { ConversationLayout } from "./components/conversation-layout/conversation-layout.tsx"
 import { Dispatch } from "./components/dispatch/dispatch.tsx"
+import { Greeting } from "./components/greeting/greeting.tsx"
 import { LiveAnnouncer } from "./components/live-announcer/live-announcer.tsx"
 import { MainView } from "./components/main-view/main-view.tsx"
 import { PaperDesk } from "./components/paper-desk/paper-desk.tsx"
 import { PendingAskCard } from "./components/pending-ask-card/pending-ask-card.tsx"
 import { RequestedTaskBoard } from "./components/requested-task-board/requested-task-board.tsx"
-import { Stage } from "./components/stage/stage.tsx"
+import { Stage, type StagePosture } from "./components/stage/stage.tsx"
 
 /**
  * 描く器。
@@ -34,6 +35,8 @@ const MARGIN_TITLE = "この部屋のやり取り"
 type PresentationalConversationProps = {
   readonly chatMode: boolean
   readonly shell: ConversationShell
+  /** 新しい器の姿勢。旧い器は読まない。 */
+  readonly posture: StagePosture
 }
 
 export function PresentationalConversation(props: PresentationalConversationProps): ReactElement {
@@ -55,9 +58,12 @@ export function PresentationalConversation(props: PresentationalConversationProp
         />
       ) : (
         <Stage
+          posture={props.posture}
           figure={<CharacterView />}
           desk={
             <PaperDesk
+              posture={props.posture}
+              greeting={<Greeting />}
               paper={props.chatMode ? <ChatView /> : <MainView outline="none" />}
               margin={{ title: MARGIN_TITLE, body: props.shell.margin }}
               dock={<Dispatch />}
