@@ -2,6 +2,8 @@
 
 import type { ReactElement } from "react"
 
+import { conversationMoment } from "../../../../shared/session/conversation-moment.ts"
+import { usePhoneWidth } from "../../../hooks/use-phone-width.ts"
 import { useSession } from "../../../stores/session.ts"
 import type { StagePosture } from "./components/stage/stage.tsx"
 import {
@@ -13,11 +15,15 @@ import { useMainViewContent, type MainViewContent } from "./stores/main-view-con
 export function Conversation(props: { readonly shell: ConversationShell }): ReactElement {
   const chatMode = useSession((session) => session.state.chatMode)
   const contentKind = useMainViewContent((state) => state.content.kind)
+  const waitingForAnswer = useSession((session) => conversationMoment(session.state) === "ask")
+  const phone = usePhoneWidth()
+  const posture = chatMode ? "deliver" : postureOf(contentKind)
   return (
     <PresentationalConversation
       chatMode={chatMode}
       shell={props.shell}
-      posture={chatMode ? "deliver" : postureOf(contentKind)}
+      posture={posture}
+      asking={posture === "work" && waitingForAnswer && !phone}
     />
   )
 }

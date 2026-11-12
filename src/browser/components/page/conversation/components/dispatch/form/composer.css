@@ -1,6 +1,9 @@
 /* 「↓ <キャラクター名> が質問しています…」の帯と「お伺いへ」の口。
    下の札を指す矢印から始まるので、テキスト入力欄の上に置く。
    字は答え待ちの色で、地は持たない（枠の色と二重にしない）。 */
+.dispatch-inquiry-band {
+  flex: 0 0 auto;
+}
 .dispatch-band {
   flex: 0 0 auto;
   margin: 0 0 var(--space-sm);
@@ -88,26 +91,64 @@
     padding: 0 var(--space-sm);
   }
 }
-/* 新しい器の「働く」姿勢。補足を送る1行に畳み、欄の右に経過時間と中断を置く。補完の口は隠す。 */
+/* モデルと深さの札は新しい器の入力欄だけに出す。 */
+.dispatch-model-chip {
+  display: none;
+  flex: 0 0 auto;
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+  white-space: nowrap;
+}
+/* 新しい器の「働く」「尋ねる」「渡す」姿勢。打つと伸びる1行にし、欄の右に札と経過時間と送信か中断を置く。
+   働く・尋ねるは補完の口を隠し、渡すは画像の口だけ残す。
+   `/` の候補は入力欄の上に浮かべる（見本の `.slash`）。 */
 @media (min-width: 761px) {
-  [data-posture="work"] .dispatch-form {
+  :is([data-posture="work"], [data-posture="ask"], [data-posture="deliver"]) .dispatch-form {
+    position: relative;
     flex-direction: row;
     flex-wrap: wrap;
     align-items: flex-end;
     gap: var(--inline-control);
   }
-  [data-posture="work"] .dispatch-toolbar {
+  :is([data-posture="work"], [data-posture="ask"], [data-posture="deliver"]) .dispatch-toolbar {
     padding-top: 0;
   }
-  [data-posture="work"] .dispatch-tool {
+  /* 帯と頼みごとの列は欄の上に1段で置く。 */
+  :is([data-posture="work"], [data-posture="ask"], [data-posture="deliver"])
+    :is(.dispatch-inquiry-band, .dispatch-band, .dispatch-band-text, .reply-queue-slot) {
+    flex: 0 0 100%;
+  }
+  /* 尋ねるでは、お伺いがすぐ上にあるので、帯と口を出さず、答えを書く欄の輪も重ねない。 */
+  [data-posture="ask"] .dispatch-inquiry-band,
+  [data-posture="ask"] .dispatch-pending-glow {
     display: none;
   }
-  [data-posture="work"] .dispatch-text-wrap {
+  [data-posture="ask"] .dispatch-form.is-answering {
+    padding: 0;
+    border: none;
+  }
+  :is([data-posture="work"], [data-posture="ask"]) .dispatch-tool,
+  [data-posture="deliver"] .dispatch-tool:nth-of-type(n + 2) {
+    display: none;
+  }
+  :is([data-posture="work"], [data-posture="ask"], [data-posture="deliver"]) .dispatch-model-chip {
+    display: inline;
+  }
+  :is([data-posture="work"], [data-posture="ask"], [data-posture="deliver"]) .dispatch-text-wrap {
+    position: static;
     flex: 1 1 0;
   }
-  [data-posture="work"] .dispatch-text {
+  :is([data-posture="work"], [data-posture="ask"], [data-posture="deliver"]) .dispatch-text {
     field-sizing: content;
     max-height: 38vh;
+  }
+  :is([data-posture="work"], [data-posture="ask"], [data-posture="deliver"]) .dispatch-suggestions {
+    bottom: calc(100% + var(--inline-control));
+    max-height: none;
+    padding: var(--stack-tight);
+    border-radius: var(--radius-lg);
+    background: var(--surface-float);
+    box-shadow: var(--shadow-raised);
   }
 }
 /* 狭い画面（760px 以下）。左に ＋、まん中に丸い欄、右に丸ボタン（<PhoneTurnAction>）。

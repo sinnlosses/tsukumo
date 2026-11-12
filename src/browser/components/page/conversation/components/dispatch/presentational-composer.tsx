@@ -13,6 +13,7 @@ import {
 } from "react"
 
 import { PROMPT_IMAGE_MEDIA_TYPES } from "../../../../../../shared/session-driver/prompt-image.ts"
+import { RunSettingChip } from "../../../../../features/run-setting/run-setting-chip.tsx"
 import { useExternalSync } from "../../../../../hooks/use-external-sync.ts"
 import { usePhoneWidth } from "../../../../../hooks/use-phone-width.ts"
 import { deferredModule } from "../../../../../stores/deferred-module.ts"
@@ -112,36 +113,38 @@ export function PresentationalComposer({
       )}
       {/* 答え待ちのあいだだけ出る帯（誰が何を待っているか）と、お伺いのカードへフォーカスを移す口。 */}
       {band.kind === "inquiry" && (
-        <HStack
-          element="div"
-          name={{ kind: "none" }}
-          gap="sm"
-          align="center"
-          justify="between"
-          wrap="wrap"
-          className={styles["dispatch-band"]}
-        >
-          <Text
-            element="p"
-            size="secondary"
-            tone="state-warn"
-            weight="inherit"
-            className={styles["dispatch-band-text"]}
+        <div className={styles["dispatch-inquiry-band"]}>
+          <HStack
+            element="div"
+            name={{ kind: "none" }}
+            gap="sm"
+            align="center"
+            justify="between"
+            wrap="wrap"
+            className={styles["dispatch-band"]}
           >
-            {band.text}
-          </Text>
-          <Button
-            variant="outline-hover-warn"
-            size="label"
-            pressed="none"
-            disabled={false}
-            disclosure={{ kind: "none" }}
-            className={styles["dispatch-band-jump"]}
-            onClick={band.onJump}
-          >
-            {INQUIRY_JUMP_LABEL}
-          </Button>
-        </HStack>
+            <Text
+              element="p"
+              size="secondary"
+              tone="state-warn"
+              weight="inherit"
+              className={styles["dispatch-band-text"]}
+            >
+              {band.text}
+            </Text>
+            <Button
+              variant="outline-hover-warn"
+              size="label"
+              pressed="none"
+              disabled={false}
+              disclosure={{ kind: "none" }}
+              className={styles["dispatch-band-jump"]}
+              onClick={band.onJump}
+            >
+              {INQUIRY_JUMP_LABEL}
+            </Button>
+          </HStack>
+        </div>
       )}
       <InputRow phone={phone} onPickImages={onPickImages} onInsertTrigger={onInsertTrigger}>
         <VStack
@@ -258,6 +261,7 @@ export function PresentationalComposer({
           hidden
           onChange={onImagesChosen}
         />
+        <RunSettingChip className={styles["dispatch-model-chip"]} />
         <div className={styles["dispatch-toolbar-end"]}>
           <span className={styles["dispatch-toolbar-divider"]} aria-hidden="true" />
           <TurnStatus

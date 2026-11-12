@@ -15,6 +15,8 @@ type PaperDeskProps = {
   readonly paper: ReactNode
   readonly margin: { readonly title: string; readonly body: ReactNode }
   readonly dock: ReactNode
+  /** 尋ねるあいだだけ渡す。入力欄の場所の上にお伺いを出し、紙の中身を引かせる。 */
+  readonly inquiry?: ReactNode
 }
 
 export function PaperDesk(props: PaperDeskProps): ReactElement {
@@ -31,18 +33,20 @@ export function PaperDesk(props: PaperDeskProps): ReactElement {
       </div>
     )
   }
+  const asking = props.inquiry !== undefined
   return (
     <>
       <div className={styles["paper-sheet"]}>
-        <main className={styles["paper"]} data-region="paper" aria-label="紙">
+        <main className={styles["paper"]} data-region="paper" data-asking={asking} aria-label="紙">
           {props.paper}
         </main>
         <section
           className={styles["paper-dock"]}
           data-region="dock"
-          data-posture={props.posture}
+          data-posture={asking ? "ask" : props.posture}
           aria-label="入力欄"
         >
+          {props.inquiry}
           {props.dock}
         </section>
       </div>

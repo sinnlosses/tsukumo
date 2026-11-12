@@ -78,6 +78,8 @@ export function Inquiry(): ReactElement | undefined {
  */
 export function InquiryCard(props: {
   readonly actions: "inline" | "none"
+  /** `dock` は新しい器の入力欄の場所に出す形。枠と余白は入れ物が持ち、高さの上限は画面の高さから取る。 */
+  readonly placement?: "dock"
 }): ReactElement | undefined {
   const inquiry = useInquiryAnswer()
   const jump = useInquiryJump((state) => state.jump)
@@ -112,7 +114,11 @@ export function InquiryCard(props: {
   return (
     <>
       <section
-        className={clsx(styles["inquiry"], props.actions === "none" && styles["is-bare"])}
+        className={clsx(
+          styles["inquiry"],
+          props.actions === "none" && styles["is-bare"],
+          props.placement === "dock" && styles["is-dock"],
+        )}
         ref={mergeRefs(cardRef, visibilityRef)}
         tabIndex={-1}
         aria-label={INQUIRY_CHIP}

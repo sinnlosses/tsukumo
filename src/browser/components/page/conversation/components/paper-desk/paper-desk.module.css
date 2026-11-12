@@ -31,6 +31,10 @@
   scrollbar-width: thin;
   container-type: size;
 }
+/* 尋ねる。お伺いに答え待ちを引かせ、紙の中身を引く（見本は不透明度 0.32）。 */
+.paper[data-asking="true"] > * {
+  opacity: 0.32;
+}
 /* 紙の下端で本文を紙の地へ溶かし、浮く入力欄のまわりに字が透けないようにする。 */
 .paper-sheet::after {
   content: "";
@@ -50,6 +54,16 @@
   border-radius: var(--radius-xl);
   background: var(--surface-float);
   box-shadow: var(--shadow-raised);
+}
+/* 尋ねる。お伺いを上、答えを書く1行を下に置き、答え待ちの色の輪で囲む。値は見本の `.inq`。 */
+.paper-dock[data-posture="ask"] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--stack-block);
+  padding: var(--inset-card);
+  box-shadow:
+    0 0 0 1.5px color-mix(in srgb, var(--state-warn) 70%, transparent),
+    var(--shadow-raised);
 }
 .paper-margin {
   --paper-margin-max-width: 260px;

@@ -15,6 +15,7 @@ import { ChatView } from "./components/chat-view/chat-view.tsx"
 import { ConversationLayout } from "./components/conversation-layout/conversation-layout.tsx"
 import { Dispatch } from "./components/dispatch/dispatch.tsx"
 import { Greeting } from "./components/greeting/greeting.tsx"
+import { InquiryCard } from "./components/inquiry/inquiry.tsx"
 import { LiveAnnouncer } from "./components/live-announcer/live-announcer.tsx"
 import { MainView } from "./components/main-view/main-view.tsx"
 import { PaperDesk } from "./components/paper-desk/paper-desk.tsx"
@@ -37,6 +38,8 @@ type PresentationalConversationProps = {
   readonly shell: ConversationShell
   /** 新しい器の姿勢。旧い器は読まない。 */
   readonly posture: StagePosture
+  /** 新しい器で、入力欄の場所にお伺いを出すか（働くあいだの答え待ち）。旧い器は読まない。 */
+  readonly asking: boolean
 }
 
 export function PresentationalConversation(props: PresentationalConversationProps): ReactElement {
@@ -44,7 +47,7 @@ export function PresentationalConversation(props: PresentationalConversationProp
     <>
       {props.shell.kind === "classic" ? (
         <ConversationLayout
-          main={props.chatMode ? <ChatView /> : <MainView outline="column" />}
+          main={props.chatMode ? <ChatView /> : <MainView outline="column" inquiry="inline" />}
           sidebar={<Sidebar />}
           character={<CharacterView />}
           dispatch={<Dispatch />}
@@ -64,9 +67,16 @@ export function PresentationalConversation(props: PresentationalConversationProp
             <PaperDesk
               posture={props.posture}
               greeting={<Greeting />}
-              paper={props.chatMode ? <ChatView /> : <MainView outline="none" />}
+              paper={
+                props.chatMode ? (
+                  <ChatView />
+                ) : (
+                  <MainView outline="none" inquiry={props.asking ? "none" : "inline"} />
+                )
+              }
               margin={{ title: MARGIN_TITLE, body: props.shell.margin }}
               dock={<Dispatch />}
+              inquiry={props.asking ? <InquiryCard actions="inline" placement="dock" /> : undefined}
             />
           }
         />

@@ -26,6 +26,14 @@
   border: none;
   background: none;
 }
+/* 新しい器の入力欄の場所。浮く入力欄が枠と余白を持ち、画面の高さから入力欄の1行と余白の分を引いた高さで、本文の側を内側で転がす。 */
+.inquiry.is-dock {
+  max-height: calc(100vh - 11rem);
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+}
 /* 広げた板。ビューポートいっぱいに取り、中の札が高さの上限と枠を持たず、本文の側が板の内側で転がる。 */
 .inquiry-board {
   box-sizing: border-box;

@@ -61,8 +61,11 @@ type ShownCard =
   | { readonly kind: "none" }
   | { readonly kind: "turn"; readonly turn: MainViewTurn; readonly fresh: boolean }
 
-/** `outline` は札の左にやり取りの列を置くか。 */
-export function MainView(props: { readonly outline: "column" | "none" }): ReactElement {
+/** `outline` は札の左にやり取りの列を置くか。`inquiry` は札の末尾にお伺いを出すか（入力欄の場所に出すときは `none`）。 */
+export function MainView(props: {
+  readonly outline: "column" | "none"
+  readonly inquiry: "inline" | "none"
+}): ReactElement {
   const { activeTurnId, newestTurnId, selectTurn } = useTurnSelection()
   // 畳んだ結果は姿ごとに1回だけ作られる（昇順。追従を決める `useTurnSelection` と同じものを読む）。
   const turns = useMainViewTurns()
@@ -206,7 +209,7 @@ export function MainView(props: { readonly outline: "column" | "none" }): ReactE
                     />
                   </AskThreadProvider>
                 </div>
-                {!viewingPast && (
+                {!viewingPast && props.inquiry === "inline" && (
                   <div className={styles["turn-card-inquiry"]}>
                     <Inquiry />
                   </div>
@@ -215,7 +218,7 @@ export function MainView(props: { readonly outline: "column" | "none" }): ReactE
             </article>
           )}
         </ContentFrame>
-        {!viewingPast && <InquiryJumpFloat />}
+        {!viewingPast && props.inquiry === "inline" && <InquiryJumpFloat />}
         {/* 筆先に添うミニ立ち絵。この入れ物の原点を基準に置く（`position: absolute`）ので、書き上げたあと残っているあいだも本文と一緒に転がる。
             出ているやり取りを渡すのは、残った筆先が別のやり取りのものなら引っ込ませるため。 */}
         {cardTurn !== undefined && <MiniPortrait shownTurnId={cardTurn.turn.id} />}
