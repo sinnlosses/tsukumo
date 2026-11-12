@@ -1,0 +1,1785 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>会話の画面の配置3案（使い捨ての試作）</title>
+    <!--
+      使い捨ての試作。問いは「会話の画面の配置を3案のどれにするか」の1つ。
+      3案 × 4局面を ?variant=A|B|C と ?moment=greet|work|ask|deliver で切り替える。
+      ?tone=night|day は読む面の色、?pack=karakasa|tsukumo は立ち絵、?bar=0 は上の切り替えの帯を隠す。
+      中身は架空の依頼と架空のレポートで、実物の会話ではない。
+      開き方: このファイルをブラウザで開く。素材は ../../../../characters/ から相対で読む
+      （唐傘は履歴に入らない characters/local/karakasa に置いたときだけ出て、無ければ同梱の tsukumo に落ちる）。
+      本番のコードではない。テストもエラー処理も持たない。
+    -->
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+      }
+      body {
+        --accent: #ff9e9e;
+        --night: #14121a;
+        --ink: #ece8ef;
+        --ink-soft: rgb(236 232 239 / 0.74);
+        --ink-quiet: rgb(236 232 239 / 0.52);
+        --sheet: #211e29;
+        --float: #2d2937;
+        --raise: rgb(236 232 239 / 0.07);
+        --rule: rgb(236 232 239 / 0.11);
+        --ok: #7ee081;
+        --warn: #e3c766;
+        --ng: #f2a0a0;
+        --sans: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic UI", system-ui, sans-serif;
+        --voice: "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif JP", serif;
+        --mono: "IBM Plex Mono", "SF Mono", ui-monospace, Menlo, monospace;
+        background: var(--night);
+        color: var(--ink);
+        font: 16px/1.85 var(--sans);
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      body[data-tone="day"] .tone {
+        --ink: #1f1c27;
+        --ink-soft: rgb(31 28 39 / 0.78);
+        --ink-quiet: rgb(31 28 39 / 0.58);
+        --sheet: #eceaf1;
+        --float: #fbfaff;
+        --raise: rgb(31 28 39 / 0.06);
+        --rule: rgb(31 28 39 / 0.15);
+        --ok: #1c7c37;
+        --warn: #8a6500;
+        --ng: #b3362f;
+      }
+      .tone {
+        color: var(--ink);
+      }
+      button,
+      textarea,
+      input {
+        font: inherit;
+        color: inherit;
+      }
+      button {
+        cursor: pointer;
+      }
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      kbd {
+        font: 11px var(--mono);
+        padding: 1px 5px;
+        border-radius: 4px;
+        background: var(--raise);
+        color: var(--ink-soft);
+      }
+      code {
+        font: 0.88em var(--mono);
+        background: var(--raise);
+        padding: 1px 6px;
+        border-radius: 5px;
+      }
+
+      /* ── 試作の切り替えの帯（評価する画面の一部ではない） ── */
+      #protobar {
+        position: fixed;
+        inset: 0 0 auto 0;
+        height: 34px;
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 0 10px;
+        background: #f4f1c9;
+        color: #23210f;
+        font: 12px/1 var(--mono);
+      }
+      #protobar button {
+        border: 1px solid #23210f55;
+        background: none;
+        color: inherit;
+        border-radius: 4px;
+        padding: 4px 8px;
+        font: inherit;
+      }
+      #protobar button[aria-pressed="true"] {
+        background: #23210f;
+        color: #f4f1c9;
+      }
+      #protobar output {
+        min-width: 11em;
+        text-align: center;
+        font-weight: 700;
+      }
+      #protobar .gap {
+        width: 14px;
+      }
+      #protobar small {
+        margin-left: auto;
+        font-size: 11px;
+        opacity: 0.7;
+      }
+      #app {
+        position: fixed;
+        inset: 34px 0 0 0;
+      }
+      body[data-bar="0"] #protobar {
+        display: none;
+      }
+      body[data-bar="0"] #app {
+        inset: 0;
+      }
+      .shell {
+        position: absolute;
+        inset: 0;
+      }
+
+      /* ── 読む面の組版（3案で共有する中身） ── */
+      .paper {
+        color: var(--ink);
+        line-break: strict;
+        text-autospace: normal;
+      }
+      :where(.paper p, .paper li) {
+        max-width: 42em;
+        text-wrap: pretty;
+      }
+      :where(.paper p) {
+        margin: 0 0 1em;
+      }
+      .r-head {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 13px;
+        color: var(--ink-soft);
+      }
+      .r-head .sp {
+        margin-left: auto;
+        font: 12px var(--mono);
+        color: var(--ink-quiet);
+      }
+      .chip {
+        font: 12px var(--mono);
+        padding: 2px 7px;
+        border-radius: 5px;
+        background: var(--raise);
+      }
+      .done {
+        color: var(--ok);
+        font-weight: 600;
+      }
+      .r-ask {
+        font-size: 13px;
+        color: var(--ink-quiet);
+        margin: 8px 0 0 !important;
+      }
+      .lead {
+        font-size: 27px;
+        line-height: 1.5;
+        font-weight: 700;
+        margin: 30px 0 6px;
+        word-break: auto-phrase;
+        text-wrap: balance;
+        font-feature-settings: "palt";
+        letter-spacing: 0.02em;
+      }
+      .lead2 {
+        color: var(--ink-soft);
+        margin: 0 0 30px !important;
+      }
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 24px;
+        padding: 18px 0 20px;
+        border-top: 1px solid var(--rule);
+        border-bottom: 1px solid var(--rule);
+      }
+      .stat b {
+        display: block;
+        font: 600 28px/1.3 var(--sans);
+        font-variant-numeric: tabular-nums;
+      }
+      .stat b i {
+        font-style: normal;
+        font-weight: 400;
+        font-size: 16px;
+        color: var(--ink-quiet);
+        margin-right: 8px;
+      }
+      .stat span {
+        font-size: 12.5px;
+        color: var(--ink-quiet);
+      }
+      .checks {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px 20px;
+        font-size: 13px;
+        color: var(--ink-soft);
+        margin: 14px 0 0;
+      }
+      .checks span::before {
+        content: "✓";
+        color: var(--ok);
+        margin-right: 5px;
+        font-weight: 700;
+      }
+      .paper h2 {
+        font-size: 20px;
+        line-height: 1.5;
+        margin: 56px 0 12px;
+        font-weight: 700;
+        word-break: auto-phrase;
+        scroll-margin-top: 24px;
+      }
+      .paper figure {
+        margin: 34px 0 0;
+      }
+      .paper figcaption {
+        font-size: 13px;
+        color: var(--ink-quiet);
+        margin-top: 8px;
+      }
+      .flow {
+        width: 100%;
+        height: auto;
+        color: var(--ink-quiet);
+      }
+      .flow .n rect {
+        fill: var(--raise);
+      }
+      .flow .n.new rect {
+        fill: color-mix(in srgb, var(--accent) 26%, transparent);
+      }
+      .flow text {
+        fill: var(--ink);
+        font: 13px var(--sans);
+        text-anchor: middle;
+      }
+      .flow .l {
+        fill: var(--ink-quiet);
+        font-size: 11.5px;
+      }
+      .flow .e {
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.2;
+      }
+      .paper table {
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 15px;
+        margin-top: 6px;
+      }
+      .paper th {
+        font-size: 12.5px;
+        font-weight: 500;
+        color: var(--ink-quiet);
+        text-align: left;
+        padding: 8px 16px 8px 0;
+        border-bottom: 1px solid var(--rule);
+      }
+      .paper td {
+        padding: 11px 16px 11px 0;
+        border-bottom: 1px solid var(--rule);
+        vertical-align: top;
+      }
+      .opts {
+        list-style: none;
+        padding: 0;
+        margin: 6px 0 0;
+      }
+      .opts li {
+        display: grid;
+        grid-template-columns: 84px 1fr;
+        gap: 2px 14px;
+        padding: 13px 0;
+        border-bottom: 1px solid var(--rule);
+        max-width: none;
+      }
+      .opts b {
+        font-weight: 600;
+      }
+      .opts span {
+        grid-column: 2;
+        color: var(--ink-soft);
+        font-size: 15px;
+      }
+      .verdict {
+        font-size: 12.5px;
+        font-weight: 600;
+        color: var(--ink-quiet);
+      }
+      .verdict.adopt {
+        color: var(--ok);
+      }
+
+      /* 働くあいだの紙 */
+      .w-req {
+        font-size: 13px;
+        color: var(--ink-quiet);
+        margin: 0 !important;
+      }
+      .w-title {
+        font-size: 23px;
+        line-height: 1.5;
+        font-weight: 700;
+        margin: 8px 0 6px;
+        word-break: auto-phrase;
+      }
+      .w-meta {
+        font-size: 13.5px;
+        color: var(--ink-soft);
+        margin: 0 !important;
+      }
+      .w-meta time {
+        font-family: var(--mono);
+      }
+      .tl {
+        list-style: none;
+        margin: 38px 0 0;
+        padding: 0;
+      }
+      .tl > li {
+        position: relative;
+        padding: 0 0 30px 42px;
+        max-width: none;
+      }
+      .tl > li::before {
+        content: "";
+        position: absolute;
+        left: 6px;
+        top: 5px;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        border: 1.5px solid var(--ink-quiet);
+        background: var(--sheet);
+        z-index: 1;
+      }
+      .tl > li::after {
+        content: "";
+        position: absolute;
+        left: 14.5px;
+        top: 24px;
+        bottom: -5px;
+        width: 1.5px;
+        background: var(--rule);
+      }
+      .tl > li:last-child::after {
+        display: none;
+      }
+      .tl > .past::before {
+        content: "✓";
+        border-color: transparent;
+        background: color-mix(in srgb, var(--ok) 24%, var(--sheet));
+        color: var(--ok);
+        font: 700 11px/18px var(--sans);
+        text-align: center;
+      }
+      .tl > .now::before {
+        border: 5px solid var(--accent);
+      }
+      .tl > .next {
+        color: var(--ink-quiet);
+      }
+      .tl h3 {
+        font-size: 16.5px;
+        line-height: 1.7;
+        margin: 0;
+        font-weight: 700;
+      }
+      .tl h3 small {
+        font: 12px var(--mono);
+        color: var(--ink-quiet);
+        margin-left: 10px;
+        font-weight: 400;
+      }
+      .interim {
+        margin: 10px 0 0;
+        padding: 14px 18px;
+        background: var(--raise);
+        border-radius: 10px;
+        font-size: 15px;
+        max-width: 42em;
+      }
+      .interim small {
+        display: block;
+        font-size: 12px;
+        color: var(--ink-quiet);
+      }
+      .live {
+        list-style: none;
+        padding: 0;
+        margin: 10px 0 0;
+        font-size: 15px;
+      }
+      .live li {
+        padding: 2px 0;
+        color: var(--ink-quiet);
+        max-width: none;
+      }
+      .live li.cur {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .live .t {
+        font: 12px var(--mono);
+        color: var(--ink-quiet);
+        margin-left: 10px;
+        font-weight: 400;
+      }
+
+      /* 迎える */
+      .g-who {
+        font-size: 12.5px;
+        color: color-mix(in srgb, var(--accent) 80%, white);
+        margin: 0 0 6px;
+      }
+      .g-voice {
+        font: 600 30px/1.6 var(--voice);
+        margin: 0 0 30px;
+        word-break: auto-phrase;
+        text-shadow: 0 2px 18px rgb(0 0 0 / 0.6);
+      }
+      .g-group {
+        margin-top: 30px;
+      }
+      .g-group h3 {
+        font-size: 12.5px;
+        font-weight: 500;
+        color: var(--ink-quiet);
+        margin: 0 0 4px;
+      }
+      .g-row {
+        display: flex;
+        align-items: baseline;
+        gap: 12px;
+        width: 100%;
+        text-align: left;
+        background: none;
+        border: 0;
+        border-top: 1px solid var(--rule);
+        padding: 11px 4px;
+        font-size: 15px;
+        line-height: 1.6;
+      }
+      .g-row:hover {
+        background: var(--raise);
+      }
+      .g-row code {
+        flex: none;
+      }
+      .g-row em {
+        margin-left: auto;
+        flex: none;
+        font-style: normal;
+        font-size: 12.5px;
+        color: var(--ink-quiet);
+      }
+
+      /* 入力欄（1行から、打った分だけ伸びる） */
+      .composer {
+        display: flex;
+        align-items: flex-end;
+        gap: 8px;
+        text-shadow: none;
+        background: var(--float);
+        border-radius: 16px;
+        padding: 9px 10px 9px 12px;
+        box-shadow:
+          0 0 0 1px var(--rule),
+          0 14px 36px rgb(0 0 0 / 0.38);
+      }
+      .composer:focus-within {
+        box-shadow:
+          0 0 0 1.5px var(--accent),
+          0 14px 36px rgb(0 0 0 / 0.38);
+      }
+      .composer textarea {
+        flex: 1;
+        min-width: 0;
+        border: 0;
+        outline: 0;
+        background: none;
+        resize: none;
+        field-sizing: content;
+        max-height: 38vh;
+        font: 16px/1.6 var(--sans);
+        padding: 5px 2px;
+      }
+      .composer textarea::placeholder {
+        color: var(--ink-quiet);
+      }
+      .c-bar {
+        display: contents;
+      }
+      .c-bar .c-btn:first-child {
+        order: -1;
+      }
+      .composer[data-size="large"] {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 12px 12px 10px 14px;
+      }
+      .composer[data-size="large"] textarea {
+        min-height: 4.8em;
+        flex: 1;
+      }
+      .composer[data-size="large"] .c-bar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .composer[data-size="large"] .c-hint {
+        margin-right: auto;
+      }
+      .c-btn {
+        flex: none;
+        height: 36px;
+        min-width: 36px;
+        border-radius: 10px;
+        border: 0;
+        background: var(--raise);
+        font-size: 13.5px;
+        padding: 0 11px;
+      }
+      .c-send {
+        background: var(--accent);
+        color: #2b1216;
+        font-weight: 600;
+      }
+      .c-send kbd {
+        background: rgb(43 18 22 / 0.14);
+        color: inherit;
+        margin-left: 4px;
+      }
+      .c-hint {
+        flex: none;
+        align-self: center;
+        font-size: 12px;
+        color: var(--ink-quiet);
+      }
+
+      /* お伺い（入力欄の位置に出る） */
+      .inq {
+        background: var(--float);
+        border-radius: 18px;
+        padding: 18px 20px 16px;
+        box-shadow:
+          0 0 0 1.5px color-mix(in srgb, var(--warn) 70%, transparent),
+          0 24px 60px rgb(0 0 0 / 0.5);
+      }
+      .inq header {
+        display: flex;
+        align-items: baseline;
+        gap: 10px;
+        font-size: 12.5px;
+        color: var(--warn);
+        font-weight: 600;
+      }
+      .inq header span {
+        margin-left: auto;
+        font: 12px var(--mono);
+        color: var(--ink-quiet);
+        font-weight: 400;
+      }
+      .inq h2 {
+        font-size: 20px;
+        line-height: 1.5;
+        margin: 4px 0 10px;
+        font-weight: 700;
+      }
+      .inq dl {
+        margin: 0 0 12px;
+        display: grid;
+        gap: 3px;
+        font-size: 13.5px;
+        line-height: 1.7;
+        color: var(--ink-soft);
+      }
+      .inq dl div {
+        display: grid;
+        grid-template-columns: 5.2em 1fr;
+        gap: 10px;
+      }
+      .inq dt {
+        color: var(--ink-quiet);
+      }
+      .inq dd {
+        margin: 0;
+      }
+      .opt {
+        display: grid;
+        grid-template-columns: 26px 1fr auto;
+        align-items: baseline;
+        gap: 0 8px;
+        width: 100%;
+        text-align: left;
+        border: 0;
+        border-radius: 11px;
+        background: var(--raise);
+        padding: 9px 12px;
+        margin-top: 6px;
+        line-height: 1.55;
+      }
+      .opt b {
+        font-size: 15.5px;
+        font-weight: 600;
+      }
+      .opt span {
+        grid-column: 2;
+        font-size: 13px;
+        color: var(--ink-soft);
+      }
+      .opt em {
+        grid-row: 1;
+        grid-column: 3;
+        font-style: normal;
+        font-size: 11.5px;
+        color: var(--warn);
+      }
+      .opt[aria-checked="true"] {
+        background: color-mix(in srgb, var(--accent) 20%, var(--float));
+        box-shadow: inset 0 0 0 1.5px var(--accent);
+      }
+      .inq footer {
+        display: flex;
+        gap: 8px;
+        margin-top: 12px;
+      }
+      .inq input {
+        flex: 1;
+        min-width: 0;
+        border: 0;
+        border-radius: 10px;
+        background: var(--raise);
+        padding: 0 12px;
+        height: 38px;
+        font-size: 14.5px;
+      }
+      .inq input::placeholder {
+        color: var(--ink-quiet);
+      }
+      .inq .c-btn {
+        height: 38px;
+      }
+
+      /* 欄外（目次・聞くの札・作業の要点） */
+      .side-h {
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--ink-quiet);
+        margin: 0 0 6px;
+      }
+      .outline a {
+        display: block;
+        font-size: 13px;
+        line-height: 1.6;
+        color: var(--ink-soft);
+        padding: 4px 0 4px 12px;
+        border-left: 2px solid transparent;
+        cursor: pointer;
+      }
+      .outline a.cur {
+        color: var(--ink);
+        border-left-color: var(--accent);
+      }
+      .slip {
+        margin-top: 26px;
+        padding: 12px 14px;
+        border-radius: 10px;
+        background: rgb(236 232 239 / 0.07);
+        font-size: 13px;
+        line-height: 1.7;
+      }
+      .slip small {
+        display: block;
+        color: var(--ink-quiet);
+        font-size: 11.5px;
+      }
+      .slip p {
+        margin: 2px 0 0;
+      }
+      .slip .a {
+        color: var(--ink-soft);
+      }
+      .facts {
+        margin: 0;
+        font-size: 13px;
+        line-height: 1.7;
+      }
+      .facts div {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 6px 0;
+        border-bottom: 1px solid var(--rule);
+      }
+      .facts dt {
+        color: var(--ink-quiet);
+      }
+      .facts dd {
+        margin: 0;
+        font-family: var(--mono);
+        font-size: 12.5px;
+      }
+      .facts-note {
+        font-size: 12px;
+        color: var(--ink-quiet);
+        line-height: 1.7;
+        margin: 10px 0 0;
+      }
+
+      /* 部屋の頭・吹き出し・立ち絵（舞台の部品） */
+      .room-name {
+        font: 600 15px/1.4 var(--sans);
+        letter-spacing: 0.02em;
+      }
+      .room-state {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        font-size: 12.5px;
+        line-height: 1.4;
+        color: var(--ink-soft);
+      }
+      .room-state i {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--ink-quiet);
+      }
+      .room-state[data-state="work"] i {
+        background: var(--accent);
+      }
+      .room-state[data-state="ask"] i {
+        background: var(--warn);
+      }
+      .room-state[data-state="deliver"] i {
+        background: var(--ok);
+      }
+      .room-state time {
+        font-family: var(--mono);
+      }
+      .room-nav {
+        display: flex;
+        gap: 2px;
+      }
+      .room-nav button {
+        font-size: 12.5px;
+        color: var(--ink-soft);
+        background: none;
+        border: 0;
+        padding: 4px 8px;
+        border-radius: 6px;
+      }
+      .room-nav button:hover {
+        background: rgb(255 255 255 / 0.1);
+        color: var(--ink);
+      }
+      .b-old {
+        font: 600 14px/1.7 var(--voice);
+        color: rgb(255 255 255 / 0.74);
+        margin: 0 0 0 4px;
+        padding: 3px 12px;
+        border-radius: 10px;
+        background: rgb(20 18 26 / 0.5);
+        backdrop-filter: blur(6px);
+      }
+      .b-now {
+        background: color-mix(in srgb, #1d1a25 84%, var(--accent));
+        border-radius: 16px 16px 16px 4px;
+        padding: 11px 16px 13px;
+        box-shadow: 0 10px 30px rgb(0 0 0 / 0.45);
+        animation: bubble-in 0.32s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+      }
+      .b-now small {
+        display: block;
+        font: 11.5px/1.6 var(--sans);
+        color: color-mix(in srgb, var(--accent) 80%, white);
+      }
+      .b-now p {
+        margin: 0;
+        font: 600 16.5px/1.75 var(--voice);
+        word-break: auto-phrase;
+      }
+      @keyframes bubble-in {
+        from {
+          opacity: 0;
+          transform: translateY(8px) scale(0.98);
+        }
+      }
+      .portrait {
+        pointer-events: none;
+        user-select: none;
+        view-transition-name: portrait;
+      }
+      .tone-main {
+        view-transition-name: sheet;
+      }
+      .dock {
+        view-transition-name: dock;
+      }
+      ::view-transition-group(*) {
+        animation-duration: 0.42s;
+        animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .b-now {
+          animation: none;
+        }
+      }
+
+      /* ══ A 舞台と紙 ══ */
+      .A {
+        --stage-w: clamp(300px, 26vw, 600px);
+        display: grid;
+        grid-template: minmax(0, 1fr) / var(--stage-w) minmax(0, 1fr);
+      }
+      .A[data-moment="greet"] {
+        --stage-w: clamp(340px, 42vw, 900px);
+      }
+      .scene {
+        position: absolute;
+        inset: 0;
+        background: var(--scene-img) left center / cover no-repeat;
+      }
+      .A .scene::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background:
+          linear-gradient(180deg, rgb(20 18 26 / 0.62), transparent 24%),
+          linear-gradient(0deg, rgb(20 18 26 / 0.5), transparent 36%),
+          linear-gradient(
+            90deg,
+            rgb(20 18 26 / 0.12) 0,
+            rgb(20 18 26 / 0.5) calc(var(--stage-w) * 0.86),
+            rgb(20 18 26 / 0.9) calc(var(--stage-w) + 140px)
+          );
+      }
+      .A-stage {
+        position: relative;
+        min-width: 0;
+        z-index: 2;
+        pointer-events: none;
+      }
+      .A-stage > :not(.portrait) {
+        pointer-events: auto;
+      }
+      .A-stage .room {
+        position: absolute;
+        top: 16px;
+        left: 22px;
+        right: 8px;
+        display: grid;
+        gap: 4px;
+        text-shadow: 0 1px 10px rgb(0 0 0 / 0.8);
+      }
+      .A-stage .room-nav {
+        margin: 2px 0 0 -8px;
+      }
+      .A-stage .portrait {
+        position: absolute;
+      }
+      body[data-fit="bust"] .A-stage {
+        --portrait-h: calc(var(--stage-w) * 1.14 * var(--ratio));
+      }
+      body[data-fit="bust"] .A-stage .portrait {
+        left: -5%;
+        bottom: 0;
+        width: 114%;
+        -webkit-mask-image:
+          linear-gradient(#0000, #000 11%), linear-gradient(90deg, #000 80%, #0000);
+        -webkit-mask-composite: source-in;
+        mask-image: linear-gradient(#0000, #000 11%), linear-gradient(90deg, #000 80%, #0000);
+        mask-composite: intersect;
+      }
+      body[data-fit="full"] .A-stage {
+        --portrait-h: min(70%, calc(var(--stage-w) * 1.34));
+      }
+      body[data-fit="full"] .A-stage .portrait {
+        left: 50%;
+        bottom: -1%;
+        height: var(--portrait-h);
+        transform: translateX(-50%);
+      }
+      .A-stage .bubbles {
+        position: absolute;
+        left: 20px;
+        right: 6px;
+        bottom: calc(var(--portrait-h) - 4px);
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+      }
+      body[data-fit="full"] .A-stage .bubbles {
+        bottom: calc(var(--portrait-h) - 12px);
+      }
+      .A-right {
+        position: relative;
+        display: flex;
+        justify-content: center;
+        min-width: 0;
+        min-height: 0;
+        padding-top: 16px;
+      }
+      .A-sheet {
+        position: relative;
+        flex: 0 1 880px;
+        min-width: 0;
+        display: flex;
+      }
+      .A-sheet .paper {
+        flex: 1;
+        min-width: 0;
+        overflow: auto;
+        scrollbar-width: thin;
+        background: var(--sheet);
+        border-radius: 12px 12px 0 0;
+        padding: 38px 64px 150px;
+        box-shadow: 0 24px 70px rgb(0 0 0 / 0.5);
+      }
+      .A-sheet::after {
+        content: "";
+        position: absolute;
+        inset: auto 12px 0 0;
+        height: 110px;
+        background: linear-gradient(transparent, var(--sheet) 64%);
+        pointer-events: none;
+      }
+      .A-sheet .dock {
+        position: absolute;
+        left: 30px;
+        right: 30px;
+        bottom: 16px;
+        z-index: 2;
+      }
+      .A[data-moment="ask"] .paper > * {
+        opacity: 0.32;
+      }
+      .A-margin {
+        flex: 0 1 260px;
+        min-width: 190px;
+        padding: 42px 22px 0 28px;
+        overflow: auto;
+        text-shadow: 0 1px 8px rgb(0 0 0 / 0.6);
+      }
+      .A-home {
+        flex: 0 1 680px;
+        min-width: 0;
+        align-self: center;
+        padding: 0 36px 7vh 12px;
+      }
+
+      /* ══ B 下のドック ══ */
+      .B {
+        display: grid;
+        grid-template-rows: 52px minmax(0, 1fr) auto;
+        background: var(--night);
+      }
+      .B .tone {
+        --sheet: #17151d;
+      }
+      .B-head {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 0 22px;
+        border-bottom: 1px solid var(--rule);
+      }
+      .B-head .room-nav {
+        margin-left: auto;
+      }
+      .B-main {
+        overflow: auto;
+        scrollbar-width: thin;
+        background: var(--sheet);
+      }
+      .B-col {
+        display: grid;
+        grid-template-columns: minmax(0, 720px) 230px;
+        gap: 56px;
+        justify-content: center;
+        padding: 40px 32px 72px;
+      }
+      .B-margin {
+        padding-top: 4px;
+        color: var(--ink);
+      }
+      .B-margin .slip {
+        background: var(--raise);
+      }
+      .B-dock {
+        border-top: 1px solid var(--rule);
+        padding: 12px 32px 16px;
+      }
+      .B-dockin {
+        position: relative;
+        max-width: 1006px;
+        margin: 0 auto;
+      }
+      .window {
+        position: relative;
+        aspect-ratio: 1;
+        border-radius: 50%;
+        overflow: hidden;
+        background: var(--scene-img) 28% 60% / cover no-repeat;
+        box-shadow:
+          0 0 0 1px var(--rule),
+          0 16px 44px rgb(0 0 0 / 0.5);
+        view-transition-name: portrait;
+      }
+      .window .portrait {
+        position: absolute;
+        view-transition-name: none;
+        width: calc(var(--z) * 100%);
+        left: calc(50% - var(--x) * var(--z) * 100%);
+        top: calc(50% - var(--y) * var(--z) * var(--ratio) * 100%);
+      }
+      .B-bust {
+        --z: var(--face-z);
+        --x: var(--face-x);
+        --y: var(--face-y);
+        position: absolute;
+        left: -150px;
+        bottom: -4px;
+        width: 126px;
+      }
+      .B-talk {
+        display: grid;
+        gap: 8px;
+        max-width: 720px;
+      }
+      .B-voice {
+        margin: 0;
+        font: 600 15.5px/1.7 var(--voice);
+        padding-left: 4px;
+      }
+      .B-voice small {
+        font: 11.5px var(--sans);
+        color: color-mix(in srgb, var(--accent) 80%, white);
+        margin-right: 10px;
+      }
+      .B[data-moment="ask"] .B-col {
+        opacity: 0.32;
+      }
+      .B-home {
+        max-width: 680px;
+        margin: 0 auto;
+        padding: 4vh 24px 40px;
+      }
+      .B-home .window {
+        --z: var(--bust-z);
+        --x: var(--bust-x);
+        --y: var(--bust-y);
+        width: min(34vh, 290px);
+        margin: 0 0 22px;
+      }
+      .B-home .g-voice {
+        font-size: 26px;
+        text-shadow: none;
+      }
+
+      /* ══ C 4分割の改良 ══ */
+      .C {
+        --side: 300px;
+        --bottom: 32%;
+        display: grid;
+        grid-template: 46px minmax(0, 1fr) var(--bottom) / minmax(0, 1fr) var(--side);
+        gap: 10px;
+        padding: 0 12px 12px;
+        background: var(--night);
+      }
+      .C[data-moment="greet"] {
+        --bottom: 46%;
+      }
+      .C[data-moment="ask"] {
+        --bottom: 56%;
+        --side: 46px;
+      }
+      .C[data-moment="deliver"] {
+        --bottom: 124px;
+        --side: 46px;
+      }
+      .C-nav {
+        grid-column: 1 / -1;
+        margin: 0 -12px;
+        padding: 0 20px;
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        border-bottom: 1px solid var(--rule);
+      }
+      .C-nav .room-nav {
+        margin-left: auto;
+      }
+      .C-main {
+        border-radius: 10px;
+        background: var(--sheet);
+        overflow: auto;
+        scrollbar-width: thin;
+        display: grid;
+        grid-template-columns: 190px minmax(0, 720px) minmax(0, 1fr);
+        gap: 36px;
+        padding: 30px 28px 60px 22px;
+        align-content: start;
+      }
+      .C-main .outline {
+        position: sticky;
+        top: 0;
+        align-self: start;
+      }
+      .C-side {
+        border-radius: 10px;
+        background: var(--sheet);
+        padding: 18px;
+        overflow: hidden;
+      }
+      .C-side[data-rail] {
+        padding: 12px 0;
+        display: grid;
+        align-content: start;
+        justify-items: center;
+        gap: 14px;
+        font-size: 12px;
+        color: var(--ink-quiet);
+        writing-mode: vertical-rl;
+      }
+      .tasks {
+        list-style: none;
+        margin: 0 0 18px;
+        padding: 0;
+        font-size: 13.5px;
+        line-height: 1.6;
+      }
+      .tasks li {
+        padding: 9px 0;
+        border-bottom: 1px solid var(--rule);
+      }
+      .tasks code {
+        margin-right: 8px;
+      }
+      .C-bottom {
+        grid-column: 1 / -1;
+        display: grid;
+        grid-template-columns: minmax(0, 44%) minmax(0, 1fr);
+        gap: 10px;
+        min-height: 0;
+      }
+      .C-char {
+        position: relative;
+        border-radius: 10px;
+        overflow: hidden;
+        background: var(--scene-img) left 62% / cover no-repeat;
+      }
+      .C-char::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(90deg, rgb(20 18 26 / 0.2), rgb(20 18 26 / 0.66));
+      }
+      .C-char .portrait {
+        position: absolute;
+        left: -8px;
+        bottom: -6%;
+        height: min(118%, 400px);
+      }
+      body[data-fit="bust"] .C-char .portrait {
+        -webkit-mask-image: linear-gradient(#0000, #000 12%), linear-gradient(90deg, #000 76%, #0000);
+        -webkit-mask-composite: source-in;
+        mask-image: linear-gradient(#0000, #000 12%), linear-gradient(90deg, #000 76%, #0000);
+        mask-composite: intersect;
+      }
+      body[data-fit="full"] .C-char .portrait {
+        left: 14px;
+        bottom: -2%;
+        height: 100%;
+      }
+      .C-char .bubbles {
+        position: absolute;
+        left: min(46%, 300px);
+        right: 14px;
+        bottom: 14px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+      }
+      .C[data-moment="deliver"] .C-char .b-old {
+        display: none;
+      }
+      .C[data-moment="deliver"] .C-char .bubbles {
+        left: 150px;
+        bottom: 12px;
+      }
+      .C-disp {
+        border-radius: 10px;
+        background: var(--sheet);
+        padding: 12px;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        min-height: 0;
+        overflow: auto;
+      }
+      .C-disp .composer {
+        box-shadow: 0 0 0 1px var(--rule);
+      }
+      .C-disp .dock {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        justify-content: flex-end;
+        min-height: 0;
+      }
+      .C-disp .composer[data-size="large"] {
+        flex: 1;
+      }
+
+      .C-disp .inq {
+        box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--warn) 70%, transparent);
+      }
+
+      /* ══ 狭い画面（760px 以下。3案とも今の縦1列に落ちる） ══ */
+      .N {
+        display: grid;
+        grid-template-rows: auto minmax(0, 1fr) auto auto;
+        background: var(--night);
+      }
+      .N .tone {
+        --sheet: #17151d;
+      }
+      .N-head {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 14px;
+        border-bottom: 1px solid var(--rule);
+      }
+      .face {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        object-fit: cover;
+        flex: none;
+      }
+      .N-head b {
+        display: block;
+        font-size: 14.5px;
+        line-height: 1.5;
+      }
+      .N-main {
+        overflow: auto;
+        background: var(--sheet);
+        padding: 22px 18px 40px;
+      }
+      .N-main .lead {
+        font-size: 22px;
+      }
+      .N-main .stats {
+        gap: 12px;
+      }
+      .N-main .stat b {
+        font-size: 21px;
+      }
+      .N-main .g-voice {
+        font-size: 23px;
+        text-shadow: none;
+      }
+      .N-voice {
+        display: flex;
+        align-items: flex-end;
+        gap: 10px;
+        padding: 8px 14px 0;
+      }
+      .N-voice .b-now {
+        padding: 8px 14px 9px;
+      }
+      .N-voice .b-now p {
+        font-size: 15px;
+      }
+      .N-dock {
+        padding: 10px 12px 12px;
+      }
+      .N .c-hint {
+        display: none;
+      }
+      @media (max-width: 1120px) {
+        .A-margin,
+        .B-margin {
+          display: none;
+        }
+        .B-col {
+          grid-template-columns: minmax(0, 720px);
+        }
+        .B-dockin {
+          max-width: 720px;
+        }
+        .C-main {
+          grid-template-columns: minmax(0, 720px);
+        }
+        .C-main .outline {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <nav id="protobar" aria-label="試作の切り替え（評価する画面の一部ではない）">
+      <button data-step="-1" aria-label="前の案">‹</button>
+      <output id="pb-variant"></output>
+      <button data-step="1" aria-label="次の案">›</button>
+      <span class="gap"></span>
+      <button data-moment="greet">迎える</button>
+      <button data-moment="work">働く</button>
+      <button data-moment="ask">尋ねる</button>
+      <button data-moment="deliver">渡す</button>
+      <span class="gap"></span>
+      <button data-toggle="tone" id="pb-tone"></button>
+      <button data-toggle="pack" id="pb-pack"></button>
+      <small>試作・中身は架空 ｜ ← → 案 ｜ ↑ ↓ 局面 ｜ T 紙の色 ｜ H 帯を隠す</small>
+    </nav>
+    <div id="app"></div>
+
+    <script>
+      const ROOT = "../../../../characters/"
+      const PACKS = {
+        karakasa: {
+          name: "唐傘",
+          dir: ROOT + "local/karakasa",
+          accent: "#ff9e9e",
+          fit: "bust",
+          ratio: 800 / 874,
+          face: [2.1, 0.47, 0.37],
+          bust: [1.16, 0.49, 0.47],
+          lines: {
+            greet: {
+              now: "おかえりなさい。雨上がりの、いい夕暮れね。今日は何から始めましょうか。",
+            },
+            work: { old: "まず今の形を見てくるわね。", now: "形が分かったから、変換に入るわ。" },
+            ask: {
+              old: "形が分かったから、変換に入るわ。",
+              now: "ひとつ聞かせて。変換表の置き場、あなたはどこがいいかしら。",
+            },
+            deliver: {
+              old: "テストも通ったわ。",
+              now: "終わったわ。古い形の ID も、もう迷子にならないはずよ。",
+            },
+          },
+        },
+        tsukumo: {
+          name: "つくも",
+          dir: ROOT + "tsukumo",
+          accent: "#6fe3cd",
+          fit: "full",
+          ratio: 1374 / 1145,
+          face: [3, 0.49, 0.31],
+          bust: [1.9, 0.5, 0.36],
+          lines: {
+            greet: { now: "おかえり、きみ！ 今日は何から始める？" },
+            work: { old: "まず今の形を見てくるね。", now: "形は分かった。変換に入るよ！" },
+            ask: {
+              old: "形は分かった。変換に入るよ！",
+              now: "ひとつ聞かせて。変換表の置き場、きみはどこがいい？",
+            },
+            deliver: {
+              old: "テストも通ったよ。",
+              now: "終わったよ！ 古い形の ID も、もう迷子にならないはず。",
+            },
+          },
+        },
+      }
+      const VARIANTS = { A: "舞台と紙", B: "下のドック", C: "4分割の改良" }
+      const MOMENTS = ["greet", "work", "ask", "deliver"]
+      const EXPRESSION = { greet: "excited", work: "thinking", ask: "curious", deliver: "proud" }
+      const STATE_LABEL = {
+        greet: "依頼を待っている",
+        work: "作業中 2/3 ・ <time data-tick>1:54</time>",
+        ask: "答えを待っている",
+        deliver: "終わった ・ 4分12秒",
+      }
+
+      const query = new URLSearchParams(location.search)
+      const state = {
+        variant: query.get("variant") ?? "A",
+        moment: query.get("moment") ?? "deliver",
+        tone: query.get("tone") ?? "night",
+        pack: query.get("pack") ?? "karakasa",
+        bar: query.get("bar") !== "0",
+      }
+      const narrow = matchMedia("(max-width: 760px)")
+      let ticker
+
+      const pack = () => PACKS[state.pack]
+      const portrait = () =>
+        `<img class="portrait" src="${pack().dir}/${EXPRESSION[state.moment]}.png" alt="${pack().name}の立ち絵">`
+
+      function room() {
+        return `<div class="room">
+          <div class="room-name">tsukumo-3</div>
+          <div class="room-state" data-state="${state.moment}"><i></i>${STATE_LABEL[state.moment]}</div>
+          ${roomNav()}
+        </div>`
+      }
+      function roomNav() {
+        return `<nav class="room-nav" aria-label="ほかの画面">
+          <button>タスク 3</button><button>成果</button><button>キャラ</button><button>設定</button>
+        </nav>`
+      }
+      function bubbles() {
+        const line = pack().lines[state.moment]
+        return `<div class="bubbles">
+          ${line.old ? `<p class="b-old">${line.old}</p>` : ""}
+          <div class="b-now"><small>${pack().name} 20:58</small><p>${line.now}</p></div>
+        </div>`
+      }
+
+      function composer(size) {
+        const work = state.moment === "work"
+        return `<form class="composer" data-size="${size}">
+          <textarea rows="1" placeholder="${work ? "補足を書く（作業は止めずに届く）" : `${pack().name}への依頼を書く`}"></textarea>
+          <div class="c-bar">
+            <button type="button" class="c-btn" aria-label="画像やファイルを添える">＋</button>
+            <span class="c-hint">/ コマンド　@ ファイル</span>
+            ${
+              work
+                ? `<button type="button" class="c-btn">止める</button>`
+                : `<button class="c-btn c-send">送る<kbd>⌘↩</kbd></button>`
+            }
+          </div>
+        </form>`
+      }
+
+      function inquiry() {
+        return `<form class="inq">
+          <header>${pack().name}からのお伺い<span>1 / 1 ・ 待って 0:12</span></header>
+          <h2>変換表はどこに置く？</h2>
+          <dl>
+            <div><dt>聞く理由</dt><dd>置き場の好みが分からず、こちらで決めるとあとで張り替えになりやすい。</dd></div>
+            <div><dt>確かめた</dt><dd>置き場は今3か所に分かれていて、どれも同じ形をしている。</dd></div>
+            <div><dt>おすすめ</dt><dd>設定ファイル。方針の文書に「置き場を1か所にまとめたい」とある。</dd></div>
+          </dl>
+          <div role="radiogroup" aria-label="変換表の置き場">
+            <button type="button" class="opt" role="radio" aria-checked="true"><kbd>1</kbd><b>設定ファイルに置く</b><em>おすすめ</em><span>起動のときに1回読む。直したら起こし直す</span></button>
+            <button type="button" class="opt" role="radio" aria-checked="false"><kbd>2</kbd><b>コードの定数に置く</b><span>読むのは速いが、直すたびに組み立て直す</span></button>
+            <button type="button" class="opt" role="radio" aria-checked="false"><kbd>3</kbd><b>課題の置き場から毎回引く</b><span>いつも最新だが、開くたびに 0.2 秒ほど待つ</span></button>
+          </div>
+          <footer>
+            <input placeholder="選択肢にない答えを書く" aria-label="選択肢にない答え">
+            <button type="button" class="c-btn">任せる</button>
+            <button class="c-btn c-send">これで答える<kbd>↩</kbd></button>
+          </footer>
+        </form>`
+      }
+      const dock = (size = "line") => (state.moment === "ask" ? inquiry() : composer(size))
+
+      function report() {
+        return `<div class="r-head" id="sec-0"><span class="chip">T-002</span><span>ID の変換を新旧どちらの形でも受け付ける</span><span class="done">✓ 完了</span><span class="sp">所要 4分12秒 ・ 手順 12</span></div>
+          <p class="r-ask">頼んだこと: 古い形の ID を貼っても課題が開くようにして</p>
+          <p class="lead">次から、古い形の ID を貼っても同じ課題が開く。</p>
+          <p class="lead2">新しい形の ID の読み方は変えていない。</p>
+          <div class="stats">
+            <div class="stat"><b><i>1 →</i>2</b><span>受け付ける ID の形</span></div>
+            <div class="stat"><b><i>8 →</i>0 件</b><span>開けなかった古い形の ID</span></div>
+            <div class="stat"><b>3,152 件</b><span>通った単体テスト</span></div>
+          </div>
+          <div class="checks"><span>型検査</span><span>lint</span><span>整形</span><span>単体 3,152</span><span>E2E 71</span></div>
+          <figure>
+            <svg class="flow" viewBox="0 0 720 168" role="img" aria-label="貼られた ID が課題を開くまでの流れ">
+              <defs><marker id="ar" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 8 4 0 8z" fill="currentColor"/></marker></defs>
+              <g class="n"><rect x="0" y="62" width="120" height="44" rx="9"/><text x="60" y="89">貼られた ID</text></g>
+              <g class="n"><rect x="176" y="62" width="128" height="44" rx="9"/><text x="240" y="89">形を見分ける</text></g>
+              <g class="n new"><rect x="372" y="12" width="150" height="44" rx="9"/><text x="447" y="39">変換表で引く</text></g>
+              <g class="n"><rect x="372" y="112" width="150" height="44" rx="9"/><text x="447" y="139">そのまま使う</text></g>
+              <g class="n"><rect x="592" y="62" width="128" height="44" rx="9"/><text x="656" y="89">課題を開く</text></g>
+              <path class="e" d="M120 84H170" marker-end="url(#ar)"/>
+              <path class="e" d="M304 76C338 70 340 42 366 36" marker-end="url(#ar)"/>
+              <path class="e" d="M304 92C338 98 340 126 366 132" marker-end="url(#ar)"/>
+              <path class="e" d="M522 34C562 38 564 70 587 78" marker-end="url(#ar)"/>
+              <path class="e" d="M522 134C562 130 564 98 587 90" marker-end="url(#ar)"/>
+              <text class="l" x="328" y="40">古い形</text><text class="l" x="324" y="136">新しい形</text>
+            </svg>
+            <figcaption>図 1　貼られた ID が課題を開くまで。色の付いた「変換表で引く」が今回足した道。</figcaption>
+          </figure>
+          <h2 id="sec-1">変換は1か所にまとめた</h2>
+          <p>ID を読む場所は <code>toId</code> の1か所だけで、呼ぶ側の2か所には手を入れていない。古い形かどうかは先頭の文字で見分け、古い形のときだけ変換表を引く。表に無い ID は「見つからない」と返し、何も開かない。</p>
+          <table>
+            <thead><tr><th>貼られた形</th><th>例</th><th>扱い</th></tr></thead>
+            <tbody>
+              <tr><td>古い形</td><td><code>T-002</code></td><td>変換表で新しい形に直してから開く</td></tr>
+              <tr><td>新しい形</td><td><code>GH-2002</code></td><td>そのまま開く</td></tr>
+              <tr><td>どちらでもない</td><td><code>2002</code></td><td>「見つからない」と返す</td></tr>
+            </tbody>
+          </table>
+          <h2 id="sec-2">採らなかった案</h2>
+          <ul class="opts">
+            <li><span class="verdict adopt">✓ 採った</span><b>読む場所で両方の形を受ける</b><span>呼ぶ側を変えずに済み、直す場所が1つで足りる</span></li>
+            <li><span class="verdict">× 採らない</span><b>古い ID を一括で書き換える</b><span>外の文書やコミットに残った古い ID は書き換えられない</span></li>
+            <li><span class="verdict">× 採らない</span><b>貼る側で直してもらう</b><span>覚えることが増え、貼り間違いが残る</span></li>
+          </ul>
+          <h2 id="sec-3">確かめていないこと</h2>
+          <p>変換表に載っていない古い ID が、実際にどれだけ残っているかは数えていない。数えるなら、課題の置き場の閉じた課題を古い形で引き、当たらなかった件を並べる。</p>`
+      }
+
+      function work() {
+        return `<p class="w-req">頼んだこと: 古い形の ID を貼っても課題が開くようにして</p>
+          <h1 class="w-title">ID の変換を新旧どちらの形でも受け付ける</h1>
+          <p class="w-meta">フェーズ 2 / 3 ・ 経過 <time data-tick>1:54</time> ・ あと約3分の見込み</p>
+          <ol class="tl">
+            <li class="past"><h3>今の形を調べる<small>1分12秒</small></h3>
+              <div class="interim"><small>ここまでで分かったこと</small>ID は <code>toId</code> の1か所で変換していて、呼ぶ側は2か所だった。</div></li>
+            <li class="now"><h3>変換を両方の形に対応させる<small>0:42</small></h3>
+              <ul class="live">
+                <li><code>id-convert.ts</code> を書き換えた</li>
+                <li>テストを3件足した</li>
+                <li class="cur">テストを走らせている<span class="t">pnpm run test ・ 12秒</span></li>
+              </ul></li>
+            <li class="next"><h3>文書と検証を揃える</h3></li>
+          </ol>`
+      }
+      const content = () => (state.moment === "deliver" ? report() : work())
+
+      function greet(withComposer = true, withVoice = true) {
+        return `${
+          withVoice
+            ? `<p class="g-who">${pack().name}</p><h1 class="g-voice">${pack().lines.greet.now}</h1>`
+            : `<h1 class="w-title">何から始める？</h1>`
+        }
+          ${withComposer ? composer("large") : ""}
+          <section class="g-group"><h3>前回の続き</h3>
+            <button class="g-row"><span>一覧の並べ替えを覚えておく作業が、検証の手前で止まっている</span><em>続きから頼む</em></button>
+          </section>
+          <section class="g-group"><h3>着手できるタスク</h3>
+            <button class="g-row"><code>T-101</code><span>古い形の ID を貼っても課題が開くようにする</span><em>頼む</em></button>
+            <button class="g-row"><code>T-103</code><span>設定の読み込みを1か所にまとめる</span><em>頼む</em></button>
+            <button class="g-row"><code>T-106</code><span>一覧の並べ替えを覚えておく</span><em>頼む</em></button>
+          </section>`
+      }
+
+      function outline() {
+        return `<nav class="outline" aria-label="このレポートの目次"><p class="side-h">このレポート</p>
+          <a class="cur" data-to="sec-0">結論</a><a data-to="sec-1">変換は1か所にまとめた</a><a data-to="sec-2">採らなかった案</a><a data-to="sec-3">確かめていないこと</a></nav>`
+      }
+      function margin() {
+        if (state.moment === "deliver") {
+          return `${outline()}
+            <article class="slip"><small>聞 1 ・「変換表で引く」について</small><p>表に無い古い ID はどうなる？</p><p class="a">「見つからない」と返して、何も開かない。</p></article>`
+        }
+        return `<p class="side-h">この作業</p>
+          <dl class="facts">
+            <div><dt>フェーズ</dt><dd>2 / 3</dd></div>
+            <div><dt>経過</dt><dd><time data-tick>1:54</time></dd></div>
+            <div><dt>見込み</dt><dd>あと約3分</dd></div>
+            <div><dt>走らせた手順</dt><dd>7</dd></div>
+          </dl>
+          <p class="facts-note">見込みは、似た大きさの過去の作業5回の所要から出す。</p>`
+      }
+      function tasks() {
+        return `<p class="side-h">タスク　着手できる 3</p>
+          <ul class="tasks">
+            <li><code>T-101</code>古い形の ID を貼っても課題が開くようにする</li>
+            <li><code>T-103</code>設定の読み込みを1か所にまとめる</li>
+            <li><code>T-106</code>一覧の並べ替えを覚えておく</li>
+          </ul>
+          <p class="side-h">使用量</p>
+          <dl class="facts"><div><dt>文脈</dt><dd>61%</dd></div><div><dt>5時間枠</dt><dd>34%</dd></div><div><dt>7日枠</dt><dd>61%</dd></div></dl>`
+      }
+
+      const SHELLS = {
+        // A: 画面全体が舞台。左に立ち絵、中央に紙、右に欄外。入力欄は紙の下端に浮く。
+        A() {
+          const right =
+            state.moment === "greet"
+              ? `<div class="A-home">${greet()}</div>`
+              : `<div class="A-sheet tone tone-main"><main class="paper" id="paper">${content()}</main><div class="dock">${dock()}</div></div>
+                 <aside class="A-margin">${margin()}</aside>`
+          return `<div class="A shell" data-moment="${state.moment}">
+            <div class="scene"></div>
+            <aside class="A-stage">${room()}${state.moment === "greet" ? "" : bubbles()}${portrait()}</aside>
+            <div class="A-right">${right}</div>
+          </div>`
+        },
+        // B: 中央の1列。頭の帯・読む面・下のドック（顔を出す立ち絵と、いまのセリフと、入力欄）。
+        B() {
+          const head = `<header class="B-head"><span class="room-name">tsukumo-3</span>
+            <span class="room-state" data-state="${state.moment}"><i></i>${STATE_LABEL[state.moment]}</span>${roomNav()}</header>`
+          if (state.moment === "greet") {
+            return `<div class="B shell" data-moment="greet">${head}
+              <main class="B-main tone tone-main"><div class="B-home paper"><div class="window">${portrait()}</div>${greet()}</div></main></div>`
+          }
+          const line = pack().lines[state.moment]
+          return `<div class="B shell" data-moment="${state.moment}">${head}
+            <main class="B-main tone tone-main"><div class="B-col"><div class="paper" id="paper">${content()}</div><aside class="B-margin">${margin()}</aside></div></main>
+            <footer class="B-dock"><div class="B-dockin">
+              <div class="B-bust window">${portrait()}</div>
+              <div class="B-talk"><p class="B-voice"><small>${pack().name}</small>${line.now}</p><div class="dock">${dock()}</div></div>
+            </div></footer>
+          </div>`
+        },
+        // C: 今の4領域の並びのまま、下段の高さとサイドバーの幅だけを局面で変える。
+        C() {
+          const deliver = state.moment === "deliver"
+          const rail = deliver || state.moment === "ask"
+          const main =
+            state.moment === "greet"
+              ? `<div></div><div class="paper">${greet(false, false)}</div>`
+              : `${deliver ? outline() : "<div></div>"}<div class="paper" id="paper">${content()}</div>`
+          return `<div class="C shell" data-moment="${state.moment}">
+            <header class="C-nav"><span class="room-name">tsukumo-3</span>
+              <span class="room-state" data-state="${state.moment}"><i></i>${STATE_LABEL[state.moment]}</span>${roomNav()}</header>
+            <main class="C-main tone tone-main">${main}</main>
+            <aside class="C-side" ${rail ? "data-rail" : ""}>${rail ? "タスク 3　　文脈 61%" : tasks()}</aside>
+            <div class="C-bottom">
+              <section class="C-char">${portrait()}${bubbles()}</section>
+              <section class="C-disp"><div class="dock">${dock(deliver ? "line" : "large")}</div></section>
+            </div>
+          </div>`
+        },
+        // 760px 以下は3案とも同じ縦1列（今の狭い画面の並び）。
+        N() {
+          const line = pack().lines[state.moment]
+          return `<div class="N shell" data-moment="${state.moment}">
+            <header class="N-head"><img class="face" src="${pack().dir}/face.png" alt="">
+              <div><span class="room-state" data-state="${state.moment}"><i></i>${STATE_LABEL[state.moment]}</span><b>${state.moment === "greet" ? "tsukumo-3" : "ID の変換を新旧どちらの形でも受け付ける"}</b></div></header>
+            <main class="N-main tone"><div class="paper" id="paper">${state.moment === "greet" ? greet(false) : content()}</div></main>
+            ${state.moment === "greet" ? "" : `<div class="N-voice"><img class="face" src="${pack().dir}/face.png" alt=""><div class="b-now"><p>${line.now}</p></div></div>`}
+            <div class="N-dock"><div class="dock">${dock()}</div></div>
+          </div>`
+        },
+      }
+
+      function render() {
+        const app = document.getElementById("app")
+        const body = document.body
+        body.dataset.tone = state.tone
+        body.dataset.fit = pack().fit
+        body.dataset.bar = state.bar ? "1" : "0"
+        body.style.setProperty("--accent", pack().accent)
+        body.style.setProperty("--ratio", String(pack().ratio))
+        for (const [name, values] of [["face", pack().face], ["bust", pack().bust]]) {
+          for (const [index, key] of ["z", "x", "y"].entries()) {
+            body.style.setProperty(`--${name}-${key}`, String(values[index]))
+          }
+        }
+        body.style.setProperty("--scene-img", `url("${pack().dir}/background.png")`)
+        app.innerHTML = SHELLS[narrow.matches ? "N" : state.variant]()
+
+        document.getElementById("pb-variant").textContent =
+          `${state.variant} ${VARIANTS[state.variant]}`
+        document.getElementById("pb-tone").textContent = state.tone === "night" ? "紙: 夜" : "紙: 昼"
+        document.getElementById("pb-pack").textContent = `立ち絵: ${pack().name}`
+        for (const button of document.querySelectorAll("#protobar [data-moment]")) {
+          button.setAttribute("aria-pressed", String(button.dataset.moment === state.moment))
+        }
+
+        clearInterval(ticker)
+        const ticks = app.querySelectorAll("[data-tick]")
+        if (ticks.length > 0) {
+          let seconds = 114
+          ticker = setInterval(() => {
+            seconds += 1
+            const label = `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`
+            for (const tick of ticks) tick.textContent = label
+          }, 1000)
+        }
+      }
+
+      // 動きを付けるのは局面が変わるときだけ（案・紙の色・立ち絵の切り替えは試作の操作なので動かさない）。
+      function go(patch) {
+        const posture = patch.moment !== undefined && patch.moment !== state.moment
+        Object.assign(state, patch)
+        const next = new URLSearchParams()
+        for (const key of ["variant", "moment", "tone", "pack"]) next.set(key, state[key])
+        if (!state.bar) next.set("bar", "0")
+        history.replaceState(null, "", `?${next}`)
+        const still = matchMedia("(prefers-reduced-motion: reduce)").matches
+        if (posture && document.startViewTransition && !still) document.startViewTransition(render)
+        else render()
+      }
+      const stepVariant = (step) => {
+        const keys = Object.keys(VARIANTS)
+        go({ variant: keys[(keys.indexOf(state.variant) + step + keys.length) % keys.length] })
+      }
+      const stepMoment = (step) =>
+        go({
+          moment: MOMENTS[(MOMENTS.indexOf(state.moment) + step + MOMENTS.length) % MOMENTS.length],
+        })
+
+      document.getElementById("protobar").addEventListener("click", (event) => {
+        const button = event.target.closest("button")
+        if (!button) return
+        if (button.dataset.step) stepVariant(Number(button.dataset.step))
+        if (button.dataset.moment) go({ moment: button.dataset.moment })
+        if (button.dataset.toggle === "tone") go({ tone: state.tone === "night" ? "day" : "night" })
+        if (button.dataset.toggle === "pack") {
+          go({ pack: state.pack === "karakasa" ? "tsukumo" : "karakasa" })
+        }
+      })
+      document.getElementById("app").addEventListener("click", (event) => {
+        const option = event.target.closest(".opt")
+        if (option) {
+          for (const each of document.querySelectorAll(".opt")) {
+            each.setAttribute("aria-checked", String(each === option))
+          }
+        }
+        const anchor = event.target.closest("[data-to]")
+        if (anchor) {
+          document.getElementById(anchor.dataset.to)?.scrollIntoView({ behavior: "smooth" })
+          for (const each of document.querySelectorAll(".outline a")) {
+            each.classList.toggle("cur", each === anchor)
+          }
+        }
+      })
+      // 送ると働くへ、答えると働くへ戻る（局面が変わる2つの瞬間を触って確かめるため）。
+      document.getElementById("app").addEventListener("submit", (event) => {
+        event.preventDefault()
+        if (state.moment !== "work") go({ moment: "work" })
+      })
+      document.addEventListener("keydown", (event) => {
+        const typing = event.target.closest?.("input, textarea, [contenteditable]")
+        if (typing) {
+          if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
+            event.target.form?.requestSubmit()
+          }
+          return
+        }
+        if (state.moment === "ask" && /^[1-3]$/.test(event.key)) {
+          document.querySelectorAll(".opt")[Number(event.key) - 1]?.click()
+          return
+        }
+        if (state.moment === "ask" && event.key === "Enter") go({ moment: "work" })
+        if (event.key === "ArrowLeft") stepVariant(-1)
+        if (event.key === "ArrowRight") stepVariant(1)
+        if (event.key === "ArrowUp") stepMoment(-1)
+        if (event.key === "ArrowDown") stepMoment(1)
+        if (event.key === "t") go({ tone: state.tone === "night" ? "day" : "night" })
+        if (event.key === "h") go({ bar: !state.bar })
+      })
+      narrow.addEventListener("change", render)
+
+      // 手元に唐傘の素材が無ければ、同梱の立ち絵に落とす。
+      const probe = new Image()
+      probe.addEventListener("error", () => {
+        if (state.pack === "karakasa") go({ pack: "tsukumo" })
+      })
+      probe.src = `${PACKS.karakasa.dir}/default.png`
+      for (const expression of Object.values(EXPRESSION)) {
+        new Image().src = `${pack().dir}/${expression}.png`
+      }
+      render()
+    </script>
+  </body>
+</html>
