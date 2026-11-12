@@ -17,7 +17,7 @@ import { Dispatch } from "./components/dispatch/dispatch.tsx"
 import { Greeting } from "./components/greeting/greeting.tsx"
 import { InquiryCard } from "./components/inquiry/inquiry.tsx"
 import { LiveAnnouncer } from "./components/live-announcer/live-announcer.tsx"
-import { MainView, PhoneActivity } from "./components/main-view/main-view.tsx"
+import { MainView, PhoneActivity, StageActivity } from "./components/main-view/main-view.tsx"
 import { PaperDesk } from "./components/paper-desk/paper-desk.tsx"
 import { PendingAskCard } from "./components/pending-ask-card/pending-ask-card.tsx"
 import { RequestedTaskBoard } from "./components/requested-task-board/requested-task-board.tsx"
@@ -63,7 +63,13 @@ export function PresentationalConversation(props: PresentationalConversationProp
         <Stage
           posture={props.posture}
           chatMode={props.chatMode}
-          figure={<CharacterView hands={<PhoneActivity />} placement="stage" />}
+          figure={
+            <CharacterView
+              hands={<PhoneActivity />}
+              stageHands={<StageActivity />}
+              placement="stage"
+            />
+          }
           desk={
             <PaperDesk
               posture={props.posture}

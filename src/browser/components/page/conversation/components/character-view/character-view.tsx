@@ -11,12 +11,15 @@ import {
 /** `hands` は狭い画面で顔と吹き出しの下に出す「手元」か「待ち」の行。 */
 export function CharacterView(props: {
   readonly hands?: ReactNode
+  /** 舞台の吹き出しの下に出す「手元」「待ち」の行。 */
+  readonly stageHands?: ReactNode
   readonly placement?: CharacterViewPlacement
 }): ReactElement {
   return (
     <PresentationalCharacterView
       {...useCharacterView()}
       hands={props.hands}
+      stageHands={props.stageHands}
       placement={props.placement}
     />
   )

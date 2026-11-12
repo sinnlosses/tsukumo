@@ -52,6 +52,7 @@ import { Welcome } from "./welcome.tsx"
 import { WorkStrip } from "./work-strip.tsx"
 
 export { PhoneActivity } from "./phone-activity.tsx"
+export { StageActivity } from "./stage-activity.tsx"
 
 /** 画面に出す中身。`card` は札に載せるターンで、`fresh` は働くあいだの中身から入れ替えたばかりのレポートか。 */
 type ShownView =

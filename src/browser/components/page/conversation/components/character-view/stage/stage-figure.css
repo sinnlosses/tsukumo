@@ -52,6 +52,10 @@
 .stage-figure-balloon {
   flex: none;
 }
+/* 吹き出しの紙の左右の余白。紙の下辺が段の下端（＝頭の印）に付く。 */
+.stage-figure-balloon {
+  padding: 0 var(--balloon-right-gap) 0 var(--gutter-region);
+}
 /* やり取りの流れが残りの高さを受け持つ。中身は下に寄せ、溢れた古い行は上へ押し出す。 */
 .stage-figure-thread {
   display: flex;

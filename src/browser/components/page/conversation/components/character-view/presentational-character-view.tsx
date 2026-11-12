@@ -24,12 +24,15 @@ import type { CharacterViewModel } from "./hooks/use-character-view.ts"
 import { ItemSeats } from "./item-seat-list.tsx"
 import { PhoneBalloon } from "./phone-balloon.tsx"
 import { SpeechLog } from "./speech-log.tsx"
+import { StageBalloon } from "./stage-balloon.tsx"
 
 /** 旧い器のキャラビューの領域に置くか、新しい器の舞台に置くか。 */
 export type CharacterViewPlacement = "classic" | "stage"
 
 type PresentationalCharacterViewProps = CharacterViewModel & {
   readonly hands?: ReactNode
+  /** 舞台の吹き出しの下に出す「手元」「待ち」の行。 */
+  readonly stageHands?: ReactNode
   readonly placement?: CharacterViewPlacement
 }
 
@@ -51,6 +54,7 @@ export function PresentationalCharacterView({
   seats,
   stage,
   hands,
+  stageHands,
   placement = "classic",
 }: PresentationalCharacterViewProps): ReactElement {
   const portraitIn = (className?: string): ReactNode =>
@@ -96,7 +100,24 @@ export function PresentationalCharacterView({
         <StageFigure
           stage={stage}
           portrait={portraitIn(styles["stage-figure-portrait"])}
-          thread={balloons}
+          thread={
+            <BalloonTrack
+              speeches={reaction.kind === "none" ? speeches.slice(0, -1) : speeches}
+              reaction={reaction}
+              speakerName={speakerName}
+              onToggleSpeech={onToggleSpeech}
+              withoutLatest={true}
+            />
+          }
+          balloon={
+            <StageBalloon
+              speeches={speeches}
+              reaction={reaction}
+              speakerName={speakerName}
+              onToggleSpeech={onToggleSpeech}
+              hands={stageHands}
+            />
+          }
         />
       ) : (
         <div className={styles["character-stage"]}>
@@ -127,6 +148,7 @@ function StageFigure(props: {
   readonly stage: CharacterStage
   readonly portrait: ReactNode
   readonly thread: ReactNode
+  readonly balloon: ReactNode
 }): ReactElement {
   return (
     <div className={styles["stage-figure"]} style={stageFigureStyle(props.stage)}>
@@ -140,7 +162,9 @@ function StageFigure(props: {
         <div className={styles["stage-figure-thread"]} data-slot="thread">
           {props.thread}
         </div>
-        <div className={styles["stage-figure-balloon"]} data-slot="balloon" />
+        <div className={styles["stage-figure-balloon"]} data-slot="balloon">
+          {props.balloon}
+        </div>
       </div>
     </div>
   )

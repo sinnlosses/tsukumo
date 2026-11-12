@@ -127,6 +127,11 @@ export function workActivityOf(source: WorkActivitySource): WorkActivity {
   }
 }
 
+/** 1行の頭に付ける語。 */
+export function workActivityLabelOf(activity: WorkActivity): string {
+  return activity.tone === "asking" ? "待ち" : "手元"
+}
+
 function retryOf(turn: TurnProgress, apiTrouble: ApiTrouble): WorkRetry {
   return turn.kind === "running" && apiTrouble.kind === "retrying"
     ? { kind: "retrying", ...apiRetryNotice(apiTrouble) }

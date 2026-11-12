@@ -3,6 +3,7 @@
 
 import type { ReactElement } from "react"
 
+import { workActivityLabelOf } from "./domain/work-activity.ts"
 import { useCurrentStep } from "./hooks/use-current-step.ts"
 
 export function PhoneActivity(): ReactElement {
@@ -13,7 +14,7 @@ export function PhoneActivity(): ReactElement {
   const { activity } = step
   return (
     <span data-tone={activity.tone}>
-      {activity.tone === "asking" ? "待ち" : "手元"}: {activity.text}
+      {workActivityLabelOf(activity)}: {activity.text}
     </span>
   )
 }

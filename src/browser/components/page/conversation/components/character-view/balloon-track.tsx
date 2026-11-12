@@ -27,6 +27,8 @@ type BalloonTrackProps = {
   readonly speakerName?: string
   /** 吹き出しを押したとき（セリフごとの `target` を渡して呼ぶ）。 */
   readonly onToggleSpeech: (turnId: number, index: number) => void
+  /** 最新の1件を別の場所（舞台の「いまの吹き出し」）が出していて、この並びには最新が無いか。 */
+  readonly withoutLatest?: boolean
 }
 
 export function BalloonTrack(props: BalloonTrackProps): ReactElement {
@@ -43,7 +45,7 @@ export function BalloonTrack(props: BalloonTrackProps): ReactElement {
 
   return (
     <div className={styles["balloon-track"]}>
-      {reaction.kind === "shown" && (
+      {reaction.kind === "shown" && props.withoutLatest !== true && (
         <BalloonRow
           key={`reaction-${reaction.reaction}`}
           sideTime={speakerName === undefined ? reaction.time : NO_TIME}
@@ -57,7 +59,7 @@ export function BalloonTrack(props: BalloonTrackProps): ReactElement {
           />
         </BalloonRow>
       )}
-      {reaction.kind === "writing" && (
+      {reaction.kind === "writing" && props.withoutLatest !== true && (
         <BalloonRow key="reaction-writing" sideTime={NO_TIME}>
           <Balloon
             text=""
@@ -69,7 +71,7 @@ export function BalloonTrack(props: BalloonTrackProps): ReactElement {
         </BalloonRow>
       )}
       {newestFirst.map((speech, index) => {
-        const latest = !reacting && index === 0
+        const latest = !reacting && index === 0 && props.withoutLatest !== true
         const speaker = latest ? speakerName : undefined
         return (
           <BalloonRow
