@@ -1,0 +1,21 @@
+.chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--inline-tight);
+  padding: var(--stack-tight) var(--gutter-region);
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--surface-raised);
+  color: var(--ink-soft);
+  font-size: var(--font-label);
+}
+.chip-button {
+  cursor: pointer;
+}
+.chip-button[aria-pressed="true"] {
+  background: var(--ink);
+  color: var(--surface);
+}
+.chip-count {
+  font-variant-numeric: tabular-nums;
+}

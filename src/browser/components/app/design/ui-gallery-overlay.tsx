@@ -4,9 +4,11 @@ import { useState, type ReactElement } from "react"
 
 import { BottomSheet } from "../../ui/bottom-sheet/bottom-sheet.tsx"
 import { Button } from "../../ui/button/button.tsx"
+import { CommandList, type CommandItem } from "../../ui/command-row/command-row.tsx"
 import { Dialog } from "../../ui/dialog/dialog.tsx"
 import { ImageZoom } from "../../ui/image-zoom/image-zoom.tsx"
 import { Menu, type MenuItem } from "../../ui/menu/menu.tsx"
+import { Sheet } from "../../ui/sheet/sheet.tsx"
 import { Text } from "../../ui/text/text.tsx"
 import styles from "./design.module.css"
 import { Group } from "./ui-gallery-group.tsx"
@@ -44,7 +46,15 @@ const MENU_ITEMS = [
   },
 ] as const satisfies readonly MenuItem[]
 
+const COMMAND_ITEMS = [
+  { key: "tasks", label: "タスク", hint: "移る" },
+  { key: "achievement", label: "成果", hint: "移る" },
+  { key: "settings", label: "設定", hint: "" },
+] as const satisfies readonly CommandItem[]
+
 export function OverlayGroups(): ReactElement {
+  const [sheetPaperOpen, setSheetPaperOpen] = useState(false)
+  const [picked, setPicked] = useState("まだ選んでいない")
   const [dialogOpen, setDialogOpen] = useState(false)
   const [sheetOpen, setSheetOpen] = useState(false)
   const [zoomOpen, setZoomOpen] = useState(false)
@@ -85,6 +95,32 @@ export function OverlayGroups(): ReactElement {
             板の中身（760px 以下の幅でだけ開いたままになる）
           </Text>
         </BottomSheet>
+      </Group>
+      <Group title="Sheet（右から重ねる紙。開くと出る）" parts={["sheet"]}>
+        <Opener label="Sheet を開く" onOpen={() => setSheetPaperOpen(true)} />
+        <Sheet
+          open={sheetPaperOpen}
+          title="見本の紙"
+          sub={{ kind: "shown", text: "補いの一行" }}
+          flush={false}
+          onClose={() => setSheetPaperOpen(false)}
+        >
+          <Text element="p" size="body" tone="ink" weight="normal" className="">
+            紙の本文（架空の短い文）
+          </Text>
+        </Sheet>
+      </Group>
+      <Group title="CommandList（探すの一覧。↑ ↓ と Enter）" parts={["command-row"]}>
+        <div className={styles["design-input"]}>
+          <CommandList
+            ariaLabel="見本の一覧"
+            items={COMMAND_ITEMS}
+            onSelect={(key) => setPicked(key)}
+          />
+          <Text element="span" size="secondary" tone="ink-quiet" weight="normal" className="">
+            選んだ行: {picked}
+          </Text>
+        </div>
       </Group>
       <Group title="Menu（開くと出る）" parts={["menu"]}>
         <Menu triggerLabel="見本のメニュー" disabled={false} items={MENU_ITEMS} className="" />

@@ -205,6 +205,10 @@
   --inline-group: var(--space-lg);
   --gutter-region: var(--space-md);
   --gutter-page: var(--space-lg);
+  --gutter-sheet: var(--space-3xl);
+  --inset-sheet-head: calc(var(--space-xl) + var(--space-2xs)) var(--gutter-sheet)
+    calc(var(--space-md) + var(--space-2xs));
+  --stack-sheet-end: var(--spacing-10);
 
   --radius-sm: 0.375rem;
   --radius-md: 0.625rem;

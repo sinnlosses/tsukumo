@@ -53,12 +53,12 @@ export function RequestBlock(props: RequestBlockProps): ReactElement {
       {hasChips && (
         <div className={styles["request-chips"]}>
           {chips.command !== undefined && (
-            <Chip className={styles["is-command"] ?? ""}>{chips.command}</Chip>
+            <RequestChip className={styles["is-command"] ?? ""}>{chips.command}</RequestChip>
           )}
           {chips.tasks.map((task) => (
             <span key={task.id} className={styles["request-chip-group"]}>
-              <Chip className={styles["is-task"]}>{task.id}</Chip>
-              <Chip className="">{task.summary}</Chip>
+              <RequestChip className={styles["is-task"]}>{task.id}</RequestChip>
+              <RequestChip className="">{task.summary}</RequestChip>
             </span>
           ))}
           <PromptImageThumbnails images={images.slice(0, MAX_THUMBNAILS)} size="chip" />
@@ -112,12 +112,12 @@ export function RequestBlock(props: RequestBlockProps): ReactElement {
   )
 }
 
-type ChipProps = {
+type RequestChipProps = {
   readonly className: string
   readonly children: string
 }
 
-function Chip(props: ChipProps): ReactElement {
+function RequestChip(props: RequestChipProps): ReactElement {
   return (
     <span className={clsx(styles["request-chip"], props.className)}>
       <Text element="span" size="label" tone="inherit" weight="inherit" className="">

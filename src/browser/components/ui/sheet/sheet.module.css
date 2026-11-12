@@ -1,0 +1,41 @@
+/* 紙の面・動きは Astryx の `Drawer` が持つ。ここは見本の形（上を 16px あけ、左上だけ丸める）と中の並べ方。 */
+
+.sheet {
+  inset-block-start: 16px;
+  block-size: auto;
+  border-radius: var(--radius-lg) 0 0 0;
+  background: var(--surface);
+  box-shadow: var(--shadow-sheet);
+}
+.sheet-frame {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.sheet-head {
+  display: flex;
+  flex: none;
+  align-items: baseline;
+  gap: var(--inline-control);
+  padding: var(--inset-sheet-head);
+}
+.sheet-title {
+  display: flex;
+  flex: 1;
+  align-items: baseline;
+  gap: var(--inline-control);
+}
+.sheet-close {
+  align-self: center;
+}
+.sheet-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  scrollbar-width: thin;
+  padding: 0 var(--gutter-sheet) var(--stack-sheet-end);
+}
+.sheet-body-flush {
+  padding: 0;
+  overflow: hidden;
+}
