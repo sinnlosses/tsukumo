@@ -162,11 +162,11 @@ describe("設定の歯車（帯の右端）", () => {
     expect(document.activeElement).toBe(gear())
   })
 
-  it("初めは「見た目」の面で、地・領域・字の色の3つを出す", () => {
+  it("初めは「見た目」の面で、会話の画面の器と、地・領域・字の色の3つを出す", () => {
     renderScreenNav()
     fireEvent.click(gear())
 
-    expect(faceLabels()).toEqual(["地の色", "領域の色", "字の色"])
+    expect(faceLabels()).toEqual(["会話の画面", "地の色", "領域の色", "字の色"])
   })
 
   it("ナビは5項目で、選んだ項目が aria-current になり面が替わる", () => {
@@ -198,7 +198,7 @@ describe("設定の歯車（帯の右端）", () => {
 
     fireEvent.click(gear())
 
-    expect(faceLabels()).toEqual(["地の色", "領域の色", "字の色"])
+    expect(faceLabels()).toEqual(["会話の画面", "地の色", "領域の色", "字の色"])
   })
 
   it("見た目の面の見本の帯が、選んだ色を映す", () => {

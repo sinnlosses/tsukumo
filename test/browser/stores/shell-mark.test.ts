@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest"
 
-import { applyShellMark } from "../../../src/browser/stores/shell-mark.ts"
+import { applyShellMark, shownShell } from "../../../src/browser/stores/shell-mark.ts"
 
 afterEach(() => {
   localStorage.clear()
@@ -27,5 +27,14 @@ describe("器の切り替えの印", () => {
   it("知らない値の引数は印を変えない", () => {
     markFor("?shell=stage")
     expect(markFor("?shell=paper")).toBe("stage")
+  })
+
+  it("立てた印を読み、立っていないか知らない値なら旧い器として読む", () => {
+    const root = document.createElement("html")
+    expect(shownShell(root)).toBe("classic")
+    applyShellMark("?shell=stage", root)
+    expect(shownShell(root)).toBe("stage")
+    root.dataset["shell"] = "paper"
+    expect(shownShell(root)).toBe("classic")
   })
 })

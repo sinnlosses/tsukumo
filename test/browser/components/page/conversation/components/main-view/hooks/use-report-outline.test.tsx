@@ -15,6 +15,7 @@ import {
 const OUTLINE_PANEL_STORAGE_KEY = "tsukumo-outline-panel:v1"
 
 const ONE_TURN = {
+  column: true,
   turns: [
     {
       id: 0,

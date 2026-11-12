@@ -23,7 +23,7 @@ const Achievement = deferredScreen(
 )
 const Design = deferredScreen(async () => (await import("./design/design.tsx")).Design)
 
-/** 狭い画面の引き出しに差し込む中身は、サイドバーと会話の画面の部品を含むので、ここで渡す。 */
+/** 狭い画面の引き出しと新しい器の欄外に差し込む中身は、サイドバーと会話の画面の部品を含むので、ここで渡す。 */
 export const LAYOUT_SCREENS = {
   skipLink: <SkipLink />,
   nav: (
@@ -37,7 +37,10 @@ export const LAYOUT_SCREENS = {
     />
   ),
   diaryNotice: <DiaryNotice />,
-  conversation: <Conversation />,
+  conversation: {
+    classic: <Conversation shell={{ kind: "classic" }} />,
+    stage: <Conversation shell={{ kind: "stage", margin: <TurnList /> }} />,
+  },
   overlay: {
     character: <Character />,
     "token-usage": <TokenUsage />,

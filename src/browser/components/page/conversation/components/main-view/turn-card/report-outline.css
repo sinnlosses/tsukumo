@@ -207,9 +207,13 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-/* 狭い画面でだけ出す、本文の上端の知らせの行。 */
+/* 列が無いとき（狭い画面と、列を置かない器）だけ出す、本文の上端の知らせの行。 */
 .outline-phone-notice {
   display: none;
+}
+.outline-frame[data-outline="hidden"] .outline-phone-notice {
+  display: block;
+  padding-bottom: var(--stack-block);
 }
 
 /* 狭い画面（760px 以下）では列を出さず、本文が幅いっぱいを取る。 */

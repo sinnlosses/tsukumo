@@ -3,8 +3,16 @@
 import type { ReactElement } from "react"
 
 import { useSession } from "../../../stores/session.ts"
-import { PresentationalConversation } from "./presentational-conversation.tsx"
+import {
+  PresentationalConversation,
+  type ConversationShell,
+} from "./presentational-conversation.tsx"
 
-export function Conversation(): ReactElement {
-  return <PresentationalConversation chatMode={useSession((session) => session.state.chatMode)} />
+export function Conversation(props: { readonly shell: ConversationShell }): ReactElement {
+  return (
+    <PresentationalConversation
+      chatMode={useSession((session) => session.state.chatMode)}
+      shell={props.shell}
+    />
+  )
 }

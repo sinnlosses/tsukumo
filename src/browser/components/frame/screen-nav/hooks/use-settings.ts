@@ -37,6 +37,7 @@ import {
   useRevealSpeedSetting,
   type ScreenNavSettingsRevealSpeed,
 } from "./use-reveal-speed-setting.ts"
+import { useShellSetting, type ScreenNavSettingsShell } from "./use-shell-setting.ts"
 
 /** 新しいセッションの既定の操作子。表示はサーバから届いた値だけに従い、押した側へ先に倒さない。 */
 type ScreenNavSettingsSessionDefault = {
@@ -66,6 +67,7 @@ export type ScreenNavSettings = {
   readonly sessionDefault: ScreenNavSettingsSessionDefault
   readonly revealSpeed: ScreenNavSettingsRevealSpeed
   readonly launchSkill: ScreenNavSettingsLaunchSkill
+  readonly shell: ScreenNavSettingsShell
   /** 上書きが1つも無いときは押せない（戻す先が無い）。 */
   readonly resetDisabled: boolean
   readonly onReset: () => void
@@ -80,6 +82,7 @@ export function useSettings(): ScreenNavSettings {
   const color = useAppearanceColor()
   const revealSpeed = useRevealSpeedSetting()
   const launchSkill = useLaunchSkillSetting()
+  const shell = useShellSetting()
   const [open, setOpen] = useState(false)
   const toggleRef = useRef<HTMLButtonElement>(null)
 
@@ -145,6 +148,7 @@ export function useSettings(): ScreenNavSettings {
     },
     revealSpeed,
     launchSkill,
+    shell,
     toggleRef,
   }
 }

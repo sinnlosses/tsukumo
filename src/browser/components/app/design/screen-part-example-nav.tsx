@@ -100,6 +100,7 @@ const PARTS: ScreenNavParts = {
     },
     revealSpeed: { value: "standard", onChange: noop },
     launchSkill: { value: "", onChange: noop },
+    shell: { value: "classic", onChange: noop },
     resetDisabled: true,
     onReset: noop,
     toggleRef: createRef(),

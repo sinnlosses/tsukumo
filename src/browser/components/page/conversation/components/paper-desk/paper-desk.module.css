@@ -1,0 +1,71 @@
+/* 舞台の右の場所（紙・浮く入力欄・欄外）。値は見本 `docs/history/mockup/ui-rebuild-2026-11-12/whole.html` の `.A-sheet`・`.paper`・`.dock`・`.A-margin`。 */
+.paper-sheet {
+  --paper-max-width: 880px;
+  --paper-fade-height: 110px;
+  /* 紙の右端の、転がす棒の幅。下端の溶かしをここに掛けない。 */
+  --paper-scrollbar-room: 12px;
+  --paper-dock-inline: 30px;
+  --paper-dock-bottom: 16px;
+  position: relative;
+  display: flex;
+  flex: 0 1 var(--paper-max-width);
+  min-width: 0;
+}
+/* 中身のメインビューは、札の内側に本文の余白を持つ。紙の余白は、見本の余白からその分を引いた残り。
+   `--region-padding` は中身が札を縁まで広げる量で、紙では札を縁まで広げない。
+   お伺いのカードの高さの上限は紙の内寸を `cqh` で読む。 */
+.paper {
+  --region-padding: 0px;
+  --paper-padding-top: 18px;
+  --paper-padding-inline: 44px;
+  /* 浮く入力欄の下に本文の終わりが隠れないだけ空ける。 */
+  --paper-dock-room: 200px;
+  flex: 1;
+  min-width: 0;
+  padding: var(--paper-padding-top) var(--paper-padding-inline) var(--paper-dock-room);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  background: var(--surface);
+  box-shadow: var(--shadow-sheet);
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  container-type: size;
+}
+/* 紙の下端で本文を紙の地へ溶かし、浮く入力欄のまわりに字が透けないようにする。 */
+.paper-sheet::after {
+  content: "";
+  position: absolute;
+  inset: auto var(--paper-scrollbar-room) 0 0;
+  height: var(--paper-fade-height);
+  background: linear-gradient(transparent, var(--surface) 64%);
+  pointer-events: none;
+}
+.paper-dock {
+  position: absolute;
+  right: var(--paper-dock-inline);
+  bottom: var(--paper-dock-bottom);
+  left: var(--paper-dock-inline);
+  z-index: 2;
+  padding: var(--inset-control);
+  border-radius: var(--radius-xl);
+  background: var(--surface-float);
+  box-shadow: var(--shadow-raised);
+}
+.paper-margin {
+  --paper-margin-max-width: 260px;
+  --paper-margin-min-width: 190px;
+  --paper-margin-padding: 42px 22px 0 28px;
+  flex: 0 1 var(--paper-margin-max-width);
+  display: flex;
+  flex-direction: column;
+  gap: var(--stack-block);
+  min-width: var(--paper-margin-min-width);
+  padding: var(--paper-margin-padding);
+  overflow-y: auto;
+}
+.paper-margin-title {
+  margin: 0;
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+  font-weight: 500;
+}

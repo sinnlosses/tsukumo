@@ -61,7 +61,8 @@ type ShownCard =
   | { readonly kind: "none" }
   | { readonly kind: "turn"; readonly turn: MainViewTurn; readonly fresh: boolean }
 
-export function MainView(): ReactElement {
+/** `outline` は札の左にやり取りの列を置くか。 */
+export function MainView(props: { readonly outline: "column" | "none" }): ReactElement {
   const { activeTurnId, newestTurnId, selectTurn } = useTurnSelection()
   // 畳んだ結果は姿ごとに1回だけ作られる（昇順。追従を決める `useTurnSelection` と同じものを読む）。
   const turns = useMainViewTurns()
@@ -163,6 +164,7 @@ export function MainView(): ReactElement {
           {cardTurn !== undefined && (
             <article className={styles["turn-card"]}>
               <ReportOutline
+                column={props.outline === "column"}
                 turns={outlineTurns}
                 activeTurnId={cardTurn.turn.id}
                 onSelectTurn={selectTurn}

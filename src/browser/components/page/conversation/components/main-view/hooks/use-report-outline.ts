@@ -56,6 +56,8 @@ type ReportOutlineTurn = {
 }
 
 export type ReportOutlineProps = {
+  /** 列を置いてよいか。置かないときは、知らせの行を本文の上端に出す。 */
+  readonly column: boolean
   /** 集計期間の中のやり取り。古い順（末尾が最新）。 */
   readonly turns: readonly ReportOutlineTurn[]
   readonly activeTurnId: number
@@ -316,7 +318,7 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
     }
   }, [])
 
-  const visible = props.turns.length >= 1
+  const visible = props.column && props.turns.length >= 1
 
   // 見出しへ移れと頼まれたら、その見出しへ転がして固定する。
   useMountEffect(() =>

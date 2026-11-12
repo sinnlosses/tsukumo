@@ -14,6 +14,7 @@ describe("ReportOutline の節の行", () => {
     localStorage.setItem("tsukumo-outline-panel:v1", JSON.stringify({ collapse: "open" }))
     render(
       <ReportOutline
+        column
         turns={[
           {
             id: 0,
@@ -47,6 +48,7 @@ describe("ReportOutline の節の行", () => {
     localStorage.setItem("tsukumo-outline-panel:v1", JSON.stringify({ collapse: "open" }))
     render(
       <ReportOutline
+        column
         turns={[
           {
             id: 0,
@@ -84,6 +86,7 @@ describe("ReportOutline のやり取りの行", () => {
     localStorage.setItem("tsukumo-outline-panel:v1", JSON.stringify({ collapse: "open" }))
     render(
       <ReportOutline
+        column
         turns={[
           {
             id: 0,
@@ -116,5 +119,33 @@ describe("ReportOutline のやり取りの行", () => {
     expect(
       screen.getByRole("button", { name: /架空の委譲の依頼（補足メッセージ 2件）/ }).textContent,
     ).toContain("脇 2")
+  })
+
+  it("列を置かないときは、やり取りの列を出さず本文だけを出す", () => {
+    localStorage.setItem("tsukumo-outline-panel:v1", JSON.stringify({ collapse: "open" }))
+    render(
+      <ReportOutline
+        column={false}
+        turns={[
+          {
+            id: 0,
+            title: "架空の依頼",
+            result: "done",
+            asideCount: 0,
+            headedSectionIds: [],
+            report: { kind: "none" },
+          },
+        ]}
+        activeTurnId={0}
+        onSelectTurn={() => undefined}
+        notice={{ kind: "none" }}
+        onNotice={() => undefined}
+      >
+        <p>架空の本文</p>
+      </ReportOutline>,
+    )
+
+    expect(screen.queryByRole("navigation", { name: "やり取り" })).toBeNull()
+    expect(screen.getByText("架空の本文")).toBeTruthy()
   })
 })

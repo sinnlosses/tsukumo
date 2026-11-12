@@ -42,7 +42,10 @@ function stubScreens(): LayoutScreens {
     skipLink: <div />,
     nav: <nav aria-label="画面のナビ" />,
     diaryNotice: stubElement("diary-notice"),
-    conversation: stubElement("conversation"),
+    conversation: {
+      classic: stubElement("conversation"),
+      stage: stubElement("stage-conversation"),
+    },
     overlay: {
       character: deferredStub("character"),
       "token-usage": deferredStub("token-usage"),
@@ -62,6 +65,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup()
   vi.restoreAllMocks()
+  delete document.documentElement.dataset["shell"]
 })
 
 async function moveTo(hash: string): Promise<void> {
@@ -70,6 +74,29 @@ async function moveTo(hash: string): Promise<void> {
     await new Promise((resolve) => setTimeout(resolve, 0))
   })
 }
+
+describe("Layout の器の切り替え", () => {
+  it("印が無いときは、旧い器の会話の画面と帯を出す", () => {
+    render(<Layout screens={stubScreens()} />)
+
+    expect(screen.getByTestId("conversation")).toBeDefined()
+    expect(screen.queryByTestId("stage-conversation")).toBeNull()
+    expect(screen.getByRole("navigation", { name: "画面のナビ" })).toBeDefined()
+  })
+
+  it("印が stage のときは、新しい器の会話の画面を出し、会話の画面では帯を出さない", async () => {
+    document.documentElement.dataset["shell"] = "stage"
+    render(<Layout screens={stubScreens()} />)
+
+    expect(screen.getByTestId("stage-conversation")).toBeDefined()
+    expect(screen.queryByTestId("conversation")).toBeNull()
+    expect(screen.queryByRole("navigation", { name: "画面のナビ" })).toBeNull()
+
+    await moveTo("#token-usage")
+
+    expect(screen.getByRole("navigation", { name: "画面のナビ" })).toBeDefined()
+  })
+})
 
 describe("Layout の描画の失敗の受け止め", () => {
   it("会話の画面だけのあいだは、会話以外の画面のモジュールを読まない。画面を開くと、その画面だけ読む", async () => {

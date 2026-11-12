@@ -46,7 +46,7 @@ function renderPage(): RenderResult {
   // 差し替えない（`window.fetch` は happy-dom の対象外なので落ちるだけで、テストは待たない）。
   return render(
     <QueryClientProvider client={createTestQueryClient()}>
-      <MainView />
+      <MainView outline="column" />
     </QueryClientProvider>,
   )
 }

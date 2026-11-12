@@ -8,6 +8,7 @@ import { Activity, type ReactElement } from "react"
 
 import type { Screen } from "../../stores/location-hash.ts"
 import { useScreen } from "../../stores/screen.tsx"
+import { shownShell, type Shell } from "../../stores/shell-mark.ts"
 import { ScreenBoundary } from "./screen-boundary.tsx"
 
 /**
@@ -19,7 +20,8 @@ export type LayoutScreens = {
   /** 画面のナビの帯（狭い画面の引き出しの中身を差し込み済み）。 */
   readonly nav: ReactElement
   readonly diaryNotice: ReactElement
-  readonly conversation: ReactElement
+  /** 会話の画面。器の印（`shownShell`）が `classic` なら旧い器、`stage` なら新しい器「舞台と紙」で描く。 */
+  readonly conversation: Record<Shell, ReactElement>
   readonly overlay: Record<Exclude<Screen, "conversation">, ReactElement>
 }
 
@@ -32,20 +34,23 @@ export type LayoutScreens = {
  */
 export function Layout(props: { readonly screens: LayoutScreens }): ReactElement {
   const screen = useScreen()
+  const shell = shownShell(document.documentElement)
   const { screens } = props
+  // 新しい器は会話の画面に帯を出さない。ほかの画面から戻る口が要るので、ほかの画面では帯を残す。
+  const showNav = shell === "classic" || screen !== "conversation"
   return (
     <>
       {screen === "conversation" && screens.skipLink}
-      {/* 画面のナビの帯。どの画面でも最上部に出るので、画面を選ぶ分岐の外に置く。
+      {/* 画面のナビの帯。旧い器ではどの画面でも最上部に出るので、画面を選ぶ分岐の外に置く。
           会話の画面の `<ConversationLayout>` は、帯が奪う高さを CSS の変数（theme.css）から読んで縮む。 */}
-      {screens.nav}
+      {showNav && screens.nav}
       {/* 書き終わりの知らせ。成果の画面でだけ出す。
           ほかの画面へ移っても「×」で消したかどうかを忘れないよう、外さずに `<Activity>` で隠す。 */}
       <Activity mode={screen === "achievement" ? "visible" : "hidden"}>
         <ScreenBoundary>{screens.diaryNotice}</ScreenBoundary>
       </Activity>
       <Activity mode={screen === "conversation" ? "visible" : "hidden"}>
-        <ScreenBoundary>{screens.conversation}</ScreenBoundary>
+        <ScreenBoundary>{screens.conversation[shell]}</ScreenBoundary>
       </Activity>
       {screen !== "conversation" && (
         <ScreenBoundary key={screen}>{screens.overlay[screen]}</ScreenBoundary>
