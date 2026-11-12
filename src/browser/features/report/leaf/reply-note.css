@@ -9,21 +9,16 @@
   align-items: center;
   gap: var(--stack-tight);
 }
-/* 本文の右の欄外に出す付箋の札。 */
+/* 余白の札の中の、頼んだ付箋。 */
 .note-card {
   display: flex;
   flex-direction: column;
   gap: var(--stack-tight);
-  padding: var(--inset-control);
-  border: 1px solid var(--rule-soft);
-  border-left: 3px solid var(--accent);
-  border-radius: var(--radius-lg);
-  background: var(--surface);
   color: var(--ink);
   overflow-wrap: anywhere;
 }
-.note-card.is-sent {
-  border-left-color: var(--state-ok);
+.note-card.is-sent .note-card-mark {
+  color: var(--state-ok);
 }
 .note-card-head {
   display: flex;

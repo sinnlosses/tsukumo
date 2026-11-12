@@ -7,7 +7,6 @@ import { type ReactElement, type ReactNode, use } from "react"
 
 import { foldInlineMarks } from "../../../../shared/report/inline-mark.ts"
 import type { LeafValue } from "../../../../shared/report/report-leaf-value.ts"
-import { type LeafAskSlot, useLeafAskThread } from "../ask-thread-context.ts"
 import {
   CompareSwap,
   figureClassName,
@@ -16,10 +15,9 @@ import {
   leafFrameClassNames,
   type SwapSettings,
 } from "../markdown.tsx"
-import { AskFrame, RowAskContext } from "./ask-frame.tsx"
-import { AskBadge } from "./ask-thread-view.tsx"
+import { AskFrame } from "./ask-frame.tsx"
 import styles from "./leaf.module.css"
-import { ReplyNoteCard, useLeafNotes } from "./reply-note-card.tsx"
+import { ReplyUnitMark, RowAskContext } from "./reply-unit-row.tsx"
 
 const CAPTION_LABELS = { figure: "図", table: "表" } as const
 
@@ -53,8 +51,6 @@ export function FoldedLeafFrame(
   props: ReportLeafFrameProps & { readonly fold: string; readonly swap: false | SwapSettings },
 ): ReactElement {
   const { captionNumber, gutterNotes } = props.value
-  const askThread = useLeafAskThread()
-  const replyNotes = useLeafNotes()
   const hasCaption = captionNumber.kind !== "none"
   // 題の行が畳みの外にあるときだけ、題の行が部品全体を指す単位になる。畳むと題の行ごと隠れるので、本体の全体を単位にする。
   const unit = hasCaption && props.fold.trim() === "" ? "caption" : "body"
@@ -64,10 +60,7 @@ export function FoldedLeafFrame(
         label={`${CAPTION_LABELS[captionNumber.kind]} ${String(captionNumber.ordinal)}`}
         title={props.title}
         unit={unit === "caption"}
-        aside={captionAsideOf(
-          captionNumber.kind === "table" ? props.captionAside : undefined,
-          askThread,
-        )}
+        aside={captionNumber.kind === "table" ? props.captionAside : undefined}
       />
     )
   const captionedClassName = clsx(
@@ -89,15 +82,15 @@ export function FoldedLeafFrame(
       )}
     </LeafFold>
   )
-  if (gutterNotes.length === 0 && replyNotes.length === 0) {
+  if (gutterNotes.length === 0) {
     return (
-      <AskFrame title={props.title} captioned={hasCaption} unit={unit}>
+      <AskFrame title={props.title} unit={unit}>
         {captioned}
       </AskFrame>
     )
   }
   return (
-    <AskFrame title={props.title} captioned={hasCaption} unit={unit}>
+    <AskFrame title={props.title} unit={unit}>
       <div className={leafFrameClassNames.withGutter}>
         {captioned}
         <div className={leafFrameClassNames.gutter}>
@@ -110,9 +103,6 @@ export function FoldedLeafFrame(
                 <InlineMarkdown text={note.text} />
               </p>
             </aside>
-          ))}
-          {replyNotes.map((numbered) => (
-            <ReplyNoteCard key={numbered.note.id} numbered={numbered} />
           ))}
         </div>
       </div>
@@ -154,18 +144,6 @@ function CaptionedBox(props: {
   )
 }
 
-function captionAsideOf(aside: ReactNode, askThread: LeafAskSlot): ReactNode {
-  if (askThread.kind === "none") {
-    return aside
-  }
-  return (
-    <span className={styles["ask-caption-aside"]}>
-      {aside}
-      <AskBadge thread={askThread.thread} />
-    </span>
-  )
-}
-
 function LeafCaption(props: {
   readonly label: string
   readonly title: string
@@ -188,6 +166,7 @@ function LeafCaption(props: {
           <InlineCodeText text={props.title} />
         </span>
       )}
+      {unit && <ReplyUnitMark />}
     </>
   )
   if (props.aside === undefined) {

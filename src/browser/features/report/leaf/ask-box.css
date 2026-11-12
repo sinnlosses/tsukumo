@@ -1,6 +1,6 @@
-/* 内容部品の指せる単位と余白の「聞く・頼む」と、部品の下に開くその場の入力欄。
+/* 内容部品の指せる単位と余白の「聞く・頼む」・余白の札・狭い幅のシート。
    余白（248px、本文との間 24px）は、本文の容器から引いても本文が 30em 以上残るときだけ右の列に出す。
-   出さない幅では、余白の口を外枠の右端に重ね、指した単位の右に出す。 */
+   出さない幅では、余白の口を外枠の右端に重ね、指した単位の右に出し、札のかわりにシートを出す。 */
 .ask-frame {
   --reply-margin-width: 248px;
   --reply-margin-gap: 24px;
@@ -116,18 +116,96 @@
 .ask-row-active > td {
   background: var(--surface-accent);
 }
-/* 聞いたことのある行は左に印の線を付ける。 */
-.ask-row-asked > td:first-child {
-  padding-left: var(--inline-control);
-  box-shadow: inset 3px 0 0 var(--accent);
+/* 単位の横の「聞 n」「頼 n」。単位の右上に置くときは corner。 */
+.reply-mark {
+  display: inline-flex;
+  gap: var(--stack-tight);
+  padding-inline-start: var(--inline-control);
+  vertical-align: baseline;
 }
-/* 聞いた部品の下の、問いと答えの対。 */
+.reply-mark-corner {
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 0;
+}
+.reply-mark-button {
+  min-height: 1.25rem;
+  padding: 0 var(--inline-control);
+  border-radius: var(--radius-pill);
+  background: var(--surface-accent);
+  color: var(--accent);
+  font-size: var(--font-secondary);
+  white-space: nowrap;
+}
+.ask-body,
+.reply-unit:not(tr) {
+  position: relative;
+}
+/* 指した単位の横の余白に出す札。上端は単位の上端（style の top）で、外枠の高さは変えない。 */
+.margin-card {
+  position: absolute;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--stack-block);
+  padding: var(--inset-card);
+  border: 1px solid var(--rule-soft);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  overflow-wrap: anywhere;
+}
+.margin-card > * + * {
+  padding-top: var(--stack-block);
+  border-top: 1px solid var(--rule-soft);
+}
+.margin-card .reply-port {
+  position: static;
+  align-self: flex-start;
+}
+/* 狭い幅で、札のかわりに画面の下から出すシート。document.body へ出すので画面を基準に置く。 */
+.reply-sheet {
+  position: fixed;
+  inset: auto 0 0 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: var(--stack-block);
+  max-height: 70vh;
+  padding: var(--inset-card);
+  overflow-y: auto;
+  border-top: 3px solid var(--accent);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  background: var(--surface);
+  box-shadow: 0 -4px 16px rgb(0 0 0 / 0.3);
+}
+.reply-sheet-head {
+  display: flex;
+  justify-content: flex-end;
+}
+.reply-sheet-close {
+  min-height: 1.75rem;
+  padding: var(--inset-control);
+}
+.reply-sheet-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--stack-block);
+}
+.reply-sheet-body > * + * {
+  padding-top: var(--stack-block);
+  border-top: 1px solid var(--rule-soft);
+}
+.reply-sheet-body .reply-port {
+  position: static;
+  align-self: flex-start;
+}
 .ask-thread {
   display: flex;
   flex-direction: column;
   gap: var(--stack-block);
-  padding-left: var(--gutter-region);
-  border-left: 3px solid var(--accent);
 }
 .ask-pair {
   display: flex;
@@ -150,20 +228,11 @@
   min-height: 1.5rem;
   padding: var(--inset-control);
 }
-.ask-caption-aside {
-  display: inline-flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--inline-control);
-}
+/* 札の中の入力欄。 */
 .ask-box {
   display: flex;
   flex-direction: column;
   gap: var(--stack-block);
-  padding: var(--inset-card);
-  border: 1px solid var(--accent);
-  border-radius: var(--radius-lg);
-  background: var(--surface);
 }
 .ask-target {
   color: var(--ink-soft);

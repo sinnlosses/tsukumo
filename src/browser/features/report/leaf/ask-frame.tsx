@@ -1,74 +1,48 @@
-// 内容部品の外枠に、指せる単位と余白の「聞く・頼む」を足す。口が渡され、節の中の内容部品のときだけ包む。
+// 内容部品の外枠に、指せる単位と余白の「聞く・頼む」・余白の札を足す。口が渡され、節の中の内容部品のときだけ包む。
 // それ以外は子をそのまま返す（包みの要素を足さない）。
-// 余白は本文の右の列で、指した単位の上端の高さに「聞く・頼む」を1つ出す。余白を出さない幅では、指した単位の右に出す。
-// 開いている入力欄は部品の中で1つ。部品全体の欄と行の欄は、同じ状態を取り合う。
-// キーボードは部品ごとに Tab の止まり場を1つ置き（roving tabindex）、中は ↑↓ で単位を動く。フォーカスが来た単位を指し、Enter か ⌘⌥M で欄を開く。
+// 余白は本文の右の列で、指した単位の上端の高さに「聞く・頼む」を1つ出す。聞いた対・付箋・開いた入力欄は、単位ごとの札にして同じ列に出す。
+// 開いている入力欄はレポートで1つ（`ReplyPoint` が持つ）。部品全体の欄と行の欄は、同じ状態を取り合う。
+// キーボードは部品ごとに Tab の止まり場を1つ置き（roving tabindex）、中は ↑↓ で単位を動く。Enter か ⌘⌥M で欄を開く。
 // 字を選んで指した単位の欄は、書き始めに選んだ字の引用を入れる。
 
-import clsx from "clsx"
-import {
-  createContext,
-  type KeyboardEvent,
-  type ReactElement,
-  type ReactNode,
-  use,
-  useRef,
-  useState,
-} from "react"
+import { type KeyboardEvent, type ReactElement, type ReactNode, use, useRef, useState } from "react"
 
 import type { ReplyTarget } from "../../../../shared/session/reply-target.ts"
-import { Button } from "../../../components/ui/button/button.tsx"
 import { useBeforePaintSync } from "../../../hooks/use-before-paint-sync.ts"
 import { useEventListener } from "../../../hooks/use-event-listener.ts"
 import { useReplyNotes, useReplySessionKey } from "../../../stores/reply-note-list.ts"
 import { useLeafAskThread } from "../ask-thread-context.ts"
-import { askLeafKey, type AskPair } from "../domain/ask-thread.ts"
+import { type AskPair, askLeafKey } from "../domain/ask-thread.ts"
 import { replyTargetOf } from "../domain/reply-target.ts"
 import { isOpenShortcut, type ReplyUnit, replyUnitOf, UNIT_SELECTOR } from "../domain/reply-unit.ts"
 import { LeafIdentityContext, SectionPointContext } from "../leaf-point-context.ts"
-import { ReplyPointContext } from "../reply-point.tsx"
+import { type OpenAsk, ReplyPointContext } from "../reply-point.tsx"
 import { ReplyPortContext } from "../reply-port.ts"
 import { AskBox, type AskMode } from "./ask-box.tsx"
-import { AskThreadView } from "./ask-thread-view.tsx"
 import styles from "./leaf.module.css"
-
-/** 単位が自分の印（指した・欄を開いた・聞いた）を読む口。`none` の部品は単位の印を出さない。 */
-export type RowAsk =
-  | { readonly kind: "none" }
-  | {
-      readonly kind: "available"
-      /** その行を指しているか。添字を渡さなければ部品全体を指しているか。 */
-      readonly isPointed: (index?: number) => boolean
-      /** その行について欄が開いているか（欄は部品の下に出し、行には印を付ける）。 */
-      readonly isOpen: (index: number) => boolean
-      /** その行について聞いたことがあるか（行に印の線を付ける）。 */
-      readonly isAsked: (index: number) => boolean
-      /** 単位の `tabIndex`。部品の中で Tab の止まり場は1つ（前に入っていた単位、無ければ部品全体の単位）で、ほかは -1。 */
-      readonly tabIndexOf: (index?: number) => 0 | -1
-    }
-
-export const RowAskContext = createContext<RowAsk>({ kind: "none" })
+import {
+  MarginCardBody,
+  MarginCards,
+  marginCardsOf,
+  pairScopeOf,
+  ReplyPortButton,
+} from "./margin-card-list.tsx"
+import { useLeafNotes } from "./reply-note-card.tsx"
+import { ReplySheet } from "./reply-sheet.tsx"
+import {
+  type AskScope,
+  type MarginTops,
+  marginTopsOf,
+  pointAt,
+  scopeKeyOf,
+  scopeSelectorOf,
+  unitScopeOf,
+  unitSelectorOf,
+} from "./reply-unit-dom.ts"
+import { type RowAsk, RowAskContext, ReplyUnitMark } from "./reply-unit-row.tsx"
 
 /** 何も指していないとき、レポートで最初に指せる単位の横の余白に出す書き添え。 */
 const HINT_TEXT = "字・行・案を選ぶと、ここに「聞く・頼む」が1つ出る"
-
-/** 押しても単位を指さない要素（単位の中のボタン・リンク・入力）。 */
-const INTERACTIVE_SELECTOR = "button, a, input, select, textarea, summary, label"
-
-type AskScope =
-  | { readonly kind: "leaf" }
-  | { readonly kind: "row"; readonly index: number; readonly firstCell: string }
-
-type OpenAsk =
-  | { readonly kind: "closed" }
-  | {
-      readonly kind: "open"
-      readonly scope: AskScope
-      readonly mode: AskMode
-      readonly initialText: string
-      /** 頼むに切り替えたときの書き始めの字。 */
-      readonly requestText: string
-    }
 
 type RowTargetSlot =
   | { readonly kind: "none" }
@@ -83,19 +57,8 @@ type RowTargetSlot =
       }) => ReplyTarget
     }
 
-type MarginTops = {
-  /** 指した単位の上端（外枠の上端から）。 */
-  readonly pointed: number
-  /** 書き添えを置く単位の上端。最初の行の単位、無ければ最初の単位。 */
-  readonly hint: number
-  /** この外枠がレポートで最初の外枠か。 */
-  readonly first: boolean
-}
-
 export function AskFrame(props: {
   readonly title: string
-  /** 題の行を持つ部品か。持たない部品は、答えの欄の頭にバッジを置く。 */
-  readonly captioned: boolean
   /** 部品全体を指す単位。`caption` は題の行（呼び出し側が印を置く）、`body` は本体の全体。 */
   readonly unit: "caption" | "body"
   readonly children: ReactNode
@@ -105,38 +68,54 @@ export function AskFrame(props: {
   const rowTarget = useRowTarget(props.title)
   const addNote = useReplyNotes((state) => state.addNote)
   const thread = useLeafAskThread()
-  const [open, setOpen] = useState<OpenAsk>({ kind: "closed" })
+  const notes = useLeafNotes()
   const frameRef = useRef<HTMLDivElement>(null)
-  const [tops, setTops] = useState<MarginTops>({ pointed: 0, hint: 0, first: false })
+  const [tops, setTops] = useState<MarginTops>({ pointed: 0, hint: 0, first: false, cards: {} })
   const [tabStop, setTabStop] = useState<{ readonly row?: number }>({})
+  const leafKey = rowTarget.kind === "available" ? rowTarget.leafKey : ""
   const pointed =
-    point.kind === "available" &&
-    rowTarget.kind === "available" &&
-    point.pointed?.leafKey === rowTarget.leafKey
-      ? point.pointed
-      : undefined
+    point.kind === "available" && point.pointed?.leafKey === leafKey ? point.pointed : undefined
+  const open =
+    point.kind === "available" && point.open?.leafKey === leafKey ? point.open : undefined
   const touched = point.kind === "available" && point.touched
   const quote = point.kind === "available" ? point.quote : ""
   const pointedSelector = pointed === undefined ? undefined : unitSelectorOf(pointed)
+  const narrow = point.kind === "available" && point.narrow
+  const sheet =
+    point.kind === "available" && narrow && point.sheet?.leafKey === leafKey
+      ? point.sheet
+      : undefined
+  const cards = marginCardsOf(
+    thread.kind === "asked" ? thread.thread.pairs : [],
+    notes,
+    open?.scope,
+    sheet?.scope,
+  )
   useBeforePaintSync(() => {
     const frame = frameRef.current
     if (frame === null) {
       return
     }
-    const next = marginTopsOf(frame, touched, pointedSelector)
-    setTops((current) =>
-      current.pointed === next.pointed && current.hint === next.hint && current.first === next.first
-        ? current
-        : next,
+    const next = marginTopsOf(
+      frame,
+      touched,
+      cards.map((card) => card.scope),
+      pointedSelector,
     )
-  }, [pointedSelector, touched])
+    setTops((current) => (JSON.stringify(current) === JSON.stringify(next) ? current : next))
+  }, [pointedSelector, touched, cards])
   useEventListener(
     document,
     "keydown",
     (event) => {
-      if (pointed !== undefined && !isOpenAt(open, pointed) && isOpenShortcut(event)) {
+      if (
+        point.kind === "available" &&
+        pointed !== undefined &&
+        !isOpenAt(pointed, open) &&
+        isOpenShortcut(event)
+      ) {
         event.preventDefault()
-        setOpen(openedOf(pointed, quote))
+        point.openAsk(openedOf(leafKey, pointed, quote))
       }
     },
     { enabled: pointed !== undefined },
@@ -144,16 +123,16 @@ export function AskFrame(props: {
   if (slot.kind === "none" || rowTarget.kind === "none" || point.kind === "none") {
     return <>{props.children}</>
   }
-  const { targetOf, sessionKey, leafKey } = rowTarget
+  const { targetOf, sessionKey } = rowTarget
   const closeAt = (scope: AskScope) => {
-    setOpen({ kind: "closed" })
+    point.closeAsk()
     frameRef.current?.querySelector<HTMLElement>(scopeSelectorOf(scope))?.focus()
   }
   const openAt = (scope: AskScope, mode: AskMode, initialText: string) => {
-    setOpen({ kind: "open", scope, mode, initialText, requestText: "" })
+    point.openAsk({ leafKey, scope, mode, initialText, requestText: "" })
   }
   const openUnit = (unit: ReplyUnit) => {
-    setOpen(openedOf(unit, pointed === unit ? quote : ""))
+    point.openAsk(openedOf(leafKey, unit, pointed === unit ? quote : ""))
   }
   const onUnitKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     const unitElement = event.target
@@ -179,7 +158,7 @@ export function AskFrame(props: {
       openUnit(unit)
     }
   }
-  const boxOf = (opened: Extract<OpenAsk, { readonly kind: "open" }>): ReactElement => {
+  const boxOf = (opened: OpenAsk): ReactElement => {
     const target = targetOf(
       opened.scope.kind === "row"
         ? { index: opened.scope.index, firstCell: opened.scope.firstCell }
@@ -209,13 +188,49 @@ export function AskFrame(props: {
     isPointed: (index) =>
       pointed !== undefined &&
       (index === undefined ? pointed.row === undefined : pointed.row?.index === index),
-    isOpen: (index) =>
-      open.kind === "open" && open.scope.kind === "row" && open.scope.index === index,
-    isAsked: (index) =>
-      thread.kind === "asked" && thread.thread.pairs.some((pair) => pair.row?.index === index),
+    isOpen: (index) => open?.scope.kind === "row" && open.scope.index === index,
+    marksOf: (index) => {
+      const key = index === undefined ? "leaf" : `row:${String(index)}`
+      const card = cards.find((candidate) => candidate.key === key)
+      return { asked: card?.pairs.length ?? 0, requested: card?.notes.length ?? 0 }
+    },
+    showUnit: (frame, index) => {
+      const element = frame.querySelector<HTMLElement>(
+        scopeSelectorOf(
+          index === undefined ? { kind: "leaf" } : { kind: "row", index, firstCell: "" },
+        ),
+      )
+      if (element === null) {
+        return
+      }
+      const unit = replyUnitOf(element, leafKey)
+      point.point(unit)
+      if (narrow) {
+        point.openSheet({ leafKey, scope: unitScopeOf(unit) })
+      }
+    },
     tabIndexOf: (index) => (index === tabStop.row ? 0 : -1),
   }
-  const hinted = !touched && tops.first
+  const pointedKey = pointed === undefined ? undefined : scopeKeyOf(unitScopeOf(pointed))
+  const portShown = pointed !== undefined && !isOpenAt(pointed, open)
+  const hinted = !touched && tops.first && cards.length === 0
+  const shownCards = narrow ? [] : cards
+  const sheetCard =
+    sheet === undefined ? undefined : cards.find((card) => card.key === scopeKeyOf(sheet.scope))
+  const actions = {
+    renderBox: () => (open === undefined ? <></> : boxOf(open)),
+    onPort: () => {
+      if (pointed !== undefined) {
+        openUnit(pointed)
+      }
+    },
+    onContinue: (pair: AskPair) => {
+      openAt(pairScopeOf(pair), "ask", "")
+    },
+    onRequest: (pair: AskPair) => {
+      openAt(pairScopeOf(pair), "request", pair.answer.kind === "answered" ? pair.answer.text : "")
+    },
+  }
   return (
     <RowAskContext value={rowAsk}>
       <div
@@ -249,41 +264,37 @@ export function AskFrame(props: {
             }}
             onKeyDown={onUnitKeyDown}
           >
+            {props.unit === "body" && <ReplyUnitMark corner />}
             {props.children}
           </div>
-          {thread.kind === "asked" && (
-            <AskThreadView
-              thread={thread.thread}
-              captioned={props.captioned}
-              onContinue={(pair) => {
-                openAt(scopeOf(pair), "ask", "")
-              }}
-              onRequest={(pair) => {
-                openAt(
-                  scopeOf(pair),
-                  "request",
-                  pair.answer.kind === "answered" ? pair.answer.text : "",
-                )
-              }}
-            />
-          )}
-          {open.kind === "open" && <div data-reply-keep="">{boxOf(open)}</div>}
         </div>
         <div className={styles["ask-margin"]} data-reply-keep="">
-          {pointed !== undefined && !isOpenAt(open, pointed) && (
-            <Button
-              variant="outline-accent"
-              size="label"
-              pressed="none"
-              disabled={false}
-              disclosure={{ kind: "none" }}
-              className={styles["reply-port"]}
+          <MarginCards
+            leafKey={leafKey}
+            cards={shownCards}
+            tops={tops.cards}
+            shifts={point.cardShifts}
+            {...(portShown && pointedKey !== undefined ? { pointedKey } : {})}
+            {...actions}
+          />
+          {sheetCard !== undefined && (
+            <ReplySheet onClose={point.closeSheet}>
+              <MarginCardBody
+                card={sheetCard}
+                withPort
+                {...actions}
+                onPort={() => {
+                  openAt(sheetCard.scope, "ask", "")
+                }}
+              />
+            </ReplySheet>
+          )}
+          {portShown && !shownCards.some((card) => card.key === pointedKey) && (
+            <ReplyPortButton
               onClick={() => {
                 openUnit(pointed)
               }}
-            >
-              聞く・頼む
-            </Button>
+            />
           )}
           {hinted && (
             <p className={styles["reply-hint"]} aria-hidden="true">
@@ -293,36 +304,6 @@ export function AskFrame(props: {
         </div>
       </div>
     </RowAskContext>
-  )
-}
-
-/** 案・主張の行。単位の口があれば押して指せる行にし、指した印を付ける。 */
-export function ReplyUnitRow(props: {
-  /** 書いた並びの添字。 */
-  readonly index: number
-  /** 指した所の行の字。 */
-  readonly label: string
-  /** 頼むの欄の書き始めの字。 */
-  readonly requestText: string
-  readonly className: string
-  readonly children: ReactNode
-}): ReactElement {
-  const rowAsk = use(RowAskContext)
-  if (rowAsk.kind === "none") {
-    return <div className={props.className}>{props.children}</div>
-  }
-  return (
-    <div
-      className={clsx(props.className, styles["reply-unit"])}
-      data-reply-unit="row"
-      data-reply-row={props.index}
-      data-reply-label={props.label}
-      data-reply-request={props.requestText}
-      data-pointed={rowAsk.isPointed(props.index) ? "" : undefined}
-      tabIndex={rowAsk.tabIndexOf(props.index)}
-    >
-      {props.children}
-    </div>
   )
 }
 
@@ -351,26 +332,10 @@ function useRowTarget(title: string): RowTargetSlot {
   }
 }
 
-/** 押した要素を含む外枠の中の単位を指す。単位の中のボタンなどを押したときと、単位の外を押したときは指さない。 */
-function pointAt(
-  target: EventTarget,
-  frame: Element,
-  leafKey: string,
-  point: (unit: ReplyUnit) => void,
-): void {
-  if (!(target instanceof Element) || target.closest(INTERACTIVE_SELECTOR) !== null) {
-    return
-  }
-  const unit = target.closest(UNIT_SELECTOR)
-  if (unit !== null && frame.contains(unit)) {
-    point(replyUnitOf(unit, leafKey))
-  }
-}
-
 /** 指した単位について、聞くの欄を開く。字を選んで指したなら、書き始めに引用を入れる。 */
-function openedOf(unit: ReplyUnit, quote: string): OpenAsk {
+function openedOf(leafKey: string, unit: ReplyUnit, quote: string): OpenAsk {
   return {
-    kind: "open",
+    leafKey,
     scope: unitScopeOf(unit),
     mode: "ask",
     initialText: quote === "" ? "" : `${quote}\n\n`,
@@ -378,53 +343,10 @@ function openedOf(unit: ReplyUnit, quote: string): OpenAsk {
   }
 }
 
-/** 単位の要素を外枠の中から引く選択子。 */
-function scopeSelectorOf(scope: AskScope): string {
-  return scope.kind === "leaf"
-    ? '[data-reply-unit="leaf"]'
-    : `[data-reply-row="${String(scope.index)}"]`
-}
-
-function unitSelectorOf(unit: ReplyUnit): string {
-  return scopeSelectorOf(unitScopeOf(unit))
-}
-
-/** 書き添えは、一度も指していないあいだ、レポートで最初の外枠の最初の行（無ければ最初の単位）の高さに置く。 */
-function marginTopsOf(frame: HTMLElement, touched: boolean, pointedSelector?: string): MarginTops {
-  const base = frame.getBoundingClientRect().top
-  const topOf = (element?: Element) =>
-    element === undefined ? 0 : Math.round(element.getBoundingClientRect().top - base)
-  const firstUnit = touched
-    ? undefined
-    : (frame.querySelector('[data-reply-unit="row"]') ??
-      frame.querySelector(UNIT_SELECTOR) ??
-      undefined)
-  return {
-    pointed:
-      pointedSelector === undefined ? 0 : topOf(frame.querySelector(pointedSelector) ?? undefined),
-    hint: topOf(firstUnit),
-    first:
-      firstUnit !== undefined &&
-      frame.closest("[data-report-body]")?.querySelector("[data-reply-frame]") === frame,
-  }
-}
-
 /** 指した単位について欄が開いているか（開いていれば「聞く・頼む」は出さない）。 */
-function isOpenAt(open: OpenAsk, unit: ReplyUnit): boolean {
-  if (open.kind === "closed") {
+function isOpenAt(unit: ReplyUnit, open?: OpenAsk): boolean {
+  if (open === undefined) {
     return false
   }
   return open.scope.kind === "row" ? open.scope.index === unit.row?.index : unit.row === undefined
-}
-
-function unitScopeOf(unit: ReplyUnit): AskScope {
-  return unit.row === undefined
-    ? { kind: "leaf" }
-    : { kind: "row", index: unit.row.index, firstCell: unit.row.firstCell }
-}
-
-function scopeOf(pair: AskPair): AskScope {
-  return pair.row === undefined
-    ? { kind: "leaf" }
-    : { kind: "row", index: pair.row.index, firstCell: pair.row.label }
 }

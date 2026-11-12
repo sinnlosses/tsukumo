@@ -71,13 +71,13 @@ test.describe("report → メインビュー", () => {
     await port.click()
     const field = room.page.getByRole("textbox", { name: /指した所/ })
     await expect(field).toBeFocused()
-    await expect(room.page.getByText("答えはこの下に返る。作業は始めない")).toBeVisible()
+    await expect(room.page.getByText("答えはこの札に返る。作業は始めない")).toBeVisible()
 
     await room.page.keyboard.press("Escape")
     await expect(field).toBeHidden()
   })
 
-  test("聞いた表の行の下に問いと答えの対と「聞 1・答えた」が出て、やり取りの列の節の行に「聞 1」が出る", async ({
+  test("聞いた表の行の横の余白の札に問いと答えの対が出て、行の横に「聞 1」、やり取りの列の節の行に「聞 1」が出る。欄を開いても外枠の高さは変わらない", async ({
     run,
   }) => {
     const room = await run.open({
@@ -91,12 +91,20 @@ test.describe("report → メインビュー", () => {
     const thread = room.page.getByRole("group", { name: "聞いたこと" })
     await expect(thread.getByText("E2E（会話）の行について")).toBeVisible()
     await expect(thread.getByText("なぜ E2E（会話）だけ遅いの？")).toBeVisible()
-    await expect(room.page.getByText("聞 1・答えた")).toBeVisible()
     await expect(room.page.getByRole("button", { name: "続けて聞く" })).toBeVisible()
-    await expect(room.page.getByText("聞 1", { exact: true })).toBeVisible()
+    await expect(room.page.getByRole("button", { name: "聞 1", exact: true })).toBeVisible()
+    await expect(room.page.getByText("聞 1", { exact: true })).toHaveCount(2)
+    await expect(room.page.getByText("答えた")).toHaveCount(0)
+
+    const frame = room.page.locator("[data-reply-frame]").first()
+    const before = await frame.boundingBox()
+    await room.page.locator('[data-reply-row="1"]').click()
+    await room.page.getByRole("button", { name: "聞く・頼む" }).click()
+    await expect(room.page.getByRole("textbox", { name: /指した所/ })).toBeVisible()
+    expect((await frame.boundingBox())?.height).toBe(before?.height)
   })
 
-  test("答えがまだ無い問いは、答えの場所に「作業は始めていない」が出て、バッジは答え待ち", async ({
+  test("答えがまだ無い問いは、余白の札の答えの場所に「作業は始めていない」が出て、印は答え待ちと区別しない", async ({
     run,
   }) => {
     const room = await run.open({
@@ -108,7 +116,7 @@ test.describe("report → メインビュー", () => {
 
     await room.waitForEvent("turn-finished")
     await expect(room.page.getByText("（作業は始めていない）", { exact: false })).toBeVisible()
-    await expect(room.page.getByText("聞 1・答え待ち")).toBeVisible()
+    await expect(room.page.getByRole("button", { name: "聞 1", exact: true })).toBeVisible()
   })
 
   test("触れるレポートは、つまみを振ると数・文・図の強調が変わり、開き直すと初期値に戻る", async ({

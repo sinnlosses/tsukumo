@@ -7,8 +7,8 @@ import type { LeafValue } from "../../../../shared/report/report-leaf-value.ts"
 import { Badge } from "../../../components/ui/badge/badge.tsx"
 import { claimNoteBody } from "../domain/reply-note.ts"
 import { InlineMarkdown, textLeafClassNames } from "../markdown.tsx"
-import { ReplyUnitRow } from "./ask-frame.tsx"
 import styles from "./leaf.module.css"
+import { ReplyUnitRow } from "./reply-unit-row.tsx"
 import { LeafFold, ReportLeafFrame } from "./report-leaf-frame.tsx"
 
 type ClaimsPart = Extract<A2uiReportComponent, { readonly component: "Claims" }>

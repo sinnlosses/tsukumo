@@ -16,6 +16,7 @@ import {
 } from "../../../components/ui/table/table.tsx"
 import { FoldedTableBody, tableLeafClassNames } from "../markdown.tsx"
 import styles from "./leaf.module.css"
+import { ReplyUnitMark } from "./reply-unit-row.tsx"
 
 export type LeafTableAlign = ColumnAlign | "center"
 
@@ -34,8 +35,6 @@ export type LeafTableRow = {
     /** 部品の中の Tab の止まり場なら 0、ほかは -1。 */
     readonly tabIndex: 0 | -1
     readonly active: boolean
-    /** この行について聞いたことがあるか（行の左に印の線を付ける）。 */
-    readonly asked: boolean
   }
 }
 
@@ -143,7 +142,6 @@ function BodyRow(props: {
         className={clsx(
           unit !== undefined && styles["reply-unit"],
           unit?.active === true && styles["ask-row-active"],
-          unit?.asked === true && styles["ask-row-asked"],
         )}
         {...(unit !== undefined && { point: unit })}
       >
@@ -179,6 +177,7 @@ function BodyRow(props: {
               <span className={styles["table-detail-spacer"]} aria-hidden="true" />
             )}
             {cell}
+            {index === 0 && unit !== undefined && <ReplyUnitMark index={unit.index} />}
           </TableCell>
         ))}
       </TableRow>

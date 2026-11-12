@@ -40,7 +40,7 @@ describe("AskBox", () => {
     const { field } = open()
 
     expect(screen.getByText(/指した所: 架空の節 › 架空の表 › 架空の行/)).toBeTruthy()
-    expect(screen.getByText("答えはこの下に返る。作業は始めない")).toBeTruthy()
+    expect(screen.getByText("答えはこの札に返る。作業は始めない")).toBeTruthy()
     expect(document.activeElement).toBe(field)
   })
 
@@ -81,7 +81,7 @@ describe("AskBox", () => {
 
     expect(screen.getByText("付箋にして、あとでまとめて頼む")).toBeTruthy()
     expect(screen.getByRole("button", { name: "付箋にする ⌘⏎" })).toBeTruthy()
-    expect(screen.queryByText("答えはこの下に返る。作業は始めない")).toBeNull()
+    expect(screen.queryByText("答えはこの札に返る。作業は始めない")).toBeNull()
   })
 
   it("頼むで ⌘⏎ すると onNote を呼び、会話への onSend は呼ばない", () => {

@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
-import { createRef } from "react"
+import { createRef, type ReactNode, use } from "react"
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest"
 
 import {
@@ -25,7 +25,10 @@ import {
   leafFrameClassNames,
   loadMarkdown,
 } from "../../../../../src/browser/features/report/markdown.tsx"
-import { ReplyPointScope } from "../../../../../src/browser/features/report/reply-point.tsx"
+import {
+  ReplyPointContext,
+  ReplyPointScope,
+} from "../../../../../src/browser/features/report/reply-point.tsx"
 import {
   type ReplyPort,
   ReplyPortContext,
@@ -197,9 +200,14 @@ describe("FoldedLeafFrame", () => {
   })
 })
 
+function Passthrough(props: { readonly children: ReactNode }) {
+  return <>{props.children}</>
+}
+
 describe("FoldedLeafFrame の聞いた問いと答え", () => {
   const SECTION: SectionPoint = { kind: "section", reportToolUseId: "toolu_1", heading: "架空の節" }
   const LEAF: LeafIdentity = { kind: "leaf", componentId: "p1", componentKind: "Paragraph" }
+  const LEAF_OTHER: LeafIdentity = { kind: "leaf", componentId: "p2", componentKind: "Paragraph" }
   const KEY = askLeafKey("toolu_1", "p1")
   const answeredPair: AskPair = {
     question: "なぜ？",
@@ -216,11 +224,23 @@ describe("FoldedLeafFrame の聞いた問いと答え", () => {
     return { kind: "grouped", byLeaf: new Map([[KEY, thread]]), remaining: [] }
   }
 
+  /** jsdom は幅を測らないので、狭い幅の判定だけ文脈の値で差し替える。 */
+  function NarrowPoint(props: { readonly children: ReactNode }) {
+    const point = use(ReplyPointContext)
+    return (
+      <ReplyPointContext value={point.kind === "available" ? { ...point, narrow: true } : point}>
+        {props.children}
+      </ReplyPointContext>
+    )
+  }
+
   function threadFrame(
     threads: AskThreadSlot,
     captionNumber: FrameValue["captionNumber"] = NO_CAPTION,
     ask?: ReplyPort["ask"],
+    narrow = false,
   ) {
+    const Wrap = narrow ? NarrowPoint : Passthrough
     return render(
       <ReplyPortContext
         value={{
@@ -234,48 +254,174 @@ describe("FoldedLeafFrame の聞いた問いと答え", () => {
       >
         <AskThreadContext value={threads}>
           <ReplyPointScope rootRef={createRef<HTMLElement>()}>
-            <SectionPointContext value={SECTION}>
-              <LeafIdentityContext value={LEAF}>
-                <div data-report-region="section">
-                  <FoldedLeafFrame
-                    value={{ captionNumber, gutterNotes: [] }}
-                    title="架空の題"
-                    fit={false}
-                    fold=""
-                    swap={false}
-                  >
-                    <p>架空の本体</p>
-                  </FoldedLeafFrame>
-                </div>
-              </LeafIdentityContext>
-            </SectionPointContext>
+            <Wrap>
+              <SectionPointContext value={SECTION}>
+                <LeafIdentityContext value={LEAF}>
+                  <div data-report-region="section">
+                    <FoldedLeafFrame
+                      value={{ captionNumber, gutterNotes: [] }}
+                      title="架空の題"
+                      fit={false}
+                      fold=""
+                      swap={false}
+                    >
+                      <p>架空の本体</p>
+                    </FoldedLeafFrame>
+                  </div>
+                </LeafIdentityContext>
+              </SectionPointContext>
+            </Wrap>
           </ReplyPointScope>
         </AskThreadContext>
       </ReplyPortContext>,
     )
   }
 
-  it("答えた対は問いと答えを出し、題の行にバッジ「聞 1・答えた」が付く", () => {
+  it("答えた対は問いと答えを出し、題の行にバッジは無く、部品全体を指す題の横に「聞 1」が出る", () => {
     const { container } = threadFrame(threadsOf(answeredPair), { kind: "table", ordinal: 1 })
 
     expect(screen.getByText("なぜ？")).toBeTruthy()
     expect(screen.getByText(/架空の理由だから。/)).toBeTruthy()
-    expect(container.querySelector(CAPTION_SELECTOR)?.textContent).toContain("聞 1・答えた")
+    const caption = container.querySelector(CAPTION_SELECTOR)
+    expect(caption?.textContent).toContain("聞 1")
+    expect(caption?.textContent).not.toContain("答えた")
   })
 
-  it("答え待ちの対は「作業は始めていない」を出し、バッジは答え待ち、続けて聞くは出ない", () => {
+  it("答え待ちの対は「作業は始めていない」を出し、印は答え待ちを区別せず、続けて聞くは出ない", () => {
     threadFrame(threadsOf(answeredPair, waitingPair), { kind: "table", ordinal: 1 })
 
     expect(screen.getByText(/作業は始めていない/)).toBeTruthy()
-    expect(screen.getByText("聞 2・答え待ち")).toBeTruthy()
+    expect(screen.getByRole("button", { name: "聞 2" })).toBeTruthy()
+    expect(screen.queryByText(/答え待ち/)).toBeNull()
     expect(screen.getAllByRole("button", { name: "続けて聞く" })).toHaveLength(1)
   })
 
-  it("題の行を持たない部品は、バッジを答えの欄の頭に置く", () => {
+  it("題の行を持たない部品は、本体の単位の横に「聞 1」が出る", () => {
     const { container } = threadFrame(threadsOf(answeredPair))
 
     expect(container.querySelector(CAPTION_SELECTOR)).toBeNull()
-    expect(screen.getByText("聞 1・答えた")).toBeTruthy()
+    expect(
+      container.querySelector('[data-reply-unit="leaf"]')?.contains(screen.getByText("聞 1")),
+    ).toBe(true)
+  })
+
+  it("狭い幅で印を押すと、その単位の札がシートに開く", () => {
+    threadFrame(threadsOf(answeredPair), NO_CAPTION, undefined, true)
+    expect(screen.queryByRole("dialog")).toBeNull()
+
+    fireEvent.click(screen.getByRole("button", { name: "聞 1" }))
+
+    expect(screen.getByRole("dialog", { name: "聞く・頼む" }).textContent).toContain(
+      "架空の理由だから。",
+    )
+  })
+
+  it("答えは余白の札に出て、本体の中には出ない", () => {
+    const { container } = threadFrame(threadsOf(answeredPair))
+
+    const group = screen.getByRole("group", { name: "聞いたこと" })
+    expect(group.closest('[class*="ask-margin"]')).not.toBeNull()
+    expect(container.querySelector('[class*="ask-main"]')?.contains(group)).toBe(false)
+  })
+
+  it("開いた入力欄も余白の札の中に出て、本体の中には出ない", () => {
+    const { container } = threadFrame(threadsOf(answeredPair))
+
+    fireEvent.click(screen.getByRole("button", { name: "続けて聞く" }))
+
+    const field = screen.getByRole("textbox")
+    expect(field.closest('[class*="ask-margin"]')).not.toBeNull()
+    expect(container.querySelector('[class*="ask-main"]')?.contains(field)).toBe(false)
+  })
+
+  it("狭い幅では余白に札を並べず、開いた欄の札1枚だけをシートに出し、閉じると消える", () => {
+    const { container } = threadFrame(threadsOf(answeredPair), NO_CAPTION, undefined, true)
+    expect(container.querySelector("[data-margin-card]")).toBeNull()
+    expect(screen.queryByRole("dialog")).toBeNull()
+
+    fireEvent.click(screen.getByText("架空の本体"))
+    fireEvent.click(screen.getByRole("button", { name: "聞く・頼む" }))
+
+    const sheet = screen.getByRole("dialog", { name: "聞く・頼む" })
+    expect(sheet.contains(screen.getByRole("textbox"))).toBe(true)
+    expect(sheet.textContent).toContain("架空の理由だから。")
+    expect(container.querySelector("[data-margin-card]")).toBeNull()
+    expect(container.contains(sheet)).toBe(false)
+
+    fireEvent.click(screen.getByRole("button", { name: "閉じる" }))
+
+    expect(screen.queryByRole("dialog")).toBeNull()
+  })
+
+  it("狭い幅で欄を送ったあとも同じ単位のシートは残り、Esc で閉じる", () => {
+    threadFrame(threadsOf(answeredPair), NO_CAPTION, undefined, true)
+    fireEvent.click(screen.getByText("架空の本体"))
+    fireEvent.click(screen.getByRole("button", { name: "聞く・頼む" }))
+
+    fireEvent.click(screen.getByRole("button", { name: "やめる" }))
+
+    expect(screen.queryByRole("textbox")).toBeNull()
+    const sheet = screen.getByRole("dialog", { name: "聞く・頼む" })
+    expect(sheet.textContent).toContain("架空の理由だから。")
+
+    fireEvent.keyDown(sheet, { key: "Escape" })
+
+    expect(screen.queryByRole("dialog")).toBeNull()
+  })
+
+  it("別の部品で欄を開くと、前の部品の欄は閉じる", () => {
+    render(
+      <ReplyPortContext
+        value={{
+          kind: "open",
+          port: {
+            appendDraft: vi.fn<ReplyPort["appendDraft"]>(),
+            prependDraft: vi.fn<ReplyPort["prependDraft"]>(),
+            ask: vi.fn<ReplyPort["ask"]>(),
+          },
+        }}
+      >
+        <AskThreadContext
+          value={{
+            kind: "grouped",
+            byLeaf: new Map([
+              [KEY, { pairs: [answeredPair], waiting: false, count: 1 }],
+              [askLeafKey("toolu_1", "p2"), { pairs: [answeredPair], waiting: false, count: 1 }],
+            ]),
+            remaining: [],
+          }}
+        >
+          <ReplyPointScope rootRef={createRef<HTMLElement>()}>
+            <SectionPointContext value={SECTION}>
+              {[LEAF, LEAF_OTHER].map((leaf) => (
+                <LeafIdentityContext key={leaf.componentId} value={leaf}>
+                  <div data-report-region="section">
+                    <FoldedLeafFrame
+                      value={{ captionNumber: NO_CAPTION, gutterNotes: [] }}
+                      title="架空の題"
+                      fit={false}
+                      fold=""
+                      swap={false}
+                    >
+                      <p>架空の本体</p>
+                    </FoldedLeafFrame>
+                  </div>
+                </LeafIdentityContext>
+              ))}
+            </SectionPointContext>
+          </ReplyPointScope>
+        </AskThreadContext>
+      </ReplyPortContext>,
+    )
+
+    const [first, second] = screen.getAllByRole("button", { name: "続けて聞く" })
+    if (first === undefined || second === undefined) throw new Error("続けて聞くが2つ無い")
+    fireEvent.click(first)
+    expect(screen.getAllByRole("textbox")).toHaveLength(1)
+    fireEvent.click(second)
+
+    expect(screen.getAllByRole("textbox")).toHaveLength(1)
+    expect(second.closest("[data-reply-frame]")?.contains(screen.getByRole("textbox"))).toBe(true)
   })
 
   it("続けて聞くで、同じ指した所のその場の入力欄が開く", () => {

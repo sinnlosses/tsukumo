@@ -1,4 +1,4 @@
-// 部品の下に開く、その場の入力欄。指した所を欄の頭に出し、⌘⏎ で `ask` に渡して閉じる。
+// 余白の札（狭い幅ではシート）の中に開く、その場の入力欄。指した所を欄の頭に出し、⌘⏎ で `ask` に渡して閉じる。
 
 import { type KeyboardEvent, type ReactElement, useId, useRef, useState } from "react"
 
@@ -89,7 +89,7 @@ export function AskBox(props: AskBoxProps): ReactElement {
       />
       <div className={styles["ask-foot"]}>
         <span className={styles["ask-note"]}>
-          {mode === "ask" ? "答えはこの下に返る。作業は始めない" : "付箋にして、あとでまとめて頼む"}
+          {mode === "ask" ? "答えはこの札に返る。作業は始めない" : "付箋にして、あとでまとめて頼む"}
         </span>
         <Button
           variant="ghost"

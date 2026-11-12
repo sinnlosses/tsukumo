@@ -1,4 +1,4 @@
-// 「聞く」の問いと答えを、部品の下へ戻すための束。会話ページが組んで渡し、レポートは束を引くだけ。
+// 「聞く」の問いと答えを、聞いた部品の余白の札へ戻すための束。会話ページが組んで渡し、レポートは束を引くだけ。
 
 import { createContext, use } from "react"
 import { sum } from "remeda"
@@ -15,7 +15,7 @@ import { LeafIdentityContext, SectionPointContext } from "./leaf-point-context.t
 
 export type { RemainingAside } from "./domain/ask-thread.ts"
 
-/** 束が渡されていない描画は `none`。部品の下には何も増えない。 */
+/** 束が渡されていない描画は `none`。余白の札は何も増えない。 */
 export type AskThreadSlot = { readonly kind: "none" } | ({ readonly kind: "grouped" } & AskThreads)
 
 export const AskThreadContext = createContext<AskThreadSlot>({ kind: "none" })

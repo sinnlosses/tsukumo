@@ -38,9 +38,9 @@ import {
   tableLeafClassNames,
   tagToneClassName,
 } from "../markdown.tsx"
-import { type RowAsk, RowAskContext } from "./ask-frame.tsx"
 import { ColumnMarked, type HeadSort, LeafTable, type LeafTableRow } from "./leaf-table.tsx"
 import styles from "./leaf.module.css"
+import { type RowAsk, RowAskContext } from "./reply-unit-row.tsx"
 import { FoldedLeafFrame } from "./report-leaf-frame.tsx"
 
 type TablePart = A2uiReportPart<"Table">
@@ -317,7 +317,6 @@ function bodyRows(
                 pointed: rowAsk.isPointed(index),
                 tabIndex: rowAsk.tabIndexOf(index),
                 active: rowAsk.isOpen(index),
-                asked: rowAsk.isAsked(index),
               },
         detail:
           detail === undefined

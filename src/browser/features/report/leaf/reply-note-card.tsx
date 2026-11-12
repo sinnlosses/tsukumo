@@ -1,4 +1,4 @@
-// 付箋を本文の右の欄外に出す札と、いまの部品の付箋を求める読み口。
+// 頼んだ付箋の札（余白の札の中に出す）と、いまの部品の付箋を求める読み口。
 
 import clsx from "clsx"
 import { type ReactElement, use } from "react"
@@ -11,7 +11,6 @@ import {
   useReplySessionKey,
 } from "../../../stores/reply-note-list.ts"
 import { LeafIdentityContext, SectionPointContext } from "../leaf-point-context.ts"
-import { leafFrameClassNames } from "../markdown.tsx"
 import { ReplyPortContext } from "../reply-port.ts"
 import styles from "./leaf.module.css"
 
@@ -46,13 +45,7 @@ export function ReplyNoteCard(props: { readonly numbered: NumberedNote }): React
   const removeNote = useReplyNotes((state) => state.removeNote)
   const { component, row } = note.target.label
   return (
-    <aside
-      className={clsx(
-        leafFrameClassNames.gutterNote,
-        styles["note-card"],
-        note.state.kind === "sent" && styles["is-sent"],
-      )}
-    >
+    <div className={clsx(styles["note-card"], note.state.kind === "sent" && styles["is-sent"])}>
       <p className={styles["note-card-head"]}>
         <span className={styles["note-card-mark"]}>頼 {number}</span>
         <span className={styles["note-card-target"]}>{row ?? component}</span>
@@ -79,6 +72,6 @@ export function ReplyNoteCard(props: { readonly numbered: NumberedNote }): React
           ? `送った → やり取り ${String(note.state.turn)} で作業中`
           : "まだ送っていない"}
       </p>
-    </aside>
+    </div>
   )
 }

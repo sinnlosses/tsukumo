@@ -1,13 +1,12 @@
 import { act, cleanup, fireEvent, screen } from "@testing-library/react"
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest"
 
-import {
-  leafFrameClassNames,
-  loadMarkdown,
-} from "../../../../../src/browser/features/report/markdown.tsx"
+import { loadMarkdown } from "../../../../../src/browser/features/report/markdown.tsx"
 import { useReplyNotes } from "../../../../../src/browser/stores/reply-note-list.ts"
 import { newLeafHtml, renderDirectLeaf } from "../../../../fixture/direct-leaf-compare.tsx"
 import { openRequestAt, renderNoteLeaf } from "../../../../fixture/reply-note-leaf.tsx"
+
+const CARD_SELECTOR = "[data-margin-card]"
 
 beforeAll(async () => {
   await loadMarkdown()
@@ -112,26 +111,30 @@ describe("Options の案を指して頼む", () => {
     expect(screen.getByRole("textbox")).toHaveProperty("value", "")
   })
 
-  it("付箋は欄外注が無い部品でも欄外に札で出て、× で外せる", () => {
+  it("付箋は頼んだ単位の余白の札に出て、本体の中には出ず、× で外せる", () => {
     const { container } = renderNoteLeaf(part, { port: true })
-    expect(container.querySelector(`.${leafFrameClassNames.gutter}`)).toBeNull()
+    expect(container.querySelector(CARD_SELECTOR)).toBeNull()
 
     noteSecondOption()
 
-    const gutter = container.querySelector(`.${leafFrameClassNames.gutter}`)
-    expect(gutter).not.toBeNull()
-    expect(gutter?.textContent).toContain("頼 1")
-    expect(gutter?.textContent).toContain("架空の案乙")
-    expect(gutter?.textContent).toContain("この案で進めて。")
-    expect(gutter?.textContent).toContain("まだ送っていない")
-    expect(gutter?.contains(screen.getByRole("button", { name: "付箋を外す" }))).toBe(true)
+    const card = container.querySelector(CARD_SELECTOR)
+    expect(card).not.toBeNull()
+    expect(card?.closest('[class*="ask-margin"]')).not.toBeNull()
+    expect(card?.closest('[class*="ask-main"]')).toBeNull()
+    expect(card?.textContent).toContain("頼 1")
+    expect(card?.textContent).toContain("架空の案乙")
+    expect(card?.textContent).toContain("この案で進めて。")
+    expect(card?.textContent).toContain("まだ送っていない")
+    expect(card?.contains(screen.getByRole("button", { name: "付箋を外す" }))).toBe(true)
+    const mark = screen.getByRole("button", { name: "頼 1" })
+    expect(mark.closest("[data-reply-row]")?.textContent).toContain("架空の案乙")
 
     fireEvent.click(screen.getByRole("button", { name: "付箋を外す" }))
 
-    expect(container.querySelector(`.${leafFrameClassNames.gutter}`)).toBeNull()
+    expect(container.querySelector(CARD_SELECTOR)).toBeNull()
   })
 
-  it("送った付箋は欄外に「送った → やり取り n で作業中」と残り、外すボタンは出ない", () => {
+  it("送った付箋は余白の札に「送った → やり取り n で作業中」と残り、外すボタンは出ない", () => {
     const { container } = renderNoteLeaf(part, { port: true })
     noteSecondOption()
     const [note] = Object.entries(useReplyNotes.getState().notesBySession).flatMap(
@@ -143,7 +146,7 @@ describe("Options の案を指して頼む", () => {
       useReplyNotes.getState().markSent(note.sessionKey, [note.id], 3)
     })
 
-    const card = container.querySelector(`.${leafFrameClassNames.gutterNote}`)
+    const card = container.querySelector(CARD_SELECTOR)
     expect(card?.textContent).toContain("送った → やり取り 3 で作業中")
     expect(screen.queryByRole("button", { name: "付箋を外す" })).toBeNull()
   })
