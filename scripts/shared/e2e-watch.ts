@@ -57,6 +57,7 @@ export const E2E_WATCHED_REGIONS = {
   "test/e2e/spacing-verdict.test.ts": ["main"],
   "test/e2e/report-task.test.ts": ["main"],
   "test/e2e/run-setting.test.ts": ["sidebar"],
+  "test/e2e/achievement-sheet.test.ts": ["other-screens"],
   "test/e2e/session-ended.test.ts": ["main", "dispatch"],
   "test/e2e/session-switch.test.ts": "every",
   "test/e2e/speak-bubble.test.ts": ["character"],

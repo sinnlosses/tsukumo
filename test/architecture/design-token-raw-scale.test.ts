@@ -66,7 +66,6 @@ const RAW_SCALE_REFERENCE_LIMITS: Readonly<Record<string, number>> = {
   "browser/components/frame/sidebar/components/task-doing-count.module.css": 1,
   "browser/components/frame/sidebar/components/usage-pane.module.css": 2,
   "browser/components/frame/sidebar/sidebar.module.css": 5,
-  "browser/components/page/achievement/achievement.module.css": 2,
   "browser/components/page/achievement/components/bookmark-section/bookmark-section.module.css": 3,
   "browser/components/page/achievement/components/day-switch/day-switch.module.css": 3,
   "browser/components/page/achievement/components/diary-book/diary-book.module.css": 27,
