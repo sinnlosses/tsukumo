@@ -1,10 +1,11 @@
 // キャラビュー本体の入口。
 
-import type { ReactElement } from "react"
+import type { ReactElement, ReactNode } from "react"
 
 import { useCharacterView } from "./hooks/use-character-view.ts"
 import { PresentationalCharacterView } from "./presentational-character-view.tsx"
 
-export function CharacterView(): ReactElement {
-  return <PresentationalCharacterView {...useCharacterView()} />
+/** `hands` は狭い画面で顔と吹き出しの下に出す「手元」か「待ち」の行。 */
+export function CharacterView(props: { readonly hands?: ReactNode }): ReactElement {
+  return <PresentationalCharacterView {...useCharacterView()} hands={props.hands} />
 }

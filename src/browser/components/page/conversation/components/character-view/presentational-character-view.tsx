@@ -6,7 +6,7 @@
 //
 // 狭い画面（760px 以下）では立ち絵と吹き出しの並びの代わりに `<PhoneBalloon>`（顔と最新の1件）を出す（どちらを出すかは CSS の `@media`）。
 
-import type { ReactElement } from "react"
+import type { ReactElement, ReactNode } from "react"
 
 import { Portrait } from "../../../../frame/portrait.tsx"
 import { HStack } from "../../../../ui/h-stack/h-stack.tsx"
@@ -18,7 +18,9 @@ import { ItemSeats } from "./item-seat-list.tsx"
 import { PhoneBalloon } from "./phone-balloon.tsx"
 import { SpeechLog } from "./speech-log.tsx"
 
-type PresentationalCharacterViewProps = CharacterViewModel
+type PresentationalCharacterViewProps = CharacterViewModel & {
+  readonly hands?: ReactNode
+}
 
 export function PresentationalCharacterView({
   portraitUrl,
@@ -36,6 +38,7 @@ export function PresentationalCharacterView({
   face,
   phoneLine,
   seats,
+  hands,
 }: PresentationalCharacterViewProps): ReactElement {
   const portrait = portraitUrl !== undefined && (
     <Portrait
@@ -65,7 +68,7 @@ export function PresentationalCharacterView({
         onOpen={onOpenSpeechLog}
         onClose={onCloseSpeechLog}
       />
-      <PhoneBalloon face={face} line={phoneLine} onOpenLog={onOpenSpeechLog} />
+      <PhoneBalloon face={face} line={phoneLine} onOpenLog={onOpenSpeechLog} hands={hands} />
       <div className={styles["character-stage"]}>
         <HStack
           element="div"

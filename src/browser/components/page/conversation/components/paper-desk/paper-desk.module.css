@@ -106,3 +106,62 @@
   font-size: var(--font-label);
   font-weight: 500;
 }
+/* 狭い画面（760px 以下）。紙は全面に出し、入力欄は紙の下に積む（浮かせない）。欄外は出さない。
+   紙の入れ物は箱を作らず、紙と入力欄を外枠の縦の並びへ直に加える。
+   紙は残りの高さを取り、転がるのは紙だけにする。高さの上限は外枠が決めるので、作業の帯が後から出ても本文の位置は動かない。 */
+@media (max-width: 760px) {
+  .paper-sheet {
+    display: contents;
+  }
+  .paper-sheet::after,
+  .paper-margin {
+    display: none;
+  }
+  .paper {
+    --paper-padding-top: 14px;
+    --paper-padding-inline: var(--gutter-page);
+    --paper-dock-room: 24px;
+    order: 1;
+    border-radius: 0;
+    box-shadow: none;
+  }
+  .paper-dock {
+    position: static;
+    order: 3;
+    flex: none;
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+  .paper-dock[data-posture="ask"] {
+    padding: var(--inset-card) 0 0;
+    box-shadow: none;
+  }
+  /* 迎える。入れ物は箱を作らず、迎えの一言・始め方・入力欄を外枠の縦の並びへ直に加える。
+     入力欄は最下段（`.paper-dock` と同じ `order`）、始め方は残りの高さを取って転がる。 */
+  .paper-home {
+    display: contents;
+  }
+  .paper-home > * {
+    order: 1;
+    padding-inline: var(--gutter-page);
+  }
+  .paper-home > :first-child {
+    flex: none;
+    padding-top: var(--gutter-region);
+  }
+  .paper-home-body {
+    flex: 1 1 0;
+    padding-block: var(--gutter-region);
+    overflow-y: auto;
+  }
+  .paper-home-dock {
+    flex: none;
+    order: 3;
+    padding: var(--inset-control) var(--gutter-page);
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+}

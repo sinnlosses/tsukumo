@@ -47,3 +47,26 @@
   min-height: 0;
   padding-top: var(--stage-desk-top);
 }
+/* 狭い画面（760px 以下）。舞台は出さず、縦1列に積む。
+   上から紙（残りの高さ）・キャラクターの行・入力欄。迎えるでは、キャラクターの行を紙の上に置く。
+   紙と入力欄は `.paper`・`.paper-dock`（`paper-desk` の class）の `order` で並べる。 */
+@media (max-width: 760px) {
+  .stage-shell,
+  .stage-shell[data-posture="greet"] {
+    display: flex;
+    flex-direction: column;
+  }
+  .stage-scene {
+    display: none;
+  }
+  .stage-figure {
+    flex: none;
+    order: 2;
+  }
+  .stage-shell[data-posture="greet"] .stage-figure {
+    order: 0;
+  }
+  .stage-desk {
+    display: contents;
+  }
+}
