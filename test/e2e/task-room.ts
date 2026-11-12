@@ -219,6 +219,43 @@ export async function openTaskBoardRoom(
   return room
 }
 
+/**
+ * 新しい器「舞台と紙」のタスクの紙の足場。タスクのモーダルと同じ5件を置いてから、器を新しいほうへ切り替えて
+ * `#tasks` を開く（器の印は読み込んだときにしか読まないので、検索引数で立てて読み込み直す）。
+ */
+export async function openTaskSheetRoom(
+  run: ScenarioRun,
+  scenario: string,
+  domRoots: readonly DomRootName[],
+  viewport: ScenarioOptions["viewport"],
+): Promise<ScenarioRoom> {
+  const room = await run.open({ scenario, scene: "none", viewport, domRoots })
+  await placeTasks(room, [
+    {
+      ...task("t-001", "架空のタスク（`code` を含む要約）", "todo"),
+      description: RICH_DESCRIPTION,
+      acceptance: RICH_ACCEPTANCE,
+      notes: RICH_NOTES,
+      difficulty: "sonnet",
+      loopable: "Y",
+    },
+    task("t-002", "架空のタスク（完了）", "done"),
+    task("t-003", "架空のタスク（進行中）", "doing"),
+    {
+      ...task("t-004", "架空のタスク（待ち）", "todo", ["t-001"]),
+      difficulty: "opus",
+      loopable: "N",
+    },
+    task("t-005", "架空のタスク（保留）", "hold", ["t-001"]),
+  ])
+  const url = new URL(room.page.url())
+  url.searchParams.set("shell", "stage")
+  await room.page.goto(url.toString())
+  await room.page.getByRole("link", { name: "タスク 1", exact: true }).click()
+  await room.page.getByRole("combobox", { name: "タスクを探す" }).waitFor()
+  return room
+}
+
 /** タスク板の足場のうち、仕分けの対象のドラフト2件と保留の1件を置くもの。 */
 export async function openTaskBoardRoomWithDrafts(
   run: ScenarioRun,

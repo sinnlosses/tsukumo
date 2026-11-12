@@ -16,6 +16,7 @@ export const E2E_REGION_ROOTS = {
   ],
   "task-board": [
     "src/browser/components/page/conversation/components/requested-task-board/requested-task-board.tsx",
+    "src/browser/features/task-board/task-sheet.tsx",
   ],
   "screen-nav": ["src/browser/components/frame/screen-nav/screen-nav.tsx"],
   // 会話の画面を開いたままでも、隠した `<Activity>` の中や画面の切り替えで DOM に入りうる。
@@ -62,6 +63,7 @@ export const E2E_WATCHED_REGIONS = {
   "test/e2e/target-size.test.ts": "every",
   "test/e2e/task-board.test.ts": ["task-board", "sidebar"],
   "test/e2e/task-list.test.ts": ["sidebar", "task-board"],
+  "test/e2e/task-sheet.test.ts": ["task-board"],
   "test/e2e/turn-failure.test.ts": ["main", "dispatch"],
   "test/e2e/turn-flow.test.ts": "every",
   "test/e2e/usage-review-own-session.test.ts": ["main", "other-screens"],

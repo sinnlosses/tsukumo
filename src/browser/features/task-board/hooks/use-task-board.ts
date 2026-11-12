@@ -139,6 +139,18 @@ export function useTaskBoard(
       if (event.key === "ArrowDown" || event.key === "ArrowUp") {
         event.preventDefault()
         move(event.key === "ArrowDown" ? 1 : -1)
+        return
+      }
+      if (
+        event.key === "Enter" &&
+        content.kind === "known" &&
+        content.sortBand.kind === "none" &&
+        content.selection.kind === "some" &&
+        content.selection.run.kind === "available" &&
+        !isPressable(event.target)
+      ) {
+        event.preventDefault()
+        content.selection.run.onRun()
       }
     },
     onConfirmClose: (outcome) => {
@@ -149,4 +161,9 @@ export function useTaskBoard(
     },
     focusSignal: state.focusSignal,
   }
+}
+
+/** Enter が自分で押す・開く動きを持つ要素（ボタン・リンク・詳細の開閉）。ここでは頼みに横取りしない。 */
+function isPressable(target: EventTarget): boolean {
+  return target instanceof Element && target.closest("button, a, summary") !== null
 }

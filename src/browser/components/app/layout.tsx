@@ -7,10 +7,12 @@
 
 import { Activity, type ReactElement } from "react"
 
+import { taskReadiness } from "../../../shared/repository/task-summary.ts"
 import { SHEET_TITLES, type Screen, type SheetScreen } from "../../stores/location-hash.ts"
 import { navigateTo, useScreen } from "../../stores/screen.tsx"
+import { useSession } from "../../stores/session.ts"
 import { shownShell, type Shell } from "../../stores/shell-mark.ts"
-import { Sheet } from "../ui/sheet/sheet.tsx"
+import { Sheet, type SheetSub } from "../ui/sheet/sheet.tsx"
 import { ScreenBoundary } from "./screen-boundary.tsx"
 
 type OverlayScreen = Exclude<Screen, "conversation">
@@ -44,6 +46,14 @@ export function Layout(props: { readonly screens: LayoutScreens }): ReactElement
   const shell = shownShell(document.documentElement)
   const { screens } = props
   const sheetScreen = shell === "stage" && isSheetScreen(screen) ? screen : undefined
+  const tasks = useSession((session) => session.state.tasks)
+  const sheetSub: SheetSub =
+    sheetScreen === "tasks" && tasks.kind === "known"
+      ? {
+          kind: "shown",
+          text: `着手できる ${String(tasks.items.filter((task) => taskReadiness(task)?.kind === "ready").length)} ・ ぜんぶで ${String(tasks.items.length)}`,
+        }
+      : { kind: "none" }
   const conversationShown = screen === "conversation" || sheetScreen !== undefined
   // 新しい器は帯を出さない。見本帳だけは戻る口が要るので帯を残す。
   const showNav = shell === "classic" || screen === "design"
@@ -65,8 +75,8 @@ export function Layout(props: { readonly screens: LayoutScreens }): ReactElement
         <Sheet
           open={sheetScreen !== undefined}
           title={sheetScreen === undefined ? "" : SHEET_TITLES[sheetScreen]}
-          sub={{ kind: "none" }}
-          flush={false}
+          sub={sheetSub}
+          flush={sheetScreen === "tasks"}
           onClose={() => {
             navigateTo("conversation")
           }}

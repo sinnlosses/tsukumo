@@ -13,7 +13,7 @@ import { Heading } from "../heading/heading.tsx"
 import { Text } from "../text/text.tsx"
 import styles from "./sheet.module.css"
 
-type SheetSub = { readonly kind: "none" } | { readonly kind: "shown"; readonly text: string }
+export type SheetSub = { readonly kind: "none" } | { readonly kind: "shown"; readonly text: string }
 
 export type SheetProps = {
   readonly open: boolean

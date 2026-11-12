@@ -159,6 +159,7 @@ type TaskBoardKeyEvent = {
   readonly ctrlKey: boolean
   readonly altKey: boolean
   readonly key: string
+  readonly target: EventTarget
   readonly preventDefault: () => void
 }
 
@@ -170,7 +171,7 @@ export type TaskBoardView = {
   readonly onQueryChange: (query: string) => void
   readonly onFilter: (filter: TaskBoardFilter) => void
   readonly onSelect: (id: string) => void
-  /** モーダルの中身の器で受けるキー（↑↓ で行を移る。Alt+← は「戻る」。Esc は `<dialog>` が閉じる）。 */
+  /** モーダルの中身の器で受けるキー（↑↓ で行を移る。Enter で選んだタスクを頼む。Alt+← は「戻る」。Esc は `<dialog>` が閉じる）。 */
   readonly onKeyDown: (event: TaskBoardKeyEvent) => void
   readonly onConfirmClose: (outcome: TaskRunConfirmOutcome) => void
   /**
