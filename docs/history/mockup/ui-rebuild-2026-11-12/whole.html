@@ -1580,7 +1580,7 @@
       }
       .cal button {
         position: relative;
-        aspect-ratio: 1;
+        aspect-ratio: 4 / 5;
         border: 0;
         border-radius: 9px;
         background: none;
@@ -1590,14 +1590,15 @@
         place-items: start center;
         padding-top: 6px;
       }
-      .cal button i {
+      .cal button .fox {
         position: absolute;
-        bottom: 6px;
-        width: var(--s);
-        height: var(--s);
-        border-radius: 50%;
-        background: var(--accent);
-        box-shadow: 0 0 calc(var(--s) * 1.1) var(--accent);
+        bottom: 4px;
+      }
+      .cal button .fox-2 {
+        filter: drop-shadow(0 0 3px color-mix(in srgb, var(--accent) 35%, transparent));
+      }
+      .cal button .fox-3 {
+        filter: drop-shadow(0 0 7px color-mix(in srgb, var(--accent) 65%, transparent));
       }
       .cal button:hover,
       .cal button[aria-pressed="true"] {
@@ -2490,7 +2491,14 @@
           const blanks = "<span></span>".repeat(6)
           const days = Array.from({ length: 30 }, (_, index) => index + 1)
             .map((day) => {
-              const lamp = counts[day] ? `<i style="--s: ${3 + counts[day] * 2}px"></i>` : ""
+              // 灯りは今の成果の画面の狐火（Lamp）をそのまま使う。段階で大きさと光を変える。
+              const level = !counts[day] ? 0 : counts[day] >= 4 ? 3 : counts[day] >= 2 ? 2 : 1
+              const size = [14, 18, 22, 26][level]
+              const flame = "M12 2.5c1.6 3.7 5.5 5.6 5.5 10.6a5.5 5.5 0 0 1-11 0c0-2.7 1.4-4.2 2.6-5.6.2 1.4 1 2.3 2 2.6-.4-2.8.3-5.3.9-7.6z"
+              const lamp =
+                level === 0
+                  ? `<svg class="fox" width="${size}" height="${size}" viewBox="0 0 24 24" aria-hidden="true"><path d="${flame}" fill="none" stroke="var(--rule)" stroke-width="1.2"/></svg>`
+                  : `<svg class="fox fox-${level}" width="${size}" height="${size}" viewBox="0 0 24 24" aria-hidden="true"><path d="${flame}" fill="var(--accent)" fill-opacity="${[0, 0.4, 0.7, 1][level]}"/>${level === 3 ? '<path d="M12 11c.9 1.6 2.3 2.4 2.3 4.2a2.3 2.3 0 0 1-4.6 0c0-1.3.9-2.4 2.3-4.2z" fill="var(--sheet)" opacity="0.85"/>' : ""}</svg>`
               return `<button type="button" data-day="${day}" aria-pressed="${day === state.day}" aria-label="11月${day}日 ${counts[day] ?? 0}件">${day}${lamp}</button>`
             })
             .join("")
@@ -2506,7 +2514,7 @@
           return `<header class="over-head"><h1>成果</h1><span class="over-sub">2026年11月 ・ 終えたタスク 19件</span>${closeButton}</header>
             <div class="over-body"><div class="dy">
               <div><div class="cal"><span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span>土</span><span>日</span>${blanks}${days}</div>
-                <p class="cal-note">灯りの大きさが、その日に終えたタスクの数。</p></div>
+                <p class="cal-note">狐火の大きさと明るさが、その日に終えたタスクの数。</p></div>
               <div><h2>11月${state.day}日（${week}）</h2><p class="over-sub">この日に終えたこと ${count}件</p>${body}</div>
             </div></div>`
         },
