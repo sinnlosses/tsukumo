@@ -8,6 +8,8 @@
                                 fail 失敗 / stopped 止めた / away 戻る / loop ループ
   ?moment= で場面、?tone=day で昼、?depth=1〜3 で読む深さ（紙の群）、?bar=0 で切り替えの帯を隠す。
   進み具合の印は、成果の暦と同じ狐火の形（今の画面の Lamp）を使う。
+  左の舞台は上から、部屋の頭・今日の灯り・この依頼でのやり取りの流れ・いまの吹き出し（手元つき）・立ち絵。
+  吹き出しは立ち絵のすぐ上に付く。立ち絵の右上の札は相づち（押すとキャラクターが返す）。
   立ち絵は characters/local/karakasa があればそれ、無ければ同梱の tsukumo。
 -->
 <html lang="ja">
@@ -30,7 +32,7 @@
         --accent: #ff9e9e;
         --accent-ink: var(--accent);
         --night: #14121a;
-        --stage-w: clamp(280px, 24vw, 400px);
+        --stage-w: clamp(300px, 27vw, 520px);
         --ink: #ece8ef;
         --ink-soft: rgb(236 232 239 / 0.78);
         --ink-quiet: rgb(236 232 239 / 0.56);
@@ -110,56 +112,257 @@
         display: grid;
         grid-template-columns: var(--stage-w) minmax(0, 1fr);
       }
+      /* 舞台は上から、部屋の頭・今日の灯り・やり取りの流れ・いまの吹き出し・立ち絵。
+         吹き出しは立ち絵のすぐ上に積むので、画面の高さが変わっても立ち絵から離れない。
+         立ち絵の高さは幅から決まる（素材は 874×800）。 */
       .stage {
+        --portrait-h: calc(var(--stage-w) * 1.08);
         position: relative;
         overflow: hidden;
         background: var(--scene) center / cover no-repeat;
+        display: flex;
+        flex-direction: column;
       }
-      .stage::after {
+      .stage::before {
         content: "";
         position: absolute;
         inset: 0;
-        background: linear-gradient(90deg, transparent 58%, var(--night));
+        background:
+          linear-gradient(180deg, rgb(20 18 26 / 0.78) 0, rgb(20 18 26 / 0.28) 170px, transparent 300px),
+          linear-gradient(90deg, transparent 62%, var(--night));
+        pointer-events: none;
+      }
+      .stage > * {
+        position: relative;
+        z-index: 2;
       }
       .stage img.portrait {
         position: absolute;
+        z-index: 1;
         left: -6%;
         bottom: 0;
         width: 118%;
         mask-image: linear-gradient(0deg, black 82%, transparent), linear-gradient(90deg, black 80%, transparent);
         mask-composite: intersect;
       }
-      .room-head {
-        position: absolute;
-        top: 16px;
-        left: 20px;
-        right: 20px;
-        z-index: 2;
-        font-size: 13px;
+      .st-top {
+        padding: 14px 18px 0;
+        font-size: 13.5px;
         color: var(--ink-soft);
-        text-shadow: 0 1px 6px rgb(0 0 0 / 0.7);
       }
-      .room-head b {
+      .rh {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .rh b {
         font-size: 18px;
         color: var(--ink);
-        display: block;
       }
-      .balloon {
-        position: absolute;
-        left: 20px;
-        right: 28px;
-        top: 40%;
-        z-index: 2;
-        background: rgb(46 34 44 / 0.86);
-        border-radius: 14px;
-        padding: 12px 16px;
-        font: 600 15.5px/1.75 var(--voice);
+      .rh .seg {
+        margin-left: auto;
+        background: rgb(24 20 28 / 0.6);
+      }
+      .rh-nav {
+        display: flex;
+        gap: 14px;
+        margin-top: 2px;
+        font-size: 13px;
+      }
+      .rh-nav span:last-child {
+        margin-left: auto;
+      }
+      .today {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        width: 100%;
+        margin-top: 10px;
+        padding: 5px 12px 6px;
+        border: 0;
+        border-radius: 11px;
+        background: rgb(24 20 28 / 0.6);
         backdrop-filter: blur(6px);
+        color: var(--ink-soft);
+        font-size: 13px;
+        text-align: left;
       }
-      .balloon small {
-        display: block;
-        font: 13px var(--sans);
+      .today > span:first-child {
+        white-space: nowrap;
+      }
+      .today b {
+        color: var(--ink);
+      }
+      .today .plus {
         color: var(--accent);
+        font-weight: 700;
+      }
+      .wk {
+        display: flex;
+        gap: 4px;
+        margin-left: auto;
+      }
+      .wk span {
+        display: grid;
+        justify-items: center;
+        align-content: end;
+        width: 22px;
+        height: 36px;
+        font-size: 12px;
+        line-height: 1.2;
+        color: var(--ink-quiet);
+      }
+      .wk .is-today {
+        color: var(--ink);
+        font-weight: 700;
+      }
+      .talk-wrap {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+      }
+      .more {
+        position: absolute;
+        z-index: 1;
+        top: 8px;
+        left: 18px;
+        border: 0;
+        border-radius: 999px;
+        padding: 1px 12px;
+        background: rgb(24 20 28 / 0.82);
+        color: var(--ink-soft);
+        font-size: 13px;
+      }
+      .talk {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        align-items: flex-start;
+        gap: 6px;
+        padding: 14px 18px 12px;
+        overflow: hidden;
+        mask-image: linear-gradient(180deg, transparent 30px, black 96px);
+      }
+      .vl {
+        flex: none;
+        max-width: 95%;
+        border: 0;
+        border-radius: 11px;
+        padding: 4px 11px 5px;
+        background: rgb(24 20 28 / 0.74);
+        color: rgb(236 232 239 / 0.9);
+        font: 600 14px/1.6 var(--voice);
+        text-align: left;
+      }
+      .vl time {
+        font: 12px var(--mono);
+        color: rgb(236 232 239 / 0.62);
+        margin-right: 7px;
+      }
+      .vl .lamp {
+        vertical-align: -2px;
+        margin-right: 4px;
+      }
+      .vl.you {
+        align-self: flex-end;
+        background: color-mix(in srgb, var(--accent) 17%, rgb(24 20 28 / 0.74));
+        color: var(--ink);
+        font: 13.5px/1.6 var(--sans);
+      }
+      .vl.you::before {
+        content: "あなた";
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--accent);
+        margin-right: 7px;
+      }
+      button.vl:hover,
+      .today:hover {
+        background: rgb(58 48 64 / 0.86);
+      }
+      .say {
+        flex: none;
+        margin: 0 22px 0 14px;
+        padding: 9px 16px 11px;
+        border-radius: 16px;
+        background: rgb(46 34 44 / 0.93);
+        backdrop-filter: blur(8px);
+        box-shadow: 0 10px 26px rgb(0 0 0 / 0.42);
+        color: #f6f1f4;
+        font: 600 16.5px/1.75 var(--voice);
+      }
+      .say .tail {
+        position: absolute;
+        left: 36%;
+        bottom: -12px;
+        width: 28px;
+        height: 28px;
+        border-radius: 4px;
+        background: rgb(46 34 44);
+        transform: rotate(45deg);
+      }
+      .say .who {
+        display: flex;
+        gap: 8px;
+        align-items: baseline;
+        font: 700 13px var(--sans);
+        color: var(--accent);
+      }
+      .say .who span {
+        font-weight: 400;
+        color: rgb(236 232 239 / 0.62);
+      }
+      .say .hands {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        gap: 8px;
+        margin-top: 8px;
+        padding-top: 7px;
+        border-top: 1px solid rgb(236 232 239 / 0.14);
+        font: 13px/1.55 var(--sans);
+        color: rgb(236 232 239 / 0.76);
+      }
+      .say .hands b {
+        font-weight: 700;
+        color: rgb(236 232 239 / 0.6);
+      }
+      .stage .seat {
+        flex: none;
+        height: calc(var(--portrait-h) - 30px);
+      }
+      .aizuchi {
+        position: absolute;
+        top: 12px;
+        right: 16px;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 6px;
+        max-width: 62%;
+      }
+      .aizuchi button {
+        border: 0;
+        border-radius: 999px;
+        padding: 4px 15px;
+        background: rgb(24 20 28 / 0.78);
+        backdrop-filter: blur(6px);
+        box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--accent) 72%, transparent);
+        color: var(--ink);
+        font-size: 13.5px;
+      }
+      .aizuchi button:hover {
+        background: color-mix(in srgb, var(--accent) 26%, rgb(24 20 28));
+      }
+      .ph.flash {
+        outline: 2px solid var(--accent-ink);
+        outline-offset: 6px;
+        border-radius: 8px;
+      }
+      .n-voice {
+        display: none;
       }
 
       /* 紙の骨組み。本文の列（1行 40 字まで）と欄外の列を持つ。 */
@@ -217,6 +420,30 @@
       .mg ul {
         margin: 0;
         padding-left: 1.1em;
+      }
+      .mg.voice {
+        display: grid;
+        grid-template-columns: 34px minmax(0, 1fr);
+        gap: 9px;
+        align-items: start;
+        align-self: end;
+        padding-bottom: 8px;
+      }
+      .mg.voice img {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        object-fit: cover;
+        object-position: 50% 20%;
+        box-shadow: 0 0 0 1.5px var(--accent-ink);
+      }
+      .mg.voice p {
+        margin: 0;
+        padding: 5px 11px;
+        border-radius: 4px 12px 12px 12px;
+        background: var(--raise);
+        color: var(--ink);
+        font: 600 14px/1.6 var(--voice);
       }
       .mg .mg-n {
         font-weight: 700;
@@ -1470,6 +1697,14 @@
         display: flex;
         justify-content: center;
         pointer-events: none;
+        z-index: 5;
+      }
+      .dock::before {
+        content: "";
+        position: absolute;
+        z-index: -1;
+        inset: -36px -28px -20px -8px;
+        background: linear-gradient(180deg, transparent, var(--night) 36px);
       }
       .dock-in {
         pointer-events: auto;
@@ -1532,7 +1767,7 @@
         position: fixed;
         left: 12px;
         bottom: 12px;
-        width: calc(var(--stage-w) - 24px);
+        max-width: calc(var(--stage-w) - 24px);
         z-index: 50;
         background: #f6f3e8;
         color: #1b1a17;
@@ -1561,6 +1796,12 @@
       .proto-bar button[aria-pressed="true"] {
         background: #1b1a17;
         color: #f6f3e8;
+      }
+      .proto-bar[data-open="0"] div {
+        display: none;
+      }
+      .proto-bar[data-open="1"] .pb-sum {
+        margin-top: 4px;
       }
       body[data-bar="0"] .proto-bar {
         display: none;
@@ -1602,13 +1843,43 @@
         .dock {
           left: 8px;
           right: 8px;
+          flex-direction: column;
+          gap: 6px;
+        }
+        .n-voice {
+          pointer-events: auto;
+          display: grid;
+          grid-template-columns: 44px minmax(0, 1fr);
+          gap: 10px;
+          align-items: end;
+        }
+        .n-voice img {
+          width: 44px;
+          height: 44px;
+          border-radius: 50%;
+          object-fit: cover;
+          object-position: 50% 20%;
+          box-shadow: 0 0 0 2px var(--accent);
+        }
+        .n-voice p {
+          padding: 7px 13px;
+          border-radius: 14px 14px 14px 4px;
+          background: rgb(46 34 44 / 0.95);
+          color: #f6f1f4;
+          font: 600 14.5px/1.65 var(--voice);
+          box-shadow: 0 8px 20px rgb(0 0 0 / 0.4);
+        }
+        .n-voice small {
+          display: block;
+          font: 13px/1.5 var(--sans);
+          color: rgb(236 232 239 / 0.72);
         }
         .proto-bar {
           left: 8px;
           right: 8px;
           bottom: auto;
           top: 8px;
-          width: auto;
+          max-width: none;
         }
         .p-top {
           flex-wrap: wrap;
@@ -1624,8 +1895,10 @@
   <body>
     <div class="room">
       <aside class="stage" id="stage">
-        <div class="room-head" id="room-head"></div>
-        <div class="balloon" id="balloon"></div>
+        <div class="st-top" id="st-top"></div>
+        <div class="talk-wrap"><button type="button" class="more" id="more">▴ これまでのやり取り</button><div class="talk" id="thread" aria-label="この依頼でのやり取り"></div></div>
+        <div class="say" id="now" aria-live="polite"></div>
+        <div class="seat"><div class="aizuchi" id="aizuchi"></div></div>
         <img class="portrait" id="portrait" alt="" />
       </aside>
       <main class="desk" id="desk"></main>
@@ -1652,6 +1925,8 @@
         choice: "",
         pick: "",
         tab: "a",
+        react: undefined,
+        barOpen: false,
       }
       document.body.dataset.bar = params.get("bar") ?? "1"
       const pack = () => PACKS[state.pack]
@@ -1684,7 +1959,7 @@
       const vd = (k, label) => `<span class="vd vd-${k}"><i aria-hidden="true">${VD[k][0]}</i>${label ?? VD[k][1]}</span>`
       function ph(o) {
         const size = o.k === "now" ? 22 : 18
-        return `<li class="ph ph-${o.k}">${lamp(o.k, size)}<div class="ph-main"><div class="ph-head"><span class="ph-t">${o.t}</span>${o.tag ?? ""}<span class="ph-time">${o.time ?? ""}</span></div>${o.note ? `<p class="ph-note">${o.note}${o.diff ? ` <span class="dchip">${o.diff}</span>` : ""}</p>` : ""}${o.body ?? ""}</div></li>`
+        return `<li class="ph ph-${o.k}" ${o.id === undefined ? "" : `data-phid="${o.id}"`}>${lamp(o.k, size)}<div class="ph-main"><div class="ph-head"><span class="ph-t">${o.t}</span>${o.tag ?? ""}<span class="ph-time">${o.time ?? ""}</span></div>${o.note ? `<p class="ph-note">${o.note}${o.diff ? ` <span class="dchip">${o.diff}</span>` : ""}</p>` : ""}${o.body ?? ""}</div></li>`
       }
       function lg(k, text, cmd, seal, body, open) {
         const g = { ok: "✓", ng: "✕", un: "?" }[k]
@@ -1694,6 +1969,9 @@
         `<figure class="fig"><figcaption class="fig-t">${title}</figcaption>${body}${foot ? `<p class="fig-f">${foot}</p>` : ""}</figure>`
       const spec = (name, body, rules) =>
         `<div class="pair spec"><div>${body}</div><aside class="mg"><p class="mg-n">${name}</p><ul>${rules.map((r) => `<li>${r}</li>`).join("")}</ul></aside></div>`
+      // 案内の付箋: キャラクターが紙の欄外から、見てほしい所を一言で指す。1枚に3つまで。
+      const guide = (text) =>
+        `<aside class="mg voice"><img src="${pack().dir}/face.png" alt="" /><p>${text}</p></aside>`
       const src = (items) =>
         `<aside class="mg" aria-label="出どころ">${items.map(([n, t]) => `<p><b class="n">${n}</b>${t}</p>`).join("")}</aside>`
       function paperTop(ask, withDepth) {
@@ -1761,7 +2039,7 @@
             <div><p class="v">6<small>/ 6 個</small></p><p class="l">設定を読むグラフの部品</p><div class="meter"><i style="width:100%"></i></div></div>
             <div><p class="v">3,156<small>件</small></p><p class="l">通った単体テスト</p><p class="d">3,152 → 3,156（+4）</p></div>
           </div>
-          <h2 class="wide">確かさ</h2>
+          <div class="pair"><h2>確かさ</h2>${guide(again ? "幅 390 のところだけ、まだ直っていないの。先にここを見てね。" : "ここだけ、まだ見ていないの。Safari のことよ。")}</div>
           ${ledger(again, d === 3)}
           <h2>変えたところ</h2>
           <div class="pair"><div class="prose"><p>目盛りの数は <code>axis.ts</code> の定数から、設定の <code>ticks</code> を読む形に替えた<sup class="ref">1</sup>。範囲の外の値は、設定を読むところで 4 か 48 に丸める<sup class="ref">2</sup>。</p>
@@ -1771,7 +2049,7 @@
               [2, "<code>src/setting/parse.ts:88</code>・単体テスト「範囲の外を丸める」"],
               [3, "<code>src/chart/pie-chart.tsx:61</code>"],
             ])}</div>
-          ${fig("設定を 24 にすると、目盛りは倍の細かさになる（幅 1400）", `<div class="cmp" data-mode="side"><figure>${shot(false)}<figcaption>前 ― 12 本</figcaption></figure><figure>${shot(true)}<figcaption>後 ― 24 本</figcaption></figure></div>`, "")}
+          <div class="pair">${fig("設定を 24 にすると、目盛りは倍の細かさになる（幅 1400）", `<div class="cmp" data-mode="side"><figure>${shot(false)}<figcaption>前 ― 12 本</figcaption></figure><figure>${shot(true)}<figcaption>後 ― 24 本</figcaption></figure></div>`, "")}${guide("前と後、並べておいたわ。見比べてみて。")}</div>
           <h2>置いた前提</h2>
           <ul class="ul"><li>目盛りの数は 4〜48 の範囲だけ受け付ける。範囲は頼まれていなかったので、今の最小と最大の比から置いた。</li></ul>
           ${route(d === 3, again)}
@@ -1945,10 +2223,10 @@
           <div class="stamp wide">${vd("run")}${lamps(["lit", "lit", "now", "none"], "4段のうち3段目")}<span>4段のうち3段目</span><span>経過 ${tick(372)}</span><span>あと <b>約 4分</b>（似た作業 9 件の中央値から）</span></div>
           <h1 class="concl mid wide">表示の層を直している。テストと画で確かめる段が残っている。</h1>
           <ol class="plan wide">
-            ${ph({ k: "lit", t: "今の形を調べる", time: "1分40秒", note: "目盛りの数は <code>axis.ts</code> の定数 12 から来ていた。", diff: "変更なし" })}
-            ${ph({ k: "lit", t: "目盛りを設定から読む", time: "3分02秒", note: "設定に <code>ticks</code> を足し、既定を 12 のまま残した。", diff: "2ファイル +38 −6" })}
-            ${ph({ k: "now", t: "表示の層を直している", time: "1分30秒〜", body: now })}
-            ${ph({ k: "none", t: "テストと画で確かめる", time: "似た作業では 2〜4分" })}
+            ${ph({ id: 0, k: "lit", t: "今の形を調べる", time: "1分40秒", note: "目盛りの数は <code>axis.ts</code> の定数 12 から来ていた。", diff: "変更なし" })}
+            ${ph({ id: 1, k: "lit", t: "目盛りを設定から読む", time: "3分02秒", note: "設定に <code>ticks</code> を足し、既定を 12 のまま残した。", diff: "2ファイル +38 −6" })}
+            ${ph({ id: 2, k: "now", t: "表示の層を直している", time: "1分30秒〜", body: now })}
+            ${ph({ id: 3, k: "none", t: "テストと画で確かめる", time: "似た作業では 2〜4分" })}
           </ol>
           <p class="quiet wide">「いま」と「任せた」の行は、段が済むと1行のまとめに畳まれる。「できた」「あなた」「計画を直した」は残り、終わると紙の末尾の道筋になる。</p>
         </article>`
@@ -2133,6 +2411,150 @@
         return { group, key, m: group.moments[key] }
       }
       const startedAt = Date.now()
+      // ---- 舞台（キャラクターの側）-------------------------------------
+      // やり取りの1行は [誰, 時刻, 文, 段を終えて灯したか, 紙の段の番号]。
+      const REQ = ["you", "13:52", "グラフの目盛りの数を、設定で変えられるようにして"]
+      const DONE3 = [
+        ["her", "13:54", "定数の 12 が元だったわ。ひとつ灯したわね。", true, 0],
+        ["her", "13:57", "設定から読めるようにしたわ。既定は 12 のままよ。", true, 1],
+        ["her", "14:03", "部品 6 個、ぜんぶ通ったわ。", true],
+      ]
+      const STAGE = {
+        parts: {
+          today: [3, false],
+          thread: [
+            REQ,
+            ["her", "14:06", "検査も通ったわ。いま紙にまとめるわね。", true],
+            ["her", "14:07", "終わったわ。確かめていないことも1つ、隠さず書いておいたの。"],
+            ["you", "14:20", "部品をひととおり見せて"],
+            ["her", "14:20", "文・数・比べる・つながり・証拠・触る、の6つに分けたわ。"],
+          ],
+        },
+        "paper:deliver": {
+          today: [4, true],
+          thread: [REQ, ...DONE3, ["her", "14:06", "検査も通ったわ。いま紙にまとめるわね。", true]],
+          chips: [
+            ["おつかれさま", "flustered", "べ、別に……これくらい、いつものことよ。でも、ありがとう。"],
+            ["ありがとう", "excited", "ふふ、どういたしまして。また頼ってね。"],
+          ],
+        },
+        "paper:again": {
+          today: [4, false],
+          thread: [
+            ["you", "14:31", "前のレポートの指摘を直して"],
+            ["her", "14:32", "指摘は2つ、どちらも幅 720 の話ね。", true],
+            ["her", "14:37", "間引きの規則を直したわ。", true],
+            ["her", "14:40", "幅 390 でも撮ってみたら、まだ2か所重なっていたの。", true],
+          ],
+          chips: [["見つけてくれて助かる", "flustered", "……見落としたままより、ずっといいでしょう？"]],
+        },
+        "paper:decide": {
+          today: [3, false],
+          thread: [
+            ["you", "13:10", "目盛りの数をどこで決めるか、案を比べて"],
+            ["her", "13:12", "置き場は3つあったわ。順に見てくるわね。"],
+            ["her", "13:16", "読み口が1つで済むのは、設定ファイルだけだったの。", true],
+          ],
+        },
+        "paper:quick": { today: [3, false], thread: [["you", "12:50", "おはよう。今日もよろしくね"], ["her", "12:50", "おはよう。雨上がりで気分がいいわ。何から始める？"], ["you", "13:05", "目盛りの既定はいくつ？"]] },
+        "flow:work": {
+          today: [3, false],
+          hands: ["手元", "グラフの部品 6 個のうち 4 個目 ・ 12秒前"],
+          thread: [REQ, ["her", "13:53", "任せて。まず今の形を見てくるわね。"], DONE3[0], DONE3[1], ["you", "13:58", "円グラフは後回しでいいよ"]],
+          chips: [["がんばって", "excited", "ふふ、任せて。あと少しよ。"]],
+        },
+        "flow:laps": {
+          today: [3, false],
+          hands: ["手元", "間引きの境を、幅に比例する形に直している ・ 8秒前"],
+          thread: [
+            ["you", "13:18", "タスク T-104 を進めて"],
+            ["her", "13:20", "計画を今の main に合わせたわ。", true],
+            ["her", "13:42", "4段とも書けたわ。受け入れ役に見せるわね。", true],
+            ["her", "13:46", "3つ差し戻されたわ。画が足りなかったの。"],
+            ["her", "13:52", "直したわ。もう一度見てもらうわね。"],
+          ],
+          chips: [["あせらなくていいよ", "flustered", "……ありがとう。ちゃんと通してみせるわ。"]],
+        },
+        "flow:long": {
+          today: [3, false],
+          hands: ["手元", "export.ts の呼び出し 7 か所のうち 5 か所目 ・ 4秒前"],
+          thread: [
+            ["you", "13:02", "古い設定の読み口を 12 か所とも新しい形に移して"],
+            ["her", "13:20", "5つ目で型が合わなかったから、先に共通の変換を作ったの。"],
+            ["her", "13:43", "8つ目まで移したわ。", true],
+          ],
+        },
+        "flow:wait": {
+          today: [3, false],
+          hands: ["待ち", "全段の検査の終わり ・ 2分40秒（いつもは 3〜5 分）"],
+          thread: [REQ, ...DONE3, ["her", "14:04", "全部の検査を回すわね。数分かかるわ。"]],
+          chips: [["待つあいだ話そう", "excited", "あら、付き合ってくれるの？ じゃあ検査が終わるまで、少しだけ。"]],
+        },
+        "flow:ask": {
+          today: [3, false],
+          hands: ["待ち", "あなたの答え ・ 右下の入力欄で答えられる"],
+          thread: [REQ, ...DONE3, ["her", "14:10", "幅 720 の画を撮ったら、数字が重なっていたの。"]],
+        },
+        "flow:fail": {
+          today: [3, false],
+          thread: [REQ, ...DONE3, ["her", "14:04", "全部の検査を回すわね。数分かかるわ。"]],
+          chips: [["大丈夫、続けよう", "excited", "……ええ。期待値を直せば、きっと通るわ。"]],
+        },
+        "flow:stopped": {
+          today: [3, false],
+          thread: [REQ, DONE3[0], DONE3[1], ["you", "13:59", "いったん止めて"]],
+        },
+        "flow:away": {
+          today: [3, false],
+          hands: ["待ち", "あなたの答え ・ 18分"],
+          thread: [REQ, ...DONE3, ["her", "14:11", "ひとつ聞きたいことができたの。待っているわね。"]],
+        },
+        "flow:loop": {
+          today: [3, false],
+          hands: ["手元", "T-104 の受け入れの1周目 ・ 20秒前"],
+          thread: [
+            ["you", "12:40", "着手できるタスクを順に進めて"],
+            ["her", "12:58", "T-101 を送ったわ。", true],
+            ["her", "13:21", "T-102 も送ったわ。1回差し戻されたけれど。", true],
+            ["her", "13:53", "T-103、2回差し戻されたけれど通したわ。", true],
+          ],
+        },
+      }
+      const stageOf = () => STAGE[`${state.group}:${state.moment}`] ?? STAGE.parts
+      function renderStage(m) {
+        const s = stageOf()
+        const r = state.react
+        const face = r ? r.face : (m.face ?? "default")
+        const line = m.line ?? "部品をひとつずつ並べたわ。右の欄外に、当てる決まりを書いてあるの。"
+        const said = r ? r.line : line
+        const [count, plus] = s.today
+        const week = [2, 3, 1, count, 0, 0, 0]
+        const kindOf = (n) => (n === 0 ? "none" : n >= 4 ? "now" : "lit")
+        document.getElementById("st-top").innerHTML = `<div class="rh"><b>tsukumo-3</b><span aria-hidden="true">▾</span><div class="seg" role="group" aria-label="仕事と雑談"><button type="button" aria-pressed="true">仕事</button><button type="button" aria-pressed="false">雑談</button></div></div>
+          <div>${m.head ?? "部品の見本帳"}</div>
+          <div class="rh-nav"><span>タスク 3</span><span>成果</span><span>キャラ</span><span>設定</span><span>探す <kbd>⌘K</kbd></span></div>
+          <button type="button" class="today" aria-label="今日の灯り。押すと成果を開く"><span>今日 <b>${count} つ</b>灯した${plus ? ' <span class="plus">＋1</span>' : ""}</span><span class="wk">${["月", "火", "水", "木", "金", "土", "日"]
+            .map((d, i) => `<span class="${i === 3 ? "is-today" : ""}">${lamp(kindOf(week[i]), 11 + Math.min(week[i], 4) * 2)}${d}</span>`)
+            .join("")}</span></button>`
+        const rows = [...s.thread, ...(r ? [["her", "いま", line], ["you", "いま", r.you]] : [])]
+        document.getElementById("more").hidden = rows.length <= 3
+        document.getElementById("thread").innerHTML = rows
+          .map(([who, time, text, lit, ph]) => {
+            const body = `${who === "her" ? `<time>${time}</time>${lit ? lamp("lit", 14) : ""}` : ""}${text}`
+            return ph === undefined ? `<p class="vl ${who === "you" ? "you" : ""}">${body}</p>` : `<button type="button" class="vl" data-goto="${ph}" title="紙のこの段へ移る">${body}</button>`
+          })
+          .join("")
+        const hands = s.hands && !r ? `<div class="hands"><b>${s.hands[0]}</b><span>${s.hands[1]}</span></div>` : ""
+        document.getElementById("now").innerHTML = `<div class="who">${pack().name}<span>いま</span></div>${said}${hands}<i class="tail" aria-hidden="true"></i>`
+        document.getElementById("aizuchi").innerHTML =
+          s.chips && !r ? s.chips.map(([label], i) => `<button type="button" data-aizuchi="${i}">${label}</button>`).join("") : ""
+        const img = document.getElementById("portrait")
+        img.src = `${pack().dir}/${face}.png`
+        img.alt = `${pack().name}の立ち絵`
+        // 狭い幅では舞台を出さず、顔といまのセリフを入力欄の上に置く。
+        return `<div class="n-voice"><img src="${pack().dir}/face.png" alt="" /><p>${said}${s.hands && !r ? `<small>${s.hands[0]}: ${s.hands[1]}</small>` : ""}</p></div>`
+      }
+
       function paintTicks() {
         const passed = (Date.now() - startedAt) / 1000
         for (const el of document.querySelectorAll("[data-tick]")) el.textContent = fmt(Number(el.dataset.tick) + passed)
@@ -2145,22 +2567,21 @@
         document.body.dataset.tone = state.tone
         document.body.style.setProperty("--accent", pack().accent)
         document.getElementById("stage").style.setProperty("--scene", `url("${pack().dir}/background.png")`)
-        const img = document.getElementById("portrait")
-        img.src = `${pack().dir}/${m.face ?? "default"}.png`
-        img.alt = `${pack().name}の立ち絵`
-        document.getElementById("room-head").innerHTML = `<b>tsukumo-3</b>${m.head ?? "部品の見本帳"}`
-        document.getElementById("balloon").innerHTML = `<small>${pack().name}</small>${m.line ?? "部品をひとつずつ並べたわ。右の欄外に、当てる決まりを書いてあるの。"}`
+        const narrowVoice = renderStage(m)
         desk.innerHTML = m.html()
         desk.scrollTop = keepScroll ? top : 0
-        document.getElementById("dock").innerHTML = (m.dock ?? dockPlain)()
+        document.getElementById("dock").innerHTML = narrowVoice + (m.dock ?? dockPlain)()
         document.title = `${m.title ?? "見本帳"} ― tsukumo（試作）`
-        document.getElementById("bar").innerHTML =
+        const bar = document.getElementById("bar")
+        bar.dataset.open = state.barOpen ? "1" : "0"
+        bar.innerHTML =
           `<div>${Object.entries(GROUPS)
             .map(([k, g]) => `<button type="button" data-group="${k}" aria-pressed="${k === state.group}">${g.label}</button>`)
             .join("")}<button type="button" data-tone-toggle aria-pressed="${state.tone === "day"}">昼</button></div>` +
           `<div>${Object.entries(group.moments)
             .map(([k, each]) => `<button type="button" data-moment="${k}" aria-pressed="${k === key}">${each.label}</button>`)
-            .join("")}</div>`
+            .join("")}</div>` +
+          `<button type="button" class="pb-sum" data-bar-toggle aria-expanded="${state.barOpen}">${state.barOpen ? "▾ 帯を畳む" : `▴ 場面を替える（${group.label} › ${m.label}）`}</button>`
         const url = new URL(location.href)
         for (const k of ["group", "moment", "tone", "depth"]) url.searchParams.set(k, state[k])
         history.replaceState(null, "", url)
@@ -2174,11 +2595,31 @@
         if (d.group) {
           state.group = d.group
           state.moment = ""
+          state.react = undefined
           return render(false)
         }
         if (d.moment) {
           state.moment = d.moment
+          state.react = undefined
           return render(false)
+        }
+        if (d.goto !== undefined) {
+          const target = document.querySelector(`[data-phid="${d.goto}"]`)
+          if (target) {
+            target.scrollIntoView({ block: "center" })
+            target.classList.add("flash")
+            setTimeout(() => target.classList.remove("flash"), 1600)
+          }
+          return
+        }
+        if (d.aizuchi !== undefined) {
+          const [you, face, line] = stageOf().chips[Number(d.aizuchi)]
+          state.react = { you, face, line }
+          return render(true)
+        }
+        if ("barToggle" in d) {
+          state.barOpen = !state.barOpen
+          return render(true)
         }
         if ("toneToggle" in d) state.tone = state.tone === "day" ? "night" : "day"
         else if (d.depth) state.depth = Number(d.depth)
