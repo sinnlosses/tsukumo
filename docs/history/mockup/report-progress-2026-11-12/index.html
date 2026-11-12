@@ -1,0 +1,930 @@
+<!doctype html>
+<!--
+  レポートとプログレスの見直し案の試作（2026-11-12）。使い捨て。
+  案A「舞台と紙」（../ui-rebuild-2026-11-12/whole.html）の紙の上で、4つの場面を切り替えて見る。
+    ?moment=work   働く: 生きた計画・人の言葉の実況・途中の成果物・経過時間と止める
+    ?moment=away   戻る: 離れていたあいだのことを4つの問いの順で出す
+    ?moment=deliver 渡す: 札の行・結論・あなたの番・確かさの3値・出どころの番号・道筋
+    ?moment=again  2回目: 前回のレポートからの差分（解決した・新しく出た・残っている）
+  下の帯（?bar=0 で隠す）で場面と昼夜を替える。中身はすべて架空。
+  立ち絵は characters/local/karakasa があればそれ、無ければ同梱の tsukumo。
+-->
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>レポートとプログレスの見直し案（試作）</title>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+      }
+      body {
+        --accent: #ff9e9e;
+        --night: #14121a;
+        --ink: #ece8ef;
+        --ink-soft: rgb(236 232 239 / 0.76);
+        --ink-quiet: rgb(236 232 239 / 0.52);
+        --sheet: #211e29;
+        --float: #2d2937;
+        --raise: rgb(236 232 239 / 0.07);
+        --rule: rgb(236 232 239 / 0.11);
+        --ok: #7ee081;
+        --warn: #e3c766;
+        --ng: #f2a0a0;
+        --you: #8ec5ff;
+        --sans: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic UI", system-ui, sans-serif;
+        --voice: "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif JP", serif;
+        --mono: "IBM Plex Mono", "SF Mono", ui-monospace, Menlo, monospace;
+        background: var(--night);
+        color: var(--ink);
+        font: 16px/1.85 var(--sans);
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      body[data-tone="day"] .paper {
+        --ink: #1f1c27;
+        --ink-soft: rgb(31 28 39 / 0.8);
+        --ink-quiet: rgb(31 28 39 / 0.58);
+        --sheet: #eceaf1;
+        --float: #fbfaff;
+        --raise: rgb(31 28 39 / 0.06);
+        --rule: rgb(31 28 39 / 0.15);
+        --ok: #1c7c37;
+        --warn: #8a6500;
+        --ng: #b3362f;
+        --you: #1f5fa8;
+        color: var(--ink);
+      }
+      button {
+        font: inherit;
+        color: inherit;
+        cursor: pointer;
+      }
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      code,
+      .mono {
+        font-family: var(--mono);
+        font-size: 0.86em;
+      }
+      p {
+        margin: 0;
+      }
+
+      /* 舞台（案Aの左の列を縮めたもの） */
+      .room {
+        position: fixed;
+        inset: 0;
+        display: grid;
+        grid-template-columns: clamp(300px, 26vw, 420px) minmax(0, 1fr);
+      }
+      .stage {
+        position: relative;
+        overflow: hidden;
+        background: var(--scene) center / cover no-repeat;
+      }
+      .stage::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(90deg, transparent 60%, var(--night));
+      }
+      .stage img.portrait {
+        position: absolute;
+        left: -6%;
+        bottom: 0;
+        width: 118%;
+        mask-image: linear-gradient(0deg, black 82%, transparent), linear-gradient(90deg, black 80%, transparent);
+        mask-composite: intersect;
+      }
+      .room-head {
+        position: absolute;
+        top: 16px;
+        left: 20px;
+        right: 20px;
+        z-index: 2;
+        font-size: 13px;
+        color: var(--ink-soft);
+        text-shadow: 0 1px 6px rgb(0 0 0 / 0.7);
+      }
+      .room-head b {
+        font-size: 18px;
+        color: var(--ink);
+        display: block;
+      }
+      .balloon {
+        position: absolute;
+        left: 20px;
+        right: 28px;
+        top: 44%;
+        z-index: 2;
+        background: rgb(46 34 44 / 0.86);
+        border-radius: 14px;
+        padding: 12px 16px;
+        font: 600 15.5px/1.75 var(--voice);
+        backdrop-filter: blur(6px);
+      }
+      .balloon small {
+        display: block;
+        font: 12px var(--sans);
+        color: var(--accent);
+      }
+
+      /* 紙 */
+      .desk {
+        overflow: auto;
+        padding: 22px 28px 120px 8px;
+      }
+      .paper {
+        max-width: 980px;
+        margin: 0 auto;
+        background: var(--sheet);
+        border-radius: 18px;
+        padding: 30px 40px 40px;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 220px;
+        column-gap: 36px;
+        color: var(--ink);
+      }
+      .paper > * {
+        grid-column: 1;
+      }
+      .paper > .wide {
+        grid-column: 1 / -1;
+      }
+      .ask {
+        font-size: 13px;
+        color: var(--ink-quiet);
+        margin-bottom: 14px;
+      }
+
+      /* 札の行 */
+      .stamp {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px 18px;
+        font-size: 13px;
+        color: var(--ink-soft);
+      }
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        border-radius: 999px;
+        padding: 2px 12px 2px 10px;
+        font-weight: 700;
+        font-size: 13px;
+      }
+      .badge::before {
+        content: "";
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: currentColor;
+      }
+      .badge.done {
+        color: var(--ok);
+        background: color-mix(in srgb, var(--ok) 14%, transparent);
+      }
+      .badge.partial {
+        color: var(--warn);
+        background: color-mix(in srgb, var(--warn) 14%, transparent);
+      }
+      .badge.you {
+        color: var(--you);
+        background: color-mix(in srgb, var(--you) 16%, transparent);
+      }
+      .badge.run {
+        color: var(--accent);
+        background: color-mix(in srgb, var(--accent) 14%, transparent);
+      }
+      .badge.run::before {
+        animation: beat 1.6s steps(2, jump-none) infinite;
+      }
+      @keyframes beat {
+        50% {
+          opacity: 0.3;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .badge.run::before {
+          animation: none;
+        }
+      }
+      .stamp .add {
+        color: var(--ok);
+      }
+      .stamp .del {
+        color: var(--ng);
+      }
+      h1.conclusion {
+        font-size: 24px;
+        line-height: 1.6;
+        margin: 14px 0 6px;
+        letter-spacing: 0.01em;
+        text-wrap: pretty;
+      }
+      .sub {
+        color: var(--ink-soft);
+        margin-bottom: 22px;
+        text-wrap: pretty;
+      }
+
+      /* あなたの番 */
+      .turn {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin: 6px 0 28px;
+      }
+      .turn section {
+        background: var(--raise);
+        border-radius: 12px;
+        padding: 14px 16px;
+      }
+      .turn h3 {
+        margin: 0 0 6px;
+        font-size: 12.5px;
+        letter-spacing: 0.06em;
+        color: var(--ink-quiet);
+        font-weight: 600;
+      }
+      .turn section.mine {
+        box-shadow: inset 3px 0 0 var(--you);
+      }
+      .turn section.mine h3 {
+        color: var(--you);
+      }
+      .turn ol {
+        margin: 0;
+        padding-left: 1.3em;
+        font-size: 15px;
+      }
+      .act {
+        display: inline-block;
+        margin-top: 8px;
+        border: 0;
+        border-radius: 8px;
+        padding: 4px 12px;
+        background: var(--you);
+        color: #10131a;
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      /* 確かさ */
+      h2 {
+        font-size: 18px;
+        margin: 30px 0 10px;
+      }
+      .certain {
+        display: grid;
+        gap: 2px;
+      }
+      .certain details {
+        border-radius: 10px;
+      }
+      .certain summary {
+        list-style: none;
+        display: grid;
+        grid-template-columns: 22px minmax(0, 1fr) auto;
+        gap: 10px;
+        align-items: baseline;
+        padding: 8px 10px;
+        border-radius: 10px;
+        cursor: pointer;
+      }
+      .certain summary::-webkit-details-marker {
+        display: none;
+      }
+      .certain summary:hover {
+        background: var(--raise);
+      }
+      .mark {
+        font-weight: 800;
+        text-align: center;
+      }
+      .ok .mark {
+        color: var(--ok);
+      }
+      .ng .mark {
+        color: var(--ng);
+      }
+      .un .mark {
+        color: var(--warn);
+      }
+      .certain .num {
+        font: 13px var(--mono);
+        color: var(--ink-quiet);
+      }
+      .certain .body {
+        margin: 0 10px 10px 42px;
+        font-size: 14px;
+        color: var(--ink-soft);
+      }
+      .certain pre {
+        margin: 6px 0 0;
+        padding: 10px 12px;
+        background: var(--night);
+        border-radius: 8px;
+        font: 12.5px/1.6 var(--mono);
+        color: var(--ink-soft);
+        overflow: auto;
+      }
+      .group-label {
+        font-size: 12.5px;
+        color: var(--ink-quiet);
+        margin: 12px 0 2px 10px;
+      }
+
+      /* 本文と出どころ */
+      .prose p {
+        margin: 0 0 12px;
+        text-wrap: pretty;
+      }
+      sup.ref {
+        font: 700 11px var(--mono);
+        color: var(--accent);
+        margin-left: 2px;
+      }
+      .margin {
+        grid-column: 2;
+        font-size: 12.5px;
+        line-height: 1.6;
+        color: var(--ink-quiet);
+        align-self: start;
+      }
+      .margin p {
+        margin: 0 0 12px;
+      }
+      .margin b {
+        font: 700 11px var(--mono);
+        color: var(--accent);
+        margin-right: 4px;
+      }
+      .ba {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin: 8px 0 14px;
+      }
+      .ba figure {
+        margin: 0;
+        font-size: 12.5px;
+        color: var(--ink-quiet);
+      }
+      .ba .shot {
+        height: 120px;
+        border-radius: 10px;
+        background: var(--float);
+        display: grid;
+        place-items: center;
+        margin-bottom: 4px;
+        font: 600 30px var(--mono);
+      }
+      .ba .shot.after {
+        color: var(--accent);
+      }
+
+      /* 道筋（プログレスの記録とつながる） */
+      .route {
+        margin-top: 30px;
+        border-top: 1px solid var(--rule);
+        padding-top: 14px;
+      }
+      .route summary {
+        cursor: pointer;
+        color: var(--ink-soft);
+        font-size: 14px;
+      }
+      .bars {
+        display: flex;
+        gap: 3px;
+        height: 8px;
+        margin: 12px 0 8px;
+      }
+      .bars i {
+        border-radius: 4px;
+        background: color-mix(in srgb, var(--accent) 55%, transparent);
+      }
+
+      /* 生きた計画 */
+      .plan {
+        list-style: none;
+        margin: 6px 0 0;
+        padding: 0;
+        position: relative;
+      }
+      .plan > li {
+        position: relative;
+        padding: 0 0 18px 34px;
+      }
+      .plan > li::before {
+        content: "";
+        position: absolute;
+        left: 9px;
+        top: 14px;
+        bottom: -6px;
+        width: 2px;
+        background: var(--rule);
+      }
+      .plan > li:last-child::before {
+        display: none;
+      }
+      .dot {
+        position: absolute;
+        left: 2px;
+        top: 6px;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        border: 2px solid var(--rule);
+        background: var(--sheet);
+      }
+      .plan .done .dot {
+        border-color: var(--ok);
+        background: var(--ok);
+      }
+      .plan .now .dot {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent) 20%, transparent);
+      }
+      .plan .head {
+        display: flex;
+        gap: 12px;
+        align-items: baseline;
+      }
+      .plan .head .t {
+        font-weight: 700;
+      }
+      .plan .done .head .t {
+        font-weight: 500;
+        color: var(--ink-soft);
+      }
+      .plan .head .time {
+        margin-left: auto;
+        font: 12.5px var(--mono);
+        color: var(--ink-quiet);
+      }
+      .plan .note {
+        font-size: 14px;
+        color: var(--ink-soft);
+        margin-top: 2px;
+      }
+      .plan .diffchip {
+        font: 12px var(--mono);
+        color: var(--ink-quiet);
+      }
+      .live {
+        margin-top: 8px;
+        background: var(--raise);
+        border-radius: 10px;
+        padding: 10px 14px;
+        font-size: 14.5px;
+      }
+      .live .now-line {
+        display: flex;
+        gap: 10px;
+        align-items: baseline;
+      }
+      .live .now-line .time {
+        margin-left: auto;
+        font: 12.5px var(--mono);
+        color: var(--ink-quiet);
+      }
+      .live ul {
+        list-style: none;
+        margin: 8px 0 0;
+        padding: 0;
+        font-size: 13px;
+        color: var(--ink-quiet);
+      }
+      .live ul li::before {
+        content: "・";
+      }
+      .agents {
+        margin-top: 8px;
+        display: grid;
+        gap: 4px;
+        font-size: 13.5px;
+      }
+      .agents div {
+        display: grid;
+        grid-template-columns: 10px 1fr auto;
+        gap: 10px;
+        align-items: baseline;
+        padding: 4px 10px;
+        border-radius: 8px;
+        background: var(--raise);
+      }
+      .agents i {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--accent);
+      }
+      .agents .ok i {
+        background: var(--ok);
+      }
+      .agents .wait i {
+        background: var(--warn);
+      }
+      .agents span:last-child {
+        font: 12px var(--mono);
+        color: var(--ink-quiet);
+      }
+      .changed {
+        font-size: 13.5px;
+        color: var(--ink-soft);
+        background: color-mix(in srgb, var(--warn) 10%, transparent);
+        border-radius: 8px;
+        padding: 6px 12px;
+        margin-top: 6px;
+      }
+      .changed b {
+        color: var(--warn);
+      }
+
+      /* 経過の札（浮く入力欄の上） */
+      .dock {
+        position: fixed;
+        right: 28px;
+        bottom: 22px;
+        left: calc(clamp(300px, 26vw, 420px) + 8px);
+        display: flex;
+        justify-content: center;
+        pointer-events: none;
+      }
+      .dock-in {
+        pointer-events: auto;
+        width: min(980px, 100%);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: var(--float);
+        border-radius: 14px;
+        padding: 10px 12px 10px 18px;
+        box-shadow: 0 10px 30px rgb(0 0 0 / 0.35);
+        font-size: 14px;
+        color: var(--ink-soft);
+      }
+      .dock-in .grow {
+        flex: 1;
+        color: var(--ink-quiet);
+      }
+      .dock-in .stop {
+        border: 0;
+        border-radius: 9px;
+        padding: 5px 14px;
+        background: var(--raise);
+        font-size: 13px;
+      }
+      .dock-in .mono {
+        color: var(--ink);
+      }
+
+      /* 戻る */
+      .away {
+        display: grid;
+        gap: 10px;
+        margin-top: 14px;
+      }
+      .away section {
+        display: grid;
+        grid-template-columns: 150px minmax(0, 1fr);
+        gap: 16px;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--rule);
+      }
+      .away h3 {
+        margin: 0;
+        font-size: 13px;
+        color: var(--ink-quiet);
+        font-weight: 600;
+      }
+      .away ul {
+        margin: 0;
+        padding-left: 1.1em;
+      }
+      .read-mark {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 12.5px;
+        color: var(--accent);
+        margin: 26px 0 8px;
+      }
+      .read-mark::before,
+      .read-mark::after {
+        content: "";
+        flex: 1;
+        height: 1px;
+        background: color-mix(in srgb, var(--accent) 50%, transparent);
+      }
+
+      /* 前回からの差分 */
+      .delta {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin: 4px 0 8px;
+      }
+      .delta section {
+        border-radius: 12px;
+        background: var(--raise);
+        padding: 12px 14px;
+        font-size: 14px;
+      }
+      .delta h3 {
+        margin: 0 0 6px;
+        font-size: 12.5px;
+        font-weight: 700;
+      }
+      .delta .fixed h3 {
+        color: var(--ok);
+      }
+      .delta .new h3 {
+        color: var(--ng);
+      }
+      .delta .left h3 {
+        color: var(--warn);
+      }
+      .delta ul {
+        margin: 0;
+        padding-left: 1.1em;
+      }
+
+      /* 試作の切り替えの帯（評価の対象ではない） */
+      .proto-bar {
+        position: fixed;
+        top: 12px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 50;
+        display: flex;
+        gap: 4px;
+        background: #f6f3e8;
+        color: #1b1a17;
+        border-radius: 999px;
+        padding: 4px;
+        font: 12px/1 var(--sans);
+        box-shadow: 0 4px 18px rgb(0 0 0 / 0.4);
+      }
+      .proto-bar button {
+        border: 0;
+        background: none;
+        color: inherit;
+        border-radius: 999px;
+        padding: 7px 12px;
+      }
+      .proto-bar button[aria-pressed="true"] {
+        background: #1b1a17;
+        color: #f6f3e8;
+      }
+      body[data-bar="0"] .proto-bar {
+        display: none;
+      }
+
+      @media (max-width: 760px) {
+        .room {
+          grid-template-columns: 1fr;
+        }
+        .stage {
+          display: none;
+        }
+        .desk {
+          padding: 12px 10px 110px;
+        }
+        .paper {
+          grid-template-columns: 1fr;
+          padding: 20px 18px 28px;
+        }
+        .margin {
+          grid-column: 1;
+        }
+        .turn,
+        .delta {
+          grid-template-columns: 1fr;
+        }
+        .away section {
+          grid-template-columns: 1fr;
+          gap: 4px;
+        }
+        .dock {
+          left: 10px;
+          right: 10px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="room">
+      <aside class="stage" id="stage">
+        <div class="room-head" id="room-head"></div>
+        <div class="balloon" id="balloon"></div>
+        <img class="portrait" id="portrait" alt="" />
+      </aside>
+      <main class="desk" id="desk"></main>
+    </div>
+    <div class="dock" id="dock"></div>
+    <nav class="proto-bar" aria-label="試作の切り替え" id="bar"></nav>
+
+    <script>
+      const ROOT = "../../../../characters/"
+      const PACKS = {
+        karakasa: { dir: ROOT + "local/karakasa", name: "唐傘" },
+        tsukumo: { dir: ROOT + "tsukumo", name: "つくも" },
+      }
+      const params = new URLSearchParams(location.search)
+      const state = {
+        moment: params.get("moment") ?? "deliver",
+        tone: params.get("tone") ?? "night",
+        pack: "karakasa",
+      }
+      document.body.dataset.bar = params.get("bar") ?? "1"
+      const pack = () => PACKS[state.pack]
+
+      const MOMENTS = {
+        work: { label: "働く", face: "thinking", line: "いまは表示の層を直しているところ。テストは2つ目の段で回すわね。", head: "働いている ・ 6分12秒" },
+        away: { label: "戻る", face: "excited", line: "おかえりなさい。あなたに聞きたいことが1つ残っているの。", head: "あなたの番 ・ 18分前から" },
+        deliver: { label: "渡す", face: "proud", line: "終わったわ。画は前後で並べておいたから、見比べてね。", head: "終わった ・ 14分20秒" },
+        again: { label: "2回目", face: "default", line: "前に言われたところは直したわ。新しく1つ気になる点が出たの。", head: "一部済んだ ・ 9分05秒" },
+      }
+
+      const PLAN = [
+        { t: "今の形を調べる", state: "done", time: "1分40秒", note: "目盛りの数は `axis.ts` の定数 12 から来ていた。", diff: "変更なし" },
+        { t: "目盛りを設定から読む", state: "done", time: "3分02秒", note: "設定に `ticks` を足し、既定を 12 のまま残した。", diff: "2ファイル +38 −6" },
+        { t: "表示の層を直す", state: "now", time: "1分30秒〜" },
+        { t: "テストと画で確かめる", state: "next" },
+      ]
+
+      function work() {
+        const rows = PLAN.map((p) => {
+          if (p.state === "done")
+            return `<li class="done"><span class="dot"></span><div class="head"><span class="t">${p.t}</span><span class="time">${p.time}</span></div>
+              <p class="note">${md(p.note)} <span class="diffchip">${p.diff}</span></p></li>`
+          if (p.state === "now")
+            return `<li class="now"><span class="dot"></span><div class="head"><span class="t">表示の層を直している</span><span class="time">${p.time}</span></div>
+              <div class="live">
+                <div class="now-line"><span><b>グラフの部品 6 個のうち 4 個目</b>（<code>bar-chart.tsx</code>）に、設定の目盛りを通している</span><span class="time">12秒前</span></div>
+                <ul><li>読んだ: <code>chart-axis.tsx</code> ほか 5 ファイル</li><li>直した: <code>line-chart.tsx</code>・<code>area-chart.tsx</code>・<code>pie-chart.tsx</code></li></ul>
+              </div>
+              <div class="agents">
+                <div class="ok"><i></i><span>型の検査を先に回す役 ― 通った（3,152 件）</span><span>0:48</span></div>
+                <div><i></i><span>画を撮る役 ― 幅 1400 の2枚目を撮っている</span><span>1:05</span></div>
+              </div>
+              <p class="changed"><b>計画を直した</b> ― 円グラフにも目盛りがあると分かったので、この段に円グラフを足した（段の数は変わらない）。</p></li>`
+          return `<li><span class="dot"></span><div class="head"><span class="t" style="color:var(--ink-quiet)">${p.t}</span><span class="time">似た作業では 2〜4分</span></div></li>`
+        }).join("")
+        return `<article class="paper" aria-label="作業中の紙">
+          <p class="ask wide">頼んだこと: グラフの目盛りの数を設定で変えられるようにして</p>
+          <div class="stamp wide"><span class="badge run">働いている</span><span>4段のうち3段目</span><span class="mono">経過 6:12</span><span>見込み <b>あと約 4分</b>（似た作業 9 件の中央値から）</span></div>
+          <h1 class="conclusion wide" style="font-size:20px">表示の層を直している。テストと画で確かめる段が残っている。</h1>
+          <ol class="plan wide">${rows}</ol>
+        </article>`
+      }
+
+      function away() {
+        return `<article class="paper" aria-label="戻ったときの紙">
+          <p class="ask wide">頼んだこと: グラフの目盛りの数を設定で変えられるようにして</p>
+          <div class="stamp wide"><span class="badge you">あなたの番</span><span>18分前から待っている</span><span class="mono">離れていた 23分</span></div>
+          <h1 class="conclusion wide">離れていた23分のあいだに、4段のうち3段が済んだ。最後の段の前に、あなたの答えが1つ要る。</h1>
+          <div class="away wide">
+            <section><h3>あなたを待っていること</h3><div><p>目盛りを 24 にすると、幅 720 で数字が重なる。<b>重なる幅では間引くか、24 のまま重ねるか</b>。</p>
+              <button class="act" type="button">答える（1 で間引く・2 で重ねる）</button></div></section>
+            <section><h3>変わったこと</h3><ul><li>設定に <code>ticks</code> を足した（既定は 12 のまま）</li><li>グラフの部品 6 個が設定の値を読むようになった</li><li>単体テストを 4 件足し、3,156 件が通った</li></ul></section>
+            <section><h3>置いた前提</h3><ul><li>目盛りの数は 4〜48 の範囲だけ受け付ける（範囲は決まっていなかったので、今の最小と最大の比から置いた）</li></ul></section>
+            <section><h3>進め方</h3><p>計画どおり。途中で円グラフにも目盛りがあると分かり、3段目に足した。</p></section>
+          </div>
+          <p class="read-mark wide">ここから先は、前に見たあと</p>
+          <ol class="plan wide">
+            <li class="done"><span class="dot"></span><div class="head"><span class="t">目盛りを設定から読む</span><span class="time">3分02秒</span></div><p class="note">設定に <code>ticks</code> を足した。 <span class="diffchip">2ファイル +38 −6</span></p></li>
+            <li class="done"><span class="dot"></span><div class="head"><span class="t">表示の層を直す</span><span class="time">5分48秒</span></div><p class="note">6 個の部品が設定を読む。 <span class="diffchip">6ファイル +52 −31</span></p></li>
+            <li class="now"><span class="dot"></span><div class="head"><span class="t">あなたの答えを待っている</span><span class="time">18分</span></div></li>
+          </ol>
+        </article>`
+      }
+
+      function certainty(again) {
+        // 落ちたものを先に、開いた状態で出す。確かめたものは畳んで最後に置く。
+        return `<div class="certain wide">
+          ${again ? `<p class="group-label">落ちた ― 1件</p>
+          <details class="ng" open><summary><span class="mark">✕</span><span>幅 390 で、目盛りの数字が2か所重なる</span><span class="num">capture-view.ts --size 390x844</span></summary>
+            <div class="body">間引きの規則が幅 720 を境にしていて、390 では効いていない。<pre>重なり: x=212 「18」と「20」、x=301 「36」と「38」</pre></div></details>` : ""}
+          <p class="group-label">確かめていない ― 1件</p>
+          <details class="un"><summary><span class="mark">?</span><span>Safari での目盛りの字の詰まり</span><span class="num">未実行</span></summary>
+            <div class="body">撮る道具が Chromium だけのため。確かめるなら、試作を Safari で開いて幅 720 の目盛りを見る。</div></details>
+          <p class="group-label">確かめた ― 4件</p>
+          <details class="ok"><summary><span class="mark">✓</span><span>型の検査・lint・整形</span><span class="num">pnpm run check</span></summary></details>
+          <details class="ok"><summary><span class="mark">✓</span><span>単体テスト <b>3,156 件</b>（足した 4 件を含む）</span><span class="num">pnpm run test</span></summary></details>
+          <details class="ok"><summary><span class="mark">✓</span><span>E2E <b>71 件</b></span><span class="num">pnpm run test:e2e</span></summary></details>
+          <details class="ok"><summary><span class="mark">✓</span><span>幅 1400 と 720 で目盛りが 24 本に見える（画は下）</span><span class="num">capture-view.ts</span></summary></details>
+        </div>`
+      }
+
+      function deliver(again) {
+        const stamp = again
+          ? `<span class="badge partial">一部済んだ</span><span>前回のレポートから <b>2件解決・1件新しく</b></span>`
+          : `<span class="badge done">済んだ</span><span>4段 ・ 14分20秒</span>`
+        return `<article class="paper" aria-label="レポートの紙">
+          <p class="ask wide">頼んだこと: ${again ? "前のレポートの指摘を直して" : "グラフの目盛りの数を設定で変えられるようにして"}</p>
+          <div class="stamp wide">${stamp}<span><span class="add">+90</span> <span class="del">−37</span> ・ 8ファイル</span><span>確かめた 4 ・ ${again ? "落ちた 1 ・ " : ""}確かめていない 1</span></div>
+          <h1 class="conclusion wide">${again ? "幅 720 の重なりは消えた。幅 390 では、まだ2か所重なる。" : "グラフの目盛りの数を、設定の <code>ticks</code> で 4〜48 本に変えられるようになった。"}</h1>
+          <p class="sub wide">${again ? "前回の指摘2件は直した。間引きの規則が幅 720 を境にしているため、もっと狭い幅では効いていない。" : "既定は今と同じ 12 本で、設定を変えない人の画面は変わらない。"}</p>
+          ${again ? `<div class="delta wide">
+            <section class="fixed"><h3>解決 ― 2件</h3><ul><li>幅 720 で数字が重なる</li><li>既定の 12 が設定に出ていない</li></ul></section>
+            <section class="new"><h3>新しく ― 1件</h3><ul><li>幅 390 で2か所重なる</li></ul></section>
+            <section class="left"><h3>残っている ― 1件</h3><ul><li>Safari で見ていない</li></ul></section></div>` : ""}
+          <div class="turn wide">
+            <section class="mine"><h3>あなたがすること</h3><ol>${again ? "<li>幅 390 も間引くか決める（1 で間引く・2 で今のまま）</li>" : "<li>設定の画面で目盛りを 24 にして、見え方を確かめる</li>"}</ol>
+              <button class="act" type="button">${again ? "答える" : "設定を開く"}</button></section>
+            <section><h3>${pack().name}が続けてできること</h3><ol>${again ? "<li>間引きの境を幅に比例させる（約 5 分）</li>" : "<li>Safari で見え方を確かめる</li><li>目盛りの数を設定の画面の説明に足す</li>"}</ol></section>
+          </div>
+          <h2 class="wide">確かさ</h2>
+          ${certainty(again)}
+          <h2>変えたところ</h2>
+          <div class="prose">
+            <p>目盛りの数は <code>axis.ts</code> の定数から、設定の <code>ticks</code> を読む形に替えた<sup class="ref">1</sup>。範囲の外の値は、設定を読むところで 4 か 48 に丸める<sup class="ref">2</sup>。</p>
+            <p>グラフの部品 6 個は、同じ <code>useAxisTicks</code> から数を受け取る。円グラフは目盛りを使わないと思っていたが、外周の目盛りがあったので足した<sup class="ref">3</sup>。</p>
+          </div>
+          <aside class="margin" aria-label="出どころ" style="grid-row: span 2">
+            <p><b>1</b><code>src/chart/axis.ts:14</code> の <code>DEFAULT_TICKS</code></p>
+            <p><b>2</b><code>src/setting/parse.ts:88</code>・単体テスト「範囲の外を丸める」</p>
+            <p><b>3</b><code>src/chart/pie-chart.tsx:61</code></p>
+          </aside>
+          <div class="ba">
+            <figure><div class="shot">12</div>前 ― 目盛り 12 本（幅 1400）</figure>
+            <figure><div class="shot after">24</div>後 ― 設定で 24 本（幅 1400）</figure>
+          </div>
+          <details class="route wide"><summary>この結論に至った道筋 ― 4段 ・ 14分20秒 ・ 道具 41 回</summary>
+            <div class="bars"><i style="flex:100"></i><i style="flex:182"></i><i style="flex:348"></i><i style="flex:230"></i></div>
+            <ol class="plan">
+              <li class="done"><span class="dot"></span><div class="head"><span class="t">今の形を調べる</span><span class="time">1分40秒</span></div></li>
+              <li class="done"><span class="dot"></span><div class="head"><span class="t">目盛りを設定から読む</span><span class="time">3分02秒</span></div></li>
+              <li class="done"><span class="dot"></span><div class="head"><span class="t">表示の層を直す</span><span class="time">5分48秒</span></div></li>
+              <li class="done"><span class="dot"></span><div class="head"><span class="t">テストと画で確かめる</span><span class="time">3分50秒</span></div></li>
+            </ol></details>
+        </article>`
+      }
+
+      function md(text) {
+        return text.replace(/`([^`]+)`/g, "<code>$1</code>")
+      }
+
+      function render() {
+        const m = MOMENTS[state.moment]
+        document.body.dataset.tone = state.tone
+        document.getElementById("stage").style.setProperty("--scene", `url("${pack().dir}/background.png")`)
+        const img = document.getElementById("portrait")
+        img.src = `${pack().dir}/${m.face}.png`
+        img.alt = `${pack().name}の立ち絵`
+        document.getElementById("room-head").innerHTML = `<b>tsukumo-3</b>${m.head}`
+        document.getElementById("balloon").innerHTML = `<small>${pack().name}</small>${m.line}`
+        const desk = document.getElementById("desk")
+        desk.innerHTML =
+          state.moment === "work" ? work() : state.moment === "away" ? away() : deliver(state.moment === "again")
+        document.getElementById("dock").innerHTML =
+          state.moment === "work"
+            ? `<div class="dock-in"><span class="badge run">3/4</span><span class="mono">6:12</span><span class="grow">補足を送る（いまの作業の続きとして届く）</span><button class="stop" type="button">止める</button></div>`
+            : `<div class="dock-in"><span class="grow">${pack().name}への依頼を書く</span><kbd class="mono">⌘↵</kbd></div>`
+        document.title = state.moment === "work" ? "◐ 3/4 表示の層 ― tsukumo" : state.moment === "away" ? "● あなたの番 ― tsukumo" : "✓ 済んだ ― tsukumo"
+        document.getElementById("bar").innerHTML =
+          Object.entries(MOMENTS)
+            .map(([key, each]) => `<button type="button" data-moment="${key}" aria-pressed="${key === state.moment}">${each.label}</button>`)
+            .join("") +
+          `<button type="button" data-tone-toggle aria-pressed="${state.tone === "day"}">昼</button>`
+      }
+
+      document.addEventListener("click", (event) => {
+        const target = event.target.closest("button")
+        if (!target) return
+        if (target.dataset.moment) state.moment = target.dataset.moment
+        else if ("toneToggle" in target.dataset) state.tone = state.tone === "day" ? "night" : "day"
+        else return
+        const url = new URL(location.href)
+        url.searchParams.set("moment", state.moment)
+        url.searchParams.set("tone", state.tone)
+        history.replaceState(null, "", url)
+        render()
+      })
+
+      const probe = new Image()
+      probe.onerror = () => {
+        state.pack = "tsukumo"
+        render()
+      }
+      probe.src = `${PACKS.karakasa.dir}/default.png`
+      render()
+    </script>
+  </body>
+</html>
