@@ -1,0 +1,75 @@
+/* 新しい器の舞台。立ち絵は舞台の下端に接し、置き方はパックの定義から写した変数（`--stage-figure-*`）で決まる。
+   上の4段（部屋の頭・今日の灯り・やり取りの流れ・いまの吹き出し）は、下端を立ち絵の頭の印に合わせる。
+   立ち絵の高さは幅と素材の縦横比で決まり CSS からは読めないので、席の中の印（`.stage-figure-head`）を anchor で引く。
+   印は席の高さ（＝立ち絵の高さ）に対する割合で置くので、舞台の幅が変わっても頭に付いてくる。 */
+.stage-figure {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+.stage-figure-seat {
+  position: absolute;
+  bottom: 0;
+  left: var(--stage-figure-left);
+  width: var(--stage-figure-width);
+  mask-image: var(--stage-figure-fade);
+  mask-composite: intersect;
+}
+.stage-figure-portrait {
+  anchor-name: --stage-portrait;
+}
+/* 立ち絵は席の幅いっぱいに広げる（`portrait.module.css` の既定は素材の大きさで止まる）。
+   縦長の素材が舞台より高くなるときは高さで止め、絵は左下に寄せる。
+   止めた箱の上端は絵の上端と一致するので、頭の印の割合はそのまま効く。 */
+.stage-figure-portrait img {
+  width: 100%;
+  max-width: none;
+  max-height: 62cqh;
+  object-fit: contain;
+  object-position: left bottom;
+}
+.stage-figure-head {
+  position: absolute;
+  top: var(--stage-figure-head);
+  left: 0;
+  width: 100%;
+  height: 0;
+  anchor-name: --stage-figure-head;
+}
+.stage-figure-rows {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: anchor(--stage-figure-head top, 40%);
+  left: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+}
+.stage-figure-room-head,
+.stage-figure-today,
+.stage-figure-balloon {
+  flex: none;
+}
+/* やり取りの流れが残りの高さを受け持つ。中身は下に寄せ、溢れた古い行は上へ押し出す。 */
+.stage-figure-thread {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-height: 0;
+  padding: 0 var(--balloon-right-gap) 0 var(--gutter-region);
+}
+.stage-figure-thread > .balloon-track {
+  flex: 0 1 auto;
+  align-self: stretch;
+  margin: 0;
+  max-height: 100%;
+}
+
+@media (max-width: 760px) {
+  .stage-figure {
+    display: none;
+  }
+}

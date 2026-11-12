@@ -62,7 +62,8 @@ export function PresentationalConversation(props: PresentationalConversationProp
       ) : (
         <Stage
           posture={props.posture}
-          figure={<CharacterView hands={<PhoneActivity />} />}
+          chatMode={props.chatMode}
+          figure={<CharacterView hands={<PhoneActivity />} placement="stage" />}
           desk={
             <PaperDesk
               posture={props.posture}

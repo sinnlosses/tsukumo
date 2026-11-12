@@ -12,6 +12,10 @@
 
 import { useState } from "react"
 
+import {
+  type CharacterStage,
+  DEFAULT_CHARACTER_STAGE,
+} from "../../../../../../../shared/character-pack/character-stage.ts"
 import type { Expression } from "../../../../../../../shared/character-pack/expression.ts"
 import type { ItemSeatMap } from "../../../../../../../shared/item/item.ts"
 import type { ReactionKind } from "../../../../../../../shared/recommendation/reaction.ts"
@@ -105,6 +109,8 @@ export type CharacterViewModel = {
   readonly phoneLine: PhoneBalloonLine
   /** 使用中のパックの3つの席に置いたアイテム。行が無ければ全席が空。 */
   readonly seats: ItemSeatMap
+  /** 新しい器の舞台での立ち絵の置き方。キャラクターが届いていなければ既定。 */
+  readonly stage: CharacterStage
 }
 
 /**
@@ -204,6 +210,7 @@ export function useCharacterView(): CharacterViewModel {
     face: characterFaceInfo(character),
     phoneLine: phoneLineOf(reaction, activeSpeeches, now),
     seats: (character === undefined ? undefined : itemSeats[character.pack]) ?? EMPTY_SEATS,
+    stage: character?.stage ?? DEFAULT_CHARACTER_STAGE,
   }
 }
 

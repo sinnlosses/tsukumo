@@ -22,6 +22,7 @@
 // 一覧の1件（`CharacterPackEntry`）は `characterPackEntry` で組む。
 
 import type { CharacterDefinition } from "../../src/shared/character-pack/character-definition.ts"
+import { DEFAULT_CHARACTER_STAGE } from "../../src/shared/character-pack/character-stage.ts"
 import {
   type CharacterInfo,
   type CharacterPackEntry,
@@ -59,6 +60,7 @@ export function characterInfo(overrides: Partial<CharacterInfo> = {}): Character
     miniCall: undefined,
     background: undefined,
     diaryFont: undefined,
+    stage: DEFAULT_CHARACTER_STAGE,
     editable: true,
     ...overrides,
   }
@@ -116,6 +118,7 @@ export function characterDefinition(
     miniCall: undefined,
     background: undefined,
     diaryFont: undefined,
+    stage: DEFAULT_CHARACTER_STAGE,
     ...overrides,
   }
 }

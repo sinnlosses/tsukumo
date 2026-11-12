@@ -11,7 +11,7 @@
 
 ```
 characters/<name>/
-  character.json     name / portraits（表情 → ファイル名）/ expressions（名前 → 日本語ラベル）/ diaryFont（日記の書体のファイル名）
+  character.json     name / portraits（表情 → ファイル名）/ expressions（名前 → 日本語ラベル）/ diaryFont（日記の書体のファイル名）/ stage（舞台での立ち絵の置き方）
   persona.md         人格。tsukumo が systemPrompt.append で足す（口調・セリフと詳細の書き分け。セリフの間合いとレポートの記法は core 側）
   *.svg / *.png      素材
   *.woff2 / *.woff / *.ttf / *.otf   日記の書体（任意。`diaryFont` が指す）
@@ -19,6 +19,17 @@ characters/<name>/
 
 - **キャラクターの中身は定義が持つ**（原則4）。`speak` の enum と説明は `expressions` から作る。
   `diaryFont` はパックに同梱した書体ファイルだけを指せ、素材と同じ経路（「パックの一覧と素材の URL」）で配る
+- **舞台での立ち絵の置き方も定義が持つ**（`stage`。読むのは `src/shared/character-pack/character-stage.ts` の
+  `toCharacterStage`）。立ち絵はいつも舞台の下端に接し、高さは幅と素材の縦横比から決まる。欄はどれも任意で、
+  無いパック・読めない欄は既定で立ち、範囲外の数は帯の端へ寄せる:
+
+  | 欄      | 意味                                                                       | 既定               | 帯        |
+  | ------- | -------------------------------------------------------------------------- | ------------------ | --------- |
+  | `left`  | 立ち絵の左端。舞台の幅に対する割合で、負なら左へはみ出す                   | `-0.06`            | -0.5〜0.5 |
+  | `width` | 立ち絵の幅。舞台の幅に対する割合                                           | `1.18`             | 0.5〜2    |
+  | `fade`  | ぼかして隠す素材の縁（`top`・`right`・`bottom`・`left`）。空ならぼかさない | `["top", "right"]` | ―         |
+  | `head`  | 素材の上端から頭のてっぺんまで。素材の高さに対する割合で、吹き出しの付け根 | `0.07`             | 0〜0.6    |
+
 - **パックは機械の出来事への反応の行（定型文）を持たない**（利用者決定）。再試行・失敗・
   利用上限・待ちの行は、迎えの挨拶とは別の問い合わせが `persona.md` の口調で代（起こした1回）ごとに書く
   （`docs/architecture/display.md` 4.2「出力の分離（セリフと詳細）」）。前の版の `character.json` に残った

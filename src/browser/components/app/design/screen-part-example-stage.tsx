@@ -3,6 +3,7 @@
 
 import { createRef, type ReactElement, type ReactNode } from "react"
 
+import { DEFAULT_CHARACTER_STAGE } from "../../../../shared/character-pack/character-stage.ts"
 import type { CharacterViewModel } from "../../page/conversation/components/character-view/hooks/use-character-view.ts"
 import { PresentationalCharacterView } from "../../page/conversation/components/character-view/presentational-character-view.tsx"
 import { PresentationalSpeechLog } from "../../page/conversation/components/character-view/presentational-speech-log.tsx"
@@ -41,6 +42,7 @@ const CHARACTER: CharacterViewModel = {
   face: NO_FACE,
   phoneLine: { kind: "text", text: "READMEを見直すね。", time: TIME },
   seats: { topLeft: undefined, belowLeft: undefined, belowRight: undefined },
+  stage: DEFAULT_CHARACTER_STAGE,
 }
 
 export const STAGE_EXAMPLES: readonly ScreenPartExample[] = [

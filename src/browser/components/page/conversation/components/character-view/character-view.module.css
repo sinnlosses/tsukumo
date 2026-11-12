@@ -11,6 +11,7 @@
 @import "./stage/speech-log.css";
 @import "./stage/phone-balloon.css";
 @import "./stage/item-seat.css";
+@import "./stage/stage-figure.css";
 
 .character-region {
   position: relative;

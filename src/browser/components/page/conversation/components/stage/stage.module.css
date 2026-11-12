@@ -12,6 +12,9 @@
 .stage-shell[data-posture="greet"] {
   --stage-width: clamp(340px, 42vw, 900px);
 }
+.stage-shell[data-chat] {
+  --stage-width: 40vw;
+}
 /* 背景を全面に敷き、上下と右へ向けて地の色で覆う（右ほど濃くし、紙の後ろで背景が字の邪魔をしない）。 */
 .stage-scene {
   position: absolute;
