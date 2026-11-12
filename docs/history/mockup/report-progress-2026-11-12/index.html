@@ -1,19 +1,20 @@
 <!doctype html>
 <!--
-  レポートとプログレスの見直し案の試作（2026-11-12）。使い捨て。
-  案A「舞台と紙」（../ui-rebuild-2026-11-12/whole.html）の紙の上で、4つの場面を切り替えて見る。
-    ?moment=work   働く: 生きた計画・人の言葉の実況・途中の成果物・経過時間と止める
-    ?moment=away   戻る: 離れていたあいだのことを4つの問いの順で出す
-    ?moment=deliver 渡す: 札の行・結論・あなたの番・確かさの3値・出どころの番号・道筋
-    ?moment=again  2回目: 前回のレポートからの差分（解決した・新しく出た・残っている）
-  下の帯（?bar=0 で隠す）で場面と昼夜を替える。中身はすべて架空。
+  レポートとプログレスの見直し案の試作・全体版（2026-11-12）。使い捨て。中身はすべて架空。
+  案A「舞台と紙」（../ui-rebuild-2026-11-12/whole.html）の紙の上で、3つの群を切り替えて見る。
+    ?group=paper  紙:          deliver 渡す / again 2回目 / decide 判断を仰ぐ / quick 短い答え
+    ?group=parts  部品の見本帳: text 文 / number 数 / compare 比べる / link つながり / proof 証拠 / touch 触る
+    ?group=flow   進み具合:     work 働く / laps 流れと周回 / long 長い作業 / wait 止まる・待つ / ask 割り込み /
+                                fail 失敗 / stopped 止めた / away 戻る / loop ループ
+  ?moment= で場面、?tone=day で昼、?depth=1〜3 で読む深さ（紙の群）、?bar=0 で切り替えの帯を隠す。
+  進み具合の印は、成果の暦と同じ狐火の形（今の画面の Lamp）を使う。
   立ち絵は characters/local/karakasa があればそれ、無ければ同梱の tsukumo。
 -->
 <html lang="ja">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>レポートとプログレスの見直し案（試作）</title>
+    <title>レポートとプログレスの見直し案（試作・全体版）</title>
     <style>
       *,
       *::before,
@@ -27,65 +28,87 @@
       }
       body {
         --accent: #ff9e9e;
+        --accent-ink: var(--accent);
         --night: #14121a;
+        --stage-w: clamp(280px, 24vw, 400px);
         --ink: #ece8ef;
-        --ink-soft: rgb(236 232 239 / 0.76);
-        --ink-quiet: rgb(236 232 239 / 0.52);
+        --ink-soft: rgb(236 232 239 / 0.78);
+        --ink-quiet: rgb(236 232 239 / 0.56);
         --sheet: #211e29;
-        --float: #2d2937;
-        --raise: rgb(236 232 239 / 0.07);
-        --rule: rgb(236 232 239 / 0.11);
-        --ok: #7ee081;
-        --warn: #e3c766;
-        --ng: #f2a0a0;
-        --you: #8ec5ff;
+        --float: #2c2836;
+        --raise: rgb(236 232 239 / 0.06);
+        --rule: rgb(236 232 239 / 0.12);
+        --ok: #6fcf7f;
+        --warn: #e3b341;
+        --ng: #f0646a;
+        --data: #3987e5;
+        --data-2: #d95926;
+        --data-3: #199e70;
+        --data-mute: rgb(236 232 239 / 0.26);
         --sans: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic UI", system-ui, sans-serif;
         --voice: "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif JP", serif;
         --mono: "IBM Plex Mono", "SF Mono", ui-monospace, Menlo, monospace;
         background: var(--night);
         color: var(--ink);
-        font: 16px/1.85 var(--sans);
+        font: 16px/1.8 var(--sans);
         overflow: hidden;
         -webkit-font-smoothing: antialiased;
+        line-break: strict;
+        text-autospace: normal;
       }
-      body[data-tone="day"] .paper {
+      body[data-tone="day"] .tone {
+        --accent-ink: color-mix(in oklab, var(--accent), #1f1c27 46%);
         --ink: #1f1c27;
         --ink-soft: rgb(31 28 39 / 0.8);
-        --ink-quiet: rgb(31 28 39 / 0.58);
-        --sheet: #eceaf1;
-        --float: #fbfaff;
-        --raise: rgb(31 28 39 / 0.06);
-        --rule: rgb(31 28 39 / 0.15);
+        --ink-quiet: rgb(31 28 39 / 0.62);
+        --sheet: #f4f2f7;
+        --float: #ffffff;
+        --raise: rgb(31 28 39 / 0.05);
+        --rule: rgb(31 28 39 / 0.14);
         --ok: #1c7c37;
         --warn: #8a6500;
-        --ng: #b3362f;
-        --you: #1f5fa8;
+        --ng: #c62f38;
+        --data: #2a78d6;
+        --data-2: #eb6834;
+        --data-3: #1baf7a;
+        --data-mute: rgb(31 28 39 / 0.22);
+      }
+      .tone {
         color: var(--ink);
       }
-      button {
+      button,
+      input {
         font: inherit;
         color: inherit;
+      }
+      button {
         cursor: pointer;
       }
       :focus-visible {
-        outline: 2px solid var(--accent);
+        outline: 2px solid var(--accent-ink);
         outline-offset: 2px;
       }
       code,
-      .mono {
+      .mono,
+      kbd {
         font-family: var(--mono);
         font-size: 0.86em;
+      }
+      kbd {
+        border-radius: 5px;
+        padding: 1px 6px;
+        background: var(--raise);
       }
       p {
         margin: 0;
       }
 
-      /* 舞台（案Aの左の列を縮めたもの） */
+      /* 舞台 */
       .room {
         position: fixed;
         inset: 0;
         display: grid;
-        grid-template-columns: clamp(300px, 26vw, 420px) minmax(0, 1fr);
+        grid-template-columns: var(--stage-w) minmax(0, 1fr);
       }
       .stage {
         position: relative;
@@ -96,7 +119,7 @@
         content: "";
         position: absolute;
         inset: 0;
-        background: linear-gradient(90deg, transparent 60%, var(--night));
+        background: linear-gradient(90deg, transparent 58%, var(--night));
       }
       .stage img.portrait {
         position: absolute;
@@ -125,7 +148,7 @@
         position: absolute;
         left: 20px;
         right: 28px;
-        top: 44%;
+        top: 40%;
         z-index: 2;
         background: rgb(46 34 44 / 0.86);
         border-radius: 14px;
@@ -135,109 +158,231 @@
       }
       .balloon small {
         display: block;
-        font: 12px var(--sans);
+        font: 13px var(--sans);
         color: var(--accent);
       }
 
-      /* 紙 */
+      /* 紙の骨組み。本文の列（1行 40 字まで）と欄外の列を持つ。 */
       .desk {
         overflow: auto;
-        padding: 22px 28px 120px 8px;
+        padding: 22px 28px 130px 8px;
+        scroll-behavior: smooth;
       }
       .paper {
-        max-width: 980px;
+        max-width: 1010px;
         margin: 0 auto;
         background: var(--sheet);
         border-radius: 18px;
-        padding: 30px 40px 40px;
+        padding: 28px 44px 44px;
         display: grid;
-        grid-template-columns: minmax(0, 1fr) 220px;
-        column-gap: 36px;
-        color: var(--ink);
+        grid-template-columns: minmax(0, 41em) minmax(0, 1fr);
+        column-gap: 40px;
+        align-content: start;
+      }
+      .paper.note {
+        max-width: 700px;
+        grid-template-columns: minmax(0, 1fr);
       }
       .paper > * {
         grid-column: 1;
+        min-width: 0;
       }
       .paper > .wide {
         grid-column: 1 / -1;
       }
+      .pair {
+        grid-column: 1 / -1;
+        display: grid;
+        grid-template-columns: subgrid;
+        align-items: start;
+      }
+      .pair > :first-child {
+        min-width: 0;
+      }
+      .mg {
+        grid-column: 2;
+        font-size: 13.5px;
+        line-height: 1.65;
+        color: var(--ink-quiet);
+        padding-top: 4px;
+      }
+      .mg p {
+        margin: 0 0 8px;
+      }
+      .mg b.n {
+        font: 700 12px var(--mono);
+        color: var(--accent-ink);
+        margin-right: 5px;
+      }
+      .mg ul {
+        margin: 0;
+        padding-left: 1.1em;
+      }
+      .mg .mg-n {
+        font-weight: 700;
+        color: var(--ink-soft);
+        margin-bottom: 2px;
+      }
+
+      /* 紙の頭 */
+      .p-top {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 12px;
+      }
       .ask {
         font-size: 13px;
         color: var(--ink-quiet);
-        margin-bottom: 14px;
+        flex: 1;
       }
-
-      /* 札の行 */
+      .p-tools {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      .seg {
+        display: inline-flex;
+        background: var(--raise);
+        border-radius: 9px;
+        padding: 2px;
+      }
+      .seg button,
+      .tool {
+        border: 0;
+        background: none;
+        border-radius: 7px;
+        padding: 2px 12px;
+        font-size: 13.5px;
+        color: var(--ink-soft);
+      }
+      .seg button[aria-pressed="true"] {
+        background: var(--float);
+        color: var(--ink);
+        font-weight: 700;
+      }
+      .tool {
+        background: var(--raise);
+      }
       .stamp {
         display: flex;
         flex-wrap: wrap;
         align-items: center;
-        gap: 8px 18px;
+        gap: 6px 18px;
         font-size: 13px;
         color: var(--ink-soft);
+        font-variant-numeric: tabular-nums;
       }
-      .badge {
+      .vd {
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        border-radius: 999px;
-        padding: 2px 12px 2px 10px;
+        border-radius: 7px;
+        padding: 1px 12px 1px 8px;
         font-weight: 700;
-        font-size: 13px;
+        font-size: 13.5px;
+        color: var(--c);
+        background: color-mix(in srgb, var(--c) 14%, transparent);
       }
-      .badge::before {
-        content: "";
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background: currentColor;
+      .vd i {
+        font-style: normal;
       }
-      .badge.done {
-        color: var(--ok);
-        background: color-mix(in srgb, var(--ok) 14%, transparent);
+      .vd-ok {
+        --c: var(--ok);
       }
-      .badge.partial {
-        color: var(--warn);
-        background: color-mix(in srgb, var(--warn) 14%, transparent);
+      .vd-part,
+      .vd-wait {
+        --c: var(--warn);
       }
-      .badge.you {
-        color: var(--you);
-        background: color-mix(in srgb, var(--you) 16%, transparent);
+      .vd-you,
+      .vd-run {
+        --c: var(--accent-ink);
       }
-      .badge.run {
-        color: var(--accent);
-        background: color-mix(in srgb, var(--accent) 14%, transparent);
+      .vd-ng {
+        --c: var(--ng);
       }
-      .badge.run::before {
-        animation: beat 1.6s steps(2, jump-none) infinite;
+      .vd-stop {
+        --c: var(--ink-soft);
       }
-      @keyframes beat {
-        50% {
-          opacity: 0.3;
-        }
-      }
-      @media (prefers-reduced-motion: reduce) {
-        .badge.run::before {
-          animation: none;
-        }
-      }
-      .stamp .add {
+      .add,
+      .g-ok {
         color: var(--ok);
       }
-      .stamp .del {
+      .del,
+      .g-ng {
         color: var(--ng);
       }
-      h1.conclusion {
+      .g-un {
+        color: var(--ink-quiet);
+      }
+      .lamps {
+        display: inline-flex;
+        align-items: flex-end;
+        gap: 1px;
+      }
+      .lamp {
+        flex: none;
+      }
+      .lamp-lit {
+        color: color-mix(in srgb, var(--accent-ink) 72%, transparent);
+      }
+      .lamp-now {
+        color: var(--accent-ink);
+        filter: drop-shadow(0 0 6px color-mix(in srgb, var(--accent) 60%, transparent));
+      }
+      .lamp-none,
+      .lamp-skip {
+        color: var(--ink-quiet);
+      }
+      .lamp-x {
+        display: inline-grid;
+        place-items: center;
+        width: var(--z);
+        height: var(--z);
+        color: var(--ng);
+        font-weight: 800;
+        font-size: 13px;
+      }
+      h1.concl {
         font-size: 24px;
-        line-height: 1.6;
-        margin: 14px 0 6px;
+        line-height: 1.55;
+        margin: 12px 0 6px;
+        text-wrap: balance;
+        word-break: auto-phrase;
         letter-spacing: 0.01em;
-        text-wrap: pretty;
+      }
+      h1.concl.mid {
+        font-size: 20px;
       }
       .sub {
         color: var(--ink-soft);
-        margin-bottom: 22px;
+        margin-bottom: 20px;
         text-wrap: pretty;
+      }
+      h2 {
+        font-size: 19px;
+        line-height: 1.5;
+        margin: 38px 0 10px;
+        word-break: auto-phrase;
+        text-wrap: balance;
+      }
+      h3 {
+        font-size: 16px;
+        margin: 22px 0 4px;
+      }
+      .prose p,
+      p.body {
+        margin: 0 0 14px;
+        text-wrap: pretty;
+      }
+      .quiet {
+        font-size: 13.5px;
+        color: var(--ink-quiet);
+      }
+      sup.ref {
+        font: 700 12px var(--mono);
+        color: var(--accent-ink);
+        margin-left: 2px;
       }
 
       /* あなたの番 */
@@ -245,7 +390,7 @@
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 12px;
-        margin: 6px 0 28px;
+        margin: 4px 0 6px;
       }
       .turn section {
         background: var(--raise);
@@ -253,237 +398,241 @@
         padding: 14px 16px;
       }
       .turn h3 {
-        margin: 0 0 6px;
-        font-size: 12.5px;
-        letter-spacing: 0.06em;
+        margin: 0 0 4px;
+        font-size: 13.5px;
         color: var(--ink-quiet);
-        font-weight: 600;
+        font-weight: 700;
       }
-      .turn section.mine {
-        box-shadow: inset 3px 0 0 var(--you);
+      .turn .mine {
+        box-shadow: inset 3px 0 0 var(--accent-ink);
       }
-      .turn section.mine h3 {
-        color: var(--you);
+      .turn .mine h3 {
+        color: var(--accent-ink);
       }
-      .turn ol {
-        margin: 0;
-        padding-left: 1.3em;
-        font-size: 15px;
-      }
-      .act {
+      .btn {
         display: inline-block;
         margin-top: 8px;
         border: 0;
         border-radius: 8px;
-        padding: 4px 12px;
-        background: var(--you);
-        color: #10131a;
-        font-size: 13px;
+        padding: 3px 14px;
+        background: var(--accent);
+        color: #1b1418;
+        font-size: 13.5px;
         font-weight: 700;
       }
+      .btn.ghost {
+        background: var(--raise);
+        color: var(--ink);
+      }
+      .chip {
+        border: 0;
+        border-radius: 999px;
+        padding: 2px 13px;
+        margin: 4px 6px 0 0;
+        background: var(--float);
+        font-size: 13.5px;
+      }
 
-      /* 確かさ */
-      h2 {
-        font-size: 18px;
-        margin: 30px 0 10px;
+      /* 主要な数 */
+      .kf {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px 44px;
+        margin: 26px 0 4px;
       }
-      .certain {
+      .kf > div {
+        min-width: 150px;
+      }
+      .kf .v {
+        font-size: 30px;
+        font-weight: 700;
+        line-height: 1.25;
+      }
+      .kf .v small {
+        font-size: 15px;
+        font-weight: 500;
+        color: var(--ink-soft);
+        margin-left: 3px;
+      }
+      .kf .l {
+        font-size: 13px;
+        color: var(--ink-soft);
+        line-height: 1.5;
+      }
+      .kf .d {
+        font-size: 13.5px;
+        color: var(--ink-quiet);
+        font-variant-numeric: tabular-nums;
+      }
+      .meter {
+        height: 6px;
+        border-radius: 3px;
+        background: color-mix(in srgb, var(--data) 24%, transparent);
+        margin: 6px 0 2px;
+        overflow: hidden;
+      }
+      .meter i {
+        display: block;
+        height: 100%;
+        border-radius: 3px;
+        background: var(--data);
+      }
+
+      /* 確かさの台帳 */
+      .ledger {
         display: grid;
-        gap: 2px;
+        gap: 1px;
       }
-      .certain details {
-        border-radius: 10px;
+      .lg-label {
+        font-size: 13.5px;
+        color: var(--ink-quiet);
+        margin: 10px 0 0 10px;
       }
-      .certain summary {
+      .lg summary {
         list-style: none;
         display: grid;
-        grid-template-columns: 22px minmax(0, 1fr) auto;
+        grid-template-columns: 20px minmax(0, 1fr) auto auto;
         gap: 10px;
         align-items: baseline;
-        padding: 8px 10px;
-        border-radius: 10px;
+        padding: 6px 10px;
+        border-radius: 9px;
         cursor: pointer;
       }
-      .certain summary::-webkit-details-marker {
+      .lg summary::-webkit-details-marker {
         display: none;
       }
-      .certain summary:hover {
+      .lg summary:hover {
         background: var(--raise);
       }
-      .mark {
+      .lg .g {
         font-weight: 800;
         text-align: center;
       }
-      .ok .mark {
+      .lg-ok .g {
         color: var(--ok);
       }
-      .ng .mark {
+      .lg-ng .g {
         color: var(--ng);
       }
-      .un .mark {
-        color: var(--warn);
-      }
-      .certain .num {
-        font: 13px var(--mono);
+      .lg-un .g {
         color: var(--ink-quiet);
+        border: 1.5px dashed var(--ink-quiet);
+        border-radius: 50%;
+        width: 19px;
+        height: 19px;
+        line-height: 16px;
+        font-size: 13px;
       }
-      .certain .body {
-        margin: 0 10px 10px 42px;
+      .lg .cmd {
+        color: var(--ink-quiet);
+        font-size: 13.5px;
+      }
+      .seal {
+        font-size: 12.5px;
+        border-radius: 5px;
+        padding: 0 7px;
+        color: var(--ink-quiet);
+        box-shadow: inset 0 0 0 1px var(--rule);
+      }
+      .seal.seen {
+        color: var(--ok);
+        box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ok) 50%, transparent);
+      }
+      .lg-body {
+        margin: 0 10px 10px 40px;
         font-size: 14px;
         color: var(--ink-soft);
       }
-      .certain pre {
+      pre {
         margin: 6px 0 0;
         padding: 10px 12px;
-        background: var(--night);
+        background: var(--raise);
         border-radius: 8px;
-        font: 12.5px/1.6 var(--mono);
+        font: 13.5px/1.65 var(--mono);
         color: var(--ink-soft);
         overflow: auto;
       }
-      .group-label {
-        font-size: 12.5px;
-        color: var(--ink-quiet);
-        margin: 12px 0 2px 10px;
-      }
 
-      /* 本文と出どころ */
-      .prose p {
-        margin: 0 0 12px;
-        text-wrap: pretty;
-      }
-      sup.ref {
-        font: 700 11px var(--mono);
-        color: var(--accent);
-        margin-left: 2px;
-      }
-      .margin {
-        grid-column: 2;
-        font-size: 12.5px;
-        line-height: 1.6;
-        color: var(--ink-quiet);
-        align-self: start;
-      }
-      .margin p {
-        margin: 0 0 12px;
-      }
-      .margin b {
-        font: 700 11px var(--mono);
-        color: var(--accent);
-        margin-right: 4px;
-      }
-      .ba {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 12px;
-        margin: 8px 0 14px;
-      }
-      .ba figure {
-        margin: 0;
-        font-size: 12.5px;
-        color: var(--ink-quiet);
-      }
-      .ba .shot {
-        height: 120px;
-        border-radius: 10px;
-        background: var(--float);
-        display: grid;
-        place-items: center;
-        margin-bottom: 4px;
-        font: 600 30px var(--mono);
-      }
-      .ba .shot.after {
-        color: var(--accent);
-      }
-
-      /* 道筋（プログレスの記録とつながる） */
-      .route {
-        margin-top: 30px;
-        border-top: 1px solid var(--rule);
-        padding-top: 14px;
-      }
-      .route summary {
-        cursor: pointer;
-        color: var(--ink-soft);
-        font-size: 14px;
-      }
-      .bars {
-        display: flex;
-        gap: 3px;
-        height: 8px;
-        margin: 12px 0 8px;
-      }
-      .bars i {
-        border-radius: 4px;
-        background: color-mix(in srgb, var(--accent) 55%, transparent);
-      }
-
-      /* 生きた計画 */
+      /* 計画（狐火が灯る） */
       .plan {
         list-style: none;
-        margin: 6px 0 0;
+        margin: 8px 0 0;
         padding: 0;
-        position: relative;
       }
-      .plan > li {
+      .ph {
+        display: grid;
+        grid-template-columns: 26px minmax(0, 1fr);
+        column-gap: 10px;
         position: relative;
-        padding: 0 0 18px 34px;
+        padding-bottom: 16px;
       }
-      .plan > li::before {
+      .ph > .lamp,
+      .ph > .lamp-x {
+        justify-self: center;
+        margin-top: 5px;
+      }
+      .ph::before {
         content: "";
         position: absolute;
-        left: 9px;
-        top: 14px;
-        bottom: -6px;
-        width: 2px;
+        left: 12px;
+        top: 30px;
+        bottom: 0;
+        width: 1.5px;
         background: var(--rule);
       }
-      .plan > li:last-child::before {
+      .ph:last-child::before {
         display: none;
       }
-      .dot {
-        position: absolute;
-        left: 2px;
-        top: 6px;
-        width: 16px;
-        height: 16px;
-        border-radius: 50%;
-        border: 2px solid var(--rule);
-        background: var(--sheet);
-      }
-      .plan .done .dot {
-        border-color: var(--ok);
-        background: var(--ok);
-      }
-      .plan .now .dot {
-        border-color: var(--accent);
-        box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent) 20%, transparent);
-      }
-      .plan .head {
+      .ph-head {
         display: flex;
-        gap: 12px;
+        gap: 10px;
         align-items: baseline;
       }
-      .plan .head .t {
-        font-weight: 700;
-      }
-      .plan .done .head .t {
+      .ph-t {
         font-weight: 500;
         color: var(--ink-soft);
       }
-      .plan .head .time {
-        margin-left: auto;
-        font: 12.5px var(--mono);
+      .ph-now > .ph-main > .ph-head .ph-t,
+      .ph-fail > .ph-main > .ph-head .ph-t {
+        font-weight: 700;
+        color: var(--ink);
+      }
+      .ph-none > .ph-main > .ph-head .ph-t,
+      .ph-skip > .ph-main > .ph-head .ph-t {
         color: var(--ink-quiet);
       }
-      .plan .note {
+      .ph-time {
+        margin-left: auto;
+        font: 13.5px var(--mono);
+        color: var(--ink-quiet);
+        white-space: nowrap;
+      }
+      .ph-note {
         font-size: 14px;
         color: var(--ink-soft);
-        margin-top: 2px;
       }
-      .plan .diffchip {
-        font: 12px var(--mono);
+      .dchip {
+        font: 13px var(--mono);
         color: var(--ink-quiet);
+        white-space: nowrap;
+      }
+      .tag {
+        font-size: 12.5px;
+        font-weight: 700;
+        border-radius: 5px;
+        padding: 0 7px;
+        color: var(--c, var(--ink-soft));
+        background: color-mix(in srgb, var(--c, var(--ink-soft)) 15%, transparent);
+        white-space: nowrap;
+      }
+      .tag.you {
+        --c: var(--accent-ink);
+      }
+      .tag.ng {
+        --c: var(--ng);
+      }
+      .tag.warn {
+        --c: var(--warn);
       }
       .live {
         margin-top: 8px;
@@ -492,113 +641,93 @@
         padding: 10px 14px;
         font-size: 14.5px;
       }
-      .live .now-line {
-        display: flex;
+      .act {
+        display: grid;
+        grid-template-columns: 58px minmax(0, 1fr) auto;
         gap: 10px;
         align-items: baseline;
+        padding: 2px 0;
       }
-      .live .now-line .time {
-        margin-left: auto;
-        font: 12.5px var(--mono);
+      .act .k {
+        font-size: 12.5px;
+        font-weight: 700;
         color: var(--ink-quiet);
       }
-      .live ul {
-        list-style: none;
-        margin: 8px 0 0;
-        padding: 0;
+      .act .when {
+        font: 13px var(--mono);
+        color: var(--ink-quiet);
+      }
+      .act.said .k {
+        color: var(--accent-ink);
+      }
+      .act.kept .k {
+        color: var(--ok);
+      }
+      .act.gone {
+        color: var(--ink-quiet);
         font-size: 13px;
-        color: var(--ink-quiet);
       }
-      .live ul li::before {
-        content: "・";
-      }
-      .agents {
-        margin-top: 8px;
-        display: grid;
-        gap: 4px;
+      .note-line {
         font-size: 13.5px;
-      }
-      .agents div {
-        display: grid;
-        grid-template-columns: 10px 1fr auto;
-        gap: 10px;
-        align-items: baseline;
-        padding: 4px 10px;
         border-radius: 8px;
-        background: var(--raise);
-      }
-      .agents i {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background: var(--accent);
-      }
-      .agents .ok i {
-        background: var(--ok);
-      }
-      .agents .wait i {
-        background: var(--warn);
-      }
-      .agents span:last-child {
-        font: 12px var(--mono);
-        color: var(--ink-quiet);
-      }
-      .changed {
-        font-size: 13.5px;
+        padding: 5px 12px;
+        margin-top: 6px;
         color: var(--ink-soft);
-        background: color-mix(in srgb, var(--warn) 10%, transparent);
-        border-radius: 8px;
-        padding: 6px 12px;
+        background: color-mix(in srgb, var(--c, var(--warn)) 11%, transparent);
+      }
+      .note-line b {
+        color: var(--c, var(--warn));
+        margin-right: 4px;
+      }
+      .par {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
         margin-top: 6px;
       }
-      .changed b {
-        color: var(--warn);
+      .par > div,
+      .lap {
+        background: var(--raise);
+        border-radius: 9px;
+        padding: 7px 12px;
+        font-size: 13.5px;
       }
-
-      /* 経過の札（浮く入力欄の上） */
-      .dock {
-        position: fixed;
-        right: 28px;
-        bottom: 22px;
-        left: calc(clamp(300px, 26vw, 420px) + 8px);
-        display: flex;
-        justify-content: center;
-        pointer-events: none;
+      .lap {
+        display: grid;
+        grid-template-columns: 62px minmax(0, 1fr) auto;
+        gap: 10px;
+        margin-top: 4px;
+        align-items: baseline;
       }
-      .dock-in {
-        pointer-events: auto;
-        width: min(980px, 100%);
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        background: var(--float);
-        border-radius: 14px;
-        padding: 10px 12px 10px 18px;
-        box-shadow: 0 10px 30px rgb(0 0 0 / 0.35);
+      .lap .w {
+        font-weight: 700;
+      }
+      .lap.now {
+        box-shadow: inset 3px 0 0 var(--accent-ink);
+      }
+      .fold-done {
         font-size: 14px;
         color: var(--ink-soft);
+        cursor: pointer;
       }
-      .dock-in .grow {
-        flex: 1;
-        color: var(--ink-quiet);
+      .route {
+        margin-top: 34px;
+        border-top: 1px solid var(--rule);
+        padding-top: 12px;
       }
-      .dock-in .stop {
-        border: 0;
-        border-radius: 9px;
-        padding: 5px 14px;
-        background: var(--raise);
-        font-size: 13px;
+      .route > summary {
+        cursor: pointer;
+        color: var(--ink-soft);
+        font-size: 14px;
       }
-      .dock-in .mono {
-        color: var(--ink);
+      .foot-tools {
+        margin-top: 20px;
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
       }
 
-      /* 戻る */
-      .away {
-        display: grid;
-        gap: 10px;
-        margin-top: 14px;
-      }
+      /* 戻る・差分・選ぶ */
       .away section {
         display: grid;
         grid-template-columns: 150px minmax(0, 1fr);
@@ -610,34 +739,33 @@
         margin: 0;
         font-size: 13px;
         color: var(--ink-quiet);
-        font-weight: 600;
       }
-      .away ul {
+      .away ul,
+      .delta ul,
+      .ul {
         margin: 0;
-        padding-left: 1.1em;
+        padding-left: 1.15em;
       }
       .read-mark {
         display: flex;
         align-items: center;
         gap: 12px;
-        font-size: 12.5px;
-        color: var(--accent);
-        margin: 26px 0 8px;
+        font-size: 13.5px;
+        color: var(--accent-ink);
+        margin: 24px 0 6px;
       }
       .read-mark::before,
       .read-mark::after {
         content: "";
         flex: 1;
         height: 1px;
-        background: color-mix(in srgb, var(--accent) 50%, transparent);
+        background: color-mix(in srgb, var(--accent-ink) 50%, transparent);
       }
-
-      /* 前回からの差分 */
       .delta {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
         gap: 12px;
-        margin: 4px 0 8px;
+        margin: 2px 0 12px;
       }
       .delta section {
         border-radius: 12px;
@@ -646,46 +774,789 @@
         font-size: 14px;
       }
       .delta h3 {
-        margin: 0 0 6px;
-        font-size: 12.5px;
-        font-weight: 700;
+        margin: 0 0 4px;
+        font-size: 13.5px;
       }
-      .delta .fixed h3 {
+      .opt {
+        display: grid;
+        grid-template-columns: 74px minmax(0, 1fr) auto;
+        gap: 14px;
+        align-items: start;
+        padding: 12px 14px;
+        border-radius: 12px;
+        margin-top: 6px;
+      }
+      .opt.adopt {
+        background: var(--raise);
+      }
+      .opt .v {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--ink-quiet);
+        padding-top: 3px;
+      }
+      .opt.adopt .v {
         color: var(--ok);
       }
-      .delta .new h3 {
-        color: var(--ng);
+      .opt b {
+        display: block;
       }
-      .delta .left h3 {
+      .opt p {
+        font-size: 14px;
+        color: var(--ink-soft);
+      }
+      .opt.reject b,
+      .opt.reject p {
+        color: var(--ink-quiet);
+      }
+      .opt[data-picked="true"] {
+        box-shadow: inset 0 0 0 2px var(--accent-ink);
+      }
+
+      /* 図の共通の形: 題（主張）・本体・脚（出どころ） */
+      .fig {
+        margin: 18px 0 8px;
+      }
+      .fig-t {
+        font-weight: 700;
+        font-size: 15.5px;
+        line-height: 1.6;
+        margin-bottom: 10px;
+        text-wrap: balance;
+        word-break: auto-phrase;
+      }
+      .fig-f {
+        font-size: 13px;
+        color: var(--ink-quiet);
+        margin-top: 8px;
+      }
+      .spec {
+        padding: 6px 0 22px;
+        border-bottom: 1px solid var(--rule);
+        margin-bottom: 8px;
+      }
+      .spec:last-of-type {
+        border-bottom: 0;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 14.5px;
+        font-variant-numeric: tabular-nums;
+      }
+      th {
+        font-size: 13.5px;
+        font-weight: 600;
+        color: var(--ink-quiet);
+        text-align: left;
+        padding: 4px 10px 6px;
+        border-bottom: 1px solid var(--rule);
+        white-space: nowrap;
+      }
+      th button {
+        border: 0;
+        background: none;
+        padding: 0;
+        font-weight: inherit;
+        color: inherit;
+      }
+      th[aria-sort] button {
+        color: var(--ink);
+      }
+      td {
+        padding: 7px 10px;
+        border-bottom: 1px solid var(--rule);
+      }
+      tr:last-child td {
+        border-bottom: 0;
+      }
+      .r {
+        text-align: right;
+      }
+      tr.em td {
+        font-weight: 700;
+      }
+      tr.total td {
+        border-top: 1.5px solid var(--ink-quiet);
+        color: var(--ink-soft);
+      }
+      tbody tr:hover td {
+        background: var(--raise);
+      }
+      .cellbar {
+        display: inline-block;
+        height: 8px;
+        border-radius: 0 3px 3px 0;
+        background: var(--data-mute);
+        vertical-align: middle;
+        margin-right: 8px;
+      }
+      tr.em .cellbar {
+        background: var(--data);
+      }
+      .st {
+        white-space: nowrap;
+      }
+      .st i {
+        font-style: normal;
+        font-weight: 800;
+        margin-right: 4px;
+      }
+      .st.ok i {
+        color: var(--ok);
+      }
+      .st.warn i {
         color: var(--warn);
       }
-      .delta ul {
+      .st.ng i {
+        color: var(--ng);
+      }
+      .st.na {
+        color: var(--ink-quiet);
+      }
+      .hbar {
+        display: grid;
+        grid-template-columns: 96px minmax(0, 1fr);
+        row-gap: 7px;
+        column-gap: 12px;
+        font-size: 13.5px;
+        align-items: center;
+      }
+      .hbar .lbl {
+        color: var(--ink-soft);
+        text-align: right;
+      }
+      .hbar .bar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-variant-numeric: tabular-nums;
+      }
+      .hbar .bar i {
+        height: 14px;
+        border-radius: 0 4px 4px 0;
+        background: var(--data-mute);
+      }
+      .hbar .em i {
+        background: var(--data);
+      }
+      .hbar .em {
+        font-weight: 700;
+      }
+      svg.chart {
+        display: block;
+        width: 100%;
+        height: auto;
+        overflow: visible;
+      }
+      .chart text {
+        font: 13px var(--sans);
+        fill: var(--ink-soft);
+      }
+      .chart .grid {
+        stroke: var(--rule);
+        stroke-width: 1;
+      }
+      .chart .ln {
+        fill: none;
+        stroke-width: 2;
+        stroke-linejoin: round;
+        stroke-linecap: round;
+      }
+      .chart .mute {
+        stroke: var(--data-mute);
+      }
+      .chart .main {
+        stroke: var(--data);
+      }
+      .chart .dot {
+        fill: var(--data);
+        stroke: var(--sheet);
+        stroke-width: 2;
+      }
+      .chart .node {
+        fill: none;
+        stroke: var(--ink-quiet);
+        stroke-width: 1.2;
+      }
+      .chart .node.new {
+        stroke: var(--data);
+        stroke-width: 2;
+      }
+      .chart .edge {
+        fill: none;
+        stroke: var(--ink-quiet);
+        stroke-width: 1.2;
+      }
+      .chart .nt {
+        font-size: 13px;
+        fill: var(--ink);
+        text-anchor: middle;
+      }
+      .chart .et {
+        font-size: 12px;
+        fill: var(--ink-quiet);
+      }
+      .db {
+        display: grid;
+        grid-template-columns: 76px minmax(0, 1fr);
+        gap: 10px 12px;
+        font-size: 13.5px;
+        align-items: center;
+      }
+      .db .track {
+        position: relative;
+        height: 22px;
+      }
+      .db .track::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 10.5px;
+        height: 1px;
+        background: var(--rule);
+      }
+      .db .seg-l {
+        position: absolute;
+        top: 9px;
+        height: 4px;
+        background: color-mix(in srgb, var(--data) 45%, transparent);
+      }
+      .db .p {
+        position: absolute;
+        top: 5px;
+        width: 12px;
+        height: 12px;
+        margin-left: -6px;
+        border-radius: 50%;
+        box-shadow: 0 0 0 2px var(--sheet);
+      }
+      .db .p.b {
+        background: var(--ink-quiet);
+      }
+      .db .p.a {
+        background: var(--data);
+      }
+      .db .val {
+        position: absolute;
+        top: -1px;
+        font-size: 13.5px;
+        font-variant-numeric: tabular-nums;
+        transform: translateX(-50%);
+        margin-top: -14px;
+        color: var(--ink-soft);
+      }
+      .db .val.a {
+        font-weight: 700;
+        color: var(--ink);
+      }
+      .key {
+        display: flex;
+        gap: 16px;
+        font-size: 13px;
+        color: var(--ink-quiet);
+        margin-top: 8px;
+      }
+      .key i {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        margin-right: 5px;
+        vertical-align: -1px;
+      }
+      .sm {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+      }
+      .sm p {
+        font-size: 13px;
+        color: var(--ink-soft);
+      }
+      .sm b {
+        color: var(--ink);
+      }
+
+      /* 見比べ */
+      .modes {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+        margin-bottom: 8px;
+        font-size: 13.5px;
+      }
+      .cmp {
+        --p: 50%;
+        position: relative;
+      }
+      .cmp[data-mode="side"] {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+      .cmp figure {
         margin: 0;
-        padding-left: 1.1em;
+        font-size: 13.5px;
+        color: var(--ink-quiet);
+      }
+      .cmp:not([data-mode="side"]) figure + figure {
+        position: absolute;
+        inset: 0;
+      }
+      .cmp:not([data-mode="side"]) figcaption {
+        display: none;
+      }
+      .cmp[data-mode="swipe"] figure + figure {
+        clip-path: inset(0 0 0 var(--p));
+      }
+      .cmp[data-mode="swipe"]::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: var(--p);
+        width: 2px;
+        background: var(--accent-ink);
+      }
+      .cmp[data-mode="onion"] figure + figure {
+        opacity: var(--p-o, 0.5);
+      }
+      .shot {
+        display: block;
+        width: 100%;
+        height: auto;
+        border-radius: 8px;
+      }
+      .shot .s-bg {
+        fill: var(--night);
+      }
+      .shot .s-p {
+        fill: #2c2836;
+      }
+      .shot .s-bar {
+        fill: #3a3546;
+      }
+      .shot .s-main {
+        fill: #ece8ef;
+        opacity: 0.9;
+      }
+      .shot .s-ch {
+        fill: var(--accent);
+        opacity: 0.75;
+      }
+      .shot .s-t {
+        fill: #1f1c27;
+        font: 600 12px var(--sans);
+        text-anchor: middle;
+      }
+      input[type="range"] {
+        accent-color: var(--accent-ink);
+      }
+      .diff {
+        font: 13.5px/1.75 var(--mono);
+        background: var(--raise);
+        border-radius: 10px;
+        overflow: hidden;
+      }
+      .diff-h {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 5px 12px;
+        color: var(--ink-quiet);
+        border-bottom: 1px solid var(--rule);
+      }
+      .diff .l {
+        display: grid;
+        grid-template-columns: 34px 34px 16px minmax(0, 1fr);
+        padding: 0 12px 0 0;
+        white-space: pre;
+      }
+      .diff .n {
+        text-align: right;
+        color: var(--ink-quiet);
+        opacity: 0.7;
+        padding-right: 8px;
+      }
+      .diff .l.a {
+        background: color-mix(in srgb, var(--ok) 12%, transparent);
+      }
+      .diff .l.d {
+        background: color-mix(in srgb, var(--ng) 12%, transparent);
+      }
+      .diff mark {
+        color: inherit;
+        border-radius: 3px;
+      }
+      .diff .l.a mark {
+        background: color-mix(in srgb, var(--ok) 34%, transparent);
+      }
+      .diff .l.d mark {
+        background: color-mix(in srgb, var(--ng) 34%, transparent);
+      }
+      .diff .l.mk {
+        box-shadow: inset 3px 0 0 var(--data);
+      }
+      .vs {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+        font-size: 14.5px;
+      }
+      .vs h4 {
+        margin: 0 0 4px;
+        font-size: 14.5px;
+      }
+
+      /* 時間の図・手順 */
+      .tl {
+        font-size: 13px;
+      }
+      .tl-row {
+        display: grid;
+        grid-template-columns: 118px minmax(0, 1fr);
+        align-items: center;
+        height: 26px;
+      }
+      .tl-row.child .tl-name {
+        padding-left: 14px;
+        color: var(--ink-quiet);
+      }
+      .tl-track {
+        position: relative;
+        height: 100%;
+        border-left: 1px solid var(--rule);
+      }
+      .tl-bar {
+        position: absolute;
+        top: 7px;
+        height: 12px;
+        border-radius: 3px;
+        background: var(--data-mute);
+      }
+      .tl-bar.em {
+        background: var(--data);
+      }
+      .tl-bar.wait {
+        background: none;
+        box-shadow: inset 0 0 0 1.5px var(--warn);
+        border-radius: 3px;
+      }
+      .tl-ev {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 1px;
+        background: var(--accent-ink);
+      }
+      .tl-axis {
+        position: relative;
+        height: 20px;
+        margin-left: 118px;
+        color: var(--ink-quiet);
+        font: 12.5px var(--mono);
+      }
+      .tl-axis span {
+        position: absolute;
+        transform: translateX(-50%);
+        white-space: nowrap;
+      }
+      .tl-axis span:first-child {
+        transform: none;
+      }
+      .tl-axis span:last-child {
+        left: auto;
+        right: 0;
+        transform: none;
+      }
+      .steps {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: stretch;
+        gap: 6px;
+        font-size: 14px;
+      }
+      .steps > div {
+        background: var(--raise);
+        border-radius: 9px;
+        padding: 6px 12px;
+        max-width: 190px;
+      }
+      .steps > div small {
+        display: block;
+        color: var(--ink-quiet);
+        font-size: 13px;
+      }
+      .steps > span {
+        align-self: center;
+        color: var(--ink-quiet);
+      }
+
+      /* 文の部品 */
+      .ul.lab li b:first-child {
+        margin-right: 6px;
+      }
+      .chk {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+      .chk li {
+        display: grid;
+        grid-template-columns: 22px 1fr;
+      }
+      .chk .done {
+        color: var(--ink-soft);
+      }
+      .chk i {
+        font-style: normal;
+        font-weight: 800;
+      }
+      .chk .done i {
+        color: var(--ok);
+      }
+      dl.dl {
+        display: grid;
+        grid-template-columns: 9em minmax(0, 1fr);
+        gap: 6px 16px;
+        margin: 0;
+        font-size: 15px;
+      }
+      dl.dl dt {
+        color: var(--ink-quiet);
+        font-size: 13.5px;
+        padding-top: 2px;
+      }
+      dl.dl dd {
+        margin: 0;
+      }
+      .caution {
+        display: grid;
+        grid-template-columns: 24px 1fr;
+        gap: 8px;
+        padding: 10px 14px;
+        border-radius: 10px;
+        background: color-mix(in srgb, var(--c) 10%, transparent);
+        box-shadow: inset 3px 0 0 var(--c);
+        font-size: 15px;
+      }
+      .caution i {
+        font-style: normal;
+        font-weight: 800;
+        color: var(--c);
+      }
+      blockquote {
+        margin: 0;
+        padding-left: 16px;
+        box-shadow: inset 2px 0 0 var(--ink-quiet);
+        color: var(--ink-soft);
+      }
+      blockquote footer {
+        font-size: 13.5px;
+        color: var(--ink-quiet);
+      }
+      .scale > * {
+        margin: 0 0 6px;
+      }
+
+      /* 証拠の部品 */
+      .trace {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+      .trace li {
+        display: grid;
+        grid-template-columns: 22px 1fr;
+        column-gap: 8px;
+        padding: 5px 0;
+      }
+      .trace i {
+        font-style: normal;
+        font-weight: 800;
+      }
+      .trace .ng i {
+        color: var(--ng);
+      }
+      .trace .ok i {
+        color: var(--ok);
+      }
+      .trace small {
+        display: block;
+        color: var(--ink-quiet);
+        font-size: 13px;
+      }
+      .pins {
+        position: relative;
+      }
+      .pin {
+        position: absolute;
+        width: 22px;
+        height: 22px;
+        margin: -12px 0 0 -12px;
+        border-radius: 50%;
+        background: var(--accent);
+        color: #1b1418;
+        font: 700 12px/22px var(--mono);
+        text-align: center;
+        box-shadow: 0 0 0 2px var(--sheet);
+      }
+      .thread {
+        background: var(--float);
+        border-radius: 10px;
+        padding: 8px 12px;
+        color: var(--ink-soft);
+      }
+      .thread b {
+        color: var(--accent-ink);
+      }
+      mark.sel {
+        background: color-mix(in srgb, var(--accent) 28%, transparent);
+        color: inherit;
+        border-radius: 3px;
+      }
+      .tabs {
+        display: flex;
+        gap: 4px;
+        border-bottom: 1px solid var(--rule);
+        margin-bottom: 10px;
+      }
+      .tabs button {
+        border: 0;
+        background: none;
+        padding: 4px 12px;
+        font-size: 14px;
+        color: var(--ink-quiet);
+        border-bottom: 2px solid transparent;
+        margin-bottom: -1px;
+      }
+      .tabs button[aria-selected="true"] {
+        color: var(--ink);
+        font-weight: 700;
+        border-bottom-color: var(--accent-ink);
+      }
+      .pv {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 6px 20px;
+        align-items: center;
+      }
+      .pv-axis {
+        grid-column: 1 / -1;
+        height: 34px;
+        position: relative;
+        border-bottom: 1.5px solid var(--ink-quiet);
+      }
+      .pv-axis i {
+        position: absolute;
+        bottom: 0;
+        width: 1.5px;
+        height: 9px;
+        background: var(--ink-soft);
+      }
+      .pv-axis i.hit {
+        background: var(--ng);
+        height: 15px;
+      }
+
+      /* 入力欄と経過の札 */
+      .dock {
+        position: fixed;
+        right: 28px;
+        bottom: 20px;
+        left: calc(var(--stage-w) + 8px);
+        display: flex;
+        justify-content: center;
+        pointer-events: none;
+      }
+      .dock-in {
+        pointer-events: auto;
+        width: min(1010px, 100%);
+        background: var(--float);
+        border-radius: 14px;
+        padding: 10px 12px 10px 18px;
+        box-shadow: 0 10px 30px rgb(0 0 0 / 0.35);
+        font-size: 14px;
+        color: var(--ink-soft);
+      }
+      .dock-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .dock-row .grow {
+        flex: 1;
+        color: var(--ink-quiet);
+      }
+      .dock-row .mono {
+        color: var(--ink);
+      }
+      .dock .q {
+        padding: 4px 0 10px;
+        border-bottom: 1px solid var(--rule);
+        margin-bottom: 8px;
+        color: var(--ink);
+      }
+      .dock .q p {
+        font-size: 15px;
+        font-weight: 700;
+      }
+      .dock .q small {
+        display: block;
+        color: var(--ink-quiet);
+        font-size: 13.5px;
+      }
+      .pickrow {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 8px;
+      }
+      .pickrow button {
+        border: 0;
+        border-radius: 9px;
+        padding: 4px 14px;
+        background: var(--raise);
+        font-size: 14px;
+      }
+      .pickrow button[aria-pressed="true"] {
+        background: var(--accent);
+        color: #1b1418;
+        font-weight: 700;
       }
 
       /* 試作の切り替えの帯（評価の対象ではない） */
       .proto-bar {
         position: fixed;
-        top: 12px;
-        left: 50%;
-        transform: translateX(-50%);
+        left: 12px;
+        bottom: 12px;
+        width: calc(var(--stage-w) - 24px);
         z-index: 50;
-        display: flex;
-        gap: 4px;
         background: #f6f3e8;
         color: #1b1a17;
-        border-radius: 999px;
-        padding: 4px;
-        font: 12px/1 var(--sans);
-        box-shadow: 0 4px 18px rgb(0 0 0 / 0.4);
+        border-radius: 14px;
+        padding: 6px;
+        font: 13px/1 var(--sans);
+        box-shadow: 0 4px 18px rgb(0 0 0 / 0.45);
+      }
+      .proto-bar div {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2px;
+      }
+      .proto-bar div + div {
+        margin-top: 4px;
+        padding-top: 4px;
+        border-top: 1px solid rgb(0 0 0 / 0.12);
       }
       .proto-bar button {
         border: 0;
         background: none;
         color: inherit;
         border-radius: 999px;
-        padding: 7px 12px;
+        padding: 6px 9px;
       }
       .proto-bar button[aria-pressed="true"] {
         background: #1b1a17;
@@ -695,6 +1566,18 @@
         display: none;
       }
 
+      @media (max-width: 900px) {
+        .paper {
+          grid-template-columns: minmax(0, 1fr);
+          padding: 22px 22px 32px;
+        }
+        .mg {
+          grid-column: 1;
+          padding: 2px 0 0 12px;
+          box-shadow: inset 2px 0 0 var(--rule);
+          margin-bottom: 10px;
+        }
+      }
       @media (max-width: 760px) {
         .room {
           grid-template-columns: 1fr;
@@ -703,26 +1586,37 @@
           display: none;
         }
         .desk {
-          padding: 12px 10px 110px;
-        }
-        .paper {
-          grid-template-columns: 1fr;
-          padding: 20px 18px 28px;
-        }
-        .margin {
-          grid-column: 1;
+          padding: 10px 8px 130px;
         }
         .turn,
-        .delta {
+        .delta,
+        .vs,
+        .sm,
+        .par {
           grid-template-columns: 1fr;
         }
         .away section {
           grid-template-columns: 1fr;
-          gap: 4px;
+          gap: 2px;
         }
         .dock {
-          left: 10px;
-          right: 10px;
+          left: 8px;
+          right: 8px;
+        }
+        .proto-bar {
+          left: 8px;
+          right: 8px;
+          bottom: auto;
+          top: 8px;
+          width: auto;
+        }
+        .p-top {
+          flex-wrap: wrap;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .desk {
+          scroll-behavior: auto;
         }
       }
     </style>
@@ -742,189 +1636,581 @@
     <script>
       const ROOT = "../../../../characters/"
       const PACKS = {
-        karakasa: { dir: ROOT + "local/karakasa", name: "唐傘" },
-        tsukumo: { dir: ROOT + "tsukumo", name: "つくも" },
+        karakasa: { dir: ROOT + "local/karakasa", name: "唐傘", accent: "#ff9e9e" },
+        tsukumo: { dir: ROOT + "tsukumo", name: "つくも", accent: "#6fe3cd" },
       }
       const params = new URLSearchParams(location.search)
       const state = {
-        moment: params.get("moment") ?? "deliver",
+        group: params.get("group") ?? "paper",
+        moment: params.get("moment") ?? "",
         tone: params.get("tone") ?? "night",
+        depth: Number(params.get("depth") ?? 2),
         pack: "karakasa",
+        sort: { key: "sec", dir: -1 },
+        cmp: "side",
+        ticks: 24,
+        choice: "",
+        pick: "",
+        tab: "a",
       }
       document.body.dataset.bar = params.get("bar") ?? "1"
       const pack = () => PACKS[state.pack]
+      const TASK = "グラフの目盛りの数を設定で変えられるようにして"
 
-      const MOMENTS = {
-        work: { label: "働く", face: "thinking", line: "いまは表示の層を直しているところ。テストは2つ目の段で回すわね。", head: "働いている ・ 6分12秒" },
-        away: { label: "戻る", face: "excited", line: "おかえりなさい。あなたに聞きたいことが1つ残っているの。", head: "あなたの番 ・ 18分前から" },
-        deliver: { label: "渡す", face: "proud", line: "終わったわ。画は前後で並べておいたから、見比べてね。", head: "終わった ・ 14分20秒" },
-        again: { label: "2回目", face: "default", line: "前に言われたところは直したわ。新しく1つ気になる点が出たの。", head: "一部済んだ ・ 9分05秒" },
+      // ---- 小さな部品 -------------------------------------------------
+      const FLAME =
+        "M12 2.5c1.6 3.7 5.5 5.6 5.5 10.6a5.5 5.5 0 0 1-11 0c0-2.7 1.4-4.2 2.6-5.6.2 1.4 1 2.3 2 2.6-.4-2.8.3-5.3.9-7.6z"
+      function lamp(kind, size = 18) {
+        if (kind === "fail") return `<span class="lamp-x" style="--z:${size}px" aria-hidden="true">✕</span>`
+        const hollow = kind === "none" || kind === "skip"
+        const body = hollow
+          ? `<path d="${FLAME}" fill="none" stroke="currentColor" stroke-width="1.3" ${kind === "skip" ? 'stroke-dasharray="2 2.4"' : ""}/>`
+          : `<path d="${FLAME}" fill="currentColor"/>${kind === "now" ? '<path d="M12 11c.9 1.6 2.3 2.4 2.3 4.2a2.3 2.3 0 0 1-4.6 0c0-1.3.9-2.4 2.3-4.2z" fill="var(--sheet)" opacity=".85"/>' : ""}`
+        return `<svg class="lamp lamp-${kind}" width="${size}" height="${size}" viewBox="0 0 24 24" aria-hidden="true">${body}</svg>`
       }
+      function lamps(kinds, label) {
+        return `<span class="lamps" role="img" aria-label="${label}">${kinds.map((k) => lamp(k, k === "now" ? 20 : 15)).join("")}</span>`
+      }
+      const rep = (kind, n) => Array.from({ length: n }, () => kind)
+      const VD = {
+        ok: ["✓", "済んだ"],
+        part: ["◐", "一部済んだ"],
+        you: ["●", "あなたの番"],
+        run: ["◌", "働いている"],
+        stop: ["■", "止めた"],
+        ng: ["✕", "失敗で止まった"],
+        wait: ["…", "待っている"],
+      }
+      const vd = (k, label) => `<span class="vd vd-${k}"><i aria-hidden="true">${VD[k][0]}</i>${label ?? VD[k][1]}</span>`
+      function ph(o) {
+        const size = o.k === "now" ? 22 : 18
+        return `<li class="ph ph-${o.k}">${lamp(o.k, size)}<div class="ph-main"><div class="ph-head"><span class="ph-t">${o.t}</span>${o.tag ?? ""}<span class="ph-time">${o.time ?? ""}</span></div>${o.note ? `<p class="ph-note">${o.note}${o.diff ? ` <span class="dchip">${o.diff}</span>` : ""}</p>` : ""}${o.body ?? ""}</div></li>`
+      }
+      function lg(k, text, cmd, seal, body, open) {
+        const g = { ok: "✓", ng: "✕", un: "?" }[k]
+        return `<details class="lg lg-${k}" ${open ? "open" : ""}><summary><span class="g">${g}</span><span>${text}</span>${seal ? `<span class="seal ${seal === "記録あり" ? "seen" : ""}">${seal}</span>` : "<span></span>"}<code class="cmd">${cmd}</code></summary>${body ? `<div class="lg-body">${body}</div>` : ""}</details>`
+      }
+      const fig = (title, body, foot) =>
+        `<figure class="fig"><figcaption class="fig-t">${title}</figcaption>${body}${foot ? `<p class="fig-f">${foot}</p>` : ""}</figure>`
+      const spec = (name, body, rules) =>
+        `<div class="pair spec"><div>${body}</div><aside class="mg"><p class="mg-n">${name}</p><ul>${rules.map((r) => `<li>${r}</li>`).join("")}</ul></aside></div>`
+      const src = (items) =>
+        `<aside class="mg" aria-label="出どころ">${items.map(([n, t]) => `<p><b class="n">${n}</b>${t}</p>`).join("")}</aside>`
+      function paperTop(ask, withDepth) {
+        const seg = withDepth
+          ? `<div class="seg" role="group" aria-label="読む深さ">${[
+              [1, "一目"],
+              [2, "本文"],
+              [3, "記録"],
+            ]
+              .map(([n, l]) => `<button type="button" data-depth="${n}" aria-pressed="${state.depth === n}">${l}</button>`)
+              .join("")}</div><button type="button" class="tool" data-copy="この紙の Markdown（架空）">写す</button>`
+          : ""
+        return `<div class="p-top wide"><p class="ask">${ask}</p><div class="p-tools">${seg}</div></div>`
+      }
+      const shot = (after) =>
+        after
+          ? `<svg viewBox="0 0 320 200" class="shot" role="img" aria-label="後の配置"><rect width="320" height="200" rx="8" class="s-bg"/><rect width="84" height="200" rx="8" class="s-ch"/><rect x="92" y="8" width="220" height="184" rx="6" class="s-main"/><rect x="104" y="168" width="196" height="16" rx="6" class="s-bar"/><text x="202" y="92" class="s-t">後の配置</text></svg>`
+          : `<svg viewBox="0 0 320 200" class="shot" role="img" aria-label="前の配置"><rect width="320" height="200" rx="8" class="s-bg"/><rect width="320" height="14" class="s-bar"/><rect x="8" y="22" width="48" height="96" rx="4" class="s-p"/><rect x="60" y="22" width="150" height="96" rx="4" class="s-main"/><rect x="216" y="22" width="96" height="96" rx="4" class="s-p"/><rect x="8" y="126" width="150" height="66" rx="4" class="s-ch"/><rect x="164" y="126" width="148" height="66" rx="4" class="s-p"/><text x="135" y="74" class="s-t">前の配置</text></svg>`
 
-      const PLAN = [
-        { t: "今の形を調べる", state: "done", time: "1分40秒", note: "目盛りの数は `axis.ts` の定数 12 から来ていた。", diff: "変更なし" },
-        { t: "目盛りを設定から読む", state: "done", time: "3分02秒", note: "設定に `ticks` を足し、既定を 12 のまま残した。", diff: "2ファイル +38 −6" },
-        { t: "表示の層を直す", state: "now", time: "1分30秒〜" },
-        { t: "テストと画で確かめる", state: "next" },
-      ]
-
-      function work() {
-        const rows = PLAN.map((p) => {
-          if (p.state === "done")
-            return `<li class="done"><span class="dot"></span><div class="head"><span class="t">${p.t}</span><span class="time">${p.time}</span></div>
-              <p class="note">${md(p.note)} <span class="diffchip">${p.diff}</span></p></li>`
-          if (p.state === "now")
-            return `<li class="now"><span class="dot"></span><div class="head"><span class="t">表示の層を直している</span><span class="time">${p.time}</span></div>
-              <div class="live">
-                <div class="now-line"><span><b>グラフの部品 6 個のうち 4 個目</b>（<code>bar-chart.tsx</code>）に、設定の目盛りを通している</span><span class="time">12秒前</span></div>
-                <ul><li>読んだ: <code>chart-axis.tsx</code> ほか 5 ファイル</li><li>直した: <code>line-chart.tsx</code>・<code>area-chart.tsx</code>・<code>pie-chart.tsx</code></li></ul>
-              </div>
-              <div class="agents">
-                <div class="ok"><i></i><span>型の検査を先に回す役 ― 通った（3,152 件）</span><span>0:48</span></div>
-                <div><i></i><span>画を撮る役 ― 幅 1400 の2枚目を撮っている</span><span>1:05</span></div>
-              </div>
-              <p class="changed"><b>計画を直した</b> ― 円グラフにも目盛りがあると分かったので、この段に円グラフを足した（段の数は変わらない）。</p></li>`
-          return `<li><span class="dot"></span><div class="head"><span class="t" style="color:var(--ink-quiet)">${p.t}</span><span class="time">似た作業では 2〜4分</span></div></li>`
-        }).join("")
-        return `<article class="paper" aria-label="作業中の紙">
-          <p class="ask wide">頼んだこと: グラフの目盛りの数を設定で変えられるようにして</p>
-          <div class="stamp wide"><span class="badge run">働いている</span><span>4段のうち3段目</span><span class="mono">経過 6:12</span><span>見込み <b>あと約 4分</b>（似た作業 9 件の中央値から）</span></div>
-          <h1 class="conclusion wide" style="font-size:20px">表示の層を直している。テストと画で確かめる段が残っている。</h1>
-          <ol class="plan wide">${rows}</ol>
+      // ---- 紙 ---------------------------------------------------------
+      function ledger(again, full) {
+        const failed = again
+          ? `<p class="lg-label">落ちた ― 1件</p>${lg("ng", "幅 390 で、目盛りの数字が2か所重なる", "capture-view.ts --size 390x844", "記録あり", "間引きの規則が幅 720 を境にしていて、390 では効いていない。<pre>重なり: x=212 「18」と「20」、x=301 「36」と「38」</pre>", true)}`
+          : ""
+        const unknown = `<p class="lg-label">確かめていない ― 1件</p>${lg("un", "Safari での目盛りの字の詰まり", "未実行", "", "撮る道具が Chromium だけのため。確かめるなら、Safari で幅 720 の目盛りを見る。", full)}`
+        const passed =
+          full || again
+            ? `<p class="lg-label">確かめた ― 4件</p>${lg("ok", "型の検査・lint・整形", "pnpm run check", "記録あり", "14:02 に走り、終了コード 0。", false)}${lg("ok", "単体テスト <b>3,156 件</b>（足した 4 件を含む）", "pnpm run test", "記録あり", "", false)}${lg("ok", "E2E <b>71 件</b>", "pnpm run test:e2e", "記録あり", "", false)}${lg("ok", "幅 1400 と 720 で目盛りが 24 本に見える", "目で見た", "申告のみ", "走った記録が無い確かめ。画は「変えたところ」に置いた。", false)}`
+            : `<p class="lg-label">確かめた ― 4件</p>${lg("ok", "型の検査・lint・単体 <b>3,156</b>・E2E <b>71</b>・画 2枚", "開くと1件ずつ", "記録あり 3 ・ 申告 1", "", false)}`
+        return `<div class="ledger wide">${failed}${unknown}${passed}</div>`
+      }
+      function route(open) {
+        return `<details class="route wide" ${open ? "open" : ""}><summary>この結論に至った道筋 ― 4段 ・ 14分20秒 ・ 道具 41 回</summary><ol class="plan">
+          ${ph({ k: "lit", t: "今の形を調べる", time: "1分40秒", note: "目盛りの数は <code>axis.ts</code> の定数 12 から来ていた。", diff: "変更なし" })}
+          ${ph({ k: "lit", t: "目盛りを設定から読む", time: "3分02秒", note: "設定に <code>ticks</code> を足し、既定を 12 のまま残した。", diff: "2ファイル +38 −6" })}
+          ${ph({ k: "lit", t: "表示の層を直す", time: "5分48秒", note: "途中で円グラフにも目盛りがあると分かり、この段に足した。", diff: "6ファイル +52 −31" })}
+          ${ph({ k: "lit", t: "テストと画で確かめる", time: "3分50秒", note: "単体を 4 件足し、幅 1400 と 720 の画を撮った。" })}
+        </ol><p class="quiet">生の記録（道具の呼び出し 41 回）は、段を押すと開く。</p></details>`
+      }
+      function deliver(again) {
+        const d = state.depth
+        const stamp = again
+          ? `${vd("part")}<span>前回から <b>2件解決 ・ 1件新しく</b></span>${lamps(rep("lit", 3), "3段とも済んだ")}<span>3段 ・ 9分05秒</span>`
+          : `${vd("ok")}${lamps(rep("lit", 4), "4段とも済んだ")}<span>4段 ・ 14分20秒</span>`
+        const head = `${paperTop(`頼んだこと: ${again ? "前のレポートの指摘を直して" : TASK}`, true)}
+          <div class="stamp wide">${stamp}<span><b class="add">+90</b> <b class="del">−37</b> ・ 8ファイル</span><span>${again ? '<b class="g-ng">✕1</b> ' : ""}<b class="g-un">?1</b> <b class="g-ok">✓4</b></span></div>
+          <h1 class="concl wide">${again ? "幅 720 の重なりは消えた。幅 390 では、まだ2か所重なる。" : "グラフの目盛りの数を、設定の <code>ticks</code> で 4〜48 本に変えられるようになった。"}</h1>
+          <p class="sub wide">${again ? "前回の指摘2件は直した。間引きの規則が幅 720 を境にしているため、もっと狭い幅では効いていない。" : "既定は今と同じ 12 本で、設定を変えない人の画面は変わらない。"}</p>
+          ${again ? `<div class="delta wide"><section><h3 class="g-ok">✓ 解決 ― 2件</h3><ul><li>幅 720 で数字が重なる</li><li>既定の 12 が設定に出ていない</li></ul></section><section><h3 class="g-ng">✕ 新しく ― 1件</h3><ul><li>幅 390 で2か所重なる</li></ul></section><section><h3 class="g-un">? 残っている ― 1件</h3><ul><li>Safari で見ていない</li></ul></section></div>` : ""}
+          <div class="turn wide">
+            <section class="mine"><h3>あなたの番</h3><p>${again ? "幅 390 も間引くかを決める。" : "設定の画面で目盛りを 24 にして、見え方を確かめる。"}</p>${again ? '<div class="pickrow"><button type="button">1　間引く</button><button type="button">2　今のまま</button></div>' : '<button class="btn" type="button">設定を開く</button>'}</section>
+            <section><h3>続けて頼めること</h3><div><button class="chip" type="button">${again ? "間引きの境を幅に比例させて" : "Safari でも見え方を確かめて"}</button><button class="chip" type="button">設定の画面に説明を足して</button></div><p class="quiet" style="margin-top:6px">押すと入力欄に入る。送るまでは始まらない。</p></section>
+          </div>`
+        if (d === 1)
+          return `<article class="paper tone">${head}<p class="quiet wide" style="margin-top:18px">ここまでが「一目」。確かさ（${again ? "落ちた 1・" : ""}確かめていない 1・確かめた 4）と本文は「本文」で開く。</p></article>`
+        return `<article class="paper tone">${head}
+          <div class="kf wide">
+            <div><p class="v">4〜48<small>本</small></p><p class="l">設定できる目盛りの数</p><p class="d">前は 12 本に固定</p></div>
+            <div><p class="v">6<small>/ 6 個</small></p><p class="l">設定を読むグラフの部品</p><div class="meter"><i style="width:100%"></i></div></div>
+            <div><p class="v">3,156<small>件</small></p><p class="l">通った単体テスト</p><p class="d">3,152 → 3,156（+4）</p></div>
+          </div>
+          <h2 class="wide">確かさ</h2>
+          ${ledger(again, d === 3)}
+          <h2>変えたところ</h2>
+          <div class="pair"><div class="prose"><p>目盛りの数は <code>axis.ts</code> の定数から、設定の <code>ticks</code> を読む形に替えた<sup class="ref">1</sup>。範囲の外の値は、設定を読むところで 4 か 48 に丸める<sup class="ref">2</sup>。</p>
+            <p>グラフの部品 6 個は、同じ <code>useAxisTicks</code> から数を受け取る。円グラフは目盛りを使わないと思っていたが、外周の目盛りがあったので足した<sup class="ref">3</sup>。</p></div>
+            ${src([
+              [1, "<code>src/chart/axis.ts:14</code> の <code>DEFAULT_TICKS</code>"],
+              [2, "<code>src/setting/parse.ts:88</code>・単体テスト「範囲の外を丸める」"],
+              [3, "<code>src/chart/pie-chart.tsx:61</code>"],
+            ])}</div>
+          ${fig("設定を 24 にすると、目盛りは倍の細かさになる（幅 1400）", `<div class="cmp" data-mode="side"><figure>${shot(false)}<figcaption>前 ― 12 本</figcaption></figure><figure>${shot(true)}<figcaption>後 ― 24 本</figcaption></figure></div>`, "")}
+          <h2>置いた前提</h2>
+          <ul class="ul"><li>目盛りの数は 4〜48 の範囲だけ受け付ける。範囲は頼まれていなかったので、今の最小と最大の比から置いた。</li></ul>
+          ${route(d === 3)}
+          <div class="foot-tools wide"><button class="tool" type="button">前のレポートと比べる</button><button class="tool" type="button">HTML で保存</button><span class="quiet" style="align-self:center">キー: <kbd>{</kbd> <kbd>}</kbd> で見出しを移る ・ <kbd>d</kbd> で読む深さ ・ <kbd>o</kbd> で節を畳む</span></div>
+        </article>`
+      }
+      function decide() {
+        const opts = [
+          ["adopt", "設定ファイル", "起こし直すだけで変わり、読み口が1つで済む。", "勧める ・ 確度 高"],
+          ["consider", "環境変数", "設定ファイルの上書きとしてなら足せる。単独では、起こすたびに指定が要る。", "足すなら後で"],
+          ["reject", "定数のまま", "変えるたびに組み立て直しが要る。頼まれたことを満たさない。", "勧めない"],
+        ]
+        return `<article class="paper tone">${paperTop("頼んだこと: 目盛りの数をどこで決めるか、案を比べて", true)}
+          <div class="stamp wide">${vd("you")}<span>3案を調べた ・ 6分10秒</span><span>変更なし</span><span><b class="g-un">?1</b> <b class="g-ok">✓3</b></span></div>
+          <h1 class="concl wide">目盛りの数は設定ファイルで決めるのを勧める。決めてくれたら、約 10 分で入れられる。</h1>
+          <p class="sub wide">${state.pick ? `<b>決めた: ${state.pick}。</b> 入力欄に「${state.pick}で進めて」を入れた。送ると始める。` : "下の3案から選ぶと、入力欄に続きの依頼が入る。"}</p>
+          <div class="wide">${opts
+            .map(
+              ([v, name, why, tag]) =>
+                `<div class="opt ${v}" data-picked="${state.pick === name}"><span class="v">${v === "adopt" ? "✓ " : v === "reject" ? "― " : "〜 "}${tag}</span><div><b>${name}</b><p>${why}</p></div><button type="button" class="btn ${v === "adopt" ? "" : "ghost"}" style="margin-top:0" data-pick="${name}">これにする</button></div>`,
+            )
+            .join("")}</div>
+          <h2>比べた点</h2>
+          ${fig("設定ファイルだけが、3点とも満たす", `<table><thead><tr><th>案</th><th>組み立て直しが要らない</th><th>読み口が1つ</th><th>今の設定と重ならない</th></tr></thead><tbody>
+            <tr class="em"><td>設定ファイル</td><td class="st ok"><i>✓</i>要らない</td><td class="st ok"><i>✓</i>1つ</td><td class="st ok"><i>✓</i>重ならない</td></tr>
+            <tr><td>環境変数</td><td class="st ok"><i>✓</i>要らない</td><td class="st warn"><i>!</i>2つになる</td><td class="st na">? 見ていない</td></tr>
+            <tr><td>定数のまま</td><td class="st ng"><i>✕</i>要る</td><td class="st ok"><i>✓</i>1つ</td><td class="st ok"><i>✓</i>重ならない</td></tr></tbody></table>`, "出どころ: <code>src/setting/</code> の読み口を数えた")}
+          <h2 class="wide">確かさ</h2>
+          <div class="ledger wide"><p class="lg-label">確かめていない ― 1件</p>${lg("un", "環境変数が、今の設定の読み込みと重なるか", "未実行", "", "環境変数の案を採るときだけ要る確かめ。採らないなら要らない。", true)}<p class="lg-label">確かめた ― 3件</p>${lg("ok", "設定の読み口は 1 か所・起こし直しで読み直す・定数の使われ方 6 か所", "開くと1件ずつ", "記録あり 3", "", false)}</div>
+        </article>`
+      }
+      function quick() {
+        return `<article class="paper note tone">${paperTop("聞いたこと: 目盛りの既定はいくつ？", false)}
+          <div class="stamp">${vd("ok", "答えた")}<span>調べただけ ・ 変更なし ・ 12秒</span></div>
+          <h1 class="concl">既定は 12 本。</h1>
+          <p class="body"><code>src/chart/axis.ts:14</code> の <code>DEFAULT_TICKS</code> が 12 で、6 個のグラフの部品がこの値を読んでいる。</p>
+          <p class="quiet">短い答えの紙は、判定の行・答え・出どころだけにする。確かさの台帳・道筋・主要な数は出さない。</p>
         </article>`
       }
 
+      // ---- 部品の見本帳 ----------------------------------------------
+      const partsHead = (family, claim) =>
+        `${paperTop(`部品の見本帳 ・ ${family}（中身は架空。右の欄外が、その部品に当てる決まり）`, false)}<h1 class="concl mid wide">${claim}</h1><div class="wide" style="height:10px"></div>`
+      function partsText() {
+        return `<article class="paper tone">${partsHead("文の族", "文は 1行 40 字までに収め、強調は太字だけで運ぶ。")}
+          ${spec("見出しと本文（Paragraph・Section）", `<div class="scale"><h1 class="concl" style="margin-top:0">結論は 24px で、文節で折る</h1><h2 style="margin-top:0">節の見出しは 19px で結論を言う</h2><h3 style="margin-top:0">小見出しは 16px の太字</h3><p class="body">本文は 16px、行送りは 1.8。<b>強調は太字だけ</b>で、色や下線は使わない。<code>code</code> と <code>path:line</code> は等幅で、和文との間は自動で空く。1行が 40 字を超えないので、行の頭へ戻る目が迷わない。</p><p class="quiet">小さい字は 13.5px。脚・出どころ・単位に使う。</p></div>`, ["本文 16px・行送り 1.8・1行 40 字まで（今は 14px・1.7・最大 63 字ぶん）", "字の段は 13.5・14.5・16・19・24 の5つ。欄外や凡例も 13px を下回らない", "見出しは文節で折り、左右の行の長さをそろえる", "強調は太字の1種だけ"])}
+          ${spec("箇条書き（ItemList）", `<ul class="ul lab"><li><b>読む深さ</b>一目・本文・記録の3段で開く。</li><li><b>確かさ</b>落ちたものから並べる。</li></ul><ol class="ul" style="margin-top:10px"><li>設定に <code>ticks</code> を足す</li><li>部品 6 個に通す</li></ol><ul class="chk" style="margin-top:10px"><li class="done"><i>✓</i>幅 1400 で見た</li><li class="done"><i>✓</i>幅 720 で見た</li><li><i>○</i>幅 390 で見る</li></ul>`, ["並べるのは同じ種類の項目だけ", "ラベルは太字で文の頭に置く", "済みは ✓ と字の濃さの両方で言う"])}
+          ${spec("名前と値（DescriptionList）", `<dl class="dl"><dt>設定の名前</dt><dd><code>ticks</code></dd><dt>受け付ける範囲</dt><dd>4〜48（外の値は端に丸める）</dd><dt>既定</dt><dd>12</dd></dl>`, ["名前は細く小さく、値を本文の濃さで", "名前の列は 9 字ぶんで固定"])}
+          ${spec("注意と覚え書き（Note）", `<div class="caution" style="--c:var(--warn)"><i>!</i><div><b>設定ファイルを増やすなら、読む順を1か所に決める。</b>決めないと、どちらの値が勝つか分からなくなる。</div></div><div class="caution" style="--c:var(--ng);margin-top:8px"><i>✕</i><div><b>この操作は戻せない。</b>古い設定の欄を消すと、前の版では起こせなくなる。</div></div>`, ["本文に割り込むのは、注意（!）と戻せない操作（✕）の2つだけ", "覚え書きと補足は欄外へ出す", "問いは注意の箱にせず、紙の頭の「あなたの番」へ送る", "印と太字の頭の1文で言い、色だけに頼らない"])}
+          ${spec("引用と畳み（Quote・fold）", `<blockquote><p>行は 40 字を上限とする。</p><footer>― 架空の組版の手引き 第3章</footer></blockquote><details style="margin-top:12px"><summary class="fold-done">長い出力 ― 23 行</summary><pre>typecheck  ok  6.1s\nlint       ok  2.3s\ntest       ok  5.5s (31 files)</pre></details>`, ["引用は左の細い線と出どころ", "畳みの題は、中身の量を言う"])}
+        </article>`
+      }
+      const ROWS = [
+        { name: "E2E", sec: 186, diff: 12, st: ["warn", "!", "遅くなった"] },
+        { name: "単体", sec: 72, diff: -3, st: ["ok", "✓", "変わらない"] },
+        { name: "型検査", sec: 41, diff: 0, st: ["ok", "✓", "変わらない"] },
+        { name: "lint", sec: 18, diff: -1, st: ["ok", "✓", "変わらない"] },
+        { name: "整形", sec: 6, diff: 0, st: ["ok", "✓", "変わらない"] },
+      ]
+      function tableSpec() {
+        const { key, dir } = state.sort
+        const rows = [...ROWS].sort((a, b) => (key === "name" ? a.name.localeCompare(b.name, "ja") * dir : (a[key] - b[key]) * dir))
+        const th = (k, label, right) =>
+          `<th ${right ? 'class="r"' : ""} ${key === k ? `aria-sort="${dir > 0 ? "ascending" : "descending"}"` : ""}><button type="button" data-sort="${k}">${label}${key === k ? (dir > 0 ? " ↑" : " ↓") : ""}</button></th>`
+        return fig(
+          "遅いのは E2E の段で、全体の 58% を占める",
+          `<table><thead><tr>${th("name", "段")}${th("sec", "所要（秒）")}${th("diff", "前回との差（秒）", true)}<th>状態</th></tr></thead><tbody>${rows
+            .map(
+              (r) =>
+                `<tr class="${r.sec === 186 ? "em" : ""}"><td>${r.name}</td><td><span class="cellbar" style="width:${(r.sec / 186) * 150}px"></span>${r.sec}</td><td class="r">${r.diff > 0 ? "+" : r.diff < 0 ? "−" : ""}${Math.abs(r.diff)}</td><td class="st ${r.st[0]}"><i>${r.st[1]}</i>${r.st[2]}</td></tr>`,
+            )
+            .join("")}<tr class="total"><td>計</td><td>323</td><td class="r">+8</td><td></td></tr></tbody></table>`,
+          "出どころ: 検証の記録（28日） ・ 見出しを押すと並べ替わる",
+        )
+      }
+      function partsNumber() {
+        return `<article class="paper tone">${partsHead("数の族", "数は、前と後・単位・出どころをそろえ、題で言いたいことを先に言う。")}
+          ${spec("主要な数（keyFigures・Stats）", `<div class="kf" style="margin-top:0"><div><p class="v">884<small>px</small></p><p class="l">レポートの読める高さ</p><p class="d">513 → 884（+371）</p></div><div><p class="v">21<small>/ 24 個</small></p><p class="l">新しい形に移した部品</p><div class="meter"><i style="width:87.5%"></i></div></div><div><p class="v">3<small>件</small></p><p class="l">7日の差し戻し</p><svg class="chart" viewBox="0 0 120 26" style="width:120px"><polyline class="ln mute" points="2,6 21,9 40,7 59,14 78,17 97,20"/><polyline class="ln main" points="97,20 116,22"/><circle class="dot" cx="116" cy="22" r="4"/></svg></div></div>`, ["箱で囲まず、余白で分ける", "大きい数字は字幅をそろえない（表の中だけそろえる）", "前→後は絶対値で書き、差を括弧に", "色は数字に付けず、棒や線の側に付ける"])}
+          ${spec("表（Table）", tableSpec(), ["題は「何の表か」でなく、表から言えること", "数字は右か棒の横にそろえ、単位は見出しに1回", "罫は横の細い線だけ。強調は1行", "並べ替え・絞り込み・行の中身は今の部品のまま残す"])}
+          ${spec("対応表（Matrix）", fig("幅 390 だけ、間引きがまだ効かない", `<table><thead><tr><th>機能</th><th>幅 390</th><th>幅 720</th><th>幅 1400</th></tr></thead><tbody><tr><td>目盛りの数を変える</td><td class="st ok"><i>✓</i>効く</td><td class="st ok"><i>✓</i>効く</td><td class="st ok"><i>✓</i>効く</td></tr><tr class="em"><td>重なる数字を間引く</td><td class="st ng"><i>✕</i>2か所重なる</td><td class="st ok"><i>✓</i>効く</td><td class="st na">― 要らない</td></tr><tr><td>設定の画面に出る</td><td class="st warn"><i>!</i>説明が切れる</td><td class="st ok"><i>✓</i>出る</td><td class="st ok"><i>✓</i>出る</td></tr></tbody></table>`, ""), ["印だけにせず、印＋短い語で書く", "「該当なし」は ― と薄い字で、失敗と分ける"])}
+          ${spec("棒（Chart: bar）", fig("検証の時間の半分以上を E2E が使っている", `<div class="hbar">${ROWS.map((r) => `<span class="lbl">${r.name}</span><span class="bar ${r.sec === 186 ? "em" : ""}" title="${r.name}: ${r.sec} 秒"><i style="width:${(r.sec / 186) * 78}%"></i>${r.sec} 秒</span>`).join("")}</div>`, "出どころ: 検証の記録（28日の中央値）"), ["大きい順に並べ、言いたい1本だけ色を付ける", "値は棒の先に直に書き、目盛りの線は引かない", "棒は細く（14px）、根元は角のまま", "グラフの色は紙の決まった青。キャラの色は使わない"])}
+          ${spec("折れ線（Chart: line）", fig("遅延読み込みを入れたあと、起動は 1.3 秒台に縮んだ", `<svg class="chart" viewBox="0 0 680 200" role="img" aria-label="起動時間の推移。11月1日から6日は 1.5 秒前後、7日以降は 1.3 秒台"><line class="grid" x1="44" x2="600" y1="30" y2="30"/><line class="grid" x1="44" x2="600" y1="100" y2="100"/><line class="grid" x1="44" x2="600" y1="170" y2="170"/><text x="36" y="34" text-anchor="end">1.6 秒</text><text x="36" y="104" text-anchor="end">1.4</text><text x="36" y="174" text-anchor="end">1.2</text><line x1="347.3" x2="347.3" y1="24" y2="170" stroke="var(--accent-ink)" stroke-width="1"/><text x="353" y="22">11/07 遅延読み込みを入れた</text><polyline class="ln mute" points="44,58 94.5,44 145.1,68.5 195.6,51 246.2,61.5 296.7,54.5"/><polyline class="ln main" points="296.7,54.5 347.3,114 397.8,128 448.4,117.5 498.9,131.5 549.5,124.5 600,128"/><circle class="dot" cx="600" cy="128" r="4.5"/><text x="610" y="132" style="font-weight:700;fill:var(--ink)">1.32 秒</text><text x="44" y="190" text-anchor="middle">11/01</text><text x="347.3" y="190" text-anchor="middle">11/07</text><text x="600" y="190" text-anchor="middle">11/12</text></svg>`, "出どころ: 起動の計測（各日 10 回の中央値）"), ["線は 2px、終わりの点に値を直に書く", "出来事は縦の線と短い語で図の中に書く", "言いたい区間だけ色、前の区間は薄く", "目盛りは3本まで。軸は1つだけ"])}
+          ${spec("前と後（Chart: arrow・slope）", fig("一覧に並ぶ件数は、3つの幅すべてで増えた", `<div class="db">${[["幅 720", 6, 9], ["幅 1400", 8, 14], ["幅 1920", 10, 18]].map(([l, b, a]) => `<span>${l}</span><span class="track"><i class="seg-l" style="left:${b * 5}%;width:${(a - b) * 5}%"></i><i class="p b" style="left:${b * 5}%"></i><i class="p a" style="left:${a * 5}%"></i></span>`).join("")}</div><div class="db" style="margin-top:2px">${[["", 6, 9]].map(() => `<span></span><span class="quiet">幅 720: 6 → <b>9</b> 件　幅 1400: 8 → <b>14</b> 件　幅 1920: 10 → <b>18</b> 件</span>`).join("")}</div><div class="key"><span><i style="background:var(--ink-quiet)"></i>前</span><span><i style="background:var(--data)"></i>後</span></div>`, ""), ["前は灰、後は青で、同じ軸に置く", "点が重なるところは紙の色の輪で分ける"])}
+          ${spec("小さな並び（ChartGrid）", fig("7日で伸びているのは E2E だけ", `<div class="sm">${[["型検査", "41 秒", "6,50.5 35,50.8 64,50.2 93,50.5 122,50.5 151,50.8 180,50.5", false], ["単体", "72 秒", "6,42.4 35,41.8 64,42.1 93,41.3 122,41.6 151,41.8 180,41.8", false], ["E2E", "186 秒（+36）", "6,20 35,18.6 64,16.6 93,14.4 122,12.7 151,11.3 180,9.9", true]].map(([n, v, pts, em]) => `<div><p><b>${n}</b>　${v}</p><svg class="chart" viewBox="0 0 190 64"><line class="grid" x1="0" x2="190" y1="62" y2="62"/><polyline class="ln ${em ? "main" : "mute"}" points="${pts}"/>${em ? '<circle class="dot" cx="180" cy="9.9" r="4"/>' : ""}</svg></div>`).join("")}</div>`, "3枚とも縦の軸は同じ（0〜200 秒）"), ["同じ形・同じ軸で並べ、違いを目の動きだけで読ませる", "2つの単位を1枚に重ねない"])}
+        </article>`
+      }
+      function partsCompare() {
+        const mode = state.cmp
+        return `<article class="paper tone">${partsHead("比べる族", "前と後は同じ場所に重ね、採った案と採らなかった理由を1つの形で残す。")}
+          ${spec("画像の前後（Compare: before-after）", fig("レポートの読む面が、画面の右いっぱいに広がった", `<div class="modes"><div class="seg" role="group" aria-label="比べ方">${[["side", "並べる"], ["swipe", "拭う"], ["onion", "透かす"]].map(([k, l]) => `<button type="button" data-cmp="${k}" aria-pressed="${mode === k}">${l}</button>`).join("")}</div>${mode === "side" ? "" : '<input type="range" min="0" max="100" value="50" data-cmp-range aria-label="前と後の境" />'}</div><div class="cmp" data-mode="${mode}"><figure>${shot(false)}<figcaption>前</figcaption></figure><figure>${shot(true)}<figcaption>後</figcaption></figure></div>`, "同じ幅（1400×900）で撮った2枚"), ["並べる・拭う・透かすの3つを、同じ枠の中で切り替える（今の部品のまま残す）", "題は、変わったことを1文で", "2枚は同じ幅・同じ場面で撮る"])}
+          ${spec("コードの差分（Compare: code）", `<div class="diff"><div class="diff-h"><span>src/chart/axis.ts</span><button type="button" class="tool" data-copy="const step = niceStep(sorted, ticks)">写す</button></div>
+<div class="l"><span class="n">12</span><span class="n">12</span><span> </span><span>export function pickTicks(values: number[], ticks: number) {</span></div>
+<div class="l d"><span class="n">13</span><span class="n"></span><span>−</span><span>  const step = niceStep(sorted, <mark>DEFAULT_TICKS</mark>)</span></div>
+<div class="l a mk"><span class="n"></span><span class="n">13</span><span>+</span><span>  const step = niceStep(sorted, <mark>ticks</mark>)</span></div>
+<div class="l"><span class="n">14</span><span class="n">14</span><span> </span><span>  return sorted.filter((v) =&gt; v % step === 0)</span></div></div><p class="quiet" style="margin-top:6px">青い線の行: 「設定の値がここで効く」</p>`, ["変わった語だけを濃く塗る", "行の印（＋ −）と色の両方で言う", "読ませたい行には線を引き、ひとことを添える"])}
+          ${spec("採否（Options）", `<div class="opt adopt"><span class="v">✓ 採る</span><div><b>設定ファイル</b><p>起こし直すだけで変わり、読み口が1つで済む。</p></div><span></span></div><div class="opt"><span class="v">〜 検討</span><div><b>環境変数</b><p>設定ファイルの上書きとしてなら足せる。</p></div><span></span></div><div class="opt reject"><span class="v">― 採らない</span><div><b>定数のまま</b><p>変えるたびに組み立て直しが要る。</p></div><span></span></div>`, ["採った案を先頭に、地を一段上げて置く", "採らなかった案は消さず、理由と一緒に薄く残す", "判断を仰ぐ紙では、行に「これにする」が付く（紙の群の「判断を仰ぐ」）"])}
+          ${spec("2案の見比べ（Compare: versus）", `<div class="vs"><div><h4>幅で間引く</h4><ul class="ul"><li>狭い幅だけ本数が減る</li><li>設定の値と見た目がずれる</li></ul></div><div><h4>字を小さくする</h4><ul class="ul"><li>本数は設定どおり</li><li>12px を下回ると読めない</li></ul></div></div>`, ["側ごとに見出しと短い箇条", "3つ以上を比べるなら表にする"])}
+        </article>`
+      }
+      function partsLink() {
+        const bar = (l, w, cls = "") => `<i class="tl-bar ${cls}" style="left:${l}%;width:${w}%"></i>`
+        return `<article class="paper tone">${partsHead("つながりの族", "流れは箱を減らして矢印に語を書き、時間は同じ軸に並べる。")}
+          ${spec("流れの図（Graph・Mermaid）", fig("狭い幅のときだけ、割った目盛りを間引いてから描く", `<svg class="chart" viewBox="0 0 656 150" role="img" aria-label="設定を読み、4〜48 に丸め、目盛りを割る。幅が 720 未満なら間引いてから描く"><defs><marker id="ah" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L8 4L0 8z" fill="var(--ink-quiet)"/></marker></defs>
+            <rect class="node" x="1" y="22" width="112" height="36" rx="8"/><text class="nt" x="57" y="45">設定を読む</text>
+            <rect class="node" x="152" y="22" width="132" height="36" rx="8"/><text class="nt" x="218" y="45">4〜48 に丸める</text>
+            <rect class="node" x="324" y="22" width="112" height="36" rx="8"/><text class="nt" x="380" y="45">目盛りを割る</text>
+            <rect class="node" x="560" y="22" width="92" height="36" rx="8"/><text class="nt" x="606" y="45">描く</text>
+            <rect class="node new" x="438" y="104" width="92" height="36" rx="8"/><text class="nt" x="484" y="127">間引く</text>
+            <path class="edge" d="M113 40H150" marker-end="url(#ah)"/><text class="et" x="131" y="33" text-anchor="middle">ticks</text>
+            <path class="edge" d="M284 40H322" marker-end="url(#ah)"/><text class="et" x="303" y="33" text-anchor="middle">本数</text>
+            <path class="edge" d="M436 40H558" marker-end="url(#ah)"/><text class="et" x="497" y="33" text-anchor="middle">幅が 720 以上</text>
+            <path class="edge" d="M380 58V122H436" marker-end="url(#ah)"/><text class="et" x="388" y="96">幅が 720 未満</text>
+            <path class="edge" d="M530 122H606V60" marker-end="url(#ah)"/><text class="et" x="612" y="96">半分に</text></svg>`, "青い枠が、今回足した箱"), ["箱は塗らず細い線で。色は「今回変えた箱」の1つだけ", "矢印には必ず語を書く", "1枚に1つの話。箱が7つを超えたら分ける"])}
+          ${spec("時間の図（Timeline）", fig("時間をいちばん使ったのは、表示の層を直す段", `<div class="tl">
+            <div class="tl-row"><span class="tl-name">今の形を調べる</span><span class="tl-track">${bar(0, 11.6)}</span></div>
+            <div class="tl-row"><span class="tl-name">設定から読む</span><span class="tl-track">${bar(11.6, 21.2)}</span></div>
+            <div class="tl-row"><span class="tl-name">表示の層を直す</span><span class="tl-track">${bar(32.8, 40.5, "em")}<i class="tl-ev" style="left:45.3%" title="計画を直した"></i></span></div>
+            <div class="tl-row child"><span class="tl-name">型の検査の役</span><span class="tl-track">${bar(36, 5.6)}</span></div>
+            <div class="tl-row child"><span class="tl-name">画を撮る役</span><span class="tl-track">${bar(41.9, 25.6)}${bar(67.5, 5.8, "wait")}</span></div>
+            <div class="tl-row"><span class="tl-name">確かめる</span><span class="tl-track">${bar(73.3, 26.7)}</span></div>
+            <div class="tl-axis"><span style="left:0">0</span><span style="left:34.9%">5分</span><span style="left:69.8%">10分</span><span>14分20秒</span></div></div>`, "縦の線: 計画を直した ・ 枠だけの棒: 答えを待っていた時間"), ["並べて走った役は、字下げした行で同じ軸に", "待っていた時間は、塗らずに枠だけで描く", "出来事は縦の線1本で"])}
+          ${spec("手順の連鎖（ItemList: flow）", `<div class="steps"><div><b>設定を開く</b><small>歯車から</small></div><span>→</span><div><b>目盛りを 24 に</b><small>4〜48 の間で</small></div><span>→</span><div><b>グラフを見る</b><small>起こし直しは要らない</small></div></div>`, ["5つまでの一本道は、箱の連鎖で", "分かれ道があるなら流れの図にする"])}
+        </article>`
+      }
+      function partsProof() {
+        return `<article class="paper tone">${partsHead("証拠の族", "確かさは1か所にまとめ、走った記録があるかどうかまで見せる。")}
+          ${spec("確かさの台帳（checks と Claims を1つに）", ledger(true, true), ["落ちた → 確かめていない → 確かめた の順", "落ちたものだけ開いて出し、全部通ったら1行に畳む", "「記録あり」は、tsukumo がそのコマンドの実行を見たもの。「申告のみ」は書き手の言葉だけ", "確かめていないは、失敗の赤にせず点線の ? で"])}
+          ${spec("試した手（Trace）", `<ol class="trace"><li class="ng"><i>✕</i><div>間引きの境を幅 720 に固定した<small>幅 390 で2か所重なった。境は幅に比例させる必要がある。</small></div></li><li class="ng"><i>✕</i><div>目盛りの字を小さくした<small>12px を下回り、読めなくなった。</small></div></li><li class="ok"><i>✓</i><div><b>幅に比例して本数を減らした</b><small>幅 390・720・1400 のどれでも重なり 0。</small></div></li></ol>`, ["うまくいかなかった手も、分かったことと一緒に残す", "効いた手だけ太字に"])}
+          ${spec("コード（Code）", `<div class="diff"><div class="diff-h"><span>src/setting/parse.ts</span><button type="button" class="tool" data-copy="return Math.min(48, Math.max(4, value))">写す</button></div>
+<div class="l"><span class="n">87</span><span class="n"></span><span> </span><span>function parseTicks(value: number): number {</span></div>
+<div class="l mk"><span class="n">88</span><span class="n"></span><span> </span><span>  return Math.min(48, Math.max(4, value))</span></div>
+<div class="l"><span class="n">89</span><span class="n"></span><span> </span><span>}</span></div></div><p class="quiet" style="margin-top:6px">88 行目: 範囲の外の値は、ここで端に丸める</p>`, ["頭に場所（パス）と「写す」", "読ませたい行に線、下にひとこと", "長いものは 12 行で畳む"])}
+          ${spec("画像と注記（Picture）", `<div class="pins" style="max-width:420px">${shot(true)}<span class="pin" style="left:13%;top:50%">1</span><span class="pin" style="left:63%;top:90%">2</span></div><ol class="ul" style="margin-top:8px;font-size:14.5px"><li>立ち絵は左の列に立つ</li><li>入力欄は紙の下端に浮く</li></ol>`, ["見る場所は番号の印で画の上に置き、下の箇条と対にする", "押すと拡大（今の部品のまま残す）"])}
+          <div class="pair spec"><div class="prose"><p>範囲の外の値は、設定を読むところで端に丸める<sup class="ref">1</sup>。丸めたときは、起動の記録に1行残る<sup class="ref">2</sup>。</p></div><aside class="mg"><p class="mg-n">出どころの番号（本文と欄外）</p><p><b class="n">1</b><code>src/setting/parse.ts:88</code></p><p><b class="n">2</b>単体テスト「範囲の外を丸める」</p><ul><li>主張の文の末尾に番号、同じ高さの欄外に場所</li><li>番号に触れると、その行の前後が覗ける（今の「ファイルの覗き」を使う）</li></ul></aside></div>
+        </article>`
+      }
+      function hits(n) {
+        return Math.max(0, Math.round((n - 16) / 4))
+      }
+      function axisTicks(n) {
+        const k = hits(n)
+        return Array.from({ length: n }, (_, i) => `<i class="${i % 2 === 1 && i / 2 < k ? "hit" : ""}" style="left:${(i / (n - 1)) * 100}%"></i>`).join("")
+      }
+      function partsTouch() {
+        const n = state.ticks
+        return `<article class="paper tone">${partsHead("触る族", "読み手が値を動かし、その場で答え、選んだ字に返事を付けられる。")}
+          ${spec("動かせる値（ParameterSlider）", fig("目盛りを増やすと、幅 390 では数字が重なりはじめる", `<div class="pv"><label>目盛りの数 <b id="pv-n">${n}</b> 本<br /><input type="range" min="4" max="48" value="${n}" data-ticks style="width:100%" /></label><div class="kf" style="margin:0"><div><p class="v" id="pv-k">${hits(n)}<small>か所</small></p><p class="l">幅 390 で重なる数字</p></div></div><div class="pv-axis" id="pv-axis">${axisTicks(n)}</div></div>`, "赤く長い目盛りが、隣と重なる数字（架空の式）"), ["動かす値と、変わる数・図を1つの枠に入れる", "動かしても紙の高さが変わらないようにする", "式は書き手が渡し、描くのは tsukumo（今の仕組みのまま）"])}
+          ${spec("その場で答える（ChoicePicker・お伺い）", `<p class="body" style="margin-bottom:4px"><b>幅 390 でも間引く？</b></p><div class="pickrow" style="margin-top:0">${[["1", "間引く"], ["2", "今のまま"]].map(([k, l]) => `<button type="button" data-choice="${l}" aria-pressed="${state.choice === l}"><kbd>${k}</kbd> ${l}</button>`).join("")}</div><p class="quiet" style="margin-top:8px">${state.choice ? `答えた: ${state.choice}。入力欄を通さずに、そのまま続きが始まる。` : "数字のキーでも答えられる。"}</p>`, ["問いは紙の頭と、問いが生まれた場所の両方に出す", "答えは数字のキーと Enter だけで済む（今の形を残す）"])}
+          <div class="pair spec"><div class="prose"><p>目盛りの数は <mark class="sel">4〜48 の範囲だけ受け付ける</mark>。範囲は頼まれていなかったので、今の最小と最大の比から置いた。</p></div><aside class="mg"><p class="mg-n">選んで聞く・頼む（返事の層）</p><div class="thread"><p><b>聞く</b> 上限を 96 にすると何が困る？</p><p style="margin-top:4px">幅 1400 でも数字が重なる。重ならない上限は 60 本。</p></div><ul style="margin-top:8px"><li>字・行・図を選ぶと、同じ高さの欄外に札が1つ出る（今の仕組みを残す）</li><li>何も選んでいないあいだ、欄外に案内の箱は出さない</li></ul></aside></div>
+          ${spec("切り替え（Tabs）", `<div class="tabs" role="tablist">${[["a", "幅 1400"], ["b", "幅 720"], ["c", "幅 390"]].map(([k, l]) => `<button type="button" role="tab" data-tab="${k}" aria-selected="${state.tab === k}">${l}</button>`).join("")}</div><p class="body">${{ a: "目盛りは 24 本とも重ならない。", b: "間引いて 12 本になる。", c: "間引きが効かず、2か所重なる。" }[state.tab]}</p>`, ["切り替えるのは、同じ形で条件だけ違うもの", "切り替えても高さが跳ねないよう、いちばん高い中身に合わせる"])}
+          ${spec("キーの操作（紙の全体）", `<table><thead><tr><th>キー</th><th>すること</th></tr></thead><tbody><tr><td><kbd>{</kbd> <kbd>}</kbd></td><td>前の見出し・次の見出しへ移る（今のまま）</td></tr><tr><td><kbd>[</kbd> <kbd>]</kbd></td><td>前のやり取り・次のやり取りへ移る（今のまま）</td></tr><tr><td><kbd>1</kbd>〜<kbd>9</kbd></td><td>問いに答える（今のまま）</td></tr><tr class="em"><td><kbd>d</kbd></td><td>読む深さを一目 → 本文 → 記録の順に替える（足す）</td></tr><tr class="em"><td><kbd>o</kbd></td><td>今の節を畳む・開く（足す）</td></tr><tr class="em"><td><kbd>⌘.</kbd></td><td>作業を止める（足す）</td></tr><tr class="em"><td><kbd>?</kbd></td><td>キーの一覧を出す（足す）</td></tr></tbody></table>`, ["今あるキーは変えず、足りない4つを足す", "入力欄に字を打っているあいだは、どのキーも奪わない", "1字のキーは、設定で切れるようにする"])}
+        </article>`
+      }
+
+      // ---- 進み具合 ---------------------------------------------------
+      const tick = (base) => `<span class="mono" data-tick="${base}">${fmt(base)}</span>`
+      function fmt(s) {
+        const m = Math.floor(s / 60)
+        return `${m}:${String(Math.floor(s % 60)).padStart(2, "0")}`
+      }
+      function work() {
+        const now = `<div class="live">
+            <div class="act"><span class="k">いま</span><span><b>グラフの部品 6 個のうち 4 個目</b>（<code>bar-chart.tsx</code>）に、設定の目盛りを通している</span><span class="when">12秒前</span></div>
+            <div class="act kept"><span class="k">できた</span><span><code>line-chart.tsx</code> <span class="dchip">+9 −4</span>　<code>area-chart.tsx</code> <span class="dchip">+8 −4</span>　<code>pie-chart.tsx</code> <span class="dchip">+14 −6</span></span><span class="when">押すと差分</span></div>
+            <div class="act"><span class="k">任せた</span><span>型の検査を先に回す役 ― <span class="g-ok">✓</span> 通った（3,152 件）</span><span class="when">0:48</span></div>
+            <div class="act"><span class="k">任せた</span><span>画を撮る役 ― 幅 1400 の2枚目を撮っている</span><span class="when">${fmt(65)}</span></div>
+            <div class="act said"><span class="k">あなた</span><span>「円グラフは後回しでいいよ」 → 受け取った。円グラフを最後に回した。</span><span class="when">13:58</span></div>
+          </div>
+          <p class="note-line"><b>計画を直した</b>円グラフにも目盛りがあると分かったので、この段に足した（段の数は変わらない）。</p>`
+        return `<article class="paper tone">${paperTop(`頼んだこと: ${TASK}`, false)}
+          <div class="stamp wide">${vd("run")}${lamps(["lit", "lit", "now", "none"], "4段のうち3段目")}<span>4段のうち3段目</span><span>経過 ${tick(372)}</span><span>あと <b>約 4分</b>（似た作業 9 件の中央値から）</span></div>
+          <h1 class="concl mid wide">表示の層を直している。テストと画で確かめる段が残っている。</h1>
+          <ol class="plan wide">
+            ${ph({ k: "lit", t: "今の形を調べる", time: "1分40秒", note: "目盛りの数は <code>axis.ts</code> の定数 12 から来ていた。", diff: "変更なし" })}
+            ${ph({ k: "lit", t: "目盛りを設定から読む", time: "3分02秒", note: "設定に <code>ticks</code> を足し、既定を 12 のまま残した。", diff: "2ファイル +38 −6" })}
+            ${ph({ k: "now", t: "表示の層を直している", time: "1分30秒〜", body: now })}
+            ${ph({ k: "none", t: "テストと画で確かめる", time: "似た作業では 2〜4分" })}
+          </ol>
+          <p class="quiet wide">「いま」と「任せた」の行は、段が済むと1行のまとめに畳まれる。「できた」「あなた」「計画を直した」は残り、終わると紙の末尾の道筋になる。</p>
+        </article>`
+      }
+      function laps() {
+        return `<article class="paper tone">${paperTop("頼んだこと: タスク T-104「目盛りを設定で変える」を進めて", false)}
+          <div class="stamp wide">${vd("run")}${lamps(["lit", "lit", "now", "none", "none"], "5つの工程のうち3つ目")}<span>受け入れの2周目</span><span>経過 ${tick(2310)}</span><span>似た作業 12 件では、差し戻しは平均 1.4 回</span></div>
+          <h1 class="concl mid wide">受け入れ役の2回目の指摘を直している。指摘は 3 件から 1 件に減った。</h1>
+          <ol class="plan wide">
+            ${ph({ k: "lit", t: "計画を今の main に合わせる", time: "2分10秒", note: "段を4つに分けた。" })}
+            ${ph({ k: "lit", t: "実装（4段）", time: "21分40秒", note: "段3と段4は並べて進めた。", diff: "8ファイル +90 −37", body: `<div class="par"><div><b>段3</b> 表示の層を直す <span class="dchip">5:48</span></div><div><b>段4</b> 設定の画面に出す <span class="dchip">4:20</span></div></div>` })}
+            ${ph({ k: "now", t: "受け入れている", tag: '<span class="tag warn">2周目</span>', time: "14分30秒〜", body: `<div class="lap"><span class="w">1周目</span><span><span class="g-ng">✕</span> 差し戻し ― 指摘 3 件（画像のパスが無い・幅 390 の画が無い・単体の件数が合わない）</span><span class="dchip">4:10</span></div><div class="lap"><span class="w">直し</span><span><span class="g-ok">✓</span> 3 件とも直した</span><span class="dchip">6:02</span></div><div class="lap"><span class="w">2周目</span><span><span class="g-ng">✕</span> 差し戻し ― 指摘 1 件（幅 390 で数字が重なる）</span><span class="dchip">3:05</span></div><div class="lap now"><span class="w">直し</span><span><b>間引きの境を、幅に比例する形に直している</b></span><span class="dchip">1:13〜</span></div>` })}
+            ${ph({ k: "none", t: "振り返る", time: "いつもは 1〜2分" })}
+            ${ph({ k: "none", t: "main へ送る", time: "検査が全段で走る（いつもは 4〜6分）" })}
+          </ol>
+          <p class="quiet wide">工程は増やさず、差し戻しは「周」として同じ工程の中に積む。何周目かと、指摘が減っているかが一目で分かる。</p>
+        </article>`
+      }
+      function long() {
+        return `<article class="paper tone">${paperTop("頼んだこと: 古い設定の読み口を 12 か所とも新しい形に移して", false)}
+          <div class="stamp wide">${vd("run")}${lamps([...rep("lit", 8), "now", ...rep("none", 3)], "12段のうち9段目")}<span>12段のうち9段目</span><span>経過 ${tick(2712)}</span><span>あと <b>約 14分</b>（済んだ 8 段の平均から）</span></div>
+          <h1 class="concl mid wide">9 か所目の読み口を移している。残りは 3 か所と、最後の検査。</h1>
+          <ol class="plan wide">
+            <li class="ph ph-lit">${lamp("lit")}<div class="ph-main"><details><summary class="fold-done">済んだ 8 段 ・ 41分 ・ 16ファイル +212 −180（開くと1段ずつ）</summary><p class="ph-note">1〜8 か所目を移した。5 か所目で型が合わず、<b>計画を直して</b>共通の変換を先に作った。</p></details></div></li>
+            ${ph({ k: "now", t: "9 か所目（<code>export.ts</code>）を移している", time: "2分05秒〜", body: `<div class="live"><div class="act"><span class="k">いま</span><span>呼び出し 7 か所のうち <b>5 か所目</b>を書き換えている</span><span class="when">4秒前</span></div></div>` })}
+            ${ph({ k: "none", t: "10 か所目（<code>import.ts</code>）", time: "" })}
+            ${ph({ k: "none", t: "11 か所目（<code>share.ts</code>）", time: "" })}
+            ${ph({ k: "skip", t: "12 か所目（<code>legacy.ts</code>）", tag: '<span class="tag">飛ばす</span>', time: "", note: "呼び出しが 0 か所と分かったので、移さずに消す。" })}
+            ${ph({ k: "none", t: "全段の検査を通す", time: "いつもは 4〜6分" })}
+          </ol>
+          <p class="quiet wide">済んだ段は1行に畳み、今の段とこれからの段だけを開く。頭の狐火の並びが、全体の中の位置を言う。</p>
+        </article>`
+      }
+      function wait() {
+        return `<article class="paper tone">${paperTop(`頼んだこと: ${TASK}`, false)}
+          <div class="stamp wide">${vd("wait", "検査を待っている")}${lamps(["lit", "lit", "lit", "now"], "4段のうち4段目")}<span>4段のうち4段目</span><span>経過 ${tick(790)}</span></div>
+          <h1 class="concl mid wide">全段の検査の終わりを待っている。止まってはいない。</h1>
+          <ol class="plan wide">
+            <li class="ph ph-lit">${lamp("lit")}<div class="ph-main"><details><summary class="fold-done">済んだ 3 段 ・ 10分30秒</summary></details></div></li>
+            ${ph({ k: "now", t: "テストと画で確かめている", time: "2分40秒〜", body: `<div class="live"><div class="act"><span class="k">待ち</span><span><b>90 秒、新しい動きが無い。</b><code>pnpm run check --full</code> の終わりを待っている（いつもは 3〜5 分で、いま 2分40秒）</span><span class="when">${fmt(160)}</span></div><div class="act gone"><span class="k">最後</span><span>E2E 71 件のうち 48 件目まで通った</span><span class="when">1分30秒前</span></div></div>` })}
+          </ol>
+          <h2 class="wide">ほかの「止まって見える」ときの言い方</h2>
+          <div class="wide">
+            <p class="note-line"><b>再試</b>API が混んでいて、2 回目を試している。次は 8 秒後。3 回だめなら止めて知らせる。</p>
+            <p class="note-line"><b>上限</b>利用の上限に達した。18:00 に自動で続ける。<button class="tool" type="button" style="margin-left:8px">依頼を入力欄に戻す</button></p>
+            <p class="note-line" style="--c:var(--ng)"><b>動かない</b>いつもの 3 倍（15 分）を超えた。止まっているかもしれない。<button class="tool" type="button" style="margin-left:8px">出力を見る</button><button class="tool" type="button" style="margin-left:6px">止める</button></p>
+          </div>
+          <p class="quiet wide" style="margin-top:12px">「いつもは」の幅は、その道具の過去の所要から出す。記録が無い道具では幅を出さず、経過だけを出す。</p>
+        </article>`
+      }
+      function ask() {
+        return `<article class="paper tone">${paperTop(`頼んだこと: ${TASK}`, false)}
+          <div class="stamp wide">${vd("you")}${lamps(["lit", "lit", "lit", "now"], "4段のうち4段目")}<span>4段のうち4段目で待っている</span><span>待って ${tick(48)}</span></div>
+          <h1 class="concl mid wide">最後の段の前に、あなたの答えが1つ要る。</h1>
+          <ol class="plan wide">
+            <li class="ph ph-lit">${lamp("lit")}<div class="ph-main"><details><summary class="fold-done">済んだ 3 段 ・ 10分30秒</summary></details></div></li>
+            ${ph({ k: "now", t: "テストと画で確かめている", tag: '<span class="tag you">あなたの番</span>', time: "0:48 待ち", body: `<div class="live"><div class="act said"><span class="k">問い</span><span><b>幅 720 で数字が重なる。重なる幅では間引く？</b> 答えは下の入力欄で。</span><span class="when">14:11</span></div><div class="act gone"><span class="k">材料</span><span>幅 720 の画で、「18」と「20」ほか 4 か所が重なった（今の段で撮った画）</span><span class="when"></span></div></div>` })}
+          </ol>
+          <h2 class="wide">知らせの4段</h2>
+          ${fig("強く知らせるのは、あなたの判断が要るときだけ", `<table><thead><tr><th>段</th><th>いつ</th><th>どこに出るか</th></tr></thead><tbody>
+            <tr><td>気配</td><td>働いているあいだずっと</td><td>立ち絵の表情・タブの題の印（◐）</td></tr>
+            <tr><td>一目</td><td>段が進んだ・計画を直した</td><td>入力欄の上の札（狐火の並びと経過）</td></tr>
+            <tr class="em"><td>割り込み</td><td>問い・許可・失敗</td><td>ブラウザの通知・鈴の音・タブの題「● あなたの番」</td></tr>
+            <tr><td>まとめ</td><td>終わった・戻ってきた</td><td>紙の頭（判定の行と、離れていたあいだのこと）</td></tr></tbody></table>`, "通知と音は設定で切れる。画面を見ているあいだは鳴らさない。")}
+        </article>`
+      }
+      function fail() {
+        return `<article class="paper tone">${paperTop(`頼んだこと: ${TASK}`, true)}
+          <div class="stamp wide">${vd("ng")}${lamps(["lit", "lit", "lit", "fail"], "4段のうち4段目で止まった")}<span>4段のうち4段目で止まった</span><span>12分48秒</span><span><b class="add">+90</b> <b class="del">−37</b> ・ 8ファイル（コミットしていない）</span></div>
+          <h1 class="concl wide">E2E が 2 件落ちて止まった。変更は作業ツリーに残っている。</h1>
+          <p class="sub wide">落ちたのは、目盛りの数を数えている 2 件。期待値が 12 本のままになっている。</p>
+          <div class="turn wide">
+            <section class="mine"><h3>あなたの番</h3><p>どう続けるかを選ぶ。</p><div class="pickrow"><button type="button"><kbd>1</kbd> 期待値を直して続ける</button><button type="button"><kbd>2</kbd> 変更を残して止める</button><button type="button"><kbd>3</kbd> 変更を元に戻す</button></div></section>
+            <section><h3>残っているもの</h3><ul class="ul" style="font-size:14.5px"><li>済んだ 3 段の変更 8 ファイル</li><li>足した単体テスト 4 件（通っている）</li></ul></section>
+          </div>
+          <h2 class="wide">確かさ</h2>
+          <div class="ledger wide"><p class="lg-label">落ちた ― 1件</p>${lg("ng", "E2E <b>71 件中 2 件</b>が落ちた", "pnpm run test:e2e", "記録あり", "<pre>✕ chart-axis.test.ts:41  目盛りは 12 本  (受け取った値: 24)\n✕ chart-axis.test.ts:58  数字は重ならない (幅 720)</pre>1 件目は期待値が古い。2 件目は本物の重なり。", true)}<p class="lg-label">確かめた ― 2件</p>${lg("ok", "型の検査・lint・単体 <b>3,156</b>", "開くと1件ずつ", "記録あり 2", "", false)}</div>
+          <details class="route wide"><summary>ここまでの道筋 ― 4段のうち3段が済んだ ・ 12分48秒 ・ 道具 37 回</summary><ol class="plan">
+            ${ph({ k: "lit", t: "今の形を調べる", time: "1分40秒" })}
+            ${ph({ k: "lit", t: "目盛りを設定から読む", time: "3分02秒", diff: "2ファイル +38 −6", note: "設定に <code>ticks</code> を足した。" })}
+            ${ph({ k: "lit", t: "表示の層を直す", time: "5分48秒", diff: "6ファイル +52 −31", note: "6 個の部品が設定を読む。" })}
+            ${ph({ k: "fail", t: "テストと画で確かめる", tag: '<span class="tag ng">ここで止まった</span>', time: "2分18秒", note: "E2E が 2 件落ちた。" })}
+          </ol></details>
+        </article>`
+      }
+      function stopped() {
+        return `<article class="paper tone">${paperTop(`頼んだこと: ${TASK}`, true)}
+          <div class="stamp wide">${vd("stop", "あなたが止めた")}${lamps(["lit", "lit", "now", "none"], "4段のうち3段目の途中")}<span>4段のうち3段目の途中</span><span>7分05秒</span></div>
+          <h1 class="concl wide">3段目の途中で止めた。グラフの部品 6 個のうち 3 個までは直してある。</h1>
+          <div class="turn wide">
+            <section class="mine"><h3>あなたの番</h3><div class="pickrow" style="margin-top:2px"><button type="button"><kbd>1</kbd> 続きから再開する</button><button type="button"><kbd>2</kbd> ここまでをコミットする</button><button type="button"><kbd>3</kbd> 元に戻す</button></div></section>
+            <section><h3>中途半端なもの</h3><p style="font-size:14.5px"><code>bar-chart.tsx</code> は書きかけで、型の検査が通らない。再開すると、このファイルから続ける。</p></section>
+          </div>
+          <h2>ここまでにできたこと</h2>
+          <ol class="plan">
+            ${ph({ k: "lit", t: "今の形を調べる", time: "1分40秒" })}
+            ${ph({ k: "lit", t: "目盛りを設定から読む", time: "3分02秒", diff: "2ファイル +38 −6", note: "設定に <code>ticks</code> を足した。" })}
+            ${ph({ k: "now", t: "表示の層を直す（途中）", time: "2分23秒", note: "3 個は済み、1 個は書きかけ、2 個は手つかず。", diff: "4ファイル +31 −14" })}
+            ${ph({ k: "none", t: "テストと画で確かめる", time: "" })}
+          </ol>
+        </article>`
+      }
       function away() {
-        return `<article class="paper" aria-label="戻ったときの紙">
-          <p class="ask wide">頼んだこと: グラフの目盛りの数を設定で変えられるようにして</p>
-          <div class="stamp wide"><span class="badge you">あなたの番</span><span>18分前から待っている</span><span class="mono">離れていた 23分</span></div>
-          <h1 class="conclusion wide">離れていた23分のあいだに、4段のうち3段が済んだ。最後の段の前に、あなたの答えが1つ要る。</h1>
+        return `<article class="paper tone">${paperTop(`頼んだこと: ${TASK}`, false)}
+          <div class="stamp wide">${vd("you")}${lamps(["lit", "lit", "lit", "now"], "4段のうち4段目で待っている")}<span>18分前から待っている</span><span>離れていた 23分</span></div>
+          <h1 class="concl wide">離れていた 23 分のあいだに、4段のうち3段が済んだ。最後の段の前に、あなたの答えが1つ要る。</h1>
           <div class="away wide">
-            <section><h3>あなたを待っていること</h3><div><p>目盛りを 24 にすると、幅 720 で数字が重なる。<b>重なる幅では間引くか、24 のまま重ねるか</b>。</p>
-              <button class="act" type="button">答える（1 で間引く・2 で重ねる）</button></div></section>
+            <section><h3>あなたを待っていること</h3><div><p>目盛りを 24 にすると、幅 720 で数字が重なる。<b>重なる幅では間引くか、24 のまま重ねるか。</b></p><div class="pickrow"><button type="button"><kbd>1</kbd> 間引く</button><button type="button"><kbd>2</kbd> 重ねる</button></div></div></section>
             <section><h3>変わったこと</h3><ul><li>設定に <code>ticks</code> を足した（既定は 12 のまま）</li><li>グラフの部品 6 個が設定の値を読むようになった</li><li>単体テストを 4 件足し、3,156 件が通った</li></ul></section>
-            <section><h3>置いた前提</h3><ul><li>目盛りの数は 4〜48 の範囲だけ受け付ける（範囲は決まっていなかったので、今の最小と最大の比から置いた）</li></ul></section>
+            <section><h3>置いた前提</h3><ul><li>目盛りの数は 4〜48 の範囲だけ受け付ける（範囲は頼まれていなかったので、今の最小と最大の比から置いた）</li></ul></section>
             <section><h3>進め方</h3><p>計画どおり。途中で円グラフにも目盛りがあると分かり、3段目に足した。</p></section>
           </div>
           <p class="read-mark wide">ここから先は、前に見たあと</p>
           <ol class="plan wide">
-            <li class="done"><span class="dot"></span><div class="head"><span class="t">目盛りを設定から読む</span><span class="time">3分02秒</span></div><p class="note">設定に <code>ticks</code> を足した。 <span class="diffchip">2ファイル +38 −6</span></p></li>
-            <li class="done"><span class="dot"></span><div class="head"><span class="t">表示の層を直す</span><span class="time">5分48秒</span></div><p class="note">6 個の部品が設定を読む。 <span class="diffchip">6ファイル +52 −31</span></p></li>
-            <li class="now"><span class="dot"></span><div class="head"><span class="t">あなたの答えを待っている</span><span class="time">18分</span></div></li>
+            ${ph({ k: "lit", t: "目盛りを設定から読む", time: "3分02秒", note: "設定に <code>ticks</code> を足した。", diff: "2ファイル +38 −6" })}
+            ${ph({ k: "lit", t: "表示の層を直す", time: "5分48秒", note: "6 個の部品が設定を読む。", diff: "6ファイル +52 −31" })}
+            ${ph({ k: "now", t: "あなたの答えを待っている", tag: '<span class="tag you">あなたの番</span>', time: "18分" })}
           </ol>
         </article>`
       }
-
-      function certainty(again) {
-        // 落ちたものを先に、開いた状態で出す。確かめたものは畳んで最後に置く。
-        return `<div class="certain wide">
-          ${again ? `<p class="group-label">落ちた ― 1件</p>
-          <details class="ng" open><summary><span class="mark">✕</span><span>幅 390 で、目盛りの数字が2か所重なる</span><span class="num">capture-view.ts --size 390x844</span></summary>
-            <div class="body">間引きの規則が幅 720 を境にしていて、390 では効いていない。<pre>重なり: x=212 「18」と「20」、x=301 「36」と「38」</pre></div></details>` : ""}
-          <p class="group-label">確かめていない ― 1件</p>
-          <details class="un"><summary><span class="mark">?</span><span>Safari での目盛りの字の詰まり</span><span class="num">未実行</span></summary>
-            <div class="body">撮る道具が Chromium だけのため。確かめるなら、試作を Safari で開いて幅 720 の目盛りを見る。</div></details>
-          <p class="group-label">確かめた ― 4件</p>
-          <details class="ok"><summary><span class="mark">✓</span><span>型の検査・lint・整形</span><span class="num">pnpm run check</span></summary></details>
-          <details class="ok"><summary><span class="mark">✓</span><span>単体テスト <b>3,156 件</b>（足した 4 件を含む）</span><span class="num">pnpm run test</span></summary></details>
-          <details class="ok"><summary><span class="mark">✓</span><span>E2E <b>71 件</b></span><span class="num">pnpm run test:e2e</span></summary></details>
-          <details class="ok"><summary><span class="mark">✓</span><span>幅 1400 と 720 で目盛りが 24 本に見える（画は下）</span><span class="num">capture-view.ts</span></summary></details>
-        </div>`
-      }
-
-      function deliver(again) {
-        const stamp = again
-          ? `<span class="badge partial">一部済んだ</span><span>前回のレポートから <b>2件解決・1件新しく</b></span>`
-          : `<span class="badge done">済んだ</span><span>4段 ・ 14分20秒</span>`
-        return `<article class="paper" aria-label="レポートの紙">
-          <p class="ask wide">頼んだこと: ${again ? "前のレポートの指摘を直して" : "グラフの目盛りの数を設定で変えられるようにして"}</p>
-          <div class="stamp wide">${stamp}<span><span class="add">+90</span> <span class="del">−37</span> ・ 8ファイル</span><span>確かめた 4 ・ ${again ? "落ちた 1 ・ " : ""}確かめていない 1</span></div>
-          <h1 class="conclusion wide">${again ? "幅 720 の重なりは消えた。幅 390 では、まだ2か所重なる。" : "グラフの目盛りの数を、設定の <code>ticks</code> で 4〜48 本に変えられるようになった。"}</h1>
-          <p class="sub wide">${again ? "前回の指摘2件は直した。間引きの規則が幅 720 を境にしているため、もっと狭い幅では効いていない。" : "既定は今と同じ 12 本で、設定を変えない人の画面は変わらない。"}</p>
-          ${again ? `<div class="delta wide">
-            <section class="fixed"><h3>解決 ― 2件</h3><ul><li>幅 720 で数字が重なる</li><li>既定の 12 が設定に出ていない</li></ul></section>
-            <section class="new"><h3>新しく ― 1件</h3><ul><li>幅 390 で2か所重なる</li></ul></section>
-            <section class="left"><h3>残っている ― 1件</h3><ul><li>Safari で見ていない</li></ul></section></div>` : ""}
-          <div class="turn wide">
-            <section class="mine"><h3>あなたがすること</h3><ol>${again ? "<li>幅 390 も間引くか決める（1 で間引く・2 で今のまま）</li>" : "<li>設定の画面で目盛りを 24 にして、見え方を確かめる</li>"}</ol>
-              <button class="act" type="button">${again ? "答える" : "設定を開く"}</button></section>
-            <section><h3>${pack().name}が続けてできること</h3><ol>${again ? "<li>間引きの境を幅に比例させる（約 5 分）</li>" : "<li>Safari で見え方を確かめる</li><li>目盛りの数を設定の画面の説明に足す</li>"}</ol></section>
-          </div>
-          <h2 class="wide">確かさ</h2>
-          ${certainty(again)}
-          <h2>変えたところ</h2>
-          <div class="prose">
-            <p>目盛りの数は <code>axis.ts</code> の定数から、設定の <code>ticks</code> を読む形に替えた<sup class="ref">1</sup>。範囲の外の値は、設定を読むところで 4 か 48 に丸める<sup class="ref">2</sup>。</p>
-            <p>グラフの部品 6 個は、同じ <code>useAxisTicks</code> から数を受け取る。円グラフは目盛りを使わないと思っていたが、外周の目盛りがあったので足した<sup class="ref">3</sup>。</p>
-          </div>
-          <aside class="margin" aria-label="出どころ" style="grid-row: span 2">
-            <p><b>1</b><code>src/chart/axis.ts:14</code> の <code>DEFAULT_TICKS</code></p>
-            <p><b>2</b><code>src/setting/parse.ts:88</code>・単体テスト「範囲の外を丸める」</p>
-            <p><b>3</b><code>src/chart/pie-chart.tsx:61</code></p>
-          </aside>
-          <div class="ba">
-            <figure><div class="shot">12</div>前 ― 目盛り 12 本（幅 1400）</figure>
-            <figure><div class="shot after">24</div>後 ― 設定で 24 本（幅 1400）</figure>
-          </div>
-          <details class="route wide"><summary>この結論に至った道筋 ― 4段 ・ 14分20秒 ・ 道具 41 回</summary>
-            <div class="bars"><i style="flex:100"></i><i style="flex:182"></i><i style="flex:348"></i><i style="flex:230"></i></div>
-            <ol class="plan">
-              <li class="done"><span class="dot"></span><div class="head"><span class="t">今の形を調べる</span><span class="time">1分40秒</span></div></li>
-              <li class="done"><span class="dot"></span><div class="head"><span class="t">目盛りを設定から読む</span><span class="time">3分02秒</span></div></li>
-              <li class="done"><span class="dot"></span><div class="head"><span class="t">表示の層を直す</span><span class="time">5分48秒</span></div></li>
-              <li class="done"><span class="dot"></span><div class="head"><span class="t">テストと画で確かめる</span><span class="time">3分50秒</span></div></li>
-            </ol></details>
+      function loop() {
+        const row = (k, id, name, time, lapsN, res) =>
+          `<tr class="${k === "now" ? "em" : ""}"><td>${lamp(k, 16)}</td><td><code>${id}</code></td><td>${name}</td><td class="r">${time}</td><td class="r">${lapsN}</td><td>${res}</td></tr>`
+        return `<article class="paper tone">${paperTop("頼んだこと: 着手できるタスクを順に進めて（ループ）", false)}
+          <div class="stamp wide">${vd("run")}${lamps(["lit", "lit", "lit", "now", "none"], "5件のうち4件目")}<span>5件のうち4件目</span><span>経過 ${tick(4380)}</span><span>今日の灯り <b>+3</b></span></div>
+          <h1 class="concl mid wide">3 件を main へ送り、4 件目の受け入れに入っている。あなたを待っていることは無い。</h1>
+          ${fig("止まっていたのは T-103 の差し戻し 2 回ぶんで、ほかは 1 回で通った", `<table><thead><tr><th></th><th>タスク</th><th>名前</th><th class="r">所要</th><th class="r">差し戻し</th><th>結果</th></tr></thead><tbody>
+            ${row("lit", "T-101", "一覧の見出しを固定する", "14分", "0", '<span class="st ok"><i>✓</i>送った</span>')}
+            ${row("lit", "T-102", "課題の ID の形を新しくする", "22分", "1", '<span class="st ok"><i>✓</i>送った</span>')}
+            ${row("lit", "T-103", "起動にかかる時間を測る", "31分", "2", '<span class="st ok"><i>✓</i>送った</span>')}
+            ${row("now", "T-104", "目盛りを設定で変える", `${fmt(390)}〜`, "0", "受け入れの1周目")}
+            ${row("none", "T-105", "設定の画面に説明を足す", "", "", '<span class="st na">これから</span>')}</tbody></table>`, "行を押すと、そのタスクの紙（計画と道筋）が開く")}
+          <p class="quiet wide">終えたタスクは、成果の暦の今日の狐火になる。ループが止まるのは、着手できるタスクが無くなったとき・あなたの答えが要るとき・上限に届いたとき。</p>
         </article>`
       }
 
-      function md(text) {
-        return text.replace(/`([^`]+)`/g, "<code>$1</code>")
+      // ---- 群と場面 ---------------------------------------------------
+      const dockPlain = () => `<div class="dock-in tone"><div class="dock-row"><span class="grow">${pack().name}への依頼を書く</span><kbd>⌘↵</kbd></div></div>`
+      const dockRun = (kinds, label, base) =>
+        `<div class="dock-in tone"><div class="dock-row">${lamps(kinds, label)}<span data-tick="${base}" class="mono">${fmt(base)}</span><span class="grow">補足を送る（いまの作業の続きとして届く）</span><button class="tool" type="button">止める <kbd>⌘.</kbd></button></div></div>`
+      const dockAsk = () =>
+        `<div class="dock-in tone"><div class="q"><p>幅 720 で数字が重なる。重なる幅では間引く？</p><small>材料: 幅 720 の画で 4 か所が重なった ・ 勧めは「間引く」（設定の値は保ち、見た目だけ減らせる）</small><div class="pickrow">${[["1", "間引く（勧め）"], ["2", "24 のまま重ねる"], ["3", "ほかの案を書く"]].map(([k, l]) => `<button type="button" data-choice="${l}" aria-pressed="${state.choice === l}"><kbd>${k}</kbd> ${l}</button>`).join("")}</div></div><div class="dock-row"><span class="grow">${state.choice ? `「${state.choice}」で答える` : "答えを選ぶか、ここに書く"}</span><kbd>↵</kbd></div></div>`
+      const GROUPS = {
+        paper: {
+          label: "紙",
+          moments: {
+            deliver: { label: "渡す", face: "proud", head: "終わった ・ 14分20秒", line: "終わったわ。確かめていないことも1つ、隠さず書いておいたの。", html: () => deliver(false), title: "✓ 済んだ" },
+            again: { label: "2回目", face: "thinking", head: "一部済んだ ・ 9分05秒", line: "前に言われたところは直したわ。新しく1つ、気になる点が出たの。", html: () => deliver(true), title: "◐ 一部済んだ" },
+            decide: { label: "判断を仰ぐ", face: "curious", head: "あなたの番", line: "私のおすすめは設定ファイルよ。でも決めるのはあなたね。", html: decide, title: "● あなたの番" },
+            quick: { label: "短い答え", face: "default", head: "答えた ・ 12秒", line: "12 本よ。", html: quick, title: "✓ 答えた" },
+          },
+        },
+        parts: {
+          label: "部品",
+          moments: {
+            text: { label: "文", html: partsText },
+            number: { label: "数", html: partsNumber },
+            compare: { label: "比べる", html: partsCompare },
+            link: { label: "つながり", html: partsLink },
+            proof: { label: "証拠", html: partsProof },
+            touch: { label: "触る", html: partsTouch },
+          },
+        },
+        flow: {
+          label: "進み具合",
+          moments: {
+            work: { label: "働く", face: "thinking", head: "働いている", line: "いまは表示の層を直しているところ。円グラフは最後に回したわ。", html: work, dock: () => dockRun(["lit", "lit", "now", "none"], "4段のうち3段目", 372), title: "◐ 3/4 表示の層" },
+            laps: { label: "流れと周回", face: "serious", head: "受け入れの2周目", line: "また1つ差し戻されたわ。……でも指摘は減っているのよ。", html: laps, dock: () => dockRun(["lit", "lit", "now", "none", "none"], "5つの工程のうち3つ目", 2310), title: "◐ 受け入れ 2周目" },
+            long: { label: "長い作業", face: "default", head: "働いている ・ 12段のうち9段目", line: "9つ目まで来たわ。灯りが並んでいくのは、悪くない眺めね。", html: long, dock: () => dockRun([...rep("lit", 8), "now", ...rep("none", 3)], "12段のうち9段目", 2712), title: "◐ 9/12" },
+            wait: { label: "止まる・待つ", face: "bored", head: "検査を待っている", line: "検査が終わるのを待っているの。止まっているわけじゃないのよ。", html: wait, dock: () => dockRun(["lit", "lit", "lit", "now"], "4段のうち4段目", 790), title: "… 検査を待っている" },
+            ask: { label: "割り込み", face: "curious", head: "あなたの番 ・ 待って 0:48", line: "ひとつだけ聞かせて。重なるところは、間引いていいかしら。", html: ask, dock: dockAsk, title: "● あなたの番" },
+            fail: { label: "失敗", face: "sad", head: "失敗で止まった", line: "ごめんなさい、最後の検査で2つ落ちたわ。直したものは残してあるの。", html: fail, title: "✕ 止まった" },
+            stopped: { label: "止めた", face: "default", head: "あなたが止めた", line: "ここで止めたわ。続きは、いつでも同じところから始められるのよ。", html: stopped, title: "■ 止めた" },
+            away: { label: "戻る", face: "excited", head: "あなたの番 ・ 18分前から", line: "おかえりなさい。あなたに聞きたいことが1つ残っているの。", html: away, title: "● あなたの番" },
+            loop: { label: "ループ", face: "proud", head: "ループ ・ 5件のうち4件目", line: "今日はもう3つ灯したわ。4つ目もすぐよ。", html: loop, dock: () => dockRun(["lit", "lit", "lit", "now", "none"], "5件のうち4件目", 4380), title: "◐ 4/5 件" },
+          },
+        },
       }
-
-      function render() {
-        const m = MOMENTS[state.moment]
+      const view = () => {
+        const group = GROUPS[state.group] ?? GROUPS.paper
+        const key = group.moments[state.moment] ? state.moment : Object.keys(group.moments)[0]
+        return { group, key, m: group.moments[key] }
+      }
+      const startedAt = Date.now()
+      function paintTicks() {
+        const passed = (Date.now() - startedAt) / 1000
+        for (const el of document.querySelectorAll("[data-tick]")) el.textContent = fmt(Number(el.dataset.tick) + passed)
+      }
+      function render(keepScroll) {
+        const { group, key, m } = view()
+        state.moment = key
+        const desk = document.getElementById("desk")
+        const top = desk.scrollTop
         document.body.dataset.tone = state.tone
+        document.body.style.setProperty("--accent", pack().accent)
         document.getElementById("stage").style.setProperty("--scene", `url("${pack().dir}/background.png")`)
         const img = document.getElementById("portrait")
-        img.src = `${pack().dir}/${m.face}.png`
+        img.src = `${pack().dir}/${m.face ?? "default"}.png`
         img.alt = `${pack().name}の立ち絵`
-        document.getElementById("room-head").innerHTML = `<b>tsukumo-3</b>${m.head}`
-        document.getElementById("balloon").innerHTML = `<small>${pack().name}</small>${m.line}`
-        const desk = document.getElementById("desk")
-        desk.innerHTML =
-          state.moment === "work" ? work() : state.moment === "away" ? away() : deliver(state.moment === "again")
-        document.getElementById("dock").innerHTML =
-          state.moment === "work"
-            ? `<div class="dock-in"><span class="badge run">3/4</span><span class="mono">6:12</span><span class="grow">補足を送る（いまの作業の続きとして届く）</span><button class="stop" type="button">止める</button></div>`
-            : `<div class="dock-in"><span class="grow">${pack().name}への依頼を書く</span><kbd class="mono">⌘↵</kbd></div>`
-        document.title = state.moment === "work" ? "◐ 3/4 表示の層 ― tsukumo" : state.moment === "away" ? "● あなたの番 ― tsukumo" : "✓ 済んだ ― tsukumo"
+        document.getElementById("room-head").innerHTML = `<b>tsukumo-3</b>${m.head ?? "部品の見本帳"}`
+        document.getElementById("balloon").innerHTML = `<small>${pack().name}</small>${m.line ?? "部品をひとつずつ並べたわ。右の欄外に、当てる決まりを書いてあるの。"}`
+        desk.innerHTML = m.html()
+        desk.scrollTop = keepScroll ? top : 0
+        document.getElementById("dock").innerHTML = (m.dock ?? dockPlain)()
+        document.title = `${m.title ?? "見本帳"} ― tsukumo（試作）`
         document.getElementById("bar").innerHTML =
-          Object.entries(MOMENTS)
-            .map(([key, each]) => `<button type="button" data-moment="${key}" aria-pressed="${key === state.moment}">${each.label}</button>`)
-            .join("") +
-          `<button type="button" data-tone-toggle aria-pressed="${state.tone === "day"}">昼</button>`
+          `<div>${Object.entries(GROUPS)
+            .map(([k, g]) => `<button type="button" data-group="${k}" aria-pressed="${k === state.group}">${g.label}</button>`)
+            .join("")}<button type="button" data-tone-toggle aria-pressed="${state.tone === "day"}">昼</button></div>` +
+          `<div>${Object.entries(group.moments)
+            .map(([k, each]) => `<button type="button" data-moment="${k}" aria-pressed="${k === key}">${each.label}</button>`)
+            .join("")}</div>`
+        const url = new URL(location.href)
+        for (const k of ["group", "moment", "tone", "depth"]) url.searchParams.set(k, state[k])
+        history.replaceState(null, "", url)
+        paintTicks()
       }
 
       document.addEventListener("click", (event) => {
-        const target = event.target.closest("button")
-        if (!target) return
-        if (target.dataset.moment) state.moment = target.dataset.moment
-        else if ("toneToggle" in target.dataset) state.tone = state.tone === "day" ? "night" : "day"
-        else return
-        const url = new URL(location.href)
-        url.searchParams.set("moment", state.moment)
-        url.searchParams.set("tone", state.tone)
-        history.replaceState(null, "", url)
-        render()
+        const b = event.target.closest("button")
+        if (!b) return
+        const d = b.dataset
+        if (d.group) {
+          state.group = d.group
+          state.moment = ""
+          return render(false)
+        }
+        if (d.moment) {
+          state.moment = d.moment
+          return render(false)
+        }
+        if ("toneToggle" in d) state.tone = state.tone === "day" ? "night" : "day"
+        else if (d.depth) state.depth = Number(d.depth)
+        else if (d.sort) state.sort = { key: d.sort, dir: state.sort.key === d.sort ? -state.sort.dir : -1 }
+        else if (d.cmp) state.cmp = d.cmp
+        else if (d.choice) state.choice = d.choice
+        else if (d.pick) state.pick = d.pick
+        else if (d.tab) state.tab = d.tab
+        else if (d.copy) {
+          navigator.clipboard?.writeText(d.copy)
+          b.textContent = "写した"
+          return
+        } else return
+        render(true)
       })
+      document.addEventListener("input", (event) => {
+        const el = event.target
+        if ("cmpRange" in el.dataset) {
+          const box = el.closest(".fig").querySelector(".cmp")
+          box.style.setProperty("--p", `${el.value}%`)
+          box.style.setProperty("--p-o", el.value / 100)
+        }
+        if ("ticks" in el.dataset) {
+          state.ticks = Number(el.value)
+          document.getElementById("pv-n").textContent = state.ticks
+          document.getElementById("pv-k").firstChild.textContent = hits(state.ticks)
+          document.getElementById("pv-axis").innerHTML = axisTicks(state.ticks)
+        }
+      })
+      setInterval(paintTicks, 1000)
 
       const probe = new Image()
       probe.onerror = () => {
         state.pack = "tsukumo"
-        render()
+        render(false)
       }
       probe.src = `${PACKS.karakasa.dir}/default.png`
-      render()
+      render(false)
     </script>
   </body>
 </html>
