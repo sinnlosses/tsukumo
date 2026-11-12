@@ -6,6 +6,7 @@ import { Badge } from "../../ui/badge/badge.tsx"
 import { Button } from "../../ui/button/button.tsx"
 import { Divider } from "../../ui/divider/divider.tsx"
 import { Heading } from "../../ui/heading/heading.tsx"
+import { Lamp } from "../../ui/lamp/lamp.tsx"
 import { Note } from "../../ui/note/note.tsx"
 import { Quote } from "../../ui/quote/quote.tsx"
 import { Surface } from "../../ui/surface/surface.tsx"
@@ -33,6 +34,8 @@ const SURFACE_TONES = ["surface", "raised", "accent"] as const
 const SURFACE_SHADOWS = ["none", "raised", "overlay"] as const
 const NOTE_TONES = ["info", "warn", "ng", "ask"] as const
 const BUTTON_VARIANTS = ["outline", "solid-accent", "solid-danger", "ghost", "link"] as const
+const LAMP_LEVELS = ["none", "faint", "lit", "bright"] as const
+const LAMP_STEP_STATES = ["done", "now", "todo", "skipped"] as const
 
 export function UiGallery(): ReactElement {
   return (
@@ -163,6 +166,14 @@ export function UiGallery(): ReactElement {
           <Note key={tone} tone={tone} title={tone}>
             架空の注記の本文
           </Note>
+        ))}
+      </Group>
+      <Group title="Lamp（暦の段階 × 段の印の状態）" parts={["lamp"]}>
+        {LAMP_LEVELS.map((level) => (
+          <Lamp key={level} kind="level" level={level} />
+        ))}
+        {LAMP_STEP_STATES.map((state) => (
+          <Lamp key={state} kind="step" state={state} sizePx={20} />
         ))}
       </Group>
       <InputGroups />

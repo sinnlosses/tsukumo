@@ -1,6 +1,9 @@
 .achievement-calendar-lamp-lit {
   filter: drop-shadow(0 0 3px color-mix(in srgb, var(--accent) 30%, transparent));
 }
+.lamp-step-now {
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--accent) 60%, transparent));
+}
 .achievement-calendar-lamp-bright {
   filter: drop-shadow(0 0 7px color-mix(in srgb, var(--accent) 60%, transparent));
 }

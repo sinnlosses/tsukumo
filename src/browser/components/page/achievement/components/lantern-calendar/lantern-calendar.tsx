@@ -6,11 +6,11 @@ import { keys } from "remeda"
 import type { DateKey } from "../../../../../../shared/diary/date-key.ts"
 import { HStack } from "../../../../ui/h-stack/h-stack.tsx"
 import { Heading } from "../../../../ui/heading/heading.tsx"
+import { Lamp } from "../../../../ui/lamp/lamp.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
 import { LAMP_LABEL } from "../../domain/lamp-label.ts"
 import type { AchievementCalendarView, CalendarCell } from "../../hooks/use-achievement-calendar.ts"
 import { Bell } from "../bell/bell.tsx"
-import { Lamp } from "../lamp/lamp.tsx"
 import styles from "./lantern-calendar.module.css"
 
 const WEEKDAY_HEADS = ["月", "火", "水", "木", "金", "土", "日"] satisfies readonly string[]
@@ -101,7 +101,7 @@ function Legend(): ReactElement {
           weight="inherit"
           className={styles["achievement-calendar-legend-item"]}
         >
-          <Lamp level={level} />
+          <Lamp kind="level" level={level} />
           {LAMP_LABEL[level]}
         </Text>
       ))}
@@ -215,7 +215,7 @@ function DayCell(props: DayCellProps): ReactElement {
           <Bell />
         </HStack>
       )}
-      <Lamp level={cell.level} />
+      <Lamp kind="level" level={cell.level} />
       {cell.isToday && (
         <Text
           element="span"

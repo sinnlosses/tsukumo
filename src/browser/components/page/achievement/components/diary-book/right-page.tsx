@@ -2,9 +2,9 @@ import { useRef, type ReactElement } from "react"
 
 import { Portrait } from "../../../../frame/portrait.tsx"
 import { HStack } from "../../../../ui/h-stack/h-stack.tsx"
+import { Lamp } from "../../../../ui/lamp/lamp.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
 import type { DiaryBookPage } from "../../hooks/use-diary-book.ts"
-import { Lamp } from "../lamp/lamp.tsx"
 import { BlankReview } from "./blank-review.tsx"
 import styles from "./diary-book.module.css"
 import { useFitDiaryPage } from "./hooks/use-fit-diary-page.ts"
@@ -32,7 +32,7 @@ export function RightPage(props: {
           {page.weekday}
         </Text>
         <span className={styles["diary-book-lamp"]}>
-          <Lamp level={page.lampLevel} />
+          <Lamp kind="level" level={page.lampLevel} />
           {page.lampLabel}
         </span>
       </div>
