@@ -15,6 +15,8 @@ export function CharacterView(props: {
   readonly stageHands?: ReactNode
   /** 舞台のいちばん上の段に置く部屋の頭。 */
   readonly roomHead?: ReactNode
+  /** 部屋の頭のすぐ下に置く「今日の灯り」。 */
+  readonly today?: ReactNode
   readonly placement?: CharacterViewPlacement
 }): ReactElement {
   return (
@@ -23,6 +25,7 @@ export function CharacterView(props: {
       hands={props.hands}
       stageHands={props.stageHands}
       roomHead={props.roomHead}
+      today={props.today}
       placement={props.placement}
     />
   )

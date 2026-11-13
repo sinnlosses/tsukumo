@@ -51,6 +51,10 @@
 .stage-figure-room-head {
   padding: var(--gutter-region) var(--gutter-region) 0 var(--gutter-page);
 }
+/* 今日の灯りの段。部屋の頭のすぐ下で、左端を部屋の頭の字とそろえる。 */
+.stage-figure-today {
+  padding: var(--stack-block) var(--gutter-region) 0 var(--gutter-page);
+}
 .stage-figure-room-head,
 .stage-figure-today,
 .stage-figure-balloon {

@@ -29,7 +29,12 @@ import { Stage, type StagePosture } from "./components/stage/stage.tsx"
  */
 export type ConversationShell =
   | { readonly kind: "classic" }
-  | { readonly kind: "stage"; readonly margin: ReactNode; readonly head: ReactNode }
+  | {
+      readonly kind: "stage"
+      readonly margin: ReactNode
+      readonly head: ReactNode
+      readonly today: ReactNode
+    }
 
 const MARGIN_TITLE = "この部屋のやり取り"
 
@@ -74,6 +79,7 @@ export function PresentationalConversation(props: PresentationalConversationProp
               hands={<PhoneActivity />}
               stageHands={<StageActivity />}
               roomHead={props.shell.head}
+              today={props.shell.today}
               placement="stage"
             />
           }

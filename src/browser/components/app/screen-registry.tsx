@@ -6,6 +6,7 @@ import { TaskSheet } from "../../features/task-board/task-sheet.tsx"
 import { RoomHead } from "../frame/screen-nav/room-head.tsx"
 import { ScreenNav } from "../frame/screen-nav/screen-nav.tsx"
 import { SettingsScreen } from "../frame/screen-nav/settings-screen.tsx"
+import { TodayLamp } from "../frame/screen-nav/today-lamp.tsx"
 import { SidebarTaskPane } from "../frame/sidebar/components/sidebar-task-pane.tsx"
 import { UsagePane } from "../frame/sidebar/components/usage-pane.tsx"
 import { SkipLink } from "../frame/skip-link.tsx"
@@ -45,7 +46,11 @@ export const LAYOUT_SCREENS = {
   diaryNotice: <DiaryNotice />,
   conversation: {
     classic: <Conversation shell={{ kind: "classic" }} />,
-    stage: <Conversation shell={{ kind: "stage", margin: <TurnList />, head: <RoomHead /> }} />,
+    stage: (
+      <Conversation
+        shell={{ kind: "stage", margin: <TurnList />, head: <RoomHead />, today: <TodayLamp /> }}
+      />
+    ),
   },
   overlay: {
     character: <Character />,

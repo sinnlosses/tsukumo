@@ -35,6 +35,8 @@ type PresentationalCharacterViewProps = CharacterViewModel & {
   readonly stageHands?: ReactNode
   /** 舞台のいちばん上の段に置く部屋の頭。 */
   readonly roomHead?: ReactNode
+  /** 部屋の頭のすぐ下に置く「今日の灯り」。 */
+  readonly today?: ReactNode
   readonly placement?: CharacterViewPlacement
 }
 
@@ -58,6 +60,7 @@ export function PresentationalCharacterView({
   hands,
   stageHands,
   roomHead,
+  today,
   placement = "classic",
 }: PresentationalCharacterViewProps): ReactElement {
   const portraitIn = (className?: string): ReactNode =>
@@ -104,6 +107,7 @@ export function PresentationalCharacterView({
           stage={stage}
           portrait={portraitIn(styles["stage-figure-portrait"])}
           roomHead={roomHead}
+          today={today}
           thread={
             <BalloonTrack
               speeches={reaction.kind === "none" ? speeches.slice(0, -1) : speeches}
@@ -152,6 +156,7 @@ function StageFigure(props: {
   readonly stage: CharacterStage
   readonly portrait: ReactNode
   readonly roomHead: ReactNode
+  readonly today: ReactNode
   readonly thread: ReactNode
   readonly balloon: ReactNode
 }): ReactElement {
@@ -165,7 +170,9 @@ function StageFigure(props: {
         <div className={styles["stage-figure-room-head"]} data-slot="room-head">
           {props.roomHead}
         </div>
-        <div className={styles["stage-figure-today"]} data-slot="today" />
+        <div className={styles["stage-figure-today"]} data-slot="today">
+          {props.today}
+        </div>
         <div className={styles["stage-figure-thread"]} data-slot="thread">
           {props.thread}
         </div>
