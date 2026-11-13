@@ -69,3 +69,51 @@
     stroke: var(--graph-return);
   }
 }
+
+/* 新しい器の紙の流れの図（graph・svg）。箱は塗らず細い線で描き、色は「今回変えた箱」だけに使う。
+   矢印の語は薄い字。上の規則より強い選択子で、箱の地・変更の印の色を置き換える。 */
+:root[data-shell="stage"] .detail-block {
+  & .report-svg-figure svg :is(rect, polygon):not([data-frame]),
+  & .report-svg-figure svg :is(rect, polygon)[data-tone]:not([data-frame]),
+  & .report-svg-figure svg[data-graph] :is(rect, polygon)[data-tone]:not([data-frame]) {
+    fill: none;
+    stroke: var(--ink-quiet);
+    stroke-width: 1.2px;
+  }
+  & .report-svg-figure svg rect[stroke-width]:not([data-frame]) {
+    stroke: var(--ink);
+    stroke-width: 2px;
+  }
+  & .report-svg-figure svg[data-graph] :is(rect, polygon, polyline)[data-change]:not([data-frame]) {
+    stroke: var(--chart-series-1);
+    stroke-width: 2px;
+  }
+  &
+    .report-svg-figure
+    svg[data-graph]
+    :is(rect, polygon, polyline)[data-change="removed"]:not([data-frame]) {
+    stroke: var(--ink-quiet);
+    stroke-dasharray: 6 4;
+  }
+  & .report-svg-figure svg polyline[data-tone],
+  & .report-svg-figure svg polyline[data-return] {
+    stroke: var(--ink-quiet);
+  }
+  & .report-svg-figure svg rect[data-frame],
+  & .report-svg-figure svg rect[data-frame][data-tone] {
+    fill: none;
+    stroke: var(--rule);
+    stroke-width: 1px;
+  }
+  & .report-svg-figure svg polyline,
+  & .report-svg-figure svg line {
+    stroke-width: 1.2px;
+  }
+  & .report-svg-figure svg text {
+    stroke: none;
+    paint-order: normal;
+  }
+  & .report-svg-figure svg text[data-sub] {
+    fill: var(--ink-quiet);
+  }
+}

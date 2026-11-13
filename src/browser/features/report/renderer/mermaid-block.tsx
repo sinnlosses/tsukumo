@@ -16,6 +16,7 @@ import { vendorAssetPath } from "../../../../shared/view-server/vendor-asset.ts"
 import { Text } from "../../../components/ui/text/text.tsx"
 import { useExternalSync } from "../../../hooks/use-external-sync.ts"
 import { useMountEffect } from "../../../hooks/use-mount-effect.ts"
+import { shownShell } from "../../../stores/shell-mark.ts"
 import { errorMessage } from "../../../utils/error-message.ts"
 import { mergeRefs } from "../../../utils/merge-ref.ts"
 import { useSeenOnce } from "../hooks/use-seen-once.ts"
@@ -238,12 +239,23 @@ function initializeFor(
 function figureThemeCss(node: HTMLElement): string {
   const radius = getComputedStyle(node).getPropertyValue("--radius-md").trim()
   const soft = resolveHexOver(node, "--ink-soft", "--surface")
+  const onStage = shownShell(node.ownerDocument.documentElement) === "stage"
+  const unfilled = onStage
+    ? [
+        ".node rect, .node polygon, .node circle, .node ellipse, .node path, rect.actor { fill: none; }",
+      ]
+    : []
+  // 新しい器の紙は昼夜で地が替わるが、SVG に解いた色は描いた時点で固まるので、縁取りを付けない（暗い縁が明るい紙の上で字を潰す）
+  const labelStroke = onStage
+    ? ""
+    : ` -webkit-text-stroke: 5px ${resolveHex(node, "--surface")}; paint-order: stroke fill;`
   return [
+    ...unfilled,
     "rect, polygon, circle, ellipse, path { filter: none; }",
     `.node rect, .node .label-container, rect.actor { rx: ${radius}; ry: ${radius}; }`,
     ".edgeLabel, .edgeLabel p, .edgeLabel span, .labelBkg { background-color: transparent; }",
     // 状態遷移の span.edgeLabel は mermaid の `.label div .edgeLabel`（詳細度が上）が色を決めるので、同じ詳細度で後に並べる
-    `.edgeLabel span, .label div .edgeLabel { color: ${soft}; -webkit-text-stroke: 5px ${resolveHex(node, "--surface")}; paint-order: stroke fill; }`,
+    `.edgeLabel span, .label div .edgeLabel { color: ${soft};${labelStroke} }`,
     `.messageText { fill: ${soft}; }`,
   ].join("\n")
 }

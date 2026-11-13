@@ -253,3 +253,50 @@
     }
   }
 }
+
+/* 新しい器の紙の時間の図。並べて走った役は字下げした行で同じ軸に置き、待っていた時間は塗らずに枠だけ、出来事は縦の線1本で描く。 */
+:root[data-shell="stage"] .detail-block {
+  & .report-timeline-lane {
+    border-block-start: 1px solid var(--rule-quiet);
+    border-inline-start: 0;
+    padding-inline-start: 0;
+    font-weight: 600;
+    color: var(--ink-soft);
+  }
+  & .report-timeline-lane ~ .report-timeline-row .report-timeline-name {
+    padding-inline-start: var(--inline-group);
+    color: var(--ink-quiet);
+  }
+  & .report-timeline-track {
+    border-inline-start: 1px solid var(--rule);
+  }
+  & .report-timeline-bar,
+  & .report-timeline-extra,
+  & .report-timeline-uncertain,
+  & .report-timeline-wait {
+    block-size: 12px;
+  }
+  & .report-timeline-bar {
+    border-radius: var(--radius-sm);
+  }
+  & .report-timeline-wait {
+    border: 1.5px solid var(--state-warn);
+    border-radius: var(--radius-sm);
+    background: none;
+  }
+  & .report-timeline-event {
+    border-inline-start: 1px solid var(--accent);
+  }
+  & .report-timeline-event-label {
+    color: var(--ink-quiet);
+  }
+  & .report-timeline-legend-swatch-wait {
+    box-sizing: border-box;
+    border: 1.5px solid var(--state-warn);
+    border-radius: var(--radius-sm);
+    background: none;
+  }
+  & .report-timeline-legend-swatch-event {
+    border-inline-start: 1px solid var(--accent);
+  }
+}

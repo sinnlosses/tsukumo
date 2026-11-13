@@ -417,6 +417,15 @@
   & .report-graph-legend-tone-e {
     --graph-legend-color: var(--chart-series-5);
   }
+  /* 新しい器の紙では、変えた箱の色は系列1の1色、消した箱は静かな色の破線。凡例の見本も図に合わせる。 */
+  :root[data-shell="stage"] & .report-graph-legend-added,
+  :root[data-shell="stage"] & .report-graph-legend-changed {
+    --graph-legend-color: var(--chart-series-1);
+  }
+  :root[data-shell="stage"] & .report-graph-legend-removed,
+  :root[data-shell="stage"] & .report-graph-legend-return {
+    --graph-legend-color: var(--ink-quiet);
+  }
   /* 対応表（`report` の `matrix` の塊から tsukumo が組む）。交点は印だけで、状態は記号と色の両方で言う。 */
   & .report-matrix {
     margin: var(--report-block-gap) 0;

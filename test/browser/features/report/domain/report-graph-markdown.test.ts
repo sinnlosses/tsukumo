@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
 
+import { graphSource } from "../../../../../src/browser/features/report/domain/report-graph-markdown.ts"
 import {
   GRAPH_SHAPE_LEGEND,
   fencedFigureCaptioned,
@@ -18,6 +19,26 @@ function legend(...items: readonly (readonly [string, string])[]): string {
     "</div>"
   )
 }
+
+describe("graph の紙の描き方の mermaid のソース", () => {
+  it("箱は塗らず、群の枠は破線にし、色は変えた箱と辺だけに使う", () => {
+    const source = graphSource(
+      {
+        direction: "LR",
+        legend: [],
+        source: "+ A -> B\n- B -> C\n[甲]\nD\nD -> A",
+      },
+      true,
+    )
+
+    expect(source).not.toContain("fill:var")
+    expect(source).not.toContain("classDef tone-")
+    expect(source).toContain("classDef added stroke:var(--chart-series-1),stroke-width:2px")
+    expect(source).toContain(
+      "classDef removed stroke:var(--ink-quiet),stroke-width:2px,stroke-dasharray:5 4",
+    )
+  })
+})
 
 describe("graph の部品の mermaid のソースと凡例", () => {
   it("graph は ID を n0 から振り直し、ラベルを引用符で包んだ flowchart にして図の番号と題を付ける", () => {
