@@ -1,55 +1,105 @@
-.detail-block {
-  /* 前後の両側が code の見比べの行の印（行の器の `data-compare`）。
-   前の側の変えた・消した行は ng、後の側の変えた・足した行は ok の地と左の線。 */
-  & .code-line[data-compare="before"] {
-    background: var(--code-diff-line-removed);
-    box-shadow: inset 3px 0 0 var(--state-ng);
+/* 新しい器の「比べる族」。見本は docs/history/mockup/report-progress-2026-11-12/index.html の `?group=parts&moment=compare`。
+   題は図の頭に置き、前後の画像は同じ幅で並べて札（前・後）は画像の下に静かな字で添える。矢印は置かない（前後は札と並びが言う）。
+   重ねるだけは2枚が同じ枠に入るので、札は画像の角に浮かせたまま残す。
+   対等な2つは箱を持たず、見出しの太字と短い箇条で並べる。採否は採った案の行だけ地を一段上げ、採らなかった案は字を静かにして残す。 */
+:root[data-shell="stage"] .detail-block {
+  & .report-captioned:has(> :is(.report-compare, .report-compare-figure)) > .report-caption {
+    order: -1;
+    align-self: flex-start;
+    max-inline-size: 100%;
+    text-align: start;
+    font-size: var(--font-subheading);
+    font-weight: 700;
+    color: var(--ink);
   }
-  & .code-line:is([data-compare="after"], [data-compare="added"]) {
-    background: var(--code-diff-line-added);
-    box-shadow: inset 3px 0 0 var(--state-ok);
+  & .report-captioned.report-compare-swap {
+    inline-size: 100%;
   }
-  /* 向かいの側にだけある行の高さを揃える空の行。前後を縦に積むときは揃える相手が無いので描かない。 */
+  & .report-captioned.report-compare-swap > .report-caption {
+    grid-area: 1 / 1;
+    justify-self: start;
+    align-self: center;
+  }
+  & .report-compare-arrow {
+    display: none;
+  }
+  & .report-compare-figure:not(.report-compare-versus, .report-compare-swap > *) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  &
+    .report-compare-figure:not(.report-compare-versus, .report-compare-swap > *):has(
+      > :only-child
+    ) {
+    grid-template-columns: minmax(0, 1fr);
+  }
   @container report-body (max-width: calc(40em + 0.75rem)) {
-    & .code-line[data-compare="gap"] {
-      display: none;
+    & .report-compare-figure:not(.report-compare-versus, .report-compare-swap > *) {
+      grid-template-columns: minmax(0, 1fr);
     }
   }
-  /* 足した行の札。選択・写しに混ぜない。 */
-  & .code-line-new {
-    margin-inline-start: var(--space-sm);
-    padding: 0 var(--space-xs);
-    border-radius: var(--radius-sm);
-    background: color-mix(in srgb, var(--state-ok) 18%, transparent);
-    font-family: var(--font-sans);
-    font-size: var(--font-label);
-    color: var(--state-ok);
-    user-select: none;
+  & .report-captioned.report-compare-swap[data-view="side"] > .report-compare-figure {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
   }
-  & .report-compare-code-legend {
+  @container report-body (max-width: calc(40em + 0.75rem)) {
+    & .report-captioned.report-compare-swap[data-view="side"] > .report-compare-figure {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+  & .report-captioned.report-compare-swap:not([data-view="overlay"]) .report-compare-figure-side {
     display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-sm) var(--space-lg);
-    margin-top: var(--space-sm);
+    flex-direction: column;
+  }
+  & .report-captioned.report-compare-swap:not([data-view="overlay"]) .report-compare-label {
+    order: 1;
+    align-self: flex-start;
+    height: auto;
+    margin: var(--space-xs) 0 0;
+    padding: 0;
+    border: none;
+    background: none;
     font-size: var(--font-secondary);
+    font-weight: 500;
     color: var(--ink-quiet);
   }
-  & .report-compare-code-legend-item {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-xs);
+  &
+    .report-captioned.report-compare-swap[data-view="side"]
+    .report-compare-figure:not(.report-compare-versus)
+    > .report-compare-figure-side[data-side="after"]
+    .report-image-zoom
+    img {
+    border-color: var(--rule-soft);
+    box-shadow: none;
   }
-  & .report-compare-code-legend-before,
-  & .report-compare-code-legend-after {
-    flex: none;
-    inline-size: 0.8em;
-    block-size: 0.8em;
-    border-radius: var(--radius-sm);
+  & :is(.report-compare-side, .report-compare-figure-side) {
+    padding: 0;
+    border: none;
+    background: none;
   }
-  & .report-compare-code-legend-before {
-    background: var(--state-ng);
+  & .report-compare-heading,
+  & .report-compare-versus .report-compare-label {
+    font-size: var(--font-body);
+    font-weight: 700;
+    color: var(--ink);
   }
-  & .report-compare-code-legend-after {
-    background: var(--state-ok);
+  & .report-option {
+    grid-template-columns: 6em minmax(0, 1fr);
+    margin-top: var(--space-xs);
+    padding: var(--space-sm) var(--space-md);
+    border-bottom: none;
+    border-radius: var(--radius-lg);
+  }
+  & .report-option-adopt {
+    background: var(--surface-raised);
+  }
+  & .report-option-name,
+  & .report-option-reason {
+    display: block;
+  }
+  & .report-option-reason::before {
+    content: none;
+  }
+  & .report-option-reject .report-option-name {
+    color: var(--ink-quiet);
   }
 }

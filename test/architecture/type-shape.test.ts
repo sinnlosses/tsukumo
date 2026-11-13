@@ -107,7 +107,7 @@ const UNDEFINED_UNION_CEILING = {
   "src/server/repository": 16,
   "src/server/view-server": 16,
   "scripts/dev": 13,
-  "src/browser/features": 89,
+  "src/browser/features": 87,
   "src/server/adapter": 11,
   "src/server/diary": 11,
   "src/wiring/(root)": 11,

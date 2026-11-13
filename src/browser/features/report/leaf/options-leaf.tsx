@@ -16,7 +16,7 @@ type OptionsPart = Extract<A2uiReportComponent, { readonly component: "Options" 
 type Option = OptionsPart["items"][number]
 
 const VERDICTS = {
-  adopt: { className: undefined, mark: "✓", label: "採る", tone: "ok" },
+  adopt: { className: noteLeafClassNames.optionAdopt, mark: "✓", label: "採る", tone: "ok" },
   consider: { className: undefined, mark: "〜", label: "検討", tone: "warn" },
   reject: {
     className: noteLeafClassNames.optionReject,
@@ -53,13 +53,24 @@ export function OptionsLeaf(props: {
           </p>
         )}
         <div className={noteLeafClassNames.options}>
-          {part.items.map((item, index) => (
+          {adoptedFirst(part.items).map(({ item, index }) => (
             <OptionRow key={`${String(index)}:${item.name}`} item={item} index={index} />
           ))}
         </div>
       </LeafFold>
     </ReportLeafFrame>
   )
+}
+
+/** 採る案を先頭に寄せ、残りは書き手が渡した順を保つ。index は返信の宛先なので元の位置のまま持つ。 */
+function adoptedFirst(
+  items: OptionsPart["items"],
+): readonly { readonly item: Option; readonly index: number }[] {
+  const indexed = items.map((item, index) => ({ item, index }))
+  return [
+    ...indexed.filter(({ item }) => item.verdict === "adopt"),
+    ...indexed.filter(({ item }) => item.verdict !== "adopt"),
+  ]
 }
 
 function OptionRow(props: { readonly item: Option; readonly index: number }): ReactElement {

@@ -1,33 +1,54 @@
-// 前後の2つのソースを行に切り、LCS で揃えた行の並びを返す。
+// 前後の2つのソースを行に切り、LCS で揃えて1つの `diff` の本文にする。
 
 import { commonIndexPairs } from "./word-diff.ts"
 
-export type LineChange = "same" | "changed" | "removed" | "added"
-
 /** 左右で揃えた1行。`removed` は前の側だけ、`added` は後の側だけにある。 */
-export type AlignedLine =
+type AlignedLine =
   | { readonly change: "same" | "changed"; readonly before: number; readonly after: number }
   | { readonly change: "removed"; readonly before: number }
   | { readonly change: "added"; readonly after: number }
-
-/** 片側の1行。`gap` は向かいの側にだけある行の高さを揃える空の行。 */
-export type SideLine =
-  | { readonly kind: "line"; readonly index: number; readonly change: LineChange }
-  | { readonly kind: "gap" }
-
-export type LineDiffSide = "before" | "after"
-
-/** 前後の片側に描く行の並び。 */
-export type SideLineDiff = { readonly side: LineDiffSide; readonly lines: readonly SideLine[] }
 
 /** どちらかの側の行がこの数を超えたら比べない。 */
 const LINE_DIFF_MAX_LINES = 200
 
 /**
+ * 前後を1つの `diff` の本文にする。変わった行の連なりは、前の行（`-`）を先に、後の行（`+`）をあとに並べる。
+ * 行が上限を超えたら `undefined`。
+ */
+export function unifiedDiffSource(before: string, after: string): string | undefined {
+  const aligned = diffLines(before, after)
+  if (aligned === undefined) {
+    return undefined
+  }
+  const left = splitLines(before)
+  const right = splitLines(after)
+  const runs = aligned.reduce<readonly (readonly AlignedLine[])[]>((done, line) => {
+    const last = done.at(-1)
+    return line.change !== "same" && last?.[0]?.change !== undefined && last[0].change !== "same"
+      ? [...done.slice(0, -1), [...last, line]]
+      : [...done, [line]]
+  }, [])
+  return runs
+    .flatMap((run) => [
+      ...run.flatMap((line) =>
+        line.change === "same"
+          ? [` ${left[line.before] ?? ""}`]
+          : "before" in line
+            ? [`-${left[line.before] ?? ""}`]
+            : [],
+      ),
+      ...run.flatMap((line) =>
+        line.change !== "same" && "after" in line ? [`+${right[line.after] ?? ""}`] : [],
+      ),
+    ])
+    .join("\n")
+}
+
+/**
  * 共通の行の間の隙間では、前の n 行と後の m 行を頭から min(n, m) 行ずつ変えた行の対にし、
  * 余りを消した行か足した行にする。行が上限を超えたら `undefined`。
  */
-export function diffLines(before: string, after: string): readonly AlignedLine[] | undefined {
+function diffLines(before: string, after: string): readonly AlignedLine[] | undefined {
   const left = splitLines(before)
   const right = splitLines(after)
   if (left.length > LINE_DIFF_MAX_LINES || right.length > LINE_DIFF_MAX_LINES) {
@@ -43,23 +64,6 @@ export function diffLines(before: string, after: string): readonly AlignedLine[]
     const [startBefore, startAfter] = starts[index] ?? [0, 0]
     const gap = alignGap(startBefore, i, startAfter, j)
     return index < common.length ? [...gap, { change: "same", before: i, after: j }] : gap
-  })
-}
-
-/** 揃えた並びを片側から見た行の並びにする。 */
-export function sideLines(
-  aligned: readonly AlignedLine[],
-  side: LineDiffSide,
-): readonly SideLine[] {
-  return aligned.map((line) => {
-    if (side === "before") {
-      return "before" in line
-        ? { kind: "line", index: line.before, change: line.change }
-        : { kind: "gap" }
-    }
-    return "after" in line
-      ? { kind: "line", index: line.after, change: line.change }
-      : { kind: "gap" }
   })
 }
 

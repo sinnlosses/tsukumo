@@ -37,6 +37,18 @@
     gap: var(--space-sm);
     align-items: stretch;
   }
+  /* 側を持たない前後（コードの差分）は1つの塊で器いっぱいに置く。 */
+  & .report-compare-figure:has(> :only-child) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  /* 包みは中央寄せなので、コードの差分は器の幅いっぱいに伸ばし、題は左端に置く。 */
+  & .report-captioned:has(> .report-compare-figure > .code-file) {
+    align-items: stretch;
+    inline-size: 100%;
+  }
+  & .report-captioned:has(> .report-compare-figure > .code-file) > .report-caption {
+    align-self: flex-start;
+  }
   /* 対等な2つ（`relation` が versus）は矢印を置かず、2つの側を同じ幅で並べる。 */
   & .report-compare-versus {
     grid-template-columns: repeat(2, minmax(0, 1fr));
