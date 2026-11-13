@@ -38,6 +38,19 @@ describe("PaperDesk", () => {
     expect(document.querySelector('[data-region="dock"]')?.textContent).toContain("架空の選択肢")
   })
 
+  it("迎える姿勢では、入力欄の場所を始め方より後ろに並べる", () => {
+    render(desk("greet", false))
+
+    const body = document.querySelector('[data-region="paper"]')
+    const dock = document.querySelector('[data-region="dock"]')
+    const regions = [...document.querySelectorAll("[data-region]")]
+    expect(regions.indexOf(body ?? document.body)).toBeLessThan(
+      regions.indexOf(dock ?? document.body),
+    )
+    expect(body).not.toBeNull()
+    expect(dock).not.toBeNull()
+  })
+
   it("尋ねていなければ選択肢を出さない", () => {
     render(desk("work", false))
 
