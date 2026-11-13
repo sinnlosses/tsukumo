@@ -3,7 +3,7 @@
    立ち絵の高さは幅と素材の縦横比で決まり CSS からは読めないので、席の中の印（`.stage-figure-head`）を anchor で引く。
    印は席の高さ（＝立ち絵の高さ）に対する割合で置くので、舞台の幅が変わっても頭に付いてくる。 */
 .stage-figure {
-  --stage-figure-thread-floor: 10rem;
+  --stage-figure-thread-floor: var(--stage-thread-floor, 10rem);
   --stage-figure-rows-floor: calc(var(--stage-figure-thread-floor) + 20rem);
   position: relative;
   flex: 1;
@@ -30,7 +30,7 @@
   width: 100%;
   max-width: none;
   max-height: min(
-    62cqh,
+    var(--stage-figure-height-cap, 62cqh),
     calc((100cqh - var(--stage-figure-rows-floor)) / var(--stage-figure-below-head))
   );
   object-fit: contain;
