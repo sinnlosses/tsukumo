@@ -1,0 +1,48 @@
+/* 動かせる値。名札を左・今の値を右の上の行に、つまみを幅いっぱいの次の行に置く。値は桁が変わっても幅が動かない。 */
+.parameter-knob {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--stack-tight) var(--inline-group);
+  font-size: var(--font-secondary);
+  color: var(--ink-soft);
+}
+.parameter-knob-slider {
+  display: grid;
+  grid-template-columns: 1fr auto;
+}
+.parameter-knob input {
+  margin: 0;
+  accent-color: var(--accent);
+}
+.parameter-knob input:disabled {
+  cursor: not-allowed;
+}
+.parameter-knob-value {
+  min-width: 3ch;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.parameter-knob-range {
+  grid-column: 1 / -1;
+  width: 100%;
+  min-width: 0;
+}
+.parameter-knob-check {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--inline-control);
+}
+/* つまみと、つまみで変わる数・図を1つに囲む入れ物。変わる数・図の高さは固定して、動かしても紙の高さが変わらない。 */
+.parameter-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--stack-block);
+  padding: var(--inset-card);
+  border: 1px solid var(--rule-soft);
+  border-radius: var(--radius-lg);
+}
+.parameter-group > :not([data-parameter-knob]) {
+  min-height: 4rem;
+}

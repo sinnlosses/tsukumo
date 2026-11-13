@@ -28,6 +28,18 @@ const SHELL_OPTIONS = SHELL_LABELS.map(([value, label]): RunSettingSelectOption 
   row: <RunSettingName danger={false}>{label}</RunSettingName>,
 }))
 
+const SINGLE_KEY_LABELS = [
+  ["on", "使う"],
+  ["off", "使わない"],
+] as const satisfies readonly (readonly [string, string])[]
+
+const SINGLE_KEY_OPTIONS = SINGLE_KEY_LABELS.map(([value, label]): RunSettingSelectOption => ({
+  value,
+  disabled: false,
+  icon: undefined,
+  row: <RunSettingName danger={false}>{label}</RunSettingName>,
+}))
+
 export function ScreenNavSettingsLookFace(props: ScreenNavSettingsProps): ReactElement {
   const { settings } = props
   const fieldId = useId()
@@ -62,6 +74,34 @@ export function ScreenNavSettingsLookFace(props: ScreenNavSettingsProps): ReactE
           title={undefined}
           dot="none"
           onChange={settings.shell.onChange}
+        />
+      </HStack>
+      <HStack
+        element="div"
+        name={{ kind: "none" }}
+        gap="lg"
+        align="center"
+        justify="between"
+        wrap="nowrap"
+        className={rowStyles["screen-nav-settings-row"]}
+      >
+        <label htmlFor={`${fieldId}-single-keys`}>1字のキー（d・o・?）</label>
+        <RunSettingSelect
+          id={`${fieldId}-single-keys`}
+          ariaLabel="1字のキー"
+          heading="1字のキー"
+          value={settings.singleKeys.value ? "on" : "off"}
+          options={SINGLE_KEY_OPTIONS}
+          disabled={false}
+          danger={false}
+          rail={false}
+          layout="list"
+          mouth="field"
+          title={undefined}
+          dot="none"
+          onChange={(next) => {
+            settings.singleKeys.onChange(next === "on")
+          }}
         />
       </HStack>
       <div className={styles["band"]} style={{ backgroundColor: colorOf("ground") }}>

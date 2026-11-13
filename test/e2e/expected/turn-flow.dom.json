@@ -1049,18 +1049,7 @@
                                                                   "tag": "div",
                                                                   "attributes": {
                                                                     "data-reply-keep": ""
-                                                                  },
-                                                                  "children": [
-                                                                    {
-                                                                      "tag": "p",
-                                                                      "attributes": {
-                                                                        "aria-hidden": "true"
-                                                                      },
-                                                                      "children": [
-                                                                        "字・行・案を選ぶと、ここに「聞く・頼む」が1つ出る"
-                                                                      ]
-                                                                    }
-                                                                  ]
+                                                                  }
                                                                 }
                                                               ]
                                                             },

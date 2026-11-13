@@ -9,6 +9,7 @@
 
 import {
   useRef,
+  useState,
   type KeyboardEvent,
   type ReactElement,
   type ReactNode,
@@ -32,6 +33,7 @@ import { useMainViewTurns } from "../../../../../stores/main-view-turn.ts"
 import { nextReadingDepth, useReadingDepth } from "../../../../../stores/reading-depth.ts"
 import { useReadingSection } from "../../../../../stores/reading-section.ts"
 import { useSession } from "../../../../../stores/session.ts"
+import { loadSingleKeys } from "../../../../../stores/single-key-setting.ts"
 import { useTurnSelection } from "../../../../../stores/turn-selection.ts"
 import { type MainViewContent, useMainViewContent } from "../../stores/main-view-content.ts"
 import { Inquiry } from "../inquiry/inquiry.tsx"
@@ -42,6 +44,7 @@ import { headingStepOf, neighborTurnId, readingKeyOf, turnStepOf } from "./domai
 import { type ShownTarget, useActiveTurnScroll } from "./hooks/use-active-turn-scroll.ts"
 import { useReportOutlineTurns } from "./hooks/use-report-outline-turn-list.ts"
 import { InquiryJumpFloat } from "./inquiry-jump-float.tsx"
+import { KeyHelp } from "./key-help.tsx"
 import styles from "./main-view.module.css"
 import { MiniPortrait } from "./mini-portrait.tsx"
 import { PhaseList } from "./phase-list.tsx"
@@ -118,6 +121,7 @@ export function MainView(props: {
       : undefined
   const outlineTurns = useReportOutlineTurns()
   const moveHeading = useReadingSection((state) => state.move)
+  const [helpOpen, setHelpOpen] = useState(false)
 
   function onKeyDown(event: KeyboardEvent<HTMLElement>): void {
     const keyEvent = {
@@ -130,8 +134,14 @@ export function MainView(props: {
     }
     const reading = props.progress === "paper" ? readingKeyOf(keyEvent) : "none"
     if (reading !== "none") {
-      event.preventDefault()
-      pressReadingKey(reading, event.currentTarget)
+      if (loadSingleKeys()) {
+        event.preventDefault()
+        if (reading === "help") {
+          setHelpOpen(true)
+        } else {
+          pressReadingKey(reading, event.currentTarget)
+        }
+      }
       return
     }
     const headingStep = headingStepOf(keyEvent)
@@ -259,6 +269,12 @@ export function MainView(props: {
         {/* 筆先に添うミニ立ち絵。この入れ物の原点を基準に置く（`position: absolute`）ので、書き上げたあと残っているあいだも本文と一緒に転がる。
             出ているやり取りを渡すのは、残った筆先が別のやり取りのものなら引っ込ませるため。 */}
         {cardTurn !== undefined && <MiniPortrait shownTurnId={cardTurn.turn.id} />}
+        <KeyHelp
+          open={helpOpen}
+          onClose={() => {
+            setHelpOpen(false)
+          }}
+        />
       </div>
     </RepositoryFileLinkProvider>
   )

@@ -117,7 +117,7 @@ export function ChoicePicker(props: ChoicePickerProps): ReactElement {
         return (
           <Button
             key={option.value}
-            variant={on ? "tinted-accent" : "outline"}
+            variant={on ? "solid-accent" : "ghost"}
             size="action"
             pressed={on ? "on" : "off"}
             disabled={false}

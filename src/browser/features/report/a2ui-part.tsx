@@ -5,7 +5,8 @@
 
 import type { ReactComponentImplementation } from "@a2ui/react/v0_9"
 import type { SurfaceModel } from "@a2ui/web_core/v0_9"
-import { createContext, type ReactElement, use, useState } from "react"
+import clsx from "clsx"
+import { createContext, type ReactElement, use } from "react"
 
 import type { A2uiReportComponent } from "../../../shared/report/a2ui-report-catalog.ts"
 import { A2UI_ROOT_ID, type A2uiReportPart } from "../../../shared/report/a2ui-report-outline.ts"
@@ -14,7 +15,6 @@ import type {
   MainViewReportRegions,
   MainViewSurfaceLeafRegion,
 } from "../../../shared/session/main-view-shape.ts"
-import { Button } from "../../components/ui/button/button.tsx"
 import { Divider } from "../../components/ui/divider/divider.tsx"
 import { useReadingDepth } from "../../stores/reading-depth.ts"
 import {
@@ -35,10 +35,12 @@ import { ChoicePicker, InteractiveTable } from "./leaf/a2ui-interactive-view.tsx
 import { RegionBox, RegionChunks, ReportFrame } from "./leaf/body-region.tsx"
 import { ChartTermLinkScope, chartLinkInputsOf } from "./leaf/chart-term-link.tsx"
 import { DirectLeaf, directLeafViewOf } from "./leaf/direct-leaf-view.tsx"
+import styles from "./leaf/leaf.module.css"
 import { NextStepRow, type NextStepsOrigin } from "./leaf/next-step-row.tsx"
-import { liveLeafElement, type useReevaluatedLeaves } from "./leaf/parameter-knob.tsx"
+import { holdsKnob, liveLeafElement, type useReevaluatedLeaves } from "./leaf/parameter-knob.tsx"
 import { FavorRegion, HeadRegion } from "./leaf/report-head-region.tsx"
 import { SectionFoldButton } from "./leaf/section-fold-button.tsx"
+import { TabsPart } from "./leaf/tabs-part.tsx"
 import { arrangedBlockClassNames } from "./markdown.tsx"
 import { ReplyPortContext, type ReplyPortSlot } from "./reply-port.ts"
 
@@ -310,18 +312,29 @@ function LayoutPart(props: { readonly id: string }): ReactElement {
       )
     case "Column":
       return (
-        <div>
+        <div
+          className={
+            holdsKnob(report.view.written, part.children) ? styles["parameter-group"] : undefined
+          }
+        >
           <PartRun lead="" ids={part.children} />
         </div>
       )
     case "Card":
       return (
-        <div className={arrangedBlockClassNames.panel}>
+        <div
+          className={clsx(
+            arrangedBlockClassNames.panel,
+            holdsKnob(report.view.written, [part.child]) && styles["parameter-group"],
+          )}
+        >
           <PartRun lead="" ids={[part.child]} />
         </div>
       )
     case "Tabs":
-      return <TabsPart tabs={part.tabs} />
+      return (
+        <TabsPart tabs={part.tabs} renderChild={(child) => <PartRun lead="" ids={[child]} />} />
+      )
     case "Divider":
       return (
         <Divider
@@ -362,34 +375,4 @@ function LayoutPart(props: { readonly id: string }): ReactElement {
       )
     }
   }
-}
-
-function TabsPart(props: {
-  readonly tabs: Extract<A2uiReportComponent, { readonly component: "Tabs" }>["tabs"]
-}): ReactElement {
-  const [selected, setSelected] = useState(0)
-  const current = props.tabs[selected] ?? props.tabs[0]
-  return (
-    <div>
-      <div role="tablist">
-        {props.tabs.map((tab, index) => (
-          <Button
-            key={tab.child}
-            variant="ghost"
-            size="action"
-            pressed={index === selected ? "on" : "off"}
-            disabled={false}
-            disclosure={{ kind: "none" }}
-            className=""
-            onClick={() => {
-              setSelected(index)
-            }}
-          >
-            {typeof tab.title === "string" ? tab.title : ""}
-          </Button>
-        ))}
-      </div>
-      {current !== undefined && <PartRun lead="" ids={[current.child]} />}
-    </div>
-  )
 }

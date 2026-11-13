@@ -27,7 +27,7 @@ export function AskThreadView(props: AskThreadViewProps): ReactElement {
             ↳ {pair.row === undefined ? "この部品について" : `${pair.row.label}の行について`}
           </p>
           <p>
-            <span className={styles["ask-speaker"]}>あなた</span> {pair.question}
+            <span className={styles["ask-speaker"]}>聞く</span> {pair.question}
           </p>
           <p>
             {pair.answer.kind === "answered" ? (

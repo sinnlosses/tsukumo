@@ -33,12 +33,18 @@ export function headingStepOf(event: TurnStepKeyEvent): TurnStep | undefined {
   return event.key === "{" || event.key === "}" ? HEADING_KEYS[event.key] : undefined
 }
 
-/** 新しい器の紙で、`d` が読む深さを回し、`o` が全節を畳む・開く。ほかのキーは `none`。 */
-export function readingKeyOf(event: TurnStepKeyEvent): "depth" | "fold" | "none" {
+/** 新しい器の紙で、`d` が読む深さを回し、`o` が全節を畳む・開き、`?` がキーの一覧を出す。ほかのキーは `none`。 */
+export function readingKeyOf(event: TurnStepKeyEvent): "depth" | "fold" | "help" | "none" {
   if (yieldsToInput(event)) {
     return "none"
   }
-  return event.key === "d" ? "depth" : event.key === "o" ? "fold" : "none"
+  return event.key === "d"
+    ? "depth"
+    : event.key === "o"
+      ? "fold"
+      : event.key === "?"
+        ? "help"
+        : "none"
 }
 
 /** `turnIds` は古い順。端では `undefined`。 */

@@ -77,6 +77,15 @@ describe("readingKeyOf", () => {
     expect(readingKeyOf(keyEvent({ key: "d", target }))).toBe("none")
     expect(readingKeyOf(keyEvent({ key: "d", metaKey: true }))).toBe("none")
   })
+
+  it("? はキーの一覧。入力要素の中・変換中・修飾キー付きは読まない", () => {
+    expect(readingKeyOf(keyEvent({ key: "?" }))).toBe("help")
+    expect(readingKeyOf(keyEvent({ key: "?", target: document.createElement("textarea") }))).toBe(
+      "none",
+    )
+    expect(readingKeyOf(keyEvent({ key: "?", isComposing: true }))).toBe("none")
+    expect(readingKeyOf(keyEvent({ key: "?", metaKey: true }))).toBe("none")
+  })
 })
 
 describe("neighborTurnId", () => {

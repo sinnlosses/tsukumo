@@ -1,0 +1,32 @@
+/* 切り替え。題は下線つきの並び、中身は全部の子を同じ区画に重ね、選んでいない子は見えなくして高さを最も高い子に合わせる。 */
+.tabs-list {
+  display: flex;
+  gap: var(--inline-tight);
+  border-bottom: 1px solid var(--rule);
+}
+.tabs-tab {
+  padding: var(--inset-control);
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--ink-quiet);
+  font: inherit;
+  cursor: pointer;
+}
+.tabs-tab[aria-selected="true"] {
+  border-bottom-color: var(--accent);
+  color: var(--ink);
+  font-weight: 700;
+}
+.tabs-stack {
+  display: grid;
+  padding-top: var(--stack-block);
+}
+.tabs-panel {
+  grid-area: 1 / 1;
+  min-width: 0;
+  visibility: hidden;
+}
+.tabs-panel[data-selected] {
+  visibility: visible;
+}

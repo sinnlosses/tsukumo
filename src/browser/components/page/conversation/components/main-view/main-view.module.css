@@ -41,3 +41,40 @@
 .work-strip-pop {
   composes: surface-edge-rule surface-radius-md surface-tone-surface from "../../../../ui/surface/surface-face.module.css";
 }
+.key-help[open] {
+  box-sizing: border-box;
+  width: min(480px, calc(100vw - 2rem));
+  max-height: calc(100dvh - 2rem);
+  padding: var(--inset-card);
+  overflow-y: auto;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: var(--font-secondary);
+}
+.key-help-title {
+  margin: 0;
+  padding-bottom: var(--stack-block);
+  font-size: var(--font-secondary);
+}
+.key-help-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.key-help-table th {
+  color: var(--ink-quiet);
+  font-weight: normal;
+  text-align: left;
+}
+.key-help-table th,
+.key-help-table td {
+  padding: var(--inset-control);
+  padding-left: 0;
+}
+.key-help-table td {
+  border-top: 1px solid var(--rule-quiet);
+}
+.key-help-keys {
+  white-space: nowrap;
+}

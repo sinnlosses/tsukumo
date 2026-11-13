@@ -41,9 +41,6 @@ import {
 } from "./reply-unit-dom.ts"
 import { type RowAsk, RowAskContext, ReplyUnitMark } from "./reply-unit-row.tsx"
 
-/** 何も指していないとき、レポートで最初に指せる単位の横の余白に出す書き添え。 */
-const HINT_TEXT = "字・行・案を選ぶと、ここに「聞く・頼む」が1つ出る"
-
 type RowTargetSlot =
   | { readonly kind: "none" }
   | {
@@ -70,14 +67,13 @@ export function AskFrame(props: {
   const thread = useLeafAskThread()
   const notes = useLeafNotes()
   const frameRef = useRef<HTMLDivElement>(null)
-  const [tops, setTops] = useState<MarginTops>({ pointed: 0, hint: 0, first: false, cards: {} })
+  const [tops, setTops] = useState<MarginTops>({ pointed: 0, cards: {} })
   const [tabStop, setTabStop] = useState<{ readonly row?: number }>({})
   const leafKey = rowTarget.kind === "available" ? rowTarget.leafKey : ""
   const pointed =
     point.kind === "available" && point.pointed?.leafKey === leafKey ? point.pointed : undefined
   const open =
     point.kind === "available" && point.open?.leafKey === leafKey ? point.open : undefined
-  const touched = point.kind === "available" && point.touched
   const quote = point.kind === "available" ? point.quote : ""
   const pointedSelector = pointed === undefined ? undefined : unitSelectorOf(pointed)
   const narrow = point.kind === "available" && point.narrow
@@ -98,12 +94,11 @@ export function AskFrame(props: {
     }
     const next = marginTopsOf(
       frame,
-      touched,
       cards.map((card) => card.scope),
       pointedSelector,
     )
     setTops((current) => (JSON.stringify(current) === JSON.stringify(next) ? current : next))
-  }, [pointedSelector, touched, cards])
+  }, [pointedSelector, cards])
   useEventListener(
     document,
     "keydown",
@@ -213,7 +208,6 @@ export function AskFrame(props: {
   }
   const pointedKey = pointed === undefined ? undefined : scopeKeyOf(unitScopeOf(pointed))
   const portShown = pointed !== undefined && !isOpenAt(pointed, open)
-  const hinted = !touched && tops.first && cards.length === 0
   const shownCards = narrow ? [] : cards
   const sheetCard =
     sheet === undefined ? undefined : cards.find((card) => card.key === scopeKeyOf(sheet.scope))
@@ -237,10 +231,7 @@ export function AskFrame(props: {
         ref={frameRef}
         className={styles["ask-frame"]}
         data-reply-frame={leafKey}
-        style={{
-          "--reply-unit-top": `${String(tops.pointed)}px`,
-          "--reply-hint-top": `${String(tops.hint)}px`,
-        }}
+        style={{ "--reply-unit-top": `${String(tops.pointed)}px` }}
       >
         <div className={styles["ask-main"]}>
           <div
@@ -295,11 +286,6 @@ export function AskFrame(props: {
                 openUnit(pointed)
               }}
             />
-          )}
-          {hinted && (
-            <p className={styles["reply-hint"]} aria-hidden="true">
-              {HINT_TEXT}
-            </p>
           )}
         </div>
       </div>

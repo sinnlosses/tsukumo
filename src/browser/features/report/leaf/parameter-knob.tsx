@@ -2,6 +2,7 @@
 // 振った値は面のデータモデルの `/view/<つまみのID>/value` に置き、イベントにも記録にも載せない。
 // 面は本文ごとに作り直さないが、部品を作り直すとデータモデルごと空に戻り、つまみは初期値から描き直す。
 
+import clsx from "clsx"
 import { type ReactElement, useId, useSyncExternalStore } from "react"
 
 import type { A2uiWrittenComponent } from "../../../../shared/report/a2ui-report-catalog.ts"
@@ -88,6 +89,14 @@ export function liveLeafElement(
 
 const NO_LEAVES: ReevaluatedLeaves = {}
 
+/** 子の ID にこの一覧のつまみが含まれるか。含む入れ物は変わる数・図とつまみを1つの枠にする。 */
+export function holdsKnob(written: WrittenReportView, ids: readonly string[]): boolean {
+  return (
+    written.kind !== "none" &&
+    written.components.some((component) => ids.includes(component.id) && isKnob(component))
+  )
+}
+
 function isKnob(component: A2uiWrittenComponent): component is Knob {
   return component.component === "ParameterSlider" || component.component === "ParameterCheckBox"
 }
@@ -137,7 +146,10 @@ function ParameterKnob(props: {
   }
   const value = typeof stored === "number" ? stored : knob.initial
   return (
-    <div className={styles["parameter-knob"]} data-parameter-knob={knob.id}>
+    <div
+      className={clsx(styles["parameter-knob"], styles["parameter-knob-slider"])}
+      data-parameter-knob={knob.id}
+    >
       <label htmlFor={inputId}>{knob.label}</label>
       <output htmlFor={inputId} className={styles["parameter-knob-value"]}>
         {String(value)}

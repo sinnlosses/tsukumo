@@ -2,6 +2,8 @@
    子部品ごとの `*.css` をここで `@import` する。並びは規則の重なり順なので、入れ替えると同じ詳細度の規則の勝ち負けが変わる。 */
 
 @import "./interactive-view.css";
+@import "./parameter-knob.css";
+@import "./tabs-part.css";
 @import "./description-list-leaf.css";
 @import "./trace-leaf.css";
 @import "./chart-grid-leaf.css";

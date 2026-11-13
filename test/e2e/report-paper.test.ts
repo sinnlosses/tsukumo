@@ -32,6 +32,10 @@ test.describe("紙のレポート", () => {
     await page.keyboard.press("d")
     await expect(body.getByRole("button", { name: "一目" })).toHaveAttribute("aria-pressed", "true")
     await expect(body.getByRole("heading", { name: "架空の変えたところ" })).toBeHidden()
+    await page.keyboard.press("?")
+    await expect(page.getByRole("dialog", { name: "キーの一覧" })).toBeVisible()
+    await page.keyboard.press("Escape")
+    await expect(page.getByRole("dialog", { name: "キーの一覧" })).toBeHidden()
   })
 
   test("判断を仰ぐ紙は、結論の直後のあなたの番で選んだ答えを入力欄に入れるだけで送らない", async ({

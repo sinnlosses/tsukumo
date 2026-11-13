@@ -52,7 +52,12 @@
             "id": "s1",
             "component": "Section",
             "heading": "架空の worker 数の試算",
-            "children": ["p1", "sw", "sc", "st", "ch"]
+            "children": ["p1", "grp"]
+          },
+          {
+            "id": "grp",
+            "component": "Column",
+            "children": ["sw", "sc", "st", "ch"]
           },
           {
             "id": "p1",

@@ -19,7 +19,7 @@
             "id": "root",
             "component": "Report",
             "conclusion": ["架空の結論: 種別で絞り、列の見出しで並べ替えられる表を置いた。"],
-            "children": ["s1", "s2"],
+            "children": ["s1", "s2", "s3"],
             "closing": { "text": "触ってみてね！", "expression": "proud" }
           },
           {
@@ -75,6 +75,37 @@
             "rows": [
               ["架空の甲", "1"],
               ["架空の乙", "2"]
+            ]
+          },
+          {
+            "id": "s3",
+            "component": "Section",
+            "heading": "架空の切り替え",
+            "children": ["tabs1"]
+          },
+          {
+            "id": "tabs1",
+            "component": "Tabs",
+            "tabs": [
+              { "title": "案A", "child": "ta" },
+              { "title": "案B", "child": "tb" }
+            ]
+          },
+          {
+            "id": "ta",
+            "component": "Paragraph",
+            "text": "架空の案Aの説明。短い一文だけで、高さは低い。"
+          },
+          {
+            "id": "tb",
+            "component": "Table",
+            "title": "架空の案Bの内訳（案Aより背が高い）",
+            "columns": ["項目", "値"],
+            "rows": [
+              ["架空の甲", "1"],
+              ["架空の乙", "2"],
+              ["架空の丙", "3"],
+              ["架空の丁", "4"]
             ]
           }
         ]

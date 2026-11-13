@@ -120,7 +120,7 @@ const MARGIN_DECLARATION_LIMITS: Readonly<Record<string, number>> = {
   "browser/features/current-work/current-work-step-group.module.css": 2,
   "browser/features/report/leaf/chart-grid-leaf.css": 1,
   "browser/features/report/leaf/description-list-leaf.css": 1,
-  "browser/features/report/leaf/interactive-view.css": 3,
+  "browser/features/report/leaf/interactive-view.css": 2,
   "browser/features/report/leaf/table-badge.css": 1,
   "browser/features/report/leaf/table-detail.css": 1,
   "browser/features/report/leaf/trace-leaf.css": 3,
