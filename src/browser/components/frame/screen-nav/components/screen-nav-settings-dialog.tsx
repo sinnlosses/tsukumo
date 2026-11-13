@@ -56,7 +56,7 @@ export function ScreenNavSettingsGear(props: ScreenNavSettingsProps): ReactEleme
 }
 
 /** 設定の左のナビと右の面。 */
-export function ScreenNavSettingsFaces(props: ScreenNavSettingsProps): ReactElement {
+function ScreenNavSettingsFaces(props: ScreenNavSettingsProps): ReactElement {
   const { settings } = props
   const [selectedKey, setSelectedKey] = useState<string>(FACES[0].key)
   const selected: Face = FACES.find((face) => face.key === selectedKey) ?? FACES[0]

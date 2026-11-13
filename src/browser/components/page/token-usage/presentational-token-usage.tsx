@@ -8,6 +8,9 @@
 import type { ReactElement } from "react"
 
 import type { UseContextUsageResult } from "../../../domain/context-usage.ts"
+import { shownShell } from "../../../stores/shell-mark.ts"
+import { PlanUsageRow } from "../../frame/sidebar/components/plan-usage-row.tsx"
+import type { UsePlanUsageResult } from "../../frame/sidebar/hooks/use-plan-usage.ts"
 import { HStack } from "../../ui/h-stack/h-stack.tsx"
 import { Text } from "../../ui/text/text.tsx"
 import { VStack } from "../../ui/v-stack/v-stack.tsx"
@@ -32,13 +35,17 @@ type PresentationalTokenUsageProps = UseTokenUsageResult & {
   readonly contextUsage: UseContextUsageResult
   /** 「減らし方を見てもらう」区画。 */
   readonly usageReview: UseUsageReviewResult
+  /** プランの枠（5時間・7日間）。 */
+  readonly planUsage: UsePlanUsageResult
 }
 
 export function PresentationalTokenUsage(props: PresentationalTokenUsageProps): ReactElement {
   const { report } = props
+  // 新しい器では、題は紙の見出しが持ち、幅と余白は紙の本文が持つ。
+  const inSheet = shownShell(document.documentElement) === "stage"
 
   return (
-    <div className={styles["token-usage"]}>
+    <div className={inSheet ? styles["token-usage-in-sheet"] : styles["token-usage"]}>
       <HStack
         element="div"
         name={{ kind: "none" }}
@@ -48,7 +55,7 @@ export function PresentationalTokenUsage(props: PresentationalTokenUsageProps): 
         wrap="wrap"
         className=""
       >
-        <h1 className={styles["token-usage-title"]}>トークン消費</h1>
+        {!inSheet && <h1 className={styles["token-usage-title"]}>トークン消費</h1>}
         {props.plan !== undefined && (
           <Text
             element="span"
@@ -68,9 +75,20 @@ export function PresentationalTokenUsage(props: PresentationalTokenUsageProps): 
         )}
       </HStack>
 
-      <UsageReviewCard review={props.usageReview} />
-
       <ContextUsageCard card={props.contextUsage} />
+
+      <VStack
+        element="section"
+        name={{ kind: "none" }}
+        gap="sm"
+        align="stretch"
+        justify="start"
+        wrap="nowrap"
+        className=""
+      >
+        <h2 className={styles["token-usage-section-label"]}>プランの枠</h2>
+        <PlanUsageRow planUsage={props.planUsage} />
+      </VStack>
 
       <VStack
         element="section"
@@ -124,6 +142,8 @@ export function PresentationalTokenUsage(props: PresentationalTokenUsageProps): 
           <ToolUsageCard tools={report.tools} />
         </div>
       )}
+
+      <UsageReviewCard review={props.usageReview} />
     </div>
   )
 }

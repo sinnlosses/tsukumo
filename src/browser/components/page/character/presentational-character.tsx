@@ -3,6 +3,7 @@
 
 import type { ReactElement } from "react"
 
+import { shownShell } from "../../../stores/shell-mark.ts"
 import styles from "./character.module.css"
 import { CharacterCreate } from "./components/character-create/character-create.tsx"
 import { CharacterEdit } from "./components/character-edit/character-edit.tsx"
@@ -13,9 +14,15 @@ type PresentationalCharacterProps = UseCharacterResult
 
 export function PresentationalCharacter(props: PresentationalCharacterProps): ReactElement {
   const { create } = props
+  // 新しい器では紙の本文が幅と余白を持つので、外側の列は持たない。
+  const inSheet = shownShell(document.documentElement) === "stage"
 
   return (
-    <div className={styles["character-screen-columns"]}>
+    <div
+      className={
+        inSheet ? styles["character-screen-columns-in-sheet"] : styles["character-screen-columns"]
+      }
+    >
       <CharacterList onCreate={create.onOpen} />
       <CharacterEdit />
       <CharacterCreate key={create.key} open={create.open} onClose={create.onClose} />

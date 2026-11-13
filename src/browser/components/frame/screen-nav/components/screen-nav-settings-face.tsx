@@ -82,6 +82,15 @@ export const FACES = [
   },
 ] satisfies readonly [Face, ...Face[]]
 
+export type FaceKey = (typeof FACES)[number]["key"]
+
+/** 設定の紙で並べる群。見本の順で、面の中身を群の見出しの下に1列で並べる。「知らせ」は今の設定に項目が無いので無い。 */
+export const SETTINGS_GROUPS = [
+  { label: "動き方", keys: ["session-default"] },
+  { label: "見た目", keys: ["look", "reveal"] },
+  { label: "このプロジェクト", keys: ["launch-skill", "workflow"] },
+] as const satisfies readonly { readonly label: string; readonly keys: readonly FaceKey[] }[]
+
 /** 引き出しの設定の面の中身（`inDrawer` の面を名前の見出し付きで縦に並べ、末尾に既定に戻す）。 */
 export function ScreenNavSettingsBody(props: ScreenNavSettingsProps): ReactElement {
   const { settings } = props

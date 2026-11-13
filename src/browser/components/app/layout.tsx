@@ -47,13 +47,18 @@ export function Layout(props: { readonly screens: LayoutScreens }): ReactElement
   const { screens } = props
   const sheetScreen = shell === "stage" && isSheetScreen(screen) ? screen : undefined
   const tasks = useSession((session) => session.state.tasks)
+  const packCount = useSession((session) => session.state.characterPacks.length)
   const sheetSub: SheetSub =
     sheetScreen === "tasks" && tasks.kind === "known"
       ? {
           kind: "shown",
           text: `着手できる ${String(tasks.items.filter((task) => taskReadiness(task)?.kind === "ready").length)} ・ ぜんぶで ${String(tasks.items.length)}`,
         }
-      : { kind: "none" }
+      : sheetScreen === "character"
+        ? { kind: "shown", text: `${String(packCount)}人` }
+        : sheetScreen === "token-usage"
+          ? { kind: "shown", text: "このセッションと、プランの枠" }
+          : { kind: "none" }
   const conversationShown = screen === "conversation" || sheetScreen !== undefined
   // 新しい器は帯を出さない。見本帳だけは戻る口が要るので帯を残す。
   const showNav = shell === "classic" || screen === "design"

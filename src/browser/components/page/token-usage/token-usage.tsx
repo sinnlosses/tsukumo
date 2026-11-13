@@ -9,6 +9,7 @@ import type { ReactElement } from "react"
 import { useContextUsage } from "../../../domain/context-usage.ts"
 import { rpc } from "../../../stores/rpc.ts"
 import { useSession } from "../../../stores/session.ts"
+import { usePlanUsage } from "../../frame/sidebar/hooks/use-plan-usage.ts"
 import { useTokenUsage } from "./hooks/use-token-usage.ts"
 import { useUsageReview } from "./hooks/use-usage-review.ts"
 import { PresentationalTokenUsage } from "./presentational-token-usage.tsx"
@@ -20,6 +21,7 @@ export function TokenUsage(): ReactElement {
       {...useTokenUsage()}
       contextUsage={useContextUsage(rpc.contextUsage.report, refetchKey)}
       usageReview={useUsageReview()}
+      planUsage={usePlanUsage(refetchKey)}
     />
   )
 }

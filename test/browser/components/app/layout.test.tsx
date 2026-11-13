@@ -4,6 +4,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { deferredScreen } from "../../../../src/browser/components/app/deferred-screen.tsx"
 import { Layout, type LayoutScreens } from "../../../../src/browser/components/app/layout.tsx"
+import { INITIAL_SESSION_STATE } from "../../../../src/shared/session/session-state.ts"
+import { characterPackEntry } from "../../../fixture/character.ts"
+import { putSession } from "../../session-store.ts"
 
 // 名前を入れた部品は、描くときに throw する。
 const failing = vi.hoisted(() => ({ names: new Set<string>() }))
@@ -113,6 +116,28 @@ describe("Layout の器の切り替え", () => {
     })
 
     expect(window.location.hash).toBe("")
+  })
+
+  it("印が stage でキャラクターの紙を開くと、見出しの横に人数が出る", async () => {
+    document.documentElement.dataset["shell"] = "stage"
+    putSession({
+      ...INITIAL_SESSION_STATE,
+      characterPacks: [characterPackEntry("a", "甲"), characterPackEntry("b", "乙")],
+    })
+    render(<Layout screens={stubScreens()} />)
+
+    await moveTo("#character")
+
+    expect(await screen.findByText("2人")).toBeDefined()
+  })
+
+  it("印が stage で使用量の紙を開くと、見出しの横に補いが出る", async () => {
+    document.documentElement.dataset["shell"] = "stage"
+    render(<Layout screens={stubScreens()} />)
+
+    await moveTo("#token-usage")
+
+    expect(await screen.findByText("このセッションと、プランの枠")).toBeDefined()
   })
 
   it("印が stage でも、見本帳は紙にせず帯を残す", async () => {

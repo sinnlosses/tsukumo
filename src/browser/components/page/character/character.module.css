@@ -4,15 +4,19 @@
    16進の色は書かない（見本の色は theme.css のトークンに当てる）。 */
 
 /* ---- 2段組 ---- */
-.character-screen-columns {
+.character-screen-columns,
+.character-screen-columns-in-sheet {
   display: grid;
   grid-template-columns: 260px minmax(0, 1fr);
   align-items: start;
   gap: var(--space-2xl);
+}
+.character-screen-columns {
   max-width: 90rem;
   margin: 0 auto;
   padding: var(--space-sm) var(--space-2xl) var(--space-3xl);
 }
+/* character-screen-columns-in-sheet: 新しい器では幅と左右の余白を紙の本文（sheet-body）が持つので、上の揃いだけを使う。 */
 .character-card {
   position: relative;
   display: flex;
@@ -234,9 +238,12 @@
 
 /* 狭い画面（760px 以下）: 一覧を上に積み、詳しい設定の余白を詰める（格子と差し色の列数は詳しい設定の幅を見る @container が決める）。 */
 @media (max-width: 760px) {
-  .character-screen-columns {
+  .character-screen-columns,
+  .character-screen-columns-in-sheet {
     grid-template-columns: minmax(0, 1fr);
     gap: var(--space-lg);
+  }
+  .character-screen-columns {
     padding: 0 0 var(--space-2xl);
   }
 }

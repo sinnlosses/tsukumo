@@ -9,6 +9,7 @@ import type { ReactElement } from "react"
 import { EXPRESSIONS } from "../../../../../../shared/character-pack/expression.ts"
 import { usePackHref } from "../../../../../stores/screen.tsx"
 import { useSession } from "../../../../../stores/session.ts"
+import { shownShell } from "../../../../../stores/shell-mark.ts"
 import { Button } from "../../../../ui/button/button.tsx"
 import { Heading } from "../../../../ui/heading/heading.tsx"
 import { PlusIcon } from "../../../../ui/icon/icon.tsx"
@@ -25,14 +26,16 @@ export function CharacterList(props: { readonly onCreate: () => void }): ReactEl
 
   return (
     <nav className={styles["character-list"]} aria-label="キャラクター一覧">
-      <div className={styles["character-list-heading"]}>
-        <Heading level={2} size="body" tone="inherit" weight="bold" className="">
-          キャラクター
-        </Heading>
-        <Text element="span" size="action" tone="ink-quiet" weight="inherit" className="">
-          {packs.length}
-        </Text>
-      </div>
+      {shownShell(document.documentElement) === "classic" && (
+        <div className={styles["character-list-heading"]}>
+          <Heading level={2} size="body" tone="inherit" weight="bold" className="">
+            キャラクター
+          </Heading>
+          <Text element="span" size="action" tone="ink-quiet" weight="inherit" className="">
+            {packs.length}
+          </Text>
+        </div>
+      )}
       {packs.map((entry) => {
         const count = entry.character.expressionsWithPortrait.length
         const countText =

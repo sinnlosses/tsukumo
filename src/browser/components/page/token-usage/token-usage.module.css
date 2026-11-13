@@ -1,10 +1,14 @@
 /* トークン消費の画面。
    会話の画面と入れ替わるので、1枚のページとして縦に流す。4領域の grid も仕切りも持たない。
    横スクロールを出さないのがこの画面の要点で、表は必ず幅いっぱいに収め、はみ出しうるものは数の単位（k / M）と行数の上限で先に減らしてある。 */
-.token-usage {
+.token-usage,
+.token-usage-in-sheet {
   display: flex;
   flex-direction: column;
   gap: var(--space-xl);
+}
+/* token-usage-in-sheet: 新しい器では幅と余白を紙の本文（sheet-body）が持つので、上の縦並びだけを使う。 */
+.token-usage {
   max-width: 60rem;
   margin: 0 auto;
   padding: 0 var(--space-xs) var(--space-3xl);
