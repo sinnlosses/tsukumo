@@ -75,6 +75,14 @@ describe("疑似セッションの判定と次の手の場面", () => {
     expect(report?.components.filter((part) => part.component === "Section")).toEqual([])
   })
 
+  it("progress-guide-many は、案内の付箋3つと節8つを、落とさずに持つ", () => {
+    const [report] = reportsOf("progress-guide-many")
+
+    expect(report?.guideNotes).toHaveLength(3)
+    expect(report?.droppedCount).toBe(0)
+    expect(report?.components.filter((part) => part.component === "Section")).toHaveLength(8)
+  })
+
   it("progress-failed は、失敗で止まった判定と ng の行と、書き手が続ける次の手を持つ", () => {
     const [report] = reportsOf("progress-failed")
 

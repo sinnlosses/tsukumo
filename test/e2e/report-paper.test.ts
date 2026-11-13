@@ -71,4 +71,22 @@ test.describe("紙のレポート", () => {
     await expect(body.locator("[data-paper-form]")).toContainText("答えた")
     await expect(body.getByRole("heading", { name: "あなたの番" })).toHaveCount(0)
   })
+
+  test("案内の付箋は、書き手が指した部品の欄外に顔つきで1つ出て、本文は変わらない", async ({
+    run,
+  }) => {
+    const room = await run.open({
+      scenario: "report-paper-guide",
+      scene: "progress-guide-one",
+      viewport: "wide",
+      domRoots: ["page"],
+    })
+    await room.waitForEvent("turn-finished")
+    const page = await reopenInStage(room)
+    const note = page.locator("[data-report-body] [data-guide-card]")
+
+    await expect(note).toHaveCount(1)
+    await expect(note).toContainText("ここだけは、見比べてみてね")
+    await expect(note.getByRole("img")).toBeVisible()
+  })
 })

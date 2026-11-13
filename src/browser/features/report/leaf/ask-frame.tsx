@@ -19,6 +19,12 @@ import { LeafIdentityContext, SectionPointContext } from "../leaf-point-context.
 import { type OpenAsk, ReplyPointContext } from "../reply-point.tsx"
 import { ReplyPortContext } from "../reply-port.ts"
 import { AskBox, type AskMode } from "./ask-box.tsx"
+import {
+  clearGuideCard,
+  GuideNoteInline,
+  GuideNoteMargin,
+  useLeafGuideNotes,
+} from "./guide-note-list.tsx"
 import styles from "./leaf.module.css"
 import {
   MarginCardBody,
@@ -66,6 +72,7 @@ export function AskFrame(props: {
   const addNote = useReplyNotes((state) => state.addNote)
   const thread = useLeafAskThread()
   const notes = useLeafNotes()
+  const guide = useLeafGuideNotes()
   const frameRef = useRef<HTMLDivElement>(null)
   const [tops, setTops] = useState<MarginTops>({ pointed: 0, cards: {} })
   const [tabStop, setTabStop] = useState<{ readonly row?: number }>({})
@@ -92,10 +99,13 @@ export function AskFrame(props: {
     if (frame === null) {
       return
     }
-    const next = marginTopsOf(
+    const next = clearGuideCard(
+      marginTopsOf(
+        frame,
+        cards.map((card) => card.scope),
+        pointedSelector,
+      ),
       frame,
-      cards.map((card) => card.scope),
-      pointedSelector,
     )
     setTops((current) => (JSON.stringify(current) === JSON.stringify(next) ? current : next))
   }, [pointedSelector, cards])
@@ -258,8 +268,19 @@ export function AskFrame(props: {
             {props.unit === "body" && <ReplyUnitMark corner />}
             {props.children}
           </div>
+          {narrow && guide.texts.length > 0 && (
+            <GuideNoteInline texts={guide.texts} face={guide.face} />
+          )}
         </div>
         <div className={styles["ask-margin"]} data-reply-keep="">
+          {!narrow && guide.texts.length > 0 && (
+            <GuideNoteMargin
+              id={`${leafKey}#guide`}
+              texts={guide.texts}
+              face={guide.face}
+              shift={point.cardShifts[`${leafKey}#guide`] ?? 0}
+            />
+          )}
           <MarginCards
             leafKey={leafKey}
             cards={shownCards}

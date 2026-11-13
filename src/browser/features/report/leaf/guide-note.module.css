@@ -1,0 +1,46 @@
+/* 案内の付箋。値は見本 `docs/history/mockup/report-progress-2026-11-12/index.html` の `.mg.voice`（顔 34px の丸・左上の角だけ小さい吹き出し・セリフと同じ書体）と、900px 以下の `.mg`（左に細い線）。
+   付箋は本文の選択・指す操作の対象にしない。 */
+.guide-note {
+  display: flex;
+  flex-direction: column;
+  gap: var(--stack-block);
+  pointer-events: none;
+  user-select: none;
+}
+.guide-note-margin {
+  position: absolute;
+  left: 0;
+  right: 0;
+  padding-top: var(--stack-tight);
+}
+.guide-note-inline {
+  padding: var(--stack-tight) 0 0 var(--gutter-region);
+  box-shadow: inset 2px 0 0 var(--rule);
+}
+.guide-note-row {
+  display: flex;
+  gap: var(--inline-control);
+  align-items: flex-start;
+}
+.guide-note-face {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-round);
+  object-fit: cover;
+  object-position: 50% 20%;
+  box-shadow: 0 0 0 1.5px var(--accent);
+}
+.guide-note-text {
+  min-width: 0;
+  margin: 0;
+  padding: var(--stack-tight) var(--gutter-region);
+  border-radius: var(--radius-sm) var(--radius-xl) var(--radius-xl) var(--radius-xl);
+  background: var(--surface-raised);
+  color: var(--ink);
+  font-family: var(--font-voice);
+  font-size: var(--font-secondary);
+  font-weight: 600;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}

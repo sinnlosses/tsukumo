@@ -1,0 +1,74 @@
+{
+  "name": "progress-guide-one",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "架空の一覧の並びを直してほしい（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 1200,
+      "event": {
+        "kind": "report",
+        "toolUseId": "fake-progress-guide-one-1",
+        "components": [
+          {
+            "id": "root",
+            "component": "Report",
+            "verdict": "done",
+            "next": { "owner": "none", "action": "続けて頼むことは無い（架空）" },
+            "guideNotes": [{ "target": "p2", "text": "ここだけは、見比べてみてね" }],
+            "conclusion": ["架空の結論: 一覧を名前の順に並べ直した。"],
+            "checks": [
+              {
+                "status": "ok",
+                "label": "架空の並びの確認",
+                "figure": "3 件",
+                "command": "",
+                "detail": "",
+                "howToVerify": ""
+              }
+            ],
+            "children": ["s1", "s2"],
+            "closing": { "text": "並べ直したよ", "expression": "default" }
+          },
+          {
+            "id": "s1",
+            "component": "Section",
+            "heading": "架空の変えたところ",
+            "children": ["p1"]
+          },
+          {
+            "id": "p1",
+            "component": "Paragraph",
+            "text": "架空の並べ替えの関数を名前の順にした。呼ぶ側は変えていない。"
+          },
+          {
+            "id": "s2",
+            "component": "Section",
+            "heading": "架空の気になるところ",
+            "children": ["p2"]
+          },
+          {
+            "id": "p2",
+            "component": "Paragraph",
+            "text": "同じ名前が並ぶときの順は、元の並びのまま残る。"
+          }
+        ]
+      }
+    },
+    {
+      "afterMs": 1250,
+      "event": {
+        "kind": "tool-finished",
+        "toolUseId": "fake-progress-guide-one-1",
+        "content": "ok",
+        "isError": false
+      }
+    },
+    { "afterMs": 2000, "event": { "kind": "turn-finished", "outcome": { "kind": "completed" } } }
+  ]
+}

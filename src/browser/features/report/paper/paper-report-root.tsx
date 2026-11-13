@@ -8,17 +8,21 @@ import type { ReactElement } from "react"
 import type { ReportProgress } from "../../../../shared/report/report-progress-field.ts"
 import type { MainViewSurfaceHead } from "../../../../shared/session/main-view-shape.ts"
 import { Button } from "../../../components/ui/button/button.tsx"
+import { characterFaceInfo } from "../../../domain/character-face.ts"
 import {
   READING_DEPTHS,
   type ReadingDepth,
   useReadingDepth,
 } from "../../../stores/reading-depth.ts"
+import { useSession } from "../../../stores/session.ts"
 import { BodyRegions, useReport } from "../a2ui-part.tsx"
 import { certaintyLedgerOf } from "../domain/certainty-ledger.ts"
+import { type GuideNoteField, guideLeafIdsOf } from "../domain/guide-note-target.ts"
 import { type PaperForm, paperFormOf } from "../domain/paper-form.ts"
 import { splitConclusion } from "../domain/split-conclusion.ts"
 import { RegionBox, ReportFrame } from "../leaf/body-region.tsx"
 import { CertaintyLedger } from "../leaf/certainty-ledger.tsx"
+import { GuideNoteFrame, GuideNoteScope } from "../leaf/guide-note-list.tsx"
 import { StatCards } from "../leaf/stats-leaf.tsx"
 import { checksClassName, InlineMarkdown, statsLeafClassNames } from "../markdown.tsx"
 import { PaperContext } from "./paper-context.ts"
@@ -42,6 +46,12 @@ export function PaperReportRoot(): ReactElement {
   const depth = useReadingDepth((state) => state.depth)
   const ledger = certaintyLedgerOf(head.checks, view.components)
   const hasLedgerRows = Object.values(ledger.counts).some((count) => count > 0)
+  const character = useSession((session) => session.state.character)
+  const fields = new Set<GuideNoteField>([
+    "head",
+    ...(form === "deliver" && head.keyFigures.length > 0 ? (["figures"] as const) : []),
+    ...(full && hasLedgerRows ? (["ledger"] as const) : []),
+  ])
   return (
     <PaperContext value={true}>
       <ReportFrame
@@ -52,33 +62,46 @@ export function PaperReportRoot(): ReactElement {
         blockClassName={report.blockClassName}
         depth={depth}
       >
-        <RegionBox region={{ kind: "head" }}>
-          <div className={styles["paper-head"]} data-paper-form={form}>
-            <div className={styles["paper-top"]}>
-              <PaperStamp form={form} head={head} counts={ledger.counts} />
-              <DepthSwitch depth={depth} />
-            </div>
-            <Conclusion lead={head.lead} />
-            {progress.previous.kind === "previous" && <Previous previous={progress.previous} />}
-            <PaperTurn
-              form={form}
-              next={progress.next}
-              components={view.components}
-              nextSteps={report.nextSteps}
-            />
-          </div>
-        </RegionBox>
-        {form === "deliver" && head.keyFigures.length > 0 && (
-          <div className={statsLeafClassNames.keyFigures} data-paper-part="figures">
-            <StatCards items={head.keyFigures} />
-          </div>
-        )}
-        {full && hasLedgerRows && (
-          <div className={checksClassName("status")} data-paper-part="ledger">
-            <CertaintyLedger ledger={ledger} depth={depth} />
-          </div>
-        )}
-        <BodyRegions foldable={true} />
+        <GuideNoteScope
+          notes={progress.guideNotes}
+          targets={{ componentIds: new Set(report.parts.keys()), fields }}
+          leafIdsOf={(id) => guideLeafIdsOf(report.parts, id)}
+          face={characterFaceInfo(character)}
+        >
+          <GuideNoteFrame field="head">
+            <RegionBox region={{ kind: "head" }}>
+              <div className={styles["paper-head"]} data-paper-form={form}>
+                <div className={styles["paper-top"]}>
+                  <PaperStamp form={form} head={head} counts={ledger.counts} />
+                  <DepthSwitch depth={depth} />
+                </div>
+                <Conclusion lead={head.lead} />
+                {progress.previous.kind === "previous" && <Previous previous={progress.previous} />}
+                <PaperTurn
+                  form={form}
+                  next={progress.next}
+                  components={view.components}
+                  nextSteps={report.nextSteps}
+                />
+              </div>
+            </RegionBox>
+          </GuideNoteFrame>
+          {fields.has("figures") && (
+            <GuideNoteFrame field="figures">
+              <div className={statsLeafClassNames.keyFigures} data-paper-part="figures">
+                <StatCards items={head.keyFigures} />
+              </div>
+            </GuideNoteFrame>
+          )}
+          {fields.has("ledger") && (
+            <GuideNoteFrame field="ledger">
+              <div className={checksClassName("status")} data-paper-part="ledger">
+                <CertaintyLedger ledger={ledger} depth={depth} />
+              </div>
+            </GuideNoteFrame>
+          )}
+          <BodyRegions foldable={true} />
+        </GuideNoteScope>
         {full && progress.assumptions.length > 0 && (
           <Assumptions assumptions={progress.assumptions} />
         )}

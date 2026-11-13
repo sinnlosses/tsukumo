@@ -1,7 +1,7 @@
 /* 新しい器の紙の頭。値は見本 `docs/history/mockup/report-progress-2026-11-12/index.html` の `.stamp`・`.vd`・`.concl`・`.sub`・`.delta`・`.turn`。
    差し色（`--accent`）は「あなたの番」にだけ使い、意味の色は印と語を対にして使う。 */
 /* 読む深さ。一目は頭の欄だけを残し、記録は畳みの中身を開いた形にする。部品は外さず隠すだけにする。 */
-.paper[data-depth="1"] > :not([data-report-region="head"]) {
+.paper[data-depth="1"] > :not([data-report-region="head"], [data-guide-frame="head"]) {
   display: none;
 }
 .paper[data-depth="3"] details::details-content {

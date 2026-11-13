@@ -120,6 +120,8 @@
     "progress-short",
     "progress-failed",
     "progress-stopped",
+    "progress-guide-one",
+    "progress-guide-many",
     "proof-parts",
     "api-failure",
     "rate-limit",
