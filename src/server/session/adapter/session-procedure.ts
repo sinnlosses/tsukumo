@@ -44,6 +44,12 @@ export function sessionProcedure(ports: SessionCommandPorts) {
         errors,
       ),
     ),
+    pressAizuchi: procedure.pressAizuchi.handler(({ input, context, errors }) =>
+      refusedUnlessAccepted(
+        receiveSessionCommand(table.pressAizuchi, input, context.session),
+        errors,
+      ),
+    ),
     switchCharacter: procedure.switchCharacter.handler(({ input, context, errors }) =>
       refusedUnlessAccepted(
         receiveSessionCommand(table.switchCharacter, input, context.session),

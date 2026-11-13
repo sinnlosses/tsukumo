@@ -1,6 +1,7 @@
-// 迎えの挨拶と反応の行を、別々の問い合わせで書く。誰もこの問い合わせを待たない。
+// 迎えの挨拶・反応の行・相づちの組を、別々の問い合わせで書く。誰もこの問い合わせを待たない。
 // 反応の行は代（起こした1回）につき1回だけ書き、`/clear` では挨拶だけを書き直す。
 
+import type { AizuchiPairs } from "../../../shared/recommendation/aizuchi.ts"
 import type { WrittenReactions } from "../../../shared/recommendation/reaction.ts"
 import { runRetriedQuery } from "../../core/query/structured-query.ts"
 import {
@@ -17,6 +18,11 @@ import {
   type WelcomeGreetingMaterial,
 } from "./welcome-greeting.ts"
 import {
+  parseWrittenAizuchi,
+  writtenAizuchiQuery,
+  type WrittenAizuchiMaterial,
+} from "./written-aizuchi.ts"
+import {
   parseWrittenReactions,
   writtenReactionsQuery,
   type WrittenReactionsMaterial,
@@ -25,6 +31,8 @@ import {
 export type WelcomeGreeterPorts = Omit<WelcomeGreetingWriterPorts, "onUnwritten"> & {
   /** 反応の行が書けたときだけ呼ぶ。 */
   readonly emitReactions: (reactions: WrittenReactions) => void
+  /** 相づちの組が書けたときだけ呼ぶ。 */
+  readonly emitAizuchi: (pairs: AizuchiPairs) => void
   /** 書けなかった理由を知らせる関数（中断では呼ばない）。`error` は問い合わせの失敗のときだけ実物が入る。 */
   readonly onUnwritten: (place: UnwrittenPlace, error: unknown) => void
 }
@@ -32,11 +40,18 @@ export type WelcomeGreeterPorts = Omit<WelcomeGreetingWriterPorts, "onUnwritten"
 export type UnwrittenPlace =
   | GreetingUnwrittenPlace
   | (typeof reactionsUnwrittenPlace)[UnwrittenResult]
+  | (typeof aizuchiUnwrittenPlace)[UnwrittenResult]
 
 const reactionsUnwrittenPlace = {
   failed: "welcome-reactions-failed",
   rejected: "welcome-reactions-rejected",
   "timed-out": "welcome-reactions-timed-out",
+} as const satisfies Record<UnwrittenResult, string>
+
+const aizuchiUnwrittenPlace = {
+  failed: "aizuchi-failed",
+  rejected: "aizuchi-rejected",
+  "timed-out": "aizuchi-timed-out",
 } as const satisfies Record<UnwrittenResult, string>
 
 /** 代ごとに1つ持つ。 */
@@ -59,6 +74,7 @@ export function createWelcomeGreeter(ports: WelcomeGreeterPorts): WelcomeGreeter
     start: (material) => {
       writeGreeting(material)
       void writeReactions(ports, material, WELCOME_GREETING_TIMEOUT_MS)
+      void writeAizuchi(ports, material, WELCOME_GREETING_TIMEOUT_MS)
     },
     rewriteGreeting: writeGreeting,
   }
@@ -91,4 +107,33 @@ async function writeReactions(
     return
   }
   ports.emitReactions(outcome.value)
+}
+
+/** 相づちの組を問い合わせ、書ければ配る。書けなければ何も配らない（反応の行とは別の問い合わせ）。 */
+async function writeAizuchi(
+  ports: WelcomeGreeterPorts,
+  material: WrittenAizuchiMaterial,
+  timeoutMs: number,
+): Promise<void> {
+  const outcome = await runRetriedQuery(
+    ports,
+    writtenAizuchiQuery(material),
+    (answer) => parseWrittenAizuchi(answer, material.expressions),
+    new AbortController().signal,
+    timeoutMs,
+    WELCOME_GREETING_HEDGE_MS,
+    WELCOME_GREETING_MAX_ATTEMPTS,
+  )
+  if (outcome.kind === "aborted") {
+    return
+  }
+  ports.report(welcomeWritingFootprint(ports.now(), "aizuchi", outcome.kind, outcome.trace))
+  if (outcome.kind !== "written") {
+    ports.onUnwritten(
+      aizuchiUnwrittenPlace[outcome.kind],
+      outcome.kind === "failed" ? outcome.error : undefined,
+    )
+    return
+  }
+  ports.emitAizuchi(outcome.value)
 }

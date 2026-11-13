@@ -1,0 +1,14 @@
+{
+  "stage-balloon": [
+    { "tag": "div", "attributes": { "data-latest": "true", "data-reaction": "aizuchi" }, "children": [
+      "任せて。もう少しだよ。"
+    ] }
+  ],
+  "stage-thread": [
+    { "tag": "div", "attributes": { "data-slot": "thread" }, "children": [
+      { "tag": "div", "attributes": { "data-speaker": "you" }, "children": [
+        "がんばって"
+      ] }
+    ] }
+  ]
+}

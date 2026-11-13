@@ -2,6 +2,7 @@
 
 import type { CharacterInfo, CharacterPackEntry } from "../character-pack/character.ts"
 import type { ItemInfo, ItemSeatMap } from "../item/item.ts"
+import type { AizuchiMoment, AizuchiPairs } from "../recommendation/aizuchi.ts"
 import type { ReactionLine, WrittenReactions } from "../recommendation/reaction.ts"
 import type { RecommendationCard } from "../recommendation/recommendation-card.ts"
 import type { WelcomeGreetingState } from "../recommendation/welcome-greeting.ts"
@@ -36,6 +37,19 @@ export type SurroundingEvent =
    * 反応の行が書けた（代を起こすたびに1回、書けたときだけ。`/clear` では流れない。出し手はサーバの迎えの書き手 `createWelcomeGreeter`）。
    */
   | { readonly kind: "reactions-written"; readonly reactions: WrittenReactions }
+  /**
+   * 相づちの組が書けた（代を起こすたびに1回、書けたときだけ。`/clear` では流れない。出し手は反応の行と同じ `createWelcomeGreeter`）。
+   */
+  | { readonly kind: "aizuchi-written"; readonly pairs: AizuchiPairs }
+  /**
+   * 利用者が相づちの札を押した（出し手はコマンド `pressAizuchi`。駆動には何も送らない）。
+   * 書けていない・番号の組が無い・押し済みの組なら、畳んでも何も変わらない。
+   */
+  | {
+      readonly kind: "aizuchi-pressed"
+      readonly moment: AizuchiMoment
+      readonly index: number
+    }
   /**
    * 待ちの一言を出す時刻（`waitingLineDueAt`）が来た。出し手はサーバの時計で、その時刻に1回流す。
    * 時刻が来た瞬間には他のイベントが来ないので、待ちの一言を記録に積む合図にする。

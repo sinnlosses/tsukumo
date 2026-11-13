@@ -10,6 +10,7 @@ import { isBlankText } from "../utils/blank-text.ts"
 import { clipText } from "../utils/clip-text.ts"
 import { commandCandidates } from "./command-suggestion.ts"
 import { isModelAlias } from "./run-setting-value.ts"
+import { advanceByAizuchiPressed, advanceByAizuchiWritten } from "./session-advance-aizuchi.ts"
 import {
   advanceByQuestionAnswered,
   advanceByReport,
@@ -318,6 +319,8 @@ const SESSION_EVENT_FOLDS = {
     ...state,
     writtenReactions: { kind: "written", reactions: event.reactions },
   }),
+  "aizuchi-written": (state, event) => advanceByAizuchiWritten(state, event.pairs),
+  "aizuchi-pressed": advanceByAizuchiPressed,
   "waiting-line-due": keepState,
   "welcome-greeting-shown": keepState,
   // `sessionId` もここで決まる（`session-info` は最初の依頼まで届かないので、それまで「いまどのセッションに居るか」を言えるのはこの経路だけ）。

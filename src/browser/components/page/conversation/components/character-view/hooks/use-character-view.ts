@@ -18,10 +18,11 @@ import {
 } from "../../../../../../../shared/character-pack/character-stage.ts"
 import type { Expression } from "../../../../../../../shared/character-pack/expression.ts"
 import type { ItemSeatMap } from "../../../../../../../shared/item/item.ts"
+import type { AizuchiMoment } from "../../../../../../../shared/recommendation/aizuchi.ts"
 import type { ReactionKind } from "../../../../../../../shared/recommendation/reaction.ts"
 import type { ShownReaction } from "../../../../../../../shared/session/shown-reaction.ts"
 import { reportDraftingOf } from "../../../../../../../shared/session/turn-progress.ts"
-import type { Speech } from "../../../../../../../shared/session/turn-speech.ts"
+import type { Speech, TurnLine } from "../../../../../../../shared/session/turn-speech.ts"
 import { turnSpeeches, type TurnSpeech } from "../../../../../../../shared/session/turn-speech.ts"
 import {
   characterFaceInfo,
@@ -40,6 +41,7 @@ import { useTurnSelection } from "../../../../../../stores/turn-selection.ts"
 import { nowEpochMilliseconds } from "../../../../../../utils/clock.ts"
 import { recordClockStampWithDay, type ClockStamp } from "../../../domain/clock-stamp.ts"
 import { welcomeHeadOf } from "../../../domain/welcome-entry-list.ts"
+import { useShownAizuchi } from "../../../stores/shown-aizuchi.ts"
 import { useShownReaction, useWaitingLineDueAt } from "../../../stores/shown-reaction.ts"
 import { useWelcomeCards } from "../../hooks/use-welcome-card-list.ts"
 import {
@@ -61,6 +63,8 @@ const DEFAULT_PAST_TURN_EXPRESSION = "default"
 
 /** 吹き出しに出す1件。押すとそのセリフの表情へ立ち絵が遡る。 */
 export type CharacterViewSpeech = {
+  /** キャラクターの言葉（`her`）か、利用者が押した札の文（`you`。押しても何もしない）か。 */
+  readonly speaker: "her" | "you"
   readonly text: string
   /** 吹き出しに添える時刻（名前を添える最新の1件は名前の隣、ほかは吹き出しの脇）。今日でない日のものは日付つき。 */
   readonly time: ClockStamp
@@ -82,6 +86,14 @@ export type BalloonReaction =
       readonly time: ClockStamp
     }
 
+/** 立ち絵の右上に出す相づちの札1枚。押すと返事がもらえる。 */
+export type CharacterViewAizuchi = {
+  readonly moment: AizuchiMoment
+  readonly index: number
+  readonly label: string
+  readonly onPress: () => void
+}
+
 /** `<CharacterView>` が画面に出す形。presenter はこれをそのまま部品へ渡すだけ。 */
 export type CharacterViewModel = {
   /** 立ち絵の素材 URL。character が届いていなければ `undefined`（吹き出しだけで成立させる）。 */
@@ -91,6 +103,8 @@ export type CharacterViewModel = {
   readonly motion: PortraitMotion
   /** 吹き出しに出すセリフ（古い→新しい）。過去のターンを見ていればそのターンぶんに差し替わる。 */
   readonly speeches: readonly CharacterViewSpeech[]
+  /** 舞台のやり取りの流れに並べる行（古い→新しい）。利用者の札の行を挟み、最新の吹き出しが別の段にあるあいだはそのセリフを含まない。 */
+  readonly thread: readonly CharacterViewSpeech[]
   /** 吹き出しの最新に出す反応。過去のターンを見ているあいだは出さない。 */
   readonly reaction: BalloonReaction
   /** 最新の吹き出しに添える話し手の名前。キャラクターが届いていない・名前が無ければ `undefined`。 */
@@ -111,6 +125,8 @@ export type CharacterViewModel = {
   readonly seats: ItemSeatMap
   /** 新しい器の舞台での立ち絵の置き方。キャラクターが届いていなければ既定。 */
   readonly stage: CharacterStage
+  /** 立ち絵の右上に出す相づちの札。過去のターンを見ているあいだは空。 */
+  readonly aizuchi: readonly CharacterViewAizuchi[]
 }
 
 /**
@@ -134,6 +150,8 @@ export function useCharacterView(): CharacterViewModel {
   const draftingReport = useSession(
     (session) => reportDraftingOf(session.state.sdkTurn).kind === "drafting",
   )
+  const shownChips = useShownAizuchi()
+  const dispatch = useSession((session) => session.dispatch)
   const waitingDueAt = useWaitingLineDueAt()
   const { cards: welcomeCards } = useWelcomeCards()
   const welcomeHead = welcomeHeadOf(welcomeCards)
@@ -153,15 +171,18 @@ export function useCharacterView(): CharacterViewModel {
     activeTurnId === undefined || newestTurnId === undefined
       ? undefined
       : pastTurnSpeech(turns, activeTurnId, newestTurnId)
-  const activeSpeeches = pastTurn === undefined ? speeches : pastTurn.speeches
+  const turnLines = turns.find((t) => t.id === activeTurnId)?.speeches ?? []
+  // 過去のターンの吹き出しは、利用者の札の行を除いた並び（札の行は流れにだけ出す）。
+  const pastBalloonIndices = pastTurn?.speeches.flatMap((line, index) =>
+    line.source === "you" ? [] : [index],
+  )
+  const activeSpeeches =
+    pastTurn === undefined ? speeches : pastTurn.speeches.filter((line) => line.source !== "you")
   // 吹き出しの各件が、留めた行の並びの何番目か。今のターンの吹き出しは反応を含まないので、並びの位置へ写す。
   const lineIndices =
-    pastTurn === undefined
-      ? balloonLineIndices(
-          turns.find((t) => t.id === activeTurnId)?.speeches ?? [],
-          speeches.length,
-        )
-      : pastTurn.speeches.map((_, index) => index)
+    pastBalloonIndices === undefined
+      ? balloonLineIndices(turnLines, speeches.length)
+      : pastBalloonIndices
   const reaction: ShownReaction = pastTurn === undefined ? latestReaction : { kind: "none" }
   // 何も留めていないとき、印が付くのは「いま表示しているターン」の最後の吹き出し。
   // 反応を出しているあいだは立ち絵が反応に従うので、どの行にも付けない。
@@ -200,6 +221,13 @@ export function useCharacterView(): CharacterViewModel {
     expression,
     motion,
     speeches: balloonSpeeches(activeSpeeches, anchor, now),
+    thread: threadLinesOf(
+      balloonSpeeches(activeSpeeches, anchor, now),
+      lineIndices ?? [],
+      turnLines,
+      reaction.kind === "none",
+      now,
+    ),
     reaction: balloonReactionOf(reaction, now),
     speakerName: character?.name,
     pinnedSpeech: pinned,
@@ -211,6 +239,17 @@ export function useCharacterView(): CharacterViewModel {
     phoneLine: phoneLineOf(reaction, activeSpeeches, now),
     seats: (character === undefined ? undefined : itemSeats[character.pack]) ?? EMPTY_SEATS,
     stage: character?.stage ?? DEFAULT_CHARACTER_STAGE,
+    aizuchi:
+      pastTurn === undefined
+        ? shownChips.map(({ moment, index, chip }) => ({
+            moment,
+            index,
+            label: chip,
+            onPress: () => {
+              void dispatch.session.pressAizuchi({ moment, index })
+            },
+          }))
+        : [],
   }
 }
 
@@ -272,6 +311,47 @@ type BalloonAnchor =
       readonly marked: MarkedSpeech
     }
 
+/**
+ * 舞台の「やり取りの流れ」に並べる行（古い→新しい）。
+ * 吹き出しの各件（`lineIndices` が並びの位置）に、利用者の札の行をターンの並びの位置で挟む。
+ * 位置が決められないとき（`lineIndices` が無い）は札の行を末尾へ足す。
+ * 最新の吹き出しは別の段が出すので、反応が出ていないあいだは、最後のセリフを流れから外す。
+ */
+function threadLinesOf(
+  balloons: readonly CharacterViewSpeech[],
+  lineIndices: readonly number[],
+  turnLines: readonly TurnLine[],
+  latestIsBalloon: boolean,
+  now: number,
+): readonly CharacterViewSpeech[] {
+  const her = balloons.map((speech, position) => ({
+    at: lineIndices[position] ?? Number.MAX_SAFE_INTEGER,
+    speech,
+  }))
+  const you = turnLines.flatMap((line, index) =>
+    line.source === "you"
+      ? [
+          {
+            at: index,
+            speech: {
+              speaker: "you",
+              text: line.text,
+              time: recordClockStampWithDay(line.time, now),
+              selected: false,
+              target: undefined,
+            } satisfies CharacterViewSpeech,
+          },
+        ]
+      : [],
+  )
+  const merged = [...her, ...you].toSorted((a, b) => a.at - b.at).map((entry) => entry.speech)
+  if (!latestIsBalloon) {
+    return merged
+  }
+  const lastHer = merged.findLastIndex((speech) => speech.speaker === "her")
+  return merged.filter((_, index) => index !== lastHer)
+}
+
 /** `<BalloonTrack>` がそのまま置ける形に畳む。 */
 function balloonSpeeches(
   speeches: readonly Speech[],
@@ -282,13 +362,14 @@ function balloonSpeeches(
     const text = speech.text
     const time = recordClockStampWithDay(speech.time, now)
     if (anchor.kind === "none") {
-      return { text, time, selected: false, target: undefined }
+      return { speaker: "her", text, time, selected: false, target: undefined }
     }
     const index = anchor.lineIndices[position]
     if (index === undefined) {
-      return { text, time, selected: false, target: undefined }
+      return { speaker: "her", text, time, selected: false, target: undefined }
     }
     return {
+      speaker: "her",
       text,
       time,
       selected: isSpeechSelected(anchor.marked, anchor.turnId, index),

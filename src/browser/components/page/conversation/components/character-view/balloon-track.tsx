@@ -73,6 +73,18 @@ export function BalloonTrack(props: BalloonTrackProps): ReactElement {
       {newestFirst.map((speech, index) => {
         const latest = !reacting && index === 0 && props.withoutLatest !== true
         const speaker = latest ? speakerName : undefined
+        if (speech.speaker === "you") {
+          return (
+            <BalloonRow key={oldestIndexOf(index)} sideTime={speech.time}>
+              <Balloon
+                text={speech.text}
+                latest={false}
+                time={NO_TIME}
+                interaction={{ kind: "you" }}
+              />
+            </BalloonRow>
+          )
+        }
         return (
           <BalloonRow
             key={oldestIndexOf(index)}

@@ -7,6 +7,7 @@
 // 挨拶を出している間の記録には依頼が無く、`/clear` と起こし直しで空になるので、そこにある `welcome` の反応の記録はいまの挨拶のものだけ
 // （続きから起こした直後のおかえりは、組み直した依頼のあとにしか積まれない）。
 
+import { pressablePair } from "../recommendation/aizuchi.ts"
 import type { ReactionLine } from "../recommendation/reaction.ts"
 import { isWelcomeGreetingLine, NO_WELCOME_HEAD } from "../recommendation/welcome-greeting.ts"
 import { advanceSessionState } from "./session-advance.ts"
@@ -40,6 +41,9 @@ export function applySessionEvent(
   const next = advanceSessionState(state, event, at)
   if (event.kind === "welcome-greeting-shown") {
     return recordWelcomeGreeting(next, event.line, at)
+  }
+  if (event.kind === "aizuchi-pressed") {
+    return recordAizuchiPress(state, next, event, at)
   }
   if (!REACTION_START_EVENT_KINDS.has(event.kind)) {
     return next
@@ -114,6 +118,35 @@ function recordWelcomeGreeting(state: SessionState, line: ReactionLine, at: numb
         ? { ...record, text: line.text, expression: line.expression }
         : record,
     ),
+  }
+}
+
+/** 押せる札だったときだけ、利用者の札の行と返事の反応の行を `at` の時刻で記録に積む（押せない札では何も変わらない）。 */
+function recordAizuchiPress(
+  before: SessionState,
+  after: SessionState,
+  event: Extract<SessionEvent, { readonly kind: "aizuchi-pressed" }>,
+  at: number,
+): SessionState {
+  const found = pressablePair(before.aizuchi, event.moment, event.index)
+  if (found.kind === "none") {
+    return after
+  }
+  const { pair } = found
+  const time: RecordTime = { kind: "stamped", at }
+  return {
+    ...after,
+    records: [
+      ...after.records,
+      { kind: "aizuchi-chip", text: pair.chip, time },
+      {
+        kind: "reaction",
+        reaction: "aizuchi",
+        text: pair.reply,
+        expression: pair.expression,
+        time,
+      },
+    ],
   }
 }
 

@@ -7,6 +7,7 @@ import type { CharacterInfo, CharacterPackEntry } from "../character-pack/charac
 import type { Expression } from "../character-pack/expression.ts"
 import type { DiaryWriting } from "../diary/diary.ts"
 import type { ItemInfo, ItemSeatMap } from "../item/item.ts"
+import type { AizuchiState } from "../recommendation/aizuchi.ts"
 import type { WrittenReactionsState } from "../recommendation/reaction.ts"
 import type { RecommendationCard } from "../recommendation/recommendation-card.ts"
 import type { WelcomeGreetingState } from "../recommendation/welcome-greeting.ts"
@@ -117,11 +118,9 @@ export type SessionState = {
    */
   readonly finishedTurnCount: number
   /**
-   * 次に始まるターンに振る通し番号。ターンが始まるたびに1つ増え、記録が集計期間から落ちても
-   * 戻らないので、同じターンはセッションが続くかぎり同じ番号になる。
-   *
-   * 番号を位置（何番目のターンか）で決めると、集計期間（`MAX_SESSION_STATE_TURNS`）がいっぱいになったあといちばん新しいターンの番号が止まる。
-   * 描く側はその番号を React の `key` に使っているので、止まると別のターンが同じ部品として使い回され、書き上げる演出（マウント時にしか走らない）が二度と起動しなくなる（実測）。
+   * 次に始まるターンに振る通し番号。ターンが始まるたびに1つ増え、記録が集計期間から落ちても戻らない。
+   * 描く側が React の `key` に使うので、位置（何番目のターンか）で決めると集計期間（`MAX_SESSION_STATE_TURNS`）が埋まったあとに
+   * 別のターンが同じ部品として使い回され、マウント時にしか走らない書き上げる演出が起動しなくなる（実測）。
    */
   readonly nextTurnId: number
   /**
@@ -144,6 +143,8 @@ export type SessionState = {
    * `/clear` では戻さない（書き直さない）。起こし直すと初期の `none` へ戻り、新しい代が書き直す。
    */
   readonly writtenReactions: WrittenReactionsState
+  /** 相づちの組。源は `aizuchi-written` だけ。戻し方は反応の行と同じ。 */
+  readonly aizuchi: AizuchiState
   /**
    * キャラビューが立ち絵を取りに行く先（`character-changed` が届くまでは undefined）。
    * 素材そのものは持たない（`portraits` の値は `/character/<pack>/<file>` の URL）。
@@ -293,6 +294,7 @@ export const INITIAL_SESSION_STATE: SessionState = {
   recommendation: [],
   welcomeGreeting: { kind: "none" },
   writtenReactions: { kind: "none" },
+  aizuchi: { kind: "none" },
   character: undefined,
   characterPacks: [],
   items: [],

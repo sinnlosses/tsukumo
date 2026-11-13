@@ -101,6 +101,7 @@ function recordTimes(record: SessionRecord): readonly RecordTime[] {
     case "turn-failure":
     // 待ちの一言はターンが閉じたあとに積むので、ターンの長さに数えない。
     case "reaction":
+    case "aizuchi-chip":
       return []
   }
 }

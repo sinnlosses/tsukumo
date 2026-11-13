@@ -184,6 +184,11 @@ export type SessionRecord =
       readonly expression: Expression
       readonly time: RecordTime
     }
+  /**
+   * 利用者が押した相づちの札の文。`time` は押した時刻。
+   * 返事は続けて積む `reaction`（`aizuchi`）。舞台のやり取りの流れとセリフのログだけが拾い、メインビュー・雑談のログ・会話のアーカイブは拾わない。
+   */
+  | { readonly kind: "aizuchi-chip"; readonly text: string; readonly time: RecordTime }
   | {
       readonly kind: "tool"
       readonly toolUseId: string

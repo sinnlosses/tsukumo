@@ -8,6 +8,7 @@
 //
 // 新しい器の舞台（`placement` が `stage`）では、立ち絵を舞台の下端に立たせ、その上に5段の置き場を積む。
 // 段は上から部屋の頭・今日の灯り・やり取りの流れ・いまの吹き出し・立ち絵で、`data-slot` で名乗る。
+// 立ち絵の席の右上には、局面に合った相づちの札が出る（`data-slot="aizuchi"`）。
 
 import type { CSSProperties, ReactElement, ReactNode } from "react"
 
@@ -20,10 +21,11 @@ import { HStack } from "../../../../ui/h-stack/h-stack.tsx"
 import { VStack } from "../../../../ui/v-stack/v-stack.tsx"
 import { BalloonTrack } from "./balloon-track.tsx"
 import styles from "./character-view.module.css"
-import type { CharacterViewModel } from "./hooks/use-character-view.ts"
+import type { CharacterViewAizuchi, CharacterViewModel } from "./hooks/use-character-view.ts"
 import { ItemSeats } from "./item-seat-list.tsx"
 import { PhoneBalloon } from "./phone-balloon.tsx"
 import { SpeechLog } from "./speech-log.tsx"
+import { StageAizuchi } from "./stage-aizuchi.tsx"
 import { StageBalloon } from "./stage-balloon.tsx"
 
 /** 旧い器のキャラビューの領域に置くか、新しい器の舞台に置くか。 */
@@ -46,6 +48,7 @@ export function PresentationalCharacterView({
   expression,
   motion,
   speeches,
+  thread,
   reaction,
   speakerName,
   pinnedSpeech,
@@ -57,6 +60,7 @@ export function PresentationalCharacterView({
   phoneLine,
   seats,
   stage,
+  aizuchi,
   hands,
   stageHands,
   roomHead,
@@ -105,12 +109,13 @@ export function PresentationalCharacterView({
       {placement === "stage" ? (
         <StageFigure
           stage={stage}
+          aizuchi={aizuchi}
           portrait={portraitIn(styles["stage-figure-portrait"])}
           roomHead={roomHead}
           today={today}
           thread={
             <BalloonTrack
-              speeches={reaction.kind === "none" ? speeches.slice(0, -1) : speeches}
+              speeches={thread}
               reaction={reaction}
               speakerName={speakerName}
               onToggleSpeech={onToggleSpeech}
@@ -154,6 +159,7 @@ export function PresentationalCharacterView({
  */
 function StageFigure(props: {
   readonly stage: CharacterStage
+  readonly aizuchi: readonly CharacterViewAizuchi[]
   readonly portrait: ReactNode
   readonly roomHead: ReactNode
   readonly today: ReactNode
@@ -166,6 +172,7 @@ function StageFigure(props: {
         {props.portrait}
         <span className={styles["stage-figure-head"]} aria-hidden="true" />
       </div>
+      {props.aizuchi.length > 0 && <StageAizuchi aizuchi={props.aizuchi} />}
       <div className={styles["stage-figure-rows"]}>
         <div className={styles["stage-figure-room-head"]} data-slot="room-head">
           {props.roomHead}

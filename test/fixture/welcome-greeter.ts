@@ -6,6 +6,7 @@ import type {
 } from "../../src/server/welcome-greeting/core/welcome-greeter.ts"
 import type { WelcomeGreetingText } from "../../src/server/welcome-greeting/core/welcome-greeting.ts"
 import type { WelcomeWritingFootprint } from "../../src/shared/diagnostic/welcome-writing.ts"
+import type { AizuchiPairs } from "../../src/shared/recommendation/aizuchi.ts"
 import type { WrittenReactions } from "../../src/shared/recommendation/reaction.ts"
 import type { WelcomeGreetingState } from "../../src/shared/recommendation/welcome-greeting.ts"
 
@@ -37,21 +38,25 @@ export function welcomeGreeterHarness(recent: readonly WelcomeGreetingText[] = [
   readonly emitted: WelcomeGreetingState[]
   readonly queries: {
     readonly prompt: string
+    readonly kind: string
     readonly settle: (value: unknown) => void
     readonly fail: () => void
   }[]
   readonly unwritten: { readonly place: UnwrittenPlace; readonly error: unknown }[]
   readonly reported: WelcomeWritingFootprint[]
   readonly reactions: WrittenReactions[]
+  readonly aizuchi: AizuchiPairs[]
   readonly advance: (ms: number) => void
 } {
   const written: (readonly WelcomeGreetingText[])[] = []
   const emitted: WelcomeGreetingState[] = []
   const reactions: WrittenReactions[] = []
+  const aizuchi: AizuchiPairs[] = []
   const unwritten: { place: UnwrittenPlace; error: unknown }[] = []
   const reported: WelcomeWritingFootprint[] = []
   const queries: {
     readonly prompt: string
+    readonly kind: string
     readonly settle: (value: unknown) => void
     readonly fail: () => void
   }[] = []
@@ -65,6 +70,7 @@ export function welcomeGreeterHarness(recent: readonly WelcomeGreetingText[] = [
       new Promise((resolve, reject) => {
         queries.push({
           prompt: request.prompt,
+          kind: request.kind,
           settle: resolve,
           fail: () => reject(new Error("架空")),
         })
@@ -79,6 +85,9 @@ export function welcomeGreeterHarness(recent: readonly WelcomeGreetingText[] = [
     emitReactions: (entry) => {
       reactions.push(entry)
     },
+    emitAizuchi: (pairs) => {
+      aizuchi.push(pairs)
+    },
     onUnwritten: (place, error) => {
       unwritten.push({ place, error })
     },
@@ -89,7 +98,7 @@ export function welcomeGreeterHarness(recent: readonly WelcomeGreetingText[] = [
   const advance = (ms: number): void => {
     clock += ms
   }
-  return { ports, written, emitted, queries, unwritten, reported, reactions, advance }
+  return { ports, written, emitted, queries, unwritten, reported, reactions, aizuchi, advance }
 }
 
 /** 解いた問い合わせの続きが走り終わるのを待つ。 */

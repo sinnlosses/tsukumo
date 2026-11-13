@@ -1,0 +1,15 @@
+{
+  "stage-balloon": [
+    { "tag": "div", "attributes": { "data-latest": "true", "data-reaction": "aizuchi" }, "children": [
+      "ありがとう。ひと息つこうか。"
+    ] }
+  ],
+  "stage-thread": [
+    { "tag": "div", "attributes": { "data-slot": "thread" }, "children": [
+      { "tag": "div", "attributes": { "data-speaker": "you" }, "children": [
+        "おつかれさま"
+      ] },
+      "終わったよ。架空のセリフ。"
+    ] }
+  ]
+}

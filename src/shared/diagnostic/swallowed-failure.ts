@@ -60,6 +60,9 @@ const SWALLOWED_FAILURE_PLACES = {
     "welcome-reactions-failed",
     "welcome-reactions-rejected",
     "welcome-reactions-timed-out",
+    "aizuchi-failed",
+    "aizuchi-rejected",
+    "aizuchi-timed-out",
   ],
   repository: [
     "task-summary-poll",

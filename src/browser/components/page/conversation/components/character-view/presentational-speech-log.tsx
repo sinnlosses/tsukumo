@@ -168,20 +168,24 @@ function SpeechLogRow(props: {
       </li>
     )
   }
-  const latest = entry.age === "latest"
+  const latest = entry.speaker === "her" && entry.age === "latest"
   return (
-    <li className={styles["speech-log-speech"]} data-age={entry.age}>
+    <li className={styles["speech-log-speech"]} data-age={entry.age} data-speaker={entry.speaker}>
       <Balloon
         text={entry.text}
         latest={latest}
         speaker={latest ? props.speakerName : undefined}
         time={{ kind: "unknown" }}
-        interaction={{
-          kind: "toggleable",
-          selected: entry.selected,
-          target: entry.target,
-          onToggleSpeech: props.onToggleSpeech,
-        }}
+        interaction={
+          entry.speaker === "you"
+            ? { kind: "you" }
+            : {
+                kind: "toggleable",
+                selected: entry.selected,
+                target: entry.target,
+                onToggleSpeech: props.onToggleSpeech,
+              }
+        }
       />
       {entry.time.kind === "known" && (
         <time className={styles["speech-log-speech-time"]} dateTime={entry.time.dateTime}>

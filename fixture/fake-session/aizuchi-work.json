@@ -1,0 +1,61 @@
+{
+  "name": "aizuchi-work",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "aizuchi-written",
+        "pairs": {
+          "deliver": [
+            {
+              "chip": "おつかれさま",
+              "reply": "ありがとう。ひと息つこうか。",
+              "expression": "proud"
+            },
+            { "chip": "ありがとう", "reply": "どういたしまして。", "expression": "excited" },
+            { "chip": "いい感じ", "reply": "うれしいな。", "expression": "proud" }
+          ],
+          "stumble": [
+            {
+              "chip": "大丈夫、続けよう",
+              "reply": "うん、もう一度やってみる。",
+              "expression": "serious"
+            },
+            {
+              "chip": "ゆっくりでいい",
+              "reply": "ありがとう、落ち着いてやるね。",
+              "expression": "default"
+            },
+            { "chip": "一緒に見よう", "reply": "助かるよ。", "expression": "default" }
+          ],
+          "work": [
+            { "chip": "がんばって", "reply": "任せて。もう少しだよ。", "expression": "serious" },
+            {
+              "chip": "あせらなくていいよ",
+              "reply": "ありがとう、じっくり進めるね。",
+              "expression": "default"
+            },
+            { "chip": "待ってるね", "reply": "もうすぐ戻るよ。", "expression": "curious" }
+          ]
+        }
+      }
+    },
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "働いているあいだの札を見るために頼む（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 600000,
+      "event": {
+        "kind": "turn-finished",
+        "outcome": {
+          "kind": "completed"
+        }
+      }
+    }
+  ]
+}

@@ -101,7 +101,11 @@ function toMainViewEntries(record: SessionRecord, context: TurnContext): readonl
   if (record.kind === "speech") {
     return record.answersAside ? [{ kind: "aside-answer", text: record.text }] : []
   }
-  if (record.kind === "compact-boundary" || record.kind === "reaction") {
+  if (
+    record.kind === "compact-boundary" ||
+    record.kind === "reaction" ||
+    record.kind === "aizuchi-chip"
+  ) {
     return []
   }
   if (record.kind === "aside") {

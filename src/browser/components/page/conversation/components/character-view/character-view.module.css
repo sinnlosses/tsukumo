@@ -13,6 +13,7 @@
 @import "./stage/item-seat.css";
 @import "./stage/stage-figure.css";
 @import "./stage/stage-balloon.css";
+@import "./stage/aizuchi.css";
 
 .character-region {
   position: relative;

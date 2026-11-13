@@ -42,19 +42,30 @@ const REACTIONS_WRITTEN = {
   reactions: REACTIONS,
 } as const satisfies WelcomeWritingEvent
 
+const AIZUCHI_PAIR = { chip: "架空の札", reply: "架空の返事", expression: "default" } as const
+const AIZUCHI_WRITTEN = {
+  kind: "aizuchi-written",
+  pairs: {
+    deliver: [AIZUCHI_PAIR, AIZUCHI_PAIR, AIZUCHI_PAIR],
+    stumble: [AIZUCHI_PAIR, AIZUCHI_PAIR, AIZUCHI_PAIR],
+    work: [AIZUCHI_PAIR, AIZUCHI_PAIR, AIZUCHI_PAIR],
+  },
+} as const satisfies WelcomeWritingEvent
+
 describe("createWelcomeKeeper", () => {
-  it("新規の代が書けた挨拶と反応の行を、同じセッションの続きへ戻る代で書かせずに流し直す", () => {
+  it("新規の代が書けた挨拶・反応の行・相づちを、同じセッションの続きへ戻る代で書かせずに流し直す", () => {
     const keeper = createWelcomeKeeper()
     const first = keeper.noteLaunched({ kind: "new" }, ignore)
     first.emit({ kind: "welcome-greeting-changed", state: { kind: "writing" } })
     first.observe(sessionInfo(S1))
     first.emit(GREETING_WRITTEN)
     first.emit(REACTIONS_WRITTEN)
+    first.emit(AIZUCHI_WRITTEN)
 
     const back = recorded(keeper, S1)
 
     expect(back.replay()).toBe(true)
-    expect(back.events).toEqual([GREETING_WRITTEN, REACTIONS_WRITTEN])
+    expect(back.events).toEqual([GREETING_WRITTEN, REACTIONS_WRITTEN, AIZUCHI_WRITTEN])
   })
 
   it("書き手の出来事はその代の受け取る関数へそのまま流す", () => {

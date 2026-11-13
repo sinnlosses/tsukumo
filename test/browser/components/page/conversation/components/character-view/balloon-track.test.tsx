@@ -13,7 +13,7 @@ function speech(
   text: string,
   time: CharacterViewSpeech["time"] = { kind: "unknown" },
 ): CharacterViewSpeech {
-  return { text, time, selected: false, target: undefined }
+  return { speaker: "her", text, time, selected: false, target: undefined }
 }
 
 function NOOP(): void {

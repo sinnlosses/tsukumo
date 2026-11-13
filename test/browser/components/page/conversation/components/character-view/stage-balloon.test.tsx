@@ -9,7 +9,7 @@ afterEach(() => {
 })
 
 function speech(text: string): CharacterViewSpeech {
-  return { text, time: { kind: "unknown" }, selected: false, target: undefined }
+  return { speaker: "her", text, time: { kind: "unknown" }, selected: false, target: undefined }
 }
 
 function NOOP(): void {

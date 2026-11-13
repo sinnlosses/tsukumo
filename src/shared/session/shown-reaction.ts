@@ -7,6 +7,7 @@
 // 迎えるときは、挨拶を書いている途中は「…」、書けていればその文を出し、書けなかったら出さない。
 // 依頼を受けてから最初の `speak` までは「…」を出す。
 // 再試行・失敗・利用上限は、反応の行の問い合わせが書いた行を出し、書けていなければ出さない（挨拶が書けたかは見ない）。
+// 相づちの札を押したあとは、再試行のほかの反応に先んじて、押した組の返事を出す（`shownAizuchiAnswer`）。
 // 依頼を待つ間が続いたら、Claude Code が `report` に書いた待ちの一言、無ければ書かせた待ちの行を出す。
 // 続きから起こしてまだ依頼が無い間は、前回の待ちの一言、無ければ迎えの挨拶の札の無い文をおかえりとして出す。
 
@@ -21,6 +22,7 @@ import { conversationMoment } from "./conversation-moment.ts"
 import type { ReportWaitingLine } from "./session-event-report.ts"
 import type { RecordTime, SessionRecord } from "./session-record.ts"
 import type { SessionState } from "./session-state.ts"
+import { shownAizuchiAnswer } from "./shown-aizuchi.ts"
 
 export type ShownReaction =
   | { readonly kind: "none" }
@@ -137,6 +139,7 @@ function derivedReactionTime(state: SessionState, reaction: ReactionKind): Recor
       return dueAt === undefined ? UNKNOWN_TIME : { kind: "stamped", at: dueAt }
     }
     case "welcome":
+    case "aizuchi":
       return UNKNOWN_TIME
   }
 }
@@ -157,6 +160,12 @@ function untimedReaction(state: SessionState, head: WelcomeHead, now: number): U
       return WRITING_REACTION
     case "none":
       return NO_SHOWN_REACTION
+    case "aizuchi": {
+      const answer = shownAizuchiAnswer(state)
+      return answer.kind === "none"
+        ? NO_SHOWN_REACTION
+        : { kind: "shown", reaction, line: answer.line }
+    }
     default:
       return shownWrittenLine(state.writtenReactions, reaction)
   }
@@ -247,6 +256,9 @@ function reactionKindOf(
 ): ReactionKind | "accepted" | "welcome-back" | "none" {
   if (state.apiTrouble.kind === "retrying") {
     return "retrying"
+  }
+  if (shownAizuchiAnswer(state).kind === "shown") {
+    return "aizuchi"
   }
   switch (conversationMoment(state)) {
     case "greet":

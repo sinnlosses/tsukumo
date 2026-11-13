@@ -23,15 +23,30 @@ const TIME: ClockStamp = { kind: "known", dateTime: "2026-01-01T10:00", text: "1
 
 const NO_FACE = { url: undefined, alt: "さくら" }
 
+const FIRST_SPEECH = {
+  speaker: "her",
+  text: "おはよう。今日は何から始める？",
+  time: TIME,
+  selected: false,
+  target: undefined,
+} as const satisfies CharacterViewModel["speeches"][number]
+
 const CHARACTER: CharacterViewModel = {
   portraitUrl: undefined,
   altText: "さくら（にこにこ）",
   expression: "default",
   motion: "waiting",
   speeches: [
-    { text: "おはよう。今日は何から始める？", time: TIME, selected: false, target: undefined },
-    { text: "READMEを見直すね。", time: TIME, selected: true, target: { turnId: 1, index: 1 } },
+    FIRST_SPEECH,
+    {
+      speaker: "her",
+      text: "READMEを見直すね。",
+      time: TIME,
+      selected: true,
+      target: { turnId: 1, index: 1 },
+    },
   ],
+  thread: [FIRST_SPEECH],
   reaction: { kind: "none" },
   speakerName: "さくら",
   pinnedSpeech: undefined,
@@ -43,6 +58,7 @@ const CHARACTER: CharacterViewModel = {
   phoneLine: { kind: "text", text: "READMEを見直すね。", time: TIME },
   seats: { topLeft: undefined, belowLeft: undefined, belowRight: undefined },
   stage: DEFAULT_CHARACTER_STAGE,
+  aizuchi: [],
 }
 
 export const STAGE_EXAMPLES: readonly ScreenPartExample[] = [
@@ -58,6 +74,7 @@ export const STAGE_EXAMPLES: readonly ScreenPartExample[] = [
           <PresentationalCharacterView
             {...CHARACTER}
             speeches={[]}
+            thread={[]}
             reaction={{ kind: "writing" }}
             phoneLine={{ kind: "writing" }}
           />
@@ -90,6 +107,7 @@ export const STAGE_EXAMPLES: readonly ScreenPartExample[] = [
           {
             kind: "speech",
             key: "s1",
+            speaker: "her",
             text: "READMEを見直すね。",
             time: TIME,
             age: "latest",

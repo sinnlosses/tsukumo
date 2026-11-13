@@ -61,6 +61,8 @@ export type SpeechLogEntry =
   | {
       readonly kind: "speech"
       readonly key: string
+      /** キャラクターの行（`her`）か、利用者が押した札の行（`you`。印も遡りも無い）か。 */
+      readonly speaker: "her" | "you"
       readonly text: string
       readonly time: ClockStamp
       readonly age: SpeechAge
@@ -132,7 +134,8 @@ function logEntries(
 ): readonly SpeechLogEntry[] {
   const turns = turnSpeeches(records).filter((turn) => turn.speeches.length > 0)
   const requestTimes = requestTimesByTurn(records)
-  const speechCount = sumBy(turns, (turn) => turn.speeches.length)
+  // 古さはキャラクターの行だけで数える（利用者の札の行は最新の座を取らない）。
+  const herFlags = turns.flatMap((turn) => turn.speeches.map((speech) => speech.source !== "you"))
   const lastTurnId = turns.at(-1)?.id
   // セリフを古い側から数えた順に並べた、それぞれの日。日の区切りは隣り合うセリフの日で決める。
   const speechDays = turns.flatMap((turn) =>
@@ -169,8 +172,9 @@ function logEntries(
           key: `speech-${key}`,
           text: speech.text,
           time: recordClockStamp(speech.time, timeZone),
-          age: speechAge(speechCount - 1 - (offset + index)),
-          selected: isSpeechSelected(marked, turn.id, index),
+          speaker: speech.source === "you" ? "you" : "her",
+          age: speechAge(herFlags.slice(offset + index + 1).filter(Boolean).length),
+          selected: speech.source !== "you" && isSpeechSelected(marked, turn.id, index),
           target: { turnId: turn.id, index },
         },
       ]
@@ -184,10 +188,11 @@ function markedSpeechOf(markBasis: LogMarkBasis, turns: readonly TurnSpeech[]): 
     case "pinned":
       return { kind: "at", turnId: markBasis.turnId, index: markBasis.index }
     case "following": {
-      const count = turns.find((turn) => turn.id === markBasis.turnId)?.speeches.length
-      return count === undefined
+      const lines = turns.find((turn) => turn.id === markBasis.turnId)?.speeches
+      const last = lines?.findLastIndex((line) => line.source !== "you")
+      return last === undefined || last < 0
         ? { kind: "none" }
-        : { kind: "at", turnId: markBasis.turnId, index: count - 1 }
+        : { kind: "at", turnId: markBasis.turnId, index: last }
     }
     case "none":
       return { kind: "none" }

@@ -66,6 +66,12 @@
 /* 過去の吹き出しは見本の 14px。
    古いほど薄いが、地ごと薄めず字の色だけを surface へ混ぜる（地ごと薄めると背景の絵が文字の裏へ透ける）。
    いちばん薄い段でも surface の上で 4.5:1 を割らない ink 55%（約 4.8）で止め、3つ前から先はずっとその段。 */
+.speech-log-speech[data-speaker="you"] {
+  flex-direction: row-reverse;
+}
+.speech-log-speech > .balloon[data-speaker="you"] {
+  border-style: dashed;
+}
 .speech-log-speech > .balloon[data-latest="false"] {
   font-size: var(--font-subheading);
   line-height: 1.65;

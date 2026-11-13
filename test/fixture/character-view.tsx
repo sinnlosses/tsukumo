@@ -4,12 +4,13 @@ import { QueryClientProvider } from "@tanstack/react-query"
 import { render } from "@testing-library/react"
 
 import { CharacterView } from "../../src/browser/components/page/conversation/components/character-view/character-view.tsx"
+import type { CharacterViewPlacement } from "../../src/browser/components/page/conversation/components/character-view/presentational-character-view.tsx"
 import { writeHashRoute, type ViewedTurn } from "../../src/browser/stores/location-hash.ts"
 import type { Expression } from "../../src/shared/character-pack/expression.ts"
 import type { WrittenReactions } from "../../src/shared/recommendation/reaction.ts"
 import { INITIAL_SESSION_STATE, type SessionState } from "../../src/shared/session/session-state.ts"
 import { createTestQueryClient } from "../browser/query-client.tsx"
-import { putSession } from "../browser/session-store.ts"
+import { type CommandSpy, putSession } from "../browser/session-store.ts"
 import { characterInfo, shownPortraits } from "./character.ts"
 
 export const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = characterInfo({
@@ -42,6 +43,12 @@ export function speech(
 export function renderCharacterView(
   stateOverrides: Partial<SessionState>,
   viewedTurn: ViewedTurn = "newest",
+  options: {
+    /** 送られたコマンドを受け取る関数。 */
+    readonly spy?: CommandSpy
+    /** 舞台の器で描くときの置き場。 */
+    readonly placement?: CharacterViewPlacement
+  } = {},
 ): void {
   writeHashRoute({
     screen: "conversation",
@@ -49,11 +56,11 @@ export function renderCharacterView(
     pack: { kind: "in-use" },
     achievementDate: { kind: "today" },
   })
-  putSession({ ...INITIAL_SESSION_STATE, ...stateOverrides })
+  putSession({ ...INITIAL_SESSION_STATE, ...stateOverrides }, options.spy)
   const queryClient = createTestQueryClient()
   render(
     <QueryClientProvider client={queryClient}>
-      <CharacterView />
+      <CharacterView placement={options.placement} />
     </QueryClientProvider>,
   )
 }

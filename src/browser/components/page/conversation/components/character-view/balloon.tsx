@@ -27,6 +27,7 @@ import type { SpeechTarget } from "./domain/pinned-speech.ts"
 type BalloonInteraction =
   | { readonly kind: "reaction"; readonly reaction: ReactionKind }
   | { readonly kind: "writing" }
+  | { readonly kind: "you" }
   | {
       readonly kind: "toggleable"
       readonly selected: boolean
@@ -92,6 +93,14 @@ export function Balloon(props: BalloonProps): ReactElement {
       <div className={styles["balloon"]} data-latest={props.latest} data-writing="true">
         {speakerLabel}
         <TypingDots />
+      </div>
+    )
+  }
+
+  if (interaction.kind === "you") {
+    return (
+      <div className={styles["balloon"]} data-latest={props.latest} data-speaker="you">
+        {body}
       </div>
     )
   }

@@ -80,6 +80,62 @@ test.describe("機械の出来事 → キャラビューの反応", () => {
   })
 })
 
+test.describe("立ち絵の右上の相づちの札 → キャラクターの返事", () => {
+  const MOMENTS = [
+    {
+      name: "渡したあと",
+      scene: "aizuchi-deliver",
+      wait: "turn-finished",
+      chips: ["おつかれさま", "ありがとう"],
+      reply: "ありがとう。ひと息つこうか。",
+    },
+    {
+      name: "失敗のあと",
+      scene: "aizuchi-stumble",
+      wait: "turn-finished",
+      chips: ["大丈夫、続けよう"],
+      reply: "うん、もう一度やってみる。",
+    },
+    {
+      name: "働いているあいだ",
+      scene: "aizuchi-work",
+      wait: "request",
+      chips: ["がんばって"],
+      reply: "任せて。もう少しだよ。",
+    },
+  ] as const
+
+  for (const moment of MOMENTS) {
+    test(`${moment.name}は札が出て、押すと札が引っ込み、返事が反応の吹き出しに出る`, async ({
+      run,
+    }) => {
+      const room = await run.open({
+        scenario: `character-${moment.scene}`,
+        scene: moment.scene,
+        viewport: "wide",
+        domRoots: ["stage-balloon", "stage-thread"],
+      })
+      const chips = room.page.locator('[data-slot="aizuchi"] button')
+
+      await room.waitForEvent(moment.wait)
+      const url = new URL(room.page.url())
+      url.searchParams.set("shell", "stage")
+      await room.page.goto(url.toString())
+      await chips.first().waitFor()
+      expect(await chips.allTextContents()).toEqual(moment.chips)
+
+      await chips.first().click()
+      await room.waitForEvent("aizuchi-pressed")
+      await room.page
+        .locator('[data-slot="balloon"] [data-reaction="aizuchi"]')
+        .getByText(moment.reply)
+        .waitFor()
+      expect(await chips.count()).toBe(0)
+      await room.settleAndMatchPicked(ELAPSED_MS)
+    })
+  }
+})
+
 /** 吹き出しの最新の1件が `text` で、セリフのログにも同じ文と時刻の1件だけが並ぶ。 */
 async function expectOneLoggedLine(page: Page, text: string): Promise<void> {
   const [balloon, log] = await balloonAndLog(page)
