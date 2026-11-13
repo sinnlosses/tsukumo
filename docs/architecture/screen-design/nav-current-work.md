@@ -24,7 +24,7 @@
 **カード**は `<button type="button" aria-expanded aria-controls>` で、字は
 「印・状態の語・（あれば）縦線・今のフェーズ・（あれば）縦線・実行中の手順の要約」の順に1行で並ぶ
 （今のフェーズは下の「ワークプラン」）。要約は
-`ツール名: 対象`（`summarizeToolInput`。`src/browser/domain/tool-summary.ts`）で、入りきらなければ
+「対象＋動詞」の文（`src/browser/domain/tool-narration.ts`。表に無い道具は `ツール名: 対象`）で、入りきらなければ
 末尾を「…」で切る。状態の語は6つで、上の行ほど強い:
 
 | 語           | いつ                                       | 見た目                            | 右の要約                                                                                                                                                                 |

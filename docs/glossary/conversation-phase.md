@@ -27,7 +27,7 @@
 - **英語識別子**: `turnStep`（一覧を導く関数は `src/shared/session/turn-step.ts` の
   `currentTurnSteps`）
 - **定義**: いちばん新しい依頼（ターン）の中で claude が呼んだツール1回ぶん。済み / 実行中 /
-  失敗 のどれかで、ツール名と対象（`summarizeToolInput` の要約）を持つ
+  失敗 のどれかで、ツール名と対象（`summarizeToolInput` の要約。画面の1行は `src/browser/domain/tool-narration.ts` の文）を持つ
 - **注記**: **範囲は依頼1つ**で、「直近の何件」ではない。状態に別の入れ物は持たず、
   セッションの記録（`records`）から最後の依頼より後のツールの記録を拾って導く
 - **避ける言い方**: ステップ（メインビューの `MainViewStep` は本文の区切りで、別のもの）、

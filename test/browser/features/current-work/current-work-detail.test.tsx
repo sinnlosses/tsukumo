@@ -146,8 +146,8 @@ describe("いまの作業（押すと開く依頼の手順の一覧）。語・�
     fireEvent.click(workToggle())
 
     expect(listLines(".current-work-steps li")).toEqual([
-      "… Bash: echo new",
-      "✓ Read: /tmp/old.txt（12秒）",
+      "… echo newを走らせている",
+      "✓ old.txtを読んでいる（12秒）",
     ])
   })
 
@@ -203,9 +203,9 @@ describe("いまの作業（押すと開く依頼の手順の一覧）。語・�
       expect(workList().querySelector(".current-work-plan-span-name")).toBeNull()
       expect(listLines(".current-work-phase-heading, .current-work-steps li")).toEqual([
         "2/3 架空の段B",
-        "… Bash: echo b",
+        "… echo bを走らせている",
         "1/3 架空の段A",
-        "✓ Read: /tmp/a.txt（0秒）",
+        "✓ a.txtを読んでいる（0秒）",
       ])
     })
 
@@ -260,13 +260,13 @@ describe("いまの作業（押すと開く依頼の手順の一覧）。語・�
 
       expect(listLines(".current-work-phase-heading, .current-work-steps li")).toEqual([
         "1/2 架空の段A",
-        "… Bash: echo t4",
+        "… echo t4を走らせている",
         "2/2 架空の段B",
-        "… Bash: echo t3",
+        "… echo t3を走らせている",
         "1/2 架空の段A",
-        "… Bash: echo t2",
-        "… Bash: echo t1",
-        "… Bash: echo t0",
+        "… echo t2を走らせている",
+        "… echo t1を走らせている",
+        "… echo t0を走らせている",
       ])
     })
 
@@ -303,7 +303,7 @@ describe("いまの作業（押すと開く依頼の手順の一覧）。語・�
     fireEvent.click(workToggle())
 
     expect(document.querySelector(".current-work-steps li")?.textContent).toBe(
-      "✓ Read: /tmp/restored.txt",
+      "✓ restored.txtを読んでいる",
     )
   })
 
@@ -324,13 +324,13 @@ describe("いまの作業（押すと開く依頼の手順の一覧）。語・�
 
     const rowTexts = () => listLines(".current-work-steps li")
     expect(rowTexts()).toHaveLength(5)
-    expect(rowTexts()[0]).toBe("… Bash: echo 11")
+    expect(rowTexts()[0]).toBe("… echo 11を走らせている")
 
     fireEvent.click(screen.getByRole("button", { name: "手順をすべて見る（全 12 件）" }))
 
     expect(rowTexts()).toHaveLength(12)
-    expect(rowTexts()[0]).toBe("… Bash: echo 11")
-    expect(rowTexts().at(-1)).toBe("… Bash: echo 0")
+    expect(rowTexts()[0]).toBe("… echo 11を走らせている")
+    expect(rowTexts().at(-1)).toBe("… echo 0を走らせている")
     expect(screen.getByRole("button", { name: "新しい5件だけにする" })).toBeDefined()
   })
 
@@ -430,7 +430,9 @@ describe("いまの作業（押すと開く依頼の手順の一覧）。語・�
 
     fireEvent.click(workToggle())
 
-    expect(document.querySelector(".current-work-steps li")?.textContent).toBe("… Bash: echo")
+    expect(document.querySelector(".current-work-steps li")?.textContent).toBe(
+      "… echoを走らせている",
+    )
   })
 
   it("セッションが終わると、実行中だった手順は一覧から消える", () => {

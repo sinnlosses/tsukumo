@@ -14,6 +14,7 @@ import { PHASE_SPAN_NAMES, phasePosition } from "../../../shared/session/work-pl
 import type { WorkPhase } from "../../../shared/session/work-plan.ts"
 import { clipText, type ClippedText } from "../../../shared/utils/clip-text.ts"
 import { formatElapsed } from "../../../shared/utils/elapsed-time.ts"
+import { narrateToolUse } from "../../domain/tool-narration.ts"
 import { summarizeToolInput } from "../../domain/tool-summary.ts"
 
 export type CurrentWorkStep = {
@@ -89,7 +90,9 @@ export function currentWorkStepGroups(steps: readonly TurnStep[]): readonly Curr
  */
 export function currentWorkStepLabel(step: TurnStep): string {
   const summary = summarizeToolInput(step.name, step.input)
-  const base = summary === "" ? step.name : `${step.name}: ${summary}`
+  const base =
+    narrateToolUse(step.name, step.input) ??
+    (summary === "" ? step.name : `${step.name}: ${summary}`)
   const duration = toolDuration(step)
   return duration.kind === "known"
     ? `${base}（${formatElapsed(Math.round(duration.milliseconds / 1000))}）`

@@ -57,7 +57,7 @@ describe("CurrentStep", () => {
     render(<CurrentStep />)
 
     expect(screen.getByRole("heading", { name: "いまのフェーズ · 2 架空の段B" })).toBeTruthy()
-    expect(screen.getByText(/Bash\s+架空のコマンド/u)).toBeTruthy()
+    expect(screen.getByText(/架空のコマンドを走らせている/u)).toBeTruthy()
   })
 
   it("API の再試行中はその1行に何回目かを出す", () => {

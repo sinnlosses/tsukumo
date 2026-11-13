@@ -46,7 +46,9 @@ describe("useWorkStrip（時刻に依るもの）", () => {
     const strip = stripAt(state, START + 72_000)
 
     expect(strip.kind).toBe("working")
-    expect(strip.kind === "working" && strip.activity.text).toBe("Bash  架空のコマンド · 12秒")
+    expect(strip.kind === "working" && strip.activity.text).toBe(
+      "架空のコマンドを走らせている（1/2 段） · 12秒",
+    )
     expect(strip.kind === "working" && strip.sideLabel).toBe("経過 1分12秒")
   })
 

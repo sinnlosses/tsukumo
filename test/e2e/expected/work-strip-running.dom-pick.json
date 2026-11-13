@@ -7,7 +7,7 @@
       { "tag": "li", "attributes": { "data-phase-state": "upcoming" } },
       { "tag": "li", "attributes": { "data-phase-state": "upcoming" } },
       "集計の関数とスクリプト",
-      { "tag": "p", "children": ["Bash pnpm exec vitest run /tmp/dummy/metric · 1分00秒"] }
+      { "tag": "p", "children": ["pnpm exec vitest run /tmp/dummy/metricを走らせている（2/4 段） · 1分00秒"] }
     ] }
   ]
 }

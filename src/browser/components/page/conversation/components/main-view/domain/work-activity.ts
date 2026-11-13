@@ -17,11 +17,17 @@ import type {
   TurnProgress,
 } from "../../../../../../../shared/session/turn-progress.ts"
 import type { TurnStep, TurnStepList } from "../../../../../../../shared/session/turn-step.ts"
+import {
+  phaseNumberText,
+  phasePosition,
+} from "../../../../../../../shared/session/work-plan-phase-number.ts"
+import type { WorkPhase } from "../../../../../../../shared/session/work-plan.ts"
 import type {
   WorkflowProgress,
   WorkflowStep,
 } from "../../../../../../../shared/session/workflow-step.ts"
 import { formatElapsed } from "../../../../../../../shared/utils/elapsed-time.ts"
+import { narrateToolUse } from "../../../../../../domain/tool-narration.ts"
 import { summarizeToolInput } from "../../../../../../domain/tool-summary.ts"
 import { backgroundSummaryLabel } from "../../../../../../features/current-work/current-work-step.ts"
 import { apiRetryNotice } from "../../../domain/api-error-label.ts"
@@ -83,12 +89,13 @@ export function workActivityOf(source: WorkActivitySource): WorkActivity {
   const running = turnStepList.steps.findLast((step) => step.status.kind === "running")
   if (running !== undefined) {
     const seconds = secondsSince(running, now)
+    const line = narratedLine(running.name, running.input)
     return {
-      text: [toolLine(running.name, running.input), seconds]
+      text: [`${line.text}${phaseRangeSuffix(running.phase)}`, seconds]
         .filter((part) => part !== "")
         .join(" · "),
       tone: "quiet",
-      mono: true,
+      mono: line.mono,
       retry,
     }
   }
@@ -104,10 +111,11 @@ export function workActivityOf(source: WorkActivitySource): WorkActivity {
     const { step } = stepped
     if (step.running) {
       const seconds = formatElapsed(Math.max(0, Math.floor((now - step.startedAt) / 1000)))
+      const line = narratedLine(step.name, step.input)
       return {
-        text: `背景で · ${toolLine(step.name, step.input)} · ${seconds}`,
+        text: `背景で · ${line.text} · ${seconds}`,
         tone: "quiet",
-        mono: true,
+        mono: line.mono,
         retry,
       }
     }
@@ -203,6 +211,26 @@ function pendingLabel(pending: PendingAsk): string {
   return rest.length > 0
     ? `質問: ${first.header} ほか${String(rest.length)}問`
     : `質問: ${first.header}`
+}
+
+/** 言い換えの文。表に無い道具は今の「名前  要約」に落とし、等幅で組む。 */
+function narratedLine(
+  name: string,
+  input: unknown,
+): { readonly text: string; readonly mono: boolean } {
+  const sentence = narrateToolUse(name, input)
+  return sentence === undefined
+    ? { text: toolLine(name, input), mono: true }
+    : { text: sentence, mono: false }
+}
+
+/** 番号を持つ段で走っているときだけ「（本 2/4 段）」を添える。 */
+function phaseRangeSuffix(phase: WorkPhase): string {
+  if (phase.kind !== "phase") {
+    return ""
+  }
+  const text = phaseNumberText(phasePosition(phase))
+  return text === "" ? "" : `（${text} 段）`
 }
 
 function toolLine(name: string, input: unknown): string {

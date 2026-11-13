@@ -164,7 +164,7 @@ describe("useCurrentWork の札の語・印・要約（状態の強さの順）"
     [
       "レポートが届けば実行中の手順の要約に戻る",
       { turn: RUNNING, records: RUNNING_BASH, sdkTurn: NOT_DRAFTING },
-      { word: "作業中", summary: "Bash: echo dummy" },
+      { word: "作業中", summary: "echo dummyを走らせている" },
     ],
     [
       "レポートを書いている途中は実行中の手順の要約を覆う",
@@ -174,7 +174,7 @@ describe("useCurrentWork の札の語・印・要約（状態の強さの順）"
     [
       "許可要求の答え待ちは実行中の手順の要約に従う",
       { turn: RUNNING, pending: [PERMISSION], records: RUNNING_BASH },
-      { word: "答え待ち", summary: "Bash: echo dummy" },
+      { word: "答え待ち", summary: "echo dummyを走らせている" },
     ],
     [
       "質問の答え待ちは実行中のツールの要約より質問の要約を優先する",

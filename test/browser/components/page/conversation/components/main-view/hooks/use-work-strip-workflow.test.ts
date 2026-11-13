@@ -87,7 +87,7 @@ describe("useWorkStrip（ワークフロースクリプトの中の手順）", (
         completed,
         stepStarted("Bash", { command: "架空のコマンド" }),
       ),
-    ).toBe("背景で · Bash  架空のコマンド · 55秒")
+    ).toBe("背景で · 架空のコマンドを走らせている · 55秒")
     expect(
       activityAfter(
         tasksChanged(WORKFLOW),
@@ -96,7 +96,7 @@ describe("useWorkStrip（ワークフロースクリプトの中の手順）", (
         stepStarted("Bash", { command: "架空のコマンド" }),
         stepStarted("Read", { file_path: "/架空/a.ts" }),
       ),
-    ).toBe("背景で · Read  /架空/a.ts · 54秒")
+    ).toBe("背景で · a.tsを読んでいる · 54秒")
   })
 
   it("手順が終わって agent が走っていれば「背景で · 考えている」、agent が全部 done ならワークフロースクリプトの説明に戻る", () => {
@@ -112,7 +112,7 @@ describe("useWorkStrip（ワークフロースクリプトの中の手順）", (
         stepFinished("Bash"),
         stepStarted("Read", { file_path: "/架空/a.ts" }),
       ),
-    ).toBe("背景で · Read  /架空/a.ts · 54秒")
+    ).toBe("背景で · a.tsを読んでいる · 54秒")
     expect(
       activityAfter(...base, stepFinished("Bash"), {
         kind: "workflow-progress",
@@ -158,7 +158,7 @@ describe("useWorkStrip（ワークフロースクリプトの中の手順）", (
         stepStarted("Bash", { command: "架空のコマンド" }),
         tasksChanged(WORKFLOW, SHELL),
       ),
-    ).toBe("背景で · Bash  架空のコマンド · 56秒")
+    ).toBe("背景で · 架空のコマンドを走らせている · 56秒")
   })
 
   it("手順を持つワークフロースクリプトとサブエージェントがいれば、新しく始まった方を出す", () => {
@@ -184,7 +184,9 @@ describe("useWorkStrip（ワークフロースクリプトの中の手順）", (
     ]
     const bash = stepStarted("Bash", { command: "架空のコマンド" })
     const head = [tasksChanged(WORKFLOW, agentTask), WORKFLOW_PROGRESS]
-    expect(activityAfter(...head, ...nestedRead, bash)).toBe("背景で · Bash  架空のコマンド · 54秒")
+    expect(activityAfter(...head, ...nestedRead, bash)).toBe(
+      "背景で · 架空のコマンドを走らせている · 54秒",
+    )
     expect(activityAfter(...head, bash, ...nestedRead)).toBe("背景で · 考えている")
   })
 
@@ -201,9 +203,9 @@ describe("useWorkStrip（ワークフロースクリプトの中の手順）", (
         progressOf("wf-2", "agent-2"),
         stepStarted("Bash", { command: "架空のコマンド" }),
         stepStarted("Read", { file_path: "/架空/a.ts" }, "agent-2"),
-        stepStarted("Glob", { pattern: "架空" }),
+        stepStarted("NotebookEdit", { pattern: "架空" }),
       ),
-    ).toBe("背景で · Glob  架空 · 53秒")
+    ).toBe("背景で · NotebookEdit  架空 · 53秒")
   })
 
   it("ワークフロースクリプトが動いていないときに届いた手順は捨てる", () => {
@@ -221,7 +223,7 @@ describe("useWorkStrip（ワークフロースクリプトの中の手順）", (
         stepStarted("Read", { file_path: "/架空/a.ts" }, "subagent-1"),
         completed,
       ),
-    ).toBe("背景で · Bash  架空のコマンド · 56秒")
+    ).toBe("背景で · 架空のコマンドを走らせている · 56秒")
   })
 
   it("背景のサブエージェントの手順が済んでいれば「背景で · 考えている」にする", () => {
