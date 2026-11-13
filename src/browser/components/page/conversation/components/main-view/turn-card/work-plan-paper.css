@@ -156,10 +156,47 @@
   font-family: var(--font-mono);
   white-space: nowrap;
 }
+.work-plan-act[data-kind="delegate"] > .work-plan-act-kind {
+  color: var(--accent);
+}
 .work-plan-fold {
   color: var(--ink-soft);
   font-size: var(--font-secondary);
   cursor: pointer;
+}
+/* 段の中の周。「n周目」「直し」の語・結果と理由・所要の3列に並べ、いまの周は左の線で強める。 */
+.work-plan-laps,
+.work-plan-lap-fold,
+.work-plan-delegate-fold {
+  display: flex;
+  flex-direction: column;
+  gap: var(--stack-tight);
+}
+.work-plan-lap {
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: var(--inline-control);
+  padding: var(--inset-control);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+  font-size: var(--font-secondary);
+  overflow-wrap: anywhere;
+}
+.work-plan-lap[data-result="now"] {
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+.work-plan-lap-label {
+  font-weight: 700;
+}
+.work-plan-lap-mark {
+  font-weight: 700;
+}
+.work-plan-lap-mark[data-result="rejected"] {
+  color: var(--state-ng);
+}
+.work-plan-lap-mark[data-result="fixed"] {
+  color: var(--state-ok);
 }
 .work-plan-parallel {
   display: flex;

@@ -1,0 +1,104 @@
+{
+  "name": "work-plan-delegates",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "架空の一覧画面を、役を分けて作り直したい（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 100,
+      "event": {
+        "kind": "work-plan",
+        "phaseIds": [],
+        "delegatedRange": { "kind": "range", "first": 1, "count": 2 },
+        "skippedPhases": [],
+        "awaitingSummary": { "kind": "none" },
+        "phases": ["計画を確かめる", "役を分けて作る", "受け入れる"],
+        "current": 1,
+        "finishedInGroup": [],
+        "phaseSummary": "架空の計画は決まった。"
+      }
+    },
+    {
+      "afterMs": 200,
+      "event": {
+        "kind": "background-tasks-changed",
+        "tasks": [
+          { "taskId": "fake-delegate-1", "kind": "agent", "description": "架空の型を直す役" },
+          { "taskId": "fake-delegate-2", "kind": "agent", "description": "架空の画を撮る役" },
+          { "taskId": "fake-delegate-3", "kind": "agent", "description": "架空の文書を揃える役" },
+          { "taskId": "fake-delegate-4", "kind": "agent", "description": "架空の単体を足す役" },
+          { "taskId": "fake-delegate-5", "kind": "agent", "description": "架空の並びを調べる役" },
+          { "taskId": "fake-delegate-6", "kind": "workflow", "description": "架空の検査の流れ" },
+          { "taskId": "fake-delegate-bash", "kind": "shell", "description": "架空の長い待ち" }
+        ]
+      }
+    },
+    {
+      "afterMs": 300,
+      "event": {
+        "kind": "delegate-progress",
+        "taskId": "fake-delegate-1",
+        "summary": "架空の型の検査が通った（3,152 件）"
+      }
+    },
+    {
+      "afterMs": 300,
+      "event": {
+        "kind": "delegate-progress",
+        "taskId": "fake-delegate-2",
+        "summary": "架空の幅 1400 の2枚目を撮っている"
+      }
+    },
+    {
+      "afterMs": 300,
+      "event": {
+        "kind": "delegate-progress",
+        "taskId": "fake-delegate-3",
+        "summary": "架空の用語集の見出しを揃え終えた"
+      }
+    },
+    {
+      "afterMs": 300,
+      "event": {
+        "kind": "delegate-progress",
+        "taskId": "fake-delegate-4",
+        "summary": "架空の並び替えの単体を3本書いている"
+      }
+    },
+    {
+      "afterMs": 300,
+      "event": {
+        "kind": "delegate-progress",
+        "taskId": "fake-delegate-6",
+        "summary": "架空の検査の2段目を回している"
+      }
+    },
+    {
+      "afterMs": 400,
+      "event": {
+        "kind": "background-tasks-changed",
+        "tasks": [
+          { "taskId": "fake-delegate-2", "kind": "agent", "description": "架空の画を撮る役" },
+          { "taskId": "fake-delegate-4", "kind": "agent", "description": "架空の単体を足す役" },
+          { "taskId": "fake-delegate-5", "kind": "agent", "description": "架空の並びを調べる役" },
+          { "taskId": "fake-delegate-6", "kind": "workflow", "description": "架空の検査の流れ" },
+          { "taskId": "fake-delegate-bash", "kind": "shell", "description": "架空の長い待ち" }
+        ]
+      }
+    },
+    {
+      "afterMs": 500,
+      "event": {
+        "kind": "tool-started",
+        "toolUseId": "fake-work-plan-delegates-1",
+        "name": "Read",
+        "input": { "file_path": "/架空/list.ts" }
+      }
+    }
+  ]
+}

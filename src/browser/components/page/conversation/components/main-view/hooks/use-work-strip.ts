@@ -203,6 +203,7 @@ const NO_RECAPS = new Map<string, PhaseRecap>()
 const UNKNOWN_RECAP = {
   duration: { kind: "unknown" },
   summary: "",
+  laps: [],
 } as const satisfies PhaseRecap
 
 export function useWorkStrip(): WorkStripModel {

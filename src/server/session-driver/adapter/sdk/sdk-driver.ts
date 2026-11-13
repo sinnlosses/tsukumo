@@ -115,7 +115,7 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
     if (given.mode.kind === "work" && stepWatch.observe(event) === "exceeded") {
       sendProgressNudge(stepLimitPromptText(given.turnStepLimit))
     }
-    if (event.kind === "delegate-progress" || event.kind === "progress-nudged") {
+    if (event.kind === "progress-nudged") {
       return
     }
     if (event.kind === "turn-finished") {

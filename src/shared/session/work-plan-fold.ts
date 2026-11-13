@@ -161,13 +161,18 @@ function advancedByReturn(plan: PlannedWorkPlan, handback: DelegateReturn): Plan
   return returned.kind === "finished" ? returned.advanced : plan
 }
 
-/** `phase-redone` は位置を動かさず、`phase` に当たる段の周だけを 1 進める。当たる段が無ければ `plan` のまま。 */
+/**
+ * `phase-redone` は位置を動かさず、`phase` に当たる段の周だけを 1 進め、要約を差し戻しの理由にする。
+ * 当たる段が無ければ `plan` のまま。
+ */
 function redoneByReturn(
   plan: PlannedWorkPlan,
   handback: Extract<DelegateReturn, { readonly kind: "phase-redone" }>,
 ): PlannedWorkPlan {
   const phase = rangePhaseOf(plan, handback)
-  return phase === undefined ? plan : { ...plan, phaseLaps: lapsWithRedo(plan, phase.index) }
+  return phase === undefined
+    ? plan
+    : { ...plan, phaseLaps: lapsWithRedo(plan, phase.index), redoReason: handback.summary }
 }
 
 function returnedByReturn(

@@ -18,6 +18,7 @@ import type { StampedPendingAsk } from "../session-driver/pending-ask.ts"
 import type { RateLimit } from "../session-driver/rate-limit.ts"
 import type { PreviousUsageReview, UsageProposalRun, UsageReview } from "../usage/usage-review.ts"
 import type { CommandDescription } from "./command-description.ts"
+import type { DelegateRole } from "./delegate-role.ts"
 import type { EffortLevel } from "./run-setting-value.ts"
 import type { SessionChoice } from "./session-choice.ts"
 import { BUILTIN_SESSION_DEFAULT, type SessionDefault } from "./session-default.ts"
@@ -228,22 +229,17 @@ export type SessionState = {
    * `background-tasks-changed` で顔ぶれから外れた分を落とし、`session-ended` で空にする。
    */
   readonly workflowProgress: readonly WorkflowProgress[]
-  /**
-   * 見直しの状態。源は見直しのイベント（`UsageReviewEvent`）だけ。
-   * 見直しは会話とは別の使い捨ての問い合わせで走るので、会話の `turn-finished` / `session-ended` では動かさず、起こし直しでも残す。
-   * 前回の結果を出すのはこの状態ではない。
-   */
+  /** 見直しの状態（{@link UsageReview}）。源は見直しのイベント（`UsageReviewEvent`）だけ。 */
   readonly usageReview: UsageReview
-  /**
-   * 前回の見直しの結果。{@link usageReview} とは別の状態で、起こし直しでもプロセスの再起動でも消えない
-   * （源は `usage-review-result` が届くたびと、プロセスを起こしたとき1回だけホームのファイルを読む口）。
-   * `usage-proposal-dismissed` が届くと、見送った提案をここからも取り除く（「前回の提案」を開き直したときに、見送ったはずの札が出ないようにするため）。
-   */
+  /** 前回の見直しの結果（{@link PreviousUsageReview}）。 */
   readonly previousUsageReview: PreviousUsageReview
-  /**
-   * 結果の提案の実行（「tsukumo に頼む」「タスクにする」）の状態。源は見直しのイベントだけで、{@link usageReview} と同じく会話のターンでは動かさない。
-   */
+  /** 結果の提案の実行の状態（{@link UsageProposalRun}）。 */
   readonly usageProposalRun: UsageProposalRun
+  /**
+   * 委譲先（{@link backgroundTasks} の `agent`・`workflow`）ごとの、進みの最新の1行（{@link DelegateRole}）。差し替え方は `delegateRolesOfTasks`・`delegateRolesWithProgress`。
+   * ブラウザのメモリにだけ置く。会話のアーカイブ・計測値・診断ログ・永続化に入れない。
+   */
+  readonly delegateRoles: readonly DelegateRole[]
   /**
    * 成果の日記書きの進み。帯の「いまの作業」の「振り返り中」が読む。
    *
@@ -313,6 +309,7 @@ export const INITIAL_SESSION_STATE: SessionState = {
   usageReview: { kind: "idle" },
   previousUsageReview: { kind: "none" },
   usageProposalRun: { kind: "idle" },
+  delegateRoles: [],
   diaryWriting: { kind: "idle" },
   apiTrouble: { kind: "none" },
   rateLimit: { kind: "clear" },

@@ -1,7 +1,10 @@
 // 新しい器の紙に描くワークプランのロジック。働くあいだは判定の行と計画、終わったあとは紙の末尾の道筋に畳む。
 
 import { conversationMoment } from "../../../../../../../shared/session/conversation-moment.ts"
-import { recordTimeAt } from "../../../../../../../shared/session/session-record.ts"
+import {
+  type RecordTime,
+  recordTimeAt,
+} from "../../../../../../../shared/session/session-record.ts"
 import { phaseCount, type LatestWorkPlan } from "../../../../../../../shared/session/work-plan.ts"
 import { formatElapsed } from "../../../../../../../shared/utils/elapsed-time.ts"
 import {
@@ -94,6 +97,7 @@ export function useWorkPlanPaper(): WorkPlanPaperModel {
   const turn = useSession((session) => session.state.turn)
   const pending = useSession((session) => session.state.pending)
   const backgroundCount = useSession((session) => session.state.backgroundTasks.length)
+  const delegateRoles = useSession((session) => session.state.delegateRoles)
   const moment = useSession((session) => conversationMoment(session.state))
   const turns = useMainViewTurns()
   const replaceDraft = useComposerDraft((state) => state.replaceDraft)
@@ -113,6 +117,7 @@ export function useWorkPlanPaper(): WorkPlanPaperModel {
             at: turnCountedUntil(turn, backgroundCount, now),
           }),
           steps: turnStepList.steps,
+          delegates: delegateRoles,
         })
       : []
   const rows = slots.flatMap(rowsOfSlot)
@@ -206,12 +211,9 @@ export function useStoppedChoiceKeys(model: WorkPlanPaperModel): void {
   )
 }
 
-/** 「n秒前」の字。時刻が分からなければ空。 */
-export function sinceText(live: WorkPlanRow["live"], now: number): string {
-  if (live.kind === "none") {
-    return ""
-  }
-  const at = recordTimeAt(live.startedAt)
+/** `since` から数えた「n秒前」の字。時刻が分からなければ空。 */
+export function sinceText(since: RecordTime, now: number): string {
+  const at = recordTimeAt(since)
   return at === undefined ? "" : `${formatElapsed(Math.max(0, Math.floor((now - at) / 1000)))}前`
 }
 

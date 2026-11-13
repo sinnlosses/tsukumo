@@ -6,11 +6,15 @@ import { formatMeasured } from "../../../../../../shared/utils/elapsed-time.ts"
 import { InlineMarkdown } from "../../../../../features/report/markdown.tsx"
 import { Button } from "../../../../ui/button/button.tsx"
 import { Lamp, LampRow, type LampStepState } from "../../../../ui/lamp/lamp.tsx"
-import type {
-  FoldedWorkPlan,
-  WorkPlanRow,
-  WorkPlanRowState,
-  WorkPlanSlot,
+import {
+  foldDelegates,
+  type FoldedWorkPlan,
+  foldLaps,
+  type WorkPlanDelegate,
+  type WorkPlanLap,
+  type WorkPlanRow,
+  type WorkPlanRowState,
+  type WorkPlanSlot,
 } from "../../domain/work-plan-row.ts"
 import { sinceText, STOPPED_CHOICES, type WorkPlanPaperModel } from "./hooks/use-work-plan-paper.ts"
 import styles from "./main-view.module.css"
@@ -45,6 +49,10 @@ const ROW_LAMP_SIZE_PX = { now: 22, other: 18 } as const
 const PLAN_LABEL = "ワークプラン"
 const LIVE_NOW = "いま"
 const LIVE_TOUCHED = "できた"
+const LIVE_DELEGATE = "任せた"
+const DELEGATES_DONE = "済んだ"
+const DELEGATE_SEPARATOR = " ― "
+const LAP_MARK = { rejected: "✕", fixed: "✓" } as const
 const SKIPPED_TAG = "飛ばした"
 const RUNNING_SUFFIX = "〜"
 const MIDWAY_SUFFIX = "（途中）"
@@ -239,6 +247,8 @@ function RowItem(props: {
       : ""
   const title =
     row.state === "current" && clock.kind === "closed" ? `${row.title}${MIDWAY_SUFFIX}` : row.title
+  // 周を持つ段では実況を「直し」の周の行が出すので、「いま」の行には重ねない。
+  const liveNow = row.live.kind === "now" && row.laps.length === 0
   return (
     <li className={styles["work-plan-phase"]} data-state={row.state}>
       <Lamp
@@ -265,10 +275,11 @@ function RowItem(props: {
             <InlineMarkdown text={row.summary} />
           </p>
         )}
+        {row.laps.length > 0 && <LapList row={row} running={running} />}
         {clock.kind === "live" &&
           row.state === "current" &&
-          (row.live.kind === "now" || row.touched.length > 0) && (
-            <LiveBlock row={row} now={clock.now} />
+          (liveNow || row.touched.length > 0 || row.delegates.length > 0) && (
+            <LiveBlock row={row} liveNow={liveNow} now={clock.now} />
           )}
         {!running && row.touched.length > 0 && (
           <p className={styles["work-plan-touched"]}>{row.touched.join("　")}</p>
@@ -278,16 +289,88 @@ function RowItem(props: {
   )
 }
 
-function LiveBlock(props: { readonly row: WorkPlanRow; readonly now: number }): ReactElement {
+/** 段の中の周の行。差し戻しと直しを交互に並べ、4周目からは前の周を `<details>` に畳む。 */
+function LapList(props: { readonly row: WorkPlanRow; readonly running: boolean }): ReactElement {
+  const { row, running } = props
+  const { folded, laps } = foldLaps(row.laps)
+  const liveText = row.live.kind === "now" ? row.live.text : ""
+  return (
+    <div className={styles["work-plan-laps"]}>
+      {folded.kind === "folded" && (
+        <details className={styles["work-plan-lap-fold"]}>
+          <summary className={styles["work-plan-fold"]}>{foldedLapsText(folded.count)}</summary>
+          {folded.laps.map((lap) => (
+            <LapItem key={lap.key} lap={lap} liveText="" running={false} />
+          ))}
+        </details>
+      )}
+      {laps.map((lap) => (
+        <LapItem key={lap.key} lap={lap} liveText={liveText} running={running} />
+      ))}
+    </div>
+  )
+}
+
+function LapItem(props: {
+  readonly lap: WorkPlanLap
+  readonly liveText: string
+  readonly running: boolean
+}): ReactElement {
+  const { lap } = props
+  const now = lap.result === "now"
+  const time =
+    lap.duration.kind === "known"
+      ? `${formatMeasured(lap.duration)}${now && props.running ? RUNNING_SUFFIX : ""}`
+      : ""
+  return (
+    <div className={styles["work-plan-lap"]} data-result={lap.result}>
+      <span className={styles["work-plan-lap-label"]}>{lap.label}</span>
+      <span>
+        {lap.result !== "now" && (
+          <>
+            <span className={styles["work-plan-lap-mark"]} data-result={lap.result}>
+              {LAP_MARK[lap.result]}
+            </span>{" "}
+          </>
+        )}
+        {now ? <b>{props.liveText}</b> : lap.text}
+      </span>
+      <span className={styles["work-plan-act-when"]}>{time}</span>
+    </div>
+  )
+}
+
+function LiveBlock(props: {
+  readonly row: WorkPlanRow
+  /** 「いま」の行を出すか。 */
+  readonly liveNow: boolean
+  readonly now: number
+}): ReactElement {
   const { row } = props
+  const { folded, delegates } = foldDelegates(row.delegates)
   return (
     <div className={styles["work-plan-live"]}>
-      {row.live.kind === "now" && (
+      {props.liveNow && row.live.kind === "now" && (
         <div className={styles["work-plan-act"]}>
           <span className={styles["work-plan-act-kind"]}>{LIVE_NOW}</span>
           <span>{row.live.text}</span>
-          <span className={styles["work-plan-act-when"]}>{sinceText(row.live, props.now)}</span>
+          <span className={styles["work-plan-act-when"]}>
+            {sinceText(row.live.startedAt, props.now)}
+          </span>
         </div>
+      )}
+      {delegates.map((delegate) => (
+        <DelegateItem key={delegate.key} delegate={delegate} now={props.now} />
+      ))}
+      {folded.kind === "folded" && (
+        <details className={styles["work-plan-delegate-fold"]}>
+          <summary className={styles["work-plan-fold"]}>
+            {`${DELEGATES_DONE} ${String(folded.delegates.length)} つ`}
+          </summary>
+          {folded.delegates.map((delegate) => (
+            <DelegateItem key={delegate.key} delegate={delegate} now={props.now} />
+          ))}
+        </details>
       )}
       {row.touched.length > 0 && (
         <div className={styles["work-plan-act"]} data-kind="touched">
@@ -298,6 +381,37 @@ function LiveBlock(props: { readonly row: WorkPlanRow; readonly now: number }): 
       )}
     </div>
   )
+}
+
+/** 「任せた」の行。役の名前と進みの最新の1行。済んだ役は ✓ を付ける（文言は役の1行のまま）。 */
+function DelegateItem(props: {
+  readonly delegate: WorkPlanDelegate
+  readonly now: number
+}): ReactElement {
+  const { delegate } = props
+  return (
+    <div className={styles["work-plan-act"]} data-kind="delegate" data-state={delegate.state}>
+      <span className={styles["work-plan-act-kind"]}>{LIVE_DELEGATE}</span>
+      <span>
+        {delegate.name}
+        {(delegate.state === "done" || delegate.text !== "") && DELEGATE_SEPARATOR}
+        {delegate.state === "done" && (
+          <>
+            <span className={styles["work-plan-lap-mark"]} data-result="fixed">
+              {LAP_MARK.fixed}
+            </span>{" "}
+          </>
+        )}
+        {delegate.text}
+      </span>
+      <span className={styles["work-plan-act-when"]}>{sinceText(delegate.since, props.now)}</span>
+    </div>
+  )
+}
+
+function foldedLapsText(count: number): string {
+  const range = count === 1 ? "1周目" : `1〜${String(count)}周目`
+  return `${range} ${LAP_MARK.rejected} ${String(count)} 回`
 }
 
 function slotKeyOf(slot: WorkPlanSlot): string {

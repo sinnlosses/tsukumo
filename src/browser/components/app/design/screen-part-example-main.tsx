@@ -157,6 +157,8 @@ function planRow(
       state === "upcoming" ? { kind: "unknown" } : { kind: "known", milliseconds: seconds * 1000 },
     summary,
     lap: 1,
+    laps: [],
+    delegates: [],
     touched: state === "upcoming" ? [] : [`${key}.ts`],
     live:
       state === "current"
@@ -168,7 +170,42 @@ function planRow(
 const PLAN_ROWS: readonly WorkPlanRow[] = [
   planRow("1", "done", "今の形を調べる", 100, "目盛りの数は定数から来ていた。"),
   planRow("2", "skipped", "古い形を残す", 0, "呼び出しが無いので飛ばした。"),
-  planRow("3", "current", "表示の層を直している", 90, ""),
+  {
+    ...planRow("3", "current", "表示の層を直している", 90, ""),
+    lap: 2,
+    laps: [
+      {
+        key: "1-rejected",
+        label: "1周目",
+        result: "rejected",
+        text: "幅 390 で数字が重なると差し戻された。",
+        duration: { kind: "known", milliseconds: 60_000 },
+      },
+      {
+        key: "1-fixed",
+        label: "直し",
+        result: "now",
+        text: "",
+        duration: { kind: "known", milliseconds: 30_000 },
+      },
+    ],
+    delegates: [
+      {
+        key: "agent-1",
+        name: "画を撮る役",
+        state: "running",
+        text: "幅 1400 の2枚目を撮っている",
+        since: { kind: "restored" },
+      },
+      {
+        key: "agent-2",
+        name: "型の検査を先に回す役",
+        state: "done",
+        text: "通った",
+        since: { kind: "restored" },
+      },
+    ],
+  },
   planRow("4", "upcoming", "テストと画で確かめる", 0, ""),
 ]
 
