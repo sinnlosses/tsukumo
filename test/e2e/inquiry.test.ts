@@ -149,6 +149,7 @@ test.describe("お伺い", () => {
     expect(await inquiry.locator("details table").count()).toBe(0)
     expect(await detail.count()).toBe(0)
     expect(await inquiry.getByText("⚠ 戻せない").count()).toBe(1)
+    await expect(inquiry.getByRole("radio", { name: /A に置く/ })).toBeChecked()
 
     const tops = await Promise.all(
       ["聞く理由", "事実", "おすすめの理由"].map(async (label) => {
