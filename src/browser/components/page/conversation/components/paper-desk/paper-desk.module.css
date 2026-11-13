@@ -68,7 +68,7 @@
 .paper-margin {
   --paper-margin-max-width: 260px;
   --paper-margin-min-width: 190px;
-  --paper-margin-padding: 42px 22px 0 28px;
+  --paper-margin-padding: calc(42px + var(--stage-tools-room, 0px)) 22px 0 28px;
   flex: 0 1 var(--paper-margin-max-width);
   display: flex;
   flex-direction: column;

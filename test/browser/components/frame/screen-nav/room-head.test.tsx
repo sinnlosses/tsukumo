@@ -1,7 +1,11 @@
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
-import { RoomHead } from "../../../../../src/browser/components/frame/screen-nav/room-head.tsx"
+import {
+  RoomHead,
+  RoomHeadScope,
+  RoomHeadTools,
+} from "../../../../../src/browser/components/frame/screen-nav/room-head.tsx"
 import type { TaskSummaryItem } from "../../../../../src/shared/repository/task-summary.ts"
 import {
   INITIAL_SESSION_STATE,
@@ -24,7 +28,13 @@ afterEach(() => {
 
 function renderRoomHead(state: Partial<SessionState>, spy: (command: SentCommand) => void): void {
   putSession({ ...INITIAL_SESSION_STATE, ...state }, spy)
-  render(<RoomHead />, { wrapper: queryClientWrapper() })
+  render(
+    <RoomHeadScope>
+      <RoomHead />
+      <RoomHeadTools />
+    </RoomHeadScope>,
+    { wrapper: queryClientWrapper() },
+  )
 }
 
 function task(id: string, waitingFor: readonly string[]): TaskSummaryItem {
@@ -58,6 +68,16 @@ describe("部屋の頭", () => {
       ["設定", "#settings"],
     ])
     expect(screen.getByRole("link", { name: /^文脈/ }).getAttribute("href")).toBe("#token-usage")
+  })
+
+  it("入口は右上の群にあり、左の群には部屋の名前・仕事と雑談・状態だけが残る", () => {
+    renderRoomHead({ tasks: { kind: "no-beads" } }, () => {})
+
+    const count = (selector: string): number => document.querySelectorAll(selector).length
+    expect(count('[data-region="room-head"] a')).toBe(0)
+    expect(count('[data-region="room-head"] [role="radio"]')).toBe(2)
+    expect(count('[data-region="room-tools"] a')).toBe(4)
+    expect(count('[data-region="room-tools"] button')).toBe(1)
   })
 
   it("開いている紙の札だけが aria-current を持つ", async () => {

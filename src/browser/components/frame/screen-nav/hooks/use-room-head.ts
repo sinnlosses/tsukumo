@@ -1,5 +1,5 @@
 // 新しい器「舞台と紙」の部屋の頭のロジック。
-// 部屋の名前（押すとセッションの一覧）・仕事と雑談の切り替え・状態・「文脈 n%」・ほかの画面の札・探すを、見た目が受け取れる形まで畳んで返す。
+// 部屋の名前（押すとセッションの一覧）・仕事と雑談の切り替え・状態・「文脈 n%」・ほかの画面の入口・探すを、見た目が受け取れる形まで畳んで返す。
 //
 // 札は `<a href>` で、紙の開閉の正典は `location.hash` のまま。
 // 仕事と雑談の切り替えの表示はサーバから届いた値だけに従い、押した側へ先に倒さない。
@@ -11,7 +11,6 @@ import {
   type ConversationMoment,
 } from "../../../../../shared/session/conversation-moment.ts"
 import { useContextUsage } from "../../../../domain/context-usage.ts"
-import type { Screen } from "../../../../stores/location-hash.ts"
 import { rpc } from "../../../../stores/rpc.ts"
 import { useScreen, useScreenHref } from "../../../../stores/screen.tsx"
 import { useRestartRefused, useSession } from "../../../../stores/session.ts"
@@ -25,7 +24,7 @@ export type RoomStateTone = ConversationMoment | "chat"
 
 /** 部屋の頭の札1つ。 */
 export type RoomHeadGate = {
-  readonly screen: Screen
+  readonly screen: "tasks" | "achievement" | "character" | "settings"
   readonly label: string
   readonly href: string
   /** その紙を開いているか。 */
@@ -84,7 +83,7 @@ export function useRoomHead(): RoomHeadView {
   const project = useProjectName()
   const { tag, switcher } = useSessionSwitcher(room, project)
 
-  const gateOf = (screen: Screen, label: string): RoomHeadGate => ({
+  const gateOf = (screen: RoomHeadGate["screen"], label: string): RoomHeadGate => ({
     screen,
     label,
     href: screenHref(screen),

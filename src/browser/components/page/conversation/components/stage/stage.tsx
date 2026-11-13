@@ -20,6 +20,8 @@ type StageProps = {
   readonly covered: boolean
   /** 覆いを押したとき（紙を閉じる）。 */
   readonly onUncover: () => void
+  /** 器の右上に置く入口の群。覆いの上に残す。 */
+  readonly tools: ReactNode
   /** 舞台に立たせるもの（立ち絵と吹き出し）。 */
   readonly figure: ReactNode
   /** 舞台の右の場所に置くもの（紙・欄外・浮く入力欄）。 */
@@ -40,6 +42,7 @@ export function Stage(props: StageProps): ReactElement {
       <div className={styles["stage-desk"]} inert={props.covered}>
         {props.desk}
       </div>
+      <div className={styles["stage-tools"]}>{props.tools}</div>
       {props.covered && (
         // oxlint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- キーでは紙の Esc で閉じる
         <div className={styles["stage-veil"]} aria-hidden="true" onClick={props.onUncover} />

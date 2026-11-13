@@ -1,20 +1,19 @@
-/* 部屋の頭。値は見本 `docs/history/mockup/ui-rebuild-2026-11-12/whole.html` の `.room`・`.room-pick`・`.gate`・`.room-state`・`.meter`・`.room-nav`。
+/* 部屋の頭の左の群。値は見本 `docs/history/mockup/ui-rebuild-2026-11-12/whole.html` の `.room`・`.room-pick`・`.room-state`。
    背景の上に直に字を置くので、字に影を敷いて読めるようにする。 */
 .room-head {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: var(--stack-tight) var(--inline-control);
-  align-items: center;
+  display: flex;
+  flex-direction: column;
+  gap: var(--stack-tight);
+  align-items: flex-start;
   max-width: 336px;
   color: var(--ink);
   text-shadow: 0 1px 10px rgb(0 0 0 / 0.8);
 }
-/* 押せる地の左の余白のぶん左へずらし、字の左端を状態の行とそろえる（札の並びも同じ）。 */
+/* 押せる地の左の余白のぶん左へずらし、字の左端を状態の行とそろえる。 */
 .room-head-pick {
   display: inline-flex;
   align-items: center;
   gap: var(--inline-control);
-  justify-self: start;
   max-width: 100%;
   padding: 0 var(--inline-tight);
   overflow: hidden;
@@ -74,62 +73,48 @@
 .room-head-state[data-state="stumble"] i {
   background: var(--state-ng);
 }
-.room-head-meter,
-.room-head-gate {
-  border-radius: var(--radius-md);
-  color: var(--ink-soft);
-  text-decoration: none;
-  text-shadow: inherit;
-}
-.room-head-meter {
+/* 右上の群。押せる地のボタンを並べ、背景の上でも読めるよう地を敷く。 */
+.room-tools {
   display: flex;
+  flex-wrap: wrap;
+  gap: var(--stack-tight) var(--inline-tight);
+  justify-content: flex-end;
+  min-width: 0;
+}
+.room-tools-nav {
+  display: contents;
+}
+.room-tools-button {
+  display: inline-flex;
   align-items: center;
   gap: var(--inline-tight);
-  justify-self: end;
-  padding: 0 var(--inline-tight);
-  font: var(--font-label) var(--font-mono);
+  padding: var(--stack-tight) var(--inline-control);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--ground) 62%, transparent);
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 0.14);
+  color: var(--ink-soft);
+  font-size: var(--font-secondary);
+  line-height: 1.4;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
 }
-.room-head-meter i {
-  width: 34px;
+.room-tools-button i {
+  width: 28px;
   height: 4px;
   border-radius: var(--radius-sm);
   background: linear-gradient(
     90deg,
-    var(--ink-soft) var(--room-head-meter-fill),
-    rgb(255 255 255 / 0.2) var(--room-head-meter-fill)
+    var(--ink-soft) var(--room-tools-meter-fill),
+    rgb(255 255 255 / 0.2) var(--room-tools-meter-fill)
   );
 }
-.room-head-nav {
-  display: flex;
-  flex-wrap: wrap;
-  translate: calc(var(--inline-control) * -1);
-}
-.room-head-gate {
-  padding: var(--stack-tight) var(--inline-control);
-  font-size: var(--font-secondary);
-}
-.room-head-search {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--inline-tight);
-  justify-self: end;
-  padding: var(--stack-tight) var(--inline-tight);
-  border: 0;
-  border-radius: var(--radius-md);
-  background: none;
-  color: var(--ink-soft);
-  font-size: var(--font-secondary);
-  text-shadow: inherit;
-  cursor: pointer;
-}
-.room-head-search kbd {
+.room-tools-button kbd {
   background: rgb(20 18 26 / 0.55);
 }
-.room-head-search:hover,
-.room-head-meter:hover,
-.room-head-gate:hover,
-.room-head-meter[aria-current="page"],
-.room-head-gate[aria-current="page"] {
-  background: rgb(255 255 255 / 0.1);
+.room-tools-button:hover,
+.room-tools-button[aria-current="page"] {
+  background: rgb(255 255 255 / 0.16);
   color: var(--ink);
 }

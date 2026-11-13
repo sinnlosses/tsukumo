@@ -3,7 +3,7 @@
 
 import { RunSettingGroup } from "../../features/run-setting/run-setting-group.tsx"
 import { TaskSheet } from "../../features/task-board/task-sheet.tsx"
-import { RoomHead } from "../frame/screen-nav/room-head.tsx"
+import { RoomHead, RoomHeadScope, RoomHeadTools } from "../frame/screen-nav/room-head.tsx"
 import { ScreenNav } from "../frame/screen-nav/screen-nav.tsx"
 import { SettingsScreen } from "../frame/screen-nav/settings-screen.tsx"
 import { TodayLamp } from "../frame/screen-nav/today-lamp.tsx"
@@ -47,9 +47,17 @@ export const LAYOUT_SCREENS = {
   conversation: {
     classic: <Conversation shell={{ kind: "classic" }} />,
     stage: (
-      <Conversation
-        shell={{ kind: "stage", margin: <TurnList />, head: <RoomHead />, today: <TodayLamp /> }}
-      />
+      <RoomHeadScope>
+        <Conversation
+          shell={{
+            kind: "stage",
+            margin: <TurnList />,
+            head: <RoomHead />,
+            tools: <RoomHeadTools />,
+            today: <TodayLamp />,
+          }}
+        />
+      </RoomHeadScope>
     ),
   },
   overlay: {

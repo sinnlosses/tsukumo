@@ -30,7 +30,7 @@ import { Stage, type StagePosture } from "./components/stage/stage.tsx"
 
 /**
  * 描く器。
- * 新しい器の欄外に置くやり取りの並びと、舞台の左上に置く部屋の頭は、ほかの画面の部品の中身なので、画面の登録表から受け取る。
+ * 新しい器の欄外に置くやり取りの並びと、舞台の左上に置く部屋の頭、舞台の器の右上に置く入口の群は、ほかの画面の部品の中身なので、画面の登録表から受け取る。
  */
 export type ConversationShell =
   | { readonly kind: "classic" }
@@ -38,6 +38,7 @@ export type ConversationShell =
       readonly kind: "stage"
       readonly margin: ReactNode
       readonly head: ReactNode
+      readonly tools: ReactNode
       readonly today: ReactNode
     }
 
@@ -85,6 +86,7 @@ export function PresentationalConversation(props: PresentationalConversationProp
           chatMode={props.chatMode}
           covered={props.covered}
           onUncover={props.onUncover}
+          tools={props.shell.tools}
           figure={
             <CharacterView
               hands={<PhoneActivity />}

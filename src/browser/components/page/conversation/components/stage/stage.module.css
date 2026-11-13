@@ -61,6 +61,24 @@
   z-index: 2;
   background: rgb(12 10 16 / 0.52);
 }
+/* 右上の入口の群。働く・渡すでは欄外の列の幅（1400px 幅で欄外の列が 240px、右の余白が 22px）に収め、折り返す。
+   欄外の列は `--stage-tools-room` のぶん上端を空ける。迎えるでは右の地の上に1行で並べる。 */
+.stage-tools {
+  --stage-tools-width: 216px;
+  position: absolute;
+  top: 12px;
+  right: 22px;
+  z-index: 3;
+  display: flex;
+  justify-content: flex-end;
+  max-width: min(var(--stage-tools-width), calc(100% - var(--stage-width) - 22px));
+}
+.stage-shell:not([data-posture="greet"]) {
+  --stage-tools-room: 64px;
+}
+.stage-shell[data-posture="greet"] .stage-tools {
+  max-width: calc(100% - var(--stage-width) - 44px);
+}
 /* 狭い画面（760px 以下）。舞台は出さず、縦1列に積む。
    上から紙（残りの高さ）・キャラクターの行・入力欄。迎えるでは、キャラクターの行を紙の上に置く。
    紙と入力欄は `.paper`・`.paper-dock`（`paper-desk` の class）の `order` で並べる。 */
@@ -83,7 +101,8 @@
   .stage-desk {
     display: contents;
   }
-  .stage-veil {
+  .stage-veil,
+  .stage-tools {
     display: none;
   }
 }
