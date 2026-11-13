@@ -114,6 +114,9 @@ describe("Chart の札を節の外から出す", () => {
       plugins: { colors: { enabled: true }, legend: { display: true } },
       set: vi.fn<() => void>(),
     }
+    static readonly overrides = {
+      bar: { scales: { _value_: {} } },
+    }
     static readonly register = vi.fn<() => void>()
     readonly data = { labels: ["架空1", "架空2"], datasets: [{ label: "架空系列", data: [3, 1] }] }
     readonly tooltip = { setActiveElements: vi.fn<(active: unknown, position: unknown) => void>() }

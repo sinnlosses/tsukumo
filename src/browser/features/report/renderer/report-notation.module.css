@@ -18,5 +18,6 @@
 @import "./report-notation-body.css";
 @import "./report-notation-list.css";
 @import "./report-notation-table.css";
+@import "./report-notation-number.css";
 @import "./report-notation-inline.css";
 @import "./report-notation-mark.css";

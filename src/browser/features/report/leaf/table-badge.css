@@ -10,6 +10,43 @@
   box-sizing: border-box;
 }
 
+/* 表の状態のセルと凡例も、印の色と語の対にして地は持たない。 */
+:root[data-shell="stage"] .table-cell-badge {
+  padding: 0;
+  border: 0;
+  background: none;
+}
+:root[data-shell="stage"] .table-cell-badge[data-tone="ok"] {
+  color: var(--state-ok);
+}
+:root[data-shell="stage"] .table-cell-badge[data-tone="warn"] {
+  color: var(--state-warn);
+}
+:root[data-shell="stage"] .table-cell-badge[data-tone="ng"] {
+  color: var(--state-ng);
+}
+
+/* 新しい器の対応表は、印を地のない太字にして、続く短い語と対にする（「失敗」は ✕ と語で分け、色だけに頼らない）。 */
+:root[data-shell="stage"] .matrix-mark-badge {
+  min-inline-size: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-weight: 800;
+}
+:root[data-shell="stage"] .matrix-mark-badge[data-tone="ok"] {
+  color: var(--state-ok);
+}
+:root[data-shell="stage"] .matrix-mark-badge[data-tone="warn"] {
+  color: var(--state-warn);
+}
+:root[data-shell="stage"] .matrix-mark-badge[data-tone="ng"] {
+  color: var(--state-ng);
+}
+:root[data-shell="stage"] .matrix-mark-badge[data-tone="neutral"] {
+  color: var(--ink-quiet);
+}
+
 .matrix-emphasis-badge {
   margin-inline-start: var(--space-xs);
 }

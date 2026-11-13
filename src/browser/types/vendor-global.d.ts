@@ -78,6 +78,13 @@ declare global {
         readonly legend: { display: boolean }
       }
     }
+    /** 種類ごとの既定。`bar` の `scales._value_` は値の軸（向きによらず）の既定。 */
+    readonly overrides: Readonly<
+      Record<
+        string,
+        { readonly scales?: Readonly<Record<string, Record<string, unknown> | undefined>> }
+      >
+    >
     /**
      * `beforeUpdate` の `chart.config` は、`new Chart` に渡した config そのもの。
      */

@@ -1,0 +1,165 @@
+/* 新しい器の紙の「数」の族（主要な数・表・対応表・グラフ）。
+   図と表は題（上）・本体・脚の3つでそろえ、色は数字でなく棒・線・点に付ける。 */
+:root[data-shell="stage"] .detail-block {
+  /* 主要な数。箱で囲まず余白で分け、前→後は絶対値で添える。 */
+  & .report-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--stack-group) var(--stack-section);
+  }
+  & .report-captioned:has(> .report-stats) {
+    inline-size: auto;
+    align-items: flex-start;
+    margin-inline: 0;
+  }
+  & .report-stat {
+    display: flex;
+    flex-direction: column;
+    gap: var(--stack-tight);
+    min-inline-size: 120px;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    font-size: var(--font-secondary);
+    line-height: 1.5;
+  }
+  & .report-stat b,
+  & .report-stat strong {
+    display: block;
+    font-size: var(--font-lead);
+    line-height: 1.25;
+    color: var(--ink);
+  }
+  & .report-stat b::after,
+  & .report-stat strong::after {
+    content: none;
+  }
+  & .report-stat-total {
+    padding-inline-start: var(--inline-tight);
+    font-size: var(--font-body);
+  }
+  & .report-stat-label {
+    color: var(--ink-soft);
+  }
+  & .report-stat-delta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0 var(--inline-control);
+    font-size: var(--font-secondary);
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-quiet);
+  }
+  & .report-stat-before,
+  & .report-stat-better,
+  & .report-stat-worse {
+    margin-inline-end: 0;
+    font-size: inherit;
+  }
+  & .report-stat-after {
+    padding-inline-start: 0.35em;
+  }
+  & .report-stat-change,
+  & .report-stat-change-better,
+  & .report-stat-change-worse {
+    display: inline;
+    margin: 0;
+    padding: 0;
+    background: none;
+    font-weight: 400;
+    color: var(--ink-quiet);
+  }
+  & .report-stat-delta > svg {
+    flex: none;
+    width: 120px;
+    height: 26px;
+    overflow: visible;
+  }
+  & .report-stat-delta > svg polyline {
+    fill: none;
+    stroke: color-mix(in srgb, var(--ink) 26%, transparent);
+    stroke-width: 2;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+    vector-effect: non-scaling-stroke;
+  }
+  & .report-stat-delta > svg circle {
+    fill: var(--chart-series-1);
+  }
+  & .report-stat-meter {
+    block-size: 6px;
+    margin: 0;
+    border-radius: var(--radius-sm);
+    background: color-mix(in srgb, var(--chart-series-1) 24%, transparent);
+  }
+  & .report-stat-meter-fill {
+    border-radius: var(--radius-sm);
+  }
+  & .report-stat-target {
+    border-block-start: 0;
+    margin-block-start: 0;
+    padding-block-start: 0;
+  }
+  & .report-stat-verdict {
+    padding: 0;
+    background: none;
+    font-weight: 600;
+  }
+  & .report-stat.report-stat-missed {
+    border-color: transparent;
+  }
+
+  /* 表。強調は1行を太字にするだけで、差し色（キャラクターの色）は使わない。数の棒は灰、強調の行だけ紙の青。 */
+  & tbody tr:has(.report-row-emphasis-mark) td {
+    background: none;
+    font-weight: 700;
+  }
+  & .report-cell-bar {
+    background: color-mix(in srgb, var(--ink) 14%, transparent);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  }
+  & tbody tr:has(.report-row-emphasis-mark) .report-cell-bar,
+  & tbody tr:has(.report-row-emphasis-mark) td:has(.report-column-emphasis-mark) .report-cell-bar {
+    background: color-mix(in srgb, var(--chart-series-1) 40%, transparent);
+  }
+  & th:has(.report-column-emphasis-mark),
+  & td:has(.report-column-emphasis-mark),
+  & tbody tr:has(.report-row-emphasis-mark) td:has(.report-column-emphasis-mark) {
+    background: var(--surface-raised);
+  }
+  & tbody td:has(.report-column-emphasis-mark) .report-cell-bar {
+    background: color-mix(in srgb, var(--ink) 14%, transparent);
+  }
+
+  /* 対応表。印と短い語を1行に並べ、「該当なし」は薄い字で失敗と分ける。 */
+  & .report-matrix-note {
+    display: inline;
+    margin: 0;
+    padding-inline-start: var(--inline-tight);
+    font-size: inherit;
+    color: var(--ink-soft);
+  }
+  & .report-matrix .table-scroll td {
+    white-space: nowrap;
+  }
+
+  /* 図の題は本体の上に置く。表は元から上。 */
+  & .report-captioned > .report-caption {
+    order: -1;
+    align-self: flex-start;
+    text-align: left;
+  }
+  & .report-captioned > .report-caption .report-caption-number {
+    font-family: inherit;
+    font-size: var(--font-secondary);
+    font-weight: 600;
+    color: var(--ink-quiet);
+  }
+  & .report-captioned > .report-caption .report-caption-text {
+    font-size: var(--font-body);
+    font-weight: 700;
+    color: var(--ink);
+    text-wrap: balance;
+  }
+}

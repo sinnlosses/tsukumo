@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
-import { afterEach, beforeAll, describe, expect, it } from "vitest"
+import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest"
 
 import {
   DirectLeaf,
@@ -13,8 +13,13 @@ beforeAll(async () => {
   await loadMarkdown()
 })
 
+beforeEach(() => {
+  document.documentElement.dataset["shell"] = "stage"
+})
+
 afterEach(() => {
   cleanup()
+  delete document.documentElement.dataset["shell"]
 })
 
 type MatrixPart = Extract<A2uiReportComponent, { readonly component: "Matrix" }>
@@ -61,6 +66,13 @@ function renderPart(part: MatrixPart) {
 }
 
 describe("Matrix の部品", () => {
+  it("旧い器では補足の無いセルに状態の語を足さない", () => {
+    delete document.documentElement.dataset["shell"]
+    const { container } = renderPart(partOf(ALL_STATUSES))
+
+    expect(container.querySelectorAll("[class*='matrix-note']")).toHaveLength(0)
+  })
+
   it("交点の印は role=img と状態の語を持ち、数は行 × 列と一致する", () => {
     renderPart(partOf(ALL_STATUSES))
 
@@ -75,16 +87,18 @@ describe("Matrix の部品", () => {
 
     expect(["甲", "乙", "架空のA", "架空のB"].filter((word) => !text.includes(word))).toEqual([])
     expect(["存在しない字"].filter((word) => !text.includes(word))).toEqual(["存在しない字"])
-    expect(container.querySelectorAll("[aria-hidden='true']")).toHaveLength(4)
+    expect(container.querySelectorAll("[aria-hidden='true']")).toHaveLength(8)
   })
 
-  it("補足のセルは印の下に補足の字を出し、読み上げの語に補足を括弧で添える", () => {
+  it("補足のセルは印に続けて補足の字を出し（補足の無いセルは状態の語）、読み上げの語に補足を括弧で添える", () => {
     const { container } = renderPart(
       partOf([{ name: "架空のA", cells: ["ok", { status: "warn", note: "7日まで" }] }]),
     )
 
     expect(screen.getByRole("img", { name: "要注意（7日まで）" }).textContent).toBe("！")
-    expect(container.querySelector("[class*='matrix-note']")?.textContent).toBe("7日まで")
+    expect(
+      Array.from(container.querySelectorAll("[class*='matrix-note']"), (note) => note.textContent),
+    ).toEqual(["OK", "7日まで"])
   })
 
   it("採った列は見出しに「推奨」の札を付け、見出し・セル・末尾の行のその列に印を置く", () => {
@@ -107,13 +121,11 @@ describe("Matrix の部品", () => {
     ])
   })
 
-  it("補足・採った列・末尾の行の無い格子は、札・補足・tfoot を出さない", () => {
+  it("採った列・末尾の行の無い格子は、札・tfoot を出さない", () => {
     const { container } = renderPart(partOf(ALL_STATUSES))
 
     expect(
-      container.querySelectorAll(
-        "[data-tone='accent'], [class*='matrix-note'], [class*='column-emphasis-mark'], tfoot",
-      ),
+      container.querySelectorAll("[data-tone='accent'], [class*='column-emphasis-mark'], tfoot"),
     ).toHaveLength(0)
   })
 

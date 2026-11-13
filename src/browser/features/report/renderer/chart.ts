@@ -22,8 +22,11 @@ import { loadVendorScript } from "./vendor-script.ts"
 
 const CHART_SRC = vendorAssetPath("chart.umd.min.js")
 
-const MAX_BAR_THICKNESS = 56
-const BAR_RADIUS = 3
+const MAX_BAR_THICKNESS = 14
+const BAR_RADIUS = 4
+const LINE_WIDTH = 2
+const LINE_END_DOT_RADIUS = 4
+const MAX_VALUE_TICKS = 3
 const MUTED_BAR_PERCENT = 26
 
 const seriesOptionsSchema = z.object({
@@ -76,7 +79,24 @@ export function loadChart(element: HTMLElement): Promise<void> {
     Chart.defaults.scale.ticks.color = resolveColor(element, "--ink-quiet")
     Chart.defaults.plugins.legend.display = false
     Chart.defaults.scale.grid.display = false
-    Chart.defaults.set("scales.linear", { grid: { display: true } })
+    // 値の目盛りは3本まで。棒は値を先端に直に書くので、値の軸の目盛りも線も引かない。
+    Chart.defaults.set("scales.linear", {
+      grid: { display: true },
+      ticks: { maxTicksLimit: MAX_VALUE_TICKS },
+    })
+    const barValueAxis = Chart.overrides["bar"]?.scales?.["_value_"]
+    if (barValueAxis !== undefined) {
+      Object.assign(barValueAxis, {
+        grid: { display: false },
+        ticks: { display: false },
+        border: { display: false },
+      })
+    }
+    Chart.defaults.set("datasets.line", {
+      borderWidth: LINE_WIDTH,
+      pointRadius: (context: { dataIndex: number; dataset: { data: readonly unknown[] } }) =>
+        context.dataIndex === context.dataset.data.length - 1 ? LINE_END_DOT_RADIUS : 0,
+    })
     Chart.defaults.set("datasets.bar", {
       maxBarThickness: MAX_BAR_THICKNESS,
       borderRadius: BAR_RADIUS,
