@@ -40,12 +40,13 @@ describe("Dispatch", () => {
     expect(document.title).toBe("tsukumo")
   })
 
-  it("答え待ちがあるとタブのタイトルの先頭に「● 」を付ける", () => {
+  it("答え待ちがあるとタブのタイトルの頭に「● あなたの番」を付ける", () => {
     document.title = "tsukumo"
     renderDispatch({
+      turn: { kind: "running", startedAt: 0 },
       pending: [{ kind: "permission", id: "ask-1", toolName: "Bash", input: {}, askedAt: 0 }],
     })
 
-    expect(document.title).toBe("● tsukumo")
+    expect(document.title).toBe("● あなたの番 ― tsukumo")
   })
 })

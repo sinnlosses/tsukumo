@@ -272,7 +272,23 @@ describe("useSessionConnection（ページが隠れている間）", () => {
     expect(useSession.getState().state.pending).toEqual([PERMISSION])
   })
 
-  it("隠れている間、pending-changed を含まないフレームは表に戻るまで溜まる", () => {
+  it("隠れていても turn-finished を含むフレームはすぐ渡す（裏のタブの題を「済んだ」にする）", () => {
+    putSession(INITIAL_SESSION_STATE)
+    const connected = connect()
+
+    setPageHidden(true)
+    connected.onFrame(eventsFrame(REQUEST))
+    act(() => {
+      connected.onFrame(eventsFrame({ kind: "turn-finished", outcome: { kind: "interrupted" } }))
+    })
+
+    expect(useSession.getState().state.turn).toMatchObject({
+      kind: "finished",
+      ending: { kind: "interrupted" },
+    })
+  })
+
+  it("隠れている間、局面を変えるイベントを含まないフレームは表に戻るまで溜まる", () => {
     putSession(INITIAL_SESSION_STATE)
     const connected = connect()
     const sets = countSets()

@@ -69,6 +69,16 @@ describe("resolvePortraitMotion", () => {
     expect(resolvePortraitMotion(input, 1000 + SUCCESS_MOTION_WINDOW_MS - 1)).toBe("success")
   })
 
+  it("中断で終わった直後も「完了の反応」を出し、その残り時間で戻す", () => {
+    const input: PortraitMotionInput = {
+      turn: { kind: "finished", startedAt: 0, finishedAt: 1000, ending: { kind: "interrupted" } },
+      lastToolFailureAt: undefined,
+      draftingReport: false,
+    }
+    expect(resolvePortraitMotion(input, 1000 + SUCCESS_MOTION_WINDOW_MS - 1)).toBe("success")
+    expect(nextPortraitMotionTransitionDelayMs(input, 1000)).toBe(SUCCESS_MOTION_WINDOW_MS)
+  })
+
   it("完了の反応の期間を過ぎたら「読んでいる」に戻る", () => {
     const input: PortraitMotionInput = {
       turn: { kind: "finished", startedAt: 0, finishedAt: 1000, ending: { kind: "ended" } },

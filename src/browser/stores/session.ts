@@ -9,7 +9,7 @@ import { create } from "zustand"
 import { type CommandRefusalReason, isCommandRefusalReason } from "../../shared/command.ts"
 import { PROTOCOL_VERSION, type ServerFrame } from "../../shared/frame.ts"
 import type { CommandClient } from "../../shared/rpc.ts"
-import type { StampedEvent } from "../../shared/session/session-event.ts"
+import type { SessionEvent, StampedEvent } from "../../shared/session/session-event.ts"
 import { applySessionEvent } from "../../shared/session/session-fold.ts"
 import {
   INITIAL_SESSION_STATE,
@@ -215,6 +215,14 @@ function resultOfFailure(error: unknown): CommandResult<never> {
   return { kind: "failed" }
 }
 
+/** 隠れていても溜めずに渡すイベント。答え待ち・ターンの終わり・続きのターン・セッションの終わりで、タブの題が変わる。 */
+const TAB_TITLE_EVENTS: ReadonlySet<SessionEvent["kind"]> = new Set([
+  "pending-changed",
+  "turn-finished",
+  "turn-resumed",
+  "session-ended",
+])
+
 type FrameBatch = {
   readonly push: (frame: ServerFrame) => void
   /** 溜めたフレームを渡さずに捨て、予約した呼び出しと `visibilitychange` の購読を外す。 */
@@ -225,7 +233,7 @@ type FrameBatch = {
  * 届いた `events` を次の描画の手前（`requestAnimationFrame`）まで溜め、到着順につないだ1つの `events` にして `receive` へ渡す。
  * ページが隠れている間（`document.hidden`）は渡さずに溜め続け、表に戻った `visibilitychange` で1回にまとめて渡す
  * （隠れたタブでも `requestAnimationFrame` が呼ばれるホストがあるので、描画の手前でも隠れていれば渡さない）。
- * ただし答え待ちの変化（`pending-changed`）を含むフレームは、隠れていても溜めた分と合わせてすぐ渡す（裏のタブのタイトルに答え待ちの印を付けるため）。
+ * ただし局面を変えるイベント（{@link TAB_TITLE_EVENTS}）を含むフレームは、隠れていても溜めた分と合わせてすぐ渡す（裏のタブの題を局面に合わせるため）。
  * `hello` は隠れていても溜めずにすぐ渡し、溜めていた `events` は捨てる（`hello` の姿がそれより新しい）。
  */
 function batchByAnimationFrame(receive: (frame: ServerFrame) => void): FrameBatch {
@@ -263,7 +271,7 @@ function batchByAnimationFrame(receive: (frame: ServerFrame) => void): FrameBatc
       queued.push(...frame.events)
       if (!document.hidden) {
         scheduled ??= requestAnimationFrame(flush)
-      } else if (frame.events.some(({ event }) => event.kind === "pending-changed")) {
+      } else if (frame.events.some(({ event }) => TAB_TITLE_EVENTS.has(event.kind))) {
         deliver()
       }
     },

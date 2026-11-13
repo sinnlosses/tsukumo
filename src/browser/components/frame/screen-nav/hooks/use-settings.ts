@@ -24,6 +24,7 @@ import {
 import type { ModelEffortSupport } from "../../../../../shared/session/session-event-setting.ts"
 import { resolveEffortSelect, type EffortSelect } from "../../../../domain/effort-label.ts"
 import { useSession } from "../../../../stores/session.ts"
+import { useAlertSetting, type ScreenNavSettingsAlert } from "./use-alert-setting.ts"
 import {
   useAppearanceColor,
   type ScreenNavSettingsColor,
@@ -70,6 +71,7 @@ export type ScreenNavSettings = {
   readonly launchSkill: ScreenNavSettingsLaunchSkill
   readonly shell: ScreenNavSettingsShell
   readonly singleKeys: ScreenNavSettingsSingleKeys
+  readonly alert: ScreenNavSettingsAlert
   /** 上書きが1つも無いときは押せない（戻す先が無い）。 */
   readonly resetDisabled: boolean
   readonly onReset: () => void
@@ -86,6 +88,7 @@ export function useSettings(): ScreenNavSettings {
   const launchSkill = useLaunchSkillSetting()
   const shell = useShellSetting()
   const singleKeys = useSingleKeySetting()
+  const alert = useAlertSetting()
   const [open, setOpen] = useState(false)
   const toggleRef = useRef<HTMLButtonElement>(null)
 
@@ -153,6 +156,7 @@ export function useSettings(): ScreenNavSettings {
     launchSkill,
     shell,
     singleKeys,
+    alert,
     toggleRef,
   }
 }

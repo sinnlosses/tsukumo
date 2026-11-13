@@ -4,6 +4,7 @@
 import { createRef } from "react"
 
 import { parseSessionId } from "../../../../shared/session/session-id.ts"
+import { DEFAULT_ALERT_SETTING } from "../../../stores/alert-setting.ts"
 import type {
   ScreenNavGate,
   ScreenNavParts,
@@ -102,6 +103,7 @@ const PARTS: ScreenNavParts = {
     launchSkill: { value: "", onChange: noop },
     shell: { value: "classic", onChange: noop },
     singleKeys: { value: true, onChange: noop },
+    alert: { value: DEFAULT_ALERT_SETTING, notice: { kind: "none" }, onChange: noop },
     resetDisabled: true,
     onReset: noop,
     toggleRef: createRef(),

@@ -175,20 +175,20 @@ describe("設定の歯車（帯の右端）", () => {
     ])
   })
 
-  it("ナビは5項目で、選んだ項目が aria-current になり面が替わる", () => {
+  it("ナビは6項目で、選んだ項目が aria-current になり面が替わる", () => {
     renderScreenNav()
     fireEvent.click(gear())
     const dialog = openedSettingsDialog()
-    const names = ["見た目", "セッションの既定", "演出", "タスクの実行", "ワークフロー"]
+    const names = ["見た目", "セッションの既定", "演出", "知らせ", "タスクの実行", "ワークフロー"]
 
     const current = (): (string | null)[] =>
       names.map((name) => within(dialog).getByRole("button", { name }).getAttribute("aria-current"))
 
-    expect(current()).toEqual(["page", null, null, null, null])
+    expect(current()).toEqual(["page", null, null, null, null, null])
 
     showFace("セッションの既定")
 
-    expect(current()).toEqual([null, "page", null, null, null])
+    expect(current()).toEqual([null, "page", null, null, null, null])
     expect(faceLabels()).toEqual(["モデル", "effort", "許可モード", "図の既定"])
 
     showFace("演出")
@@ -408,9 +408,9 @@ describe("設定の歯車（新しいセッションの既定）", () => {
 
     expect(
       within(drawer)
-        .getAllByText(/^(見た目|セッションの既定|演出|タスクの実行|ワークフロー)$/u)
+        .getAllByText(/^(見た目|セッションの既定|演出|知らせ|タスクの実行|ワークフロー)$/u)
         .map((heading) => heading.textContent),
-    ).toEqual(["見た目", "セッションの既定", "演出", "タスクの実行"])
+    ).toEqual(["見た目", "セッションの既定", "演出", "知らせ", "タスクの実行"])
     expect(within(drawer).getByText("領域の中の字")).toBeDefined()
   })
 

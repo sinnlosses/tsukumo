@@ -1,5 +1,5 @@
 // 設定の紙（`#settings`）の中身。
-// 動き方・見た目・このプロジェクトの群（`SETTINGS_GROUPS`）の見出しの下に、面の中身を1列で縦に並べ、末尾に「既定に戻す」を1つ置く。
+// 群（`SETTINGS_GROUPS`）の見出しの下に、面の中身を1列で縦に並べ、末尾に「既定に戻す」を1つ置く。
 import type { ReactElement } from "react"
 
 import { Button } from "../../../ui/button/button.tsx"

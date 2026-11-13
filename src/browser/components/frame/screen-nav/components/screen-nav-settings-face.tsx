@@ -1,12 +1,13 @@
 // 設定の面の表（`FACES`）と、その表から面を縦に並べた引き出しの中身（`ScreenNavSettingsBody`）。
 // 面は `FACES` に1行ずつ宣言し、足すときはここへ1行書けばダイアログのナビと面、引き出しの両方に出る（引き出しに出すかは `inDrawer`）。
 
-import { Palette, Play, SlidersHorizontal, Sparkles, Workflow } from "lucide-react"
+import { Bell, Palette, Play, SlidersHorizontal, Sparkles, Workflow } from "lucide-react"
 import { Fragment, type ComponentType, type ReactElement } from "react"
 
 import { Button } from "../../../ui/button/button.tsx"
 import { HStack } from "../../../ui/h-stack/h-stack.tsx"
 import { Text } from "../../../ui/text/text.tsx"
+import { ScreenNavSettingsAlertFace } from "./screen-nav-settings-alert.tsx"
 import { ScreenNavSettingsLookFace } from "./screen-nav-settings-look.tsx"
 import { ScreenNavSettingsWorkflowFace } from "./screen-nav-settings-workflow.tsx"
 import styles from "./screen-nav-settings.module.css"
@@ -64,6 +65,14 @@ export const FACES = [
     inDrawer: true,
   },
   {
+    key: "alert",
+    label: "知らせ",
+    icon: Bell,
+    Body: ScreenNavSettingsAlertFace,
+    foot: "reset",
+    inDrawer: true,
+  },
+  {
     key: "launch-skill",
     label: "タスクの実行",
     icon: Play,
@@ -84,10 +93,11 @@ export const FACES = [
 
 export type FaceKey = (typeof FACES)[number]["key"]
 
-/** 設定の紙で並べる群。見本の順で、面の中身を群の見出しの下に1列で並べる。「知らせ」は今の設定に項目が無いので無い。 */
+/** 設定の紙で並べる群。見本の順で、面の中身を群の見出しの下に1列で並べる。 */
 export const SETTINGS_GROUPS = [
   { label: "動き方", keys: ["session-default"] },
   { label: "見た目", keys: ["look", "reveal"] },
+  { label: "知らせ", keys: ["alert"] },
   { label: "このプロジェクト", keys: ["launch-skill", "workflow"] },
 ] as const satisfies readonly { readonly label: string; readonly keys: readonly FaceKey[] }[]
 

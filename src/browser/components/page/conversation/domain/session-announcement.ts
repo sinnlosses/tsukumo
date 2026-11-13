@@ -42,7 +42,9 @@ function momentTexts(previous: SessionState, next: SessionState): readonly strin
     case "ask":
       return ["お伺いが届いた"]
     case "deliver":
-      return ["レポートが届いた"]
+      return next.turn.kind === "finished" && next.turn.ending.kind === "interrupted"
+        ? ["止めた"]
+        : ["レポートが届いた"]
     case "stumble":
       return ["失敗で終わった"]
     case "greet":

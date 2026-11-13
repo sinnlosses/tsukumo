@@ -48,6 +48,15 @@ describe("announcementsBetween", () => {
     expect(announcementsBetween(working, failed)).toEqual(["失敗で終わった"])
   })
 
+  it("中断で終わったときは「止めた」", () => {
+    const working = fold(INITIAL_SESSION_STATE, REQUEST)
+    const interrupted = fold(working, {
+      kind: "turn-finished",
+      outcome: { kind: "interrupted" },
+    })
+    expect(announcementsBetween(working, interrupted)).toEqual(["止めた"])
+  })
+
   it("閉じたあとに続きのターンが始まると「続きを作業中」", () => {
     const finished = fold(INITIAL_SESSION_STATE, REQUEST, FINISH)
     expect(announcementsBetween(finished, fold(finished, { kind: "turn-resumed" }))).toEqual([

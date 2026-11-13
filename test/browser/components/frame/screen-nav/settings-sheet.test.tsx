@@ -49,18 +49,18 @@ function renderSheet(): void {
 }
 
 describe("設定の紙", () => {
-  it("群の表に、設定の面の5つがちょうど1回ずつ出る", () => {
+  it("群の表に、設定の面の6つがちょうど1回ずつ出る", () => {
     const grouped: readonly string[] = SETTINGS_GROUPS.flatMap((group) => group.keys)
 
     expect(grouped.toSorted()).toEqual(FACES.map((face) => face.key).toSorted())
   })
 
-  it("3つの群の見出しが見本の順に出る", () => {
+  it("4つの群の見出しが見本の順に出る", () => {
     renderSheet()
 
     expect(
       screen.getAllByRole("heading", { level: 2 }).map((heading) => heading.textContent),
-    ).toEqual(["動き方", "見た目", "このプロジェクト"])
+    ).toEqual(["動き方", "見た目", "知らせ", "このプロジェクト"])
   })
 
   it("今の設定の項目が全部出る", async () => {
@@ -73,6 +73,8 @@ describe("設定の紙", () => {
       "新しいセッションの既定の許可モード",
       "新しいセッションの図の既定",
       "書き上げる演出の速さ",
+      "通知する（このタブを見ていないときだけ）",
+      "鈴の音",
       "起動するスキル",
     ]) {
       expect(screen.getByLabelText(name), name).toBeDefined()
