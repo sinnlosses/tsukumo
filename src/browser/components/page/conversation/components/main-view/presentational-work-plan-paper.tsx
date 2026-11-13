@@ -1,19 +1,21 @@
 // 新しい器の紙に描くワークプラン。働くあいだは判定の行と計画を紙の頭に、終わったあとは同じ並びを紙の末尾の道筋に畳んで出す。
 
-import type { ReactElement } from "react"
+import { Fragment, type ReactElement } from "react"
 
 import { formatMeasured } from "../../../../../../shared/utils/elapsed-time.ts"
 import { InlineMarkdown } from "../../../../../features/report/markdown.tsx"
 import { Lamp, LampRow, type LampStepState } from "../../../../ui/lamp/lamp.tsx"
-import type {
-  FoldedWorkPlan,
-  WorkPlanRow,
-  WorkPlanRowState,
-  WorkPlanSlot,
+import {
+  type FoldedWorkPlan,
+  rowsOfSlot,
+  type WorkPlanRow,
+  type WorkPlanRowState,
+  type WorkPlanSlot,
 } from "../../domain/work-plan-row.ts"
 import type { WorkPlanPaperModel } from "./hooks/use-work-plan-paper.ts"
 import type { WorkQuietLine } from "./hooks/use-work-quiet.ts"
 import styles from "./main-view.module.css"
+import { AwayBriefBlock, ReadMark } from "./presentational-away-brief.tsx"
 import { PresentationalFailedPaper } from "./presentational-failed-paper.tsx"
 import { ASK_TAG, WorkPlanAskBlock } from "./presentational-work-plan-ask.tsx"
 import { LapList, LiveBlock, QuietAct } from "./presentational-work-plan-live.tsx"
@@ -113,6 +115,9 @@ export function PresentationalWorkPlanPaper(props: {
   }
   const quietRowKey = model.rows.find((row) => row.state === "current")?.key ?? ""
   const clock: PlanClock = { kind: "live", now: model.now, quietLine: model.quietLine, quietRowKey }
+  const { away } = model
+  const markKey =
+    away.kind === "brief" && away.markBeforeRowKey.kind === "row" ? away.markBeforeRowKey.key : ""
   return (
     <section className={styles["work-plan"]} aria-label={PLAN_LABEL}>
       <Stamp
@@ -122,6 +127,7 @@ export function PresentationalWorkPlanPaper(props: {
         elapsed={model.elapsed}
         estimate={model.estimate.kind === "shown" ? model.estimate.text : ""}
       />
+      {away.kind === "brief" && <AwayBriefBlock brief={away} />}
       {quietRowKey === "" && model.quietLine.quiet.kind !== "none" && (
         <div className={styles["work-plan-live"]}>
           <QuietAct line={model.quietLine} />
@@ -130,10 +136,13 @@ export function PresentationalWorkPlanPaper(props: {
       {model.rows.length > 0 && (
         <ol className={styles["work-plan-list"]}>
           {model.plan.folded.kind === "folded" && (
-            <FoldedItem folded={model.plan.folded} clock={CLOSED_CLOCK} />
+            <FoldedItem folded={model.plan.folded} clock={CLOSED_CLOCK} markKey={markKey} />
           )}
           {model.plan.slots.map((slot) => (
-            <SlotItem key={slotKeyOf(slot)} slot={slot} clock={clock} />
+            <Fragment key={slotKeyOf(slot)}>
+              {rowsOfSlot(slot).some((row) => row.key === markKey) && <ReadMark />}
+              <SlotItem slot={slot} clock={clock} />
+            </Fragment>
           ))}
         </ol>
       )}
@@ -212,8 +221,11 @@ function StoppedPaper(props: {
 function FoldedItem(props: {
   readonly folded: Extract<FoldedWorkPlan["folded"], { readonly kind: "folded" }>
   readonly clock: PlanClock
+  /** 印を前に引く行の `key`。畳んだ行の中にあれば畳みを開いて出す。引かないなら空。 */
+  readonly markKey: string
 }): ReactElement {
-  const { folded } = props
+  const { folded, markKey } = props
+  const marked = folded.rows.some((row) => row.key === markKey)
   const parts = [
     `済んだ ${String(folded.count)} 段`,
     ...(folded.duration.kind === "known" ? [formatMeasured(folded.duration)] : []),
@@ -222,11 +234,14 @@ function FoldedItem(props: {
   return (
     <li className={styles["work-plan-phase"]} data-state="done">
       <Lamp kind="step" state="done" sizePx={ROW_LAMP_SIZE_PX.other} />
-      <details className={styles["work-plan-phase-main"]}>
+      <details className={styles["work-plan-phase-main"]} open={marked}>
         <summary className={styles["work-plan-fold"]}>{parts.join(" ・ ")}</summary>
         <ol className={styles["work-plan-list"]}>
           {folded.rows.map((row) => (
-            <RowItem key={row.key} row={row} span="" clock={props.clock} />
+            <Fragment key={row.key}>
+              {row.key === markKey && <ReadMark />}
+              <RowItem row={row} span="" clock={props.clock} />
+            </Fragment>
           ))}
         </ol>
       </details>

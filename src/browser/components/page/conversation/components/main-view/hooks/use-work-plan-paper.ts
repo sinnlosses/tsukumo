@@ -18,9 +18,11 @@ import { useNowWhile } from "../../../../../../stores/clock.ts"
 import { useCurrentTurnSteps } from "../../../../../../stores/current-turn-step-list.ts"
 import { useMainViewTurns } from "../../../../../../stores/main-view-turn.ts"
 import { useSession } from "../../../../../../stores/session.ts"
+import type { AwayBrief } from "../../../domain/away-brief.ts"
 import { phaseRecapsOf } from "../../../domain/phase-recap.ts"
 import { turnResultsOf } from "../../../domain/turn-result.ts"
 import { NO_USUAL_TEXT, remainingEstimate, type UsualText } from "../../../domain/usual-duration.ts"
+import { askOf } from "../../../domain/work-plan-ask-row.ts"
 import { markFailedRow } from "../../../domain/work-plan-failed-row.ts"
 import {
   type FoldedWorkPlan,
@@ -35,6 +37,7 @@ import { useMainViewContent } from "../../../stores/main-view-content.ts"
 import { useUsualDurations } from "../../../stores/usual-duration.ts"
 import { remainingLinesOf } from "../domain/failed-paper.ts"
 import { turnFailureBlockOf, type TurnFailureBlockModel } from "../domain/turn-failure-block.ts"
+import { useAwayBrief } from "./use-away-brief.ts"
 import { useWorkQuietLine, type WorkQuietLine } from "./use-work-quiet.ts"
 
 /** 判定の行の語。答え待ち・背景だけが残っている・働いている。 */
@@ -47,7 +50,7 @@ type RouteEnding = "finished" | "stopped"
  * 紙に描くワークプラン。
  *
  * - `none`: 出さない（迎えるとき・依頼が無いとき・閉じたやり取りにワークプランが無いとき）
- * - `working`: 働くあいだ。判定の行（`verdict`・`position`「4段のうち3段目」・`elapsed`「経過 6分12秒」・`estimate` の見込み）と、止まって見えるときの行（`quietLine`）と、長い並びを畳んだ計画
+ * - `working`: 働くあいだ。判定の行（`verdict`・`position`「4段のうち3段目」・`elapsed`「経過 6分12秒」・`estimate` の見込み）と、止まって見えるときの行（`quietLine`）と、長い並びを畳んだ計画と、離れていたあいだのまとめ（`away`）
  * - `finished`: 中身がレポートに入れ替わったあと。紙の末尾に畳んで置く道筋の題と、畳まない並び
  * - `stopped`: 段の途中で止めたあと（書き手が `stopped` で閉じた・レポートが無いまま段を残して閉じた）。
  *   判定の行・続け方の下書き（`onDraft` で入力欄に入れるだけで送らない）・中途半端なもの（今の段で触ったファイル）・ここまでの並び。
@@ -69,6 +72,7 @@ export type WorkPlanPaperModel =
       readonly plan: FoldedWorkPlan
       readonly rows: readonly WorkPlanRow[]
       readonly now: number
+      readonly away: AwayBrief
     }
   | {
       readonly kind: "finished"
@@ -131,13 +135,9 @@ export function useWorkPlanPaper(): WorkPlanPaperModel {
   const shown = content.kind !== "welcome" && turnStepList.kind === "turn"
   const now = useNowWhile(shown && isTurnCounting(turn, backgroundCount))
   const quietLine = useWorkQuietLine(now)
-
-  if (!shown) {
-    return { kind: "none" }
-  }
-  const plan = turnStepList.plan
+  const plan: LatestWorkPlan = turnStepList.kind === "turn" ? turnStepList.plan : { kind: "none" }
   const slots =
-    plan.kind === "planned"
+    shown && plan.kind === "planned"
       ? workPlanSlotsOf({
           plan,
           recaps: phaseRecapsOf(turnStepList.trail, {
@@ -151,7 +151,15 @@ export function useWorkPlanPaper(): WorkPlanPaperModel {
         })
       : []
   const rows = slots.flatMap(rowsOfSlot)
+  const away = useAwayBrief(
+    turnStepList.kind === "turn"
+      ? { kind: "turn", plan, trail: turnStepList.trail, rows, ask: askOf(pending) }
+      : { kind: "none" },
+  )
 
+  if (!shown) {
+    return { kind: "none" }
+  }
   if (content.kind === "work") {
     return {
       kind: "working",
@@ -168,6 +176,7 @@ export function useWorkPlanPaper(): WorkPlanPaperModel {
       plan: foldWorkPlanSlots(slots),
       rows,
       now,
+      away,
     }
   }
   if (plan.kind !== "planned") {

@@ -301,3 +301,42 @@
   font-size: var(--font-secondary);
   cursor: pointer;
 }
+/* 戻ったときの離れていたあいだのまとめ。値は見本の `.away`・`.read-mark`。 */
+.work-plan-away {
+  display: flex;
+  flex-direction: column;
+  gap: var(--stack-tight);
+}
+.work-plan-away-part {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+  gap: var(--inline-group);
+  padding: var(--stack-group) 0;
+  border-bottom: 1px solid var(--rule);
+}
+.work-plan-away-list {
+  padding-left: var(--inline-group);
+  list-style: disc;
+  overflow-wrap: anywhere;
+}
+.work-plan-read-mark {
+  display: flex;
+  align-items: center;
+  gap: var(--inline-group);
+  padding: var(--stack-block) 0 var(--stack-group);
+  color: var(--accent);
+  font-size: var(--font-secondary);
+}
+.work-plan-read-mark::before,
+.work-plan-read-mark::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: color-mix(in srgb, var(--accent) 50%, transparent);
+}
+@media (max-width: 760px) {
+  .work-plan-away-part {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--stack-tight);
+  }
+}

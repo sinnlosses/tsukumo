@@ -95,6 +95,7 @@ function renderWorking(rows: readonly WorkPlanRow[]) {
         },
         rows,
         now: 0,
+        away: { kind: "none" },
       }}
     />,
   )

@@ -94,6 +94,10 @@ Network タブで `/ws` の upgrade が101を返し、`hello` フレーム（購
 `?shell=stage` で撮る。** 4段のうち4段目で手順が失敗し、`turn-finished` が `failed` で閉じる。
 **問いが生まれた段の問いと材料を確かめるときは、場面 `work-plan-ask` を同じ開き方で撮る。**
 3段が済み、4段目で `AskUserQuestion` の答え待ちのまま止まる。
+**戻ったときの離れていたあいだのまとめと「ここから先は、前に見たあと」の印は、場面 `work-plan-away` を `test/e2e/work-plan-paper.test.ts` の
+「23 分離れて戻ると」の手順の中で撮る。** `capture-view.ts` の操作ではページを隠して戻せないので、2件目の `work-plan` のあとで
+`document.hidden` を上書きして `visibilitychange` を起こし、`pending-changed` を待って `page.clock.runFor` で 23 分進めてから戻し、
+`page.screenshot({ path: <絶対パス> })` を一時に足して幅 1400×900 と 720×900 で撮る。幅 1400 では答え待ちのカードが紙に重なるので、紙の領域（`locator.screenshot`）も撮る。
 
 **狭い画面の頭の点と経過（`phone-head-dot`・`phone-head-elapsed`）と、トークンの画面の結果のカード
 （`usage-review-card` の結果の場面。class は `usage-review-result`）は、場面を足さず次の1コマンドずつで撮れる。**

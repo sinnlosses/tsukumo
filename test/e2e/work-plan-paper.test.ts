@@ -6,6 +6,7 @@ import type { ScenarioRoom } from "./scenario-open.ts"
 // 新しい器の紙のワークプラン（docs/architecture/testing.md「E2E のシナリオの一覧」）。
 // 場面 `work-plan-long` は8段のうち5段目で手順が走ったまま止まる。`work-plan` は `turn-finished` まで流す。
 // `work-plan-laps` は差し戻し2回のあと段が済み、`work-plan-delegates` は任せた役が6つで2つが済む。
+// `work-plan-away` は2件目の記録のあと約 9 秒あけて残りの段と問いが届く（その間にページを隠す）。
 
 async function reopenInStage(room: ScenarioRoom): Promise<Page> {
   const url = new URL(room.page.url())
@@ -121,4 +122,63 @@ test.describe("紙のワークプラン", () => {
     await expect(plan).toContainText("答えは下の入力欄で")
     await expect(plan.getByRole("button")).toHaveCount(0)
   })
+
+  test("23 分離れて戻ると、紙の頭にまとめが4つの順で出て、印が境に引かれ、最初の操作で畳まれる", async ({
+    run,
+  }) => {
+    const room = await run.open({
+      scenario: "work-plan-paper-away",
+      scene: "work-plan-away",
+      viewport: "wide",
+      domRoots: ["page"],
+    })
+    await room.waitForEvent("work-plan", 2)
+    const page = await reopenInStage(room)
+    const plan = page.getByRole("region", { name: "ワークプラン" })
+    await expect(plan.getByRole("img", { name: "4段のうち2段目" })).toBeVisible()
+
+    await setPageHidden(page, true)
+    await room.waitForEvent("pending-changed")
+    await page.clock.runFor(AWAY_MS)
+    await setPageHidden(page, false)
+
+    const away = plan.getByRole("region", { name: "離れていたあいだのまとめ" })
+    await expect(away).toContainText(
+      "離れていた 23 分のあいだに、4段のうち3段が済んだ。あなたの答えが1つ要る。",
+    )
+    await expect(away.getByRole("heading")).toHaveText([
+      "あなたを待っていること",
+      "変わったこと",
+      "置いた前提",
+      "進め方",
+    ])
+    await expect(away).toContainText("重なる幅では間引くか、24 のまま重ねるか。")
+    await expect(away).toContainText("答えは下の入力欄で")
+    await expect(away).toContainText("目盛りの数は 4〜48 の範囲だけ受け付ける")
+    await expect(away).toContainText("途中で円グラフにも目盛りがあると分かり")
+    const items = plan.getByRole("listitem")
+    await expect(items.filter({ hasText: "ここから先は、前に見たあと" })).toHaveCount(1)
+    await expect(page.locator("li:has-text('ここから先は、前に見たあと') + li")).toContainText(
+      "目盛りを設定から読む",
+    )
+
+    await away.getByRole("heading", { name: "進め方" }).click()
+    await expect(away).toBeHidden()
+    await expect(page.getByText("ここから先は、前に見たあと")).toBeHidden()
+  })
 })
+
+/** 離れていた時間。見本の「離れていた 23 分」に合わせる。 */
+const AWAY_MS = 23 * 60 * 1000
+
+/** ページの `document.hidden` を上書きして `visibilitychange` を起こす（タブを裏に回した・戻したの模擬）。 */
+async function setPageHidden(page: Page, hidden: boolean): Promise<void> {
+  await page.evaluate((value) => {
+    Object.defineProperty(document, "hidden", { configurable: true, get: () => value })
+    Object.defineProperty(document, "visibilityState", {
+      configurable: true,
+      get: () => (value ? "hidden" : "visible"),
+    })
+    document.dispatchEvent(new Event("visibilitychange"))
+  }, hidden)
+}

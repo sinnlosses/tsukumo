@@ -1,0 +1,149 @@
+{
+  "name": "work-plan-away",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "グラフの目盛りの数を設定から読むようにしたい（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 200,
+      "event": {
+        "kind": "work-plan",
+        "phaseIds": [],
+        "delegatedRange": { "kind": "none" },
+        "skippedPhases": [],
+        "awaitingSummary": { "kind": "none" },
+        "phases": [
+          "今の形を調べる",
+          "目盛りを設定から読む",
+          "表示の層を直す",
+          "既定の本数を決める"
+        ],
+        "current": 0,
+        "finishedInGroup": [],
+        "phaseSummary": ""
+      }
+    },
+    {
+      "afterMs": 600,
+      "event": {
+        "kind": "work-plan",
+        "phaseIds": [],
+        "delegatedRange": { "kind": "none" },
+        "skippedPhases": [],
+        "awaitingSummary": { "kind": "none" },
+        "phases": [
+          "今の形を調べる",
+          "目盛りを設定から読む",
+          "表示の層を直す",
+          "既定の本数を決める"
+        ],
+        "current": 1,
+        "finishedInGroup": [],
+        "phaseSummary": "目盛りの数は定数から来ていた。"
+      }
+    },
+    {
+      "afterMs": 9000,
+      "event": {
+        "kind": "tool-started",
+        "toolUseId": "fake-work-plan-away-1",
+        "name": "Edit",
+        "input": { "file_path": "/fake/src/chart-config.ts", "old_string": "a", "new_string": "b" }
+      }
+    },
+    {
+      "afterMs": 9100,
+      "event": {
+        "kind": "tool-finished",
+        "toolUseId": "fake-work-plan-away-1",
+        "content": "ダミーの書き換え結果",
+        "isError": false
+      }
+    },
+    {
+      "afterMs": 9400,
+      "event": {
+        "kind": "work-plan",
+        "phaseIds": [],
+        "delegatedRange": { "kind": "none" },
+        "skippedPhases": [],
+        "awaitingSummary": { "kind": "none" },
+        "phases": [
+          "今の形を調べる",
+          "目盛りを設定から読む",
+          "表示の層を直す",
+          "既定の本数を決める"
+        ],
+        "current": 2,
+        "finishedInGroup": [],
+        "phaseSummary": "設定に `ticks` を足した（既定は 12 のまま）。",
+        "assumptions": ["目盛りの数は 4〜48 の範囲だけ受け付ける（架空の前提）"]
+      }
+    },
+    {
+      "afterMs": 9800,
+      "event": {
+        "kind": "work-plan",
+        "phaseIds": [],
+        "delegatedRange": { "kind": "none" },
+        "skippedPhases": [],
+        "awaitingSummary": { "kind": "none" },
+        "phases": [
+          "今の形を調べる",
+          "目盛りを設定から読む",
+          "表示の層を直す",
+          "既定の本数を決める"
+        ],
+        "current": 3,
+        "finishedInGroup": [],
+        "phaseSummary": "グラフの部品 6 個が設定の値を読むようにした。",
+        "replanReason": "途中で円グラフにも目盛りがあると分かり、表示の層を直す段に足した。",
+        "assumptions": ["目盛りの数は 4〜48 の範囲だけ受け付ける（架空の前提）"]
+      }
+    },
+    {
+      "afterMs": 10200,
+      "event": {
+        "kind": "pending-changed",
+        "pending": [
+          {
+            "kind": "question",
+            "id": "fake-work-plan-away",
+            "questions": [
+              {
+                "header": "架空の重なり",
+                "text": "架空の質問：重なる幅では間引くか、24 のまま重ねるか。",
+                "multiSelect": false,
+                "options": [
+                  { "label": "間引く (推奨)", "description": "架空の説明A" },
+                  { "label": "重ねる", "description": "架空の説明B" }
+                ]
+              }
+            ],
+            "briefs": [
+              {
+                "header": "架空の重なり",
+                "whyAsk": "架空の好みが分からない。",
+                "facts": [
+                  {
+                    "text": "架空の幅 720 の画で 4 か所が重なった。",
+                    "basis": "checked"
+                  }
+                ],
+                "options": [
+                  { "label": "間引く", "irreversible": false, "figures": [] },
+                  { "label": "重ねる", "irreversible": false, "figures": [] }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

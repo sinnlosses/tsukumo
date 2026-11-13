@@ -259,6 +259,7 @@ export const MAIN_VIEW_EXAMPLES: readonly ScreenPartExample[] = [
             plan: { folded: { kind: "none" }, slots: PLAN_SLOTS },
             rows: PLAN_ROWS,
             now: 0,
+            away: { kind: "none" },
           }}
         />
         <PresentationalWorkPlanPaper
@@ -288,6 +289,55 @@ export const MAIN_VIEW_EXAMPLES: readonly ScreenPartExample[] = [
             now: 0,
             onDraft: noop,
             onRetry: noop,
+          }}
+        />
+      </>
+    ),
+  },
+  {
+    frame: "flow",
+    path: "page/conversation/components/main-view/presentational-away-brief.tsx",
+    render: () => (
+      <>
+        <PresentationalWorkPlanPaper
+          model={{
+            kind: "working",
+            verdict: "asking",
+            position: "4段のうち3段目",
+            elapsed: "経過 31分02秒",
+            estimate: { kind: "none" },
+            quietLine: {
+              quiet: { kind: "none" },
+              runningLine: "",
+              onStop: noop,
+              onRestoreRequest: noop,
+            },
+            plan: { folded: { kind: "none" }, slots: PLAN_SLOTS },
+            rows: PLAN_ROWS,
+            now: 0,
+            away: {
+              kind: "brief",
+              minutes: 23,
+              total: 4,
+              settled: 2,
+              waiting: {
+                kind: "asked",
+                question: "重なる幅では間引くか、24 のまま重ねるか。",
+                material: "幅 720 の画で 4 か所が重なった",
+                askedAt: 0,
+              },
+              changes: [
+                {
+                  key: "2",
+                  title: "古い形を残す",
+                  summary: "呼び出しが無いので飛ばした。",
+                  touched: 0,
+                },
+              ],
+              assumptions: ["目盛りの数は 4〜48 の範囲だけ受け付ける"],
+              replans: [],
+              markBeforeRowKey: { kind: "row", key: "2" },
+            },
           }}
         />
       </>

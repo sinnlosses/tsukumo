@@ -135,6 +135,7 @@
     "work-plan-stopped",
     "work-plan-failed",
     "work-plan-ask",
+    "work-plan-away",
     "work-plan-phase-unknown",
     "work-plan-resumed",
     "work-plan-quick",
