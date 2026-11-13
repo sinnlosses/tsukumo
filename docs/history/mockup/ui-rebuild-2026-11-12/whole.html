@@ -871,29 +871,31 @@
             rgb(20 18 26 / 0.9) calc(var(--stage-w) + 140px)
           );
       }
+      /* 舞台は上から、部屋の頭・今日の灯り・やり取りの流れ・いまの吹き出し・立ち絵の5段。
+         吹き出しは立ち絵の頭のすぐ上に積むので、画面の高さが変わっても立ち絵から離れない。 */
       .A-stage {
         position: relative;
         min-width: 0;
         z-index: 2;
         pointer-events: none;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
       }
       .A-stage > :not(.portrait) {
         pointer-events: auto;
       }
-      .A-stage .room {
-        position: absolute;
-        top: 16px;
-        left: 22px;
-        right: 8px;
-        display: grid;
-        gap: 4px;
-        text-shadow: 0 1px 10px rgb(0 0 0 / 0.8);
-      }
-      .A-stage .room-nav {
-        margin: 2px 0 0 -8px;
+      .A-stage .room,
+      .A-stage .today,
+      .A-stage .talk-wrap,
+      .A-stage .say,
+      .A-stage .seat {
+        position: relative;
+        z-index: 2;
       }
       .A-stage .portrait {
         position: absolute;
+        z-index: 1;
       }
       body[data-fit="bust"] .A-stage {
         --portrait-h: calc(var(--stage-w) * 1.14 * var(--ratio));
@@ -917,18 +919,12 @@
         height: var(--portrait-h);
         transform: translateX(-50%);
       }
-      .A-stage .bubbles {
-        position: absolute;
-        left: 20px;
-        right: 6px;
-        bottom: calc(var(--portrait-h) - 4px);
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 10px;
+      .A-stage .seat {
+        flex: none;
+        height: calc(var(--portrait-h) - 30px);
       }
-      body[data-fit="full"] .A-stage .bubbles {
-        bottom: calc(var(--portrait-h) - 12px);
+      body[data-fit="full"] .A-stage .seat {
+        height: calc(var(--portrait-h) - 40px);
       }
       .A-right {
         position: relative;
@@ -1053,13 +1049,30 @@
 
       /* ══ 案Aの全体: 部屋の頭 ══ */
       .A-stage .room {
-        top: 14px;
-        left: 20px;
-        right: 12px;
-        grid-template-columns: 1fr auto;
-        gap: 6px 10px;
+        display: grid;
+        gap: 3px;
+        padding: 14px 18px 0;
+        text-shadow: 0 1px 10px rgb(0 0 0 / 0.8);
+      }
+      .rh,
+      .rs {
+        display: flex;
         align-items: center;
-        max-width: 336px;
+        gap: 10px;
+      }
+      .rh .gate {
+        margin-left: auto;
+      }
+      .rs .meter {
+        margin-left: auto;
+      }
+      .A-stage .room-nav {
+        margin: 0 0 0 -8px;
+        align-items: center;
+      }
+      .room-nav .kbtn {
+        margin-left: auto;
+        padding: 4px 8px;
       }
       .room-pick {
         justify-self: start;
@@ -1144,10 +1157,6 @@
         background: rgb(255 255 255 / 0.1);
         color: var(--ink);
       }
-      .A-stage .room-nav {
-        margin: 0 0 0 -8px;
-      }
-
       /* セッションの切り替え（部屋の名前から出る） */
       .pop {
         position: absolute;
@@ -1190,35 +1199,238 @@
         background: var(--raise);
       }
 
-      /* これまでのセリフ */
-      .logbtn {
+      /* 今日の灯り・やり取りの流れ・いまの吹き出し・相づちの札 */
+      .A-stage .today {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin: 8px 18px 0;
+        padding: 4px 12px 5px;
         border: 0;
-        background: rgb(20 18 26 / 0.5);
+        border-radius: 11px;
+        background: rgb(24 20 28 / 0.6);
         backdrop-filter: blur(6px);
         color: var(--ink-soft);
-        font-size: 11.5px;
+        font-size: 13px;
+        text-align: left;
+        text-shadow: none;
+      }
+      .today > span:first-child {
+        white-space: nowrap;
+      }
+      .today b {
+        color: var(--ink);
+      }
+      .today .plus {
+        color: var(--accent);
+        font-weight: 700;
+      }
+      .today:hover {
+        background: rgb(58 48 64 / 0.86);
+      }
+      .wk {
+        display: flex;
+        gap: 4px;
+        margin-left: auto;
+      }
+      .wk span {
+        display: grid;
+        justify-items: center;
+        align-content: end;
+        width: 22px;
+        height: 34px;
+        font-size: 12px;
+        line-height: 1.2;
+        color: var(--ink-quiet);
+      }
+      .wk .is-today {
+        color: var(--ink);
+        font-weight: 700;
+      }
+      .lamp {
+        flex: none;
+      }
+      .lamp-lit {
+        color: color-mix(in srgb, var(--accent) 72%, transparent);
+      }
+      .lamp-now {
+        color: var(--accent);
+        filter: drop-shadow(0 0 6px color-mix(in srgb, var(--accent) 60%, transparent));
+      }
+      .lamp-none {
+        color: var(--ink-quiet);
+      }
+      .A-stage .talk-wrap {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+      }
+      .more {
+        position: absolute;
+        z-index: 1;
+        top: 8px;
+        left: 18px;
+        border: 0;
         border-radius: 999px;
-        padding: 2px 10px;
-        margin-left: 4px;
+        padding: 1px 12px;
+        background: rgb(24 20 28 / 0.82);
+        color: var(--ink-soft);
+        font-size: 13px;
+      }
+      .more[hidden] {
+        display: none;
+      }
+      .talk {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        align-items: flex-start;
+        gap: 6px;
+        padding: 14px 18px 12px;
+        overflow: hidden;
+        mask-image: linear-gradient(180deg, transparent 30px, black 96px);
       }
       .A-stage[data-log]::before {
         content: "";
         position: absolute;
         inset: 0;
-        background: linear-gradient(rgb(20 18 26 / 0.1), rgb(20 18 26 / 0.74) 22%);
+        background: rgb(20 18 26 / 0.66);
       }
-      .A-stage .bubbles.log {
-        top: 112px;
+      .A-stage[data-log] .talk {
         overflow: auto;
         scrollbar-width: none;
+        mask-image: none;
+        padding-top: 40px;
       }
-      .bubbles.log > :first-child {
+      .talk > :first-child {
         margin-top: auto;
       }
-      .bubbles.log .b-old small {
-        font: 11px var(--mono);
-        margin-right: 8px;
-        opacity: 0.7;
+      .vl {
+        flex: none;
+        max-width: 95%;
+        margin: 0;
+        border-radius: 11px;
+        padding: 4px 11px 5px;
+        background: rgb(24 20 28 / 0.74);
+        color: rgb(236 232 239 / 0.9);
+        font: 600 14px/1.6 var(--voice);
+        text-shadow: none;
+      }
+      .vl time {
+        font: 12px var(--mono);
+        color: rgb(236 232 239 / 0.62);
+        margin-right: 7px;
+      }
+      .vl .lamp {
+        vertical-align: -2px;
+        margin-right: 4px;
+      }
+      .vl.you {
+        align-self: flex-end;
+        background: color-mix(in srgb, var(--accent) 17%, rgb(24 20 28 / 0.74));
+        color: var(--ink);
+        font: 13.5px/1.6 var(--sans);
+      }
+      .vl.you::before {
+        content: "あなた";
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--accent);
+        margin-right: 7px;
+      }
+      .A[data-mode="chat"] .vl {
+        font-size: 16px;
+        padding: 6px 14px 7px;
+      }
+      .A[data-mode="chat"] .vl.you {
+        font-size: 15px;
+      }
+      .A[data-mode="chat"] .talk {
+        overflow: auto;
+        scrollbar-width: none;
+        mask-image: linear-gradient(180deg, transparent 10px, black 60px);
+      }
+      .talk-empty {
+        margin: 0;
+        align-self: flex-start;
+        font-size: 13px;
+        color: var(--ink-quiet);
+      }
+      .A-stage .say {
+        flex: none;
+        margin: 0 22px 0 14px;
+        padding: 9px 16px 11px;
+        border-radius: 16px;
+        background: rgb(46 34 44 / 0.93);
+        backdrop-filter: blur(8px);
+        box-shadow: 0 10px 26px rgb(0 0 0 / 0.42);
+        color: #f6f1f4;
+        font: 600 16.5px/1.75 var(--voice);
+        text-shadow: none;
+        word-break: auto-phrase;
+        animation: bubble-in 0.32s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+      }
+      .say .tail {
+        position: absolute;
+        left: 36%;
+        bottom: -12px;
+        width: 28px;
+        height: 28px;
+        border-radius: 4px;
+        background: rgb(46 34 44);
+        transform: rotate(45deg);
+        z-index: -1;
+      }
+      .say .who {
+        display: flex;
+        gap: 8px;
+        align-items: baseline;
+        font: 700 13px var(--sans);
+        color: var(--accent);
+      }
+      .say .who span {
+        font-weight: 400;
+        color: rgb(236 232 239 / 0.62);
+      }
+      .say .hands {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        gap: 8px;
+        margin-top: 8px;
+        padding-top: 7px;
+        border-top: 1px solid rgb(236 232 239 / 0.14);
+        font: 13px/1.55 var(--sans);
+        color: rgb(236 232 239 / 0.76);
+      }
+      .say .hands b {
+        font-weight: 700;
+        color: rgb(236 232 239 / 0.6);
+      }
+      .aizuchi {
+        position: absolute;
+        top: 12px;
+        right: 16px;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 6px;
+        max-width: 62%;
+      }
+      .aizuchi button {
+        border: 0;
+        border-radius: 999px;
+        padding: 4px 15px;
+        background: rgb(24 20 28 / 0.78);
+        backdrop-filter: blur(6px);
+        box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--accent) 72%, transparent);
+        color: var(--ink);
+        font-size: 13.5px;
+      }
+      .aizuchi button:hover {
+        background: color-mix(in srgb, var(--accent) 26%, rgb(24 20 28));
       }
 
       /* 入力欄の足し分（動き方の札・コマンドの候補） */
@@ -1291,66 +1503,22 @@
       }
 
       /* 雑談 */
+      /* 会話の本体は舞台の流れ。右は覚えていることと入力欄だけ。 */
       .A[data-mode="chat"] {
-        --stage-w: clamp(340px, 40vw, 860px);
+        --stage-w: clamp(340px, 30vw, 680px);
+      }
+      body[data-fit="full"] .A[data-mode="chat"] .A-stage {
+        --portrait-h: min(46%, calc(var(--stage-w) * 1.2));
       }
       .A-chat {
-        flex: 0 1 700px;
+        flex: 0 1 640px;
         min-width: 0;
         min-height: 0;
         display: flex;
         flex-direction: column;
-        padding: 0 28px 18px 8px;
-      }
-      .ch-thread {
-        flex: 1;
-        min-height: 0;
-        overflow: auto;
-        scrollbar-width: none;
-        display: flex;
-        flex-direction: column;
-        gap: 14px;
-        padding: 28px 4px 20px;
-      }
-      .ch-thread > :first-child {
-        margin-top: auto;
-      }
-      .ch-her {
-        align-self: flex-start;
-        max-width: 82%;
-        background: color-mix(in srgb, #1d1a25 84%, var(--accent));
-        border-radius: 16px 16px 16px 4px;
-        padding: 10px 16px 12px;
-        box-shadow: 0 10px 30px rgb(0 0 0 / 0.35);
-      }
-      .ch-her small {
-        display: block;
-        font-size: 11.5px;
-        line-height: 1.6;
-        color: color-mix(in srgb, var(--accent) 70%, white);
-      }
-      .ch-her p {
-        margin: 0;
-        font: 600 17px/1.8 var(--voice);
-        word-break: auto-phrase;
-      }
-      .ch-me {
-        align-self: flex-end;
-        max-width: 74%;
-        background: var(--float);
-        border-radius: 16px 16px 4px 16px;
-        padding: 9px 15px;
-      }
-      .ch-me p {
-        margin: 0;
-        font-size: 15.5px;
-        line-height: 1.7;
-      }
-      .ch-me small {
-        display: block;
-        text-align: right;
-        font: 11px var(--mono);
-        color: var(--ink-quiet);
+        justify-content: space-between;
+        padding: 40px 28px 18px 8px;
+        text-shadow: 0 1px 8px rgb(0 0 0 / 0.6);
       }
       .mem {
         list-style: none;
@@ -2031,6 +2199,14 @@
             ["her", "いちばん好きな季節よ。毎日あなたの手の中にいられるでしょう。……い、今のは忘れて。", "21:04"],
           ],
           reply: "ふふ、試作の中の私は、まだこれしか言えないの。",
+          chips: {
+            greet: [["ただいま", "excited", "ええ、おかえりなさい。待っていたのよ。"]],
+            work: [["がんばって", "excited", "ふふ、任せて。あと少しよ。"]],
+            deliver: [
+              ["おつかれさま", "flustered", "べ、別に……これくらい、いつものことよ。でも、ありがとう。"],
+              ["ありがとう", "excited", "ふふ、どういたしまして。また頼ってね。"],
+            ],
+          },
           diary:
             "十一月十二日、雨上がり。古い形の札が迷子にならないよう、道をひとつ足した。途中であなたは席を立ったけれど、戻ってきて「いいね」と言ってくれた。それだけで、骨がすこし軽くなる。",
         },
@@ -2075,6 +2251,14 @@
             ["her", "好き。夜が長いと、狐火がいちばん綺麗に見えるんだ。", "21:03"],
           ],
           reply: "へへ、試作の中のボクは、まだこれしか言えないんだ。",
+          chips: {
+            greet: [["ただいま", "excited", "おかえり！ 待ってたよ。"]],
+            work: [["がんばって", "excited", "うん、任せて。もう少しだよ！"]],
+            deliver: [
+              ["おつかれさま", "flustered", "えへへ、ありがとう。ちょっと照れるな。"],
+              ["ありがとう", "excited", "どういたしまして！ またいつでも頼ってね。"],
+            ],
+          },
           diary:
             "十一月十二日。きょうは道をひとつ足した。きみが「いいね」と言ったので、尻尾がしばらく止まらなかった。",
         },
@@ -2202,6 +2386,7 @@
         peek: null,
         palette: "",
         picked: 0,
+        react: null,
       }
       const narrow = matchMedia("(max-width: 760px)")
       let ticker
@@ -2210,6 +2395,7 @@
       const pack = () => PACKS[state.pack]
       const chatting = () => state.mode === "chat"
       function expression() {
+        if (state.react) return state.react.face
         if (state.sheet) return pack().sheetLines[state.sheet][0]
         if (chatting()) return "excited"
         return EXPRESSION[state.moment]
@@ -2220,20 +2406,47 @@
       function room() {
         const label = chatting() ? "雑談している" : STATE_LABEL[state.moment]
         return `<div class="room">
-          <button type="button" class="room-pick" data-overlay="sessions" aria-expanded="${state.overlay === "sessions"}">tsukumo-3<span></span></button>
-          <div class="gate" role="group" aria-label="仕事と雑談の切り替え">
-            <button type="button" data-mode="work" aria-pressed="${!chatting()}">仕事</button><button type="button" data-mode="chat" aria-pressed="${chatting()}">雑談</button>
+          <div class="rh">
+            <button type="button" class="room-pick" data-overlay="sessions" aria-expanded="${state.overlay === "sessions"}">tsukumo-3<span></span></button>
+            <div class="gate" role="group" aria-label="仕事と雑談の切り替え">
+              <button type="button" data-mode="work" aria-pressed="${!chatting()}">仕事</button><button type="button" data-mode="chat" aria-pressed="${chatting()}">雑談</button>
+            </div>
           </div>
-          <div class="room-state" data-state="${chatting() ? "chat" : state.moment}"><i></i>${label}</div>
-          <button type="button" class="meter" data-sheet="usage" title="文脈 61%・5時間の枠 34%・7日の枠 61%"><i style="--v: 61%"></i>文脈 61%</button>
+          <div class="rs">
+            <div class="room-state" data-state="${chatting() ? "chat" : state.moment}"><i></i>${label}</div>
+            <button type="button" class="meter" data-sheet="usage" title="文脈 61%・5時間の枠 34%・7日の枠 61%"><i style="--v: 61%"></i>文脈 61%</button>
+          </div>
           ${roomNav()}
-          <button type="button" class="kbtn" data-overlay="palette">探す<kbd>⌘K</kbd></button>
         </div>`
       }
       function roomNav() {
         return `<nav class="room-nav" aria-label="ほかの画面">
-          <button type="button" data-sheet="tasks">タスク 3</button><button type="button" data-sheet="diary">成果</button><button type="button" data-sheet="pack">キャラ</button><button type="button" data-sheet="settings">設定</button>
+          <button type="button" data-sheet="tasks">タスク 3</button><button type="button" data-sheet="diary">成果</button><button type="button" data-sheet="pack">キャラ</button><button type="button" data-sheet="settings">設定</button><button type="button" class="kbtn" data-overlay="palette">探す<kbd>⌘K</kbd></button>
         </nav>`
+      }
+
+      // 今日の灯り（今日の数と今週7日の狐火）
+      function lamp(kind, size) {
+        const flame =
+          "M12 2.5c1.6 3.7 5.5 5.6 5.5 10.6a5.5 5.5 0 0 1-11 0c0-2.7 1.4-4.2 2.6-5.6.2 1.4 1 2.3 2 2.6-.4-2.8.3-5.3.9-7.6z"
+        const body =
+          kind === "none"
+            ? `<path d="${flame}" fill="none" stroke="currentColor" stroke-width="1.3"/>`
+            : `<path d="${flame}" fill="currentColor"/>${kind === "now" ? '<path d="M12 11c.9 1.6 2.3 2.4 2.3 4.2a2.3 2.3 0 0 1-4.6 0c0-1.3.9-2.4 2.3-4.2z" fill="var(--sheet)" opacity=".85"/>' : ""}`
+        return `<svg class="lamp lamp-${kind}" width="${size}" height="${size}" viewBox="0 0 24 24" aria-hidden="true">${body}</svg>`
+      }
+      function today() {
+        const lit = state.moment === "deliver" && !chatting() ? 4 : 3
+        const plus = state.moment === "deliver" && !chatting()
+        const week = [2, 3, 1, lit, 0, 0, 0]
+        const kind = (count) => (count === 0 ? "none" : count >= 4 ? "now" : "lit")
+        const days = ["月", "火", "水", "木", "金", "土", "日"]
+          .map(
+            (day, index) =>
+              `<span class="${index === 3 ? "is-today" : ""}">${lamp(kind(week[index]), 11 + Math.min(week[index], 4) * 2)}${day}</span>`,
+          )
+          .join("")
+        return `<button type="button" class="today" data-sheet="diary" aria-label="今日の灯り。押すと成果を開く"><span>今日 <b>${lit} つ</b>灯した${plus ? ' <span class="plus">＋1</span>' : ""}</span><span class="wk">${days}</span></button>`
       }
       function sessions() {
         return `<div class="pop" role="menu" aria-label="セッションの切り替え">
@@ -2247,22 +2460,63 @@
           <button type="button">main<small>依頼を待っている</small></button>
         </div>`
       }
-      function bubbles() {
-        const name = pack().name
-        const line = state.sheet ? { now: pack().sheetLines[state.sheet][1] } : pack().lines[state.moment]
-        const now = `<div class="b-now"><small>${name} 20:58</small><p>${line.now}</p></div>`
-        if (state.overlay === "log") {
-          return `<div class="bubbles log">
-            ${pack().log.map(([time, text]) => `<p class="b-old"><small>${time}</small>${text}</p>`).join("")}
-            ${now}
-            <button type="button" class="logbtn" data-overlay="log">閉じる</button>
-          </div>`
+      // ── 舞台の3段（やり取りの流れ・いまの吹き出し・相づちの札）。
+      // 流れの1行は [誰, 時刻, 文, 段を終えて灯したか]。いまの吹き出しは流れの最後の行ではなく、手元の知らせを足せる別の段。
+      const REQUEST = "古い形の ID を貼っても課題が開くようにして"
+      const HANDS = {
+        work: ["手元", "id-convert.ts を書き換えている ・ 12秒前"],
+        ask: ["待ち", "あなたの答え ・ 右下の入力欄で答えられる"],
+      }
+      function flow() {
+        if (chatting()) {
+          const earlier = pack().chat.slice(0, -1)
+          return earlier.map(([who, text, time]) => [who === "her" ? "her" : "you", time, text])
         }
-        return `<div class="bubbles">
-          <button type="button" class="logbtn" data-overlay="log">これまでのセリフ</button>
-          ${line.old ? `<p class="b-old">${line.old}</p>` : ""}
-          ${now}
-        </div>`
+        const log = pack().log
+        const her = (index, lit) => ["her", log[index][0], log[index][1], lit]
+        const req = ["you", "20:40", REQUEST]
+        const rows = {
+          greet: [],
+          work: [req, her(0), her(1, true)],
+          ask: [req, her(0), her(1, true), her(2, true)],
+          deliver: [req, her(0), her(1, true), her(2, true), her(3), ["you", "20:47", "設定ファイルにして"], her(4, true), her(5, true)],
+        }
+        return rows[state.moment]
+      }
+      function nowSaid() {
+        if (state.react) return state.react.line
+        if (chatting()) return pack().chat.at(-1)[1]
+        if (state.sheet) return pack().sheetLines[state.sheet][1]
+        return pack().lines[state.moment].now
+      }
+      function chips() {
+        if (state.react || state.sheet || chatting()) return []
+        return pack().chips[state.moment] ?? []
+      }
+      function talk() {
+        const rows = [...flow(), ...(state.react ? [["you", "いま", state.react.you]] : [])]
+        const body =
+          rows.length === 0
+            ? `<p class="talk-empty">ここに、あなたとのやり取りが並んでいく</p>`
+            : rows
+                .map(([who, time, text, lit]) =>
+                  who === "you"
+                    ? `<p class="vl you">${text}</p>`
+                    : `<p class="vl"><time>${time}</time>${lit ? lamp("lit", 14) : ""}${text}</p>`,
+                )
+                .join("")
+        const more = !chatting() && rows.length > 3
+        return `<div class="talk-wrap">${more ? `<button type="button" class="more" data-overlay="log">${state.overlay === "log" ? "閉じる" : "▴ これまでのやり取り"}</button>` : ""}<div class="talk" id="thread" aria-label="この部屋でのやり取り">${body}</div></div>`
+      }
+      function say() {
+        const hands = !state.react && !state.sheet && !chatting() ? HANDS[state.moment] : undefined
+        return `<div class="say" aria-live="polite"><div class="who">${pack().name}<span>いま</span></div>${nowSaid()}${hands ? `<div class="hands"><b>${hands[0]}</b><span>${hands[1]}</span></div>` : ""}<i class="tail" aria-hidden="true"></i></div>`
+      }
+      function seat() {
+        const buttons = chips()
+          .map(([label], index) => `<button type="button" data-aizuchi="${index}">${label}</button>`)
+          .join("")
+        return `<div class="seat"><div class="aizuchi">${buttons}</div></div>`
       }
 
       function composer(size) {
@@ -2420,21 +2674,15 @@
       }
 
       function chatView() {
-        const name = pack().name
-        const thread = pack()
-          .chat.map(([who, text, time]) =>
-            who === "her"
-              ? `<div class="ch-her"><small>${name} ${time}</small><p>${text}</p></div>`
-              : `<div class="ch-me"><p>${text}</p><small>${time}</small></div>`,
-          )
-          .join("")
-        return `<div class="A-chat"><div class="ch-thread" id="thread">${thread}</div><div class="dock">${composer("line")}</div></div>
-          <aside class="A-margin">
+        return `<div class="A-chat">
+          <div>
             <p class="side-h">覚えていること</p>
             <ul class="mem"><li>雨の音を聞きながら仕事をするのが好き</li><li>金曜の夕方は早めに切り上げる</li></ul>
             <p class="side-h">最近の話題</p>
             <ul class="mem"><li>雨の日と梅雨</li><li>縁側で飲むお茶</li></ul>
-          </aside>`
+          </div>
+          <div class="dock">${composer("line")}</div>
+        </div>`
       }
 
       // ── 重ねる紙 ──
@@ -2648,11 +2896,10 @@
               ? `<div class="A-home">${greet()}</div>`
               : `<div class="A-sheet tone tone-main"><main class="paper" id="paper">${paperContent()}</main><div class="dock">${dock()}</div></div>
                  <aside class="A-margin">${turns()}${margin()}</aside>`
-          const speaks = state.sheet !== null || (!chatting() && !greeting)
           return `<div class="A shell" data-moment="${state.moment}" data-mode="${state.mode}">
             <div class="scene"></div>
             <aside class="A-stage"${state.overlay === "log" ? " data-log" : ""}>
-              ${room()}${state.overlay === "sessions" ? sessions() : ""}${speaks ? bubbles() : ""}${portrait()}
+              ${room()}${state.overlay === "sessions" ? sessions() : ""}${today()}${talk()}${say()}${seat()}${portrait()}
             </aside>
             <div class="A-right">${right}${overSheet()}</div>
             ${state.overlay === "palette" ? palette() : ""}
@@ -2702,8 +2949,6 @@
         if (state.overlay === "palette") document.getElementById("pal-q")?.focus()
         const thread = document.getElementById("thread")
         if (thread) thread.scrollTop = thread.scrollHeight
-        const log = app.querySelector(".bubbles.log")
-        if (log) log.scrollTop = log.scrollHeight
 
         clearInterval(ticker)
         const ticks = app.querySelectorAll("[data-tick]")
@@ -2722,6 +2967,7 @@
         const posture =
           (patch.moment !== undefined && patch.moment !== state.moment) ||
           (patch.mode !== undefined && patch.mode !== state.mode)
+        if (posture || (patch.sheet !== undefined && patch.sheet !== state.sheet)) state.react = null
         fresh = patch.sheet !== undefined && patch.sheet !== null && patch.sheet !== state.sheet
         if (patch.overlay === "palette") Object.assign(state, { palette: "", picked: 0 })
         Object.assign(state, patch)
@@ -2785,6 +3031,11 @@
       const app = document.getElementById("app")
       app.addEventListener("click", (event) => {
         const hit = (selector) => event.target.closest(selector)
+        if (hit("[data-aizuchi]")) {
+          const [you, face, line] = chips()[Number(hit("[data-aizuchi]").dataset.aizuchi)]
+          state.react = { you, face, line }
+          return render()
+        }
         if (hit("[data-pick]")) return runPalette(Number(hit("[data-pick]").dataset.pick))
         if (hit("[data-dispatch]") || hit(".g-row")) return dispatchTask()
         if (hit("[data-new]")) return go({ ...leave, mode: "work", moment: "greet" })
@@ -2857,18 +3108,10 @@
         event.preventDefault()
         if (chatting()) {
           const field = event.target.querySelector("textarea")
-          const thread = document.getElementById("thread")
           if (!field || field.value.trim() === "") return
-          const mine = document.createElement("div")
-          mine.className = "ch-me"
-          mine.append(Object.assign(document.createElement("p"), { textContent: field.value }))
-          const hers = document.createElement("div")
-          hers.className = "ch-her"
-          hers.innerHTML = `<small>${pack().name}</small><p>${pack().reply}</p>`
-          thread.append(mine, hers)
+          pack().chat.push(["me", field.value, "21:06"], ["her", pack().reply, "21:06"])
           field.value = ""
-          thread.scrollTop = thread.scrollHeight
-          return
+          return render()
         }
         if (state.moment !== "work") go({ moment: "work" })
       })
