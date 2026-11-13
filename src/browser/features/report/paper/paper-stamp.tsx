@@ -7,7 +7,10 @@ import type {
   PhaseListEntryView,
   PhaseTimesView,
 } from "../../../../shared/report/report-phase-time.ts"
-import type { ReportJudgment } from "../../../../shared/report/report-progress-field.ts"
+import type {
+  ReportJudgment,
+  ReportProgress,
+} from "../../../../shared/report/report-progress-field.ts"
 import type { MainViewSurfaceHead } from "../../../../shared/session/main-view-shape.ts"
 import { type LampStepState, LampRow } from "../../../components/ui/lamp/lamp.tsx"
 import type { CertaintyLedger } from "../domain/certainty-ledger.ts"
@@ -46,6 +49,7 @@ export function PaperStamp(props: {
         <span aria-hidden="true">{stamp.mark}</span>
         {stamp.label}
       </span>
+      <SincePrevious previous={head.progress.previous} />
       {phaseTimes.kind === "times" && <PhaseLamps view={phaseTimes} />}
       {changedFiles.kind === "files" ? (
         <span>
@@ -58,6 +62,26 @@ export function PaperStamp(props: {
       )}
       <CheckCounts counts={props.counts} />
     </p>
+  )
+}
+
+/** 前回からの件数。解決と新しくだけを並べ、0件の側は語ごと出さない。 */
+function SincePrevious(props: { readonly previous: ReportProgress["previous"] }): ReactElement {
+  const { previous } = props
+  if (previous.kind === "none") {
+    return <></>
+  }
+  const parts = [
+    { word: "解決", count: previous.resolved.length },
+    { word: "新しく", count: previous.added.length },
+  ].filter((part) => part.count > 0)
+  if (parts.length === 0) {
+    return <></>
+  }
+  return (
+    <span>
+      前回から <b>{parts.map((part) => `${String(part.count)}件${part.word}`).join(" ・ ")}</b>
+    </span>
   )
 }
 

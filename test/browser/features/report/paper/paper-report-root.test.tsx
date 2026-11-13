@@ -78,6 +78,32 @@ const SCENES = {
     },
     { id: "a1", component: "Markdown", markdown: "架空の読み口が既定値を持っている。" },
   ],
+  second: [
+    {
+      id: "root",
+      component: "Report",
+      verdict: "done",
+      previous: {
+        resolved: ["架空の時刻の扱いを直した", "架空の並びを直した"],
+        added: ["架空の検査が1件増えた"],
+        remaining: ["架空の残り"],
+      },
+      conclusion: ["架空の結論: 残りも直した。"],
+      children: ["s1"],
+    },
+    ...section("架空の本文。"),
+  ],
+  resolvedOnly: [
+    {
+      id: "root",
+      component: "Report",
+      verdict: "done",
+      previous: { resolved: ["架空の直した1件"], added: [], remaining: [] },
+      conclusion: ["架空の結論: 直した。"],
+      children: ["s1"],
+    },
+    ...section("架空の本文。"),
+  ],
   unverified: [
     {
       id: "root",
@@ -202,6 +228,32 @@ describe("新しい器の紙の頭", () => {
     expect(headOrder(container)[0]).toContain("✓答えた")
     expect(screen.queryByRole("heading", { name: "あなたの番" })).toBeNull()
     expect(screen.queryByRole("heading", { name: "続けて頼めること" })).toBeNull()
+  })
+
+  it("2回目の紙は、判定の行・結論・解決・新しく・残っているの順に並ぶ", async () => {
+    const { container } = renderScene("second", "stage")
+    await screen.findByText(/残りも直した/)
+
+    const order = headOrder(container)
+    expect(order[0]).toContain("前回から 2件解決 ・ 1件新しく")
+    expect(order[1]).toContain("残りも直した")
+    expect(order[2]).toContain("✓ 解決")
+    expect(order[3]).toContain("✕ 新しく")
+    expect(order[4]).toContain("？ 残っている")
+  })
+
+  it("前回との対応が無い紙は、判定の行に前回からを出さない", () => {
+    const { container } = renderScene("delivered", "stage")
+
+    expect(headOrder(container)[0]).not.toContain("前回から")
+  })
+
+  it("解決だけの紙は、判定の行を前回から1件解決にして、新しくの語を出さない", () => {
+    const { container } = renderScene("resolvedOnly", "stage")
+
+    const stamp = headOrder(container)[0] ?? ""
+    expect(stamp).toContain("前回から 1件解決")
+    expect(stamp).not.toContain("新しく")
   })
 
   it("旧い器では紙の根を使わず、印の無いときと同じ DOM になる", () => {

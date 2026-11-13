@@ -72,6 +72,24 @@ test.describe("紙のレポート", () => {
     await expect(body.getByRole("heading", { name: "あなたの番" })).toHaveCount(0)
   })
 
+  test("2回目の紙は、判定の行に前回からの件数が出て、結論の直後に解決と新しくが並ぶ", async ({
+    run,
+  }) => {
+    const room = await run.open({
+      scenario: "report-paper-second",
+      scene: "progress-second",
+      viewport: "wide",
+      domRoots: ["page"],
+    })
+    await room.waitForEvent("turn-finished")
+    const page = await reopenInStage(room)
+    const form = page.locator("[data-report-body] [data-paper-form]")
+
+    await expect(form).toContainText("前回から")
+    await expect(form.getByRole("heading", { name: /✓ 解決/u })).toBeVisible()
+    await expect(form.getByRole("heading", { name: /✕ 新しく/u })).toBeVisible()
+  })
+
   test("案内の付箋は、書き手が指した部品の欄外に顔つきで1つ出て、本文は変わらない", async ({
     run,
   }) => {
