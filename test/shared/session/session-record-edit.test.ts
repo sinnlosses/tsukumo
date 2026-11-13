@@ -118,6 +118,23 @@ describe("applySessionEvent（変更のラベル）", () => {
     })
   })
 
+  it("report の記録は、判定・次の手・置いた前提・出どころ・前回との対応・案内の付箋をイベントから写す", () => {
+    const progress = {
+      verdict: "yours",
+      verdictWritten: true,
+      closingConflict: false,
+      next: { kind: "next", owner: "you", action: "架空の問い", choices: ["甲"] },
+      assumptions: ["架空の前提"],
+      sources: [{ mark: 1, place: "a.ts:1" }],
+      previous: { kind: "previous", resolved: ["架空1"], added: [], remaining: ["架空2"] },
+      guideNotes: [{ target: "checks", text: "架空の案内" }],
+    } as const
+
+    expect(
+      apply(REQUEST, reportEvent({ toolUseId: "toolu_r1", ...progress })).records.at(-1),
+    ).toMatchObject({ kind: "report", ...progress })
+  })
+
   it("知らない toolUseId の report-change-summary では姿を変えない", () => {
     const reported = apply(REQUEST, reportEvent({ toolUseId: "toolu_other" }))
 

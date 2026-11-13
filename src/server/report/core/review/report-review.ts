@@ -36,7 +36,6 @@ import type {
   ReportArgumentChars,
   ReportArgumentField,
 } from "../../../../shared/report/report-argument-size.ts"
-import type { ReportCheck } from "../../../../shared/report/report-check.ts"
 import type { ToolErrorField } from "../../../../shared/report/tool-error-field.ts"
 import type {
   ReportCalledEvent,
@@ -50,6 +49,7 @@ import type { ReportDraft } from "../rules/draft.ts"
 import {
   REPORT_FINISHED_WITH_NG_REJECTION_TEXT,
   REPORT_NOTHING_NEW_REJECTION_TEXT,
+  REPORT_PREVIOUS_WITHOUT_EARLIER_REPORT_REJECTION_TEXT,
   REPORT_RESEND_REJECTION_TEXT,
   REPORT_UNRUN_CHECK_COMMAND_REJECTION_TEXT,
   REPORT_UNANSWERED_WORK_PLAN_REJECTION_TEXT,
@@ -62,12 +62,13 @@ import {
   reportViolations,
 } from "../rules/report-violation.ts"
 import { a2uiStructureFaultField } from "../rules/structure.ts"
+import { hasNgCheck, isFinishedReport, isUnrunOkCheck } from "./report-check-fit.ts"
 import { closingSpeech, countedRecord, withoutDroppedParts } from "./report-drawn-event.ts"
 import type { ReportNews, ReportReview, ReportVerdict } from "./report-review-type.ts"
 import { isSameReport } from "./same-report.ts"
 import { toolErrorFieldsOf } from "./tool-error-field.ts"
 import type { TurnRejection } from "./turn-rejection.ts"
-import { type ClosingFit, isFinished, judgeWorkPlanClosing } from "./work-plan-closing-fit.ts"
+import { type ClosingFit, judgeWorkPlanClosing } from "./work-plan-closing-fit.ts"
 
 /**
  * 判定が差し戻していないのに `isError` で返った呼び出し（形の検査で落ちて handler に届かなかったものと、handler で組んだ値が形の検査に落ちたもの）の理由の名前。
@@ -111,8 +112,11 @@ export function createReportReview(
   let drawn: readonly ReportCalledEvent[] = []
   // 補足メッセージ（`aside`）で始まったターンか（走っているターンに届いた `aside` は保留。決まりは `nextAsideTurn`）。
   let asideTurn = INITIAL_ASIDE_TURN
-  // このターンにメインが打った Bash のコマンド（`checks` の `command` との突き合わせにだけ使う）。
-  let bashCommandsInTurn: readonly string[] = []
+  // この依頼でメインが打った Bash のコマンド（`checks` の `command` との突き合わせにだけ使う）。
+  // 背景のワークフローは依頼の中でターンをまたぐので、ターンの頭では空に戻さず、`request` でだけ戻す。
+  let bashCommandsInRequest: readonly string[] = []
+  // このセッションで1度でも `report` を描いたか。ターンの頭でも依頼でも戻さない。
+  let drewAnyReport = false
 
   /** `isError` で返った呼び出しの記録。判定の差し戻しなら理由の名前、判定まで届かなかった呼び出しは `tool-error`。 */
   const rejectionOf = (
@@ -131,7 +135,6 @@ export function createReportReview(
   const startTurn = (): void => {
     rejectedInTurn = new Set()
     drawn = []
-    bashCommandsInTurn = []
   }
 
   const markRejected = (rejection: TurnRejection): void => {
@@ -195,7 +198,7 @@ export function createReportReview(
         return closingVerdict
       }
       const finishedWithNg =
-        isFinished(report.task) && hasNgCheck(report)
+        isFinishedReport(report) && hasNgCheck(report)
           ? settle("finished-with-ng", "finished-with-ng", REPORT_FINISHED_WITH_NG_REJECTION_TEXT)
           : accepted
       if (finishedWithNg.kind === "rejected") {
@@ -213,7 +216,7 @@ export function createReportReview(
       if (backgroundRunning.kind === "rejected") {
         return backgroundRunning
       }
-      const unrunCheck = report.checks.some((check) => isUnrunOkCheck(check, bashCommandsInTurn))
+      const unrunCheck = report.checks.some((check) => isUnrunOkCheck(check, bashCommandsInRequest))
         ? settle(
             "unrun-check-command",
             "unrun-check-command",
@@ -222,6 +225,17 @@ export function createReportReview(
         : accepted
       if (unrunCheck.kind === "rejected") {
         return unrunCheck
+      }
+      const earlierMissing =
+        report.previous.kind === "previous" && !drewAnyReport
+          ? settle(
+              "previous-without-earlier-report",
+              "previous-without-earlier-report",
+              REPORT_PREVIOUS_WITHOUT_EARLIER_REPORT_REJECTION_TEXT,
+            )
+          : accepted
+      if (earlierMissing.kind === "rejected") {
+        return earlierMissing
       }
       const violations = reportViolations(report)
       const rejecting = violations.filter((violation) => modes[violation.kind] === "reject")
@@ -300,15 +314,19 @@ export function createReportReview(
           }
           const kept = withoutDroppedParts(report, dropped)
           drawn = [...drawn, kept]
+          drewAnyReport = true
           news.markDrawn()
           return [kept, event, ...closingSpeech(kept), ...countedRecord(kept, counted)]
         }
         case "tool-started":
           if (event.name === "Bash") {
-            bashCommandsInTurn = [...bashCommandsInTurn, bashCommandOf(event.input)]
+            bashCommandsInRequest = [...bashCommandsInRequest, bashCommandOf(event.input)]
           }
           return [event]
         case "request":
+          bashCommandsInRequest = []
+          asideTurn = nextAsideTurn(asideTurn, event)
+          return [event]
         case "turn-started":
         case "aside":
         case "turn-resumed":
@@ -333,14 +351,4 @@ export function createReportReview(
   }
 
   return review
-}
-
-function isUnrunOkCheck(check: ReportCheck, bashCommands: readonly string[]): boolean {
-  return (
-    check.status === "ok" && check.command.trim() !== "" && !bashCommands.includes(check.command)
-  )
-}
-
-function hasNgCheck(report: ReportDraft): boolean {
-  return report.checks.some((check) => check.status === "ng")
 }

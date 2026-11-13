@@ -6,6 +6,7 @@ import type { KeyFigures } from "../report/report-block-comparison.ts"
 import type { ReportChangeCount } from "../report/report-change-summary.ts"
 import type { ReportCheck } from "../report/report-check.ts"
 import type { ReportImageSize } from "../report/report-image.ts"
+import type { ReportProgress } from "../report/report-progress-field.ts"
 import type { ReportTask } from "../report/report-task.ts"
 import type { VerificationStage } from "../report/report-verification.ts"
 import type { ToolErrorField } from "../report/tool-error-field.ts"
@@ -42,6 +43,7 @@ export type ReportEvent =
   /**
    * `report` ツールの呼び出し。メインが呼んだものだけが届く（サブエージェントの呼び出しは変換で捨てる）。
    * `checks`（検証結果）は無ければ空の配列、`favor` は無ければ空の文字列、`task` と `workPlanClosing`（フェーズの閉じ方）は無ければ `none`。
+   * 判定・次の手などの {@link ReportProgress} の欄は、古い欄から読み替えたあとの形（`workPlanClosing` も書いた判定から導いた値になりうる）。
    * `keyFigures`（結論の直下に並べる数）は無ければ空の配列。
    * `toolUseId` は呼び出しの id で、差し戻しが同じ呼び出しの `tool-finished` と突き合わせるのに使う。
    * `closing`（締めのセリフ）は描いたあとに差し戻しが `speech` として出すもので、画面の状態はこの欄を読まない。
@@ -59,7 +61,7 @@ export type ReportEvent =
    * `components` は `a2ui` の版で受け付けた部品の一覧で、旧い版の呼び出しでは空。本文の節・図・振り返りの部品は、この一覧の内容部品から導く。
    * `imageSizes` と `unshelvedImages` は `report` の引数ではなく、サーバが画像を置き場に置いたときに測った寸法と、置き場に置けなかった・寸法を測れなかったパス。駆動は空で渡し、セッションの管理が畳む前に埋める。
    */
-  | {
+  | ({
       readonly kind: "report"
       readonly toolUseId: ToolUseId
       readonly argumentChars: ReportArgumentChars
@@ -83,7 +85,7 @@ export type ReportEvent =
       readonly components: readonly A2uiWrittenComponent[]
       readonly imageSizes: readonly ReportImageSize[]
       readonly unshelvedImages: readonly string[]
-    }
+    } & ReportProgress)
   /**
    * 引数が読めず（`conclusion` が文字列・文字列の配列・省略のどれでもない）`report` にならなかったメインの呼び出し。サーバの中だけで流れる。
    * `CallReview` が同じ `toolUseId` の `tool-finished` まで預かり、差し戻しの記録（`report-rejected`）にだけ使う（畳み込み・ブラウザには届かない）。

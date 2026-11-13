@@ -1,7 +1,10 @@
+import { pick } from "remeda"
 import { describe, expect, it } from "vitest"
 import { z } from "zod"
 
 import { REPORT_INPUT_SCHEMA_MAX_CHARS } from "../../../../../scripts/shared/addition-budget.ts"
+import { REPORT_FIELD_CARD_NOTES } from "../../../../../src/server/report/core/prompt/report-field-card-note.ts"
+import { REPORT_FIELD_DESCRIPTIONS } from "../../../../../src/server/report/core/prompt/report-tool.ts"
 import {
   type CallReview,
   createCallReview,
@@ -18,6 +21,15 @@ import {
   WAITING_LINE,
   workServer,
 } from "../../../../fixture/sdk-tool.ts"
+
+const PROGRESS_FIELDS = [
+  "verdict",
+  "next",
+  "assumptions",
+  "sources",
+  "previous",
+  "guideNotes",
+] as const
 
 const UNKNOWN_MERMAID_LINE =
   "- `Mermaid` の図に規約の2種（sequenceDiagram・stateDiagram-v2）の外の種類が1個ある。flowchart は `Graph` で書き、それ以外の図は `Table`・`ItemList`・`Svg` で書く"
@@ -259,6 +271,26 @@ describe("report の本文（components）", () => {
       expect(definition).not.toContain(detail)
       expect(card.text).toContain(detail)
     }
+  })
+
+  it("判定・次の手などの欄は、定義には1行の説明だけが載り、細かい書き方と古い欄との関係は Report のカードにだけ載る", async () => {
+    const reply = await mcpRequest(workServer(), "tools/list", {}, TOOLS_WHOLE_SCHEMA_REPLY)
+    const definition = JSON.stringify(
+      reply.result.tools.find((tool) => tool.name === "report")?.inputSchema,
+    )
+    const card = await callTool(workServer(), "report_part_card", { component: "Report" })
+
+    for (const line of Object.values(pick(REPORT_FIELD_DESCRIPTIONS, PROGRESS_FIELDS))) {
+      expect(definition).toContain(line)
+      expect(card.text).toContain(line)
+    }
+    for (const field of PROGRESS_FIELDS) {
+      const detail = REPORT_FIELD_CARD_NOTES[field].slice(0, 20)
+      expect(definition).not.toContain(detail)
+      expect(card.text).toContain(detail)
+    }
+    expect(definition).not.toContain("favor は owner が you の next")
+    expect(card.text).toContain("favor は owner が you の next")
   })
 
   it("Report の conclusion の説明に、目安の字数と読点の数がある", async () => {

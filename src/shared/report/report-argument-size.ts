@@ -19,6 +19,12 @@ export const REPORT_ARGUMENT_FIELDS = [
   "sessionRemaining",
   "closing",
   "waitingLine",
+  "verdict",
+  "next",
+  "assumptions",
+  "sources",
+  "previous",
+  "guideNotes",
 ] as const satisfies readonly string[]
 
 export type ReportArgumentField = (typeof REPORT_ARGUMENT_FIELDS)[number]

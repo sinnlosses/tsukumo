@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest"
 
 import type { ReportCheck } from "../../../../../src/shared/report/report-check.ts"
+import type { SessionEvent } from "../../../../../src/shared/session/session-event.ts"
 import { reportDraft, reportEvent } from "../../../../fixture/report-event.ts"
 import { createReportReview, noPlan, SESSION_INFO } from "../../../../fixture/report-review.ts"
+import { requestEvent } from "../../../../fixture/session-event.ts"
 import { checkedToolUseId } from "../../../../fixture/tool-use-id.ts"
 
 const okCheck = (command: string): ReportCheck => ({
@@ -14,7 +16,11 @@ const okCheck = (command: string): ReportCheck => ({
   howToVerify: "",
 })
 
-function countedReasonsAfter(bashCommands: readonly string[], command: string): readonly string[] {
+function countedReasonsAfter(
+  bashCommands: readonly string[],
+  command: string,
+  between: readonly SessionEvent[] = [],
+): readonly string[] {
   const review = createReportReview(noPlan)
   review.pass(SESSION_INFO)
   bashCommands.forEach((bash, index) => {
@@ -25,6 +31,7 @@ function countedReasonsAfter(bashCommands: readonly string[], command: string): 
       input: { command: bash },
     })
   })
+  between.forEach((event) => review.pass(event))
   const draft = reportDraft({ conclusion: "架空の結論。", checks: [okCheck(command)] })
   expect(review.judge(draft)).toEqual({ kind: "accepted" })
   review.pass(
@@ -53,5 +60,20 @@ describe("打っていない command の ok の行", () => {
 
   it("command が空白だけの行は数えない", () => {
     expect(countedReasonsAfter([], "  ")).toEqual([])
+  })
+
+  it("別のターンで打った Bash も、同じ依頼なら突き合わせに使う", () => {
+    expect(
+      countedReasonsAfter(["架空の確認コマンド"], "架空の確認コマンド", [
+        { kind: "turn-finished", outcome: { kind: "completed" } },
+        SESSION_INFO,
+      ]),
+    ).toEqual([])
+  })
+
+  it("新しい依頼が届くと、それまでに打った Bash は突き合わせに使わない", () => {
+    expect(
+      countedReasonsAfter(["架空の確認コマンド"], "架空の確認コマンド", [requestEvent()]),
+    ).toEqual(["unrun-check-command"])
   })
 })

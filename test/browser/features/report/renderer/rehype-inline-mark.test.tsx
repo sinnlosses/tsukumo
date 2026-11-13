@@ -37,6 +37,13 @@ describe("rehypeInlineMark（Markdown を通した描画）", () => {
     ).toBe("width: 60%;")
   })
 
+  it("出どころの番号は span にならず、素の文字 [n] になる", () => {
+    const { container } = render(<Markdown text="架空の根拠{{src: 2}}。" />)
+
+    expect(container.textContent).toBe("架空の根拠[2]。")
+    expect(container.querySelectorAll("p span")).toHaveLength(0)
+  })
+
   it("壊れた印と inline code の中は字のままで、印の span にならない", () => {
     const { container } = render(<Markdown text={"`{{3 / 5}}` と {{3 / 5 と {{x}} と {{5 / 3}}"} />)
 

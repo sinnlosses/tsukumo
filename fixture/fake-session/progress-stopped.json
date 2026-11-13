@@ -1,0 +1,47 @@
+{
+  "name": "progress-stopped",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "架空の古い画面を新しい部品に置き換えてほしい（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 1200,
+      "event": {
+        "kind": "report",
+        "toolUseId": "fake-progress-stopped-1",
+        "components": [
+          {
+            "id": "root",
+            "component": "Report",
+            "verdict": "stopped",
+            "next": { "owner": "writer", "action": "架空の残りの3画面を置き換える" },
+            "conclusion": ["架空の結論: 5画面のうち2画面を置き換えたところで止めた。"],
+            "children": ["s1"],
+            "closing": { "text": "ここで一度止めるね", "expression": "default" }
+          },
+          { "id": "s1", "component": "Section", "heading": "架空の残り", "children": ["t1"] },
+          {
+            "id": "t1",
+            "component": "Markdown",
+            "markdown": "架空の設定画面ほか3画面が残っている。"
+          }
+        ]
+      }
+    },
+    {
+      "afterMs": 1250,
+      "event": {
+        "kind": "tool-finished",
+        "toolUseId": "fake-progress-stopped-1",
+        "content": "ok",
+        "isError": false
+      }
+    },
+    { "afterMs": 2000, "event": { "kind": "turn-finished", "outcome": { "kind": "completed" } } }
+  ]
+}

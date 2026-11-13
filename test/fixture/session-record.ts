@@ -11,6 +11,7 @@ import type {
   SessionRecord,
   ToolRunStatus,
 } from "../../src/shared/session/session-record.ts"
+import { NO_REPORT_PROGRESS } from "./report-event.ts"
 
 /** 利用者の依頼1件。 */
 export function requestRecord(
@@ -94,6 +95,7 @@ export function reportRecord(conclusion = "架空の結論"): SessionRecord {
     unshelvedImages: [],
     components: [],
     time: STAMPED,
+    ...NO_REPORT_PROGRESS,
   }
 }
 

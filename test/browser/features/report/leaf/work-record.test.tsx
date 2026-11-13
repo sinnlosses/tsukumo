@@ -63,16 +63,25 @@ const CHECKS: ReportChecksView = {
       viaCommand: false,
       detail: "",
       howToVerify: "架空の画面を開く",
+      seal: { kind: "claimed" },
     },
   ],
   passed: [
-    { label: "架空の検証", labelHead: "架空の検証", figure: "3件", time: "", viaCommand: false },
+    {
+      label: "架空の検証",
+      labelHead: "架空の検証",
+      figure: "3件",
+      time: "",
+      viaCommand: false,
+      seal: { kind: "claimed" },
+    },
     {
       label: "架空のコマンドの検証",
       labelHead: "架空のコマンドの検証",
       figure: "",
       time: "",
       viaCommand: true,
+      seal: { kind: "run" },
     },
   ],
 }
@@ -192,6 +201,7 @@ describe("作業の記録", () => {
           viaCommand: true,
           detail: "",
           howToVerify: "",
+          seal: { kind: "claimed" },
         },
       ],
     }

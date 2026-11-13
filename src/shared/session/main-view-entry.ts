@@ -3,6 +3,7 @@
 
 import { changedFilesView } from "../report/changed-file-section.ts"
 import { sectionDrawsAnything } from "../report/drawn-entry-markdown.ts"
+import { type CheckBashOutcome, sealOfCheck } from "../report/report-check-seal.ts"
 import { reportChecksView } from "../report/report-check-view.ts"
 import { phaseTimesView } from "../report/report-phase-time.ts"
 import {
@@ -175,6 +176,8 @@ function reportRegionsOf(
     report.checks,
     (command) => bashCommandDuration(context, command),
     isBlankText(report.favor) ? { kind: "none" } : { kind: "favor", id: favorId },
+    (check) =>
+      sealOfCheck(check, bashOutcomeOf(lastBashOf(context, check.command)), report.verification),
   )
   const phaseRows = phaseDurations(context.trail, report.time, report.workPlanClosing)
   const { drawn, layout, imageSource } = reportDrawnPieces(report)
@@ -213,4 +216,11 @@ function reportRegionsOf(
       { id: favorId, text: report.favor },
     ),
   }
+}
+
+function bashOutcomeOf(bash: ReturnType<typeof lastBashOf>): CheckBashOutcome {
+  if (bash === "none") {
+    return "none"
+  }
+  return bash.status.kind === "running" ? "running" : bash.status.result.kind
 }

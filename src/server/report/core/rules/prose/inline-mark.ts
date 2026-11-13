@@ -1,4 +1,4 @@
-// 行内の印を置ける場所（結論・`text` の塊・`list` の項目・`table` のセル）にある、書式に当たらない `{{` の数。数だけを持ち、本文の字は持たない。
+// 行内の印を置ける場所（結論・`text` の塊・`list` の項目・`table` のセル）の文と、そこにある書式に当たらない `{{` の数。違反は数だけを持ち、本文の字は持たない。
 
 import { sumBy } from "remeda"
 
@@ -16,12 +16,19 @@ import { proseTexts } from "./sentence.ts"
 type InlineMarkSource = Pick<ReportDraft, "conclusion" | "components">
 
 export function brokenInlineMarks(report: InlineMarkSource, outline: ReportOutline): number {
-  const texts = [
+  return sumBy(inlineMarkTexts(report, outline), brokenInlineMarkCount)
+}
+
+/** 行内の印を置ける場所の文を並べる。 */
+export function inlineMarkTexts(
+  report: InlineMarkSource,
+  outline: ReportOutline,
+): readonly string[] {
+  return [
     report.conclusion,
     ...retrospectiveHeadTexts(report),
     ...drawnLeaves(outline).flatMap(markTexts),
   ]
-  return sumBy(texts, brokenInlineMarkCount)
 }
 
 /** 振り返りの要約とドラフトの行。塊（`outline.retrospective`）は内容部品として別に読む。 */

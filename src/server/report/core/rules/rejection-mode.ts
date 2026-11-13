@@ -24,6 +24,7 @@ export const REPORT_REJECTION_MODES = {
   "finished-with-ng": "reject",
   "background-running": "reject",
   "unrun-check-command": "count",
+  "previous-without-earlier-report": "count",
   "long-conclusion": "reject",
   "unknown-mermaid": "reject",
   "too-many-notes": "reject",
@@ -72,4 +73,7 @@ export const REPORT_REJECTION_MODES = {
   "broken-inline-mark": "count",
   "plot-title-without-number": "count",
   "template-miss": "count",
+  "verdict-closing-mismatch": "count",
+  "source-mismatch": "count",
+  "guide-note-misplaced": "count",
 } as const satisfies Record<ReportRejectionReason, ReportRejectionMode>

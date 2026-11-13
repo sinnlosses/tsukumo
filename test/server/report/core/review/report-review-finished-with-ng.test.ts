@@ -53,6 +53,41 @@ describe("createReportReview の judge（ng の確認がある finished の repo
     ).toEqual({ kind: "accepted" })
   })
 
+  it("書いた verdict が done で ng の行があれば、task が無くても差し戻す", () => {
+    const draft = reportDraft({
+      conclusion: "架空の結論。",
+      verdict: "done",
+      verdictWritten: true,
+      checks: [check("ng")],
+    })
+
+    expect(createReportReview(noPlan).judge(draft)).toMatchObject({
+      reasons: ["finished-with-ng"],
+    })
+  })
+
+  it("verdict も task も書かない古い呼び出しは、読み替えの既定が done でも ng で差し戻さない", () => {
+    const draft = reportDraft({
+      conclusion: "架空の結論。",
+      verdict: "done",
+      verdictWritten: false,
+      checks: [check("ng")],
+    })
+
+    expect(createReportReview(noPlan).judge(draft)).toEqual({ kind: "accepted" })
+  })
+
+  it("書いた verdict が partial なら ng の行があっても通す", () => {
+    const draft = reportDraft({
+      conclusion: "架空の結論。",
+      verdict: "partial",
+      verdictWritten: true,
+      checks: [check("ng")],
+    })
+
+    expect(createReportReview(noPlan).judge(draft)).toEqual({ kind: "accepted" })
+  })
+
   it("ng の行が無い finished は通す", () => {
     expect(createReportReview(noPlan).judge(withTask("finished", ["ok", "unobserved"]))).toEqual({
       kind: "accepted",

@@ -8,6 +8,7 @@ import { unified } from "unified"
 import type { A2uiReportComponent } from "../../../../shared/report/a2ui-report-catalog.ts"
 import type { KeyFigures } from "../../../../shared/report/report-block-comparison.ts"
 import type { ReportCheck } from "../../../../shared/report/report-check.ts"
+import type { ReportProgress } from "../../../../shared/report/report-progress-field.ts"
 import type { ReportTask } from "../../../../shared/report/report-task.ts"
 import type { WorkPlanClosing } from "../../../../shared/session/work-plan.ts"
 
@@ -28,7 +29,7 @@ export type ReportDraft = {
   readonly task: ReportTask
   /** フェーズの閉じ方。記法の検査には使わず、フェーズの閉じ方の差し戻し（`ReportReview`）が読む。 */
   readonly workPlanClosing: WorkPlanClosing
-}
+} & ReportProgress
 
 // モデルが書いた Markdown を構文木（mdast）にする読み。
 //

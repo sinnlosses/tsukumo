@@ -4,6 +4,7 @@ import { isBlockViolation } from "../../../../../src/server/report/core/rules/bl
 import { isCheckViolation } from "../../../../../src/server/report/core/rules/check.ts"
 import type { ReportDraft } from "../../../../../src/server/report/core/rules/draft.ts"
 import { isFigureViolation } from "../../../../../src/server/report/core/rules/figure.ts"
+import { isProgressFieldViolation } from "../../../../../src/server/report/core/rules/progress-field.ts"
 import { isProseViolation } from "../../../../../src/server/report/core/rules/prose.ts"
 import {
   REPORT_VIOLATION_KINDS,
@@ -26,6 +27,7 @@ describe("違反の種類の持ち主", () => {
       isFigureViolation,
       isCheckViolation,
       isTemplateViolation,
+      isProgressFieldViolation,
     ]
 
     expect(

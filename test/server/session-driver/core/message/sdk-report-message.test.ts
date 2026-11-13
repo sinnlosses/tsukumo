@@ -36,6 +36,7 @@ describe("toSessionEvents（report ツール）", () => {
         argumentChars: expect.objectContaining({ total: expect.any(Number) }),
         conclusion: "架空の結論。",
         favor: "架空のお願い",
+        next: { kind: "next", owner: "you", action: "架空のお願い", choices: [] },
         checks: [
           {
             status: "ok",
@@ -127,6 +128,40 @@ describe("toSessionEvents（report ツール）", () => {
     })
 
     expect(closings).toEqual(["finished", "stopped", "none"])
+  })
+
+  it("古い欄だけの呼び出しと、新しい欄で同じ意味を書いた呼び出しは、同じ判定・次の手・閉じ方に落ちる", () => {
+    const task = { id: "T-1", name: "架空の作業", outcome: "awaiting-answer" }
+    const read = [
+      { task, favor: "架空の答えを選んでほしい", workPlanClosing: "stopped" },
+      {
+        task: { ...task, outcome: "finished" },
+        verdict: "yours",
+        next: { owner: "you", action: "架空の答えを選んでほしい" },
+      },
+    ].map((input) => {
+      const [event] = toSessionEvents(
+        assistantMessageWithoutUuid([
+          {
+            type: "tool_use",
+            id: "toolu_r1",
+            name: REPORT_TOOL_FULL_NAME,
+            input: { conclusion: "架空の結論。", ...input },
+          },
+        ]),
+        EXPRESSIONS,
+      )
+      return event?.kind === "report"
+        ? { verdict: event.verdict, next: event.next, workPlanClosing: event.workPlanClosing }
+        : "report でない"
+    })
+
+    expect(read[0]).toEqual({
+      verdict: "yours",
+      next: { kind: "next", owner: "you", action: "架空の答えを選んでほしい", choices: [] },
+      workPlanClosing: "stopped",
+    })
+    expect(read[1]).toEqual(read[0])
   })
 
   it("report の waitingLine が空白だけ・形の崩れなら書かなかったものとして畳む", () => {
@@ -457,6 +492,7 @@ describe("toSessionEvents（report ツール）", () => {
         conclusion: "",
         conclusionSentenceChars: [],
         favor: "架空のお願い",
+        next: { kind: "next", owner: "you", action: "架空のお願い", choices: [] },
       }),
     ])
   })

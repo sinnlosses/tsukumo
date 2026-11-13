@@ -51,6 +51,14 @@ import {
   MAX_FIRST_SENTENCE,
   MAX_HEADING,
 } from "./report-limit.ts"
+import {
+  reportAssumptionsSchema,
+  reportGuideNoteSchema,
+  reportJudgmentSchema,
+  reportNextSchema,
+  reportPreviousSchema,
+  reportSourceEntrySchema,
+} from "./report-progress-field.ts"
 import { reportRetrospectiveSchema } from "./report-retrospective.ts"
 import { reportTaskSchema } from "./report-task.ts"
 import { timelineBlockSchema } from "./timeline-block.ts"
@@ -222,6 +230,12 @@ const reportComponentSchema = z.object({
   sessionRemaining: z.string().optional(),
   closing: speechSchema.optional(),
   waitingLine: speechSchema.optional(),
+  verdict: reportJudgmentSchema.optional(),
+  next: reportNextSchema.optional(),
+  assumptions: reportAssumptionsSchema.optional(),
+  sources: z.array(reportSourceEntrySchema).optional(),
+  previous: reportPreviousSchema.optional(),
+  guideNotes: z.array(reportGuideNoteSchema).optional(),
 })
 
 /** 書き手が書く根。静的な一覧の根に、名前つきの式 `defs` を足した形。 */

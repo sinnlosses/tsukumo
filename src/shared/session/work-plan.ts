@@ -3,6 +3,7 @@
 import { sumBy } from "remeda"
 import { z } from "zod"
 
+import type { ReportJudgment } from "../report/report-progress-field.ts"
 import { isBlankText } from "../utils/blank-text.ts"
 import {
   hasConsistentPhaseIds,
@@ -327,6 +328,19 @@ export type WorkPlanClosing = "none" | (typeof WORK_PLAN_CLOSINGS)[number]
 /** `report` の引数の `workPlanClosing` を読む。「無い」と形の崩れは `none` に畳む。 */
 export function parseWorkPlanClosing(value: unknown): WorkPlanClosing {
   return WORK_PLAN_CLOSINGS.find((closing) => closing === value) ?? "none"
+}
+
+/** `report` の判定から導くフェーズの閉じ方。済んだ・一部済んだは `finished`、ほかは `stopped`。 */
+export function closingOfJudgment(verdict: ReportJudgment): Exclude<WorkPlanClosing, "none"> {
+  return verdict === "done" || verdict === "partial" ? "finished" : "stopped"
+}
+
+/** 書いた判定と書いた閉じ方が食い違うか。閉じ方を書いていなければ食い違わない。 */
+export function verdictClosingConflict(
+  verdict: ReportJudgment,
+  workPlanClosing: WorkPlanClosing,
+): boolean {
+  return workPlanClosing !== "none" && workPlanClosing !== closingOfJudgment(verdict)
 }
 
 /** ワークプランの今の段（{@link WorkPhase}）。 */

@@ -1,0 +1,69 @@
+{
+  "name": "progress-delivered",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "架空の一覧の並びを直してほしい（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 1200,
+      "event": {
+        "kind": "report",
+        "toolUseId": "fake-progress-delivered-1",
+        "components": [
+          {
+            "id": "root",
+            "component": "Report",
+            "verdict": "done",
+            "next": { "owner": "none", "action": "続けて頼むことは無い（架空）" },
+            "assumptions": [
+              "架空の一覧は名前の順で読まれると置いた（並びの決まりが書かれていなかったため）"
+            ],
+            "sources": [
+              { "mark": 1, "place": "src/fictional/list.ts:12", "note": "架空の並べ替え" }
+            ],
+            "guideNotes": [{ "target": "checks", "text": "確かめた行はここだよ" }],
+            "conclusion": ["架空の結論: 一覧を名前の順に並べ直した{{src: 1}}。"],
+            "checks": [
+              {
+                "status": "ok",
+                "label": "架空の並びの確認",
+                "figure": "3 件",
+                "command": "",
+                "detail": "",
+                "howToVerify": ""
+              }
+            ],
+            "children": ["s1"],
+            "closing": { "text": "並べ直したよ", "expression": "default" }
+          },
+          {
+            "id": "s1",
+            "component": "Section",
+            "heading": "架空の変えたところ",
+            "children": ["t1"]
+          },
+          {
+            "id": "t1",
+            "component": "Markdown",
+            "markdown": "架空の並べ替えの関数を名前の順にした{{src: 1}}。"
+          }
+        ]
+      }
+    },
+    {
+      "afterMs": 1250,
+      "event": {
+        "kind": "tool-finished",
+        "toolUseId": "fake-progress-delivered-1",
+        "content": "ok",
+        "isError": false
+      }
+    },
+    { "afterMs": 2000, "event": { "kind": "turn-finished", "outcome": { "kind": "completed" } } }
+  ]
+}

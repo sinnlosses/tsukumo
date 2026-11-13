@@ -7,6 +7,7 @@ import type { KeyFigures } from "../report/report-block-comparison.ts"
 import type { ReportChangeSummary } from "../report/report-change-summary.ts"
 import type { ReportCheck } from "../report/report-check.ts"
 import type { ReportImageSize } from "../report/report-image.ts"
+import type { ReportProgress } from "../report/report-progress-field.ts"
 import type { ReportTask } from "../report/report-task.ts"
 import type { ReportVerification } from "../report/report-verification.ts"
 import type { RecordedPromptImage } from "../session-driver/prompt-image.ts"
@@ -117,7 +118,7 @@ export type SessionRecord =
    * `toolUseId` は `image` の塊の画像を置き場から引く鍵（`reportImagePath`）。
    * `waitingLine` はメインビューには描かず、依頼を待つ間の吹き出しが読む（`shownReaction`）。
    */
-  | {
+  | ({
       readonly kind: "report"
       readonly toolUseId: string
       readonly conclusion: string
@@ -142,7 +143,7 @@ export type SessionRecord =
       readonly components: readonly A2uiWrittenComponent[]
       /** 受け付けた時刻。最後の段の所要時間を閉じる端になる。 */
       readonly time: RecordTime
-    }
+    } & ReportProgress)
   /**
    * `work_plan` ツールで受け取ったワークプランと、`finished` の `report` で tsukumo が閉じたワークプラン。
    * 届いた位置に積むだけで、今のワークプランは `currentWorkPlan`、手順ごとの段は `currentTurnSteps` が記録から導く。

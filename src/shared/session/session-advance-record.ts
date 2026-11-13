@@ -1,6 +1,9 @@
 // 記録（`records`）に積むイベントのうち、畳み方の大きいものを畳んで次のセッションの姿を返す純粋関数。
 
+import { pick } from "remeda"
+
 import { NO_REPORT_CHANGE_SUMMARY } from "../report/report-change-summary.ts"
+import { REPORT_PROGRESS_KEYS } from "../report/report-progress-field.ts"
 import { NO_REPORT_VERIFICATION } from "../report/report-verification.ts"
 import type { SpeechEvent } from "./session-event-speech.ts"
 import type { ReportCalledEvent, SessionEventOfKind, ToolStartedEvent } from "./session-event.ts"
@@ -68,6 +71,7 @@ export function advanceByReport(
         unshelvedImages: event.unshelvedImages,
         components: event.components,
         time: { kind: "stamped", at },
+        ...pick(event, REPORT_PROGRESS_KEYS),
       },
     ],
   }

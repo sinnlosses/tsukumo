@@ -1,0 +1,55 @@
+{
+  "name": "progress-failed",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "架空の書き出しを速くしてほしい（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 1200,
+      "event": {
+        "kind": "report",
+        "toolUseId": "fake-progress-failed-1",
+        "components": [
+          {
+            "id": "root",
+            "component": "Report",
+            "verdict": "failed",
+            "next": { "owner": "writer", "action": "架空の落ちた検査を直してから続ける" },
+            "conclusion": [
+              "架空の結論: 書き出しは速くなったが、架空の検査が1件落ちたので止まった。"
+            ],
+            "checks": [
+              {
+                "status": "ng",
+                "label": "架空の単体テスト",
+                "figure": "12 件中 1 件",
+                "command": "",
+                "detail": "架空の境界の値で落ちた",
+                "howToVerify": ""
+              }
+            ],
+            "children": ["s1"],
+            "closing": { "text": "ごめん、1件落ちちゃった", "expression": "default" }
+          },
+          { "id": "s1", "component": "Section", "heading": "架空の落ち方", "children": ["t1"] },
+          { "id": "t1", "component": "Markdown", "markdown": "架空の空の入力で落ちた。" }
+        ]
+      }
+    },
+    {
+      "afterMs": 1250,
+      "event": {
+        "kind": "tool-finished",
+        "toolUseId": "fake-progress-failed-1",
+        "content": "ok",
+        "isError": false
+      }
+    },
+    { "afterMs": 2000, "event": { "kind": "turn-finished", "outcome": { "kind": "completed" } } }
+  ]
+}

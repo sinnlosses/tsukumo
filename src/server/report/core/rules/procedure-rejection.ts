@@ -17,6 +17,7 @@ export const REPORT_PROCEDURE_REJECTIONS = [
   "finished-with-ng",
   "background-running",
   "unrun-check-command",
+  "previous-without-earlier-report",
 ] as const satisfies readonly string[]
 
 export type ProcedureRejection = (typeof REPORT_PROCEDURE_REJECTIONS)[number]
@@ -70,10 +71,17 @@ export const REPORT_FINISHED_WITH_NG_REJECTION_TEXT =
   REPORT_CHANGED_FIELDS_ONLY_TEXT +
   "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。"
 
-/** `checks` の `ok` の行の `command` が、このターンに打った Bash に無い `report` を差し戻すときの戻り値。 */
+/** `checks` の `ok` の行の `command` が、この依頼で打った Bash に無い `report` を差し戻すときの戻り値。 */
 export const REPORT_UNRUN_CHECK_COMMAND_REJECTION_TEXT =
-  "`checks` の `ok` の行の `command` に、このターンに打っていないコマンドがある。" +
+  "`checks` の `ok` の行の `command` に、この依頼で打っていないコマンドがある。" +
   "打ったコマンドを打った文字列のまま書くか、コマンドでない確認なら `command` を空文字にして呼び直すこと。" +
+  REPORT_CHANGED_FIELDS_ONLY_TEXT +
+  "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。"
+
+/** 前の `report` がこのセッションに無いのに `previous` を書いた `report` を差し戻すときの戻り値。 */
+export const REPORT_PREVIOUS_WITHOUT_EARLIER_REPORT_REJECTION_TEXT =
+  "このセッションにはまだ前の `report` が無いのに、`previous`（前回との対応）を書いている。" +
+  "`previous` は2回目以降のレポートだけに書くので、省いて呼び直すこと。" +
   REPORT_CHANGED_FIELDS_ONLY_TEXT +
   "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。"
 

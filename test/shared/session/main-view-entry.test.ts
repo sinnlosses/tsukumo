@@ -75,6 +75,55 @@ describe("mainViewEntries（記録ごとの結果の持ち回し）", () => {
   const reportHeads = (entries: readonly MainViewEntry[]) =>
     entries.flatMap((entry) => (entry.kind === "report" ? [headOf(entry.regions)] : []))
 
+  it("検証の行の印は、同じ依頼の Bash と控えから3種に分かれ、控えが後から届くと差し替わる", () => {
+    const row = (label: string, command: string) =>
+      ({ status: "ok", label, figure: "", command, detail: "", howToVerify: "" }) as const
+    const events: readonly Timed[] = [
+      [ask, 0],
+      [bashStarted("toolu_b1", "架空の検査"), 1_000],
+      [bashFinished("toolu_b1"), 2_000],
+      [
+        reportEvent({
+          toolUseId: "toolu_r1",
+          checks: [
+            row("架空の実行", "架空の検査"),
+            row("架空の控え", "tw verify"),
+            row("架空の目視", ""),
+          ],
+        }),
+        3_000,
+      ],
+    ]
+    const sealsOf = (state: SessionState) =>
+      reportHeads(mainViewEntries(state)).flatMap((head) =>
+        head?.checks.kind === "checks" ? head.checks.passed.map((passed) => passed.seal) : [],
+      )
+    const before = foldTimed(events)
+    const verified = foldTimed(
+      [
+        [
+          {
+            kind: "report-verification",
+            toolUseId: "toolu_r1",
+            stages: [{ name: "test", result: "passed", count: { kind: "counted", tests: 3 } }],
+          },
+          4_000,
+        ],
+      ],
+      before,
+    )
+
+    expect(sealsOf(before)).toEqual([{ kind: "run" }, { kind: "claimed" }, { kind: "claimed" }])
+    expect(sealsOf(verified)).toEqual([
+      { kind: "run" },
+      {
+        kind: "record",
+        stage: { name: "test", result: "passed", count: { kind: "counted", tests: 3 } },
+      },
+      { kind: "claimed" },
+    ])
+  })
+
   it("report の記録は、呼び出しの toolUseId を持ったまま entry になる", () => {
     const entries = mainViewEntries(
       foldTimed([
