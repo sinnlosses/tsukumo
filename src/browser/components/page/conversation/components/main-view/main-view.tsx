@@ -216,7 +216,7 @@ export function MainView(props: {
                     />
                   </div>
                 )}
-                {progress === "paper" && view.kind === "work" && (
+                {progress === "paper" && (view.kind === "work" || view.kind === "report") && (
                   <div className={styles["turn-card-plan"]}>
                     <WorkPlanPaper />
                   </div>
@@ -251,11 +251,6 @@ export function MainView(props: {
                     />
                   </AskThreadProvider>
                 </div>
-                {progress === "paper" && view.kind === "report" && (
-                  <div className={styles["turn-card-plan"]}>
-                    <WorkPlanPaper />
-                  </div>
-                )}
                 {!viewingPast && props.inquiry === "inline" && (
                   <div className={styles["turn-card-inquiry"]}>
                     <Inquiry />

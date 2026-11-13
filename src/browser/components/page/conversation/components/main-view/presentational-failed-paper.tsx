@@ -13,6 +13,8 @@ export function PresentationalFailedPaper(props: {
   readonly model: Extract<WorkPlanPaperModel, { readonly kind: "failed" }>
   /** 判定の行。 */
   readonly stamp: ReactNode
+  /** 離れていたあいだのまとめ。出さないなら `false`。 */
+  readonly away: ReactNode
   /** 止まった段に印を付けた計画。 */
   readonly plan: ReactNode
 }): ReactElement {
@@ -21,6 +23,7 @@ export function PresentationalFailedPaper(props: {
   return (
     <section className={styles["work-plan"]} aria-label={PLAN_LABEL}>
       {props.stamp}
+      {props.away}
       <p className={styles["work-plan-conclusion"]}>{model.reason}</p>
       <div className={styles["work-plan-turn"]}>
         <YourTurnPart

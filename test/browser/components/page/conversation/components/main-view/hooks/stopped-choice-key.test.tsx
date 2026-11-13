@@ -17,6 +17,7 @@ function stoppedModel(onDraft: (text: string) => void): WorkPlanPaperModel {
     slots: [],
     rows: [],
     now: 0,
+    away: { kind: "none" },
     onDraft,
   }
 }

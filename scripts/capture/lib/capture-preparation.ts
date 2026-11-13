@@ -17,6 +17,7 @@ import { positiveIntegerArgument } from "../../shared/positive-integer-argument.
  * - `hash`: `location.hash` を書いて画面を移す（キャラクター画面・作る画面）
  * - `press`: キーを押す（モーダルの Esc での閉じ）
  * - `advance`: 偽の時計をミリ秒だけ進める（時間が経つと出る画）
+ * - `hide`: ページを隠し、偽の時計をミリ秒だけ進めてから戻す（離れていたあいだのまとめが出る画。偽の時計が要る）
  * - `wait`: 要素が出るのを待つ（`hash` で開いた画面の読み込みなど）
  * - `local-storage`: `localStorage` に値を書いてページを読み直す（利用者の端末に覚えた選び方が効く画）
  */
@@ -30,6 +31,7 @@ export type Preparation =
   | { readonly kind: "hash"; readonly hash: string }
   | { readonly kind: "press"; readonly key: string }
   | { readonly kind: "advance"; readonly ms: number }
+  | { readonly kind: "hide"; readonly ms: number }
   | { readonly kind: "wait"; readonly selector: string }
   | { readonly kind: "local-storage"; readonly key: string; readonly value: string }
 
@@ -100,6 +102,11 @@ export async function applyPreparation(
       case "advance":
         await page.clock.runFor(step.ms)
         break
+      case "hide":
+        await setPageHidden(page, true)
+        await page.clock.runFor(step.ms)
+        await setPageHidden(page, false)
+        break
       case "wait":
         await page.waitForSelector(step.selector, { timeout: WAIT_TIMEOUT_MS })
         break
@@ -145,6 +152,8 @@ export function describePreparation(step: Preparation): string {
       return `${step.key} キーを押す`
     case "advance":
       return `時計を ${String(step.ms)}ms 進める`
+    case "hide":
+      return `ページを隠して ${String(step.ms)}ms たってから戻す`
     case "wait":
       return `${step.selector} が出るのを待つ`
     case "local-storage":
@@ -168,6 +177,7 @@ export const PREPARATION_OPTIONS = {
   hash: { type: "string" },
   press: { type: "string" },
   advance: { type: "string" },
+  "hide-for": { type: "string" },
   type: { type: "string" },
   "scroll-element": { type: "string" },
 } as const
@@ -220,6 +230,14 @@ export function readPreparations(tokens: readonly ArgumentToken[]):
         preparations.push({ kind: "advance", ms: ms.data })
         break
       }
+      case "hide-for": {
+        const ms = positiveIntegerArgument.safeParse(value)
+        if (!ms.success) {
+          return undefined
+        }
+        preparations.push({ kind: "hide", ms: ms.data })
+        break
+      }
       case "scroll-element": {
         const next = tokens[index + 1]
         const top =
@@ -243,4 +261,16 @@ export function readPreparations(tokens: readonly ArgumentToken[]):
     }
   }
   return { preparations, textTokenIndexes }
+}
+
+/** `document.hidden` を上書きして `visibilitychange` を起こす（タブを裏に回した・戻したの模擬）。 */
+async function setPageHidden(page: Page, hidden: boolean): Promise<void> {
+  await page.evaluate((value) => {
+    Object.defineProperty(document, "hidden", { configurable: true, get: () => value })
+    Object.defineProperty(document, "visibilityState", {
+      configurable: true,
+      get: () => (value ? "hidden" : "visible"),
+    })
+    document.dispatchEvent(new Event("visibilitychange"))
+  }, hidden)
 }

@@ -81,6 +81,7 @@ export type WorkPlanPaperModel =
       readonly slots: readonly WorkPlanSlot[]
       readonly rows: readonly WorkPlanRow[]
       readonly now: number
+      readonly away: AwayBrief
     }
   | {
       readonly kind: "stopped"
@@ -91,6 +92,7 @@ export type WorkPlanPaperModel =
       readonly slots: readonly WorkPlanSlot[]
       readonly rows: readonly WorkPlanRow[]
       readonly now: number
+      readonly away: AwayBrief
       readonly onDraft: (text: string) => void
     }
   | {
@@ -103,6 +105,7 @@ export type WorkPlanPaperModel =
       readonly slots: readonly WorkPlanSlot[]
       readonly rows: readonly WorkPlanRow[]
       readonly now: number
+      readonly away: AwayBrief
       readonly onDraft: (text: string) => void
       readonly onRetry: (request: string) => void
     }
@@ -209,6 +212,7 @@ export function useWorkPlanPaper(): WorkPlanPaperModel {
       slots: failedSlots,
       rows: failedRows,
       now,
+      away,
       onDraft: (text) => {
         replaceDraft({ text, caret: text.length })
       },
@@ -228,6 +232,7 @@ export function useWorkPlanPaper(): WorkPlanPaperModel {
       slots,
       rows,
       now,
+      away,
       onDraft: (text) => {
         replaceDraft({ text, caret: text.length })
       },
@@ -249,6 +254,7 @@ export function useWorkPlanPaper(): WorkPlanPaperModel {
     slots,
     rows,
     now,
+    away,
   }
 }
 

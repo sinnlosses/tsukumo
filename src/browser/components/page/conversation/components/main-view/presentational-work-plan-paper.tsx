@@ -75,16 +75,19 @@ export function PresentationalWorkPlanPaper(props: {
   const { model } = props
   if (model.kind === "finished") {
     return (
-      <details className={styles["work-plan-route"]} data-ending={model.ending}>
-        <summary className={styles["work-plan-route-summary"]}>
-          {`${ROUTE_TITLE[model.ending]} ― ${model.summary}`}
-        </summary>
-        <ol className={styles["work-plan-list"]} aria-label={PLAN_LABEL}>
-          {model.slots.map((slot) => (
-            <SlotItem key={slotKeyOf(slot)} slot={slot} clock={CLOSED_CLOCK} />
-          ))}
-        </ol>
-      </details>
+      <>
+        {model.away.kind === "brief" && <AwayBriefBlock brief={model.away} />}
+        <details className={styles["work-plan-route"]} data-ending={model.ending}>
+          <summary className={styles["work-plan-route-summary"]}>
+            {`${ROUTE_TITLE[model.ending]} ― ${model.summary}`}
+          </summary>
+          <ol className={styles["work-plan-list"]} aria-label={PLAN_LABEL}>
+            {model.slots.map((slot) => (
+              <SlotItem key={slotKeyOf(slot)} slot={slot} clock={CLOSED_CLOCK} />
+            ))}
+          </ol>
+        </details>
+      </>
     )
   }
   if (model.kind === "stopped") {
@@ -103,6 +106,7 @@ export function PresentationalWorkPlanPaper(props: {
             estimate=""
           />
         }
+        away={model.away.kind === "brief" && <AwayBriefBlock brief={model.away} />}
         plan={
           <ol className={styles["work-plan-list"]}>
             {model.slots.map((slot) => (
@@ -199,6 +203,7 @@ function StoppedPaper(props: {
         elapsed={model.elapsed}
         estimate=""
       />
+      {model.away.kind === "brief" && <AwayBriefBlock brief={model.away} />}
       <div className={styles["work-plan-turn"]}>
         <YourTurnPart onDraft={model.onDraft} extra={false} />
         <section className={styles["work-plan-turn-part"]}>

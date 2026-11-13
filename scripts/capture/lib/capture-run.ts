@@ -60,7 +60,7 @@ export async function capture(
       options.waitFor !== undefined ||
       options.clock !== undefined ||
       options.revealAt !== undefined ||
-      options.preparations.some((step) => step.kind === "advance")
+      options.preparations.some((step) => step.kind === "advance" || step.kind === "hide")
     if (clockInstalled) {
       await (options.clock === undefined
         ? page.clock.install()

@@ -270,6 +270,7 @@ export const MAIN_VIEW_EXAMPLES: readonly ScreenPartExample[] = [
             slots: PLAN_SLOTS,
             rows: PLAN_ROWS,
             now: 0,
+            away: { kind: "none" },
           }}
         />
         <PresentationalWorkPlanPaper
@@ -287,6 +288,7 @@ export const MAIN_VIEW_EXAMPLES: readonly ScreenPartExample[] = [
             slots: FAILED_SLOTS,
             rows: FAILED_SLOTS.flatMap(rowsOfSlot),
             now: 0,
+            away: { kind: "none" },
             onDraft: noop,
             onRetry: noop,
           }}
@@ -362,10 +364,12 @@ export const MAIN_VIEW_EXAMPLES: readonly ScreenPartExample[] = [
           slots: FAILED_SLOTS,
           rows: FAILED_SLOTS.flatMap(rowsOfSlot),
           now: 0,
+          away: { kind: "none" },
           onDraft: noop,
           onRetry: noop,
         }}
         stamp={<p>失敗で止まった ・ 4段のうち3段目で止まった ・ 12分48秒</p>}
+        away={false}
         plan={<p>止まった段に ✕ を付けた計画がここに入る。</p>}
       />
     ),

@@ -216,6 +216,7 @@ describe("PresentationalWorkPlanPaper の失敗で止まった紙", () => {
           slots: rows.map((item) => ({ kind: "phase", spanHead: { kind: "none" }, row: item })),
           rows,
           now: 0,
+          away: { kind: "none" },
           ...handlers,
         }}
       />,
@@ -242,5 +243,67 @@ describe("PresentationalWorkPlanPaper の失敗で止まった紙", () => {
 
     expect(onDraft).toHaveBeenCalledWith("ここまでの変更を元に戻して")
     expect(onRetry).toHaveBeenCalledWith("架空の依頼")
+  })
+})
+
+describe("PresentationalWorkPlanPaper の渡す紙の離れていたあいだのまとめ", () => {
+  const brief = {
+    kind: "brief",
+    minutes: 5,
+    total: 3,
+    settled: 3,
+    waiting: { kind: "none" },
+    changes: [],
+    assumptions: [],
+    replans: [],
+    markBeforeRowKey: { kind: "none" },
+  } as const
+
+  it("済んだ紙の頭に、道筋より先にまとめが出る", () => {
+    const rows = [row("1", "done")]
+    const { container } = render(
+      <PresentationalWorkPlanPaper
+        model={{
+          kind: "finished",
+          ending: "finished",
+          summary: "1段",
+          slots: rows.map((item) => ({ kind: "phase", spanHead: { kind: "none" }, row: item })),
+          rows,
+          now: 0,
+          away: brief,
+        }}
+      />,
+    )
+
+    const away = screen.getByLabelText("離れていたあいだのまとめ")
+    const route = container.querySelector("details")
+    if (route === null) {
+      throw new Error("道筋の <details> が無い")
+    }
+    expect(away.compareDocumentPosition(route) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
+  it("失敗で止まった紙でも、まとめが出る", () => {
+    const rows = [row("1", "done"), row("2", "failed")]
+    render(
+      <PresentationalWorkPlanPaper
+        model={{
+          kind: "failed",
+          position: "2段のうち2段目で止まった",
+          elapsed: "",
+          reason: "架空の理由の語",
+          retry: { kind: "none" },
+          remaining: [],
+          slots: rows.map((item) => ({ kind: "phase", spanHead: { kind: "none" }, row: item })),
+          rows,
+          now: 0,
+          away: brief,
+          onDraft: () => {},
+          onRetry: () => {},
+        }}
+      />,
+    )
+
+    expect(screen.getByLabelText("離れていたあいだのまとめ")).toBeTruthy()
   })
 })
