@@ -78,6 +78,27 @@ const SCENES = {
     },
     { id: "a1", component: "Markdown", markdown: "架空の読み口が既定値を持っている。" },
   ],
+  unverified: [
+    {
+      id: "root",
+      component: "Report",
+      verdict: "done",
+      conclusion: ["架空の結論: 設定の読み口を1か所にした。"],
+      children: ["s1"],
+    },
+    { id: "s1", component: "Section", heading: "架空の節", children: ["c1"] },
+    {
+      id: "c1",
+      component: "Claims",
+      items: [
+        {
+          claim: "架空の別の環境でも同じに読む。",
+          certainty: "unverified",
+          howToVerify: "架空の環境で起こし直す",
+        },
+      ],
+    },
+  ],
 } as const
 
 /** 場面の引数を、本番と同じ読み替えと畳みを通した本文にする。 */
@@ -167,6 +188,12 @@ describe("新しい器の紙の頭", () => {
 
     expect(appendDraft).toHaveBeenCalledWith("続けて。架空の残り")
     expect(ask).not.toHaveBeenCalled()
+  })
+
+  it("検証が無く未確認の主張だけがある紙も、判定の行に確かめていないの件数を出す", () => {
+    const { container } = renderScene("unverified", "stage")
+
+    expect(headOrder(container)[0]).toContain("？1")
   })
 
   it("短い答えの紙は、判定を答えたにし、あなたの番も続けて頼めることも出さない", () => {

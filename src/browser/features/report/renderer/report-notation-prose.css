@@ -302,7 +302,7 @@
     font-family: var(--font-code);
     font-size-adjust: none;
     padding: var(--space-sm) var(--space-md);
-    background: var(--ground);
+    background: var(--report-code-ground);
     border-radius: var(--radius-md);
     white-space: pre-wrap;
     overflow-wrap: anywhere;
@@ -321,12 +321,12 @@
   }
   /* フェンスの頭に添える帯。ファイル名（```diff src/foo.ts）があれば左のラベルに出し
    （差分だけを見てどのファイルか分からない、を防ぐ）、右には常にコピーのボタンを置く。
-   別の枠を足さず、コードの地（--ground）を上へ伸ばして1つの塊に見せる（箱が2つ並ぶと、差分そのものより境目のほうが目立つ）。
+   別の枠を足さず、コードの地（--report-code-ground）を上へ伸ばして1つの塊に見せる（箱が2つ並ぶと、差分そのものより境目のほうが目立つ）。
    ラベルの文字はパスなので等幅で、寸法は「ID・ツール名・キー」の段。
    器は Markdown のレンダラ側（`Pre`）が作るので、レポートの記法・許可リストは増えていない。 */
   & .code-file {
     margin: var(--report-block-gap) 0;
-    background: var(--ground);
+    background: var(--report-code-ground);
     border: 1px solid var(--report-chunk-rule, var(--rule-soft));
     border-radius: var(--radius-md);
     overflow: hidden;
@@ -358,8 +358,7 @@
     font-variant-numeric: tabular-nums;
     user-select: none;
   }
-  /* 行ごとに描くコード（`marks` のある塊と、コマンドの行のある shell の塊）。1行を1つの塊にし、<pre> の左右の余白まで地と罫を伸ばす。
-   印の行は地を --surface-raised、左端に 2px の --accent を沈めた罫、ラベルは行の右端に 12px・--ink-quiet。 */
+  /* 行ごとに描くコード（`marks` のある塊と、コマンドの行のある shell の塊）。1行を1つの塊にし、<pre> の左右の余白まで地と罫を伸ばす。 */
   & .code-line {
     display: flex;
     align-items: baseline;
@@ -371,10 +370,6 @@
   & .code-line-text {
     flex: 1 1 auto;
     min-width: 0;
-  }
-  & .code-line-mark {
-    background: var(--surface-raised);
-    box-shadow: inset 2px 0 0 var(--accent);
   }
   & .code-line-output {
     color: var(--ink-soft);
@@ -407,12 +402,6 @@
   }
   & .code-diff-removed {
     background: var(--code-diff-word-removed);
-  }
-  & .code-mark-label {
-    flex: none;
-    font-family: var(--font-sans);
-    font-size: var(--font-label);
-    color: var(--ink-quiet);
   }
   /* 畳んだ範囲の 1 行。押すと中身が出る。 */
   & .code-fold {

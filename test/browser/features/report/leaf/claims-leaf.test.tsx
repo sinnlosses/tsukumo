@@ -56,6 +56,12 @@ describe("Claims の部品", () => {
     expect(unverified).toContain("根拠架空の別の根拠")
     expect(unverified).toContain("確かめ方架空の別の手順")
   })
+
+  it("主張の行は、台帳の飛び先になる部品の id と位置の id を持つ", () => {
+    renderDirectLeaf({ id: "c1", component: "Claims", items: ITEMS, fold: "", aside: "" })
+
+    expect(document.getElementById("claim-c1-2")?.textContent).toContain("架空の未確認の主張")
+  })
 })
 
 describe("Claims の主張を指して頼む", () => {

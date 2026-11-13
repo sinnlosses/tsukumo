@@ -14,10 +14,11 @@ import {
   useReadingDepth,
 } from "../../../stores/reading-depth.ts"
 import { BodyRegions, useReport } from "../a2ui-part.tsx"
+import { certaintyLedgerOf } from "../domain/certainty-ledger.ts"
 import { type PaperForm, paperFormOf } from "../domain/paper-form.ts"
 import { splitConclusion } from "../domain/split-conclusion.ts"
 import { RegionBox, ReportFrame } from "../leaf/body-region.tsx"
-import { ChecksVerdict } from "../leaf/checks-verdict.tsx"
+import { CertaintyLedger } from "../leaf/certainty-ledger.tsx"
 import { StatCards } from "../leaf/stats-leaf.tsx"
 import { checksClassName, InlineMarkdown, statsLeafClassNames } from "../markdown.tsx"
 import { PaperContext } from "./paper-context.ts"
@@ -39,6 +40,8 @@ export function PaperReportRoot(): ReactElement {
   })
   const full = form !== "answer"
   const depth = useReadingDepth((state) => state.depth)
+  const ledger = certaintyLedgerOf(head.checks, view.components)
+  const hasLedgerRows = Object.values(ledger.counts).some((count) => count > 0)
   return (
     <PaperContext value={true}>
       <ReportFrame
@@ -52,7 +55,7 @@ export function PaperReportRoot(): ReactElement {
         <RegionBox region={{ kind: "head" }}>
           <div className={styles["paper-head"]} data-paper-form={form}>
             <div className={styles["paper-top"]}>
-              <PaperStamp form={form} head={head} />
+              <PaperStamp form={form} head={head} counts={ledger.counts} />
               <DepthSwitch depth={depth} />
             </div>
             <Conclusion lead={head.lead} />
@@ -70,9 +73,9 @@ export function PaperReportRoot(): ReactElement {
             <StatCards items={head.keyFigures} />
           </div>
         )}
-        {full && head.checks.kind === "checks" && (
+        {full && hasLedgerRows && (
           <div className={checksClassName("status")} data-paper-part="ledger">
-            <ChecksVerdict view={head.checks} />
+            <CertaintyLedger ledger={ledger} depth={depth} />
           </div>
         )}
         <BodyRegions foldable={true} />

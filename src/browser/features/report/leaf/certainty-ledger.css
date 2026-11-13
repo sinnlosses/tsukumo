@@ -1,0 +1,110 @@
+/* 紙の確かさの台帳の置き方。1行は印・文・裏取りの印・コマンドの4列。
+   紙の中の `details`・`summary` には Markdown 向けの地と枠の規則（features/report/renderer/report-notation-prose.css）が当たるので、
+   台帳の欄の中に限って同じ要素より強い組み合わせで打ち消す。 */
+[data-paper-part="ledger"] .ledger {
+  display: grid;
+  max-inline-size: min(100%, var(--report-measure-wide));
+}
+[data-paper-part="ledger"] .ledger-label {
+  margin: 0;
+  padding: var(--stack-block) 0 0 var(--inline-control);
+  color: var(--ink-quiet);
+  font-size: var(--font-secondary);
+}
+[data-paper-part="ledger"] .ledger-row {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: none;
+}
+/* 新しい器の Markdown の `summary`（`:root[data-shell="stage"] .detail-block summary`）の字の大きさと色に勝つよう、台帳の class を2つ重ねる。 */
+[data-paper-part="ledger"] .ledger .ledger-row > summary {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr) auto auto;
+  gap: var(--inline-control);
+  align-items: baseline;
+  margin: 0;
+  padding: var(--stack-tight) var(--inline-control);
+  border-radius: var(--radius-md);
+  color: var(--ink);
+  font-size: var(--font-body);
+  list-style: none;
+  cursor: pointer;
+}
+[data-paper-part="ledger"] .ledger-row > summary::-webkit-details-marker {
+  display: none;
+}
+[data-paper-part="ledger"] .ledger-row > summary:hover {
+  background: var(--surface-raised);
+}
+[data-paper-part="ledger"] .ledger-mark {
+  font-weight: 800;
+  text-align: center;
+}
+[data-paper-part="ledger"] .ledger-mark[data-tone="ok"] {
+  color: var(--state-ok);
+}
+[data-paper-part="ledger"] .ledger-mark[data-tone="ng"] {
+  color: var(--state-ng);
+}
+/* 確かめていないは失敗の色にせず、点線の丸で囲む。 */
+[data-paper-part="ledger"] .ledger-mark[data-tone="unknown"] {
+  box-sizing: border-box;
+  width: 19px;
+  height: 19px;
+  border: 1.5px dashed var(--ink-quiet);
+  border-radius: var(--radius-round);
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+  line-height: 16px;
+}
+[data-paper-part="ledger"] .ledger-text {
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
+[data-paper-part="ledger"] .ledger-text a {
+  color: inherit;
+}
+[data-paper-part="ledger"] .ledger-figure {
+  color: var(--ink-bright);
+}
+[data-paper-part="ledger"] .ledger-seal {
+  padding: 0 var(--inline-tight);
+  border-radius: var(--radius-sm);
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+  white-space: nowrap;
+  box-shadow: inset 0 0 0 1px var(--rule);
+}
+[data-paper-part="ledger"] .ledger-seal[data-seen] {
+  color: var(--state-ok);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--state-ok) 50%, transparent);
+}
+[data-paper-part="ledger"] .ledger-command {
+  padding: 0;
+  background: none;
+  color: var(--ink-quiet);
+  font-size: var(--font-secondary);
+  white-space: nowrap;
+}
+/* 左の字下げは印の列（20px）と列の間をあけた文の頭にそろえる。 */
+[data-paper-part="ledger"] .ledger-body {
+  display: grid;
+  gap: var(--stack-tight);
+  padding: 0 var(--inline-control) var(--stack-block) 2.5em;
+  color: var(--ink-soft);
+  font-size: var(--font-secondary);
+}
+[data-paper-part="ledger"] .ledger-body > p {
+  margin: 0;
+  font-size: inherit;
+  line-height: 1.6;
+}
+[data-paper-part="ledger"] .ledger-origin,
+[data-paper-part="ledger"] .ledger-how {
+  color: var(--ink-quiet);
+}
+[data-paper-part="ledger"] .ledger-fold-rows {
+  padding-inline-start: var(--inline-group);
+}

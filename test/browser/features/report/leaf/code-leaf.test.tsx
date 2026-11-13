@@ -112,6 +112,41 @@ describe("Code の部品", () => {
 
     expect(marks.filter((mark) => !fresh.includes(mark.label))).toEqual([])
   })
+
+  it("印のラベルは行の右でなく、塊の下に行の順の箇条で出る", () => {
+    const { part } = pair({
+      source: "const a = 1\nconst b = 2\nconst c = 3\n",
+      marks: [
+        { lines: "3", label: "架空B" },
+        { lines: "1-2", label: "架空A" },
+      ],
+    })
+    const view = directLeafViewOf(part)
+    if (view === undefined) {
+      throw new Error("Code の部品が無い")
+    }
+    const { container } = render(
+      <DirectLeaf
+        part={part}
+        imageSource={{ kind: "none" }}
+        value={{
+          captionNumber: { kind: "none" },
+          tagTones: {},
+          gutterNotes: [],
+          mergedIntoPrevious: false,
+        }}
+        view={view}
+      />,
+    )
+
+    expect(container.querySelector("pre")?.textContent).not.toContain("架空A")
+    const notes = container.querySelector("ul")
+    expect(notes?.previousElementSibling?.querySelector("pre")).not.toBeNull()
+    expect([...(notes?.children ?? [])].map((item) => item.textContent)).toEqual([
+      "1行目: 架空A",
+      "3行目: 架空B",
+    ])
+  })
 })
 
 async function clickCopy(overrides: Partial<Fields>): Promise<string[]> {

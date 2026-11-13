@@ -120,6 +120,7 @@
     "progress-short",
     "progress-failed",
     "progress-stopped",
+    "proof-parts",
     "api-failure",
     "rate-limit",
     "diary-written",

@@ -15,6 +15,7 @@
 @import "./ask-box.css";
 @import "./reply-note.css";
 @import "./note-leaf.css";
+@import "./certainty-ledger.css";
 
 /* 引用の上下のあき。 */
 .quote-block {

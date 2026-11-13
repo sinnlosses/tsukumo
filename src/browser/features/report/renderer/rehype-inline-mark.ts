@@ -1,5 +1,5 @@
 // 文中の行内の印（`{{12 → 8}}`・`{{spark: 3 5 4 8}}`・`{{3 / 5}}`）を、サニタイズのあとの木で `span` に替える rehype のプラグイン。
-// 出どころの番号 `{{src: 1}}` は `span` にせず、畳んだ素の文字 `[1]` にする。
+// 出どころの番号 `{{src: 1}}` は、番号だけを字に持つ上付きの `sup` にする。
 // 印の `span` の文字は `foldInlineMarks` が畳んだ素の文字と同じにする（装飾の要素は文字を持たない）。
 // 壊れた印と inline code（`code`・`pre`）の中は元の文字のまま残す。
 
@@ -18,6 +18,7 @@ const MARK_CLASS_NAMES = {
   "report-mark-ratio-bar": styles["report-mark-ratio-bar"],
   "report-mark-ratio-fill": styles["report-mark-ratio-fill"],
   "report-mark-ratio-value": styles["report-mark-ratio-value"],
+  "report-mark-source": styles["report-mark-source"],
 } as const
 
 const SKIPPED_TAG_NAMES: ReadonlySet<string> = new Set(["code", "pre"])
@@ -54,7 +55,12 @@ function markElement(segment: MarkSegment): ElementContent {
   const { mark } = segment
   switch (mark.kind) {
     case "source":
-      return { type: "text", value: foldInlineMarks(segment.source) }
+      return {
+        type: "element",
+        tagName: "sup",
+        properties: { className: [MARK_CLASS_NAMES["report-mark-source"]] },
+        children: [{ type: "text", value: String(mark.number) }],
+      }
     case "diff":
       return span("report-mark-diff", [
         span("report-mark-diff-from", [{ type: "text", value: `${mark.from} →` }]),

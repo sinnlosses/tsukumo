@@ -47,7 +47,7 @@ import {
 } from "../repository-link.tsx"
 import { codeFenceTree } from "./code-fence-tree.ts"
 import { rehypeCodeFileName } from "./code-file-name.ts"
-import { CodeLines } from "./code-line-list.tsx"
+import { CodeLines, CodeMarkNotes } from "./code-line-list.tsx"
 import { splitCodeLines } from "./code-line.ts"
 import {
   codeFileName,
@@ -280,7 +280,7 @@ function Pre(props: PreProps): ReactElement {
   )
 }
 
-/** 頭の帯とコード本体。始まりの行が分かる塊は、行ごとに描いて行番号を付ける。 */
+/** 頭の帯とコード本体と、塊の下の印のラベル。始まりの行が分かる塊は、行ごとに描いて行番号を付ける。 */
 function FencedCode(props: {
   readonly codeNode: Element
   readonly preProps: JSX.IntrinsicElements["pre"]
@@ -296,28 +296,31 @@ function FencedCode(props: {
   const found = useCodeStartLine({ path: fileName, language: language ?? "", source })
   const startLine = isDiff || kinds !== undefined ? undefined : found
   return (
-    <div className={styles["code-file"]}>
-      <div className={styles["code-file-name"]}>
-        {fileName !== undefined && <FileNameLabel fileName={fileName} />}
-        <CopyButton text={kinds === undefined ? source : shellCommandText(source, kinds)} />
+    <>
+      <div className={styles["code-file"]}>
+        <div className={styles["code-file-name"]}>
+          {fileName !== undefined && <FileNameLabel fileName={fileName} />}
+          <CopyButton text={kinds === undefined ? source : shellCommandText(source, kinds)} />
+        </div>
+        {marks.length === 0 && kinds === undefined && !isDiff && startLine === undefined ? (
+          <pre {...rest} />
+        ) : (
+          <pre {...rest}>
+            <code className={clsx(codeNode.properties.className)}>
+              <CodeLines
+                lines={splitCodeLines(codeNode.children)}
+                marks={marks}
+                kinds={kinds}
+                wordRanges={wordRanges}
+                diff={isDiff}
+                startLine={startLine}
+              />
+            </code>
+          </pre>
+        )}
       </div>
-      {marks.length === 0 && kinds === undefined && !isDiff && startLine === undefined ? (
-        <pre {...rest} />
-      ) : (
-        <pre {...rest}>
-          <code className={clsx(codeNode.properties.className)}>
-            <CodeLines
-              lines={splitCodeLines(codeNode.children)}
-              marks={marks}
-              kinds={kinds}
-              wordRanges={wordRanges}
-              diff={isDiff}
-              startLine={startLine}
-            />
-          </code>
-        </pre>
-      )}
-    </div>
+      <CodeMarkNotes marks={marks} startLine={startLine} />
+    </>
   )
 }
 

@@ -69,7 +69,7 @@ function draftRegions(
   const conclusion = (root.conclusion ?? []).join("")
   const drawnReport = drawnReportOf(drawn, conclusion, "body")
   const tidied = drawnReport.sections.map((section) => section.section)
-  const layout = reportLeafLayoutOf(tidied)
+  const layout = reportLeafLayoutOf(tidied, [])
   const imageSource = { kind: "none" } as const
   return {
     kind: "regions",

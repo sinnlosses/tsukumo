@@ -171,6 +171,20 @@
 - **英語識別子**: `assumptions`（`report` の Report の欄の名前）
 - **定義**: **書き手が作業の中で置いた前提の文の並び**（1要素1文。なぜ置いたかを含める）
 
+### 確かさの台帳
+
+- **英語識別子**: `CertaintyLedger`（紙に描く値と部品。`src/browser/features/report/domain/certainty-ledger.ts`）
+- **定義**: **紙の「確かさ」を1つにまとめた台帳**。行の材料は `checks` の全行と、`Claims` の確定でない主張。並びは「落ちた（`ng`）」→「確かめていない（`unobserved`・`blocked`・確定でない主張）」→「確かめた（`ok`）」で、確かめた行は1行に畳む
+- **注記**: 紙の頭の件数（✕・？・✓）も台帳の3つの群から数える。主張の行は主張の1文目だけを持ち、押すと節の中の主張へ移る。
+  形の決めは `docs/architecture/adr/0056-report-progress-contract.md`「論点 3」
+- **避ける言い方**: 検証結果の一覧（確定でない主張も並ぶ）
+
+### 裏取りの印
+
+- **英語識別子**: `ReportCheckSeal`（`run`・`record`・`claimed`。`src/shared/report/report-check-seal.ts`）
+- **定義**: **台帳の行に tsukumo が付ける、裏を取ったかどうかの印**。記録あり（実行: 打った Bash と照らした・控え: 検証の控えの段と照らした）と申告のみの2つの語で描く
+- **注記**: 書き手には申告させない。`command` が空の行と確定でない主張はいつも申告のみ
+
 ### 出どころ
 
 - **英語識別子**: `sources`（`report` の Report の欄の名前。1件は `mark`・`place`・`note`）

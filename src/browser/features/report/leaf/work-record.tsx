@@ -91,7 +91,7 @@ const STAGE_DISPLAY_NAMES: ReadonlyMap<string, string> = new Map([
   ["test:e2e", "E2E"],
 ])
 
-function stageDisplayName(name: string): string {
+export function stageDisplayName(name: string): string {
   return STAGE_DISPLAY_NAMES.get(name) ?? name
 }
 

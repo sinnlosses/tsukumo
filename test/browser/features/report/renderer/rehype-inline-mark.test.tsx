@@ -37,11 +37,11 @@ describe("rehypeInlineMark（Markdown を通した描画）", () => {
     ).toBe("width: 60%;")
   })
 
-  it("出どころの番号は span にならず、素の文字 [n] になる", () => {
+  it("出どころの番号は、番号だけを字に持つ上付きの sup になる", () => {
     const { container } = render(<Markdown text="架空の根拠{{src: 2}}。" />)
 
-    expect(container.textContent).toBe("架空の根拠[2]。")
-    expect(container.querySelectorAll("p span")).toHaveLength(0)
+    expect(container.textContent).toBe("架空の根拠2。")
+    expect(container.querySelector("p sup")?.textContent).toBe("2")
   })
 
   it("壊れた印と inline code の中は字のままで、印の span にならない", () => {

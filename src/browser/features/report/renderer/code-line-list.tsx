@@ -1,4 +1,4 @@
-// フェンス付きコードの中身を行ごとに描く。印の行（`marks`）の地とラベルと、無印の長い範囲の畳みと、shell の出力の行の字の色と、`diff` の行の中の違う語の地を持つ。
+// フェンス付きコードの中身を行ごとに描く。印の行（`marks`）の線と塊の下のラベルと、無印の長い範囲の畳みと、shell の出力の行の字の色と、`diff` の行の中の違う語の地を持つ。
 
 import clsx from "clsx"
 import type { Element, ElementContent } from "hast"
@@ -30,7 +30,6 @@ export function CodeLines(props: {
 }): ReactElement {
   const [opened, setOpened] = useState<readonly number[]>([])
   const folds = foldedRanges(props.lines.length, props.marks)
-  const labels = markLabels(props.marks)
 
   const rows = props.lines.flatMap((line, index): readonly ReactNode[] => {
     const number = index + 1
@@ -45,7 +44,6 @@ export function CodeLines(props: {
         number={number}
         fileLine={props.startLine === undefined ? undefined : props.startLine + index}
         marks={props.marks}
-        label={labels.get(number)}
         kind={props.kinds?.[index]}
         wordRange={props.wordRanges.get(index)}
         diff={props.diff}
@@ -54,6 +52,29 @@ export function CodeLines(props: {
   })
 
   return <>{rows}</>
+}
+
+/**
+ * 印のラベルを、塊の下に「<行>行目: <ラベル>」の箇条で出す。行は印の最初の行で、ファイルの何行目か分かるときはその行。
+ * ラベルのある印が無ければ何も描かない。
+ */
+export function CodeMarkNotes(props: {
+  readonly marks: readonly CodeMark[]
+  /** 1 行目がファイルの何行目か。 */
+  readonly startLine?: number
+}): ReactElement {
+  const labels = [...markLabels(props.marks)].toSorted(([a], [b]) => a - b)
+  if (labels.length === 0) {
+    return <></>
+  }
+  return (
+    <ul className={styles["code-mark-notes"]}>
+      {labels.map(([line, label]) => {
+        const shown = props.startLine === undefined ? line : props.startLine + line - 1
+        return <li key={line}>{`${String(shown)}行目: ${label}`}</li>
+      })}
+    </ul>
+  )
 }
 
 function foldRow(
@@ -86,7 +107,6 @@ function CodeLineRow(props: {
   /** ファイルの何行目か。行番号の列を出さないときは `undefined`。 */
   readonly fileLine?: number
   readonly marks: readonly CodeMark[]
-  readonly label?: string
   readonly kind?: ShellLineKind
   readonly wordRange?: DiffLineWords
 }): ReactElement {
@@ -114,9 +134,6 @@ function CodeLineRow(props: {
       <span className={styles["code-line-text"]}>
         {props.kind === "output" ? props.line.map(plainText) : diffLine.map(hastToReact)}
       </span>
-      {props.label !== undefined && (
-        <span className={styles["code-mark-label"]}>{props.label}</span>
-      )}
     </span>
   )
 }

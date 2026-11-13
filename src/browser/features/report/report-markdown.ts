@@ -33,7 +33,7 @@ export function reportSectionsMarkdown(
   sections: readonly { readonly heading: string; readonly blocks: readonly FigureBlock[] }[],
   imageSource: ReportImageSource,
 ): string {
-  const { tagTones, values } = reportLeafLayoutOf(sections)
+  const { tagTones, values } = reportLeafLayoutOf(sections, [])
   return joinParts(
     zip(sections, values).map(([section, sectionValues]) =>
       joinParts([

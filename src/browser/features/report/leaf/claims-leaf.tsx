@@ -5,6 +5,7 @@ import type { ReactElement } from "react"
 import type { A2uiReportComponent } from "../../../../shared/report/a2ui-report-catalog.ts"
 import type { LeafValue } from "../../../../shared/report/report-leaf-value.ts"
 import { Badge } from "../../../components/ui/badge/badge.tsx"
+import { claimTargetId } from "../domain/certainty-ledger.ts"
 import { claimNoteBody } from "../domain/reply-note.ts"
 import { InlineMarkdown, textLeafClassNames } from "../markdown.tsx"
 import styles from "./leaf.module.css"
@@ -32,7 +33,12 @@ export function ClaimsLeaf(props: {
       <LeafFold fold={part.fold} empty={false}>
         <div className={textLeafClassNames.claims}>
           {part.items.map((item, index) => (
-            <ClaimRow key={`${String(index)}:${item.claim}`} item={item} index={index} />
+            <ClaimRow
+              key={`${String(index)}:${item.claim}`}
+              item={item}
+              index={index}
+              targetId={claimTargetId(part.id, index)}
+            />
           ))}
         </div>
       </LeafFold>
@@ -43,6 +49,7 @@ export function ClaimsLeaf(props: {
 function ClaimRow(props: {
   readonly item: ClaimsPart["items"][number]
   readonly index: number
+  readonly targetId: string
 }): ReactElement {
   const { claim, certainty, basis, howToVerify } = props.item
   const { mark, label, tone } = CERTAINTIES[certainty]
@@ -53,7 +60,7 @@ function ClaimRow(props: {
       requestText={claimNoteBody(howToVerify)}
       className={textLeafClassNames.claim}
     >
-      <p>
+      <p id={props.targetId}>
         <span className={textLeafClassNames.claimCertainty}>
           <Badge tone={tone} shape="square" className={styles["verdict-badge"]}>
             <span className={textLeafClassNames.claimMark} aria-hidden="true">

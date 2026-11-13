@@ -251,9 +251,8 @@
 }
 
 /* 新しい器「舞台と紙」の値。名前は上と同じで、`<html>` の `data-shell` で分ける。
-   値の表と旧い器との対応は `docs/architecture/screen-design/design-token.md`「13.14 デザイントークン」。
    昼と夜で違う色は `light-dark(昼, 夜)` で持ち、昼の紙（`PaperTone`）の下で昼の値になる。
-   上の `:root` の導出（`--surface-accent`・`--rule-control` など）は、同じ要素で読むのでここの値から導かれる。 */
+   上の `:root` の導出は、同じ要素で読むのでここの値から導かれる。 */
 :root[data-shell="stage"] {
   --ground: #14121a;
   --surface: light-dark(#eceaf1, #211e29);
@@ -271,6 +270,10 @@
   --state-ng: light-dark(#b3362f, #f2a0a0);
   --state-info: light-dark(#285f9e, #9cc1ee);
   --state-ask: light-dark(#6a45a8, #c7aef0);
+  --code-diff-line-added: light-dark(#dcf1e0, #203524);
+  --code-diff-line-removed: light-dark(#f7dedc, #372120);
+  --code-diff-word-added: light-dark(#b4e0bd, #345d3e);
+  --code-diff-word-removed: light-dark(#efbcb8, #603334);
 
   /* グラフの 1〜3 本目は色覚の検査を通した順。地の色を変えたらやり直す。 */
   --chart-series-1: light-dark(#2a78d6, #3987e5);

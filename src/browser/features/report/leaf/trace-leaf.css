@@ -10,8 +10,8 @@
 [data-report-region] .trace-row {
   position: relative;
   display: grid;
-  grid-template-columns: 22px minmax(0, 1fr) auto;
-  column-gap: var(--space-md);
+  grid-template-columns: 22px minmax(0, 1fr);
+  column-gap: var(--space-sm);
   max-inline-size: none;
   margin: 0;
   padding: var(--space-sm) 0;
@@ -52,29 +52,28 @@
   background: var(--surface);
   border: 1px dashed var(--rule);
 }
-[data-report-region] .trace-title,
-[data-report-region] .trace-supplement {
-  align-self: baseline;
+/* 本文の列。題の下に補いを小さく置き、出力の畳みを続ける。 */
+[data-report-region] .trace-body {
+  align-self: center;
+  min-inline-size: 0;
 }
 [data-report-region] .trace-title {
-  min-inline-size: 0;
+  display: block;
   color: var(--ink);
   font-size: var(--font-body);
   overflow-wrap: anywhere;
 }
-[data-report-region] .trace-row-ng .trace-title {
+/* 効いた手だけ太字にする（太字は `TraceRow` が `b` で付ける）。 */
+[data-report-region] .trace-title > b {
   color: var(--ink-bright);
-  font-weight: 600;
 }
 [data-report-region] .trace-supplement {
-  grid-column: auto;
+  display: block;
   color: var(--ink-quiet);
-  font-family: var(--font-mono);
   font-size: var(--font-label);
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 [data-report-region] .trace-output {
-  grid-column: 2 / -1;
   margin: 0;
   padding: 0;
   border: 0;
@@ -112,13 +111,4 @@
   background: var(--ground);
   white-space: pre;
   overflow-x: auto;
-}
-@container report-body (max-width: calc(40em + 0.75rem)) {
-  [data-report-region] .trace-row {
-    grid-template-columns: 22px minmax(0, 1fr);
-  }
-  [data-report-region] .trace-supplement {
-    grid-column: 2;
-    white-space: normal;
-  }
 }

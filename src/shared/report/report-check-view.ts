@@ -30,6 +30,7 @@ export type ReportFavorTarget =
 
 /**
  * 問題の1項目。字はバッククォートを落としただけの逃がす前の字。
+ * `command` は打った文字列の前後の空白を落としたもの。
  * `time` は `command` から測った所要時間の字で、測れなければ空文字。`viaCommand` は `command` が空白だけでないこと。
  * `detail` は空白だけなら空文字、`howToVerify` は `unobserved` で空白だけでないときだけ残す。
  */
@@ -37,6 +38,7 @@ export type ReportCheckProblemRow = {
   readonly status: ReportCheckProblemStatus
   readonly label: string
   readonly figure: string
+  readonly command: string
   readonly time: string
   readonly viaCommand: boolean
   readonly detail: string
@@ -44,11 +46,12 @@ export type ReportCheckProblemRow = {
   readonly seal: ReportCheckSeal
 }
 
-/** 通った1項目。`labelHead` は label の最初の全角の括弧「（」より前（無ければ全文）。 */
+/** 通った1項目。`labelHead` は label の最初の全角の括弧「（」より前（無ければ全文）。`command` は問題の1項目と同じ。 */
 export type ReportCheckPassedRow = {
   readonly label: string
   readonly labelHead: string
   readonly figure: string
+  readonly command: string
   readonly time: string
   readonly viaCommand: boolean
   readonly seal: ReportCheckSeal
@@ -136,6 +139,7 @@ export function reportChecksView(
           status: check.status,
           label: check.label,
           figure: check.figure,
+          command: check.command.trim(),
           time: timeOf(check),
           viaCommand: check.command.trim() !== "",
           detail: check.detail.trim() === "" ? "" : check.detail,
@@ -152,6 +156,7 @@ export function reportChecksView(
         label: check.label,
         labelHead: headIndex === -1 ? check.label : check.label.slice(0, headIndex),
         figure: check.figure,
+        command: check.command.trim(),
         time: timeOf(check),
         viaCommand: check.command.trim() !== "",
         seal: check.seal,

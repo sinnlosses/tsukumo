@@ -86,6 +86,25 @@ describe("疑似セッションの判定と次の手の場面", () => {
     })
   })
 
+  it("proof-parts は、検証の3つの状態・未確認の主張・試した手・印つきのコード・本文の出どころを1つのレポートに持つ", () => {
+    const [report] = reportsOf("proof-parts")
+    const components = report?.components ?? []
+
+    expect(report?.checks.map((check) => check.status)).toEqual([
+      "ng",
+      "unobserved",
+      "ok",
+      "ok",
+      "ok",
+    ])
+    expect(report?.sources).toEqual([
+      { mark: 1, place: "src/fictional/parse.ts:2", note: "架空の丸め" },
+    ])
+    expect(components.map((part) => part.component)).toEqual(
+      expect.arrayContaining(["Claims", "Trace", "Code"]),
+    )
+  })
+
   it("progress-stopped は、止めた判定と書き手が続ける次の手を持つ", () => {
     const [report] = reportsOf("progress-stopped")
 

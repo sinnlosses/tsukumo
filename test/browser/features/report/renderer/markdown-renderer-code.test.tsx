@@ -139,7 +139,7 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
     expect(container.querySelector("pre code.language-ts .code-line-mark")?.textContent).toContain(
       "a",
     )
-    expect(container.querySelector(".code-mark-label")?.textContent).toBe("架空の印")
+    expect(container.querySelector(".code-mark-notes")?.textContent).toBe("1行目: 架空の印")
   })
 
   it("ファイル名は文字として出る（HTML として解釈しない）", () => {
@@ -162,7 +162,7 @@ describe("Markdown（code の marks）", () => {
     marks: readonly { lines: string; label: string }[],
   ): string => `\`\`\`ts ${encodeMarks(marks)}\n${sourceLines.join("\n")}\n\`\`\``
 
-  it("印の行に印のクラスが付き、ラベルは印の最初の行の右端に出る", () => {
+  it("印の行に印のクラスが付き、ラベルは行に置かず、塊の下に印の最初の行の番号と出る", () => {
     const { container } = render(
       <Markdown text={fenceWith(lines(6), [{ lines: "2-3", label: "架空の印" }])} />,
     )
@@ -177,8 +177,8 @@ describe("Markdown（code の marks）", () => {
       false,
       false,
     ])
-    expect(rows[1]?.querySelector(".code-mark-label")?.textContent).toBe("架空の印")
-    expect(container.querySelectorAll(".code-mark-label")).toHaveLength(1)
+    expect(rows[1]?.textContent).toBe("const v2 = 2")
+    expect(container.querySelector(".code-mark-notes")?.textContent).toBe("2行目: 架空の印")
     expect(rows[0]?.textContent).toBe("const v1 = 1")
   })
 
@@ -197,7 +197,7 @@ describe("Markdown（code の marks）", () => {
     )
 
     expect(container.querySelectorAll(".code-line-mark")).toHaveLength(1)
-    expect(container.querySelector(".code-mark-label")?.textContent).toBe("架空の印")
+    expect(container.querySelector(".code-mark-notes")?.textContent).toBe("2行目: 架空の印")
   })
 
   it("marks の無い塊は行に分けず、20行を超えても畳まない", () => {
