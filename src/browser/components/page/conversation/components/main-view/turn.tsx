@@ -19,6 +19,7 @@ import { AskThreadContext } from "../../../../../features/report/ask-thread-cont
 import { ReplyPortContext } from "../../../../../features/report/reply-port.ts"
 import { Report } from "../../../../../features/report/report.tsx"
 import { useExternalSync } from "../../../../../hooks/use-external-sync.ts"
+import { useCurrentTurnSteps } from "../../../../../stores/current-turn-step-list.ts"
 import { Text } from "../../../../ui/text/text.tsx"
 import { VStack } from "../../../../ui/v-stack/v-stack.tsx"
 import { useDraftedReports } from "../../stores/drafted-report.ts"
@@ -40,6 +41,8 @@ type TurnProps = {
   readonly newest: boolean
   /** 出し始めた時点で既にある最終レポートも、まだ読まれていないものとして演出するか（地図から入れ替えたばかりのレポート）。 */
   readonly freshReport: boolean
+  /** 失敗で終わったやり取りの失敗を紙の計画が出すとき `paper`（頭の枠は外す）。省くと頭に枠を出す。 */
+  readonly failure?: "paper"
 }
 
 export function Turn(props: TurnProps): ReactElement {
@@ -67,6 +70,11 @@ export function Turn(props: TurnProps): ReactElement {
     askSlot.kind === "grouped" ? arrangeTurn(turn, askSlot.remaining) : arrangeTurn(turn)
   const latestStepId = props.newest ? finalStep?.id : undefined
   const port = useReplyPort()
+  const turnStepList = useCurrentTurnSteps()
+  const paperShowsFailure =
+    props.failure === "paper" &&
+    turnStepList.kind === "turn" &&
+    turnStepList.plan.kind === "planned"
 
   return (
     <ReplyPortContext value={{ kind: "open", port }}>
@@ -82,7 +90,9 @@ export function Turn(props: TurnProps): ReactElement {
             これ以前の {turn.droppedCount} 件は省略した
           </Text>
         )}
-        {(turn.steps.length > 0 || turn.drafts.length > 0 || turn.failure.kind === "failed") && (
+        {(turn.steps.length > 0 ||
+          turn.drafts.length > 0 ||
+          (turn.failure.kind === "failed" && !paperShowsFailure)) && (
           <VStack
             element="div"
             name={{ kind: "none" }}
@@ -92,7 +102,7 @@ export function Turn(props: TurnProps): ReactElement {
             wrap="nowrap"
             className=""
           >
-            {turn.failure.kind === "failed" && (
+            {turn.failure.kind === "failed" && !paperShowsFailure && (
               <TurnFailureBlock
                 failure={turn.failure.failure}
                 requestText={turn.request?.text ?? ""}

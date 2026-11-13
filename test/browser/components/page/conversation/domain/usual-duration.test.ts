@@ -42,6 +42,7 @@ function rowsOf(usual: UsualDurations) {
     steps: [],
     delegates: [],
     usual,
+    asks: [],
   }).flatMap((slot) => (slot.kind === "phase" ? [slot.row] : slot.rows))
 }
 

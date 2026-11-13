@@ -90,6 +90,11 @@ Network タブで `/ws` の upgrade が101を返し、`hello` フレーム（購
 フェーズ2を一度も今にしないまま閉じ、最終レポートのフェーズごとの時間でフェーズ2が「不明」になることを見る
 （`docs/architecture/display.md`「ワークプラン」）。
 
+**失敗で止まった紙（判定の行・結論・続け方と残っているもの・止まった段の ✕）を確かめるときは、場面 `work-plan-failed` を
+`?shell=stage` で撮る。** 4段のうち4段目で手順が失敗し、`turn-finished` が `failed` で閉じる。
+**問いが生まれた段の問いと材料を確かめるときは、場面 `work-plan-ask` を同じ開き方で撮る。**
+3段が済み、4段目で `AskUserQuestion` の答え待ちのまま止まる。
+
 **狭い画面の頭の点と経過（`phone-head-dot`・`phone-head-elapsed`）と、トークンの画面の結果のカード
 （`usage-review-card` の結果の場面。class は `usage-review-result`）は、場面を足さず次の1コマンドずつで撮れる。**
 点と経過は作業が走っているあいだだけ出るので、場面の終わりでは消えている。`--until-step` で途中の手に止める。

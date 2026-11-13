@@ -28,6 +28,20 @@
 .work-plan-verdict[data-verdict="asking"] {
   --work-plan-verdict-ink: var(--state-ask);
 }
+.work-plan-verdict[data-verdict="failed"] {
+  --work-plan-verdict-ink: var(--state-ng);
+}
+.work-plan-tag[data-tone="ask"] {
+  --work-plan-tag-ink: var(--state-ask);
+}
+.work-plan-tag[data-tone="ng"] {
+  --work-plan-tag-ink: var(--state-ng);
+}
+.work-plan-conclusion {
+  font-size: var(--font-subheading);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
 .work-plan-elapsed {
   font-family: var(--font-mono);
 }

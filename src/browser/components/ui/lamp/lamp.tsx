@@ -7,7 +7,7 @@ import styles from "./lamp.module.css"
 
 export type LampLevel = "none" | "faint" | "lit" | "bright"
 
-export type LampStepState = "done" | "now" | "todo" | "skipped"
+export type LampStepState = "done" | "now" | "todo" | "skipped" | "fail"
 
 export type LampProps =
   | { readonly kind: "level"; readonly level: LampLevel }
@@ -79,6 +79,25 @@ function LevelLamp(props: { readonly level: LampLevel }): ReactElement {
 }
 
 function StepLamp(props: { readonly state: LampStepState; readonly sizePx: number }): ReactElement {
+  if (props.state === "fail") {
+    return (
+      <svg
+        width={props.sizePx}
+        height={props.sizePx}
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+        data-lamp-state="fail"
+      >
+        <path
+          d="M6 6l12 12M18 6L6 18"
+          fill="none"
+          stroke="var(--state-ng)"
+          strokeWidth="3"
+          strokeLinecap="round"
+        />
+      </svg>
+    )
+  }
   const outlined = props.state === "todo" || props.state === "skipped"
   return (
     <svg

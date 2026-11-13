@@ -124,6 +124,8 @@
     "work-plan",
     "work-plan-skipped",
     "work-plan-stopped",
+    "work-plan-failed",
+    "work-plan-ask",
     "work-plan-phase-unknown",
     "work-plan-resumed",
     "work-plan-quick",

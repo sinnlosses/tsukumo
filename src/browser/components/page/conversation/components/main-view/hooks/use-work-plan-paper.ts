@@ -21,6 +21,7 @@ import { useSession } from "../../../../../../stores/session.ts"
 import { phaseRecapsOf } from "../../../domain/phase-recap.ts"
 import { turnResultsOf } from "../../../domain/turn-result.ts"
 import { NO_USUAL_TEXT, remainingEstimate, type UsualText } from "../../../domain/usual-duration.ts"
+import { markFailedRow } from "../../../domain/work-plan-failed-row.ts"
 import {
   type FoldedWorkPlan,
   foldWorkPlanSlots,
@@ -32,6 +33,8 @@ import {
 import { useComposerDraft } from "../../../stores/composer-draft.ts"
 import { useMainViewContent } from "../../../stores/main-view-content.ts"
 import { useUsualDurations } from "../../../stores/usual-duration.ts"
+import { remainingLinesOf } from "../domain/failed-paper.ts"
+import { turnFailureBlockOf, type TurnFailureBlockModel } from "../domain/turn-failure-block.ts"
 import { useWorkQuietLine, type WorkQuietLine } from "./use-work-quiet.ts"
 
 /** 判定の行の語。答え待ち・背景だけが残っている・働いている。 */
@@ -49,6 +52,8 @@ type RouteEnding = "finished" | "stopped"
  * - `stopped`: 段の途中で止めたあと（書き手が `stopped` で閉じた・レポートが無いまま段を残して閉じた）。
  *   判定の行・続け方の下書き（`onDraft` で入力欄に入れるだけで送らない）・中途半端なもの（今の段で触ったファイル）・ここまでの並び。
  *   レポートが無いまま閉じたのは利用者が止めたときなので、`stopper` を `you` にする
+ * - `failed`: 失敗で閉じたやり取り。判定の行・理由の語（`reason`）・続け方（`onDraft`）と依頼を入力欄に戻す口（`retry`・`onRetry`）・
+ *   残っているもの（`remaining`）・止まった段に印を付けた並び
  *
  * `rows` は狐火の並びに使う全部の行（読み順）。`now` は「n秒前」を数える時刻。
  */
@@ -84,6 +89,19 @@ export type WorkPlanPaperModel =
       readonly now: number
       readonly onDraft: (text: string) => void
     }
+  | {
+      readonly kind: "failed"
+      readonly position: string
+      readonly elapsed: string
+      readonly reason: string
+      readonly retry: TurnFailureBlockModel["retry"]
+      readonly remaining: readonly string[]
+      readonly slots: readonly WorkPlanSlot[]
+      readonly rows: readonly WorkPlanRow[]
+      readonly now: number
+      readonly onDraft: (text: string) => void
+      readonly onRetry: (request: string) => void
+    }
 
 /** 止めたあとの続け方。ボタンか数字のキーで選ぶと、入力欄に下書きを入れるだけで送らない。 */
 export const STOPPED_CHOICES = [
@@ -95,6 +113,7 @@ export const STOPPED_CHOICES = [
 const SUMMARY_SEPARATOR = " ・ "
 
 const STOPPED_MIDWAY_SUFFIX = "の途中"
+const FAILED_SUFFIX = "で止まった"
 
 export function useWorkPlanPaper(): WorkPlanPaperModel {
   const turnStepList = useCurrentTurnSteps()
@@ -106,6 +125,8 @@ export function useWorkPlanPaper(): WorkPlanPaperModel {
   const moment = useSession((session) => conversationMoment(session.state))
   const turns = useMainViewTurns()
   const replaceDraft = useComposerDraft((state) => state.replaceDraft)
+  const appendToDraft = useComposerDraft((state) => state.appendToDraft)
+  const rateLimit = useSession((session) => session.state.rateLimit)
   const usual = useUsualDurations()
   const shown = content.kind !== "welcome" && turnStepList.kind === "turn"
   const now = useNowWhile(shown && isTurnCounting(turn, backgroundCount))
@@ -126,6 +147,7 @@ export function useWorkPlanPaper(): WorkPlanPaperModel {
           steps: turnStepList.steps,
           delegates: delegateRoles,
           usual,
+          asks: pending,
         })
       : []
   const rows = slots.flatMap(rowsOfSlot)
@@ -154,6 +176,36 @@ export function useWorkPlanPaper(): WorkPlanPaperModel {
   const result = turnResultsOf(turns, moment).at(-1)
   const settled = rows.filter((row) => row.state === "done" || row.state === "skipped").length
   const finalReported = turns.at(-1)?.steps.some((step) => step.mark === "final") ?? false
+  const failure = turns.at(-1)?.failure
+  if (result === "failed" && failure?.kind === "failed") {
+    const failedSlots = markFailedRow(slots)
+    const failedRows = failedSlots.flatMap(rowsOfSlot)
+    const block = turnFailureBlockOf({
+      failure: failure.failure,
+      requestText: turns.at(-1)?.request?.text ?? "",
+      rateLimit,
+      newest: true,
+      hasFailedStep: false,
+      now,
+    })
+    return {
+      kind: "failed",
+      position: rows.some((row) => row.state === "current")
+        ? `${positionText(plan, rows)}${FAILED_SUFFIX}`
+        : `${String(rows.length)}段のうち${String(settled)}段が済んだ`,
+      elapsed: turn.kind === "idle" ? "" : turnElapsedText(turn, backgroundCount, now),
+      reason: block.reason,
+      retry: block.retry,
+      remaining: remainingLinesOf({ rows: failedRows, steps: turnStepList.steps }),
+      slots: failedSlots,
+      rows: failedRows,
+      now,
+      onDraft: (text) => {
+        replaceDraft({ text, caret: text.length })
+      },
+      onRetry: appendToDraft,
+    }
+  }
   const halfway = result !== "failed" && !finalReported && settled < rows.length
   if (result === "stopped" || halfway) {
     return {
@@ -201,7 +253,7 @@ export function useStoppedChoiceKeys(model: WorkPlanPaperModel): void {
     "keydown",
     (event) => {
       if (
-        model.kind !== "stopped" ||
+        (model.kind !== "stopped" && model.kind !== "failed") ||
         event.metaKey ||
         event.ctrlKey ||
         event.altKey ||
@@ -217,7 +269,7 @@ export function useStoppedChoiceKeys(model: WorkPlanPaperModel): void {
       event.preventDefault()
       model.onDraft(choice.draft)
     },
-    { enabled: model.kind === "stopped" },
+    { enabled: model.kind === "stopped" || model.kind === "failed" },
   )
 }
 

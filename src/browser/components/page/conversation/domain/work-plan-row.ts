@@ -3,6 +3,7 @@
 
 import { groupBy, sumBy } from "remeda"
 
+import type { StampedPendingAsk } from "../../../../../shared/session-driver/pending-ask.ts"
 import type { DelegateRole } from "../../../../../shared/session/delegate-role.ts"
 import { type RecordTime, recordTimeAt } from "../../../../../shared/session/session-record.ts"
 import type { TurnStep } from "../../../../../shared/session/turn-step.ts"
@@ -26,8 +27,9 @@ import { narrateToolUse } from "../../../../domain/tool-narration.ts"
 import { MAX_TOOL_SUMMARY_LENGTH, toolInputText } from "../../../../domain/tool-summary.ts"
 import type { PhaseRecap } from "./phase-recap.ts"
 import { NO_USUAL_TEXT, type UsualText, usualRangeText } from "./usual-duration.ts"
+import { askOf, NO_ASK, type WorkPlanAsk } from "./work-plan-ask-row.ts"
 
-export type WorkPlanRowState = "done" | "current" | "upcoming" | "skipped"
+export type WorkPlanRowState = "done" | "current" | "upcoming" | "skipped" | "failed"
 
 /** 今の段の「いま」の1行。今の段で動いた手順のうち最後のもの。 */
 export type WorkPlanLive =
@@ -78,6 +80,8 @@ export type WorkPlanRow = {
   readonly touched: readonly string[]
   readonly live: WorkPlanLive
   readonly usual: UsualText
+  /** 答え待ちの問い。今の段のうち読み順で最初の行だけが持つ（ほかは `none`）。 */
+  readonly ask: WorkPlanAsk
 }
 
 /** 群の先頭の行に付ける群の名「前」「本」「後」。群の先頭でない・範囲が無いなら `none`。 */
@@ -103,6 +107,7 @@ export type WorkPlanRowSource = {
   readonly steps: readonly TurnStep[]
   readonly delegates: readonly DelegateRole[]
   readonly usual: UsualDurations
+  readonly asks: readonly StampedPendingAsk[]
 }
 
 /**
@@ -292,6 +297,7 @@ function rowOf(
       state === "upcoming"
         ? usualRangeText(source.usual.phases[phaseSpanOf(source.plan, phase)])
         : NO_USUAL_TEXT,
+    ask: holdsDelegates ? askOf(source.asks) : NO_ASK,
   }
 }
 

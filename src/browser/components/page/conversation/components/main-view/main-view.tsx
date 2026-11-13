@@ -225,6 +225,11 @@ export function MainView(props: {
                       turn={cardTurn.turn}
                       newest={cardTurn.turn.id === newestTurnId}
                       freshReport={cardTurn.fresh}
+                      failure={
+                        progress === "paper" && cardTurn.turn.id === newestTurnId
+                          ? "paper"
+                          : undefined
+                      }
                       key={cardTurn.turn.id}
                     />
                   </AskThreadProvider>

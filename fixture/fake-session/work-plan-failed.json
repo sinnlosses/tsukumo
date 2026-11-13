@@ -1,0 +1,178 @@
+{
+  "name": "work-plan-failed",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "グラフの目盛りの数を設定から読むようにしたい（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 200,
+      "event": {
+        "kind": "work-plan",
+        "phaseIds": [],
+        "delegatedRange": { "kind": "none" },
+        "skippedPhases": [],
+        "awaitingSummary": { "kind": "none" },
+        "phases": [
+          "今の形を調べる",
+          "目盛りを設定から読む",
+          "表示の層を直す",
+          "テストと画で確かめる"
+        ],
+        "current": 0,
+        "finishedInGroup": [],
+        "phaseSummary": ""
+      }
+    },
+    {
+      "afterMs": 1000,
+      "event": {
+        "kind": "work-plan",
+        "phaseIds": [],
+        "delegatedRange": { "kind": "none" },
+        "skippedPhases": [],
+        "awaitingSummary": { "kind": "none" },
+        "phases": [
+          "今の形を調べる",
+          "目盛りを設定から読む",
+          "表示の層を直す",
+          "テストと画で確かめる"
+        ],
+        "current": 1,
+        "finishedInGroup": [],
+        "phaseSummary": "目盛りの数は定数から来ていた。"
+      }
+    },
+    {
+      "afterMs": 1200,
+      "event": {
+        "kind": "tool-started",
+        "toolUseId": "fake-work-plan-failed-1",
+        "name": "Edit",
+        "input": { "file_path": "/tmp/dummy/settings.ts" }
+      }
+    },
+    {
+      "afterMs": 1500,
+      "event": {
+        "kind": "tool-finished",
+        "toolUseId": "fake-work-plan-failed-1",
+        "content": "ok",
+        "isError": false
+      }
+    },
+    {
+      "afterMs": 2300,
+      "event": {
+        "kind": "work-plan",
+        "phaseIds": [],
+        "delegatedRange": { "kind": "none" },
+        "skippedPhases": [],
+        "awaitingSummary": { "kind": "none" },
+        "phases": [
+          "今の形を調べる",
+          "目盛りを設定から読む",
+          "表示の層を直す",
+          "テストと画で確かめる"
+        ],
+        "current": 2,
+        "finishedInGroup": [],
+        "phaseSummary": "設定に `ticks` を足した。"
+      }
+    },
+    {
+      "afterMs": 2500,
+      "event": {
+        "kind": "tool-started",
+        "toolUseId": "fake-work-plan-failed-2",
+        "name": "Edit",
+        "input": { "file_path": "/tmp/dummy/chart.ts" }
+      }
+    },
+    {
+      "afterMs": 2800,
+      "event": {
+        "kind": "tool-finished",
+        "toolUseId": "fake-work-plan-failed-2",
+        "content": "ok",
+        "isError": false
+      }
+    },
+    {
+      "afterMs": 3000,
+      "event": {
+        "kind": "tool-started",
+        "toolUseId": "fake-work-plan-failed-3",
+        "name": "Edit",
+        "input": { "file_path": "/tmp/dummy/axis.ts" }
+      }
+    },
+    {
+      "afterMs": 3300,
+      "event": {
+        "kind": "tool-finished",
+        "toolUseId": "fake-work-plan-failed-3",
+        "content": "ok",
+        "isError": false
+      }
+    },
+    {
+      "afterMs": 4000,
+      "event": {
+        "kind": "work-plan",
+        "phaseIds": [],
+        "delegatedRange": { "kind": "none" },
+        "skippedPhases": [],
+        "awaitingSummary": { "kind": "none" },
+        "phases": [
+          "今の形を調べる",
+          "目盛りを設定から読む",
+          "表示の層を直す",
+          "テストと画で確かめる"
+        ],
+        "current": 3,
+        "finishedInGroup": [],
+        "phaseSummary": "6 個の部品が設定を読むようにした。"
+      }
+    },
+    {
+      "afterMs": 4200,
+      "event": {
+        "kind": "tool-started",
+        "toolUseId": "fake-work-plan-failed-4",
+        "name": "Bash",
+        "input": { "command": "dummy-e2e --all" }
+      }
+    },
+    {
+      "afterMs": 4800,
+      "event": {
+        "kind": "tool-finished",
+        "toolUseId": "fake-work-plan-failed-4",
+        "content": "dummy-e2e: 2 件が落ちた（疑似セッションの作り物の出力）\n終了コード 1",
+        "isError": true
+      }
+    },
+    {
+      "afterMs": 5200,
+      "event": {
+        "kind": "api-error",
+        "error": "server_error"
+      }
+    },
+    {
+      "afterMs": 5400,
+      "event": {
+        "kind": "turn-finished",
+        "outcome": {
+          "kind": "failed",
+          "cause": { "kind": "api-error" }
+        }
+      }
+    }
+  ]
+}

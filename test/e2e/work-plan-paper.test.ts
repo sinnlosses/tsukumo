@@ -86,4 +86,39 @@ test.describe("紙のワークプラン", () => {
     await expect(plan.getByText("済んだ 2 つ")).toBeVisible()
     await expect(plan.getByText(/架空の型を直す役/u)).toBeHidden()
   })
+
+  test("失敗で止まった紙に ✕ と続け方が出て、戻す口が依頼を入力欄に戻す", async ({ run }) => {
+    const room = await run.open({
+      scenario: "work-plan-paper-failed",
+      scene: "work-plan-failed",
+      viewport: "wide",
+      domRoots: ["page"],
+    })
+    await room.waitForEvent("turn-finished")
+    const page = await reopenInStage(room)
+    const plan = page.getByRole("region", { name: "ワークプラン" })
+
+    await expect(plan).toContainText("失敗で止まった")
+    await expect(plan).toContainText("ここで止まった")
+    await expect(plan.getByRole("img", { name: "4段のうち4段目で止まった" })).toBeVisible()
+    await expect(plan.getByRole("button", { name: /続きから再開する/u })).toBeVisible()
+    await plan.getByRole("button", { name: "同じ依頼を入力欄に戻す" }).click()
+    await expect(page.getByRole("textbox")).toHaveValue(/目盛りの数を設定から読む/u)
+  })
+
+  test("問いが今の段に出て、答える場所は入力欄だけ", async ({ run }) => {
+    const room = await run.open({
+      scenario: "work-plan-paper-ask",
+      scene: "work-plan-ask",
+      viewport: "wide",
+      domRoots: ["page"],
+    })
+    await room.waitForEvent("pending-changed")
+    const page = await reopenInStage(room)
+    const plan = page.getByRole("region", { name: "ワークプラン" })
+
+    await expect(plan).toContainText("目盛りの既定の本数はいくつにする？")
+    await expect(plan).toContainText("答えは下の入力欄で")
+    await expect(plan.getByRole("button")).toHaveCount(0)
+  })
 })

@@ -41,6 +41,13 @@ describe("Lamp の段の印", () => {
     expect(flame?.getAttribute("stroke-dasharray")).not.toBeNull()
   })
 
+  it("失敗は炎でなく ✕ を描く", () => {
+    const { svg, paths } = renderedStep("fail")
+    expect(svg.getAttribute("data-lamp-state")).toBe("fail")
+    expect(paths).toHaveLength(1)
+    expect(paths[0]?.getAttribute("stroke")).toBe("var(--state-ng)")
+  })
+
   it("渡した大きさで描く", () => {
     expect(renderedStep("done").svg.getAttribute("width")).toBe("16")
   })

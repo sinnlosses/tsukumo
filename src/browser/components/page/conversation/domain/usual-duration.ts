@@ -16,7 +16,7 @@ export type UsualText =
 /** 見込みの材料にする行（`WorkPlanRow` のうち要る欄）。 */
 export type EstimatedRow = {
   readonly key: string
-  readonly state: "done" | "current" | "upcoming" | "skipped"
+  readonly state: "done" | "current" | "upcoming" | "skipped" | "failed"
   readonly duration: MeasuredTime
 }
 

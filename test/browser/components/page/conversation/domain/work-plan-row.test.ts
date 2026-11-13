@@ -107,6 +107,7 @@ describe("workPlanSlotsOf", () => {
         steps: [],
         delegates: [],
         usual: NO_USUAL_DURATIONS,
+        asks: [],
       }),
     )
 
@@ -142,6 +143,7 @@ describe("workPlanSlotsOf", () => {
         ],
         delegates: [],
         usual: NO_USUAL_DURATIONS,
+        asks: [],
       }),
     )
 
@@ -167,6 +169,7 @@ describe("workPlanSlotsOf", () => {
       steps: [],
       delegates: [],
       usual: NO_USUAL_DURATIONS,
+      asks: [],
     })
 
     expect(
@@ -199,6 +202,7 @@ describe("workPlanSlotsOf の周", () => {
         steps: [],
         delegates: [],
         usual: NO_USUAL_DURATIONS,
+        asks: [],
       }),
     )[1]
   }
@@ -252,6 +256,7 @@ describe("foldLaps", () => {
           steps: [],
           delegates: [],
           usual: NO_USUAL_DURATIONS,
+          asks: [],
         }),
       )[1]?.laps ?? []
     )
@@ -293,6 +298,7 @@ describe("任せた役の行", () => {
           steps: [],
           delegates: roles,
           usual: NO_USUAL_DURATIONS,
+          asks: [],
         }),
       )[1]?.delegates ?? []
     )
@@ -349,6 +355,7 @@ describe("任せた役の行", () => {
         steps: [],
         delegates: [role("1", "running")],
         usual: NO_USUAL_DURATIONS,
+        asks: [],
       }),
     )
 
@@ -371,6 +378,7 @@ describe("foldWorkPlanSlots", () => {
       steps: [],
       delegates: [],
       usual: NO_USUAL_DURATIONS,
+      asks: [],
     })
     const { folded, slots: rest } = foldWorkPlanSlots(slots)
 
@@ -394,6 +402,7 @@ describe("foldWorkPlanSlots", () => {
           steps: [],
           delegates: [],
           usual: NO_USUAL_DURATIONS,
+          asks: [],
         }),
       ).folded,
     ).toEqual({ kind: "none" })
@@ -406,6 +415,7 @@ describe("foldWorkPlanSlots", () => {
           steps: [],
           delegates: [],
           usual: NO_USUAL_DURATIONS,
+          asks: [],
         }),
       ).folded,
     ).toEqual({ kind: "none" })

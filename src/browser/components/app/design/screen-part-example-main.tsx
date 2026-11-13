@@ -9,11 +9,19 @@ import type {
 } from "../../page/conversation/components/main-view/hooks/use-work-strip.ts"
 import { PresentationalAsideThread } from "../../page/conversation/components/main-view/presentational-aside-thread.tsx"
 import { PresentationalCurrentStep } from "../../page/conversation/components/main-view/presentational-current-step.tsx"
+import { PresentationalFailedPaper } from "../../page/conversation/components/main-view/presentational-failed-paper.tsx"
 import { PresentationalPhaseList } from "../../page/conversation/components/main-view/presentational-phase-list.tsx"
 import { PresentationalReportOutline } from "../../page/conversation/components/main-view/presentational-report-outline.tsx"
+import { WorkPlanAskBlock } from "../../page/conversation/components/main-view/presentational-work-plan-ask.tsx"
+import { LiveBlock } from "../../page/conversation/components/main-view/presentational-work-plan-live.tsx"
 import { PresentationalWorkPlanPaper } from "../../page/conversation/components/main-view/presentational-work-plan-paper.tsx"
 import { PresentationalWorkStrip } from "../../page/conversation/components/main-view/presentational-work-strip.tsx"
-import type { WorkPlanRow, WorkPlanSlot } from "../../page/conversation/domain/work-plan-row.ts"
+import { markFailedRow } from "../../page/conversation/domain/work-plan-failed-row.ts"
+import {
+  rowsOfSlot,
+  type WorkPlanRow,
+  type WorkPlanSlot,
+} from "../../page/conversation/domain/work-plan-row.ts"
 import type { ScreenPartExample } from "./screen-part-example-type.ts"
 
 const noop = (): void => {}
@@ -171,6 +179,7 @@ function planRow(
         ? { kind: "now", text: "chart.tsを直している", startedAt: { kind: "restored" } }
         : { kind: "none" },
     usual: state === "upcoming" ? { kind: "shown", text: "似た作業では 2〜4分" } : { kind: "none" },
+    ask: { kind: "none" },
   }
 }
 
@@ -222,6 +231,8 @@ const PLAN_SLOTS: readonly WorkPlanSlot[] = PLAN_ROWS.map((row) => ({
   row,
 }))
 
+const FAILED_SLOTS = markFailedRow(PLAN_SLOTS)
+
 export const MAIN_VIEW_EXAMPLES: readonly ScreenPartExample[] = [
   {
     frame: "flow",
@@ -260,6 +271,77 @@ export const MAIN_VIEW_EXAMPLES: readonly ScreenPartExample[] = [
             now: 0,
           }}
         />
+        <PresentationalWorkPlanPaper
+          model={{
+            kind: "failed",
+            position: "4段のうち3段目で止まった",
+            elapsed: "12分48秒",
+            reason: "利用の上限に達して止まった",
+            retry: {
+              kind: "request",
+              label: "同じ依頼を入力欄に戻す",
+              request: "目盛りを設定から読んで",
+            },
+            remaining: ["済んだ 1 段の変更 2 ファイル", "落ちた手順 1 件（E2E を回している）"],
+            slots: FAILED_SLOTS,
+            rows: FAILED_SLOTS.flatMap(rowsOfSlot),
+            now: 0,
+            onDraft: noop,
+            onRetry: noop,
+          }}
+        />
+      </>
+    ),
+  },
+  {
+    frame: "flow",
+    path: "page/conversation/components/main-view/presentational-failed-paper.tsx",
+    render: () => (
+      <PresentationalFailedPaper
+        model={{
+          kind: "failed",
+          position: "4段のうち3段目で止まった",
+          elapsed: "12分48秒",
+          reason: "往復の上限に当たって止まった",
+          retry: {
+            kind: "request",
+            label: "同じ依頼を入力欄に戻す",
+            request: "目盛りを設定から読んで",
+          },
+          remaining: ["済んだ 1 段の変更 2 ファイル"],
+          slots: FAILED_SLOTS,
+          rows: FAILED_SLOTS.flatMap(rowsOfSlot),
+          now: 0,
+          onDraft: noop,
+          onRetry: noop,
+        }}
+        stamp={<p>失敗で止まった ・ 4段のうち3段目で止まった ・ 12分48秒</p>}
+        plan={<p>止まった段に ✕ を付けた計画がここに入る。</p>}
+      />
+    ),
+  },
+  {
+    frame: "flow",
+    path: "page/conversation/components/main-view/presentational-work-plan-ask.tsx",
+    render: () => (
+      <WorkPlanAskBlock
+        ask={{
+          kind: "asked",
+          question: "目盛りの既定の本数はいくつにする？",
+          material: "今の既定は 12 本で、幅 720 では数字が重ならない。",
+          askedAt: 0,
+        }}
+      />
+    ),
+  },
+  {
+    frame: "flow",
+    path: "page/conversation/components/main-view/presentational-work-plan-live.tsx",
+    render: () => (
+      <>
+        {PLAN_ROWS.filter((row) => row.state === "current").map((row) => (
+          <LiveBlock key={row.key} row={row} liveNow now={0} quietLines={[]} />
+        ))}
       </>
     ),
   },

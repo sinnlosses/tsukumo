@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 import type {
@@ -51,7 +51,7 @@ function delegate(id: string, state: WorkPlanDelegate["state"]): WorkPlanDelegat
 function row(
   key: string,
   state: WorkPlanRow["state"],
-  extra: Partial<Pick<WorkPlanRow, "laps" | "delegates">> = {},
+  extra: Partial<Pick<WorkPlanRow, "laps" | "delegates" | "ask">> = {},
 ): WorkPlanRow {
   return {
     key,
@@ -69,6 +69,7 @@ function row(
         ? { kind: "now", text: "架空の手順をしている", startedAt: { kind: "restored" } }
         : { kind: "none" },
     usual: { kind: "none" },
+    ask: { kind: "none" },
     ...extra,
   }
 }
@@ -177,5 +178,68 @@ describe("PresentationalWorkPlanPaper の周と任せた役", () => {
 
     expect(screen.queryByText(/周目/u)).toBeNull()
     expect(container.querySelector("details")).toBeNull()
+  })
+})
+
+describe("PresentationalWorkPlanPaper の問い", () => {
+  it("問いが付いた段に、問いと材料と答える場所の案内が出て、ボタンは無い", () => {
+    renderWorking([
+      row("1", "done"),
+      row("2", "current", {
+        ask: { kind: "asked", question: "架空の質問？", material: "架空の事実", askedAt: 0 },
+      }),
+    ])
+
+    expect(screen.getByText("架空の質問？")).toBeTruthy()
+    expect(screen.getByText("架空の事実")).toBeTruthy()
+    expect(screen.getByText("あなたの番")).toBeTruthy()
+    expect(screen.queryByRole("button")).toBeNull()
+  })
+})
+
+describe("PresentationalWorkPlanPaper の失敗で止まった紙", () => {
+  function renderFailed(handlers: {
+    readonly onDraft: (text: string) => void
+    readonly onRetry: (request: string) => void
+  }) {
+    const rows = [row("1", "done"), row("2", "failed"), row("3", "upcoming")]
+    return render(
+      <PresentationalWorkPlanPaper
+        model={{
+          kind: "failed",
+          position: "3段のうち2段目で止まった",
+          elapsed: "12分48秒",
+          reason: "架空の理由の語",
+          retry: { kind: "request", label: "同じ依頼を入力欄に戻す", request: "架空の依頼" },
+          remaining: ["済んだ 1 段の変更 2 ファイル"],
+          slots: rows.map((item) => ({ kind: "phase", spanHead: { kind: "none" }, row: item })),
+          rows,
+          now: 0,
+          ...handlers,
+        }}
+      />,
+    )
+  }
+
+  it("判定の行・理由・残っているものが出て、止まった段に ✕ と札が付く", () => {
+    const { container } = renderFailed({ onDraft: () => {}, onRetry: () => {} })
+
+    expect(screen.getByText("失敗で止まった")).toBeTruthy()
+    expect(screen.getByText("架空の理由の語")).toBeTruthy()
+    expect(screen.getByText("済んだ 1 段の変更 2 ファイル")).toBeTruthy()
+    expect(screen.getByText("ここで止まった")).toBeTruthy()
+    expect(container.querySelectorAll('[data-lamp-state="fail"]').length).toBeGreaterThan(0)
+  })
+
+  it("続け方の選択は下書きに入れ、戻す口は依頼を渡すだけで、どちらも送らない", () => {
+    const onDraft = vi.fn<(text: string) => void>()
+    const onRetry = vi.fn<(request: string) => void>()
+    renderFailed({ onDraft, onRetry })
+
+    fireEvent.click(screen.getByRole("button", { name: /元に戻す/u }))
+    fireEvent.click(screen.getByRole("button", { name: "同じ依頼を入力欄に戻す" }))
+
+    expect(onDraft).toHaveBeenCalledWith("ここまでの変更を元に戻して")
+    expect(onRetry).toHaveBeenCalledWith("架空の依頼")
   })
 })
