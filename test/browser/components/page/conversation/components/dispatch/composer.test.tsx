@@ -118,7 +118,7 @@ function renderComposer(
   const client = createTestQueryClient()
   render(
     <QueryClientProvider client={client}>
-      <Composer />
+      <Composer progress={{ kind: "strip" }} />
     </QueryClientProvider>,
   )
 }

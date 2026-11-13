@@ -41,8 +41,9 @@
   flex-direction: column;
   margin: calc(-1 * var(--region-padding));
 }
-/* 依頼の全文の入れ物。左右はレポート本文の余白に揃える。 */
-.turn-card-request {
+/* 依頼の全文と、新しい器の紙のワークプランの入れ物。左右はレポート本文の余白に揃える。 */
+.turn-card-request,
+.turn-card-plan {
   padding: var(--space-lg) var(--space-xl) 0;
 }
 /* お伺いのカードの入れ物。札は領域の縁まで広がらず、領域の余白のぶん内側に置く。 */
@@ -124,6 +125,11 @@
 }
 .main-step.is-interim[open] > summary {
   margin-bottom: var(--stack-block);
+}
+/* 新しい器の紙では、段のまとめを計画の段の行に畳むので、中間レポートの箱を本文に積まない。
+   レポートのあとの経過の畳み（`.progress-fold-steps`）の中は、開いて読む記録なので残す。 */
+.turn-card-body[data-progress="paper"] .main-step.is-interim:not(.progress-fold-steps > *) {
+  display: none;
 }
 
 /* 狭い画面では中間レポートの本文を出さず、一覧の行を押して板で読む(`display: none` は読み上げからも外れる)。 */

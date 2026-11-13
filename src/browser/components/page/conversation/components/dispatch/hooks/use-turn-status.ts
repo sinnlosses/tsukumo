@@ -1,6 +1,6 @@
 // `<TurnStatus>` のロジック。経過時間の刻みと、送信⇄中断のどちらを出すかを畳んだ値にして返す。
 //
-// 経過時間と再試行中の知らせを出すのは雑談モードのときだけ。
+// 経過時間を出すのは雑談モードのときと、新しい器（`paper`）で数えているあいだ。再試行中の知らせは雑談モードのときだけ。
 // 1秒の刻みはローカルなタイマーで、`SessionState` に秒数は持たない。
 //
 // 押す先を決めるのもここ。
@@ -18,6 +18,7 @@ import {
   turnElapsedLabel,
   turnElapsedText,
 } from "../../../../../../domain/turn-elapsed.ts"
+import { useEventListener } from "../../../../../../hooks/use-event-listener.ts"
 import { useNowWhile } from "../../../../../../stores/clock.ts"
 import { useSession } from "../../../../../../stores/session.ts"
 import {
@@ -34,6 +35,10 @@ const SEND_LABEL = "送信"
 const ANSWER_LABEL = "答える"
 const NEXT_LABEL = "次へ"
 const INTERRUPT_LABEL = "中断"
+const STOP_LABEL = "止める"
+/** 新しい器の入力欄で作業を止めるキー（⌘. か Ctrl+.）の札。 */
+const STOP_KEY_HINT = "⌘."
+const STOP_KEY = "."
 const WORK_SEND_TITLE = "⌘⏎ で送る（委譲中は補足メッセージ）· ⌘⇧⏎ で新しい依頼として送る"
 const CHAT_SEND_TITLE = "⌘⏎ で送る"
 const ANSWER_TITLE = "⌘⏎ で答える"
@@ -51,7 +56,19 @@ type TurnStatusAction =
       readonly disabled: boolean
       readonly title: string
     }
-  | { readonly kind: "interrupt"; readonly label: string; readonly onInterrupt: () => void }
+  | {
+      readonly kind: "interrupt"
+      readonly label: string
+      /** 押す代わりに打てるキーの札。旧い器では出さず空。 */
+      readonly keyHint: string
+      readonly onInterrupt: () => void
+    }
+
+/**
+ * 進み具合を出す場所。`strip` は旧い器（札の頭の帯）、`paper` は新しい器（紙の計画と入力欄の札）。
+ * `paper` では、仕事のときも経過を出し、止めるボタンを「止める」と言い、⌘. で止められる。
+ */
+export type TurnStatusPlace = "strip" | "paper"
 
 /**
  * 経過時間の行に添える API の知らせ（再試行中・利用上限・失敗の理由）。
@@ -83,7 +100,7 @@ export type TurnStatusModel = {
   readonly notice: TurnStatusNotice
 }
 
-export function useTurnStatus(): TurnStatusModel {
+export function useTurnStatus(place: TurnStatusPlace): TurnStatusModel {
   const dispatch = useSession((session) => session.dispatch)
   // 質問に答えている間は、ターンが進行中でも「中断」ではなく答えるボタンを出す（SDK は答えを待って止まっているので、押す先は中断ではなく送信）。
   const inquiry = useInquiryAnswer()
@@ -96,32 +113,48 @@ export function useTurnStatus(): TurnStatusModel {
   const rateLimit = useSession((session) => session.state.rateLimit)
   const chatMode = useSession((session) => session.state.chatMode)
   const backgroundTaskCount = useSession((session) => session.state.backgroundTasks.length)
-  const now = useNowWhile(chatMode && isTurnCounting(turn, backgroundTaskCount))
+  const counting = isTurnCounting(turn, backgroundTaskCount)
+  const paper = place === "paper"
+  const now = useNowWhile((chatMode || paper) && counting)
+  const interruptible = turn.kind === "running" && inquiry.kind !== "question"
+  const interrupt = (): void => {
+    void dispatch.session.interrupt()
+  }
+  useEventListener(
+    window,
+    "keydown",
+    (event) => {
+      if ((event.metaKey || event.ctrlKey) && event.key === STOP_KEY && !event.isComposing) {
+        event.preventDefault()
+        interrupt()
+      }
+    },
+    { enabled: paper && interruptible },
+  )
 
   return {
-    elapsed: chatMode
-      ? {
-          kind: "shown",
-          label: turnElapsedLabel(turn, backgroundTaskCount),
-          text: turnElapsedText(turn, backgroundTaskCount, now),
-        }
-      : { kind: "none" },
-    action:
-      turn.kind === "running" && inquiry.kind !== "question"
+    elapsed:
+      chatMode || (paper && counting)
         ? {
-            kind: "interrupt",
-            label: INTERRUPT_LABEL,
-            onInterrupt: () => {
-              void dispatch.session.interrupt()
-            },
+            kind: "shown",
+            label: turnElapsedLabel(turn, backgroundTaskCount),
+            text: turnElapsedText(turn, backgroundTaskCount, now),
           }
-        : {
-            kind: "send",
-            label: inquiry.kind === "question" ? questionSendLabel(inquiry.last) : SEND_LABEL,
-            emphasis: inquiry.kind === "question" && !drafted ? "quiet" : "solid",
-            disabled: !connected || ended,
-            title: sendTitle(inquiry.kind === "question", chatMode),
-          },
+        : { kind: "none" },
+    action: interruptible
+      ? {
+          kind: "interrupt",
+          label: paper ? STOP_LABEL : INTERRUPT_LABEL,
+          keyHint: paper ? STOP_KEY_HINT : "",
+          onInterrupt: interrupt,
+        }
+      : {
+          kind: "send",
+          label: inquiry.kind === "question" ? questionSendLabel(inquiry.last) : SEND_LABEL,
+          emphasis: inquiry.kind === "question" && !drafted ? "quiet" : "solid",
+          disabled: !connected || ended,
+          title: sendTitle(inquiry.kind === "question", chatMode),
+        },
     notice: turnStatusNotice({ turn, apiTrouble, rateLimit, chatMode, now }),
   }
 }

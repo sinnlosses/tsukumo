@@ -21,7 +21,8 @@ export type PhoneTurnActionModel =
     }
 
 export function usePhoneTurnAction(): PhoneTurnActionModel {
-  const { action } = useTurnStatus()
+  // ⌘. は広い幅の道具の行（`paper` の `<TurnStatus>`）が受けるので、ここでは張らない。
+  const { action } = useTurnStatus("strip")
   const drafted = useComposerDraft((state) => state.draft.text.trim() !== "")
   const [confirming, setConfirming] = useState(false)
 

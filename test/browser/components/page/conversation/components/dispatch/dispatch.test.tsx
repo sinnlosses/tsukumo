@@ -27,7 +27,7 @@ function renderDispatch(stateOverrides: Partial<SessionState>): void {
   const client = createTestQueryClient()
   render(
     <QueryClientProvider client={client}>
-      <Dispatch />
+      <Dispatch progress={{ kind: "strip" }} />
     </QueryClientProvider>,
   )
 }

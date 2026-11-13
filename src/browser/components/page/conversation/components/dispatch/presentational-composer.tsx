@@ -30,11 +30,11 @@ import { NEW_SESSION_LABEL, type ComposerModel } from "./hooks/use-composer.ts"
 import type { CompletionTrigger } from "./hooks/use-suggestion.ts"
 import { ReplyNoteQueue } from "./reply-note-queue.tsx"
 import { TextAreaSurface } from "./text-area-surface.tsx"
-import { PhoneTurnAction, TurnStatus } from "./turn-status.tsx"
+import { type DispatchProgress, PhoneTurnAction, TurnStatus } from "./turn-status.tsx"
 
 const markdownEditorSurface = deferredModule(() => import("./markdown-editor-surface.tsx"))
 
-type PresentationalComposerProps = ComposerModel
+type PresentationalComposerProps = ComposerModel & { readonly progress: DispatchProgress }
 
 /**
  * props はここだけ分解して受ける。
@@ -60,6 +60,7 @@ export function PresentationalComposer({
   replyNotes,
   onInsertTrigger,
   newSession,
+  progress,
 }: PresentationalComposerProps): ReactElement {
   const phone = usePhoneWidth()
   return (
@@ -265,6 +266,7 @@ export function PresentationalComposer({
         <div className={styles["dispatch-toolbar-end"]}>
           <span className={styles["dispatch-toolbar-divider"]} aria-hidden="true" />
           <TurnStatus
+            progress={progress}
             betweenElapsedAndAction={
               <Button
                 variant={answering ? "outline-warn" : "outline-accent"}

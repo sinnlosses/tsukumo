@@ -90,6 +90,8 @@ const SEND_SHORTCUT_HINT = "⌘⏎"
 type PresentationalTurnStatusProps = TurnStatusModel & {
   /** 経過の右、送信⇄中断の左に挟むもの（道具の行の「新規」）。 */
   readonly betweenElapsedAndAction: ReactNode
+  /** 経過の左に置く段の狐火の並び（新しい器で働くあいだ）。 */
+  readonly lamps: ReactNode
 }
 
 export function PresentationalTurnStatus(props: PresentationalTurnStatusProps): ReactElement {
@@ -118,6 +120,7 @@ export function PresentationalTurnStatus(props: PresentationalTurnStatusProps): 
           </span>
         </Text>
       )}
+      {props.lamps}
       {props.elapsed.kind === "shown" && (
         <Text
           element="span"
@@ -154,6 +157,9 @@ export function PresentationalTurnStatus(props: PresentationalTurnStatusProps): 
           <Text element="span" size="inherit" tone="inherit" weight="bold" className="">
             {props.action.label}
           </Text>
+          {props.action.keyHint !== "" && (
+            <kbd className={styles["dispatch-interrupt-key"]}>{props.action.keyHint}</kbd>
+          )}
         </Button>
       ) : (
         <button

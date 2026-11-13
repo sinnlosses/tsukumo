@@ -1,0 +1,104 @@
+{
+  "name": "work-plan-long",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "古い設定の読み口を 8 か所とも新しい形に移して（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 100,
+      "event": {
+        "kind": "work-plan",
+        "phaseIds": [],
+        "delegatedRange": { "kind": "none" },
+        "skippedPhases": [],
+        "awaitingSummary": { "kind": "none" },
+        "phases": [
+          "1 か所目を移す",
+          "2 か所目を移す",
+          "3 か所目を移す",
+          "4 か所目を移す",
+          "5 か所目を移す",
+          "6 か所目を移す",
+          "7 か所目を移す",
+          "全段の検査を通す"
+        ],
+        "current": 0,
+        "finishedInGroup": [],
+        "phaseSummary": ""
+      }
+    },
+    {
+      "afterMs": 200,
+      "event": {
+        "kind": "tool-started",
+        "toolUseId": "fake-long-1",
+        "name": "Edit",
+        "input": { "file_path": "/tmp/dummy/alpha.ts" }
+      }
+    },
+    {
+      "afterMs": 900,
+      "event": {
+        "kind": "tool-finished",
+        "toolUseId": "fake-long-1",
+        "content": "ダミーの書き込み結果",
+        "isError": false
+      }
+    },
+    {
+      "afterMs": 1000,
+      "event": {
+        "kind": "work-plan",
+        "phaseIds": [],
+        "delegatedRange": { "kind": "none" },
+        "skippedPhases": [],
+        "awaitingSummary": { "kind": "none" },
+        "phases": [
+          "1 か所目を移す",
+          "2 か所目を移す",
+          "3 か所目を移す",
+          "4 か所目を移す",
+          "5 か所目を移す",
+          "6 か所目を移す",
+          "7 か所目を移す",
+          "全段の検査を通す"
+        ],
+        "current": 4,
+        "finishedInGroup": [],
+        "phaseSummary": "架空の読み口を 4 か所移した。"
+      }
+    },
+    {
+      "afterMs": 1100,
+      "event": {
+        "kind": "tool-started",
+        "toolUseId": "fake-long-2",
+        "name": "Edit",
+        "input": { "file_path": "/tmp/dummy/export.ts" }
+      }
+    },
+    {
+      "afterMs": 1500,
+      "event": {
+        "kind": "tool-finished",
+        "toolUseId": "fake-long-2",
+        "content": "ダミーの書き込み結果",
+        "isError": false
+      }
+    },
+    {
+      "afterMs": 1600,
+      "event": {
+        "kind": "tool-started",
+        "toolUseId": "fake-long-3",
+        "name": "Read",
+        "input": { "file_path": "/tmp/dummy/import.ts" }
+      }
+    }
+  ]
+}

@@ -26,8 +26,29 @@ const FLAME_PATH =
 
 const CORE_PATH = "M12 11c.9 1.6 2.3 2.4 2.3 4.2a2.3 2.3 0 0 1-4.6 0c0-1.3.9-2.4 2.3-4.2z"
 
+/** 段の印の並びで、今の段だけを大きくする（見本の値）。 */
+const ROW_LAMP_SIZE_PX = { now: 20, other: 15 } as const
+
 export function Lamp(props: LampProps): ReactElement {
   return props.kind === "level" ? <LevelLamp level={props.level} /> : <StepLamp {...props} />
+}
+
+/** 段の印の並び。読み上げは並び全体を `label` の1つの画像として読む。 */
+export function LampRow(props: {
+  readonly lamps: readonly { readonly key: string; readonly state: LampStepState }[]
+  readonly label: string
+}): ReactElement {
+  return (
+    <span className={styles["lamp-row"]} role="img" aria-label={props.label}>
+      {props.lamps.map((lamp) => (
+        <StepLamp
+          key={lamp.key}
+          state={lamp.state}
+          sizePx={lamp.state === "now" ? ROW_LAMP_SIZE_PX.now : ROW_LAMP_SIZE_PX.other}
+        />
+      ))}
+    </span>
+  )
 }
 
 function LevelLamp(props: { readonly level: LampLevel }): ReactElement {

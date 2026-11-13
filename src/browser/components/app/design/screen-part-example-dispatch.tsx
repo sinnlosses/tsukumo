@@ -8,9 +8,17 @@ import {
   PresentationalPhoneTurnAction,
   PresentationalTurnStatus,
 } from "../../page/conversation/components/dispatch/presentational-turn-status.tsx"
+import type { DispatchProgress } from "../../page/conversation/components/dispatch/turn-status.tsx"
+import { LampRow, type LampStepState } from "../../ui/lamp/lamp.tsx"
 import type { ScreenPartExample } from "./screen-part-example-type.ts"
 
 const noop = (): void => {}
+
+const STRIP_PROGRESS = { kind: "strip" } as const satisfies DispatchProgress
+
+const EXAMPLE_LAMPS = (["done", "done", "now", "todo"] as const satisfies LampStepState[]).map(
+  (state, index) => ({ key: String(index), state }),
+)
 
 const COMPOSER: ComposerModel = {
   input: {
@@ -54,15 +62,17 @@ export const DISPATCH_EXAMPLES: readonly ScreenPartExample[] = [
     path: "page/conversation/components/dispatch/presentational-composer.tsx",
     render: () => (
       <>
-        <PresentationalComposer {...COMPOSER} />
+        <PresentationalComposer {...COMPOSER} progress={STRIP_PROGRESS} />
         <PresentationalComposer
           {...COMPOSER}
+          progress={STRIP_PROGRESS}
           answering
           input={{ ...COMPOSER.input, draft: { text: "", caret: 0 } }}
           band={{ kind: "inquiry", text: "答え待ちの質問があります", onJump: noop }}
         />
         <PresentationalComposer
           {...COMPOSER}
+          progress={STRIP_PROGRESS}
           input={{ ...COMPOSER.input, draft: { text: "/co", caret: 3 } }}
           suggestion={{
             ...COMPOSER.suggestion,
@@ -77,6 +87,7 @@ export const DISPATCH_EXAMPLES: readonly ScreenPartExample[] = [
         />
         <PresentationalComposer
           {...COMPOSER}
+          progress={STRIP_PROGRESS}
           band={{ kind: "disconnected", text: "サーバとの接続が切れています" }}
         />
       </>
@@ -89,6 +100,7 @@ export const DISPATCH_EXAMPLES: readonly ScreenPartExample[] = [
       <>
         <PresentationalTurnStatus
           betweenElapsedAndAction={undefined}
+          lamps={undefined}
           elapsed={{ kind: "none" }}
           notice={{ kind: "none" }}
           action={{
@@ -101,6 +113,7 @@ export const DISPATCH_EXAMPLES: readonly ScreenPartExample[] = [
         />
         <PresentationalTurnStatus
           betweenElapsedAndAction={undefined}
+          lamps={undefined}
           elapsed={{ kind: "shown", label: "経過", text: "1:23" }}
           notice={{
             kind: "shown",
@@ -108,10 +121,18 @@ export const DISPATCH_EXAMPLES: readonly ScreenPartExample[] = [
             label: "再試行中 2/10",
             detail: "混み合っているので少し待って再試行しています",
           }}
-          action={{ kind: "interrupt", label: "中断", onInterrupt: noop }}
+          action={{ kind: "interrupt", label: "中断", keyHint: "", onInterrupt: noop }}
         />
         <PresentationalTurnStatus
           betweenElapsedAndAction={undefined}
+          lamps={<LampRow lamps={EXAMPLE_LAMPS} label="4段のうち3段目" />}
+          elapsed={{ kind: "shown", label: "経過", text: "6分12秒" }}
+          notice={{ kind: "none" }}
+          action={{ kind: "interrupt", label: "止める", keyHint: "⌘.", onInterrupt: noop }}
+        />
+        <PresentationalTurnStatus
+          betweenElapsedAndAction={undefined}
+          lamps={undefined}
           elapsed={{ kind: "shown", label: "失敗", text: "0:42" }}
           notice={{ kind: "shown", tone: "ng", label: "利用上限", detail: "利用上限に達しました" }}
           action={{

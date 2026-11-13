@@ -17,7 +17,12 @@ import { Dispatch } from "./components/dispatch/dispatch.tsx"
 import { Greeting } from "./components/greeting/greeting.tsx"
 import { InquiryCard } from "./components/inquiry/inquiry.tsx"
 import { LiveAnnouncer } from "./components/live-announcer/live-announcer.tsx"
-import { MainView, PhoneActivity, StageActivity } from "./components/main-view/main-view.tsx"
+import {
+  MainView,
+  PhoneActivity,
+  StageActivity,
+  WorkPlanDockLamps,
+} from "./components/main-view/main-view.tsx"
 import { PaperDesk } from "./components/paper-desk/paper-desk.tsx"
 import { PendingAskCard } from "./components/pending-ask-card/pending-ask-card.tsx"
 import { RequestedTaskBoard } from "./components/requested-task-board/requested-task-board.tsx"
@@ -56,10 +61,16 @@ export function PresentationalConversation(props: PresentationalConversationProp
     <>
       {props.shell.kind === "classic" ? (
         <ConversationLayout
-          main={props.chatMode ? <ChatView /> : <MainView outline="column" inquiry="inline" />}
+          main={
+            props.chatMode ? (
+              <ChatView />
+            ) : (
+              <MainView outline="column" inquiry="inline" progress="strip" />
+            )
+          }
           sidebar={<Sidebar />}
           character={<CharacterView />}
-          dispatch={<Dispatch />}
+          dispatch={<Dispatch progress={{ kind: "strip" }} />}
           inquiry={!props.chatMode && <PendingAskCard />}
           rail={{
             badge: !props.chatMode && <TaskDoingCount />,
@@ -91,11 +102,22 @@ export function PresentationalConversation(props: PresentationalConversationProp
                 props.chatMode ? (
                   <ChatView />
                 ) : (
-                  <MainView outline="none" inquiry={props.asking ? "none" : "inline"} />
+                  <MainView
+                    outline="none"
+                    inquiry={props.asking ? "none" : "inline"}
+                    progress="paper"
+                  />
                 )
               }
               margin={{ title: MARGIN_TITLE, body: props.shell.margin }}
-              dock={<Dispatch />}
+              dock={
+                <Dispatch
+                  progress={{
+                    kind: "paper",
+                    lamps: !props.chatMode && <WorkPlanDockLamps />,
+                  }}
+                />
+              }
               inquiry={props.asking ? <InquiryCard actions="inline" placement="dock" /> : undefined}
             />
           }

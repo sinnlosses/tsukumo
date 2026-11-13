@@ -11,7 +11,9 @@ import { PresentationalAsideThread } from "../../page/conversation/components/ma
 import { PresentationalCurrentStep } from "../../page/conversation/components/main-view/presentational-current-step.tsx"
 import { PresentationalPhaseList } from "../../page/conversation/components/main-view/presentational-phase-list.tsx"
 import { PresentationalReportOutline } from "../../page/conversation/components/main-view/presentational-report-outline.tsx"
+import { PresentationalWorkPlanPaper } from "../../page/conversation/components/main-view/presentational-work-plan-paper.tsx"
 import { PresentationalWorkStrip } from "../../page/conversation/components/main-view/presentational-work-strip.tsx"
+import type { WorkPlanRow, WorkPlanSlot } from "../../page/conversation/domain/work-plan-row.ts"
 import type { ScreenPartExample } from "./screen-part-example-type.ts"
 
 const noop = (): void => {}
@@ -139,7 +141,73 @@ const OUTLINE_BASE = {
   onWidthCommit: noop,
 } as const
 
+function planRow(
+  key: string,
+  state: WorkPlanRow["state"],
+  title: string,
+  seconds: number,
+  summary: string,
+): WorkPlanRow {
+  return {
+    key,
+    state,
+    ordinal: key,
+    title,
+    duration:
+      state === "upcoming" ? { kind: "unknown" } : { kind: "known", milliseconds: seconds * 1000 },
+    summary,
+    lap: 1,
+    touched: state === "upcoming" ? [] : [`${key}.ts`],
+    live:
+      state === "current"
+        ? { kind: "now", text: "chart.tsを直している", startedAt: { kind: "restored" } }
+        : { kind: "none" },
+  }
+}
+
+const PLAN_ROWS: readonly WorkPlanRow[] = [
+  planRow("1", "done", "今の形を調べる", 100, "目盛りの数は定数から来ていた。"),
+  planRow("2", "skipped", "古い形を残す", 0, "呼び出しが無いので飛ばした。"),
+  planRow("3", "current", "表示の層を直している", 90, ""),
+  planRow("4", "upcoming", "テストと画で確かめる", 0, ""),
+]
+
+const PLAN_SLOTS: readonly WorkPlanSlot[] = PLAN_ROWS.map((row) => ({
+  kind: "phase",
+  spanHead: { kind: "none" },
+  row,
+}))
+
 export const MAIN_VIEW_EXAMPLES: readonly ScreenPartExample[] = [
+  {
+    frame: "flow",
+    path: "page/conversation/components/main-view/presentational-work-plan-paper.tsx",
+    render: () => (
+      <>
+        <PresentationalWorkPlanPaper
+          model={{
+            kind: "working",
+            verdict: "running",
+            position: "4段のうち3段目",
+            elapsed: "経過 6分12秒",
+            plan: { folded: { kind: "none" }, slots: PLAN_SLOTS },
+            rows: PLAN_ROWS,
+            now: 0,
+          }}
+        />
+        <PresentationalWorkPlanPaper
+          model={{
+            kind: "finished",
+            ending: "stopped",
+            summary: "4段のうち2段が済んだ ・ 7分05秒 ・ 道具 23 回",
+            slots: PLAN_SLOTS,
+            rows: PLAN_ROWS,
+            now: 0,
+          }}
+        />
+      </>
+    ),
+  },
   {
     frame: "flow",
     path: "page/conversation/components/main-view/presentational-current-step.tsx",

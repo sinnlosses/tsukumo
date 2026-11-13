@@ -4,6 +4,12 @@
 .lamp-step-now {
   filter: drop-shadow(0 0 6px color-mix(in srgb, var(--accent) 60%, transparent));
 }
+.lamp-row {
+  display: inline-flex;
+  flex: none;
+  align-items: flex-end;
+  gap: 0;
+}
 .achievement-calendar-lamp-bright {
   filter: drop-shadow(0 0 7px color-mix(in srgb, var(--accent) 60%, transparent));
 }

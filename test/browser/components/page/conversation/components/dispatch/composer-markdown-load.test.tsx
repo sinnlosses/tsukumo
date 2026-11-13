@@ -50,7 +50,7 @@ describe("Composer の面の読み込み", () => {
     putSession({ ...INITIAL_SESSION_STATE }, () => {})
     render(
       <QueryClientProvider client={createTestQueryClient()}>
-        <Composer />
+        <Composer progress={{ kind: "strip" }} />
       </QueryClientProvider>,
     )
     expect(screen.getByPlaceholderText(/依頼を書く/)).toBeDefined()

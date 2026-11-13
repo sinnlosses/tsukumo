@@ -1,0 +1,218 @@
+/* 紙のワークプラン。値は見本 `docs/history/mockup/report-progress-2026-11-12/index.html` の `.stamp`・`.vd`・`.plan`・`.ph`・`.live`・`.act`・`.route`。 */
+.work-plan {
+  display: flex;
+  flex-direction: column;
+  gap: var(--stack-block);
+}
+.work-plan-stamp {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--stack-tight) var(--inline-group);
+  color: var(--ink-soft);
+  font-size: var(--font-secondary);
+  font-variant-numeric: tabular-nums;
+}
+.work-plan-verdict {
+  --work-plan-verdict-ink: var(--accent);
+
+  display: inline-flex;
+  align-items: center;
+  gap: var(--inline-control);
+  padding: 0 var(--inline-group) 0 var(--inline-control);
+  border-radius: var(--radius-sm);
+  color: var(--work-plan-verdict-ink);
+  background: color-mix(in srgb, var(--work-plan-verdict-ink) 14%, transparent);
+  font-weight: 700;
+}
+.work-plan-verdict[data-verdict="asking"] {
+  --work-plan-verdict-ink: var(--state-ask);
+}
+.work-plan-elapsed {
+  font-family: var(--font-mono);
+}
+.work-plan-list {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  list-style: none;
+}
+/* 段1つ。狐火の列と本文の列で、狐火の下に次の段までの縦の線を引く。 */
+.work-plan-phase {
+  position: relative;
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr);
+  column-gap: var(--inline-control);
+  padding-bottom: var(--stack-group);
+}
+.work-plan-phase > svg {
+  justify-self: center;
+  translate: 0 4px;
+}
+.work-plan-phase::before {
+  content: "";
+  position: absolute;
+  top: 30px;
+  bottom: 0;
+  left: 12px;
+  width: 1.5px;
+  background: var(--rule);
+}
+.work-plan-phase:last-child::before {
+  display: none;
+}
+.work-plan-phase-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--stack-tight);
+  min-width: 0;
+}
+.work-plan-phase-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--inline-control);
+}
+.work-plan-phase-title {
+  color: var(--ink-soft);
+  font-weight: 500;
+}
+.work-plan-phase[data-state="current"]
+  > .work-plan-phase-main
+  > .work-plan-phase-head
+  > .work-plan-phase-title {
+  color: var(--ink);
+  font-weight: 700;
+}
+.work-plan-phase[data-state="upcoming"]
+  > .work-plan-phase-main
+  > .work-plan-phase-head
+  > .work-plan-phase-title,
+.work-plan-phase[data-state="skipped"]
+  > .work-plan-phase-main
+  > .work-plan-phase-head
+  > .work-plan-phase-title {
+  color: var(--ink-quiet);
+}
+.work-plan-phase-time {
+  flex: 1;
+  color: var(--ink-quiet);
+  text-align: end;
+  font-family: var(--font-mono);
+  font-size: var(--font-secondary);
+  white-space: nowrap;
+}
+.work-plan-phase-note,
+.work-plan-touched {
+  color: var(--ink-soft);
+  font-size: var(--font-secondary);
+  overflow-wrap: anywhere;
+}
+.work-plan-touched {
+  color: var(--ink-quiet);
+  font-family: var(--font-mono);
+}
+.work-plan-tag {
+  --work-plan-tag-ink: var(--ink-soft);
+
+  padding: 0 var(--inline-control);
+  border-radius: var(--radius-sm);
+  color: var(--work-plan-tag-ink);
+  background: color-mix(in srgb, var(--work-plan-tag-ink) 15%, transparent);
+  font-size: var(--font-label);
+  font-weight: 700;
+  white-space: nowrap;
+}
+.work-plan-tag[data-tone="warn"] {
+  --work-plan-tag-ink: var(--state-warn);
+}
+/* 今の段の実況。「いま」「できた」の項目を、語・本文・時刻の3列に並べる。 */
+.work-plan-live {
+  display: flex;
+  flex-direction: column;
+  gap: var(--stack-tight);
+  padding: var(--inset-control);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+  font-size: var(--font-secondary);
+}
+.work-plan-act {
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: var(--inline-control);
+  overflow-wrap: anywhere;
+}
+.work-plan-act-kind {
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+  font-weight: 700;
+}
+.work-plan-act[data-kind="touched"] > .work-plan-act-kind {
+  color: var(--state-ok);
+}
+.work-plan-act-when {
+  color: var(--ink-quiet);
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+.work-plan-fold {
+  color: var(--ink-soft);
+  font-size: var(--font-secondary);
+  cursor: pointer;
+}
+.work-plan-parallel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--stack-tight);
+  padding-bottom: var(--stack-block);
+}
+.work-plan-parallel-label {
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+  font-weight: 700;
+}
+/* 止めたあとの「あなたの番」と「中途半端なもの」。広い幅では左右に、狭い幅では縦に並べる。 */
+.work-plan-turn {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: var(--stack-block) var(--inline-group);
+}
+.work-plan-turn-part {
+  display: flex;
+  flex-direction: column;
+  gap: var(--stack-tight);
+  padding: var(--inset-control);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+}
+.work-plan-turn-part[data-mine="true"] {
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+.work-plan-turn-heading {
+  color: var(--ink-soft);
+  font-size: var(--font-label);
+  font-weight: 700;
+}
+.work-plan-choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--inline-control);
+}
+.work-plan-choice-key {
+  color: var(--ink-quiet);
+  font-family: var(--font-mono);
+}
+/* 終わったあとの道筋。紙の末尾に畳んで置く。 */
+.work-plan-route {
+  display: flex;
+  flex-direction: column;
+  gap: var(--stack-block);
+  padding-top: var(--stack-block);
+  border-top: 1px solid var(--rule);
+}
+.work-plan-route-summary {
+  color: var(--ink-soft);
+  font-size: var(--font-secondary);
+  cursor: pointer;
+}

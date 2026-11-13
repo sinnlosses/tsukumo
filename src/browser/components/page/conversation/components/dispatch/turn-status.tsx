@@ -3,21 +3,30 @@
 import type { ReactElement, ReactNode } from "react"
 
 import { usePhoneTurnAction } from "./hooks/use-phone-turn-action.ts"
-import { useTurnStatus } from "./hooks/use-turn-status.ts"
+import { type TurnStatusPlace, useTurnStatus } from "./hooks/use-turn-status.ts"
 import {
   PresentationalPhoneTurnAction,
   PresentationalTurnStatus,
 } from "./presentational-turn-status.tsx"
 
+/** 入力欄に置く進み具合。`paper` の `lamps` は経過の左に置く段の狐火の並び。 */
+export type DispatchProgress =
+  | { readonly kind: "strip" }
+  | { readonly kind: "paper"; readonly lamps: ReactNode }
+
 export function TurnStatus({
   betweenElapsedAndAction,
+  progress,
 }: {
   readonly betweenElapsedAndAction: ReactNode
+  readonly progress: DispatchProgress
 }): ReactElement {
+  const place: TurnStatusPlace = progress.kind
   return (
     <PresentationalTurnStatus
-      {...useTurnStatus()}
+      {...useTurnStatus(place)}
       betweenElapsedAndAction={betweenElapsedAndAction}
+      lamps={progress.kind === "paper" && progress.lamps}
     />
   )
 }

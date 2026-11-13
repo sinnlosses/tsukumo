@@ -6,7 +6,7 @@ import { Badge } from "../../ui/badge/badge.tsx"
 import { Button } from "../../ui/button/button.tsx"
 import { Divider } from "../../ui/divider/divider.tsx"
 import { Heading } from "../../ui/heading/heading.tsx"
-import { Lamp } from "../../ui/lamp/lamp.tsx"
+import { Lamp, LampRow } from "../../ui/lamp/lamp.tsx"
 import { Note } from "../../ui/note/note.tsx"
 import { Quote } from "../../ui/quote/quote.tsx"
 import { Surface } from "../../ui/surface/surface.tsx"
@@ -175,6 +175,10 @@ export function UiGallery(): ReactElement {
         {LAMP_STEP_STATES.map((state) => (
           <Lamp key={state} kind="step" state={state} sizePx={20} />
         ))}
+        <LampRow
+          lamps={LAMP_STEP_STATES.map((state) => ({ key: state, state }))}
+          label="架空の段の印の並び"
+        />
       </Group>
       <InputGroups />
       <OverlayGroups />

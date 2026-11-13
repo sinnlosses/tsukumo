@@ -4,7 +4,8 @@ import type { ReactElement } from "react"
 
 import { useComposer } from "./hooks/use-composer.ts"
 import { PresentationalComposer } from "./presentational-composer.tsx"
+import type { DispatchProgress } from "./turn-status.tsx"
 
-export function Composer(): ReactElement {
-  return <PresentationalComposer {...useComposer()} />
+export function Composer(props: { readonly progress: DispatchProgress }): ReactElement {
+  return <PresentationalComposer {...useComposer()} progress={props.progress} />
 }

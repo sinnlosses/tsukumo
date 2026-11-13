@@ -49,10 +49,12 @@ import { RequestBlock } from "./request-block.tsx"
 import { TurnCardHead } from "./turn-card-head.tsx"
 import { Turn } from "./turn.tsx"
 import { Welcome } from "./welcome.tsx"
+import { WorkPlanPaper } from "./work-plan-paper.tsx"
 import { WorkStrip } from "./work-strip.tsx"
 
 export { PhoneActivity } from "./phone-activity.tsx"
 export { StageActivity } from "./stage-activity.tsx"
+export { WorkPlanDockLamps } from "./work-plan-paper.tsx"
 
 /** 画面に出す中身。`card` は札に載せるターンで、`fresh` は働くあいだの中身から入れ替えたばかりのレポートか。 */
 type ShownView =
@@ -64,10 +66,14 @@ type ShownCard =
   | { readonly kind: "none" }
   | { readonly kind: "turn"; readonly turn: MainViewTurn; readonly fresh: boolean }
 
-/** `outline` は札の左にやり取りの列を置くか。`inquiry` は札の末尾にお伺いを出すか（入力欄の場所に出すときは `none`）。 */
+/**
+ * `outline` は札の左にやり取りの列を置くか。`inquiry` は札の末尾にお伺いを出すか（入力欄の場所に出すときは `none`）。
+ * `progress` は進み具合を札の頭の帯に出すか（`strip`）、紙の計画と末尾の道筋に出すか（`paper`）。
+ */
 export function MainView(props: {
   readonly outline: "column" | "none"
   readonly inquiry: "inline" | "none"
+  readonly progress: "strip" | "paper"
 }): ReactElement {
   const { activeTurnId, newestTurnId, selectTurn } = useTurnSelection()
   // 畳んだ結果は姿ごとに1回だけ作られる（昇順。追従を決める `useTurnSelection` と同じものを読む）。
@@ -89,6 +95,8 @@ export function MainView(props: {
       ? { kind: "past", turnId: activeTurnId }
       : { kind: "newest" }
   const viewingPast = viewing.kind === "past"
+  // 紙の計画が描けるのは今の依頼だけなので、過去のやり取りは帯の形のまま中間レポートを出す。
+  const progress = viewingPast ? "strip" : props.progress
   const view: ShownView = awaitingHello ? { kind: "waiting" } : shownView(content, turns, viewing)
   useActiveTurnScroll(rootRef, shownTargetOf(view))
 
@@ -177,7 +185,7 @@ export function MainView(props: {
                 notice={notice}
                 onNotice={onNotice}
               >
-                {!viewingPast && (
+                {!viewingPast && props.progress === "strip" && (
                   <TurnCardHead>
                     <WorkStrip />
                   </TurnCardHead>
@@ -191,17 +199,26 @@ export function MainView(props: {
                     />
                   </div>
                 )}
-                <div className={styles["turn-card-body"]}>
+                {progress === "paper" && view.kind === "work" && (
+                  <div className={styles["turn-card-plan"]}>
+                    <WorkPlanPaper />
+                  </div>
+                )}
+                <div className={styles["turn-card-body"]} data-progress={progress}>
                   <AskThreadProvider turn={cardTurn.turn} turns={turns}>
                     {/* 狭い画面の一覧と「いまの段」。広い画面では CSS で消える。
                       一覧の板の中の本文を、`<Turn>` が隠した同じ本文より DOM の前に置くため、`<Turn>` の前に並べる。 */}
-                    <PhaseList
-                      turn={cardTurn.turn}
-                      planCount={viewingPast ? 0 : planCountOf(turnStepList)}
-                      turnId={cardTurn.turn.id}
-                      key={`phase-list:${String(cardTurn.turn.id)}`}
-                    />
-                    {phoneWidth && !viewingPast && view.kind === "work" && <CurrentStep />}
+                    {progress === "strip" && (
+                      <PhaseList
+                        turn={cardTurn.turn}
+                        planCount={viewingPast ? 0 : planCountOf(turnStepList)}
+                        turnId={cardTurn.turn.id}
+                        key={`phase-list:${String(cardTurn.turn.id)}`}
+                      />
+                    )}
+                    {phoneWidth && !viewingPast && view.kind === "work" && progress === "strip" && (
+                      <CurrentStep />
+                    )}
                     {/* `key` にターンの番号を渡す。
                     前後へ移っても同じ位置の `<Turn>` を使い回すと、「このターンを出し始めた時点で既にあった本文」（演出の対象を決める材料）が最初のターンのものに留まってしまう。 */}
                     <Turn
@@ -212,6 +229,11 @@ export function MainView(props: {
                     />
                   </AskThreadProvider>
                 </div>
+                {progress === "paper" && view.kind === "report" && (
+                  <div className={styles["turn-card-plan"]}>
+                    <WorkPlanPaper />
+                  </div>
+                )}
                 {!viewingPast && props.inquiry === "inline" && (
                   <div className={styles["turn-card-inquiry"]}>
                     <Inquiry />
