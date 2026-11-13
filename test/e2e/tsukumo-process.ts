@@ -45,6 +45,7 @@ export function spawnTsukumo(
   home: string,
   userHome: string,
   cwd: string,
+  characterPack?: string,
   port = 0,
 ): ChildProcess {
   return spawnFakeTsukumo({
@@ -54,7 +55,21 @@ export function spawnTsukumo(
     session: undefined,
     port,
     home,
-    extraEnv: { TSUKUMO_FIXED_CLOCK: FIXED_INSTANT, TZ: TIME_ZONE, HOME: userHome },
+    extraEnv: {
+      TSUKUMO_FIXED_CLOCK: FIXED_INSTANT,
+      TZ: TIME_ZONE,
+      HOME: userHome,
+      ...(characterPack === undefined
+        ? {}
+        : {
+            TSUKUMO_CHARACTER: path.join(
+              REPOSITORY_ROOT,
+              "fixture",
+              "character-pack",
+              characterPack,
+            ),
+          }),
+    },
     dropInheritedTsukumoEnv: true,
     stderr: "pipe",
     detached: true,

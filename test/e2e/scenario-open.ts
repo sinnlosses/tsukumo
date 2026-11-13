@@ -67,6 +67,8 @@ export type ScenarioOptions = {
   readonly domRoots: readonly DomRootName[]
   /** 起こす前に cwd へ置くファイル（cwd からの相対パスと中身の並び）。手元の画像など、場面が指すファイル。 */
   readonly cwdFiles?: readonly CwdFile[]
+  /** `fixture/character-pack/` の下のパックの名前。指すと `TSUKUMO_CHARACTER` でそのパックを選んで起こす。無ければ同梱の既定。 */
+  readonly characterPack?: string
 }
 
 /** サイドバーの使用量の目盛り（コンテキスト・プラン使用量）の口の `title`。 */
@@ -170,7 +172,13 @@ export async function openRoom(
   writeBeadsConfig(userHome.real)
   writeCwdFiles(cwd.real, options.cwdFiles ?? [])
 
-  const child = spawnTsukumo(options.scene, home.real, userHome.real, cwd.real)
+  const child = spawnTsukumo(
+    options.scene,
+    home.real,
+    userHome.real,
+    cwd.real,
+    options.characterPack,
+  )
   addCleanup(() => stopTsukumo(child))
   const viewUrl = await waitForViewUrl(child, home.real, LAUNCH_TIMEOUT_MS)
   const url = new URL(viewUrl)

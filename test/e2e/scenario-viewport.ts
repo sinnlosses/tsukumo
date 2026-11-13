@@ -5,6 +5,7 @@
  * シナリオだけ `narrow` を使う。`large` と `medium` は、領域の寸法をビューポートの大きさごとに測るシナリオが使う。
  * `tier-edge-medium` と `tier-edge-large` はサイドバーを柱に畳む段の境目の両側、`compact` は柱の段でやり取りの列が既定で畳まれる幅。
  * `phone` はスマホの縦のビューポート、`tier-edge-narrow` と `tier-edge-rail` は狭い画面の形と柱の段の境目の両側。
+ * `full-hd` はフルHDの全画面（1920×1080）、`laptop` は小さめのノート PC の画面（1280×800）。
  */
 export const VIEWPORTS = {
   wide: { width: 1400, height: 900 },
@@ -17,4 +18,6 @@ export const VIEWPORTS = {
   "tier-edge-medium": { width: 1100, height: 768 },
   "tier-edge-large": { width: 1101, height: 768 },
   compact: { width: 800, height: 768 },
+  "full-hd": { width: 1920, height: 1080 },
+  laptop: { width: 1280, height: 800 },
 } as const satisfies Record<string, { readonly width: number; readonly height: number }>

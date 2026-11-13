@@ -37,6 +37,8 @@ describe("capture の入口の崩れた引数", () => {
     ["capture-view.ts", "--scene", "x", "--viewport", "1000x800"],
     ["capture-view.ts", "--scene", "x", "--paper-metric", "--reveal-at", "500"],
     ["capture-view.ts", "--scene", "x", "--text-length"],
+    ["capture-view.ts", "--scene", "x", "--shell", "classic"],
+    ["capture-view.ts", "http://localhost:1/", "--shell", "stage"],
     ["compare-wrap.ts"],
     ["compare-wrap.ts", "--foo"],
     ["compare-wrap.ts", "--before", "http://localhost:1/"],

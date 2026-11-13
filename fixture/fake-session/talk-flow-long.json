@@ -1,0 +1,100 @@
+{
+  "name": "talk-flow-long",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "架空の一覧画面の並び替えを直したい（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 100,
+      "event": {
+        "kind": "speech",
+        "text": "わかった。まず計画を立てるね。",
+        "expression": "default"
+      }
+    },
+    {
+      "afterMs": 200,
+      "event": {
+        "kind": "work-plan",
+        "phaseIds": [],
+        "delegatedRange": { "kind": "range", "first": 1, "count": 2 },
+        "skippedPhases": [],
+        "awaitingSummary": { "kind": "none" },
+        "phases": ["計画を確かめる", "並び替えを調べる", "並び替えを直す", "受け入れる"],
+        "current": 1,
+        "finishedInGroup": [],
+        "phaseSummary": "架空の計画は決まった。"
+      }
+    },
+    {
+      "afterMs": 300,
+      "event": {
+        "kind": "delegate-returned",
+        "handback": {
+          "kind": "phase-done",
+          "phase": 1,
+          "count": 2,
+          "summary": "架空の並び替えの原因が分かった。"
+        }
+      }
+    },
+    {
+      "afterMs": 400,
+      "event": {
+        "kind": "speech",
+        "text": "原因が見つかったよ。続けて直すね。",
+        "expression": "excited"
+      }
+    },
+    {
+      "afterMs": 500,
+      "event": {
+        "kind": "request",
+        "text": "空の一覧のときも崩れないようにしてほしい（架空の補足）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 600,
+      "event": {
+        "kind": "speech",
+        "text": "空の一覧も見ておくね。",
+        "expression": "curious"
+      }
+    },
+    {
+      "afterMs": 700,
+      "event": {
+        "kind": "delegate-returned",
+        "handback": {
+          "kind": "phase-done",
+          "phase": 2,
+          "count": 2,
+          "summary": "架空の並び替えを、空の一覧も含めて直し切った。"
+        }
+      }
+    },
+    {
+      "afterMs": 800,
+      "event": {
+        "kind": "speech",
+        "text": "直し終わったよ。あとは受け入れだね。",
+        "expression": "proud"
+      }
+    },
+    {
+      "afterMs": 900,
+      "event": {
+        "kind": "tool-started",
+        "toolUseId": "fake-talk-flow-long-1",
+        "name": "Bash",
+        "input": { "command": "ls" }
+      }
+    }
+  ]
+}

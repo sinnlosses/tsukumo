@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 260" width="200" height="260" role="img" aria-label="テスト用の明るいパック（通常）">
+  <ellipse cx="100" cy="238" rx="46" ry="9" fill="#000" opacity="0.10"/>
+  <circle cx="100" cy="110" r="64" fill="#fde68a" stroke="#92400e" stroke-width="4"/>
+  <circle cx="80" cy="102" r="6" fill="#451a03"/>
+  <circle cx="120" cy="102" r="6" fill="#451a03"/>
+  <path d="M82 130q18 14 36 0" fill="none" stroke="#451a03" stroke-width="4" stroke-linecap="round"/>
+</svg>

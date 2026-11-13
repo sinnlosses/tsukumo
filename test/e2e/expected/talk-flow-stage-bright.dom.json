@@ -1,0 +1,124 @@
+{
+  "stage-thread": [
+    {
+      "tag": "div",
+      "attributes": {
+        "data-slot": "thread"
+      },
+      "children": [
+        {
+          "tag": "div",
+          "attributes": {
+            "data-latest": "false",
+            "data-interactive": "true",
+            "data-selected": "false",
+            "role": "button",
+            "aria-pressed": "false"
+          },
+          "children": [
+            {
+              "tag": "span",
+              "attributes": {
+                "data-type": "inherit",
+                "data-color": "inherit"
+              },
+              "children": [
+                "空の一覧も見ておくね。"
+              ]
+            }
+          ]
+        },
+        {
+          "tag": "time",
+          "attributes": {
+            "dateTime": "2026-01-15T10:00+09:00"
+          },
+          "children": [
+            "10:00"
+          ]
+        }
+      ]
+    }
+  ],
+  "stage-balloon": [
+    {
+      "tag": "div",
+      "attributes": {
+        "data-slot": "balloon"
+      },
+      "children": [
+        {
+          "tag": "div",
+          "attributes": {
+            "data-has-balloon": "true"
+          },
+          "children": [
+            {
+              "tag": "div",
+              "attributes": {
+                "data-latest": "true",
+                "data-interactive": "true",
+                "data-selected": "true",
+                "role": "button",
+                "aria-pressed": "true"
+              },
+              "children": [
+                {
+                  "tag": "span",
+                  "attributes": {
+                    "data-type": "supporting",
+                    "data-color": "accent"
+                  },
+                  "children": [
+                    "テスト用の明るいパック"
+                  ]
+                },
+                {
+                  "tag": "time",
+                  "attributes": {
+                    "dateTime": "2026-01-15T10:00+09:00"
+                  },
+                  "children": [
+                    "10:00"
+                  ]
+                },
+                {
+                  "tag": "span",
+                  "attributes": {
+                    "data-type": "inherit",
+                    "data-color": "inherit"
+                  },
+                  "children": [
+                    "直し終わったよ。あとは受け入れだね。"
+                  ]
+                }
+              ]
+            },
+            {
+              "tag": "p",
+              "attributes": {
+                "data-tone": "quiet",
+                "data-mono": "false"
+              },
+              "children": [
+                {
+                  "tag": "b",
+                  "children": [
+                    "手元"
+                  ]
+                },
+                "lsを走らせている · 1秒"
+              ]
+            }
+          ]
+        },
+        {
+          "tag": "i",
+          "attributes": {
+            "aria-hidden": "true"
+          }
+        }
+      ]
+    }
+  ]
+}

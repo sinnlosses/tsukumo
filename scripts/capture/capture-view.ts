@@ -36,7 +36,7 @@ import { errorMessage } from "../../src/browser/utils/error-message.ts"
 import { REPOSITORY_ROOT } from "../shared/repository-root.ts"
 import { parseOptions, USAGE } from "./lib/capture-option.ts"
 import { capture } from "./lib/capture-run.ts"
-import type { Source } from "./lib/capture-source.ts"
+import type { Shell, Source } from "./lib/capture-source.ts"
 import { CATALOG } from "./lib/catalog-entry.ts"
 import { imageSceneEntry, launchPlaceOf, workspaceOf } from "./lib/catalog-setup.ts"
 import { launchFakeScene } from "./lib/fake-scene-launch.ts"
@@ -131,11 +131,21 @@ async function openSource(source: Source, outDir: string): Promise<OpenedSource 
       extraEnv:
         source.until === undefined ? {} : { TSUKUMO_FAKE_SCENE_UNTIL: String(source.until) },
     })
-    return { url: launched.url, close: launched.close, skipReveal: imageEntry?.skipReveal === true }
+    return {
+      url: source.shell === undefined ? launched.url : withShell(launched.url, source.shell),
+      close: launched.close,
+      skipReveal: imageEntry?.skipReveal === true,
+    }
   } catch (error) {
     process.stderr.write(`${errorMessage(error)}\n`)
     return undefined
   }
+}
+
+function withShell(url: string, shell: Shell): string {
+  const shelled = new URL(url)
+  shelled.searchParams.set("shell", shell)
+  return shelled.toString()
 }
 
 function isDirectory(target: string): boolean {
