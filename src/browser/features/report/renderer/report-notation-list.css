@@ -13,3 +13,92 @@
   padding-inline-start: 2em;
   list-style: revert;
 }
+
+/* 新しい器の「文の族」。見本は docs/history/mockup/report-progress-2026-11-12/index.html の `?group=parts&moment=text`。
+   箇条は字下げを 1.15em に詰め、ラベルは太字で文の頭に置く（列に組まない）。
+   済みは ✓ と字の濃さの両方で言い、未了は ○ で言う。畳みは枠も地も持たず、題だけを静かな字で出す。 */
+:root[data-shell="stage"] .detail-block {
+  & :is(ul, ol) {
+    padding-inline-start: 1.15em;
+  }
+  & .report-labeled-list > :is(ul, ol) {
+    display: block;
+    column-gap: 0;
+    list-style: revert;
+    counter-reset: none;
+  }
+  & .report-labeled-list li {
+    display: list-item;
+    padding: 0;
+    border-top: none;
+    counter-increment: none;
+  }
+  & .report-labeled-list ol > li::before {
+    content: none;
+  }
+  & .report-list-label {
+    min-width: 0;
+    padding-inline-end: var(--inline-tight);
+    color: var(--ink);
+    font-size: inherit;
+    line-height: inherit;
+  }
+  & .report-list-text {
+    display: inline;
+    margin-top: 0;
+    color: var(--ink);
+    font-size: inherit;
+    line-height: inherit;
+  }
+  & ul:has(> .report-task-item) {
+    padding-inline-start: 0;
+    list-style: none;
+  }
+  & .report-task-item {
+    display: grid;
+    grid-template-columns: 22px minmax(0, 1fr);
+    align-items: baseline;
+  }
+  & .report-task-item:has(> .report-task-check-done) {
+    color: var(--ink-soft);
+  }
+  & .report-task-check {
+    width: auto;
+    height: auto;
+    margin: 0;
+    border: none;
+    background: none;
+    font-weight: 800;
+    line-height: inherit;
+    text-align: start;
+    vertical-align: baseline;
+    color: var(--ink-quiet);
+  }
+  & .report-task-check:not(.report-task-check-done)::before {
+    content: "○";
+    font-weight: 400;
+  }
+  & .report-task-check-done {
+    color: var(--state-ok);
+  }
+  & details {
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    background: none;
+  }
+  & summary {
+    color: var(--ink-soft);
+    font-size: var(--font-subheading);
+  }
+  & :global(.astryx-blockquote) {
+    padding-inline-start: var(--gutter-region);
+    border-inline-start: none;
+    box-shadow: inset 2px 0 0 var(--ink-quiet);
+    color: var(--ink-soft);
+    & cite {
+      color: var(--ink-quiet);
+      font-size: var(--font-secondary);
+    }
+  }
+}

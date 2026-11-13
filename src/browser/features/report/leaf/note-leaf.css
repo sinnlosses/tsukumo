@@ -1,0 +1,42 @@
+/* 紙の中で本文に割り込む箱。注意（!）と戻せない操作（✕）の2つだけで、印と太字の頭の1文で言い、色だけに頼らない。 */
+[data-report-region] .caution {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  gap: var(--inline-tight);
+  max-inline-size: min(100%, var(--report-measure-prose, 40em));
+  padding: var(--inset-control);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--caution-tone) 10%, transparent);
+  box-shadow: inset 3px 0 0 var(--caution-tone);
+  color: var(--ink);
+}
+[data-report-region] .caution-warn {
+  --caution-tone: var(--state-warn);
+}
+[data-report-region] .caution-ng {
+  --caution-tone: var(--state-ng);
+}
+[data-report-region] .caution-mark {
+  color: var(--caution-tone);
+  font-style: normal;
+  font-weight: 800;
+}
+[data-report-region] .caution-body > p {
+  margin: 0;
+}
+/* 補足は欄外の字（小さく静かに、頭に語を置く）。 */
+[data-report-region] .note-aside {
+  max-inline-size: min(100%, var(--report-measure-prose, 40em));
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+  line-height: 1.6;
+}
+[data-report-region] .note-aside > p {
+  display: inline;
+  margin: 0;
+}
+[data-report-region] .note-aside-label {
+  padding-inline-end: var(--inline-tight);
+  color: var(--ink-soft);
+  font-weight: 600;
+}

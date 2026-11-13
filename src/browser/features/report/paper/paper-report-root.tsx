@@ -20,6 +20,7 @@ import { RegionBox, ReportFrame } from "../leaf/body-region.tsx"
 import { ChecksVerdict } from "../leaf/checks-verdict.tsx"
 import { StatCards } from "../leaf/stats-leaf.tsx"
 import { checksClassName, InlineMarkdown, statsLeafClassNames } from "../markdown.tsx"
+import { PaperContext } from "./paper-context.ts"
 import { PaperStamp } from "./paper-stamp.tsx"
 import { PaperTurn } from "./paper-turn.tsx"
 import styles from "./paper.module.css"
@@ -39,48 +40,48 @@ export function PaperReportRoot(): ReactElement {
   const full = form !== "answer"
   const depth = useReadingDepth((state) => state.depth)
   return (
-    <ReportFrame
-      reveal={report.reveal}
-      turnId={report.turnId}
-      className={clsx(report.className, styles["paper"])}
-      revealClassName={report.revealClassName}
-      blockClassName={report.blockClassName}
-      depth={depth}
-    >
-      <RegionBox region={{ kind: "head" }}>
-        <div className={styles["paper-head"]} data-paper-form={form}>
-          <div className={styles["paper-top"]}>
-            <PaperStamp form={form} head={head} />
-            <DepthSwitch depth={depth} />
-          </div>
-          <Conclusion lead={head.lead} />
-          {progress.previous.kind === "previous" && <Previous previous={progress.previous} />}
-          {full && (
+    <PaperContext value={true}>
+      <ReportFrame
+        reveal={report.reveal}
+        turnId={report.turnId}
+        className={clsx(report.className, styles["paper"])}
+        revealClassName={report.revealClassName}
+        blockClassName={report.blockClassName}
+        depth={depth}
+      >
+        <RegionBox region={{ kind: "head" }}>
+          <div className={styles["paper-head"]} data-paper-form={form}>
+            <div className={styles["paper-top"]}>
+              <PaperStamp form={form} head={head} />
+              <DepthSwitch depth={depth} />
+            </div>
+            <Conclusion lead={head.lead} />
+            {progress.previous.kind === "previous" && <Previous previous={progress.previous} />}
             <PaperTurn
               form={form}
               next={progress.next}
               components={view.components}
               nextSteps={report.nextSteps}
             />
-          )}
-        </div>
-      </RegionBox>
-      {form === "deliver" && head.keyFigures.length > 0 && (
-        <div className={statsLeafClassNames.keyFigures} data-paper-part="figures">
-          <StatCards items={head.keyFigures} />
-        </div>
-      )}
-      {full && head.checks.kind === "checks" && (
-        <div className={checksClassName("status")} data-paper-part="ledger">
-          <ChecksVerdict view={head.checks} />
-        </div>
-      )}
-      <BodyRegions foldable={true} />
-      {full && progress.assumptions.length > 0 && (
-        <Assumptions assumptions={progress.assumptions} />
-      )}
-      {progress.sources.length > 0 && <Sources sources={progress.sources} form={form} />}
-    </ReportFrame>
+          </div>
+        </RegionBox>
+        {form === "deliver" && head.keyFigures.length > 0 && (
+          <div className={statsLeafClassNames.keyFigures} data-paper-part="figures">
+            <StatCards items={head.keyFigures} />
+          </div>
+        )}
+        {full && head.checks.kind === "checks" && (
+          <div className={checksClassName("status")} data-paper-part="ledger">
+            <ChecksVerdict view={head.checks} />
+          </div>
+        )}
+        <BodyRegions foldable={true} />
+        {full && progress.assumptions.length > 0 && (
+          <Assumptions assumptions={progress.assumptions} />
+        )}
+        {progress.sources.length > 0 && <Sources sources={progress.sources} form={form} />}
+      </ReportFrame>
+    </PaperContext>
   )
 }
 

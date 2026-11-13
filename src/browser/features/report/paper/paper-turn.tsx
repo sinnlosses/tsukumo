@@ -9,6 +9,7 @@ import { Button } from "../../../components/ui/button/button.tsx"
 import { buildNextSteps, type NextStepAlternative } from "../domain/next-step-plan.ts"
 import type { PaperForm } from "../domain/paper-form.ts"
 import type { NextStepsOrigin } from "../leaf/next-step-row.tsx"
+import { InlineMarkdown } from "../markdown.tsx"
 import { ReplyPortContext } from "../reply-port.ts"
 import styles from "./paper.module.css"
 
@@ -21,8 +22,9 @@ export function PaperTurn(props: {
   readonly nextSteps?: NextStepsOrigin
 }): ReactElement {
   const slot = use(ReplyPortContext)
+  const questionsOnly = props.form === "answer"
   const steps =
-    props.nextSteps === undefined
+    props.nextSteps === undefined || questionsOnly
       ? []
       : buildNextSteps({ components: props.components, ...props.nextSteps })
   const alternatives = steps.flatMap((step) =>
@@ -35,17 +37,33 @@ export function PaperTurn(props: {
       ? []
       : alternatives.map((option) => ({ label: `別の案: ${option.name}`, draft: option.draft }))),
   ]
-  const mine = props.next.kind === "next" && props.next.owner === "you" ? props.next : undefined
+  const mine =
+    !questionsOnly && props.next.kind === "next" && props.next.owner === "you"
+      ? props.next
+      : undefined
+  const questions = props.components.flatMap((part) =>
+    part.component === "Note" && part.tone === "ask" && part.text.trim() !== "" ? [part.text] : [],
+  )
   const append = slot.kind === "open" ? slot.port.appendDraft : undefined
-  if (mine === undefined && picks.length === 0 && continuations.length === 0) {
+  if (
+    mine === undefined &&
+    picks.length === 0 &&
+    questions.length === 0 &&
+    continuations.length === 0
+  ) {
     return <></>
   }
   return (
     <div className={styles["paper-turn"]}>
-      {(mine !== undefined || picks.length > 0) && (
+      {(mine !== undefined || picks.length > 0 || questions.length > 0) && (
         <section className={styles["paper-turn-part"]} data-mine="true">
           <h3 className={styles["paper-turn-heading"]}>あなたの番</h3>
           {mine !== undefined && <p>{mine.action}</p>}
+          {questions.map((text) => (
+            <p key={text}>
+              <InlineMarkdown text={text} />
+            </p>
+          ))}
           {append !== undefined && (
             <DraftButtons
               drafts={[

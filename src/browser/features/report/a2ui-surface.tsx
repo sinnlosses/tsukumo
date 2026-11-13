@@ -68,7 +68,7 @@ function FailedReport(props: A2uiReportProps & { readonly error: unknown }): Rea
       blockClassName={props.blockClassName}
     >
       <HeadRegion head={view.head} />
-      <NoteBody tone="ng" text="本文を描けませんでした。" />
+      <NoteBody tone="ng" text="本文を描けませんでした。" inPaper={false} />
       <FavorRegion id={view.favor.id} text={view.favor.text} />
       {props.nextSteps !== undefined && (
         <NextStepRow origin={props.nextSteps} components={view.components} />

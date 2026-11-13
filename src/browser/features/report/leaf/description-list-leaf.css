@@ -46,3 +46,28 @@
     padding-block-start: var(--space-xs);
   }
 }
+/* 新しい器: 名前の列は 9em で固定し、行どうしの罫は引かない。名前は小さく静かに、値は本文の濃さで出す。 */
+:root[data-shell="stage"] [data-report-region] .description-list-leaf {
+  grid-template-columns: 9em minmax(0, 1fr);
+  border-top: none;
+}
+:root[data-shell="stage"] [data-report-region] .description-list-row {
+  border-bottom: none;
+}
+:root[data-shell="stage"] [data-report-region] .description-list-term,
+:root[data-shell="stage"] [data-report-region] .description-list-description {
+  padding-block: var(--stack-tight);
+}
+:root[data-shell="stage"] [data-report-region] .description-list-term {
+  color: var(--ink-quiet);
+  font-size: var(--font-secondary);
+}
+:root[data-shell="stage"] [data-report-region] .description-list-description {
+  font-size: var(--font-body);
+}
+@container report-body (max-width: calc(40em + 0.75rem)) {
+  :root[data-shell="stage"] [data-report-region] .description-list-leaf,
+  :root[data-shell="stage"] [data-report-region] .description-list-row {
+    display: block;
+  }
+}
