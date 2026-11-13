@@ -20,6 +20,7 @@ import { useMainViewTurns } from "../../../../../../stores/main-view-turn.ts"
 import { useSession } from "../../../../../../stores/session.ts"
 import { phaseRecapsOf } from "../../../domain/phase-recap.ts"
 import { turnResultsOf } from "../../../domain/turn-result.ts"
+import { NO_USUAL_TEXT, remainingEstimate, type UsualText } from "../../../domain/usual-duration.ts"
 import {
   type FoldedWorkPlan,
   foldWorkPlanSlots,
@@ -30,6 +31,8 @@ import {
 } from "../../../domain/work-plan-row.ts"
 import { useComposerDraft } from "../../../stores/composer-draft.ts"
 import { useMainViewContent } from "../../../stores/main-view-content.ts"
+import { useUsualDurations } from "../../../stores/usual-duration.ts"
+import { useWorkQuietLine, type WorkQuietLine } from "./use-work-quiet.ts"
 
 /** 判定の行の語。答え待ち・背景だけが残っている・働いている。 */
 type WorkingVerdict = "asking" | "background" | "running"
@@ -41,7 +44,7 @@ type RouteEnding = "finished" | "stopped"
  * 紙に描くワークプラン。
  *
  * - `none`: 出さない（迎えるとき・依頼が無いとき・閉じたやり取りにワークプランが無いとき）
- * - `working`: 働くあいだ。判定の行（`verdict`・`position`「4段のうち3段目」・`elapsed`「経過 6分12秒」）と、長い並びを畳んだ計画
+ * - `working`: 働くあいだ。判定の行（`verdict`・`position`「4段のうち3段目」・`elapsed`「経過 6分12秒」・`estimate` の見込み）と、止まって見えるときの行（`quietLine`）と、長い並びを畳んだ計画
  * - `finished`: 中身がレポートに入れ替わったあと。紙の末尾に畳んで置く道筋の題と、畳まない並び
  * - `stopped`: 段の途中で止めたあと（書き手が `stopped` で閉じた・レポートが無いまま段を残して閉じた）。
  *   判定の行・続け方の下書き（`onDraft` で入力欄に入れるだけで送らない）・中途半端なもの（今の段で触ったファイル）・ここまでの並び。
@@ -56,6 +59,8 @@ export type WorkPlanPaperModel =
       readonly verdict: WorkingVerdict
       readonly position: string
       readonly elapsed: string
+      readonly estimate: UsualText
+      readonly quietLine: WorkQuietLine
       readonly plan: FoldedWorkPlan
       readonly rows: readonly WorkPlanRow[]
       readonly now: number
@@ -101,8 +106,10 @@ export function useWorkPlanPaper(): WorkPlanPaperModel {
   const moment = useSession((session) => conversationMoment(session.state))
   const turns = useMainViewTurns()
   const replaceDraft = useComposerDraft((state) => state.replaceDraft)
+  const usual = useUsualDurations()
   const shown = content.kind !== "welcome" && turnStepList.kind === "turn"
   const now = useNowWhile(shown && isTurnCounting(turn, backgroundCount))
+  const quietLine = useWorkQuietLine(now)
 
   if (!shown) {
     return { kind: "none" }
@@ -118,6 +125,7 @@ export function useWorkPlanPaper(): WorkPlanPaperModel {
           }),
           steps: turnStepList.steps,
           delegates: delegateRoles,
+          usual,
         })
       : []
   const rows = slots.flatMap(rowsOfSlot)
@@ -133,6 +141,8 @@ export function useWorkPlanPaper(): WorkPlanPaperModel {
             : "running",
       position: positionText(plan, rows),
       elapsed: `${turnElapsedLabel(turn, backgroundCount)} ${turnElapsedText(turn, backgroundCount, now)}`,
+      estimate: plan.kind === "planned" ? remainingEstimate(plan, rows, usual) : NO_USUAL_TEXT,
+      quietLine,
       plan: foldWorkPlanSlots(slots),
       rows,
       now,

@@ -159,6 +159,40 @@
 .work-plan-act[data-kind="delegate"] > .work-plan-act-kind {
   color: var(--accent);
 }
+/* 止まって見えるときの行（見本の `moment=wait`）。待ちは字を太く、動かないは頭の語を NG の色にする。 */
+.work-plan-act[data-kind="quiet"] > .work-plan-act-kind {
+  color: var(--state-warn);
+}
+.work-plan-act[data-quiet="stalled"] > .work-plan-act-kind {
+  color: var(--state-ng);
+}
+.work-plan-quiet-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--stack-tight);
+}
+.work-plan-quiet-text {
+  font-weight: 700;
+}
+.work-plan-quiet-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--inline-control);
+}
+.work-plan-quiet-output[open] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--stack-tight);
+}
+.work-plan-quiet-output > summary {
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+.work-plan-quiet-output > code {
+  font-family: var(--font-mono);
+  overflow-wrap: anywhere;
+}
 .work-plan-fold {
   color: var(--ink-soft);
   font-size: var(--font-secondary);

@@ -100,7 +100,13 @@ const WORKING_STRIP: WorkStripModel = {
     },
   ],
   headLabel: "実装",
-  activity: { text: "ファイルを読んでいる", tone: "quiet", mono: false, retry: { kind: "none" } },
+  activity: {
+    text: "ファイルを読んでいる",
+    tone: "quiet",
+    mono: false,
+    retry: { kind: "none" },
+    quiet: { kind: "none" },
+  },
 }
 
 const FINISHED_STRIP: WorkStripModel = {
@@ -164,6 +170,7 @@ function planRow(
       state === "current"
         ? { kind: "now", text: "chart.tsを直している", startedAt: { kind: "restored" } }
         : { kind: "none" },
+    usual: state === "upcoming" ? { kind: "shown", text: "似た作業では 2〜4分" } : { kind: "none" },
   }
 }
 
@@ -227,6 +234,17 @@ export const MAIN_VIEW_EXAMPLES: readonly ScreenPartExample[] = [
             verdict: "running",
             position: "4段のうち3段目",
             elapsed: "経過 6分12秒",
+            estimate: { kind: "shown", text: "あと約 4分（似た段 9 件の中央値から）" },
+            quietLine: {
+              quiet: {
+                kind: "waiting",
+                label: "待ち",
+                text: "1分30秒、新しい動きが無い。コマンドの終わりを待っている（いつもは 3〜5 分）",
+              },
+              runningLine: "Bash  pnpm run check",
+              onStop: noop,
+              onRestoreRequest: noop,
+            },
             plan: { folded: { kind: "none" }, slots: PLAN_SLOTS },
             rows: PLAN_ROWS,
             now: 0,
@@ -259,6 +277,7 @@ export const MAIN_VIEW_EXAMPLES: readonly ScreenPartExample[] = [
               tone: "quiet",
               mono: false,
               retry: { kind: "none" },
+              quiet: { kind: "none" },
             },
           }}
         />
@@ -271,6 +290,7 @@ export const MAIN_VIEW_EXAMPLES: readonly ScreenPartExample[] = [
               tone: "asking",
               mono: true,
               retry: { kind: "retrying", label: "再試行 2/10", detail: "混み合っています" },
+              quiet: { kind: "none" },
             },
           }}
         />

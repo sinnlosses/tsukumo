@@ -10,6 +10,7 @@ import { isTurnCounting } from "../../../../../../domain/turn-elapsed.ts"
 import { useNowWhile } from "../../../../../../stores/clock.ts"
 import { useCurrentTurnSteps } from "../../../../../../stores/current-turn-step-list.ts"
 import { useSession } from "../../../../../../stores/session.ts"
+import { useUsualDurations } from "../../../stores/usual-duration.ts"
 import { workActivityOf, type WorkActivity } from "../domain/work-activity.ts"
 
 /** 見出しはワークプランがあるときだけ「いまの段 · 5 題」。無ければ1行だけ。 */
@@ -33,6 +34,8 @@ export function useCurrentStep(): CurrentStepModel {
   const workflowProgress = useSession((session) => session.state.workflowProgress)
   const apiTrouble = useSession((session) => session.state.apiTrouble)
   const records = useSession((session) => session.state.records)
+  const rateLimit = useSession((session) => session.state.rateLimit)
+  const usual = useUsualDurations()
   const now = useNowWhile(isTurnCounting(turn, backgroundTasks.length))
 
   if (turnStepList.kind !== "turn") {
@@ -52,6 +55,8 @@ export function useCurrentStep(): CurrentStepModel {
       turn,
       apiTrouble,
       records,
+      rateLimit,
+      usual,
       now,
     }),
   }

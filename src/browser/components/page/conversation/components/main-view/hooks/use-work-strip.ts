@@ -51,6 +51,7 @@ import { type PhaseRecap, phaseRecapsOf } from "../../../domain/phase-recap.ts"
 import type { WorkStripResult } from "../../../domain/turn-result-mark.ts"
 import { turnResultsOf, type TurnResult } from "../../../domain/turn-result.ts"
 import { useMainViewContent } from "../../../stores/main-view-content.ts"
+import { useUsualDurations } from "../../../stores/usual-duration.ts"
 import { type StepsLanding, useWorkStripSteps } from "../../../stores/work-strip-step-list.ts"
 import { workActivityOf, type WorkActivity } from "../domain/work-activity.ts"
 import { usePhasePopover, type PhasePopover } from "./use-phase-popover.ts"
@@ -213,6 +214,8 @@ export function useWorkStrip(): WorkStripModel {
   const turn = useSession((session) => session.state.turn)
   const pending = useSession((session) => session.state.pending)
   const apiTrouble = useSession((session) => session.state.apiTrouble)
+  const rateLimit = useSession((session) => session.state.rateLimit)
+  const usual = useUsualDurations()
   const reportDrafting = useSession((session) => reportDraftingOf(session.state.sdkTurn))
   const backgroundTasks = useSession((session) => session.state.backgroundTasks)
   const workflowSteps = useSession((session) => session.state.workflowSteps)
@@ -317,6 +320,8 @@ export function useWorkStrip(): WorkStripModel {
       turn,
       apiTrouble,
       records,
+      rateLimit,
+      usual,
       now,
     }),
     steps,

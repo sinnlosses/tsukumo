@@ -1,8 +1,9 @@
-// 使用量の配線。口は3つ。
+// 使用量の配線。口は4つ。
 // - 日付ごとの記録（token-usage・diagnostic・context-usage・experience-metric・report-usage・throwaway-query）の作成・閉じる・古いファイルの掃除（`wireUsageLogs`）。
 //   疑似セッションの走りは本物の使用量に混ぜないので、context-usage・experience-metric・report-usage・throwaway-query には何も書かない口を渡す。
 //   token-usage と diagnostic は疑似でも本物を作る。
 // - トークン消費の画面の読み口。記録の読み口に「今日」を決めて渡す（`wireTokenUsage`）。
+// - 「いつもは」の所要の読み口。直近の日付の体験の記録を畳む（`wireUsualDuration`）。
 // - 見直し。前回の結果の読み書きと、見直しの走りと、トークン消費の画面から届くコマンドの中身を選ぶ（`wireUsageReview`）。
 
 import { todayLocalDateKey } from "../server/adapter/local-time.ts"
@@ -30,6 +31,9 @@ import { createThrowawayQueryLog } from "../server/usage/adapter/throwaway-query
 import { createTokenUsageLog } from "../server/usage/adapter/token-usage-log.ts"
 import type { TokenUsageProcedurePorts } from "../server/usage/adapter/token-usage-procedure.ts"
 import type { OpenTaskReader } from "../server/usage/adapter/tw-claim-list.ts"
+import type { UsualDurationProcedurePorts } from "../server/usage/adapter/usual-duration-procedure.ts"
+import { summarizeUsualDurations } from "../server/usage/core/experience/experience-metric-summary.ts"
+import type { ExperienceMetricLog } from "../server/usage/core/experience/experience-metric.ts"
 import type { UsageReviewCommandPorts } from "../server/usage/core/review/usage-review-command.ts"
 import {
   createUsageReviewRunner,
@@ -112,6 +116,26 @@ export function wireTokenUsage(
       // 「今日」はここで決めて渡す（OS のタイムゾーンに依るので、core は今日が何日かを知らない）。
       readTokenUsageSummary: (days) =>
         summarizeRecentTokenUsage(tokenUsageLog, todayLocalDateKey(context.now), days),
+    },
+  }
+}
+
+/** 「いつもは」の所要に数える日数（今日を含む）。 */
+const USUAL_DURATION_DAYS = 30
+
+export function wireUsualDuration(
+  context: Pick<WiringContext, "now">,
+  experienceMetricLog: Pick<ExperienceMetricLog, "readRange">,
+): { readonly rpc: UsualDurationProcedurePorts } {
+  return {
+    rpc: {
+      readUsualDurations: () => {
+        const endDate = todayLocalDateKey(context.now)
+        const startDate = Temporal.PlainDate.from(endDate)
+          .subtract({ days: USUAL_DURATION_DAYS - 1 })
+          .toString()
+        return summarizeUsualDurations(experienceMetricLog.readRange({ startDate, endDate }))
+      },
     },
   }
 }

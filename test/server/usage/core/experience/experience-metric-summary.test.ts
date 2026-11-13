@@ -1,10 +1,15 @@
 import { describe, expect, it } from "vitest"
 
-import { summarizeExperienceMetric } from "../../../../../src/server/usage/core/experience/experience-metric-summary.ts"
+import {
+  summarizeExperienceMetric,
+  summarizeUsualDurations,
+} from "../../../../../src/server/usage/core/experience/experience-metric-summary.ts"
 import type {
   ConclusionEntry,
+  PhaseEntry,
   RecoveryEntry,
   SplitEntry,
+  WaitEntry,
 } from "../../../../../src/server/usage/core/experience/experience-metric.ts"
 
 function conclusion(
@@ -113,5 +118,50 @@ describe("summarizeExperienceMetric", () => {
 
     expect(summary?.untilConclusionMs).toEqual({ kind: "empty" })
     expect(summary?.hands).toEqual({ kind: "empty" })
+  })
+})
+
+describe("summarizeUsualDurations", () => {
+  function phase(span: PhaseEntry["span"], phaseSeconds: number): PhaseEntry {
+    return { at: 0, sessionId: "claude-session-1", kind: "phase", span, phaseSeconds }
+  }
+
+  function wait(waitKind: WaitEntry["waitKind"], waitSeconds: number): WaitEntry {
+    return { at: 0, sessionId: "claude-session-1", kind: "wait", waitKind, waitSeconds }
+  }
+
+  it("件数が5に足りない塊は、件数だけを持つ empty になる", () => {
+    const usual = summarizeUsualDurations([10, 20, 30, 40].map((seconds) => wait("bash", seconds)))
+
+    expect(usual.waits.bash).toEqual({ kind: "empty", count: 4 })
+    expect(usual.phases.delegated).toEqual({ kind: "empty", count: 0 })
+  })
+
+  it("5件あれば、中央値と25・75パーセンタイルを出す（群・種類ごとに分ける）", () => {
+    const usual = summarizeUsualDurations([
+      ...[50, 10, 40, 20, 30].map((seconds) => wait("workflow", seconds)),
+      ...[100, 200, 300, 400, 500].map((seconds) => phase("delegated", seconds)),
+      wait("bash", 999),
+      phase("lead", 999),
+    ])
+
+    expect(usual.waits.workflow).toEqual({
+      kind: "measured",
+      count: 5,
+      medianSeconds: 30,
+      lowSeconds: 20,
+      highSeconds: 40,
+    })
+    expect(usual.phases.delegated).toMatchObject({ kind: "measured", medianSeconds: 300 })
+    expect(usual.waits.bash).toEqual({ kind: "empty", count: 1 })
+    expect(usual.phases.lead).toEqual({ kind: "empty", count: 1 })
+  })
+
+  it("外れ値が1つあっても中央値は動かない", () => {
+    const usual = summarizeUsualDurations(
+      [60, 61, 62, 63, 64, 36_000].map((seconds) => wait("agent", seconds)),
+    )
+
+    expect(usual.waits.agent).toMatchObject({ medianSeconds: 62, lowSeconds: 61, highSeconds: 64 })
   })
 })

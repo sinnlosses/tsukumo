@@ -17,6 +17,7 @@ import {
   type WorkPlanSlot,
 } from "../../domain/work-plan-row.ts"
 import { sinceText, STOPPED_CHOICES, type WorkPlanPaperModel } from "./hooks/use-work-plan-paper.ts"
+import type { WorkQuietLine } from "./hooks/use-work-quiet.ts"
 import styles from "./main-view.module.css"
 
 const VERDICT = {
@@ -57,8 +58,22 @@ const SKIPPED_TAG = "飛ばした"
 const RUNNING_SUFFIX = "〜"
 const MIDWAY_SUFFIX = "（途中）"
 
-/** 行を描くときの時計。`live` は働くあいだで、今の段に実況と「n秒前」を開く。`closed` は閉じたあとで、今の段を途中として描く。 */
-type PlanClock = { readonly kind: "live"; readonly now: number } | { readonly kind: "closed" }
+const QUIET_OUTPUT = "出力を見る"
+const QUIET_STOP = "止める"
+const QUIET_RESTORE = "依頼を入力欄に戻す"
+
+/**
+ * 行を描くときの時計。`live` は働くあいだで、今の段に実況と「n秒前」を開き、
+ * `quietRowKey` の行（今の段のうち読み順で最初の行）に止まって見えるときの行を置く。`closed` は閉じたあとで、今の段を途中として描く。
+ */
+type PlanClock =
+  | {
+      readonly kind: "live"
+      readonly now: number
+      readonly quietLine: WorkQuietLine
+      readonly quietRowKey: string
+    }
+  | { readonly kind: "closed" }
 
 const CLOSED_CLOCK = { kind: "closed" } as const satisfies PlanClock
 
@@ -83,6 +98,8 @@ export function PresentationalWorkPlanPaper(props: {
   if (model.kind === "stopped") {
     return <StoppedPaper model={model} />
   }
+  const quietRowKey = model.rows.find((row) => row.state === "current")?.key ?? ""
+  const clock: PlanClock = { kind: "live", now: model.now, quietLine: model.quietLine, quietRowKey }
   return (
     <section className={styles["work-plan"]} aria-label={PLAN_LABEL}>
       <Stamp
@@ -90,14 +107,20 @@ export function PresentationalWorkPlanPaper(props: {
         rows={model.rows}
         position={model.position}
         elapsed={model.elapsed}
+        estimate={model.estimate.kind === "shown" ? model.estimate.text : ""}
       />
+      {quietRowKey === "" && model.quietLine.quiet.kind !== "none" && (
+        <div className={styles["work-plan-live"]}>
+          <QuietAct line={model.quietLine} />
+        </div>
+      )}
       {model.rows.length > 0 && (
         <ol className={styles["work-plan-list"]}>
           {model.plan.folded.kind === "folded" && (
             <FoldedItem folded={model.plan.folded} clock={CLOSED_CLOCK} />
           )}
           {model.plan.slots.map((slot) => (
-            <SlotItem key={slotKeyOf(slot)} slot={slot} clock={{ kind: "live", now: model.now }} />
+            <SlotItem key={slotKeyOf(slot)} slot={slot} clock={clock} />
           ))}
         </ol>
       )}
@@ -123,6 +146,8 @@ function Stamp(props: {
   readonly rows: readonly WorkPlanRow[]
   readonly position: string
   readonly elapsed: string
+  /** 見込み「あと約 4分（…から）」。出さないなら空。 */
+  readonly estimate: string
 }): ReactElement {
   const verdict = VERDICT[props.verdict]
   return (
@@ -134,6 +159,7 @@ function Stamp(props: {
       {props.rows.length > 0 && <WorkPlanLamps rows={props.rows} label={props.position} />}
       {props.position !== "" && <span>{props.position}</span>}
       <span className={styles["work-plan-elapsed"]}>{props.elapsed}</span>
+      {props.estimate !== "" && <span>{props.estimate}</span>}
     </p>
   )
 }
@@ -149,6 +175,7 @@ function StoppedPaper(props: {
         rows={model.rows}
         position={model.position}
         elapsed={model.elapsed}
+        estimate=""
       />
       <div className={styles["work-plan-turn"]}>
         <section className={styles["work-plan-turn-part"]} data-mine="true">
@@ -244,11 +271,17 @@ function RowItem(props: {
   const time =
     row.duration.kind === "known"
       ? `${formatMeasured(row.duration)}${running ? RUNNING_SUFFIX : ""}`
-      : ""
+      : row.usual.kind === "shown" && clock.kind === "live"
+        ? row.usual.text
+        : ""
   const title =
     row.state === "current" && clock.kind === "closed" ? `${row.title}${MIDWAY_SUFFIX}` : row.title
   // 周を持つ段では実況を「直し」の周の行が出すので、「いま」の行には重ねない。
   const liveNow = row.live.kind === "now" && row.laps.length === 0
+  const quietLine =
+    clock.kind === "live" && clock.quietRowKey === row.key && clock.quietLine.quiet.kind !== "none"
+      ? [clock.quietLine]
+      : []
   return (
     <li className={styles["work-plan-phase"]} data-state={row.state}>
       <Lamp
@@ -278,8 +311,11 @@ function RowItem(props: {
         {row.laps.length > 0 && <LapList row={row} running={running} />}
         {clock.kind === "live" &&
           row.state === "current" &&
-          (liveNow || row.touched.length > 0 || row.delegates.length > 0) && (
-            <LiveBlock row={row} liveNow={liveNow} now={clock.now} />
+          (liveNow ||
+            row.touched.length > 0 ||
+            row.delegates.length > 0 ||
+            quietLine.length > 0) && (
+            <LiveBlock row={row} liveNow={liveNow} now={clock.now} quietLines={quietLine} />
           )}
         {!running && row.touched.length > 0 && (
           <p className={styles["work-plan-touched"]}>{row.touched.join("　")}</p>
@@ -345,11 +381,16 @@ function LiveBlock(props: {
   /** 「いま」の行を出すか。 */
   readonly liveNow: boolean
   readonly now: number
+  /** 止まって見えるときの行。置かない段では空。 */
+  readonly quietLines: readonly WorkQuietLine[]
 }): ReactElement {
   const { row } = props
   const { folded, delegates } = foldDelegates(row.delegates)
   return (
     <div className={styles["work-plan-live"]}>
+      {props.quietLines.map((line) => (
+        <QuietAct key={line.quiet.kind} line={line} />
+      ))}
       {props.liveNow && row.live.kind === "now" && (
         <div className={styles["work-plan-act"]}>
           <span className={styles["work-plan-act-kind"]}>{LIVE_NOW}</span>
@@ -406,6 +447,61 @@ function DelegateItem(props: {
       </span>
       <span className={styles["work-plan-act-when"]}>{sinceText(delegate.since, props.now)}</span>
     </div>
+  )
+}
+
+/**
+ * 止まって見えるときの行。動かないときは「出力を見る」（走っている手順の道具と引数）と「止める」、
+ * 上限のときは「依頼を入力欄に戻す」を添える。
+ */
+function QuietAct(props: { readonly line: WorkQuietLine }): ReactElement {
+  const { quiet, runningLine } = props.line
+  if (quiet.kind === "none") {
+    return <></>
+  }
+  return (
+    <div className={styles["work-plan-act"]} data-kind="quiet" data-quiet={quiet.kind}>
+      <span className={styles["work-plan-act-kind"]}>{quiet.label}</span>
+      <span className={styles["work-plan-quiet-body"]}>
+        <span className={styles["work-plan-quiet-text"]}>{quiet.text}</span>
+        {quiet.kind === "stalled" && (
+          <span className={styles["work-plan-quiet-actions"]}>
+            {runningLine !== "" && (
+              <details className={styles["work-plan-quiet-output"]}>
+                <summary>{QUIET_OUTPUT}</summary>
+                <code>{runningLine}</code>
+              </details>
+            )}
+            <QuietButton label={QUIET_STOP} onClick={props.line.onStop} />
+          </span>
+        )}
+        {quiet.kind === "limited" && (
+          <span className={styles["work-plan-quiet-actions"]}>
+            <QuietButton label={QUIET_RESTORE} onClick={props.line.onRestoreRequest} />
+          </span>
+        )}
+      </span>
+      <span />
+    </div>
+  )
+}
+
+function QuietButton(props: {
+  readonly label: string
+  readonly onClick: () => void
+}): ReactElement {
+  return (
+    <Button
+      variant="outline-accent"
+      size="secondary"
+      pressed="none"
+      disabled={false}
+      disclosure={{ kind: "none" }}
+      className=""
+      onClick={props.onClick}
+    >
+      {props.label}
+    </Button>
   )
 }
 

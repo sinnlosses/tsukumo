@@ -68,6 +68,7 @@ function row(
       state === "current"
         ? { kind: "now", text: "架空の手順をしている", startedAt: { kind: "restored" } }
         : { kind: "none" },
+    usual: { kind: "none" },
     ...extra,
   }
 }
@@ -80,6 +81,13 @@ function renderWorking(rows: readonly WorkPlanRow[]) {
         verdict: "running",
         position: "",
         elapsed: "",
+        estimate: { kind: "none" },
+        quietLine: {
+          quiet: { kind: "none" },
+          runningLine: "",
+          onStop: () => {},
+          onRestoreRequest: () => {},
+        },
         plan: {
           folded: { kind: "none" },
           slots: rows.map((item) => ({ kind: "phase", spanHead: { kind: "none" }, row: item })),

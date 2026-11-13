@@ -33,7 +33,7 @@ import { wireRepository } from "./repository.ts"
 import { wireSessionClaim } from "./session-claim.ts"
 import { type StartedSession, startSession } from "./session-start.ts"
 import type { StartupPrerequisites } from "./startup-prerequisite.ts"
-import { type WiredUsageLogs, wireTokenUsage, wireUsageLogs } from "./usage.ts"
+import { type WiredUsageLogs, wireTokenUsage, wireUsageLogs, wireUsualDuration } from "./usage.ts"
 import { startViewDelivery, type ViewDeliveryOptions } from "./view-delivery.ts"
 import type { WiringContext } from "./wiring-context.ts"
 import { wireWorkflowSetting } from "./workflow-setting.ts"
@@ -99,6 +99,7 @@ export function assembleStartup(
   const achievement = wireAchievement(context, achievementCache, usageLogs.diagnostic)
   const repository = wireRepository(context, usageLogs.diagnostic, readBeadsStamp)
   const tokenUsage = wireTokenUsage(context, usageLogs.tokenUsage)
+  const usualDuration = wireUsualDuration(context, usageLogs.experienceMetric)
   const sessionClaim = wireSessionClaim()
 
   return {
@@ -116,6 +117,7 @@ export function assembleStartup(
     rpc: {
       ...repository.rpc,
       ...tokenUsage.rpc,
+      ...usualDuration.rpc,
       ...sessionClaim.rpc,
       ...achievement.rpc,
       ...workflowSetting.rpc,

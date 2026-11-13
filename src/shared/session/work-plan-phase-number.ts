@@ -1,5 +1,6 @@
 // 段の番号（群ごとの通し番号）と、番号を使った段の呼び名・見出し・位置の字を組む決まり。
 
+import type { PHASE_SPANS } from "../usage/experience-metric-record.ts"
 import {
   finishedPhaseCount,
   type DelegatedRange,
@@ -13,7 +14,7 @@ import {
  * フェーズのグループ。範囲が無ければ並び全体の `whole`、範囲があれば範囲の前の `lead`・範囲の `delegated`・範囲の後ろの `trail`。
  * 段の番号は群ごとに1から数える。
  */
-export type PhaseSpan = "whole" | "lead" | "delegated" | "trail"
+export type PhaseSpan = (typeof PHASE_SPANS)[number]
 
 /**
  * 段の番号。`numbered` は群 `span` と、群の中の `ordinals`「2」（段が2つ以上なら「2–3」）と `text`「2/4」（「2–3/4」）、
@@ -41,6 +42,15 @@ export function plannedPhaseNumber(
   phase: Pick<PlannedPhase, "index">,
 ): PhaseNumber {
   return phaseNumberOf(plan.delegatedRange, [phase.index], phaseCount(plan.phases))
+}
+
+/** 段の群。番号を持たない段は範囲の1要素なので `delegated`。 */
+export function phaseSpanOf(
+  plan: Pick<WorkPlan, "phases" | "delegatedRange">,
+  phase: Pick<PlannedPhase, "index">,
+): PhaseSpan {
+  const number = plannedPhaseNumber(plan, phase)
+  return number.kind === "numbered" ? number.span : "delegated"
 }
 
 /** 番号の字「後 1/3」（並び全体の群なら「1/3」）。番号を持たない段は空の文字列。 */

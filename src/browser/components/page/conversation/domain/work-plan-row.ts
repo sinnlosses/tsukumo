@@ -10,6 +10,7 @@ import {
   PHASE_SPAN_NAMES,
   phaseNumberOf,
   phaseOrdinalText,
+  phaseSpanOf,
   plannedPhaseNumber,
 } from "../../../../../shared/session/work-plan-phase-number.ts"
 import {
@@ -18,11 +19,13 @@ import {
   plannedPhasesOf,
   type PlannedWorkPlan,
 } from "../../../../../shared/session/work-plan.ts"
+import type { UsualDurations } from "../../../../../shared/usage/usual-duration.ts"
 import { clipWithEllipsis } from "../../../../../shared/utils/clip-text.ts"
 import type { MeasuredTime } from "../../../../../shared/utils/elapsed-time.ts"
 import { narrateToolUse } from "../../../../domain/tool-narration.ts"
 import { MAX_TOOL_SUMMARY_LENGTH, toolInputText } from "../../../../domain/tool-summary.ts"
 import type { PhaseRecap } from "./phase-recap.ts"
+import { NO_USUAL_TEXT, type UsualText, usualRangeText } from "./usual-duration.ts"
 
 export type WorkPlanRowState = "done" | "current" | "upcoming" | "skipped"
 
@@ -60,6 +63,7 @@ export type WorkPlanDelegate = {
  * `title` は今の段なら進行形の名前、ほかは名前。`touched` はその段で `Edit`・`Write` が触ったファイルの名前（重ねない・触った順）。
  * `laps` は周の行（{@link WorkPlanLap}）で、周が進んでいない段とこれからの段は空。
  * `delegates` は任せた役の行で、今の段のうち読み順で最初の行だけが持つ（ほかは空）。
+ * `usual` はこれからの段にだけ付く「似た作業では 2〜4分」（{@link usualRangeText}）。
  */
 export type WorkPlanRow = {
   readonly key: string
@@ -73,6 +77,7 @@ export type WorkPlanRow = {
   readonly delegates: readonly WorkPlanDelegate[]
   readonly touched: readonly string[]
   readonly live: WorkPlanLive
+  readonly usual: UsualText
 }
 
 /** 群の先頭の行に付ける群の名「前」「本」「後」。群の先頭でない・範囲が無いなら `none`。 */
@@ -97,6 +102,7 @@ export type WorkPlanRowSource = {
   readonly recaps: ReadonlyMap<string, PhaseRecap>
   readonly steps: readonly TurnStep[]
   readonly delegates: readonly DelegateRole[]
+  readonly usual: UsualDurations
 }
 
 /**
@@ -282,6 +288,10 @@ function rowOf(
     delegates: holdsDelegates ? source.delegates.map(delegateOf) : [],
     touched: state === "upcoming" ? [] : touchedFilesOf(steps),
     live: state === "current" ? liveOf(steps) : NO_LIVE,
+    usual:
+      state === "upcoming"
+        ? usualRangeText(source.usual.phases[phaseSpanOf(source.plan, phase)])
+        : NO_USUAL_TEXT,
   }
 }
 

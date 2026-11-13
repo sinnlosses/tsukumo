@@ -236,6 +236,93 @@ describe("readRange", () => {
     expect(log.readRange({ startDate: "2026-09-22", endDate: "2026-09-22" })).toEqual([entry])
   })
 
+  it("段と道具の所要を、群・種類と秒数だけの行に書き、読み戻す", async () => {
+    const log = createExperienceMetricLog(root())
+    const entries = [
+      {
+        at: at(9, 0),
+        sessionId: "claude-session-1",
+        kind: "phase",
+        span: "delegated",
+        phaseSeconds: 240,
+      },
+      {
+        at: at(9, 1),
+        sessionId: "claude-session-1",
+        kind: "wait",
+        waitKind: "workflow",
+        waitSeconds: 180.5,
+      },
+    ] as const
+
+    for (const entry of entries) {
+      log.append(entry)
+    }
+    await log.flush()
+
+    const lines = readLines("2026-09-22.jsonl")
+    expect(lines.map(keysOf)).toEqual([
+      ["v", "at", "sessionId", "kind", "span", "phaseSeconds"],
+      ["v", "at", "sessionId", "kind", "waitKind", "waitSeconds"],
+    ])
+    expect(lines).toMatchObject([{ v: EXPERIENCE_METRIC_FORMAT_VERSION }, {}])
+    expect(log.readRange({ startDate: "2026-09-22", endDate: "2026-09-22" })).toEqual(entries)
+  })
+
+  it("知らない群・種類の名前の行は読まずに落とす", async () => {
+    const log = createExperienceMetricLog(root())
+    log.append(conclusion(at(9, 0)))
+    await log.flush()
+    const base = { v: EXPERIENCE_METRIC_FORMAT_VERSION, at: "2026-09-22T10:00:00+09:00" }
+    const unknownNames = [
+      { ...base, sessionId: "s", kind: "phase", span: "任意の段の名前", phaseSeconds: 1 },
+      { ...base, sessionId: "s", kind: "wait", waitKind: "Bash", waitSeconds: 1 },
+    ]
+    appendFileSync(
+      join(root(), "2026-09-22.jsonl"),
+      unknownNames.map((line) => `${JSON.stringify(line)}\n`).join(""),
+    )
+
+    expect(log.readRange({ startDate: "2026-09-22", endDate: "2026-09-22" })).toEqual([
+      conclusion(at(9, 0)),
+    ])
+  })
+
+  it("版3の読む時間・仕切りの行も読む", async () => {
+    const log = createExperienceMetricLog(root())
+    log.append(conclusion(at(9, 0)))
+    await log.flush()
+    const versionThree = [
+      {
+        v: 3,
+        at: "2026-09-22T10:00:00+09:00",
+        sessionId: "claude-session-1",
+        kind: "reading",
+        readingSeconds: 30,
+        bodyChars: 100,
+        tableRate: 0,
+        hasDiagram: false,
+      },
+      {
+        v: 3,
+        at: "2026-09-22T10:01:00+09:00",
+        sessionId: "claude-session-1",
+        kind: "split",
+        divider: "rowTop",
+        releasedPercent: 50,
+        previousPercent: 40,
+      },
+    ]
+    appendFileSync(
+      join(root(), "2026-09-22.jsonl"),
+      versionThree.map((line) => `${JSON.stringify(line)}\n`).join(""),
+    )
+
+    expect(
+      log.readRange({ startDate: "2026-09-22", endDate: "2026-09-22" }).map((e) => e.kind),
+    ).toEqual(["conclusion", "reading", "split"])
+  })
+
   it("知らない仕切りの名前の行は読まずに落とす", async () => {
     const log = createExperienceMetricLog(root())
     log.append(conclusion(at(9, 0)))

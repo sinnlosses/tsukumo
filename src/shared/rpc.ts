@@ -26,6 +26,7 @@ import { sessionDigestContract } from "./contract/session-digest.ts"
 import { sessionContract } from "./contract/session.ts"
 import { tokenUsageContract } from "./contract/token-usage.ts"
 import { usageReviewContract } from "./contract/usage-review.ts"
+import { usualDurationContract } from "./contract/usual-duration.ts"
 import {
   workflowSettingCommandContract,
   workflowSettingContract,
@@ -43,6 +44,7 @@ export const rpcContract = {
   sessionDigest: sessionDigestContract,
   sessionClaim: sessionClaimContract,
   workflowSetting: workflowSettingContract,
+  usualDuration: usualDurationContract,
 }
 
 /** ブラウザが手続きを呼ぶ client の型（契約から導く）。 */

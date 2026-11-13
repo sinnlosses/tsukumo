@@ -96,6 +96,24 @@ function toRecord(entry: ExperienceMetricEntry): ExperienceMetricRecord {
         tableRate: entry.tableRate,
         hasDiagram: entry.hasDiagram,
       }
+    case "phase":
+      return {
+        v,
+        at,
+        sessionId: entry.sessionId,
+        kind: "phase",
+        span: entry.span,
+        phaseSeconds: entry.phaseSeconds,
+      }
+    case "wait":
+      return {
+        v,
+        at,
+        sessionId: entry.sessionId,
+        kind: "wait",
+        waitKind: entry.waitKind,
+        waitSeconds: entry.waitSeconds,
+      }
   }
 }
 
@@ -139,6 +157,22 @@ function fromRecord(record: ExperienceMetricRecord): ExperienceMetricEntry {
         bodyChars: record.bodyChars,
         tableRate: record.tableRate,
         hasDiagram: record.hasDiagram,
+      }
+    case "phase":
+      return {
+        at,
+        sessionId: record.sessionId,
+        kind: "phase",
+        span: record.span,
+        phaseSeconds: record.phaseSeconds,
+      }
+    case "wait":
+      return {
+        at,
+        sessionId: record.sessionId,
+        kind: "wait",
+        waitKind: record.waitKind,
+        waitSeconds: record.waitSeconds,
       }
   }
 }

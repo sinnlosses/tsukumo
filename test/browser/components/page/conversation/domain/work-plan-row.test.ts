@@ -18,6 +18,7 @@ import {
   type PlannedWorkPlan,
   type WorkPlanEntry,
 } from "../../../../../../src/shared/session/work-plan.ts"
+import { NO_USUAL_DURATIONS } from "../../../../../../src/shared/usage/usual-duration.ts"
 import { checkedTaskId } from "../../../../../fixture/task-id.ts"
 
 const PHASES = ["架空の調べ", "架空の実装", "架空の検証", "架空の仕上げ"]
@@ -105,6 +106,7 @@ describe("workPlanSlotsOf", () => {
         }),
         steps: [],
         delegates: [],
+        usual: NO_USUAL_DURATIONS,
       }),
     )
 
@@ -139,6 +141,7 @@ describe("workPlanSlotsOf", () => {
           stepIn(plan, "Read", { file_path: "/架空/d.ts" }, "5", { kind: "running" }),
         ],
         delegates: [],
+        usual: NO_USUAL_DURATIONS,
       }),
     )
 
@@ -158,7 +161,13 @@ describe("workPlanSlotsOf", () => {
       { delegatedRange: { kind: "range", first: 1, count: 3 }, finishedInGroup: ["架空の画面"] },
       ["架空の計画", ["架空のサーバ", "架空の画面"], "架空の検証", "架空の受け入れ"],
     )
-    const slots = workPlanSlotsOf({ plan, recaps: new Map(), steps: [], delegates: [] })
+    const slots = workPlanSlotsOf({
+      plan,
+      recaps: new Map(),
+      steps: [],
+      delegates: [],
+      usual: NO_USUAL_DURATIONS,
+    })
 
     expect(
       slots.map((slot) => [
@@ -189,6 +198,7 @@ describe("workPlanSlotsOf の周", () => {
         recaps: recapsOf(plan, { 架空の実装: { duration: known(seconds), summary: "", laps } }),
         steps: [],
         delegates: [],
+        usual: NO_USUAL_DURATIONS,
       }),
     )[1]
   }
@@ -241,6 +251,7 @@ describe("foldLaps", () => {
           recaps: recapsOf(plan, { 架空の実装: { duration: known(100), summary: "", laps } }),
           steps: [],
           delegates: [],
+          usual: NO_USUAL_DURATIONS,
         }),
       )[1]?.laps ?? []
     )
@@ -275,8 +286,15 @@ describe("任せた役の行", () => {
   const delegatesOf = (roles: readonly DelegateRole[]) => {
     const plan = planned(1)
     return (
-      rowsOf(workPlanSlotsOf({ plan, recaps: new Map(), steps: [], delegates: roles }))[1]
-        ?.delegates ?? []
+      rowsOf(
+        workPlanSlotsOf({
+          plan,
+          recaps: new Map(),
+          steps: [],
+          delegates: roles,
+          usual: NO_USUAL_DURATIONS,
+        }),
+      )[1]?.delegates ?? []
     )
   }
 
@@ -330,6 +348,7 @@ describe("任せた役の行", () => {
         recaps: new Map(),
         steps: [],
         delegates: [role("1", "running")],
+        usual: NO_USUAL_DURATIONS,
       }),
     )
 
@@ -351,6 +370,7 @@ describe("foldWorkPlanSlots", () => {
       }),
       steps: [],
       delegates: [],
+      usual: NO_USUAL_DURATIONS,
     })
     const { folded, slots: rest } = foldWorkPlanSlots(slots)
 
@@ -368,13 +388,25 @@ describe("foldWorkPlanSlots", () => {
     const short = planned(3)
     expect(
       foldWorkPlanSlots(
-        workPlanSlotsOf({ plan: short, recaps: new Map(), steps: [], delegates: [] }),
+        workPlanSlotsOf({
+          plan: short,
+          recaps: new Map(),
+          steps: [],
+          delegates: [],
+          usual: NO_USUAL_DURATIONS,
+        }),
       ).folded,
     ).toEqual({ kind: "none" })
     const early = planned(1, {}, LONG)
     expect(
       foldWorkPlanSlots(
-        workPlanSlotsOf({ plan: early, recaps: new Map(), steps: [], delegates: [] }),
+        workPlanSlotsOf({
+          plan: early,
+          recaps: new Map(),
+          steps: [],
+          delegates: [],
+          usual: NO_USUAL_DURATIONS,
+        }),
       ).folded,
     ).toEqual({ kind: "none" })
   })
