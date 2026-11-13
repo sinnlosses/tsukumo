@@ -22,7 +22,7 @@ import type { AizuchiMoment } from "../../../../../../../shared/recommendation/a
 import type { ReactionKind } from "../../../../../../../shared/recommendation/reaction.ts"
 import type { ShownReaction } from "../../../../../../../shared/session/shown-reaction.ts"
 import { reportDraftingOf } from "../../../../../../../shared/session/turn-progress.ts"
-import type { Speech, TurnLine } from "../../../../../../../shared/session/turn-speech.ts"
+import type { Speech } from "../../../../../../../shared/session/turn-speech.ts"
 import { turnSpeeches, type TurnSpeech } from "../../../../../../../shared/session/turn-speech.ts"
 import {
   characterFaceInfo,
@@ -56,6 +56,8 @@ import {
   type SpeechTarget,
   type ViewedSpeech,
 } from "../domain/pinned-speech.ts"
+import type { TalkFlowRow } from "../domain/talk-flow.ts"
+import { useTalkFlow } from "./use-talk-flow.ts"
 import { useWelcomeGreetingRecord } from "./use-welcome-greeting-record.ts"
 
 /** そのターンにセリフが1件も無かったときに当てる表情（`INITIAL_SESSION_STATE` と同じ既定）。 */
@@ -63,8 +65,6 @@ const DEFAULT_PAST_TURN_EXPRESSION = "default"
 
 /** 吹き出しに出す1件。押すとそのセリフの表情へ立ち絵が遡る。 */
 export type CharacterViewSpeech = {
-  /** キャラクターの言葉（`her`）か、利用者が押した札の文（`you`。押しても何もしない）か。 */
-  readonly speaker: "her" | "you"
   readonly text: string
   /** 吹き出しに添える時刻（名前を添える最新の1件は名前の隣、ほかは吹き出しの脇）。今日でない日のものは日付つき。 */
   readonly time: ClockStamp
@@ -103,8 +103,8 @@ export type CharacterViewModel = {
   readonly motion: PortraitMotion
   /** 吹き出しに出すセリフ（古い→新しい）。過去のターンを見ていればそのターンぶんに差し替わる。 */
   readonly speeches: readonly CharacterViewSpeech[]
-  /** 舞台のやり取りの流れに並べる行（古い→新しい）。利用者の札の行を挟み、最新の吹き出しが別の段にあるあいだはそのセリフを含まない。 */
-  readonly thread: readonly CharacterViewSpeech[]
+  /** 舞台のやり取りの流れ（全部のターン、古い→新しい）。最新のターンを見ているあいだは、いまの吹き出しに出している行を含まない。 */
+  readonly flow: readonly TalkFlowRow[]
   /** 吹き出しの最新に出す反応。過去のターンを見ているあいだは出さない。 */
   readonly reaction: BalloonReaction
   /** 最新の吹き出しに添える話し手の名前。キャラクターが届いていない・名前が無ければ `undefined`。 */
@@ -214,6 +214,8 @@ export function useCharacterView(): CharacterViewModel {
   const motion = resolvePortraitMotion({ turn, lastToolFailureAt, draftingReport }, now)
 
   const { portraitUrl, altText } = portraitAppearance(character, expression)
+  const balloonReaction = balloonReactionOf(reaction, now)
+  const flow = useTalkFlow(balloonReaction)
 
   return {
     portraitUrl,
@@ -221,14 +223,8 @@ export function useCharacterView(): CharacterViewModel {
     expression,
     motion,
     speeches: balloonSpeeches(activeSpeeches, anchor, now),
-    thread: threadLinesOf(
-      balloonSpeeches(activeSpeeches, anchor, now),
-      lineIndices ?? [],
-      turnLines,
-      reaction.kind === "none",
-      now,
-    ),
-    reaction: balloonReactionOf(reaction, now),
+    flow,
+    reaction: balloonReaction,
     speakerName: character?.name,
     pinnedSpeech: pinned,
     onToggleSpeech: toggleSpeech,
@@ -311,47 +307,6 @@ type BalloonAnchor =
       readonly marked: MarkedSpeech
     }
 
-/**
- * 舞台の「やり取りの流れ」に並べる行（古い→新しい）。
- * 吹き出しの各件（`lineIndices` が並びの位置）に、利用者の札の行をターンの並びの位置で挟む。
- * 位置が決められないとき（`lineIndices` が無い）は札の行を末尾へ足す。
- * 最新の吹き出しは別の段が出すので、反応が出ていないあいだは、最後のセリフを流れから外す。
- */
-function threadLinesOf(
-  balloons: readonly CharacterViewSpeech[],
-  lineIndices: readonly number[],
-  turnLines: readonly TurnLine[],
-  latestIsBalloon: boolean,
-  now: number,
-): readonly CharacterViewSpeech[] {
-  const her = balloons.map((speech, position) => ({
-    at: lineIndices[position] ?? Number.MAX_SAFE_INTEGER,
-    speech,
-  }))
-  const you = turnLines.flatMap((line, index) =>
-    line.source === "you"
-      ? [
-          {
-            at: index,
-            speech: {
-              speaker: "you",
-              text: line.text,
-              time: recordClockStampWithDay(line.time, now),
-              selected: false,
-              target: undefined,
-            } satisfies CharacterViewSpeech,
-          },
-        ]
-      : [],
-  )
-  const merged = [...her, ...you].toSorted((a, b) => a.at - b.at).map((entry) => entry.speech)
-  if (!latestIsBalloon) {
-    return merged
-  }
-  const lastHer = merged.findLastIndex((speech) => speech.speaker === "her")
-  return merged.filter((_, index) => index !== lastHer)
-}
-
 /** `<BalloonTrack>` がそのまま置ける形に畳む。 */
 function balloonSpeeches(
   speeches: readonly Speech[],
@@ -362,14 +317,13 @@ function balloonSpeeches(
     const text = speech.text
     const time = recordClockStampWithDay(speech.time, now)
     if (anchor.kind === "none") {
-      return { speaker: "her", text, time, selected: false, target: undefined }
+      return { text, time, selected: false, target: undefined }
     }
     const index = anchor.lineIndices[position]
     if (index === undefined) {
-      return { speaker: "her", text, time, selected: false, target: undefined }
+      return { text, time, selected: false, target: undefined }
     }
     return {
-      speaker: "her",
       text,
       time,
       selected: isSpeechSelected(anchor.marked, anchor.turnId, index),

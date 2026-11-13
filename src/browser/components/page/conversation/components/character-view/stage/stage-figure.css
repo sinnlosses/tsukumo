@@ -3,6 +3,8 @@
    立ち絵の高さは幅と素材の縦横比で決まり CSS からは読めないので、席の中の印（`.stage-figure-head`）を anchor で引く。
    印は席の高さ（＝立ち絵の高さ）に対する割合で置くので、舞台の幅が変わっても頭に付いてくる。 */
 .stage-figure {
+  --stage-figure-thread-floor: 10rem;
+  --stage-figure-rows-floor: calc(var(--stage-figure-thread-floor) + 20rem);
   position: relative;
   flex: 1;
   min-height: 0;
@@ -21,11 +23,16 @@
 }
 /* 立ち絵は席の幅いっぱいに広げる（`portrait.module.css` の既定は素材の大きさで止まる）。
    縦長の素材が舞台より高くなるときは高さで止め、絵は左下に寄せる。
-   止めた箱の上端は絵の上端と一致するので、頭の印の割合はそのまま効く。 */
+   止めた箱の上端は絵の上端と一致するので、頭の印の割合はそのまま効く。
+   頭の印から上に上の4段の最低の高さ（`--stage-figure-rows-floor`）が残るよう、背の低い舞台では立ち絵の側を縮める。
+   頭の印より下の割合は数でしか割れないので、`--stage-figure-below-head` は単位なしの比で受ける。 */
 .stage-figure-portrait img {
   width: 100%;
   max-width: none;
-  max-height: 62cqh;
+  max-height: min(
+    62cqh,
+    calc((100cqh - var(--stage-figure-rows-floor)) / var(--stage-figure-below-head))
+  );
   object-fit: contain;
   object-position: left bottom;
 }
@@ -64,29 +71,21 @@
 .stage-figure-balloon {
   padding: 0 var(--balloon-right-gap) 0 var(--gutter-region);
 }
-/* 「ログ」の口は、旧い器では領域の右上だが、舞台の上端は部屋の頭が使うので、やり取りの流れの左上（部屋の頭のすぐ下）へ移す。
-   口は舞台の外（`.character-region` の直下）にあるので、流れの段を anchor で引く。 */
+/* 舞台では「ログ」の口を出さない。やり取りの流れの上端の札（`.talk-flow-more`）が口の役を持つ。 */
 .character-region:has(.stage-figure) .speech-log-open {
-  position-anchor: --stage-figure-thread;
-  top: anchor(top);
-  right: auto;
-  left: anchor(left);
+  display: none;
 }
-/* やり取りの流れが残りの高さを受け持つ。中身は下に寄せ、溢れた古い行は上へ押し出す。 */
+/* やり取りの流れが残りの高さを受け持つ。中身は下に寄せ、溢れた古い行は上へ押し出す。
+   押し出した行と札を段の外（今日の灯り・部屋の頭）へ描かない。
+   最低の高さは上端の札と薄れる帯の下に最後の行が見える分で、吹き出しが想定より高いときは段の側でなく吹き出しが頭の印の下へはみ出す。 */
 .stage-figure-thread {
-  anchor-name: --stage-figure-thread;
   display: flex;
   flex: 1;
   flex-direction: column;
   justify-content: flex-end;
-  min-height: 0;
+  min-height: var(--stage-figure-thread-floor);
+  overflow: hidden;
   padding: 0 var(--balloon-right-gap) 0 var(--gutter-region);
-}
-.stage-figure-thread > .balloon-track {
-  flex: 0 1 auto;
-  align-self: stretch;
-  margin: 0;
-  max-height: 100%;
 }
 
 @media (max-width: 760px) {

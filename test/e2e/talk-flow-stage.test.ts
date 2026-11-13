@@ -36,9 +36,36 @@ test.describe("新しい器の流れ", () => {
       await expect(page.locator('[data-slot="thread"]')).toBeVisible()
       await expect(page.locator('[data-slot="balloon"]').first()).toBeVisible()
       expect(await horizontalOverflow(page)).toBeLessThanOrEqual(0)
+      await expectLastHerLineInsideThread(page)
       await room.settleAndMatch(1000)
     })
   }
+
+  test("流れに利用者とキャラクターの行が並び、札でログが開き、狐火の行で紙のその段へ移る", async ({
+    run,
+  }) => {
+    const room = await run.open({
+      scenario: "talk-flow-stage-jump",
+      scene: "talk-flow-long",
+      viewport: "full-hd",
+      domRoots: [],
+    })
+    await room.waitForEvent("tool-started")
+    const page = await reopenInStage(room)
+    const thread = page.locator('[data-slot="thread"]')
+
+    await expect(thread.locator('[data-who="you"]').first()).toBeVisible()
+    await expect(thread.locator('[data-who="her"]').first()).toBeVisible()
+
+    await thread.getByRole("button", { name: /これまでのやり取り/u }).click()
+    const log = page.locator("dialog[open]")
+    await log.waitFor()
+    await page.keyboard.press("Escape")
+    await log.waitFor({ state: "hidden" })
+
+    await thread.locator('button[data-who="her"]').first().click()
+    await expect(page.locator('main [data-step-id][data-jumped="true"]')).toHaveCount(1)
+  })
 
   test("背景の明るいテスト用パックでも、舞台の骨組みが出て横にはみ出さない", async ({ run }) => {
     const room = await run.open({
@@ -54,6 +81,44 @@ test.describe("新しい器の流れ", () => {
     await expect(page.locator('[data-slot="thread"]')).toBeVisible()
     await expect(page.locator('[data-slot="balloon"]').first()).toBeVisible()
     expect(await horizontalOverflow(page)).toBeLessThanOrEqual(0)
+    await expectFlowBelowTodayStrip(page)
+    await expectLastHerLineInsideThread(page)
     await room.settleAndMatch(1000)
   })
 })
+
+/**
+ * 段が潰れると行が1つも見えなくなり、段の上端と札の位置だけでは気づけない。
+ * 最後のキャラクターの行が、段の内側に丸ごと収まり、上端の札より下にあることで確かめる。
+ */
+async function expectLastHerLineInsideThread(page: Page): Promise<void> {
+  const thread = page.locator('[data-slot="thread"]')
+  const threadBox = await thread.boundingBox()
+  const moreBox = await thread.getByRole("button", { name: /これまでのやり取り/u }).boundingBox()
+  const lineBox = await thread.locator('[data-who="her"]').last().boundingBox()
+  if (threadBox === null || moreBox === null || lineBox === null) {
+    throw new Error(
+      "流れの段・これまでのやり取りの札・最後のキャラクターの行のどれかが描かれていない",
+    )
+  }
+  expect(lineBox.y).toBeGreaterThanOrEqual(moreBox.y + moreBox.height)
+  expect(lineBox.y + lineBox.height).toBeLessThanOrEqual(threadBox.y + threadBox.height)
+}
+
+/**
+ * 立ち絵が大きいと流れの段が潰れ、押し出された行は段の外の上側に並ぶ（段の `overflow` で切って見せない）。
+ * 見えるのは段の内側だけなので、段の上端と「これまでのやり取り」の札が、今日の灯りの下端より下にあることで確かめる。
+ */
+async function expectFlowBelowTodayStrip(page: Page): Promise<void> {
+  const thread = page.locator('[data-slot="thread"]')
+  const todayBox = await page.locator('[data-slot="today"]').boundingBox()
+  const threadBox = await thread.boundingBox()
+  const moreBox = await thread.getByRole("button", { name: /これまでのやり取り/u }).boundingBox()
+  if (todayBox === null || threadBox === null || moreBox === null) {
+    throw new Error("今日の灯り・流れの段・これまでのやり取りの札のどれかが描かれていない")
+  }
+  const todayBottom = todayBox.y + todayBox.height
+  expect(threadBox.y).toBeGreaterThanOrEqual(todayBottom)
+  expect(moreBox.y).toBeGreaterThanOrEqual(todayBottom)
+  expect(await thread.evaluate((element) => getComputedStyle(element).overflowY)).toBe("hidden")
+}

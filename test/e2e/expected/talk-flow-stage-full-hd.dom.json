@@ -7,34 +7,119 @@
       },
       "children": [
         {
-          "tag": "div",
+          "tag": "button",
           "attributes": {
-            "data-latest": "false",
-            "data-interactive": "true",
-            "data-selected": "false",
-            "role": "button",
-            "aria-pressed": "false"
+            "type": "button"
           },
           "children": [
-            {
-              "tag": "span",
-              "attributes": {
-                "data-type": "inherit",
-                "data-color": "inherit"
-              },
-              "children": [
-                "空の一覧も見ておくね。"
-              ]
-            }
+            "▴ これまでのやり取り"
           ]
         },
         {
-          "tag": "time",
+          "tag": "div",
           "attributes": {
-            "dateTime": "2026-01-15T10:00+09:00"
+            "aria-label": "この依頼でのやり取り"
           },
           "children": [
-            "10:00"
+            {
+              "tag": "p",
+              "attributes": {
+                "data-who": "her"
+              },
+              "children": [
+                {
+                  "tag": "time",
+                  "attributes": {
+                    "dateTime": "2026-01-15T10:00+09:00"
+                  },
+                  "children": [
+                    "10:00"
+                  ]
+                },
+                "疑似セッションの駆動で立ち上がったよ。ここはぜんぶ作り物の会話。"
+              ]
+            },
+            {
+              "tag": "p",
+              "attributes": {
+                "data-who": "you"
+              },
+              "children": [
+                "あるじ",
+                "架空の一覧画面の並び替えを直したい（架空の依頼）"
+              ]
+            },
+            {
+              "tag": "p",
+              "attributes": {
+                "data-who": "her"
+              },
+              "children": [
+                {
+                  "tag": "time",
+                  "attributes": {
+                    "dateTime": "2026-01-15T10:00+09:00"
+                  },
+                  "children": [
+                    "10:00"
+                  ]
+                },
+                "わかった。まず計画を立てるね。"
+              ]
+            },
+            {
+              "tag": "button",
+              "attributes": {
+                "data-who": "her",
+                "type": "button"
+              },
+              "children": [
+                {
+                  "tag": "time",
+                  "attributes": {
+                    "dateTime": "2026-01-15T10:00+09:00"
+                  },
+                  "children": [
+                    "10:00"
+                  ]
+                },
+                {
+                  "tag": "svg",
+                  "attributes": {
+                    "data-lamp-state": "done"
+                  }
+                },
+                "原因が見つかったよ。続けて直すね。"
+              ]
+            },
+            {
+              "tag": "p",
+              "attributes": {
+                "data-who": "you"
+              },
+              "children": [
+                "あるじ",
+                "空の一覧のときも崩れないようにしてほしい（架空の補足）"
+              ]
+            },
+            {
+              "tag": "p",
+              "attributes": {
+                "data-who": "her"
+              },
+              "children": [
+                {
+                  "tag": "time",
+                  "attributes": {
+                    "dateTime": "2026-01-15T10:00+09:00"
+                  },
+                  "children": [
+                    "10:00"
+                  ]
+                },
+                "空の一覧も見ておくね。"
+              ]
+            }
           ]
         }
       ]

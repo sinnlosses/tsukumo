@@ -1,4 +1,4 @@
-// キャラビュー本体の器。立ち絵（<Portrait>）と吹き出しの並び（<BalloonTrack>）を同じ領域に同居させる。
+// キャラビュー本体の器。立ち絵（<Portrait>）と吹き出しの並び（<BalloonTrack>。新しい器の舞台ではやり取りの流れ <TalkFlow>）を同じ領域に同居させる。
 //
 // 右上の「ログ」（<SpeechLog>）の床にも同じ立ち絵を立たせるので、立ち絵と話し手の名前はここから渡す。
 //
@@ -27,6 +27,7 @@ import { PhoneBalloon } from "./phone-balloon.tsx"
 import { SpeechLog } from "./speech-log.tsx"
 import { StageAizuchi } from "./stage-aizuchi.tsx"
 import { StageBalloon } from "./stage-balloon.tsx"
+import { TalkFlow } from "./talk-flow.tsx"
 
 /** 旧い器のキャラビューの領域に置くか、新しい器の舞台に置くか。 */
 export type CharacterViewPlacement = "classic" | "stage"
@@ -48,7 +49,7 @@ export function PresentationalCharacterView({
   expression,
   motion,
   speeches,
-  thread,
+  flow,
   reaction,
   speakerName,
   pinnedSpeech,
@@ -113,15 +114,7 @@ export function PresentationalCharacterView({
           portrait={portraitIn(styles["stage-figure-portrait"])}
           roomHead={roomHead}
           today={today}
-          thread={
-            <BalloonTrack
-              speeches={thread}
-              reaction={reaction}
-              speakerName={speakerName}
-              onToggleSpeech={onToggleSpeech}
-              withoutLatest={true}
-            />
-          }
+          thread={<TalkFlow rows={flow} onOpenSpeechLog={onOpenSpeechLog} />}
           balloon={
             <StageBalloon
               speeches={speeches}
@@ -197,6 +190,7 @@ function stageFigureStyle(stage: CharacterStage): CSSProperties {
     "--stage-figure-left": `${String(stage.left * 100)}%`,
     "--stage-figure-width": `${String(stage.width * 100)}%`,
     "--stage-figure-head": `${String(stage.head * 100)}%`,
+    "--stage-figure-below-head": String(1 - stage.head),
     "--stage-figure-fade": fade.length === 0 ? "none" : fade.join(", "),
   }
 }

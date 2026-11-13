@@ -6,7 +6,7 @@
   ],
   "stage-thread": [
     { "tag": "div", "attributes": { "data-slot": "thread" }, "children": [
-      { "tag": "div", "attributes": { "data-speaker": "you" }, "children": [
+      { "tag": "p", "attributes": { "data-who": "you" }, "children": [
         "がんばって"
       ] }
     ] }

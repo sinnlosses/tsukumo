@@ -110,6 +110,11 @@ describe("CharacterView（相づちの札）", () => {
 
     expect(shownChips()).toEqual([])
     expect(document.querySelector("[data-reaction]")?.textContent).toContain("渡すの返事0")
+    expect(
+      [...document.querySelectorAll('[data-slot="thread"] [data-who="you"]')].map(
+        (line) => line.textContent,
+      ),
+    ).toContainEqual(expect.stringContaining("渡すの札0"))
   })
 })
 

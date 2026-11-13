@@ -30,6 +30,7 @@ import { arrangeTurn, progressFoldSummary, type ProgressEntry } from "./domain/t
 import { DraftReport } from "./draft-report.tsx"
 import { ExpandableHead } from "./expandable-head.tsx"
 import { useReplyPort } from "./hooks/use-reply-port.ts"
+import { useStepJumpLanding } from "./hooks/use-step-jump.ts"
 import styles from "./main-view.module.css"
 import { QuestionRecord } from "./question-record.tsx"
 import { ReportHead, type ReportLabel } from "./report-head.tsx"
@@ -70,6 +71,7 @@ export function Turn(props: TurnProps): ReactElement {
     askSlot.kind === "grouped" ? arrangeTurn(turn, askSlot.remaining) : arrangeTurn(turn)
   const latestStepId = props.newest ? finalStep?.id : undefined
   const port = useReplyPort()
+  useStepJumpLanding(turn.id)
   const turnStepList = useCurrentTurnSteps()
   const paperShowsFailure =
     props.failure === "paper" &&
@@ -227,6 +229,7 @@ function StepCard(props: StepProps): ReactElement {
           isInterimStep(step) && questions.length === 0 && styles["phone-hidden"],
         )}
         {...{ [REPORT_STEP_ATTRIBUTE]: step.body.kind === "text" ? "" : undefined }}
+        data-step-id={step.id}
       >
         <StepReport
           step={step}
@@ -267,6 +270,7 @@ function FoldedStep(props: FoldedStepProps): ReactElement {
   const [opened, setOpened] = useState(false)
   return (
     <details
+      data-step-id={props.step.id}
       onToggle={(event) => {
         if (event.currentTarget.open) {
           setOpened(true)

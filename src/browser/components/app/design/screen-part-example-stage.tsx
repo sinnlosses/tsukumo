@@ -7,6 +7,7 @@ import { DEFAULT_CHARACTER_STAGE } from "../../../../shared/character-pack/chara
 import type { CharacterViewModel } from "../../page/conversation/components/character-view/hooks/use-character-view.ts"
 import { PresentationalCharacterView } from "../../page/conversation/components/character-view/presentational-character-view.tsx"
 import { PresentationalSpeechLog } from "../../page/conversation/components/character-view/presentational-speech-log.tsx"
+import { PresentationalTalkFlow } from "../../page/conversation/components/character-view/presentational-talk-flow.tsx"
 import { PresentationalChatView } from "../../page/conversation/components/chat-view/presentational-chat-view.tsx"
 import type { ClockStamp } from "../../page/conversation/domain/clock-stamp.ts"
 import styles from "./design.module.css"
@@ -23,30 +24,26 @@ const TIME: ClockStamp = { kind: "known", dateTime: "2026-01-01T10:00", text: "1
 
 const NO_FACE = { url: undefined, alt: "さくら" }
 
-const FIRST_SPEECH = {
-  speaker: "her",
-  text: "おはよう。今日は何から始める？",
-  time: TIME,
-  selected: false,
-  target: undefined,
-} as const satisfies CharacterViewModel["speeches"][number]
-
 const CHARACTER: CharacterViewModel = {
   portraitUrl: undefined,
   altText: "さくら（にこにこ）",
   expression: "default",
   motion: "waiting",
   speeches: [
-    FIRST_SPEECH,
     {
-      speaker: "her",
+      text: "おはよう。今日は何から始める？",
+      time: TIME,
+      selected: false,
+      target: undefined,
+    },
+    {
       text: "READMEを見直すね。",
       time: TIME,
       selected: true,
       target: { turnId: 1, index: 1 },
     },
   ],
-  thread: [FIRST_SPEECH],
+  flow: [],
   reaction: { kind: "none" },
   speakerName: "さくら",
   pinnedSpeech: undefined,
@@ -74,7 +71,6 @@ export const STAGE_EXAMPLES: readonly ScreenPartExample[] = [
           <PresentationalCharacterView
             {...CHARACTER}
             speeches={[]}
-            thread={[]}
             reaction={{ kind: "writing" }}
             phoneLine={{ kind: "writing" }}
           />
@@ -116,6 +112,40 @@ export const STAGE_EXAMPLES: readonly ScreenPartExample[] = [
           },
         ]}
       />
+    ),
+  },
+  {
+    frame: "flow",
+    path: "page/conversation/components/character-view/presentational-talk-flow.tsx",
+    render: () => (
+      <StageBox>
+        <PresentationalTalkFlow
+          onOpenSpeechLog={noop}
+          onJumpToStep={noop}
+          rows={[
+            { kind: "you", key: "y1", turnId: 1, time: TIME, text: "READMEの手順を見直して" },
+            {
+              kind: "her",
+              key: "h1",
+              turnId: 1,
+              time: TIME,
+              text: "任せて。まず今の手順を読んでくるね。",
+              target: { turnId: 1, index: 0 },
+              finishedStep: { kind: "none" },
+            },
+            {
+              kind: "her",
+              key: "h2",
+              turnId: 1,
+              time: TIME,
+              text: "古い手順が2つあったよ。ひとつ灯したね。",
+              target: { turnId: 1, index: 1 },
+              finishedStep: { kind: "finished", turnId: 1, stepId: 0 },
+            },
+            { kind: "you", key: "y2", turnId: 1, time: TIME, text: "図は後回しでいいよ" },
+          ]}
+        />
+      </StageBox>
     ),
   },
   {

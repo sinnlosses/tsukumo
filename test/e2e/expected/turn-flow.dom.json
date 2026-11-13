@@ -525,7 +525,8 @@
                                             {
                                               "tag": "section",
                                               "attributes": {
-                                                "data-report-step": ""
+                                                "data-report-step": "",
+                                                "data-step-id": "3"
                                               },
                                               "children": [
                                                 {

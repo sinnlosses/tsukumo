@@ -1,0 +1,93 @@
+/* 舞台のやり取りの流れ。値は見本（`docs/history/mockup/` の report-progress の `index.html`）の `.talk-wrap`・`.talk`・`.vl`・`.more` を、近いトークンへ寄せたもの。
+   行は下に寄せ、溢れた古い行は上へ押し出す。上端は透明へ抜いて、押し出された行が薄れて消えるように見せる。
+   行の地は主題によらず暗い半透明に固定し、背景の明るいパックの上でも字が読めるようにする。地が固定なので字の色も主題の `--ink` でなく明るい色に固定する。 */
+.talk-flow-wrap {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+.talk-flow {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: flex-start;
+  gap: var(--stack-tight);
+  min-height: 0;
+  max-height: 100%;
+  padding: var(--stack-group) 0 var(--gutter-region);
+  overflow: hidden;
+  mask-image: linear-gradient(180deg, transparent 30px, black 96px);
+}
+.talk-flow-line {
+  flex: none;
+  max-width: 95%;
+  margin: 0;
+  padding: var(--stack-tight) var(--gutter-region);
+  border-radius: var(--radius-lg);
+  background: rgb(24 20 28 / 0.74);
+  color: rgb(236 232 239 / 0.9);
+  font-family: var(--font-voice);
+  font-size: var(--font-body);
+  font-weight: 600;
+  line-height: 1.6;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+/* 依頼は長くなりやすいので、流れの中では3行で切る（全文はメインビューの頭にある）。 */
+.talk-flow-line[data-who="you"] {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  align-self: flex-end;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--accent) 17%, rgb(24 20 28 / 0.74));
+  color: rgb(246 241 244);
+  font-family: var(--font-sans);
+  font-size: var(--font-secondary);
+  font-weight: 400;
+}
+button.talk-flow-line {
+  border: 0;
+  cursor: pointer;
+}
+button.talk-flow-line:hover {
+  background: rgb(58 48 64 / 0.86);
+}
+.talk-flow-caller,
+.talk-flow-time {
+  padding-right: var(--inline-control);
+  font-size: var(--font-label);
+}
+.talk-flow-caller {
+  color: var(--accent);
+  font-weight: 700;
+}
+.talk-flow-time {
+  color: rgb(236 232 239 / 0.62);
+  font-family: var(--font-mono);
+  font-weight: 400;
+}
+.talk-flow-lamp {
+  display: inline-block;
+  padding-right: var(--inline-tight);
+  vertical-align: -2px;
+}
+.talk-flow-more {
+  position: absolute;
+  top: var(--stack-block);
+  left: 0;
+  z-index: 1;
+  padding: 0 var(--gutter-region);
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: rgb(24 20 28 / 0.82);
+  color: rgb(236 232 239 / 0.78);
+  font-size: var(--font-secondary);
+  cursor: pointer;
+}
+.talk-flow-more:hover {
+  background: rgb(58 48 64 / 0.86);
+}
