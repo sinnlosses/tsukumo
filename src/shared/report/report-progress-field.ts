@@ -71,6 +71,18 @@ export type ReportProgress = {
   readonly guideNotes: readonly ReportGuideNote[]
 }
 
+/** 判定・次の手などの欄をどれも書かず、古い欄も無い読み。 */
+export const NO_REPORT_PROGRESS = {
+  verdict: "done",
+  verdictWritten: false,
+  closingConflict: false,
+  next: { kind: "none" },
+  assumptions: [],
+  sources: [],
+  previous: { kind: "none" },
+  guideNotes: [],
+} as const satisfies ReportProgress
+
 export const REPORT_PROGRESS_KEYS = [
   "verdict",
   "verdictWritten",

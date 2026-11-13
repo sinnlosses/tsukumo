@@ -15,6 +15,7 @@ import {
 import { sectionDrawsAnything } from "../../../shared/report/drawn-entry-markdown.ts"
 import { drawnReportOf } from "../../../shared/report/report-drawn-outline.ts"
 import { reportLeafLayoutOf } from "../../../shared/report/report-leaf-value.ts"
+import { NO_REPORT_PROGRESS } from "../../../shared/report/report-progress-field.ts"
 import { writtenReportView } from "../../../shared/report/report-static-component-list.ts"
 import { a2uiReportView } from "../../../shared/session/a2ui-report-view.ts"
 import type {
@@ -91,6 +92,7 @@ function draftRegions(
         checks: { kind: "none" },
         status: NO_SURFACE_STATUS,
         finalStatus: NO_SURFACE_STATUS,
+        progress: NO_REPORT_PROGRESS,
       },
       { id: `favor-${toolUseId}`, text: "" },
     ),

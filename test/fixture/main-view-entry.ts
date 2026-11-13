@@ -1,4 +1,5 @@
 import type { PhaseListRowView } from "../../src/shared/report/report-phase-time.ts"
+import { NO_REPORT_PROGRESS } from "../../src/shared/report/report-progress-field.ts"
 import type {
   MainViewA2uiReport,
   MainViewEntry,
@@ -34,6 +35,7 @@ export const noRootA2ui = (
     checks: { kind: "none" },
     status: NO_SURFACE_STATUS,
     finalStatus: NO_SURFACE_STATUS,
+    progress: NO_REPORT_PROGRESS,
   },
   favor: { id: favorId, text: "" },
 })

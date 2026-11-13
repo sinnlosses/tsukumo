@@ -16,6 +16,8 @@
   --report-heading-gap: 12px;
   --report-measure: 42em;
   --report-measure-wide: 63em;
+  /* 文章の塊（段落・箇条書き・引用・注・検証結果）だけの幅。表・図・見比べ・コードは `--report-measure-wide` のまま。 */
+  --report-measure-prose: var(--report-measure-wide);
   --report-figure-max: 70cqh;
   --report-figure-min-scale: 0.75;
   margin: 0 0 var(--space-lg);
@@ -29,8 +31,16 @@
   container: report-body / inline-size;
 
   & :is(p, li, blockquote, .report-note, .report-note-favor, .report-checks) {
-    max-inline-size: min(100%, var(--report-measure-wide));
+    max-inline-size: min(100%, var(--report-measure-prose));
     text-wrap: pretty;
+  }
+}
+/* 新しい器の紙は、文章の塊を1行 40 字までにする。 */
+:root[data-shell="stage"] .detail-block {
+  --report-measure-prose: 40em;
+
+  & .report-with-gutter > :is(p, blockquote) {
+    max-inline-size: min(100%, var(--report-measure-prose));
   }
 }
 :is(.detail-block, [data-report-region])

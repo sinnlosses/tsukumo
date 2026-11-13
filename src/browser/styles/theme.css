@@ -275,18 +275,18 @@
   --state-ask: light-dark(#6a45a8, #c7aef0);
 
   --font-sans: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic UI", system-ui, sans-serif;
-  --font-label: 0.75rem;
+  --font-label: 0.8125rem;
   --font-action: 0.8125rem;
   --font-secondary: 0.8125rem;
-  --font-subheading: 0.9375rem;
+  --font-subheading: 0.875rem;
   --font-body: 1rem;
-  --font-heading-3: 1.0625rem;
-  --font-heading-2: 1.25rem;
-  --font-heading-1: 1.375rem;
-  --font-lead: 1.6875rem;
-  --report-heading-2: 1.25rem;
-  --report-heading-3: 1.0625rem;
-  --line-height-reading: 1.85;
+  --font-heading-3: 1.1875rem;
+  --font-heading-2: 1.1875rem;
+  --font-heading-1: 1.5rem;
+  --font-lead: 1.5rem;
+  --report-heading-2: 1.1875rem;
+  --report-heading-3: 1rem;
+  --line-height-reading: 1.8;
 
   --shadow-raised: 0 0 0 1px var(--rule), 0 14px 36px rgb(0 0 0 / 0.38);
   --shadow-overlay: 0 0 0 1px var(--rule), 0 24px 60px rgb(0 0 0 / 0.5);

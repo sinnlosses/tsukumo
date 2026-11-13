@@ -8,6 +8,7 @@ import {
   type PhaseTimeRow,
   phaseTimesView,
 } from "../../../../../src/shared/report/report-phase-time.ts"
+import { NO_REPORT_PROGRESS } from "../../../../../src/shared/report/report-progress-field.ts"
 import type { MainViewSurfaceHead } from "../../../../../src/shared/session/main-view-shape.ts"
 
 afterEach(() => {
@@ -94,6 +95,7 @@ function head(overrides: Partial<MainViewSurfaceHead>): MainViewSurfaceHead {
     checks: { kind: "none" },
     status: EMPTY_STATUS,
     finalStatus: EMPTY_STATUS,
+    progress: NO_REPORT_PROGRESS,
     ...overrides,
   }
 }

@@ -10,6 +10,7 @@ import type { ReportImageSource } from "../report/report-image-markdown.ts"
 import type { ReportImageSize } from "../report/report-image.ts"
 import type { LeafValue } from "../report/report-leaf-value.ts"
 import type { PhaseTimesView } from "../report/report-phase-time.ts"
+import type { ReportProgress } from "../report/report-progress-field.ts"
 import type { WrittenReportView } from "../report/report-static-component-list.ts"
 import type { ReportTask } from "../report/report-task.ts"
 import type { ReportVerification } from "../report/report-verification.ts"
@@ -156,6 +157,8 @@ export type MainViewSurfaceHead = {
   readonly checks: ReportChecksView
   readonly status: MainViewSurfaceStatus
   readonly finalStatus: MainViewSurfaceStatus
+  /** 判定・次の手・置いた前提・出どころ・前回との対応・案内の付箋。書き途中の草稿は書いていない読み。 */
+  readonly progress: ReportProgress
 }
 
 /** 包みの中の合図の行より後ろ。段ごとの所要時間と変更したファイルと、検証の控えから運んだ検証の段と件数。 */

@@ -65,7 +65,13 @@ describe("疑似セッションの判定と次の手の場面", () => {
   it("progress-short は、済んだ判定と結論1文だけで、本文の節を持たない", () => {
     const [report] = reportsOf("progress-short")
 
-    expect(report).toMatchObject({ verdict: "done", next: { kind: "none" }, sources: [] })
+    expect(report).toMatchObject({
+      verdict: "done",
+      verdictWritten: true,
+      next: { kind: "none" },
+      sources: [],
+      droppedCount: 0,
+    })
     expect(report?.components.filter((part) => part.component === "Section")).toEqual([])
   })
 

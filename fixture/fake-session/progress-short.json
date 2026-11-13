@@ -21,8 +21,13 @@
             "verdict": "done",
             "figureNone": "short-answer",
             "conclusion": ["架空の結論: 既定値は 30 秒。"],
-            "children": [],
+            "children": ["a1"],
             "closing": { "text": "30 秒だよ", "expression": "default" }
+          },
+          {
+            "id": "a1",
+            "component": "Markdown",
+            "markdown": "架空の設定の読み口が、架空の既定値 30 秒を持っている。"
           }
         ]
       }

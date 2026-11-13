@@ -29,6 +29,7 @@ import { usePhoneWidth } from "../../../../../hooks/use-phone-width.ts"
 import { useCurrentTurnSteps } from "../../../../../stores/current-turn-step-list.ts"
 import { useInquiryJump } from "../../../../../stores/inquiry-jump.ts"
 import { useMainViewTurns } from "../../../../../stores/main-view-turn.ts"
+import { nextReadingDepth, useReadingDepth } from "../../../../../stores/reading-depth.ts"
 import { useReadingSection } from "../../../../../stores/reading-section.ts"
 import { useSession } from "../../../../../stores/session.ts"
 import { useTurnSelection } from "../../../../../stores/turn-selection.ts"
@@ -37,7 +38,7 @@ import { Inquiry } from "../inquiry/inquiry.tsx"
 import { AskThreadProvider } from "./ask-thread-provider.tsx"
 import { CurrentStep } from "./current-step.tsx"
 import { headNoticeOf, type HeadNoticeAction } from "./domain/head-notice.ts"
-import { headingStepOf, neighborTurnId, turnStepOf } from "./domain/turn-step-key.ts"
+import { headingStepOf, neighborTurnId, readingKeyOf, turnStepOf } from "./domain/turn-step-key.ts"
 import { type ShownTarget, useActiveTurnScroll } from "./hooks/use-active-turn-scroll.ts"
 import { useReportOutlineTurns } from "./hooks/use-report-outline-turn-list.ts"
 import { InquiryJumpFloat } from "./inquiry-jump-float.tsx"
@@ -126,6 +127,12 @@ export function MainView(props: {
       altKey: event.altKey,
       isComposing: event.nativeEvent.isComposing,
       target: event.target,
+    }
+    const reading = props.progress === "paper" ? readingKeyOf(keyEvent) : "none"
+    if (reading !== "none") {
+      event.preventDefault()
+      pressReadingKey(reading, event.currentTarget)
+      return
     }
     const headingStep = headingStepOf(keyEvent)
     if (headingStep !== undefined) {
@@ -340,4 +347,17 @@ function shownTargetOf(view: ShownView): ShownTarget {
     return { kind: "none" }
   }
   return { kind: view.kind, turnId: view.card.turn.id }
+}
+
+/** `d` は読む深さを回し、`o` はメインビューに出ている紙の節を全部畳む・開く。 */
+function pressReadingKey(key: "depth" | "fold", root: HTMLElement): void {
+  const { depth, setDepth, toggleFold } = useReadingDepth.getState()
+  if (key === "depth") {
+    setDepth(nextReadingDepth(depth))
+    return
+  }
+  const keys = [...root.querySelectorAll<HTMLElement>("[data-fold-key]")].flatMap(
+    (section) => section.dataset["foldKey"] ?? [],
+  )
+  toggleFold({ kind: "all", keys })
 }

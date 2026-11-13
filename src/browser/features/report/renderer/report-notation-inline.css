@@ -157,3 +157,28 @@
     overflow-wrap: anywhere;
   }
 }
+/* 新しい器の紙は本文の列を 40em にするので、欄外注の列は 40em の右に 160px 以上空けば出す。
+   塊の上下のあきは塊自身の margin のまま残し（grid の中では相殺しないが、包みに持たせ直さない）、欄外注の列の負の margin だけを落とす。
+   63em の段の条件にも当たる幅では、本文の列の幅だけをこちらが上書きする。 */
+:root[data-shell="stage"] .detail-block {
+  @container report-gutter (min-width: calc(40em + 160px)) {
+    & .report-with-gutter {
+      display: grid;
+      grid-template-columns: minmax(0, 40em) minmax(0, 1fr);
+      column-gap: var(--gutter-sheet);
+      align-items: start;
+    }
+    & .report-with-gutter > * {
+      grid-column: 1;
+    }
+    & .report-with-gutter > .report-gutter {
+      grid-column: 2;
+      margin-block: 0;
+      padding-left: var(--inline-group);
+      border-left: 1px solid var(--rule-soft);
+    }
+    & .report-gutter-note-label {
+      display: block;
+    }
+  }
+}

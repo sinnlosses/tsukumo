@@ -1,11 +1,14 @@
 // セッションの記録を、メインビューに時系列で流す記録（`MainViewEntry`）へ変える。
 // セッションの状態から導くだけで、別の状態は持たない。
 
+import { pick } from "remeda"
+
 import { changedFilesView } from "../report/changed-file-section.ts"
 import { sectionDrawsAnything } from "../report/drawn-entry-markdown.ts"
 import { type CheckBashOutcome, sealOfCheck } from "../report/report-check-seal.ts"
 import { reportChecksView } from "../report/report-check-view.ts"
 import { phaseTimesView } from "../report/report-phase-time.ts"
+import { REPORT_PROGRESS_KEYS } from "../report/report-progress-field.ts"
 import {
   staticReportComponents,
   writtenReportView,
@@ -212,6 +215,7 @@ function reportRegionsOf(
           changedFiles: changedFilesView(report.changeSummary),
           verification: report.verification,
         },
+        progress: pick(report, REPORT_PROGRESS_KEYS),
       },
       { id: favorId, text: report.favor },
     ),

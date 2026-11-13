@@ -1,4 +1,4 @@
-// メインビューでターンの前後へ移るキー（`[` が1つ古いほう、`]` が1つ新しいほう）と、見出しの前後へ移るキー（`{` が前、`}` が後ろ）の読み取りと、ターンの移り先の選び方。
+// メインビューでターンの前後へ移るキー（`[` が1つ古いほう、`]` が1つ新しいほう）と、見出しの前後へ移るキー（`{` が前、`}` が後ろ）と、紙の読む深さ・畳みのキー（`d`・`o`）の読み取りと、ターンの移り先の選び方。
 
 export type TurnStep = "older" | "newer"
 
@@ -31,6 +31,14 @@ export function headingStepOf(event: TurnStepKeyEvent): TurnStep | undefined {
     return undefined
   }
   return event.key === "{" || event.key === "}" ? HEADING_KEYS[event.key] : undefined
+}
+
+/** 新しい器の紙で、`d` が読む深さを回し、`o` が全節を畳む・開く。ほかのキーは `none`。 */
+export function readingKeyOf(event: TurnStepKeyEvent): "depth" | "fold" | "none" {
+  if (yieldsToInput(event)) {
+    return "none"
+  }
+  return event.key === "d" ? "depth" : event.key === "o" ? "fold" : "none"
 }
 
 /** `turnIds` は古い順。端では `undefined`。 */

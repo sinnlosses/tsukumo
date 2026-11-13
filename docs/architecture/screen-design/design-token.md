@@ -82,24 +82,24 @@
 
 #### 字
 
-見本は本文を 16px・行の高さ 1.85 にし、セリフを明朝（`--voice`）で組む。
+見本は本文を 16px・行の高さ 1.8 にし、セリフを明朝（`--voice`）で組む。新しい器の字の段は 13（欄外・印）・14（補助）・16（本文）・19（小見出し）・24px（見出し）の5つで、欄外と印も 13px を下回らない（`test/architecture/stage-type-scale.test.ts` が見張る）。
 
 | トークン                             | 旧い器                              | 新しい器                                                                              | 使う場面                               |
 | ------------------------------------ | ----------------------------------- | ------------------------------------------------------------------------------------- | -------------------------------------- |
 | `--font-sans`                        | Astryx neutral の本文の書体の並び   | `"Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic UI", system-ui, sans-serif` | 本文・見出し                           |
 | `--font-voice`                       | 明朝の並び（`--font-serif` と同じ） | 同じ                                                                                  | セリフ・迎えの一言（見本の `--voice`） |
 | `--font-mono`・`--font-code`         | 今の値                              | 同じ                                                                                  | 等幅・レポートのコード                 |
-| `--font-label`                       | `--font-size-sm`（12px）            | 0.75rem（12px）                                                                       | 等幅の札・キー・時刻                   |
+| `--font-label`                       | `--font-size-sm`（12px）            | 0.8125rem（13px）                                                                     | 等幅の札・キー・時刻                   |
 | `--font-action`                      | `--font-label`                      | 0.8125rem（13px）                                                                     | ボタン・切り替えの字                   |
 | `--font-secondary`                   | `--font-size-sm`（12px）            | 0.8125rem（13px）                                                                     | 補足・欄外・表の見出し行               |
-| `--font-subheading`                  | `--font-size-base`（14px）          | 0.9375rem（15px）                                                                     | 小見出し・表・一覧の行                 |
+| `--font-subheading`                  | `--font-size-base`（14px）          | 0.875rem（14px）                                                                      | 小見出し・表・一覧の行                 |
 | `--font-body`                        | `--font-size-base`（14px）          | 1rem（16px）                                                                          | 本文                                   |
-| `--font-heading-3`・`--font-heading` | `--font-size-lg`（17px）            | 1.0625rem（17px）                                                                     | 段の見出し                             |
-| `--font-heading-2`                   | `--font-size-xl`（20px）            | 1.25rem（20px）                                                                       | 紙の節の見出し・お伺いの題             |
-| `--font-heading-1`                   | `--font-size-2xl`（24px）           | 1.375rem（22px）                                                                      | 重ねる紙の題                           |
-| `--font-lead`                        | `--font-heading-1`                  | 1.6875rem（27px）                                                                     | 紙の頭の一文（見本の `.lead`）         |
-| `--report-heading-2`・`-3`           | 1.3125rem・1.0625rem                | 1.25rem・1.0625rem                                                                    | レポートの見出し                       |
-| `--line-height-reading`              | 1.7                                 | 1.85                                                                                  | 本文の行の高さ                         |
+| `--font-heading-3`・`--font-heading` | `--font-size-lg`（17px）            | 1.1875rem（19px）                                                                     | 段の見出し                             |
+| `--font-heading-2`                   | `--font-size-xl`（20px）            | 1.1875rem（19px）                                                                     | 紙の節の見出し・お伺いの題             |
+| `--font-heading-1`                   | `--font-size-2xl`（24px）           | 1.5rem（24px）                                                                        | 重ねる紙の題・紙の結論                 |
+| `--font-lead`                        | `--font-heading-1`                  | 1.5rem（24px）                                                                        | 紙の頭の一文（見本の `.lead`）         |
+| `--report-heading-2`・`-3`           | 1.3125rem・1.0625rem                | 1.1875rem・1rem                                                                       | レポートの見出し                       |
+| `--line-height-reading`              | 1.7                                 | 1.8                                                                                   | 本文の行の高さ                         |
 
 - 旧い器の大きさは触る画面で Astryx が組み直す（本文は 16px になる）。新しい器の大きさは組み直さない。
 - 見本で 12.5px・13.5px・14.5px のように半端な大きさは、近い段へ寄せる（同点は大きい段へ）。
@@ -185,7 +185,7 @@
 | `--sans`                             | `--font-sans`                               | 値を替える                                       |
 | `--voice`                            | `--font-voice`（足した）                    | 旧い器も同じ明朝の並び                           |
 | `--mono`                             | `--font-mono`・`--font-code`                | 旧い器のまま                                     |
-| 本文の `16px/1.85`                   | `--font-body`・`--line-height-reading`      | 値を替える                                       |
+| 本文の `16px/1.8`                    | `--font-body`・`--line-height-reading`      | 値を替える                                       |
 | `.lead`                              | `--font-lead`（足した）                     | 旧い器では `var(--font-heading-1)`               |
 | なし                                 | `--font-input`                              | 旧い器のまま（1rem）                             |
 | なし                                 | `--surface-accent`                          | 旧い器の式のまま                                 |
