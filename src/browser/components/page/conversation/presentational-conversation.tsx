@@ -48,7 +48,7 @@ type PresentationalConversationProps = {
   readonly shell: ConversationShell
   /** 新しい器の姿勢。旧い器は読まない。 */
   readonly posture: StagePosture
-  /** 新しい器で、入力欄の場所にお伺いを出すか（働くあいだの答え待ち）。旧い器は読まない。 */
+  /** 新しい器で、入力欄の場所にお伺いを出すか（答え待ちのあいだ。姿勢・幅によらない）。旧い器は読まない。 */
   readonly asking: boolean
   /** 新しい器で、ほかの画面の紙が重なっているか。旧い器は読まない。 */
   readonly covered: boolean

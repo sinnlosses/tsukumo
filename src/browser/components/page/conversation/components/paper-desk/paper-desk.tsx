@@ -25,6 +25,7 @@ export function PaperDesk(props: PaperDeskProps): ReactElement {
       <div className={styles["paper-home"]} data-region="home" data-posture="greet">
         {props.greeting}
         <section className={styles["paper-home-dock"]} data-region="dock" aria-label="入力欄">
+          {props.inquiry}
           {props.dock}
         </section>
         <main className={styles["paper-home-body"]} data-region="paper" aria-label="始め方">

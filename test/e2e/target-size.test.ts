@@ -40,7 +40,7 @@ test.describe("会話の画面の押す的と字", () => {
       viewport: "medium",
       domRoots: [],
     })
-    await room.waitForEvent("turn-finished")
+    await room.waitForEvent("pending-changed")
     await room.page.getByRole("checkbox").first().check()
     const answer = room.page.getByRole("button", { name: /これで答える/ })
     await expect.poll(() => answer.getAttribute("aria-disabled")).not.toBe("true")
