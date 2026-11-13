@@ -3,7 +3,7 @@
 
 /**
  * 委譲先が `phase_result` で返した結果。
- * `phase-done` は `finished`、`phase-skipped` は `skipped`、`stopped` は `stopped`。
+ * `phase-done` は `finished`、`phase-skipped` は `skipped`、`stopped` は `stopped`、`phase-redone` は `redo`（段は済まず周が進む）。
  */
 export type DelegateReturn =
   | {
@@ -13,6 +13,12 @@ export type DelegateReturn =
       readonly summary: string
     }
   | { readonly kind: "phase-skipped"; readonly phase: number; readonly count: number }
+  | {
+      readonly kind: "phase-redone"
+      readonly phase: number
+      readonly count: number
+      readonly summary: string
+    }
   | {
       readonly kind: "stopped"
       readonly phase: number

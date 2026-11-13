@@ -127,6 +127,8 @@
     "work-plan-phase-unknown",
     "work-plan-resumed",
     "work-plan-quick",
+    "work-plan-replanned",
+    "work-plan-laps",
     "work-strip-running",
     "work-strip-background",
     "phone-inquiry-pick",

@@ -1,9 +1,12 @@
 // イベントと記録の並びからいまのワークプランを畳む決まりと、委譲の返却・`report` が段を進める決まり。
 
+import { omit } from "remeda"
+
 import { isBlankText } from "../utils/blank-text.ts"
 import type { DelegateReturn } from "./delegate-return.ts"
 import type { SessionEvent } from "./session-event.ts"
 import type { SessionRecord } from "./session-record.ts"
+import { lapsWithRedo, nextPhaseLaps } from "./work-plan-lap.ts"
 import {
   finishedPhaseCount,
   NO_AWAITING_SUMMARY,
@@ -33,8 +36,14 @@ export function nextWorkPlan(plan: LatestWorkPlan, event: WorkPlanEvent): Latest
   switch (event.kind) {
     case "request":
       return NO_WORK_PLAN
-    case "work-plan":
-      return withLeadPhasesFinished(plan, workPlanOf(event))
+    case "work-plan": {
+      const next = workPlanOf(event)
+      const laps = next.phaseLaps ?? nextPhaseLaps(plan, next)
+      return withLeadPhasesFinished(
+        plan,
+        laps.some((lap) => lap !== 1) ? { ...next, phaseLaps: laps } : omit(next, ["phaseLaps"]),
+      )
+    }
     case "delegate-returned":
       return plan.kind === "none" ? plan : advancedByReturn(plan, event.handback)
     case "workflow-progress":
@@ -69,6 +78,11 @@ export function workPlanOf(plan: WorkPlan): PlannedWorkPlan {
     delegatedRange: plan.delegatedRange,
     skippedPhases: plan.skippedPhases,
     awaitingSummary: plan.awaitingSummary,
+    ...(plan.replanReason === undefined ? {} : { replanReason: plan.replanReason }),
+    ...(plan.redoReason === undefined ? {} : { redoReason: plan.redoReason }),
+    ...(plan.assumptions === undefined ? {} : { assumptions: plan.assumptions }),
+    ...(plan.phaseDoings === undefined ? {} : { phaseDoings: plan.phaseDoings }),
+    ...(plan.phaseLaps === undefined ? {} : { phaseLaps: plan.phaseLaps }),
   }
 }
 
@@ -101,11 +115,17 @@ export function isOutOfOrderReturn(plan: WorkPlan, handback: DelegateReturn): bo
 
 /** 範囲があり `count` が範囲の段の数と同じ `phase-done`・`phase-skipped` の `phase` に当たる段。当たらなければ undefined。 */
 function reportedPhaseOf(plan: WorkPlan, handback: DelegateReturn): PlannedPhase | undefined {
-  if (
-    (handback.kind !== "phase-done" && handback.kind !== "phase-skipped") ||
-    plan.delegatedRange.kind !== "range" ||
-    plan.delegatedRange.count !== handback.count
-  ) {
+  return handback.kind === "phase-done" || handback.kind === "phase-skipped"
+    ? rangePhaseOf(plan, handback)
+    : undefined
+}
+
+/** 範囲があり `count` が範囲の段の数と同じ返却の `phase` に当たる段。当たらなければ undefined。 */
+function rangePhaseOf(
+  plan: WorkPlan,
+  handback: { readonly phase: number; readonly count: number },
+) {
+  if (plan.delegatedRange.kind !== "range" || plan.delegatedRange.count !== handback.count) {
     return undefined
   }
   const target = plan.delegatedRange.first + handback.phase - 1
@@ -134,8 +154,20 @@ function withLeadPhasesFinished(previous: LatestWorkPlan, next: PlannedWorkPlan)
  * `phase-skipped` は済ませた段の名前を飛ばした段に足す。
  */
 function advancedByReturn(plan: PlannedWorkPlan, handback: DelegateReturn): PlannedWorkPlan {
+  if (handback.kind === "phase-redone") {
+    return redoneByReturn(plan, handback)
+  }
   const returned = returnedByReturn(plan, handback)
   return returned.kind === "finished" ? returned.advanced : plan
+}
+
+/** `phase-redone` は位置を動かさず、`phase` に当たる段の周だけを 1 進める。当たる段が無ければ `plan` のまま。 */
+function redoneByReturn(
+  plan: PlannedWorkPlan,
+  handback: Extract<DelegateReturn, { readonly kind: "phase-redone" }>,
+): PlannedWorkPlan {
+  const phase = rangePhaseOf(plan, handback)
+  return phase === undefined ? plan : { ...plan, phaseLaps: lapsWithRedo(plan, phase.index) }
 }
 
 function returnedByReturn(
@@ -214,14 +246,10 @@ function advancedByWorkflowProgress(
 function closedByReport(plan: PlannedWorkPlan): PlannedWorkPlan {
   return phaseCount(plan.phases) - finishedPhaseCount(plan) === 1
     ? {
-        kind: "planned",
-        phases: plan.phases,
-        phaseIds: plan.phaseIds,
+        ...plan,
         current: plan.phases.length,
         finishedInGroup: [],
         phaseSummary: "",
-        delegatedRange: plan.delegatedRange,
-        skippedPhases: plan.skippedPhases,
         awaitingSummary: NO_AWAITING_SUMMARY,
       }
     : plan

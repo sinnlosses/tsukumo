@@ -1,0 +1,90 @@
+{
+  "name": "work-plan-laps",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "架空の一覧画面の並び替えを直したい（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 100,
+      "event": {
+        "kind": "work-plan",
+        "phaseIds": [],
+        "delegatedRange": { "kind": "range", "first": 1, "count": 3 },
+        "skippedPhases": [],
+        "awaitingSummary": { "kind": "none" },
+        "phases": [
+          "計画を確かめる",
+          "並び替えを調べる",
+          "並び替えを直す",
+          "確かめる",
+          "受け入れる"
+        ],
+        "current": 1,
+        "finishedInGroup": [],
+        "phaseSummary": "架空の計画は決まった。"
+      }
+    },
+    {
+      "afterMs": 200,
+      "event": {
+        "kind": "delegate-returned",
+        "handback": {
+          "kind": "phase-done",
+          "phase": 1,
+          "count": 3,
+          "summary": "架空の並び替えの原因が分かった。"
+        }
+      }
+    },
+    {
+      "afterMs": 300,
+      "event": {
+        "kind": "delegate-returned",
+        "handback": {
+          "kind": "phase-redone",
+          "phase": 2,
+          "count": 3,
+          "summary": "架空の受け入れで、同じ値の並びが崩れると差し戻された。"
+        }
+      }
+    },
+    {
+      "afterMs": 400,
+      "event": {
+        "kind": "delegate-returned",
+        "handback": {
+          "kind": "phase-redone",
+          "phase": 2,
+          "count": 3,
+          "summary": "架空の再確認で、空の一覧の扱いが足りないと差し戻された。"
+        }
+      }
+    },
+    {
+      "afterMs": 500,
+      "event": {
+        "kind": "delegate-returned",
+        "handback": {
+          "kind": "phase-done",
+          "phase": 2,
+          "count": 3,
+          "summary": "架空の3周目で、並び替えを直し切った。"
+        }
+      }
+    },
+    {
+      "afterMs": 600,
+      "event": {
+        "kind": "tool-started",
+        "toolUseId": "fake-work-plan-laps-1",
+        "name": "Bash",
+        "input": { "command": "ls" }
+      }
+    }
+  ]
+}

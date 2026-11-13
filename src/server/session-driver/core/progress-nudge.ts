@@ -107,7 +107,7 @@ export function createProgressNudge(): ProgressNudge {
           return
         case "delegate-returned": {
           const handback = event.handback
-          if (handback.kind === "stopped") {
+          if (handback.kind === "stopped" || handback.kind === "phase-redone") {
             return
           }
           const done = handback.kind === "phase-done"

@@ -47,6 +47,52 @@ describe("parseWorkPlan の段のまとめ", () => {
   })
 })
 
+describe("parseWorkPlan の計画を直した理由・前提・進行形", () => {
+  it("replanReason・redoReason・assumptions と段の doing を WorkPlan に写す", () => {
+    const plan = parseWorkPlan({
+      phases: [
+        { id: "a", name: "架空の段A", doing: "架空の段Aを進めている" },
+        { id: "b", name: "架空の段B" },
+      ],
+      current: 0,
+      replanReason: "架空の理由。",
+      redoReason: "架空のやり直し。",
+      assumptions: ["架空の前提"],
+    })
+
+    expect(plan).toMatchObject({
+      phases: ["架空の段A", "架空の段B"],
+      phaseIds: ["a", "b"],
+      replanReason: "架空の理由。",
+      redoReason: "架空のやり直し。",
+      assumptions: ["架空の前提"],
+      phaseDoings: ["架空の段Aを進めている", "架空の段B"],
+    })
+  })
+
+  it("空白だけの doing は受け付けない", () => {
+    expect(
+      parseWorkPlan({ phases: [{ id: "a", name: "架空の段A", doing: " " }], current: 0 }),
+    ).toBeUndefined()
+  })
+
+  it("plannedPhasesOf が doing と lap を運ぶ（欄が無ければ name と 1）", () => {
+    const plan = parseWorkPlan({
+      phases: [
+        { id: "a", name: "架空の段A", doing: "架空の段Aを進めている" },
+        { id: "b", name: "架空の段B" },
+      ],
+      current: 0,
+    })
+    const phases = plan === undefined ? [] : plannedPhasesOf({ ...plan, phaseLaps: [2, 1] })
+
+    expect(phases.map(({ doing, lap }) => [doing, lap])).toEqual([
+      ["架空の段Aを進めている", 2],
+      ["架空の段B", 1],
+    ])
+  })
+})
+
 describe("parseWorkPlan の並列のフェーズ", () => {
   it("段の名前と並列のフェーズの混ざった並びと、今の並列のフェーズの中で済んだ段を読む", () => {
     expect(

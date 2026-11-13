@@ -9,7 +9,11 @@ const nonBlankTextSchema = z.string().refine((text) => !isBlankText(text))
 /** `work_plan` の段1つ。名前だけか、段の id と名前の組。 */
 export const phaseElementSchema = z.union([
   nonBlankTextSchema,
-  z.object({ id: nonBlankTextSchema, name: nonBlankTextSchema }),
+  z.object({
+    id: nonBlankTextSchema,
+    name: nonBlankTextSchema,
+    doing: nonBlankTextSchema.optional(),
+  }),
 ])
 
 type PhaseElement = z.infer<typeof phaseElementSchema>
@@ -21,6 +25,13 @@ export function phaseNameEntriesOf(
   entries: readonly PhaseElementEntry[],
 ): readonly (string | readonly string[])[] {
   return entries.map((entry) => (isGroup(entry) ? entry.map(phaseNameOf) : phaseNameOf(entry)))
+}
+
+/** 平らにした読み順の段の進行形の名前。`doing` を省いた段は名前のまま。 */
+export function phaseDoingsOf(entries: readonly PhaseElementEntry[]): readonly string[] {
+  return flatElements(entries).map((element) =>
+    typeof element === "string" ? element : (element.doing ?? element.name),
+  )
 }
 
 /** 平らにした読み順の段の id。どの段にも id が無ければ空。 */

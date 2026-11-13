@@ -24,7 +24,7 @@
 
 - **英語識別子**: `phase_result`（ツール名そのもの）、`PhaseResult`（引数を読んだ形）、`phase-result-called`（委譲先の呼び出しを運ぶサーバの中だけのイベント）
 - **定義**: `speak` と同じプロセス内の MCP サーバで提供するツール。委譲先がフェーズごとに1回呼び、フェーズの結果を返す構造化した返却。
-  引数は `phase`（委譲先のフェーズの番号）・`count`（委譲先のフェーズの数）・`outcome`（`finished`・`skipped`・`stopped`）・`reason`（`stopped` のときだけ）・`summary`（`finished` のときだけ。任意）。
+  引数は `phase`（委譲先のフェーズの番号）・`count`（委譲先のフェーズの数）・`outcome`（`finished`・`skipped`・`stopped`・`redo`。`redo` はフェーズが済まず周が1つ進み、`phase-redone` の `DelegateReturn` になる）・`reason`（`stopped` と `redo` のときだけ）・`summary`（`finished` のときだけ。任意）。
   受け付けた呼び出しは、委譲先のフェーズの範囲の中の `phase` に当たるプログレスバーのフェーズが今のフェーズの集合に入っているときだけプログレスバーを動かす
 - **注記**: `summary` を持たない返却は要約が空（**まとめ待ちのフェーズ**）。引数とプログレスバーの動かし方の正典は `docs/architecture/workflow-contract.md`「スキルの契約」
 - **避ける言い方**: 返却ツール（`SubagentHandback` と紛れる）、結果報告（`report` と紛れる）

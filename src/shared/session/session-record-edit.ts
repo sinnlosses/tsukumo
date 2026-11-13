@@ -50,6 +50,13 @@ export function workPlanRecordOf(
     delegatedRange: event.delegatedRange,
     skippedPhases: event.skippedPhases,
     awaitingSummary: event.awaitingSummary,
+    ...(event.replanReason === undefined ? {} : { replanReason: event.replanReason }),
+    ...(event.redoReason === undefined ? {} : { redoReason: event.redoReason }),
+    ...(event.assumptions === undefined ? {} : { assumptions: event.assumptions }),
+    ...(event.phaseDoings === undefined ? {} : { phaseDoings: event.phaseDoings }),
+    ...(next.kind === "planned" && next.phaseLaps !== undefined
+      ? { phaseLaps: next.phaseLaps }
+      : {}),
     time: { kind: "stamped", at },
   }
 }
