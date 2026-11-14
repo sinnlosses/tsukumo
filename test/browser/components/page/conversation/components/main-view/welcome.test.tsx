@@ -3,7 +3,6 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
 import { Welcome } from "../../../../../../../src/browser/components/page/conversation/components/main-view/welcome.tsx"
-import { useComposerFocus } from "../../../../../../../src/browser/stores/composer-focus.ts"
 import { useSessionSwitcherRequest } from "../../../../../../../src/browser/stores/session-switcher-request.ts"
 import type { TaskSummaryItem } from "../../../../../../../src/shared/repository/task-summary.ts"
 import {
@@ -113,15 +112,6 @@ describe("Welcome（札のほかの口）", () => {
 
     expect(document.body.querySelector("ul")).toBeNull()
     expect(useSessionSwitcherRequest.getState().open).toBe(true)
-  })
-
-  it("キー / で入力欄へのフォーカスを求める", () => {
-    renderWelcome(FILLED)
-    const before = useComposerFocus.getState().signal
-
-    fireEvent.keyDown(document.body, { key: "/" })
-
-    expect(useComposerFocus.getState().signal).toBe(before + 1)
   })
 
   it("空の帳面（タスク0件・続き無し）では札が出ず、一文だけ出て、前のやり取りのキーも効かない", () => {

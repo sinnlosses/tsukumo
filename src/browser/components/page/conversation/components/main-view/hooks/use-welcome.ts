@@ -7,7 +7,6 @@ import {
 } from "../../../../../../domain/character-face.ts"
 import { isOverlayOpen } from "../../../../../../hooks/open-overlay.ts"
 import { useEventListener } from "../../../../../../hooks/use-event-listener.ts"
-import { useComposerFocus } from "../../../../../../stores/composer-focus.ts"
 import { useSessionSwitcherRequest } from "../../../../../../stores/session-switcher-request.ts"
 import { useSession } from "../../../../../../stores/session.ts"
 import { nowEpochMilliseconds } from "../../../../../../utils/clock.ts"
@@ -27,7 +26,6 @@ export function useWelcome(): WelcomeModel {
   const { cards, hasOtherSessions } = useWelcomeCards()
   const character = useSession((session) => session.state.character)
   const asking = useSession((session) => session.state.pending.length > 0)
-  const requestFocus = useComposerFocus((state) => state.requestFocus)
   const openSwitcher = useSessionSwitcherRequest((state) => state.openSwitcher)
 
   function onSeePrevious(): void {
@@ -60,9 +58,6 @@ export function useWelcome(): WelcomeModel {
         event.preventDefault()
         onStart(card)
       }
-    } else if (key.kind === "write") {
-      event.preventDefault()
-      requestFocus()
     } else if (hasOtherSessions) {
       event.preventDefault()
       onSeePrevious()

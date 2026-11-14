@@ -52,6 +52,27 @@ test.describe("入力欄から送る", () => {
     await expect(room.page.getByRole("combobox", { name: "探す" })).toBeVisible()
   })
 
+  test("渡すの姿勢で入力欄から Esc で出て / を押すと、入力欄にフォーカスが戻り、下書きは空のまま", async ({
+    run,
+  }) => {
+    const room = await run.open({
+      scenario: "input-dispatch",
+      scene: "none",
+      viewport: "wide",
+      domRoots: [],
+    })
+
+    const textArea = room.page.locator("textarea")
+    await textArea.focus()
+    await room.page.keyboard.press("Escape")
+    await expect(textArea).not.toBeFocused()
+
+    await room.page.keyboard.press("/")
+
+    await expect(textArea).toBeFocused()
+    await expect(textArea).toHaveValue("")
+  })
+
   test("入力欄に打っている最中に Esc を押すと、フォーカスが入力欄から外れる", async ({ run }) => {
     const room = await run.open({
       scenario: "input-dispatch",

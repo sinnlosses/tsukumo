@@ -11,5 +11,6 @@ export const PAPER_KEYS = [
   { keys: ["1", "…", "9"], action: "問いに答える" },
   { keys: ["d"], action: "読む深さを一目 → 本文 → 記録の順に替える" },
   { keys: ["o"], action: "節を畳む・開く" },
+  { keys: ["/"], action: "入力欄へ移る" },
   { keys: ["?"], action: "キーの一覧を出す" },
 ] as const satisfies readonly PaperKeyRow[]

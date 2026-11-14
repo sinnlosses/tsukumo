@@ -53,6 +53,54 @@ function close(): void {
   })
 }
 
+function pressSlash(init: KeyboardEventInit = {}, target: EventTarget = document.body): boolean {
+  const event = new KeyboardEvent("keydown", { key: "/", bubbles: true, cancelable: true, ...init })
+  act(() => {
+    target.dispatchEvent(event)
+  })
+  return event.defaultPrevented
+}
+
+describe("useComposerFocusTiming（/ で入力欄へ移る）", () => {
+  it("入力要素の外で / を押すと、面にフォーカスを1回入れ、字は入れない", () => {
+    const focusedCount = renderWhileRunning()
+
+    expect(pressSlash()).toBe(true)
+
+    expect(focusedCount()).toBe(1)
+  })
+
+  it("入力要素の中では何もしない", () => {
+    const focusedCount = renderWhileRunning()
+    const field = document.createElement("textarea")
+    document.body.append(field)
+
+    expect(pressSlash({}, field)).toBe(false)
+
+    expect(focusedCount()).toBe(0)
+  })
+
+  it("変換中・修飾キー付きでは何もしない", () => {
+    const focusedCount = renderWhileRunning()
+
+    pressSlash({ isComposing: true })
+    pressSlash({ metaKey: true })
+    pressSlash({ ctrlKey: true })
+    pressSlash({ altKey: true })
+
+    expect(focusedCount()).toBe(0)
+  })
+
+  it("重なる面が開いているあいだは何もしない", () => {
+    const focusedCount = renderWhileRunning()
+    releases = [acquireOverlay()]
+
+    pressSlash()
+
+    expect(focusedCount()).toBe(0)
+  })
+})
+
 describe("useComposerFocusTiming（やり取りが閉じたとき）", () => {
   it("フォーカスがメインビューの外にあれば、入力欄へ入れる", () => {
     const focusedCount = renderWhileRunning()
