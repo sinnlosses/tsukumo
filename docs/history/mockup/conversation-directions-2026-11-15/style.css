@@ -1185,7 +1185,7 @@ body[data-scene="ask"] .composer-body {
   user-select: none;
 }
 
-/* 箱が低いときは流れを畳み、立ち絵が残りの高さを使う（右の相棒・手元の窓の置き場） */
+/* 箱が低いときは流れを畳み、立ち絵が残りの高さを使う（右の相棒・手元の小舞台の置き場） */
 @container stage (block-size < 640px) {
   .flow {
     display: none;
@@ -1201,7 +1201,7 @@ body[data-scene="ask"] .composer-body {
   }
 }
 
-/* 箱が細いときは吹き出しの字を1段小さくする（手元の窓の置き場） */
+/* 箱が細いときは吹き出しの字を1段小さくする（手元の小舞台の置き場） */
 @container stage (inline-size < 300px) {
   .bubble {
     margin: 8px 8px 0;
@@ -1214,7 +1214,7 @@ body[data-scene="ask"] .composer-body {
   }
 }
 
-/* 手元の窓: やり取りの列の下の段に、キャラビューの箱を置く */
+/* 手元の小舞台: やり取りの列の下の段に、キャラビューの箱を置く */
 body[data-v="desk"] {
   --gutter-w: clamp(248px, 19vw, 320px);
 }

@@ -19,7 +19,7 @@ if (params.get("bar") === "0") {
   document.body.dataset.bar = "0"
 }
 
-// 「手元の窓」だけ、キャラビューをやり取りの列の下へ移す。
+// 「手元の小舞台」だけ、キャラビューをやり取りの列の下へ移す。
 if (variant === "desk") {
   const slot = document.querySelector('[data-slot="desk"]')
   const stage = document.querySelector(".stage")
