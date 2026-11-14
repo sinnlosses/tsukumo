@@ -40,9 +40,10 @@
               ]
             },
             {
-              "tag": "p",
+              "tag": "button",
               "attributes": {
-                "data-who": "you"
+                "data-who": "you",
+                "type": "button"
               },
               "children": [
                 "あるじ",
@@ -93,9 +94,11 @@
               ]
             },
             {
-              "tag": "p",
+              "tag": "button",
               "attributes": {
-                "data-who": "you"
+                "data-who": "you",
+                "aria-current": "true",
+                "type": "button"
               },
               "children": [
                 "あるじ",

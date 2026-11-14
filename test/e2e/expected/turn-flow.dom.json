@@ -207,9 +207,11 @@
                               ]
                             },
                             {
-                              "tag": "p",
+                              "tag": "button",
                               "attributes": {
-                                "data-who": "you"
+                                "data-who": "you",
+                                "aria-current": "true",
+                                "type": "button"
                               },
                               "children": [
                                 "あるじ",

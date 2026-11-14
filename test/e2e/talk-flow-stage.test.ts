@@ -66,6 +66,33 @@ test.describe("新しい器の流れ", () => {
     await expect(page.locator('main [data-step-id][data-jumped="true"]')).toHaveCount(1)
   })
 
+  test("流れの依頼の行を押すと、紙がその回に替わる", async ({ run }) => {
+    const room = await run.open({
+      scenario: "talk-flow-stage-open-turn",
+      scene: "turn-outline",
+      viewport: "wide",
+      domRoots: [],
+    })
+    await room.waitForEvent("turn-finished", 5)
+    const page = room.page
+    const sidebar = page.locator('[data-region="sidebar"]')
+    const firstRow = sidebar.getByRole("button", {
+      name: "完了: 指示をタスクにする（架空の依頼）",
+    })
+    await expect(firstRow).not.toHaveAttribute("aria-current", "true")
+
+    await page
+      .locator('[data-slot="thread"] button[data-who="you"]', {
+        hasText: "指示をタスクにする（架空の依頼）",
+      })
+      .click()
+
+    await expect(firstRow).toHaveAttribute("aria-current", "true")
+    await expect(
+      page.locator('[data-slot="thread"] button[data-who="you"][aria-current="true"]'),
+    ).toHaveCount(1)
+  })
+
   test("背景の明るいテスト用パックでも、舞台の骨組みが出て横にはみ出さない", async ({ run }) => {
     const room = await run.open({
       scenario: "talk-flow-stage-bright",

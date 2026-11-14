@@ -34,6 +34,7 @@ describe("PresentationalTalkFlow（舞台のやり取りの流れ）", () => {
         rows={[you("架空の依頼"), her("架空の着手", false), her("架空の区切り", true)]}
         onOpenSpeechLog={() => {}}
         onJumpToStep={onJumpToStep}
+        onOpenTurn={() => {}}
       />,
     )
 
@@ -41,12 +42,39 @@ describe("PresentationalTalkFlow（舞台のやり取りの流れ）", () => {
     expect(lines.map((line) => line.getAttribute("data-who"))).toEqual(["you", "her", "her"])
     expect(lines.map((line) => line.querySelector("svg") !== null)).toEqual([false, false, true])
     expect(screen.getAllByRole("button").map((button) => button.textContent)).toEqual([
+      "あなた架空の依頼",
       "10:00架空の区切り",
     ])
 
     fireEvent.click(screen.getByRole("button", { name: /架空の区切り/u }))
 
     expect(onJumpToStep).toHaveBeenCalledWith({ turnId: 0, stepId: 1 })
+  })
+
+  it("依頼の行は回への入口で、押すとその回の番号で onOpenTurn が呼ばれ、見ている回の行に aria-current が付く", () => {
+    const onOpenTurn = vi.fn<(turnId: number) => void>()
+    render(
+      <PresentationalTalkFlow
+        rows={[
+          { ...you("架空の一回目"), turnId: 3 },
+          { ...you("架空の二回目"), turnId: 4 },
+        ]}
+        activeTurnId={4}
+        onOpenSpeechLog={() => {}}
+        onJumpToStep={() => {}}
+        onOpenTurn={onOpenTurn}
+      />,
+    )
+
+    fireEvent.click(screen.getByRole("button", { name: /架空の一回目/u }))
+
+    expect(onOpenTurn).toHaveBeenCalledWith(3)
+    expect(screen.getByRole("button", { name: /架空の二回目/u }).getAttribute("aria-current")).toBe(
+      "true",
+    )
+    expect(
+      screen.getByRole("button", { name: /架空の一回目/u }).getAttribute("aria-current"),
+    ).toBeNull()
   })
 
   it("行が4つ以上あれば「これまでのやり取り」の札が出て、押すとセリフのログを開く", () => {
@@ -61,6 +89,7 @@ describe("PresentationalTalkFlow（舞台のやり取りの流れ）", () => {
         ]}
         onOpenSpeechLog={onOpenSpeechLog}
         onJumpToStep={() => {}}
+        onOpenTurn={() => {}}
       />,
     )
 

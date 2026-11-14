@@ -53,6 +53,14 @@ button.talk-flow-line {
   border: 0;
   cursor: pointer;
 }
+button.talk-flow-line[data-who="you"] {
+  min-height: 24px;
+}
+button.talk-flow-line[data-who="you"][aria-current="true"] {
+  box-shadow:
+    inset 2px 0 0 var(--accent),
+    0 0 0 1px color-mix(in srgb, var(--accent) 46%, transparent);
+}
 button.talk-flow-line:hover {
   background: rgb(58 48 64 / 0.86);
 }

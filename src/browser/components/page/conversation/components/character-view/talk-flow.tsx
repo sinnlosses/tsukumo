@@ -4,7 +4,7 @@
 import type { ReactElement } from "react"
 
 import { useStepJump, type StepJumpTarget } from "../../stores/step-jump.ts"
-import { useTurnSelection } from "../../stores/turn-selection.ts"
+import { showTurn, useTurnSelection } from "../../stores/turn-selection.ts"
 import type { TalkFlowRow } from "./domain/talk-flow.ts"
 import { PresentationalTalkFlow } from "./presentational-talk-flow.tsx"
 
@@ -28,6 +28,8 @@ export function TalkFlow(props: TalkFlowProps): ReactElement {
       rows={props.rows}
       onOpenSpeechLog={props.onOpenSpeechLog}
       onJumpToStep={jumpToStep}
+      onOpenTurn={showTurn}
+      activeTurnId={activeTurnId}
     />
   )
 }

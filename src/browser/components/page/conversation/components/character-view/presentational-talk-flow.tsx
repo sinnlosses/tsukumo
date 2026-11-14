@@ -1,7 +1,8 @@
 // 舞台のやり取りの流れの器。利用者の依頼・補足は右寄せ、キャラクターのセリフは左寄せで、古い→新しいを上→下に並べる。
 // 中身は下に寄せ、溢れた古い行は上へ押し出して薄れさせる（`stage/talk-flow.css`）。
 // 行が `MORE_THRESHOLD` 件以上あるときだけ、上端に「これまでのやり取り」の札を出してセリフのログを開く。
-// 段を終えたセリフの行だけが狐火を持ち、押すと紙のその段へ移るボタンになる。ほかの行は押せない。
+// 段を終えたセリフの行だけが狐火を持ち、押すと紙のその段へ移るボタンになる。
+// 利用者の行は押すと紙のその回を出すボタンで、見ている回の行に印を付ける。ほかの行は押せない。
 // 流れが空でも器は残す（段の高さ配分を変えない）。
 
 import type { ReactElement, ReactNode } from "react"
@@ -22,6 +23,10 @@ type PresentationalTalkFlowProps = {
   readonly onOpenSpeechLog: () => void
   /** 段を終えたセリフの行を押したとき。 */
   readonly onJumpToStep: (target: StepJumpTarget) => void
+  /** 依頼の行を押したとき。紙にその回を出す。 */
+  readonly onOpenTurn: (turnId: number) => void
+  /** いま紙に出している回。同じ回の依頼の行に印を付ける。 */
+  readonly activeTurnId?: number
 }
 
 export function PresentationalTalkFlow(props: PresentationalTalkFlowProps): ReactElement {
@@ -34,7 +39,13 @@ export function PresentationalTalkFlow(props: PresentationalTalkFlowProps): Reac
       )}
       <div className={styles["talk-flow"]} aria-label="この依頼でのやり取り">
         {props.rows.map((row) => (
-          <TalkFlowLine key={row.key} row={row} onJumpToStep={props.onJumpToStep} />
+          <TalkFlowLine
+            key={row.key}
+            row={row}
+            onJumpToStep={props.onJumpToStep}
+            onOpenTurn={props.onOpenTurn}
+            activeTurnId={props.activeTurnId}
+          />
         ))}
       </div>
     </div>
@@ -44,14 +55,25 @@ export function PresentationalTalkFlow(props: PresentationalTalkFlowProps): Reac
 function TalkFlowLine(props: {
   readonly row: TalkFlowRow
   readonly onJumpToStep: (target: StepJumpTarget) => void
+  readonly onOpenTurn: (turnId: number) => void
+  readonly activeTurnId?: number
 }): ReactElement {
   const { row } = props
   if (row.kind === "you") {
     return (
-      <p className={styles["talk-flow-line"]} data-who="you">
+      <button
+        type="button"
+        className={styles["talk-flow-line"]}
+        data-who="you"
+        aria-current={row.turnId === props.activeTurnId ? "true" : undefined}
+        title="紙のこの回を開く"
+        onClick={() => {
+          props.onOpenTurn(row.turnId)
+        }}
+      >
         <span className={styles["talk-flow-caller"]}>{row.caller ?? DEFAULT_CALLER}</span>
         {row.text}
-      </p>
+      </button>
     )
   }
   const time: ReactNode = row.time.kind === "known" && (

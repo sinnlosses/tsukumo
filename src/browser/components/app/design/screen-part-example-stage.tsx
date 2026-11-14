@@ -121,6 +121,8 @@ export const STAGE_EXAMPLES: readonly ScreenPartExample[] = [
         <PresentationalTalkFlow
           onOpenSpeechLog={noop}
           onJumpToStep={noop}
+          onOpenTurn={noop}
+          activeTurnId={1}
           rows={[
             { kind: "you", key: "y1", turnId: 1, time: TIME, text: "READMEの手順を見直して" },
             {
