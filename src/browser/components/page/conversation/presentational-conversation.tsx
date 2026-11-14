@@ -24,14 +24,13 @@ import { Stage, type StagePosture } from "./components/stage/stage.tsx"
 
 /**
  * 器に差し込む、ほかの画面の部品の中身。
- * サイドバーの中段に置くやり取りの並び・検索の入口・下の入口の行と、舞台の左上に置く部屋の頭、迎えるでだけ舞台の器の右上に置く入口の群は、画面の登録表から受け取る。
+ * サイドバーの中段に置くやり取りの並び・検索の入口・下の入口の行と、舞台の左上に置く部屋の頭は、画面の登録表から受け取る。
  */
 export type ConversationShell = {
   readonly margin: ReactNode
   readonly sidebarSearch: ReactNode
   readonly sidebarGates: ReactNode
   readonly head: ReactNode
-  readonly tools: ReactNode
   readonly today: ReactNode
   /** 狭い幅の1行の頭。題（`subject`）は会話の画面が決めて渡す。 */
   readonly narrowHead: (subject: NarrowHeadSubject) => ReactNode
@@ -66,7 +65,6 @@ export function PresentationalConversation(props: PresentationalConversationProp
         chatMode={props.chatMode}
         covered={props.covered}
         onUncover={props.onUncover}
-        tools={props.shell.tools}
         narrowHead={props.shell.narrowHead(props.narrowHeadSubject)}
         figure={
           <CharacterView

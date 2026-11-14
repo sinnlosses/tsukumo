@@ -1,6 +1,6 @@
 // 「舞台と紙」の部屋の頭の入口。ほかの画面とセッションへ移る。
-// 左の群（RoomHead）は舞台の左上、右上の群（RoomHeadTools）は迎えるの器の右上、狭い幅の頭（RoomNarrowHead）は縦1列の先頭に出る。
-// 働く・渡す・雑談では右上の群の代わりに、サイドバーの検索の入口（RoomSidebarSearch）と下の入口の行（RoomSidebarGates）を出す。
+// 左の群（RoomHead）は舞台の左上、狭い幅の頭（RoomNarrowHead）は縦1列の先頭に出る。
+// サイドバーの頭の検索の入口と部屋の名前（RoomSidebarSearch）と、下の入口の行（RoomSidebarGates）はどの姿勢でも出す。
 // 置き場が離れるので、算出を1回にして探すの開閉などの状態を分けないよう、RoomHeadScope が全部を包む。
 // セッションの一覧と探すのダイアログは、狭い幅で隠れる舞台の中に置くと開いても見えないので、RoomHeadScope が中身の後ろに1回だけ置く。
 
@@ -12,7 +12,6 @@ import {
   PresentationalRoomNarrowHead,
   PresentationalRoomSidebarGates,
   PresentationalRoomSidebarSearch,
-  PresentationalRoomTools,
   type RoomNarrowHeadSubject,
 } from "./components/room-head.tsx"
 import { useRoomHead, type RoomHeadView } from "./hooks/use-room-head.ts"
@@ -35,10 +34,6 @@ export function RoomHeadScope(props: { readonly children: ReactNode }): ReactEle
 
 export function RoomHead(): ReactElement {
   return <PresentationalRoomHead {...useScopedRoomHead()} />
-}
-
-export function RoomHeadTools(): ReactElement {
-  return <PresentationalRoomTools {...useScopedRoomHead()} />
 }
 
 export function RoomSidebarSearch(): ReactElement {

@@ -58,8 +58,8 @@ export const DIARY_BODY_SELECTOR = '[class*="diary-book-body_"]'
 /** 入力欄。ページに `<textarea>` は1つしか無い。 */
 export const COMPOSER_SELECTOR = "textarea"
 
-/** 迎えるの始め方にある、タスクのモーダルを開くボタン。 */
-export const TASK_BOARD_SELECTOR = 'button:has-text("タスクの一覧")'
+/** サイドバーの入口の行にある、タスクの紙（`TaskSheet`）を開く入口。 */
+export const TASK_BOARD_SELECTOR = 'nav[aria-label="ほかの画面"] a[href$="#tasks"]'
 
 /**
  * 書き終わりの知らせ（`DiaryNotice`）の「日記帳で開く」。成果の画面（`#achievement`）

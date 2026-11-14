@@ -176,36 +176,8 @@
   color: var(--ground);
 }
 
-.others {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--inline-control);
-}
-.others-label {
-  margin-right: var(--inline-tight);
-}
-/* 広い画面では並びの箱を持たず、ボタンは見出しと同じ折り返しの行に並ぶ。 */
-.other-list {
-  display: contents;
-}
-.other {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--inline-tight);
-  height: 34px;
-  padding: 0 var(--space-md);
-  border-radius: var(--radius-md);
-}
-.others-large .other:first-of-type {
-  height: 44px;
-  padding: 0 var(--space-xl);
-  font-size: var(--font-body);
-}
-
-/* 狭い画面では、札3枚とほかの始め方が入力欄の上の高さ（390x844 で約 600px）にスクロールなしで収まるよう詰める。
-   札は送られる依頼とキーの印を畳み、題を2行・理由を1行で切る。
-   ほかの始め方は見出しを1行に置き、その下にボタンを同じ幅で横1列に並べる（2つでも3つでも1行）。 */
+/* 狭い画面では、札3枚が入力欄の上の高さ（390x844 で約 600px）にスクロールなしで収まるよう詰める。
+   札は送られる依頼とキーの印を畳み、題を2行・理由を1行で切る。 */
 @media (max-width: 760px) {
   .welcome {
     gap: var(--space-md);
@@ -263,34 +235,6 @@
   .card-start {
     height: 36px;
   }
-
-  .others {
-    flex-direction: column;
-    align-items: stretch;
-    gap: var(--stack-tight);
-  }
-  .other-list {
-    display: grid;
-    grid-auto-columns: 1fr;
-    grid-auto-flow: column;
-    gap: var(--inline-control);
-  }
-  .other,
-  .others-large .other:first-of-type {
-    flex-direction: column;
-    justify-content: center;
-    gap: var(--stack-tight);
-    height: auto;
-    min-height: 56px;
-    padding: var(--space-sm) var(--space-xs);
-    font-size: var(--font-secondary);
-    line-height: 1.3;
-    text-align: center;
-  }
-  /* ラベルは句の切れ目でだけ折り、句の途中では折らない。 */
-  .other-phrase {
-    white-space: nowrap;
-  }
 }
 
 /* 高さの低いスマホ（375x667 で入力欄の上に約 400px）では、案内の文を畳み、札の理由の行を隠して、
@@ -299,7 +243,6 @@
   .lead {
     display: none;
   }
-  /* 題と札の間は xs のまま、札とほかの始め方の間は md（xs + sm）に保つ。 */
   .welcome {
     gap: var(--stack-tight);
   }
@@ -308,11 +251,6 @@
   }
   .card {
     padding: var(--space-xs) var(--space-md) var(--space-xs) var(--space-lg);
-  }
-  .other,
-  .others-large .other:first-of-type {
-    min-height: 48px;
-    padding: var(--space-xs);
   }
   .card-head {
     grid-column: 1;

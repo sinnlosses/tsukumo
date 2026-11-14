@@ -3,6 +3,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
 import { Welcome } from "../../../../../../../src/browser/components/page/conversation/components/main-view/welcome.tsx"
+import { useComposerFocus } from "../../../../../../../src/browser/stores/composer-focus.ts"
 import { useSessionSwitcherRequest } from "../../../../../../../src/browser/stores/session-switcher-request.ts"
 import type { TaskSummaryItem } from "../../../../../../../src/shared/repository/task-summary.ts"
 import {
@@ -17,9 +18,6 @@ afterEach(() => {
   cleanup()
   useSessionSwitcherRequest.setState(useSessionSwitcherRequest.getInitialState(), true)
 })
-
-// ラベルは句ごとの要素に分かれていて、jsdom は要素の境目に空白を挟んで名前を作る。
-const PREVIOUS_LABEL = /前のやり取り\s*を見る/
 
 const READY_TASK: TaskSummaryItem = {
   id: "X-1",
@@ -87,33 +85,52 @@ describe("Welcome（キーで始める）", () => {
   })
 })
 
-describe("Welcome（ほかの始め方）", () => {
-  it("「前のやり取りを見る」で切り替え画面を開く", () => {
+describe("Welcome（札のほかの口）", () => {
+  it("札が並び、「ほかの始め方」の札は無い", () => {
     renderWelcome(FILLED)
 
-    fireEvent.click(screen.getByRole("button", { name: PREVIOUS_LABEL }))
+    expect(document.body.querySelector("ul")).not.toBeNull()
+    expect(screen.queryByText("ほかの始め方")).toBeNull()
+    expect(screen.queryByRole("button", { name: /自分で書く/ })).toBeNull()
+  })
+
+  it("キー ← で切り替え画面を開く", () => {
+    renderWelcome(FILLED)
+
+    fireEvent.keyDown(document.body, { key: "ArrowLeft" })
 
     expect(useSessionSwitcherRequest.getState().open).toBe(true)
   })
 
-  it("別の作業ツリーの行しか無いときは、前回の続きの札は出ないが「前のやり取りを見る」は出る", () => {
+  it("別の作業ツリーの行しか無いときも、キー ← で切り替え画面が開く", () => {
     const [previous] = FILLED.sessions ?? []
     renderWelcome({
       tasks: { kind: "known", items: [], omittedClosedCount: 0 },
       sessions: previous === undefined ? [] : [{ ...previous, inCurrentWorktree: false }],
     })
 
+    fireEvent.keyDown(document.body, { key: "ArrowLeft" })
+
     expect(document.body.querySelector("ul")).toBeNull()
-    expect(screen.getByRole("button", { name: PREVIOUS_LABEL })).toBeTruthy()
+    expect(useSessionSwitcherRequest.getState().open).toBe(true)
   })
 
-  it("空の帳面（タスク0件・続き無し）では札が出ず、「自分で書く」だけが大きく出て、前のやり取りの口も無い", () => {
+  it("キー / で入力欄へのフォーカスを求める", () => {
+    renderWelcome(FILLED)
+    const before = useComposerFocus.getState().signal
+
+    fireEvent.keyDown(document.body, { key: "/" })
+
+    expect(useComposerFocus.getState().signal).toBe(before + 1)
+  })
+
+  it("空の帳面（タスク0件・続き無し）では札が出ず、一文だけ出て、前のやり取りのキーも効かない", () => {
     renderWelcome({ tasks: { kind: "known", items: [], omittedClosedCount: 0 } })
 
+    fireEvent.keyDown(document.body, { key: "ArrowLeft" })
+
     expect(document.body.querySelector("ul")).toBeNull()
-    expect(
-      screen.getByRole("button", { name: /自分で書く/ }).closest(".others-large"),
-    ).not.toBeNull()
-    expect(screen.queryByRole("button", { name: PREVIOUS_LABEL })).toBeNull()
+    expect(screen.getByText("入力欄から頼める。")).toBeTruthy()
+    expect(useSessionSwitcherRequest.getState().open).toBe(false)
   })
 })

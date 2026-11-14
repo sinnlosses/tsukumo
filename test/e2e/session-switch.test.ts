@@ -25,7 +25,7 @@ test.describe("セッションの切り替え", () => {
       scenario: "session-switch-enter",
       scene: "session-list",
       viewport: "wide",
-      domRoots: ["room-head"],
+      domRoots: ["sidebar"],
     })
 
     await room.waitForEvent("sessions-changed")

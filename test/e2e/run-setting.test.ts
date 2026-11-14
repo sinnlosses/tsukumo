@@ -20,7 +20,7 @@ test.describe("新しいセッションの既定のモデル・effort の操作�
     })
 
     await room.page
-      .locator('[data-region="room-tools"]')
+      .locator('[data-region="sidebar"]')
       .getByRole("link", { name: "設定", exact: true })
       .click()
     const combobox = room.page.getByRole("combobox", { name: "新しいセッションの既定のモデル" })

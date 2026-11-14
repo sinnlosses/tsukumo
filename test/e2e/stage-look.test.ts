@@ -119,7 +119,7 @@ function masksOf(page: Page): readonly Locator[] {
     page.locator("time"),
     page.locator("[data-tick]"),
     page.locator('[data-slot="today"]'),
-    page.locator('[data-region="room-head"] > button[aria-haspopup="dialog"]'),
+    page.locator('[data-region="sidebar"] button[aria-haspopup="dialog"]').first(),
   ]
 }
 

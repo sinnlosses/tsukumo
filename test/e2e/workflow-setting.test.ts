@@ -146,7 +146,7 @@ async function openWorkflowFace(
       kind: "after-act",
       act: () =>
         room.page
-          .locator('[data-region="room-tools"]')
+          .locator('[data-region="sidebar"]')
           .getByRole("link", { name: "設定", exact: true })
           .click(),
     },

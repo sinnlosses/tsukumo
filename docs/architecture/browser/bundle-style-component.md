@@ -97,7 +97,7 @@ class 名は用語集の語（`balloon` / `portrait` / `work-strip` など）を
 | 字とアイコン   | ボタンの印と字、札の顔の絵と理由           | `--stack-tight`   | `--inline-tight`   | —                                  | 4px        |
 | 部品の中の項目 | 札の頭・題・理由・足の行、札の頭の番号と印 | `--stack-block`   | `--inline-control` | `--inset-control`（8px 12px）      | 8px        |
 | 同じ塊の項目   | 始め方の札どうし                           | `--stack-group`   | `--inline-group`   | `--inset-card`（12px 16px）        | 16px       |
-| 塊と塊         | 案内の文と札の一覧、札の一覧とほかの始め方 | `--stack-section` | —                  | —                                  | 24px       |
+| 塊と塊         | 案内の文と札の一覧                         | `--stack-section` | —                  | —                                  | 24px       |
 | 画面の区画     | 領域の縁、ページの縁                       | —                 | —                  | `--gutter-region`・`--gutter-page` | 12px・16px |
 
 **部品の内側の余白は、その部品と隣の部品の間以下にする**（内≦外）。内側が外の間より広いと、部品の中身より隣の部品のほうが近く見え、どこまでが1つの部品か読めなくなる。札なら、札の内側（`--inset-card`）を札どうしの間（`--stack-group`・`--inline-group`）以下にし、札の中の行の間（`--stack-block`）を札の内側以下にする。

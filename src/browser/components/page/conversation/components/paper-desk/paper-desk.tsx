@@ -1,5 +1,5 @@
 // 新しい器「舞台と紙」の、舞台の右の場所。
-// 働く・渡すでは、中央に紙、紙の下端に浮く入力欄、右端にサイドバーを置く。迎えるでは紙も欄外も出さず、迎えの一言・始め方・入力欄を地の上に下寄せで並べ、入力欄は働くと同じ下端に置く。
+// どの姿勢でも、中央に紙、紙の下端に浮く入力欄、右端にサイドバーを置く。迎えるでは紙の先頭に迎えの一言を置き、始め方を紙に出す。
 // 場所は `data-region` でも名乗る（class 名はハッシュ化されるので、外から場所を指す口はこちらを使う）。
 // ここから他の機能を import しない（中身は props で受ける）。
 
@@ -13,7 +13,7 @@ type PaperDeskProps = {
   /** 迎えるでだけ、入力欄の上に出す迎えの一言。 */
   readonly greeting: ReactNode
   readonly paper: ReactNode
-  /** 働く・渡すで紙の右（3列目）に置くサイドバー。迎えるでは出さない。 */
+  /** 紙の右（3列目）に置くサイドバー。 */
   readonly sidebar: ReactNode
   readonly dock: ReactNode
   /** 尋ねるあいだだけ渡す。入力欄の場所の上にお伺いを出し、紙の中身を引かせる。 */
@@ -21,25 +21,12 @@ type PaperDeskProps = {
 }
 
 export function PaperDesk(props: PaperDeskProps): ReactElement {
-  if (props.posture === "greet") {
-    return (
-      <div className={styles["paper-home"]} data-region="home" data-posture="greet">
-        {props.greeting}
-        <main className={styles["paper-home-body"]} data-region="paper" aria-label="始め方">
-          {props.paper}
-        </main>
-        <section className={styles["paper-home-dock"]} data-region="dock" aria-label="入力欄">
-          {props.inquiry}
-          {props.dock}
-        </section>
-      </div>
-    )
-  }
   const asking = props.inquiry !== undefined
   return (
     <>
       <div className={styles["paper-sheet"]}>
         <main className={styles["paper"]} data-region="paper" data-asking={asking} aria-label="紙">
+          {props.greeting}
           {props.paper}
         </main>
         <section

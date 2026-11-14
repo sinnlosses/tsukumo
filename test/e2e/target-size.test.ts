@@ -19,7 +19,7 @@ test.describe("会話の画面の押す的と字", () => {
     run,
   }) => {
     const room = await openTaskListRoomWithRunningTask(run, "target-size-welcome", [], "medium")
-    await room.page.getByRole("button", { name: "タスクの一覧から選ぶ", exact: true }).waitFor()
+    await room.page.getByRole("link", { name: /^タスク/ }).waitFor()
     await expectReadable(room.page)
 
     await openTaskBoardFromWelcome(room)

@@ -5,7 +5,6 @@ import { TaskSheet } from "../../features/task-board/task-sheet.tsx"
 import {
   RoomHead,
   RoomHeadScope,
-  RoomHeadTools,
   RoomNarrowHead,
   RoomSidebarGates,
   RoomSidebarSearch,
@@ -42,7 +41,6 @@ export const LAYOUT_SCREENS = {
           sidebarSearch: <RoomSidebarSearch />,
           sidebarGates: <RoomSidebarGates />,
           head: <RoomHead />,
-          tools: <RoomHeadTools />,
           today: <TodayLamp />,
           narrowHead: (subject) => <RoomNarrowHead subject={subject} />,
         }}

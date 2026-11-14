@@ -1,4 +1,4 @@
-/* 部屋の頭の左の群。値は見本 `docs/history/mockup/ui-rebuild-2026-11-12/whole.html` の `.room`・`.room-pick`・`.room-state`。
+/* 部屋の頭の左の群。値は見本 `docs/history/mockup/ui-rebuild-2026-11-12/whole.html` の `.room`・`.room-state`。
    背景の上に直に字を置くので、字に影を敷いて読めるようにする。 */
 .room-head {
   display: flex;
@@ -8,38 +8,6 @@
   max-width: 336px;
   color: var(--ink);
   text-shadow: 0 1px 10px rgb(0 0 0 / 0.8);
-}
-/* 押せる地の左の余白のぶん左へずらし、字の左端を状態の行とそろえる。 */
-.room-head-pick {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--inline-control);
-  max-width: 100%;
-  padding: 0 var(--inline-tight);
-  overflow: hidden;
-  translate: calc(var(--inline-tight) * -1);
-  border: 0;
-  border-radius: var(--radius-md);
-  background: none;
-  color: inherit;
-  font: 600 var(--font-subheading) / 1.4 var(--font-sans);
-  letter-spacing: 0.02em;
-  text-overflow: ellipsis;
-  text-shadow: inherit;
-  white-space: nowrap;
-  cursor: pointer;
-}
-.room-head-pick-mark {
-  flex: none;
-  width: 6px;
-  height: 6px;
-  border-right: 1.5px solid var(--ink-soft);
-  border-bottom: 1.5px solid var(--ink-soft);
-  transform: translateY(-3px) rotate(45deg);
-}
-.room-head-pick:hover,
-.room-head-pick[aria-expanded="true"] {
-  background: rgb(255 255 255 / 0.1);
 }
 .room-head-mode {
   text-shadow: none;
@@ -124,50 +92,43 @@
 .room-narrow-head-menu[aria-expanded="true"] {
   background: color-mix(in srgb, var(--surface-raised), var(--ink) 10%);
 }
-/* 右上の群。押せる地のボタンを並べ、背景の上でも読めるよう地を敷く。 */
-.room-tools {
+/* サイドバーの頭。部屋の名前（押すとセッションの一覧）の下に検索の入口を置く。 */
+.room-side-head {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--stack-tight) var(--inline-tight);
-  justify-content: flex-end;
+  flex-direction: column;
+  gap: var(--stack-tight);
   min-width: 0;
 }
-.room-tools-nav {
-  display: contents;
-}
-.room-tools-button {
-  display: inline-flex;
+.room-side-title {
+  display: flex;
   align-items: center;
-  gap: var(--inline-tight);
-  padding: var(--stack-tight) var(--inline-control);
+  gap: var(--inline-control);
+  max-width: 100%;
+  padding: 0 var(--inline-control);
   border: 0;
   border-radius: var(--radius-md);
-  background: color-mix(in srgb, var(--ground) 62%, transparent);
-  box-shadow: 0 0 0 1px rgb(255 255 255 / 0.14);
-  color: var(--ink-soft);
-  font-size: var(--font-secondary);
-  line-height: 1.4;
-  text-decoration: none;
-  white-space: nowrap;
+  background: none;
+  color: var(--ink);
+  font: 600 var(--font-subheading) / 1.8 var(--font-sans);
+  letter-spacing: 0.02em;
   cursor: pointer;
 }
-.room-tools-button i {
-  width: 28px;
-  height: 4px;
-  border-radius: var(--radius-sm);
-  background: linear-gradient(
-    90deg,
-    var(--ink-soft) var(--room-tools-meter-fill),
-    rgb(255 255 255 / 0.2) var(--room-tools-meter-fill)
-  );
+.room-side-title > span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-.room-tools-button kbd {
-  background: rgb(20 18 26 / 0.55);
+.room-side-title-mark {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-right: 1.5px solid var(--ink-soft);
+  border-bottom: 1.5px solid var(--ink-soft);
+  transform: translateY(-3px) rotate(45deg);
 }
-.room-tools-button:hover,
-.room-tools-button[aria-current="page"] {
-  background: rgb(255 255 255 / 0.16);
-  color: var(--ink);
+.room-side-title:hover,
+.room-side-title[aria-expanded="true"] {
+  background: rgb(255 255 255 / 0.1);
 }
 /* サイドバーの検索の入口。値は見本の `.side-search`。 */
 .room-side-search {
@@ -221,8 +182,8 @@
   border-radius: var(--radius-sm);
   background: linear-gradient(
     90deg,
-    var(--ink-soft) var(--room-tools-meter-fill),
-    rgb(255 255 255 / 0.2) var(--room-tools-meter-fill)
+    var(--ink-soft) var(--room-side-meter-fill),
+    rgb(255 255 255 / 0.2) var(--room-side-meter-fill)
   );
 }
 .room-side-gate:hover,

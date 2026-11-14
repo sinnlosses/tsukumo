@@ -77,39 +77,6 @@
   gap: var(--stack-block);
   padding: var(--inset-card);
 }
-/* 迎える。紙を出さず、舞台の右の地に入力欄と始め方を縦に並べる。値は見本の `.A-home`。 */
-.paper-home {
-  --region-padding: 0px;
-  --paper-dock-inline: 30px;
-  --paper-dock-bottom: 16px;
-  --paper-home-padding: 0 var(--paper-dock-inline) var(--paper-dock-bottom) 12px;
-  display: flex;
-  flex: 0 1 680px;
-  flex-direction: column;
-  gap: var(--stack-block);
-  justify-content: flex-end;
-  align-self: stretch;
-  min-width: 0;
-  min-height: 0;
-  padding: var(--paper-home-padding);
-}
-.paper-home > :first-child {
-  flex: none;
-}
-.paper-home-dock {
-  flex: none;
-  padding: var(--inset-control);
-  border-radius: var(--radius-xl);
-  background: var(--surface-float);
-  box-shadow: var(--shadow-raised);
-}
-.paper-home-body {
-  flex: 0 1 auto;
-  min-width: 0;
-  min-height: 0;
-  overflow-y: auto;
-  scrollbar-width: thin;
-}
 .paper-margin-title {
   margin: 0;
   color: var(--ink-quiet);
@@ -146,32 +113,6 @@
   }
   .paper-dock[data-posture="ask"] {
     padding: var(--inset-card) 0 0;
-    box-shadow: none;
-  }
-  /* 迎える。入れ物は箱を作らず、迎えの一言・始め方・入力欄を外枠の縦の並びへ直に加える。
-     入力欄は最下段（`.paper-dock` と同じ `order`）、始め方は残りの高さを取って転がる。 */
-  .paper-home {
-    display: contents;
-  }
-  .paper-home > * {
-    order: 1;
-    padding-inline: var(--gutter-page);
-  }
-  .paper-home > :first-child {
-    flex: none;
-    padding-top: var(--gutter-region);
-  }
-  .paper-home-body {
-    flex: 1 1 0;
-    padding-block: var(--gutter-region);
-    overflow-y: auto;
-  }
-  .paper-home-dock {
-    flex: none;
-    order: 3;
-    padding: var(--inset-control) var(--gutter-page);
-    border-radius: 0;
-    background: transparent;
     box-shadow: none;
   }
 }

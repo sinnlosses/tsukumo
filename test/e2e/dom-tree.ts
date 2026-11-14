@@ -71,7 +71,6 @@ const DOM_ROOT_SELECTORS = {
   paper: '[data-region="paper"]',
   sidebar: '[data-region="sidebar"]',
   dock: '[data-region="dock"]',
-  "room-head": '[data-region="room-head"]',
   "stage-balloon": '[data-slot="balloon"]',
   "stage-thread": '[data-slot="thread"]',
   "stage-portrait": '[data-slot="portrait"]',

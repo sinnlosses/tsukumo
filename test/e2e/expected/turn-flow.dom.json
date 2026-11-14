@@ -88,23 +88,6 @@
                           },
                           "children": [
                             {
-                              "tag": "button",
-                              "attributes": {
-                                "aria-haspopup": "dialog",
-                                "aria-expanded": "false",
-                                "type": "button"
-                              },
-                              "children": [
-                                "<project>",
-                                {
-                                  "tag": "span",
-                                  "attributes": {
-                                    "aria-hidden": "true"
-                                  }
-                                }
-                              ]
-                            },
-                            {
                               "tag": "div",
                               "attributes": {
                                 "role": "radiogroup",
@@ -364,6 +347,20 @@
                 "aria-label": "紙"
               },
               "children": [
+                {
+                  "tag": "header",
+                  "attributes": {
+                    "data-region": "greeting"
+                  },
+                  "children": [
+                    {
+                      "tag": "p",
+                      "children": [
+                        "つくもの精霊"
+                      ]
+                    }
+                  ]
+                },
                 {
                   "tag": "div",
                   "attributes": {
@@ -1572,6 +1569,23 @@
                 "aria-label": "サイドバー"
               },
               "children": [
+                {
+                  "tag": "button",
+                  "attributes": {
+                    "aria-haspopup": "dialog",
+                    "aria-expanded": "false",
+                    "type": "button"
+                  },
+                  "children": [
+                    "<project>",
+                    {
+                      "tag": "span",
+                      "attributes": {
+                        "aria-hidden": "true"
+                      }
+                    }
+                  ]
+                },
                 {
                   "tag": "button",
                   "attributes": {

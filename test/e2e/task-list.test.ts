@@ -8,7 +8,7 @@ import {
   openTaskListRoomWithDraft,
 } from "./task-room.ts"
 
-// 迎えるの「タスクの一覧から選ぶ」で開くタスクのモーダルから頼む流れ（docs/architecture/testing.md「E2E のシナリオの一覧」）。
+// 迎えるのサイドバーの入口で開くタスクのモーダルから頼む流れ（docs/architecture/testing.md「E2E のシナリオの一覧」）。
 
 /** 撮るときの経過（凍らせた瞬間から）。「何秒前」の類いをこの値で揃える。 */
 const ELAPSED_MS = 60_000

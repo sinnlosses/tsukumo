@@ -4,7 +4,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import {
   RoomHead,
   RoomHeadScope,
-  RoomHeadTools,
   RoomNarrowHead,
   RoomSidebarGates,
   RoomSidebarSearch,
@@ -34,7 +33,8 @@ function renderRoomHead(state: Partial<SessionState>, spy: (command: SentCommand
   render(
     <RoomHeadScope>
       <RoomHead />
-      <RoomHeadTools />
+      <RoomSidebarSearch />
+      <RoomSidebarGates />
     </RoomHeadScope>,
     { wrapper: queryClientWrapper() },
   )
@@ -65,6 +65,7 @@ describe("部屋の頭", () => {
     const nav = screen.getByRole("navigation", { name: "ほかの画面" })
     const links = within(nav).getAllByRole("link")
     expect(links.map((link) => [link.textContent, link.getAttribute("href")])).toEqual([
+      ["文脈 —", "#token-usage"],
       ["タスク 2", "#tasks"],
       ["成果", "#achievement"],
       ["キャラ", "#character"],
@@ -73,14 +74,23 @@ describe("部屋の頭", () => {
     expect(screen.getByRole("link", { name: /^文脈/ }).getAttribute("href")).toBe("#token-usage")
   })
 
-  it("入口は右上の群にあり、左の群には部屋の名前・仕事と雑談・状態だけが残る", () => {
+  it("入口はサイドバーの入口の行にあり、左の群には仕事と雑談・状態だけが残り、部屋の名前はサイドバーの頭にある", () => {
     renderRoomHead({ tasks: { kind: "no-beads" } }, () => {})
 
     const count = (selector: string): number => document.querySelectorAll(selector).length
     expect(count('[data-region="room-head"] a')).toBe(0)
+    expect(count('[data-region="room-head"] button:not([role="radio"])')).toBe(0)
     expect(count('[data-region="room-head"] [role="radio"]')).toBe(2)
-    expect(count('[data-region="room-tools"] a')).toBe(4)
-    expect(count('[data-region="room-tools"] button')).toBe(1)
+    expect(
+      within(screen.getByRole("navigation", { name: "ほかの画面" })).getAllByRole("link"),
+    ).toHaveLength(4)
+    const [title] = screen
+      .getAllByRole("button")
+      .filter((button) => button.getAttribute("role") !== "radio")
+    expect(title?.getAttribute("aria-haspopup")).toBe("dialog")
+    expect(title?.getAttribute("aria-expanded")).toBe("false")
+    fireEvent.click(title ?? document.body)
+    expect(title?.getAttribute("aria-expanded")).toBe("true")
   })
 
   it("開いている紙の札だけが aria-current を持つ", async () => {
@@ -189,11 +199,11 @@ describe("狭い幅の頭", () => {
     expect(window.location.hash).toBe("#settings")
   })
 
-  it("部屋が題のときは、部屋の頭と同じ主の字を出す", () => {
+  it("部屋が題のときは、サイドバーの頭の部屋の名前と同じ主の字を出す", () => {
     putSession({ ...INITIAL_SESSION_STATE, tasks: { kind: "no-beads" } }, () => {})
     render(
       <RoomHeadScope>
-        <RoomHead />
+        <RoomSidebarSearch />
         <RoomNarrowHead subject={{ kind: "room" }} />
       </RoomHeadScope>,
       { wrapper: queryClientWrapper() },
@@ -201,7 +211,7 @@ describe("狭い幅の頭", () => {
 
     const narrowTitle = document.querySelector('[data-region="room-narrow-head"] b')?.textContent
     expect(narrowTitle).not.toBe("")
-    expect(document.querySelector('[data-region="room-head"]')?.textContent).toContain(narrowTitle)
+    expect(document.querySelector("button[aria-haspopup]")?.textContent).toContain(narrowTitle)
   })
 })
 
@@ -234,7 +244,7 @@ describe("探す", () => {
       },
     )
 
-    fireEvent.click(screen.getByRole("button", { name: /^探す/ }))
+    fireEvent.click(screen.getByRole("button", { name: /^検索/ }))
     const field = screen.getByRole("combobox", { name: "探す", hidden: true })
     fireEvent.change(field, { target: { value: "T-" } })
     expect(

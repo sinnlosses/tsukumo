@@ -1,6 +1,6 @@
 {
-  "room-head": [
-    { "tag": "div", "attributes": { "data-region": "room-head" }, "children": [
+  "sidebar": [
+    { "tag": "aside", "attributes": { "data-region": "sidebar" }, "children": [
       { "tag": "button", "attributes": { "aria-haspopup": "dialog", "aria-expanded": "false" } }
     ] }
   ]

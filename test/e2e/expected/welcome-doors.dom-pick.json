@@ -11,11 +11,7 @@
           "架空のタスク（着手できる）",
           { "tag": "button", "attributes": { "aria-label": "T-001 を始める（すぐ送る）" } }
         ] }
-      ] },
-      "ほかの始め方",
-      { "tag": "button", "children": ["自分で書く"] },
-      { "tag": "button", "children": ["タスクの一覧", "から選ぶ"] },
-      { "tag": "button", "children": ["前のやり取り", "を見る"] }
+      ] }
     ] }
   ]
 }

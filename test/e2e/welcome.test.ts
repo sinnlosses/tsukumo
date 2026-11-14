@@ -55,7 +55,7 @@ function draft(page: Page): Promise<string> {
 }
 
 test.describe("始め方の一覧", () => {
-  test("理由つきのおすすめのカードと「ほかの始め方」が並び、広いビューポートでも中くらいのビューポートでも横にあふれない", async ({
+  test("理由つきのおすすめのカードが並び、「ほかの始め方」の札は無く、広いビューポートでも中くらいのビューポートでも横にあふれない", async ({
     run,
   }) => {
     const room = await openWelcomeRoom(run, "welcome-doors", "wide")
@@ -68,9 +68,8 @@ test.describe("始め方の一覧", () => {
     ).toBe(0)
     expect(await welcome(page).locator("ul > li").count()).toBe(2)
     expect(await welcome(page).getByText("いちばんのおすすめ").count()).toBe(1)
-    for (const name of ["自分で書く", "タスクの一覧から選ぶ", "前のやり取りを見る"]) {
-      expect(await mainView(page).getByRole("button", { name }).count()).toBe(1)
-    }
+    expect(await welcome(page).getByText("ほかの始め方").count()).toBe(0)
+    expect(await welcome(page).locator("button:not([aria-label])").count()).toBe(0)
     const overflow = await mainView(page).evaluate((el) => el.scrollWidth - el.clientWidth)
     expect(overflow).toBeLessThanOrEqual(0)
     await room.settleAndMatchPicked(ELAPSED_MS)

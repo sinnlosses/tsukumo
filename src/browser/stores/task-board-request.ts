@@ -12,16 +12,12 @@ export type TaskBoardRequest =
 
 type TaskBoardRequestState = {
   readonly request: TaskBoardRequest
-  readonly openList: () => void
   readonly openTask: (id: string) => void
   readonly close: () => void
 }
 
 export const useTaskBoardRequest = create<TaskBoardRequestState>()((set) => ({
   request: { kind: "closed" },
-  openList: () => {
-    set({ request: { kind: "open", focus: { kind: "first" } } })
-  },
   openTask: (id) => {
     set({ request: { kind: "open", focus: { kind: "task", id } } })
   },

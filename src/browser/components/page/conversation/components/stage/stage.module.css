@@ -10,7 +10,6 @@
   background: var(--ground);
 }
 .stage-shell[data-posture="greet"] {
-  --stage-width: clamp(340px, 42vw, 900px);
   --stage-thread-floor: 3rem;
   --stage-figure-height-cap: 68cqh;
 }
@@ -61,16 +60,6 @@
   z-index: 2;
   background: rgb(12 10 16 / 0.52);
 }
-/* 迎えるだけに出る右上の入口の群。右の地の上に1行で並べる。 */
-.stage-tools {
-  position: absolute;
-  top: 12px;
-  right: 22px;
-  z-index: 3;
-  display: flex;
-  justify-content: flex-end;
-  max-width: calc(100% - var(--stage-width) - 44px);
-}
 /* 狭い幅の頭の置き場。広い幅では升目に入れない（中身の側も隠す）。 */
 .stage-narrow-head {
   display: none;
@@ -103,8 +92,7 @@
   .stage-desk {
     display: contents;
   }
-  .stage-veil,
-  .stage-tools {
+  .stage-veil {
     display: none;
   }
 }

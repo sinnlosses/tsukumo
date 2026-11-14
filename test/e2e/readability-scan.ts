@@ -20,7 +20,7 @@ export async function scanReadability(page: Page): Promise<ReadabilityReport> {
   })
   return page.evaluate((MIN_FONT: number) => {
     const ROOTS =
-      '[data-region="paper"], [data-region="sidebar"],[data-region="dock"], [data-region="room-tools"], dialog[open]'
+      '[data-region="paper"], [data-region="sidebar"],[data-region="dock"], dialog[open]'
     const TARGETS =
       'button, a[href], input, select, textarea, summary, [role="button"], [role="tab"], [role="option"], [role="menuitem"]'
     const MIN_TARGET = 23.95

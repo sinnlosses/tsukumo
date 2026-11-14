@@ -38,20 +38,16 @@ describe("PaperDesk", () => {
     expect(document.querySelector('[data-region="dock"]')?.textContent).toContain("架空の選択肢")
   })
 
-  it("迎える姿勢では、入力欄の場所を始め方より後ろに並べる", () => {
+  it("迎える姿勢でも、紙の先頭に迎えの一言を置いて始め方を続け、home の場所は無い", () => {
     render(desk("greet", false))
 
-    const body = document.querySelector('[data-region="paper"]')
-    const dock = document.querySelector('[data-region="dock"]')
-    const regions = [...document.querySelectorAll("[data-region]")]
-    expect(regions.indexOf(body ?? document.body)).toBeLessThan(
-      regions.indexOf(dock ?? document.body),
-    )
-    expect(body).not.toBeNull()
-    expect(dock).not.toBeNull()
+    const paper = document.querySelector('[data-region="paper"]')
+    expect(paper?.textContent).toBe("迎えの一言紙の本文")
+    expect(document.querySelector('[data-region="home"]')).toBeNull()
+    expect(paper?.parentElement).toBe(document.querySelector('[data-region="dock"]')?.parentElement)
   })
 
-  it.each(["work", "deliver"] as const)(
+  it.each(["greet", "work", "deliver"] as const)(
     "%s の姿勢では、紙と入力欄のあとにサイドバーを3列目に置き、欄外は置かない",
     (posture) => {
       render(desk(posture, false))
@@ -62,12 +58,6 @@ describe("PaperDesk", () => {
       expect(regions).toEqual(["paper", "dock", "sidebar"])
     },
   )
-
-  it("迎える姿勢ではサイドバーを置かない", () => {
-    render(desk("greet", false))
-
-    expect(document.querySelector('[data-region="sidebar"]')).toBeNull()
-  })
 
   it("尋ねていなければ選択肢を出さない", () => {
     render(desk("work", false))

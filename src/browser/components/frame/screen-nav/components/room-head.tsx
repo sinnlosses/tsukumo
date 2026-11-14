@@ -1,7 +1,7 @@
 // 新しい器「舞台と紙」の部屋の頭の器。
-// 左の群（PresentationalRoomHead）は舞台の左上に置き、部屋の名前（押すとセッションの一覧）・仕事と雑談の切り替え・状態を並べる。
-// 右上の群（PresentationalRoomTools）は舞台の器の右上に置き、文脈 n%・ほかの画面の入口・探す（⌘K）をアイコンつきのボタンで並べる。
-// 狭い幅では2つの群の代わりに1行の頭（PresentationalRoomNarrowHead）を出し、入口はすべて「≡」から開く探すに畳む。
+// 左の群（PresentationalRoomHead）は舞台の左上に置き、仕事と雑談の切り替え・状態を並べる。
+// サイドバーの頭（PresentationalRoomSidebarSearch）は部屋の名前（押すとセッションの一覧）と探す（⌘K）の入口、下の入口の行（PresentationalRoomSidebarGates）は文脈 n%・ほかの画面の入口を置く。
+// 狭い幅では左の群の代わりに1行の頭（PresentationalRoomNarrowHead）を出し、入口はすべて「≡」から開く探すに畳む。
 // フックも算出も持たず、受け取った値と呼び先をそのまま置く。
 
 import type { ReactElement, ReactNode } from "react"
@@ -36,16 +36,6 @@ const GATE_ICONS = {
 export function PresentationalRoomHead(props: RoomHeadView): ReactElement {
   return (
     <div className={styles["room-head"]} data-region="room-head">
-      <button
-        type="button"
-        className={styles["room-head-pick"]}
-        aria-haspopup="dialog"
-        aria-expanded={props.sessionsOpen}
-        onClick={props.onOpenSessions}
-      >
-        {props.title}
-        <span className={styles["room-head-pick-mark"]} aria-hidden="true" />
-      </button>
       <div className={styles["room-head-mode"]} title={props.modeBlockedTitle}>
         <Segmented
           ariaLabel="仕事と雑談の切り替え"
@@ -66,7 +56,7 @@ export function PresentationalRoomHead(props: RoomHeadView): ReactElement {
 
 /**
  * セッションの一覧と探すの2つのダイアログ。
- * 開く口は左の群・右上の群・狭い幅の頭に散るが、狭い幅では舞台ごと隠れるので、どの口からも見えるよう舞台の外に1回だけ置く。
+ * 開く口はサイドバーの頭・狭い幅の頭に散るが、狭い幅では舞台ごと隠れるので、どの口からも見えるよう舞台の外に1回だけ置く。
  */
 export function PresentationalRoomDialogs(
   props: Pick<RoomHeadView, "switcher" | "title" | "search">,
@@ -122,24 +112,38 @@ export function PresentationalRoomNarrowHead(
   )
 }
 
-/** サイドバーの頭に置く検索の入口。押すと探すが開く。 */
-export function PresentationalRoomSidebarSearch(props: Pick<RoomHeadView, "search">): ReactElement {
+/** サイドバーの頭。部屋の名前（押すとセッションの一覧）と、検索の入口（押すと探すが開く）を置く。 */
+export function PresentationalRoomSidebarSearch(
+  props: Pick<RoomHeadView, "search" | "title" | "sessionsOpen" | "onOpenSessions">,
+): ReactElement {
   return (
-    <button
-      type="button"
-      className={styles["room-side-search"]}
-      aria-haspopup="dialog"
-      aria-expanded={props.search.open}
-      onClick={props.search.onOpen}
-    >
-      <SearchIcon />
-      <span>検索</span>
-      <kbd>⌘K</kbd>
-    </button>
+    <div className={styles["room-side-head"]}>
+      <button
+        type="button"
+        className={styles["room-side-title"]}
+        aria-haspopup="dialog"
+        aria-expanded={props.sessionsOpen}
+        onClick={props.onOpenSessions}
+      >
+        <span>{props.title}</span>
+        <span className={styles["room-side-title-mark"]} aria-hidden="true" />
+      </button>
+      <button
+        type="button"
+        className={styles["room-side-search"]}
+        aria-haspopup="dialog"
+        aria-expanded={props.search.open}
+        onClick={props.search.onOpen}
+      >
+        <SearchIcon />
+        <span>検索</span>
+        <kbd>⌘K</kbd>
+      </button>
+    </div>
   )
 }
 
-/** サイドバーの下の入口の行。文脈 n%・ほかの画面の入口を、右上の群と同じ <a href> で並べる。 */
+/** サイドバーの下の入口の行。文脈 n%・ほかの画面の入口を <a href> で並べる。 */
 export function PresentationalRoomSidebarGates(
   props: Pick<RoomHeadView, "context" | "gates">,
 ): ReactElement {
@@ -155,7 +159,7 @@ export function PresentationalRoomSidebarGates(
         {props.context.label}
         <i
           aria-hidden="true"
-          style={{ "--room-tools-meter-fill": `${String(props.context.fill)}%` }}
+          style={{ "--room-side-meter-fill": `${String(props.context.fill)}%` }}
         />
       </a>
       {props.gates.map((gate) => (
@@ -170,51 +174,5 @@ export function PresentationalRoomSidebarGates(
         </a>
       ))}
     </nav>
-  )
-}
-
-export function PresentationalRoomTools(
-  props: Pick<RoomHeadView, "context" | "gates" | "search">,
-): ReactElement {
-  return (
-    <div className={styles["room-tools"]} data-region="room-tools">
-      <a
-        className={styles["room-tools-button"]}
-        href={props.context.href}
-        aria-current={props.context.current ? "page" : undefined}
-        aria-busy={props.context.busy}
-      >
-        <TokenIcon />
-        {props.context.label}
-        <i
-          aria-hidden="true"
-          style={{ "--room-tools-meter-fill": `${String(props.context.fill)}%` }}
-        />
-      </a>
-      <nav className={styles["room-tools-nav"]} aria-label="ほかの画面">
-        {props.gates.map((gate) => (
-          <a
-            key={gate.screen}
-            className={styles["room-tools-button"]}
-            href={gate.href}
-            aria-current={gate.current ? "page" : undefined}
-          >
-            {GATE_ICONS[gate.screen]}
-            {gate.label}
-          </a>
-        ))}
-      </nav>
-      <button
-        type="button"
-        className={styles["room-tools-button"]}
-        aria-haspopup="dialog"
-        aria-expanded={props.search.open}
-        onClick={props.search.onOpen}
-      >
-        <SearchIcon />
-        探す
-        <kbd>⌘K</kbd>
-      </button>
-    </div>
   )
 }

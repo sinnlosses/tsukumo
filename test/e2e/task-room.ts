@@ -1,6 +1,7 @@
 import { mkdirSync, renameSync, writeFileSync } from "node:fs"
 import { dirname, join } from "node:path"
 
+import { TASK_BOARD_SELECTOR } from "../../scripts/capture/lib/catalog-selector.ts"
 import { FAKE_BEADS_ISSUES_PATH } from "../../src/server/repository/adapter/beads/fake-beads.ts"
 import type { TaskDifficulty, TaskLoopable } from "../../src/shared/repository/task-summary.ts"
 import type { DomRootName } from "./dom-tree.ts"
@@ -269,9 +270,9 @@ export async function openTaskBoardRoomWithDrafts(
   return room
 }
 
-/** 迎えるの始め方の「タスクの一覧から選ぶ」でタスクのモーダルを開く。 */
+/** サイドバーの入口（`#tasks`）を押して、タスクの紙（`TaskSheet`）を開く。 */
 export async function openTaskBoardFromWelcome(room: ScenarioRoom): Promise<void> {
-  await room.page.getByRole("button", { name: "タスクの一覧から選ぶ", exact: true }).click()
+  await room.page.locator(TASK_BOARD_SELECTOR).click()
   await room.page.getByRole("dialog", { name: "タスク" }).waitFor()
 }
 

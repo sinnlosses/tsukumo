@@ -1,6 +1,6 @@
 {
   "paper": [
-    { "tag": "main", "attributes": { "data-region": "paper", "aria-label": "始め方" }, "children": [
+    { "tag": "main", "attributes": { "data-region": "paper", "aria-label": "紙" }, "children": [
       { "tag": "h2", "children": ["何から始める？"] }
     ] }
   ],
