@@ -34,6 +34,7 @@ import { useComposerDraft } from "../../../stores/composer-draft.ts"
 import { useCurrentTurnSteps } from "../../../stores/current-turn-step-list.ts"
 import { useMainViewContent } from "../../../stores/main-view-content.ts"
 import { useMainViewTurns } from "../../../stores/main-view-turn.ts"
+import { useTurnSelection } from "../../../stores/turn-selection.ts"
 import { useUsualDurations } from "../../../stores/usual-duration.ts"
 import { remainingLinesOf } from "../domain/failed-paper.ts"
 import { turnFailureBlockOf, type TurnFailureBlockModel } from "../domain/turn-failure-block.ts"
@@ -121,6 +122,24 @@ const SUMMARY_SEPARATOR = " ・ "
 
 const STOPPED_MIDWAY_SUFFIX = "の途中"
 const FAILED_SUFFIX = "で止まった"
+
+/**
+ * 紙が、いま働いている回の計画を出しているか。
+ * 過去の回を見ているあいだ・計画を持たない作業・ターンの外の背景の待ちは含めない（紙が同じ内容を出していない）。
+ */
+export function useWorkPlanOnPaper(): boolean {
+  const turnStepList = useCurrentTurnSteps()
+  const content = useMainViewContent((state) => state.content)
+  const running = useSession((session) => session.state.turn.kind === "running")
+  const { activeTurnId, newestTurnId } = useTurnSelection()
+  return (
+    content.kind === "work" &&
+    running &&
+    turnStepList.kind === "turn" &&
+    turnStepList.plan.kind === "planned" &&
+    activeTurnId === newestTurnId
+  )
+}
 
 export function useWorkPlanPaper(): WorkPlanPaperModel {
   const turnStepList = useCurrentTurnSteps()

@@ -1,6 +1,6 @@
 // `<TurnStatus>` のロジック。経過時間の刻みと、送信⇄中断のどちらを出すかを畳んだ値にして返す。
 //
-// 経過時間を出すのは雑談モードのときと、新しい器（`paper`）で数えているあいだ。再試行中の知らせは雑談モードのときだけ。
+// 経過時間を出すのは雑談モードのときだけ。再試行中の知らせは雑談モードのときだけ。
 // 1秒の刻みはローカルなタイマーで、`SessionState` に秒数は持たない。
 //
 // 押す先を決めるのもここ。
@@ -62,7 +62,7 @@ type TurnStatusAction =
 
 /**
  * 進み具合を出す場所。`strip` はやり取りの札の頭（過去のやり取りを見ているあいだと狭い幅の入力欄）、`paper` は紙の計画と入力欄の札。
- * `paper` では、仕事のときも経過を出し、止めるボタンを「止める」と言い、⌘. で止められる。
+ * `paper` では、止めるボタンを「止める」と言い、⌘. で止められる。仕事のときの経過は紙の頭が出すので、入力欄には出さない。
  */
 export type TurnStatusPlace = "strip" | "paper"
 
@@ -129,14 +129,13 @@ export function useTurnStatus(place: TurnStatusPlace): TurnStatusModel {
   )
 
   return {
-    elapsed:
-      chatMode || (paper && counting)
-        ? {
-            kind: "shown",
-            label: turnElapsedLabel(turn, backgroundTaskCount),
-            text: turnElapsedText(turn, backgroundTaskCount, now),
-          }
-        : { kind: "none" },
+    elapsed: chatMode
+      ? {
+          kind: "shown",
+          label: turnElapsedLabel(turn, backgroundTaskCount),
+          text: turnElapsedText(turn, backgroundTaskCount, now),
+        }
+      : { kind: "none" },
     action: interruptible
       ? {
           kind: "interrupt",

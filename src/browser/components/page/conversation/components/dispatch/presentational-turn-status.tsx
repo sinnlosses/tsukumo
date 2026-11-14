@@ -120,7 +120,7 @@ export function PresentationalTurnStatus(props: PresentationalTurnStatusProps): 
           </span>
         </Text>
       )}
-      {props.lamps}
+      <span className={styles["dispatch-lamps"]}>{props.lamps}</span>
       {props.elapsed.kind === "shown" && (
         <Text
           element="span"

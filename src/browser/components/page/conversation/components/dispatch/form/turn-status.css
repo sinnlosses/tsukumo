@@ -27,6 +27,15 @@
 .dispatch-elapsed-row {
   flex: 0 0 auto;
 }
+/* 段の狐火の並びの入れ物。狭い画面ではこの入れ物を無いものとして並べる。広い画面（761px 以上）では紙の頭が持つので出さない。 */
+.dispatch-lamps {
+  display: contents;
+}
+@media (min-width: 761px) {
+  .dispatch-lamps {
+    display: none;
+  }
+}
 /* 経過時間は機械が数えた値なので等幅。字の色は `Text` が持つ。書体だけここに置く。 */
 .dispatch-elapsed {
   font-family: var(--font-mono);

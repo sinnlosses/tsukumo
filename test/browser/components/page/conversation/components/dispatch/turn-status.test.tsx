@@ -52,7 +52,7 @@ function renderTurnStatus(
   render(
     <TurnStatus
       betweenElapsedAndAction={undefined}
-      progress={{ kind: "paper", lamps: undefined }}
+      progress={{ kind: "paper", lamps: <span data-testid="dock-lamps" /> }}
     />,
   )
 }
@@ -93,6 +93,18 @@ describe("TurnStatus", () => {
     } finally {
       clock.mockRestore()
     }
+  })
+
+  it("仕事のときは、数えているあいだも経過を入力欄に出さない（紙の頭が出す）", () => {
+    renderTurnStatus({ turn: { kind: "running", startedAt: 0 } })
+
+    expect(screen.queryByText("経過")).toBeNull()
+  })
+
+  it("渡された灯りを描く（広い幅で隠すのは CSS）", () => {
+    renderTurnStatus({ turn: { kind: "running", startedAt: 0 } })
+
+    expect(screen.getByTestId("dock-lamps")).toBeDefined()
   })
 
   it("(5) finished になると経過時間が止まり、ラベルが「所要」に変わる", () => {

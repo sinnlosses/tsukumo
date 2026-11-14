@@ -41,6 +41,7 @@
 #### 舞台の「手元」の行
 
 **手順を持つターンのあいだ、舞台の吹き出しの下に「手元」か「待ち」の1行を出す**（`components/page/conversation/components/main-view/stage-activity.tsx` の `StageActivity`。狭い幅では吹き出しの下の `PhoneActivity`）。字は紙の計画の今の段と同じもの（`domain/work-activity.ts`）を読み、答え待ちは「待ち」、ほかは「手元」の札を頭に置く。
+広い幅で、紙が働いている回の計画を出しているあいだは、紙の「いま」の行と同じ内容なので出さない（`useWorkPlanOnPaper`）。過去の回を見ているあいだ・計画を持たない作業・ターンの外の背景の待ちでは出す。
 
 - 字は今のフェーズでいま走っている手順の文（作り方は `components/page/conversation/domain/tool-narration.ts`。表に無い道具は等幅の「名前 要約」）。メインが `report` の引数を書いている途中は「レポートを書いています」、ターンが終わってバックグラウンドタスクだけが動いていれば「背景で <説明>」
 - ワークフロースクリプトの中の手順は、走っている agent の手順を出す（SDK はメインの流れに流さないので、`PreToolUse` のフックから `workflow-step-started`、`PostToolUse`・`PostToolUseFailure` のフックから `workflow-step-finished` にして運ぶ）。目視は疑似セッションの場面 `workflow-steps`

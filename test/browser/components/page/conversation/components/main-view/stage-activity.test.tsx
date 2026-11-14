@@ -5,11 +5,18 @@ import { StageActivity } from "../../../../../../../src/browser/components/page/
 import { applySessionEvent } from "../../../../../../../src/shared/session/session-fold.ts"
 import { INITIAL_SESSION_STATE } from "../../../../../../../src/shared/session/session-state.ts"
 import { requestEvent } from "../../../../../../fixture/session-event.ts"
+import {
+  detailRecord,
+  requestRecord,
+  workPlanRecord,
+} from "../../../../../../fixture/session-record.ts"
+import { checkedTaskId } from "../../../../../../fixture/task-id.ts"
 import { checkedToolUseId } from "../../../../../../fixture/tool-use-id.ts"
 import { putSession } from "../../../../../session-store.ts"
 
 afterEach(() => {
   cleanup()
+  window.location.hash = ""
 })
 
 const STARTED = applySessionEvent(
@@ -45,6 +52,44 @@ describe("StageActivity", () => {
     expect(screen.queryByText("手元")).toBeNull()
     expect(screen.getByText(/お伺いが届いた/u)).toBeTruthy()
     expect(document.querySelector("p")?.getAttribute("data-tone")).toBe("asking")
+  })
+
+  it("紙が働いている回の計画を出しているあいだは「手元」の行を出さない", () => {
+    putSession({ ...STARTED, records: [...STARTED.records, workPlanRecord()] })
+    const { container } = render(<StageActivity />)
+
+    expect(container.textContent).toBe("")
+  })
+
+  it("過去の回を見ているあいだは、計画があっても「手元」の行を出す", () => {
+    window.location.hash = "#?turn=0"
+    putSession({
+      ...STARTED,
+      records: [
+        requestRecord({ turnId: 0 }),
+        detailRecord("架空のレポート"),
+        requestRecord({ turnId: 1 }),
+        workPlanRecord(),
+        ...STARTED.records,
+      ],
+    })
+    render(<StageActivity />)
+
+    expect(screen.getByText("手元")).toBeTruthy()
+  })
+
+  it("ターンの外の背景の待ちでは、計画があっても「手元」の行を出す", () => {
+    putSession({
+      ...STARTED,
+      turn: { kind: "finished", startedAt: 0, finishedAt: 1, ending: { kind: "ended" } },
+      records: [...STARTED.records, workPlanRecord()],
+      backgroundTasks: [
+        { taskId: checkedTaskId("task-1"), kind: "agent", description: "架空の委譲" },
+      ],
+    })
+    render(<StageActivity />)
+
+    expect(screen.getByText("手元")).toBeTruthy()
   })
 
   it("ターンが無ければ何も出さない", () => {
