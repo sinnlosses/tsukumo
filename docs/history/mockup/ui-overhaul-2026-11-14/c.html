@@ -1,0 +1,544 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>案C タブとボード型（使い捨ての試作）</title>
+    <!--
+      使い捨ての試作。問いは「会話画面の全面改良を、3案のどの構造で進めるか」。この HTML は案C。
+      案C: 上端にタブ列（ボードと最近のセッション）、待機はタスクのボード、作業と完了は紙とパイプライン、
+      キャラクターは右の席に常駐して、足元に交代用の顔の棚を持つ。タスクとセッションを同じ「作業」として扱う。
+      ?moment=greet|work|deliver ?pack=shirasuzu|tsukumo|chou|spirit ?view=home|session ?open=sessions|tasks|chars|progress|palette|keys ?bar=0
+      中身は架空の依頼・架空のタスク・架空のレポートで、実物の会話ではない。
+      開き方: このファイルをブラウザで開く。素材は ../../../../characters/ から相対で読む。
+      本番のコードではない。テストもエラー処理も持たない。
+    -->
+    <link rel="stylesheet" href="kit.css" />
+    <style>
+      #app {
+        display: grid;
+        grid-template: 44px minmax(0, 1fr) / minmax(0, 1fr) 320px;
+      }
+      .bg {
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        background:
+          linear-gradient(270deg, rgb(20 18 26 / 0.08), rgb(20 18 26 / 0.5) 300px, var(--ground) 560px),
+          var(--bg-image) right center / auto 100% no-repeat,
+          var(--ground);
+      }
+
+      /* 上端のタブ列: ボードと、最近のセッション */
+      .tabs {
+        grid-column: 1 / -1;
+        display: flex;
+        align-items: flex-end;
+        gap: 2px;
+        padding: 0 10px;
+        background: rgb(14 12 19 / 0.74);
+        -webkit-backdrop-filter: blur(18px);
+        backdrop-filter: blur(18px);
+        white-space: nowrap;
+      }
+      .tab {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        height: 36px;
+        max-width: 232px;
+        padding: 0 12px;
+        border-radius: 10px 10px 0 0;
+        font-size: 13px;
+        color: var(--ink-quiet);
+      }
+      .tab:hover {
+        background: var(--raised);
+        color: var(--ink);
+      }
+      .tab[aria-selected="true"] {
+        background: var(--surface);
+        color: var(--ink);
+        font-weight: 700;
+      }
+      .tab .t {
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .tab.add {
+        padding: 0 9px;
+      }
+      .tabs .tail {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        height: 44px;
+      }
+      .search {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        height: 30px;
+        padding: 0 8px 0 10px;
+        border-radius: 9px;
+        background: var(--raised);
+        color: var(--ink-soft);
+        font-size: 13px;
+      }
+
+      /* 左の主面: タブの中身（ボード、または紙） */
+      .main {
+        grid-area: 2 / 1;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        background: var(--surface);
+        box-shadow: 1px 0 0 var(--rule-quiet);
+      }
+      .pipe {
+        display: flex;
+        gap: 10px;
+        padding: 12px 18px 12px;
+        border-bottom: 1px solid var(--rule-quiet);
+      }
+      .pipe ol {
+        flex: 1;
+        display: flex;
+        gap: 4px;
+      }
+      .pipe li {
+        flex: 1;
+        min-width: 0;
+        padding: 8px 10px 9px;
+        border-radius: 3px 3px 10px 10px;
+        background: var(--raised);
+        box-shadow: inset 0 3px 0 var(--raised-2);
+        font-size: 13px;
+      }
+      .pipe li.wide {
+        flex: 1.7;
+      }
+      .pipe li.done {
+        box-shadow: inset 0 3px 0 var(--accent);
+      }
+      .pipe li.now {
+        background: color-mix(in srgb, var(--surface) 84%, var(--accent));
+        box-shadow: inset 0 3px 0 var(--accent);
+      }
+      .pipe li.todo {
+        color: var(--ink-quiet);
+      }
+      .pipe .h {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        white-space: nowrap;
+      }
+      .pipe p {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        margin-top: 4px;
+        font-size: 12px;
+        line-height: 1.5;
+        color: var(--ink-quiet);
+      }
+      .pipe .sub {
+        display: grid;
+        grid-template-columns: 16px minmax(0, 1fr) auto;
+        gap: 6px;
+        align-items: center;
+        margin-top: 4px;
+        font-size: 12.5px;
+        white-space: nowrap;
+      }
+      .pipe-side {
+        display: grid;
+        align-content: center;
+        justify-items: end;
+        padding: 0 4px 0 8px;
+        font-size: 12px;
+        color: var(--ink-quiet);
+      }
+      .pipe-side b {
+        font: 700 18px/1.3 var(--mono);
+        color: var(--ink);
+      }
+      .doc {
+        flex: 1;
+        min-height: 0;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 270px;
+      }
+      .doc-scroll {
+        overflow: auto;
+        padding: 20px 36px 24px;
+      }
+      .side {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        overflow: auto;
+        padding: 20px 16px;
+        border-left: 1px solid var(--rule-quiet);
+      }
+      .side h2 {
+        font-size: 13px;
+        color: var(--ink-soft);
+      }
+      .side .next {
+        display: grid;
+        gap: 2px;
+        padding: 10px 12px;
+        border-radius: 12px;
+        background: var(--raised);
+        text-align: left;
+      }
+      .side .next:hover:not([disabled]) {
+        background: var(--raised-2);
+      }
+      .side .next[disabled] {
+        opacity: 0.55;
+      }
+      .side .next b {
+        font-size: 13.5px;
+        line-height: 1.5;
+      }
+      .side p {
+        font-size: 12.5px;
+        line-height: 1.6;
+      }
+      .side .btn {
+        align-self: flex-start;
+      }
+      .meta {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        color: var(--ink-quiet);
+      }
+      .m {
+        font-size: 12.5px;
+        line-height: 1.5;
+        color: var(--ink-quiet);
+      }
+      .dock {
+        max-width: 810px;
+        padding: 0 20px 16px;
+      }
+      .is-home .dock {
+        max-width: none;
+      }
+
+      /* ボード */
+      .board {
+        flex: 1;
+        min-height: 0;
+        display: grid;
+        grid-template-columns: 1.25fr 1fr 1fr 1fr;
+        gap: 14px;
+        align-items: start;
+        overflow: auto;
+        padding: 16px 18px 10px;
+      }
+      .lane {
+        display: grid;
+        gap: 8px;
+        align-content: start;
+      }
+      .lane h2 {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin: 2px 4px 4px;
+        font-size: 13px;
+        color: var(--ink-soft);
+      }
+      .lane h2 small {
+        font: 12px/1 var(--mono);
+        color: var(--ink-quiet);
+      }
+      .card {
+        display: grid;
+        gap: 6px;
+        padding: 12px 12px 10px;
+        border-radius: 12px;
+        background: var(--raised);
+      }
+      .lane:first-child .card {
+        background: color-mix(in srgb, var(--surface) 86%, var(--accent));
+      }
+      .card[aria-selected="true"] {
+        box-shadow: 0 0 0 1.5px var(--accent);
+      }
+      .card h3 {
+        font-size: 14px;
+        line-height: 1.5;
+      }
+      .card.done h3 {
+        font-weight: 400;
+        color: var(--ink-soft);
+      }
+      .card.blocked {
+        opacity: 0.7;
+      }
+      .card .foot {
+        display: flex;
+        justify-content: flex-end;
+        min-height: 28px;
+      }
+      .card.ready:not(:hover):not([aria-selected="true"]) .btn.tonal,
+      .card.done:not(:hover):not([aria-selected="true"]) .btn {
+        visibility: hidden;
+      }
+
+      /* 右の席: キャラクターが常駐し、足元に交代用の顔の棚 */
+      .companion {
+        grid-area: 2 / 2;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        padding: 14px 14px 0;
+      }
+      .c-top {
+        display: grid;
+        gap: 8px;
+        margin-bottom: auto;
+      }
+      .today {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px 12px;
+        font-size: 12.5px;
+        color: var(--ink-soft);
+        text-shadow: 0 1px 6px rgb(0 0 0 / 0.8);
+      }
+      .today b {
+        font: 700 14px/1 var(--mono);
+        color: var(--ink);
+      }
+      .companion .log {
+        margin-top: 12px;
+      }
+      .companion .bubble {
+        margin-top: 10px;
+        z-index: 1;
+        --tail: 48%;
+      }
+      .portrait {
+        display: block;
+        width: 100%;
+        height: auto;
+        max-height: 46vh;
+        margin-top: 2px;
+        object-fit: contain;
+        object-position: center bottom;
+        filter: drop-shadow(0 10px 24px rgb(0 0 0 / 0.5));
+      }
+      .shelf {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 4px -14px 0;
+        padding: 8px 14px;
+        background: rgb(14 12 19 / 0.76);
+        -webkit-backdrop-filter: blur(16px);
+        backdrop-filter: blur(16px);
+        border-top: 1px solid var(--rule-quiet);
+      }
+      .shelf button {
+        display: grid;
+        padding: 2px;
+        border-radius: 50%;
+      }
+      .shelf button[aria-pressed="true"] {
+        box-shadow: 0 0 0 2px var(--pa);
+      }
+      .shelf button:not([aria-pressed="true"]) img {
+        opacity: 0.66;
+      }
+      .shelf button:hover img {
+        opacity: 1;
+      }
+      .shelf .hint {
+        font-size: 12px;
+        color: var(--ink-quiet);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script src="kit.js"></script>
+    <script>
+      const app = document.getElementById("app")
+      const { icon, kbd, st } = K
+      const SESSION_OF = { "T-240": "s1", "T-231": "s3", "T-234": "s2", "T-212": "s6" }
+      /* カードを選んだときの一言。実装では相づちの札（代ごとに先に書く返事）の応用を想定する */
+      const REACT = {
+        shirasuzu: (t) => `${t.id} ですね。${t.size === "S" ? "小さめなので、すぐ済みそうですの。" : "少し大きいので、段を分けて進めますの。"}`,
+        tsukumo: (t) => `${t.id} だね。${t.size === "S" ? "これはすぐ終わりそう。" : "段を分けて進めるよ。"}`,
+        chou: (t) => `${t.id} ですね。${t.size === "S" ? "短時間で完了する見込みです。" : "段階を分けて進めます。"}`,
+        spirit: (t) => `${t.id} だね、あるじ。${t.size === "S" ? "すぐ済むよ。" : "順番に進めるよ。"}`,
+      }
+      let lastMoment = K.state.moment
+      let view = K.state.moment === "greet" ? "home" : new URLSearchParams(location.search).get("view") || "session"
+      let pipeOpen = null
+      let sel = [0, 0]
+
+      function lanes() {
+        const all = K.tasks()
+        return [
+          { title: "推薦", lead: icon("spark", 15), cards: all.filter((t) => t.rec && t.state === "ready") },
+          { title: "着手できる", lead: "", cards: all.filter((t) => t.state === "ready" && !t.rec) },
+          { title: "進行中・待ち", lead: "", cards: all.filter((t) => ["doing", "ask", "blocked"].includes(t.state)) },
+          { title: "今日の完了", lead: "", cards: all.filter((t) => t.state === "done") },
+        ]
+      }
+      function card(t, li, i) {
+        const selected = sel[0] === li && sel[1] === i
+        const busy = K.state.moment === "work"
+        const s = SESSION_OF[t.id]
+        let body = ""
+        let foot = ""
+        if (t.state === "ready") foot = `<button class="btn ${t.rec ? "primary" : "tonal"} sm" data-task="${t.id}" ${busy ? 'disabled title="ターン中は依頼できない"' : ""}>依頼${selected ? " " + kbd("⏎") : ""}</button>`
+        else if (t.state === "doing") {
+          const pl = K.plan()
+          body = `${K.segbar(pl)}<p class="m">${pl.now}/${pl.total} ${pl.phases[pl.now - 1].name}・${pl.elapsed}</p>`
+          foot = `<button class="btn tonal sm" data-view="session">開く</button>`
+        } else if (t.state === "ask") {
+          body = `<p class="m">${t.note}</p>`
+          foot = `<button class="btn tonal sm" data-session="${s}">回答する</button>`
+        } else if (t.state === "blocked") body = `<p class="m">${t.note}</p>`
+        else foot = `<button class="btn tonal sm" data-session="${s}">レポートを開く</button>`
+        const mark = t.state === "done" ? st("ok") : t.state === "ask" ? st("ask") : t.state === "doing" ? st("now") : ""
+        return `<article class="card ${t.state}" data-card="${li},${i}" aria-selected="${selected}"><div class="meta">${mark}<span class="mono">${t.id}</span><span class="size">${t.size}</span><span class="grow"></span>${t.rec && t.state === "ready" && K.state.moment === "greet" ? kbd(String(t.rec)) : ""}</div><h3>${t.title}</h3>${t.rec && t.state === "ready" ? `<p class="m">${t.why}</p>` : ""}${body}<div class="foot">${foot}</div></article>`
+      }
+      const board = () => `<div class="board" aria-label="タスクのボード">${lanes().map((l, li) => `<section class="lane"><h2>${l.lead}${l.title}<small>${l.cards.length}</small></h2>${l.cards.map((t, i) => card(t, li, i)).join("")}</section>`).join("")}</div>`
+
+      function tabs() {
+        const ss = K.sessions().slice(0, 3)
+        return `<nav class="tabs" aria-label="作業のタブ">
+          <button class="tab" data-view="home" aria-selected="${view === "home"}" title="ボード（⌘J）">${icon("board", 15)}<span class="t">ボード</span></button>
+          ${ss.map((s) => `<button class="tab" ${s.open ? 'data-view="session"' : `data-session="${s.id}"`} aria-selected="${view === "session" && Boolean(s.open)}">${st(s.state)}<span class="t">${s.title}</span></button>`).join("")}
+          <button class="tab add" data-act="newSession" title="新規セッション（⌘⇧O）">${icon("plus", 15)}</button>
+          <button class="tab" data-open="sessions" title="すべてのセッション">すべて ${kbd("⌘ O")}</button>
+          <span class="grow"></span>
+          <span class="tail"><span class="meters"><span class="meter"><span class="ring" style="--p:61"></span>文脈 <b>61%</b></span><span class="meter"><span class="ring" style="--p:34"></span>5h <b>34%</b></span><span class="meter"><span class="ring" style="--p:61"></span>7d <b>61%</b></span></span>
+          <button class="search" data-open="palette">${icon("search", 15)}検索 ${kbd("⌘ K")}</button><button class="icon-btn" title="設定（⌘,）">${icon("sliders", 17)}</button></span>
+        </nav>`
+      }
+      function pipe() {
+        const pl = K.plan()
+        const m = K.state.moment
+        const open = pipeOpen ?? m === "work"
+        return `<div class="pipe"><ol aria-label="進行">${pl.phases
+          .map((ph) => {
+            const subs = open && ph.lanes && ph.state !== "todo" ? ph.lanes.map((l) => `<div class="sub">${st(l.state)}<span>${l.who}・${l.name}</span><span class="mono quiet">${l.dur}</span></div>`).join("") : ""
+            const sum = open && !ph.lanes && ph.state === "done" ? `<p>${ph.sum}</p>` : ""
+            return `<li class="${ph.state} ${ph.lanes ? "wide" : ""}"><div class="h">${st(ph.state)}<b>${ph.n} ${ph.name}</b><span class="grow"></span><span class="mono quiet">${ph.dur}</span></div>${subs}${sum}</li>`
+          })
+          .join("")}</ol><button class="pipe-side" data-open="progress" title="内訳を開閉（⌘I）"><b>${pl.elapsed}</b><span>${m === "work" ? "経過" : "所要"} ${icon("chev", 12)}</span></button></div>`
+      }
+      function side() {
+        const recs = K.tasks()
+          .filter((t) => t.rec && t.state === "ready")
+          .slice(0, 3)
+        const busy = K.state.moment === "work"
+        return `<aside class="side" aria-label="次の候補"><h2>次の候補</h2>${recs.map((t) => `<button class="next" data-task="${t.id}" ${busy ? "disabled" : ""}><span class="meta"><span class="mono">${t.id}</span><span class="size">${t.size}</span></span><b>${t.title}</b><span class="m">${t.why}</span></button>`).join("")}
+          <p class="quiet">${busy ? "ターン中は依頼できない。完了すると、ここから続けて依頼できる。" : "ここから続けて依頼できる。"}</p><button class="btn tonal sm" data-view="home">${icon("board", 14)}ボードを開く ${kbd("⌘ J")}</button></aside>`
+      }
+      function companion() {
+        const p = K.pack()
+        const n = (s) => K.tasks().filter((t) => s.includes(t.state)).length
+        const today = `<div class="today"><span>完了 <b>${n(["done"])}</b></span><span>進行 <b>${n(["doing"])}</b></span><span>回答待ち <b>${n(["ask"])}</b></span><span>着手できる <b>${n(["ready"])}</b></span></div>`
+        return `<aside class="companion" aria-label="舞台"><div class="c-top">${K.lampHtml()}${today}</div>${K.logHtml()}${K.bubbleHtml()}<img class="portrait" alt="${p.name}の立ち絵" src="${K.portrait()}">
+          <div class="shelf" role="group" aria-label="キャラクターを切替">${K.PACKS.map((q, i) => `<button data-pack="${q.id}" aria-pressed="${q.id === p.id}" title="${q.name}（⌃${i + 1}）" style="--pa:${q.accent}"><img class="face" width="40" height="40" alt="${q.name}" src="${K.face(q)}"></button>`).join("")}<span class="grow"></span><span class="hint">${kbd("⌃ 1–4")}</span></div></aside>`
+      }
+      function render() {
+        const m = K.state.moment
+        if (m !== lastMoment) {
+          view = m === "greet" ? "home" : "session"
+          lastMoment = m
+          pipeOpen = null
+          sel = [0, 0]
+        }
+        const session = view === "session"
+        app.innerHTML = `<div class="bg"></div>${tabs()}<main class="main ${session ? "is-session" : "is-home"}">${session ? `${pipe()}<div class="doc"><div class="doc-scroll">${m === "work" ? K.workHtml() : K.reportHtml()}</div>${side()}</div>` : board()}<div class="dock">${K.composerHtml({ rows: 2 })}</div></main>${companion()}`
+      }
+      function say(t) {
+        const p = app.querySelector(".companion .bubble p")
+        if (p && view === "home" && K.state.moment === "greet") p.textContent = REACT[K.state.pack](t)
+      }
+      const taskAt = ([li, i]) => lanes()[li]?.cards[i]
+      function move(dl, di) {
+        if (view !== "home") return
+        const L = lanes()
+        let [l, i] = sel
+        if (dl) {
+          do {
+            l = (l + dl + L.length) % L.length
+          } while (!L[l].cards.length)
+          i = Math.min(i, L[l].cards.length - 1)
+        } else i = Math.max(0, Math.min(i + di, L[l].cards.length - 1))
+        sel = [l, i]
+        render()
+        say(taskAt(sel))
+      }
+      app.addEventListener("click", (e) => {
+        const v = e.target.closest("[data-view]")
+        if (v) {
+          view = K.state.moment === "greet" ? "home" : v.dataset.view
+          return render()
+        }
+        if (e.target.closest("[data-session]") && K.state.moment !== "work") view = "session"
+        const c = e.target.closest("[data-card]")
+        if (c && !e.target.closest("button")) {
+          sel = c.dataset.card.split(",").map(Number)
+          render()
+          say(taskAt(sel))
+        }
+      })
+      app.addEventListener("mouseover", (e) => {
+        const c = e.target.closest?.("[data-card]")
+        if (c) say(taskAt(c.dataset.card.split(",").map(Number)))
+      })
+
+      K.hooks.tasks = () => {
+        K.closeAll()
+        view = "home"
+        render()
+      }
+      K.hooks.progress = () => {
+        K.closeAll()
+        if (K.state.moment === "greet") return K.toast("進行中の作業は無い")
+        view = "session"
+        pipeOpen = !(pipeOpen ?? K.state.moment === "work")
+        render()
+      }
+      K.hooks.extraKeys = [
+        ["← → ↑ ↓", "ボードのカードを選択"],
+        ["⏎", "選択したカードを依頼"],
+      ]
+      const startRec = (n) => () => {
+        const t = K.tasks().find((x) => x.rec === n)
+        if (K.state.moment === "greet" && t) K.act.startTask(t.id)
+      }
+      K.keys({
+        "plain:left": () => move(-1, 0),
+        "plain:right": () => move(1, 0),
+        "plain:up": () => move(0, -1),
+        "plain:down": () => move(0, 1),
+        "plain:enter": () => view === "home" && app.querySelector('.card[aria-selected="true"] .foot button:not([disabled])')?.click(),
+        "plain:1": startRec(1),
+        "plain:2": startRec(2),
+        "plain:3": startRec(3),
+      })
+      K.protoBar("c")
+      K.onChange(render)
+      render()
+      K.autoOpen()
+    </script>
+  </body>
+</html>

@@ -1,0 +1,765 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>案B コマンド中心型（使い捨ての試作）</title>
+    <!--
+      使い捨ての試作。問いは「会話画面の全面改良を、3案のどの構造で進めるか」。この HTML は案B。
+      案B: 固定のバーとパネルを持たず、舞台を全面に広げる。下のオムニバー（依頼・タスク・コマンドの入口を1本に統合）と
+      キーの案内の帯、上の進行カプセルだけを常設し、キャラクター・セッション・タスクは重なりで呼び出す。
+      ?moment=greet|work|deliver ?pack=shirasuzu|tsukumo|chou|spirit ?open=chars|sessions|tasks|progress|palette|keys ?bar=0
+      中身は架空の依頼・架空のタスク・架空のレポートで、実物の会話ではない。
+      開き方: このファイルをブラウザで開く。素材は ../../../../characters/ から相対で読む。
+      本番のコードではない。テストもエラー処理も持たない。
+    -->
+    <link rel="stylesheet" href="kit.css" />
+    <style>
+      body {
+        --stage-w: 32vw;
+        --left: 34vw;
+        --pw: min(29vw, 50vh);
+      }
+      body[data-m="greet"] {
+        --stage-w: 44vw;
+        --left: 46vw;
+        --pw: min(40vw, 62vh);
+      }
+      .bg {
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        background:
+          linear-gradient(90deg, rgb(20 18 26 / 0.05), rgb(20 18 26 / 0.56) 42%, rgb(20 18 26 / 0.9)),
+          linear-gradient(0deg, rgb(20 18 26 / 0.8), transparent 32%),
+          var(--bg-image) center / cover no-repeat,
+          var(--ground);
+      }
+      .glass {
+        background: var(--glass);
+        -webkit-backdrop-filter: blur(22px) saturate(1.5);
+        backdrop-filter: blur(22px) saturate(1.5);
+        box-shadow:
+          0 0 0 1px var(--rule),
+          inset 0 1px 0 rgb(255 255 255 / 0.06),
+          0 18px 50px rgb(0 0 0 / 0.42);
+      }
+
+      /* 上端: 左に場所、中央に進行カプセル、右に使用量。バーの地は持たない */
+      .crumb {
+        position: absolute;
+        left: 12px;
+        top: 10px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        height: 34px;
+        padding: 0 10px;
+        border-radius: 10px;
+        font-size: 13px;
+        text-shadow: 0 1px 6px rgb(0 0 0 / 0.8);
+      }
+      .crumb:hover {
+        background: rgb(20 18 26 / 0.6);
+      }
+      .stage-lamp {
+        position: absolute;
+        left: 22px;
+        top: 50px;
+      }
+      .usage {
+        position: absolute;
+        right: 14px;
+        top: 10px;
+        height: 34px;
+        padding: 0 14px;
+        border-radius: 17px;
+      }
+      .island {
+        position: absolute;
+        left: 50%;
+        top: 9px;
+        translate: -50% 0;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        height: 36px;
+        padding: 0 12px 0 10px;
+        border-radius: 18px;
+        background: rgb(12 10 16 / 0.86);
+        box-shadow:
+          0 0 0 1px var(--rule),
+          0 10px 30px rgb(0 0 0 / 0.5);
+        font-size: 13px;
+        white-space: nowrap;
+      }
+      .island .flame {
+        color: var(--accent);
+      }
+      .island .flame svg {
+        fill: currentColor;
+      }
+      .island .segbar {
+        width: 110px;
+      }
+
+      /* 舞台: 下から立ち絵・吹き出し・やり取りを連続して積む */
+      .stage {
+        position: absolute;
+        left: 0;
+        top: 84px;
+        bottom: 38px;
+        width: var(--stage-w);
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        align-items: center;
+        padding: 0 22px;
+      }
+      .stage .log,
+      .stage .bubble {
+        width: min(100%, 400px);
+      }
+      .stage .bubble {
+        margin-top: 10px;
+        z-index: 1;
+      }
+      .portrait {
+        display: block;
+        width: var(--pw);
+        max-width: 100%;
+        height: auto;
+        max-height: 62vh;
+        margin-top: 2px;
+        object-fit: contain;
+        object-position: center bottom;
+        filter: drop-shadow(0 14px 30px rgb(0 0 0 / 0.55));
+      }
+
+      /* 中央: 待機は起動の一覧、作業は道のり、完了は紙 */
+      .center {
+        position: absolute;
+        left: var(--left);
+        right: 40px;
+        top: 62px;
+        bottom: 126px;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        min-height: 0;
+      }
+      .launch {
+        border-radius: 18px 18px 8px 8px;
+        padding: 6px 8px 8px;
+        overflow: auto;
+      }
+      .launch .row {
+        padding: 9px 12px;
+      }
+      .launch .row.big .t {
+        font-size: 15.5px;
+        font-weight: 700;
+      }
+      .launch .lead {
+        min-width: 3.6em;
+      }
+      .launch .right {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12px;
+        color: var(--ink-quiet);
+      }
+      .journey {
+        flex: none;
+        max-height: 100%;
+        overflow: auto;
+        border-radius: 18px;
+        padding: 20px 26px;
+      }
+      .journey header {
+        display: flex;
+        align-items: baseline;
+        gap: 12px;
+      }
+      .journey h1 {
+        font-size: 19px;
+      }
+      .journey .elapsed {
+        font: 700 22px/1 var(--mono);
+      }
+      .track {
+        display: flex;
+        margin: 22px 0 6px;
+      }
+      .track li {
+        flex: 1;
+        position: relative;
+        display: grid;
+        justify-items: center;
+        gap: 4px;
+        font-size: 13px;
+        text-align: center;
+      }
+      .track li::before {
+        content: "";
+        position: absolute;
+        top: 19px;
+        right: 50%;
+        width: 100%;
+        height: 2px;
+        background: var(--raised-2);
+      }
+      .track li:first-child::before {
+        display: none;
+      }
+      .track li.done::before,
+      .track li.now::before {
+        background: var(--accent);
+      }
+      .track .node {
+        position: relative;
+        display: grid;
+        place-items: center;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: var(--surface-float);
+        color: var(--ink-quiet);
+        box-shadow: inset 0 0 0 1.5px var(--rule);
+      }
+      .track .done .node {
+        background: var(--accent);
+        color: var(--on-accent);
+        box-shadow: none;
+      }
+      .track .done .node svg {
+        fill: currentColor;
+      }
+      .track .now .node {
+        color: var(--accent);
+        box-shadow:
+          inset 0 0 0 2px var(--accent),
+          0 0 22px color-mix(in srgb, var(--accent) 60%, transparent);
+      }
+      .track .now .node svg {
+        fill: currentColor;
+      }
+      .track .todo {
+        color: var(--ink-quiet);
+      }
+      .track .now b {
+        color: var(--accent);
+      }
+      .journey h2 {
+        margin: 20px 0 8px;
+        font-size: 14px;
+      }
+      .lanes {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+      .lane {
+        padding: 12px 14px;
+        border-radius: 12px;
+        background: rgb(0 0 0 / 0.26);
+        font-size: 13.5px;
+      }
+      .lane.now {
+        box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 50%, transparent);
+      }
+      .lane .h {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .lane pre {
+        margin: 8px 0 0;
+        font: 12.5px/1.7 var(--mono);
+        color: var(--ink-quiet);
+        white-space: pre-wrap;
+      }
+      .sofar li {
+        display: grid;
+        grid-template-columns: 16px minmax(0, 1fr) auto;
+        gap: 10px;
+        padding: 8px 0;
+        border-bottom: 1px solid var(--rule-quiet);
+        font-size: 13.5px;
+      }
+      .paper {
+        flex: 1;
+        min-height: 0;
+        overflow: auto;
+        border-radius: 18px;
+        padding: 24px 36px 30px;
+        background: var(--surface);
+        box-shadow:
+          0 0 0 1px var(--rule-quiet),
+          0 24px 70px rgb(0 0 0 / 0.5);
+      }
+      .paper > * {
+        max-width: 46em;
+      }
+
+      /* オムニバーと、キーの案内の帯 */
+      .omni {
+        position: absolute;
+        left: var(--left);
+        right: 40px;
+        bottom: 56px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        height: 60px;
+        padding: 0 10px 0 14px;
+        border-radius: 18px;
+      }
+      body[data-m="greet"] .omni {
+        border-radius: 8px 8px 18px 18px;
+      }
+      .omni:focus-within {
+        box-shadow:
+          0 0 0 1.5px var(--accent),
+          0 18px 50px rgb(0 0 0 / 0.42);
+      }
+      .omni input {
+        flex: 1;
+        min-width: 0;
+        height: 100%;
+        border: 0;
+        outline: 0;
+        background: none;
+        font-size: 17px;
+      }
+      .hints {
+        position: absolute;
+        inset: auto 0 0 0;
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        height: 38px;
+        padding: 0 10px;
+        background: rgb(14 12 19 / 0.8);
+        -webkit-backdrop-filter: blur(18px);
+        backdrop-filter: blur(18px);
+        border-top: 1px solid var(--rule-quiet);
+        font-size: 12.5px;
+        white-space: nowrap;
+      }
+      .hints > button:not(.run-chip) {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        height: 28px;
+        padding: 0 8px;
+        border-radius: 8px;
+        color: var(--ink-soft);
+      }
+      .hints > button:hover {
+        background: var(--raised-2);
+        color: var(--ink);
+      }
+      .hints .sep {
+        width: 1px;
+        height: 16px;
+        margin: 0 6px;
+        background: var(--rule);
+      }
+
+      /* 重なり: キャラクターの交代・2列の切替 */
+      dialog.chars {
+        margin: auto;
+        padding: 18px 18px 0;
+      }
+      .cards {
+        display: flex;
+        gap: 12px;
+      }
+      .pcard {
+        display: grid;
+        grid-template-rows: 250px auto auto auto;
+        gap: 2px;
+        width: 204px;
+        padding: 0 0 10px;
+        border-radius: 14px;
+        overflow: hidden;
+        background: rgb(0 0 0 / 0.3);
+        text-align: left;
+        transition:
+          transform 0.14s,
+          box-shadow 0.14s;
+      }
+      .pcard .art {
+        display: grid;
+        place-items: end center;
+        background:
+          linear-gradient(0deg, rgb(20 18 26 / 0.6), transparent 60%),
+          var(--pbg, linear-gradient(180deg, #2d2937, #1b1822)) center / cover;
+      }
+      .pcard img {
+        max-width: 92%;
+        max-height: 236px;
+        object-fit: contain;
+      }
+      .pcard b,
+      .pcard .m,
+      .pcard .f {
+        padding: 0 12px;
+      }
+      .pcard b {
+        margin-top: 8px;
+        font-size: 15px;
+      }
+      .pcard .m {
+        font-size: 12px;
+        color: var(--ink-quiet);
+      }
+      .pcard .f {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 6px;
+        font-size: 12px;
+        color: var(--pa);
+      }
+      .pcard:focus-visible,
+      .pcard[aria-selected="true"] {
+        outline: none;
+        transform: translateY(-4px);
+        box-shadow:
+          0 0 0 2px var(--pa),
+          0 16px 36px rgb(0 0 0 / 0.5);
+      }
+      dialog.chars .dlg-hints {
+        margin: 16px -18px 0;
+      }
+      dialog.two {
+        width: 940px;
+        height: 560px;
+        margin: 12vh auto auto;
+      }
+      .two .q {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        height: 54px;
+        padding: 0 16px;
+        border-bottom: 1px solid var(--rule-quiet);
+        color: var(--ink-quiet);
+      }
+      .two .q input {
+        flex: 1;
+        min-width: 0;
+        height: 100%;
+        border: 0;
+        outline: 0;
+        background: none;
+        font-size: 16px;
+        color: var(--ink);
+      }
+      .two .cols {
+        flex: 1;
+        min-height: 0;
+        display: grid;
+        grid-template-columns: 400px minmax(0, 1fr);
+      }
+      .two .list {
+        overflow: auto;
+        padding: 4px 6px 8px;
+        border-right: 1px solid var(--rule-quiet);
+      }
+      .pv {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        height: 100%;
+        padding: 22px 26px;
+      }
+      .pv .meta {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12.5px;
+        color: var(--ink-quiet);
+      }
+      .pv h2 {
+        font-size: 20px;
+        line-height: 1.5;
+      }
+      .pv h3 {
+        margin-top: 8px;
+        font-size: 12.5px;
+        font-weight: 400;
+        color: var(--ink-quiet);
+      }
+      .pv li {
+        padding: 5px 0;
+        border-bottom: 1px solid var(--rule-quiet);
+        font-size: 13.5px;
+      }
+      .pv .say {
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+        padding: 12px 14px;
+        border-radius: 14px;
+        background: color-mix(in srgb, var(--surface) 88%, var(--accent));
+        font: 16px/1.7 var(--voice);
+      }
+      .pv .foot {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: auto;
+        font-size: 12.5px;
+      }
+      #islandPop {
+        width: 380px;
+        padding: 12px 14px;
+      }
+      #islandPop li {
+        display: grid;
+        grid-template-columns: 16px minmax(0, 1fr) auto;
+        gap: 10px;
+        padding: 6px 0;
+        font-size: 13px;
+      }
+      #islandPop .todo {
+        color: var(--ink-quiet);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script src="kit.js"></script>
+    <script>
+      const app = document.getElementById("app")
+      const { icon, kbd, st } = K
+      const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c])
+      let launchSel = 0
+      let launchRows = []
+
+      /* 待機: オムニバーの上に、依頼の候補を1本の一覧で出す。打つと絞り込む */
+      function buildLaunch(raw) {
+        const q = raw.trim().toLowerCase().replace(/^#/, "")
+        const hit = (s) => !q || s.toLowerCase().includes(q)
+        const rows = []
+        if (raw.trim()) rows.push({ g: "依頼", lead: icon("up", 16), t: `「${esc(raw.trim())}」を依頼として送信`, m: "", hint: "⏎ 送信", run: () => K.act.send() })
+        const tasks = K.tasks()
+        tasks.filter((t) => t.rec && hit(t.id + t.title)).forEach((t) => rows.push({ g: "推薦", big: true, lead: `<span class="mono">${t.id}</span>`, t: t.title, m: t.why, size: t.size, hint: "⏎ 依頼", run: () => K.act.startTask(t.id) }))
+        tasks.filter((t) => t.state === "ready" && !t.rec && hit(t.id + t.title)).forEach((t) => rows.push({ g: "着手できるタスク", lead: `<span class="mono">${t.id}</span>`, t: t.title, m: "", size: t.size, hint: "⏎ 依頼", run: () => K.act.startTask(t.id) }))
+        K.sessions()
+          .slice(0, 3)
+          .filter((s) => hit(s.title))
+          .forEach((s) => rows.push({ g: "最近のセッション", lead: st(s.state), t: s.title, m: `${s.when}・「${s.last}」`, hint: "⏎ 開く", run: () => K.act.openSession(s.id) }))
+        return rows
+      }
+      function drawLaunch() {
+        const box = document.getElementById("launch")
+        if (!box) return
+        launchRows = buildLaunch(document.getElementById("omni").value)
+        launchSel = Math.min(launchSel, Math.max(0, launchRows.length - 1))
+        let g = ""
+        box.innerHTML = launchRows
+          .map((r, i) => {
+            const head = r.g !== g ? `<div class="group-label">${(g = r.g)}</div>` : ""
+            return `${head}<button class="row ${r.big ? "big" : ""}" data-launch="${i}" aria-selected="${i === launchSel}"><span class="lead">${r.lead}</span><span><span class="t">${r.t}</span>${r.m ? `<span class="m">${r.m}</span>` : ""}</span><span class="right">${r.size ? `<span class="size">${r.size}</span>` : ""}${i === launchSel ? `<span>${r.hint}</span>` : ""}</span></button>`
+          })
+          .join("")
+        box.querySelector('[aria-selected="true"]')?.scrollIntoView({ block: "nearest" })
+      }
+
+      function island() {
+        const pl = K.plan()
+        if (K.state.moment === "greet") return ""
+        const done = K.state.moment === "deliver"
+        return `<button class="island" popovertarget="islandPop" data-align="center" title="進行の詳細（⌘I）">${done ? st("ok") : `<span class="flame">${icon("flame", 16)}</span>`}<b>${done ? "完了" : pl.phases[pl.now - 1].name}</b><span class="mono quiet">${pl.now}/${pl.total}</span>${K.segbar(pl)}<span class="mono">${pl.elapsed}</span>${icon("chev", 14)}</button>`
+      }
+      function journey() {
+        const pl = K.plan()
+        const cur = pl.phases[2]
+        const tail = ["$ pnpm run css-types\n$ node capture-view.ts --size 1400x900\n  撮影: 待機 → 作業（2枚目）", "$ pnpm exec tsc --noEmit\n  エラー 0 件（架空）"]
+        return `<section class="journey glass" aria-label="進行">
+          <header><span class="mono quiet">/next-task ${pl.task}</span><h1>${pl.title}</h1><span class="grow"></span><span class="quiet">経過</span><span class="elapsed">${pl.elapsed}</span></header>
+          <ol class="track">${pl.phases.map((ph) => `<li class="${ph.state}"><span class="node">${icon("flame", 20)}</span><b>${ph.name}</b><span class="mono quiet">${ph.dur || "　"}</span></li>`).join("")}</ol>
+          <h2>いま: ${cur.n} ${cur.name}　<span class="quiet">並列 2</span></h2>
+          <div class="lanes">${cur.lanes.map((l, i) => `<div class="lane ${l.state}"><div class="h">${st(l.state)}<b>${l.who}</b><span>${l.name}</span><span class="grow"></span><span class="mono quiet">${l.dur}</span></div><div>${l.line}</div><pre>${tail[1 - i]}</pre></div>`).join("")}</div>
+          <h2>ここまで</h2>
+          <ul class="sofar">${pl.phases
+            .filter((p) => p.state === "done")
+            .map((p) => `<li>${st("done")}<span><b>${p.n} ${p.name}</b>　${p.sum}</span><span class="mono quiet">${p.dur}</span></li>`)
+            .join("")}</ul>
+        </section>`
+      }
+      function hints() {
+        const p = K.pack()
+        return `<footer class="hints">
+          <button data-open="chars" title="キャラクターを切替"><img class="face" width="22" height="22" alt="" src="${K.face(p)}"><b>${p.name}</b>${kbd("⌃ 1–4")}</button><span class="sep"></span>
+          <button data-open="tasks">${kbd("⌘ J")}タスク</button><button data-open="sessions">${kbd("⌘ O")}セッション</button><button data-act="newSession">${kbd("⌘ ⇧ O")}新規</button><button data-open="progress">${kbd("⌘ I")}進行</button><button data-open="palette">${kbd("⌘ K")}検索</button><button data-open="keys">${kbd("⌘ /")}キー</button>
+          <span class="grow"></span>${K.runChips()}</footer>`
+      }
+      function render() {
+        const m = K.state.moment
+        const p = K.pack()
+        const pl = K.plan()
+        document.body.dataset.m = m
+        const working = m === "work"
+        app.innerHTML = `<div class="bg"></div>
+          <button class="crumb" data-open="sessions" title="セッションを切替（⌘O）"><span class="quiet">tsukumo-task /</span><b>${m === "greet" ? "新規セッション" : pl.title}</b>${icon("chev", 14)}</button>
+          <div class="stage-lamp">${K.lampHtml()}</div>
+          ${island()}
+          <div class="usage glass meters"><span class="meter"><span class="ring" style="--p:61"></span>文脈 <b>61%</b></span><span class="meter"><span class="ring" style="--p:34"></span>5h <b>34%</b></span><span class="meter"><span class="ring" style="--p:61"></span>7d <b>61%</b></span></div>
+          <aside class="stage" aria-label="舞台">${K.logHtml()}${K.bubbleHtml()}<img class="portrait" alt="${p.name}の立ち絵" src="${K.portrait()}"></aside>
+          <main class="center">${m === "greet" ? '<div class="launch glass" id="launch" role="listbox" aria-label="依頼の候補"></div>' : m === "work" ? journey() : `<article class="paper">${K.reportHtml()}</article>`}</main>
+          <div class="omni glass"><img class="face" width="32" height="32" alt="" src="${K.face(p)}"><input id="omni" type="text" data-main-input autocomplete="off" placeholder="${p.name}に依頼　　# タスク　/ コマンド　@ ファイル" aria-label="依頼">
+            ${working ? `<button class="btn stop" data-act="stop">${icon("stop", 14)}中断 ${kbd("⌘ .")}</button>` : `<button class="btn primary" data-act="send">送信 ${kbd("⌘ ⏎")}</button>`}</div>
+          ${hints()}`
+        launchSel = 0
+        drawLaunch()
+        if (m === "greet" && !document.querySelector("dialog[open]")) document.getElementById("omni").focus()
+      }
+      app.addEventListener("input", (e) => {
+        if (e.target.id === "omni" && K.state.moment === "greet") {
+          launchSel = 0
+          drawLaunch()
+        }
+      })
+      app.addEventListener("keydown", (e) => {
+        if (e.target.id !== "omni" || K.state.moment !== "greet" || e.isComposing) return
+        if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+          e.preventDefault()
+          launchSel = (launchSel + (e.key === "ArrowDown" ? 1 : -1) + launchRows.length) % Math.max(1, launchRows.length)
+          drawLaunch()
+        } else if (e.key === "Enter" && !e.metaKey) {
+          e.preventDefault()
+          launchRows[launchSel]?.run()
+        }
+      })
+      app.addEventListener("click", (e) => {
+        const r = e.target.closest("[data-launch]")
+        if (r) launchRows[Number(r.dataset.launch)]?.run()
+      })
+
+      /* 進行カプセルの詳細 */
+      K.pop("islandPop", () => {
+        const pl = K.plan()
+        return `<div class="pg-head" style="display:flex;justify-content:space-between;margin-bottom:8px"><b>${pl.title}</b><span class="mono quiet">${pl.now}/${pl.total}・${pl.elapsed}</span></div><ol>${pl.phases.map((ph) => `<li class="${ph.state}">${st(ph.state)}<span>${ph.n} ${ph.name}${ph.lanes && ph.state === "now" ? "（並列 2）" : ""}</span><span class="mono quiet">${ph.dur}</span></li>`).join("")}</ol>`
+      })
+
+      /* キャラクターの交代: 立ち絵を並べ、← → と ⏎、または ⌃1–4 で直接 */
+      const charDlg = document.createElement("dialog")
+      charDlg.className = "dlg chars"
+      charDlg.setAttribute("closedby", "any")
+      charDlg.setAttribute("aria-label", "キャラクターを切替")
+      document.body.append(charDlg)
+      function openChars() {
+        K.closeAll()
+        charDlg.innerHTML = `<div class="cards">${K.PACKS.map((p, i) => `<button class="pcard" data-pack="${p.id}" aria-selected="${p.id === K.state.pack}" style="--pa:${p.accent};${p.bg ? `--pbg:url('${p.dir}/background.png')` : ""}"><span class="art"><img alt="" src="${K.portrait(p, "default")}"></span><b>${p.name}</b><span class="m">${p.tagline}</span><span class="f"><span>${p.id === K.state.pack ? "使用中" : "　"}</span>${kbd("⌃ " + (i + 1))}</span></button>`).join("")}</div>
+          <div class="dlg-hints"><span>${kbd("← →")} 選択</span><span>${kbd("⏎")} 交代</span><span>${kbd("esc")} 閉じる</span><span class="grow"></span><span>${K.state.moment === "work" ? "ターン中は交代できない" : "素材・表情の編集は「キャラクターを管理」から"}</span></div>`
+        charDlg.showModal()
+        charDlg.querySelector('[aria-selected="true"]').focus()
+      }
+      charDlg.addEventListener("keydown", (e) => {
+        if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return
+        const cards = [...charDlg.querySelectorAll(".pcard")]
+        const i = cards.indexOf(document.activeElement)
+        const next = cards[(i + (e.key === "ArrowRight" ? 1 : -1) + cards.length) % cards.length]
+        cards.forEach((c) => c.setAttribute("aria-selected", String(c === next)))
+        next.focus()
+      })
+
+      /* 2列の切替（左に一覧、右に内容）: セッションとタスクで同じ形 */
+      const twoDlg = document.createElement("dialog")
+      twoDlg.className = "dlg two"
+      twoDlg.setAttribute("closedby", "any")
+      twoDlg.innerHTML = `<div class="q">${icon("search", 18)}<input type="text" aria-label="絞り込む"><span class="chip" id="twoKind"></span></div><div class="cols"><div class="list" role="listbox"></div><div class="preview"></div></div><div class="dlg-hints"></div>`
+      document.body.append(twoDlg)
+      const two = { kind: "task", sel: 0, items: [] }
+      const twoInput = twoDlg.querySelector("input")
+      function drawTwo() {
+        const q = twoInput.value.trim().toLowerCase()
+        const isTask = two.kind === "task"
+        two.items = isTask ? K.tasks().filter((t) => ["ready", "ask", "blocked"].includes(t.state) && (!q || (t.id + t.title).toLowerCase().includes(q))) : K.sessions().filter((s) => !q || s.title.toLowerCase().includes(q))
+        two.sel = Math.min(two.sel, Math.max(0, two.items.length - 1))
+        let g = ""
+        const label = (t) => ({ ready: "着手できる", ask: "回答待ち", blocked: "依存の完了待ち" })[t.state]
+        twoDlg.querySelector(".list").innerHTML = two.items
+          .map((x, i) => {
+            const grp = isTask ? label(x) : x.group
+            const head = grp !== g ? `<div class="group-label">${(g = grp)}</div>` : ""
+            return isTask
+              ? `${head}<button class="row" data-two="${i}" aria-selected="${i === two.sel}"><span class="mono">${x.id}</span><span><span class="t">${x.title}</span></span><span class="size">${x.size}</span></button>`
+              : `${head}<button class="row" data-two="${i}" aria-selected="${i === two.sel}">${st(x.state)}<span><span class="t">${x.title}</span><span class="m">${x.when}${x.open ? "・表示中" : ""}</span></span><span></span></button>`
+          })
+          .join("")
+        const x = two.items[two.sel]
+        const busy = K.state.moment === "work"
+        twoDlg.querySelector(".preview").innerHTML = !x
+          ? '<div class="pv quiet">該当する項目が無い</div>'
+          : isTask
+            ? `<div class="pv"><div class="meta"><span class="mono">${x.id}</span><span class="size">${x.size}</span><span>${label(x)}</span></div><h2>${x.title}</h2>${x.why ? `<p class="quiet">${icon("spark", 14)} 推薦の理由: ${x.why}</p>` : ""}${x.note ? `<p class="quiet">${x.note}</p>` : ""}
+                <h3>完了条件（架空）</h3><ul><li>変更後に pnpm run check が通過する</li><li>幅 1400 と 720 の画面を撮影して確認する</li></ul>
+                <div class="foot"><button class="btn primary" data-task="${x.id}" ${x.state !== "ready" || busy ? "disabled" : ""}>依頼 ${kbd("⏎")}</button><span class="quiet">${busy ? "ターン中は依頼できない" : `/next-task ${x.id} を送信`}</span></div></div>`
+            : `<div class="pv"><div class="meta">${st(x.state)}<span>${{ now: "作業中", ok: "完了", ask: "回答待ち", stop: "中断" }[x.state]}</span><span class="mono">${x.when}</span></div><h2>${x.title}</h2><p class="quiet">依頼 ${x.turns} 件${x.task ? "・" + x.task : ""}</p>
+                <div class="say"><img class="face" width="32" height="32" alt="" src="${K.face()}"><span>「${x.last}」</span></div>
+                <h3>このセッションの依頼</h3><ul><li><span class="mono">${x.task ? "/next-task " + x.task : x.title}</span></li>${x.turns > 1 ? `<li class="quiet">ほか ${x.turns - 1} 件</li>` : ""}</ul>
+                <div class="foot"><button class="btn primary" data-session="${x.id}" ${busy ? "disabled" : ""}>続きから開く ${kbd("⏎")}</button><button class="btn tonal" data-act="newSession" ${busy ? "disabled" : ""}>新規 ${kbd("⌘ ⇧ O")}</button><span class="quiet">${busy ? "ターン中は切替できない" : ""}</span></div></div>`
+        twoDlg.querySelector(".list [aria-selected='true']")?.scrollIntoView({ block: "nearest" })
+      }
+      function openTwo(kind) {
+        const same = twoDlg.open && two.kind === kind
+        K.closeAll()
+        if (same) return
+        two.kind = kind
+        two.sel = 0
+        twoInput.value = ""
+        twoInput.placeholder = kind === "task" ? "タスクを絞り込む" : "セッションを検索"
+        twoDlg.setAttribute("aria-label", kind === "task" ? "タスクを選択" : "セッションを切替")
+        document.getElementById("twoKind").textContent = kind === "task" ? "タスク" : "セッション"
+        twoDlg.querySelector(".dlg-hints").innerHTML = `<span>${kbd("↑ ↓")} 移動</span><span>${kbd("⏎")} ${kind === "task" ? "依頼" : "開く"}</span><span>${kbd("esc")} 閉じる</span><span class="grow"></span><span>${kind === "task" ? `${kbd("⌘ O")} セッションへ` : `${kbd("⌘ J")} タスクへ`}</span>`
+        drawTwo()
+        twoDlg.showModal()
+        twoInput.focus()
+      }
+      twoInput.addEventListener("input", () => {
+        two.sel = 0
+        drawTwo()
+      })
+      twoDlg.addEventListener("keydown", (e) => {
+        if (e.isComposing) return
+        if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+          e.preventDefault()
+          two.sel = (two.sel + (e.key === "ArrowDown" ? 1 : -1) + two.items.length) % Math.max(1, two.items.length)
+          drawTwo()
+        } else if (e.key === "Enter" && !e.metaKey) {
+          e.preventDefault()
+          twoDlg.querySelector(".preview .btn.primary:not([disabled])")?.click()
+        }
+      })
+      twoDlg.addEventListener("click", (e) => {
+        const r = e.target.closest("[data-two]")
+        if (!r) return
+        two.sel = Number(r.dataset.two)
+        drawTwo()
+        twoInput.focus()
+      })
+
+      K.hooks.chars = openChars
+      K.hooks.tasks = () => openTwo("task")
+      K.hooks.sessions = () => openTwo("session")
+      K.hooks.progress = () => {
+        K.closeAll()
+        const b = document.querySelector(".island")
+        if (b) b.click()
+        else K.toast("進行中の作業は無い")
+      }
+      K.keys()
+      K.protoBar("b")
+      K.onChange(render)
+      render()
+      K.autoOpen()
+    </script>
+  </body>
+</html>

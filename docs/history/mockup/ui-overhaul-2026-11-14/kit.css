@@ -1,0 +1,922 @@
+/*
+  使い捨ての試作「会話画面の全面改良 3案」の共有スタイル。本番のコードではない。
+  ここに置くのはトークンと部品（キーの札・ボタン・行・ポップオーバー・ダイアログ・吹き出し・紙の中身）だけで、
+  配置は各案の HTML が持つ（案どうしで配置を共有しない）。
+*/
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+body {
+  --ground: #14121a;
+  --surface: #211e29;
+  --surface-float: #2d2937;
+  --ink: #ece8ef;
+  --ink-soft: rgb(236 232 239 / 0.76);
+  --ink-quiet: rgb(236 232 239 / 0.6);
+  --rule: rgb(236 232 239 / 0.12);
+  --rule-quiet: rgb(236 232 239 / 0.07);
+  --raised: rgb(236 232 239 / 0.07);
+  --raised-2: rgb(236 232 239 / 0.12);
+  --accent: #f9c3cd;
+  --on-accent: #221a22;
+  --ok: #7ee081;
+  --warn: #e3c766;
+  --ng: #f2a0a0;
+  --ask: #c7aef0;
+  --glass: rgb(30 27 38 / 0.76);
+  --sans: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic UI", system-ui, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+  --voice: "Hiragino Mincho ProN", "Yu Mincho", "YuMincho", serif;
+  --proto-h: 0px;
+  color-scheme: dark;
+  background: var(--ground);
+  color: var(--ink);
+  font: 14px/1.6 var(--sans);
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+body.has-proto {
+  --proto-h: 30px;
+}
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+button[disabled] {
+  cursor: not-allowed;
+}
+input,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+h1,
+h2,
+h3,
+p,
+ol,
+ul {
+  margin: 0;
+  padding: 0;
+}
+ol,
+ul {
+  list-style: none;
+}
+.mono {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  letter-spacing: 0;
+}
+.quiet {
+  color: var(--ink-quiet);
+}
+.grow {
+  flex: 1;
+}
+svg.ic {
+  flex: none;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+#app {
+  position: fixed;
+  inset: var(--proto-h) 0 0 0;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+/* 試作の切替バー（評価するデザインの外。?bar=0 で隠す） */
+.proto {
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: 30px;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px;
+  background: #000;
+  color: #fff;
+  font: 12px/1 var(--mono);
+  white-space: nowrap;
+}
+.proto b {
+  font-weight: 600;
+  margin-right: 4px;
+}
+.proto span {
+  color: rgb(255 255 255 / 0.62);
+  margin-left: 10px;
+}
+.proto a,
+.proto button {
+  color: #fff;
+  text-decoration: none;
+  padding: 4px 8px;
+  border-radius: 5px;
+  font: inherit;
+}
+.proto a:hover,
+.proto button:hover {
+  background: rgb(255 255 255 / 0.16);
+}
+.proto [aria-current="true"] {
+  background: #fff;
+  color: #000;
+}
+
+/* キーの札 */
+.keys {
+  display: inline-flex;
+  gap: 2px;
+  vertical-align: middle;
+}
+kbd {
+  display: inline-grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 5px;
+  border: 1px solid var(--rule);
+  border-bottom-width: 2px;
+  background: rgb(255 255 255 / 0.05);
+  color: var(--ink-soft);
+  font: 12px/1 var(--mono);
+}
+
+/* ボタン・札・切替 */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1;
+  white-space: nowrap;
+  transition:
+    background 0.12s,
+    transform 0.08s;
+}
+.btn:active:not([disabled]) {
+  transform: translateY(1px);
+}
+.btn.sm {
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 8px;
+}
+.btn.primary {
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: 700;
+}
+.btn.primary kbd {
+  border-color: color-mix(in srgb, var(--on-accent) 30%, transparent);
+  background: transparent;
+  color: var(--on-accent);
+}
+.btn.tonal {
+  background: var(--raised);
+}
+.btn.tonal:hover,
+.btn.ghost:hover {
+  background: var(--raised-2);
+}
+.btn.stop {
+  background: color-mix(in srgb, var(--ng) 16%, transparent);
+  color: var(--ng);
+  font-weight: 700;
+}
+.btn[disabled] {
+  opacity: 0.45;
+}
+.icon-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  color: var(--ink-soft);
+  font: 15px/1 var(--mono);
+}
+.icon-btn:hover {
+  background: var(--raised-2);
+  color: var(--ink);
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: var(--raised);
+  font-size: 12.5px;
+  line-height: 1;
+  white-space: nowrap;
+  color: var(--ink-soft);
+}
+button.chip:hover {
+  background: var(--raised-2);
+  color: var(--ink);
+}
+.chip[aria-pressed="true"] {
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+  color: var(--ink);
+}
+.seg {
+  display: inline-flex;
+  padding: 2px;
+  border-radius: 9px;
+  background: rgb(0 0 0 / 0.3);
+}
+.seg button {
+  height: 26px;
+  padding: 0 12px;
+  border-radius: 7px;
+  font-size: 12.5px;
+  color: var(--ink-quiet);
+}
+.seg button[aria-pressed="true"] {
+  background: var(--surface-float);
+  color: var(--ink);
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.4);
+}
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  background: var(--raised);
+}
+.badge.ok {
+  background: color-mix(in srgb, var(--ok) 20%, transparent);
+  color: var(--ok);
+}
+.badge.ask {
+  background: color-mix(in srgb, var(--ask) 22%, transparent);
+  color: var(--ask);
+}
+.badge.warn {
+  background: color-mix(in srgb, var(--warn) 20%, transparent);
+  color: var(--warn);
+}
+.badge.ng {
+  background: color-mix(in srgb, var(--ng) 20%, transparent);
+  color: var(--ng);
+}
+.badge.now {
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+  color: var(--accent);
+}
+.size {
+  display: inline-grid;
+  place-items: center;
+  min-width: 20px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 5px;
+  border: 1px solid var(--rule);
+  color: var(--ink-quiet);
+  font: 12px/1 var(--mono);
+}
+
+/* 状態の印（色だけにせず、形も変える） */
+.st {
+  display: inline-grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  flex: none;
+  border-radius: 50%;
+  font: 700 12px/1 var(--mono);
+}
+.st.now {
+  background: radial-gradient(circle, var(--accent) 0 4px, transparent 4.5px);
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--accent) 50%, transparent);
+}
+.st.ok {
+  color: var(--ok);
+}
+.st.ask {
+  color: var(--ask);
+}
+.st.stop {
+  color: var(--ng);
+}
+.st.todo {
+  box-shadow: inset 0 0 0 1.5px var(--rule);
+}
+
+/* 行（一覧の1件） */
+.row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 10px;
+  text-align: left;
+}
+.row:hover {
+  background: var(--raised);
+}
+.row[aria-selected="true"] {
+  background: var(--raised-2);
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+.row .t {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13.5px;
+}
+.row .m {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  color: var(--ink-quiet);
+}
+.group-label {
+  padding: 10px 10px 4px;
+  font-size: 12px;
+  color: var(--ink-quiet);
+}
+.face {
+  flex: none;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--raised);
+}
+
+/* 使用量の輪 */
+.meters {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--ink-quiet);
+  white-space: nowrap;
+}
+.meter {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.meter b {
+  font: 600 12px/1 var(--mono);
+  color: var(--ink-soft);
+}
+.ring {
+  --p: 50;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: conic-gradient(var(--ink-soft) calc(var(--p) * 1%), var(--raised-2) 0);
+  -webkit-mask: radial-gradient(circle, transparent 3.6px, #000 4.2px);
+  mask: radial-gradient(circle, transparent 3.6px, #000 4.2px);
+}
+
+/* ポップオーバー（メニュー）とダイアログ */
+.pop {
+  position: fixed;
+  inset: auto;
+  margin: 0;
+  border: 0;
+  padding: 6px;
+  min-width: 264px;
+  border-radius: 14px;
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(22px) saturate(1.5);
+  backdrop-filter: blur(22px) saturate(1.5);
+  box-shadow:
+    0 0 0 1px var(--rule),
+    inset 0 1px 0 rgb(255 255 255 / 0.06),
+    0 18px 50px rgb(0 0 0 / 0.5);
+  color: var(--ink);
+}
+.pop .foot {
+  margin-top: 4px;
+  padding: 8px 10px 4px;
+  border-top: 1px solid var(--rule-quiet);
+  font-size: 12px;
+  color: var(--ink-quiet);
+}
+dialog.dlg {
+  border: 0;
+  padding: 0;
+  max-width: none;
+  max-height: none;
+  border-radius: 18px;
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(26px) saturate(1.5);
+  backdrop-filter: blur(26px) saturate(1.5);
+  box-shadow:
+    0 0 0 1px var(--rule),
+    inset 0 1px 0 rgb(255 255 255 / 0.06),
+    0 30px 80px rgb(0 0 0 / 0.6);
+  color: var(--ink);
+}
+dialog.dlg[open] {
+  display: flex;
+  flex-direction: column;
+}
+dialog.dlg:focus-visible {
+  outline: none;
+}
+dialog:modal {
+  overscroll-behavior: contain;
+}
+dialog::backdrop {
+  background: rgb(10 8 14 / 0.5);
+  overflow: hidden;
+  overscroll-behavior: contain;
+}
+.dlg-hints {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 14px;
+  border-top: 1px solid var(--rule-quiet);
+  font-size: 12px;
+  color: var(--ink-quiet);
+}
+
+/* 検索（⌘K） */
+dialog.palette {
+  width: 680px;
+  max-height: 560px;
+  margin: 13vh auto auto;
+}
+.palette .q {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 16px;
+  height: 54px;
+  border-bottom: 1px solid var(--rule-quiet);
+  color: var(--ink-quiet);
+}
+.palette .q input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: 0;
+  outline: 0;
+  background: none;
+  font-size: 16px;
+  color: var(--ink);
+}
+.palette .scopes {
+  display: flex;
+  gap: 6px;
+}
+.palette .list {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 4px 6px 8px;
+}
+.palette .empty {
+  padding: 28px 14px;
+  color: var(--ink-quiet);
+}
+
+/* キーの一覧（⌘/） */
+dialog.keysheet {
+  width: 860px;
+  margin: 11vh auto auto;
+  padding: 20px 24px 8px;
+}
+.keysheet h2 {
+  font-size: 16px;
+  margin-bottom: 12px;
+}
+.keysheet .cols {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px 28px;
+}
+.keysheet h3 {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--ink-quiet);
+  margin: 6px 0 4px;
+}
+.keysheet li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 5px 0;
+  font-size: 13px;
+  border-bottom: 1px solid var(--rule-quiet);
+}
+.keysheet .dlg-hints {
+  margin: 12px -24px 0;
+}
+
+/* 知らせ */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 92px;
+  z-index: 40;
+  translate: -50% 0;
+  padding: 9px 14px;
+  border-radius: 12px;
+  background: var(--surface-float);
+  box-shadow:
+    0 0 0 1px var(--rule),
+    0 14px 36px rgb(0 0 0 / 0.5);
+  font-size: 13px;
+  animation: toast-in 0.18s ease-out;
+}
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    translate: -50% 8px;
+  }
+}
+
+/* 吹き出しと、その上のやり取り */
+.bubble {
+  position: relative;
+  padding: 11px 15px 12px;
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--surface) 90%, var(--accent));
+  border: 1px solid color-mix(in srgb, var(--accent) 46%, transparent);
+  box-shadow: 0 10px 30px rgb(0 0 0 / 0.36);
+}
+.bubble::after {
+  content: "";
+  position: absolute;
+  left: var(--tail, 46%);
+  bottom: -7px;
+  width: 12px;
+  height: 12px;
+  rotate: 45deg;
+  background: inherit;
+  border: inherit;
+  border-top-color: transparent;
+  border-left-color: transparent;
+}
+.bubble header {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 2px;
+  font-size: 12px;
+  color: var(--ink-quiet);
+}
+.bubble header b {
+  color: var(--accent);
+  font-size: 13px;
+}
+.bubble p {
+  font: 17px/1.7 var(--voice);
+}
+.bubble .hand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--rule);
+  font-size: 12.5px;
+  color: var(--ink-soft);
+}
+.log {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--ink-soft);
+  text-shadow: 0 1px 6px rgb(0 0 0 / 0.8);
+}
+.log .you {
+  align-self: flex-end;
+  max-width: 92%;
+  padding: 5px 10px;
+  border-radius: 10px 10px 2px 10px;
+  background: rgb(20 18 26 / 0.66);
+  text-shadow: none;
+}
+.log .you b {
+  margin-right: 6px;
+  color: var(--accent);
+  font-size: 12px;
+}
+.log .line {
+  font-family: var(--voice);
+  font-size: 14px;
+}
+.log time {
+  margin-right: 6px;
+  font: 12px/1 var(--mono);
+  color: var(--ink-quiet);
+}
+.lamp {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12.5px;
+  color: var(--ink-soft);
+  text-shadow: 0 1px 6px rgb(0 0 0 / 0.8);
+}
+.lamp b {
+  font: 700 15px/1 var(--mono);
+  color: var(--ink);
+}
+.lamp .week {
+  display: inline-flex;
+  gap: 5px;
+  color: var(--ink-quiet);
+}
+.lamp .week .lit {
+  color: var(--accent);
+}
+.lamp .week .lit svg {
+  fill: currentColor;
+}
+
+/* 進行の帯（段の数だけ区切る） */
+.segbar {
+  display: flex;
+  gap: 3px;
+  min-width: 80px;
+}
+.segbar i {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--raised-2);
+}
+.segbar i.done {
+  background: var(--accent);
+}
+.segbar i.now {
+  background: linear-gradient(90deg, var(--accent) 55%, var(--raised-2) 55%);
+  animation: seg-now 2.4s steps(6) infinite;
+}
+@keyframes seg-now {
+  50% {
+    opacity: 0.55;
+  }
+}
+
+/* 入力欄（案A・案C が使う。案B はオムニバー） */
+.composer {
+  border-radius: 14px;
+  background: var(--surface-float);
+  box-shadow:
+    0 0 0 1px var(--rule),
+    0 12px 32px rgb(0 0 0 / 0.36);
+}
+.composer:focus-within {
+  box-shadow:
+    0 0 0 1.5px var(--accent),
+    0 12px 32px rgb(0 0 0 / 0.36);
+}
+.composer textarea {
+  display: block;
+  width: 100%;
+  resize: none;
+  border: 0;
+  outline: 0;
+  background: none;
+  padding: 12px 14px 4px;
+  font-size: 16px;
+  line-height: 1.6;
+}
+.composer .c-foot {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px 8px;
+  white-space: nowrap;
+}
+.composer .c-foot > * {
+  flex: none;
+}
+.composer .c-foot > .grow {
+  flex: 1;
+}
+.composer .sep {
+  width: 1px;
+  height: 18px;
+  margin: 0 6px;
+  background: var(--rule);
+}
+.run-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 26px;
+  padding: 0 8px;
+  border-radius: 8px;
+  font: 12.5px/1 var(--mono);
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+.run-chip:hover {
+  background: var(--raised-2);
+  color: var(--ink);
+}
+
+/* 紙の中身（レポートと作業の記録） */
+.rp {
+  font-size: 15px;
+  line-height: 1.75;
+}
+.rp .req {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--ink-quiet);
+}
+.rp .verdict {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+  font-size: 12.5px;
+  color: var(--ink-quiet);
+}
+.rp h1 {
+  margin: 12px 0 18px;
+  font-size: 24px;
+  line-height: 1.5;
+  letter-spacing: 0.01em;
+  text-wrap: pretty;
+}
+.rp h2 {
+  margin: 26px 0 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--rule-quiet);
+  font-size: 16px;
+}
+.rp .figs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.rp .fig {
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--raised);
+}
+.rp .fig span {
+  display: block;
+  font-size: 12.5px;
+  color: var(--ink-quiet);
+}
+.rp .fig b {
+  font: 700 22px/1.4 var(--mono);
+}
+.rp .fig small {
+  margin-left: 6px;
+  font: 12px/1 var(--mono);
+  color: var(--ink-quiet);
+}
+.rp .turn {
+  margin-top: 18px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--raised);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+.rp .turn h3 {
+  font-size: 12.5px;
+  color: var(--accent);
+}
+.rp .turn .replies {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+.rp .checks li {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) auto;
+  gap: 6px;
+  align-items: baseline;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--rule-quiet);
+}
+.rp .checks .q {
+  color: var(--warn);
+}
+.rp .checks .y {
+  color: var(--ok);
+}
+.rp table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.rp th {
+  text-align: left;
+  font-weight: 400;
+  font-size: 12.5px;
+  color: var(--ink-quiet);
+}
+.rp th,
+.rp td {
+  padding: 7px 10px 7px 0;
+  border-bottom: 1px solid var(--rule-quiet);
+}
+.rp .agents {
+  display: grid;
+  gap: 6px;
+  margin-top: 8px;
+}
+.rp .agent {
+  display: grid;
+  grid-template-columns: 18px 7.5em minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 9px 12px;
+  border-radius: 10px;
+  background: var(--raised);
+  font-size: 13.5px;
+}
+.rp .agent .who {
+  font-weight: 700;
+}
+.rp .agent .what {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ink-soft);
+}
+.rp .sofar li {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: baseline;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--rule-quiet);
+  font-size: 14px;
+}
+.rp .sofar b {
+  display: block;
+  font-size: 14px;
+}
+.rp .sofar span {
+  color: var(--ink-soft);
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 6px;
+  background: var(--raised-2);
+  background-clip: content-box;
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
