@@ -57,6 +57,7 @@ export const E2E_WATCHED_REGIONS = {
   "test/e2e/report-paper.test.ts": ["paper", "main", "dispatch"],
   "test/e2e/run-setting.test.ts": ["room-head"],
   "test/e2e/achievement-sheet.test.ts": ["other-screens"],
+  "test/e2e/search-palette.test.ts": ["room-head"],
   "test/e2e/session-ended.test.ts": ["main", "dispatch"],
   "test/e2e/session-switch.test.ts": "every",
   "test/e2e/speak-bubble.test.ts": ["character"],

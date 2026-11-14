@@ -110,7 +110,10 @@ export function OverlayGroups(): ReactElement {
           </Text>
         </Sheet>
       </Group>
-      <Group title="CommandList（探すの一覧。↑ ↓ と Enter）" parts={["command-row"]}>
+      <Group
+        title="CommandList（探すの一覧。↑ ↓・Ctrl+N・Ctrl+P と Enter）"
+        parts={["command-row"]}
+      >
         <div className={styles["design-input"]}>
           <CommandList
             ariaLabel="見本の一覧"

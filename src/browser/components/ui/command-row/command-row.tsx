@@ -1,8 +1,9 @@
-// 探す（⌘K）の一覧。↑ ↓ で選ぶ行を動かし、Enter か行のクリックで選ぶ。
+// 探す（⌘K）の一覧。↑ ↓ と Ctrl+N・Ctrl+P で選ぶ行を動かし、Enter か行のクリックで選ぶ。変換中のキーは受けない。
 // 行は渡された並びのまま描き、群（`group`）が前の行と変わるところに群の見出しを置く。
 // 絞り込みの欄（`search`）を渡すと一覧の上に置き、キーは欄に字を打っているあいだも一覧が受ける。
 // 行の絞り込みと開閉は持たない（呼び出し側が行を絞って渡す）。
 
+import { isImeKeyEvent } from "@astryxdesign/core/utils"
 import { useId, useState, type ChangeEvent, type KeyboardEvent, type ReactElement } from "react"
 
 import styles from "./command-row.module.css"
@@ -44,13 +45,21 @@ export function CommandList(props: CommandListProps): ReactElement {
   const activeId = props.items[activeIndex] === undefined ? undefined : rowId(idPrefix, activeIndex)
   const { search } = props
 
+  const moveTo = (index: number): void => {
+    setActive(index)
+    document.getElementById(rowId(idPrefix, index))?.scrollIntoView({ block: "nearest" })
+  }
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>): void => {
-    if (event.key === "ArrowDown") {
+    if (isImeKeyEvent(event.nativeEvent)) {
+      return
+    }
+    const ctrlOnly = event.ctrlKey && !event.metaKey
+    if (event.key === "ArrowDown" || (ctrlOnly && event.key === "n")) {
       event.preventDefault()
-      setActive(Math.min(activeIndex + 1, last))
-    } else if (event.key === "ArrowUp") {
+      moveTo(Math.min(activeIndex + 1, last))
+    } else if (event.key === "ArrowUp" || (ctrlOnly && event.key === "p")) {
       event.preventDefault()
-      setActive(Math.max(activeIndex - 1, 0))
+      moveTo(Math.max(activeIndex - 1, 0))
     } else if (event.key === "Enter") {
       event.preventDefault()
       const item = props.items[activeIndex]
@@ -107,7 +116,8 @@ export function CommandList(props: CommandListProps): ReactElement {
         aria-activedescendant={activeId}
         placeholder={search.placeholder}
         value={search.value}
-        autoFocus
+        // `autoFocus` に戻すと `<Dialog>` が開いた元を覚える前にフォーカスが入り、閉じても開いた元へ戻らなくなる
+        data-autofocus="true"
         onChange={onSearchChange}
       />
       {list}

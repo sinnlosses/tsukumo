@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { useState, type ReactElement } from "react"
-import { afterEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import {
   CommandList,
@@ -100,5 +100,53 @@ describe("CommandList", () => {
 
     fireEvent.change(field, { target: { value: "当たらない字" } })
     expect(screen.getByText("架空の空")).toBeDefined()
+  })
+
+  it("変換中の Enter は行を選ばず、↓ は選ぶ行を動かさない", () => {
+    const onSelect = vi.fn<(key: string) => void>()
+    renderList(onSelect)
+    const list = screen.getByRole("listbox")
+    fireEvent.keyDown(list, { key: "Enter", isComposing: true })
+    fireEvent.keyDown(list, { key: "Enter", keyCode: 229 })
+    fireEvent.keyDown(list, { key: "ArrowDown", isComposing: true })
+    expect(onSelect).not.toHaveBeenCalled()
+    expect(selectedLabel()).toBe("架空の行A")
+  })
+
+  it("Ctrl+N で次の行、Ctrl+P で前の行へ動き、⌘ が一緒なら動かない", () => {
+    renderList(() => {})
+    const list = screen.getByRole("listbox")
+    fireEvent.keyDown(list, { key: "n", ctrlKey: true })
+    expect(selectedLabel()).toBe("架空の行B")
+    fireEvent.keyDown(list, { key: "n", ctrlKey: true, metaKey: true })
+    fireEvent.keyDown(list, { key: "p", ctrlKey: true, metaKey: true })
+    expect(selectedLabel()).toBe("架空の行B")
+    fireEvent.keyDown(list, { key: "p", ctrlKey: true })
+    expect(selectedLabel()).toBe("架空の行A")
+  })
+
+  describe("選んだ行への追従", () => {
+    const original = Element.prototype.scrollIntoView
+    const scrollIntoView = vi.fn<(options?: ScrollIntoViewOptions) => void>()
+
+    beforeEach(() => {
+      scrollIntoView.mockClear()
+      Element.prototype.scrollIntoView = scrollIntoView
+    })
+    afterEach(() => {
+      Element.prototype.scrollIntoView = original
+    })
+
+    it("↓ で動かした先の行を見える範囲へ寄せ、マウスを乗せただけでは寄せない", () => {
+      renderList(() => {})
+      fireEvent.keyDown(screen.getByRole("listbox"), { key: "ArrowDown" })
+      expect(scrollIntoView).toHaveBeenCalledTimes(1)
+      expect(scrollIntoView).toHaveBeenCalledWith({ block: "nearest" })
+      expect(scrollIntoView.mock.contexts[0]).toBe(screen.getByRole("option", { selected: true }))
+
+      scrollIntoView.mockClear()
+      fireEvent.mouseMove(screen.getByRole("option", { name: /架空の行C/ }))
+      expect(scrollIntoView).not.toHaveBeenCalled()
+    })
   })
 })
