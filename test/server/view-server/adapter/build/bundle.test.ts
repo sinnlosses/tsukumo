@@ -50,13 +50,13 @@ describe("buildUiBundle", () => {
   it("CSS Modules の class 名が、CSS の選択子と JS の対応表に同じ綴りで入っている", () => {
     const result = built
 
-    // `layout-grid` は
-    // `components/page/conversation/components/conversation-layout/conversation-layout.module.css`
+    // `stage-shell` は
+    // `components/page/conversation/components/stage/stage.module.css`
     // の class。組み立てるとハッシュ付きの名前になる。
-    const selector = /\.(_?layout-grid_[\w-]+)/.exec(
+    const selector = /\.(_?stage-shell_[\w-]+)/.exec(
       result.kind === "ok" ? result.bundle.styleSheet : "",
     )
-    const hashedName = selector?.[1] ?? "（CSS に layout-grid の選択子が無い）"
+    const hashedName = selector?.[1] ?? "（CSS に stage-shell の選択子が無い）"
     // minify した JS は文字列をバッククォートで書くことがある（`"` 固定では見つからない）。
     expect(result.kind === "ok" ? result.bundle.uiScript : "").toMatch(
       new RegExp(`["'\`]${hashedName}["'\`]`),
