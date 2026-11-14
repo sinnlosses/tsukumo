@@ -1,0 +1,264 @@
+/* 融合案「舞台の上の紙」。メインビュー・入力欄・キャラビューを1つの面（舞台）にまとめ、紙は中身の分だけ舞台を覆う。 */
+
+body[data-scene="greet"] [data-hide~="greet"] {
+  display: none !important;
+}
+
+body[data-v="fused"] .shell {
+  grid-template-columns: minmax(0, 1fr) var(--side-w);
+  grid-template-areas: "main side";
+}
+
+/* 舞台。背景を面の全体に敷き、右へ行くほど暗くして紙の縁を落ち着かせる */
+.fuse {
+  --lane-w: clamp(264px, 20.5vw, 400px);
+  --dock-clear: 124px;
+  grid-area: main;
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--lane-w) minmax(0, 1fr);
+  min-block-size: 0;
+  border: 1px solid var(--rule-quiet);
+  border-radius: var(--radius-container);
+  overflow: clip;
+  background:
+    linear-gradient(to right, rgb(25 23 32 / 26%) 0%, rgb(25 23 32 / 54%) 36%, rgb(25 23 32 / 70%) 100%),
+    linear-gradient(to top, rgb(25 23 32 / 74%) 0%, rgb(25 23 32 / 0%) 38%),
+    var(--art) 22% center / cover;
+}
+
+/* 迎える場面だけ、キャラクターの側を広く取る。依頼を送った瞬間に既定の幅へ戻す */
+body[data-scene="greet"] .fuse {
+  --lane-w: 40.5%;
+}
+
+body[data-scene="ask"] .fuse {
+  --dock-clear: 152px;
+}
+
+/* 会話の列。上から、これまでのやり取りの題・このやり取りの流れ・今の吹き出し・立ち絵 */
+.lane {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  min-block-size: 0;
+  padding: 12px 0 0 12px;
+  container: lane / size;
+}
+
+/* やり取りの切り替えは1つの札にまとめ、押すと一覧が開く */
+.lane-turns {
+  flex: none;
+}
+
+.lane-turns .chip-button {
+  background: color-mix(in srgb, var(--ground) 82%, transparent);
+  color: var(--ink);
+}
+
+.lane .flow {
+  padding: 12px 12px 4px 0;
+  mask-image: none;
+}
+
+.lane .bubble {
+  margin: 10px 12px 0 0;
+}
+
+/* 立ち絵は列の幅を少しはみ出してよい。左は舞台の縁で切れ、右は紙の後ろへ回る */
+.lane .window {
+  justify-content: center;
+  block-size: 52cqb;
+}
+
+.lane .portrait {
+  flex: none;
+  inline-size: auto;
+  block-size: 100%;
+  max-block-size: none;
+  max-inline-size: calc(100cqi + 96px);
+}
+
+body[data-scene="greet"] .lane .bubble {
+  align-self: center;
+  max-inline-size: 340px;
+  margin-inline-end: 12px;
+}
+
+body[data-scene="greet"] .lane {
+  justify-content: flex-end;
+}
+
+body[data-scene="greet"] .lane .window {
+  block-size: 80cqb;
+}
+
+/* 紙の側。頭の帯・下から積む紙・入力欄 */
+.desk {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 10px;
+  min-block-size: 0;
+  padding: 12px 12px 0 16px;
+  container: paper / inline-size;
+}
+
+.fuse .paper-head {
+  min-block-size: 48px;
+  padding: 8px 12px 8px 20px;
+  border: 1px solid var(--rule-quiet);
+  border-radius: var(--radius-container);
+  background: var(--surface);
+  box-shadow: 0 6px 18px rgb(0 0 0 / 30%);
+}
+
+.state-idle {
+  color: var(--ink-soft);
+}
+
+/* 新しい紙ほど下に積み、キャラクターと入力欄の隣に出す */
+.stream {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-block-size: 0;
+  padding-block-end: var(--dock-clear);
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.stream::before {
+  content: "";
+  flex: 1 0 0;
+}
+
+.stream [data-latest] {
+  scroll-initial-target: nearest;
+}
+
+.sheet {
+  flex: none;
+  padding: 20px 28px;
+  border: 1px solid var(--rule-quiet);
+  border-radius: var(--radius-container);
+  background: var(--surface);
+  box-shadow: 0 10px 28px rgb(0 0 0 / 38%);
+}
+
+.sheet.inquiry {
+  max-inline-size: none;
+  margin: 0;
+  border-color: color-mix(in srgb, var(--state-warn) 55%, var(--surface));
+}
+
+/* レポートは舞台の下端まで覆う1枚の紙。中身は紙の中でスクロールする */
+body[data-scene="read"] .stream {
+  padding-block-end: 0;
+  overflow: hidden;
+}
+
+body[data-scene="read"] .stream::before {
+  display: none;
+}
+
+.sheet-report {
+  flex: 1 1 0;
+  min-block-size: 0;
+  padding: 24px 32px 190px;
+  border-block-end: 0;
+  border-end-start-radius: 0;
+  border-end-end-radius: 0;
+  overflow-y: auto;
+}
+
+.fuse .dock {
+  inset-inline: 16px 12px;
+  padding: 0 12px 14px;
+  background: none;
+}
+
+body[data-scene="read"] .fuse .dock {
+  margin-inline: 1px;
+  padding-block-start: 56px;
+  background: linear-gradient(to top, var(--surface) 80%, transparent);
+}
+
+/* 迎える場面の始め方 */
+.welcome h1 {
+  margin-block-end: 12px;
+  font-size: 19px;
+  font-weight: 650;
+}
+
+.starts {
+  display: grid;
+  gap: 8px;
+}
+
+.start {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 2px 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--rule-soft);
+  border-radius: var(--radius-element);
+}
+
+.start-best {
+  border-color: color-mix(in srgb, var(--accent) 60%, var(--surface));
+  background: var(--surface-accent);
+}
+
+.start-name {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 15px;
+  font-weight: 650;
+  color: var(--ink-bright);
+}
+
+.start-note {
+  grid-column: 1;
+  font-size: 13px;
+  color: var(--ink-quiet);
+}
+
+.start-best .start-note {
+  color: var(--ink-quiet-accent);
+}
+
+.start .button {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+}
+
+.button-quiet {
+  background: var(--surface-raised);
+  color: var(--ink);
+}
+
+.button kbd,
+.chip-button kbd {
+  display: inline-grid;
+  place-items: center;
+  min-inline-size: 20px;
+  block-size: 20px;
+  padding: 0 4px;
+  border-radius: var(--radius-inner);
+  background: color-mix(in srgb, currentColor 14%, transparent);
+}
+
+.starts-other {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-block-start: 14px;
+  font-size: 13px;
+  color: var(--ink-quiet);
+}

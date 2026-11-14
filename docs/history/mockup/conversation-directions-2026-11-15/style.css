@@ -213,6 +213,10 @@ body[data-v="stage"] [data-hide-v~="stage"] {
   margin-inline-end: auto;
 }
 
+.mock-bar-link {
+  color: var(--ink-soft);
+}
+
 .mock-bar-group {
   display: inline-flex;
   gap: 2px;
