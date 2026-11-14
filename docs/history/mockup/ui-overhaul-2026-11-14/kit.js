@@ -149,6 +149,10 @@
     board:
       '<rect x="4" y="4.5" width="4.5" height="15" rx="1.2"/><rect x="9.75" y="4.5" width="4.5" height="10" rx="1.2"/><rect x="15.5" y="4.5" width="4.5" height="12.5" rx="1.2"/>',
     shield: '<path d="M12 3.5 5 6v5.5c0 4.2 2.9 7.4 7 9 4.1-1.6 7-4.8 7-9V6z"/>',
+    refresh: '<path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4.5V11h-6.5"/>',
+    trophy: '<path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M9 20h6"/>',
+    clip: '<path d="M19 11.5 12.5 18a4.2 4.2 0 0 1-6-6L13 5.5a2.8 2.8 0 0 1 4 4L10.5 16a1.4 1.4 0 0 1-2-2l6-6"/>',
+    right: '<path d="m9 6 6 6-6 6"/>',
     cpu: '<rect x="6.5" y="6.5" width="11" height="11" rx="2"/><path d="M10 3.5v3M14 3.5v3M10 17.5v3M14 17.5v3M3.5 10h3M3.5 14h3M17.5 10h3M17.5 14h3"/>',
   }
   const icon = (name, size = 16) =>
@@ -449,7 +453,9 @@
         ...((hooks.hideKeys || []).includes("⌘ I") ? [] : [cmd("進行の詳細を表示", "⌘ I", () => hooks.progress())]),
         cmd("キーの一覧を表示", "⌘ /", () => keysheet.open()),
         cmd("雑談に切替", "", () => toast("雑談に切替（試作では表示のみ）")),
-        cmd("設定を開く", "⌘ ,", () => toast("設定を開く（試作では表示のみ）")),
+        cmd("設定を開く", "⌘ ,", () => hooks.settings()),
+        // hooks.extraCmds: その案だけが持つ移動先（[名前, キー, 動作] の並び）
+        ...(hooks.extraCmds || []).map(([t, k, run]) => cmd(t, k, run)),
         ...PACKS.map((p, i) => ({ scope: "char", g: "キャラクター", lead: `<img class="face" width="24" height="24" alt="" src="${face(p)}">`, t: p.name, m: p.tagline, k: `⌃ ${i + 1}`, run: () => act.switchPack(p.id) })),
         ...tasks()
           .filter((t) => t.state === "ready")
@@ -586,6 +592,7 @@
   hooks.tasks = () => palette.open("task")
   hooks.chars = () => palette.open("char")
   hooks.progress = () => toast("進行の詳細（この案では常時表示）")
+  hooks.settings = () => toast("設定を開く（試作では表示のみ）")
 
   document.addEventListener("click", (e) => {
     const b = e.target.closest?.("[data-act],[data-pack],[data-task],[data-session],[data-open]")
@@ -617,7 +624,7 @@
       "mod+j": () => hooks.tasks(),
       "mod+o": () => hooks.sessions(),
       "mod+i": () => hooks.progress(),
-      "mod+,": () => toast("設定を開く（試作では表示のみ）"),
+      "mod+,": () => (closeAll(), hooks.settings()),
       "mod+.": () => act.stop(),
       "mod+enter": () => (closeAll(), act.send()),
       ...Object.fromEntries(PACKS.map((p, i) => [`ctrl+${i + 1}`, () => (closeAll(), act.switchPack(p.id))])),
@@ -633,7 +640,7 @@
       if (e.altKey && isMac) parts.push("alt")
       if (e.shiftKey) parts.push("shift")
       const key = e.code.startsWith("Key") ? e.code.slice(3).toLowerCase() : e.code.startsWith("Digit") ? e.code.slice(5) : NAMES[e.code] || e.key.toLowerCase()
-      const typing = /^(INPUT|TEXTAREA)$/.test(document.activeElement?.tagName || "")
+      const typing = /^(INPUT|TEXTAREA)$/.test(document.activeElement?.tagName || "") || document.activeElement?.isContentEditable
       const f = parts.length ? map[[...parts, key].join("+")] : !typing && !document.querySelector("dialog[open]") && map["plain:" + key]
       if (f) {
         e.preventDefault()

@@ -3,19 +3,24 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>採用案: 常設パネル型・進行は現行のまま・重複なし（使い捨ての試作）</title>
+    <title>採用案: 常設サイドバー型・進行は現行のまま・重複なし（使い捨ての試作）</title>
     <!--
-      使い捨ての試作。3案の比較（index.html）で利用者が案A を選び、条件を2つ付けた（2026-11-14）。
+      使い捨ての試作。3案の比較（index.html）で利用者が案A を選び、条件と注文を付けた（2026-11-14）。
         1. 進行の出し方は今の実物のまま変えない（紙の頭の札・灯り・「n段のうちm段目」・経過と、紙の中の計画の一覧）。
         2. 同じ情報を2か所以上に出さない。
-      この HTML はその2つを案A に反映した見本。情報ごとの置き場は次のとおり（?map=1 か、上の「置き場を表示」で枠が出る）。
-        やり取り（依頼とセリフ）… 舞台のログ。依頼を押すと、その回を紙に出す（欄外の「この部屋のやり取り」と紙の頭の依頼文は置かない）
-        進行と状態 … 紙（今の出し方のまま）。上のバー・入力欄・吹き出し・パネルには置かない
-        タスク … 右パネル（待機の推薦3件だけは紙。パネルの一覧からは外す）
-        セッション … 右パネルのタブ（上のバーは名前だけ）
-        使用量 … 上のバー　　実行設定 … 入力欄の札　　今日の灯り … 舞台の上端
-      ?moment=greet|work|deliver ?pack=shirasuzu|tsukumo|chou|spirit ?turn=1|2 ?map=1 ?open=chars|sessions|tasks|palette|keys ?bar=0
-      進行の部品（札・灯り・計画の一覧）は今の実物を写したもので、新しい意匠ではない。
+        3. 成果・キャラクター・使用量のメニューの配置を考え直す。
+        4. 入力欄は Astryx の部品を参考にする（ChatComposer の骨格: 角丸 28px・余白 12px・下の行に操作・円形の送信・上に添付の引き出し）。
+        5. 使用量は上ではなくサイドバーの下に、取り直しのボタンと一緒に置く。
+      この HTML はそれを案A に反映した見本。上のバーは使用量を外すと中身が残らないので無くし、3列（舞台・紙・サイドバー）を上端まで伸ばした。
+      情報ごとの置き場（?map=1 か、上の「置き場を表示」で枠が出る）:
+        やり取り（依頼とセリフ）… 舞台のログ。依頼を押すと、その回を紙に出す
+        キャラクター（切替と管理）… 舞台の頭の名札　　成果 … 舞台の頭の「今日の灯り」　　モード … 舞台の頭
+        進行と状態 … 紙（今の出し方のまま）　　レポート … 紙
+        場所（部屋とセッションの名前）・検索 … サイドバーの頭　　タスク・セッションの一覧 … サイドバー
+        使用量（取り直しつき）・設定 … サイドバーの下　　モデル・考える深さ・許可モード … 入力欄の下の行
+      ?moment=greet|work|deliver ?pack=shirasuzu|tsukumo|chou|spirit ?turn=1|2 ?map=1 ?attach=1 ?draft=1 ?side=0
+      ?sheet=achievement|character|usage|settings ?open=chars|sessions|tasks|palette|keys ?bar=0
+      進行の部品（札・灯り・計画の一覧）と、成果・キャラクター・使用量・設定の紙の中身は今の実物を前提にしていて、新しい意匠ではない。
       中身は架空の依頼・架空のタスク・架空のレポートで、実物の会話ではない。
       開き方: このファイルをブラウザで開く。素材は ../../../../characters/ から相対で読む。
       本番のコードではない。テストもエラー処理も持たない。
@@ -24,13 +29,10 @@
     <style>
       #app {
         display: grid;
-        grid-template: 48px minmax(0, 1fr) / 328px minmax(0, 1fr) 340px;
+        grid-template: minmax(0, 1fr) / 328px minmax(0, 1fr) 340px;
       }
-      body.panel-closed #app {
-        grid-template-columns: 328px minmax(0, 1fr) 12px;
-      }
-      body.panel-closed .panel {
-        display: none;
+      body.side-closed #app {
+        grid-template-columns: 328px minmax(0, 1fr) 56px;
       }
       .bg {
         position: absolute;
@@ -38,22 +40,23 @@
         z-index: -1;
         background:
           linear-gradient(90deg, rgb(20 18 26 / 0.08), rgb(20 18 26 / 0.5) 300px, var(--ground) 580px),
+          linear-gradient(180deg, rgb(20 18 26 / 0.5), transparent 130px),
           var(--bg-image) left center / auto 100% no-repeat,
           var(--ground);
       }
 
-      /* 上のバー: 場所（キャラクター・セッションの名前）と使用量と入口だけ。状態と進行は置かない */
-      .top {
-        grid-column: 1 / -1;
+      /* 舞台: 頭に名札・モード・今日の灯り（成果の入口）。その下はやり取りだけ */
+      .stage {
+        grid-column: 1;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        padding: 12px 14px 0;
+      }
+      .s-head {
         display: flex;
         align-items: center;
-        gap: 12px;
-        padding: 0 12px;
-        background: rgb(20 18 26 / 0.62);
-        -webkit-backdrop-filter: blur(18px);
-        backdrop-filter: blur(18px);
-        border-bottom: 1px solid var(--rule-quiet);
-        white-space: nowrap;
+        gap: 8px;
       }
       .who {
         display: inline-flex;
@@ -62,57 +65,41 @@
         height: 36px;
         padding: 0 10px 0 4px;
         border-radius: 18px;
-        background: var(--raised);
+        background: rgb(20 18 26 / 0.62);
+        -webkit-backdrop-filter: blur(14px);
+        backdrop-filter: blur(14px);
       }
-      .who:hover {
-        background: var(--raised-2);
+      .who:hover,
+      .lamp-btn:hover {
+        background: rgb(20 18 26 / 0.86);
       }
       .who b {
         font-size: 14px;
       }
-      .crumb {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 13px;
-      }
-      .crumb button {
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-        height: 30px;
-        padding: 0 8px;
-        border-radius: 8px;
-      }
-      .crumb button:hover {
-        background: var(--raised);
-      }
-      .search {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        height: 30px;
-        padding: 0 8px 0 10px;
-        border-radius: 9px;
-        background: var(--raised);
-        color: var(--ink-soft);
-        font-size: 13px;
-      }
-      .search:hover {
-        background: var(--raised-2);
-      }
-
-      /* 舞台: やり取りはここにだけ出す。依頼の行は、その回を紙に出すボタンを兼ねる */
-      .stage {
-        grid-area: 2 / 1;
-        display: flex;
-        flex-direction: column;
-        min-height: 0;
-        padding: 14px 14px 0;
-      }
-      .stage .lampwrap {
+      .lamp-btn {
         align-self: flex-start;
-        margin-bottom: auto;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        height: 32px;
+        margin: 8px 0 auto;
+        padding: 0 10px;
+        border-radius: 16px;
+        background: rgb(20 18 26 / 0.5);
+        -webkit-backdrop-filter: blur(14px);
+        backdrop-filter: blur(14px);
+      }
+      .lamp-btn .lamp {
+        text-shadow: none;
+      }
+      .lamp-btn .go {
+        display: inline-flex;
+        align-items: center;
+        gap: 2px;
+        padding-left: 10px;
+        border-left: 1px solid var(--rule);
+        font-size: 12.5px;
+        color: var(--ink-soft);
       }
       .stage .log {
         margin-top: 12px;
@@ -132,7 +119,6 @@
       }
       .stage .say {
         margin-top: 10px;
-        z-index: 1;
       }
       .portrait {
         display: block;
@@ -147,12 +133,12 @@
 
       /* 紙 */
       .paper {
-        grid-area: 2 / 2;
+        grid-column: 2;
         display: flex;
         flex-direction: column;
         min-height: 0;
         margin-top: 12px;
-        border-radius: 16px 16px 0 0;
+        border-radius: 18px 18px 0 0;
         background: var(--surface);
         box-shadow:
           0 0 0 1px var(--rule-quiet),
@@ -168,7 +154,7 @@
         max-width: 46em;
       }
       .dock {
-        padding: 0 20px 16px;
+        padding: 0 18px 16px;
       }
 
       /* 進行: 今の実物の出し方を写したもの（札・灯り・段の位置・経過、その下に計画の一覧） */
@@ -288,7 +274,7 @@
         padding: 5px 0 5px 16px;
       }
 
-      /* 待機の紙: 推薦3件（パネルの一覧からは外す） */
+      /* 待機の紙: 推薦3件（サイドバーの一覧からは外す） */
       .welcome h1 {
         margin: 4px 0 4px;
         font-size: 22px;
@@ -309,7 +295,7 @@
         gap: 12px;
         width: 100%;
         padding: 12px 14px;
-        border-radius: 12px;
+        border-radius: 14px;
         background: var(--raised);
         text-align: left;
       }
@@ -330,18 +316,200 @@
         color: var(--ink-quiet);
       }
 
-      /* 右の常設パネル: タスクとセッションの一覧だけ。進行は置かない */
-      .panel {
-        grid-area: 2 / 3;
+      /* 入力欄: Astryx の ChatComposer の骨格（本体は角丸 28px・余白 12px・間 8px。上に添付の引き出し、下の行に操作と円形の送信） */
+      .cc-drawer {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 0 14px -16px;
+        padding: 8px 12px 24px;
+        border-radius: 18px 18px 0 0;
+        background: var(--raised-2);
+        font-size: 12.5px;
+      }
+      .cc-body {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding: 12px;
+        border-radius: 28px;
+        background: var(--surface-float);
+        box-shadow:
+          0 0 0 1px var(--rule),
+          0 2px 8px rgb(0 0 0 / 0.3);
+        cursor: text;
+        transition: box-shadow 0.12s;
+      }
+      .cc-body:hover,
+      .cc-body:focus-within {
+        box-shadow:
+          0 0 0 1px var(--raised-2),
+          0 12px 32px rgb(0 0 0 / 0.46);
+      }
+      .cc-input {
+        min-height: 1.6em;
+        max-height: 176px;
+        overflow: auto;
+        padding: 4px 8px 0;
+        outline: none;
+        font-size: 16px;
+        line-height: 1.6;
+        caret-color: var(--accent);
+      }
+      .cc-input.tall {
+        min-height: 3.2em;
+      }
+      .cc-input:empty::before {
+        content: attr(data-placeholder);
+        color: var(--ink-quiet);
+      }
+      .tok {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        height: 24px;
+        padding: 0 8px;
+        border-radius: 8px;
+        background: color-mix(in srgb, var(--accent) 20%, transparent);
+        font: 13px/1 var(--mono);
+        vertical-align: 1px;
+      }
+      .tok button {
+        display: grid;
+        color: var(--ink-quiet);
+      }
+      .cc-foot {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        min-height: 32px;
+        white-space: nowrap;
+        cursor: default;
+      }
+      .cc-left,
+      .cc-right {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+      }
+      .cc-icon,
+      .cc-new,
+      .cc .run-chip {
+        height: 32px;
+        border-radius: 16px;
+        color: var(--ink-soft);
+      }
+      .cc-icon {
+        display: grid;
+        place-items: center;
+        width: 32px;
+        font: 15px/1 var(--mono);
+      }
+      .cc-new {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 0 12px 0 10px;
+        font-size: 13px;
+      }
+      .cc .run-chip {
+        padding: 0 10px;
+      }
+      .cc-icon:hover,
+      .cc-new:hover:not([disabled]) {
+        background: var(--raised-2);
+        color: var(--ink);
+      }
+      .cc-new[disabled] {
+        opacity: 0.45;
+      }
+      .cc-foot .sep {
+        width: 1px;
+        height: 18px;
+        margin: 0 6px;
+        background: var(--rule);
+      }
+      .cc-right .keys {
+        margin: 0 6px 0 4px;
+      }
+      .cc-send {
+        display: grid;
+        place-items: center;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: var(--accent);
+        color: var(--on-accent);
+        transition: transform 0.08s;
+      }
+      .cc-send svg {
+        stroke-width: 2.2;
+      }
+      .cc-send:active {
+        transform: scale(0.94);
+      }
+      .cc-send.stop {
+        background: var(--raised-2);
+        color: var(--ink);
+      }
+      .cc-send.stop svg {
+        fill: currentColor;
+      }
+
+      /* サイドバー: 頭に場所と検索、中にタスクとセッションの一覧、下に使用量（取り直しつき）と設定 */
+      .side {
+        grid-column: 3;
         display: flex;
         flex-direction: column;
         min-height: 0;
         margin: 12px 12px 0;
-        border-radius: 16px 16px 0 0;
+        border-radius: 18px 18px 0 0;
         background: rgb(33 30 41 / 0.88);
         -webkit-backdrop-filter: blur(18px);
         backdrop-filter: blur(18px);
         box-shadow: 0 0 0 1px var(--rule-quiet);
+      }
+      .side-head {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        padding: 8px 8px 0 6px;
+      }
+      .place {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        min-width: 0;
+        height: 32px;
+        padding: 0 8px;
+        border-radius: 10px;
+        font-size: 13px;
+        white-space: nowrap;
+      }
+      .place:hover {
+        background: var(--raised);
+      }
+      .place b {
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .side-search {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        height: 34px;
+        margin: 6px 10px 0;
+        padding: 0 8px 0 10px;
+        border-radius: 17px;
+        background: rgb(0 0 0 / 0.28);
+        color: var(--ink-quiet);
+        font-size: 13px;
+      }
+      .side-search:hover {
+        background: rgb(0 0 0 / 0.4);
+        color: var(--ink);
       }
       .tabs {
         display: flex;
@@ -373,15 +541,6 @@
         min-height: 0;
         overflow: auto;
         padding: 8px;
-      }
-      .panel-foot {
-        display: flex;
-        gap: 10px;
-        padding: 8px 12px;
-        border-top: 1px solid var(--rule-quiet);
-        font-size: 12px;
-        color: var(--ink-quiet);
-        white-space: nowrap;
       }
       .trow {
         position: relative;
@@ -451,6 +610,159 @@
         font: 12.5px/1.6 var(--voice);
         color: var(--ink-soft);
       }
+      .usage {
+        padding: 8px 12px 10px;
+        border-top: 1px solid var(--rule-quiet);
+      }
+      .u-head {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 2px;
+        font-size: 12px;
+        color: var(--ink-quiet);
+      }
+      .u-title {
+        display: inline-flex;
+        align-items: center;
+        gap: 2px;
+        height: 26px;
+        margin-left: -6px;
+        padding: 0 6px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--ink);
+      }
+      .u-title:hover {
+        background: var(--raised);
+      }
+      .u-row {
+        display: grid;
+        grid-template-columns: 3.4em minmax(0, 1fr) 2.6em 7.6em;
+        align-items: center;
+        gap: 8px;
+        padding: 3px 0;
+        font-size: 12.5px;
+        color: var(--ink-soft);
+      }
+      .u-row .bar {
+        height: 5px;
+        border-radius: 3px;
+        background: linear-gradient(90deg, var(--ink-soft) calc(var(--p) * 1%), var(--raised-2) 0);
+      }
+      .u-row b {
+        font: 600 12.5px/1 var(--mono);
+        text-align: right;
+        color: var(--ink);
+      }
+      .u-row .note {
+        font-size: 12px;
+        color: var(--ink-quiet);
+        white-space: nowrap;
+      }
+      #refresh.spin svg {
+        animation: turn 0.6s linear 1;
+      }
+      @keyframes turn {
+        to {
+          rotate: 360deg;
+        }
+      }
+      .side-foot {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        padding: 6px 8px 8px;
+        border-top: 1px solid var(--rule-quiet);
+      }
+      .side-foot .btn {
+        color: var(--ink-soft);
+      }
+
+      /* サイドバーをたたんだ帯: 入口と使用量の輪だけを残す */
+      .rail {
+        grid-column: 3;
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        padding: 14px 0 10px;
+      }
+      body.side-closed .rail {
+        display: flex;
+      }
+      body.side-closed .side {
+        display: none;
+      }
+      .rail button {
+        position: relative;
+        display: grid;
+        place-items: center;
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        color: var(--ink-soft);
+      }
+      .rail button:hover {
+        background: var(--raised-2);
+        color: var(--ink);
+      }
+      .rail small {
+        position: absolute;
+        right: 0;
+        top: 0;
+        font: 12px/1 var(--mono);
+        color: var(--accent);
+      }
+      .rail .mini {
+        display: grid;
+        justify-items: center;
+        gap: 2px;
+        margin-top: 6px;
+        font: 12px/1 var(--mono);
+        color: var(--ink-quiet);
+      }
+
+      /* 重ねる紙（成果・キャラクター・使用量・設定）: 今の実物と同じく右から重ね、舞台は残す。中身は今回の対象外 */
+      .veil {
+        position: absolute;
+        inset: 0 0 0 328px;
+        z-index: 7;
+        background: rgb(12 10 16 / 0.52);
+      }
+      .sheet {
+        position: absolute;
+        inset: 12px 0 0 auto;
+        z-index: 8;
+        width: min(100% - 328px - 64px, 1000px);
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        padding: 26px 32px;
+        border-radius: 18px 0 0 0;
+        background: var(--surface);
+        box-shadow: -20px 0 70px rgb(0 0 0 / 0.5);
+      }
+      .sheet header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .sheet h1 {
+        font-size: 24px;
+      }
+      .sheet ul {
+        display: grid;
+        gap: 6px;
+        margin-top: 6px;
+      }
+      .sheet li {
+        padding: 12px 14px;
+        border-radius: 12px;
+        background: var(--raised);
+        font-size: 14px;
+      }
 
       /* 置き場の表示（?map=1）: 情報の種類ごとに、出している場所を枠で示す */
       body.map [data-info] {
@@ -464,22 +776,19 @@
         right: 0;
         top: 0;
         z-index: 6;
+        translate: 0 -60%;
         padding: 2px 7px;
-        border-radius: 0 0 0 7px;
+        border-radius: 7px;
         background: var(--warn);
         color: #1a1608;
         font: 700 12px/1.4 var(--sans);
         white-space: nowrap;
         text-shadow: none;
-        translate: 0 -60%;
       }
+      body.map .s-head [data-info]::after,
+      body.map .side-head [data-info]::after,
       body.map .tabbody[data-info]::after {
-        translate: none;
-      }
-      body.map .top [data-info]::after {
-        top: auto;
-        bottom: 0;
-        translate: 0 70%;
+        translate: 0 20%;
       }
     </style>
   </head>
@@ -494,7 +803,22 @@
       let taskSel = 0
       let turnSel = Number(query.get("turn")) || 2
       let lastMoment = K.state.moment
+      let attached = query.get("attach") === "1"
+      let sheet = query.get("sheet") || ""
+      let usageAt = "17:25"
       if (query.get("map") === "1") document.body.classList.add("map")
+      if (query.get("side") === "0") document.body.classList.add("side-closed")
+      const SHEETS = {
+        achievement: ["成果", ["灯りの暦（成果のあった日に狐火が点く）", "その日の日記", "終えたタスクの数", "キャラクターと振り返る"]],
+        character: ["キャラクター", ["キャラクターの一覧と新規作成", "名前と自己紹介", "顔・ミニ立ち絵・表情の素材"]],
+        usage: ["使用量", ["いまのコンテキストの内訳（システム・ツール・メモリ・メッセージ）", "プランの枠（5時間・7日間と、戻る時刻）", "期間の消費（入力・出力・キャッシュ）"]],
+        settings: ["設定", ["動き方（新しいセッションの既定のモデル・考える深さ・許可モード）", "見た目と演出", "知らせ", "このプロジェクト（タスクの実行・ワークフロー）"]],
+      }
+      const USAGE = [
+        ["文脈", 61, "圧縮まで 33.5k"],
+        ["5時間", 34, "20:00 に戻る"],
+        ["7日間", 52, "11/18 に戻る"],
+      ]
 
       /* このセッションのやり取り（架空の2回）。待機は新規セッションなので無い */
       function turns() {
@@ -505,25 +829,14 @@
           { id: 2, req: "/next-task T-240", lines: [["16:01", p.log[0]]] },
         ]
       }
-
-      function topBar() {
-        const p = K.pack()
-        return `<header class="top">
-          <button class="who" popovertarget="charPop" data-info="キャラクター" title="キャラクターを切替（⌃1–4）"><img class="face" width="28" height="28" alt="" src="${K.face(p)}"><b>${p.name}</b>${icon("chev", 14)}</button>
-          <span class="crumb" data-info="場所"><span class="quiet">tsukumo-task</span><span class="quiet">/</span><button data-open="sessions" title="セッションを切替（⌘O）"><b>${K.state.moment === "greet" ? "新規セッション" : "入力欄の下端のずれ"}</b>${icon("chev", 14)}</button></span>
-          <span class="grow"></span>
-          <span class="seg" role="group" aria-label="モード"><button aria-pressed="true">仕事</button><button>雑談</button></span>
-          <span class="meters" data-info="使用量"><span class="meter"><span class="ring" style="--p:61"></span>文脈 <b>61%</b></span><span class="meter"><span class="ring" style="--p:34"></span>5h <b>34%</b></span><span class="meter"><span class="ring" style="--p:61"></span>7d <b>61%</b></span></span>
-          <button class="search" data-open="palette">${icon("search", 15)}検索 ${kbd("⌘ K")}</button>
-          <button class="icon-btn" id="panelBtn" title="パネルを開閉（⌘B）">${icon("panel", 17)}</button>
-          <button class="icon-btn" title="設定（⌘,）">${icon("sliders", 17)}</button>
-        </header>`
-      }
       function stage() {
         const p = K.pack()
         const ts = turns()
         const log = ts.length ? `<div class="log" data-info="やり取り">${ts.map((t) => `<button class="you" data-turn="${t.id}" aria-current="${t.id === turnSel}" title="この回を紙に表示"><b>あなた</b>${t.req}</button>${t.lines.map(([tm, l]) => `<p class="line"><time>${tm}</time>${l}</p>`).join("")}`).join("")}</div>` : ""
-        return `<aside class="stage" aria-label="舞台"><div class="lampwrap" data-info="今日の灯り">${K.lampHtml()}</div>${log}
+        return `<aside class="stage" aria-label="舞台">
+          <div class="s-head"><button class="who" popovertarget="charPop" data-info="キャラクター" title="キャラクターの切替と管理（⌃1–4）"><img class="face" width="28" height="28" alt="" src="${K.face(p)}"><b>${p.name}</b>${icon("chev", 14)}</button><span class="grow"></span><span class="seg" role="group" aria-label="モード" data-info="モード"><button aria-pressed="true">仕事</button><button>雑談</button></span></div>
+          <button class="lamp-btn" data-sheet="achievement" data-info="今日の灯り（成果の入口）" title="成果を開く">${K.lampHtml()}<span class="go">成果${icon("right", 13)}</span></button>
+          ${log}
           <div class="say" data-info="セリフ"><div class="bubble"><header><b>${p.name}</b><time class="mono">16:04</time></header><p>${p.say[K.state.moment]}</p></div></div>
           <img class="portrait" alt="${p.name}の立ち絵" src="${K.portrait()}"></aside>`
       }
@@ -558,14 +871,28 @@
         return `<div class="welcome" data-info="推薦"><h1>何から始める？</h1><p class="quiet">推薦は ${kbd("1")} ${kbd("2")} ${kbd("3")} で開始。ほかのタスクは右の一覧か ${kbd("⌘ J")}。</p>
           <ol class="recs">${recs.map((t, i) => `<li><button class="rec" data-task="${t.id}">${kbd(String(i + 1))}<span><b>${t.title}</b><span class="m"><span class="mono">${t.id}</span>　${t.why}</span></span><span class="size">${t.size}</span><span class="btn tonal sm">開始</span></button></li>`).join("")}</ol></div>`
       }
+      /* 入力欄: Astryx の ChatComposer の骨格を写す（引き出し・本体〔入力・下の行〕・円形の送信と中断） */
+      function composer() {
+        const p = K.pack()
+        const m = K.state.moment
+        const working = m === "work"
+        const draft = query.get("draft") === "1" ? `<span class="tok" contenteditable="false">/next-task</span>&nbsp;<span class="tok" contenteditable="false">T-241</span>&nbsp;幅 720 の画面も撮影して` : ""
+        const drawer = attached ? `<div class="cc-drawer"><span class="tok">${icon("image", 14)}撮影-1400.png<button data-detach aria-label="添付を外す">${icon("x", 12)}</button></span><span class="grow"></span><span class="quiet">添付 1</span></div>` : ""
+        return `<div class="cc" data-info="入力と実行設定">${drawer}<div class="cc-body">
+          <div class="cc-input ${m === "greet" ? "tall" : ""}" contenteditable="true" role="textbox" aria-multiline="true" aria-label="${p.name}への依頼" data-main-input data-placeholder="${p.name}に依頼する">${draft}</div>
+          <div class="cc-foot">
+            <div class="cc-left"><button class="cc-icon" data-attach title="画像を添付">${icon("clip", 17)}</button><button class="cc-icon" title="コマンド（/）">/</button><button class="cc-icon" title="ファイルを参照（@）">@</button><span class="sep"></span>${K.runChips()}</div>
+            <div class="cc-right"><button class="cc-new" data-act="newSession" ${working ? 'disabled title="ターン中は開始できない"' : 'title="新規セッション（⌘⇧O）"'}>${icon("plus", 14)}新規</button>${kbd(working ? "⌘ ." : "⌘ ⏎")}<button class="cc-send ${working ? "stop" : ""}" data-act="${working ? "stop" : "send"}" aria-label="${working ? "中断" : "送信"}" title="${working ? "中断（⌘.）" : "送信（⌘⏎）"}">${icon(working ? "stop" : "up", working ? 16 : 18)}</button></div>
+          </div></div></div>`
+      }
       function paper() {
         const m = K.state.moment
         const body = m === "greet" ? welcome() : turnSel === 1 ? firstTurnPaper() : m === "work" ? progressBlock() : deliverPaper()
-        return `<main class="paper"><div class="paper-scroll">${body}</div><div class="dock" data-info="入力と実行設定">${K.composerHtml({ rows: m === "greet" ? 3 : 2 })}</div></main>`
+        return `<main class="paper"><div class="paper-scroll">${body}</div><div class="dock">${composer()}</div></main>`
       }
 
       function readyList() {
-        // 待機の推薦3件は紙に出すので、パネルの一覧からは外す。進行中のタスクも外す（紙が出している）
+        // 待機の推薦3件は紙に出すので、サイドバーの一覧からは外す。進行中のタスクも外す（紙が出している）
         const greet = K.state.moment === "greet"
         return K.tasks().filter((t) => t.state === "ready" && !(greet && t.rec))
       }
@@ -601,14 +928,34 @@
           <div class="group-label">ほかの部屋</div>
           <button class="row srow" disabled title="別のウィンドウで使用中">${st("now")}<span><span class="t">決まりの文章を 40% 削減</span><span class="m">tsukumo-plugins・別のウィンドウで使用中</span></span><span></span></button>`
       }
-      function panel() {
+      function side() {
+        const count = K.tasks().filter((t) => t.state === "ready").length
         const T = [
-          ["tasks", `タスク <small>${K.tasks().filter((t) => t.state === "ready").length}</small>`],
+          ["tasks", `タスク <small>${count}</small>`],
           ["sessions", "セッション"],
         ]
-        return `<aside class="panel" aria-label="パネル"><div class="tabs" role="tablist">${T.map(([id, l]) => `<button role="tab" data-tab="${id}" aria-selected="${tab === id}">${l}</button>`).join("")}</div>
+        const title = K.state.moment === "greet" ? "新規セッション" : "入力欄の下端のずれ"
+        return `<aside class="side" aria-label="サイドバー">
+          <div class="side-head"><button class="place" data-tab="sessions" data-info="場所" title="セッションを切替（⌘O）"><span class="quiet">tsukumo-task /</span><b>${title}</b>${icon("chev", 14)}</button><span class="grow"></span><button class="icon-btn" data-side-toggle title="サイドバーをたたむ（⌘B）">${icon("panel", 17)}</button></div>
+          <button class="side-search" data-open="palette">${icon("search", 15)}<span>検索</span><span class="grow"></span>${kbd("⌘ K")}</button>
+          <div class="tabs" role="tablist">${T.map(([id, l]) => `<button role="tab" data-tab="${id}" aria-selected="${tab === id}">${l}</button>`).join("")}</div>
           <div class="tabbody" role="tabpanel" data-info="${tab === "tasks" ? "タスクの一覧" : "セッションの一覧"}">${tab === "tasks" ? tasksTab() : sessionsTab()}</div>
-          <div class="panel-foot"><span>${kbd("⌘ J")} タスク</span><span>${kbd("⌘ O")} セッション</span><span class="grow"></span><span>${kbd("⌘ B")} 開閉</span></div></aside>`
+          <div class="usage" data-info="使用量"><div class="u-head"><button class="u-title" data-sheet="usage" title="使用量の内訳を開く">使用量${icon("right", 13)}</button><span class="grow"></span><span class="mono">${usageAt} 時点</span><button class="icon-btn" id="refresh" title="使用量を取り直す" aria-label="使用量を取り直す">${icon("refresh", 15)}</button></div>
+            ${USAGE.map(([l, p, note]) => `<div class="u-row"><span>${l}</span><span class="bar" style="--p:${p}" role="img" aria-label="${l} ${p}%"></span><b>${p}%</b><span class="note">${note}</span></div>`).join("")}</div>
+          <div class="side-foot"><button class="btn ghost sm" data-sheet="settings">${icon("sliders", 15)}設定 ${kbd("⌘ ,")}</button><span class="grow"></span><button class="btn ghost sm" data-open="keys">${icon("keyboard", 15)}キー ${kbd("⌘ /")}</button></div>
+        </aside>
+        <aside class="rail" aria-label="たたんだサイドバー">
+          <button data-side-toggle title="サイドバーを開く（⌘B）">${icon("panel", 18)}</button><button data-open="palette" title="検索（⌘K）">${icon("search", 18)}</button>
+          <button data-tab="tasks" title="タスク（⌘J）">${icon("list", 18)}<small>${count}</small></button><button data-tab="sessions" title="セッション（⌘O）">${icon("clock", 18)}</button><span class="grow"></span>
+          ${USAGE.map(([l, p]) => `<span class="mini" title="${l} ${p}%"><span class="ring" style="--p:${p}"></span>${p}</span>`).join("")}
+          <button data-sheet="settings" title="設定（⌘,）">${icon("sliders", 18)}</button>
+        </aside>`
+      }
+      function sheetHtml() {
+        if (!sheet) return ""
+        const [title, items] = SHEETS[sheet]
+        return `<div class="veil" data-sheet-close></div><section class="sheet" role="dialog" aria-label="${title}"><header><h1>${title}</h1><button class="btn tonal" data-sheet-close>閉じる ${kbd("esc")}</button></header>
+          <p class="quiet">今の実物と同じく、右から重ねる紙として開く。舞台は残り、入口だけをこの見本で決めている。中身は今の実物のまま。</p><ul>${items.map((x) => `<li>${x}</li>`).join("")}</ul></section>`
       }
 
       function render() {
@@ -618,11 +965,12 @@
           turnSel = 2
           tab = "tasks"
         }
-        app.innerHTML = `<div class="bg"></div>${topBar()}${stage()}${paper()}${panel()}`
+        app.innerHTML = `<div class="bg"></div>${stage()}${paper()}${side()}${sheetHtml()}`
       }
       function setTab(id) {
-        document.body.classList.remove("panel-closed")
+        document.body.classList.remove("side-closed")
         K.closeAll()
+        sheet = ""
         tab = id
         render()
         if (id === "sessions") document.getElementById("sQuery")?.focus()
@@ -633,12 +981,38 @@
         turnSel = id
         render()
       }
+      function openSheet(id) {
+        K.closeAll()
+        sheet = sheet === id ? "" : id
+        render()
+      }
+      /* 名札のメニューは #app の外（ポップオーバー）に出るので、文書全体で受ける */
+      document.addEventListener("click", (e) => {
+        const s = e.target.closest?.("[data-sheet]")
+        if (s) return openSheet(s.dataset.sheet)
+        if (e.target.closest?.("[data-sheet-close]")) return openSheet(sheet)
+      })
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && sheet && !document.querySelector("dialog[open]")) openSheet(sheet)
+      })
       app.addEventListener("click", (e) => {
         const t = e.target.closest("[data-tab]")
         if (t) return setTab(t.dataset.tab)
         const u = e.target.closest("[data-turn]")
         if (u) return setTurn(Number(u.dataset.turn))
-        if (e.target.closest("#panelBtn")) return document.body.classList.toggle("panel-closed")
+        if (e.target.closest("[data-side-toggle]")) return document.body.classList.toggle("side-closed")
+        if (e.target.closest("[data-attach]") || e.target.closest("[data-detach]")) {
+          attached = !e.target.closest("[data-detach]")
+          return render()
+        }
+        const rf = e.target.closest("#refresh")
+        if (rf) {
+          usageAt = "17:31"
+          render()
+          document.getElementById("refresh").classList.add("spin")
+          return K.toast("使用量を取り直した")
+        }
+        if (e.target.closest(".cc-body") && !e.target.closest("button")) document.querySelector(".cc-input").focus()
         const r = e.target.closest(".trow[data-i]")
         if (r && !e.target.closest("button")) {
           taskSel = Number(r.dataset.i)
@@ -646,16 +1020,22 @@
         }
       })
 
-      K.pop("charPop", () => `<div class="group-label">キャラクター</div>${K.PACKS.map((p, i) => `<button class="row" data-pack="${p.id}" aria-selected="${p.id === K.state.pack}"><img class="face" width="36" height="36" alt="" src="${K.face(p)}"><span><span class="t">${p.name}</span><span class="m">${p.tagline}</span></span>${kbd("⌃ " + (i + 1))}</button>`).join("")}<div class="foot">素材・表情の編集と新規作成は「キャラクターを管理」から</div>`)
+      K.pop("charPop", () => `<div class="group-label">キャラクター</div>${K.PACKS.map((p, i) => `<button class="row" data-pack="${p.id}" aria-selected="${p.id === K.state.pack}"><img class="face" width="36" height="36" alt="" src="${K.face(p)}"><span><span class="t">${p.name}</span><span class="m">${p.tagline}</span></span>${kbd("⌃ " + (i + 1))}</button>`).join("")}<div class="foot" style="padding:4px 0 0"><button class="row" data-sheet="character">${icon("sliders", 16)}<span class="t">キャラクターを管理</span><span class="m">素材・表情・新規作成</span></button></div>`)
 
       K.hooks.sessions = () => setTab("sessions")
       K.hooks.tasks = () => setTab("tasks")
       K.hooks.progress = () => K.toast("進行は紙に常時表示している")
+      K.hooks.settings = () => openSheet("settings")
       K.hooks.chars = () => document.querySelector(".who").click()
       K.hooks.hideKeys = ["⌘ I"]
       K.hooks.extraKeys = [
         ["[ ]", "前後のやり取りへ移動（入力中以外）"],
-        ["⌘ B", "右のパネルを開閉"],
+        ["⌘ B", "サイドバーを開閉"],
+      ]
+      K.hooks.extraCmds = [
+        ["成果を開く", "", () => openSheet("achievement")],
+        ["キャラクターを管理", "", () => openSheet("character")],
+        ["使用量の内訳を開く", "", () => openSheet("usage")],
       ]
       const moveTask = (d) => () => {
         const n = readyList().length
@@ -668,7 +1048,7 @@
         if (K.state.moment === "greet" && t) K.act.startTask(t.id)
       }
       K.keys({
-        "mod+b": () => document.body.classList.toggle("panel-closed"),
+        "mod+b": () => document.body.classList.toggle("side-closed"),
         "plain:[": () => setTurn(turnSel - 1),
         "plain:]": () => setTurn(turnSel + 1),
         "mod+alt+up": () => setTurn(turnSel - 1),
@@ -688,7 +1068,10 @@
       mapBtn.textContent = "置き場を表示"
       mapBtn.addEventListener("click", () => document.body.classList.toggle("map"))
       document.querySelector(".proto a")?.before(mapBtn)
-      K.onChange(render)
+      K.onChange(() => {
+        sheet = ""
+        render()
+      })
       render()
       K.autoOpen()
     </script>
