@@ -46,16 +46,13 @@ export function PaperDesk(props: PaperDeskProps): ReactElement {
 
 type PaperMarginProps = {
   readonly title: string
-  /** 偽なら題は名乗り（`aria-label`）だけにし、見出しを中身の区画に任せる。 */
-  readonly titleShown: boolean
   readonly body: ReactNode
 }
 
-/** サイドバーの中段に置く、受け取ったものの並び。 */
+/** 雑談のサイドバーの中段。題は名乗り（`aria-label`）だけにし、見出しは中身の区画に任せる。 */
 export function PaperMargin(props: PaperMarginProps): ReactElement {
   return (
     <section className={styles["paper-margin"]} aria-label={props.title}>
-      {props.titleShown && <h2 className={styles["paper-margin-title"]}>{props.title}</h2>}
       {props.body}
     </section>
   )

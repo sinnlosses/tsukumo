@@ -9,7 +9,6 @@ import type { ReactElement, ReactNode } from "react"
 import {
   AchievementIcon,
   CharacterIcon,
-  ListIcon,
   SearchIcon,
   SettingsIcon,
   TokenIcon,
@@ -27,7 +26,6 @@ const MODE_OPTIONS = [
 ] as const
 
 const GATE_ICONS = {
-  tasks: <ListIcon />,
   achievement: <AchievementIcon />,
   character: <CharacterIcon />,
   settings: <SettingsIcon />,

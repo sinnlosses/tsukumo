@@ -1,6 +1,6 @@
 // 状態のカタログのうち、タスク一覧・入力の補完・キャラクター画面の場面。
 
-import { COMPOSER_SELECTOR, TASK_BOARD_SELECTOR } from "./catalog-selector.ts"
+import { COMPOSER_SELECTOR } from "./catalog-selector.ts"
 import { SCENE_END_SETTLE, type CatalogEntry } from "./catalog-type.ts"
 
 export const SCREEN_ENTRIES: readonly CatalogEntry[] = [
@@ -10,7 +10,7 @@ export const SCREEN_ENTRIES: readonly CatalogEntry[] = [
     label: "タスク一覧のモーダル",
     homeSetup: { kind: "default" },
     workspaceSetup: { kind: "task-list" },
-    prepare: [{ kind: "click", selector: TASK_BOARD_SELECTOR }],
+    prepare: [{ kind: "hash", hash: "#tasks" }],
     skipReveal: false,
     settle: SCENE_END_SETTLE,
   },

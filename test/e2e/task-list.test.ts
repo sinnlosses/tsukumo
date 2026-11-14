@@ -30,6 +30,23 @@ test.describe("タスクの一覧", () => {
     await room.settleAndMatchPickedWithMessages(ELAPSED_MS)
   })
 
+  test("サイドバーの一覧の行を選んで「依頼」を押すと、確認を挟まずに依頼が送られて働くの姿勢になる", async ({
+    run,
+  }) => {
+    const room = await openTaskListRoom(run, "task-list-sidebar-request", ["sidebar"])
+    const sidebar = room.page.locator('[data-region="sidebar"]')
+    const row = sidebar.getByRole("option").filter({ hasText: "T-001" })
+    await row.click()
+    await sidebar.getByRole("button", { name: "依頼", exact: true }).click()
+
+    await room.waitForEvent("request")
+    expect(await room.page.getByRole("dialog", { name: "タスクの実行" }).count()).toBe(0)
+    await expect(room.page.locator("[data-posture]").first()).toHaveAttribute(
+      "data-posture",
+      /^(work|deliver)$/,
+    )
+  })
+
   test("ドラフトのチップで絞り、「計画する」から確認の「頼む」を押すと計画の文面で依頼が送られる", async ({
     run,
   }) => {

@@ -3,7 +3,7 @@
 // ターンが終わっていても `backgroundTasks` が残っている間は「経過」のまま数え続け、残っていないターンの終わりで初めてその時刻に止まる。
 
 import type { TurnProgress } from "../../../../../shared/session/turn-progress.ts"
-import { formatElapsed, formatMinutesSeconds } from "../../../../../shared/utils/elapsed-time.ts"
+import { formatElapsed } from "../../../../../shared/utils/elapsed-time.ts"
 
 const ELAPSED_LABEL = "経過"
 const FINISHED_LABEL = "所要"
@@ -35,28 +35,6 @@ export function turnElapsedText(
   return turn.kind === "idle"
     ? "-"
     : formatElapsed(turnElapsedSeconds(turn, backgroundTaskCount, now))
-}
-
-/**
- * {@link turnElapsedText} と同じ経過を、狭い画面の頭に出す「20:03」（1時間を超えたら「1:02:03」）の形にする。
- * まだ一度も依頼が無ければ `-`。
- */
-export function turnElapsedClock(
-  turn: TurnProgress,
-  backgroundTaskCount: number,
-  now: number,
-): string {
-  if (turn.kind === "idle") {
-    return "-"
-  }
-  const totalSeconds = turnElapsedSeconds(turn, backgroundTaskCount, now)
-  const hours = Math.floor(totalSeconds / 3600)
-  if (hours === 0) {
-    return formatMinutesSeconds(totalSeconds)
-  }
-  const minutes = Math.floor((totalSeconds % 3600) / 60)
-  const secondsText = String(totalSeconds % 60).padStart(2, "0")
-  return `${String(hours)}:${String(minutes).padStart(2, "0")}:${secondsText}`
 }
 
 /** 経過を数え終える時刻（エポックミリ秒）。{@link isTurnCounting} の間は `now`、数え終わったターンは終わった時刻。 */

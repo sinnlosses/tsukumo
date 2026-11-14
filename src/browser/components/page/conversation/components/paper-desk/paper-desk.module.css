@@ -77,12 +77,6 @@
   gap: var(--stack-block);
   padding: var(--inset-card);
 }
-.paper-margin-title {
-  margin: 0;
-  color: var(--ink-quiet);
-  font-size: var(--font-label);
-  font-weight: 500;
-}
 /* 狭い画面（760px 以下）。紙は全面に出し、入力欄は紙の下に積む（浮かせない）。欄外は出さない。
    紙の入れ物は箱を作らず、紙と入力欄を外枠の縦の並びへ直に加える。
    紙は残りの高さを取り、転がるのは紙だけにする。高さの上限は外枠が決めるので、作業の帯が後から出ても本文の位置は動かない。 */

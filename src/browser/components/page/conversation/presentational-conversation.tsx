@@ -4,6 +4,7 @@
 
 import type { ReactElement, ReactNode } from "react"
 
+import { SidebarTaskList } from "../../../features/task-board/sidebar-task-list.tsx"
 import { Sidebar } from "../../frame/sidebar/sidebar.tsx"
 import { CharacterView } from "./components/character-view/character-view.tsx"
 import { ChatMemory } from "./components/chat-memory/chat-memory.tsx"
@@ -27,7 +28,6 @@ import { Stage, type StagePosture } from "./components/stage/stage.tsx"
  * サイドバーの中段に置くやり取りの並び・検索の入口・下の入口の行と、舞台の左上に置く部屋の頭は、画面の登録表から受け取る。
  */
 export type ConversationShell = {
-  readonly margin: ReactNode
   readonly sidebarSearch: ReactNode
   readonly sidebarGates: ReactNode
   readonly head: ReactNode
@@ -41,7 +41,6 @@ export type NarrowHeadSubject =
   | { readonly kind: "room" }
   | { readonly kind: "turn"; readonly title: string }
 
-const MARGIN_TITLE = "この部屋のやり取り"
 const CHAT_MARGIN_TITLE = "雑談の覚え書き"
 
 type PresentationalConversationProps = {
@@ -49,6 +48,8 @@ type PresentationalConversationProps = {
   readonly shell: ConversationShell
   readonly posture: StagePosture
   readonly narrowHeadSubject: NarrowHeadSubject
+  /** サイドバーのタスクの一覧から外すタスクの ID（迎えるのあいだ、紙の推薦のカードが指すもの）。 */
+  readonly sidebarExcludedTaskIds: readonly string[]
   /** 入力欄の場所にお伺いを出すか（答え待ちのあいだ。姿勢・幅によらない）。 */
   readonly asking: boolean
   /** ほかの画面の紙が重なっているか。 */
@@ -90,13 +91,9 @@ export function PresentationalConversation(props: PresentationalConversationProp
                 search={props.shell.sidebarSearch}
                 body={
                   props.chatMode ? (
-                    <PaperMargin
-                      title={CHAT_MARGIN_TITLE}
-                      titleShown={false}
-                      body={<ChatMemory />}
-                    />
+                    <PaperMargin title={CHAT_MARGIN_TITLE} body={<ChatMemory />} />
                   ) : (
-                    <PaperMargin title={MARGIN_TITLE} titleShown body={props.shell.margin} />
+                    <SidebarTaskList excludedIds={props.sidebarExcludedTaskIds} />
                   )
                 }
                 foot={props.shell.sidebarGates}

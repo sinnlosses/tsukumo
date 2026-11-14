@@ -1,7 +1,6 @@
 import { mkdirSync, renameSync, writeFileSync } from "node:fs"
 import { dirname, join } from "node:path"
 
-import { TASK_BOARD_SELECTOR } from "../../scripts/capture/lib/catalog-selector.ts"
 import { FAKE_BEADS_ISSUES_PATH } from "../../src/server/repository/adapter/beads/fake-beads.ts"
 import type { TaskDifficulty, TaskLoopable } from "../../src/shared/repository/task-summary.ts"
 import type { DomRootName } from "./dom-tree.ts"
@@ -221,7 +220,7 @@ export async function openTaskBoardRoom(
 }
 
 /**
- * タスクの紙の足場。タスクのモーダルと同じ5件を置いてから、部屋の右上の「タスク n」で `#tasks` を開く。
+ * タスクの紙の足場。タスクのモーダルと同じ5件を置いてから、`#tasks` へ移って開く（紙の入口は探すにあり、足場は hash で直に移る）。
  */
 export async function openTaskSheetRoom(
   run: ScenarioRun,
@@ -248,7 +247,9 @@ export async function openTaskSheetRoom(
     },
     task("t-005", "架空のタスク（保留）", "hold", ["t-001"]),
   ])
-  await room.page.getByRole("link", { name: "タスク 1", exact: true }).click()
+  await room.page.evaluate(() => {
+    window.location.hash = "#tasks"
+  })
   await room.page.getByRole("combobox", { name: "タスクを探す" }).waitFor()
   return room
 }
@@ -270,9 +271,11 @@ export async function openTaskBoardRoomWithDrafts(
   return room
 }
 
-/** サイドバーの入口（`#tasks`）を押して、タスクの紙（`TaskSheet`）を開く。 */
+/** `#tasks` へ移って、タスクの紙（`TaskSheet`）を開く（紙の入口は探すにあり、足場は hash で直に移る）。 */
 export async function openTaskBoardFromWelcome(room: ScenarioRoom): Promise<void> {
-  await room.page.locator(TASK_BOARD_SELECTOR).click()
+  await room.page.evaluate(() => {
+    window.location.hash = "#tasks"
+  })
   await room.page.getByRole("dialog", { name: "タスク" }).waitFor()
 }
 

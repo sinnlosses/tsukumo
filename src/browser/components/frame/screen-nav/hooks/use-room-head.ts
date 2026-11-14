@@ -5,7 +5,6 @@
 // 仕事と雑談の切り替えの表示はサーバから届いた値だけに従い、押した側へ先に倒さない。
 
 import { FRAME_ERROR_REASON } from "../../../../../shared/frame-error-reason.ts"
-import { taskReadiness } from "../../../../../shared/repository/task-summary.ts"
 import {
   conversationMoment,
   type ConversationMoment,
@@ -25,7 +24,7 @@ export type RoomStateTone = ConversationMoment | "chat"
 
 /** 部屋の頭の札1つ。 */
 export type RoomHeadGate = {
-  readonly screen: "tasks" | "achievement" | "character" | "settings"
+  readonly screen: "achievement" | "character" | "settings"
   readonly label: string
   readonly href: string
   /** その紙を開いているか。 */
@@ -76,7 +75,6 @@ export function useRoomHead(): RoomHeadView {
   const dispatch = useSession((session) => session.dispatch)
   const chatMode = useSession((session) => session.state.chatMode)
   const moment = useSession((session) => conversationMoment(session.state))
-  const tasks = useSession((session) => session.state.tasks)
   const finishedTurnCount = useSession((session) => session.state.finishedTurnCount)
   const character = useSession((session) => session.state.character)
   const restartRefused = useRestartRefused()
@@ -93,10 +91,6 @@ export function useRoomHead(): RoomHeadView {
     href: screenHref(screen),
     current: current === screen,
   })
-  const readyCount =
-    tasks.kind === "known"
-      ? tasks.items.filter((task) => taskReadiness(task)?.kind === "ready").length
-      : undefined
   const tone: RoomStateTone = chatMode ? "chat" : moment
   const onChangeMode = (chat: boolean): void => {
     if (chat !== chatMode && !restartRefused) {
@@ -123,9 +117,6 @@ export function useRoomHead(): RoomHeadView {
       busy: contextUsage.kind === "pending",
     },
     gates: [
-      ...(tasks.kind === "no-beads"
-        ? []
-        : [gateOf("tasks", readyCount === undefined ? "タスク" : `タスク ${String(readyCount)}`)]),
       gateOf("achievement", "成果"),
       gateOf("character", "キャラ"),
       gateOf("settings", "設定"),

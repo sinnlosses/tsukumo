@@ -29,8 +29,14 @@ export function Conversation(props: { readonly shell: ConversationShell }): Reac
     chatMode || posture === "greet" || latestTurn === undefined
       ? ROOM_SUBJECT
       : { kind: "turn", title: turnTitle(latestTurn) }
+  const recommendation = useSession((session) => session.state.recommendation)
+  const sidebarExcludedTaskIds =
+    posture === "greet"
+      ? recommendation.flatMap((card) => (card.kind === "task" ? [card.taskId] : []))
+      : []
   return (
     <PresentationalConversation
+      sidebarExcludedTaskIds={sidebarExcludedTaskIds}
       chatMode={chatMode}
       shell={props.shell}
       posture={posture}

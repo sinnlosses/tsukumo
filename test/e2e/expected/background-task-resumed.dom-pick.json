@@ -1,8 +1,5 @@
 {
   "stage-balloon": [
     { "tag": "div", "attributes": { "data-latest": "true" }, "children": ["短い背景の待ちが終わったよ。"] }
-  ],
-  "sidebar": [
-    { "tag": "button", "attributes": { "data-result": "done", "aria-current": "true" } }
   ]
 }

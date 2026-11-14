@@ -19,7 +19,7 @@ test.describe("バックグラウンドタスク", () => {
       scenario: "background-task-resumed",
       scene: "background-task-short",
       viewport: "wide",
-      domRoots: ["stage-balloon", "sidebar"],
+      domRoots: ["stage-balloon"],
     })
     const backgroundLine = room.page
       .locator('[data-slot="balloon"]')

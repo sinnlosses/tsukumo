@@ -13,7 +13,6 @@ import { SettingsScreen } from "../frame/screen-nav/settings-screen.tsx"
 import { TodayLamp } from "../frame/screen-nav/today-lamp.tsx"
 import { SkipLink } from "../frame/skip-link.tsx"
 import { DiaryNotice } from "../page/achievement/components/diary-notice/diary-notice.tsx"
-import { TurnList } from "../page/conversation/components/main-view/turn-list.tsx"
 import { Conversation } from "../page/conversation/conversation.tsx"
 import { deferredScreen } from "./deferred-screen.tsx"
 import type { LayoutScreens } from "./layout.tsx"
@@ -37,7 +36,6 @@ export const LAYOUT_SCREENS = {
     <RoomHeadScope>
       <Conversation
         shell={{
-          margin: <TurnList />,
           sidebarSearch: <RoomSidebarSearch />,
           sidebarGates: <RoomSidebarGates />,
           head: <RoomHead />,

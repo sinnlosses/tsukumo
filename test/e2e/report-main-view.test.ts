@@ -1,3 +1,5 @@
+import type { Locator, Page } from "playwright-core"
+
 import { expect, test } from "./room-fixture.ts"
 import { nextAnimationFrame } from "./scenario-wait.ts"
 
@@ -5,7 +7,6 @@ import { nextAnimationFrame } from "./scenario-wait.ts"
 // `report` ツールの呼び出しが紙の Markdown へどう出るかを、疑似セッションの場面で確かめる:
 // `notation`（記法の一覧）、`report-chart`（グラフの塊。ベンダのスクリプトが描く）、
 // `a2ui-parameter-sample`（つまみを振ると数・文・図の強調が変わり、開き直すと初期値に戻る）、
-// `turn-outline`（サイドバーのやり取りと結果の印）、
 // `reading-position`（別のやり取りへ移って戻ると読んでいた見出しの位置から見える）。
 
 /** 撮るときの経過（凍らせた瞬間から）。「何秒前」の類いをこの値で揃える。 */
@@ -274,33 +275,6 @@ test.describe("report → メインビュー", () => {
     await ask.waitFor({ state: "hidden" })
   })
 
-  test("サイドバーにやり取りが結果の印つきで並び、やり取りの行で Enter を押すとそのやり取りへ移る", async ({
-    run,
-  }) => {
-    const room = await run.open({
-      scenario: "report-turn-outline",
-      scene: "turn-outline",
-      viewport: "wide",
-      domRoots: ["sidebar"],
-    })
-
-    await room.waitForEvent("turn-finished", 5)
-    const margin = room.page.locator('[data-region="sidebar"]')
-    await margin.locator('button[aria-current="true"]').waitFor()
-    await room.settleAndMatchPicked(ELAPSED_MS)
-
-    const firstRow = margin.getByRole("button", {
-      name: "完了: 指示をタスクにする（架空の依頼）",
-    })
-    await firstRow.focus()
-    await room.page.keyboard.press("Enter")
-    await expect.poll(() => firstRow.getAttribute("aria-current")).toBe("true")
-    await room.page
-      .locator("section", { has: room.page.getByRole("heading", { level: 2, name: "依頼" }) })
-      .getByText("指示をタスクにする（架空の依頼）")
-      .waitFor()
-  })
-
   test("別のやり取りへ移って戻ると、読んでいた見出しが同じ位置にあり、初めて開くやり取りは先頭から見える", async ({
     run,
   }) => {
@@ -333,7 +307,7 @@ test.describe("report → メインビュー", () => {
     // 凍らせた時計では rAF が進まないので、読み位置を測るフレームを進める。
     await room.page.clock.runFor(50)
 
-    await room.page.getByRole("button", { name: "完了: 読み位置の一つ目（架空の依頼）" }).click()
+    await flowRow(room.page, "読み位置の一つ目（架空の依頼）").click()
     await room.page
       .locator("h4", { hasText: "一の見出し1（架空）" })
       .filter({ visible: true })
@@ -344,7 +318,12 @@ test.describe("report → メインビュー", () => {
       .evaluate((element) => element.getBoundingClientRect().top)
     expect(firstHeadingTop).toBeGreaterThan(0)
 
-    await room.page.getByRole("button", { name: "完了: 読み位置の二つ目（架空の依頼）" }).click()
+    await flowRow(room.page, "読み位置の二つ目（架空の依頼）").click()
     await expect.poll(async () => Math.abs((await topOf()) - before)).toBeLessThanOrEqual(2)
   })
 })
+
+/** 舞台の流れの依頼の行（押すとその回へ移る）。 */
+function flowRow(page: Page, text: string): Locator {
+  return page.locator('[data-slot="thread"] button[data-who="you"]', { hasText: text })
+}

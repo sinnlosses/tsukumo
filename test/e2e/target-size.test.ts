@@ -19,7 +19,7 @@ test.describe("会話の画面の押す的と字", () => {
     run,
   }) => {
     const room = await openTaskListRoomWithRunningTask(run, "target-size-welcome", [], "medium")
-    await room.page.getByRole("link", { name: /^タスク/ }).waitFor()
+    await room.page.getByRole("listbox", { name: "着手できるタスク" }).waitFor()
     await expectReadable(room.page)
 
     await openTaskBoardFromWelcome(room)
@@ -61,7 +61,11 @@ test.describe("会話の画面の押す的と字", () => {
       domRoots: [],
     })
     await room.waitForEvent("pending-changed")
-    await room.page.getByRole("button", { name: "完了: 枠の色を揃えたい（架空の依頼）" }).click()
+    await room.page
+      .locator('[data-slot="thread"] button[data-who="you"]', {
+        hasText: "枠の色を揃えたい（架空の依頼）",
+      })
+      .click()
     await room.page.getByRole("button", { name: "お伺いが届いた" }).waitFor()
     await expectReadable(room.page)
   })

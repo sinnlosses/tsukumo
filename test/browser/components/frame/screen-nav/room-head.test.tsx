@@ -56,7 +56,7 @@ function task(id: string, waitingFor: readonly string[]): TaskSummaryItem {
 }
 
 describe("部屋の頭", () => {
-  it("札は hash で紙を開くリンクで、タスクの札には着手できる件数を添える", () => {
+  it("札は hash で紙を開くリンクで、タスクの札は出さない（紙の入口は探すにある）", () => {
     renderRoomHead(
       { tasks: knownTaskSummary([task("T-1", []), task("T-2", ["T-1"]), task("T-3", [])]) },
       () => {},
@@ -66,7 +66,6 @@ describe("部屋の頭", () => {
     const links = within(nav).getAllByRole("link")
     expect(links.map((link) => [link.textContent, link.getAttribute("href")])).toEqual([
       ["文脈 —", "#token-usage"],
-      ["タスク 2", "#tasks"],
       ["成果", "#achievement"],
       ["キャラ", "#character"],
       ["設定", "#settings"],

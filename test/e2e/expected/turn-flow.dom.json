@@ -1613,49 +1613,9 @@
                   ]
                 },
                 {
-                  "tag": "section",
-                  "attributes": {
-                    "aria-label": "この部屋のやり取り"
-                  },
+                  "tag": "p",
                   "children": [
-                    {
-                      "tag": "h2",
-                      "children": [
-                        "この部屋のやり取り"
-                      ]
-                    },
-                    {
-                      "tag": "ol",
-                      "children": [
-                        {
-                          "tag": "li",
-                          "children": [
-                            {
-                              "tag": "button",
-                              "attributes": {
-                                "data-result": "done",
-                                "aria-current": "true",
-                                "aria-label": "完了: report ツールの描き方を確かめたい（架空の依頼）",
-                                "type": "button"
-                              },
-                              "children": [
-                                {
-                                  "tag": "span",
-                                  "attributes": {
-                                    "aria-hidden": "true"
-                                  },
-                                  "children": [
-                                    "✓"
-                                  ]
-                                },
-                                "report ツールの描き方を確かめたい（架空の依頼）",
-                                "10:00 0秒"
-                              ]
-                            }
-                          ]
-                        }
-                      ]
-                    }
+                    "このリポジトリにはタスクの置き場が無い"
                   ]
                 },
                 {

@@ -3,7 +3,6 @@
    CSS Modules が class 名をファイルごとにハッシュ化しても、`@import` で取り込んだ規則は入口の名前になるので、別の `*.css` の class をまたぐ選択子（`.main-step > .detail-block` など）がそのまま効き、部品はこのファイルの1つから引く。
    並びは規則の重なり順なので、入れ替えると同じ詳細度の規則の勝ち負けが変わる。 */
 
-@import "./phone/turn-list.css";
 @import "./phone/current-step.css";
 @import "./turn-card/inquiry-jump-float.css";
 @import "./turn-card/mini-portrait.css";

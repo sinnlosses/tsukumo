@@ -58,9 +58,6 @@ export const DIARY_BODY_SELECTOR = '[class*="diary-book-body_"]'
 /** 入力欄。ページに `<textarea>` は1つしか無い。 */
 export const COMPOSER_SELECTOR = "textarea"
 
-/** サイドバーの入口の行にある、タスクの紙（`TaskSheet`）を開く入口。 */
-export const TASK_BOARD_SELECTOR = 'nav[aria-label="ほかの画面"] a[href$="#tasks"]'
-
 /**
  * 書き終わりの知らせ（`DiaryNotice`）の「日記帳で開く」。成果の画面（`#achievement`）
  * だけに出る（`App` の `<Activity>`）。

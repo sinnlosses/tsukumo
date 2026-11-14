@@ -71,7 +71,6 @@ const RAW_SCALE_REFERENCE_LIMITS: Readonly<Record<string, number>> = {
   "browser/components/page/conversation/components/inquiry/inquiry.module.css": 20,
   "browser/components/page/conversation/components/main-view/phone/current-step.css": 4,
   "browser/components/page/conversation/components/main-view/phone/phase-list.css": 3,
-  "browser/components/page/conversation/components/main-view/phone/turn-list.css": 6,
   "browser/components/page/conversation/components/main-view/turn-card/aside-thread.css": 4,
   "browser/components/page/conversation/components/main-view/turn-card/head-notice.css": 2,
   "browser/components/page/conversation/components/main-view/turn-card/inquiry-jump-float.css": 1,
