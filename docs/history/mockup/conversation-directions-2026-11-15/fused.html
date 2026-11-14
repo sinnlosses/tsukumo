@@ -46,6 +46,10 @@
     <header class="mock-bar" aria-label="見本の切り替え">
       <span class="mock-bar-title">融合案「舞台の上の紙」の見本（中身は架空）</span>
       <a class="mock-bar-link" href="index.html">3案の見本へ</a>
+      <span class="mock-bar-group" data-param="voice">
+        <a data-value="lane" href="?voice=lane">過ぎたセリフは列に</a>
+        <a data-value="paper" href="?voice=paper">過ぎたセリフは紙の中に</a>
+      </span>
       <span class="mock-bar-group" data-param="scene">
         <a data-value="greet" href="?scene=greet">迎える</a>
         <a data-value="work" href="?scene=work">待つ</a>
@@ -80,9 +84,9 @@
             </p>
             <ol class="flow" data-hide="greet" aria-label="このやり取り">
               <li class="flow-you"><span class="flow-who">きみ</span>設定に知らせの切り替えを足したい</li>
-              <li class="flow-line" data-hide="ask read">ほいきた、受け取ったぞ。ちょっと覗いてくる。</li>
-              <li class="flow-line">群は3つあったぞ。知らせの群に足すのがよさそうなのだ。</li>
-              <li class="flow-line" data-hide="work">型は通ったぞ。いまは単体テストを回してるところなのだ。</li>
+              <li class="flow-line" data-hide="ask read" data-voice-hide>ほいきた、受け取ったぞ。ちょっと覗いてくる。</li>
+              <li class="flow-line" data-voice-hide>群は3つあったぞ。知らせの群に足すのがよさそうなのだ。</li>
+              <li class="flow-line" data-hide="work" data-voice-hide>型は通ったぞ。いまは単体テストを回してるところなのだ。</li>
             </ol>
             <div class="bubble" role="status">
               <p class="bubble-who">
@@ -160,6 +164,10 @@
                     <span class="plan-mark"><svg viewBox="0 0 24 24" class="icon icon-sm"><use href="#i-check" /></svg></span>
                     <span class="plan-name">今の形を調べる</span><span class="plan-time">48秒</span>
                     <p class="plan-summary">設定の群は3つあり、知らせの値は端末ごとの好みに置ける。</p>
+                    <p class="voice" data-voice-only>
+                      <img class="voice-face" src="../../../../characters/tsukumo/face.png" alt="つくも" />
+                      <span>群は3つあったぞ。知らせの群に足すのがよさそうなのだ。<button class="voice-more" type="button">ほか 1件</button></span>
+                    </p>
                   </li>
                   <li class="plan-step plan-current">
                     <span class="plan-mark">2</span>
@@ -168,6 +176,10 @@
                       <dt>いま</dt><dd><code>pnpm run test</code> を走らせている</dd>
                       <dt class="plan-made">できた</dt><dd><code>setting-notice.tsx</code></dd>
                     </dl>
+                    <p class="voice" data-voice-only data-hide="work">
+                      <img class="voice-face" src="../../../../characters/tsukumo/face.png" alt="つくも" />
+                      <span>型は通ったぞ。いまは単体テストを回してるところなのだ。</span>
+                    </p>
                   </li>
                   <li class="plan-step" data-hide="ask"><span class="plan-mark">3</span><span class="plan-name">保存につなぐ</span></li>
                   <li class="plan-step" data-hide="ask"><span class="plan-mark">4</span><span class="plan-name">文書と検証を揃える</span></li>
@@ -198,6 +210,9 @@
 
               <article class="sheet sheet-report" data-hide="greet work ask" aria-label="レポート">
                 <div class="report">
+                  <details class="worklog" data-voice-only>
+                    <summary>作業の経過<span>4段・6分40秒・セリフ 4件</span></summary>
+                  </details>
                   <h1>知らせの切り替えを設定に足し、端末ごとに保存されるようにした</h1>
                   <ul class="checks" aria-label="確かめたこと">
                     <li><svg viewBox="0 0 24 24" class="icon"><use href="#i-check" /></svg>型検査</li>
@@ -212,14 +227,25 @@
                       <thead><tr><th>場所</th><th>変更</th><th>状態</th></tr></thead>
                       <tbody>
                         <tr><td>設定の「知らせ」の群</td><td>切り替えを1つ足した</td><td><span class="tag tag-ok">済み</span></td></tr>
-                        <tr><td>切り替えの文言</td><td>「背面のときだけ鳴らす」</td><td><span class="tag tag-ask">確認待ち</span></td></tr>
+                        <tr class="pointed"><td>切り替えの文言</td><td>「背面のときだけ鳴らす」</td><td><span class="tag tag-ask">確認待ち</span></td></tr>
                         <tr><td>端末ごとの好み</td><td>保存の鍵を1つ足した</td><td><span class="tag tag-ok">済み</span></td></tr>
                         <tr><td>キーの一覧</td><td>行を1つ足した</td><td><span class="tag tag-ok">済み</span></td></tr>
                       </tbody>
                     </table>
                   </div>
+                  <aside class="voice voice-point" data-voice-only>
+                    <img class="voice-face" src="../../../../characters/tsukumo/face.png" alt="つくも" />
+                    <span><b class="voice-at">表 1 の2行目</b>ここの言い方を、きみに決めてほしいのだ。</span>
+                  </aside>
                   <h2>確かめてほしい所</h2>
-                  <p>切り替えの文言は、平易な語の一覧に「背面」が無いので仮の言い方にしてある。ほかの画面では「ほかのタブを見ているとき」と書いている。どちらにそろえるかを決めてほしい。</p>
+                  <p class="asked">切り替えの文言は、平易な語の一覧に「背面」が無いので仮の言い方にしてある。ほかの画面では「ほかのタブを見ているとき」と書いている。どちらにそろえるかを決めてほしい。</p>
+                  <aside class="thread" data-voice-only>
+                    <p class="thread-you"><b>聞く</b>ほかの画面ではどの語を使っている？</p>
+                    <p class="voice">
+                      <img class="voice-face" src="../../../../characters/tsukumo/face.png" alt="つくも" />
+                      <span>設定とキーの一覧と通知の3つとも、「ほかのタブを見ているとき」だったぞ。</span>
+                    </p>
+                  </aside>
                   <p>狭い幅の引き出しでは、群の見出しと切り替えが1行に収まることを 390px の画で確かめた。</p>
                 </div>
               </article>

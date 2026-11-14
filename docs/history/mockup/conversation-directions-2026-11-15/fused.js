@@ -1,18 +1,26 @@
-// 融合案の見本の切り替え。URL の検索引数から場面とパックを読み、body の印・素材・入力欄の中身を決める。
+// 融合案の見本の切り替え。URL の検索引数から場面・セリフの置き場・パックを読み、body の印・素材・入力欄の中身を決める。
 
 const SCENES = ["read", "greet", "work", "ask"]
+const VOICES = ["lane", "paper"]
 const PACKS = {
   tsukumo: { name: "つくも", accent: "#6fe3cd" },
   shirasuzu: { name: "白鈴", accent: "#f9c3cd" },
 }
 
 const params = new URLSearchParams(location.search)
-const requested = params.get("scene")
-const scene = SCENES.includes(requested) ? requested : SCENES[0]
-const packId = Object.hasOwn(PACKS, params.get("pack")) ? params.get("pack") : "tsukumo"
+
+function pick(name, allowed) {
+  const value = params.get(name)
+  return allowed.includes(value) ? value : allowed[0]
+}
+
+const scene = pick("scene", SCENES)
+const voice = pick("voice", VOICES)
+const packId = pick("pack", Object.keys(PACKS))
 const pack = PACKS[packId]
 
 document.body.dataset.scene = scene
+document.body.dataset.voice = voice
 if (params.get("bar") === "0") {
   document.body.dataset.bar = "0"
 }
@@ -30,14 +38,19 @@ if (packId !== "tsukumo") {
   }
 }
 
-for (const link of document.querySelectorAll('.mock-bar-group[data-param="scene"] a')) {
-  const next = new URLSearchParams({ scene: link.dataset.value })
-  if (packId !== "tsukumo") {
-    next.set("pack", packId)
-  }
-  link.href = `?${next}`
-  if (link.dataset.value === scene) {
-    link.setAttribute("aria-current", "true")
+const current = { scene, voice }
+for (const group of document.querySelectorAll(".mock-bar-group")) {
+  const name = group.dataset.param
+  for (const link of group.querySelectorAll("a")) {
+    const next = new URLSearchParams(current)
+    next.set(name, link.dataset.value)
+    if (packId !== "tsukumo") {
+      next.set("pack", packId)
+    }
+    link.href = `?${next}`
+    if (link.dataset.value === current[name]) {
+      link.setAttribute("aria-current", "true")
+    }
   }
 }
 

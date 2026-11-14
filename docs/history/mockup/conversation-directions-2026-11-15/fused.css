@@ -262,3 +262,197 @@ body[data-scene="read"] .fuse .dock {
   font-size: 13px;
   color: var(--ink-quiet);
 }
+
+/* 紙の中の声。過ぎたセリフを、それを言った所（段・レポートの部品）の直下か横の余白に置く */
+body:not([data-voice="paper"]) [data-voice-only] {
+  display: none !important;
+}
+
+body[data-voice="paper"] [data-voice-hide] {
+  display: none !important;
+}
+
+body[data-voice="paper"]:not([data-scene="greet"]) .lane .window {
+  block-size: 58cqb;
+}
+
+.voice {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  align-items: start;
+  gap: 8px;
+  max-inline-size: 36em;
+  margin-block: 10px 4px;
+  padding: 8px 12px 8px 8px;
+  border-radius: 4px 14px 14px;
+  background: color-mix(in srgb, var(--surface), var(--accent) 9%);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 30%, transparent);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ink-bright);
+}
+
+.voice-face {
+  inline-size: 24px;
+  block-size: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--surface);
+}
+
+.voice-more {
+  margin-inline-start: 8px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: var(--surface-raised);
+  font-size: 12px;
+  color: var(--ink-quiet-accent);
+}
+
+.voice-at {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-quiet-accent);
+}
+
+.plan-step .voice {
+  grid-column: 2 / -1;
+}
+
+body[data-voice="paper"] .pointed td {
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+.worklog {
+  margin-block-end: 16px;
+  border: 1px solid var(--rule-soft);
+  border-radius: var(--radius-element);
+  font-size: 14px;
+}
+
+.worklog summary {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 8px 14px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+
+.worklog summary span {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-quiet);
+}
+
+/* きみの書き添えと答えの札。余白のある幅でだけ出す（足りない幅では、今と同じく下から出すシート） */
+.thread {
+  display: none;
+}
+
+.thread p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.thread-you {
+  padding: 8px 12px;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-element);
+}
+
+.thread-you b {
+  display: block;
+  font-size: 12px;
+  color: var(--ink-quiet);
+}
+
+.sheet-report {
+  container: report / inline-size;
+}
+
+/* 余白のある幅では、声と札を対象の横へ出す。本文は押し下げない */
+@container report (inline-size >= 880px) {
+  .report {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 248px;
+    column-gap: 24px;
+    max-inline-size: 1032px;
+  }
+
+  .report > * {
+    grid-column: 1;
+  }
+
+  .report > .voice-point,
+  .report > .thread {
+    grid-column: 2;
+    align-self: start;
+    margin: 0;
+  }
+
+  .report > .thread {
+    display: grid;
+    gap: 6px;
+  }
+
+  .report > .voice-point {
+    position: relative;
+    border-radius: 14px;
+  }
+
+  .report > .voice-point::before {
+    content: "";
+    position: absolute;
+    inset-block-start: 14px;
+    inset-inline-start: -5px;
+    inline-size: 10px;
+    block-size: 10px;
+    rotate: 45deg;
+    background: inherit;
+    box-shadow: inset 1px -1px 0 color-mix(in srgb, var(--accent) 30%, transparent);
+  }
+
+  .report > .thread .voice {
+    margin: 0;
+  }
+}
+
+@supports (anchor-name: --target) {
+  @container report (inline-size >= 880px) {
+    .pointed {
+      anchor-name: --pointed-row;
+    }
+
+    .asked {
+      anchor-name: --asked-part;
+    }
+
+    .report > .voice-point,
+    .report > .thread {
+      position: absolute;
+      inset-inline-end: 0;
+      inline-size: 248px;
+    }
+
+    .report > .voice-point {
+      inset-block-start: anchor(--pointed-row top);
+    }
+
+    .report > .thread {
+      inset-block-start: anchor(--asked-part top);
+    }
+  }
+}
+
+/* 余白を出した幅では、入力欄を本文の列にそろえる */
+@container paper (inline-size >= 908px) {
+  body[data-voice="paper"][data-scene="read"] .dock .composer {
+    translate: -118px 0;
+  }
+}
