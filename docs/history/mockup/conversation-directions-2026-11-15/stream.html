@@ -11,11 +11,11 @@
   <!--
     投稿とセリフをメインビューの1本の流れに載せる案「会話の流れ」の見本。中身はすべて架空で、実物の会話ではない。
     ?scene=greet|work|ask|read  場面（迎える・待つ・答える・読む）
-    ?side=right|left            サイドバーの置き場（右の列・立ち絵の上）
+    ?side=lane|right|left       置き場（やり取りの列を左に・サイドバーは右・サイドバーは立ち絵の上）
     ?pack=shirasuzu             別のパックの素材と差し色で見る
     ?bar=0                      上の切り替えの帯を隠す（撮影用）
   -->
-  <body data-v="stream" data-scene="read" data-side="right">
+  <body data-v="stream" data-scene="read" data-side="lane">
     <svg class="sprite" width="0" height="0" aria-hidden="true">
       <defs>
         <g id="i-image"><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="9" cy="9" r="2" /><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21" /></g>
@@ -25,6 +25,7 @@
         <g id="i-plus"><path d="M12 5v14M5 12h14" /></g>
         <g id="i-up"><path d="M12 19V5M5 12l7-7 7 7" /></g>
         <g id="i-chevron"><path d="m6 9 6 6 6-6" /></g>
+        <g id="i-chevron-left"><path d="m15 18-6-6 6-6" /></g>
         <g id="i-brief"><rect x="2" y="7" width="20" height="14" rx="2" /><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" /></g>
         <g id="i-chat"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" /></g>
         <g id="i-user"><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></g>
@@ -48,6 +49,7 @@
       <span class="mock-bar-title">「会話の流れ」の見本（中身は架空）</span>
       <a class="mock-bar-link" href="fused.html">融合案の見本へ</a>
       <span class="mock-bar-group" data-param="side">
+        <a data-value="lane" href="?side=lane">やり取りの列を左に</a>
         <a data-value="right" href="?side=right">サイドバーは右</a>
         <a data-value="left" href="?side=left">サイドバーは立ち絵の上</a>
       </span>
@@ -80,6 +82,31 @@
       <div class="shell">
         <div class="ground" aria-hidden="true"></div>
 
+        <nav class="turn-lane" data-region="turns" aria-label="やり取り">
+          <header class="gutter-head">
+            <span>やり取り</span>
+            <button class="icon-button" type="button" aria-label="やり取りの列を畳む"><svg viewBox="0 0 24 24" class="icon"><use href="#i-chevron-left" /></svg></button>
+          </header>
+          <p class="turn-lane-empty" data-hide="work ask read">最初の依頼を送ると、ここに並ぶ</p>
+          <ol class="turns" data-hide="greet">
+            <li class="turn"><svg viewBox="0 0 24 24" class="icon"><use href="#i-check" /></svg><span>設定の見出しの階層をそろえる</span></li>
+            <li class="turn"><svg viewBox="0 0 24 24" class="icon"><use href="#i-check" /></svg><span>狭い幅で一覧が切れるのを直す</span></li>
+            <li class="turn turn-current">
+              <span class="turn-dot" data-hide="ask read"></span>
+              <svg viewBox="0 0 24 24" class="icon turn-ask" data-hide="work read"><use href="#i-question" /></svg>
+              <svg viewBox="0 0 24 24" class="icon" data-hide="work ask"><use href="#i-check" /></svg>
+              <span>設定に知らせの切り替えを足したい</span>
+              <ol class="turn-heads">
+                <li class="turn-head" data-hide="read"><span class="turn-head-kind">レポート</span>今の形を調べる</li>
+                <li class="turn-head turn-head-current" data-hide="work read"><span class="turn-head-kind">お伺い</span>古い保存の鍵を消してよいか</li>
+                <li class="turn-head turn-head-current" data-hide="work ask"><span class="turn-head-kind">最終</span>知らせの切り替えを設定に足した</li>
+                <li class="turn-head turn-head-sub" data-hide="work ask">変えた所</li>
+                <li class="turn-head turn-head-sub" data-hide="work ask">確かめてほしい所</li>
+              </ol>
+            </li>
+          </ol>
+        </nav>
+
         <div class="actor" data-region="character">
           <img class="portrait" data-hide="work ask read" src="../../../../characters/tsukumo/excited.png" alt="つくも（わくわく）" />
           <img class="portrait" data-hide="greet ask read" src="../../../../characters/tsukumo/thinking.png" alt="つくも（ふむ）" />
@@ -89,7 +116,7 @@
 
         <section class="talk" data-region="main" aria-label="会話">
           <header class="paper-head">
-            <button class="chip-button" type="button" aria-haspopup="listbox" data-hide="greet">やり取り <b>3</b> / 3<svg viewBox="0 0 24 24" class="icon icon-sm"><use href="#i-chevron" /></svg></button>
+            <button class="chip-button turn-chip" type="button" aria-haspopup="listbox" data-hide="greet">やり取り <b>3</b> / 3<svg viewBox="0 0 24 24" class="icon icon-sm"><use href="#i-chevron" /></svg></button>
             <span class="state state-idle" data-hide="work ask read"><span class="state-dot"></span>依頼を待っている</span>
             <span class="state state-run" data-hide="greet ask read"><span class="state-dot"></span>作業中</span>
             <span class="state state-ask" data-hide="greet work read"><span class="state-dot"></span>答え待ち</span>

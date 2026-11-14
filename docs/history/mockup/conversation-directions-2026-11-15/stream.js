@@ -1,7 +1,7 @@
 // 「会話の流れ」の見本の切り替え。URL の検索引数から場面・サイドバーの置き場・パックを読み、body の印と素材を決める。
 
 const SCENES = ["read", "greet", "work", "ask"]
-const SIDES = ["right", "left"]
+const SIDES = ["lane", "right", "left"]
 const PACKS = {
   tsukumo: { name: "つくも", accent: "#6fe3cd" },
   shirasuzu: { name: "白鈴", accent: "#f9c3cd" },
@@ -69,14 +69,15 @@ if (draft !== null) {
   }
 }
 
-// 流れの送り位置。読む場面は、作業の経過の行を上端に置いてレポートを頭から読ませる。
+// 流れの送り位置。読む場面は、作業の経過の行を上端に置いてレポートを頭から読ませる（やり取りの列の形は、上端のぼかしの幅だけ下げる）。
 // ほかの場面は新しい物を下端に出す（scroll-initial-target を持たないブラウザでは、ここで下端へ送る）。
 const stream = document.querySelector(".stream")
 if (stream !== null) {
   if (scene === "read") {
     const fold = stream.querySelector(".worklog")
     if (fold !== null) {
-      stream.scrollTop = fold.offsetTop - stream.offsetTop - 4
+      const clearance = side === "lane" ? 20 : 4
+      stream.scrollTop = fold.offsetTop - stream.offsetTop - clearance
     }
   } else if (!CSS.supports("scroll-initial-target", "nearest")) {
     stream.scrollTop = stream.scrollHeight
