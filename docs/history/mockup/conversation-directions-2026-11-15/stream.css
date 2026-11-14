@@ -1,0 +1,278 @@
+/* 「会話の流れ」。投稿とセリフをメインビューの1本の流れに載せ、計画・お伺い・レポートは流れの中の紙にする。 */
+
+body[data-v="stream"] .shell {
+  --lane-w: clamp(264px, 20.5vw, 400px);
+  position: relative;
+  grid-template-rows: minmax(0, 1fr);
+}
+
+/* 舞台。背景を敷いた面で、立ち絵と会話の流れが同じ面に載る */
+.ground {
+  z-index: 0;
+  border: 1px solid var(--rule-quiet);
+  border-radius: var(--radius-container);
+  background:
+    linear-gradient(to right, rgb(25 23 32 / 26%) 0%, rgb(25 23 32 / 54%) 36%, rgb(25 23 32 / 70%) 100%),
+    linear-gradient(to top, rgb(25 23 32 / 74%) 0%, rgb(25 23 32 / 0%) 38%),
+    var(--art) 22% center / cover;
+}
+
+/* サイドバーは右の列（今の雑談と同じ骨格） */
+body[data-side="right"] .shell {
+  grid-template-columns: var(--lane-w) minmax(0, 1fr) var(--side-w);
+}
+
+body[data-side="right"] .ground {
+  grid-area: 1 / 1 / 2 / 3;
+}
+
+body[data-side="right"] .actor {
+  grid-area: 1 / 1;
+}
+
+body[data-side="right"] .talk {
+  grid-area: 1 / 2;
+}
+
+body[data-side="right"] .side {
+  grid-area: 1 / 3;
+}
+
+/* サイドバーは立ち絵の上。空いた右の幅を会話の流れと余白に渡す */
+body[data-side="left"] .shell {
+  grid-template-columns: var(--side-w) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 42fr) minmax(0, 58fr);
+}
+
+body[data-side="left"] .ground {
+  grid-area: 1 / 1 / -1 / -1;
+}
+
+body[data-side="left"] .side {
+  grid-area: 1 / 1;
+  z-index: 2;
+  margin: 12px 0 0 12px;
+}
+
+body[data-side="left"] .actor {
+  grid-area: 2 / 1;
+}
+
+body[data-side="left"] .talk {
+  grid-area: 1 / 2 / -1 / -1;
+}
+
+/* 立ち絵。セリフは持たない。左は舞台の縁で切れ、右は流れの紙の後ろへ回る */
+.actor {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  min-block-size: 0;
+  clip-path: inset(0 -240px 0 0);
+  container: actor / size;
+}
+
+.actor .portrait {
+  flex: none;
+  inline-size: auto;
+  block-size: 58cqb;
+  max-block-size: none;
+  max-inline-size: calc(100cqi + 96px);
+}
+
+body[data-side="left"] .actor .portrait {
+  block-size: 100cqb;
+}
+
+/* 会話の面。頭の帯・会話の流れ・入力欄 */
+.talk {
+  --dock-clear: 124px;
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 10px;
+  min-block-size: 0;
+  padding: 12px 12px 0 4px;
+  container: paper / inline-size;
+}
+
+body[data-scene="ask"] .talk {
+  --dock-clear: 152px;
+}
+
+body[data-scene="read"] .talk {
+  --dock-clear: 176px;
+}
+
+.talk .paper-head {
+  min-block-size: 48px;
+  padding: 8px 12px;
+  border: 1px solid var(--rule-quiet);
+  border-radius: var(--radius-container);
+  background: var(--surface);
+  box-shadow: 0 6px 18px rgb(0 0 0 / 30%);
+}
+
+body[data-v="stream"][data-scene="read"] .stream {
+  padding-block-end: var(--dock-clear);
+  overflow-y: auto;
+}
+
+body[data-v="stream"][data-scene="read"] .stream::before {
+  display: block;
+}
+
+body[data-scene="work"] [data-latest-in="work"],
+body[data-scene="ask"] [data-latest-in="ask"] {
+  scroll-initial-target: nearest;
+}
+
+/* きみの投稿は右、キャラクターのセリフは左（立ち絵の側）に出す */
+.say,
+.post {
+  flex: none;
+  max-inline-size: min(40em, 86%);
+  margin: 0;
+  padding: 10px 14px;
+  font-size: 16px;
+  line-height: 1.65;
+  color: var(--ink-bright);
+}
+
+.say {
+  align-self: flex-start;
+  border-radius: 4px 16px 16px;
+  background: color-mix(in srgb, var(--surface), var(--accent) 10%);
+  box-shadow:
+    0 6px 18px rgb(0 0 0 / 35%),
+    inset 0 0 0 1px color-mix(in srgb, var(--accent) 40%, transparent);
+}
+
+.post {
+  align-self: flex-end;
+  border-radius: 16px 16px 4px;
+  background: var(--surface-lift);
+  box-shadow:
+    0 6px 18px rgb(0 0 0 / 35%),
+    inset 0 0 0 1px var(--rule-soft);
+}
+
+.say time,
+.post time {
+  margin-inline-start: 10px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.say time {
+  color: var(--ink-quiet-accent);
+}
+
+.post time {
+  color: var(--ink-quiet);
+}
+
+/* セリフに続く紙（始め方・お伺い・レポート）は、そのセリフに添えた物として詰めて置く */
+.attach {
+  margin-block-start: -4px;
+  border-start-start-radius: 4px;
+}
+
+.sheet.step {
+  padding: 8px 20px;
+}
+
+.step .plan {
+  max-inline-size: none;
+  margin: 0;
+}
+
+.sheet.paper {
+  padding: 24px 32px 28px;
+  container: report / inline-size;
+}
+
+.paper .report {
+  max-inline-size: none;
+  margin: 0;
+}
+
+.turn-fold {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  padding: 6px 8px 6px 16px;
+  border-radius: var(--radius-element);
+  background: color-mix(in srgb, var(--ground) 80%, transparent);
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.turn-no {
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.turn-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.turn-fold .chip-button {
+  block-size: 26px;
+  margin-inline-start: auto;
+}
+
+.talk .worklog {
+  flex: none;
+  margin: 0;
+  border-color: transparent;
+  background: color-mix(in srgb, var(--ground) 80%, transparent);
+}
+
+/* 本文の列が 760px を超えないよう、流れと入力欄の幅を止める。余った右側には舞台が見える */
+.talk .stream {
+  max-inline-size: 1098px;
+}
+
+.talk .dock {
+  inset-inline: 4px auto;
+  inline-size: min(100% - 16px, 1098px);
+  padding: 48px 0 14px;
+  background: linear-gradient(to top, rgb(25 23 32 / 94%) 58%, rgb(25 23 32 / 0%));
+}
+
+.talk .composer {
+  max-inline-size: none;
+  margin: 0 12px;
+}
+
+/* 余白の出る幅では、右の 272px を書き添えの札に空け、会話は本文の列の中で往復する */
+@container paper (inline-size >= 908px) {
+  .talk .post,
+  .talk .step,
+  .talk .inquiry,
+  .talk .welcome,
+  .talk .turn-fold,
+  .talk .worklog {
+    margin-inline-end: 272px;
+  }
+
+  .talk .composer {
+    margin-inline-end: 285px;
+  }
+}
+
+/* 札が付いた行は、余白の出る幅で淡く塗って札と結ぶ */
+@container report (inline-size >= 880px) {
+  .paper .asked td {
+    background: color-mix(in srgb, var(--accent) 8%, transparent);
+  }
+}
