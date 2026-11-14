@@ -226,10 +226,11 @@
     `<span class="segbar" role="img" aria-label="${pl.total} 段のうち ${pl.now} 段目">${pl.phases.map((p) => `<i class="${p.state}"></i>`).join("")}</span>`
 
   /* ── 3案で同じ中身（紙・吹き出し・入力欄） ─────────────── */
-  function reportHtml() {
+  /* bare: 依頼文の行を出さない（採用案。依頼は舞台のログにだけ出す）。verdict: 判定の行の中身を差し替える */
+  function reportHtml({ bare = false, verdict } = {}) {
     return `<div class="rp">
-      <div class="req"><span class="mono">/next-task T-240</span><span>入力欄を下端に固定する</span></div>
-      <div class="verdict"><span class="badge ok">${icon("check", 13)}完了</span><span>変更 6 ファイル</span><span>所要 4:33</span><span class="grow"></span>
+      ${bare ? "" : '<div class="req"><span class="mono">/next-task T-240</span><span>入力欄を下端に固定する</span></div>'}
+      <div class="verdict">${verdict || `<span class="badge ok">${icon("check", 13)}完了</span><span>変更 6 ファイル</span><span>所要 4:33</span>`}<span class="grow"></span>
         <span class="seg"><button>一目</button><button aria-pressed="true">本文</button><button>記録</button></span></div>
       <h1>待機から作業へ移っても、入力欄が同じ高さに留まるようになった。</h1>
       <div class="figs">
@@ -418,7 +419,8 @@
         dlg.setAttribute("aria-labelledby", "keysheetTitle")
         document.body.append(dlg)
       }
-      const groups = [...SHORTCUTS]
+      // hooks.hideKeys: その案に無い操作のキー（例: 進行を常時出す採用案の ⌘ I）を一覧から外す
+      const groups = SHORTCUTS.map(([g, rows]) => [g, rows.filter(([k]) => !(hooks.hideKeys || []).includes(k))])
       if (hooks.extraKeys) groups[2] = [groups[2][0], [...groups[2][1], ...hooks.extraKeys]]
       dlg.innerHTML = `<h2 id="keysheetTitle">キーの一覧</h2><div class="cols">${groups.map(([g, rows]) => `<div><h3>${g}</h3><ul>${rows.map(([k, a]) => `<li><span>${a}</span>${kbd(k)}</li>`).join("")}</ul></div>`).join("")}</div><div class="dlg-hints"><span>${kbd("esc")} 閉じる</span><span class="grow"></span><span>入力中でも ⌘ と ⌃ の組合せは有効</span></div>`
       dlg.showModal()
@@ -444,7 +446,7 @@
         cmd("新規セッションを開始", "⌘ ⇧ O", () => act.newSession()),
         cmd("セッションを切替", "⌘ O", () => hooks.sessions()),
         cmd("タスクを選択して依頼", "⌘ J", () => hooks.tasks()),
-        cmd("進行の詳細を表示", "⌘ I", () => hooks.progress()),
+        ...((hooks.hideKeys || []).includes("⌘ I") ? [] : [cmd("進行の詳細を表示", "⌘ I", () => hooks.progress())]),
         cmd("キーの一覧を表示", "⌘ /", () => keysheet.open()),
         cmd("雑談に切替", "", () => toast("雑談に切替（試作では表示のみ）")),
         cmd("設定を開く", "⌘ ,", () => toast("設定を開く（試作では表示のみ）")),
@@ -657,6 +659,7 @@
       ["a", "A 常設パネル"],
       ["b", "B コマンド中心"],
       ["c", "C タブとボード"],
+      ["final", "採用案（A 改）"],
     ]
     protoEl.innerHTML = `<b>試作</b>${V.map(([v, l]) => `<button data-variant="${v}" aria-current="${v === variant}">${l}</button>`).join("")}<span>場面</span>${MOMENTS.map(([m, l]) => `<button data-moment-set="${m}">${l}</button>`).join("")}<span>キャラクター</span>${PACKS.map((p) => `<button data-pack-set="${p.id}">${p.name}</button>`).join("")}<span class="grow"></span><a href="index.html">比較へ戻る</a>`
     protoEl.addEventListener("click", (e) => {
