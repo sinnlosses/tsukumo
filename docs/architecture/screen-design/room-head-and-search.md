@@ -131,9 +131,9 @@
 
 ## モデルと深さの値の源
 
-**入力欄に、いまのモデルと考える深さ（effort）の札「Fable・High」を添える**（`features/run-setting/run-setting-chip.tsx`）。札は見せるだけで、変える口は持たない。新しいセッションの既定は設定の紙の「動き方」で変える。
+**入力欄の下の行に、モデル・effort・許可モードの3つの札を添える**（`features/run-setting/run-setting-group.tsx`。広い幅だけ）。押すと選択肢が上へ開き、選ぶといまのセッションの値を変える。新しいセッションの既定は設定の紙の「動き方」で変える。
 
-- effort の段が分からないあいだ（対応しないモデル・まだ届かない）は、モデル名だけを出す
+- effort の段が分からないあいだ（対応しないモデル・まだ届かない）は、effort の札を出さない
 - **モデル・許可モードは、まだ届いていない値を見た目上の既定に倒す**（字と畳み方は
   `src/browser/features/run-setting/model-label.ts` / `permission-mode-label.ts` の1箇所）。
   **届いたが tsukumo の知らない許可モード（SDK が新しく足した語）は既定に倒さず、届いた語を

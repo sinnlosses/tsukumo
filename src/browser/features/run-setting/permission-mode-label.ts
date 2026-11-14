@@ -12,6 +12,13 @@ export const PERMISSION_MODE_LABELS = [
   ["bypassPermissions", "全部許す"],
 ] satisfies readonly (readonly [PermissionMode, string])[]
 
+/** 許可モードの字。知らない語は届いた語のまま出す（既定のモードの字に倒さない）。 */
+export function permissionModeLabel(mode: ReportedPermissionMode): string {
+  return typeof mode === "string"
+    ? (PERMISSION_MODE_LABELS.find(([value]) => value === mode)?.[1] ?? mode)
+    : mode.raw
+}
+
 /** 「全部許す」かどうか。この1つだけは字に意味の色を載せる。 */
 export function isDangerousPermissionMode(mode: ReportedPermissionMode): boolean {
   return mode === DANGEROUS_PERMISSION_MODE

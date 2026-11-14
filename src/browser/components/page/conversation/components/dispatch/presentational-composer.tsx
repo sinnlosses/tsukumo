@@ -1,5 +1,5 @@
 // 入力欄本体の器。
-// 入力欄のサーフェス（`<textarea>` かマークダウンエディタ）と補完の候補一覧を内包し、その下に道具の行（画像・`/`・`@`・面の切り替えのボタン、経過時間と送信⇄中断の <TurnStatus>）を置いた `<form>` を置く。
+// 入力欄のサーフェス（`<textarea>` かマークダウンエディタ）と補完の候補一覧を内包し、その下に道具の行（画像・`/`・`@`・面の切り替えのボタン、広い幅ではモデル・effort・許可モードの札、経過時間と送信⇄中断の <TurnStatus>）を置いた `<form>` を置く。
 
 import clsx from "clsx"
 import { AtSign, Heading, ImageIcon, Plus, Slash } from "lucide-react"
@@ -13,7 +13,7 @@ import {
 } from "react"
 
 import { PROMPT_IMAGE_MEDIA_TYPES } from "../../../../../../shared/session-driver/prompt-image.ts"
-import { RunSettingChip } from "../../../../../features/run-setting/run-setting-chip.tsx"
+import { RunSettingGroup } from "../../../../../features/run-setting/run-setting-group.tsx"
 import { useExternalSync } from "../../../../../hooks/use-external-sync.ts"
 import { usePhoneWidth } from "../../../../../hooks/use-phone-width.ts"
 import { deferredModule } from "../../../../../stores/deferred-module.ts"
@@ -253,7 +253,13 @@ export function PresentationalComposer({
               {inputSurface}
             </VStack>
           }
-          tools={tools}
+          tools={
+            <>
+              {tools}
+              <span className={styles["dispatch-toolbar-divider"]} aria-hidden="true" />
+              <RunSettingGroup />
+            </>
+          }
           actions={turnStatus}
           className={styles["dispatch-shell"]}
         />
@@ -262,7 +268,7 @@ export function PresentationalComposer({
   )
 }
 
-/** 画像・`/`・`@`・面の切り替えの4つと、見えない画像の選び口、モデルの札。 */
+/** 画像・`/`・`@`・面の切り替えの4つと、見えない画像の選び口。 */
 function ComposerTools({
   mode,
   onToggleMode,
@@ -340,7 +346,6 @@ function ComposerTools({
         hidden
         onChange={onImagesChosen}
       />
-      <RunSettingChip className={styles["dispatch-model-chip"]} />
     </>
   )
 }

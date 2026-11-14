@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest"
 
-import { isDangerousPermissionMode } from "../../../../src/browser/features/run-setting/permission-mode-label.ts"
+import {
+  isDangerousPermissionMode,
+  permissionModeLabel,
+} from "../../../../src/browser/features/run-setting/permission-mode-label.ts"
 import { PERMISSION_MODES } from "../../../../src/shared/session/run-setting-value.ts"
 import {
   foldPermissionMode,
@@ -17,6 +20,13 @@ describe("isDangerousPermissionMode", () => {
 
   it("知らない許可モードは危険扱いにしない", () => {
     expect(isDangerousPermissionMode({ kind: "unknown", raw: "no-such-mode" })).toBe(false)
+  })
+})
+
+describe("permissionModeLabel", () => {
+  it("知っている許可モードは日本語の字、知らない語は届いた語のまま出す（既定の字に倒さない）", () => {
+    expect(permissionModeLabel("plan")).toBe("プラン")
+    expect(permissionModeLabel({ kind: "unknown", raw: "dontAsk" })).toBe("dontAsk")
   })
 })
 

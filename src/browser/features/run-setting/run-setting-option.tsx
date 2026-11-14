@@ -1,5 +1,4 @@
 // モデル・effort・許可モードの吊り下げのカードの選択肢（`RunSettingSelectOption`）の組み立て。
-// 設定の「セッションの既定」が使う。
 //
 // 絵は道具の線画なのでコードに置く（キャラクターの中身ではない）。
 // モデルは頭文字を丸で囲み、effort は段の数だけ伸びる棒、許可モードは盾の形の違いで見分ける。
@@ -7,6 +6,7 @@
 
 import clsx from "clsx"
 import {
+  Shield,
   ShieldCheck,
   ShieldEllipsis,
   ShieldHalf,
@@ -67,6 +67,15 @@ export function modelSelectOptions(
   })
 }
 
+export function unknownModelOption(name: string): RunSettingSelectOption {
+  return {
+    value: name,
+    disabled: false,
+    icon: <ModelIcon letter={name.slice(0, 1).toUpperCase()} />,
+    row: <RunSettingName danger={false}>{name}</RunSettingName>,
+  }
+}
+
 export function effortSelectOptions(effort: EffortSelect): readonly RunSettingSelectOption[] {
   if (effort.kind !== "known") {
     return [
@@ -91,6 +100,20 @@ export function effortSelectOptions(effort: EffortSelect): readonly RunSettingSe
       </>
     ),
   }))
+}
+
+/** 知らない許可モードが届いたときに末尾へ足す行。絵は何の強さも名乗らない素の盾で、字は届いた語。 */
+export function unknownPermissionModeOption(raw: string): RunSettingSelectOption {
+  return {
+    value: raw,
+    disabled: false,
+    icon: (
+      <span className={styles["run-setting-shield"]} data-fill="empty">
+        <Shield size={16} strokeWidth={1.9} aria-hidden="true" />
+      </span>
+    ),
+    row: <RunSettingName danger={false}>{raw}</RunSettingName>,
+  }
 }
 
 export function permissionModeSelectOptions(

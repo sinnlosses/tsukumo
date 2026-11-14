@@ -91,16 +91,8 @@
     padding: 0 var(--space-sm);
   }
 }
-/* モデルと深さの札は新しい器の入力欄だけに出す。 */
-.dispatch-model-chip {
-  display: none;
-  flex: 0 0 auto;
-  color: var(--ink-quiet);
-  font-size: var(--font-label);
-  white-space: nowrap;
-}
-/* 広い画面の入力欄は殻の中に並ぶ。打つと伸びる欄の下の行に、左に道具とモデルの札、右に経過時間と送信か中断を置く。
-   新しい器の「働く」「尋ねる」「渡す」姿勢では、働く・尋ねるは補完の口を隠し、渡すは画像の口だけ残し、モデルの札を出す。 */
+/* 広い画面の入力欄は殻の中に並ぶ。打つと伸びる欄の下の行に、左に道具とモデル・effort・許可モードの札、右に経過時間と送信か中断を置く。
+   新しい器の「働く」「尋ねる」「渡す」姿勢では、働く・尋ねるは補完の口を隠し、渡すは画像の口だけ残す。 */
 @media (min-width: 761px) {
   /* 殻（`<ComposerShell>`）の中。本体の角丸・余白・影は Astryx の `ChatComposer` が持つ。
      入力の面は殻の地に溶かし、枠と地を持たせない。
@@ -146,11 +138,6 @@
     height: 2rem;
     border-radius: var(--radius-pill);
   }
-  .dispatch-shell .dispatch-model-chip {
-    align-items: center;
-    height: 2rem;
-    padding: 0 var(--gutter-region);
-  }
   /* 尋ねるでは、お伺いがすぐ上にあるので、帯と口を出さず、答えを書く欄の輪も重ねない。 */
   [data-posture="ask"] .dispatch-inquiry-band,
   [data-posture="ask"] .dispatch-pending-glow {
@@ -162,9 +149,6 @@
   }
   [data-posture="ask"] .dispatch-tool {
     display: none;
-  }
-  .dispatch-model-chip:not(:empty) {
-    display: inline-flex;
   }
 }
 /* 狭い画面（760px 以下）。左に ＋、まん中に丸い欄、右に丸ボタン（<PhoneTurnAction>）。

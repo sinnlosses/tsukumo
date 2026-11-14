@@ -119,8 +119,8 @@
 
 - **英語識別子**: `SettingMark`（セッションごとの束は `SettingMarks`、`SessionState.settingMarks`）
 - **定義**: モデル・effort・許可モードの切り替えを受け付けたこと（空洞）と、
-  受け付けた値で効いているのを見届けたこと（塗り）を言い分ける印。「舞台と紙」の器はセッションの途中でこの3つを変える口を持たないので、
-  画面には描かない（状態の `SessionState.settingMarks` と `features/run-setting/model-permission.ts` だけが持つ）
+  受け付けた値で効いているのを見届けたこと（塗り）を言い分ける印。入力欄の下の行の3つの札の右肩に点として描く
+  （状態は `SessionState.settingMarks` と `features/run-setting/model-permission.ts` が持つ）
 - **避ける言い方**: 設定の口の右肩の点（旧称。「設定の口」が `tw config` を指す語だったため紛れる）
 
 ### デザイントークン
