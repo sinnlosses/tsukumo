@@ -1,0 +1,1407 @@
+/* 会話の画面の方向性の見本。色と寸法は src/browser/styles/theme.css と Astryx のテーマの値を写した。 */
+
+:root {
+  color-scheme: dark;
+  --ground: #191720;
+  --surface: #221f2b;
+  --surface-lift: #2b2835;
+  --ink: #e8e3ea;
+  --ink-bright: #f7f6f8;
+  --accent: #6fe3cd;
+  --ink-soft: color-mix(in srgb, var(--ink) 76%, var(--surface));
+  --ink-quiet: color-mix(in srgb, var(--ink) 62%, var(--surface));
+  --ink-quiet-accent: color-mix(in srgb, color-mix(in srgb, var(--ink), var(--accent) 25%) 74%, var(--surface));
+  --rule: color-mix(in srgb, var(--surface), var(--ink) 32%);
+  --rule-soft: color-mix(in srgb, var(--surface), var(--ink) 14%);
+  --rule-quiet: color-mix(in srgb, var(--surface), var(--ink) 7%);
+  --surface-raised: color-mix(in srgb, var(--ink) 9%, transparent);
+  --surface-accent: color-mix(in srgb, var(--surface), var(--accent) 11%);
+  --state-ok: #7ee081;
+  --state-warn: #e3c766;
+  --state-ask: #c7aef0;
+  --radius-inner: 6px;
+  --radius-element: 10px;
+  --radius-container: 12px;
+  --radius-page: 28px;
+  --shadow-low: 0 2px 4px oklch(0 0 0 / 25%), 0 4px 8px oklch(0 0 0 / 40%), inset 0 0 0 1px oklch(1 0 0 / 8%);
+  --shadow-med: 0 2px 4px oklch(0 0 0 / 35%), 0 4px 12px oklch(0 0 0 / 50%), inset 0 0 0 1px oklch(1 0 0 / 12%);
+  --font-sans: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Segoe UI", Roboto, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
+  --nav-h: 52px;
+  --bar-h: 36px;
+  --pad: 16px;
+  --gap: 12px;
+  --side-w: clamp(300px, 22.8vw, 390px);
+  --buddy-w: clamp(340px, 26.5vw, 480px);
+  --stage-w: clamp(312px, 24vw, 460px);
+  --gutter-w: clamp(200px, 15vw, 256px);
+  --art: url("../../../../characters/tsukumo/background.png");
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scrollbar-color: var(--rule) transparent;
+  scrollbar-width: thin;
+}
+
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--accent) 36%, transparent);
+  color: var(--ink-bright);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+ol,
+ul,
+dl,
+dd,
+p,
+h1,
+h2 {
+  margin: 0;
+  padding: 0;
+}
+
+ol,
+ul {
+  list-style: none;
+}
+
+kbd {
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.sprite {
+  position: absolute;
+}
+
+.visually-hidden {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.icon {
+  inline-size: 18px;
+  block-size: 18px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.icon-sm {
+  inline-size: 14px;
+  block-size: 14px;
+}
+
+.icon-button {
+  display: inline-grid;
+  place-items: center;
+  inline-size: 32px;
+  block-size: 32px;
+  border-radius: 999px;
+  color: var(--ink-soft);
+}
+
+.icon-button:hover,
+.run-chip:hover,
+.chip-button:hover {
+  background: var(--surface-raised);
+  color: var(--ink-bright);
+}
+
+.chip-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  block-size: 30px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: var(--surface-raised);
+  color: var(--ink-soft);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.chip-button b {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.tag-ok {
+  background: color-mix(in srgb, var(--state-ok) 16%, var(--surface));
+  color: var(--state-ok);
+}
+
+.tag-ask {
+  background: color-mix(in srgb, var(--state-warn) 16%, var(--surface));
+  color: var(--state-warn);
+}
+
+.tag-accent {
+  background: color-mix(in srgb, var(--accent) 16%, var(--surface));
+  color: var(--accent);
+}
+
+/* 場面と方向性ごとの出し分け */
+body[data-scene="read"] [data-hide~="read"],
+body[data-scene="work"] [data-hide~="work"],
+body[data-scene="ask"] [data-hide~="ask"],
+body[data-v="stage"] [data-hide-v~="stage"] {
+  display: none !important;
+}
+
+/* 見本の切り替えの帯 */
+.mock-bar {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  block-size: var(--bar-h);
+  padding: 0 16px;
+  background: #0f0e14;
+  border-block-end: 1px solid var(--rule-quiet);
+  font-size: 13px;
+  color: var(--ink-quiet);
+}
+
+.mock-bar-title {
+  margin-inline-end: auto;
+}
+
+.mock-bar-group {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 999px;
+  background: var(--surface);
+}
+
+.mock-bar-group a {
+  padding: 2px 12px;
+  border-radius: 999px;
+  color: var(--ink-soft);
+  text-decoration: none;
+}
+
+.mock-bar-group a[aria-current="true"] {
+  background: var(--surface-lift);
+  color: var(--ink-bright);
+}
+
+body[data-bar="0"] {
+  --bar-h: 0px;
+}
+
+body[data-bar="0"] .mock-bar {
+  display: none;
+}
+
+/* 骨組み */
+.app {
+  display: grid;
+  grid-template-rows: var(--nav-h) minmax(0, 1fr);
+  block-size: calc(100dvb - var(--bar-h));
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  padding: 0 20px;
+  border-block-end: 1px solid var(--rule-soft);
+}
+
+.nav-room {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.nav-face {
+  inline-size: 36px;
+  block-size: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--surface);
+}
+
+.nav-room-name {
+  font-size: 17px;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+}
+
+.nav-room-port {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-quiet);
+}
+
+.nav-tabs {
+  display: inline-flex;
+  align-items: stretch;
+  gap: 4px;
+  align-self: stretch;
+}
+
+.nav-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  color: var(--ink-quiet);
+  border-block-end: 2px solid transparent;
+  margin-block-end: -1px;
+}
+
+.nav-tab[aria-current="page"] {
+  color: var(--ink-bright);
+  border-block-end-color: var(--accent);
+}
+
+.nav-rule {
+  inline-size: 1px;
+  block-size: 22px;
+  align-self: center;
+  margin-inline: 10px;
+  background: var(--rule);
+}
+
+.nav-gear {
+  margin-inline-start: auto;
+}
+
+.shell {
+  display: grid;
+  gap: var(--gap);
+  padding: var(--pad);
+  min-block-size: 0;
+}
+
+.main {
+  grid-area: main;
+}
+
+.stage {
+  grid-area: stage;
+}
+
+.side {
+  grid-area: side;
+}
+
+body[data-v="desk"] .shell {
+  grid-template-columns: minmax(0, 1fr) var(--side-w);
+  grid-template-areas: "main side";
+}
+
+body[data-v="buddy"] .shell {
+  grid-template-columns: minmax(0, 1fr) var(--buddy-w);
+  grid-template-rows: minmax(0, 42fr) minmax(0, 58fr);
+  grid-template-areas:
+    "main side"
+    "main stage";
+}
+
+body[data-v="stage"] .shell {
+  grid-template-columns: var(--stage-w) minmax(0, 1fr) var(--side-w);
+  grid-template-areas: "stage main side";
+}
+
+.main,
+.side {
+  min-block-size: 0;
+  background: var(--surface);
+  border: 1px solid var(--rule-quiet);
+  border-radius: var(--radius-container);
+  overflow: hidden;
+}
+
+/* メインビュー */
+.main {
+  display: grid;
+  grid-template-columns: var(--gutter-w) minmax(0, 1fr);
+}
+
+body[data-v="stage"] .main {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.gutter {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  min-block-size: 0;
+  border-inline-end: 1px solid var(--rule-quiet);
+}
+
+.gutter-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 8px 4px 20px;
+  font-size: 13px;
+  color: var(--ink-quiet);
+}
+
+.turns {
+  padding: 4px 8px;
+  overflow-y: auto;
+}
+
+.turn {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  align-items: start;
+  gap: 2px 8px;
+  padding: 7px 12px;
+  border-radius: var(--radius-element);
+  font-size: 13px;
+  color: var(--ink-quiet);
+}
+
+.turn > .icon {
+  inline-size: 14px;
+  block-size: 14px;
+  margin-block-start: 3px;
+}
+
+.turn-current {
+  background: var(--surface-raised);
+  color: var(--ink-bright);
+  font-weight: 600;
+}
+
+.turn-dot {
+  inline-size: 8px;
+  block-size: 8px;
+  margin: 6px 3px 0;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.turn-heads {
+  grid-column: 2;
+  display: grid;
+  gap: 2px;
+  margin-block-start: 6px;
+  font-weight: 400;
+}
+
+.turn-head {
+  padding: 3px 0 3px 10px;
+  border-inline-start: 1px solid var(--rule);
+  color: var(--ink-quiet);
+}
+
+.turn-head-current {
+  border-inline-start-color: var(--accent);
+  color: var(--ink);
+}
+
+.paper {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-block-size: 0;
+  container: paper / inline-size;
+}
+
+.paper-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 16px 10px 24px;
+  border-block-end: 1px solid var(--rule-quiet);
+  white-space: nowrap;
+}
+
+.state {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.state-dot {
+  inline-size: 8px;
+  block-size: 8px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.state-ok {
+  color: var(--state-ok);
+}
+
+.state-run {
+  color: var(--accent);
+}
+
+.state-ask {
+  color: var(--state-warn);
+}
+
+.state-run .state-dot,
+.task-doing .state-dot {
+  @media (prefers-reduced-motion: no-preference) {
+    animation: breathe 1.6s ease-in-out infinite alternate;
+  }
+}
+
+@keyframes breathe {
+  from {
+    opacity: 0.45;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.phases {
+  display: inline-flex;
+  align-items: center;
+}
+
+.phase {
+  display: inline-grid;
+  place-items: center;
+  inline-size: 22px;
+  block-size: 22px;
+  border: 1px solid var(--rule);
+  border-radius: 50%;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-quiet);
+}
+
+.phase + .phase {
+  margin-inline-start: 12px;
+  position: relative;
+}
+
+.phase + .phase::before {
+  content: "";
+  position: absolute;
+  inset-inline-end: 100%;
+  inline-size: 12px;
+  block-size: 1px;
+  margin-inline-end: 1px;
+  background: var(--rule);
+}
+
+.phase-done {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--surface));
+  color: var(--accent);
+}
+
+.phase-current {
+  border-color: var(--accent);
+  color: var(--ink-bright);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+.phase-name {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.paper-head-end {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  margin-inline-start: auto;
+}
+
+.elapsed {
+  font-size: 13px;
+  color: var(--ink-quiet);
+}
+
+.elapsed b {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  color: var(--ink-soft);
+}
+
+.paper-body {
+  overflow-y: auto;
+  padding: 24px 32px 190px;
+}
+
+.report {
+  max-inline-size: 760px;
+  margin-inline: auto;
+}
+
+.report h1 {
+  padding-block-end: 12px;
+  border-block-end: 1px solid var(--rule-soft);
+  font-size: 21px;
+  font-weight: 650;
+  line-height: 1.45;
+  text-wrap: balance;
+}
+
+.checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  margin-block: 12px 4px;
+  color: var(--ink-soft);
+}
+
+.checks li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.checks .icon {
+  inline-size: 15px;
+  block-size: 15px;
+  color: var(--state-ok);
+  stroke-width: 2.25;
+}
+
+.checks b {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.report p {
+  margin-block: 12px;
+  font-size: 16px;
+  line-height: 1.75;
+}
+
+.report h2 {
+  margin-block: 28px 8px;
+  font-size: 17px;
+  font-weight: 650;
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+table {
+  inline-size: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+}
+
+caption {
+  padding-block-end: 6px;
+  text-align: start;
+  font-size: 13px;
+  color: var(--ink-quiet);
+}
+
+th {
+  padding: 6px 12px;
+  border-block-end: 1px solid var(--rule);
+  text-align: start;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-quiet);
+}
+
+td {
+  padding: 9px 12px;
+  border-block-end: 1px solid var(--rule-quiet);
+}
+
+/* 待つ場面の計画 */
+.plan {
+  display: grid;
+  gap: 4px;
+  max-inline-size: 760px;
+  margin-inline: auto;
+}
+
+.plan-step {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 4px 12px;
+  padding: 8px 0;
+  font-size: 16px;
+  color: var(--ink-quiet);
+}
+
+.plan-mark {
+  display: inline-grid;
+  place-items: center;
+  inline-size: 24px;
+  block-size: 24px;
+  border: 1px solid var(--rule);
+  border-radius: 50%;
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.plan-done .plan-mark {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--surface));
+  color: var(--accent);
+}
+
+.plan-done .plan-name {
+  color: var(--ink-soft);
+}
+
+.plan-current {
+  color: var(--ink-bright);
+}
+
+.plan-current .plan-name {
+  font-weight: 650;
+}
+
+.plan-current .plan-mark {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+.plan-time {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-quiet);
+}
+
+.plan-summary,
+.plan-now {
+  grid-column: 2 / -1;
+  font-size: 14px;
+  color: var(--ink-soft);
+}
+
+.plan-now {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 6px 16px;
+  padding: 12px 16px;
+  border-radius: var(--radius-element);
+  background: var(--surface-raised);
+}
+
+.plan-now dt {
+  font-weight: 600;
+  color: var(--ink-quiet);
+}
+
+.plan-now .plan-made {
+  color: var(--state-ok);
+}
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+}
+
+/* 答える場面のお伺い */
+.inquiry {
+  display: grid;
+  gap: 14px;
+  max-inline-size: 760px;
+  margin-inline: auto;
+  padding: 16px 20px;
+  border: 1px solid color-mix(in srgb, var(--state-warn) 55%, var(--surface));
+  border-radius: var(--radius-container);
+}
+
+.inquiry-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+}
+
+.inquiry-kind {
+  font-weight: 600;
+  color: var(--state-warn);
+}
+
+.inquiry-wait {
+  margin-inline-start: auto;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-quiet);
+}
+
+.inquiry h1 {
+  font-size: 18px;
+  font-weight: 650;
+}
+
+.inquiry-brief {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 6px 16px;
+  padding: 12px 14px;
+  border: 1px dashed var(--rule);
+  border-radius: var(--radius-element);
+  color: var(--ink-soft);
+}
+
+.inquiry-brief dt {
+  font-weight: 600;
+  color: var(--ink-quiet);
+}
+
+.inquiry-brief dd {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.options {
+  display: grid;
+  gap: 6px;
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border: 1px solid var(--rule-soft);
+  border-radius: var(--radius-element);
+  font-size: 15px;
+}
+
+.option kbd {
+  display: inline-grid;
+  place-items: center;
+  inline-size: 22px;
+  block-size: 22px;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-inner);
+  color: var(--ink-quiet);
+}
+
+.option-name {
+  font-weight: 650;
+}
+
+.option-note {
+  margin-inline-start: auto;
+  font-size: 13px;
+  color: var(--ink-quiet);
+}
+
+.option-chosen {
+  border-color: var(--accent);
+  background: var(--surface-accent);
+}
+
+.inquiry-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--ink-quiet);
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  block-size: 34px;
+  padding: 0 16px;
+  border-radius: var(--radius-element);
+  font-weight: 650;
+}
+
+.button-primary {
+  background: var(--accent);
+  color: var(--ground);
+}
+
+/* 入力欄（ChatComposer の殻。引き出し・入力・足・送る） */
+.dock {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: 0;
+  padding: 56px 12px 14px;
+  background: linear-gradient(to top, var(--surface) 80%, transparent);
+  pointer-events: none;
+}
+
+.composer {
+  display: grid;
+  max-inline-size: 800px;
+  margin-inline: auto;
+  pointer-events: auto;
+  container: composer / inline-size;
+}
+
+.composer-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 20px 8px;
+  font-size: 13px;
+  color: var(--state-warn);
+}
+
+.composer-drawer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-inline: 16px;
+  padding: 8px 10px 18px;
+  margin-block-end: -10px;
+  border: 1px solid var(--rule-soft);
+  border-block-end: 0;
+  border-radius: 16px 16px 0 0;
+  background: color-mix(in srgb, var(--surface), var(--ink) 3%);
+}
+
+.token {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  block-size: 26px;
+  padding: 0 4px 0 10px;
+  border-radius: var(--radius-inner);
+  background: var(--surface-raised);
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.token button {
+  display: inline-grid;
+  place-items: center;
+  inline-size: 20px;
+  block-size: 20px;
+  border-radius: 50%;
+  color: var(--ink-quiet);
+}
+
+.composer-body {
+  position: relative;
+  display: grid;
+  gap: 8px;
+  padding: 14px 12px 10px 20px;
+  border-radius: var(--radius-page);
+  background: var(--surface-lift);
+  box-shadow: var(--shadow-low);
+}
+
+.composer-body:focus-within {
+  box-shadow: var(--shadow-med);
+}
+
+body[data-scene="ask"] .composer-body {
+  box-shadow:
+    var(--shadow-low),
+    0 0 0 1px color-mix(in srgb, var(--state-warn) 55%, transparent);
+}
+
+.composer-input {
+  field-sizing: content;
+  inline-size: 100%;
+  min-block-size: 1lh;
+  max-block-size: 8lh;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  resize: none;
+  background: none;
+  color: var(--ink-bright);
+  caret-color: var(--accent);
+  font: inherit;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.composer-input::placeholder {
+  color: var(--ink-quiet);
+}
+
+.composer-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-inline-start: -8px;
+}
+
+.composer-tools,
+.composer-send {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  min-inline-size: 0;
+}
+
+.composer-send {
+  gap: 10px;
+}
+
+.composer-rule {
+  inline-size: 1px;
+  block-size: 18px;
+  margin-inline: 8px;
+  background: var(--rule);
+}
+
+.run-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  block-size: 32px;
+  padding: 0 8px;
+  border-radius: 999px;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+.send-key {
+  color: var(--ink-quiet);
+}
+
+.send-button {
+  display: inline-grid;
+  place-items: center;
+  inline-size: 34px;
+  block-size: 34px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--ground);
+}
+
+.send-button .icon {
+  stroke-width: 2.25;
+}
+
+.send-stop {
+  background: var(--ink);
+}
+
+.stop-square {
+  inline-size: 11px;
+  block-size: 11px;
+  border-radius: 3px;
+  background: var(--ground);
+}
+
+/* 幅の足りない入力欄では、札を記号だけにする */
+@container composer (inline-size < 600px) {
+  .run-chip span,
+  .send-key {
+    display: none;
+  }
+}
+
+/* キャラビュー: 背景を敷いた箱に、流れ・吹き出し・立ち絵を上から積む。3つの方向性で同じ部品を使い、箱の大きさで形が変わる */
+.stage {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-block-size: 0;
+  overflow: hidden;
+  border: 1px solid var(--rule-quiet);
+  border-radius: var(--radius-container);
+  background:
+    linear-gradient(
+      to bottom,
+      rgb(25 23 32 / 66%) 0%,
+      rgb(25 23 32 / 34%) 42%,
+      rgb(25 23 32 / 18%) 72%,
+      rgb(25 23 32 / 62%) 100%
+    ),
+    var(--art) 70% center / cover;
+  container: stage / size;
+}
+
+.flow {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 8px;
+  min-block-size: 0;
+  padding: 20px 14px 4px;
+  overflow: hidden;
+  font-size: 14px;
+  line-height: 1.6;
+  mask-image: linear-gradient(to bottom, transparent 0, #000 112px);
+}
+
+.flow-line,
+.flow-you {
+  max-inline-size: 90%;
+  padding: 6px 12px;
+  color: var(--ink);
+}
+
+.flow-line {
+  align-self: flex-start;
+  border-radius: 14px 14px 14px 4px;
+  background: color-mix(in srgb, var(--surface) 86%, transparent);
+}
+
+.flow-you {
+  align-self: flex-end;
+  border-radius: 14px 14px 4px 14px;
+  background: color-mix(in srgb, var(--ground) 82%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 18%, transparent);
+}
+
+.flow-who {
+  margin-inline-end: 8px;
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--ink-quiet);
+}
+
+.bubble {
+  position: relative;
+  z-index: 2;
+  flex: none;
+  margin: 12px 12px 0;
+  padding: 10px 14px 12px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--surface), var(--accent) 9%);
+  box-shadow:
+    0 6px 18px rgb(0 0 0 / 45%),
+    inset 0 0 0 1px color-mix(in srgb, var(--accent) 42%, transparent);
+}
+
+.bubble::after {
+  content: "";
+  position: absolute;
+  inset-block-end: -6px;
+  inset-inline-start: calc(50% - 6px);
+  inline-size: 12px;
+  block-size: 12px;
+  rotate: 45deg;
+  background: inherit;
+  box-shadow: inset -1px -1px 0 color-mix(in srgb, var(--accent) 42%, transparent);
+}
+
+.bubble-who {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 12px;
+}
+
+.bubble-name {
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--accent);
+}
+
+.bubble-who time {
+  font-family: var(--font-mono);
+  color: var(--ink-quiet);
+}
+
+.bubble-text {
+  margin-block-start: 2px;
+  font-size: 16px;
+  line-height: 1.65;
+  color: var(--ink-bright);
+}
+
+.bubble-log {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-inline-start: auto;
+  padding: 2px 8px;
+  border-radius: 999px;
+  color: var(--ink-quiet);
+}
+
+.bubble-log:hover {
+  background: var(--surface-raised);
+  color: var(--ink-bright);
+}
+
+.window {
+  display: flex;
+  flex: none;
+  min-block-size: 0;
+}
+
+.portrait {
+  display: block;
+  inline-size: 100%;
+  block-size: auto;
+  max-block-size: 58cqb;
+  object-fit: contain;
+  object-position: center bottom;
+  user-select: none;
+}
+
+/* 箱が低いときは流れを畳み、立ち絵が残りの高さを使う（右の相棒・手元の窓の置き場） */
+@container stage (block-size < 640px) {
+  .flow {
+    display: none;
+  }
+
+  .window {
+    flex: 1 1 0;
+  }
+
+  .portrait {
+    block-size: 100%;
+    max-block-size: none;
+  }
+}
+
+/* 箱が細いときは吹き出しの字を1段小さくする（手元の窓の置き場） */
+@container stage (inline-size < 300px) {
+  .bubble {
+    margin: 8px 8px 0;
+    padding: 8px 12px 10px;
+  }
+
+  .bubble-text {
+    font-size: 14px;
+    line-height: 1.6;
+  }
+}
+
+/* 手元の窓: やり取りの列の下の段に、キャラビューの箱を置く */
+body[data-v="desk"] {
+  --gutter-w: clamp(248px, 19vw, 320px);
+}
+
+body[data-v="desk"] .gutter {
+  grid-template-rows: auto minmax(0, 1fr) clamp(340px, 49%, 520px);
+}
+
+.stage-slot:empty {
+  display: none;
+}
+
+.stage-slot {
+  min-block-size: 0;
+  padding: 0 8px 8px;
+}
+
+.stage-slot .stage {
+  block-size: 100%;
+}
+
+/* サイドバー */
+.side {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  container: side / inline-size;
+}
+
+.side-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px 16px 6px;
+}
+
+.side-title {
+  font-weight: 650;
+}
+
+.side-count {
+  font-size: 12px;
+  color: var(--ink-quiet);
+  white-space: nowrap;
+}
+
+.side-count b {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.tasks {
+  display: grid;
+  align-content: start;
+  gap: 2px;
+  padding: 4px 8px 20px;
+  overflow-y: auto;
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 28px), transparent);
+}
+
+.task {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1px 8px;
+  padding: 8px 10px;
+  border-radius: var(--radius-element);
+}
+
+.task-doing {
+  background: var(--surface-accent);
+}
+
+/* 差し色を敷いた面の控えめな字は、灰色でなく差し色に寄せる */
+.task-doing .task-summary,
+.task-doing .task-id,
+.option-chosen .option-note,
+.option-chosen kbd,
+.bubble-who time,
+.bubble-log {
+  color: var(--ink-quiet-accent);
+}
+
+.task-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.task-state .state-dot {
+  inline-size: 7px;
+  block-size: 7px;
+}
+
+.task-ready {
+  color: var(--ink-soft);
+}
+
+.task-wait {
+  color: var(--ink-quiet);
+}
+
+.task-id {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-quiet);
+}
+
+.task-name,
+.task-summary {
+  grid-column: 1 / -1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.task-name {
+  font-weight: 600;
+  color: var(--ink-bright);
+}
+
+.task-summary {
+  font-size: 13px;
+  color: var(--ink-quiet);
+}
+
+.usage {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 8px 8px 16px;
+  border-block-start: 1px solid var(--rule-quiet);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.usage-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.usage-label {
+  color: var(--ink-quiet);
+}
+
+.usage b {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.usage .icon-button {
+  margin-inline-start: auto;
+  inline-size: 28px;
+  block-size: 28px;
+}
+
+.meter {
+  display: inline-block;
+  inline-size: 36px;
+  block-size: 4px;
+  border-radius: 999px;
+  background: var(--rule-soft);
+  overflow: hidden;
+}
+
+.meter span {
+  display: block;
+  block-size: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+}
+
+.pie {
+  inline-size: 16px;
+  block-size: 16px;
+  border-radius: 50%;
+  background: conic-gradient(var(--accent) var(--share), var(--rule-soft) 0);
+}
+
+/* 幅の足りないサイドバーでは、文脈の棒を外す */
+@container side (inline-size < 280px) {
+  .meter {
+    display: none;
+  }
+}
