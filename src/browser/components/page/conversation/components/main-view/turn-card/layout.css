@@ -43,6 +43,12 @@
 .turn-card-plan {
   padding: var(--space-lg) var(--space-xl) 0;
 }
+/* 広い幅は舞台の流れが依頼の全文と画像の縮小版を持つので、紙の頭には出さない（狭い幅は舞台を出さないので残す）。 */
+@media (min-width: 761px) {
+  .turn-card-request {
+    display: none;
+  }
+}
 /* お伺いのカードの入れ物。札は領域の縁まで広がらず、領域の余白のぶん内側に置く。 */
 .turn-card-inquiry {
   padding-top: var(--stack-group);

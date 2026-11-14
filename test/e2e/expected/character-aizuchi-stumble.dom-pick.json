@@ -6,8 +6,8 @@
   ],
   "stage-thread": [
     { "tag": "div", "attributes": { "data-slot": "thread" }, "children": [
-      { "tag": "button", "attributes": { "data-who": "you" }, "children": [
-        "大丈夫、続けよう"
+      { "tag": "div", "attributes": { "data-who": "you" }, "children": [
+        { "tag": "button", "children": ["大丈夫、続けよう"] }
       ] }
     ] }
   ]

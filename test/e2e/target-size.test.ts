@@ -62,7 +62,7 @@ test.describe("会話の画面の押す的と字", () => {
     })
     await room.waitForEvent("pending-changed")
     await room.page
-      .locator('[data-slot="thread"] button[data-who="you"]', {
+      .locator('[data-slot="thread"] [data-who="you"] > button', {
         hasText: "枠の色を揃えたい（架空の依頼）",
       })
       .click()

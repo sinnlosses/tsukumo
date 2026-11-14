@@ -43,6 +43,22 @@ function rowsOf(records: readonly SessionRecord[]): readonly (readonly unknown[]
 }
 
 describe("talkFlowOf（舞台に流すやり取りの並び）", () => {
+  it("依頼の行は添えた画像を持ち、補足の行は持たない", () => {
+    const images = [{ kind: "sent", id: "a", thumbnail: "data:image/png;base64,AAAA" }] as const
+    const rows = talkFlowOf(
+      [
+        requestRecord({ text: "架空の依頼", images, time: at(1) }),
+        asideRecord({ text: "架空の補足", time: at(2) }),
+      ],
+      "UTC",
+    )
+
+    expect(rows.map((row) => (row.kind === "you" ? row.images : "her"))).toEqual([
+      images,
+      undefined,
+    ])
+  })
+
   it("依頼・セリフ・補足・セリフを、時刻の順に you/her/you/her で並べる", () => {
     expect(
       rowsOf([

@@ -325,5 +325,5 @@ test.describe("report → メインビュー", () => {
 
 /** 舞台の流れの依頼の行（押すとその回へ移る）。 */
 function flowRow(page: Page, text: string): Locator {
-  return page.locator('[data-slot="thread"] button[data-who="you"]', { hasText: text })
+  return page.locator('[data-slot="thread"] [data-who="you"] > button', { hasText: text })
 }

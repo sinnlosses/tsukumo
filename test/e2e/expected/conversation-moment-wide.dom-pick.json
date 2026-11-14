@@ -1,8 +1,6 @@
 {
   "paper": [
     { "tag": "div", "attributes": { "data-main-view-content": "report" }, "children": [
-      { "tag": "h2", "children": ["依頼"] },
-      "局面の入れ替えを見たい（架空の依頼）",
       { "tag": "section", "attributes": { "data-report-step": "" }, "children": [
         { "tag": "h4", "children": ["疑似セッションのレポート"] }
       ] }

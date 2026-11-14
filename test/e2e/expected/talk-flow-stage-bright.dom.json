@@ -40,14 +40,23 @@
               ]
             },
             {
-              "tag": "button",
+              "tag": "div",
               "attributes": {
                 "data-who": "you",
-                "type": "button"
+                "data-current": "false",
+                "data-expanded": "false"
               },
               "children": [
-                "きみ",
-                "架空の一覧画面の並び替えを直したい（架空の依頼）"
+                {
+                  "tag": "button",
+                  "attributes": {
+                    "type": "button"
+                  },
+                  "children": [
+                    "きみ",
+                    "架空の一覧画面の並び替えを直したい（架空の依頼）"
+                  ]
+                }
               ]
             },
             {
@@ -94,15 +103,24 @@
               ]
             },
             {
-              "tag": "button",
+              "tag": "div",
               "attributes": {
                 "data-who": "you",
-                "aria-current": "true",
-                "type": "button"
+                "data-current": "true",
+                "data-expanded": "false"
               },
               "children": [
-                "きみ",
-                "空の一覧のときも崩れないようにしてほしい（架空の補足）"
+                {
+                  "tag": "button",
+                  "attributes": {
+                    "aria-current": "true",
+                    "type": "button"
+                  },
+                  "children": [
+                    "きみ",
+                    "空の一覧のときも崩れないようにしてほしい（架空の補足）"
+                  ]
+                }
               ]
             },
             {

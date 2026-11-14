@@ -2,7 +2,7 @@
 
 import { useState, type RefCallback } from "react"
 
-import { useResizeObservedRef } from "../../../../../../hooks/use-observed-ref.ts"
+import { useResizeObservedRef } from "../../../../hooks/use-observed-ref.ts"
 
 export function useClamped<Element extends HTMLElement>(): {
   readonly ref: RefCallback<Element>

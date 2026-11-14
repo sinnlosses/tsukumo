@@ -5,10 +5,12 @@
 // 利用者の行は押すと紙のその回を出すボタンで、見ている回の行に印を付ける。ほかの行は押せない。
 // 流れが空でも器は残す（段の高さ配分を変えない）。
 
-import type { ReactElement, ReactNode } from "react"
+import { useState, type ReactElement, type ReactNode } from "react"
 
 import { Lamp } from "../../../../ui/lamp/lamp.tsx"
+import { useClamped } from "../../hooks/use-clamped.ts"
 import type { StepJumpTarget } from "../../stores/step-jump.ts"
+import { PromptImageThumbnails } from "../prompt-image/prompt-image.tsx"
 import styles from "./character-view.module.css"
 import type { TalkFlowRow } from "./domain/talk-flow.ts"
 
@@ -52,6 +54,62 @@ export function PresentationalTalkFlow(props: PresentationalTalkFlowProps): Reac
   )
 }
 
+type YouRow = Extract<TalkFlowRow, { readonly kind: "you" }>
+
+/**
+ * 利用者の行。外枠の中に、回を開くボタンと、見ている回だけの「続きを読む」・画像の縮小版を兄弟で置く（ボタンを入れ子にしない）。
+ * 見ている回は6行、ほかの回は2行で切る。切れているか測れるのは見ている回だけ。
+ */
+function YouLine(props: {
+  readonly row: YouRow
+  readonly current: boolean
+  readonly onOpenTurn: (turnId: number) => void
+}): ReactElement {
+  const { row, current } = props
+  const [expanded, setExpanded] = useState(false)
+  const { ref, clamped } = useClamped<HTMLButtonElement>()
+  const images = row.images ?? []
+  return (
+    <div
+      className={styles["talk-flow-line"]}
+      data-who="you"
+      data-current={current ? "true" : "false"}
+      data-expanded={current && expanded ? "true" : "false"}
+    >
+      <button
+        ref={current ? ref : undefined}
+        type="button"
+        className={styles["talk-flow-open"]}
+        aria-current={current ? "true" : undefined}
+        title="紙のこの回を開く"
+        onClick={() => {
+          props.onOpenTurn(row.turnId)
+        }}
+      >
+        <span className={styles["talk-flow-caller"]}>{row.caller ?? DEFAULT_CALLER}</span>
+        {row.text}
+      </button>
+      {current && (clamped || expanded) && (
+        <button
+          type="button"
+          className={styles["talk-flow-expand"]}
+          aria-expanded={expanded}
+          onClick={() => {
+            setExpanded(!expanded)
+          }}
+        >
+          {expanded ? "畳む" : "続きを読む"}
+        </button>
+      )}
+      {current && images.length > 0 && (
+        <div className={styles["talk-flow-images"]}>
+          <PromptImageThumbnails images={images} size="chip" />
+        </div>
+      )}
+    </div>
+  )
+}
+
 function TalkFlowLine(props: {
   readonly row: TalkFlowRow
   readonly onJumpToStep: (target: StepJumpTarget) => void
@@ -61,19 +119,11 @@ function TalkFlowLine(props: {
   const { row } = props
   if (row.kind === "you") {
     return (
-      <button
-        type="button"
-        className={styles["talk-flow-line"]}
-        data-who="you"
-        aria-current={row.turnId === props.activeTurnId ? "true" : undefined}
-        title="紙のこの回を開く"
-        onClick={() => {
-          props.onOpenTurn(row.turnId)
-        }}
-      >
-        <span className={styles["talk-flow-caller"]}>{row.caller ?? DEFAULT_CALLER}</span>
-        {row.text}
-      </button>
+      <YouLine
+        row={row}
+        current={row.turnId === props.activeTurnId}
+        onOpenTurn={props.onOpenTurn}
+      />
     )
   }
   const time: ReactNode = row.time.kind === "known" && (

@@ -17,7 +17,7 @@ test.describe("タスクの一覧", () => {
   test("一覧で選んで「tsukumo に頼む」から確認の「実行する」を押すと既定の文面で依頼が送られて確認と一覧が閉じる", async ({
     run,
   }) => {
-    const room = await openTaskListRoom(run, "task-list-run-executed", ["paper"])
+    const room = await openTaskListRoom(run, "task-list-run-executed", ["stage-thread"])
     await openTaskBoardFromWelcome(room)
     await taskRow(room, "T-001").click()
     await board(room).getByRole("button", { name: "tsukumo に頼む" }).click()
@@ -50,7 +50,7 @@ test.describe("タスクの一覧", () => {
   test("ドラフトのチップで絞り、「計画する」から確認の「頼む」を押すと計画の文面で依頼が送られる", async ({
     run,
   }) => {
-    const room = await openTaskListRoomWithDraft(run, "task-list-draft-plan", ["paper"])
+    const room = await openTaskListRoomWithDraft(run, "task-list-draft-plan", ["stage-thread"])
     await openTaskBoardFromWelcome(room)
     await board(room).getByRole("button", { name: "ドラフト 1", exact: true }).click()
     await taskRow(room, "T-003").click()

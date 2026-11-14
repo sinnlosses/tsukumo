@@ -75,7 +75,7 @@ test.describe("新しい器の流れ", () => {
     })
     await room.waitForEvent("turn-finished", 5)
     const page = room.page
-    const firstRow = page.locator('[data-slot="thread"] button[data-who="you"]', {
+    const firstRow = page.locator('[data-slot="thread"] [data-who="you"] > button', {
       hasText: "指示をタスクにする（架空の依頼）",
     })
     await expect(firstRow).not.toHaveAttribute("aria-current", "true")
@@ -84,7 +84,7 @@ test.describe("新しい器の流れ", () => {
 
     await expect(firstRow).toHaveAttribute("aria-current", "true")
     await expect(
-      page.locator('[data-slot="thread"] button[data-who="you"][aria-current="true"]'),
+      page.locator('[data-slot="thread"] [data-who="you"] > button[aria-current="true"]'),
     ).toHaveCount(1)
   })
 

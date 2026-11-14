@@ -9,8 +9,8 @@
       { "tag": "p", "attributes": { "data-who": "her" }, "children": [
         "終わったよ。架空のセリフ。"
       ] },
-      { "tag": "button", "attributes": { "data-who": "you" }, "children": [
-        "おつかれさま"
+      { "tag": "div", "attributes": { "data-who": "you" }, "children": [
+        { "tag": "button", "children": ["おつかれさま"] }
       ] }
     ] }
   ]

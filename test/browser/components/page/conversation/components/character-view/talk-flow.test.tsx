@@ -77,6 +77,72 @@ describe("PresentationalTalkFlow（舞台のやり取りの流れ）", () => {
     ).toBeNull()
   })
 
+  it("見ている回の依頼の行は、切れていれば「続きを読む」で全文が開き「畳む」に替わり、回を開く操作は呼ばない", () => {
+    vi.spyOn(HTMLElement.prototype, "scrollHeight", "get").mockReturnValue(200)
+    const onOpenTurn = vi.fn<(turnId: number) => void>()
+    render(
+      <PresentationalTalkFlow
+        rows={[{ ...you("架空の長い依頼"), turnId: 4 }]}
+        activeTurnId={4}
+        onOpenSpeechLog={() => {}}
+        onJumpToStep={() => {}}
+        onOpenTurn={onOpenTurn}
+      />,
+    )
+
+    const more = screen.getByRole("button", { name: "続きを読む" })
+    expect(more.getAttribute("aria-expanded")).toBe("false")
+    fireEvent.click(more)
+
+    const fold = screen.getByRole("button", { name: "畳む" })
+    expect(fold.getAttribute("aria-expanded")).toBe("true")
+    expect(onOpenTurn).not.toHaveBeenCalled()
+  })
+
+  it("ほかの回の行と、切れていない見ている回の行には「続きを読む」が出ない", () => {
+    vi.spyOn(HTMLElement.prototype, "scrollHeight", "get").mockReturnValue(200)
+    const { rerender } = render(
+      <PresentationalTalkFlow
+        rows={[{ ...you("架空の一回目"), turnId: 3 }]}
+        activeTurnId={4}
+        onOpenSpeechLog={() => {}}
+        onJumpToStep={() => {}}
+        onOpenTurn={() => {}}
+      />,
+    )
+    expect(screen.queryByRole("button", { name: "続きを読む" })).toBeNull()
+
+    vi.spyOn(HTMLElement.prototype, "scrollHeight", "get").mockReturnValue(0)
+    rerender(
+      <PresentationalTalkFlow
+        rows={[{ ...you("架空の短い依頼"), turnId: 4 }]}
+        activeTurnId={4}
+        onOpenSpeechLog={() => {}}
+        onJumpToStep={() => {}}
+        onOpenTurn={() => {}}
+      />,
+    )
+    expect(screen.queryByRole("button", { name: "続きを読む" })).toBeNull()
+  })
+
+  it("画像の縮小版は、見ている回の依頼の行にだけ出る", () => {
+    const images = [{ kind: "sent", id: "a", thumbnail: "data:image/png;base64,AAAA" }] as const
+    render(
+      <PresentationalTalkFlow
+        rows={[
+          { kind: "you", key: "a", turnId: 3, time: TIME, text: "架空の一回目", images },
+          { kind: "you", key: "b", turnId: 4, time: TIME, text: "架空の二回目", images },
+        ]}
+        activeTurnId={4}
+        onOpenSpeechLog={() => {}}
+        onJumpToStep={() => {}}
+        onOpenTurn={() => {}}
+      />,
+    )
+
+    expect(screen.getAllByRole("img")).toHaveLength(1)
+  })
+
   it("行が4つ以上あれば「これまでのやり取り」の札が出て、押すとセリフのログを開く", () => {
     const onOpenSpeechLog = vi.fn<() => void>()
     render(

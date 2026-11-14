@@ -207,15 +207,24 @@
                               ]
                             },
                             {
-                              "tag": "button",
+                              "tag": "div",
                               "attributes": {
                                 "data-who": "you",
-                                "aria-current": "true",
-                                "type": "button"
+                                "data-current": "true",
+                                "data-expanded": "false"
                               },
                               "children": [
-                                "あるじ",
-                                "report ツールの描き方を確かめたい（架空の依頼）"
+                                {
+                                  "tag": "button",
+                                  "attributes": {
+                                    "aria-current": "true",
+                                    "type": "button"
+                                  },
+                                  "children": [
+                                    "あるじ",
+                                    "report ツールの描き方を確かめたい（架空の依頼）"
+                                  ]
+                                }
                               ]
                             },
                             {
@@ -386,37 +395,6 @@
                                 "data-outline-collapsed": "true"
                               },
                               "children": [
-                                {
-                                  "tag": "section",
-                                  "children": [
-                                    {
-                                      "tag": "h2",
-                                      "attributes": {
-                                        "data-level": "2",
-                                        "data-color": "disabled",
-                                        "data-weight": "normal"
-                                      },
-                                      "children": [
-                                        "依頼"
-                                      ]
-                                    },
-                                    {
-                                      "tag": "p",
-                                      "children": [
-                                        {
-                                          "tag": "span",
-                                          "attributes": {
-                                            "data-type": "supporting",
-                                            "data-color": "inherit"
-                                          },
-                                          "children": [
-                                            "report ツールの描き方を確かめたい（架空の依頼）"
-                                          ]
-                                        }
-                                      ]
-                                    }
-                                  ]
-                                },
                                 {
                                   "tag": "div",
                                   "attributes": {

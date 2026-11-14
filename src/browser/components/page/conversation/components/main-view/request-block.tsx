@@ -11,10 +11,10 @@ import type { MainViewRequest } from "../../../../../../shared/session/main-view
 import { Button } from "../../../../ui/button/button.tsx"
 import { Heading } from "../../../../ui/heading/heading.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
+import { useClamped } from "../../hooks/use-clamped.ts"
 import { PromptImageThumbnails } from "../prompt-image/prompt-image.tsx"
 import { requestChips } from "./domain/request-chip-split.ts"
 import { turnRequestLines } from "./domain/turn-title.ts"
-import { useClamped } from "./hooks/use-clamped.ts"
 import styles from "./main-view.module.css"
 
 const REQUEST_LABEL = "依頼"

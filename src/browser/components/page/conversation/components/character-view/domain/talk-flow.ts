@@ -7,6 +7,7 @@
 // `work-plan` で切るのは、計画を出したときの `speak` を、あとの段を終えた `work-plan` と取り違えないため。
 // 前後の両方に候補があれば前を取る（前のセリフがもう別の段と対なら後ろ）。
 
+import type { RecordedPromptImage } from "../../../../../../../shared/session-driver/prompt-image.ts"
 import { mainViewEntries } from "../../../../../../../shared/session/main-view-entry.ts"
 import type { SessionRecord } from "../../../../../../../shared/session/session-record.ts"
 import { INITIAL_SESSION_STATE } from "../../../../../../../shared/session/session-state.ts"
@@ -40,6 +41,8 @@ export type TalkFlowRow =
       readonly text: string
       /** キャラクターが利用者を呼ぶ言葉（`character.json` の `userCall`）。持たないパックでは無い。 */
       readonly caller?: string
+      /** 依頼に添えた画像の控え。依頼の行にだけ持ち、補足・相づちの札の行には無い。 */
+      readonly images?: readonly RecordedPromptImage[]
     }
   | {
       readonly kind: "her"
@@ -72,6 +75,7 @@ export function talkFlowOf(
               turnId,
               time: recordClockStamp(turn.request.time, timeZone),
               text: turn.request.text,
+              images: turn.request.images,
               ...caller,
             },
           ]

@@ -1,9 +1,7 @@
 {
-  "paper": [
-    { "tag": "section", "children": [
-      { "tag": "h2", "children": ["依頼"] },
-      "T-003",
-      "架空のタスク（ドラフト）"
+  "stage-thread": [
+    { "tag": "div", "attributes": { "data-who": "you" }, "children": [
+      { "tag": "button", "children": ["あるじ", "ドラフト T-003 を計画して。## 完了条件 と ## やること を書いて、着手できる todo にする。"] }
     ] }
   ]
 }
