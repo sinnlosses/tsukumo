@@ -1,6 +1,6 @@
 {
   "task-board": [
-    { "tag": "dialog", "attributes": { "aria-label": "タスク" }, "children": [
+    { "tag": "dialog", "attributes": { "aria-label": "タスク", "open": true }, "children": [
       { "tag": "ul", "attributes": { "role": "listbox", "aria-label": "タスク" }, "children": [
         { "tag": "li", "attributes": { "role": "option", "aria-selected": "true", "data-state": "ready" }, "children": ["T-001"] },
         { "tag": "li", "attributes": { "role": "option", "aria-selected": "false" }, "children": ["T-002"] },

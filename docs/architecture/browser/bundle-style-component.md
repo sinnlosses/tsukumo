@@ -37,7 +37,7 @@ CSS は分けず1本。サーバは起動時にすべてメモリに読み、`/a
 import するので、食い違うと入口を別のモジュールとして読み React が2つ動く）。
 
 - 使い手は Markdown の部品の入口 `markdown.tsx`（`<Report>`・お伺いと質問の記録の preview）と `deferred-task-body.tsx`
-  （タスクのモーダルとタスクの紙の詳細）を使い、描画一式の `renderer/markdown-renderer.tsx`・`task-body.tsx` を直接
+  （タスクのモーダルの詳細・サイドバーのプレビュー）を使い、描画一式の `renderer/markdown-renderer.tsx`・`task-body.tsx` を直接
   import しない（すると一式が入口に戻る）。読み込みの状態の持ち方は2つとも `stores/deferred-module.ts` の `deferredModule`。
   外から引く入口の `markdown.tsx` が遅延読み込みの側で、描画一式は中の `renderer/` に入るので、描画一式を外から直に
   import すると部品の境界の検査（`test/architecture/browser-box.test.ts` の `componentBoundaryViolations`）が落とし、入口から
@@ -62,9 +62,9 @@ import するので、食い違うと入口を別のモジュールとして読�
 だけ**を領域・機能・ページの1枚（`<領域>/<領域>.module.css`・`features/<機能>/<機能>.module.css`・
 `<ページ>.module.css`）に置く。部品が平たく並ぶ `components/`（`features/<機能>/components/` など）でも、
 部品の `.tsx` の隣に同じ名前で置く（container / presenter の対は対の名前）。自分の見た目を持つ共有部品も
-隣に置く（`components/frame/portrait.module.css`）。**tsukumo が書くグローバルな CSS は `styles/layer-order.css`（層の順の宣言だけ）・`styles/theme.css`（`fade-in`）・`styles/page-base.css`・`ui/spinner/spinner.css`（`spinner-turn`）の4つだけ**
+隣に置く（`components/frame/portrait.module.css`）。**tsukumo が書くグローバルな CSS は `styles/layer-order.css`（層の順の宣言だけ）・`styles/theme.css`（`fade-in`）・`ui/spinner/spinner.css`（`spinner-turn`）の3つだけ**
 （Astryx の `astryx.css` と組み立て済みのテーマの CSS を除く）で、
-`theme.css` はトークン（`:root`）を、`page-base.css` は `body`・`prefers-reduced-motion`・コードの書体の `@font-face` と、`@layer tsukumo-base` に入れた要素への規則
+`theme.css` はトークン（`:root`）・`body`・`prefers-reduced-motion` と、`@layer tsukumo-base` に入れた要素への規則
 （フォーム部品の書体・フォーカスの輪・リンク・見出しと段落の既定の打ち消し）を持つ。層の順は `reset`・`tsukumo-base`・`astryx-base`・`astryx-theme` で、
 層なしの CSS（トークン・`*.module.css`）はどの層にも勝つ。共有する `@keyframes` は CSS Modules が名前を付け替えるので、名前ごと `var()`（`--fade-in-name`・`--spinner-animation`）で渡す。
 **16進の色を書いてよいのもそこだけ**（`docs/architecture/screen-design.md` 13.2）。同居に移した理由は `docs/history/decision.md`
@@ -97,7 +97,7 @@ class 名は用語集の語（`balloon` / `portrait` / `work-strip` など）を
 | 字とアイコン   | ボタンの印と字、札の顔の絵と理由           | `--stack-tight`   | `--inline-tight`   | —                                  | 4px        |
 | 部品の中の項目 | 札の頭・題・理由・足の行、札の頭の番号と印 | `--stack-block`   | `--inline-control` | `--inset-control`（8px 12px）      | 8px        |
 | 同じ塊の項目   | 始め方の札どうし                           | `--stack-group`   | `--inline-group`   | `--inset-card`（12px 16px）        | 16px       |
-| 塊と塊         | 案内の文と札の一覧                         | `--stack-section` | —                  | —                                  | 24px       |
+| 塊と塊         | 案内の文と札の一覧、札の一覧とほかの始め方 | `--stack-section` | —                  | —                                  | 24px       |
 | 画面の区画     | 領域の縁、ページの縁                       | —                 | —                  | `--gutter-region`・`--gutter-page` | 12px・16px |
 
 **部品の内側の余白は、その部品と隣の部品の間以下にする**（内≦外）。内側が外の間より広いと、部品の中身より隣の部品のほうが近く見え、どこまでが1つの部品か読めなくなる。札なら、札の内側（`--inset-card`）を札どうしの間（`--stack-group`・`--inline-group`）以下にし、札の中の行の間（`--stack-block`）を札の内側以下にする。
@@ -163,7 +163,7 @@ CSS に無い名前は `undefined` のままなので、**綴りを間違える�
   `docs/architecture/screen-design.md` の段を直す
 - **上書きは `className` の1つ**。**部品の CSS で `:where()` の外に書いた property は部品のもの**で、
   呼び出し側は同じ property を書かない。呼び出し側に譲る既定（`margin: 0` など）は `:where()` の中に書く
-  （詳細度0なので読み込み順に関係なく呼び出し側が勝つ。`page-base.css` の要素への規則は `tsukumo-base`
+  （詳細度0なので読み込み順に関係なく呼び出し側が勝つ。`theme.css` の要素への規則は `tsukumo-base`
   の層に入れてあるので、層なしの `:where()` の既定にも負ける）。呼び出し側が渡すのは**置き方**と**語彙に無い見た目**だけ。**`className` に渡すのは
   `styles["…"]`（2枚読むときは `<箱の名前>Styles["…"]`）の字面だけ**で、重なりは `test/architecture/style.test.ts`「components/ui/ の部品の className」が見る
 - **画面固有の値を持つもの（`--usage-*`・`--diary-gold-*`）は部品を使わず、機能の CSS のまま残す**

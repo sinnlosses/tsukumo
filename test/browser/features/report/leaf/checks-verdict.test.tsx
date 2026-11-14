@@ -65,14 +65,7 @@ function regionsOf(checks: readonly unknown[], favor: string): MainViewReportReg
     (candidate) => candidate.kind === "report",
   )
   if (entry?.kind !== "report") throw new Error("レポートの記録が無い")
-  return headOnly(entry.regions)
-}
-
-/** 面の本文の頭とお願いだけを残した、面にならない本文（頭の合図の行を `HeadRegion` が描く経路）。 */
-function headOnly(regions: MainViewReportRegions): MainViewReportRegions {
-  if (regions.a2ui.kind !== "surface") throw new Error("面にならなかった")
-  const { head, favor } = regions.a2ui
-  return { ...regions, a2ui: { kind: "none", head, favor } }
+  return entry.regions
 }
 
 /** 合図の行の包み（`status`）を描いた DOM。 */
@@ -94,14 +87,17 @@ function verdictOf(body: MainViewReportRegions) {
   return rendered
 }
 
-describe("ChecksVerdict（面にならない本文の合図の行）", () => {
+describe("ChecksVerdict（面の合図の行）", () => {
   it.each([
     ["4 状態を混ぜた検証", MIXED, ""],
     ["通った項目だけ", [check("ok", "架空の単体")], ""],
     ["問題の項目だけ", [check("ng", "架空の E2E", { detail: "架空の理由" })], ""],
     ["お願いのある検証", MIXED, "架空のお願い。"],
-  ])("%s は、頭の値から合図の行の包みを描く", (_, checks, favor) => {
-    const fresh = verdictOf(regionsOf(checks, favor))
+  ])("%s は、面の値から合図の行の包みを描く", (_, checks, favor) => {
+    const surface = regionsOf(checks, favor)
+    expect(surface.a2ui.kind).toBe("surface")
+
+    const fresh = verdictOf(surface)
 
     expect(fresh.html).toContain("架空の")
     expect(fresh.textNodes.length).toBeGreaterThan(0)

@@ -2,33 +2,25 @@
    `.inquiry-option .detail-block` の打ち消しは、`.detail-block` 自体の見た目（report-notation.module.css）とは別ファイルなので、`InquiryOption` がその両方の class を同じ要素に重ねて付ける。
 
    答えると消える一時的な塊なので、地も枠も答え待ちの色（--state-warn）の系統にして、いま答えるものだと分かるようにする。
-   高さの上限はメインビューの内寸（`100cqh`）から少し引いた値で、操作の行を下端に残して本文の側を内側で転がす。 */
+   高さの上限はメインビューの内寸（`100cqh`。`.layout-main` が `container-type: size`）から貼り付いた札の頭を引いた値で、操作の行を下端に残して本文の側を内側で転がす。 */
 .inquiry {
   container-type: inline-size;
   display: flex;
   flex-direction: column;
-  max-height: calc(100cqh - 1.5rem);
+  max-height: calc(100cqh - var(--turn-card-head-height, 0px) - 1.5rem);
   margin: var(--space-md) 0 0;
   padding: var(--inset-card);
   border: 1px solid var(--state-warn);
   border-radius: var(--radius-lg);
   /* 地は塗りつぶさず、面の色に警告色をごく薄く混ぜる。 */
   background: color-mix(in srgb, var(--surface), var(--state-warn) 6%);
-  /* 札へ転がしたとき、器の上端に貼り付けず少し空けて止める。 */
-  scroll-margin-top: 0.5rem;
+  /* 札へ転がしたとき、貼り付いた札の頭の下に潜らせない。 */
+  scroll-margin-top: calc(var(--turn-card-head-height, 0px) + 0.5rem);
   scroll-margin-bottom: 0.5rem;
 }
 /* 狭い画面の板の中では板が枠と転がりを持つので、札は枠と高さの上限を持たない。 */
 .inquiry.is-bare {
   max-height: none;
-  margin: 0;
-  padding: 0;
-  border: none;
-  background: none;
-}
-/* 新しい器の入力欄の場所。浮く入力欄が枠と余白を持ち、画面の高さから入力欄の1行と余白の分を引いた高さで、本文の側を内側で転がす。 */
-.inquiry.is-dock {
-  max-height: calc(100vh - 11rem);
   margin: 0;
   padding: 0;
   border: none;

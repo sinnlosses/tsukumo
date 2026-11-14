@@ -1,6 +1,5 @@
 // 会話は流さない（配るのはページ・同梱物・立ち絵と、架空のファイル一覧だけ）。
 
-import { summarizeUsualDurations } from "../../src/server/usage/core/experience/experience-metric-summary.ts"
 import type {
   FindReportImage,
   ServeCharacterAsset,
@@ -48,7 +47,6 @@ export const EMPTY_RPC_PORTS = {
   readPlanUsage: () => Promise.resolve(UNAVAILABLE_PLAN_USAGE),
   readSessionDigest: () => Promise.resolve(UNAVAILABLE_SESSION_DIGEST),
   readOccupiedSessionIds: () => Promise.resolve([]),
-  readUsualDurations: () => summarizeUsualDurations([]),
   readAchievementDay: () => Promise.resolve({ kind: "ok", achievement: { kind: "unknown" } }),
   readAchievementCalendar: () => Promise.resolve({ kind: "ok", calendar: { kind: "unknown" } }),
   readWorkflowEntries: () => Promise.resolve([]),

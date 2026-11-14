@@ -102,7 +102,7 @@ describe("plot の受け付け", () => {
       ["丙", "7"],
     ])
     expect(
-      reportLeafLayoutOf([{ heading: "", blocks: [block] }], []).values[0]?.[0]?.captionNumber,
+      reportLeafLayoutOf([{ heading: "", blocks: [block] }]).values[0]?.[0]?.captionNumber,
     ).toEqual({
       kind: "table",
       ordinal: 1,

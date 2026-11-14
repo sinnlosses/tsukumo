@@ -35,5 +35,4 @@ export const FRAME_ERROR_REASON = {
     "いま日記を書いている最中は、ほかの日を振り返れない（書き終わると頼める）",
   achievementReflectionUnavailable: "その日の成果が読めない、または振り返る成果が無い",
   welcomeGreetingNotShown: "いま出している迎えの挨拶から組める文ではない",
-  aizuchiNotShown: "いま出している相づちの札ではない",
 } as const

@@ -113,8 +113,8 @@
     （言い換えも要約の生成もしない）。**残っていることは要約に書かず、引数 `sessionRemaining` に入れる**
     （`task.outcome` が `finished` のときだけ省ける。無ければ空の文字列。始め方の一覧の「前回の続き」のカードの題と依頼の文になる。欄の無かった頃の `report` だけ、
     要約の段落の頭が「残り」の段落をサーバが残りとして読み、要約から外す）。どちらもレポートには
-    描かず、セッションの一覧が transcript の最後に通った `report` から読み戻す
-    （`docs/architecture/screen-design/room-head-and-search.md`「セッションの切り替え」）。tsukumo は要約を別の場所へ書き出さない（transcript の
+    描かず、セッションの切り替え画面が transcript の最後に通った `report` から読み戻す
+    （`docs/architecture/screen-design.md`「切り替え画面」）。tsukumo は要約を別の場所へ書き出さない（transcript の
     ツールの入力に残るだけなので、`docs/coding-standards.md`「会話内容の扱い」の例外を増やさない）。
     書き方は引数の説明が持ち、省けない欄は組んだ値の形の検査が持つ。任意の `title`（セッション一覧の
     見出し）と同じく、差し戻した呼び出しの値は、同じターンの出し直しで省いた欄に引き継がれたときだけ使う。

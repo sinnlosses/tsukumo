@@ -1,0 +1,33 @@
+.task-running-item + .task-running-item {
+  margin-top: var(--space-xs);
+}
+/* 1行目。札・IDを左に寄せ、`›` を右端に置く。 */
+.task-running-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  min-width: 0;
+}
+.task-running-chevron {
+  flex: none;
+  margin-left: auto;
+  color: color-mix(in srgb, var(--ink-quiet), var(--accent) 40%);
+}
+/* 「進行中」の札。色だけでなく字でも状態を伝える。
+   高さ・角丸は件数のチップと揃える（角丸 12px = 高さ 24px の半分でカプセル型になる）。 */
+.task-running-badge {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 var(--space-sm);
+  border-radius: var(--radius-lg);
+  background: var(--accent);
+  color: var(--ground);
+  font-size: var(--font-label);
+  font-weight: 600;
+}
+/* 2行目（summary）。進行中は他の行と違い折り返して全文出す。字の段は `Text` が持つ。 */
+.task-running-body {
+  white-space: normal;
+  line-height: 1.5;
+}

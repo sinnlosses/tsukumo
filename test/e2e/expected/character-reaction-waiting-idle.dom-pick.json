@@ -1,11 +1,9 @@
 {
-  "stage-balloon": [
+  "character": [
     { "tag": "div", "attributes": { "data-latest": "true", "data-reaction": "idle" }, "children": [
       "架空の待ちの一言（書かせた行）。"
-    ] }
-  ],
-  "stage-thread": [
-    { "tag": "p", "attributes": { "data-who": "her" }, "children": ["ちょっと見てくるね。"] },
-    { "tag": "p", "attributes": { "data-who": "her" }, "children": ["書けたよ。架空の締め。"] }
+    ] },
+    { "tag": "div", "attributes": { "data-latest": "false" }, "children": ["書けたよ。架空の締め。"] },
+    { "tag": "div", "attributes": { "data-latest": "false" }, "children": ["ちょっと見てくるね。"] }
   ]
 }

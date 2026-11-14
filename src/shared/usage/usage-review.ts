@@ -93,8 +93,6 @@ export type UsageReviewProgress =
 
 /**
  * 見直しの状態。会話のターンとは関係なく、見直しの走りが流すイベントだけで動く。
- * 見直しは会話とは別の使い捨ての問い合わせで走るので、会話の `turn-finished` / `session-ended` では動かさず、起こし直しでも残す。
- * 前回の結果を出すのはこの状態ではない。
  *
  * - `idle`: ふだん。一度も見直していない・見直しが結果を渡さずに終わった
  * - `running`: 見直し中。`startedAt` は見直しが始まった時刻（最初の段が届くまでの間も経過に数える）
@@ -114,7 +112,6 @@ export type UsageProposalRunOutcome = "succeeded" | "failed" | "interrupted"
 
 /**
  * 提案の実行（「tsukumo に頼む」「タスクにする」）の状態。`key` は実行した提案の識別子（{@link usageProposalKey}）。
- * 源は見直しのイベントだけで、{@link UsageReview} と同じく会話のターンでは動かさない。
  *
  * - `idle`: まだ1度も実行していない
  * - `running`: 実行中。`startedAt` は始まった時刻
@@ -146,8 +143,6 @@ export function usageProposalKey(proposal: Pick<UsageProposal, "kind" | "target"
 /**
  * 前回の見直しの結果。{@link UsageReview} の `result` とは別の状態。
  * `usageReview` はプロセスの再起動でふだんへ戻るが、こちらはホームのファイル（`~/.tsukumo/usage-review.json`）に残り続け、プロセスの再起動でも消えない。
- * 源は `usage-review-result` が届くたびと、プロセスを起こしたとき1回だけホームのファイルを読む口。
- * `usage-proposal-dismissed` が届くと、見送った提案をここからも取り除く（「前回の提案」を開き直したときに、見送ったはずの札が出ないようにするため）。
  *
  * - `none`: 一度も見直していない（リンクを出さない）
  * - `found`: 直前の1回の結果。古い結果は新しいもので置き換わり、履歴には残らない

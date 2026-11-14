@@ -26,6 +26,7 @@
   & .report-compare-side :is(ul, ol) {
     list-style: revert;
     margin: 0;
+    padding-left: var(--space-lg);
   }
   /* 前後（`report` の `Compare` の `before-after` から tsukumo が組む）。
    左に前・右に後の札を同じ幅で並べ、間に矢印を置く。器が狭いときは前を上・後を下に積み、矢印を下向きにする。
@@ -35,18 +36,6 @@
     grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
     gap: var(--space-sm);
     align-items: stretch;
-  }
-  /* 側を持たない前後（コードの差分）は1つの塊で器いっぱいに置く。 */
-  & .report-compare-figure:has(> :only-child) {
-    grid-template-columns: minmax(0, 1fr);
-  }
-  /* 包みは中央寄せなので、コードの差分は器の幅いっぱいに伸ばし、題は左端に置く。 */
-  & .report-captioned:has(> .report-compare-figure > .code-file) {
-    align-items: stretch;
-    inline-size: 100%;
-  }
-  & .report-captioned:has(> .report-compare-figure > .code-file) > .report-caption {
-    align-self: flex-start;
   }
   /* 対等な2つ（`relation` が versus）は矢印を置かず、2つの側を同じ幅で並べる。 */
   & .report-compare-versus {
@@ -79,6 +68,7 @@
   }
   & .report-compare-figure-side :is(ul, ol) {
     list-style: revert;
+    padding-left: var(--space-lg);
   }
   /* 側の mermaid の図は側の幅に収める（`mermaid` の class は `MermaidBlock` が素の名前で付ける）。 */
   & .report-compare-figure-side pre:global(.mermaid) {
@@ -442,11 +432,24 @@
     border: 1px solid var(--rule);
     border-radius: var(--radius-md);
   }
+  /* 説明の並びを添えた画像（`report` の `image` の塊の `notes` から tsukumo が組む）。
+   左に画像（か「出せない」の札）、右に番号つきの説明を並べ、器が狭いときは画像の下に積む。 */
+  & .report-image-notes {
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) minmax(12rem, 2fr);
+    gap: var(--space-lg) var(--space-xl);
+    align-items: start;
+  }
+  @container report-body (max-width: calc(40em + 0.75rem)) {
+    & .report-image-notes {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
   & .report-image-note-list {
     display: grid;
     row-gap: var(--space-sm);
     margin: 0;
-    padding: 0 0 0 1.15em;
+    padding: 0;
     list-style: none;
   }
   & .report-image-note-list > li {
@@ -455,6 +458,21 @@
     column-gap: var(--space-sm);
     align-items: baseline;
     margin: 0;
+  }
+  & .report-image-note-number {
+    box-sizing: border-box;
+    align-self: start;
+    width: 22px;
+    height: 22px;
+    border: 1px solid var(--ink-soft);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+    font-size: var(--font-label);
+    font-weight: 600;
+    color: var(--ink-soft);
   }
   & .report-image-note-text {
     min-width: 0;

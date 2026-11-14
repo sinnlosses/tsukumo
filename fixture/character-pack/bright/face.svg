@@ -1,7 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200" role="img" aria-label="テスト用の明るいパック（顔）">
-  <rect width="200" height="200" fill="#fef3c7"/>
-  <circle cx="100" cy="100" r="64" fill="#fde68a" stroke="#92400e" stroke-width="4"/>
-  <circle cx="80" cy="92" r="6" fill="#451a03"/>
-  <circle cx="120" cy="92" r="6" fill="#451a03"/>
-  <path d="M82 120q18 14 36 0" fill="none" stroke="#451a03" stroke-width="4" stroke-linecap="round"/>
-</svg>

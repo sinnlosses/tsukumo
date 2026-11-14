@@ -105,19 +105,33 @@
     font-weight: 600;
     color: var(--ink-soft);
   }
-  /* 本文の列の幅より十分に広い器では、grid の中では margin が相殺しないので、塊の上下のあきは包みが持ち、中の塊の上下の margin は落とす。
+  /* 本文の列（63em）の右に 160px 以上空くときだけ、欄外注を本文の列の右の欄外注の列に出す（器はメインビューの本文）。
+   包みを2列の grid にし、欄外注の列は塊と同じ行に置いて上端を揃える（行は高いほうに伸び、次の塊に重ならない）。
+   grid の中では margin が相殺しないので、塊の上下のあきは包みが持ち、中の塊と欄外注の列の上下の margin は落とす。
+   欄外注の列を持つ塊は、表と図でも本文の列に収まる。欄外注の列は 1920 幅でも本文の列のすぐ右に置く。
    `body.css` の `:is(.detail-block, …) > .report-with-gutter > :is(p, ul, ol)` と同じ詳細度なので、勝たせるために末尾に置く。 */
   @container report-gutter (min-width: calc(63em + 160px)) {
     & .report-with-gutter {
+      display: grid;
+      grid-template-columns: minmax(0, 63em) minmax(0, 1fr);
+      column-gap: var(--space-3xl);
+      align-items: start;
       margin: var(--report-block-gap) 0;
     }
     & .report-with-gutter:has(> .report-captioned) {
       margin: var(--report-figure-gap) 0;
     }
     & .report-with-gutter > :is(*, p, ul, ol) {
+      grid-column: 1;
       margin-block: 0;
     }
+    & .report-with-gutter > .report-gutter {
+      grid-column: 2;
+      padding-left: var(--space-lg);
+      border-left: 1px solid var(--rule-soft);
+    }
     & .report-gutter-note-label {
+      display: block;
       margin: 0 0 var(--space-2xs);
     }
   }
@@ -141,29 +155,5 @@
     color: var(--ink-soft);
     text-decoration: none;
     overflow-wrap: anywhere;
-  }
-}
-/* 本文の列（40em）の右に 160px 以上空くときだけ、欄外注を本文の列の右の欄外注の列に出す。
-   包みを2列の grid にし、欄外注の列は塊と同じ行に置いて上端を揃える（行は高いほうに伸び、次の塊に重ならない）。 */
-.detail-block {
-  @container report-gutter (min-width: calc(40em + 160px)) {
-    & .report-with-gutter {
-      display: grid;
-      grid-template-columns: minmax(0, 40em) minmax(0, 1fr);
-      column-gap: var(--gutter-sheet);
-      align-items: start;
-    }
-    & .report-with-gutter > * {
-      grid-column: 1;
-    }
-    & .report-with-gutter > .report-gutter {
-      grid-column: 2;
-      margin-block: 0;
-      padding-left: var(--inline-group);
-      border-left: 1px solid var(--rule-soft);
-    }
-    & .report-gutter-note-label {
-      display: block;
-    }
   }
 }

@@ -1,5 +1,5 @@
 /* キャラクター画面と、その上に重なる新しく作るダイアログ。
-   会話の画面に重ねる紙の中に描く。幅と左右の余白は紙の本文（sheet-body）が持つ。
+   会話の画面と入れ替わる（重ねない）ので、ここは1枚のページとして流す。4領域の grid も仕切りも持たない。
    キャラクター画面は左に一覧（260px）、右に選んでいるパックの詳しい設定の2段組で、760px 以下では一覧を上に積む（このファイル末尾の @media）。
    16進の色は書かない（見本の色は theme.css のトークンに当てる）。 */
 
@@ -9,6 +9,9 @@
   grid-template-columns: 260px minmax(0, 1fr);
   align-items: start;
   gap: var(--space-2xl);
+  max-width: 90rem;
+  margin: 0 auto;
+  padding: var(--space-sm) var(--space-2xl) var(--space-3xl);
 }
 .character-card {
   position: relative;
@@ -229,10 +232,11 @@
   min-height: 18rem;
 }
 
-/* 狭い画面（760px 以下）: 一覧を上に積む（格子と差し色の列数は詳しい設定の幅を見る @container が決める）。 */
+/* 狭い画面（760px 以下）: 一覧を上に積み、詳しい設定の余白を詰める（格子と差し色の列数は詳しい設定の幅を見る @container が決める）。 */
 @media (max-width: 760px) {
   .character-screen-columns {
     grid-template-columns: minmax(0, 1fr);
     gap: var(--space-lg);
+    padding: 0 0 var(--space-2xl);
   }
 }

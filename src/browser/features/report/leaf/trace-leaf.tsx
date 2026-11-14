@@ -49,26 +49,16 @@ function TraceRow(props: { readonly item: TraceItem }): ReactElement {
       <span className={styles["trace-mark"]} role="img" aria-label={label}>
         {mark}
       </span>
-      <div className={styles["trace-body"]}>
-        <span className={styles["trace-title"]}>
-          {status === "ok" ? (
-            <b>
-              <InlineMarkdown text={title} />
-            </b>
-          ) : (
-            <InlineMarkdown text={title} />
-          )}
-        </span>
-        {supplement.trim() !== "" && (
-          <span className={styles["trace-supplement"]}>{supplement}</span>
-        )}
-        {output.trim() !== "" && (
-          <details className={styles["trace-output"]}>
-            <summary>出力を見る</summary>
-            <pre>{output}</pre>
-          </details>
-        )}
-      </div>
+      <span className={styles["trace-title"]}>
+        <InlineMarkdown text={title} />
+      </span>
+      {supplement.trim() !== "" && <span className={styles["trace-supplement"]}>{supplement}</span>}
+      {output.trim() !== "" && (
+        <details className={styles["trace-output"]}>
+          <summary>出力を見る</summary>
+          <pre>{output}</pre>
+        </details>
+      )}
     </li>
   )
 }

@@ -2,14 +2,6 @@
   "name": "question-long",
   "steps": [
     {
-      "afterMs": 0,
-      "event": {
-        "kind": "request",
-        "text": "見出しの付け方を相談したい（架空の依頼）",
-        "images": []
-      }
-    },
-    {
       "afterMs": 100,
       "event": {
         "kind": "pending-changed",
@@ -75,6 +67,15 @@
       "event": {
         "kind": "utterance",
         "text": "長いラベルと長い説明の場面（架空）。選択肢の折り返しを見るために置いてある。\n"
+      }
+    },
+    {
+      "afterMs": 1300,
+      "event": {
+        "kind": "turn-finished",
+        "outcome": {
+          "kind": "completed"
+        }
       }
     }
   ]

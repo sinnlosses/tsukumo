@@ -43,7 +43,7 @@ function renderComposer(sent: SentCommand[] = []): void {
   putSession(INITIAL_SESSION_STATE, (command) => sent.push(command))
   render(
     <QueryClientProvider client={createTestQueryClient()}>
-      <Composer progress={{ kind: "paper", lamps: undefined }} />
+      <Composer />
     </QueryClientProvider>,
   )
 }
@@ -142,7 +142,7 @@ function renderWith(state: SessionState, spy: CommandSpy): void {
   putSession(state, spy)
   render(
     <QueryClientProvider client={createTestQueryClient()}>
-      <Composer progress={{ kind: "paper", lamps: undefined }} />
+      <Composer />
     </QueryClientProvider>,
   )
 }

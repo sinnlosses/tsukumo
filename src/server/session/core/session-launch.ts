@@ -134,7 +134,7 @@ export function createSessionLaunch<Pack extends NamedCharacterPack>(
     if (chat) {
       onEvent({ kind: "chat-topics-changed", topics: ports.readChatTopics(pack) })
       // 「覚えていること」も同じ理由で流し直す。
-      // 仕事のときは読まない（仕事では雑談の欄外ごと出ないので、状態が初期値の空のままでよい）。
+      // 仕事のときは読まない（仕事では雑談のサイドバーごと出ないので、状態が初期値の空のままでよい）。
       onEvent({ kind: "remembered-lines-changed", lines: ports.readRememberedLines(pack) })
     }
     // 新しいセッションの既定も同じ理由で流し直す（歯車が読む値）。

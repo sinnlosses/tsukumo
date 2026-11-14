@@ -131,11 +131,7 @@ async function openSource(source: Source, outDir: string): Promise<OpenedSource 
       extraEnv:
         source.until === undefined ? {} : { TSUKUMO_FAKE_SCENE_UNTIL: String(source.until) },
     })
-    return {
-      url: launched.url,
-      close: launched.close,
-      skipReveal: imageEntry?.skipReveal === true,
-    }
+    return { url: launched.url, close: launched.close, skipReveal: imageEntry?.skipReveal === true }
   } catch (error) {
     process.stderr.write(`${errorMessage(error)}\n`)
     return undefined

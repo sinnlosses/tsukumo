@@ -1,8 +1,6 @@
 {
-  "stage-portrait": [
-    { "tag": "div", "attributes": { "role": "img", "data-expression": "proud" } }
-  ],
-  "stage-balloon": [
+  "character": [
+    { "tag": "div", "attributes": { "role": "img", "data-expression": "proud" } },
     { "tag": "div", "attributes": { "data-latest": "true", "data-selected": "true" }, "children": [
       "見てきたよ。架空のセリフ。"
     ] }

@@ -18,6 +18,7 @@ function source(overrides: Partial<TurnFailureBlockSource>): TurnFailureBlockSou
     requestText: "架空の依頼",
     rateLimit: { kind: "clear" },
     newest: true,
+    hasFailedStep: false,
     now: NOW.epochMilliseconds,
     ...overrides,
   }
@@ -78,5 +79,13 @@ describe("turnFailureBlockOf", () => {
         }),
       ).retry.kind,
     ).toBe("request")
+  })
+
+  it("失敗した手順を見る口は、いちばん新しいやり取りで失敗した手順があるときだけ出す", () => {
+    expect(turnFailureBlockOf(source({ hasFailedStep: true })).failedSteps.kind).toBe("shown")
+    expect(turnFailureBlockOf(source({ hasFailedStep: false })).failedSteps.kind).toBe("none")
+    expect(
+      turnFailureBlockOf(source({ hasFailedStep: true, newest: false })).failedSteps.kind,
+    ).toBe("none")
   })
 })

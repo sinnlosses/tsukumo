@@ -54,8 +54,8 @@ Beads アダプタ（`server/**/adapter/` の Beads を読むファイル）が�
 最初から読めないときも初回に必ず `unknown` か `no-beads` が届く。
 起動直後は、前回読めた一覧（`~/.tsukumo/task-summary.json`。作業ディレクトリごと）を
 `bd` の結果を待たずに先に知らせ、読んだ結果が違えば差し替える（同じなら知らせない。読めなければ `unknown`）。
-知らせた `known` は覚え直す。画面は `loading` ならタスクの紙とタスクのモーダルにスケルトン（文字は出さない）、
-`unknown` なら「不明」を出し、`no-beads` ならタスクの紙の入口ごと出さない
+知らせた `known` は覚え直す。画面は `loading` ならサイドバーのタスクの節とタスクのモーダルにスケルトン（文字は出さない）、
+`unknown` なら「不明」を出し、`no-beads` ならタスクの節ごと出さない
 （始め方の一覧のカードとおすすめは `loading` も `unknown` と同じ扱いで出さない）。
 
 **ファイル名は概念で、単数形**（原則5）。`helpers/` と `common/` は作らない。**ディレクトリ名に単数形の
@@ -122,5 +122,5 @@ components/page/<ページ>/
 - **置かれる機能の外から引いてよいのは `features/<機能>/` の直下のファイルだけ**（公開面。明示の一覧は持たず、
   ディレクトリの位置で決まる）。外から引かれる中のファイルは機能の直下へ上げる。検査は `.dependency-cruiser.cjs` の
   `browser-feature-public-surface:*`（`test/` からの import は対象外）
-- 会話の画面は**1ページ**で、舞台（`stage/`・`character-view/`）・紙と欄外（`paper-desk/`・`main-view/`・`chat-view/`・`chat-memory/`）・入力欄（`dispatch/`）は `conversation/components/` の下、部屋の頭と設定の紙は `frame/screen-nav/` の部品。検査は
+- 会話の画面は**1ページ**で、4つの領域のうち、メインビュー・キャラビュー・入力欄（`dispatch/`）は `conversation/components/` の下、サイドバーは `frame/sidebar/` の部品。検査は
   `test/architecture/browser-box.test.ts`（`describe("components/page/ の形", …)`）

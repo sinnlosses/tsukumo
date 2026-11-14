@@ -43,13 +43,9 @@ export type TurnFailure =
   | { readonly kind: "execution-error" }
 
 /**
- * 終わったターンの終わり方（`TurnProgress` の `finished` の `ending`）。
- *
- * - `ended`: 失敗でも中断でもない終わり（完了と、`session-ended`）
- * - `interrupted`: 中断で終わった。失敗にはしないが、タブの題と読み上げは「止めた」と言う
- * - `failed`: 失敗で終わった
+ * 終わったターンが失敗だったか（`TurnProgress` の `finished` の `ending`）。`ended` は失敗でない
+ * 終わり方すべて（完了・中断）。
  */
 export type TurnEnding =
   | { readonly kind: "ended" }
-  | { readonly kind: "interrupted" }
   | { readonly kind: "failed"; readonly failure: TurnFailure }

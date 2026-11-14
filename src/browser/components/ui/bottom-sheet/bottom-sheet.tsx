@@ -5,8 +5,8 @@
 import { BottomSheet as AstryxBottomSheet } from "@astryxdesign/core/BottomSheet"
 import type { ReactElement, ReactNode } from "react"
 
+import { useCloseWhenWide } from "../../../hooks/use-close-when-wide.ts"
 import styles from "./bottom-sheet.module.css"
-import { useCloseWhenWide } from "./use-close-when-wide.ts"
 
 /** 下端の口。無いときは下端ごと描かない。 */
 type BottomSheetFooter =

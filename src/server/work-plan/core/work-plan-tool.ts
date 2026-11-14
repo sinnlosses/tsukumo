@@ -18,17 +18,7 @@ export const WORK_PLAN_PHASES_DESCRIPTION =
   "「xxx.ts を修正」のようにファイルや操作で分けない。" +
   '並列のフェーズは、名前の配列（2つ以上・重ならない名前）を1つの要素にして渡す（例: ["調べる", ["サーバを直す", "画面を直す"], "検証"]）。' +
   "委譲先がどの順で phase_result を返しても、phase に当たる並列のフェーズが済む。" +
-  "名前の代わりに { id, name } でも渡せる（並列のフェーズの配列の中も同じ）。id を渡すなら全部の段に、重ならない id を渡す。" +
-  "{ id, name, doing } の doing は進行形の名前（「調べている」など。省くと name のまま）"
-
-export const WORK_PLAN_REPLAN_REASON_DESCRIPTION =
-  "phases を前の呼び出しから変えたとき、計画を直した理由を1文で。変えていないときは省く"
-
-export const WORK_PLAN_REDO_REASON_DESCRIPTION =
-  "current を済んだフェーズへ戻したとき、やり直す理由を1文で。戻していないときは省く"
-
-export const WORK_PLAN_ASSUMPTIONS_DESCRIPTION =
-  "ここまでに置いた前提の配列。skippedPhases と同じく、毎回の呼び出しで全部入れる。置いていなければ省く"
+  "名前の代わりに { id, name } でも渡せる（並列のフェーズの配列の中も同じ）。id を渡すなら全部の段に、重ならない id を渡す"
 
 export const WORK_PLAN_CURRENT_DESCRIPTION =
   "今の要素の位置（0始まり。並列のフェーズの配列は1つの要素として数える）。" +

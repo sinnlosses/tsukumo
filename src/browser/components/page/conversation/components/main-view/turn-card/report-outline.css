@@ -26,7 +26,7 @@
 .outline-rail {
   border-right: 1px solid var(--rule-quiet);
 }
-/* 転がる器の余白ぶん上へずらした位置に貼り付く。
+/* 札の頭と同じく、転がる器の余白ぶん上へずらした位置が貼り付く基準（`.turn-card-head`）。
    行が多いときは一覧の中で転がす。 */
 .outline-nav {
   position: sticky;
@@ -207,13 +207,9 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-/* 列が無いとき（狭い画面と、列を置かない器）だけ出す、本文の上端の知らせの行。 */
+/* 狭い画面でだけ出す、本文の上端の知らせの行。 */
 .outline-phone-notice {
   display: none;
-}
-.outline-frame[data-outline="hidden"] .outline-phone-notice {
-  display: block;
-  padding-bottom: var(--stack-block);
 }
 
 /* 狭い画面（760px 以下）では列を出さず、本文が幅いっぱいを取る。 */

@@ -1,15 +1,17 @@
 // セリフのログの器。開くボタン（右上の「ログ」）と、その中身の `<dialog>` を置く。
 //
-// 吹き出しはキャラビューと同じ `<Balloon>` で描く。
+// 中身はキャラビューの舞台をそのまま上へ伸ばした形。
+// 立ち絵はキャラビューのものと同じ `<Portrait>` を受け取って床（`.speech-log-floor`）に置き、吹き出しはキャラビューと同じ `<Balloon>` で描く。
 // どこに重ねるかは CSS（`stage/speech-log.css` の anchor positioning）が決める。
 //
 // `<dialog>` は top layer に出るので、キャラビューの `overflow` には切り取られない。
 
 import { History, X } from "lucide-react"
-import type { ReactElement } from "react"
+import type { ReactElement, ReactNode } from "react"
 
 import { Button } from "../../../../ui/button/button.tsx"
 import { Dialog } from "../../../../ui/dialog/dialog.tsx"
+import { HStack } from "../../../../ui/h-stack/h-stack.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
 import { VStack } from "../../../../ui/v-stack/v-stack.tsx"
 import { Balloon } from "./balloon.tsx"
@@ -26,6 +28,8 @@ type PresentationalSpeechLogProps = SpeechLogModel & {
   readonly open: boolean
   readonly onOpen: () => void
   readonly onClose: () => void
+  /** キャラビューに立っている立ち絵（素材が無ければ何も描かない）。床に同じものを立たせる。 */
+  readonly portrait: ReactNode
   /** 最新の吹き出しに添える話し手の名前（キャラビューの最新の吹き出しと同じ）。 */
   readonly speakerName?: string
 }
@@ -38,6 +42,7 @@ export function PresentationalSpeechLog({
   onToggleSpeech,
   onOpen,
   onClose,
+  portrait,
   speakerName,
 }: PresentationalSpeechLogProps): ReactElement {
   return (
@@ -79,6 +84,17 @@ export function PresentationalSpeechLog({
             <X size={16} />
             {CLOSE_LABEL}
           </Button>
+          <HStack
+            element="div"
+            name={{ kind: "none" }}
+            gap="none"
+            align="end"
+            justify="start"
+            wrap="nowrap"
+            className={styles["speech-log-floor"]}
+          >
+            {portrait}
+          </HStack>
           <VStack
             element="div"
             name={{ kind: "none" }}
@@ -152,24 +168,20 @@ function SpeechLogRow(props: {
       </li>
     )
   }
-  const latest = entry.speaker === "her" && entry.age === "latest"
+  const latest = entry.age === "latest"
   return (
-    <li className={styles["speech-log-speech"]} data-age={entry.age} data-speaker={entry.speaker}>
+    <li className={styles["speech-log-speech"]} data-age={entry.age}>
       <Balloon
         text={entry.text}
         latest={latest}
         speaker={latest ? props.speakerName : undefined}
         time={{ kind: "unknown" }}
-        interaction={
-          entry.speaker === "you"
-            ? { kind: "you" }
-            : {
-                kind: "toggleable",
-                selected: entry.selected,
-                target: entry.target,
-                onToggleSpeech: props.onToggleSpeech,
-              }
-        }
+        interaction={{
+          kind: "toggleable",
+          selected: entry.selected,
+          target: entry.target,
+          onToggleSpeech: props.onToggleSpeech,
+        }}
       />
       {entry.time.kind === "known" && (
         <time className={styles["speech-log-speech-time"]} dateTime={entry.time.dateTime}>

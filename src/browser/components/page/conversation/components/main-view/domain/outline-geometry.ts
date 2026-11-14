@@ -16,9 +16,16 @@ export function topOf(element: Element): number {
  * 基準は一覧の上端。狭い画面では列が出ず（高さ 0）一覧の上端は基準にならないので、読む面の上端を使う。
  */
 export function activeLineOf(content: HTMLElement, nav?: HTMLElement, scroller?: Element): number {
+  const headHeight = Number.parseFloat(
+    getComputedStyle(content).getPropertyValue("--turn-card-head-height"),
+  )
   const reference =
     nav !== undefined && nav.getBoundingClientRect().height > 0 ? nav : (scroller ?? content)
-  return reference.getBoundingClientRect().top + ACTIVE_SLACK_PX
+  return (
+    reference.getBoundingClientRect().top +
+    (Number.isFinite(headHeight) ? headHeight : 0) +
+    ACTIVE_SLACK_PX
+  )
 }
 
 /** 根の上へ広げる距離（px）。どれだけ転がり去った見出しも、根の外へ出さない。 */

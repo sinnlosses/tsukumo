@@ -8,6 +8,8 @@ import { dayLabel } from "../../../../../utils/day-label.ts"
 import { Button } from "../../../../ui/button/button.tsx"
 import { HStack } from "../../../../ui/h-stack/h-stack.tsx"
 import { Heading } from "../../../../ui/heading/heading.tsx"
+import { Text } from "../../../../ui/text/text.tsx"
+import { VStack } from "../../../../ui/v-stack/v-stack.tsx"
 import type { AchievementDaySwitch } from "../../hooks/use-achievement.ts"
 import styles from "./day-switch.module.css"
 
@@ -35,14 +37,8 @@ export function DaySwitch(props: DaySwitchProps): ReactElement {
       wrap="wrap"
       className=""
     >
-      <Heading
-        level={2}
-        size="heading"
-        tone="ink"
-        weight="normal"
-        className={styles["achievement-day-switch-label"]}
-      >
-        {known ? dateLabel(daySwitch) : LOADING_VALUE}
+      <Heading level={1} size="heading" tone="ink" weight="normal" className="">
+        成果
       </Heading>
       <div className={styles["achievement-day-switch-nav"]}>
         <Button
@@ -57,6 +53,23 @@ export function DaySwitch(props: DaySwitchProps): ReactElement {
         >
           ‹
         </Button>
+        <VStack
+          element="span"
+          name={{ kind: "none" }}
+          gap="none"
+          align="center"
+          justify="start"
+          wrap="nowrap"
+          className={styles["achievement-day-switch-label"]}
+        >
+          {known ? (
+            <Text element="span" size="subheading" tone="ink" weight="inherit" className="">
+              {dateLabel(daySwitch)}
+            </Text>
+          ) : (
+            LOADING_VALUE
+          )}
+        </VStack>
         <Button
           variant="outline"
           size="secondary"

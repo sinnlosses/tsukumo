@@ -20,19 +20,9 @@ const stateRing = (state: string): string =>
 const inkTint = (percent: number): string =>
   `color-mix(in srgb, var(--ink) ${String(percent)}%, transparent)`
 
-// neutral は触る画面で `lg` より狭いときに字の段と書体を組み直すので、同じ条件で書き直す。
-// 写す先は字の役の大きさで、Astryx の大きさの段（`--font-size-*`）に写すと、そこを引く値と循環する。
-const typeTokens = {
-  "--font-family-body": "var(--font-sans)",
-  "--font-family-heading": "var(--font-sans)",
-  "--text-body-size": "var(--font-body)",
+// neutral は触る画面で `lg` より狭いときに字の段を組み直すので、本文の行の高さも同じ条件で書き直す。
+const readingLeadingTokens = {
   "--text-body-leading": "var(--line-height-reading)",
-  "--text-supporting-size": "var(--font-secondary)",
-  "--text-label-size": "var(--font-subheading)",
-  "--text-large-size": "var(--font-heading)",
-  "--text-heading-1-size": "var(--font-heading-1)",
-  "--text-heading-2-size": "var(--font-heading-2)",
-  "--text-heading-3-size": "var(--font-heading-3)",
 } satisfies Partial<Record<TokenName, TokenValue>>
 
 const tsukumoTokens = {
@@ -40,7 +30,7 @@ const tsukumoTokens = {
   "--color-background-muted": "var(--ground)",
   "--color-background-surface": "var(--surface)",
   "--color-background-card": "var(--surface)",
-  "--color-background-popover": "var(--surface-float)",
+  "--color-background-popover": "var(--surface)",
 
   "--color-text-primary": "var(--ink)",
   "--color-text-secondary": "var(--ink-soft)",
@@ -87,30 +77,19 @@ const tsukumoTokens = {
 
   "--font-family-code": "var(--font-code)",
 
-  ...typeTokens,
+  ...readingLeadingTokens,
 
-  "--radius-inner": "var(--radius-sm)",
-  "--radius-element": "var(--radius-md)",
-  "--radius-container": "var(--radius-lg)",
-  "--radius-full": "var(--radius-pill)",
-
-  "--shadow-med": "var(--shadow-raised)",
-  "--shadow-high": "var(--shadow-overlay)",
   "--shadow-inset-selected": "inset var(--shadow-ring)",
   "--shadow-inset-success": stateRing("--state-ok"),
   "--shadow-inset-warning": stateRing("--state-warn"),
   "--shadow-inset-error": stateRing("--state-ng"),
-
-  "--duration-fast": "var(--motion-fast)",
-  "--duration-medium": "var(--motion-enter)",
-  "--ease-entrance": "var(--motion-ease)",
 } satisfies Partial<Record<TokenName, TokenValue>>
 
 const tsukumoAdaptations = {
   rules: [
     {
       when: { pointer: "coarse", width: { below: "lg" } },
-      value: { tokens: typeTokens },
+      value: { tokens: readingLeadingTokens },
     },
   ],
 } satisfies ThemeAdaptations

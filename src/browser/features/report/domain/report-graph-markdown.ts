@@ -14,9 +14,8 @@ import { htmlInline } from "../../../../shared/report/report-inline-markdown.ts"
  * 書き手の名前はエッジを結ぶためだけに使い、ソースの ID は `n0`, `n1` … を振る（`end` などの予約語を避ける）。
  * ラベルはノードもエッジも必ず引用符で包む（`@`・`(`・`|` などを構文と読ませない）。
  * 読めない行は呼び出し側が先に差し戻す前提で、ここでは飛ばす。
- * `paper` が真なら新しい器の紙の描き方で、箱は塗らず群の枠は破線にし、色は変えた箱と辺だけに使う（色の目印・戻り道の色は出さない）。
  */
-export function graphSource(block: ReportGraph, paper = false): string {
+export function graphSource(block: ReportGraph): string {
   const { nodes, edges, groups } = readGraphSource(block.source)
   const nodeLine = (index: number, indent: string): string => {
     const node = nodes[index]
@@ -54,7 +53,8 @@ export function graphSource(block: ReportGraph, paper = false): string {
   ]
   const groundOf = groupGrounds(groups)
   const groupStyleLines = groups.map(
-    (group, index) => `  style g${String(index)} ${groupStyle(group, groundOf[index] ?? 1, paper)}`,
+    (group, index) =>
+      `  style g${String(index)} ${group.tone === "none" ? graphGroundStyle(groundOf[index] ?? 1) : graphToneGroupStyle(group.tone)}`,
   )
   const edgeLines = edges.map((edge) => {
     const arrow = edge.label === "" ? "-->" : `-->|${quoted(edge.label)}|`
@@ -62,35 +62,28 @@ export function graphSource(block: ReportGraph, paper = false): string {
   })
   const changes = new Set([...nodes, ...edges].map(({ change }) => change))
   const classDefLines = [
-    ...GRAPH_CHANGES.filter(({ change }) => changes.has(change)).map(({ change, color, dashed }) =>
-      paper
-        ? `  classDef ${change} ${graphStroke(PAPER_CHANGE_COLORS[change], dashed, 2)}`
-        : `  classDef ${change} ${graphStroke(color, dashed, 3)}`,
+    ...GRAPH_CHANGES.filter(({ change }) => changes.has(change)).map(
+      ({ change, color, dashed }) => `  classDef ${change} ${graphStroke(color, dashed, 3)}`,
     ),
-    ...(paper
-      ? []
-      : GRAPH_TONES.filter(({ tone }) =>
-          nodes.some((node) => node.change === "unchanged" && node.tone === tone),
-        ).map(
-          ({ tone, color, fill }) =>
-            `  classDef tone-${tone} fill:var(${fill}),${graphStroke(color, false, 1.5)}`,
-        )),
+    ...GRAPH_TONES.filter(({ tone }) =>
+      nodes.some((node) => node.change === "unchanged" && node.tone === tone),
+    ).map(
+      ({ tone, color, fill }) =>
+        `  classDef tone-${tone} fill:var(${fill}),${graphStroke(color, false, 1.5)}`,
+    ),
   ]
   const classLines = nodes.flatMap((node, index) => {
     if (node.change !== "unchanged") {
       return [`  class ${mermaidId(index)} ${node.change}`]
     }
-    return node.tone === "none" || paper ? [] : [`  class ${mermaidId(index)} tone-${node.tone}`]
+    return node.tone === "none" ? [] : [`  class ${mermaidId(index)} tone-${node.tone}`]
   })
   const linkStyleLines = edges.flatMap((edge, index) => {
     const style = GRAPH_CHANGES.find(({ change }) => change === edge.change)
-    const color = paper
-      ? style === undefined
-        ? undefined
-        : PAPER_CHANGE_COLORS[style.change]
-      : (style?.color ??
-        (edge.returns ? GRAPH_RETURN_COLOR : undefined) ??
-        GRAPH_TONES.find(({ tone }) => tone === edge.tone)?.color)
+    const color =
+      style?.color ??
+      (edge.returns ? GRAPH_RETURN_COLOR : undefined) ??
+      GRAPH_TONES.find(({ tone }) => tone === edge.tone)?.color
     const dashed = (style?.dashed ?? false) || edge.dashed || edge.returns
     const properties = [
       ...(color === undefined
@@ -124,13 +117,6 @@ const GRAPH_CHANGES = [
 }[]
 
 const GRAPH_RETURN_COLOR = "--graph-return"
-
-/** 紙の描き方で変えた箱・辺に使う色（変えた・足したは系列1、消したは静かな色の破線）。 */
-const PAPER_CHANGE_COLORS = {
-  added: "--chart-series-1",
-  changed: "--chart-series-1",
-  removed: "--ink-quiet",
-} as const satisfies Record<Exclude<GraphChange, "unchanged">, string>
 
 /** 色の目印の無い群に順に当てる地の色の数（`--graph-ground-1` 〜）。 */
 const GRAPH_GROUND_COUNT = 3
@@ -173,7 +159,6 @@ type GraphLegendItem =
 export function graphLegendItemsOf(
   block: ReportGraph,
   withShapes = true,
-  paper = false,
 ): readonly GraphLegendItem[] {
   const { nodes, edges } = readGraphSource(block.source)
   const shapes = GRAPH_SHAPES.filter(({ shape }) => nodes.some((node) => node.shape === shape))
@@ -187,9 +172,7 @@ export function graphLegendItemsOf(
     ...(edges.some((edge) => edge.returns)
       ? [{ kind: "return", label: "戻り道" } satisfies GraphLegendItem]
       : []),
-    ...(paper
-      ? []
-      : block.legend.map(({ tone, label }): GraphLegendItem => ({ kind: "tone", tone, label }))),
+    ...block.legend.map(({ tone, label }): GraphLegendItem => ({ kind: "tone", tone, label })),
   ]
 }
 
@@ -220,13 +203,6 @@ export function groupGrounds(groups: readonly GraphSourceGroup[]): readonly numb
     next += 1
     return ((next - 1) % GRAPH_GROUND_COUNT) + 1
   })
-}
-
-function groupStyle(group: GraphSourceGroup, ground: number, paper: boolean): string {
-  if (paper) {
-    return "fill:none,stroke:var(--rule-quiet),stroke-width:1px,stroke-dasharray:4 3"
-  }
-  return group.tone === "none" ? graphGroundStyle(ground) : graphToneGroupStyle(group.tone)
 }
 
 function graphGroundStyle(ground: number): string {

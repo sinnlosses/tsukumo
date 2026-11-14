@@ -1,5 +1,5 @@
 // `report` ツールで受け取ったレポートの検査（「検査 → 整形 → 描画」の検査の段）の入口。
-// 家族（文章・塊・図・checks・雛形・判定と出どころと案内の付箋）の検出を並べて上限を超えたものを返し、差し戻し文と構造の差し戻し文にする。
+// 家族（文章・塊・図・checks・雛形）の検出を並べて上限を超えたものを返し、差し戻し文と構造の差し戻し文にする。
 //
 // 検査するのは「レポートの記法」（`REPORT_NOTATION_PROMPT`）の条のうち、機械で判定できるものだけ。
 // 読み手によって結論が変わる条（効能書き・根拠の量・前置きと締めの行など）は入れない。
@@ -30,12 +30,6 @@ import {
 } from "./figure.ts"
 import { REPORT_CHANGED_FIELDS_ONLY_TEXT } from "./procedure-rejection.ts"
 import {
-  detectProgressFieldViolations,
-  isProgressFieldViolation,
-  type ProgressFieldViolation,
-  progressFieldViolationMessage,
-} from "./progress-field.ts"
-import {
   detectProseViolations,
   isProseViolation,
   type ProseViolation,
@@ -60,7 +54,6 @@ export type ReportViolation =
   | BlockViolation
   | CheckViolation
   | TemplateViolation
-  | ProgressFieldViolation
 
 /** 違反にしない上限（これを超えたら違反）。 */
 const VIOLATION_THRESHOLDS = {
@@ -112,9 +105,6 @@ const VIOLATION_THRESHOLDS = {
   "broken-inline-mark": 0,
   "plot-title-without-number": 0,
   "template-miss": 0,
-  "verdict-closing-mismatch": 0,
-  "source-mismatch": 0,
-  "guide-note-misplaced": 0,
 } as const satisfies Record<ReportViolation["kind"], number>
 
 export const REPORT_VIOLATION_KINDS = keys(VIOLATION_THRESHOLDS)
@@ -194,10 +184,5 @@ const FAMILIES: readonly RuleFamily[] = [
     detect: detectTemplateViolations,
     owns: isTemplateViolation,
     message: templateViolationMessage,
-  }),
-  family({
-    detect: detectProgressFieldViolations,
-    owns: isProgressFieldViolation,
-    message: progressFieldViolationMessage,
   }),
 ]

@@ -129,6 +129,6 @@ tsukumo 側のキャッシュ・スナップショットは作らない。**仕�
   `SessionChoice.heading` として運び、読めない・空なら無いものとして畳む
   （`src/shared/session/session-choice.ts`）。**`/clear` で分かれたセッションは別の行のまま**でよく
   （それぞれに中身の分かる見出しが付けば足りる）、前後をつなぐ仕組みは作らない。行の形
-  （見出し・時刻・見出しが無いときの見え方）は `docs/architecture/screen-design/room-head-and-search.md`「セッションの切り替え」
-  が正典。**画面から新しいセッションを起こすボタン**（セッションの一覧の「＋ 新しく始める」。
+  （短縮ID・見出し・時刻・見出しが無いときの見え方）は `docs/architecture/screen-design.md`「切り替え画面」
+  が正典。**画面から新しいセッションを起こすボタン**（切り替え画面の「＋ 新しいセッション」。
   `session.startNewSession`）は新規で起こす（ユーザー決定。起動・切り替えも同じ）

@@ -14,8 +14,6 @@ import {
   Plus,
   RefreshCw,
   RotateCcw,
-  Search,
-  Settings,
   Trash2,
   Trophy,
   Upload,
@@ -96,16 +94,6 @@ export function TokenIcon(): ReactElement {
 /** 成果の口（トロフィー）。 */
 export function AchievementIcon(): ReactElement {
   return <Icon icon={Trophy} {...ICON_ATTRIBUTES} />
-}
-
-/** 設定の口（歯車）。 */
-export function SettingsIcon(): ReactElement {
-  return <Icon icon={Settings} {...ICON_ATTRIBUTES} />
-}
-
-/** 探す口（虫眼鏡）。 */
-export function SearchIcon(): ReactElement {
-  return <Icon icon={Search} {...ICON_ATTRIBUTES} />
 }
 
 const ICON_ATTRIBUTES = { size: "sm", strokeWidth: 1.9 } as const

@@ -16,8 +16,6 @@
   --report-heading-gap: 12px;
   --report-measure: 42em;
   --report-measure-wide: 63em;
-  /* 文章の塊（段落・箇条書き・引用・注・検証結果）だけの幅で、1行 40 字まで。表・図・見比べ・コードは `--report-measure-wide` のまま。 */
-  --report-measure-prose: 40em;
   --report-figure-max: 70cqh;
   --report-figure-min-scale: 0.75;
   margin: 0 0 var(--space-lg);
@@ -31,11 +29,8 @@
   container: report-body / inline-size;
 
   & :is(p, li, blockquote, .report-note, .report-note-favor, .report-checks) {
-    max-inline-size: min(100%, var(--report-measure-prose));
+    max-inline-size: min(100%, var(--report-measure-wide));
     text-wrap: pretty;
-  }
-  & .report-with-gutter > :is(p, blockquote) {
-    max-inline-size: min(100%, var(--report-measure-prose));
   }
 }
 :is(.detail-block, [data-report-region])
@@ -383,14 +378,18 @@
     width: 0.75rem;
     transform: rotate(45deg) scale(0.9);
   }
-  /* 変えた箱の色は系列1の1色、消した箱は静かな色の破線。凡例の見本も図に合わせる。 */
-  & .report-graph-legend-added,
-  & .report-graph-legend-changed {
-    --graph-legend-color: var(--chart-series-1);
+  & .report-graph-legend-added {
+    --graph-legend-color: var(--state-ok);
   }
-  & .report-graph-legend-removed,
+  & .report-graph-legend-removed {
+    --graph-legend-color: var(--state-ng);
+    border-top-style: dashed;
+  }
+  & .report-graph-legend-changed {
+    --graph-legend-color: var(--state-warn);
+  }
   & .report-graph-legend-return {
-    --graph-legend-color: var(--ink-quiet);
+    --graph-legend-color: var(--graph-return);
     border-top-style: dashed;
   }
   & .report-graph-legend-tone-a {

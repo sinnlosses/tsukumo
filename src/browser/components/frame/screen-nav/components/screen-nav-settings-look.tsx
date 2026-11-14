@@ -1,31 +1,14 @@
-// 設定のダイアログの「見た目」の面。1字のキーの行、3色の見本の帯と、色ごとの行（色見本の四角＋16進の読み出し）を置く。
+// 設定のダイアログの「見た目」の面。3色の見本の帯と、色ごとの行（色見本の四角＋16進の読み出し）を置く。
 // 色の読み書きは `ScreenNavSettings.colors`（`useAppearanceColor`）のままで、帯はその値をそのまま描く。
 
 import { useId, type ReactElement } from "react"
 
 import type { AppearanceColorKey } from "../../../../domain/appearance-color.ts"
-import { RunSettingName } from "../../../../features/run-setting/run-setting-option.tsx"
-import {
-  RunSettingSelect,
-  type RunSettingSelectOption,
-} from "../../../../features/run-setting/run-setting-select.tsx"
 import { HStack } from "../../../ui/h-stack/h-stack.tsx"
 import { Text } from "../../../ui/text/text.tsx"
 import styles from "./screen-nav-settings-look.module.css"
 import rowStyles from "./screen-nav-settings.module.css"
 import type { ScreenNavSettingsProps } from "./screen-nav-settings.tsx"
-
-const SINGLE_KEY_LABELS = [
-  ["on", "使う"],
-  ["off", "使わない"],
-] as const satisfies readonly (readonly [string, string])[]
-
-const SINGLE_KEY_OPTIONS = SINGLE_KEY_LABELS.map(([value, label]): RunSettingSelectOption => ({
-  value,
-  disabled: false,
-  icon: undefined,
-  row: <RunSettingName danger={false}>{label}</RunSettingName>,
-}))
 
 export function ScreenNavSettingsLookFace(props: ScreenNavSettingsProps): ReactElement {
   const { settings } = props
@@ -37,34 +20,6 @@ export function ScreenNavSettingsLookFace(props: ScreenNavSettingsProps): ReactE
 
   return (
     <>
-      <HStack
-        element="div"
-        name={{ kind: "none" }}
-        gap="lg"
-        align="center"
-        justify="between"
-        wrap="nowrap"
-        className={rowStyles["screen-nav-settings-row"]}
-      >
-        <label htmlFor={`${fieldId}-single-keys`}>1字のキー（d・o・?）</label>
-        <RunSettingSelect
-          id={`${fieldId}-single-keys`}
-          ariaLabel="1字のキー"
-          heading="1字のキー"
-          value={settings.singleKeys.value ? "on" : "off"}
-          options={SINGLE_KEY_OPTIONS}
-          disabled={false}
-          danger={false}
-          rail={false}
-          layout="list"
-          mouth="field"
-          title={undefined}
-          dot="none"
-          onChange={(next) => {
-            settings.singleKeys.onChange(next === "on")
-          }}
-        />
-      </HStack>
       <div className={styles["band"]} style={{ backgroundColor: colorOf("ground") }}>
         <span
           className={styles["band-surface"]}

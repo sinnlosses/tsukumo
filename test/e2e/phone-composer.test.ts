@@ -50,7 +50,7 @@ test.describe("狭い画面の入力欄", () => {
     await page.getByRole("button", { name: "続ける", exact: true }).click()
     expect(await page.getByRole("button", { name: "止める", exact: true }).count()).toBe(0)
 
-    const balloon = page.locator('[data-region="stage"]').getByRole("button", {
+    const balloon = page.locator('[data-region="character"]').getByRole("button", {
       name: /^その前に/u,
     })
     await balloon.waitFor()

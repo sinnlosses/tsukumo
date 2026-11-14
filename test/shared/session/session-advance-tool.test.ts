@@ -48,7 +48,7 @@ describe("applySessionEvent", () => {
       },
     )
 
-    // ツールの記録そのものは `toolUseId` / `nested` を持つ（画面の用途と
+    // ツールの記録そのものは `toolUseId` / `nested` を持つ（サイドバー用途と
     // 突き合わせ用。docs/architecture/display.md「表示」）。
     expect(view.records).toEqual([
       {

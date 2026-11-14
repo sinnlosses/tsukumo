@@ -4,10 +4,10 @@ import { expect, test } from "./room-fixture.ts"
 
 // トークンの画面の見直しが会話とは別に走ること（docs/architecture/testing.md「E2E のシナリオの一覧」）。
 // 場面 `work-strip-plan-pending` はターンが進行中のまま止まる。同じ tsukumo をもう1つのタブでトークンの画面に開き、
-// 見直しを始めて結果のカードが出るまでを流し、仕事の画面の紙が変わらないことを DOM で判定する。
+// 見直しを始めて結果のカードが出るまでを流し、仕事の画面のメインビューが変わらないことを DOM で判定する。
 // 見直しの手順は疑似セッションの `usageReview.review`。期待値は撮らない。
 
-const MAIN_VIEW = '[data-region="paper"]'
+const MAIN_VIEW = '[data-region="main"]'
 
 /** メインビューの中身（要素の数と文字）。ブラウザの時計は凍っているので、経過の表示も動かない。 */
 function mainViewContent(

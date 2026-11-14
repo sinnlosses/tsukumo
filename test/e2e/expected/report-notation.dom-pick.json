@@ -1,5 +1,5 @@
 {
-  "paper": [
+  "main": [
     { "tag": "div", "attributes": { "data-report-region": "markdown" }, "children": [
       { "tag": "h4", "children": ["表現の一覧（架空）"] },
       { "tag": "blockquote", "children": [{ "tag": "p", "children": ["これは引用のテスト。実物の会話ではない。"] }] },

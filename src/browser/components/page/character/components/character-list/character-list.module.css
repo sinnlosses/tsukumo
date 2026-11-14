@@ -5,6 +5,12 @@
   gap: var(--space-sm);
   min-width: 0;
 }
+.character-list-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--space-xs) var(--space-xs);
+}
 .character-list-row {
   display: flex;
   align-items: center;

@@ -1,0 +1,16 @@
+{
+  "main": [
+    { "tag": "div", "attributes": { "data-main-view-content": "report" }, "children": [
+      { "tag": "button", "attributes": { "data-outline-turn": "0", "data-result": "done", "aria-label": "完了: 局面の入れ替えを見たい（架空の依頼）" } },
+      { "tag": "section", "attributes": { "aria-label": "進み具合", "data-work-strip": "finished" } },
+      { "tag": "section", "children": [
+        { "tag": "h2", "children": ["依頼"] },
+        { "tag": "p", "children": ["局面の入れ替えを見たい（架空の依頼）"] }
+      ] },
+      { "tag": "div", "attributes": { "data-report-region": "markdown" }, "children": [
+        { "tag": "h4", "children": ["疑似セッションのレポート"] },
+        { "tag": "p", "children": ["これは架空の本文で、実物の会話ではない。"] }
+      ] }
+    ] }
+  ]
+}

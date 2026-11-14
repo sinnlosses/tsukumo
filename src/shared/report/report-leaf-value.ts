@@ -2,13 +2,11 @@
 //
 // 番号は節をまたいで並びの順に通しで数える。
 
-import { parseInlineMarks } from "./inline-mark.ts"
 import { plotDrawingOf } from "./plot-drawing.ts"
 import { tableRowCells } from "./report-block-comparison.ts"
 import type { LeafComponent, ReportSection } from "./report-block.ts"
 import type { CaptionKind } from "./report-caption.ts"
 import { REPORT_NOTE_KINDS } from "./report-notation.ts"
-import type { ReportSourceEntry } from "./report-progress-field.ts"
 import { type TagTones, tagTonesOf } from "./report-table-markdown.ts"
 
 /** 内容部品の題の番号。題を持たない内容部品は `none`。 */
@@ -39,8 +37,6 @@ type BlocksFold = {
   readonly counts: CaptionCounts
   /** 欄外注を受ける、直前の包みの `values` の位置。無ければ -1。 */
   readonly ownerIndex: number
-  /** 欄外注を添え終えた出どころの番号。 */
-  readonly seenSources: ReadonlySet<number>
 }
 
 /** 欄外注にした `memo` の頭に付けるラベル。 */
@@ -56,64 +52,43 @@ export type ReportLeafLayout = {
   readonly values: readonly (readonly LeafValue[])[]
 }
 
-/**
- * `sources` は出どころの並び。番号 `{{src: n}}` が最初に現れる内容部品に、その出どころの場所と補いを欄外注で添える（2度目からは添えない）。
- */
-export function reportLeafLayoutOf(
-  sections: readonly ReportSection[],
-  sources: readonly ReportSourceEntry[],
-): ReportLeafLayout {
+export function reportLeafLayoutOf(sections: readonly ReportSection[]): ReportLeafLayout {
   const tagTones = tagTonesOf(sections.flatMap((section) => section.blocks))
-  const context = { tagTones, sources }
   const { perSection } = sections.reduce<{
     readonly perSection: readonly (readonly LeafValue[])[]
     readonly counts: CaptionCounts
-    readonly seenSources: ReadonlySet<number>
   }>(
     (acc, section) => {
-      const folded = valuesOfBlocks(section.blocks, acc.counts, acc.seenSources, context)
-      return {
-        perSection: [...acc.perSection, folded.values],
-        counts: folded.counts,
-        seenSources: folded.seenSources,
-      }
+      const folded = valuesOfBlocks(section.blocks, acc.counts, tagTones)
+      return { perSection: [...acc.perSection, folded.values], counts: folded.counts }
     },
-    { perSection: [], counts: { figure: 0, table: 0 }, seenSources: new Set() },
+    { perSection: [], counts: { figure: 0, table: 0 } },
   )
   return { tagTones, values: perSection }
-}
-
-type LayoutContext = {
-  readonly tagTones: ReadonlyMap<string, string>
-  readonly sources: readonly ReportSourceEntry[]
 }
 
 function valuesOfBlocks(
   blocks: readonly LeafComponent[],
   counts: CaptionCounts,
-  seenSources: ReadonlySet<number>,
-  context: LayoutContext,
+  tagTones: ReadonlyMap<string, string>,
 ): BlocksFold {
-  return blocks.reduce<BlocksFold>((acc, block) => withLeafValue(acc, block, context), {
+  return blocks.reduce<BlocksFold>((acc, block) => withLeafValue(acc, block, tagTones), {
     values: [],
     counts,
     ownerIndex: -1,
-    seenSources,
   })
 }
 
-function withLeafValue(acc: BlocksFold, block: LeafComponent, context: LayoutContext): BlocksFold {
-  const { tagTones } = context
+function withLeafValue(
+  acc: BlocksFold,
+  block: LeafComponent,
+  tagTones: ReadonlyMap<string, string>,
+): BlocksFold {
   const kind = captionKindOf(block)
   const counts = kind === undefined ? acc.counts : { ...acc.counts, [kind]: acc.counts[kind] + 1 }
-  const firstSources = context.sources.filter(
-    (source) => !acc.seenSources.has(source.mark) && sourceNumbersIn(block).has(source.mark),
-  )
-  const seenSources = new Set([...acc.seenSources, ...firstSources.map((source) => source.mark)])
   const gutterNotes = [
     ...(block.kind === "note" && block.tone === "memo" ? textNotes(MEMO_LABEL, block.text) : []),
     ...asideNotes(block.aside),
-    ...firstSources.map(sourceNote),
   ]
   if (block.kind === "note" && block.tone === "memo" && acc.ownerIndex >= 0) {
     return {
@@ -132,7 +107,6 @@ function withLeafValue(acc: BlocksFold, block: LeafComponent, context: LayoutCon
       ],
       counts,
       ownerIndex: acc.ownerIndex,
-      seenSources,
     }
   }
   return {
@@ -147,44 +121,11 @@ function withLeafValue(acc: BlocksFold, block: LeafComponent, context: LayoutCon
     ],
     counts,
     ownerIndex: acc.values.length,
-    seenSources,
   }
 }
 
 function asideNotes(aside: string): readonly LeafGutterNote[] {
   return textNotes("", aside)
-}
-
-/** 場所はインラインコードにして、欄外注の中でもファイルの覗きが効くようにする。 */
-function sourceNote(source: ReportSourceEntry): LeafGutterNote {
-  const note = source.note?.trim() ?? ""
-  return {
-    label: String(source.mark),
-    text: note === "" ? `\`${source.place}\`` : `\`${source.place}\` ${note}`,
-  }
-}
-
-/** 内容部品の字の欄のどこかに置いた出どころの番号。 */
-function sourceNumbersIn(block: LeafComponent): ReadonlySet<number> {
-  return new Set(
-    stringsIn(block).flatMap((text) =>
-      text.includes("{{src:")
-        ? parseInlineMarks(text).flatMap((segment) =>
-            segment.kind === "mark" && segment.mark.kind === "source" ? [segment.mark.number] : [],
-          )
-        : [],
-    ),
-  )
-}
-
-function stringsIn(value: unknown): readonly string[] {
-  if (typeof value === "string") {
-    return [value]
-  }
-  if (Array.isArray(value)) {
-    return value.flatMap(stringsIn)
-  }
-  return typeof value === "object" && value !== null ? Object.values(value).flatMap(stringsIn) : []
 }
 
 function textNotes(label: string, text: string): readonly LeafGutterNote[] {

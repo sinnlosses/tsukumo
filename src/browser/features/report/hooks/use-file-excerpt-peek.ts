@@ -5,10 +5,10 @@
 import { useRef, useState, type RefObject } from "react"
 
 import type { FileExcerpt, FileExcerptRequest } from "../../../../shared/repository/file-excerpt.ts"
+import { useDismissSignal } from "../../../hooks/use-dismiss-signal.ts"
 import { useEventListener } from "../../../hooks/use-event-listener.ts"
 import { useUnmountEffect } from "../../../hooks/use-mount-effect.ts"
 import type { LineRange, PointedLines } from "../domain/pointed-line-range.ts"
-import { useDismissSignal } from "./use-dismiss-signal.ts"
 
 /** 重ねて（フォーカスして）から浮きを出すまでの待ち。 */
 const FILE_EXCERPT_PEEK_DELAY_MS = 500

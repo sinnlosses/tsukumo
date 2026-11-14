@@ -1,14 +1,16 @@
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
-import { afterEach, describe, expect, it } from "vitest"
+import { act, cleanup, render, screen } from "@testing-library/react"
+import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { RunSettingGroup } from "../../../../src/browser/features/run-setting/run-setting-group.tsx"
+import { nowEpochMilliseconds } from "../../../../src/browser/utils/clock.ts"
 import { INITIAL_SESSION_STATE } from "../../../../src/shared/session/session-state.ts"
+import type { SettingMark, SettingMarks } from "../../../../src/shared/session/setting-mark.ts"
 import { checkedSessionId } from "../../../fixture/session-id.ts"
-import { typedElement } from "../../../typed-element.ts"
-import { putSession, putState, type SentCommand } from "../../session-store.ts"
+import { putSession, putState } from "../../session-store.ts"
 
 afterEach(() => {
   cleanup()
+  vi.useRealTimers()
 })
 
 const OPUS_SUPPORT = {
@@ -18,100 +20,219 @@ const OPUS_SUPPORT = {
   effortLevels: ["low", "medium", "high", "xhigh", "max"],
 } as const
 
-const KNOWN_STATE = {
-  ...INITIAL_SESSION_STATE,
-  model: "claude-opus-5",
-  modelEffortSupport: [OPUS_SUPPORT],
-  effort: "high",
-} satisfies typeof INITIAL_SESSION_STATE
-
-function renderGroup(state: typeof INITIAL_SESSION_STATE = KNOWN_STATE): readonly SentCommand[] {
-  const sent: SentCommand[] = []
-  putSession(state, (command) => {
-    sent.push(command)
+function renderGroup(): void {
+  putSession({
+    ...INITIAL_SESSION_STATE,
+    model: "claude-opus-5",
+    modelEffortSupport: [OPUS_SUPPORT],
+    effort: "high",
   })
-  render(<RunSettingGroup />)
-  return sent
+  render(<RunSettingGroup placement="sidebar-footer" />)
 }
 
-function selectOf(label: RegExp): HTMLSelectElement {
-  return typedElement(
-    screen.getByRole("combobox", { name: label }),
-    HTMLSelectElement,
-    "札の <select>",
-  )
+function optionsOf(label: RegExp): readonly HTMLOptionElement[] {
+  const select = screen.getByRole("combobox", { name: label })
+  return [...select.querySelectorAll("option")]
 }
 
-describe("RunSettingGroup（入力欄の下の行の札）", () => {
-  it("モデル・effort・許可モードの3つの札を出す", () => {
+describe("RunSettingGroup（吊り下げのカードの行）", () => {
+  it("effort の行は、いまの段までの棒だけが灯る", () => {
     renderGroup()
 
-    expect(screen.getAllByRole("combobox")).toHaveLength(3)
-    expect(selectOf(/^モデル /)).toBeTruthy()
-    expect(selectOf(/^effort /)).toBeTruthy()
-    expect(selectOf(/^許可モード /)).toBeTruthy()
-  })
-
-  it("選ぶと対応する手続きが1回ずつ送られる", () => {
-    const sent = renderGroup()
-
-    fireEvent.change(selectOf(/^モデル /), { target: { value: "sonnet" } })
-    fireEvent.change(selectOf(/^effort /), { target: { value: "max" } })
-    fireEvent.change(selectOf(/^許可モード /), { target: { value: "plan" } })
-
-    expect(sent).toEqual([
-      { procedure: "session.setModel", model: "sonnet" },
-      { procedure: "session.setEffort", effort: "max" },
-      { procedure: "session.setPermissionMode", mode: "plan" },
+    expect(
+      optionsOf(/^effort /).map((option) => [
+        option.value,
+        option.querySelector(".run-setting-effort-bar-row")?.classList.contains("is-lit"),
+      ]),
+    ).toEqual([
+      ["low", true],
+      ["medium", true],
+      ["high", true],
+      ["xhigh", false],
+      ["max", false],
     ])
   })
 
-  it("選んだだけでは値が変わらず、サーバから届いた値で変わる", () => {
+  it("許可モードの行は、盾の塗りで段を見せる", () => {
     renderGroup()
 
-    fireEvent.change(selectOf(/^effort /), { target: { value: "max" } })
-    expect(selectOf(/^effort /).value).toBe("high")
-
-    act(() => {
-      putState({ ...KNOWN_STATE, effort: "max" })
-    })
-    expect(selectOf(/^effort /).value).toBe("max")
+    expect(
+      optionsOf(/^許可モード /).map((option) => [
+        option.value,
+        option.querySelector("[data-fill]")?.getAttribute("data-fill"),
+      ]),
+    ).toEqual([
+      ["default", "empty"],
+      ["acceptEdits", "dashed"],
+      ["auto", "dashed"],
+      ["plan", "dashed"],
+      ["bypassPermissions", "filled"],
+    ])
   })
+})
 
-  it("effort の段が分からないあいだは effort の札を出さない", () => {
-    renderGroup({ ...INITIAL_SESSION_STATE, model: "claude-opus-5" })
+const NO_MARK = { kind: "none" } satisfies SettingMark
+const NO_ORIGIN = { kind: "unknown" } as const
 
-    expect(screen.queryByRole("combobox", { name: /^effort / })).toBeNull()
-    expect(screen.getAllByRole("combobox")).toHaveLength(2)
-  })
+function marksWith(patch: Partial<SettingMarks>): SettingMarks {
+  return { model: NO_MARK, effort: NO_MARK, permissionMode: NO_MARK, ...patch }
+}
 
-  it("知らないモデルと許可モードは届いた語のまま出す", () => {
-    renderGroup({
-      ...KNOWN_STATE,
+function stateWithMarks(settingMarks: SettingMarks): typeof INITIAL_SESSION_STATE {
+  return { ...INITIAL_SESSION_STATE, model: "claude-opus-5", effort: "high", settingMarks }
+}
+
+function dotOf(label: RegExp): string | undefined {
+  const select = screen.getByRole("combobox", { name: label })
+  return select.parentElement?.querySelector("[data-dot]")?.getAttribute("data-dot") ?? undefined
+}
+
+describe("RunSettingGroup（知らないモデル）", () => {
+  it("既定のモデルに畳まず、届いた名前をボタンの名前と吊り下げのカードの行にする", () => {
+    putSession({
+      ...INITIAL_SESSION_STATE,
       model: "claude-opus-4-8",
+      modelEffortSupport: [OPUS_SUPPORT],
+    })
+    render(<RunSettingGroup placement="sidebar-footer" />)
+
+    expect(screen.getByRole("combobox", { name: "モデル claude-opus-4-8" })).toBeTruthy()
+    expect(optionsOf(/^モデル /).map((option) => option.value)).toContain("claude-opus-4-8")
+  })
+})
+
+describe("RunSettingGroup（知らない許可モード）", () => {
+  it("既定の字に倒さず、届いた語を許可モードの口の名前にする", () => {
+    putSession({
+      ...INITIAL_SESSION_STATE,
       session: {
         kind: "running",
         sessionId: checkedSessionId("s-fixture"),
         permissionMode: { kind: "unknown", raw: "dontAsk" },
       },
     })
+    render(<RunSettingGroup placement="sidebar-footer" />)
 
-    expect(screen.getByRole("combobox", { name: "モデル claude-opus-4-8" })).toBeTruthy()
     expect(screen.getByRole("combobox", { name: "許可モード dontAsk" })).toBeTruthy()
-    expect(selectOf(/^許可モード /).value).toBe("dontAsk")
+  })
+})
+
+describe("RunSettingGroup（口の右肩の点）", () => {
+  it("印が無ければ点を出さない", () => {
+    putSession(stateWithMarks(marksWith({})))
+    render(<RunSettingGroup placement="sidebar-footer" />)
+
+    expect([dotOf(/^モデル /), dotOf(/^effort /), dotOf(/^許可モード /)]).toEqual([
+      undefined,
+      undefined,
+      undefined,
+    ])
   })
 
-  it("全部許すのときだけ許可モードの札が警告の形になる", () => {
-    renderGroup({
-      ...KNOWN_STATE,
-      session: {
-        kind: "running",
-        sessionId: checkedSessionId("s-fixture"),
-        permissionMode: "bypassPermissions",
-      },
+  it("受け付けた印はその口にだけ空洞の点を出し、title が「受け付けた」と言う（モデル・effort・許可モードとも）", () => {
+    const at = nowEpochMilliseconds()
+    for (const setting of ["model", "effort", "permissionMode"] as const) {
+      cleanup()
+      putSession(
+        stateWithMarks(
+          marksWith({ [setting]: { kind: "accepted", value: "x", at, from: NO_ORIGIN } }),
+        ),
+      )
+      render(<RunSettingGroup placement="sidebar-footer" />)
+
+      const dots = {
+        model: dotOf(/^モデル /),
+        effort: dotOf(/^effort /),
+        permissionMode: dotOf(/^許可モード /),
+      }
+      expect(dots).toEqual({
+        model: undefined,
+        effort: undefined,
+        permissionMode: undefined,
+        [setting]: "accepted",
+      })
+      const label = { model: /^モデル /, effort: /^effort /, permissionMode: /^許可モード / }[
+        setting
+      ]
+      expect(screen.getByRole("combobox", { name: label }).title).toMatch(/・ 受け付けた$/)
+    }
+  })
+
+  it("見届けた印は塗りの点を出し、title が「効いた」と言う", () => {
+    putSession(
+      stateWithMarks(
+        marksWith({ model: { kind: "confirmed", value: "opus", at: nowEpochMilliseconds() } }),
+      ),
+    )
+    render(<RunSettingGroup placement="sidebar-footer" />)
+
+    expect(dotOf(/^モデル /)).toBe("confirmed")
+    expect(screen.getByRole("combobox", { name: /^モデル / }).title).toMatch(/・ 効いた$/)
+  })
+
+  it("見届けた点は3秒で消え、空洞の点は見届けるまで残る", () => {
+    vi.useFakeTimers()
+    const at = nowEpochMilliseconds()
+    putSession(
+      stateWithMarks(
+        marksWith({
+          model: { kind: "confirmed", value: "opus", at },
+          effort: { kind: "accepted", value: "high", at, from: NO_ORIGIN },
+        }),
+      ),
+    )
+    render(<RunSettingGroup placement="sidebar-footer" />)
+
+    act(() => {
+      vi.advanceTimersByTime(3100)
+    })
+    expect([dotOf(/^モデル /), dotOf(/^effort /)]).toEqual([undefined, "accepted"])
+
+    act(() => {
+      vi.advanceTimersByTime(60_000)
+    })
+    expect(dotOf(/^effort /)).toBe("accepted")
+  })
+
+  it("空洞の点が見届けられて塗りになり、消えたあとに別の時刻で付け直された印は、また点を出す", () => {
+    vi.useFakeTimers()
+    const at = nowEpochMilliseconds()
+    putSession(
+      stateWithMarks(
+        marksWith({ model: { kind: "accepted", value: "opus", at, from: NO_ORIGIN } }),
+      ),
+    )
+    render(<RunSettingGroup placement="sidebar-footer" />)
+
+    act(() => {
+      putState(stateWithMarks(marksWith({ model: { kind: "confirmed", value: "opus", at } })))
+    })
+    expect(dotOf(/^モデル /)).toBe("confirmed")
+    act(() => {
+      vi.advanceTimersByTime(3100)
+    })
+    expect(dotOf(/^モデル /)).toBeUndefined()
+
+    act(() => {
+      putState(
+        stateWithMarks(
+          marksWith({
+            model: { kind: "accepted", value: "sonnet", at: at + 3100, from: NO_ORIGIN },
+          }),
+        ),
+      )
     })
 
-    expect(selectOf(/^許可モード /).classList.contains("is-danger")).toBe(true)
-    expect(selectOf(/^モデル /).classList.contains("is-danger")).toBe(false)
+    expect(dotOf(/^モデル /)).toBe("accepted")
+  })
+
+  it("開いた時点で寿命を過ぎている見届けた印は点を出さない", () => {
+    const old = nowEpochMilliseconds() - 60_000
+    putSession(
+      stateWithMarks(marksWith({ permissionMode: { kind: "confirmed", value: "plan", at: old } })),
+    )
+    render(<RunSettingGroup placement="sidebar-footer" />)
+
+    expect(dotOf(/^許可モード /)).toBeUndefined()
   })
 })

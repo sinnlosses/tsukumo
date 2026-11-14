@@ -18,9 +18,10 @@ function press(key: string, rest: Partial<WelcomeKeyEvent> = {}): WelcomeKeyEven
 }
 
 describe("始め方の一覧のキー", () => {
-  it("1〜3 は札、← は前のやり取り", () => {
+  it("1〜3 は札、/ は入力欄、← は前のやり取り", () => {
     expect(welcomeKeyOf(press("1"))).toEqual({ kind: "card", index: 0 })
     expect(welcomeKeyOf(press("3"))).toEqual({ kind: "card", index: 2 })
+    expect(welcomeKeyOf(press("/"))).toEqual({ kind: "write" })
     expect(welcomeKeyOf(press("ArrowLeft"))).toEqual({ kind: "previous" })
   })
 

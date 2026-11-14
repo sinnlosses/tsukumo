@@ -252,7 +252,7 @@ const CHARACTER_ASSET_CONTENT_SECURITY_POLICY =
 
 /**
  * ページ本体。中身は `<div id="app">` だけ。
- * 舞台・紙・欄外・入力欄のすべてが React の部品で、ブラウザ側の入口が1つの root として mount する。
+ * メインビュー・キャラビュー・サイドバー・入力欄のすべてが React の部品で、ブラウザ側の入口が1つの root として mount する。
  */
 function buildLayoutPage(
   ownStyleSheets: readonly string[],

@@ -31,7 +31,7 @@ test.describe("雑談の吹き出しの間", () => {
       scenario: "chat-speech-gap",
       scene: "chat-speech-gap",
       viewport: "wide",
-      domRoots: ["paper"],
+      domRoots: ["main"],
     })
     const bubble = (n: number) =>
       room.page.locator('[data-speaker="character"]', {

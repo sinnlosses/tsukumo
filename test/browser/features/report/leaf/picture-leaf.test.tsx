@@ -49,23 +49,6 @@ describe("Picture の部品", () => {
     expect(fresh).toBe(oldLeafHtml(block, SHELVED))
   })
 
-  it("注記は番号の印と文の対で並ぶ", () => {
-    const { block, part } = pair("/tmp/架空の画面.png", ["架空の左の列", "架空の下端"])
-    const host = document.createElement("div")
-    host.innerHTML = newLeafHtml(block, part, SHELVED)
-
-    const items = [...(host.querySelector("ol")?.children ?? [])]
-    expect(
-      items.map((item) => [
-        item.querySelector('[aria-hidden="true"]')?.textContent,
-        item.textContent,
-      ]),
-    ).toEqual([
-      ["1", "1架空の左の列"],
-      ["2", "2架空の下端"],
-    ])
-  })
-
   it("画像の src は置き場の経路だけで、置き場に置かないものには付けない", () => {
     const shelved = pair("/tmp/架空の画面.png", [])
     const none = pair("/tmp/架空の画面.png", [])

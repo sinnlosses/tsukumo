@@ -46,45 +46,41 @@ export function PresentationalAchievement(props: PresentationalAchievementProps)
   return (
     <>
       <div className={styles["achievement"]}>
-        <div className={styles["achievement-calendar-column"]}>
-          <LanternCalendar
-            calendar={props.calendar}
-            viewedDate={viewedDate}
-            onSelectDate={props.onSelectDate}
+        <DaySwitch
+          daySwitch={props.daySwitch}
+          onPreviousDay={props.onPreviousDay}
+          onNextDay={props.onNextDay}
+          onToday={props.onToday}
+        />
+        <LanternCalendar
+          calendar={props.calendar}
+          viewedDate={viewedDate}
+          onSelectDate={props.onSelectDate}
+        />
+        <DiarySection
+          diary={props.diarySection}
+          isFetching={props.isFetching}
+          writing={props.writing}
+          portrait={props.diaryPortrait}
+          reveal={props.diaryReveal}
+          onRevealed={props.onDiaryRevealed}
+          review={props.review}
+          onOpenDiaryBook={props.onOpenDiaryBook}
+        />
+        {props.view.kind === "ready" && (
+          <BookmarkSection
+            bookmark={
+              props.view.diary.kind === "written" ? props.view.diary.diary.bookmark : undefined
+            }
+            writerName={props.diaryPortrait.name}
           />
-        </div>
-        <div className={styles["achievement-day-column"]}>
-          <DaySwitch
-            daySwitch={props.daySwitch}
-            onPreviousDay={props.onPreviousDay}
-            onNextDay={props.onNextDay}
-            onToday={props.onToday}
+        )}
+        {props.view.kind === "ready" && (
+          <SurpriseSection
+            graduations={props.view.graduations}
+            milestones={props.view.milestones}
           />
-          <DiarySection
-            diary={props.diarySection}
-            isFetching={props.isFetching}
-            writing={props.writing}
-            portrait={props.diaryPortrait}
-            reveal={props.diaryReveal}
-            onRevealed={props.onDiaryRevealed}
-            review={props.review}
-            onOpenDiaryBook={props.onOpenDiaryBook}
-          />
-          {props.view.kind === "ready" && (
-            <BookmarkSection
-              bookmark={
-                props.view.diary.kind === "written" ? props.view.diary.diary.bookmark : undefined
-              }
-              writerName={props.diaryPortrait.name}
-            />
-          )}
-          {props.view.kind === "ready" && (
-            <SurpriseSection
-              graduations={props.view.graduations}
-              milestones={props.view.milestones}
-            />
-          )}
-        </div>
+        )}
       </div>
       <DiaryBook {...props.diaryBook} />
     </>

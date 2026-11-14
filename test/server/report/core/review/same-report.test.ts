@@ -53,20 +53,6 @@ describe("isSameReport", () => {
     expect(isSameReport(drawnOf(sections), draftOf(other))).toBe(false)
   })
 
-  it.each([
-    ["判定", { verdict: "partial" }],
-    ["次の手", { next: { kind: "next", owner: "you", action: "架空の次の手", choices: [] } }],
-    ["置いた前提", { assumptions: ["架空の前提"] }],
-    ["出どころ", { sources: [{ mark: 1, place: "架空の場所" }] }],
-    [
-      "前回との対応",
-      { previous: { kind: "previous", resolved: ["架空"], added: [], remaining: [] } },
-    ],
-    ["案内の付箋", { guideNotes: [{ target: "checks", text: "架空の案内" }] }],
-  ] as const)("%s だけが違っても違うと判定する", (_name, progress) => {
-    expect(isSameReport(drawnOf(sections), { ...draftOf(sections), ...progress })).toBe(false)
-  })
-
   it("図の記録が違えば違うと判定する", () => {
     const withFigure = reportDraft({
       conclusion: "架空の結論。",

@@ -8,7 +8,6 @@ import { characterAssetPath } from "./character-asset.ts"
 import type { CharacterBackground } from "./character-background.ts"
 import type { CharacterDefinition } from "./character-definition.ts"
 import type { CharacterPackName } from "./character-pack-name.ts"
-import { type CharacterStage, DEFAULT_CHARACTER_STAGE } from "./character-stage.ts"
 import { type ExpressionChoice, expressionChoices } from "./expression-choice.ts"
 import { type Expression, EXPRESSIONS } from "./expression.ts"
 
@@ -74,8 +73,6 @@ export type CharacterInfo = {
    * 定義に `diaryFont` が無いパックでは undefined（`--font-serif` のまま）。
    */
   readonly diaryFont?: string
-  /** {@link CharacterDefinition.stage}（立ち絵の置き方）。定義が無いパックでは既定の置き方を持つ。 */
-  readonly stage: CharacterStage
   /**
    * 立ち絵と差し色を画面から変えられるか。
    * 変えた結果の書き込み先は `~/.tsukumo/characters/<name>/` の1箇所だけで、そこに書いた版が探索の順で起動先の `characters/local` に負けるパックだけが false になる（書いても次の起動で読まれないので、画面から口を出さない）。
@@ -84,7 +81,7 @@ export type CharacterInfo = {
 }
 
 /**
- * 切り替えの選択肢1つ分（キャラクターの紙の一覧の1行）。
+ * 切り替えの選択肢1つ分（サイドバーの `<select>`）。
  * `name` は `characters/<name>` のディレクトリ名で、`label` は画面に出す名前（`character.json` の `name`。無ければ `name`）。
  */
 export type CharacterPackChoice = {
@@ -169,7 +166,6 @@ export function toCharacterInfo(source: CharacterInfoSource): CharacterInfo {
         ? undefined
         : backgroundWithUrl(definition.background, assetUrl),
     diaryFont: definition?.diaryFont === undefined ? undefined : assetUrl(definition.diaryFont),
-    stage: definition?.stage ?? DEFAULT_CHARACTER_STAGE,
     editable: source.editable,
   }
 }

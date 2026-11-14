@@ -18,6 +18,9 @@ afterEach(() => {
   useSessionSwitcherRequest.setState(useSessionSwitcherRequest.getInitialState(), true)
 })
 
+// ラベルは句ごとの要素に分かれていて、jsdom は要素の境目に空白を挟んで名前を作る。
+const PREVIOUS_LABEL = /前のやり取り\s*を見る/
+
 const READY_TASK: TaskSummaryItem = {
   id: "X-1",
   summary: "架空のタスク",
@@ -84,43 +87,33 @@ describe("Welcome（キーで始める）", () => {
   })
 })
 
-describe("Welcome（札のほかの口）", () => {
-  it("札が並び、「ほかの始め方」の札は無い", () => {
+describe("Welcome（ほかの始め方）", () => {
+  it("「前のやり取りを見る」で切り替え画面を開く", () => {
     renderWelcome(FILLED)
 
-    expect(document.body.querySelector("ul")).not.toBeNull()
-    expect(screen.queryByText("ほかの始め方")).toBeNull()
-    expect(screen.queryByRole("button", { name: /自分で書く/ })).toBeNull()
-  })
-
-  it("キー ← で切り替え画面を開く", () => {
-    renderWelcome(FILLED)
-
-    fireEvent.keyDown(document.body, { key: "ArrowLeft" })
+    fireEvent.click(screen.getByRole("button", { name: PREVIOUS_LABEL }))
 
     expect(useSessionSwitcherRequest.getState().open).toBe(true)
   })
 
-  it("別の作業ツリーの行しか無いときも、キー ← で切り替え画面が開く", () => {
+  it("別の作業ツリーの行しか無いときは、前回の続きの札は出ないが「前のやり取りを見る」は出る", () => {
     const [previous] = FILLED.sessions ?? []
     renderWelcome({
       tasks: { kind: "known", items: [], omittedClosedCount: 0 },
       sessions: previous === undefined ? [] : [{ ...previous, inCurrentWorktree: false }],
     })
 
-    fireEvent.keyDown(document.body, { key: "ArrowLeft" })
-
     expect(document.body.querySelector("ul")).toBeNull()
-    expect(useSessionSwitcherRequest.getState().open).toBe(true)
+    expect(screen.getByRole("button", { name: PREVIOUS_LABEL })).toBeTruthy()
   })
 
-  it("空の帳面（タスク0件・続き無し）では札が出ず、一文だけ出て、前のやり取りのキーも効かない", () => {
+  it("空の帳面（タスク0件・続き無し）では札が出ず、「自分で書く」だけが大きく出て、前のやり取りの口も無い", () => {
     renderWelcome({ tasks: { kind: "known", items: [], omittedClosedCount: 0 } })
 
-    fireEvent.keyDown(document.body, { key: "ArrowLeft" })
-
     expect(document.body.querySelector("ul")).toBeNull()
-    expect(screen.getByText("入力欄から頼める。")).toBeTruthy()
-    expect(useSessionSwitcherRequest.getState().open).toBe(false)
+    expect(
+      screen.getByRole("button", { name: /自分で書く/ }).closest(".others-large"),
+    ).not.toBeNull()
+    expect(screen.queryByRole("button", { name: PREVIOUS_LABEL })).toBeNull()
   })
 })

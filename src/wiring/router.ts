@@ -53,10 +53,6 @@ import {
   type TokenUsageProcedurePorts,
   tokenUsageProcedure,
 } from "../server/usage/adapter/token-usage-procedure.ts"
-import {
-  type UsualDurationProcedurePorts,
-  usualDurationProcedure,
-} from "../server/usage/adapter/usual-duration-procedure.ts"
 import type { UsageReviewCommandPorts } from "../server/usage/core/review/usage-review-command.ts"
 import { frameProcedure } from "../server/view-server/adapter/rpc/frame-procedure.ts"
 import {
@@ -81,7 +77,6 @@ export type RpcRouterPorts = RepositoryProcedurePorts &
   AchievementProcedurePorts &
   SessionDigestProcedurePorts &
   SessionClaimProcedurePorts &
-  UsualDurationProcedurePorts &
   Pick<WorkflowSettingProcedurePorts, "readWorkflowSetting" | "readWorkflowEntries">
 
 /** 読み取りの手続きを束ね、照合のミドルウェアを全部の前に掛ける（`/rpc` に載る）。 */
@@ -98,7 +93,6 @@ export function createRpcRouter(ports: RpcRouterPorts) {
       sessionDigest: sessionDigestProcedure(ports),
       sessionClaim: sessionClaimProcedure(ports),
       workflowSetting: workflowSettingProcedure(ports),
-      usualDuration: usualDurationProcedure(ports),
     })
 }
 

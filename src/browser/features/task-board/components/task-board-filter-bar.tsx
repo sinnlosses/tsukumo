@@ -56,9 +56,7 @@ export function TaskBoardFilterBar(props: {
  * 開いたときのフォーカスを検索欄に置くため、`autofocus` の属性を書く。
  * `showModal()` は `autofocus` の属性を持つ子へフォーカスを置き、無ければ最初のフォーカスできる子（↑↓ を受ける器）へ置く。
  * React の `autoFocus` は属性を書かずに描いた瞬間に `focus()` するだけで、そのあとに走る `showModal()` に上書きされる。
- * 右から重ねる紙（`<Sheet>`）の `Drawer` は `data-autofocus` の属性を持つ要素へフォーカスを置くので、あわせて書く。
  */
 function markAutofocus(element: HTMLInputElement | null): void {
   element?.setAttribute("autofocus", "")
-  element?.setAttribute("data-autofocus", "")
 }

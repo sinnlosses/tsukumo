@@ -2,7 +2,7 @@
 // 過去のやり取りへ移って戻ったときは、そのやり取りで最後に読んでいた見出しの位置から見せる（ページを開いているあいだだけ覚える）。
 //
 // `scrollTop` ではなく `scrollIntoView` を使う。
-// 実際に転がる祖先は、広い画面も狭い画面（≤760px）も紙の `main[data-region="paper"]` で、ページ自身は転がらない。
+// 実際に転がる祖先は、広い画面も狭い画面（≤760px）も `main[data-region="main"]` で、ページ自身は転がらない。
 // `scrollIntoView` は「どの祖先が転がっているか」を呼ぶ側が知らなくても、転がる祖先を全部たどって動かす。
 // 読み位置を戻すときは差を測って動かすので、転がる祖先を自分で探す（`scrollerOf`）。
 
@@ -138,19 +138,22 @@ function headingTopsOf(root: HTMLElement): readonly number[] {
   return readableHeadings(root).map((heading) => heading.getBoundingClientRect().top)
 }
 
-/** 購読を張るときに解く、転がる祖先。 */
-type ScrollGeometry = { readonly scroller: Element }
+/** 購読を張るときに解く、転がる祖先と札の頭の高さ。 */
+type ScrollGeometry = { readonly scroller: Element; readonly headHeight: number }
 
 function resolveGeometry(root: HTMLElement): ScrollGeometry {
-  return { scroller: scrollerOf(root) }
+  const headHeight = Number.parseFloat(
+    getComputedStyle(root).getPropertyValue("--turn-card-head-height"),
+  )
+  return { scroller: scrollerOf(root), headHeight: Number.isFinite(headHeight) ? headHeight : 0 }
 }
 
-/** 転がる祖先と、読む面の基準の線（祖先の上端）。解いていなければここで解く。 */
+/** 転がる祖先と、読む面の基準の線（祖先の上端＋札の頭の高さ）。解いていなければここで解く。 */
 function baselineOf(
   root: HTMLElement,
   geometryRef: RefObject<ScrollGeometry | undefined>,
 ): { readonly scroller: Element; readonly baseline: number } {
-  const { scroller } = geometryRef.current ?? resolveGeometry(root)
+  const { scroller, headHeight } = geometryRef.current ?? resolveGeometry(root)
   const top = scroller === document.documentElement ? 0 : scroller.getBoundingClientRect().top
-  return { scroller, baseline: top }
+  return { scroller, baseline: top + headHeight }
 }

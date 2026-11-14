@@ -1,5 +1,5 @@
-// 始め方の一覧の札を、状態・前回のセッションの要約・タスク一覧から用意する。
-// 札のボタンは依頼をすぐ送り、キーは札を押すほか、ほかの口（入力欄・切り替え画面）を開く。
+// 始め方の一覧の札と「ほかの始め方」を、状態・前回のセッションの要約・タスク一覧から用意する。
+// ボタンとキーは、どちらも依頼をすぐ送るか、ほかの口（入力欄・タスクのモーダル・切り替え画面）を開く。
 
 import {
   characterFaceInfo,
@@ -7,8 +7,10 @@ import {
 } from "../../../../../../domain/character-face.ts"
 import { isOverlayOpen } from "../../../../../../hooks/open-overlay.ts"
 import { useEventListener } from "../../../../../../hooks/use-event-listener.ts"
+import { useComposerFocus } from "../../../../../../stores/composer-focus.ts"
 import { useSessionSwitcherRequest } from "../../../../../../stores/session-switcher-request.ts"
 import { useSession } from "../../../../../../stores/session.ts"
+import { useTaskBoardRequest } from "../../../../../../stores/task-board-request.ts"
 import { nowEpochMilliseconds } from "../../../../../../utils/clock.ts"
 import type { WelcomeCard } from "../../../domain/welcome-entry-list.ts"
 import { useWelcomeCards } from "../../hooks/use-welcome-card-list.ts"
@@ -17,8 +19,13 @@ import { welcomeKeyOf } from "../domain/welcome-key.ts"
 export type WelcomeModel = {
   readonly cards: readonly WelcomeCard[]
   readonly face: CharacterFaceInfo
+  /** 切り替え画面で選べる、いまのセッション以外の行があるか（「前のやり取りを見る」を出すか）。 */
+  readonly hasOtherSessions: boolean
   /** 札の「始める」。入力欄を経由せず依頼を送る。 */
   readonly onStart: (card: WelcomeCard) => void
+  readonly onWrite: () => void
+  readonly onPickTask: () => void
+  readonly onSeePrevious: () => void
 }
 
 export function useWelcome(): WelcomeModel {
@@ -26,6 +33,8 @@ export function useWelcome(): WelcomeModel {
   const { cards, hasOtherSessions } = useWelcomeCards()
   const character = useSession((session) => session.state.character)
   const asking = useSession((session) => session.state.pending.length > 0)
+  const requestFocus = useComposerFocus((state) => state.requestFocus)
+  const openList = useTaskBoardRequest((state) => state.openList)
   const openSwitcher = useSessionSwitcherRequest((state) => state.openSwitcher)
 
   function onSeePrevious(): void {
@@ -58,6 +67,9 @@ export function useWelcome(): WelcomeModel {
         event.preventDefault()
         onStart(card)
       }
+    } else if (key.kind === "write") {
+      event.preventDefault()
+      requestFocus()
     } else if (hasOtherSessions) {
       event.preventDefault()
       onSeePrevious()
@@ -67,6 +79,10 @@ export function useWelcome(): WelcomeModel {
   return {
     cards,
     face: characterFaceInfo(character),
+    hasOtherSessions,
     onStart,
+    onWrite: requestFocus,
+    onPickTask: openList,
+    onSeePrevious,
   }
 }

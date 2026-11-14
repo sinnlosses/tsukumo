@@ -1,4 +1,4 @@
-import { omit, pick } from "remeda"
+import { pick } from "remeda"
 import { describe, expect, it, vi } from "vitest"
 
 import { startFakeSession } from "../../../../../src/server/session-driver/adapter/fake/fake-driver.ts"
@@ -355,9 +355,6 @@ describe("startFakeSession", () => {
         toolUseId,
         argumentChars: expect.objectContaining({ total: expect.any(Number) }),
       })
-    // 疑似セッションの report は引数として読み直されるので、判定を書かなかった場面にする。
-    const written = (toolUseId: string): SessionEvent =>
-      sessionEventSchema.parse(omit(report(toolUseId), ["verdict"]))
     const finished = (toolUseId: string, isError: boolean) =>
       ({
         kind: "tool-finished",
@@ -374,9 +371,9 @@ describe("startFakeSession", () => {
             name: "架空の差し戻し",
             resume: undefined,
             steps: [
-              { afterMs: 0, waitForAnswer: false, event: written("fake-r1") },
+              { afterMs: 0, waitForAnswer: false, event: report("fake-r1") },
               { afterMs: 1, waitForAnswer: false, event: finished("fake-r1", true) },
-              { afterMs: 2, waitForAnswer: false, event: written("fake-r2") },
+              { afterMs: 2, waitForAnswer: false, event: report("fake-r2") },
               { afterMs: 3, waitForAnswer: false, event: finished("fake-r2", false) },
             ],
           },

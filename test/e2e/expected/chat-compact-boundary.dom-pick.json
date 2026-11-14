@@ -1,9 +1,0 @@
-{
-  "paper": [
-    { "tag": "div", "attributes": { "data-speaker": "user" }, "children": ["架空の雑談その1（区切りより前）"] },
-    { "tag": "div", "attributes": { "data-speaker": "character" }, "children": ["区切りより前のセリフだよ。"] },
-    { "tag": "hr", "attributes": { "data-speaker": "boundary" } },
-    { "tag": "div", "attributes": { "data-speaker": "user" }, "children": ["架空の雑談その2（区切りより後）"] },
-    { "tag": "div", "attributes": { "data-speaker": "character" }, "children": ["区切りより後のセリフだよ。"] }
-  ]
-}

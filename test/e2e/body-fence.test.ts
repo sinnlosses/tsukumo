@@ -11,7 +11,7 @@ test.describe("body → メインビュー", () => {
       scenario: "body-fence-view",
       scene: "body-fence-view",
       viewport: "wide",
-      domRoots: ["paper"],
+      domRoots: ["main"],
     })
 
     await room.waitForEvent("turn-finished")

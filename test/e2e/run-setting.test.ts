@@ -1,31 +1,26 @@
-import { expect, test } from "./room-fixture.ts"
+import { expect, test, VIEWPORTS } from "./room-fixture.ts"
 
-// モデル・effort の操作子（docs/architecture/testing.md「E2E のシナリオの一覧」）の2本。
-// 場面は名指しせず（`opening` のまま）。
-// 1本目は、部屋の右上の「設定」で設定の紙を開き、クリック・キーボードで吊り下げのカードを開閉でき、
-// 選ぶと新しいセッションの既定を書くコマンドが流れることを確かめる。
-// 2本目は、入力欄の下の行のモデルの札を押して選ぶと、いまのセッションのモデルが届いた値で変わることを確かめる。
+// モデル・effort・許可モードの操作子（docs/architecture/testing.md「E2E のシナリオの一覧」）。
+// 場面は名指しせず（`opening` のまま）。広いビューポートのサイドバー下端と、中くらいのビューポート幅の柱の両方で、
+// クリック・キーボードで吊り下げのカードを開閉でき、選ぶと `session.setModel` 等のコマンドが流れることを確かめる。
 //
-// 値が変わったかどうかは `waitForEvent` の回数ではなく `<select>` の value を見て判定する。
+// 値が変わったかどうかは `waitForEvent` の回数ではなく `<select>` の value を見て判定する
+// （`opening` の最初の一巡でも `session-info` が1回流れるため、回数を数える待ちは数えズレる）。
 
 const ELAPSED_MS = 60_000
 
-test.describe("新しいセッションの既定のモデル・effort の操作子", () => {
-  test("設定の紙で、クリックで吊り下げのカードが開き、↓ と Enter で選ぶと既定のモデルが変わり、Esc で閉じる", async ({
+test.describe("モデル・effort・許可モードの操作子", () => {
+  test("広いビューポートのサイドバー下端で、クリックで吊り下げのカードが開き、選ぶと session.setModel が流れ、Esc で閉じる", async ({
     run,
   }) => {
     const room = await run.open({
       scenario: "run-setting-model-selected",
       scene: "none",
       viewport: "wide",
-      domRoots: [],
+      domRoots: ["sidebar"],
     })
 
-    await room.page
-      .locator('[data-region="sidebar"]')
-      .getByRole("link", { name: "設定", exact: true })
-      .click()
-    const combobox = room.page.getByRole("combobox", { name: "新しいセッションの既定のモデル" })
+    const combobox = room.page.getByRole("combobox", { name: /^モデル /u })
     await combobox.click()
     await room.page.getByRole("option", { name: "Sonnet" }).waitFor()
     await room.page.keyboard.press("ArrowDown")
@@ -45,36 +40,30 @@ test.describe("新しいセッションの既定のモデル・effort の操作�
       .toBe(false)
 
     await room.settleAndMatchPickedWithMessages(ELAPSED_MS)
-  })
 
-  test("入力欄の下の行のモデルの札を押して別のモデルを選ぶと、届いた値で札の value が変わる", async ({
-    run,
-  }) => {
-    const room = await run.open({
-      scenario: "run-setting-composer-model",
-      scene: "none",
-      viewport: "wide",
-      domRoots: [],
-    })
+    await room.resize(VIEWPORTS.medium)
+    const effort = room.page.getByRole("combobox", { name: /^effort /u })
+    const effortBox = await effort.boundingBox()
+    await effort.click()
+    const option = room.page.getByRole("option", { name: "High", exact: true })
+    await option.waitFor()
+    const optionBox = await option.boundingBox()
 
-    const textArea = room.page.locator("textarea")
-    await textArea.fill("札の確かめに起こす依頼（架空）")
-    await textArea.press("Meta+Enter")
-    await room.waitForEvent("turn-finished")
+    // 柱では吊り下げのカードを横へ吊る（決まっていること）。右端の柱ではビューポートの外へ出ないよう左右どちらかへ
+    // 寄るので、縦に重ねて下へ積まれていないことだけを見る。
+    expect(effortBox).not.toBeNull()
+    expect(optionBox).not.toBeNull()
+    if (effortBox !== null && optionBox !== null) {
+      const hangsToSide =
+        optionBox.x + optionBox.width <= effortBox.x || optionBox.x >= effortBox.x + effortBox.width
+      expect(hangsToSide).toBe(true)
+    }
 
-    const chip = room.page.getByRole("combobox", { name: /^モデル / })
-    const before = await chip.evaluate((element) =>
-      element instanceof HTMLSelectElement ? element.value : "",
-    )
-    await chip.click()
-    await room.page.getByRole("option", { name: "Sonnet" }).click()
-
+    await option.click()
     await expect
       .poll(() =>
-        chip.evaluate((element) => (element instanceof HTMLSelectElement ? element.value : "")),
+        effort.evaluate((element) => (element instanceof HTMLSelectElement ? element.value : "")),
       )
-      .not.toBe(before)
-
-    await room.settleAndMatchPickedWithMessages(ELAPSED_MS)
+      .toBe("high")
   })
 })

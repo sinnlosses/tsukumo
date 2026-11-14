@@ -183,14 +183,6 @@ function violationOf(
     fileContents: new Map(),
     task: report.task,
     workPlanClosing: report.workPlanClosing,
-    verdict: report.verdict,
-    verdictWritten: report.verdictWritten,
-    closingConflict: report.closingConflict,
-    next: report.next,
-    assumptions: report.assumptions,
-    sources: report.sources,
-    previous: report.previous,
-    guideNotes: report.guideNotes,
   }).filter((violation) => REPORT_REJECTION_MODES[violation.kind] === "reject")
   return rejecting.length === 0
     ? undefined

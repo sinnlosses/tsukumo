@@ -1,13 +1,8 @@
 // 見本帳の `ui/` の節のうち、入力の部品（Field・TextField・Select）。
 
-import { ArrowUp, Square } from "lucide-react"
 import { useState, type ReactElement } from "react"
 
-import { Chip } from "../../ui/chip/chip.tsx"
-import { ComposerShell } from "../../ui/composer-shell/composer-shell.tsx"
 import { Field } from "../../ui/field/field.tsx"
-import { RoundButton } from "../../ui/round-button/round-button.tsx"
-import { Segmented } from "../../ui/segmented/segmented.tsx"
 import { Select } from "../../ui/select/select.tsx"
 import { TextField } from "../../ui/text-field/text-field.tsx"
 import { Text } from "../../ui/text/text.tsx"
@@ -23,89 +18,9 @@ export function InputGroups(): ReactElement {
   const [line, setLine] = useState("短い一行")
   const [area, setArea] = useState("複数行の\n入力欄")
   const [choice, setChoice] = useState("a")
-  const [mode, setMode] = useState("work")
-  const [filter, setFilter] = useState(true)
 
   return (
     <>
-      <Group title="Chip（入口の札・絞り込み・入力欄の札）" parts={["chip"]}>
-        <Chip
-          label="タスク"
-          count={{ kind: "shown", value: 3 }}
-          action={{ kind: "button", pressed: false, onClick: () => {} }}
-          className=""
-        />
-        <Chip
-          label="進行中"
-          count={{ kind: "none" }}
-          action={{ kind: "button", pressed: filter, onClick: () => setFilter(!filter) }}
-          className=""
-        />
-        <Chip label="Fable・高" count={{ kind: "none" }} action={{ kind: "static" }} className="" />
-      </Group>
-      <Group
-        title="ComposerShell・RoundButton（入力欄の殻と円形の送信・中断）"
-        parts={["composer-shell", "round-button"]}
-      >
-        <ComposerShell
-          drawer={{
-            kind: "shown",
-            children: (
-              <Chip
-                label="添付 1"
-                count={{ kind: "none" }}
-                action={{ kind: "static" }}
-                className=""
-              />
-            ),
-          }}
-          input={<textarea aria-label="見本の入力" placeholder="依頼する" rows={2} />}
-          tools={
-            <Chip
-              label="Fable・高"
-              count={{ kind: "none" }}
-              action={{ kind: "static" }}
-              className=""
-            />
-          }
-          actions={
-            <>
-              <RoundButton
-                action={{ kind: "press", onClick: () => {} }}
-                ariaLabel="中断（見本）"
-                title="中断"
-                disabled={false}
-                emphasis="neutral"
-                className=""
-              >
-                <Square size={14} fill="currentColor" aria-hidden="true" />
-              </RoundButton>
-              <RoundButton
-                action={{ kind: "press", onClick: () => {} }}
-                ariaLabel="送信（見本）"
-                title="送信"
-                disabled={false}
-                emphasis="solid"
-                className=""
-              >
-                <ArrowUp size={18} aria-hidden="true" />
-              </RoundButton>
-            </>
-          }
-          className=""
-        />
-      </Group>
-      <Group title="Segmented（仕事と雑談）" parts={["segmented"]}>
-        <Segmented
-          ariaLabel="見本の切り替え"
-          value={mode}
-          options={[
-            { value: "work", label: "仕事" },
-            { value: "chat", label: "雑談" },
-          ]}
-          onChange={setMode}
-        />
-      </Group>
       <Group title="TextField（1行・複数行・押せない）" parts={["text-field"]}>
         <TextField
           element="input"

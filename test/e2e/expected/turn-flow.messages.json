@@ -126,18 +126,6 @@
         "kind": "none"
       },
       "workPlanClosing": "none",
-      "verdict": "done",
-      "verdictWritten": false,
-      "closingConflict": false,
-      "next": {
-        "kind": "none"
-      },
-      "assumptions": [],
-      "sources": [],
-      "previous": {
-        "kind": "none"
-      },
-      "guideNotes": [],
       "closing": {
         "kind": "speech",
         "text": "途中まで書いたよ。",
@@ -321,21 +309,6 @@
         "kind": "none"
       },
       "workPlanClosing": "none",
-      "verdict": "done",
-      "verdictWritten": false,
-      "closingConflict": false,
-      "next": {
-        "kind": "next",
-        "owner": "you",
-        "action": "`b.ts` のキャッシュを消してよいか決めてほしい（架空のお願い）。",
-        "choices": []
-      },
-      "assumptions": [],
-      "sources": [],
-      "previous": {
-        "kind": "none"
-      },
-      "guideNotes": [],
       "closing": {
         "kind": "speech",
         "text": "書けたよ！",

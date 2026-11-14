@@ -151,35 +151,43 @@ describe("Compare の部品", () => {
       source: "retry:\n  max: 5\n  backoff: 200ms\n  jitter: true\ntimeout: 5s\n",
     }
 
-    function codeRows(container: HTMLElement): string[] {
-      return Array.from(container.querySelectorAll("pre code > span")).map(
-        (row) => row.textContent ?? "",
-      )
+    const LEGEND_BEFORE = "変えた行（前）"
+
+    function sideRows(container: HTMLElement, side: "before" | "after"): Element[] {
+      return Array.from(container.querySelectorAll(`[data-side="${side}"] pre code > span`))
     }
 
-    it("前後なら、1つの diff に重ねて、前の行に - と後の行に + の印が付く", () => {
+    it("前後なら、変えた行・足した行に印、向かいに空の行、足した行に「新設」の札、図の下に凡例が出る", () => {
       const { container } = renderPart(codePart("before-after", BEFORE_YAML, AFTER_YAML))
 
-      expect(codeRows(container)).toEqual([
-        " retry:",
-        "-  max: 3",
-        "+  max: 5",
-        "   backoff: 200ms",
-        "+  jitter: true",
-        " timeout: 5s",
+      expect(sideRows(container, "before").map((row) => row.getAttribute("data-compare"))).toEqual([
+        null,
+        "before",
+        null,
+        "gap",
+        null,
       ])
+      expect(sideRows(container, "after").map((row) => row.getAttribute("data-compare"))).toEqual([
+        null,
+        "after",
+        null,
+        "added",
+        null,
+      ])
+      expect(screen.getAllByText("新設")).toHaveLength(1)
+      expect(sideRows(container, "after")[3]?.textContent).toBe("  jitter: true新設")
+      expect(screen.getByText(LEGEND_BEFORE)).toBeTruthy()
+      expect(screen.getByText("変えた・足した行（後）")).toBeTruthy()
     })
 
-    it("対等な2つなら重ねず、側ごとにそのまま描く", () => {
+    it("対等な2つなら印も凡例も無い", () => {
       const { container } = renderPart(codePart("versus", BEFORE_YAML, AFTER_YAML))
 
-      expect(
-        container.querySelectorAll('[data-side="before"] pre, [data-side="after"] pre'),
-      ).toHaveLength(2)
-      expect(container.textContent).not.toContain("+  max: 5")
+      expect(container.querySelector("[data-compare]")).toBeNull()
+      expect(screen.queryByText(LEGEND_BEFORE)).toBeNull()
     })
 
-    it("前後で片側だけが code なら重ねない", () => {
+    it("前後で片側だけが code なら印も凡例も無い", () => {
       const points: ComparePart["sides"][number] = {
         kind: "points",
         heading: "",
@@ -187,7 +195,14 @@ describe("Compare の部品", () => {
       }
       const { container } = renderPart(codePart("before-after", points, AFTER_YAML))
 
-      expect(container.textContent).not.toContain("+  max: 5")
+      expect(container.querySelector("[data-compare]")).toBeNull()
+      expect(screen.queryByText(/行（後）/)).toBeNull()
+    })
+
+    it("前後で全部同じなら凡例を出さない", () => {
+      renderPart(codePart("before-after", BEFORE_YAML, BEFORE_YAML))
+
+      expect(screen.queryByText(/行（[前後]）/)).toBeNull()
     })
   })
 

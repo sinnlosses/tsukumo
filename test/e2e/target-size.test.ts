@@ -5,7 +5,6 @@ import { git, initGitRepository } from "../fixture/git-repository.ts"
 import { expectReadable } from "./readability-scan.ts"
 import { expect, test, VIEWPORTS } from "./room-fixture.ts"
 import {
-  openTaskBoardFromWelcome,
   openTaskBoardRoomWithDrafts,
   openTaskListRoomWithRunningTask,
   READY_TASK_ID,
@@ -15,21 +14,20 @@ import {
 // （docs/architecture/testing.md「E2E のシナリオの一覧」）。期待値は撮らず、割れたものの名前と寸法を差分に出す。
 
 test.describe("会話の画面の押す的と字", () => {
-  test("迎える画面と、そこから開くタスクのモーダルの押せるもの・字が下限を割らない（medium と large）", async ({
+  test("迎える画面とサイドバー、サイドバーのタスクのプレビューの押せるもの・字が下限を割らない（medium と large）", async ({
     run,
   }) => {
     const room = await openTaskListRoomWithRunningTask(run, "target-size-welcome", [], "medium")
-    await room.page.getByRole("listbox", { name: "着手できるタスク" }).waitFor()
+    await room.page.getByRole("button", { name: "サイドバー", exact: true }).click()
+    await room.page.locator('[data-region="sidebar"]').waitFor()
     await expectReadable(room.page)
 
-    await openTaskBoardFromWelcome(room)
-    const board = room.page.getByRole("dialog", { name: "タスク" })
-    await board.getByRole("option").filter({ hasText: READY_TASK_ID }).click()
-    await board.getByRole("button", { name: "tsukumo に頼む" }).waitFor()
+    await room.page.locator(`#task-row-${READY_TASK_ID}`).click()
+    await room.page.getByRole("button", { name: "これを始める →" }).waitFor()
     await expectReadable(room.page)
 
     await room.resize(VIEWPORTS.large)
-    await board.getByRole("button", { name: "tsukumo に頼む" }).waitFor()
+    await room.page.getByRole("button", { name: "これを始める →" }).waitFor()
     await expectReadable(room.page)
   })
 
@@ -42,7 +40,7 @@ test.describe("会話の画面の押す的と字", () => {
       viewport: "medium",
       domRoots: [],
     })
-    await room.waitForEvent("pending-changed")
+    await room.waitForEvent("turn-finished")
     await room.page.getByRole("checkbox").first().check()
     const answer = room.page.getByRole("button", { name: /これで答える/ })
     await expect.poll(() => answer.getAttribute("aria-disabled")).not.toBe("true")
@@ -61,11 +59,7 @@ test.describe("会話の画面の押す的と字", () => {
       domRoots: [],
     })
     await room.waitForEvent("pending-changed")
-    await room.page
-      .locator('[data-slot="thread"] [data-who="you"] > button', {
-        hasText: "枠の色を揃えたい（架空の依頼）",
-      })
-      .click()
+    await room.page.getByRole("button", { name: "完了: 枠の色を揃えたい（架空の依頼）" }).click()
     await room.page.getByRole("button", { name: "お伺いが届いた" }).waitFor()
     await expectReadable(room.page)
   })
@@ -122,7 +116,7 @@ test.describe("レポートの押せるパスの押す的と字", () => {
     writeFileSync(join(room.cwd, LONG_PATH), "")
     await git(room.cwd, "add", LONG_PATH)
     await git(room.cwd, "commit", "--quiet", "-m", "架空のファイル")
-    const links = room.page.locator('[data-region="paper"] span[role="button"]')
+    const links = room.page.locator('[data-region="main"] span[role="button"]')
     // 時計が止まっているので、一覧の応答を React Query が配るのに要るタイマーは応答のあとで進める。
     await room.revealAfterResponse(links.nth(2), {
       response: "listFiles",

@@ -1,19 +1,16 @@
 // 入力欄へフォーカスを入れる時機と、Esc で外す条件。
 // やり取りが閉じているときにマウントされたとき・閉じたとき（会話の画面へ戻ったときも同じ）と、スキップリンクが押されたとき。
-// 入力要素の外で `/` を押したときも、字を入れずに入れる。
 // 狭い画面（760px 以下）は、開いただけでキーボードと吹き出しの畳みを起こさないよう、前の2つでは入れない。
 
 import type { RefObject } from "react"
 
 import { isExchangeClosed } from "../../../../../../../shared/session/conversation-moment.ts"
 import { isOverlayOpen } from "../../../../../../hooks/open-overlay.ts"
-import { useEventListener } from "../../../../../../hooks/use-event-listener.ts"
 import { useExternalSync } from "../../../../../../hooks/use-external-sync.ts"
 import { isPhoneWidth } from "../../../../../../hooks/use-phone-width.ts"
 import { useComposerFocus } from "../../../../../../stores/composer-focus.ts"
 import { useSession } from "../../../../../../stores/session.ts"
 import { isFocusWithinMainView } from "../../../domain/main-view-focus.ts"
-import { isComposerFocusKey } from "../domain/composer-focus-key.ts"
 import type { ComposerKey, ComposerSurface } from "../domain/composer-surface.ts"
 
 export function useComposerFocusTiming(surfaceRef: RefObject<ComposerSurface | null>): void {
@@ -31,24 +28,6 @@ export function useComposerFocusTiming(surfaceRef: RefObject<ComposerSurface | n
       surfaceRef.current?.focus()
     }
   }, [signal, surfaceRef])
-
-  useEventListener(document, "keydown", (event) => {
-    const hit = isComposerFocusKey(
-      {
-        key: event.key,
-        metaKey: event.metaKey,
-        ctrlKey: event.ctrlKey,
-        altKey: event.altKey,
-        isComposing: event.isComposing,
-        target: event.target ?? undefined,
-      },
-      isOverlayOpen(),
-    )
-    if (hit) {
-      event.preventDefault()
-      surfaceRef.current?.focus()
-    }
-  })
 }
 
 /** 修飾キーなしの Esc で入力欄のフォーカスを外す。重なる面が開いている間は、その面を閉じる Esc に譲る。外したら true。 */

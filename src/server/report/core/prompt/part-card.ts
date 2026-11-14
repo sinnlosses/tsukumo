@@ -7,8 +7,8 @@ import { z } from "zod"
 import { REPORT_COMPONENT_SCHEMAS } from "../../../../shared/report/a2ui-report-catalog.ts"
 import { PART_CARD_NOTES, partCardNote } from "../../../../shared/report/part-card-note.ts"
 import { PART_EXAMPLES } from "../../../../shared/report/part-example-list.ts"
-import { REPORT_FIELD_CARD_NOTES } from "./report-field-card-note.ts"
 import {
+  REPORT_FIELD_CARD_NOTES,
   REPORT_FIELD_DESCRIPTIONS,
   REPORT_SECTIONS_CARD_NOTE,
   REPORT_SECTIONS_DESCRIPTION,
@@ -86,12 +86,6 @@ function reportCardSchemas() {
       sessionRemaining: noted(shape.sessionRemaining, "sessionRemaining"),
       closing: noted(shape.closing, "closing"),
       waitingLine: noted(shape.waitingLine, "waitingLine"),
-      verdict: noted(shape.verdict, "verdict"),
-      next: noted(shape.next, "next"),
-      assumptions: noted(shape.assumptions, "assumptions"),
-      sources: noted(shape.sources, "sources"),
-      previous: noted(shape.previous, "previous"),
-      guideNotes: noted(shape.guideNotes, "guideNotes"),
     }),
     Section: partCardNote(Section.describe(REPORT_SECTIONS_DESCRIPTION), REPORT_SECTIONS_CARD_NOTE),
   }

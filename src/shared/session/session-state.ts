@@ -7,7 +7,6 @@ import type { CharacterInfo, CharacterPackEntry } from "../character-pack/charac
 import type { Expression } from "../character-pack/expression.ts"
 import type { DiaryWriting } from "../diary/diary.ts"
 import type { ItemInfo, ItemSeatMap } from "../item/item.ts"
-import type { AizuchiState } from "../recommendation/aizuchi.ts"
 import type { WrittenReactionsState } from "../recommendation/reaction.ts"
 import type { RecommendationCard } from "../recommendation/recommendation-card.ts"
 import type { WelcomeGreetingState } from "../recommendation/welcome-greeting.ts"
@@ -18,7 +17,6 @@ import type { StampedPendingAsk } from "../session-driver/pending-ask.ts"
 import type { RateLimit } from "../session-driver/rate-limit.ts"
 import type { PreviousUsageReview, UsageProposalRun, UsageReview } from "../usage/usage-review.ts"
 import type { CommandDescription } from "./command-description.ts"
-import type { DelegateRole } from "./delegate-role.ts"
 import type { EffortLevel } from "./run-setting-value.ts"
 import type { SessionChoice } from "./session-choice.ts"
 import { BUILTIN_SESSION_DEFAULT, type SessionDefault } from "./session-default.ts"
@@ -119,9 +117,11 @@ export type SessionState = {
    */
   readonly finishedTurnCount: number
   /**
-   * 次に始まるターンに振る通し番号。ターンが始まるたびに1つ増え、記録が集計期間から落ちても戻らない。
-   * 描く側が React の `key` に使うので、位置（何番目のターンか）で決めると集計期間（`MAX_SESSION_STATE_TURNS`）が埋まったあとに
-   * 別のターンが同じ部品として使い回され、マウント時にしか走らない書き上げる演出が起動しなくなる（実測）。
+   * 次に始まるターンに振る通し番号。ターンが始まるたびに1つ増え、記録が集計期間から落ちても
+   * 戻らないので、同じターンはセッションが続くかぎり同じ番号になる。
+   *
+   * 番号を位置（何番目のターンか）で決めると、集計期間（`MAX_SESSION_STATE_TURNS`）がいっぱいになったあといちばん新しいターンの番号が止まる。
+   * 描く側はその番号を React の `key` に使っているので、止まると別のターンが同じ部品として使い回され、書き上げる演出（マウント時にしか走らない）が二度と起動しなくなる（実測）。
    */
   readonly nextTurnId: number
   /**
@@ -144,8 +144,6 @@ export type SessionState = {
    * `/clear` では戻さない（書き直さない）。起こし直すと初期の `none` へ戻り、新しい代が書き直す。
    */
   readonly writtenReactions: WrittenReactionsState
-  /** 相づちの組。源は `aizuchi-written` だけ。戻し方は反応の行と同じ。 */
-  readonly aizuchi: AizuchiState
   /**
    * キャラビューが立ち絵を取りに行く先（`character-changed` が届くまでは undefined）。
    * 素材そのものは持たない（`portraits` の値は `/character/<pack>/<file>` の URL）。
@@ -184,7 +182,7 @@ export type SessionState = {
    */
   readonly chatMode: boolean
   /**
-   * 雑談の欄外の「最近の話題」に出す見出し（新しい順）。要約の本文ではなく、写しから取り出した見出しだけ。
+   * 雑談のサイドバーの「最近の話題」に出す見出し（新しい順）。要約の本文ではなく、写しから取り出した見出しだけ。
    * 源は `chat-topics-changed` だけで、届くたびに丸ごと置き換える。
    * 起こし直すと初期値の空へ戻り、雑談で起こしたときだけサーバから流れ直す（仕事のときは空のまま）。
    */
@@ -195,7 +193,7 @@ export type SessionState = {
    */
   readonly chatConsolidationHalt: ChatConsolidationHalt
   /**
-   * 雑談の欄外の「覚えていること」に出す一覧（`persona.md` の `## 覚えたこと`）。`- ` を外した文面で、古い→新しいの順。
+   * 雑談のサイドバーの「覚えていること」に出す一覧（`persona.md` の `## 覚えたこと`）。`- ` を外した文面で、古い→新しいの順。
    * 源は `remembered-lines-changed` だけ。起こし直すと初期値の空へ戻る。
    */
   readonly rememberedLines: readonly string[]
@@ -229,17 +227,22 @@ export type SessionState = {
    * `background-tasks-changed` で顔ぶれから外れた分を落とし、`session-ended` で空にする。
    */
   readonly workflowProgress: readonly WorkflowProgress[]
-  /** 見直しの状態（{@link UsageReview}）。源は見直しのイベント（`UsageReviewEvent`）だけ。 */
-  readonly usageReview: UsageReview
-  /** 前回の見直しの結果（{@link PreviousUsageReview}）。 */
-  readonly previousUsageReview: PreviousUsageReview
-  /** 結果の提案の実行の状態（{@link UsageProposalRun}）。 */
-  readonly usageProposalRun: UsageProposalRun
   /**
-   * 委譲先（{@link backgroundTasks} の `agent`・`workflow`）ごとの、進みの最新の1行（{@link DelegateRole}）。差し替え方は `delegateRolesOfTasks`・`delegateRolesWithProgress`。
-   * ブラウザのメモリにだけ置く。会話のアーカイブ・計測値・診断ログ・永続化に入れない。
+   * 見直しの状態。源は見直しのイベント（`UsageReviewEvent`）だけ。
+   * 見直しは会話とは別の使い捨ての問い合わせで走るので、会話の `turn-finished` / `session-ended` では動かさず、起こし直しでも残す。
+   * 前回の結果を出すのはこの状態ではない。
    */
-  readonly delegateRoles: readonly DelegateRole[]
+  readonly usageReview: UsageReview
+  /**
+   * 前回の見直しの結果。{@link usageReview} とは別の状態で、起こし直しでもプロセスの再起動でも消えない
+   * （源は `usage-review-result` が届くたびと、プロセスを起こしたとき1回だけホームのファイルを読む口）。
+   * `usage-proposal-dismissed` が届くと、見送った提案をここからも取り除く（「前回の提案」を開き直したときに、見送ったはずの札が出ないようにするため）。
+   */
+  readonly previousUsageReview: PreviousUsageReview
+  /**
+   * 結果の提案の実行（「tsukumo に頼む」「タスクにする」）の状態。源は見直しのイベントだけで、{@link usageReview} と同じく会話のターンでは動かさない。
+   */
+  readonly usageProposalRun: UsageProposalRun
   /**
    * 成果の日記書きの進み。帯の「いまの作業」の「振り返り中」が読む。
    *
@@ -290,7 +293,6 @@ export const INITIAL_SESSION_STATE: SessionState = {
   recommendation: [],
   welcomeGreeting: { kind: "none" },
   writtenReactions: { kind: "none" },
-  aizuchi: { kind: "none" },
   character: undefined,
   characterPacks: [],
   items: [],
@@ -309,7 +311,6 @@ export const INITIAL_SESSION_STATE: SessionState = {
   usageReview: { kind: "idle" },
   previousUsageReview: { kind: "none" },
   usageProposalRun: { kind: "idle" },
-  delegateRoles: [],
   diaryWriting: { kind: "idle" },
   apiTrouble: { kind: "none" },
   rateLimit: { kind: "clear" },

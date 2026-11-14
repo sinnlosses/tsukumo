@@ -9,7 +9,7 @@ import type { Expression } from "../../src/shared/character-pack/expression.ts"
 import type { WrittenReactions } from "../../src/shared/recommendation/reaction.ts"
 import { INITIAL_SESSION_STATE, type SessionState } from "../../src/shared/session/session-state.ts"
 import { createTestQueryClient } from "../browser/query-client.tsx"
-import { type CommandSpy, putSession } from "../browser/session-store.ts"
+import { putSession } from "../browser/session-store.ts"
 import { characterInfo, shownPortraits } from "./character.ts"
 
 export const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = characterInfo({
@@ -42,10 +42,6 @@ export function speech(
 export function renderCharacterView(
   stateOverrides: Partial<SessionState>,
   viewedTurn: ViewedTurn = "newest",
-  options: {
-    /** 送られたコマンドを受け取る関数。 */
-    readonly spy?: CommandSpy
-  } = {},
 ): void {
   writeHashRoute({
     screen: "conversation",
@@ -53,7 +49,7 @@ export function renderCharacterView(
     pack: { kind: "in-use" },
     achievementDate: { kind: "today" },
   })
-  putSession({ ...INITIAL_SESSION_STATE, ...stateOverrides }, options.spy)
+  putSession({ ...INITIAL_SESSION_STATE, ...stateOverrides })
   const queryClient = createTestQueryClient()
   render(
     <QueryClientProvider client={queryClient}>

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { mainViewTurns } from "../../../src/browser/components/page/conversation/domain/main-view/main-view.ts"
+import { mainViewTurns } from "../../../src/browser/domain/main-view/main-view.ts"
 import { mainViewEntries } from "../../../src/shared/session/main-view-entry.ts"
 import type { SessionEvent } from "../../../src/shared/session/session-event.ts"
 import { applySessionEvent } from "../../../src/shared/session/session-fold.ts"
@@ -116,23 +116,6 @@ describe("applySessionEvent（変更のラベル）", () => {
         mixed: true,
       },
     })
-  })
-
-  it("report の記録は、判定・次の手・置いた前提・出どころ・前回との対応・案内の付箋をイベントから写す", () => {
-    const progress = {
-      verdict: "yours",
-      verdictWritten: true,
-      closingConflict: false,
-      next: { kind: "next", owner: "you", action: "架空の問い", choices: ["甲"] },
-      assumptions: ["架空の前提"],
-      sources: [{ mark: 1, place: "a.ts:1" }],
-      previous: { kind: "previous", resolved: ["架空1"], added: [], remaining: ["架空2"] },
-      guideNotes: [{ target: "checks", text: "架空の案内" }],
-    } as const
-
-    expect(
-      apply(REQUEST, reportEvent({ toolUseId: "toolu_r1", ...progress })).records.at(-1),
-    ).toMatchObject({ kind: "report", ...progress })
   })
 
   it("知らない toolUseId の report-change-summary では姿を変えない", () => {

@@ -61,4 +61,4 @@
   **長いアイドルのふるまい（座る・うとうと）は作らない**（席を外している時間で誰も見ていない）。
   **例外は依頼を待つ間の待ちの一言1回だけ**（利用者決定。上の「黙って立つだけの場面の埋め方」）で、
   動きは足さず、繰り返さない
-- `prefers-reduced-motion: reduce` を尊重する（規則は `src/browser/styles/page-base.css` にある）
+- `prefers-reduced-motion: reduce` を尊重する（規則は `src/browser/styles/theme.css` にある）

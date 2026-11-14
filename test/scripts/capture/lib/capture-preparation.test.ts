@@ -147,15 +147,6 @@ describe("readPreparations", () => {
     }
   })
 
-  test("--hide-for は正の整数のミリ秒を読む", () => {
-    expect(readArguments(["--hide-for", "1380000"])?.preparations).toEqual([
-      { kind: "hide", ms: 1380000 },
-    ])
-    for (const bad of ["0", "1.5", "abc"]) {
-      expect(readArguments(["--hide-for", bad])).toBeUndefined()
-    }
-  })
-
   test("知らない旗と値の無い旗は parseArgs の段で落ちる", () => {
     expect(() => readArguments(["--foo", "x"])).toThrow("Unknown option '--foo'")
     expect(() => readArguments(["--click"])).toThrow("Option '--click <value>' argument missing")

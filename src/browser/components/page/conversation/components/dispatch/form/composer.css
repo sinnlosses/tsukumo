@@ -1,9 +1,6 @@
 /* 「↓ <キャラクター名> が質問しています…」の帯と「お伺いへ」の口。
    下の札を指す矢印から始まるので、テキスト入力欄の上に置く。
    字は答え待ちの色で、地は持たない（枠の色と二重にしない）。 */
-.dispatch-inquiry-band {
-  flex: 0 0 auto;
-}
 .dispatch-band {
   flex: 0 0 auto;
   margin: 0 0 var(--space-sm);
@@ -89,66 +86,6 @@
   }
   .dispatch-new-session {
     padding: 0 var(--space-sm);
-  }
-}
-/* 広い画面の入力欄は殻の中に並ぶ。打つと伸びる欄の下の行に、左に道具とモデル・effort・許可モードの札、右に経過時間と送信か中断を置く。
-   新しい器の「働く」「尋ねる」「渡す」姿勢では、働く・尋ねるは補完の口を隠し、渡すは画像の口だけ残す。 */
-@media (min-width: 761px) {
-  /* 殻（`<ComposerShell>`）の中。本体の角丸・余白・影は Astryx の `ChatComposer` が持つ。
-     入力の面は殻の地に溶かし、枠と地を持たせない。
-     `/` の候補は入力欄の上に浮かべる（殻の本体が位置の基準）。 */
-  .dispatch-shell .dispatch-text-wrap {
-    position: static;
-  }
-  .dispatch-shell .dispatch-text {
-    box-sizing: border-box;
-    min-height: 1.6em;
-    max-height: 176px;
-    padding: var(--stack-tight) var(--inline-control) 0;
-    border: none;
-    background: transparent;
-    font-size: var(--font-input);
-    line-height: 1.6;
-    field-sizing: content;
-    overflow-y: auto;
-  }
-  /* 輪は殻の本体が描く（キーボードで入ったときだけ）ので、面の輪は色だけ消して幅と線種を残す（強制カラーでは見える）。 */
-  .dispatch-shell .dispatch-text:focus-visible,
-  .dispatch-form.is-answering .dispatch-shell .dispatch-text:focus-visible {
-    outline-color: transparent;
-    border-color: transparent;
-  }
-  .dispatch-shell .markdown-editor .markdown-editor-view {
-    border: none;
-    background: transparent;
-  }
-  .dispatch-shell .markdown-editor .markdown-editor-view:global(.cm-focused) {
-    outline-color: transparent;
-  }
-  .dispatch-shell .dispatch-suggestions {
-    bottom: calc(100% + var(--inline-control));
-    max-height: none;
-    padding: var(--stack-tight);
-    border-radius: var(--radius-lg);
-    background: var(--surface-float);
-    box-shadow: var(--shadow-raised);
-  }
-  .dispatch-shell .dispatch-tool {
-    width: 2rem;
-    height: 2rem;
-    border-radius: var(--radius-pill);
-  }
-  /* 尋ねるでは、お伺いがすぐ上にあるので、帯と口を出さず、答えを書く欄の輪も重ねない。 */
-  [data-posture="ask"] .dispatch-inquiry-band,
-  [data-posture="ask"] .dispatch-pending-glow {
-    display: none;
-  }
-  [data-posture="ask"] .dispatch-form.is-answering {
-    padding: 0;
-    border: none;
-  }
-  [data-posture="ask"] .dispatch-tool {
-    display: none;
   }
 }
 /* 狭い画面（760px 以下）。左に ＋、まん中に丸い欄、右に丸ボタン（<PhoneTurnAction>）。

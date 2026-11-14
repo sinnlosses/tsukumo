@@ -1,14 +1,10 @@
 // セッションの記録を、メインビューに時系列で流す記録（`MainViewEntry`）へ変える。
 // セッションの状態から導くだけで、別の状態は持たない。
 
-import { pick } from "remeda"
-
 import { changedFilesView } from "../report/changed-file-section.ts"
 import { sectionDrawsAnything } from "../report/drawn-entry-markdown.ts"
-import { type CheckBashOutcome, sealOfCheck } from "../report/report-check-seal.ts"
 import { reportChecksView } from "../report/report-check-view.ts"
 import { phaseTimesView } from "../report/report-phase-time.ts"
-import { REPORT_PROGRESS_KEYS } from "../report/report-progress-field.ts"
 import {
   staticReportComponents,
   writtenReportView,
@@ -105,11 +101,7 @@ function toMainViewEntries(record: SessionRecord, context: TurnContext): readonl
   if (record.kind === "speech") {
     return record.answersAside ? [{ kind: "aside-answer", text: record.text }] : []
   }
-  if (
-    record.kind === "compact-boundary" ||
-    record.kind === "reaction" ||
-    record.kind === "aizuchi-chip"
-  ) {
+  if (record.kind === "compact-boundary" || record.kind === "reaction") {
     return []
   }
   if (record.kind === "aside") {
@@ -179,8 +171,6 @@ function reportRegionsOf(
     report.checks,
     (command) => bashCommandDuration(context, command),
     isBlankText(report.favor) ? { kind: "none" } : { kind: "favor", id: favorId },
-    (check) =>
-      sealOfCheck(check, bashOutcomeOf(lastBashOf(context, check.command)), report.verification),
   )
   const phaseRows = phaseDurations(context.trail, report.time, report.workPlanClosing)
   const { drawn, layout, imageSource } = reportDrawnPieces(report)
@@ -215,16 +205,8 @@ function reportRegionsOf(
           changedFiles: changedFilesView(report.changeSummary),
           verification: report.verification,
         },
-        progress: pick(report, REPORT_PROGRESS_KEYS),
       },
       { id: favorId, text: report.favor },
     ),
   }
-}
-
-function bashOutcomeOf(bash: ReturnType<typeof lastBashOf>): CheckBashOutcome {
-  if (bash === "none") {
-    return "none"
-  }
-  return bash.status.kind === "running" ? "running" : bash.status.result.kind
 }

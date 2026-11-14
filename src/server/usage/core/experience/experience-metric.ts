@@ -16,7 +16,6 @@ import type {
   ClosedMoment,
   SplitDivider,
 } from "../../../../shared/usage/experience-metric-record.ts"
-import { observedDurations, type PhaseEntry, type WaitEntry } from "./observed-duration.ts"
 import { reportBodyChars } from "./report-body-length.ts"
 
 /** 進行の計測値の読み書きの関数。書けなくても・読めなくても例外を投げない。 */
@@ -36,15 +35,7 @@ export type ExperienceMetricPeriod = {
  * 記録の1件（書き出す行そのものではない）。
  * `at` はエポックミリ秒で、ISO 8601 への変換と日付ごとのファイルの選択は `adapter` 側の仕事。
  */
-export type ExperienceMetricEntry =
-  | ConclusionEntry
-  | RecoveryEntry
-  | SplitEntry
-  | ReadingEntry
-  | PhaseEntry
-  | WaitEntry
-
-export type { PhaseEntry, WaitEntry }
+export type ExperienceMetricEntry = ConclusionEntry | RecoveryEntry | SplitEntry | ReadingEntry
 
 /** 最終レポートで閉じてから、次の依頼を送るまで。`at` は次の依頼の時刻。 */
 export type ReadingEntry = {
@@ -128,8 +119,7 @@ export function createExperienceMetricRecorder(log: ExperienceMetricLog): Experi
       tally = step.tally
       const readStep = stepReading(reading, event, state, at, step.entries)
       reading = readStep.reading
-      const durations = state.chatMode ? [] : observedDurations(event, state, at)
-      for (const entry of [...readStep.entries, ...step.entries, ...durations]) {
+      for (const entry of [...readStep.entries, ...step.entries]) {
         log.append(entry)
       }
     },

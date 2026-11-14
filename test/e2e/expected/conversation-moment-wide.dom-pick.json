@@ -1,9 +1,0 @@
-{
-  "paper": [
-    { "tag": "div", "attributes": { "data-main-view-content": "report" }, "children": [
-      { "tag": "section", "attributes": { "data-report-step": "" }, "children": [
-        { "tag": "h4", "children": ["疑似セッションのレポート"] }
-      ] }
-    ] }
-  ]
-}

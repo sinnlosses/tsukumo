@@ -1,7 +1,7 @@
 // 段の番号（群ごとの通し番号）と、番号を使った段の呼び名・見出し・位置の字を組む決まり。
 
-import type { PHASE_SPANS } from "../usage/experience-metric-record.ts"
 import {
+  finishedPhaseCount,
   type DelegatedRange,
   phaseCount,
   type PlannedPhase,
@@ -13,7 +13,7 @@ import {
  * フェーズのグループ。範囲が無ければ並び全体の `whole`、範囲があれば範囲の前の `lead`・範囲の `delegated`・範囲の後ろの `trail`。
  * 段の番号は群ごとに1から数える。
  */
-export type PhaseSpan = (typeof PHASE_SPANS)[number]
+export type PhaseSpan = "whole" | "lead" | "delegated" | "trail"
 
 /**
  * 段の番号。`numbered` は群 `span` と、群の中の `ordinals`「2」（段が2つ以上なら「2–3」）と `text`「2/4」（「2–3/4」）、
@@ -43,15 +43,6 @@ export function plannedPhaseNumber(
   return phaseNumberOf(plan.delegatedRange, [phase.index], phaseCount(plan.phases))
 }
 
-/** 段の群。番号を持たない段は範囲の1要素なので `delegated`。 */
-export function phaseSpanOf(
-  plan: Pick<WorkPlan, "phases" | "delegatedRange">,
-  phase: Pick<PlannedPhase, "index">,
-): PhaseSpan {
-  const number = plannedPhaseNumber(plan, phase)
-  return number.kind === "numbered" ? number.span : "delegated"
-}
-
 /** 番号の字「後 1/3」（並び全体の群なら「1/3」）。番号を持たない段は空の文字列。 */
 export function phaseNumberText(number: PhaseNumber): string {
   if (number.kind === "named") {
@@ -64,6 +55,26 @@ export function phaseNumberText(number: PhaseNumber): string {
 /** 群の名を前に付けた番号「後1」「2–3」（並び全体の群なら番号だけ）。番号を持たない段は空の文字列。 */
 export function phaseOrdinalText(number: PhaseNumber): string {
   return number.kind === "named" ? "" : `${PHASE_SPAN_NAMES[number.span]}${number.ordinals}`
+}
+
+/** 全部の段（範囲の外を含む）で言う済み具合「5段すべて済み」「5段のうち4段済み」。 */
+export function completionText(
+  plan: Pick<WorkPlan, "phases" | "current" | "finishedInGroup">,
+): string {
+  const total = phaseCount(plan.phases)
+  const finished = finishedPhaseCount(plan)
+  return finished >= total
+    ? `${String(total)}フェーズすべて済み`
+    : `${String(total)}フェーズのうち${String(finished)}フェーズ済み`
+}
+
+/** 段の呼び名「後1. 段の名前」（範囲が無ければ「2. 段の名前」、番号を持たない段は名前だけ）。 */
+export function plannedPhaseTitle(
+  plan: Pick<WorkPlan, "phases" | "delegatedRange">,
+  phase: Pick<PlannedPhase, "index" | "name">,
+): string {
+  const ordinal = phaseOrdinalText(plannedPhaseNumber(plan, phase))
+  return ordinal === "" ? phase.name : `${ordinal}. ${phase.name}`
 }
 
 /**

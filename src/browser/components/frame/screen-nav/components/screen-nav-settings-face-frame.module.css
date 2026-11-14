@@ -1,0 +1,19 @@
+/* 設定のダイアログの面の枠。面の名前と中身はスクロールし、下の帯は面の下端に留まる。 */
+
+.face-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--space-2xl) var(--space-3xl);
+}
+.face-title {
+  margin: 0 0 var(--space-lg);
+}
+.foot {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-sm);
+  padding: var(--space-lg) var(--space-3xl);
+}

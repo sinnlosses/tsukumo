@@ -1,4 +1,4 @@
-/* 日の切り替え。右の列の頭で、日付の見出しと前後の日のボタンを並べる。 */
+/* 日の切り替え。題「成果」と同じ行に置く。 */
 .achievement-day-switch-nav {
   display: flex;
   align-items: center;

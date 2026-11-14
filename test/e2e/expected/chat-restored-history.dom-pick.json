@@ -1,5 +1,5 @@
 {
-  "paper": [
+  "main": [
     { "tag": "div", "attributes": { "data-speaker": "user" }, "children": ["前のセッションの架空の雑談（組み直したもの）"] },
     { "tag": "div", "attributes": { "data-speaker": "character", "role": "button" }, "children": ["前のセッションの架空のセリフだよ。"] },
     { "tag": "div", "attributes": { "data-day": "2026-01-15" } },

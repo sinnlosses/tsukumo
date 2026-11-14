@@ -1,23 +1,41 @@
-// 会話の画面の右端に常設するサイドバーの枠。上から検索の入口（search）・中段（body）・下の入口の行（foot）を並べる。
-// 場所は `data-region="sidebar"` でも名乗る（class 名はハッシュ化されるので、外から場所を指す口はこちらを使う）。
-// 中身は props で受け、ストアを読まない。転がるのは中段だけ。
+// サイドバー本体。独立した2つの塊（タスク一覧・下端の帯）を並べる。
+// どちらかの中身が空・不明でも、残りは表示を続ける（それぞれ自分の分だけ見る）。
+// 起動先に `.beads` が無い（`tasks.kind === "no-beads"`）ときは、タスクの節ごと出さない。
+//
+// 下端の帯はモデル・effort・許可モードの操作子と、コンテキストの使用量・プラン使用量の目盛り（`SidebarFooter`）。
+// 区画ではないので見出しを名乗らず、`SidebarSection` の枠も借りない。
+// サイドバーの左右いっぱいに広がり、上端の罫線と一段沈んだ地で、伸び縮みするタスクの区画と切り分ける。
 
-import type { ReactElement, ReactNode } from "react"
+// 雑談中は4段に差し替える: 上からプロフィール・最近の話題・覚えていること・下端の帯。
+// 差し替えを決めるのは `<Layout>` ではなくここで、どちらの形もサイドバーの中に閉じる。
 
+import type { ReactElement } from "react"
+
+import { useSession } from "../../../stores/session.ts"
+import { PersonaMemorySection } from "./components/persona-memory-section.tsx"
+import { ProfileCard } from "./components/profile-card.tsx"
+import { RecentTopicSection } from "./components/recent-topic-section.tsx"
+import { SidebarFooter } from "./components/sidebar-footer.tsx"
+import { TaskSection } from "./components/task-section.tsx"
 import styles from "./sidebar.module.css"
 
-type SidebarProps = {
-  readonly search: ReactNode
-  readonly body: ReactNode
-  readonly foot: ReactNode
-}
-
-export function Sidebar(props: SidebarProps): ReactElement {
+export function Sidebar(): ReactElement {
+  const chatMode = useSession((session) => session.state.chatMode)
+  const noBeads = useSession((session) => session.state.tasks.kind === "no-beads")
   return (
-    <aside className={styles["sidebar"]} data-region="sidebar" aria-label="サイドバー">
-      <div className={styles["sidebar-search"]}>{props.search}</div>
-      <div className={styles["sidebar-body"]}>{props.body}</div>
-      <div className={styles["sidebar-foot"]}>{props.foot}</div>
-    </aside>
+    <>
+      {chatMode && (
+        <>
+          <ProfileCard />
+          {/* 2段目と3段目はまとめて1つの入れ物で転がす（札と下端の帯は伸び縮みしない）。 */}
+          <div className={styles["sidebar-chat-body"]}>
+            <RecentTopicSection />
+            <PersonaMemorySection />
+          </div>
+        </>
+      )}
+      {!chatMode && !noBeads && <TaskSection />}
+      <SidebarFooter />
+    </>
   )
 }

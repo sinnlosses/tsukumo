@@ -1,79 +1,15 @@
-/* `reset.css` が消す箇条の印を、本文の箇条書きにだけ戻す。字下げは下の `.detail-block` の規則が持つ。 */
+/* `reset.css` が消す箇条の印と字下げを、本文の箇条書きにだけ戻す。 */
 :is(.detail-block, [data-report-region]) > ul,
 :is(.detail-block, [data-report-region]) > .report-with-gutter > ul {
+  padding-inline-start: 2em;
   list-style: disc;
 }
 :is(.detail-block, [data-report-region]) > ol,
 :is(.detail-block, [data-report-region]) > .report-with-gutter > ol {
+  padding-inline-start: 2em;
   list-style: decimal;
 }
 :is(.detail-block, [data-report-region]) :is(li, blockquote) > :is(ul, ol) {
+  padding-inline-start: 2em;
   list-style: revert;
-}
-
-/* 紙の「文の族」。見本は docs/history/mockup/report-progress-2026-11-12/index.html の `?group=parts&moment=text`。
-   箇条は字下げを 1.15em に詰め、ラベルは太字で文の頭に置く（列に組まない）。
-   済みは ✓ と字の濃さの両方で言い、未了は ○ で言う。畳みは枠も地も持たず、題だけを静かな字で出す。 */
-.detail-block {
-  & :is(ul, ol) {
-    padding-inline-start: 1.15em;
-  }
-  /* 名前付きの並び（`list` の `label`）。 */
-  & .report-labeled-list > :is(ul, ol) {
-    list-style: revert;
-  }
-  & .report-list-label {
-    padding-inline-end: var(--inline-tight);
-    color: var(--ink);
-    font-weight: 700;
-    overflow-wrap: break-word;
-  }
-  & .report-list-text {
-    color: var(--ink);
-    overflow-wrap: anywhere;
-  }
-  & .report-labeled-list code {
-    font-size: 0.86em;
-  }
-  & ul:has(> .report-task-item) {
-    padding-inline-start: 0;
-    list-style: none;
-  }
-  & .report-task-item {
-    display: grid;
-    grid-template-columns: 22px minmax(0, 1fr);
-    align-items: baseline;
-  }
-  & .report-task-item:has(> .report-task-check-done) {
-    color: var(--ink-soft);
-  }
-  & .report-task-check {
-    width: auto;
-    height: auto;
-    margin: 0;
-    border: none;
-    background: none;
-    font-weight: 800;
-    line-height: inherit;
-    text-align: start;
-    vertical-align: baseline;
-    color: var(--ink-quiet);
-  }
-  & .report-task-check:not(.report-task-check-done)::before {
-    content: "○";
-    font-weight: 400;
-  }
-  & .report-task-check-done {
-    color: var(--state-ok);
-  }
-  & :global(.astryx-blockquote) {
-    padding-inline-start: var(--gutter-region);
-    border-inline-start: none;
-    box-shadow: inset 2px 0 0 var(--ink-quiet);
-    color: var(--ink-soft);
-    & cite {
-      color: var(--ink-quiet);
-      font-size: var(--font-secondary);
-    }
-  }
 }

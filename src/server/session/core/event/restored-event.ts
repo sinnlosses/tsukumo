@@ -57,7 +57,6 @@ function mapRecordTimes(
     record.kind === "aside" ||
     record.kind === "speech" ||
     record.kind === "reaction" ||
-    record.kind === "aizuchi-chip" ||
     record.kind === "work-plan" ||
     record.kind === "report"
   ) {

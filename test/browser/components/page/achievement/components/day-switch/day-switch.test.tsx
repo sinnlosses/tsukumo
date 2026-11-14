@@ -64,13 +64,6 @@ describe("DaySwitch", () => {
     )
   })
 
-  it("日付を level 2 の見出しにし、題の「成果」は出さない", () => {
-    renderSwitch(KNOWN_TODAY)
-
-    expect(screen.getByRole("heading", { level: 2 }).textContent).toBe("9月24日（木）")
-    expect(screen.queryByRole("heading", { level: 1 })).toBeNull()
-  })
-
   it("今年でなければ年を添える", () => {
     renderSwitch(KNOWN_OTHER_YEAR)
     expect(document.querySelector(".achievement-day-switch-label")?.textContent).toBe(

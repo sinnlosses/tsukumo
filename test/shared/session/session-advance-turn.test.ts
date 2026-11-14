@@ -180,7 +180,7 @@ describe("applySessionEvent", () => {
     ])
   })
 
-  it("finishedTurnCount は turn が running に戻っても前の値のまま、次の turn-finished で進む（部屋の頭の「文脈 n%」・使用量の紙の取り直しの合図。受け入れの確認で見つかった不具合の再現）", () => {
+  it("finishedTurnCount は turn が running に戻っても前の値のまま、次の turn-finished で進む（サイドバーの使用量の行・トークン消費の画面の取り直しの合図。受け入れの確認で見つかった不具合の再現）", () => {
     expect(INITIAL_SESSION_STATE.finishedTurnCount).toBe(0)
 
     // 時刻はすべて同じにする（凍らせたサーバの時計の下でもターンごとに違う値になること）。

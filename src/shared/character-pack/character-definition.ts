@@ -12,7 +12,6 @@ import { optionalString } from "../utils/optional-string.ts"
 import { parseJson } from "../utils/parse-json.ts"
 import { type CharacterBackground, toCharacterBackground } from "./character-background.ts"
 import { isDiaryFontFileName } from "./character-diary-font.ts"
-import { type CharacterStage, toCharacterStage } from "./character-stage.ts"
 import { EXPRESSIONS, type Expression, type RemovableExpression } from "./expression.ts"
 
 /**
@@ -50,7 +49,7 @@ export type CharacterDefinition = {
    */
   readonly face?: string
   /**
-   * 自己紹介文。キャラクターの紙のプロフィールで、名前の下に1行添える。
+   * 自己紹介文。雑談中のサイドバーのプロフィールで、名前の下に1行添える。
    * 任意で、無いパックは名前だけになる。空白だけの値は無いのと同じに畳む（札に空の行が出ないように）。
    */
   readonly tagline?: string
@@ -76,11 +75,6 @@ export type CharacterDefinition = {
    * 効くのは成果の画面の日記の吹き出しと日記帳の見開きの本文だけ（レポートやセリフの吹き出しの書体は変えない）。
    */
   readonly diaryFont?: string
-  /**
-   * 舞台に立つ立ち絵の置き方（立ち位置・ぼかす縁・頭の位置）。
-   * 任意で、無いパック・読めない欄は既定の値で立つ（{@link toCharacterStage} が畳む）。
-   */
-  readonly stage: CharacterStage
 }
 
 /**
@@ -230,7 +224,6 @@ function toCharacterDefinition(value: unknown): CharacterDefinition | undefined 
     miniCall: nonBlankString(value.miniCall),
     background: toCharacterBackground(value.background),
     diaryFont: toDiaryFont(value.diaryFont),
-    stage: toCharacterStage(value.stage),
   }
 }
 

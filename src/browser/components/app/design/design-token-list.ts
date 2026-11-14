@@ -3,10 +3,9 @@
 type TokenEntry = { readonly name: string; readonly use: string }
 
 export const COLOR_TOKENS = [
-  { name: "--ground", use: "画面の地・舞台の地" },
-  { name: "--surface", use: "箱の地・紙の地" },
-  { name: "--surface-float", use: "紙の上に浮く面" },
-  { name: "--surface-raised", use: "浮いた箱の地・持ち上げ" },
+  { name: "--ground", use: "画面の地" },
+  { name: "--surface", use: "箱の地" },
+  { name: "--surface-raised", use: "浮いた箱の地" },
   { name: "--surface-accent", use: "キャラクターの色を載せた箱の地" },
   { name: "--ink", use: "本文の字" },
   { name: "--ink-soft", use: "やわらかい字" },
@@ -31,15 +30,6 @@ export const FONT_TOKENS = [
   { name: "--font-subheading", use: "小見出し" },
   { name: "--font-body", use: "本文" },
   { name: "--font-heading", use: "見出し" },
-  { name: "--font-heading-2", use: "紙の節の見出し" },
-  { name: "--font-heading-1", use: "重ねる紙の題" },
-  { name: "--font-lead", use: "紙の頭の一文" },
-] as const satisfies readonly TokenEntry[]
-
-export const FAMILY_TOKENS = [
-  { name: "--font-sans", use: "本文・見出し" },
-  { name: "--font-voice", use: "セリフ" },
-  { name: "--font-mono", use: "ID・キー・時刻" },
 ] as const satisfies readonly TokenEntry[]
 
 export const SPACE_TOKENS = [
@@ -66,17 +56,10 @@ export const RADIUS_TOKENS = [
 export const SHADOW_TOKENS = [
   { name: "--shadow-raised", use: "メニュー・浮かぶカード" },
   { name: "--shadow-overlay", use: "ダイアログ・引き出し" },
-  { name: "--shadow-sheet", use: "舞台の上の紙" },
   { name: "--shadow-ring", use: "選んでいる目印の輪" },
 ] as const satisfies readonly TokenEntry[]
 
 export const MOTION_TOKENS = [
   { name: "--motion-fast", use: "hover・色の切り替え" },
-  { name: "--motion-base", use: "開閉・寄り" },
-  { name: "--motion-enter", use: "吹き出し・紙が入る" },
-  { name: "--motion-shift", use: "器の姿勢が変わる" },
-] as const satisfies readonly TokenEntry[]
-
-export const EASING_TOKENS = [
-  { name: "--motion-ease", use: "入る動きの緩急" },
+  { name: "--motion-base", use: "開閉・出入り" },
 ] as const satisfies readonly TokenEntry[]

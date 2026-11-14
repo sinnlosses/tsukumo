@@ -1,5 +1,5 @@
 // 画面1つ分の描画の失敗を受け止める境界。
-// 失敗した画面の場所に説明と読み込み直すボタンを出し、ほかの画面は残す。
+// 失敗した画面の場所に説明と読み込み直すボタンを出し、ほかの画面と画面のナビの帯は残す。
 // ErrorBoundary は class でしか書けないので、ここだけ class で書く。
 
 import { Component, type ErrorInfo, type ReactElement, type ReactNode } from "react"

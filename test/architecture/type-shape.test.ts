@@ -92,7 +92,7 @@ describe("プロパティと引数の `| undefined`", () => {
 })
 
 const UNDEFINED_UNION_CEILING = {
-  "src/browser/components": 114,
+  "src/browser/components": 123,
   "src/server/session-driver": 49,
   "scripts/hook": 39,
   "src/shared/report": 34,
@@ -107,7 +107,7 @@ const UNDEFINED_UNION_CEILING = {
   "src/server/repository": 16,
   "src/server/view-server": 16,
   "scripts/dev": 13,
-  "src/browser/features": 83,
+  "src/browser/features": 89,
   "src/server/adapter": 11,
   "src/server/diary": 11,
   "src/wiring/(root)": 11,
@@ -117,7 +117,7 @@ const UNDEFINED_UNION_CEILING = {
   "scripts/document": 7,
   "src/browser/domain": 8,
   "src/server/work-plan": 7,
-  "src/browser/stores": 5,
+  "src/browser/stores": 6,
   "src/server/achievement": 6,
   "src/shared/session-driver": 6,
   "scripts/runtime": 6,
@@ -129,6 +129,7 @@ const UNDEFINED_UNION_CEILING = {
   "src/server/welcome-greeting": 3,
   "src/shared/diary": 3,
   "src/browser/utils": 2,
+  "src/browser/hooks": 1,
   "src/(root)": 1,
   "src/server/checkout": 1,
   "src/server/diagnostic": 1,

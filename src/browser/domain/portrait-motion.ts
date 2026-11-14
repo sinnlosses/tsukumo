@@ -43,7 +43,7 @@ export function resolvePortraitMotion(input: PortraitMotionInput, now: number): 
   }
   if (
     input.turn.kind === "finished" &&
-    input.turn.ending.kind !== "failed" &&
+    input.turn.ending.kind === "ended" &&
     now - input.turn.finishedAt < SUCCESS_MOTION_WINDOW_MS
   ) {
     return "success"
@@ -70,7 +70,7 @@ export function nextPortraitMotionTransitionDelayMs(
   const failedAt = lastFailureAt(input)
   const remaining = [
     failedAt === undefined ? undefined : failedAt + FAILURE_MOTION_WINDOW_MS - now,
-    input.turn.kind === "finished" && input.turn.ending.kind !== "failed"
+    input.turn.kind === "finished" && input.turn.ending.kind === "ended"
       ? input.turn.finishedAt + SUCCESS_MOTION_WINDOW_MS - now
       : undefined,
   ].filter((ms): ms is number => ms !== undefined && ms > 0)

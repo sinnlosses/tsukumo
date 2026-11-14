@@ -36,31 +36,7 @@ test.describe("会話の画面の読み上げとフォーカス", () => {
         return { style: style.outlineStyle, width: style.outlineWidth }
       }),
     ).toEqual({ style: "solid", width: "1px" })
-    // 面の輪は色を消してあるので、見える輪は殻の本体（角丸 28px の祖先）が描く。
-    const shellRing = () =>
-      page.locator(COMPOSER).evaluate((element) => {
-        for (let node = element.parentElement; node !== null; node = node.parentElement) {
-          const style = getComputedStyle(node)
-          if (style.borderTopLeftRadius === "28px") {
-            return {
-              style: style.outlineStyle,
-              width: style.outlineWidth,
-              color: style.outlineColor,
-            }
-          }
-        }
-        return undefined
-      })
-    const focusedRing = await shellRing()
-    expect(focusedRing?.style).toBe("solid")
-    expect(focusedRing?.width).not.toBe("0px")
-    expect(focusedRing?.color).not.toMatch(/^rgba\(\d+, \d+, \d+, 0\)$|^transparent$/)
-    await page.locator(COMPOSER).evaluate((element) => {
-      element.blur()
-    })
-    expect((await shellRing())?.style).toBe("none")
-    await page.locator(COMPOSER).focus()
-    expect(await page.getByRole("main", { name: "紙" }).count()).toBe(1)
+    expect(await page.getByRole("main", { name: "メインビュー" }).count()).toBe(1)
     expect(await page.getByRole("main").count()).toBe(1)
 
     const firstStop = await page.evaluate(

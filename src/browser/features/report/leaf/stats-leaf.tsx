@@ -69,66 +69,45 @@ function Stat(props: { readonly item: StatItem }): ReactElement {
   const { item } = props
   const layout = statLayoutOf(item)
   const missed = layout.target.kind === "target" && layout.target.verdict === "missed"
-  const hasBefore = item.before.trim() !== ""
-  const before = hasBefore && (
+  const before = item.before.trim() !== "" && (
     <span className={BEFORE_CLASS_NAMES[layout.beforeTone]}>
       <AffixedCodeText lead="" text={item.before} tail=" →" />
-      <span className={statsLeafClassNames.statAfter} aria-hidden="true">
-        <InlineCodeText text={item.value} />
-      </span>
     </span>
   )
-  const change = layout.change.kind === "change" && (
-    <span className={CHANGE_CLASS_NAMES[layout.change.tone]}>
-      <AffixedCodeText lead={CHANGE_ARROWS[layout.change.arrow]} text={item.change} tail="" />
-    </span>
-  )
-  const hasDelta = hasBefore || layout.spark.kind !== "none" || layout.change.kind === "change"
   return (
     <div className={clsx(statsLeafClassNames.stat, missed && statsLeafClassNames.statMissed)}>
-      <StatValue item={item} />
-      <StatMeter layout={layout} />
-      <span className={statsLeafClassNames.statLabel}>
-        <InlineCodeText text={item.label} />
-      </span>
-      {hasDelta && (
-        <span className={statsLeafClassNames.statDelta}>
+      {layout.spark.kind === "none" ? (
+        before
+      ) : (
+        <span className={statsLeafClassNames.statTrend}>
           {before}
-          {change}
           <Spark spark={layout.spark} />
         </span>
       )}
-      {layout.target.kind === "target" && <TargetLine item={item} target={layout.target} />}
-    </div>
-  )
-}
-
-function StatValue(props: { readonly item: StatItem }): ReactElement {
-  const { item } = props
-  return (
-    <b>
-      <InlineCodeText text={item.value} />
-      {item.total.trim() !== "" && (
-        <span className={statsLeafClassNames.statTotal}>
-          <AffixedCodeText lead=" / " text={item.total} tail="" />
+      <b>
+        <InlineCodeText text={item.value} />
+        {item.total.trim() !== "" && (
+          <span className={statsLeafClassNames.statTotal}>
+            <AffixedCodeText lead=" / " text={item.total} tail="" />
+          </span>
+        )}
+      </b>
+      {layout.change.kind === "change" && (
+        <span className={CHANGE_CLASS_NAMES[layout.change.tone]}>
+          <AffixedCodeText lead={CHANGE_ARROWS[layout.change.arrow]} text={item.change} tail="" />
         </span>
       )}
-    </b>
-  )
-}
-
-function StatMeter(props: { readonly layout: StatLayout }): ReactElement {
-  const { meter } = props.layout
-  if (meter.kind !== "meter") {
-    return <></>
-  }
-  return (
-    <span className={statsLeafClassNames.statMeter} aria-hidden="true">
-      <span
-        className={statsLeafClassNames.statMeterFill}
-        style={{ width: `${String(meter.percent)}%` }}
-      />
-    </span>
+      {layout.meter.kind === "meter" && (
+        <span className={statsLeafClassNames.statMeter} aria-hidden="true">
+          <span
+            className={statsLeafClassNames.statMeterFill}
+            style={{ width: `${String(layout.meter.percent)}%` }}
+          />
+        </span>
+      )}
+      <InlineCodeText text={item.label} />
+      {layout.target.kind === "target" && <TargetLine item={item} target={layout.target} />}
+    </div>
   )
 }
 

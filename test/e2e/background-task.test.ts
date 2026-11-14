@@ -12,18 +12,17 @@ const ELAPSED_MS = 60_000
 const RESUMED_TURN_FINISHED_OCCURRENCE = 2
 
 test.describe("バックグラウンドタスク", () => {
-  test("ターンが終わってもバックグラウンドタスクが舞台の手元の行に残り、背景の待ちが終わると turn-resumed で続きのターンが流れて消える", async ({
+  test("ターンが終わってもバックグラウンドタスクが帯に残り、背景の待ちが終わると turn-resumed で続きのターンが流れて消える", async ({
     run,
   }) => {
     const room = await run.open({
       scenario: "background-task-resumed",
       scene: "background-task-short",
       viewport: "wide",
-      domRoots: ["stage-balloon"],
+      domRoots: ["work-strip", "turn-outline"],
     })
-    const backgroundLine = room.page
-      .locator('[data-slot="balloon"]')
-      .getByText("背景で 架空の短い待ち（2秒）")
+    const strip = room.page.locator('[data-region="main"] section[aria-label="進み具合"]')
+    const backgroundLine = strip.getByText("背景で 架空の短い待ち（2秒）")
 
     await room.waitForEvent("turn-finished")
     await backgroundLine.waitFor()

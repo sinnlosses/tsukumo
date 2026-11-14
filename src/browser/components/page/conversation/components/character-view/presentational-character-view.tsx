@@ -1,41 +1,24 @@
-// キャラビュー本体の器。舞台に立ち絵（<Portrait>）とやり取りの流れ（<TalkFlow>）を同居させる。
+// キャラビュー本体の器。立ち絵（<Portrait>）と吹き出しの並び（<BalloonTrack>）を同じ領域に同居させる。
 //
 // 右上の「ログ」（<SpeechLog>）の床にも同じ立ち絵を立たせるので、立ち絵と話し手の名前はここから渡す。
 //
 // 立ち絵の素材（URL）が無いときは `<Portrait>` を出さず、吹き出しだけで成立させる。
 //
-// 狭い画面（760px 以下）では舞台の代わりに `<PhoneBalloon>`（顔と最新の1件）を出す（どちらを出すかは CSS の `@media`）。
-//
-// 舞台では、立ち絵を舞台の下端に立たせ、その上に5段の置き場を積む。
-// 段は上から部屋の頭・今日の灯り・やり取りの流れ・いまの吹き出し・立ち絵で、`data-slot` で名乗る。
-// 立ち絵の席の右上には、局面に合った相づちの札が出る（`data-slot="aizuchi"`）。
+// 狭い画面（760px 以下）では立ち絵と吹き出しの並びの代わりに `<PhoneBalloon>`（顔と最新の1件）を出す（どちらを出すかは CSS の `@media`）。
 
-import type { CSSProperties, ReactElement, ReactNode } from "react"
+import type { ReactElement } from "react"
 
-import type {
-  CharacterStage,
-  StageFadeEdge,
-} from "../../../../../../shared/character-pack/character-stage.ts"
 import { Portrait } from "../../../../frame/portrait.tsx"
+import { HStack } from "../../../../ui/h-stack/h-stack.tsx"
 import { VStack } from "../../../../ui/v-stack/v-stack.tsx"
+import { BalloonTrack } from "./balloon-track.tsx"
 import styles from "./character-view.module.css"
-import type { CharacterViewAizuchi, CharacterViewModel } from "./hooks/use-character-view.ts"
+import type { CharacterViewModel } from "./hooks/use-character-view.ts"
 import { ItemSeats } from "./item-seat-list.tsx"
 import { PhoneBalloon } from "./phone-balloon.tsx"
 import { SpeechLog } from "./speech-log.tsx"
-import { StageAizuchi } from "./stage-aizuchi.tsx"
-import { StageBalloon } from "./stage-balloon.tsx"
-import { TalkFlow } from "./talk-flow.tsx"
 
-type PresentationalCharacterViewProps = CharacterViewModel & {
-  readonly hands?: ReactNode
-  /** 舞台の吹き出しの下に出す「手元」「待ち」の行。 */
-  readonly stageHands?: ReactNode
-  /** 舞台のいちばん上の段に置く部屋の頭。 */
-  readonly roomHead?: ReactNode
-  /** 部屋の頭のすぐ下に置く「今日の灯り」。 */
-  readonly today?: ReactNode
-}
+type PresentationalCharacterViewProps = CharacterViewModel
 
 export function PresentationalCharacterView({
   portraitUrl,
@@ -43,7 +26,6 @@ export function PresentationalCharacterView({
   expression,
   motion,
   speeches,
-  flow,
   reaction,
   speakerName,
   pinnedSpeech,
@@ -54,23 +36,16 @@ export function PresentationalCharacterView({
   face,
   phoneLine,
   seats,
-  stage,
-  aizuchi,
-  hands,
-  stageHands,
-  roomHead,
-  today,
 }: PresentationalCharacterViewProps): ReactElement {
-  const portraitIn = (className?: string): ReactNode =>
-    portraitUrl !== undefined && (
-      <Portrait
-        url={portraitUrl}
-        altText={altText}
-        expression={expression}
-        motion={motion}
-        className={className}
-      />
-    )
+  const portrait = portraitUrl !== undefined && (
+    <Portrait
+      url={portraitUrl}
+      altText={altText}
+      expression={expression}
+      motion={motion}
+      className={styles["portrait"]}
+    />
+  )
   return (
     <VStack
       element="div"
@@ -82,6 +57,7 @@ export function PresentationalCharacterView({
       className={styles["character-region"]}
     >
       <SpeechLog
+        portrait={portrait}
         speakerName={speakerName}
         pinnedSpeech={pinnedSpeech}
         onToggleSpeech={onToggleSpeech}
@@ -89,82 +65,27 @@ export function PresentationalCharacterView({
         onOpen={onOpenSpeechLog}
         onClose={onCloseSpeechLog}
       />
-      <PhoneBalloon face={face} line={phoneLine} onOpenLog={onOpenSpeechLog} hands={hands} />
-      <StageFigure
-        stage={stage}
-        aizuchi={aizuchi}
-        portrait={portraitIn(styles["stage-figure-portrait"])}
-        roomHead={roomHead}
-        today={today}
-        thread={<TalkFlow rows={flow} onOpenSpeechLog={onOpenSpeechLog} />}
-        balloon={
-          <StageBalloon
+      <PhoneBalloon face={face} line={phoneLine} onOpenLog={onOpenSpeechLog} />
+      <div className={styles["character-stage"]}>
+        <HStack
+          element="div"
+          name={{ kind: "none" }}
+          gap="none"
+          align="end"
+          justify="start"
+          wrap="wrap"
+          className={styles["character-layout"]}
+        >
+          {portrait}
+          <BalloonTrack
             speeches={speeches}
             reaction={reaction}
             speakerName={speakerName}
             onToggleSpeech={onToggleSpeech}
-            hands={stageHands}
           />
-        }
-      />
+        </HStack>
+      </div>
       <ItemSeats seats={seats} portraitShown={portraitUrl !== undefined} />
     </VStack>
   )
 }
-
-/**
- * 舞台の5段。立ち絵の席を先に置くのは、上の4段の下端が立ち絵の頭の印を anchor で引くため（参照元が DOM で先にないと効かない）。
- * 立ち絵が無いときも頭の印は残し、上の4段は既定の高さで立ち絵の場所の上に止まる。
- */
-function StageFigure(props: {
-  readonly stage: CharacterStage
-  readonly aizuchi: readonly CharacterViewAizuchi[]
-  readonly portrait: ReactNode
-  readonly roomHead: ReactNode
-  readonly today: ReactNode
-  readonly thread: ReactNode
-  readonly balloon: ReactNode
-}): ReactElement {
-  return (
-    <div className={styles["stage-figure"]} style={stageFigureStyle(props.stage)}>
-      <div className={styles["stage-figure-seat"]} data-slot="portrait">
-        {props.portrait}
-        <span className={styles["stage-figure-head"]} aria-hidden="true" />
-      </div>
-      {props.aizuchi.length > 0 && <StageAizuchi aizuchi={props.aizuchi} />}
-      <div className={styles["stage-figure-rows"]}>
-        <div className={styles["stage-figure-room-head"]} data-slot="room-head">
-          {props.roomHead}
-        </div>
-        <div className={styles["stage-figure-today"]} data-slot="today">
-          {props.today}
-        </div>
-        <div className={styles["stage-figure-thread"]} data-slot="thread">
-          {props.thread}
-        </div>
-        <div className={styles["stage-figure-balloon"]} data-slot="balloon">
-          {props.balloon}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function stageFigureStyle(stage: CharacterStage): CSSProperties {
-  const fade = stage.fade.map((edge) => FADE_GRADIENT[edge])
-  return {
-    "--stage-figure-left": `${String(stage.left * 100)}%`,
-    "--stage-figure-width": `${String(stage.width * 100)}%`,
-    "--stage-figure-head": `${String(stage.head * 100)}%`,
-    "--stage-figure-below-head": String(1 - stage.head),
-    "--stage-figure-fade": fade.length === 0 ? "none" : fade.join(", "),
-  }
-}
-
-/** 縁を透明へ抜くマスク。重ねた分は `mask-composite: intersect` で掛け合わせる。 */
-const FADE_GRADIENT = {
-  top: "linear-gradient(180deg, transparent, black 18%)",
-  right: "linear-gradient(270deg, transparent, black 20%)",
-  bottom: "linear-gradient(0deg, transparent, black 12%)",
-  left: "linear-gradient(90deg, transparent, black 12%)",
-} as const satisfies Record<StageFadeEdge, string>

@@ -10,9 +10,9 @@
 
 ### 吹き出し
 
-- **英語識別子**: `balloon`
+- **英語識別子**: `balloon`（並びは `balloon-track`）
 - **定義**: **セリフ**1件を囲って見せる表示。キャラビューの中で立ち絵と同居する。
-  1件につき1つ出し、今のターンの分を並びに縦へ積んで**最新を一番上**に見せる
+  1件につき1つ出し、今のターンの分を並び（`balloon-track`）に縦へ積んで**最新を一番上**に見せる
   （並びは自前でスクロールする）。**立ち絵は領域の左下、並びは右上**に置き、領域の高さは全部使う。
   **最新の1件だけを濃く大きくし**（左下の角から立ち絵へ向けて尻尾を伸ばす）、過去は小さく薄くする。
   折り返し・全角文字の幅・禁則処理はブラウザに任せる
@@ -27,11 +27,9 @@
 ### 反応
 
 - **英語識別子**: 出来事は `ReactionKind` で、値は迎える `welcome` / 再試行 `retrying` / 失敗 `failed` /
-  利用上限 `limited` / 待ち `idle` / 相づちの返事 `aizuchi`。1行は `ReactionLine`、反応の行の問い合わせが書く4つの行は
+  利用上限 `limited` / 待ち `idle`。1行は `ReactionLine`、反応の行の問い合わせが書く4つの行は
   `WrittenReactions`（状態の欄は `writtenReactions` で型は `WrittenReactionsState`、イベントは
-  `reactions-written`）・相づち（立ち絵の右上の札と押したときの返事の組。別の問い合わせが書き、
-  状態の欄は `aizuchi`、イベントは書けた `aizuchi-written` と押した `aizuchi-pressed`、
-  記録は利用者の札の行 `aizuchi-chip` と返事の `reaction`）・`ShownReaction`（いま出す反応。導く関数は
+  `reactions-written`）・`ShownReaction`（いま出す反応。導く関数は
   `src/shared/session/shown-reaction.ts` の `shownReaction`）・記録の種類 `reaction`（出し始めた出来事で積む。
   積む関数は `src/shared/session/session-fold.ts` の `applySessionEvent`）・待ちの一言を出す時刻が来た合図の
   イベント `waiting-line-due`

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { mainViewTurns } from "../../../../../src/browser/components/page/conversation/domain/main-view/main-view.ts"
+import { mainViewTurns } from "../../../../../src/browser/domain/main-view/main-view.ts"
 import { asidePromptText } from "../../../../../src/server/session-driver/core/aside-prompt.ts"
 import { progressNudgeSendText } from "../../../../../src/server/session-driver/core/progress-nudge.ts"
 import { EMPTY_INPUT_LEDGER } from "../../../../../src/server/session-driver/core/session/input-ledger.ts"

@@ -1,5 +1,5 @@
 {
-  "paper": [
+  "main": [
     { "tag": "div", "attributes": { "data-report-body": "" }, "children": [
       { "tag": "h4", "children": ["架空の節"] },
       { "tag": "pre", "attributes": { "aria-label": "この図を拡大" } },
@@ -11,9 +11,8 @@
         { "tag": "td", "children": ["1"] },
         { "tag": "td", "children": ["2"] }
       ] },
-      { "tag": "div", "attributes": { "role": "note", "aria-label": "注意" }, "children": [
-        "架空の注意の一文。"
-      ] },
+      "注意",
+      "架空の注意の一文。",
       { "tag": "ol", "attributes": { "aria-label": "連鎖" } },
       "図 2",
       { "tag": "pre", "children": [

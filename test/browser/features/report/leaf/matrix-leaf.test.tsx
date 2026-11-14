@@ -75,18 +75,16 @@ describe("Matrix の部品", () => {
 
     expect(["甲", "乙", "架空のA", "架空のB"].filter((word) => !text.includes(word))).toEqual([])
     expect(["存在しない字"].filter((word) => !text.includes(word))).toEqual(["存在しない字"])
-    expect(container.querySelectorAll("[aria-hidden='true']")).toHaveLength(8)
+    expect(container.querySelectorAll("[aria-hidden='true']")).toHaveLength(4)
   })
 
-  it("補足のセルは印に続けて補足の字を出し（補足の無いセルは状態の語）、読み上げの語に補足を括弧で添える", () => {
+  it("補足のセルは印の下に補足の字を出し、読み上げの語に補足を括弧で添える", () => {
     const { container } = renderPart(
       partOf([{ name: "架空のA", cells: ["ok", { status: "warn", note: "7日まで" }] }]),
     )
 
     expect(screen.getByRole("img", { name: "要注意（7日まで）" }).textContent).toBe("！")
-    expect(
-      Array.from(container.querySelectorAll("[class*='matrix-note']"), (note) => note.textContent),
-    ).toEqual(["OK", "7日まで"])
+    expect(container.querySelector("[class*='matrix-note']")?.textContent).toBe("7日まで")
   })
 
   it("採った列は見出しに「推奨」の札を付け、見出し・セル・末尾の行のその列に印を置く", () => {
@@ -109,11 +107,13 @@ describe("Matrix の部品", () => {
     ])
   })
 
-  it("採った列・末尾の行の無い格子は、札・tfoot を出さない", () => {
+  it("補足・採った列・末尾の行の無い格子は、札・補足・tfoot を出さない", () => {
     const { container } = renderPart(partOf(ALL_STATUSES))
 
     expect(
-      container.querySelectorAll("[data-tone='accent'], [class*='column-emphasis-mark'], tfoot"),
+      container.querySelectorAll(
+        "[data-tone='accent'], [class*='matrix-note'], [class*='column-emphasis-mark'], tfoot",
+      ),
     ).toHaveLength(0)
   })
 

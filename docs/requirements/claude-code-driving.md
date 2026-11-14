@@ -53,7 +53,7 @@
 - **バックグラウンドタスクが終わると、claude は依頼なしで続きのターンを始める**（実測は
   `docs/history/decision.md`）。依頼に当たるメッセージは流れないので、**ターンの外で届いた
   `init` を合図に、記録を持たない続きのターンの始まり（`turn-resumed`）を補う**（`src/server/session-driver/core/self-started-turn.ts`。
-  見え方は `docs/architecture/screen-design/scene-behavior.md`「バックグラウンドタスク」）
+  見え方は `docs/architecture/screen-design.md` 13.9「バックグラウンドタスク」）
 - **中断は SDK の `interrupt()` で効く。** 中断されたターンの `result` は `error_during_execution`
   で終わり、同じセッションに続けて入力を送れる（中断前の文脈を保っている）
 - **API がうまくいかなかったことを黙って捨てない**。再試行中（まだ続く）・
@@ -73,5 +73,5 @@
   答える）。**tsukumo は認証情報を読まない**。`skipBehaviors` は必ず `true`（手元の transcript の
   走査を起こさない）。名前のとおり実験中の API なので、呼ぶのは `sdk-` のアダプタ1本に閉じ、読めない形・
   失敗は「取れない」に畳む。運ぶのは2つの枠の使用率・戻る時刻・取った時刻だけ（出し方は
-  `docs/architecture/screen-design/room-head-and-search.md`「使用量の紙のプラン使用量のカード」。調べた結果は `docs/research/plan-usage.md`）
+  `docs/architecture/display.md` 4.2「各表示物」のサイドバー。調べた結果は `docs/research/plan-usage.md`）
 - **SDK も transcript（JSONL）を書くが、tsukumo はそれを読まない**

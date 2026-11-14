@@ -6,10 +6,10 @@ import { z } from "zod"
 import type { DelegateReturn } from "../../../shared/session/delegate-return.ts"
 import { isBlankText } from "../../../shared/utils/blank-text.ts"
 
-/** 段の結果。`finished` は済ませた、`skipped` は飛ばした、`stopped` は途中で止めた、`redo` は段が済まずやり直しの周が進む。 */
-const PHASE_OUTCOMES = ["finished", "skipped", "stopped", "redo"] as const
+/** 段の結果。`finished` は済ませた、`skipped` は飛ばした、`stopped` は途中で止めた。 */
+const PHASE_OUTCOMES = ["finished", "skipped", "stopped"] as const
 
-/** 引数を読んだ形。段のまとめは `finished` だけが、理由は `stopped` と `redo` だけが持つ（まとめを渡さなければ空の文字列）。 */
+/** 引数を読んだ形。段のまとめは `finished` だけが、止めた理由は `stopped` だけが持つ（まとめを渡さなければ空の文字列）。 */
 export type PhaseResult =
   | {
       readonly phase: number
@@ -25,7 +25,7 @@ export type PhaseResult =
   | {
       readonly phase: number
       readonly count: number
-      readonly outcome: "stopped" | "redo"
+      readonly outcome: "stopped"
       readonly reason: string
     }
 
@@ -43,7 +43,7 @@ export const phaseResultShape = {
 
 /**
  * `phase_result` の引数の形の正典。
- * `phase` が `count` を超える・`stopped`・`redo` に空でない `reason` が無い・どちらでもないのに `reason` がある・`finished` でないのに `summary` がある、のどれかなら通らない。
+ * `phase` が `count` を超える・`stopped` に空でない `reason` が無い・`stopped` でないのに `reason` がある・`finished` でないのに `summary` がある、のどれかなら通らない。
  */
 const phaseResultSchema = z.object(phaseResultShape).superRefine((value, context) => {
   const reject = (path: string): void => {
@@ -53,7 +53,7 @@ const phaseResultSchema = z.object(phaseResultShape).superRefine((value, context
     reject("phase")
   }
   if (
-    value.outcome === "stopped" || value.outcome === "redo"
+    value.outcome === "stopped"
       ? value.reason === undefined || isBlankText(value.reason)
       : value.reason !== undefined
   ) {
@@ -76,7 +76,6 @@ export function parsePhaseResult(value: unknown): PhaseResult | undefined {
   const { phase, count, outcome, reason = "", summary = "" } = parsed.data
   switch (outcome) {
     case "stopped":
-    case "redo":
       return { phase, count, outcome, reason }
     case "finished":
       return { phase, count, outcome, summary: isBlankText(summary) ? "" : summary }
@@ -97,13 +96,6 @@ export function delegateReturnOf(result: PhaseResult): DelegateReturn {
       }
     case "skipped":
       return { kind: "phase-skipped", phase: result.phase, count: result.count }
-    case "redo":
-      return {
-        kind: "phase-redone",
-        phase: result.phase,
-        count: result.count,
-        summary: result.reason,
-      }
     case "stopped":
       return { kind: "stopped", phase: result.phase, count: result.count, summary: result.reason }
   }

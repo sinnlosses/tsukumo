@@ -1,4 +1,4 @@
-import { mainViewTurns } from "../../src/browser/components/page/conversation/domain/main-view/main-view.ts"
+import { mainViewTurns } from "../../src/browser/domain/main-view/main-view.ts"
 import type { ReportSection } from "../../src/shared/report/report-block.ts"
 import type { ReportCheck } from "../../src/shared/report/report-check.ts"
 import type { ReportTask } from "../../src/shared/report/report-task.ts"

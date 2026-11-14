@@ -56,8 +56,8 @@
 - [`docs/architecture/stage-item.md`](../architecture/stage-item.md) — アイテム（キャラビューの席に置く飾りの一覧と席の置き場・画面から足すときの受け取り方・配る URL）
 - [`docs/architecture/testing.md`](../architecture/testing.md) — テスト（対象ごとの方法・E2E・目視確認の手順）
 - [`docs/architecture/build.md`](../architecture/build.md) — ビルドと依存（事前の組み立て・HMR・足す依存の一覧）
-- [`docs/architecture/screen-design.md`](../architecture/screen-design.md) — 画面のデザイン（色・書体・レイアウトの計画とトークン、雑談モードの画面、背景、舞台と紙の器・部屋の頭と探す）
-- [`docs/architecture/display.md`](../architecture/display.md) — 表示（セリフとレポートの出力分離、レポートの記法の規約、立ち絵・吹き出し・メインビュー・入力欄・タスクのモーダルなど各表示物の仕様）
+- [`docs/architecture/screen-design.md`](../architecture/screen-design.md) — 画面のデザイン（色・書体・レイアウトの計画とトークン、雑談モードの画面、背景、画面のナビの帯）
+- [`docs/architecture/display.md`](../architecture/display.md) — 表示（セリフとレポートの出力分離、レポートの記法の規約、立ち絵・吹き出し・メインビュー・入力欄・サイドバーなど各表示物の仕様）
 - [`docs/architecture/workflow-contract.md`](../architecture/workflow-contract.md) — ワークフローの契約（`work_plan`・`report` のツール、読む Beads の欄、ワークフローがしてよいこと）
 - [`docs/architecture/chat-mode.md`](../architecture/chat-mode.md) — 雑談モード（遡れる幅、記憶の圧縮と忘却、残す旗、会話のアーカイブ、人格への書き戻し）
 - [`docs/coding-standards.md`](../coding-standards.md) — コーディング規約（**会話内容の扱い**を含む）

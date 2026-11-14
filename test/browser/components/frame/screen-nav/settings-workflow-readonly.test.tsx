@@ -6,16 +6,16 @@ import { typedElement } from "../../../../typed-element.ts"
 import { rpcOutput } from "../../../rpc-fetch-stub.ts"
 import {
   bandButton,
+  dialog,
   menuItem,
   REPOSITORY,
   renderWorkflowFace,
   setCommands,
   stepList,
   tearDownWorkflowFace,
-  workflowGroup,
 } from "./workflow-face.tsx"
 
-// 設定の紙の「ワークフロー」の面の、読み取り専用（`readonly`）の欄。
+// 設定のダイアログの「ワークフロー」の面の、読み取り専用（`readonly`）の欄。
 // 入力を置かず、名前・説明・値だけを schema の順に描き、下書きや帯の数に入れない。
 
 afterEach(tearDownWorkflowFace)
@@ -60,7 +60,7 @@ const VIEW: WorkflowSettingView = {
 }
 
 function bandText(): string | null {
-  return typedElement(workflowGroup().querySelector("footer"), HTMLElement, "下の帯").textContent
+  return typedElement(dialog().querySelector("footer"), HTMLElement, "下の帯").textContent
 }
 
 function isDisabled(name: "保存" | "やめる"): boolean {
@@ -68,16 +68,16 @@ function isDisabled(name: "保存" | "やめる"): boolean {
 }
 
 function readonlyField(label: string): HTMLElement {
-  const head = within(workflowGroup()).getByText(label, { selector: "p" })
+  const head = within(dialog()).getByText(label, { selector: "p" })
   return typedElement(head.closest("div")?.parentElement ?? null, HTMLElement, "読み取り専用の欄")
 }
 
-describe("設定の紙の「ワークフロー」の面（読み取り専用）", () => {
+describe("設定のダイアログの「ワークフロー」の面（読み取り専用）", () => {
   it("読み取り専用の欄を schema の順に、名前・説明・値で出す", async () => {
     renderWorkflowFace(() => rpcOutput(VIEW))
     await stepList()
 
-    const labels = Array.from(workflowGroup().querySelectorAll("p, label"))
+    const labels = Array.from(dialog().querySelectorAll("p, label"))
       .map((element) => element.textContent)
       .filter((text) =>
         ["スキルの並び", "架空の固定", "架空のコマンド", "架空の未設定"].includes(text ?? ""),
@@ -136,7 +136,7 @@ describe("設定の紙の「ワークフロー」の面（読み取り専用）"
       } satisfies WorkflowSettingView),
     )
 
-    await within(workflowGroup()).findByText("架空の固定値")
+    await within(dialog()).findByText("架空の固定値")
 
     expect(isDisabled("保存")).toBe(true)
     expect(isDisabled("やめる")).toBe(true)

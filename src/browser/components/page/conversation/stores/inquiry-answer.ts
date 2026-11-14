@@ -26,12 +26,10 @@ import {
   type QuestionAnswer,
   withoutRecommendedMark,
 } from "../../../../../shared/session-driver/question.ts"
+import { toolInputText } from "../../../../domain/tool-summary.ts"
 import { useSession, type SessionDispatch } from "../../../../stores/session.ts"
-import { toolInputText } from "../domain/tool-summary.ts"
 import { useComposerDraft } from "./composer-draft.ts"
 import {
-  EMPTY_DRAFT_ANSWER,
-  recommendedSelection,
   useInquiryDraft,
   useInquiryFocus,
   type DraftAnswer,
@@ -182,6 +180,13 @@ export function inquiryBriefOf(brief: QuestionBrief): InquiryBrief {
 const ALLOW_LABEL = "許可"
 const DENY_LABEL = "拒否"
 
+const EMPTY_DRAFT_ANSWER: DraftAnswer = {
+  index: 0,
+  selections: [],
+  writtenAnswers: [],
+  entrusted: [],
+}
+
 type InquiryDraft = {
   readonly answer: DraftAnswer
   readonly setAnswer: (next: DraftAnswer) => void
@@ -257,7 +262,7 @@ function questionModel(
     return { kind: "none" }
   }
 
-  const selected = draft.answer.selections[index] ?? recommendedSelection(question)
+  const selected = draft.answer.selections[index] ?? []
   const writtenAnswer = draft.answer.writtenAnswers[index] ?? ""
   const last = index === questions.length - 1
 
@@ -326,7 +331,7 @@ function questionModel(
     showBack: index > 0,
     last,
     options,
-    focusedLabel: focusedLabelOf(touchedLabel ?? draft.answer.selections[index]?.at(-1)),
+    focusedLabel: focusedLabelOf(touchedLabel ?? selected.at(-1)),
     onFocus: setFocus,
     writtenAnswer,
     writing: !question.multiSelect && composerWriting,

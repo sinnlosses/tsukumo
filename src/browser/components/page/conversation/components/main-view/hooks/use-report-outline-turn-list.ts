@@ -5,11 +5,11 @@ import { zip } from "remeda"
 
 import { conversationMoment } from "../../../../../../../shared/session/conversation-moment.ts"
 import { turnAsides } from "../../../../../../../shared/session/main-view-shape.ts"
+import { useMainViewTurns } from "../../../../../../stores/main-view-turn.ts"
 import { useSession } from "../../../../../../stores/session.ts"
 import { headedSectionIdsOfTurn } from "../../../domain/headed-section.ts"
 import { outlineReportOf, type OutlineReport } from "../../../domain/outline-report-row.ts"
 import { turnResultsOf, type TurnResult } from "../../../domain/turn-result.ts"
-import { useMainViewTurns } from "../../../stores/main-view-turn.ts"
 import { turnTitle } from "../domain/turn-title.ts"
 
 /** やり取り1件。題・結果・脇の話の数。 */

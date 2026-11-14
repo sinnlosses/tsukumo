@@ -1,6 +1,7 @@
 // 入力欄の上の「頼みごと」の列のロジック。
 // まだ送っていない付箋を並べ、順番の入れ替えと「まとめて頼む」を持つ。
 
+import { useMainViewTurns } from "../../../../../../stores/main-view-turn.ts"
 import {
   notesOf,
   useReplyNotes,
@@ -9,7 +10,6 @@ import {
 } from "../../../../../../stores/reply-note-list.ts"
 import { useTurnRunning } from "../../../../../../stores/session.ts"
 import { reportTitleLookup } from "../../../domain/reply-batch-draft.ts"
-import { useMainViewTurns } from "../../../stores/main-view-turn.ts"
 import { armAfterTurn, draftReplyBatch, useReplyBatch } from "../../../stores/reply-batch.ts"
 
 const IDLE_GUIDE = "まとめて1つの依頼にする。送るのは ⌘⏎"

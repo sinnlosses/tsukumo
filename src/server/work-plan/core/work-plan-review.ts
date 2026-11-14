@@ -49,18 +49,8 @@ import {
 } from "./band-position.ts"
 import { delegateReturnOf, parsePhaseResult } from "./phase-result.ts"
 
-/**
- * 差し戻さずに通す条。`replan-reason-missing` は `phases` を前の受け付け済みの並びから変えたのに `replanReason` が無い。
- * 判定の結果に名前を載せるだけで、今は読んで記録に残す箇所が無い（利用状況の記録・セッションイベントには出ない）。
- */
-export type WorkPlanCounted = "replan-reason-missing"
-
 export type WorkPlanVerdict =
-  | {
-      readonly kind: "accepted"
-      readonly plan: WorkPlan
-      readonly counted: readonly WorkPlanCounted[]
-    }
+  | { readonly kind: "accepted"; readonly plan: WorkPlan }
   | { readonly kind: "malformed" }
   | { readonly kind: "summary-missing" }
   | { readonly kind: "skipped-phase" }
@@ -207,12 +197,6 @@ export function createWorkPlanReview(): WorkPlanReview {
     if (skipMarkVerdict !== undefined) {
       return skipMarkVerdict
     }
-    const counted: readonly WorkPlanCounted[] =
-      accepted.kind === "planned" &&
-      !isDeepEqual(accepted.phases, plan.phases) &&
-      plan.replanReason === undefined
-        ? ["replan-reason-missing"]
-        : []
     const finishedNow = finishedPhaseNames(plan)
     resultMarks = resultMarks.filter((name) => finishedNow.has(name))
     confirmedRange = plan.delegatedRange
@@ -220,7 +204,7 @@ export function createWorkPlanReview(): WorkPlanReview {
     gateRaised = false
     summaryReturned = false
     handbackLines = []
-    return { kind: "accepted", plan, counted }
+    return { kind: "accepted", plan }
   }
 
   const settle = (verdict: WorkPlanVerdict): WorkPlanVerdict => {
@@ -243,12 +227,6 @@ export function createWorkPlanReview(): WorkPlanReview {
         return { kind: "out-of-order" }
       }
       returnedCount = result.count
-      if (handback.kind === "phase-redone" && accepted.kind === "planned") {
-        const redone = nextWorkPlan(accepted, { kind: "delegate-returned", handback })
-        const moved = redone !== accepted
-        accepted = redone
-        return { kind: "accepted", moved, handback, plan: accepted }
-      }
       const returned =
         accepted.kind === "planned" ? phaseFinishedByReturn(accepted, handback) : undefined
       if (returned?.kind !== "finished") {

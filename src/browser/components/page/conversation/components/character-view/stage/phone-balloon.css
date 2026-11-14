@@ -6,7 +6,6 @@
 
 @media (max-width: 760px) {
   .phone-balloon {
-    --phone-face-size: 34px;
     display: flex;
     align-items: flex-end;
     gap: var(--space-sm);
@@ -15,11 +14,11 @@
   }
   .phone-balloon-face {
     flex: none;
-    width: var(--phone-face-size);
-    height: var(--phone-face-size);
+    width: 34px;
+    height: 34px;
     border-radius: 50%;
   }
-  /* 顔の側の下の角だけ尖らせる。高さが変わって本文が揺れないよう、字は2行で切る。 */
+  /* 顔の側の下の角だけ尖らせる。高さが変わって本文が揺れないよう、字は3行で切る。 */
   .phone-balloon-bubble {
     min-width: 0;
     padding: var(--space-sm) var(--space-md);
@@ -42,36 +41,15 @@
     line-height: 1;
   }
   /* 入力欄の欄にフォーカスがあるあいだは顔だけにする。 */
-  body:has([data-region="dock"] textarea:focus) .phone-balloon-bubble,
-  body:has([data-region="dock"] textarea:focus) .phone-balloon-time {
+  body:has([data-region="dispatch"] textarea:focus) .phone-balloon-bubble,
+  body:has([data-region="dispatch"] textarea:focus) .phone-balloon-time {
     display: none;
   }
   .phone-balloon-text {
     display: -webkit-box;
     overflow: hidden;
     -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
-  }
-  /* 顔と吹き出しの下の1行。顔の幅と隙間だけ内へ寄せて、吹き出しの左に揃える。 */
-  .phone-balloon {
-    flex-wrap: wrap;
-  }
-  .phone-balloon-hands {
-    flex: 0 0 100%;
-    min-width: 0;
-    padding-left: calc(var(--phone-face-size) + var(--inline-control));
-    overflow: hidden;
-    color: var(--ink-quiet);
-    font-family: var(--font-mono);
-    font-size: var(--font-label);
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .phone-balloon-hands:empty {
-    display: none;
-  }
-  .phone-balloon-hands [data-tone="asking"] {
-    color: var(--state-warn);
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
   }
 }

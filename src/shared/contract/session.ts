@@ -8,7 +8,6 @@ import { EXPRESSIONS } from "../character-pack/expression.ts"
 import { commandBase } from "../command.ts"
 import { dateKeySchema } from "../diary/date-key.ts"
 import { FRAME_ERROR_REASON } from "../frame-error-reason.ts"
-import { AIZUCHI_MOMENT_NAMES, AIZUCHI_PAIRS_PER_MOMENT } from "../recommendation/aizuchi.ts"
 import { MAX_SHOWN_WELCOME_GREETING_LENGTH } from "../recommendation/welcome-greeting.ts"
 import { answerSchema } from "../session-driver/pending-ask.ts"
 import {
@@ -103,21 +102,6 @@ export const sessionContract = {
     z.object({
       text: z.string().min(1).max(MAX_SHOWN_WELCOME_GREETING_LENGTH),
       expression: z.enum(EXPRESSIONS),
-    }),
-  ),
-  /**
-   * 立ち絵のそばの相づちの札を押した。入力は札の局面と番号だけで、文面は代の始めにサーバが書いたものから取り出す。
-   * 駆動には何も送らず、ターンの最中も受ける（作業は止まらず、作業中の会話にも入らない）。
-   * いま出している札でなければ断る（`aizuchiNotShown`）。
-   */
-  pressAizuchi: commandBase.input(
-    z.object({
-      moment: z.enum(AIZUCHI_MOMENT_NAMES),
-      index: z
-        .number()
-        .int()
-        .min(0)
-        .max(AIZUCHI_PAIRS_PER_MOMENT - 1),
     }),
   ),
   /** キャラクターパックを切り替える（駆動の起こし直し）。 */

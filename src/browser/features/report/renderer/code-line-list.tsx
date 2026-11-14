@@ -1,8 +1,8 @@
-// フェンス付きコードの中身を行ごとに描く。印の行（`marks`）の線と塊の下のラベルと、無印の長い範囲の畳みと、shell の出力の行の字の色と、`diff` の行の中の違う語の地を持つ。
+// フェンス付きコードの中身を行ごとに描く。印の行（`marks`）の地とラベルと、無印の長い範囲の畳みと、shell の出力の行の字の色と、`diff` の行の中の違う語の地と、前後の見比べの行の印を持つ。
 
 import clsx from "clsx"
 import type { Element, ElementContent } from "hast"
-import { createElement, useState, type ReactElement, type ReactNode } from "react"
+import { createContext, createElement, useState, type ReactElement, type ReactNode } from "react"
 
 import {
   foldedRanges,
@@ -14,8 +14,14 @@ import { Button } from "../../../components/ui/button/button.tsx"
 import { diffLineSide, markDiffSign, type CodeLine } from "./code-line.ts"
 import type { DiffLineWords, DiffWordRanges } from "./diff-pair.ts"
 import { markDiffWords } from "./diff-word-mark.ts"
+import type { SideLine, SideLineDiff } from "./line-diff.ts"
 import styles from "./report-notation.module.css"
 import type { ShellLineKind } from "./shell-line.ts"
+
+/** 前後の見比べの片側の行の並び。hast の属性には載せず、塊の外から行の描き手まで運ぶ。 */
+export const CodeLineDiffContext = createContext<SideLineDiff | undefined>(undefined)
+
+type CompareLineMark = "before" | "after" | "added"
 
 export function CodeLines(props: {
   readonly lines: readonly CodeLine[]
@@ -27,9 +33,43 @@ export function CodeLines(props: {
   readonly diff: boolean
   /** 1 行目がファイルの何行目か。分かるときだけ行番号の列を出す。 */
   readonly startLine?: number
+  /** 前後の見比べの片側の行の並び。見比べでない塊は `undefined`。 */
+  readonly lineDiff?: SideLineDiff
 }): ReactElement {
   const [opened, setOpened] = useState<readonly number[]>([])
   const folds = foldedRanges(props.lines.length, props.marks)
+  const labels = markLabels(props.marks)
+
+  if (props.lineDiff !== undefined) {
+    const { side } = props.lineDiff
+    return (
+      <>
+        {props.lineDiff.lines.map((row, position) =>
+          row.kind === "gap" ? (
+            <span
+              key={`gap-${String(position)}`}
+              className={styles["code-line"]}
+              data-compare="gap"
+              aria-hidden="true"
+            />
+          ) : (
+            <CodeLineRow
+              key={row.index + 1}
+              line={props.lines[row.index] ?? []}
+              number={row.index + 1}
+              fileLine={undefined}
+              marks={[]}
+              label={undefined}
+              kind={undefined}
+              wordRange={undefined}
+              diff={false}
+              compare={compareLineMark(side, row)}
+            />
+          ),
+        )}
+      </>
+    )
+  }
 
   const rows = props.lines.flatMap((line, index): readonly ReactNode[] => {
     const number = index + 1
@@ -44,9 +84,11 @@ export function CodeLines(props: {
         number={number}
         fileLine={props.startLine === undefined ? undefined : props.startLine + index}
         marks={props.marks}
+        label={labels.get(number)}
         kind={props.kinds?.[index]}
         wordRange={props.wordRanges.get(index)}
         diff={props.diff}
+        compare={undefined}
       />,
     ]
   })
@@ -54,27 +96,17 @@ export function CodeLines(props: {
   return <>{rows}</>
 }
 
-/**
- * 印のラベルを、塊の下に「<行>行目: <ラベル>」の箇条で出す。行は印の最初の行で、ファイルの何行目か分かるときはその行。
- * ラベルのある印が無ければ何も描かない。
- */
-export function CodeMarkNotes(props: {
-  readonly marks: readonly CodeMark[]
-  /** 1 行目がファイルの何行目か。 */
-  readonly startLine?: number
-}): ReactElement {
-  const labels = [...markLabels(props.marks)].toSorted(([a], [b]) => a - b)
-  if (labels.length === 0) {
-    return <></>
+function compareLineMark(
+  side: SideLineDiff["side"],
+  row: Extract<SideLine, { readonly kind: "line" }>,
+): CompareLineMark | undefined {
+  if (row.change === "same") {
+    return undefined
   }
-  return (
-    <ul className={styles["code-mark-notes"]}>
-      {labels.map(([line, label]) => {
-        const shown = props.startLine === undefined ? line : props.startLine + line - 1
-        return <li key={line}>{`${String(shown)}行目: ${label}`}</li>
-      })}
-    </ul>
-  )
+  if (side === "before") {
+    return "before"
+  }
+  return row.change === "added" ? "added" : "after"
 }
 
 function foldRow(
@@ -107,8 +139,11 @@ function CodeLineRow(props: {
   /** ファイルの何行目か。行番号の列を出さないときは `undefined`。 */
   readonly fileLine?: number
   readonly marks: readonly CodeMark[]
+  readonly label?: string
   readonly kind?: ShellLineKind
   readonly wordRange?: DiffLineWords
+  /** 前後の見比べの行の印。印の無い行と見比べでない塊は `undefined`。 */
+  readonly compare?: CompareLineMark
 }): ReactElement {
   const marked = props.marks.some((mark) => {
     const range = readMarkLines(mark.lines)
@@ -123,6 +158,7 @@ function CodeLineRow(props: {
   return (
     <span
       data-line={props.fileLine}
+      data-compare={props.compare}
       className={clsx(
         styles["code-line"],
         marked && styles["code-line-mark"],
@@ -133,7 +169,11 @@ function CodeLineRow(props: {
     >
       <span className={styles["code-line-text"]}>
         {props.kind === "output" ? props.line.map(plainText) : diffLine.map(hastToReact)}
+        {props.compare === "added" && <span className={styles["code-line-new"]}>新設</span>}
       </span>
+      {props.label !== undefined && (
+        <span className={styles["code-mark-label"]}>{props.label}</span>
+      )}
     </span>
   )
 }

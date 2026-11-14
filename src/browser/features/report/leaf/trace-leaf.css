@@ -4,14 +4,14 @@
 [data-report-region] .trace-leaf {
   max-inline-size: min(100%, var(--report-measure-wide));
   margin: var(--report-block-gap) 0;
-  padding: 0 0 0 1.15em;
+  padding: 0;
   list-style: none;
 }
 [data-report-region] .trace-row {
   position: relative;
   display: grid;
-  grid-template-columns: 22px minmax(0, 1fr);
-  column-gap: var(--space-sm);
+  grid-template-columns: 22px minmax(0, 1fr) auto;
+  column-gap: var(--space-md);
   max-inline-size: none;
   margin: 0;
   padding: var(--space-sm) 0;
@@ -52,28 +52,29 @@
   background: var(--surface);
   border: 1px dashed var(--rule);
 }
-/* 本文の列。題の下に補いを小さく置き、出力の畳みを続ける。 */
-[data-report-region] .trace-body {
-  align-self: center;
-  min-inline-size: 0;
+[data-report-region] .trace-title,
+[data-report-region] .trace-supplement {
+  align-self: baseline;
 }
 [data-report-region] .trace-title {
-  display: block;
+  min-inline-size: 0;
   color: var(--ink);
   font-size: var(--font-body);
   overflow-wrap: anywhere;
 }
-/* 効いた手だけ太字にする（太字は `TraceRow` が `b` で付ける）。 */
-[data-report-region] .trace-title > b {
+[data-report-region] .trace-row-ng .trace-title {
   color: var(--ink-bright);
+  font-weight: 600;
 }
 [data-report-region] .trace-supplement {
-  display: block;
+  grid-column: auto;
   color: var(--ink-quiet);
+  font-family: var(--font-mono);
   font-size: var(--font-label);
-  overflow-wrap: anywhere;
+  white-space: nowrap;
 }
 [data-report-region] .trace-output {
+  grid-column: 2 / -1;
   margin: 0;
   padding: 0;
   border: 0;
@@ -82,7 +83,8 @@
 }
 [data-report-region] .trace-output > summary {
   cursor: pointer;
-  font-size: var(--font-subheading);
+  color: var(--ink-soft);
+  font-size: var(--font-secondary);
   list-style: none;
 }
 [data-report-region] .trace-output > summary::-webkit-details-marker {
@@ -110,4 +112,13 @@
   background: var(--ground);
   white-space: pre;
   overflow-x: auto;
+}
+@container report-body (max-width: calc(40em + 0.75rem)) {
+  [data-report-region] .trace-row {
+    grid-template-columns: 22px minmax(0, 1fr);
+  }
+  [data-report-region] .trace-supplement {
+    grid-column: 2;
+    white-space: normal;
+  }
 }

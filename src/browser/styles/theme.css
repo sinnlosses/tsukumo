@@ -1,4 +1,4 @@
-/* デザイントークンの定義先（body と要素への規則は隣の `page-base.css`）。色の 16 進の値はこのファイルが正典で、どの色をつまみ・導出・固定のどれにするかと役割は `docs/architecture/screen-design.md`「Color」が持つ。
+/* 色・書体のトークンの定義先と、ページ全体の下地。色の 16 進の値はこのファイルが正典で、どの色をつまみ・導出・固定のどれにするかと役割は `docs/architecture/screen-design.md`「Color」が持つ。
    tsukumo が書くグローバルな CSS の全体は `docs/architecture/browser/bundle-style-component.md`「tsukumo が書くグローバルな CSS」が持ち、機能ごとの見た目は各機能の `*.module.css` にある。
    16進の色を書いてよいのもここだけで、各機能はカスタムプロパティを参照する（font-size / font-family も同じ）。 */
 :root {
@@ -8,55 +8,54 @@
      accent はパックの `accent` を `usePackAppearance` が `document.documentElement` に差し替える。
      ground / surface / ink は使う人が歯車から差す（`applyAppearanceColorOverride`）。
      ここに書く値は tsukumo-spirit（`characters/tsukumo-spirit/character.json`）と同じ、パックが届く前・パックに `accent` が無いときの既定値。 */
-  /* 昼と夜で違う色は `light-dark(昼, 夜)` で持ち、昼の紙（`PaperTone`）の下で昼の値になる。 */
-  --ground: #14121a;
-  --surface: light-dark(#eceaf1, #211e29);
-  --ink: light-dark(#1f1c27, #ece8ef);
+  --ground: #191720;
+  --surface: #221f2b;
+  --ink: #e8e3ea;
   --accent: #f2b0a0;
 
   /* 固定の導出（使う人にもパックにも差せない）。 */
-  --ink-quiet: light-dark(rgb(31 28 39 / 0.66), rgb(236 232 239 / 0.6));
+  --ink-quiet: color-mix(in srgb, var(--ink) 60%, transparent);
   /* 読ませる補助の字（表の見出し行・添え書き・やり取りの列の見出し）。本文より弱いが ink-quiet ほど沈めない。 */
-  --ink-soft: light-dark(rgb(31 28 39 / 0.78), rgb(236 232 239 / 0.74));
-  /* レポートの拾う字（見出し・太字・`stats` の数）。 */
-  --ink-bright: var(--ink);
-  --rule: light-dark(rgb(31 28 39 / 0.15), rgb(236 232 239 / 0.11));
+  --ink-soft: color-mix(in srgb, var(--ink) 72%, transparent);
+  /* レポートの拾う字（見出し・太字・`stats` の数）。`surface` 上で約 15:1。 */
+  --ink-bright: #f7f6f8;
+  --rule: color-mix(in srgb, var(--surface), var(--ink) 32%);
   /* 枠だけで部品と分かる操作子（入力欄・＋・≡）の縁。`surface` 上で 3:1 以上（WCAG 1.4.11）。
      `--rule` は区切り線にも使う（約 140 箇所）ので、濃くせずに別に持つ。 */
   --rule-control: color-mix(in srgb, var(--surface), var(--ink) 44%);
   /* 読む面の静かな罫線。カードの枠や表の行のように、線そのものは意味を持たず「ここで切れている」とだけ言えばよい場所に使う。
      `--rule` は押せる部品の縁のように、線が輪郭を担う場所。 */
-  --rule-quiet: light-dark(rgb(31 28 39 / 0.08), rgb(236 232 239 / 0.06));
-  /* レポートの表の行罫。 */
-  --rule-soft: var(--rule);
+  --rule-quiet: color-mix(in srgb, var(--surface), var(--ink) 6%);
+  /* レポートの表の行罫。`--rule` と `--rule-quiet` のあいだ（`surface` 上で約 1.3:1）。 */
+  --rule-soft: color-mix(in srgb, var(--surface), var(--ink) 12%);
   /* surface を accent でわずかに染めた地。「選ばれたタブ」と同じ扱いでよい場所（最新の吹き出し・選ばれた選択肢・送信ボタン）にだけ使う。 */
   --surface-accent: color-mix(in srgb, var(--surface), var(--accent) 12%);
   /* 本文の地の上に浮く塊の地（機械の名前・表の見出し行・カード・最終レポート）。
-     読む面の地は ground（沈む）・surface（基準＝本文）・surface-raised（浮く）の3段で、段そのものが意味を持つ。
-     surface と混ぜた不透明な色にすると、浮く塊が浮く塊の中に入ったとき親と同じ色になって消える（実測）ので、敷いた地に重ねる（透ける）形で持つ。 */
-  --surface-raised: light-dark(rgb(31 28 39 / 0.06), rgb(236 232 239 / 0.07));
-  /* 紙の上に浮く面（入力欄・メニュー・お伺い）の不透明な地。 */
-  --surface-float: light-dark(#fbfaff, #2d2937);
+     読む面の地は ground（沈む＝途中のもの・畳んだもの）・surface（基準＝本文）・surface-raised（浮く）の3段になり、段そのものが意味を持つ。
+     敷いた地に重ねる（透ける）形で持つ。
+     surface と混ぜた不透明な色にすると、浮く塊が浮く塊の中に入ったとき（最終レポートの中のインラインコード・表の見出し行・カード）に親と同じ色になって消える（実測）。
+     重ねる形なら、どの段の上でも必ず1段上がる。 */
+  --surface-raised: color-mix(in srgb, var(--ink) 10%, transparent);
 
   /* 意味を固定した色。誰が来ても変わらない。文字のラベルと対で使うものだけがここに入る（色だけで意味を伝えない）。
      state-info・state-ask・state-memo はレポートの「情報」「疑問」「メモ」の印で、ラベルが必ず添う。 */
-  --state-ok: light-dark(#187332, #7ee081);
-  --state-warn: light-dark(#7f5d00, #e3c766);
-  --state-ng: light-dark(#b3362f, #f2a0a0);
-  --state-info: light-dark(#285f9e, #9cc1ee);
-  --state-ask: light-dark(#6a45a8, #c7aef0);
+  --state-ok: #7ee081;
+  --state-warn: #e3c766;
+  --state-ng: #f2a0a0;
+  --state-info: #9cc1ee;
+  --state-ask: #c7aef0;
   --state-memo: var(--ink);
 
   /* コードの差分の地。固定の値で、color-mix で作らない。 */
-  --code-diff-line-added: light-dark(#dcf1e0, #203524);
-  --code-diff-line-removed: light-dark(#f7dedc, #372120);
-  --code-diff-word-added: light-dark(#b4e0bd, #345d3e);
-  --code-diff-word-removed: light-dark(#efbcb8, #603334);
+  --code-diff-line-added: #203524;
+  --code-diff-line-removed: #372120;
+  --code-diff-word-added: #345d3e;
+  --code-diff-word-removed: #603334;
 
-  /* レポートの chart の系列色。`accent` の色相は使わない。1〜3 本目は色覚の検査を通した順で、地の色を変えたらやり直す。 */
-  --chart-series-1: light-dark(#2a78d6, #3987e5);
-  --chart-series-2: light-dark(#eb6834, #d95926);
-  --chart-series-3: light-dark(#1baf7a, #199e70);
+  /* レポートの chart の系列色。`accent` の色相は使わない。 */
+  --chart-series-1: #87bafd;
+  --chart-series-2: #f49f81;
+  --chart-series-3: #c2a7f4;
   --chart-series-4: #aec26f;
   --chart-series-5: #ea9bc7;
   --chart-series-6: #d3b460;
@@ -147,29 +146,27 @@
   ); /* 流れ（flow）の丸・線、画像の部品の「図 n」の番号 */
   --report-chart-reference: var(--graph-return); /* グラフの基準線（目標・上限）の点線と名前 */
 
-  /* タイプスケール。字の役の大きさ（`--text-*-size`）はテーマの定義がここから写す。
-     字の大きさは 13px を下回らず5種類以内で、本文の行送りは 1.8。 */
-  --font-label: 0.8125rem;
-  --font-action: 0.8125rem;
-  --font-secondary: 0.8125rem;
-  --font-subheading: 0.875rem;
+  /* タイプスケール。字の段は Astryx のトークンを引く（字の下限は 12px で、10px の `--font-size-xs` より下は引かない）。 */
+  --font-label: var(--font-size-sm);
+  --font-action: var(--font-label);
+  --font-secondary: var(--text-supporting-size);
+  --font-subheading: var(--font-size-base);
   /* iOS Safari は 16px 未満の入力欄にフォーカスすると画面を拡大するので、入力欄の字は 1rem を下げない。 */
   --font-input: 1rem;
-  --font-body: 1rem;
-  --font-heading: var(--font-heading-3);
-  --font-heading-3: 1.1875rem;
-  --font-heading-2: 1.1875rem;
-  --font-heading-1: 1.5rem;
-  --font-lead: 1.5rem;
+  --font-body: var(--text-body-size);
+  --font-heading: var(--text-heading-3-size);
+  --font-heading-3: var(--text-heading-3-size);
+  --font-heading-2: var(--text-heading-2-size);
+  --font-heading-1: var(--text-heading-1-size);
   /* レポートの見出し。入力欄の見出し（上の --font-heading-1〜-3）とは別のつまみ。 */
-  --report-heading-2: 1.1875rem;
-  --report-heading-3: 1rem;
+  --report-heading-2: 1.3125rem;
+  --report-heading-3: 1.0625rem;
   /* 長い日本語の段落が詰まらない本文の行の高さ。テーマの定義が `--text-body-leading` へ写し、`--line-height-body` がそれを引く。 */
-  --line-height-reading: 1.8;
+  --line-height-reading: 1.7;
   --line-height-body: var(--text-body-leading);
 
-  /* 書体は本文と等幅の2本。レポートのコードだけ同梱の IBM Plex Mono（`--font-code`）。 */
-  --font-sans: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic UI", system-ui, sans-serif;
+  /* 書体は Astryx の本文の書体と等幅の2本。レポートのコードだけ同梱の IBM Plex Mono（`--font-code`）。 */
+  --font-sans: var(--font-family-body);
   --font-mono: ui-monospace, SFMono-Regular, monospace;
   --font-code: "IBM Plex Mono", var(--font-mono);
   /* 唯一の例外: 成果の画面の日記の本文だけ、端末に入っている明朝体の名前を並べ、最後を `serif` に落とす。外部フォントは足さない。 */
@@ -177,8 +174,6 @@
   /* 日記の本文が実際に使う書体。既定は `--font-serif` そのもの。
      キャラクターパックが書体を同梱していれば `usePackAppearance` がここだけを上書きする（FontFace で読み込めた登録名 → `--font-serif` の順に並べたフォールバック）。 */
   --font-diary: var(--font-serif);
-  /* キャラクターのセリフ。 */
-  --font-voice: var(--font-serif);
 
   --space-2xs: var(--spacing-0-5);
   --space-xs: var(--spacing-1);
@@ -202,31 +197,32 @@
   --inline-group: var(--space-lg);
   --gutter-region: var(--space-md);
   --gutter-page: var(--space-lg);
-  --gutter-sheet: var(--space-3xl);
-  --inset-sheet-head: calc(var(--space-xl) + var(--space-2xs)) var(--gutter-sheet)
-    calc(var(--space-md) + var(--space-2xs));
-  --stack-sheet-end: var(--spacing-10);
 
-  --radius-sm: 0.375rem;
-  --radius-md: 0.625rem;
-  --radius-lg: 0.75rem;
+  --radius-sm: var(--radius-inner);
+  --radius-md: var(--radius-element);
+  --radius-lg: var(--radius-container);
   --radius-xl: 1rem;
-  --radius-pill: 9999px;
+  --radius-pill: var(--radius-full);
   --radius-round: 50%;
 
-  --shadow-raised: 0 0 0 1px var(--rule), 0 14px 36px rgb(0 0 0 / 0.38);
-  --shadow-overlay: 0 0 0 1px var(--rule), 0 24px 60px rgb(0 0 0 / 0.5);
-  --shadow-sheet: 0 24px 70px rgb(0 0 0 / 0.5);
+  --shadow-raised: var(--shadow-med);
+  --shadow-overlay: var(--shadow-high);
   --shadow-ring: 0 0 0 2px var(--accent);
 
   --motion-fast: 0.12s;
   --motion-base: 0.2s;
-  --motion-enter: 0.3s;
-  --motion-shift: 0.42s;
-  --motion-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
 
-  /* 画面の縁の余白（body の padding）。 */
+  /* 画面の縁の余白（body の padding）。
+     帯はこの余白の外へはみ出して画面の端から端まで出るので、帯（screen-nav.module.css）と会話の画面の grid（layout.module.css）も読む。 */
   --page-padding: var(--gutter-page);
+
+  /* 画面のナビの帯が最上部で奪う高さ。帯の外寸は帯の地 + 下の罫線の2つの和。
+     帯（screen-nav.module.css）と、そのぶん縮む会話の画面の grid（layout.module.css）の両方が読むので、値はここに1つだけ置く（狭い画面では帯を出さず、下の @media の縦の flex が grid の高さを決める）。
+     `--screen-nav-height` は罫線を含まない帯の地の高さで、口の下線はこの下端に重なる。
+     帯の下の隙間は画面の縁と同じだけ空ける。 */
+  --screen-nav-height: 52px;
+  --screen-nav-rule: 1px;
+  --screen-nav-gap: var(--page-padding);
 
   /* 下向きの矢印の形（プルダウンの右端と、開閉するタイトルの右）。
      mask で使うので、塗りは読み手の `currentColor` が決める（この中の `stroke='black'` は形を出すためだけのもの）。
@@ -238,6 +234,73 @@
 @media (max-width: 760px) {
   :root {
     --stack-section: var(--space-lg);
+  }
+}
+
+body {
+  margin: 0;
+  padding: var(--page-padding);
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: var(--font-body);
+  line-height: var(--line-height-body);
+  overflow-wrap: anywhere;
+}
+
+/* 狭い画面（760px 以下）の会話の画面は、縁の余白を持たず画面の高さに固定した縦の1列にする。
+   頭（画面のナビ）が上の行を中身なりに取り、会話の画面の grid（conversation-layout.module.css）が残りを取る。
+   どの画面を出しているかは画面のナビの `data-screen` で見る（ほかの画面は縦に流れる1枚のページのまま）。 */
+@media (max-width: 760px) {
+  body:has([data-screen="conversation"]) {
+    padding: 0;
+  }
+  body:has([data-screen="conversation"]) #app {
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+  }
+}
+
+/* 要素そのものへの規則。層に入れるので、層なしの CSS（トークン・`*.module.css`）が当てる値に負け、
+   Astryx の部品の class（`astryx-base` の層）も上書きしない。 */
+@layer tsukumo-base {
+  /* フォーム部品（button/input/select/textarea）はブラウザの既定では親の書体を継がないので、ここで1回だけ継がせる。
+     大きさ・行の高さ・太さも一緒に継ぐ（`font-family` だけにすると、大きさを上書きしていない部品で行の高さが本文の 1.75 から UA 既定に戻る）。
+     機能の CSS には書かず、ここから変える値（`font-size` など）だけを書く。 */
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+  }
+
+  /* フォーカスの輪は、キャラクターの色（accent）を出してよい場所の1つ。 */
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  /* リンクは本文と同じ色のまま（読む面はキャラクターの色を受け取らない）。
+     色を取り上げるかわりに下線で区別するので、どのパックの accent が来てもリンクだと分かる。 */
+  a {
+    color: var(--ink);
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+  a:hover {
+    text-decoration-color: var(--accent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    /* 計算値が `1e-05s` と指数で出る長さだと、Astryx の `BottomSheet` が閉じ待ちの長さを読めず、閉じたあとも `:modal` のまま残る。 */
+    transition-duration: 1ms !important;
   }
 }
 
@@ -254,4 +317,20 @@
   to {
     opacity: 1;
   }
+}
+
+/* レポートのコードの書体。実ファイルは tsukumo が 127.0.0.1 の `/vendor/` から配る（読めなければ `--font-code` の次の等幅に落ちる）。 */
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/vendor/ibm-plex-mono-latin-400.woff2") format("woff2");
+}
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("/vendor/ibm-plex-mono-latin-600.woff2") format("woff2");
 }

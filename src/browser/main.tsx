@@ -17,7 +17,6 @@ import { applyAppearanceColorOverride } from "./stores/appearance-color-root.ts"
 import { reportBrowserError } from "./stores/browser-error-report.ts"
 // ページ全体の下地（トークン・body・要素への規則）。
 import "./styles/theme.css"
-import "./styles/page-base.css"
 import {
   isTemporalSupported,
   showUnsupportedBrowserNotice,

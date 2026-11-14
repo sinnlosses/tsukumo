@@ -15,7 +15,7 @@ test.describe("レポートの画像の寸法", () => {
       scenario: "image-layout-tall",
       scene: "report-tall-figure",
       viewport: "phone",
-      domRoots: ["paper"],
+      domRoots: ["main"],
       cwdFiles: [{ path: "report-image-fixture/tall.png", content: fictionalPng(180, 900) }],
     })
 
@@ -37,7 +37,7 @@ test.describe("レポートの画像の寸法", () => {
       scenario: "image-layout-shift",
       scene: "report-image",
       viewport: "wide",
-      domRoots: ["paper"],
+      domRoots: ["main"],
       cwdFiles: [{ path: "report-image-fixture/after.png", content: fictionalPng(8, 4) }],
     })
     let release: () => void = () => undefined

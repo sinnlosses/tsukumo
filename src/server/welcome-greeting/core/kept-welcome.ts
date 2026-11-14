@@ -1,7 +1,6 @@
 // 書けた迎えの挨拶と反応の行を、プロセスの中でセッションごとに覚え、同じセッションへ戻る代でそのまま出し直す。
 // ディスクには書かない。
 
-import type { WrittenAizuchi } from "../../../shared/recommendation/aizuchi.ts"
 import type { WrittenReactionsState } from "../../../shared/recommendation/reaction.ts"
 import type { WelcomeGreeting } from "../../../shared/recommendation/welcome-greeting.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
@@ -15,7 +14,7 @@ export type WelcomeLaunchStart =
 /** 書き手が流す出来事。 */
 export type WelcomeWritingEvent = Extract<
   SessionEvent,
-  { readonly kind: "welcome-greeting-changed" | "reactions-written" | "aizuchi-written" }
+  { readonly kind: "welcome-greeting-changed" | "reactions-written" }
 >
 
 /** プロセスに1つ持つ。 */
@@ -40,7 +39,6 @@ export type KeptWelcomeLaunch = {
 type KeptWelcome = {
   readonly greeting: WelcomeGreeting
   readonly reactions: WrittenReactionsState
-  readonly aizuchi: WrittenAizuchi
 }
 
 export function createWelcomeKeeper(): WelcomeKeeper {
@@ -50,7 +48,6 @@ export function createWelcomeKeeper(): WelcomeKeeper {
       let sessionId: SessionId | undefined = start.kind === "resume" ? start.sessionId : undefined
       let greeting: WelcomeGreeting | undefined = undefined
       let reactions: WrittenReactionsState = { kind: "none" }
-      let aizuchi: WrittenAizuchi = { kind: "none" }
       const keep = (): void => {
         if (sessionId === undefined) {
           return
@@ -59,7 +56,7 @@ export function createWelcomeKeeper(): WelcomeKeeper {
           kept.delete(sessionId)
           return
         }
-        kept.set(sessionId, { greeting, reactions, aizuchi })
+        kept.set(sessionId, { greeting, reactions })
       }
       return {
         replay: () => {
@@ -69,16 +66,12 @@ export function createWelcomeKeeper(): WelcomeKeeper {
           }
           greeting = found.greeting
           reactions = found.reactions
-          aizuchi = found.aizuchi
           emit({
             kind: "welcome-greeting-changed",
             state: { kind: "written", greeting: found.greeting },
           })
           if (found.reactions.kind === "written") {
             emit({ kind: "reactions-written", reactions: found.reactions.reactions })
-          }
-          if (found.aizuchi.kind === "written") {
-            emit({ kind: "aizuchi-written", pairs: found.aizuchi.pairs })
           }
           return true
         },
@@ -89,10 +82,6 @@ export function createWelcomeKeeper(): WelcomeKeeper {
           }
           if (event.kind === "reactions-written") {
             reactions = { kind: "written", reactions: event.reactions }
-            keep()
-          }
-          if (event.kind === "aizuchi-written") {
-            aizuchi = { kind: "written", pairs: event.pairs }
             keep()
           }
           emit(event)

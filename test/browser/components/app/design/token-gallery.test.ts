@@ -3,7 +3,6 @@ import { readFileSync } from "node:fs"
 import { describe, expect, it } from "vitest"
 
 import {
-  EASING_TOKENS,
   MOTION_TOKENS,
   RADIUS_TOKENS,
   SHADOW_TOKENS,
@@ -14,16 +13,12 @@ const FAMILY_PATTERN = /^\s+(--(?:space|radius|shadow|motion)-[\w-]+):/gm
 
 function declaredNames(): readonly string[] {
   const css = readFileSync(`${process.cwd()}/src/browser/styles/theme.css`, "utf8")
-  return [...new Set([...css.matchAll(FAMILY_PATTERN)].map((match) => match[1] ?? ""))]
+  return [...css.matchAll(FAMILY_PATTERN)].map((match) => match[1] ?? "")
 }
 
-const LISTED = [
-  ...SPACE_TOKENS,
-  ...RADIUS_TOKENS,
-  ...SHADOW_TOKENS,
-  ...MOTION_TOKENS,
-  ...EASING_TOKENS,
-].map((token) => token.name)
+const LISTED = [...SPACE_TOKENS, ...RADIUS_TOKENS, ...SHADOW_TOKENS, ...MOTION_TOKENS].map(
+  (token) => token.name,
+)
 
 describe("見本帳のトークン", () => {
   it("余白・角丸・影・動きのトークンは、theme.css の宣言と見本帳の一覧が過不足なく一致する", () => {

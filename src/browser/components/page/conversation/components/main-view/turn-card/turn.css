@@ -32,16 +32,3 @@
 .progress-fold-steps {
   margin-top: var(--space-md);
 }
-/* 舞台のやり取りの流れから連れてきた段の目印。差し色の輪が一度灯って消える。
-   長さは `useStepJumpLanding` が目印を外すまでの時間と同じにする。 */
-.main-step[data-jumped="true"] {
-  animation: step-jumped 1.6s var(--motion-ease) both;
-}
-@keyframes step-jumped {
-  from {
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 70%, transparent);
-  }
-  to {
-    box-shadow: 0 0 0 3px transparent;
-  }
-}

@@ -102,13 +102,6 @@ describe("コマンドの契約の入力（受け付ける形）", () => {
     })
   })
 
-  it("session.pressAizuchi は局面と番号だけを受け付ける", () => {
-    expect(parseInput("session.pressAizuchi", { moment: "work", index: 2 })).toEqual({
-      moment: "work",
-      index: 2,
-    })
-  })
-
   it("見た目の編集は、パックの名前として通る形なら受け付ける", () => {
     expect(parseInput("characterPack.clearBackground", { pack: "fictional-2" })).toEqual({
       pack: "fictional-2",
@@ -230,8 +223,6 @@ describe("コマンドの契約の入力（落とす形）", () => {
       "session.recordWelcomeGreeting",
       welcome("架空の挨拶", "架空の顔"),
     ],
-    ["pressAizuchi の知らない局面", "session.pressAizuchi", { moment: "greet", index: 0 }],
-    ["pressAizuchi の範囲外の番号", "session.pressAizuchi", { moment: "work", index: 3 }],
     ["clearBackground のパックの名前が無い", "characterPack.clearBackground", {}],
     ...["", "..", "../fictional", "fictional/other", ".hidden", "架空"].map(
       (pack) =>

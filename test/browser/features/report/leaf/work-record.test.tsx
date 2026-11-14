@@ -8,7 +8,6 @@ import {
   type PhaseTimeRow,
   phaseTimesView,
 } from "../../../../../src/shared/report/report-phase-time.ts"
-import { NO_REPORT_PROGRESS } from "../../../../../src/shared/report/report-progress-field.ts"
 import type { MainViewSurfaceHead } from "../../../../../src/shared/session/main-view-shape.ts"
 
 afterEach(() => {
@@ -60,32 +59,20 @@ const CHECKS: ReportChecksView = {
       status: "unobserved",
       label: "架空の画面の確認",
       figure: "",
-      command: "",
       time: "",
       viaCommand: false,
       detail: "",
       howToVerify: "架空の画面を開く",
-      seal: { kind: "claimed" },
     },
   ],
   passed: [
-    {
-      label: "架空の検証",
-      labelHead: "架空の検証",
-      figure: "3件",
-      command: "",
-      time: "",
-      viaCommand: false,
-      seal: { kind: "claimed" },
-    },
+    { label: "架空の検証", labelHead: "架空の検証", figure: "3件", time: "", viaCommand: false },
     {
       label: "架空のコマンドの検証",
       labelHead: "架空のコマンドの検証",
       figure: "",
-      command: "pnpm run fictional",
       time: "",
       viaCommand: true,
-      seal: { kind: "run" },
     },
   ],
 }
@@ -98,7 +85,6 @@ function head(overrides: Partial<MainViewSurfaceHead>): MainViewSurfaceHead {
     checks: { kind: "none" },
     status: EMPTY_STATUS,
     finalStatus: EMPTY_STATUS,
-    progress: NO_REPORT_PROGRESS,
     ...overrides,
   }
 }
@@ -202,12 +188,10 @@ describe("作業の記録", () => {
           status: "ng",
           label: "架空の別コマンド",
           figure: "",
-          command: "pnpm run fictional-other",
           time: "",
           viaCommand: true,
           detail: "",
           howToVerify: "",
-          seal: { kind: "claimed" },
         },
       ],
     }

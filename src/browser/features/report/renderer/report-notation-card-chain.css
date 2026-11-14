@@ -8,7 +8,7 @@
     align-items: stretch;
     inline-size: 100%;
     margin: 0;
-    padding: 0 0 0 1.15em;
+    padding: 0;
     overflow-x: auto;
     list-style: none;
   }
@@ -124,38 +124,5 @@
     & .report-card-chain-arrow::after {
       content: "→";
     }
-  }
-}
-
-/* 紙の手順の連鎖。箱は塗らず細い線で描き、矢印と語は静かな字。色は変えた箱の枠だけ。 */
-.detail-block {
-  & .report-card-chain {
-    gap: var(--stack-tight);
-  }
-  & .report-card-chain-card {
-    gap: 0;
-    border: 1px solid var(--rule-soft);
-    border-radius: var(--radius-md);
-    background: none;
-    font-size: var(--font-subheading);
-  }
-  & .report-card-chain-tone {
-    display: none;
-  }
-  & .report-card-chain-card.report-card-chain-added,
-  & .report-card-chain-card.report-card-chain-changed {
-    border: 2px solid var(--chart-series-1);
-  }
-  & .report-card-chain-card.report-card-chain-removed {
-    border: 2px dashed var(--ink-quiet);
-  }
-  & .report-card-chain-arrow,
-  & .report-card-chain-arrow[class*="report-card-chain-"] {
-    --report-card-chain-arrow-color: var(--ink-quiet);
-  }
-  & .report-card-chain-arrow.report-card-chain-added,
-  & .report-card-chain-arrow.report-card-chain-removed,
-  & .report-card-chain-arrow.report-card-chain-changed {
-    color: var(--ink-quiet);
   }
 }

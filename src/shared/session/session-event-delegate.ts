@@ -99,14 +99,14 @@ export type DelegateEvent =
   | { readonly kind: "background-tool-finished"; readonly toolUseId: ToolUseId }
   /**
    * バックグラウンドタスクの進みの1行が届いた（SDK の `system` / `task_progress` の `summary`）。
-   * `summary` は委譲先の会話から作られた字なので、記録・ログ・ファイルに写さない。
-   * `ProgressNudge` が受け、畳み込みが任せた役の1行（`delegateRoles`）にする。状態はメモリにだけ置くので、ブラウザのメモリにだけ届く。
+   * `summary` は委譲先の会話から作られた字なので、畳み込み・記録・ログに写さない。
+   * サーバの中だけで流れ、`ProgressNudge` が受けたら駆動が送り出す手前で捨てる（畳み込み・ブラウザには届かない）。
    */
   | { readonly kind: "delegate-progress"; readonly taskId: TaskId; readonly summary: string }
   /**
    * 駆動が委譲先の進みの1行をメインへ差し込んだ（`ProgressNudge`）。差し込んだ事実だけを運び、文面は持たない。
    * `CallReview.pass` が `speak` の新しい事実に数える。
-   * サーバの中だけで流れ、駆動が送り出す手前で捨てる（畳み込み・ブラウザには届かない）。
+   * `delegate-progress` と同じくサーバの中だけで流れ、駆動が送り出す手前で捨てる（畳み込み・ブラウザには届かない）。
    * ターンの始まりは、続く `init` から `turn-resumed` が補う。
    */
   | { readonly kind: "progress-nudged" }

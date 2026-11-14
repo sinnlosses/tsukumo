@@ -17,390 +17,497 @@
           ]
         },
         {
-          "tag": "div",
+          "tag": "nav",
           "attributes": {
-            "data-posture": "deliver"
+            "aria-label": "画面",
+            "data-screen": "conversation"
           },
           "children": [
             {
-              "tag": "div",
+              "tag": "button",
+              "attributes": {
+                "data-variant": "ghost",
+                "data-size": "lg",
+                "data-elevation": "none",
+                "data-astryx-pressable": "",
+                "aria-expanded": "false",
+                "aria-label": "キャラクターを選ぶ（いまは つくもの精霊）",
+                "data-astryx-edge-comp": "",
+                "type": "button"
+              },
+              "children": [
+                {
+                  "tag": "img",
+                  "attributes": {
+                    "alt": "つくもの精霊",
+                    "src": "/character/tsukumo-spirit/face.svg"
+                  }
+                },
+                {
+                  "tag": "span",
+                  "attributes": {
+                    "aria-hidden": "true"
+                  },
+                  "children": [
+                    {
+                      "tag": "svg"
+                    }
+                  ]
+                },
+                {
+                  "tag": "span",
+                  "attributes": {
+                    "role": "status",
+                    "aria-live": "polite"
+                  }
+                }
+              ]
+            },
+            {
+              "tag": "span",
+              "attributes": {
+                "data-type": "large",
+                "data-color": "primary"
+              },
+              "children": [
+                "<project>"
+              ]
+            },
+            {
+              "tag": "span",
+              "attributes": {
+                "data-type": "supporting",
+                "data-color": "disabled"
+              },
+              "children": [
+                "<port>"
+              ]
+            },
+            {
+              "tag": "span",
+              "attributes": {
+                "aria-hidden": "true"
+              },
+              "children": [
+                "-"
+              ]
+            },
+            {
+              "tag": "button",
+              "attributes": {
+                "aria-haspopup": "dialog",
+                "aria-expanded": "false",
+                "aria-label": "セッション FA。押すとセッションを切り替える画面を開く",
+                "type": "button"
+              },
+              "children": [
+                "FA"
+              ]
+            },
+            {
+              "tag": "a",
+              "attributes": {
+                "aria-current": "page",
+                "href": "/?t=<token>"
+              },
+              "children": [
+                {
+                  "tag": "span",
+                  "attributes": {
+                    "aria-hidden": "true"
+                  },
+                  "children": [
+                    {
+                      "tag": "svg",
+                      "attributes": {
+                        "data-size": "sm",
+                        "data-color": "inherit"
+                      }
+                    }
+                  ]
+                },
+                "仕事"
+              ]
+            },
+            {
+              "tag": "a",
+              "attributes": {
+                "href": "/?t=<token>"
+              },
+              "children": [
+                {
+                  "tag": "span",
+                  "attributes": {
+                    "aria-hidden": "true"
+                  },
+                  "children": [
+                    {
+                      "tag": "svg",
+                      "attributes": {
+                        "data-size": "sm",
+                        "data-color": "inherit"
+                      }
+                    }
+                  ]
+                },
+                "雑談"
+              ]
+            },
+            {
+              "tag": "span",
               "attributes": {
                 "aria-hidden": "true"
               }
             },
             {
-              "tag": "section",
+              "tag": "a",
               "attributes": {
-                "data-region": "stage",
-                "aria-label": "キャラクター"
+                "href": "/?t=<token>#character"
               },
               "children": [
                 {
-                  "tag": "div",
+                  "tag": "span",
                   "attributes": {
-                    "data-direction": "vertical",
-                    "data-gap": "2",
-                    "data-wrap": "nowrap"
+                    "aria-hidden": "true"
                   },
                   "children": [
                     {
-                      "tag": "div",
+                      "tag": "svg",
                       "attributes": {
-                        "data-slot": "portrait"
-                      },
-                      "children": [
-                        {
-                          "tag": "div",
-                          "attributes": {
-                            "role": "img",
-                            "aria-label": "つくもの精霊（どや顔）",
-                            "data-expression": "proud",
-                            "data-motion": "reading"
-                          },
-                          "children": [
-                            {
-                              "tag": "img",
-                              "attributes": {
-                                "alt": "つくもの精霊（どや顔）",
-                                "src": "/character/tsukumo-spirit/proud.svg"
-                              }
-                            }
-                          ]
-                        },
-                        {
-                          "tag": "span",
-                          "attributes": {
-                            "aria-hidden": "true"
-                          }
-                        }
-                      ]
-                    },
-                    {
-                      "tag": "div",
-                      "attributes": {
-                        "data-slot": "room-head"
-                      },
-                      "children": [
-                        {
-                          "tag": "div",
-                          "attributes": {
-                            "data-region": "room-head"
-                          },
-                          "children": [
-                            {
-                              "tag": "div",
-                              "attributes": {
-                                "role": "radiogroup",
-                                "aria-label": "仕事と雑談の切り替え",
-                                "data-size": "md",
-                                "data-astryx-touch-action": "pan-y pinch-zoom"
-                              },
-                              "children": [
-                                {
-                                  "tag": "button",
-                                  "attributes": {
-                                    "role": "radio",
-                                    "aria-checked": "true",
-                                    "data-value": "work",
-                                    "data-size": "md",
-                                    "data-selected": "selected",
-                                    "type": "button"
-                                  },
-                                  "children": [
-                                    {
-                                      "tag": "span",
-                                      "attributes": {
-                                        "data-astryx-segment-title": ""
-                                      },
-                                      "children": [
-                                        "仕事"
-                                      ]
-                                    }
-                                  ]
-                                },
-                                {
-                                  "tag": "button",
-                                  "attributes": {
-                                    "role": "radio",
-                                    "aria-checked": "false",
-                                    "data-value": "chat",
-                                    "data-astryx-pressable": "",
-                                    "data-size": "md",
-                                    "type": "button"
-                                  },
-                                  "children": [
-                                    {
-                                      "tag": "span",
-                                      "attributes": {
-                                        "data-astryx-segment-title": ""
-                                      },
-                                      "children": [
-                                        "雑談"
-                                      ]
-                                    }
-                                  ]
-                                }
-                              ]
-                            },
-                            {
-                              "tag": "div",
-                              "attributes": {
-                                "data-state": "deliver"
-                              },
-                              "children": [
-                                {
-                                  "tag": "i",
-                                  "attributes": {
-                                    "aria-hidden": "true"
-                                  }
-                                },
-                                "終わった"
-                              ]
-                            }
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "tag": "div",
-                      "attributes": {
-                        "data-slot": "today"
+                        "data-size": "sm",
+                        "data-color": "inherit"
                       }
-                    },
-                    {
-                      "tag": "div",
-                      "attributes": {
-                        "data-slot": "thread"
-                      },
-                      "children": [
-                        {
-                          "tag": "button",
-                          "attributes": {
-                            "type": "button"
-                          },
-                          "children": [
-                            "▴ これまでのやり取り"
-                          ]
-                        },
-                        {
-                          "tag": "div",
-                          "attributes": {
-                            "aria-label": "この依頼でのやり取り"
-                          },
-                          "children": [
-                            {
-                              "tag": "p",
-                              "attributes": {
-                                "data-who": "her"
-                              },
-                              "children": [
-                                {
-                                  "tag": "time",
-                                  "attributes": {
-                                    "dateTime": "2026-01-15T10:00+09:00"
-                                  },
-                                  "children": [
-                                    "10:00"
-                                  ]
-                                },
-                                "疑似セッションの駆動で立ち上がったよ。ここはぜんぶ作り物の会話。"
-                              ]
-                            },
-                            {
-                              "tag": "div",
-                              "attributes": {
-                                "data-who": "you",
-                                "data-current": "true",
-                                "data-expanded": "false"
-                              },
-                              "children": [
-                                {
-                                  "tag": "button",
-                                  "attributes": {
-                                    "aria-current": "true",
-                                    "type": "button"
-                                  },
-                                  "children": [
-                                    "あるじ",
-                                    "report ツールの描き方を確かめたい（架空の依頼）"
-                                  ]
-                                }
-                              ]
-                            },
-                            {
-                              "tag": "p",
-                              "attributes": {
-                                "data-who": "her"
-                              },
-                              "children": [
-                                {
-                                  "tag": "time",
-                                  "attributes": {
-                                    "dateTime": "2026-01-15T10:00+09:00"
-                                  },
-                                  "children": [
-                                    "10:00"
-                                  ]
-                                },
-                                "見てくるね。"
-                              ]
-                            },
-                            {
-                              "tag": "p",
-                              "attributes": {
-                                "data-who": "her"
-                              },
-                              "children": [
-                                {
-                                  "tag": "time",
-                                  "attributes": {
-                                    "dateTime": "2026-01-15T10:00+09:00"
-                                  },
-                                  "children": [
-                                    "10:00"
-                                  ]
-                                },
-                                "途中まで書いたよ。"
-                              ]
-                            }
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "tag": "div",
-                      "attributes": {
-                        "data-slot": "balloon"
-                      },
-                      "children": [
-                        {
-                          "tag": "div",
-                          "attributes": {
-                            "data-has-balloon": "true"
-                          },
-                          "children": [
-                            {
-                              "tag": "div",
-                              "attributes": {
-                                "data-latest": "true",
-                                "data-interactive": "true",
-                                "data-selected": "true",
-                                "role": "button",
-                                "aria-pressed": "true"
-                              },
-                              "children": [
-                                {
-                                  "tag": "span",
-                                  "attributes": {
-                                    "data-type": "supporting",
-                                    "data-color": "accent"
-                                  },
-                                  "children": [
-                                    "つくもの精霊"
-                                  ]
-                                },
-                                {
-                                  "tag": "time",
-                                  "attributes": {
-                                    "dateTime": "2026-01-15T10:00+09:00"
-                                  },
-                                  "children": [
-                                    "10:00"
-                                  ]
-                                },
-                                {
-                                  "tag": "span",
-                                  "attributes": {
-                                    "data-type": "inherit",
-                                    "data-color": "inherit"
-                                  },
-                                  "children": [
-                                    "書けたよ！"
-                                  ]
-                                }
-                              ]
-                            },
-                            {
-                              "tag": "p",
-                              "attributes": {
-                                "data-tone": "quiet",
-                                "data-mono": "false"
-                              },
-                              "children": [
-                                {
-                                  "tag": "b",
-                                  "children": [
-                                    "手元"
-                                  ]
-                                },
-                                "考えている"
-                              ]
-                            }
-                          ]
-                        },
-                        {
-                          "tag": "i",
-                          "attributes": {
-                            "aria-hidden": "true"
-                          }
-                        }
-                      ]
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "tag": "main",
-              "attributes": {
-                "data-region": "paper",
-                "data-asking": "false",
-                "aria-label": "紙"
-              },
-              "children": [
-                {
-                  "tag": "header",
-                  "attributes": {
-                    "data-region": "greeting"
-                  },
-                  "children": [
-                    {
-                      "tag": "p",
-                      "children": [
-                        "つくもの精霊"
-                      ]
                     }
                   ]
                 },
+                "キャラ"
+              ]
+            },
+            {
+              "tag": "a",
+              "attributes": {
+                "href": "/?t=<token>#token-usage"
+              },
+              "children": [
                 {
-                  "tag": "div",
+                  "tag": "span",
                   "attributes": {
-                    "data-brush-origin": "",
-                    "data-main-view": ""
+                    "aria-hidden": "true"
+                  },
+                  "children": [
+                    {
+                      "tag": "svg",
+                      "attributes": {
+                        "data-size": "sm",
+                        "data-color": "inherit"
+                      }
+                    }
+                  ]
+                },
+                "トークン"
+              ]
+            },
+            {
+              "tag": "a",
+              "attributes": {
+                "href": "/?t=<token>#achievement"
+              },
+              "children": [
+                {
+                  "tag": "span",
+                  "attributes": {
+                    "aria-hidden": "true"
+                  },
+                  "children": [
+                    {
+                      "tag": "svg",
+                      "attributes": {
+                        "data-size": "sm",
+                        "data-color": "inherit"
+                      }
+                    }
+                  ]
+                },
+                "成果"
+              ]
+            },
+            {
+              "tag": "button",
+              "attributes": {
+                "aria-haspopup": "dialog",
+                "aria-label": "設定",
+                "type": "button"
+              },
+              "children": [
+                {
+                  "tag": "svg"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "tag": "div",
+          "attributes": {
+            "data-collapse-character": "false"
+          },
+          "children": [
+            {
+              "tag": "div",
+              "attributes": {
+                "data-sidebar-open": "false"
+              },
+              "children": [
+                {
+                  "tag": "main",
+                  "attributes": {
+                    "data-region": "main",
+                    "aria-label": "メインビュー"
                   },
                   "children": [
                     {
                       "tag": "div",
                       "attributes": {
-                        "data-main-view-content": "report"
+                        "data-brush-origin": "",
+                        "data-main-view": ""
                       },
                       "children": [
                         {
-                          "tag": "article",
+                          "tag": "div",
+                          "attributes": {
+                            "data-main-view-content": "report"
+                          },
                           "children": [
                             {
-                              "tag": "div",
-                              "attributes": {
-                                "data-outline": "hidden",
-                                "data-outline-collapsed": "true"
-                              },
+                              "tag": "article",
                               "children": [
                                 {
                                   "tag": "div",
                                   "attributes": {
-                                    "data-progress": "paper"
+                                    "data-outline": "shown",
+                                    "data-outline-collapsed": "false"
                                   },
                                   "children": [
+                                    {
+                                      "tag": "nav",
+                                      "attributes": {
+                                        "aria-label": "やり取り"
+                                      },
+                                      "children": [
+                                        "やり取り",
+                                        {
+                                          "tag": "button",
+                                          "attributes": {
+                                            "data-variant": "ghost",
+                                            "data-size": "sm",
+                                            "data-elevation": "none",
+                                            "data-astryx-pressable": "",
+                                            "aria-expanded": "true",
+                                            "aria-label": "やり取りを畳む",
+                                            "data-astryx-edge-comp": "",
+                                            "type": "button"
+                                          },
+                                          "children": [
+                                            {
+                                              "tag": "svg"
+                                            },
+                                            {
+                                              "tag": "span",
+                                              "attributes": {
+                                                "role": "status",
+                                                "aria-live": "polite"
+                                              }
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "tag": "button",
+                                          "attributes": {
+                                            "data-outline-turn": "0",
+                                            "data-result": "done",
+                                            "aria-current": "true",
+                                            "aria-label": "完了: report ツールの描き方を確かめたい（架空の依頼）",
+                                            "type": "button"
+                                          },
+                                          "children": [
+                                            {
+                                              "tag": "span",
+                                              "attributes": {
+                                                "aria-hidden": "true"
+                                              },
+                                              "children": [
+                                                "●"
+                                              ]
+                                            },
+                                            "report ツールの描き方を確かめたい（架空の依頼）"
+                                          ]
+                                        },
+                                        {
+                                          "tag": "button",
+                                          "attributes": {
+                                            "data-level": "report",
+                                            "aria-current": "location",
+                                            "type": "button"
+                                          },
+                                          "children": [
+                                            {
+                                              "tag": "span",
+                                              "attributes": {
+                                                "aria-hidden": "true"
+                                              }
+                                            },
+                                            "最終",
+                                            "架空の結論: 目盛りを 24 に直し、`a.ts` だけで済んだ。"
+                                          ]
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "tag": "div",
+                                      "attributes": {
+                                        "role": "separator",
+                                        "aria-orientation": "vertical",
+                                        "aria-label": "やり取りと本文の境界"
+                                      }
+                                    },
+                                    {
+                                      "tag": "section",
+                                      "attributes": {
+                                        "aria-label": "進み具合",
+                                        "data-work-strip": "finished"
+                                      },
+                                      "children": [
+                                        {
+                                          "tag": "span",
+                                          "attributes": {
+                                            "data-result": "done"
+                                          },
+                                          "children": [
+                                            {
+                                              "tag": "span",
+                                              "attributes": {
+                                                "aria-hidden": "true"
+                                              }
+                                            },
+                                            "完了",
+                                            {
+                                              "tag": "span",
+                                              "attributes": {
+                                                "aria-hidden": "true"
+                                              },
+                                              "children": [
+                                                "答え待ち"
+                                              ]
+                                            },
+                                            {
+                                              "tag": "span",
+                                              "attributes": {
+                                                "aria-hidden": "true"
+                                              },
+                                              "children": [
+                                                "止めた"
+                                              ]
+                                            },
+                                            {
+                                              "tag": "span",
+                                              "attributes": {
+                                                "aria-hidden": "true"
+                                              },
+                                              "children": [
+                                                "失敗"
+                                              ]
+                                            },
+                                            {
+                                              "tag": "span",
+                                              "attributes": {
+                                                "aria-hidden": "true"
+                                              },
+                                              "children": [
+                                                "作業中"
+                                              ]
+                                            },
+                                            {
+                                              "tag": "span",
+                                              "attributes": {
+                                                "aria-hidden": "true"
+                                              },
+                                              "children": [
+                                                "背景で作業中"
+                                              ]
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "tag": "span",
+                                          "attributes": {
+                                            "data-type": "body",
+                                            "data-color": "primary"
+                                          }
+                                        },
+                                        {
+                                          "tag": "span",
+                                          "attributes": {
+                                            "data-type": "supporting",
+                                            "data-color": "disabled"
+                                          },
+                                          "children": [
+                                            "所要 0秒"
+                                          ]
+                                        },
+                                        {
+                                          "tag": "button",
+                                          "attributes": {
+                                            "data-variant": "secondary",
+                                            "data-size": "sm",
+                                            "data-elevation": "none",
+                                            "data-astryx-pressable": "",
+                                            "aria-expanded": "false",
+                                            "type": "button"
+                                          },
+                                          "children": [
+                                            "手順 3 ▾",
+                                            {
+                                              "tag": "span",
+                                              "attributes": {
+                                                "role": "status",
+                                                "aria-live": "polite"
+                                              }
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "tag": "section",
+                                      "children": [
+                                        {
+                                          "tag": "h2",
+                                          "attributes": {
+                                            "data-level": "2",
+                                            "data-color": "disabled",
+                                            "data-weight": "normal"
+                                          },
+                                          "children": [
+                                            "依頼"
+                                          ]
+                                        },
+                                        {
+                                          "tag": "p",
+                                          "children": [
+                                            {
+                                              "tag": "span",
+                                              "attributes": {
+                                                "data-type": "supporting",
+                                                "data-color": "inherit"
+                                              },
+                                              "children": [
+                                                "report ツールの描き方を確かめたい（架空の依頼）"
+                                              ]
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    },
                                     {
                                       "tag": "div",
                                       "attributes": {
@@ -412,8 +519,7 @@
                                         {
                                           "tag": "section",
                                           "attributes": {
-                                            "data-report-step": "",
-                                            "data-step-id": "3"
+                                            "data-report-step": ""
                                           },
                                           "children": [
                                             {
@@ -463,8 +569,7 @@
                                                 {
                                                   "tag": "div",
                                                   "attributes": {
-                                                    "data-report-body": "",
-                                                    "data-depth": "2"
+                                                    "data-report-body": ""
                                                   },
                                                   "children": [
                                                     {
@@ -474,372 +579,141 @@
                                                       },
                                                       "children": [
                                                         {
+                                                          "tag": "p",
+                                                          "children": [
+                                                            "架空の結論: 目盛りを 24 に直し、",
+                                                            {
+                                                              "tag": "code",
+                                                              "children": [
+                                                                "a.ts"
+                                                              ]
+                                                            },
+                                                            "だけで済んだ。"
+                                                          ]
+                                                        },
+                                                        {
                                                           "tag": "div",
                                                           "attributes": {
-                                                            "data-paper-form": "deliver"
+                                                            "role": "group",
+                                                            "aria-label": "検証結果"
                                                           },
                                                           "children": [
                                                             {
-                                                              "tag": "p",
+                                                              "tag": "span",
+                                                              "attributes": {
+                                                                "data-variant": "success",
+                                                                "data-tone": "ok",
+                                                                "data-shape": "square"
+                                                              },
                                                               "children": [
-                                                                {
-                                                                  "tag": "span",
-                                                                  "attributes": {
-                                                                    "data-verdict": "done"
-                                                                  },
-                                                                  "children": [
-                                                                    {
-                                                                      "tag": "span",
-                                                                      "attributes": {
-                                                                        "aria-hidden": "true"
-                                                                      },
-                                                                      "children": [
-                                                                        "✓"
-                                                                      ]
-                                                                    },
-                                                                    "済んだ"
-                                                                  ]
-                                                                },
-                                                                "変更なし",
-                                                                {
-                                                                  "tag": "span",
-                                                                  "attributes": {
-                                                                    "aria-label": "落ちた 1・確かめていない 1・確かめた 1"
-                                                                  },
-                                                                  "children": [
-                                                                    {
-                                                                      "tag": "b",
-                                                                      "attributes": {
-                                                                        "data-tone": "ng"
-                                                                      },
-                                                                      "children": [
-                                                                        "✕",
-                                                                        "1"
-                                                                      ]
-                                                                    },
-                                                                    {
-                                                                      "tag": "b",
-                                                                      "attributes": {
-                                                                        "data-tone": "unknown"
-                                                                      },
-                                                                      "children": [
-                                                                        "？",
-                                                                        "1"
-                                                                      ]
-                                                                    },
-                                                                    {
-                                                                      "tag": "b",
-                                                                      "attributes": {
-                                                                        "data-tone": "ok"
-                                                                      },
-                                                                      "children": [
-                                                                        "✓",
-                                                                        "1"
-                                                                      ]
-                                                                    }
-                                                                  ]
-                                                                }
+                                                                "✓ 1件 通った"
+                                                              ]
+                                                            },
+                                                            {
+                                                              "tag": "span",
+                                                              "attributes": {
+                                                                "data-variant": "warning",
+                                                                "data-tone": "warn",
+                                                                "data-shape": "square"
+                                                              },
+                                                              "children": [
+                                                                "？ 1件 確かめていない"
+                                                              ]
+                                                            },
+                                                            {
+                                                              "tag": "span",
+                                                              "attributes": {
+                                                                "data-variant": "error",
+                                                                "data-tone": "ng",
+                                                                "data-shape": "square"
+                                                              },
+                                                              "children": [
+                                                                "✕ 1件 落ちた"
+                                                              ]
+                                                            },
+                                                            "1234 件",
+                                                            {
+                                                              "tag": "a",
+                                                              "attributes": {
+                                                                "href": "/?t=<token>#favor-fake-report-call-2"
+                                                              },
+                                                              "children": [
+                                                                "●",
+                                                                "お願い 1 ↓"
                                                               ]
                                                             },
                                                             {
                                                               "tag": "div",
                                                               "attributes": {
-                                                                "role": "group",
-                                                                "aria-label": "読む深さ"
+                                                                "role": "table",
+                                                                "aria-label": "検証結果の問題"
                                                               },
                                                               "children": [
                                                                 {
-                                                                  "tag": "button",
+                                                                  "tag": "div",
                                                                   "attributes": {
-                                                                    "data-variant": "ghost",
-                                                                    "data-size": "sm",
-                                                                    "data-elevation": "none",
-                                                                    "data-astryx-pressable": "",
-                                                                    "data-is-pressed": "false",
-                                                                    "aria-pressed": "false",
-                                                                    "aria-label": "一目",
-                                                                    "data-astryx-edge-comp": "",
-                                                                    "type": "button"
+                                                                    "role": "row"
                                                                   },
                                                                   "children": [
-                                                                    "一目",
                                                                     {
                                                                       "tag": "span",
                                                                       "attributes": {
-                                                                        "aria-hidden": "true"
+                                                                        "data-variant": "error",
+                                                                        "data-tone": "ng",
+                                                                        "data-shape": "square"
                                                                       },
                                                                       "children": [
-                                                                        "一目"
+                                                                        "✕ 落ちた"
                                                                       ]
                                                                     },
-                                                                    {
-                                                                      "tag": "span",
-                                                                      "attributes": {
-                                                                        "role": "status",
-                                                                        "aria-live": "polite"
-                                                                      }
-                                                                    }
+                                                                    "目盛りの E2E",
+                                                                    "1 / 56",
+                                                                    "架空の 1 件が落ちた"
                                                                   ]
                                                                 },
                                                                 {
-                                                                  "tag": "button",
+                                                                  "tag": "div",
                                                                   "attributes": {
-                                                                    "data-variant": "ghost",
-                                                                    "data-size": "sm",
-                                                                    "data-elevation": "none",
-                                                                    "data-astryx-pressable": "",
-                                                                    "data-is-pressed": "true",
-                                                                    "aria-pressed": "true",
-                                                                    "aria-label": "本文",
-                                                                    "data-astryx-edge-comp": "",
-                                                                    "type": "button"
+                                                                    "role": "row"
                                                                   },
                                                                   "children": [
-                                                                    "本文",
                                                                     {
                                                                       "tag": "span",
                                                                       "attributes": {
-                                                                        "aria-hidden": "true"
+                                                                        "data-variant": "warning",
+                                                                        "data-tone": "warn",
+                                                                        "data-shape": "square"
                                                                       },
                                                                       "children": [
-                                                                        "本文"
+                                                                        "？ 確かめていない"
                                                                       ]
                                                                     },
-                                                                    {
-                                                                      "tag": "span",
-                                                                      "attributes": {
-                                                                        "role": "status",
-                                                                        "aria-live": "polite"
-                                                                      }
-                                                                    }
+                                                                    "狭いビューポートでの見た目",
+                                                                    "手で確かめていない",
+                                                                    "確かめ方:",
+                                                                    "ビューポートを 720 幅にして、目盛りの帯が欄からはみ出さないことを見る"
                                                                   ]
-                                                                },
+                                                                }
+                                                              ]
+                                                            },
+                                                            {
+                                                              "tag": "details",
+                                                              "children": [
                                                                 {
-                                                                  "tag": "button",
-                                                                  "attributes": {
-                                                                    "data-variant": "ghost",
-                                                                    "data-size": "sm",
-                                                                    "data-elevation": "none",
-                                                                    "data-astryx-pressable": "",
-                                                                    "data-is-pressed": "false",
-                                                                    "aria-pressed": "false",
-                                                                    "aria-label": "記録",
-                                                                    "data-astryx-edge-comp": "",
-                                                                    "type": "button"
-                                                                  },
+                                                                  "tag": "summary",
                                                                   "children": [
-                                                                    "記録",
                                                                     {
                                                                       "tag": "span",
                                                                       "attributes": {
-                                                                        "aria-hidden": "true"
+                                                                        "data-variant": "success",
+                                                                        "data-tone": "ok",
+                                                                        "data-shape": "square"
                                                                       },
                                                                       "children": [
-                                                                        "記録"
+                                                                        "✓ 通った 1件"
                                                                       ]
                                                                     },
-                                                                    {
-                                                                      "tag": "span",
-                                                                      "attributes": {
-                                                                        "role": "status",
-                                                                        "aria-live": "polite"
-                                                                      }
-                                                                    }
-                                                                  ]
-                                                                }
-                                                              ]
-                                                            },
-                                                            {
-                                                              "tag": "p",
-                                                              "children": [
-                                                                "架空の結論: 目盛りを 24 に直し、",
-                                                                {
-                                                                  "tag": "code",
-                                                                  "children": [
-                                                                    "a.ts"
-                                                                  ]
-                                                                },
-                                                                "だけで済んだ。"
-                                                              ]
-                                                            },
-                                                            {
-                                                              "tag": "section",
-                                                              "attributes": {
-                                                                "data-mine": "true"
-                                                              },
-                                                              "children": [
-                                                                {
-                                                                  "tag": "h3",
-                                                                  "children": [
-                                                                    "あなたの番"
-                                                                  ]
-                                                                },
-                                                                {
-                                                                  "tag": "p",
-                                                                  "children": [
-                                                                    "`b.ts` のキャッシュを消してよいか決めてほしい（架空のお願い）。"
-                                                                  ]
-                                                                }
-                                                              ]
-                                                            }
-                                                          ]
-                                                        }
-                                                      ]
-                                                    },
-                                                    {
-                                                      "tag": "div",
-                                                      "attributes": {
-                                                        "data-paper-part": "ledger"
-                                                      },
-                                                      "children": [
-                                                        {
-                                                          "tag": "div",
-                                                          "attributes": {
-                                                            "role": "group",
-                                                            "aria-label": "確かさの台帳"
-                                                          },
-                                                          "children": [
-                                                            {
-                                                              "tag": "section",
-                                                              "attributes": {
-                                                                "data-tone": "ng"
-                                                              },
-                                                              "children": [
-                                                                {
-                                                                  "tag": "p",
-                                                                  "children": [
-                                                                    "落ちた ― 1件"
-                                                                  ]
-                                                                },
-                                                                {
-                                                                  "tag": "details",
-                                                                  "attributes": {
-                                                                    "data-tone": "ng",
-                                                                    "open": true
-                                                                  },
-                                                                  "children": [
-                                                                    {
-                                                                      "tag": "summary",
-                                                                      "children": [
-                                                                        {
-                                                                          "tag": "span",
-                                                                          "attributes": {
-                                                                            "data-tone": "ng",
-                                                                            "aria-hidden": "true"
-                                                                          },
-                                                                          "children": [
-                                                                            "✕"
-                                                                          ]
-                                                                        },
-                                                                        "目盛りの E2E",
-                                                                        {
-                                                                          "tag": "b",
-                                                                          "children": [
-                                                                            "1 / 56"
-                                                                          ]
-                                                                        },
-                                                                        "申告のみ"
-                                                                      ]
-                                                                    },
-                                                                    {
-                                                                      "tag": "p",
-                                                                      "children": [
-                                                                        "架空の 1 件が落ちた"
-                                                                      ]
-                                                                    }
-                                                                  ]
-                                                                }
-                                                              ]
-                                                            },
-                                                            {
-                                                              "tag": "section",
-                                                              "attributes": {
-                                                                "data-tone": "unknown"
-                                                              },
-                                                              "children": [
-                                                                {
-                                                                  "tag": "p",
-                                                                  "children": [
-                                                                    "確かめていない ― 1件"
-                                                                  ]
-                                                                },
-                                                                {
-                                                                  "tag": "details",
-                                                                  "attributes": {
-                                                                    "data-tone": "unknown"
-                                                                  },
-                                                                  "children": [
-                                                                    {
-                                                                      "tag": "summary",
-                                                                      "children": [
-                                                                        {
-                                                                          "tag": "span",
-                                                                          "attributes": {
-                                                                            "data-tone": "unknown",
-                                                                            "aria-hidden": "true"
-                                                                          },
-                                                                          "children": [
-                                                                            "?"
-                                                                          ]
-                                                                        },
-                                                                        "狭いビューポートでの見た目",
-                                                                        {
-                                                                          "tag": "code",
-                                                                          "children": [
-                                                                            "未実行"
-                                                                          ]
-                                                                        }
-                                                                      ]
-                                                                    }
-                                                                  ]
-                                                                }
-                                                              ]
-                                                            },
-                                                            {
-                                                              "tag": "section",
-                                                              "attributes": {
-                                                                "data-tone": "ok"
-                                                              },
-                                                              "children": [
-                                                                {
-                                                                  "tag": "p",
-                                                                  "children": [
-                                                                    "確かめた ― 1件"
-                                                                  ]
-                                                                },
-                                                                {
-                                                                  "tag": "details",
-                                                                  "attributes": {
-                                                                    "data-tone": "ok",
-                                                                    "data-ledger-fold": ""
-                                                                  },
-                                                                  "children": [
-                                                                    {
-                                                                      "tag": "summary",
-                                                                      "children": [
-                                                                        {
-                                                                          "tag": "span",
-                                                                          "attributes": {
-                                                                            "data-tone": "ok",
-                                                                            "aria-hidden": "true"
-                                                                          },
-                                                                          "children": [
-                                                                            "✓"
-                                                                          ]
-                                                                        },
-                                                                        "pnpm run check",
-                                                                        {
-                                                                          "tag": "span",
-                                                                          "attributes": {
-                                                                            "data-seen": ""
-                                                                          },
-                                                                          "children": [
-                                                                            "記録あり 1"
-                                                                          ]
-                                                                        },
-                                                                        "開くと1件ずつ"
-                                                                      ]
-                                                                    }
+                                                                    "pnpm run check"
                                                                   ]
                                                                 }
                                                               ]
@@ -1168,7 +1042,18 @@
                                                               "tag": "div",
                                                               "attributes": {
                                                                 "data-reply-keep": ""
-                                                              }
+                                                              },
+                                                              "children": [
+                                                                {
+                                                                  "tag": "p",
+                                                                  "attributes": {
+                                                                    "aria-hidden": "true"
+                                                                  },
+                                                                  "children": [
+                                                                    "字・行・案を選ぶと、ここに「聞く・頼む」が1つ出る"
+                                                                  ]
+                                                                }
+                                                              ]
                                                             }
                                                           ]
                                                         },
@@ -1383,6 +1268,36 @@
                                                           ]
                                                         }
                                                       ]
+                                                    },
+                                                    {
+                                                      "tag": "div",
+                                                      "attributes": {
+                                                        "data-report-region": "favor"
+                                                      },
+                                                      "children": [
+                                                        {
+                                                          "tag": "span",
+                                                          "attributes": {
+                                                            "data-type": "supporting",
+                                                            "data-color": "disabled"
+                                                          },
+                                                          "children": [
+                                                            "お願い"
+                                                          ]
+                                                        },
+                                                        {
+                                                          "tag": "p",
+                                                          "children": [
+                                                            {
+                                                              "tag": "code",
+                                                              "children": [
+                                                                "b.ts"
+                                                              ]
+                                                            },
+                                                            "のキャッシュを消してよいか決めてほしい（架空のお願い）。"
+                                                          ]
+                                                        }
+                                                      ]
                                                     }
                                                   ]
                                                 }
@@ -1421,33 +1336,415 @@
                       ]
                     }
                   ]
+                },
+                {
+                  "tag": "div",
+                  "attributes": {
+                    "role": "separator",
+                    "aria-orientation": "vertical",
+                    "aria-label": "メインビューとサイドバーの境界"
+                  }
+                },
+                {
+                  "tag": "aside",
+                  "attributes": {
+                    "data-region": "sidebar",
+                    "aria-label": "サイドバー"
+                  },
+                  "children": [
+                    {
+                      "tag": "div",
+                      "attributes": {
+                        "role": "group",
+                        "aria-label": "実行の設定"
+                      },
+                      "children": [
+                        {
+                          "tag": "select",
+                          "attributes": {
+                            "aria-label": "モデル Opus",
+                            "value": "opus"
+                          },
+                          "children": [
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "type": "button"
+                              },
+                              "children": [
+                                {
+                                  "tag": "selectedcontent",
+                                  "children": [
+                                    {
+                                      "tag": "span",
+                                      "attributes": {
+                                        "aria-hidden": "true"
+                                      },
+                                      "children": [
+                                        "O"
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "span",
+                          "attributes": {
+                            "aria-hidden": "true"
+                          }
+                        },
+                        {
+                          "tag": "select",
+                          "attributes": {
+                            "aria-label": "effort Medium",
+                            "value": "medium"
+                          },
+                          "children": [
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "type": "button"
+                              },
+                              "children": [
+                                {
+                                  "tag": "selectedcontent",
+                                  "children": [
+                                    {
+                                      "tag": "span",
+                                      "attributes": {
+                                        "aria-hidden": "true"
+                                      },
+                                      "children": [
+                                        {
+                                          "tag": "span",
+                                          "attributes": {
+                                            "aria-hidden": "true"
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "span",
+                          "attributes": {
+                            "aria-hidden": "true"
+                          }
+                        },
+                        {
+                          "tag": "select",
+                          "attributes": {
+                            "aria-label": "許可モード 自動判定",
+                            "value": "auto"
+                          },
+                          "children": [
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "type": "button"
+                              },
+                              "children": [
+                                {
+                                  "tag": "selectedcontent",
+                                  "children": [
+                                    {
+                                      "tag": "span",
+                                      "attributes": {
+                                        "aria-hidden": "true"
+                                      },
+                                      "children": [
+                                        {
+                                          "tag": "span",
+                                          "attributes": {
+                                            "data-fill": "dashed"
+                                          },
+                                          "children": [
+                                            {
+                                              "tag": "svg"
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "tag": "button",
+                      "attributes": {
+                        "aria-label": "コンテキスト 61%（122k / 200k）",
+                        "aria-expanded": "false",
+                        "data-finished-turn-count": "1",
+                        "type": "button"
+                      },
+                      "children": [
+                        "文脈",
+                        "61%",
+                        {
+                          "tag": "span",
+                          "attributes": {
+                            "aria-hidden": "true"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "tag": "span",
+                      "attributes": {
+                        "aria-hidden": "true"
+                      }
+                    },
+                    {
+                      "tag": "button",
+                      "attributes": {
+                        "aria-label": "プラン使用量 5時間 34%・7日間 61%",
+                        "aria-expanded": "false",
+                        "data-finished-turn-count": "1",
+                        "type": "button"
+                      },
+                      "children": [
+                        {
+                          "tag": "svg"
+                        },
+                        "5h",
+                        "34%",
+                        {
+                          "tag": "svg"
+                        },
+                        "7d",
+                        "61%"
+                      ]
+                    }
+                  ]
                 }
               ]
             },
             {
-              "tag": "section",
+              "tag": "div",
               "attributes": {
-                "data-region": "dock",
-                "data-posture": "deliver",
-                "aria-label": "入力欄"
+                "role": "separator",
+                "aria-orientation": "horizontal",
+                "aria-label": "上段と下段の境界"
+              }
+            },
+            {
+              "tag": "div",
+              "attributes": {
+                "data-collapse-character": "false"
               },
               "children": [
                 {
-                  "tag": "div",
+                  "tag": "section",
                   "attributes": {
-                    "data-direction": "vertical",
-                    "data-gap": "2",
-                    "data-wrap": "nowrap"
+                    "data-region": "character",
+                    "aria-label": "キャラクター"
                   },
                   "children": [
                     {
-                      "tag": "form",
+                      "tag": "div",
+                      "attributes": {
+                        "data-direction": "vertical",
+                        "data-gap": "2",
+                        "data-wrap": "nowrap"
+                      },
                       "children": [
+                        {
+                          "tag": "button",
+                          "attributes": {
+                            "data-variant": "secondary",
+                            "data-size": "sm",
+                            "data-elevation": "none",
+                            "data-astryx-pressable": "",
+                            "aria-expanded": "false",
+                            "aria-label": "ログ",
+                            "type": "button"
+                          },
+                          "children": [
+                            {
+                              "tag": "svg"
+                            },
+                            "ログ",
+                            {
+                              "tag": "span",
+                              "attributes": {
+                                "role": "status",
+                                "aria-live": "polite"
+                              }
+                            }
+                          ]
+                        },
                         {
                           "tag": "div",
                           "attributes": {
-                            "data-density": "balanced"
+                            "data-direction": "horizontal",
+                            "data-gap": "0",
+                            "data-wrap": "wrap"
                           },
+                          "children": [
+                            {
+                              "tag": "div",
+                              "attributes": {
+                                "role": "img",
+                                "aria-label": "つくもの精霊（どや顔）",
+                                "data-expression": "proud",
+                                "data-motion": "reading"
+                              },
+                              "children": [
+                                {
+                                  "tag": "img",
+                                  "attributes": {
+                                    "alt": "つくもの精霊（どや顔）",
+                                    "src": "/character/tsukumo-spirit/proud.svg"
+                                  }
+                                }
+                              ]
+                            },
+                            {
+                              "tag": "div",
+                              "attributes": {
+                                "data-latest": "true",
+                                "data-interactive": "true",
+                                "data-selected": "true",
+                                "role": "button",
+                                "aria-pressed": "true"
+                              },
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "data-type": "supporting",
+                                    "data-color": "accent"
+                                  },
+                                  "children": [
+                                    "つくもの精霊"
+                                  ]
+                                },
+                                {
+                                  "tag": "time",
+                                  "attributes": {
+                                    "dateTime": "2026-01-15T10:00+09:00"
+                                  },
+                                  "children": [
+                                    "10:00"
+                                  ]
+                                },
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "data-type": "inherit",
+                                    "data-color": "inherit"
+                                  },
+                                  "children": [
+                                    "書けたよ！"
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "tag": "div",
+                              "attributes": {
+                                "data-latest": "false",
+                                "data-interactive": "true",
+                                "data-selected": "false",
+                                "role": "button",
+                                "aria-pressed": "false"
+                              },
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "data-type": "inherit",
+                                    "data-color": "inherit"
+                                  },
+                                  "children": [
+                                    "途中まで書いたよ。"
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "tag": "time",
+                              "attributes": {
+                                "dateTime": "2026-01-15T10:00+09:00"
+                              },
+                              "children": [
+                                "10:00"
+                              ]
+                            },
+                            {
+                              "tag": "div",
+                              "attributes": {
+                                "data-latest": "false",
+                                "data-interactive": "true",
+                                "data-selected": "false",
+                                "role": "button",
+                                "aria-pressed": "false"
+                              },
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "data-type": "inherit",
+                                    "data-color": "inherit"
+                                  },
+                                  "children": [
+                                    "見てくるね。"
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "tag": "time",
+                              "attributes": {
+                                "dateTime": "2026-01-15T10:00+09:00"
+                              },
+                              "children": [
+                                "10:00"
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "tag": "div",
+                  "attributes": {
+                    "role": "separator",
+                    "aria-orientation": "vertical",
+                    "aria-label": "キャラビューと入力欄の境界"
+                  }
+                },
+                {
+                  "tag": "section",
+                  "attributes": {
+                    "data-region": "dispatch",
+                    "aria-label": "入力欄"
+                  },
+                  "children": [
+                    {
+                      "tag": "div",
+                      "attributes": {
+                        "data-direction": "vertical",
+                        "data-gap": "2",
+                        "data-wrap": "nowrap"
+                      },
+                      "children": [
+                        {
+                          "tag": "form",
                           "children": [
                             {
                               "tag": "div",
@@ -1582,150 +1879,6 @@
                               }
                             },
                             {
-                              "tag": "select",
-                              "attributes": {
-                                "aria-label": "モデル Opus",
-                                "value": "opus"
-                              },
-                              "children": [
-                                {
-                                  "tag": "button",
-                                  "attributes": {
-                                    "type": "button"
-                                  },
-                                  "children": [
-                                    {
-                                      "tag": "selectedcontent",
-                                      "children": [
-                                        {
-                                          "tag": "span",
-                                          "attributes": {
-                                            "aria-hidden": "true"
-                                          },
-                                          "children": [
-                                            "O"
-                                          ]
-                                        },
-                                        {
-                                          "tag": "span",
-                                          "attributes": {
-                                            "data-part": "name"
-                                          },
-                                          "children": [
-                                            "Opus"
-                                          ]
-                                        }
-                                      ]
-                                    },
-                                    {
-                                      "tag": "svg"
-                                    }
-                                  ]
-                                }
-                              ]
-                            },
-                            {
-                              "tag": "select",
-                              "attributes": {
-                                "aria-label": "effort Medium",
-                                "value": "medium"
-                              },
-                              "children": [
-                                {
-                                  "tag": "button",
-                                  "attributes": {
-                                    "type": "button"
-                                  },
-                                  "children": [
-                                    {
-                                      "tag": "selectedcontent",
-                                      "children": [
-                                        {
-                                          "tag": "span",
-                                          "attributes": {
-                                            "aria-hidden": "true"
-                                          },
-                                          "children": [
-                                            {
-                                              "tag": "span",
-                                              "attributes": {
-                                                "aria-hidden": "true"
-                                              }
-                                            }
-                                          ]
-                                        },
-                                        {
-                                          "tag": "span",
-                                          "attributes": {
-                                            "data-part": "name"
-                                          },
-                                          "children": [
-                                            "Medium"
-                                          ]
-                                        }
-                                      ]
-                                    },
-                                    {
-                                      "tag": "svg"
-                                    }
-                                  ]
-                                }
-                              ]
-                            },
-                            {
-                              "tag": "select",
-                              "attributes": {
-                                "aria-label": "許可モード 自動判定",
-                                "value": "auto"
-                              },
-                              "children": [
-                                {
-                                  "tag": "button",
-                                  "attributes": {
-                                    "type": "button"
-                                  },
-                                  "children": [
-                                    {
-                                      "tag": "selectedcontent",
-                                      "children": [
-                                        {
-                                          "tag": "span",
-                                          "attributes": {
-                                            "aria-hidden": "true"
-                                          },
-                                          "children": [
-                                            {
-                                              "tag": "span",
-                                              "attributes": {
-                                                "data-fill": "dashed"
-                                              },
-                                              "children": [
-                                                {
-                                                  "tag": "svg"
-                                                }
-                                              ]
-                                            }
-                                          ]
-                                        },
-                                        {
-                                          "tag": "span",
-                                          "attributes": {
-                                            "data-part": "name"
-                                          },
-                                          "children": [
-                                            "自動判定"
-                                          ]
-                                        }
-                                      ]
-                                    },
-                                    {
-                                      "tag": "svg"
-                                    }
-                                  ]
-                                }
-                              ]
-                            },
-                            {
                               "tag": "div",
                               "attributes": {
                                 "data-direction": "horizontal",
@@ -1758,163 +1911,20 @@
                                   ]
                                 },
                                 {
-                                  "tag": "kbd",
-                                  "children": [
-                                    "⌘⏎"
-                                  ]
-                                },
-                                {
                                   "tag": "button",
                                   "attributes": {
-                                    "aria-label": "送信",
+                                    "data-shortcut": "⌘⏎",
                                     "data-emphasis": "solid",
                                     "type": "submit"
                                   },
                                   "children": [
-                                    {
-                                      "tag": "svg"
-                                    }
+                                    "送信"
                                   ]
                                 }
                               ]
                             }
                           ]
                         }
-                      ]
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "tag": "aside",
-              "attributes": {
-                "data-region": "sidebar",
-                "aria-label": "サイドバー"
-              },
-              "children": [
-                {
-                  "tag": "button",
-                  "attributes": {
-                    "aria-haspopup": "dialog",
-                    "aria-expanded": "false",
-                    "type": "button"
-                  },
-                  "children": [
-                    "<project>",
-                    {
-                      "tag": "span",
-                      "attributes": {
-                        "aria-hidden": "true"
-                      }
-                    }
-                  ]
-                },
-                {
-                  "tag": "button",
-                  "attributes": {
-                    "aria-haspopup": "dialog",
-                    "aria-expanded": "false",
-                    "type": "button"
-                  },
-                  "children": [
-                    {
-                      "tag": "svg",
-                      "attributes": {
-                        "data-size": "sm",
-                        "data-color": "inherit"
-                      }
-                    },
-                    "検索",
-                    {
-                      "tag": "kbd",
-                      "children": [
-                        "⌘K"
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "tag": "p",
-                  "children": [
-                    "このリポジトリにはタスクの置き場が無い"
-                  ]
-                },
-                {
-                  "tag": "nav",
-                  "attributes": {
-                    "aria-label": "ほかの画面"
-                  },
-                  "children": [
-                    {
-                      "tag": "a",
-                      "attributes": {
-                        "aria-busy": "false",
-                        "href": "/?t=<token>#token-usage"
-                      },
-                      "children": [
-                        {
-                          "tag": "svg",
-                          "attributes": {
-                            "data-size": "sm",
-                            "data-color": "inherit"
-                          }
-                        },
-                        "文脈 61%",
-                        {
-                          "tag": "i",
-                          "attributes": {
-                            "aria-hidden": "true"
-                          }
-                        }
-                      ]
-                    },
-                    {
-                      "tag": "a",
-                      "attributes": {
-                        "href": "/?t=<token>#achievement"
-                      },
-                      "children": [
-                        {
-                          "tag": "svg",
-                          "attributes": {
-                            "data-size": "sm",
-                            "data-color": "inherit"
-                          }
-                        },
-                        "成果"
-                      ]
-                    },
-                    {
-                      "tag": "a",
-                      "attributes": {
-                        "href": "/?t=<token>#character"
-                      },
-                      "children": [
-                        {
-                          "tag": "svg",
-                          "attributes": {
-                            "data-size": "sm",
-                            "data-color": "inherit"
-                          }
-                        },
-                        "キャラ"
-                      ]
-                    },
-                    {
-                      "tag": "a",
-                      "attributes": {
-                        "href": "/?t=<token>#settings"
-                      },
-                      "children": [
-                        {
-                          "tag": "svg",
-                          "attributes": {
-                            "data-size": "sm",
-                            "data-color": "inherit"
-                          }
-                        },
-                        "設定"
                       ]
                     }
                   ]

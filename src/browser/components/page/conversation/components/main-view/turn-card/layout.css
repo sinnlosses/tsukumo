@@ -1,4 +1,7 @@
+/* `--turn-card-head-height` は札の頭（進み具合のプログレスバー）の外寸で、貼り付いた帯の真下を指す位置に使う。
+   帯を出さないあいだは 0 で、帯があれば `useTurnCardHeadHeight` が実測した高さを同じ名前で書き込む。 */
 .main-turns {
+  --turn-card-head-height: 0px;
   display: flex;
   flex-direction: column;
   /* 札が短くても、やり取りの列が領域の下端まで届くよう、領域の内寸を最低の高さにする（札は余白を打ち消して縁まで広がる）。 */
@@ -38,16 +41,9 @@
   flex-direction: column;
   margin: calc(-1 * var(--region-padding));
 }
-/* 依頼の全文と、新しい器の紙のワークプランの入れ物。左右はレポート本文の余白に揃える。 */
-.turn-card-request,
-.turn-card-plan {
+/* 依頼の全文の入れ物。左右はレポート本文の余白に揃える。 */
+.turn-card-request {
   padding: var(--space-lg) var(--space-xl) 0;
-}
-/* 広い幅は舞台の流れが依頼の全文と画像の縮小版を持つので、紙の頭には出さない（狭い幅は舞台を出さないので残す）。 */
-@media (min-width: 761px) {
-  .turn-card-request {
-    display: none;
-  }
 }
 /* お伺いのカードの入れ物。札は領域の縁まで広がらず、領域の余白のぶん内側に置く。 */
 .turn-card-inquiry {
@@ -58,9 +54,9 @@
 .turn-card-body {
   padding: var(--space-lg) var(--space-xl) var(--space-md);
 }
-/* 列から飛んだ見出しとレポートの札と、ページ内のリンクから飛んだ先（お願いの部品など）を、器の上端に貼り付けず少し空けて止める。 */
+/* 列から飛んだ見出しとレポートの札と、ページ内のリンクから飛んだ先（お願いの部品など）が、貼り付いた頭の下に隠れないようにする。 */
 .turn-card :is(h4, h5, [id], [data-report-step]) {
-  scroll-margin-top: 0.5rem;
+  scroll-margin-top: calc(var(--turn-card-head-height) + 0.5rem);
 }
 /* ステップは縦に1本で積む（Z字に読ませない）。カードの枠は「ひとかたまり」の区切りを見せるためだけに使い、番号は振らない。 */
 .main-step {
@@ -128,11 +124,6 @@
 }
 .main-step.is-interim[open] > summary {
   margin-bottom: var(--stack-block);
-}
-/* 新しい器の紙では、段のまとめを計画の段の行に畳むので、中間レポートの箱を本文に積まない。
-   レポートのあとの経過の畳み（`.progress-fold-steps`）の中は、開いて読む記録なので残す。 */
-.turn-card-body[data-progress="paper"] .main-step.is-interim:not(.progress-fold-steps > *) {
-  display: none;
 }
 
 /* 狭い画面では中間レポートの本文を出さず、一覧の行を押して板で読む(`display: none` は読み上げからも外れる)。 */

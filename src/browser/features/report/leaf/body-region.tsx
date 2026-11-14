@@ -10,7 +10,6 @@ import { createContext, type ReactElement, type ReactNode, use } from "react"
 
 import { isBlankText } from "../../../../shared/utils/blank-text.ts"
 import { useReportReveal } from "../../../domain/reveal/use-report-reveal.ts"
-import type { ReadingDepth } from "../../../stores/reading-depth.ts"
 import { splitReportBlocks } from "../domain/block-split.ts"
 import { detailBlockClassName, Markdown } from "../markdown.tsx"
 import { ReplyPointScope } from "../reply-point.tsx"
@@ -26,8 +25,6 @@ type ReportFrameProps = {
   readonly revealClassName: string
   /** 本文の根に重ねて付ける class。 */
   readonly blockClassName: string
-  /** 新しい器の紙の読む深さ。根の `data-depth` に立て、深さで隠す欄は CSS が決める（部品を外すと演出の対象が欠ける）。 */
-  readonly depth?: ReadingDepth
   /** 欄の並び。マウントした時点で揃っている DOM に演出を掛ける。 */
   readonly children: ReactNode
 }
@@ -51,7 +48,6 @@ export function ReportFrame(props: ReportFrameProps): ReactElement {
       className={clsx(detailBlockClassName, props.blockClassName, props.className)}
       ref={rootRef}
       data-report-body=""
-      data-depth={props.depth}
     >
       <RevealingContext value={revealing}>
         <ReplyPointScope rootRef={rootRef}>{props.children}</ReplyPointScope>
@@ -94,8 +90,6 @@ export type RegionMark =
       readonly id: number
       readonly askCount: number
       readonly noteCount: number
-      /** 新しい器の紙で畳める節。`key` は部屋の中で節を1つに決める鍵。 */
-      readonly fold?: { readonly key: string; readonly folded: boolean }
     }
   | { readonly kind: "favor"; readonly id: string }
 
@@ -118,8 +112,6 @@ export function RegionBox(props: {
       data-note-count={
         region.kind === "section" && region.noteCount > 0 ? region.noteCount : undefined
       }
-      data-fold-key={region.kind === "section" ? region.fold?.key : undefined}
-      data-folded={region.kind === "section" ? region.fold?.folded : undefined}
       id={region.kind === "favor" ? region.id : undefined}
     >
       {props.children}

@@ -83,9 +83,11 @@ function bodyRows(part: MatrixPart): readonly LeafTableRow[] {
         return (
           <ColumnMarked key={`${String(index)}:${status}`} marked={index === part.emphasisColumn}>
             <MatrixMark status={status} note={note} legend={false} />
-            <span className={matrixLeafClassNames.matrixNote} aria-hidden="true">
-              {note === "" ? MATRIX_MARKS[status].label : note}
-            </span>
+            {note !== "" && (
+              <span className={matrixLeafClassNames.matrixNote} aria-hidden="true">
+                {note}
+              </span>
+            )}
           </ColumnMarked>
         )
       }),

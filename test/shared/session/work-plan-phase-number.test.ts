@@ -1,10 +1,16 @@
 import { describe, expect, it } from "vitest"
 
-import { phaseLabel, phaseNumberOf } from "../../../src/shared/session/work-plan-phase-number.ts"
+import {
+  completionText,
+  phaseLabel,
+  phaseNumberOf,
+  plannedPhaseTitle,
+} from "../../../src/shared/session/work-plan-phase-number.ts"
 import {
   currentPhaseOf,
   type WorkPhase,
   type WorkPlan,
+  type WorkPlanEntry,
 } from "../../../src/shared/session/work-plan.ts"
 import { GROUPED, next } from "../../fixture/work-plan-draft.ts"
 
@@ -14,6 +20,15 @@ describe("phaseNumberOf", () => {
   const range = { kind: "range", first: 1, count: 3 } as const
 
   // 前・本・後の3群。前は計画（0）、本は段B〜D（1〜3）、後は受け入れ・振り返り・送り出し（4〜6）
+  const SPANNED: readonly WorkPlanEntry[] = [
+    "架空の計画",
+    "架空の段B",
+    "架空の段C",
+    "架空の段D",
+    "架空の受け入れ",
+    "架空の振り返り",
+    "架空の送り出し",
+  ]
   const spannedRange = { kind: "range", first: 1, count: 3 } as const
 
   it("範囲が無ければ並び全体の通し番号と全体の段の数で数える", () => {
@@ -40,6 +55,27 @@ describe("phaseNumberOf", () => {
   it("並列のフェーズは先頭と末尾の番号を「–」でつなぐ", () => {
     expect(phaseNumberOf(none, [1, 2], 4)).toMatchObject({ ordinals: "2–3", text: "2–3/4" })
     expect(phaseNumberOf(range, [1, 2], 4)).toMatchObject({ ordinals: "1–2", text: "1–2/3" })
+  })
+
+  it("段の呼び名は群の名を前に付け、範囲が無ければ付けない", () => {
+    const plan = { ...next(SPANNED, 4), delegatedRange: spannedRange }
+    expect(plannedPhaseTitle(plan, { index: 0, name: "架空の計画" })).toBe("前1. 架空の計画")
+    expect(plannedPhaseTitle(plan, { index: 2, name: "架空の段C" })).toBe("本2. 架空の段C")
+    expect(plannedPhaseTitle(plan, { index: 5, name: "架空の振り返り" })).toBe(
+      "後2. 架空の振り返り",
+    )
+  })
+
+  it("済み具合は範囲の外を含む全部の段で言う（範囲なし・範囲の中だけ済み・全部済み）", () => {
+    const at = (current: number, delegatedRange: WorkPlan["delegatedRange"]): WorkPlan => ({
+      ...next(GROUPED, current),
+      delegatedRange,
+    })
+
+    expect(completionText(at(2, none))).toBe("4フェーズのうち3フェーズ済み")
+    expect(completionText(at(2, range))).toBe("4フェーズのうち3フェーズ済み")
+    expect(completionText(at(3, range))).toBe("4フェーズすべて済み")
+    expect(completionText(at(3, none))).toBe("4フェーズすべて済み")
   })
 
   it("pending は範囲を1要素とみなして前と後ろを数え、範囲の要素だけが番号を持たない", () => {

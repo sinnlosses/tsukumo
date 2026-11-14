@@ -135,5 +135,3 @@
 | `docs/architecture/adr/0055-report-reply-margin-notes.md`                       | 返す層の見た目: 選んだ所の横の余白に「聞く・頼む」を1つ出し、欄と答えは余白の札にする                 | 採用                   |
 | `docs/architecture/adr/0056-report-progress-contract.md`                        | レポートと進み具合の契約: 1枚の紙・確かさの台帳・判定・次の手                                         | 採用                   |
 | `docs/architecture/adr/0057-stage-and-paper-layout.md`                          | 「舞台と紙」の器: 4局面の姿勢・右から重ねる紙・2つの入口・新旧の切り替え                              | 採用                   |
-| `docs/architecture/adr/0058-aizuchi-chips.md`                                   | 相づちの札: 代ごとに先に書く返事・作業の会話を通らない経路・局面の表と札の決め方                      | 採用                   |
-| `docs/architecture/adr/0059-sidebar-and-single-place.md`                        | 常設サイドバーと「同じ情報は1か所」: 3列の器・置き場の表・入力欄の下の行・キーの体系                  | 採用                   |

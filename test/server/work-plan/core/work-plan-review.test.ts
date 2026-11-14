@@ -295,46 +295,6 @@ describe("WorkPlanReview の planMissing", () => {
   })
 })
 
-describe("WorkPlanReview の計画を直した理由とやり直し", () => {
-  const CHANGED = ["架空の段A", "架空の新しい段", "架空の段C"]
-
-  it("新しい欄の無い呼び出しは今までどおり accepted で、数える条も無い", () => {
-    const review = createWorkPlanReview()
-
-    expect(review.judge(inputOf(0))).toMatchObject({ kind: "accepted", counted: [] })
-  })
-
-  it("phases を変えて replanReason が無い呼び出しは差し戻さず counted に残し、理由があれば残さない", () => {
-    const review = createWorkPlanReview()
-    review.judge(inputOf(0))
-
-    expect(review.judge({ ...inputOf(0), phases: CHANGED })).toMatchObject({
-      kind: "accepted",
-      counted: ["replan-reason-missing"],
-    })
-    expect(
-      review.judge({ ...inputOf(0), phases: PHASES, replanReason: "架空の理由。" }),
-    ).toMatchObject({ kind: "accepted", counted: [] })
-  })
-
-  it("phase_result の redo は段を済ませず（位置はそのまま）、周が進んだ記録を返す", () => {
-    const review = createWorkPlanReview()
-    review.judge({ ...inputOf(0), delegatedRange: { first: 0, count: 3 } })
-
-    const verdict = review.judgeResult({ phase: 1, count: 3, outcome: "redo", reason: "架空" })
-
-    expect(verdict).toMatchObject({ kind: "accepted", moved: true })
-    expect(review.latestPlan()).toMatchObject({ current: 0, phaseLaps: [2, 1, 1] })
-  })
-
-  it("redo に reason が無ければ差し戻す", () => {
-    const review = createWorkPlanReview()
-    review.judge(inputOf(0))
-
-    expect(review.judgeResult({ phase: 1, count: 3, outcome: "redo" }).kind).toBe("malformed")
-  })
-})
-
 describe("WorkPlanReview の今のワークプラン", () => {
   const standingOf = (plan: LatestWorkPlan): WorkPlanStanding =>
     plan.kind === "none"

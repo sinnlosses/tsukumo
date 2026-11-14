@@ -9,7 +9,6 @@ import {
   type ReportArgumentField,
 } from "../../../../shared/report/report-argument-size.ts"
 import type { ReportCalledEvent, SessionEvent } from "../../../../shared/session/session-event.ts"
-import { verdictClosingConflict } from "../../../../shared/session/work-plan.ts"
 
 export type ReportInheritance = {
   /**
@@ -102,30 +101,11 @@ function inherited(event: ReportCalledEvent, base: ReportCalledEvent): ReportCal
   )
   const from = (field: ReportArgumentField): ReportCalledEvent => (fields.has(field) ? base : event)
   const fromBody = BODY_FIELDS.some((field) => fields.has(field)) ? base : event
-  const written = (field: ReportArgumentField): boolean =>
-    event.argumentChars.fields[field] !== undefined || fields.has(field)
-  // 新しい欄を書いていなければ、その値は古い欄から読み替えたものなので、古い欄と同じ呼び出しから引く。
-  const fromRead = (field: ReportArgumentField, old: ReportArgumentField): ReportCalledEvent =>
-    written(field) ? from(field) : from(old)
-  const verdictFrom = fromRead("verdict", "task")
-  const closingWritten = written("workPlanClosing")
-  const workPlanClosing = fromRead("workPlanClosing", "verdict").workPlanClosing
   return {
     ...event,
     inheritedFields: [...fields],
     task: from("task").task,
-    workPlanClosing,
-    verdict: verdictFrom.verdict,
-    verdictWritten: verdictFrom.verdictWritten,
-    closingConflict:
-      verdictFrom.verdictWritten &&
-      closingWritten &&
-      verdictClosingConflict(verdictFrom.verdict, workPlanClosing),
-    next: fromRead("next", "favor").next,
-    assumptions: from("assumptions").assumptions,
-    sources: from("sources").sources,
-    previous: from("previous").previous,
-    guideNotes: from("guideNotes").guideNotes,
+    workPlanClosing: from("workPlanClosing").workPlanClosing,
     conclusion: from("conclusion").conclusion,
     conclusionSentenceChars: from("conclusion").conclusionSentenceChars,
     conclusionFirstSentence: from("conclusion").conclusionFirstSentence,

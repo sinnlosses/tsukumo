@@ -21,7 +21,6 @@ import { Report } from "../../../../../features/report/report.tsx"
 import { useExternalSync } from "../../../../../hooks/use-external-sync.ts"
 import { Text } from "../../../../ui/text/text.tsx"
 import { VStack } from "../../../../ui/v-stack/v-stack.tsx"
-import { useCurrentTurnSteps } from "../../stores/current-turn-step-list.ts"
 import { useDraftedReports } from "../../stores/drafted-report.ts"
 import { AsideThread } from "./aside-thread.tsx"
 import { revealStepIdOf } from "./domain/draft-reveal.ts"
@@ -30,7 +29,6 @@ import { arrangeTurn, progressFoldSummary, type ProgressEntry } from "./domain/t
 import { DraftReport } from "./draft-report.tsx"
 import { ExpandableHead } from "./expandable-head.tsx"
 import { useReplyPort } from "./hooks/use-reply-port.ts"
-import { useStepJumpLanding } from "./hooks/use-step-jump.ts"
 import styles from "./main-view.module.css"
 import { QuestionRecord } from "./question-record.tsx"
 import { ReportHead, type ReportLabel } from "./report-head.tsx"
@@ -42,8 +40,6 @@ type TurnProps = {
   readonly newest: boolean
   /** 出し始めた時点で既にある最終レポートも、まだ読まれていないものとして演出するか（地図から入れ替えたばかりのレポート）。 */
   readonly freshReport: boolean
-  /** 失敗で終わったやり取りの失敗を紙の計画が出すとき `paper`（頭の枠は外す）。省くと頭に枠を出す。 */
-  readonly failure?: "paper"
 }
 
 export function Turn(props: TurnProps): ReactElement {
@@ -71,12 +67,6 @@ export function Turn(props: TurnProps): ReactElement {
     askSlot.kind === "grouped" ? arrangeTurn(turn, askSlot.remaining) : arrangeTurn(turn)
   const latestStepId = props.newest ? finalStep?.id : undefined
   const port = useReplyPort()
-  useStepJumpLanding(turn.id)
-  const turnStepList = useCurrentTurnSteps()
-  const paperShowsFailure =
-    props.failure === "paper" &&
-    turnStepList.kind === "turn" &&
-    turnStepList.plan.kind === "planned"
 
   return (
     <ReplyPortContext value={{ kind: "open", port }}>
@@ -92,9 +82,7 @@ export function Turn(props: TurnProps): ReactElement {
             これ以前の {turn.droppedCount} 件は省略した
           </Text>
         )}
-        {(turn.steps.length > 0 ||
-          turn.drafts.length > 0 ||
-          (turn.failure.kind === "failed" && !paperShowsFailure)) && (
+        {(turn.steps.length > 0 || turn.drafts.length > 0 || turn.failure.kind === "failed") && (
           <VStack
             element="div"
             name={{ kind: "none" }}
@@ -104,7 +92,7 @@ export function Turn(props: TurnProps): ReactElement {
             wrap="nowrap"
             className=""
           >
-            {turn.failure.kind === "failed" && !paperShowsFailure && (
+            {turn.failure.kind === "failed" && (
               <TurnFailureBlock
                 failure={turn.failure.failure}
                 requestText={turn.request?.text ?? ""}
@@ -229,7 +217,6 @@ function StepCard(props: StepProps): ReactElement {
           isInterimStep(step) && questions.length === 0 && styles["phone-hidden"],
         )}
         {...{ [REPORT_STEP_ATTRIBUTE]: step.body.kind === "text" ? "" : undefined }}
-        data-step-id={step.id}
       >
         <StepReport
           step={step}
@@ -270,7 +257,6 @@ function FoldedStep(props: FoldedStepProps): ReactElement {
   const [opened, setOpened] = useState(false)
   return (
     <details
-      data-step-id={props.step.id}
       onToggle={(event) => {
         if (event.currentTarget.open) {
           setOpened(true)

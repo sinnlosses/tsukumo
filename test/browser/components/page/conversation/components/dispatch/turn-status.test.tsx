@@ -13,14 +13,7 @@ import { checkedTaskId } from "../../../../../../fixture/task-id.ts"
 import { typedElement } from "../../../../../../typed-element.ts"
 import { type CommandSpy, putSession } from "../../../../../session-store.ts"
 
-const macPlatform = vi.hoisted(() => ({ isMac: true }))
-vi.mock("../../../../../../../src/browser/utils/primary-shortcut.ts", async (importOriginal) => ({
-  ...(await importOriginal<Record<string, unknown>>()),
-  isMacPlatform: () => macPlatform.isMac,
-}))
-
 afterEach(() => {
-  macPlatform.isMac = true
   cleanup()
   // 組み立て中の答えはモジュール単位で残るので、次のテストへ持ち越さない。
   useInquiryDraft.setState(useInquiryDraft.getInitialState(), true)
@@ -56,48 +49,38 @@ function renderTurnStatus(
   dispatch: CommandSpy = () => {},
 ): void {
   putSession({ ...INITIAL_SESSION_STATE, ...stateOverrides }, dispatch)
-  render(
-    <TurnStatus
-      betweenElapsedAndAction={undefined}
-      progress={{ kind: "paper", lamps: <span data-testid="dock-lamps" /> }}
-    />,
-  )
+  render(<TurnStatus betweenElapsedAndAction={undefined} />)
 }
 
 describe("TurnStatus", () => {
-  it("進行中のボタンが「止める」で、Mac では ⌘. だけで interrupt が dispatch される", () => {
+  it("(4) ターンが進行中のときボタンが「中断」になり、押すと interrupt が dispatch される", () => {
     const calls: unknown[] = []
     renderTurnStatus({ turn: { kind: "running", startedAt: 0 } }, (command) => calls.push(command))
 
-    expect(screen.getByRole("button", { name: "止める" }).textContent).toBe("")
-    expect(document.querySelector("kbd")?.textContent).toBe("⌘.")
+    const button = screen.getByRole("button")
+    expect(button.textContent).toBe("中断")
 
-    fireEvent.keyDown(window, { key: ".", code: "Period", metaKey: true })
-    fireEvent.keyDown(window, { key: ".", code: "Period", ctrlKey: true })
-    fireEvent.keyDown(window, { key: ".", code: "Period" })
-    fireEvent.keyDown(window, { key: ".", code: "Period", metaKey: true, isComposing: true })
+    fireEvent.click(button)
 
     expect(calls).toEqual([{ procedure: "session.interrupt" }])
   })
 
-  it("Mac 以外では Ctrl+. で interrupt が dispatch され、⌘. では働かない", () => {
-    macPlatform.isMac = false
-    const calls: unknown[] = []
-    renderTurnStatus({ turn: { kind: "running", startedAt: 0 } }, (command) => calls.push(command))
+  it("仕事のときは、経過時間も再試行中の知らせも行に出さない", () => {
+    renderTurnStatus({
+      turn: { kind: "running", startedAt: 0 },
+      apiTrouble: {
+        kind: "retrying",
+        at: 0,
+        attempt: 2,
+        maxRetries: 10,
+        retryDelayMs: 4000,
+        errorStatus: 529,
+        error: "overloaded",
+      },
+    })
 
-    fireEvent.keyDown(window, { key: ".", code: "Period", metaKey: true })
-    fireEvent.keyDown(window, { key: ".", code: "Period", ctrlKey: true })
-
-    expect(calls).toEqual([{ procedure: "session.interrupt" }])
-  })
-
-  it("進行中でなければ ⌘. で止めない", () => {
-    const calls: unknown[] = []
-    renderTurnStatus({}, (command) => calls.push(command))
-
-    fireEvent.keyDown(window, { key: ".", code: "Period", metaKey: true })
-
-    expect(calls).toEqual([])
+    expect(screen.queryByText("経過")).toBeNull()
+    expect(screen.queryAllByRole("status").filter((live) => live.textContent !== "")).toEqual([])
   })
 
   it("(5) 経過時間は running の起点から数え、ラベルは「経過」（進行中）", () => {
@@ -113,18 +96,6 @@ describe("TurnStatus", () => {
     } finally {
       clock.mockRestore()
     }
-  })
-
-  it("仕事のときは、数えているあいだも経過を入力欄に出さない（紙の頭が出す）", () => {
-    renderTurnStatus({ turn: { kind: "running", startedAt: 0 } })
-
-    expect(screen.queryByText("経過")).toBeNull()
-  })
-
-  it("渡された灯りを描く（広い幅で隠すのは CSS）", () => {
-    renderTurnStatus({ turn: { kind: "running", startedAt: 0 } })
-
-    expect(screen.getByTestId("dock-lamps")).toBeDefined()
   })
 
   it("(5) finished になると経過時間が止まり、ラベルが「所要」に変わる", () => {
@@ -172,7 +143,7 @@ describe("TurnStatus", () => {
     )
 
     const button = typedElement(screen.getByRole("button"), HTMLButtonElement, "ボタン")
-    expect(button.getAttribute("aria-label")).toBe("答える")
+    expect(button.textContent).toBe("答える")
     expect(button.type).toBe("submit")
 
     fireEvent.click(button)

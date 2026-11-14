@@ -92,19 +92,14 @@ export const OPENED_SDK_TURN = {
 } as const satisfies SdkTurn
 
 /**
- * ターンの終わり方を {@link TurnEnding} に畳む（中断は失敗にせず `interrupted` に残す）。
+ * ターンの終わり方を、失敗だったかどうかに畳む（中断は失敗にしない）。
  * 失敗の理由が API のエラーなら、そのターンで届いた種類を足す
  * （`assistant` の `error`（`errored`）、無ければ最後の呼び直しの知らせ（`retrying`。呼び直しを使い切って止まったとき）、どちらも無ければ `unknown`）。
  */
 export function turnEnding(outcome: TurnOutcome, trouble: ApiTrouble): TurnEnding {
-  switch (outcome.kind) {
-    case "failed":
-      return { kind: "failed", failure: toTurnFailure(outcome.cause, trouble) }
-    case "interrupted":
-      return { kind: "interrupted" }
-    case "completed":
-      return { kind: "ended" }
-  }
+  return outcome.kind === "failed"
+    ? { kind: "failed", failure: toTurnFailure(outcome.cause, trouble) }
+    : { kind: "ended" }
 }
 
 /**

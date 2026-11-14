@@ -390,33 +390,6 @@ describe("A2UI のカタログ文書", () => {
     },
   )
 
-  it("Report は判定・次の手・置いた前提・出どころ・前回との対応・案内の付箋を省いても全部付けても通る", () => {
-    const bare = { id: "root", component: "Report", children: ["s"] }
-    const full = {
-      ...bare,
-      verdict: "yours",
-      next: { owner: "you", action: "架空の答えを選ぶ", choices: ["はい", "いいえ"] },
-      assumptions: ["架空の前提を置いた"],
-      sources: [{ mark: 1, place: "a.ts:1", note: "架空" }],
-      previous: { resolved: ["架空"], added: [], remaining: ["架空"] },
-      guideNotes: [{ target: "checks", text: "ここを見てね" }],
-    }
-
-    expect(a2uiReportComponentSchema.safeParse(bare).success).toBe(true)
-    const parsed = a2uiReportComponentSchema.parse(full)
-    expect(parsed).toEqual(full)
-  })
-
-  it.each([
-    ["verdict が語彙の外", { verdict: "finished" }],
-    ["next.owner が語彙の外", { next: { owner: "main", action: "架空" } }],
-    ["sources[].mark が 0", { sources: [{ mark: 0, place: "a.ts:1" }] }],
-  ])("Report は %s なら落ちる", (_name, fields) => {
-    const report = { id: "root", component: "Report", children: ["s"], ...fields }
-
-    expect(a2uiReportComponentSchema.safeParse(report).success).toBe(false)
-  })
-
   it("Report の workPlanClosing は WORK_PLAN_CLOSINGS と一致する", async () => {
     const { WORK_PLAN_CLOSINGS } = await import("../../../src/shared/session/work-plan.ts")
     const report = JSON.stringify(document.components.Report)

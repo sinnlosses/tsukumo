@@ -40,9 +40,6 @@ class FakeChart implements Instance {
     plugins: { colors: { enabled: true }, legend: { display: true } },
     set: vi.fn<() => void>(),
   }
-  static readonly overrides = {
-    bar: { scales: { _value_: {} } },
-  }
   static readonly register = vi.fn<() => void>()
   readonly destroy = vi.fn<() => void>()
   readonly data: { labels?: unknown[]; datasets: { label?: string; data: unknown[] }[] }

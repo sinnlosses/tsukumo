@@ -27,7 +27,7 @@ export function GraphLeaf(props: {
   if (part.component !== "Graph") {
     return <></>
   }
-  const drawing = graphDrawingOf(part, true)
+  const drawing = graphDrawingOf(part)
   return (
     <FoldedLeafFrame
       value={value}
@@ -208,7 +208,7 @@ function GraphLegend(props: {
   readonly part: GraphPart
   readonly withShapes: boolean
 }): ReactElement {
-  const items = graphLegendItemsOf(props.part, props.withShapes, true)
+  const items = graphLegendItemsOf(props.part, props.withShapes)
   return (
     <>
       {items.length > 0 && (

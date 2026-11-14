@@ -3,6 +3,7 @@
    CSS Modules が class 名をファイルごとにハッシュ化しても、`@import` で取り込んだ規則は入口の名前になるので、別の `*.css` の class をまたぐ選択子（`.main-step > .detail-block` など）がそのまま効き、部品はこのファイルの1つから引く。
    並びは規則の重なり順なので、入れ替えると同じ詳細度の規則の勝ち負けが変わる。 */
 
+@import "./phone/turn-list.css";
 @import "./phone/current-step.css";
 @import "./turn-card/inquiry-jump-float.css";
 @import "./turn-card/mini-portrait.css";
@@ -12,13 +13,14 @@
 @import "./turn-card/head-notice.css";
 @import "./turn-card/report-outline.css";
 @import "./turn-card/request-block.css";
+@import "./turn-card/turn-card-head.css";
 @import "./turn-card/aside-thread.css";
 @import "./turn-card/question-record.css";
 @import "./turn-card/turn-failure-block.css";
 @import "./turn-card/turn.css";
 @import "./turn-card/report-draft.css";
 @import "./welcome/welcome.css";
-@import "./turn-card/work-plan-paper.css";
+@import "./turn-card/work-strip.css";
 
 /* 依頼の塊の見出しの字は目に見えなくてよい。`h2` は読み上げの見出しとして残す。
    `composes` の参照先の相対パスは `@import` した先のファイルでは解けないので、入口のここに置く。 */
@@ -35,40 +37,6 @@
 .tool-block {
   composes: surface-edge-rule surface-radius-md surface-tone-surface from "../../../../ui/surface/surface-face.module.css";
 }
-.key-help[open] {
-  box-sizing: border-box;
-  width: min(480px, calc(100vw - 2rem));
-  max-height: calc(100dvh - 2rem);
-  padding: var(--inset-card);
-  overflow-y: auto;
-  border: 1px solid var(--rule);
-  border-radius: var(--radius-xl);
-  background: var(--surface);
-  color: var(--ink);
-  font-size: var(--font-secondary);
-}
-.key-help-title {
-  margin: 0;
-  padding-bottom: var(--stack-block);
-  font-size: var(--font-secondary);
-}
-.key-help-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-.key-help-table th {
-  color: var(--ink-quiet);
-  font-weight: normal;
-  text-align: left;
-}
-.key-help-table th,
-.key-help-table td {
-  padding: var(--inset-control);
-  padding-left: 0;
-}
-.key-help-table td {
-  border-top: 1px solid var(--rule-quiet);
-}
-.key-help-keys {
-  white-space: nowrap;
+.work-strip-pop {
+  composes: surface-edge-rule surface-radius-md surface-tone-surface from "../../../../ui/surface/surface-face.module.css";
 }

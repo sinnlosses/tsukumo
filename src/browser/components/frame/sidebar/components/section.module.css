@@ -1,0 +1,65 @@
+/* サイドバーの区画1つ。見出し（h2、伸縮しない）と .sidebar-block-scroll（残りを埋めて内側でスクロールする）の縦積みにする。
+   区画自身は伸縮できないと内側の overflow-y: auto が効かないので min-height: 0 が要る。 */
+.sidebar-block {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  /* 区画の間の余白は3区画ぶん効くので、ここを詰めた分がそのまま一覧に見える件数になる。
+     見出し（h2）と中身（.sidebar-block-scroll）の両方が同じ横位置で揃うようにここに置く（中身側だけに付けると見出しだけ左に飛び出す）。 */
+  --block-inline-padding: var(--space-sm);
+  margin: 0 0 var(--space-sm);
+  padding: 0 var(--block-inline-padding);
+  font-size: var(--font-secondary);
+}
+/* 見出しと絞り込みの行（`filters`）をまとめた、スクロールしても上に止まる帯。
+   左右の負のマージンは `--block-bleed` と `.sidebar-block` の左右の余白を打ち消して帯を領域の枠いっぱいに広げ、
+   左右の padding は同じ値を取り戻して見出しの左右端を一覧の左右端にそろえる。
+   `--block-bleed` は区画の外側がすでに領域の縁まで出ている分を引くための値で、既定は領域の余白。 */
+.sidebar-block-head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  flex: 0 0 auto;
+  --head-bleed: var(--block-bleed, var(--region-padding));
+  margin: 0 calc(-1 * var(--head-bleed) - var(--block-inline-padding));
+  padding: var(--space-lg) calc(var(--head-bleed) + var(--block-inline-padding)) var(--space-md);
+}
+.sidebar-block-head[data-scrolled="true"] {
+  border-bottom: 1px solid var(--rule);
+  box-shadow: var(--shadow-raised);
+}
+/* 区画の見出し。字は `Heading` が持ち、ここに残すのは置き方だけ（横並び・間隔）。 */
+.sidebar-block-heading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex: 0 0 auto;
+  margin: 0;
+}
+.sidebar-block p {
+  margin: var(--space-xs) 0;
+}
+/* 区画の中身。親（.sidebar-block）に定まった高さが無い文脈（狭い画面での1列の畳み）では flex-grow は働かず、中身なりの高さに広がるだけになる。
+   flex-basis は 0 ではなく auto にすること。
+   親の高さが auto のときに flex-basis: 0 だと、内容サイズの見積もりの基準そのものが 0 になり、overflow-y: auto と min-height: 0 の効果で中身が高さ 0 に潰れる。 */
+/* 上下の padding は `theme.css` の `:focus-visible`（outline 2px + outline-offset 2px = 要素の外側 4px）とちょうど合わせている。
+   overflow の scrollport は padding box の内側までを含むので、この 4px の中に収まる outline は上端・下端とも切られない。
+   左右は付けない。横位置は親（.sidebar-block）の `--block-inline-padding` が揃えるので、ここに付けると見出しより中身が内側へ二重に寄る。 */
+.sidebar-block-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--space-xs) 0;
+}
+/* 見出しの右端に並ぶボタン（タスク一覧の「一覧を見る」）。枠なしのリンク風にする。 */
+.sidebar-block-title {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+/* 箱だけ（置き方）。顔は `<Button variant="link">` が持つ。 */
+.sidebar-block-action {
+  flex: 0 0 auto;
+  min-height: 1.5rem;
+  padding-inline: var(--space-sm);
+  margin-inline-end: calc(-1 * var(--space-sm));
+}

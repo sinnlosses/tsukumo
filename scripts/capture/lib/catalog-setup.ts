@@ -129,7 +129,7 @@ function diaryEpochMilliseconds(date: string): number {
 
 /**
  * `bd list --json` の形の架空の課題。先頭は `report-task-finished` 場面の `task.id`（t-002）で、
- * タスクの一覧が溢れて転がる件数を置く（`FICTIONAL_ISSUE_COUNT`）。
+ * サイドバーのタスク区画が溢れて転がる件数を置く（`FICTIONAL_ISSUE_COUNT`）。
  */
 function fictionalIssues(): readonly Readonly<Record<string, unknown>>[] {
   return Array.from({ length: FICTIONAL_ISSUE_COUNT }, (_, index) => ({

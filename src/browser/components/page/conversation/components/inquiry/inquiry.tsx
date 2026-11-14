@@ -15,6 +15,7 @@ import { formatMinutesSeconds } from "../../../../../../shared/utils/elapsed-tim
 import { truncateForDisplay } from "../../../../../features/current-work/current-work-step.ts"
 import { usePhoneWidth } from "../../../../../hooks/use-phone-width.ts"
 import { useNowWhile } from "../../../../../stores/clock.ts"
+import { useInquiryJump } from "../../../../../stores/inquiry-jump.ts"
 import { mergeRefs } from "../../../../../utils/merge-ref.ts"
 import { Button } from "../../../../ui/button/button.tsx"
 import { Dialog } from "../../../../ui/dialog/dialog.tsx"
@@ -25,7 +26,6 @@ import {
   type InquiryModel,
   type InquiryOptionRow,
 } from "../../stores/inquiry-answer.ts"
-import { useInquiryJump } from "../../stores/inquiry-jump.ts"
 import { useInquiryScroll } from "./hooks/use-inquiry-scroll.ts"
 import { useInquiryVisibility } from "./hooks/use-inquiry-visibility.ts"
 import {
@@ -78,8 +78,6 @@ export function Inquiry(): ReactElement | undefined {
  */
 export function InquiryCard(props: {
   readonly actions: "inline" | "none"
-  /** `dock` は新しい器の入力欄の場所に出す形。枠と余白は入れ物が持ち、高さの上限は画面の高さから取る。 */
-  readonly placement?: "dock"
 }): ReactElement | undefined {
   const inquiry = useInquiryAnswer()
   const jump = useInquiryJump((state) => state.jump)
@@ -114,11 +112,7 @@ export function InquiryCard(props: {
   return (
     <>
       <section
-        className={clsx(
-          styles["inquiry"],
-          props.actions === "none" && styles["is-bare"],
-          props.placement === "dock" && styles["is-dock"],
-        )}
+        className={clsx(styles["inquiry"], props.actions === "none" && styles["is-bare"])}
         ref={mergeRefs(cardRef, visibilityRef)}
         tabIndex={-1}
         aria-label={INQUIRY_CHIP}

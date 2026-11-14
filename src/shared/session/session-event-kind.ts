@@ -59,8 +59,6 @@ const SESSION_EVENT_KINDS = {
   "welcome-greeting-changed": true,
   "welcome-greeting-shown": true,
   "reactions-written": true,
-  "aizuchi-written": true,
-  "aizuchi-pressed": true,
   "waiting-line-due": true,
   "sessions-changed": true,
   "chat-mode-changed": true,

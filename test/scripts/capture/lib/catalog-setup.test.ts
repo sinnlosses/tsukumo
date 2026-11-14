@@ -1,4 +1,4 @@
-// タスク区画を撮る件の作業場所に置く架空の課題が、タスクの一覧を溢れさせる件数で、t-002 を残す判断を検証する。
+// タスク区画を撮る件の作業場所に置く架空の課題が、サイドバーの区画を溢れさせる件数で、t-002 を残す判断を検証する。
 
 import { mkdtempSync, readFileSync, rmSync } from "node:fs"
 import { tmpdir } from "node:os"

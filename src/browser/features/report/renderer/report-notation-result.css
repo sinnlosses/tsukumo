@@ -228,6 +228,7 @@
   & .report-work-record details > summary {
     cursor: pointer;
     font-variant-numeric: tabular-nums;
+    color: var(--ink);
   }
   & .report-work-record-fold-title {
     display: inline-flex;
@@ -457,6 +458,7 @@
     min-height: 24px;
     margin: 0;
     padding: var(--space-md) 0;
+    font-size: var(--font-secondary);
     list-style: none;
   }
   & .report-checks-passed > details > summary::-webkit-details-marker {

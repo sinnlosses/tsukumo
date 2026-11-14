@@ -1,43 +1,13 @@
-/* 表の系統（`Table`・`Matrix`）の `Badge` の置き方と、地を外した印の色。 */
+/* 表の系統（`Table`・`Matrix`）の `Badge` の置き方だけ。顔（色・地・角丸・字）は `Badge` が持つ。 */
 
-/* 表の状態のセルと凡例は、印の色と語の対にして地は持たない。 */
 .table-cell-badge {
   gap: 0.35em;
-  padding: 0;
-  border: 0;
-  background: none;
-}
-.table-cell-badge[data-tone="ok"] {
-  color: var(--state-ok);
-}
-.table-cell-badge[data-tone="warn"] {
-  color: var(--state-warn);
-}
-.table-cell-badge[data-tone="ng"] {
-  color: var(--state-ng);
 }
 
-/* 対応表は、印を地のない太字にして、続く短い語と対にする（「失敗」は ✕ と語で分け、色だけに頼らない）。 */
 .matrix-mark-badge {
   justify-content: center;
-  min-inline-size: 0;
+  min-inline-size: 1.5rem;
   box-sizing: border-box;
-  padding: 0;
-  border: 0;
-  background: none;
-  font-weight: 800;
-}
-.matrix-mark-badge[data-tone="ok"] {
-  color: var(--state-ok);
-}
-.matrix-mark-badge[data-tone="warn"] {
-  color: var(--state-warn);
-}
-.matrix-mark-badge[data-tone="ng"] {
-  color: var(--state-ng);
-}
-.matrix-mark-badge[data-tone="neutral"] {
-  color: var(--ink-quiet);
 }
 
 .matrix-emphasis-badge {

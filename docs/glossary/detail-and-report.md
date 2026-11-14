@@ -29,7 +29,7 @@
 - **定義**: **メインビューの本文を、Markdown 1本に畳まずに分けて持つ単位**。`report` ツールの本文は、セクションの欄（`id` と見出しの字）と、
   頭（結論・合図の行）・図・セクション・振り返り・お願いを持つ面の値を持つ。最終のときの頭は、頭にフェーズごとの所要時間を足したもの。セクションの欄の `id` は、整形して
   図を先頭に足したあとのセクションの並びの位置。`report` ツール以外の本文（詳細・フェーズのまとめ）は Markdown 1本の欄にする
-- **注記**: 描く側は欄の Markdown を読まず、面の値（`MainViewReportRegions.a2ui`。頭・お願い・セクション）から描く。描くものがあるかは `reportDrawsAnything`（`src/browser/components/page/conversation/domain/main-view/main-view-report-body.ts`）が数える。
+- **注記**: 描く側は欄の Markdown を読まず、面の値（`MainViewReportRegions.a2ui`。頭・お願い・セクション）から描く。描くものがあるかは `reportDrawsAnything`（`src/browser/domain/main-view/main-view-report-body.ts`）が数える。
   形の決めは `docs/architecture/adr/0031-report-body-as-regions.md`
 - **避ける言い方**: ブロック、部品（セクションの中の `LeafComponent` と紛れる）、パート
 
@@ -37,7 +37,7 @@
 
 - **英語識別子**: `final`（`MainViewStep.mark` の値）
 - **定義**: **そのやり取りで最後の、中間でない本文**。`report` ツールが呼ばれたターンでは
-  最後の呼び出し、呼ばれなかったターンでは最後の本文（`browser/components/page/conversation/domain/main-view/main-view.ts` の `markFinalReport` /
+  最後の呼び出し、呼ばれなかったターンでは最後の本文（`browser/domain/main-view/main-view.ts` の `markFinalReport` /
   `selectLastText`）。ラベル「最終レポート」（タスク見出し行の頭）が出るのは、同じやり取りに中間レポートがあるときか、
   本文に `report` の `task` があるときだけ（どちらも無ければ区別にならないため）。**いちばん新しいやり取りでは、加えて
   そのやり取りが閉じている（ターンが `running` でなく、バックグラウンドタスクも残っていない）ときだけ
@@ -80,7 +80,7 @@
 
 - **英語識別子**: `interim`（`MainViewStep.interim`）
 - **定義**: **ターンの途中で出たレポート**。出どころは2つ: 1つのターンで `report` ツールが何度か
-  呼ばれたときの最後でない呼び出し（`src/browser/components/page/conversation/domain/main-view/main-view.ts` の `selectToolReports`）と、
+  呼ばれたときの最後でない呼び出し（`src/browser/domain/main-view/main-view.ts` の `selectToolReports`）と、
   フェーズを進めた `work_plan` の**フェーズのまとめ**（委譲中は `phase_result` では空で、メインが同じ位置で渡す `work_plan` の `phaseSummary` がフェーズのまとめになる。
   `docs/architecture/display.md`「ワークプラン」）。メインビューには印を付けた枠で残る。通った
   `report` はそこで SDK のターンを閉じるので、`report` からの中間レポートはバックグラウンドタスクや委譲の返却で
@@ -146,64 +146,3 @@
 - **注記**: 検証の無いレポートでは出ない。お願いがあれば総括行の右端に、末尾のお願いへ飛ぶ「お願い 1 ↓」の印を置く。
   規則は `docs/architecture/display/check-result.md`「検証結果は、総括行と開く行で描く」が正典
 - **避ける言い方**: サマリー行（何の要約か分からない）、委譲の返却（別の語。委譲先からの知らせ）
-
-### 判定の行
-
-- **英語識別子**: `verdict`（`report` の Report の欄の名前。値は `done`・`partial`・`yours`・`stopped`・`failed`）
-- **英語識別子**: `ReportJudgment`（値の型）
-- **定義**: **紙の頭に置く、そのレポートの終わり方の判定**。済んだ・一部済んだ・あなたの番・止めた・失敗で止まった、の5つから書き手が1つ選ぶ。
-  無ければ古い欄（`task` の `outcome`）から読み替え、どちらも無ければ `done` として読む
-- **注記**: 合図の行の `verdict`（描く印の名前）とは指す物が違う。値の型は差し戻しの判定 `ReportVerdict` と分けて `ReportJudgment` と呼ぶ。
-  形の決めは `docs/architecture/adr/0056-report-progress-contract.md`「論点 2」
-- **避ける言い方**: 結果、ステータス（`status` は検証結果の行の状態と紛れる）
-
-### 次の手
-
-- **英語識別子**: `next`（`report` の Report の欄の名前。`owner`・`action`・`choices`）
-- **英語識別子**: `ReportNext`（欄の型）
-- **定義**: **判定の行の直後に置く、次に誰が何をするかの1文**。`owner` は `you`（利用者が動く）・`writer`（書き手が続ける）・`none`。
-  `choices` は選べる答えの短い語で、3つまで描く
-- **注記**: 古い欄のお願い（`favor`）は `owner` が `you` の次の手として読み替える。新しい欄があれば新しい欄が勝つ
-- **避ける言い方**: 次の一手（`docs/architecture/adr/0051` の「続けて頼めること」の材料と紛れる）
-
-### 置いた前提
-
-- **英語識別子**: `assumptions`（`report` の Report の欄の名前）
-- **定義**: **書き手が作業の中で置いた前提の文の並び**（1要素1文。なぜ置いたかを含める）
-
-### 確かさの台帳
-
-- **英語識別子**: `CertaintyLedger`（紙に描く値と部品。`src/browser/features/report/domain/certainty-ledger.ts`）
-- **定義**: **紙の「確かさ」を1つにまとめた台帳**。行の材料は `checks` の全行と、`Claims` の確定でない主張。並びは「落ちた（`ng`）」→「確かめていない（`unobserved`・`blocked`・確定でない主張）」→「確かめた（`ok`）」で、確かめた行は1行に畳む
-- **注記**: 紙の頭の件数（✕・？・✓）も台帳の3つの群から数える。主張の行は主張の1文目だけを持ち、押すと節の中の主張へ移る。
-  形の決めは `docs/architecture/adr/0056-report-progress-contract.md`「論点 3」
-- **避ける言い方**: 検証結果の一覧（確定でない主張も並ぶ）
-
-### 裏取りの印
-
-- **英語識別子**: `ReportCheckSeal`（`run`・`record`・`claimed`。`src/shared/report/report-check-seal.ts`）
-- **定義**: **台帳の行に tsukumo が付ける、裏を取ったかどうかの印**。記録あり（実行: 打った Bash と照らした・控え: 検証の控えの段と照らした）と申告のみの2つの語で描く
-- **注記**: 書き手には申告させない。`command` が空の行と確定でない主張はいつも申告のみ
-
-### 出どころ
-
-- **英語識別子**: `sources`（`report` の Report の欄の名前。1件は `mark`・`place`・`note`）
-- **英語識別子**: `ReportSourceEntry`（1件の型）
-- **定義**: **本文の文末の番号が指す根拠の場所**。`mark` は 1 から始まる番号、`place` は `path:line` か一次情報の名前。
-  本文では行内の印 `{{src: n}}` で番号を置く
-- **避ける言い方**: 参考文献、脚注（脚注の記法とは別）
-
-### 前回との対応
-
-- **英語識別子**: `previous`（`report` の Report の欄の名前。`resolved`・`added`・`remaining`）
-- **英語識別子**: `ReportPrevious`（欄の型）
-- **定義**: **2回目以降のレポートで、前回から直ったこと・新しく出たこと・残っていることの3つの並び**。書き手が申告し、tsukumo は前回の行と機械で結ばない
-- **避ける言い方**: 差分（git の差分と紛れる）
-
-### 案内の付箋
-
-- **英語識別子**: `guideNotes`（`report` の Report の欄の名前。1件は `target`・`text`）
-- **英語識別子**: `ReportGuideNote`（1件の型）
-- **定義**: **キャラクターが紙の一部を指して添える1文**。`target` は部品の ID か欄の名前（`checks` など）。3つまで描く
-- **注記**: `docs/architecture/adr/0051` の付箋（利用者が「頼む」で積むもの）とは別物で、識別子も置き場も分ける
-- **避ける言い方**: 付箋（だけ。利用者が積む付箋と紛れる）、注釈

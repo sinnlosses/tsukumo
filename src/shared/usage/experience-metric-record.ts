@@ -1,15 +1,12 @@
 // 進行の計測値を記録に残すときの行の形。
 // 1行は、閉じた依頼1つ（`conclusion`）か、つまずきからの立ち直り1回（`recovery`）か、
-// 仕切りを離した1回（`split`）か、最終レポートを閉じてから次の依頼までの読む時間（`reading`）か、
-// 済んだ段1つの所要（`phase`）か、終わった道具1回の所要（`wait`）。
+// 仕切りを離した1回（`split`）か、最終レポートを閉じてから次の依頼までの読む時間（`reading`）。
 //
 // この記録に書いてよいもの:
 //
 // - 数（ミリ秒・回数・字数・率）・有無・時刻・セッションID
 // - 局面の名前（`ConversationMoment` の値）
 // - 仕切りの名前（`SPLIT_DIVIDERS` の固定の3語）と、仕切りの比率（%）
-// - 段の群（`PHASE_SPANS` の固定の4語）と、済んだ段の秒数。段の名前は入れない
-// - 待ちの種類（`WAIT_KINDS` の固定の4語）と、終わった道具の秒数。道具の引数は入れない
 //
 // 書かないもの:
 //
@@ -19,41 +16,10 @@
 import { z } from "zod"
 
 /** 行の形の版。形を変えたら上げ、古い行と見分ける。 */
-export const EXPERIENCE_METRIC_FORMAT_VERSION = 4 satisfies number
+export const EXPERIENCE_METRIC_FORMAT_VERSION = 3 satisfies number
 
-/**
- * 読める版。版1は `split` の行が無い時代、版2は `reading` の行が無い時代、版3は `phase`・`wait` の行が無い時代の行で、
- * `conclusion`・`recovery` の形は版4と同じ。
- */
-const readableVersionSchema = z.literal([1, 2, 3, EXPERIENCE_METRIC_FORMAT_VERSION])
-
-/** 段の群（`PhaseSpan` の値。`PHASE_SPAN_NAMES` の鍵）。 */
-export const PHASE_SPANS = [
-  "whole",
-  "lead",
-  "delegated",
-  "trail",
-] as const satisfies readonly string[]
-
-/** 待ちやすい道具の種類（固定の語彙）。 */
-export const WAIT_KINDS = [
-  "bash",
-  "agent",
-  "workflow",
-  "other",
-] as const satisfies readonly string[]
-
-export type WaitKind = (typeof WAIT_KINDS)[number]
-
-export function waitKindOfTool(toolName: string): WaitKind {
-  return WAIT_KIND_OF_TOOL[toolName] ?? "other"
-}
-
-const WAIT_KIND_OF_TOOL: Readonly<Record<string, WaitKind>> = {
-  Bash: "bash",
-  Agent: "agent",
-  Workflow: "workflow",
-}
+/** 読める版。版1は `split` の行が無い時代、版2は `reading` の行が無い時代の行で、`conclusion`・`recovery` の形は版3と同じ。 */
+const readableVersionSchema = z.literal([1, 2, EXPERIENCE_METRIC_FORMAT_VERSION])
 
 /** 会話の画面の3つの仕切り（固定の語彙）。表に並べる順でもある。 */
 export const SPLIT_DIVIDERS = [
@@ -107,7 +73,7 @@ const recoveryRecordSchema = z
 /** 仕切りを離した1回。動かしている途中は書かない。 */
 const splitRecordSchema = z
   .object({
-    v: z.literal([2, 3, EXPERIENCE_METRIC_FORMAT_VERSION]),
+    v: z.literal([2, EXPERIENCE_METRIC_FORMAT_VERSION]),
     /** ISO 8601（オフセット付き）。離した時刻。 */
     at: isoAtSchema,
     sessionId: z.string(),
@@ -123,7 +89,7 @@ const splitRecordSchema = z
 /** 最終レポートを閉じてから、次の依頼を送るまで。本文は残さず、字数・表率・図の有無だけを持つ。 */
 const readingRecordSchema = z
   .object({
-    v: z.literal([3, EXPERIENCE_METRIC_FORMAT_VERSION]),
+    v: z.literal(EXPERIENCE_METRIC_FORMAT_VERSION),
     /** ISO 8601（オフセット付き）。次の依頼を送った時刻。 */
     at: isoAtSchema,
     sessionId: z.string(),
@@ -139,42 +105,12 @@ const readingRecordSchema = z
   })
   .readonly()
 
-/** ワークプランの段が1つ済んだ（飛ばした段は書かない）。 */
-const phaseRecordSchema = z
-  .object({
-    v: z.literal(EXPERIENCE_METRIC_FORMAT_VERSION),
-    /** ISO 8601（オフセット付き）。段が済んだ時刻。 */
-    at: isoAtSchema,
-    sessionId: z.string(),
-    kind: z.literal("phase"),
-    span: z.enum(PHASE_SPANS),
-    /** 段が今の段だった時間の和（秒）。 */
-    phaseSeconds: z.number(),
-  })
-  .readonly()
-
-/** 道具1回（背景で走らせたものは完了の知らせまで）が終わった。 */
-const waitRecordSchema = z
-  .object({
-    v: z.literal(EXPERIENCE_METRIC_FORMAT_VERSION),
-    /** ISO 8601（オフセット付き）。終わった時刻。 */
-    at: isoAtSchema,
-    sessionId: z.string(),
-    kind: z.literal("wait"),
-    waitKind: z.enum(WAIT_KINDS),
-    /** 始まってから終わるまで（秒）。 */
-    waitSeconds: z.number(),
-  })
-  .readonly()
-
 /** JSONL に書く1行の形。 */
 export const experienceMetricRecordSchema = z.discriminatedUnion("kind", [
   conclusionRecordSchema,
   recoveryRecordSchema,
   splitRecordSchema,
   readingRecordSchema,
-  phaseRecordSchema,
-  waitRecordSchema,
 ])
 
 export type ExperienceMetricRecord = z.infer<typeof experienceMetricRecordSchema>

@@ -1,0 +1,37 @@
+/* 1段目。プロフィール。領域の左右と上の縁までぴたりと広げる（下端の帯と同じ負のマージン）。
+   伸び縮みしないので、余った高さはすべて2段目・3段目の入れ物へ行く。
+   地は `surface` を差し色で5%だけ染める（`--surface-accent` の12%は選ばれたものの地なので使わない）。
+   下の罫線は `rule` のまま。 */
+.profile-card {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: var(--space-lg);
+  margin: calc(-1 * var(--region-padding)) calc(-1 * var(--region-padding)) 0;
+  padding: var(--space-xl);
+  border-bottom: 1px solid var(--rule);
+  background: color-mix(in srgb, var(--surface), var(--accent) 5%);
+}
+/* 顔は帯の顔と同じ丸・同じ差し色の輪で、大きさだけ見本の 64px にする。 */
+.profile-card-face {
+  flex: none;
+  width: 4rem;
+  height: 4rem;
+  border-radius: 50%;
+  background: var(--surface-accent);
+  box-shadow: 0 0 0 2px var(--accent);
+  object-fit: cover;
+}
+.profile-card-text {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+/* 名前とひとことは読む面の文字なので差し色を受け取らない。字の段・色・太さは `Text` が持つ。 */
+.profile-card-name {
+  margin: 0;
+  line-height: 1.3;
+}
+.profile-card-tagline {
+  margin: 0;
+  line-height: 1.5;
+}

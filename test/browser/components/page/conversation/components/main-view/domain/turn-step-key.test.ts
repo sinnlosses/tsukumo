@@ -3,7 +3,6 @@ import { describe, expect, it } from "vitest"
 import {
   headingStepOf,
   neighborTurnId,
-  readingKeyOf,
   turnStepOf,
   type TurnStepKeyEvent,
 } from "../../../../../../../../src/browser/components/page/conversation/components/main-view/domain/turn-step-key.ts"
@@ -62,29 +61,6 @@ describe("headingStepOf", () => {
     expect(headingStepOf(keyEvent({ key: "{", target: document.createElement("button") }))).toBe(
       "older",
     )
-  })
-})
-
-describe("readingKeyOf", () => {
-  it("d は読む深さ、o は畳み、ほかのキーは読まない", () => {
-    expect(readingKeyOf(keyEvent({ key: "d" }))).toBe("depth")
-    expect(readingKeyOf(keyEvent({ key: "o" }))).toBe("fold")
-    expect(readingKeyOf(keyEvent({ key: "{" }))).toBe("none")
-  })
-
-  it("入力要素の中・修飾キー付きは読まない", () => {
-    const target = document.createElement("textarea")
-    expect(readingKeyOf(keyEvent({ key: "d", target }))).toBe("none")
-    expect(readingKeyOf(keyEvent({ key: "d", metaKey: true }))).toBe("none")
-  })
-
-  it("? はキーの一覧。入力要素の中・変換中・修飾キー付きは読まない", () => {
-    expect(readingKeyOf(keyEvent({ key: "?" }))).toBe("help")
-    expect(readingKeyOf(keyEvent({ key: "?", target: document.createElement("textarea") }))).toBe(
-      "none",
-    )
-    expect(readingKeyOf(keyEvent({ key: "?", isComposing: true }))).toBe("none")
-    expect(readingKeyOf(keyEvent({ key: "?", metaKey: true }))).toBe("none")
   })
 })
 

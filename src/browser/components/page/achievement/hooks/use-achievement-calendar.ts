@@ -1,4 +1,9 @@
-// 灯りの暦の取得と、暦のマスの並びへの畳み込み。取りに行く側は `useAchievementCalendarQuery`。
+// 灯りの暦の取得。
+// 手続き `achievement.calendar` は常に「今日を含む直近5週」を配るので、見ている日とは独立に1回だけ取りに行く。
+//
+// 取り直す契機は、開いたとき・ウィンドウにフォーカスが戻ったとき（`staleTime: 0` と React Query の既定の `refetchOnWindowFocus`）・60秒ごと（常に今日が範囲に入るので無条件）・日記が書き上がったとき（`useAchievement` が無効化する）。
+
+import { useQuery } from "@tanstack/react-query"
 
 import {
   lampLevel,
@@ -7,9 +12,10 @@ import {
 } from "../../../../../shared/achievement/achievement-calendar.ts"
 import { dateKeyOfPlainDate, type DateKey } from "../../../../../shared/diary/date-key.ts"
 import { monthDayLabel } from "../../../../../shared/utils/month-day-label.ts"
-import { useAchievementCalendarQuery } from "../../../../domain/achievement-calendar-query.ts"
 import { rpc } from "../../../../stores/rpc.ts"
 import { LAMP_LABEL } from "../domain/lamp-label.ts"
+
+const REFETCH_INTERVAL_MS = 60_000
 
 /** 暦のマス1つ。今日より後は押せない日付だけ。 */
 export type CalendarCell =
@@ -39,9 +45,24 @@ export type AchievementCalendarView =
     })
 
 export function useAchievementCalendar(): AchievementCalendarView {
-  const calendar = useAchievementCalendarQuery(rpc.achievement.calendar)
-  if (calendar.kind !== "known") {
-    return calendar
+  const query = useQuery(
+    rpc.achievement.calendar.queryOptions({
+      staleTime: 0,
+      // 画面を離れている間も前回の結果を捨てない（既定の `gcTime` では5分で捨てる）。
+      gcTime: Infinity,
+      refetchInterval: REFETCH_INTERVAL_MS,
+      // 落ちた応答は再試行せず、すぐ「取れなかった」に倒す。
+      retry: false,
+    }),
+  )
+
+  if (query.isPending) {
+    return { kind: "loading" }
+  }
+  // 落ちた応答（503・403）も「取れなかった」に倒す。
+  const calendar = query.data
+  if (calendar === undefined || calendar.kind === "unknown") {
+    return { kind: "unknown" }
   }
   const dateKeys = fullCalendarDateKeys(calendar.today)
   const first = dateKeys[0]

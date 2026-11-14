@@ -55,10 +55,6 @@
   最後のフェーズは `report` のフェーズの閉じ方 `finished` で tsukumo が閉じる）と
   `finishedInGroup`（今の並列のフェーズの中で済んだフェーズの名前。省けば空）と
   `phaseSummary`（**フェーズのまとめ**。済んだフェーズが1つ以上あり全部済みでない呼び出しでは必須。`phase_result` で進んだ位置でも省けない）。
-  足せる欄は `replanReason`（`phases` を前の呼び出しから変えた呼び出しの理由1文）、`redoReason`（`current` を済んだフェーズへ戻した呼び出しの理由1文）、
-  `assumptions`（ここまでに置いた前提の配列。`skippedPhases` と同じく毎回全部渡す）、フェーズの `{ id, name, doing }` の `doing`（進行形の名前。省くと `name` のまま）。
-  `work-plan` の記録は `phaseDoings`（平らにした並びの進行形の名前）と `phaseLaps`（平らにした並びの1始まりの周の数。欄が無ければ全部 1）を持つ。
-  周の番号は tsukumo が、済んだフェーズへ戻した回数と `phase_result` の `redo` の回数から数える。
   委譲中は**委譲先のフェーズの範囲**（`delegatedRange`。`docs/architecture/workflow-contract.md`「委譲の返却」）も渡す。
   **毎回、フェーズの並びごと渡す**（委譲で進めるときも同じで、ワークプランを渡した依頼で委譲の返却（`SubagentHandback`）を受けたあとは委譲ゲートが下りるまで呼ぶ）。
   戻り値は `"ok"` か、`current` が要素の数を超えた・フェーズのまとめが足りない・長すぎる・1回で2フェーズ以上済ませた・

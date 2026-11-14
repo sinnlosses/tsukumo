@@ -1,19 +1,11 @@
 import { readdirSync } from "node:fs"
 
 import { cleanup, render } from "@testing-library/react"
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, describe, expect, it } from "vitest"
 
 import { UiGallery } from "../../../../../src/browser/components/app/design/ui-gallery.tsx"
 
-// Astryx の選択の動きは取り外しで cancel を呼び、happy-dom はそれを未処理の拒否にする。
-beforeEach(() => {
-  vi.spyOn(Animation.prototype, "cancel").mockImplementation(() => {})
-})
-
-afterEach(() => {
-  cleanup()
-  vi.restoreAllMocks()
-})
+afterEach(cleanup)
 
 /** 見本帳に並べない `ui/` の部品と、その理由。 */
 const EXCLUDED: Readonly<Record<string, string>> = {

@@ -53,17 +53,11 @@ function pair(source: string, legend: readonly { tone: "a" | "b"; label: string 
 
 describe("Graph の部品", () => {
   it("5 ノード以下の一本道はカードの連鎖で、旧い描画と一致する", () => {
-    const { block, part } = pair(CHAIN, [])
+    const { block, part } = pair(CHAIN, [{ tone: "a", label: "架空の色" }])
     const fresh = newLeafHtml(block, part)
 
     expect(fresh).toContain("report-card-chain")
     expect(fresh).toBe(oldLeafHtml(block))
-  })
-
-  it("紙では色の目印の凡例を出さない", () => {
-    const { part } = pair(CHAIN, [{ tone: "a", label: "架空の色" }])
-
-    expect(newLeafHtml(pair(CHAIN, []).block, part)).not.toContain("架空の色")
   })
 
   it("主経路の長い図は折り返しの svg で、旧い描画と一致する", () => {

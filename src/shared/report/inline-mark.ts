@@ -1,4 +1,4 @@
-// 文中に置く行内の印 `{{12 → 8}}`（前後の差）・`{{spark: 3 5 4 8}}`（折れ線）・`{{3 / 5}}`（帯）・`{{src: 1}}`（出どころの番号）の読み方と、素の文字への畳み。
+// 文中に置く行内の印 `{{12 → 8}}`（前後の差）・`{{spark: 3 5 4 8}}`（折れ線）・`{{3 / 5}}`（帯）の読み方と、素の文字への畳み。
 // 書式に当たらない `{{` は壊れた印で、畳みも描画もせず字のまま残す。inline code の中は読まない。
 
 import { sumBy } from "remeda"
@@ -7,7 +7,6 @@ type InlineMark =
   | { readonly kind: "diff"; readonly from: string; readonly to: string }
   | { readonly kind: "spark"; readonly values: readonly number[] }
   | { readonly kind: "ratio"; readonly part: string; readonly whole: string }
-  | { readonly kind: "source"; readonly number: number }
 
 type InlineSegment =
   | { readonly kind: "text"; readonly text: string }
@@ -21,8 +20,6 @@ const BRACES = /\{\{[^{}\n]*\}\}|\{\{/g
 
 const NUMBER = "-?\\d+(?:\\.\\d+)?"
 const SPARK_BODY = /^spark:\s*(.*)$/
-const SOURCE_BODY = /^src:\s*(.*)$/
-const SOURCE_NUMBER = /^[1-9]\d*$/
 const RATIO_BODY = /^(\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)$/
 const SPARK_NUMBER = new RegExp(`^${NUMBER}$`)
 const DIFF_FORBIDDEN = /[`*_~[\]<>|\\]/
@@ -38,7 +35,7 @@ const MAX_DIFF_SIDE_WIDTH = 16
 
 const SPARK_LEVELS = "▁▂▃▄▅▆▇█"
 
-/** 印を素の文字へ畳む（`12 → 8`・block 文字の列・`3/5`・`[1]`）。壊れた印と inline code の中はそのまま。 */
+/** 印を素の文字へ畳む（`12 → 8`・block 文字の列・`3/5`）。壊れた印と inline code の中はそのまま。 */
 export function foldInlineMarks(text: string): string {
   return parseInlineMarks(text)
     .map((segment) => (segment.kind === "mark" ? foldedMark(segment.mark) : segment.text))
@@ -85,8 +82,6 @@ function foldedMark(mark: InlineMark): string {
       return sparkBlocks(mark.values)
     case "ratio":
       return `${mark.part}/${mark.whole}`
-    case "source":
-      return `[${String(mark.number)}]`
   }
 }
 
@@ -133,11 +128,6 @@ function markOf(body: string): InlineMark | undefined {
   const spark = SPARK_BODY.exec(body)
   if (spark !== null) {
     return sparkOf(spark[1] ?? "")
-  }
-  const source = SOURCE_BODY.exec(body)
-  if (source !== null) {
-    const number = source[1] ?? ""
-    return SOURCE_NUMBER.test(number) ? { kind: "source", number: Number(number) } : undefined
   }
   const ratio = RATIO_BODY.exec(body)
   if (ratio !== null) {

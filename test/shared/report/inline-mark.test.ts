@@ -61,26 +61,6 @@ describe("foldInlineMarks", () => {
     expect(foldInlineMarks("`{{x` と ``{{12 → 8}}``")).toBe("`{{x` と ``{{12 → 8}}``")
   })
 
-  it("出どころの番号 {{src: n}} は source の印になり [n] に畳む", () => {
-    expect(parseInlineMarks("架空の根拠{{src: 3}}")).toEqual([
-      { kind: "text", text: "架空の根拠" },
-      { kind: "mark", source: "{{src: 3}}", mark: { kind: "source", number: 3 } },
-    ])
-    expect(foldInlineMarks("架空の根拠{{src: 3}}。")).toBe("架空の根拠[3]。")
-  })
-
-  it.each(["{{src: 0}}", "{{src: x}}", "{{src: 1.5}}", "{{src:}}"])(
-    "整数でない・0 の出どころ %s は壊れた印のまま",
-    (broken) => {
-      expect(foldInlineMarks(broken)).toBe(broken)
-      expect(brokenInlineMarkCount(broken)).toBe(1)
-    },
-  )
-
-  it("inline code の中の {{src: n}} は読まない", () => {
-    expect(foldInlineMarks("`{{src: 2}}` と {{src: 2}}")).toBe("`{{src: 2}}` と [2]")
-  })
-
   it("1つの文に複数あっても出現順に畳み、前後の文字は欠けない", () => {
     expect(foldInlineMarks("{{12 → 8}}、{{3 / 5}}。{{x}}と{{1 / 2}}")).toBe(
       "12 → 8、3/5。{{x}}と1/2",

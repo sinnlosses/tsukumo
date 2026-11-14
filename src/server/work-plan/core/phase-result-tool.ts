@@ -12,7 +12,6 @@ export const PHASE_RESULT_TOOL_DESCRIPTION =
   "委譲先としてフェーズを1つ終えたとき、SubagentHandback の前に1回呼び、その結果を返す。" +
   "tsukumo が進み具合のプログレスバーを進める。結果の中身（したこと・分かったこと）は返さず、タスクの置き場に書く。" +
   "プログレスバーの中間レポートに出すフェーズのまとめだけは summary に1〜2文で渡せる（渡したフェーズは、メインの work_plan の phaseSummary が要らない）。" +
-  "差し戻しなどでフェーズをやり直すときは outcome を redo にし、reason に理由を1文で渡す（フェーズは済まず、周が進む）。" +
   "メイン（委譲していない側）は呼ばない（work_plan で進める）。"
 
 export const PHASE_RESULT_PHASE_DESCRIPTION =
@@ -21,11 +20,10 @@ export const PHASE_RESULT_PHASE_DESCRIPTION =
 export const PHASE_RESULT_COUNT_DESCRIPTION = "委譲先のフェーズの数"
 
 export const PHASE_RESULT_OUTCOME_DESCRIPTION =
-  "finished（済ませた）・skipped（要らず飛ばした）・stopped（途中で止めた。reason を添える）・" +
-  "redo（受け入れの差し戻しなどでやり直す。フェーズは済まず、同じフェーズの周が1つ進む。reason を添える）"
+  "finished（済ませた）・skipped（要らず飛ばした）・stopped（途中で止めた。reason を添える）"
 
 export const PHASE_RESULT_REASON_DESCRIPTION =
-  "止めた理由・やり直す理由を1文で。outcome が stopped か redo のときだけ渡し、ほかでは省く"
+  "止めた理由を1〜2文で。outcome が stopped のときだけ渡し、ほかでは省く"
 
 export const PHASE_RESULT_SUMMARY_DESCRIPTION =
   "フェーズのまとめを1〜2文で（プログレスバーの中間レポートに出る）。outcome が finished のときだけ渡し、ほかでは省く"
@@ -33,8 +31,8 @@ export const PHASE_RESULT_SUMMARY_DESCRIPTION =
 /** 差し戻しの種類ごとの直し方。 */
 const PHASE_RESULT_REJECTIONS = {
   malformed:
-    "phase は 1 から count までの整数にし、outcome は finished・skipped・stopped・redo のどれかにする。" +
-    "reason は outcome が stopped のときだけ（redo も同じ）、空でない文で渡す。summary は outcome が finished のときだけ渡す。直して呼び直すこと。" +
+    "phase は 1 から count までの整数にし、outcome は finished・skipped・stopped のどれかにする。" +
+    "reason は outcome が stopped のときだけ、空でない文で渡す。summary は outcome が finished のときだけ渡す。直して呼び直すこと。" +
     "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。",
   outOfOrder:
     "phase は今のフェーズの番号にする。済んだフェーズへの戻りと、先のフェーズへの飛ばしは受け付けない。" +

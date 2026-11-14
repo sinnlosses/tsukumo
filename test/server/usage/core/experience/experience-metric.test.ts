@@ -15,7 +15,6 @@ import {
 import { reportOfDrawn } from "../../../../fixture/report-event.ts"
 import { requestEvent } from "../../../../fixture/session-event.ts"
 import { checkedSessionId } from "../../../../fixture/session-id.ts"
-import { checkedToolUseId } from "../../../../fixture/tool-use-id.ts"
 
 /** 依頼の文面に入れる目印。記録の行に出てはいけない。 */
 const REQUEST_MARK = "架空の依頼の目印・青い傘"
@@ -187,111 +186,6 @@ describe("createExperienceMetricRecorder", () => {
 
     expect(entries.length).toBe(3)
     expect(JSON.stringify(entries)).not.toContain(REQUEST_MARK)
-  })
-
-  describe("段と道具の所要", () => {
-    const PHASE_MARK = "架空の段の目印・緑の鞄"
-    const COMMAND_MARK = "架空のコマンドの目印・黄色い帽子"
-
-    function workPlan(current: number, skippedPhases: readonly string[] = []): SessionEvent {
-      return {
-        kind: "work-plan",
-        phases: [PHASE_MARK, "架空の段B", "架空の段C"],
-        phaseIds: [],
-        current,
-        finishedInGroup: [],
-        phaseSummary: "",
-        delegatedRange: { kind: "none" },
-        skippedPhases,
-        awaitingSummary: { kind: "none" },
-      }
-    }
-
-    function toolStarted(id: string, name: string, input: unknown): SessionEvent {
-      return { kind: "tool-started", toolUseId: checkedToolUseId(id), name, input }
-    }
-
-    function toolFinished(id: string): SessionEvent {
-      return {
-        kind: "tool-finished",
-        toolUseId: checkedToolUseId(id),
-        content: COMMAND_MARK,
-        isError: false,
-      }
-    }
-
-    it("段が済んだら、群と今の段だった秒数を1行書く（飛ばした段は書かない）", () => {
-      const { entries, send } = createHarness()
-
-      send(10, REQUEST)
-      send(20, workPlan(0))
-      send(50, workPlan(1))
-      send(60, workPlan(2, ["架空の段B"]))
-
-      expect(entries.filter((entry) => entry.kind === "phase")).toEqual([
-        {
-          at: 50_000,
-          sessionId: "claude-session-1",
-          kind: "phase",
-          span: "whole",
-          phaseSeconds: 30,
-        },
-      ])
-    })
-
-    it("道具が終わったら、種類と秒数を1行書く。背景の Bash は完了の知らせで数える", () => {
-      const { entries, send } = createHarness()
-
-      send(10, REQUEST)
-      send(20, toolStarted("t1", "Bash", { command: COMMAND_MARK }))
-      send(35, toolFinished("t1"))
-      send(40, toolStarted("t2", "Bash", { command: COMMAND_MARK, run_in_background: true }))
-      send(41, toolFinished("t2"))
-      send(100, { kind: "background-tool-finished", toolUseId: checkedToolUseId("t2") })
-      send(101, { kind: "background-tool-finished", toolUseId: checkedToolUseId("t2") })
-      send(110, toolStarted("t3", "Read", { file_path: COMMAND_MARK }))
-      send(111, toolFinished("t3"))
-
-      expect(entries.filter((entry) => entry.kind === "wait")).toEqual([
-        {
-          at: 35_000,
-          sessionId: "claude-session-1",
-          kind: "wait",
-          waitKind: "bash",
-          waitSeconds: 15,
-        },
-        {
-          at: 100_000,
-          sessionId: "claude-session-1",
-          kind: "wait",
-          waitKind: "bash",
-          waitSeconds: 60,
-        },
-        {
-          at: 111_000,
-          sessionId: "claude-session-1",
-          kind: "wait",
-          waitKind: "other",
-          waitSeconds: 1,
-        },
-      ])
-    })
-
-    it("段の名前・道具の名前と引数・結果は行に入らない", () => {
-      const { entries, send } = createHarness()
-
-      send(10, REQUEST)
-      send(20, workPlan(0))
-      send(25, toolStarted("t1", "Bash", { command: COMMAND_MARK }))
-      send(30, toolFinished("t1"))
-      send(50, workPlan(1))
-
-      expect(entries.map((entry) => entry.kind)).toEqual(["wait", "phase"])
-      const text = JSON.stringify(entries)
-      expect(text).not.toContain(PHASE_MARK)
-      expect(text).not.toContain(COMMAND_MARK)
-      expect(text).not.toContain("Bash")
-    })
   })
 
   describe("読む時間", () => {

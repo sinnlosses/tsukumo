@@ -42,9 +42,7 @@ export function useMarginCardStack(
 function measureStack(root: HTMLElement, tailHeight: number): MarginCardStack {
   const rootRect = root.getBoundingClientRect()
   const slots = [...root.querySelectorAll<HTMLElement>("[data-margin-card]")].map((card) => {
-    const frameTop =
-      card.closest("[data-reply-frame], [data-guide-frame]")?.getBoundingClientRect().top ??
-      rootRect.top
+    const frameTop = card.closest("[data-reply-frame]")?.getBoundingClientRect().top ?? rootRect.top
     return {
       id: card.dataset["marginCard"] ?? "",
       top: frameTop - rootRect.top + Number(card.dataset["cardTop"] ?? 0),

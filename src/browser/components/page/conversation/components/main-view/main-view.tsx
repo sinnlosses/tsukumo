@@ -9,7 +9,6 @@
 
 import {
   useRef,
-  useState,
   type KeyboardEvent,
   type ReactElement,
   type ReactNode,
@@ -26,36 +25,31 @@ import {
 } from "../../../../../../shared/session/work-plan.ts"
 import { RepositoryFileLinkProvider } from "../../../../../features/report/repository-link.tsx"
 import { useBeforePaintSync } from "../../../../../hooks/use-before-paint-sync.ts"
-import { nextReadingDepth, useReadingDepth } from "../../../../../stores/reading-depth.ts"
+import { usePhoneWidth } from "../../../../../hooks/use-phone-width.ts"
+import { useCurrentTurnSteps } from "../../../../../stores/current-turn-step-list.ts"
+import { useInquiryJump } from "../../../../../stores/inquiry-jump.ts"
+import { useMainViewTurns } from "../../../../../stores/main-view-turn.ts"
+import { useReadingSection } from "../../../../../stores/reading-section.ts"
 import { useSession } from "../../../../../stores/session.ts"
-import { loadSingleKeys } from "../../../../../stores/single-key-setting.ts"
-import { useCurrentTurnSteps } from "../../stores/current-turn-step-list.ts"
-import { useInquiryJump } from "../../stores/inquiry-jump.ts"
+import { useTurnSelection } from "../../../../../stores/turn-selection.ts"
 import { type MainViewContent, useMainViewContent } from "../../stores/main-view-content.ts"
-import { useMainViewTurns } from "../../stores/main-view-turn.ts"
-import { useReadingSection } from "../../stores/reading-section.ts"
-import { useTurnSelection } from "../../stores/turn-selection.ts"
 import { Inquiry } from "../inquiry/inquiry.tsx"
 import { AskThreadProvider } from "./ask-thread-provider.tsx"
+import { CurrentStep } from "./current-step.tsx"
 import { headNoticeOf, type HeadNoticeAction } from "./domain/head-notice.ts"
-import { headingStepOf, neighborTurnId, readingKeyOf, turnStepOf } from "./domain/turn-step-key.ts"
+import { headingStepOf, neighborTurnId, turnStepOf } from "./domain/turn-step-key.ts"
 import { type ShownTarget, useActiveTurnScroll } from "./hooks/use-active-turn-scroll.ts"
 import { useReportOutlineTurns } from "./hooks/use-report-outline-turn-list.ts"
 import { InquiryJumpFloat } from "./inquiry-jump-float.tsx"
-import { KeyHelp } from "./key-help.tsx"
 import styles from "./main-view.module.css"
 import { MiniPortrait } from "./mini-portrait.tsx"
 import { PhaseList } from "./phase-list.tsx"
 import { ReportOutline } from "./report-outline.tsx"
 import { RequestBlock } from "./request-block.tsx"
+import { TurnCardHead } from "./turn-card-head.tsx"
 import { Turn } from "./turn.tsx"
 import { Welcome } from "./welcome.tsx"
-import { WorkPlanPaper } from "./work-plan-paper.tsx"
-
-export { PhoneActivity } from "./phone-activity.tsx"
-export { StageActivity } from "./stage-activity.tsx"
-export { WorkPlanDockLamps } from "./work-plan-paper.tsx"
-export { turnTitle } from "./domain/turn-title.ts"
+import { WorkStrip } from "./work-strip.tsx"
 
 /** 画面に出す中身。`card` は札に載せるターンで、`fresh` は働くあいだの中身から入れ替えたばかりのレポートか。 */
 type ShownView =
@@ -67,11 +61,7 @@ type ShownCard =
   | { readonly kind: "none" }
   | { readonly kind: "turn"; readonly turn: MainViewTurn; readonly fresh: boolean }
 
-/** `outline` は札の左にやり取りの列を置くか。`inquiry` は札の末尾にお伺いを出すか（入力欄の場所に出すときは `none`）。 */
-export function MainView(props: {
-  readonly outline: "column" | "none"
-  readonly inquiry: "inline" | "none"
-}): ReactElement {
+export function MainView(): ReactElement {
   const { activeTurnId, newestTurnId, selectTurn } = useTurnSelection()
   // 畳んだ結果は姿ごとに1回だけ作られる（昇順。追従を決める `useTurnSelection` と同じものを読む）。
   const turns = useMainViewTurns()
@@ -83,6 +73,7 @@ export function MainView(props: {
   const turnStepList = useCurrentTurnSteps()
   const phase: WorkPhase =
     turnStepList.kind === "turn" ? currentPhaseOf(turnStepList.plan) : { kind: "none" }
+  const phoneWidth = usePhoneWidth()
   const rootRef = useRef<HTMLDivElement>(null)
   const carriedFocusRef = useRef(false)
 
@@ -91,8 +82,6 @@ export function MainView(props: {
       ? { kind: "past", turnId: activeTurnId }
       : { kind: "newest" }
   const viewingPast = viewing.kind === "past"
-  // 紙の計画が描けるのは今の依頼だけなので、過去のやり取りは段の一覧の形で中間レポートを出す。
-  const progress = viewingPast ? "strip" : "paper"
   const view: ShownView = awaitingHello ? { kind: "waiting" } : shownView(content, turns, viewing)
   useActiveTurnScroll(rootRef, shownTargetOf(view))
 
@@ -113,7 +102,6 @@ export function MainView(props: {
       : undefined
   const outlineTurns = useReportOutlineTurns()
   const moveHeading = useReadingSection((state) => state.move)
-  const [helpOpen, setHelpOpen] = useState(false)
 
   function onKeyDown(event: KeyboardEvent<HTMLElement>): void {
     const keyEvent = {
@@ -123,18 +111,6 @@ export function MainView(props: {
       altKey: event.altKey,
       isComposing: event.nativeEvent.isComposing,
       target: event.target,
-    }
-    const reading = readingKeyOf(keyEvent)
-    if (reading !== "none") {
-      if (loadSingleKeys()) {
-        event.preventDefault()
-        if (reading === "help") {
-          setHelpOpen(true)
-        } else {
-          pressReadingKey(reading, event.currentTarget)
-        }
-      }
-      return
     }
     const headingStep = headingStepOf(keyEvent)
     if (headingStep !== undefined) {
@@ -187,13 +163,17 @@ export function MainView(props: {
           {cardTurn !== undefined && (
             <article className={styles["turn-card"]}>
               <ReportOutline
-                column={props.outline === "column"}
                 turns={outlineTurns}
                 activeTurnId={cardTurn.turn.id}
                 onSelectTurn={selectTurn}
                 notice={notice}
                 onNotice={onNotice}
               >
+                {!viewingPast && (
+                  <TurnCardHead>
+                    <WorkStrip />
+                  </TurnCardHead>
+                )}
                 {cardTurn.turn.request !== undefined && (
                   <div className={styles["turn-card-request"]}>
                     <RequestBlock
@@ -203,39 +183,28 @@ export function MainView(props: {
                     />
                   </div>
                 )}
-                {progress === "paper" && (view.kind === "work" || view.kind === "report") && (
-                  <div className={styles["turn-card-plan"]}>
-                    <WorkPlanPaper />
-                  </div>
-                )}
-                <div className={styles["turn-card-body"]} data-progress={progress}>
+                <div className={styles["turn-card-body"]}>
                   <AskThreadProvider turn={cardTurn.turn} turns={turns}>
                     {/* 狭い画面の一覧と「いまの段」。広い画面では CSS で消える。
                       一覧の板の中の本文を、`<Turn>` が隠した同じ本文より DOM の前に置くため、`<Turn>` の前に並べる。 */}
-                    {progress === "strip" && (
-                      <PhaseList
-                        turn={cardTurn.turn}
-                        planCount={viewingPast ? 0 : planCountOf(turnStepList)}
-                        turnId={cardTurn.turn.id}
-                        key={`phase-list:${String(cardTurn.turn.id)}`}
-                      />
-                    )}
+                    <PhaseList
+                      turn={cardTurn.turn}
+                      planCount={viewingPast ? 0 : planCountOf(turnStepList)}
+                      turnId={cardTurn.turn.id}
+                      key={`phase-list:${String(cardTurn.turn.id)}`}
+                    />
+                    {phoneWidth && !viewingPast && view.kind === "work" && <CurrentStep />}
                     {/* `key` にターンの番号を渡す。
                     前後へ移っても同じ位置の `<Turn>` を使い回すと、「このターンを出し始めた時点で既にあった本文」（演出の対象を決める材料）が最初のターンのものに留まってしまう。 */}
                     <Turn
                       turn={cardTurn.turn}
                       newest={cardTurn.turn.id === newestTurnId}
                       freshReport={cardTurn.fresh}
-                      failure={
-                        progress === "paper" && cardTurn.turn.id === newestTurnId
-                          ? "paper"
-                          : undefined
-                      }
                       key={cardTurn.turn.id}
                     />
                   </AskThreadProvider>
                 </div>
-                {!viewingPast && props.inquiry === "inline" && (
+                {!viewingPast && (
                   <div className={styles["turn-card-inquiry"]}>
                     <Inquiry />
                   </div>
@@ -244,16 +213,10 @@ export function MainView(props: {
             </article>
           )}
         </ContentFrame>
-        {!viewingPast && props.inquiry === "inline" && <InquiryJumpFloat />}
+        {!viewingPast && <InquiryJumpFloat />}
         {/* 筆先に添うミニ立ち絵。この入れ物の原点を基準に置く（`position: absolute`）ので、書き上げたあと残っているあいだも本文と一緒に転がる。
             出ているやり取りを渡すのは、残った筆先が別のやり取りのものなら引っ込ませるため。 */}
         {cardTurn !== undefined && <MiniPortrait shownTurnId={cardTurn.turn.id} />}
-        <KeyHelp
-          open={helpOpen}
-          onClose={() => {
-            setHelpOpen(false)
-          }}
-        />
       </div>
     </RepositoryFileLinkProvider>
   )
@@ -342,17 +305,4 @@ function shownTargetOf(view: ShownView): ShownTarget {
     return { kind: "none" }
   }
   return { kind: view.kind, turnId: view.card.turn.id }
-}
-
-/** `d` は読む深さを回し、`o` はメインビューに出ている紙の節を全部畳む・開く。 */
-function pressReadingKey(key: "depth" | "fold", root: HTMLElement): void {
-  const { depth, setDepth, toggleFold } = useReadingDepth.getState()
-  if (key === "depth") {
-    setDepth(nextReadingDepth(depth))
-    return
-  }
-  const keys = [...root.querySelectorAll<HTMLElement>("[data-fold-key]")].flatMap(
-    (section) => section.dataset["foldKey"] ?? [],
-  )
-  toggleFold({ kind: "all", keys })
 }

@@ -92,7 +92,7 @@
 - **SDK のイベントを足す・扱いを変えるタスクは、そのイベントを起こす経路を本文に列挙し、
   1回のやり取りで何回起きうるかを書く。** 委譲中の進み具合の通知（`SendMessage`）を「委譲1回に
   つき1回」と見て吹き出しを空にする仕様を書いたところ、実際は通知が委譲1回で複数回届き、
-  吹き出しが「（まだ発話がありません）」に戻り続けた（経緯は `docs/architecture/screen-design/scene-behavior.md`
+  吹き出しが「（まだ発話がありません）」に戻り続けた（経緯は `docs/architecture/screen-design.md` 13.9
   「バックグラウンドタスク」）
 - **わざと壊して落ちるか確かめるときは、このタスクで編集していないファイルか一時ファイルに
   壊しを入れる。** 退避したコピーから戻す——`git checkout --` で戻すと、同じファイルへの
@@ -160,4 +160,4 @@
 ## `summary` の長さ
 
 共通版は「1行に収める」とだけ言う。**このリポジトリでは全角40文字以内**を目安にする
-（タスクのモーダルの一覧が summary を2行で切るため。`src/browser/features/task-board/components/task-board-list.tsx`）。
+（サイドバーのタスク一覧が2列の行で出すため。`src/browser/features/task-board/task-list.tsx` の `TaskItem`）。

@@ -215,42 +215,7 @@ export async function openTaskBoardRoom(
       description: ["## 目的・背景", "", "架空の保留の理由を本文にだけ書く。"].join("\n"),
     },
   ])
-  await openTaskBoardFromWelcome(room)
-  return room
-}
-
-/**
- * タスクの紙の足場。タスクのモーダルと同じ5件を置いてから、`#tasks` へ移って開く（紙の入口は探すにあり、足場は hash で直に移る）。
- */
-export async function openTaskSheetRoom(
-  run: ScenarioRun,
-  scenario: string,
-  domRoots: readonly DomRootName[],
-  viewport: ScenarioOptions["viewport"],
-): Promise<ScenarioRoom> {
-  const room = await run.open({ scenario, scene: "none", viewport, domRoots })
-  await placeTasks(room, [
-    {
-      ...task("t-001", "架空のタスク（`code` を含む要約）", "todo"),
-      description: RICH_DESCRIPTION,
-      acceptance: RICH_ACCEPTANCE,
-      notes: RICH_NOTES,
-      difficulty: "sonnet",
-      loopable: "Y",
-    },
-    task("t-002", "架空のタスク（完了）", "done"),
-    task("t-003", "架空のタスク（進行中）", "doing"),
-    {
-      ...task("t-004", "架空のタスク（待ち）", "todo", ["t-001"]),
-      difficulty: "opus",
-      loopable: "N",
-    },
-    task("t-005", "架空のタスク（保留）", "hold", ["t-001"]),
-  ])
-  await room.page.evaluate(() => {
-    window.location.hash = "#tasks"
-  })
-  await room.page.getByRole("combobox", { name: "タスクを探す" }).waitFor()
+  await room.page.getByRole("button", { name: "一覧を見る" }).click()
   return room
 }
 
@@ -267,16 +232,8 @@ export async function openTaskBoardRoomWithDrafts(
     task("t-003", "架空のタスク（ドラフト乙）", "draft"),
     task("t-004", "架空のタスク（保留）", "hold"),
   ])
-  await openTaskBoardFromWelcome(room)
+  await room.page.getByRole("button", { name: "一覧を見る" }).click()
   return room
-}
-
-/** `#tasks` へ移って、タスクの紙（`TaskSheet`）を開く（紙の入口は探すにあり、足場は hash で直に移る）。 */
-export async function openTaskBoardFromWelcome(room: ScenarioRoom): Promise<void> {
-  await room.page.evaluate(() => {
-    window.location.hash = "#tasks"
-  })
-  await room.page.getByRole("dialog", { name: "タスク" }).waitFor()
 }
 
 /** 先頭のタスクの `description`。 */

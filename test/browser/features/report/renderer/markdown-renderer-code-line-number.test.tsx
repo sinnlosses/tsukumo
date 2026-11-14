@@ -34,6 +34,7 @@ function drawn(
         path={props.path}
         marks={props.marks === true ? [{ lines: "2", label: "架空の印" }] : []}
         source={SOURCE}
+        lineDiff={undefined}
       />,
     ),
   )
@@ -111,6 +112,7 @@ describe("Code の行番号", () => {
           path="src/fictional.ts"
           marks={[]}
           source={"$ pnpm run check\nok\n"}
+          lineDiff={undefined}
         />,
       ),
     )
@@ -130,6 +132,7 @@ describe("Code の行番号", () => {
           path=""
           marks={[]}
           source={"-const a = 1\n+const a = 2\n const b = 3\n"}
+          lineDiff={undefined}
         />,
       ),
     )

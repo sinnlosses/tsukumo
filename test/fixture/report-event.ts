@@ -12,7 +12,6 @@ import {
   type RecordedReportFigure,
 } from "../../src/shared/report/a2ui-report-catalog.ts"
 import type { ReportSection } from "../../src/shared/report/report-block.ts"
-import type { ReportProgress } from "../../src/shared/report/report-progress-field.ts"
 import type { ReportRetrospective } from "../../src/shared/report/report-retrospective.ts"
 import type { ReportCalledEvent } from "../../src/shared/session/session-event.ts"
 import { checkedToolUseId } from "./tool-use-id.ts"
@@ -27,18 +26,6 @@ export type LegacySectionInput = {
 export type ReportEventInput = Partial<Omit<ReportCalledEvent, "kind" | "toolUseId">> & {
   readonly toolUseId?: string
 }
-
-/** 判定・次の手などの欄をどれも書かず、古い欄も無い呼び出しの読み。 */
-export const NO_REPORT_PROGRESS = {
-  verdict: "done",
-  verdictWritten: false,
-  closingConflict: false,
-  next: { kind: "none" },
-  assumptions: [],
-  sources: [],
-  previous: { kind: "none" },
-  guideNotes: [],
-} as const satisfies ReportProgress
 
 /** `report` ツールの呼び出し1件。 */
 export function reportEvent(input: ReportEventInput = {}): ReportCalledEvent {
@@ -67,7 +54,6 @@ export function reportEvent(input: ReportEventInput = {}): ReportCalledEvent {
     components: [],
     imageSizes: [],
     unshelvedImages: [],
-    ...NO_REPORT_PROGRESS,
     ...overrides,
   }
 }
@@ -135,7 +121,6 @@ export function reportDraft(input: ReportDraftInput = {}): ReportDraft {
     fileContents: new Map(),
     task: { kind: "none" },
     workPlanClosing: "none",
-    ...NO_REPORT_PROGRESS,
     ...overrides,
     components,
   }

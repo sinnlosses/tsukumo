@@ -33,11 +33,8 @@ import {
   WORK_PLAN_CURRENT_DESCRIPTION,
   WORK_PLAN_DELEGATED_RANGE_DESCRIPTION,
   WORK_PLAN_FINISHED_IN_GROUP_DESCRIPTION,
-  WORK_PLAN_ASSUMPTIONS_DESCRIPTION,
   WORK_PLAN_PHASE_SUMMARY_DESCRIPTION,
   WORK_PLAN_PHASES_DESCRIPTION,
-  WORK_PLAN_REDO_REASON_DESCRIPTION,
-  WORK_PLAN_REPLAN_REASON_DESCRIPTION,
   WORK_PLAN_SKIPPED_PHASES_DESCRIPTION,
   WORK_PLAN_TOOL_DESCRIPTION,
 } from "../../../work-plan/core/work-plan-tool.ts"
@@ -60,9 +57,6 @@ export function workPlanTool(review: CallReview) {
       phaseSummary: workPlanShape.phaseSummary.describe(WORK_PLAN_PHASE_SUMMARY_DESCRIPTION),
       delegatedRange: workPlanShape.delegatedRange.describe(WORK_PLAN_DELEGATED_RANGE_DESCRIPTION),
       skippedPhases: workPlanShape.skippedPhases.describe(WORK_PLAN_SKIPPED_PHASES_DESCRIPTION),
-      replanReason: workPlanShape.replanReason.describe(WORK_PLAN_REPLAN_REASON_DESCRIPTION),
-      redoReason: workPlanShape.redoReason.describe(WORK_PLAN_REDO_REASON_DESCRIPTION),
-      assumptions: workPlanShape.assumptions.describe(WORK_PLAN_ASSUMPTIONS_DESCRIPTION),
     },
     async (input) => {
       const answer = answerWorkPlanCall(review, input)

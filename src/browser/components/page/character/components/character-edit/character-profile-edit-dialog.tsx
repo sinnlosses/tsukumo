@@ -18,8 +18,8 @@ import { TextField } from "../../../../ui/text-field/text-field.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
 import styles from "../../character.module.css"
 
-/** 自己紹介文の説明（キャラクターの紙のプロフィールに出ることを添える）。 */
-const TAGLINE_HINT = "キャラクターの紙のプロフィールに出る一言"
+/** 自己紹介文の説明（雑談のサイドバーの札にも出ることを添える）。 */
+const TAGLINE_HINT = "画面や雑談のサイドバーのプロフィールに出る一言"
 const NAME_HINT = "画面や吹き出しに出る名前。空にすると id をそのまま使います"
 
 type CharacterProfileEditDialogProps = {

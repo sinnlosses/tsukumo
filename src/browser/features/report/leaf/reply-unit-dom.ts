@@ -12,6 +12,10 @@ export type AskScope =
 export type MarginTops = {
   /** 指した単位の上端（外枠の上端から）。 */
   readonly pointed: number
+  /** 書き添えを置く単位の上端。最初の行の単位、無ければ最初の単位。 */
+  readonly hint: number
+  /** この外枠がレポートで最初の外枠か。 */
+  readonly first: boolean
   /** 札を置く単位ごとの上端（`scopeKeyOf` の鍵）。 */
   readonly cards: Readonly<Record<string, number>>
 }
@@ -53,17 +57,28 @@ export function unitScopeOf(unit: ReplyUnit): AskScope {
     : { kind: "row", index: unit.row.index, firstCell: unit.row.firstCell }
 }
 
+/** 書き添えは、一度も指していないあいだ、レポートで最初の外枠の最初の行（無ければ最初の単位）の高さに置く。 */
 export function marginTopsOf(
   frame: HTMLElement,
+  touched: boolean,
   cardScopes: readonly AskScope[],
   pointedSelector?: string,
 ): MarginTops {
   const base = frame.getBoundingClientRect().top
   const topOf = (element?: Element) =>
     element === undefined ? 0 : Math.round(element.getBoundingClientRect().top - base)
+  const firstUnit = touched
+    ? undefined
+    : (frame.querySelector('[data-reply-unit="row"]') ??
+      frame.querySelector(UNIT_SELECTOR) ??
+      undefined)
   return {
     pointed:
       pointedSelector === undefined ? 0 : topOf(frame.querySelector(pointedSelector) ?? undefined),
+    hint: topOf(firstUnit),
+    first:
+      firstUnit !== undefined &&
+      frame.closest("[data-report-body]")?.querySelector("[data-reply-frame]") === frame,
     cards: Object.fromEntries(
       cardScopes.map((scope) => [
         scopeKeyOf(scope),

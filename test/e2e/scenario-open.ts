@@ -67,11 +67,10 @@ export type ScenarioOptions = {
   readonly domRoots: readonly DomRootName[]
   /** 起こす前に cwd へ置くファイル（cwd からの相対パスと中身の並び）。手元の画像など、場面が指すファイル。 */
   readonly cwdFiles?: readonly CwdFile[]
-  /** `fixture/character-pack/` の下のパックの名前。指すと `TSUKUMO_CHARACTER` でそのパックを選んで起こす。無ければ同梱の既定。 */
-  readonly characterPack?: string
-  /** 場面の手を先頭から何個まで流して止めるか。途中の画を撮る場面だけが指す。 */
-  readonly sceneUntil?: number
 }
+
+/** サイドバーの使用量の目盛り（コンテキスト・プラン使用量）の口の `title`。 */
+const USAGE_GAUGE_TITLES = ["コンテキスト", "プラン使用量"] as const
 
 /**
  * 起こして開いた1件。シナリオはこれに対して待ち・操作・判定を行う。
@@ -119,6 +118,12 @@ export type ScenarioRoom = {
     target: Locator,
     options: { readonly response: string; readonly baseline: ResponseBaseline },
   ) => Promise<void>
+  /**
+   * `turn-finished` が `occurrence` 回目に届くまで待ち、サイドバーのコンテキストとプラン使用量の目盛りが
+   * どちらもそのターンの後に取った値（`data-finished-turn-count` が `occurrence`）を出して取得中でなくなるまで、凍らせた時計を進める。
+   * `occurrence` を終わったターンの数として読むので、`opening` と復元でターンを終わらせない場面に限る。
+   */
+  readonly revealUsageAfterTurn: (occurrence: number) => Promise<void>
   /** `pending-changed` の答え待ちに `id` の札が載るまで待つ（何回目の `pending-changed` かでは待たない）。 */
   readonly waitForPending: (id: string) => Promise<void>
   /**
@@ -165,10 +170,7 @@ export async function openRoom(
   writeBeadsConfig(userHome.real)
   writeCwdFiles(cwd.real, options.cwdFiles ?? [])
 
-  const child = spawnTsukumo(options.scene, home.real, userHome.real, cwd.real, {
-    characterPack: options.characterPack,
-    sceneUntil: options.sceneUntil,
-  })
+  const child = spawnTsukumo(options.scene, home.real, userHome.real, cwd.real)
   addCleanup(() => stopTsukumo(child))
   const viewUrl = await waitForViewUrl(child, home.real, LAUNCH_TIMEOUT_MS)
   const url = new URL(viewUrl)
@@ -279,6 +281,18 @@ export async function openRoom(
       const counted = await countedBefore(baseline, () => responses.count(response))
       await responses.waitForCount(response, counted + 1)
       await advanceClockUntilVisible(page, target)
+    },
+    revealUsageAfterTurn: async (occurrence) => {
+      await messages.waitForEvent("turn-finished", occurrence)
+      lastAwaited = { kind: "turn-finished", occurrence }
+      for (const title of USAGE_GAUGE_TITLES) {
+        await advanceClockUntilVisible(
+          page,
+          page.locator(
+            `button[title="${title}"][data-finished-turn-count="${String(occurrence)}"]:not([aria-busy="true"])`,
+          ),
+        )
+      }
     },
     waitForPending: async (id) => {
       await messages.waitForEventMatching("pending-changed", (event) =>

@@ -109,17 +109,16 @@ describe("PresentationalAchievement", () => {
     expect(document.querySelector(".achievement-calendar")).toBeNull()
   })
 
-  it("左に灯りの暦、右に日の切り替え → 日記の区画の順で並ぶ（しおり・小さな驚きは無ければ挟まらない）", () => {
+  it("日の切り替え → 灯りの暦 → 日記の区画の順で並ぶ（しおり・小さな驚きは無ければ挟まらない）", () => {
     renderScreen()
 
     const root = document.querySelector(".achievement")
-    const [calendarColumn, dayColumn] = [...(root?.children ?? [])]
-    expect(calendarColumn?.children[0]?.className).toBe("achievement-calendar")
-    const dayChildren = [...(dayColumn?.children ?? [])]
+    const children = [...(root?.children ?? [])]
     // 日の切り替えの外枠は `HStack` に置き換わって固有の class を持たないので、中身
     // （`.achievement-day-switch-nav`）で見分ける。
-    expect(dayChildren[0]?.querySelector(".achievement-day-switch-nav")).not.toBeNull()
-    expect(dayChildren[1]?.className).toContain("achievement-diary")
+    expect(children[0]?.querySelector(".achievement-day-switch-nav")).not.toBeNull()
+    expect(children[1]?.className).toBe("achievement-calendar")
+    expect(children[2]?.className).toContain("achievement-diary")
   })
 
   it("しおりがあれば日記の区画のあとに出る", () => {

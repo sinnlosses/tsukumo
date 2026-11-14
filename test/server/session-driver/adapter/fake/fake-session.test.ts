@@ -141,33 +141,6 @@ describe("同梱の疑似セッションの委譲の返却", () => {
   })
 })
 
-describe("同梱の疑似セッションの計画の直しとやり直しの周", () => {
-  const foldedPlan = (name: string) => {
-    const scene = bundledFakeSession().turns.find((turn) => turn.name === name)
-    if (scene === undefined) {
-      throw new Error(`場面 ${name} が無い`)
-    }
-    return currentWorkPlan(
-      scene.steps.reduce(
-        (view, { event }) => applySessionEvent(view, event, 0),
-        INITIAL_SESSION_STATE,
-      ).records,
-    )
-  }
-
-  it("場面 work-plan-replanned は、計画を直した理由と前提と進行形を今のワークプランに残す", () => {
-    expect(foldedPlan("work-plan-replanned")).toMatchObject({
-      current: 1,
-      replanReason: expect.stringContaining("型を分ける"),
-      assumptions: ["架空の設定ファイルの書式は変えない"],
-    })
-  })
-
-  it("場面 work-plan-laps は、差し戻し2回のあと3周目で済ませ、周が 3 になる", () => {
-    expect(foldedPlan("work-plan-laps")).toMatchObject({ current: 3, phaseLaps: [1, 1, 3, 1, 1] })
-  })
-})
-
 describe("同梱の疑似セッションのワークプラン", () => {
   it("全ての work-plan の件が、ワークプランの全欄を持ち workPlanSchema を通る", () => {
     const session = bundledFakeSession()

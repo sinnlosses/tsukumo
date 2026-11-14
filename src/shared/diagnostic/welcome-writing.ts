@@ -26,8 +26,8 @@ const WELCOME_REJECTIONS = [
 
 export type WelcomeRejection = (typeof WELCOME_REJECTIONS)[number]
 
-/** 書いたもの（迎えの挨拶か、反応の行か、相づちの組か）。 */
-const WELCOME_WRITING_TARGETS = ["greeting", "reactions", "aizuchi"] as const
+/** 書いたもの（迎えの挨拶か、反応の行か）。 */
+const WELCOME_WRITING_TARGETS = ["greeting", "reactions"] as const
 
 /** 問い合わせ1回、または書き込み全体の結果。`timed-out` は締め切りで中断した問い合わせ。 */
 const WELCOME_WRITING_RESULTS = ["written", "failed", "rejected", "timed-out"] as const

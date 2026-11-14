@@ -16,7 +16,7 @@ import styles from "./markdown.module.css"
 import type { ChartTooltipControl } from "./renderer/chart-tooltip.ts"
 import type { FenceFigureLanguage } from "./renderer/fence-figure.tsx"
 import { ZoomableSvgFigure } from "./renderer/figure-zoom.tsx"
-import { unifiedDiffSource } from "./renderer/line-diff.ts"
+import { diffLines, sideLines, type SideLineDiff } from "./renderer/line-diff.ts"
 import {
   FoldedList as LongBlockFoldedList,
   FoldedTableBody as LongBlockFoldedTableBody,
@@ -107,7 +107,6 @@ export const noteLeafClassNames = {
   noteFavor: notationStyles["report-note-favor"],
   options: notationStyles["report-options"],
   option: notationStyles["report-option"],
-  optionAdopt: notationStyles["report-option-adopt"],
   optionReject: notationStyles["report-option-reject"],
   optionBody: notationStyles["report-option-body"],
   optionName: notationStyles["report-option-name"],
@@ -166,6 +165,10 @@ export const compareLeafClassNames = {
   compare: notationStyles["report-compare"],
   compareSide: notationStyles["report-compare-side"],
   compareHeading: notationStyles["report-compare-heading"],
+  codeLegend: notationStyles["report-compare-code-legend"],
+  codeLegendItem: notationStyles["report-compare-code-legend-item"],
+  codeLegendBefore: notationStyles["report-compare-code-legend-before"],
+  codeLegendAfter: notationStyles["report-compare-code-legend-after"],
 } as const
 
 /** 内容部品を直接描く数の部品が付ける class 名（Markdown の `stats`・`stat` と同じ見た目）。 */
@@ -177,9 +180,6 @@ export const statsLeafClassNames = {
   stat: notationStyles["report-stat"],
   statBefore: notationStyles["report-stat-before"],
   statTrend: notationStyles["report-stat-trend"],
-  statLabel: notationStyles["report-stat-label"],
-  statDelta: notationStyles["report-stat-delta"],
-  statAfter: notationStyles["report-stat-after"],
   statBetter: notationStyles["report-stat-better"],
   statWorse: notationStyles["report-stat-worse"],
   statTotal: notationStyles["report-stat-total"],
@@ -284,7 +284,7 @@ export { CompareSwap, ReportImage, type SwapSettings, SwapSideContext }
 
 export { CodeSpan }
 
-export { unifiedDiffSource }
+export { diffLines, sideLines, type SideLineDiff }
 
 /**
  * mermaid のソースを図に描く。

@@ -3,12 +3,10 @@
 import { sumBy } from "remeda"
 import { z } from "zod"
 
-import type { ReportJudgment } from "../report/report-progress-field.ts"
 import { isBlankText } from "../utils/blank-text.ts"
 import {
   hasConsistentPhaseIds,
   phaseElementSchema,
-  phaseDoingsOf,
   phaseIdsOf,
   phaseNameEntriesOf,
 } from "./work-plan-phase-id.ts"
@@ -27,8 +25,6 @@ export type WorkPlanEntry = string | PhaseGroup
  * `skippedPhases` は済んだ段のうち飛ばした段の名前（同じ名前の段は見分けない）。
  * `awaitingSummary` はまとめ待ちのフェーズ（{@link AwaitingSummary}）。
  * `phaseIds` は並びを平らにした読み順の段の id で、`work_plan` が id を渡さなければ空。
- * `replanReason`・`redoReason`・`assumptions` は `work_plan` が渡した欄、`phaseDoings` は平らにした並びの進行形の名前（どの段も `doing` を渡さなければ無い）。
- * `phaseLaps` は平らにした並びの1始まりの周の数で、無ければ全部 1。
  */
 export type WorkPlan = {
   readonly phases: readonly WorkPlanEntry[]
@@ -39,11 +35,6 @@ export type WorkPlan = {
   readonly delegatedRange: DelegatedRange
   readonly skippedPhases: readonly string[]
   readonly awaitingSummary: AwaitingSummary
-  readonly replanReason?: string
-  readonly redoReason?: string
-  readonly assumptions?: readonly string[]
-  readonly phaseDoings?: readonly string[]
-  readonly phaseLaps?: readonly number[]
 }
 
 /**
@@ -79,7 +70,7 @@ export type LatestWorkPlan = { readonly kind: "none" } | PlannedWorkPlan
 
 export type PlannedWorkPlan = { readonly kind: "planned" } & WorkPlan
 
-type PlannedPhaseState = "done" | "current" | "upcoming"
+export type PlannedPhaseState = "done" | "current" | "upcoming"
 
 /**
  * 並びを平らにした段1つ。`index` は平らにした並びでの0始まりの位置（段の番号は `phaseNumberOf` が導く）。
@@ -101,10 +92,6 @@ type PlannedPhaseBase = {
   readonly name: string
   readonly key: string
   readonly entry: number
-  /** 進行形の名前。`doing` が無ければ `name`。 */
-  readonly doing: string
-  /** 1始まりの周の数。 */
-  readonly lap: number
 }
 
 /**
@@ -143,9 +130,6 @@ export const workPlanShape = {
     })
     .optional(),
   skippedPhases: z.array(phaseNameSchema).optional(),
-  replanReason: z.string().optional(),
-  redoReason: z.string().optional(),
-  assumptions: z.array(z.string()).optional(),
 }
 
 /**
@@ -227,17 +211,10 @@ export function parseWorkPlanCall(value: unknown): WorkPlanCall | undefined {
     phaseSummary = "",
     delegatedRange,
     skippedPhases = [],
-    replanReason,
-    redoReason,
-    assumptions,
   } = parsed.data
-  const names = phaseNameEntriesOf(phases)
-  const doings = phaseDoingsOf(phases)
-  const flatNames = names.flat()
-  const hasDoing = doings.some((doing, index) => doing !== flatNames[index])
   return {
     plan: {
-      phases: names,
+      phases: phaseNameEntriesOf(phases),
       phaseIds: phaseIdsOf(phases),
       current,
       finishedInGroup,
@@ -245,10 +222,6 @@ export function parseWorkPlanCall(value: unknown): WorkPlanCall | undefined {
       delegatedRange: delegatedRangeOf(delegatedRange, current + 1),
       skippedPhases,
       awaitingSummary: NO_AWAITING_SUMMARY,
-      ...(replanReason === undefined || isBlankText(replanReason) ? {} : { replanReason }),
-      ...(redoReason === undefined || isBlankText(redoReason) ? {} : { redoReason }),
-      ...(assumptions === undefined ? {} : { assumptions }),
-      ...(hasDoing ? { phaseDoings: doings } : {}),
     },
     firstOmitted: delegatedRange?.first === undefined,
   }
@@ -262,8 +235,7 @@ export function isMidWay(plan: Pick<WorkPlan, "phases" | "current" | "finishedIn
 
 /** 並びを平らにした段（{@link PlannedPhase}）。読み順に並ぶ。 */
 export function plannedPhasesOf(
-  plan: Pick<WorkPlan, "phases" | "current" | "finishedInGroup" | "skippedPhases"> &
-    Pick<WorkPlan, "phaseDoings" | "phaseLaps">,
+  plan: Pick<WorkPlan, "phases" | "current" | "finishedInGroup" | "skippedPhases">,
 ): readonly PlannedPhase[] {
   const { skippedPhases } = plan
   const flattened = plan.phases.flatMap((entry, position) =>
@@ -272,14 +244,7 @@ export function plannedPhasesOf(
   return flattened.map(({ position, name }, index): PlannedPhase => {
     const occurrence = flattened.slice(0, index).filter((other) => other.name === name).length
     const state = entryPhaseState(plan, position, name)
-    const base = {
-      index,
-      name,
-      key: `${name}\u0000${String(occurrence)}`,
-      entry: position,
-      doing: plan.phaseDoings?.[index] ?? name,
-      lap: plan.phaseLaps?.[index] ?? 1,
-    }
+    const base = { index, name, key: `${name}\u0000${String(occurrence)}`, entry: position }
     return state === "done"
       ? { ...base, state, skipped: skippedPhases.includes(name) }
       : { ...base, state, skipped: false }
@@ -328,19 +293,6 @@ export type WorkPlanClosing = "none" | (typeof WORK_PLAN_CLOSINGS)[number]
 /** `report` の引数の `workPlanClosing` を読む。「無い」と形の崩れは `none` に畳む。 */
 export function parseWorkPlanClosing(value: unknown): WorkPlanClosing {
   return WORK_PLAN_CLOSINGS.find((closing) => closing === value) ?? "none"
-}
-
-/** `report` の判定から導くフェーズの閉じ方。済んだ・一部済んだは `finished`、ほかは `stopped`。 */
-export function closingOfJudgment(verdict: ReportJudgment): Exclude<WorkPlanClosing, "none"> {
-  return verdict === "done" || verdict === "partial" ? "finished" : "stopped"
-}
-
-/** 書いた判定と書いた閉じ方が食い違うか。閉じ方を書いていなければ食い違わない。 */
-export function verdictClosingConflict(
-  verdict: ReportJudgment,
-  workPlanClosing: WorkPlanClosing,
-): boolean {
-  return workPlanClosing !== "none" && workPlanClosing !== closingOfJudgment(verdict)
 }
 
 /** ワークプランの今の段（{@link WorkPhase}）。 */

@@ -16,7 +16,7 @@ test.describe("入力欄から送る", () => {
       scenario: "input-dispatch",
       scene: "none",
       viewport: "wide",
-      domRoots: ["paper", "dock"],
+      domRoots: ["main", "dispatch"],
     })
 
     const textArea = room.page.locator("textarea")
@@ -26,51 +26,6 @@ test.describe("入力欄から送る", () => {
     await room.waitForEvent("request")
     await room.waitForEvent("turn-finished")
     await room.settleAndMatchPickedWithMessages(ELAPSED_MS)
-  })
-
-  test("Mac では入力欄の行頭の Ctrl+K で探すが開かずに行末まで消え、⌘K では探すが開く", async ({
-    run,
-  }) => {
-    test.skip(process.platform !== "darwin", "Ctrl+K を OS の編集コマンドに写すのは macOS だけ")
-    const room = await run.open({
-      scenario: "input-dispatch",
-      scene: "none",
-      viewport: "wide",
-      domRoots: [],
-    })
-
-    const textArea = room.page.locator("textarea")
-    await textArea.fill("行末まで消す場面（架空の依頼）")
-    await textArea.focus()
-    await room.page.keyboard.press("Home")
-    await room.page.keyboard.press("Control+K")
-
-    await expect(textArea).toHaveValue("")
-    expect(await room.page.getByRole("combobox", { name: "探す" }).count()).toBe(0)
-
-    await room.page.keyboard.press("Meta+K")
-    await expect(room.page.getByRole("combobox", { name: "探す" })).toBeVisible()
-  })
-
-  test("渡すの姿勢で入力欄から Esc で出て / を押すと、入力欄にフォーカスが戻り、下書きは空のまま", async ({
-    run,
-  }) => {
-    const room = await run.open({
-      scenario: "input-dispatch",
-      scene: "none",
-      viewport: "wide",
-      domRoots: [],
-    })
-
-    const textArea = room.page.locator("textarea")
-    await textArea.focus()
-    await room.page.keyboard.press("Escape")
-    await expect(textArea).not.toBeFocused()
-
-    await room.page.keyboard.press("/")
-
-    await expect(textArea).toBeFocused()
-    await expect(textArea).toHaveValue("")
   })
 
   test("入力欄に打っている最中に Esc を押すと、フォーカスが入力欄から外れる", async ({ run }) => {

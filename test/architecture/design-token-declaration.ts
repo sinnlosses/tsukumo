@@ -4,18 +4,13 @@ import { readFileSync } from "node:fs"
 
 import { listSourceFiles, SRC_ROOT } from "./source-file.ts"
 
-const PAGE_WIDE_CSS: ReadonlySet<string> = new Set([
-  "browser/styles/theme.css",
-  "browser/styles/page-base.css",
-])
-
-/** 部品の CSS（トークンとページ全体の下地を除く）ごとに count の値を数え、0 のファイルを落とす。 */
+/** 部品の CSS（theme.css を除く）ごとに count の値を数え、0 のファイルを落とす。 */
 export function countByBrowserCss(
   count: (css: string) => number,
 ): Readonly<Record<string, number>> {
   return Object.fromEntries(
     listSourceFiles(SRC_ROOT, SRC_ROOT, [".css"])
-      .filter((relPath) => relPath.startsWith("browser/") && !PAGE_WIDE_CSS.has(relPath))
+      .filter((relPath) => relPath.startsWith("browser/") && relPath !== "browser/styles/theme.css")
       .flatMap((relPath) => {
         const value = count(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8"))
         return value > 0 ? [[relPath, value] as const] : []

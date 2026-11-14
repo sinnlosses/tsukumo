@@ -23,13 +23,6 @@ describe("isDangerousPermissionMode", () => {
   })
 })
 
-describe("permissionModeLabel", () => {
-  it("知っている許可モードは日本語の字、知らない語は届いた語のまま出す（既定の字に倒さない）", () => {
-    expect(permissionModeLabel("plan")).toBe("プラン")
-    expect(permissionModeLabel({ kind: "unknown", raw: "dontAsk" })).toBe("dontAsk")
-  })
-})
-
 describe("foldPermissionMode", () => {
   it.each([
     ["plan", "plan"],
@@ -40,4 +33,11 @@ describe("foldPermissionMode", () => {
       expect(foldPermissionMode(raw)).toEqual(expected)
     },
   )
+})
+
+describe("permissionModeLabel", () => {
+  it("知っている許可モードは日本語の字、知らない語は届いた語のまま出す（既定の字に倒さない）", () => {
+    expect(permissionModeLabel("plan")).toBe("プラン")
+    expect(permissionModeLabel({ kind: "unknown", raw: "dontAsk" })).toBe("dontAsk")
+  })
 })

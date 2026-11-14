@@ -14,7 +14,7 @@ test.describe("会話が終わったあとの入力欄", () => {
       scenario: "session-ended-restart",
       scene: "ended-ready",
       viewport: "wide",
-      domRoots: ["paper", "dock"],
+      domRoots: ["main", "dispatch"],
     })
 
     const textArea = room.page.locator("textarea")

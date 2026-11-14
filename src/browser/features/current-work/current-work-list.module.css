@@ -1,0 +1,139 @@
+/* 依頼の手順の一覧の箱と中身。どこに重ねるかは置く側の class が持つ。 */
+
+/* 超えたら内側でスクロールする（高さの上限は置く側が決める）。 */
+.current-work-list {
+  composes: surface-edge-rule surface-radius-md surface-tone-surface from "../../components/ui/surface/surface-face.module.css";
+  overflow-y: auto;
+  padding: var(--space-sm) var(--space-md);
+  font-size: var(--font-secondary);
+}
+/* 字の太さ・色は `Text` が持つ。margin だけ残す。 */
+.current-work-heading {
+  margin: 0 0 var(--space-sm);
+}
+/* 答え待ちのときだけ出す「お伺いへ」。顔は `<Button variant="link">` が持ち、ここは箱だけ（置き方・margin）。 */
+.current-work-go-to-inquiry {
+  display: block;
+  margin: 0 0 var(--space-sm);
+}
+/* ワークプラン。 */
+.current-work-plan-heading {
+  margin: var(--space-sm) 0 var(--space-xs);
+}
+/* ワークプランの群（前・本・後）1行。群の名を行の頭に置き、群が無い依頼は並びだけ。 */
+.current-work-plan-spans {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  margin: 0 0 var(--space-sm);
+}
+.current-work-plan-span {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-sm);
+}
+.current-work-plan-span-name {
+  flex: none;
+  width: 1.2em;
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+}
+.current-work-plan-span-current {
+  color: var(--accent);
+  font-weight: 700;
+}
+.current-work-plan {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-xs) var(--space-sm);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.current-work-plan-phase {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-sm) var(--space-xs) var(--space-xs);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-pill);
+  color: var(--ink-quiet);
+}
+.current-work-plan-phase:not(:last-child)::after {
+  content: "→";
+  margin-left: var(--space-sm);
+  color: var(--ink-quiet);
+}
+/* 頭の丸。帯の段の丸と同じ顔（番号は枠だけ、済んだ段は差し色の地に ✓）。 */
+.current-work-plan-phase b {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding: 0 var(--space-xs);
+  border: 1.5px solid var(--rule);
+  border-radius: var(--radius-pill);
+  font-family: var(--font-mono);
+  font-size: var(--font-label);
+  font-weight: 400;
+  line-height: 1;
+}
+.current-work-plan-phase-done {
+  background: var(--surface-raised);
+}
+.current-work-plan-phase-done b {
+  border-color: transparent;
+  background: color-mix(in srgb, var(--surface), var(--accent) 30%);
+  color: var(--accent);
+}
+.current-work-plan-phase-skipped {
+  color: var(--ink-quiet);
+  text-decoration: line-through;
+}
+.current-work-plan-phase-skipped b {
+  border-style: dashed;
+  border-color: var(--rule);
+  background: none;
+  color: var(--ink-quiet);
+  text-decoration: none;
+}
+.current-work-plan-phase-current {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--surface), var(--accent) 10%);
+  color: var(--ink);
+}
+.current-work-plan-phase-current b {
+  border: 2px solid var(--accent);
+  color: var(--accent);
+  font-weight: 700;
+}
+.current-work-full {
+  margin: 0 0 var(--space-sm);
+}
+/* 色は `Text` が持つ。margin だけ残す。 */
+.current-work-full-heading {
+  margin: 0 0 var(--space-xs);
+}
+.current-work-full-text {
+  margin: 0;
+  padding: var(--space-sm);
+  max-height: 12rem;
+  overflow: auto;
+  border-radius: var(--radius-md);
+  background: var(--ground);
+  font-family: var(--font-mono);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+/* 色は `Text` が持つ。margin だけ残す。 */
+.current-work-steps-heading {
+  margin: var(--space-sm) 0 var(--space-xs);
+}
+/* 手順の一覧を畳む・広げる口。顔は `<Button variant="link">` が持ち、ここは箱だけ（margin）。 */
+.current-work-toggle-all {
+  margin-top: var(--space-sm);
+}

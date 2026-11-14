@@ -1,5 +1,5 @@
 {
-  "paper": [
+  "main": [
     { "tag": "div", "attributes": { "data-main-view-content": "welcome" }, "children": [
       { "tag": "ul", "attributes": { "data-count": "2" }, "children": [
         { "tag": "li", "children": [
@@ -11,7 +11,11 @@
           "架空のタスク（着手できる）",
           { "tag": "button", "attributes": { "aria-label": "T-001 を始める（すぐ送る）" } }
         ] }
-      ] }
+      ] },
+      "ほかの始め方",
+      { "tag": "button", "children": ["自分で書く"] },
+      { "tag": "button", "children": ["タスクの一覧", "から選ぶ"] },
+      { "tag": "button", "children": ["前のやり取り", "を見る"] }
     ] }
   ]
 }

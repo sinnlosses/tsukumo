@@ -3,12 +3,6 @@
 
 import { create } from "zustand"
 
-import {
-  FREE_TEXT_OPTION_LABEL,
-  isRecommendedLabel,
-  sortQuestionOptions,
-  type Question,
-} from "../../../../../shared/session-driver/question.ts"
 import { useSession } from "../../../../stores/session.ts"
 
 /**
@@ -52,43 +46,19 @@ export const useInquiryFocus = create<InquiryFocusState>()(() => ({ focus: { kin
  */
 export function dropSelectionOnWritingStart(): void {
   const pending = useSession.getState().state.pending[0]
-  if (pending?.kind !== "question") {
-    return
-  }
   const stored = useInquiryDraft.getState().draft
-  const answer = stored?.pendingId === pending.id ? stored.answer : EMPTY_DRAFT_ANSWER
-  const index = Math.min(answer.index, pending.questions.length - 1)
-  const question = pending.questions[index]
-  if (question?.multiSelect !== false) {
+  if (pending?.kind !== "question" || stored?.pendingId !== pending.id) {
     return
   }
-  const current = answer.selections[index] ?? recommendedSelection(question)
-  if (current.length === 0) {
+  const index = Math.min(stored.answer.index, pending.questions.length - 1)
+  if (
+    pending.questions[index]?.multiSelect !== false ||
+    (stored.answer.selections[index] ?? []).length === 0
+  ) {
     return
   }
-  const length = Math.max(answer.selections.length, index + 1)
-  const selections = Array.from({ length }, (_, i) =>
-    i === index ? [] : (answer.selections[i] ?? []),
-  )
+  const selections = stored.answer.selections.map((chosen, i) => (i === index ? [] : chosen))
   useInquiryDraft.setState({
-    draft: { pendingId: pending.id, answer: { ...answer, selections } },
+    draft: { pendingId: pending.id, answer: { ...stored.answer, selections } },
   })
-}
-
-export const EMPTY_DRAFT_ANSWER: DraftAnswer = {
-  index: 0,
-  selections: [],
-  writtenAnswers: [],
-  entrusted: [],
-}
-
-/**
- * まだ触っていない問の選択の初期値。おすすめの行を選んだ状態で開く。
- * 単一選択は並びの先頭のおすすめ1つ、複数選択はおすすめの行すべて。おすすめが無ければ空。
- */
-export function recommendedSelection(question: Question): readonly string[] {
-  const labels = sortQuestionOptions(question.options)
-    .map((option) => option.label)
-    .filter((label) => label !== FREE_TEXT_OPTION_LABEL && isRecommendedLabel(label))
-  return question.multiSelect ? labels : labels.slice(0, 1)
 }

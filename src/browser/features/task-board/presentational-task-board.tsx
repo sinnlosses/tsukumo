@@ -1,7 +1,6 @@
-// タスクの一覧の器だけ。フックも算出も持たず、受け取った値と呼び先をそのまま置く。
-// 中身（`TaskBoardFrame`）はモーダル（`<dialog>`）と右から重ねる紙で共用する。
+// タスクのモーダルの器だけ。フックも算出も持たず、受け取った値と呼び先をそのまま置く。
 //
-// `<dialog>` は top layer に出るので、紙の `overflow` には切り取られない。
+// `<dialog>` は top layer に出るので、サイドバー領域の `overflow` には切り取られない。
 // 中身は開いている間だけ描く。
 // 検索欄の `autoFocus` は描いた瞬間にしか効かないので、常に描いておくと開いたときにフォーカスが入らない。
 //
@@ -15,7 +14,7 @@
 // が器に届かなくなる。`focusSignal` が増えるたびに器へフォーカスを戻す
 // （0 のままの初回の描画では検索欄の `autoFocus` を奪わないよう、そのときは戻さない）。
 
-import type { ReactElement, ReactNode } from "react"
+import type { ReactElement } from "react"
 import { useRef } from "react"
 
 import { Dialog } from "../../components/ui/dialog/dialog.tsx"
@@ -34,25 +33,6 @@ import type { TaskBoardView } from "./domain/task-board-view.ts"
 import styles from "./task-board.module.css"
 
 export function PresentationalTaskBoard(props: TaskBoardView): ReactElement {
-  return (
-    <Dialog
-      open={props.open}
-      ariaLabel="タスク"
-      backdrop="dim"
-      placement={{ kind: "auto" }}
-      onClose={props.onClose}
-      className={styles["task-board"]}
-    >
-      {props.open && <TaskBoardFrame {...props} head={<TaskBoardHead onClose={props.onClose} />} />}
-      {props.confirm.kind === "open" && (
-        <TaskRunConfirm target={props.confirm.target} onClose={props.onConfirmClose} />
-      )}
-    </Dialog>
-  )
-}
-
-/** 一覧・絞り込み・詳細・操作の帯。見出しは呼び出し側が渡す（紙は自前の見出しを持つので空）。 */
-export function TaskBoardFrame(props: TaskBoardView & { readonly head: ReactNode }): ReactElement {
   const content = props.content
   const frameRef = useRef<HTMLDivElement>(null)
 
@@ -63,85 +43,99 @@ export function TaskBoardFrame(props: TaskBoardView & { readonly head: ReactNode
   }, [props.focusSignal])
 
   return (
-    <div
-      ref={frameRef}
-      className={styles["task-board-frame"]}
-      tabIndex={-1}
-      onKeyDown={props.onKeyDown}
+    <Dialog
+      open={props.open}
+      ariaLabel="タスク"
+      backdrop="dim"
+      placement={{ kind: "auto" }}
+      onClose={props.onClose}
+      className={styles["task-board"]}
     >
-      {props.head}
-      {content.kind === "loading" && (
-        <div className={styles["task-board-message"]}>
-          <TaskSkeleton />
+      {props.open && (
+        <div
+          ref={frameRef}
+          className={styles["task-board-frame"]}
+          tabIndex={-1}
+          onKeyDown={props.onKeyDown}
+        >
+          <TaskBoardHead onClose={props.onClose} />
+          {content.kind === "loading" && (
+            <div className={styles["task-board-message"]}>
+              <TaskSkeleton />
+            </div>
+          )}
+          {content.kind === "unknown" && (
+            <Text
+              element="p"
+              size="secondary"
+              tone="ink-quiet"
+              weight="inherit"
+              className={styles["task-board-message"]}
+            >
+              タスクの一覧が読めない
+            </Text>
+          )}
+          {content.kind === "empty" && (
+            <Text
+              element="p"
+              size="secondary"
+              tone="ink-quiet"
+              weight="inherit"
+              className={styles["task-board-message"]}
+            >
+              タスクが無い
+            </Text>
+          )}
+          {content.kind === "known" && (
+            <TaskBoardColumns
+              list={
+                <>
+                  <TaskBoardFilterBar
+                    query={content.query}
+                    chips={content.chips}
+                    listId={content.listId}
+                    activeOptionId={content.activeOptionId}
+                    onQueryChange={props.onQueryChange}
+                    onFilter={props.onFilter}
+                  />
+                  <TaskBoardList
+                    listId={content.listId}
+                    rows={content.rows}
+                    omittedClosedCount={content.omittedClosedCount}
+                    onSelect={props.onSelect}
+                  />
+                </>
+              }
+              detail={
+                content.selection.kind === "some" && (
+                  <>
+                    <TaskDetail
+                      key={content.selection.detail.id}
+                      detail={content.selection.detail}
+                      breadcrumb={content.selection.breadcrumb}
+                      knownIds={content.knownIds}
+                      onJump={content.selection.onJump}
+                    />
+                    {content.sortBand.kind === "none" && (
+                      <TaskBoardAction
+                        onCopy={content.selection.onCopy}
+                        opener={content.selection.opener}
+                        run={content.selection.run}
+                      />
+                    )}
+                  </>
+                )
+              }
+            />
+          )}
+          {content.kind === "known" && content.sortBand.kind === "some" && (
+            <TaskBoardSortBand band={content.sortBand} />
+          )}
         </div>
       )}
-      {content.kind === "unknown" && (
-        <Text
-          element="p"
-          size="secondary"
-          tone="ink-quiet"
-          weight="inherit"
-          className={styles["task-board-message"]}
-        >
-          タスクの一覧が読めない
-        </Text>
+      {props.confirm.kind === "open" && (
+        <TaskRunConfirm target={props.confirm.target} onClose={props.onConfirmClose} />
       )}
-      {content.kind === "empty" && (
-        <Text
-          element="p"
-          size="secondary"
-          tone="ink-quiet"
-          weight="inherit"
-          className={styles["task-board-message"]}
-        >
-          タスクが無い
-        </Text>
-      )}
-      {content.kind === "known" && (
-        <TaskBoardColumns
-          list={
-            <>
-              <TaskBoardFilterBar
-                query={content.query}
-                chips={content.chips}
-                listId={content.listId}
-                activeOptionId={content.activeOptionId}
-                onQueryChange={props.onQueryChange}
-                onFilter={props.onFilter}
-              />
-              <TaskBoardList
-                listId={content.listId}
-                rows={content.rows}
-                omittedClosedCount={content.omittedClosedCount}
-                onSelect={props.onSelect}
-              />
-            </>
-          }
-          detail={
-            content.selection.kind === "some" && (
-              <>
-                <TaskDetail
-                  key={content.selection.detail.id}
-                  detail={content.selection.detail}
-                  breadcrumb={content.selection.breadcrumb}
-                  knownIds={content.knownIds}
-                  onJump={content.selection.onJump}
-                />
-                {content.sortBand.kind === "none" && (
-                  <TaskBoardAction
-                    onCopy={content.selection.onCopy}
-                    opener={content.selection.opener}
-                    run={content.selection.run}
-                  />
-                )}
-              </>
-            )
-          }
-        />
-      )}
-      {content.kind === "known" && content.sortBand.kind === "some" && (
-        <TaskBoardSortBand band={content.sortBand} />
-      )}
-    </div>
+    </Dialog>
   )
 }

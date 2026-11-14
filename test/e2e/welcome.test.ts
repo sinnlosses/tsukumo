@@ -30,7 +30,7 @@ async function openWelcomeRoom(
     scenario,
     scene: setup.scene,
     viewport,
-    domRoots: ["paper"],
+    domRoots: ["main"],
   })
   await setup.writeTasks(room)
   await room.waitForEvent("sessions-changed")
@@ -43,7 +43,7 @@ async function openWelcomeRoom(
 }
 
 function mainView(page: Page): Locator {
-  return page.locator('[data-region="paper"]')
+  return page.locator('[data-region="main"]')
 }
 
 function welcome(page: Page): Locator {
@@ -55,7 +55,7 @@ function draft(page: Page): Promise<string> {
 }
 
 test.describe("始め方の一覧", () => {
-  test("理由つきのおすすめのカードが並び、「ほかの始め方」の札は無く、広いビューポートでも中くらいのビューポートでも横にあふれない", async ({
+  test("理由つきのおすすめのカードと「ほかの始め方」が並び、広いビューポートでも中くらいのビューポートでも横にあふれない", async ({
     run,
   }) => {
     const room = await openWelcomeRoom(run, "welcome-doors", "wide")
@@ -68,8 +68,9 @@ test.describe("始め方の一覧", () => {
     ).toBe(0)
     expect(await welcome(page).locator("ul > li").count()).toBe(2)
     expect(await welcome(page).getByText("いちばんのおすすめ").count()).toBe(1)
-    expect(await welcome(page).getByText("ほかの始め方").count()).toBe(0)
-    expect(await welcome(page).locator("button:not([aria-label])").count()).toBe(0)
+    for (const name of ["自分で書く", "タスクの一覧から選ぶ", "前のやり取りを見る"]) {
+      expect(await mainView(page).getByRole("button", { name }).count()).toBe(1)
+    }
     const overflow = await mainView(page).evaluate((el) => el.scrollWidth - el.clientWidth)
     expect(overflow).toBeLessThanOrEqual(0)
     await room.settleAndMatchPicked(ELAPSED_MS)
@@ -80,8 +81,7 @@ test.describe("始め方の一覧", () => {
     expect(mediumOverflow).toBeLessThanOrEqual(0)
   })
 
-  // 狭い画面の迎えるでは、始め方は入力欄と迎えの一言の残りの高さを取って中で転がる。
-  test("390x844 で理由の無い札を含む3枚が並んでも、ページは縦にはみ出さず、始め方の欄の中で転がる", async ({
+  test("390x844 で理由の無い札を含む3枚が並んでも、メインビューは縦にはみ出さない", async ({
     run,
   }) => {
     const room = await openWelcomeRoom(run, "welcome-unreasoned-cards", "phone", {
@@ -92,13 +92,8 @@ test.describe("始め方の一覧", () => {
     await mainView(page).getByRole("button", { name: READY_CARD }).waitFor()
     expect(await welcome(page).locator("ul > li").count()).toBe(3)
     expect(await welcome(page).getByText("架空のつながり").count()).toBe(1)
-    const pageOverflow = await page.evaluate(() => {
-      const root = document.scrollingElement ?? document.documentElement
-      return root.scrollHeight - root.clientHeight
-    })
-    expect(pageOverflow).toBe(0)
-    const scrollable = await mainView(page).evaluate((el) => getComputedStyle(el).overflowY)
-    expect(scrollable).toBe("auto")
+    const overflow = await mainView(page).evaluate((el) => el.scrollHeight - el.clientHeight)
+    expect(overflow).toBe(0)
   })
 
   test("「始める」を押すと、入力欄を経由せず依頼が送られ、下書きは残る", async ({ run }) => {

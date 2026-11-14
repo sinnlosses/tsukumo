@@ -3,11 +3,11 @@
 // `<Composer>` の `<form>` の中に置くことを前提にする。
 // 送るほう（`action.kind === "send"`）は `type="submit"` で、押すと Composer の `onSubmit` がそのまま依頼を送る。
 
-import { ArrowUp, Square } from "lucide-react"
+import clsx from "clsx"
 import type { ReactElement, ReactNode } from "react"
 
+import { Button } from "../../../../ui/button/button.tsx"
 import { HStack } from "../../../../ui/h-stack/h-stack.tsx"
-import { RoundButton } from "../../../../ui/round-button/round-button.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
 import styles from "./dispatch.module.css"
 import type { PhoneTurnActionModel } from "./hooks/use-phone-turn-action.ts"
@@ -84,14 +84,12 @@ export function PresentationalPhoneTurnAction(props: PhoneTurnActionModel): Reac
   )
 }
 
-/** Command+Enter で送信できることを示す記号。送信ボタンの左に添える。 */
+/** Command+Enter で送信できることを示す記号（`dispatch.module.css` が `::after` で描く）。 */
 const SEND_SHORTCUT_HINT = "⌘⏎"
 
 type PresentationalTurnStatusProps = TurnStatusModel & {
   /** 経過の右、送信⇄中断の左に挟むもの（道具の行の「新規」）。 */
   readonly betweenElapsedAndAction: ReactNode
-  /** 経過の左に置く段の狐火の並び（新しい器で働くあいだ）。 */
-  readonly lamps: ReactNode
 }
 
 export function PresentationalTurnStatus(props: PresentationalTurnStatusProps): ReactElement {
@@ -120,7 +118,6 @@ export function PresentationalTurnStatus(props: PresentationalTurnStatusProps): 
           </span>
         </Text>
       )}
-      <span className={styles["dispatch-lamps"]}>{props.lamps}</span>
       {props.elapsed.kind === "shown" && (
         <Text
           element="span"
@@ -145,35 +142,33 @@ export function PresentationalTurnStatus(props: PresentationalTurnStatusProps): 
       )}
       {props.betweenElapsedAndAction}
       {props.action.kind === "interrupt" ? (
-        <span className={styles["dispatch-action"]}>
-          {props.action.keyHint !== "" && (
-            <kbd className={styles["dispatch-key-hint"]}>{props.action.keyHint}</kbd>
-          )}
-          <RoundButton
-            action={{ kind: "press", onClick: props.action.onInterrupt }}
-            ariaLabel={props.action.label}
-            title={props.action.label}
-            disabled={false}
-            emphasis="neutral"
-            className=""
-          >
-            <Square size={14} fill="currentColor" aria-hidden="true" />
-          </RoundButton>
-        </span>
+        <Button
+          variant="outline-hover-danger"
+          size="secondary"
+          pressed="none"
+          disabled={false}
+          disclosure={{ kind: "none" }}
+          className={styles["dispatch-interrupt"]}
+          onClick={props.action.onInterrupt}
+        >
+          <Text element="span" size="inherit" tone="inherit" weight="bold" className="">
+            {props.action.label}
+          </Text>
+        </Button>
       ) : (
-        <span className={styles["dispatch-action"]}>
-          <kbd className={styles["dispatch-key-hint"]}>{SEND_SHORTCUT_HINT}</kbd>
-          <RoundButton
-            action={{ kind: "submit" }}
-            ariaLabel={props.action.label}
-            title={props.action.title}
-            disabled={props.action.disabled}
-            emphasis={props.action.emphasis}
-            className=""
-          >
-            <ArrowUp size={18} strokeWidth={2.2} aria-hidden="true" />
-          </RoundButton>
-        </span>
+        <button
+          type="submit"
+          disabled={props.action.disabled}
+          className={clsx(
+            styles["dispatch-send"],
+            props.action.emphasis === "quiet" && styles["is-quiet"],
+          )}
+          data-shortcut={SEND_SHORTCUT_HINT}
+          data-emphasis={props.action.emphasis}
+          title={props.action.title}
+        >
+          {props.action.label}
+        </button>
       )}
     </HStack>
   )

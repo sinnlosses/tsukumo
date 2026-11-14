@@ -10,5 +10,4 @@ export type TurnRejection =
   | "finished-with-ng"
   | "background-running"
   | "unrun-check-command"
-  | "previous-without-earlier-report"
   | "a2ui-structure"

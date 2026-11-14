@@ -10,7 +10,6 @@ import type { CommandInputs } from "../../../shared/command.ts"
 import type { PromptRouting, sessionContract } from "../../../shared/contract/session.ts"
 import type { DateKey } from "../../../shared/diary/date-key.ts"
 import { FRAME_ERROR_REASON } from "../../../shared/frame-error-reason.ts"
-import type { AizuchiMoment } from "../../../shared/recommendation/aizuchi.ts"
 import type { ReactionLine } from "../../../shared/recommendation/reaction.ts"
 import { isWelcomeGreetingLine } from "../../../shared/recommendation/welcome-greeting.ts"
 import {
@@ -21,7 +20,6 @@ import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import { isWelcomeGreetingRecorded } from "../../../shared/session/session-fold.ts"
 import type { SessionId } from "../../../shared/session/session-id.ts"
 import type { SessionState } from "../../../shared/session/session-state.ts"
-import { shownAizuchi } from "../../../shared/session/shown-aizuchi.ts"
 import { greetingOnShow } from "../../../shared/session/shown-reaction.ts"
 import type { DispatchResult } from "../../core/command-receiver.ts"
 import type { DiaryDayTask } from "../../diary/core/diary-tool.ts"
@@ -114,10 +112,6 @@ export function sessionCommands(ports: SessionCommandPorts): SessionCommandTable
     recordWelcomeGreeting: {
       kind: "session",
       receive: (input, session) => recordWelcomeGreeting(input, session),
-    },
-    pressAizuchi: {
-      kind: "session",
-      receive: (input, session) => pressAizuchi(input, session),
     },
     // 雑談かどうかは切り替えをまたいで保つ（パックを変えただけで仕事へ戻らない）。
     // 画面から名前が届いた唯一の口なので、ここで選んだパックだけが次の起動の初期値になる。
@@ -239,19 +233,6 @@ function recordWelcomeGreeting(
     kind: "welcome-greeting-shown",
     line: { text: line.text, expression: line.expression },
   })
-  return Promise.resolve(ACCEPTED)
-}
-
-/** いま出している札を押したときだけ `aizuchi-pressed` を流す。駆動には何も送らない。 */
-function pressAizuchi(
-  input: { readonly moment: AizuchiMoment; readonly index: number },
-  session: CommandSession,
-): Promise<DispatchResult> {
-  const shown = shownAizuchi(session.state())
-  if (!shown.some(({ moment, index }) => moment === input.moment && index === input.index)) {
-    return declined(FRAME_ERROR_REASON.aizuchiNotShown)
-  }
-  session.generation().emit({ kind: "aizuchi-pressed", moment: input.moment, index: input.index })
   return Promise.resolve(ACCEPTED)
 }
 

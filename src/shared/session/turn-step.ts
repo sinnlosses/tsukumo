@@ -20,7 +20,7 @@ import { currentPhaseOf, type LatestWorkPlan, type WorkPhase } from "./work-plan
 
 /**
  * 依頼の手順1件の進み具合。`failed` の `output` は失敗の中身（`<details>` で開いて読む）。
- * `done` / `failed` が持つ `finishedAt` は所要時間の計算に使う（{@link toolRecordDuration}）。
+ * `done` / `failed` が持つ `finishedAt` は所要時間の計算に使う（{@link toolDuration}）。
  */
 export type TurnStepStatus =
   | { readonly kind: "running" }
@@ -44,17 +44,14 @@ export type TurnStep = {
   readonly phase: WorkPhase
 }
 
-/** ツール1件の所要時間（{@link toolRecordDuration}）。復元した手順は `unknown`（`RecordTime` を参照）。 */
+/** ツール1件の所要時間（{@link toolDuration}）。復元した手順は `unknown`（`RecordTime` を参照）。 */
 export type ToolDuration = MeasuredTime
 
 /**
- * `tool` の記録1件の所要時間。実行中、または開始・終了のどちらかが `restored`（前のセッションから読み戻した手順）なら `unknown`。
+ * {@link TurnStep} 1件の所要時間。実行中、または開始・終了のどちらかが `restored`（前のセッションから読み戻した手順）なら `unknown`。
  * 背景で走らせた Bash の終了は完了の知らせの時刻で（{@link BackgroundEnd}）、知らせが届いていなければ `unknown`。
  */
-export function toolRecordDuration(
-  record: Extract<SessionRecord, { readonly kind: "tool" }>,
-): ToolDuration {
-  const step = toTurnStep(record, { kind: "none" })
+export function toolDuration(step: TurnStep): ToolDuration {
   if (step.status.kind === "running" || step.backgroundEnd.kind === "awaiting") {
     return { kind: "unknown" }
   }
@@ -66,6 +63,13 @@ export function toolRecordDuration(
   return startAt === undefined || finishAt === undefined
     ? { kind: "unknown" }
     : { kind: "known", milliseconds: finishAt - startAt }
+}
+
+/** `tool` の記録1件の所要時間（{@link toolDuration}）。 */
+export function toolRecordDuration(
+  record: Extract<SessionRecord, { readonly kind: "tool" }>,
+): ToolDuration {
+  return toolDuration(toTurnStep(record, { kind: "none" }))
 }
 
 /**

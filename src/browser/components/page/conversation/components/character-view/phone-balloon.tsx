@@ -4,7 +4,7 @@
 // 吹き出しを押すとセリフのログが開く。1件も無ければ顔だけを出す。
 // 時刻は名前の行を足さず、吹き出しの脇に出す（分からなければ出さない）。
 
-import type { ReactElement, ReactNode } from "react"
+import type { ReactElement } from "react"
 
 import type { CharacterFaceInfo } from "../../../../../domain/character-face.ts"
 import { CharacterFace } from "../../../../frame/character-face.tsx"
@@ -15,8 +15,6 @@ type PhoneBalloonProps = {
   readonly face: CharacterFaceInfo
   readonly line: PhoneBalloonLine
   readonly onOpenLog: () => void
-  /** 顔と吹き出しの下の行。 */
-  readonly hands?: ReactNode
 }
 
 /** 吹き出しを押すと開くものを読み上げに伝える名前。 */
@@ -49,9 +47,6 @@ export function PhoneBalloon(props: PhoneBalloonProps): ReactElement {
         <time className={styles["phone-balloon-time"]} dateTime={line.time.dateTime}>
           {line.time.text}
         </time>
-      )}
-      {props.hands !== undefined && (
-        <div className={styles["phone-balloon-hands"]}>{props.hands}</div>
       )}
     </div>
   )

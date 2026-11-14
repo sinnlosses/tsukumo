@@ -4,7 +4,7 @@ import type { Page } from "playwright-core"
 import { MIN_FONT_SIZE } from "../../scripts/shared/minimum-font-size.ts"
 
 // 会話の画面の押せるもの・字を走査して、寸法・名前・字の大きさ・コントラストの下限を割るものを返す。
-// 舞台は背景画像の上の字なので走査しない（部屋の頭も舞台の中にある）。
+// キャラクターの領域は背景画像の上の字なので走査しない。
 
 export type ReadabilityReport = {
   readonly smallTargets: readonly string[]
@@ -20,7 +20,7 @@ export async function scanReadability(page: Page): Promise<ReadabilityReport> {
   })
   return page.evaluate((MIN_FONT: number) => {
     const ROOTS =
-      '[data-region="paper"], [data-region="sidebar"],[data-region="dock"], dialog[open]'
+      '[data-region="main"], [data-region="sidebar"], [data-region="dispatch"], nav[aria-label="画面"], dialog[open]'
     const TARGETS =
       'button, a[href], input, select, textarea, summary, [role="button"], [role="tab"], [role="option"], [role="menuitem"]'
     const MIN_TARGET = 23.95
@@ -162,12 +162,7 @@ export async function scanReadability(page: Page): Promise<ReadabilityReport> {
       if (fontSize < MIN_FONT) {
         smallText.add(`${fontSize.toString()}px ${label}`)
       }
-      // 答え待ちのあいだ紙の中身はわざと引かせる（読ませる字はお伺いの札にある）。
-      if (
-        element.closest(
-          '[aria-hidden="true"], :disabled, [aria-disabled="true"], [data-region="paper"][data-asking="true"]',
-        ) !== null
-      ) {
+      if (element.closest('[aria-hidden="true"], :disabled, [aria-disabled="true"]') !== null) {
         continue
       }
       const background = backgroundOf(element)

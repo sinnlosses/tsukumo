@@ -56,7 +56,6 @@
 メディアクエリ・コンテナクエリ・当たり判定／画面の操作がサーバへ届いて書き込み・起こし直し・置き場の配信を経て画面が変わる往復／
 contenteditable（CodeMirror）・IME の確定。同じ場面とビューポートで測れるものは1本にまとめる。E2E が判定に
 使うのは DOM の構造と WebSocket のメッセージの列だけで、スクリーンショットは目視の添え物（判定しない）。
-例外は器の崩れを守る18枚の画で、これだけは画素で比べる（`docs/architecture/testing/e2e-artifact-and-expectation.md`「器の見た目の画」）。
 目視の手順は下の「手で確かめること」。足場（起こす・開く・成果物を書く・比べる）は
 `test/e2e/room-fixture.ts` の `test` を入口にし（部屋を組み立てる `scenario-open.ts`・待ちの `scenario-wait.ts`・ビューポートの大きさの `scenario-viewport.ts` を読む。成果物・DOM の木・記録などは同じ置き場の概念ごとのファイル）、
 シナリオは入口を呼ぶだけにする。

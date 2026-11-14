@@ -7,7 +7,7 @@ import type { FeatureCommandTable } from "../../core/command-receiver.ts"
 
 export type ChatCommandPorts = {
   /**
-   * 雑談の欄外「覚えていること」の「編集」から1行消し、流し直す `remembered-lines-changed` を返す。
+   * 雑談のサイドバー「覚えていること」の「編集」から1行消し、流し直す `remembered-lines-changed` を返す。
    * 受け付けられなかったときは undefined。セッションは起こし直さない。
    */
   readonly forgetRememberedLine: (line: string) => Promise<SessionEvent | undefined>

@@ -9,21 +9,15 @@ import {
   PresentationalTurnStatus,
 } from "./presentational-turn-status.tsx"
 
-/** 入力欄に置く進み具合。`paper` の `lamps` は経過の左に置く段の狐火の並び。 */
-export type DispatchProgress = { readonly kind: "paper"; readonly lamps: ReactNode }
-
 export function TurnStatus({
   betweenElapsedAndAction,
-  progress,
 }: {
   readonly betweenElapsedAndAction: ReactNode
-  readonly progress: DispatchProgress
 }): ReactElement {
   return (
     <PresentationalTurnStatus
-      {...useTurnStatus("paper")}
+      {...useTurnStatus()}
       betweenElapsedAndAction={betweenElapsedAndAction}
-      lamps={progress.lamps}
     />
   )
 }

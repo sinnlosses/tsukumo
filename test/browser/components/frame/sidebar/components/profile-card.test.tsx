@@ -1,0 +1,42 @@
+// 雑談中のサイドバーの最上段、プロフィール（docs/architecture/screen-design.md「雑談のときのサイドバー」）。
+// ここで見るのは、自己紹介文が無いパックで空の行を置かないことだけ。
+
+import { cleanup, render, screen } from "@testing-library/react"
+import { afterEach, describe, expect, it } from "vitest"
+
+import { ProfileCard } from "../../../../../../src/browser/components/frame/sidebar/components/profile-card.tsx"
+import {
+  INITIAL_SESSION_STATE,
+  type SessionState,
+} from "../../../../../../src/shared/session/session-state.ts"
+import { characterInfo, characterPackEntry } from "../../../../../fixture/character.ts"
+import { type CommandSpy, putSession } from "../../../../session-store.ts"
+
+afterEach(() => {
+  cleanup()
+})
+
+const TWO_PACKS: SessionState["characterPacks"] = [
+  characterPackEntry("fictional", "架空の精霊"),
+  characterPackEntry("local", "架空の同居人"),
+]
+
+function renderProfileCard(
+  stateOverrides: Partial<SessionState>,
+  dispatch: CommandSpy = () => {},
+): void {
+  putSession({ ...INITIAL_SESSION_STATE, ...stateOverrides }, dispatch)
+  render(<ProfileCard />)
+}
+
+describe("ProfileCard", () => {
+  it("自己紹介文が無いパックは名前だけ（空の行を置かない）", () => {
+    renderProfileCard({
+      characterPacks: TWO_PACKS,
+      character: characterInfo({ name: "架空の精霊", tagline: undefined }),
+    })
+
+    const lines = screen.getByRole("region", { name: "プロフィール" }).querySelectorAll("p")
+    expect([...lines].map((line) => line.textContent)).toEqual(["架空の精霊"])
+  })
+})

@@ -39,11 +39,6 @@ describe("parsePhaseResult", () => {
     ["知らない結果", { phase: 1, count: 2, outcome: "done" }],
     ["stopped に理由が無い", { phase: 1, count: 2, outcome: "stopped" }],
     ["stopped の理由が空白だけ", { phase: 1, count: 2, outcome: "stopped", reason: " " }],
-    ["redo に理由が無い", { phase: 1, count: 2, outcome: "redo" }],
-    [
-      "redo にまとめがある",
-      { phase: 1, count: 2, outcome: "redo", reason: "架空", summary: "架空" },
-    ],
     ["stopped でないのに理由がある", { phase: 1, count: 2, outcome: "skipped", reason: "架空" }],
     [
       "finished でないのにまとめがある",
@@ -73,11 +68,5 @@ describe("delegateReturnOf", () => {
     expect(
       delegateReturnOf({ phase: 1, count: 2, outcome: "stopped", reason: "架空の理由。" }),
     ).toEqual({ kind: "stopped", phase: 1, count: 2, summary: "架空の理由。" })
-  })
-
-  it("redo は理由を要約にしたやり直しの返却にする", () => {
-    expect(
-      delegateReturnOf({ phase: 1, count: 2, outcome: "redo", reason: "架空の差し戻し。" }),
-    ).toEqual({ kind: "phase-redone", phase: 1, count: 2, summary: "架空の差し戻し。" })
   })
 })

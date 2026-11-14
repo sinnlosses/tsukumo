@@ -67,9 +67,6 @@ export function wireWelcomeGreeting(
         emitReactions: (reactions) => {
           kept.emit({ kind: "reactions-written", reactions })
         },
-        emitAizuchi: (pairs) => {
-          kept.emit({ kind: "aizuchi-written", pairs })
-        },
         onUnwritten: (place, error) => {
           reportFailure({ feature: "recommendation", place }, error)
         },

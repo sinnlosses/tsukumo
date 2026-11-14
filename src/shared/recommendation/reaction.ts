@@ -10,9 +10,8 @@ import type { Expression } from "../character-pack/expression.ts"
  * - `failed`: 失敗で閉じた
  * - `limited`: 利用上限で閉じた
  * - `idle`: 依頼を待つ間が続いた（Claude Code が待ちの一言を書かなかったときの控え）
- * - `aizuchi`: 利用者が相づちの札を押した（返事は代の始めに書いた組のもの）
  */
-export type ReactionKind = "welcome" | "aizuchi" | WrittenReactionKind
+export type ReactionKind = "welcome" | WrittenReactionKind
 
 /** 反応の1行（セリフと、そのときの表情）。 */
 export type ReactionLine = {

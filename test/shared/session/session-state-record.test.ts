@@ -271,11 +271,11 @@ describe("applySessionEvent（API の不調と失敗）", () => {
     expect(state.turn).toMatchObject({ kind: "finished", ending: { kind: "ended" } })
   })
 
-  it("中断は失敗にせず、記録も積まず、終わり方に中断を残す", () => {
+  it("中断は失敗にせず、記録も積まない", () => {
     const state = apply(REQUEST, { kind: "turn-finished", outcome: { kind: "interrupted" } })
 
     expect(state.records.some((record) => record.kind === "turn-failure")).toBe(false)
-    expect(state.turn).toMatchObject({ kind: "finished", ending: { kind: "interrupted" } })
+    expect(state.turn).toMatchObject({ kind: "finished", ending: { kind: "ended" } })
   })
 
   it("上限の失敗は理由をそのまま積む", () => {

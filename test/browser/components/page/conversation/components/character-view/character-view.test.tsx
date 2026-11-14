@@ -63,12 +63,11 @@ describe("CharacterView", () => {
     ).not.toThrow()
 
     expect(document.querySelector(".portrait")).toBeNull()
-    expect(document.querySelector('[data-slot="balloon"] .balloon-text')?.textContent).toBe(
-      "やあ、調子はどう？",
-    )
+    expect(document.querySelector(".balloon-track")).not.toBeNull()
+    expect(document.querySelector(".balloon-text")?.textContent).toBe("やあ、調子はどう？")
   })
 
-  it("(1) 過去のターンを選ぶと、そのターンの最後のセリフが吹き出しに出る", () => {
+  it("(1) 過去のターンを選ぶと、そのターンのセリフだけが吹き出しに出る", () => {
     renderCharacterView(
       {
         records: TWO_TURN_RECORDS,
@@ -79,10 +78,10 @@ describe("CharacterView", () => {
     )
 
     expect(
-      [...document.querySelectorAll('[data-slot="balloon"] .balloon-text')].map(
-        (balloon) => balloon.textContent,
-      ),
-    ).toEqual(["1つ目のセリフB"])
+      [...document.querySelectorAll(".balloon-text")].map((balloon) => balloon.textContent),
+    ).toEqual(["1つ目のセリフB", "1つ目のセリフA"])
+    // 最新（そのターンの最後）の1件だけが濃い（吹き出しの規則は変えない）。
+    expect(document.querySelector(".balloon")?.getAttribute("data-latest")).toBe("true")
   })
 
   it("(2) 今回のターンを選ぶと、従来どおり今のセリフが出る", () => {
@@ -279,7 +278,7 @@ describe("CharacterView（記録に積んだ反応と時刻）", () => {
     ...shownPortraits({ default: "/character/default.png", sad: "/character/sad.png" }),
   }
 
-  it("過去のターンが反応で終わったときは、吹き出しに反応を出し、その表情になる", () => {
+  it("過去のターンでは、積んだ反応も吹き出しに並び、反応で終わったターンはその表情になる", () => {
     renderCharacterView(
       {
         records: [
@@ -296,10 +295,10 @@ describe("CharacterView（記録に積んだ反応と時刻）", () => {
     )
 
     expect(
-      [...document.querySelectorAll('[data-slot="balloon"] .balloon-text')].map(
+      [...document.querySelectorAll(".balloon-track .balloon-text")].map(
         (balloon) => balloon.textContent,
       ),
-    ).toEqual(["架空の失敗の反応"])
+    ).toEqual(["架空の失敗の反応", "1つ目のセリフ"])
     expect(document.querySelector(".portrait")?.getAttribute("data-expression")).toBe("sad")
   })
 

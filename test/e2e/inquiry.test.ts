@@ -4,7 +4,7 @@ import { fictionalPng } from "../../scripts/shared/fictional-png.ts"
 import { expect, test, VIEWPORTS } from "./room-fixture.ts"
 
 // お伺い（許可要求と質問。docs/architecture/testing.md「E2E のシナリオの一覧」）。
-// 札は入力欄の場所に出る。許可は場面 `permission`（本文が長く紙が転がる場合は `inquiry-below-body`）、質問は `question-pair`（単一選択が1問ずつ）・
+// 許可は場面 `permission`（本文が長くカードがビューポートの外に出る場合は `inquiry-below-body`）、質問は `question-pair`（単一選択が1問ずつ）・
 // `question-long`（長いラベルと長い説明）・`question-preview`（選択肢ごとの比較）・
 // `question-preview-image`（preview に書いた手元の画像と、描かない画像）・
 // `question-brief`（添え書き付き。広いビューポートの2列から、ビューポートを狭めてカードの1列へ）。
@@ -21,7 +21,7 @@ test.describe("お伺い", () => {
       scenario: "inquiry-permission-mouse",
       scene: "permission",
       viewport: "wide",
-      domRoots: ["dock"],
+      domRoots: ["main", "dispatch"],
     })
     const inquiry = inquiryOf(room.page)
 
@@ -36,26 +36,38 @@ test.describe("お伺い", () => {
     await room.settleAndMatchPickedWithMessages(ELAPSED_MS)
   })
 
-  test("札は入力欄の場所に出て、紙を先頭まで転がしても札は見えたまま動かない", async ({ run }) => {
+  test("カードは本文の末尾に出て、ビューポートの外のあいだ下端の「お伺い ↓」を押すとカードがビューポートに入り、ボタンが消える", async ({
+    run,
+  }) => {
     const room = await run.open({
       scenario: "inquiry-below-body",
       scene: "inquiry-below-body",
       viewport: "wide",
-      domRoots: [],
+      domRoots: ["main"],
     })
-    const paper = room.page.locator('[data-region="paper"]')
-    const dock = room.page.locator('[data-region="dock"]')
+    const main = room.page.locator('[data-region="main"]')
     const inquiry = inquiryOf(room.page)
+    const jump = room.page.getByRole("button", { name: "お伺い ↓" })
 
     await room.waitForPending("fake-below-body-1")
-    await expect.poll(() => insideOf(inquiry, dock)).toBe(true)
-    const before = await inquiry.boundingBox()
+    // 届くと札まで送られ、札は本文（最後の中間レポート）より下にある。
+    await expect.poll(() => insideOf(inquiry, main)).toBe(true)
+    const [lastReport, card] = await Promise.all([
+      main.getByText("八つ目の段で架空の仕上げを終えた").boundingBox(),
+      inquiry.boundingBox(),
+    ])
+    expect(lastReport !== null && card !== null && card.y > lastReport.y).toBe(true)
+    expect(await jump.count()).toBe(0)
 
-    await paper.evaluate((element) => {
+    await main.evaluate((element) => {
       element.scrollTop = 0
     })
-    expect(await inquiry.boundingBox()).toEqual(before)
-    expect(await room.page.getByRole("button", { name: "お伺い ↓" }).count()).toBe(0)
+    await expect.poll(() => jump.count()).toBe(1)
+    expect(await insideOf(inquiry, main)).toBe(false)
+
+    await jump.click()
+    await expect.poll(() => insideOf(inquiry, main)).toBe(true)
+    await expect.poll(() => jump.count()).toBe(0)
   })
 
   test("質問は、カードを選んで「次へ」「これで答える」で1問ずつ答える（マウス）", async ({
@@ -65,7 +77,7 @@ test.describe("お伺い", () => {
       scenario: "inquiry-question-mouse",
       scene: "question-pair",
       viewport: "wide",
-      domRoots: ["dock"],
+      domRoots: ["main"],
     })
     const inquiry = inquiryOf(room.page)
 
@@ -84,7 +96,7 @@ test.describe("お伺い", () => {
       scenario: "inquiry-question-entrust",
       scene: "question-pair",
       viewport: "wide",
-      domRoots: ["dock"],
+      domRoots: ["main"],
     })
     const inquiry = inquiryOf(room.page)
 
@@ -100,14 +112,14 @@ test.describe("お伺い", () => {
     ["inquiry-question-long-medium", "question-long"],
     ["inquiry-question-preview-medium", "question-preview"],
   ] as const) {
-    test(`${scenario}: 札の「次へ」「これで答える」は入力欄の場所の中にあり、転がさずに押せる`, async ({
+    test(`${scenario}: 札の「次へ」「これで答える」はメインビューの中にあり、転がさずに押せる`, async ({
       run,
     }) => {
-      const room = await run.open({ scenario, scene, viewport: "medium", domRoots: ["dock"] })
-      const dock = room.page.locator('[data-region="dock"]')
+      const room = await run.open({ scenario, scene, viewport: "medium", domRoots: ["main"] })
+      const main = room.page.locator('[data-region="main"]')
       const answer = inquiryOf(room.page).getByRole("button", { name: /次へ|これで答える/ })
 
-      await expect.poll(() => insideOf(answer, dock)).toBe(true)
+      await expect.poll(() => insideOf(answer, main)).toBe(true)
       const hit = await answer.evaluate((element) => {
         const rect = element.getBoundingClientRect()
         const found = document.elementFromPoint(
@@ -126,8 +138,8 @@ test.describe("お伺い", () => {
     const room = await run.open({
       scenario: "inquiry-question-brief-wide",
       scene: "question-brief",
-      viewport: "full-hd",
-      domRoots: ["dock"],
+      viewport: "wide",
+      domRoots: ["main"],
     })
     const inquiry = inquiryOf(room.page)
     const detail = inquiry.getByRole("group", { name: /の詳細$/ })
@@ -137,7 +149,6 @@ test.describe("お伺い", () => {
     expect(await inquiry.locator("details table").count()).toBe(0)
     expect(await detail.count()).toBe(0)
     expect(await inquiry.getByText("⚠ 戻せない").count()).toBe(1)
-    await expect(inquiry.getByRole("radio", { name: /A に置く/ })).toBeChecked()
 
     const tops = await Promise.all(
       ["聞く理由", "事実", "おすすめの理由"].map(async (label) => {
@@ -161,10 +172,10 @@ test.describe("お伺い", () => {
     ])
     expect(options !== null && panel !== null && panel.x > options.x + options.width).toBe(true)
     // 詳細が出て札が伸びても、札は見える範囲に収まり、「次へ」は転がさずに押せる。
-    const dock = room.page.locator('[data-region="dock"]')
-    await expect.poll(() => insideOf(inquiry, dock)).toBe(true)
+    const main = room.page.locator('[data-region="main"]')
+    await expect.poll(() => insideOf(inquiry, main)).toBe(true)
     await expect
-      .poll(() => insideOf(inquiry.getByRole("button", { name: /次へ/ }), dock))
+      .poll(() => insideOf(inquiry.getByRole("button", { name: /次へ/ }), main))
       .toBe(true)
 
     expect(await inquiry.locator("details table").count()).toBe(0)
@@ -175,8 +186,7 @@ test.describe("お伺い", () => {
     await expect(inquiry.getByText("架空の説明C")).toBeVisible()
     await inquiry.getByRole("radio", { name: /A に置く/ }).click()
 
-    // 札は入力欄の場所の幅いっぱいに出るので、1列になるのは札の幅が 44rem を割るスマホの幅。
-    await room.resize(VIEWPORTS.phone)
+    await room.resize(VIEWPORTS.compact)
     await expect.poll(() => detail.count()).toBe(1)
     const [last, stackedPanel] = await Promise.all([
       inquiry.getByRole("radio", { name: /C に移す/ }).boundingBox(),
@@ -199,7 +209,7 @@ test.describe("お伺い", () => {
       scenario: "inquiry-question-brief-writing",
       scene: "question-brief",
       viewport: "wide",
-      domRoots: ["dock"],
+      domRoots: ["main"],
     })
     const inquiry = inquiryOf(room.page)
     const answer = room.page.getByPlaceholder("選択肢以外の答えを書く…")
@@ -232,7 +242,7 @@ test.describe("お伺い", () => {
       scenario: "inquiry-question-brief-board",
       scene: "question-brief",
       viewport: "wide",
-      domRoots: ["dock"],
+      domRoots: ["main"],
     })
     const card = inquiryOf(room.page)
     const board = room.page.getByRole("dialog", { name: "お伺い（広げた板）" })
@@ -265,7 +275,7 @@ test.describe("お伺い", () => {
       scenario: "inquiry-question-preview-image",
       scene: "question-preview-image",
       viewport: "wide",
-      domRoots: ["dock"],
+      domRoots: ["main"],
       // preview が指す画像（置いていないほうの画像は置かない）。
       cwdFiles: [
         { path: "report-image-fixture/after.png", content: fictionalPng(8, 4) },

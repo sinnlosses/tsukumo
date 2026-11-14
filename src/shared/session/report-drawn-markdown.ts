@@ -21,10 +21,7 @@ export function reportDrawnPieces(report: ReportRecord): ReportDrawnPieces {
     report.conclusion,
     "whole",
   )
-  const layout = reportLeafLayoutOf(
-    drawn.sections.map((section) => section.section),
-    report.sources,
-  )
+  const layout = reportLeafLayoutOf(drawn.sections.map((section) => section.section))
   const imageSource = {
     kind: "shelved",
     toolUseId: report.toolUseId,

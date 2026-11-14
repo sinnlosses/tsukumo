@@ -9,9 +9,7 @@ import { applyUsageReviewEvent, type UsageReviewEvent } from "../usage/usage-rev
 import { isBlankText } from "../utils/blank-text.ts"
 import { clipText } from "../utils/clip-text.ts"
 import { commandCandidates } from "./command-suggestion.ts"
-import { delegateRolesOfTasks, delegateRolesWithProgress } from "./delegate-role.ts"
 import { isModelAlias } from "./run-setting-value.ts"
-import { advanceByAizuchiPressed, advanceByAizuchiWritten } from "./session-advance-aizuchi.ts"
 import {
   advanceByQuestionAnswered,
   advanceByReport,
@@ -230,10 +228,6 @@ const SESSION_EVENT_FOLDS = {
   "delegate-returned": (state, event, at) => ({
     ...state,
     records: [...state.records, ...workPlanRecords(state.records, event, at)],
-    delegateRoles:
-      event.handback.kind === "phase-done" || event.handback.kind === "phase-skipped"
-        ? []
-        : state.delegateRoles,
   }),
   "report-malformed": keepState,
   "report-rejected": keepState,
@@ -250,17 +244,8 @@ const SESSION_EVENT_FOLDS = {
   }),
   "tool-started": advanceByToolStarted,
   "background-tool-finished": (state, event, at) => notifyBackgroundEnd(state, event.toolUseId, at),
-  "delegate-progress": (state, event, at) => ({
-    ...state,
-    delegateRoles: delegateRolesWithProgress(
-      state.delegateRoles,
-      state.backgroundTasks,
-      event.taskId,
-      event.summary,
-      at,
-    ),
-  }),
   // 駆動が送り出す手前で捨てる。
+  "delegate-progress": keepState,
   "progress-nudged": keepState,
   "tool-finished": (state, event, at) =>
     finishTool(
@@ -288,8 +273,6 @@ const SESSION_EVENT_FOLDS = {
       finishedTurnCount: finishedTurnCountOf(state),
       sdkTurn: CLOSED_SDK_TURN,
       apiTrouble: { kind: "none" },
-      // ワークフロースクリプトはメインのターンが終わっても背景で走り続けるので、走っている役は残す。
-      delegateRoles: state.delegateRoles.filter((role) => role.state === "running"),
     }
   },
   // `diaryWriting` と見直しの欄はここでは動かさない（`turn-finished` と同じ理由）。
@@ -302,7 +285,6 @@ const SESSION_EVENT_FOLDS = {
     backgroundTasks: [],
     workflowSteps: [],
     workflowProgress: [],
-    delegateRoles: [],
     apiTrouble: { kind: "none" },
   }),
   "api-retry": (state, event, at) => ({
@@ -336,8 +318,6 @@ const SESSION_EVENT_FOLDS = {
     ...state,
     writtenReactions: { kind: "written", reactions: event.reactions },
   }),
-  "aizuchi-written": (state, event) => advanceByAizuchiWritten(state, event.pairs),
-  "aizuchi-pressed": advanceByAizuchiPressed,
   "waiting-line-due": keepState,
   "welcome-greeting-shown": keepState,
   // `sessionId` もここで決まる（`session-info` は最初の依頼まで届かないので、それまで「いまどのセッションに居るか」を言えるのはこの経路だけ）。
@@ -378,10 +358,9 @@ const SESSION_EVENT_FOLDS = {
     ...state,
     records: [...state.records, { kind: "compact-boundary" }],
   }),
-  "background-tasks-changed": (state, event, at) => ({
+  "background-tasks-changed": (state, event) => ({
     ...state,
     backgroundTasks: event.tasks,
-    delegateRoles: delegateRolesOfTasks(state.delegateRoles, event.tasks, at),
     workflowSteps: workflowItemsOfTasks(state.workflowSteps, event.tasks),
     workflowProgress: workflowItemsOfTasks(state.workflowProgress, event.tasks),
   }),

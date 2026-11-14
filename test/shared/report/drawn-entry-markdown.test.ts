@@ -277,7 +277,7 @@ const ROWS: readonly (readonly [
 ]
 
 function presencesOf(blocks: readonly LeafComponent[]): readonly DrawnEntryPresence[] {
-  const values = reportLeafLayoutOf([{ heading: "", blocks }], []).values[0] ?? []
+  const values = reportLeafLayoutOf([{ heading: "", blocks }]).values[0] ?? []
   return blocks.map((block, index) => {
     const value = values[index]
     if (value === undefined) {
@@ -295,7 +295,7 @@ describe("drawnEntryPresence", () => {
 
 describe("sectionDrawsAnything", () => {
   const drawsOf = (section: ReportSection): boolean =>
-    sectionDrawsAnything(section, reportLeafLayoutOf([section], []).values[0] ?? [])
+    sectionDrawsAnything(section, reportLeafLayoutOf([section]).values[0] ?? [])
 
   it("見出しか描くものがある塊があれば真で、空白だけの markdown は数えない", () => {
     expect(drawsOf({ heading: "", blocks: [markdown("  \n"), text(" ")] })).toBe(false)
@@ -335,7 +335,7 @@ describe("drawnEntryMarkdown", () => {
   ]
 
   it.each(cases)("%s の字", (_, block, expected) => {
-    const value = reportLeafLayoutOf([{ heading: "", blocks: [block] }], []).values[0]?.[0]
+    const value = reportLeafLayoutOf([{ heading: "", blocks: [block] }]).values[0]?.[0]
 
     expect(value === undefined ? "" : drawnEntryMarkdown(block, value)).toBe(expected)
   })
@@ -345,7 +345,7 @@ describe("drawnEntryMarkdown", () => {
       { kind: "markdown", markdown: "架空の本文", ...PLAIN },
       { kind: "note", tone: "memo", text: "架空の覚え書き", ...PLAIN },
     ] as const
-    const [first, second] = reportLeafLayoutOf([{ heading: "", blocks }], []).values[0] ?? []
+    const [first, second] = reportLeafLayoutOf([{ heading: "", blocks }]).values[0] ?? []
 
     expect(first === undefined ? "" : drawnEntryMarkdown(blocks[0], first)).toBe(MEMO_MERGED)
     expect(second === undefined ? "" : drawnEntryPresence(blocks[1], second)).toBe("empty")

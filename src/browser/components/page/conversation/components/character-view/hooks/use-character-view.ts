@@ -12,13 +12,8 @@
 
 import { useState } from "react"
 
-import {
-  type CharacterStage,
-  DEFAULT_CHARACTER_STAGE,
-} from "../../../../../../../shared/character-pack/character-stage.ts"
 import type { Expression } from "../../../../../../../shared/character-pack/expression.ts"
 import type { ItemSeatMap } from "../../../../../../../shared/item/item.ts"
-import type { AizuchiMoment } from "../../../../../../../shared/recommendation/aizuchi.ts"
 import type { ReactionKind } from "../../../../../../../shared/recommendation/reaction.ts"
 import type { ShownReaction } from "../../../../../../../shared/session/shown-reaction.ts"
 import { reportDraftingOf } from "../../../../../../../shared/session/turn-progress.ts"
@@ -37,12 +32,11 @@ import {
 } from "../../../../../../domain/portrait-motion.ts"
 import { useExternalSync } from "../../../../../../hooks/use-external-sync.ts"
 import { useSession } from "../../../../../../stores/session.ts"
+import { useTurnSelection } from "../../../../../../stores/turn-selection.ts"
 import { nowEpochMilliseconds } from "../../../../../../utils/clock.ts"
 import { recordClockStampWithDay, type ClockStamp } from "../../../domain/clock-stamp.ts"
 import { welcomeHeadOf } from "../../../domain/welcome-entry-list.ts"
-import { useShownAizuchi } from "../../../stores/shown-aizuchi.ts"
 import { useShownReaction, useWaitingLineDueAt } from "../../../stores/shown-reaction.ts"
-import { useTurnSelection } from "../../../stores/turn-selection.ts"
 import { useWelcomeCards } from "../../hooks/use-welcome-card-list.ts"
 import {
   balloonLineIndices,
@@ -56,8 +50,6 @@ import {
   type SpeechTarget,
   type ViewedSpeech,
 } from "../domain/pinned-speech.ts"
-import type { TalkFlowRow } from "../domain/talk-flow.ts"
-import { useTalkFlow } from "./use-talk-flow.ts"
 import { useWelcomeGreetingRecord } from "./use-welcome-greeting-record.ts"
 
 /** そのターンにセリフが1件も無かったときに当てる表情（`INITIAL_SESSION_STATE` と同じ既定）。 */
@@ -86,14 +78,6 @@ export type BalloonReaction =
       readonly time: ClockStamp
     }
 
-/** 立ち絵の右上に出す相づちの札1枚。押すと返事がもらえる。 */
-export type CharacterViewAizuchi = {
-  readonly moment: AizuchiMoment
-  readonly index: number
-  readonly label: string
-  readonly onPress: () => void
-}
-
 /** `<CharacterView>` が画面に出す形。presenter はこれをそのまま部品へ渡すだけ。 */
 export type CharacterViewModel = {
   /** 立ち絵の素材 URL。character が届いていなければ `undefined`（吹き出しだけで成立させる）。 */
@@ -103,8 +87,6 @@ export type CharacterViewModel = {
   readonly motion: PortraitMotion
   /** 吹き出しに出すセリフ（古い→新しい）。過去のターンを見ていればそのターンぶんに差し替わる。 */
   readonly speeches: readonly CharacterViewSpeech[]
-  /** 舞台のやり取りの流れ（全部のターン、古い→新しい）。最新のターンを見ているあいだは、いまの吹き出しに出している行を含まない。 */
-  readonly flow: readonly TalkFlowRow[]
   /** 吹き出しの最新に出す反応。過去のターンを見ているあいだは出さない。 */
   readonly reaction: BalloonReaction
   /** 最新の吹き出しに添える話し手の名前。キャラクターが届いていない・名前が無ければ `undefined`。 */
@@ -123,10 +105,6 @@ export type CharacterViewModel = {
   readonly phoneLine: PhoneBalloonLine
   /** 使用中のパックの3つの席に置いたアイテム。行が無ければ全席が空。 */
   readonly seats: ItemSeatMap
-  /** 新しい器の舞台での立ち絵の置き方。キャラクターが届いていなければ既定。 */
-  readonly stage: CharacterStage
-  /** 立ち絵の右上に出す相づちの札。過去のターンを見ているあいだは空。 */
-  readonly aizuchi: readonly CharacterViewAizuchi[]
 }
 
 /**
@@ -150,8 +128,6 @@ export function useCharacterView(): CharacterViewModel {
   const draftingReport = useSession(
     (session) => reportDraftingOf(session.state.sdkTurn).kind === "drafting",
   )
-  const shownChips = useShownAizuchi()
-  const dispatch = useSession((session) => session.dispatch)
   const waitingDueAt = useWaitingLineDueAt()
   const { cards: welcomeCards } = useWelcomeCards()
   const welcomeHead = welcomeHeadOf(welcomeCards)
@@ -171,18 +147,15 @@ export function useCharacterView(): CharacterViewModel {
     activeTurnId === undefined || newestTurnId === undefined
       ? undefined
       : pastTurnSpeech(turns, activeTurnId, newestTurnId)
-  const turnLines = turns.find((t) => t.id === activeTurnId)?.speeches ?? []
-  // 過去のターンの吹き出しは、利用者の札の行を除いた並び（札の行は流れにだけ出す）。
-  const pastBalloonIndices = pastTurn?.speeches.flatMap((line, index) =>
-    line.source === "you" ? [] : [index],
-  )
-  const activeSpeeches =
-    pastTurn === undefined ? speeches : pastTurn.speeches.filter((line) => line.source !== "you")
+  const activeSpeeches = pastTurn === undefined ? speeches : pastTurn.speeches
   // 吹き出しの各件が、留めた行の並びの何番目か。今のターンの吹き出しは反応を含まないので、並びの位置へ写す。
   const lineIndices =
-    pastBalloonIndices === undefined
-      ? balloonLineIndices(turnLines, speeches.length)
-      : pastBalloonIndices
+    pastTurn === undefined
+      ? balloonLineIndices(
+          turns.find((t) => t.id === activeTurnId)?.speeches ?? [],
+          speeches.length,
+        )
+      : pastTurn.speeches.map((_, index) => index)
   const reaction: ShownReaction = pastTurn === undefined ? latestReaction : { kind: "none" }
   // 何も留めていないとき、印が付くのは「いま表示しているターン」の最後の吹き出し。
   // 反応を出しているあいだは立ち絵が反応に従うので、どの行にも付けない。
@@ -214,8 +187,6 @@ export function useCharacterView(): CharacterViewModel {
   const motion = resolvePortraitMotion({ turn, lastToolFailureAt, draftingReport }, now)
 
   const { portraitUrl, altText } = portraitAppearance(character, expression)
-  const balloonReaction = balloonReactionOf(reaction, now)
-  const flow = useTalkFlow(balloonReaction)
 
   return {
     portraitUrl,
@@ -223,8 +194,7 @@ export function useCharacterView(): CharacterViewModel {
     expression,
     motion,
     speeches: balloonSpeeches(activeSpeeches, anchor, now),
-    flow,
-    reaction: balloonReaction,
+    reaction: balloonReactionOf(reaction, now),
     speakerName: character?.name,
     pinnedSpeech: pinned,
     onToggleSpeech: toggleSpeech,
@@ -234,18 +204,6 @@ export function useCharacterView(): CharacterViewModel {
     face: characterFaceInfo(character),
     phoneLine: phoneLineOf(reaction, activeSpeeches, now),
     seats: (character === undefined ? undefined : itemSeats[character.pack]) ?? EMPTY_SEATS,
-    stage: character?.stage ?? DEFAULT_CHARACTER_STAGE,
-    aizuchi:
-      pastTurn === undefined
-        ? shownChips.map(({ moment, index, chip }) => ({
-            moment,
-            index,
-            label: chip,
-            onPress: () => {
-              void dispatch.session.pressAizuchi({ moment, index })
-            },
-          }))
-        : [],
   }
 }
 

@@ -124,7 +124,7 @@ function renderNew(
   imageSource: ReportImageSource,
 ): Rendered {
   const view = directLeafViewOf(part)
-  const value = reportLeafLayoutOf(sectionOf(block), []).values[0]?.[0]
+  const value = reportLeafLayoutOf(sectionOf(block)).values[0]?.[0]
   if (view === undefined) {
     throw new Error(`直接描く部品が無い: ${part.component}`)
   }

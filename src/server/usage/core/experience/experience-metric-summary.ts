@@ -3,13 +3,7 @@
 
 import { sortBy, sumBy } from "remeda"
 
-import type { PhaseSpan } from "../../../../shared/session/work-plan-phase-number.ts"
-import type { SplitDivider, WaitKind } from "../../../../shared/usage/experience-metric-record.ts"
-import {
-  USUAL_DURATION_MIN_COUNT,
-  type UsualDurations,
-  type UsualSpread,
-} from "../../../../shared/usage/usual-duration.ts"
+import type { SplitDivider } from "../../../../shared/usage/experience-metric-record.ts"
 import type { ExperienceMetricEntry, SplitEntry } from "./experience-metric.ts"
 
 /** 畳み方。境目（エポックミリ秒）の前後に分けるか、全体を1つにするか。 */
@@ -78,35 +72,6 @@ export function summarizeExperienceMetric(
   ]
 }
 
-/**
- * 段の群ごとの `phaseSeconds` と、待ちの種類ごとの `waitSeconds` の件数・中央値・25 と 75 パーセンタイル。
- * 件数が {@link USUAL_DURATION_MIN_COUNT} に足りない塊は `empty`。
- */
-export function summarizeUsualDurations(entries: readonly ExperienceMetricEntry[]): UsualDurations {
-  const phases = entries.flatMap((entry) => (entry.kind === "phase" ? [entry] : []))
-  const waits = entries.flatMap((entry) => (entry.kind === "wait" ? [entry] : []))
-  const phaseSpread = (span: PhaseSpan) =>
-    usualSpreadOf(phases.filter((entry) => entry.span === span).map((entry) => entry.phaseSeconds))
-  const waitSpread = (kind: WaitKind) =>
-    usualSpreadOf(
-      waits.filter((entry) => entry.waitKind === kind).map((entry) => entry.waitSeconds),
-    )
-  return {
-    phases: {
-      whole: phaseSpread("whole"),
-      lead: phaseSpread("lead"),
-      delegated: phaseSpread("delegated"),
-      trail: phaseSpread("trail"),
-    },
-    waits: {
-      bash: waitSpread("bash"),
-      agent: waitSpread("agent"),
-      workflow: waitSpread("workflow"),
-      other: waitSpread("other"),
-    },
-  }
-}
-
 function summarizeRange(
   range: ExperienceSummary["range"],
   entries: readonly ExperienceMetricEntry[],
@@ -153,38 +118,16 @@ function summarizeSplits(splits: readonly SplitEntry[], divider: SplitDivider): 
   }
 }
 
-function usualSpreadOf(values: readonly number[]): UsualSpread {
-  const sorted = sortBy(values, (value) => value)
-  const [first, ...rest] = sorted
-  if (first === undefined || sorted.length < USUAL_DURATION_MIN_COUNT) {
-    return { kind: "empty", count: sorted.length }
-  }
-  const ranked: NonEmpty = [first, ...rest]
-  return {
-    kind: "measured",
-    count: sorted.length,
-    medianSeconds: rankOf(ranked, 0.5),
-    lowSeconds: rankOf(ranked, 0.25),
-    highSeconds: rankOf(ranked, 0.75),
-  }
-}
-
 /**
  * 中央値と90パーセンタイル（どちらも最も近い順位の値。補間しない）。
  * 偶数件の中央値は、真ん中の2つのうち小さいほう。
  */
 function spreadOf(values: readonly number[]): Spread {
-  const [first, ...rest] = sortBy(values, (value) => value)
-  if (first === undefined) {
-    return { kind: "empty" }
-  }
-  const ranked: NonEmpty = [first, ...rest]
-  return { kind: "measured", median: rankOf(ranked, 0.5), p90: rankOf(ranked, 0.9) }
-}
-
-type NonEmpty = readonly [number, ...number[]]
-
-/** 小さい順に並べた値の、割合 `ratio` に最も近い順位の値（補間しない）。 */
-function rankOf(sorted: NonEmpty, ratio: number): number {
-  return sorted[Math.max(0, Math.ceil(sorted.length * ratio) - 1)] ?? sorted[0]
+  const sorted = sortBy(values, (value) => value)
+  const pick = (ratio: number) => sorted[Math.max(0, Math.ceil(sorted.length * ratio) - 1)]
+  const median = pick(0.5)
+  const p90 = pick(0.9)
+  return median === undefined || p90 === undefined
+    ? { kind: "empty" }
+    : { kind: "measured", median, p90 }
 }

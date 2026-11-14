@@ -1,6 +1,14 @@
-// やり取りの結果（`TurnResult`）を、やり取りの列が出す印と字の表。
+// やり取りの結果（`TurnResult`）を、やり取りの列と進み具合のプログレスバーが同じ印と字で出すための表。
+
+import { omit } from "remeda"
 
 import type { TurnResult } from "./turn-result.ts"
+
+/**
+ * 帯のチップが言える状態。レポートの無いやり取りは帯が段の進みから決めるか、出さないので入らない。
+ * `background` はターンが終わってバックグラウンドタスクだけが残るときで、やり取りの列の印には無い。
+ */
+export type WorkStripResult = Exclude<TurnResult, "no-report"> | "background"
 
 export const TURN_RESULT_MARKS = {
   done: { mark: "✓", label: "完了" },
@@ -10,3 +18,8 @@ export const TURN_RESULT_MARKS = {
   working: { mark: "…", label: "作業中" },
   "no-report": { mark: "–", label: "レポートなし" },
 } as const satisfies Record<TurnResult, { readonly mark: string; readonly label: string }>
+
+export const WORK_STRIP_MARKS = {
+  ...omit(TURN_RESULT_MARKS, ["no-report"]),
+  background: { mark: "·", label: "背景で作業中" },
+} as const satisfies Record<WorkStripResult, { readonly mark: string; readonly label: string }>

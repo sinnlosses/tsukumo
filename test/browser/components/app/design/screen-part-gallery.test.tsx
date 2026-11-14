@@ -14,6 +14,8 @@ const EXCLUDED: Readonly<Record<string, string>> = {
   "page/character/presentational-character.tsx": "ページの根",
   "page/token-usage/presentational-token-usage.tsx": "ページの根",
   "page/conversation/presentational-conversation.tsx": "ページの根",
+  "page/conversation/components/conversation-layout/presentational-conversation-layout.tsx":
+    "ページの根",
 }
 
 const MAX_EXCLUDED = 7

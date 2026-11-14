@@ -1,0 +1,117 @@
+/* 設定のダイアログ。880×600（高さは画面の 86% まで）の箱に、頭・ナビ・面を置く。 */
+
+.dialog[open] {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  width: 880px;
+  max-width: calc(100vw - 2rem);
+  height: min(600px, 86dvh);
+  max-height: none;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: var(--font-secondary);
+}
+
+.head {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-sm);
+  height: 54px;
+  padding: 0 var(--space-lg);
+  border-bottom: 1px solid var(--rule-quiet);
+}
+.head-icon {
+  color: var(--ink-quiet);
+}
+.head-title {
+  margin: 0;
+}
+.close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  margin-left: auto;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--ink-quiet);
+  cursor: pointer;
+}
+.close:hover {
+  color: var(--ink);
+}
+.main {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+.nav {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: var(--space-2xs);
+  box-sizing: border-box;
+  width: 232px;
+  padding: var(--space-xl) var(--space-md);
+  border-right: 1px solid var(--rule-quiet);
+  background: color-mix(in srgb, var(--ground) 40%, transparent);
+}
+.nav-group {
+  margin: 0 0 var(--space-sm) var(--space-sm);
+}
+.nav-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  height: 36px;
+  padding: 0 var(--space-md);
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--ink-quiet);
+  font: inherit;
+  font-size: var(--font-secondary);
+  text-align: left;
+  cursor: pointer;
+}
+.nav-item:hover {
+  color: var(--ink);
+}
+.nav-item-selected {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--ink);
+  font-weight: 700;
+}
+.nav-item-selected svg {
+  color: var(--accent);
+}
+.nav-item-selected::before {
+  content: "";
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  left: 0;
+  width: 3px;
+  border-radius: var(--radius-sm);
+  background: var(--accent);
+}
+.face {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+.reset {
+  flex: none;
+  border-radius: var(--radius-md);
+}

@@ -1,5 +1,5 @@
 // キャラクター画面の左の列、パックの一覧。
-// 見出しと件数は重ねる紙の頭が持つ。ここはパックごとの行（丸い顔・名前・「表情 <枚数> · 使用中」）、点線の「新しく作る」を置く。
+// 見出し「キャラクター」と件数、パックごとの行（丸い顔・名前・「表情 <枚数> · 使用中」）、点線の「新しく作る」を置く。
 //
 // 行はただのリンク（`#character?pack=<名前>`）で、押すと右側がそのパックの詳しい設定に替わる。
 // 選んでいる行は `aria-current="page"` で示す（色だけにしない）。
@@ -10,6 +10,7 @@ import { EXPRESSIONS } from "../../../../../../shared/character-pack/expression.
 import { usePackHref } from "../../../../../stores/screen.tsx"
 import { useSession } from "../../../../../stores/session.ts"
 import { Button } from "../../../../ui/button/button.tsx"
+import { Heading } from "../../../../ui/heading/heading.tsx"
 import { PlusIcon } from "../../../../ui/icon/icon.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
 import { VStack } from "../../../../ui/v-stack/v-stack.tsx"
@@ -24,6 +25,14 @@ export function CharacterList(props: { readonly onCreate: () => void }): ReactEl
 
   return (
     <nav className={styles["character-list"]} aria-label="キャラクター一覧">
+      <div className={styles["character-list-heading"]}>
+        <Heading level={2} size="body" tone="inherit" weight="bold" className="">
+          キャラクター
+        </Heading>
+        <Text element="span" size="action" tone="ink-quiet" weight="inherit" className="">
+          {packs.length}
+        </Text>
+      </div>
       {packs.map((entry) => {
         const count = entry.character.expressionsWithPortrait.length
         const countText =

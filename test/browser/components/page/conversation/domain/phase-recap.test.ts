@@ -76,46 +76,40 @@ describe("phaseRecapsOf", () => {
       at(40),
     )
 
-    expect(recaps.get(keyOf(last, "架空の調べ"))).toMatchObject({
+    expect(recaps.get(keyOf(last, "架空の調べ"))).toEqual({
       duration: known(10),
       summary: "架空の調べのまとめ",
     })
-    expect(recaps.get(keyOf(last, "架空の実装"))).toMatchObject({
+    expect(recaps.get(keyOf(last, "架空の実装"))).toEqual({
       duration: known(15),
       summary: "架空の実装のまとめ",
     })
-    expect(recaps.get(keyOf(last, "架空の検証"))).toMatchObject({
-      duration: known(15),
-      summary: "",
-    })
+    expect(recaps.get(keyOf(last, "架空の検証"))).toEqual({ duration: known(15), summary: "" })
   })
 
   it("一度も今の段にならなかった段は所要が不明でまとめが空", () => {
     const last = plan(1, at(10), "架空の調べのまとめ")
     const recaps = phaseRecapsOf(within([plan(0, at(0)), last]), at(30))
 
-    expect(recaps.get(keyOf(last, "架空の検証"))).toMatchObject({ duration: UNKNOWN, summary: "" })
+    expect(recaps.get(keyOf(last, "架空の検証"))).toEqual({ duration: UNKNOWN, summary: "" })
   })
 
   it("依頼の最初の記録が途中から始まったら、そのとき今だった段の所要は不明", () => {
     const last = plan(2, at(10), "架空の実装のまとめ")
     const recaps = phaseRecapsOf(within([plan(1, at(0)), last]), at(30))
 
-    expect(recaps.get(keyOf(last, "架空の実装"))).toMatchObject({
+    expect(recaps.get(keyOf(last, "架空の実装"))).toEqual({
       duration: UNKNOWN,
       summary: "架空の実装のまとめ",
     })
-    expect(recaps.get(keyOf(last, "架空の調べ"))).toMatchObject({ duration: UNKNOWN, summary: "" })
+    expect(recaps.get(keyOf(last, "架空の調べ"))).toEqual({ duration: UNKNOWN, summary: "" })
   })
 
   it("まとめを渡さずに進んだ段は、まとめが空", () => {
     const last = plan(1, at(10))
     const recaps = phaseRecapsOf(within([plan(0, at(0)), last]), at(30))
 
-    expect(recaps.get(keyOf(last, "架空の調べ"))).toMatchObject({
-      duration: known(10),
-      summary: "",
-    })
+    expect(recaps.get(keyOf(last, "架空の調べ"))).toEqual({ duration: known(10), summary: "" })
   })
 
   it("並列のフェーズの中のフェーズが別々に済めば、フェーズごとに別のまとめを持つ", () => {
@@ -130,11 +124,11 @@ describe("phaseRecapsOf", () => {
       at(40),
     )
 
-    expect(recaps.get(keyOf(last, "架空の画面"))).toMatchObject({
+    expect(recaps.get(keyOf(last, "架空の画面"))).toEqual({
       duration: known(10),
       summary: "架空の画面のまとめ",
     })
-    expect(recaps.get(keyOf(last, "架空のサーバ"))).toMatchObject({
+    expect(recaps.get(keyOf(last, "架空のサーバ"))).toEqual({
       duration: known(20),
       summary: "架空のサーバのまとめ",
     })
@@ -159,7 +153,7 @@ describe("phaseRecapsOf", () => {
     const last = plan(1, at(12), "架空の調べのまとめ")
     const recaps = phaseRecapsOf(within([plan(0, at(0)), returned, last]), at(30))
 
-    expect(recaps.get(keyOf(last, "架空の調べ"))).toMatchObject({
+    expect(recaps.get(keyOf(last, "架空の調べ"))).toEqual({
       duration: known(10),
       summary: "架空の調べのまとめ",
     })
@@ -178,11 +172,11 @@ describe("phaseRecapsOf", () => {
       at(120),
     )
 
-    expect(recaps.get(keyOf(last, "架空の調べ"))).toMatchObject({
+    expect(recaps.get(keyOf(last, "架空の調べ"))).toEqual({
       duration: known(10),
       summary: "架空の調べのまとめ",
     })
-    expect(recaps.get(keyOf(last, "架空の実装"))).toMatchObject({
+    expect(recaps.get(keyOf(last, "架空の実装"))).toEqual({
       duration: known(23),
       summary: "架空の実装のまとめ",
     })

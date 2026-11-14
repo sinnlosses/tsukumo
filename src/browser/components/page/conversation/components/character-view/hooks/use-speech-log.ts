@@ -21,11 +21,11 @@ import type {
 import { turnSpeeches, type TurnSpeech } from "../../../../../../../shared/session/turn-speech.ts"
 import { useExternalSync } from "../../../../../../hooks/use-external-sync.ts"
 import { useSession } from "../../../../../../stores/session.ts"
+import { useTurnSelection } from "../../../../../../stores/turn-selection.ts"
 import { localTimeZoneId } from "../../../../../../utils/clock.ts"
 import { dayLabel } from "../../../../../../utils/day-label.ts"
 import { entryDay, startsNewDay } from "../../../domain/chat-log.ts"
 import { recordClockStamp, type ClockStamp } from "../../../domain/clock-stamp.ts"
-import { useTurnSelection } from "../../../stores/turn-selection.ts"
 import {
   isSpeechSelected,
   type MarkedSpeech,
@@ -61,8 +61,6 @@ export type SpeechLogEntry =
   | {
       readonly kind: "speech"
       readonly key: string
-      /** キャラクターの行（`her`）か、利用者が押した札の行（`you`。印も遡りも無い）か。 */
-      readonly speaker: "her" | "you"
       readonly text: string
       readonly time: ClockStamp
       readonly age: SpeechAge
@@ -134,8 +132,7 @@ function logEntries(
 ): readonly SpeechLogEntry[] {
   const turns = turnSpeeches(records).filter((turn) => turn.speeches.length > 0)
   const requestTimes = requestTimesByTurn(records)
-  // 古さはキャラクターの行だけで数える（利用者の札の行は最新の座を取らない）。
-  const herFlags = turns.flatMap((turn) => turn.speeches.map((speech) => speech.source !== "you"))
+  const speechCount = sumBy(turns, (turn) => turn.speeches.length)
   const lastTurnId = turns.at(-1)?.id
   // セリフを古い側から数えた順に並べた、それぞれの日。日の区切りは隣り合うセリフの日で決める。
   const speechDays = turns.flatMap((turn) =>
@@ -172,9 +169,8 @@ function logEntries(
           key: `speech-${key}`,
           text: speech.text,
           time: recordClockStamp(speech.time, timeZone),
-          speaker: speech.source === "you" ? "you" : "her",
-          age: speechAge(herFlags.slice(offset + index + 1).filter(Boolean).length),
-          selected: speech.source !== "you" && isSpeechSelected(marked, turn.id, index),
+          age: speechAge(speechCount - 1 - (offset + index)),
+          selected: isSpeechSelected(marked, turn.id, index),
           target: { turnId: turn.id, index },
         },
       ]
@@ -188,11 +184,10 @@ function markedSpeechOf(markBasis: LogMarkBasis, turns: readonly TurnSpeech[]): 
     case "pinned":
       return { kind: "at", turnId: markBasis.turnId, index: markBasis.index }
     case "following": {
-      const lines = turns.find((turn) => turn.id === markBasis.turnId)?.speeches
-      const last = lines?.findLastIndex((line) => line.source !== "you")
-      return last === undefined || last < 0
+      const count = turns.find((turn) => turn.id === markBasis.turnId)?.speeches.length
+      return count === undefined
         ? { kind: "none" }
-        : { kind: "at", turnId: markBasis.turnId, index: last }
+        : { kind: "at", turnId: markBasis.turnId, index: count - 1 }
     }
     case "none":
       return { kind: "none" }

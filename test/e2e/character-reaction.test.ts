@@ -23,9 +23,9 @@ test.describe("機械の出来事 → キャラビューの反応", () => {
       scenario: "character-reaction-replaced",
       scene: "reaction-accepted",
       viewport: "wide",
-      domRoots: ["stage-portrait", "stage-balloon", "stage-thread"],
+      domRoots: ["character"],
     })
-    const character = room.page.locator('[data-slot="balloon"]')
+    const character = room.page.locator('[data-region="character"]')
 
     await room.waitForEvent("request")
     await character.locator('[data-latest="true"][data-writing="true"]').waitFor()
@@ -43,7 +43,7 @@ test.describe("機械の出来事 → キャラビューの反応", () => {
       scenario: "character-reaction-waiting-idle",
       scene: "waiting-idle",
       viewport: "wide",
-      domRoots: ["stage-balloon", "stage-thread"],
+      domRoots: ["character"],
     })
 
     await room.waitForEvent("turn-finished")
@@ -57,9 +57,10 @@ test.describe("機械の出来事 → キャラビューの反応", () => {
       scenario: "character-reaction-welcome-greeting",
       scene: "welcome-greeting",
       viewport: "wide",
-      domRoots: ["stage-balloon", "stage-thread"],
+      domRoots: ["character"],
     })
-    const latestBalloon = room.page.locator('[data-slot="balloon"] [data-latest="true"]')
+    const character = room.page.locator('[data-region="character"]')
+    const latestBalloon = character.locator('[data-latest="true"]')
 
     await room.waitForEvent("welcome-greeting-shown")
     await expectOneLoggedLine(room.page, "架空の挨拶。")
@@ -79,59 +80,6 @@ test.describe("機械の出来事 → キャラビューの反応", () => {
   })
 })
 
-test.describe("立ち絵の右上の相づちの札 → キャラクターの返事", () => {
-  const MOMENTS = [
-    {
-      name: "渡したあと",
-      scene: "aizuchi-deliver",
-      wait: "turn-finished",
-      chips: ["おつかれさま", "ありがとう"],
-      reply: "ありがとう。ひと息つこうか。",
-    },
-    {
-      name: "失敗のあと",
-      scene: "aizuchi-stumble",
-      wait: "turn-finished",
-      chips: ["大丈夫、続けよう"],
-      reply: "うん、もう一度やってみる。",
-    },
-    {
-      name: "働いているあいだ",
-      scene: "aizuchi-work",
-      wait: "request",
-      chips: ["がんばって"],
-      reply: "任せて。もう少しだよ。",
-    },
-  ] as const
-
-  for (const moment of MOMENTS) {
-    test(`${moment.name}は札が出て、押すと札が引っ込み、返事が反応の吹き出しに出る`, async ({
-      run,
-    }) => {
-      const room = await run.open({
-        scenario: `character-${moment.scene}`,
-        scene: moment.scene,
-        viewport: "wide",
-        domRoots: ["stage-balloon", "stage-thread"],
-      })
-      const chips = room.page.locator('[data-slot="aizuchi"] button')
-
-      await room.waitForEvent(moment.wait)
-      await chips.first().waitFor()
-      expect(await chips.allTextContents()).toEqual(moment.chips)
-
-      await chips.first().click()
-      await room.waitForEvent("aizuchi-pressed")
-      await room.page
-        .locator('[data-slot="balloon"] [data-reaction="aizuchi"]')
-        .getByText(moment.reply)
-        .waitFor()
-      expect(await chips.count()).toBe(0)
-      await room.settleAndMatchPicked(ELAPSED_MS)
-    })
-  }
-})
-
 /** 吹き出しの最新の1件が `text` で、セリフのログにも同じ文と時刻の1件だけが並ぶ。 */
 async function expectOneLoggedLine(page: Page, text: string): Promise<void> {
   const [balloon, log] = await balloonAndLog(page)
@@ -144,17 +92,14 @@ async function expectOneLoggedLine(page: Page, text: string): Promise<void> {
  * 時刻は `<time>` の `dateTime`。
  */
 async function balloonAndLog(page: Page): Promise<readonly [string, readonly string[]]> {
-  const stage = page.locator('[data-region="stage"]')
-  const balloon = await stage
-    .locator('[data-slot="balloon"] [data-latest="true"]')
+  const character = page.locator('[data-region="character"]')
+  const balloon = await character
+    .locator('[data-latest="true"]')
     .evaluate(
       (element) =>
         `${element.querySelector('[class*="balloon-text"]')?.textContent ?? ""}@${element.querySelector("time")?.getAttribute("datetime") ?? "-"}`,
     )
-  // 舞台では「ログ」の口を出さず、流れの札が口の役を持つ。札は行が少ないと出ないので、隠れた口を直に押す。
-  await stage
-    .getByRole("button", { name: "ログ", exact: true, includeHidden: true })
-    .dispatchEvent("click")
+  await character.getByRole("button", { name: "ログ", exact: true }).click()
   const log = page.locator("dialog[open]")
   await log.waitFor()
   const lines = await log

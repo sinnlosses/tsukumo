@@ -3,8 +3,8 @@ import { afterEach, beforeAll, describe, expect, it, vi } from "vitest"
 
 import { useInquiryCardVisibility } from "../../../../../../../src/browser/components/page/conversation/stores/inquiry-card-visibility.ts"
 import { useInquiryDraft } from "../../../../../../../src/browser/components/page/conversation/stores/inquiry-draft.ts"
-import { useInquiryJump } from "../../../../../../../src/browser/components/page/conversation/stores/inquiry-jump.ts"
 import { loadMarkdown } from "../../../../../../../src/browser/features/report/markdown.tsx"
+import { useInquiryJump } from "../../../../../../../src/browser/stores/inquiry-jump.ts"
 import type { SessionState } from "../../../../../../../src/shared/session/session-state.ts"
 import {
   chooseOutlineOpen,

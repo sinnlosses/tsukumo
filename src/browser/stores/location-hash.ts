@@ -29,40 +29,31 @@ import {
 import { dateKeyOf, parseDateKey, type DateKey } from "../../shared/diary/date-key.ts"
 
 /**
- * 画面の名前の一覧（唯一の正典）。
- * `Screen` 型と hash の `?` より前のパス（{@link pathOf}）はここから導く。
+ * 画面の名前とラベルの一覧（唯一の正典）。
+ * `Screen` 型・帯のメニューの並び（`SCREEN_NAV_ITEMS`）・hash の `?` より前のパス（{@link pathOf}）は全部ここから導く。
  * 画面を足したら、画面の部品を引く表（`LAYOUT_SCREENS` の `overlay`）にも登録する（忘れると型エラーになる）。
  */
 const SCREEN_LIST = [
-  { screen: "conversation" },
-  { screen: "character" },
-  { screen: "token-usage" },
-  { screen: "achievement" },
-  { screen: "tasks" },
-  { screen: "settings" },
-] as const satisfies readonly { readonly screen: string }[]
+  { screen: "conversation", label: "会話" },
+  { screen: "character", label: "キャラ" },
+  { screen: "token-usage", label: "トークン" },
+  { screen: "achievement", label: "成果" },
+] as const satisfies readonly { readonly screen: string; readonly label: string }[]
 
-/** どの入口にも出さず、hash を打って開く画面（見本帳）。 */
+/** 帯のメニューに出る画面。 */
+export type NavScreen = (typeof SCREEN_LIST)[number]["screen"]
+
+/** 帯に出さず、hash を打って開く画面（見本帳）。 */
 const HIDDEN_SCREEN_LIST = [{ screen: "design" }] as const satisfies readonly {
   readonly screen: string
 }[]
 
 /** 出している画面。hash が対応しない値のときは会話の画面に落ちる。 */
-export type Screen =
-  | (typeof SCREEN_LIST)[number]["screen"]
-  | (typeof HIDDEN_SCREEN_LIST)[number]["screen"]
+export type Screen = NavScreen | (typeof HIDDEN_SCREEN_LIST)[number]["screen"]
 
-/** 重ねる紙にする画面（会話の画面は紙の下に敷き、見本帳は紙にせず全面に出す）。 */
-export type SheetScreen = Exclude<Screen, "conversation" | "design">
-
-/** 紙の見出し。並びは画面を並べて出すときの順。 */
-export const SHEET_TITLES = {
-  tasks: "タスク",
-  achievement: "成果",
-  "token-usage": "使用量",
-  character: "キャラクター",
-  settings: "設定",
-} as const satisfies Record<SheetScreen, string>
+/** 帯のメニューが並べる順そのもの。 */
+export const SCREEN_NAV_ITEMS: readonly { readonly screen: NavScreen; readonly label: string }[] =
+  SCREEN_LIST
 
 /**
  * 見ているターン。`"newest"` は今回に追従する（新しいターンが始まればそちらへ移る）。

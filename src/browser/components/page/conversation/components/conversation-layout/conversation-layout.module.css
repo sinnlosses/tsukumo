@@ -1,0 +1,246 @@
+/* 会話の画面の4領域のレイアウト。
+   上段（メイン・サイドバー）と下段（キャラビュー・入力欄）で仕切りの位置を独立に動かせるようにするため、上下の行をそれぞれ別の grid（.layout-row-top / .layout-row-bottom）にし、行の高さ・各行の列幅は CSS カスタムプロパティで持つ（<ConversationLayout> がドラッグに応じて style で書き換える）。
+   ここに書いた var() の第2引数（フォールバック値）は `DEFAULT_SPLIT` と一致させること。
+
+   狭い画面での積み方（画面の高さに固定し、本文・顔と吹き出し・入力欄を縦の1列にする）は、このファイルの末尾の@media にある（他の領域のぶんはそれぞれの *.module.css の末尾）。
+   中くらいのビューポート幅（761〜1100px）でサイドバーを柱に畳む形は、その手前の @media にある。 */
+.layout-grid {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: var(--layout-row-top, 65fr) auto var(--layout-row-bottom, 35fr);
+  gap: var(--space-sm);
+  /* 最上部の帯（画面のナビ）の外寸（帯の地＋下の罫線）とその下の隙間、body の下の padding を差し引いて、grid 自体は残りの高さぴったりにする。
+     上の padding は引かない（帯がその中へはみ出して画面の上端に付くため）。
+     帯は別の機能が描くので、ここは奪われる高さ（theme.css の変数）だけを読む。 */
+  height: calc(
+    100vh - var(--page-padding) - var(--screen-nav-height) - var(--screen-nav-rule) -
+      var(--screen-nav-gap)
+  );
+}
+.layout-row {
+  display: grid;
+  gap: var(--space-sm);
+  min-width: 0;
+  min-height: 0;
+}
+.layout-row-top {
+  grid-template-columns: var(--layout-top-left, 75fr) auto var(--layout-top-right, 25fr);
+}
+.layout-row-bottom {
+  grid-template-columns: var(--layout-bottom-left, 50fr) auto var(--layout-bottom-right, 50fr);
+}
+/* 答え待ちのカードの席。狭い画面でだけ出す。 */
+.layout-inquiry {
+  display: none;
+}
+/* キャラビューを畳んだとき（雑談モード。立ち絵が上段へ移る）。
+   領域と仕切りは <ConversationLayout> が描かないので、ここは残った入力欄に全幅を渡すだけ。 */
+.layout-row-bottom[data-collapse-character="true"] {
+  grid-template-columns: 1fr;
+}
+/* 領域そのものは横に転がらない（横にスクロールできると使い勝手が悪い）。
+   `overflow-y: auto` だけを書くと、CSS では片方の軸が visible でなくなったときにもう片方の visible も auto に計算されるので、書いていない overflow-x が auto になって4領域すべてが横に転がっていた。
+   横に長いものは、中身の側が自前のスクロール容器を持つ（レポートの表は .table-scroll、コードは pre-wrap、svg は max-width: 100%、長い語は overflow-wrap: anywhere で折り返す）。 */
+.layout-region {
+  composes: surface-edge-rule surface-radius-lg surface-tone-surface from "../../../../ui/surface/surface-face.module.css";
+  /* 中身の側が「領域の内側の余白」を知るための変数。
+     メインビューのカードの頭（`position: sticky`）はこれだけ上へずらして、転がっても余白の帯から本文が覗かないようにする（`main-view.module.css`）。 */
+  --region-padding: var(--gutter-region);
+  min-width: 0;
+  min-height: 0;
+  padding: var(--region-padding);
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+/* メインビューの内寸を、中身（お伺いのカードの高さの上限）が `cqh` で読む。 */
+.layout-main {
+  container-type: size;
+}
+/* 枠も地の色も持たず、`ground` の上に直接置く領域。
+   キャラビューは常にこちら（付喪神は器物に宿るのであって、ウィジェットの中に座っているのではない）で、雑談中のメインビューもこちらになる（立ち絵と会話がそこへ移り、畳んだキャラビューと同じ立場になるため）。
+   2つの領域が同じ class を共有するのは、下の覆いの式を1箇所にしか書かないため。
+
+   背景を敷くのはこの領域だけ（キャラビューのセリフのログは、この領域の背景を上へ伸ばした写しを `--character-veil` を継いで描く。`character-view/stage/speech-log.css` の `.speech-log-stage::before`）。
+   枠も角丸も付けないのは変えない。背景はウィジェットの地ではなく、`ground` がこの領域だけ絵に替わったものとして扱う（角丸のままだと絵の四隅が欠けて「ウィジェットの中の絵」に見える）。
+   敷き方は覆いを1枚重ねた形で、覆いは `ground` 一色を `--character-background-veil` の不透明度にしたもの。
+   画像が見えるのは最大でも 30%。
+   下限は `MIN_BACKGROUND_VEIL` が定義の側で保証し、いまの地と字の色で足りないぶんは `--character-background-veil-floor` が押し上げる（両方の大きいほうを採る）。
+   下端で合わせる（background-position）のは、立ち絵が床に立つ見え方（--portrait-drop）と地面の位置をそろえるため。
+   雑談のメインビューでも同じ値でよい（そちらでも立ち絵は下端に立つ。横長になるぶん cover が左右を削るだけで、地面の高さは合ったまま）。
+   背景が無いときは変数が差さっていないので、覆いは不透明な `ground`（＝この領域の地はいままでと同じ色）、画像は `none` に落ちる。 */
+.layout-region.layout-ground {
+  --character-veil: color-mix(
+    in srgb,
+    var(--ground)
+      calc(
+        max(var(--character-background-veil, 1), var(--character-background-veil-floor, 0.7)) * 100%
+      ),
+    transparent
+  );
+  border: none;
+  border-radius: 0;
+  background-color: transparent;
+  background-image:
+    linear-gradient(var(--character-veil), var(--character-veil)),
+    var(--character-background-image, none);
+  background-position: center bottom;
+  background-size: cover;
+}
+/* サイドバーだけは領域自体をスクロールさせず（.layout-region の overflow-y: auto を打ち消す）、 3つの .sidebar-block を縦に並べて区画ごとに内側でスクロールさせる（「タスク一覧」「セッション情報」の見出しが画面の外に流れないようにするため）。
+   狭い画面でも.layout-grid の高さが画面に固定されるので、区画の伸び縮みと内側のスクロールは同じように働く。 */
+.layout-sidebar {
+  display: flex;
+  flex-direction: column;
+  overflow-y: hidden;
+}
+/* 答え待ちの間の枠の強調（dispatch.module.css の `.dispatch-pending-glow`）は、`<Dispatch>` の兄弟としてではなく、この領域（`<ConversationLayout>` が描く `.layout-dispatch` の `<section>`）自身の内側の縁に沿わせたい。
+   そこに `position: absolute; inset: 0` を置くための基準をここで用意する（部品は自分の subtree の外の DOM を直接いじらない。基準を用意するのは CSS 側で、JS の配線ではない）。 */
+.layout-dispatch {
+  position: relative;
+}
+/* 上下の仕切りと、比率を戻す口を同じ行に置く入れ物。
+   口は仕切りの右端に重ねる（口の中に仕切りを入れると、押したつもりがドラッグの始まりになる）。 */
+.layout-divider {
+  position: relative;
+}
+/* 領域の比率を既定に戻すピル（`<ConversationLayout>` が直接描く）。
+   比率が既定と違うときだけ出る。
+   上下の仕切りの右端に絵＋字で置く。
+   仕切りの行は 0.6rem しかないので、口は上下の隙間（grid の gap）へはみ出して仕切りの線の高さに縦の中央を合わせる。
+   右端は下段の領域の右端（.layout-row-bottom）に揃える。 */
+/* 顔は `<Button variant="tinted-accent">` が持つ。
+   箱（位置・重なり・並べ・余白・角丸・字の大きさ・行送り・折り返し・浮かせ方）だけここに置く。 */
+.layout-reset-split {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-pill);
+  font-size: var(--font-label);
+  line-height: 1;
+  white-space: nowrap;
+  transform: translateY(-50%);
+}
+
+/* 柱とサイドバーを包む要素。外側を押したかの判定にだけ使い、grid の並びには加わらない。 */
+.layout-side {
+  display: contents;
+}
+/* 中くらいのビューポート幅でだけ出る柱。 */
+.layout-rail {
+  display: none;
+}
+.layout-rail-toggle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-xs);
+  border-radius: var(--radius-md);
+}
+
+/* 中くらいのビューポート幅。サイドバーを右端の柱に畳み、柱の口で上段に重ねて開く。
+   問い合わせの字は `RAIL_TIER_QUERY` と同じにする。 */
+@media (min-width: 761px) and (max-width: 1100px) {
+  .layout-row-top {
+    position: relative;
+    grid-template-columns: minmax(0, 1fr) 3rem;
+  }
+  .layout-row-top .layout-resizer-top {
+    display: none;
+  }
+  .layout-row-top .layout-sidebar {
+    display: none;
+  }
+  .layout-row-top[data-sidebar-open="true"] .layout-sidebar {
+    display: flex;
+    position: absolute;
+    top: 0;
+    right: calc(3rem + 0.5rem);
+    bottom: 0;
+    z-index: 3;
+    box-sizing: border-box;
+    width: 20rem;
+    box-shadow: var(--shadow-overlay);
+  }
+  .layout-rail {
+    composes: surface-edge-rule surface-radius-lg surface-tone-surface from "../../../../ui/surface/surface-face.module.css";
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-sm);
+    min-height: 0;
+    padding: var(--space-md) 0;
+  }
+  .layout-row-top[data-sidebar-open="true"] .layout-rail {
+    border-color: var(--accent);
+  }
+}
+
+/* 狭い画面（760px 以下）。上から本文・顔と吹き出し・入力欄の縦の1列にし、転がるのは本文だけにする。
+   頭はこの grid の外（画面のナビの中）にあり、`#app` の縦の flex（theme.css の @media）がその残りの高さをこの grid に渡す。
+   サイドバーは出さない（行き先は頭の ≡ から開く面）。
+   下段は顔と吹き出し・入力欄の順に積み、どちらも中身なりの高さにする。 */
+@media (max-width: 760px) {
+  .layout-grid {
+    flex: 1 1 0;
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(0, 1fr) auto;
+    gap: 0;
+    min-height: 0;
+    height: auto;
+  }
+  .layout-row-top,
+  .layout-row-bottom {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  .layout-row-top .layout-sidebar {
+    display: none;
+  }
+  .layout-region.layout-main {
+    --region-padding: 14px;
+    padding: var(--region-padding) var(--space-lg);
+    border: none;
+    border-radius: 0;
+    background-color: transparent;
+  }
+  .layout-row-bottom,
+  .layout-row-bottom[data-collapse-character="true"] {
+    grid-template-rows: auto;
+  }
+  .layout-row-bottom .layout-region {
+    overflow-y: visible;
+  }
+  /* 入力欄の領域は余白・枠・角丸を持たず、入力欄の地と罫線が幅いっぱいに敷かれる。 */
+  .layout-row-bottom .layout-dispatch {
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    overflow: visible;
+  }
+  /* 顔と吹き出しの行は無地の地に置く（背景の絵はこの行では敷かない）。 */
+  .layout-row-bottom .layout-ground {
+    padding: 0;
+    background-image: none;
+  }
+  /* 札が無いあいだは余白も取らない。 */
+  .layout-inquiry {
+    display: block;
+    flex: none;
+    padding: var(--space-md) var(--space-md) 0;
+  }
+  .layout-inquiry:empty {
+    display: none;
+  }
+  /* 動かせる比率が無いので、上下の仕切りと比率を戻す口は出さない。 */
+  .layout-divider {
+    display: none;
+  }
+}

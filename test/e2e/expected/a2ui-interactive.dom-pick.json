@@ -1,5 +1,5 @@
 {
-  "paper": [
+  "main": [
     { "tag": "a2ui-react-report", "children": [
       { "tag": "div", "attributes": { "data-report-region": "section", "data-report-section": "0" }, "children": [
         { "tag": "h4", "children": ["架空の一覧"] },

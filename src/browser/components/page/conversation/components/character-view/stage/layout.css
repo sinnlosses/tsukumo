@@ -1,0 +1,42 @@
+/* 立ち絵と吹き出しの並びを包む箱。広い画面では並びに加わらず、狭い画面でまとめて隠すためだけにある。 */
+.character-stage {
+  display: contents;
+}
+/* 立ち絵も吹き出しの並びも下端で揃える（床に立つ見え方にするため）。
+   並びが伸びる向きは上で、過去のセリフは上へ押し上がる（.balloon-track の column-reverse）。
+   最新の吹き出しの下端の位置そのものは .balloon-track の margin-bottom（--balloon-bottom-gap）で固定する。
+   列と立ち絵の間に隙間を空けない（重なりは `.portrait + .balloon-track` の負の margin-left で作る）。
+   overflow: hidden は --portrait-drop で下へはみ出した立ち絵の足元をここで切るためのもの。
+   領域そのもの（.layout-region の overflow-y: auto）にスクロールバーを出さない。 */
+.character-layout {
+  height: 100%;
+  overflow: hidden;
+}
+/* 立ち絵の置き方（`<Portrait>` に className で渡す）。
+   大きさは領域の高さを基準にする（幅は画の縦横比で決まる）。
+   幅を基準にすると、キャラビューが横長・浅めの領域（既定で画面の 40% の高さ）のときに小さくなりすぎる。
+   いっぱいには広げず --portrait-height ぶんに留め、下端で揃えたうえで --portrait-drop ぶん下へずらして床に置く。
+   max-width は、領域が細いときに吹き出しの場所（.balloon-track の flex-basis）を食い潰さないための上限。
+   右端を透明へ抜く（`mask-image`）。吹き出しの列を重ねたときに、立ち絵の輪郭が列の下に唐突に切れて見えないようにするため。
+   マスクは不透明度だけを読むので、途中の色（black）自体に意味は無い。 */
+.portrait {
+  margin: 0 0 calc(-1 * var(--portrait-drop));
+  flex: 0 1 auto;
+  height: var(--portrait-height);
+  max-width: 45%;
+  -webkit-mask-image: linear-gradient(90deg, black 78%, transparent);
+  mask-image: linear-gradient(90deg, black 78%, transparent);
+  z-index: 1;
+}
+/* アイテムの席が位置を引く基準。セリフのログの床にも立ち絵が立つので、名前は舞台の立ち絵だけに付ける。
+   `.character-layout` に stacking context を作ると、席が立ち絵と列のあいだに挟まる重なりの順が壊れる。 */
+.character-layout > .portrait {
+  anchor-name: --stage-portrait;
+}
+
+/* 狭い画面（760px 以下）では立ち絵と吹き出しの並びを出さない（代わりは `<PhoneBalloon>`）。 */
+@media (max-width: 760px) {
+  .character-stage {
+    display: none;
+  }
+}

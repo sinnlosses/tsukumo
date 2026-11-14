@@ -1,8 +1,7 @@
-// セッションの出来事（`SessionEvent`）のうち、画面の周辺の状態（タスク・おすすめ・迎えの挨拶・キャラクター・セッション一覧・雑談・既定・圧縮）に関するものの型。
+// セッションの出来事（`SessionEvent`）のうち、サイドバーと画面の周辺の状態（タスク・おすすめ・迎えの挨拶・キャラクター・セッション一覧・雑談・既定・圧縮）に関するものの型。
 
 import type { CharacterInfo, CharacterPackEntry } from "../character-pack/character.ts"
 import type { ItemInfo, ItemSeatMap } from "../item/item.ts"
-import type { AizuchiMoment, AizuchiPairs } from "../recommendation/aizuchi.ts"
 import type { ReactionLine, WrittenReactions } from "../recommendation/reaction.ts"
 import type { RecommendationCard } from "../recommendation/recommendation-card.ts"
 import type { WelcomeGreetingState } from "../recommendation/welcome-greeting.ts"
@@ -14,7 +13,7 @@ import type { SessionId } from "./session-id.ts"
 export type SurroundingEvent =
   /**
    * タスクの一覧が変わった（Beads の課題を見て起こす）。
-   * 起こしてから最初の見回りで必ず1回届く。読めない・消えたときは `tasks: { kind: "unknown" }`（タスクの紙の「不明」表示に対応する）。
+   * 起こしてから最初の見回りで必ず1回届く。読めない・消えたときは `tasks: { kind: "unknown" }`（サイドバーの「不明」表示に対応する）。
    * 一覧は差分（{@link TaskSummaryChange}）で運び、全件は `hello` の `SessionState.tasks` が持つ。
    */
   | { readonly kind: "tasks-changed"; readonly tasks: TaskSummaryChange }
@@ -37,19 +36,6 @@ export type SurroundingEvent =
    * 反応の行が書けた（代を起こすたびに1回、書けたときだけ。`/clear` では流れない。出し手はサーバの迎えの書き手 `createWelcomeGreeter`）。
    */
   | { readonly kind: "reactions-written"; readonly reactions: WrittenReactions }
-  /**
-   * 相づちの組が書けた（代を起こすたびに1回、書けたときだけ。`/clear` では流れない。出し手は反応の行と同じ `createWelcomeGreeter`）。
-   */
-  | { readonly kind: "aizuchi-written"; readonly pairs: AizuchiPairs }
-  /**
-   * 利用者が相づちの札を押した（出し手はコマンド `pressAizuchi`。駆動には何も送らない）。
-   * 書けていない・番号の組が無い・押し済みの組なら、畳んでも何も変わらない。
-   */
-  | {
-      readonly kind: "aizuchi-pressed"
-      readonly moment: AizuchiMoment
-      readonly index: number
-    }
   /**
    * 待ちの一言を出す時刻（`waitingLineDueAt`）が来た。出し手はサーバの時計で、その時刻に1回流す。
    * 時刻が来た瞬間には他のイベントが来ないので、待ちの一言を記録に積む合図にする。
@@ -91,7 +77,7 @@ export type SurroundingEvent =
    */
   | { readonly kind: "chat-mode-changed"; readonly chat: boolean }
   /**
-   * 雑談の欄外の「最近の話題」に出す見出し（新しい順）。雑談で起こしたときと、定着があらすじを書き直したときに流れる。
+   * 雑談のサイドバーの「最近の話題」に出す見出し（新しい順）。雑談で起こしたときと、定着があらすじを書き直したときに流れる。
    * 運ぶのは写しから取り出した見出しだけで、要約の本文は乗らない。取り出せなかった・写しがまだ無いときは空の並び。
    */
   | { readonly kind: "chat-topics-changed"; readonly topics: readonly string[] }
@@ -101,7 +87,7 @@ export type SurroundingEvent =
    */
   | { readonly kind: "chat-consolidation-halted"; readonly failures: number }
   /**
-   * 雑談の欄外の「覚えていること」に出す一覧。
+   * 雑談のサイドバーの「覚えていること」に出す一覧。
    * 雑談で起こしたときと、`remember` / `forget`（キャラクター自身）・画面の「編集」の `chat.forgetRememberedLine` のどれかで `persona.md` の `## 覚えたこと` が変わったときに流れる。
    *
    * 運ぶのは節の行そのもの（`- ` を外した文面、古い→新しいの順）。

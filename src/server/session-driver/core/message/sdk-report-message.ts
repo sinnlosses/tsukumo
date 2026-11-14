@@ -20,7 +20,6 @@ import { optionalString } from "../../../../shared/utils/optional-string.ts"
 import { a2uiReportInput } from "../../../report/core/body/a2ui-report-message.ts"
 import { parseConclusion } from "../../../report/core/body/conclusion-sentence.ts"
 import { legacyReportComponents } from "../../../report/core/body/legacy-report-component-list.ts"
-import { readProgressFields } from "../../../report/core/body/report-progress-reading.ts"
 import { speechEvents } from "./sdk-speech-message.ts"
 
 /**
@@ -29,7 +28,6 @@ import { speechEvents } from "./sdk-speech-message.ts"
  * `keyFigures` の「無い」と形の崩れ（3〜4個でない）は空の配列に畳む。
  * `favor` の「無い」は空の文字列に、`checks` の「無い」は空の配列に畳む（描く側は空の塊を置かないだけで済む）。
  * `task` の「無い」と形の崩れ（引数に `task` が無かったころの transcript も）は `none` に畳む。`workPlanClosing` も同じ。
- * 判定・次の手・置いた前提・出どころ・前回との対応・案内の付箋は、古い欄の読み替えごと {@link readProgressFields} が読む（`workPlanClosing` は判定から導くことがある）。
  * `closing` の「無い」（引数に `closing` が無かったころの transcript）は `none` に畳む。
  * `waitingLine` の「無い」（省いた・文が空白だけ・形の崩れ）も `none` に畳む。
  * `title` の「無い」と文字列でないものは undefined。
@@ -70,18 +68,6 @@ export function reportEvents(
   }
 
   const task = parseReportTask(fields.task)
-  const favor = optionalString(fields.favor) ?? ""
-  const { workPlanClosing, ...progress } = readProgressFields({
-    verdict: fields.verdict,
-    next: fields.next,
-    assumptions: fields.assumptions,
-    sources: fields.sources,
-    previous: fields.previous,
-    guideNotes: fields.guideNotes,
-    favor,
-    task,
-    workPlanClosing: parseWorkPlanClosing(fields.workPlanClosing),
-  })
 
   return [
     {
@@ -99,11 +85,10 @@ export function reportEvents(
       conclusionSentenceChars: conclusion.conclusionSentenceChars,
       conclusionFirstSentence: conclusion.conclusionFirstSentence,
       keyFigures: parseKeyFigures(fields.keyFigures),
-      favor,
+      favor: optionalString(fields.favor) ?? "",
       checks: parseReportChecks(fields.checks),
       task,
-      workPlanClosing,
-      ...progress,
+      workPlanClosing: parseWorkPlanClosing(fields.workPlanClosing),
       closing: speechEvents(fields.closing, expressions)[0] ?? { kind: "none" },
       waitingLine: speechEvents(fields.waitingLine, expressions).find(
         (speech) => speech.text.trim() !== "",

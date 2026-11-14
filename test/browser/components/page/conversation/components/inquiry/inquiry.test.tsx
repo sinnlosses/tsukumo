@@ -8,7 +8,7 @@ import {
   useInquiryDraft,
   useInquiryFocus,
 } from "../../../../../../../src/browser/components/page/conversation/stores/inquiry-draft.ts"
-import { useInquiryJump } from "../../../../../../../src/browser/components/page/conversation/stores/inquiry-jump.ts"
+import { useInquiryJump } from "../../../../../../../src/browser/stores/inquiry-jump.ts"
 import type { StampedPendingAsk } from "../../../../../../../src/shared/session-driver/pending-ask.ts"
 import type { QuestionBrief } from "../../../../../../../src/shared/session-driver/question-brief.ts"
 import type {

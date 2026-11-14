@@ -1,7 +1,7 @@
-// 部屋の頭の部屋の名前と、押すと開くセッションの一覧のロジック。
-// 部屋の名前と探すの「セッションを切り替える」が、同じ開閉の状態（`useSessionSwitcherRequest`）を読む。
+// 帯の左上の部屋の名前のラベルと、押すと開く切り替え画面のロジック。
+// 札と切り替え画面が同じ開閉の状態（`useSessionSwitcherRequest`）を読む。
 //
-// 一覧（`SessionState.sessions`）は軽いもの（ID・見出し・時刻）だけを持つ。
+// 一覧（`SessionState.sessions`）は軽いもの（ID・見出し・時刻）だけで、依頼の数・要約・最後のセリフは選んだ1件ぶんだけ取りに行く（`useSessionDigest`）。
 
 import { FRAME_ERROR_REASON } from "../../../../../shared/frame-error-reason.ts"
 import type { SessionChoice } from "../../../../../shared/session/session-choice.ts"
@@ -19,6 +19,12 @@ import { useOccupiedSessions } from "./use-occupied-session-list.ts"
 
 /** 一覧の日の区切り（見本の「今日」「昨日」「それより前」）。 */
 export type SessionSwitcherGroup = "today" | "yesterday" | "earlier"
+
+export const SESSION_SWITCHER_GROUP_LABELS = {
+  today: "今日",
+  yesterday: "昨日",
+  earlier: "それより前",
+} as const satisfies Record<SessionSwitcherGroup, string>
 
 export type SessionSwitcherRow = {
   readonly sessionId: SessionId

@@ -56,7 +56,7 @@ const tablePlot = () =>
 
 const reportLeafValues = (
   sections: Parameters<typeof reportLeafLayoutOf>[0],
-): ReportLeafLayout["values"] => reportLeafLayoutOf(sections, []).values
+): ReportLeafLayout["values"] => reportLeafLayoutOf(sections).values
 
 describe("reportLeafLayoutOf", () => {
   it("図と表の番号は節をまたいで通しで数え、題の無い塊は番号を持たない", () => {
@@ -118,31 +118,6 @@ describe("reportLeafLayoutOf", () => {
 
     expect(blocks?.[0]?.captionNumber).toEqual({ kind: "none" })
     expect(blocks?.[0]?.gutterNotes).toEqual([{ label: "", text: "架空の出どころ" }])
-  })
-
-  it("出どころの番号が最初に現れる内容部品に、場所と補いの欄外注が付き、2度目の出現には付かない", () => {
-    const text = (body: string): LeafComponent => ({
-      kind: "text",
-      text: body,
-      fold: "",
-      aside: "",
-    })
-    const [first, second] = reportLeafLayoutOf(
-      [
-        section([text("架空の一文{{src: 1}}。"), text("架空の二文{{src: 2}}。")]),
-        section([text("架空の三文{{src: 1}}。")]),
-      ],
-      [
-        { mark: 1, place: "src/fictional/a.ts:12", note: "架空の補い" },
-        { mark: 2, place: "架空の一次情報" },
-      ],
-    ).values
-
-    expect(first?.map((value) => value.gutterNotes)).toEqual([
-      [{ label: "1", text: "`src/fictional/a.ts:12` 架空の補い" }],
-      [{ label: "2", text: "`架空の一次情報`" }],
-    ])
-    expect(second?.[0]?.gutterNotes).toEqual([])
   })
 
   it("memo の欄外注は直前の内容部品へ寄り、memo 自身は寄せたことだけを持つ。セクションの最初の memo は自分で持つ", () => {

@@ -18,7 +18,7 @@ test.describe("入力欄のマークダウンエディタ", () => {
       scenario: "markdown-composer-send",
       scene: "none",
       viewport: "wide",
-      domRoots: ["dock"],
+      domRoots: ["dispatch"],
     })
     const { page } = room
     const toggle = page.getByRole("button", { name: TOGGLE_NAME })
@@ -56,7 +56,7 @@ test.describe("入力欄のマークダウンエディタ", () => {
       scenario: "markdown-composer-ime",
       scene: "none",
       viewport: "wide",
-      domRoots: ["dock"],
+      domRoots: ["dispatch"],
     })
     const { page } = room
     const lines = page.locator(".cm-line")
@@ -122,7 +122,7 @@ test.describe("入力欄のマークダウンエディタ", () => {
       scenario: "markdown-composer-ime",
       scene: "none",
       viewport: "wide",
-      domRoots: ["dock"],
+      domRoots: ["dispatch"],
     })
     const { page } = room
     const lines = page.locator(".cm-line")
@@ -213,7 +213,7 @@ test.describe("入力欄のマークダウンエディタ", () => {
       scenario: "markdown-composer-ime",
       scene: "none",
       viewport: "wide",
-      domRoots: ["dock"],
+      domRoots: ["dispatch"],
     })
     const { page } = room
     const toggle = page.getByRole("button", { name: TOGGLE_NAME })

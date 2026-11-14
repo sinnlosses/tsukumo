@@ -37,7 +37,7 @@ test.describe("失敗の表示", () => {
 })
 
 function failureBlock(page: Page): Locator {
-  return page.locator('[data-region="paper"]').getByRole("note", { name: "失敗で終わった" })
+  return page.locator('[data-region="main"]').getByRole("note", { name: "失敗で終わった" })
 }
 
 function draft(page: Page): Promise<string> {
@@ -55,7 +55,7 @@ function isAtHeadOfCard(block: Locator): Promise<boolean> {
 
 /** 入力欄の下段（道具の口と送信の行）が1段に収まっているか。2段に折れると、行の高さが送信ボタン2つ分を超える。 */
 function isDispatchRowSingle(page: Page): Promise<boolean> {
-  return page.locator('[data-region="dock"]').evaluate((region) => {
+  return page.locator('[data-region="dispatch"]').evaluate((region) => {
     const send = region.querySelector('button[type="submit"]')
     const toolbar = send?.parentElement?.parentElement
     if (send === null || toolbar === null || toolbar === undefined) {

@@ -17,80 +17,28 @@ const REACTIONS = {
   idle: { text: "架空の待ち", expression: "default" },
 }
 
-const AIZUCHI_PAIR = { chip: "架空の札", reply: "架空の返事", expression: "default" }
-const AIZUCHI = {
-  deliver: [AIZUCHI_PAIR, AIZUCHI_PAIR, AIZUCHI_PAIR],
-  stumble: [AIZUCHI_PAIR, AIZUCHI_PAIR, AIZUCHI_PAIR],
-  work: [AIZUCHI_PAIR, AIZUCHI_PAIR, AIZUCHI_PAIR],
-}
-
-function isGreetingQuery(query: { readonly kind: string }): boolean {
-  return query.kind === "welcome-greeting"
-}
-
-function isReactionsQuery(query: { readonly kind: string }): boolean {
-  return query.kind === "welcome-reactions"
+/** 挨拶の問い合わせか（反応の行の問い合わせは材料の節を持たない）。 */
+function isGreetingQuery(query: { readonly prompt: string }): boolean {
+  return query.prompt.startsWith("## 材料")
 }
 
 describe("createWelcomeGreeter", () => {
-  it("start は挨拶の答えを待たずに、反応の行と相づちの問い合わせも別々に同時に起こす", () => {
+  it("start は挨拶の答えを待たずに、反応の行の問い合わせも同時に起こす", () => {
     const { ports, queries } = harness()
 
     createWelcomeGreeter(ports).start(MATERIAL)
 
-    expect(queries.map((query) => query.kind)).toEqual([
-      "welcome-greeting",
-      "welcome-reactions",
-      "aizuchi",
-    ])
+    expect(queries.map(isGreetingQuery)).toEqual([true, false])
   })
 
-  it("rewriteGreeting は挨拶だけを問い合わせ、反応の行と相づちの問い合わせを起こさない", () => {
+  it("rewriteGreeting は挨拶だけを問い合わせ、反応の行の問い合わせを起こさない", () => {
     const { ports, queries } = harness()
     const greeter = createWelcomeGreeter(ports)
 
     greeter.start(MATERIAL)
     greeter.rewriteGreeting(MATERIAL)
 
-    expect(queries.map((query) => query.kind)).toEqual([
-      "welcome-greeting",
-      "welcome-reactions",
-      "aizuchi",
-      "welcome-greeting",
-    ])
-  })
-
-  it("相づちが書ければ配り、足跡の対象は aizuchi になる", async () => {
-    const { ports, queries, aizuchi, reported } = harness()
-
-    createWelcomeGreeter(ports).start(MATERIAL)
-    queries[2]?.settle(AIZUCHI)
-    await flush()
-
-    expect(aizuchi).toEqual([AIZUCHI])
-    expect(reported.map((footprint) => [footprint.target, footprint.outcome])).toEqual([
-      ["aizuchi", "written"],
-    ])
-  })
-
-  it("相づちの1組が知らない表情なら全部を落として配らず、相づちの場所で知らせる", async () => {
-    const { ports, queries, aizuchi, reactions, unwritten } = harness()
-
-    createWelcomeGreeter(ports).start(MATERIAL)
-    queries[1]?.settle(REACTIONS)
-    queries[2]?.settle({
-      ...AIZUCHI,
-      work: [AIZUCHI_PAIR, AIZUCHI_PAIR, { ...AIZUCHI_PAIR, expression: "架空の知らない表情" }],
-    })
-    await flush()
-    for (let index = 1; index < 4; index += 1) {
-      queries.filter((query) => query.kind === "aizuchi")[index]?.settle({})
-      await flush()
-    }
-
-    expect(aizuchi).toEqual([])
-    expect(reactions).toEqual([REACTIONS])
-    expect(unwritten.map((entry) => entry.place)).toEqual(["aizuchi-rejected"])
+    expect(queries.map(isGreetingQuery)).toEqual([true, false, true])
   })
 
   it("挨拶が書けなくても、反応の行が書ければ配る", async () => {
@@ -119,7 +67,7 @@ describe("createWelcomeGreeter", () => {
     queries[1]?.settle({ ...REACTIONS, idle: { text: "", expression: "default" } })
     await flush()
     for (let index = 1; index < 4; index += 1) {
-      queries.filter(isReactionsQuery)[index]?.settle({})
+      queries.filter((query) => !isGreetingQuery(query))[index]?.settle({})
       await flush()
     }
 

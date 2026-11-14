@@ -69,9 +69,9 @@ test.describe("ワークフローの設定", () => {
             0,
           ),
       )
-    // つかむ点へフォーカスを移すと、設定の紙はその点が見える所まで転がる。測るのはそのあと。
-    await dialog.getByRole("button", { name: "架空の甲 を動かす（↑↓ キーでも）" }).focus()
     const scrolledBefore = await scrolled()
+
+    await dialog.getByRole("button", { name: "架空の甲 を動かす（↑↓ キーでも）" }).focus()
     await room.page.keyboard.press("Space")
     await room.page.keyboard.press("ArrowDown")
     await room.page.keyboard.press("Escape")
@@ -139,16 +139,13 @@ async function openWorkflowFace(
     }),
   )
 
+  await room.page.locator('button[aria-label="設定"][aria-haspopup="dialog"]').click()
   const dialog = room.page.getByRole("dialog", { name: "設定" })
   await room.revealAfterResponse(ready(dialog), {
     response: "workflowSetting/read",
     baseline: {
       kind: "after-act",
-      act: () =>
-        room.page
-          .locator('[data-region="sidebar"]')
-          .getByRole("link", { name: "設定", exact: true })
-          .click(),
+      act: () => dialog.getByRole("button", { name: "ワークフロー" }).click(),
     },
   })
   return { room, dialog }

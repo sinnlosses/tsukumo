@@ -19,9 +19,12 @@ import {
 import { REVEAL_PENDING_ATTRIBUTE } from "../../../../../../domain/reveal/start-pop.ts"
 import { useBeforePaintSync } from "../../../../../../hooks/use-before-paint-sync.ts"
 import { useMountEffect } from "../../../../../../hooks/use-mount-effect.ts"
+import {
+  useReadingSection,
+  type ReportOutlineEntry,
+} from "../../../../../../stores/reading-section.ts"
 import type { OutlineReport } from "../../../domain/outline-report-row.ts"
 import type { TurnResult } from "../../../domain/turn-result.ts"
-import { useReadingSection, type ReportOutlineEntry } from "../../../stores/reading-section.ts"
 import type { HeadNotice, HeadNoticeAction } from "../domain/head-notice.ts"
 import {
   activeLineOf,
@@ -53,8 +56,6 @@ type ReportOutlineTurn = {
 }
 
 export type ReportOutlineProps = {
-  /** 列を置いてよいか。置かないときは、知らせの行を本文の上端に出す。 */
-  readonly column: boolean
   /** 集計期間の中のやり取り。古い順（末尾が最新）。 */
   readonly turns: readonly ReportOutlineTurn[]
   readonly activeTurnId: number
@@ -178,7 +179,7 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
     }
     const content: HTMLDivElement = found
 
-    const scrollerOfContent = content.closest('[data-region="paper"]')
+    const scrollerOfContent = content.closest('[data-region="main"]')
 
     let passedHeadings = new Set<Element>()
     let headingObserver: IntersectionObserver | undefined = undefined
@@ -315,7 +316,7 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
     }
   }, [])
 
-  const visible = props.column && props.turns.length >= 1
+  const visible = props.turns.length >= 1
 
   // 見出しへ移れと頼まれたら、その見出しへ転がして固定する。
   useMountEffect(() =>

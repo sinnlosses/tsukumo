@@ -1,7 +1,10 @@
 {
-  "stage-thread": [
-    { "tag": "div", "attributes": { "data-who": "you" }, "children": [
-      { "tag": "button", "children": ["あるじ", "ドラフト T-003 を計画して。## 完了条件 と ## やること を書いて、着手できる todo にする。"] }
+  "task-section": [
+    { "tag": "section", "attributes": { "aria-label": "タスク" }, "children": [
+      { "tag": "ul", "attributes": { "aria-label": "絞り込み" }, "children": [
+        { "tag": "button", "attributes": { "aria-pressed": "true" }, "children": ["ドラフト", "1"] }
+      ] },
+      { "tag": "button", "attributes": { "aria-haspopup": "dialog", "aria-expanded": "false" }, "children": ["T-003", "架空のタスク（ドラフト）"] }
     ] }
   ]
 }

@@ -1,10 +1,42 @@
-/* 設定の面に並ぶ行。 */
+/* 帯の右端の歯車と、設定の面に並ぶ行。
+   狭い画面で帯から消す規則は `screen-nav.module.css` の @media が持つ。 */
 
+/* 設定の歯車。帯のいちばん右端で、モデル・許可モードの右に付く。
+   会話の画面では左隣のいまの作業のカードもモデル・許可モードも帯に無いので、自分で右端へ寄る（`margin-left: auto`）。 */
+.screen-nav-settings {
+  display: flex;
+  flex: none;
+  margin-left: auto;
+}
+/* 枠も地も無い 36px の四角に線画の歯車だけを置く。開いているときは字の濃さに加えて地も敷く（色だけで伝えない）。 */
+.screen-nav-settings-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--ink-quiet);
+  cursor: pointer;
+}
+.screen-nav-settings-toggle:hover {
+  color: var(--ink);
+}
+/* 群の区切りの見出し。2つ目からは上に余白を置く。字の大きさ・色は `Text` が持つ。 */
+.screen-nav-settings-heading {
+  margin: 0 0 var(--space-sm);
+}
+.screen-nav-settings-heading ~ .screen-nav-settings-heading {
+  margin-top: var(--space-md);
+}
 /* ラベルと操作子の2列。並べ・間隔・揃えは `HStack` が持つ。 */
 .screen-nav-settings-row {
   min-height: 1.9rem;
 }
-/* 面の行。「名前 132 ＋ 操作 1fr」の2列で、行の間に細い罫線を引く。 */
+/* ダイアログの面の行。「名前 132 ＋ 操作 1fr」の2列で、行の間に細い罫線を引く。引き出しは外側にこの class を置かないので変わらない。 */
 .screen-nav-settings-table {
   font-size: var(--font-secondary);
 }
@@ -28,4 +60,8 @@
   width: 0;
   min-width: 100%;
   margin: var(--space-xs) 0 0;
+}
+/* 箱だけ（置き方）。顔は `<Button variant="link">` が持つ。 */
+.screen-nav-settings-reset {
+  margin-left: auto;
 }

@@ -64,10 +64,7 @@ describe("applySessionEvent（委譲とワークプラン）", () => {
 describe("applySessionEvent（委譲の返却で進むワークプラン）", () => {
   const request = requestEvent()
   const PHASES = ["架空の計画", "架空の実装A", "架空の実装B", "架空の受け入れ"]
-  const plan = (
-    current: number,
-    delegatedRange: WorkPlan["delegatedRange"],
-  ): Extract<SessionEvent, { readonly kind: "work-plan" }> => ({
+  const plan = (current: number, delegatedRange: WorkPlan["delegatedRange"]): SessionEvent => ({
     kind: "work-plan",
     phases: PHASES,
     current,
@@ -141,22 +138,6 @@ describe("applySessionEvent（委譲の返却で進むワークプラン）", ()
     const state = apply(request, plan(1, RANGE), request)
 
     expect(applySessionEvent(state, returned(done(1)), 5_000)).toEqual(state)
-  })
-
-  it("新しい欄つきの work-plan と phase-redone の返却を畳むと、今のワークプランに欄と周 2 が残る", () => {
-    const state = apply(
-      request,
-      { ...plan(1, RANGE), replanReason: "架空の理由。", assumptions: ["架空の前提"] },
-      returned({ kind: "phase-redone", phase: 1, count: 2, summary: "架空の差し戻し" }),
-      plan(1, RANGE),
-    )
-
-    const latest = currentWorkPlan(state.records)
-
-    expect(latest).toMatchObject({ current: 1, phaseLaps: [1, 2, 1, 1] })
-    expect(
-      state.records.find((record) => record.kind === "work-plan" && record.replanReason),
-    ).toMatchObject({ assumptions: ["架空の前提"] })
   })
 })
 

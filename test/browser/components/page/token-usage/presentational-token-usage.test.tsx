@@ -1,7 +1,6 @@
 import { cleanup, fireEvent, render } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
-import type { UsePlanUsageResult } from "../../../../../src/browser/components/page/token-usage/hooks/use-plan-usage.ts"
 import type {
   ModelRowView,
   PeriodChoiceView,
@@ -142,30 +141,8 @@ function renderScreen(options: Partial<RenderOptions> = {}): ReturnType<typeof r
       plan={merged.plan}
       contextUsage={{ kind: "unavailable" }}
       usageReview={FIXTURE_USAGE_REVIEW}
-      planUsage={FIXTURE_PLAN_USAGE}
     />,
   )
-}
-
-/** プランの枠は別のテストで測るので、ここでは取れた値（5時間 40%・7日 10%）で描く。 */
-const FIXTURE_PLAN_USAGE: UsePlanUsageResult = {
-  state: {
-    kind: "ready",
-    usage: {
-      fiveHour: {
-        utilization: 40,
-        resetsAt: Temporal.Instant.from("2001-02-03T12:00:00Z").epochMilliseconds,
-      },
-      sevenDay: {
-        utilization: 10,
-        resetsAt: Temporal.Instant.from("2001-02-09T12:00:00Z").epochMilliseconds,
-      },
-    },
-    takenAt: Temporal.Instant.from("2001-02-03T09:00:00Z").epochMilliseconds,
-  },
-  source: { kind: "after", finishedTurnCount: 1 },
-  fetching: false,
-  retry: () => {},
 }
 
 describe("PresentationalTokenUsage", () => {
@@ -350,27 +327,6 @@ describe("PresentationalTokenUsage", () => {
       false,
       true,
     ])
-  })
-
-  it("文脈・プランの枠・期間の消費・減らし方の順に並ぶ", () => {
-    const { getByRole, getByText } = renderScreen()
-
-    const contextNote = getByText("いまのコンテキストはまだ取れていない")
-    const planHeading = getByRole("heading", { name: "プランの枠" })
-    const periodHeading = getByRole("heading", { name: "期間の消費" })
-    const reviewHeading = getByText("tsukumo に減らし方を見てもらう")
-    const following = (a: Node, b: Node): boolean =>
-      (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0
-    expect(following(contextNote, planHeading)).toBe(true)
-    expect(following(planHeading, periodHeading)).toBe(true)
-    expect(following(periodHeading, reviewHeading)).toBe(true)
-  })
-
-  it("プランの枠に5時間の枠と7日の枠の行が出る", () => {
-    const { queryByText } = renderScreen()
-
-    expect(queryByText("5時間")).not.toBeNull()
-    expect(queryByText("7日間")).not.toBeNull()
   })
 
   it("plan が届いていれば題の右に札で出す", () => {

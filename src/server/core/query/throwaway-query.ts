@@ -13,7 +13,6 @@ const THROWAWAY_QUERY_KINDS = [
   "recommendation",
   "welcome-greeting",
   "welcome-reactions",
-  "aizuchi",
   "character-generation",
   "usage-review",
   "usage-proposal",

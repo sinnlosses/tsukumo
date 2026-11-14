@@ -1,4 +1,4 @@
-// 設定の紙の「ワークフロー」の面。どのリポジトリの設定かを先頭に出し、欄を schema の順に置く。
+// 設定のダイアログの「ワークフロー」の面。どのリポジトリの設定かを先頭に出し、欄を schema の順に置く。
 // 並びの欄は頭の行・流れの帯・行の札（つかむ点・番号・名前・識別子・説明・「…」）・並びに入っていないスキルの札、
 // 選択の欄は選択肢のラジオ（名前と説明）、コマンドの欄は1行のテキスト欄を置く。
 // 読み取り専用の欄は名前・説明・値の字だけで、入力は置かない。
@@ -8,65 +8,54 @@
 import type { ReactElement } from "react"
 
 import { useWorkflowSetting } from "../hooks/use-workflow-setting.ts"
+import { ScreenNavSettingsFaceFrame } from "./screen-nav-settings-face-frame.tsx"
 import { WorkflowField } from "./workflow-field/workflow-field.tsx"
 import { WorkflowMessage } from "./workflow-message/workflow-message.tsx"
 import { WorkflowRepository } from "./workflow-repository/workflow-repository.tsx"
 import { WorkflowSaveBand } from "./workflow-save-band/workflow-save-band.tsx"
 
-/**
- * 紙の「このプロジェクト」の群に置く形。面の枠で包まず、欄と保存の帯を流れのまま縦に置く。
- * 帯の置き場の class は呼び手が渡す。
- */
-export function ScreenNavSettingsWorkflowFlow(props: {
-  readonly bandClassName: string
-}): ReactElement {
-  const { body, band } = workflowParts(useWorkflowSetting())
+export function ScreenNavSettingsWorkflowFace(props: { readonly title: string }): ReactElement {
+  const setting = useWorkflowSetting()
 
-  return (
-    <>
-      {body}
-      {band !== undefined && <footer className={props.bandClassName}>{band}</footer>}
-    </>
-  )
-}
-
-function workflowParts(setting: ReturnType<typeof useWorkflowSetting>): {
-  readonly body: ReactElement
-  readonly band?: ReactElement
-} {
   switch (setting.kind) {
     case "loading":
-      return { body: <WorkflowMessage text="ワークフローの設定を読んでいる…" tone="ink-quiet" /> }
+      return (
+        <ScreenNavSettingsFaceFrame title={props.title} foot={undefined}>
+          <WorkflowMessage text="ワークフローの設定を読んでいる…" tone="ink-quiet" />
+        </ScreenNavSettingsFaceFrame>
+      )
     case "unreachable":
-      return { body: <WorkflowMessage text={setting.message} tone="state-warn" /> }
+      return (
+        <ScreenNavSettingsFaceFrame title={props.title} foot={undefined}>
+          <WorkflowMessage text={setting.message} tone="state-warn" />
+        </ScreenNavSettingsFaceFrame>
+      )
     case "unavailable":
-      return {
-        body: (
-          <>
-            <WorkflowRepository repository={setting.repository} />
-            <WorkflowMessage text={setting.message} tone="ink" />
-          </>
-        ),
-      }
+      return (
+        <ScreenNavSettingsFaceFrame title={props.title} foot={undefined}>
+          <WorkflowRepository repository={setting.repository} />
+          <WorkflowMessage text={setting.message} tone="ink" />
+        </ScreenNavSettingsFaceFrame>
+      )
     case "available":
-      return {
-        body: (
-          <>
-            <WorkflowRepository repository={setting.repository} />
-            {setting.rows.map((row) => (
-              <WorkflowField key={row.key} row={row} busy={setting.busy} />
-            ))}
-          </>
-        ),
-        band: (
-          <WorkflowSaveBand
-            change={setting.change}
-            busy={setting.busy}
-            onSave={setting.onSave}
-            onCancel={setting.onCancel}
-            canSave={setting.canSave}
-          />
-        ),
-      }
+      return (
+        <ScreenNavSettingsFaceFrame
+          title={props.title}
+          foot={
+            <WorkflowSaveBand
+              change={setting.change}
+              busy={setting.busy}
+              onSave={setting.onSave}
+              onCancel={setting.onCancel}
+              canSave={setting.canSave}
+            />
+          }
+        >
+          <WorkflowRepository repository={setting.repository} />
+          {setting.rows.map((row) => (
+            <WorkflowField key={row.key} row={row} busy={setting.busy} />
+          ))}
+        </ScreenNavSettingsFaceFrame>
+      )
   }
 }

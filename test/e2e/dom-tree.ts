@@ -68,15 +68,18 @@ ${DOM_TREE_HELPERS_SCRIPT}
 
 /** 部分木の名前から根のセレクタへの表。`class` では当てない（見た目の直しで外れる）。 */
 const DOM_ROOT_SELECTORS = {
-  paper: '[data-region="paper"]',
+  "screen-nav": 'nav[aria-label="画面"]',
+  main: '[data-region="main"]',
   sidebar: '[data-region="sidebar"]',
-  dock: '[data-region="dock"]',
-  "stage-balloon": '[data-slot="balloon"]',
-  "stage-thread": '[data-slot="thread"]',
-  "stage-portrait": '[data-slot="portrait"]',
+  character: '[data-region="character"]',
+  dispatch: '[data-region="dispatch"]',
+  "work-strip": 'section[aria-label="進み具合"]',
+  "turn-outline": 'nav[aria-label="やり取り"]',
   "remembered-lines": 'section[aria-label="覚えていること"]',
+  "task-section": 'section[aria-label="タスク"]',
   "task-board": 'dialog[aria-label="タスク"]',
-  "session-menu": 'dialog[aria-label="セッションの切り替え"]',
+  "task-run-confirm": 'dialog[aria-label="タスクの実行"]',
+  "session-switcher": 'dialog[aria-label="セッションを切り替える"]',
 } as const satisfies Record<string, string>
 
 /**

@@ -31,10 +31,7 @@ export async function expectBlockGapsOnGrid(page: Page): Promise<void> {
     if (body === null) {
       return []
     }
-    // 流れから外した子（余白に浮かべる口など）は塊として数えない。
-    const blocks = [...body.children].filter(
-      (child) => !["absolute", "fixed"].includes(getComputedStyle(child).position),
-    )
+    const blocks = [...body.children]
     return blocks.slice(1).map((block, index) => {
       const previous = blocks[index]
       const label = (element?: Element): string =>

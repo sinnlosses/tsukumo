@@ -3,17 +3,15 @@
 import { phaseDurationOf } from "../../../../../shared/session/phase-duration.ts"
 import type { RecordTime } from "../../../../../shared/session/session-record.ts"
 import { workPlanOf } from "../../../../../shared/session/work-plan-fold.ts"
-import { lapEntriesOf, type WorkPlanLapEntry } from "../../../../../shared/session/work-plan-lap.ts"
 import { shiftedPhaseOf } from "../../../../../shared/session/work-plan-shift.ts"
 import type { WorkPlanTrail } from "../../../../../shared/session/work-plan-trail.ts"
 import { type LatestWorkPlan, plannedPhasesOf } from "../../../../../shared/session/work-plan.ts"
 import type { MeasuredTime } from "../../../../../shared/utils/elapsed-time.ts"
 
-/** 段1つの所要（{@link phaseDurationOf}）と段のまとめ（無ければ空の文字列）と、差し戻された周（{@link lapEntriesOf}）。 */
+/** 段1つの所要（{@link phaseDurationOf}）と段のまとめ（無ければ空の文字列）。 */
 export type PhaseRecap = {
   readonly duration: MeasuredTime
   readonly summary: string
-  readonly laps: readonly WorkPlanLapEntry[]
 }
 
 /**
@@ -37,15 +35,10 @@ export function phaseRecapsOf(
       return shifted.kind === "finished" ? [[shifted.phase.key, shifted.summary] as const] : []
     }),
   )
-  const laps = lapEntriesOf(trail)
   return new Map(
     plannedPhasesOf(last).map((phase) => [
       phase.key,
-      {
-        duration: durationOf(phase.key),
-        summary: summaries.get(phase.key) ?? "",
-        laps: laps.get(phase.key) ?? [],
-      },
+      { duration: durationOf(phase.key), summary: summaries.get(phase.key) ?? "" },
     ]),
   )
 }

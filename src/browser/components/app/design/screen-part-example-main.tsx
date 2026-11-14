@@ -1,22 +1,17 @@
-// 見本帳の「画面の部品」のうち、メインビューの小さな部品（いまのフェーズ・補足・済んだフェーズ・やり取りの列）の例。
+// 見本帳の「画面の部品」のうち、メインビューの小さな部品（いまのフェーズ・補足・済んだフェーズ・進み具合・やり取りの列）の例。
 
 import { createRef } from "react"
 
 import type { PhaseRow } from "../../page/conversation/components/main-view/domain/phase-row.ts"
+import type {
+  WorkStripPhase,
+  WorkStripModel,
+} from "../../page/conversation/components/main-view/hooks/use-work-strip.ts"
 import { PresentationalAsideThread } from "../../page/conversation/components/main-view/presentational-aside-thread.tsx"
 import { PresentationalCurrentStep } from "../../page/conversation/components/main-view/presentational-current-step.tsx"
-import { PresentationalFailedPaper } from "../../page/conversation/components/main-view/presentational-failed-paper.tsx"
 import { PresentationalPhaseList } from "../../page/conversation/components/main-view/presentational-phase-list.tsx"
 import { PresentationalReportOutline } from "../../page/conversation/components/main-view/presentational-report-outline.tsx"
-import { WorkPlanAskBlock } from "../../page/conversation/components/main-view/presentational-work-plan-ask.tsx"
-import { LiveBlock } from "../../page/conversation/components/main-view/presentational-work-plan-live.tsx"
-import { PresentationalWorkPlanPaper } from "../../page/conversation/components/main-view/presentational-work-plan-paper.tsx"
-import { markFailedRow } from "../../page/conversation/domain/work-plan-failed-row.ts"
-import {
-  rowsOfSlot,
-  type WorkPlanRow,
-  type WorkPlanSlot,
-} from "../../page/conversation/domain/work-plan-row.ts"
+import { PresentationalWorkStrip } from "../../page/conversation/components/main-view/presentational-work-strip.tsx"
 import type { ScreenPartExample } from "./screen-part-example-type.ts"
 
 const noop = (): void => {}
@@ -49,6 +44,83 @@ const PHASE_ROWS = [
   phaseRow(3, "飛ばした確認", "", true),
 ]
 
+function stripPhase(
+  key: string,
+  mark: string,
+  label: string,
+  state: WorkStripPhase["state"],
+): WorkStripPhase {
+  return {
+    key,
+    mark,
+    label,
+    state,
+    skipped: false,
+    spinning: state === "current",
+    popoverId: `popover-${key}`,
+    popover: { kind: "closed" },
+    onToggle: noop,
+  }
+}
+
+const STRIP_BASE = {
+  trackRef: createRef<HTMLOListElement>(),
+  readingLabel: "",
+  sideLabel: "経過 6分12秒",
+  steps: {
+    toggleLabel: "手順 12 ▾",
+    list: { kind: "closed" },
+    onToggle: noop,
+    groups: [],
+    backgroundList: { kind: "none" },
+  },
+} as const
+
+const WORKING_STRIP: WorkStripModel = {
+  ...STRIP_BASE,
+  kind: "working",
+  result: "working",
+  phases: [
+    {
+      kind: "phase",
+      spanHead: { kind: "none" },
+      phase: stripPhase("p1", "✓", "1. 下調べ（済）", "done"),
+    },
+    {
+      kind: "phase",
+      spanHead: { kind: "none" },
+      phase: stripPhase("p2", "2", "2. 実装（今のフェーズ）", "current"),
+    },
+    {
+      kind: "phase",
+      spanHead: { kind: "none" },
+      phase: stripPhase("p3", "3", "3. 確認", "upcoming"),
+    },
+  ],
+  headLabel: "実装",
+  activity: { text: "ファイルを読んでいる", tone: "quiet", mono: false, retry: { kind: "none" } },
+}
+
+const FINISHED_STRIP: WorkStripModel = {
+  ...STRIP_BASE,
+  kind: "finished",
+  result: "done",
+  phases: [
+    {
+      kind: "phase",
+      spanHead: { kind: "none" },
+      phase: stripPhase("p1", "✓", "1. 下調べ（済）", "done"),
+    },
+    {
+      kind: "phase",
+      spanHead: { kind: "none" },
+      phase: stripPhase("p2", "✓", "2. 実装（済）", "done"),
+    },
+  ],
+  headLabel: "全部のフェーズが済んだ",
+  sideLabel: "所要 21分49秒",
+}
+
 const OUTLINE_BASE = {
   visible: true,
   onSelectTurn: noop,
@@ -67,250 +139,7 @@ const OUTLINE_BASE = {
   onWidthCommit: noop,
 } as const
 
-function planRow(
-  key: string,
-  state: WorkPlanRow["state"],
-  title: string,
-  seconds: number,
-  summary: string,
-): WorkPlanRow {
-  return {
-    key,
-    state,
-    ordinal: key,
-    title,
-    duration:
-      state === "upcoming" ? { kind: "unknown" } : { kind: "known", milliseconds: seconds * 1000 },
-    summary,
-    lap: 1,
-    laps: [],
-    delegates: [],
-    touched: state === "upcoming" ? [] : [`${key}.ts`],
-    live:
-      state === "current"
-        ? { kind: "now", text: "chart.tsを直している", startedAt: { kind: "restored" } }
-        : { kind: "none" },
-    usual: state === "upcoming" ? { kind: "shown", text: "似た作業では 2〜4分" } : { kind: "none" },
-    ask: { kind: "none" },
-  }
-}
-
-const PLAN_ROWS: readonly WorkPlanRow[] = [
-  planRow("1", "done", "今の形を調べる", 100, "目盛りの数は定数から来ていた。"),
-  planRow("2", "skipped", "古い形を残す", 0, "呼び出しが無いので飛ばした。"),
-  {
-    ...planRow("3", "current", "表示の層を直している", 90, ""),
-    lap: 2,
-    laps: [
-      {
-        key: "1-rejected",
-        label: "1周目",
-        result: "rejected",
-        text: "幅 390 で数字が重なると差し戻された。",
-        duration: { kind: "known", milliseconds: 60_000 },
-      },
-      {
-        key: "1-fixed",
-        label: "直し",
-        result: "now",
-        text: "",
-        duration: { kind: "known", milliseconds: 30_000 },
-      },
-    ],
-    delegates: [
-      {
-        key: "agent-1",
-        name: "画を撮る役",
-        state: "running",
-        text: "幅 1400 の2枚目を撮っている",
-        since: { kind: "restored" },
-      },
-      {
-        key: "agent-2",
-        name: "型の検査を先に回す役",
-        state: "done",
-        text: "通った",
-        since: { kind: "restored" },
-      },
-    ],
-  },
-  planRow("4", "upcoming", "テストと画で確かめる", 0, ""),
-]
-
-const PLAN_SLOTS: readonly WorkPlanSlot[] = PLAN_ROWS.map((row) => ({
-  kind: "phase",
-  spanHead: { kind: "none" },
-  row,
-}))
-
-const FAILED_SLOTS = markFailedRow(PLAN_SLOTS)
-
 export const MAIN_VIEW_EXAMPLES: readonly ScreenPartExample[] = [
-  {
-    frame: "flow",
-    path: "page/conversation/components/main-view/presentational-work-plan-paper.tsx",
-    render: () => (
-      <>
-        <PresentationalWorkPlanPaper
-          model={{
-            kind: "working",
-            verdict: "running",
-            position: "4段のうち3段目",
-            elapsed: "経過 6分12秒",
-            estimate: { kind: "shown", text: "あと約 4分（似た段 9 件の中央値から）" },
-            quietLine: {
-              quiet: {
-                kind: "waiting",
-                label: "待ち",
-                text: "1分30秒、新しい動きが無い。コマンドの終わりを待っている（いつもは 3〜5 分）",
-              },
-              runningLine: "Bash  pnpm run check",
-              onStop: noop,
-              onRestoreRequest: noop,
-            },
-            plan: { folded: { kind: "none" }, slots: PLAN_SLOTS },
-            rows: PLAN_ROWS,
-            now: 0,
-            away: { kind: "none" },
-          }}
-        />
-        <PresentationalWorkPlanPaper
-          model={{
-            kind: "finished",
-            ending: "stopped",
-            summary: "4段のうち2段が済んだ ・ 7分05秒 ・ 道具 23 回",
-            slots: PLAN_SLOTS,
-            rows: PLAN_ROWS,
-            now: 0,
-            away: { kind: "none" },
-          }}
-        />
-        <PresentationalWorkPlanPaper
-          model={{
-            kind: "failed",
-            position: "4段のうち3段目で止まった",
-            elapsed: "12分48秒",
-            reason: "利用の上限に達して止まった",
-            retry: {
-              kind: "request",
-              label: "同じ依頼を入力欄に戻す",
-              request: "目盛りを設定から読んで",
-            },
-            remaining: ["済んだ 1 段の変更 2 ファイル", "落ちた手順 1 件（E2E を回している）"],
-            slots: FAILED_SLOTS,
-            rows: FAILED_SLOTS.flatMap(rowsOfSlot),
-            now: 0,
-            away: { kind: "none" },
-            onDraft: noop,
-            onRetry: noop,
-          }}
-        />
-      </>
-    ),
-  },
-  {
-    frame: "flow",
-    path: "page/conversation/components/main-view/presentational-away-brief.tsx",
-    render: () => (
-      <>
-        <PresentationalWorkPlanPaper
-          model={{
-            kind: "working",
-            verdict: "asking",
-            position: "4段のうち3段目",
-            elapsed: "経過 31分02秒",
-            estimate: { kind: "none" },
-            quietLine: {
-              quiet: { kind: "none" },
-              runningLine: "",
-              onStop: noop,
-              onRestoreRequest: noop,
-            },
-            plan: { folded: { kind: "none" }, slots: PLAN_SLOTS },
-            rows: PLAN_ROWS,
-            now: 0,
-            away: {
-              kind: "brief",
-              minutes: 23,
-              total: 4,
-              settled: 2,
-              waiting: {
-                kind: "asked",
-                question: "重なる幅では間引くか、24 のまま重ねるか。",
-                material: "幅 720 の画で 4 か所が重なった",
-                askedAt: 0,
-              },
-              changes: [
-                {
-                  key: "2",
-                  title: "古い形を残す",
-                  summary: "呼び出しが無いので飛ばした。",
-                  touched: 0,
-                },
-              ],
-              assumptions: ["目盛りの数は 4〜48 の範囲だけ受け付ける"],
-              replans: [],
-              markBeforeRowKey: { kind: "row", key: "2" },
-            },
-          }}
-        />
-      </>
-    ),
-  },
-  {
-    frame: "flow",
-    path: "page/conversation/components/main-view/presentational-failed-paper.tsx",
-    render: () => (
-      <PresentationalFailedPaper
-        model={{
-          kind: "failed",
-          position: "4段のうち3段目で止まった",
-          elapsed: "12分48秒",
-          reason: "往復の上限に当たって止まった",
-          retry: {
-            kind: "request",
-            label: "同じ依頼を入力欄に戻す",
-            request: "目盛りを設定から読んで",
-          },
-          remaining: ["済んだ 1 段の変更 2 ファイル"],
-          slots: FAILED_SLOTS,
-          rows: FAILED_SLOTS.flatMap(rowsOfSlot),
-          now: 0,
-          away: { kind: "none" },
-          onDraft: noop,
-          onRetry: noop,
-        }}
-        stamp={<p>失敗で止まった ・ 4段のうち3段目で止まった ・ 12分48秒</p>}
-        away={false}
-        plan={<p>止まった段に ✕ を付けた計画がここに入る。</p>}
-      />
-    ),
-  },
-  {
-    frame: "flow",
-    path: "page/conversation/components/main-view/presentational-work-plan-ask.tsx",
-    render: () => (
-      <WorkPlanAskBlock
-        ask={{
-          kind: "asked",
-          question: "目盛りの既定の本数はいくつにする？",
-          material: "今の既定は 12 本で、幅 720 では数字が重ならない。",
-          askedAt: 0,
-        }}
-      />
-    ),
-  },
-  {
-    frame: "flow",
-    path: "page/conversation/components/main-view/presentational-work-plan-live.tsx",
-    render: () => (
-      <>
-        {PLAN_ROWS.filter((row) => row.state === "current").map((row) => (
-          <LiveBlock key={row.key} row={row} liveNow now={0} quietLines={[]} />
-        ))}
-      </>
-    ),
-  },
   {
     frame: "flow",
     path: "page/conversation/components/main-view/presentational-current-step.tsx",
@@ -325,7 +154,6 @@ export const MAIN_VIEW_EXAMPLES: readonly ScreenPartExample[] = [
               tone: "quiet",
               mono: false,
               retry: { kind: "none" },
-              quiet: { kind: "none" },
             },
           }}
         />
@@ -338,7 +166,6 @@ export const MAIN_VIEW_EXAMPLES: readonly ScreenPartExample[] = [
               tone: "asking",
               mono: true,
               retry: { kind: "retrying", label: "再試行 2/10", detail: "混み合っています" },
-              quiet: { kind: "none" },
             },
           }}
         />
@@ -369,6 +196,16 @@ export const MAIN_VIEW_EXAMPLES: readonly ScreenPartExample[] = [
           turnId={1}
           list={{ rows: PHASE_ROWS, sheet: { kind: "closed" }, onOpen: noop, onClose: noop }}
         />
+      </>
+    ),
+  },
+  {
+    frame: "flow",
+    path: "page/conversation/components/main-view/presentational-work-strip.tsx",
+    render: () => (
+      <>
+        <PresentationalWorkStrip strip={WORKING_STRIP} />
+        <PresentationalWorkStrip strip={FINISHED_STRIP} />
       </>
     ),
   },

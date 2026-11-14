@@ -33,6 +33,7 @@ function OpenableSpeechLog(props: {
   const [open, setOpen] = useState(false)
   return (
     <SpeechLog
+      portrait={<img alt="架空の立ち絵" />}
       speakerName="架空の名前"
       pinnedSpeech={undefined}
       onToggleSpeech={props.onToggleSpeech}

@@ -1,5 +1,5 @@
 // 開くよう頼まれたタスクのモーダル（`useTaskBoardRequest`）。
-// 狭い画面では舞台が隠れる（`display: none` の中の `<dialog>` は開いても見えない）ので、どの場所にも入れず会話の画面に直に置く。
+// 狭い画面ではサイドバーとメインビューの片方が隠れる（`display: none` の中の `<dialog>` は開いても見えない）ので、どちらの領域にも入れず会話の画面に直に置く。
 
 import type { ReactElement } from "react"
 

@@ -115,7 +115,7 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
     if (given.mode.kind === "work" && stepWatch.observe(event) === "exceeded") {
       sendProgressNudge(stepLimitPromptText(given.turnStepLimit))
     }
-    if (event.kind === "progress-nudged") {
+    if (event.kind === "delegate-progress" || event.kind === "progress-nudged") {
       return
     }
     if (event.kind === "turn-finished") {
@@ -287,7 +287,7 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
     readSessionDigest,
     setModel: async (model) => {
       await session.setModel(model)
-      // 入力欄のモデルの札は `state.model` をそのまま出すので、ここで確認の合図を出さないと次のターンの `init` まで古い値に居座る。
+      // サイドバーの `<select>` は `state.model` をそのまま出すので、ここで確認の合図を出さないと次のターンの `init` まで古い値に居座る。
       if (model !== undefined) {
         options.onEvent({ kind: "model-changed", model })
       }

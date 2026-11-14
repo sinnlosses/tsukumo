@@ -11,10 +11,10 @@ import type { MainViewRequest } from "../../../../../../shared/session/main-view
 import { Button } from "../../../../ui/button/button.tsx"
 import { Heading } from "../../../../ui/heading/heading.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
-import { useClamped } from "../../hooks/use-clamped.ts"
 import { PromptImageThumbnails } from "../prompt-image/prompt-image.tsx"
 import { requestChips } from "./domain/request-chip-split.ts"
 import { turnRequestLines } from "./domain/turn-title.ts"
+import { useClamped } from "./hooks/use-clamped.ts"
 import styles from "./main-view.module.css"
 
 const REQUEST_LABEL = "依頼"
@@ -53,12 +53,12 @@ export function RequestBlock(props: RequestBlockProps): ReactElement {
       {hasChips && (
         <div className={styles["request-chips"]}>
           {chips.command !== undefined && (
-            <RequestChip className={styles["is-command"] ?? ""}>{chips.command}</RequestChip>
+            <Chip className={styles["is-command"] ?? ""}>{chips.command}</Chip>
           )}
           {chips.tasks.map((task) => (
             <span key={task.id} className={styles["request-chip-group"]}>
-              <RequestChip className={styles["is-task"]}>{task.id}</RequestChip>
-              <RequestChip className="">{task.summary}</RequestChip>
+              <Chip className={styles["is-task"]}>{task.id}</Chip>
+              <Chip className="">{task.summary}</Chip>
             </span>
           ))}
           <PromptImageThumbnails images={images.slice(0, MAX_THUMBNAILS)} size="chip" />
@@ -112,12 +112,12 @@ export function RequestBlock(props: RequestBlockProps): ReactElement {
   )
 }
 
-type RequestChipProps = {
+type ChipProps = {
   readonly className: string
   readonly children: string
 }
 
-function RequestChip(props: RequestChipProps): ReactElement {
+function Chip(props: ChipProps): ReactElement {
   return (
     <span className={clsx(styles["request-chip"], props.className)}>
       <Text element="span" size="label" tone="inherit" weight="inherit" className="">

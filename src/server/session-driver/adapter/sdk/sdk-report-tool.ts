@@ -85,14 +85,6 @@ export function reportTool(
       fileContents,
       task: report.task,
       workPlanClosing: report.workPlanClosing,
-      verdict: report.verdict,
-      verdictWritten: report.verdictWritten,
-      closingConflict: report.closingConflict,
-      next: report.next,
-      assumptions: report.assumptions,
-      sources: report.sources,
-      previous: report.previous,
-      guideNotes: report.guideNotes,
     })
     if (verdict.kind === "rejected") {
       return { content: [{ type: "text" as const, text: verdict.text }], isError: true }
@@ -188,12 +180,6 @@ function a2uiInputShape(
     sessionRemaining: shape.sessionRemaining.describe(described.sessionRemaining),
     closing: speech.describe(described.closing),
     waitingLine: speech.describe(described.waitingLine),
-    verdict: shape.verdict.describe(described.verdict),
-    next: shape.next.describe(described.next),
-    assumptions: shape.assumptions.describe(described.assumptions),
-    sources: shape.sources.describe(described.sources),
-    previous: shape.previous.describe(described.previous),
-    guideNotes: shape.guideNotes.describe(described.guideNotes),
   })
   return {
     components: z

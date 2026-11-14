@@ -183,7 +183,6 @@ describe("toRestoredEvents", () => {
         toolUseId: "r-2",
         conclusion: "架空の二",
         favor: "架空のお願い",
-        next: { kind: "next", owner: "you", action: "架空のお願い", choices: [] },
         argumentChars: { total: 21, fields: { conclusion: 6 } },
         inheritedFields: ["favor"],
       }),

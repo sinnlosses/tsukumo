@@ -85,24 +85,6 @@ describe("Trace の部品", () => {
     expect(rows[1]?.textContent).toContain("2.1 秒")
   })
 
-  it("効いた手（ok）の題だけを太字にし、補いは題の下に置く", () => {
-    const container = drawn({
-      items: [
-        { ...ITEM, title: "架空の効かなかった手", status: "ng", supplement: "架空の分かったこと" },
-        { ...ITEM, title: "架空の効いた手" },
-      ],
-    })
-
-    const rows = [...container.querySelectorAll("ol > li")]
-    expect(rows.map((row) => row.querySelector("b")?.textContent)).toEqual([
-      undefined,
-      "架空の効いた手",
-    ])
-    const [, body] = rows[0]?.children ?? []
-    expect(rows[0]?.children).toHaveLength(2)
-    expect(body?.textContent).toBe("架空の効かなかった手架空の分かったこと")
-  })
-
   it("出力のある行だけ details で開け、出力は記法を通さず pre にそのまま入る", () => {
     const container = drawn({
       items: [

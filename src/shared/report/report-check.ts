@@ -15,7 +15,7 @@ export const reportCheckSchema = z.object({
   ),
   command: partCardNote(
     z.string(),
-    "確かめるのに打った Bash のコマンドを、打った文字列のまま（tsukumo が同じ依頼の呼び出しと完全一致で突き合わせ、測った所要時間を添える）。コマンドでない確認は空文字",
+    "確かめるのに打った Bash のコマンドを、打った文字列のまま（tsukumo が同じターンの呼び出しと完全一致で突き合わせ、測った所要時間を添える）。コマンドでない確認は空文字",
   ),
   detail: partCardNote(
     z.string().describe("ng・unobserved は理由、blocked は前提を1文で。ok は空文字"),

@@ -195,7 +195,7 @@ describe("createSocketRouter（chat。画面の「編集」から覚えたこと
     expect(emitted).toEqual([{ kind: "remembered-lines-changed", lines: ["架空の残った1行"] }])
   })
 
-  it("仕事のモードでは受け付けない（欄外の「覚えていること」自体が雑談中にしか出ない）", async () => {
+  it("仕事のモードでは受け付けない（サイドバーの「覚えていること」自体が雑談中にしか出ない）", async () => {
     const { commands, forgottenLines } = startRouter()
 
     expect(await commands.chat.forgetRememberedLine({ line: "架空の消したい1行" })).toEqual({

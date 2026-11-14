@@ -20,7 +20,7 @@ export function TurnFailureBlock(props: {
   readonly newest: boolean
 }): ReactElement {
   const block = useTurnFailureBlock(props)
-  const { retry } = block
+  const { retry, failedSteps } = block
 
   return (
     <section
@@ -34,21 +34,36 @@ export function TurnFailureBlock(props: {
       <Text element="p" size="inherit" tone="inherit" weight="inherit" className={styles["reason"]}>
         <span title={block.detail}>{block.reason}</span>
       </Text>
-      {retry.kind !== "none" && (
+      {(retry.kind !== "none" || failedSteps.kind === "shown") && (
         <div className={styles["doors"]}>
-          <Button
-            variant="outline-surface"
-            size="secondary"
-            pressed="none"
-            disabled={false}
-            disclosure={{ kind: "none" }}
-            className={styles["door"]}
-            onClick={() => {
-              block.onRetry(retry.request)
-            }}
-          >
-            {retry.label}
-          </Button>
+          {retry.kind !== "none" && (
+            <Button
+              variant="outline-surface"
+              size="secondary"
+              pressed="none"
+              disabled={false}
+              disclosure={{ kind: "none" }}
+              className={styles["door"]}
+              onClick={() => {
+                block.onRetry(retry.request)
+              }}
+            >
+              {retry.label}
+            </Button>
+          )}
+          {failedSteps.kind === "shown" && (
+            <Button
+              variant="outline-surface"
+              size="secondary"
+              pressed="none"
+              disabled={false}
+              disclosure={{ kind: "none" }}
+              className={styles["door"]}
+              onClick={block.onShowFailedSteps}
+            >
+              {failedSteps.label}
+            </Button>
+          )}
         </div>
       )}
     </section>

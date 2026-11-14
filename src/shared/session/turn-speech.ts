@@ -14,11 +14,8 @@ export type Speech = {
   readonly time: RecordTime
 }
 
-/**
- * ターンの流れに出した1件。`source` は `speak` のセリフ（`speak`）か、出し始めた反応（`reaction`）か、利用者が押した相づちの札（`you`）か。
- * `you` の `expression` は、その直前までに出していた顔（立ち絵は札では変わらない）。
- */
-export type TurnLine = Speech & { readonly source: "speak" | "reaction" | "you" }
+/** ターンの吹き出しに出した1件。`source` は `speak` のセリフ（`speak`）か、出し始めた反応（`reaction`）か。 */
+export type TurnLine = Speech & { readonly source: "speak" | "reaction" }
 
 /** 1ターン分のセリフ。`id` は `mainViewTurns` が振る通し番号と同じ（タブの選択からそのまま引ける）。 */
 export type TurnSpeech = {
@@ -45,45 +42,25 @@ export function turnSpeeches(records: readonly SessionRecord[]): readonly TurnSp
       // 依頼より前に届いた記録のまとまりは、セリフが1件も無ければ落とすので、引く先の無い空のまとまりは残らない。
       .filter((turn) => turn.kind !== "pre-request" || turn.records.some(isSpokenRecord))
       .map((turn): TurnSpeech => {
-        const lines = turn.records
-          .filter(isSpokenRecord)
-          .reduce<readonly TurnLine[]>((acc, record) => [...acc, lineOf(record, acc)], [])
+        const speeches = turn.records.filter(isSpokenRecord)
         return {
           id: turnIdOf(turn),
           request: turn.kind === "pre-request" ? undefined : turn.request.text,
-          speeches: lines,
-          expression: lines.at(-1)?.expression,
+          speeches: speeches.map((speech) => ({
+            text: speech.text,
+            expression: speech.expression,
+            time: speech.time,
+            source: speech.kind === "speech" ? "speak" : "reaction",
+          })),
+          expression: speeches.at(-1)?.expression,
         }
       })
   )
 }
 
-type SpokenRecord = Extract<
-  SessionRecord,
-  { readonly kind: "speech" | "reaction" | "aizuchi-chip" }
->
-
-/** 流れに出した記録（`speak` のセリフ・出し始めた反応・利用者が押した札）。 */
-function isSpokenRecord(record: SessionRecord): record is SpokenRecord {
-  return record.kind === "speech" || record.kind === "reaction" || record.kind === "aizuchi-chip"
+/** 吹き出しに出した記録（`speak` のセリフと、出し始めた反応）。 */
+function isSpokenRecord(
+  record: SessionRecord,
+): record is Extract<SessionRecord, { readonly kind: "speech" | "reaction" }> {
+  return record.kind === "speech" || record.kind === "reaction"
 }
-
-function lineOf(record: SpokenRecord, earlier: readonly TurnLine[]): TurnLine {
-  if (record.kind === "aizuchi-chip") {
-    return {
-      text: record.text,
-      expression: earlier.at(-1)?.expression ?? DEFAULT_EXPRESSION,
-      time: record.time,
-      source: "you",
-    }
-  }
-  return {
-    text: record.text,
-    expression: record.expression,
-    time: record.time,
-    source: record.kind === "speech" ? "speak" : "reaction",
-  }
-}
-
-/** 札のほかに顔の手がかりが無いターンに当てる表情（`INITIAL_SESSION_STATE` と同じ既定）。 */
-const DEFAULT_EXPRESSION = "default"
