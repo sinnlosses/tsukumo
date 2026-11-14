@@ -219,14 +219,11 @@ body[data-v="stage"] [data-hide-v~="stage"] {
 
 .mock-bar-group {
   display: inline-flex;
-  gap: 2px;
-  padding: 2px;
-  border-radius: 999px;
-  background: var(--surface);
+  gap: 4px;
 }
 
 .mock-bar-group a {
-  padding: 2px 12px;
+  padding: 3px 12px;
   border-radius: 999px;
   color: var(--ink-soft);
   text-decoration: none;
