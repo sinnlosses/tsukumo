@@ -3,10 +3,7 @@
 import type { ReactElement, ReactNode } from "react"
 
 import { useCharacterView } from "./hooks/use-character-view.ts"
-import {
-  type CharacterViewPlacement,
-  PresentationalCharacterView,
-} from "./presentational-character-view.tsx"
+import { PresentationalCharacterView } from "./presentational-character-view.tsx"
 
 /** `hands` は狭い画面で顔と吹き出しの下に出す「手元」か「待ち」の行。 */
 export function CharacterView(props: {
@@ -17,7 +14,6 @@ export function CharacterView(props: {
   readonly roomHead?: ReactNode
   /** 部屋の頭のすぐ下に置く「今日の灯り」。 */
   readonly today?: ReactNode
-  readonly placement?: CharacterViewPlacement
 }): ReactElement {
   return (
     <PresentationalCharacterView
@@ -26,7 +22,6 @@ export function CharacterView(props: {
       stageHands={props.stageHands}
       roomHead={props.roomHead}
       today={props.today}
-      placement={props.placement}
     />
   )
 }

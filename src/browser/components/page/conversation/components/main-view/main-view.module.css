@@ -13,14 +13,12 @@
 @import "./turn-card/head-notice.css";
 @import "./turn-card/report-outline.css";
 @import "./turn-card/request-block.css";
-@import "./turn-card/turn-card-head.css";
 @import "./turn-card/aside-thread.css";
 @import "./turn-card/question-record.css";
 @import "./turn-card/turn-failure-block.css";
 @import "./turn-card/turn.css";
 @import "./turn-card/report-draft.css";
 @import "./welcome/welcome.css";
-@import "./turn-card/work-strip.css";
 @import "./turn-card/work-plan-paper.css";
 
 /* 依頼の塊の見出しの字は目に見えなくてよい。`h2` は読み上げの見出しとして残す。
@@ -36,9 +34,6 @@
   composes: surface-edge-rule surface-radius-md surface-tone-ground from "../../../../ui/surface/surface-face.module.css";
 }
 .tool-block {
-  composes: surface-edge-rule surface-radius-md surface-tone-surface from "../../../../ui/surface/surface-face.module.css";
-}
-.work-strip-pop {
   composes: surface-edge-rule surface-radius-md surface-tone-surface from "../../../../ui/surface/surface-face.module.css";
 }
 .key-help[open] {

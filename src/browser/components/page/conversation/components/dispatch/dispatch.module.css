@@ -80,7 +80,7 @@
   padding: 0 var(--space-xl);
   border-radius: var(--radius-md);
   /* モックの 14px（--font-subheading）は区画の見出しの段で、ボタンには使わない。
-     ボタンの字は機械のラベルではなく操作の名前そのものなので「補助・サイドバーの本文」寄りに見て --font-secondary（13px）に寄せた（大きさ以外は `theme.css` の既定を継ぐ）。 */
+     ボタンの字は機械のラベルではなく操作の名前そのものなので「補助・欄外の本文」寄りに見て --font-secondary（13px）に寄せた（大きさ以外は `theme.css` の既定を継ぐ）。 */
   font-size: var(--font-secondary);
 }
 .dispatch-send {

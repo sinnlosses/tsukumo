@@ -14,7 +14,7 @@ import type { ChatUnconsolidatedEntry } from "../archive/chat-archive-port.ts"
 import { chatLineText } from "../archive/chat-memory-prompt.ts"
 import { CHAT_MEMORY_BUDGET } from "../memory/chat-memory-budget.ts"
 
-/** サイドバーの「最近の話題」に出す見出しの件数の上限。 */
+/** 雑談の欄外の「最近の話題」に出す見出しの件数の上限。 */
 const CHAT_TOPIC_LIMIT = 3
 
 /** 定着を起こすモデル（軽いもの）。 */

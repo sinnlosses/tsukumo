@@ -6,9 +6,8 @@ import type { ScenarioRoom } from "./scenario-open.ts"
 // 新しい器の紙のレポート（docs/architecture/testing.md「E2E のシナリオの一覧」）。
 // 場面 `progress-delivered` は済んだ判定、`progress-ask` は選べる答え2つの「あなたの番」、`progress-short` は結論と段落1つの短い答え。
 
-async function reopenInStage(room: ScenarioRoom): Promise<Page> {
+async function reopenRoom(room: ScenarioRoom): Promise<Page> {
   const url = new URL(room.page.url())
-  url.searchParams.set("shell", "stage")
   await room.page.goto(url.toString())
   return room.page
 }
@@ -22,7 +21,7 @@ test.describe("紙のレポート", () => {
       domRoots: ["page"],
     })
     await room.waitForEvent("turn-finished")
-    const page = await reopenInStage(room)
+    const page = await reopenRoom(room)
     const body = page.locator("[data-report-body]")
 
     await expect(body.locator("[data-paper-form]")).toContainText("済んだ")
@@ -48,7 +47,7 @@ test.describe("紙のレポート", () => {
       domRoots: ["page"],
     })
     await room.waitForEvent("turn-finished")
-    const page = await reopenInStage(room)
+    const page = await reopenRoom(room)
     const body = page.locator("[data-report-body]")
 
     await expect(body.locator("[data-paper-form]")).toContainText("あなたの番")
@@ -65,7 +64,7 @@ test.describe("紙のレポート", () => {
       domRoots: ["page"],
     })
     await room.waitForEvent("turn-finished")
-    const page = await reopenInStage(room)
+    const page = await reopenRoom(room)
     const body = page.locator("[data-report-body]")
 
     await expect(body.locator("[data-paper-form]")).toContainText("答えた")
@@ -82,7 +81,7 @@ test.describe("紙のレポート", () => {
       domRoots: ["page"],
     })
     await room.waitForEvent("turn-finished")
-    const page = await reopenInStage(room)
+    const page = await reopenRoom(room)
     const form = page.locator("[data-report-body] [data-paper-form]")
 
     await expect(form).toContainText("前回から")
@@ -100,7 +99,7 @@ test.describe("紙のレポート", () => {
       domRoots: ["page"],
     })
     await room.waitForEvent("turn-finished")
-    const page = await reopenInStage(room)
+    const page = await reopenRoom(room)
     const note = page.locator("[data-report-body] [data-guide-card]")
 
     await expect(note).toHaveCount(1)

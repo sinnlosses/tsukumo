@@ -21,11 +21,11 @@ import type {
 import { turnSpeeches, type TurnSpeech } from "../../../../../../../shared/session/turn-speech.ts"
 import { useExternalSync } from "../../../../../../hooks/use-external-sync.ts"
 import { useSession } from "../../../../../../stores/session.ts"
-import { useTurnSelection } from "../../../../../../stores/turn-selection.ts"
 import { localTimeZoneId } from "../../../../../../utils/clock.ts"
 import { dayLabel } from "../../../../../../utils/day-label.ts"
 import { entryDay, startsNewDay } from "../../../domain/chat-log.ts"
 import { recordClockStamp, type ClockStamp } from "../../../domain/clock-stamp.ts"
+import { useTurnSelection } from "../../../stores/turn-selection.ts"
 import {
   isSpeechSelected,
   type MarkedSpeech,

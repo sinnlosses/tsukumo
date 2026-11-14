@@ -287,7 +287,7 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
     readSessionDigest,
     setModel: async (model) => {
       await session.setModel(model)
-      // サイドバーの `<select>` は `state.model` をそのまま出すので、ここで確認の合図を出さないと次のターンの `init` まで古い値に居座る。
+      // 入力欄のモデルの札は `state.model` をそのまま出すので、ここで確認の合図を出さないと次のターンの `init` まで古い値に居座る。
       if (model !== undefined) {
         options.onEvent({ kind: "model-changed", model })
       }

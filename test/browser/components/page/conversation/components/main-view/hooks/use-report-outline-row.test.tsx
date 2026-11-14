@@ -6,8 +6,8 @@ import {
   useReportOutline,
   type ReportOutlineProps,
 } from "../../../../../../../../src/browser/components/page/conversation/components/main-view/hooks/use-report-outline.ts"
+import { useReadingSection } from "../../../../../../../../src/browser/components/page/conversation/stores/reading-section.ts"
 import { detailBlockClassName } from "../../../../../../../../src/browser/features/report/markdown.tsx"
-import { useReadingSection } from "../../../../../../../../src/browser/stores/reading-section.ts"
 
 const OUTLINE_PANEL_STORAGE_KEY = "tsukumo-outline-panel:v1"
 

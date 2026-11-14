@@ -58,13 +58,8 @@ export const DIARY_BODY_SELECTOR = '[class*="diary-book-body_"]'
 /** 入力欄。ページに `<textarea>` は1つしか無い。 */
 export const COMPOSER_SELECTOR = "textarea"
 
-/**
- * 狭いビューポートでだけ出る引き出しを開くボタンと、その中のタスクのタブ。タスク一覧を開くボタンもある。
- * 広いビューポートでは引き出しの口もタブも出ない。
- */
-export const DRAWER_TOGGLE_SELECTOR = '[aria-label="やり取りとタスクを開く"]'
-export const DRAWER_TASKS_TAB_SELECTOR = '[role="tab"]:has-text("タスク")'
-export const TASK_BOARD_SELECTOR = 'button:has-text("一覧を見る")'
+/** 迎えるの始め方にある、タスクのモーダルを開くボタン。 */
+export const TASK_BOARD_SELECTOR = 'button:has-text("タスクの一覧")'
 
 /**
  * 書き終わりの知らせ（`DiaryNotice`）の「日記帳で開く」。成果の画面（`#achievement`）

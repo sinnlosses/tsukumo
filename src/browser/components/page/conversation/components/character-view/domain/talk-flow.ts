@@ -18,8 +18,8 @@ import {
 import { workPlanOf } from "../../../../../../../shared/session/work-plan-fold.ts"
 import { shiftedPhaseOf } from "../../../../../../../shared/session/work-plan-shift.ts"
 import type { LatestWorkPlan } from "../../../../../../../shared/session/work-plan.ts"
-import { groupIntoTurns } from "../../../../../../domain/main-view/main-view-step.ts"
 import { recordClockStamp, type ClockStamp } from "../../../domain/clock-stamp.ts"
+import { groupIntoTurns } from "../../../domain/main-view/main-view-step.ts"
 import type { SpeechTarget } from "./pinned-speech.ts"
 
 /**

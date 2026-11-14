@@ -115,7 +115,7 @@ describe("applySessionEvent", () => {
     expect(view.model).toBe("claude-sonnet-5")
   })
 
-  // 実機で確かめた回帰: 1件も依頼を送っていない（`init` がまだ届いていない）うちにサイドバーで
+  // 実機で確かめた回帰: 1件も依頼を送っていない（`init` がまだ届いていない）うちに画面から
   // モデルを切り替えると、駆動は切り替わっているのに表示だけ5秒ほどで古い値に戻っていた
   // （`model-changed` を `session.kind === "running"` のときだけ効かせていたときの不具合）。
   // `model` は `session` の外にあるので、`starting`/`identified` の間でも更新できる。
@@ -175,7 +175,7 @@ describe("applySessionEvent", () => {
   })
 
   // 回帰: `permissionMode` がまだ届かず `identified` のままでも、`model-changed` は
-  // `model` だけを更新できる（`session` はそのまま）。実機で確かめたサイドバーのモデル切り替えが
+  // `model` だけを更新できる（`session` はそのまま）。実機で確かめた画面からのモデル切り替えが
   // 戻ってしまう不具合はこれが効いていなかったために起きた。
   it("model-changed は identified（permissionMode がまだ）でも model を更新し、session は動かさない", () => {
     const identified = apply({

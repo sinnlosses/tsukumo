@@ -6,7 +6,7 @@ import { Composer } from "../../../../../../../src/browser/components/page/conve
 import { saveSessionDraft } from "../../../../../../../src/browser/components/page/conversation/domain/composer-draft-storage.ts"
 import { useComposerDraft } from "../../../../../../../src/browser/components/page/conversation/stores/composer-draft.ts"
 import { useInquiryDraft } from "../../../../../../../src/browser/components/page/conversation/stores/inquiry-draft.ts"
-import { useInquiryJump } from "../../../../../../../src/browser/stores/inquiry-jump.ts"
+import { useInquiryJump } from "../../../../../../../src/browser/components/page/conversation/stores/inquiry-jump.ts"
 import type { CharacterInfo } from "../../../../../../../src/shared/character-pack/character.ts"
 import { FRAME_ERROR_REASON } from "../../../../../../../src/shared/frame-error-reason.ts"
 import type { StampedPendingAsk } from "../../../../../../../src/shared/session-driver/pending-ask.ts"
@@ -118,7 +118,7 @@ function renderComposer(
   const client = createTestQueryClient()
   render(
     <QueryClientProvider client={client}>
-      <Composer progress={{ kind: "strip" }} />
+      <Composer progress={{ kind: "paper", lamps: undefined }} />
     </QueryClientProvider>,
   )
 }

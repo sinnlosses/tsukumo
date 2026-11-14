@@ -1,12 +1,12 @@
-// キャラビュー本体の器。立ち絵（<Portrait>）と吹き出しの並び（<BalloonTrack>。新しい器の舞台ではやり取りの流れ <TalkFlow>）を同じ領域に同居させる。
+// キャラビュー本体の器。舞台に立ち絵（<Portrait>）とやり取りの流れ（<TalkFlow>）を同居させる。
 //
 // 右上の「ログ」（<SpeechLog>）の床にも同じ立ち絵を立たせるので、立ち絵と話し手の名前はここから渡す。
 //
 // 立ち絵の素材（URL）が無いときは `<Portrait>` を出さず、吹き出しだけで成立させる。
 //
-// 狭い画面（760px 以下）では立ち絵と吹き出しの並びの代わりに `<PhoneBalloon>`（顔と最新の1件）を出す（どちらを出すかは CSS の `@media`）。
+// 狭い画面（760px 以下）では舞台の代わりに `<PhoneBalloon>`（顔と最新の1件）を出す（どちらを出すかは CSS の `@media`）。
 //
-// 新しい器の舞台（`placement` が `stage`）では、立ち絵を舞台の下端に立たせ、その上に5段の置き場を積む。
+// 舞台では、立ち絵を舞台の下端に立たせ、その上に5段の置き場を積む。
 // 段は上から部屋の頭・今日の灯り・やり取りの流れ・いまの吹き出し・立ち絵で、`data-slot` で名乗る。
 // 立ち絵の席の右上には、局面に合った相づちの札が出る（`data-slot="aizuchi"`）。
 
@@ -17,9 +17,7 @@ import type {
   StageFadeEdge,
 } from "../../../../../../shared/character-pack/character-stage.ts"
 import { Portrait } from "../../../../frame/portrait.tsx"
-import { HStack } from "../../../../ui/h-stack/h-stack.tsx"
 import { VStack } from "../../../../ui/v-stack/v-stack.tsx"
-import { BalloonTrack } from "./balloon-track.tsx"
 import styles from "./character-view.module.css"
 import type { CharacterViewAizuchi, CharacterViewModel } from "./hooks/use-character-view.ts"
 import { ItemSeats } from "./item-seat-list.tsx"
@@ -29,9 +27,6 @@ import { StageAizuchi } from "./stage-aizuchi.tsx"
 import { StageBalloon } from "./stage-balloon.tsx"
 import { TalkFlow } from "./talk-flow.tsx"
 
-/** 旧い器のキャラビューの領域に置くか、新しい器の舞台に置くか。 */
-export type CharacterViewPlacement = "classic" | "stage"
-
 type PresentationalCharacterViewProps = CharacterViewModel & {
   readonly hands?: ReactNode
   /** 舞台の吹き出しの下に出す「手元」「待ち」の行。 */
@@ -40,7 +35,6 @@ type PresentationalCharacterViewProps = CharacterViewModel & {
   readonly roomHead?: ReactNode
   /** 部屋の頭のすぐ下に置く「今日の灯り」。 */
   readonly today?: ReactNode
-  readonly placement?: CharacterViewPlacement
 }
 
 export function PresentationalCharacterView({
@@ -66,7 +60,6 @@ export function PresentationalCharacterView({
   stageHands,
   roomHead,
   today,
-  placement = "classic",
 }: PresentationalCharacterViewProps): ReactElement {
   const portraitIn = (className?: string): ReactNode =>
     portraitUrl !== undefined && (
@@ -78,15 +71,6 @@ export function PresentationalCharacterView({
         className={className}
       />
     )
-  const portrait = portraitIn(styles["portrait"])
-  const balloons = (
-    <BalloonTrack
-      speeches={speeches}
-      reaction={reaction}
-      speakerName={speakerName}
-      onToggleSpeech={onToggleSpeech}
-    />
-  )
   return (
     <VStack
       element="div"
@@ -98,7 +82,6 @@ export function PresentationalCharacterView({
       className={styles["character-region"]}
     >
       <SpeechLog
-        portrait={portrait}
         speakerName={speakerName}
         pinnedSpeech={pinnedSpeech}
         onToggleSpeech={onToggleSpeech}
@@ -107,40 +90,23 @@ export function PresentationalCharacterView({
         onClose={onCloseSpeechLog}
       />
       <PhoneBalloon face={face} line={phoneLine} onOpenLog={onOpenSpeechLog} hands={hands} />
-      {placement === "stage" ? (
-        <StageFigure
-          stage={stage}
-          aizuchi={aizuchi}
-          portrait={portraitIn(styles["stage-figure-portrait"])}
-          roomHead={roomHead}
-          today={today}
-          thread={<TalkFlow rows={flow} onOpenSpeechLog={onOpenSpeechLog} />}
-          balloon={
-            <StageBalloon
-              speeches={speeches}
-              reaction={reaction}
-              speakerName={speakerName}
-              onToggleSpeech={onToggleSpeech}
-              hands={stageHands}
-            />
-          }
-        />
-      ) : (
-        <div className={styles["character-stage"]}>
-          <HStack
-            element="div"
-            name={{ kind: "none" }}
-            gap="none"
-            align="end"
-            justify="start"
-            wrap="wrap"
-            className={styles["character-layout"]}
-          >
-            {portrait}
-            {balloons}
-          </HStack>
-        </div>
-      )}
+      <StageFigure
+        stage={stage}
+        aizuchi={aizuchi}
+        portrait={portraitIn(styles["stage-figure-portrait"])}
+        roomHead={roomHead}
+        today={today}
+        thread={<TalkFlow rows={flow} onOpenSpeechLog={onOpenSpeechLog} />}
+        balloon={
+          <StageBalloon
+            speeches={speeches}
+            reaction={reaction}
+            speakerName={speakerName}
+            onToggleSpeech={onToggleSpeech}
+            hands={stageHands}
+          />
+        }
+      />
       <ItemSeats seats={seats} portraitShown={portraitUrl !== undefined} />
     </VStack>
   )

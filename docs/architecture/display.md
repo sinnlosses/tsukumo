@@ -3,7 +3,7 @@
 ステータス: **正典**。ユーザーの発言の引用・変更の経緯・実測の数字は `docs/history/decision.md`「display.md 4.2 …」の節にある。
 
 責務: セリフとレポートの出力分離、レポートの記法の規約、立ち絵・吹き出し・メインビュー・
-入力欄・サイドバーなど各表示物の仕様を持つ。それ以外の機能要件は `docs/requirements.md`。
+入力欄・タスクのモーダルなど各表示物の仕様を持つ。それ以外の機能要件は `docs/requirements.md`。
 読む時: 表示物・レポートの記法に触るとき。
 直す時: 表示の仕様を変えたとき。
 
@@ -73,7 +73,6 @@
 - `docs/architecture/display/permission-and-question.md`: 許可と質問
 - `docs/architecture/display/main-view.md`: メインビュー（局面・最終と中間のレポート・畳み・本文の流し方・1ターン＝1枚のカード・やり取りの列・補足メッセージの欄・失敗の表示）
 - `docs/architecture/display/rich-rendering.md`: レポートの見せ方・パスとコード・色・外部ライブラリ・帯のいまの作業
-- `docs/architecture/display/sidebar.md`: サイドバー
 - `docs/architecture/display/input-box.md`: 入力欄・配り方・フォールバック
 
 #### タスクのモーダル

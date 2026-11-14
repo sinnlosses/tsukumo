@@ -29,7 +29,7 @@
 - **定義**: **メインビューの本文を、Markdown 1本に畳まずに分けて持つ単位**。`report` ツールの本文は、セクションの欄（`id` と見出しの字）と、
   頭（結論・合図の行）・図・セクション・振り返り・お願いを持つ面の値を持つ。最終のときの頭は、頭にフェーズごとの所要時間を足したもの。セクションの欄の `id` は、整形して
   図を先頭に足したあとのセクションの並びの位置。`report` ツール以外の本文（詳細・フェーズのまとめ）は Markdown 1本の欄にする
-- **注記**: 描く側は欄の Markdown を読まず、面の値（`MainViewReportRegions.a2ui`。頭・お願い・セクション）から描く。描くものがあるかは `reportDrawsAnything`（`src/browser/domain/main-view/main-view-report-body.ts`）が数える。
+- **注記**: 描く側は欄の Markdown を読まず、面の値（`MainViewReportRegions.a2ui`。頭・お願い・セクション）から描く。描くものがあるかは `reportDrawsAnything`（`src/browser/components/page/conversation/domain/main-view/main-view-report-body.ts`）が数える。
   形の決めは `docs/architecture/adr/0031-report-body-as-regions.md`
 - **避ける言い方**: ブロック、部品（セクションの中の `LeafComponent` と紛れる）、パート
 
@@ -37,7 +37,7 @@
 
 - **英語識別子**: `final`（`MainViewStep.mark` の値）
 - **定義**: **そのやり取りで最後の、中間でない本文**。`report` ツールが呼ばれたターンでは
-  最後の呼び出し、呼ばれなかったターンでは最後の本文（`browser/domain/main-view/main-view.ts` の `markFinalReport` /
+  最後の呼び出し、呼ばれなかったターンでは最後の本文（`browser/components/page/conversation/domain/main-view/main-view.ts` の `markFinalReport` /
   `selectLastText`）。ラベル「最終レポート」（タスク見出し行の頭）が出るのは、同じやり取りに中間レポートがあるときか、
   本文に `report` の `task` があるときだけ（どちらも無ければ区別にならないため）。**いちばん新しいやり取りでは、加えて
   そのやり取りが閉じている（ターンが `running` でなく、バックグラウンドタスクも残っていない）ときだけ
@@ -80,7 +80,7 @@
 
 - **英語識別子**: `interim`（`MainViewStep.interim`）
 - **定義**: **ターンの途中で出たレポート**。出どころは2つ: 1つのターンで `report` ツールが何度か
-  呼ばれたときの最後でない呼び出し（`src/browser/domain/main-view/main-view.ts` の `selectToolReports`）と、
+  呼ばれたときの最後でない呼び出し（`src/browser/components/page/conversation/domain/main-view/main-view.ts` の `selectToolReports`）と、
   フェーズを進めた `work_plan` の**フェーズのまとめ**（委譲中は `phase_result` では空で、メインが同じ位置で渡す `work_plan` の `phaseSummary` がフェーズのまとめになる。
   `docs/architecture/display.md`「ワークプラン」）。メインビューには印を付けた枠で残る。通った
   `report` はそこで SDK のターンを閉じるので、`report` からの中間レポートはバックグラウンドタスクや委譲の返却で

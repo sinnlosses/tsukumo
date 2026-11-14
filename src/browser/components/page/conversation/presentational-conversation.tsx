@@ -1,18 +1,12 @@
-// 会話の画面の器。旧い器では `<ConversationLayout>` の差し込み口を4領域とサイドバーで埋める。
-// 新しい器「舞台と紙」では、舞台に立ち絵、紙にメインビュー、欄外に受け取ったもの、紙の下端に入力欄を差す。
+// 会話の画面の器「舞台と紙」。舞台に立ち絵、紙にメインビュー、欄外に受け取ったもの（雑談では覚えていることと最近の話題）、紙の下端に入力欄を差す。
 //
-// 雑談モードではメインビューを雑談ビューに差し替え、キャラビューを畳む（立ち絵が上段へ移るため）。
-// 同時にメインの領域を地そのものにする（枠と角丸が外れ、背景がそこへ移る）。
-// `<ConversationLayout>` に2つの旗を別々に渡すのは、畳むことと枠を外すことが別の話で、片方だけが要る形もありうるため。
+// 雑談モードではメインビューを雑談ビューに差し替える。
 
 import type { ReactElement, ReactNode } from "react"
 
-import { RunSettingGroup } from "../../../features/run-setting/run-setting-group.tsx"
-import { TaskDoingCount } from "../../frame/sidebar/components/task-doing-count.tsx"
-import { Sidebar } from "../../frame/sidebar/sidebar.tsx"
 import { CharacterView } from "./components/character-view/character-view.tsx"
+import { ChatMemory } from "./components/chat-memory/chat-memory.tsx"
 import { ChatView } from "./components/chat-view/chat-view.tsx"
-import { ConversationLayout } from "./components/conversation-layout/conversation-layout.tsx"
 import { Dispatch } from "./components/dispatch/dispatch.tsx"
 import { Greeting } from "./components/greeting/greeting.tsx"
 import { InquiryCard } from "./components/inquiry/inquiry.tsx"
@@ -24,107 +18,93 @@ import {
   WorkPlanDockLamps,
 } from "./components/main-view/main-view.tsx"
 import { PaperDesk } from "./components/paper-desk/paper-desk.tsx"
-import { PendingAskCard } from "./components/pending-ask-card/pending-ask-card.tsx"
 import { RequestedTaskBoard } from "./components/requested-task-board/requested-task-board.tsx"
 import { Stage, type StagePosture } from "./components/stage/stage.tsx"
 
 /**
- * 描く器。
- * 新しい器の欄外に置くやり取りの並びと、舞台の左上に置く部屋の頭、舞台の器の右上に置く入口の群は、ほかの画面の部品の中身なので、画面の登録表から受け取る。
+ * 器に差し込む、ほかの画面の部品の中身。
+ * 欄外に置くやり取りの並びと、舞台の左上に置く部屋の頭、舞台の器の右上に置く入口の群は、画面の登録表から受け取る。
  */
-export type ConversationShell =
-  | { readonly kind: "classic" }
-  | {
-      readonly kind: "stage"
-      readonly margin: ReactNode
-      readonly head: ReactNode
-      readonly tools: ReactNode
-      readonly today: ReactNode
-    }
+export type ConversationShell = {
+  readonly margin: ReactNode
+  readonly head: ReactNode
+  readonly tools: ReactNode
+  readonly today: ReactNode
+  /** 狭い幅の1行の頭。題（`subject`）は会話の画面が決めて渡す。 */
+  readonly narrowHead: (subject: NarrowHeadSubject) => ReactNode
+}
+
+/** 狭い幅の頭の題。迎えると雑談では部屋の頭の主の字、ほかでは最新のやり取りの題。 */
+export type NarrowHeadSubject =
+  | { readonly kind: "room" }
+  | { readonly kind: "turn"; readonly title: string }
 
 const MARGIN_TITLE = "この部屋のやり取り"
+const CHAT_MARGIN_TITLE = "雑談の覚え書き"
 
 type PresentationalConversationProps = {
   readonly chatMode: boolean
   readonly shell: ConversationShell
-  /** 新しい器の姿勢。旧い器は読まない。 */
   readonly posture: StagePosture
-  /** 新しい器で、入力欄の場所にお伺いを出すか（答え待ちのあいだ。姿勢・幅によらない）。旧い器は読まない。 */
+  readonly narrowHeadSubject: NarrowHeadSubject
+  /** 入力欄の場所にお伺いを出すか（答え待ちのあいだ。姿勢・幅によらない）。 */
   readonly asking: boolean
-  /** 新しい器で、ほかの画面の紙が重なっているか。旧い器は読まない。 */
+  /** ほかの画面の紙が重なっているか。 */
   readonly covered: boolean
-  /** 新しい器で、紙の左に見えている会話の紙の端（覆い）を押したとき。 */
+  /** 紙の左に見えている会話の紙の端（覆い）を押したとき。 */
   readonly onUncover: () => void
 }
 
 export function PresentationalConversation(props: PresentationalConversationProps): ReactElement {
   return (
     <>
-      {props.shell.kind === "classic" ? (
-        <ConversationLayout
-          main={
-            props.chatMode ? (
-              <ChatView />
-            ) : (
-              <MainView outline="column" inquiry="inline" progress="strip" />
-            )
-          }
-          sidebar={<Sidebar />}
-          character={<CharacterView />}
-          dispatch={<Dispatch progress={{ kind: "strip" }} />}
-          inquiry={!props.chatMode && <PendingAskCard />}
-          rail={{
-            badge: !props.chatMode && <TaskDoingCount />,
-            tools: <RunSettingGroup placement="rail" />,
-          }}
-          collapseCharacter={props.chatMode}
-          mainAsGround={props.chatMode}
-        />
-      ) : (
-        <Stage
-          posture={props.posture}
-          chatMode={props.chatMode}
-          covered={props.covered}
-          onUncover={props.onUncover}
-          tools={props.shell.tools}
-          figure={
-            <CharacterView
-              hands={<PhoneActivity />}
-              stageHands={<StageActivity />}
-              roomHead={props.shell.head}
-              today={props.shell.today}
-              placement="stage"
-            />
-          }
-          desk={
-            <PaperDesk
-              posture={props.posture}
-              greeting={<Greeting />}
-              paper={
-                props.chatMode ? (
-                  <ChatView />
-                ) : (
-                  <MainView
-                    outline="none"
-                    inquiry={props.asking ? "none" : "inline"}
-                    progress="paper"
-                  />
-                )
-              }
-              margin={{ title: MARGIN_TITLE, body: props.shell.margin }}
-              dock={
-                <Dispatch
-                  progress={{
-                    kind: "paper",
-                    lamps: !props.chatMode && <WorkPlanDockLamps />,
-                  }}
-                />
-              }
-              inquiry={props.asking ? <InquiryCard actions="inline" placement="dock" /> : undefined}
-            />
-          }
-        />
-      )}
+      <Stage
+        posture={props.posture}
+        chatMode={props.chatMode}
+        covered={props.covered}
+        onUncover={props.onUncover}
+        tools={props.shell.tools}
+        narrowHead={props.shell.narrowHead(props.narrowHeadSubject)}
+        figure={
+          <CharacterView
+            hands={<PhoneActivity />}
+            stageHands={<StageActivity />}
+            roomHead={props.shell.head}
+            today={props.shell.today}
+          />
+        }
+        desk={
+          <PaperDesk
+            posture={props.posture}
+            greeting={<Greeting />}
+            paper={
+              props.chatMode ? (
+                <ChatView />
+              ) : (
+                <MainView outline="none" inquiry={props.asking ? "none" : "inline"} />
+              )
+            }
+            margin={
+              props.chatMode
+                ? {
+                    title: CHAT_MARGIN_TITLE,
+                    titleShown: false,
+                    body: <ChatMemory />,
+                  }
+                : { title: MARGIN_TITLE, titleShown: true, body: props.shell.margin }
+            }
+            dock={
+              <Dispatch
+                progress={{
+                  kind: "paper",
+                  lamps: !props.chatMode && <WorkPlanDockLamps />,
+                }}
+              />
+            }
+            inquiry={props.asking ? <InquiryCard actions="inline" placement="dock" /> : undefined}
+          />
+        }
+      />
       <LiveAnnouncer />
       {!props.chatMode && <RequestedTaskBoard />}
     </>

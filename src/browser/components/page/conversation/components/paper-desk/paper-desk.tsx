@@ -13,7 +13,12 @@ type PaperDeskProps = {
   /** 迎えるでだけ、入力欄の上に出す迎えの一言。 */
   readonly greeting: ReactNode
   readonly paper: ReactNode
-  readonly margin: { readonly title: string; readonly body: ReactNode }
+  /** 欄外。`titleShown` が偽なら題は名乗り（`aria-label`）だけにし、見出しを中身の区画に任せる。 */
+  readonly margin: {
+    readonly title: string
+    readonly titleShown: boolean
+    readonly body: ReactNode
+  }
   readonly dock: ReactNode
   /** 尋ねるあいだだけ渡す。入力欄の場所の上にお伺いを出し、紙の中身を引かせる。 */
   readonly inquiry?: ReactNode
@@ -56,7 +61,9 @@ export function PaperDesk(props: PaperDeskProps): ReactElement {
         data-region="margin"
         aria-label={props.margin.title}
       >
-        <h2 className={styles["paper-margin-title"]}>{props.margin.title}</h2>
+        {props.margin.titleShown && (
+          <h2 className={styles["paper-margin-title"]}>{props.margin.title}</h2>
+        )}
         {props.margin.body}
       </aside>
     </>

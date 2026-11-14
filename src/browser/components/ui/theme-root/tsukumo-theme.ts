@@ -21,7 +21,7 @@ const inkTint = (percent: number): string =>
   `color-mix(in srgb, var(--ink) ${String(percent)}%, transparent)`
 
 // neutral は触る画面で `lg` より狭いときに字の段と書体を組み直すので、同じ条件で書き直す。
-// 写す先は字の役の大きさで、`theme.css` の旧い器が引く大きさの段（`--font-size-*`）に写すと循環する。
+// 写す先は字の役の大きさで、Astryx の大きさの段（`--font-size-*`）に写すと、そこを引く値と循環する。
 const typeTokens = {
   "--font-family-body": "var(--font-sans)",
   "--font-family-heading": "var(--font-sans)",

@@ -92,79 +92,17 @@
   & .report-badge-ng {
     color: var(--state-ng);
   }
-  /* 名前付きの並び（`list` の `label`）。
-   ラベルと本文を2列に組み、項目の間を細い横線で区切る。
-   1列目は `ordered` の番号と `check` のチェックの置き場で、印の無い `bullet` では幅0に縮む。
-   器が狭いときは、同じ理由で1列に積み、ラベル（と番号・チェック）を本文の上の行に置く。 */
+  /* 名前付きの並び（`list` の `label`）。字の置き方は report-notation-list.css。 */
   & .report-labeled-list > :is(ul, ol) {
-    display: grid;
-    grid-template-columns: auto fit-content(11em) minmax(0, 1fr);
-    column-gap: var(--space-xl);
     margin: var(--report-block-gap) 0;
-    padding-left: 0;
-    list-style: none;
-    counter-reset: report-labeled-item;
-  }
-  @container report-body (max-width: calc(40em + 0.75rem)) {
-    & .report-labeled-list > :is(ul, ol) {
-      display: block;
-      padding-left: 0;
-      list-style: none;
-    }
-  }
-  & .report-labeled-list li {
-    display: grid;
-    grid-column: 1 / -1;
-    grid-template-columns: subgrid;
-    align-items: start;
-    padding: var(--space-md) 0;
-    border-top: 1px solid var(--rule-quiet);
-    counter-increment: report-labeled-item;
-  }
-  @container report-body (max-width: calc(40em + 0.75rem)) {
-    & .report-labeled-list li {
-      display: block;
-    }
-  }
-  & .report-labeled-list li:first-child {
-    border-top: none;
-  }
-  & .report-labeled-list ol > li::before {
-    content: counter(report-labeled-item) ".";
-    color: var(--ink-quiet);
-  }
-  & .report-list-label {
-    grid-column: 2;
-    min-width: calc(7.5 * var(--font-body));
-    color: var(--ink-quiet);
-    font-size: var(--font-secondary);
-    font-weight: 700;
-    line-height: 1.85;
-    overflow-wrap: break-word;
-  }
-  & .report-list-text {
-    grid-column: 3;
-    min-width: 0;
-    color: var(--ink);
-    font-size: var(--font-subheading);
-    line-height: 1.85;
-    overflow-wrap: anywhere;
-  }
-  @container report-body (max-width: calc(40em + 0.75rem)) {
-    & .report-list-text {
-      display: block;
-      margin-top: var(--space-2xs);
-    }
-  }
-  & .report-labeled-list code {
-    font-size: 0.86em;
   }
   /* 一本道の流れ（`list` の `flow`）。番号の丸を1本の線でつなぐ。
-   段の数に上限を置かないので、縦積みの高さを縛る値は書かない。 */
+   段の数に上限を置かないので、縦積みの高さを縛る値は書かない。
+   字下げは本文の箇条（report-notation-list.css）と同じ 1.15em。 */
   & .report-flow {
     list-style: none;
     margin: var(--report-block-gap) 0;
-    padding: 0;
+    padding: 0 0 0 1.15em;
   }
   & .report-flow-step {
     position: relative;

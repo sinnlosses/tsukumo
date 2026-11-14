@@ -14,7 +14,7 @@ export type AlertSetting = {
   readonly events: Readonly<Record<AlertEventKind, boolean>>
 }
 
-export const DEFAULT_ALERT_SETTING = {
+const DEFAULT_ALERT_SETTING = {
   notify: false,
   bell: false,
   events: { question: true, permission: true, failure: true, finished: false },

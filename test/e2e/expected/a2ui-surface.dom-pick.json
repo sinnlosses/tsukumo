@@ -1,9 +1,9 @@
 {
-  "main": [
+  "paper": [
     { "tag": "a2ui-react-report", "children": [
       { "tag": "div", "attributes": { "data-report-region": "head" }, "children": [
-        "架空の結論: 同じ中身の本文を、節と図と表の番号つきで並べた。",
-        { "tag": "div", "attributes": { "role": "group", "aria-label": "検証結果" } }
+        { "tag": "span", "attributes": { "aria-label": "落ちた 1・確かめた 1" } },
+        "架空の結論: 同じ中身の本文を、節と図と表の番号つきで並べた。"
       ] },
       { "tag": "div", "attributes": { "data-report-region": "section", "data-report-section": "0" }, "children": [
         "図 1"

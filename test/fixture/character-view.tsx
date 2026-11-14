@@ -4,7 +4,6 @@ import { QueryClientProvider } from "@tanstack/react-query"
 import { render } from "@testing-library/react"
 
 import { CharacterView } from "../../src/browser/components/page/conversation/components/character-view/character-view.tsx"
-import type { CharacterViewPlacement } from "../../src/browser/components/page/conversation/components/character-view/presentational-character-view.tsx"
 import { writeHashRoute, type ViewedTurn } from "../../src/browser/stores/location-hash.ts"
 import type { Expression } from "../../src/shared/character-pack/expression.ts"
 import type { WrittenReactions } from "../../src/shared/recommendation/reaction.ts"
@@ -46,8 +45,6 @@ export function renderCharacterView(
   options: {
     /** 送られたコマンドを受け取る関数。 */
     readonly spy?: CommandSpy
-    /** 舞台の器で描くときの置き場。 */
-    readonly placement?: CharacterViewPlacement
   } = {},
 ): void {
   writeHashRoute({
@@ -60,7 +57,7 @@ export function renderCharacterView(
   const queryClient = createTestQueryClient()
   render(
     <QueryClientProvider client={queryClient}>
-      <CharacterView placement={options.placement} />
+      <CharacterView />
     </QueryClientProvider>,
   )
 }

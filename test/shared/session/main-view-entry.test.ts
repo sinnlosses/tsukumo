@@ -1,7 +1,7 @@
 // `mainViewEntries` の記録ごとの結果の持ち回しと、失敗・脇の話の扱い。
 import { describe, expect, it } from "vitest"
 
-import { mainViewTurns } from "../../../src/browser/domain/main-view/main-view.ts"
+import { mainViewTurns } from "../../../src/browser/components/page/conversation/domain/main-view/main-view.ts"
 import { mainViewEntries } from "../../../src/shared/session/main-view-entry.ts"
 import { type MainViewEntry, turnAsides } from "../../../src/shared/session/main-view-shape.ts"
 import type { SessionEvent } from "../../../src/shared/session/session-event.ts"

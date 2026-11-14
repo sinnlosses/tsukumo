@@ -16,7 +16,7 @@ test.describe("入力欄から送る", () => {
       scenario: "input-dispatch",
       scene: "none",
       viewport: "wide",
-      domRoots: ["main", "dispatch"],
+      domRoots: ["paper", "dock"],
     })
 
     const textArea = room.page.locator("textarea")

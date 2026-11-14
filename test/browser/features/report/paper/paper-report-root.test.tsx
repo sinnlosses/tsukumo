@@ -14,7 +14,6 @@ import { checkedToolUseId } from "../../../../fixture/tool-use-id.ts"
 
 afterEach(() => {
   cleanup()
-  delete document.documentElement.dataset["shell"]
   useReadingDepth.setState(useReadingDepth.getInitialState(), true)
 })
 
@@ -142,10 +141,7 @@ function regionsOfScene(name: keyof typeof SCENES): MainViewReportRegions {
   return entry.regions
 }
 
-function renderScene(name: keyof typeof SCENES, shell: "stage" | "classic" | "unset") {
-  if (shell !== "unset") {
-    document.documentElement.dataset["shell"] = shell
-  }
+function renderScene(name: keyof typeof SCENES) {
   const appendDraft = vi.fn<(text: string) => void>()
   const ask = vi.fn<() => void>()
   const port = { appendDraft, prependDraft: () => undefined, ask }
@@ -176,7 +172,7 @@ function headOrder(container: HTMLElement): readonly string[] {
 
 describe("新しい器の紙の頭", () => {
   it("渡す紙は、判定の行が済んだで、結論の直後に続けて頼めることが来る", async () => {
-    const { container } = renderScene("delivered", "stage")
+    const { container } = renderScene("delivered")
     await screen.findByText(/一覧を名前の順に並べ直した/)
 
     const order = headOrder(container)
@@ -190,7 +186,7 @@ describe("新しい器の紙の頭", () => {
   })
 
   it("判断を仰ぐ紙は、あなたの番が結論の直後に来て、選べる答えを押すと入力欄に入るだけで送らない", async () => {
-    const { container, appendDraft, ask } = renderScene("ask", "stage")
+    const { container, appendDraft, ask } = renderScene("ask")
     await screen.findByText(/古い設定は2か所から読まれていて/)
 
     const order = headOrder(container)
@@ -208,7 +204,7 @@ describe("新しい器の紙の頭", () => {
   })
 
   it("続けて頼めることを押すと、下書きが入力欄に入るだけで送らない", () => {
-    const { appendDraft, ask } = renderScene("delivered", "stage")
+    const { appendDraft, ask } = renderScene("delivered")
 
     fireEvent.click(screen.getByRole("button", { name: "続ける: 架空の残り" }))
 
@@ -217,13 +213,13 @@ describe("新しい器の紙の頭", () => {
   })
 
   it("検証が無く未確認の主張だけがある紙も、判定の行に確かめていないの件数を出す", () => {
-    const { container } = renderScene("unverified", "stage")
+    const { container } = renderScene("unverified")
 
     expect(headOrder(container)[0]).toContain("？1")
   })
 
   it("短い答えの紙は、判定を答えたにし、あなたの番も続けて頼めることも出さない", () => {
-    const { container } = renderScene("short", "stage")
+    const { container } = renderScene("short")
 
     expect(headOrder(container)[0]).toContain("✓答えた")
     expect(screen.queryByRole("heading", { name: "あなたの番" })).toBeNull()
@@ -231,7 +227,7 @@ describe("新しい器の紙の頭", () => {
   })
 
   it("2回目の紙は、判定の行・結論・解決・新しく・残っているの順に並ぶ", async () => {
-    const { container } = renderScene("second", "stage")
+    const { container } = renderScene("second")
     await screen.findByText(/残りも直した/)
 
     const order = headOrder(container)
@@ -243,26 +239,17 @@ describe("新しい器の紙の頭", () => {
   })
 
   it("前回との対応が無い紙は、判定の行に前回からを出さない", () => {
-    const { container } = renderScene("delivered", "stage")
+    const { container } = renderScene("delivered")
 
     expect(headOrder(container)[0]).not.toContain("前回から")
   })
 
   it("解決だけの紙は、判定の行を前回から1件解決にして、新しくの語を出さない", () => {
-    const { container } = renderScene("resolvedOnly", "stage")
+    const { container } = renderScene("resolvedOnly")
 
     const stamp = headOrder(container)[0] ?? ""
     expect(stamp).toContain("前回から 1件解決")
     expect(stamp).not.toContain("新しく")
-  })
-
-  it("旧い器では紙の根を使わず、印の無いときと同じ DOM になる", () => {
-    const classic = renderScene("delivered", "classic").container.innerHTML
-    cleanup()
-    const unset = renderScene("delivered", "unset").container.innerHTML
-
-    expect(classic).toBe(unset)
-    expect(classic).not.toContain("data-paper-form")
   })
 })
 
@@ -274,7 +261,7 @@ describe("読む深さと節の畳み", () => {
   }
 
   it("既定は本文で、一目に替えても節の DOM は残り、根の印だけが替わる", () => {
-    const { container } = renderScene("delivered", "stage")
+    const { container } = renderScene("delivered")
     expect(bodyOf(container).dataset["depth"]).toBe("2")
 
     fireEvent.click(screen.getByRole("button", { name: "一目" }))
@@ -286,8 +273,8 @@ describe("読む深さと節の畳み", () => {
   })
 
   it("深さは部屋に1つで、別の紙で替えてもそろって替わる", () => {
-    const first = renderScene("delivered", "stage").container
-    const second = renderScene("ask", "stage").container
+    const first = renderScene("delivered").container
+    const second = renderScene("ask").container
 
     fireEvent.click(within(first).getByRole("button", { name: "記録" }))
 
@@ -295,7 +282,7 @@ describe("読む深さと節の畳み", () => {
   })
 
   it("節の畳みのボタンを押すと欄が data-folded になり、中身の DOM は残る", () => {
-    const { container } = renderScene("delivered", "stage")
+    const { container } = renderScene("delivered")
     const region = container.querySelector<HTMLElement>("[data-report-section]")
 
     fireEvent.click(within(region ?? document.body).getByRole("button", { name: "畳む" }))
@@ -305,7 +292,7 @@ describe("読む深さと節の畳み", () => {
   })
 
   it("見出しの無い節には畳みのボタンを出さない", () => {
-    const { container } = renderScene("short", "stage")
+    const { container } = renderScene("short")
     const region = container.querySelector<HTMLElement>("[data-report-section]")
 
     expect(region?.textContent).toContain("架空の読み口が既定値を持っている。")

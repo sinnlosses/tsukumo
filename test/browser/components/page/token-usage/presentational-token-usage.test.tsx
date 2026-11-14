@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
-import type { UsePlanUsageResult } from "../../../../../src/browser/components/frame/sidebar/hooks/use-plan-usage.ts"
+import type { UsePlanUsageResult } from "../../../../../src/browser/components/page/token-usage/hooks/use-plan-usage.ts"
 import type {
   ModelRowView,
   PeriodChoiceView,

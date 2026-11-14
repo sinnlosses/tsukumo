@@ -1,9 +1,8 @@
-import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
 import { TurnList } from "../../../../../../../src/browser/components/page/conversation/components/main-view/turn-list.tsx"
 import { readHashRoute } from "../../../../../../../src/browser/stores/location-hash.ts"
-import { useNavDrawer } from "../../../../../../../src/browser/stores/nav-drawer.ts"
 import type { SessionRecord } from "../../../../../../../src/shared/session/session-record.ts"
 import {
   INITIAL_SESSION_STATE,
@@ -20,7 +19,6 @@ import { putSession } from "../../../../../session-store.ts"
 
 afterEach(() => {
   cleanup()
-  useNavDrawer.setState(useNavDrawer.getInitialState(), true)
   window.location.hash = ""
 })
 
@@ -91,15 +89,11 @@ describe("TurnList", () => {
     expect(row?.querySelector(".turn-list-span")?.textContent).toMatch(/^作業中 1:0[5-7]$/u)
   })
 
-  it("行を押すと引き出しを閉じ、そのやり取りに留める", () => {
+  it("行を押すと、そのやり取りに留める", () => {
     renderTurnList({ records: TWO_DONE_TURNS })
-    act(() => {
-      useNavDrawer.getState().openDrawer()
-    })
 
     fireEvent.click(rows()[0] ?? document.body)
 
-    expect(useNavDrawer.getState().open).toBe(false)
     expect(readHashRoute().turn).toBe(0)
     expect(readHashRoute().screen).toBe("conversation")
   })

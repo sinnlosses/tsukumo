@@ -4,7 +4,7 @@ import type { Locator, Page } from "playwright-core"
 
 import { EVENT_TIMEOUT_MS } from "./message-record.ts"
 
-/** `revealAfterResponse`・`revealUsageAfterTurn` が、要素が見えるまで凍らせた時計を進める1回の幅（ミリ秒）。 */
+/** `revealAfterResponse` が、要素が見えるまで凍らせた時計を進める1回の幅（ミリ秒）。 */
 const REVEAL_CLOCK_STEP_MS = 50
 
 /** `revealAfterResponse` が応答の件数を数え始める基準。 */

@@ -2,8 +2,8 @@
 // 最新のターンを見ているあいだは、いまの吹き出しの段が出している最新のセリフを流れには重ねない。
 
 import { useSession } from "../../../../../../stores/session.ts"
-import { useTurnSelection } from "../../../../../../stores/turn-selection.ts"
 import { localTimeZoneId } from "../../../../../../utils/clock.ts"
+import { useTurnSelection } from "../../../stores/turn-selection.ts"
 import { talkFlowOf, type TalkFlowRow } from "../domain/talk-flow.ts"
 
 /** いまの吹き出しが反応を出しているか（`BalloonReaction` のうち、ここが見る分）。 */

@@ -21,9 +21,6 @@ test.describe("キャラクターの紙", () => {
       viewport: "wide",
       domRoots: ["page"],
     })
-    const url = new URL(room.page.url())
-    url.searchParams.set("shell", "stage")
-    await room.page.goto(url.toString())
     await room.page.getByRole("link", { name: "キャラ", exact: true }).click()
     const list = room.page.getByRole("navigation", { name: "キャラクター一覧" })
     await list.waitFor()

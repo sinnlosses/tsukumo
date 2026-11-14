@@ -6,10 +6,10 @@ import {
   phasePosition,
 } from "../../../../../../../shared/session/work-plan-phase-number.ts"
 import { currentPhaseOf, type WorkPhase } from "../../../../../../../shared/session/work-plan.ts"
-import { isTurnCounting } from "../../../../../../domain/turn-elapsed.ts"
 import { useNowWhile } from "../../../../../../stores/clock.ts"
-import { useCurrentTurnSteps } from "../../../../../../stores/current-turn-step-list.ts"
 import { useSession } from "../../../../../../stores/session.ts"
+import { isTurnCounting } from "../../../domain/turn-elapsed.ts"
+import { useCurrentTurnSteps } from "../../../stores/current-turn-step-list.ts"
 import { useUsualDurations } from "../../../stores/usual-duration.ts"
 import { workActivityOf, type WorkActivity } from "../domain/work-activity.ts"
 

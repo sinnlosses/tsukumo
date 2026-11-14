@@ -14,7 +14,7 @@ import type { ScreenPartExample } from "./screen-part-example-type.ts"
 
 const noop = (): void => {}
 
-const STRIP_PROGRESS = { kind: "strip" } as const satisfies DispatchProgress
+const PAPER_PROGRESS = { kind: "paper", lamps: false } as const satisfies DispatchProgress
 
 const EXAMPLE_LAMPS = (["done", "done", "now", "todo"] as const satisfies LampStepState[]).map(
   (state, index) => ({ key: String(index), state }),
@@ -62,17 +62,17 @@ export const DISPATCH_EXAMPLES: readonly ScreenPartExample[] = [
     path: "page/conversation/components/dispatch/presentational-composer.tsx",
     render: () => (
       <>
-        <PresentationalComposer {...COMPOSER} progress={STRIP_PROGRESS} />
+        <PresentationalComposer {...COMPOSER} progress={PAPER_PROGRESS} />
         <PresentationalComposer
           {...COMPOSER}
-          progress={STRIP_PROGRESS}
+          progress={PAPER_PROGRESS}
           answering
           input={{ ...COMPOSER.input, draft: { text: "", caret: 0 } }}
           band={{ kind: "inquiry", text: "答え待ちの質問があります", onJump: noop }}
         />
         <PresentationalComposer
           {...COMPOSER}
-          progress={STRIP_PROGRESS}
+          progress={PAPER_PROGRESS}
           input={{ ...COMPOSER.input, draft: { text: "/co", caret: 3 } }}
           suggestion={{
             ...COMPOSER.suggestion,
@@ -87,7 +87,7 @@ export const DISPATCH_EXAMPLES: readonly ScreenPartExample[] = [
         />
         <PresentationalComposer
           {...COMPOSER}
-          progress={STRIP_PROGRESS}
+          progress={PAPER_PROGRESS}
           band={{ kind: "disconnected", text: "サーバとの接続が切れています" }}
         />
       </>

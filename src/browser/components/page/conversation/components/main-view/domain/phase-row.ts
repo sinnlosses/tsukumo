@@ -9,7 +9,7 @@ import {
   type MainViewTurn,
 } from "../../../../../../../shared/session/main-view-shape.ts"
 import { formatMinutesSeconds } from "../../../../../../../shared/utils/elapsed-time.ts"
-import { doneMarkOf } from "../../../../../../domain/phase-mark.ts"
+import { doneMarkOf } from "../../../domain/phase-mark.ts"
 
 type TextBody = Extract<MainViewStepBody, { readonly kind: "text" }>
 

@@ -49,14 +49,6 @@ function renderTurnStatus(
   dispatch: CommandSpy = () => {},
 ): void {
   putSession({ ...INITIAL_SESSION_STATE, ...stateOverrides }, dispatch)
-  render(<TurnStatus betweenElapsedAndAction={undefined} progress={{ kind: "strip" }} />)
-}
-
-function renderPaperTurnStatus(
-  stateOverrides: Partial<SessionState>,
-  dispatch: CommandSpy = () => {},
-): void {
-  putSession({ ...INITIAL_SESSION_STATE, ...stateOverrides }, dispatch)
   render(
     <TurnStatus
       betweenElapsedAndAction={undefined}
@@ -66,11 +58,9 @@ function renderPaperTurnStatus(
 }
 
 describe("TurnStatus", () => {
-  it("新しい器では、進行中のボタンが「止める」で、⌘. と Ctrl+. でも interrupt が dispatch される", () => {
+  it("進行中のボタンが「止める」で、⌘. と Ctrl+. でも interrupt が dispatch される", () => {
     const calls: unknown[] = []
-    renderPaperTurnStatus({ turn: { kind: "running", startedAt: 0 } }, (command) =>
-      calls.push(command),
-    )
+    renderTurnStatus({ turn: { kind: "running", startedAt: 0 } }, (command) => calls.push(command))
 
     expect(screen.getByRole("button").textContent).toBe("止める⌘.")
 
@@ -81,52 +71,13 @@ describe("TurnStatus", () => {
     expect(calls).toEqual([{ procedure: "session.interrupt" }, { procedure: "session.interrupt" }])
   })
 
-  it("新しい器でも、進行中でなければ ⌘. で止めない", () => {
+  it("進行中でなければ ⌘. で止めない", () => {
     const calls: unknown[] = []
-    renderPaperTurnStatus({}, (command) => calls.push(command))
+    renderTurnStatus({}, (command) => calls.push(command))
 
     fireEvent.keyDown(window, { key: ".", metaKey: true })
 
     expect(calls).toEqual([])
-  })
-
-  it("旧い器では ⌘. で止めない", () => {
-    const calls: unknown[] = []
-    renderTurnStatus({ turn: { kind: "running", startedAt: 0 } }, (command) => calls.push(command))
-
-    fireEvent.keyDown(window, { key: ".", metaKey: true })
-
-    expect(calls).toEqual([])
-  })
-
-  it("(4) ターンが進行中のときボタンが「中断」になり、押すと interrupt が dispatch される", () => {
-    const calls: unknown[] = []
-    renderTurnStatus({ turn: { kind: "running", startedAt: 0 } }, (command) => calls.push(command))
-
-    const button = screen.getByRole("button")
-    expect(button.textContent).toBe("中断")
-
-    fireEvent.click(button)
-
-    expect(calls).toEqual([{ procedure: "session.interrupt" }])
-  })
-
-  it("仕事のときは、経過時間も再試行中の知らせも行に出さない", () => {
-    renderTurnStatus({
-      turn: { kind: "running", startedAt: 0 },
-      apiTrouble: {
-        kind: "retrying",
-        at: 0,
-        attempt: 2,
-        maxRetries: 10,
-        retryDelayMs: 4000,
-        errorStatus: 529,
-        error: "overloaded",
-      },
-    })
-
-    expect(screen.queryByText("経過")).toBeNull()
-    expect(screen.queryAllByRole("status").filter((live) => live.textContent !== "")).toEqual([])
   })
 
   it("(5) 経過時間は running の起点から数え、ラベルは「経過」（進行中）", () => {

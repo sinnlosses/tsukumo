@@ -8,10 +8,10 @@ import {
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../../../../../../src/shared/session/session-state.ts"
-import type { SentCommand } from "../../../../../../browser/session-store.ts"
 import { renderCharacterView } from "../../../../../../fixture/character-view.tsx"
 import { characterChangedEvent } from "../../../../../../fixture/character.ts"
 import { requestEvent } from "../../../../../../fixture/session-event.ts"
+import type { SentCommand } from "../../../../../session-store.ts"
 
 // すべて手で書いた架空の札と返事。
 
@@ -55,8 +55,6 @@ function shownChips(): readonly string[] {
   )
 }
 
-const STAGE = { placement: "stage" } as const
-
 describe("CharacterView（相づちの札）", () => {
   it.each([
     ["渡したあとは2枚", [WRITTEN, requestEvent(), COMPLETED], ["渡すの札0", "渡すの札1"]],
@@ -65,7 +63,7 @@ describe("CharacterView（相づちの札）", () => {
     ["始め方の一覧（greet）には出さない", [WRITTEN], []],
     ["書けていない代には出さない", [requestEvent(), COMPLETED], []],
   ] as const)("%s", (_, events, expected) => {
-    renderCharacterView(stateAfter(events), "newest", STAGE)
+    renderCharacterView(stateAfter(events))
 
     expect(shownChips()).toEqual(expected)
   })
@@ -76,7 +74,7 @@ describe("CharacterView（相づちの札）", () => {
       pending: [{ kind: "permission", id: "架空の許可", toolName: "架空のツール", input: {} }],
     } as const satisfies SessionEvent
 
-    renderCharacterView(stateAfter([WRITTEN, requestEvent(), asking]), "newest", STAGE)
+    renderCharacterView(stateAfter([WRITTEN, requestEvent(), asking]))
 
     expect(shownChips()).toEqual([])
   })
@@ -84,7 +82,7 @@ describe("CharacterView（相づちの札）", () => {
   it("過去のやり取りを見ているあいだは出さない", () => {
     const state = stateAfter([WRITTEN, requestEvent(), COMPLETED, requestEvent(), COMPLETED])
 
-    renderCharacterView(state, 0, STAGE)
+    renderCharacterView(state, 0)
 
     expect(shownChips()).toEqual([])
   })
@@ -92,7 +90,6 @@ describe("CharacterView（相づちの札）", () => {
   it("押すと、局面と番号で pressAizuchi を送る", () => {
     const sent: SentCommand[] = []
     renderCharacterView(stateAfter([WRITTEN, requestEvent(), COMPLETED]), "newest", {
-      ...STAGE,
       spy: (command) => {
         sent.push(command)
       },
@@ -106,7 +103,7 @@ describe("CharacterView（相づちの札）", () => {
   it("押したあとは、返事を吹き出しに出して札を引っ込める", () => {
     const state = stateAfter([WRITTEN, requestEvent(), COMPLETED, press()])
 
-    renderCharacterView(state, "newest", STAGE)
+    renderCharacterView(state)
 
     expect(shownChips()).toEqual([])
     expect(document.querySelector("[data-reaction]")?.textContent).toContain("渡すの返事0")

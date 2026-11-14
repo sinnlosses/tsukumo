@@ -188,7 +188,7 @@ describe("操作できる Table と ChoicePicker", () => {
       <Report reveal={false} turnId={1} {...NO_CLASS_NAMES} body={body} />,
     )
 
-    expect(screen.queryAllByRole("button")).toEqual([])
+    expect([...container.querySelectorAll("[data-report-region] table button")]).toEqual([])
     expect(
       [...container.querySelectorAll("[data-report-region] table tbody tr")].map(
         (row) => row.firstElementChild?.textContent,
@@ -302,12 +302,8 @@ describe("頭とお願い（A2UI の面）", () => {
     )
 
     const head = container.querySelector('[data-report-region="head"]')
-    expect(head?.querySelector(":scope > div > p")?.textContent).toBe("架空の結論。")
-    expect(head?.querySelectorAll("b")[0]?.textContent).toBe("14")
-    const favor = container.querySelector('[data-report-region="favor"]')
-    expect(favor?.id).toBe(body.a2ui.favor.id)
-    expect(favor?.textContent).toContain("お願い")
-    expect(favor?.textContent).toContain("架空のお願い。")
+    expect(head?.querySelector('[class*="paper-conclusion"]')?.textContent).toBe("架空の結論。")
+    expect(head?.textContent).toContain("架空のお願い。")
     const stubs = [...container.querySelectorAll("[data-markdown-stub]")].map(
       (stub) => stub.textContent,
     )
@@ -357,12 +353,14 @@ describe("部品の一覧のある本文（A2UI の面）", () => {
       "架空の左。",
     )
     expect(cells?.[1]?.textContent).toBe("架空の右。")
-    expect(
-      [...(region?.children ?? [])].map((child) =>
-        child === row ? "row" : (child.textContent ?? ""),
-      ),
-    ).toEqual(["架空の並び", "架空の前。", "row", "架空の後ろ。"])
-    expect(region?.firstElementChild?.tagName).toBe("H4")
+    const contents = [...(region?.children ?? [])].filter((child) => child.tagName !== "BUTTON")
+    expect(contents.map((child) => (child === row ? "row" : (child.textContent ?? "")))).toEqual([
+      "架空の並び",
+      "架空の前。",
+      "row",
+      "架空の後ろ。",
+    ])
+    expect(contents[0]?.tagName).toBe("H4")
   })
 
   it("記法の字を含む見出しは、h4 を React で描かず欄の Markdown に任せる", () => {
@@ -376,7 +374,8 @@ describe("部品の一覧のある本文（A2UI の面）", () => {
     )
 
     const region = container.querySelector('[data-report-section="0"]')
-    expect(region?.firstElementChild?.textContent).toBe("架空の `code` 見出し")
+    const heading = [...(region?.children ?? [])].find((child) => child.tagName !== "BUTTON")
+    expect(heading?.textContent).toBe("架空の `code` 見出し")
   })
 
   it("面が作れなかった本文は、節を落として「本文を描けませんでした」を出し、頭とお願いは描いて、原因を診断ログへ送る", () => {

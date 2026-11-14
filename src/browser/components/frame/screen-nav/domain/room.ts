@@ -41,3 +41,14 @@ export function roomName(viewPort: number): string {
   const color = ROOM_COLORS[viewPort - FIRST_ROOM_PORT]
   return color === undefined ? String(viewPort) : `${color}${ROOM_SUFFIX}`
 }
+
+/**
+ * このページを配っている URL のポート（`location.port`）から読む部屋の名前。
+ * どの部屋かの正典はこのポートで、サーバから送り直してもらう値ではないので状態には乗せない。
+ * 空文字は URL がポートを省いた形で、http の既定ポートを補う。
+ */
+export function roomNameOfPagePort(port: string): string {
+  return roomName(port === "" ? DEFAULT_HTTP_PORT : Number(port))
+}
+
+const DEFAULT_HTTP_PORT = 80

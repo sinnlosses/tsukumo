@@ -58,7 +58,6 @@ afterEach(() => {
   themeStyleElement?.remove()
   themeStyleElement = undefined
   window.location.hash = ""
-  delete document.documentElement.dataset["shell"]
 })
 
 function renderCharacter(state: Partial<SessionState> = {}, spy: CommandSpy = () => {}): void {
@@ -95,8 +94,7 @@ function profileName(): string | null | undefined {
 }
 
 describe("Character", () => {
-  it("新しい器では一覧の見出しの行を出さない", () => {
-    document.documentElement.dataset["shell"] = "stage"
+  it("一覧の見出しの行を出さない", () => {
     renderCharacter()
 
     const list = screen.getByRole("navigation", { name: "キャラクター一覧" })
@@ -107,8 +105,6 @@ describe("Character", () => {
   it("左に一覧（件数・行・新しく作る）、右に使用中のパックの詳しい設定を出す", () => {
     renderCharacter()
 
-    const list = screen.getByRole("navigation", { name: "キャラクター一覧" })
-    expect(list.querySelector(".character-list-heading")?.textContent).toBe("キャラクター2")
     expect(screen.getByRole("button", { name: "新しく作る" })).toBeDefined()
     // 使用中の行は表情の枚数と「使用中」を添え、選ばれている（aria-current）。
     const inUseRow = screen.getByRole("link", { name: /架空の精霊/ })
@@ -234,7 +230,7 @@ describe("Character", () => {
     expect(calls).toEqual([{ procedure: "session.switchCharacter", name: "other" }])
   })
 
-  // 切り替えは起こし直しなので、ターン進行中は押せない（サイドバーの `<select>` と同じ規則）。
+  // 切り替えは起こし直しなので、ターン進行中は押せない（セッションの切り替えと同じ規則）。
   it("ターン進行中は「このキャラクターに切り替える」を押せない", () => {
     window.location.hash = "#character?pack=other"
     renderCharacter({ turn: { kind: "running", startedAt: 1 } })

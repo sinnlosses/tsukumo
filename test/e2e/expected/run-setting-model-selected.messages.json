@@ -41,10 +41,13 @@
     }
   },
   {
-    "sent": "session.setModel",
+    "sent": "session.setSessionDefault",
     "order": 1,
     "input": {
-      "model": "sonnet"
+      "model": "sonnet",
+      "effort": "medium",
+      "permissionMode": "auto",
+      "figurePreference": "chart"
     }
   },
   {
@@ -57,20 +60,13 @@
     "received": "event",
     "at": 1768438800000,
     "event": {
-      "kind": "session-info",
-      "sessionId": "fake-session",
-      "model": "sonnet",
-      "permissionMode": "auto",
-      "slashCommands": "<コマンド一覧>",
-      "terminalSlashCommands": "<コマンド一覧>",
-      "skillNames": [
-        "tsukumo-workflow:next-task",
-        "fable-review"
-      ],
-      "agentNames": [
-        "tsukumo-workflow:acceptor",
-        "fable-acceptor"
-      ]
+      "kind": "session-default-changed",
+      "sessionDefault": {
+        "model": "sonnet",
+        "effort": "medium",
+        "permissionMode": "auto",
+        "figurePreference": "chart"
+      }
     }
   }
 ]

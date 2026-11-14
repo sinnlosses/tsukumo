@@ -121,7 +121,7 @@ describe("API の不調と失敗（docs/requirements.md 4.1）", () => {
     ]
 
     expect(messages.flatMap((message) => toSessionEvents(message, EXPRESSIONS))).toEqual([
-      // 「近い」（allowed_warning）は clear に畳む——枠の残り具合はサイドバーのプラン使用量が出す。
+      // 「近い」（allowed_warning）は clear に畳む——枠の残り具合は使用量の紙のプラン使用量が出す。
       { kind: "rate-limit-changed", rateLimit: { kind: "clear" } },
       {
         kind: "rate-limit-changed",

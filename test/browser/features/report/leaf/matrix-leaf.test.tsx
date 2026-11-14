@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
-import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest"
+import { afterEach, beforeAll, describe, expect, it } from "vitest"
 
 import {
   DirectLeaf,
@@ -13,13 +13,8 @@ beforeAll(async () => {
   await loadMarkdown()
 })
 
-beforeEach(() => {
-  document.documentElement.dataset["shell"] = "stage"
-})
-
 afterEach(() => {
   cleanup()
-  delete document.documentElement.dataset["shell"]
 })
 
 type MatrixPart = Extract<A2uiReportComponent, { readonly component: "Matrix" }>
@@ -66,13 +61,6 @@ function renderPart(part: MatrixPart) {
 }
 
 describe("Matrix の部品", () => {
-  it("旧い器では補足の無いセルに状態の語を足さない", () => {
-    delete document.documentElement.dataset["shell"]
-    const { container } = renderPart(partOf(ALL_STATUSES))
-
-    expect(container.querySelectorAll("[class*='matrix-note']")).toHaveLength(0)
-  })
-
   it("交点の印は role=img と状態の語を持ち、数は行 × 列と一致する", () => {
     renderPart(partOf(ALL_STATUSES))
 

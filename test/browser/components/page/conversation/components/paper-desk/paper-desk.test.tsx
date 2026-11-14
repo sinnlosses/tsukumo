@@ -13,7 +13,7 @@ function desk(posture: "greet" | "work" | "deliver", withInquiry: boolean) {
       posture={posture}
       greeting={<p>迎えの一言</p>}
       paper={<p>紙の本文</p>}
-      margin={{ title: "欄外", body: <p>欄外の中身</p> }}
+      margin={{ title: "欄外", titleShown: true, body: <p>欄外の中身</p> }}
       dock={<p>入力欄の中身</p>}
       inquiry={withInquiry ? <p>架空の選択肢</p> : undefined}
     />

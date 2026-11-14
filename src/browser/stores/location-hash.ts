@@ -29,27 +29,18 @@ import {
 import { dateKeyOf, parseDateKey, type DateKey } from "../../shared/diary/date-key.ts"
 
 /**
- * 画面の名前とラベルの一覧（唯一の正典）。
- * `Screen` 型・旧い器の帯のメニューの並び（`SCREEN_NAV_ITEMS`）・hash の `?` より前のパス（{@link pathOf}）は全部ここから導く。
+ * 画面の名前の一覧（唯一の正典）。
+ * `Screen` 型と hash の `?` より前のパス（{@link pathOf}）はここから導く。
  * 画面を足したら、画面の部品を引く表（`LAYOUT_SCREENS` の `overlay`）にも登録する（忘れると型エラーになる）。
- *
- * `band` は旧い器の帯に口を出すか。タスクと設定は新しい器の部屋の頭から開く紙で、旧い器の帯には出さない（hash を打てば全面に出る）。
  */
 const SCREEN_LIST = [
-  { screen: "conversation", label: "会話", band: true },
-  { screen: "character", label: "キャラ", band: true },
-  { screen: "token-usage", label: "トークン", band: true },
-  { screen: "achievement", label: "成果", band: true },
-  { screen: "tasks", label: "タスク", band: false },
-  { screen: "settings", label: "設定", band: false },
-] as const satisfies readonly {
-  readonly screen: string
-  readonly label: string
-  readonly band: boolean
-}[]
-
-/** 旧い器の帯のメニューに出る画面。 */
-export type NavScreen = Extract<(typeof SCREEN_LIST)[number], { readonly band: true }>["screen"]
+  { screen: "conversation" },
+  { screen: "character" },
+  { screen: "token-usage" },
+  { screen: "achievement" },
+  { screen: "tasks" },
+  { screen: "settings" },
+] as const satisfies readonly { readonly screen: string }[]
 
 /** どの入口にも出さず、hash を打って開く画面（見本帳）。 */
 const HIDDEN_SCREEN_LIST = [{ screen: "design" }] as const satisfies readonly {
@@ -61,13 +52,10 @@ export type Screen =
   | (typeof SCREEN_LIST)[number]["screen"]
   | (typeof HIDDEN_SCREEN_LIST)[number]["screen"]
 
-/** 新しい器で重ねる紙にする画面（会話の画面は紙の下に敷き、見本帳は紙にせず全面に出す）。 */
+/** 重ねる紙にする画面（会話の画面は紙の下に敷き、見本帳は紙にせず全面に出す）。 */
 export type SheetScreen = Exclude<Screen, "conversation" | "design">
 
-/**
- * 紙の見出し。並びは画面を並べて出すときの順。
- * 旧い器の帯のラベル（`SCREEN_LIST` の `label`）とは語が違う。
- */
+/** 紙の見出し。並びは画面を並べて出すときの順。 */
 export const SHEET_TITLES = {
   tasks: "タスク",
   achievement: "成果",
@@ -75,10 +63,6 @@ export const SHEET_TITLES = {
   character: "キャラクター",
   settings: "設定",
 } as const satisfies Record<SheetScreen, string>
-
-/** 旧い器の帯のメニューが並べる順そのもの。 */
-export const SCREEN_NAV_ITEMS: readonly { readonly screen: NavScreen; readonly label: string }[] =
-  SCREEN_LIST.filter((item): item is Extract<typeof item, { readonly band: true }> => item.band)
 
 /**
  * 見ているターン。`"newest"` は今回に追従する（新しいターンが始まればそちらへ移る）。

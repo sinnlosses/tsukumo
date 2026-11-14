@@ -11,7 +11,7 @@ const TURN_ID = 3
 function Probe(): ReactElement {
   useStepJumpLanding(TURN_ID)
   return (
-    <main data-region="main">
+    <main data-region="paper">
       <details data-testid="progress">
         <summary>架空の経過</summary>
         <details data-step-id="2" data-testid="step">

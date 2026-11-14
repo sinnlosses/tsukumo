@@ -43,12 +43,8 @@ function deferredStub(name: string): ReactElement {
 function stubScreens(): LayoutScreens {
   return {
     skipLink: <div />,
-    nav: <nav aria-label="画面のナビ" />,
     diaryNotice: stubElement("diary-notice"),
-    conversation: {
-      classic: stubElement("conversation"),
-      stage: stubElement("stage-conversation"),
-    },
+    conversation: stubElement("conversation"),
     overlay: {
       character: deferredStub("character"),
       "token-usage": deferredStub("token-usage"),
@@ -70,7 +66,6 @@ beforeEach(() => {
 afterEach(() => {
   cleanup()
   vi.restoreAllMocks()
-  delete document.documentElement.dataset["shell"]
 })
 
 async function moveTo(hash: string): Promise<void> {
@@ -80,26 +75,8 @@ async function moveTo(hash: string): Promise<void> {
   })
 }
 
-describe("Layout の器の切り替え", () => {
-  it("印が無いときは、旧い器の会話の画面と帯を出す", () => {
-    render(<Layout screens={stubScreens()} />)
-
-    expect(screen.getByTestId("conversation")).toBeDefined()
-    expect(screen.queryByTestId("stage-conversation")).toBeNull()
-    expect(screen.getByRole("navigation", { name: "画面のナビ" })).toBeDefined()
-  })
-
-  it("印が stage のときは、新しい器の会話の画面を出し、帯を出さない", () => {
-    document.documentElement.dataset["shell"] = "stage"
-    render(<Layout screens={stubScreens()} />)
-
-    expect(screen.getByTestId("stage-conversation")).toBeDefined()
-    expect(screen.queryByTestId("conversation")).toBeNull()
-    expect(screen.queryByRole("navigation", { name: "画面のナビ" })).toBeNull()
-  })
-
-  it("印が stage のときは、ほかの画面を会話の画面の上に紙で重ね、紙を閉じると会話の画面へ戻る", async () => {
-    document.documentElement.dataset["shell"] = "stage"
+describe("Layout の重ねる紙", () => {
+  it("ほかの画面を会話の画面の上に紙で重ね、紙を閉じると会話の画面へ戻る", async () => {
     render(<Layout screens={stubScreens()} />)
 
     await moveTo("#settings")
@@ -107,8 +84,7 @@ describe("Layout の器の切り替え", () => {
     expect(screen.getByTestId("settings").closest("dialog")?.getAttribute("aria-label")).toBe(
       "設定",
     )
-    expect(screen.getByTestId("stage-conversation")).toBeDefined()
-    expect(screen.queryByRole("navigation", { name: "画面のナビ" })).toBeNull()
+    expect(screen.getByTestId("conversation")).toBeDefined()
 
     await act(async () => {
       screen.getByRole("button", { name: /閉じる/, hidden: true }).click()
@@ -118,8 +94,7 @@ describe("Layout の器の切り替え", () => {
     expect(window.location.hash).toBe("")
   })
 
-  it("印が stage でキャラクターの紙を開くと、見出しの横に人数が出る", async () => {
-    document.documentElement.dataset["shell"] = "stage"
+  it("キャラクターの紙を開くと、見出しの横に人数が出る", async () => {
     putSession({
       ...INITIAL_SESSION_STATE,
       characterPacks: [characterPackEntry("a", "甲"), characterPackEntry("b", "乙")],
@@ -131,8 +106,7 @@ describe("Layout の器の切り替え", () => {
     expect(await screen.findByText("2人")).toBeDefined()
   })
 
-  it("印が stage で使用量の紙を開くと、見出しの横に補いが出る", async () => {
-    document.documentElement.dataset["shell"] = "stage"
+  it("使用量の紙を開くと、見出しの横に補いが出る", async () => {
     render(<Layout screens={stubScreens()} />)
 
     await moveTo("#token-usage")
@@ -140,22 +114,13 @@ describe("Layout の器の切り替え", () => {
     expect(await screen.findByText("このセッションと、プランの枠")).toBeDefined()
   })
 
-  it("印が stage でも、見本帳は紙にせず帯を残す", async () => {
-    document.documentElement.dataset["shell"] = "stage"
+  it("見本帳は紙にせず、会話の画面と入れ替えて出す", async () => {
     render(<Layout screens={stubScreens()} />)
 
     await moveTo("#design")
 
     expect((await screen.findByTestId("design")).closest("dialog")).toBeNull()
-    expect(screen.getByRole("navigation", { name: "画面のナビ" })).toBeDefined()
-  })
-
-  it("印が無いときは、タスクと設定の画面も全面に出す", async () => {
-    render(<Layout screens={stubScreens()} />)
-
-    await moveTo("#tasks")
-
-    expect(screen.getByTestId("tasks").closest("dialog")).toBeNull()
+    expect(screen.getByTestId("conversation").style.display).toBe("none")
   })
 })
 
@@ -170,36 +135,38 @@ describe("Layout の描画の失敗の受け止め", () => {
     expect([...loaded.names]).toEqual(["token-usage"])
   })
 
-  it("ほかの画面が throw しても、説明と読み込み直すボタンを出し、画面のナビは残る", async () => {
+  it("ほかの画面が throw しても、説明と読み込み直すボタンを出し、会話の画面は残る", async () => {
     failing.names.add("character")
     render(<Layout screens={stubScreens()} />)
 
     await moveTo("#character")
 
     expect(
-      within(await screen.findByRole("alert")).getByRole("button", { name: "読み込み直す" }),
+      within(await screen.findByRole("alert", { hidden: true })).getByRole("button", {
+        name: "読み込み直す",
+        hidden: true,
+      }),
     ).toBeDefined()
-    expect(screen.getByRole("navigation", { name: "画面のナビ" })).toBeDefined()
+    expect(screen.getByTestId("conversation")).toBeDefined()
   })
 
   it("別の画面へ移ると、失敗していた画面の印が消える", async () => {
     failing.names.add("character")
     render(<Layout screens={stubScreens()} />)
     await moveTo("#character")
-    expect(await screen.findByRole("alert")).toBeDefined()
+    expect(await screen.findByRole("alert", { hidden: true })).toBeDefined()
 
     await moveTo("#token-usage")
 
     expect(await screen.findByTestId("token-usage")).toBeDefined()
-    expect(screen.queryByRole("alert")).toBeNull()
+    expect(screen.queryByRole("alert", { hidden: true })).toBeNull()
   })
 
-  it("会話の画面が throw しても、帯と書き終わりの知らせは巻き込まれない", () => {
+  it("会話の画面が throw しても、書き終わりの知らせは巻き込まれない", () => {
     failing.names.add("conversation")
     render(<Layout screens={stubScreens()} />)
 
     expect(screen.getAllByRole("alert")).toHaveLength(1)
-    expect(screen.getByRole("navigation", { name: "画面のナビ" })).toBeDefined()
     expect(screen.getByTestId("diary-notice")).toBeDefined()
   })
 

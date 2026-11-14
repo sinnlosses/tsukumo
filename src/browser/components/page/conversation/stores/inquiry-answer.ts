@@ -26,8 +26,8 @@ import {
   type QuestionAnswer,
   withoutRecommendedMark,
 } from "../../../../../shared/session-driver/question.ts"
-import { toolInputText } from "../../../../domain/tool-summary.ts"
 import { useSession, type SessionDispatch } from "../../../../stores/session.ts"
+import { toolInputText } from "../domain/tool-summary.ts"
 import { useComposerDraft } from "./composer-draft.ts"
 import {
   EMPTY_DRAFT_ANSWER,

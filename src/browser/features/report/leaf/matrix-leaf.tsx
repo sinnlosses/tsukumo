@@ -11,7 +11,6 @@ import {
   matrixLegendStatuses,
 } from "../../../../shared/report/table-layout.ts"
 import { Badge } from "../../../components/ui/badge/badge.tsx"
-import { shownShell } from "../../../stores/shell-mark.ts"
 import { InlineMarkdown, matrixLeafClassNames } from "../markdown.tsx"
 import { ColumnMarked, LeafTable, type LeafTableRow } from "./leaf-table.tsx"
 import styles from "./leaf.module.css"
@@ -75,7 +74,6 @@ function headCells(part: MatrixPart): readonly ReactNode[] {
 }
 
 function bodyRows(part: MatrixPart): readonly LeafTableRow[] {
-  const stage = shownShell(document.documentElement) === "stage"
   return part.rows.map((row, rowIndex) => ({
     key: `${String(rowIndex)}:${row.name}`,
     cells: [
@@ -85,11 +83,9 @@ function bodyRows(part: MatrixPart): readonly LeafTableRow[] {
         return (
           <ColumnMarked key={`${String(index)}:${status}`} marked={index === part.emphasisColumn}>
             <MatrixMark status={status} note={note} legend={false} />
-            {(note !== "" || stage) && (
-              <span className={matrixLeafClassNames.matrixNote} aria-hidden="true">
-                {note === "" ? MATRIX_MARKS[status].label : note}
-              </span>
-            )}
+            <span className={matrixLeafClassNames.matrixNote} aria-hidden="true">
+              {note === "" ? MATRIX_MARKS[status].label : note}
+            </span>
           </ColumnMarked>
         )
       }),

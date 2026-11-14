@@ -4,8 +4,8 @@
 import { useRef, type RefObject } from "react"
 
 import { useExternalSync } from "../../../../../../hooks/use-external-sync.ts"
-import type { InquiryJump } from "../../../../../../stores/inquiry-jump.ts"
 import type { InquiryModel } from "../../../stores/inquiry-answer.ts"
+import type { InquiryJump } from "../../../stores/inquiry-jump.ts"
 
 /** 札の中で最初にフォーカスを受ける選択肢。 */
 const FIRST_CHOICE_SELECTOR = "input"

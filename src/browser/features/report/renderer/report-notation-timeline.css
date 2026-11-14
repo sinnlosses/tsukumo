@@ -254,8 +254,8 @@
   }
 }
 
-/* 新しい器の紙の時間の図。並べて走った役は字下げした行で同じ軸に置き、待っていた時間は塗らずに枠だけ、出来事は縦の線1本で描く。 */
-:root[data-shell="stage"] .detail-block {
+/* 紙の時間の図。並べて走った役は字下げした行で同じ軸に置き、待っていた時間は塗らずに枠だけ、出来事は縦の線1本で描く。 */
+.detail-block {
   & .report-timeline-lane {
     border-block-start: 1px solid var(--rule-quiet);
     border-inline-start: 0;

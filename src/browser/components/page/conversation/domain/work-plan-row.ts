@@ -23,9 +23,9 @@ import {
 import type { UsualDurations } from "../../../../../shared/usage/usual-duration.ts"
 import { clipWithEllipsis } from "../../../../../shared/utils/clip-text.ts"
 import type { MeasuredTime } from "../../../../../shared/utils/elapsed-time.ts"
-import { narrateToolUse } from "../../../../domain/tool-narration.ts"
-import { MAX_TOOL_SUMMARY_LENGTH, toolInputText } from "../../../../domain/tool-summary.ts"
 import type { PhaseRecap } from "./phase-recap.ts"
+import { narrateToolUse } from "./tool-narration.ts"
+import { MAX_TOOL_SUMMARY_LENGTH, toolInputText } from "./tool-summary.ts"
 import { NO_USUAL_TEXT, type UsualText, usualRangeText } from "./usual-duration.ts"
 import { askOf, NO_ASK, type WorkPlanAsk } from "./work-plan-ask-row.ts"
 

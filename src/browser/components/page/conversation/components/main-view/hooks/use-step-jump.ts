@@ -10,7 +10,7 @@ import { useStepJump, type StepJumpState } from "../../../stores/step-jump.ts"
 /** 目印（`data-jumped`）を付けておく時間。`turn.css` の `step-jumped` の長さと同じにする。 */
 const JUMPED_MARK_MS = 1600
 
-/** 紙を包む `<main>`（旧い器は `data-region="main"`、新しい器は `data-region="paper"`）。 */
+/** 紙を包む `<main>`（`data-region="paper"`）。 */
 const MAIN_REGION_SELECTOR = "main"
 
 export function useStepJumpLanding(turnId: number): void {

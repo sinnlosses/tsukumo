@@ -12,7 +12,7 @@ test.describe("タスクの作業のレポートの結論部", () => {
     run,
   }) => {
     const room = await openReportTaskRoom(run, "report-task-finished", "report-task-finished", [
-      "main",
+      "paper",
     ])
     await room.settleAndMatchPicked(ELAPSED_MS)
   })

@@ -79,7 +79,7 @@ export type CurrentCharacter = {
    */
   readonly applyDelete: (remove: CharacterDelete) => SessionEvent | undefined
   /**
-   * 雑談のサイドバー「覚えていること」の「編集」から1行消し、流し直す `remembered-lines-changed` を返す。
+   * 雑談の欄外「覚えていること」の「編集」から1行消し、流し直す `remembered-lines-changed` を返す。
    * 一致する行が無い・書けない・そのパックが編集できないときは undefined。
    */
   readonly forgetRememberedLine: (line: string) => SessionEvent | undefined

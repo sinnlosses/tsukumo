@@ -1,4 +1,4 @@
-// 設定のダイアログの「ワークフロー」の面。どのリポジトリの設定かを先頭に出し、欄を schema の順に置く。
+// 設定の紙の「ワークフロー」の面。どのリポジトリの設定かを先頭に出し、欄を schema の順に置く。
 // 並びの欄は頭の行・流れの帯・行の札（つかむ点・番号・名前・識別子・説明・「…」）・並びに入っていないスキルの札、
 // 選択の欄は選択肢のラジオ（名前と説明）、コマンドの欄は1行のテキスト欄を置く。
 // 読み取り専用の欄は名前・説明・値の字だけで、入力は置かない。
@@ -8,7 +8,6 @@
 import type { ReactElement } from "react"
 
 import { useWorkflowSetting } from "../hooks/use-workflow-setting.ts"
-import { ScreenNavSettingsFaceFrame } from "./screen-nav-settings-face-frame.tsx"
 import { WorkflowField } from "./workflow-field/workflow-field.tsx"
 import { WorkflowMessage } from "./workflow-message/workflow-message.tsx"
 import { WorkflowRepository } from "./workflow-repository/workflow-repository.tsx"
@@ -26,18 +25,8 @@ export function ScreenNavSettingsWorkflowFlow(props: {
   return (
     <>
       {body}
-      {band !== undefined && <div className={props.bandClassName}>{band}</div>}
+      {band !== undefined && <footer className={props.bandClassName}>{band}</footer>}
     </>
-  )
-}
-
-export function ScreenNavSettingsWorkflowFace(props: { readonly title: string }): ReactElement {
-  const { body, band } = workflowParts(useWorkflowSetting())
-
-  return (
-    <ScreenNavSettingsFaceFrame title={props.title} foot={band}>
-      {body}
-    </ScreenNavSettingsFaceFrame>
   )
 }
 

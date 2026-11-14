@@ -15,8 +15,7 @@ import type { A2uiReportComponent } from "../../../shared/report/a2ui-report-cat
 import { a2uiPartsById } from "../../../shared/report/a2ui-report-outline.ts"
 import { useExternalSync } from "../../hooks/use-external-sync.ts"
 import { reportBrowserError } from "../../stores/browser-error-report.ts"
-import { shownShell } from "../../stores/shell-mark.ts"
-import { type A2uiReportProps, PartView, ReportContext, ReportRoot } from "./a2ui-part.tsx"
+import { type A2uiReportProps, PartView, ReportContext } from "./a2ui-part.tsx"
 import { loadReportCatalogApis } from "./domain/a2ui-catalog-load.ts"
 import { ReportFrame } from "./leaf/body-region.tsx"
 import { NextStepRow } from "./leaf/next-step-row.tsx"
@@ -86,9 +85,7 @@ function reportCatalog(): Catalog<ReactComponentImplementation> {
   const apis = loadReportCatalogApis()
   const implementations = [...apis.components.values()].map((api) =>
     api.name === "Report"
-      ? createComponentImplementation(api, () =>
-          shownShell(document.documentElement) === "stage" ? <PaperReportRoot /> : <ReportRoot />,
-        )
+      ? createComponentImplementation(api, () => <PaperReportRoot />)
       : createComponentImplementation(api, ({ context }) => (
           <PartView id={context.componentModel.id} />
         )),

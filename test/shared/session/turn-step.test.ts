@@ -2,10 +2,12 @@ import { describe, expect, it } from "vitest"
 
 import type { SessionEvent } from "../../../src/shared/session/session-event.ts"
 import { applySessionEvent } from "../../../src/shared/session/session-fold.ts"
+import type { SessionRecord } from "../../../src/shared/session/session-record.ts"
 import { INITIAL_SESSION_STATE } from "../../../src/shared/session/session-state.ts"
 import {
   currentTurnSteps,
-  toolDuration,
+  toolRecordDuration,
+  type ToolDuration,
   type TurnStep,
 } from "../../../src/shared/session/turn-step.ts"
 import { EMPTY_WORK_PLAN_TRAIL } from "../../../src/shared/session/work-plan-trail.ts"
@@ -28,15 +30,6 @@ function turnSteps(list: ReturnType<typeof currentTurnSteps>): readonly TurnStep
     throw new Error(`依頼が無い（"no-request"）: ${list.kind}`)
   }
   return list.steps
-}
-
-/** `turnSteps` の先頭の手順（無ければ分かるように投げる）。 */
-function firstStep(list: ReturnType<typeof currentTurnSteps>): TurnStep {
-  const step = turnSteps(list)[0]
-  if (step === undefined) {
-    throw new Error("手順が1つも無い")
-  }
-  return step
 }
 
 describe("currentTurnSteps（依頼の手順を最後の依頼から導く）", () => {
@@ -147,20 +140,14 @@ describe("currentTurnSteps（依頼の手順を最後の依頼から導く）", 
   })
 })
 
-describe("toolDuration（所要時間。tool-started / tool-finished の at から機械で測る）", () => {
+describe("toolRecordDuration（所要時間。tool-started / tool-finished の at から機械で測る）", () => {
   it("開始・終了の両方が stamped なら known", () => {
-    const list = currentTurnSteps(
-      [
-        requestRecord(),
-        toolRecord({
-          startedAt: { kind: "stamped", at: 1_000 },
-          status: finishedToolStatus({ finishedAt: { kind: "stamped", at: 4_500 } }),
-        }),
-      ],
-      false,
-    )
+    const tool = toolRecord({
+      startedAt: { kind: "stamped", at: 1_000 },
+      status: finishedToolStatus({ finishedAt: { kind: "stamped", at: 4_500 } }),
+    })
 
-    expect(toolDuration(firstStep(list))).toEqual({ kind: "known", milliseconds: 3_500 })
+    expect(durationOf(tool)).toEqual({ kind: "known", milliseconds: 3_500 })
   })
 
   it("背景で走らせた Bash は、済みでも知らせを待つあいだは unknown、届いたら開始から知らせまで", () => {
@@ -170,60 +157,45 @@ describe("toolDuration（所要時間。tool-started / tool-finished の at か�
         status: finishedToolStatus({ finishedAt: { kind: "stamped", at: 1_300 } }),
         backgroundEnd,
       })
-    const list = currentTurnSteps(
+
+    expect(
       [
-        requestRecord(),
         backgroundBash({ kind: "awaiting" }),
         backgroundBash({ kind: "notified", at: { kind: "stamped", at: 61_000 } }),
-      ],
-      false,
-    )
-
-    expect(turnSteps(list).map((step) => toolDuration(step))).toEqual([
-      { kind: "unknown" },
-      { kind: "known", milliseconds: 60_000 },
-    ])
+      ].map(durationOf),
+    ).toEqual([{ kind: "unknown" }, { kind: "known", milliseconds: 60_000 }])
   })
 
   it("実行中は unknown", () => {
-    const list = currentTurnSteps(
-      [requestRecord(), toolRecord({ status: { kind: "running" } })],
-      false,
-    )
-
-    expect(toolDuration(firstStep(list))).toEqual({ kind: "unknown" })
+    expect(durationOf(toolRecord({ status: { kind: "running" } }))).toEqual({ kind: "unknown" })
   })
 
   it("復元した手順（開始・終了が restored）は unknown（replay の速さを所要時間に見せない）", () => {
-    const list = currentTurnSteps(
-      [
-        requestRecord(),
-        toolRecord({
-          startedAt: { kind: "restored" },
-          status: finishedToolStatus({ finishedAt: { kind: "restored" } }),
-        }),
-      ],
-      false,
-    )
+    const tool = toolRecord({
+      startedAt: { kind: "restored" },
+      status: finishedToolStatus({ finishedAt: { kind: "restored" } }),
+    })
 
-    expect(toolDuration(firstStep(list))).toEqual({ kind: "unknown" })
+    expect(durationOf(tool)).toEqual({ kind: "unknown" })
   })
 
   it("transcript から時刻を戻した手順（recovered）は元の時刻の差になる", () => {
-    const list = currentTurnSteps(
-      [
-        requestRecord(),
-        toolRecord({
-          startedAt: { kind: "recovered", at: 1_000 },
-          status: finishedToolStatus({ finishedAt: { kind: "recovered", at: 4_500 } }),
-        }),
-      ],
-      false,
-    )
+    const tool = toolRecord({
+      startedAt: { kind: "recovered", at: 1_000 },
+      status: finishedToolStatus({ finishedAt: { kind: "recovered", at: 4_500 } }),
+    })
 
-    expect(toolDuration(firstStep(list))).toEqual({ kind: "known", milliseconds: 3_500 })
+    expect(durationOf(tool)).toEqual({ kind: "known", milliseconds: 3_500 })
   })
 })
+
+/** `tool` の記録の所要時間（`tool` でなければ分かるように投げる）。 */
+function durationOf(record: SessionRecord): ToolDuration {
+  if (record.kind !== "tool") {
+    throw new Error(`tool の記録ではない: ${record.kind}`)
+  }
+  return toolRecordDuration(record)
+}
 
 describe("currentTurnSteps（report ツール）", () => {
   it("report の呼び出しは依頼の手順に出ない（speak と同じく tool-started にならない）", () => {

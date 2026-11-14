@@ -8,7 +8,6 @@ import type { A2uiReportComponent } from "../../../../shared/report/a2ui-report-
 import { htmlInlineSegments } from "../../../../shared/report/report-inline-markdown.ts"
 import type { LeafValue } from "../../../../shared/report/report-leaf-value.ts"
 import type { MainViewKeyFigure } from "../../../../shared/session/main-view-shape.ts"
-import { shownShell } from "../../../stores/shell-mark.ts"
 import {
   STAT_SPARK_HEIGHT,
   STAT_SPARK_RADIUS,
@@ -71,15 +70,12 @@ function Stat(props: { readonly item: StatItem }): ReactElement {
   const layout = statLayoutOf(item)
   const missed = layout.target.kind === "target" && layout.target.verdict === "missed"
   const hasBefore = item.before.trim() !== ""
-  const stage = shownShell(document.documentElement) === "stage"
   const before = hasBefore && (
     <span className={BEFORE_CLASS_NAMES[layout.beforeTone]}>
       <AffixedCodeText lead="" text={item.before} tail=" →" />
-      {stage && (
-        <span className={statsLeafClassNames.statAfter} aria-hidden="true">
-          <InlineCodeText text={item.value} />
-        </span>
-      )}
+      <span className={statsLeafClassNames.statAfter} aria-hidden="true">
+        <InlineCodeText text={item.value} />
+      </span>
     </span>
   )
   const change = layout.change.kind === "change" && (
@@ -88,25 +84,6 @@ function Stat(props: { readonly item: StatItem }): ReactElement {
     </span>
   )
   const hasDelta = hasBefore || layout.spark.kind !== "none" || layout.change.kind === "change"
-  if (!stage) {
-    return (
-      <div className={clsx(statsLeafClassNames.stat, missed && statsLeafClassNames.statMissed)}>
-        {layout.spark.kind === "none" ? (
-          before
-        ) : (
-          <span className={statsLeafClassNames.statTrend}>
-            {before}
-            <Spark spark={layout.spark} />
-          </span>
-        )}
-        <StatValue item={item} />
-        {change}
-        <StatMeter layout={layout} />
-        <InlineCodeText text={item.label} />
-        {layout.target.kind === "target" && <TargetLine item={item} target={layout.target} />}
-      </div>
-    )
-  }
   return (
     <div className={clsx(statsLeafClassNames.stat, missed && statsLeafClassNames.statMissed)}>
       <StatValue item={item} />

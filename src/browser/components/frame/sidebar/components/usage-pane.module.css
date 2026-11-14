@@ -1,9 +1,0 @@
-/* 狭い画面の引き出しの「使用量」のタブの中身。
-   プラン使用量のカードが幅で棒を畳むための基準（`@container`）もここ。 */
-.usage-pane {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-md);
-  padding: var(--space-xs) var(--space-lg) var(--space-md);
-  container-type: inline-size;
-}

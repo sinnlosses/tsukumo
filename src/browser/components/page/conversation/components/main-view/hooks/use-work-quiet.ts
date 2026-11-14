@@ -1,9 +1,9 @@
 // 働くあいだの紙に出す「止まって見える」ときの行（待ち・再試・上限・動かない）と、その行に添える口。
 // 「止める」は入力欄の止めるボタンと同じ中断の口を、「依頼を入力欄に戻す」は下書きを入れるだけで送らない。
 
-import { useCurrentTurnSteps } from "../../../../../../stores/current-turn-step-list.ts"
 import { useSession } from "../../../../../../stores/session.ts"
 import { useComposerDraft } from "../../../stores/composer-draft.ts"
+import { useCurrentTurnSteps } from "../../../stores/current-turn-step-list.ts"
 import { useUsualDurations } from "../../../stores/usual-duration.ts"
 import { runningStepLineOf, type WorkQuiet, workQuietOf } from "../domain/work-activity.ts"
 

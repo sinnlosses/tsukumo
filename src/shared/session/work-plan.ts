@@ -79,7 +79,7 @@ export type LatestWorkPlan = { readonly kind: "none" } | PlannedWorkPlan
 
 export type PlannedWorkPlan = { readonly kind: "planned" } & WorkPlan
 
-export type PlannedPhaseState = "done" | "current" | "upcoming"
+type PlannedPhaseState = "done" | "current" | "upcoming"
 
 /**
  * 並びを平らにした段1つ。`index` は平らにした並びでの0始まりの位置（段の番号は `phaseNumberOf` が導く）。

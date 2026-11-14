@@ -36,7 +36,6 @@ const { Report } = await import("../../../../../src/browser/features/report/repo
 
 afterEach(() => {
   cleanup()
-  delete document.documentElement.dataset["shell"]
   useReadingDepth.setState(useReadingDepth.getInitialState(), true)
 })
 
@@ -66,7 +65,6 @@ function longRegions(): MainViewReportRegions {
 
 describe("新しい器の紙の書き上げ", () => {
   it("書き上げの最中に深さを替えても、本文の欄は外れない", () => {
-    document.documentElement.dataset["shell"] = "stage"
     const { container } = render(
       <Report
         reveal={true}

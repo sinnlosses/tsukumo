@@ -32,16 +32,6 @@ describe("sourceOf", () => {
     })
   })
 
-  test("--shell stage は場面の器になり、URL には付けられない", () => {
-    expect(sourceOf(undefined, "report", undefined, undefined, undefined, "stage")).toMatchObject({
-      kind: "scene",
-      shell: "stage",
-    })
-    expect(
-      sourceOf("http://x", undefined, undefined, undefined, undefined, "stage"),
-    ).toBeUndefined()
-  })
-
   test("URL と --cwd / --session・場面と URL・場面の無い --until-step / --cwd / --session は読まない", () => {
     expect(sourceOf("http://x", undefined, undefined, "/a", undefined)).toBeUndefined()
     expect(sourceOf("http://x", undefined, undefined, undefined, "/s.json")).toBeUndefined()

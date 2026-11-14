@@ -42,8 +42,8 @@
     line-height: 1;
   }
   /* 入力欄の欄にフォーカスがあるあいだは顔だけにする。 */
-  body:has([data-region="dispatch"] textarea:focus) .phone-balloon-bubble,
-  body:has([data-region="dispatch"] textarea:focus) .phone-balloon-time {
+  body:has([data-region="dock"] textarea:focus) .phone-balloon-bubble,
+  body:has([data-region="dock"] textarea:focus) .phone-balloon-time {
     display: none;
   }
   .phone-balloon-text {

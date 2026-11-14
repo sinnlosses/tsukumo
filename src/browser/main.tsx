@@ -15,7 +15,6 @@ import { loadMarkdown } from "./features/report/markdown.tsx"
 import { loadTaskBody } from "./features/task-board/deferred-task-body.tsx"
 import { applyAppearanceColorOverride } from "./stores/appearance-color-root.ts"
 import { reportBrowserError } from "./stores/browser-error-report.ts"
-import { applyShellMark } from "./stores/shell-mark.ts"
 // ページ全体の下地（トークン・body・要素への規則）。
 import "./styles/theme.css"
 import "./styles/page-base.css"
@@ -32,9 +31,6 @@ if (!isTemporalSupported(globalThis)) {
     showUnsupportedBrowserNotice(appRoot)
   }
 } else {
-  // 器の値は `:root[data-shell]` で分かれるので、色を読む次の1回より前に立てる。
-  applyShellMark(location.search, document.documentElement)
-
   // 保存済みの画面の色を `documentElement` へ反映する1回。
   // 最初の描画より前に差す必要があるので、色を持つ部品（帯の歯車）の初期化には任せない。
   // 任せると、保存した色が一瞬だけ既定で描かれてから入れ替わる。

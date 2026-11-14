@@ -50,46 +50,6 @@
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-raised);
 }
-/* 立ち絵の上に列を重ねる本体（--balloon-overlap ぶん左へ寄せる）。
-   加えて尻尾ぶんの場所を左に確保する。
-   `.balloon-track` は overflow-y: auto を持ち、CSS の規則で overflow-x も自動的に visible ではなくなる（＝横方向もクリップされる）ため、尻尾を吹き出しの外（左）へ絶対配置するだけだと padding の外＝クリップ境界の外に出て消える。
-   ここで確保した padding-left ぶんが、下の尻尾の幅（--balloon-tail）と一致することで、尻尾がちょうど padding の中に収まりクリップされない（目視で確認）。 */
-.portrait + .balloon-track {
-  margin-left: calc(-1 * var(--balloon-overlap));
-  padding-left: var(--balloon-tail);
-}
-/* 尻尾は立ち絵があるときだけ（立ち絵が無い・読めないときは吹き出しだけで成立させる）。
-   枠の三角（::before）と中身の三角（::after）を重ねて、枠線が尻尾の先まで続いて見える形にする。
-   三角1枚だと枠線の色で塗った板が飛び出しているだけに見える。
-   立ち絵は左にいるので、尻尾は吹き出しの左辺から真横（左）へ出し、先端を左に向ける（下辺から出すと、下に伸びる分の場所を空ける必要があり、最新の位置を固定できない）。
-   border-right を色付きに、border-top と border-bottom を透明にした二等辺三角形で、right: 100% で吹き出しの左外側に置く。
-   縦の位置は下端から --balloon-tail-bottom（吹き出しの下寄りを指す）。 */
-.portrait + .balloon-track > .balloon-row > .balloon[data-latest="true"]::before,
-.portrait + .balloon-track > .balloon-row > .balloon[data-latest="true"]::after,
-.speech-log-stage:has(.portrait) .balloon[data-latest="true"]::before,
-.speech-log-stage:has(.portrait) .balloon[data-latest="true"]::after {
-  content: "";
-  position: absolute;
-  bottom: var(--balloon-tail-bottom);
-  right: 100%;
-  width: 0;
-  height: 0;
-  border-top: var(--balloon-tail) solid transparent;
-  border-bottom: var(--balloon-tail) solid transparent;
-  border-right: var(--balloon-tail) solid var(--accent);
-}
-/* ::after は吹き出し側へ 1px 寄せたうえで上下の border 幅を一回り小さくする。
-   ずらすだけだと斜辺に沿って滑るだけで枠の色が出ないので、斜辺に 1px 残すには大きさも変える必要がある。
-   小さくしたぶん bottom も 2px 上げ、2つの三角の頂点の高さを揃える。
-   揃えないと枠線が上の斜辺だけに寄り、下の斜辺から消える。 */
-.portrait + .balloon-track > .balloon-row > .balloon[data-latest="true"]::after,
-.speech-log-stage:has(.portrait) .balloon[data-latest="true"]::after {
-  bottom: calc(var(--balloon-tail-bottom) + 2px);
-  right: calc(100% - 1px);
-  border-top-width: calc(var(--balloon-tail) - 2px);
-  border-bottom-width: calc(var(--balloon-tail) - 2px);
-  border-right-color: var(--surface-accent);
-}
 /* 過去の吹き出しは地ごと薄めず、文字の色だけを地へ混ぜて薄める。
    要素ごと `opacity` で薄めると吹き出しの地まで半透明になり、背景を敷いたときに画像が文字の裏へ透ける。
    混ぜる量の上限は 45%（4.83。50% だと 4.24 で下回る）。

@@ -1,8 +1,8 @@
-/* 新しい器の「比べる族」。見本は docs/history/mockup/report-progress-2026-11-12/index.html の `?group=parts&moment=compare`。
+/* 紙の「比べる族」。見本は docs/history/mockup/report-progress-2026-11-12/index.html の `?group=parts&moment=compare`。
    題は図の頭に置き、前後の画像は同じ幅で並べて札（前・後）は画像の下に静かな字で添える。矢印は置かない（前後は札と並びが言う）。
    重ねるだけは2枚が同じ枠に入るので、札は画像の角に浮かせたまま残す。
    対等な2つは箱を持たず、見出しの太字と短い箇条で並べる。採否は採った案の行だけ地を一段上げ、採らなかった案は字を静かにして残す。 */
-:root[data-shell="stage"] .detail-block {
+.detail-block {
   & .report-captioned:has(> :is(.report-compare, .report-compare-figure)) > .report-caption {
     order: -1;
     align-self: flex-start;

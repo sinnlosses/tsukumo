@@ -13,9 +13,9 @@ tsukumo は Node の1プロセスで、Claude Code を SDK の子プロセスと
 ```mermaid
 flowchart TB
   subgraph host["ホストのタブ（ブラウザ）"]
-    main["メインビュー"]
-    char["キャラビュー"]
-    side["サイドバー"]
+    main["紙"]
+    char["舞台"]
+    side["部屋の頭"]
     input["入力欄"]
   end
   subgraph node["tsukumo（Node の1プロセス）"]
@@ -37,15 +37,15 @@ flowchart TB
 
 箱と実物
 
-| 箱                       | 実物                                                                  | 正典の文書                                |
-| ------------------------ | --------------------------------------------------------------------- | ----------------------------------------- |
-| メインビュー             | `src/browser/components/page/conversation/components/main-view/`      | `docs/requirements/screen-layout.md`      |
-| キャラビュー             | `src/browser/components/page/conversation/components/character-view/` | `docs/requirements/screen-layout.md`      |
-| サイドバー               | `src/browser/components/frame/sidebar/`                               | `docs/requirements/screen-layout.md`      |
-| 入力欄                   | `src/browser/components/page/conversation/components/dispatch/`       | `docs/requirements/screen-layout.md`      |
-| ビューサーバ             | `src/server/view-server/`                                             | `docs/architecture/runtime-flow.md`       |
-| セッションドライバ       | `src/server/session-driver/`                                          | `docs/architecture/runtime-flow.md`       |
-| speak と report のツール | `src/server/session-driver/adapter/sdk/`                              | `docs/architecture/overview-and-layer.md` |
+| 箱                       | 実物                                                              | 正典の文書                                                |
+| ------------------------ | ----------------------------------------------------------------- | --------------------------------------------------------- |
+| 紙                       | `src/browser/components/page/conversation/components/paper-desk/` | `docs/architecture/screen-design/layout.md`               |
+| 舞台                     | `src/browser/components/page/conversation/components/stage/`      | `docs/architecture/screen-design/layout.md`               |
+| 部屋の頭                 | `src/browser/components/frame/screen-nav/`                        | `docs/architecture/screen-design/room-head-and-search.md` |
+| 入力欄                   | `src/browser/components/page/conversation/components/dispatch/`   | `docs/architecture/screen-design/layout.md`               |
+| ビューサーバ             | `src/server/view-server/`                                         | `docs/architecture/runtime-flow.md`                       |
+| セッションドライバ       | `src/server/session-driver/`                                      | `docs/architecture/runtime-flow.md`                       |
+| speak と report のツール | `src/server/session-driver/adapter/sdk/`                          | `docs/architecture/overview-and-layer.md`                 |
 
 ## 2. 層の構成
 
@@ -81,31 +81,33 @@ flowchart BT
 
 ## 3. ブラウザの画面の領域
 
-`conversation-layout` が4つの領域を1枚のページに組む。
+舞台（`Stage`）が左に立ち絵と部屋の頭を、右の場所（`PaperDesk`）が紙・入力欄・欄外を並べる。ほかの画面は右から重ねる紙で開く。
 
 ```mermaid
-flowchart TB
-  subgraph layout["conversation-layout"]
-    subgraph upper["上段"]
-      m["メインビュー 広い"]
-      s["サイドバー 狭い"]
-    end
-    subgraph lower["下段"]
-      c["キャラビュー 半分"]
-      d["入力欄 半分"]
-    end
+flowchart LR
+  subgraph stage["舞台"]
+    h["部屋の頭"]
+    c["立ち絵と吹き出し"]
   end
+  subgraph desk["紙の場所"]
+    m["紙"]
+    d["入力欄（紙の下端に浮く）"]
+  end
+  g["欄外"]
+  sheet["重ねる紙（タスク・成果・使用量・キャラ・設定）"]
 ```
 
 箱と実物
 
-| 箱                  | 実物                                                                       | 正典の文書                           |
-| ------------------- | -------------------------------------------------------------------------- | ------------------------------------ |
-| conversation-layout | `src/browser/components/page/conversation/components/conversation-layout/` | `docs/requirements/screen-layout.md` |
-| メインビュー        | `src/browser/components/page/conversation/components/main-view/`           | `docs/requirements/screen-layout.md` |
-| サイドバー          | `src/browser/components/frame/sidebar/`                                    | `docs/requirements/screen-layout.md` |
-| キャラビュー        | `src/browser/components/page/conversation/components/character-view/`      | `docs/requirements/screen-layout.md` |
-| 入力欄              | `src/browser/components/page/conversation/components/dispatch/`            | `docs/requirements/screen-layout.md` |
+| 箱               | 実物                                                                  | 正典の文書                                                |
+| ---------------- | --------------------------------------------------------------------- | --------------------------------------------------------- |
+| 舞台             | `src/browser/components/page/conversation/components/stage/`          | `docs/architecture/screen-design/layout.md`               |
+| 立ち絵と吹き出し | `src/browser/components/page/conversation/components/character-view/` | `docs/architecture/screen-design/scene-behavior.md`       |
+| 部屋の頭         | `src/browser/components/frame/screen-nav/`                            | `docs/architecture/screen-design/room-head-and-search.md` |
+| 紙・欄外         | `src/browser/components/page/conversation/components/paper-desk/`     | `docs/architecture/screen-design/layout.md`               |
+| 紙の中身         | `src/browser/components/page/conversation/components/main-view/`      | `docs/architecture/screen-design/report-head.md`          |
+| 入力欄           | `src/browser/components/page/conversation/components/dispatch/`       | `docs/architecture/screen-design/layout.md`               |
+| 重ねる紙         | `src/browser/components/ui/sheet/`                                    | `docs/architecture/screen-design/layout.md`               |
 
 ## 4. サーバの機能の依存
 

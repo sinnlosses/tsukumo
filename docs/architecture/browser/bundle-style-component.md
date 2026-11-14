@@ -37,7 +37,7 @@ CSS は分けず1本。サーバは起動時にすべてメモリに読み、`/a
 import するので、食い違うと入口を別のモジュールとして読み React が2つ動く）。
 
 - 使い手は Markdown の部品の入口 `markdown.tsx`（`<Report>`・お伺いと質問の記録の preview）と `deferred-task-body.tsx`
-  （タスクのモーダルの詳細・サイドバーのプレビュー）を使い、描画一式の `renderer/markdown-renderer.tsx`・`task-body.tsx` を直接
+  （タスクのモーダルとタスクの紙の詳細）を使い、描画一式の `renderer/markdown-renderer.tsx`・`task-body.tsx` を直接
   import しない（すると一式が入口に戻る）。読み込みの状態の持ち方は2つとも `stores/deferred-module.ts` の `deferredModule`。
   外から引く入口の `markdown.tsx` が遅延読み込みの側で、描画一式は中の `renderer/` に入るので、描画一式を外から直に
   import すると部品の境界の検査（`test/architecture/browser-box.test.ts` の `componentBoundaryViolations`）が落とし、入口から
@@ -64,7 +64,7 @@ import するので、食い違うと入口を別のモジュールとして読�
 部品の `.tsx` の隣に同じ名前で置く（container / presenter の対は対の名前）。自分の見た目を持つ共有部品も
 隣に置く（`components/frame/portrait.module.css`）。**tsukumo が書くグローバルな CSS は `styles/layer-order.css`（層の順の宣言だけ）・`styles/theme.css`（`fade-in`）・`styles/page-base.css`・`ui/spinner/spinner.css`（`spinner-turn`）の4つだけ**
 （Astryx の `astryx.css` と組み立て済みのテーマの CSS を除く）で、
-`theme.css` はトークン（`:root` と新しい器の `:root[data-shell="stage"]`）を、`page-base.css` は `body`・`prefers-reduced-motion`・コードの書体の `@font-face` と、`@layer tsukumo-base` に入れた要素への規則
+`theme.css` はトークン（`:root`）を、`page-base.css` は `body`・`prefers-reduced-motion`・コードの書体の `@font-face` と、`@layer tsukumo-base` に入れた要素への規則
 （フォーム部品の書体・フォーカスの輪・リンク・見出しと段落の既定の打ち消し）を持つ。層の順は `reset`・`tsukumo-base`・`astryx-base`・`astryx-theme` で、
 層なしの CSS（トークン・`*.module.css`）はどの層にも勝つ。共有する `@keyframes` は CSS Modules が名前を付け替えるので、名前ごと `var()`（`--fade-in-name`・`--spinner-animation`）で渡す。
 **16進の色を書いてよいのもそこだけ**（`docs/architecture/screen-design.md` 13.2）。同居に移した理由は `docs/history/decision.md`

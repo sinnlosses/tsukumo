@@ -71,10 +71,6 @@
 .stage-figure-balloon {
   padding: 0 var(--balloon-right-gap) 0 var(--gutter-region);
 }
-/* 舞台では「ログ」の口を出さない。やり取りの流れの上端の札（`.talk-flow-more`）が口の役を持つ。 */
-.character-region:has(.stage-figure) .speech-log-open {
-  display: none;
-}
 /* やり取りの流れが残りの高さを受け持つ。中身は下に寄せ、溢れた古い行は上へ押し出す。
    押し出した行と札を段の外（今日の灯り・部屋の頭）へ描かない。
    最低の高さは上端の札と薄れる帯の下に最後の行が見える分で、吹き出しが想定より高いときは段の側でなく吹き出しが頭の印の下へはみ出す。 */

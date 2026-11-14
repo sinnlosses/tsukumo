@@ -14,12 +14,7 @@ export type Source =
       readonly launch: SceneLaunch
       /** `--session` で渡された疑似セッションのファイル。無ければ undefined（同梱のファイル）。 */
       readonly session?: string
-      /** `--shell` で渡された器。無ければ既定の器で開く。 */
-      readonly shell?: Shell
     }
-
-/** `?shell=` に付けられる器。 */
-export type Shell = "stage"
 
 export type SceneLaunch =
   | { readonly kind: "given"; readonly cwd: string }
@@ -27,7 +22,7 @@ export type SceneLaunch =
 
 /**
  * URL と場面名のどちらか片方だけが要る。
- * 両方・どちらも無いとき、場面の無い `--until-step`・`--cwd`・`--session`・`--shell` は undefined。
+ * 両方・どちらも無いとき、場面の無い `--until-step`・`--cwd`・`--session` は undefined。
  */
 export function sourceOf(
   url?: string,
@@ -35,21 +30,19 @@ export function sourceOf(
   untilStep?: number,
   cwd?: string,
   session?: string,
-  shell?: Shell,
 ): Source | undefined {
   if (
     url !== undefined &&
     scene === undefined &&
     untilStep === undefined &&
     cwd === undefined &&
-    session === undefined &&
-    shell === undefined
+    session === undefined
   ) {
     return { kind: "url", url }
   }
   if (scene !== undefined && url === undefined) {
     const launch: SceneLaunch = cwd === undefined ? { kind: "by-scene" } : { kind: "given", cwd }
-    return { kind: "scene", scene, until: untilStep, launch, session, shell }
+    return { kind: "scene", scene, until: untilStep, launch, session }
   }
   return undefined
 }

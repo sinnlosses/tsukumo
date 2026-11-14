@@ -428,7 +428,7 @@ describe("書かないパック", () => {
   })
 })
 
-describe("onChange（画面のサイドバーへ流し直す口）", () => {
+describe("onChange（画面の欄外へ流し直す口）", () => {
   it("書けたときだけ、更新後の一覧を渡して呼ぶ", () => {
     const changes: (readonly string[])[] = []
     const memory = createPersonaMemory(

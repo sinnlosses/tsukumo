@@ -7,19 +7,17 @@ import {
 } from "../../../../../../../shared/session/session-record.ts"
 import { phaseCount, type LatestWorkPlan } from "../../../../../../../shared/session/work-plan.ts"
 import { formatElapsed } from "../../../../../../../shared/utils/elapsed-time.ts"
+import { useEventListener } from "../../../../../../hooks/use-event-listener.ts"
+import { useNowWhile } from "../../../../../../stores/clock.ts"
+import { useSession } from "../../../../../../stores/session.ts"
+import type { AwayBrief } from "../../../domain/away-brief.ts"
+import { phaseRecapsOf } from "../../../domain/phase-recap.ts"
 import {
   isTurnCounting,
   turnCountedUntil,
   turnElapsedLabel,
   turnElapsedText,
-} from "../../../../../../domain/turn-elapsed.ts"
-import { useEventListener } from "../../../../../../hooks/use-event-listener.ts"
-import { useNowWhile } from "../../../../../../stores/clock.ts"
-import { useCurrentTurnSteps } from "../../../../../../stores/current-turn-step-list.ts"
-import { useMainViewTurns } from "../../../../../../stores/main-view-turn.ts"
-import { useSession } from "../../../../../../stores/session.ts"
-import type { AwayBrief } from "../../../domain/away-brief.ts"
-import { phaseRecapsOf } from "../../../domain/phase-recap.ts"
+} from "../../../domain/turn-elapsed.ts"
 import { turnResultsOf } from "../../../domain/turn-result.ts"
 import { NO_USUAL_TEXT, remainingEstimate, type UsualText } from "../../../domain/usual-duration.ts"
 import { askOf } from "../../../domain/work-plan-ask-row.ts"
@@ -33,7 +31,9 @@ import {
   workPlanSlotsOf,
 } from "../../../domain/work-plan-row.ts"
 import { useComposerDraft } from "../../../stores/composer-draft.ts"
+import { useCurrentTurnSteps } from "../../../stores/current-turn-step-list.ts"
 import { useMainViewContent } from "../../../stores/main-view-content.ts"
+import { useMainViewTurns } from "../../../stores/main-view-turn.ts"
 import { useUsualDurations } from "../../../stores/usual-duration.ts"
 import { remainingLinesOf } from "../domain/failed-paper.ts"
 import { turnFailureBlockOf, type TurnFailureBlockModel } from "../domain/turn-failure-block.ts"
@@ -197,7 +197,6 @@ export function useWorkPlanPaper(): WorkPlanPaperModel {
       requestText: turns.at(-1)?.request?.text ?? "",
       rateLimit,
       newest: true,
-      hasFailedStep: false,
       now,
     })
     return {

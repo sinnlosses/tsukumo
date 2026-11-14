@@ -6,11 +6,8 @@ import {
   useReportOutline,
   type ReportOutlineProps,
 } from "../../../../../../../../src/browser/components/page/conversation/components/main-view/hooks/use-report-outline.ts"
+import { useReadingSection } from "../../../../../../../../src/browser/components/page/conversation/stores/reading-section.ts"
 import { detailBlockClassName } from "../../../../../../../../src/browser/features/report/markdown.tsx"
-import {
-  readingSectionOf,
-  useReadingSection,
-} from "../../../../../../../../src/browser/stores/reading-section.ts"
 
 const OUTLINE_PANEL_STORAGE_KEY = "tsukumo-outline-panel:v1"
 
@@ -385,7 +382,7 @@ function StoreProbe(): ReactElement {
 
 function ScrollerProbe(): ReactElement {
   return (
-    <div data-region="main">
+    <div data-region="paper">
       <StoreProbe />
     </div>
   )
@@ -402,8 +399,15 @@ function placeHeadings(tops: readonly number[]): void {
   notifyHeadings(outlineHeadings())
 }
 
+/** 読んでいる位置のいちばん近い手前の `##`。まだ通っていなければ、手前に無ければ `none`。 */
 function section(): unknown {
-  return readingSectionOf(useReadingSection.getState())
+  const state = useReadingSection.getState()
+  const found = state.reached
+    ? state.headings.findLast(
+        (heading, at) => at <= state.activeIndex && heading.level === "section",
+      )
+    : undefined
+  return found === undefined ? { kind: "none" } : { kind: "shown", text: found.text }
 }
 
 function moveHeading(step: "older" | "newer"): void {
@@ -437,7 +441,7 @@ describe("useReportOutline（見出しの観測）", () => {
 describe("useReportOutline（器の寸法が変わったときの帯）", () => {
   it("ビューポートも読む線も変わらずスクロールする器の下端だけが動いても、帯の下端を引き直す", () => {
     render(<ScrollerProbe />)
-    const scroller = document.querySelector<HTMLElement>('[data-region="main"]')
+    const scroller = document.querySelector<HTMLElement>('[data-region="paper"]')
     if (scroller === null) {
       throw new Error("スクロールする器が見つからない")
     }
@@ -528,7 +532,7 @@ describe("useReportOutline（読んでいる節と節の移動）", () => {
   describe("転がる器の端", () => {
     function renderScrolled(metrics: { scrollTop: number }): HTMLElement {
       render(<ScrollerProbe />)
-      const scroller = document.querySelector<HTMLElement>('[data-region="main"]')
+      const scroller = document.querySelector<HTMLElement>('[data-region="paper"]')
       if (scroller === null) {
         throw new Error("スクロールする器が見つからない")
       }

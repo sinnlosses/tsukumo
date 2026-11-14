@@ -6,9 +6,8 @@ import type { ScenarioRoom } from "./scenario-open.ts"
 // 新しい器の流れ（docs/architecture/testing.md「E2E のシナリオの一覧」）。
 // 場面 `talk-flow-long` は利用者の発言2つ・セリフ4つ・段を終えた対2組が並ぶ。
 
-async function reopenInStage(room: ScenarioRoom): Promise<Page> {
+async function reopenRoom(room: ScenarioRoom): Promise<Page> {
   const url = new URL(room.page.url())
-  url.searchParams.set("shell", "stage")
   await room.page.goto(url.toString())
   return room.page
 }
@@ -31,7 +30,7 @@ test.describe("新しい器の流れ", () => {
         domRoots: ["stage-thread", "stage-balloon"],
       })
       await room.waitForEvent("tool-started")
-      const page = await reopenInStage(room)
+      const page = await reopenRoom(room)
 
       await expect(page.locator('[data-slot="thread"]')).toBeVisible()
       await expect(page.locator('[data-slot="balloon"]').first()).toBeVisible()
@@ -51,7 +50,7 @@ test.describe("新しい器の流れ", () => {
       domRoots: [],
     })
     await room.waitForEvent("tool-started")
-    const page = await reopenInStage(room)
+    const page = await reopenRoom(room)
     const thread = page.locator('[data-slot="thread"]')
 
     await expect(thread.locator('[data-who="you"]').first()).toBeVisible()
@@ -76,7 +75,7 @@ test.describe("新しい器の流れ", () => {
       characterPack: "bright",
     })
     await room.waitForEvent("tool-started")
-    const page = await reopenInStage(room)
+    const page = await reopenRoom(room)
 
     await expect(page.locator('[data-slot="thread"]')).toBeVisible()
     await expect(page.locator('[data-slot="balloon"]').first()).toBeVisible()
@@ -93,16 +92,26 @@ test.describe("新しい器の流れ", () => {
  */
 async function expectLastHerLineInsideThread(page: Page): Promise<void> {
   const thread = page.locator('[data-slot="thread"]')
-  const threadBox = await thread.boundingBox()
-  const moreBox = await thread.getByRole("button", { name: /これまでのやり取り/u }).boundingBox()
-  const lineBox = await thread.locator('[data-who="her"]').last().boundingBox()
-  if (threadBox === null || moreBox === null || lineBox === null) {
-    throw new Error(
-      "流れの段・これまでのやり取りの札・最後のキャラクターの行のどれかが描かれていない",
-    )
-  }
-  expect(lineBox.y).toBeGreaterThanOrEqual(moreBox.y + moreBox.height)
-  expect(lineBox.y + lineBox.height).toBeLessThanOrEqual(threadBox.y + threadBox.height)
+  // 行が足された直後は段が末尾へ転がり終わっていないので、収まるまで待つ。
+  await expect
+    .poll(async () => {
+      const threadBox = await thread.boundingBox()
+      const moreBox = await thread
+        .getByRole("button", { name: /これまでのやり取り/u })
+        .boundingBox()
+      const lineBox = await thread.locator('[data-who="her"]').last().boundingBox()
+      if (threadBox === null || moreBox === null || lineBox === null) {
+        return "流れの段・これまでのやり取りの札・最後のキャラクターの行のどれかが描かれていない"
+      }
+      if (lineBox.y < moreBox.y + moreBox.height) {
+        return `最後の行の上端 ${String(lineBox.y)} が札の下端 ${String(moreBox.y + moreBox.height)} より上`
+      }
+      if (lineBox.y + lineBox.height > threadBox.y + threadBox.height) {
+        return `最後の行の下端 ${String(lineBox.y + lineBox.height)} が段の下端 ${String(threadBox.y + threadBox.height)} より下`
+      }
+      return ""
+    })
+    .toBe("")
 }
 
 /**

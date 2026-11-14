@@ -49,7 +49,7 @@
 | `docs/requirements/launch-and-setting.md`         | 4.6 起動と設定（1コマンドでの起動と、既存設定を壊さない制約）。                                          |
 | `docs/requirements/portrait-motion.md`            | 4.3 状態連動の後半。                                                                                     |
 | `docs/requirements/purpose-and-scope.md`          | 1. 概要・目的、2. スコープ（やること・やらないこと・想定利用者）、6. 既存のものとの関係。                |
-| `docs/requirements/screen-layout.md`              | 4.7 画面レイアウト（biim 風の4領域、1枚の HTML にまとめた形、狭い画面での見せ方）。                      |
+| `docs/requirements/screen-layout.md`              | 4.7 画面レイアウト（舞台と紙、1枚の HTML にまとめた形、狭い画面での見せ方）。                            |
 | `docs/requirements/session-restore-condition.md`  | 4.8 セッションの復元の後半。                                                                             |
 | `docs/requirements/session-restore.md`            | 4.8 セッションの復元の前半。                                                                             |
 | `docs/requirements/token-usage-review.md`         | 4.12 トークン消費の見直し（見直しの2つのツール、見直しの寿命、提案の識別子と実行、見送りと前回の結果）。 |

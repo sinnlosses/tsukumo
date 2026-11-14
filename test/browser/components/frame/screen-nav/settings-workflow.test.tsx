@@ -9,7 +9,6 @@ import { typedElement } from "../../../../typed-element.ts"
 import { rpcError, rpcOutput } from "../../../rpc-fetch-stub.ts"
 import {
   bandButton,
-  dialog,
   menuItem,
   openMenu,
   REPOSITORY,
@@ -17,10 +16,11 @@ import {
   setCommands,
   stepList,
   tearDownWorkflowFace,
+  workflowGroup,
 } from "./workflow-face.tsx"
 
-// 設定のダイアログの「ワークフロー」の面（docs/architecture/screen-design.md「設定の歯車」、
-// docs/architecture/workflow-contract.md「設定コマンド」）。
+// 設定の紙の「ワークフロー」の面（docs/architecture/screen-design/room-head-and-search.md「設定の紙の面の並び」、
+// docs/architecture/workflow-contract/config-and-beads.md「設定コマンド」）。
 // 欄は `workflowSetting.read` が返した形だけから描き、操作は下書きだけを変え、保存で `workflowSetting.set` を送って返った面に替える。
 
 afterEach(tearDownWorkflowFace)
@@ -62,11 +62,20 @@ function removeStep(title: string): void {
 }
 
 function addStep(title: string): void {
-  fireEvent.click(within(dialog()).getByRole("button", { name: `${title} を並びの最後に足す` }))
+  fireEvent.click(
+    within(workflowGroup()).getByRole("button", { name: `${title} を並びの最後に足す` }),
+  )
+}
+
+/** ワークフローの面の `<select>`。同じ群に並ぶ「起動するスキル」は数えない。 */
+function workflowSelects(): HTMLElement[] {
+  return within(workflowGroup())
+    .queryAllByRole("combobox")
+    .filter((element) => element.getAttribute("aria-label") !== "起動するスキル")
 }
 
 function flowText(): string | null {
-  return typedElement(dialog().querySelector(".flow"), HTMLElement, "流れの帯").textContent
+  return typedElement(workflowGroup().querySelector(".flow"), HTMLElement, "流れの帯").textContent
 }
 
 function stepTexts(list: HTMLElement): (string | null)[] {
@@ -75,7 +84,7 @@ function stepTexts(list: HTMLElement): (string | null)[] {
     .map((item) => item.textContent)
 }
 
-describe("設定のダイアログの「ワークフロー」の面（スキルの並び）", () => {
+describe("設定の紙の「ワークフロー」の面（スキルの並び）", () => {
   it("行に番号・名前・識別子を出し、候補に無い名前も残して印を付け、足せる候補を札に出す", async () => {
     renderWorkflowFace(() => rpcOutput(stepsView(["架空:乙", "架空:消えた"])))
 
@@ -84,11 +93,11 @@ describe("設定のダイアログの「ワークフロー」の面（スキル�
     expect(stepTexts(list)).toEqual(["1架空の乙乙", "2架空:消えた候補に無い"])
     expect(flowText()).toBe("1架空の乙→2架空:消えた")
     expect(
-      within(dialog())
+      within(workflowGroup())
         .getAllByRole("button", { name: /を並びの最後に足す$/u })
         .map((button) => button.getAttribute("aria-label")),
     ).toEqual(["架空の甲 を並びの最後に足す", "架空の丙 を並びの最後に足す"])
-    expect(within(dialog()).queryByRole("combobox")).toBeNull()
+    expect(workflowSelects()).toHaveLength(0)
   })
 
   it("「…」は並べ替え4つと「並びから外す」を持ち、先頭は上へ・末尾は下へが押せない", async () => {
@@ -138,12 +147,12 @@ describe("設定のダイアログの「ワークフロー」の面（スキル�
   it("外すと「並びに入っていないスキル」の札に出て、押すと並びの最後に戻る", async () => {
     renderWorkflowFace(() => rpcOutput(stepsView(["架空:甲", "架空:乙", "架空:丙"])))
     const list = await stepList()
-    expect(dialog().textContent).toContain("足せるスキルはない（3つとも並んでいる）")
+    expect(workflowGroup().textContent).toContain("足せるスキルはない（3つとも並んでいる）")
 
     removeStep("架空の甲")
 
     expect(stepTexts(list)).toEqual(["1架空の乙乙● 並びを変えた", "2架空の丙丙● 並びを変えた"])
-    expect(dialog().textContent).not.toContain("足せるスキルはない")
+    expect(workflowGroup().textContent).not.toContain("足せるスキルはない")
     addStep("架空の甲")
     expect(stepTexts(list)).toEqual([
       "1架空の乙乙● 並びを変えた",
@@ -212,12 +221,12 @@ describe("設定のダイアログの「ワークフロー」の面（スキル�
 })
 
 function grip(title: string): HTMLElement {
-  return within(dialog()).getByRole("button", { name: `${title} を動かす（↑↓ キーでも）` })
+  return within(workflowGroup()).getByRole("button", { name: `${title} を動かす（↑↓ キーでも）` })
 }
 
 function announcement(): string | null {
   // Astryx のボタンが置く空の `status`（読み上げ用の領域）は数えない。
-  const notice = within(dialog())
+  const notice = within(workflowGroup())
     .getAllByRole("status")
     .find((live) => live.textContent !== "")
   return notice?.textContent ?? null
@@ -249,7 +258,7 @@ function rowClasses(list: HTMLElement): string[] {
     .map((item) => item.className)
 }
 
-describe("設定のダイアログの「ワークフロー」の面（つかんで並べ替える）", () => {
+describe("設定の紙の「ワークフロー」の面（つかんで並べ替える）", () => {
   it("つかむ点を押して動かすと置き場所の線が出て、離すと下書きの並びと流れの帯が変わり、まだ書かない", async () => {
     const sent = renderWorkflowFace(() => rpcOutput(stepsView(["架空:甲", "架空:乙", "架空:丙"])))
     const list = await stepList()
@@ -278,9 +287,9 @@ describe("設定のダイアログの「ワークフロー」の面（つかん�
     expect(flowText()).toBe("1架空の乙→2架空の丙→3架空の甲")
     expect(rowClasses(list).some((name) => name.includes("step-drop"))).toBe(false)
     expect(announcement()).toBe("架空の甲 を 3 番目へ置いた")
-    expect(typedElement(dialog().querySelector("footer"), HTMLElement, "下の帯").textContent).toBe(
-      "● 並びを変えたやめる保存",
-    )
+    expect(
+      typedElement(workflowGroup().querySelector("footer"), HTMLElement, "下の帯").textContent,
+    ).toBe("● 並びを変えたやめる保存")
     expect(setCommands(sent)).toEqual([])
   })
 
@@ -337,7 +346,7 @@ describe("設定のダイアログの「ワークフロー」の面（つかん�
     })
   })
 
-  it("Esc でつかむ前の並びに戻り、ダイアログは閉じない", async () => {
+  it("Esc でつかむ前の並びに戻る", async () => {
     renderWorkflowFace(() => rpcOutput(stepsView(["架空:甲", "架空:乙", "架空:丙"])))
     const list = await stepList()
     const handle = grip("架空の乙")
@@ -349,7 +358,6 @@ describe("設定のダイアログの「ワークフロー」の面（つかん�
     expect(stepTexts(list)).toEqual(["1架空の甲甲", "2架空の乙乙", "3架空の丙丙"])
     expect(rowClasses(list).some((name) => name.includes("step-grabbed"))).toBe(false)
     expect(announcement()).toBe("架空の乙 を 2 番目へ戻した")
-    expect(dialog()).toBeTruthy()
   })
 
   it("並びが1つだけなら、つかむ点は押せない", async () => {
@@ -361,14 +369,14 @@ describe("設定のダイアログの「ワークフロー」の面（つかん�
   })
 })
 
-describe("設定のダイアログの「ワークフロー」の面（リポジトリと書き込みの結果）", () => {
+describe("設定の紙の「ワークフロー」の面（リポジトリと書き込みの結果）", () => {
   it("見出しの下にリポジトリを出す", async () => {
     renderWorkflowFace(() => rpcOutput(stepsView(["架空:甲"])))
 
-    await within(dialog()).findByRole("list", { name: "スキルの並び" })
+    await within(workflowGroup()).findByRole("list", { name: "スキルの並び" })
 
-    expect(dialog().textContent).toContain("架空の作業ツリー のリポジトリ")
-    expect(dialog().textContent).toContain("/架空/作業ツリー/.tw/config.toml")
+    expect(workflowGroup().textContent).toContain("架空の作業ツリー のリポジトリ")
+    expect(workflowGroup().textContent).toContain("/架空/作業ツリー/.tw/config.toml")
   })
 
   it("変更が無いあいだは「保存」「やめる」が押せず、変更中の印も出ない", async () => {
@@ -377,7 +385,7 @@ describe("設定のダイアログの「ワークフロー」の面（リポジ�
 
     expect(bandButton("保存").getAttribute("aria-disabled")).toBe("true")
     expect(bandButton("やめる").getAttribute("aria-disabled")).toBe("true")
-    expect(dialog().textContent).not.toContain("並びを変えた")
+    expect(workflowGroup().textContent).not.toContain("並びを変えた")
   })
 
   it.each([
@@ -390,9 +398,9 @@ describe("設定のダイアログの「ワークフロー」の面（リポジ�
 
     operate()
 
-    expect(typedElement(dialog().querySelector("footer"), HTMLElement, "下の帯").textContent).toBe(
-      `● ${text}やめる保存`,
-    )
+    expect(
+      typedElement(workflowGroup().querySelector("footer"), HTMLElement, "下の帯").textContent,
+    ).toBe(`● ${text}やめる保存`)
     expect(bandButton("保存").getAttribute("aria-disabled")).toBeNull()
   })
 
@@ -426,7 +434,7 @@ describe("設定のダイアログの「ワークフロー」の面（リポジ�
     addStep("架空の丙")
     fireEvent.click(bandButton("保存"))
 
-    expect(await within(dialog()).findByText("架空の断りの理由")).toBeTruthy()
+    expect(await within(workflowGroup()).findByText("架空の断りの理由")).toBeTruthy()
     expect(stepTexts(list)).toHaveLength(2)
     expect(bandButton("保存").getAttribute("aria-disabled")).toBeNull()
   })
@@ -443,12 +451,12 @@ describe("設定のダイアログの「ワークフロー」の面（リポジ�
     const list = await stepList()
     removeStep("架空の甲")
     fireEvent.click(bandButton("保存"))
-    await within(dialog()).findByText("架空の断りの理由")
+    await within(workflowGroup()).findByText("架空の断りの理由")
 
     fireEvent.click(bandButton("やめる"))
 
     expect(stepTexts(list)).toEqual(["1架空の甲甲", "2架空の乙乙"])
-    expect(within(dialog()).queryByText("架空の断りの理由")).toBeNull()
+    expect(within(workflowGroup()).queryByText("架空の断りの理由")).toBeNull()
     expect(bandButton("保存").getAttribute("aria-disabled")).toBe("true")
   })
 
@@ -462,20 +470,19 @@ describe("設定のダイアログの「ワークフロー」の面（リポジ�
       rpcOutput({ kind: "unavailable", repository: REPOSITORY, reason, detail }),
     )
 
-    expect(await within(dialog()).findByText(text, { exact: false })).toBeTruthy()
-    expect(dialog().textContent).toContain("架空の作業ツリー のリポジトリ")
-    expect(within(dialog()).queryAllByRole("combobox")).toHaveLength(0)
-    expect(
-      within(dialog()).getByRole("button", { name: "ワークフロー" }).getAttribute("aria-current"),
-    ).toBe("page")
+    expect(await within(workflowGroup()).findByText(text, { exact: false })).toBeTruthy()
+    expect(workflowGroup().textContent).toContain("架空の作業ツリー のリポジトリ")
+    expect(workflowSelects()).toHaveLength(0)
   })
 
   it("手続きが返らなければ、読めなかったことを言う", async () => {
     renderWorkflowFace(() => rpcError(500))
 
     expect(
-      await within(dialog()).findByText("ワークフローの設定を読めなかった", { exact: false }),
+      await within(workflowGroup()).findByText("ワークフローの設定を読めなかった", {
+        exact: false,
+      }),
     ).toBeTruthy()
-    expect(within(dialog()).queryAllByRole("combobox")).toHaveLength(0)
+    expect(workflowSelects()).toHaveLength(0)
   })
 })

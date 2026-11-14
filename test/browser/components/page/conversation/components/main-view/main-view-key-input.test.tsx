@@ -26,7 +26,7 @@ function renderPaper(): HTMLElement {
   putSession({ ...INITIAL_SESSION_STATE, records: threeTurns() })
   render(
     <QueryClientProvider client={createTestQueryClient()}>
-      <MainView outline="column" inquiry="inline" progress="paper" />
+      <MainView outline="column" inquiry="inline" />
     </QueryClientProvider>,
   )
   const root = document.querySelector<HTMLElement>("[data-main-view]")

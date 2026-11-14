@@ -1,12 +1,8 @@
-// 見本帳の「画面の部品」のうち、メインビューの小さな部品（いまのフェーズ・補足・済んだフェーズ・進み具合・やり取りの列）の例。
+// 見本帳の「画面の部品」のうち、メインビューの小さな部品（いまのフェーズ・補足・済んだフェーズ・やり取りの列）の例。
 
 import { createRef } from "react"
 
 import type { PhaseRow } from "../../page/conversation/components/main-view/domain/phase-row.ts"
-import type {
-  WorkStripPhase,
-  WorkStripModel,
-} from "../../page/conversation/components/main-view/hooks/use-work-strip.ts"
 import { PresentationalAsideThread } from "../../page/conversation/components/main-view/presentational-aside-thread.tsx"
 import { PresentationalCurrentStep } from "../../page/conversation/components/main-view/presentational-current-step.tsx"
 import { PresentationalFailedPaper } from "../../page/conversation/components/main-view/presentational-failed-paper.tsx"
@@ -15,7 +11,6 @@ import { PresentationalReportOutline } from "../../page/conversation/components/
 import { WorkPlanAskBlock } from "../../page/conversation/components/main-view/presentational-work-plan-ask.tsx"
 import { LiveBlock } from "../../page/conversation/components/main-view/presentational-work-plan-live.tsx"
 import { PresentationalWorkPlanPaper } from "../../page/conversation/components/main-view/presentational-work-plan-paper.tsx"
-import { PresentationalWorkStrip } from "../../page/conversation/components/main-view/presentational-work-strip.tsx"
 import { markFailedRow } from "../../page/conversation/domain/work-plan-failed-row.ts"
 import {
   rowsOfSlot,
@@ -53,89 +48,6 @@ const PHASE_ROWS = [
   phaseRow(2, "実装", "5:40", false),
   phaseRow(3, "飛ばした確認", "", true),
 ]
-
-function stripPhase(
-  key: string,
-  mark: string,
-  label: string,
-  state: WorkStripPhase["state"],
-): WorkStripPhase {
-  return {
-    key,
-    mark,
-    label,
-    state,
-    skipped: false,
-    spinning: state === "current",
-    popoverId: `popover-${key}`,
-    popover: { kind: "closed" },
-    onToggle: noop,
-  }
-}
-
-const STRIP_BASE = {
-  trackRef: createRef<HTMLOListElement>(),
-  readingLabel: "",
-  sideLabel: "経過 6分12秒",
-  steps: {
-    toggleLabel: "手順 12 ▾",
-    list: { kind: "closed" },
-    onToggle: noop,
-    groups: [],
-    backgroundList: { kind: "none" },
-  },
-} as const
-
-const WORKING_STRIP: WorkStripModel = {
-  ...STRIP_BASE,
-  kind: "working",
-  result: "working",
-  phases: [
-    {
-      kind: "phase",
-      spanHead: { kind: "none" },
-      phase: stripPhase("p1", "✓", "1. 下調べ（済）", "done"),
-    },
-    {
-      kind: "phase",
-      spanHead: { kind: "none" },
-      phase: stripPhase("p2", "2", "2. 実装（今のフェーズ）", "current"),
-    },
-    {
-      kind: "phase",
-      spanHead: { kind: "none" },
-      phase: stripPhase("p3", "3", "3. 確認", "upcoming"),
-    },
-  ],
-  headLabel: "実装",
-  activity: {
-    text: "ファイルを読んでいる",
-    tone: "quiet",
-    mono: false,
-    retry: { kind: "none" },
-    quiet: { kind: "none" },
-  },
-}
-
-const FINISHED_STRIP: WorkStripModel = {
-  ...STRIP_BASE,
-  kind: "finished",
-  result: "done",
-  phases: [
-    {
-      kind: "phase",
-      spanHead: { kind: "none" },
-      phase: stripPhase("p1", "✓", "1. 下調べ（済）", "done"),
-    },
-    {
-      kind: "phase",
-      spanHead: { kind: "none" },
-      phase: stripPhase("p2", "✓", "2. 実装（済）", "done"),
-    },
-  ],
-  headLabel: "全部のフェーズが済んだ",
-  sideLabel: "所要 21分49秒",
-}
 
 const OUTLINE_BASE = {
   visible: true,
@@ -457,16 +369,6 @@ export const MAIN_VIEW_EXAMPLES: readonly ScreenPartExample[] = [
           turnId={1}
           list={{ rows: PHASE_ROWS, sheet: { kind: "closed" }, onOpen: noop, onClose: noop }}
         />
-      </>
-    ),
-  },
-  {
-    frame: "flow",
-    path: "page/conversation/components/main-view/presentational-work-strip.tsx",
-    render: () => (
-      <>
-        <PresentationalWorkStrip strip={WORKING_STRIP} />
-        <PresentationalWorkStrip strip={FINISHED_STRIP} />
       </>
     ),
   },

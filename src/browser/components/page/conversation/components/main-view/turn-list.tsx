@@ -1,20 +1,19 @@
-// 狭い画面の引き出しの「やり取り」のタブ。このセッションのやり取りを古い順（新しいものが下）に1行ずつ並べる。
+// 欄外の「やり取り」。このセッションのやり取りを古い順（新しいものが下）に1行ずつ並べる。
 // 材料はやり取りの列と同じ（`useReportOutlineTurns`）で、2行目の時刻（`turnSpans`）はここでだけ引く。
 //
 // いまの回（最新のやり取りで、経過を数えているあいだ）は回る輪と淡い差し色の地で、2行目は「作業中 <経過>」。経過は頭と同じ数え方。
-// 行を押すと引き出しを閉じ、会話の画面のそのやり取りへ移る。
+// 行を押すと、会話の画面のそのやり取りへ移る。
 
 import clsx from "clsx"
 import type { ReactElement } from "react"
 
-import { isTurnCounting, turnElapsedClock } from "../../../../../domain/turn-elapsed.ts"
 import { useNowWhile } from "../../../../../stores/clock.ts"
-import { useNavDrawer } from "../../../../../stores/nav-drawer.ts"
 import { useSession } from "../../../../../stores/session.ts"
-import { showTurn, useTurnSelection } from "../../../../../stores/turn-selection.ts"
 import { localTimeZoneId } from "../../../../../utils/clock.ts"
 import { Spinner } from "../../../../ui/spinner/spinner.tsx"
+import { isTurnCounting, turnElapsedClock } from "../../domain/turn-elapsed.ts"
 import { TURN_RESULT_MARKS } from "../../domain/turn-result-mark.ts"
+import { showTurn, useTurnSelection } from "../../stores/turn-selection.ts"
 import { turnSpanLabel, turnSpans, type TurnSpan } from "./domain/turn-span.ts"
 import { useReportOutlineTurns } from "./hooks/use-report-outline-turn-list.ts"
 import styles from "./main-view.module.css"
@@ -31,7 +30,6 @@ export function TurnList(): ReactElement {
   const { activeTurnId } = useTurnSelection()
   const turn = useSession((session) => session.state.turn)
   const backgroundTaskCount = useSession((session) => session.state.backgroundTasks.length)
-  const closeDrawer = useNavDrawer((state) => state.close)
   const counting = isTurnCounting(turn, backgroundTaskCount)
   const now = useNowWhile(counting)
   const timeZone = localTimeZoneId()
@@ -58,7 +56,6 @@ export function TurnList(): ReactElement {
               aria-current={entry.id === activeTurnId ? "true" : undefined}
               aria-label={`${working ? WORKING_LABEL : result.label}: ${entry.title}`}
               onClick={() => {
-                closeDrawer()
                 showTurn(entry.id)
               }}
             >

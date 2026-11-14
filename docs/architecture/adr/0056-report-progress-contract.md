@@ -258,8 +258,8 @@
 | `docs/architecture/display/check-result.md`（検証結果の描き方）                                            | 置き換え     | 確かさの台帳（論点 3）                                                                      |
 | `docs/architecture/display/conclusion.md` のお願い（`favor`）                                              | 置き換え     | 紙の頭の「あなたの番」（論点 2）                                                            |
 | `docs/architecture/display/work-plan-timing.md` の中間レポート・合図の行                                   | 置き換え     | 紙の計画の段の行と時系列の項目（論点 1）                                                    |
-| `docs/architecture/screen-design/report-head.md`「レポートの頭（合図の行）」                               | 置き換え     | 紙の頭の判定の行（論点 2・7）                                                               |
-| `docs/architecture/screen-design/work-strip.md`「進み具合のプログレスバー」                                | 置き換え     | 紙の計画と、入力欄の狐火の札                                                                |
+| `docs/architecture/screen-design/report-head.md`「紙の頭の判定の行」（旧「レポートの頭（合図の行）」）     | 置き換え     | 紙の頭の判定の行（論点 2・7）                                                               |
+| 画面のデザインの `work-strip.md`「進み具合のプログレスバー」（いまは消した）                               | 置き換え     | 紙の計画と、入力欄の狐火の札                                                                |
 | `docs/architecture/screen-design/notice-and-failure.md`「知らせの行」「読み上げとフォーカス」              | 一部置き換え | 知らせの4段（論点 5）。失敗の表示の語は紙の失敗の形へ移す                                   |
 | `docs/architecture/workflow-contract/port-and-return.md`「ツール」の `work_plan`・`report` の表            | 書き足す     | 論点 2・4 の欄を足す。今の欄の意味は変えない                                                |
 | `src/shared/session/session-event-delegate.ts` の `delegate-progress` の説明                               | 置き換え     | ブラウザのメモリにだけ届く（論点 6）                                                        |

@@ -1,12 +1,8 @@
 /* キャラビュー。
    立ち絵と吹き出しの並びを同じ領域に同居させ、立ち絵をどこにどれだけの大きさで置くかもここが決める（立ち絵そのものの中身と動きは portrait.module.css）。
-   舞台の見た目の本体は `stage/` の layout / balloon-track / balloon / speech-log / phone-balloon / item-seat の各 `*.css` にあり、ここで `@import` する。
-   CSS Modules が class 名をファイルごとにハッシュ化しても、`@import` で取り込んだ規則は入口の名前になるので、別の `*.css` の class をまたぐ選択子（`.portrait + .balloon-track` など）がそのまま効き、部品はこのファイルの1つから引く。
+   舞台の見た目の本体は `stage/` の balloon / speech-log / phone-balloon / item-seat / stage-figure などの各 `*.css` にあり、ここで `@import` する。
+   CSS Modules が class 名をファイルごとにハッシュ化しても、`@import` で取り込んだ規則は入口の名前になるので、別の `*.css` の class をまたぐ選択子がそのまま効き、部品はこのファイルの1つから引く。 */
 
-   領域の高さを .character-layout まで継がせ、立ち絵の割合指定（下の --portrait-height）が領域の中で解決されるようにする（vh 基準にすると、下段の行の高さ（既定 40%）より大きくなって領域ごとスクロールし、最新の吹き出しが隠れる）。 */
-
-@import "./stage/layout.css";
-@import "./stage/balloon-track.css";
 @import "./stage/balloon.css";
 @import "./stage/speech-log.css";
 @import "./stage/phone-balloon.css";
@@ -23,31 +19,14 @@
      大きさは外（`.layout-region` の高さ 100% と幅）から決まるので、中身を大きさの計算から外す封じ込めを掛けても寸法は変わらない。 */
   container-type: size;
   height: 100%;
-  /* 立ち絵の大きさ（領域の高さに対する割合）と、吹き出しの列の寸法。
-     値はモックに合わせた固定量。
-     立ち絵は領域いっぱいには出さず、少し小さくして床に置く。
-     --portrait-drop は立ち絵を領域の下端よりさらに下へずらす量で、足元が枠で切れて「床に立っている」見え方になる。
-     `.portrait` の max-width（45%）と `.balloon-track` の flex-basis（既定 11rem。領域が低いときは --balloon-track-basis が縮む。`.balloon-track` 参照）が先に当たるので、ここを上げすぎても吹き出しの幅は下限（8rem）未満には潰れない。 */
-  --portrait-height: 88%;
-  --portrait-drop: 2.25rem;
-  --balloon-tail: 8px;
-  /* 尻尾を最新の吹き出しの下端から浮かせる量（モック値）。縦中央ではなく下寄りに付く。 */
-  --balloon-tail-bottom: 26px;
-  /* 吹き出しの列を立ち絵に重ねる量（モックは `margin-left: -30px`）。
-     列は立ち絵の右に隙間を空けて並べず、この分だけ立ち絵の上へ被せる（`.portrait + .balloon-track`）。
-     モック値（30px）では立ち絵の顔の側に寄りすぎるので、12px 詰めてある。 */
+  /* アイテムの席を立ち絵の右端から内側へ寄せる量。 */
   --balloon-overlap: 18px;
-  /* 最新の吹き出しの下端を領域の下端から浮かせる固定量と、列の右端を領域の右端から離す量（モックの `padding: 20px 20px 28px 0`）。
-     px の絶対値で持つ（margin/max-height のパーセントは containing block の幅に対して解決されるため、高さの意図で書くと壊れる）。 */
-  --balloon-bottom-gap: 28px;
+  /* 吹き出しの右端を領域の右端から離す量（モックの `padding-right: 20px`）。 */
   --balloon-right-gap: 20px;
   /* 列のスクロールバーと吹き出しの間。
      --balloon-right-gap の外側の余白からこの分を列の内側へ移すので、吹き出しの位置は変わらず、スクロールバーだけがこの分右へ寄る。 */
   --balloon-scrollbar-gap: 12px;
-  /* 右上の「ログ」の口（領域の角から 4px、高さ 30px）が占める高さぶんの余白。
-     吹き出しの並びがスクロールしてもここまでは伸びない（.balloon-track）。 */
-  --speech-log-open-space: 26px;
-  /* 領域を仕切りで低くしたとき、吹き出しの文字・余白・列の幅を領域の高さ（`cqh`）に連動させて縮める（立ち絵は --portrait-height で領域の高さに比例して縮むので、吹き出しが固定量のままだと相対的に大きく見える）。
+  /* 領域を仕切りで低くしたとき、吹き出しの文字・余白・列の幅を領域の高さ（`cqh`）に連動させて縮める。
      既定の高さでは変えない（実測で既定の領域の高さは 252px）。
      clamp() の中間の式が既定より大きい値になるよう、余裕を見て 210px を境目に選んだ（式が上限＝現状の固定値を超えるので clamp が上限側で止まり、既定の見た目は変わらない）。
      境目を下回ってはじめて式の値が効き、読める下限（--font-label、11px）まで縮む。
@@ -55,7 +34,6 @@
      境目の px を `cqh` の係数へ直す式は「上限の px × 100 ÷ 境目の px」（例: 最新の文字は 15 × 100 ÷ 210 ≈ 7.143）。 */
   --balloon-latest-scale: clamp(var(--font-label), 7.143cqh, var(--font-body));
   --balloon-past-scale: clamp(var(--font-label), 6.19cqh, var(--font-secondary));
-  --balloon-track-basis: clamp(8rem, 83.81cqh, 11rem);
 }
 
 /* 狭い画面（760px 以下）。立ち絵と吹き出しの並びを出さず、顔と最新の1件（`<PhoneBalloon>`）だけを中身なりの高さで出す。

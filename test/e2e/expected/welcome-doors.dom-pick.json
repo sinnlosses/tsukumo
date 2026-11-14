@@ -1,5 +1,5 @@
 {
-  "main": [
+  "paper": [
     { "tag": "div", "attributes": { "data-main-view-content": "welcome" }, "children": [
       { "tag": "ul", "attributes": { "data-count": "2" }, "children": [
         { "tag": "li", "children": [

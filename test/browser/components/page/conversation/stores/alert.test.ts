@@ -2,10 +2,7 @@ import { act } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { useAlert } from "../../../../../../src/browser/components/page/conversation/stores/alert.ts"
-import {
-  DEFAULT_ALERT_SETTING,
-  saveAlertSetting,
-} from "../../../../../../src/browser/stores/alert-setting.ts"
+import { saveAlertSetting } from "../../../../../../src/browser/stores/alert-setting.ts"
 import { useSession } from "../../../../../../src/browser/stores/session.ts"
 import { ringBell } from "../../../../../../src/browser/utils/bell.ts"
 import type { SessionEvent } from "../../../../../../src/shared/session/session-event.ts"
@@ -17,6 +14,9 @@ vi.mock("../../../../../../src/browser/utils/bell.ts", () => ({
   primeBell: vi.fn<() => void>(),
   ringBell: vi.fn<() => void>(),
 }))
+
+/** 既定のまま、どの出来事で知らせるか。 */
+const DEFAULT_ALERT_EVENTS = { question: true, permission: true, failure: true, finished: false }
 
 /** 出した通知を控える代役。`permission` はテストごとに替える。 */
 class FakeNotification {
@@ -59,7 +59,7 @@ beforeEach(() => {
   vi.stubGlobal("Notification", FakeNotification)
   vi.spyOn(document, "visibilityState", "get").mockImplementation(() => visibility)
   vi.spyOn(document, "hasFocus").mockImplementation(() => focused)
-  saveAlertSetting({ ...DEFAULT_ALERT_SETTING, notify: true, bell: true })
+  saveAlertSetting({ notify: true, bell: true, events: DEFAULT_ALERT_EVENTS })
   putSession(INITIAL_SESSION_STATE)
   act(() => {
     useAlert.setState(useAlert.getInitialState(), true)
@@ -134,7 +134,7 @@ describe("useAlert", () => {
   })
 
   it("通知と鈴を切っていれば何も出さない", () => {
-    saveAlertSetting(DEFAULT_ALERT_SETTING)
+    saveAlertSetting({ notify: false, bell: false, events: DEFAULT_ALERT_EVENTS })
 
     receive(requestEvent(), PERMISSION)
 

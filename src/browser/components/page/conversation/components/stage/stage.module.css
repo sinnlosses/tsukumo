@@ -79,8 +79,12 @@
 .stage-shell[data-posture="greet"] .stage-tools {
   max-width: calc(100% - var(--stage-width) - 44px);
 }
+/* 狭い幅の頭の置き場。広い幅では升目に入れない（中身の側も隠す）。 */
+.stage-narrow-head {
+  display: none;
+}
 /* 狭い画面（760px 以下）。舞台は出さず、縦1列に積む。
-   上から紙（残りの高さ）・キャラクターの行・入力欄。迎えるでは、キャラクターの行を紙の上に置く。
+   上から頭・紙（残りの高さ）・キャラクターの行・入力欄。迎えるでは、キャラクターの行を紙の上に置く。
    紙と入力欄は `.paper`・`.paper-dock`（`paper-desk` の class）の `order` で並べる。 */
 @media (max-width: 760px) {
   .stage-shell,
@@ -90,6 +94,12 @@
   }
   .stage-scene {
     display: none;
+  }
+  .stage-narrow-head {
+    display: contents;
+  }
+  .stage-narrow-head > * {
+    order: -1;
   }
   .stage-figure {
     flex: none;

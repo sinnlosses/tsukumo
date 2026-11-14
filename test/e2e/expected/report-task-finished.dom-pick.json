@@ -1,5 +1,5 @@
 {
-  "main": [
+  "paper": [
     { "tag": "section", "attributes": { "data-report-step": "" }, "children": [
       { "tag": "header", "children": [
         { "tag": "button", "children": ["T-002"] },

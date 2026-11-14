@@ -296,7 +296,9 @@
   padding-top: var(--stack-block);
   border-top: 1px solid var(--rule);
 }
+/* 押せる的の下限（24px）を、字の行の高さだけでは満たさない。 */
 .work-plan-route-summary {
+  min-height: 1.5rem;
   color: var(--ink-soft);
   font-size: var(--font-secondary);
   cursor: pointer;

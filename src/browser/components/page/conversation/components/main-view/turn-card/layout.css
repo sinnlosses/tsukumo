@@ -1,7 +1,4 @@
-/* `--turn-card-head-height` は札の頭（進み具合のプログレスバー）の外寸で、貼り付いた帯の真下を指す位置に使う。
-   帯を出さないあいだは 0 で、帯があれば `useTurnCardHeadHeight` が実測した高さを同じ名前で書き込む。 */
 .main-turns {
-  --turn-card-head-height: 0px;
   display: flex;
   flex-direction: column;
   /* 札が短くても、やり取りの列が領域の下端まで届くよう、領域の内寸を最低の高さにする（札は余白を打ち消して縁まで広がる）。 */
@@ -55,9 +52,9 @@
 .turn-card-body {
   padding: var(--space-lg) var(--space-xl) var(--space-md);
 }
-/* 列から飛んだ見出しとレポートの札と、ページ内のリンクから飛んだ先（お願いの部品など）が、貼り付いた頭の下に隠れないようにする。 */
+/* 列から飛んだ見出しとレポートの札と、ページ内のリンクから飛んだ先（お願いの部品など）を、器の上端に貼り付けず少し空けて止める。 */
 .turn-card :is(h4, h5, [id], [data-report-step]) {
-  scroll-margin-top: calc(var(--turn-card-head-height) + 0.5rem);
+  scroll-margin-top: 0.5rem;
 }
 /* ステップは縦に1本で積む（Z字に読ませない）。カードの枠は「ひとかたまり」の区切りを見せるためだけに使い、番号は振らない。 */
 .main-step {

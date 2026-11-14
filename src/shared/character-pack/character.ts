@@ -84,7 +84,7 @@ export type CharacterInfo = {
 }
 
 /**
- * 切り替えの選択肢1つ分（サイドバーの `<select>`）。
+ * 切り替えの選択肢1つ分（キャラクターの紙の一覧の1行）。
  * `name` は `characters/<name>` のディレクトリ名で、`label` は画面に出す名前（`character.json` の `name`。無ければ `name`）。
  */
 export type CharacterPackChoice = {

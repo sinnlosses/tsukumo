@@ -45,20 +45,25 @@ export function spawnTsukumo(
   home: string,
   userHome: string,
   cwd: string,
-  characterPack?: string,
-  port = 0,
+  launch: {
+    readonly characterPack?: string
+    /** 場面の手を先頭から何個まで流すか（`TSUKUMO_FAKE_SCENE_UNTIL`）。 */
+    readonly sceneUntil?: number
+  } = {},
 ): ChildProcess {
+  const { characterPack, sceneUntil } = launch
   return spawnFakeTsukumo({
     entry: path.join(REPOSITORY_ROOT, "src", "cli.ts"),
     cwd,
     scene: scene === "none" ? undefined : scene,
     session: undefined,
-    port,
+    port: 0,
     home,
     extraEnv: {
       TSUKUMO_FIXED_CLOCK: FIXED_INSTANT,
       TZ: TIME_ZONE,
       HOME: userHome,
+      ...(sceneUntil === undefined ? {} : { TSUKUMO_FAKE_SCENE_UNTIL: String(sceneUntil) }),
       ...(characterPack === undefined
         ? {}
         : {

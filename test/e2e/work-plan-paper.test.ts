@@ -8,9 +8,8 @@ import type { ScenarioRoom } from "./scenario-open.ts"
 // `work-plan-laps` は差し戻し2回のあと段が済み、`work-plan-delegates` は任せた役が6つで2つが済む。
 // `work-plan-away` は2件目の記録のあと約 9 秒あけて残りの段と問いが届く（その間にページを隠す）。
 
-async function reopenInStage(room: ScenarioRoom): Promise<Page> {
+async function reopenRoom(room: ScenarioRoom): Promise<Page> {
   const url = new URL(room.page.url())
-  url.searchParams.set("shell", "stage")
   await room.page.goto(url.toString())
   return room.page
 }
@@ -24,7 +23,7 @@ test.describe("紙のワークプラン", () => {
       domRoots: ["page"],
     })
     await room.waitForEvent("tool-started", 3)
-    const page = await reopenInStage(room)
+    const page = await reopenRoom(room)
     const plan = page.getByRole("region", { name: "ワークプラン" })
 
     await expect(plan.getByRole("img", { name: "8段のうち5段目" })).toBeVisible()
@@ -43,7 +42,7 @@ test.describe("紙のワークプラン", () => {
       domRoots: ["page"],
     })
     await room.waitForEvent("turn-finished")
-    const page = await reopenInStage(room)
+    const page = await reopenRoom(room)
     const route = page.getByText(/^この結論に至った道筋 ― 3段/u)
 
     await expect(route).toBeVisible()
@@ -61,7 +60,7 @@ test.describe("紙のワークプラン", () => {
       domRoots: ["page"],
     })
     await room.waitForEvent("tool-started")
-    const page = await reopenInStage(room)
+    const page = await reopenRoom(room)
     const plan = page.getByRole("region", { name: "ワークプラン" })
 
     await expect(plan.getByRole("img", { name: "5段のうち4段目" })).toBeVisible()
@@ -79,7 +78,7 @@ test.describe("紙のワークプラン", () => {
       domRoots: ["page"],
     })
     await room.waitForEvent("tool-started")
-    const page = await reopenInStage(room)
+    const page = await reopenRoom(room)
     const plan = page.getByRole("region", { name: "ワークプラン" })
 
     await expect(plan).toContainText("架空の画を撮る役 ― 架空の幅 1400 の2枚目を撮っている")
@@ -96,7 +95,7 @@ test.describe("紙のワークプラン", () => {
       domRoots: ["page"],
     })
     await room.waitForEvent("turn-finished")
-    const page = await reopenInStage(room)
+    const page = await reopenRoom(room)
     const plan = page.getByRole("region", { name: "ワークプラン" })
 
     await expect(plan).toContainText("失敗で止まった")
@@ -115,7 +114,7 @@ test.describe("紙のワークプラン", () => {
       domRoots: ["page"],
     })
     await room.waitForEvent("pending-changed")
-    const page = await reopenInStage(room)
+    const page = await reopenRoom(room)
     const plan = page.getByRole("region", { name: "ワークプラン" })
 
     await expect(plan).toContainText("目盛りの既定の本数はいくつにする？")
@@ -133,7 +132,7 @@ test.describe("紙のワークプラン", () => {
       domRoots: ["page"],
     })
     await room.waitForEvent("work-plan", 2)
-    const page = await reopenInStage(room)
+    const page = await reopenRoom(room)
     const plan = page.getByRole("region", { name: "ワークプラン" })
     await expect(plan.getByRole("img", { name: "4段のうち2段目" })).toBeVisible()
 

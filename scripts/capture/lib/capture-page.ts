@@ -10,10 +10,10 @@ import { waitUntilStable } from "./stable-sample.ts"
 import { describeStillDiff } from "./still-diff.ts"
 
 /**
- * 本文が入る領域（メインビュー）。class 名は組み立てのたびにハッシュ化される（CSS Modules）
- * ので、領域を指すときは `<Layout>` が付ける `data-region` を使う。
+ * 本文が入る領域（紙）。class 名は組み立てのたびにハッシュ化される（CSS Modules）
+ * ので、領域を指すときは `<PaperDesk>` が付ける `data-region` を使う。
  */
-export const MAIN_REGION_SELECTOR = '[data-region="main"]'
+export const MAIN_REGION_SELECTOR = '[data-region="paper"]'
 
 /**
  * 演出を打ち切るキー（`entry.skipReveal`。`SKIP_EVENT_NAMES` は

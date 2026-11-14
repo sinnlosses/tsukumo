@@ -1,4 +1,4 @@
-import { act, cleanup, fireEvent, screen, within } from "@testing-library/react"
+import { act, cleanup, screen } from "@testing-library/react"
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { useInquiryDraft } from "../../../../../../../src/browser/components/page/conversation/stores/inquiry-draft.ts"
@@ -22,14 +22,10 @@ import {
 import { componentsOfSections } from "../../../../../../fixture/report-event.ts"
 import {
   detailRecord,
-  finishedToolStatus,
   reportRecord,
   requestRecord,
-  toolRecord,
-  workPlanRecord,
 } from "../../../../../../fixture/session-record.ts"
 import { typedElement } from "../../../../../../typed-element.ts"
-import { stubPhoneWidth } from "../../../../../phone-width.ts"
 import { putState } from "../../../../../session-store.ts"
 
 beforeAll(async () => {
@@ -257,67 +253,6 @@ describe("MainView（閉じたときの入れ替えとフォーカス）", () =>
   })
 })
 
-describe("MainView（失敗の表示から帯の手順へ）", () => {
-  it("失敗した手順を見る口を押すと、帯の手順の一覧が開き、失敗の行が1つ出る", () => {
-    renderMainView(
-      [
-        requestRecord({ text: "架空の依頼", turnId: 0 }),
-        workPlanRecord({ phases: ["架空の段A", "架空の段B"], current: 0 }),
-        toolRecord({
-          toolUseId: "fake-ok",
-          status: finishedToolStatus(),
-        }),
-        toolRecord({
-          toolUseId: "fake-failed",
-          status: finishedToolStatus({
-            result: { kind: "failed", output: { head: "架空のエラー出力", omittedLength: 0 } },
-          }),
-        }),
-        { kind: "turn-failure", failure: { kind: "execution-error" } },
-      ],
-      {
-        kind: "finished",
-        startedAt: 0,
-        finishedAt: 100,
-        ending: { kind: "failed", failure: { kind: "execution-error" } },
-      },
-    )
-    expect(screen.queryByRole("region", { name: "依頼の手順" })).toBeNull()
-
-    const block = screen.getByRole("note", { name: "失敗で終わった" })
-    act(() => {
-      fireEvent.click(within(block).getByRole("button", { name: "失敗した手順を見る" }))
-    })
-
-    const steps = screen.getByRole("region", { name: "依頼の手順" })
-    expect(steps.querySelectorAll("[data-step-failed]")).toHaveLength(1)
-  })
-})
-
-describe("MainView（狭い画面の「いまの段」）", () => {
-  const RUNNING_RECORDS = [
-    requestRecord({ text: "架空の依頼", turnId: 0 }),
-    workPlanRecord({ phases: ["架空の段A", "架空の段B"], current: 0 }),
-  ]
-  const RUNNING_TURN = { kind: "running", startedAt: 0 } as const
-
-  it("広い画面では描かない", () => {
-    stubPhoneWidth(false)
-
-    renderMainView(RUNNING_RECORDS, RUNNING_TURN)
-
-    expect(screen.queryByRole("heading", { name: /^いまのフェーズ/u })).toBeNull()
-  })
-
-  it("狭い画面では描く", () => {
-    stubPhoneWidth(true)
-
-    renderMainView(RUNNING_RECORDS, RUNNING_TURN)
-
-    expect(screen.getByRole("heading", { name: /^いまのフェーズ/u })).toBeTruthy()
-  })
-})
-
 describe("MainView（答えた質問の記録）", () => {
   function answered(toolUseId: string, text: string): SessionRecord {
     return {
@@ -403,7 +338,7 @@ describe("MainView（レポートを欄ごとに描く）", () => {
       regionedReport("<div>架空の結論", textBlock("架空の本文A。")),
     ])
 
-    expect(regionsOfBody()).toEqual(["head", "0", "1", "favor"])
+    expect(regionsOfBody()).toEqual(["head", "0", "1"])
     expect(reportBody().querySelector('[data-report-region="head"] h4')).toBeNull()
     expect(reportBody().querySelector('[data-report-section="1"] h4')?.textContent).toBe(
       "架空の節B",
@@ -422,7 +357,7 @@ describe("MainView（レポートを欄ごとに描く）", () => {
     ])
 
     const heading = reportBody().querySelector('[data-report-section="1"] h4')
-    expect(regionsOfBody()).toEqual(["head", "0", "1", "favor"])
+    expect(regionsOfBody()).toEqual(["head", "0", "1"])
     expect(heading?.textContent).toBe("架空の節B")
     expect(heading?.closest("details")).toBeNull()
   })

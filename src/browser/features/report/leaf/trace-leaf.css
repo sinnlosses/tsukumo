@@ -4,7 +4,7 @@
 [data-report-region] .trace-leaf {
   max-inline-size: min(100%, var(--report-measure-wide));
   margin: var(--report-block-gap) 0;
-  padding: 0;
+  padding: 0 0 0 1.15em;
   list-style: none;
 }
 [data-report-region] .trace-row {
@@ -82,8 +82,7 @@
 }
 [data-report-region] .trace-output > summary {
   cursor: pointer;
-  color: var(--ink-soft);
-  font-size: var(--font-secondary);
+  font-size: var(--font-subheading);
   list-style: none;
 }
 [data-report-region] .trace-output > summary::-webkit-details-marker {

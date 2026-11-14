@@ -22,6 +22,8 @@ type StageProps = {
   readonly onUncover: () => void
   /** 器の右上に置く入口の群。覆いの上に残す。 */
   readonly tools: ReactNode
+  /** 狭い幅で縦1列の先頭に置く1行の頭。広い幅では中身の側が隠す。 */
+  readonly narrowHead: ReactNode
   /** 舞台に立たせるもの（立ち絵と吹き出し）。 */
   readonly figure: ReactNode
   /** 舞台の右の場所に置くもの（紙・欄外・浮く入力欄）。 */
@@ -36,6 +38,7 @@ export function Stage(props: StageProps): ReactElement {
       data-chat={props.chatMode ? "" : undefined}
     >
       <div className={styles["stage-scene"]} aria-hidden="true" />
+      <div className={styles["stage-narrow-head"]}>{props.narrowHead}</div>
       <section className={styles["stage-figure"]} data-region="stage" aria-label="キャラクター">
         {props.figure}
       </section>

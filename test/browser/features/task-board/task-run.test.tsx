@@ -4,7 +4,6 @@ import { afterEach, describe, expect, it } from "vitest"
 
 import { saveLaunchSkill } from "../../../../src/browser/domain/launch-skill.ts"
 import { TaskBoard } from "../../../../src/browser/features/task-board/task-board.tsx"
-import { TaskList } from "../../../../src/browser/features/task-board/task-list.tsx"
 import type {
   TaskSummaryItem,
   TaskSummaryResult,
@@ -61,11 +60,6 @@ const TASKS: readonly TaskSummaryItem[] = [
 
 const RUNNING_TURN: Partial<SessionState> = { turn: { kind: "running", startedAt: 0 } }
 
-/** サイドバーの区画の一覧。確認は姿と送り口が要るので store で包む。 */
-function renderList(spy: CommandSpy, overrides: Partial<SessionState>): void {
-  renderWithStore(<TaskList tasks={known(TASKS)} selectedStatus="all" />, spy, overrides)
-}
-
 /** 見出しの「一覧を見る」で開くタスクのモーダル（開いた状態で描く）。閉じる要求は `closed` に溜まる。 */
 function renderBoard(
   spy: CommandSpy = () => {},
@@ -110,40 +104,14 @@ function confirmDialog(): Element | null {
 describe("タスクの実行を頼む", () => {
   it("ターンが動いている間は「実行する」を出さず、理由を出す", () => {
     const sent: unknown[] = []
-    renderList(collectInto(sent), RUNNING_TURN)
+    renderBoard(collectInto(sent), [], TASKS, RUNNING_TURN)
 
-    startFromPeek("X-002")
+    openRunConfirm("X-002")
 
     expect(screen.queryByRole("button", { name: "実行する" })).toBeNull()
     expect(confirmDialog()?.textContent).toContain("いまターンが動いているので送れない")
     expect(sent).toEqual([])
   })
-
-  it.each([
-    ["「キャンセル」", () => fireEvent.click(screen.getByRole("button", { name: "キャンセル" }))],
-    [
-      "Esc",
-      () => {
-        if (confirmDialog() === null) {
-          throw new Error("確認が開いていない")
-        }
-        fireEvent.keyDown(document, { key: "Escape" })
-      },
-    ],
-  ])(
-    "区画の一覧の確認を %s で閉じると、何も送らず確認だけ閉じて、プレビューは残る",
-    (_, dismiss) => {
-      const sent: unknown[] = []
-      renderList(collectInto(sent), {})
-
-      startFromPeek("X-002")
-      dismiss()
-
-      expect(sent).toEqual([])
-      expect(confirmDialog()).toBeNull()
-      expect(document.querySelector('dialog[aria-label="X-002 の詳細"]')).not.toBeNull()
-    },
-  )
 
   it("モーダルから断ったときは確認だけ閉じ、一覧へ戻れる", () => {
     const closed: string[] = []
@@ -174,125 +142,6 @@ describe("タスクの実行を頼む", () => {
 
     expect(closed).toEqual([])
     expect(document.querySelector("dialog.task-board")?.hasAttribute("open")).toBe(true)
-  })
-
-  it("区画の一覧で「これを始める」が出るのは、着手できる todo と待ちの無い保留", () => {
-    const task = (
-      id: string,
-      status: string,
-      dependencies: readonly string[],
-    ): TaskSummaryItem => ({
-      id,
-      summary: `架空のタスク ${id}`,
-      status: taskStatusOfWord(status),
-      dependencies,
-      waitingFor: dependencies,
-      labels: [],
-      difficulty: undefined,
-      loopable: undefined,
-      importance: "normal",
-      urgency: "normal",
-      body: "",
-      location: { kind: "none" },
-    })
-    putSession(INITIAL_SESSION_STATE, () => {})
-    render(
-      <TaskList
-        tasks={known([
-          task("Y-001", "doing", []),
-          task("Y-002", "todo", ["Y-001"]),
-          task("Y-003", "todo", []),
-          task("Y-004", "hold", []),
-          task("Y-005", "hold", ["Y-001"]),
-        ])}
-        selectedStatus="all"
-      />,
-    )
-
-    const startable = ["Y-001", "Y-002", "Y-003", "Y-004", "Y-005"].filter((id) => {
-      fireEvent.click(rowOf(id))
-      return screen.queryByRole("button", { name: "これを始める →" }) !== null
-    })
-    expect(startable).toEqual(["Y-003", "Y-004"])
-  })
-
-  it("区画の一覧から保留を頼むと、判断を聞く旨を添えて送る", () => {
-    const sent: unknown[] = []
-    renderWithStore(
-      <TaskList tasks={known([...TASKS, holdTask("X-003", [], [])])} selectedStatus="all" />,
-      collectInto(sent),
-    )
-
-    startFromPeek("X-003")
-    fireEvent.click(screen.getByRole("button", { name: "実行する" }))
-
-    expect(sent).toEqual([
-      {
-        procedure: "session.prompt",
-        text: "タスク X-003 を進めて。このタスクは保留なので、着手の前に判断を聞いて。",
-        images: [],
-      },
-    ])
-  })
-
-  it("ドラフトのプレビューには「計画する」「却下する」が出て、「これを始める」は出ない", () => {
-    putSession(INITIAL_SESSION_STATE, () => {})
-    render(<TaskList tasks={known([...TASKS, draftTask("X-004")])} selectedStatus="all" />)
-
-    fireEvent.click(rowOf("X-004"))
-    expect(screen.getByRole("button", { name: "計画する" })).toBeDefined()
-    expect(screen.getByRole("button", { name: "却下する" })).toBeDefined()
-    expect(screen.queryByRole("button", { name: "これを始める →" })).toBeNull()
-
-    fireEvent.click(rowOf("X-002"))
-    expect(screen.getByRole("button", { name: "これを始める →" })).toBeDefined()
-    expect(screen.queryByRole("button", { name: "計画する" })).toBeNull()
-  })
-
-  it("ドラフトの「計画する」は確認の「頼む」で計画の文面を送り、プレビューを閉じる", () => {
-    const sent: unknown[] = []
-    renderWithStore(
-      <TaskList tasks={known([...TASKS, draftTask("X-004")])} selectedStatus="all" />,
-      collectInto(sent),
-    )
-
-    fireEvent.click(rowOf("X-004"))
-    fireEvent.click(screen.getByRole("button", { name: "計画する" }))
-    expect(confirmDialog()?.textContent).toContain("X-004 の計画を頼みますか")
-    fireEvent.click(screen.getByRole("button", { name: "頼む" }))
-
-    expect(sent).toEqual([
-      {
-        procedure: "session.prompt",
-        text: "ドラフト X-004 を計画して。## 完了条件 と ## やること を書いて、着手できる todo にする。",
-        images: [],
-      },
-    ])
-    expect(screen.queryByRole("dialog", { name: "X-004 の詳細" })).toBeNull()
-  })
-
-  it("ドラフトの「却下する」は却下の文面を送り、キャンセルでは送らずプレビューが残る", () => {
-    const sent: unknown[] = []
-    renderWithStore(
-      <TaskList tasks={known([...TASKS, draftTask("X-004")])} selectedStatus="all" />,
-      collectInto(sent),
-    )
-
-    fireEvent.click(rowOf("X-004"))
-    fireEvent.click(screen.getByRole("button", { name: "却下する" }))
-    fireEvent.click(screen.getByRole("button", { name: "キャンセル" }))
-    expect(sent).toEqual([])
-    expect(screen.getByRole("button", { name: "却下する" })).toBeDefined()
-
-    fireEvent.click(screen.getByRole("button", { name: "却下する" }))
-    fireEvent.click(screen.getByRole("button", { name: "頼む" }))
-    expect(sent).toEqual([
-      {
-        procedure: "session.prompt",
-        text: "ドラフト X-004 を却下して。理由を ## 結果 に書いて、dropped で閉じる。",
-        images: [],
-      },
-    ])
   })
 
   it("モーダルのドラフトには「計画する」「却下する」が出て、「tsukumo に頼む」は出ない", () => {
@@ -444,21 +293,6 @@ function draftTask(id: string): TaskSummaryItem {
     summary: `架空のドラフト ${id}`,
     status: taskStatusOfWord("draft"),
   }
-}
-
-/** 区画の一覧の行（カード）のボタン。 */
-function rowOf(taskId: string): HTMLElement {
-  const element = document.getElementById(`task-row-${taskId}`)
-  if (element === null) {
-    throw new Error(`${taskId} の行が無い`)
-  }
-  return element
-}
-
-/** 区画の一覧で `taskId` の行を押してプレビューを開き、「これを始める」を押す。 */
-function startFromPeek(taskId: string): void {
-  fireEvent.click(rowOf(taskId))
-  fireEvent.click(screen.getByRole("button", { name: "これを始める →" }))
 }
 
 /** モーダルの一覧で `taskId` の行を選び、操作の帯の「tsukumo に頼む」を押す。 */

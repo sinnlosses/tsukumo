@@ -1,14 +1,11 @@
 /* 紙の「証拠」の族のうち記法が描くもの（コードの印の行・塊の下の印のラベル・画像の注記の番号・出どころの番号）。 */
 .detail-block {
-  /* コードの塊の地。舞台の地（`--ground`）は昼も夜の色なので、新しい器の紙では紙に重ねる持ち上げにする。 */
-  --report-code-ground: var(--ground);
-  :root[data-shell="stage"] & {
-    --report-code-ground: var(--surface-raised);
-    --report-code-surface: var(--surface-raised);
-  }
-  /* 新しい器のコードは色分けせず本文の字で書く。
+  /* コードの塊の地。舞台の地（`--ground`）は昼も夜の色なので、紙に重ねる持ち上げにする。 */
+  --report-code-ground: var(--surface-raised);
+  --report-code-surface: var(--surface-raised);
+  /* コードは色分けせず本文の字で書く。
    配られる highlight.js のテーマは夜の地に合わせた固定の色で、昼の紙の上では読めない。 */
-  :root[data-shell="stage"] & pre :is(code, [class*="hljs-"]) {
+  & pre :is(code, [class*="hljs-"]) {
     color: var(--ink);
   }
   /* 読ませたい行は、地を塗らず左の線で示す。 */
@@ -18,7 +15,7 @@
   /* 印のラベルは塊の下に「<行>行目: <ラベル>」の箇条で並べる（`CodeMarkNotes`）。 */
   & .code-mark-notes {
     margin: 0;
-    padding: var(--stack-tight) 0 0 1.2em;
+    padding: var(--stack-tight) 0 0 1.15em;
     color: var(--ink-quiet);
     font-size: var(--font-secondary);
   }

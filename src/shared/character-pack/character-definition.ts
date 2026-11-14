@@ -50,7 +50,7 @@ export type CharacterDefinition = {
    */
   readonly face?: string
   /**
-   * 自己紹介文。雑談中のサイドバーのプロフィールで、名前の下に1行添える。
+   * 自己紹介文。キャラクターの紙のプロフィールで、名前の下に1行添える。
    * 任意で、無いパックは名前だけになる。空白だけの値は無いのと同じに畳む（札に空の行が出ないように）。
    */
   readonly tagline?: string

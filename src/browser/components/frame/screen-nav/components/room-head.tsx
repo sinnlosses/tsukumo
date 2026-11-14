@@ -1,6 +1,7 @@
-// 新しい器「舞台と紙」の部屋の頭の器。2つの部品に分かれる。
+// 新しい器「舞台と紙」の部屋の頭の器。
 // 左の群（PresentationalRoomHead）は舞台の左上に置き、部屋の名前（押すとセッションの一覧）・仕事と雑談の切り替え・状態を並べる。
 // 右上の群（PresentationalRoomTools）は舞台の器の右上に置き、文脈 n%・ほかの画面の入口・探す（⌘K）をアイコンつきのボタンで並べる。
+// 狭い幅では2つの群の代わりに1行の頭（PresentationalRoomNarrowHead）を出し、入口はすべて「≡」から開く探すに畳む。
 // フックも算出も持たず、受け取った値と呼び先をそのまま置く。
 
 import type { ReactElement, ReactNode } from "react"
@@ -14,6 +15,7 @@ import {
   TokenIcon,
 } from "../../../ui/icon/icon.tsx"
 import { Segmented } from "../../../ui/segmented/segmented.tsx"
+import { CharacterFace } from "../../character-face.tsx"
 import type { RoomHeadGate, RoomHeadView } from "../hooks/use-room-head.ts"
 import styles from "./room-head.module.css"
 import { RoomSessionMenu } from "./room-session-menu.tsx"
@@ -58,9 +60,65 @@ export function PresentationalRoomHead(props: RoomHeadView): ReactElement {
         <i aria-hidden="true" />
         {props.state.label}
       </div>
+    </div>
+  )
+}
+
+/**
+ * セッションの一覧と探すの2つのダイアログ。
+ * 開く口は左の群・右上の群・狭い幅の頭に散るが、狭い幅では舞台ごと隠れるので、どの口からも見えるよう舞台の外に1回だけ置く。
+ */
+export function PresentationalRoomDialogs(
+  props: Pick<RoomHeadView, "switcher" | "title" | "search">,
+): ReactElement {
+  return (
+    <>
       <RoomSessionMenu switcher={props.switcher} title={props.title} />
       <SearchPalette search={props.search} />
-    </div>
+    </>
+  )
+}
+
+/** 狭い幅の頭の題。迎えるでは部屋の頭の主の字、ほかでは最新のやり取りの題。 */
+export type RoomNarrowHeadSubject =
+  | { readonly kind: "room" }
+  | { readonly kind: "turn"; readonly title: string }
+
+const NARROW_MENU_LABEL = "メニューと探す"
+
+/** 狭い幅（760px 以下）の1行の頭。顔・状態・題・「≡」を並べ、「≡」で探すを開く。広い幅では CSS が隠す。 */
+export function PresentationalRoomNarrowHead(
+  props: Pick<RoomHeadView, "face" | "state" | "title" | "search"> & {
+    readonly subject: RoomNarrowHeadSubject
+  },
+): ReactElement {
+  return (
+    <header className={styles["room-narrow-head"]} data-region="room-narrow-head">
+      <CharacterFace
+        url={props.face.url}
+        alt={props.face.alt}
+        className={styles["room-narrow-head-face"]}
+      />
+      <div className={styles["room-narrow-head-text"]}>
+        <div className={styles["room-head-state"]} data-state={props.state.tone}>
+          <i aria-hidden="true" />
+          {props.state.label}
+        </div>
+        <b className={styles["room-narrow-head-title"]}>
+          {props.subject.kind === "turn" ? props.subject.title : props.title}
+        </b>
+      </div>
+      <button
+        type="button"
+        className={styles["room-narrow-head-menu"]}
+        aria-label={NARROW_MENU_LABEL}
+        aria-haspopup="dialog"
+        aria-expanded={props.search.open}
+        onClick={props.search.onOpen}
+      >
+        ≡
+      </button>
+    </header>
   )
 }
 

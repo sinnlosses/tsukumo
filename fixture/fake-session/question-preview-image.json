@@ -2,6 +2,14 @@
   "name": "question-preview-image",
   "steps": [
     {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "画面の形を画像で見比べたい（架空の依頼）",
+        "images": []
+      }
+    },
+    {
       "afterMs": 1500,
       "event": {
         "kind": "pending-changed",

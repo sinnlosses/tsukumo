@@ -13,7 +13,7 @@ test.describe("speak → キャラビューの吹き出し", () => {
       scenario: "speak-bubble-closing-narration",
       scene: "closing-narration-quick",
       viewport: "wide",
-      domRoots: ["character"],
+      domRoots: ["stage-balloon", "stage-thread"],
     })
 
     await room.waitForEvent("turn-finished")

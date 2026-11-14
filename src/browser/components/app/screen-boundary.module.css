@@ -1,4 +1,4 @@
-/* 描けなかった画面の代わりに出す知らせ。画面のナビの帯の下に置く。 */
+/* 描けなかった画面の代わりに出す知らせ。 */
 .screen-failure {
   box-sizing: border-box;
   max-width: calc(100vw - 2 * var(--page-padding));

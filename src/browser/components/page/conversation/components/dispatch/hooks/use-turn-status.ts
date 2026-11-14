@@ -13,11 +13,6 @@
 import type { ApiTrouble } from "../../../../../../../shared/session-driver/api-trouble.ts"
 import type { RateLimit } from "../../../../../../../shared/session-driver/rate-limit.ts"
 import type { TurnProgress } from "../../../../../../../shared/session/turn-progress.ts"
-import {
-  isTurnCounting,
-  turnElapsedLabel,
-  turnElapsedText,
-} from "../../../../../../domain/turn-elapsed.ts"
 import { useEventListener } from "../../../../../../hooks/use-event-listener.ts"
 import { useNowWhile } from "../../../../../../stores/clock.ts"
 import { useSession } from "../../../../../../stores/session.ts"
@@ -27,6 +22,7 @@ import {
   turnFailureLabel,
 } from "../../../domain/api-error-label.ts"
 import { rateLimitResetText, rateLimitSubject } from "../../../domain/rate-limit-label.ts"
+import { isTurnCounting, turnElapsedLabel, turnElapsedText } from "../../../domain/turn-elapsed.ts"
 import { useComposerDraft } from "../../../stores/composer-draft.ts"
 import { useInquiryAnswer } from "../../../stores/inquiry-answer.ts"
 
@@ -59,13 +55,13 @@ type TurnStatusAction =
   | {
       readonly kind: "interrupt"
       readonly label: string
-      /** 押す代わりに打てるキーの札。旧い器では出さず空。 */
+      /** 押す代わりに打てるキーの札。`strip` では出さず空。 */
       readonly keyHint: string
       readonly onInterrupt: () => void
     }
 
 /**
- * 進み具合を出す場所。`strip` は旧い器（札の頭の帯）、`paper` は新しい器（紙の計画と入力欄の札）。
+ * 進み具合を出す場所。`strip` はやり取りの札の頭（過去のやり取りを見ているあいだと狭い幅の入力欄）、`paper` は紙の計画と入力欄の札。
  * `paper` では、仕事のときも経過を出し、止めるボタンを「止める」と言い、⌘. で止められる。
  */
 export type TurnStatusPlace = "strip" | "paper"
@@ -162,7 +158,7 @@ export function useTurnStatus(place: TurnStatusPlace): TurnStatusModel {
 /**
  * 行に出す API の知らせ。強い順に1つだけ: 進行中の再試行 → 利用上限に達した → 失敗で終わったターンの理由。
  * 仕事のときは利用上限だけ（再試行中は進み具合のプログレスバー、失敗の理由はレポートの頭の失敗の表示が出す）。
- * 「利用上限が近い」は出さない（枠の残り具合はサイドバーのプラン使用量が出す）。
+ * 「利用上限が近い」は出さない（枠の残り具合は使用量の紙のプラン使用量が出す）。
  * 利用上限に達した知らせは戻る時刻を過ぎても次の知らせが来るまで出し続ける（戻ったかどうかは tsukumo からは分からず、次に API を呼んだときの知らせで消える）。
  */
 function turnStatusNotice(source: {

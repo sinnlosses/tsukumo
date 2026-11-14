@@ -158,7 +158,7 @@ JSX の中で「条件が立ったときだけ描く」は `{条件 && <部品 /
 ### zustand の store
 
 `browser/stores/` に置く「画面全体で共有する状態」は zustand の `create()` で書く
-（`stores/inquiry-jump.ts`）。`Context` の `Provider` は作らない——store は `create()` が返す
+（`components/page/conversation/stores/inquiry-jump.ts`）。`Context` の `Provider` は作らない——store は `create()` が返す
 hook そのものが持ち、部品はどこからでもその hook を呼べる。
 
 ```ts
@@ -174,7 +174,7 @@ export const useQuestionScroll = create<QuestionScrollState>()((set) => ({
 読んでいる値が変わっていなくても描き直しが止まらない（zustand のセレクタも中は
 `useSyncExternalStore` なので、同じ姿から毎回違う参照が返ると描き直し続ける）。1つのフィールドだけを
 返すセレクタには要らない。姿から重い導出を返すときは、`useShallow` ではなく姿をキーに覚える
-（`stores/main-view-turn.ts` の `mainViewTurnsOf`）。
+（`components/page/conversation/stores/main-view-turn.ts` の `mainViewTurnsOf`）。
 
 store には値だけでなく、React に属さない関数も同じく持たせる（`stores/session.ts` の `dispatch` や
 `receive`）。store の外の資源（接続など）は `create()` に渡す関数の閉包に置き、購読させない。
@@ -186,7 +186,7 @@ store には値だけでなく、React に属さない関数も同じく持た�
 `setState()` は React の外からも呼べるので、`afterEach` で初期値に戻す（`getInitialState()` を
 `setState(..., true)` で丸ごと入れ直す。会話の姿は `test/browser/session-store.ts` の `putSession` が
 戻してから入れる）
-（`test/browser/features/current-work/current-work.test.tsx`）。
+（`test/browser/components/page/conversation/stores/alert.test.ts`）。
 
 ### TanStack Query と queryOptions
 

@@ -37,12 +37,12 @@ import {
 } from "../../../../../../domain/portrait-motion.ts"
 import { useExternalSync } from "../../../../../../hooks/use-external-sync.ts"
 import { useSession } from "../../../../../../stores/session.ts"
-import { useTurnSelection } from "../../../../../../stores/turn-selection.ts"
 import { nowEpochMilliseconds } from "../../../../../../utils/clock.ts"
 import { recordClockStampWithDay, type ClockStamp } from "../../../domain/clock-stamp.ts"
 import { welcomeHeadOf } from "../../../domain/welcome-entry-list.ts"
 import { useShownAizuchi } from "../../../stores/shown-aizuchi.ts"
 import { useShownReaction, useWaitingLineDueAt } from "../../../stores/shown-reaction.ts"
+import { useTurnSelection } from "../../../stores/turn-selection.ts"
 import { useWelcomeCards } from "../../hooks/use-welcome-card-list.ts"
 import {
   balloonLineIndices,

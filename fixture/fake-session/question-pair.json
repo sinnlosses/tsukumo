@@ -2,6 +2,14 @@
   "name": "question-pair",
   "steps": [
     {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "道具と土台を選んで進めたい（架空の依頼）",
+        "images": []
+      }
+    },
+    {
       "afterMs": 100,
       "event": {
         "kind": "pending-changed",
@@ -67,15 +75,6 @@
       "event": {
         "kind": "utterance",
         "text": "1問1答の場面（架空）。最後の1問に答えるとまとめて届く。\n"
-      }
-    },
-    {
-      "afterMs": 1300,
-      "event": {
-        "kind": "turn-finished",
-        "outcome": {
-          "kind": "completed"
-        }
       }
     }
   ]

@@ -8,9 +8,6 @@
 import type { ReactElement } from "react"
 
 import type { UseContextUsageResult } from "../../../domain/context-usage.ts"
-import { shownShell } from "../../../stores/shell-mark.ts"
-import { PlanUsageRow } from "../../frame/sidebar/components/plan-usage-row.tsx"
-import type { UsePlanUsageResult } from "../../frame/sidebar/hooks/use-plan-usage.ts"
 import { HStack } from "../../ui/h-stack/h-stack.tsx"
 import { Text } from "../../ui/text/text.tsx"
 import { VStack } from "../../ui/v-stack/v-stack.tsx"
@@ -18,8 +15,10 @@ import { ContextUsageCard } from "./components/context-usage-card/context-usage-
 import { ModelUsageCard } from "./components/model-usage-card/model-usage-card.tsx"
 import { PeriodChoices } from "./components/period-choice-list/period-choice-list.tsx"
 import { PeriodUsageCard } from "./components/period-usage-card/period-usage-card.tsx"
+import { PlanUsageRow } from "./components/plan-usage-row/plan-usage-row.tsx"
 import { ToolUsageCard } from "./components/tool-usage-card/tool-usage-card.tsx"
 import { UsageReviewCard } from "./components/usage-review-card/usage-review-card.tsx"
+import type { UsePlanUsageResult } from "./hooks/use-plan-usage.ts"
 import type { UseTokenUsageResult } from "./hooks/use-token-usage.ts"
 import type { UseUsageReviewResult } from "./hooks/use-usage-review.ts"
 import styles from "./token-usage.module.css"
@@ -41,11 +40,9 @@ type PresentationalTokenUsageProps = UseTokenUsageResult & {
 
 export function PresentationalTokenUsage(props: PresentationalTokenUsageProps): ReactElement {
   const { report } = props
-  // 新しい器では、題は紙の見出しが持ち、幅と余白は紙の本文が持つ。
-  const inSheet = shownShell(document.documentElement) === "stage"
 
   return (
-    <div className={inSheet ? styles["token-usage-in-sheet"] : styles["token-usage"]}>
+    <div className={styles["token-usage"]}>
       <HStack
         element="div"
         name={{ kind: "none" }}
@@ -55,7 +52,6 @@ export function PresentationalTokenUsage(props: PresentationalTokenUsageProps): 
         wrap="wrap"
         className=""
       >
-        {!inSheet && <h1 className={styles["token-usage-title"]}>トークン消費</h1>}
         {props.plan !== undefined && (
           <Text
             element="span"

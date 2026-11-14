@@ -34,9 +34,9 @@
   background: var(--surface-accent);
   box-shadow: inset 3px 0 0 var(--accent);
 }
-/* 済んだ行（完了）は薄く出す。 */
+/* 済んだ行（完了）は字を控えめにして引かせる。不透明度で薄めると控えめな字がコントラストの下限を割る。 */
 .task-board-option[data-state="done"] {
-  opacity: 0.6;
+  color: var(--ink-quiet);
 }
 .task-board-option-id {
   flex: none;

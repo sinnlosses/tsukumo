@@ -5,6 +5,7 @@ import {
   RoomHead,
   RoomHeadScope,
   RoomHeadTools,
+  RoomNarrowHead,
 } from "../../../../../src/browser/components/frame/screen-nav/room-head.tsx"
 import type { TaskSummaryItem } from "../../../../../src/shared/repository/task-summary.ts"
 import {
@@ -103,6 +104,74 @@ describe("部屋の頭", () => {
 
     expect(calls).toEqual([{ procedure: "session.setChatMode", chat: true }])
     expect(screen.getByRole("radio", { name: "仕事" }).getAttribute("aria-checked")).toBe("true")
+  })
+})
+
+describe("狭い幅の頭", () => {
+  function renderNarrowHead(
+    state: Partial<SessionState>,
+    subject: { readonly kind: "room" } | { readonly kind: "turn"; readonly title: string },
+  ): void {
+    putSession({ ...INITIAL_SESSION_STATE, ...state }, () => {})
+    render(
+      <RoomHeadScope>
+        <RoomNarrowHead subject={subject} />
+      </RoomHeadScope>,
+      { wrapper: queryClientWrapper() },
+    )
+  }
+
+  it("状態とやり取りの題を出し、「≡」で探すを開くと「移る」の群から紙と切り替えへ移れる", async () => {
+    renderNarrowHead(
+      { tasks: knownTaskSummary([task("T-1", [])]) },
+      {
+        kind: "turn",
+        title: "架空の依頼の題",
+      },
+    )
+
+    const head = screen.getByRole("banner")
+    expect(head.querySelector("b")?.textContent).toBe("架空の依頼の題")
+    expect(head.querySelector("[data-state]")?.textContent).not.toBe("")
+
+    const menu = screen.getByRole("button", { name: "メニューと探す" })
+    fireEvent.click(menu)
+    expect(menu.getAttribute("aria-expanded")).toBe("true")
+    const options = screen
+      .getAllByRole("option", { hidden: true })
+      .map((option) => option.textContent ?? "")
+    expect(options.slice(0, 7)).toEqual([
+      "タスク",
+      "成果",
+      "使用量",
+      "キャラクター",
+      "設定",
+      "雑談に切り替える",
+      "セッションを切り替える",
+    ])
+
+    const field = screen.getByRole("combobox", { name: "探す", hidden: true })
+    fireEvent.change(field, { target: { value: "設定" } })
+    await act(async () => {
+      fireEvent.keyDown(field, { key: "Enter" })
+      await new Promise((resolve) => setTimeout(resolve, 0))
+    })
+    expect(window.location.hash).toBe("#settings")
+  })
+
+  it("部屋が題のときは、部屋の頭と同じ主の字を出す", () => {
+    putSession({ ...INITIAL_SESSION_STATE, tasks: { kind: "no-beads" } }, () => {})
+    render(
+      <RoomHeadScope>
+        <RoomHead />
+        <RoomNarrowHead subject={{ kind: "room" }} />
+      </RoomHeadScope>,
+      { wrapper: queryClientWrapper() },
+    )
+
+    const narrowTitle = document.querySelector('[data-region="room-narrow-head"] b')?.textContent
+    expect(narrowTitle).not.toBe("")
+    expect(document.querySelector('[data-region="room-head"]')?.textContent).toContain(narrowTitle)
   })
 })
 

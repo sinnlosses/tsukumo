@@ -1,8 +1,8 @@
 {
-  "dispatch": [
-    { "tag": "section", "attributes": { "data-region": "dispatch", "aria-label": "入力欄" }, "children": [
+  "dock": [
+    { "tag": "section", "attributes": { "data-region": "dock", "aria-label": "入力欄" }, "children": [
+      { "tag": "div", "attributes": { "role": "toolbar", "aria-label": "書式" } },
       { "tag": "div", "attributes": { "editor": "codemirror", "value": "" } },
-      { "tag": "button", "attributes": { "aria-pressed": "true", "aria-label": "マークダウンエディタで書く" } },
       { "tag": "button", "attributes": { "type": "submit" }, "children": ["送信"] }
     ] }
   ]

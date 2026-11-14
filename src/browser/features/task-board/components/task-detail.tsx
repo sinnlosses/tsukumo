@@ -121,12 +121,7 @@ export function TaskDetail(props: {
         />
       )}
       <article aria-label="本文">
-        <TaskBody
-          text={detail.body}
-          typesetting="detail"
-          knownIds={props.knownIds}
-          onJump={props.onJump}
-        />
+        <TaskBody text={detail.body} knownIds={props.knownIds} onJump={props.onJump} />
       </article>
     </section>
   )

@@ -16,8 +16,8 @@
   --report-heading-gap: 12px;
   --report-measure: 42em;
   --report-measure-wide: 63em;
-  /* 文章の塊（段落・箇条書き・引用・注・検証結果）だけの幅。表・図・見比べ・コードは `--report-measure-wide` のまま。 */
-  --report-measure-prose: var(--report-measure-wide);
+  /* 文章の塊（段落・箇条書き・引用・注・検証結果）だけの幅で、1行 40 字まで。表・図・見比べ・コードは `--report-measure-wide` のまま。 */
+  --report-measure-prose: 40em;
   --report-figure-max: 70cqh;
   --report-figure-min-scale: 0.75;
   margin: 0 0 var(--space-lg);
@@ -34,11 +34,6 @@
     max-inline-size: min(100%, var(--report-measure-prose));
     text-wrap: pretty;
   }
-}
-/* 新しい器の紙は、文章の塊を1行 40 字までにする。 */
-:root[data-shell="stage"] .detail-block {
-  --report-measure-prose: 40em;
-
   & .report-with-gutter > :is(p, blockquote) {
     max-inline-size: min(100%, var(--report-measure-prose));
   }
@@ -388,18 +383,14 @@
     width: 0.75rem;
     transform: rotate(45deg) scale(0.9);
   }
-  & .report-graph-legend-added {
-    --graph-legend-color: var(--state-ok);
-  }
-  & .report-graph-legend-removed {
-    --graph-legend-color: var(--state-ng);
-    border-top-style: dashed;
-  }
+  /* 変えた箱の色は系列1の1色、消した箱は静かな色の破線。凡例の見本も図に合わせる。 */
+  & .report-graph-legend-added,
   & .report-graph-legend-changed {
-    --graph-legend-color: var(--state-warn);
+    --graph-legend-color: var(--chart-series-1);
   }
+  & .report-graph-legend-removed,
   & .report-graph-legend-return {
-    --graph-legend-color: var(--graph-return);
+    --graph-legend-color: var(--ink-quiet);
     border-top-style: dashed;
   }
   & .report-graph-legend-tone-a {
@@ -416,15 +407,6 @@
   }
   & .report-graph-legend-tone-e {
     --graph-legend-color: var(--chart-series-5);
-  }
-  /* 新しい器の紙では、変えた箱の色は系列1の1色、消した箱は静かな色の破線。凡例の見本も図に合わせる。 */
-  :root[data-shell="stage"] & .report-graph-legend-added,
-  :root[data-shell="stage"] & .report-graph-legend-changed {
-    --graph-legend-color: var(--chart-series-1);
-  }
-  :root[data-shell="stage"] & .report-graph-legend-removed,
-  :root[data-shell="stage"] & .report-graph-legend-return {
-    --graph-legend-color: var(--ink-quiet);
   }
   /* 対応表（`report` の `matrix` の塊から tsukumo が組む）。交点は印だけで、状態は記号と色の両方で言う。 */
   & .report-matrix {

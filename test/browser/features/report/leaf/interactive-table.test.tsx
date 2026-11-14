@@ -79,8 +79,8 @@ describe("操作できる Table", () => {
     expect(names(container)).toEqual(["あ", "う", "え", "お", "ぼ", "ん"])
     cleanup()
 
-    renderRegions(regionsOf(reportParts({ rows, sortable: false }, false)))
-    expect(screen.queryAllByRole("button")).toEqual([])
+    const plain = renderRegions(regionsOf(reportParts({ rows, sortable: false }, false)))
+    expect([...plain.container.querySelectorAll("table button")]).toEqual([])
   })
 
   it("並べ替えられない表の見出しには aria-sort もボタンも付けない", () => {

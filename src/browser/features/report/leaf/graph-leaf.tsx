@@ -6,7 +6,6 @@ import { Fragment, type ReactElement } from "react"
 import type { A2uiReportComponent } from "../../../../shared/report/a2ui-report-catalog.ts"
 import { plainInline } from "../../../../shared/report/report-inline-markdown.ts"
 import type { LeafValue } from "../../../../shared/report/report-leaf-value.ts"
-import { shownShell } from "../../../stores/shell-mark.ts"
 import type { CardChainItem } from "../domain/card-chain-markdown.ts"
 import { graphDrawingOf } from "../domain/graph-drawing.ts"
 import {
@@ -28,8 +27,7 @@ export function GraphLeaf(props: {
   if (part.component !== "Graph") {
     return <></>
   }
-  const paper = shownShell(document.documentElement) === "stage"
-  const drawing = graphDrawingOf(part, paper)
+  const drawing = graphDrawingOf(part, true)
   return (
     <FoldedLeafFrame
       value={value}
@@ -41,19 +39,19 @@ export function GraphLeaf(props: {
       {drawing.kind === "chain" && (
         <>
           <CardChainView chain={drawing.chain} />
-          <GraphLegend part={part} withShapes={false} paper={paper} />
+          <GraphLegend part={part} withShapes={false} />
         </>
       )}
       {drawing.kind === "fold" && (
         <>
           <FoldView drawing={graphFoldDrawingOf(drawing.figure)} />
-          <GraphLegend part={part} withShapes paper={paper} />
+          <GraphLegend part={part} withShapes />
         </>
       )}
       {drawing.kind === "mermaid" && (
         <>
           <MermaidFigure source={drawing.source} />
-          <GraphLegend part={part} withShapes paper={paper} />
+          <GraphLegend part={part} withShapes />
         </>
       )}
     </FoldedLeafFrame>
@@ -209,9 +207,8 @@ function FoldTextView(props: { readonly text: FoldText }): ReactElement {
 function GraphLegend(props: {
   readonly part: GraphPart
   readonly withShapes: boolean
-  readonly paper: boolean
 }): ReactElement {
-  const items = graphLegendItemsOf(props.part, props.withShapes, props.paper)
+  const items = graphLegendItemsOf(props.part, props.withShapes, true)
   return (
     <>
       {items.length > 0 && (

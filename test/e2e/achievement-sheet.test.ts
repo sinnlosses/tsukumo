@@ -7,7 +7,6 @@ async function openAchievementSheet(
 ) {
   const room = await run.open({ scenario, scene: "none", viewport, domRoots: ["page"] })
   const url = new URL(room.page.url())
-  url.searchParams.set("shell", "stage")
   url.hash = "#achievement"
   await room.page.goto(url.toString())
   await room.page.getByRole("region", { name: "灯りの暦" }).waitFor()

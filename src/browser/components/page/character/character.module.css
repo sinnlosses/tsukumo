@@ -1,22 +1,15 @@
 /* キャラクター画面と、その上に重なる新しく作るダイアログ。
-   会話の画面と入れ替わる（重ねない）ので、ここは1枚のページとして流す。4領域の grid も仕切りも持たない。
+   会話の画面に重ねる紙の中に描く。幅と左右の余白は紙の本文（sheet-body）が持つ。
    キャラクター画面は左に一覧（260px）、右に選んでいるパックの詳しい設定の2段組で、760px 以下では一覧を上に積む（このファイル末尾の @media）。
    16進の色は書かない（見本の色は theme.css のトークンに当てる）。 */
 
 /* ---- 2段組 ---- */
-.character-screen-columns,
-.character-screen-columns-in-sheet {
+.character-screen-columns {
   display: grid;
   grid-template-columns: 260px minmax(0, 1fr);
   align-items: start;
   gap: var(--space-2xl);
 }
-.character-screen-columns {
-  max-width: 90rem;
-  margin: 0 auto;
-  padding: var(--space-sm) var(--space-2xl) var(--space-3xl);
-}
-/* character-screen-columns-in-sheet: 新しい器では幅と左右の余白を紙の本文（sheet-body）が持つので、上の揃いだけを使う。 */
 .character-card {
   position: relative;
   display: flex;
@@ -236,14 +229,10 @@
   min-height: 18rem;
 }
 
-/* 狭い画面（760px 以下）: 一覧を上に積み、詳しい設定の余白を詰める（格子と差し色の列数は詳しい設定の幅を見る @container が決める）。 */
+/* 狭い画面（760px 以下）: 一覧を上に積む（格子と差し色の列数は詳しい設定の幅を見る @container が決める）。 */
 @media (max-width: 760px) {
-  .character-screen-columns,
-  .character-screen-columns-in-sheet {
+  .character-screen-columns {
     grid-template-columns: minmax(0, 1fr);
     gap: var(--space-lg);
-  }
-  .character-screen-columns {
-    padding: 0 0 var(--space-2xl);
   }
 }

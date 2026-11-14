@@ -56,10 +56,10 @@ Network タブで `/ws` の upgrade が101を返し、`hello` フレーム（購
    （Orca の中で起こしたら Orca のタブ、外なら既定のブラウザ）に出ることを見る。タブだけ閉じてしまったときは
    `node scripts/capture/open-view.ts <URL>` で開き直せる
 3. **画面の入力欄から依頼を打つ**。送信できること、実行中に中断できること
-4. **再読み込みなしに**吹き出しにセリフが出て、メインビューにレポートが流れること
-5. ツールを使う依頼で、**会話の画面の進み具合のバーに進行が出て、狭い画面では頭の「手順 n」を押すと依頼の手順の一覧が開く**こと
-6. 許可の要る操作を頼み、**メインビューのプログレスバーの下にお伺いのカードが出て、タブのタイトルが変わり、
-   カードを選んで「これで答える」を押すか、入力欄の帯の「お伺いへ」から 1 と Enter で答えると作業が続く**こと
+4. **再読み込みなしに**舞台の吹き出しにセリフが出て、紙にレポートが流れること
+5. ツールを使う依頼で、**紙のワークプランと入力欄の灯に進行が出て、舞台の手元の行にいまの手が出る**こと
+6. 許可の要る操作を頼み、**入力欄の場所にお伺いの札が出て紙の中身が引き、タブのタイトルが変わり、
+   札を選んで「これで答える」を押すと作業が続く**こと
 7. ウィンドウの幅を変えて、**折り返しがブラウザ側で追従する**こと
 8. `orca` が使えない状況を作っても、プロセスが落ちずに配信を続けること
 9. レポートに出た git 管理下のパス（inline code・フェンスのファイル名・相対リンク）を押すと、
@@ -72,7 +72,7 @@ Network タブで `/ws` の upgrade が101を返し、`hello` フレーム（購
 `turn-resumed` → `speech` → ターンの終わりを2回はさみ、最後に完了の一言と最終 `report` が続く。
 `turn-resumed` が届いてから次の `speech` / `report` が届くまでのあいだも、メインビューは前の
 `report` を出したままで、吹き出しは空にならず前のセリフを保っている
-ことを確かめる（`docs/architecture/screen-design.md` 13.9「バックグラウンドタスク」）。
+ことを確かめる（`docs/architecture/screen-design/scene-behavior.md`「バックグラウンドタスク」）。
 
 **並列のフェーズ（`docs/architecture/display.md`「ワークプラン」）の描き方を確かめるときは、疑似セッションの場面
 `work-strip-parallel`・`work-strip-parallel-ask`・`work-plan-parallel` を使う。** 前の2つはプログレスバーで並列のフェーズの中のフェーズの丸が
@@ -90,8 +90,7 @@ Network タブで `/ws` の upgrade が101を返し、`hello` フレーム（購
 フェーズ2を一度も今にしないまま閉じ、最終レポートのフェーズごとの時間でフェーズ2が「不明」になることを見る
 （`docs/architecture/display.md`「ワークプラン」）。
 
-**失敗で止まった紙（判定の行・結論・続け方と残っているもの・止まった段の ✕）を確かめるときは、場面 `work-plan-failed` を
-`?shell=stage` で撮る。** 4段のうち4段目で手順が失敗し、`turn-finished` が `failed` で閉じる。
+**失敗で止まった紙（判定の行・結論・続け方と残っているもの・止まった段の ✕）を確かめるときは、場面 `work-plan-failed` で撮る。** 4段のうち4段目で手順が失敗し、`turn-finished` が `failed` で閉じる。
 **問いが生まれた段の問いと材料を確かめるときは、場面 `work-plan-ask` を同じ開き方で撮る。**
 3段が済み、4段目で `AskUserQuestion` の答え待ちのまま止まる。
 **戻ったときの離れていたあいだのまとめと「ここから先は、前に見たあと」の印は、場面 `work-plan-away` を `test/e2e/work-plan-paper.test.ts` の
@@ -99,13 +98,9 @@ Network タブで `/ws` の upgrade が101を返し、`hello` フレーム（購
 `document.hidden` を上書きして `visibilitychange` を起こし、`pending-changed` を待って `page.clock.runFor` で 23 分進めてから戻し、
 `page.screenshot({ path: <絶対パス> })` を一時に足して幅 1400×900 と 720×900 で撮る。幅 1400 では答え待ちのカードが紙に重なるので、紙の領域（`locator.screenshot`）も撮る。
 
-**狭い画面の頭の点と経過（`phone-head-dot`・`phone-head-elapsed`）と、トークンの画面の結果のカード
-（`usage-review-card` の結果の場面。class は `usage-review-result`）は、場面を足さず次の1コマンドずつで撮れる。**
-点と経過は作業が走っているあいだだけ出るので、場面の終わりでは消えている。`--until-step` で途中の手に止める。
+**トークンの画面の結果のカード（`usage-review-card` の結果の場面。class は `usage-review-result`）は、場面を足さず次の1コマンドで撮れる。**
 
 ```bash
-node scripts/capture/capture-view.ts --scene phone-phases --size 390x844 --until-step 3 \
-  --measure '[class*="phone-head-dot"]' --measure '[class*="phone-head-elapsed"]'
 node scripts/capture/capture-view.ts --scene report --size 1400x900 --hash '#token-usage' \
   --wait-after 'section[aria-label="減らし方を見てもらう"]' --click 'button:has-text("減らし方を見てもらう")' \
   --wait-after '[class*="usage-review-result"]' --measure '[class*="usage-review-result"]'

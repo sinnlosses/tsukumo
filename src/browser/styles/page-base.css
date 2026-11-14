@@ -10,20 +10,6 @@ body {
   overflow-wrap: anywhere;
 }
 
-/* 狭い画面（760px 以下）の会話の画面は、縁の余白を持たず画面の高さに固定した縦の1列にする。
-   頭（画面のナビ）が上の行を中身なりに取り、会話の画面の grid（conversation-layout.module.css）が残りを取る。
-   どの画面を出しているかは画面のナビの `data-screen` で見る（ほかの画面は縦に流れる1枚のページのまま）。 */
-@media (max-width: 760px) {
-  body:has([data-screen="conversation"]) {
-    padding: 0;
-  }
-  body:has([data-screen="conversation"]) #app {
-    display: flex;
-    flex-direction: column;
-    height: 100dvh;
-  }
-}
-
 /* 要素そのものへの規則。層に入れるので、層なしの CSS（トークン・`*.module.css`）が当てる値に負け、
    Astryx の部品の class（`astryx-base` の層）も上書きしない。 */
 @layer tsukumo-base {

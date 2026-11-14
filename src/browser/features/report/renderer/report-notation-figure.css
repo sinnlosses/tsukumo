@@ -26,7 +26,6 @@
   & .report-compare-side :is(ul, ol) {
     list-style: revert;
     margin: 0;
-    padding-left: var(--space-lg);
   }
   /* 前後（`report` の `Compare` の `before-after` から tsukumo が組む）。
    左に前・右に後の札を同じ幅で並べ、間に矢印を置く。器が狭いときは前を上・後を下に積み、矢印を下向きにする。
@@ -80,7 +79,6 @@
   }
   & .report-compare-figure-side :is(ul, ol) {
     list-style: revert;
-    padding-left: var(--space-lg);
   }
   /* 側の mermaid の図は側の幅に収める（`mermaid` の class は `MermaidBlock` が素の名前で付ける）。 */
   & .report-compare-figure-side pre:global(.mermaid) {
@@ -448,7 +446,7 @@
     display: grid;
     row-gap: var(--space-sm);
     margin: 0;
-    padding: 0;
+    padding: 0 0 0 1.15em;
     list-style: none;
   }
   & .report-image-note-list > li {

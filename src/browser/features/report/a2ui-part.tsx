@@ -32,13 +32,12 @@ import {
   SectionPointContext,
 } from "./leaf-point-context.ts"
 import { ChoicePicker, InteractiveTable } from "./leaf/a2ui-interactive-view.tsx"
-import { RegionBox, RegionChunks, ReportFrame } from "./leaf/body-region.tsx"
+import { RegionBox, RegionChunks } from "./leaf/body-region.tsx"
 import { ChartTermLinkScope, chartLinkInputsOf } from "./leaf/chart-term-link.tsx"
 import { DirectLeaf, directLeafViewOf } from "./leaf/direct-leaf-view.tsx"
 import styles from "./leaf/leaf.module.css"
-import { NextStepRow, type NextStepsOrigin } from "./leaf/next-step-row.tsx"
+import type { NextStepsOrigin } from "./leaf/next-step-row.tsx"
 import { holdsKnob, liveLeafElement, type useReevaluatedLeaves } from "./leaf/parameter-knob.tsx"
-import { FavorRegion, HeadRegion } from "./leaf/report-head-region.tsx"
 import { SectionFoldButton } from "./leaf/section-fold-button.tsx"
 import { TabsPart } from "./leaf/tabs-part.tsx"
 import { arrangedBlockClassNames } from "./markdown.tsx"
@@ -67,33 +66,6 @@ type ReportContextValue = A2uiReportProps & {
 }
 
 export const ReportContext = createContext<ReportContextValue | undefined>(undefined)
-
-/**
- * 根の `Report` の実装。既定の描画と同じ根と欄の並びを描く。
- * 頭の順に、図・本文の節・振り返り・お願いを並べる。
- * 本文の節は部品の木から、図と振り返りは面の値の塊の並び（`figure`・`retrospective`）から描く。
- * 頭とお願いは面の値から直接描き、欄の Markdown を読まない。
- */
-export function ReportRoot(): ReactElement {
-  const report = useReport()
-  const { view } = report
-  return (
-    <ReportFrame
-      reveal={report.reveal}
-      turnId={report.turnId}
-      className={report.className}
-      revealClassName={report.revealClassName}
-      blockClassName={report.blockClassName}
-    >
-      <HeadRegion head={view.head} />
-      <BodyRegions foldable={false} />
-      <FavorRegion id={view.favor.id} text={view.favor.text} />
-      {report.nextSteps !== undefined && (
-        <NextStepRow origin={report.nextSteps} components={view.components} />
-      )}
-    </ReportFrame>
-  )
-}
 
 /** 図・本文の節・振り返りの欄を、この順に並べる。`foldable` なら見出しのある本文の節ごとに畳みのボタンを先頭に置く。 */
 export function BodyRegions(props: { readonly foldable: boolean }): ReactElement {

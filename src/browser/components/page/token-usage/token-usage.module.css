@@ -1,23 +1,11 @@
 /* トークン消費の画面。
-   会話の画面と入れ替わるので、1枚のページとして縦に流す。4領域の grid も仕切りも持たない。
+   会話の画面に重ねる紙の中に、1枚のページとして縦に流す。題は紙の頭が持つ。
    横スクロールを出さないのがこの画面の要点で、表は必ず幅いっぱいに収め、はみ出しうるものは数の単位（k / M）と行数の上限で先に減らしてある。 */
-.token-usage,
-.token-usage-in-sheet {
+/* 幅と余白は重ねる紙の本文（sheet-body）が持つので、縦並びだけを持つ。 */
+.token-usage {
   display: flex;
   flex-direction: column;
   gap: var(--space-xl);
-}
-/* token-usage-in-sheet: 新しい器では幅と余白を紙の本文（sheet-body）が持つので、上の縦並びだけを使う。 */
-.token-usage {
-  max-width: 60rem;
-  margin: 0 auto;
-  padding: 0 var(--space-xs) var(--space-3xl);
-}
-.token-usage-title {
-  margin: 0;
-  color: var(--usage-ink);
-  font-size: var(--font-heading);
-  font-weight: normal;
 }
 /* プランの札。題の右に添えるだけの静かな印（状態の警告ではないので accent は使わない）。 */
 /* 字の段・色は `Text` が持つ。箱（枠・角丸・余白）・行の高さだけここに置く。 */

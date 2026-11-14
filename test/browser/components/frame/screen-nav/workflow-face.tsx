@@ -1,14 +1,12 @@
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react"
 
-import { ScreenNav } from "../../../../../src/browser/components/frame/screen-nav/screen-nav.tsx"
+import { SettingsScreen } from "../../../../../src/browser/components/frame/screen-nav/settings-screen.tsx"
 import { INITIAL_SESSION_STATE } from "../../../../../src/shared/session/session-state.ts"
-import { typedElement } from "../../../../typed-element.ts"
-import { EMPTY_NAV_DRAWER_SLOTS } from "../../../nav-drawer-slot.tsx"
 import { queryClientWrapper } from "../../../query-client.tsx"
 import { stubRpcFetch, type rpcOutput, type RpcFetchStub } from "../../../rpc-fetch-stub.ts"
 import { putSession, type SentCommand } from "../../../session-store.ts"
 
-// 設定のダイアログの「ワークフロー」の面を開くまでの足場。
+// 設定の紙の「ワークフロー」の面を描くまでの足場。
 
 export const REPOSITORY = {
   worktreeName: "架空の作業ツリー",
@@ -29,7 +27,7 @@ export function renderWorkflowFace(
   onSet: (command: SentCommand) => unknown = () => undefined,
 ): SentCommand[] {
   const sent: SentCommand[] = []
-  // 帯はほかの手続き（作業ディレクトリの名前など）も引くので、この面の読み取りにだけ `read` を返す。
+  // 紙はほかの手続き（起動するスキルの候補など）も引くので、この面の読み取りにだけ `read` を返す。
   rpcStub = stubRpcFetch((call) =>
     call.procedure === "workflowSetting/read" ? read() : { kind: "pending" },
   )
@@ -37,25 +35,18 @@ export function renderWorkflowFace(
     sent.push(command)
     return onSet(command)
   })
-  render(<ScreenNav drawer={EMPTY_NAV_DRAWER_SLOTS} />, { wrapper: queryClientWrapper() })
-  fireEvent.click(
-    typedElement(
-      document.querySelector(".screen-nav > .screen-nav-settings .screen-nav-settings-toggle"),
-      HTMLElement,
-      "帯の歯車",
-    ),
-  )
-  fireEvent.click(within(dialog()).getByRole("button", { name: "ワークフロー" }))
+  render(<SettingsScreen />, { wrapper: queryClientWrapper() })
   return sent
 }
 
-export function dialog(): HTMLElement {
-  return screen.getByRole("dialog", { name: "設定" })
+/** ワークフローの面を置く「このプロジェクト」の群。 */
+export function workflowGroup(): HTMLElement {
+  return screen.getByRole("region", { name: "このプロジェクト" })
 }
 
 export function openMenu(title: string): HTMLElement {
-  fireEvent.click(within(dialog()).getByRole("button", { name: `${title} の操作` }))
-  return within(dialog()).getByRole("menu", { name: `${title} の操作` })
+  fireEvent.click(within(workflowGroup()).getByRole("button", { name: `${title} の操作` }))
+  return within(workflowGroup()).getByRole("menu", { name: `${title} の操作` })
 }
 
 export function menuItem(title: string, label: string): HTMLElement {
@@ -63,11 +54,11 @@ export function menuItem(title: string, label: string): HTMLElement {
 }
 
 export function bandButton(name: "保存" | "やめる"): HTMLElement {
-  return within(dialog()).getByRole("button", { name })
+  return within(workflowGroup()).getByRole("button", { name })
 }
 
 export async function stepList(): Promise<HTMLElement> {
-  return within(dialog()).findByRole("list", { name: "スキルの並び" })
+  return within(workflowGroup()).findByRole("list", { name: "スキルの並び" })
 }
 
 export function setCommands(sent: readonly SentCommand[]): SentCommand[] {

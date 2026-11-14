@@ -8,7 +8,7 @@
 
 ## 何が困っていたか
 
-- 今の会話の画面は4領域（メインビュー・サイドバー・キャラビュー・入力欄）で、`src/browser/components/page/conversation/components/conversation-layout/presentational-conversation-layout.tsx` が組んでいる。立ち絵は箱の中に小さく収まり、レポートを読む面は画面の半分ほどしか無い（今の値は `docs/architecture/screen-design/stage-and-paper-yardstick.md`「作り直す前の値」）。
+- 今の会話の画面は4領域（メインビュー・サイドバー・キャラビュー・入力欄）で、会話の画面の部品 conversation-layout（いまは消した）が組んでいる。立ち絵は箱の中に小さく収まり、レポートを読む面は画面の半分ほどしか無い（今の値は `docs/architecture/screen-design/stage-and-paper-yardstick.md`「作り直す前の値」）。
 - ほかの画面への入口は、上の帯（`src/browser/components/frame/screen-nav/`）のタブ・札・歯車と、サイドバー（`src/browser/components/frame/sidebar/`）のタスクの一覧・使用量の2か所に散っている。
 - ほかの画面（キャラ・トークン・成果・見本帳）は、`src/browser/components/app/screen-registry.tsx` の `overlay` に登録され、全面に重なる。`src/browser/components/app/layout.tsx` の `Layout` は、ほかの画面を出すあいだ会話の画面を `<Activity mode="hidden">` で隠す。そのためキャラクターも、読んでいたレポートも見えなくなる。
 
@@ -126,12 +126,12 @@
 | `docs/architecture/screen-design/layout.md`                                                       | 置き換え     | 舞台・紙・欄外の並びと、4局面の器の形（論点 2）                                             |
 | `docs/architecture/screen-design/conversation-phase.md`「局面と判定」「遷移」                     | 一部置き換え | 局面の判定と入れ替える瞬間は残す。中身の入れ替えは器の姿勢になる（論点 2）                  |
 | `docs/architecture/screen-design/narrow-screen.md`                                                | 置き換え     | 縦1列・全面の紙・「≡」から開く探す（論点 5）                                                |
-| `docs/architecture/screen-design/nav-strip.md`                                                    | 置き換え     | 上の帯は無くなり、入口は部屋の頭と探すの2つになる                                           |
-| `docs/architecture/screen-design/nav-room-and-switch.md`                                          | 置き換え     | 部屋の名前とセッションの切り替えは部屋の頭へ移る                                            |
-| `docs/architecture/screen-design/nav-usage.md`                                                    | 置き換え     | いつも見えるのは「文脈 n%」の札だけで、ほかは使用量の紙へ移る                               |
-| `docs/architecture/screen-design/nav-gear-and-face.md`                                            | 置き換え     | 設定の歯車のダイアログは設定の紙に、キャラクターの選択はキャラの紙に移る                    |
-| `docs/architecture/screen-design/nav-mode-control.md`                                             | 一部置き換え | 仕事と雑談の門は部屋の頭へ、モデルと深さは入力欄の札と設定の紙へ移る。値の源は残す          |
-| `docs/architecture/screen-design/nav-current-work.md`・`nav-work-plan-and-background-task.md`     | 置き換え     | いまの作業は紙の計画と舞台の「手元」の行に移る（ADR 0056 の論点 1 と合わせて）              |
+| 画面のデザインの `nav-strip.md`（いまは消した）                                                   | 置き換え     | 上の帯は無くなり、入口は部屋の頭と探すの2つになる                                           |
+| 画面のデザインの `nav-room-and-switch.md`（いまは消した）                                         | 置き換え     | 部屋の名前とセッションの切り替えは部屋の頭へ移る                                            |
+| 画面のデザインの `nav-usage.md`（いまは消した）                                                   | 置き換え     | いつも見えるのは「文脈 n%」の札だけで、ほかは使用量の紙へ移る                               |
+| 画面のデザインの `nav-gear-and-face.md`（いまは消した）                                           | 置き換え     | 設定の歯車のダイアログは設定の紙に、キャラクターの選択はキャラの紙に移る                    |
+| 画面のデザインの `nav-mode-control.md`（いまは消した）                                            | 一部置き換え | 仕事と雑談の門は部屋の頭へ、モデルと深さは入力欄の札と設定の紙へ移る。値の源は残す          |
+| 画面のデザインの `nav-current-work.md`・`nav-work-plan-and-background-task.md`（いまは消した）    | 置き換え     | いまの作業は紙の計画と舞台の「手元」の行に移る（ADR 0056 の論点 1 と合わせて）              |
 | `docs/architecture/screen-design/setting-place.md`・`character-screen.md`                         | 一部置き換え | 設定とキャラクターの置き場は重ねる紙になる（論点 3）。中身の決まりは残す                    |
 | `docs/architecture/screen-design/background.md`・`scene-behavior.md`                              | 一部置き換え | 背景は「枠を持たない領域」ではなく舞台の全面に敷く。表情とセリフの早見表は残す              |
 | `docs/architecture/screen-design/diary.md`                                                        | 一部置き換え | 成果の画面は重ねる紙になる。灯りの暦の狐火（`Lamp`）は残す                                  |

@@ -260,6 +260,8 @@ describe("表の行に聞いた印", () => {
     expect(marked).toHaveLength(1)
     expect(marked[0]?.firstElementChild?.textContent).toContain("あ")
     expect(screen.getByText("なぜ？")).toBeTruthy()
-    expect(container.textContent).not.toContain("答えた")
+    expect(screen.getByText("なぜ？").closest("[data-report-region]")?.textContent).not.toContain(
+      "答えた",
+    )
   })
 })

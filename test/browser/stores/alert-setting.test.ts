@@ -1,10 +1,12 @@
 import { afterEach, describe, expect, it } from "vitest"
 
-import {
-  DEFAULT_ALERT_SETTING,
-  loadAlertSetting,
-  saveAlertSetting,
-} from "../../../src/browser/stores/alert-setting.ts"
+import { loadAlertSetting, saveAlertSetting } from "../../../src/browser/stores/alert-setting.ts"
+
+const DEFAULT_ALERT_SETTING = {
+  notify: false,
+  bell: false,
+  events: { question: true, permission: true, failure: true, finished: false },
+}
 
 afterEach(() => {
   localStorage.clear()

@@ -3,7 +3,6 @@
 
 import { create } from "zustand"
 
-import { mainViewTurnsOf } from "../../../../stores/main-view-turn.ts"
 import { notesOf, useReplyNotes, type ReplyNote } from "../../../../stores/reply-note-list.ts"
 import { useSession } from "../../../../stores/session.ts"
 import {
@@ -12,6 +11,7 @@ import {
   type ReportTitleOf,
 } from "../domain/reply-batch-draft.ts"
 import { useComposerDraft } from "./composer-draft.ts"
+import { mainViewTurnsOf } from "./main-view-turn.ts"
 
 type ReplyBatchState = {
   /** 下書きにまとめた付箋の id。まとめていない下書きでは空。 */

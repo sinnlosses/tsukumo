@@ -1,8 +1,8 @@
 // 探す（⌘K）のロジック。開閉と打った字を持ち、出どころごとの項目を集めて絞る。
 // ⌘K（Windows などでは Ctrl+K）はどこにフォーカスがあっても開閉する。開閉は URL に載せない。
 //
-// 出どころは4つ。画面（重ねる紙の5枚・仕事と雑談の切り替え・セッションの切り替え）、頼めるタスク（タスクの一覧）、
-// コマンド（入力欄の `/` 補完と同じ候補）、見た目。
+// 出どころは3つ。画面（重ねる紙の5枚・仕事と雑談の切り替え・セッションの切り替え）、頼めるタスク（タスクの一覧）、
+// コマンド（入力欄の `/` 補完と同じ候補）。
 // タスクとコマンドは依頼として送るので、ターンが動いているあいだは載せない（送っても断られる）。
 
 import { useState } from "react"
@@ -14,7 +14,6 @@ import { useEventListener } from "../../../../hooks/use-event-listener.ts"
 import { SHEET_TITLES } from "../../../../stores/location-hash.ts"
 import { navigateTo } from "../../../../stores/screen.tsx"
 import { useSession, useTurnRunning } from "../../../../stores/session.ts"
-import { switchShell } from "../../../../stores/shell-mark.ts"
 import { matchingSearchEntries, type SearchEntry } from "../domain/search-entry.ts"
 
 /** 探すの材料のうち、部屋の頭と分け合うもの。 */
@@ -121,19 +120,7 @@ export function useSearchPalette(sources: SearchSources): SearchPaletteView {
         hint: command.description ?? "",
         run: () => request(`/${command.name}`),
       }))
-  const lookEntries: readonly SearchEntry[] = [
-    {
-      key: "shell:classic",
-      group: "見た目",
-      label: "旧い画面に戻す",
-      hint: "読み込み直す",
-      run: () => switchShell("classic"),
-    },
-  ]
-  const entries = matchingSearchEntries(
-    [...moveEntries, ...taskEntries, ...commandEntries, ...lookEntries],
-    query,
-  )
+  const entries = matchingSearchEntries([...moveEntries, ...taskEntries, ...commandEntries], query)
 
   return {
     open,

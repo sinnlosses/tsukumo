@@ -6,6 +6,13 @@
   margin: 0 auto;
   padding: 0 var(--space-xs) var(--space-2xl);
 }
+/* 会話の画面へ戻るリンク。見出しの上の1行で、ページと一緒に流れる。 */
+.design-back {
+  align-self: flex-start;
+  padding-top: var(--gutter-page);
+  color: var(--ink-quiet);
+  font-size: var(--font-secondary);
+}
 
 .design-catalog-part {
   min-width: 0;

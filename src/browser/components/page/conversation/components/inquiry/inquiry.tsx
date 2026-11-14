@@ -15,7 +15,6 @@ import { formatMinutesSeconds } from "../../../../../../shared/utils/elapsed-tim
 import { truncateForDisplay } from "../../../../../features/current-work/current-work-step.ts"
 import { usePhoneWidth } from "../../../../../hooks/use-phone-width.ts"
 import { useNowWhile } from "../../../../../stores/clock.ts"
-import { useInquiryJump } from "../../../../../stores/inquiry-jump.ts"
 import { mergeRefs } from "../../../../../utils/merge-ref.ts"
 import { Button } from "../../../../ui/button/button.tsx"
 import { Dialog } from "../../../../ui/dialog/dialog.tsx"
@@ -26,6 +25,7 @@ import {
   type InquiryModel,
   type InquiryOptionRow,
 } from "../../stores/inquiry-answer.ts"
+import { useInquiryJump } from "../../stores/inquiry-jump.ts"
 import { useInquiryScroll } from "./hooks/use-inquiry-scroll.ts"
 import { useInquiryVisibility } from "./hooks/use-inquiry-visibility.ts"
 import {

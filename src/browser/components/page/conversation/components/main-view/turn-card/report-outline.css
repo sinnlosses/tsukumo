@@ -26,7 +26,7 @@
 .outline-rail {
   border-right: 1px solid var(--rule-quiet);
 }
-/* 札の頭と同じく、転がる器の余白ぶん上へずらした位置が貼り付く基準（`.turn-card-head`）。
+/* 転がる器の余白ぶん上へずらした位置に貼り付く。
    行が多いときは一覧の中で転がす。 */
 .outline-nav {
   position: sticky;

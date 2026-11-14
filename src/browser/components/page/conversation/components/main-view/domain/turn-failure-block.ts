@@ -20,18 +20,12 @@ type TurnFailureRetry =
       readonly request: string
     }
 
-/** 進み具合のプログレスバーの手順の一覧で、失敗した手順を開くボタン。 */
-type TurnFailureStepsDoor =
-  | { readonly kind: "none" }
-  | { readonly kind: "shown"; readonly label: string }
-
 export type TurnFailureBlockModel = {
   /** 何が起きたかの語（内部の綴りは含めない）。 */
   readonly reason: string
   /** `title` に出す全文（内部の綴りを含む）。 */
   readonly detail: string
   readonly retry: TurnFailureRetry
-  readonly failedSteps: TurnFailureStepsDoor
 }
 
 export type TurnFailureBlockSource = {
@@ -41,23 +35,16 @@ export type TurnFailureBlockSource = {
   readonly rateLimit: RateLimit
   /** いちばん新しいやり取りか。 */
   readonly newest: boolean
-  /** いちばん新しい依頼の手順が帯に出ていて、失敗した手順があるか。 */
-  readonly hasFailedStep: boolean
   readonly now: number
 }
 
 const RETRY_LABEL = "同じ依頼を入力欄に戻す"
-const FAILED_STEPS_LABEL = "失敗した手順を見る"
 
 export function turnFailureBlockOf(source: TurnFailureBlockSource): TurnFailureBlockModel {
   return {
     reason: turnFailureLabel(source.failure),
     detail: turnFailureDetail(source.failure),
     retry: retryOf(source),
-    failedSteps:
-      source.newest && source.hasFailedStep
-        ? { kind: "shown", label: FAILED_STEPS_LABEL }
-        : { kind: "none" },
   }
 }
 

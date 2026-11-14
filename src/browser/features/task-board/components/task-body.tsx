@@ -1,4 +1,4 @@
-// タスクの本文（Markdown）を、タスクのモーダルの詳細とサイドバーのプレビューに描く。
+// タスクの本文（Markdown）を、タスクの紙の詳細に描く。
 //
 // 読むのは `remark-gfm`（表・チェック・取り消し線・自動リンク）と `remark-cjk-friendly`（約物の隣の強調）だけ。
 // 生の HTML は解釈せず字のまま出す（`rehype-raw` を差さないと、react-markdown は HTML を字に戻す）。
@@ -9,7 +9,6 @@
 // 見出しは段を下げる（`#`・`##` → `h4`、`###` 以下 → `h5`）。
 // モーダルの見出しが `h2`、タスクのタイトルが `h3` なので、本文の `##` をそのまま `h2` にすると段が逆になる。
 
-import clsx from "clsx"
 import type { Nodes } from "mdast"
 import type { JSX, ReactElement } from "react"
 import ReactMarkdown, {
@@ -23,19 +22,15 @@ import remarkGfm from "remark-gfm"
 import { linkTaskBodyIds, taskLinkId } from "../domain/task-body-link.ts"
 import styles from "./task-body.module.css"
 
-/** `detail` はタスクのモーダルの詳細、`peek` はサイドバーのプレビュー（字を一段小さく組む）。 */
-type TaskBodyTypesetting = "detail" | "peek"
-
 export type TaskBodyProps = {
   readonly text: string
-  readonly typesetting: TaskBodyTypesetting
   readonly knownIds: ReadonlySet<string>
   readonly onJump: (id: string) => void
 }
 
 export function TaskBody(props: TaskBodyProps): ReactElement {
   return (
-    <div className={clsx(styles["task-body"], TYPESETTING_CLASS[props.typesetting])}>
+    <div className={styles["task-body"]}>
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkCjkFriendly, remarkTaskLink(props.knownIds)]}
         components={{ ...TASK_BODY_COMPONENTS, a: anchorOf(props.onJump) }}
@@ -46,11 +41,6 @@ export function TaskBody(props: TaskBodyProps): ReactElement {
     </div>
   )
 }
-
-const TYPESETTING_CLASS = {
-  detail: undefined,
-  peek: styles["task-body-peek"],
-} satisfies Record<TaskBodyTypesetting, string | undefined>
 
 /**
  * react-markdown の既定の `urlTransform` は知らない URL の仕組み（`javascript:` など）を

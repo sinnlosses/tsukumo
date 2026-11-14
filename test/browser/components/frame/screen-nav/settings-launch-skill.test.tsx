@@ -1,11 +1,10 @@
-import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
-import { ScreenNav } from "../../../../../src/browser/components/frame/screen-nav/screen-nav.tsx"
+import { SettingsScreen } from "../../../../../src/browser/components/frame/screen-nav/settings-screen.tsx"
 import { loadLaunchSkill, saveLaunchSkill } from "../../../../../src/browser/domain/launch-skill.ts"
 import { INITIAL_SESSION_STATE } from "../../../../../src/shared/session/session-state.ts"
 import { typedElement } from "../../../../typed-element.ts"
-import { EMPTY_NAV_DRAWER_SLOTS } from "../../../nav-drawer-slot.tsx"
 import { queryClientWrapper } from "../../../query-client.tsx"
 import {
   rpcError,
@@ -36,18 +35,9 @@ function renderFace(entries: RpcStubReply): HTMLSelectElement {
     call.procedure === "workflowSetting/entries" ? entries : { kind: "pending" },
   )
   putSession(INITIAL_SESSION_STATE, () => undefined)
-  render(<ScreenNav drawer={EMPTY_NAV_DRAWER_SLOTS} />, { wrapper: queryClientWrapper() })
-  fireEvent.click(
-    typedElement(
-      document.querySelector(".screen-nav > .screen-nav-settings .screen-nav-settings-toggle"),
-      HTMLElement,
-      "帯の歯車",
-    ),
-  )
-  const dialog = screen.getByRole("dialog", { name: "設定" })
-  fireEvent.click(within(dialog).getByRole("button", { name: "タスクの実行" }))
+  render(<SettingsScreen />, { wrapper: queryClientWrapper() })
   return typedElement(
-    dialog.querySelector("select[aria-label='起動するスキル']"),
+    screen.getByLabelText("起動するスキル"),
     HTMLSelectElement,
     "起動するスキルの select",
   )

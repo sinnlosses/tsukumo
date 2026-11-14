@@ -37,12 +37,12 @@ import type {
   UsualSpread,
 } from "../../../../../../../shared/usage/usual-duration.ts"
 import { formatElapsed } from "../../../../../../../shared/utils/elapsed-time.ts"
-import { narrateToolUse } from "../../../../../../domain/tool-narration.ts"
-import { summarizeToolInput } from "../../../../../../domain/tool-summary.ts"
 import { backgroundSummaryLabel } from "../../../../../../features/current-work/current-work-step.ts"
 import { apiRetryNotice } from "../../../domain/api-error-label.ts"
 import { rateLimitResetText } from "../../../domain/rate-limit-label.ts"
 import { isSlashClear } from "../../../domain/slash-clear.ts"
+import { narrateToolUse } from "../../../domain/tool-narration.ts"
+import { summarizeToolInput } from "../../../domain/tool-summary.ts"
 import { minutesOf } from "../../../domain/usual-duration.ts"
 
 const BACKGROUND_THINKING = "背景で · 考えている"

@@ -36,7 +36,7 @@ test.describe("会話の画面の読み上げとフォーカス", () => {
         return { style: style.outlineStyle, width: style.outlineWidth }
       }),
     ).toEqual({ style: "solid", width: "1px" })
-    expect(await page.getByRole("main", { name: "メインビュー" }).count()).toBe(1)
+    expect(await page.getByRole("main", { name: "始め方" }).count()).toBe(1)
     expect(await page.getByRole("main").count()).toBe(1)
 
     const firstStop = await page.evaluate(

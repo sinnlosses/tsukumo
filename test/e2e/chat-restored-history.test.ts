@@ -1,9 +1,10 @@
 import { test } from "./room-fixture.ts"
+import { otherSessionRows, sessionMenu, sessionMenuOpener } from "./session-menu.ts"
 
 // 復元した雑談の履歴（docs/architecture/testing.md「E2E のシナリオの一覧」）。疑似セッションの場面
 // `chat-restored-history` は、前のセッションの1件のやり取りを `resume` で切り替え先に出し、
 // 起動した代にはいまのセッションの2件のやり取りを流す。2回目の `turn-finished` を待ってから
-// 切り替え画面で前のセッションを選ぶと、雑談のまま、前のセッションの履歴に続けて、
+// 部屋の頭のセッションの一覧で前のセッションを選ぶと、雑談のまま、前のセッションの履歴に続けて、
 // 切り替え先が流し直した起動のセリフといまの2件に起き直す。
 // 切り替え先の流し直しが終わるまで届いてから撮る（途中で撮ると、負荷で撮る時点が前後して揺れる）。
 
@@ -22,15 +23,12 @@ test.describe("復元した雑談の履歴", () => {
       scenario: "chat-restored-history",
       scene: "chat-restored-history",
       viewport: "wide",
-      domRoots: ["main"],
+      domRoots: ["paper"],
     })
 
     await room.waitForEvent("turn-finished", LAST_TURN_FINISHED_OCCURRENCE)
-    await room.page.getByRole("button", { name: /押すとセッションを切り替える画面を開く/u }).click()
-    const search = room.page.getByRole("combobox", { name: "セッションを探す" })
-    await search.waitFor()
-    await search.press("ArrowDown")
-    await search.press("Enter")
+    await sessionMenuOpener(room.page).click()
+    await otherSessionRows(sessionMenu(room.page)).first().click()
     await room.waitForEvent("turn-finished", RESTARTED_TURN_FINISHED_OCCURRENCE)
     await room.settleAndMatchPicked(ELAPSED_MS)
   })

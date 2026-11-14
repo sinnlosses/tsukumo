@@ -1,5 +1,5 @@
 // 新しい器「舞台と紙」の部屋の頭のロジック。
-// 部屋の名前（押すとセッションの一覧）・仕事と雑談の切り替え・状態・「文脈 n%」・ほかの画面の入口・探すを、見た目が受け取れる形まで畳んで返す。
+// 部屋の名前（押すとセッションの一覧）・仕事と雑談の切り替え・状態・顔・「文脈 n%」・ほかの画面の入口・探すを、見た目が受け取れる形まで畳んで返す。
 //
 // 札は `<a href>` で、紙の開閉の正典は `location.hash` のまま。
 // 仕事と雑談の切り替えの表示はサーバから届いた値だけに従い、押した側へ先に倒さない。
@@ -10,12 +10,13 @@ import {
   conversationMoment,
   type ConversationMoment,
 } from "../../../../../shared/session/conversation-moment.ts"
+import { characterFaceInfo, type CharacterFaceInfo } from "../../../../domain/character-face.ts"
 import { useContextUsage } from "../../../../domain/context-usage.ts"
 import { rpc } from "../../../../stores/rpc.ts"
 import { useScreen, useScreenHref } from "../../../../stores/screen.tsx"
 import { useRestartRefused, useSession } from "../../../../stores/session.ts"
+import { roomNameOfPagePort } from "../domain/room.ts"
 import { useProjectName } from "./use-project-name.ts"
-import { currentRoomName } from "./use-screen-nav.ts"
 import { useSearchPalette, type SearchPaletteView } from "./use-search-palette.ts"
 import { useSessionSwitcher, type ScreenNavSessionSwitcher } from "./use-session-switcher.ts"
 
@@ -42,6 +43,8 @@ export type RoomHeadView = {
   readonly modeBlockedTitle?: string
   readonly onChangeMode: (chat: boolean) => void
   readonly state: { readonly tone: RoomStateTone; readonly label: string }
+  /** 狭い幅の頭に出す、いまのパックの顔。 */
+  readonly face: CharacterFaceInfo
   readonly context: RoomHeadContext
   readonly gates: readonly RoomHeadGate[]
   readonly search: SearchPaletteView
@@ -75,11 +78,12 @@ export function useRoomHead(): RoomHeadView {
   const moment = useSession((session) => conversationMoment(session.state))
   const tasks = useSession((session) => session.state.tasks)
   const finishedTurnCount = useSession((session) => session.state.finishedTurnCount)
+  const character = useSession((session) => session.state.character)
   const restartRefused = useRestartRefused()
   const current = useScreen()
   const screenHref = useScreenHref()
   const contextUsage = useContextUsage(rpc.contextUsage.report, finishedTurnCount)
-  const room = currentRoomName()
+  const room = roomNameOfPagePort(window.location.port)
   const project = useProjectName()
   const { tag, switcher } = useSessionSwitcher(room, project)
 
@@ -110,6 +114,7 @@ export function useRoomHead(): RoomHeadView {
     modeBlockedTitle: restartRefused ? FRAME_ERROR_REASON.chatModeSwitchDuringTurn : undefined,
     onChangeMode,
     state: { tone, label: STATE_LABELS[tone] },
+    face: characterFaceInfo(character),
     context: {
       label: `${CONTEXT_LABEL} ${contextUsage.kind === "ready" ? `${String(contextUsage.percentage)}%` : PLACEHOLDER}`,
       fill: contextUsage.kind === "ready" ? Math.min(contextUsage.percentage, 100) : 0,

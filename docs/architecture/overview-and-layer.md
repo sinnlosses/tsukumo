@@ -18,20 +18,20 @@ tsukumo の画面だけになる。
 1. **入力欄 → セッションドライバ**: `<Composer>` がコマンドの手続き（`session.prompt` /
    `session.interrupt` など）を WebSocket の上で呼び、`session` の行が駆動（SDK または fake driver）へ
    渡す（「コマンドの受け手と手続きの置き方」）
-2. **イベント → 各ビュー**: `assistant` のテキストはメインビューの**レポート**、`speak` の
-   引数はキャラビューの**セリフと表情**、`tool_use` / `tool_result` はサイドバーの**進行**に
+2. **イベント → 各ビュー**: `assistant` のテキストは紙の**レポート**、`speak` の
+   引数は舞台の**セリフと表情**、`tool_use` / `tool_result` は舞台の「手元」の行と紙の計画の**進行**に
    なる。`applySessionEvent` で畳んだ `SessionState` を、サーバとブラウザが同じ形で持つ
    （「shared」）
 3. **`canUseTool` → 答え待ち → お伺い → 回答**: 許可プロンプトと `AskUserQuestion` はどちらも
-   `canUseTool` に届く。tsukumo は答え待ちの状態にして**メインビューのお伺いのカード**に選択肢を出し（キャラは
+   `canUseTool` に届く。tsukumo は答え待ちの状態にして**お伺いのカード**（紙の下端の入力欄の場所）に選択肢を出し（キャラは
    吹き出しで聞くだけ）、選ばれた答えを `canUseTool` の戻り値として SDK へ返す
 
 **外へ出る経路は作らない。** SDK は claude を子プロセスとして起こすだけ、`speak` は tsukumo の
 プロセス内の MCP サーバ（戻り値は `"ok"` だけ）、ビューは `127.0.0.1` にだけバインドする。
 **会話は tsukumo のプロセスの外へ出さない**（`docs/coding-standards.md`「会話内容の扱い」）。
 
-実際の画面はメインビュー・キャラビュー・サイドバー・入力欄の4領域が**1枚のページ**に入る
-（`docs/requirements.md` 4.7 が正典）。
+実際の画面は舞台（キャラクター）・紙・欄外・入力欄が**1枚のページ**に入り、ほかの画面は右から重ねる紙で開く
+（`docs/architecture/screen-design/layout.md` が正典）。
 
 ```
 browser（React。状態 = shared の SessionState、reducer はサーバと同じ物）

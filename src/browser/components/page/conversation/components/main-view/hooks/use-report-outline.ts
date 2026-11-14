@@ -19,12 +19,9 @@ import {
 import { REVEAL_PENDING_ATTRIBUTE } from "../../../../../../domain/reveal/start-pop.ts"
 import { useBeforePaintSync } from "../../../../../../hooks/use-before-paint-sync.ts"
 import { useMountEffect } from "../../../../../../hooks/use-mount-effect.ts"
-import {
-  useReadingSection,
-  type ReportOutlineEntry,
-} from "../../../../../../stores/reading-section.ts"
 import type { OutlineReport } from "../../../domain/outline-report-row.ts"
 import type { TurnResult } from "../../../domain/turn-result.ts"
+import { useReadingSection, type ReportOutlineEntry } from "../../../stores/reading-section.ts"
 import type { HeadNotice, HeadNoticeAction } from "../domain/head-notice.ts"
 import {
   activeLineOf,
@@ -181,7 +178,7 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
     }
     const content: HTMLDivElement = found
 
-    const scrollerOfContent = content.closest('[data-region="main"]')
+    const scrollerOfContent = content.closest('[data-region="paper"]')
 
     let passedHeadings = new Set<Element>()
     let headingObserver: IntersectionObserver | undefined = undefined

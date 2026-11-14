@@ -1,12 +1,11 @@
-import { expect, test, VIEWPORTS } from "./room-fixture.ts"
+import { expect, test } from "./room-fixture.ts"
 import { nextAnimationFrame } from "./scenario-wait.ts"
 
 // report → メインビュー（docs/architecture/testing.md「E2E のシナリオの一覧」）。
-// `report` ツールの呼び出しがメインビューの Markdown へどう出るかを、疑似セッションの場面で確かめる:
+// `report` ツールの呼び出しが紙の Markdown へどう出るかを、疑似セッションの場面で確かめる:
 // `notation`（記法の一覧）、`report-chart`（グラフの塊。ベンダのスクリプトが描く）、
-// `long-report-quick`（やり取りの列。札の幅で畳む）、
 // `a2ui-parameter-sample`（つまみを振ると数・文・図の強調が変わり、開き直すと初期値に戻る）、
-// `turn-outline`（やり取りの列の上の段のやり取りと結果の印）、
+// `turn-outline`（欄外のやり取りと結果の印）、
 // `reading-position`（別のやり取りへ移って戻ると読んでいた見出しの位置から見える）。
 
 /** 撮るときの経過（凍らせた瞬間から）。「何秒前」の類いをこの値で揃える。 */
@@ -18,7 +17,7 @@ test.describe("report → メインビュー", () => {
       scenario: "report-notation",
       scene: "notation",
       viewport: "wide",
-      domRoots: ["main"],
+      domRoots: ["paper"],
     })
 
     await room.waitForEvent("turn-finished")
@@ -30,7 +29,7 @@ test.describe("report → メインビュー", () => {
       scenario: "a2ui-surface",
       scene: "a2ui-surface-sample",
       viewport: "wide",
-      domRoots: ["main"],
+      domRoots: ["paper"],
     })
 
     await room.waitForEvent("turn-finished")
@@ -44,7 +43,7 @@ test.describe("report → メインビュー", () => {
       scenario: "a2ui-interactive",
       scene: "a2ui-interactive-sample",
       viewport: "wide",
-      domRoots: ["main"],
+      domRoots: ["paper"],
     })
 
     await room.waitForEvent("turn-finished")
@@ -60,7 +59,7 @@ test.describe("report → メインビュー", () => {
       scenario: "a2ui-interactive",
       scene: "a2ui-interactive-sample",
       viewport: "wide",
-      domRoots: ["main"],
+      domRoots: ["paper"],
     })
 
     await room.waitForEvent("turn-finished")
@@ -77,14 +76,15 @@ test.describe("report → メインビュー", () => {
     await expect(field).toBeHidden()
   })
 
-  test("聞いた表の行の横の余白の札に問いと答えの対が出て、行の横に「聞 1」、やり取りの列の節の行に「聞 1」が出る。欄を開いても外枠の高さは変わらない", async ({
+  // 余白の札の列は、紙の本文が列を出せる幅（full-hd）でだけ横に並ぶ。
+  test("聞いた表の行の横の余白の札に問いと答えの対が出て、行の横に「聞 1」が出る。欄を開いても外枠の高さは変わらない", async ({
     run,
   }) => {
     const room = await run.open({
       scenario: "report-ask-answered",
       scene: "report-ask-answered",
-      viewport: "wide",
-      domRoots: ["main"],
+      viewport: "full-hd",
+      domRoots: ["paper"],
     })
 
     await room.waitForEvent("turn-finished")
@@ -93,7 +93,6 @@ test.describe("report → メインビュー", () => {
     await expect(thread.getByText("なぜ E2E（会話）だけ遅いの？")).toBeVisible()
     await expect(room.page.getByRole("button", { name: "続けて聞く" })).toBeVisible()
     await expect(room.page.getByRole("button", { name: "聞 1", exact: true })).toBeVisible()
-    await expect(room.page.getByText("聞 1", { exact: true })).toHaveCount(2)
     await expect(room.page.getByText("答えた")).toHaveCount(0)
 
     const frame = room.page.locator("[data-reply-frame]").first()
@@ -111,12 +110,13 @@ test.describe("report → メインビュー", () => {
       scenario: "report-ask-waiting",
       scene: "report-ask-waiting",
       viewport: "wide",
-      domRoots: ["main"],
+      domRoots: ["paper"],
     })
 
     await room.waitForEvent("turn-finished")
+    // 中間レポートの札の中は余白の列を出す幅が無いので、札は「聞 1」で開く板に出る。
+    await room.page.getByRole("button", { name: "聞 1", exact: true }).click()
     await expect(room.page.getByText("（作業は始めていない）", { exact: false })).toBeVisible()
-    await expect(room.page.getByRole("button", { name: "聞 1", exact: true })).toBeVisible()
   })
 
   test("触れるレポートは、つまみを振ると数・文・図の強調が変わり、開き直すと初期値に戻る", async ({
@@ -126,7 +126,7 @@ test.describe("report → メインビュー", () => {
       scenario: "a2ui-parameter",
       scene: "a2ui-parameter-sample",
       viewport: "wide",
-      domRoots: ["main"],
+      domRoots: ["paper"],
     })
 
     await room.waitForEvent("turn-finished")
@@ -177,7 +177,7 @@ test.describe("report → メインビュー", () => {
       scenario: "report-chart",
       scene: "report-chart",
       viewport: "wide",
-      domRoots: ["main"],
+      domRoots: ["paper"],
     })
 
     await room.waitForEvent("turn-finished")
@@ -189,7 +189,7 @@ test.describe("report → メインビュー", () => {
       scenario: "report-plot-chart",
       scene: "report-plot-chart",
       viewport: "wide",
-      domRoots: ["main"],
+      domRoots: ["paper"],
     })
 
     await room.waitForEvent("turn-finished")
@@ -201,7 +201,7 @@ test.describe("report → メインビュー", () => {
       scenario: "report-plot-gauge",
       scene: "report-plot-gauge",
       viewport: "wide",
-      domRoots: ["main"],
+      domRoots: ["paper"],
     })
 
     await room.waitForEvent("turn-finished")
@@ -213,7 +213,7 @@ test.describe("report → メインビュー", () => {
       scenario: "plot-scatter-histogram",
       scene: "plot-scatter-histogram",
       viewport: "wide",
-      domRoots: ["main"],
+      domRoots: ["paper"],
     })
 
     await room.waitForEvent("turn-finished")
@@ -227,7 +227,7 @@ test.describe("report → メインビュー", () => {
       scenario: "report-reply-next",
       scene: "reply-next",
       viewport: "wide",
-      domRoots: ["main"],
+      domRoots: ["paper"],
     })
 
     await room.waitForEvent("turn-finished")
@@ -249,7 +249,7 @@ test.describe("report → メインビュー", () => {
       scenario: "report-selection-point",
       scene: "report-reply-margin",
       viewport: "wide",
-      domRoots: ["main"],
+      domRoots: ["paper"],
     })
 
     await room.waitForEvent("turn-finished")
@@ -274,53 +274,27 @@ test.describe("report → メインビュー", () => {
     await ask.waitFor({ state: "hidden" })
   })
 
-  test("札の幅が 48rem 未満ではやり取りの列が既定で畳まれ、開くを選ぶと読み込み直しても開いたまま、狭い画面（760px 以下）では列を出さない", async ({
-    run,
-  }) => {
-    const room = await run.open({
-      scenario: "report-outline-compact",
-      scene: "long-report-quick",
-      viewport: "compact",
-      domRoots: ["turn-outline"],
-    })
-
-    await room.waitForEvent("turn-finished")
-    await room.page.getByRole("button", { name: "やり取りを開く" }).waitFor()
-    await room.settleAndMatchPicked(ELAPSED_MS)
-
-    await room.page.getByRole("button", { name: "やり取りを開く" }).click()
-    await room.page.getByRole("button", { name: "やり取りを畳む" }).waitFor()
-    await room.page.reload({ waitUntil: "domcontentloaded" })
-    await room.page.getByRole("button", { name: "やり取りを畳む" }).waitFor()
-
-    await room.resize(VIEWPORTS.narrow)
-    await room.page.locator('nav[aria-label="やり取り"]').waitFor({ state: "hidden" })
-  })
-
-  test("やり取りの列の上の段にやり取りが結果の印つきで並び、やり取りの行で Enter を押すとそのやり取りへ移る", async ({
+  test("欄外にやり取りが結果の印つきで並び、やり取りの行で Enter を押すとそのやり取りへ移る", async ({
     run,
   }) => {
     const room = await run.open({
       scenario: "report-turn-outline",
       scene: "turn-outline",
       viewport: "wide",
-      domRoots: ["turn-outline"],
+      domRoots: ["margin"],
     })
 
     await room.waitForEvent("turn-finished", 5)
-    await room.page.locator('nav[aria-label="やり取り"] [data-level="sub"]').waitFor()
+    const margin = room.page.locator('[data-region="margin"]')
+    await margin.locator('button[aria-current="true"]').waitFor()
     await room.settleAndMatchPicked(ELAPSED_MS)
 
-    const firstRow = room.page.getByRole("button", {
+    const firstRow = margin.getByRole("button", {
       name: "完了: 指示をタスクにする（架空の依頼）",
     })
     await firstRow.focus()
     await room.page.keyboard.press("Enter")
-    await room.page
-      .locator('[data-outline-turn][aria-current="true"]', {
-        hasText: "指示をタスクにする（架空の依頼）",
-      })
-      .waitFor()
+    await expect.poll(() => firstRow.getAttribute("aria-current")).toBe("true")
     await room.page
       .locator("section", { has: room.page.getByRole("heading", { level: 2, name: "依頼" }) })
       .getByText("指示をタスクにする（架空の依頼）")
@@ -334,7 +308,7 @@ test.describe("report → メインビュー", () => {
       scenario: "report-reading-position",
       scene: "reading-position",
       viewport: "wide",
-      domRoots: ["main"],
+      domRoots: ["paper"],
     })
 
     await room.waitForEvent("turn-finished", 2)

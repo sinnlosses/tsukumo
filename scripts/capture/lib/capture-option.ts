@@ -33,7 +33,6 @@ export const USAGE = `使い方:
                         （場面は fixture/fake-session/〔--session があればその索引〕の場面名。URL とは併用しない）
   --cwd <dir>           --scene の tsukumo を起こす作業ディレクトリ（.beads や課題ファイルを探す先。既定はこの作業ツリー。場面が参照する画像〔after.png など〕はこの下に置く。無いと --wait-for が上限まで待って失敗する。手元の画像を置く場面は --out の隣に架空の画像入りの作業場所を立てる。件が演出を打ち切る場面は、--cwd の有無に関わらず打ち切ってから撮る。--scene と一緒にだけ使う）
   --session <ファイル>  --scene・--list-scenes が読む疑似セッションの索引を同梱のファイルから差し替える。索引と同じ階層に、索引が名指す場面の json を全部置く（索引だけを写すと場面が読めずに落ちる）。索引がファイルでなければ使い方を出して終わる。読ませるのは架空の会話だけで、実物の会話（transcript・SDK のイベント）は渡さない
-  --shell stage         --scene の場面を新しい器（?shell=stage）で開いて撮る（受ける値は stage だけ。--scene と一緒にだけ使い、URL は書き換えない）
   --until-step <n>     --scene の場面を先頭から n 手目で止めた画を撮る（正の整数。--scene と一緒にだけ使う）
   --list-scenes         場面ごとに report に出る部品の kind と、書き上げる演出が掛かる見込みを一覧して終わる（撮らない。見込みは節の文字数からの見積もりで、描いて確かめてはいない）
   --out <path>          画像の出力先（既定 ${DEFAULT_OUT}）
@@ -132,7 +131,6 @@ function readOptions(argv: readonly string[]): Options | undefined {
       full: { type: "boolean" },
       "list-scenes": { type: "boolean" },
       session: { type: "string" },
-      shell: { type: "string" },
     },
   })
   const session = values.session === undefined ? undefined : path.resolve(values.session)
@@ -181,16 +179,12 @@ function readOptions(argv: readonly string[]): Options | undefined {
     return undefined
   }
 
-  if (values.shell !== undefined && values.shell !== "stage") {
-    return undefined
-  }
   const source = sourceOf(
     urls[0],
     values.scene,
     untilStep?.data,
     values.cwd === undefined ? undefined : path.resolve(values.cwd),
     session,
-    values.shell,
   )
   return source === undefined
     ? undefined

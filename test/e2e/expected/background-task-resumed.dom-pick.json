@@ -1,11 +1,8 @@
 {
-  "work-strip": [
-    { "tag": "section", "attributes": { "aria-label": "進み具合", "data-work-strip": "finished" }, "children": [
-      { "tag": "span", "attributes": { "data-result": "done" }, "children": ["完了"] }
-    ] }
+  "stage-balloon": [
+    { "tag": "div", "attributes": { "data-latest": "true" }, "children": ["短い背景の待ちが終わったよ。"] }
   ],
-  "turn-outline": [
-    { "tag": "button", "attributes": { "data-outline-turn": "0", "data-result": "done" } },
-    { "tag": "button", "attributes": { "data-level": "report" }, "children": ["最終", "短い背景の待ちが終わった"] }
+  "margin": [
+    { "tag": "button", "attributes": { "data-result": "done", "aria-current": "true" } }
   ]
 }

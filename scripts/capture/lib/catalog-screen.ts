@@ -1,25 +1,16 @@
 // 状態のカタログのうち、タスク一覧・入力の補完・キャラクター画面の場面。
 
-import {
-  COMPOSER_SELECTOR,
-  DRAWER_TASKS_TAB_SELECTOR,
-  DRAWER_TOGGLE_SELECTOR,
-  TASK_BOARD_SELECTOR,
-} from "./catalog-selector.ts"
+import { COMPOSER_SELECTOR, TASK_BOARD_SELECTOR } from "./catalog-selector.ts"
 import { SCENE_END_SETTLE, type CatalogEntry } from "./catalog-type.ts"
 
 export const SCREEN_ENTRIES: readonly CatalogEntry[] = [
   {
     name: "task-board",
-    scene: "report",
+    scene: "welcome-recommendation",
     label: "タスク一覧のモーダル",
     homeSetup: { kind: "default" },
     workspaceSetup: { kind: "task-list" },
-    prepare: [
-      { kind: "click-if-shown", selector: DRAWER_TOGGLE_SELECTOR },
-      { kind: "click-if-shown", selector: DRAWER_TASKS_TAB_SELECTOR },
-      { kind: "click", selector: TASK_BOARD_SELECTOR },
-    ],
+    prepare: [{ kind: "click", selector: TASK_BOARD_SELECTOR }],
     skipReveal: false,
     settle: SCENE_END_SETTLE,
   },

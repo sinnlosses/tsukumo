@@ -2,7 +2,6 @@
 
 import type { PHASE_SPANS } from "../usage/experience-metric-record.ts"
 import {
-  finishedPhaseCount,
   type DelegatedRange,
   phaseCount,
   type PlannedPhase,
@@ -65,26 +64,6 @@ export function phaseNumberText(number: PhaseNumber): string {
 /** 群の名を前に付けた番号「後1」「2–3」（並び全体の群なら番号だけ）。番号を持たない段は空の文字列。 */
 export function phaseOrdinalText(number: PhaseNumber): string {
   return number.kind === "named" ? "" : `${PHASE_SPAN_NAMES[number.span]}${number.ordinals}`
-}
-
-/** 全部の段（範囲の外を含む）で言う済み具合「5段すべて済み」「5段のうち4段済み」。 */
-export function completionText(
-  plan: Pick<WorkPlan, "phases" | "current" | "finishedInGroup">,
-): string {
-  const total = phaseCount(plan.phases)
-  const finished = finishedPhaseCount(plan)
-  return finished >= total
-    ? `${String(total)}フェーズすべて済み`
-    : `${String(total)}フェーズのうち${String(finished)}フェーズ済み`
-}
-
-/** 段の呼び名「後1. 段の名前」（範囲が無ければ「2. 段の名前」、番号を持たない段は名前だけ）。 */
-export function plannedPhaseTitle(
-  plan: Pick<WorkPlan, "phases" | "delegatedRange">,
-  phase: Pick<PlannedPhase, "index" | "name">,
-): string {
-  const ordinal = phaseOrdinalText(plannedPhaseNumber(plan, phase))
-  return ordinal === "" ? phase.name : `${ordinal}. ${phase.name}`
 }
 
 /**

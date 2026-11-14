@@ -10,16 +10,16 @@ import { rpcOutput } from "../../../rpc-fetch-stub.ts"
 import type { SentCommand } from "../../../session-store.ts"
 import {
   bandButton,
-  dialog,
   menuItem,
   REPOSITORY,
   renderWorkflowFace,
   setCommands,
   stepList,
   tearDownWorkflowFace,
+  workflowGroup,
 } from "./workflow-face.tsx"
 
-// 設定のダイアログの「ワークフロー」の面の、選択（`choice`）とコマンド（`command`）の欄。
+// 設定の紙の「ワークフロー」の面の、選択（`choice`）とコマンド（`command`）の欄。
 // 欄は `workflowSetting.read` が返した形だけから描き、操作は下書きだけを変え、保存で欄ごとに `workflowSetting.set` を送る。
 
 afterEach(tearDownWorkflowFace)
@@ -79,7 +79,7 @@ function renderMixed(onSet?: (command: SentCommand) => unknown): SentCommand[] {
 }
 
 function guardGroup(): HTMLElement {
-  return within(dialog()).getByRole("radiogroup", { name: "架空の選択" })
+  return within(workflowGroup()).getByRole("radiogroup", { name: "架空の選択" })
 }
 
 function radio(label: string): HTMLInputElement {
@@ -87,7 +87,7 @@ function radio(label: string): HTMLInputElement {
 }
 
 function commandBox(): HTMLInputElement {
-  return within(dialog()).getByRole<HTMLInputElement>("textbox", { name: "架空のコマンド" })
+  return within(workflowGroup()).getByRole<HTMLInputElement>("textbox", { name: "架空のコマンド" })
 }
 
 function isSaveDisabled(): boolean {
@@ -95,15 +95,15 @@ function isSaveDisabled(): boolean {
 }
 
 function bandText(): string | null {
-  return typedElement(dialog().querySelector("footer"), HTMLElement, "下の帯").textContent
+  return typedElement(workflowGroup().querySelector("footer"), HTMLElement, "下の帯").textContent
 }
 
-describe("設定のダイアログの「ワークフロー」の面（選択とコマンド）", () => {
+describe("設定の紙の「ワークフロー」の面（選択とコマンド）", () => {
   it("並び・選択・コマンドの欄を schema の順に出し、選択肢には説明を添える", async () => {
     renderMixed()
     await stepList()
 
-    const labels = Array.from(dialog().querySelectorAll("p, label"))
+    const labels = Array.from(workflowGroup().querySelectorAll("p, label"))
       .map((element) => element.textContent)
       .filter((text) => ["スキルの並び", "架空の選択", "架空のコマンド"].includes(text ?? ""))
     expect(labels).toEqual(["スキルの並び", "架空の選択", "架空のコマンド"])
@@ -178,7 +178,7 @@ describe("設定のダイアログの「ワークフロー」の面（選択と�
     fireEvent.change(commandBox(), { target: { value: "断られる検証" } })
     fireEvent.click(bandButton("保存"))
 
-    expect(await within(dialog()).findByText("架空の断りの理由")).toBeTruthy()
+    expect(await within(workflowGroup()).findByText("架空の断りの理由")).toBeTruthy()
     expect(radio("架空のベータ").checked).toBe(true)
     expect(commandBox().value).toBe("断られる検証")
     expect(isSaveDisabled()).toBe(false)
@@ -207,7 +207,7 @@ describe("設定のダイアログの「ワークフロー」の面（選択と�
 
       expect(isSaveDisabled()).toBe(true)
       expect(bandButton("やめる").getAttribute("aria-disabled")).toBeNull()
-      expect(dialog().textContent).toContain("空にして保存はできない")
+      expect(workflowGroup().textContent).toContain("空にして保存はできない")
     },
   )
 

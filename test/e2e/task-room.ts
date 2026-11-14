@@ -215,13 +215,12 @@ export async function openTaskBoardRoom(
       description: ["## 目的・背景", "", "架空の保留の理由を本文にだけ書く。"].join("\n"),
     },
   ])
-  await room.page.getByRole("button", { name: "一覧を見る" }).click()
+  await openTaskBoardFromWelcome(room)
   return room
 }
 
 /**
- * 新しい器「舞台と紙」のタスクの紙の足場。タスクのモーダルと同じ5件を置いてから、器を新しいほうへ切り替えて
- * `#tasks` を開く（器の印は読み込んだときにしか読まないので、検索引数で立てて読み込み直す）。
+ * タスクの紙の足場。タスクのモーダルと同じ5件を置いてから、部屋の右上の「タスク n」で `#tasks` を開く。
  */
 export async function openTaskSheetRoom(
   run: ScenarioRun,
@@ -248,9 +247,6 @@ export async function openTaskSheetRoom(
     },
     task("t-005", "架空のタスク（保留）", "hold", ["t-001"]),
   ])
-  const url = new URL(room.page.url())
-  url.searchParams.set("shell", "stage")
-  await room.page.goto(url.toString())
   await room.page.getByRole("link", { name: "タスク 1", exact: true }).click()
   await room.page.getByRole("combobox", { name: "タスクを探す" }).waitFor()
   return room
@@ -269,8 +265,14 @@ export async function openTaskBoardRoomWithDrafts(
     task("t-003", "架空のタスク（ドラフト乙）", "draft"),
     task("t-004", "架空のタスク（保留）", "hold"),
   ])
-  await room.page.getByRole("button", { name: "一覧を見る" }).click()
+  await openTaskBoardFromWelcome(room)
   return room
+}
+
+/** 迎えるの始め方の「タスクの一覧から選ぶ」でタスクのモーダルを開く。 */
+export async function openTaskBoardFromWelcome(room: ScenarioRoom): Promise<void> {
+  await room.page.getByRole("button", { name: "タスクの一覧から選ぶ", exact: true }).click()
+  await room.page.getByRole("dialog", { name: "タスク" }).waitFor()
 }
 
 /** 先頭のタスクの `description`。 */

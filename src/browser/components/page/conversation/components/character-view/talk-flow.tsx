@@ -3,8 +3,8 @@
 
 import type { ReactElement } from "react"
 
-import { useTurnSelection } from "../../../../../stores/turn-selection.ts"
 import { useStepJump, type StepJumpTarget } from "../../stores/step-jump.ts"
+import { useTurnSelection } from "../../stores/turn-selection.ts"
 import type { TalkFlowRow } from "./domain/talk-flow.ts"
 import { PresentationalTalkFlow } from "./presentational-talk-flow.tsx"
 

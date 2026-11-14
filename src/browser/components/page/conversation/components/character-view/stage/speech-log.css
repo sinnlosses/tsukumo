@@ -1,10 +1,3 @@
-/* 下のセリフのログ（`.speech-log`・`.speech-log-floor`・`.speech-log-scroller`）が位置の基準にする名前。 */
-.character-layout {
-  anchor-name: --speech-log-floor;
-}
-.balloon-track {
-  anchor-name: --speech-log-track;
-}
 /* 見本どおり、後ろは暗くしない（`<Dialog backdrop="clear">` が持つ。開いているあいだの操作は modal が止める）。 */
 /* 枠の中を丸ごと覆う箱。
    空いたところを押しても `<dialog>` 自身が target にならない（`<Dialog>` の backdrop クリックの読み替えは target が `<dialog>` のときだけ閉じる）。 */
@@ -12,53 +5,22 @@
   position: relative;
   height: 100%;
 }
-/* 背景。
-   キャラビューの領域と同じ縮尺・同じ位置で敷き、上へはそのまま続けるので、開いても立ち絵の後ろの絵は動かない。
-   箱の中身の領域（content box）を領域の矩形に重ね（幅は枠の外まで 1px ずつ広げて領域の幅に、高さは `cqh` で読んだ領域の高さ）、絵の位置決めをそこに置く（`background-origin: content-box`）。
-   `cover` はその矩形に対して解かれるので `.layout-ground` と同じ絵になり、`padding-top` で上へ伸ばした箱の中に、領域では切り落とされていた上の部分が描かれる（はみ出しは枠の overflow が切る）。
-   覆いは領域と同じ `--character-veil`（`.layout-ground` が作る。`<dialog>` はその DOM の子孫なので継ぐ）。
-   絵の上端が見えないように、領域の上端から上 6rem で地（ground）へ溶かす。
-   背景の無いパックでは覆いが不透明な ground、絵が `none` に落ちて、いままでと同じ地になる。 */
-.speech-log-stage::before {
-  content: "";
-  position: absolute;
-  right: -1px;
-  bottom: -1px;
-  left: -1px;
-  box-sizing: content-box;
-  height: calc(100cqh + 2 * var(--region-padding));
-  padding-top: 100vh;
-  background-image:
-    linear-gradient(
-      to top,
-      transparent calc(100cqh + 2 * var(--region-padding)),
-      var(--ground) calc(100cqh + 2 * var(--region-padding) + 6rem)
-    ),
-    linear-gradient(var(--character-veil, var(--ground)), var(--character-veil, var(--ground))),
-    var(--character-background-image, none);
-  background-origin: border-box, border-box, content-box;
-  background-position: center bottom;
-  background-size: auto, auto, cover;
-  background-repeat: no-repeat;
-  pointer-events: none;
+/* セリフのログ（`.speech-log`）が位置の基準にする名前。
+   上端は舞台のやり取りの流れの段、左右と下端は上の4段の箱（下端が立ち絵の頭の印）。 */
+.stage-figure-thread {
+  anchor-name: --speech-log-thread;
 }
-/* 吹き出しの列。
-   左右と下端はキャラビューの `.balloon-track` に重ね（最新の吹き出しの下端がキャラビューと同じ高さに来る）、上端だけ枠の上端まで伸ばす。
+.stage-figure-rows {
+  anchor-name: --speech-log-rows;
+}
+/* 吹き出しの列。枠の中いっぱいに置く。
    並びは古い→新しいを上→下で、開いた直後に下端へスクロールしてある。 */
 .speech-log-scroller {
-  position: fixed;
-  position-anchor: --speech-log-track;
-  top: calc(var(--speech-log-top) + 1px);
-  right: anchor(right);
-  bottom: anchor(bottom);
-  left: anchor(left);
+  position: absolute;
+  inset: 0;
   z-index: 1;
   padding-right: var(--balloon-scrollbar-gap);
   overflow-y: auto;
-}
-/* 立ち絵があるときは、キャラビューの列（`.portrait + .balloon-track`）と同じく尻尾ぶんを左に空ける。 */
-.speech-log-stage:has(.portrait) .speech-log-scroller {
-  padding-left: var(--balloon-tail);
 }
 .speech-log-speech {
   display: flex;
@@ -86,57 +48,29 @@
   color: color-mix(in srgb, var(--ink) 55%, var(--surface));
 }
 
-/* 狭い画面（760px 以下）では、セリフのログは画面いっぱいに開き、列は枠の中に置く。 */
+/* 狭い画面（760px 以下）では、セリフのログは画面いっぱいに開き、列は閉じる口の下に置く。 */
 @media (max-width: 760px) {
-  .speech-log-stage::before {
-    top: 0;
-    height: auto;
-    padding-top: 0;
-  }
   .speech-log-scroller {
-    position: absolute;
     inset: 44px 0 0;
     padding: 0 var(--space-lg) var(--space-lg);
   }
 }
 
-/* 「ログ」の口。
-   領域の右上、絵の上に重ねて置き、領域の角まで寄せる。
-   基準の `.character-region` は領域の padding の内側なので、`--region-padding`（`layout.module.css` の `.layout-region`）を打ち消して角からの距離を直に書く。
-   はみ出した先は `.layout-region` の padding の中で、overflow の切り取りは padding box の縁なので切れない。
-   行を1段足すと、立ち絵の高さ（--portrait-height は .character-layout の高さの割合）がそのぶん縮むため、行を増やさず重ねにしてある。
-   箱だけで、顔は `<Button variant="outline-faint-ground">` が持つ。 */
+/* 「ログ」の口。舞台ではやり取りの流れの上端の札（`.talk-flow-more`）、狭い画面では入力欄の上の吹き出しが口の役を持つので出さない。 */
 .speech-log-open {
-  position: absolute;
-  top: calc(4px - var(--region-padding));
-  right: calc(4px - var(--region-padding));
-  z-index: 4;
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-sm);
-  height: 30px;
-  padding: 0 var(--space-md);
-  border-radius: var(--radius-md);
+  display: none;
 }
 /* セリフのログ。
-   キャラビューの舞台をそのまま上へ伸ばす。左右と下端はキャラビューの領域に揃え、上端だけを帯のすぐ下まで伸ばす。
-   立ち絵と吹き出しの列は、キャラビューの立ち絵の床（`.character-layout`）と吹き出しの並び（`.balloon-track`）にそのまま重ねるので、開いても立ち絵と最新の吹き出しは動かない。
-
-   位置は CSS の anchor positioning で決める（`<dialog>` は top layer に出るので、領域の位置を知る手段が要る）。
-   基準はこのファイルの先頭の `.character-layout` と `.balloon-track` の `anchor-name`。
-   枠は領域の padding の外まで広げる（`--region-padding` は `.layout-region` から継ぐ。`.speech-log-open` と同じ打ち消し方）。
-   床と列は `position: fixed` の子で、`<dialog>` に transform などを掛けないかぎり包含ブロックは画面のままなので、枠の外の要素を基準にできる。 */
+   舞台のやり取りの流れといまの吹き出しの場所に重ねて開き、部屋の頭・今日の灯り・立ち絵は覆わない（開いても立ち絵は動かない）。
+   位置は CSS の anchor positioning で決める（`<dialog>` は top layer に出るので、舞台の位置を知る手段が要る）。
+   `<dialog>` に transform などを掛けないかぎり包含ブロックは画面のままなので、枠の外の要素を基準にできる。 */
 .speech-log {
-  /* 枠の上端＝帯（画面のナビ）の外寸とその下の隙間のすぐ下。
-     会話の画面の grid の上端と同じ（layout.module.css の .layout-grid と同じ変数を足す）。 */
-  --speech-log-top: calc(var(--screen-nav-height) + var(--screen-nav-rule) + var(--screen-nav-gap));
   position: fixed;
-  position-anchor: --speech-log-floor;
   inset: auto;
-  top: var(--speech-log-top);
-  left: calc(anchor(left) - var(--region-padding));
-  right: calc(anchor(right) - var(--region-padding));
-  bottom: calc(anchor(bottom) - var(--region-padding));
+  top: anchor(--speech-log-thread top);
+  left: calc(anchor(--speech-log-rows left) + var(--space-sm));
+  right: calc(anchor(--speech-log-rows right) + var(--space-sm));
+  bottom: anchor(--speech-log-rows bottom);
   box-sizing: border-box;
   width: auto;
   height: auto;
@@ -146,25 +80,11 @@
   padding: 0;
   border: 1px solid color-mix(in srgb, var(--rule) 70%, transparent);
   border-radius: var(--radius-lg);
-  /* 地はキャラビューと同じ ground（舞台がそのまま伸びた見え方）。
-     影はメインビューの surface の上に落ちるので、ground から作っても見える。 */
+  /* 地は不透明にし、下に重なるやり取りの流れの行を透かさない。 */
   background: var(--ground);
   color: var(--ink);
   box-shadow: var(--shadow-overlay);
   overflow: hidden;
-}
-/* 立ち絵の床。
-   キャラビューの `.character-layout` に重ね、中の `.portrait` はキャラビューと同じ規則（`--portrait-height` / `--portrait-drop` / max-width）で立つ。
-   足元を切るのも同じ overflow: hidden。 */
-.speech-log-floor {
-  position: fixed;
-  position-anchor: --speech-log-floor;
-  top: anchor(top);
-  right: anchor(right);
-  bottom: anchor(bottom);
-  left: anchor(left);
-  overflow: hidden;
-  pointer-events: none;
 }
 /* 上へ転がせることの印（読み込みの口ではない）。
    列の上端に貼り付き、下地を ground から透明へ抜いて、上へ流れていく吹き出しを溶かす（見本の上端 90px の溶かし）。
@@ -277,14 +197,7 @@
 }
 /* 狭い画面（760px 以下）。開くボタンは「ログ」ではなく入力欄の上の吹き出しで、ログは画面いっぱいに開く（立ち絵の床は出さない）。 */
 @media (max-width: 760px) {
-  .speech-log-open {
-    display: none;
-  }
-  .speech-log-floor {
-    visibility: hidden;
-  }
   .speech-log {
-    --speech-log-top: 0px;
     inset: 0;
     width: 100%;
     height: 100dvh;

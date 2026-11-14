@@ -87,7 +87,6 @@ export const STAGE_EXAMPLES: readonly ScreenPartExample[] = [
         open={false}
         onOpen={noop}
         onClose={noop}
-        portrait={undefined}
         speakerName="さくら"
         userCall="きみ"
         onToggleSpeech={noop}

@@ -1,9 +1,7 @@
 {
-  "character": [
-    { "tag": "section", "attributes": { "data-region": "character", "aria-label": "キャラクター" }, "children": [
-      { "tag": "div", "attributes": { "data-latest": "true", "data-reaction": "welcome" }, "children": [
-        "架空の書き直した挨拶、T-001 はどう？"
-      ] }
+  "stage-balloon": [
+    { "tag": "div", "attributes": { "data-latest": "true", "data-reaction": "welcome" }, "children": [
+      "架空の書き直した挨拶、T-001 はどう？"
     ] }
   ]
 }

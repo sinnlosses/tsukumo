@@ -1,7 +1,7 @@
 // 失敗で止まった紙の「残っているもの」の行を、計画の行と依頼の手順から作る。
 
 import type { TurnStep } from "../../../../../../../shared/session/turn-step.ts"
-import { narrateToolUse } from "../../../../../../domain/tool-narration.ts"
+import { narrateToolUse } from "../../../domain/tool-narration.ts"
 import type { WorkPlanRow } from "../../../domain/work-plan-row.ts"
 
 /**

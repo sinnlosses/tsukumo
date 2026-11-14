@@ -23,9 +23,9 @@ test.describe("機械の出来事 → キャラビューの反応", () => {
       scenario: "character-reaction-replaced",
       scene: "reaction-accepted",
       viewport: "wide",
-      domRoots: ["character"],
+      domRoots: ["stage-portrait", "stage-balloon", "stage-thread"],
     })
-    const character = room.page.locator('[data-region="character"]')
+    const character = room.page.locator('[data-slot="balloon"]')
 
     await room.waitForEvent("request")
     await character.locator('[data-latest="true"][data-writing="true"]').waitFor()
@@ -43,7 +43,7 @@ test.describe("機械の出来事 → キャラビューの反応", () => {
       scenario: "character-reaction-waiting-idle",
       scene: "waiting-idle",
       viewport: "wide",
-      domRoots: ["character"],
+      domRoots: ["stage-balloon", "stage-thread"],
     })
 
     await room.waitForEvent("turn-finished")
@@ -57,10 +57,9 @@ test.describe("機械の出来事 → キャラビューの反応", () => {
       scenario: "character-reaction-welcome-greeting",
       scene: "welcome-greeting",
       viewport: "wide",
-      domRoots: ["character"],
+      domRoots: ["stage-balloon", "stage-thread"],
     })
-    const character = room.page.locator('[data-region="character"]')
-    const latestBalloon = character.locator('[data-latest="true"]')
+    const latestBalloon = room.page.locator('[data-slot="balloon"] [data-latest="true"]')
 
     await room.waitForEvent("welcome-greeting-shown")
     await expectOneLoggedLine(room.page, "架空の挨拶。")
@@ -118,9 +117,6 @@ test.describe("立ち絵の右上の相づちの札 → キャラクターの返
       const chips = room.page.locator('[data-slot="aizuchi"] button')
 
       await room.waitForEvent(moment.wait)
-      const url = new URL(room.page.url())
-      url.searchParams.set("shell", "stage")
-      await room.page.goto(url.toString())
       await chips.first().waitFor()
       expect(await chips.allTextContents()).toEqual(moment.chips)
 
@@ -148,14 +144,17 @@ async function expectOneLoggedLine(page: Page, text: string): Promise<void> {
  * 時刻は `<time>` の `dateTime`。
  */
 async function balloonAndLog(page: Page): Promise<readonly [string, readonly string[]]> {
-  const character = page.locator('[data-region="character"]')
-  const balloon = await character
-    .locator('[data-latest="true"]')
+  const stage = page.locator('[data-region="stage"]')
+  const balloon = await stage
+    .locator('[data-slot="balloon"] [data-latest="true"]')
     .evaluate(
       (element) =>
         `${element.querySelector('[class*="balloon-text"]')?.textContent ?? ""}@${element.querySelector("time")?.getAttribute("datetime") ?? "-"}`,
     )
-  await character.getByRole("button", { name: "ログ", exact: true }).click()
+  // 舞台では「ログ」の口を出さず、流れの札が口の役を持つ。札は行が少ないと出ないので、隠れた口を直に押す。
+  await stage
+    .getByRole("button", { name: "ログ", exact: true, includeHidden: true })
+    .dispatchEvent("click")
   const log = page.locator("dialog[open]")
   await log.waitFor()
   const lines = await log

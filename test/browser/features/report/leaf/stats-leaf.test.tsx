@@ -1,5 +1,5 @@
 import { cleanup, render } from "@testing-library/react"
-import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest"
+import { afterEach, beforeAll, describe, expect, it } from "vitest"
 
 import {
   DirectLeaf,
@@ -16,13 +16,8 @@ beforeAll(async () => {
   await loadMarkdown()
 })
 
-beforeEach(() => {
-  document.documentElement.dataset["shell"] = "stage"
-})
-
 afterEach(() => {
   cleanup()
-  delete document.documentElement.dataset["shell"]
 })
 
 type StatsPart = Extract<A2uiReportComponent, { readonly component: "Stats" }>
@@ -79,21 +74,6 @@ function cardTextsOf(items: StatsPart["items"]): string[] {
 }
 
 describe("Stats の部品", () => {
-  it("旧い器では折れ線を前の数と同じ包みに置く旧い並びで描き、新しい器の包みを出さない", () => {
-    delete document.documentElement.dataset["shell"]
-    const container = renderStats([
-      item({ before: "12", value: "9", label: "架空の件数", series: [1, 2, 3] }),
-      item({ value: "1", label: "架空の一" }),
-      item({ value: "2", label: "架空の二" }),
-    ])
-
-    expect(container.querySelectorAll(`.${statsLeafClassNames.statDelta ?? "?"}`)).toHaveLength(0)
-    expect(container.querySelectorAll(`.${statsLeafClassNames.statAfter ?? "?"}`)).toHaveLength(0)
-    expect(
-      container.querySelectorAll(`.${statsLeafClassNames.statTrend ?? "?"} > svg`),
-    ).toHaveLength(1)
-  })
-
   it("入力の項目の数だけ札が残り、ラベルの字が全部描画に残る", () => {
     const container = renderStats(THREE)
     const text = container.textContent ?? ""

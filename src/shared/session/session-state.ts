@@ -184,7 +184,7 @@ export type SessionState = {
    */
   readonly chatMode: boolean
   /**
-   * 雑談のサイドバーの「最近の話題」に出す見出し（新しい順）。要約の本文ではなく、写しから取り出した見出しだけ。
+   * 雑談の欄外の「最近の話題」に出す見出し（新しい順）。要約の本文ではなく、写しから取り出した見出しだけ。
    * 源は `chat-topics-changed` だけで、届くたびに丸ごと置き換える。
    * 起こし直すと初期値の空へ戻り、雑談で起こしたときだけサーバから流れ直す（仕事のときは空のまま）。
    */
@@ -195,7 +195,7 @@ export type SessionState = {
    */
   readonly chatConsolidationHalt: ChatConsolidationHalt
   /**
-   * 雑談のサイドバーの「覚えていること」に出す一覧（`persona.md` の `## 覚えたこと`）。`- ` を外した文面で、古い→新しいの順。
+   * 雑談の欄外の「覚えていること」に出す一覧（`persona.md` の `## 覚えたこと`）。`- ` を外した文面で、古い→新しいの順。
    * 源は `remembered-lines-changed` だけ。起こし直すと初期値の空へ戻る。
    */
   readonly rememberedLines: readonly string[]

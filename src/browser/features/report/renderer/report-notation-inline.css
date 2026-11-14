@@ -105,33 +105,19 @@
     font-weight: 600;
     color: var(--ink-soft);
   }
-  /* 本文の列（63em）の右に 160px 以上空くときだけ、欄外注を本文の列の右の欄外注の列に出す（器はメインビューの本文）。
-   包みを2列の grid にし、欄外注の列は塊と同じ行に置いて上端を揃える（行は高いほうに伸び、次の塊に重ならない）。
-   grid の中では margin が相殺しないので、塊の上下のあきは包みが持ち、中の塊と欄外注の列の上下の margin は落とす。
-   欄外注の列を持つ塊は、表と図でも本文の列に収まる。欄外注の列は 1920 幅でも本文の列のすぐ右に置く。
+  /* 本文の列の幅より十分に広い器では、grid の中では margin が相殺しないので、塊の上下のあきは包みが持ち、中の塊の上下の margin は落とす。
    `body.css` の `:is(.detail-block, …) > .report-with-gutter > :is(p, ul, ol)` と同じ詳細度なので、勝たせるために末尾に置く。 */
   @container report-gutter (min-width: calc(63em + 160px)) {
     & .report-with-gutter {
-      display: grid;
-      grid-template-columns: minmax(0, 63em) minmax(0, 1fr);
-      column-gap: var(--space-3xl);
-      align-items: start;
       margin: var(--report-block-gap) 0;
     }
     & .report-with-gutter:has(> .report-captioned) {
       margin: var(--report-figure-gap) 0;
     }
     & .report-with-gutter > :is(*, p, ul, ol) {
-      grid-column: 1;
       margin-block: 0;
     }
-    & .report-with-gutter > .report-gutter {
-      grid-column: 2;
-      padding-left: var(--space-lg);
-      border-left: 1px solid var(--rule-soft);
-    }
     & .report-gutter-note-label {
-      display: block;
       margin: 0 0 var(--space-2xs);
     }
   }
@@ -157,10 +143,9 @@
     overflow-wrap: anywhere;
   }
 }
-/* 新しい器の紙は本文の列を 40em にするので、欄外注の列は 40em の右に 160px 以上空けば出す。
-   塊の上下のあきは塊自身の margin のまま残し（grid の中では相殺しないが、包みに持たせ直さない）、欄外注の列の負の margin だけを落とす。
-   63em の段の条件にも当たる幅では、本文の列の幅だけをこちらが上書きする。 */
-:root[data-shell="stage"] .detail-block {
+/* 本文の列（40em）の右に 160px 以上空くときだけ、欄外注を本文の列の右の欄外注の列に出す。
+   包みを2列の grid にし、欄外注の列は塊と同じ行に置いて上端を揃える（行は高いほうに伸び、次の塊に重ならない）。 */
+.detail-block {
   @container report-gutter (min-width: calc(40em + 160px)) {
     & .report-with-gutter {
       display: grid;
