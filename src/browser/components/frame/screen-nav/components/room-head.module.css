@@ -169,3 +169,64 @@
   background: rgb(255 255 255 / 0.16);
   color: var(--ink);
 }
+/* サイドバーの検索の入口。値は見本の `.side-search`。 */
+.room-side-search {
+  display: flex;
+  align-items: center;
+  gap: var(--inline-control);
+  width: 100%;
+  min-height: 34px;
+  padding: 0 var(--inline-control);
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: rgb(0 0 0 / 0.28);
+  color: var(--ink-quiet);
+  font-size: var(--font-secondary);
+  cursor: pointer;
+}
+.room-side-search span {
+  flex: 1 1 auto;
+  text-align: left;
+}
+.room-side-search:hover,
+.room-side-search[aria-expanded="true"] {
+  background: rgb(0 0 0 / 0.4);
+  color: var(--ink);
+}
+/* サイドバーの下の入口の行。折り返さず、足りない幅は字を詰める。 */
+.room-side-gates {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: var(--inline-tight);
+  min-width: 0;
+}
+.room-side-gate {
+  display: inline-flex;
+  flex: 0 1 auto;
+  align-items: center;
+  gap: var(--inline-tight);
+  min-width: 0;
+  min-height: 28px;
+  padding: 0 var(--inline-control);
+  border-radius: var(--radius-md);
+  color: var(--ink-soft);
+  font-size: var(--font-secondary);
+  line-height: 1.4;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.room-side-gate i {
+  width: 28px;
+  height: 4px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(
+    90deg,
+    var(--ink-soft) var(--room-tools-meter-fill),
+    rgb(255 255 255 / 0.2) var(--room-tools-meter-fill)
+  );
+}
+.room-side-gate:hover,
+.room-side-gate[aria-current="page"] {
+  background: rgb(255 255 255 / 0.12);
+  color: var(--ink);
+}

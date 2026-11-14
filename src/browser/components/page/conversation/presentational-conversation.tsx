@@ -1,9 +1,10 @@
-// 会話の画面の器「舞台と紙」。舞台に立ち絵、紙にメインビュー、欄外に受け取ったもの（雑談では覚えていることと最近の話題）、紙の下端に入力欄を差す。
+// 会話の画面の器「舞台と紙」。舞台に立ち絵、紙にメインビュー、右端のサイドバーの中段に受け取ったもの（雑談では覚えていることと最近の話題）、紙の下端に入力欄を差す。
 //
 // 雑談モードではメインビューを雑談ビューに差し替える。
 
 import type { ReactElement, ReactNode } from "react"
 
+import { Sidebar } from "../../frame/sidebar/sidebar.tsx"
 import { CharacterView } from "./components/character-view/character-view.tsx"
 import { ChatMemory } from "./components/chat-memory/chat-memory.tsx"
 import { ChatView } from "./components/chat-view/chat-view.tsx"
@@ -17,16 +18,18 @@ import {
   StageActivity,
   WorkPlanDockLamps,
 } from "./components/main-view/main-view.tsx"
-import { PaperDesk } from "./components/paper-desk/paper-desk.tsx"
+import { PaperDesk, PaperMargin } from "./components/paper-desk/paper-desk.tsx"
 import { RequestedTaskBoard } from "./components/requested-task-board/requested-task-board.tsx"
 import { Stage, type StagePosture } from "./components/stage/stage.tsx"
 
 /**
  * 器に差し込む、ほかの画面の部品の中身。
- * 欄外に置くやり取りの並びと、舞台の左上に置く部屋の頭、舞台の器の右上に置く入口の群は、画面の登録表から受け取る。
+ * サイドバーの中段に置くやり取りの並び・検索の入口・下の入口の行と、舞台の左上に置く部屋の頭、迎えるでだけ舞台の器の右上に置く入口の群は、画面の登録表から受け取る。
  */
 export type ConversationShell = {
   readonly margin: ReactNode
+  readonly sidebarSearch: ReactNode
+  readonly sidebarGates: ReactNode
   readonly head: ReactNode
   readonly tools: ReactNode
   readonly today: ReactNode
@@ -84,14 +87,22 @@ export function PresentationalConversation(props: PresentationalConversationProp
                 <MainView outline="none" inquiry={props.asking ? "none" : "inline"} />
               )
             }
-            margin={
-              props.chatMode
-                ? {
-                    title: CHAT_MARGIN_TITLE,
-                    titleShown: false,
-                    body: <ChatMemory />,
-                  }
-                : { title: MARGIN_TITLE, titleShown: true, body: props.shell.margin }
+            sidebar={
+              <Sidebar
+                search={props.shell.sidebarSearch}
+                body={
+                  props.chatMode ? (
+                    <PaperMargin
+                      title={CHAT_MARGIN_TITLE}
+                      titleShown={false}
+                      body={<ChatMemory />}
+                    />
+                  ) : (
+                    <PaperMargin title={MARGIN_TITLE} titleShown body={props.shell.margin} />
+                  )
+                }
+                foot={props.shell.sidebarGates}
+              />
             }
             dock={
               <Dispatch

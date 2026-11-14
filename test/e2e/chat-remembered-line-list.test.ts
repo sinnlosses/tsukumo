@@ -1,6 +1,6 @@
 import { expect, test } from "./room-fixture.ts"
 
-// 雑談の欄外の「覚えていること」と「最近の話題」（docs/architecture/screen-design/chat-mode-sidebar-and-speech.md）。
+// 雑談のサイドバーの「覚えていること」と「最近の話題」（docs/architecture/screen-design/chat-mode-sidebar-and-speech.md）。
 // 場面 `chat-remembered-lines` は、「覚えていること」に短い1行とチップの表示幅を超える長い1行を、
 // 「最近の話題」に短い話題と、空白を含まない長い語（日本語・英字）の話題を載せる。
 //
@@ -13,7 +13,7 @@ const ELAPSED_MS = 60_000
 const SHORT_LINE = "架空の1行"
 const LONG_LINE = "架空の長い1行".repeat(5)
 
-test.describe("雑談の欄外の「覚えていること」", () => {
+test.describe("雑談のサイドバーの「覚えていること」", () => {
   test("編集で × が出て、キャンセルは何も送らず、確認の「消す」で送る", async ({ run }) => {
     const room = await run.open({
       scenario: "chat-remembered-lines-edit",
@@ -33,20 +33,20 @@ test.describe("雑談の欄外の「覚えていること」", () => {
     await room.settleAndMatchPickedWithMessages(ELAPSED_MS)
   })
 
-  test("長い話題と長い覚えたことを出しても、欄外と2つの区画の入れ物は横に転がらない", async ({
+  test("長い話題と長い覚えたことを出しても、サイドバーと2つの区画の入れ物は横に転がらない", async ({
     run,
   }) => {
     const room = await run.open({
       scenario: "chat-sidebar-no-horizontal-scroll",
       scene: "chat-remembered-lines",
       viewport: "wide",
-      domRoots: ["margin"],
+      domRoots: ["sidebar"],
     })
 
     await room.page.getByRole("list", { name: "最近の話題" }).waitFor()
     const overflows = await room.page.evaluate(() => {
-      const body = document.querySelector('[data-region="margin"]')
-      if (body === null) throw new Error("雑談の欄外が無い")
+      const body = document.querySelector('[data-region="sidebar"]')
+      if (body === null) throw new Error("雑談のサイドバーが無い")
       const containers = body.querySelectorAll(
         '[class*="sidebar-block_"], [class*="sidebar-block-head_"], [class*="sidebar-block-scroll_"]',
       )

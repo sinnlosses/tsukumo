@@ -6,6 +6,8 @@ import {
   RoomHeadScope,
   RoomHeadTools,
   RoomNarrowHead,
+  RoomSidebarGates,
+  RoomSidebarSearch,
 } from "../../../../../src/browser/components/frame/screen-nav/room-head.tsx"
 import type { TaskSummaryItem } from "../../../../../src/shared/repository/task-summary.ts"
 import {
@@ -104,6 +106,34 @@ describe("部屋の頭", () => {
 
     expect(calls).toEqual([{ procedure: "session.setChatMode", chat: true }])
     expect(screen.getByRole("radio", { name: "仕事" }).getAttribute("aria-checked")).toBe("true")
+  })
+})
+
+describe("サイドバーの入口", () => {
+  it("検索の入口を押すと探すが開き、入口の行には文脈と3つの紙の <a> が並ぶ", () => {
+    putSession({ ...INITIAL_SESSION_STATE, tasks: { kind: "no-beads" } }, () => {})
+    render(
+      <RoomHeadScope>
+        <RoomSidebarSearch />
+        <RoomSidebarGates />
+      </RoomHeadScope>,
+      { wrapper: queryClientWrapper() },
+    )
+
+    const links = within(screen.getByRole("navigation", { name: "ほかの画面" })).getAllByRole(
+      "link",
+    )
+    expect(links.map((link) => link.getAttribute("href"))).toEqual([
+      "#token-usage",
+      "#achievement",
+      "#character",
+      "#settings",
+    ])
+
+    const search = screen.getByRole("button", { name: /^検索/ })
+    expect(search.getAttribute("aria-expanded")).toBe("false")
+    fireEvent.click(search)
+    expect(search.getAttribute("aria-expanded")).toBe("true")
   })
 })
 

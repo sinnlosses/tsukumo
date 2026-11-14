@@ -126,7 +126,7 @@ test.describe("お伺い", () => {
     const room = await run.open({
       scenario: "inquiry-question-brief-wide",
       scene: "question-brief",
-      viewport: "wide",
+      viewport: "full-hd",
       domRoots: ["dock"],
     })
     const inquiry = inquiryOf(room.page)

@@ -122,6 +122,57 @@ export function PresentationalRoomNarrowHead(
   )
 }
 
+/** サイドバーの頭に置く検索の入口。押すと探すが開く。 */
+export function PresentationalRoomSidebarSearch(props: Pick<RoomHeadView, "search">): ReactElement {
+  return (
+    <button
+      type="button"
+      className={styles["room-side-search"]}
+      aria-haspopup="dialog"
+      aria-expanded={props.search.open}
+      onClick={props.search.onOpen}
+    >
+      <SearchIcon />
+      <span>検索</span>
+      <kbd>⌘K</kbd>
+    </button>
+  )
+}
+
+/** サイドバーの下の入口の行。文脈 n%・ほかの画面の入口を、右上の群と同じ <a href> で並べる。 */
+export function PresentationalRoomSidebarGates(
+  props: Pick<RoomHeadView, "context" | "gates">,
+): ReactElement {
+  return (
+    <nav className={styles["room-side-gates"]} aria-label="ほかの画面">
+      <a
+        className={styles["room-side-gate"]}
+        href={props.context.href}
+        aria-current={props.context.current ? "page" : undefined}
+        aria-busy={props.context.busy}
+      >
+        <TokenIcon />
+        {props.context.label}
+        <i
+          aria-hidden="true"
+          style={{ "--room-tools-meter-fill": `${String(props.context.fill)}%` }}
+        />
+      </a>
+      {props.gates.map((gate) => (
+        <a
+          key={gate.screen}
+          className={styles["room-side-gate"]}
+          href={gate.href}
+          aria-current={gate.current ? "page" : undefined}
+        >
+          {GATE_ICONS[gate.screen]}
+          {gate.label}
+        </a>
+      ))}
+    </nav>
+  )
+}
+
 export function PresentationalRoomTools(
   props: Pick<RoomHeadView, "context" | "gates" | "search">,
 ): ReactElement {

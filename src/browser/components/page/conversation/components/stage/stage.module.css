@@ -1,7 +1,7 @@
 /* 新しい器「舞台と紙」の外枠。値は見本 `docs/history/mockup/ui-rebuild-2026-11-12/whole.html` の `.A`・`.scene`・`.A-stage`・`.A-right`。
    画面の全面を覆い、body の縁の余白（`--page-padding`）を受けない。 */
 .stage-shell {
-  --stage-width: clamp(300px, 26vw, 600px);
+  --stage-width: 328px;
   --stage-desk-top: 16px;
   position: fixed;
   inset: 0;
@@ -61,22 +61,14 @@
   z-index: 2;
   background: rgb(12 10 16 / 0.52);
 }
-/* 右上の入口の群。働く・渡すでは欄外の列の幅（1400px 幅で欄外の列が 240px、右の余白が 22px）に収め、折り返す。
-   欄外の列は `--stage-tools-room` のぶん上端を空ける。迎えるでは右の地の上に1行で並べる。 */
+/* 迎えるだけに出る右上の入口の群。右の地の上に1行で並べる。 */
 .stage-tools {
-  --stage-tools-width: 216px;
   position: absolute;
   top: 12px;
   right: 22px;
   z-index: 3;
   display: flex;
   justify-content: flex-end;
-  max-width: min(var(--stage-tools-width), calc(100% - var(--stage-width) - 22px));
-}
-.stage-shell:not([data-posture="greet"]) {
-  --stage-tools-room: 64px;
-}
-.stage-shell[data-posture="greet"] .stage-tools {
   max-width: calc(100% - var(--stage-width) - 44px);
 }
 /* 狭い幅の頭の置き場。広い幅では升目に入れない（中身の側も隠す）。 */

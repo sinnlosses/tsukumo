@@ -69,7 +69,7 @@ ${DOM_TREE_HELPERS_SCRIPT}
 /** 部分木の名前から根のセレクタへの表。`class` では当てない（見た目の直しで外れる）。 */
 const DOM_ROOT_SELECTORS = {
   paper: '[data-region="paper"]',
-  margin: '[data-region="margin"]',
+  sidebar: '[data-region="sidebar"]',
   dock: '[data-region="dock"]',
   "room-head": '[data-region="room-head"]',
   "stage-balloon": '[data-slot="balloon"]',

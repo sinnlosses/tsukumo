@@ -5,7 +5,7 @@ import { nextAnimationFrame } from "./scenario-wait.ts"
 // `report` ツールの呼び出しが紙の Markdown へどう出るかを、疑似セッションの場面で確かめる:
 // `notation`（記法の一覧）、`report-chart`（グラフの塊。ベンダのスクリプトが描く）、
 // `a2ui-parameter-sample`（つまみを振ると数・文・図の強調が変わり、開き直すと初期値に戻る）、
-// `turn-outline`（欄外のやり取りと結果の印）、
+// `turn-outline`（サイドバーのやり取りと結果の印）、
 // `reading-position`（別のやり取りへ移って戻ると読んでいた見出しの位置から見える）。
 
 /** 撮るときの経過（凍らせた瞬間から）。「何秒前」の類いをこの値で揃える。 */
@@ -274,18 +274,18 @@ test.describe("report → メインビュー", () => {
     await ask.waitFor({ state: "hidden" })
   })
 
-  test("欄外にやり取りが結果の印つきで並び、やり取りの行で Enter を押すとそのやり取りへ移る", async ({
+  test("サイドバーにやり取りが結果の印つきで並び、やり取りの行で Enter を押すとそのやり取りへ移る", async ({
     run,
   }) => {
     const room = await run.open({
       scenario: "report-turn-outline",
       scene: "turn-outline",
       viewport: "wide",
-      domRoots: ["margin"],
+      domRoots: ["sidebar"],
     })
 
     await room.waitForEvent("turn-finished", 5)
-    const margin = room.page.locator('[data-region="margin"]')
+    const margin = room.page.locator('[data-region="sidebar"]')
     await margin.locator('button[aria-current="true"]').waitFor()
     await room.settleAndMatchPicked(ELAPSED_MS)
 

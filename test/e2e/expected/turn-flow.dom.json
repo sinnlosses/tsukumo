@@ -1568,61 +1568,16 @@
             {
               "tag": "aside",
               "attributes": {
-                "data-region": "margin",
-                "aria-label": "この部屋のやり取り"
+                "data-region": "sidebar",
+                "aria-label": "サイドバー"
               },
               "children": [
                 {
-                  "tag": "h2",
-                  "children": [
-                    "この部屋のやり取り"
-                  ]
-                },
-                {
-                  "tag": "ol",
-                  "children": [
-                    {
-                      "tag": "li",
-                      "children": [
-                        {
-                          "tag": "button",
-                          "attributes": {
-                            "data-result": "done",
-                            "aria-current": "true",
-                            "aria-label": "完了: report ツールの描き方を確かめたい（架空の依頼）",
-                            "type": "button"
-                          },
-                          "children": [
-                            {
-                              "tag": "span",
-                              "attributes": {
-                                "aria-hidden": "true"
-                              },
-                              "children": [
-                                "✓"
-                              ]
-                            },
-                            "report ツールの描き方を確かめたい（架空の依頼）",
-                            "10:00 0秒"
-                          ]
-                        }
-                      ]
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "tag": "div",
-              "attributes": {
-                "data-region": "room-tools"
-              },
-              "children": [
-                {
-                  "tag": "a",
+                  "tag": "button",
                   "attributes": {
-                    "aria-busy": "false",
-                    "href": "/?t=<token>#token-usage"
+                    "aria-haspopup": "dialog",
+                    "aria-expanded": "false",
+                    "type": "button"
                   },
                   "children": [
                     {
@@ -1632,12 +1587,58 @@
                         "data-color": "inherit"
                       }
                     },
-                    "文脈 61%",
+                    "検索",
                     {
-                      "tag": "i",
-                      "attributes": {
-                        "aria-hidden": "true"
-                      }
+                      "tag": "kbd",
+                      "children": [
+                        "⌘K"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "tag": "section",
+                  "attributes": {
+                    "aria-label": "この部屋のやり取り"
+                  },
+                  "children": [
+                    {
+                      "tag": "h2",
+                      "children": [
+                        "この部屋のやり取り"
+                      ]
+                    },
+                    {
+                      "tag": "ol",
+                      "children": [
+                        {
+                          "tag": "li",
+                          "children": [
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "data-result": "done",
+                                "aria-current": "true",
+                                "aria-label": "完了: report ツールの描き方を確かめたい（架空の依頼）",
+                                "type": "button"
+                              },
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  },
+                                  "children": [
+                                    "✓"
+                                  ]
+                                },
+                                "report ツールの描き方を確かめたい（架空の依頼）",
+                                "10:00 0秒"
+                              ]
+                            }
+                          ]
+                        }
+                      ]
                     }
                   ]
                 },
@@ -1647,6 +1648,29 @@
                     "aria-label": "ほかの画面"
                   },
                   "children": [
+                    {
+                      "tag": "a",
+                      "attributes": {
+                        "aria-busy": "false",
+                        "href": "/?t=<token>#token-usage"
+                      },
+                      "children": [
+                        {
+                          "tag": "svg",
+                          "attributes": {
+                            "data-size": "sm",
+                            "data-color": "inherit"
+                          }
+                        },
+                        "文脈 61%",
+                        {
+                          "tag": "i",
+                          "attributes": {
+                            "aria-hidden": "true"
+                          }
+                        }
+                      ]
+                    },
                     {
                       "tag": "a",
                       "attributes": {
@@ -1693,30 +1717,6 @@
                           }
                         },
                         "設定"
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "tag": "button",
-                  "attributes": {
-                    "aria-haspopup": "dialog",
-                    "aria-expanded": "false",
-                    "type": "button"
-                  },
-                  "children": [
-                    {
-                      "tag": "svg",
-                      "attributes": {
-                        "data-size": "sm",
-                        "data-color": "inherit"
-                      }
-                    },
-                    "探す",
-                    {
-                      "tag": "kbd",
-                      "children": [
-                        "⌘K"
                       ]
                     }
                   ]

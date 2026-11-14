@@ -1,6 +1,6 @@
 {
-  "margin": [
-    { "tag": "aside", "attributes": { "data-region": "margin", "aria-label": "この部屋のやり取り" }, "children": [
+  "sidebar": [
+    { "tag": "aside", "attributes": { "data-region": "sidebar", "aria-label": "サイドバー" }, "children": [
       { "tag": "button", "attributes": { "data-result": "done", "aria-label": "完了: 指示をタスクにする（架空の依頼）" } },
       { "tag": "button", "attributes": { "data-result": "failed", "aria-label": "失敗: 打ち直して通す（架空の依頼）" } },
       { "tag": "button", "attributes": { "data-result": "awaiting-answer" } },

@@ -1,0 +1,30 @@
+/* 右端の常設サイドバー。値は見本 `docs/history/mockup/ui-overhaul-2026-11-14/final.html` の `.side`・`.side-search`・`.side-foot`。
+   幅は 340px で、中段だけが転がる。外の余白は置き場（親）が決める。 */
+.sidebar {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  width: 340px;
+  min-height: 0;
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  background: rgb(33 30 41 / 0.88);
+  box-shadow: 0 0 0 1px var(--rule-quiet);
+  backdrop-filter: blur(18px);
+}
+.sidebar-search {
+  flex: none;
+  padding: var(--inset-card) var(--inset-card) 0;
+}
+.sidebar-body {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+.sidebar-foot {
+  flex: none;
+  padding: var(--inset-control) var(--inset-card);
+  border-top: 1px solid var(--rule-quiet);
+}

@@ -7,6 +7,8 @@ import {
   RoomHeadScope,
   RoomHeadTools,
   RoomNarrowHead,
+  RoomSidebarGates,
+  RoomSidebarSearch,
 } from "../frame/screen-nav/room-head.tsx"
 import { SettingsScreen } from "../frame/screen-nav/settings-screen.tsx"
 import { TodayLamp } from "../frame/screen-nav/today-lamp.tsx"
@@ -37,6 +39,8 @@ export const LAYOUT_SCREENS = {
       <Conversation
         shell={{
           margin: <TurnList />,
+          sidebarSearch: <RoomSidebarSearch />,
+          sidebarGates: <RoomSidebarGates />,
           head: <RoomHead />,
           tools: <RoomHeadTools />,
           today: <TodayLamp />,

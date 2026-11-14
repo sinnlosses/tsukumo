@@ -1,5 +1,5 @@
 // 新しい器「舞台と紙」の、舞台の右の場所。
-// 働く・渡すでは、中央に紙、紙の下端に浮く入力欄、右に欄外を置く。迎えるでは紙も欄外も出さず、迎えの一言・始め方・入力欄を地の上に下寄せで並べ、入力欄は働くと同じ下端に置く。
+// 働く・渡すでは、中央に紙、紙の下端に浮く入力欄、右端にサイドバーを置く。迎えるでは紙も欄外も出さず、迎えの一言・始め方・入力欄を地の上に下寄せで並べ、入力欄は働くと同じ下端に置く。
 // 場所は `data-region` でも名乗る（class 名はハッシュ化されるので、外から場所を指す口はこちらを使う）。
 // ここから他の機能を import しない（中身は props で受ける）。
 
@@ -13,12 +13,8 @@ type PaperDeskProps = {
   /** 迎えるでだけ、入力欄の上に出す迎えの一言。 */
   readonly greeting: ReactNode
   readonly paper: ReactNode
-  /** 欄外。`titleShown` が偽なら題は名乗り（`aria-label`）だけにし、見出しを中身の区画に任せる。 */
-  readonly margin: {
-    readonly title: string
-    readonly titleShown: boolean
-    readonly body: ReactNode
-  }
+  /** 働く・渡すで紙の右（3列目）に置くサイドバー。迎えるでは出さない。 */
+  readonly sidebar: ReactNode
   readonly dock: ReactNode
   /** 尋ねるあいだだけ渡す。入力欄の場所の上にお伺いを出し、紙の中身を引かせる。 */
   readonly inquiry?: ReactNode
@@ -56,16 +52,24 @@ export function PaperDesk(props: PaperDeskProps): ReactElement {
           {props.dock}
         </section>
       </div>
-      <aside
-        className={styles["paper-margin"]}
-        data-region="margin"
-        aria-label={props.margin.title}
-      >
-        {props.margin.titleShown && (
-          <h2 className={styles["paper-margin-title"]}>{props.margin.title}</h2>
-        )}
-        {props.margin.body}
-      </aside>
+      <div className={styles["paper-sidebar"]}>{props.sidebar}</div>
     </>
+  )
+}
+
+type PaperMarginProps = {
+  readonly title: string
+  /** 偽なら題は名乗り（`aria-label`）だけにし、見出しを中身の区画に任せる。 */
+  readonly titleShown: boolean
+  readonly body: ReactNode
+}
+
+/** サイドバーの中段に置く、受け取ったものの並び。 */
+export function PaperMargin(props: PaperMarginProps): ReactElement {
+  return (
+    <section className={styles["paper-margin"]} aria-label={props.title}>
+      {props.titleShown && <h2 className={styles["paper-margin-title"]}>{props.title}</h2>}
+      {props.body}
+    </section>
   )
 }

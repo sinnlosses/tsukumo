@@ -13,7 +13,7 @@ function desk(posture: "greet" | "work" | "deliver", withInquiry: boolean) {
       posture={posture}
       greeting={<p>迎えの一言</p>}
       paper={<p>紙の本文</p>}
-      margin={{ title: "欄外", titleShown: true, body: <p>欄外の中身</p> }}
+      sidebar={<aside data-region="sidebar">サイドバーの中身</aside>}
       dock={<p>入力欄の中身</p>}
       inquiry={withInquiry ? <p>架空の選択肢</p> : undefined}
     />
@@ -49,6 +49,24 @@ describe("PaperDesk", () => {
     )
     expect(body).not.toBeNull()
     expect(dock).not.toBeNull()
+  })
+
+  it.each(["work", "deliver"] as const)(
+    "%s の姿勢では、紙と入力欄のあとにサイドバーを3列目に置き、欄外は置かない",
+    (posture) => {
+      render(desk(posture, false))
+
+      const regions = [...document.querySelectorAll("[data-region]")].map((node) =>
+        node.getAttribute("data-region"),
+      )
+      expect(regions).toEqual(["paper", "dock", "sidebar"])
+    },
+  )
+
+  it("迎える姿勢ではサイドバーを置かない", () => {
+    render(desk("greet", false))
+
+    expect(document.querySelector('[data-region="sidebar"]')).toBeNull()
   })
 
   it("尋ねていなければ選択肢を出さない", () => {

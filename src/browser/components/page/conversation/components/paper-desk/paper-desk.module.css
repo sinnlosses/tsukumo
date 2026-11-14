@@ -1,6 +1,5 @@
 /* 舞台の右の場所（紙・浮く入力欄・欄外）。値は見本 `docs/history/mockup/ui-rebuild-2026-11-12/whole.html` の `.A-sheet`・`.paper`・`.dock`・`.A-margin`。 */
 .paper-sheet {
-  --paper-max-width: 880px;
   --paper-fade-height: 110px;
   /* 紙の右端の、転がす棒の幅。下端の溶かしをここに掛けない。 */
   --paper-scrollbar-room: 12px;
@@ -8,7 +7,7 @@
   --paper-dock-bottom: 16px;
   position: relative;
   display: flex;
-  flex: 0 1 var(--paper-max-width);
+  flex: 1 1 0;
   min-width: 0;
 }
 /* 中身のメインビューは、札の内側に本文の余白を持つ。紙の余白は、見本の余白からその分を引いた残り。
@@ -65,17 +64,18 @@
     0 0 0 1.5px color-mix(in srgb, var(--state-warn) 70%, transparent),
     var(--shadow-raised);
 }
+/* 3列目。サイドバーの枠（幅 340px）を舞台の右端に置き、外の余白を持つ。 */
+.paper-sidebar {
+  display: flex;
+  flex: none;
+  min-height: 0;
+  padding: var(--inset-card) var(--inset-card) 0;
+}
 .paper-margin {
-  --paper-margin-max-width: 260px;
-  --paper-margin-min-width: 190px;
-  --paper-margin-padding: calc(42px + var(--stage-tools-room, 0px)) 22px 0 28px;
-  flex: 0 1 var(--paper-margin-max-width);
   display: flex;
   flex-direction: column;
   gap: var(--stack-block);
-  min-width: var(--paper-margin-min-width);
-  padding: var(--paper-margin-padding);
-  overflow-y: auto;
+  padding: var(--inset-card);
 }
 /* 迎える。紙を出さず、舞台の右の地に入力欄と始め方を縦に並べる。値は見本の `.A-home`。 */
 .paper-home {
@@ -124,7 +124,7 @@
     display: contents;
   }
   .paper-sheet::after,
-  .paper-margin {
+  .paper-sidebar {
     display: none;
   }
   .paper {
