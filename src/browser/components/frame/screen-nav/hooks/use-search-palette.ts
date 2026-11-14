@@ -1,5 +1,5 @@
 // 探す（⌘K）のロジック。開閉と打った字を持ち、出どころごとの項目を集めて絞る。
-// ⌘K（Windows などでは Ctrl+K）はどこにフォーカスがあっても開閉する。開閉は URL に載せない。
+// ⌘K（Mac 以外では Ctrl+K。Mac の Ctrl+K は OS の編集コマンドなので受けない）はどこにフォーカスがあっても開閉する。開閉は URL に載せない。
 //
 // 出どころは3つ。画面（重ねる紙の5枚・仕事と雑談の切り替え・セッションの切り替え）、頼めるタスク（タスクの一覧）、
 // コマンド（入力欄の `/` 補完と同じ候補）。
@@ -14,6 +14,7 @@ import { useEventListener } from "../../../../hooks/use-event-listener.ts"
 import { SHEET_TITLES } from "../../../../stores/location-hash.ts"
 import { navigateTo } from "../../../../stores/screen.tsx"
 import { useSession, useTurnRunning } from "../../../../stores/session.ts"
+import { isMacPlatform, matchesPrimaryShortcut } from "../../../../utils/primary-shortcut.ts"
 import { matchingSearchEntries, type SearchEntry } from "../domain/search-entry.ts"
 
 /** 探すの材料のうち、部屋の頭と分け合うもの。 */
@@ -58,7 +59,7 @@ export function useSearchPalette(sources: SearchSources): SearchPaletteView {
   }
 
   useEventListener(document, "keydown", (event) => {
-    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+    if (matchesPrimaryShortcut(event, { code: "KeyK" }, isMacPlatform())) {
       event.preventDefault()
       if (open) {
         close()

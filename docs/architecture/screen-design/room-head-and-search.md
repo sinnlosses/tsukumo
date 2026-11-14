@@ -114,7 +114,7 @@
 
 ## 探す（⌘K）
 
-**サイドバーの検索の入口か ⌘K（Windows などでは Ctrl+K）で、画面の上の方に浮かぶ1枚の一覧を開く**（`SearchPalette`。`<Dialog>` の `backdrop="dim"`）。⌘K はどこにフォーカスがあっても開閉する。開閉は URL に載せない（`location-hash.ts` の「新しく作るダイアログは URL を持たない」）。
+**サイドバーの検索の入口か ⌘K（Mac 以外では Ctrl+K）で、画面の上の方に浮かぶ1枚の一覧を開く**（`SearchPalette`。`<Dialog>` の `backdrop="dim"`）。⌘K はどこにフォーカスがあっても開閉する。Mac では ⌘ だけを受け、Ctrl+K は OS の編集コマンド（行末までの切り取り）と日本語入力のキーなので受けずに OS へ渡す（⌘+Ctrl+K も Alt・Shift が余分に付いた組合せも受けない）。IME の変換中は働かない。判定は `utils/primary-shortcut.ts` の `matchesPrimaryShortcut`。開閉は URL に載せない（`location-hash.ts` の「新しく作るダイアログは URL を持たない」）。
 
 - 上に探す欄（「画面・タスク・コマンドを探す」）、下に群ごとの一覧。↑↓ と Enter で選び、Esc と覆いの押下で閉じる。当てはまる項目が無ければ「当てはまるものが無い」
 - **絞り方**: 空白で区切った語がどれも、項目の名前か添える語に含まれる項目を残す（大文字と小文字は区別しない。`domain/search-entry.ts` の `matchingSearchEntries`）。並びは群の順にそろえ、群の中は出どころの順のまま

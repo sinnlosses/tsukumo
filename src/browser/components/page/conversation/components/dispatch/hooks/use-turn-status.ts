@@ -16,6 +16,7 @@ import type { TurnProgress } from "../../../../../../../shared/session/turn-prog
 import { useEventListener } from "../../../../../../hooks/use-event-listener.ts"
 import { useNowWhile } from "../../../../../../stores/clock.ts"
 import { useSession } from "../../../../../../stores/session.ts"
+import { isMacPlatform, matchesPrimaryShortcut } from "../../../../../../utils/primary-shortcut.ts"
 import {
   apiRetryNotice,
   turnFailureDetail,
@@ -34,7 +35,7 @@ const INTERRUPT_LABEL = "中断"
 const STOP_LABEL = "止める"
 /** 新しい器の入力欄で作業を止めるキー（⌘. か Ctrl+.）の札。 */
 const STOP_KEY_HINT = "⌘."
-const STOP_KEY = "."
+const STOP_KEY = { key: "." } as const
 const WORK_SEND_TITLE = "⌘⏎ で送る（委譲中は補足メッセージ）· ⌘⇧⏎ で新しい依頼として送る"
 const CHAT_SEND_TITLE = "⌘⏎ で送る"
 const ANSWER_TITLE = "⌘⏎ で答える"
@@ -120,7 +121,7 @@ export function useTurnStatus(place: TurnStatusPlace): TurnStatusModel {
     window,
     "keydown",
     (event) => {
-      if ((event.metaKey || event.ctrlKey) && event.key === STOP_KEY && !event.isComposing) {
+      if (matchesPrimaryShortcut(event, STOP_KEY, isMacPlatform())) {
         event.preventDefault()
         interrupt()
       }

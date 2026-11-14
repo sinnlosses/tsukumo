@@ -28,6 +28,30 @@ test.describe("入力欄から送る", () => {
     await room.settleAndMatchPickedWithMessages(ELAPSED_MS)
   })
 
+  test("Mac では入力欄の行頭の Ctrl+K で探すが開かずに行末まで消え、⌘K では探すが開く", async ({
+    run,
+  }) => {
+    test.skip(process.platform !== "darwin", "Ctrl+K を OS の編集コマンドに写すのは macOS だけ")
+    const room = await run.open({
+      scenario: "input-dispatch",
+      scene: "none",
+      viewport: "wide",
+      domRoots: [],
+    })
+
+    const textArea = room.page.locator("textarea")
+    await textArea.fill("行末まで消す場面（架空の依頼）")
+    await textArea.focus()
+    await room.page.keyboard.press("Home")
+    await room.page.keyboard.press("Control+K")
+
+    await expect(textArea).toHaveValue("")
+    expect(await room.page.getByRole("combobox", { name: "探す" }).count()).toBe(0)
+
+    await room.page.keyboard.press("Meta+K")
+    await expect(room.page.getByRole("combobox", { name: "探す" })).toBeVisible()
+  })
+
   test("入力欄に打っている最中に Esc を押すと、フォーカスが入力欄から外れる", async ({ run }) => {
     const room = await run.open({
       scenario: "input-dispatch",

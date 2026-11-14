@@ -17,6 +17,12 @@ import { knownTaskSummary } from "../../../../fixture/session-state.ts"
 import { queryClientWrapper } from "../../../query-client.tsx"
 import { putSession, type SentCommand } from "../../../session-store.ts"
 
+const macPlatform = vi.hoisted(() => ({ isMac: true }))
+vi.mock("../../../../../src/browser/utils/primary-shortcut.ts", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  isMacPlatform: () => macPlatform.isMac,
+}))
+
 // Astryx の2つ切り替えの動きは Web Animations を使い、happy-dom は取り外しの cancel を未処理の拒否にする。cancel を何もしない形にして避ける。
 beforeEach(() => {
   vi.spyOn(Animation.prototype, "cancel").mockImplementation(() => {})
@@ -218,7 +224,7 @@ describe("探す", () => {
   it("⌘K で開き、字で絞って ↑ ↓ と Enter で選ぶと、その画面の紙を開いて閉じる", async () => {
     renderRoomHead({ tasks: { kind: "no-beads" } }, () => {})
 
-    fireEvent.keyDown(document, { key: "k", metaKey: true })
+    fireEvent.keyDown(document, { key: "k", code: "KeyK", metaKey: true })
     const field = screen.getByRole("combobox", { name: "探す", hidden: true })
     fireEvent.change(field, { target: { value: "設定" } })
     expect(
@@ -232,6 +238,27 @@ describe("探す", () => {
 
     expect(window.location.hash).toBe("#settings")
     expect(screen.queryByRole("combobox", { name: "探す", hidden: true })).toBeNull()
+  })
+
+  it("Mac では Ctrl+K と変換中の ⌘K で開かず、Mac 以外では Ctrl+K で開く", () => {
+    renderRoomHead({ tasks: { kind: "no-beads" } }, () => {})
+    const isOpen = (): boolean =>
+      screen.queryByRole("combobox", { name: "探す", hidden: true }) !== null
+
+    fireEvent.keyDown(document, { key: "k", code: "KeyK", ctrlKey: true })
+    expect(isOpen()).toBe(false)
+    fireEvent.keyDown(document, { key: "k", code: "KeyK", metaKey: true, isComposing: true })
+    expect(isOpen()).toBe(false)
+
+    macPlatform.isMac = false
+    try {
+      fireEvent.keyDown(document, { key: "k", code: "KeyK", metaKey: true })
+      expect(isOpen()).toBe(false)
+      fireEvent.keyDown(document, { key: "k", code: "KeyK", ctrlKey: true })
+      expect(isOpen()).toBe(true)
+    } finally {
+      macPlatform.isMac = true
+    }
   })
 
   it("頼めるタスクを選ぶと、タスクを進める依頼を送る", () => {

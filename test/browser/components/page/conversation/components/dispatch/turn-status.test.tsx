@@ -13,7 +13,14 @@ import { checkedTaskId } from "../../../../../../fixture/task-id.ts"
 import { typedElement } from "../../../../../../typed-element.ts"
 import { type CommandSpy, putSession } from "../../../../../session-store.ts"
 
+const macPlatform = vi.hoisted(() => ({ isMac: true }))
+vi.mock("../../../../../../../src/browser/utils/primary-shortcut.ts", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  isMacPlatform: () => macPlatform.isMac,
+}))
+
 afterEach(() => {
+  macPlatform.isMac = true
   cleanup()
   // 組み立て中の答えはモジュール単位で残るので、次のテストへ持ち越さない。
   useInquiryDraft.setState(useInquiryDraft.getInitialState(), true)
@@ -58,25 +65,37 @@ function renderTurnStatus(
 }
 
 describe("TurnStatus", () => {
-  it("進行中のボタンが「止める」で、⌘. と Ctrl+. でも interrupt が dispatch される", () => {
+  it("進行中のボタンが「止める」で、Mac では ⌘. だけで interrupt が dispatch される", () => {
     const calls: unknown[] = []
     renderTurnStatus({ turn: { kind: "running", startedAt: 0 } }, (command) => calls.push(command))
 
     expect(screen.getByRole("button", { name: "止める" }).textContent).toBe("")
     expect(document.querySelector("kbd")?.textContent).toBe("⌘.")
 
-    fireEvent.keyDown(window, { key: ".", metaKey: true })
-    fireEvent.keyDown(window, { key: ".", ctrlKey: true })
-    fireEvent.keyDown(window, { key: "." })
+    fireEvent.keyDown(window, { key: ".", code: "Period", metaKey: true })
+    fireEvent.keyDown(window, { key: ".", code: "Period", ctrlKey: true })
+    fireEvent.keyDown(window, { key: ".", code: "Period" })
+    fireEvent.keyDown(window, { key: ".", code: "Period", metaKey: true, isComposing: true })
 
-    expect(calls).toEqual([{ procedure: "session.interrupt" }, { procedure: "session.interrupt" }])
+    expect(calls).toEqual([{ procedure: "session.interrupt" }])
+  })
+
+  it("Mac 以外では Ctrl+. で interrupt が dispatch され、⌘. では働かない", () => {
+    macPlatform.isMac = false
+    const calls: unknown[] = []
+    renderTurnStatus({ turn: { kind: "running", startedAt: 0 } }, (command) => calls.push(command))
+
+    fireEvent.keyDown(window, { key: ".", code: "Period", metaKey: true })
+    fireEvent.keyDown(window, { key: ".", code: "Period", ctrlKey: true })
+
+    expect(calls).toEqual([{ procedure: "session.interrupt" }])
   })
 
   it("進行中でなければ ⌘. で止めない", () => {
     const calls: unknown[] = []
     renderTurnStatus({}, (command) => calls.push(command))
 
-    fireEvent.keyDown(window, { key: ".", metaKey: true })
+    fireEvent.keyDown(window, { key: ".", code: "Period", metaKey: true })
 
     expect(calls).toEqual([])
   })
