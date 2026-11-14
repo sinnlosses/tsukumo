@@ -49,13 +49,12 @@
   bottom: var(--paper-dock-bottom);
   left: var(--paper-dock-inline);
   z-index: 2;
-  padding: var(--inset-control);
+}
+/* 尋ねる。お伺いを上、答えを書く1行を下に置き、答え待ちの色の輪で囲む。値は見本の `.inq`。
+   ほかの姿勢では入力欄の殻が自分で箱を持つが、尋ねるだけはお伺いと入力欄を1つの箱に収める。 */
+.paper-dock[data-posture="ask"] {
   border-radius: var(--radius-xl);
   background: var(--surface-float);
-  box-shadow: var(--shadow-raised);
-}
-/* 尋ねる。お伺いを上、答えを書く1行を下に置き、答え待ちの色の輪で囲む。値は見本の `.inq`。 */
-.paper-dock[data-posture="ask"] {
   display: flex;
   flex-direction: column;
   gap: var(--stack-block);
@@ -107,6 +106,8 @@
   }
   .paper-dock[data-posture="ask"] {
     padding: var(--inset-card) 0 0;
+    border-radius: 0;
+    background: transparent;
     box-shadow: none;
   }
 }

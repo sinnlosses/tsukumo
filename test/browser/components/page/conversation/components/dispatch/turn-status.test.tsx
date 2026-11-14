@@ -62,7 +62,8 @@ describe("TurnStatus", () => {
     const calls: unknown[] = []
     renderTurnStatus({ turn: { kind: "running", startedAt: 0 } }, (command) => calls.push(command))
 
-    expect(screen.getByRole("button").textContent).toBe("止める⌘.")
+    expect(screen.getByRole("button", { name: "止める" }).textContent).toBe("")
+    expect(document.querySelector("kbd")?.textContent).toBe("⌘.")
 
     fireEvent.keyDown(window, { key: ".", metaKey: true })
     fireEvent.keyDown(window, { key: ".", ctrlKey: true })
@@ -152,7 +153,7 @@ describe("TurnStatus", () => {
     )
 
     const button = typedElement(screen.getByRole("button"), HTMLButtonElement, "ボタン")
-    expect(button.textContent).toBe("答える")
+    expect(button.getAttribute("aria-label")).toBe("答える")
     expect(button.type).toBe("submit")
 
     fireEvent.click(button)

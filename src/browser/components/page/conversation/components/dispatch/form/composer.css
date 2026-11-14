@@ -99,24 +99,57 @@
   font-size: var(--font-label);
   white-space: nowrap;
 }
-/* 新しい器の「働く」「尋ねる」「渡す」姿勢。打つと伸びる1行にし、欄の右に札と経過時間と送信か中断を置く。
-   働く・尋ねるは補完の口を隠し、渡すは画像の口だけ残す。
-   `/` の候補は入力欄の上に浮かべる（見本の `.slash`）。 */
+/* 広い画面の入力欄は殻の中に並ぶ。打つと伸びる欄の下の行に、左に道具とモデルの札、右に経過時間と送信か中断を置く。
+   新しい器の「働く」「尋ねる」「渡す」姿勢では、働く・尋ねるは補完の口を隠し、渡すは画像の口だけ残し、モデルの札を出す。 */
 @media (min-width: 761px) {
-  :is([data-posture="work"], [data-posture="ask"], [data-posture="deliver"]) .dispatch-form {
-    position: relative;
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: flex-end;
-    gap: var(--inline-control);
+  /* 殻（`<ComposerShell>`）の中。本体の角丸・余白・影は Astryx の `ChatComposer` が持つ。
+     入力の面は殻の地に溶かし、枠と地を持たせない。
+     `/` の候補は入力欄の上に浮かべる（殻の本体が位置の基準）。 */
+  .dispatch-shell .dispatch-text-wrap {
+    position: static;
   }
-  :is([data-posture="work"], [data-posture="ask"], [data-posture="deliver"]) .dispatch-toolbar {
-    padding-top: 0;
+  .dispatch-shell .dispatch-text {
+    box-sizing: border-box;
+    min-height: 1.6em;
+    max-height: 176px;
+    padding: var(--stack-tight) var(--inline-control) 0;
+    border: none;
+    background: transparent;
+    font-size: var(--font-input);
+    line-height: 1.6;
+    field-sizing: content;
+    overflow-y: auto;
   }
-  /* 帯と頼みごとの列は欄の上に1段で置く。 */
-  :is([data-posture="work"], [data-posture="ask"], [data-posture="deliver"])
-    :is(.dispatch-inquiry-band, .dispatch-band, .dispatch-band-text, .reply-queue-slot) {
-    flex: 0 0 100%;
+  /* 輪は殻の本体が描く（キーボードで入ったときだけ）ので、面の輪は色だけ消して幅と線種を残す（強制カラーでは見える）。 */
+  .dispatch-shell .dispatch-text:focus-visible,
+  .dispatch-form.is-answering .dispatch-shell .dispatch-text:focus-visible {
+    outline-color: transparent;
+    border-color: transparent;
+  }
+  .dispatch-shell .markdown-editor .markdown-editor-view {
+    border: none;
+    background: transparent;
+  }
+  .dispatch-shell .markdown-editor .markdown-editor-view:global(.cm-focused) {
+    outline-color: transparent;
+  }
+  .dispatch-shell .dispatch-suggestions {
+    bottom: calc(100% + var(--inline-control));
+    max-height: none;
+    padding: var(--stack-tight);
+    border-radius: var(--radius-lg);
+    background: var(--surface-float);
+    box-shadow: var(--shadow-raised);
+  }
+  .dispatch-shell .dispatch-tool {
+    width: 2rem;
+    height: 2rem;
+    border-radius: var(--radius-pill);
+  }
+  .dispatch-shell .dispatch-model-chip {
+    align-items: center;
+    height: 2rem;
+    padding: 0 var(--gutter-region);
   }
   /* 尋ねるでは、お伺いがすぐ上にあるので、帯と口を出さず、答えを書く欄の輪も重ねない。 */
   [data-posture="ask"] .dispatch-inquiry-band,
@@ -127,28 +160,11 @@
     padding: 0;
     border: none;
   }
-  :is([data-posture="work"], [data-posture="ask"]) .dispatch-tool,
-  [data-posture="deliver"] .dispatch-tool:nth-of-type(n + 2) {
+  [data-posture="ask"] .dispatch-tool {
     display: none;
   }
-  :is([data-posture="work"], [data-posture="ask"], [data-posture="deliver"]) .dispatch-model-chip {
-    display: inline;
-  }
-  :is([data-posture="work"], [data-posture="ask"], [data-posture="deliver"]) .dispatch-text-wrap {
-    position: static;
-    flex: 1 1 0;
-  }
-  :is([data-posture="work"], [data-posture="ask"], [data-posture="deliver"]) .dispatch-text {
-    field-sizing: content;
-    max-height: 38vh;
-  }
-  :is([data-posture="work"], [data-posture="ask"], [data-posture="deliver"]) .dispatch-suggestions {
-    bottom: calc(100% + var(--inline-control));
-    max-height: none;
-    padding: var(--stack-tight);
-    border-radius: var(--radius-lg);
-    background: var(--surface-float);
-    box-shadow: var(--shadow-raised);
+  .dispatch-model-chip:not(:empty) {
+    display: inline-flex;
   }
 }
 /* 狭い画面（760px 以下）。左に ＋、まん中に丸い欄、右に丸ボタン（<PhoneTurnAction>）。

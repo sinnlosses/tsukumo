@@ -18,6 +18,7 @@ import { useExternalSync } from "../../../../../hooks/use-external-sync.ts"
 import { usePhoneWidth } from "../../../../../hooks/use-phone-width.ts"
 import { deferredModule } from "../../../../../stores/deferred-module.ts"
 import { Button } from "../../../../ui/button/button.tsx"
+import { ComposerShell } from "../../../../ui/composer-shell/composer-shell.tsx"
 import { HStack } from "../../../../ui/h-stack/h-stack.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
 import { VStack } from "../../../../ui/v-stack/v-stack.tsx"
@@ -63,6 +64,64 @@ export function PresentationalComposer({
   progress,
 }: PresentationalComposerProps): ReactElement {
   const phone = usePhoneWidth()
+  const inputSurface = (
+    <>
+      {(mode === "plain" || phone) && (
+        <TextAreaSurface
+          ref={surfaceRef}
+          initialDraft={draft}
+          placeholder={placeholder}
+          label={label}
+          onChange={onChange}
+          onKeyDown={onKeyDown}
+          onPaste={onPaste}
+          onDragOver={onDragOver}
+          onDrop={onDrop}
+        />
+      )}
+      {mode === "markdown" && !phone && (
+        <MarkdownSurface
+          ref={surfaceRef}
+          initialDraft={draft}
+          placeholder={placeholder}
+          label={label}
+          onChange={onChange}
+          onKeyDown={onKeyDown}
+          onPaste={onPaste}
+          onDragOver={onDragOver}
+          onDrop={onDrop}
+        />
+      )}
+      {suggestions.kind === "command" && (
+        <CommandSuggestions
+          matches={suggestions.matches}
+          selectedIndex={selectedIndex}
+          onSelect={onSelectSuggestion}
+        />
+      )}
+      {suggestions.kind === "file" && (
+        <FileSuggestions
+          matches={suggestions.matches}
+          omittedCount={suggestions.omittedCount}
+          selectedIndex={selectedIndex}
+          onSelect={onSelectSuggestion}
+        />
+      )}
+    </>
+  )
+  const tools = (
+    <ComposerTools
+      mode={mode}
+      onToggleMode={onToggleMode}
+      onPickImages={onPickImages}
+      onInsertTrigger={onInsertTrigger}
+      imageInputRef={imageInputRef}
+      onImagesChosen={onImagesChosen}
+    />
+  )
+  const turnStatus = (
+    <ComposerTurnStatus progress={progress} answering={answering} newSession={newSession} />
+  )
   return (
     <form
       className={clsx(styles["dispatch-form"], answering && styles["is-answering"])}
@@ -147,146 +206,171 @@ export function PresentationalComposer({
           </HStack>
         </div>
       )}
-      <InputRow phone={phone} onPickImages={onPickImages} onInsertTrigger={onInsertTrigger}>
-        <VStack
-          element="div"
-          name={{ kind: "none" }}
-          gap="none"
-          align="stretch"
-          justify="start"
-          wrap="nowrap"
-          className={styles["dispatch-text-wrap"]}
-        >
-          <PromptImageChips images={images} onRemove={onRemoveImage} />
-          {(mode === "plain" || phone) && (
-            <TextAreaSurface
-              ref={surfaceRef}
-              initialDraft={draft}
-              placeholder={placeholder}
-              label={label}
-              onChange={onChange}
-              onKeyDown={onKeyDown}
-              onPaste={onPaste}
-              onDragOver={onDragOver}
-              onDrop={onDrop}
-            />
-          )}
-          {mode === "markdown" && !phone && (
-            <MarkdownSurface
-              ref={surfaceRef}
-              initialDraft={draft}
-              placeholder={placeholder}
-              label={label}
-              onChange={onChange}
-              onKeyDown={onKeyDown}
-              onPaste={onPaste}
-              onDragOver={onDragOver}
-              onDrop={onDrop}
-            />
-          )}
-          {suggestions.kind === "command" && (
-            <CommandSuggestions
-              matches={suggestions.matches}
-              selectedIndex={selectedIndex}
-              onSelect={onSelectSuggestion}
-            />
-          )}
-          {suggestions.kind === "file" && (
-            <FileSuggestions
-              matches={suggestions.matches}
-              omittedCount={suggestions.omittedCount}
-              selectedIndex={selectedIndex}
-              onSelect={onSelectSuggestion}
-            />
-          )}
-        </VStack>
-      </InputRow>
-      <div className={styles["dispatch-toolbar"]}>
-        <Button
-          variant="ghost"
-          size="action"
-          pressed="none"
-          disabled={false}
-          ariaLabel="画像を添える"
-          disclosure={{ kind: "none" }}
-          title="画像を添える"
-          className={styles["dispatch-tool"]}
-          onClick={onPickImages}
-        >
-          <ImageIcon size={TOOL_ICON_SIZE} strokeWidth={1.8} />
-        </Button>
-        <Button
-          variant="ghost"
-          size="action"
-          pressed="none"
-          disabled={false}
-          ariaLabel="コマンドを補完する"
-          disclosure={{ kind: "none" }}
-          title="コマンドを補完する"
-          className={styles["dispatch-tool"]}
-          onClick={() => onInsertTrigger("/")}
-        >
-          <Slash size={TOOL_ICON_SIZE} strokeWidth={1.8} />
-        </Button>
-        <Button
-          variant="ghost"
-          size="action"
-          pressed="none"
-          disabled={false}
-          ariaLabel="ファイルを補完する"
-          disclosure={{ kind: "none" }}
-          title="ファイルを補完する"
-          className={styles["dispatch-tool"]}
-          onClick={() => onInsertTrigger("@")}
-        >
-          <AtSign size={TOOL_ICON_SIZE} strokeWidth={1.8} />
-        </Button>
-        <Button
-          variant="ghost"
-          size="action"
-          pressed={mode === "markdown" ? "on" : "off"}
-          disabled={false}
-          ariaLabel="マークダウンエディタで書く"
-          disclosure={{ kind: "none" }}
-          title="マークダウンエディタで書く"
-          className={styles["dispatch-tool"]}
-          onClick={onToggleMode}
-        >
-          <Heading size={TOOL_ICON_SIZE} strokeWidth={1.8} />
-        </Button>
-        <input
-          ref={imageInputRef}
-          type="file"
-          accept={PROMPT_IMAGE_MEDIA_TYPES.join(",")}
-          multiple
-          hidden
-          onChange={onImagesChosen}
+      {phone ? (
+        <>
+          <InputRow phone={phone} onPickImages={onPickImages} onInsertTrigger={onInsertTrigger}>
+            <VStack
+              element="div"
+              name={{ kind: "none" }}
+              gap="none"
+              align="stretch"
+              justify="start"
+              wrap="nowrap"
+              className={styles["dispatch-text-wrap"]}
+            >
+              <PromptImageChips images={images} onRemove={onRemoveImage} />
+              {inputSurface}
+            </VStack>
+          </InputRow>
+          <div className={styles["dispatch-toolbar"]}>
+            {tools}
+            <div className={styles["dispatch-toolbar-end"]}>
+              <span className={styles["dispatch-toolbar-divider"]} aria-hidden="true" />
+              {turnStatus}
+            </div>
+          </div>
+        </>
+      ) : (
+        <ComposerShell
+          drawer={
+            images.length === 0
+              ? { kind: "none" }
+              : {
+                  kind: "shown",
+                  children: <PromptImageChips images={images} onRemove={onRemoveImage} />,
+                }
+          }
+          input={
+            <VStack
+              element="div"
+              name={{ kind: "none" }}
+              gap="none"
+              align="stretch"
+              justify="start"
+              wrap="nowrap"
+              className={styles["dispatch-text-wrap"]}
+            >
+              {inputSurface}
+            </VStack>
+          }
+          tools={tools}
+          actions={turnStatus}
+          className={styles["dispatch-shell"]}
         />
-        <RunSettingChip className={styles["dispatch-model-chip"]} />
-        <div className={styles["dispatch-toolbar-end"]}>
-          <span className={styles["dispatch-toolbar-divider"]} aria-hidden="true" />
-          <TurnStatus
-            progress={progress}
-            betweenElapsedAndAction={
-              <Button
-                variant={answering ? "outline-warn" : "outline-accent"}
-                size="secondary"
-                pressed="none"
-                disabled={newSession.disabled}
-                ariaLabel={NEW_SESSION_LABEL}
-                disclosure={{ kind: "none" }}
-                title={newSession.title}
-                className={styles["dispatch-new-session"]}
-                onClick={newSession.onStart}
-              >
-                <Plus size={14} strokeWidth={2} aria-hidden="true" />
-                <span className={styles["dispatch-new-session-label"]}>新規</span>
-              </Button>
-            }
-          />
-        </div>
-      </div>
+      )}
     </form>
+  )
+}
+
+/** 画像・`/`・`@`・面の切り替えの4つと、見えない画像の選び口、モデルの札。 */
+function ComposerTools({
+  mode,
+  onToggleMode,
+  onPickImages,
+  onInsertTrigger,
+  imageInputRef,
+  onImagesChosen,
+}: {
+  readonly mode: ComposerModel["modeSwitch"]["mode"]
+  readonly onToggleMode: () => void
+  readonly onPickImages: () => void
+  readonly onInsertTrigger: (trigger: CompletionTrigger) => void
+  readonly imageInputRef: ComposerModel["promptImage"]["imageInputRef"]
+  readonly onImagesChosen: ComposerModel["promptImage"]["onImagesChosen"]
+}): ReactElement {
+  return (
+    <>
+      <Button
+        variant="ghost"
+        size="action"
+        pressed="none"
+        disabled={false}
+        ariaLabel="画像を添える"
+        disclosure={{ kind: "none" }}
+        title="画像を添える"
+        className={styles["dispatch-tool"]}
+        onClick={onPickImages}
+      >
+        <ImageIcon size={TOOL_ICON_SIZE} strokeWidth={1.8} />
+      </Button>
+      <Button
+        variant="ghost"
+        size="action"
+        pressed="none"
+        disabled={false}
+        ariaLabel="コマンドを補完する"
+        disclosure={{ kind: "none" }}
+        title="コマンドを補完する"
+        className={styles["dispatch-tool"]}
+        onClick={() => onInsertTrigger("/")}
+      >
+        <Slash size={TOOL_ICON_SIZE} strokeWidth={1.8} />
+      </Button>
+      <Button
+        variant="ghost"
+        size="action"
+        pressed="none"
+        disabled={false}
+        ariaLabel="ファイルを補完する"
+        disclosure={{ kind: "none" }}
+        title="ファイルを補完する"
+        className={styles["dispatch-tool"]}
+        onClick={() => onInsertTrigger("@")}
+      >
+        <AtSign size={TOOL_ICON_SIZE} strokeWidth={1.8} />
+      </Button>
+      <Button
+        variant="ghost"
+        size="action"
+        pressed={mode === "markdown" ? "on" : "off"}
+        disabled={false}
+        ariaLabel="マークダウンエディタで書く"
+        disclosure={{ kind: "none" }}
+        title="マークダウンエディタで書く"
+        className={styles["dispatch-tool"]}
+        onClick={onToggleMode}
+      >
+        <Heading size={TOOL_ICON_SIZE} strokeWidth={1.8} />
+      </Button>
+      <input
+        ref={imageInputRef}
+        type="file"
+        accept={PROMPT_IMAGE_MEDIA_TYPES.join(",")}
+        multiple
+        hidden
+        onChange={onImagesChosen}
+      />
+      <RunSettingChip className={styles["dispatch-model-chip"]} />
+    </>
+  )
+}
+
+/** 経過・知らせ・「新規」と、送信か中断。 */
+function ComposerTurnStatus({
+  progress,
+  answering,
+  newSession,
+}: Pick<PresentationalComposerProps, "progress" | "answering" | "newSession">): ReactElement {
+  return (
+    <TurnStatus
+      progress={progress}
+      betweenElapsedAndAction={
+        <Button
+          variant={answering ? "outline-warn" : "outline-accent"}
+          size="secondary"
+          pressed="none"
+          disabled={newSession.disabled}
+          ariaLabel={NEW_SESSION_LABEL}
+          disclosure={{ kind: "none" }}
+          title={newSession.title}
+          className={styles["dispatch-new-session"]}
+          onClick={newSession.onStart}
+        >
+          <Plus size={14} strokeWidth={2} aria-hidden="true" />
+          <span className={styles["dispatch-new-session-label"]}>新規</span>
+        </Button>
+      }
+    />
   )
 }
 

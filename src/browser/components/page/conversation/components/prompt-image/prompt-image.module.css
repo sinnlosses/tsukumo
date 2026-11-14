@@ -61,6 +61,9 @@
 .prompt-image-zoom {
   position: relative;
   display: block;
+  /* `size="label"` の固定の高さ（28px）が絵（4rem）より低く、絵だけが札の外へはみ出して列の高さに数えられない。絵の高さに合わせる。 */
+  height: auto;
+  min-height: 0;
   padding: 0;
   line-height: 0;
 }

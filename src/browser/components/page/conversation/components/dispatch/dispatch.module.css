@@ -67,70 +67,6 @@
   background: var(--surface-accent);
   color: var(--ink);
 }
-/* 「送信」は行の主目的なので、accent で塗りつぶす（入力欄で塗ってよいのはこれ1つだけ）。
-   字は地の色で抜く。
-   答え待ちの質問がある間は、答え待ちの色（--state-warn）で塗って札と揃える。 */
-.dispatch-send,
-.dispatch-interrupt {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  flex: 0 0 auto;
-  height: 2.5rem;
-  padding: 0 var(--space-xl);
-  border-radius: var(--radius-md);
-  /* モックの 14px（--font-subheading）は区画の見出しの段で、ボタンには使わない。
-     ボタンの字は機械のラベルではなく操作の名前そのものなので「補助・欄外の本文」寄りに見て --font-secondary（13px）に寄せた（大きさ以外は `theme.css` の既定を継ぐ）。 */
-  font-size: var(--font-secondary);
-}
-.dispatch-send {
-  border: 1px solid var(--accent);
-  background: var(--accent);
-  color: var(--ground);
-  font-weight: 700;
-  cursor: pointer;
-}
-.dispatch-send:hover {
-  background: color-mix(in srgb, var(--accent) 85%, var(--ink));
-}
-.dispatch-form .dispatch-send:disabled {
-  background: transparent;
-  border-color: var(--rule);
-  color: var(--ink-quiet);
-  font-weight: 400;
-  cursor: not-allowed;
-}
-.dispatch-form.is-answering .dispatch-send {
-  background: var(--state-warn);
-  border-color: var(--state-warn);
-}
-.dispatch-form.is-answering .dispatch-send:hover {
-  background: color-mix(in srgb, var(--state-warn) 85%, var(--ink));
-}
-/* 答え待ちの質問のあいだ、自由入力の字が無ければ塗らない。 */
-.dispatch-form.is-answering .dispatch-send.is-quiet {
-  background: transparent;
-  color: var(--state-warn);
-  font-weight: 400;
-}
-.dispatch-form.is-answering .dispatch-send.is-quiet:hover {
-  background: color-mix(in srgb, var(--state-warn) 12%, transparent);
-}
-/* 「中断」は塗らない。
-   送信と同じ位置に出るので、塗りの有無で「いまは送れない」を示す。
-   顔は `<Button variant="outline-hover-danger">`、太さは中の `Text` が持つ。 */
-/* Command+Enter で送信できることを示す記号（<TurnStatus> が data-shortcut 属性に持たせる）。
-   ラベルの文字とは別の擬似要素にして、少し薄めて添える。
-   中断のときは属性ごと出ないので、この擬似要素も出ない。 */
-.dispatch-send[data-shortcut]::after {
-  content: " " attr(data-shortcut);
-  opacity: 0.7;
-  /* キーは機械の側の名前なので等幅。
-     ボタンの字（--font-secondary）より一段控えめな印の大きさ（--font-label）にする。 */
-  font-family: var(--font-mono);
-  font-size: var(--font-label);
-  font-weight: 400;
-}
 /* 依頼を書く面。
    領域の地（surface）より一段沈めた ground に置き、枠は薄くして、フォーカスが来たときだけ accent に寄せる。 */
 .dispatch-text {
@@ -171,10 +107,6 @@
     gap: var(--space-sm);
     border-top: 1px solid var(--rule);
     background: color-mix(in srgb, var(--ground) 50%, var(--surface));
-  }
-  .dispatch-send,
-  .dispatch-interrupt {
-    display: none;
   }
   .dispatch-text {
     box-sizing: border-box;

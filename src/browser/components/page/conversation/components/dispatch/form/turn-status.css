@@ -40,11 +40,26 @@
 .dispatch-elapsed {
   font-family: var(--font-mono);
 }
-/* 止めるボタンに添えるキーの札。字の色はボタンから継ぐ。 */
-.dispatch-interrupt-key {
+/* 送信と中断の円形のボタンの左に添えるキーの札（⌘⏎・⌘.）。 */
+.dispatch-key-hint {
   color: var(--ink-quiet);
   font-family: var(--font-mono);
   font-size: var(--font-label);
+}
+/* キーの札と円形のボタンの組。広い画面では行の並びへそのまま出し、狭い画面では右の丸ボタンに任せて出さない。
+   答え待ちの質問がある間は、円形のボタンを答え待ちの色（--state-warn）で塗る。 */
+.dispatch-action {
+  display: flex;
+  align-items: center;
+  gap: var(--inline-tight);
+}
+.dispatch-form.is-answering .dispatch-action {
+  --round-button-color: var(--state-warn);
+}
+@media (max-width: 760px) {
+  .dispatch-action {
+    display: none;
+  }
 }
 /* 狭い画面（760px 以下）では経過を画面の頭が持つので、この行には出さない。 */
 @media (max-width: 760px) {

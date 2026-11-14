@@ -62,7 +62,7 @@ const RAW_SCALE_REFERENCE_LIMITS: Readonly<Record<string, number>> = {
   "browser/components/page/conversation/components/character-view/stage/speech-log.css": 10,
   "browser/components/page/conversation/components/chat-memory/chat-memory.module.css": 14,
   "browser/components/page/conversation/components/chat-view/chat-view.module.css": 12,
-  "browser/components/page/conversation/components/dispatch/dispatch.module.css": 11,
+  "browser/components/page/conversation/components/dispatch/dispatch.module.css": 9,
   "browser/components/page/conversation/components/dispatch/form/composer.css": 12,
   "browser/components/page/conversation/components/dispatch/form/file-suggestion-list.css": 1,
   "browser/components/page/conversation/components/dispatch/form/format-bar.css": 2,
