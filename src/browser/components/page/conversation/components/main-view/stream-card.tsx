@@ -54,6 +54,24 @@ export function SayRow(props: {
   )
 }
 
+/** 離れていたあいだに足された行の手前の線。固定の文で、キャラクターのセリフにしない。 */
+export function AwaySeamLine(props: { readonly label: string }): ReactElement {
+  return (
+    <div role="separator" className={styles["away-seam"]} data-away-seam="">
+      <Text
+        element="span"
+        size="label"
+        tone="ink-quiet"
+        weight="inherit"
+        className={styles["away-seam-text"]}
+      >
+        <span className={styles["away-seam-lead"]}>ここから新しい</span>
+        {props.label}
+      </Text>
+    </div>
+  )
+}
+
 type PlanRecord = Extract<ProgressItem, { readonly kind: "plan" }>["record"]
 
 /** 段の札。ワークプランの記録が指す、そのとき走っている段。 */

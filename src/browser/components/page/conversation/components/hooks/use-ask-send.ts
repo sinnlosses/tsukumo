@@ -3,16 +3,19 @@
 
 import type { ReplyTarget } from "../../../../../../shared/session/reply-target.ts"
 import { useSession } from "../../../../../stores/session.ts"
+import { useAwaySeam } from "../../stores/away-seam.ts"
 
 export function useAskSend(): (target: ReplyTarget, text: string) => void {
   const dispatch = useSession((session) => session.dispatch)
   const sendable = useSession(
     (session) => session.connection === "open" && session.state.endedReason === undefined,
   )
+  const dismissAwaySeam = useAwaySeam((state) => state.dismiss)
   return (target, text) => {
     if (!sendable) {
       return
     }
+    dismissAwaySeam()
     void dispatch.session.prompt({ text, images: [], routing: "ask", target })
   }
 }

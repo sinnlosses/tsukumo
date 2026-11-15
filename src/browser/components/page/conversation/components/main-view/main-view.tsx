@@ -25,6 +25,7 @@ import {
 } from "../../../../../../shared/session/work-plan.ts"
 import { RepositoryFileLinkProvider } from "../../../../../features/report/repository-link.tsx"
 import { useBeforePaintSync } from "../../../../../hooks/use-before-paint-sync.ts"
+import { useExternalSync } from "../../../../../hooks/use-external-sync.ts"
 import { usePhoneWidth } from "../../../../../hooks/use-phone-width.ts"
 import { useCurrentTurnSteps } from "../../../../../stores/current-turn-step-list.ts"
 import { useInquiryJump } from "../../../../../stores/inquiry-jump.ts"
@@ -32,6 +33,7 @@ import { useMainViewTurns } from "../../../../../stores/main-view-turn.ts"
 import { useReadingSection } from "../../../../../stores/reading-section.ts"
 import { useSession } from "../../../../../stores/session.ts"
 import { useTurnSelection } from "../../../../../stores/turn-selection.ts"
+import { useAwaySeam } from "../../stores/away-seam.ts"
 import { type MainViewContent, useMainViewContent } from "../../stores/main-view-content.ts"
 import { useStickToBottom } from "../hooks/use-stick-to-bottom.ts"
 import { Inquiry } from "../inquiry/inquiry.tsx"
@@ -79,6 +81,15 @@ export function MainView(): ReactElement {
   const phoneWidth = usePhoneWidth()
   const rootRef = useRef<HTMLDivElement>(null)
   const carriedFocusRef = useRef(false)
+
+  // 別のやり取りを選んだら線を外す（見ているやり取りが、線を出したやり取りと違うあいだ）。
+  const awayTurnId = useAwaySeam((state) => state.away?.turnId)
+  const dismissAwaySeam = useAwaySeam((state) => state.dismiss)
+  useExternalSync(() => {
+    if (awayTurnId !== undefined && activeTurnId !== undefined && activeTurnId !== awayTurnId) {
+      dismissAwaySeam()
+    }
+  }, [awayTurnId, activeTurnId, dismissAwaySeam])
 
   const viewing: Viewing =
     activeTurnId !== undefined && activeTurnId !== newestTurnId

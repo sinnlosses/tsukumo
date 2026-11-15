@@ -6,7 +6,7 @@
 // 失敗で終わったやり取りは、最初の本文の手前に失敗の表示を出す（色だけでなく字で成功と見分ける）。
 
 import clsx from "clsx"
-import { use, useState, type ReactElement, type ReactNode } from "react"
+import { Fragment, use, useState, type ReactElement, type ReactNode } from "react"
 
 import type { ReportTask } from "../../../../../../shared/report/report-task.ts"
 import type { TaskSummaryResult } from "../../../../../../shared/repository/task-summary.ts"
@@ -30,7 +30,9 @@ import { useConversationStreamRows } from "../../../../../stores/main-view-turn.
 import { useSession } from "../../../../../stores/session.ts"
 import { Text } from "../../../../ui/text/text.tsx"
 import { VStack } from "../../../../ui/v-stack/v-stack.tsx"
+import { useAwaySeam } from "../../stores/away-seam.ts"
 import { useDraftedReports } from "../../stores/drafted-report.ts"
+import { awaySeamOf, type AwaySeam } from "./domain/away-seam.ts"
 import { revealStepIdOf } from "./domain/draft-reveal.ts"
 import { REPORT_STEP_ATTRIBUTE } from "./domain/outline-report-head.ts"
 import {
@@ -46,7 +48,7 @@ import { useReplyPort } from "./hooks/use-reply-port.ts"
 import styles from "./main-view.module.css"
 import { QuestionRecord } from "./question-record.tsx"
 import { ReportHead, type ReportLabel } from "./report-head.tsx"
-import { PlanCard, PostRow, SayRow } from "./stream-card.tsx"
+import { AwaySeamLine, PlanCard, PostRow, SayRow } from "./stream-card.tsx"
 import { TurnFailureBlock } from "./turn-failure-block.tsx"
 
 type TurnProps = {
@@ -92,6 +94,13 @@ export function Turn(props: TurnProps): ReactElement {
     return !isAskGroupedToLeaf(askSlot, row.record)
   })
   const items = streamItemsOf(shownRows, turn)
+  const generation = useSession((session) => session.generation)
+  const away = useAwaySeam((state) => state.away)
+  // 狭い画面では流れの行を描かないので、線も出さない。
+  const seam =
+    !phoneWidth && away?.generation === generation && away.turnId === turn.id
+      ? awaySeamOf({ away, rows, items })
+      : NO_SEAM
   const latestStepId = props.newest ? finalStep?.id : undefined
   const port = useReplyPort()
   const tasks = useSession((session) => session.state.tasks)
@@ -124,15 +133,19 @@ export function Turn(props: TurnProps): ReactElement {
             {/* `key` は配列の添字ではなく、記録の位置と本文のステップの `step.id`（`MainViewStep.id`。古いステップを落とす前に振った通し番号）を使う。
               添字だと、古いステップが落ちて残りの添字が1つずつ前へずれた瞬間に React が別のステップの DOM を使い回してしまい、`<details>` の `open` のような制御されていない DOM の状態が別のステップへ乗り移って見える。 */}
             {items.map((item, index) => (
-              <StreamItemView
-                item={item}
-                turn={turn}
-                tasks={tasks}
-                newest={props.newest}
-                isRevealed={(stepId) => stepId === revealStepId}
-                isLatest={(stepId) => stepId === latestStepId}
-                key={streamItemKey(item, index)}
-              />
+              <Fragment key={streamItemKey(item, index)}>
+                {seam.kind === "seam" && seam.before === index && (
+                  <AwaySeamLine label={seam.label} />
+                )}
+                <StreamItemView
+                  item={item}
+                  turn={turn}
+                  tasks={tasks}
+                  newest={props.newest}
+                  isRevealed={(stepId) => stepId === revealStepId}
+                  isLatest={(stepId) => stepId === latestStepId}
+                />
+              </Fragment>
             ))}
             {/* `key` を `toolUseId` にするので、書いている途中の部品から記録の部品へ移っても面を作り直さない。 */}
             {turn.drafts.map((draft, index) => (
@@ -149,6 +162,8 @@ export function Turn(props: TurnProps): ReactElement {
     </ReplyPortContext>
   )
 }
+
+const NO_SEAM = { kind: "none" } as const satisfies AwaySeam
 
 function streamItemKey(item: StreamItem, index: number): string {
   switch (item.kind) {

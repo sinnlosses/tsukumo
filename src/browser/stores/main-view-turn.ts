@@ -67,6 +67,11 @@ export function useConversationStreamRows(turnId: number): readonly Conversation
   return useSession((session) => streamRowsOf(session.state).get(turnId) ?? NO_ROWS)
 }
 
+/** 姿1つから区切った、やり取りの流れの行の数（読む口は {@link useConversationStreamRows} と同じ）。やり取りが無ければ 0。 */
+export function conversationStreamRowCountOf(state: SessionState, turnId: number): number {
+  return (streamRowsOf(state).get(turnId) ?? NO_ROWS).length
+}
+
 const NO_ROWS: readonly ConversationStreamRow[] = []
 
 function streamRowsOf(state: SessionState): ReadonlyMap<number, readonly ConversationStreamRow[]> {

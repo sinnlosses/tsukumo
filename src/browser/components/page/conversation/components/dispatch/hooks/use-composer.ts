@@ -27,6 +27,7 @@ import { useRestartRefused, useSession, useTurnRunning } from "../../../../../..
 import { clearSessionDraft, saveSessionDraft } from "../../../domain/composer-draft-storage.ts"
 import { isClearWithArgs } from "../../../domain/slash-clear.ts"
 import "../../../stores/composer-draft-session.ts"
+import { useAwaySeam } from "../../../stores/away-seam.ts"
 import { EMPTY_DRAFT, useComposerDraft, type Draft } from "../../../stores/composer-draft.ts"
 import { favorBandShown, useFavorVisibility } from "../../../stores/favor-visibility.ts"
 import { useInquiryAnswer } from "../../../stores/inquiry-answer.ts"
@@ -136,6 +137,7 @@ export function useComposer(): ComposerModel {
   const favorId = useFavorVisibility((state) => state.favorId)
   const favorShown = useFavorVisibility(favorBandShown)
   const dismissFavor = useFavorVisibility((state) => state.dismiss)
+  const dismissAwaySeam = useAwaySeam((state) => state.dismiss)
   const surfaceRef = useRef<ComposerSurface | null>(null)
   const [mode, setMode] = useState<ComposerMode>(loadComposerMode)
   useComposerFocusTiming(surfaceRef)
@@ -186,6 +188,7 @@ export function useComposer(): ComposerModel {
         )
         if (result.kind !== "ok") return
         dismissFavor()
+        dismissAwaySeam()
         settleBatchSent(replySessionKey, batchNoteIds, previousLastTurnId)
         clearAfterSend()
       }
@@ -193,6 +196,7 @@ export function useComposer(): ComposerModel {
       return
     } else {
       dismissFavor()
+      dismissAwaySeam()
       void dispatch.session.prompt({ text: trimmed, images: promptImage.images, routing })
     }
     clearAfterSend()

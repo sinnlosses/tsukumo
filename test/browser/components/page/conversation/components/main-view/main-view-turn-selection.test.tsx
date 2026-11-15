@@ -1,6 +1,7 @@
 import { act, cleanup, fireEvent, screen, within } from "@testing-library/react"
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest"
 
+import { useAwaySeam } from "../../../../../../../src/browser/components/page/conversation/stores/away-seam.ts"
 import { useInquiryCardVisibility } from "../../../../../../../src/browser/components/page/conversation/stores/inquiry-card-visibility.ts"
 import { useInquiryDraft } from "../../../../../../../src/browser/components/page/conversation/stores/inquiry-draft.ts"
 import { loadMarkdown } from "../../../../../../../src/browser/features/report/markdown.tsx"
@@ -55,6 +56,19 @@ describe("MainView（やり取りの移動）", () => {
   const PERMISSION = [
     { kind: "permission", id: "fake-ask", toolName: "Bash", input: {}, askedAt: 0 },
   ] as const satisfies SessionState["pending"]
+
+  it("別のやり取りを選ぶと、離れていたあいだの線を外す", () => {
+    renderMainView(threeTurns())
+    act(() => {
+      useAwaySeam.setState({
+        away: { generation: 0, turnId: 2, rowCount: 1, awayMs: 120_000 },
+      })
+    })
+
+    stepTurn("[")
+
+    expect(useAwaySeam.getState().away).toBeUndefined()
+  })
 
   it("題の行（前後の口と n / N）は出ない", () => {
     renderMainView(threeTurns())
