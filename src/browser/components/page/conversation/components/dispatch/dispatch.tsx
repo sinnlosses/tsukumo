@@ -3,20 +3,53 @@
 
 import { useState, type ReactElement } from "react"
 
+import { conversationMoment } from "../../../../../../shared/session/conversation-moment.ts"
 import { useExternalSync } from "../../../../../hooks/use-external-sync.ts"
+import { useMainViewTurns } from "../../../../../stores/main-view-turn.ts"
 import { useSession } from "../../../../../stores/session.ts"
 import { VStack } from "../../../../ui/v-stack/v-stack.tsx"
+import { endedWhileHiddenOf, tabTitleMarkOf, tabTitleOf } from "../../domain/tab-title-mark.ts"
+import { turnResultsOf } from "../../domain/turn-result.ts"
 import { Composer } from "./composer.tsx"
 import styles from "./dispatch.module.css"
 
 export function Dispatch(): ReactElement {
   const pendingActive = useSession((session) => session.state.pending.length > 0)
+  const turns = useMainViewTurns()
+  const moment = useSession((session) => conversationMoment(session.state))
+  const chatMode = useSession((session) => session.state.chatMode)
+  // 雑談モードは答え待ちの印だけ。
+  const newestResult = chatMode ? "no-report" : (turnResultsOf(turns, moment).at(-1) ?? "no-report")
   // 最初に読んだ元のタイトルへ戻す（読むのは1回だけ）。
   const [originalTitle] = useState(() => document.title)
+  // 隠れているあいだに終わったか。結果が変わった時点の `document.hidden` で決め、表に戻ったら外す（保存しない）。
+  const [tracked, setTracked] = useState({ result: newestResult, endedWhileHidden: false })
+  if (tracked.result !== newestResult) {
+    setTracked({
+      result: newestResult,
+      endedWhileHidden: endedWhileHiddenOf(tracked.result, newestResult, document.hidden),
+    })
+  }
+  const { endedWhileHidden } = tracked
 
   useExternalSync(() => {
-    document.title = pendingActive ? `● ${originalTitle}` : originalTitle
-  }, [pendingActive, originalTitle])
+    const onVisibilityChange = (): void => {
+      if (!document.hidden) {
+        setTracked((current) => ({ ...current, endedWhileHidden: false }))
+      }
+    }
+    document.addEventListener("visibilitychange", onVisibilityChange)
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibilityChange)
+    }
+  }, [])
+
+  useExternalSync(() => {
+    document.title = tabTitleOf(
+      originalTitle,
+      tabTitleMarkOf({ pendingActive, newestResult, endedWhileHidden }),
+    )
+  }, [pendingActive, newestResult, endedWhileHidden, originalTitle])
 
   return (
     <VStack
