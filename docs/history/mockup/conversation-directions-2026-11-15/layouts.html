@@ -8,11 +8,13 @@
     <link rel="stylesheet" href="fused.css" />
     <link rel="stylesheet" href="stream.css" />
     <link rel="stylesheet" href="layouts.css" />
+    <link rel="stylesheet" href="refine.css" />
   </head>
   <!--
     「会話の流れ」のやり取りの列を左に置く形（候補 A）を土台に、ヘッダー・やり取り・タスク・立ち絵の配置を替えた候補の見本。
     中身はすべて架空で、実物の会話ではない。候補を並べて見比べるページは compare.html。
     ?layout=a|b|c|d|e|f|g|h     候補（基準・サイドレール・整列バー・左ピラー・HUD とコンソール・見開き・タスクバー・集中モード）
+    ?layout=a2                  候補 A の仕上げ（細いヘッダー・面の下端まで伸びるサイドバー・背景の透けるパネル。refine.css）
     ?scene=greet|work|ask|read  場面（迎える・待つ・答える・読む）
     ?open=tasks                 タスクの一覧を開いた状態で見る（候補 f・g）
     ?pack=shirasuzu             別のパックの素材と差し色で見る
@@ -54,6 +56,7 @@
       <a class="mock-bar-link" href="compare.html">候補を並べて比べる</a>
       <span class="mock-bar-group" data-param="layout">
         <a data-value="a" href="?layout=a">A 基準</a>
+        <a data-value="a2" href="?layout=a2">A 仕上げ</a>
         <a data-value="b" href="?layout=b">B レール</a>
         <a data-value="c" href="?layout=c">C 整列バー</a>
         <a data-value="d" href="?layout=d">D ピラー</a>

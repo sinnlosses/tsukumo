@@ -1,0 +1,342 @@
+/* 候補 A の仕上げ（?layout=a2）。配置は A のまま、ヘッダーを細くし、サイドバーを面の下端まで伸ばす。
+   パネルは背景の透ける面に、会話の流れの紙と吹き出しは細い縁と柔らかい影に替える */
+
+body[data-layout="a2"] {
+  --nav-h: 40px;
+  --radius-container: 16px;
+  --hairline: rgb(255 255 255 / 9%);
+  --hairline-quiet: rgb(255 255 255 / 5%);
+  --glass: linear-gradient(to bottom, rgb(44 41 56 / 80%), rgb(31 28 40 / 88%));
+  --glass-blur: blur(22px) saturate(1.35);
+  --lift: inset 0 1px 0 rgb(255 255 255 / 7%), 0 18px 40px rgb(8 6 14 / 45%);
+  --paper: rgb(27 25 35 / 95%);
+}
+
+/* 背景は上端と下端を沈め、立ち絵の立つ左下だけ明るさを残す */
+body[data-layout="a2"] .ground {
+  background:
+    linear-gradient(to bottom, rgb(14 12 22 / 72%) 0, rgb(14 12 22 / 0%) 132px),
+    linear-gradient(to top, rgb(14 12 22 / 72%) 0, rgb(14 12 22 / 0%) 34%),
+    radial-gradient(100% 80% at 10% 100%, rgb(14 12 22 / 4%) 0, rgb(14 12 22 / 34%) 100%),
+    var(--art) center / cover;
+}
+
+/* ヘッダー: 40px の1行。背景を透かし、今の画面は下線ではなく面で示す */
+body[data-layout="a2"] .nav {
+  gap: 16px;
+  padding: 0 12px 0 16px;
+  border-block-end: 1px solid var(--hairline-quiet);
+  background: rgb(20 18 28 / 58%);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+}
+
+body[data-layout="a2"] .nav-room {
+  gap: 8px;
+}
+
+body[data-layout="a2"] .nav-face {
+  inline-size: 24px;
+  block-size: 24px;
+}
+
+body[data-layout="a2"] .nav-room-name {
+  font-size: 14px;
+}
+
+body[data-layout="a2"] .nav-tabs {
+  align-items: center;
+  align-self: center;
+  gap: 2px;
+}
+
+body[data-layout="a2"] .nav-tab {
+  gap: 6px;
+  block-size: 28px;
+  margin: 0;
+  padding: 0 10px;
+  border-block-end: 0;
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--ink-soft);
+  transition:
+    background-color 0.15s,
+    color 0.15s;
+}
+
+body[data-layout="a2"] .nav-tab:hover {
+  background: rgb(255 255 255 / 5%);
+  color: var(--ink);
+}
+
+body[data-layout="a2"] .nav-tab[aria-current="page"] {
+  background: rgb(255 255 255 / 10%);
+  box-shadow: inset 0 0 0 1px var(--hairline-quiet);
+  color: var(--ink-bright);
+}
+
+body[data-layout="a2"] .nav-tab .icon {
+  inline-size: 16px;
+  block-size: 16px;
+}
+
+body[data-layout="a2"] .nav-tab[aria-current="page"] .icon {
+  color: var(--accent);
+}
+
+body[data-layout="a2"] .nav-rule {
+  block-size: 16px;
+  margin-inline: 8px;
+}
+
+body[data-layout="a2"] .nav-gear {
+  inline-size: 28px;
+  block-size: 28px;
+}
+
+/* やり取りの列とサイドバー: 背景の透ける面。サイドバーは面の下端まで伸ばし、使用量を足元に置く */
+body[data-layout="a2"] :is(.turn-lane, .side) {
+  border-color: var(--hairline);
+  background: var(--glass);
+  box-shadow: var(--lift);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+}
+
+body[data-layout="a2"] .side {
+  align-self: stretch;
+}
+
+body[data-layout="a2"] .side-head {
+  padding: 14px 16px 8px;
+}
+
+body[data-layout="a2"] .side-title,
+body[data-layout="a2"] .turn-lane .gutter-head {
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  color: var(--ink-soft);
+}
+
+body[data-layout="a2"] .tasks {
+  gap: 4px;
+  padding: 2px 8px 24px;
+  scrollbar-color: rgb(255 255 255 / 24%) transparent;
+}
+
+body[data-layout="a2"] .task {
+  padding: 9px 10px;
+  border-radius: 12px;
+  transition: background-color 0.15s;
+}
+
+body[data-layout="a2"] .task:hover {
+  background: rgb(255 255 255 / 4%);
+}
+
+body[data-layout="a2"] .task-doing,
+body[data-layout="a2"] .task-doing:hover {
+  background: linear-gradient(
+    to right,
+    color-mix(in srgb, var(--accent) 17%, transparent),
+    color-mix(in srgb, var(--accent) 6%, transparent)
+  );
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+body[data-layout="a2"] .usage {
+  padding: 10px 10px 10px 16px;
+  border-block-start-color: var(--hairline-quiet);
+}
+
+body[data-layout="a2"] .turn {
+  border-radius: 10px;
+}
+
+body[data-layout="a2"] .turn-current {
+  background: rgb(255 255 255 / 8%);
+  box-shadow: inset 0 0 0 1px var(--hairline-quiet);
+}
+
+/* 立ち絵の足元に、狐火の色の淡い明かりを落とす */
+body[data-layout="a2"] .actor::after {
+  content: "";
+  position: absolute;
+  inset-inline: 6%;
+  inset-block-end: 0;
+  z-index: -1;
+  block-size: 56px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--accent) 30%, transparent), transparent);
+  filter: blur(12px);
+}
+
+/* 進行の帯: 40px のカプセル */
+body[data-layout="a2"] .talk .paper-head {
+  gap: 12px;
+  min-block-size: 40px;
+  padding: 5px 6px 5px 16px;
+  border-color: var(--hairline);
+  border-radius: 999px;
+  background: var(--glass);
+  box-shadow: var(--lift);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  font-size: 13px;
+}
+
+body[data-layout="a2"] .paper-head .phase {
+  inline-size: 20px;
+  block-size: 20px;
+}
+
+body[data-layout="a2"] .paper-head .phase + .phase {
+  margin-inline-start: 10px;
+}
+
+body[data-layout="a2"] .paper-head .phase + .phase::before {
+  inline-size: 10px;
+}
+
+body[data-layout="a2"] .paper-head .chip-button {
+  block-size: 28px;
+}
+
+/* 紙: 縁を細くして、上の縁に薄い光を入れる */
+body[data-layout="a2"] .sheet {
+  background: var(--paper);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 5%),
+    0 16px 36px rgb(8 6 14 / 42%);
+}
+
+body[data-layout="a2"] .sheet:not(.inquiry) {
+  border-color: var(--hairline-quiet);
+}
+
+body[data-layout="a2"] :is(.report h1, .report h2, .inquiry h1, .welcome h1) {
+  letter-spacing: 0.015em;
+}
+
+body[data-layout="a2"] .report h1 {
+  padding-block-end: 14px;
+  border-block-end-color: var(--hairline);
+  font-size: 22px;
+}
+
+body[data-layout="a2"] .report h2 {
+  margin-block-start: 32px;
+  font-size: 16px;
+}
+
+body[data-layout="a2"] th {
+  border-block-end-color: var(--hairline);
+  letter-spacing: 0.03em;
+}
+
+body[data-layout="a2"] td {
+  border-block-end-color: var(--hairline-quiet);
+}
+
+/* お伺いの添え書きは、枠の中の枠にせず、上下の罫だけで区切る */
+body[data-layout="a2"] .inquiry-brief {
+  padding: 12px 2px;
+  border: 0;
+  border-block: 1px solid var(--hairline);
+  border-radius: 0;
+}
+
+body[data-layout="a2"] .option {
+  border-color: var(--hairline);
+  border-radius: 12px;
+}
+
+body[data-layout="a2"] .option-chosen {
+  border-color: var(--accent);
+}
+
+/* 吹き出し: セリフは狐火の色を上から下へ薄め、投稿は一段明るい面にする */
+body[data-layout="a2"] :is(.say, .post) {
+  padding: 9px 14px;
+  font-size: 15px;
+  text-wrap: pretty;
+}
+
+body[data-layout="a2"] .say {
+  border-radius: 6px 18px 18px;
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--accent) 16%, var(--paper)),
+    color-mix(in srgb, var(--accent) 9%, var(--paper))
+  );
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 8%),
+    inset 0 0 0 1px color-mix(in srgb, var(--accent) 30%, transparent),
+    0 10px 24px rgb(8 6 14 / 40%);
+}
+
+body[data-layout="a2"] .post {
+  border-radius: 18px 18px 6px;
+  background: rgb(54 50 67 / 92%);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 8%),
+    inset 0 0 0 1px var(--hairline),
+    0 10px 24px rgb(8 6 14 / 40%);
+}
+
+/* 投稿の面は一段明るいので、時刻の字も一段明るくして読める濃さを保つ */
+body[data-layout="a2"] .post time {
+  color: var(--ink-soft);
+}
+
+body[data-layout="a2"] .talk .worklog {
+  border-radius: 999px;
+  background: rgb(20 18 28 / 62%);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+}
+
+body[data-layout="a2"] .worklog summary {
+  padding: 6px 16px;
+}
+
+/* 入力欄: 背景の透ける面に、細い縁と深い影 */
+body[data-layout="a2"] .composer-body {
+  gap: 6px;
+  padding: 12px 10px 8px 18px;
+  border-radius: 22px;
+  background: linear-gradient(to bottom, rgb(54 50 68 / 88%), rgb(41 38 52 / 94%));
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 9%),
+    0 0 0 1px var(--hairline),
+    0 20px 44px rgb(8 6 14 / 55%);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+}
+
+body[data-layout="a2"] .composer-body:focus-within {
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 9%),
+    0 0 0 1px color-mix(in srgb, var(--accent) 50%, transparent),
+    0 20px 44px rgb(8 6 14 / 55%);
+}
+
+body[data-layout="a2"][data-scene="ask"] .composer-body {
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 9%),
+    0 0 0 1px color-mix(in srgb, var(--state-warn) 55%, transparent),
+    0 20px 44px rgb(8 6 14 / 55%);
+}
+
+body[data-layout="a2"] .composer-drawer {
+  border-color: var(--hairline);
+  border-radius: 14px 14px 0 0;
+  background: rgb(34 31 44 / 88%);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+}
+
+body[data-layout="a2"] .send-button {
+  inline-size: 32px;
+  block-size: 32px;
+}

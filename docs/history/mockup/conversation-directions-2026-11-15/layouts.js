@@ -1,7 +1,7 @@
 // レイアウト候補の見本の切り替え。URL の検索引数から候補・場面・パックを読んで body の印を決め、
 // 候補ごとに部品（進行の帯・使用量・入口の部品・紙）を載せ替える。配置と見た目は layouts.css が決める。
 
-const LAYOUTS = ["a", "b", "c", "d", "e", "f", "g", "h"]
+const LAYOUTS = ["a", "a2", "b", "c", "d", "e", "f", "g", "h"]
 const SCENES = ["read", "greet", "work", "ask"]
 const PACKS = {
   tsukumo: { name: "つくも", accent: "#6fe3cd" },
@@ -76,6 +76,8 @@ function gatherIntoBar() {
 
 const ARRANGE = {
   a() {},
+  // 部品の並びは a のまま。見た目と寸法だけを refine.css が替える。
+  a2() {},
   // 部屋の名前はレールに収まらないので、やり取りの列の頭へ移す。
   b() {
     lane.prepend(group("lane-room", one(".nav-room-name"), one(".nav-room-port")))
