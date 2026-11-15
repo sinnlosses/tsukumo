@@ -49,6 +49,6 @@ test.describe("離れていたあいだの線", () => {
 
     // 狭い画面は流れの行を描かないので、線も出ない。
     await room.resize({ width: 720, height: 900 })
-    expect(await main.locator("[data-away-seam]").count()).toBe(0)
+    await expect(main.locator("[data-away-seam]")).toHaveCount(0)
   })
 })
