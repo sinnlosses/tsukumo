@@ -99,7 +99,7 @@ const STATE = {
     elapsed: "1分08秒",
     steps: 5,
     phaseTime: "20秒〜",
-    now: "<code>pnpm run test</code> を走らせている",
+    now: "<code>Bash pnpm run test</code>",
     nowTime: "12秒",
     made: "<code>setting-notice.tsx</code>",
     fresh: [],
@@ -110,7 +110,7 @@ const STATE = {
     elapsed: "6分10秒",
     steps: 12,
     phaseTime: "1分40秒〜",
-    now: "全部の検査の終わりを待っている（<code>pnpm run check --full</code>）",
+    now: "<code>Bash pnpm run check --full</code>",
     nowTime: "1分40秒",
     made: "<code>docs/guide/setting.md</code>",
     fresh: [1, 2],
@@ -285,7 +285,8 @@ const HEAD = {
     return shelf({
       open,
       body: `<ol class="steps">${stepsRows({ note: false, live: false, tools: true })}</ol>${moment === "read" ? `${timeTotal}${band()}` : ""}`,
-      end: headEnd({ usual: true, toggle: true, open, fold: "" }),
+      // 見込み（「いつもは」）は利用者が後回しにしたので、採用した案2 には出さない。
+      end: headEnd({ usual: false, toggle: true, open, fold: "" }),
     })
   },
   // 案3: 働くあいだは一覧を開いたまま、終わると1行に畳む。
@@ -359,13 +360,13 @@ function reportNow() {
   </div></article>`
 }
 
-// 提案のレポート（案2・案3）。頭は結論の直後に確かさだけを置き、利用者の用件「あなたの番」はいちばん下に置く。
+// 提案のレポート（案2・案3）。頭は結論の直後に検証の結果（確かめたこと）だけを置き、利用者の用件「お願い」はいちばん下に置く。
 function reportNew() {
   return `<article class="sheet paper attach" aria-label="レポート"><div class="report">
     <p class="task-line"><span class="task-tag">T-104</span><span>設定に知らせの切り替えを足す</span><span>${CHANGE}</span>${WIDEN}</p>
     <h1 class="tight">${CONCLUSION}</h1>
     <dl class="head-rows">
-      <div class="head-row"><dt>確かさ</dt><dd>
+      <div class="head-row"><dt>確かめたこと</dt><dd>
         <ul class="ledger">
           <li class="ledger-row" data-state="open">${icon("question")}<span class="ledger-label">ほかのタブを見ているときに鳴るか</span><span class="seal seal-said">申告のみ</span>
             <p class="ledger-how">音は撮影では確かめられない。確かめ方: 切り替えを入れ、別のタブを開いたまま依頼を1つ終わらせる</p></li>
@@ -375,7 +376,7 @@ function reportNew() {
     </dl>
     ${REPORT_BODY}
     <section class="turn-end" id="turn-end" aria-labelledby="turn-title">
-      <h2 class="turn-title" id="turn-title">あなたの番</h2>
+      <h2 class="turn-title" id="turn-title">お願い</h2>
       <p class="turn-text">${FAVOR}</p>
       <ul class="next-chips">
         <li><button class="next-chip" type="button">「ほかのタブを見ているとき」にそろえる</button></li>
@@ -498,7 +499,7 @@ if (turnEnd !== null) {
   document.body.dataset.turn = "yours"
   one(".composer").insertAdjacentHTML(
     "afterbegin",
-    `<p class="composer-status">${icon("down")}<span>あなたの番が1件あります</span><button class="status-jump" type="button">レポートの末尾へ</button></p>`,
+    `<p class="composer-status">${icon("down")}<span>お願いが1件あります</span><button class="status-jump" type="button">レポートの末尾へ</button></p>`,
   )
   one(".status-jump").addEventListener("click", () => {
     stream.scrollTo({ top: stream.scrollHeight, behavior: "smooth" })
