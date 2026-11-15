@@ -218,9 +218,9 @@
 
   /* 画面のナビの帯が最上部で奪う高さ。帯の外寸は帯の地 + 下の罫線の2つの和。
      帯（screen-nav.module.css）と、そのぶん縮む会話の画面の grid（layout.module.css）の両方が読むので、値はここに1つだけ置く（狭い画面では帯を出さず、下の @media の縦の flex が grid の高さを決める）。
-     `--screen-nav-height` は罫線を含まない帯の地の高さで、口の下線はこの下端に重なる。
+     `--screen-nav-height` は罫線を含まない帯の地の高さ。
      帯の下の隙間は画面の縁と同じだけ空ける。 */
-  --screen-nav-height: 52px;
+  --screen-nav-height: 40px;
   --screen-nav-rule: 1px;
   --screen-nav-gap: var(--page-padding);
 

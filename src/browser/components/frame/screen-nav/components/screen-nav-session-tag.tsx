@@ -82,7 +82,7 @@ function SessionTagTitle(props: SessionTagTitleProps): ReactElement {
     return (
       <Text
         element="span"
-        size="heading"
+        size="subheading"
         tone="ink"
         weight="bold"
         className={styles["screen-nav-room"]}

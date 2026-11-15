@@ -56,7 +56,6 @@ const MARGIN_DECLARATION_LIMITS: Readonly<Record<string, number>> = {
   "browser/components/frame/protocol-mismatch.module.css": 1,
   "browser/components/frame/screen-nav/components/nav-drawer.module.css": 2,
   "browser/components/frame/screen-nav/components/phone-head.module.css": 2,
-  "browser/components/frame/screen-nav/components/screen-nav-gate.module.css": 1,
   "browser/components/frame/screen-nav/components/screen-nav-settings-dialog.module.css": 2,
   "browser/components/frame/screen-nav/components/screen-nav-settings-face-frame.module.css": 1,
   "browser/components/frame/screen-nav/components/screen-nav-settings-look.module.css": 2,

@@ -35,15 +35,14 @@
   align-self: center;
   margin: 0 var(--space-md);
   width: 1px;
-  height: 24px;
+  height: 16px;
   background: var(--rule);
 }
-/* 口は縮めない（押す先なので、字が欠けると何の口か分からなくなる）。
-   帯の高さいっぱいに伸ばして、口の下線が帯の下端に来るようにする。 */
+/* 口は縮めない（押す先なので、字が欠けると何の口か分からなくなる）。 */
 .screen-nav-gates {
   display: flex;
   flex: none;
-  align-self: stretch;
+  align-self: center;
   gap: var(--space-2xs);
   min-width: 0;
 }

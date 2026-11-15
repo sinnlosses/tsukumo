@@ -22,8 +22,8 @@
 /* いまのパックの顔。丸く切り抜き、透過の縁が帯に溶けないように丸の地を --surface-accent で塗り、外側に差し色の輪を掛ける。 */
 .screen-nav-face {
   flex: none;
-  width: 2.25rem;
-  height: 2.25rem;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   background: var(--surface-accent);
   box-shadow: 0 0 0 1px var(--accent);

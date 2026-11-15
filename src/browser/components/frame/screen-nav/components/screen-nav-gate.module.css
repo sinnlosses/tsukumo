@@ -1,34 +1,50 @@
 /* 帯に並ぶ口1つ。 */
 
-/* 口は枠も地も無い文字のタブ。
-   下線は負の `margin-bottom` で帯の下の罫線に重ねる（いまの口の下線が罫線の上に載って見える）。
-   いまの口以外も透明の下線を持つので、選ばれても字の位置が動かない。 */
 .screen-nav-gate {
   display: flex;
   align-items: center;
-  gap: var(--space-sm);
-  margin-bottom: calc(-1 * var(--screen-nav-rule));
-  padding: 0 var(--space-md);
-  border-bottom: 2px solid transparent;
+  --gate-gap: 6px;
+  --gate-padding: 10px;
+  --gate-radius: 8px;
+  --font-nav-gate: 0.8125rem;
+  gap: var(--gate-gap);
+  height: 28px;
+  box-sizing: border-box;
+  padding: 0 var(--gate-padding);
+  border-radius: var(--gate-radius);
   color: var(--ink-quiet);
-  font-size: var(--font-subheading);
+  font-size: var(--font-nav-gate);
   line-height: 1.4;
+  transition:
+    background-color var(--motion-fast),
+    color var(--motion-fast);
   text-decoration: none;
   white-space: nowrap;
 }
 .screen-nav-gate:hover {
   color: var(--ink);
 }
-/* いまの口は字の濃さ・太さ・差し色の下線の3つで示す（色だけで伝えない）。 */
+/* いまの口は一段明るい面・差し色のアイコン・字の濃さと太さで示す（色だけで伝えない。`aria-current` も付く）。 */
 .screen-nav-gate.is-active {
-  border-bottom-color: var(--accent);
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+  box-shadow: inset 0 0 0 1px var(--rule);
   color: var(--ink);
   font-weight: 500;
 }
-/* 絵は字と同じ色で字の隣に添える（飾りなので読み上げない）。 */
+.screen-nav-gate:not(.is-active, .is-disabled):hover {
+  background: color-mix(in srgb, var(--ink) 5%, transparent);
+}
+/* 絵は 16px。ふだんは字と同じ色で、いまの口だけ差し色にする（飾りなので読み上げない）。 */
 .screen-nav-gate-icon {
   display: inline-flex;
   flex: none;
+}
+.screen-nav-gate-icon > svg {
+  width: 16px;
+  height: 16px;
+}
+.screen-nav-gate.is-active .screen-nav-gate-icon {
+  color: var(--accent);
 }
 /* `restartRefused` の間の、いまと違うモードの口。押せないことを字の薄さと禁止のカーソルで示す。 */
 .screen-nav-gate.is-disabled {
