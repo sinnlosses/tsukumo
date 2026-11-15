@@ -74,7 +74,7 @@
   .nav-drawer-identity .screen-nav-face {
     width: 28px;
     height: 28px;
-    box-shadow: none;
+    border: 0;
   }
   /* キャラクターの選択メニューは、顔の真下ではなく名乗りの行の下に、引き出しの幅いっぱい（左右 16 を残す）で重ねる。
      基準を名乗りの行へ移すため、顔の入れ物は静的に置く。 */

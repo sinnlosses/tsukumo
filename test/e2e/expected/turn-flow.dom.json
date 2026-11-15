@@ -46,17 +46,6 @@
                 {
                   "tag": "span",
                   "attributes": {
-                    "aria-hidden": "true"
-                  },
-                  "children": [
-                    {
-                      "tag": "svg"
-                    }
-                  ]
-                },
-                {
-                  "tag": "span",
-                  "attributes": {
                     "role": "status",
                     "aria-live": "polite"
                   }

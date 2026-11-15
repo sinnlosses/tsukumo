@@ -135,7 +135,7 @@ describe("ScreenNav", () => {
     })
   })
 
-  // 顔の右下の「⌄」で開く（13.9「キャラクターの選択メニュー」）。
+  // 顔を押して開く（13.9「キャラクターの選択メニュー」）。
   describe("キャラクターの選択メニュー", () => {
     const PACKS = [
       characterPackEntry("fictional", "架空の精霊"),

@@ -3,7 +3,6 @@
 // 同じ部品を広い画面の帯と狭い画面の引き出しの両方に置くので、id は `useId()` でこの器ごとに振る（`aria-controls` が指す先が重ならない）。
 
 import clsx from "clsx"
-import { ChevronDown } from "lucide-react"
 import { useId, type ReactElement } from "react"
 
 import { Button } from "../../../ui/button/button.tsx"
@@ -55,9 +54,6 @@ export function ScreenNavCharacterPicker(props: ScreenNavCharacterPickerProps): 
           alt={picker.face.alt}
           className={clsx(styles["screen-nav-face"], shellStyles["screen-nav-face"])}
         />
-        <span className={styles["screen-nav-character-picker-mark"]} aria-hidden="true">
-          <ChevronDown size={10} strokeWidth={2.2} />
-        </span>
       </Button>
       {picker.open && (
         <ul
