@@ -14,7 +14,7 @@ type ConversationLayoutProps = {
   readonly character: ReactNode
   readonly dispatch: ReactNode
   readonly inquiry: ReactNode
-  readonly rail: { readonly badge: ReactNode; readonly tools: ReactNode }
+  readonly rail: { readonly badge: ReactNode }
   readonly collapseCharacter: boolean
   readonly mainAsGround: boolean
 }

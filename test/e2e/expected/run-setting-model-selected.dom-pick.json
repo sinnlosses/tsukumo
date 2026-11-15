@@ -1,6 +1,6 @@
 {
-  "sidebar": [
-    { "tag": "aside", "attributes": { "data-region": "sidebar", "aria-label": "サイドバー" }, "children": [
+  "dispatch": [
+    { "tag": "section", "attributes": { "data-region": "dispatch", "aria-label": "入力欄" }, "children": [
       { "tag": "div", "attributes": { "role": "group", "aria-label": "実行の設定" }, "children": [
         { "tag": "select", "attributes": { "aria-label": "モデル Sonnet", "value": "sonnet" } },
         { "tag": "select", "attributes": { "aria-label": "effort Medium", "value": "medium" } },

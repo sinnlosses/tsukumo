@@ -29,8 +29,6 @@ type PresentationalConversationLayoutProps = UseConversationLayoutResult & {
   readonly rail: {
     /** 中くらいのビューポート幅の柱の、開くボタンの中に置くもの。 */
     readonly badge: ReactNode
-    /** 中くらいのビューポート幅の柱の、開くボタンの下に並べるもの。 */
-    readonly tools: ReactNode
   }
   /** キャラビューの領域を畳み、下段を入力欄だけにするか。立ち絵が上段へ移ったとき（雑談モード）に使う。 */
   readonly collapseCharacter: boolean
@@ -77,7 +75,7 @@ export function PresentationalConversationLayout({
   character,
   dispatch,
   inquiry,
-  rail: { badge: railBadge, tools: railTools },
+  rail: { badge: railBadge },
   collapseCharacter,
   mainAsGround,
 }: PresentationalConversationLayoutProps): ReactElement {
@@ -144,7 +142,6 @@ export function PresentationalConversationLayout({
               {railBadge}
               {sidebarOpen ? <PanelRightClose size={18} /> : <PanelRightOpen size={18} />}
             </Button>
-            {railTools}
           </div>
         </div>
       </div>

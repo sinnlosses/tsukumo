@@ -1,9 +1,8 @@
-// サイドバーの下端の帯。1行に、左からモデル・effort・許可モードの操作子（`RunSettingGroup`）、コンテキストの目盛り、プラン使用量の2つの円を並べる。
+// サイドバーの下端の帯。1行に、コンテキストの目盛りとプラン使用量の2つの円を右寄せで並べる。
 // 目盛りと円はどちらもボタンで、押すと帯の上に詳しい面（いまのコンテキストのカードとプラン使用量のカード）が開く。
 
 import type { ReactElement } from "react"
 
-import { RunSettingGroup } from "../../../../features/run-setting/run-setting-group.tsx"
 import type { SidebarFooterView } from "../hooks/use-sidebar-footer.ts"
 import { ContextUsageGauge } from "./context-usage-gauge.tsx"
 import { ContextUsageRow } from "./context-usage-row.tsx"
@@ -26,7 +25,6 @@ export function PresentationalSidebarFooter({
 }: SidebarFooterView): ReactElement {
   return (
     <div className={styles["sidebar-footer"]} ref={ref}>
-      <RunSettingGroup placement="sidebar-footer" />
       {/* 目盛りと円はひとまとまりで右へ寄せる（サイドバーが狭くて折り返すときも、2つが離れずに次の行の右端へ移る）。 */}
       <div className={styles["sidebar-footer-usage"]}>
         <ContextUsageGauge

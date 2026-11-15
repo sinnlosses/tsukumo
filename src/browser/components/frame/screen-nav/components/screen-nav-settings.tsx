@@ -75,7 +75,6 @@ export function ScreenNavSettingsSessionDefaultFace(props: ScreenNavSettingsProp
           options={modelSelectOptions(settings.sessionDefault.modelEffortSupport)}
           disabled={false}
           danger={false}
-          rail={false}
           layout="list"
           mouth="field"
           title={undefined}
@@ -105,7 +104,6 @@ export function ScreenNavSettingsSessionDefaultFace(props: ScreenNavSettingsProp
           options={effortSelectOptions(settings.sessionDefault.effort)}
           disabled={settings.sessionDefault.effort.kind !== "known"}
           danger={false}
-          rail={false}
           layout="row"
           mouth="field"
           title={
@@ -135,7 +133,6 @@ export function ScreenNavSettingsSessionDefaultFace(props: ScreenNavSettingsProp
           options={permissionModeSelectOptions(SESSION_DEFAULT_PERMISSION_MODES)}
           disabled={false}
           danger={false}
-          rail={false}
           layout="list"
           mouth="field"
           title={undefined}
@@ -161,7 +158,6 @@ export function ScreenNavSettingsSessionDefaultFace(props: ScreenNavSettingsProp
           options={FIGURE_PREFERENCE_OPTIONS}
           disabled={false}
           danger={false}
-          rail={false}
           layout="list"
           mouth="field"
           title={undefined}
@@ -198,7 +194,6 @@ export function ScreenNavSettingsRevealFace(props: ScreenNavSettingsProps): Reac
           options={REVEAL_SPEED_OPTIONS}
           disabled={false}
           danger={false}
-          rail={false}
           layout="list"
           mouth="field"
           title={undefined}
@@ -241,7 +236,6 @@ export function ScreenNavSettingsLaunchSkillFace(props: ScreenNavSettingsProps):
           }))}
           disabled={false}
           danger={false}
-          rail={false}
           layout="list"
           mouth="field"
           title={undefined}

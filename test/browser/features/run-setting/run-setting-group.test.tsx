@@ -1,4 +1,4 @@
-import { act, cleanup, render, screen } from "@testing-library/react"
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { RunSettingGroup } from "../../../../src/browser/features/run-setting/run-setting-group.tsx"
@@ -27,7 +27,7 @@ function renderGroup(): void {
     modelEffortSupport: [OPUS_SUPPORT],
     effort: "high",
   })
-  render(<RunSettingGroup placement="sidebar-footer" />)
+  render(<RunSettingGroup placement="nav-drawer" />)
 }
 
 function optionsOf(label: RegExp): readonly HTMLOptionElement[] {
@@ -87,6 +87,23 @@ function dotOf(label: RegExp): string | undefined {
   return select.parentElement?.querySelector("[data-dot]")?.getAttribute("data-dot") ?? undefined
 }
 
+describe("RunSettingGroup（入力欄の札）", () => {
+  it("札の口は名前と開く印を持ち、選ぶとモデルの値がセッションへ渡る", () => {
+    const commands: unknown[] = []
+    putSession(
+      { ...INITIAL_SESSION_STATE, model: "claude-opus-5", modelEffortSupport: [OPUS_SUPPORT] },
+      (command) => commands.push(command),
+    )
+    render(<RunSettingGroup placement="composer" />)
+
+    const model = screen.getByRole("combobox", { name: /^モデル / })
+    expect(model.querySelector("[data-part='name']")).toBeTruthy()
+
+    fireEvent.change(model, { target: { value: "sonnet" } })
+    expect(commands).toHaveLength(1)
+  })
+})
+
 describe("RunSettingGroup（知らないモデル）", () => {
   it("既定のモデルに畳まず、届いた名前をボタンの名前と吊り下げのカードの行にする", () => {
     putSession({
@@ -94,7 +111,7 @@ describe("RunSettingGroup（知らないモデル）", () => {
       model: "claude-opus-4-8",
       modelEffortSupport: [OPUS_SUPPORT],
     })
-    render(<RunSettingGroup placement="sidebar-footer" />)
+    render(<RunSettingGroup placement="nav-drawer" />)
 
     expect(screen.getByRole("combobox", { name: "モデル claude-opus-4-8" })).toBeTruthy()
     expect(optionsOf(/^モデル /).map((option) => option.value)).toContain("claude-opus-4-8")
@@ -111,7 +128,7 @@ describe("RunSettingGroup（知らない許可モード）", () => {
         permissionMode: { kind: "unknown", raw: "dontAsk" },
       },
     })
-    render(<RunSettingGroup placement="sidebar-footer" />)
+    render(<RunSettingGroup placement="nav-drawer" />)
 
     expect(screen.getByRole("combobox", { name: "許可モード dontAsk" })).toBeTruthy()
   })
@@ -120,7 +137,7 @@ describe("RunSettingGroup（知らない許可モード）", () => {
 describe("RunSettingGroup（口の右肩の点）", () => {
   it("印が無ければ点を出さない", () => {
     putSession(stateWithMarks(marksWith({})))
-    render(<RunSettingGroup placement="sidebar-footer" />)
+    render(<RunSettingGroup placement="nav-drawer" />)
 
     expect([dotOf(/^モデル /), dotOf(/^effort /), dotOf(/^許可モード /)]).toEqual([
       undefined,
@@ -138,7 +155,7 @@ describe("RunSettingGroup（口の右肩の点）", () => {
           marksWith({ [setting]: { kind: "accepted", value: "x", at, from: NO_ORIGIN } }),
         ),
       )
-      render(<RunSettingGroup placement="sidebar-footer" />)
+      render(<RunSettingGroup placement="nav-drawer" />)
 
       const dots = {
         model: dotOf(/^モデル /),
@@ -164,7 +181,7 @@ describe("RunSettingGroup（口の右肩の点）", () => {
         marksWith({ model: { kind: "confirmed", value: "opus", at: nowEpochMilliseconds() } }),
       ),
     )
-    render(<RunSettingGroup placement="sidebar-footer" />)
+    render(<RunSettingGroup placement="nav-drawer" />)
 
     expect(dotOf(/^モデル /)).toBe("confirmed")
     expect(screen.getByRole("combobox", { name: /^モデル / }).title).toMatch(/・ 効いた$/)
@@ -181,7 +198,7 @@ describe("RunSettingGroup（口の右肩の点）", () => {
         }),
       ),
     )
-    render(<RunSettingGroup placement="sidebar-footer" />)
+    render(<RunSettingGroup placement="nav-drawer" />)
 
     act(() => {
       vi.advanceTimersByTime(3100)
@@ -202,7 +219,7 @@ describe("RunSettingGroup（口の右肩の点）", () => {
         marksWith({ model: { kind: "accepted", value: "opus", at, from: NO_ORIGIN } }),
       ),
     )
-    render(<RunSettingGroup placement="sidebar-footer" />)
+    render(<RunSettingGroup placement="nav-drawer" />)
 
     act(() => {
       putState(stateWithMarks(marksWith({ model: { kind: "confirmed", value: "opus", at } })))
@@ -231,7 +248,7 @@ describe("RunSettingGroup（口の右肩の点）", () => {
     putSession(
       stateWithMarks(marksWith({ permissionMode: { kind: "confirmed", value: "plan", at: old } })),
     )
-    render(<RunSettingGroup placement="sidebar-footer" />)
+    render(<RunSettingGroup placement="nav-drawer" />)
 
     expect(dotOf(/^許可モード /)).toBeUndefined()
   })

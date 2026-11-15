@@ -80,6 +80,7 @@
   /* 本体の角丸は見本（22px）に合わせる。内側の要素の丸みは殻が角丸と余白の差から出す。 */
   .dispatch-form .dispatch-shell {
     --_chat-composer-radius: 22px;
+    container: composer / inline-size;
   }
   .dispatch-shell .dispatch-text {
     box-sizing: border-box;

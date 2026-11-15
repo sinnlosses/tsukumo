@@ -6,7 +6,6 @@
 
 import type { ReactElement } from "react"
 
-import { RunSettingGroup } from "../../../features/run-setting/run-setting-group.tsx"
 import { TaskDoingCount } from "../../frame/sidebar/components/task-doing-count.tsx"
 import { Sidebar } from "../../frame/sidebar/sidebar.tsx"
 import { CharacterView } from "./components/character-view/character-view.tsx"
@@ -31,10 +30,7 @@ export function PresentationalConversation(props: PresentationalConversationProp
         character={<CharacterView />}
         dispatch={<Dispatch />}
         inquiry={!props.chatMode && <PendingAskCard />}
-        rail={{
-          badge: !props.chatMode && <TaskDoingCount />,
-          tools: <RunSettingGroup placement="rail" />,
-        }}
+        rail={{ badge: !props.chatMode && <TaskDoingCount /> }}
         collapseCharacter={props.chatMode}
         mainAsGround={props.chatMode}
       />

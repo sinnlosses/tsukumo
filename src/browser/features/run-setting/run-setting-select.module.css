@@ -154,13 +154,6 @@
   display: none;
 }
 
-/* 中くらいのビューポート幅の柱では、横へ吊る。柱はビューポートの右端にあるので左へ吊り、縦は口の高さに合わせて中央へ揃える
-   （`span-bottom` だと口の下端から下へ伸び、縦の位置が口からずれる実測）。 */
-.run-setting-select.is-rail::picker(select) {
-  position-area: left;
-  margin-right: var(--space-sm);
-}
-
 /* effort の5本の棒。見出しは1行占めて改行させ、選択肢はその下に横並びにする。 */
 .run-setting-select.is-row::picker(select):popover-open {
   flex-direction: row;
@@ -253,6 +246,51 @@
   white-space: nowrap;
 }
 .run-setting-select.is-field .run-setting-select-closed .run-setting-select-icon:empty {
+  display: none;
+}
+/* 入力欄の下の行の札（`mouth="chip"`）。絵・いまの名前・矢印を枠なしで並べ、選択肢は口の上へ開く。 */
+.run-setting-select.is-chip {
+  justify-content: flex-start;
+  width: auto;
+  height: 32px;
+  border-radius: var(--radius-pill);
+  color: var(--ink-soft);
+}
+.run-setting-select.is-chip:hover {
+  color: var(--ink);
+}
+.run-setting-select.is-chip.is-danger {
+  color: var(--state-ng);
+}
+.run-setting-select.is-chip::picker(select) {
+  position-area: top span-right;
+}
+.run-setting-select.is-chip .run-setting-select-button {
+  justify-content: flex-start;
+  gap: var(--inline-tight);
+  padding: 0 var(--inline-control);
+}
+.run-setting-select.is-chip .run-setting-select-closed .run-setting-select-row {
+  display: flex;
+  flex: 0 1 auto;
+  flex-direction: row;
+  align-items: center;
+  overflow: hidden;
+}
+.run-setting-select.is-chip
+  .run-setting-select-closed
+  .run-setting-select-row
+  > :not([data-part="name"]) {
+  display: none;
+}
+.run-setting-select.is-chip .run-setting-select-closed [data-part="name"] {
+  overflow: hidden;
+  color: inherit;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.run-setting-select.is-chip .run-setting-select-closed .run-setting-select-icon:empty {
   display: none;
 }
 .run-setting-select-chevron {

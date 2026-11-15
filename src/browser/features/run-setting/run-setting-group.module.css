@@ -12,22 +12,25 @@
   height: 18px;
   background: var(--rule);
 }
-/* 中くらいのビューポート幅の柱では縦に並べる。 */
-.run-setting-group-rail {
-  flex-direction: column;
-  padding: var(--space-2xs) 0;
-}
-.run-setting-group-rail .run-setting-divider {
-  width: 18px;
-  height: 1px;
-}
 /* 狭い画面の引き出しでは、仕事・雑談の門の右に並べる。 */
 .run-setting-group-drawer {
   padding: var(--space-xs) var(--space-2xs);
 }
-/* 中くらいのビューポート幅では柱が持つので、開いたサイドバーの下端には出さない。 */
-@media (min-width: 761px) and (max-width: 1100px) {
-  .run-setting-group-footer {
+/* 広い幅の入力欄の下の行では、3つの札を枠も仕切りも無しで並べる。 */
+.run-setting-group.run-setting-group-composer {
+  gap: var(--inline-tight);
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+.run-setting-group-composer .run-setting-divider {
+  display: none;
+}
+/* 入力欄の幅が 600px に足りないときは、札を記号だけにする。 */
+@container composer (inline-size < 600px) {
+  .run-setting-group-composer select > button [data-part="name"] {
     display: none;
   }
 }

@@ -5,7 +5,7 @@
 // 閉じた口は `<selectedcontent>` がいまの `<option>` の中身をそのまま写す（React からは渡せない）ので、
 // 各行は「閉じていても出す絵」（`icon`）と「開いたときだけ出す中身」（`row`）に分ける。
 // `icon` の口は `selectedcontent` の中の `.run-setting-select-row` を `display: none` にして絵だけを写し、
-// `field` の口は絵と名前（`data-part="name"`）を写す（`run-setting-select.module.css`）。
+// `field` と `chip` の口は絵と名前（`data-part="name"`）を写す（`run-setting-select.module.css`）。
 
 import clsx from "clsx"
 import { Check, ChevronDown } from "lucide-react"
@@ -33,12 +33,10 @@ type RunSettingSelectProps = {
   readonly disabled: boolean
   /** 「全部許す」のときだけ絵と字に意味の色を載せる。呼び出し側が渡す。 */
   readonly danger: boolean
-  /** 中くらいのビューポート幅の柱では、吊り下げのカードを横へ吊る。 */
-  readonly rail: boolean
   /** `row` は選択肢を横に並べる（effort の5本の棒）。閉じた口の絵（`icon`）は列の形では出さない。 */
   readonly layout: "list" | "row"
-  /** `icon` は絵だけの口、`field` は絵・いまの名前・開閉の矢印を並べた口（設定の欄）。 */
-  readonly mouth: "icon" | "field"
+  /** `icon` は絵だけの口、`field` は絵・いまの名前・開閉の矢印を並べた口（設定の欄）、`chip` は同じ並びの枠なしの札（入力欄の下の行。選択肢は上へ開く）。 */
+  readonly mouth: "icon" | "field" | "chip"
   readonly title?: string
   /** 口の右肩の点。字は持たず、意味は `title` が言う。 */
   readonly dot: SettingDot
@@ -64,9 +62,9 @@ function RunSettingSelectBody(props: RunSettingSelectProps): ReactElement {
       className={clsx(
         styles["run-setting-select"],
         props.danger && styles["is-danger"],
-        props.rail && styles["is-rail"],
         props.layout === "row" && styles["is-row"],
         props.mouth === "field" && styles["is-field"],
+        props.mouth === "chip" && styles["is-chip"],
       )}
       value={props.value}
       disabled={props.disabled}
@@ -75,7 +73,7 @@ function RunSettingSelectBody(props: RunSettingSelectProps): ReactElement {
     >
       <button type="button" className={styles["run-setting-select-button"]}>
         <selectedcontent className={styles["run-setting-select-closed"]} />
-        {props.mouth === "field" && (
+        {props.mouth !== "icon" && (
           <ChevronDown
             size={14}
             strokeWidth={2}
