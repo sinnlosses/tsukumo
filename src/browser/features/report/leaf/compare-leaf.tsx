@@ -76,6 +76,7 @@ export function CompareLeaf(props: {
         after: labels[1] || VERSUS_FALLBACK_LABELS.after,
       },
       overlay: part.relation === "before-after",
+      markChange: part.relation === "before-after",
     }
   return (
     <FoldedLeafFrame

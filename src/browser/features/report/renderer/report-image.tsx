@@ -23,6 +23,8 @@ import {
 import { Button } from "../../../components/ui/button/button.tsx"
 import { ImageZoom, type ImageZoomFallback } from "../../../components/ui/image-zoom/image-zoom.tsx"
 import { sessionTokenUrl } from "../../../domain/session-token-url.ts"
+import type { ChangedRegion } from "../domain/changed-region.ts"
+import { compareLoadedImages } from "./compare-loaded-image.ts"
 import { type CompareView, loadCompareView, saveCompareView } from "./compare-view.ts"
 import { CompareZoom } from "./compare-zoom.tsx"
 import { RegionFramed } from "./region-frame.tsx"
@@ -72,6 +74,9 @@ type CompareSwapContextValue = {
   readonly reportMissing: () => void
   readonly reportImage: (thumb: SwapThumb) => void
   readonly reportSize: (side: SwapSide, size: NaturalSize) => void
+  readonly reportLoaded: (side: SwapSide, element: HTMLImageElement, hasRegion: boolean) => void
+  /** 書き手が `region` を渡さなかった対を、tsukumo が画素で比べた結果。「後」の側が枠にする。 */
+  readonly detected: ChangedRegion
   readonly zoom: ImageZoomTarget
 }
 
@@ -79,8 +84,12 @@ const CompareSwapContext = createContext<CompareSwapContextValue>({
   reportMissing: () => undefined,
   reportImage: () => undefined,
   reportSize: () => undefined,
+  reportLoaded: () => undefined,
+  detected: { kind: "none" },
   zoom: { kind: "own" },
 })
+
+type LoadedImage = { readonly element: HTMLImageElement; readonly hasRegion: boolean }
 
 type SwapZoom = {
   readonly side: SwapSide
@@ -94,6 +103,8 @@ export const SwapSideContext = createContext<SwapSide | "by-alt">("by-alt")
 export type SwapSettings = {
   readonly labels: Readonly<Record<SwapSide, string>>
   readonly overlay: boolean
+  /** 両側に `region` が無いとき、画素を比べて変わった範囲を「後」の側に囲むか。 */
+  readonly markChange: boolean
 }
 
 const AFTER_ALT_PREFIX = "後"
@@ -128,6 +139,9 @@ export function CompareSwap(props: CompareSwapProps): ReactElement {
   const [sizes, setSizes] = useState<Partial<Record<SwapSide, NaturalSize>>>({})
   const [position, setPosition] = useState(OVERLAY_START_POSITION)
   const [zoom, setZoom] = useState<SwapZoom | undefined>(undefined)
+  const [detected, setDetected] = useState<ChangedRegion>({ kind: "none" })
+  const loadedRef = useRef<Partial<Record<SwapSide, LoadedImage>>>({})
+  const comparedRef = useRef(false)
   const rootRef = useRef<HTMLDivElement>(null)
   const openerRef = useRef<HTMLElement | undefined>(undefined)
   const overlayable = props.settings.overlay && !missing && sameRatio(sizes.before, sizes.after)
@@ -137,6 +151,23 @@ export function CompareSwap(props: CompareSwapProps): ReactElement {
   function openZoom(side: SwapSide, opener?: HTMLElement): void {
     openerRef.current = opener
     setZoom({ side, caption: readCaption(rootRef.current) })
+  }
+
+  function reportLoaded(side: SwapSide, element: HTMLImageElement, hasRegion: boolean): void {
+    loadedRef.current[side] = { element, hasRegion }
+    const { before, after } = loadedRef.current
+    if (
+      !props.settings.markChange ||
+      comparedRef.current ||
+      before === undefined ||
+      after === undefined
+    ) {
+      return
+    }
+    comparedRef.current = true
+    if (!before.hasRegion && !after.hasRegion) {
+      setDetected(compareLoadedImages(before.element, after.element))
+    }
   }
 
   function closeZoom(): void {
@@ -167,6 +198,8 @@ export function CompareSwap(props: CompareSwapProps): ReactElement {
         reportMissing: () => setMissing(true),
         reportImage: (thumb) => setThumbs((current) => withThumb(current, thumb)),
         reportSize: (side, size) => setSizes((current) => ({ ...current, [side]: size })),
+        reportLoaded,
+        detected: missing ? { kind: "none" } : detected,
         zoom: missing ? { kind: "own" } : { kind: "swap", open: openZoom },
       }}
     >
@@ -250,7 +283,8 @@ export function CompareSwap(props: CompareSwapProps): ReactElement {
 export function ReportImage(props: ReportImageProps): ReactElement {
   const [failed, setFailed] = useState(false)
   const [zoomed, setZoomed] = useState(false)
-  const { reportMissing, reportImage, reportSize, zoom } = use(CompareSwapContext)
+  const { reportMissing, reportImage, reportSize, reportLoaded, detected, zoom } =
+    use(CompareSwapContext)
   const sideScope = use(SwapSideContext)
   const imageRef = useRef<HTMLImageElement>(null)
   const alt = props.alt ?? ""
@@ -285,7 +319,10 @@ export function ReportImage(props: ReportImageProps): ReactElement {
     )
   }
   const src = sessionTokenUrl(props.src, window.location.href)
-  const region = parseImageRegion(props["data-change-region"])
+  const ownRegion = parseImageRegion(props["data-change-region"])
+  const detectedRegion =
+    side === "after" && detected.kind === "region" ? detected.region : undefined
+  const region = ownRegion ?? detectedRegion
   const image = (
     <img
       src={src}
@@ -300,12 +337,13 @@ export function ReportImage(props: ReportImageProps): ReactElement {
           reportImage({ side, src, alt, region })
         }
       }}
-      onLoad={(event) =>
+      onLoad={(event) => {
         reportSize(side, {
           width: event.currentTarget.naturalWidth,
           height: event.currentTarget.naturalHeight,
         })
-      }
+        reportLoaded(side, event.currentTarget, ownRegion !== undefined)
+      }}
       onError={() => setFailed(true)}
     />
   )
