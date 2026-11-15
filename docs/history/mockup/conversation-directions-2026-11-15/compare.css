@@ -1,0 +1,378 @@
+/* レイアウト候補の比較ページ。色と書体は見本（style.css）と同じ値を使う */
+
+:root {
+  color-scheme: dark;
+  --ground: #191720;
+  --surface: #221f2b;
+  --surface-lift: #2b2835;
+  --ink: #e8e3ea;
+  --ink-bright: #f7f6f8;
+  --accent: #6fe3cd;
+  --ink-soft: color-mix(in srgb, var(--ink) 76%, var(--surface));
+  --ink-quiet: color-mix(in srgb, var(--ink) 62%, var(--surface));
+  --rule: color-mix(in srgb, var(--surface), var(--ink) 32%);
+  --rule-soft: color-mix(in srgb, var(--surface), var(--ink) 14%);
+  --font-sans: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Segoe UI", Roboto, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
+  --cols: 2;
+  --sample-w: 1400;
+  --sample-h: 900;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scrollbar-color: var(--rule) transparent;
+  scrollbar-width: thin;
+}
+
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--accent) 36%, transparent);
+  color: var(--ink-bright);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+h1,
+h2,
+h3,
+p,
+ul,
+dl,
+dd {
+  margin: 0;
+  padding: 0;
+}
+
+ul {
+  list-style: none;
+}
+
+button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+/* 切り替えは、スクロールしても上端に残す */
+.top {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: 12px 32px;
+  padding: 16px 28px 14px;
+  border-block-end: 1px solid var(--rule-soft);
+  background: var(--ground);
+}
+
+.top h1 {
+  font-size: 22px;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+}
+
+.top p {
+  max-inline-size: 62em;
+  margin-block-start: 4px;
+  color: var(--ink-soft);
+  text-wrap: pretty;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.seg {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.seg button {
+  block-size: 30px;
+  padding: 0 12px;
+  border-radius: 7px;
+  color: var(--ink-soft);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.seg button:hover {
+  color: var(--ink-bright);
+}
+
+.seg button[aria-pressed="true"] {
+  background: var(--surface-lift);
+  color: var(--ink-bright);
+  box-shadow: inset 0 0 0 1px var(--rule-soft);
+}
+
+main {
+  display: grid;
+  gap: 36px;
+  padding: 24px 28px 72px;
+}
+
+.axes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 40px;
+  max-inline-size: 1240px;
+}
+
+.axes h2 {
+  font-size: 15px;
+  font-weight: 650;
+}
+
+.axes p {
+  color: var(--ink-soft);
+  text-wrap: pretty;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+  gap: 44px 28px;
+}
+
+.card {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  min-inline-size: 0;
+  container: card / inline-size;
+}
+
+.card-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.letter {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  inline-size: 26px;
+  block-size: 26px;
+  border-radius: 7px;
+  background: var(--surface-lift);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-bright);
+}
+
+.card-head h2 {
+  font-size: 17px;
+  font-weight: 650;
+}
+
+.aim {
+  margin-inline-start: auto;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 14%, var(--surface));
+  font-size: 12px;
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+/* 見本は実寸の iframe を枠の幅に合わせて縮める。押す操作は上に重ねたリンクが受ける */
+.frame {
+  position: relative;
+  aspect-ratio: var(--sample-w) / var(--sample-h);
+  overflow: hidden;
+  border: 1px solid var(--rule-soft);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: 0 10px 28px rgb(0 0 0 / 35%);
+}
+
+.frame iframe {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: 0;
+  inline-size: calc(var(--sample-w) * 1px);
+  block-size: calc(var(--sample-h) * 1px);
+  border: 0;
+  transform: scale(var(--scale, 0.5));
+  transform-origin: 0 0;
+  pointer-events: none;
+}
+
+.frame-link {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+
+.frame-link:hover {
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--accent) 60%, transparent);
+}
+
+.idea {
+  text-wrap: pretty;
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px 12px;
+  padding-block: 10px;
+  border-block: 1px solid var(--rule-soft);
+}
+
+.facts dt {
+  font-size: 12px;
+  color: var(--ink-quiet);
+}
+
+.facts dd {
+  font-family: var(--font-mono);
+  color: var(--ink-bright);
+}
+
+.judge {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 24px;
+}
+
+.judge h3 {
+  margin-block-end: 2px;
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--ink-quiet);
+}
+
+.judge li {
+  position: relative;
+  padding-inline-start: 12px;
+  color: var(--ink-soft);
+  text-wrap: pretty;
+}
+
+.judge li + li {
+  margin-block-start: 4px;
+}
+
+.judge li::before {
+  content: "";
+  position: absolute;
+  inset-block-start: 0.72em;
+  inset-inline-start: 0;
+  inline-size: 4px;
+  block-size: 4px;
+  border-radius: 50%;
+  background: var(--ink-quiet);
+}
+
+@container card (inline-size < 520px) {
+  .facts {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .judge {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.summary h2 {
+  font-size: 17px;
+  font-weight: 650;
+}
+
+.summary p {
+  max-inline-size: 70em;
+  margin-block: 4px 12px;
+  color: var(--ink-soft);
+  text-wrap: pretty;
+}
+
+.table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--rule-soft);
+  border-radius: 12px;
+}
+
+table {
+  inline-size: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+th,
+td {
+  padding: 9px 14px;
+  border-block-end: 1px solid var(--rule-soft);
+  text-align: start;
+}
+
+thead th {
+  background: var(--surface);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-quiet);
+}
+
+tbody tr:last-child > * {
+  border-block-end: 0;
+}
+
+tbody th {
+  font-weight: 600;
+  color: var(--ink-bright);
+}
+
+tbody th .letter {
+  margin-inline-end: 10px;
+}
+
+.num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+}
+
+td b {
+  font-weight: 600;
+  color: var(--accent);
+}
+
+@media (width < 900px) {
+  .grid,
+  .axes {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

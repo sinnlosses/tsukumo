@@ -348,6 +348,11 @@ body[data-side="lane"] .turn-lane {
   color: var(--state-warn);
 }
 
+/* 今のやり取りの行は一段明るい地なので、見出しの字も一段明るくして読める濃さを保つ */
+.turn-lane .turn-head:not(.turn-head-current) {
+  color: var(--ink-soft);
+}
+
 .turn-head-kind {
   margin-inline-end: 6px;
   font-size: 12px;

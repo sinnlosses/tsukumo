@@ -1,0 +1,730 @@
+/* レイアウトの候補。stream.css の「やり取りの列を左に」の形（候補 A）を土台に、候補ごとの差分だけを書く。
+   進行の帯・使用量・入口の部品の載せ替えは layouts.js が行い、ここは配置と見た目を決める */
+
+body[data-layout] {
+  --turns-w: clamp(232px, 17vw, 300px);
+}
+
+.mock-bar {
+  gap: 14px;
+}
+
+.mock-bar-group a {
+  padding-inline: 10px;
+}
+
+.app {
+  position: relative;
+}
+
+.nav {
+  position: relative;
+  z-index: 3;
+  background: var(--ground);
+}
+
+.nav-modes,
+.nav-links {
+  display: contents;
+}
+
+/* B サイドレール: 入口の帯を左端の縦のレールにし、上の 52px を会話の流れへ渡す */
+body[data-layout="b"] {
+  --nav-h: 0px;
+}
+
+body[data-layout="b"] .app {
+  grid-template-columns: 64px minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+}
+
+body[data-layout="b"] .nav {
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 0 10px;
+  border-block-end: 0;
+  border-inline-end: 1px solid var(--rule-soft);
+}
+
+body[data-layout="b"] .nav-room {
+  margin-block-end: 8px;
+}
+
+body[data-layout="b"] .nav-tabs {
+  flex-direction: column;
+  align-items: center;
+  align-self: auto;
+  gap: 2px;
+}
+
+body[data-layout="b"] .nav-tab {
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  inline-size: 56px;
+  margin: 0;
+  padding: 7px 0 6px;
+  border-block-end: 0;
+  border-radius: var(--radius-element);
+  font-size: 12px;
+}
+
+body[data-layout="b"] .nav-tab[aria-current="page"] {
+  background: var(--surface-raised);
+}
+
+body[data-layout="b"] .nav-tab[aria-current="page"] .icon {
+  color: var(--accent);
+}
+
+body[data-layout="b"] .nav-rule {
+  inline-size: 28px;
+  block-size: 1px;
+  margin: 6px 0;
+}
+
+body[data-layout="b"] .nav-gear {
+  margin: auto 0 0;
+}
+
+body[data-layout="b"] .turn-lane {
+  grid-template-rows: auto auto minmax(0, 1fr);
+}
+
+.lane-room {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 12px 16px 0;
+  white-space: nowrap;
+}
+
+.lane-room .nav-room-name {
+  overflow: hidden;
+  font-size: 15px;
+  text-overflow: ellipsis;
+}
+
+/* C 整列バー: 入口の帯を下の3列と同じ幅に割り、進行の帯を中央の列の頭に入れる */
+body[data-layout="c"] .nav {
+  display: grid;
+  grid-template-columns: var(--turns-w) minmax(0, 1fr) var(--side-w);
+  gap: 12px;
+  padding: 0 12px;
+}
+
+body[data-layout="c"] .nav-room {
+  min-inline-size: 0;
+  padding-inline-start: 8px;
+}
+
+.nav-center,
+.nav-end {
+  display: flex;
+  align-items: stretch;
+  align-self: stretch;
+  min-inline-size: 0;
+}
+
+.nav-end {
+  justify-content: flex-end;
+}
+
+.nav-center .nav-modes,
+.nav-end .nav-links {
+  display: inline-flex;
+  flex: none;
+  align-items: stretch;
+  gap: 4px;
+}
+
+.nav-end .nav-tab {
+  padding-inline: 8px;
+}
+
+.nav-end .nav-gear {
+  align-self: center;
+  margin-inline-start: 4px;
+}
+
+.nav-center .paper-head {
+  flex: 1 1 0;
+  gap: 12px;
+  min-inline-size: 0;
+  margin-inline-start: 12px;
+  padding: 0 0 0 18px;
+  border-block-end: 0;
+  background: linear-gradient(var(--rule), var(--rule)) left center / 1px 22px no-repeat;
+}
+
+.paper-head .state,
+.paper-head .phases {
+  flex: none;
+}
+
+.paper-head .phase-name {
+  min-inline-size: 0;
+}
+
+body[data-layout="c"] .talk,
+body[data-layout="e"] .talk {
+  grid-template-rows: minmax(0, 1fr);
+}
+
+/* D 左ピラー: 入口の帯を無くし、部屋・モード・やり取り・ほかの画面への入口を左の柱に収める */
+body:is([data-layout="d"], [data-layout="e"]) {
+  --nav-h: 0px;
+}
+
+body:is([data-layout="d"], [data-layout="e"]) .app {
+  grid-template-rows: minmax(0, 1fr);
+}
+
+body[data-layout="d"] .turn-lane {
+  display: flex;
+  flex-direction: column;
+}
+
+body[data-layout="d"] .turns {
+  flex: 0 1 auto;
+  min-block-size: 0;
+}
+
+.pillar-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 8px 8px 12px;
+}
+
+:is(.pillar-head, .hud-room) .nav-room {
+  flex: 1 1 0;
+  gap: 8px;
+  min-inline-size: 0;
+  white-space: nowrap;
+}
+
+:is(.pillar-head, .hud-room) .nav-face {
+  flex: none;
+  inline-size: 30px;
+  block-size: 30px;
+}
+
+:is(.pillar-head, .hud-room) .nav-room-name {
+  overflow: hidden;
+  font-size: 15px;
+  text-overflow: ellipsis;
+}
+
+.pillar-head .nav-gear {
+  flex: none;
+  margin: 0;
+}
+
+/* 柱の幅では名前とポートが1行に並ばないので、顔の横に2段で積む */
+.pillar-head .nav-room {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 8px;
+  line-height: 1.25;
+}
+
+.pillar-head .nav-face {
+  grid-row: 1 / 3;
+}
+
+.pillar-head .nav-room-port {
+  grid-column: 2;
+}
+
+/* モードの切り替えは2択のセグメントにする（候補 D・E） */
+:is(.turn-lane, .hud-room) > .nav-modes {
+  display: grid;
+  flex: none;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+  margin: 0 10px 6px;
+  padding: 3px;
+  border-radius: var(--radius-element);
+  background: var(--surface-raised);
+}
+
+:is(.turn-lane, .hud-room) > .nav-modes .nav-tab {
+  justify-content: center;
+  block-size: 30px;
+  margin: 0;
+  padding: 0;
+  border-block-end: 0;
+  border-radius: 7px;
+}
+
+:is(.turn-lane, .hud-room) > .nav-modes .nav-tab[aria-current="page"] {
+  background: var(--surface-lift);
+  box-shadow: var(--shadow-low);
+}
+
+.turn-lane > .nav-links {
+  display: flex;
+  flex: none;
+  justify-content: space-between;
+  margin-block-start: 4px;
+  padding: 6px 6px 0;
+  border-block-start: 1px solid var(--rule-quiet);
+}
+
+.turn-lane > .nav-links .nav-tab,
+.hud-links .nav-tab {
+  gap: 6px;
+  margin: 0;
+  padding: 6px 8px;
+  border-block-end: 0;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.turn-lane > .nav-links .nav-tab {
+  flex: 1 1 0;
+  flex-direction: column;
+  gap: 3px;
+  padding: 6px 0;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+/* E HUD とコンソール: 入口を四隅の部品に分け、進行は入力欄の頭に入れる。部品は背景を透かす */
+.col {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-inline-size: 0;
+  min-block-size: 0;
+}
+
+.col-left {
+  grid-area: 1 / 1;
+}
+
+.col-right {
+  grid-area: 1 / 3;
+}
+
+body[data-layout="e"] .shell {
+  grid-template-rows: minmax(0, 1fr);
+}
+
+body[data-layout="e"] .talk {
+  --dock-clear: 166px;
+  grid-area: 1 / 2;
+}
+
+body[data-layout="e"][data-scene="read"] .talk {
+  --dock-clear: 218px;
+}
+
+body[data-layout="e"] :is(.turn-lane, .side) {
+  flex: 0 1 auto;
+  align-self: stretch;
+  min-block-size: 0;
+  max-block-size: none;
+}
+
+body[data-layout="e"] .actor {
+  flex: 1 0 var(--portrait-h);
+}
+
+.hud {
+  z-index: 2;
+  flex: none;
+  border: 1px solid var(--rule-quiet);
+  border-radius: var(--radius-container);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 35%);
+}
+
+body[data-layout="e"] :is(.hud, .turn-lane, .side) {
+  background: color-mix(in srgb, var(--surface) 68%, transparent);
+  -webkit-backdrop-filter: blur(18px) saturate(1.2);
+  backdrop-filter: blur(18px) saturate(1.2);
+}
+
+.hud-room {
+  display: grid;
+  gap: 8px;
+  padding-block-start: 10px;
+}
+
+.hud-room .nav-room {
+  padding-inline: 12px;
+}
+
+.hud-links {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 6px 4px 4px;
+}
+
+.hud-links .nav-links {
+  display: inline-flex;
+  gap: 2px;
+}
+
+.hud-links .nav-gear {
+  margin: 0;
+}
+
+.col-right > .usage {
+  margin-block-start: auto;
+}
+
+.composer-body > .paper-head {
+  gap: 12px;
+  min-block-size: 0;
+  margin-inline-end: 8px;
+  padding: 0 0 10px;
+  border: 0;
+  border-block-end: 1px solid var(--rule-soft);
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  font-size: 13px;
+}
+
+body[data-layout="e"] .composer-status {
+  display: none;
+}
+
+/* F・G の入口の帯: タスクと使用量を帯に集め、右の列を空ける */
+body:is([data-layout="f"], [data-layout="g"]) .nav {
+  gap: 14px;
+  padding: 0 12px 0 20px;
+}
+
+.nav > .nav-modes,
+.nav > .nav-links {
+  display: inline-flex;
+  flex: none;
+  align-items: stretch;
+  align-self: stretch;
+  gap: 4px;
+}
+
+.nav > .nav-links .nav-tab {
+  padding-inline: 8px;
+}
+
+/* 帯の幅が足りないあいだは、ほかの画面への入口を記号だけにしてタスクのチップへ幅を渡す */
+@media (width < 1560px) {
+  .nav > .nav-links .nav-tab {
+    gap: 0;
+    padding-inline: 7px;
+    font-size: 0;
+  }
+}
+
+.nav > .usage {
+  flex: none;
+  gap: 12px;
+  margin-inline-start: auto;
+  padding: 0;
+  border: 0;
+}
+
+.nav > .usage .icon-button {
+  margin-inline-start: 0;
+}
+
+.nav > .usage ~ .nav-gear {
+  margin-inline-start: 0;
+}
+
+.task-chip {
+  display: flex;
+  flex: 1 1 0;
+  align-items: center;
+  gap: 10px;
+  min-inline-size: 0;
+  max-inline-size: 560px;
+  block-size: 36px;
+  padding: 0 10px 0 12px;
+  border-radius: var(--radius-element);
+  background: var(--surface-accent);
+  text-align: start;
+  white-space: nowrap;
+}
+
+.task-chip:hover {
+  background: color-mix(in srgb, var(--surface), var(--accent) 16%);
+}
+
+.task-chip > * {
+  flex: none;
+}
+
+.task-chip .task-id,
+.task-chip-count {
+  color: var(--ink-quiet-accent);
+}
+
+.task-chip > .task-chip-name {
+  flex: 0 1 auto;
+  overflow: hidden;
+  font-weight: 600;
+  color: var(--ink-bright);
+  text-overflow: ellipsis;
+}
+
+.task-chip-count {
+  margin-inline-start: auto;
+  font-size: 12px;
+}
+
+.task-chip-count b {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  color: var(--ink);
+}
+
+/* タスクの一覧はチップの下に開く。anchor positioning を持たないブラウザでは、帯の下の決めた位置に出す */
+.task-pop {
+  position: fixed;
+  inset: auto;
+  inset-block-start: calc(var(--bar-h) + var(--nav-h) - 4px);
+  inset-inline-start: 440px;
+  inline-size: 400px;
+  max-block-size: calc(100dvb - var(--bar-h) - var(--nav-h) - 24px);
+  margin: 0;
+  padding: 0 0 4px;
+  border: 1px solid var(--rule-soft);
+  border-radius: var(--radius-container);
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 16px 40px rgb(0 0 0 / 50%);
+  overflow: auto;
+}
+
+@supports (position-area: block-end) {
+  .task-pop {
+    inset: auto;
+    margin-block-start: 6px;
+    position-area: block-end span-inline-end;
+    position-try-fallbacks: flip-inline;
+  }
+}
+
+.task-pop .tasks {
+  padding-block-end: 4px;
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+
+/* G タスクバー: 1本の流れのまま、右の列を会話の流れと余白へ渡す */
+body[data-layout="g"] .shell {
+  grid-template-columns: var(--turns-w) minmax(0, 1fr);
+}
+
+/* F 見開き: 左を会話の列（投稿・セリフ・立ち絵・入力欄）、右を紙（進行の帯・計画・お伺い・レポート）に分ける */
+body[data-layout="f"] .shell {
+  --conv-w: clamp(392px, 29.5vw, 500px);
+  --portrait-h: clamp(150px, 20dvb, 200px);
+  grid-template-columns: var(--conv-w) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+}
+
+body[data-layout="f"] .talk {
+  grid-area: 1 / 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+body[data-layout="f"][data-v="stream"] .stream {
+  flex: 1 1 0;
+  padding-block-end: 8px;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 var(--fade-start));
+  mask-image: linear-gradient(to bottom, transparent 0, #000 var(--fade-start));
+}
+
+body[data-layout="f"] .turn-chip {
+  display: inline-flex;
+}
+
+body[data-layout="f"] .turn-fold {
+  display: flex;
+  gap: 8px;
+  padding-inline-start: 12px;
+}
+
+body[data-layout="f"] .turn-fold > :not(.turn-title) {
+  flex: none;
+  white-space: nowrap;
+}
+
+body[data-layout="f"] .actor {
+  flex: none;
+  justify-content: flex-start;
+  block-size: var(--portrait-h);
+  margin: 0 0 -6px 8px;
+  clip-path: none;
+}
+
+body[data-layout="f"] .talk .dock {
+  position: static;
+  inline-size: auto;
+}
+
+/* 会話の列の幅では知らせが折り返すので、行の中の文として流す */
+body[data-layout="f"] .composer-status {
+  display: block;
+  padding-inline: 14px;
+}
+
+body[data-layout="f"] .composer-status .icon {
+  margin-inline-end: 6px;
+  vertical-align: -4px;
+}
+
+.pane {
+  z-index: 2;
+  grid-area: 1 / 2;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-inline-size: 0;
+  min-block-size: 0;
+  padding-block-end: 12px;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.pane > .paper-head {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 1;
+  flex: none;
+  min-block-size: 48px;
+  padding: 8px 12px;
+  border: 1px solid var(--rule-quiet);
+  border-radius: var(--radius-container);
+  background: var(--surface);
+  box-shadow: 0 6px 18px rgb(0 0 0 / 30%);
+}
+
+.pane > :is(.sheet, .worklog) {
+  flex: none;
+  inline-size: 100%;
+  max-inline-size: 1098px;
+  margin: 0;
+}
+
+.pane > :is(.inquiry, .welcome, .step) {
+  max-inline-size: 800px;
+}
+
+.pane > .attach {
+  border-start-start-radius: var(--radius-container);
+}
+
+.pane > .worklog {
+  border-color: transparent;
+  background: color-mix(in srgb, var(--ground) 80%, transparent);
+}
+
+/* 細い入力欄では、区切りと「新規」の字を外して記号だけにする */
+@container composer (inline-size < 440px) {
+  .composer-rule {
+    display: none;
+  }
+
+  .composer-send .chip-button {
+    gap: 0;
+    padding-inline: 8px;
+    font-size: 0;
+  }
+}
+
+/* H 集中モード: 両側のパネルを細いレールに畳み、空いた幅を会話の流れと余白へ渡す */
+body[data-layout="h"] .shell {
+  --portrait-h: clamp(200px, 28dvb, 300px);
+  grid-template-columns: 190px minmax(0, 1fr) 44px;
+}
+
+.rail {
+  z-index: 2;
+  display: grid;
+  align-self: start;
+  justify-items: center;
+  gap: 8px;
+  inline-size: 44px;
+  padding: 6px 0 12px;
+  border: 1px solid var(--rule-quiet);
+  border-radius: var(--radius-container);
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 35%);
+}
+
+.rail-turns {
+  grid-area: 1 / 1;
+}
+
+.rail-side {
+  grid-area: 1 / 3 / -1 / 4;
+}
+
+.rail :is(ol, ul) {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+}
+
+.rail-turn {
+  display: grid;
+  place-items: center;
+  inline-size: 26px;
+  block-size: 26px;
+  border: 1px solid var(--rule);
+  border-radius: 50%;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-soft);
+  text-decoration: none;
+}
+
+.rail-turn[aria-current="true"] {
+  border-color: var(--accent);
+  color: var(--ink-bright);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+.rail-tasks {
+  inline-size: 100%;
+  padding-block: 4px 12px;
+  border-block-end: 1px solid var(--rule-soft);
+}
+
+.rail-task {
+  inline-size: 10px;
+  block-size: 10px;
+  border: 1.5px solid var(--ink-soft);
+  border-radius: 50%;
+}
+
+.rail-task-doing {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+.rail-task-wait {
+  border-color: var(--rule);
+}
+
+.rail-usage li {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.rail-usage b {
+  font-weight: 500;
+}
