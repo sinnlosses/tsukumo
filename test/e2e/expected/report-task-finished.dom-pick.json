@@ -8,7 +8,6 @@
           { "tag": "code", "children": ["1/1"] },
           "のように位置を出す"
         ] },
-        { "tag": "span", "attributes": { "data-tone": "ok" }, "children": ["✓", "完了"] },
         { "tag": "p", "children": ["最終レポート"] }
       ] },
       { "tag": "div", "attributes": { "data-report-body": "" } }

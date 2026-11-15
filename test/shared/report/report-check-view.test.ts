@@ -116,6 +116,26 @@ describe("reportChecksView", () => {
     expect(view.problems.map((row) => row.time)).toEqual([""])
   })
 
+  it("照らせたかどうかは、照らせた・command が空・照らせなかった の3通りで持つ", () => {
+    const view = checksOf(
+      reportChecksView(
+        [
+          check("ok", "架空の一", { command: "架空の速い" }),
+          check("ok", "架空の二", { command: "架空の不明" }),
+          check("ng", "架空の三", { command: "  " }),
+        ],
+        (command) =>
+          command === "架空の速い" ? { kind: "known", milliseconds: 1000 } : { kind: "unknown" },
+        { kind: "none" },
+      ),
+    )
+
+    expect(view.passed.map((row) => row.recorded)).toEqual([true, false])
+    expect(view.problems.map((row) => row.recorded)).toEqual([false])
+    expect(view.passed.map((row) => row.viaCommand)).toEqual([true, true])
+    expect(view.problems.map((row) => row.viaCommand)).toEqual([false])
+  })
+
   it("お願いの印は渡した飛び先のまま総括行に載る", () => {
     const favor = { kind: "favor", id: "favor-toolu_fictional" } as const
     const view = checksOf(reportChecksView([check("ok", "架空の一")], UNMEASURED, favor))

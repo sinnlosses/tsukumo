@@ -8,7 +8,7 @@ import { openReportTaskRoom } from "./task-room.ts"
 const ELAPSED_MS = 60_000
 
 test.describe("タスクの作業のレポートの結論部", () => {
-  test("タスク見出し行（ラベル・タスクID・完了）と作業の名前の見出しが結論の上に出る", async ({
+  test("タスク見出し行（ラベル・タスクID）と作業の名前の見出しが結論の上に出て、広い画面では終わり方のバッジが出ない", async ({
     run,
   }) => {
     const room = await openReportTaskRoom(run, "report-task-finished", "report-task-finished", [

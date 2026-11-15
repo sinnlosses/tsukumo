@@ -30,6 +30,7 @@ export type ReportFavorTarget =
 /**
  * 問題の1項目。字はバッククォートを落としただけの逃がす前の字。
  * `time` は `command` から測った所要時間の字で、測れなければ空文字。`viaCommand` は `command` が空白だけでないこと。
+ * `recorded` は `command` が同じやり取りで打った Bash の記録と照らせたこと（所要時間の字の有無とは別に持つ）。
  * `detail` は空白だけなら空文字、`howToVerify` は `unobserved` で空白だけでないときだけ残す。
  */
 export type ReportCheckProblemRow = {
@@ -38,6 +39,7 @@ export type ReportCheckProblemRow = {
   readonly figure: string
   readonly time: string
   readonly viaCommand: boolean
+  readonly recorded: boolean
   readonly detail: string
   readonly howToVerify: string
 }
@@ -49,6 +51,7 @@ export type ReportCheckPassedRow = {
   readonly figure: string
   readonly time: string
   readonly viaCommand: boolean
+  readonly recorded: boolean
 }
 
 /**
@@ -108,10 +111,14 @@ export function reportChecksView(
   const problemChecks = checks.flatMap((check) =>
     check.status === "ok" ? [] : [{ ...check, status: check.status }],
   )
-  const timeOf = (check: ReportCheckInput): string => {
+  const measure = (
+    check: ReportCheckInput,
+  ): { readonly time: string; readonly recorded: boolean } => {
     const duration: MeasuredTime =
       check.command.trim() === "" ? { kind: "unknown" } : commandDuration(check.command)
-    return duration.kind === "known" ? formatElapsed(Math.round(duration.milliseconds / 1000)) : ""
+    return duration.kind === "known"
+      ? { time: formatElapsed(Math.round(duration.milliseconds / 1000)), recorded: true }
+      : { time: "", recorded: false }
   }
   return {
     kind: "checks",
@@ -131,7 +138,7 @@ export function reportChecksView(
           status: check.status,
           label: check.label,
           figure: check.figure,
-          time: timeOf(check),
+          ...measure(check),
           viaCommand: check.command.trim() !== "",
           detail: check.detail.trim() === "" ? "" : check.detail,
           howToVerify:
@@ -146,7 +153,7 @@ export function reportChecksView(
         label: check.label,
         labelHead: headIndex === -1 ? check.label : check.label.slice(0, headIndex),
         figure: check.figure,
-        time: timeOf(check),
+        ...measure(check),
         viaCommand: check.command.trim() !== "",
       }
     }),

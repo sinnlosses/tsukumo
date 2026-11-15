@@ -103,6 +103,13 @@ describe("ChecksVerdict（面の合図の行）", () => {
     expect(fresh.textNodes.length).toBeGreaterThan(0)
   })
 
+  it("照らせる Bash の記録が無い行には「申告のみ」の語が出て、畳みの見出しに「記録あり」の件数は出ない", () => {
+    const rendered = verdictOf(regionsOf(MIXED, ""))
+
+    expect(rendered.textNodes.filter((text) => text === "申告のみ")).toHaveLength(5)
+    expect(rendered.html).not.toContain("記録あり")
+  })
+
   it("お願いの印を押すと、location.hash を書かずにお願いの欄へ転がす", () => {
     const body = regionsOf(MIXED, "架空のお願い。")
     const { container } = render(

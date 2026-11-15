@@ -116,6 +116,12 @@
 .report-outcome {
   flex-shrink: 0;
 }
+/* 広い画面では、終わり方をプログレスバーのチップとやり取りの列の印が言うので、バッジは出さない（760px 以下は出す）。 */
+@media (min-width: 761px) {
+  .report-title-row > .report-outcome {
+    display: none;
+  }
+}
 
 .report-headline {
   min-width: 0;

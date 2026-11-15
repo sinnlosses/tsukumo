@@ -368,8 +368,20 @@
     overflow-wrap: anywhere;
     color: var(--ink-quiet);
   }
+  /* 裏取りの印（記録あり・申告のみ）。結論より目立たせないよう、枠も地も持たず静かな字にする。 */
+  & .report-check-source,
+  & .report-checks-problem-source,
+  & .report-checks-passed-recorded,
+  & .report-work-record-check-source {
+    flex-shrink: 0;
+    font-size: var(--font-label);
+    white-space: nowrap;
+    color: var(--ink-quiet);
+  }
   & .report-check-figure,
-  & .report-check-time {
+  & .report-check-time,
+  & .report-checks-problem-figure,
+  & .report-checks-problem-time {
     flex-shrink: 0;
     font-family: var(--font-mono);
     font-size: var(--font-label);
@@ -405,22 +417,6 @@
     font-weight: 600;
     line-height: 1.75;
     color: var(--ink);
-  }
-  & .report-checks-problem-figure {
-    flex-shrink: 0;
-    font-family: var(--font-mono);
-    font-size: var(--font-label);
-    font-variant-numeric: tabular-nums;
-    white-space: nowrap;
-    color: var(--ink-quiet);
-  }
-  & .report-checks-problem-time {
-    flex-shrink: 0;
-    font-family: var(--font-mono);
-    font-size: var(--font-label);
-    font-variant-numeric: tabular-nums;
-    white-space: nowrap;
-    color: var(--ink-quiet);
   }
   & .report-checks-problem-detail {
     margin: var(--space-xs) 0 0;

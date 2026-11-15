@@ -43,6 +43,11 @@ export function ChecksVerdict(props: { readonly view: Checks }): ReactElement {
   )
 }
 
+/** 裏取りの印の語。色だけで分けない。 */
+export function checkSourceWord(recorded: boolean): string {
+  return recorded ? "記録あり" : "申告のみ"
+}
+
 /** お願いの印。押すと `location.hash` を書かずに飛び先の要素へ転がす（`location.hash` は見ているターンの経路）。お願いが無ければ何も描かない。 */
 export function FavorJump(props: { readonly favor: ReportFavorTarget }): ReactElement {
   const { favor } = props
@@ -113,6 +118,9 @@ function ProblemRow(props: { readonly row: ReportCheckProblemRow }): ReactElemen
             {plainInline(row.figure)}
           </span>
           <span className={checksClassName("checks-problem-time")}>{row.time}</span>
+          <span className={checksClassName("checks-problem-source")}>
+            {checkSourceWord(row.recorded)}
+          </span>
         </div>
         {row.detail !== "" && (
           <div className={checksClassName("checks-problem-detail")}>{plainInline(row.detail)}</div>
@@ -131,6 +139,7 @@ function ProblemRow(props: { readonly row: ReportCheckProblemRow }): ReactElemen
 /** 通った項目を畳んだ `<details>`。`<summary>` は件数と label の頭、開くと figure・所要時間つきの一覧。 */
 function PassedFold(props: { readonly passed: readonly ReportCheckPassedRow[] }): ReactElement {
   const { passed } = props
+  const recordedCount = passed.filter((row) => row.recorded).length
   return (
     <div className={checksClassName("checks-passed")}>
       <details>
@@ -142,6 +151,14 @@ function PassedFold(props: { readonly passed: readonly ReportCheckPassedRow[] })
           </span>
           <span className={checksClassName("checks-passed-labels")}>
             {passed.map((row) => plainInline(row.labelHead)).join(" · ")}
+            {recordedCount > 0 && (
+              <>
+                {"　"}
+                <span className={checksClassName("checks-passed-recorded")}>
+                  {`記録あり ${String(recordedCount)}`}
+                </span>
+              </>
+            )}
           </span>
         </summary>
         <div role="table" aria-label="検証結果">
@@ -155,6 +172,9 @@ function PassedFold(props: { readonly passed: readonly ReportCheckPassedRow[] })
               <span className={checksClassName("check-label")}>{plainInline(row.label)}</span>
               <span className={checksClassName("check-figure")}>{plainInline(row.figure)}</span>
               <span className={checksClassName("check-time")}>{row.time}</span>
+              <span className={checksClassName("check-source")}>
+                {checkSourceWord(row.recorded)}
+              </span>
             </div>
           ))}
         </div>

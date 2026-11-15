@@ -19,7 +19,7 @@ import type { MainViewSurfaceHead } from "../../../../shared/session/main-view-s
 import { isBlankText } from "../../../../shared/utils/blank-text.ts"
 import { InlineMarkdown, workRecordClassName } from "../markdown.tsx"
 import { ChangedFilesFold } from "./changed-files-fold.tsx"
-import { FavorJump } from "./checks-verdict.tsx"
+import { checkSourceWord, FavorJump } from "./checks-verdict.tsx"
 import styles from "./leaf.module.css"
 import { PhaseTimes } from "./phase-time-section.tsx"
 
@@ -148,7 +148,7 @@ function StageTags(props: { readonly stages: readonly VerificationStage[] }): Re
 }
 
 function PassedLine(props: { readonly row: ReportCheckPassedRow }): ReactElement {
-  const { label, figure } = props.row
+  const { label, figure, recorded } = props.row
   return (
     <div className={workRecordClassName("work-record-check")}>
       <span
@@ -159,13 +159,16 @@ function PassedLine(props: { readonly row: ReportCheckPassedRow }): ReactElement
       >
         ✓
       </span>
-      <span>{lineText(label, figure)}</span>
+      <span>
+        {lineText(label, figure)}
+        <CheckSource recorded={recorded} />
+      </span>
     </div>
   )
 }
 
 function ProblemLine(props: { readonly row: ReportCheckProblemRow }): ReactElement {
-  const { status, label, figure, detail, howToVerify } = props.row
+  const { status, label, figure, detail, howToVerify, recorded } = props.row
   const tone =
     status === "ng"
       ? workRecordClassName("work-record-check-mark-ng")
@@ -175,7 +178,10 @@ function ProblemLine(props: { readonly row: ReportCheckProblemRow }): ReactEleme
       <span className={clsx(workRecordClassName("work-record-check-mark"), tone)}>
         {REPORT_CHECK_PROBLEM_MARKS[status]}
       </span>
-      <span>{lineText(label, figure)}</span>
+      <span>
+        {lineText(label, figure)}
+        <CheckSource recorded={recorded} />
+      </span>
       {detail !== "" && (
         <span className={workRecordClassName("work-record-check-how")}>{plainInline(detail)}</span>
       )}
@@ -185,6 +191,17 @@ function ProblemLine(props: { readonly row: ReportCheckProblemRow }): ReactEleme
         </span>
       )}
     </div>
+  )
+}
+
+function CheckSource(props: { readonly recorded: boolean }): ReactElement {
+  return (
+    <>
+      {"　"}
+      <span className={workRecordClassName("work-record-check-source")}>
+        {checkSourceWord(props.recorded)}
+      </span>
+    </>
   )
 }
 
