@@ -41,6 +41,7 @@ import {
 } from "./domain/stream-item-list.ts"
 import { DraftReport } from "./draft-report.tsx"
 import { ExpandableHead } from "./expandable-head.tsx"
+import { useFavorVisibility } from "./hooks/use-favor-visibility.ts"
 import { useReplyPort } from "./hooks/use-reply-port.ts"
 import styles from "./main-view.module.css"
 import { QuestionRecord } from "./question-record.tsx"
@@ -340,6 +341,7 @@ type StepReportProps = {
 function StepReport(props: StepReportProps): ReactElement | undefined {
   const { step } = props
   const phoneWidth = usePhoneWidth()
+  const favorRef = useFavorVisibility()
   if (step.body.kind !== "text") {
     return undefined
   }
@@ -384,6 +386,8 @@ function StepReport(props: StepReportProps): ReactElement | undefined {
               }
             : undefined
         }
+        favorMark={phoneWidth ? "inline" : "none"}
+        favorRef={props.latest && !props.phoneHidden && !phoneWidth ? favorRef : undefined}
         {...REPORT_CLASS_NAMES}
       />
     </>

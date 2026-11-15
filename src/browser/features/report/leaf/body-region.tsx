@@ -6,7 +6,7 @@
 // 完成した DOM の根を渡すだけで、塊の中身には触らない。
 
 import clsx from "clsx"
-import { createContext, type ReactElement, type ReactNode, use } from "react"
+import { createContext, type ReactElement, type ReactNode, type RefCallback, use } from "react"
 
 import { isBlankText } from "../../../../shared/utils/blank-text.ts"
 import { useReportReveal } from "../../../domain/reveal/use-report-reveal.ts"
@@ -94,11 +94,14 @@ export type RegionMark =
  */
 export function RegionBox(props: {
   readonly region: RegionMark
+  /** 欄の要素が付く・外れるときに呼ばれる。置く側が見えているかを観測するのに使う。 */
+  readonly favorRef?: RefCallback<HTMLElement>
   readonly children: ReactNode
 }): ReactElement {
-  const { region } = props
+  const { region, favorRef } = props
   return (
     <div
+      ref={favorRef}
       data-report-region={region.kind}
       data-report-section={region.kind === "section" ? String(region.id) : undefined}
       data-ask-count={

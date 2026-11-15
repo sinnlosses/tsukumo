@@ -135,4 +135,23 @@ describe("ChecksVerdict（面の合図の行）", () => {
     expect(scrolled).toHaveBeenCalledWith({ block: "start" })
     expect(window.location.hash).toBe(before)
   })
+
+  it("favorMark が none なら印を出さず、お願いの欄は残る。無指定は出す", () => {
+    const body = regionsOf(MIXED, "架空のお願い。")
+    const common = {
+      reveal: false,
+      turnId: 1,
+      className: "",
+      revealClassName: "",
+      blockClassName: "",
+    }
+
+    const hidden = render(<Report {...common} body={body} favorMark="none" />)
+    expect(hidden.container.textContent).not.toContain("お願い 1")
+    expect(hidden.container.querySelector(`[id="${body.a2ui.favor.id}"]`)).not.toBeNull()
+    cleanup()
+
+    const shown = render(<Report {...common} body={body} />)
+    expect(shown.container.textContent).toContain("お願い 1")
+  })
 })

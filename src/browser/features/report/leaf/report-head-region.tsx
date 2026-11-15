@@ -2,7 +2,7 @@
 // 頭はどの部分も値から、お願いは本文の塊を包みの中に並べる。
 
 import clsx from "clsx"
-import type { ReactElement } from "react"
+import type { ReactElement, RefCallback } from "react"
 
 import { REPORT_NOTE_KINDS } from "../../../../shared/report/report-notation.ts"
 import type { MainViewSurfaceHead } from "../../../../shared/session/main-view-shape.ts"
@@ -66,13 +66,17 @@ export function HeadRegion(props: { readonly head: MainViewSurfaceHead }): React
 }
 
 /** お願いの欄。本文が空なら何も描かない。`id` は合図の行の印が飛ぶ先。 */
-export function FavorRegion(props: { readonly id: string; readonly text: string }): ReactElement {
+export function FavorRegion(props: {
+  readonly id: string
+  readonly text: string
+  readonly favorRef?: RefCallback<HTMLElement>
+}): ReactElement {
   if (isBlankText(props.text)) {
     return <></>
   }
   const label = REPORT_NOTE_KINDS.find(([name]) => name === "note-favor")?.[1] ?? ""
   return (
-    <RegionBox region={{ kind: "favor", id: props.id }}>
+    <RegionBox region={{ kind: "favor", id: props.id }} favorRef={props.favorRef}>
       <div className={clsx(noteLeafClassNames.note, noteLeafClassNames.noteFavor)}>
         <NoteLabel kindName="note-favor" label={label} />
         <RegionChunks markdown={props.text} />

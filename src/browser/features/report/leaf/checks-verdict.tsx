@@ -1,7 +1,7 @@
 // 面の頭の合図の行（検証結果）を、値から直接描く。
 
 import clsx from "clsx"
-import type { ReactElement } from "react"
+import { createContext, type ReactElement, use } from "react"
 
 import {
   REPORT_CHECK_PROBLEM_MARKS,
@@ -48,10 +48,16 @@ export function checkSourceWord(recorded: boolean): string {
   return recorded ? "記録あり" : "申告のみ"
 }
 
-/** お願いの印。押すと `location.hash` を書かずに飛び先の要素へ転がす（`location.hash` は見ているターンの経路）。お願いが無ければ何も描かない。 */
+/** お願いの印を本文の中に出すか。置く側が決め、`"none"` は入力欄の上の帯が知らせるとき。 */
+export type FavorMark = "inline" | "none"
+
+export const FavorMarkContext = createContext<FavorMark>("inline")
+
+/** お願いの印。押すと `location.hash` を書かずに飛び先の要素へ転がす（`location.hash` は見ているターンの経路）。お願いが無い・`FavorMark` が `"none"` なら何も描かない。 */
 export function FavorJump(props: { readonly favor: ReportFavorTarget }): ReactElement {
   const { favor } = props
-  if (favor.kind === "none") {
+  const mark = use(FavorMarkContext)
+  if (favor.kind === "none" || mark === "none") {
     return <></>
   }
   return (

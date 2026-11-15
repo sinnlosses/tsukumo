@@ -28,6 +28,7 @@ import { clearSessionDraft, saveSessionDraft } from "../../../domain/composer-dr
 import { isClearWithArgs } from "../../../domain/slash-clear.ts"
 import "../../../stores/composer-draft-session.ts"
 import { EMPTY_DRAFT, useComposerDraft, type Draft } from "../../../stores/composer-draft.ts"
+import { favorBandShown, useFavorVisibility } from "../../../stores/favor-visibility.ts"
 import { useInquiryAnswer } from "../../../stores/inquiry-answer.ts"
 import { lastTurnId, settleBatchSent, useReplyBatch } from "../../../stores/reply-batch.ts"
 import { loadComposerMode, saveComposerMode, type ComposerMode } from "../domain/composer-mode.ts"
@@ -43,13 +44,19 @@ import {
 } from "./use-suggestion.ts"
 
 /**
- * `<textarea>` の上の帯。接続が切れているあいだ・会話が終わったあと・`/clear` に続く文を止めたあと・答え待ち（お伺い）があるあいだだけ出す（この順に先）。
+ * `<textarea>` の上の帯。接続が切れているあいだ・会話が終わったあと・`/clear` に続く文を止めたあと・答え待ち（お伺い）があるあいだ・見えていないお願いがあるあいだだけ出す（この順に先）。
  * 答えはメインビューのお伺いのカードで選ぶ（質問ならここに書いて送ってもよい）。
  * `onJump` は「お伺いへ」の口で、お伺いのカードの最初の選択肢へフォーカスを移す。
  */
 type ComposerBand =
   | { readonly kind: "none" }
   | { readonly kind: "inquiry"; readonly text: string; readonly onJump: () => void }
+  | {
+      readonly kind: "favor"
+      readonly text: string
+      /** お願いの欄を見える範囲へ送る。 */
+      readonly onJump: () => void
+    }
   | { readonly kind: "disconnected"; readonly text: string }
   | { readonly kind: "clear-dropped"; readonly text: string }
   | { readonly kind: "ended"; readonly text: string; readonly onRestart: () => void }
@@ -126,6 +133,9 @@ export function useComposer(): ComposerModel {
   const replySessionKey = useReplySessionKey()
   const batchNoteIds = useReplyBatch((state) => state.noteIds)
   const dispatchAwaited = useSession((session) => session.dispatchAwaited)
+  const favorId = useFavorVisibility((state) => state.favorId)
+  const favorShown = useFavorVisibility(favorBandShown)
+  const dismissFavor = useFavorVisibility((state) => state.dismiss)
   const surfaceRef = useRef<ComposerSurface | null>(null)
   const [mode, setMode] = useState<ComposerMode>(loadComposerMode)
   useComposerFocusTiming(surfaceRef)
@@ -175,12 +185,14 @@ export function useComposer(): ComposerModel {
           client.session.prompt({ text: trimmed, images: promptImage.images, routing }),
         )
         if (result.kind !== "ok") return
+        dismissFavor()
         settleBatchSent(replySessionKey, batchNoteIds, previousLastTurnId)
         clearAfterSend()
       }
       void sendBatch()
       return
     } else {
+      dismissFavor()
       void dispatch.session.prompt({ text: trimmed, images: promptImage.images, routing })
     }
     clearAfterSend()
@@ -221,14 +233,28 @@ export function useComposer(): ComposerModel {
     if (inquiry.kind !== "question" && blockedClearText === draft.text.trim()) {
       return { kind: "clear-dropped", text: CLEAR_DROPPED_BAND_TEXT }
     }
-    if (inquiry.kind === "none" || phone) {
+    if (phone) {
       return { kind: "none" }
     }
-    return {
-      kind: "inquiry",
-      text: inquiryBandText(inquiry.kind, askerSubject),
-      onJump: () => requestInquiryJump({ focus: true }),
+    if (inquiry.kind !== "none") {
+      return {
+        kind: "inquiry",
+        text: inquiryBandText(inquiry.kind, askerSubject),
+        onJump: () => requestInquiryJump({ focus: true }),
+      }
     }
+    if (favorShown) {
+      return {
+        kind: "favor",
+        text: FAVOR_BAND_TEXT,
+        onJump: () => {
+          if (favorId !== undefined) {
+            document.getElementById(favorId)?.scrollIntoView({ block: "start" })
+          }
+        },
+      }
+    }
+    return { kind: "none" }
   }
 
   return {
@@ -322,6 +348,8 @@ const DISCONNECTED_BAND_TEXT =
 
 const CLEAR_DROPPED_BAND_TEXT =
   "/clear のあとの文は捨てられるので、送っていません。/clear だけを送り、続きを書き直してください"
+
+const FAVOR_BAND_TEXT = "お願いが1件あります"
 
 const REQUEST_LABEL = "依頼を書く"
 const ANSWER_LABEL = "質問への答えを書く"

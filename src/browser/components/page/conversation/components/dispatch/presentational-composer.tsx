@@ -287,6 +287,38 @@ export function PresentationalComposer({
           </Button>
         </HStack>
       )}
+      {band.kind === "favor" && (
+        <HStack
+          element="div"
+          name={{ kind: "none" }}
+          gap="sm"
+          align="center"
+          justify="between"
+          wrap="wrap"
+          className={styles["dispatch-band"]}
+        >
+          <Text
+            element="p"
+            size="secondary"
+            tone="accent"
+            weight="inherit"
+            className={styles["dispatch-band-text"]}
+          >
+            {band.text}
+          </Text>
+          <Button
+            variant="outline-accent"
+            size="label"
+            pressed="none"
+            disabled={false}
+            disclosure={{ kind: "none" }}
+            className={styles["dispatch-band-jump"]}
+            onClick={band.onJump}
+          >
+            {FAVOR_JUMP_LABEL}
+          </Button>
+        </HStack>
+      )}
       {phone ? (
         <>
           <InputRow onPickImages={onPickImages} onInsertTrigger={onInsertTrigger}>
@@ -446,6 +478,7 @@ function PhoneAttach({
 
 const ATTACH_LABEL = "添える"
 const INQUIRY_JUMP_LABEL = "お伺いへ"
+const FAVOR_JUMP_LABEL = "レポートの末尾へ"
 const RESTART_LABEL = "新しく始める"
 
 /** 道具の口の絵の一辺（px）。口どうしで揃える。 */

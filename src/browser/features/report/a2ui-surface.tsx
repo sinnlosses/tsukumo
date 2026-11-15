@@ -11,7 +11,7 @@ import {
   type ReactComponentImplementation,
 } from "@a2ui/react/v0_9"
 import { Catalog, MessageProcessor, type SurfaceModel } from "@a2ui/web_core/v0_9"
-import { createContext, type ReactElement, use, useState } from "react"
+import { createContext, type ReactElement, type RefCallback, use, useState } from "react"
 
 import type { A2uiReportComponent } from "../../../shared/report/a2ui-report-catalog.ts"
 import {
@@ -67,6 +67,7 @@ type A2uiReportProps = {
   /** 本文の根に重ねて付ける class（置く側のステップの末尾の余白の打ち消しが指す綴り）。 */
   readonly blockClassName: string
   readonly nextSteps?: NextStepsOrigin
+  readonly favorRef?: RefCallback<HTMLElement>
   readonly reportToolUseId?: string
 }
 
@@ -114,7 +115,7 @@ function FailedReport(props: A2uiReportProps & { readonly error: unknown }): Rea
     >
       <HeadRegion head={view.head} />
       <NoteBody tone="ng" text="本文を描けませんでした。" />
-      <FavorRegion id={view.favor.id} text={view.favor.text} />
+      <FavorRegion id={view.favor.id} text={view.favor.text} favorRef={props.favorRef} />
       {props.nextSteps !== undefined && (
         <NextStepRow origin={props.nextSteps} components={view.components} />
       )}
@@ -255,7 +256,7 @@ function ReportRoot(): ReactElement {
           <LeafRegionContent region={view.retrospective} />
         </RegionBox>
       )}
-      <FavorRegion id={view.favor.id} text={view.favor.text} />
+      <FavorRegion id={view.favor.id} text={view.favor.text} favorRef={report.favorRef} />
       {report.nextSteps !== undefined && (
         <NextStepRow origin={report.nextSteps} components={view.components} />
       )}

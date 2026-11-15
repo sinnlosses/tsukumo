@@ -736,16 +736,6 @@
                                                         },
                                                         "1234 件",
                                                         {
-                                                          "tag": "a",
-                                                          "attributes": {
-                                                            "href": "/?t=<token>#favor-fake-report-call-2"
-                                                          },
-                                                          "children": [
-                                                            "●",
-                                                            "お願い 1 ↓"
-                                                          ]
-                                                        },
-                                                        {
                                                           "tag": "div",
                                                           "attributes": {
                                                             "role": "table",
@@ -1448,6 +1438,46 @@
                     {
                       "tag": "form",
                       "children": [
+                        {
+                          "tag": "div",
+                          "attributes": {
+                            "data-direction": "horizontal",
+                            "data-gap": "2",
+                            "data-wrap": "wrap"
+                          },
+                          "children": [
+                            {
+                              "tag": "p",
+                              "attributes": {
+                                "data-type": "supporting",
+                                "data-color": "accent"
+                              },
+                              "children": [
+                                "お願いが1件あります"
+                              ]
+                            },
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "data-variant": "secondary",
+                                "data-size": "sm",
+                                "data-elevation": "none",
+                                "data-astryx-pressable": "",
+                                "type": "button"
+                              },
+                              "children": [
+                                "レポートの末尾へ",
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "role": "status",
+                                    "aria-live": "polite"
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                        },
                         {
                           "tag": "div",
                           "attributes": {
