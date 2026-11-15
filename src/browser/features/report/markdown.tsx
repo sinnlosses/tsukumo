@@ -249,7 +249,6 @@ type FigureMarkName =
   | `graph-legend-tone-${"a" | "b" | "c" | "d" | "e"}`
   | "graph-legend-shape"
   | `graph-legend-shape-${"round" | "box" | "decision"}`
-
 /** 図の内容部品の要素に付ける class 名。 */
 export function figureClassName(name: FigureMarkName): string | undefined {
   return notationStyles[`report-${name}`]

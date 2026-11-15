@@ -143,6 +143,16 @@ export const REPORT_ENTRIES: readonly CatalogEntry[] = [
     settle: SCENE_END_SETTLE,
   },
   {
+    name: "report-pair-view",
+    scene: "report-pair-view",
+    label: "前後の対の見せ方の切り替え（画像・コード・箇条の3つの対）",
+    homeSetup: { kind: "default" },
+    workspaceSetup: { kind: "report-image" },
+    prepare: [],
+    skipReveal: false,
+    settle: SCENE_END_SETTLE,
+  },
+  {
     name: "report-proof-recorded",
     scene: "report-proof-recorded",
     label: "裏づけの帯（全部が記録あり）と、節の末尾の印と控え",

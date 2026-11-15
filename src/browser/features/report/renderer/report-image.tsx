@@ -105,6 +105,10 @@ export type SwapSettings = {
   readonly overlay: boolean
   /** 両側に `region` が無いとき、画素を比べて変わった範囲を「後」の側に囲むか。 */
   readonly markChange: boolean
+  /** 紙の見せ方が「後だけ」「前だけ」のとき、選んだ側の1枚だけを出す（見せ方の組・つまみ・見本は出さない）。 */
+  readonly pairView: "side" | "after" | "before"
+  /** 紙の見せ方の切り替えが付いた紙の中の対か。真のとき群は「切り替え」「重ねる」だけで、「並べる」は紙の切り替えが担う。 */
+  readonly paperSwitch: boolean
 }
 
 const AFTER_ALT_PREFIX = "後"
@@ -145,7 +149,8 @@ export function CompareSwap(props: CompareSwapProps): ReactElement {
   const rootRef = useRef<HTMLDivElement>(null)
   const openerRef = useRef<HTMLElement | undefined>(undefined)
   const overlayable = props.settings.overlay && !missing && sameRatio(sizes.before, sizes.after)
-  const view = chosen === "overlay" && !overlayable ? "side" : chosen
+  const pairOnly = props.settings.pairView !== "side"
+  const view = pairOnly || (chosen === "overlay" && !overlayable) ? "side" : chosen
   const switches = view === "switch" && !missing
 
   function openZoom(side: SwapSide, opener?: HTMLElement): void {
@@ -176,8 +181,9 @@ export function CompareSwap(props: CompareSwapProps): ReactElement {
   }
 
   function chooseView(next: CompareView): void {
-    setChosen(next)
-    saveCompareView(next)
+    const target = props.settings.paperSwitch && next === view ? "side" : next
+    setChosen(target)
+    saveCompareView(target)
   }
 
   function toggleShown(event: KeyboardEvent<HTMLDivElement>): void {
@@ -207,14 +213,19 @@ export function CompareSwap(props: CompareSwapProps): ReactElement {
         ref={rootRef}
         className={props.className}
         data-view={missing ? "side" : view}
+        data-pair-view={pairOnly ? props.settings.pairView : undefined}
         data-shown={shown}
         style={{ "--overlay-position": `${String(position)}%` }}
         onKeyDown={toggleShown}
       >
         {props.children}
-        {!missing && (
+        {!missing && !pairOnly && (
           <div role="group" aria-label="見せ方" className={styles["report-compare-swap-views"]}>
-            {SWAP_VIEWS.filter((choice) => choice !== "overlay" || overlayable).map((choice) => (
+            {SWAP_VIEWS.filter(
+              (choice) =>
+                (choice !== "overlay" || overlayable) &&
+                (choice !== "side" || !props.settings.paperSwitch),
+            ).map((choice) => (
               <Button
                 key={choice}
                 variant="ghost"

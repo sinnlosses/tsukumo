@@ -1,0 +1,23 @@
+.detail-block {
+  /* 紙の見せ方の切り替え（最初の `before-after` の対の題の行の右）。見えている値は `aria-pressed` が言う。 */
+  & .report-pair-switch {
+    display: inline-flex;
+    flex: none;
+    gap: var(--inline-tight);
+    padding: var(--inline-tight);
+    border: 1px solid var(--rule-soft);
+    border-radius: var(--radius-lg);
+    background: var(--ground);
+  }
+  & .report-pair-switch-view {
+    min-width: 24px;
+    min-height: 24px;
+    padding: 0 var(--inline-control);
+    border-radius: var(--radius-md);
+    white-space: nowrap;
+  }
+  /* 「後だけ」「前だけ」の対は選んだ側の1枚だけ（矢印も無い）。3列の格子のままだと1枚が3分の1の幅になる。 */
+  & .report-compare-figure:has(> .report-compare-figure-side:only-child) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

@@ -10,8 +10,8 @@ import {
   createComponentImplementation,
   type ReactComponentImplementation,
 } from "@a2ui/react/v0_9"
-import { Catalog, MessageProcessor, type SurfaceModel } from "@a2ui/web_core/v0_9"
-import { createContext, type ReactElement, type RefCallback, use, useState } from "react"
+import { Catalog, MessageProcessor } from "@a2ui/web_core/v0_9"
+import { type ReactElement, use, useState } from "react"
 
 import type { A2uiReportComponent } from "../../../shared/report/a2ui-report-catalog.ts"
 import {
@@ -19,24 +19,24 @@ import {
   type A2uiReportPart,
   a2uiPartsById,
 } from "../../../shared/report/a2ui-report-outline.ts"
-import type {
-  MainViewA2uiReport,
-  MainViewReportRegions,
-  MainViewSurfaceLeafRegion,
-} from "../../../shared/session/main-view-shape.ts"
+import type { MainViewSurfaceLeafRegion } from "../../../shared/session/main-view-shape.ts"
 import { Button } from "../../components/ui/button/button.tsx"
 import { Divider } from "../../components/ui/divider/divider.tsx"
 import { useExternalSync } from "../../hooks/use-external-sync.ts"
-import { reportBrowserError } from "../../stores/browser-error-report.ts"
+import { notesOf, useReplyNotes, useReplySessionKey } from "../../stores/reply-note-list.ts"
+import { askCountOf, noteCountOf, ReportContext, runIds, useReport } from "./a2ui-report-context.ts"
+import { FailedReport } from "./a2ui-surface-failed.tsx"
 import {
-  notesOf,
-  type ReplyNote,
-  useReplyNotes,
-  useReplySessionKey,
-} from "../../stores/reply-note-list.ts"
-import { AskThreadContext, type AskThreadSlot, sectionAskCount } from "./ask-thread-context.ts"
+  type A2uiReportProps,
+  addMissingComponents,
+  renderOrderIdsOf,
+  type ReportSurface,
+  SURFACE_ID,
+} from "./a2ui-surface-model.ts"
+import { AskThreadContext } from "./ask-thread-context.ts"
 import { loadReportCatalogApis } from "./domain/a2ui-catalog-load.ts"
 import { filterBadges, hasBoundChoicePicker, isSortableTable } from "./domain/a2ui-table-view.ts"
+import { beforeAfterPairIdsInOrder, type PairView, pairSwitchLabels } from "./domain/pair-view.ts"
 import { isPlainHeadingText } from "./domain/plain-heading.ts"
 import { reportProofView } from "./domain/report-proof.ts"
 import {
@@ -49,30 +49,12 @@ import { RegionBox, RegionChunks, ReportFrame } from "./leaf/body-region.tsx"
 import { ChartTermLinkScope, chartLinkInputsOf } from "./leaf/chart-term-link.tsx"
 import { DirectLeaf, directLeafViewOf } from "./leaf/direct-leaf-view.tsx"
 import { FavorFollowUp } from "./leaf/favor-follow-up.tsx"
-import type { NextStepsOrigin } from "./leaf/next-step-row.tsx"
-import { NoteBody } from "./leaf/note-leaf.tsx"
+import { PairViewContext } from "./leaf/pair-view-context.ts"
 import { liveLeafElement, useReevaluatedLeaves } from "./leaf/parameter-knob.tsx"
 import { SectionProof } from "./leaf/proof-band.tsx"
 import { HeadRegion, NotDoneRegion } from "./leaf/report-head-region.tsx"
 import { arrangedBlockClassNames } from "./markdown.tsx"
-import { ReplyPortContext, type ReplyPortSlot } from "./reply-port.ts"
-
-type SurfaceView = Extract<MainViewA2uiReport, { readonly kind: "surface" }>
-
-type A2uiReportProps = {
-  readonly body: MainViewReportRegions
-  readonly view: SurfaceView
-  readonly reveal: boolean
-  readonly turnId: number
-  readonly className: string
-  /** 書き上げの演出が付けるポンの class。 */
-  readonly revealClassName: string
-  /** 本文の根に重ねて付ける class（置く側のステップの末尾の余白の打ち消しが指す綴り）。 */
-  readonly blockClassName: string
-  readonly nextSteps?: NextStepsOrigin
-  readonly favorRef?: RefCallback<HTMLElement>
-  readonly reportToolUseId?: string
-}
+import { ReplyPortContext } from "./reply-port.ts"
 
 /**
  * 本文1つぶんの面。面は本文ごとに1つで、最初の一覧で作る。
@@ -89,55 +71,26 @@ export function A2uiReport(props: A2uiReportProps): ReactElement {
       addMissingComponents(surface, components)
     }
   }, [surface, components])
+  const [pairView, setPairView] = useState<PairView>("side")
+  const pairIds = beforeAfterPairIdsInOrder(renderOrderIdsOf(props.view), parts)
   if (surface.kind === "failed") {
     return <FailedReport {...props} error={surface.error} />
   }
   return (
     <ReportContext value={{ ...props, parts, dataModel: surface.surface.dataModel, leaves }}>
-      <A2uiSurface surface={surface.surface} />
+      <PairViewContext
+        value={{
+          view: pairView,
+          setView: setPairView,
+          ...(pairIds[0] === undefined ? {} : { ownerId: pairIds[0] }),
+          labels: pairSwitchLabels(parts),
+        }}
+      >
+        <A2uiSurface surface={surface.surface} />
+      </PairViewContext>
     </ReportContext>
   )
 }
-
-/**
- * 面が作れなかった本文。頭とお願いは値から描き、節の代わりに「本文を描けなかった」の印を出す。
- * 原因は診断ログへ送る（運ぶのは経路・`error.name`・スタックの先頭数フレームだけで、本文は入らない）。
- */
-function FailedReport(props: A2uiReportProps & { readonly error: unknown }): ReactElement {
-  const { view, error } = props
-  useExternalSync(() => {
-    reportBrowserError("render-failure", error)
-  }, [error])
-  return (
-    <ReportFrame
-      reveal={props.reveal}
-      turnId={props.turnId}
-      className={props.className}
-      revealClassName={props.revealClassName}
-      blockClassName={props.blockClassName}
-    >
-      <HeadRegion head={view.head} />
-      <NoteBody tone="ng" text="本文を描けませんでした。" />
-      <FavorFollowUp
-        favor={view.favor}
-        components={view.components}
-        checks={view.head.checks}
-        favorRef={props.favorRef}
-        nextSteps={props.nextSteps}
-      />
-    </ReportFrame>
-  )
-}
-
-const SURFACE_ID = "report"
-
-type ReportContextValue = A2uiReportProps & {
-  readonly parts: ReadonlyMap<string, A2uiReportComponent>
-  readonly dataModel: SurfaceModel<ReactComponentImplementation>["dataModel"]
-  readonly leaves: ReturnType<typeof useReevaluatedLeaves>
-}
-
-const ReportContext = createContext<ReportContextValue | undefined>(undefined)
 
 /** 部品名 → React 実装。どれも ID で一覧を引いて描く（`buildChild` は使わない）。 */
 const REPORT_CATALOG = reportCatalog()
@@ -154,17 +107,7 @@ function reportCatalog(): Catalog<ReactComponentImplementation> {
   return new Catalog(apis.id, "v0.9", implementations, [])
 }
 
-/**
- * 一覧から面を作る。A2UI の検証が一覧を拒んだら（`processMessages` が投げる）`failed` にする（1件の本文のために画面を落とさない）。
- */
-type ReportSurface =
-  | {
-      readonly kind: "surface"
-      readonly processor: MessageProcessor<ReactComponentImplementation>
-      readonly surface: SurfaceModel<ReactComponentImplementation>
-    }
-  | { readonly kind: "failed"; readonly error: unknown }
-
+/** 一覧から面を作る。拒まれたら `failed`。 */
 function reportSurfaceOf(components: readonly A2uiReportComponent[]): ReportSurface {
   const processor = new MessageProcessor<ReactComponentImplementation>([REPORT_CATALOG])
   try {
@@ -179,34 +122,6 @@ function reportSurfaceOf(components: readonly A2uiReportComponent[]): ReportSurf
   return surface === undefined
     ? { kind: "failed", error: new Error("surface-missing") }
     : { kind: "surface", processor, surface }
-}
-
-/** 面にまだ無い部品を足す。A2UI の検証が拒んだら（`processMessages` が投げる）、それまでの面のままにする。 */
-function addMissingComponents(
-  surface: Extract<ReportSurface, { readonly kind: "surface" }>,
-  components: readonly A2uiReportComponent[],
-): void {
-  const missing = components.filter(
-    (part) => surface.surface.componentsModel.get(part.id) === undefined,
-  )
-  if (missing.length === 0) {
-    return
-  }
-  try {
-    surface.processor.processMessages([
-      { version: "v0.9", updateComponents: { surfaceId: SURFACE_ID, components: [...missing] } },
-    ])
-  } catch {
-    // 足せなかった部品は面の外のまま。描く側は一覧から引くので、本文は伸びた一覧で描かれる。
-  }
-}
-
-function useReport(): ReportContextValue {
-  const value = use(ReportContext)
-  if (value === undefined) {
-    throw new Error("A2UI の面の部品が A2uiReport の外で描かれた")
-  }
-  return value
 }
 
 /**
@@ -343,45 +258,6 @@ function PartRun(props: { readonly lead: string; readonly ids: readonly string[]
       ))}
     </>
   )
-}
-
-function askCountOf(report: ReportContextValue, threads: AskThreadSlot, sectionId: string): number {
-  if (report.reportToolUseId === undefined) {
-    return 0
-  }
-  const part = report.parts.get(sectionId)
-  const ids = part?.component === "Section" ? part.children : [sectionId]
-  return sectionAskCount(threads, report.reportToolUseId, runIds(ids, report))
-}
-
-/** 節の中の内容部品に付いた未送信の付箋の数。口が無い描画は付箋を読まない。 */
-function noteCountOf(
-  report: ReportContextValue,
-  port: ReplyPortSlot,
-  notes: readonly ReplyNote[],
-  sectionId: string,
-): number {
-  if (port.kind === "none" || report.reportToolUseId === undefined) {
-    return 0
-  }
-  const part = report.parts.get(sectionId)
-  const ids = runIds(part?.component === "Section" ? part.children : [sectionId], report)
-  return notes.filter(
-    (note) =>
-      note.state.kind === "unsent" &&
-      note.target.key.reportToolUseId === report.reportToolUseId &&
-      ids.includes(note.target.key.componentId),
-  ).length
-}
-
-function runIds(ids: readonly string[], report: ReportContextValue): readonly string[] {
-  return ids.flatMap((id): readonly string[] => {
-    const part = report.parts.get(id)
-    if (part === undefined) {
-      return []
-    }
-    return part.component === "Section" ? runIds(part.children, report) : [id]
-  })
 }
 
 /** 並べ替えか絞り込みを受ける `Table`。使わない `Table` は欄の Markdown のまま描く。 */

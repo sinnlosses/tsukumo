@@ -4,7 +4,7 @@
 // 両側が画像のときだけ見せ方の口を持つ包みにし、「重ねる」は前後でだけ出す。
 
 import clsx from "clsx"
-import type { ReactElement } from "react"
+import { type ReactElement, use } from "react"
 
 import type { A2uiReportComponent } from "../../../../shared/report/a2ui-report-catalog.ts"
 import type { ReportImageSource } from "../../../../shared/report/report-image-markdown.ts"
@@ -26,6 +26,8 @@ import {
   type SwapSettings,
   SwapSideContext,
 } from "../markdown.tsx"
+import { PairViewContext } from "./pair-view-context.ts"
+import { PairViewSwitch } from "./pair-view-switch.tsx"
 import { PictureImage } from "./picture-leaf.tsx"
 import { FoldedLeafFrame } from "./report-leaf-frame.tsx"
 import { SvgFigureView } from "./svg-leaf.tsx"
@@ -55,9 +57,11 @@ export function CompareLeaf(props: {
   readonly imageSource: ReportImageSource
 }): ReactElement {
   const part = props.part
+  const pair = use(PairViewContext)
   if (part.component !== "Compare") {
     return <></>
   }
+  const only = part.relation === "before-after" && pair.view !== "side" ? pair.view : undefined
   const [before, after] = part.sides
   if (before === undefined || after === undefined) {
     return <></>
@@ -77,49 +81,63 @@ export function CompareLeaf(props: {
       },
       overlay: part.relation === "before-after",
       markChange: part.relation === "before-after",
+      pairView: only ?? "side",
+      paperSwitch: part.relation === "before-after" && pair.ownerId !== undefined,
     }
+  const ownsSwitch = pair.ownerId === part.id
+  const hasCaption = props.value.captionNumber.kind !== "none"
   return (
-    <FoldedLeafFrame
-      value={props.value}
-      title={part.title}
-      fit={false}
-      fold={part.fold}
-      swap={swap}
-    >
-      <div
-        className={clsx(
-          figureClassName("compare-figure"),
-          part.relation === "versus" && figureClassName("compare-versus"),
-        )}
+    <>
+      {ownsSwitch && !hasCaption && <PairViewSwitch />}
+      <FoldedLeafFrame
+        value={props.value}
+        title={part.title}
+        fit={false}
+        fold={part.fold}
+        swap={swap}
+        captionAside={ownsSwitch && hasCaption ? <PairViewSwitch /> : undefined}
       >
-        <SideView
-          position="before"
-          label={labels[0] ?? ""}
-          imageName={imageNameOf(part.relation, "before", labels[0] ?? "")}
-          accent={false}
-          content={before}
-          lineDiff={lineDiffs?.before}
-          title={part.title}
-          imageSource={props.imageSource}
-        />
-        {part.relation === "before-after" && (
-          <div className={figureClassName("compare-arrow")} aria-hidden="true">
-            →
-          </div>
+        <div
+          className={clsx(
+            figureClassName("compare-figure"),
+            part.relation === "versus" && figureClassName("compare-versus"),
+          )}
+        >
+          {only !== "after" && (
+            <SideView
+              position="before"
+              label={labels[0] ?? ""}
+              imageName={imageNameOf(part.relation, "before", labels[0] ?? "")}
+              accent={false}
+              content={before}
+              lineDiff={lineDiffs?.before}
+              title={part.title}
+              imageSource={props.imageSource}
+            />
+          )}
+          {part.relation === "before-after" && only === undefined && (
+            <div className={figureClassName("compare-arrow")} aria-hidden="true">
+              →
+            </div>
+          )}
+          {only !== "before" && (
+            <SideView
+              position="after"
+              label={labels[1] ?? ""}
+              imageName={imageNameOf(part.relation, "after", labels[1] ?? "")}
+              accent={part.relation === "before-after"}
+              content={after}
+              lineDiff={lineDiffs?.after}
+              title={part.title}
+              imageSource={props.imageSource}
+            />
+          )}
+        </div>
+        {lineDiffs !== undefined && (
+          <CodeDiffLegend lineDiffs={lineDiffs} shown={only === undefined ? POSITIONS : [only]} />
         )}
-        <SideView
-          position="after"
-          label={labels[1] ?? ""}
-          imageName={imageNameOf(part.relation, "after", labels[1] ?? "")}
-          accent={part.relation === "before-after"}
-          content={after}
-          lineDiff={lineDiffs?.after}
-          title={part.title}
-          imageSource={props.imageSource}
-        />
-      </div>
-      {lineDiffs !== undefined && <CodeDiffLegend lineDiffs={lineDiffs} />}
-    </FoldedLeafFrame>
+      </FoldedLeafFrame>
+    </>
   )
 }
 
@@ -152,8 +170,12 @@ const LEGEND_CHANGE_WORDS = {
 >
 
 /** 印の付いた種別だけを語にする。印の行が1つも無い側は項目を出さない。 */
-function CodeDiffLegend(props: { readonly lineDiffs: LineDiffPair }): ReactElement {
-  const items = POSITIONS.flatMap((position) => {
+function CodeDiffLegend(props: {
+  readonly lineDiffs: LineDiffPair
+  /** 見えている側。 */
+  readonly shown: readonly SidePosition[]
+}): ReactElement {
+  const items = props.shown.flatMap((position) => {
     const changes = new Set(
       props.lineDiffs[position].lines.flatMap((line) =>
         line.kind === "line" && line.change !== "same" ? [line.change] : [],

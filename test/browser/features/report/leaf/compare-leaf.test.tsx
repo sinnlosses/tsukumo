@@ -1,10 +1,12 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, beforeAll, describe, expect, it } from "vitest"
 
+import type { PairView } from "../../../../../src/browser/features/report/domain/pair-view.ts"
 import {
   DirectLeaf,
   directLeafViewOf,
 } from "../../../../../src/browser/features/report/leaf/direct-leaf-view.tsx"
+import { PairViewContext } from "../../../../../src/browser/features/report/leaf/pair-view-context.ts"
 import { loadMarkdown } from "../../../../../src/browser/features/report/markdown.tsx"
 import type { A2uiReportComponent } from "../../../../../src/shared/report/a2ui-report-catalog.ts"
 import type { LeafValue } from "../../../../../src/shared/report/report-leaf-value.ts"
@@ -237,6 +239,95 @@ describe("Compare の部品", () => {
       expect(screen.getByText("架空の案A")).toBeTruthy()
       expect(screen.queryByText("前")).toBeNull()
       expect(screen.queryByText("左")).toBeNull()
+    })
+  })
+
+  describe("紙の見せ方（PairViewContext）", () => {
+    const pointsSide = (heading: string): PointsSide => ({
+      kind: "points",
+      heading,
+      points: [`${heading}の点`],
+    })
+    const imageSide = (heading: string): ComparePart["sides"][number] => ({
+      kind: "image",
+      heading,
+      path: "架空.png",
+    })
+    const BEFORE_YAML: CodeSide = {
+      kind: "code",
+      heading: "前の見出し",
+      language: "yaml",
+      source: "a: 1\n",
+    }
+    const AFTER_YAML: CodeSide = {
+      kind: "code",
+      heading: "後の見出し",
+      language: "yaml",
+      source: "a: 2\n",
+    }
+
+    function renderWithView(part: ComparePart, view: PairView) {
+      const leaf = directLeafViewOf(part)
+      if (leaf === undefined) {
+        throw new Error("Compare の部品が一覧に無い")
+      }
+      return render(
+        <PairViewContext
+          value={{
+            view,
+            setView: () => undefined,
+            ownerId: undefined,
+            labels: { after: "後だけ", before: "前だけ" },
+          }}
+        >
+          <div data-report-region="section">
+            <DirectLeaf
+              part={part}
+              value={{ ...PLAIN_VALUE, captionNumber: { kind: "figure", ordinal: 1 } }}
+              imageSource={{ kind: "none" }}
+              view={leaf}
+            />
+          </div>
+        </PairViewContext>,
+      )
+    }
+
+    it("コードの対は「後だけ」で後の側と矢印なし、「前だけ」で前の側だけになる", () => {
+      const part = codePart("before-after", BEFORE_YAML, AFTER_YAML)
+      const after = renderWithView(part, "after")
+      expect(after.container.querySelector('[data-side="before"]')).toBeNull()
+      expect(after.container.querySelector('[data-side="after"]')).not.toBeNull()
+      expect(after.container.textContent).not.toContain("→")
+      cleanup()
+      const before = renderWithView(part, "before")
+      expect(before.container.querySelector('[data-side="after"]')).toBeNull()
+      expect(before.container.querySelector('[data-side="before"]')).not.toBeNull()
+    })
+
+    it("箇条の対も選んだ側だけになり、「並べる」なら両側と矢印が出る", () => {
+      const part = codePart("before-after", pointsSide("今"), pointsSide("採ったあと"))
+      const only = renderWithView(part, "after")
+      expect(only.container.textContent).toContain("採ったあとの点")
+      expect(only.container.textContent).not.toContain("今の点")
+      cleanup()
+      const side = renderWithView(part, "side")
+      expect(side.container.textContent).toContain("今の点")
+      expect(side.container.textContent).toContain("→")
+    })
+
+    it("画像の対は片側だけになり、見せ方の押しボタンが出ない", () => {
+      const part = codePart("before-after", imageSide("今"), imageSide("採ったあと"))
+      const only = renderWithView(part, "before")
+      expect(only.container.querySelector('[data-side="after"]')).toBeNull()
+      expect(only.container.querySelector("[data-pair-view='before']")).not.toBeNull()
+      expect(screen.queryByRole("group", { name: "見せ方" })).toBeNull()
+    })
+
+    it("対等な対（versus）は見せ方が効かない", () => {
+      const part = codePart("versus", pointsSide("案A"), pointsSide("案B"))
+      const only = renderWithView(part, "after")
+      expect(only.container.textContent).toContain("案Aの点")
+      expect(only.container.textContent).toContain("案Bの点")
     })
   })
 

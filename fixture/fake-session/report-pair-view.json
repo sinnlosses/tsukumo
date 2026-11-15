@@ -1,0 +1,100 @@
+{
+  "name": "report-pair-view",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "再試行の設定の前後を、画面と設定の両方で見たい（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 1500,
+      "event": {
+        "kind": "report",
+        "toolUseId": "fake-pair-view-1",
+        "components": [
+          {
+            "id": "root",
+            "component": "Report",
+            "conclusion": ["架空の結論: 再試行の設定を見直し、画面の見た目も変えた。"],
+            "checks": [],
+            "children": ["s1"],
+            "closing": { "text": "前後を並べたよ！", "expression": "proud" }
+          },
+          {
+            "id": "s1",
+            "component": "Section",
+            "heading": "架空の前後",
+            "children": ["shot", "code", "list"]
+          },
+          {
+            "id": "shot",
+            "component": "Compare",
+            "title": "架空の画面の前後",
+            "relation": "before-after",
+            "sides": [
+              { "kind": "image", "heading": "今", "path": "report-image-fixture/same-before.png" },
+              {
+                "kind": "image",
+                "heading": "見直したあと",
+                "path": "report-image-fixture/same-after.png"
+              }
+            ],
+            "fold": "",
+            "aside": ""
+          },
+          {
+            "id": "code",
+            "component": "Compare",
+            "title": "架空の設定の前後",
+            "relation": "before-after",
+            "sides": [
+              {
+                "kind": "code",
+                "heading": "今",
+                "language": "yaml",
+                "source": "retry:\n  max: 3\n  backoff: 200ms\n"
+              },
+              {
+                "kind": "code",
+                "heading": "見直したあと",
+                "language": "yaml",
+                "source": "retry:\n  max: 5\n  backoff: 100ms\n"
+              }
+            ],
+            "fold": "",
+            "aside": ""
+          },
+          {
+            "id": "list",
+            "component": "Compare",
+            "title": "架空の方針の前後",
+            "relation": "before-after",
+            "sides": [
+              { "kind": "points", "heading": "今", "points": ["固定の待ち", "上限は 3 回"] },
+              {
+                "kind": "points",
+                "heading": "見直したあと",
+                "points": ["指数の待ち", "上限は 5 回"]
+              }
+            ],
+            "fold": "",
+            "aside": ""
+          }
+        ]
+      }
+    },
+    {
+      "afterMs": 1550,
+      "event": {
+        "kind": "tool-finished",
+        "toolUseId": "fake-pair-view-1",
+        "content": "ok",
+        "isError": false
+      }
+    },
+    { "afterMs": 2300, "event": { "kind": "turn-finished", "outcome": { "kind": "completed" } } }
+  ]
+}
