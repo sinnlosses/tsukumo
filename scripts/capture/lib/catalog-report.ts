@@ -133,6 +133,16 @@ export const REPORT_ENTRIES: readonly CatalogEntry[] = [
     settle: SCENE_END_SETTLE,
   },
   {
+    name: "report-pair-heading",
+    scene: "report-pair-heading",
+    label: "前後の部品（見出しだけの札）と、「前から後」のセルを持つ表",
+    homeSetup: { kind: "default" },
+    workspaceSetup: { kind: "repository" },
+    prepare: [],
+    skipReveal: false,
+    settle: SCENE_END_SETTLE,
+  },
+  {
     name: "turn-outline-many",
     scene: "turn-outline-many",
     label: "やり取りの列（ビューポートに収まらない12件）",

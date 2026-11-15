@@ -185,6 +185,20 @@ describe("Table の部品", () => {
     expect(container.querySelector("table")).toBeNull()
   })
 
+  it("「前から後」のセルは数どうしのときだけ後を太字の印にする", () => {
+    const { part } = pair([
+      ["架空のA", { from: "3", to: "5" }],
+      ["架空のB", { from: "旧", to: "新" }],
+    ])
+    const { container } = renderPart(part)
+    const [numeric, text] = [...container.querySelectorAll("tbody tr")]
+
+    expect(numeric?.querySelector("[class*='report-change-from']")).not.toBeNull()
+    expect(numeric?.querySelector("[class*='report-change-to-numeric']")).not.toBeNull()
+    expect(text?.querySelector("[class*='report-change-to']")).not.toBeNull()
+    expect(text?.querySelector("[class*='report-change-to-numeric']")).toBeNull()
+  })
+
   it("状態の印は role=img と状態の語を持つ", () => {
     const { part } = pair([
       ["架空のA", { status: "warn", text: "注意" }],

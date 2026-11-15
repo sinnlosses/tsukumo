@@ -22,6 +22,7 @@ import {
   heatLevelOf,
   isHeatColumn,
   isHeatPeak,
+  NUMERIC_CELL_PATTERN,
   numericCellMagnitude,
   type TableHeat,
   type TableTotals,
@@ -375,7 +376,14 @@ function CellContent(props: {
         <span className={tableLeafClassNames.changeFrom}>
           <InlineMarkdown text={`${flatInline(cell.from)} →`} />
         </span>
-        <span className={tableLeafClassNames.changeTo}>
+        <span
+          className={clsx(
+            tableLeafClassNames.changeTo,
+            NUMERIC_CELL_PATTERN.test(cell.from.trim()) &&
+              NUMERIC_CELL_PATTERN.test(cell.to.trim()) &&
+              tableLeafClassNames.changeToNumeric,
+          )}
+        >
           <ChangeTo text={cell.to} />
         </span>
       </>

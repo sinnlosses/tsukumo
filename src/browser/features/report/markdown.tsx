@@ -126,6 +126,7 @@ export const tableLeafClassNames = {
   cellStatusNone: notationStyles["report-cell-status-none"],
   changeFrom: notationStyles["report-change-from"],
   changeTo: notationStyles["report-change-to"],
+  changeToNumeric: notationStyles["report-change-to-numeric"],
   tag: notationStyles["report-tag"],
   rowEmphasisMark: notationStyles["report-row-emphasis-mark"],
   columnEmphasisMark: notationStyles["report-column-emphasis-mark"],

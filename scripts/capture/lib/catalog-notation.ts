@@ -322,7 +322,7 @@ export const NOTATION_ENTRIES: readonly CatalogEntry[] = [
     workspaceSetup: { kind: "report-image" },
     prepare: [{ kind: "scroll", selector: BEFORE_AFTER_CODE_SELECTOR }],
     skipReveal: true,
-    settle: { kind: "selector", selector: BEFORE_AFTER_CODE_SELECTOR, phase: "before-prepare" },
+    settle: SCENE_END_SETTLE,
   },
   {
     name: "report-before-after-points",
@@ -332,7 +332,7 @@ export const NOTATION_ENTRIES: readonly CatalogEntry[] = [
     workspaceSetup: { kind: "report-image" },
     prepare: [{ kind: "scroll", selector: BEFORE_AFTER_POINTS_SELECTOR }],
     skipReveal: true,
-    settle: { kind: "selector", selector: BEFORE_AFTER_POINTS_SELECTOR, phase: "before-prepare" },
+    settle: SCENE_END_SETTLE,
   },
   {
     name: "report-graph-change",

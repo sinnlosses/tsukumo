@@ -66,13 +66,14 @@
   & .report-cards .report-card > p + p {
     margin-top: var(--space-sm);
   }
-  /* 表の変化したセルの前の値と矢印は取り消し線の補助色、後の値は ink-bright の太字。 */
+  /* 表の変化したセルの前の値と矢印は灰、後の値は ink-bright。数どうしのときだけ後を太くする。 */
   & .report-change-from {
     color: var(--ink-quiet);
-    text-decoration: line-through;
   }
   & .report-change-to {
     color: var(--ink-bright);
+  }
+  & .report-change-to-numeric {
     font-weight: 600;
   }
   & .report-badge {

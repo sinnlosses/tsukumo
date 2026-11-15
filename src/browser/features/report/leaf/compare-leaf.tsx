@@ -1,6 +1,6 @@
 // `Compare`（2つを左右に並べて見比べる）を Markdown に戻さず直接描く。
 // 対等（versus）で両側が箇条なら、見出しと箇条の札（Markdown の `compare` と同じ見た目）。
-// ほかは側ごとに画像・コード・箇条・mermaid・svg を並べ、前後（before-after）は札を「前」「後」にして間に矢印を置く。
+// ほかは側ごとに画像・コード・箇条・mermaid・svg を並べ、前後（before-after）は見出しを札にして（無ければ「前」「後」）間に矢印を置く。
 // 両側が画像のときだけ見せ方の口を持つ包みにし、「重ねる」は前後でだけ出す。
 
 import clsx from "clsx"
@@ -94,6 +94,7 @@ export function CompareLeaf(props: {
         <SideView
           position="before"
           label={labels[0] ?? ""}
+          imageName={imageNameOf(part.relation, "before", labels[0] ?? "")}
           accent={false}
           content={before}
           lineDiff={lineDiffs?.before}
@@ -108,6 +109,7 @@ export function CompareLeaf(props: {
         <SideView
           position="after"
           label={labels[1] ?? ""}
+          imageName={imageNameOf(part.relation, "after", labels[1] ?? "")}
           accent={part.relation === "before-after"}
           content={after}
           lineDiff={lineDiffs?.after}
@@ -187,17 +189,27 @@ function CodeDiffLegend(props: { readonly lineDiffs: LineDiffPair }): ReactEleme
   )
 }
 
-/** 前後の札は「前」「後」で、見出しがあれば括弧で添える。対等な2つの札は見出しそのもの。 */
+/** 札は見出しそのもの。前後で見出しが空のときだけ「前」「後」にする。 */
 function sideLabelOf(
   relation: ComparePart["relation"],
   position: SidePosition,
   heading: string,
 ): string {
+  const trimmed = heading.trim()
+  return relation === "before-after" && trimmed === "" ? BEFORE_AFTER_LABELS[position] : trimmed
+}
+
+/** 読み上げの名前。見出しだけの札になる前後の側は、名前に「前」「後」の位置を残す。 */
+function imageNameOf(
+  relation: ComparePart["relation"],
+  position: SidePosition,
+  label: string,
+): string {
   if (relation === "versus") {
-    return heading.trim()
+    return `${label || VERSUS_FALLBACK_LABELS[position]}の画面`
   }
-  const label = BEFORE_AFTER_LABELS[position]
-  return heading.trim() === "" ? label : `${label}（${heading.trim()}）`
+  const word = BEFORE_AFTER_LABELS[position]
+  return label === word ? `${word}の画面` : `${word}（${label}）の画面`
 }
 
 function PointsCompare(props: {
@@ -242,6 +254,7 @@ function PointsCompare(props: {
 function SideView(props: {
   readonly position: SidePosition
   readonly label: string
+  readonly imageName: string
   readonly accent: boolean
   readonly content: CompareSide
   /** 前後の両側が code のときの、この側の行の並び。 */
@@ -264,7 +277,7 @@ function SideView(props: {
         <SideContent
           content={props.content}
           lineDiff={props.lineDiff}
-          imageLabel={`${props.label || VERSUS_FALLBACK_LABELS[props.position]}の画面`}
+          imageLabel={props.imageName}
           title={props.title}
           imageSource={props.imageSource}
         />

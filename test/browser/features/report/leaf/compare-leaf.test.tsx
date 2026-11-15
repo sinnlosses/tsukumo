@@ -206,6 +206,40 @@ describe("Compare の部品", () => {
     })
   })
 
+  describe("対の札", () => {
+    const side = (heading: string, point: string): PointsSide => ({
+      kind: "points",
+      heading,
+      points: [point],
+    })
+
+    it("前後で見出しがあれば札は見出しだけになる", () => {
+      renderPart(
+        codePart(
+          "before-after",
+          side("架空の今", "架空の点1"),
+          side("架空の採ったあと", "架空の点2"),
+        ),
+      )
+      expect(screen.getByText("架空の今")).toBeTruthy()
+      expect(screen.getByText("架空の採ったあと")).toBeTruthy()
+      expect(screen.queryByText(/前|後/)).toBeNull()
+    })
+
+    it("前後で見出しが無ければ「前」「後」のままになる", () => {
+      renderPart(codePart("before-after", side("", "架空の点1"), side("", "架空の点2")))
+      expect(screen.getByText("前")).toBeTruthy()
+      expect(screen.getByText("後")).toBeTruthy()
+    })
+
+    it("対等な2つは見出しそのもので、無ければ札を出さない", () => {
+      renderPart(codePart("versus", side("架空の案A", "架空の点1"), side("", "架空の点2")))
+      expect(screen.getByText("架空の案A")).toBeTruthy()
+      expect(screen.queryByText("前")).toBeNull()
+      expect(screen.queryByText("左")).toBeNull()
+    })
+  })
+
   it("整形で落ちた見比べ（内容部品の値が無い）は何も描かない", () => {
     const { part } = pair(SIDES)
     const view = directLeafViewOf(part)
