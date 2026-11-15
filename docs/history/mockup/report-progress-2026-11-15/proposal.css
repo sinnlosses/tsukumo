@@ -21,28 +21,12 @@ body[data-scene="read"] .talk {
   position: relative;
 }
 
-/* 進行の帯の中の、計画を開く口（丸の並びと今の段の名前）と見込み */
-.plan-open {
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
-  min-inline-size: 0;
-  margin-inline-start: -6px;
-  padding: 3px 8px 3px 6px;
-  border-radius: 999px;
-  transition: background-color 0.15s;
+/* 用件のあるレポートを読むあいだは、入力欄の上の知らせの1行の分も空け、流れの字が知らせの後ろに透けないようにする */
+body[data-scene="read"][data-turn="yours"] .talk {
+  --dock-clear: 176px;
 }
 
-.plan-open:hover,
-.plan-open[aria-expanded="true"] {
-  background: rgb(255 255 255 / 7%);
-}
-
-.plan-open > .icon {
-  flex: none;
-  color: var(--ink-soft);
-}
-
+/* 進行の帯の中の見込み */
 .usual {
   color: var(--ink-soft);
 }
@@ -162,32 +146,114 @@ body[data-scene="read"] .talk {
   vertical-align: middle;
 }
 
-/* 案2: 帯から開く計画の面 */
-.plan-pop {
-  position: fixed;
-  inset: auto;
-  inline-size: 440px;
-  margin: 0;
-  padding: 10px 18px 12px;
-  border: 1px solid rgb(255 255 255 / 10%);
-  border-radius: 16px;
-  background: rgb(34 31 44);
-  color: var(--ink);
-  box-shadow: 0 20px 48px rgb(8 6 14 / 55%);
+/* フェーズごとの手順（道具の呼び出し）。済んだフェーズは「手順 n」に畳み、今のフェーズは開いて出す */
+.tools-fold {
+  grid-column: 2 / -1;
+  font-size: 13px;
 }
 
-.plan-pop-foot {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  margin: 6px 0 0;
-  padding-block-start: 10px;
-  border-block-start: 1px solid var(--hairline-quiet);
-  font-size: 12px;
+.tools-fold > summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 8px 1px 4px;
+  margin-inline-start: -4px;
+  border-radius: 6px;
+  color: var(--ink-soft);
+  cursor: pointer;
+  list-style: none;
+}
+
+.tools-fold > summary::-webkit-details-marker {
+  display: none;
+}
+
+.tools-fold > summary:hover {
+  background: rgb(255 255 255 / 7%);
+  color: var(--ink-bright);
+}
+
+.tools-fold > summary .icon {
+  rotate: -90deg;
+  transition: rotate 0.15s;
+}
+
+.tools-fold[open] > summary .icon {
+  rotate: 0deg;
+}
+
+.tools {
+  display: grid;
+  margin: 4px 0 2px;
+  padding: 0;
+  list-style: none;
+}
+
+.tool {
+  display: grid;
+  grid-template-columns: 16px 3.2em minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding-block: 3px;
   color: var(--ink-soft);
 }
 
-/* 案3: 中央の列の頭に開く計画の一覧。畳むと進行の帯と同じ1行になる */
+.tool .icon {
+  inline-size: 14px;
+  block-size: 14px;
+  stroke-width: 2.25;
+  color: var(--state-ok);
+}
+
+.tool-name {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink);
+}
+
+.tool code {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tool time {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 走っている手順の行。回る印は流れの末尾の行だけが持つので、ここは止まった点にする */
+.tool[data-state="run"] {
+  color: var(--ink-bright);
+}
+
+.tool-dot {
+  justify-self: center;
+  inline-size: 7px;
+  block-size: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+/* 開いた一覧の末尾の、フェーズごとの所要時間 */
+.shelf-body .band-total {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin: 10px 0 8px;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.shelf-body .band-total b {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--ink-bright);
+}
+
+/* 進み具合の器。案2 は畳んだ1行が既定で「手順」を押すと開き、案3 は働くあいだ開いたままにする。
+   畳むと進行の帯と同じ1行になる */
 .shelf {
   border: 1px solid var(--hairline);
   border-radius: 20px;
@@ -216,6 +282,20 @@ body[data-scene="read"] .talk {
   color: var(--ink);
 }
 
+/* 丸の並びの寸法は、A2 の進行の帯と同じにする */
+.shelf-head .phase {
+  inline-size: 20px;
+  block-size: 20px;
+}
+
+.shelf-head .phase + .phase {
+  margin-inline-start: 10px;
+}
+
+.shelf-head .phase + .phase::before {
+  inline-size: 10px;
+}
+
 .shelf-head .chip-button {
   block-size: 28px;
 }
@@ -229,9 +309,20 @@ body[data-scene="read"] .talk {
   display: none;
 }
 
-/* 開いているあいだは一覧が位置を言うので、頭の丸の並びは出さない */
-.shelf[data-open="true"] .shelf-head .phases {
+/* 開いているあいだは一覧が位置と名前を言うので、頭には「何フェーズ目か」だけを出す */
+.shelf[data-open="true"] .shelf-head :is(.phases, .phase-name),
+.shelf[data-open="false"] .shelf-where {
   display: none;
+}
+
+.shelf-body {
+  max-block-size: 40dvb;
+  overflow-y: auto;
+  scrollbar-color: rgb(255 255 255 / 24%) transparent;
+}
+
+.shelf-head .chip-button[aria-expanded="true"] .icon {
+  rotate: 180deg;
 }
 
 .shelf-fold {
@@ -271,17 +362,31 @@ body[data-scene="read"] .talk {
   color: var(--ink);
 }
 
-.now-pulse {
+/* 回る印。今の実物の、今のフェーズの番号の外周を回る弧と同じ形（1秒で1周）で、画面の中で回るのはここだけにする */
+.now-spin {
   flex: none;
   align-self: center;
-  inline-size: 8px;
-  block-size: 8px;
+  inline-size: 14px;
+  block-size: 14px;
+  border: 2px solid color-mix(in srgb, var(--accent) 16%, transparent);
+  border-block-start-color: var(--accent);
+  border-inline-end-color: color-mix(in srgb, var(--accent) 45%, transparent);
   border-radius: 50%;
-  background: var(--accent);
 
   @media (prefers-reduced-motion: no-preference) {
-    animation: breathe 1.6s ease-in-out infinite alternate;
+    animation: now-turn 1s linear infinite;
   }
+}
+
+@keyframes now-turn {
+  to {
+    rotate: 1turn;
+  }
+}
+
+/* 案2 では、状態の点は動かさない（今の実物と同じ。動くのは末尾の行の印だけ） */
+body[data-plan="tail"] .state-run .state-dot {
+  animation: none;
 }
 
 .now-text {
@@ -438,19 +543,50 @@ body[data-layout="a2"] .report h1.tight {
   margin: 0;
 }
 
-/* あなたの番。利用者が動く用件を、結論の直後に置く。
-   今のレポートの頭と同じく枠と地は持たず、色が出るのは題の語だけにする（紙の中に箱を重ねない） */
-.head-row-turn > dt {
-  font-weight: 650;
-  color: var(--state-warn);
+/* あなたの番。利用者が動く用件は、レポートのいちばん下（入力欄のすぐ上へ来る位置）に置く。
+   枠と地は持たず、上の罫と題の前の点だけで区切る（紙の中に箱を重ねない） */
+.report .turn-end {
+  margin-block-start: 28px;
+  padding-block-start: 18px;
+  border-block-start: 1px solid var(--hairline);
+}
+
+body[data-layout="a2"] .report .turn-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 6px;
+  font-size: 16px;
+}
+
+.turn-title::before {
+  content: "";
+  inline-size: 8px;
+  block-size: 8px;
+  border-radius: 50%;
+  background: var(--state-warn);
 }
 
 .report .turn-text {
   margin: 0;
-  font-size: 15px;
-  line-height: 1.7;
+  font-size: 16px;
+  line-height: 1.75;
   color: var(--ink-bright);
   text-wrap: pretty;
+}
+
+/* 入力欄の上の知らせの1行（お伺いの「質問しています」と同じ位置）。押すとレポートの末尾へ移る */
+.status-jump {
+  padding: 1px 8px;
+  border-radius: 6px;
+  color: var(--ink-bright);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--state-warn) 60%, transparent);
+  text-underline-offset: 3px;
+}
+
+.status-jump:hover {
+  background: rgb(255 255 255 / 8%);
 }
 
 .next-chips {
