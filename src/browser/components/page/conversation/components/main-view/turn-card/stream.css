@@ -43,3 +43,12 @@
   background: var(--surface-raised);
   line-height: 22px;
 }
+/* 広い画面では透ける面（値は `conversation-layout/panel/panel.css`）。 */
+@media (min-width: 761px) {
+  .stream-plan {
+    border: 1px solid var(--panel-edge-quiet);
+    background: var(--panel-glass);
+    backdrop-filter: var(--panel-filter);
+    --ink-quiet: var(--ink-soft);
+  }
+}

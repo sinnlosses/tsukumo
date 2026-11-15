@@ -74,3 +74,33 @@
 - 描き変わりがあるときのぼかしの代は、GPU プロセスでぼかし無しの約10倍（止まって見ている場面で 6% → 61%）。半径を 8px から 24px にすると 61% → 82% に増える。
 - 今の画面の無限アニメーションのうち、3列の配置でぼかしの面の中に入るのは、進行の帯の回る印（`turn-card/work-strip.css` の `--spinner-animation`）。書いている途中のレポートの筆（`turn-card/report-draft.css`）は、段の札（ぼかしを持つ面）に載せると同じ代が掛かる。立ち絵の呼吸（`frame/portrait.module.css`）はぼかしの面の後ろに入らない（やり取りの列は立ち絵の上で止まる）。
 - 会話の流れを送るあいだは、進行の帯と入力欄が流れの上に重なるので、ぼかしがあると送るたびに描き直す（送り続けて 28% → 70%）。送るのは利用者が操作しているあいだだけで、常時の負荷にはならない。
+
+### 実タブの測定（Orca の実タブ・止まった画面）
+
+既存の表（SwiftShader）とは別の測定で、値を混ぜない。
+
+測り方:
+
+- `pnpm run build` のあと、`TSUKUMO_DRIVER=fake TSUKUMO_FAKE_SCENE=report` で起こした tsukumo の URL を `orca tab create --url` で開いた（読む場面・止まった画面。幅 1477px）。
+- 描画プロセスの pid は、開いた直後で CPU 時間が最小の `Orca Helper (Renderer)`（52155）、GPU プロセスは `--type=gpu-process`（22240）を `ps` から拾った。
+- 10秒の前後で `ps -o cputime= -p <pid>` を読み、増えた CPU 時間（秒）を取った。開く前後に待ちは2秒置いた。
+- ぼかしを外した版は `orca eval` で `document.body.style.setProperty('--panel-blur', '0px')` を当てた。既定とぼかし無しを交互に3回ずつ測った。
+- ほかの作業ツリーのテストが同じマシンで動いていたので、値には揺れがある。
+
+| 条件（10秒の CPU 時間・秒）   | 描画プロセス     | GPU プロセス     |
+| ----------------------------- | ---------------- | ---------------- |
+| 既定（濃さ45%・ぼかし8px）    | 0.33・0.25・0.19 | 0.72・0.84・0.63 |
+| ぼかし 0px                    | 0.18・0.18・0.18 | 0.71・0.66・0.61 |
+| 比（平均の既定 ÷ ぼかし 0px） | 1.4              | 1.1              |
+
+比は両方とも 2 倍以内。
+
+規則の確かめ（`getComputedStyle(el).backdropFilter`）:
+
+- 既定で `backdrop-filter` が `none` でない要素を全件挙げると、上部の帯・やり取りの列・入力欄の本体（Astryx の atomic class の要素）・サイドバーの4つで、どれも `blur(8px) saturate(1.15)`。
+- `--panel-blur: 0px` では、4つとも `none`。
+- この場面（読む）に無い進行の帯・段の札・引き出しは測っていない。
+
+無限アニメーションの列挙（`document.getAnimations()` の `iterations === Infinity`）:
+
+- 全1件、`portrait-breathe`（立ち絵）。`backdrop-filter` が `none` でない祖先の中は 0件、外が1件。

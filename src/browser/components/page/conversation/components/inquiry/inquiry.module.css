@@ -117,12 +117,19 @@
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
-/* 添え書きの塊（聞く理由・事実・おすすめの理由）。行と行の間は VStack の gap が持つ。 */
+/* 広い画面の紙は縁を細く、影を柔らかくする。答え待ちの色は縁に残す。 */
+@media (min-width: 761px) {
+  .inquiry:not(.is-bare, .is-board) {
+    border-color: color-mix(in srgb, var(--state-warn) 55%, var(--panel-edge-quiet));
+    box-shadow: var(--panel-paper-lift);
+  }
+}
+/* 添え書きの塊（聞く理由・事実・おすすめの理由）。行と行の間は VStack の gap が持つ。上下の罫で区切り、枠は重ねない。 */
 .inquiry-brief {
   margin: 0 0 var(--space-md);
-  padding: var(--inset-control);
-  border: 1px dashed var(--rule);
-  border-radius: var(--radius-md);
+  padding: var(--gutter-region) var(--inline-tight);
+  border: 0 solid var(--panel-edge);
+  border-block-width: 1px;
 }
 .inquiry-brief-line {
   margin: 0;

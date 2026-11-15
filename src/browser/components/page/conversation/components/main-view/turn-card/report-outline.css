@@ -1,7 +1,17 @@
 /* やり取りの列。左の列の上に、集計期間の中のやり取りと見ているやり取りの見出しの一覧を置く。
    幅と高さの上限は置き場（`conversation-layout.module.css` の `.layout-outline`）が決め、ここは入れ物の高さに収まるよう、頭を残して一覧だけを転がす。 */
 
-/* 枠・角丸・地は `main-view.module.css` の `composes`。 */
+/* 面は広い画面でだけ出る透ける面（値は `conversation-layout/panel/panel.css`）。 */
+@media (min-width: 761px) {
+  .outline-nav {
+    border: 1px solid var(--panel-edge);
+    border-radius: var(--radius-xl);
+    background-color: var(--panel-glass);
+    box-shadow: var(--panel-lift);
+    backdrop-filter: var(--panel-filter);
+    --ink-quiet: var(--ink-soft);
+  }
+}
 .outline-nav {
   display: flex;
   flex-direction: column;

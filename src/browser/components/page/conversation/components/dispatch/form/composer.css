@@ -82,6 +82,20 @@
     --_chat-composer-radius: 22px;
     container: composer / inline-size;
   }
+  /* 本体は打つ字の読みやすさを優先して、パネルより濃い透ける面にする。引き出しはパネルと同じ面。 */
+  .dispatch-form .dispatch-shell > :not(:global(.astryx-chat-composer-drawer)) {
+    border: 1px solid var(--panel-edge);
+    background-color: var(--panel-glass-dense);
+    box-shadow: var(--panel-lift);
+    backdrop-filter: var(--panel-filter);
+    --ink-quiet: var(--ink-soft);
+  }
+  .dispatch-form .dispatch-shell > :global(.astryx-chat-composer-drawer) {
+    border-color: var(--panel-edge-quiet);
+    background-color: var(--panel-glass);
+    backdrop-filter: var(--panel-filter);
+    --ink-quiet: var(--ink-soft);
+  }
   .dispatch-shell .dispatch-text {
     box-sizing: border-box;
     min-height: 1.6em;

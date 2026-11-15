@@ -21,6 +21,16 @@
   border-bottom: var(--screen-nav-rule) solid var(--rule);
   background: color-mix(in srgb, var(--ground), var(--surface) 50%);
 }
+/* 会話の画面の広い幅では、帯は背景の透ける面。背景は帯の裏まで広がるので、grid より前に出す。値は `conversation-layout/panel/panel.css`。 */
+@media (min-width: 761px) {
+  .screen-nav[data-screen="conversation"] {
+    z-index: 1;
+    border-bottom-color: var(--panel-edge-quiet);
+    background: var(--panel-glass-strip);
+    backdrop-filter: var(--panel-filter);
+    --ink-quiet: var(--ink-soft);
+  }
+}
 /* 名乗り（顔と部屋の名前）。帯の要素どうしの間（20px）より詰めて1つの塊に見せる。 */
 .screen-nav-identity {
   display: flex;

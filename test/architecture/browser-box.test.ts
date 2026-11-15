@@ -157,6 +157,7 @@ describe("components/ui/ の置き方", () => {
 // 固定の置き場として例外にする。
 const PAGE_CONCEPT_DIRECTORIES: ReadonlySet<string> = new Set([
   "form",
+  "panel",
   "phone",
   "renderer",
   "stage",

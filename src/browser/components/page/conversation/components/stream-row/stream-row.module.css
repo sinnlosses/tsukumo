@@ -53,6 +53,29 @@
     max-width: 92%;
   }
 }
+/* 広い画面の吹き出し。セリフは差し色を上から下へ薄める面、投稿は一段明るい面。字は 15px に近い段（`--font-input`）。 */
+@media (min-width: 761px) {
+  .stream-entry {
+    font-size: var(--font-input);
+  }
+  .stream-entry.stream-entry-character {
+    background: linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--accent) 16%, var(--surface)),
+      color-mix(in srgb, var(--accent) 9%, var(--surface))
+    );
+  }
+  .stream-entry.stream-entry-user {
+    background: color-mix(in srgb, var(--surface), var(--ink) 12%);
+    --ink-quiet: var(--ink-soft);
+  }
+  .stream-entry.stream-entry-user h2 {
+    color: var(--ink-soft);
+  }
+  .stream-time {
+    color: var(--ink-soft);
+  }
+}
 /* 発言1件ぶんの行（吹き出しと、その脇の時刻）。話者で左右に寄せ、吹き出しと時刻は下端で揃える。 */
 .stream-row {
   display: flex;

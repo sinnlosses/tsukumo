@@ -9,6 +9,25 @@
   border-bottom: 1px solid var(--rule-quiet);
   background: var(--ground);
 }
+/* 広い画面では高さ 40px のカプセルの透ける面（値は `conversation-layout/panel/panel.css`）。開いた手順の一覧を持つあいだは角を丸めすぎない。
+   帯の中に無限に動くものは置かない。 */
+@media (min-width: 761px) {
+  .work-strip {
+    box-sizing: border-box;
+    justify-content: center;
+    min-height: 40px;
+    padding: var(--stack-tight) var(--stack-tight) var(--stack-tight) var(--inline-group);
+    border: 1px solid var(--panel-edge);
+    border-radius: var(--radius-pill);
+    background: var(--panel-glass);
+    box-shadow: var(--panel-lift);
+    backdrop-filter: var(--panel-filter);
+    --ink-quiet: var(--ink-soft);
+  }
+  .work-strip:has(.work-strip-steps) {
+    border-radius: var(--radius-xl);
+  }
+}
 /* 1行目。丸の並びは縮めず、今の段の名前だけが縮んで末尾を「…」にする（7段でも狭いビューポートでも1行）。 */
 .work-strip-line {
   display: flex;

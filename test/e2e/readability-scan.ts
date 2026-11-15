@@ -119,23 +119,36 @@ export async function scanReadability(page: Page): Promise<ReadabilityReport> {
       }
     }
 
-    const backgroundOf = (element: Element): Rgba | undefined => {
+    // 透ける面（backdrop-filter を持つ祖先）の字は、器の背景（覆いの下の絵）の上に乗る。
+    // 絵を1画素も読まず、覆いの下に真っ白と真っ黒を敷いた2通りで測り、悪いほうを採る。
+    const veil = parse(
+      getComputedStyle(document.querySelector("[data-narrow-ground]") ?? document.body)
+        .getPropertyValue("--character-veil")
+        .trim() || "transparent",
+    )
+    const WHITE: Rgba = { r: 255, g: 255, b: 255, a: 1 }
+    const BLACK: Rgba = { r: 0, g: 0, b: 0, a: 1 }
+    const backgroundsOf = (element: Element): readonly Rgba[] | undefined => {
       const chain: Element[] = []
       for (let node: Element | null = element; node !== null; node = node.parentElement) {
         chain.push(node)
       }
-      let background: Rgba = { r: 255, g: 255, b: 255, a: 1 }
+      let backgrounds: Rgba[] = [WHITE]
+      let seeded = false
       for (const node of chain.toReversed()) {
         const style = getComputedStyle(node)
-        if (style.backgroundImage !== "none") {
+        if (!seeded && style.backdropFilter !== "none") {
+          seeded = true
+          backgrounds = [over(veil, WHITE), over(veil, BLACK)]
+        } else if (style.backgroundImage !== "none") {
           return undefined
         }
         const color = parse(style.backgroundColor)
         if (color.a > 0) {
-          background = over(color, background)
+          backgrounds = backgrounds.map((below) => over(color, below))
         }
       }
-      return background
+      return backgrounds
     }
     const opacityOf = (element: Element): number => {
       let opacity = 1
@@ -165,15 +178,19 @@ export async function scanReadability(page: Page): Promise<ReadabilityReport> {
       if (element.closest('[aria-hidden="true"], :disabled, [aria-disabled="true"]') !== null) {
         continue
       }
-      const background = backgroundOf(element)
-      if (background === undefined) {
+      const backgrounds = backgroundsOf(element)
+      if (backgrounds === undefined) {
         continue
       }
       const front = parse(getComputedStyle(element).color)
       front.a *= opacityOf(element)
-      const a = luminance(over(front, background))
-      const b = luminance(background)
-      const ratio = (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05)
+      const ratio = Math.min(
+        ...backgrounds.map((background) => {
+          const a = luminance(over(front, background))
+          const b = luminance(background)
+          return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05)
+        }),
+      )
       if (ratio < MIN_CONTRAST) {
         lowContrastText.add(`${(Math.round(ratio * 100) / 100).toString()}:1 ${label}`)
       }

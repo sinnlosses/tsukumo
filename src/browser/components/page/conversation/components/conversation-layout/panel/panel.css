@@ -1,0 +1,58 @@
+/* 背景の透ける面（上部の帯・やり取りの列・サイドバー・進行の帯・段の札・入力欄・入力欄の上の引き出し）の値と、器の側の面の規則。
+   値は Astryx のテーマにも `theme.css` にも足さない。帯は grid の外にあるので、定義は帯と grid の共通の祖先（body）に置く。
+   濃さ・ぼかしを差し替えるときは body の `--panel-fill`・`--panel-blur` を書き換える。
+   760px 以下は透ける面を使わないので、面の規則は `@media (min-width: 761px)` の中だけに書く。 */
+:global(body:has([data-screen="conversation"])) {
+  --panel-fill: 45%;
+  --panel-blur: 8px;
+  --panel-edge: color-mix(in srgb, var(--ink) 10%, transparent);
+  --panel-edge-quiet: color-mix(in srgb, var(--ink) 6%, transparent);
+  --panel-glass: color-mix(
+    in srgb,
+    color-mix(in srgb, var(--surface), var(--ink) 5%) var(--panel-fill),
+    transparent
+  );
+  --panel-glass-dense: color-mix(
+    in srgb,
+    color-mix(in srgb, var(--surface), var(--ink) 8%) calc(var(--panel-fill) + 43%),
+    transparent
+  );
+  --panel-glass-strip: color-mix(in srgb, var(--ground) calc(var(--panel-fill) + 10%), transparent);
+  --panel-filter: blur(var(--panel-blur)) saturate(1.15);
+  --panel-paper-lift: 0 16px 36px color-mix(in srgb, black 30%, transparent);
+  --panel-lift:
+    inset 0 1px 0 color-mix(in srgb, var(--ink) 7%, transparent),
+    0 14px 32px color-mix(in srgb, black 38%, transparent);
+}
+
+/* ぼかしの値が 0 のときは `backdrop-filter` ごと外す（0px のぼかしでも面ごと合成層になって描画の負荷が掛かるため）。 */
+@container style(--panel-blur: 0px) {
+  :global(body:has([data-screen="conversation"]) *) {
+    --panel-filter: none;
+  }
+}
+
+@media (min-width: 761px) {
+  /* 背景は帯の裏（画面の上端）まで広げる。帯は grid より前に出る（screen-nav.module.css）。 */
+  .layout-grid.layout-ground::before {
+    top: calc(-1 * (var(--screen-nav-gap) + var(--screen-nav-height) + var(--screen-nav-rule)));
+  }
+  /* メインビューと入力欄の領域は面を持たない。紙と入力欄の殻が、背景に直に乗る。 */
+  .layout-region.layout-main,
+  .layout-region.layout-dispatch {
+    border: none;
+    border-radius: 0;
+    background-color: transparent;
+  }
+  .layout-region.layout-sidebar {
+    border-color: var(--panel-edge);
+    border-radius: var(--radius-xl);
+    background-color: var(--panel-glass);
+    box-shadow: var(--panel-lift);
+    backdrop-filter: var(--panel-filter);
+    /* 透ける面の上では弱い字を一段明るくして 4.5:1 を保つ。 */
+    --ink-quiet: var(--ink-soft);
+    /* ぼかしの面の中で無限に回す動きは段を刻む。 */
+    --spinner-animation: spinner-turn 1s steps(8) infinite;
+  }
+}

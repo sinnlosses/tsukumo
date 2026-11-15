@@ -41,7 +41,7 @@
   border-radius: var(--radius-pill);
   background: color-mix(in srgb, var(--accent) 55%, transparent);
   transform-origin: left center;
-  animation: draft-stroke 1.6s ease-in-out infinite;
+  animation: draft-stroke 1.6s steps(8, end) infinite;
 }
 @keyframes draft-stroke {
   0% {
