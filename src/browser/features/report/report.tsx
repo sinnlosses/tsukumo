@@ -9,6 +9,8 @@ import { MarkdownReport, ReportFrame } from "./leaf/body-region.tsx"
 import { NextStepRow, type NextStepsOrigin } from "./leaf/next-step-row.tsx"
 import { FavorRegion, HeadRegion } from "./leaf/report-head-region.tsx"
 
+export { PhaseTimeSummary } from "./leaf/phase-time-section.tsx"
+
 type ReportProps = {
   readonly body: MainViewReportBody
   /** 書き上げていくように見せるか。見るのはマウントした時点の値だけ。 */

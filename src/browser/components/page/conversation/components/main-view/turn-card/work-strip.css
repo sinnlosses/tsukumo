@@ -216,6 +216,10 @@
   border-top: 1px solid var(--rule-quiet);
   font-size: var(--font-secondary);
 }
+/* 一覧の末尾に置く所要時間の計と帯。囲みの class はレポートの帯の規則を借りる。 */
+.work-strip-phase-times {
+  padding-top: var(--stack-group);
+}
 /* フェーズの行の並び。行の下に、そのフェーズの手順を畳みか開きで置く。 */
 .work-strip-plan {
   display: flex;

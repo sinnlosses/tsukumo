@@ -2,6 +2,7 @@
 
 import { groupBy } from "remeda"
 
+import type { PhaseTimesView } from "../../../../../../../shared/report/report-phase-time.ts"
 import { conversationMoment } from "../../../../../../../shared/session/conversation-moment.ts"
 import {
   completionText,
@@ -21,6 +22,7 @@ import {
   type PlannedPhase,
   plannedPhasesOf,
 } from "../../../../../../../shared/session/work-plan.ts"
+import { finalPhaseTimesOf } from "../../../../../../domain/main-view/main-view-report-body.ts"
 import { phaseMarkOf } from "../../../../../../domain/phase-mark.ts"
 import {
   FINISHED_LABEL,
@@ -112,6 +114,8 @@ export type WorkStripSteps = {
   readonly onToggle: () => void
   /** ワークプランの全フェーズの行と、どの行にも付かない手順の群。ワークプランが無ければ行は空。 */
   readonly phaseRows: StepsPhaseRows
+  /** 済んだ姿のときだけ一覧の末尾に出す、最終レポートの段ごとの所要時間。作業中は `none`。 */
+  readonly phaseTimes: PhaseTimesView
   /** 実行中の手順と依頼の手順の間に出す「背景で動いているもの」の区画。 */
   readonly backgroundList: CurrentWorkBackgroundList
 }
@@ -162,6 +166,8 @@ const SKIPPED_PHASE_SUFFIX = "（飛ばした）"
 
 const ASKING_MARK = "?"
 
+const NO_PHASE_TIMES = { kind: "none" } as const satisfies PhaseTimesView
+
 const NO_RECAPS = new Map<string, PhaseRecap>()
 
 const UNKNOWN_RECAP = {
@@ -182,6 +188,7 @@ export function useWorkStrip(): WorkStripModel {
   const moment = useSession((session) => conversationMoment(session.state))
   const plan = turnStepList.kind === "turn" ? turnStepList.plan : NO_PLAN
   const working = content.kind === "work"
+  const newestTurn = turns.at(-1)
   const newestResult = turnResultsOf(turns, moment).at(-1)
   const result = stripResultOf(newestResult ?? "no-report", working, plan, {
     leftToBackground: turn.kind !== "running" && pending.length === 0 && backgroundTasks.length > 0,
@@ -234,6 +241,8 @@ export function useWorkStrip(): WorkStripModel {
             currentWorkStepGroups(turnStepList.steps),
           )
         : { rows: [], rest: [] },
+    phaseTimes:
+      newestTurn === undefined || working ? NO_PHASE_TIMES : finalPhaseTimesOf(newestTurn),
     backgroundList: toBackgroundListView(backgroundTasks),
   }
 

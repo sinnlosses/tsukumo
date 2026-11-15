@@ -1,6 +1,7 @@
 // メインビューの本文から、描くものがあるかと節の見出しの並びを導く。
 
-import type { MainViewReportBody } from "../../../shared/session/main-view-shape.ts"
+import type { PhaseTimesView } from "../../../shared/report/report-phase-time.ts"
+import type { MainViewReportBody, MainViewTurn } from "../../../shared/session/main-view-shape.ts"
 import { isBlankText } from "../../../shared/utils/blank-text.ts"
 
 /**
@@ -36,6 +37,33 @@ export function reportHeadedSections(
     : body.sections.flatMap((section) =>
         section.heading === "" ? [] : [{ id: section.id, heading: section.heading }],
       )
+}
+
+/** 最終レポートの印の付いたステップが持つ段ごとの所要時間。印・本文・頭のどれかが無ければ `none`。 */
+export function finalPhaseTimesOf(turn: MainViewTurn): PhaseTimesView {
+  const body = turn.steps.find((step) => step.mark === "final")?.body
+  if (body === undefined || body.kind !== "text" || body.report.kind !== "regions") {
+    return { kind: "none" }
+  }
+  return body.report.a2ui.head.status.phaseTimes
+}
+
+/** 段ごとの所要時間だけを消した本文。ほかの欄と `markdown` はそのまま。 */
+export function withoutPhaseTimes(body: MainViewReportBody): MainViewReportBody {
+  if (body.kind === "markdown") {
+    return body
+  }
+  const { a2ui } = body
+  return {
+    ...body,
+    a2ui: {
+      ...a2ui,
+      head: {
+        ...a2ui.head,
+        status: { ...a2ui.head.status, phaseTimes: { kind: "none" } },
+      },
+    },
+  }
 }
 
 /** 最終レポートの本文。面の頭の段ごとの所要時間と変更したファイルを、最終のときのものに替える。 */

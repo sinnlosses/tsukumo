@@ -17,6 +17,7 @@ import {
   type MainViewTurn,
 } from "../../../../../../shared/session/main-view-shape.ts"
 import { formatMeasured } from "../../../../../../shared/utils/elapsed-time.ts"
+import { withoutPhaseTimes } from "../../../../../domain/main-view/main-view-report-body.ts"
 import {
   AskThreadContext,
   isAskGroupedToLeaf,
@@ -338,9 +339,15 @@ type StepReportProps = {
 
 function StepReport(props: StepReportProps): ReactElement | undefined {
   const { step } = props
+  const phoneWidth = usePhoneWidth()
   if (step.body.kind !== "text") {
     return undefined
   }
+  // 広い画面の最新のやり取りの所要時間は「手順」の一覧の末尾が持つ
+  const body =
+    props.latest && !phoneWidth
+      ? { ...step.body, report: withoutPhaseTimes(step.body.report) }
+      : step.body
   const phoneHidden = props.phoneHidden ? styles["phone-hidden"] : ""
   const label = reportLabel(step, step.body.task, props.hasInterimReport, props.folded)
   const head = (
@@ -355,7 +362,7 @@ function StepReport(props: StepReportProps): ReactElement | undefined {
     <>
       {label === "final" && !props.phoneHidden ? (
         <ExpandableHead
-          body={step.body}
+          body={body}
           turnId={props.turnId}
           head={head}
           reportClassNames={REPORT_CLASS_NAMES}
@@ -364,7 +371,7 @@ function StepReport(props: StepReportProps): ReactElement | undefined {
         head
       )}
       <Report
-        body={step.body.report}
+        body={body.report}
         reveal={props.reveal}
         turnId={props.turnId}
         className={phoneHidden}

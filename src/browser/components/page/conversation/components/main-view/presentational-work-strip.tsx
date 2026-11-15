@@ -7,6 +7,11 @@ import type { ReactElement } from "react"
 
 import { CurrentWorkBackground } from "../../../../../features/current-work/current-work-background.tsx"
 import { CurrentWorkStepGroup } from "../../../../../features/current-work/current-work-step-group.tsx"
+import {
+  detailBlockClassName,
+  phaseTimesClassName,
+} from "../../../../../features/report/markdown.tsx"
+import { PhaseTimeSummary } from "../../../../../features/report/report.tsx"
 import { Button } from "../../../../ui/button/button.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
 import { WORK_STRIP_MARKS, type WorkStripResult } from "../../domain/turn-result-mark.ts"
@@ -70,6 +75,7 @@ export function PresentationalWorkStrip(props: {
       {strip.steps.list.kind === "open" && (
         <StepsList
           phaseRows={strip.steps.phaseRows}
+          phaseTimes={strip.steps.phaseTimes}
           backgroundList={strip.steps.backgroundList}
           landing={strip.steps.list.landing}
         />
@@ -107,6 +113,7 @@ function StateChip(props: { readonly result: WorkStripResult }): ReactElement {
  */
 function StepsList(props: {
   readonly phaseRows: WorkStripSteps["phaseRows"]
+  readonly phaseTimes: WorkStripSteps["phaseTimes"]
   readonly backgroundList: WorkStripSteps["backgroundList"]
   readonly landing: StepsLanding
 }): ReactElement {
@@ -125,6 +132,13 @@ function StepsList(props: {
       {rest.map((group) => (
         <CurrentWorkStepGroup key={group.key} group={group} runningMark="still" />
       ))}
+      {props.phaseTimes.kind === "times" && (
+        <div className={clsx(detailBlockClassName, styles["work-strip-phase-times"])}>
+          <div className={phaseTimesClassName("phase-times")}>
+            <PhaseTimeSummary view={props.phaseTimes} />
+          </div>
+        </div>
+      )}
     </div>
   )
 }

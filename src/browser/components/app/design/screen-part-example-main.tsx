@@ -70,6 +70,7 @@ const STRIP_BASE = {
     list: { kind: "closed" },
     onToggle: noop,
     phaseRows: { rows: [], rest: [] },
+    phaseTimes: { kind: "none" },
     backgroundList: { kind: "none" },
   },
 } as const

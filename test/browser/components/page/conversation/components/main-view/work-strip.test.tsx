@@ -10,6 +10,7 @@ import {
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../../../../../../src/shared/session/session-state.ts"
+import { reportEvent } from "../../../../../../fixture/report-event.ts"
 import { requestEvent } from "../../../../../../fixture/session-event.ts"
 import { checkedTaskId } from "../../../../../../fixture/task-id.ts"
 import { checkedToolUseId } from "../../../../../../fixture/tool-use-id.ts"
@@ -375,5 +376,60 @@ describe("WorkStrip（段の丸）", () => {
     })
 
     expect(screen.queryByRole("region", { name: "依頼の手順" })).toBeNull()
+  })
+})
+
+describe("WorkStrip（所要時間）", () => {
+  const FINISHED_EVENTS: readonly SessionEvent[] = [
+    REQUEST,
+    plan(0),
+    plan(1, "架空の段Aのまとめ。"),
+    reportEvent({ toolUseId: "toolu_r1", conclusion: "架空の結論。" }),
+    { kind: "turn-finished", outcome: { kind: "completed" } },
+  ]
+
+  function openSteps(): HTMLElement {
+    act(() => {
+      fireEvent.click(screen.getByRole("button", { name: /^手順/ }))
+    })
+    return screen.getByRole("region", { name: "依頼の手順" })
+  }
+
+  it("済んだ姿で手順を開くと、一覧の末尾に計とフェーズの数と帯が出て、一覧の行は重ねない", () => {
+    putSession(stateAfter(FINISHED_EVENTS))
+    render(<WorkStrip />)
+
+    const list = openSteps()
+
+    expect(list.textContent).toContain("3 フェーズ")
+    expect(list.querySelector("[class*='phase-band']")).not.toBeNull()
+    expect(screen.queryByRole("table", { name: "フェーズごとの所要時間" })).toBeNull()
+  })
+
+  it("作業中は帯を出さない", () => {
+    putSession(stateAfter([REQUEST, plan(0), plan(1, "架空の段Aのまとめ。")]))
+    render(<WorkStrip />)
+
+    const list = openSteps()
+
+    expect(list.textContent).not.toContain("3 フェーズ")
+    expect(list.querySelector("[class*='phase-band']")).toBeNull()
+  })
+
+  it("ワークプランの無い済んだ姿では帯を出さない", () => {
+    putSession(
+      stateAfter([
+        REQUEST,
+        bashStarted("toolu_1"),
+        bashFinished("toolu_1"),
+        reportEvent({ toolUseId: "toolu_r1", conclusion: "架空の結論。" }),
+        { kind: "turn-finished", outcome: { kind: "completed" } },
+      ]),
+    )
+    render(<WorkStrip />)
+
+    const list = openSteps()
+
+    expect(list.querySelector("[class*='phase-band']")).toBeNull()
   })
 })

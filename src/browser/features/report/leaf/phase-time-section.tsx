@@ -15,9 +15,19 @@ import { phaseTimesClassName } from "../markdown.tsx"
 type Times = Extract<PhaseTimesView, { readonly kind: "times" }>
 
 export function PhaseTimes(props: { readonly view: Times }): ReactElement {
-  const { totalText, chart, rows } = props.view
   return (
     <div className={phaseTimesClassName("phase-times")}>
+      <PhaseTimeSummary view={props.view} />
+      <PhaseTimeList rows={props.view.rows} />
+    </div>
+  )
+}
+
+/** 合計とフェーズの数の行と、帯か横棒。一覧は持たない。 */
+export function PhaseTimeSummary(props: { readonly view: Times }): ReactElement {
+  const { totalText, chart, rows } = props.view
+  return (
+    <>
       <div className={phaseTimesClassName("phase-times-head")}>
         <span className={phaseTimesClassName("phase-times-total")}>{totalText}</span>
         <span className={phaseTimesClassName("phase-times-count")}>
@@ -49,24 +59,29 @@ export function PhaseTimes(props: { readonly view: Times }): ReactElement {
           )}
         </div>
       )}
-      <div role="table" aria-label="フェーズごとの所要時間">
-        {rows.map((entry, index) =>
-          entry.kind === "row" ? (
-            <ListRow key={`${String(index)}:${entry.row.valueText}`} row={entry.row} />
-          ) : (
-            <div
-              key={`${String(index)}:group`}
-              className={phaseTimesClassName("phase-time-group")}
-              role="rowgroup"
-            >
-              <ListRow row={entry.head} />
-              {entry.inner.map((row, innerIndex) => (
-                <ListRow key={`${String(innerIndex)}:${row.valueText}`} row={row} />
-              ))}
-            </div>
-          ),
-        )}
-      </div>
+    </>
+  )
+}
+
+function PhaseTimeList(props: { readonly rows: Times["rows"] }): ReactElement {
+  return (
+    <div role="table" aria-label="フェーズごとの所要時間">
+      {props.rows.map((entry, index) =>
+        entry.kind === "row" ? (
+          <ListRow key={`${String(index)}:${entry.row.valueText}`} row={entry.row} />
+        ) : (
+          <div
+            key={`${String(index)}:group`}
+            className={phaseTimesClassName("phase-time-group")}
+            role="rowgroup"
+          >
+            <ListRow row={entry.head} />
+            {entry.inner.map((row, innerIndex) => (
+              <ListRow key={`${String(innerIndex)}:${row.valueText}`} row={row} />
+            ))}
+          </div>
+        ),
+      )}
     </div>
   )
 }
