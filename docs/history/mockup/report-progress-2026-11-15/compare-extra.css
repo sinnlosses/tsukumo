@@ -1,0 +1,90 @@
+/* 3案の比較ページで足す分だけ。土台は ../conversation-directions-2026-11-15/compare.css */
+
+.axes-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  max-inline-size: none;
+}
+
+/* 事実の欄は語が入るので、数字用の等幅にしない */
+.facts dd {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  text-wrap: pretty;
+}
+
+.pick {
+  margin-inline-start: auto;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 14%, var(--surface));
+  font-size: 12px;
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+.card-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  font-size: 13px;
+}
+
+.card-links a {
+  color: var(--ink-soft);
+  text-decoration: underline;
+  text-decoration-color: var(--rule);
+  text-underline-offset: 3px;
+}
+
+.card-links a:hover {
+  color: var(--ink-bright);
+  text-decoration-color: var(--accent);
+}
+
+/* 置き場と扱いの表は文が入るので、折り返す */
+#places,
+#carry {
+  white-space: normal;
+}
+
+#places td,
+#carry td {
+  vertical-align: top;
+  color: var(--ink-soft);
+  text-wrap: pretty;
+}
+
+#places th[scope="row"],
+#carry th[scope="row"] {
+  inline-size: 13em;
+  vertical-align: top;
+}
+
+.verdict {
+  display: inline-block;
+  padding: 1px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.verdict[data-verdict="adopt"] {
+  background: color-mix(in srgb, var(--accent) 16%, var(--surface));
+  color: var(--accent);
+}
+
+.verdict[data-verdict="later"] {
+  background: color-mix(in srgb, #e3c766 16%, var(--surface));
+  color: #e3c766;
+}
+
+.verdict[data-verdict="drop"] {
+  box-shadow: inset 0 0 0 1px var(--rule);
+  color: var(--ink-soft);
+}
+
+@media (width < 900px) {
+  .axes-3 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

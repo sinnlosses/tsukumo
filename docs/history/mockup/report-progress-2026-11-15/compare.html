@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>レポートと進行の出し方の3案の比較（2026-11-15）</title>
+    <link rel="stylesheet" href="../conversation-directions-2026-11-15/compare.css" />
+    <link rel="stylesheet" href="compare-extra.css" />
+  </head>
+  <!--
+    会話の画面を「3列と1本の流れ」（ADR 0058）へ移すときの、進行の出し方とレポートの頭の形の3案（index.html の
+    ?plan=base|tail|shelf）を、同じ場面・同じ大きさで並べて見比べるページ。
+    画は見本をそのまま縮小して出す。案ごとの文と数は compare.js の一覧が持ち、数は 1400×900 で撮って測った値。
+    ?moment=work|back|read      場面
+    ?size=1400x900|1920x1080    見本の大きさ
+    ?cols=1|2|3                 並べる列の数
+  -->
+  <body>
+    <header class="top">
+      <div class="top-text">
+        <h1>レポートと進行の出し方の3案</h1>
+        <p>
+          器は今日決めた A2（上部の帯・左にやり取りと立ち絵・中央に1本の流れ・右にタスク）のまま、中央の列の頭と流れの中身だけを替えた3案。画は見本をそのまま縮小したもので、押すと実寸で開く。中身はすべて架空。
+        </p>
+      </div>
+      <div class="controls">
+        <div class="seg" data-control="moment" role="group" aria-label="場面">
+          <button type="button" data-value="work">働く</button>
+          <button type="button" data-value="back">戻る</button>
+          <button type="button" data-value="read">読む</button>
+        </div>
+        <div class="seg" data-control="size" role="group" aria-label="見本の大きさ">
+          <button type="button" data-value="1400x900">1400×900</button>
+          <button type="button" data-value="1920x1080">1920×1080</button>
+        </div>
+        <div class="seg" data-control="cols" role="group" aria-label="並べる列の数">
+          <button type="button" data-value="1">1列</button>
+          <button type="button" data-value="2">2列</button>
+          <button type="button" data-value="3">3列</button>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="axes axes-3" aria-label="3案で違う所">
+        <div>
+          <h2>「いま何をしているか」の置き場</h2>
+          <p>A2 の進行の帯は1行で、今の画面の2行目（走っている手順）の置き場が決まっていない。案1 は流れの途中の札、案2 は流れの末尾、案3 は頭の一覧に置く。</p>
+        </div>
+        <div>
+          <h2>計画の一覧を開かずに読めるか</h2>
+          <p>これからのフェーズの名前は、案1 は丸を1つずつ押す、案2 は帯を1回押す、案3 は働くあいだ常に見える。</p>
+        </div>
+        <div>
+          <h2>レポートの頭で何を先に読ませるか</h2>
+          <p>案1 は今の頭（完了の札・確かめたこと・かかった時間）のまま。案2 と案3 は、結論の直後に「あなたの番」と確かさを置く。</p>
+        </div>
+      </section>
+
+      <div class="grid" id="cards"></div>
+
+      <section class="summary" aria-labelledby="summary-title">
+        <h2 id="summary-title">数で比べる</h2>
+        <p>
+          1400×900 の見本を撮影の道具で測った値。流れの高さは「会話の流れの上端から入力欄の上端まで」、置き場の数は閉じた面を数えずに画面に出ている所だけを数えた。列ごとにいちばん良い値を太字にした。
+        </p>
+        <div class="table-wrap">
+          <table id="summary"></table>
+        </div>
+      </section>
+
+      <section class="summary" aria-labelledby="place-title">
+        <h2 id="place-title">情報ごとの置き場</h2>
+        <p>同じ情報を2か所に出さないための表。「押す」は押すと開く面で、開かないかぎり画面に出ない。</p>
+        <div class="table-wrap">
+          <table id="places"></table>
+        </div>
+      </section>
+
+      <section class="summary" aria-labelledby="carry-title">
+        <h2 id="carry-title">以前の移行（b789339c9）の改修の扱い</h2>
+        <p>
+          11月13〜15日の移行で入れて、revert で外れた項目。書き手の道具に欄を足さずに tsukumo が出来事から作れるものを先に採り、欄が要るものは後に回した。案2 と案3 のどちらを選んでも同じ扱いになる。
+        </p>
+        <div class="table-wrap">
+          <table id="carry"></table>
+        </div>
+      </section>
+    </main>
+    <script src="compare.js"></script>
+  </body>
+</html>

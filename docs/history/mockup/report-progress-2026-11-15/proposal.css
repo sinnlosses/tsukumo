@@ -1,0 +1,697 @@
+/* レポートと進行の出し方の見本（2026-11-15）。器と見た目は候補 A の仕上げ
+   （../conversation-directions-2026-11-15/ の style.css〜refine.css）をそのまま読み、
+   ここには3案で替わる部品（進行の帯・末尾の行・頭の計画の一覧・既読の線・レポートの頭）だけを書く。 */
+
+::selection {
+  background: color-mix(in srgb, var(--accent) 36%, transparent);
+  color: var(--ink-bright);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* 添付の引き出しを出さないので、読む場面も入力欄の高さだけ空ける */
+body[data-scene="read"] .talk {
+  --dock-clear: 124px;
+}
+
+.talk {
+  position: relative;
+}
+
+/* 進行の帯の中の、計画を開く口（丸の並びと今の段の名前）と見込み */
+.plan-open {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  min-inline-size: 0;
+  margin-inline-start: -6px;
+  padding: 3px 8px 3px 6px;
+  border-radius: 999px;
+  transition: background-color 0.15s;
+}
+
+.plan-open:hover,
+.plan-open[aria-expanded="true"] {
+  background: rgb(255 255 255 / 7%);
+}
+
+.plan-open > .icon {
+  flex: none;
+  color: var(--ink-soft);
+}
+
+.usual {
+  color: var(--ink-soft);
+}
+
+.usual::before {
+  content: "·";
+  margin-inline: 6px;
+  color: var(--ink-quiet);
+}
+
+/* 計画の一覧（案2 は帯から開く面、案3 は中央の列の頭に開いたまま）。行は 印・名前・所要 */
+.steps {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.steps-row {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 2px 12px;
+  padding-block: 6px;
+  font-size: 14px;
+}
+
+.steps-mark {
+  display: inline-grid;
+  place-items: center;
+  inline-size: 20px;
+  block-size: 20px;
+  border: 1px solid var(--rule);
+  border-radius: 50%;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-soft);
+}
+
+.steps-row[data-state="done"] .steps-mark {
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+  color: var(--accent);
+}
+
+.steps-row[data-state="now"] .steps-mark {
+  border-color: var(--accent);
+  color: var(--ink-bright);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+.steps-name {
+  overflow: hidden;
+  color: var(--ink);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.steps-row[data-state="now"] .steps-name {
+  font-weight: 650;
+  color: var(--ink-bright);
+}
+
+.steps-row[data-state="next"] .steps-name {
+  color: var(--ink-soft);
+}
+
+.steps-time {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-soft);
+}
+
+.steps-note {
+  grid-column: 2 / -1;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+  text-wrap: pretty;
+}
+
+.steps-now {
+  grid-column: 2 / -1;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 0;
+  font-size: 13px;
+  color: var(--ink);
+}
+
+.steps-now-label,
+.now-label {
+  flex: none;
+  font-weight: 650;
+  color: var(--accent);
+}
+
+.steps-now time,
+.now-line time {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+/* 離れていたあいだに済んだ段の印 */
+.fresh {
+  display: inline-block;
+  inline-size: 6px;
+  block-size: 6px;
+  margin-inline-start: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  vertical-align: middle;
+}
+
+/* 案2: 帯から開く計画の面 */
+.plan-pop {
+  position: fixed;
+  inset: auto;
+  inline-size: 440px;
+  margin: 0;
+  padding: 10px 18px 12px;
+  border: 1px solid rgb(255 255 255 / 10%);
+  border-radius: 16px;
+  background: rgb(34 31 44);
+  color: var(--ink);
+  box-shadow: 0 20px 48px rgb(8 6 14 / 55%);
+}
+
+.plan-pop-foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 6px 0 0;
+  padding-block-start: 10px;
+  border-block-start: 1px solid var(--hairline-quiet);
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+/* 案3: 中央の列の頭に開く計画の一覧。畳むと進行の帯と同じ1行になる */
+.shelf {
+  border: 1px solid var(--hairline);
+  border-radius: 20px;
+  background: var(--glass);
+  box-shadow: var(--lift);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+}
+
+.shelf[data-open="false"] {
+  border-radius: 999px;
+}
+
+.shelf-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-block-size: 38px;
+  padding: 4px 6px 4px 16px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.shelf-where {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.shelf-head .chip-button {
+  block-size: 28px;
+}
+
+.shelf-body {
+  padding: 4px 16px 10px;
+  border-block-start: 1px solid var(--hairline-quiet);
+}
+
+.shelf[data-open="false"] .shelf-body {
+  display: none;
+}
+
+/* 開いているあいだは一覧が位置を言うので、頭の丸の並びは出さない */
+.shelf[data-open="true"] .shelf-head .phases {
+  display: none;
+}
+
+.shelf-fold {
+  display: inline-grid;
+  place-items: center;
+  inline-size: 28px;
+  block-size: 28px;
+  border-radius: 50%;
+  color: var(--ink-soft);
+  transition: background-color 0.15s;
+}
+
+.shelf-fold:hover {
+  background: rgb(255 255 255 / 7%);
+  color: var(--ink-bright);
+}
+
+.shelf[data-open="true"] .shelf-fold .icon {
+  rotate: 180deg;
+}
+
+/* 案2: 流れの末尾の「いま」の行。セリフではないので吹き出しにせず、細い面に載せる */
+.now-line {
+  display: inline-flex;
+  flex: none;
+  align-items: baseline;
+  align-self: flex-start;
+  gap: 10px;
+  max-inline-size: 100%;
+  margin: 0;
+  padding: 6px 16px 6px 14px;
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  background: var(--paper);
+  box-shadow: 0 8px 20px rgb(8 6 14 / 36%);
+  font-size: 14px;
+  color: var(--ink);
+}
+
+.now-pulse {
+  flex: none;
+  align-self: center;
+  inline-size: 8px;
+  block-size: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+
+  @media (prefers-reduced-motion: no-preference) {
+    animation: breathe 1.6s ease-in-out infinite alternate;
+  }
+}
+
+.now-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 済んだ段の行に添える、変えたファイルの数 */
+.plan-files {
+  margin-inline-start: 10px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+/* 離れていたあいだの境目。ここから下が、戻ってから初めて見る行 */
+.seen-line {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 12px;
+  margin: 2px 0;
+  font-size: 12px;
+}
+
+.seen-line::before,
+.seen-line::after {
+  content: "";
+  flex: 1;
+  block-size: 1px;
+  background: color-mix(in srgb, var(--accent) 42%, transparent);
+}
+
+.seen-line span {
+  padding: 3px 12px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 14%, rgb(27 25 35 / 92%));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 30%, transparent);
+  color: var(--ink-bright);
+}
+
+.seen-line b {
+  margin-inline-end: 8px;
+  font-weight: 650;
+  color: var(--accent);
+}
+
+/* レポートの頭。作業の名前の行は 13px で静かに置き、結論を主役にする。
+   紙の中の p は本文の大きさ（.report p）になるので、頭の行は .report を付けて上書きする */
+.report .task-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 10px;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.task-tag {
+  padding: 1px 7px;
+  border-radius: 6px;
+  background: rgb(255 255 255 / 7%);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink);
+}
+
+.task-name-strong {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink-bright);
+}
+
+.change {
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.change-add {
+  color: var(--state-ok);
+}
+
+.change-del {
+  color: #f08a8a;
+}
+
+.task-line .widen {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-inline-start: auto;
+  color: var(--ink-soft);
+}
+
+.badge-done {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 8px 1px 6px;
+  border-radius: 6px;
+  background: var(--state-ok);
+  font-size: 12px;
+  font-weight: 650;
+  color: #10240f;
+}
+
+.badge-done .icon {
+  inline-size: 13px;
+  block-size: 13px;
+  stroke-width: 2.6;
+}
+
+.report .meta-line {
+  display: flex;
+  gap: 16px;
+  margin: 0 0 6px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-quiet);
+}
+
+body[data-layout="a2"] .report h1.tight {
+  padding-block-end: 0;
+  border-block-end: 0;
+}
+
+/* 頭の行（左に題、右に中身）。今のレポートの「確かめたこと」と同じ組み方 */
+.head-rows {
+  display: grid;
+  margin: 14px 0 0;
+}
+
+.head-row {
+  display: grid;
+  grid-template-columns: 6.5em minmax(0, 1fr);
+  gap: 4px 16px;
+  padding: 14px 0;
+  border-block-start: 1px solid var(--hairline-quiet);
+}
+
+.head-row:last-child {
+  border-block-end: 1px solid var(--hairline-quiet);
+}
+
+.head-row > dt {
+  padding-block-start: 2px;
+  font-size: 13px;
+  color: var(--ink-quiet);
+}
+
+.head-row > dd {
+  min-inline-size: 0;
+  margin: 0;
+}
+
+/* あなたの番。利用者が動く用件を、結論の直後に置く。
+   今のレポートの頭と同じく枠と地は持たず、色が出るのは題の語だけにする（紙の中に箱を重ねない） */
+.head-row-turn > dt {
+  font-weight: 650;
+  color: var(--state-warn);
+}
+
+.report .turn-text {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--ink-bright);
+  text-wrap: pretty;
+}
+
+.next-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.next-chip {
+  block-size: 28px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 9%);
+  box-shadow: inset 0 0 0 1px var(--hairline);
+  font-size: 13px;
+  color: var(--ink-bright);
+  transition: background-color 0.15s;
+}
+
+.next-chip:hover {
+  background: rgb(255 255 255 / 15%);
+}
+
+.report .next-note {
+  margin: 8px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+/* 確かさの台帳。落ちた・確かめていないを先に開き、確かめた行は1行に畳む */
+.ledger {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 14px;
+}
+
+.ledger-row {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 2px 10px;
+}
+
+.ledger-row .icon {
+  inline-size: 16px;
+  block-size: 16px;
+  stroke-width: 2.25;
+}
+
+.ledger-row[data-state="open"] .icon {
+  color: var(--state-warn);
+}
+
+.ledger-row[data-state="ok"] .icon {
+  color: var(--state-ok);
+}
+
+.ledger-label {
+  color: var(--ink-bright);
+}
+
+.ledger-label b {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.report .ledger-how {
+  grid-column: 2 / -1;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+  text-wrap: pretty;
+}
+
+.ledger-rest {
+  color: var(--ink-soft);
+}
+
+.seal {
+  padding: 1px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.seal-kept {
+  background: color-mix(in srgb, var(--state-ok) 13%, transparent);
+  color: var(--state-ok);
+}
+
+.seal-said {
+  box-shadow: inset 0 0 0 1px var(--hairline);
+  color: var(--ink-soft);
+}
+
+/* 今のレポートの頭（案1）: 確かめたことの一覧・お願いの印・かかった時間の帯 */
+.checks-now {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 14px;
+}
+
+.checks-now li {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  align-items: center;
+  gap: 2px 8px;
+}
+
+.checks-now .icon {
+  inline-size: 16px;
+  block-size: 16px;
+  stroke-width: 2.25;
+  color: var(--state-ok);
+}
+
+.checks-now [data-state="open"] .icon {
+  color: var(--state-warn);
+}
+
+.report .checks-now p {
+  grid-column: 2;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+
+.favor-jump {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-block-start: 8px;
+  font-weight: 650;
+  color: var(--ink-bright);
+}
+
+.favor-jump::before {
+  content: "";
+  inline-size: 9px;
+  block-size: 9px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.report .band-total {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin: 0 0 12px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink-quiet);
+}
+
+.band-total b {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  color: var(--ink-bright);
+}
+
+.band {
+  display: flex;
+  gap: 3px;
+  block-size: 12px;
+  margin-block-end: 6px;
+}
+
+.band span {
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--accent) 34%, var(--surface));
+}
+
+.band span[data-longest] {
+  background: var(--accent);
+}
+
+.band-list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.band-list li {
+  display: grid;
+  grid-template-columns: 2.6em minmax(0, 1fr) auto 3em;
+  gap: 10px;
+  padding-block: 5px;
+  border-block-start: 1px solid var(--hairline-quiet);
+}
+
+.band-list :is(.band-no, .band-time, .band-share) {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.band-list .band-share {
+  text-align: end;
+}
+
+/* 作業の経過を開いたときの中身（道筋と、かかった時間） */
+body[data-layout="a2"] .talk .worklog[open] {
+  border-radius: 16px;
+}
+
+.worklog-body {
+  padding: 2px 16px 12px;
+  border-block-start: 1px solid var(--hairline-quiet);
+}
+
+.worklog-body .band {
+  margin-block: 12px 2px;
+}
+
+/* 末尾の「お願い」（案1 は紙のいちばん下に出る） */
+.report .favor-end {
+  margin-block-start: 28px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgb(255 255 255 / 5%);
+}
+
+.favor-end b {
+  display: block;
+  margin-block-end: 2px;
+  font-size: 13px;
+  color: var(--ink-quiet);
+}
