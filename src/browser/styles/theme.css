@@ -46,11 +46,11 @@
   --state-ask: #c7aef0;
   --state-memo: var(--ink);
 
-  /* コードの差分の地。固定の値で、color-mix で作らない。 */
-  --code-diff-line-added: #203524;
-  --code-diff-line-removed: #372120;
-  --code-diff-word-added: #345d3e;
-  --code-diff-word-removed: #603334;
+  /* コードの差分の地。足した側は強調の1色（chart-series-1）、消した側は灰で、状態の色は使わない。固定の値で、color-mix で作らない。 */
+  --code-diff-line-added: #2f3648;
+  --code-diff-line-removed: #2c2b33;
+  --code-diff-word-added: #3d4c67;
+  --code-diff-word-removed: #44434d;
 
   /* レポートの chart の系列色。`accent` の色相は使わない。 */
   --chart-series-1: #87bafd;
@@ -130,19 +130,13 @@
   --diary-gold-border: #5a4b25; /* しおり・節目・卒業のカードの枠 */
 
   /* レポートの結論部（見出しの行・メタの行・一文）の字と地。固定の色で、パックからは差せない。
-     差し色の役のもの（変更のラベル・流れ）だけは `--accent` から導く。 */
-  --report-outcome-finished: color-mix(
-    in srgb,
-    var(--accent) 92%,
-    var(--ground)
-  ); /* 変更したファイルの「変更」の札 */
-  --report-change-added: var(--state-ok); /* 変更のラベルの追加行 `+a` */
-  --report-change-removed: var(--state-ng); /* 変更のラベルの削除行 `−b` */
+     強調の役のもの（変更のラベル・流れ・足した側）は `--chart-series-1`、消した側は灰から導く。 */
+  --report-outcome-finished: var(--chart-series-1); /* 変更したファイルの「変更」の札 */
+  --report-change-added: var(--chart-series-1); /* 変更のラベルの追加行 `+a` */
+  --report-change-removed: var(--ink-quiet); /* 変更のラベルの削除行 `−b` */
   --report-code-surface: #26252f; /* 見出しと一文の中のコードの地 */
-  --report-sequence-ink: color-mix(
-    in srgb,
-    var(--accent) 92%,
-    var(--ground)
+  --report-sequence-ink: var(
+    --chart-series-1
   ); /* 流れ（flow）の丸・線、画像の部品の「図 n」の番号 */
   --report-chart-reference: var(--graph-return); /* グラフの基準線（目標・上限）の点線と名前 */
 

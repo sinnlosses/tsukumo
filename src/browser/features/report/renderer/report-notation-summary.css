@@ -370,6 +370,21 @@
   & .report-option-reason::before {
     content: "— ";
   }
+  /* 採った案は強調の1色の左罫と薄い地で、ほかの案と見分ける。 */
+  & .report-option-adopt {
+    background: color-mix(in srgb, var(--chart-series-1) 10%, transparent);
+    box-shadow: inset 3px 0 0 var(--chart-series-1);
+  }
+  & .report-option-adopt-mark {
+    display: inline-flex;
+    gap: 0.3em;
+    padding: 0 var(--inline-tight);
+    border-radius: var(--radius-sm);
+    background: color-mix(in srgb, var(--chart-series-1) 18%, transparent);
+    color: var(--report-change-added);
+    font-size: var(--font-label);
+    font-weight: 600;
+  }
   & .report-option-reject .report-option-name {
     color: var(--ink-soft);
     font-weight: 500;

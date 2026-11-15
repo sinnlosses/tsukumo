@@ -107,6 +107,8 @@ export const noteLeafClassNames = {
   noteFavor: notationStyles["report-note-favor"],
   options: notationStyles["report-options"],
   option: notationStyles["report-option"],
+  optionAdopt: notationStyles["report-option-adopt"],
+  optionAdoptMark: notationStyles["report-option-adopt-mark"],
   optionReject: notationStyles["report-option-reject"],
   optionBody: notationStyles["report-option-body"],
   optionName: notationStyles["report-option-name"],

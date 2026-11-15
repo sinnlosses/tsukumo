@@ -16,7 +16,12 @@ type OptionsPart = Extract<A2uiReportComponent, { readonly component: "Options" 
 type Option = OptionsPart["items"][number]
 
 const VERDICTS = {
-  adopt: { className: undefined, mark: "✓", label: "採る", tone: "ok" },
+  adopt: {
+    className: noteLeafClassNames.optionAdopt,
+    mark: "✓",
+    label: "採る",
+    tone: "neutral",
+  },
   consider: { className: undefined, mark: "〜", label: "検討", tone: "warn" },
   reject: {
     className: noteLeafClassNames.optionReject,
@@ -73,10 +78,17 @@ function OptionRow(props: { readonly item: Option; readonly index: number }): Re
       className={clsx(noteLeafClassNames.option, className)}
     >
       <span>
-        <Badge tone={tone} shape="square" className={styles["verdict-badge"]}>
-          <span aria-hidden="true">{mark}</span>
-          {label}
-        </Badge>
+        {verdict === "adopt" ? (
+          <span className={noteLeafClassNames.optionAdoptMark}>
+            <span aria-hidden="true">{mark}</span>
+            {label}
+          </span>
+        ) : (
+          <Badge tone={tone} shape="square" className={styles["verdict-badge"]}>
+            <span aria-hidden="true">{mark}</span>
+            {label}
+          </Badge>
+        )}
       </span>
       <span className={noteLeafClassNames.optionBody}>
         <span className={noteLeafClassNames.optionName}>

@@ -119,11 +119,11 @@
 
 **`note` は6種（情報・注意・異常・疑問・メモ・お願い）に割り、種別のラベルを tsukumo が文字で
 描く**（`markdown/renderer/notation.tsx`）。色は 情報＝`state-info`（青） / 注意＝`state-warn` /
-異常＝`state-ng` / 疑問＝`state-ask`（紫） / メモ＝`state-memo`（`ink` の白） / お願い＝`accent` で、
-お願いのほかの5種は、同じ形で、地をその色の 7% で染め、左に 3px の色罫を引く（右側の角だけ `radius-sm`）。
+異常＝`state-ng` / 疑問＝`state-ask`（紫） / メモ＝`state-memo`（`ink` の白）で、
+お願いは色を持たず、題の前の `state-warn` の点だけを持つ。お願いのほかの5種は、同じ形で、地をその色の 7% で染め、左に 3px の色罫を引く（右側の角だけ `radius-sm`）。
 種類は色だけで言わず、ラベルの語に記号を添える（情報ⓘ・注意⚠・異常✕・疑問?・メモ※。記号は CSS の `content` で出す飾りで、読み上げにも写しにも出さない。語は今までどおりテキストノードのまま。ADR 0042 の決まりが守るのは語の選択と写し）。ラベルの字もその種類の色で、600 にする。
 注意・異常を立たせるのは地の濃さではなく、色と記号と語である。
-お願いは縦罫と地を `accent`（10%）にし、枠で囲む（角は丸めない）。
+お願いは枠と地を持たず、上の `rule` の罫と、題の前の `state-warn` の点で区切る。
 情報＝青・疑問＝紫・メモ＝白にしたのは、結論の塊（情報）に色を持たせ、メモを灰色の側に寄せるため（以前の色割りは `docs/history/decision.md`「screen-design.md 13.x 画面設計の本文から日付を消した経緯6件」）。
 
 **確度つきの主張（`claims` の部品）の確度は、`Badge`（`shape: square`・記号＋語）で言う**。確定＝`ok`（✓）/ 推測＝`warn`（〜）/
@@ -187,10 +187,10 @@
 0.86em。**見出しは終わり方で色を変えない**（読みやすさを優先する）。終わり方は記号・言葉・色の3つで
 見せるので、色だけで意味を伝えることにはならない（13.1 原則5）。
 
-**結論部の色のうち、見本の浅葱だった役は `accent` から `color-mix` で導き**（見本の浅葱は `accent`
-そのものだった。新しいつまみは足さない）、字と地は見本の16進を固定の値として置く
-（トークン消費の画面と同じ扱い。値は `theme.css`）。導く側は `report-outcome-finished`（`accent` をわずかに `ground` へ沈める。
-変更したファイルの「変更」のラベルが使う）で、`report-sequence-ink`・`phase-band-longest`・`phase-band` も同じ考え方で導く。
+**結論部の色のうち、見本の浅葱だった役は強調の1色（`chart-series-1`）を読み**（新しいつまみは足さない）、字と地は見本の16進を固定の値として置く
+（トークン消費の画面と同じ扱い。値は `theme.css`）。`report-outcome-finished`（変更したファイルの「変更」のラベル）と `report-sequence-ink` が強調の1色、
+`report-change-added`（足した側）も強調の1色、`report-change-removed`（消した側）は `ink-quiet` の灰で、状態の色（通った・落ちた）は使わない。
+`phase-band-longest`・`phase-band` は今も `accent` から導く。
 タスクの見出しの行の終わり方（完了・答え待ち）は専用の色を持たず、`Badge`（`shape: square`。完了は `ok`・答え待ちは `warn`）が持つ:
 
 | 塗るもの                               | トークン                                        |
@@ -211,16 +211,16 @@
 タスクID の要素（見本の `<a href="#">` ではなくモーダルを開く `<button>`）。
 
 **流れ（`flow`）の丸は中立の罫と字で描き、読む順の印の色（`report-sequence-ink`）は `flow-row` の矢印と前後の画像の見比べの印だけが持つ**（見本は `docs/history/mockup/design-system-2026-11/`）。
-値は結論部の `report-outcome-finished` と同じ導き方（`accent` から）だが、「完了」とは意味が別なので流用せず、読む順を示す印
+値は結論部の `report-outcome-finished` と同じ（強調の1色）だが、「完了」とは意味が別なので流用せず、読む順を示す印
 という意味を名に持つ `report-sequence-ink` を別に立てる。
 
 **寸法**（9段のタイプスケールに無い値も固定で書く）: 丸は直径 22px・枠 1px `rule`・字は `ink-soft` の等幅 12px で、どの段も塗らない。
 縦の線は 1px の `rule-soft` 単色で、丸の下端から次の丸の上端まで。本文は 14px・行間 1.95、段の間は `--space-xl`、左の列は 22px・本文との間は `--space-lg`（狭い幅でもこの形のまま、本文だけが折り返す）。
 画像を出せないカードは高さ 168px・角丸 14px。
 横の列（`flow-row`）の箱は角丸 `radius-md`（8px）・枠 1px（`--report-chunk-rule`、無ければ `rule-soft`）・地 `--surface-raised` で、色は付けない。番号は等幅 12px で箱の中に置き、矢印の字は `report-sequence-ink`。
-レポートの `image` の画像は押すと拡大して見られる（`ImageZoom`、`size="width"`。原寸を上限に面の幅へ合わせ、縦に長ければ面が縦に流れる。カードには入口を付けない）。前後の部品の中の画像は別の面（`CompareZoom`）で開き、前／後の2つ組は選んだ側を `accent` の枠と `accent` の薄い地、もう一方を `rule` の枠で描く。暗幕は `Dialog` の `deep`。
+レポートの `image` の画像は押すと拡大して見られる（`ImageZoom`、`size="width"`。原寸を上限に面の幅へ合わせ、縦に長ければ面が縦に流れる。カードには入口を付けない）。前後の部品の中の画像は別の面（`CompareZoom`）で開き、前／後の2つ組は選んだ側を強調の1色の枠と薄い地、もう一方を `rule` の枠で描く。暗幕は `Dialog` の `deep`。
 
-`report-sequence-ink` は `--accent` を `ground` へ少し沈めた値。
+`report-sequence-ink` は強調の1色（`chart-series-1`）。
 出どころ・分岐のある流れ（`flow-detailed`）は、段を箱で囲まず平らに置く。出どころの行は等幅（`--font-code`）の `--font-label`・`ink-quiet`、分岐は判定の記号のバッジ（地は判定の色の 13%、`Badge` と同じ割合。ok＝✓・warn＝〜・ng＝✕・色の無い分岐＝→）に、`ink-soft` の語を添える。記号は飾りで、読み上げには出さない。
 `cards`・`Compare` の枠は 1px の `--report-chunk-rule`（無ければ `rule-soft`）・角 `radius-md`（8px）で、前後のラベルは `--font-label`・600・`ink-quiet`。`Picture` の注の番号の丸は枠も字も `ink-soft`。
 
@@ -232,7 +232,8 @@
   （52px・26px）が運ぶ
 - 表の見出し行の下は `rule`、行罫は `rule-quiet`（見出し行の下だけ一段濃い）
 
-素の `accent` は縦罫の1つ（お願い）と、機械が指し示す場所（フォーカスの輪・選んだ選択肢など）に残す。
+紙の中で内容の意味を言う印（お願い・変わった所・後・採った案・足した行・済み）は `accent` を読まず、強調の1色・灰・状態の色で描く。
+`accent` を残すのは利用者の操作の場所（返す層で指した単位・入力の印・つまみ・フォーカスの輪・リンクの下線）だけである。
 `hr`・`details` の枠・`panel` など `cards` 以外のカードの枠・引用の縦罫は `rule` のまま。`report-stat` の枠は `rule-quiet`。
 
 **数の系統（`Chart`・`Plot`・`Stats`・`Timeline`）の色。** 見る項目・区間だけ `chart-series-1`、ほかは `ink` の 26%（`Chart`・`Plot`）か 30%（`Timeline`）で、`accent` は使わない。

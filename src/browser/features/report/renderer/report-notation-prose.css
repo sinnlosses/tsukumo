@@ -69,14 +69,17 @@
     --report-note-tone: var(--state-memo);
   }
   /* お願い（レポートのいちばん最後に置く、利用者にしか決められない・できないこと）。
-   縦罫の色・地・枠で他の5種と見分ける。
-   縦罫は accent（文字ではなく罫線の側に載せる）。
-   地は accent で1割染め、枠で囲んで親の地が surface でも ground でも塊として立たせる。 */
+   枠と地を持たず、上の罫と、題の前の state-warn の点で他の5種と見分ける。 */
   & .report-note-favor {
-    border: 1px solid var(--rule);
-    border-left: 3px solid var(--accent);
+    border: 0;
+    border-top: 1px solid var(--rule);
     border-radius: 0;
-    background: color-mix(in srgb, var(--surface), var(--accent) 10%);
+    background: none;
+  }
+  & .report-note-favor .report-note-label::before {
+    content: "● " / "";
+    letter-spacing: 0;
+    color: var(--state-warn);
   }
   /* 種別のラベル（「情報」「注意」「異常」「疑問」「メモ」「お願い」）。
    6種すべてに tsukumo 側で足すのは、モデルが見出しの語を書き忘れても色だけで伝えないため（文字そのものは `NotationBlock` が描く）。
@@ -213,9 +216,9 @@
     vertical-align: -0.15em;
   }
   & .report-task-check-done {
-    border-color: var(--accent);
-    background: var(--surface-accent);
-    color: var(--accent);
+    border-color: var(--state-ok);
+    background: color-mix(in srgb, var(--surface), var(--state-ok) 12%);
+    color: var(--state-ok);
   }
   /* 記法の表に無いが許可リスト（`REPORT_SANITIZE_SCHEMA`）が通す要素のうち、ブラウザ既定のままだとこの配色・このタイプスケールから外れるもの。
    figure は既定で左右に 40px の字下げが付き（img を通さないこの面では svg や表に説明を添える器にしかならないので、字下げは邪魔にしかならない）、small は4段のどれでもない大きさになる。 */
@@ -359,7 +362,7 @@
     user-select: none;
   }
   /* 行ごとに描くコード（`marks` のある塊と、コマンドの行のある shell の塊）。1行を1つの塊にし、<pre> の左右の余白まで地と罫を伸ばす。
-   印の行は地を --surface-raised、左端に 2px の --accent を沈めた罫、ラベルは行の右端に 12px・--ink-quiet。 */
+   印の行は地を --surface-raised、左端に 2px の --chart-series-1 の罫、ラベルは行の右端に 12px・--ink-quiet。 */
   & .code-line {
     display: flex;
     align-items: baseline;
@@ -374,7 +377,7 @@
   }
   & .code-line-mark {
     background: var(--surface-raised);
-    box-shadow: inset 2px 0 0 var(--accent);
+    box-shadow: inset 2px 0 0 var(--chart-series-1);
   }
   & .code-line-output {
     color: var(--ink-soft);
@@ -396,10 +399,10 @@
     inline-size: 2ch;
   }
   & .code-line-added .code-line-sign {
-    color: var(--state-ok);
+    color: var(--report-change-added);
   }
   & .code-line-removed .code-line-sign {
-    color: var(--state-ng);
+    color: var(--ink-quiet);
   }
   /* diff の対の行の、違う語。 */
   & .code-diff-added {

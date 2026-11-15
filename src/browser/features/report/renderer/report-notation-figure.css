@@ -152,7 +152,7 @@
   }
   & .report-captioned.report-compare-swap .report-compare-label-after {
     border-color: transparent;
-    background: color-mix(in srgb, var(--accent) 92%, transparent);
+    background: var(--chart-series-1);
     color: var(--ground);
   }
   & .report-captioned.report-compare-swap .report-image-zoom {
@@ -230,8 +230,8 @@
     stroke-width: 1px;
   }
   & .report-svg-figure svg rect[stroke-width] {
-    fill: var(--surface-accent);
-    stroke: var(--accent);
+    fill: color-mix(in srgb, var(--chart-series-1) 12%, var(--surface-raised));
+    stroke: var(--chart-series-1);
     stroke-width: 1.5px;
   }
   /* `tone` の5色と状態の3色。a〜e は系列色・ok・warn・ng は Table の状態セルと同じ色を枠にし、地は面の色へ薄く混ぜる。凡例の見本（`report-svg-legend`）も同じ規則で描く。 */

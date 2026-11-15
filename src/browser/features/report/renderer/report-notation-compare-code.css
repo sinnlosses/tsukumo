@@ -1,13 +1,13 @@
 .detail-block {
   /* 前後の両側が code の見比べの行の印（行の器の `data-compare`）。
-   前の側の変えた・消した行は ng、後の側の変えた・足した行は ok の地と左の線。 */
+   前の側は灰、後の側の変えた・足した行は強調の1色（chart-series-1）の地と左の線で、状態の色は使わない。 */
   & .code-line[data-compare="before"] {
     background: var(--code-diff-line-removed);
-    box-shadow: inset 3px 0 0 var(--state-ng);
+    box-shadow: inset 3px 0 0 var(--ink-quiet);
   }
   & .code-line:is([data-compare="after"], [data-compare="added"]) {
     background: var(--code-diff-line-added);
-    box-shadow: inset 3px 0 0 var(--state-ok);
+    box-shadow: inset 3px 0 0 var(--chart-series-1);
   }
   /* 向かいの側にだけある行の高さを揃える空の行。前後を縦に積むときは揃える相手が無いので描かない。 */
   @container report-body (max-width: calc(40em + 0.75rem)) {
@@ -20,10 +20,10 @@
     margin-inline-start: var(--space-sm);
     padding: 0 var(--space-xs);
     border-radius: var(--radius-sm);
-    background: color-mix(in srgb, var(--state-ok) 18%, transparent);
+    background: color-mix(in srgb, var(--chart-series-1) 18%, transparent);
     font-family: var(--font-sans);
     font-size: var(--font-label);
-    color: var(--state-ok);
+    color: var(--report-change-added);
     user-select: none;
   }
   & .report-compare-code-legend {
@@ -47,9 +47,9 @@
     border-radius: var(--radius-sm);
   }
   & .report-compare-code-legend-before {
-    background: var(--state-ng);
+    background: var(--ink-quiet);
   }
   & .report-compare-code-legend-after {
-    background: var(--state-ok);
+    background: var(--chart-series-1);
   }
 }

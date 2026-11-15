@@ -16,5 +16,5 @@
   --region-frame-color: color-mix(in srgb, var(--surface), var(--ink) 60%);
 }
 .region-frame[data-side="after"] {
-  --region-frame-color: var(--accent);
+  --region-frame-color: var(--chart-series-1);
 }
