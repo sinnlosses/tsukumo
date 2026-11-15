@@ -15,8 +15,8 @@ import { localTimeZoneId } from "../../../../../../utils/clock.ts"
 import { dayLabel } from "../../../../../../utils/day-label.ts"
 import { chatLogEntries, chatLogRows, type ChatLogEntry } from "../../../domain/chat-log.ts"
 import { recordClockStamp, type ClockStamp } from "../../../domain/clock-stamp.ts"
+import { useStickToBottom } from "../../hooks/use-stick-to-bottom.ts"
 import { useRevealedChatLog } from "./use-speech-reveal.ts"
-import { useStickToBottom } from "./use-stick-to-bottom.ts"
 
 /**
  * ログの1行を、部品がそのまま置ける形に畳んだもの。

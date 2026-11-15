@@ -7,7 +7,6 @@ import type {
   WorkStripPhase,
   WorkStripModel,
 } from "../../page/conversation/components/main-view/hooks/use-work-strip.ts"
-import { PresentationalAsideThread } from "../../page/conversation/components/main-view/presentational-aside-thread.tsx"
 import { PresentationalCurrentStep } from "../../page/conversation/components/main-view/presentational-current-step.tsx"
 import { PresentationalPhaseList } from "../../page/conversation/components/main-view/presentational-phase-list.tsx"
 import { PresentationalReportOutline } from "../../page/conversation/components/main-view/presentational-report-outline.tsx"
@@ -170,21 +169,6 @@ export const MAIN_VIEW_EXAMPLES: readonly ScreenPartExample[] = [
           }}
         />
       </>
-    ),
-  },
-  {
-    frame: "flow",
-    path: "page/conversation/components/main-view/presentational-aside-thread.tsx",
-    render: () => (
-      <PresentationalAsideThread
-        summary="補足メッセージ 2件"
-        open
-        onToggle={noop}
-        rows={[
-          { key: "r1", text: "ついでに表も足して", answer: "足しておきました" },
-          { key: "r2", text: "色は控えめに", answer: "…" },
-        ]}
-      />
     ),
   },
   {

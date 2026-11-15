@@ -2,7 +2,7 @@ import { cleanup, fireEvent, render, waitFor } from "@testing-library/react"
 import type { ReactElement } from "react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
-import { useStickToBottom } from "../../../../../../../../src/browser/components/page/conversation/components/chat-view/hooks/use-stick-to-bottom.ts"
+import { useStickToBottom } from "../../../../../../../src/browser/components/page/conversation/components/hooks/use-stick-to-bottom.ts"
 
 /**
  * ログ（`ChatLog`）を描かずに、下端へ寄せる規則だけを測る

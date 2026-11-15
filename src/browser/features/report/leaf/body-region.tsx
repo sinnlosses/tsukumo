@@ -33,12 +33,7 @@ const RevealingContext = createContext(false)
 
 /** 本文の根（`data-report-body`）。書き上げの演出の最中かと、指している単位を子へ配る。 */
 export function ReportFrame(props: ReportFrameProps): ReactElement {
-  const { rootRef, revealing } = useReportReveal(
-    props.reveal,
-    props.turnId,
-    () => {},
-    props.revealClassName,
-  )
+  const { rootRef, revealing } = useReportReveal(props.reveal, () => {}, props.revealClassName)
 
   return (
     // `.detail-block` を2つ重ねる。

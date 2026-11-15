@@ -3,18 +3,11 @@ import type { ReactElement } from "react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { saveRevealSpeed } from "../../../../src/browser/domain/reveal-speed.ts"
-import {
-  publishBrushTip,
-  subscribeBrushTip,
-} from "../../../../src/browser/domain/reveal/brush-tip.ts"
 import { useReportReveal } from "../../../../src/browser/domain/reveal/use-report-reveal.ts"
 
 const REVEAL_SPEED_STORAGE_KEY = "tsukumo-reveal-speed:v1"
 
 // ポンの見え方（animation）は実ブラウザでしか確かめられないので、ここで守るのは隠す・順に出す・打ち切るの配線だけ。
-
-/** 演出を掛ける相手のやり取り（配る筆先に添う番号。`BrushTip`）。 */
-const TURN_ID = 4
 
 const POP_CLASS_NAME = "probe-pop"
 
@@ -28,7 +21,7 @@ function Probe(props: {
   readonly reveal: boolean
   readonly sections: readonly string[]
 }): ReactElement {
-  const { rootRef, revealing } = useReportReveal(props.reveal, TURN_ID, () => {}, POP_CLASS_NAME)
+  const { rootRef, revealing } = useReportReveal(props.reveal, () => {}, POP_CLASS_NAME)
 
   return (
     <div data-testid="root" ref={rootRef} data-probe-revealing={String(revealing)}>
@@ -85,18 +78,6 @@ function states(): readonly string[] {
   })
 }
 
-/** いまの筆先の区別と、筆先を出したやり取り。受け取りは呼んだその場で1回届くので、すぐ外す。 */
-function brushTipText(): string {
-  let text = "筆先なし"
-  const stop = subscribeBrushTip((tip) => {
-    if (tip !== undefined) {
-      text = `${tip.phase}:${String(tip.turnId)}`
-    }
-  })
-  stop()
-  return text
-}
-
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] })
 })
@@ -104,7 +85,6 @@ beforeEach(() => {
 afterEach(() => {
   cleanup()
   vi.useRealTimers()
-  publishBrushTip(undefined)
   localStorage.removeItem(REVEAL_SPEED_STORAGE_KEY)
 })
 
@@ -236,42 +216,13 @@ describe("useReportReveal（演出中かの状態）", () => {
   })
 })
 
-describe("useReportReveal（筆先）", () => {
-  function renderInOrigin(): void {
-    render(
-      <div data-brush-origin="">
-        <Probe reveal={true} sections={Array(3).fill(SECTION_TEXT)} />
-      </div>,
-    )
-  }
-
-  it("出しているあいだは次の節で書いている筆先を配り、出し切ったら休ませる", () => {
-    renderInOrigin()
-    expect(brushTipText()).toBe(`drafting:${String(TURN_ID)}`)
-
-    vi.advanceTimersByTime(STANDARD_INTERVAL_MS * 2)
-    expect(brushTipText()).toBe(`resting:${String(TURN_ID)}`)
-  })
-
-  it("原点の印が無ければ筆先を配らない", () => {
-    renderProbe(true)
-
-    expect(brushTipText()).toBe("筆先なし")
-  })
-})
-
 describe("useReportReveal（書き上げる演出の速さが「切る」のとき）", () => {
-  it("演出の相手でも、マウント時点で「切る」が保存されていれば何も隠さず、筆先も配らない", () => {
+  it("演出の相手でも、マウント時点で「切る」が保存されていれば何も隠さない", () => {
     saveRevealSpeed("off")
 
-    render(
-      <div data-brush-origin="">
-        <Probe reveal={true} sections={Array(3).fill(SECTION_TEXT)} />
-      </div>,
-    )
+    render(<Probe reveal={true} sections={Array(3).fill(SECTION_TEXT)} />)
 
     expect(root().hasAttribute("data-revealing")).toBe(false)
     expect(states()).toEqual(["素", "素", "素", "素", "素"])
-    expect(brushTipText()).toBe("筆先なし")
   })
 })

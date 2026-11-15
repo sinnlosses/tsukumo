@@ -21,10 +21,12 @@ import {
 } from "../../../../../../fixture/main-view.tsx"
 import { componentsOfSections } from "../../../../../../fixture/report-event.ts"
 import {
+  asideRecord,
   detailRecord,
   finishedToolStatus,
   reportRecord,
   requestRecord,
+  speechRecord,
   toolRecord,
   workPlanRecord,
 } from "../../../../../../fixture/session-record.ts"
@@ -360,6 +362,40 @@ describe("MainView（答えた質問の記録）", () => {
     expect(folds[0]?.textContent).toContain("架空の中間レポート")
     expect([...document.querySelectorAll("details")].every((details) => !details.open)).toBe(true)
     expect(first.compareDocumentPosition(second) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+})
+
+describe("MainView（会話の流れ）", () => {
+  it("依頼・補足は右寄せの投稿、セリフと補足への答えは左寄せの行で、記録の順に1本で出る", () => {
+    renderMainView([
+      requestRecord({ text: "架空の依頼", turnId: 0 }),
+      speechRecord({ text: "架空の一言目" }),
+      asideRecord({ text: "架空の補足" }),
+      speechRecord({ text: "架空の答え", answersAside: true }),
+    ])
+
+    const speakers = [...document.querySelectorAll("[data-speaker]")].map((element) => [
+      element.getAttribute("data-speaker"),
+      element.textContent,
+    ])
+    expect(speakers).toEqual([
+      ["user", "依頼架空の依頼"],
+      ["character", "架空の一言目"],
+      ["user", "架空の補足"],
+      ["character", "架空の答え"],
+    ])
+  })
+
+  it("畳むものが無ければ作業の経過は出さず、セリフのあとに最終レポートが続く", () => {
+    renderMainView([
+      requestRecord({ text: "架空の依頼", turnId: 0 }),
+      speechRecord({ text: "架空の一言目" }),
+      reportRecord("架空の結論"),
+    ])
+
+    expect(screen.getByText("架空の一言目")).toBeTruthy()
+    expect(screen.queryByText(/作業の経過/)).toBeNull()
+    expect(screen.getByText("架空の結論")).toBeTruthy()
   })
 })
 

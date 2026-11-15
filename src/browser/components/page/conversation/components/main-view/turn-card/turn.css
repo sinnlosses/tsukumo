@@ -7,11 +7,9 @@
   margin: 0 0 var(--space-sm);
   letter-spacing: 0.08em;
 }
-/* 経過の畳み。最終レポートの終わりと罫で区切り、字は `Text` が持つ。 */
+/* 作業の経過の畳み。最終レポートの上に1行で置き、字は `Text` が持つ。 */
 .progress-fold {
-  margin: var(--space-2xl) 0 0;
-  padding-top: var(--space-md);
-  border-top: 1px solid var(--rule-soft);
+  margin: 0;
 }
 /* 押す的の下限（24px）を保つ。 */
 .progress-fold > summary {

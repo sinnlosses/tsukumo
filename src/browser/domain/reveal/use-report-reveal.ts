@@ -12,7 +12,6 @@ import { startPop } from "./start-pop.ts"
 
 /**
  * レポートの根に付ける ref を返す。`reveal` が立っていたら、マウントした直後から塊を順に出す。
- * `turnId` はこの本文が載っているやり取りで、配る筆先に添えて持たせる。
  * `popClassName` は出した塊に1回だけ付ける、ポンの animation を持つ class。
  *
  * 見るのはマウントした時点の `reveal` だけ。
@@ -23,7 +22,6 @@ import { startPop } from "./start-pop.ts"
  */
 export function useReportReveal(
   reveal: boolean,
-  turnId: number,
   onPlayed: () => void,
   popClassName: string,
 ): { readonly rootRef: RefObject<HTMLDivElement | null>; readonly revealing: boolean } {
@@ -37,7 +35,7 @@ export function useReportReveal(
   const revealedOnce = useRef(false)
 
   // 描画の前に走る `useBeforePaintSync` でなければならない。描画のあとに走る同期だと、隠す前の本文が1フレームだけ全部見えてしまう。
-  // 依存はマウント時に決まったきり変わらない（`<Turn>` はやり取りの番号を `key` に持つので、`turnId` が変わるときは部品ごと作り直される）。
+  // 依存はマウント時に決まったきり変わらない。
   useBeforePaintSync(() => {
     const root = rootRef.current
     // 演出を見せる側に立った時点で知らせる（速さが「切る」・動きを減らす設定で出さなくても、見せたことにする）。
@@ -55,12 +53,12 @@ export function useReportReveal(
       return undefined
     }
     revealedOnce.current = true
-    return startPop(root, turnId, {
+    return startPop(root, {
       intervalMs: popIntervalOf(revealSpeed),
       popClassName,
       onFinish: () => setRevealing(false),
     })
-  }, [revealOnMount, turnId, revealSpeed, popClassName])
+  }, [revealOnMount, revealSpeed, popClassName])
 
   return { rootRef, revealing }
 }

@@ -272,86 +272,12 @@ describe("Turn（畳んだ中間レポートの見出し）", () => {
   })
 })
 
-describe("Turn（補足メッセージの欄の位置）", () => {
-  it("働くあいだ（最終レポートが無い）は、2つのステップに分かれた補足メッセージが、レポートの後ろの1つの欄にまとまる", () => {
-    putSession(INITIAL_SESSION_STATE)
-    const first = { text: "1つ目の問い", answer: { kind: "waiting" } } as const
-    const second = { text: "2つ目の問い", answer: { kind: "waiting" } } as const
-    const { container } = render(
-      <Turn
-        turn={turn([
-          step({ id: 0, body: turnBodyText("1つ目の本文"), mark: "interim-kept", asides: [first] }),
-          step({
-            id: 1,
-            body: turnBodyText("2つ目の本文"),
-            mark: "interim-kept",
-            asides: [second],
-          }),
-        ])}
-        newest
-        freshReport={false}
-      />,
-    )
-
-    const order = [...container.querySelectorAll("[data-report-stub], details")].map(
-      (element) => element.textContent,
-    )
-    expect(order).toHaveLength(3)
-    expect(order[0]).toBe("1つ目の本文")
-    expect(order[1]).toBe("2つ目の本文")
-    expect(order[2]).toContain("補足メッセージ 2件")
-  })
-
-  it("最終レポートのある閉じたやり取りは、補足メッセージの欄が経過の畳みの中の末尾に1つあり、題に補足の件数が出る", () => {
-    putSession(INITIAL_SESSION_STATE)
-    const first = { text: "1つ目の問い", answer: { kind: "waiting" } } as const
-    const second = { text: "2つ目の問い", answer: { kind: "waiting" } } as const
-    const { container } = render(
-      <Turn
-        turn={turn([
-          step({
-            id: 0,
-            body: turnBodyText("中間の本文"),
-            mark: "interim-folded",
-            asides: [first],
-          }),
-          step({ id: 1, body: turnBodyText("最終の本文"), mark: "final", asides: [second] }),
-        ])}
-        newest
-        freshReport={false}
-      />,
-    )
-
-    const top = [...container.querySelectorAll(":scope > div > div > *")].map(
-      (element) => element.textContent,
-    )
-    expect(top).toHaveLength(2)
-    expect(top[0]).toBe("最終の本文")
-    expect(top[1]).toContain("経過 1 件 · 補足 2 件")
-    expect(top[1]).toContain("中間の本文")
-    const inFold = container.querySelectorAll(".progress-fold-steps > details")
-    expect(inFold).toHaveLength(2)
-    expect(inFold[1]?.textContent).toContain("補足メッセージ 2件")
-  })
-
-  it("本文も質問も無いステップの補足メッセージは、欄だけを描く", () => {
-    putSession(INITIAL_SESSION_STATE)
-    const aside = { text: "架空の問い", answer: { kind: "waiting" } } as const
-    const { container } = render(
-      <Turn turn={turn([step({ id: 0, asides: [aside] })])} newest freshReport={false} />,
-    )
-
-    expect(container.querySelectorAll("section")).toHaveLength(0)
-    expect(container.querySelectorAll("details")).toHaveLength(1)
-  })
-})
-
 describe("Turn（経過の畳み）", () => {
   const interims = [0, 1, 2].map((id) =>
     step({ id, body: turnBodyText(`中間${String(id)}`), mark: "interim-folded" }),
   )
 
-  it("閉じたやり取りでは、最終レポートの下に経過の畳みが1つだけ出て、中は届いた順の1行の畳み", () => {
+  it("閉じたやり取りでは、最終レポートの上に作業の経過の畳みが1つだけ出て、中は届いた順の1行の畳み", () => {
     putSession(INITIAL_SESSION_STATE)
     const { container } = render(
       <Turn
@@ -365,7 +291,7 @@ describe("Turn（経過の畳み）", () => {
     expect(folds).toHaveLength(1)
     const fold = typedElement(folds[0], HTMLDetailsElement, "経過の畳み")
     expect(fold.open).toBe(false)
-    expect(fold.querySelector(":scope > summary")?.textContent).toBe("経過 3 件")
+    expect(fold.querySelector(":scope > summary")?.textContent).toBe("作業の経過 3 件")
     expect(
       [...fold.querySelectorAll("details.is-interim > summary")].map(
         (summary) => summary.textContent,
@@ -380,8 +306,8 @@ describe("Turn（経過の畳み）", () => {
       toggleDetails(details, true)
     }
     const stubs = [...container.querySelectorAll("[data-report-stub]")]
-    expect(stubs.map((stub) => stub.textContent)).toEqual(["最終", "中間0", "中間1", "中間2"])
-    expect(stubs.slice(1).every((stub) => fold.contains(stub))).toBe(true)
+    expect(stubs.map((stub) => stub.textContent)).toEqual(["中間0", "中間1", "中間2", "最終"])
+    expect(stubs.slice(0, 3).every((stub) => fold.contains(stub))).toBe(true)
   })
 
   it("畳んだ中間レポートは開いたときに描かれ、閉じ直しても DOM に残る", () => {
@@ -470,37 +396,12 @@ describe("Turn（経過の畳み）", () => {
     )
 
     const fold = typedElement(container.querySelector(".progress-fold"), HTMLDetailsElement, "畳み")
-    expect(fold.querySelector(":scope > summary")?.textContent).toBe("経過 1 件 · 質問 2 件")
+    expect(fold.querySelector(":scope > summary")?.textContent).toBe("作業の経過 1 件 · 質問 1 件")
     const inside = fold.textContent
     expect(inside.indexOf("中間レポート")).toBeLessThan(inside.indexOf("中間の質問"))
-    expect(inside.indexOf("中間の質問")).toBeLessThan(inside.indexOf("最終の質問"))
-
-    const outside = [...container.querySelectorAll(":scope > div > div > *")]
-      .filter((element) => element !== fold)
-      .map((element) => element.textContent)
-    expect(outside).toEqual(["最終"])
-  })
-
-  it("中間レポートが無く質問だけでも経過の畳みが出る", () => {
-    putSession(INITIAL_SESSION_STATE)
-    const { container } = render(
-      <Turn
-        turn={turn([
-          step({
-            id: 0,
-            body: turnBodyText("最終"),
-            mark: "final",
-            actions: [askedStep(0, "ただ1つの質問")],
-          }),
-        ])}
-        newest
-        freshReport={false}
-      />,
-    )
-
-    const fold = container.querySelector(".progress-fold")
-    expect(fold?.querySelector(":scope > summary")?.textContent).toBe("経過 0 件 · 質問 1 件")
-    expect(fold?.textContent).toContain("ただ1つの質問")
+    // 最終レポートより後ろに届いた質問は、流れの位置のまま畳みの外に残る。
+    expect(inside).not.toContain("最終の質問")
+    expect(container.textContent).toContain("最終の質問")
   })
 
   it("働くあいだは、質問の記録を今までどおり札のそばに出す", () => {

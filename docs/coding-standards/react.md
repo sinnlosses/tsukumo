@@ -113,7 +113,7 @@ Compiler が最適化を諦める部品（描画中に ref を読み書きする
 
 - **oxlint の `react-hooks(exhaustive-deps)` が、依存配列に置いた値の再生成を理由に落ちる。**
   この lint は静的解析で Compiler の自動メモ化を知らないので、`useCallback` を外すと
-  lint が落ちる（`chat-view/hooks/use-stick-to-bottom.ts` の `stickToBottom`）
+  lint が落ちる（`components/hooks/use-stick-to-bottom.ts` の `stickToBottom`）
 
 oxlint の `react(preserve-manual-memoization)` が手のメモ化を拒むときは、形を曲げない
 （lint を外さず、そのまま消す）。手のメモ化を残す理由が上の2つに当たらず、作り直されても

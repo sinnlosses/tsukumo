@@ -1,0 +1,94 @@
+/* 会話の流れの行の部品（セリフの行・投稿の行・時刻・「...」）。
+   雑談のログ（`chat-view/`）と仕事のメインビュー（`main-view/`）が同じ見た目で共用する。 */
+
+/* 1件の発言。
+   左右に寄せるのは外側の行（`.stream-row`）。
+   どちらの話者も `<div>`（押せるキャラクターの側も `role="button"` の `<div>`。理由は `StreamSpeech`）なので、地の見た目は話者で変わらない。 */
+.stream-entry {
+  composes: surface-edge-rule surface-radius-xl surface-tone-surface from "../../../../ui/surface/surface-face.module.css";
+  max-width: 80%;
+  padding: var(--space-sm) var(--space-lg);
+  /* セリフの文字は `ink`（長い往復でも濃さを変えない）。 */
+  color: var(--ink);
+  font-size: var(--font-body);
+  line-height: var(--line-height-body);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+/* キャラクターの発言は差し色の縁で話者を示す（左へ寄せるのは `.stream-row-character`）。
+   押せる行は指の形だけで示し、文字をドラッグで選ぶのを妨げる `user-select` は当てない。 */
+.stream-entry.stream-entry-character {
+  border-color: var(--accent);
+  background: var(--surface-accent);
+  border-bottom-left-radius: var(--radius-sm);
+}
+.stream-entry-pressable {
+  cursor: pointer;
+}
+.stream-entry-pressable:hover:not(.is-selected) {
+  background: color-mix(in srgb, var(--surface), var(--accent) 18%);
+}
+/* 立ち絵がいま従っている行。縁は太らせず、内側の影で1px ぶん重ねて濃くする。 */
+.stream-entry-character.is-selected {
+  background: color-mix(in srgb, var(--surface), var(--accent) 26%);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+/* 返事を待っている間・まだ出していない吹き出しが控えている間、末尾に出す「...」。押せない。 */
+.stream-entry.stream-entry-typing {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  align-self: flex-start;
+  border-color: var(--accent);
+  background: var(--surface-accent);
+  border-bottom-left-radius: var(--radius-sm);
+}
+/* 利用者の発言（右へ寄せるのは `.stream-row-user`）。差し色は使わず、地の濃さだけで区別する。 */
+.stream-entry.stream-entry-user {
+  background: color-mix(in srgb, var(--surface), var(--ink) 8%);
+  border-bottom-right-radius: var(--radius-sm);
+}
+@media (max-width: 760px) {
+  .stream-entry {
+    max-width: 92%;
+  }
+}
+/* 発言1件ぶんの行（吹き出しと、その脇の時刻）。話者で左右に寄せ、吹き出しと時刻は下端で揃える。 */
+.stream-row {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-sm);
+}
+.stream-row-character {
+  justify-content: flex-start;
+}
+/* 利用者の行は右に寄せ、時刻は吹き出しの左脇（DOM の順は吹き出し → 時刻のまま、並べる向きだけを返す）。 */
+.stream-row-user {
+  flex-direction: row-reverse;
+  justify-content: flex-start;
+}
+/* 現れるとき短く弾む行。`prefers-reduced-motion` は `styles/theme.css` の全体規則が潰す。 */
+.stream-entry-pop {
+  animation-name: stream-entry-pop;
+  animation-duration: 0.2s;
+  animation-timing-function: ease-out;
+}
+@keyframes stream-entry-pop {
+  0% {
+    transform: scale(0.92);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+/* 行ごとの時刻（`HH:MM`）。地は `ground` 一色を1枚（背景の絵の上に字が直に乗らないように）。 */
+.stream-time {
+  flex-shrink: 0;
+  padding: 0 var(--space-xs);
+  border-radius: var(--radius-md);
+  background: var(--ground);
+  color: var(--ink-quiet);
+  font-family: var(--font-mono);
+  font-size: var(--font-secondary);
+  line-height: var(--line-height-body);
+}

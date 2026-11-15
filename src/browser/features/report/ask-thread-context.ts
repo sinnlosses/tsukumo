@@ -4,6 +4,7 @@ import { createContext, use } from "react"
 import { sum } from "remeda"
 
 import { turnAsides, type MainViewTurn } from "../../../shared/session/main-view-shape.ts"
+import type { ReplyTarget } from "../../../shared/session/reply-target.ts"
 import {
   type AskThreads,
   askLeafKey,
@@ -32,6 +33,18 @@ export function askThreadSlotOf(
     turnAsides(turn).map((aside) => ({ aside, own: turn.id === shown.id })),
   )
   return { kind: "grouped", ...groupAsks(sources, drawnLeafKeys(shown.steps)) }
+}
+
+/** 指した所つきの補足が、描かれた部品の余白の札に束ねられたか。束ねられた補足は流れに出さない。 */
+export function isAskGroupedToLeaf(
+  slot: AskThreadSlot,
+  aside: { readonly target?: ReplyTarget },
+): boolean {
+  const { target } = aside
+  if (slot.kind === "none" || target === undefined) {
+    return false
+  }
+  return slot.byLeaf.has(askLeafKey(target.key.reportToolUseId, target.key.componentId))
 }
 
 /** 節の中の内容部品について聞いた数の合計。やり取りの列の節の行に「聞 n」を出す。 */

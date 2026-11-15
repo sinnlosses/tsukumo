@@ -91,8 +91,8 @@
 - **サーバの契約は変えない**（`SessionEvent` も `SessionState` もそのまま）。セリフは `speech`
   で1件まるごと届く（`speak` の戻りが `"ok"` になる時点で全文がある）ので、**出すタイミングを
   ブラウザ側で持たせるだけ**で足りる（`components/page/conversation/components/chat-view/hooks/use-speech-reveal.ts`）
-- **現れる瞬間、0.2秒ほど小さく拡大して落ち着く**（`chat-view.module.css` の
-  `.chat-entry-pop`。CSS のアニメーションなので、`prefers-reduced-motion` は
+- **現れる瞬間、0.2秒ほど小さく拡大して落ち着く**（`stream-row.module.css` の
+  `.stream-entry-pop`。CSS のアニメーションなので、`prefers-reduced-motion` は
   `styles/theme.css` の全体規則がそのまま止める——`.chat-typing-dot` と同じ扱いで、ここに
   個別の対応は要らない）
 - **キャラクターの吹き出しどうしは、前の吹き出しを出してから最低2秒空けて次を出す。**
@@ -114,7 +114,7 @@
   （まだ何も話していない）は、待っている吹き出しがあっても構わず既定の表情へ戻す
   （キャラビューと同じ扱い）
 - **キャラビューの `<Balloon>` は再利用せず、`components/` へも上げない。** 雑談の行はすでに
-  吹き出しの見た目を持っており（`chat-view.module.css` の `.chat-entry`）、`<Balloon>` のほうは
+  吹き出しの見た目を持っており（`stream-row.module.css` の `.stream-entry`）、`<Balloon>` のほうは
   `.balloon-track` の並び（`column-reverse`・押し上げ・薄める）と一体になっている。上げると
   **両方の事情を知る部品**になり、どちらを直しても相手が動く。`components/page/conversation/components/chat-view/` に閉じた
   ままなので、機能どうしの import も増えない（`.dependency-cruiser.cjs`）

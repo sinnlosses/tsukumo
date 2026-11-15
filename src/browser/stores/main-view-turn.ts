@@ -12,6 +12,11 @@ import { mainViewEntries } from "../../shared/session/main-view-entry.ts"
 import type { MainViewTurn } from "../../shared/session/main-view-shape.ts"
 import type { SessionState } from "../../shared/session/session-state.ts"
 import { bodiesOf, reportDraftingOf, type TurnBodies } from "../../shared/session/turn-progress.ts"
+import { splitIntoTurns, turnIdOf } from "../../shared/session/turn.ts"
+import {
+  conversationStreamRows,
+  type ConversationStreamRow,
+} from "../domain/main-view/conversation-stream.ts"
 import { mainViewTurns, withReportDrafting } from "../domain/main-view/main-view.ts"
 import { useSession } from "./session.ts"
 
@@ -44,6 +49,43 @@ export function mainViewTurnsOf(state: SessionState): readonly MainViewTurn[] {
   TURNS_BY_STATE.set(state, turns)
   latestTurns = turns
   return turns
+}
+
+const STREAM_ROWS_BY_STATE = new WeakMap<
+  SessionState,
+  ReadonlyMap<number, readonly ConversationStreamRow[]>
+>()
+
+/** 直前に区切った結果。中身の等しいやり取りの行の参照を保つために持つ。 */
+let latestStreamRows: ReadonlyMap<number, readonly ConversationStreamRow[]> = new Map()
+
+/**
+ * 選んだやり取りの、会話の流れの行（記録の区切りは姿1つにつき1回だけ行う）。
+ * ツールの記録が届くだけの更新では中身が変わらず、参照も保たれるので、出ているやり取りは描き直されない。
+ */
+export function useConversationStreamRows(turnId: number): readonly ConversationStreamRow[] {
+  return useSession((session) => streamRowsOf(session.state).get(turnId) ?? NO_ROWS)
+}
+
+const NO_ROWS: readonly ConversationStreamRow[] = []
+
+function streamRowsOf(state: SessionState): ReadonlyMap<number, readonly ConversationStreamRow[]> {
+  const remembered = STREAM_ROWS_BY_STATE.get(state)
+  if (remembered !== undefined) {
+    return remembered
+  }
+  const rows = new Map(
+    splitIntoTurns(state.records).map((turn) => {
+      const id = turnIdOf(turn)
+      return [
+        id,
+        replaceEqualDeep(latestStreamRows.get(id) ?? NO_ROWS, conversationStreamRows(turn)),
+      ]
+    }),
+  )
+  STREAM_ROWS_BY_STATE.set(state, rows)
+  latestStreamRows = rows
+  return rows
 }
 
 /**

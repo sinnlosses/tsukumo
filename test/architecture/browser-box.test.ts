@@ -70,6 +70,8 @@ const SHARED_BROWSER_BOXES = ["lib", "domain", "stores", "hooks"] as const
 /** 1つの機能しか読まなくても共有モジュールに残すファイルと、その理由。 */
 const KEPT_SHARED_FILES = {
   "browser/hooks/use-before-paint-sync.ts": "包みの置き場として規約が名指ししている",
+  "browser/domain/main-view/conversation-stream.ts":
+    "記録を流れの行にする関数の置き場（`src/shared/session/` は server からも読まれる決まりのテストが落ちるため）。流れをキャラビューや列の頭の知らせが読む後段のタスクで、別の機能からも読まれる",
   "browser/stores/reply-note-list.ts":
     "レポートの部品と会話ページの入力欄の両方が読む（入力欄の読み手は、まとめて頼むタスクで付く）",
 } as const satisfies Record<string, string>

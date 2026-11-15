@@ -1,14 +1,11 @@
 // 雑談の会話のログ。古い→新しいの順にそのまま積む。
 
-import clsx from "clsx"
 import type { ReactElement, RefCallback } from "react"
 
 import { Text } from "../../../../ui/text/text.tsx"
 import { PromptImageThumbnails } from "../prompt-image/prompt-image.tsx"
+import { StreamPostRow, StreamSpeechRow, StreamTyping } from "../stream-row/stream-row.tsx"
 import { ChatDay } from "./chat-day.tsx"
-import { ChatSpeech } from "./chat-speech.tsx"
-import { ChatTime } from "./chat-time.tsx"
-import { ChatTyping } from "./chat-typing.tsx"
 import styles from "./chat-view.module.css"
 import type { ChatRow } from "./hooks/use-chat-view.ts"
 
@@ -58,38 +55,29 @@ export function ChatLog({
                 )
               case "speech":
                 return (
-                  <div
+                  <StreamSpeechRow
                     key={row.key}
-                    className={clsx(styles["chat-row"], styles["chat-row-character"])}
-                  >
-                    <ChatSpeech
-                      text={row.text}
-                      selected={row.selected}
-                      pop={row.pop}
-                      onToggle={row.onToggle}
-                    />
-                    <ChatTime time={row.time} />
-                  </div>
+                    text={row.text}
+                    time={row.time}
+                    selected={row.selected}
+                    pop={row.pop}
+                    onToggle={row.onToggle}
+                    className=""
+                  />
                 )
               case "user":
+                // 利用者の発言は押せない（遡る先の表情を持たないので、押しても何も起きない）。
+                // 添えた画像の控えは吹き出しの中に並ぶ（控えだけは押すと拡大する）。
                 return (
-                  <div key={row.key} className={clsx(styles["chat-row"], styles["chat-row-user"])}>
-                    {/* 利用者の発言は押せない（遡る先の表情を持たないので、押しても何も起きない）。
-                     添えた画像の控えは吹き出しの中に並ぶ（控えだけは押すと拡大する）。 */}
-                    <div
-                      className={clsx(styles["chat-entry"], styles["chat-entry-user"])}
-                      data-speaker="user"
-                    >
-                      {row.text}
-                      <PromptImageThumbnails images={row.images} size="compact" />
-                    </div>
-                    <ChatTime time={row.time} />
-                  </div>
+                  <StreamPostRow key={row.key} time={row.time} className="">
+                    {row.text}
+                    <PromptImageThumbnails images={row.images} size="compact" />
+                  </StreamPostRow>
                 )
             }
           })}
           {/* 返事を待っている間・出していない吹き出しが控えている間、末尾に出す「...」。 */}
-          {showTyping && <ChatTyping />}
+          {showTyping && <StreamTyping />}
         </>
       )}
     </div>

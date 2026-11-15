@@ -302,9 +302,9 @@ describe("ChatView のセリフを遡る", () => {
 })
 
 describe("ChatView のセリフが現れる（docs/architecture/screen-design.md「雑談モードの画面」）", () => {
-  /** 弾む行（`ChatSpeech` が出すクラス）。 */
+  /** 弾む行（`StreamSpeechRow` が出すクラス）。 */
   function popEntries(): readonly Element[] {
-    return [...document.querySelectorAll(".chat-entry-pop")]
+    return [...document.querySelectorAll(".stream-entry-pop")]
   }
 
   /** 3件目のセリフが届いたところ（2件目までは開いた時点で並んでいる）。 */
@@ -331,7 +331,7 @@ describe("ChatView のセリフが現れる（docs/architecture/screen-design.md
 
   // 弾む動き自体（CSS のアニメーション）はここでは見ない——見えるかどうかは目視で確かめる
   // （docs/architecture/testing.md「手で確かめること」）。ここで守るのは、届いたばかりのセリフが
-  // 全文でその場に出て、`.chat-entry-pop` が掛かる行の配線。
+  // 全文でその場に出て、`.stream-entry-pop` が掛かる行の配線。
 
   it("届いたばかりのセリフは全文で出て、弾む行になる", () => {
     renderChatView({
@@ -375,7 +375,7 @@ describe("ChatView のセリフが現れる（docs/architecture/screen-design.md
 })
 
 describe("ChatView の「...」（返事を待つ間）", () => {
-  /** 「...」の行（`ChatTyping`。docs/architecture/screen-design.md「雑談モードの画面」）。 */
+  /** 「...」の行（`StreamTyping`。docs/architecture/screen-design.md「雑談モードの画面」）。 */
   function typingEntry(): Element | null {
     return document.querySelector('[data-speaker="typing"]')
   }

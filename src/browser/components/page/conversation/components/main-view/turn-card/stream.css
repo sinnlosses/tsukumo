@@ -1,0 +1,17 @@
+/* 仕事のメインビューの会話の流れ。
+   行（セリフ・投稿・時刻）の見た目は `stream-row/stream-row.module.css` と共用で、ここは流れの縦の並びと、段の札・投稿の幅だけを持つ。 */
+.conversation-stream {
+  min-width: 0;
+}
+/* 依頼の塊は2行の地の文を測るので、吹き出しが痩せないように下限の幅を持たせる。 */
+.stream-post {
+  min-width: min(28rem, 100%);
+}
+/* 段の札。小さな字の1行で、セリフの行と見分ける。 */
+.stream-plan {
+  align-self: flex-start;
+  padding: 0 var(--inline-control);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+  line-height: 22px;
+}

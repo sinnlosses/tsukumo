@@ -1,37 +1,50 @@
-// 1つのやり取り。ステップの並び（レポート・質問の記録）の後ろに、やり取りで1つの補足メッセージの欄を置いて縦に1本で積む（番号は振らない）。
-// 最終レポートのある閉じたやり取りは、最終レポート → 経過の畳み（中間レポートと質問の記録、末尾に補足メッセージの欄）の順にする（`arrangeTurn`）。
+// 1つのやり取りの流れ。
+// 選んだやり取りの記録を、記録の位置の順に1本で積む（`streamItemsOf`）。
+// 依頼・補足は右寄せの投稿、セリフ・反応は左寄せの行、段・質問の記録・レポートは流れの中の札と紙。
+// 最終レポートのある閉じたやり取りは、最終レポートの上に「作業の経過」の1行（段の札・質問の記録・中間の本文を畳んだもの）を置く。
 // ツールの実行は描かない（進行は帯の「いまの作業」が持つ）。
-// 失敗で終わったやり取りは、頭に失敗の表示を出す（色だけでなく字で成功と見分ける）。
+// 失敗で終わったやり取りは、最初の本文の手前に失敗の表示を出す（色だけでなく字で成功と見分ける）。
 
 import clsx from "clsx"
-import { use, useState, type ReactElement } from "react"
+import { use, useState, type ReactElement, type ReactNode } from "react"
 
 import type { ReportTask } from "../../../../../../shared/report/report-task.ts"
+import type { TaskSummaryResult } from "../../../../../../shared/repository/task-summary.ts"
 import {
   isInterimStep,
-  type MainViewAction,
   type MainViewStep,
   type MainViewStepBody,
   type MainViewTurn,
 } from "../../../../../../shared/session/main-view-shape.ts"
 import { formatMeasured } from "../../../../../../shared/utils/elapsed-time.ts"
-import { AskThreadContext } from "../../../../../features/report/ask-thread-context.ts"
+import {
+  AskThreadContext,
+  isAskGroupedToLeaf,
+} from "../../../../../features/report/ask-thread-context.ts"
 import { ReplyPortContext } from "../../../../../features/report/reply-port.ts"
 import { Report } from "../../../../../features/report/report.tsx"
 import { useExternalSync } from "../../../../../hooks/use-external-sync.ts"
+import { usePhoneWidth } from "../../../../../hooks/use-phone-width.ts"
+import { useConversationStreamRows } from "../../../../../stores/main-view-turn.ts"
+import { useSession } from "../../../../../stores/session.ts"
 import { Text } from "../../../../ui/text/text.tsx"
 import { VStack } from "../../../../ui/v-stack/v-stack.tsx"
 import { useDraftedReports } from "../../stores/drafted-report.ts"
-import { AsideThread } from "./aside-thread.tsx"
 import { revealStepIdOf } from "./domain/draft-reveal.ts"
 import { REPORT_STEP_ATTRIBUTE } from "./domain/outline-report-head.ts"
-import { arrangeTurn, progressFoldSummary, type ProgressEntry } from "./domain/turn-arrangement.ts"
+import {
+  foldSummaryOf,
+  streamItemsOf,
+  type ProgressItem,
+  type StreamItem,
+} from "./domain/stream-item-list.ts"
 import { DraftReport } from "./draft-report.tsx"
 import { ExpandableHead } from "./expandable-head.tsx"
 import { useReplyPort } from "./hooks/use-reply-port.ts"
 import styles from "./main-view.module.css"
 import { QuestionRecord } from "./question-record.tsx"
 import { ReportHead, type ReportLabel } from "./report-head.tsx"
+import { PlanCard, PostRow, SayRow } from "./stream-card.tsx"
 import { TurnFailureBlock } from "./turn-failure-block.tsx"
 
 type TurnProps = {
@@ -63,10 +76,24 @@ export function Turn(props: TurnProps): ReactElement {
     draftedToolUseIds,
   })
   const askSlot = use(AskThreadContext)
-  const arrangement =
-    askSlot.kind === "grouped" ? arrangeTurn(turn, askSlot.remaining) : arrangeTurn(turn)
+  const phoneWidth = usePhoneWidth()
+  const rows = useConversationStreamRows(turn.id)
+  // 部品について聞いた補足は、その部品の余白の札に出る。流れに出すのは、札に束ねられなかった補足だけ。
+  // 狭い画面の依頼は、一覧の上の依頼の塊が持つ。
+  const shownRows = rows.filter((row) => {
+    if (row.kind !== "post") {
+      return true
+    }
+    if (row.record.kind === "request") {
+      return !phoneWidth
+    }
+    return !isAskGroupedToLeaf(askSlot, row.record)
+  })
+  const items = streamItemsOf(shownRows, turn)
   const latestStepId = props.newest ? finalStep?.id : undefined
   const port = useReplyPort()
+  const tasks = useSession((session) => session.state.tasks)
+  const hasContent = items.length > 0 || turn.drafts.length > 0
 
   return (
     <ReplyPortContext value={{ kind: "open", port }}>
@@ -82,7 +109,7 @@ export function Turn(props: TurnProps): ReactElement {
             これ以前の {turn.droppedCount} 件は省略した
           </Text>
         )}
-        {(turn.steps.length > 0 || turn.drafts.length > 0 || turn.failure.kind === "failed") && (
+        {hasContent && (
           <VStack
             element="div"
             name={{ kind: "none" }}
@@ -90,50 +117,21 @@ export function Turn(props: TurnProps): ReactElement {
             align="stretch"
             justify="start"
             wrap="nowrap"
-            className=""
+            className={styles["conversation-stream"]}
           >
-            {turn.failure.kind === "failed" && (
-              <TurnFailureBlock
-                failure={turn.failure.failure}
-                requestText={turn.request?.text ?? ""}
-                newest={props.newest}
-              />
-            )}
-            {/* `key` は配列の添字ではなく `step.id`（`MainViewStep.id`。古いステップを落とす前に振った通し番号）を使う。
+            {/* `key` は配列の添字ではなく、記録の位置と本文のステップの `step.id`（`MainViewStep.id`。古いステップを落とす前に振った通し番号）を使う。
               添字だと、古いステップが落ちて残りの添字が1つずつ前へずれた瞬間に React が別のステップの DOM を使い回してしまい、`<details>` の `open` のような制御されていない DOM の状態が別のステップへ乗り移って見える。 */}
-            {arrangement.kind === "arrival" &&
-              turn.steps.map((step) => (
-                <Step
-                  step={step}
-                  turnId={turn.id}
-                  reveal={step.id === revealStepId}
-                  latest={step.id === latestStepId}
-                  hasInterimReport={turn.hasInterimReport}
-                  showQuestions
-                  key={step.id}
-                />
-              ))}
-            {arrangement.kind === "final-first" && (
-              <>
-                <Step
-                  step={arrangement.final}
-                  turnId={turn.id}
-                  reveal={arrangement.final.id === revealStepId}
-                  latest={arrangement.final.id === latestStepId}
-                  hasInterimReport={turn.hasInterimReport}
-                  showQuestions={false}
-                  key={arrangement.final.id}
-                />
-                {arrangement.progress.length > 0 && (
-                  <ProgressFold
-                    progress={arrangement.progress}
-                    turnId={turn.id}
-                    hasInterimReport={turn.hasInterimReport}
-                    newest={props.newest}
-                  />
-                )}
-              </>
-            )}
+            {items.map((item, index) => (
+              <StreamItemView
+                item={item}
+                turn={turn}
+                tasks={tasks}
+                newest={props.newest}
+                isRevealed={(stepId) => stepId === revealStepId}
+                isLatest={(stepId) => stepId === latestStepId}
+                key={streamItemKey(item, index)}
+              />
+            ))}
             {/* `key` を `toolUseId` にするので、書いている途中の部品から記録の部品へ移っても面を作り直さない。 */}
             {turn.drafts.map((draft, index) => (
               <DraftReport
@@ -143,14 +141,83 @@ export function Turn(props: TurnProps): ReactElement {
                 key={`draft:${draft.toolUseId}`}
               />
             ))}
-            {arrangement.kind === "arrival" && arrangement.asides.length > 0 && (
-              <AsideThread asides={arrangement.asides} newest={props.newest} />
-            )}
           </VStack>
         )}
       </div>
     </ReplyPortContext>
   )
+}
+
+function streamItemKey(item: StreamItem, index: number): string {
+  switch (item.kind) {
+    case "body":
+      return `body:${String(item.step.id)}`
+    case "question":
+      return `question:${item.entry.toolUseId}`
+    case "fold":
+      return "fold"
+    case "failure":
+      return "failure"
+    case "plan":
+    case "post":
+    case "say":
+      return `${item.kind}:${String(index)}`
+  }
+}
+
+type StreamItemViewProps = {
+  readonly item: StreamItem
+  readonly turn: MainViewTurn
+  readonly tasks: TaskSummaryResult
+  readonly newest: boolean
+  /** 書き上げる演出を掛けるステップか。 */
+  readonly isRevealed: (stepId: number) => boolean
+  /** いちばん新しいやり取りの最後のレポートか。 */
+  readonly isLatest: (stepId: number) => boolean
+}
+
+function StreamItemView(props: StreamItemViewProps): ReactNode {
+  const { item, turn } = props
+  switch (item.kind) {
+    case "post":
+      return <PostRow turn={turn} tasks={props.tasks} row={item} />
+    case "say":
+      return <SayRow row={item} />
+    case "plan":
+      return <PlanCard record={item.record} />
+    case "question":
+      return <QuestionRecord entry={item.entry} />
+    case "failure":
+      return (
+        <>
+          {turn.failure.kind === "failed" && (
+            <TurnFailureBlock
+              failure={turn.failure.failure}
+              requestText={turn.request?.text ?? ""}
+              newest={props.newest}
+            />
+          )}
+        </>
+      )
+    case "fold":
+      return (
+        <ProgressFold
+          items={item.items}
+          turnId={turn.id}
+          hasInterimReport={turn.hasInterimReport}
+        />
+      )
+    case "body":
+      return (
+        <Step
+          step={item.step}
+          turnId={turn.id}
+          reveal={props.isRevealed(item.step.id)}
+          latest={props.isLatest(item.step.id)}
+          hasInterimReport={turn.hasInterimReport}
+        />
+      )
+  }
 }
 
 /** `Report` が本文の根に重ねる class（ポンの演出と、ステップ末尾の余白の打ち消しが指す綴り）。 */
@@ -168,30 +235,10 @@ type StepProps = {
   readonly latest: boolean
   /** このステップが載っているやり取りに中間レポートがあるか（`MainViewTurn.hasInterimReport`）。 */
   readonly hasInterimReport: boolean
-  /** このステップの質問の記録を札のそばに出すか。経過の畳みに入れるやり取りの最終のステップでは出さない。 */
-  readonly showQuestions: boolean
 }
 
 /**
- * 1ステップ分。札（レポートと質問の記録）。無ければ何も描かない（`null`）。
- *
- * ツールの実行（`action.kind === "tool"`）は描かない。
- * `actions` にはツールの記録も残っているが、メインビューに出すのは質問の記録だけ。
- */
-function Step(props: StepProps): ReactElement | undefined {
-  const { step } = props
-  const hasCard =
-    step.body.kind === "text" || (props.showQuestions && step.actions.some(isQuestion))
-
-  if (!hasCard) {
-    return undefined
-  }
-
-  return <StepCard {...props} />
-}
-
-/**
- * ステップの本文と質問の記録の札。
+ * ステップの本文の札。
  *
  * 中間レポート（`step.mark` が `interim-kept` か `interim-folded`）は話が途中の本文なので、タスク見出し行にラベルを載せて地と枠を変える（`.main-step.is-interim`）。
  *
@@ -200,48 +247,37 @@ function Step(props: StepProps): ReactElement | undefined {
  *
  * 後ろに別のレポートが現れた中間レポート（`interim-folded`）は、何件も開いたまま積まれると見通しが悪いので畳む。
  * 畳んだ分は `<details>` にして、開いたときに初めて中身を描き、開いたあとは閉じても DOM に残す。まだ追い越されていない最後の中間レポートは開いた `<section>` のまま。
- * 畳むのは本文だけで、質問の記録は畳みの外に出す。
  */
-function StepCard(props: StepProps): ReactElement {
+function Step(props: StepProps): ReactElement | undefined {
   const { step } = props
-  const questions = props.showQuestions ? step.actions.filter(isQuestion) : []
-  const questionCards = questions.map((question) => (
-    <QuestionRecord entry={question} key={question.toolUseId} />
-  ))
-
-  if (step.mark !== "interim-folded") {
-    return (
-      <section
-        className={clsx(
-          stepClassName(step),
-          isInterimStep(step) && questions.length === 0 && styles["phone-hidden"],
-        )}
-        {...{ [REPORT_STEP_ATTRIBUTE]: step.body.kind === "text" ? "" : undefined }}
-      >
-        <StepReport
-          step={step}
-          turnId={props.turnId}
-          reveal={props.reveal}
-          latest={props.latest}
-          hasInterimReport={props.hasInterimReport}
-          folded={false}
-          phoneHidden={isInterimStep(step)}
-        />
-        {questionCards}
-      </section>
-    )
+  if (step.body.kind !== "text") {
+    return undefined
   }
-
-  return (
-    <>
+  if (step.mark === "interim-folded") {
+    return (
       <FoldedStep
         step={step}
         turnId={props.turnId}
         hasInterimReport={props.hasInterimReport}
         phoneHidden
       />
-      {questionCards}
-    </>
+    )
+  }
+  return (
+    <section
+      className={clsx(stepClassName(step), isInterimStep(step) && styles["phone-hidden"])}
+      {...{ [REPORT_STEP_ATTRIBUTE]: "" }}
+    >
+      <StepReport
+        step={step}
+        turnId={props.turnId}
+        reveal={props.reveal}
+        latest={props.latest}
+        hasInterimReport={props.hasInterimReport}
+        folded={false}
+        phoneHidden={isInterimStep(step)}
+      />
+    </section>
   )
 }
 
@@ -252,7 +288,7 @@ type FoldedStepProps = {
   readonly phoneHidden: boolean
 }
 
-/** 中間レポートを `<summary>` の1行に畳んだ形。質問の記録は持たない（呼ぶ側が畳みの外に出す）。 */
+/** 中間レポートを `<summary>` の1行に畳んだ形。 */
 function FoldedStep(props: FoldedStepProps): ReactElement {
   const [opened, setOpened] = useState(false)
   return (
@@ -299,7 +335,7 @@ type StepReportProps = {
   readonly latest: boolean
   readonly hasInterimReport: boolean
   readonly folded: boolean
-  /** 狭い画面で本文を隠すか。隠すのは本文の側だけで、質問の記録は残す。 */
+  /** 狭い画面で本文を隠すか。 */
   readonly phoneHidden: boolean
 }
 
@@ -351,20 +387,17 @@ function StepReport(props: StepReportProps): ReactElement | undefined {
 }
 
 type ProgressFoldProps = {
-  readonly progress: readonly ProgressEntry[]
+  readonly items: readonly ProgressItem[]
   readonly turnId: number
   readonly hasInterimReport: boolean
-  readonly newest: boolean
 }
 
-/**
- * 経過の畳み。中間レポート（1行の畳みの形）と質問の記録を届いた順に入れ、補足メッセージの欄を末尾に置く。
- */
+/** 最終レポートの上の「作業の経過」。段の札・質問の記録・本文（1行の畳みの形）を届いた順に入れる。 */
 function ProgressFold(props: ProgressFoldProps): ReactElement {
   return (
     <details className={styles["progress-fold"]}>
       <Text element="summary" size="label" tone="ink-quiet" weight="inherit" className="">
-        {progressFoldSummary(props.progress)}
+        {foldSummaryOf(props.items)}
       </Text>
       <VStack
         element="div"
@@ -375,24 +408,22 @@ function ProgressFold(props: ProgressFoldProps): ReactElement {
         wrap="nowrap"
         className={styles["progress-fold-steps"]}
       >
-        {props.progress.map((entry) => {
-          switch (entry.kind) {
-            case "interim":
+        {props.items.map((item, index) => {
+          switch (item.kind) {
+            case "plan":
+              return <PlanCard record={item.record} key={`plan:${String(index)}`} />
+            case "question":
+              return <QuestionRecord entry={item.entry} key={`question:${item.entry.toolUseId}`} />
+            case "body":
               return (
                 <FoldedStep
-                  step={entry.step}
+                  step={item.step}
                   turnId={props.turnId}
                   hasInterimReport={props.hasInterimReport}
                   phoneHidden={false}
-                  key={`interim:${String(entry.step.id)}`}
+                  key={`body:${String(item.step.id)}`}
                 />
               )
-            case "question":
-              return (
-                <QuestionRecord entry={entry.entry} key={`question:${entry.entry.toolUseId}`} />
-              )
-            case "asides":
-              return <AsideThread asides={entry.asides} newest={props.newest} key="asides" />
           }
         })}
       </VStack>
@@ -445,10 +476,4 @@ function interimSummary(body: MainViewStepBody): string {
       ? `${body.finishedPhase.skipped ? " · 飛ばした" : ""} · 所要 ${formatMeasured(body.finishedPhase.duration)}`
       : ""
   return `中間レポート: ${body.firstLine}${time}`
-}
-
-function isQuestion(
-  action: MainViewAction,
-): action is Extract<MainViewAction, { kind: "question" }> {
-  return action.kind === "question"
 }

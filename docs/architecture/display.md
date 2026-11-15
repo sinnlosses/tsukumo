@@ -32,6 +32,9 @@
 
 #### 出力の分離（セリフと詳細）
 
+セリフ（`speak`）と詳細（`report` の本文）は受け口を分けたまま、仕事のメインビューでは1本の流れの別々の形で出す（セリフは左寄せの行、詳細は段の札と紙。並びは記録の位置の順）。
+キャラビューの吹き出しも、移行のあいだは同じセリフを出す（`docs/architecture/display/main-view.md`）。
+
 - `docs/architecture/display/speak-tool.md`: speak と report のツール・部品の書き方を引く report_part_card
 - `docs/architecture/display/section-and-block.md`: 本文のセクションと部品、図の部品
 - `docs/architecture/display/block-field.md`: 部品の欄・進み具合・候補とファイル・確度つきの主張（確かめていないことはこの部品に書く）

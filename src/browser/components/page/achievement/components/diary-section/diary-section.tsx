@@ -154,7 +154,6 @@ function Bubble(props: {
       body={bubble.body}
       reveal={props.reveal}
       onRevealed={props.onRevealed}
-      revisionId={bubble.revisionId}
     />
   )
 }
@@ -163,11 +162,9 @@ function WrittenBubble(props: {
   readonly body: string
   readonly reveal: boolean
   readonly onRevealed: () => void
-  readonly revisionId: number
 }): ReactElement {
   const { rootRef } = useReportReveal(
     props.reveal,
-    props.revisionId,
     props.onRevealed,
     styles["achievement-diary-pop"],
   )

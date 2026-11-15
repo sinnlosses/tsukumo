@@ -2,8 +2,10 @@ import { cleanup, render } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { REPORT_STEP_ATTRIBUTE } from "../../../../../../../src/browser/components/page/conversation/components/main-view/domain/outline-report-head.ts"
-import { REPORT_DRAFT_ATTRIBUTE } from "../../../../../../../src/browser/components/page/conversation/components/main-view/domain/report-heading.ts"
-import { DRAFT_SLOT_ATTRIBUTE } from "../../../../../../../src/browser/components/page/conversation/components/main-view/hooks/use-draft-pen.ts"
+import {
+  DRAFT_SLOT_ATTRIBUTE,
+  REPORT_DRAFT_ATTRIBUTE,
+} from "../../../../../../../src/browser/components/page/conversation/components/main-view/domain/report-heading.ts"
 import { useDraftedReports } from "../../../../../../../src/browser/components/page/conversation/stores/drafted-report.ts"
 import { mainViewDraftOf } from "../../../../../../../src/browser/domain/main-view/a2ui-draft-view.ts"
 import { saveRevealSpeed } from "../../../../../../../src/browser/domain/reveal-speed.ts"
@@ -50,6 +52,7 @@ describe("Turn（report の草稿）", () => {
 
     const sections = [...container.querySelectorAll("section")]
     expect(sections).toHaveLength(2)
+    expect(sections[0]?.hasAttribute(REPORT_STEP_ATTRIBUTE)).toBe(true)
     expect(sections[1]?.hasAttribute(REPORT_DRAFT_ATTRIBUTE)).toBe(true)
     expect(sections[1]?.hasAttribute(REPORT_STEP_ATTRIBUTE)).toBe(false)
     expect(sections[1]?.textContent).toContain("架空の結論。")

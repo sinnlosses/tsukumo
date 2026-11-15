@@ -41,7 +41,6 @@ const ALLOWED_COUNTS: Readonly<Record<string, number>> = {
   "test/browser/components/page/conversation/components/dispatch/file-suggestion-list.test.tsx": 1,
   "test/browser/components/page/conversation/components/inquiry/inquiry.test.tsx": 2,
   "test/browser/components/page/conversation/components/main-view/main-view.test.tsx": 1,
-  "test/browser/components/page/conversation/components/main-view/mini-portrait.test.tsx": 4,
   "test/browser/components/page/conversation/components/main-view/question-record.test.tsx": 3,
   "test/browser/components/page/conversation/components/main-view/turn-list.test.tsx": 4,
   "test/browser/components/page/conversation/components/main-view/turn.test.tsx": 7,

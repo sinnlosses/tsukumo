@@ -257,7 +257,6 @@
                     {
                       "tag": "div",
                       "attributes": {
-                        "data-brush-origin": "",
                         "data-main-view": ""
                       },
                       "children": [
@@ -467,37 +466,6 @@
                                       ]
                                     },
                                     {
-                                      "tag": "section",
-                                      "children": [
-                                        {
-                                          "tag": "h2",
-                                          "attributes": {
-                                            "data-level": "2",
-                                            "data-color": "disabled",
-                                            "data-weight": "normal"
-                                          },
-                                          "children": [
-                                            "依頼"
-                                          ]
-                                        },
-                                        {
-                                          "tag": "p",
-                                          "children": [
-                                            {
-                                              "tag": "span",
-                                              "attributes": {
-                                                "data-type": "supporting",
-                                                "data-color": "inherit"
-                                              },
-                                              "children": [
-                                                "report ツールの描き方を確かめたい（架空の依頼）"
-                                              ]
-                                            }
-                                          ]
-                                        }
-                                      ]
-                                    },
-                                    {
                                       "tag": "div",
                                       "attributes": {
                                         "data-direction": "vertical",
@@ -505,6 +473,110 @@
                                         "data-wrap": "nowrap"
                                       },
                                       "children": [
+                                        {
+                                          "tag": "div",
+                                          "attributes": {
+                                            "data-speaker": "user"
+                                          },
+                                          "children": [
+                                            {
+                                              "tag": "section",
+                                              "children": [
+                                                {
+                                                  "tag": "h2",
+                                                  "attributes": {
+                                                    "data-level": "2",
+                                                    "data-color": "disabled",
+                                                    "data-weight": "normal"
+                                                  },
+                                                  "children": [
+                                                    "依頼"
+                                                  ]
+                                                },
+                                                {
+                                                  "tag": "p",
+                                                  "children": [
+                                                    {
+                                                      "tag": "span",
+                                                      "attributes": {
+                                                        "data-type": "supporting",
+                                                        "data-color": "inherit"
+                                                      },
+                                                      "children": [
+                                                        "report ツールの描き方を確かめたい（架空の依頼）"
+                                                      ]
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "tag": "time",
+                                          "attributes": {
+                                            "dateTime": "2026-01-15T10:00+09:00"
+                                          },
+                                          "children": [
+                                            "10:00"
+                                          ]
+                                        },
+                                        {
+                                          "tag": "div",
+                                          "attributes": {
+                                            "data-speaker": "character"
+                                          },
+                                          "children": [
+                                            "見てくるね。"
+                                          ]
+                                        },
+                                        {
+                                          "tag": "time",
+                                          "attributes": {
+                                            "dateTime": "2026-01-15T10:00+09:00"
+                                          },
+                                          "children": [
+                                            "10:00"
+                                          ]
+                                        },
+                                        {
+                                          "tag": "div",
+                                          "attributes": {
+                                            "data-speaker": "character"
+                                          },
+                                          "children": [
+                                            "途中まで書いたよ。"
+                                          ]
+                                        },
+                                        {
+                                          "tag": "time",
+                                          "attributes": {
+                                            "dateTime": "2026-01-15T10:00+09:00"
+                                          },
+                                          "children": [
+                                            "10:00"
+                                          ]
+                                        },
+                                        {
+                                          "tag": "details",
+                                          "children": [
+                                            {
+                                              "tag": "summary",
+                                              "children": [
+                                                {
+                                                  "tag": "span",
+                                                  "attributes": {
+                                                    "data-type": "supporting",
+                                                    "data-color": "disabled"
+                                                  },
+                                                  "children": [
+                                                    "作業の経過 1 件"
+                                                  ]
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        },
                                         {
                                           "tag": "section",
                                           "attributes": {
@@ -1295,23 +1367,21 @@
                                           ]
                                         },
                                         {
-                                          "tag": "details",
+                                          "tag": "div",
+                                          "attributes": {
+                                            "data-speaker": "character"
+                                          },
                                           "children": [
-                                            {
-                                              "tag": "summary",
-                                              "children": [
-                                                {
-                                                  "tag": "span",
-                                                  "attributes": {
-                                                    "data-type": "supporting",
-                                                    "data-color": "disabled"
-                                                  },
-                                                  "children": [
-                                                    "経過 1 件"
-                                                  ]
-                                                }
-                                              ]
-                                            }
+                                            "書けたよ！"
+                                          ]
+                                        },
+                                        {
+                                          "tag": "time",
+                                          "attributes": {
+                                            "dateTime": "2026-01-15T10:00+09:00"
+                                          },
+                                          "children": [
+                                            "10:00"
                                           ]
                                         }
                                       ]

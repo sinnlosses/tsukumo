@@ -33,16 +33,17 @@ import { useReadingSection } from "../../../../../stores/reading-section.ts"
 import { useSession } from "../../../../../stores/session.ts"
 import { useTurnSelection } from "../../../../../stores/turn-selection.ts"
 import { type MainViewContent, useMainViewContent } from "../../stores/main-view-content.ts"
+import { useStickToBottom } from "../hooks/use-stick-to-bottom.ts"
 import { Inquiry } from "../inquiry/inquiry.tsx"
 import { AskThreadProvider } from "./ask-thread-provider.tsx"
 import { CurrentStep } from "./current-step.tsx"
 import { headNoticeOf, type HeadNoticeAction } from "./domain/head-notice.ts"
 import { headingStepOf, neighborTurnId, turnStepOf } from "./domain/turn-step-key.ts"
+import { scrollerOf } from "./hooks/scroll-frame.ts"
 import { type ShownTarget, useActiveTurnScroll } from "./hooks/use-active-turn-scroll.ts"
 import { useReportOutlineTurns } from "./hooks/use-report-outline-turn-list.ts"
 import { InquiryJumpFloat } from "./inquiry-jump-float.tsx"
 import styles from "./main-view.module.css"
-import { MiniPortrait } from "./mini-portrait.tsx"
 import { PhaseList } from "./phase-list.tsx"
 import { ReportOutline } from "./report-outline.tsx"
 import { RequestBlock } from "./request-block.tsx"
@@ -67,6 +68,7 @@ export function MainView(): ReactElement {
   const turns = useMainViewTurns()
   const content = useMainViewContent((state) => state.content)
   const tasks = useSession((session) => session.state.tasks)
+  const recordCount = useSession((session) => session.state.records.length)
   const awaitingHello = useSession((session) => session.generation === 0)
   const requestInquiryJump = useInquiryJump((state) => state.requestJump)
   const moment = useSession((session) => conversationMoment(session.state))
@@ -84,6 +86,11 @@ export function MainView(): ReactElement {
   const viewingPast = viewing.kind === "past"
   const view: ShownView = awaitingHello ? { kind: "waiting" } : shownView(content, turns, viewing)
   useActiveTurnScroll(rootRef, shownTargetOf(view))
+  // 新しい行が届いたら下端へ追従するのは、働くあいだだけ。レポートを出しているあいだは頭から読ませる。
+  const stickToBottom = useStickToBottom(recordCount, {
+    scrollerOf,
+    follow: view.kind === "work" && !viewingPast,
+  })
 
   const notice = headNoticeOf({ content, moment, viewingPast, phase })
 
@@ -137,14 +144,16 @@ export function MainView(): ReactElement {
 
   return (
     <RepositoryFileLinkProvider>
-      {/* `data-brush-origin`: ミニ立ち絵を置く座標の原点。`data-main-view`: フォーカスがメインビューの中にあるかを他の部品から探す印。
-          印の名前はそれぞれ `BRUSH_ORIGIN_ATTRIBUTE`・`MAIN_VIEW_ATTRIBUTE` と揃える（JSX の属性名に定数を書けないので直に置く）。 */}
+      {/* `data-main-view`: フォーカスがメインビューの中にあるかを他の部品から探す印。
+          印の名前は `MAIN_VIEW_ATTRIBUTE` と揃える（JSX の属性名に定数を書けないので直に置く）。 */}
       <div
         className={styles["main-turns"]}
-        ref={rootRef}
+        ref={(element) => {
+          rootRef.current = element
+          return stickToBottom(element)
+        }}
         tabIndex={-1}
         onKeyDown={onKeyDown}
-        data-brush-origin=""
         data-main-view=""
       >
         {/* 中身の種類が替わったときだけ作り直し、そのときだけ現れる動きが1回掛かる。 */}
@@ -174,7 +183,8 @@ export function MainView(): ReactElement {
                     <WorkStrip />
                   </TurnCardHead>
                 )}
-                {cardTurn.turn.request !== undefined && (
+                {/* 狭い画面は依頼を一覧の上に出す（広い画面は流れの先頭の投稿が持つ）。 */}
+                {phoneWidth && cardTurn.turn.request !== undefined && (
                   <div className={styles["turn-card-request"]}>
                     <RequestBlock
                       request={cardTurn.turn.request}
@@ -214,9 +224,6 @@ export function MainView(): ReactElement {
           )}
         </ContentFrame>
         {!viewingPast && <InquiryJumpFloat />}
-        {/* 筆先に添うミニ立ち絵。この入れ物の原点を基準に置く（`position: absolute`）ので、書き上げたあと残っているあいだも本文と一緒に転がる。
-            出ているやり取りを渡すのは、残った筆先が別のやり取りのものなら引っ込ませるため。 */}
-        {cardTurn !== undefined && <MiniPortrait shownTurnId={cardTurn.turn.id} />}
       </div>
     </RepositoryFileLinkProvider>
   )

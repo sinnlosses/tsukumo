@@ -11,13 +11,11 @@
         "委譲先に任せる",
         { "tag": "p", "children": ["背景で 架空の委譲"] }
       ] },
-      { "tag": "details", "attributes": { "open": true }, "children": [
-        { "tag": "summary", "children": ["補足メッセージ 1件"] },
-        { "tag": "li", "children": [
-          "きみ:",
-          "いまどこ？（架空の補足メッセージ）",
-          "いまは委譲先が段2を進めているところ。落ちたものはまだ無いよ。"
-        ] }
+      { "tag": "div", "attributes": { "data-speaker": "user" }, "children": [
+        "いまどこ？（架空の補足メッセージ）"
+      ] },
+      { "tag": "div", "attributes": { "data-speaker": "character" }, "children": [
+        "いまは委譲先が段2を進めているところ。落ちたものはまだ無いよ。"
       ] }
     ] }
   ]
