@@ -50,6 +50,11 @@ export function putState(state: SessionState): void {
   })
 }
 
+/** 姿の世代を替えずに、届いた記録などで姿が進んだことを再現する。 */
+export function advanceState(state: SessionState): void {
+  useSession.setState({ state })
+}
+
 /** 初期の姿のうち `patch` に書いたところだけを差し替えた姿。 */
 export function stateWith(patch: Partial<SessionState>): SessionState {
   return { ...INITIAL_SESSION_STATE, ...patch }

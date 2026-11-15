@@ -52,7 +52,7 @@ function openWithFirstSpeech(): {
   const { result, rerender, unmount } = renderHook(
     ({ entries }: { readonly entries: readonly ChatLogEntry[] }) => {
       renderCount += 1
-      return useRevealedChatLog(entries)
+      return useRevealedChatLog(entries, 0)
     },
     { initialProps: { entries: speeches(0) } },
   )

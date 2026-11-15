@@ -1,15 +1,15 @@
 // 会話の画面の器。`<ConversationLayout>` の差し込み口を4領域とサイドバーで埋める。
 //
-// 雑談モードではメインビューを雑談ビューに差し替え、キャラビューを畳む（立ち絵が上段へ移るため）。
-// 同時にメインの領域を地そのものにする（枠と角丸が外れ、背景がそこへ移る）。
-// `<ConversationLayout>` に2つの旗を別々に渡すのは、畳むことと枠を外すことが別の話で、片方だけが要る形もありうるため。
+// 雑談モードも仕事と同じ3列で、左の列をキャラビューから雑談の立ち絵（`ChatStage`）に、メインビューを雑談のログ（`ChatView`）に差し替える。
+// 立ち絵とログは表情などの state を共有するので、器ごと `ChatViewProvider` で包む。
+// 包みは仕事のときも置いたままにして、切り替えで器（入力欄の手元の state）を作り直さない。
 
 import type { ReactElement } from "react"
 
 import { TaskDoingCount } from "../../frame/sidebar/components/task-doing-count.tsx"
 import { Sidebar } from "../../frame/sidebar/sidebar.tsx"
 import { CharacterView } from "./components/character-view/character-view.tsx"
-import { ChatView } from "./components/chat-view/chat-view.tsx"
+import { ChatStage, ChatView, ChatViewProvider } from "./components/chat-view/chat-view.tsx"
 import { ConversationLayout } from "./components/conversation-layout/conversation-layout.tsx"
 import { Dispatch } from "./components/dispatch/dispatch.tsx"
 import { LiveAnnouncer } from "./components/live-announcer/live-announcer.tsx"
@@ -22,18 +22,20 @@ type PresentationalConversationProps = {
 }
 
 export function PresentationalConversation(props: PresentationalConversationProps): ReactElement {
+  const layout = (
+    <ConversationLayout
+      main={props.chatMode ? <ChatView /> : <MainView />}
+      sidebar={<Sidebar />}
+      character={props.chatMode ? <ChatStage /> : <CharacterView />}
+      dispatch={<Dispatch />}
+      inquiry={!props.chatMode && <PendingAskCard />}
+      rail={{ badge: !props.chatMode && <TaskDoingCount /> }}
+      narrowGround={props.chatMode}
+    />
+  )
   return (
     <>
-      <ConversationLayout
-        main={props.chatMode ? <ChatView /> : <MainView />}
-        sidebar={<Sidebar />}
-        character={<CharacterView />}
-        dispatch={<Dispatch />}
-        inquiry={!props.chatMode && <PendingAskCard />}
-        rail={{ badge: !props.chatMode && <TaskDoingCount /> }}
-        collapseCharacter={props.chatMode}
-        mainAsGround={props.chatMode}
-      />
+      <ChatViewProvider active={props.chatMode}>{layout}</ChatViewProvider>
       <LiveAnnouncer />
       {!props.chatMode && <RequestedTaskBoard />}
     </>

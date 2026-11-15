@@ -2,7 +2,11 @@ import { QueryClientProvider } from "@tanstack/react-query"
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
-import { ChatView } from "../../../../../../../src/browser/components/page/conversation/components/chat-view/chat-view.tsx"
+import { ChatStage } from "../../../../../../../src/browser/components/page/conversation/components/chat-view/chat-stage.tsx"
+import {
+  ChatView,
+  ChatViewProvider,
+} from "../../../../../../../src/browser/components/page/conversation/components/chat-view/chat-view.tsx"
 import { useSession } from "../../../../../../../src/browser/stores/session.ts"
 import type { Expression } from "../../../../../../../src/shared/character-pack/expression.ts"
 import type {
@@ -44,7 +48,10 @@ function renderChatView(stateOverrides: Partial<SessionState>, spy: CommandSpy =
   putSession({ ...INITIAL_SESSION_STATE, ...stateOverrides }, spy)
   render(
     <QueryClientProvider client={createTestQueryClient()}>
-      <ChatView />
+      <ChatViewProvider>
+        <ChatStage />
+        <ChatView />
+      </ChatViewProvider>
     </QueryClientProvider>,
   )
 }

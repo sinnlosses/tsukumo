@@ -16,7 +16,6 @@ import type { CharacterViewModel } from "./hooks/use-character-view.ts"
 import { ItemSeats } from "./item-seat-list.tsx"
 import { PhoneBalloon } from "./phone-balloon.tsx"
 import { SpeechLog } from "./speech-log.tsx"
-
 type PresentationalCharacterViewProps = CharacterViewModel
 
 export function PresentationalCharacterView({

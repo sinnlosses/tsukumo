@@ -4,7 +4,7 @@
 // 4領域は `data-region` でも名乗る。
 // class 名は組み立てのたびにハッシュ化される（CSS Modules）ので、外から領域を指す口（画面を撮って位置と大きさを測る `node scripts/capture/capture-view.ts` や、開発者ツール）はこちらを使う。
 //
-// 枠を持たない領域（`.layout-bare`）は、キャラビューと雑談中のメインビューで同じ class を共有する。
+// 旗 `narrowGround` を立てると、狭い画面（760px 以下）で左の列を出さず背景の絵を敷く（`data-narrow-ground`）。
 //
 // 狭い画面では縦の1列に積み、サイドバーと仕切りを出さない。
 // 何を隠すかは CSS の `@media` が決めるので、ここは幅を測らない。
@@ -31,10 +31,8 @@ type PresentationalConversationLayoutProps = UseConversationLayoutResult & {
     /** 中くらいのビューポート幅の柱の、開くボタンの中に置くもの。 */
     readonly badge: ReactNode
   }
-  /** 左の列（キャラビュー）を畳み、中央の列を広げるか。立ち絵が中央へ移ったとき（雑談モード）に使う。 */
-  readonly collapseCharacter: boolean
-  /** メインの領域を、枠を持つウィジェットではなく地そのものとして描くか（枠と角丸を外し、背景をそのまま見せる）。 */
-  readonly mainAsGround: boolean
+  /** 狭い画面（760px 以下）で、左の列を出さず、背景の絵を敷くか（雑談モード）。 */
+  readonly narrowGround: boolean
 }
 
 /**
@@ -61,8 +59,7 @@ export function PresentationalConversationLayout({
   dispatch,
   inquiry,
   rail: { badge: railBadge },
-  collapseCharacter,
-  mainAsGround,
+  narrowGround,
 }: PresentationalConversationLayoutProps): ReactElement {
   // 押して消えたあとのフォーカスは動かさず、body へ落ちるのに任せる。
   // 仕切り `role="separator"` はキー操作を持たないので、そこへ移すと押せないものにフォーカスが残る。
@@ -84,42 +81,32 @@ export function PresentationalConversationLayout({
     <div
       className={clsx(styles["layout-grid"], styles["layout-ground"])}
       ref={gridRef}
-      data-collapse-character={collapseCharacter}
+      data-narrow-ground={narrowGround}
       data-sidebar-open={sidebarOpen}
       style={gridStyle}
     >
-      {/* 畳むときは仕切りごと出さない。
-            幅は state に残っているので、戻したときに使う人が決めた幅がそのまま戻る。 */}
-      {!collapseCharacter && (
-        <>
-          <section
-            className={clsx(styles["layout-region"], styles["layout-bare"], styles["layout-left"])}
-            data-region="character"
-            aria-label="キャラクター"
-          >
-            {character}
-          </section>
-          <div className={styles["layout-divider"]}>
-            <LayoutResizer
-              orientation="vertical"
-              containerRef={gridRef}
-              ariaLabel="キャラビューとメインビューの境界"
-              toValue={leftPxFromRatio}
-              onChange={left.onChange}
-              onCommit={left.onCommit}
-              className=""
-            />
-            {moved === "left" && resetButton}
-          </div>
-        </>
-      )}
+      <section
+        className={clsx(styles["layout-region"], styles["layout-bare"], styles["layout-left"])}
+        data-region="character"
+        aria-label="キャラクター"
+      >
+        {character}
+      </section>
+      <div className={styles["layout-divider"]}>
+        <LayoutResizer
+          orientation="vertical"
+          containerRef={gridRef}
+          ariaLabel="キャラビューとメインビューの境界"
+          toValue={leftPxFromRatio}
+          onChange={left.onChange}
+          onCommit={left.onCommit}
+          className=""
+        />
+        {moved === "left" && resetButton}
+      </div>
       <div className={styles["layout-center"]}>
         <main
-          className={clsx(
-            styles["layout-region"],
-            styles["layout-main"],
-            mainAsGround && styles["layout-bare"],
-          )}
+          className={clsx(styles["layout-region"], styles["layout-main"])}
           data-region="main"
           aria-label="メインビュー"
         >

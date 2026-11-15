@@ -15,8 +15,7 @@ type ConversationLayoutProps = {
   readonly dispatch: ReactNode
   readonly inquiry: ReactNode
   readonly rail: { readonly badge: ReactNode }
-  readonly collapseCharacter: boolean
-  readonly mainAsGround: boolean
+  readonly narrowGround: boolean
 }
 
 export function ConversationLayout(props: ConversationLayoutProps): ReactElement {

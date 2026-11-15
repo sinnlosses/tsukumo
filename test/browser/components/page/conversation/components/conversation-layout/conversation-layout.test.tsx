@@ -11,7 +11,7 @@ import {
  * 4領域は中身の判別さえできればよいので、部品名の文字列だけ渡す
  * （`<ConversationLayout>` は他の `features/` を import しない。層のエッジの検査が守る）。
  */
-function renderLayout(collapseCharacter = false, mainAsGround = collapseCharacter): void {
+function renderLayout(narrowGround = false): void {
   render(
     <ConversationLayout
       main="main"
@@ -20,8 +20,7 @@ function renderLayout(collapseCharacter = false, mainAsGround = collapseCharacte
       dispatch="dispatch"
       inquiry="inquiry"
       rail={{ badge: "railBadge" }}
-      collapseCharacter={collapseCharacter}
-      mainAsGround={mainAsGround}
+      narrowGround={narrowGround}
     />,
   )
 }
@@ -156,10 +155,10 @@ describe("ConversationLayout", () => {
     expect(screen.getAllByRole("separator")).toHaveLength(2)
   })
 
-  it("畳んでいる間（雑談モード）は左の列と、その仕切りを描かない", () => {
+  it("雑談モード（狭い画面で背景を敷く）でも左の列と仕切り2本を描く", () => {
     renderLayout(true)
 
-    expect(document.querySelector('[data-region="character"]')).toBeNull()
-    expect(screen.getAllByRole("separator")).toHaveLength(1)
+    expect(document.querySelector('[data-region="character"]')).not.toBeNull()
+    expect(screen.getAllByRole("separator")).toHaveLength(2)
   })
 })

@@ -14,8 +14,8 @@ afterEach(() => {
   cleanup()
 })
 
-function Log(props: { readonly count: number }): ReactElement {
-  const logRef = useStickToBottom(props.count)
+function Log(props: { readonly count: number; readonly generation?: number }): ReactElement {
+  const logRef = useStickToBottom(props.count, { generation: props.generation })
   return <div ref={logRef} data-testid="log" />
 }
 
@@ -71,6 +71,18 @@ describe("useStickToBottom", () => {
     await waitFor(() => {
       expect(log.scrollTop).toBe(1000)
     })
+  })
+
+  it("遡っている最中でも、世代が替わったら最新へ寄せ直す", () => {
+    const view = render(<Log count={3} generation={1} />)
+    const log = view.getByTestId("log")
+    giveSize(log, 1000, 400)
+    log.scrollTop = 100
+    fireEvent.scroll(log)
+
+    view.rerender(<Log count={3} generation={2} />)
+
+    expect(log.scrollTop).toBe(1000)
   })
 
   it("外れたあとは、スクロールの購読が残らない", () => {

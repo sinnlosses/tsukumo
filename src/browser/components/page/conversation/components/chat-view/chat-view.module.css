@@ -1,28 +1,25 @@
-/* 雑談ビュー（`<ChatView>`）。
-   メインビューの領域を左右に割り、左に立ち絵、右に会話のログを置く。
-   セリフ・投稿の行・時刻・「...」の見た目は仕事のメインビューと共用で、`../stream-row/stream-row.module.css` にある。
-
-   これはプロトタイプ。
-   立ち絵とログの比率は目視で仮に決めたもので、手触りを見てから詰める前提。 */
-/* 立ち絵とログの段と、狭い画面でだけ出す顔の行を縦に積む器。広い画面では段が高さいっぱいを取る。 */
+/* 雑談ビュー。
+   中央の列（`<ChatView>`）に会話のログを、左の列（`<ChatStage>`）に立ち絵と席を置く。
+   セリフ・投稿の行・時刻・「...」の見た目は仕事のメインビューと共用で、`../stream-row/stream-row.module.css` にある。 */
+/* ログと、狭い画面でだけ出す顔の行を縦に積む器。ログが高さいっぱいを取る。 */
 .chat-view {
   display: flex;
   flex-direction: column;
   height: 100%;
 }
-.chat-region {
-  flex: 1 1 0;
-  min-height: 0;
+/* 左の列いっぱいの舞台。席（`character-view` の `ItemSeats`）の基準になる。 */
+.chat-stage {
+  composes: stage-size from "../character-view/stage/stage-size.module.css";
+  position: relative;
+  container-type: size;
+  height: 100%;
+}
+/* 立ち絵は下端で揃え、沈めた足元をここで切る（領域にスクロールバーを出さない）。 */
+.chat-stage-layout {
+  display: flex;
+  align-items: flex-end;
+  height: 100%;
   overflow: hidden;
-  /* 立ち絵の大きさ（領域の高さに対する割合）。
-     メインビューはキャラビューより背が高いので、割合はキャラビュー（78%）より控えめにして、ログの側の幅を確保する。 */
-  --chat-portrait-height: 80%;
-  --chat-portrait-drop: 1.5rem;
-  /* つついたときのひと揺らし（`.chat-poke`）。
-     この2つが唯一の調整箇所。
-     立ち絵自身の動き（portrait.module.css）と同じく、控えめの初期値にしてある。 */
-  --chat-poke-sway-rotate: 1.6deg;
-  --chat-poke-sway-duration: 0.5s;
 }
 
 /* 狭い画面でだけ出す、ログの下の顔の行。 */
@@ -119,13 +116,18 @@
    ボタンの地・枠・余白は全部落とす（枠を持たないのはキャラクターだけ）。
    見えるのは立ち絵と、載せている間だけ出る案内の2つ。 */
 .chat-poke {
-  margin: 0 0 calc(-1 * var(--chat-portrait-drop));
-  flex: 0 1 auto;
+  /* つついたときのひと揺らし。
+     この2つが唯一の調整箇所。
+     立ち絵自身の動き（portrait.module.css）と同じく、控えめの初期値にしてある。 */
+  --chat-poke-sway-rotate: 1.6deg;
+  --chat-poke-sway-duration: 0.5s;
   /* 案内（`.chat-poke-hint`）を立ち絵に重ねる基準。 */
   position: relative;
-  height: var(--chat-portrait-height);
-  /* 立ち絵が縦長だと高さ側だけでは幅が読めないので、ログの場所を守る上限をここで引く（キャラビューの 45% より狭い。メインビューは背が高く、同じ割合だと幅を食いすぎる）。 */
-  max-width: 32%;
+  /* 左の列の幅いっぱいの箱に立ち、足元を床へ沈める（キャラビューの立ち絵と同じ寸法。`.chat-stage` が値を持つ）。 */
+  z-index: 1;
+  width: 100%;
+  height: var(--stage-portrait-height);
+  translate: 0 var(--stage-portrait-drop);
   padding: 0;
   border: none;
   background: none;
@@ -145,7 +147,7 @@
   animation-iteration-count: 1;
 }
 /* フォーカスの輪は内側に引く（`outline-offset: -2px`）。
-   立ち絵の左端は領域の左端と同じで、床へ沈めるぶん（`--chat-portrait-drop`）は領域の下端より下に出ているので、外側に引くと `.chat-region` の `overflow: hidden` が左と下を切ってしまう（実測: 領域も立ち絵も左端 28px）。
+   立ち絵は列の幅いっぱいで、床へ沈めるぶん（`--stage-portrait-drop`）は下に出て `.chat-stage-layout` の `overflow: hidden` に切られるので、外側に引くと左右と下の輪が切れる。
    内側なら左・上・右が丸ごと残り、切れるのは下端の1本だけになる。 */
 .chat-poke:focus-visible {
   outline-offset: -2px;
@@ -177,7 +179,7 @@
 /* 字の段・色は `Text` が持つ。箱（置き方・余白・角丸・地・出し入れ）・行の高さ・字揃えだけここに置く。 */
 .chat-poke-hint {
   position: absolute;
-  bottom: calc(var(--chat-portrait-drop) + 0.6rem);
+  bottom: calc(var(--stage-portrait-drop) + 0.6rem);
   left: 50%;
   width: max-content;
   max-width: 11rem;
@@ -198,8 +200,16 @@
 }
 /* 立ち絵は包んだボタンいっぱいに広がる（置き方は `.chat-poke` が持つ）。 */
 .chat-portrait {
+  width: 100%;
   height: 100%;
-  max-width: 100%;
+}
+.chat-portrait img {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  object-fit: contain;
+  object-position: center bottom;
 }
 /* 狭い画面（760px 以下）では立ち絵を出さない（顔だけを入力欄の上に出す）。 */
 @media (max-width: 760px) {

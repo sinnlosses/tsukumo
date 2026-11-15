@@ -19,6 +19,8 @@ type StickOptions = {
   readonly scrollerOf?: (log: HTMLElement) => Element
   /** `false` のあいだは寄せない（読み位置を先頭に置きたい中身を出しているとき）。 */
   readonly follow?: boolean
+  /** 並びが丸ごと入れ替わる世代。替わったら読み返し中の判定を捨て、最新へ寄せ直す。 */
+  readonly generation?: number
 }
 
 /**
@@ -50,12 +52,19 @@ export function useStickToBottom(
     log.scrollTop = log.scrollHeight
   }, [follow])
 
+  // 世代が替わったら、流し直した並びは遡る前の位置とは無関係なので、下端を読んでいる状態へ戻してから寄せる。
+  const generation = options.generation
+  const generationRef = useRef(generation)
   useExternalSync(() => {
+    if (generationRef.current !== generation) {
+      generationRef.current = generation
+      nearBottomRef.current = true
+    }
     if (count === 0) {
       return
     }
     stickToBottom()
-  }, [count, stickToBottom])
+  }, [count, generation, stickToBottom])
 
   // 入れ物が付いたときに、読んでいる位置の追跡と DOM の並びの変化の購読を始め、外れるときに切る。
   // 位置は「件数が増えたら寄せる」effect より前からずっと追い続ける必要があるので、件数の変化とは別に張る。

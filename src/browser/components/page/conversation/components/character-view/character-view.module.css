@@ -12,6 +12,7 @@
 @import "./stage/item-seat.css";
 
 .character-region {
+  composes: stage-size from "./stage/stage-size.module.css";
   position: relative;
   /* セリフのログ（`<dialog>`）が領域の大きさを `cqw` / `cqh` で読むためのもの（`.speech-log-stage::before`）。
      top layer に出ても DOM の祖先はここなので、コンテナは引ける。
@@ -24,9 +25,6 @@
      --portrait-drop は立ち絵を領域の下端よりさらに下へずらす量で、足元が枠で切れて「床に立っている」見え方になる。 */
   --portrait-height: 88%;
   --portrait-drop: 2.25rem;
-  /* 左の列の立ち絵（`stage/layout.css`）。高さは見本の値（1400x900 で 342px）、足元は 12px だけ下へずらす。 */
-  --stage-portrait-height: clamp(260px, 38dvb, 420px);
-  --stage-portrait-drop: 12px;
   --balloon-tail: 8px;
   /* 尻尾を最新の吹き出しの下端から浮かせる量（モック値）。縦中央ではなく下寄りに付く。 */
   --balloon-tail-bottom: 26px;

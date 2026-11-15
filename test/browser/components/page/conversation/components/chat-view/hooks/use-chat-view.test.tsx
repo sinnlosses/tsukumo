@@ -17,7 +17,7 @@ import {
 } from "../../../../../../../../src/shared/session/session-state.ts"
 import { characterInfo, shownPortraits } from "../../../../../../../fixture/character.ts"
 import { requestRecord, speechRecord } from "../../../../../../../fixture/session-record.ts"
-import { putState, putSession } from "../../../../../../session-store.ts"
+import { advanceState, putSession, putState } from "../../../../../../session-store.ts"
 
 /**
  * `<ChatView>` を丸ごと描かずに、表情の決め方・行への畳み方・セリフを出すタイミングを測る。
@@ -62,7 +62,7 @@ function renderUseChatView(stateOverrides: Partial<SessionState>): {
   function Wrapper({ children }: { readonly children: ReactNode }): ReactElement {
     return <>{children}</>
   }
-  const { result } = renderHook(() => useChatView(), { wrapper: Wrapper })
+  const { result } = renderHook(() => useChatView(true), { wrapper: Wrapper })
   return { result }
 }
 
@@ -145,7 +145,7 @@ describe("useChatView のセリフを遡る", () => {
     })
 
     act(() => {
-      putState({
+      advanceState({
         ...INITIAL_SESSION_STATE,
         records: [...RECORDS, speechRecord({ text: "3つめのセリフ" })],
         character: FIXTURE_CHARACTER,
@@ -154,6 +154,24 @@ describe("useChatView のセリフを遡る", () => {
     })
 
     expect(speechRows(result.current.rows).map((row) => row.selected)).toEqual([false, false, true])
+  })
+
+  it("姿が丸ごと入れ替わると、留めた選択は同じ描画のうちに外れる", () => {
+    const { result } = renderUseChatView({
+      records: RECORDS,
+      character: FIXTURE_CHARACTER,
+      speechExpression: "proud",
+    })
+    act(() => {
+      speechRows(result.current.rows)[0]?.onToggle()
+    })
+    expect(speechRows(result.current.rows).map((row) => row.selected)).toEqual([true, false])
+
+    act(() => {
+      putState({ ...INITIAL_SESSION_STATE, records: RECORDS, character: FIXTURE_CHARACTER })
+    })
+
+    expect(speechRows(result.current.rows).map((row) => row.selected)).toEqual([false, true])
   })
 })
 
@@ -193,7 +211,7 @@ describe("useChatView の出すタイミング（docs/architecture/screen-design
       const { result } = renderUseChatView({ records: [] })
 
       act(() => {
-        putState({
+        advanceState({
           ...INITIAL_SESSION_STATE,
           records: [speechRecord({ text: "1件目の架空のセリフ", expression: "proud" })],
           speechExpression: "proud",
@@ -204,7 +222,7 @@ describe("useChatView の出すタイミング（docs/architecture/screen-design
 
       // 時計は動かさないまま、続けて2件目が届く。
       act(() => {
-        putState({
+        advanceState({
           ...INITIAL_SESSION_STATE,
           records: [
             speechRecord({ text: "1件目の架空のセリフ", expression: "proud" }),
@@ -237,7 +255,7 @@ describe("useChatView の出すタイミング（docs/architecture/screen-design
       const { result } = renderUseChatView({ records: [] })
 
       act(() => {
-        putState({
+        advanceState({
           ...INITIAL_SESSION_STATE,
           records: [speechRecord({ text: "1件目の架空のセリフ" })],
           speechCalledInTurn: true,
@@ -248,7 +266,7 @@ describe("useChatView の出すタイミング（docs/architecture/screen-design
       // 2件目が届く前に、時計を2秒より先へ進めておく。
       clock.mockReturnValue(Temporal.Instant.fromEpochMilliseconds(3000))
       act(() => {
-        putState({
+        advanceState({
           ...INITIAL_SESSION_STATE,
           records: [
             speechRecord({ text: "1件目の架空のセリフ" }),
@@ -271,7 +289,7 @@ describe("useChatView の出すタイミング（docs/architecture/screen-design
       const { result } = renderUseChatView({ records: [], character: FIXTURE_CHARACTER })
 
       act(() => {
-        putState({
+        advanceState({
           ...INITIAL_SESSION_STATE,
           records: [speechRecord({ text: "1件目の架空のセリフ", expression: "proud" })],
           character: FIXTURE_CHARACTER,
@@ -282,7 +300,7 @@ describe("useChatView の出すタイミング（docs/architecture/screen-design
       expect(result.current.expression).toBe("proud")
 
       act(() => {
-        putState({
+        advanceState({
           ...INITIAL_SESSION_STATE,
           records: [
             speechRecord({ text: "1件目の架空のセリフ", expression: "proud" }),
@@ -319,7 +337,7 @@ describe("useChatView の出すタイミング（docs/architecture/screen-design
       })
 
       act(() => {
-        putState({
+        advanceState({
           ...INITIAL_SESSION_STATE,
           records: [previous, requestRecord({ turnId: 1, text: "架空の依頼" })],
           character: FIXTURE_CHARACTER,
@@ -332,7 +350,7 @@ describe("useChatView の出すタイミング（docs/architecture/screen-design
       expect(result.current.expression).toBe("proud")
 
       act(() => {
-        putState({
+        advanceState({
           ...INITIAL_SESSION_STATE,
           records: [
             previous,
@@ -370,7 +388,7 @@ describe("useChatView の出すタイミング（docs/architecture/screen-design
       const { result } = renderUseChatView({ records: [] })
 
       act(() => {
-        putState({
+        advanceState({
           ...INITIAL_SESSION_STATE,
           records: [speechRecord({ text: "1件目の架空のセリフ" })],
           speechCalledInTurn: true,
@@ -379,7 +397,7 @@ describe("useChatView の出すタイミング（docs/architecture/screen-design
       })
 
       act(() => {
-        putState({
+        advanceState({
           ...INITIAL_SESSION_STATE,
           records: [
             speechRecord({ text: "1件目の架空のセリフ" }),

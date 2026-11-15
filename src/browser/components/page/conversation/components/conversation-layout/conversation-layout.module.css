@@ -23,11 +23,6 @@
   /* 背景の擬似要素（下の `.layout-ground::before`）を器の後ろへ回す。 */
   isolation: isolate;
 }
-/* 左の列を畳んだとき（雑談モード。立ち絵が中央へ移る）。
-   領域と仕切りは <ConversationLayout> が描かないので、残った列に幅を渡すだけ。 */
-.layout-grid[data-collapse-character="true"] {
-  grid-template-columns: minmax(0, 1fr) auto var(--layout-sidebar-width, 22.8%);
-}
 /* 中央の列。メインビューが残りの高さを取り、入力欄は中身の高さで下端に付く。 */
 .layout-center {
   display: grid;
@@ -95,7 +90,7 @@
   pointer-events: none;
 }
 /* 枠も地の色も持たず、器の背景の上に直接置く領域。
-   キャラビューは常にこちら（付喪神は器物に宿るのであって、ウィジェットの中に座っているのではない）で、雑談中のメインビューもこちらになる。
+   左の列（仕事ではキャラビュー、雑談では立ち絵）は常にこちら（付喪神は器物に宿るのであって、ウィジェットの中に座っているのではない）。
    枠も角丸も付けないのは変えない。 */
 .layout-region.layout-bare {
   border: none;
@@ -168,9 +163,6 @@
     /* 柱と中央の列の間に仕切りの列は無いので、隙間を grid が持つ。 */
     column-gap: var(--space-sm);
   }
-  .layout-grid[data-collapse-character="true"] {
-    grid-template-columns: minmax(0, 1fr) 3rem;
-  }
   .layout-divider-sidebar {
     display: none;
   }
@@ -222,12 +214,13 @@
     min-height: 0;
     height: auto;
   }
-  /* 背景の絵は雑談モード（左の列を畳んだとき）だけ敷く。仕事モードでは顔の行を無地にする。 */
-  .layout-grid:not([data-collapse-character="true"]).layout-ground::before {
+  /* 背景の絵は雑談モードだけ敷く。仕事モードでは顔の行を無地にする。 */
+  .layout-grid:not([data-narrow-ground="true"]).layout-ground::before {
     display: none;
   }
-  .layout-grid[data-collapse-character="true"] {
-    grid-template-columns: 1fr;
+  /* 雑談モードの顔は中央の列の入力欄の上に出るので、左の列は出さない。 */
+  .layout-grid[data-narrow-ground="true"] .layout-region.layout-left {
+    display: none;
   }
   .layout-center {
     display: contents;

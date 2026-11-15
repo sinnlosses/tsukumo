@@ -94,11 +94,6 @@ export const STAGE_EXAMPLES: readonly ScreenPartExample[] = [
       <>
         <StageBox>
           <PresentationalChatView
-            portraitUrl={undefined}
-            altText="さくら（にこにこ）"
-            expression="default"
-            turnInProgress={false}
-            onNudge={noop}
             logRef={noop}
             showTyping={false}
             showEmptyMessage={false}
@@ -120,11 +115,6 @@ export const STAGE_EXAMPLES: readonly ScreenPartExample[] = [
         </StageBox>
         <StageBox>
           <PresentationalChatView
-            portraitUrl={undefined}
-            altText="さくら（にこにこ）"
-            expression="default"
-            turnInProgress
-            onNudge={noop}
             logRef={noop}
             showTyping
             showEmptyMessage={false}

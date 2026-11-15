@@ -1,7 +1,7 @@
 // `<ChatView>` のロジック。
 // 立ち絵に出す表情（押して留めた行か、出した吹き出しか）、ログに並べる行（日の区切り・時刻・印・弾む行を畳んだもの）、「...」を出すか、立ち絵をつついたときの送り先を組み立てて返す。
 
-import { useState, type RefCallback } from "react"
+import type { RefCallback } from "react"
 
 import type { Expression } from "../../../../../../../shared/character-pack/expression.ts"
 import type { RecordedPromptImage } from "../../../../../../../shared/session-driver/prompt-image.ts"
@@ -16,6 +16,7 @@ import { dayLabel } from "../../../../../../utils/day-label.ts"
 import { chatLogEntries, chatLogRows, type ChatLogEntry } from "../../../domain/chat-log.ts"
 import { recordClockStamp, type ClockStamp } from "../../../domain/clock-stamp.ts"
 import { useStickToBottom } from "../../hooks/use-stick-to-bottom.ts"
+import { useGenerationState } from "./use-generation-state.ts"
 import { useRevealedChatLog } from "./use-speech-reveal.ts"
 
 /**
@@ -83,7 +84,7 @@ type ViewedSpeech =
   | { readonly kind: "latest" }
   | { readonly kind: "pinned"; readonly index: number; readonly speechCount: number }
 
-export function useChatView(): ChatViewModel {
+export function useChatView(active: boolean): ChatViewModel {
   const records = useSession((session) => session.state.records)
   const speechExpression = useSession((session) => session.state.speechExpression)
   const character = useSession((session) => session.state.character)
@@ -93,13 +94,17 @@ export function useChatView(): ChatViewModel {
   const entries = chatLogEntries(records)
   // ログに並べるのは、出してよいと決まった前置きだけ。
   // 以下の遡り・自動スクロール・表情はすべてこの `shown` を見る（出していない行を先に選べたり、自動スクロールが先取りしたりしないように）。
-  const { entries: shown, pending } = useRevealedChatLog(entries)
-  const logRef = useStickToBottom(shown.length)
+  // 姿が丸ごと入れ替わったら（`hello`）、足止め・弾む行・留めた行は開いた時点からやり直し、ログは読み返し中でも最新へ寄せ直す。
+  // 雑談へ入るたび・出るたびに世代を替え、開いた時点からやり直す（作り直さずに器を残すので、マウントが担っていた「開いた時点」をここで作る）。
+  const sessionGeneration = useSession((session) => session.generation)
+  const generation = sessionGeneration * 2 + (active ? 1 : 0)
+  const { entries: shown, pending } = useRevealedChatLog(entries, generation)
+  const logRef = useStickToBottom(shown.length, { generation })
 
   // 現れるとき短く弾む行。
   // 弾むのは画面を開いたあとに届いた記録だけで、開いた時点で並んでいた記録（前の雑談の続き）には掛からない。
   // 遡って読むためのログが、開くたびに弾みながら組み上がることにならないように。
-  const [initialCount] = useState(entries.length)
+  const [initialCount] = useGenerationState(generation, () => entries.length)
 
   // 立ち絵がいま従っているセリフ。押していなければ「最新（出した吹き出し）」で、印は最新のセリフの行に付く。
   // 新しいセリフが来たら留めた選択はその場で失効し、立ち絵は常に「いまのセリフ」を表す側へ倒す。
@@ -108,7 +113,9 @@ export function useChatView(): ChatViewModel {
   //
   // 失効はレンダー中に件数を突き合わせて決める。
   // 件数は `shown` で数える（待たせている間は、まだ画面に出ていないセリフぶんで先に失効させない）。
-  const [viewed, setViewed] = useState<ViewedSpeech>({ kind: "latest" })
+  const [viewed, setViewed] = useGenerationState<ViewedSpeech>(generation, () => ({
+    kind: "latest",
+  }))
   const speechCount = countSpeeches(shown)
   const pinnedIndex = pinnedSpeechIndex(viewed, speechCount)
   const shownSpeechIndex = lastSpeechIndex(shown)

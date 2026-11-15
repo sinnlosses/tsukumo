@@ -75,7 +75,7 @@
         {
           "tag": "div",
           "attributes": {
-            "data-collapse-character": "false",
+            "data-narrow-ground": "false",
             "data-sidebar-open": "false"
           },
           "children": [

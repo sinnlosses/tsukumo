@@ -17,6 +17,7 @@ import { isDeepEqual } from "remeda"
 import { useExternalSync } from "../../../../../../hooks/use-external-sync.ts"
 import { nowEpochMilliseconds } from "../../../../../../utils/clock.ts"
 import type { ChatLogEntry } from "../../../domain/chat-log.ts"
+import { useGenerationState } from "./use-generation-state.ts"
 
 /** キャラクターの吹き出しどうしを最低これだけ空ける（ms）。 */
 const MIN_GAP_MS = 2000
@@ -35,21 +36,30 @@ type RevealedChatLog = {
  * それより後に届いた記録は、キャラクターのセリフの番が回ってくるたびに、前の吹き出しを出してから {@link MIN_GAP_MS} 空くまで足止めする。
  * 利用者の発言・区切りは待たせない。
  */
-export function useRevealedChatLog(entries: readonly ChatLogEntry[]): RevealedChatLog {
+export function useRevealedChatLog(
+  entries: readonly ChatLogEntry[],
+  generation: number,
+): RevealedChatLog {
   // 出してよい前置き。中身が変わらないあいだは同じ配列を持ち続け、受け取る側の導出を無駄に走らせない。
-  const [shown, setShown] = useState(entries)
+  // 姿の世代が替わったら、この3つの state は開いた時点からやり直す。
+  const [shown, setShown] = useGenerationState(generation, () => entries)
   // 直前に吹き出しを出した時刻。マウント時点で並んでいた記録ぶんはここに残さない（undefined のまま）。
   // そのときは根拠なく足止めせず、最初の1件は届き次第そのまま出す。
-  const [lastRevealAt, setLastRevealAt] = useState<number | undefined>(undefined)
+  const [lastRevealAt, setLastRevealAt] = useGenerationState<number | undefined>(
+    generation,
+    () => undefined,
+  )
   // 判定に使う時刻と、それを読んだときの記録の件数。
   // 件数が今と食い違うあいだ（`stale`）は、時刻が古いので出す件数を進めない（古い時刻で出すと、次の足止めが実際より短くなる）。
+  // 世代が替わった直後も古い時刻とみなし、時刻は effect で読み直す（描画中に時計を読まない）。
   const [clock, setClock] = useState(() => ({
+    generation,
     length: entries.length,
     at: nowEpochMilliseconds(),
   }))
 
   // React はレンダー中の `setState` を、コミットする前にもう一度その場でレンダーし直すので、この回のうちに反映される。
-  const stale = clock.length !== entries.length
+  const stale = clock.generation !== generation || clock.length !== entries.length
   const advanced: Advanced = stale
     ? { kind: "open", count: Math.min(shown.length, entries.length), lastRevealAt }
     : advanceReveal(entries, shown.length, lastRevealAt, clock.at)
@@ -79,12 +89,12 @@ export function useRevealedChatLog(entries: readonly ChatLogEntry[]): RevealedCh
         timer = setTimeout(wake, openAt - now)
         return
       }
-      setClock({ length: entries.length, at: now })
+      setClock({ generation, length: entries.length, at: now })
     }
     return () => {
       clearTimeout(timer)
     }
-  }, [stale, openAt, entries.length])
+  }, [stale, openAt, entries.length, generation])
 
   // 時刻を読み直すあいだは、出すかどうかが決まっていないので「...」を出さない。
   return { entries: shown, pending: !stale && advanced.count < entries.length }
