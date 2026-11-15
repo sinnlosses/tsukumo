@@ -1,5 +1,6 @@
 // お伺いのカードまで連れてくるフック。
-// 合図は3つで、新しい答え待ちが来たとき（`askId` が変わる）と、フォーカスした選択肢が替わったとき（詳細が出入りして札の高さが変わる）と、`useInquiryJump` の合図が変わったとき。
+// 合図は4つで、新しい答え待ちが来たとき（`askId` が変わる）と、フォーカスした選択肢が替わったとき（詳細が出入りして札の高さが変わる）と、`useInquiryJump` の合図が変わったときと、頭が見えている札が伸びたとき。
+// 詳細の中身は読み込みを待って遅れて描かれるので、選択肢が替わった時点では札はまだ伸びておらず、伸びるのは送ったあとになる。
 
 import { useRef, type RefObject } from "react"
 
@@ -22,6 +23,7 @@ export function useInquiryScroll(
   jump: InquiryJump,
 ): RefObject<HTMLElement | null> {
   const cardRef = useRef<HTMLElement>(null)
+  const heightRef = useRef(0)
   // 札が付く前に呼ばれた合図は、あとから付いた札では拾わない（勝手にフォーカスを移さない）。
   const handledSignalRef = useRef(jump.signal)
   const askId = inquiry.kind === "none" ? undefined : inquiry.id
@@ -35,6 +37,27 @@ export function useInquiryScroll(
       return
     }
     cardRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" })
+  }, [askId])
+
+  useExternalSync(() => {
+    const card = cardRef.current
+    if (askId === undefined || card === null) {
+      return undefined
+    }
+    heightRef.current = card.getBoundingClientRect().height
+    const observer = new ResizeObserver(() => {
+      const box = card.getBoundingClientRect()
+      const grew = box.height > heightRef.current
+      heightRef.current = box.height
+      // 利用者が札の頭を見ているときだけ送る。転がして札から離れていたら動かさない。
+      if (grew && isTopInView(box, viewportOf(card))) {
+        card.scrollIntoView({ block: "nearest", behavior: "smooth" })
+      }
+    })
+    observer.observe(card)
+    return () => {
+      observer.disconnect()
+    }
   }, [askId])
 
   useExternalSync(() => {
@@ -57,4 +80,22 @@ export function useInquiryScroll(
   }, [jump])
 
   return cardRef
+}
+
+type VerticalSpan = { readonly top: number; readonly bottom: number }
+
+function isTopInView(box: VerticalSpan, viewport: VerticalSpan): boolean {
+  return box.top >= viewport.top && box.top < viewport.bottom
+}
+
+/** 札をいちばん近くで転がす祖先の見える範囲。無ければ画面の見える範囲。 */
+function viewportOf(element: HTMLElement): VerticalSpan {
+  const parent = element.parentElement
+  if (parent === null) {
+    return { top: 0, bottom: window.innerHeight }
+  }
+  const overflowY = getComputedStyle(parent).overflowY
+  return overflowY === "auto" || overflowY === "scroll"
+    ? parent.getBoundingClientRect()
+    : viewportOf(parent)
 }

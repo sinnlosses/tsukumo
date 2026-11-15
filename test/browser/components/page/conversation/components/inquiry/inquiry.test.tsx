@@ -1,5 +1,5 @@
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react"
-import { afterEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { Inquiry } from "../../../../../../../src/browser/components/page/conversation/components/inquiry/inquiry.tsx"
 import { useComposerDraft } from "../../../../../../../src/browser/components/page/conversation/stores/composer-draft.ts"
@@ -18,7 +18,28 @@ import type {
 import { INITIAL_SESSION_STATE } from "../../../../../../../src/shared/session/session-state.ts"
 import { type CommandSpy, putSession } from "../../../../../session-store.ts"
 
+// 札の寸法の変化を、テストが好きなときに知らせる。
+class FakeResizeObserver {
+  static readonly instances: FakeResizeObserver[] = []
+  readonly callback: () => void
+
+  constructor(callback: () => void) {
+    this.callback = callback
+    FakeResizeObserver.instances.push(this)
+  }
+
+  observe(): void {}
+  unobserve(): void {}
+  disconnect(): void {}
+}
+
+beforeEach(() => {
+  FakeResizeObserver.instances.length = 0
+  vi.stubGlobal("ResizeObserver", FakeResizeObserver)
+})
+
 afterEach(() => {
+  vi.unstubAllGlobals()
   cleanup()
   // 組み立て中の答えはモジュール単位で残るので、次のテストへ持ち越さない。
   useInquiryDraft.setState(useInquiryDraft.getInitialState(), true)
@@ -303,6 +324,32 @@ describe("Inquiry（メインビューのお伺いのカード）", () => {
 
       fireEvent.focus(screen.getByRole("radio", { name: /B案/ }))
       expect(scrollIntoView).toHaveBeenCalledTimes(3)
+    } finally {
+      scrollIntoView.mockRestore()
+    }
+  })
+
+  it.each([
+    { name: "頭が見えている札が伸びたら、見える範囲へ送り直す", top: 200, calls: 1 },
+    { name: "転がして札の頭が見える範囲の上へ出ていたら、伸びても動かさない", top: -50, calls: 0 },
+  ])("$name（scrollIntoView）", ({ top, calls }) => {
+    const scrollIntoView = vi
+      .spyOn(Element.prototype, "scrollIntoView")
+      .mockImplementation(() => {})
+    try {
+      renderInquiry([questionPending([question()])])
+      scrollIntoView.mockClear()
+      vi.spyOn(card(), "getBoundingClientRect").mockReturnValue(
+        DOMRect.fromRect({ x: 0, y: top, width: 600, height: 700 }),
+      )
+
+      act(() => {
+        for (const observer of FakeResizeObserver.instances) {
+          observer.callback()
+        }
+      })
+
+      expect(scrollIntoView).toHaveBeenCalledTimes(calls)
     } finally {
       scrollIntoView.mockRestore()
     }
