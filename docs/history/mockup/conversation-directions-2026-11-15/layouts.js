@@ -74,10 +74,115 @@ function gatherIntoBar() {
   nav.replaceChildren(room, modes, one(".task-chip"), list, usage, links, gear)
 }
 
+// 仕上げ（a2）の調整の項目。URL の値か既定を、refine.css が読む変数へ渡す。
+const LOOK = {
+  veil: { fallback: 75, variable: "--veil", unit: "%", toCss: (value) => String(value / 100) },
+  blur: { fallback: 8, variable: "--panel-blur", unit: "px", toCss: (value) => `${value}px` },
+  fill: { fallback: 45, variable: "--panel-fill", unit: "%", toCss: (value) => `${value}%` },
+}
+
+// やり取りの列が長いときの形を見るための、前のやり取りの題（架空）。
+const EARLIER_TURNS = [
+  "起動時の案内文を短くする",
+  "タスクの一覧に絞り込みを足す",
+  "成果の暦の色をそろえる",
+  "キーの一覧を作り直す",
+  "狭い幅の引き出しを直す",
+  "使用量の表示を見直す",
+  "レポートの表の幅をそろえる",
+  "設定の検索を足す",
+  "知らせの音量を保存する",
+]
+
+function numberParam(name, fallback) {
+  const value = Number(params.get(name) ?? Number.NaN)
+  return Number.isFinite(value) ? value : fallback
+}
+
+// 歯車から開く調整の欄。動かした値は変数と URL の両方へ書く（同じ見え方を URL で渡せるようにする）。
+function setUpLook() {
+  const panel = one(".look-panel")
+  const fields = Object.entries(LOOK).map(([name, look]) => ({ name, look, input: panel.elements[name] }))
+  const show = () => {
+    for (const { look, input } of fields) {
+      const value = Number(input.value)
+      document.body.style.setProperty(look.variable, look.toCss(value))
+      input.nextElementSibling.textContent = `${value}${look.unit}`
+    }
+  }
+  const remember = (keep) => {
+    const next = new URLSearchParams(location.search)
+    for (const { name, input } of fields) {
+      if (keep) {
+        next.set(name, input.value)
+      } else {
+        next.delete(name)
+      }
+    }
+    history.replaceState(null, "", `?${next}`)
+    linkBar()
+  }
+  for (const { name, look, input } of fields) {
+    input.value = String(numberParam(name, look.fallback))
+  }
+  panel.addEventListener("input", () => {
+    show()
+    remember(true)
+  })
+  panel.addEventListener("reset", (event) => {
+    event.preventDefault()
+    for (const { look, input } of fields) {
+      input.value = String(look.fallback)
+    }
+    show()
+    remember(false)
+  })
+  show()
+  gear.setAttribute("popovertarget", "look-panel")
+}
+
+// 上の切り替えの帯のリンク。いまの URL の値（パック・調整の値）を引き継ぎ、選んだ1つだけを替える。
+function linkBar() {
+  const current = { layout, scene }
+  for (const choices of document.querySelectorAll(".mock-bar-group")) {
+    const name = choices.dataset.param
+    for (const link of choices.querySelectorAll("a")) {
+      const next = new URLSearchParams(location.search)
+      next.delete("open")
+      next.set(name, link.dataset.value)
+      link.href = `?${next}`
+      if (link.dataset.value === current[name]) {
+        link.setAttribute("aria-current", "true")
+      }
+    }
+  }
+}
+
+// 前のやり取りを足して、列が上限の高さで止まり、中だけが送られる形にする。
+function growTurns(count) {
+  const list = one(".turns")
+  const rows = EARLIER_TURNS.slice(0, Math.max(0, count - 3)).map(
+    (title) =>
+      `<li class="turn"><svg viewBox="0 0 24 24" class="icon"><use href="#i-check" /></svg><span>${title}</span></li>`,
+  )
+  list.insertAdjacentHTML("afterbegin", rows.join(""))
+}
+
 const ARRANGE = {
   a() {},
-  // 部品の並びは a のまま。見た目と寸法だけを refine.css が替える。
-  a2() {},
+  // 部品の並びは a のまま。見た目と寸法は refine.css が替え、ここは調整の欄・長いやり取り・セッションの切り替えをつなぐ。
+  a2() {
+    setUpLook()
+    growTurns(numberParam("turns", 12))
+    if (params.get("items") === "none") {
+      for (const seat of document.querySelectorAll(".seat")) {
+        seat.remove()
+      }
+    }
+    one(".session-tag").addEventListener("click", () => {
+      one("#session-switcher").showModal()
+    })
+  },
   // 部屋の名前はレールに収まらないので、やり取りの列の頭へ移す。
   b() {
     lane.prepend(group("lane-room", one(".nav-room-name"), one(".nav-room-port")))
@@ -138,21 +243,7 @@ if (packId !== "tsukumo") {
   }
 }
 
-const current = { layout, scene }
-for (const choices of document.querySelectorAll(".mock-bar-group")) {
-  const name = choices.dataset.param
-  for (const link of choices.querySelectorAll("a")) {
-    const next = new URLSearchParams(current)
-    next.set(name, link.dataset.value)
-    if (packId !== "tsukumo") {
-      next.set("pack", packId)
-    }
-    link.href = `?${next}`
-    if (link.dataset.value === current[name]) {
-      link.setAttribute("aria-current", "true")
-    }
-  }
-}
+linkBar()
 
 const draft = one("#draft")
 draft.placeholder = `${pack.name} への依頼を書く`
@@ -179,9 +270,24 @@ if (pane !== null && (scene === "work" || scene === "ask")) {
   pane.scrollTop = pane.scrollHeight
 }
 
-// チップを押した扱いで開く（showPopover で開くと、一覧がチップに結び付かず位置が決まらない）。
-if (params.get("open") === "tasks") {
-  one(".task-chip")?.click()
+// やり取りの列は、いまのやり取り（末尾）が見える位置へ送る。
+const turnList = one(".turns")
+if (turnList !== null) {
+  turnList.scrollTop = turnList.scrollHeight
+}
+
+// 開いた状態で見る。一覧と調整の欄は、押した扱いで開く（showPopover で開くと、押した部品に結び付かず位置が決まらない）。
+const OPEN = {
+  tasks: () => one(".task-chip")?.click(),
+  look: () => one('[popovertarget="look-panel"]')?.click(),
+  sessions: () => one("#session-switcher")?.showModal(),
+  peek: () => {
+    document.body.dataset.open = "peek"
+  },
+}
+const opened = params.get("open") ?? ""
+if (Object.hasOwn(OPEN, opened)) {
+  OPEN[opened]()
 }
 
 one(".composer").addEventListener("submit", (event) => {

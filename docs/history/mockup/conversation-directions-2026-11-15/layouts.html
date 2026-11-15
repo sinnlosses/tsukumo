@@ -15,6 +15,12 @@
     中身はすべて架空で、実物の会話ではない。候補を並べて見比べるページは compare.html。
     ?layout=a|b|c|d|e|f|g|h     候補（基準・サイドレール・整列バー・左ピラー・HUD とコンソール・見開き・タスクバー・集中モード）
     ?layout=a2                  候補 A の仕上げ（細いヘッダー・面の下端まで伸びるサイドバー・背景の透けるパネル。refine.css）
+      &veil=50〜100             背景の暗さ（地の色の覆いの不透明度。%）。既定 75
+      &blur=0〜24               パネルのぼかし（px）。既定 8
+      &fill=20〜90              パネルの濃さ（%）。既定 45
+      &turns=3〜12              やり取りの件数。既定 12（列が上限の高さで止まり、中だけが送られる形）
+      &items=none               席のアイテム（架空の飾り）を外す
+      &open=look|sessions|peek  調整の欄・セッションの切り替え・セッションの札の一行を開いた状態で見る
     ?scene=greet|work|ask|read  場面（迎える・待つ・答える・読む）
     ?open=tasks                 タスクの一覧を開いた状態で見る（候補 f・g）
     ?pack=shirasuzu             別のパックの素材と差し色で見る
@@ -32,6 +38,7 @@
         <g id="i-chevron"><path d="m6 9 6 6 6-6" /></g>
         <g id="i-chevron-left"><path d="m15 18-6-6 6-6" /></g>
         <g id="i-chevron-right"><path d="m9 18 6-6-6-6" /></g>
+        <g id="i-search"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></g>
         <g id="i-brief"><rect x="2" y="7" width="20" height="14" rx="2" /><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" /></g>
         <g id="i-chat"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" /></g>
         <g id="i-user"><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></g>
@@ -73,12 +80,78 @@
       </span>
     </header>
 
+    <form class="look-panel" id="look-panel" popover="auto" data-only="a2" aria-label="見た目の調整">
+      <p class="look-title">見た目の調整<span>設定にする項目の候補</span></p>
+      <label class="look-row"><span>背景の暗さ</span><input type="range" name="veil" min="50" max="100" step="5" /><output></output></label>
+      <label class="look-row"><span>パネルのぼかし</span><input type="range" name="blur" min="0" max="24" step="2" /><output></output></label>
+      <label class="look-row"><span>パネルの濃さ</span><input type="range" name="fill" min="20" max="90" step="5" /><output></output></label>
+      <button class="chip-button" type="reset">既定に戻す</button>
+    </form>
+
+    <dialog class="switcher" id="session-switcher" data-only="a2" aria-label="セッションを切り替える">
+      <div class="switcher-list">
+        <label class="switcher-search">
+          <svg viewBox="0 0 24 24" class="icon"><use href="#i-search" /></svg>
+          <input type="search" aria-label="セッションを探す" placeholder="ID・依頼・タスク番号で探す" />
+        </label>
+        <button class="switcher-new" type="button"><svg viewBox="0 0 24 24" class="icon icon-sm"><use href="#i-plus" /></svg>新しいセッション</button>
+        <p class="switcher-group">今日</p>
+        <ul>
+          <li>
+            <button class="switcher-row" type="button" aria-current="true">
+              <span class="switcher-id">FA</span><span class="switcher-name">設定に知らせの切り替えを足したい</span><span class="tag tag-accent">いま</span>
+              <span class="switcher-meta">14:20 から · 依頼 3</span>
+            </button>
+          </li>
+          <li>
+            <button class="switcher-row" type="button">
+              <span class="switcher-id">7C</span><span class="switcher-name">一覧の並び順を見直す</span>
+              <span class="switcher-meta">10:05 から · 依頼 5</span>
+            </button>
+          </li>
+        </ul>
+        <p class="switcher-group">昨日</p>
+        <ul>
+          <li>
+            <button class="switcher-row" type="button">
+              <span class="switcher-id">2B</span><span class="switcher-name">成果の暦の色をそろえる</span>
+              <span class="switcher-meta">16:40 から · 依頼 8 · 別のウィンドウで使用中</span>
+            </button>
+          </li>
+        </ul>
+        <p class="switcher-group">それより前</p>
+        <ul>
+          <li>
+            <button class="switcher-row" type="button">
+              <span class="switcher-id">91</span><span class="switcher-name">キーの一覧を作り直す</span>
+              <span class="switcher-meta">11月12日 · 依頼 12</span>
+            </button>
+          </li>
+        </ul>
+      </div>
+      <section class="switcher-detail" aria-label="セッション FA">
+        <header class="switcher-who">
+          <img class="voice-face" src="../../../../characters/tsukumo/face.png" alt="" /><span data-pack-name>つくも</span><span class="switcher-id">FA</span>
+        </header>
+        <h2>このセッションの要約</h2>
+        <p>設定の「知らせ」の群に切り替えを足し、端末ごとに保存する作業。型検査と単体テストは通過し、切り替えの文言の確認が残っている。</p>
+        <h2>最後のひとこと</h2>
+        <p class="switcher-line">検査まで全部通ったぞ、えへん！見てほしいのは表の2行目なのだ。</p>
+        <p class="switcher-remaining">残り：切り替えの文言を決める</p>
+        <button class="button button-quiet" type="button" disabled>いま出しているセッション</button>
+      </section>
+    </dialog>
+
     <div class="app">
       <nav class="nav" aria-label="画面の切り替え">
         <span class="nav-room">
           <img class="nav-face" src="../../../../characters/tsukumo/face.png" alt="" />
+          <span class="face-pick" data-only="a2" aria-hidden="true"><svg viewBox="0 0 24 24" class="icon"><use href="#i-chevron" /></svg></span>
           <span class="nav-room-name">tsukumo-task</span>
           <span class="nav-room-port">57730</span>
+          <span class="nav-sep" data-only="a2" aria-hidden="true">-</span>
+          <button class="session-tag" type="button" data-only="a2" aria-label="セッション FA（押して切り替え）" aria-describedby="session-peek">FA</button>
+          <span class="session-peek" id="session-peek" role="tooltip" data-only="a2">セッション FA · 今日 14:20 から · 依頼 3<span class="session-peek-hint">押して切り替え</span></span>
         </span>
         <span class="nav-tabs">
           <span class="nav-modes">
@@ -141,6 +214,38 @@
         </nav>
 
         <div class="actor" data-region="character">
+          <svg class="seat" data-seat="topLeft" data-only="a2" viewBox="0 0 72 132" aria-hidden="true">
+            <defs>
+              <radialGradient id="lantern-glow" cx="50%" cy="45%" r="60%">
+                <stop offset="0" stop-color="#ffdca6" />
+                <stop offset="0.55" stop-color="#f0a35a" />
+                <stop offset="1" stop-color="#c9742f" />
+              </radialGradient>
+            </defs>
+            <path d="M36 0v18" fill="none" stroke="#4a4354" stroke-width="2" />
+            <rect x="22" y="16" width="28" height="9" rx="2" fill="#2b2631" />
+            <path d="M10 62c0-22 11-37 26-37s26 15 26 37-11 37-26 37S10 84 10 62Z" fill="url(#lantern-glow)" />
+            <path d="M16 42c7 3 33 3 40 0M11 54c8 3 42 3 50 0M10 66c8 3 44 3 52 0M12 78c8 3 40 3 48 0M18 88c6 3 30 3 36 0" fill="none" stroke="#b9682f" stroke-opacity="0.55" stroke-width="1.5" />
+            <rect x="22" y="98" width="28" height="8" rx="2" fill="#2b2631" />
+            <path d="M36 106v12" fill="none" stroke="#d98a3c" stroke-width="2" />
+            <path d="M31 118h10l-2 12h-6z" fill="#d98a3c" />
+          </svg>
+          <svg class="seat" data-seat="belowLeft" data-only="a2" viewBox="0 0 96 52" aria-hidden="true">
+            <ellipse cx="48" cy="38" rx="44" ry="12" fill="#3f302b" />
+            <ellipse cx="48" cy="35" rx="40" ry="9.5" fill="#6a5146" />
+            <path d="M20 16h22v9a11 11 0 0 1-22 0Z" fill="#e9e2d2" />
+            <ellipse cx="31" cy="16" rx="11" ry="3.2" fill="#93b07c" />
+            <path d="M54 18h22v9a11 11 0 0 1-22 0Z" fill="#e9e2d2" />
+            <ellipse cx="65" cy="18" rx="11" ry="3.2" fill="#93b07c" />
+          </svg>
+          <svg class="seat" data-seat="belowRight" data-only="a2" viewBox="0 0 96 76" aria-hidden="true">
+            <path d="M34 18c0-9 6-14 14-14s14 5 14 14" fill="none" stroke="#4a372c" stroke-linecap="round" stroke-width="5" />
+            <rect x="6" y="18" width="84" height="54" rx="10" fill="#7b5a45" />
+            <path d="M6 28a10 10 0 0 1 10-10h64a10 10 0 0 1 10 10v12c0 6-18 10-42 10S6 46 6 40Z" fill="#906c53" />
+            <rect x="24" y="40" width="8" height="16" rx="2" fill="#d9b36a" />
+            <rect x="64" y="40" width="8" height="16" rx="2" fill="#d9b36a" />
+            <path d="M8 60h80" fill="none" stroke="#5f4535" stroke-width="2" />
+          </svg>
           <img class="portrait" data-hide="work ask read" src="../../../../characters/tsukumo/excited.png" alt="つくも（わくわく）" />
           <img class="portrait" data-hide="greet ask read" src="../../../../characters/tsukumo/thinking.png" alt="つくも（ふむ）" />
           <img class="portrait" data-hide="greet work read" src="../../../../characters/tsukumo/curious.png" alt="つくも（きょとん）" />

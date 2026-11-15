@@ -1,24 +1,36 @@
 /* 候補 A の仕上げ（?layout=a2）。配置は A のまま、ヘッダーを細くし、サイドバーを面の下端まで伸ばす。
-   パネルは背景の透ける面に、会話の流れの紙と吹き出しは細い縁と柔らかい影に替える */
+   背景は地の色の覆いで一様に暗くし、パネルは背景の透ける面にする。
+   覆いの濃さ（--veil）・パネルのぼかし（--panel-blur）・パネルの濃さ（--panel-fill）は layouts.js が URL の値で上書きする */
+
+@property --fade-end {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
 
 body[data-layout="a2"] {
   --nav-h: 40px;
   --radius-container: 16px;
-  --hairline: rgb(255 255 255 / 9%);
-  --hairline-quiet: rgb(255 255 255 / 5%);
-  --glass: linear-gradient(to bottom, rgb(44 41 56 / 80%), rgb(31 28 40 / 88%));
-  --glass-blur: blur(22px) saturate(1.35);
-  --lift: inset 0 1px 0 rgb(255 255 255 / 7%), 0 18px 40px rgb(8 6 14 / 45%);
+  --veil: 0.75;
+  --panel-blur: 8px;
+  --panel-fill: 45%;
+  --seat-rise: 64px;
+  --hairline: rgb(255 255 255 / 10%);
+  --hairline-quiet: rgb(255 255 255 / 6%);
+  --glass: color-mix(in srgb, rgb(46 43 58) var(--panel-fill), transparent);
+  --glass-blur: blur(var(--panel-blur)) saturate(1.15);
+  --lift: inset 0 1px 0 rgb(255 255 255 / 7%), 0 14px 32px rgb(8 6 14 / 38%);
   --paper: rgb(27 25 35 / 95%);
 }
 
-/* 背景は上端と下端を沈め、立ち絵の立つ左下だけ明るさを残す */
+/* 背景: 絵の上に地の色の覆いを1枚重ねる（いまのキャラビューと同じ敷き方）。下端で合わせ、立ち絵の立つ床と地面をそろえる */
 body[data-layout="a2"] .ground {
   background:
-    linear-gradient(to bottom, rgb(14 12 22 / 72%) 0, rgb(14 12 22 / 0%) 132px),
-    linear-gradient(to top, rgb(14 12 22 / 72%) 0, rgb(14 12 22 / 0%) 34%),
-    radial-gradient(100% 80% at 10% 100%, rgb(14 12 22 / 4%) 0, rgb(14 12 22 / 34%) 100%),
-    var(--art) center / cover;
+    linear-gradient(
+      color-mix(in srgb, var(--ground) calc(var(--veil) * 100%), transparent),
+      color-mix(in srgb, var(--ground) calc(var(--veil) * 100%), transparent)
+    ),
+    var(--art) center bottom / cover;
 }
 
 /* ヘッダー: 40px の1行。背景を透かし、今の画面は下線ではなく面で示す */
@@ -26,12 +38,13 @@ body[data-layout="a2"] .nav {
   gap: 16px;
   padding: 0 12px 0 16px;
   border-block-end: 1px solid var(--hairline-quiet);
-  background: rgb(20 18 28 / 58%);
+  background: color-mix(in srgb, var(--ground) 55%, transparent);
   -webkit-backdrop-filter: var(--glass-blur);
   backdrop-filter: var(--glass-blur);
 }
 
 body[data-layout="a2"] .nav-room {
+  position: relative;
   gap: 8px;
 }
 
@@ -42,6 +55,75 @@ body[data-layout="a2"] .nav-face {
 
 body[data-layout="a2"] .nav-room-name {
   font-size: 14px;
+}
+
+/* 顔はキャラクターの切り替え、短縮IDの札はセッションの切り替えの入口（どちらも今の帯と同じ） */
+.face-pick {
+  position: absolute;
+  inset-block-end: -3px;
+  inset-inline-start: 14px;
+  display: grid;
+  place-items: center;
+  inline-size: 13px;
+  block-size: 13px;
+  border-radius: 50%;
+  background: var(--surface-lift);
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 12%);
+  color: var(--ink-soft);
+}
+
+.face-pick .icon {
+  inline-size: 9px;
+  block-size: 9px;
+  stroke-width: 2.5;
+}
+
+.nav-sep {
+  color: var(--ink-quiet);
+}
+
+.session-tag {
+  padding: 1px 6px;
+  border-radius: 6px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink);
+  text-decoration: underline dotted var(--ink-quiet);
+  text-underline-offset: 3px;
+}
+
+.session-tag:is(:hover, :focus-visible) {
+  background: rgb(255 255 255 / 9%);
+}
+
+.session-peek {
+  position: absolute;
+  inset-block-start: calc(100% + 10px);
+  inset-inline-start: 0;
+  z-index: 5;
+  display: flex;
+  gap: 10px;
+  padding: 6px 10px;
+  border: 1px solid rgb(255 255 255 / 10%);
+  border-radius: 10px;
+  background: rgb(36 33 46 / 97%);
+  box-shadow: 0 12px 28px rgb(8 6 14 / 45%);
+  font-size: 12px;
+  color: var(--ink-soft);
+  white-space: nowrap;
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+
+.session-tag:is(:hover, :focus-visible) + .session-peek,
+body[data-open="peek"] .session-peek {
+  visibility: visible;
+  opacity: 1;
+}
+
+.session-peek-hint {
+  color: var(--accent);
 }
 
 body[data-layout="a2"] .nav-tabs {
@@ -107,6 +189,20 @@ body[data-layout="a2"] .side {
   align-self: stretch;
 }
 
+/* 透ける面の上では、弱い字を一段明るくして読める濃さを保つ */
+body[data-layout="a2"]
+  :is(
+    .side-count,
+    .usage-label,
+    .task-wait,
+    .task:not(.task-doing) :is(.task-summary, .task-id),
+    .turn:not(.turn-current),
+    .turn-lane-empty,
+    .elapsed
+  ) {
+  color: var(--ink-soft);
+}
+
 body[data-layout="a2"] .side-head {
   padding: 14px 16px 8px;
 }
@@ -131,7 +227,7 @@ body[data-layout="a2"] .task {
 }
 
 body[data-layout="a2"] .task:hover {
-  background: rgb(255 255 255 / 4%);
+  background: rgb(255 255 255 / 5%);
 }
 
 body[data-layout="a2"] .task-doing,
@@ -149,13 +245,81 @@ body[data-layout="a2"] .usage {
   border-block-start-color: var(--hairline-quiet);
 }
 
+/* やり取りの列は、立ち絵と左上の席に被らない高さで止め、中の一覧だけを送る。
+   一覧の上下は、送れる方向があるときだけぼかす */
+body[data-layout="a2"] .turn-lane {
+  max-block-size: calc(100dvb - var(--bar-h) - var(--nav-h) - 36px - var(--portrait-h) - var(--seat-rise));
+}
+
+body[data-layout="a2"] .turns {
+  --fade-size: 28px;
+  scrollbar-color: rgb(255 255 255 / 24%) transparent;
+  mask:
+    linear-gradient(#000, #000) no-clip subtract,
+    linear-gradient(to bottom, #000, transparent) 0 0 / 100% var(--fade-start) no-repeat no-clip,
+    linear-gradient(to bottom, transparent, #000) 0 100% / 100% var(--fade-end) no-repeat no-clip;
+  animation:
+    turns-fade-start linear both,
+    turns-fade-end linear both;
+  animation-timeline: scroll(self block);
+  animation-range:
+    0 var(--fade-size),
+    calc(100% - var(--fade-size)) 100%;
+}
+
+@keyframes turns-fade-start {
+  to {
+    --fade-start: var(--fade-size);
+  }
+}
+
+@keyframes turns-fade-end {
+  from {
+    --fade-end: var(--fade-size);
+  }
+}
+
 body[data-layout="a2"] .turn {
   border-radius: 10px;
 }
 
 body[data-layout="a2"] .turn-current {
-  background: rgb(255 255 255 / 8%);
+  background: rgb(255 255 255 / 9%);
   box-shadow: inset 0 0 0 1px var(--hairline-quiet);
+}
+
+/* 席のアイテム（飾り）。左上は立ち絵の後ろの頭上、左下と右下は立ち絵の手前の足元で、3つとも左の列の中に置く */
+body[data-layout="a2"] .actor .portrait {
+  position: relative;
+  z-index: 1;
+}
+
+.seat {
+  position: absolute;
+  display: block;
+  filter: drop-shadow(0 4px 6px rgb(8 6 14 / 40%));
+  pointer-events: none;
+}
+
+.seat[data-seat="topLeft"] {
+  inset-block-end: calc(var(--portrait-h) - 44px);
+  inset-inline-start: 6px;
+  z-index: 0;
+  block-size: 104px;
+}
+
+.seat[data-seat="belowLeft"] {
+  inset-block-end: 6px;
+  inset-inline-start: 0;
+  z-index: 2;
+  inline-size: 78px;
+}
+
+.seat[data-seat="belowRight"] {
+  inset-block-end: 6px;
+  inset-inline-end: 2px;
+  z-index: 2;
+  inline-size: 80px;
 }
 
 /* 立ち絵の足元に、狐火の色の淡い明かりを落とす */
@@ -291,7 +455,7 @@ body[data-layout="a2"] .post time {
 
 body[data-layout="a2"] .talk .worklog {
   border-radius: 999px;
-  background: rgb(20 18 28 / 62%);
+  background: var(--glass);
   -webkit-backdrop-filter: var(--glass-blur);
   backdrop-filter: var(--glass-blur);
 }
@@ -300,7 +464,11 @@ body[data-layout="a2"] .worklog summary {
   padding: 6px 16px;
 }
 
-/* 入力欄: 背景の透ける面に、細い縁と深い影 */
+body[data-layout="a2"] .worklog summary span {
+  color: var(--ink-soft);
+}
+
+/* 入力欄: 打つ字の読みやすさを優先して、パネルより濃い面にする */
 body[data-layout="a2"] .composer-body {
   gap: 6px;
   padding: 12px 10px 8px 18px;
@@ -339,4 +507,240 @@ body[data-layout="a2"] .composer-drawer {
 body[data-layout="a2"] .send-button {
   inline-size: 32px;
   block-size: 32px;
+}
+
+/* 見た目の調整（歯車から開く）。設定にする項目の候補を、その場で動かして確かめる */
+.look-panel {
+  position: fixed;
+  inset: auto;
+  inset-block-start: calc(var(--bar-h) + var(--nav-h) + 8px);
+  inset-inline-end: 12px;
+  inline-size: 312px;
+  margin: 0;
+  padding: 14px 16px;
+  border: 1px solid rgb(255 255 255 / 10%);
+  border-radius: 14px;
+  background: rgb(34 31 44);
+  color: var(--ink);
+  box-shadow: 0 20px 48px rgb(8 6 14 / 55%);
+}
+
+.look-panel:popover-open {
+  display: grid;
+  gap: 10px;
+}
+
+.look-title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  font-weight: 650;
+}
+
+.look-title span {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--ink-quiet);
+}
+
+.look-row {
+  display: grid;
+  grid-template-columns: 7.5em minmax(0, 1fr) 3.2em;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+}
+
+.look-row input {
+  inline-size: 100%;
+  accent-color: var(--accent);
+}
+
+.look-row output {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-soft);
+  text-align: end;
+}
+
+.look-panel .chip-button {
+  justify-self: end;
+}
+
+/* セッションの切り替え（短縮IDの札から開く）。左に探す欄と一覧、右に選んだ1件の中身 */
+.switcher {
+  inline-size: min(900px, 100vw - 64px);
+  block-size: min(540px, 100dvb - 96px);
+  padding: 0;
+  border: 1px solid rgb(255 255 255 / 10%);
+  border-radius: 18px;
+  background: rgb(30 27 39);
+  color: var(--ink);
+  box-shadow: 0 30px 80px rgb(0 0 0 / 55%);
+  overflow: hidden;
+}
+
+.switcher[open] {
+  display: grid;
+  grid-template-columns: 340px minmax(0, 1fr);
+}
+
+.switcher::backdrop {
+  background: rgb(10 8 16 / 55%);
+}
+
+.switcher-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-block-size: 0;
+  padding: 14px 10px;
+  border-inline-end: 1px solid rgb(255 255 255 / 6%);
+  overflow-y: auto;
+}
+
+.switcher-search {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  block-size: 36px;
+  padding: 0 12px;
+  border-radius: 10px;
+  background: rgb(255 255 255 / 6%);
+  color: var(--ink-quiet);
+}
+
+.switcher-search:focus-within {
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 50%, transparent);
+}
+
+.switcher-search input {
+  flex: 1;
+  min-inline-size: 0;
+  border: 0;
+  outline: 0;
+  background: none;
+  color: var(--ink-bright);
+  font: inherit;
+}
+
+.switcher-search input::placeholder {
+  color: var(--ink-quiet);
+}
+
+.switcher-new {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  block-size: 34px;
+  padding: 0 12px;
+  border-radius: 10px;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.switcher-new:hover,
+.switcher-row:hover {
+  background: rgb(255 255 255 / 5%);
+}
+
+.switcher-group {
+  padding: 8px 12px 2px;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--ink-quiet);
+}
+
+.switcher-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 2px 8px;
+  inline-size: 100%;
+  padding: 8px 12px;
+  border-radius: 10px;
+  text-align: start;
+}
+
+.switcher-row[aria-current="true"] {
+  background: rgb(255 255 255 / 9%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 6%);
+}
+
+.switcher-id {
+  padding: 0 6px;
+  border-radius: 6px;
+  background: rgb(255 255 255 / 9%);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.switcher-name {
+  overflow: hidden;
+  font-weight: 600;
+  color: var(--ink-bright);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.switcher-meta {
+  grid-column: 2 / -1;
+  font-size: 12px;
+  color: var(--ink-quiet);
+}
+
+.switcher-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-block-size: 0;
+  padding: 22px 26px;
+  overflow-y: auto;
+}
+
+.switcher-who {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.switcher-detail h2 {
+  margin-block-start: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--ink-quiet);
+}
+
+.switcher-detail p {
+  font-size: 15px;
+  line-height: 1.7;
+  text-wrap: pretty;
+}
+
+.switcher-detail .switcher-line {
+  align-self: flex-start;
+  padding: 8px 12px;
+  border-radius: 6px 16px 16px;
+  background: color-mix(in srgb, var(--accent) 12%, rgb(30 27 39));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 28%, transparent);
+}
+
+.switcher-detail .switcher-remaining {
+  font-size: 14px;
+  color: var(--ink-soft);
+}
+
+.switcher-detail .button {
+  align-self: flex-start;
+  margin-block-start: auto;
+}
+
+.switcher-detail .button:disabled {
+  opacity: 0.6;
+  cursor: default;
 }
