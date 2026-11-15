@@ -1,5 +1,5 @@
 // ドラフトの行の右端の3択（計画・却下・保留）と、却下の行の理由の欄。
-// 選んだ札は色だけでなく、左の「●」と字の色で伝える。
+// 選んだ札は色だけでなく、左の「●」と字・地の色で伝える。
 
 import clsx from "clsx"
 import type { ReactElement } from "react"
@@ -52,7 +52,11 @@ export function TaskBoardSortChoice(props: {
               sort.onChoose(item.choice)
             }}
           >
-            {checked && <span aria-hidden="true">● </span>}
+            {checked && (
+              <span className={styles["task-board-sort-dot"]} aria-hidden="true">
+                ●{" "}
+              </span>
+            )}
             {item.label}
           </button>
         )

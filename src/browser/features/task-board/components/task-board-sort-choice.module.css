@@ -36,6 +36,10 @@
 }
 .task-board-sort-drop.task-board-sort-on {
   background: color-mix(in srgb, var(--state-ng) 10%, transparent);
+  color: var(--ink);
+}
+/* 却下の札の字を state-ng にすると地との対比が字の下限を割るので、赤は読み上げから外した「●」だけに付ける。 */
+.task-board-sort-drop .task-board-sort-dot {
   color: var(--state-ng);
 }
 .task-board-sort-hold.task-board-sort-on {

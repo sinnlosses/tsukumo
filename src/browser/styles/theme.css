@@ -39,9 +39,9 @@
 
   /* 意味を固定した色。誰が来ても変わらない。文字のラベルと対で使うものだけがここに入る（色だけで意味を伝えない）。
      state-info・state-ask・state-memo はレポートの「情報」「疑問」「メモ」の印で、ラベルが必ず添う。 */
-  --state-ok: #7ee081;
-  --state-warn: #e3c766;
-  --state-ng: #f2a0a0;
+  --state-ok: #5fd38a;
+  --state-warn: #f2b544;
+  --state-ng: #ef6b6b;
   --state-info: #9cc1ee;
   --state-ask: #c7aef0;
   --state-memo: var(--ink);
