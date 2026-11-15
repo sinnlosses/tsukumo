@@ -242,6 +242,27 @@ test.describe("report → メインビュー", () => {
       .toBe("TEXTAREA")
   })
 
+  test("お願いの選択肢の札を押すと、入力欄に下書きが入り、会話へは送られない", async ({ run }) => {
+    const room = await run.open({
+      scenario: "report-favor-options",
+      scene: "report-favor-options-two",
+      viewport: "wide",
+      domRoots: ["main"],
+    })
+
+    await room.waitForEvent("turn-finished")
+    const choice = room.page.getByRole("button", { name: /表形式/ })
+    await choice.waitFor()
+    await choice.click()
+
+    const textArea = room.page.locator("textarea")
+    await expect.poll(() => textArea.inputValue()).toBe("書き出しは表形式で進めて。")
+    await expect(choice).toHaveAttribute("aria-pressed", "true")
+    await expect(
+      room.page.locator("[data-report-body]").getByText("書き出しは表形式で進めて。"),
+    ).toHaveCount(0)
+  })
+
   test("部品の外の字（頭の欄）を選ぶと「聞く・頼む」が出て、押すと入力欄の頭に引用が入ってフォーカスが移る", async ({
     run,
   }) => {

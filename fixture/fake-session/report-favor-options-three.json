@@ -1,0 +1,83 @@
+{
+  "name": "report-favor-options-three",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "架空の通知の出し方を3通りから選びたい（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 1000,
+      "event": {
+        "kind": "report",
+        "toolUseId": "fake-favor-options-three-1",
+        "components": [
+          {
+            "id": "root",
+            "component": "Report",
+            "conclusion": ["架空の結論: 通知の出し方は3通りあり、手間と見落としやすさが違う。"],
+            "checks": [
+              {
+                "status": "unobserved",
+                "label": "架空の通知の表示位置",
+                "figure": "",
+                "command": "",
+                "detail": "",
+                "howToVerify": "架空の画面を開いて右上の通知を見る",
+                "supports": ["s1"]
+              },
+              {
+                "status": "unobserved",
+                "label": "架空の通知の消える時間",
+                "figure": "",
+                "command": "",
+                "detail": "",
+                "howToVerify": "通知が出てから消えるまでを数える",
+                "supports": ["s1"]
+              }
+            ],
+            "favor": "通知の出し方を選んでください。見落としにくさを優先するなら中央がおすすめです。",
+            "favorOptions": [
+              {
+                "name": "右上に小さく出す",
+                "draft": "通知は右上に小さく出して。",
+                "result": "邪魔にならないが、見落としやすい"
+              },
+              {
+                "name": "中央に出す",
+                "draft": "通知は画面の中央に出して。",
+                "result": "見落とさない。作業は一瞬止まる",
+                "recommended": true
+              },
+              {
+                "name": "音だけで知らせる",
+                "draft": "通知は音だけで知らせて。",
+                "result": "画面は変わらない。音を切っていると気づけない"
+              }
+            ],
+            "children": ["s1"]
+          },
+          { "id": "s1", "component": "Section", "heading": "架空の通知", "children": ["p1"] },
+          {
+            "id": "p1",
+            "component": "Markdown",
+            "markdown": "通知の出し方は3通りに絞った。どれも実装の量はほぼ同じ。"
+          }
+        ]
+      }
+    },
+    {
+      "afterMs": 1050,
+      "event": {
+        "kind": "tool-finished",
+        "toolUseId": "fake-favor-options-three-1",
+        "content": "ok",
+        "isError": false
+      }
+    },
+    { "afterMs": 1800, "event": { "kind": "turn-finished", "outcome": { "kind": "completed" } } }
+  ]
+}

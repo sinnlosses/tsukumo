@@ -12,6 +12,7 @@ import type { A2uiExpressionFault } from "../../../../shared/report/report-expre
 import { tableIdOfFilterPath, tableRowFilterTexts } from "../../../../shared/report/table-view.ts"
 import type { ToolErrorField } from "../../../../shared/report/tool-error-field.ts"
 import { expressionFaults } from "./expression-structure.ts"
+import { favorOptionsFaults, type FavorOptionsFaultKind } from "./favor-option-fault.ts"
 
 export type A2uiStructureFaultKind =
   | "unknown-component"
@@ -20,6 +21,7 @@ export type A2uiStructureFaultKind =
   | "root-not-report"
   | "undefined-reference"
   | "supports-undefined"
+  | FavorOptionsFaultKind
   | "report-child-not-section"
   | "nested-section"
   | "misplaced-component"
@@ -156,6 +158,9 @@ export function a2uiStructureFaults(components: readonly unknown[]): readonly A2
       faults.push({ kind: "unreferenced-component", pointer: `/components/${String(index)}` })
     }
   })
+  if (rootIndex !== undefined && parts[rootIndex]?.component === "Report") {
+    faults.push(...favorOptionsFaults(parts[rootIndex].props, rootIndex))
+  }
   faults.push(...filterBindingFaults(parts, indexById), ...expressionFaults(components))
   return faults
 }
@@ -195,6 +200,8 @@ const A2UI_STRUCTURE_FAULT_REASONS = {
   "root-not-report": "id が root の部品は Report にする",
   "undefined-reference": "参照先の id の部品が無い",
   "supports-undefined": "参照先の id の部品が無い（checks の supports には Section の id を書く）",
+  "favor-options-recommended": "favorOptions の recommended は1つまで",
+  "favor-options-without-favor": "favorOptions は favor（お願いの本文）があるときだけ渡す",
   "report-child-not-section": "Report.children には Section の id だけを置く",
   "nested-section": "Section の子に Section は置けない",
   "misplaced-component": "ここに置けない種類の部品",

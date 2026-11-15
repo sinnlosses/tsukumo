@@ -36,6 +36,7 @@ export const REPORT_FIELD_DESCRIPTIONS = {
   retrospective: "振り返りの結果。sections に混ぜない",
   notDone: "task のとき、手を付けなかったことを並べる。無ければ空の並び",
   favor: "利用者が取る行動が残るときだけ1つ。取る手段まで書く",
+  favorOptions: "お願いの選択肢（3つまで）。favor があるときだけ",
   checks: "検証の結果。検証していないターンでは省く。文字に記法を使わない",
   title: `セッション一覧の題（${String(MAX_SESSION_HEADING_LENGTH)}字以内）。話題が変わったときだけ`,
   sessionSummary: `セッション全体の要約。変えたいときだけ（${String(MAX_SESSION_SUMMARY_LENGTH)}字以内）`,
@@ -84,6 +85,9 @@ export const REPORT_FIELD_CARD_NOTES = {
     "行動は作業を終えた・止めたあとに残る、書き手が代わりにできないことに限る（2件あってもまとめる）。報告・感想・提案は書かず、行動が無ければ省く。" +
     "打つコマンドはそのコマンドを inline code で、開く場所・押す操作は場所と名前を書く。" +
     "順番があるときは「1. …　2. …」と番号を振って順に並べる。",
+  favorOptions:
+    "利用者が選ぶ案を札で並べる。draft は利用者が送る文の形で書く。result は選ぶと何が起きるかを短く言う。" +
+    "戻せない操作を含む案は irreversible を付け、わけは favor の本文に書く。recommended は1つまで。favor が無ければ渡さない。",
   checks:
     "結論の下に総括行と、落ちた・確かめていない項目の行で描かれ、通った項目は畳む。" +
     "結果の数は figure に、打ったコマンドは command に分ける。" +

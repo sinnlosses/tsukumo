@@ -3,10 +3,11 @@
 import { type ReactElement, use, useState } from "react"
 
 import type { A2uiReportComponent } from "../../../../shared/report/a2ui-report-catalog.ts"
+import type { ReportChecksView } from "../../../../shared/report/report-check-view.ts"
 import type { ReportTaskOutcome } from "../../../../shared/report/report-task.ts"
 import type { SessionRemaining } from "../../../../shared/session/session-digest.ts"
 import { Button } from "../../../components/ui/button/button.tsx"
-import { buildNextSteps, type NextStep } from "../domain/next-step-plan.ts"
+import { buildNextSteps, type NextStep, unobservedOf } from "../domain/next-step-plan.ts"
 import { ReplyPortContext } from "../reply-port.ts"
 import styles from "./leaf.module.css"
 
@@ -20,10 +21,15 @@ export type NextStepsOrigin = {
 export function NextStepRow(props: {
   readonly origin: NextStepsOrigin
   readonly components: readonly A2uiReportComponent[]
+  readonly checks: ReportChecksView
 }): ReactElement {
   const slot = use(ReplyPortContext)
   const [choosing, setChoosing] = useState(false)
-  const steps = buildNextSteps({ components: props.components, ...props.origin })
+  const steps = buildNextSteps({
+    components: props.components,
+    unobserved: unobservedOf(props.checks),
+    ...props.origin,
+  })
   if (slot.kind === "none" || steps.length === 0) {
     return <></>
   }
@@ -35,28 +41,59 @@ export function NextStepRow(props: {
         <span className={styles["next-step-title"]} aria-hidden="true">
           次の一手
         </span>
-        {steps.map((step, index) => (
-          <Button
-            key={step.kind}
-            variant={index === 0 ? "outline-accent-tinted" : "outline"}
-            size="label"
-            pressed="none"
-            disabled={false}
-            disclosure={
-              step.kind === "alternative"
-                ? { kind: "expander", expanded: choosing }
-                : { kind: "none" }
-            }
-            title={step.label}
-            className={styles["next-step-button"]}
-            onClick={() => pressed(step, port.appendDraft, () => setChoosing(!choosing))}
-          >
-            <span className={styles["next-step-label"]}>
-              {step.label}
-              {step.kind === "alternative" && <span aria-hidden="true">…</span>}
+        {steps.map((step, index) =>
+          step.kind === "check-result" ? (
+            <span
+              key={`${step.kind}:${step.label}`}
+              role="group"
+              aria-label={step.label}
+              className={styles["next-step-check"]}
+            >
+              <span className={styles["next-step-label"]} title={step.label}>
+                {step.label}
+              </span>
+              {[
+                { name: "確かめた", draft: step.confirmedDraft },
+                { name: "違った", draft: step.mismatchDraft },
+              ].map(({ name, draft }) => (
+                <Button
+                  key={name}
+                  variant="outline"
+                  size="label"
+                  pressed="none"
+                  disabled={false}
+                  disclosure={{ kind: "none" }}
+                  title={draft}
+                  className={styles["next-step-button"]}
+                  onClick={() => port.appendDraft(draft)}
+                >
+                  <span className={styles["next-step-label"]}>{name}</span>
+                </Button>
+              ))}
             </span>
-          </Button>
-        ))}
+          ) : (
+            <Button
+              key={step.kind}
+              variant={index === 0 ? "outline-accent-tinted" : "outline"}
+              size="label"
+              pressed="none"
+              disabled={false}
+              disclosure={
+                step.kind === "alternative"
+                  ? { kind: "expander", expanded: choosing }
+                  : { kind: "none" }
+              }
+              title={step.label}
+              className={styles["next-step-button"]}
+              onClick={() => pressed(step, port.appendDraft, () => setChoosing(!choosing))}
+            >
+              <span className={styles["next-step-label"]}>
+                {step.label}
+                {step.kind === "alternative" && <span aria-hidden="true">…</span>}
+              </span>
+            </Button>
+          ),
+        )}
       </div>
       {choosing && alternative?.kind === "alternative" && (
         <div role="group" aria-label="別の案" className={styles["next-step-row"]}>
@@ -89,5 +126,7 @@ function pressed(step: NextStep, append: (text: string) => void, toggleChooser: 
     toggleChooser()
     return
   }
-  append(step.draft)
+  if (step.kind !== "check-result") {
+    append(step.draft)
+  }
 }

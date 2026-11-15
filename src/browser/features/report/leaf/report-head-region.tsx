@@ -2,12 +2,13 @@
 // 頭はどの部分も値から、お願いは本文の塊を包みの中に並べる。
 
 import clsx from "clsx"
-import type { ReactElement, RefCallback } from "react"
+import { type ReactElement, type RefCallback, use, useState } from "react"
 
 import type { ReportNotDoneView } from "../../../../shared/report/report-not-done.ts"
 import { REPORT_NOTE_KINDS } from "../../../../shared/report/report-notation.ts"
 import type { MainViewSurfaceHead } from "../../../../shared/session/main-view-shape.ts"
 import { isBlankText } from "../../../../shared/utils/blank-text.ts"
+import { type FavorOption, hasIrreversibleOption } from "../domain/favor-option-list.ts"
 import type { ReportProofView } from "../domain/report-proof.ts"
 import { splitConclusion } from "../domain/split-conclusion.ts"
 import {
@@ -18,9 +19,11 @@ import {
   statsLeafClassNames,
   textLeafClassNames,
 } from "../markdown.tsx"
+import { ReplyPortContext } from "../reply-port.ts"
 import { RegionBox, RegionChunks } from "./body-region.tsx"
 import { ChangedFilesFold } from "./changed-files-fold.tsx"
 import { ChecksVerdict } from "./checks-verdict.tsx"
+import favorStyles from "./favor-option.module.css"
 import { PhaseTimes } from "./phase-time-section.tsx"
 import proofStyles from "./proof-band.module.css"
 import { StatCards } from "./stats-leaf.tsx"
@@ -78,6 +81,9 @@ export function FavorRegion(props: {
   readonly id: string
   readonly text: string
   readonly favorRef?: RefCallback<HTMLElement>
+  readonly options: readonly FavorOption[]
+  /** 札を押して下書きを入れられるか。最新のやり取りの最終レポートだけ。 */
+  readonly pressable: boolean
 }): ReactElement {
   if (isBlankText(props.text)) {
     return <></>
@@ -88,6 +94,9 @@ export function FavorRegion(props: {
       <div className={clsx(noteLeafClassNames.note, noteLeafClassNames.noteFavor)}>
         <NoteLabel kindName="note-favor" label={label} />
         <RegionChunks markdown={props.text} />
+        {props.options.length > 0 && (
+          <FavorChoices options={props.options} pressable={props.pressable} />
+        )}
       </div>
     </RegionBox>
   )
@@ -114,6 +123,62 @@ export function NotDoneRegion(props: { readonly notDone: ReportNotDoneView }): R
         </ul>
       )}
     </RegionBox>
+  )
+}
+
+function FavorChoices(props: {
+  readonly options: readonly FavorOption[]
+  readonly pressable: boolean
+}): ReactElement {
+  const slot = use(ReplyPortContext)
+  const [chosen, setChosen] = useState("")
+  const port = props.pressable && slot.kind === "open" ? slot.port : undefined
+  return (
+    <div className={favorStyles["favor-options"]}>
+      {hasIrreversibleOption(props.options) && (
+        <p role="note" className={favorStyles.warn}>
+          戻せない操作を含む選択肢があります。わけは上のお願いの本文に書いてあります。
+        </p>
+      )}
+      <ul className={favorStyles.choices}>
+        {props.options.map((option) => (
+          <li key={option.name} className={favorStyles.item}>
+            {port === undefined ? (
+              <div className={favorStyles.choice}>
+                <ChoiceBody option={option} />
+              </div>
+            ) : (
+              <button
+                type="button"
+                className={favorStyles.choice}
+                aria-pressed={chosen === option.name}
+                onClick={() => {
+                  port.appendDraft(option.draft)
+                  setChosen(option.name)
+                }}
+              >
+                <ChoiceBody option={option} />
+              </button>
+            )}
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
+function ChoiceBody(props: { readonly option: FavorOption }): ReactElement {
+  const { option } = props
+  return (
+    <>
+      <span className={favorStyles.name}>
+        {option.name}
+        {option.recommended === true && <span className={favorStyles.recommended}>おすすめ</span>}
+      </span>
+      {option.result !== undefined && option.result !== "" && (
+        <span className={favorStyles.result}>{option.result}</span>
+      )}
+    </>
   )
 }
 

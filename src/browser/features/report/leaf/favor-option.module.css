@@ -1,0 +1,85 @@
+/* お願いの選択肢の札と、戻せない操作の注意の行。札は狭い画面でも縦に積む。間は親の gap で決める。 */
+.favor-options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--stack-tight);
+}
+
+.warn {
+  margin: 0;
+  padding: var(--inset-control);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--state-warn) 11%, transparent);
+  color: var(--ink-bright);
+  font-size: var(--font-secondary);
+}
+
+.choices {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+  gap: var(--stack-tight);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  @media (width <= 760px) {
+    grid-template-columns: 1fr;
+  }
+
+  align-items: stretch;
+
+  /* 本文の箇条の間隔（`.detail-block li + li`）が札にも掛かり、2枚目から下へずれるので、それより強い詳細度で消す。 */
+  & > .item {
+    display: flex;
+    align-items: stretch;
+    margin: 0;
+  }
+}
+
+.choice {
+  display: grid;
+  flex: 1;
+  align-content: start;
+  gap: var(--stack-tight);
+  box-sizing: border-box;
+  min-width: 0;
+  padding: var(--inset-control);
+  border: 1px solid var(--ink-soft);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+
+  &[aria-pressed="true"] {
+    border-color: var(--accent);
+    box-shadow: inset 0 0 0 1px var(--accent);
+  }
+}
+
+button.choice {
+  cursor: pointer;
+}
+
+.name {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--inline-tight);
+  align-items: center;
+  color: var(--ink-bright);
+  font-weight: 600;
+}
+
+.recommended {
+  padding: 0 var(--inline-control);
+  border: 1px solid var(--ink-soft);
+  border-radius: var(--radius-pill);
+  color: var(--ink-soft);
+  font-size: var(--font-secondary);
+  font-weight: 500;
+}
+
+.result {
+  color: var(--ink-soft);
+  font-size: var(--font-secondary);
+}

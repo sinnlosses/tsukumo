@@ -4,9 +4,11 @@ import { PART_CARD_TOOL_NAME } from "../../../../../src/server/core/tsukumo-tool
 import {
   createReportGate,
   reportFigureDescription,
+  REPORT_FIELD_DESCRIPTIONS,
   REPORT_TOOL_DESCRIPTION,
 } from "../../../../../src/server/report/core/prompt/report-tool.ts"
 import {
+  REPORT_COMPONENT_SCHEMAS,
   REPORT_FIGURE_NONE_REASONS,
   reportFigureSchema,
 } from "../../../../../src/shared/report/a2ui-report-catalog.ts"
@@ -24,6 +26,17 @@ describe("REPORT_TOOL_DESCRIPTION", () => {
     expect(REPORT_TOOL_DESCRIPTION).toContain(PART_CARD_TOOL_NAME)
     expect(REPORT_TOOL_DESCRIPTION).not.toContain("触れるレポート:")
     expect(REPORT_TOOL_DESCRIPTION).not.toContain("呼び出しの例")
+  })
+})
+
+describe("report の定義の favorOptions", () => {
+  it("説明つきで受け、選択肢は3つまで", () => {
+    const { favorOptions } = REPORT_COMPONENT_SCHEMAS.Report.shape
+    const option = { name: "架空", draft: "架空の下書き" }
+
+    expect(REPORT_FIELD_DESCRIPTIONS.favorOptions).not.toBe("")
+    expect(favorOptions.safeParse([option, option, option]).success).toBe(true)
+    expect(favorOptions.safeParse([option, option, option, option]).success).toBe(false)
   })
 })
 

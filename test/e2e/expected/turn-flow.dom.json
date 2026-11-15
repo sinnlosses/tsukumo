@@ -1388,6 +1388,76 @@
                                                   ]
                                                 }
                                               ]
+                                            },
+                                            {
+                                              "tag": "div",
+                                              "attributes": {
+                                                "role": "group",
+                                                "aria-label": "次の一手"
+                                              },
+                                              "children": [
+                                                {
+                                                  "tag": "span",
+                                                  "attributes": {
+                                                    "aria-hidden": "true"
+                                                  },
+                                                  "children": [
+                                                    "次の一手"
+                                                  ]
+                                                },
+                                                {
+                                                  "tag": "span",
+                                                  "attributes": {
+                                                    "role": "group",
+                                                    "aria-label": "狭いビューポートでの見た目"
+                                                  },
+                                                  "children": [
+                                                    "狭いビューポートでの見た目",
+                                                    {
+                                                      "tag": "button",
+                                                      "attributes": {
+                                                        "data-variant": "secondary",
+                                                        "data-size": "sm",
+                                                        "data-elevation": "none",
+                                                        "data-astryx-pressable": "",
+                                                        "aria-label": "確かめた",
+                                                        "type": "button"
+                                                      },
+                                                      "children": [
+                                                        "確かめた",
+                                                        {
+                                                          "tag": "span",
+                                                          "attributes": {
+                                                            "role": "status",
+                                                            "aria-live": "polite"
+                                                          }
+                                                        }
+                                                      ]
+                                                    },
+                                                    {
+                                                      "tag": "button",
+                                                      "attributes": {
+                                                        "data-variant": "secondary",
+                                                        "data-size": "sm",
+                                                        "data-elevation": "none",
+                                                        "data-astryx-pressable": "",
+                                                        "aria-label": "違った",
+                                                        "type": "button"
+                                                      },
+                                                      "children": [
+                                                        "違った",
+                                                        {
+                                                          "tag": "span",
+                                                          "attributes": {
+                                                            "role": "status",
+                                                            "aria-live": "polite"
+                                                          }
+                                                        }
+                                                      ]
+                                                    }
+                                                  ]
+                                                }
+                                              ]
                                             }
                                           ]
                                         }

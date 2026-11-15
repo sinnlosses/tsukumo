@@ -7,8 +7,9 @@ import type { MainViewReportBody } from "../../../shared/session/main-view-shape
 import { A2uiReport } from "./a2ui-surface.tsx"
 import { MarkdownReport, ReportFrame } from "./leaf/body-region.tsx"
 import { FavorMarkContext, type FavorMark } from "./leaf/checks-verdict.tsx"
-import { NextStepRow, type NextStepsOrigin } from "./leaf/next-step-row.tsx"
-import { FavorRegion, HeadRegion } from "./leaf/report-head-region.tsx"
+import { FavorFollowUp } from "./leaf/favor-follow-up.tsx"
+import type { NextStepsOrigin } from "./leaf/next-step-row.tsx"
+import { HeadRegion } from "./leaf/report-head-region.tsx"
 
 export { PhaseTimeSummary } from "./leaf/phase-time-section.tsx"
 
@@ -80,8 +81,13 @@ function ReportBody(props: ReportProps): ReactElement {
       blockClassName={props.blockClassName}
     >
       <HeadRegion head={body.a2ui.head} />
-      <FavorRegion id={body.a2ui.favor.id} text={body.a2ui.favor.text} favorRef={props.favorRef} />
-      {props.nextSteps !== undefined && <NextStepRow origin={props.nextSteps} components={[]} />}
+      <FavorFollowUp
+        favor={body.a2ui.favor}
+        components={[]}
+        checks={body.a2ui.head.checks}
+        favorRef={props.favorRef}
+        nextSteps={props.nextSteps}
+      />
     </ReportFrame>
   )
 }

@@ -80,6 +80,7 @@ function reportCardSchemas() {
       task: noted(shape.task, "task"),
       retrospective: noted(shape.retrospective, "retrospective"),
       favor: noted(shape.favor, "favor"),
+      favorOptions: noted(shape.favorOptions, "favorOptions"),
       checks: noted(shape.checks, "checks"),
       title: noted(shape.title, "title"),
       sessionSummary: noted(shape.sessionSummary, "sessionSummary"),

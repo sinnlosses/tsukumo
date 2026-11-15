@@ -1,0 +1,70 @@
+{
+  "name": "report-favor-options-irreversible",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "架空の古いデータの整理を進めたい（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 1000,
+      "event": {
+        "kind": "report",
+        "toolUseId": "fake-favor-options-irreversible-1",
+        "components": [
+          {
+            "id": "root",
+            "component": "Report",
+            "conclusion": ["架空の結論: 古いデータの整理は、残す範囲を決めれば進められる。"],
+            "checks": [
+              {
+                "status": "unobserved",
+                "label": "架空の整理後の一覧表示",
+                "figure": "",
+                "command": "",
+                "detail": "",
+                "howToVerify": "架空の一覧を開いて件数を見る",
+                "supports": ["s1"]
+              }
+            ],
+            "favor": "整理のしかたを選んでください。完全に消す案は、消したデータを戻せません。先に控えを取る案を勧めます。",
+            "favorOptions": [
+              {
+                "name": "控えを取ってから消す",
+                "draft": "控えを取ってから古いデータを消して。",
+                "result": "控えから戻せる",
+                "recommended": true
+              },
+              {
+                "name": "そのまま消す",
+                "draft": "古いデータをそのまま消して。",
+                "result": "消したデータは戻せない",
+                "irreversible": true
+              }
+            ],
+            "children": ["s1"]
+          },
+          { "id": "s1", "component": "Section", "heading": "架空の整理", "children": ["p1"] },
+          {
+            "id": "p1",
+            "component": "Markdown",
+            "markdown": "整理の対象は90日より古いデータ。件数は架空の数で数千件。"
+          }
+        ]
+      }
+    },
+    {
+      "afterMs": 1050,
+      "event": {
+        "kind": "tool-finished",
+        "toolUseId": "fake-favor-options-irreversible-1",
+        "content": "ok",
+        "isError": false
+      }
+    },
+    { "afterMs": 1800, "event": { "kind": "turn-finished", "outcome": { "kind": "completed" } } }
+  ]
+}

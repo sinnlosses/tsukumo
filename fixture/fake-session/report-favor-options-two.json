@@ -1,0 +1,71 @@
+{
+  "name": "report-favor-options-two",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "架空の書き出しの形式をどうするか決めたい（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 1000,
+      "event": {
+        "kind": "report",
+        "toolUseId": "fake-favor-options-two-1",
+        "components": [
+          {
+            "id": "root",
+            "component": "Report",
+            "conclusion": [
+              "架空の結論: 書き出しの形式は2通りで実装できる。どちらかを選んでほしい。"
+            ],
+            "checks": [
+              {
+                "status": "unobserved",
+                "label": "架空の書き出しの画面表示",
+                "figure": "",
+                "command": "",
+                "detail": "",
+                "howToVerify": "架空の画面を開いて書き出しの一覧を見る",
+                "supports": ["s1"]
+              }
+            ],
+            "favor": "書き出しの形式を選んでください。どちらも手戻りは小さいです。",
+            "favorOptions": [
+              {
+                "name": "表形式",
+                "draft": "書き出しは表形式で進めて。",
+                "result": "列ごとに並べて、あとから並べ替えられる",
+                "recommended": true
+              },
+              {
+                "name": "文章形式",
+                "draft": "書き出しは文章形式で進めて。",
+                "result": "短く読めるが、並べ替えはできない"
+              }
+            ],
+            "children": ["s1"]
+          },
+          { "id": "s1", "component": "Section", "heading": "架空の書き出し", "children": ["p1"] },
+          {
+            "id": "p1",
+            "component": "Markdown",
+            "markdown": "書き出しの形式を2通りまで絞った。選んだほうで実装を進める。"
+          }
+        ]
+      }
+    },
+    {
+      "afterMs": 1050,
+      "event": {
+        "kind": "tool-finished",
+        "toolUseId": "fake-favor-options-two-1",
+        "content": "ok",
+        "isError": false
+      }
+    },
+    { "afterMs": 1800, "event": { "kind": "turn-finished", "outcome": { "kind": "completed" } } }
+  ]
+}

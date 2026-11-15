@@ -20,6 +20,13 @@
   padding: var(--inset-control);
   border-radius: var(--radius-pill);
 }
+.next-step-check {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--inline-control);
+  max-width: 100%;
+}
 .next-step-label {
   display: block;
   overflow: hidden;

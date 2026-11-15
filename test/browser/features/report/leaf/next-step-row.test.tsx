@@ -5,6 +5,7 @@ import { useComposerDraft } from "../../../../../src/browser/components/page/con
 import { NextStepRow } from "../../../../../src/browser/features/report/leaf/next-step-row.tsx"
 import { ReplyPortContext } from "../../../../../src/browser/features/report/reply-port.ts"
 import type { A2uiReportComponent } from "../../../../../src/shared/report/a2ui-report-catalog.ts"
+import type { ReportChecksView } from "../../../../../src/shared/report/report-check-view.ts"
 
 afterEach(() => {
   cleanup()
@@ -32,9 +33,33 @@ const COMPONENTS: readonly A2uiReportComponent[] = [
   },
 ]
 
+const CHECKS: ReportChecksView = {
+  kind: "checks",
+  summary: {
+    passedCount: 0,
+    figures: [],
+    problems: [{ status: "unobserved", count: 1 }],
+    favor: { kind: "none" },
+  },
+  problems: [
+    {
+      status: "unobserved",
+      label: "架空の検証",
+      figure: "",
+      time: "",
+      viaCommand: false,
+      recorded: false,
+      supports: [],
+      detail: "",
+      howToVerify: "架空の手順",
+    },
+  ],
+  passed: [],
+}
+
 const ORIGIN = { sessionRemaining: { kind: "none" }, outcome: "stopped" } as const
 
-function renderRow(withPort: boolean) {
+function renderRow(withPort: boolean, checks: ReportChecksView = { kind: "none" }) {
   const port = {
     appendDraft: useComposerDraft.getState().appendParagraphToDraft,
     prependDraft: useComposerDraft.getState().prependToDraft,
@@ -42,7 +67,7 @@ function renderRow(withPort: boolean) {
   }
   return render(
     <ReplyPortContext value={withPort ? { kind: "open", port } : { kind: "none" }}>
-      <NextStepRow origin={ORIGIN} components={COMPONENTS} />
+      <NextStepRow origin={ORIGIN} components={COMPONENTS} checks={checks} />
     </ReplyPortContext>,
   )
 }
@@ -76,6 +101,15 @@ describe("NextStepRow", () => {
     fireEvent.click(screen.getByRole("button", { name: "架空の案B" }))
 
     expect(useComposerDraft.getState().draft.text).toBe("架空の案B で進めて。")
+  })
+
+  it("確かめていない検証の行から確かめた・違ったの対が出て、押すと下書きが入る", () => {
+    renderRow(true, CHECKS)
+
+    fireEvent.click(screen.getByRole("button", { name: "違った" }))
+
+    expect(screen.getAllByRole("button", { name: "確かめた" })).toHaveLength(1)
+    expect(useComposerDraft.getState().draft.text).toBe("違った: 架空の検証")
   })
 
   it("口が渡されていない描画には出ない", () => {

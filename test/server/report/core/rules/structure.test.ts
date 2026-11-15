@@ -4,6 +4,7 @@ import {
   a2uiStructureFaultMessage,
   a2uiStructureFaults,
 } from "../../../../../src/server/report/core/rules/structure.ts"
+import { REPORT_COMPONENT_SCHEMAS } from "../../../../../src/shared/report/a2ui-report-catalog.ts"
 
 // 正しい一覧。節 2 つ、`Row` の中に `Card`、図と振り返りの根拠が内容部品を参照する。
 const VALID = [
@@ -357,6 +358,43 @@ describe("a2uiStructureFaults の寄せ先の無い memo", () => {
     },
   ])("$name は通る", ({ components }) => {
     expect(a2uiStructureFaults(components)).toEqual([])
+  })
+})
+
+describe("a2uiStructureFaults の favorOptions", () => {
+  const option = (name: string, recommended?: boolean) => ({
+    name,
+    draft: "架空の下書き",
+    recommended,
+  })
+  const withOptions = (options: readonly object[], favor = "架空のお願い。") => [
+    report(["s"], { favor, favorOptions: options }),
+    section("s", ["p"]),
+    paragraph("p"),
+  ]
+
+  it("3つ・勧める印1つは通る", () => {
+    expect(
+      a2uiStructureFaults(withOptions([option("甲", true), option("乙"), option("丙")])),
+    ).toEqual([])
+  })
+
+  it("勧める印が2つだと favor-options-recommended", () => {
+    expect(a2uiStructureFaults(withOptions([option("甲", true), option("乙", true)]))).toEqual([
+      { kind: "favor-options-recommended", pointer: "/components/0/favorOptions" },
+    ])
+  })
+
+  it("favor が無いと favor-options-without-favor", () => {
+    expect(a2uiStructureFaults(withOptions([option("甲")], ""))).toEqual([
+      { kind: "favor-options-without-favor", pointer: "/components/0/favorOptions" },
+    ])
+  })
+
+  it("4つは欄の形で拒まれる", () => {
+    const four = [option("a"), option("b"), option("c"), option("d")]
+
+    expect(REPORT_COMPONENT_SCHEMAS.Report.safeParse(withOptions(four)[0]).success).toBe(false)
   })
 })
 

@@ -187,6 +187,15 @@ const sectionComponentSchema = z.object({
   children: z.array(z.string()).min(1),
 })
 
+/** お願いの選択肢1つ。`draft` は押すと入力欄へそのまま入る。 */
+export const favorOptionSchema = z.object({
+  name: z.string(),
+  draft: z.string(),
+  result: z.string().optional(),
+  recommended: z.boolean().optional(),
+  irreversible: z.boolean().optional(),
+})
+
 /** 根。`children` は `Section` の ID、`figure` は図の部品の ID。 */
 const reportComponentSchema = z.object({
   id: z.string(),
@@ -217,6 +226,7 @@ const reportComponentSchema = z.object({
     })
     .optional(),
   favor: z.string().optional(),
+  favorOptions: z.array(favorOptionSchema).max(3).optional(),
   checks: z.array(reportCheckSchema).optional(),
   title: z.string().optional(),
   sessionSummary: z.string().optional(),

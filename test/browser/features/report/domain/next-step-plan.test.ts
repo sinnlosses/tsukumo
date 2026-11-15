@@ -36,6 +36,7 @@ const none = { kind: "none" } as const
 describe("buildNextSteps", () => {
   it("4つの種類が 再開する → 続ける → 確かめる → 別の案で進める の順に出る", () => {
     const steps = buildNextSteps({
+      unobserved: [],
       components: [options, claims([claim("inferred", "架空の手順")])],
       sessionRemaining: { kind: "remaining", text: "架空の残り" },
       outcome: "stopped",
@@ -56,11 +57,17 @@ describe("buildNextSteps", () => {
   })
 
   it("元の欄が無い種類は出さず、1つも無ければ空になる", () => {
-    expect(buildNextSteps({ components: [], sessionRemaining: none, outcome: "finished" })).toEqual(
-      [],
-    )
     expect(
       buildNextSteps({
+        unobserved: [],
+        components: [],
+        sessionRemaining: none,
+        outcome: "finished",
+      }),
+    ).toEqual([])
+    expect(
+      buildNextSteps({
+        unobserved: [],
         components: [claims([claim("confirmed", "")])],
         sessionRemaining: { kind: "unrecorded" },
       }),
@@ -68,13 +75,14 @@ describe("buildNextSteps", () => {
   })
 
   it("sessionRemaining が無ければ Options の採った案の題で続ける", () => {
-    const steps = buildNextSteps({ components: [options], sessionRemaining: none })
+    const steps = buildNextSteps({ unobserved: [], components: [options], sessionRemaining: none })
 
     expect(steps[0]).toMatchObject({ kind: "continue", label: "続ける: 架空の案A" })
   })
 
   it("推測と未確認が混じれば件数だけ、howToVerify の無い主張は確かめ方の行を持たない", () => {
     const [step] = buildNextSteps({
+      unobserved: [],
       components: [claims([claim("inferred", "架空の手順"), claim("unverified", "")])],
       sessionRemaining: none,
     })
@@ -94,11 +102,52 @@ describe("buildNextSteps", () => {
   it("未確認だけなら未確認 n 件、推測だけなら推測 n 件", () => {
     const labelOf = (certainty: "inferred" | "unverified") =>
       buildNextSteps({
+        unobserved: [],
         components: [claims([claim(certainty, "手順")])],
         sessionRemaining: none,
       })[0]?.label
 
     expect(labelOf("unverified")).toBe("確かめる: 未確認 1 件")
     expect(labelOf("inferred")).toBe("確かめる: 推測 1 件")
+  })
+})
+
+describe("buildNextSteps の確かめていない検証の行", () => {
+  const rows = (count: number) =>
+    Array.from({ length: count }, (_, index) => ({
+      label: `架空の検証${index + 1}`,
+      howToVerify: `手順${index + 1}`,
+    }))
+  const stepsOf = (count: number) =>
+    buildNextSteps({ components: [], unobserved: rows(count), sessionRemaining: none })
+
+  it("行が無ければ対は出ない", () => {
+    expect(stepsOf(0)).toEqual([])
+  })
+
+  it("行が1つなら、確かめた・違った の下書きを持つ対が1つ出る", () => {
+    expect(stepsOf(1)).toEqual([
+      {
+        kind: "check-result",
+        label: "架空の検証1",
+        confirmedDraft: "確かめた: 架空の検証1",
+        mismatchDraft: "違った: 架空の検証1",
+      },
+    ])
+  })
+
+  it("上限ちょうど（2行）なら、どちらも対になり、確かめるは出ない", () => {
+    expect(stepsOf(2).map((step) => step.kind)).toEqual(["check-result", "check-result"])
+  })
+
+  it("上限を超えた行は対にせず、確かめるの1つにまとめる", () => {
+    const steps = stepsOf(3)
+
+    expect(steps.map((step) => step.kind)).toEqual(["verify", "check-result", "check-result"])
+    expect(steps[0]).toEqual({
+      kind: "verify",
+      label: "確かめる: 1 件",
+      draft: ["確かめて。", "1. 架空の検証3", "   確かめ方: 手順3"].join("\n"),
+    })
   })
 })
