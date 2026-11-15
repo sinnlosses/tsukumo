@@ -48,11 +48,11 @@ export function templateViolationMessage(violation: TemplateViolation): string {
 }
 
 const REQUEST_TEMPLATES = {
-  diagnosis: { wantsKeyFigures: true, figures: ["graph", "compare"] },
+  diagnosis: { wantsKeyFigures: true, figures: ["compare", "graph"] },
   timeline: { wantsKeyFigures: true, figures: ["timeline", "chart"] },
-  structure: { wantsKeyFigures: true, figures: ["graph", "image"] },
+  structure: { wantsKeyFigures: true, figures: ["compare", "graph", "image"] },
   screen: { wantsKeyFigures: false, figures: ["compare", "image"] },
-  decision: { wantsKeyFigures: true, figures: ["graph", "plot"] },
+  decision: { wantsKeyFigures: true, figures: ["compare", "graph", "plot"] },
   research: { wantsKeyFigures: true, figures: ["chart", "plot"] },
   status: { wantsKeyFigures: true, figures: ["chart", "plot"] },
   work: { wantsKeyFigures: false, figures: ["compare", "image", "graph"] },
