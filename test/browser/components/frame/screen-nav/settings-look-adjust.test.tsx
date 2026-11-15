@@ -1,0 +1,136 @@
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react"
+import { afterEach, beforeEach, describe, expect, it } from "vitest"
+
+import { ScreenNav } from "../../../../../src/browser/components/frame/screen-nav/screen-nav.tsx"
+import { useNavDrawer } from "../../../../../src/browser/stores/nav-drawer.ts"
+import { INITIAL_SESSION_STATE } from "../../../../../src/shared/session/session-state.ts"
+import { characterInfo } from "../../../../fixture/character.ts"
+import { typedElement } from "../../../../typed-element.ts"
+import { EMPTY_NAV_DRAWER_SLOTS } from "../../../nav-drawer-slot.tsx"
+import { stubPhoneWidth } from "../../../phone-width.ts"
+import { queryClientWrapper } from "../../../query-client.tsx"
+import { putSession, putState, stateWith } from "../../../session-store.ts"
+
+// 設定の「見た目」の面の、背景の暗さ・パネルのぼかし・パネルの濃さの範囲入力。
+
+const STORAGE_KEY = "tsukumo-appearance-adjust:v1"
+const ROOT_TOKENS = [
+  "--character-background-veil-user",
+  "--panel-blur-user",
+  "--panel-fill-user",
+] as const
+
+beforeEach(() => {
+  stubPhoneWidth(true)
+})
+
+afterEach(() => {
+  cleanup()
+  useNavDrawer.setState(useNavDrawer.getInitialState(), true)
+  window.location.hash = ""
+  localStorage.clear()
+  for (const name of ROOT_TOKENS) {
+    document.documentElement.style.removeProperty(name)
+  }
+})
+
+function openLookFace(): HTMLElement {
+  putSession(INITIAL_SESSION_STATE, () => undefined)
+  render(<ScreenNav drawer={EMPTY_NAV_DRAWER_SLOTS} />, { wrapper: queryClientWrapper() })
+  fireEvent.click(
+    typedElement(
+      document.querySelector(".screen-nav > .screen-nav-settings .screen-nav-settings-toggle"),
+      HTMLElement,
+      "帯の歯車",
+    ),
+  )
+  const dialog = screen.getByRole("dialog", { name: "設定" })
+  fireEvent.click(within(dialog).getByRole("button", { name: "見た目" }))
+  return dialog
+}
+
+function slider(dialog: HTMLElement, name: string): HTMLInputElement {
+  return typedElement(within(dialog).getByRole("slider", { name }), HTMLInputElement, name)
+}
+
+function rootToken(name: string): string {
+  return document.documentElement.style.getPropertyValue(name)
+}
+
+describe("設定の歯車（見た目の調整）", () => {
+  it("3つの範囲入力が名前つきで、範囲と既定の位置を持つ", () => {
+    const dialog = openLookFace()
+
+    const veil = slider(dialog, "背景の暗さ")
+    const blur = slider(dialog, "パネルのぼかし")
+    const fill = slider(dialog, "パネルの濃さ")
+
+    expect([veil.min, veil.max]).toEqual(["70", "100"])
+    expect([blur.min, blur.max, blur.value]).toEqual(["0", "24", "8"])
+    expect([fill.min, fill.max, fill.value]).toEqual(["20", "90", "45"])
+    expect(within(dialog).getByText("75%（パックの値）")).toBeTruthy()
+  })
+
+  it("動かすと値が documentElement のトークンと localStorage に出る", () => {
+    const dialog = openLookFace()
+
+    fireEvent.change(slider(dialog, "背景の暗さ"), { target: { value: "90" } })
+    fireEvent.change(slider(dialog, "パネルのぼかし"), { target: { value: "0" } })
+    fireEvent.change(slider(dialog, "パネルの濃さ"), { target: { value: "70" } })
+
+    expect([
+      rootToken("--character-background-veil-user"),
+      rootToken("--panel-blur-user"),
+      rootToken("--panel-fill-user"),
+    ]).toEqual(["0.9", "0px", "70%"])
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "null")).toEqual({
+      veil: 0.9,
+      blur: 0,
+      fill: 70,
+    })
+    expect(within(dialog).queryByText(/パックの値/)).toBeNull()
+  })
+
+  it("既定に戻すと、背景の暗さのトークンが外れてパックの値へ戻る", () => {
+    const dialog = openLookFace()
+    fireEvent.change(slider(dialog, "背景の暗さ"), { target: { value: "90" } })
+    fireEvent.change(slider(dialog, "パネルのぼかし"), { target: { value: "20" } })
+
+    fireEvent.click(within(dialog).getByRole("button", { name: "既定に戻す" }))
+
+    expect(rootToken("--character-background-veil-user")).toBe("")
+    expect(rootToken("--panel-blur-user")).toBe("8px")
+    expect(slider(dialog, "パネルのぼかし").value).toBe("8")
+    expect(within(dialog).getByText("75%（パックの値）")).toBeTruthy()
+  })
+
+  it("動かしていない間は、いま効いているパックの暗さを読み出しと操作子に出す", () => {
+    const dialog = openLookFace()
+    expect(within(dialog).getByText("75%（パックの値）")).toBeTruthy()
+
+    act(() => {
+      putState(
+        stateWith({
+          character: characterInfo({
+            background: { image: "/character/fictional/bg.png", veil: 0.9 },
+          }),
+        }),
+      )
+    })
+
+    expect(within(dialog).getByText("90%（パックの値）")).toBeTruthy()
+    expect(slider(dialog, "背景の暗さ").value).toBe("90")
+  })
+
+  it("保存済みの値で開くと、操作子がその値を出す", () => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ veil: 0.85, blur: 16, fill: 30 }))
+
+    const dialog = openLookFace()
+
+    expect([
+      slider(dialog, "背景の暗さ").value,
+      slider(dialog, "パネルのぼかし").value,
+      slider(dialog, "パネルの濃さ").value,
+    ]).toEqual(["85", "16", "30"])
+  })
+})

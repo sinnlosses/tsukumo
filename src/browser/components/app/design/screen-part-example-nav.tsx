@@ -87,6 +87,15 @@ const PARTS: ScreenNavParts = {
     onClose: noop,
     colors: [{ key: "ground", label: "地の色", value: "#f7f4ee", onChange: noop }],
     colorNotice: { kind: "none" },
+    adjust: {
+      veilPercent: 75,
+      veilFollowsPack: true,
+      onChangeVeilPercent: noop,
+      blur: 8,
+      onChangeBlur: noop,
+      fill: 45,
+      onChangeFill: noop,
+    },
     sessionDefault: {
       model: "sonnet",
       onChangeModel: noop,

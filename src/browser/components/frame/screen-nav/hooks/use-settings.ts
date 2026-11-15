@@ -24,6 +24,7 @@ import {
 import type { ModelEffortSupport } from "../../../../../shared/session/session-event-setting.ts"
 import { resolveEffortSelect, type EffortSelect } from "../../../../domain/effort-label.ts"
 import { useSession } from "../../../../stores/session.ts"
+import { useAppearanceAdjust, type ScreenNavSettingsAdjust } from "./use-appearance-adjust.ts"
 import {
   useAppearanceColor,
   type ScreenNavSettingsColor,
@@ -63,6 +64,7 @@ export type ScreenNavSettings = {
   readonly onClose: () => void
   readonly colors: readonly ScreenNavSettingsColor[]
   readonly colorNotice: ScreenNavSettingsColorNotice
+  readonly adjust: ScreenNavSettingsAdjust
   readonly sessionDefault: ScreenNavSettingsSessionDefault
   readonly revealSpeed: ScreenNavSettingsRevealSpeed
   readonly launchSkill: ScreenNavSettingsLaunchSkill
@@ -78,6 +80,7 @@ export function useSettings(): ScreenNavSettings {
   const sessionDefault = useSession((session) => session.state.sessionDefault)
   const modelEffortSupport = useSession((session) => session.state.modelEffortSupport)
   const color = useAppearanceColor()
+  const adjust = useAppearanceAdjust()
   const revealSpeed = useRevealSpeedSetting()
   const launchSkill = useLaunchSkillSetting()
   const [open, setOpen] = useState(false)
@@ -112,8 +115,12 @@ export function useSettings(): ScreenNavSettings {
     onClose,
     colors: color.colors,
     colorNotice: color.colorNotice,
-    resetDisabled: color.resetDisabled,
-    onReset: color.onReset,
+    adjust: adjust.adjust,
+    resetDisabled: color.resetDisabled && adjust.resetDisabled,
+    onReset: () => {
+      color.onReset()
+      adjust.onReset()
+    },
     sessionDefault: {
       model: sessionDefault.model,
       onChangeModel: (value) => {

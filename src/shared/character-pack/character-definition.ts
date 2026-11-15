@@ -192,7 +192,7 @@ export function definitionWithoutMini(content?: string): string {
 
 /**
  * 背景の素材を差し替えた JSON を返す。
- * 覆いの不透明度（`veil`）はそのまま残す（画面から変えられるのは素材だけで、濃さは定義ファイルを手で直す）。
+ * 覆いの不透明度（`veil`）はそのまま残す（キャラクター画面から変えられるのは素材だけで、濃さは定義ファイルを手で直す）。
  */
 export function definitionWithBackground(content: string | undefined, fileName: string): string {
   return editedDefinitionJson(content, "background", "image", fileName)

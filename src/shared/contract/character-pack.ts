@@ -156,7 +156,7 @@ const characterEditInput = {
   setPersona: z.object({ pack: editedCharacterPackNameSchema, persona: characterPersonaSchema }),
   /**
    * キャラビューに敷く背景を差し替える／消す。
-   * 覆いの濃さは画面から変えないので、受け取るのは素材だけ（濃さは定義ファイルを手で直す）。
+   * 覆いの濃さはキャラクター画面からは変えないので、受け取るのは素材だけ（濃さは定義ファイルを手で直す）。
    */
   setBackground: z.object({ pack: editedCharacterPackNameSchema, image: backgroundDataUrlSchema }),
   clearBackground: z.object({ pack: editedCharacterPackNameSchema }),

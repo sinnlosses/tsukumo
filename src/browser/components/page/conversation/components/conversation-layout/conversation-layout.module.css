@@ -79,6 +79,7 @@
 /* 器の全面に敷く背景。
    敷き方は絵の上に覆いを1枚重ねた形で、覆いは `ground` 一色を `--character-background-veil` の不透明度にしたもの。
    画像が見えるのは最大でも 30%。
+   濃さは、使う人が歯車で動かした値（`--character-background-veil-user`）があればそれ、無ければパックの値（`--character-background-veil`）。
    下限は `MIN_BACKGROUND_VEIL` が定義の側で保証し、いまの地と字の色で足りないぶんは `--character-background-veil-floor` が押し上げる（両方の大きいほうを採る）。
    下端で合わせる（background-position）のは、立ち絵が床に立つ見え方（--portrait-drop）と地面の位置をそろえるため。
    背景が無いときは変数が差さっていないので、覆いは不透明な `ground`、画像は `none` に落ちる。
@@ -89,7 +90,11 @@
     in srgb,
     var(--ground)
       calc(
-        max(var(--character-background-veil, 1), var(--character-background-veil-floor, 0.7)) * 100%
+        max(
+            var(--character-background-veil-user, var(--character-background-veil, 1)),
+            var(--character-background-veil-floor, 0.7)
+          ) *
+          100%
       ),
     transparent
   );

@@ -10,9 +10,11 @@ import "./styles/layer-order.css"
 import { createRoot } from "react-dom/client"
 
 import { App } from "./app.tsx"
+import { loadAppearanceAdjust } from "./domain/appearance-adjust.ts"
 import { loadAppearanceColorOverride } from "./domain/appearance-color.ts"
 import { loadMarkdown } from "./features/report/markdown.tsx"
 import { loadTaskBody } from "./features/task-board/deferred-task-body.tsx"
+import { applyAppearanceAdjust } from "./stores/appearance-adjust-root.ts"
 import { applyAppearanceColorOverride } from "./stores/appearance-color-root.ts"
 import { reportBrowserError } from "./stores/browser-error-report.ts"
 // ページ全体の下地（トークン・body・要素への規則）。
@@ -34,6 +36,7 @@ if (!isTemporalSupported(globalThis)) {
   // 最初の描画より前に差す必要があるので、色を持つ部品（帯の歯車）の初期化には任せない。
   // 任せると、保存した色が一瞬だけ既定で描かれてから入れ替わる。
   applyAppearanceColorOverride(loadAppearanceColorOverride())
+  applyAppearanceAdjust(loadAppearanceAdjust())
 
   window.addEventListener("error", (event) => {
     reportBrowserError("onerror", event.error)

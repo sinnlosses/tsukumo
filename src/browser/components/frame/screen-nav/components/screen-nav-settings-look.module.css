@@ -50,6 +50,20 @@
   border: none;
   border-radius: var(--radius-sm);
 }
+/* 標準の範囲入力。つまみと軌道の色は差し色に任せ、キーボードのフォーカスは既定の輪を残す。 */
+.range {
+  width: 140px;
+  margin: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+.readout {
+  min-width: 4.5em;
+  color: var(--ink-quiet);
+  font-family: var(--font-mono);
+  font-size: var(--font-label);
+  font-variant-numeric: tabular-nums;
+}
 .hex {
   composes: surface-edge-rule surface-radius-md surface-tone-ground from "../../../ui/surface/surface-face.module.css";
   padding: var(--space-xs) var(--space-md);

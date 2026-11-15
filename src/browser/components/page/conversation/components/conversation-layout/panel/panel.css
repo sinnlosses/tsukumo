@@ -1,10 +1,11 @@
 /* 背景の透ける面（上部の帯・やり取りの列・サイドバー・進行の帯・段の札・入力欄・入力欄の上の引き出し）の値と、器の側の面の規則。
    値は Astryx のテーマにも `theme.css` にも足さない。帯は grid の外にあるので、定義は帯と grid の共通の祖先（body）に置く。
-   濃さ・ぼかしを差し替えるときは body の `--panel-fill`・`--panel-blur` を書き換える。
+   濃さ・ぼかしは、使う人が歯車で動かした値（`--panel-fill-user`・`--panel-blur-user`。`:root` に差さる）があればそれ、無ければここの既定。
+   body の `--panel-fill`・`--panel-blur` を直接書き換えない（`:root` の値は body の宣言に負けるので、利用者の値の入口は別名にしてある）。
    760px 以下は透ける面を使わないので、面の規則は `@media (min-width: 761px)` の中だけに書く。 */
 :global(body:has([data-screen="conversation"])) {
-  --panel-fill: 45%;
-  --panel-blur: 8px;
+  --panel-fill: var(--panel-fill-user, 45%);
+  --panel-blur: var(--panel-blur-user, 8px);
   --panel-edge: color-mix(in srgb, var(--ink) 10%, transparent);
   --panel-edge-quiet: color-mix(in srgb, var(--ink) 6%, transparent);
   --panel-glass: color-mix(

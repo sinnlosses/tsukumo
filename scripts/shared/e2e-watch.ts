@@ -32,6 +32,7 @@ type E2eRegion = keyof typeof E2E_REGION_ROOTS
 
 /** E2E ファイル → 見ている領域。`"every"` はページ全体を見る（どの領域を変えても流す）。 */
 export const E2E_WATCHED_REGIONS = {
+  "test/e2e/appearance-adjust.test.ts": ["screen-nav"],
   "test/e2e/aside-thread.test.ts": ["main", "dispatch"],
   "test/e2e/away-seam.test.ts": ["main"],
   "test/e2e/background-task.test.ts": ["main", "dispatch"],
