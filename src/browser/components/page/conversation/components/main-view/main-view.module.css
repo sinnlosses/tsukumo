@@ -37,6 +37,3 @@
 .tool-block {
   composes: surface-edge-rule surface-radius-md surface-tone-surface from "../../../../ui/surface/surface-face.module.css";
 }
-.work-strip-pop {
-  composes: surface-edge-rule surface-radius-md surface-tone-surface from "../../../../ui/surface/surface-face.module.css";
-}

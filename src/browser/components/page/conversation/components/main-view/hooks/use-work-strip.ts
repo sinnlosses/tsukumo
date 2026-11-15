@@ -1,6 +1,5 @@
 // `<WorkStrip>` のロジック。いちばん新しい依頼のワークプラン・走っている手順・答え待ち・再試行を、帯に出す形へ畳む。
 
-import type { RefCallback, RefObject } from "react"
 import { groupBy } from "remeda"
 
 import { conversationMoment } from "../../../../../../../shared/session/conversation-moment.ts"
@@ -22,7 +21,6 @@ import {
   type PlannedPhase,
   plannedPhasesOf,
 } from "../../../../../../../shared/session/work-plan.ts"
-import { formatMeasured } from "../../../../../../../shared/utils/elapsed-time.ts"
 import { phaseMarkOf } from "../../../../../../domain/phase-mark.ts"
 import {
   FINISHED_LABEL,
@@ -35,7 +33,6 @@ import {
   currentWorkStepGroups,
   toBackgroundListView,
   type CurrentWorkBackgroundList,
-  type CurrentWorkStepGroup,
 } from "../../../../../../features/current-work/current-work-step.ts"
 import { useNowWhile } from "../../../../../../stores/clock.ts"
 import { useCurrentTurnSteps } from "../../../../../../stores/current-turn-step-list.ts"
@@ -51,7 +48,11 @@ import type { WorkStripResult } from "../../../domain/turn-result-mark.ts"
 import { turnResultsOf, type TurnResult } from "../../../domain/turn-result.ts"
 import { useMainViewContent } from "../../../stores/main-view-content.ts"
 import { type StepsLanding, useWorkStripSteps } from "../../../stores/work-strip-step-list.ts"
-import { usePhasePopover, type PhasePopover } from "./use-phase-popover.ts"
+import {
+  type StepsPhaseRows,
+  type StepsPhaseSlotSource,
+  stepsPhaseRowsOf,
+} from "../domain/steps-phase-row.ts"
 
 /** 段の丸1つの状態。`asking` は今の段で答え待ちが来ているとき。 */
 type WorkStripPhaseState = "done" | "current" | "asking" | "upcoming"
@@ -65,36 +66,16 @@ export type WorkStripPhase = {
   readonly state: WorkStripPhaseState
   /** 済んだ段のうち飛ばした段。`state` は `done` のまま。 */
   readonly skipped: boolean
-  readonly popoverId: string
-  readonly popover: WorkStripPhasePopover
+  /** 平らにした並びでの位置と名前（手順の一覧のフェーズの行の元）。 */
+  readonly index: number
+  readonly name: string
+  /** `PlannedPhase.key`。段ごとの所要を引く。 */
+  readonly recapKey: string
+  /** 押すと依頼の手順の一覧を開き（開いていれば開いたまま）、この段の行を一覧の上端へ送る。 */
   readonly onToggle: () => void
 }
 
-/**
- * 段の丸の吹き出し。`title` は「✓ 段の名前」（済んだ段）か「4. 段の名前」、`meta` は状態の行（「済み · 所要 1分40秒」など）、
- * `summary` は済んだ段の段のまとめ（無ければ空）、`toSteps` は依頼の手順の一覧のその段の区切りへ連れていく口（済んだ段だけ）。
- */
-export type WorkStripPhasePopover =
-  | { readonly kind: "closed" }
-  | {
-      readonly kind: "open"
-      readonly title: string
-      readonly meta: string
-      readonly summary: string
-      readonly toSteps:
-        | { readonly kind: "none" }
-        | { readonly kind: "shown"; readonly onGo: () => void }
-      readonly placeRef: RefCallback<HTMLDivElement>
-    }
-
 type PhaseFlags = { readonly asking: boolean }
-
-/** `recaps` は `PlannedPhase.key`（名前と何番目か）で引き、帯の丸の `key`（平らにした位置）では引かない。 */
-type PopoverContext = {
-  readonly popover: PhasePopover
-  readonly recaps: ReadonlyMap<string, PhaseRecap>
-  readonly onGo: (phase: PlannedPhase) => void
-}
 
 /**
  * フェーズのグループの先頭の丸（と並列のフェーズの囲み）に付ける群の名。`name` は「前」「本」「後」、`current` は今の段がその群にあるか。
@@ -129,7 +110,8 @@ export type WorkStripSteps = {
     | { readonly kind: "closed" }
     | { readonly kind: "open"; readonly landing: StepsLanding }
   readonly onToggle: () => void
-  readonly groups: readonly CurrentWorkStepGroup[]
+  /** ワークプランの全フェーズの行と、どの行にも付かない手順の群。ワークプランが無ければ行は空。 */
+  readonly phaseRows: StepsPhaseRows
   /** 実行中の手順と依頼の手順の間に出す「背景で動いているもの」の区画。 */
   readonly backgroundList: CurrentWorkBackgroundList
 }
@@ -149,8 +131,6 @@ export type WorkStripModel =
       readonly kind: "working"
       readonly result: WorkStripResult
       readonly phases: readonly WorkStripSlot[]
-      /** 丸の並び（`ol`）に付ける。吹き出しを閉じる「外を押した」の基準。 */
-      readonly trackRef: RefObject<HTMLOListElement | null>
       /** 列を畳んでいるあいだの「いま: <節>」。出さないときは空。 */
       readonly readingLabel: string
       readonly headLabel: string
@@ -161,7 +141,6 @@ export type WorkStripModel =
       readonly kind: "finished"
       readonly result: WorkStripResult
       readonly phases: readonly WorkStripSlot[]
-      readonly trackRef: RefObject<HTMLOListElement | null>
       readonly readingLabel: string
       readonly headLabel: string
       readonly sideLabel: string
@@ -182,16 +161,6 @@ const PHASE_STATE_SUFFIX = {
 const SKIPPED_PHASE_SUFFIX = "（飛ばした）"
 
 const ASKING_MARK = "?"
-
-const SKIPPED_STATE_WORD = "飛ばした · 所要"
-
-/** 吹き出しの状態の行の頭。まだの段のほかは、あとに所要か経過を続ける。 */
-const POPOVER_STATE_WORD = {
-  done: "済み · 所要",
-  current: "いま · このフェーズ",
-  asking: "答え待ち · このフェーズ",
-  upcoming: "これから",
-} satisfies Record<WorkStripPhaseState, string>
 
 const NO_RECAPS = new Map<string, PhaseRecap>()
 
@@ -223,11 +192,6 @@ export function useWorkStrip(): WorkStripModel {
   const readingLabel = useReadingSection((state) =>
     state.outlineCollapsed ? readingLabelOf(readingSectionOf(state)) : "",
   )
-  const popover = usePhasePopover(
-    shown && turnStepList.kind === "turn"
-      ? { kind: "shown", exchange: content.exchange, keys: planned.map(phaseKeyOf) }
-      : { kind: "hidden" },
-  )
 
   if (content.kind === "welcome" || turnStepList.kind !== "turn" || result === undefined) {
     return { kind: "none" }
@@ -244,40 +208,40 @@ export function useWorkStrip(): WorkStripModel {
   const elapsedWord =
     result === "failed" ? FINISHED_LABEL : turnElapsedLabel(turn, backgroundTasks.length)
   const elapsedLabel = `${elapsedWord} ${turnElapsedText(turn, backgroundTasks.length, now)}`
-  const steps: WorkStripSteps = {
-    toggleLabel: `手順 ${String(turnStepList.steps.length)} ${list.kind === "open" ? "▴" : "▾"}`,
-    list,
-    onToggle: () => toggle(exchange),
-    groups: currentWorkStepGroups(turnStepList.steps),
-    backgroundList: toBackgroundListView(backgroundTasks),
-  }
+  const recaps =
+    list.kind === "closed"
+      ? NO_RECAPS
+      : phaseRecapsOf(turnStepList.trail, {
+          kind: "stamped",
+          at: turnCountedUntil(turn, backgroundTasks.length, now),
+        })
   const stripPhases = slotsOf(
     plan,
     planned,
     { asking: working && firstPending !== undefined },
-    {
-      popover,
-      recaps:
-        popover.openKey === undefined
-          ? NO_RECAPS
-          : phaseRecapsOf(turnStepList.trail, {
-              kind: "stamped",
-              at: turnCountedUntil(turn, backgroundTasks.length, now),
-            }),
-      onGo: (phase) => {
-        openAtPhase(exchange, phase.index)
-        popover.close()
-      },
+    (phase) => {
+      openAtPhase(exchange, phase.index)
     },
   )
-  const { trackRef } = popover
+  const steps: WorkStripSteps = {
+    toggleLabel: `手順 ${String(turnStepList.steps.length)} ${list.kind === "open" ? "▴" : "▾"}`,
+    list,
+    onToggle: () => toggle(exchange),
+    phaseRows:
+      list.kind === "open"
+        ? stepsPhaseRowsOf(
+            stripPhases.map((slot) => phaseRowSlotOf(slot, recaps)),
+            currentWorkStepGroups(turnStepList.steps),
+          )
+        : { rows: [], rest: [] },
+    backgroundList: toBackgroundListView(backgroundTasks),
+  }
 
   if (!working) {
     return {
       kind: "finished",
       result,
       phases: stripPhases,
-      trackRef,
       readingLabel,
       headLabel: result === "working" && nowPhase.kind === "phase" ? nowPhase.name : completion,
       sideLabel: elapsedLabel,
@@ -288,7 +252,6 @@ export function useWorkStrip(): WorkStripModel {
   return {
     kind: "working",
     phases: stripPhases,
-    trackRef,
     result,
     readingLabel,
     headLabel: planned.length === 0 ? "" : nowPhase.kind === "phase" ? nowPhase.name : completion,
@@ -326,7 +289,7 @@ function slotsOf(
   plan: LatestWorkPlan,
   planned: readonly PlannedPhase[],
   flags: PhaseFlags,
-  context: PopoverContext,
+  onGo: (phase: PlannedPhase) => void,
 ): readonly WorkStripSlot[] {
   const entries = Object.values(groupBy(planned, (phase) => phase.entry))
   const spanOf = (members: readonly PlannedPhase[]): PhaseSpan | undefined => {
@@ -338,7 +301,7 @@ function slotsOf(
   }
   const currentSpan = spanOf(planned.filter((phase) => phase.state === "current"))
   return entries.map((members, position): WorkStripSlot => {
-    const phases = members.map((phase) => toPhase(plan, phase, flags, context))
+    const phases = members.map((phase) => toPhase(plan, phase, flags, onGo))
     const span = spanOf(members)
     const previous = entries[position - 1]
     const spanHead: WorkStripSpanHead =
@@ -371,11 +334,30 @@ function slotsOf(
 
 const NO_SPAN_HEAD = { kind: "none" } as const satisfies WorkStripSpanHead
 
+function phaseRowSlotOf(
+  slot: WorkStripSlot,
+  recaps: ReadonlyMap<string, PhaseRecap>,
+): StepsPhaseSlotSource {
+  const phases = slot.kind === "phase" ? [slot.phase] : slot.phases
+  return {
+    spanName: slot.spanHead.kind === "head" ? slot.spanHead.name : "",
+    parallelLabel: slot.kind === "parallel" ? slot.label : "",
+    phases: phases.map((phase) => ({
+      index: phase.index,
+      name: phase.name,
+      mark: phase.mark,
+      state: phase.state,
+      skipped: phase.skipped,
+      duration: (recaps.get(phase.recapKey) ?? UNKNOWN_RECAP).duration,
+    })),
+  }
+}
+
 function toPhase(
   plan: LatestWorkPlan,
   phase: PlannedPhase,
   flags: PhaseFlags,
-  context: PopoverContext,
+  onGo: (phase: PlannedPhase) => void,
 ): WorkStripPhase {
   const state: WorkStripPhaseState =
     phase.state === "current" && flags.asking ? "asking" : phase.state
@@ -386,36 +368,10 @@ function toPhase(
     label: `${plan.kind === "planned" ? plannedPhaseTitle(plan, phase) : phase.name}${phase.skipped ? SKIPPED_PHASE_SUFFIX : PHASE_STATE_SUFFIX[state]}`,
     state,
     skipped: phase.skipped,
-    popoverId: `work-strip-pop-${key}`,
-    popover:
-      context.popover.openKey === key ? popoverOf(plan, phase, state, context) : { kind: "closed" },
-    onToggle: () => context.popover.toggle(key),
-  }
-}
-
-function popoverOf(
-  plan: LatestWorkPlan,
-  phase: PlannedPhase,
-  state: WorkStripPhaseState,
-  context: PopoverContext,
-): WorkStripPhasePopover {
-  const recap = context.recaps.get(phase.key) ?? UNKNOWN_RECAP
-  const word = phase.skipped ? SKIPPED_STATE_WORD : POPOVER_STATE_WORD[state]
-  return {
-    kind: "open",
-    title:
-      state === "done"
-        ? `${phaseMarkOf(plan, phase)} ${phase.name}`
-        : plan.kind === "planned"
-          ? plannedPhaseTitle(plan, phase)
-          : phase.name,
-    meta: state === "upcoming" ? word : `${word} ${formatMeasured(recap.duration)}`,
-    summary: state === "done" ? recap.summary : "",
-    toSteps:
-      state === "done" && !phase.skipped
-        ? { kind: "shown", onGo: () => context.onGo(phase) }
-        : { kind: "none" },
-    placeRef: context.popover.placeRef,
+    index: phase.index,
+    name: phase.name,
+    recapKey: phase.key,
+    onToggle: () => onGo(phase),
   }
 }
 

@@ -101,8 +101,9 @@ describe("WorkStrip", () => {
     })
     expect(toggle.getAttribute("aria-expanded")).toBe("true")
     const list = screen.getByRole("region", { name: "依頼の手順" })
-    expect(list.textContent).toContain("1/3 架空の段A")
-    expect(list.textContent).toContain("2/3 架空の段B")
+    expect(list.textContent).toContain("架空の段A")
+    expect(list.textContent).toContain("架空の段B")
+    expect(list.textContent).toContain("架空の段C")
 
     act(() => {
       fireEvent.click(toggle)
@@ -199,7 +200,7 @@ describe("WorkStrip", () => {
   })
 })
 
-describe("WorkStrip（段の丸の吹き出し）", () => {
+describe("WorkStrip（段の丸）", () => {
   /** 段A を済ませてまとめを渡し、段B が今の段、段C がまだの段。 */
   function renderProgressed(extra: readonly SessionEvent[] = []): void {
     putSession(
@@ -226,36 +227,54 @@ describe("WorkStrip（段の丸の吹き出し）", () => {
     })
   }
 
-  it("段の丸は button で、押すと丸の下に吹き出しが出る", () => {
+  it("段の丸は button で、押しても吹き出しは出ず、依頼の手順の一覧が開く", () => {
     renderProgressed()
     const done = dot(/架空の段A/)
 
     expect(done.tagName).toBe("BUTTON")
-    expect(done.getAttribute("aria-expanded")).toBe("false")
+    expect(screen.queryByRole("region", { name: "依頼の手順" })).toBeNull()
 
     click(done)
 
-    expect(done.getAttribute("aria-expanded")).toBe("true")
-    const popover = screen.getByRole("dialog")
-    expect(done.getAttribute("aria-controls")).toBe(popover.id)
-    expect(popover.textContent).toContain("✓ 架空の段A")
-    expect(popover.textContent).toContain("済み · 所要")
-    expect(popover.textContent).toContain("架空の段Aのまとめ。")
-    expect(screen.getByRole("button", { name: "このフェーズの手順へ" })).not.toBeNull()
+    expect(screen.queryByRole("dialog")).toBeNull()
+    expect(screen.getByRole("region", { name: "依頼の手順" })).not.toBeNull()
   })
 
-  it("今の段は名前と経過だけで、まだの段は「これから」だけ。どちらにも「この段の手順へ」は無い", () => {
+  it("一覧は全フェーズを順に並べ、済んだ段の手順は畳み、今の段の手順は開き、まだの段は名前だけ", () => {
     renderProgressed()
 
-    click(dot(/架空の段B/))
-    expect(screen.getByRole("dialog").textContent).toMatch(/^2\. 架空の段Bいま · このフェーズ /)
-    expect(screen.queryByRole("button", { name: "このフェーズの手順へ" })).toBeNull()
+    click(dot(/架空の段A/))
 
-    click(dot(/架空の段C/))
-    expect(screen.getByRole("dialog").textContent).toBe("3. 架空の段Cこれから")
+    const rows = [
+      ...screen
+        .getByRole("region", { name: "依頼の手順" })
+        .querySelectorAll("li[data-phase-state]"),
+    ]
+    expect(rows.map((row) => row.getAttribute("data-phase-state"))).toEqual([
+      "done",
+      "current",
+      "upcoming",
+    ])
+    const details = rows.map((row) => row.querySelector("details")?.open)
+    expect(details).toEqual([false, true, undefined])
+    expect(rows[2]?.textContent).toContain("架空の段C")
+    expect(rows[0]?.textContent).not.toContain("架空の段Aのまとめ。")
   })
 
-  it("飛ばした段の丸は「/」と「（飛ばした）」で、吹き出しは「飛ばした · 所要」とわけを出し、「この段の手順へ」は出さない", () => {
+  it("丸を押しても一覧は押し直すまで閉じず、同じ丸をもう一度押しても開いたまま", () => {
+    renderProgressed()
+
+    click(dot(/架空の段A/))
+    click(dot(/架空の段C/))
+    click(dot(/架空の段C/))
+    act(() => {
+      fireEvent.pointerDown(document.body)
+    })
+
+    expect(screen.getAllByRole("region", { name: "依頼の手順" })).toHaveLength(1)
+  })
+
+  it("飛ばした段の丸は「/」と「（飛ばした）」で、一覧の行にも飛ばした印が付く", () => {
     putSession(
       stateAfter([
         REQUEST,
@@ -273,11 +292,10 @@ describe("WorkStrip（段の丸の吹き出し）", () => {
 
     click(skipped)
 
-    const popover = screen.getByRole("dialog")
-    expect(popover.textContent).toContain("/ 架空の段A")
-    expect(popover.textContent).toContain("飛ばした · 所要")
-    expect(popover.textContent).toContain("飛ばしたわけ。")
-    expect(screen.queryByRole("button", { name: "このフェーズの手順へ" })).toBeNull()
+    const row = screen
+      .getByRole("region", { name: "依頼の手順" })
+      .querySelector("li[data-phase-skipped]")
+    expect(row?.textContent).toContain("架空の段A（飛ばした）")
   })
 
   it("済んだ段の丸は飛ばした印を持たず「✓」のまま", () => {
@@ -288,7 +306,7 @@ describe("WorkStrip（段の丸の吹き出し）", () => {
     expect(done.closest("li")?.hasAttribute("data-phase-skipped")).toBe(false)
   })
 
-  it("答え待ちの今の段の丸も押せて、状態の行が「答え待ち」になる", () => {
+  it("答え待ちの今の段の丸も押せて、一覧の行は開いた手順を持つ", () => {
     renderProgressed([
       {
         kind: "pending-changed",
@@ -305,42 +323,10 @@ describe("WorkStrip（段の丸の吹き出し）", () => {
 
     click(dot(/架空の段B（答え待ち）/))
 
-    expect(screen.getByRole("dialog").textContent).toContain("答え待ち · このフェーズ ")
-  })
-
-  it("開くのは同時に1つで、別の丸を押すと開き替わり、同じ丸をもう一度押すと閉じる", () => {
-    renderProgressed()
-
-    click(dot(/架空の段A/))
-    click(dot(/架空の段C/))
-    expect(screen.getAllByRole("dialog")).toHaveLength(1)
-    expect(dot(/架空の段A/).getAttribute("aria-expanded")).toBe("false")
-    expect(dot(/架空の段C/).getAttribute("aria-expanded")).toBe("true")
-
-    click(dot(/架空の段C/))
-    expect(screen.queryByRole("dialog")).toBeNull()
-  })
-
-  it("Esc で閉じて押した丸へフォーカスを戻し、帯の外を押しても閉じる。丸の並びの中を押しても閉じない", () => {
-    renderProgressed()
-    const done = dot(/架空の段A/)
-
-    click(done)
-    act(() => {
-      fireEvent.keyDown(document, { key: "Escape" })
-    })
-    expect(screen.queryByRole("dialog")).toBeNull()
-    expect(document.activeElement).toBe(done)
-
-    click(done)
-    act(() => {
-      fireEvent.pointerDown(screen.getByRole("dialog"))
-    })
-    expect(screen.queryByRole("dialog")).not.toBeNull()
-    act(() => {
-      fireEvent.pointerDown(document.body)
-    })
-    expect(screen.queryByRole("dialog")).toBeNull()
+    const row = screen
+      .getByRole("region", { name: "依頼の手順" })
+      .querySelector("li[data-phase-state='asking']")
+    expect(row?.querySelector("details")?.open).toBe(true)
   })
 
   it("並列のフェーズの中の丸は押せ、並列のフェーズの囲みは button を持たない", () => {
@@ -357,10 +343,11 @@ describe("WorkStrip（段の丸の吹き出し）", () => {
     expect(group?.querySelectorAll("button")).toHaveLength(2)
 
     click(dot(/架空の段C/))
-    expect(screen.getByRole("dialog").textContent).toContain("3. 架空の段C")
+    const list = screen.getByRole("region", { name: "依頼の手順" })
+    expect(list.querySelectorAll("li[data-phase-state]")).toHaveLength(3)
   })
 
-  it("「この段の手順へ」で依頼の手順の一覧が開いて吹き出しが閉じ、一覧がその段の区切りへ転がる", () => {
+  it("丸を押すと一覧が開き、そのフェーズの行が一覧の上端へ転がる", () => {
     renderProgressed()
     vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function (
       this: HTMLElement,
@@ -369,18 +356,17 @@ describe("WorkStrip（段の丸の吹き出し）", () => {
     })
 
     click(dot(/架空の段A/))
-    click(screen.getByRole("button", { name: "このフェーズの手順へ" }))
 
     expect(screen.queryByRole("dialog")).toBeNull()
     const list = screen.getByRole("region", { name: "依頼の手順" })
     const indexes = [...list.querySelectorAll("[data-phase-indexes]")].map((heading) =>
       heading.getAttribute("data-phase-indexes"),
     )
-    expect(indexes).toEqual(["1", "0"])
+    expect(indexes).toEqual(["0", "1", "2"])
     expect(list.scrollTop).toBe(200)
   })
 
-  it("やり取りが替わると吹き出しは閉じる", () => {
+  it("やり取りが替わると一覧は閉じる", () => {
     renderProgressed()
     click(dot(/架空の段A/))
 
@@ -388,6 +374,6 @@ describe("WorkStrip（段の丸の吹き出し）", () => {
       putSession(stateAfter([REQUEST, plan(0), REQUEST, plan(1)]))
     })
 
-    expect(screen.queryByRole("dialog")).toBeNull()
+    expect(screen.queryByRole("region", { name: "依頼の手順" })).toBeNull()
   })
 })

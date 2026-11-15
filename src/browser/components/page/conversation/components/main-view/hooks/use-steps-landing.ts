@@ -1,5 +1,5 @@
 // 行や段を指して依頼の手順の一覧を開いたとき、指した先へ連れていくフック。
-// 失敗した手順は最初の失敗の行までスクロールしてフォーカスを移し、段は一覧の中だけをスクロールしてその段の区切りを一覧の上端に置く。
+// 失敗した手順は最初の失敗の行までスクロールしてフォーカスを移し、フェーズの丸は一覧の中だけをスクロールしてそのフェーズの行を一覧の上端に置く。
 
 import { useRef, type RefObject } from "react"
 
@@ -24,7 +24,7 @@ export function useStepsLanding(landing: StepsLanding): RefObject<HTMLDivElement
       summary?.focus({ preventScroll: true })
       return
     }
-    // `CurrentWorkStepGroup` の段の小見出しに付く `data-phase-indexes`（空白区切り）。新しい区切りが上にある。
+    // プログレスバーのフェーズの行（PhaseRow の li）に付く `data-phase-indexes`。
     const heading = list.querySelector<HTMLElement>(
       `[data-phase-indexes~="${String(landing.phaseIndex)}"]`,
     )

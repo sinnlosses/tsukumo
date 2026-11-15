@@ -55,21 +55,21 @@ function stripPhase(
     label,
     state,
     skipped: false,
-    popoverId: `popover-${key}`,
-    popover: { kind: "closed" },
+    index: 0,
+    name: label,
+    recapKey: key,
     onToggle: noop,
   }
 }
 
 const STRIP_BASE = {
-  trackRef: createRef<HTMLOListElement>(),
   readingLabel: "",
   sideLabel: "経過 6分12秒",
   steps: {
     toggleLabel: "手順 12 ▾",
     list: { kind: "closed" },
     onToggle: noop,
-    groups: [],
+    phaseRows: { rows: [], rest: [] },
     backgroundList: { kind: "none" },
   },
 } as const

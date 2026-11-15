@@ -3,7 +3,7 @@
 // `aria-live` は付けない。
 
 import clsx from "clsx"
-import type { ReactElement, RefObject } from "react"
+import type { ReactElement } from "react"
 
 import { CurrentWorkBackground } from "../../../../../features/current-work/current-work-background.tsx"
 import { CurrentWorkStepGroup } from "../../../../../features/current-work/current-work-step-group.tsx"
@@ -11,11 +11,11 @@ import { Button } from "../../../../ui/button/button.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
 import { WORK_STRIP_MARKS, type WorkStripResult } from "../../domain/turn-result-mark.ts"
 import type { StepsLanding } from "../../stores/work-strip-step-list.ts"
+import type { StepsPhaseRow } from "./domain/steps-phase-row.ts"
 import { useStepsLanding } from "./hooks/use-steps-landing.ts"
 import type {
   WorkStripModel,
   WorkStripPhase,
-  WorkStripPhasePopover,
   WorkStripSlot,
   WorkStripSpanHead,
   WorkStripSteps,
@@ -46,7 +46,7 @@ export function PresentationalWorkStrip(props: {
             {strip.readingLabel}
           </Text>
         )}
-        {strip.phases.length > 0 && <PhaseTrack phases={strip.phases} trackRef={strip.trackRef} />}
+        {strip.phases.length > 0 && <PhaseTrack phases={strip.phases} />}
         <Text
           element="span"
           size="body"
@@ -69,7 +69,7 @@ export function PresentationalWorkStrip(props: {
       </div>
       {strip.steps.list.kind === "open" && (
         <StepsList
-          groups={strip.steps.groups}
+          phaseRows={strip.steps.phaseRows}
           backgroundList={strip.steps.backgroundList}
           landing={strip.steps.list.landing}
         />
@@ -101,20 +101,69 @@ function StateChip(props: { readonly result: WorkStripResult }): ReactElement {
   )
 }
 
-/** 押すと開く依頼の手順の一覧。失敗した手順・段を指して開いたときは、その行・区切りへ連れてくる。 */
+/**
+ * 押すと開く依頼の手順の一覧。ワークプランの全フェーズを1行ずつ並べ、行の下にそのフェーズの手順を置く。
+ * 失敗した手順・段を指して開いたときは、その行・区切りへ連れてくる。
+ */
 function StepsList(props: {
-  readonly groups: WorkStripSteps["groups"]
+  readonly phaseRows: WorkStripSteps["phaseRows"]
   readonly backgroundList: WorkStripSteps["backgroundList"]
   readonly landing: StepsLanding
 }): ReactElement {
   const listRef = useStepsLanding(props.landing)
+  const { rows, rest } = props.phaseRows
   return (
     <div ref={listRef} role="region" aria-label="依頼の手順" className={styles["work-strip-steps"]}>
       <CurrentWorkBackground list={props.backgroundList} runningMark="still" />
-      {props.groups.map((group) => (
+      {rows.length > 0 && (
+        <ol className={styles["work-strip-plan"]}>
+          {rows.map((row) => (
+            <PhaseRow key={row.key} row={row} />
+          ))}
+        </ol>
+      )}
+      {rest.map((group) => (
         <CurrentWorkStepGroup key={group.key} group={group} runningMark="still" />
       ))}
     </div>
+  )
+}
+
+/** フェーズの行。印・名前・所要と、その下の手順（済んだフェーズは畳み、今のフェーズは開く）。これからのフェーズは名前だけ。 */
+function PhaseRow(props: { readonly row: StepsPhaseRow }): ReactElement {
+  const { row } = props
+  return (
+    <li
+      className={styles["work-strip-plan-row"]}
+      data-phase-indexes={String(row.phaseIndex)}
+      data-phase-state={row.state}
+      data-phase-skipped={row.skipped ? "true" : undefined}
+    >
+      <p className={styles["work-strip-plan-head"]}>
+        <span aria-hidden="true" className={styles["work-strip-plan-mark"]}>
+          {row.mark}
+        </span>
+        {row.spanName !== "" && <span className={styles["work-strip-span"]}>{row.spanName}</span>}
+        {row.parallelLabel !== "" && (
+          <span className={styles["work-strip-span"]}>{row.parallelLabel}</span>
+        )}
+        <span className={styles["work-strip-plan-name"]}>
+          {row.name}
+          {row.skipped && "（飛ばした）"}
+        </span>
+        {row.duration !== "" && (
+          <span className={styles["work-strip-plan-time"]}>{row.duration}</span>
+        )}
+      </p>
+      {row.stepCount > 0 && (
+        <details open={row.open} className={styles["work-strip-plan-steps"]}>
+          <summary>手順 {row.stepCount}</summary>
+          {row.groups.map((group) => (
+            <CurrentWorkStepGroup key={group.key} group={group} runningMark="still" />
+          ))}
+        </details>
+      )}
+    </li>
   )
 }
 
@@ -123,13 +172,9 @@ function StepsList(props: {
  * 並列のフェーズは中の段の丸を1つの囲みに並べ、囲みの中の丸どうしは線でつながない。
  * 群（前・本・後）の先頭の丸の前には群の名を置き、前の群の丸とは線でつながず間を空ける。
  */
-function PhaseTrack(props: {
-  readonly phases: readonly WorkStripSlot[]
-  readonly trackRef: RefObject<HTMLOListElement | null>
-}): ReactElement {
-  const { trackRef } = props
+function PhaseTrack(props: { readonly phases: readonly WorkStripSlot[] }): ReactElement {
   return (
-    <ol ref={trackRef} className={styles["work-strip-track"]}>
+    <ol className={styles["work-strip-track"]}>
       {props.phases.map((slot) =>
         slot.kind === "phase" ? (
           <PhaseDot
@@ -189,7 +234,6 @@ function PhaseDot(props: {
   readonly className: string
 }): ReactElement {
   const { phase } = props
-  const { popover } = phase
   return (
     <li
       className={props.className}
@@ -203,70 +247,11 @@ function PhaseDot(props: {
         className={styles["work-strip-phase-dot"]}
         aria-label={phase.label}
         title={phase.label}
-        aria-expanded={popover.kind === "open"}
-        aria-controls={phase.popoverId}
         onClick={phase.onToggle}
       >
         <span aria-hidden="true">{phase.mark}</span>
       </button>
-      {popover.kind === "open" && <PhasePopover id={phase.popoverId} popover={popover} />}
     </li>
-  )
-}
-
-function PhasePopover(props: {
-  readonly id: string
-  readonly popover: Extract<WorkStripPhasePopover, { readonly kind: "open" }>
-}): ReactElement {
-  const { popover } = props
-  const { placeRef } = popover
-  return (
-    <div
-      ref={placeRef}
-      id={props.id}
-      role="dialog"
-      aria-label={popover.title}
-      className={styles["work-strip-pop"]}
-    >
-      <Text
-        element="p"
-        size="body"
-        tone="ink"
-        weight="bold"
-        className={styles["work-strip-pop-title"]}
-      >
-        {popover.title}
-      </Text>
-      <Text
-        element="p"
-        size="label"
-        tone="ink-quiet"
-        weight="inherit"
-        className={styles["work-strip-pop-meta"]}
-      >
-        {popover.meta}
-      </Text>
-      {popover.summary !== "" && (
-        <Text
-          element="p"
-          size="secondary"
-          tone="inherit"
-          weight="inherit"
-          className={styles["work-strip-pop-summary"]}
-        >
-          {popover.summary}
-        </Text>
-      )}
-      {popover.toSteps.kind === "shown" && (
-        <button
-          type="button"
-          className={styles["work-strip-pop-go"]}
-          onClick={popover.toSteps.onGo}
-        >
-          このフェーズの手順へ
-        </button>
-      )}
-    </div>
   )
 }
 
