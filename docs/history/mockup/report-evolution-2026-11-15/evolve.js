@@ -256,10 +256,10 @@ function workHead() {
     <h1 class="tight">知らせの切り替えを設定に足し、端末ごとに保存されるようにした</h1>`
 }
 
-// 段1 の確かさ（案2 の頭のまま。段2 からは主張ごとの印に置き換わる）。
+// 段1 の検証の結果（案2 の冒頭のまま。段2 からは主張ごとの印に置き換わる）。
 function sureHead() {
   return `<dl class="head-rows"${upto(1)}>
-    <div class="head-row"><dt>確かさ</dt><dd>
+    <div class="head-row"><dt>確かめたこと</dt><dd>
       <ul class="ledger">
         <li class="ledger-row" data-state="open">${icon("question")}<span class="ledger-label">ほかのタブを見ているときに鳴るか</span><span class="seal seal-said">申告のみ</span>
           <p class="ledger-how">音は撮影では確かめられない。確かめ方: 切り替えを入れ、別のタブを開いたまま依頼を1つ終わらせる</p></li>
@@ -269,7 +269,7 @@ function sureHead() {
   </dl>`
 }
 
-// あなたの番。置き場は案2 と同じいちばん下。段3 では、選ぶ前に結果を画で見せ、押すと下書きが入る。
+// お願い。置き場は案2 と同じいちばん下。段3 では、選ぶ前に結果を画で見せ、押すと下書きが入る。
 function workTurn() {
   const choice = (key, primary) => `<button class="choice${primary ? " choice-main" : ""}" type="button" data-wording="${key}"
       data-draft="切り替えの文言は「${WORDING[key]}」にそろえて。" aria-pressed="false">
@@ -277,7 +277,7 @@ function workTurn() {
       <span class="choice-name">${key === "now" ? "このままにする" : "ほかの画面にそろえる"}</span>
     </button>`
   return `<section class="turn-end" id="turn-end" aria-labelledby="turn-title">
-    <h2 class="turn-title" id="turn-title">あなたの番</h2>
+    <h2 class="turn-title" id="turn-title">お願い</h2>
     <ol class="asks">
       <li class="ask">
         <p class="turn-text">切り替えの文言を、どちらにそろえるか決めてほしい。ほかの画面では「ほかのタブを見ているとき」と書いている。</p>
@@ -521,9 +521,9 @@ const WORK = {
   steps: 14,
   asks: [1, 2, 2],
   heads: {
-    pair: ["知らせの切り替えを設定に足した", "切り替えが1行増えた", "ふるまい・保存・テスト", "触ったのは4ファイル", "変えていないこと", "あなたの番"],
-    board: ["知らせの切り替えを設定に足した", "一目の盤", "あなたの番"],
-    ledger: ["知らせの切り替えを設定に足した", "裏づけの台帳", "あなたの番"],
+    pair: ["知らせの切り替えを設定に足した", "切り替えが1行増えた", "ふるまい・保存・テスト", "触ったのは4ファイル", "変えていないこと", "お願い"],
+    board: ["知らせの切り替えを設定に足した", "一目の盤", "お願い"],
+    ledger: ["知らせの切り替えを設定に足した", "裏づけの台帳", "お願い"],
   },
   paper: { pair: workPair, board: workBoard, ledger: workLedger },
 }
@@ -617,7 +617,7 @@ function decideHead() {
 
 function decideSure() {
   return `<dl class="head-rows"${upto(1)}>
-    <div class="head-row"><dt>確かさ</dt><dd>
+    <div class="head-row"><dt>確かめたこと</dt><dd>
       <ul class="ledger">
         <li class="ledger-row" data-state="open">${icon("question")}<span class="ledger-label">案2 は Safari でも遅れないか</span><span class="seal seal-said">申告のみ</span>
           <p class="ledger-how">測ったのは Chromium だけ。確かめ方: Safari で同じ測り方を 10 回</p></li>
@@ -633,7 +633,7 @@ function decideTurn() {
       <span class="choice-name">${item.name.slice(0, 2)}で進める</span>
     </button>`
   return `<section class="turn-end" id="turn-end" aria-labelledby="turn-title">
-    <h2 class="turn-title" id="turn-title">あなたの番</h2>
+    <h2 class="turn-title" id="turn-title">お願い</h2>
     <ol class="asks">
       <li class="ask">
         <p class="turn-text">鈴の鳴らし方を、どの案で進めるか決めてほしい。勧めるのは案2。</p>
@@ -797,9 +797,9 @@ const DECIDE = {
   steps: 21,
   asks: [1, 1, 1],
   heads: {
-    pair: ["鈴は Web Audio で鳴らすのがよい", "鳴るまでの間が縮む", "遅れないのは案2 と案3", "条件を満たすのは案2 だけ", "あなたの番"],
-    board: ["鈴は Web Audio で鳴らすのがよい", "一目の盤", "あなたの番"],
-    ledger: ["鈴は Web Audio で鳴らすのがよい", "裏づけの台帳", "あなたの番"],
+    pair: ["鈴は Web Audio で鳴らすのがよい", "鳴るまでの間が縮む", "遅れないのは案2 と案3", "条件を満たすのは案2 だけ", "お願い"],
+    board: ["鈴は Web Audio で鳴らすのがよい", "一目の盤", "お願い"],
+    ledger: ["鈴は Web Audio で鳴らすのがよい", "裏づけの台帳", "お願い"],
   },
   paper: { pair: decidePair, board: decideBoard, ledger: decideLedger },
 }
@@ -965,7 +965,7 @@ if (turnTitle !== null) {
   const count = CONTENT.asks[lv - 1]
   one(".composer").insertAdjacentHTML(
     "afterbegin",
-    `<p class="composer-status">${icon("down")}<span>あなたの番が${count}件あります</span><button class="status-jump" type="button">レポートの末尾へ</button></p>`,
+    `<p class="composer-status">${icon("down")}<span>お願いが${count}件あります</span><button class="status-jump" type="button">レポートの末尾へ</button></p>`,
   )
   one(".status-jump").addEventListener("click", () => {
     stream.scrollTo({ top: stream.scrollHeight, behavior: reduceMotion ? "auto" : "smooth" })
