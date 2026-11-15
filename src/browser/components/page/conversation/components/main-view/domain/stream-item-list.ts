@@ -20,17 +20,22 @@ import { progressFoldSummary, type ProgressEntry } from "./turn-arrangement.ts"
 
 type RecordOf<K extends SessionRecord["kind"]> = Extract<SessionRecord, { readonly kind: K }>
 
+type PlanItem = { readonly kind: "plan"; readonly record: RecordOf<"work-plan"> }
+
 /** 作業の経過に畳める1件。 */
 export type ProgressItem =
-  | { readonly kind: "plan"; readonly record: RecordOf<"work-plan"> }
+  | PlanItem
   | { readonly kind: "body"; readonly step: MainViewStep }
   | { readonly kind: "question"; readonly entry: MainViewQuestion }
 
+/** 流れの最上位に並べる1件。段の札は「作業の経過」の中にだけ入る。 */
 export type StreamItem =
   | Extract<ConversationStreamRow, { readonly kind: "post" | "say" }>
   | { readonly kind: "failure" }
-  | ProgressItem
+  | Exclude<ProgressItem, PlanItem>
   | { readonly kind: "fold"; readonly items: readonly ProgressItem[] }
+
+type ArrangedItem = StreamItem | PlanItem
 
 /** 流れの描く順の並び。 */
 export function streamItemsOf(
@@ -76,7 +81,7 @@ export function streamItemsOf(
     return [found]
   }
 
-  const items: StreamItem[] = []
+  const items: ArrangedItem[] = []
   for (const row of rows) {
     switch (row.kind) {
       case "post":
@@ -123,7 +128,7 @@ export function streamItemsOf(
         : [],
     ),
   ])
-  const folded = foldProgress([...items, ...leftovers])
+  const folded = foldProgress([...items, ...leftovers]).filter(isStreamItem)
   return turn.failure.kind === "failed" ? withFailure(folded) : folded
 }
 
@@ -139,7 +144,11 @@ function withFailure(items: readonly StreamItem[]): readonly StreamItem[] {
   return at < 0 ? [...items, failure] : [...items.slice(0, at), failure, ...items.slice(at)]
 }
 
-function foldProgress(items: readonly StreamItem[]): readonly StreamItem[] {
+function isStreamItem(item: ArrangedItem): item is StreamItem {
+  return item.kind !== "plan"
+}
+
+function foldProgress(items: readonly ArrangedItem[]): readonly ArrangedItem[] {
   const finalAt = items.findIndex((item) => item.kind === "body" && item.step.mark === "final")
   if (finalAt < 0) {
     return items
@@ -156,7 +165,7 @@ function foldProgress(items: readonly StreamItem[]): readonly StreamItem[] {
   ]
 }
 
-function isProgress(item: StreamItem): item is ProgressItem {
+function isProgress(item: ArrangedItem): item is ProgressItem {
   return item.kind === "plan" || item.kind === "question" || item.kind === "body"
 }
 

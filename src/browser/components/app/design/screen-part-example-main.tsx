@@ -55,7 +55,6 @@ function stripPhase(
     label,
     state,
     skipped: false,
-    spinning: state === "current",
     popoverId: `popover-${key}`,
     popover: { kind: "closed" },
     onToggle: noop,
@@ -97,7 +96,6 @@ const WORKING_STRIP: WorkStripModel = {
     },
   ],
   headLabel: "実装",
-  activity: { text: "ファイルを読んでいる", tone: "quiet", mono: false, retry: { kind: "none" } },
 }
 
 const FINISHED_STRIP: WorkStripModel = {

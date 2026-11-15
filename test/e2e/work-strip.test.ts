@@ -2,7 +2,7 @@ import type { Locator, Page } from "playwright-core"
 
 import { expectReadable } from "./readability-scan.ts"
 import { expect, test } from "./room-fixture.ts"
-import { LONG_TOOL_OCCURRENCE, phaseStates, stripOf } from "./work-strip-probe.ts"
+import { LONG_TOOL_OCCURRENCE, nowLineOf, phaseStates, stripOf } from "./work-strip-probe.ts"
 
 // 進み具合のプログレスバー（docs/architecture/testing.md「E2E のシナリオの一覧」）。
 // 場面 `work-strip-running` は1つ目の手順のあと間を空け、4つ目の手順（長い Bash）が十数秒走るので、そこで撮る。
@@ -29,12 +29,14 @@ test.describe("進み具合のプログレスバー", () => {
       .poll(() => phaseStates(strip))
       .toEqual(["current", "upcoming", "upcoming", "upcoming"])
     await expect.poll(() => strip.textContent()).toContain("今の形を調べる")
-    await expect.poll(() => activityText(strip)).toContain("Read")
+    await expect.poll(() => nowLineText(room.page)).toContain("Read")
 
     await room.waitForEvent("tool-started", LONG_TOOL_OCCURRENCE)
     await expect.poll(() => phaseStates(strip)).toEqual(["done", "current", "upcoming", "upcoming"])
     await expect.poll(() => strip.textContent()).toContain("集計の関数とスクリプト")
-    await expect.poll(() => activityText(strip)).toContain("pnpm exec vitest run /tmp/dummy/metric")
+    await expect
+      .poll(() => nowLineText(room.page))
+      .toContain("pnpm exec vitest run /tmp/dummy/metric")
 
     const topBefore = await topOf(strip)
     await scrollMainToBottom(room.page)
@@ -69,7 +71,7 @@ test.describe("進み具合のプログレスバー", () => {
     expect(await leftOf(track)).toBe(workingLeft)
   })
 
-  test("1024x768 で許可の答え待ちが届くと、今の段の丸が答え待ちになり、2行目が何を待っているかを言い、札の口は覆われない", async ({
+  test("1024x768 で許可の答え待ちが届くと、今の段の丸が答え待ちになり、「いま」の行は無く、札の口は覆われない", async ({
     run,
   }) => {
     const room = await run.open({
@@ -81,9 +83,7 @@ test.describe("進み具合のプログレスバー", () => {
     const strip = stripOf(room.page)
 
     await expect.poll(() => phaseStates(strip)).toEqual(["done", "asking"])
-    await expect
-      .poll(() => activityText(strip))
-      .toContain("お伺いが届いた · 許可: Bash  rm -rf /tmp/dummy/fake-home")
+    await expect(nowLineOf(room.page)).toHaveCount(0)
     const inquiry = room.page.getByRole("region", { name: "お伺い" })
     for (const name of ["許可", "拒否"]) {
       await expectUncovered(inquiry.getByRole("radio", { name }))
@@ -128,8 +128,8 @@ test.describe("進み具合のプログレスバー", () => {
   })
 })
 
-async function activityText(strip: Locator): Promise<string> {
-  return (await strip.locator("p").first().textContent()) ?? ""
+async function nowLineText(page: Page): Promise<string> {
+  return (await nowLineOf(page).textContent()) ?? ""
 }
 
 async function topOf(locator: Locator): Promise<number> {

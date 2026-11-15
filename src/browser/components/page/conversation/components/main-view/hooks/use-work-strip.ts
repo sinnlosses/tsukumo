@@ -4,7 +4,6 @@ import type { RefCallback, RefObject } from "react"
 import { groupBy } from "remeda"
 
 import { conversationMoment } from "../../../../../../../shared/session/conversation-moment.ts"
-import { reportDraftingOf } from "../../../../../../../shared/session/turn-progress.ts"
 import {
   completionText,
   type PhaseNumber,
@@ -52,7 +51,6 @@ import type { WorkStripResult } from "../../../domain/turn-result-mark.ts"
 import { turnResultsOf, type TurnResult } from "../../../domain/turn-result.ts"
 import { useMainViewContent } from "../../../stores/main-view-content.ts"
 import { type StepsLanding, useWorkStripSteps } from "../../../stores/work-strip-step-list.ts"
-import { workActivityOf, type WorkActivity } from "../domain/work-activity.ts"
 import { usePhasePopover, type PhasePopover } from "./use-phase-popover.ts"
 
 /** 段の丸1つの状態。`asking` は今の段で答え待ちが来ているとき。 */
@@ -67,8 +65,6 @@ export type WorkStripPhase = {
   readonly state: WorkStripPhaseState
   /** 済んだ段のうち飛ばした段。`state` は `done` のまま。 */
   readonly skipped: boolean
-  /** 丸の外周に回る弧を付けるか。作業中の帯の今の段だけ。 */
-  readonly spinning: boolean
   readonly popoverId: string
   readonly popover: WorkStripPhasePopover
   readonly onToggle: () => void
@@ -91,7 +87,7 @@ export type WorkStripPhasePopover =
       readonly placeRef: RefCallback<HTMLDivElement>
     }
 
-type PhaseFlags = { readonly asking: boolean; readonly spinning: boolean }
+type PhaseFlags = { readonly asking: boolean }
 
 /** `recaps` は `PlannedPhase.key`（名前と何番目か）で引き、帯の丸の `key`（平らにした位置）では引かない。 */
 type PopoverContext = {
@@ -142,7 +138,7 @@ export type WorkStripSteps = {
  * 帯に出す形。`headLabel` は丸の右の字、`sideLabel` は右端の等幅の字。
  *
  * - `none`: 帯ごと出さない（本文が1つも無いまま閉じた依頼と、ワークプランも働きも無いとき）
- * - `working`: 中身が働くあいだ。送った直後から出す。今の段の名前・「経過 6分12秒」・2行目（ワークプランが届く前は段の丸が無く字は空。チップが「作業中」を言うので重ねない）
+ * - `working`: 中身が働くあいだ。送った直後から出す。今の段の名前・「経過 6分12秒」（ワークプランが届く前は段の丸が無く字は空。チップが「作業中」を言うので重ねない）
  * - `finished`: 中身がレポートに入れ替わったあと。済んだ姿の字・「所要 21分49秒」の1行（ワークプランが無ければ字は空）
  *
  * `result` は状態のチップの状態。`working` は作業中・答え待ち・背景で作業中（ターンが終わってバックグラウンドタスクだけ残る）、`finished` は完了・答え待ち・止めた・失敗。
@@ -159,7 +155,6 @@ export type WorkStripModel =
       readonly readingLabel: string
       readonly headLabel: string
       readonly sideLabel: string
-      readonly activity: WorkActivity
       readonly steps: WorkStripSteps
     }
   | {
@@ -208,14 +203,9 @@ const UNKNOWN_RECAP = {
 export function useWorkStrip(): WorkStripModel {
   const turnStepList = useCurrentTurnSteps()
   const content = useMainViewContent((state) => state.content)
-  const records = useSession((session) => session.state.records)
   const turn = useSession((session) => session.state.turn)
   const pending = useSession((session) => session.state.pending)
-  const apiTrouble = useSession((session) => session.state.apiTrouble)
-  const reportDrafting = useSession((session) => reportDraftingOf(session.state.sdkTurn))
   const backgroundTasks = useSession((session) => session.state.backgroundTasks)
-  const workflowSteps = useSession((session) => session.state.workflowSteps)
-  const workflowProgress = useSession((session) => session.state.workflowProgress)
   const opened = useWorkStripSteps((state) => state.opened)
   const toggle = useWorkStripSteps((state) => state.toggle)
   const openAtPhase = useWorkStripSteps((state) => state.openAtPhase)
@@ -264,10 +254,7 @@ export function useWorkStrip(): WorkStripModel {
   const stripPhases = slotsOf(
     plan,
     planned,
-    {
-      asking: working && firstPending !== undefined,
-      spinning: working && (result === "working" || result === "background"),
-    },
+    { asking: working && firstPending !== undefined },
     {
       popover,
       recaps:
@@ -306,18 +293,6 @@ export function useWorkStrip(): WorkStripModel {
     readingLabel,
     headLabel: planned.length === 0 ? "" : nowPhase.kind === "phase" ? nowPhase.name : completion,
     sideLabel: elapsedLabel,
-    activity: workActivityOf({
-      turnStepList,
-      firstPending,
-      reportDrafting,
-      backgroundTasks,
-      workflowSteps,
-      workflowProgress,
-      turn,
-      apiTrouble,
-      records,
-      now,
-    }),
     steps,
   }
 }
@@ -411,7 +386,6 @@ function toPhase(
     label: `${plan.kind === "planned" ? plannedPhaseTitle(plan, phase) : phase.name}${phase.skipped ? SKIPPED_PHASE_SUFFIX : PHASE_STATE_SUFFIX[state]}`,
     state,
     skipped: phase.skipped,
-    spinning: flags.spinning && state === "current",
     popoverId: `work-strip-pop-${key}`,
     popover:
       context.popover.openKey === key ? popoverOf(plan, phase, state, context) : { kind: "closed" },

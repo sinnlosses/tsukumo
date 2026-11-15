@@ -44,6 +44,7 @@ import { type ShownTarget, useActiveTurnScroll } from "./hooks/use-active-turn-s
 import { useReportOutlineTurns } from "./hooks/use-report-outline-turn-list.ts"
 import { InquiryJumpFloat } from "./inquiry-jump-float.tsx"
 import styles from "./main-view.module.css"
+import { NowLine } from "./now-line.tsx"
 import { PhaseList } from "./phase-list.tsx"
 import { ReportOutline } from "./report-outline.tsx"
 import { RequestBlock } from "./request-block.tsx"
@@ -214,6 +215,7 @@ export function MainView(): ReactElement {
                     />
                   </AskThreadProvider>
                 </div>
+                {!phoneWidth && <NowLine viewingPast={viewingPast} />}
                 {!viewingPast && (
                   <div className={styles["turn-card-inquiry"]}>
                     <Inquiry />

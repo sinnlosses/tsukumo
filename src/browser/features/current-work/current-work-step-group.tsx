@@ -10,13 +10,15 @@ import styles from "./current-work-step-group.module.css"
 import type {
   CurrentWorkStep,
   CurrentWorkStepGroup as CurrentWorkStepGroupView,
+  RunningMark,
 } from "./current-work-step.ts"
 
 /** 段で区切った手順のまとまり。段の小見出しがあれば手順の上に置く。 */
 export function CurrentWorkStepGroup(props: {
   readonly group: CurrentWorkStepGroupView
+  readonly runningMark: RunningMark
 }): ReactElement {
-  const { group } = props
+  const { group, runningMark } = props
   return (
     <>
       {group.heading.kind === "phase" && (
@@ -41,7 +43,7 @@ export function CurrentWorkStepGroup(props: {
       )}
       <ul className={styles["current-work-steps"]}>
         {group.steps.map((step) => (
-          <CurrentWorkStepRow key={step.key} step={step} />
+          <CurrentWorkStepRow key={step.key} step={step} runningMark={runningMark} />
         ))}
       </ul>
     </>
@@ -49,8 +51,11 @@ export function CurrentWorkStepGroup(props: {
 }
 
 /** 手順1件。サブエージェントの中（nested）は1段下げる。失敗は `<details>` で開いて読める。 */
-function CurrentWorkStepRow(props: { readonly step: CurrentWorkStep }): ReactElement {
-  const { step } = props
+function CurrentWorkStepRow(props: {
+  readonly step: CurrentWorkStep
+  readonly runningMark: RunningMark
+}): ReactElement {
+  const { step, runningMark } = props
   const classes = clsx(
     step.nested && styles["current-work-step-nested"],
     step.status.kind === "done" && styles["current-work-step-done"],
@@ -70,7 +75,9 @@ function CurrentWorkStepRow(props: { readonly step: CurrentWorkStep }): ReactEle
           <span
             className={clsx(
               styles["current-work-step-mark"],
-              step.status.kind === "running" && styles["current-work-step-mark-running"],
+              step.status.kind === "running" &&
+                runningMark === "spin" &&
+                styles["current-work-step-mark-running"],
             )}
             aria-hidden="true"
           >

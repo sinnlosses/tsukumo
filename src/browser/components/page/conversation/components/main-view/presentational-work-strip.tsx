@@ -1,4 +1,4 @@
-// 進み具合のプログレスバーの器。状態のチップ・段の丸の並び・今の段・経過・手順の口の1行目と、走っている手順の2行目、押すと開く依頼の手順の一覧。
+// 進み具合のプログレスバーの器。状態のチップ・段の丸の並び・今の段・経過・手順の口の1行と、押すと開く依頼の手順の一覧。
 //
 // `aria-live` は付けない。
 
@@ -11,7 +11,6 @@ import { Button } from "../../../../ui/button/button.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
 import { WORK_STRIP_MARKS, type WorkStripResult } from "../../domain/turn-result-mark.ts"
 import type { StepsLanding } from "../../stores/work-strip-step-list.ts"
-import type { WorkActivity } from "./domain/work-activity.ts"
 import { useStepsLanding } from "./hooks/use-steps-landing.ts"
 import type {
   WorkStripModel,
@@ -68,7 +67,6 @@ export function PresentationalWorkStrip(props: {
         </Text>
         <StepsToggle steps={strip.steps} />
       </div>
-      {strip.kind === "working" && <ActivityLine activity={strip.activity} />}
       {strip.steps.list.kind === "open" && (
         <StepsList
           groups={strip.steps.groups}
@@ -112,9 +110,9 @@ function StepsList(props: {
   const listRef = useStepsLanding(props.landing)
   return (
     <div ref={listRef} role="region" aria-label="依頼の手順" className={styles["work-strip-steps"]}>
-      <CurrentWorkBackground list={props.backgroundList} />
+      <CurrentWorkBackground list={props.backgroundList} runningMark="still" />
       {props.groups.map((group) => (
-        <CurrentWorkStepGroup key={group.key} group={group} />
+        <CurrentWorkStepGroup key={group.key} group={group} runningMark="still" />
       ))}
     </div>
   )
@@ -197,7 +195,6 @@ function PhaseDot(props: {
       className={props.className}
       data-phase-state={phase.state}
       data-phase-skipped={phase.skipped ? "true" : undefined}
-      data-spinning={phase.spinning ? "true" : undefined}
       data-span-head={props.spanHead.kind === "head" ? "true" : undefined}
     >
       <SpanName spanHead={props.spanHead} />
@@ -286,33 +283,5 @@ function StepsToggle(props: { readonly steps: WorkStripSteps }): ReactElement {
     >
       {props.steps.toggleLabel}
     </Button>
-  )
-}
-
-function ActivityLine(props: { readonly activity: WorkActivity }): ReactElement {
-  const { activity } = props
-  return (
-    <p className={clsx(styles["work-strip-activity"], activity.mono && styles["is-mono"])}>
-      <Text
-        element="span"
-        size="secondary"
-        tone={activity.tone === "asking" ? "state-warn" : "ink-quiet"}
-        weight="inherit"
-        className={styles["work-strip-activity-text"]}
-      >
-        {activity.text}
-      </Text>
-      {activity.retry.kind === "retrying" && (
-        <Text
-          element="span"
-          size="secondary"
-          tone="state-warn"
-          weight="inherit"
-          className={styles["work-strip-retry"]}
-        >
-          <span title={activity.retry.detail}>{activity.retry.label}</span>
-        </Text>
-      )}
-    </p>
   )
 }

@@ -83,7 +83,7 @@ export function CurrentWorkList(props: CurrentWorkListProps): ReactElement {
           </pre>
         </div>
       )}
-      <CurrentWorkBackground list={work.backgroundList} />
+      <CurrentWorkBackground list={work.backgroundList} runningMark="spin" />
       {work.stepList.kind === "steps" ? (
         <>
           <Text
@@ -96,7 +96,7 @@ export function CurrentWorkList(props: CurrentWorkListProps): ReactElement {
             {work.stepList.headingLabel}
           </Text>
           {work.stepList.groups.map((group) => (
-            <CurrentWorkStepGroup key={group.key} group={group} />
+            <CurrentWorkStepGroup key={group.key} group={group} runningMark="spin" />
           ))}
           {work.stepList.toggleAll.kind === "expandable" && (
             <Button

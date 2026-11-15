@@ -6,10 +6,10 @@ import type { SessionEvent } from "../../../../../../../../src/shared/session/se
 import { checkedTaskId } from "../../../../../../../fixture/task-id.ts"
 import { checkedToolUseId } from "../../../../../../../fixture/tool-use-id.ts"
 import {
+  activityTextAt,
   foldTimed,
   plan,
   START,
-  stripAt,
   workRequest,
 } from "../../../../../../../fixture/work-strip.ts"
 
@@ -66,13 +66,12 @@ const stepFinished = (name: string, agentId = "agent-1"): SessionEvent => ({
 const completed: SessionEvent = { kind: "turn-finished", outcome: { kind: "completed" } }
 
 function activityAfter(...events: readonly SessionEvent[]): string | undefined {
-  const strip = stripAt(
+  return activityTextAt(
     foldTimed(
       [workRequest, plan, ...events].map((event, index) => [event, START + index * 1_000] as const),
     ),
     START + 60_000,
   )
-  return strip.kind === "working" ? strip.activity.text : undefined
 }
 
 describe("useWorkStrip（ワークフロースクリプトの中の手順）", () => {
@@ -212,7 +211,7 @@ describe("useWorkStrip（ワークフロースクリプトの中の手順）", (
     ).toBe("背景で 架空の流れ")
   })
 
-  it("ワークフロースクリプトの agent でない agent_id の手順では2行目が替わらない", () => {
+  it("ワークフロースクリプトの agent でない agent_id の手順では文が替わらない", () => {
     expect(
       activityAfter(
         tasksChanged(WORKFLOW),

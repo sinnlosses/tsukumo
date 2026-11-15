@@ -365,6 +365,48 @@ describe("MainView（答えた質問の記録）", () => {
   })
 })
 
+describe("MainView（流れの末尾のいまの行）", () => {
+  const RECORDS = [
+    requestRecord({ text: "架空の依頼", turnId: 0 }),
+    workPlanRecord({ phases: ["架空の段A", "架空の段B"], current: 0 }),
+    speechRecord({ text: "架空の一言目" }),
+  ]
+
+  it("作業中は、流れの最後の行の後ろに「いま」の行が1つあり、文は走っている手順の要約になる", () => {
+    stubPhoneWidth(false)
+
+    renderMainView(
+      [...RECORDS, toolRecord({ name: "Bash", input: { command: "架空のコマンド" } })],
+      { kind: "running", startedAt: 0 },
+    )
+
+    const lines = document.querySelectorAll("[data-now-line]")
+    expect(lines).toHaveLength(1)
+    expect(lines[0]?.textContent).toContain("いま")
+    expect(lines[0]?.textContent).toContain("架空のコマンド")
+    const said = screen.getByText("架空の一言目")
+    expect(
+      said.compareDocumentPosition(lines[0] ?? said) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy()
+  })
+
+  it("狭い画面では描かない", () => {
+    stubPhoneWidth(true)
+
+    renderMainView(RECORDS, { kind: "running", startedAt: 0 })
+
+    expect(document.querySelector("[data-now-line]")).toBeNull()
+  })
+
+  it("閉じたあとは描かない", () => {
+    stubPhoneWidth(false)
+
+    renderMainView([...RECORDS, reportRecord("架空の結論")])
+
+    expect(document.querySelector("[data-now-line]")).toBeNull()
+  })
+})
+
 describe("MainView（会話の流れ）", () => {
   it("依頼・補足は右寄せの投稿、セリフと補足への答えは左寄せの行で、記録の順に1本で出る", () => {
     renderMainView([

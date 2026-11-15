@@ -14,6 +14,7 @@ import {
   requestRecord,
   speechRecord,
 } from "../../../../../../fixture/session-record.ts"
+import { stubPhoneWidth } from "../../../../../phone-width.ts"
 import { putSession } from "../../../../../session-store.ts"
 
 // フィクスチャはすべて手で書いた架空の依頼とレポート（実物の会話は使わない）。
@@ -72,23 +73,29 @@ describe("TurnList", () => {
     expect(rows()[1]?.getAttribute("aria-current")).toBe("true")
   })
 
-  it("経過を数えているあいだの最新の行は回る輪で、2行目は「作業中 <経過>」", () => {
-    const startedAt = Temporal.Now.instant().epochMilliseconds - 65_000
-    renderTurnList({
-      records: [requestRecord({ turnId: 0, text: "架空の作業中の依頼" })],
-      turn: { kind: "running", startedAt },
-      sdkTurn: {
-        kind: "open",
-        bodies: { report: true, utterance: true },
-        answeringAside: false,
-        reportDrafting: { kind: "idle" },
-      },
-    })
+  describe.each([
+    ["狭い画面", true],
+    ["広い画面", false],
+  ])("経過を数えているあいだの最新の行（%s）", (_name, phone) => {
+    it("2行目は「作業中 <経過>」で、回る輪は狭い画面にだけ付く", () => {
+      stubPhoneWidth(phone)
+      const startedAt = Temporal.Now.instant().epochMilliseconds - 65_000
+      renderTurnList({
+        records: [requestRecord({ turnId: 0, text: "架空の作業中の依頼" })],
+        turn: { kind: "running", startedAt },
+        sdkTurn: {
+          kind: "open",
+          bodies: { report: true, utterance: true },
+          answeringAside: false,
+          reportDrafting: { kind: "idle" },
+        },
+      })
 
-    const [row] = rows()
-    expect(row?.className).toContain("is-working")
-    expect(row?.querySelector('[role="progressbar"]')).not.toBeNull()
-    expect(row?.querySelector(".turn-list-span")?.textContent).toMatch(/^作業中 1:0[5-7]$/u)
+      const [row] = rows()
+      expect(row?.className).toContain("is-working")
+      expect(row?.querySelector('[role="progressbar"]') !== null).toBe(phone)
+      expect(row?.querySelector(".turn-list-span")?.textContent).toMatch(/^作業中 1:0[5-7]$/u)
+    })
   })
 
   it("行を押すと引き出しを閉じ、そのやり取りに留める", () => {

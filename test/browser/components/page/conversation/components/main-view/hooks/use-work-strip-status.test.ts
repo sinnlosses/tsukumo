@@ -143,18 +143,18 @@ describe("useWorkStrip（状態）", () => {
   })
 })
 
-describe("useWorkStrip（回る弧）", () => {
+describe("useWorkStrip（今の段の丸）", () => {
   function spinningOf(strip: WorkStripModel): boolean[] {
     return strip.kind === "none"
       ? []
       : strip.phases.flatMap((slot) =>
           slot.kind === "phase"
-            ? [slot.phase.spinning]
-            : slot.phases.map((phase) => phase.spinning),
+            ? [slot.phase.state === "current"]
+            : slot.phases.map((phase) => phase.state === "current"),
         )
   }
 
-  it("作業中は今の段の丸だけが回る", () => {
+  it("作業中は今の段の丸だけが今の段になる", () => {
     const strip = stripAt(
       foldTimed([
         [workRequest, START],
@@ -167,7 +167,7 @@ describe("useWorkStrip（回る弧）", () => {
     expect(spinningOf(strip)).toEqual([true, false])
   })
 
-  it("済んだ段とまだの段は回らない", () => {
+  it("済んだ段とまだの段は今の段にならない", () => {
     const strip = stripAt(
       foldTimed([
         [workRequest, START],
@@ -179,7 +179,7 @@ describe("useWorkStrip（回る弧）", () => {
     expect(spinningOf(strip)).toEqual([false, true, false])
   })
 
-  it("答え待ちのあいだは今の段の丸も回らない", () => {
+  it("答え待ちのあいだは今の段の丸は答え待ちの印になる", () => {
     const strip = stripAt(
       foldTimed([
         [workRequest, START],
@@ -205,22 +205,7 @@ describe("useWorkStrip（回る弧）", () => {
     expect(spinningOf(strip)).toEqual([false, false])
   })
 
-  it("レポートに入れ替わった済んだ姿では回らない", () => {
-    const strip = stripAt(
-      foldTimed([
-        [workRequest, START],
-        [plan, START + 1_000],
-        [reportEvent(), START + 2_000],
-        [completed, START + 3_000],
-      ]),
-      START + 5_000,
-    )
-
-    expect(strip.kind).toBe("finished")
-    expect(spinningOf(strip)).toEqual([false, false])
-  })
-
-  it("背景で作業中のあいだも今の段の丸だけが回る", () => {
+  it("背景で作業中のあいだも今の段の丸だけが今の段になる", () => {
     const strip = stripAt(
       foldTimed([
         [workRequest, START],
@@ -247,7 +232,7 @@ describe("useWorkStrip（回る弧）", () => {
     expect(spinningOf(stripAt(foldTimed([[workRequest, START]]), START + 5_000))).toEqual([])
   })
 
-  it("並列のフェーズで今の段が複数なら、今の段の丸がすべて回る", () => {
+  it("並列のフェーズで今の段が複数なら、今の段の丸がすべて今の段になる", () => {
     const grouped: SessionEvent = {
       kind: "work-plan",
       delegatedRange: { kind: "none" },

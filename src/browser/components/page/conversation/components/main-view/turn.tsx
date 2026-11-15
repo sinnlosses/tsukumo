@@ -158,7 +158,6 @@ function streamItemKey(item: StreamItem, index: number): string {
       return "fold"
     case "failure":
       return "failure"
-    case "plan":
     case "post":
     case "say":
       return `${item.kind}:${String(index)}`
@@ -183,8 +182,6 @@ function StreamItemView(props: StreamItemViewProps): ReactNode {
       return <PostRow turn={turn} tasks={props.tasks} row={item} />
     case "say":
       return <SayRow row={item} />
-    case "plan":
-      return <PlanCard record={item.record} />
     case "question":
       return <QuestionRecord entry={item.entry} />
     case "failure":

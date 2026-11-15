@@ -12,6 +12,7 @@ import { requestEvent } from "../../../../../../../fixture/session-event.ts"
 import { checkedTaskId } from "../../../../../../../fixture/task-id.ts"
 import { checkedToolUseId } from "../../../../../../../fixture/tool-use-id.ts"
 import {
+  activityTextAt,
   foldTimed,
   plan,
   workRequest,
@@ -46,7 +47,7 @@ describe("useWorkStrip（時刻に依るもの）", () => {
     const strip = stripAt(state, START + 72_000)
 
     expect(strip.kind).toBe("working")
-    expect(strip.kind === "working" && strip.activity.text).toBe("Bash  架空のコマンド · 12秒")
+    expect(activityTextAt(state, START + 72_000)).toBe("Bash  架空のコマンド · 12秒")
     expect(strip.kind === "working" && strip.sideLabel).toBe("経過 1分12秒")
   })
 
@@ -73,7 +74,7 @@ describe("useWorkStrip（時刻に依るもの）", () => {
 
     const strip = stripAt(state, START + 18_000)
 
-    expect(strip.kind === "working" && strip.activity.text).toBe(
+    expect(activityTextAt(state, START + 18_000)).toBe(
       "お伺いが届いた · 許可: Bash  架空のコマンド · 答え待ち 7秒",
     )
     expect(
@@ -102,9 +103,7 @@ describe("useWorkStrip（時刻に依るもの）", () => {
       ],
     ])
 
-    const strip = stripAt(state, START + 18_000)
-
-    expect(strip.kind === "working" && strip.activity.text).toBe(
+    expect(activityTextAt(state, START + 18_000)).toBe(
       "お伺いが届いた · 許可: Bash  架空のコマンド · 答え待ち 7秒",
     )
   })
@@ -364,20 +363,16 @@ describe("useWorkStrip（並列のフェーズ）", () => {
 })
 
 describe("useWorkStrip（`/clear` の依頼）", () => {
-  it("依頼の先頭トークンがちょうど `/clear` なら、2行目は「会話を片付けている」", () => {
+  it("依頼の先頭トークンがちょうど `/clear` なら、文は「会話を片付けている」", () => {
     const state = foldTimed([[requestEvent("/clear"), START]])
 
-    const strip = stripAt(state, START + 5_000)
-
-    expect(strip.kind === "working" && strip.activity.text).toBe("会話を片付けている")
+    expect(activityTextAt(state, START + 5_000)).toBe("会話を片付けている")
   })
 
-  it("`/clear-foo` のような別名では、2行目は「考えている」のまま", () => {
+  it("`/clear-foo` のような別名では、文は「考えている」のまま", () => {
     const state = foldTimed([[requestEvent("/clear-foo"), START]])
 
-    const strip = stripAt(state, START + 5_000)
-
-    expect(strip.kind === "working" && strip.activity.text).toBe("考えている")
+    expect(activityTextAt(state, START + 5_000)).toBe("考えている")
   })
 })
 

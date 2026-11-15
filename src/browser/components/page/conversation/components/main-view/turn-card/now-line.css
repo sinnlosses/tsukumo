@@ -1,0 +1,28 @@
+/* 流れの末尾の1行。面は不透明にし、ぼかしの面の中と後ろに置かない。高さは字1行ぶんで保ち、長い文は末尾を「…」にする。 */
+.now-line {
+  display: flex;
+  align-items: center;
+  gap: var(--inline-control);
+  min-width: 0;
+  margin: 0;
+  padding: var(--stack-block) var(--gutter-page);
+  background: var(--ground);
+}
+.now-line-mark {
+  flex: none;
+}
+.now-line-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.now-line.is-mono .now-line-text {
+  font-family: var(--font-mono);
+  white-space: pre;
+}
+.now-line-retry {
+  flex: none;
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}

@@ -28,6 +28,9 @@ type CurrentWorkStepFailure =
   | { readonly kind: "none" }
   | { readonly kind: "failed"; readonly outputText: string; readonly inputText: string }
 
+/** 実行中の印を回すか。回る印が動くのは1画面に1か所だけにするため、置く側が決める。 */
+export type RunningMark = "spin" | "still"
+
 /**
  * 手順を始まったときの段で区切った1まとまり。
  * 小見出しは群の名のタグと「2/4 段の名前」で、ワークプランより前・全部の段を終えたあとの手順は小見出しを持たない。

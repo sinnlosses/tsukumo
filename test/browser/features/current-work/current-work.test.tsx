@@ -12,7 +12,7 @@ import {
   type SessionState,
 } from "../../../../src/shared/session/session-state.ts"
 import { renderCurrentWork, workToggle } from "../../../fixture/current-work.tsx"
-import { requestRecord } from "../../../fixture/session-record.ts"
+import { requestRecord, toolRecord } from "../../../fixture/session-record.ts"
 import { EMPTY_NAV_DRAWER_SLOTS } from "../../nav-drawer-slot.tsx"
 import { stubPhoneWidth } from "../../phone-width.ts"
 import { queryClientWrapper } from "../../query-client.tsx"
@@ -98,6 +98,17 @@ describe("いまの作業（押すと開く依頼の手順の一覧）。語・�
 
     fireEvent.click(workToggle())
     expect(screen.queryByRole("button", { name: "お伺いへ" })).toBeNull()
+  })
+
+  it("ほかの画面の一覧では、実行中の手順の印が回る class を持つ", () => {
+    renderCurrentWork({
+      turn: { kind: "running", startedAt: 0 },
+      records: [requestRecord(), toolRecord({ status: { kind: "running" } })],
+    })
+
+    fireEvent.click(workToggle())
+
+    expect(document.querySelectorAll("[class*='current-work-step-mark-running']")).toHaveLength(1)
   })
 
   it("もう一度押す・外側を押す・Esc で閉じる（Esc はフォーカスを札へ戻す）", () => {

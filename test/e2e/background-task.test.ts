@@ -21,8 +21,9 @@ test.describe("バックグラウンドタスク", () => {
       viewport: "wide",
       domRoots: ["work-strip", "turn-outline"],
     })
-    const strip = room.page.locator('[data-region="main"] section[aria-label="進み具合"]')
-    const backgroundLine = strip.getByText("背景で 架空の短い待ち（2秒）")
+    const backgroundLine = room.page
+      .locator('[data-region="main"] [data-now-line]')
+      .getByText("背景で 架空の短い待ち（2秒）")
 
     await room.waitForEvent("turn-finished")
     await backgroundLine.waitFor()

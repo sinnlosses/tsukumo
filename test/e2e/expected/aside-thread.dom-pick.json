@@ -8,8 +8,7 @@
         { "tag": "li", "attributes": { "data-phase-state": "done" } },
         { "tag": "li", "attributes": { "data-phase-state": "current" } },
         { "tag": "li", "attributes": { "data-phase-state": "upcoming" } },
-        "委譲先に任せる",
-        { "tag": "p", "children": ["背景で 架空の委譲"] }
+        "委譲先に任せる"
       ] },
       { "tag": "div", "attributes": { "data-speaker": "user" }, "children": [
         "いまどこ？（架空の補足メッセージ）"

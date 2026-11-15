@@ -80,7 +80,7 @@ describe("streamItemsOf", () => {
       turn([step({ id: 0, body: turnBodyText("書きかけ"), mark: "plain" })]),
     )
 
-    expect(items.map((item) => item.kind)).toEqual(["post", "plan", "say", "body"])
+    expect(items.map((item) => item.kind)).toEqual(["post", "say", "body"])
   })
 
   it("失敗したやり取りは、最初の本文の手前に失敗の表示を置く", () => {

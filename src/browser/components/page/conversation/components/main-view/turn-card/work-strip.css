@@ -60,18 +60,6 @@
   border-radius: 50%;
   background: var(--work-strip-dot);
 }
-/* 作業中の今の段の丸の外周を回る弧。番号は回さず、丸の寸法も動かさない
-   （`prefers-reduced-motion: reduce` では `theme.css` の全体の規則が止める）。 */
-.work-strip-phase[data-spinning="true"] > .work-strip-phase-dot > span::after {
-  content: "";
-  position: absolute;
-  inset: -5px;
-  border: 2px solid transparent;
-  border-top-color: var(--accent);
-  border-right-color: color-mix(in srgb, var(--accent) 35%, transparent);
-  border-radius: 50%;
-  animation: var(--spinner-animation);
-}
 .work-strip-track {
   display: flex;
   flex: none;
@@ -269,28 +257,6 @@
   flex: none;
   padding: var(--space-xs) var(--space-md);
   border-radius: var(--radius-pill);
-  white-space: nowrap;
-}
-/* 2行目。高さは字1行ぶんで保ち、長い要約は末尾を「…」にする。 */
-.work-strip-activity {
-  display: flex;
-  gap: var(--space-sm);
-  min-width: 0;
-  margin: 0;
-}
-.work-strip-activity-text {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.work-strip-activity.is-mono .work-strip-activity-text {
-  font-family: var(--font-mono);
-  white-space: pre;
-}
-.work-strip-retry {
-  flex: none;
-  font-family: var(--font-mono);
   white-space: nowrap;
 }
 /* 開いた依頼の手順の一覧。帯の真下に本文を押し下げて開き、高さを超えたら内側で転がす。 */

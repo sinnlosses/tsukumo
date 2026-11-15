@@ -16,5 +16,7 @@
 /* 回る印は実行中の手順と同じ（`prefers-reduced-motion: reduce` では `theme.css` の全体の規則が止める）。 */
 .current-work-background-mark {
   display: inline-block;
+}
+.current-work-background-mark-spinning {
   animation: var(--spinner-animation);
 }

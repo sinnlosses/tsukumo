@@ -1,6 +1,7 @@
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
+import { NowLine } from "../../../../../../../src/browser/components/page/conversation/components/main-view/now-line.tsx"
 import { WorkStrip } from "../../../../../../../src/browser/components/page/conversation/components/main-view/work-strip.tsx"
 import { useWorkStripSteps } from "../../../../../../../src/browser/components/page/conversation/stores/work-strip-step-list.ts"
 import type { SessionEvent } from "../../../../../../../src/shared/session/session-event.ts"
@@ -110,7 +111,7 @@ describe("WorkStrip", () => {
     expect(screen.queryByRole("region", { name: "依頼の手順" })).toBeNull()
   })
 
-  it("API の再試行は帯の2行目に何回目かを出す", () => {
+  it("API の再試行は流れの末尾の行に何回目かを出す", () => {
     putSession(
       stateAfter([
         REQUEST,
@@ -127,14 +128,19 @@ describe("WorkStrip", () => {
         },
       ]),
     )
-    render(<WorkStrip />)
+    render(
+      <>
+        <WorkStrip />
+        <NowLine viewingPast={false} />
+      </>,
+    )
 
     expect(strip().getAttribute("data-work-strip")).toBe("working")
     expect(chipLabel(strip().querySelector("[data-result]"))).toBe("作業中")
-    expect(strip().querySelector("p")?.textContent).toContain("再試行中 2/10")
+    expect(document.querySelector("[data-now-line]")?.textContent).toContain("再試行中 2/10")
   })
 
-  it("ターンが終わってバックグラウンドタスクだけ残るあいだは、チップが「背景で作業中」の点で言い、弧は今の段の丸にだけ付く", () => {
+  it("ターンが終わってバックグラウンドタスクだけ残るあいだは、チップが「背景で作業中」の点で言い、今の段の丸は回らない", () => {
     putSession(
       stateAfter([
         REQUEST,
@@ -154,12 +160,11 @@ describe("WorkStrip", () => {
     expect(chipLabel(chip)).toBe("背景で作業中")
     expect(chip?.querySelector("[class*='work-strip-spinner']")).toBeNull()
     expect(chip?.querySelector("[class*='work-strip-dot']")).not.toBeNull()
-    const spinning = strip().querySelectorAll("[data-spinning]")
-    expect(spinning).toHaveLength(1)
-    expect(spinning[0]?.getAttribute("data-phase-state")).toBe("current")
+    expect(strip().querySelector("[data-spinning]")).toBeNull()
+    expect(strip().querySelectorAll("[data-phase-state='current']")).toHaveLength(1)
   })
 
-  it("作業中のチップは回らない点だけで、弧は今の段の丸にだけ付く", () => {
+  it("作業中のチップも今の段の丸も回る印を持たない", () => {
     putSession(stateAfter([REQUEST, plan(1)]))
     render(<WorkStrip />)
 
@@ -167,9 +172,8 @@ describe("WorkStrip", () => {
     expect(chip?.getAttribute("data-result")).toBe("working")
     expect(chip?.querySelector("[class*='work-strip-spinner']")).toBeNull()
     expect(chip?.querySelector("[class*='work-strip-dot']")).not.toBeNull()
-    const spinning = strip().querySelectorAll("[data-spinning]")
-    expect(spinning).toHaveLength(1)
-    expect(spinning[0]?.getAttribute("data-phase-state")).toBe("current")
+    expect(strip().querySelector("[data-spinning]")).toBeNull()
+    expect(strip().querySelectorAll("[data-phase-state='current']")).toHaveLength(1)
   })
 
   it("ターンが閉じると帯は済んだ姿の1行で残り、段の数だけ済んだと言う", () => {

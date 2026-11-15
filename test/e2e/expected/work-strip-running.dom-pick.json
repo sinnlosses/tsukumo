@@ -6,8 +6,7 @@
       { "tag": "li", "attributes": { "data-phase-state": "current" } },
       { "tag": "li", "attributes": { "data-phase-state": "upcoming" } },
       { "tag": "li", "attributes": { "data-phase-state": "upcoming" } },
-      "集計の関数とスクリプト",
-      { "tag": "p", "children": ["Bash pnpm exec vitest run /tmp/dummy/metric · 1分00秒"] }
+      "集計の関数とスクリプト"
     ] }
   ]
 }

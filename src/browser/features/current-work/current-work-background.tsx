@@ -1,15 +1,17 @@
 // 一覧の「背景で動いているもの」の区画。
 
+import clsx from "clsx"
 import type { ReactElement } from "react"
 
 import { Text } from "../../components/ui/text/text.tsx"
 import styles from "./current-work-background.module.css"
-import type { CurrentWorkBackgroundList } from "./current-work-step.ts"
+import type { CurrentWorkBackgroundList, RunningMark } from "./current-work-step.ts"
 
 export function CurrentWorkBackground(props: {
   readonly list: CurrentWorkBackgroundList
+  readonly runningMark: RunningMark
 }): ReactElement | undefined {
-  const { list } = props
+  const { list, runningMark } = props
   if (list.kind === "none") {
     return undefined
   }
@@ -27,7 +29,13 @@ export function CurrentWorkBackground(props: {
       <ul className={styles["current-work-background"]}>
         {list.tasks.map((task) => (
           <li key={task.key}>
-            <span className={styles["current-work-background-mark"]} aria-hidden="true">
+            <span
+              className={clsx(
+                styles["current-work-background-mark"],
+                runningMark === "spin" && styles["current-work-background-mark-spinning"],
+              )}
+              aria-hidden="true"
+            >
               …
             </span>{" "}
             <Text

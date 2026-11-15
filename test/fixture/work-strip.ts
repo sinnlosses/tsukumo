@@ -1,6 +1,7 @@
 import { renderHook } from "@testing-library/react"
 import { vi } from "vitest"
 
+import { useCurrentStep } from "../../src/browser/components/page/conversation/components/main-view/hooks/use-current-step.ts"
 import {
   useWorkStrip,
   type WorkStripModel,
@@ -31,6 +32,14 @@ export function foldTimed(events: readonly (readonly [SessionEvent, number])[]):
     (state, [event, at]) => applySessionEvent(state, event, at),
     INITIAL_SESSION_STATE,
   )
+}
+
+/** 走っている手順の文（流れの末尾の行と狭い画面の「いまの段」が読む値）。ワークプランが無ければ undefined。 */
+export function activityTextAt(state: SessionState, now: number): string | undefined {
+  vi.spyOn(Temporal.Now, "instant").mockReturnValue(Temporal.Instant.fromEpochMilliseconds(now))
+  putSession(state)
+  const step = renderHook(() => useCurrentStep()).result.current
+  return step.kind === "shown" ? step.activity.text : undefined
 }
 
 export function stripAt(state: SessionState, now: number): WorkStripModel {

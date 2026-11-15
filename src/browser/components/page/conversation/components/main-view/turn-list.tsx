@@ -8,6 +8,7 @@ import clsx from "clsx"
 import type { ReactElement } from "react"
 
 import { isTurnCounting, turnElapsedClock } from "../../../../../domain/turn-elapsed.ts"
+import { usePhoneWidth } from "../../../../../hooks/use-phone-width.ts"
 import { useNowWhile } from "../../../../../stores/clock.ts"
 import { useNavDrawer } from "../../../../../stores/nav-drawer.ts"
 import { useSession } from "../../../../../stores/session.ts"
@@ -32,6 +33,8 @@ export function TurnList(): ReactElement {
   const turn = useSession((session) => session.state.turn)
   const backgroundTaskCount = useSession((session) => session.state.backgroundTasks.length)
   const closeDrawer = useNavDrawer((state) => state.close)
+  // 広い画面では回る印を流れの末尾の行に1個だけ残すので、ここは止めた印にする。
+  const phoneWidth = usePhoneWidth()
   const counting = isTurnCounting(turn, backgroundTaskCount)
   const now = useNowWhile(counting)
   const timeZone = localTimeZoneId()
@@ -63,7 +66,13 @@ export function TurnList(): ReactElement {
               }}
             >
               <span className={styles["turn-list-mark"]} aria-hidden="true">
-                {working ? <Spinner className="" /> : result.mark}
+                {working && phoneWidth ? (
+                  <Spinner className="" />
+                ) : working ? (
+                  TURN_RESULT_MARKS.working.mark
+                ) : (
+                  result.mark
+                )}
               </span>
               <span className={styles["turn-list-body"]}>
                 <span className={styles["turn-list-title"]}>{entry.title}</span>
