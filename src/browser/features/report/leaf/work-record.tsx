@@ -17,13 +17,18 @@ import type {
 } from "../../../../shared/report/report-verification.ts"
 import type { MainViewSurfaceHead } from "../../../../shared/session/main-view-shape.ts"
 import { isBlankText } from "../../../../shared/utils/blank-text.ts"
+import type { ReportProofView } from "../domain/report-proof.ts"
 import { InlineMarkdown, workRecordClassName } from "../markdown.tsx"
 import { ChangedFilesFold } from "./changed-files-fold.tsx"
 import { checkSourceWord, FavorJump } from "./checks-verdict.tsx"
 import styles from "./leaf.module.css"
 import { PhaseTimes } from "./phase-time-section.tsx"
+import { ProofBand } from "./proof-band.tsx"
 
-export function WorkRecord(props: { readonly head: MainViewSurfaceHead }): ReactElement {
+export function WorkRecord(props: {
+  readonly head: MainViewSurfaceHead
+  readonly proof?: ReportProofView
+}): ReactElement {
   const { workDone, checks, status } = props.head
   const { changedFiles, phaseTimes, verification } = status
   const rows: readonly {
@@ -58,7 +63,7 @@ export function WorkRecord(props: { readonly head: MainViewSurfaceHead }): React
           {
             key: "checks",
             title: "確かめたこと",
-            body: <CheckLines view={checks} verification={verification} />,
+            body: <CheckLines view={checks} verification={verification} proof={props.proof} />,
           },
         ]
       : []),
@@ -102,19 +107,24 @@ function stageDisplayName(name: string): string {
 function CheckLines(props: {
   readonly view: ReportChecksView
   readonly verification: ReportVerification
+  readonly proof?: ReportProofView
 }): ReactElement {
-  const { view, verification } = props
+  const { view, verification, proof } = props
   const hasStages = verification.kind === "checked"
   const keep = (row: { readonly viaCommand: boolean }): boolean => !(hasStages && row.viaCommand)
   const rows = view.kind === "checks" ? view : undefined
-  const passed = rows === undefined ? [] : rows.passed.filter(keep)
-  const problems = rows === undefined ? [] : rows.problems
+  const band = proof?.kind === "band" ? proof : undefined
+  const passed =
+    rows === undefined ? [] : (band === undefined ? rows.passed : band.unboundPassed).filter(keep)
+  const problems =
+    rows === undefined ? [] : band === undefined ? rows.problems : band.unboundProblems
   const notNg = problems.filter((row) => row.status !== "ng")
   const ng = problems.filter((row) => row.status === "ng")
   return (
     <>
       {verification.kind === "checked" && <StageTags stages={verification.stages} />}
-      <div className={hasStages ? styles["check-rest"] : undefined}>
+      {band !== undefined && <ProofBand band={band} />}
+      <div className={hasStages || band !== undefined ? styles["check-rest"] : undefined}>
         {passed.map((row, index) => (
           <PassedLine key={`${String(index)}:${row.label}`} row={row} />
         ))}

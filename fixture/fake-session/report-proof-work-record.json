@@ -1,0 +1,91 @@
+{
+  "name": "report-proof-work-record",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "通知の間引きを入れて、確かめられた範囲を教えて（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 400,
+      "event": {
+        "kind": "report",
+        "toolUseId": "fake-proof-work-record-1",
+        "components": [
+          {
+            "id": "root",
+            "component": "Report",
+            "task": {
+              "kind": "task",
+              "id": "T-003",
+              "name": "架空の通知の間引きを入れる",
+              "outcome": "finished",
+              "genre": "work"
+            },
+            "conclusion": [
+              "架空の結論: 通知の間引きを入れたが、実機での確認は申告のみで残っている。"
+            ],
+            "workDone": "通知の間引きの判定を足し、設定から間隔を読むようにした。",
+            "checks": [
+              {
+                "status": "unobserved",
+                "label": "実機での通知の間隔",
+                "figure": "",
+                "command": "",
+                "detail": "",
+                "howToVerify": "架空の端末で通知を連続して送り、間隔を見る",
+                "supports": ["s1"]
+              },
+              {
+                "status": "ng",
+                "label": "間引きのテスト",
+                "figure": "2件落ちた",
+                "command": "pnpm run test throttle.test.ts",
+                "detail": "間隔ちょうどの入力の扱いが合わない。",
+                "howToVerify": "",
+                "supports": ["s2"]
+              },
+              {
+                "status": "ok",
+                "label": "型の検査",
+                "figure": "",
+                "command": "",
+                "detail": "",
+                "howToVerify": "",
+                "supports": ["s2"]
+              }
+            ],
+            "notDone": ["通知の文面の見直しは行っていない"],
+            "children": ["s1", "s2"]
+          },
+          {
+            "id": "s1",
+            "component": "Section",
+            "heading": "架空の通知の間隔",
+            "children": ["p1"]
+          },
+          {
+            "id": "p1",
+            "component": "Markdown",
+            "markdown": "設定の間隔より短い通知を間引くようにした。"
+          },
+          {
+            "id": "s2",
+            "component": "Section",
+            "heading": "架空の間引きの判定",
+            "children": ["p2"]
+          },
+          {
+            "id": "p2",
+            "component": "Markdown",
+            "markdown": "間隔ちょうどの入力は、いまのところ間引かれずに通る。"
+          }
+        ]
+      }
+    },
+    { "afterMs": 2000, "event": { "kind": "turn-finished", "outcome": { "kind": "completed" } } }
+  ]
+}

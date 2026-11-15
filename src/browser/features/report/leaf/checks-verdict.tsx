@@ -13,8 +13,10 @@ import {
 } from "../../../../shared/report/report-check-view.ts"
 import { plainInline } from "../../../../shared/report/report-inline-markdown.ts"
 import { Badge } from "../../../components/ui/badge/badge.tsx"
+import type { ReportProofView } from "../domain/report-proof.ts"
 import { checksClassName } from "../markdown.tsx"
 import styles from "./leaf.module.css"
+import { ProofBand } from "./proof-band.tsx"
 
 type Checks = Extract<ReportChecksView, { readonly kind: "checks" }>
 
@@ -24,8 +26,30 @@ const PROBLEM_TONE = {
   blocked: "neutral",
 } as const satisfies Record<keyof typeof REPORT_CHECK_PROBLEM_WORDS, "ng" | "warn" | "neutral">
 
-export function ChecksVerdict(props: { readonly view: Checks }): ReactElement {
+export function ChecksVerdict(props: {
+  readonly view: Checks
+  readonly proof?: ReportProofView
+}): ReactElement {
   const { summary, problems, passed } = props.view
+  const { proof } = props
+  if (proof?.kind === "band") {
+    return (
+      <div className={checksClassName("verdict")} role="group" aria-label="検証結果">
+        <div className={checksClassName("checks")}>
+          <ProofBand band={proof} />
+          <FavorJump favor={summary.favor} />
+          {proof.unboundProblems.length > 0 && (
+            <div role="table" aria-label="検証結果の問題">
+              {proof.unboundProblems.map((row, index) => (
+                <ProblemRow key={`${String(index)}:${row.label}`} row={row} />
+              ))}
+            </div>
+          )}
+          {proof.unboundPassed.length > 0 && <PassedFold passed={proof.unboundPassed} />}
+        </div>
+      </div>
+    )
+  }
   return (
     <div className={checksClassName("verdict")} role="group" aria-label="検証結果">
       <div className={checksClassName("checks")}>

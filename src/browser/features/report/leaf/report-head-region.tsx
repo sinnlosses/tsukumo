@@ -4,9 +4,11 @@
 import clsx from "clsx"
 import type { ReactElement, RefCallback } from "react"
 
+import type { ReportNotDoneView } from "../../../../shared/report/report-not-done.ts"
 import { REPORT_NOTE_KINDS } from "../../../../shared/report/report-notation.ts"
 import type { MainViewSurfaceHead } from "../../../../shared/session/main-view-shape.ts"
 import { isBlankText } from "../../../../shared/utils/blank-text.ts"
+import type { ReportProofView } from "../domain/report-proof.ts"
 import { splitConclusion } from "../domain/split-conclusion.ts"
 import {
   checksClassName,
@@ -20,12 +22,18 @@ import { RegionBox, RegionChunks } from "./body-region.tsx"
 import { ChangedFilesFold } from "./changed-files-fold.tsx"
 import { ChecksVerdict } from "./checks-verdict.tsx"
 import { PhaseTimes } from "./phase-time-section.tsx"
+import proofStyles from "./proof-band.module.css"
 import { StatCards } from "./stats-leaf.tsx"
 import { WorkRecord } from "./work-record.tsx"
 
 /** 頭の欄。結論・数のカード・合図の行・段ごとの所要時間・変更したファイルのどれも無ければ何も描かない。 */
-export function HeadRegion(props: { readonly head: MainViewSurfaceHead }): ReactElement {
+export function HeadRegion(props: {
+  readonly head: MainViewSurfaceHead
+  /** 検証の行と節の結びつき。無ければ帯は出ない。 */
+  readonly proof?: ReportProofView
+}): ReactElement {
   const { lead, keyFigures, checks, status } = props.head
+  const { proof } = props
   const { phaseTimes, changedFiles } = status
   const hasStatus =
     checks.kind === "checks" || phaseTimes.kind !== "none" || changedFiles.kind !== "none"
@@ -53,10 +61,10 @@ export function HeadRegion(props: { readonly head: MainViewSurfaceHead }): React
           <StatCards items={keyFigures} />
         </div>
       )}
-      {hasRecord && <WorkRecord head={props.head} />}
+      {hasRecord && <WorkRecord head={props.head} proof={proof} />}
       {hasStatus && !hasRecord && (
         <div className={checksClassName("status")}>
-          {checks.kind === "checks" && <ChecksVerdict view={checks} />}
+          {checks.kind === "checks" && <ChecksVerdict view={checks} proof={proof} />}
           {phaseTimes.kind === "times" && <PhaseTimes view={phaseTimes} />}
           {changedFiles.kind === "files" && <ChangedFilesFold view={changedFiles} />}
         </div>
@@ -81,6 +89,30 @@ export function FavorRegion(props: {
         <NoteLabel kindName="note-favor" label={label} />
         <RegionChunks markdown={props.text} />
       </div>
+    </RegionBox>
+  )
+}
+
+/** やっていないことの欄。省いたレポートは欄ごと描かず、空の並びは「無い」と1行で言う。 */
+export function NotDoneRegion(props: { readonly notDone: ReportNotDoneView }): ReactElement {
+  const { notDone } = props
+  if (notDone.kind === "omitted") {
+    return <></>
+  }
+  return (
+    <RegionBox region={{ kind: "not-done" }}>
+      <h4>やっていないこと</h4>
+      {notDone.items.length === 0 ? (
+        <p>無い</p>
+      ) : (
+        <ul className={proofStyles["not-done-list"]}>
+          {notDone.items.map((item, index) => (
+            <li key={`${String(index)}:${item}`}>
+              <InlineMarkdown text={item} />
+            </li>
+          ))}
+        </ul>
+      )}
     </RegionBox>
   )
 }

@@ -38,6 +38,7 @@ import { AskThreadContext, type AskThreadSlot, sectionAskCount } from "./ask-thr
 import { loadReportCatalogApis } from "./domain/a2ui-catalog-load.ts"
 import { filterBadges, hasBoundChoicePicker, isSortableTable } from "./domain/a2ui-table-view.ts"
 import { isPlainHeadingText } from "./domain/plain-heading.ts"
+import { reportProofView } from "./domain/report-proof.ts"
 import {
   LeafIdentityContext,
   type SectionPoint,
@@ -50,7 +51,8 @@ import { DirectLeaf, directLeafViewOf } from "./leaf/direct-leaf-view.tsx"
 import { NextStepRow, type NextStepsOrigin } from "./leaf/next-step-row.tsx"
 import { NoteBody } from "./leaf/note-leaf.tsx"
 import { liveLeafElement, useReevaluatedLeaves } from "./leaf/parameter-knob.tsx"
-import { FavorRegion, HeadRegion } from "./leaf/report-head-region.tsx"
+import { SectionProof } from "./leaf/proof-band.tsx"
+import { FavorRegion, HeadRegion, NotDoneRegion } from "./leaf/report-head-region.tsx"
 import { arrangedBlockClassNames } from "./markdown.tsx"
 import { ReplyPortContext, type ReplyPortSlot } from "./reply-port.ts"
 
@@ -222,6 +224,11 @@ function ReportRoot(): ReactElement {
   const bodySections = Object.entries(view.sections).toSorted(
     ([, left], [, right]) => left.regionId - right.regionId,
   )
+  const proof = reportProofView(
+    view.head.checks,
+    bodySections.map(([id]) => id),
+    view.head.notDone,
+  )
   return (
     <ReportFrame
       reveal={report.reveal}
@@ -230,7 +237,7 @@ function ReportRoot(): ReactElement {
       revealClassName={report.revealClassName}
       blockClassName={report.blockClassName}
     >
-      <HeadRegion head={view.head} />
+      <HeadRegion head={view.head} proof={proof} />
       {view.figure.kind === "leaves" && (
         <RegionBox
           region={{ kind: "section", id: view.figure.regionId, askCount: 0, noteCount: 0 }}
@@ -249,8 +256,13 @@ function ReportRoot(): ReactElement {
           }}
         >
           <SectionContent id={componentId} />
+          {proof.kind === "band" &&
+            proof.sections
+              .filter((entry) => entry.sectionId === componentId)
+              .map((entry) => <SectionProof key={entry.sectionId} section={entry} />)}
         </RegionBox>
       ))}
+      <NotDoneRegion notDone={view.head.notDone} />
       {view.retrospective.kind === "leaves" && (
         <RegionBox region={{ kind: "retrospective" }}>
           <LeafRegionContent region={view.retrospective} />

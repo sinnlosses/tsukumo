@@ -79,7 +79,7 @@ export function MarkdownReport(
 
 /** 欄の入れ物が持つ印。 */
 export type RegionMark =
-  | { readonly kind: "head" | "retrospective" | "markdown" }
+  | { readonly kind: "head" | "retrospective" | "markdown" | "not-done" }
   | {
       readonly kind: "section"
       readonly id: number
