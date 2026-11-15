@@ -134,4 +134,5 @@
 | `docs/architecture/adr/0054-question-design-human-ai-guidelines.md`             | 質問の設計を Guidelines for Human-AI Interaction の則から決める                                       | 採用                   |
 | `docs/architecture/adr/0055-report-reply-margin-notes.md`                       | 返す層の見た目: 選んだ所の横の余白に「聞く・頼む」を1つ出し、欄と答えは余白の札にする                 | 採用                   |
 | `docs/architecture/adr/0056-report-progress-contract.md`                        | レポートと進み具合の契約: 1枚の紙・確かさの台帳・判定・次の手                                         | 採用                   |
-| `docs/architecture/adr/0057-stage-and-paper-layout.md`                          | 「舞台と紙」の器: 4局面の姿勢・右から重ねる紙・2つの入口・新旧の切り替え                              | 採用                   |
+| `docs/architecture/adr/0057-stage-and-paper-layout.md`                          | 「舞台と紙」の器: 4局面の姿勢・右から重ねる紙・2つの入口・新旧の切り替え                              | 置き換え済み（→ 0058） |
+| `docs/architecture/adr/0058-three-column-single-stream.md`                      | 会話の画面を3列と1本の流れにする: 左の列・会話の流れ・サイドバー                                      | 採用                   |
