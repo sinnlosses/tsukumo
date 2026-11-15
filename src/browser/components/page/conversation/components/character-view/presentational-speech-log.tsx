@@ -1,4 +1,4 @@
-// セリフのログの器。開くボタン（右上の「ログ」）と、その中身の `<dialog>` を置く。
+// セリフのログの器。`<dialog>` を置く（開く口は狭い画面の `<PhoneBalloon>`）。
 //
 // 中身はキャラビューの舞台をそのまま上へ伸ばした形。
 // 立ち絵はキャラビューのものと同じ `<Portrait>` を受け取って床（`.speech-log-floor`）に置き、吹き出しはキャラビューと同じ `<Balloon>` で描く。
@@ -6,7 +6,7 @@
 //
 // `<dialog>` は top layer に出るので、キャラビューの `overflow` には切り取られない。
 
-import { History, X } from "lucide-react"
+import { X } from "lucide-react"
 import type { ReactElement, ReactNode } from "react"
 
 import { Button } from "../../../../ui/button/button.tsx"
@@ -18,7 +18,6 @@ import { Balloon } from "./balloon.tsx"
 import styles from "./character-view.module.css"
 import type { SpeechLogEntry, SpeechLogModel } from "./hooks/use-speech-log.ts"
 
-const OPEN_LABEL = "ログ"
 const CLOSE_LABEL = "ログを閉じる"
 const DIALOG_LABEL = "セリフのログ"
 const MORE_LABEL = "もっと前を読む ↑"
@@ -26,7 +25,6 @@ const EMPTY_MESSAGE = "（まだセリフがありません）"
 
 type PresentationalSpeechLogProps = SpeechLogModel & {
   readonly open: boolean
-  readonly onOpen: () => void
   readonly onClose: () => void
   /** キャラビューに立っている立ち絵（素材が無ければ何も描かない）。床に同じものを立たせる。 */
   readonly portrait: ReactNode
@@ -40,25 +38,12 @@ export function PresentationalSpeechLog({
   entries,
   userCall,
   onToggleSpeech,
-  onOpen,
   onClose,
   portrait,
   speakerName,
 }: PresentationalSpeechLogProps): ReactElement {
   return (
     <>
-      <Button
-        variant="outline-faint-ground"
-        size="secondary"
-        pressed="none"
-        disabled={false}
-        disclosure={{ kind: "expander", expanded: open }}
-        className={styles["speech-log-open"]}
-        onClick={onOpen}
-      >
-        <History size={16} />
-        {OPEN_LABEL}
-      </Button>
       <Dialog
         open={open}
         ariaLabel={DIALOG_LABEL}

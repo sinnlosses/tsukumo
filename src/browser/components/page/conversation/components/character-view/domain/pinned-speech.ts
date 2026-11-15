@@ -1,19 +1,18 @@
-// 立ち絵がいま従っているセリフ（吹き出し・セリフのログの両方が共有する「留めた」状態）。
+// 立ち絵がいま従っているセリフ（セリフのログの行を押して「留めた」状態）。
 //
 // キーは (turnId, index)。
 // ログはどのターンのセリフでも押せる1つのウィンドウという扱いなので、タブ（`useTurnSelection`）を切り替えても留めた選択は解けない。
 // 過去のターンは記録から不変に導けるので、番号が指す先がずれることが無い。
-// 吹き出しはいま見えているターンの分しか描かないので、違うターンを留めているあいだは、印がどこにも付かないまま表情だけがそのセリフに合わせて変わる。
+// 違うターンを留めているあいだは、表情だけがそのセリフに合わせて変わる。
 //
 // 新しいセリフが来たら失効するのは「いまも伸びているターン」を留めていたときだけ（過去の閉じたターンは件数が動かないので、実質いつまでも留められる）。
 
 import type { Speech } from "../../../../../../../shared/session/turn-speech.ts"
-import type { TurnLine } from "../../../../../../../shared/session/turn-speech.ts"
 
 /** 押すと遡る先のセリフ（ターンの番号と、そのターンの並びの中の位置）。 */
 export type SpeechTarget = { readonly turnId: number; readonly index: number }
 
-/** 留めている行（吹き出し・セリフのログの両方へ、いまの印の位置として渡す）。 */
+/** 留めている行（セリフのログへ、いまの印の位置として渡す）。 */
 export type PinnedSpeech = SpeechTarget
 
 /** 立ち絵がいま従っているセリフの状態。既定は「最新」（何も押していない）。 */
@@ -74,16 +73,4 @@ export type MarkedSpeech = { readonly kind: "none" } | ({ readonly kind: "at" } 
 
 export function isSpeechSelected(marked: MarkedSpeech, turnId: number, index: number): boolean {
   return marked.kind === "at" && marked.turnId === turnId && marked.index === index
-}
-
-/**
- * 今のターンの吹き出し（`SessionState.speeches`。`speak` のセリフだけ）の各件が、そのターンの並び（`TurnSpeech.speeches`。反応を含む）の何番目か。
- * 吹き出しは並びの `speak` のセリフの末尾 `balloonCount` 件にあたる。足りなければ undefined（位置を決められないので押しても留めない）。
- */
-export function balloonLineIndices(
-  lines: readonly TurnLine[],
-  balloonCount: number,
-): readonly number[] | undefined {
-  const spoken = lines.flatMap((line, index) => (line.source === "speak" ? [index] : []))
-  return spoken.length < balloonCount ? undefined : spoken.slice(spoken.length - balloonCount)
 }

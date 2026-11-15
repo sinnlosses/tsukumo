@@ -27,11 +27,6 @@ const CHARACTER: CharacterViewModel = {
   altText: "さくら（にこにこ）",
   expression: "default",
   motion: "waiting",
-  speeches: [
-    { text: "おはよう。今日は何から始める？", time: TIME, selected: false, target: undefined },
-    { text: "READMEを見直すね。", time: TIME, selected: true, target: { turnId: 1, index: 1 } },
-  ],
-  reaction: { kind: "none" },
   speakerName: "さくら",
   pinnedSpeech: undefined,
   onToggleSpeech: noop,
@@ -53,12 +48,7 @@ export const STAGE_EXAMPLES: readonly ScreenPartExample[] = [
           <PresentationalCharacterView {...CHARACTER} />
         </StageBox>
         <StageBox>
-          <PresentationalCharacterView
-            {...CHARACTER}
-            speeches={[]}
-            reaction={{ kind: "writing" }}
-            phoneLine={{ kind: "writing" }}
-          />
+          <PresentationalCharacterView {...CHARACTER} phoneLine={{ kind: "writing" }} />
         </StageBox>
       </>
     ),
@@ -70,7 +60,6 @@ export const STAGE_EXAMPLES: readonly ScreenPartExample[] = [
       <PresentationalSpeechLog
         scrollerRef={createRef<HTMLElement>()}
         open={false}
-        onOpen={noop}
         onClose={noop}
         portrait={undefined}
         speakerName="さくら"

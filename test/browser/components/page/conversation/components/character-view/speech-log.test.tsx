@@ -26,21 +26,25 @@ function renderSpeechLogWithCall(records: readonly SessionRecord[], userCall?: s
   render(<OpenableSpeechLog onToggleSpeech={() => {}} />)
 }
 
-/** 開閉はキャラビューが持つので、テストでは開閉の state だけを持つ親で包む。 */
+/** 開閉はキャラビューが持ち、開く口は狭い画面の吹き出しなので、テストでは開閉の state と開くボタンだけを持つ親で包む。 */
 function OpenableSpeechLog(props: {
   readonly onToggleSpeech: (turnId: number, index: number) => void
 }): ReactElement {
   const [open, setOpen] = useState(false)
   return (
-    <SpeechLog
-      portrait={<img alt="架空の立ち絵" />}
-      speakerName="架空の名前"
-      pinnedSpeech={undefined}
-      onToggleSpeech={props.onToggleSpeech}
-      open={open}
-      onOpen={() => setOpen(true)}
-      onClose={() => setOpen(false)}
-    />
+    <>
+      <button type="button" onClick={() => setOpen(true)}>
+        ログを開く
+      </button>
+      <SpeechLog
+        portrait={<img alt="架空の立ち絵" />}
+        speakerName="架空の名前"
+        pinnedSpeech={undefined}
+        onToggleSpeech={props.onToggleSpeech}
+        open={open}
+        onClose={() => setOpen(false)}
+      />
+    </>
   )
 }
 
@@ -58,7 +62,7 @@ function dialogIsOpen(): boolean {
 }
 
 function openLog(): void {
-  fireEvent.click(screen.getByRole("button", { name: "ログ" }))
+  fireEvent.click(screen.getByRole("button", { name: "ログを開く" }))
 }
 
 /** この部屋の壁時計の時刻（`HH:MM`）に打たれた記録の時刻。 */
@@ -87,19 +91,15 @@ function readEntries(): readonly (
 }
 
 describe("SpeechLog", () => {
-  it("「ログ」を押すと開いて口が押された状態になり、「ログを閉じる」で閉じる", () => {
+  it("開くと見えて、「ログを閉じる」で閉じる", () => {
     renderSpeechLog([])
-    const opener = screen.getByRole("button", { name: "ログ" })
     expect(dialogIsOpen()).toBe(false)
-    expect(opener.getAttribute("aria-expanded")).toBe("false")
 
     openLog()
     expect(dialogIsOpen()).toBe(true)
-    expect(opener.getAttribute("aria-expanded")).toBe("true")
 
     fireEvent.click(screen.getByRole("button", { name: "ログを閉じる" }))
     expect(dialogIsOpen()).toBe(false)
-    expect(opener.getAttribute("aria-expanded")).toBe("false")
   })
 
   it("古い→新しいを上→下に、依頼の区切りとセリフを1本に並べ、最新が末尾（下端）に来る", () => {

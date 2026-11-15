@@ -115,7 +115,7 @@
   （キャラビューと同じ扱い）
 - **キャラビューの `<Balloon>` は再利用せず、`components/` へも上げない。** 雑談の行はすでに
   吹き出しの見た目を持っており（`stream-row.module.css` の `.stream-entry`）、`<Balloon>` のほうは
-  `.balloon-track` の並び（`column-reverse`・押し上げ・薄める）と一体になっている。上げると
+  セリフのログの並び（最新だけ濃く大きく・過去は薄める・尻尾）と一体になっている。上げると
   **両方の事情を知る部品**になり、どちらを直しても相手が動く。`components/page/conversation/components/chat-view/` に閉じた
   ままなので、機能どうしの import も増えない（`.dependency-cruiser.cjs`）
 

@@ -1,4 +1,4 @@
-// セリフのログの入口。キャラビューの右上の「ログ」（狭い画面では吹き出し）から開くモーダル。
+// セリフのログの入口。狭い画面の吹き出し（<PhoneBalloon>）から開くモーダル。
 // キャラビューの舞台をそのまま上へ伸ばし、このセッションで言ったセリフを吹き出しのまま遡って読む。
 
 import type { ReactElement, ReactNode } from "react"
@@ -20,7 +20,6 @@ type SpeechLogProps = {
   /** ログの行を押したとき。キャラビューの吹き出しと同じ状態を動かす。 */
   readonly onToggleSpeech: (turnId: number, index: number) => void
   readonly open: boolean
-  readonly onOpen: () => void
   readonly onClose: () => void
 }
 
@@ -29,7 +28,6 @@ export function SpeechLog(props: SpeechLogProps): ReactElement {
     <PresentationalSpeechLog
       {...useSpeechLog(props.open, props.pinnedSpeech, props.onToggleSpeech)}
       open={props.open}
-      onOpen={props.onOpen}
       onClose={props.onClose}
       portrait={props.portrait}
       speakerName={props.speakerName}

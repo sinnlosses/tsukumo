@@ -1,7 +1,10 @@
-import { cleanup, fireEvent, screen, within } from "@testing-library/react"
+import { act, cleanup, fireEvent, screen, within } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
-import type { SessionState } from "../../../../../../../src/shared/session/session-state.ts"
+import {
+  INITIAL_SESSION_STATE,
+  type SessionState,
+} from "../../../../../../../src/shared/session/session-state.ts"
 import {
   FIXTURE_CHARACTER,
   renderCharacterView,
@@ -14,14 +17,14 @@ import {
   requestRecord,
   speechRecord,
 } from "../../../../../../fixture/session-record.ts"
-import { typedElement } from "../../../../../../typed-element.ts"
+import { putState } from "../../../../../session-store.ts"
 
 afterEach(() => {
   cleanup()
   window.location.hash = ""
 })
 
-describe("CharacterView（吹き出しを押すと遡る。docs/architecture/screen-design.md 13.7）", () => {
+describe("CharacterView（セリフのログの行を押すと遡る。docs/architecture/screen-design.md 13.7）", () => {
   const CHARACTER_WITH_PROUD: NonNullable<SessionState["character"]> = {
     ...FIXTURE_CHARACTER,
     expressions: [
@@ -49,28 +52,44 @@ describe("CharacterView（吹き出しを押すと遡る。docs/architecture/scr
     }
   }
 
-  it("吹き出しを押すと、そのセリフの表情へ立ち絵が遡り、もう一度押すと最新へ戻る", () => {
+  /** 開く口は狭い画面の吹き出し。 */
+  function openLog(): HTMLElement {
+    fireEvent.click(screen.getByTitle("セリフのログを開く"))
+    return screen.getByRole("dialog", { name: "セリフのログ", hidden: true })
+  }
+
+  const portraitExpression = (): string | null | undefined =>
+    document.querySelector(".portrait")?.getAttribute("data-expression")
+
+  it("何も留めていなければ立ち絵は最新のセリフの表情に従う", () => {
     renderCharacterView(twoSpeechState())
-    expect(document.querySelector(".portrait")?.getAttribute("data-expression")).toBe("proud")
 
-    const olderBalloon = document.querySelector("[data-latest='false']")
-    expect(olderBalloon?.textContent).toBe("1つ目のセリフ")
-    if (olderBalloon === null) {
-      throw new Error("古い吹き出しが無い")
-    }
-    fireEvent.click(olderBalloon)
+    expect(portraitExpression()).toBe("proud")
+  })
 
-    expect(document.querySelector(".portrait")?.getAttribute("data-expression")).toBe("default")
-    expect(olderBalloon.getAttribute("aria-pressed")).toBe("true")
+  it("何も留めていないあいだ、新しいセリフが届くたびに立ち絵は最新のセリフの表情へ替わる", () => {
+    renderCharacterView(twoSpeechState())
+    expect(portraitExpression()).toBe("proud")
 
-    fireEvent.click(olderBalloon)
-    expect(document.querySelector(".portrait")?.getAttribute("data-expression")).toBe("proud")
+    act(() => {
+      putState({
+        ...INITIAL_SESSION_STATE,
+        ...twoSpeechState(),
+        speeches: [
+          speech("1つ目のセリフ", "default"),
+          speech("2つ目のセリフ", "proud"),
+          speech("3つ目のセリフ", "default"),
+        ],
+        speechExpression: "default",
+      })
+    })
+
+    expect(portraitExpression()).toBe("default")
   })
 
   it("セリフのログの行を押すと、ログの床の立ち絵がその表情になる", () => {
     renderCharacterView(twoSpeechState())
-    fireEvent.click(screen.getByRole("button", { name: /^ログ$/ }))
-    const log = screen.getByRole("dialog", { name: "セリフのログ", hidden: true })
+    const log = openLog()
     const floorExpression = (): string | null | undefined =>
       log.querySelector(".speech-log-floor .portrait")?.getAttribute("data-expression")
     expect(floorExpression()).toBe("proud")
@@ -80,7 +99,20 @@ describe("CharacterView（吹き出しを押すと遡る。docs/architecture/scr
     expect(floorExpression()).toBe("default")
   })
 
-  it("反応を出しているときも、セリフを押して留めればそのセリフの表情が勝つ", () => {
+  it("ログの行を押して留めると立ち絵がそのセリフの表情へ遡り、もう一度押すと最新へ戻る", () => {
+    renderCharacterView(twoSpeechState())
+    const log = openLog()
+    const older = within(log).getByRole("button", { name: "1つ目のセリフ", hidden: true })
+
+    fireEvent.click(older)
+    expect(portraitExpression()).toBe("default")
+    expect(older.getAttribute("aria-pressed")).toBe("true")
+
+    fireEvent.click(older)
+    expect(portraitExpression()).toBe("proud")
+  })
+
+  it("反応を出しているときも、ログの行を押して留めればそのセリフの表情が勝つ", () => {
     renderCharacterView({
       ...twoSpeechState(),
       turn: {
@@ -92,21 +124,15 @@ describe("CharacterView（吹き出しを押すと遡る。docs/architecture/scr
       character: CHARACTER_WITH_PROUD,
       writtenReactions: WRITTEN_REACTIONS,
     })
-    expect(document.querySelector("[data-reaction='failed']")).not.toBeNull()
-    expect(document.querySelector(".portrait")?.getAttribute("data-expression")).toBe("sad")
+    expect(portraitExpression()).toBe("sad")
 
-    const olderBalloon = [...document.querySelectorAll("[data-interactive='true']")].find(
-      (balloon) => balloon.textContent === "1つ目のセリフ",
-    )
-    if (olderBalloon === undefined) {
-      throw new Error("古い吹き出しが無い")
-    }
-    fireEvent.click(olderBalloon)
+    const log = openLog()
+    fireEvent.click(within(log).getByRole("button", { name: "1つ目のセリフ", hidden: true }))
 
-    expect(document.querySelector(".portrait")?.getAttribute("data-expression")).toBe("default")
+    expect(portraitExpression()).toBe("default")
   })
 
-  it("今のターンの記録に反応が挟まっていても、ログの行と吹き出しは同じセリフを留める", () => {
+  it("今のターンの記録に反応が挟まっていても、ログの行は押した行のセリフを留める", () => {
     renderCharacterView({
       records: [
         requestRecord({ text: "架空の依頼", turnId: 0 }),
@@ -119,28 +145,16 @@ describe("CharacterView（吹き出しを押すと遡る。docs/architecture/scr
       speechCalledInTurn: true,
       character: CHARACTER_WITH_PROUD,
     })
-    fireEvent.click(screen.getByRole("button", { name: /^ログ$/ }))
-    const log = screen.getByRole("dialog", { name: "セリフのログ", hidden: true })
+    const log = openLog()
 
     fireEvent.click(within(log).getByRole("button", { name: "1つ目のセリフ", hidden: true }))
 
-    const track = typedElement(
-      document.querySelector(".balloon-track"),
-      HTMLElement,
-      "吹き出しの並び",
-    )
-    expect(
-      within(track).getByRole("button", { name: "1つ目のセリフ" }).getAttribute("aria-pressed"),
-    ).toBe("true")
-    expect(document.querySelector(".portrait")?.getAttribute("data-expression")).toBe("default")
-
-    fireEvent.click(within(track).getByRole("button", { name: /2つ目のセリフ$/ }))
-
     expect(
       within(log)
-        .getByRole("button", { name: /2つ目のセリフ$/, hidden: true })
+        .getByRole("button", { name: "1つ目のセリフ", hidden: true })
         .getAttribute("aria-pressed"),
     ).toBe("true")
+    expect(portraitExpression()).toBe("default")
     expect(
       within(log)
         .getByRole("button", { name: "架空の再試行反応", hidden: true })

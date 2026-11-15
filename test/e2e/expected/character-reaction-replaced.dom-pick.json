@@ -1,8 +1,9 @@
 {
   "character": [
-    { "tag": "div", "attributes": { "role": "img", "data-expression": "proud" } },
-    { "tag": "div", "attributes": { "data-latest": "true", "data-selected": "true" }, "children": [
-      "見てきたよ。架空のセリフ。"
+    { "tag": "section", "attributes": { "data-region": "character", "aria-label": "キャラクター" }, "children": [
+      { "tag": "div", "children": [
+        { "tag": "button", "attributes": { "type": "button" }, "children": ["見てきたよ。架空のセリフ。"] }
+      ] }
     ] }
   ]
 }

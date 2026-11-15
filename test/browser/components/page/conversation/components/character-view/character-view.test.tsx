@@ -57,17 +57,17 @@ const TWO_TURN_RECORDS: readonly SessionRecord[] = [
 ]
 
 describe("CharacterView", () => {
-  it("(3) 立ち絵の URL が無い（character が undefined）ときは、吹き出しだけが出て落ちない", () => {
+  it("(3) 立ち絵の URL が無い（character が undefined）ときも落ちず、広い画面の吹き出しの並びは出ない", () => {
     expect(() =>
       renderCharacterView({ character: undefined, speeches: [speech("やあ、調子はどう？")] }),
     ).not.toThrow()
 
     expect(document.querySelector(".portrait")).toBeNull()
-    expect(document.querySelector(".balloon-track")).not.toBeNull()
-    expect(document.querySelector(".balloon-text")?.textContent).toBe("やあ、調子はどう？")
+    expect(document.querySelector(".balloon-track")).toBeNull()
+    expect(screen.queryByRole("button", { name: "ログ" })).toBeNull()
   })
 
-  it("(1) 過去のターンを選ぶと、そのターンのセリフだけが吹き出しに出る", () => {
+  it("(1) 過去のターンを選ぶと、そのターンの最後のセリフが顔の吹き出しに出る", () => {
     renderCharacterView(
       {
         records: TWO_TURN_RECORDS,
@@ -77,11 +77,7 @@ describe("CharacterView", () => {
       0,
     )
 
-    expect(
-      [...document.querySelectorAll(".balloon-text")].map((balloon) => balloon.textContent),
-    ).toEqual(["1つ目のセリフB", "1つ目のセリフA"])
-    // 最新（そのターンの最後）の1件だけが濃い（吹き出しの規則は変えない）。
-    expect(document.querySelector(".balloon")?.getAttribute("data-latest")).toBe("true")
+    expect(document.querySelector(".phone-balloon-text")?.textContent).toBe("1つ目のセリフB")
   })
 
   it("(2) 今回のターンを選ぶと、従来どおり今のセリフが出る", () => {
@@ -94,12 +90,10 @@ describe("CharacterView", () => {
       1,
     )
 
-    expect(
-      [...document.querySelectorAll(".balloon-text")].map((balloon) => balloon.textContent),
-    ).toEqual(["2つ目のセリフ"])
+    expect(document.querySelector(".phone-balloon-text")?.textContent).toBe("2つ目のセリフ")
   })
 
-  it("(3) セリフが1件も無い過去のターンでも壊れず、吹き出しも反応も出さない", () => {
+  it("(3) セリフが1件も無い過去のターンでも壊れず、顔の吹き出しを出さない", () => {
     const records: readonly SessionRecord[] = [
       requestRecord({ text: "1つ目の依頼" }),
       requestRecord({ turnId: 1, text: "2つ目の依頼" }),
@@ -119,7 +113,7 @@ describe("CharacterView", () => {
       ),
     ).not.toThrow()
 
-    expect(document.querySelectorAll(".balloon")).toHaveLength(0)
+    expect(document.querySelector(".phone-balloon-bubble")).toBeNull()
     expect(document.querySelector(".portrait")?.getAttribute("data-expression")).toBe("default")
   })
 
@@ -142,9 +136,7 @@ describe("CharacterView", () => {
       writtenReactions: WRITTEN_REACTIONS,
     })
 
-    const balloon = document.querySelector(".balloon")
-    expect(balloon?.getAttribute("data-reaction")).toBe("retrying")
-    expect(balloon?.textContent).toContain("架空の再試行反応")
+    expect(document.querySelector(".phone-balloon-text")?.textContent).toBe("架空の再試行反応")
     expect(document.querySelector(".portrait")?.getAttribute("data-expression")).toBe("thinking")
   })
 
@@ -176,7 +168,7 @@ describe("CharacterView", () => {
   })
 })
 
-describe("CharacterView（反応の吹き出し）", () => {
+describe("CharacterView（反応の字）", () => {
   const REQUEST = requestEvent()
   const SPEECH = {
     kind: "speech",
@@ -224,7 +216,7 @@ describe("CharacterView（反応の吹き出し）", () => {
     )
   }
 
-  it.each<[string, readonly (SessionEvent | typeof RESTORED)[], string, string]>([
+  it.each<[string, readonly (SessionEvent | typeof RESTORED)[], string]>([
     [
       "利用上限で閉じると、前のセリフの下に利用上限の反応が最新として出る",
       [
@@ -238,33 +230,27 @@ describe("CharacterView（反応の吹き出し）", () => {
         },
         { kind: "turn-finished", outcome: { kind: "failed", cause: { kind: "api-error" } } },
       ],
-      "limited",
       "架空の上限の反応",
     ],
     [
       "依頼を待つ間が続くと、Claude Code が report に書いた待ちの一言が最新として出る",
       [GREETED, REQUEST, SPEECH, WAITING_LINE, COMPLETED],
-      "idle",
       "架空の待ちの一言",
     ],
     [
       "続きから開くと、前回の最後のターンの待ちの一言がおかえりとして最新に出る",
       [REQUEST, SPEECH, WAITING_LINE, COMPLETED, RESTORED, GREETED],
-      "welcome",
       "架空の待ちの一言",
     ],
     [
       "続きから開いて待ちの一言が無ければ、迎えの挨拶の札なしの文がおかえりとして出る",
       [REQUEST, SPEECH, report({ kind: "none" }), COMPLETED, RESTORED, GREETED],
-      "welcome",
       "架空の挨拶",
     ],
-  ])("%s", (_, events, reaction, text) => {
+  ])("%s", (_, events, text) => {
     renderCharacterView({ ...stateAfter(events), character: FIXTURE_CHARACTER })
 
-    const latest = document.querySelector(".balloon[data-latest='true']")
-    expect(latest?.getAttribute("data-reaction")).toBe(reaction)
-    expect(latest?.textContent).toContain(text)
+    expect(document.querySelector(".phone-balloon-text")?.textContent).toBe(text)
   })
 })
 
@@ -278,7 +264,7 @@ describe("CharacterView（記録に積んだ反応と時刻）", () => {
     ...shownPortraits({ default: "/character/default.png", sad: "/character/sad.png" }),
   }
 
-  it("過去のターンでは、積んだ反応も吹き出しに並び、反応で終わったターンはその表情になる", () => {
+  it("過去のターンでは、積んだ反応が最後の1件として顔の吹き出しに出て、反応で終わったターンはその表情になる", () => {
     renderCharacterView(
       {
         records: [
@@ -294,11 +280,7 @@ describe("CharacterView（記録に積んだ反応と時刻）", () => {
       0,
     )
 
-    expect(
-      [...document.querySelectorAll(".balloon-track .balloon-text")].map(
-        (balloon) => balloon.textContent,
-      ),
-    ).toEqual(["架空の失敗の反応", "1つ目のセリフ"])
+    expect(document.querySelector(".phone-balloon-text")?.textContent).toBe("架空の失敗の反応")
     expect(document.querySelector(".portrait")?.getAttribute("data-expression")).toBe("sad")
   })
 
@@ -380,6 +362,5 @@ describe("CharacterView（狭い画面の顔と最新の1件）", () => {
     )
 
     expect(document.querySelector("dialog")?.hasAttribute("open")).toBe(true)
-    expect(screen.getByRole("button", { name: "ログ" }).getAttribute("aria-expanded")).toBe("true")
   })
 })

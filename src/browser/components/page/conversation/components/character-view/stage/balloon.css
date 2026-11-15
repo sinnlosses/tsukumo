@@ -15,7 +15,7 @@
   border-radius: var(--radius-lg);
   background: var(--surface);
 }
-/* 押せる吹き出し（吹き出しの並び・セリフのログの両方）。
+/* 押せる吹き出し（セリフのログ）。
    地を差し色の側へ寄せるだけで示す。
    印の付いている行には掛けない。 */
 .balloon[data-interactive="true"] {
@@ -31,7 +31,7 @@
   background: color-mix(in srgb, var(--surface), var(--accent) 26%);
   box-shadow: inset 0 0 0 1px var(--accent);
 }
-/* 最新の1件（`data-latest`。キャラビューでは DOM の先頭で、column-reverse で視覚上は下端に出る。セリフのログでは並びの末尾）。
+/* 最新の1件（`data-latest`。セリフのログでは並びの末尾）。
    いま読んでほしい1件だけを濃く・大きくし、立ち絵の側へ尻尾を伸ばして「誰が言ったか」を結ぶ。
    過去の分は小さく薄くして、残ってはいるが読み返す対象だと分かる見た目にする。
    枠は accent の 1.5px だけで、にじむ輪は付けない（線をくっきりさせる）。
@@ -50,22 +50,12 @@
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-raised);
 }
-/* 立ち絵の上に列を重ねる本体（--balloon-overlap ぶん左へ寄せる）。
-   加えて尻尾ぶんの場所を左に確保する。
-   `.balloon-track` は overflow-y: auto を持ち、CSS の規則で overflow-x も自動的に visible ではなくなる（＝横方向もクリップされる）ため、尻尾を吹き出しの外（左）へ絶対配置するだけだと padding の外＝クリップ境界の外に出て消える。
-   ここで確保した padding-left ぶんが、下の尻尾の幅（--balloon-tail）と一致することで、尻尾がちょうど padding の中に収まりクリップされない（目視で確認）。 */
-.portrait + .balloon-track {
-  margin-left: calc(-1 * var(--balloon-overlap));
-  padding-left: var(--balloon-tail);
-}
-/* 尻尾は立ち絵があるときだけ（立ち絵が無い・読めないときは吹き出しだけで成立させる）。
+/* 尻尾はセリフのログに立ち絵があるときだけ（立ち絵が無い・読めないときは吹き出しだけで成立させる）。
    枠の三角（::before）と中身の三角（::after）を重ねて、枠線が尻尾の先まで続いて見える形にする。
    三角1枚だと枠線の色で塗った板が飛び出しているだけに見える。
    立ち絵は左にいるので、尻尾は吹き出しの左辺から真横（左）へ出し、先端を左に向ける（下辺から出すと、下に伸びる分の場所を空ける必要があり、最新の位置を固定できない）。
    border-right を色付きに、border-top と border-bottom を透明にした二等辺三角形で、right: 100% で吹き出しの左外側に置く。
    縦の位置は下端から --balloon-tail-bottom（吹き出しの下寄りを指す）。 */
-.portrait + .balloon-track > .balloon-row > .balloon[data-latest="true"]::before,
-.portrait + .balloon-track > .balloon-row > .balloon[data-latest="true"]::after,
 .speech-log-stage:has(.portrait) .balloon[data-latest="true"]::before,
 .speech-log-stage:has(.portrait) .balloon[data-latest="true"]::after {
   content: "";
@@ -82,7 +72,6 @@
    ずらすだけだと斜辺に沿って滑るだけで枠の色が出ないので、斜辺に 1px 残すには大きさも変える必要がある。
    小さくしたぶん bottom も 2px 上げ、2つの三角の頂点の高さを揃える。
    揃えないと枠線が上の斜辺だけに寄り、下の斜辺から消える。 */
-.portrait + .balloon-track > .balloon-row > .balloon[data-latest="true"]::after,
 .speech-log-stage:has(.portrait) .balloon[data-latest="true"]::after {
   bottom: calc(var(--balloon-tail-bottom) + 2px);
   right: calc(100% - 1px);

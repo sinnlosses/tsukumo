@@ -1,20 +1,19 @@
 // `<CharacterView>` のロジック。
-// 表情・立ち絵の URL・動き・吹き出しに出すセリフを、直近の `speak` とセッションの記録から組み立てて返す。
+// 表情・立ち絵の URL・動き・狭い画面の顔と最新の1件を、直近の `speak` とセッションの記録から組み立てて返す。
 //
 // 表情は `state.speechExpression`（直近の `speak` の引数）か、反応を出しているあいだはその行の表情。
 // 時間経過で顔が変わるのは、依頼を待つ間に待ちの一言（反応）を出し始めたときだけ。
 //
-// 過去のターンのタブを選んでいる間は、そのターンの吹き出しと表情に戻す（`useTurnSelection`）。
+// 過去のターンのタブを選んでいる間は、そのターンの最後のセリフと表情に戻す（`useTurnSelection`）。
 // 立ち絵の「動き」は時間相対のアニメーションなので遡らない。
 //
-// 吹き出し・セリフのログを押すと、そのセリフの表情へ立ち絵が遡る。
+// セリフのログの行を押すと、そのセリフの表情へ立ち絵が遡る。
 // 留めた状態（`ViewedSpeech`）はここが持ち、セリフのログにも `pinnedSpeech` / `onToggleSpeech` として渡す（床に立つ立ち絵も同じものを共有するため）。
 
 import { useState } from "react"
 
 import type { Expression } from "../../../../../../../shared/character-pack/expression.ts"
 import type { ItemSeatMap } from "../../../../../../../shared/item/item.ts"
-import type { ReactionKind } from "../../../../../../../shared/recommendation/reaction.ts"
 import type { ShownReaction } from "../../../../../../../shared/session/shown-reaction.ts"
 import { reportDraftingOf } from "../../../../../../../shared/session/turn-progress.ts"
 import type { Speech } from "../../../../../../../shared/session/turn-speech.ts"
@@ -39,15 +38,11 @@ import { welcomeHeadOf } from "../../../domain/welcome-entry-list.ts"
 import { useShownReaction, useWaitingLineDueAt } from "../../../stores/shown-reaction.ts"
 import { useWelcomeCards } from "../../hooks/use-welcome-card-list.ts"
 import {
-  balloonLineIndices,
-  isSpeechSelected,
   LATEST_VIEWED_SPEECH,
   pinnedSpeechOf,
   resolvePinnedSpeech,
   toggledViewedSpeech,
-  type MarkedSpeech,
   type PinnedSpeech,
-  type SpeechTarget,
   type ViewedSpeech,
 } from "../domain/pinned-speech.ts"
 import { useWelcomeGreetingRecord } from "./use-welcome-greeting-record.ts"
@@ -55,47 +50,20 @@ import { useWelcomeGreetingRecord } from "./use-welcome-greeting-record.ts"
 /** そのターンにセリフが1件も無かったときに当てる表情（`INITIAL_SESSION_STATE` と同じ既定）。 */
 const DEFAULT_PAST_TURN_EXPRESSION = "default"
 
-/** 吹き出しに出す1件。押すとそのセリフの表情へ立ち絵が遡る。 */
-export type CharacterViewSpeech = {
-  readonly text: string
-  /** 吹き出しに添える時刻（名前を添える最新の1件は名前の隣、ほかは吹き出しの脇）。今日でない日のものは日付つき。 */
-  readonly time: ClockStamp
-  /** 印を付ける行（= 立ち絵が従っている行）か。 */
-  readonly selected: boolean
-  /** 押すと遡る先。特定できなければ undefined（文面だけ出して押しても何もしない）。 */
-  readonly target?: SpeechTarget
-}
-
-/** 吹き出しの最新に出す反応。`writing` は迎えの挨拶を書いている途中で、「…」を出す。 */
-export type BalloonReaction =
-  | { readonly kind: "none" }
-  | { readonly kind: "writing" }
-  | {
-      readonly kind: "shown"
-      readonly reaction: ReactionKind
-      readonly text: string
-      /** 出し始めた時刻。分からなければ `unknown`。 */
-      readonly time: ClockStamp
-    }
-
 /** `<CharacterView>` が画面に出す形。presenter はこれをそのまま部品へ渡すだけ。 */
 export type CharacterViewModel = {
-  /** 立ち絵の素材 URL。character が届いていなければ `undefined`（吹き出しだけで成立させる）。 */
+  /** 立ち絵の素材 URL。character が届いていなければ `undefined`（立ち絵を出さない）。 */
   readonly portraitUrl?: string
   readonly altText: string
   readonly expression: Expression
   readonly motion: PortraitMotion
-  /** 吹き出しに出すセリフ（古い→新しい）。過去のターンを見ていればそのターンぶんに差し替わる。 */
-  readonly speeches: readonly CharacterViewSpeech[]
-  /** 吹き出しの最新に出す反応。過去のターンを見ているあいだは出さない。 */
-  readonly reaction: BalloonReaction
-  /** 最新の吹き出しに添える話し手の名前。キャラクターが届いていない・名前が無ければ `undefined`。 */
+  /** セリフのログの最新の吹き出しに添える話し手の名前。キャラクターが届いていない・名前が無ければ `undefined`。 */
   readonly speakerName?: string
   /** セリフのログへ渡す、いま留めている行（`<SpeechLog>` と印・表情の状態を共有する）。 */
   readonly pinnedSpeech?: PinnedSpeech
-  /** セリフのログの行を押したとき（`<SpeechLog>` から呼ぶ。吹き出しと同じ状態を動かす）。 */
+  /** セリフのログの行を押したとき（`<SpeechLog>` から呼ぶ。立ち絵の表情が遡る）。 */
   readonly onToggleSpeech: (turnId: number, index: number) => void
-  /** セリフのログが開いているか。開くボタンは「ログ」と狭い画面の吹き出しの2つ。 */
+  /** セリフのログが開いているか。開く口は狭い画面の吹き出し。 */
   readonly speechLogOpen: boolean
   readonly onOpenSpeechLog: () => void
   readonly onCloseSpeechLog: () => void
@@ -148,18 +116,7 @@ export function useCharacterView(): CharacterViewModel {
       ? undefined
       : pastTurnSpeech(turns, activeTurnId, newestTurnId)
   const activeSpeeches = pastTurn === undefined ? speeches : pastTurn.speeches
-  // 吹き出しの各件が、留めた行の並びの何番目か。今のターンの吹き出しは反応を含まないので、並びの位置へ写す。
-  const lineIndices =
-    pastTurn === undefined
-      ? balloonLineIndices(
-          turns.find((t) => t.id === activeTurnId)?.speeches ?? [],
-          speeches.length,
-        )
-      : pastTurn.speeches.map((_, index) => index)
   const reaction: ShownReaction = pastTurn === undefined ? latestReaction : { kind: "none" }
-  // 何も留めていないとき、印が付くのは「いま表示しているターン」の最後の吹き出し。
-  // 反応を出しているあいだは立ち絵が反応に従うので、どの行にも付けない。
-  const defaultIndex = reaction.kind === "none" ? lineIndices?.at(-1) : undefined
   // 過去のターンでは、記録に残った表情（そのターンの最後のセリフのもの）をそのまま当てる。
   const currentExpression = reaction.kind === "shown" ? reaction.line.expression : speechExpression
   const fallbackExpression =
@@ -170,16 +127,6 @@ export function useCharacterView(): CharacterViewModel {
   // 失効した印を古い行に残すと、表情（最新に戻る）と印の位置が食い違う。
   const pinned = pinnedSpeech === undefined ? undefined : pinnedSpeechOf(viewed)
   const expression = pinnedSpeech?.expression ?? fallbackExpression
-  const marked: MarkedSpeech =
-    pinned !== undefined
-      ? { kind: "at", ...pinned }
-      : activeTurnId !== undefined && defaultIndex !== undefined
-        ? { kind: "at", turnId: activeTurnId, index: defaultIndex }
-        : { kind: "none" }
-  const anchor: BalloonAnchor =
-    activeTurnId === undefined || lineIndices === undefined
-      ? { kind: "none" }
-      : { kind: "anchored", turnId: activeTurnId, lineIndices, marked }
   const toggleSpeech = (turnId: number, index: number): void => {
     const current = pinnedSpeech === undefined ? LATEST_VIEWED_SPEECH : viewed
     setViewed(toggledViewedSpeech(current, turnId, index, speechesOfTurn(turnId)?.length ?? 0))
@@ -193,8 +140,6 @@ export function useCharacterView(): CharacterViewModel {
     altText,
     expression,
     motion,
-    speeches: balloonSpeeches(activeSpeeches, anchor, now),
-    reaction: balloonReactionOf(reaction, now),
     speakerName: character?.name,
     pinnedSpeech: pinned,
     onToggleSpeech: toggleSpeech,
@@ -232,62 +177,6 @@ function phoneLineOf(
   return latest === undefined
     ? { kind: "none" }
     : { kind: "text", text: latest.text, time: recordClockStampWithDay(latest.time, now) }
-}
-
-/** `ShownReaction` を `BalloonReaction` の形へ畳む（時刻を字にするほかは、持ち物をそのまま運ぶだけ）。 */
-function balloonReactionOf(reaction: ShownReaction, now: number): BalloonReaction {
-  switch (reaction.kind) {
-    case "shown":
-      return {
-        kind: "shown",
-        reaction: reaction.reaction,
-        text: reaction.line.text,
-        time: recordClockStampWithDay(reaction.time, now),
-      }
-    case "writing":
-      return { kind: "writing" }
-    case "none":
-      return { kind: "none" }
-  }
-}
-
-/**
- * 吹き出しが遡る先。
- * `lineIndices` は各件が留めた行の並びの何番目か（{@link balloonLineIndices}）。
- * 遡る先を特定できない（`none`）ときは、文面だけ出して押しても何もしない。
- */
-type BalloonAnchor =
-  | { readonly kind: "none" }
-  | {
-      readonly kind: "anchored"
-      readonly turnId: number
-      readonly lineIndices: readonly number[]
-      readonly marked: MarkedSpeech
-    }
-
-/** `<BalloonTrack>` がそのまま置ける形に畳む。 */
-function balloonSpeeches(
-  speeches: readonly Speech[],
-  anchor: BalloonAnchor,
-  now: number,
-): readonly CharacterViewSpeech[] {
-  return speeches.map((speech, position) => {
-    const text = speech.text
-    const time = recordClockStampWithDay(speech.time, now)
-    if (anchor.kind === "none") {
-      return { text, time, selected: false, target: undefined }
-    }
-    const index = anchor.lineIndices[position]
-    if (index === undefined) {
-      return { text, time, selected: false, target: undefined }
-    }
-    return {
-      text,
-      time,
-      selected: isSpeechSelected(anchor.marked, anchor.turnId, index),
-      target: { turnId: anchor.turnId, index },
-    }
-  })
 }
 
 /**
