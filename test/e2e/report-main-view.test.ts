@@ -274,7 +274,7 @@ test.describe("report → メインビュー", () => {
     await ask.waitFor({ state: "hidden" })
   })
 
-  test("札の幅が 48rem 未満ではやり取りの列が既定で畳まれ、開くを選ぶと読み込み直しても開いたまま、狭い画面（760px 以下）では列を出さない", async ({
+  test("やり取りの列は既定で開き、畳むを選ぶと読み込み直しても畳んだまま、狭い画面（760px 以下）では列を出さない", async ({
     run,
   }) => {
     const room = await run.open({
@@ -285,13 +285,13 @@ test.describe("report → メインビュー", () => {
     })
 
     await room.waitForEvent("turn-finished")
+    await room.page.getByRole("button", { name: "やり取りを畳む" }).waitFor()
+
+    await room.page.getByRole("button", { name: "やり取りを畳む" }).click()
     await room.page.getByRole("button", { name: "やり取りを開く" }).waitFor()
     await room.settleAndMatchPicked(ELAPSED_MS)
-
-    await room.page.getByRole("button", { name: "やり取りを開く" }).click()
-    await room.page.getByRole("button", { name: "やり取りを畳む" }).waitFor()
     await room.page.reload({ waitUntil: "domcontentloaded" })
-    await room.page.getByRole("button", { name: "やり取りを畳む" }).waitFor()
+    await room.page.getByRole("button", { name: "やり取りを開く" }).waitFor()
 
     await room.resize(VIEWPORTS.narrow)
     await room.page.locator('nav[aria-label="やり取り"]').waitFor({ state: "hidden" })

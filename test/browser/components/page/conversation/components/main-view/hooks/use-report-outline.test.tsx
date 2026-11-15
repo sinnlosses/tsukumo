@@ -27,8 +27,6 @@ const ONE_TURN = {
   ],
   activeTurnId: 0,
   onSelectTurn: () => undefined,
-  notice: { kind: "none" },
-  onNotice: () => undefined,
 } as const satisfies ReportOutlineProps
 
 // 最後の見出しの下が短く、転がりが縁の上端まで届かない場面を模す。

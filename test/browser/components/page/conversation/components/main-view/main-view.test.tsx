@@ -67,14 +67,6 @@ function tool(
   }
 }
 
-function button(name: string): HTMLButtonElement {
-  const found = screen.getByRole("button", { name })
-  if (!(found instanceof HTMLButtonElement)) {
-    throw new Error(`${name} が button ではない`)
-  }
-  return found
-}
-
 describe("MainView（hello の前）", () => {
   it("hello が届くまでは始め方の一覧を描かず、届くと描く", () => {
     renderMainViewBeforeHello()
@@ -215,10 +207,19 @@ describe("MainView（閉じたときの入れ替えとフォーカス）", () =>
       ?.getAttribute("data-main-view-content")
   }
 
+  /** 入れ替わる中身の器の中にある、フォーカスできる要素。 */
+  function focusableInFrame(): HTMLElement {
+    const found = document.querySelector<HTMLElement>("[data-main-view-content] button")
+    if (found === null) {
+      throw new Error("中身の器の中にフォーカスできるボタンが無い")
+    }
+    return found
+  }
+
   it("中にフォーカスがあっても、閉じた瞬間にレポートへ入れ替わり、フォーカスはメインビューの根に残る", () => {
     renderRunning()
     act(() => {
-      button("やり取りを開く").focus()
+      focusableInFrame().focus()
     })
     close()
 
@@ -231,7 +232,7 @@ describe("MainView（閉じたときの入れ替えとフォーカス）", () =>
   it("中身の種類が変わらない更新では、中にあるフォーカスをメインビューの根へ移さない", () => {
     renderRunning()
     act(() => {
-      button("やり取りを開く").focus()
+      focusableInFrame().focus()
     })
     const focused = document.activeElement
 

@@ -43,7 +43,7 @@ test.describe("委譲中の補足メッセージ", () => {
         .locator('[data-speaker="character"]', { hasText: "いまは委譲先が段2を進めている" })
         .innerText(),
     ).toContain("いまは委譲先が段2を進めているところ。")
-    expect(await main.locator("[data-outline-turn]").count()).toBe(1)
+    expect(await room.page.locator('[data-region="character"] [data-outline-turn]').count()).toBe(1)
     await room.settleAndMatchPickedWithMessages(ELAPSED_MS)
   })
 })

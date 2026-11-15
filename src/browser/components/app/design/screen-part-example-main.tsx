@@ -122,9 +122,7 @@ const FINISHED_STRIP: WorkStripModel = {
 const OUTLINE_BASE = {
   visible: true,
   onSelectTurn: noop,
-  onNotice: noop,
   onSelectReport: noop,
-  frameRef: createRef<HTMLDivElement>(),
   contentRef: createRef<HTMLDivElement>(),
   navRef: createRef<HTMLElement>(),
   listRef: createRef<HTMLDivElement>(),
@@ -218,16 +216,13 @@ export const MAIN_VIEW_EXAMPLES: readonly ScreenPartExample[] = [
             isActive: true,
           },
         ]}
-        notice={{ kind: "none" }}
         reportRow={{ kind: "shown", label: "interim", title: "表の追加", isActive: true }}
         rows={[
           { level: "section", text: "背景", isActive: true, inActiveSection: true },
           { level: "sub", text: "これまでの経緯", isActive: false, inActiveSection: true },
           { level: "section", text: "次にすること", isActive: false, inActiveSection: false },
         ]}
-      >
-        <p>本文の置き場です。</p>
-      </PresentationalReportOutline>
+      />
     ),
   },
 ]

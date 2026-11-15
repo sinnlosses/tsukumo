@@ -5,7 +5,7 @@
 
 @import "./phone/turn-list.css";
 @import "./phone/current-step.css";
-@import "./turn-card/inquiry-jump-float.css";
+@import "./turn-card/stream-float.css";
 @import "./turn-card/report-head.css";
 @import "./turn-card/layout.css";
 @import "./phone/phase-list.css";
@@ -21,6 +21,11 @@
 @import "./welcome/welcome.css";
 @import "./turn-card/work-strip.css";
 @import "./turn-card/now-line.css";
+
+/* やり取りの列の枠・角丸・地。左の列の上に載る面（`composes` の参照先を解ける入口に置く）。 */
+.outline-nav {
+  composes: surface-edge-rule surface-radius-lg surface-tone-surface from "../../../../ui/surface/surface-face.module.css";
+}
 
 /* 依頼の塊の見出しの字は目に見えなくてよい。`h2` は読み上げの見出しとして残す。
    `composes` の参照先の相対パスは `@import` した先のファイルでは解けないので、入口のここに置く。 */

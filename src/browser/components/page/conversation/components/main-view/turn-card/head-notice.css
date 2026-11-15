@@ -1,4 +1,4 @@
-/* 知らせの行。枠と字は `<Button variant="outline-warn">` が持つ。 */
+/* 狭い画面（760px 以下）の本文の上端の知らせの行。枠と字は `<Button variant="outline-warn">` が持つ。 */
 .head-notice {
   display: flex;
   align-items: center;
@@ -16,16 +16,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-/* 畳んだ列の印だけの口。押せる大きさの床（24px）にそろえる。 */
-.head-notice-mark {
-  display: inline-grid;
-  place-items: center;
-  width: 1.5rem;
-  height: 1.5rem;
-  padding: 0;
-  border-radius: var(--radius-md);
-  line-height: 1;
-}
-.head-notice-mark-glyph {
-  font-weight: 700;
+/* 本文の上端の入れ物。 */
+.turn-card-phone-notice {
+  padding-bottom: var(--stack-block);
 }

@@ -1,17 +1,15 @@
 // やり取りの列の器。
-// 札の左に、集計期間の中のやり取りと、見ているやり取りの見出しの一覧を列として置き、進み具合のプログレスバーと本文はその幅ぶん右へ寄る。
-// 列の頭には、いま見ている中身の外で起きたことを知らせの行として出す。
-// 列は札の上端から下端まで伸び、スクロールしても札の上端に残る。
-// 狭い画面（760px 以下）では列を出さず、知らせの行だけを本文の上端に出す。
+// 左の列の上に、集計期間の中のやり取りと、見ているやり取りの見出しの一覧を置く。
+// 高さは立ち絵と左上の席に被らないところで止まり（置き場の `<ConversationLayout>` が決める）、超えた分は一覧だけが転がる。
+// 狭い画面（760px 以下）では左の列ごと出さない。
 
 import clsx from "clsx"
 import { ChevronLeft, ChevronRight } from "lucide-react"
-import type { ReactElement, ReactNode } from "react"
+import type { ReactElement } from "react"
 
 import { withOccurrenceKeys } from "../../../../../domain/occurrence-key.ts"
 import { Button } from "../../../../ui/button/button.tsx"
 import { TURN_RESULT_MARKS } from "../../domain/turn-result-mark.ts"
-import { HeadNotice } from "./head-notice.tsx"
 import {
   TURN_ROW_ATTRIBUTE,
   type ReportOutlineModel,
@@ -34,125 +32,85 @@ const REPORT_LABEL_TEXT = {
   interim: "レポート",
 } as const satisfies Record<"final" | "interim", string>
 
-type PresentationalReportOutlineProps = ReportOutlineModel & {
-  readonly children: ReactNode
-}
-
 /**
  * props はここだけ分解して受ける。
- * ref を持つ入れ物を `props.contentRef` の形で描画中に読むと、lint の `react(refs)` が落ちるため。
+ * ref を持つ入れ物を `props.navRef` の形で描画中に読むと、lint の `react(refs)` が落ちるため。
+ * 本文の器（`contentRef`）は列の外（メインビューの根）に結ぶので、ここでは受けない。
  */
 export function PresentationalReportOutline({
-  visible,
   turnRows,
   onSelectTurn,
-  notice,
-  onNotice,
   reportRow,
   onSelectReport,
   rows,
-  frameRef,
-  contentRef,
   navRef,
   listRef,
   onNavKeyDown,
   onSelect,
   collapsed,
   onToggleCollapse,
-  children,
-}: PresentationalReportOutlineProps): ReactElement {
+}: ReportOutlineModel): ReactElement {
   return (
-    <div
-      className={styles["outline-frame"]}
-      data-outline={visible ? "shown" : "hidden"}
+    <nav
+      className={styles["outline-nav"]}
+      aria-label={OUTLINE_LABEL}
       data-outline-collapsed={collapsed}
-      ref={frameRef}
+      ref={navRef}
+      onKeyDown={onNavKeyDown}
     >
-      {visible && (
-        <div className={styles["outline-rail"]}>
-          <nav
-            className={styles["outline-nav"]}
-            aria-label={OUTLINE_LABEL}
-            ref={navRef}
-            onKeyDown={onNavKeyDown}
-          >
-            {collapsed ? (
-              <div className={styles["outline-collapsed"]}>
-                <Button
-                  variant="ghost"
-                  size="action"
-                  pressed="none"
-                  disabled={false}
-                  ariaLabel={EXPAND_LABEL}
-                  disclosure={{ kind: "expander", expanded: false }}
-                  className={styles["outline-toggle"]}
-                  onClick={onToggleCollapse}
-                >
-                  <ChevronRight size={14} strokeWidth={2} aria-hidden="true" />
-                </Button>
-                {notice.kind === "notice" && (
-                  <HeadNotice text={notice.text} form="mark" onPress={onNotice} />
+      {collapsed ? (
+        <Button
+          variant="ghost"
+          size="action"
+          pressed="none"
+          disabled={false}
+          ariaLabel={EXPAND_LABEL}
+          disclosure={{ kind: "expander", expanded: false }}
+          className={styles["outline-toggle"]}
+          onClick={onToggleCollapse}
+        >
+          <ChevronRight size={14} strokeWidth={2} aria-hidden="true" />
+        </Button>
+      ) : (
+        <>
+          <div className={styles["outline-list-head"]}>
+            <span className={styles["outline-list-title"]} title={TURN_STEP_KEY_HINT}>
+              {OUTLINE_LABEL}
+            </span>
+            <Button
+              variant="ghost"
+              size="action"
+              pressed="none"
+              disabled={false}
+              ariaLabel={COLLAPSE_LABEL}
+              disclosure={{ kind: "expander", expanded: true }}
+              className={styles["outline-toggle"]}
+              onClick={onToggleCollapse}
+            >
+              <ChevronLeft size={14} strokeWidth={2} aria-hidden="true" />
+            </Button>
+          </div>
+          <div className={styles["outline-list"]} ref={listRef}>
+            {turnRows.map((turn) => (
+              <div
+                key={turn.id}
+                className={clsx(styles["outline-turn-group"], turn.isActive && styles["is-active"])}
+              >
+                <TurnRow turn={turn} onSelectTurn={onSelectTurn} />
+                {turn.isActive && (
+                  <HeadingRows
+                    reportRow={reportRow}
+                    onSelectReport={onSelectReport}
+                    rows={rows}
+                    onSelect={onSelect}
+                  />
                 )}
               </div>
-            ) : (
-              <>
-                <div className={styles["outline-list-head"]}>
-                  <span className={styles["outline-list-title"]} title={TURN_STEP_KEY_HINT}>
-                    {OUTLINE_LABEL}
-                  </span>
-                  <Button
-                    variant="ghost"
-                    size="action"
-                    pressed="none"
-                    disabled={false}
-                    ariaLabel={COLLAPSE_LABEL}
-                    disclosure={{ kind: "expander", expanded: true }}
-                    className={styles["outline-toggle"]}
-                    onClick={onToggleCollapse}
-                  >
-                    <ChevronLeft size={14} strokeWidth={2} aria-hidden="true" />
-                  </Button>
-                </div>
-                {notice.kind === "notice" && (
-                  <div className={styles["outline-notice"]}>
-                    <HeadNotice text={notice.text} form="row" onPress={onNotice} />
-                  </div>
-                )}
-                <div className={styles["outline-list"]} ref={listRef}>
-                  {turnRows.map((turn) => (
-                    <div
-                      key={turn.id}
-                      className={clsx(
-                        styles["outline-turn-group"],
-                        turn.isActive && styles["is-active"],
-                      )}
-                    >
-                      <TurnRow turn={turn} onSelectTurn={onSelectTurn} />
-                      {turn.isActive && (
-                        <HeadingRows
-                          reportRow={reportRow}
-                          onSelectReport={onSelectReport}
-                          rows={rows}
-                          onSelect={onSelect}
-                        />
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
-          </nav>
-        </div>
-      )}
-      <div className={styles["outline-content"]} ref={contentRef}>
-        {notice.kind === "notice" && (
-          <div className={styles["outline-phone-notice"]}>
-            <HeadNotice text={notice.text} form="row" onPress={onNotice} />
+            ))}
           </div>
-        )}
-        {children}
-      </div>
-    </div>
+        </>
+      )}
+    </nav>
   )
 }
 

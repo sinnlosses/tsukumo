@@ -1,7 +1,12 @@
 import { cleanup, render, screen } from "@testing-library/react"
+import type { ReactElement, ReactNode } from "react"
 import { afterEach, describe, expect, it } from "vitest"
 
-import { ReportOutline } from "../../../../../../../src/browser/components/page/conversation/components/main-view/report-outline.tsx"
+import {
+  useReportOutline,
+  type ReportOutlineProps,
+} from "../../../../../../../src/browser/components/page/conversation/components/main-view/hooks/use-report-outline.ts"
+import { PresentationalReportOutline } from "../../../../../../../src/browser/components/page/conversation/components/main-view/presentational-report-outline.tsx"
 import { detailBlockClassName } from "../../../../../../../src/browser/features/report/markdown.tsx"
 
 afterEach(() => {
@@ -9,11 +14,30 @@ afterEach(() => {
   localStorage.clear()
 })
 
-describe("ReportOutline の節の行", () => {
+/** 列は左の列、本文はメインビューに置くので、本文の器を `contentRef` で結んだ兄弟として描く。 */
+function Outline(props: {
+  readonly turns: ReportOutlineProps["turns"]
+  readonly activeTurnId: number
+  readonly children: ReactNode
+}): ReactElement {
+  const { contentRef, ...model } = useReportOutline({
+    turns: props.turns,
+    activeTurnId: props.activeTurnId,
+    onSelectTurn: () => undefined,
+  })
+  return (
+    <>
+      <PresentationalReportOutline {...model} contentRef={contentRef} />
+      <div ref={contentRef}>{props.children}</div>
+    </>
+  )
+}
+
+describe("やり取りの列の節の行", () => {
   it("聞いた数を持つ節の行の右に「聞 n」を出し、聞いていない節の行には出さない", () => {
     localStorage.setItem("tsukumo-outline-panel:v1", JSON.stringify({ collapse: "open" }))
     render(
-      <ReportOutline
+      <Outline
         turns={[
           {
             id: 0,
@@ -25,9 +49,6 @@ describe("ReportOutline の節の行", () => {
           },
         ]}
         activeTurnId={0}
-        onSelectTurn={() => undefined}
-        notice={{ kind: "none" }}
-        onNotice={() => undefined}
       >
         <div className={detailBlockClassName}>
           <div data-report-section="1" data-ask-count="2">
@@ -37,7 +58,7 @@ describe("ReportOutline の節の行", () => {
             <h4>架空の聞いていない節</h4>
           </div>
         </div>
-      </ReportOutline>,
+      </Outline>,
     )
 
     expect(screen.getAllByText(/^聞 \d+$/).map((node) => node.textContent)).toEqual(["聞 2"])
@@ -46,7 +67,7 @@ describe("ReportOutline の節の行", () => {
   it("付箋の数を持つ節の行に「頼 n」を出し、付箋のない節の行には出さない", () => {
     localStorage.setItem("tsukumo-outline-panel:v1", JSON.stringify({ collapse: "open" }))
     render(
-      <ReportOutline
+      <Outline
         turns={[
           {
             id: 0,
@@ -58,9 +79,6 @@ describe("ReportOutline の節の行", () => {
           },
         ]}
         activeTurnId={0}
-        onSelectTurn={() => undefined}
-        notice={{ kind: "none" }}
-        onNotice={() => undefined}
       >
         <div className={detailBlockClassName}>
           <div data-report-section="1" data-note-count="3">
@@ -70,7 +88,7 @@ describe("ReportOutline の節の行", () => {
             <h4>架空の頼んでいない節</h4>
           </div>
         </div>
-      </ReportOutline>,
+      </Outline>,
     )
 
     expect(screen.getAllByText(/^頼 \d+$/).map((node) => node.textContent)).toEqual(["頼 3"])
@@ -78,12 +96,10 @@ describe("ReportOutline の節の行", () => {
   })
 })
 
-describe("ReportOutline のやり取りの行", () => {
+describe("やり取りの列のやり取りの行", () => {
   it("補足メッセージのあるやり取りの行にだけ、2行目の「脇 n」と読み上げの件数を添える", () => {
-    // 札の幅を測れない環境では列が既定で畳まれるので、開く選択を保存しておく。
-    localStorage.setItem("tsukumo-outline-panel:v1", JSON.stringify({ collapse: "open" }))
     render(
-      <ReportOutline
+      <Outline
         turns={[
           {
             id: 0,
@@ -103,12 +119,9 @@ describe("ReportOutline のやり取りの行", () => {
           },
         ]}
         activeTurnId={1}
-        onSelectTurn={() => undefined}
-        notice={{ kind: "none" }}
-        onNotice={() => undefined}
       >
         <p>架空の本文</p>
-      </ReportOutline>,
+      </Outline>,
     )
 
     expect(screen.getByText("脇 2")).toBeTruthy()

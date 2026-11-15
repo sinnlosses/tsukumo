@@ -56,7 +56,22 @@
 }
 /* 左の列と中央の列は、それぞれ自分の中で配置を閉じる。 */
 .layout-left {
+  position: relative;
   contain: layout style;
+}
+/* 左の列の上に載せるやり取りの列の置き場。立ち絵と左上の席の上に被らない高さで止め、超えた分は中の一覧だけが転がる。
+   上限は「列の高さ − 上下の余白 − 立ち絵の高さ − 左上の席の分（席の頭までの 60px と隙間 4px）」。
+   立ち絵の高さは立ち絵の寸法（`stage-size`）と同じ変数を読む。 */
+.layout-outline {
+  composes: stage-size from "../character-view/stage/stage-size.module.css";
+  position: absolute;
+  top: var(--region-padding);
+  right: var(--region-padding);
+  left: var(--region-padding);
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100% - 2 * var(--region-padding) - var(--stage-portrait-height) - 64px);
 }
 /* 器の全面に敷く背景。
    敷き方は絵の上に覆いを1枚重ねた形で、覆いは `ground` 一色を `--character-background-veil` の不透明度にしたもの。
@@ -225,6 +240,7 @@
   .layout-center {
     display: contents;
   }
+  .layout-outline,
   .layout-divider,
   .layout-side {
     display: none;

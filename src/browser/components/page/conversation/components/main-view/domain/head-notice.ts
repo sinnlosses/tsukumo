@@ -38,6 +38,31 @@ export function headNoticeOf(input: HeadNoticeInput): HeadNotice {
   return NO_NOTICE
 }
 
+/** 会話の流れの下端に浮く口。知らせの行と「お伺い ↓」の2つを、同時に出さず1つにまとめる。 */
+export type StreamFloat =
+  | { readonly kind: "none" }
+  | { readonly kind: "inquiry" }
+  | { readonly kind: "notice"; readonly text: string; readonly action: HeadNoticeAction }
+
+export type StreamFloatInput = {
+  readonly notice: HeadNotice
+  /** 過去のやり取りを見ているか。 */
+  readonly viewingPast: boolean
+  /** 答え待ちのお伺いがあり、そのカードが見える範囲の外にあるか。 */
+  readonly inquiryOutOfSight: boolean
+}
+
+/**
+ * 過去を見ているあいだは知らせの行だけを出す（最新のやり取りのお伺いは、知らせが同じ行き先で伝える）。
+ * 最新を見ているあいだは、お伺いのカードが見える範囲の外にあるときだけ「お伺い ↓」を出す（最新を見ているときの知らせはお伺いの届きだけで、同じ行き先）。
+ */
+export function streamFloatOf(input: StreamFloatInput): StreamFloat {
+  if (input.viewingPast) {
+    return input.notice
+  }
+  return input.inquiryOutOfSight ? { kind: "inquiry" } : { kind: "none" }
+}
+
 function pastNotice(moment: ConversationMoment, phase: WorkPhase): HeadNotice {
   switch (moment) {
     case "work":

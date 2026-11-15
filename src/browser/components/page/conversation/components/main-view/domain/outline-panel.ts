@@ -7,15 +7,14 @@ import { z } from "zod"
 import { localPreference } from "../../../../../../utils/local-preference.ts"
 
 /**
- * 利用者が選んだ畳み。`unset` のあいだは札の幅で決まる（{@link isOutlineCollapsed}）。
- * 一度でも開く・畳むを選んだら、札の幅に関わらずその選択を使う。
+ * 利用者が選んだ畳み。`unset` のあいだは開いている（{@link isOutlineCollapsed}）。
  */
 type OutlineCollapseChoice = "unset" | "collapsed" | "open"
 
 export type OutlinePanel = {
   /**
    * ユーザーがドラッグで決めた幅（px）。
-   * まだ一度も動かしていない間は `undefined` で、CSS の既定（`clamp(10rem, 22cqw, 15rem)`）に任せる。
+   * 左の列の幅へ引き継ぐ値で、列の幅そのものは左の列の幅に従う。
    */
   readonly widthPx?: number
   readonly collapse: OutlineCollapseChoice
@@ -32,9 +31,9 @@ const OUTLINE_WIDTH_MAX_PX = 384
 
 const COLLAPSE_CHOICES = ["unset", "collapsed", "open"] satisfies readonly OutlineCollapseChoice[]
 
-/** 実際に畳むか。選んでいなければ、札の幅が狭いときだけ畳む。 */
-export function isOutlineCollapsed(choice: OutlineCollapseChoice, narrow: boolean): boolean {
-  return choice === "unset" ? narrow : choice === "collapsed"
+/** 実際に畳むか。畳むのは利用者が畳むを選んだときだけ。 */
+export function isOutlineCollapsed(choice: OutlineCollapseChoice): boolean {
+  return choice === "collapsed"
 }
 
 // 幅か畳みのどちらかが不正なら全体を既定に落とす。

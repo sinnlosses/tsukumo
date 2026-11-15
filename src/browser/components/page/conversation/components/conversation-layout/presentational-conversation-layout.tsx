@@ -25,6 +25,8 @@ type PresentationalConversationLayoutProps = UseConversationLayoutResult & {
   readonly sidebar: ReactNode
   readonly character: ReactNode
   readonly dispatch: ReactNode
+  /** 左の列の上（立ち絵の上）に載せる、やり取りの列。 */
+  readonly outline: ReactNode
   /** 狭い画面で顔と吹き出しと入力欄のあいだに固定する、答え待ちのカード。 */
   readonly inquiry: ReactNode
   readonly rail: {
@@ -56,6 +58,7 @@ export function PresentationalConversationLayout({
   main,
   sidebar,
   character,
+  outline,
   dispatch,
   inquiry,
   rail: { badge: railBadge },
@@ -90,6 +93,7 @@ export function PresentationalConversationLayout({
         data-region="character"
         aria-label="キャラクター"
       >
+        <div className={styles["layout-outline"]}>{outline}</div>
         {character}
       </section>
       <div className={styles["layout-divider"]}>

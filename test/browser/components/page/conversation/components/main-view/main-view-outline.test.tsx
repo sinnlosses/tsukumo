@@ -145,6 +145,7 @@ describe("MainView（やり取りの列: やり取りと見出しの2段）", ()
   })
 
   it("畳んだ列の開き直す口を押すと、やり取りの行が出る", () => {
+    localStorage.setItem(OUTLINE_PANEL_STORAGE_KEY, JSON.stringify({ collapse: "collapsed" }))
     renderMainView(threeTurns())
 
     expect(outlineTurnRows()).toHaveLength(0)

@@ -1,4 +1,4 @@
-import { act, cleanup, fireEvent, screen, within } from "@testing-library/react"
+import { act, cleanup, fireEvent, screen } from "@testing-library/react"
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest"
 
 import { useAwaySeam } from "../../../../../../../src/browser/components/page/conversation/stores/away-seam.ts"
@@ -31,19 +31,12 @@ afterEach(() => {
   window.location.hash = ""
 })
 
-/**
- * やり取りの列の頭の知らせを押す。
- * 同じ知らせが狭い画面用に本文の上端にもあり（どちらを見せるかは CSS が決める）、ここでは列の側を押す。
- */
+/** 会話の流れの下端に浮く口の知らせを押す。 */
 function pressOutlineNotice(name: string): void {
   act(() => {
-    fireEvent.click(outlineNotice(name))
+    fireEvent.click(screen.getByRole("button", { name }))
     window.dispatchEvent(new Event("hashchange"))
   })
-}
-
-function outlineNotice(name: string): HTMLElement {
-  return within(screen.getByRole("navigation", { name: "やり取り" })).getByRole("button", { name })
 }
 
 describe("MainView（やり取りの移動）", () => {
@@ -125,7 +118,7 @@ describe("MainView（やり取りの移動）", () => {
     expect(screen.queryByText("4つ目のレポート")).toBeNull()
   })
 
-  it("最新が答え待ちのとき過去を見ると、列の頭に「お伺いが届いた」の行が出て、押すと最新へ移りお伺いへの転がしを頼む", () => {
+  it("最新が答え待ちのとき過去を見ると、会話の流れの下端の口に「お伺いが届いた」が出て、押すと最新へ移りお伺いへの転がしを頼む", () => {
     chooseOutlineOpen()
     renderMainView(threeTurns(), ASKING_TURN, PERMISSION)
     expect(screen.queryByRole("button", { name: "お伺いが届いた" })).toBeNull()
@@ -211,7 +204,7 @@ describe("MainView（やり取りの移動）", () => {
     expect(screen.queryByRole("region", { name: "お伺い" })).toBeNull()
   })
 
-  it("最新が作業中のとき過去を見ると「作業中」の行が出て、押すと最新へ移るだけ", () => {
+  it("最新が作業中のとき過去を見ると下端の口に「作業中」が出て、押すと最新へ移るだけ", () => {
     chooseOutlineOpen()
     renderMainView(threeTurns(), ASKING_TURN)
 
@@ -221,18 +214,6 @@ describe("MainView（やり取りの移動）", () => {
 
     expect(title()).toBe("3つ目")
     expect(useInquiryJump.getState().jump.signal).toBe(signal)
-  })
-
-  it("畳んだ列では知らせが印だけの口になり、押すと同じく最新へ移る", () => {
-    renderMainView(threeTurns(), ASKING_TURN, PERMISSION)
-
-    stepTurn("[")
-    const mark = outlineNotice("お伺いが届いた")
-    expect(mark.textContent).toBe("!")
-    expect(mark.getAttribute("title")).toBe("お伺いが届いた")
-
-    pressOutlineNotice("お伺いが届いた")
-    expect(title()).toBe("3つ目")
   })
 })
 

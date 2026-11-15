@@ -41,19 +41,20 @@ import { AskThreadProvider } from "./ask-thread-provider.tsx"
 import { CurrentStep } from "./current-step.tsx"
 import { headNoticeOf, type HeadNoticeAction } from "./domain/head-notice.ts"
 import { headingStepOf, neighborTurnId, turnStepOf } from "./domain/turn-step-key.ts"
+import { HeadNotice } from "./head-notice.tsx"
 import { scrollerOf } from "./hooks/scroll-frame.ts"
 import { type ShownTarget, useActiveTurnScroll } from "./hooks/use-active-turn-scroll.ts"
-import { useReportOutlineTurns } from "./hooks/use-report-outline-turn-list.ts"
-import { InquiryJumpFloat } from "./inquiry-jump-float.tsx"
 import styles from "./main-view.module.css"
 import { NowLine } from "./now-line.tsx"
 import { PhaseList } from "./phase-list.tsx"
-import { ReportOutline } from "./report-outline.tsx"
 import { RequestBlock } from "./request-block.tsx"
+import { StreamFloat } from "./stream-float.tsx"
 import { TurnCardHead } from "./turn-card-head.tsx"
 import { Turn } from "./turn.tsx"
 import { Welcome } from "./welcome.tsx"
 import { WorkStrip } from "./work-strip.tsx"
+
+export { ReportOutline } from "./report-outline.tsx"
 
 /** 画面に出す中身。`card` は札に載せるターンで、`fresh` は働くあいだの中身から入れ替えたばかりのレポートか。 */
 type ShownView =
@@ -119,7 +120,6 @@ export function MainView(): ReactElement {
     view.kind !== "welcome" && view.kind !== "waiting" && view.card.kind === "turn"
       ? view.card
       : undefined
-  const outlineTurns = useReportOutlineTurns()
   const moveHeading = useReadingSection((state) => state.move)
 
   function onKeyDown(event: KeyboardEvent<HTMLElement>): void {
@@ -183,60 +183,62 @@ export function MainView(): ReactElement {
           )}
           {cardTurn !== undefined && (
             <article className={styles["turn-card"]}>
-              <ReportOutline
-                turns={outlineTurns}
-                activeTurnId={cardTurn.turn.id}
-                onSelectTurn={selectTurn}
-                notice={notice}
-                onNotice={onNotice}
-              >
-                {!viewingPast && (
-                  <TurnCardHead>
-                    <WorkStrip />
-                  </TurnCardHead>
-                )}
-                {/* 狭い画面は依頼を一覧の上に出す（広い画面は流れの先頭の投稿が持つ）。 */}
-                {phoneWidth && cardTurn.turn.request !== undefined && (
-                  <div className={styles["turn-card-request"]}>
-                    <RequestBlock
-                      request={cardTurn.turn.request}
-                      tasks={tasks}
-                      key={cardTurn.turn.id}
-                    />
-                  </div>
-                )}
-                <div className={styles["turn-card-body"]}>
-                  <AskThreadProvider turn={cardTurn.turn} turns={turns}>
-                    {/* 狭い画面の一覧と「いまの段」。広い画面では CSS で消える。
-                      一覧の板の中の本文を、`<Turn>` が隠した同じ本文より DOM の前に置くため、`<Turn>` の前に並べる。 */}
-                    <PhaseList
-                      turn={cardTurn.turn}
-                      planCount={viewingPast ? 0 : planCountOf(turnStepList)}
-                      turnId={cardTurn.turn.id}
-                      key={`phase-list:${String(cardTurn.turn.id)}`}
-                    />
-                    {phoneWidth && !viewingPast && view.kind === "work" && <CurrentStep />}
-                    {/* `key` にターンの番号を渡す。
-                    前後へ移っても同じ位置の `<Turn>` を使い回すと、「このターンを出し始めた時点で既にあった本文」（演出の対象を決める材料）が最初のターンのものに留まってしまう。 */}
-                    <Turn
-                      turn={cardTurn.turn}
-                      newest={cardTurn.turn.id === newestTurnId}
-                      freshReport={cardTurn.fresh}
-                      key={cardTurn.turn.id}
-                    />
-                  </AskThreadProvider>
+              {phoneWidth && notice.kind === "notice" && (
+                <div className={styles["turn-card-phone-notice"]}>
+                  <HeadNotice
+                    text={notice.text}
+                    onPress={() => {
+                      onNotice(notice.action)
+                    }}
+                  />
                 </div>
-                {!phoneWidth && <NowLine viewingPast={viewingPast} />}
-                {!viewingPast && (
-                  <div className={styles["turn-card-inquiry"]}>
-                    <Inquiry />
-                  </div>
-                )}
-              </ReportOutline>
+              )}
+              {!viewingPast && (
+                <TurnCardHead>
+                  <WorkStrip />
+                </TurnCardHead>
+              )}
+              {/* 狭い画面は依頼を一覧の上に出す（広い画面は流れの先頭の投稿が持つ）。 */}
+              {phoneWidth && cardTurn.turn.request !== undefined && (
+                <div className={styles["turn-card-request"]}>
+                  <RequestBlock
+                    request={cardTurn.turn.request}
+                    tasks={tasks}
+                    key={cardTurn.turn.id}
+                  />
+                </div>
+              )}
+              <div className={styles["turn-card-body"]}>
+                <AskThreadProvider turn={cardTurn.turn} turns={turns}>
+                  {/* 狭い画面の一覧と「いまの段」。広い画面では CSS で消える。
+                      一覧の板の中の本文を、`<Turn>` が隠した同じ本文より DOM の前に置くため、`<Turn>` の前に並べる。 */}
+                  <PhaseList
+                    turn={cardTurn.turn}
+                    planCount={viewingPast ? 0 : planCountOf(turnStepList)}
+                    turnId={cardTurn.turn.id}
+                    key={`phase-list:${String(cardTurn.turn.id)}`}
+                  />
+                  {phoneWidth && !viewingPast && view.kind === "work" && <CurrentStep />}
+                  {/* `key` にターンの番号を渡す。
+                    前後へ移っても同じ位置の `<Turn>` を使い回すと、「このターンを出し始めた時点で既にあった本文」（演出の対象を決める材料）が最初のターンのものに留まってしまう。 */}
+                  <Turn
+                    turn={cardTurn.turn}
+                    newest={cardTurn.turn.id === newestTurnId}
+                    freshReport={cardTurn.fresh}
+                    key={cardTurn.turn.id}
+                  />
+                </AskThreadProvider>
+              </div>
+              {!phoneWidth && <NowLine viewingPast={viewingPast} />}
+              {!viewingPast && (
+                <div className={styles["turn-card-inquiry"]}>
+                  <Inquiry />
+                </div>
+              )}
             </article>
           )}
         </ContentFrame>
-        {!viewingPast && <InquiryJumpFloat />}
+        <StreamFloat notice={notice} viewingPast={viewingPast} onNotice={onNotice} />
       </div>
     </RepositoryFileLinkProvider>
   )

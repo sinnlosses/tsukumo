@@ -17,6 +17,7 @@ function renderLayout(narrowGround = false): void {
       main="main"
       sidebar="sidebar"
       character="character"
+      outline="outline"
       dispatch="dispatch"
       inquiry="inquiry"
       rail={{ badge: "railBadge" }}

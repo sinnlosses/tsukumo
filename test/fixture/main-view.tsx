@@ -2,6 +2,7 @@ import { QueryClientProvider } from "@tanstack/react-query"
 import { act, fireEvent, render, screen, type RenderResult } from "@testing-library/react"
 
 import { MainView } from "../../src/browser/components/page/conversation/components/main-view/main-view.tsx"
+import { ReportOutline } from "../../src/browser/components/page/conversation/components/main-view/report-outline.tsx"
 import { useSession } from "../../src/browser/stores/session.ts"
 import type { SessionRecord } from "../../src/shared/session/session-record.ts"
 import { INITIAL_SESSION_STATE, type SessionState } from "../../src/shared/session/session-state.ts"
@@ -41,11 +42,17 @@ export function renderMainViewBeforeHello(): RenderResult {
 }
 
 function renderPage(): RenderResult {
+  // 選んでいなければ畳んでおく（列の行が本文と同じ字を二重に持たないように）。開いて試すテストは先に `chooseOutlineOpen` を呼ぶ。
+  if (localStorage.getItem(OUTLINE_PANEL_STORAGE_KEY) === null) {
+    localStorage.setItem(OUTLINE_PANEL_STORAGE_KEY, JSON.stringify({ collapse: "collapsed" }))
+  }
+  // やり取りの列は左の列の上に置くので、メインビューの兄弟として描く。
   // `MainView` は `<RepositoryFileLinkProvider>`（レポートのパスを押せる部品にする一覧の取得）を
   // 内側で mount するので `useQuery` が要る。ここでは一覧の中身を見ないので、フェッチそのものは
   // 差し替えない（`window.fetch` は happy-dom の対象外なので落ちるだけで、テストは待たない）。
   return render(
     <QueryClientProvider client={createTestQueryClient()}>
+      <ReportOutline />
       <MainView />
     </QueryClientProvider>,
   )

@@ -1,43 +1,74 @@
-/* やり取りの列。札の左に、集計期間の中のやり取りと見ているやり取りの見出しの一覧を持つ。幅が足りないときは畳んだ細い列になる。 */
+/* やり取りの列。左の列の上に、集計期間の中のやり取りと見ているやり取りの見出しの一覧を置く。
+   幅と高さの上限は置き場（`conversation-layout.module.css` の `.layout-outline`）が決め、ここは入れ物の高さに収まるよう、頭を残して一覧だけを転がす。 */
 
-/* 列と本文を横に並べる器。列の既定の幅は器の幅（`cqw`）から決める。 */
-.outline-frame {
-  flex: 1;
-  container-type: inline-size;
-}
-/* 列の幅は `grid-template-columns` の1列目そのもので持つ（列の中身の `width` では持たない。
-   `auto` 列は中身の内容量で幅を決めるので、中身の変化で揺れてしまう）。 */
-.outline-frame[data-outline="shown"] {
-  display: grid;
-  grid-template-columns: clamp(10rem, 22cqw, 15rem) minmax(0, 1fr);
-}
-/* 畳んでいる間は幅も開き直すボタンだけが収まる固定値にする。 */
-.outline-frame[data-outline="shown"][data-outline-collapsed="true"] {
-  grid-template-columns: 2.5rem minmax(0, 1fr);
-}
-/* 右の側（進み具合のプログレスバー・依頼の全文・お伺い・本文）。列があってもなくても同じ幅の取り方にする。 */
-.outline-content {
-  grid-column: -2;
-  min-width: 0;
-}
-/* 列。札の上端から下端まで伸びて右の線を引く。中の一覧（`.outline-nav`）だけが札の上端に貼り付く。 */
-.outline-rail {
-  border-right: 1px solid var(--rule-quiet);
-}
-/* 札の頭と同じく、転がる器の余白ぶん上へずらした位置が貼り付く基準（`.turn-card-head`）。
-   行が多いときは一覧の中で転がす。 */
+/* 枠・角丸・地は `main-view.module.css` の `composes`。 */
 .outline-nav {
-  position: sticky;
-  top: calc(-1 * var(--region-padding, 0px));
-  max-height: 100cqh;
-  overflow-y: auto;
-  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  min-height: 0;
   padding: var(--space-md) var(--space-sm);
+}
+/* 畳んでいる間は開き直すボタンだけが収まる幅にする。 */
+.outline-nav[data-outline-collapsed="true"] {
+  align-self: flex-start;
+}
+/* 一覧だけが転がる。送れる方向があるときだけ、その側の端をぼかす（転がせない間は、スクロールの時間軸が働かず、ぼかしの値が 0 のまま）。 */
+@property --outline-fade-start {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+@property --outline-fade-end {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+@keyframes outline-fade-start {
+  from {
+    --outline-fade-start: 0px;
+  }
+  to {
+    --outline-fade-start: 1.5rem;
+  }
+}
+@keyframes outline-fade-end {
+  from {
+    --outline-fade-end: 1.5rem;
+  }
+  to {
+    --outline-fade-end: 0px;
+  }
 }
 .outline-list {
   display: flex;
+  flex: 1 1 auto;
   flex-direction: column;
   gap: var(--space-2xs);
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent,
+    black var(--outline-fade-start),
+    black calc(100% - var(--outline-fade-end)),
+    transparent
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent,
+    black var(--outline-fade-start),
+    black calc(100% - var(--outline-fade-end)),
+    transparent
+  );
+  animation:
+    outline-fade-start linear both,
+    outline-fade-end linear both;
+  animation-timeline: scroll(self block), scroll(self block);
+  animation-range:
+    0 1.5rem,
+    calc(100% - 1.5rem) 100%;
 }
 .outline-list-head {
   display: flex;
@@ -97,16 +128,6 @@
   flex: 1;
   flex-direction: column;
   min-width: 0;
-}
-.outline-notice {
-  padding: 0 var(--space-xs) var(--space-sm);
-}
-/* 畳んだ列。開き直す口の下に、知らせがあれば印だけの口を縦に並べる。 */
-.outline-collapsed {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-sm);
 }
 .outline-turn-aside {
   color: var(--ink-quiet);
@@ -204,23 +225,4 @@
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-/* 狭い画面でだけ出す、本文の上端の知らせの行。 */
-.outline-phone-notice {
-  display: none;
-}
-
-/* 狭い画面（760px 以下）では列を出さず、本文が幅いっぱいを取る。 */
-@media (max-width: 760px) {
-  .outline-frame[data-outline="shown"],
-  .outline-frame[data-outline="shown"][data-outline-collapsed="true"] {
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .outline-rail {
-    display: none;
-  }
-  .outline-phone-notice {
-    display: block;
-    padding-bottom: var(--space-sm);
-  }
 }

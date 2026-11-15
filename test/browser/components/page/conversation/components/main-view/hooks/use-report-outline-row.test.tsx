@@ -24,8 +24,6 @@ const TITLED_TURN = {
   ],
   activeTurnId: 0,
   onSelectTurn: () => undefined,
-  notice: { kind: "none" },
-  onNotice: () => undefined,
 } as const satisfies ReportOutlineProps
 
 function ReportRowProbe(): ReactElement {

@@ -1,5 +1,6 @@
-// 知らせの行。やり取りの列の頭に、いま見ている中身の外で起きたことを1つだけ押せる行で出す。
-// 開いた列では列の幅いっぱいの1行（収まらない字は末尾を切り、全文は `title`）、畳んだ列では印だけの口にする。
+// 知らせの行。狭い画面（760px 以下）の本文の上端に、いま見ている中身の外で起きたことを1つだけ押せる行で出す。
+// 広い画面では会話の流れの下端の口（`<StreamFloat>`）が同じ知らせを出す。
+// 収まらない字は末尾を切り、全文は `title`。
 
 import type { ReactElement } from "react"
 
@@ -7,34 +8,13 @@ import { Button } from "../../../../ui/button/button.tsx"
 import styles from "./main-view.module.css"
 
 const NOTICE_ARROW = "→"
-const NOTICE_MARK = "!"
 
 type HeadNoticeProps = {
   readonly text: string
-  readonly form: "row" | "mark"
   readonly onPress: () => void
 }
 
 export function HeadNotice(props: HeadNoticeProps): ReactElement {
-  if (props.form === "mark") {
-    return (
-      <Button
-        variant="outline-warn"
-        size="secondary"
-        pressed="none"
-        disabled={false}
-        ariaLabel={props.text}
-        disclosure={{ kind: "none" }}
-        title={props.text}
-        className={styles["head-notice-mark"]}
-        onClick={props.onPress}
-      >
-        <span className={styles["head-notice-mark-glyph"]} aria-hidden="true">
-          {NOTICE_MARK}
-        </span>
-      </Button>
-    )
-  }
   return (
     <Button
       variant="outline-warn"

@@ -1,7 +1,6 @@
 {
   "main": [
     { "tag": "main", "attributes": { "data-region": "main", "aria-label": "メインビュー" }, "children": [
-      { "tag": "button", "attributes": { "data-outline-turn": "0", "data-result": "done", "aria-label": "完了: 入力欄から送る場面を見たい（架空の依頼）" } },
       { "tag": "section", "children": [
         { "tag": "h2", "children": ["依頼"] },
         { "tag": "p", "children": ["入力欄から送る場面を見たい（架空の依頼）"] }

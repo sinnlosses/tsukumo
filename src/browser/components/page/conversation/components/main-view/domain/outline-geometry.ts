@@ -3,9 +3,6 @@
 /** 見出しの上端がこの距離まで一覧の上端に近づいたら、その見出しを読んでいることにする（px）。 */
 const ACTIVE_SLACK_PX = 24
 
-/** 札の幅がこれ（rem）を下回るあいだは、利用者が選んでいなければ列を畳んでおく。 */
-const NARROW_CARD_REM = 48
-
 /** 画面上の上端（px）。 */
 export function topOf(element: Element): number {
   return element.getBoundingClientRect().top
@@ -42,12 +39,6 @@ export function bandRootMargin(line: number, scroller?: Element): string {
       ? document.documentElement.clientHeight
       : scroller.getBoundingClientRect().bottom
   return `${String(BAND_REACH_PX)}px 0px ${String(Math.round(line - rootBottom))}px 0px`
-}
-
-/** 札の幅が、列を畳んでおく狭さか。 */
-export function isNarrowFrame(frame: Element): boolean {
-  const rootFontPx = Number.parseFloat(getComputedStyle(document.documentElement).fontSize)
-  return frame.getBoundingClientRect().width < NARROW_CARD_REM * rootFontPx
 }
 
 /** `row` が `nav` の中で見える位置になるよう、`nav` の `scrollTop` だけを動かす。 */

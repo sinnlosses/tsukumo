@@ -16,13 +16,12 @@ import {
   useReadingSection,
   type ReportOutlineEntry,
 } from "../../../../../../stores/reading-section.ts"
+import { MAIN_VIEW_ATTRIBUTE } from "../../../domain/main-view-focus.ts"
 import type { OutlineReport } from "../../../domain/outline-report-row.ts"
 import type { TurnResult } from "../../../domain/turn-result.ts"
-import type { HeadNotice, HeadNoticeAction } from "../domain/head-notice.ts"
 import {
   activeLineOf,
   bandRootMargin,
-  isNarrowFrame,
   scrollRowIntoView,
   topOf,
 } from "../domain/outline-geometry.ts"
@@ -53,9 +52,6 @@ export type ReportOutlineProps = {
   readonly turns: readonly ReportOutlineTurn[]
   readonly activeTurnId: number
   readonly onSelectTurn: (turnId: number) => void
-  /** 列の頭に出す知らせの行。 */
-  readonly notice: HeadNotice
-  readonly onNotice: (action: HeadNoticeAction) => void
 }
 
 /** 上の段の1行ぶん。 */
@@ -89,17 +85,13 @@ export type ReportOutlineModel = {
   readonly visible: boolean
   readonly turnRows: readonly ReportOutlineTurnRow[]
   readonly onSelectTurn: (turnId: number) => void
-  readonly notice: HeadNotice
-  readonly onNotice: () => void
   readonly reportRow: ReportOutlineReportRow
   readonly onSelectReport: () => void
   /** 見ているやり取りの見出しの行。 */
   readonly rows: readonly ReportOutlineRow[]
-  /** 列と本文を横に並べる器。 */
-  readonly frameRef: RefObject<HTMLDivElement | null>
-  /** 見出しを探す本文の器。 */
+  /** 見出しを探す本文の器。呼ぶ側が結ばなければ、画面にあるメインビューの根へ結ぶ。 */
   readonly contentRef: RefObject<HTMLDivElement | null>
-  /** 一覧の器。いま読んでいる見出しを決める基準の高さになり、行が溢れたらこの中で転がす。 */
+  /** 列の器。いま読んでいる見出しを決める基準の高さになる。行が溢れたら、中の一覧（`listRef`）だけを転がす。 */
   readonly navRef: RefObject<HTMLElement | null>
   readonly listRef: RefObject<HTMLDivElement | null>
   readonly onNavKeyDown: (event: KeyboardEvent<HTMLElement>) => void
@@ -116,7 +108,6 @@ const PIN_TOLERANCE_PX = 1
 export const TURN_ROW_ATTRIBUTE = "data-outline-turn"
 
 export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel {
-  const frameRef = useRef<HTMLDivElement>(null)
   const contentRef = useRef<HTMLDivElement>(null)
   const navRef = useRef<HTMLElement>(null)
   const listRef = useRef<HTMLDivElement>(null)
@@ -133,8 +124,7 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
   const setOutlineCollapsed = useReadingSection((state) => state.setOutlineCollapsed)
   const clear = useReadingSection((state) => state.clear)
   const [panel, setPanel] = useState<OutlinePanel>(loadOutlinePanel)
-  const [narrow, setNarrow] = useState(false)
-  const collapsed = isOutlineCollapsed(panel.collapse, narrow)
+  const collapsed = isOutlineCollapsed(panel.collapse)
 
   // 幅と畳みの唯一の更新点。離したとき・畳む/開くを押したときだけ通る。
   function commitPanel(update: (current: OutlinePanel) => OutlinePanel): void {
@@ -142,6 +132,15 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
     setPanel(next)
     saveOutlinePanel(next)
   }
+
+  // 本文はメインビューの中にあり、列は左の列に置くので、描く前にメインビューの根を探して結ぶ。
+  // 次の購読より先に宣言する。
+  useBeforePaintSync(() => {
+    const root = document.querySelector(`[${MAIN_VIEW_ATTRIBUTE}]`)
+    if (contentRef.current === null && root instanceof HTMLDivElement) {
+      contentRef.current = root
+    }
+  }, [])
 
   // 見ているやり取りの節の欄の ID は、描き直しで配列の identity が変わるので、字の鍵で変わったことだけ拾う。
   // 購読の effect より先に宣言し、最初の読み取りが ID を持った状態で走るようにする。
@@ -282,24 +281,6 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
     }
   }, [readAt, showHeadings])
 
-  // 札の幅（DOM の寸法）を購読する。
-  // 最初の1回は描く前に測る。
-  useBeforePaintSync(() => {
-    const frame = frameRef.current
-    if (frame === null) {
-      return
-    }
-    const measure = (): void => {
-      setNarrow(isNarrowFrame(frame))
-    }
-    measure()
-    const observer = new ResizeObserver(measure)
-    observer.observe(frame)
-    return () => {
-      observer.disconnect()
-    }
-  }, [])
-
   const visible = props.turns.length >= 1
 
   // 見出しへ移れと頼まれたら、その見出しへ転がして固定する。
@@ -347,19 +328,21 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
   )
 
   // 見ているやり取りの行を、列の中の転がり（DOM）で見える位置へ寄せる。
-  // `scrollIntoView` は転がる祖先の本文まで動かすので、列の `scrollTop` だけを動かす。
+  // 開いたときと、見ているやり取りが替わったとき・やり取りが増えたときに寄せる。
+  // `scrollIntoView` は転がる祖先まで動かすので、一覧の `scrollTop` だけを動かす。
   const activeTurnId = props.activeTurnId
+  const turnCount = props.turns.length
   useBeforePaintSync(() => {
-    const nav = navRef.current
-    if (nav === null || !visible || collapsed) {
+    const list = listRef.current
+    if (list === null || turnCount < 1 || collapsed) {
       return
     }
-    const row = nav.querySelector<HTMLElement>(`[${TURN_ROW_ATTRIBUTE}="${String(activeTurnId)}"]`)
+    const row = list.querySelector<HTMLElement>(`[${TURN_ROW_ATTRIBUTE}="${String(activeTurnId)}"]`)
     if (row === null) {
       return
     }
-    scrollRowIntoView(nav, row)
-  }, [activeTurnId, collapsed, visible])
+    scrollRowIntoView(list, row)
+  }, [activeTurnId, turnCount, collapsed])
 
   function focusRow(step: 1 | -1): void {
     const rows = [...(listRef.current?.querySelectorAll<HTMLButtonElement>("button") ?? [])]
@@ -375,12 +358,6 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
       isActive: turn.id === props.activeTurnId,
     })),
     onSelectTurn: props.onSelectTurn,
-    notice: props.notice,
-    onNotice: () => {
-      if (props.notice.kind === "notice") {
-        props.onNotice(props.notice.action)
-      }
-    },
     reportRow:
       activeReport.kind === "none"
         ? activeReport
@@ -392,7 +369,6 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
           },
     onSelectReport: selectReport,
     rows: outlineRows(entries, activeIndex, reached),
-    frameRef,
     contentRef,
     navRef,
     listRef,

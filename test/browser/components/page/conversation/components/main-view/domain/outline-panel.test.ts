@@ -61,10 +61,9 @@ describe("loadOutlinePanel", () => {
 })
 
 describe("isOutlineCollapsed", () => {
-  it("選んでいなければ札の幅で決まり、選んでいれば幅に関わらずその選択", () => {
-    expect(isOutlineCollapsed("unset", true)).toBe(true)
-    expect(isOutlineCollapsed("unset", false)).toBe(false)
-    expect(isOutlineCollapsed("open", true)).toBe(false)
-    expect(isOutlineCollapsed("collapsed", false)).toBe(true)
+  it("畳むのは畳むを選んだときだけで、選んでいなければ開いている", () => {
+    expect(isOutlineCollapsed("unset")).toBe(false)
+    expect(isOutlineCollapsed("open")).toBe(false)
+    expect(isOutlineCollapsed("collapsed")).toBe(true)
   })
 })
