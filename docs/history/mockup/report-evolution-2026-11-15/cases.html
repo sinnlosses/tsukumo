@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>案A「前と後」で書いたレポートの題材の一覧（2026-11-15）</title>
+    <link rel="stylesheet" href="../conversation-directions-2026-11-15/compare.css" />
+    <link rel="stylesheet" href="../report-progress-2026-11-15/compare-extra.css" />
+    <link rel="stylesheet" href="compare-extra.css" />
+    <link rel="stylesheet" href="cases-page.css" />
+  </head>
+  <!--
+    案A「前と後」を採ったときに、題材ごとにレポートがどんな形になるかを一覧にするページ。
+    画は見本（index.html の ?genre= と ?case=）をそのまま縮小して出す。題材の名前と読み方は cases.js、
+    数は cases-page.js が持ち、数は 1400×900 の見本を実ブラウザで測った値。
+    ?lv=1|2|3                   進化の段
+    ?cols=2|3|4                 並べる列の数
+  -->
+  <body>
+    <header class="top">
+      <div class="top-text">
+        <h1>案A「前と後」で書いたレポートの題材 11 通り</h1>
+        <p>
+          同じ骨組み（結論・裏づけの帯・主張ごとの組・変えていないこと・やっていないこと・お願い）で、題材だけを替えた見本。画は見本をそのまま縮小したもので、押すと実寸で開いて操作を試せる。中身はすべて架空。
+        </p>
+      </div>
+      <div class="controls">
+        <a class="back-link" href="compare.html">3つの形の比較へ</a>
+        <div class="seg" data-control="lv" role="group" aria-label="進化の段">
+          <button type="button" data-value="1">段1</button>
+          <button type="button" data-value="2">段2</button>
+          <button type="button" data-value="3">段3</button>
+        </div>
+        <div class="seg" data-control="cols" role="group" aria-label="並べる列の数">
+          <button type="button" data-value="2">2列</button>
+          <button type="button" data-value="3">3列</button>
+          <button type="button" data-value="4">4列</button>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="summary" aria-labelledby="table-title">
+        <h2 id="table-title">題材ごとの主の図と、対の読み方</h2>
+        <p>
+          主の図の型は、報告の題材で決まる。対の見出しは「前｜後」に限らず、題材に合わせて読み替える。数は段3 の見本を 1400×900 で測った値で、図の割合は最初の1画面の紙に占める面積。
+        </p>
+        <div class="table-wrap">
+          <table id="lead"></table>
+        </div>
+      </section>
+
+      <div class="grid" id="cards"></div>
+
+      <section class="summary" aria-labelledby="weak-title">
+        <h2 id="weak-title">対にならない題材での形</h2>
+        <p>11 通りのうち3つは、前と後の対にならない。無理に対へ寄せず、次の形にした。</p>
+        <div class="table-wrap">
+          <table id="weak"></table>
+        </div>
+      </section>
+
+      <section class="summary" aria-labelledby="end-title">
+        <h2 id="end-title">紙の末尾の4通り</h2>
+        <p>お願いは最下部のままで、無いときは置かない。続きの提案（今の「次の一手」）は、お願いの有無に関わらず同じ行に出る。</p>
+        <div class="table-wrap">
+          <table id="ends"></table>
+        </div>
+      </section>
+    </main>
+    <script src="cases.js"></script>
+    <script src="cases-page.js"></script>
+  </body>
+</html>

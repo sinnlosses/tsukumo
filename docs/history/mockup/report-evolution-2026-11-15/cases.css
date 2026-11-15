@@ -1,0 +1,625 @@
+/* 案A「前と後」の題材ごとの見本で足す分だけ。紙の土台は evolve.css。 */
+
+/* 進行の帯の状態の語。止めた形は中抜きの点、答え待ちは「要る」の色にする */
+.state-halt {
+  color: var(--ink);
+}
+
+.state-halt .state-dot {
+  background: none;
+  box-shadow: inset 0 0 0 2px currentColor;
+}
+
+.state-wait {
+  color: var(--state-warn);
+}
+
+/* 結論の2文目（それで何が良いか・変えていないもの） */
+.report .conclusion-rest {
+  max-inline-size: 42em;
+  margin: 8px 0 0;
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--ink-soft);
+}
+
+/* 落ちた主張の印。塗りの色に加えて、帯の目盛りは背を高くして言い分ける */
+.proof-seal[data-seal="fail"] .icon {
+  background: var(--ng);
+  color: #2b0a0a;
+}
+
+.count[data-seal="fail"] .icon {
+  color: var(--ng);
+}
+
+.tracker {
+  align-items: center;
+}
+
+.tracker i[data-seal="fail"] {
+  block-size: 14px;
+  background: var(--ng);
+}
+
+.out-ng {
+  color: var(--ng);
+}
+
+/* 狙いと違う所の囲み */
+.shot-bad {
+  background: color-mix(in srgb, var(--ng) 14%, transparent);
+  outline: 2px solid var(--ng);
+  outline-offset: 1px;
+  color: var(--ink-bright);
+}
+
+body[data-lv="1"] .shot-bad {
+  background: none;
+  outline: 0;
+  color: inherit;
+}
+
+/* 行の下の説明（設定の面の画の中） */
+.shot-row-hint {
+  flex-wrap: wrap;
+  row-gap: 0;
+}
+
+.shot-row-hint small {
+  flex-basis: 100%;
+  font-size: 12px;
+  color: var(--ink-quiet);
+}
+
+/* 狭い幅の一覧の画 */
+.pair-phone,
+.pair-code,
+.pair-keys {
+  align-items: start;
+}
+
+.pair-phone .pair-side {
+  padding: 14px;
+  border-radius: 10px;
+  background: var(--fig-ground);
+}
+
+.phone {
+  max-inline-size: 236px;
+  margin-inline: auto;
+  overflow: hidden;
+  border-radius: 14px;
+  background: var(--shot-ground);
+  box-shadow: inset 0 0 0 1px var(--hairline);
+  font-size: 13px;
+  line-height: 22px;
+}
+
+.phone-bar {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 10px 12px 8px;
+  border-block-end: 1px solid var(--hairline-quiet);
+  color: var(--ink-soft);
+}
+
+.phone-bar b {
+  font-weight: 600;
+  color: var(--ink-bright);
+}
+
+.phone-bar span {
+  font-size: 12px;
+}
+
+.phone-list li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 8px;
+  min-block-size: 44px;
+  padding: 10px 12px;
+  border-block-end: 1px solid var(--hairline-quiet);
+}
+
+.phone-list b {
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.phone-list span {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-quiet);
+}
+
+/* 前: 行の高さが 44px で止まり、2行目が欠ける */
+.phone-list .phone-cut {
+  block-size: 44px;
+  overflow: hidden;
+  outline: 2px dashed var(--was-ink);
+  outline-offset: -2px;
+}
+
+.phone-list .phone-new {
+  background: var(--mark-wash);
+  outline: 2px solid var(--mark);
+  outline-offset: -2px;
+}
+
+body[data-lv="1"] .phone-list :is(.phone-cut, .phone-new) {
+  background: none;
+  outline: 0;
+}
+
+/* コードの前後。消した行は灰、足した行は強調の色（緑と赤は使わない） */
+.code {
+  display: grid;
+  margin: 0;
+  padding: 8px 0;
+  overflow-x: auto;
+  border-radius: 8px;
+  background: var(--shot-ground);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--ink);
+}
+
+.code-line {
+  display: block;
+  padding-inline: 30px 14px;
+  white-space: pre;
+}
+
+.code-line[data-kind="del"] {
+  background: rgb(255 255 255 / 6%);
+  color: var(--was-ink);
+}
+
+.code-line[data-kind="ins"] {
+  background: var(--mark-wash);
+  color: var(--ink-bright);
+}
+
+.code-line[data-kind="del"]::before,
+.code-line[data-kind="ins"]::before {
+  position: absolute;
+  margin-inline-start: -18px;
+}
+
+.code-line[data-kind="del"]::before {
+  content: "−";
+}
+
+.code-line[data-kind="ins"]::before {
+  content: "+";
+  color: var(--mark);
+}
+
+.pair-code {
+  margin-block-start: 12px;
+}
+
+/* 構成図と依存の図 */
+.diagram {
+  display: block;
+  inline-size: 100%;
+  block-size: auto;
+  border-radius: 10px;
+  background: var(--fig-ground);
+}
+
+.dg-box {
+  fill: rgb(255 255 255 / 5%);
+  stroke: var(--hairline);
+  stroke-width: 1;
+}
+
+.dg-box-new {
+  fill: var(--mark-wash);
+  stroke: var(--mark);
+  stroke-width: 1.5;
+}
+
+.dg-text {
+  fill: var(--ink-bright);
+  font-family: var(--font-sans);
+  font-size: 12px;
+}
+
+.dg-link {
+  fill: none;
+  stroke: var(--was-ink);
+  stroke-width: 1.4;
+}
+
+.dg-link-new {
+  stroke: var(--mark);
+}
+
+.dg-tip {
+  fill: var(--was-ink);
+}
+
+.dg-tip-new {
+  fill: var(--mark);
+}
+
+/* 内訳ごとの前後の棒。同じ軸に重ね、値は棒の先に書く */
+.part-bars {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 10px;
+  background: var(--fig-ground);
+}
+
+.part-bars li {
+  display: grid;
+  grid-template-columns: 7.5em minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+}
+
+.part-pair {
+  display: grid;
+  gap: 2px;
+}
+
+.part-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.part-bar em {
+  flex: none;
+  inline-size: 1.2em;
+  font-size: 12px;
+  font-style: normal;
+  color: var(--ink-quiet);
+}
+
+.part-bar i {
+  flex: none;
+  max-inline-size: calc(100% - 64px);
+  block-size: 10px;
+  border-radius: 0 4px 4px 0;
+  background: var(--was);
+}
+
+.part-bar[data-tone="same"] i {
+  background: var(--was-ink);
+}
+
+.part-bar[data-tone="now"] i {
+  background: var(--mark);
+}
+
+.part-bar b {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-soft);
+}
+
+.part-bar:not([data-tone="was"]) b {
+  color: var(--ink-bright);
+}
+
+/* 10 回ずつの測定の点 */
+.strip {
+  display: grid;
+  gap: 2px;
+  padding: 14px 16px 10px;
+  border-radius: 10px;
+  background: var(--fig-ground);
+}
+
+.strip-row {
+  display: grid;
+  grid-template-columns: 2em minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.strip-track {
+  position: relative;
+  block-size: 24px;
+  margin-inline: 6px 10px;
+  border-block-end: 1px solid var(--hairline);
+}
+
+.strip-track i {
+  position: absolute;
+  inset-block-start: 7px;
+  inline-size: 10px;
+  block-size: 10px;
+  margin-inline-start: -5px;
+  border-radius: 50%;
+  background: var(--was-ink);
+  box-shadow: 0 0 0 2px #1d1b26;
+}
+
+.strip-track i[data-tone="now"] {
+  background: var(--mark);
+}
+
+.strip-axis .strip-track {
+  block-size: 20px;
+  border: 0;
+}
+
+.strip-axis .strip-track span {
+  position: absolute;
+  inset-block-start: 2px;
+  translate: -50% 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-quiet);
+}
+
+/* 粒の図。数えられる数は、粒を並べて数える */
+.units-figure {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 24px;
+  padding: 16px;
+  border-radius: 10px;
+  background: var(--fig-ground);
+}
+
+.units {
+  display: grid;
+  grid-template-columns: repeat(7, 24px);
+  gap: 4px;
+}
+
+.units i {
+  block-size: 24px;
+  border-radius: 5px;
+  background: var(--was);
+}
+
+.units .unit-new {
+  background: var(--mark);
+}
+
+.unit-notes {
+  display: grid;
+  gap: 6px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.unit-notes li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 8px;
+}
+
+.unit-notes .key {
+  margin-inline-start: 0;
+}
+
+.unit-notes code {
+  font-size: 13px;
+  color: var(--ink-bright);
+}
+
+.unit-rest {
+  color: var(--ink-soft);
+}
+
+/* 通った・落ちたの並び */
+.tests {
+  display: grid;
+  gap: 6px;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.tests li {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  align-items: start;
+  gap: 8px;
+}
+
+.tests .icon {
+  inline-size: 16px;
+  block-size: 16px;
+  margin-block-start: 4px;
+  stroke-width: 2.6;
+}
+
+.tests li[data-state="ok"] .icon {
+  color: var(--ok);
+}
+
+.tests li[data-state="ok"] {
+  color: var(--ink-soft);
+}
+
+.tests li[data-state="ng"] .icon {
+  color: var(--ng);
+}
+
+.tests li[data-state="ng"] {
+  font-weight: 600;
+  color: var(--ink-bright);
+}
+
+/* 鍵の一覧の前後 */
+.keys {
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+  border-radius: 10px;
+  background: var(--fig-ground);
+}
+
+.keys li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-block-size: 30px;
+  padding: 2px 10px;
+  border-radius: 6px;
+  box-shadow: inset 0 0 0 1px var(--hairline);
+}
+
+.keys code {
+  overflow: hidden;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ink);
+}
+
+.keys .key-old {
+  box-shadow: none;
+  outline: 1.5px dashed var(--was-ink);
+  outline-offset: -1.5px;
+}
+
+.keys .key-old code {
+  color: var(--was-ink);
+}
+
+.keys .key-old span {
+  flex: none;
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+/* 短い答えの名前と値 */
+.facts-list {
+  display: grid;
+  margin: 16px 0 0;
+  border-block-start: 1px solid var(--hairline);
+}
+
+.facts-list > div {
+  display: grid;
+  grid-template-columns: 8em minmax(0, 1fr);
+  gap: 16px;
+  padding-block: 10px;
+  border-block-end: 1px solid var(--hairline-quiet);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.facts-list dt {
+  font-size: 13px;
+  color: var(--ink-quiet);
+}
+
+.facts-list dd {
+  margin: 0;
+  color: var(--ink-bright);
+}
+
+/* 対の束。下の小さな画を選ぶと、上の対が入れ替わる */
+.bundle .pair {
+  align-items: start;
+}
+
+.bundle .shot:not(.shot-compact) {
+  aspect-ratio: auto;
+  min-block-size: 190px;
+}
+
+.bundle-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-block-start: 12px;
+}
+
+.bundle-pick {
+  display: grid;
+  gap: 6px;
+  padding: 6px 6px 8px;
+  border-radius: 10px;
+  box-shadow: inset 0 0 0 1px var(--hairline-quiet);
+  text-align: start;
+  transition:
+    background-color 0.15s,
+    box-shadow 0.15s;
+}
+
+.bundle-pick:hover {
+  background: rgb(255 255 255 / 6%);
+}
+
+.bundle-pick[aria-pressed="true"] {
+  background: var(--mark-wash);
+  box-shadow: inset 0 0 0 2px var(--mark);
+}
+
+.bundle-name {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  padding-inline: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-bright);
+}
+
+.bundle-name small {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--ink-soft);
+}
+
+.report .files-rest {
+  margin: 8px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-quiet);
+}
+
+.report .undone-none {
+  margin: 0;
+}
+
+/* 戻せない操作の注意。札の上に1つだけ立てる */
+.report .ask-warn {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 10px 0 0;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--warn) 11%, transparent);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ink-bright);
+}
+
+.ask-warn .icon {
+  inline-size: 17px;
+  block-size: 17px;
+  margin-block-start: 3px;
+  color: var(--warn);
+}
+
+/* お願いの無い紙の末尾。続きの提案の行だけが出る */
+.follow-alone {
+  margin-block-start: 28px;
+  padding-block-start: 16px;
+  border-block-start: 1px solid var(--hairline);
+}

@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="../conversation-directions-2026-11-15/refine.css" />
     <link rel="stylesheet" href="../report-progress-2026-11-15/proposal.css" />
     <link rel="stylesheet" href="evolve.css" />
+    <link rel="stylesheet" href="cases.css" />
   </head>
   <!--
     最終レポートの出し方を3段で進める見本。器は「3列と1本の流れ」（見本は ../conversation-directions-2026-11-15/layouts.html?layout=a2）、
@@ -22,6 +23,7 @@
     ?at=end                      流れを末尾（お願いが見える位置）まで送る
     ?open=all                    一目の盤の区画・台帳の行を全部ひらいた形
     ?pack=shirasuzu              別のパックの素材と差し色で見る
+    ?case=bug|shape|speed|…      案A の題材ごとの見本（cases.js。一覧は cases.html）
     ?bar=0                       上の切り替えの帯を隠す（撮影用）
   -->
   <body data-v="stream" data-side="lane" data-layout="a2" data-scene="read" data-plan="tail" data-moment="read">
@@ -54,12 +56,15 @@
         <g id="i-expand"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" /></g>
         <g id="i-receipt"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2ZM9 8h6M9 12h6" /></g>
         <g id="i-file"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8ZM14 3v5h5" /></g>
+        <g id="i-pause"><path d="M9 5v14M15 5v14" /></g>
+        <g id="i-alert"><path d="M12 4 3 20h18ZM12 10v4M12 17h.01" /></g>
       </defs>
     </svg>
 
     <header class="mock-bar" aria-label="見本の切り替え">
       <span class="mock-bar-title">最終レポートの見本（中身は架空）</span>
       <a class="mock-bar-link" href="compare.html">3つの形を並べて比べる</a>
+      <a class="mock-bar-link" href="cases.html">案A の題材の一覧</a>
       <span class="mock-bar-group" data-param="form">
         <a data-value="pair">案A 前と後</a>
         <a data-value="board">案B 一目の盤</a>
@@ -227,6 +232,7 @@
         </section>
       </div>
     </div>
+    <script src="cases.js"></script>
     <script src="evolve.js"></script>
   </body>
 </html>

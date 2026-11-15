@@ -54,6 +54,7 @@ function upto(level) {
 
 // 裏づけの印。色だけで言わず、記号と語を必ず添える。
 const SEALS = {
+  fail: { mark: "cross", word: "落ちた" },
   kept: { mark: "check", word: "記録あり" },
   said: { mark: "question", word: "申告のみ" },
   none: { mark: "minus", word: "やっていない" },
@@ -78,14 +79,17 @@ function tracker(seals, label) {
   return `<span class="tracker" role="img" aria-label="${label}">${ticks}</span>`
 }
 
+// 落ちた主張があるときだけ「落ちた」の数を先頭に出す。
 function countLine(seals) {
   const count = (kind) => seals.filter((value) => value === kind).length
-  const label = `主張 ${seals.length} 件のうち、記録あり ${count("kept")}、申告のみ ${count("said")}、やっていない ${count("none")}`
+  const kinds = Object.keys(SEALS).filter((kind) => kind !== "fail" || count("fail") > 0)
+  const label = `主張 ${seals.length} 件のうち、${kinds.map((kind) => `${SEALS[kind].word} ${count(kind)}`).join("、")}`
+  const counts = kinds.map(
+    (kind) => `<span class="count" data-seal="${kind}">${icon(SEALS[kind].mark)}${SEALS[kind].word} <b>${count(kind)}</b></span>`,
+  )
   return `<p class="proof-count"${from(2)}>${tracker(seals, label)}
     <span>主張 <b>${seals.length}</b> 件</span>
-    <span class="count" data-seal="kept">${icon("check")}記録あり <b>${count("kept")}</b></span>
-    <span class="count" data-seal="said">${icon("question")}申告のみ <b>${count("said")}</b></span>
-    <span class="count" data-seal="none">${icon("minus")}やっていない <b>${count("none")}</b></span>
+    ${counts.join("")}
   </p>`
 }
 
@@ -804,18 +808,44 @@ const DECIDE = {
   paper: { pair: decidePair, board: decideBoard, ledger: decideLedger },
 }
 
-const CONTENT = { work: WORK, decide: DECIDE }[genre]
+// 案A の題材ごとの見本（cases.js が足す）。この見本の部品を渡して、題材の一覧を受け取る。
+const CASES =
+  typeof globalThis.reportCases === "function"
+    ? globalThis.reportCases({ icon, from, upto, seal, receipt, countLine, tracker, switcher })
+    : {}
+const caseId = params.get("case") ?? ""
+const CONTENT = CASES[caseId] ?? { work: WORK, decide: DECIDE }[genre]
+if (CASES[caseId] !== undefined) {
+  document.body.dataset.form = "pair"
+  document.body.dataset.case = caseId
+}
 
 // ---------- 器に流し込む ----------
 
+// 終わり方。完了のほかに、途中で止めた形と、利用者の答えを待つ形がある。
+const STATES = {
+  done: { label: "完了", tone: "state-ok", mark: "check" },
+  halt: { label: "止めた", tone: "state-halt", mark: "pause" },
+  wait: { label: "答え待ち", tone: "state-wait", mark: "question" },
+}
+const state = STATES[CONTENT.state ?? "done"]
+
 function shelfHead() {
-  const dots = Array.from({ length: CONTENT.phases }, (_, index) => `<span class="phase phase-done">${index + 1}</span>`).join("")
-  const where = `${CONTENT.phases}フェーズすべて済み`
+  const done = CONTENT.done ?? CONTENT.phases
+  const dots = Array.from(
+    { length: CONTENT.phases },
+    (_, index) => `<span class="phase${index < done ? " phase-done" : ""}">${index + 1}</span>`,
+  ).join("")
+  const where = done === CONTENT.phases ? `${CONTENT.phases}フェーズすべて済み` : `${CONTENT.phases}フェーズのうち${done}フェーズまで済み`
+  const place =
+    CONTENT.phases === 0
+      ? ""
+      : `<span class="phases" role="img" aria-label="${where}">${dots}</span>
+      <span class="phase-name">${where}</span><span class="shelf-where">${where}</span>`
   return `<section class="shelf" data-open="false" aria-label="進み具合">
     <header class="shelf-head">
-      <span class="state state-ok"><span class="state-dot"></span>完了</span>
-      <span class="phases" role="img" aria-label="${where}">${dots}</span>
-      <span class="phase-name">${where}</span><span class="shelf-where">${where}</span>
+      <span class="state ${state.tone}"><span class="state-dot"></span>${state.label}</span>
+      ${place}
       <span class="paper-head-end"><span class="elapsed">所要 <b>${CONTENT.total}</b></span>
         <button class="chip-button" type="button">手順 <b>${CONTENT.steps}</b>${icon("chevron", " icon-sm")}</button></span>
     </header>
@@ -825,12 +855,18 @@ function shelfHead() {
 
 const stream = one("#stream")
 stream.insertAdjacentHTML("beforebegin", shelfHead())
-stream.innerHTML = `<details class="worklog"><summary>作業の経過<span>${CONTENT.worklog}</span></summary></details>
+const worklog =
+  CONTENT.worklog === undefined
+    ? `<p class="post">${CONTENT.request}<time>${CONTENT.say[1]}</time></p>`
+    : `<details class="worklog"><summary>作業の経過<span>${CONTENT.worklog}</span></summary></details>`
+const paper = typeof CONTENT.paper === "function" ? CONTENT.paper() : CONTENT.paper[form]()
+stream.innerHTML = `${worklog}
   <p class="say">${CONTENT.say[0]}<time>${CONTENT.say[1]}</time></p>
-  <article class="sheet paper attach" aria-label="レポート"><div class="report evolve">${CONTENT.paper[form]()}</div></article>`
+  <article class="sheet paper attach" aria-label="レポート"><div class="report evolve">${paper}</div></article>`
 
 one("#turn-request").textContent = CONTENT.request
-one("#turn-heads").innerHTML = CONTENT.heads[form]
+one("#turn-current .icon use").setAttribute("href", `#i-${state.mark}`)
+one("#turn-heads").innerHTML = (Array.isArray(CONTENT.heads) ? CONTENT.heads : CONTENT.heads[form])
   .map((text, index) =>
     index === 0
       ? `<li class="turn-head turn-head-current"><span class="turn-head-kind">最終</span>${text}</li>`
@@ -846,9 +882,12 @@ for (const choices of all(".mock-bar-group")) {
     const next = new URLSearchParams(location.search)
     next.delete("at")
     next.delete("open")
+    if (name !== "lv") {
+      next.delete("case")
+    }
     next.set(name, link.dataset.value)
     link.href = `?${next}`
-    if (link.dataset.value === current[name]) {
+    if (link.dataset.value === current[name] && (name === "lv" || CASES[caseId] === undefined)) {
       link.setAttribute("aria-current", "true")
     }
   }
@@ -962,7 +1001,7 @@ document.addEventListener("click", (event) => {
 // 用件のあるレポートを読むあいだ、入力欄の上に知らせの1行を出す（案2 と同じ位置）。
 const turnTitle = one("#turn-title")
 if (turnTitle !== null) {
-  const count = CONTENT.asks[lv - 1]
+  const count = Array.isArray(CONTENT.asks) ? CONTENT.asks[lv - 1] : CONTENT.asks
   one(".composer").insertAdjacentHTML(
     "afterbegin",
     `<p class="composer-status">${icon("down")}<span>お願いが${count}件あります</span><button class="status-jump" type="button">レポートの末尾へ</button></p>`,
@@ -983,8 +1022,8 @@ if (turnTitle !== null) {
 if (params.get("at") === "end") {
   stream.scrollTop = stream.scrollHeight
 } else {
-  const fold = stream.querySelector(".worklog")
-  stream.scrollTop = fold.offsetTop - stream.offsetTop - 11
+  const top = stream.querySelector(".worklog") ?? stream.querySelector(".post")
+  stream.scrollTop = top.offsetTop - stream.offsetTop - 11
 }
 
 const turnList = one(".turns")

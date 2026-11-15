@@ -1,0 +1,37 @@
+/* 案A の題材の一覧のページで足す分だけ。土台は ../conversation-directions-2026-11-15/compare.css と compare-extra.css */
+
+/* 主の図の型の札（題材の名前の右） */
+.lead-tag {
+  margin-inline-start: auto;
+  padding: 2px 10px;
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 1px var(--rule);
+  font-size: 12px;
+  white-space: nowrap;
+  color: var(--ink-soft);
+}
+
+.facts-4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+#lead,
+#weak,
+#ends {
+  white-space: normal;
+}
+
+:is(#lead, #weak, #ends) td {
+  vertical-align: top;
+  color: var(--ink-soft);
+  text-wrap: pretty;
+}
+
+:is(#lead, #weak, #ends) th[scope="row"] {
+  inline-size: 12em;
+  vertical-align: top;
+}
+
+#ends th[scope="row"] {
+  inline-size: 16em;
+}

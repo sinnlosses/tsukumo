@@ -24,6 +24,19 @@
   color: var(--ink-bright);
 }
 
+/* となりのページへの口（比較のページと、題材の一覧のページ） */
+.back-link {
+  font-size: 13px;
+  color: var(--ink-soft);
+  text-decoration: underline;
+  text-decoration-color: var(--rule);
+  text-underline-offset: 3px;
+}
+
+.back-link:hover {
+  color: var(--ink-bright);
+}
+
 .sign {
   font-size: 13px;
   color: var(--ink-soft);
