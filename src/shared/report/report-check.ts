@@ -25,12 +25,19 @@ export const reportCheckSchema = z.object({
     z.string(),
     "unobserved のとき必須。知らない人が繰り返せる確かめ方を1〜2文で（何を開いて・何をして・何が見えれば良いか）。ok・ng・blocked は空文字",
   ),
+  supports: partCardNote(
+    z.array(z.string()).optional(),
+    "この行が裏づける節（Section）の id の並び。裏づける節が無ければ省く",
+  ),
 })
 
-export type ReportCheck = z.infer<typeof reportCheckSchema>
+/** 検証の行。`supports` は書き手が省ける。記録から読み戻した行（`parseReportChecks`）は必ず並びで持つ。 */
+export type ReportCheck = Omit<z.infer<typeof reportCheckSchema>, "supports"> & {
+  readonly supports?: readonly string[]
+}
 
 /**
- * `figure`・`command`・`howToVerify` を足す前の記録（transcript からの復元）も読めるように、3つは欠けていたら空文字に畳む。
+ * `figure`・`command`・`howToVerify`・`supports` を足す前の記録（transcript からの復元）も読めるように、欠けていたら空文字（`supports` は空の並び）に畳む。
  * 状態・ラベル・補足が崩れた呼び出しは handler に届く前に SDK が差し戻すので、ここで欠けるのは古い記録だけ。
  */
 const storedReportCheckSchema = z.preprocess(
@@ -39,6 +46,7 @@ const storedReportCheckSchema = z.preprocess(
     figure: z.string().catch(""),
     command: z.string().catch(""),
     howToVerify: z.string().catch(""),
+    supports: z.array(z.string()).optional().catch(undefined),
   }),
 )
 

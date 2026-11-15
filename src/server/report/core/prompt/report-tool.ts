@@ -34,6 +34,7 @@ export const REPORT_TOOL_DESCRIPTION =
 export const REPORT_FIELD_DESCRIPTIONS = {
   task: "タスクの作業のときだけ渡す。渡したら conclusion に作業の名前・タスクID・変更の量を書かない",
   retrospective: "振り返りの結果。sections に混ぜない",
+  notDone: "task のとき、手を付けなかったことを並べる。無ければ空の並び",
   favor: "利用者が取る行動が残るときだけ1つ。取る手段まで書く",
   checks: "検証の結果。検証していないターンでは省く。文字に記法を使わない",
   title: `セッション一覧の題（${String(MAX_SESSION_HEADING_LENGTH)}字以内）。話題が変わったときだけ`,
@@ -73,6 +74,8 @@ export const REPORT_FIELD_CARD_NOTES = {
     "作業のレポートの最小の形は、ここに図1つと、sections に表か箇条書き。",
   retrospective:
     "振り返りのフェーズがあったときだけ渡す。見出し「振り返り」のセクションとして最後に描く。",
+  notDone:
+    "task を渡すときは必ず渡す。タスクで手を付けなかったことを1要素1件で並べ、無ければ空の並びを渡す（省くのは「無い」とは言わず黙ること）。",
   favor:
     "行動は作業を終えた・止めたあとに残る、書き手が代わりにできないことに限る（2件あってもまとめる）。報告・感想・提案は書かず、行動が無ければ省く。" +
     "打つコマンドはそのコマンドを inline code で、開く場所・押す操作は場所と名前を書く。" +
@@ -80,7 +83,8 @@ export const REPORT_FIELD_CARD_NOTES = {
   checks:
     "結論の下に総括行と、落ちた・確かめていない項目の行で描かれ、通った項目は畳む。" +
     "結果の数は figure に、打ったコマンドは command に分ける。" +
-    "label・figure・detail・howToVerify は素の文字で描かれる。",
+    "label・figure・detail・howToVerify は素の文字で描かれる。" +
+    "supports には、その行が裏づける節（Section）の id を並べる。",
   title:
     "セッションの中心の話題が変わったときだけ新しい題を渡し、変わっていなければ省く。" +
     "/clear のあとの新しいセッションには前の題が残っていることがあるので、要約の中心と違うなら付け直す。",

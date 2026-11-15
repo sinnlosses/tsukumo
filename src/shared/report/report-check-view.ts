@@ -20,6 +20,8 @@ export type ReportCheckInput = {
   readonly command: string
   readonly detail: string
   readonly howToVerify: string
+  /** 裏づける節の id。省かれていれば空の並びとして運ぶ。 */
+  readonly supports?: readonly string[]
 }
 
 /** お願いがあるときの、総括行の印が飛ぶ先（お願いの部品の `id`）。 */
@@ -32,6 +34,7 @@ export type ReportFavorTarget =
  * `time` は `command` から測った所要時間の字で、測れなければ空文字。`viaCommand` は `command` が空白だけでないこと。
  * `recorded` は `command` が同じやり取りで打った Bash の記録と照らせたこと（所要時間の字の有無とは別に持つ）。
  * `detail` は空白だけなら空文字、`howToVerify` は `unobserved` で空白だけでないときだけ残す。
+ * `supports` は裏づける節の id を入力のまま運ぶ（通った1項目も同じ）。
  */
 export type ReportCheckProblemRow = {
   readonly status: ReportCheckProblemStatus
@@ -40,6 +43,7 @@ export type ReportCheckProblemRow = {
   readonly time: string
   readonly viaCommand: boolean
   readonly recorded: boolean
+  readonly supports: readonly string[]
   readonly detail: string
   readonly howToVerify: string
 }
@@ -52,6 +56,7 @@ export type ReportCheckPassedRow = {
   readonly time: string
   readonly viaCommand: boolean
   readonly recorded: boolean
+  readonly supports: readonly string[]
 }
 
 /**
@@ -140,6 +145,7 @@ export function reportChecksView(
           figure: check.figure,
           ...measure(check),
           viaCommand: check.command.trim() !== "",
+          supports: check.supports ?? [],
           detail: check.detail.trim() === "" ? "" : check.detail,
           howToVerify:
             check.status !== "unobserved" || check.howToVerify.trim() === ""
@@ -155,6 +161,7 @@ export function reportChecksView(
         figure: check.figure,
         ...measure(check),
         viaCommand: check.command.trim() !== "",
+        supports: check.supports ?? [],
       }
     }),
   }

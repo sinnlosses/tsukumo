@@ -204,6 +204,7 @@ const reportComponentSchema = z.object({
   ),
   keyFigures: keyFiguresSchema.optional(),
   workDone: partCardNote(z.string().optional(), "task時のしたこと1段落"),
+  notDone: z.array(z.string()).optional(),
   figure: z.string().optional(),
   figureNone: z.enum(REPORT_FIGURE_NONE_REASONS).optional(),
   children: z.array(z.string()).min(1),

@@ -19,12 +19,14 @@ export type A2uiStructureFaultKind =
   | "missing-root"
   | "root-not-report"
   | "undefined-reference"
+  | "supports-undefined"
   | "report-child-not-section"
   | "nested-section"
   | "misplaced-component"
   | "deep-layout"
   | "memo-without-owner"
   | "figure-not-figure-part"
+  | "supports-not-section"
   | "unreferenced-component"
   | "filter-target-missing"
   | "filter-target-not-filterable"
@@ -70,7 +72,7 @@ export function a2uiStructureFaultMessage(fault: A2uiStructureFault): string {
       code: "VALIDATION_FAILED",
       surfaceId: A2UI_REPORT_SURFACE_ID,
       path: fault.pointer,
-      message: "reason" in fault ? fault.reason : A2UI_STRUCTURE_FAULT_REASONS[fault.kind],
+      message: "reason" in fault ? fault.reason : structureFaultReason(fault),
     },
   })
 }
@@ -119,7 +121,10 @@ export function a2uiStructureFaults(components: readonly unknown[]): readonly A2
       for (const reference of referencesOf(part, index)) {
         const target = indexById.get(reference.id)
         if (target === undefined) {
-          faults.push({ kind: "undefined-reference", pointer: reference.pointer })
+          faults.push({
+            kind: reference.slot === "supports" ? "supports-undefined" : "undefined-reference",
+            pointer: reference.pointer,
+          })
           continue
         }
         const component = parts[target]?.component
@@ -127,6 +132,9 @@ export function a2uiStructureFaults(components: readonly unknown[]): readonly A2
           component === undefined ? undefined : placementFault(reference.slot, component, depth)
         if (fault !== undefined) {
           faults.push({ kind: fault, pointer: reference.pointer })
+        }
+        if (reference.slot === "supports") {
+          continue
         }
         if (!reached.has(target)) {
           reached.add(target)
@@ -169,6 +177,13 @@ export function unreferencedOnlyIds(
   })
 }
 
+function structureFaultReason(fault: {
+  readonly kind: A2uiStructureFaultKind
+  readonly pointer: string
+}): string {
+  return A2UI_STRUCTURE_FAULT_REASONS[fault.kind]
+}
+
 const A2UI_VERSION = "v0.9"
 
 const A2UI_REPORT_SURFACE_ID = "report"
@@ -179,6 +194,7 @@ const A2UI_STRUCTURE_FAULT_REASONS = {
   "missing-root": "id が root の Report が無い",
   "root-not-report": "id が root の部品は Report にする",
   "undefined-reference": "参照先の id の部品が無い",
+  "supports-undefined": "参照先の id の部品が無い（checks の supports には Section の id を書く）",
   "report-child-not-section": "Report.children には Section の id だけを置く",
   "nested-section": "Section の子に Section は置けない",
   "misplaced-component": "ここに置けない種類の部品",
@@ -186,6 +202,7 @@ const A2UI_STRUCTURE_FAULT_REASONS = {
   "memo-without-owner":
     "セクションの先頭に tone が memo の Note は置けない（寄せ先が無く何も描かれない）。Paragraph などを先に置き、その後ろに Note を置く",
   "figure-not-figure-part": "Report.figure には図の部品の id を置く",
+  "supports-not-section": "checks の supports には Section の id だけを置く",
   "unreferenced-component": "どこからも参照されない部品",
   "filter-target-missing": "value の path が指す id の Table が無い（/view/<Table の id>/filter）",
   "filter-target-not-filterable": "value の path が指す Table に filterable: true が無い",
@@ -293,7 +310,7 @@ const CONTAINERS: ReadonlySet<string> = new Set(["Row", "Column", "Card", "Tabs"
 const MAX_LAYOUT_DEPTH = 3
 
 /** 参照の欄の種類。`layout` は配置の部品の子。 */
-type Slot = "report-child" | "figure" | "retrospective" | "section-child" | "layout"
+type Slot = "report-child" | "figure" | "retrospective" | "section-child" | "layout" | "supports"
 
 type Part = { readonly id?: string; readonly component?: string }
 
@@ -324,6 +341,7 @@ function referencesOf(part: ReturnType<typeof partOf>, index: number): readonly 
         ...(isPlainObject(props.retrospective)
           ? idList(props.retrospective.blocks, `${base}/retrospective/blocks`, "retrospective")
           : []),
+        ...supportReferences(props.checks, base),
       ]
     case "Section":
       return idList(props.children, `${base}/children`, "section-child")
@@ -353,6 +371,17 @@ function referencesOf(part: ReturnType<typeof partOf>, index: number): readonly 
   }
 }
 
+/** 検証の行の `supports`（裏づける節の id）への参照。 */
+function supportReferences(checks: unknown, base: string): readonly Reference[] {
+  return Array.isArray(checks)
+    ? checks.flatMap((check: unknown, checkIndex) =>
+        isPlainObject(check)
+          ? idList(check.supports, `${base}/checks/${String(checkIndex)}/supports`, "supports")
+          : [],
+      )
+    : []
+}
+
 function idList(value: unknown, pointer: string, slot: Slot): readonly Reference[] {
   if (!Array.isArray(value)) {
     return []
@@ -376,6 +405,8 @@ function placementFault(
       return component === "Section" ? undefined : "report-child-not-section"
     case "figure":
       return FIGURE_COMPONENTS.includes(component) ? undefined : "figure-not-figure-part"
+    case "supports":
+      return component === "Section" ? undefined : "supports-not-section"
     case "retrospective":
       return isLeaf(component) ? undefined : "misplaced-component"
     case "section-child":

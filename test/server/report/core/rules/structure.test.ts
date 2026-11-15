@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest"
 
-import { a2uiStructureFaults } from "../../../../../src/server/report/core/rules/structure.ts"
+import {
+  a2uiStructureFaultMessage,
+  a2uiStructureFaults,
+} from "../../../../../src/server/report/core/rules/structure.ts"
 
 // 正しい一覧。節 2 つ、`Row` の中に `Card`、図と振り返りの根拠が内容部品を参照する。
 const VALID = [
@@ -354,5 +357,35 @@ describe("a2uiStructureFaults の寄せ先の無い memo", () => {
     },
   ])("$name は通る", ({ components }) => {
     expect(a2uiStructureFaults(components)).toEqual([])
+  })
+})
+
+describe("a2uiStructureFaults の検証の行の supports", () => {
+  const withSupports = (supports?: readonly string[]) => [
+    report(["s"], { checks: [{ status: "ok", label: "架空", supports }] }),
+    section("s", ["p"]),
+    paragraph("p"),
+  ]
+
+  it("節を指す・省くときは通る", () => {
+    expect(a2uiStructureFaults(withSupports(["s"]))).toEqual([])
+    expect(a2uiStructureFaults(withSupports())).toEqual([])
+  })
+
+  it("節でない部品を指すと supports-not-section", () => {
+    expect(a2uiStructureFaults(withSupports(["p"]))).toEqual([
+      { kind: "supports-not-section", pointer: "/components/0/checks/0/supports/0" },
+    ])
+  })
+
+  it("無い id を指すと supports-undefined で、文が直し方を言う", () => {
+    const faults = a2uiStructureFaults(withSupports(["nothing"]))
+
+    expect(faults).toEqual([
+      { kind: "supports-undefined", pointer: "/components/0/checks/0/supports/0" },
+    ])
+    expect(faults.map((fault) => JSON.parse(a2uiStructureFaultMessage(fault)))).toMatchObject([
+      { error: { message: expect.stringContaining("Section の id") } },
+    ])
   })
 })

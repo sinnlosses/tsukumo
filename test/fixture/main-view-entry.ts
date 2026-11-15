@@ -31,6 +31,7 @@ export const noRootA2ui = (
     lead: leadText === "" ? { kind: "none" } : { kind: "conclusion-lead", text: leadText },
     keyFigures: [],
     workDone: "",
+    notDone: { kind: "omitted" },
     checks: { kind: "none" },
     status: NO_SURFACE_STATUS,
     finalStatus: NO_SURFACE_STATUS,

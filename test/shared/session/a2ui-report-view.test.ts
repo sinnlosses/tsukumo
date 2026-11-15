@@ -221,6 +221,24 @@ describe("a2ui の版の記録の本文", () => {
     expect(omitted.head.workDone).toBe("")
   })
 
+  it("Report.notDone は、省くと omitted・空の並びは listed の空・中身ありは listed で面の頭に載る", () => {
+    const notDoneOf = (notDone?: readonly string[]) =>
+      regionsOf(
+        reportOf({
+          components: PARTS.map((part) =>
+            part.id === "root" && notDone !== undefined ? { ...part, notDone } : part,
+          ),
+        }),
+      ).a2ui.head.notDone
+
+    expect(notDoneOf()).toEqual({ kind: "omitted" })
+    expect(notDoneOf([])).toEqual({ kind: "listed", items: [] })
+    expect(notDoneOf(["架空の手を付けなかったこと"])).toEqual({
+      kind: "listed",
+      items: ["架空の手を付けなかったこと"],
+    })
+  })
+
   it("根が Report でなければ none", () => {
     const parts = PARTS.filter((part) => part.id !== "root")
 

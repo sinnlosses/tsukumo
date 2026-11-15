@@ -28,6 +28,12 @@ import {
   figureViolationMessage,
   isFigureViolation,
 } from "./figure.ts"
+import {
+  detectNotDoneViolations,
+  isNotDoneViolation,
+  type NotDoneViolation,
+  notDoneViolationMessage,
+} from "./not-done.ts"
 import { REPORT_CHANGED_FIELDS_ONLY_TEXT } from "./procedure-rejection.ts"
 import {
   detectProseViolations,
@@ -53,6 +59,7 @@ export type ReportViolation =
   | ProseViolation
   | BlockViolation
   | CheckViolation
+  | NotDoneViolation
   | TemplateViolation
 
 /** 違反にしない上限（これを超えたら違反）。 */
@@ -93,6 +100,7 @@ const VIOLATION_THRESHOLDS = {
   "long-first-sentence": 0,
   "bad-heading": 0,
   "unobserved-without-how": 0,
+  "omitted-not-done": 0,
   "arrow-in-prose": 0,
   "label-in-item": 0,
   "labeled-ordered": 0,
@@ -179,6 +187,11 @@ const FAMILIES: readonly RuleFamily[] = [
     detect: detectCheckViolations,
     owns: isCheckViolation,
     message: checkViolationMessage,
+  }),
+  family({
+    detect: detectNotDoneViolations,
+    owns: isNotDoneViolation,
+    message: notDoneViolationMessage,
   }),
   family({
     detect: detectTemplateViolations,

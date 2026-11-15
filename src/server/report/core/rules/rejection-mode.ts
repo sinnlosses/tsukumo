@@ -60,6 +60,7 @@ export const REPORT_REJECTION_MODES = {
   "long-first-sentence": "count",
   "bad-heading": "reject",
   "unobserved-without-how": "reject",
+  "omitted-not-done": "count",
   "arrow-in-prose": "reject",
   "label-in-item": "reject",
   "labeled-ordered": "reject",

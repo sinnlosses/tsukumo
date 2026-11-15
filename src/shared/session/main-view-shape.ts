@@ -9,6 +9,7 @@ import type { ReportChecksView } from "../report/report-check-view.ts"
 import type { ReportImageSource } from "../report/report-image-markdown.ts"
 import type { ReportImageSize } from "../report/report-image.ts"
 import type { LeafValue } from "../report/report-leaf-value.ts"
+import type { ReportNotDoneView } from "../report/report-not-done.ts"
 import type { PhaseTimesView } from "../report/report-phase-time.ts"
 import type { WrittenReportView } from "../report/report-static-component-list.ts"
 import type { ReportTask } from "../report/report-task.ts"
@@ -153,6 +154,8 @@ export type MainViewSurfaceHead = {
   readonly keyFigures: readonly MainViewKeyFigure[]
   /** `Report.workDone`（したこと）の字。省かれていれば空文字。 */
   readonly workDone: string
+  /** `Report.notDone`（やっていないこと）。省かれていれば `omitted`、空の並びは `listed` の空。 */
+  readonly notDone: ReportNotDoneView
   readonly checks: ReportChecksView
   readonly status: MainViewSurfaceStatus
   readonly finalStatus: MainViewSurfaceStatus

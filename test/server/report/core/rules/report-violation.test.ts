@@ -4,6 +4,7 @@ import { isBlockViolation } from "../../../../../src/server/report/core/rules/bl
 import { isCheckViolation } from "../../../../../src/server/report/core/rules/check.ts"
 import type { ReportDraft } from "../../../../../src/server/report/core/rules/draft.ts"
 import { isFigureViolation } from "../../../../../src/server/report/core/rules/figure.ts"
+import { isNotDoneViolation } from "../../../../../src/server/report/core/rules/not-done.ts"
 import { isProseViolation } from "../../../../../src/server/report/core/rules/prose.ts"
 import {
   REPORT_VIOLATION_KINDS,
@@ -25,6 +26,7 @@ describe("違反の種類の持ち主", () => {
       isBlockViolation,
       isFigureViolation,
       isCheckViolation,
+      isNotDoneViolation,
       isTemplateViolation,
     ]
 
@@ -35,7 +37,7 @@ describe("違反の種類の持ち主", () => {
 })
 
 describe("reportViolations の並び", () => {
-  it("文章・塊・図・checks・雛形の順に違反が並ぶ", () => {
+  it("文章・塊・図・checks・やっていないこと・雛形の順に違反が並ぶ", () => {
     const base = draft(
       [reportDraftText("架空。"), note(), note(), note(), mermaid("flowchart TD\nA --> B")],
       ["架空の 3 件が 2 層で 5 分遅い。", "二つ目。", "三つ目。"],
@@ -66,8 +68,9 @@ describe("reportViolations の並び", () => {
       "too-many-notes",
       "unknown-mermaid",
       "unobserved-without-how",
+      "omitted-not-done",
       "template-miss",
     ])
-    expect(reportViolations(report).length).toBe(5)
+    expect(reportViolations(report).length).toBe(6)
   })
 })

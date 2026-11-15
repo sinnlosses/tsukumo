@@ -13,6 +13,7 @@ import type { LeafComponent } from "../report/report-block.ts"
 import type { DrawnReport, DrawnSection } from "../report/report-drawn-outline.ts"
 import type { ReportImageSource } from "../report/report-image-markdown.ts"
 import type { LeafValue, ReportLeafLayout } from "../report/report-leaf-value.ts"
+import { reportNotDoneView } from "../report/report-not-done.ts"
 import type { WrittenReportView } from "../report/report-static-component-list.ts"
 import type {
   MainViewA2uiReport,
@@ -33,7 +34,7 @@ export function a2uiReportView(
   drawn: DrawnReport,
   layout: ReportLeafLayout,
   imageSource: ReportImageSource,
-  headWithoutWorkDone: Omit<MainViewSurfaceHead, "workDone">,
+  headWithoutWorkDone: Omit<MainViewSurfaceHead, "workDone" | "notDone">,
   favor: Extract<MainViewA2uiReport, { readonly kind: "surface" }>["favor"],
 ): MainViewA2uiReport {
   const byId = a2uiPartsById(components)
@@ -41,6 +42,7 @@ export function a2uiReportView(
   const head: MainViewSurfaceHead = {
     ...headWithoutWorkDone,
     workDone: root?.component === "Report" ? (root.workDone ?? "").trim() : "",
+    notDone: reportNotDoneView(root?.component === "Report" ? root.notDone : undefined),
   }
   if (root?.component !== "Report") {
     return { kind: "none", head, favor }
