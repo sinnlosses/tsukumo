@@ -1,7 +1,7 @@
 // やり取りの列の幅と、利用者が選んだ畳み。`localStorage` にこの2つだけ保存する（会話は保存しない）。
 // 読み書きに失敗しても既定へ落ちるだけで、例外は投げない。
 
-import { clamp, isPlainObject } from "remeda"
+import { isPlainObject } from "remeda"
 import { z } from "zod"
 
 import { localPreference } from "../../../../../../utils/local-preference.ts"
@@ -35,11 +35,6 @@ const COLLAPSE_CHOICES = ["unset", "collapsed", "open"] satisfies readonly Outli
 /** 実際に畳むか。選んでいなければ、札の幅が狭いときだけ畳む。 */
 export function isOutlineCollapsed(choice: OutlineCollapseChoice, narrow: boolean): boolean {
   return choice === "unset" ? narrow : choice === "collapsed"
-}
-
-/** `LayoutResizer` の `toValue` にそのまま渡す。比率（0〜1）を可動域つきの px にする。 */
-export function outlineWidthFromRatio(ratio: number, rect: DOMRect): number {
-  return clamp(ratio * rect.width, { min: OUTLINE_WIDTH_MIN_PX, max: OUTLINE_WIDTH_MAX_PX })
 }
 
 // 幅か畳みのどちらかが不正なら全体を既定に落とす。

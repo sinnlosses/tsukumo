@@ -3,6 +3,7 @@
 /**
  * ビューポートの大きさ。広いほうはカタログを撮る道具の広いビューポートと同じ。狭いビューポートの積み替えを見る
  * シナリオだけ `narrow` を使う。`large` と `medium` は、領域の寸法をビューポートの大きさごとに測るシナリオが使う。
+ * `ultrawide` は、やり取りの列を開いたまま余白の札（本文の容器が 692px 以上）が出る幅（3列では 1400px だと本文の容器が足りない）。
  * `tier-edge-medium` と `tier-edge-large` はサイドバーを柱に畳む段の境目の両側、`compact` は柱の段でやり取りの列が既定で畳まれる幅。
  * `phone` はスマホの縦のビューポート、`tier-edge-narrow` と `tier-edge-rail` は狭い画面の形と柱の段の境目の両側。
  */
@@ -13,6 +14,7 @@ export const VIEWPORTS = {
   "tier-edge-narrow": { width: 760, height: 844 },
   "tier-edge-rail": { width: 761, height: 844 },
   large: { width: 1440, height: 900 },
+  ultrawide: { width: 1920, height: 1080 },
   medium: { width: 1024, height: 768 },
   "tier-edge-medium": { width: 1100, height: 768 },
   "tier-edge-large": { width: 1101, height: 768 },

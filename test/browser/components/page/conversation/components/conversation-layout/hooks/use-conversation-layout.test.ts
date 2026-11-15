@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import {
   DEFAULT_SPLIT,
+  loadSplit,
   saveSplit,
 } from "../../../../../../../../src/browser/components/page/conversation/components/conversation-layout/domain/split.ts"
 import { useConversationLayout } from "../../../../../../../../src/browser/components/page/conversation/components/conversation-layout/hooks/use-conversation-layout.ts"
@@ -10,63 +11,69 @@ import { INITIAL_SESSION_STATE } from "../../../../../../../../src/shared/sessio
 import { putSession, type SentCommand } from "../../../../../../session-store.ts"
 
 /**
- * `<ConversationLayout>` を丸ごと描かずに、比率の state・ドラッグの読み替え・保存だけを測る
- * （docs/architecture.md「機能の中を分ける」）。DOM への直接書き込み（`writeFraction`）と
- * `style` の組み立て（`fractionStyle`）が本物の要素・レンダーで効くかは、`<ConversationLayout>` の
- * 別のテスト（部品ごと描画する側）が確かめる。
+ * `<ConversationLayout>` を丸ごと描かずに、幅の state・ドラッグの読み替え・保存だけを測る
+ * （docs/architecture.md「機能の中を分ける」）。DOM への直接書き込みが本物の要素で効くかは、
+ * `<ConversationLayout>` の別のテスト（部品ごと描画する側）が確かめる。
  */
 
 beforeEach(() => {
-  saveSplit(DEFAULT_SPLIT)
+  localStorage.clear()
 })
 
 afterEach(() => {
-  saveSplit(DEFAULT_SPLIT)
+  localStorage.clear()
 })
 
 describe("useConversationLayout", () => {
-  it("初期状態は保存済みの比率を読む", () => {
-    saveSplit({ ...DEFAULT_SPLIT, rowTop: 40, topLeft: 20, bottomLeft: 70 })
+  it("初期状態は保存済みの幅を読み、まだ動かしていない", () => {
+    saveSplit({ leftPx: 300, sidebar: 30 })
 
-    const { result } = renderHook(() => useConversationLayout(false))
+    const { result } = renderHook(() => useConversationLayout())
 
-    expect(result.current.splitters.rowTop.style["--layout-row-top"]).toBe("40fr")
-    expect(result.current.splitters.topLeft.style["--layout-top-left"]).toBe("20fr")
-    expect(result.current.splitters.bottomLeft.style["--layout-bottom-left"]).toBe("70fr")
+    expect(result.current.splitters.gridStyle["--layout-left-width"]).toBe("300px")
+    expect(result.current.splitters.gridStyle["--layout-sidebar-width"]).toBe("30%")
+    expect(result.current.splitters.moved).toBe("none")
   })
 
-  it("畳んでいて雑談用の比率がまだ無いときは、gridStyle が仕事の比率で組み立つ", () => {
-    saveSplit({ ...DEFAULT_SPLIT, rowTop: 35 })
+  it("離した仕切りを覚え、保存し、既定に戻すと両方が戻って印も消える", () => {
+    const { result } = renderHook(() => useConversationLayout())
 
-    const { result } = renderHook(() => useConversationLayout(true))
+    act(() => {
+      result.current.splitters.left.onCommit(320)
+    })
+    expect(result.current.splitters.moved).toBe("left")
+    expect(loadSplit()).toEqual({ ...DEFAULT_SPLIT, leftPx: 320 })
 
-    expect(result.current.splitters.rowTop.style["--layout-row-top"]).toBe("35fr")
-    expect(result.current.splitters.rowTop.style["--layout-row-bottom"]).toBe("65fr")
+    act(() => {
+      result.current.splitters.sidebar.onCommit(30)
+    })
+    expect(result.current.splitters.moved).toBe("sidebar")
+    expect(loadSplit()).toEqual({ leftPx: 320, sidebar: 30 })
+
+    act(() => {
+      result.current.splitters.onReset()
+    })
+    expect(result.current.splitters.moved).toBe("none")
+    expect(loadSplit()).toEqual(DEFAULT_SPLIT)
   })
 
-  it("仕切りを離すたびに1回だけ、離した比率と動かす前の比率を体験の記録へ送る（動かしている途中は送らない）", async () => {
-    saveSplit({ ...DEFAULT_SPLIT, rowTop: 40, topLeft: 20, bottomLeft: 70 })
+  it("サイドバーの仕切りを離すたびに1回だけ、メインの幅の比で体験の記録へ送る（動かしている途中は送らない）", async () => {
+    saveSplit({ leftPx: 238, sidebar: 20 })
     const sent: SentCommand[] = []
     putSession(INITIAL_SESSION_STATE, (command) => {
       sent.push(command)
     })
-    const { result } = renderHook(() => useConversationLayout(false))
+    const { result } = renderHook(() => useConversationLayout())
 
     act(() => {
-      result.current.splitters.topLeft.onChange(25)
-      result.current.splitters.topLeft.onChange(30)
+      result.current.splitters.sidebar.onChange(25)
+      result.current.splitters.sidebar.onChange(30)
     })
     await flush()
     expect(sent).toEqual([])
 
     act(() => {
-      result.current.splitters.topLeft.onCommit(30)
-    })
-    act(() => {
-      result.current.splitters.rowTop.onCommit(50)
-    })
-    act(() => {
-      result.current.splitters.bottomLeft.onCommit(60)
+      result.current.splitters.sidebar.onCommit(30)
     })
     await flush()
 
@@ -74,20 +81,8 @@ describe("useConversationLayout", () => {
       {
         procedure: "experienceMetric.recordSplit",
         divider: "topLeft",
-        releasedPercent: 30,
-        previousPercent: 20,
-      },
-      {
-        procedure: "experienceMetric.recordSplit",
-        divider: "rowTop",
-        releasedPercent: 50,
-        previousPercent: 40,
-      },
-      {
-        procedure: "experienceMetric.recordSplit",
-        divider: "bottomLeft",
-        releasedPercent: 60,
-        previousPercent: 70,
+        releasedPercent: 70,
+        previousPercent: 80,
       },
     ])
   })

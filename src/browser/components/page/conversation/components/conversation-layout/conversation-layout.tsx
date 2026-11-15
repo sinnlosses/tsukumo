@@ -20,10 +20,5 @@ type ConversationLayoutProps = {
 }
 
 export function ConversationLayout(props: ConversationLayoutProps): ReactElement {
-  return (
-    <PresentationalConversationLayout
-      {...props}
-      {...useConversationLayout(props.collapseCharacter)}
-    />
-  )
+  return <PresentationalConversationLayout {...props} {...useConversationLayout()} />
 }

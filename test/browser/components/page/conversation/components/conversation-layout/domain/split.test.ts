@@ -2,94 +2,95 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import {
   DEFAULT_SPLIT,
-  isDefaultSplit,
+  leftPxFromRatio,
   loadSplit,
+  sidebarPercentFromRatio,
 } from "../../../../../../../../src/browser/components/page/conversation/components/conversation-layout/domain/split.ts"
 
-// `localStorage` に持つ比率の読み取り側。読めない・保存が無い・可動域の外のときに
-// DEFAULT_SPLIT へ落ちる契約（docs/architecture/display/input-box.md「表示できないものがあっても残りを
+// `localStorage` に持つ幅の読み取り側。読めない・保存が無い・可動域の外のときに
+// 既定へ落ちる契約（docs/architecture/display/input-box.md「表示できないものがあっても残りを
 // 表示して動作を続ける」）を確かめる。書き込みの失敗（プライベートウィンドウ限定）は
 // docs/coding-standards.md「足すかどうか」で埋めないと決めている。
-const STORAGE_KEY = "tsukumo-layout-split:v1"
+const STORAGE_KEY = "tsukumo-layout-split:v2"
+const V1_KEY = "tsukumo-layout-split:v1"
+const OUTLINE_KEY = "tsukumo-outline-panel:v1"
 
 beforeEach(() => {
-  localStorage.removeItem(STORAGE_KEY)
+  localStorage.clear()
 })
 
 afterEach(() => {
-  localStorage.removeItem(STORAGE_KEY)
+  localStorage.clear()
 })
 
 describe("loadSplit", () => {
-  it("保存が無い（初回起動）ときは既定の比率を返す", () => {
+  it("保存が無い（初回起動）ときは既定（左の列 238px・サイドバー 22.8%）で開く", () => {
+    expect(loadSplit()).toEqual({ leftPx: 238, sidebar: 22.8 })
     expect(loadSplit()).toEqual(DEFAULT_SPLIT)
   })
 
-  it("保存値が読めない（壊れた JSON）ときは既定の比率に落ちる", () => {
+  it("v1 だけが保存されているときは読まずに既定で開き、v1 の値は消さない", () => {
+    const v1 = JSON.stringify({ rowTop: 40, topLeft: 30, bottomLeft: 20 })
+    localStorage.setItem(V1_KEY, v1)
+
+    expect(loadSplit()).toEqual(DEFAULT_SPLIT)
+    expect(localStorage.getItem(V1_KEY)).toBe(v1)
+  })
+
+  it("v2 が保存されているときはサイドバーの幅をそのまま読む", () => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ leftPx: 300, sidebar: 30 }))
+
+    expect(loadSplit()).toEqual({ leftPx: 300, sidebar: 30 })
+  })
+
+  it("v2 に左の列の幅が無ければ、やり取りの列の幅（widthPx）を左の列の幅として読む", () => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ sidebar: 30 }))
+    localStorage.setItem(OUTLINE_KEY, JSON.stringify({ widthPx: 260, collapse: "open" }))
+
+    expect(loadSplit()).toEqual({ leftPx: 260, sidebar: 30 })
+  })
+
+  it("v2 が無くても、やり取りの列の幅（widthPx）を左の列の幅として読む", () => {
+    localStorage.setItem(OUTLINE_KEY, JSON.stringify({ widthPx: 260, collapse: "open" }))
+
+    expect(loadSplit()).toEqual({ leftPx: 260, sidebar: DEFAULT_SPLIT.sidebar })
+  })
+
+  it("やり取りの列の幅が 200〜400px の外なら端に収める", () => {
+    localStorage.setItem(OUTLINE_KEY, JSON.stringify({ widthPx: 128, collapse: "open" }))
+    expect(loadSplit().leftPx).toBe(200)
+
+    localStorage.setItem(OUTLINE_KEY, JSON.stringify({ widthPx: 900, collapse: "open" }))
+    expect(loadSplit().leftPx).toBe(400)
+  })
+
+  it("v2 の左の列の幅が可動域の外なら端に収める", () => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ leftPx: 50, sidebar: 30 }))
+
+    expect(loadSplit()).toEqual({ leftPx: 200, sidebar: 30 })
+  })
+
+  it("壊れた値（JSON でない・サイドバーが可動域の外）は既定で開く", () => {
     localStorage.setItem(STORAGE_KEY, "{not json")
-
     expect(loadSplit()).toEqual(DEFAULT_SPLIT)
-  })
 
-  it("保存値が可動域の外のときは既定の比率に落ちる", () => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ rowTop: 5, topLeft: 50, bottomLeft: 50 }))
-
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ leftPx: 300, sidebar: 99 }))
     expect(loadSplit()).toEqual(DEFAULT_SPLIT)
-  })
-
-  // 雑談用の上下比だけは、無くても壊れていても `undefined` に畳むだけで、他の3項は保存値の
-  // ままにする（雑談で一度も動かしていない状態＝この項が無い保存値。項を足す前の保存値も
-  // ここを通って読める）。
-  it("雑談用の比率が無い保存値は、他の3項をそのまま読んで雑談用だけ未設定になる", () => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ rowTop: 40, topLeft: 30, bottomLeft: 20 }))
-
-    expect(loadSplit()).toEqual({
-      rowTop: 40,
-      topLeft: 30,
-      bottomLeft: 20,
-      collapsedRowTop: undefined,
-    })
-  })
-
-  it("雑談用の比率が壊れているときは、そこだけ未設定にして他の3項は落とさない", () => {
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify({ rowTop: 40, topLeft: 30, bottomLeft: 20, collapsedRowTop: "80" }),
-    )
-
-    expect(loadSplit()).toEqual({
-      rowTop: 40,
-      topLeft: 30,
-      bottomLeft: 20,
-      collapsedRowTop: undefined,
-    })
-  })
-
-  it("雑談用の比率が可動域の外のときも、そこだけ未設定になる", () => {
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify({ rowTop: 40, topLeft: 30, bottomLeft: 20, collapsedRowTop: 99 }),
-    )
-
-    expect(loadSplit().collapsedRowTop).toBeUndefined()
   })
 })
 
-// 「比率を既定に戻す」ピルを出すかどうかの判定（`isDefaultSplit`）。
-describe("isDefaultSplit", () => {
-  it("DEFAULT_SPLIT そのものは既定", () => {
-    expect(isDefaultSplit(DEFAULT_SPLIT)).toBe(true)
+describe("leftPxFromRatio", () => {
+  it("比率に器の幅を掛けて px にし、200〜400px の可動域へ詰める", () => {
+    expect(leftPxFromRatio(0.1, new DOMRect(0, 0, 1000, 0))).toBe(200)
+    expect(leftPxFromRatio(0.25, new DOMRect(0, 0, 1000, 0))).toBe(250)
+    expect(leftPxFromRatio(0.9, new DOMRect(0, 0, 2000, 0))).toBe(400)
   })
+})
 
-  it.each([
-    ["rowTop", { rowTop: 40 }],
-    ["topLeft", { topLeft: 30 }],
-    ["bottomLeft", { bottomLeft: 60 }],
-  ] as const)("%s が既定と違えば既定ではない", (_key, patch) => {
-    expect(isDefaultSplit({ ...DEFAULT_SPLIT, ...patch })).toBe(false)
-  })
-
-  it("collapsedRowTop に値が入っていれば既定ではない（雑談だけ動かした場合）", () => {
-    expect(isDefaultSplit({ ...DEFAULT_SPLIT, collapsedRowTop: 80 })).toBe(false)
+describe("sidebarPercentFromRatio", () => {
+  it("器の右端からの幅を % にし、可動域へ詰める", () => {
+    expect(sidebarPercentFromRatio(0.75)).toBe(25)
+    expect(sidebarPercentFromRatio(0.99)).toBe(15)
+    expect(sidebarPercentFromRatio(0.2)).toBe(40)
   })
 })

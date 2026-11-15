@@ -71,7 +71,7 @@
 8. **ドラッグや CSS 変数で寸法を変えた直後に寸法を測るときは、`waitForFunction` などで描画が追いつく
    のを待つ。** `container-type: inline-size` の器の中で `grid-template-columns` を CSS 変数で動かすと、
    直後の `getBoundingClientRect()` は古い列幅を返し、次の描画で追いつく。測った値をそのまま
-   `expect` に渡さず、期待する寸法になるまで待ってから測る（`report-main-view`: やり取りと本文の境界を
+   `expect` に渡さず、期待する寸法になるまで待ってから測る（`report-main-view`: 仕切りを
    ドラッグした直後のやり取りの列の幅の検査で、待たずに測ると古い幅が返った）
 9. **ブラウザは自前で起こさず、`room-fixture.ts` の `test` が受ける Playwright の `browser` fixture に任せる。**
    起動と後始末は worker が持つので、打ち切られた起動の始末を足場に書かない。1件の上限は

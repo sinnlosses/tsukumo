@@ -42,7 +42,7 @@ test.describe("お伺い", () => {
     const room = await run.open({
       scenario: "inquiry-below-body",
       scene: "inquiry-below-body",
-      viewport: "wide",
+      viewport: "medium",
       domRoots: ["main"],
     })
     const main = room.page.locator('[data-region="main"]')
@@ -138,7 +138,7 @@ test.describe("お伺い", () => {
     const room = await run.open({
       scenario: "inquiry-question-brief-wide",
       scene: "question-brief",
-      viewport: "wide",
+      viewport: "ultrawide",
       domRoots: ["main"],
     })
     const inquiry = inquiryOf(room.page)

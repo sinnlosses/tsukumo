@@ -6,19 +6,17 @@
   container-type: inline-size;
 }
 /* 列の幅は `grid-template-columns` の1列目そのもので持つ（列の中身の `width` では持たない。
-   `auto` 列は中身の内容量で幅を決めるので、ドラッグで決めた幅が中身の変化で揺れてしまう）。
-   ユーザーがドラッグで決めた幅は `--outline-rail-width` へ入る。まだ決めていなければ今までの既定。 */
+   `auto` 列は中身の内容量で幅を決めるので、中身の変化で揺れてしまう）。 */
 .outline-frame[data-outline="shown"] {
   display: grid;
-  grid-template-columns: var(--outline-rail-width, clamp(10rem, 22cqw, 15rem)) auto minmax(0, 1fr);
+  grid-template-columns: clamp(10rem, 22cqw, 15rem) minmax(0, 1fr);
 }
-/* 畳んでいる間は仕切りを描かないので列を1本減らし、幅も開き直すボタンだけが収まる固定値にする。 */
+/* 畳んでいる間は幅も開き直すボタンだけが収まる固定値にする。 */
 .outline-frame[data-outline="shown"][data-outline-collapsed="true"] {
   grid-template-columns: 2.5rem minmax(0, 1fr);
 }
 /* 右の側（進み具合のプログレスバー・依頼の全文・お伺い・本文）。列があってもなくても同じ幅の取り方にする。 */
 .outline-content {
-  /* 仕切りは狭い画面で描かれないので、2列目（`auto`）へ落ちないよう最後の列に置く。 */
   grid-column: -2;
   min-width: 0;
 }

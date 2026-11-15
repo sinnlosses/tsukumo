@@ -1,80 +1,91 @@
-// レイアウトの領域の比率（3本の仕切りの位置）。`localStorage` に比率だけ保存する（会話は保存しない）。
+// レイアウトの2本の仕切りの位置。`localStorage` には幅だけ保存する（会話は保存しない）。
+// 左の列は px、サイドバーは器の幅に対する %。
 // 読み書きに失敗しても既定へ落ちるだけで、例外は投げない。
 
-import { clamp, isPlainObject } from "remeda"
+import { clamp, isPlainObject, round } from "remeda"
 import { z } from "zod"
 
 import { localPreference } from "../../../../../../utils/local-preference.ts"
 
 export type Split = {
-  readonly rowTop: number
-  readonly topLeft: number
-  readonly bottomLeft: number
-  /**
-   * キャラビューを畳んでいるとき（雑談モード）の上下比。
-   * まだ一度も動かしていない間は `undefined` で、読む側が `rowTop` に落とす。
-   * `rowTop` の値をここへコピーして持たせない（焼き付けると、あとから仕事の比率を変えたときに雑談側が追随しなくなる）。
-   */
-  readonly collapsedRowTop?: number
+  /** 左の列（立ち絵と席）の幅（px）。 */
+  readonly leftPx: number
+  /** サイドバーの幅（器の幅に対する %）。 */
+  readonly sidebar: number
 }
 
-// 下段の左右は半々。
+type SavedSplit = {
+  readonly leftPx?: number
+  readonly sidebar: number
+}
+
+// 既定は見本（1400x900）の左の列 238px・サイドバー 319px。
 export const DEFAULT_SPLIT: Split = {
-  rowTop: 65,
-  topLeft: 75,
-  bottomLeft: 50,
-  collapsedRowTop: undefined,
+  leftPx: 238,
+  sidebar: 22.8,
 }
 
-// 仕切りをどちらかの端まで詰めて操作不能にしないための可動域。
-const MIN_PERCENT = 15
-const MAX_PERCENT = 85
-
-const percent = z.number().min(MIN_PERCENT).max(MAX_PERCENT)
-
-// 雑談用の上下比だけは、無くても壊れていても `undefined` に畳むだけにする（他の3項と違い DEFAULT_SPLIT 全体へは落とさない）。
-// この項が無い保存値＝雑談で一度も動かしていない状態で、項を足す前に保存した値もそのまま読める。
-// キーが欠けた項は `undefined` として項の schema に渡す。
-const preference = localPreference(
-  "tsukumo-layout-split:v1",
-  z.preprocess(
-    (stored) =>
-      isPlainObject(stored)
-        ? {
-            rowTop: stored["rowTop"],
-            topLeft: stored["topLeft"],
-            bottomLeft: stored["bottomLeft"],
-            collapsedRowTop: stored["collapsedRowTop"],
-          }
-        : stored,
-    z.object({
-      rowTop: percent,
-      topLeft: percent,
-      bottomLeft: percent,
-      collapsedRowTop: percent.optional().catch(undefined),
-    }),
-  ),
-  DEFAULT_SPLIT,
-)
-
-/** `LayoutResizer` の `toValue` にそのまま渡す。比率（0〜1）を可動域つきの % にする。 */
-export function percentFromRatio(ratio: number): number {
-  return clamp(ratio * 100, { min: MIN_PERCENT, max: MAX_PERCENT })
+/** 左の列の仕切りの `toValue` にそのまま渡す。器の左端からの位置を、可動域つきの px にする。 */
+export function leftPxFromRatio(ratio: number, rect: DOMRect): number {
+  return clampLeftPx(ratio * rect.width)
 }
 
-export const loadSplit: () => Split = preference.load
+/** サイドバーの仕切りの `toValue` にそのまま渡す。器の左端からの比率（0〜1）を、右端からの幅（可動域つきの %）にする。 */
+export function sidebarPercentFromRatio(ratio: number): number {
+  return round(clamp((1 - ratio) * 100, { min: SIDEBAR_MIN_PERCENT, max: SIDEBAR_MAX_PERCENT }), 1)
+}
 
 /**
- * 3本の比率と雑談の上下比が、すべて既定と同じか。
- * `collapsedRowTop` の `undefined` は既定として扱う（まだ一度も動かしていない状態なので、既定と違うとは言わない）。
+ * 保存が無い・壊れているときは既定を返す。
+ * 左の列の幅だけは、v2 に無ければ前の版が持っていたやり取りの列の幅を引き継ぐ。
  */
-export function isDefaultSplit(split: Split): boolean {
-  return (
-    split.rowTop === DEFAULT_SPLIT.rowTop &&
-    split.topLeft === DEFAULT_SPLIT.topLeft &&
-    split.bottomLeft === DEFAULT_SPLIT.bottomLeft &&
-    split.collapsedRowTop === DEFAULT_SPLIT.collapsedRowTop
-  )
+export function loadSplit(): Split {
+  const saved = preference.load()
+  return { ...saved, leftPx: saved.leftPx ?? inheritedLeftPx() }
 }
 
-export const saveSplit: (value: Split) => void = preference.save
+export const saveSplit: (value: Split) => void = (value) => {
+  preference.save(value)
+}
+
+// 左の列の可動域（px）。
+const LEFT_MIN_PX = 200
+const LEFT_MAX_PX = 400
+
+// サイドバーをどちらかの端まで詰めて操作不能にしないための可動域（%）。
+const SIDEBAR_MIN_PERCENT = 15
+const SIDEBAR_MAX_PERCENT = 40
+
+function clampLeftPx(px: number): number {
+  return clamp(px, { min: LEFT_MIN_PX, max: LEFT_MAX_PX })
+}
+
+// v1（3本の比率）の鍵は読まない。消しもしない。
+// 左の列の幅が無い保存値は、読むときに `inheritedLeftPx` で補う。
+const preference = localPreference<SavedSplit>(
+  "tsukumo-layout-split:v2",
+  z.preprocess(
+    (stored) =>
+      isPlainObject(stored) ? { leftPx: stored["leftPx"], sidebar: stored["sidebar"] } : stored,
+    z.object({
+      leftPx: z.number().transform(clampLeftPx).optional().catch(undefined),
+      sidebar: z.number().min(SIDEBAR_MIN_PERCENT).max(SIDEBAR_MAX_PERCENT),
+    }),
+  ),
+  { sidebar: DEFAULT_SPLIT.sidebar },
+)
+
+// 前の版のやり取りの列の幅（`widthPx`）が、左の列の幅の引き継ぎ元。
+// 鍵はやり取りの列の保存と同じ字で、幅だけを読む（書き込まない）。
+const legacyOutlinePreference = localPreference(
+  "tsukumo-outline-panel:v1",
+  z.preprocess(
+    (stored) => (isPlainObject(stored) ? { widthPx: stored["widthPx"] } : stored),
+    z.object({ widthPx: z.number().transform(clampLeftPx).optional().catch(undefined) }),
+  ),
+  { widthPx: undefined },
+)
+
+function inheritedLeftPx(): number {
+  return legacyOutlinePreference.load().widthPx ?? DEFAULT_SPLIT.leftPx
+}

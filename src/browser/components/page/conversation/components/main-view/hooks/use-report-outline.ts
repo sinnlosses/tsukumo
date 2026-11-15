@@ -7,14 +7,7 @@
 // 列の幅と畳んだ状態は利用者が変えられ、`localStorage` に保つ。
 // キーボードでは ↑↓ でやり取りの行・レポートの行・見出しの行を区別なく移り、Enter は行の `<button>` が受ける。
 
-import {
-  useEffectEvent,
-  useRef,
-  useState,
-  type CSSProperties,
-  type KeyboardEvent,
-  type RefObject,
-} from "react"
+import { useEffectEvent, useRef, useState, type KeyboardEvent, type RefObject } from "react"
 
 import { REVEAL_PENDING_ATTRIBUTE } from "../../../../../../domain/reveal/start-pop.ts"
 import { useBeforePaintSync } from "../../../../../../hooks/use-before-paint-sync.ts"
@@ -102,10 +95,7 @@ export type ReportOutlineModel = {
   readonly onSelectReport: () => void
   /** 見ているやり取りの見出しの行。 */
   readonly rows: readonly ReportOutlineRow[]
-  /**
-   * 列と本文を横に並べる器。やり取りと本文の境界のドラッグが比率の基準にし、
-   * ドラッグ中はここへ直接 `--outline-rail-width` を書いて列の幅を変える。
-   */
+  /** 列と本文を横に並べる器。 */
   readonly frameRef: RefObject<HTMLDivElement | null>
   /** 見出しを探す本文の器。 */
   readonly contentRef: RefObject<HTMLDivElement | null>
@@ -117,16 +107,10 @@ export type ReportOutlineModel = {
   /** 畳んでいるか。畳んでいる間は一覧を隠し、開き直すボタンだけ残す。 */
   readonly collapsed: boolean
   readonly onToggleCollapse: () => void
-  /** ユーザーが決めた幅を `.outline-frame` の `style` に渡す。まだ決めていなければ空（CSS の既定に任せる）。 */
-  readonly widthStyle: CSSProperties
-  readonly onWidthChange: (px: number) => void
-  readonly onWidthCommit: (px: number) => void
 }
 
 /** 固定した見出しの上端が、固定したときの位置からこの距離までは動いていないとみなす（px）。 */
 const PIN_TOLERANCE_PX = 1
-
-const OUTLINE_WIDTH_VARIABLE = "--outline-rail-width"
 
 /** やり取りの行の `<button>` が持つ属性。値はやり取りの id。 */
 export const TURN_ROW_ATTRIBUTE = "data-outline-turn"
@@ -422,14 +406,6 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
     collapsed,
     onToggleCollapse: () => {
       commitPanel((current) => ({ ...current, collapse: collapsed ? "open" : "collapsed" }))
-    },
-    widthStyle:
-      panel.widthPx === undefined ? {} : { [OUTLINE_WIDTH_VARIABLE]: `${String(panel.widthPx)}px` },
-    onWidthChange: (px) => {
-      frameRef.current?.style.setProperty(OUTLINE_WIDTH_VARIABLE, `${String(px)}px`)
-    },
-    onWidthCommit: (px) => {
-      commitPanel((current) => ({ ...current, widthPx: px }))
     },
   }
 }

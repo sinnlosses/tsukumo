@@ -1,9 +1,10 @@
 // `<ConversationLayout>` の器。
 //
+// 広い画面では左（立ち絵と席）・中央（メインビューと、その下端の入力欄）・右（サイドバー）の3列を、器の全面に敷いた背景の上に並べる。
 // 4領域は `data-region` でも名乗る。
 // class 名は組み立てのたびにハッシュ化される（CSS Modules）ので、外から領域を指す口（画面を撮って位置と大きさを測る `node scripts/capture/capture-view.ts` や、開発者ツール）はこちらを使う。
 //
-// 枠を持たない領域（`.layout-ground`）は、キャラビューと雑談中のメインビューで同じ class を共有する（覆いの式を1箇所にしか書かないため）。
+// 枠を持たない領域（`.layout-bare`）は、キャラビューと雑談中のメインビューで同じ class を共有する。
 //
 // 狭い画面では縦の1列に積み、サイドバーと仕切りを出さない。
 // 何を隠すかは CSS の `@media` が決めるので、ここは幅を測らない。
@@ -16,7 +17,7 @@ import type { ReactElement, ReactNode } from "react"
 import { Button } from "../../../../ui/button/button.tsx"
 import { LayoutResizer } from "../../../../ui/layout-resizer/layout-resizer.tsx"
 import styles from "./conversation-layout.module.css"
-import { percentFromRatio } from "./domain/split.ts"
+import { leftPxFromRatio, sidebarPercentFromRatio } from "./domain/split.ts"
 import type { UseConversationLayoutResult } from "./hooks/use-conversation-layout.ts"
 
 type PresentationalConversationLayoutProps = UseConversationLayoutResult & {
@@ -30,9 +31,9 @@ type PresentationalConversationLayoutProps = UseConversationLayoutResult & {
     /** 中くらいのビューポート幅の柱の、開くボタンの中に置くもの。 */
     readonly badge: ReactNode
   }
-  /** キャラビューの領域を畳み、下段を入力欄だけにするか。立ち絵が上段へ移ったとき（雑談モード）に使う。 */
+  /** 左の列（キャラビュー）を畳み、中央の列を広げるか。立ち絵が中央へ移ったとき（雑談モード）に使う。 */
   readonly collapseCharacter: boolean
-  /** メインの領域を、枠を持つウィジェットではなく地そのものとして描くか（枠と角丸を外し、背景があればそこへ敷く）。 */
+  /** メインの領域を、枠を持つウィジェットではなく地そのものとして描くか（枠と角丸を外し、背景をそのまま見せる）。 */
   readonly mainAsGround: boolean
 }
 
@@ -43,26 +44,10 @@ const RESET_SPLIT_LABEL = "比率を既定に戻す"
 
 /**
  * props はここだけ分解して受ける。
- * ref を持つ入れ物を `props.splitters.rowTop.ref` の形で描画中に読むと、lint の `react(refs)` が落ちるため。
+ * ref を持つ入れ物を `props.splitters.gridRef` の形で描画中に読むと、lint の `react(refs)` が落ちるため。
  */
 export function PresentationalConversationLayout({
-  splitters: {
-    topLeft: {
-      ref: rowTopRef,
-      style: rowTopStyle,
-      onChange: onTopLeftChange,
-      onCommit: onTopLeftCommit,
-    },
-    rowTop: { ref: gridRef, style: gridStyle, onChange: onRowTopChange, onCommit: onRowTopCommit },
-    bottomLeft: {
-      ref: rowBottomRef,
-      style: rowBottomStyle,
-      onChange: onBottomLeftChange,
-      onCommit: onBottomLeftCommit,
-    },
-    onReset,
-    isChanged: isSplitChanged,
-  },
+  splitters: { gridRef, gridStyle, left, sidebar: sidebarSplitter, onReset, moved },
   sidebarDisclosure: {
     rootRef: sideRef,
     id: sidebarId,
@@ -79,129 +64,67 @@ export function PresentationalConversationLayout({
   collapseCharacter,
   mainAsGround,
 }: PresentationalConversationLayoutProps): ReactElement {
+  // 押して消えたあとのフォーカスは動かさず、body へ落ちるのに任せる。
+  // 仕切り `role="separator"` はキー操作を持たないので、そこへ移すと押せないものにフォーカスが残る。
+  const resetButton = (
+    <Button
+      variant="tinted-accent"
+      size="action"
+      pressed="none"
+      disabled={false}
+      disclosure={{ kind: "none" }}
+      className={styles["layout-reset-split"]}
+      onClick={onReset}
+    >
+      <RotateCw size={14} />
+      {RESET_SPLIT_LABEL}
+    </Button>
+  )
   return (
     <div
-      className={styles["layout-grid"]}
+      className={clsx(styles["layout-grid"], styles["layout-ground"])}
       ref={gridRef}
       data-collapse-character={collapseCharacter}
+      data-sidebar-open={sidebarOpen}
       style={gridStyle}
     >
-      <div
-        className={clsx(styles["layout-row"], styles["layout-row-top"])}
-        ref={rowTopRef}
-        data-sidebar-open={sidebarOpen}
-        style={rowTopStyle}
-      >
+      {/* 畳むときは仕切りごと出さない。
+            幅は state に残っているので、戻したときに使う人が決めた幅がそのまま戻る。 */}
+      {!collapseCharacter && (
+        <>
+          <section
+            className={clsx(styles["layout-region"], styles["layout-bare"], styles["layout-left"])}
+            data-region="character"
+            aria-label="キャラクター"
+          >
+            {character}
+          </section>
+          <div className={styles["layout-divider"]}>
+            <LayoutResizer
+              orientation="vertical"
+              containerRef={gridRef}
+              ariaLabel="キャラビューとメインビューの境界"
+              toValue={leftPxFromRatio}
+              onChange={left.onChange}
+              onCommit={left.onCommit}
+              className=""
+            />
+            {moved === "left" && resetButton}
+          </div>
+        </>
+      )}
+      <div className={styles["layout-center"]}>
         <main
           className={clsx(
             styles["layout-region"],
             styles["layout-main"],
-            mainAsGround && styles["layout-ground"],
+            mainAsGround && styles["layout-bare"],
           )}
           data-region="main"
           aria-label="メインビュー"
         >
           {main}
         </main>
-        <LayoutResizer
-          orientation="vertical"
-          containerRef={rowTopRef}
-          ariaLabel="メインビューとサイドバーの境界"
-          toValue={percentFromRatio}
-          onChange={onTopLeftChange}
-          onCommit={onTopLeftCommit}
-          className={styles["layout-resizer-top"]}
-        />
-        <div className={styles["layout-side"]} ref={sideRef}>
-          <aside
-            id={sidebarId}
-            className={clsx(styles["layout-region"], styles["layout-sidebar"])}
-            data-region="sidebar"
-            aria-label="サイドバー"
-          >
-            {sidebar}
-          </aside>
-          <div className={styles["layout-rail"]}>
-            <Button
-              variant="ghost"
-              size="label"
-              pressed="none"
-              disabled={false}
-              ariaLabel="サイドバー"
-              disclosure={{
-                kind: "popover",
-                popup: "none",
-                ref: sidebarToggleRef,
-                expanded: sidebarOpen,
-                controls: sidebarId,
-              }}
-              title={sidebarOpen ? "サイドバーを閉じる" : "サイドバーを開く"}
-              className={styles["layout-rail-toggle"]}
-              onClick={onToggleSidebar}
-            >
-              {railBadge}
-              {sidebarOpen ? <PanelRightClose size={18} /> : <PanelRightOpen size={18} />}
-            </Button>
-          </div>
-        </div>
-      </div>
-      {/* 畳んでいる間もこの仕切りは出す（雑談中でも入力欄の高さを変えられる）。
-            覚える先は `useConversationLayout` の中で切り替わるだけで、仕切りそのものは1本。 */}
-      <div className={styles["layout-divider"]}>
-        <LayoutResizer
-          orientation="horizontal"
-          containerRef={gridRef}
-          ariaLabel="上段と下段の境界"
-          toValue={percentFromRatio}
-          onChange={onRowTopChange}
-          onCommit={onRowTopCommit}
-          className=""
-        />
-        {/* 押して消えたあとのフォーカスは動かさず、body へ落ちるのに任せる。
-              仕切り `role="separator"` はキー操作を持たないので、そこへ移すと押せないものにフォーカスが残る。 */}
-        {isSplitChanged && (
-          <Button
-            variant="tinted-accent"
-            size="action"
-            pressed="none"
-            disabled={false}
-            disclosure={{ kind: "none" }}
-            className={styles["layout-reset-split"]}
-            onClick={onReset}
-          >
-            <RotateCw size={14} />
-            {RESET_SPLIT_LABEL}
-          </Button>
-        )}
-      </div>
-      <div
-        className={clsx(styles["layout-row"], styles["layout-row-bottom"])}
-        ref={rowBottomRef}
-        data-collapse-character={collapseCharacter}
-        style={rowBottomStyle}
-      >
-        {/* 畳むときは仕切りごと出さない。
-              比率は state に残っているので、戻したときに使う人が決めた幅がそのまま戻る。 */}
-        {!collapseCharacter && (
-          <>
-            <section
-              className={clsx(styles["layout-region"], styles["layout-ground"])}
-              data-region="character"
-              aria-label="キャラクター"
-            >
-              {character}
-            </section>
-            <LayoutResizer
-              orientation="vertical"
-              containerRef={rowBottomRef}
-              ariaLabel="キャラビューと入力欄の境界"
-              toValue={percentFromRatio}
-              onChange={onBottomLeftChange}
-              onCommit={onBottomLeftCommit}
-              className=""
-            />
-          </>
-        )}
         <div className={styles["layout-inquiry"]}>{inquiry}</div>
         <section
           className={clsx(styles["layout-region"], styles["layout-dispatch"])}
@@ -210,6 +133,50 @@ export function PresentationalConversationLayout({
         >
           {dispatch}
         </section>
+      </div>
+      <div className={clsx(styles["layout-divider"], styles["layout-divider-sidebar"])}>
+        <LayoutResizer
+          orientation="vertical"
+          containerRef={gridRef}
+          ariaLabel="メインビューとサイドバーの境界"
+          toValue={sidebarPercentFromRatio}
+          onChange={sidebarSplitter.onChange}
+          onCommit={sidebarSplitter.onCommit}
+          className=""
+        />
+        {moved === "sidebar" && resetButton}
+      </div>
+      <div className={styles["layout-side"]} ref={sideRef}>
+        <aside
+          id={sidebarId}
+          className={clsx(styles["layout-region"], styles["layout-sidebar"])}
+          data-region="sidebar"
+          aria-label="サイドバー"
+        >
+          {sidebar}
+        </aside>
+        <div className={styles["layout-rail"]}>
+          <Button
+            variant="ghost"
+            size="label"
+            pressed="none"
+            disabled={false}
+            ariaLabel="サイドバー"
+            disclosure={{
+              kind: "popover",
+              popup: "none",
+              ref: sidebarToggleRef,
+              expanded: sidebarOpen,
+              controls: sidebarId,
+            }}
+            title={sidebarOpen ? "サイドバーを閉じる" : "サイドバーを開く"}
+            className={styles["layout-rail-toggle"]}
+            onClick={onToggleSidebar}
+          >
+            {railBadge}
+            {sidebarOpen ? <PanelRightClose size={18} /> : <PanelRightOpen size={18} />}
+          </Button>
+        </div>
       </div>
     </div>
   )

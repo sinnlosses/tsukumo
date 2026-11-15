@@ -10,9 +10,7 @@ import type { ReactElement, ReactNode } from "react"
 
 import { withOccurrenceKeys } from "../../../../../domain/occurrence-key.ts"
 import { Button } from "../../../../ui/button/button.tsx"
-import { LayoutResizer } from "../../../../ui/layout-resizer/layout-resizer.tsx"
 import { TURN_RESULT_MARKS } from "../../domain/turn-result-mark.ts"
-import { outlineWidthFromRatio } from "./domain/outline-panel.ts"
 import { HeadNotice } from "./head-notice.tsx"
 import {
   TURN_ROW_ATTRIBUTE,
@@ -26,7 +24,6 @@ import styles from "./main-view.module.css"
 const OUTLINE_LABEL = "やり取り"
 const COLLAPSE_LABEL = "やり取りを畳む"
 const EXPAND_LABEL = "やり取りを開く"
-const RESIZER_LABEL = "やり取りと本文の境界"
 
 const TURN_STEP_KEY_HINT = "前後のやり取りへは [ ] キー"
 
@@ -62,9 +59,6 @@ export function PresentationalReportOutline({
   onSelect,
   collapsed,
   onToggleCollapse,
-  widthStyle,
-  onWidthChange,
-  onWidthCommit,
   children,
 }: PresentationalReportOutlineProps): ReactElement {
   return (
@@ -72,7 +66,6 @@ export function PresentationalReportOutline({
       className={styles["outline-frame"]}
       data-outline={visible ? "shown" : "hidden"}
       data-outline-collapsed={collapsed}
-      style={collapsed ? undefined : widthStyle}
       ref={frameRef}
     >
       {visible && (
@@ -150,17 +143,6 @@ export function PresentationalReportOutline({
             )}
           </nav>
         </div>
-      )}
-      {visible && !collapsed && (
-        <LayoutResizer
-          orientation="vertical"
-          containerRef={frameRef}
-          ariaLabel={RESIZER_LABEL}
-          toValue={outlineWidthFromRatio}
-          onChange={onWidthChange}
-          onCommit={onWidthCommit}
-          className=""
-        />
       )}
       <div className={styles["outline-content"]} ref={contentRef}>
         {notice.kind === "notice" && (

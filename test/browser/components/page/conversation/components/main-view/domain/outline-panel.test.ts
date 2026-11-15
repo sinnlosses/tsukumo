@@ -3,7 +3,6 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest"
 import {
   isOutlineCollapsed,
   loadOutlinePanel,
-  outlineWidthFromRatio,
 } from "../../../../../../../../src/browser/components/page/conversation/components/main-view/domain/outline-panel.ts"
 
 const STORAGE_KEY = "tsukumo-outline-panel:v1"
@@ -11,7 +10,6 @@ const STORAGE_KEY = "tsukumo-outline-panel:v1"
 const DEFAULT_OUTLINE_PANEL = { widthPx: undefined, collapse: "unset" } as const
 
 const OUTLINE_WIDTH_MIN_PX = 128
-const OUTLINE_WIDTH_MAX_PX = 384
 
 beforeEach(() => {
   localStorage.removeItem(STORAGE_KEY)
@@ -68,22 +66,5 @@ describe("isOutlineCollapsed", () => {
     expect(isOutlineCollapsed("unset", false)).toBe(false)
     expect(isOutlineCollapsed("open", true)).toBe(false)
     expect(isOutlineCollapsed("collapsed", false)).toBe(true)
-  })
-})
-
-describe("outlineWidthFromRatio", () => {
-  it("比率が小さく px が下限を割るときは下限に詰める", () => {
-    const rect = new DOMRect(0, 0, 1000, 0)
-    expect(outlineWidthFromRatio(0.1, rect)).toBe(OUTLINE_WIDTH_MIN_PX)
-  })
-
-  it("比率に器の幅を掛けて px にし、可動域へ詰める", () => {
-    const rect = new DOMRect(0, 0, 300, 0)
-    expect(outlineWidthFromRatio(0.5, rect)).toBe(150)
-  })
-
-  it("比率が大きく器も広いときは上限に詰める", () => {
-    const rect = new DOMRect(0, 0, 2000, 0)
-    expect(outlineWidthFromRatio(0.9, rect)).toBe(OUTLINE_WIDTH_MAX_PX)
   })
 })

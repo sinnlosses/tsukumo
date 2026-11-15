@@ -223,29 +223,19 @@ describe("useReportOutline（押した見出しの固定）", () => {
 })
 
 function PanelProbe(): ReactElement {
-  const { collapsed, onToggleCollapse, widthStyle, onWidthCommit } = useReportOutline(ONE_TURN)
+  const { collapsed, onToggleCollapse } = useReportOutline(ONE_TURN)
   return (
-    <div>
-      <button data-testid="toggle" onClick={onToggleCollapse}>
-        {collapsed ? "開く" : "畳む"}
-      </button>
-      <button
-        data-testid="commit-width"
-        onClick={() => {
-          onWidthCommit(200)
-        }}
-      />
-      <span data-testid="width">{String(widthStyle["--outline-rail-width"] ?? "既定")}</span>
-    </div>
+    <button data-testid="toggle" onClick={onToggleCollapse}>
+      {collapsed ? "開く" : "畳む"}
+    </button>
   )
 }
 
-describe("useReportOutline（畳みと幅の保存）", () => {
-  it("最初は開いていて、幅はまだ決まっていない", () => {
+describe("useReportOutline（畳みの保存）", () => {
+  it("最初は開いている", () => {
     render(<PanelProbe />)
 
     expect(screen.getByTestId("toggle").textContent).toBe("畳む")
-    expect(screen.getByTestId("width").textContent).toBe("既定")
   })
 
   it("畳む/開くを押すたびに反転し、保存した値を次の読み込みで読み戻す", () => {
@@ -257,17 +247,6 @@ describe("useReportOutline（畳みと幅の保存）", () => {
 
     render(<PanelProbe />)
     expect(screen.getByTestId("toggle").textContent).toBe("開く")
-  })
-
-  it("幅を確定すると widthStyle に反映され、次の読み込みでも保たれる", () => {
-    const { unmount } = render(<PanelProbe />)
-
-    fireEvent.click(screen.getByTestId("commit-width"))
-    expect(screen.getByTestId("width").textContent).toBe("200px")
-    unmount()
-
-    render(<PanelProbe />)
-    expect(screen.getByTestId("width").textContent).toBe("200px")
   })
 })
 

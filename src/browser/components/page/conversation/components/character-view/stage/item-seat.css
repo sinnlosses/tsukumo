@@ -1,7 +1,7 @@
-/* キャラビューの席。基準は `.character-region`（`position: relative`、`container-type: size`）。
+/* キャラビューの席。基準は `.character-region`（`position: relative`、左の列いっぱい）。
    重なりは 背景 → 左上 → 立ち絵（z-index 1）→ 左下・右下 → 吹き出しの列（z-index 3）。
-   立ち絵の位置は `stage/layout.css` が `.character-layout > .portrait` に付ける `--stage-portrait` で引く。
-   anchor の参照元が DOM で先にないと位置が効かないので、この箱は `.character-stage` の後ろに置く。
+   左上は立ち絵の後ろの頭上、左下と右下は立ち絵の手前の足元に置く。3つとも左の列の中に収める。
+   立ち絵の高さは `character-view.module.css` の `--stage-portrait-height` で、頭上の席はそこから位置を引く。
    箱そのものは `display: contents` で、領域の縦の並び（gap）に加わらない。 */
 .item-seats {
   display: contents;
@@ -9,29 +9,32 @@
 }
 .seat {
   position: absolute;
-  max-width: 14cqw;
-  max-height: 24cqh;
+  display: block;
   object-fit: contain;
+  filter: drop-shadow(0 4px 6px rgb(8 6 14 / 40%));
 }
 .seat[data-seat="topLeft"] {
-  top: 0;
-  left: 16px;
+  bottom: calc(var(--stage-portrait-height) - 44px);
+  left: 6px;
   z-index: 0;
-  object-position: left top;
+  height: 104px;
+  max-width: calc(100% - 12px);
+  object-position: left bottom;
 }
 .seat[data-seat="belowLeft"],
 .seat[data-seat="belowRight"] {
-  position-anchor: --stage-portrait;
-  bottom: 0;
+  bottom: 6px;
   z-index: 2;
-  max-width: min(14cqw, calc(anchor-size(width) * 0.35));
+  max-height: 24cqh;
   object-position: center bottom;
 }
 .seat[data-seat="belowLeft"] {
-  left: calc(anchor(left) + 8px);
+  left: 0;
+  width: min(78px, 38%);
 }
 .seat[data-seat="belowRight"] {
-  right: calc(anchor(right) + 18px);
+  right: 2px;
+  width: min(80px, 38%);
 }
 
 /* 狭い画面（760px 以下）では出さない。 */

@@ -83,7 +83,7 @@ test.describe("report → メインビュー", () => {
     const room = await run.open({
       scenario: "report-ask-answered",
       scene: "report-ask-answered",
-      viewport: "wide",
+      viewport: "ultrawide",
       domRoots: ["main"],
     })
 
@@ -110,7 +110,7 @@ test.describe("report → メインビュー", () => {
     const room = await run.open({
       scenario: "report-ask-waiting",
       scene: "report-ask-waiting",
-      viewport: "wide",
+      viewport: "ultrawide",
       domRoots: ["main"],
     })
 
