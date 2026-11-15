@@ -58,7 +58,7 @@ describe("TurnStatus", () => {
     renderTurnStatus({ turn: { kind: "running", startedAt: 0 } }, (command) => calls.push(command))
 
     const button = screen.getByRole("button")
-    expect(button.textContent).toBe("中断")
+    expect(button.getAttribute("aria-label")).toBe("中断")
 
     fireEvent.click(button)
 
@@ -143,7 +143,7 @@ describe("TurnStatus", () => {
     )
 
     const button = typedElement(screen.getByRole("button"), HTMLButtonElement, "ボタン")
-    expect(button.textContent).toBe("答える")
+    expect(button.getAttribute("aria-label")).toBe("答える")
     expect(button.type).toBe("submit")
 
     fireEvent.click(button)

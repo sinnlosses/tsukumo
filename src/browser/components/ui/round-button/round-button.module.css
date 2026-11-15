@@ -1,0 +1,35 @@
+/* 色は `--round-button-color` で外から替えられる（既定は accent）。 */
+.round-button {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 1px solid var(--round-button-color, var(--accent));
+  border-radius: 50%;
+  background: var(--round-button-color, var(--accent));
+  color: var(--ground);
+  cursor: pointer;
+}
+.round-button:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--round-button-color, var(--accent)) 85%, var(--ink));
+}
+.round-button[data-emphasis="quiet"] {
+  background: transparent;
+  color: var(--round-button-color, var(--accent));
+}
+.round-button[data-emphasis="quiet"]:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--round-button-color, var(--accent)) 12%, transparent);
+}
+.round-button[data-emphasis="neutral"] {
+  border-color: var(--rule);
+  background: var(--surface-raised);
+  color: var(--ink);
+}
+.round-button:disabled {
+  border-color: var(--rule);
+  background: transparent;
+  color: var(--ink-quiet);
+  cursor: not-allowed;
+}

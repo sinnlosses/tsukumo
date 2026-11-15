@@ -31,9 +31,18 @@
 .dispatch-elapsed {
   font-family: var(--font-mono);
 }
-/* 狭い画面（760px 以下）では経過を画面の頭が持つので、この行には出さない。 */
+/* 円形のボタンの包み。置き場は持たず、答え待ちの色と、狭い画面で隠す口だけを受け持つ。
+   答え待ちの質問がある間は、円形のボタンを答え待ちの色（--state-warn）で塗る。 */
+.dispatch-action {
+  display: contents;
+}
+.dispatch-form.is-answering .dispatch-action {
+  --round-button-color: var(--state-warn);
+}
+/* 狭い画面（760px 以下）では経過を画面の頭が、送信と中断を右の丸ボタン（<PhoneTurnAction>）が持つので、この行には出さない。 */
 @media (max-width: 760px) {
-  .dispatch-elapsed-row {
+  .dispatch-elapsed-row,
+  .dispatch-form .dispatch-action {
     display: none;
   }
 }

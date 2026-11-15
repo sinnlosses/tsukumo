@@ -10,7 +10,7 @@
   "dispatch": [
     { "tag": "section", "attributes": { "data-region": "dispatch", "aria-label": "入力欄" }, "children": [
       { "tag": "textarea", "attributes": { "aria-label": "依頼を書く", "value": "" } },
-      { "tag": "button", "attributes": { "type": "submit" }, "children": ["送信"] }
+      { "tag": "button", "attributes": { "type": "submit", "aria-label": "送信" } }
     ] }
   ]
 }

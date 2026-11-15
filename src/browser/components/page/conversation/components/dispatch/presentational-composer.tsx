@@ -1,5 +1,6 @@
 // 入力欄本体の器。
-// 入力欄のサーフェス（`<textarea>` かマークダウンエディタ）と補完の候補一覧を内包し、その下に道具の行（画像・`/`・`@`・面の切り替えのボタン、経過時間と送信⇄中断の <TurnStatus>）を置いた `<form>` を置く。
+// 広い画面は殻（`<ComposerShell>`）の中に、添付の引き出し・入力欄のサーフェス（`<textarea>` かマークダウンエディタ）と補完の候補一覧・道具（画像・`/`・`@`・面の切り替えのボタン）・「新規」と送信⇄中断の <TurnStatus> を並べる。
+// 狭い画面（760px 以下）は殻を使わず、欄の左右に ＋ と丸ボタンを置く。
 
 import clsx from "clsx"
 import { AtSign, Heading, ImageIcon, Plus, Slash } from "lucide-react"
@@ -17,6 +18,7 @@ import { useExternalSync } from "../../../../../hooks/use-external-sync.ts"
 import { usePhoneWidth } from "../../../../../hooks/use-phone-width.ts"
 import { deferredModule } from "../../../../../stores/deferred-module.ts"
 import { Button } from "../../../../ui/button/button.tsx"
+import { ComposerShell } from "../../../../ui/composer-shell/composer-shell.tsx"
 import { HStack } from "../../../../ui/h-stack/h-stack.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
 import { VStack } from "../../../../ui/v-stack/v-stack.tsx"
@@ -61,6 +63,147 @@ export function PresentationalComposer({
   newSession,
 }: PresentationalComposerProps): ReactElement {
   const phone = usePhoneWidth()
+  const chips = <PromptImageChips images={images} onRemove={onRemoveImage} />
+  const input = (
+    <VStack
+      element="div"
+      name={{ kind: "none" }}
+      gap="none"
+      align="stretch"
+      justify="start"
+      wrap="nowrap"
+      className={styles["dispatch-text-wrap"]}
+    >
+      {phone && chips}
+      {(mode === "plain" || phone) && (
+        <TextAreaSurface
+          ref={surfaceRef}
+          initialDraft={draft}
+          placeholder={placeholder}
+          label={label}
+          onChange={onChange}
+          onKeyDown={onKeyDown}
+          onPaste={onPaste}
+          onDragOver={onDragOver}
+          onDrop={onDrop}
+        />
+      )}
+      {mode === "markdown" && !phone && (
+        <MarkdownSurface
+          ref={surfaceRef}
+          initialDraft={draft}
+          placeholder={placeholder}
+          label={label}
+          onChange={onChange}
+          onKeyDown={onKeyDown}
+          onPaste={onPaste}
+          onDragOver={onDragOver}
+          onDrop={onDrop}
+        />
+      )}
+      {suggestions.kind === "command" && (
+        <CommandSuggestions
+          matches={suggestions.matches}
+          selectedIndex={selectedIndex}
+          onSelect={onSelectSuggestion}
+        />
+      )}
+      {suggestions.kind === "file" && (
+        <FileSuggestions
+          matches={suggestions.matches}
+          omittedCount={suggestions.omittedCount}
+          selectedIndex={selectedIndex}
+          onSelect={onSelectSuggestion}
+        />
+      )}
+    </VStack>
+  )
+  const tools = (
+    <>
+      <Button
+        variant="ghost"
+        size="action"
+        pressed="none"
+        disabled={false}
+        ariaLabel="画像を添える"
+        disclosure={{ kind: "none" }}
+        title="画像を添える"
+        className={styles["dispatch-tool"]}
+        onClick={onPickImages}
+      >
+        <ImageIcon size={TOOL_ICON_SIZE} strokeWidth={1.8} />
+      </Button>
+      <Button
+        variant="ghost"
+        size="action"
+        pressed="none"
+        disabled={false}
+        ariaLabel="コマンドを補完する"
+        disclosure={{ kind: "none" }}
+        title="コマンドを補完する"
+        className={styles["dispatch-tool"]}
+        onClick={() => onInsertTrigger("/")}
+      >
+        <Slash size={TOOL_ICON_SIZE} strokeWidth={1.8} />
+      </Button>
+      <Button
+        variant="ghost"
+        size="action"
+        pressed="none"
+        disabled={false}
+        ariaLabel="ファイルを補完する"
+        disclosure={{ kind: "none" }}
+        title="ファイルを補完する"
+        className={styles["dispatch-tool"]}
+        onClick={() => onInsertTrigger("@")}
+      >
+        <AtSign size={TOOL_ICON_SIZE} strokeWidth={1.8} />
+      </Button>
+      <Button
+        variant="ghost"
+        size="action"
+        pressed={mode === "markdown" ? "on" : "off"}
+        disabled={false}
+        ariaLabel="マークダウンエディタで書く"
+        disclosure={{ kind: "none" }}
+        title="マークダウンエディタで書く"
+        className={styles["dispatch-tool"]}
+        onClick={onToggleMode}
+      >
+        <Heading size={TOOL_ICON_SIZE} strokeWidth={1.8} />
+      </Button>
+      <input
+        ref={imageInputRef}
+        type="file"
+        accept={PROMPT_IMAGE_MEDIA_TYPES.join(",")}
+        multiple
+        hidden
+        onChange={onImagesChosen}
+      />
+    </>
+  )
+  const turnStatus = (
+    <div className={styles["dispatch-toolbar-end"]}>
+      <TurnStatus
+        betweenElapsedAndAction={
+          <Button
+            variant={answering ? "outline-warn" : "outline-accent"}
+            size="secondary"
+            pressed="none"
+            disabled={newSession.disabled}
+            ariaLabel={NEW_SESSION_LABEL}
+            disclosure={{ kind: "none" }}
+            title={newSession.title}
+            className={styles["dispatch-new-session"]}
+            onClick={newSession.onStart}
+          >
+            <Plus size={14} strokeWidth={2} aria-hidden="true" />
+            <span className={styles["dispatch-new-session-label"]}>新規</span>
+          </Button>
+        }
+      />
+    </div>
+  )
   return (
     <form
       className={clsx(styles["dispatch-form"], answering && styles["is-answering"])}
@@ -143,143 +286,25 @@ export function PresentationalComposer({
           </Button>
         </HStack>
       )}
-      <InputRow phone={phone} onPickImages={onPickImages} onInsertTrigger={onInsertTrigger}>
-        <VStack
-          element="div"
-          name={{ kind: "none" }}
-          gap="none"
-          align="stretch"
-          justify="start"
-          wrap="nowrap"
-          className={styles["dispatch-text-wrap"]}
-        >
-          <PromptImageChips images={images} onRemove={onRemoveImage} />
-          {(mode === "plain" || phone) && (
-            <TextAreaSurface
-              ref={surfaceRef}
-              initialDraft={draft}
-              placeholder={placeholder}
-              label={label}
-              onChange={onChange}
-              onKeyDown={onKeyDown}
-              onPaste={onPaste}
-              onDragOver={onDragOver}
-              onDrop={onDrop}
-            />
-          )}
-          {mode === "markdown" && !phone && (
-            <MarkdownSurface
-              ref={surfaceRef}
-              initialDraft={draft}
-              placeholder={placeholder}
-              label={label}
-              onChange={onChange}
-              onKeyDown={onKeyDown}
-              onPaste={onPaste}
-              onDragOver={onDragOver}
-              onDrop={onDrop}
-            />
-          )}
-          {suggestions.kind === "command" && (
-            <CommandSuggestions
-              matches={suggestions.matches}
-              selectedIndex={selectedIndex}
-              onSelect={onSelectSuggestion}
-            />
-          )}
-          {suggestions.kind === "file" && (
-            <FileSuggestions
-              matches={suggestions.matches}
-              omittedCount={suggestions.omittedCount}
-              selectedIndex={selectedIndex}
-              onSelect={onSelectSuggestion}
-            />
-          )}
-        </VStack>
-      </InputRow>
-      <div className={styles["dispatch-toolbar"]}>
-        <Button
-          variant="ghost"
-          size="action"
-          pressed="none"
-          disabled={false}
-          ariaLabel="画像を添える"
-          disclosure={{ kind: "none" }}
-          title="画像を添える"
-          className={styles["dispatch-tool"]}
-          onClick={onPickImages}
-        >
-          <ImageIcon size={TOOL_ICON_SIZE} strokeWidth={1.8} />
-        </Button>
-        <Button
-          variant="ghost"
-          size="action"
-          pressed="none"
-          disabled={false}
-          ariaLabel="コマンドを補完する"
-          disclosure={{ kind: "none" }}
-          title="コマンドを補完する"
-          className={styles["dispatch-tool"]}
-          onClick={() => onInsertTrigger("/")}
-        >
-          <Slash size={TOOL_ICON_SIZE} strokeWidth={1.8} />
-        </Button>
-        <Button
-          variant="ghost"
-          size="action"
-          pressed="none"
-          disabled={false}
-          ariaLabel="ファイルを補完する"
-          disclosure={{ kind: "none" }}
-          title="ファイルを補完する"
-          className={styles["dispatch-tool"]}
-          onClick={() => onInsertTrigger("@")}
-        >
-          <AtSign size={TOOL_ICON_SIZE} strokeWidth={1.8} />
-        </Button>
-        <Button
-          variant="ghost"
-          size="action"
-          pressed={mode === "markdown" ? "on" : "off"}
-          disabled={false}
-          ariaLabel="マークダウンエディタで書く"
-          disclosure={{ kind: "none" }}
-          title="マークダウンエディタで書く"
-          className={styles["dispatch-tool"]}
-          onClick={onToggleMode}
-        >
-          <Heading size={TOOL_ICON_SIZE} strokeWidth={1.8} />
-        </Button>
-        <input
-          ref={imageInputRef}
-          type="file"
-          accept={PROMPT_IMAGE_MEDIA_TYPES.join(",")}
-          multiple
-          hidden
-          onChange={onImagesChosen}
+      {phone ? (
+        <>
+          <InputRow onPickImages={onPickImages} onInsertTrigger={onInsertTrigger}>
+            {input}
+          </InputRow>
+          <div className={styles["dispatch-toolbar"]}>
+            {tools}
+            {turnStatus}
+          </div>
+        </>
+      ) : (
+        <ComposerShell
+          drawer={images.length > 0 ? { kind: "shown", children: chips } : { kind: "none" }}
+          input={input}
+          tools={tools}
+          actions={turnStatus}
+          className={styles["dispatch-shell"]}
         />
-        <div className={styles["dispatch-toolbar-end"]}>
-          <span className={styles["dispatch-toolbar-divider"]} aria-hidden="true" />
-          <TurnStatus
-            betweenElapsedAndAction={
-              <Button
-                variant={answering ? "outline-warn" : "outline-accent"}
-                size="secondary"
-                pressed="none"
-                disabled={newSession.disabled}
-                ariaLabel={NEW_SESSION_LABEL}
-                disclosure={{ kind: "none" }}
-                title={newSession.title}
-                className={styles["dispatch-new-session"]}
-                onClick={newSession.onStart}
-              >
-                <Plus size={14} strokeWidth={2} aria-hidden="true" />
-                <span className={styles["dispatch-new-session-label"]}>新規</span>
-              </Button>
-            }
-          />
-        </div>
-      </div>
+      )}
     </form>
   )
 }
@@ -330,21 +355,16 @@ function PendingMarkdownSurface({
   )
 }
 
-/** 狭い画面（760px 以下）だけ、欄の左右に ＋ と丸ボタンを置く。広い画面では欄だけを描く。 */
+/** 狭い画面（760px 以下）だけ、欄の左右に ＋ と丸ボタンを置く。 */
 function InputRow({
-  phone,
   onPickImages,
   onInsertTrigger,
   children,
 }: {
-  readonly phone: boolean
   readonly onPickImages: () => void
   readonly onInsertTrigger: (trigger: CompletionTrigger) => void
   readonly children: ReactNode
 }): ReactElement {
-  if (!phone) {
-    return <>{children}</>
-  }
   return (
     <div className={styles["dispatch-input-row"]}>
       <PhoneAttach onPickImages={onPickImages} onInsertTrigger={onInsertTrigger} />

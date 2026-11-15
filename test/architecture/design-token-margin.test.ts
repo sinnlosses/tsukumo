@@ -91,7 +91,7 @@ const MARGIN_DECLARATION_LIMITS: Readonly<Record<string, number>> = {
   "browser/components/page/conversation/components/character-view/stage/layout.css": 1,
   "browser/components/page/conversation/components/character-view/stage/speech-log.css": 2,
   "browser/components/page/conversation/components/chat-view/chat-view.module.css": 5,
-  "browser/components/page/conversation/components/dispatch/form/composer.css": 3,
+  "browser/components/page/conversation/components/dispatch/form/composer.css": 2,
   "browser/components/page/conversation/components/inquiry/inquiry.module.css": 12,
   "browser/components/page/conversation/components/main-view/phone/current-step.css": 2,
   "browser/components/page/conversation/components/main-view/phone/phase-list.css": 2,

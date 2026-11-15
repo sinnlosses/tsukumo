@@ -48,12 +48,12 @@
   display: grid;
   flex: 0 0 auto;
   place-items: center;
-  width: 2.25rem;
-  height: 2.25rem;
+  width: 2rem;
+  height: 2rem;
   padding: 0;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-pill);
 }
-/* 道具の行の右のかたまり。区切り線・「＋ 新規」・<TurnStatus> を右端へ寄せる。 */
+/* 道具の行の右のかたまり。「＋ 新規」・<TurnStatus> を右端へ寄せる。 */
 .dispatch-toolbar-end {
   display: flex;
   flex: 0 1 auto;
@@ -64,12 +64,6 @@
   min-width: 0;
   margin-left: auto;
 }
-.dispatch-toolbar-divider {
-  align-self: stretch;
-  width: 1px;
-  margin: var(--space-sm) var(--space-xs);
-  background: var(--rule);
-}
 .dispatch-new-session {
   display: inline-flex;
   flex: 0 0 auto;
@@ -79,7 +73,47 @@
   padding: 0 var(--space-md);
   border-radius: var(--radius-pill);
 }
-/* ビューポートが狭いと入力欄の幅が道具の列・区切り・札・送信を1段に並べるには足りないので、「新規」の字を隠して絵だけにする（`title` と `aria-label` は残る）。 */
+/* 広い画面の入力欄は殻（`<ComposerShell>`）の中に並ぶ。本体の角丸・余白・影は Astryx の `ChatComposer` が持つ。
+   入力の面は殻の地に溶かし、枠と地を持たせない。
+   `/` の候補は殻の本体の中で入力欄の下に並べる（領域の上端で切られて隠れないように、浮かべない）。 */
+@media (min-width: 761px) {
+  /* 本体の角丸は見本（22px）に合わせる。内側の要素の丸みは殻が角丸と余白の差から出す。 */
+  .dispatch-form .dispatch-shell {
+    --_chat-composer-radius: 22px;
+  }
+  .dispatch-shell .dispatch-text {
+    box-sizing: border-box;
+    min-height: 1.6em;
+    max-height: 176px;
+    padding: var(--stack-tight) var(--inline-control) 0;
+    border: none;
+    background: transparent;
+    font-size: var(--font-input);
+    line-height: 1.6;
+    field-sizing: content;
+    overflow-y: auto;
+  }
+  /* 輪は殻の本体が描く（キーボードで入ったときだけ）ので、面の輪は色だけ消して幅と線種を残す（強制カラーでは見える）。 */
+  .dispatch-shell .dispatch-text:focus-visible,
+  .dispatch-form.is-answering .dispatch-shell .dispatch-text:focus-visible {
+    outline-color: transparent;
+    border-color: transparent;
+  }
+  .dispatch-shell .markdown-editor .markdown-editor-view {
+    border: none;
+    background: transparent;
+  }
+  .dispatch-shell .markdown-editor .markdown-editor-view:global(.cm-focused) {
+    outline-color: transparent;
+  }
+  .dispatch-shell .dispatch-suggestions {
+    position: static;
+    max-height: 10rem;
+    padding: var(--stack-tight);
+    border-radius: var(--radius-lg);
+  }
+}
+/* ビューポートが狭いと入力欄の幅が道具の列・札・送信を1段に並べるには足りないので、「新規」の字を隠して絵だけにする（`title` と `aria-label` は残る）。 */
 @media (max-width: 1000px) {
   .dispatch-new-session-label {
     display: none;
@@ -106,7 +140,6 @@
     padding-top: 0;
   }
   .dispatch-tool,
-  .dispatch-toolbar-divider,
   .dispatch-new-session {
     display: none;
   }
