@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>最終レポートの3段の進化と3つの形の比較（2026-11-15）</title>
+    <link rel="stylesheet" href="../conversation-directions-2026-11-15/compare.css" />
+    <link rel="stylesheet" href="../report-progress-2026-11-15/compare-extra.css" />
+    <link rel="stylesheet" href="compare-extra.css" />
+  </head>
+  <!--
+    最終レポートの出し方を3段で進める方針と、紙の形の3つの候補（index.html の ?form=pair|board|ledger）を、
+    同じ題材・同じ大きさで並べて見比べるページ。画は見本をそのまま縮小して出す。
+    形ごとの文と数は compare.js の一覧が持ち、数は 1400×900 の見本を実ブラウザで測った値。
+    ?genre=work|decide          題材（作業の報告・判断の報告）
+    ?lv=1|2|3                   進化の段
+    ?cols=1|2|3                 並べる列の数
+  -->
+  <body>
+    <header class="top">
+      <div class="top-text">
+        <h1>最終レポートの3段の進化と、3つの形</h1>
+        <p>
+          器は「3列と1本の流れ」、進行の帯と用件の置き場は案2「帯と末尾の行」のままで、紙の中身だけを替えた見本。画は見本をそのまま縮小したもので、押すと実寸で開く。中身はすべて架空。
+        </p>
+      </div>
+      <div class="controls">
+        <div class="seg" data-control="genre" role="group" aria-label="題材">
+          <button type="button" data-value="work">作業の報告</button>
+          <button type="button" data-value="decide">判断の報告</button>
+        </div>
+        <div class="seg" data-control="lv" role="group" aria-label="進化の段">
+          <button type="button" data-value="1">段1</button>
+          <button type="button" data-value="2">段2</button>
+          <button type="button" data-value="3">段3</button>
+        </div>
+        <div class="seg" data-control="cols" role="group" aria-label="並べる列の数">
+          <button type="button" data-value="1">1列</button>
+          <button type="button" data-value="2">2列</button>
+          <button type="button" data-value="3">3列</button>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="axes axes-3" aria-label="3段の進化">
+        <div>
+          <h2>段1　図が先に立つ</h2>
+          <p>結論のすぐ下に主の図を置き、節は「主張の見出し・図・注記」で組む。主の図の型は報告の種類で決める（作業は前と後、判断は案の比べ）。色は、状態・強調の1色・灰の3役に分け、紙の中で差し色を使わない。</p>
+        </div>
+        <div>
+          <h2>段2　証拠がその場にある</h2>
+          <p>主張ごとに、裏づけの印（記録あり・申告のみ・やっていない）と控え（走らせたもの・数・時刻）を付ける。確かさを頭の一覧と本文の2か所に分けない。前後の画は機械で比べて変わった所を囲み、やっていないことの欄を常に置く。</p>
+        </div>
+        <div>
+          <h2>段3　紙の上で進める</h2>
+          <p>見比べ方の切り替え・出力の覗き見・開閉を紙の上で行う。用件はいちばん下のまま、選ぶ前に結果を画で見せ、押すと下書きが入る。主の操作は1つ、続きの提案は2つまでにし、自由に書ける入力欄をすぐ下に残す。</p>
+        </div>
+      </section>
+
+      <section class="summary" aria-labelledby="path-title">
+        <h2 id="path-title">今から段3 までの道筋（案A・作業の報告）</h2>
+        <p>1段ずつ送っても紙が読める状態を保つ。「今」は 11月15日に選んだ案2 の見本。画を押すと実寸で開く。</p>
+        <ol class="path" id="path"></ol>
+      </section>
+
+      <div class="grid" id="cards"></div>
+
+      <section class="summary" aria-labelledby="summary-title">
+        <h2 id="summary-title">数で比べる</h2>
+        <p>
+          1400×900 の見本を実ブラウザで開き、紙の見えている範囲（紙の上端から入力欄の上端まで）で測った値。図の割合は、画・図・数の図が占める面積を見えている紙の面積で割った値。列ごとにいちばん良い値を太字にした（図と主張は大きい方、字数と長さは小さい方）。
+        </p>
+        <div class="table-wrap">
+          <table id="summary"></table>
+        </div>
+      </section>
+
+      <section class="summary" aria-labelledby="topic-title">
+        <h2 id="topic-title">観点ごとの決まりと、形による違い</h2>
+        <p>「3つに共通」は方針として決めたい所で、どの形を選んでも同じになる。</p>
+        <div class="table-wrap">
+          <table id="topics"></table>
+        </div>
+      </section>
+
+      <section class="summary" aria-labelledby="part-title">
+        <h2 id="part-title">今の部品の問題と、足す部品</h2>
+        <p>部品は32種あり、数は足りている。問題は選ばれ方と、主張と裏づけを結ぶ形が無いこと。部品は減らさない。</p>
+        <div class="table-wrap">
+          <table id="trouble"></table>
+        </div>
+        <div class="table-wrap">
+          <table id="parts"></table>
+        </div>
+      </section>
+
+      <section class="summary" aria-labelledby="color-title">
+        <h2 id="color-title">色の役割</h2>
+        <p>
+          差は OKLab の色差を 100 倍した値で、15 未満は色覚に関わらず見分けにくい（dataviz の検査の下限）。今の値は <code>src/browser/styles/theme.css</code> とパックの <code>character.json</code> から引いた。見本の4色（強調・通った・要る・落ちた）は、全部の組で最小 17.9。色覚の見分けは最小 7.5 で注意の帯に入るので、状態は必ず記号と語を添える。明るさの帯の検査は外れる（面を塗る系列色向けの帯で、見本の4色は印と線に使うので字の対比を優先した）。
+        </p>
+        <div class="table-wrap">
+          <table id="colors"></table>
+        </div>
+      </section>
+
+      <section class="summary" aria-labelledby="past-title">
+        <h2 id="past-title">これまでの決定との関係</h2>
+        <p>形の候補は7つ出し、そのうち3つを見本にした。見本にしなかった4つと、以前の決定に当たる所を並べる。</p>
+        <div class="table-wrap">
+          <table id="past"></table>
+        </div>
+      </section>
+    </main>
+    <script src="compare.js"></script>
+  </body>
+</html>

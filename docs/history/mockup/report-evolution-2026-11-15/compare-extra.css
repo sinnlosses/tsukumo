@@ -1,0 +1,87 @@
+/* 3つの形の比較ページで足す分だけ。土台は ../conversation-directions-2026-11-15/compare.css と
+   ../report-progress-2026-11-15/compare-extra.css */
+
+/* 今から段3 までの道筋。4枚を横に並べる */
+.path {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.path-step p {
+  margin-block: 8px 0;
+  font-size: 13px;
+  color: var(--ink-soft);
+  text-wrap: pretty;
+}
+
+.path-step b {
+  margin-inline-end: 8px;
+  font-weight: 650;
+  color: var(--ink-bright);
+}
+
+.sign {
+  font-size: 13px;
+  color: var(--ink-soft);
+  text-wrap: pretty;
+}
+
+.sign b {
+  margin-inline-end: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-quiet);
+}
+
+/* 文の入る表は折り返す */
+#topics,
+#trouble,
+#parts,
+#colors,
+#past {
+  white-space: normal;
+}
+
+:is(#topics, #trouble, #parts, #colors, #past) td {
+  vertical-align: top;
+  color: var(--ink-soft);
+  text-wrap: pretty;
+}
+
+:is(#topics, #trouble, #parts, #colors, #past) th[scope="row"] {
+  inline-size: 11em;
+  vertical-align: top;
+}
+
+#topics td:first-of-type {
+  inline-size: 30%;
+  color: var(--ink);
+}
+
+:is(#past, #parts) th[scope="row"] {
+  inline-size: 19em;
+}
+
+#trouble + .table-wrap,
+.table-wrap + .table-wrap {
+  margin-block-start: 20px;
+}
+
+.swatch {
+  display: inline-block;
+  inline-size: 12px;
+  block-size: 12px;
+  margin-inline-end: 6px;
+  border-radius: 3px;
+  vertical-align: -1px;
+}
+
+@media (width < 1100px) {
+  .path {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
