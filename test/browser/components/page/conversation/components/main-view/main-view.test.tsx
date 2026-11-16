@@ -422,10 +422,10 @@ describe("MainView（会話の流れ）", () => {
       element.textContent,
     ])
     expect(speakers).toEqual([
-      ["user", "依頼架空の依頼"],
-      ["character", "架空の一言目"],
-      ["user", "架空の補足"],
-      ["character", "架空の答え"],
+      ["user", "あなた依頼架空の依頼"],
+      ["character", "キャラクター架空の一言目"],
+      ["user", "あなた架空の補足"],
+      ["character", "キャラクター架空の答え"],
     ])
   })
 

@@ -9,11 +9,13 @@ import clsx from "clsx"
 import { Fragment, use, useState, type ReactElement, type ReactNode } from "react"
 
 import type { TaskSummaryResult } from "../../../../../../shared/repository/task-summary.ts"
+import { conversationMoment } from "../../../../../../shared/session/conversation-moment.ts"
 import {
   isInterimStep,
   type MainViewStep,
   type MainViewTurn,
 } from "../../../../../../shared/session/main-view-shape.ts"
+import { DEFAULT_CHARACTER_NAME } from "../../../../../domain/portrait-appearance.ts"
 import {
   AskThreadContext,
   isAskGroupedToLeaf,
@@ -23,6 +25,7 @@ import { useExternalSync } from "../../../../../hooks/use-external-sync.ts"
 import { usePhoneWidth } from "../../../../../hooks/use-phone-width.ts"
 import { useConversationStreamRows } from "../../../../../stores/main-view-turn.ts"
 import { useSession } from "../../../../../stores/session.ts"
+import { localTimeZoneId } from "../../../../../utils/clock.ts"
 import { Text } from "../../../../ui/text/text.tsx"
 import { useAwaySeam } from "../../stores/away-seam.ts"
 import { useDraftedReports } from "../../stores/drafted-report.ts"
@@ -36,6 +39,11 @@ import {
   type StreamGroup,
   type StreamItem,
 } from "./domain/stream-item-list.ts"
+import {
+  PLAIN_PRESENTATION,
+  streamPresentationOf,
+  type RowPresentation,
+} from "./domain/stream-presentation.ts"
 import { DraftReport } from "./draft-report.tsx"
 import { FoldedStep, StepReport } from "./folded-step.tsx"
 import { useReplyPort } from "./hooks/use-reply-port.ts"
@@ -105,6 +113,15 @@ export function Turn(props: TurnProps): ReactElement {
   const port = useReplyPort()
   const tasks = useSession((session) => session.state.tasks)
   const hasContent = items.length > 0 || turn.drafts.length > 0
+  const moment = useSession((session) => conversationMoment(session.state))
+  const speakerName =
+    useSession((session) => session.state.character?.name) ?? DEFAULT_CHARACTER_NAME
+  const presentations = streamPresentationOf(items, {
+    live: props.newest && (moment === "work" || moment === "ask"),
+    asking: moment === "ask",
+    hasDraft: turn.drafts.length > 0,
+    timeZone: localTimeZoneId(),
+  })
 
   return (
     <ReplyPortContext value={{ kind: "open", port }}>
@@ -139,6 +156,8 @@ export function Turn(props: TurnProps): ReactElement {
                       item={item}
                       turn={turn}
                       tasks={tasks}
+                      presentation={presentations[group.start + offset] ?? PLAIN_PRESENTATION}
+                      speakerName={speakerName}
                       newest={props.newest}
                       questionForm={questionForm}
                       redoToolUseId={redoToolUseId}
@@ -220,6 +239,9 @@ type StreamItemViewProps = {
   readonly item: StreamItem
   readonly turn: MainViewTurn
   readonly tasks: TaskSummaryResult
+  readonly presentation: RowPresentation
+  /** 読み上げ用のキャラクターの名前。 */
+  readonly speakerName: string
   readonly newest: boolean
   readonly questionForm: "card" | "asked"
   /** 「答え直す」を付ける答えの `toolUseId`。いちばん新しいやり取りの最後の答え。 */
@@ -234,9 +256,11 @@ function StreamItemView(props: StreamItemViewProps): ReactNode {
   const { item, turn } = props
   switch (item.kind) {
     case "post":
-      return <PostRow turn={turn} tasks={props.tasks} row={item} />
+      return (
+        <PostRow turn={turn} tasks={props.tasks} row={item} presentation={props.presentation} />
+      )
     case "say":
-      return <SayRow row={item} />
+      return <SayRow row={item} presentation={props.presentation} speakerName={props.speakerName} />
     case "question":
       return <QuestionRecord entry={item.entry} form={props.questionForm} />
     case "answer":
@@ -261,6 +285,7 @@ function StreamItemView(props: StreamItemViewProps): ReactNode {
           tasks={props.tasks}
           questionForm={props.questionForm}
           redoToolUseId={props.redoToolUseId}
+          speakerName={props.speakerName}
         />
       )
     case "body":

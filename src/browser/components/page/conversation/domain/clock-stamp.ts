@@ -30,6 +30,21 @@ export function recordClockStampWithDay(time: RecordTime, now: number): ClockSta
   return { ...stamp, text: dayAwareClockTime(at, now) }
 }
 
+/**
+ * 並びの各行の時刻を、見える字で出すか（出さない行は見えない字の `<time>` だけ残す）。
+ * 直前に時刻を出した行と分（`dateTime`）が変わった行だけ出す。時刻の無い行（`unknown`）は出さず、比べにも数えない。
+ */
+export function visibleClockFlags(stamps: readonly ClockStamp[]): readonly boolean[] {
+  const shownDateTimes: string[] = []
+  return stamps.map((stamp) => {
+    if (stamp.kind === "unknown" || stamp.dateTime === shownDateTimes.at(-1)) {
+      return false
+    }
+    shownDateTimes.push(stamp.dateTime)
+    return true
+  })
+}
+
 export function recordClockStamp(time: RecordTime, timeZone: string): ClockStamp {
   const at = recordTimeAt(time)
   if (at === undefined) {

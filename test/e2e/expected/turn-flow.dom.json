@@ -553,6 +553,7 @@
                                     "data-speaker": "user"
                                   },
                                   "children": [
+                                    "あなた",
                                     {
                                       "tag": "section",
                                       "children": [
@@ -637,12 +638,14 @@
                                     "data-speaker": "character"
                                   },
                                   "children": [
+                                    "つくもの精霊",
                                     "書けたよ！"
                                   ]
                                 },
                                 {
                                   "tag": "time",
                                   "attributes": {
+                                    "data-quiet": "",
                                     "dateTime": "2026-01-15T10:00+09:00"
                                   },
                                   "children": [

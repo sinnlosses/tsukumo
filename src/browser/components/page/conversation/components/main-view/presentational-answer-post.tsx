@@ -7,6 +7,7 @@ import type { ReactElement } from "react"
 import { Button } from "../../../../ui/button/button.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
 import { StreamPostRow } from "../stream-row/stream-row.tsx"
+import { USER_SPEAKER_NAME } from "./domain/stream-presentation.ts"
 import type { AnswerPostModel } from "./hooks/use-answer-post.ts"
 import styles from "./main-view.module.css"
 
@@ -17,7 +18,12 @@ type PresentationalAnswerPostProps = AnswerPostModel
 export function PresentationalAnswerPost(props: PresentationalAnswerPostProps): ReactElement {
   return (
     <div className={styles["answer-post"]}>
-      <StreamPostRow time={{ kind: "unknown" }} className="">
+      <StreamPostRow
+        time={{ kind: "unknown" }}
+        timeShown={false}
+        speakerName={USER_SPEAKER_NAME}
+        className=""
+      >
         <div className={styles["answer-post-body"]}>
           <Text element="span" size="label" tone="ink-quiet" weight="semibold" className="">
             {props.post.stamp}

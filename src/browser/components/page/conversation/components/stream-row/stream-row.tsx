@@ -9,6 +9,7 @@ import clsx from "clsx"
 import type { ReactElement, ReactNode } from "react"
 
 import { TypingDots } from "../../../../ui/typing-dot-list/typing-dot-list.tsx"
+import { VisuallyHidden } from "../../../../ui/visually-hidden/visually-hidden.tsx"
 import type { ClockStamp } from "../../domain/clock-stamp.ts"
 import { useSpeechPress } from "../hooks/use-speech-press.ts"
 import styles from "./stream-row.module.css"
@@ -18,6 +19,12 @@ type StreamSpeechRowProps = {
   readonly time: ClockStamp
   readonly selected: boolean
   readonly pop: boolean
+  /** 明るさと尾（仕事のメインビューのいまの一言）。雑談は `plain`。 */
+  readonly liveness: "plain" | "live" | "live-with-tail"
+  /** 読み上げ用の話し手の名前。空なら付けない（雑談）。 */
+  readonly speakerName: string
+  /** 時刻を見える字で出すか。出さなければ、触れるかフォーカスが入ったときだけ見える。 */
+  readonly timeShown: boolean
   /** 渡すと押せる行になる（雑談）。渡さなければ押せない行（仕事のメインビュー）。 */
   readonly onToggle?: () => void
   /** 行の外側に重ねる class（狭い画面で隠すときなど）。 */
@@ -32,15 +39,20 @@ export function StreamSpeechRow(props: StreamSpeechRowProps): ReactElement {
         text={props.text}
         selected={props.selected}
         pop={props.pop}
+        liveness={props.liveness}
+        speakerName={props.speakerName}
         {...(props.onToggle === undefined ? {} : { onToggle: props.onToggle })}
       />
-      <StreamTime time={props.time} />
+      <StreamTime time={props.time} shown={props.timeShown} />
     </div>
   )
 }
 
 type StreamPostRowProps = {
   readonly time: ClockStamp
+  readonly timeShown: boolean
+  /** 読み上げ用の話し手の名前。空なら付けない（雑談）。 */
+  readonly speakerName: string
   /** 吹き出しに重ねる class。 */
   readonly className: string
   readonly children: ReactNode
@@ -54,9 +66,10 @@ export function StreamPostRow(props: StreamPostRowProps): ReactElement {
         className={clsx(styles["stream-entry"], styles["stream-entry-user"], props.className)}
         data-speaker="user"
       >
+        <SpeakerName name={props.speakerName} />
         {props.children}
       </div>
-      <StreamTime time={props.time} />
+      <StreamTime time={props.time} shown={props.timeShown} />
     </div>
   )
 }
@@ -82,6 +95,8 @@ type StreamSpeechProps = {
   readonly text: string
   readonly selected: boolean
   readonly pop: boolean
+  readonly liveness: "plain" | "live" | "live-with-tail"
+  readonly speakerName: string
   readonly onToggle?: () => void
 }
 
@@ -100,12 +115,15 @@ function StreamSpeech(props: StreamSpeechProps): ReactElement {
     props.onToggle !== undefined && styles["stream-entry-pressable"],
     props.selected && styles["is-selected"],
     props.pop && styles["stream-entry-pop"],
+    props.liveness !== "plain" && styles["stream-entry-live"],
   )
 
   if (props.onToggle === undefined) {
     return (
       <div className={className} data-speaker="character">
+        <SpeakerName name={props.speakerName} />
         {props.text}
+        {props.liveness === "live-with-tail" && <StreamTail />}
       </div>
     )
   }
@@ -126,15 +144,31 @@ function StreamSpeech(props: StreamSpeechProps): ReactElement {
   )
 }
 
-function StreamTime(props: { readonly time: ClockStamp }): ReactElement | undefined {
-  if (props.time.kind === "unknown") {
-    return undefined
-  }
+/** 吹き出しの左下（立ち絵の側）へ向けた尾。吹き出しの形の一部で、読み上げには渡さない。 */
+function StreamTail(): ReactElement {
   return (
-    <time className={styles["stream-time"]} dateTime={props.time.dateTime}>
-      {props.time.text}
-    </time>
+    <svg className={styles["stream-tail"]} viewBox="0 0 14 12" aria-hidden="true">
+      <path d="M3 0 0.5 11.5 13 0" />
+    </svg>
   )
+}
+
+function StreamTime(props: { readonly time: ClockStamp; readonly shown: boolean }): ReactNode {
+  return (
+    props.time.kind === "known" && (
+      <time
+        className={clsx(styles["stream-time"], !props.shown && styles["stream-time-quiet"])}
+        dateTime={props.time.dateTime}
+        {...(props.shown ? {} : { "data-quiet": "" })}
+      >
+        {props.time.text}
+      </time>
+    )
+  )
+}
+
+function SpeakerName(props: { readonly name: string }): ReactNode {
+  return props.name !== "" && <VisuallyHidden element="span">{props.name}</VisuallyHidden>
 }
 
 function ignorePress(): void {}

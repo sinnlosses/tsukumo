@@ -13,6 +13,7 @@ import { recordClockStamp, type ClockStamp } from "../../domain/clock-stamp.ts"
 import { PromptImageThumbnails } from "../prompt-image/prompt-image.tsx"
 import { StreamPostRow, StreamSpeechRow } from "../stream-row/stream-row.tsx"
 import type { ProgressItem, StreamItem } from "./domain/stream-item-list.ts"
+import { USER_SPEAKER_NAME, type RowPresentation } from "./domain/stream-presentation.ts"
 import styles from "./main-view.module.css"
 import { RequestBlock } from "./request-block.tsx"
 
@@ -20,13 +21,19 @@ type PostRowProps = {
   readonly turn: MainViewTurn
   readonly tasks: TaskSummaryResult
   readonly row: Extract<StreamItem, { readonly kind: "post" }>
+  readonly presentation: RowPresentation
 }
 
 /** 右寄せの投稿。 */
 export function PostRow(props: PostRowProps): ReactElement {
   const { row, turn } = props
   return (
-    <StreamPostRow time={clockOf(row.at)} className={styles["stream-post"] ?? ""}>
+    <StreamPostRow
+      time={clockOf(row.at)}
+      timeShown={props.presentation.timeShown}
+      speakerName={USER_SPEAKER_NAME}
+      className={styles["stream-post"] ?? ""}
+    >
       {row.record.kind === "aside" ? (
         <>
           {row.record.text}
@@ -42,11 +49,16 @@ export function PostRow(props: PostRowProps): ReactElement {
 /** 左寄せのセリフ・反応。押せない。狭い画面では隠す（セリフは吹き出しが持つ）。 */
 export function SayRow(props: {
   readonly row: Extract<StreamItem, { readonly kind: "say" }>
+  readonly presentation: RowPresentation
+  readonly speakerName: string
 }): ReactElement {
   return (
     <StreamSpeechRow
       text={props.row.record.text}
       time={clockOf(props.row.at)}
+      timeShown={props.presentation.timeShown}
+      liveness={props.presentation.liveness}
+      speakerName={props.speakerName}
       selected={false}
       pop={false}
       className={styles["phone-hidden"] ?? ""}

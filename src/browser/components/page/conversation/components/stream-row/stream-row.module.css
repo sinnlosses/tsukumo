@@ -33,6 +33,41 @@
   background: color-mix(in srgb, var(--surface), var(--accent) 26%);
   box-shadow: inset 0 0 0 1px var(--accent);
 }
+/* 仕事の流れのいまの一言。差し色を一段濃くして影を付ける。尾は左下（立ち絵の側）へ向ける。 */
+.stream-entry-character.stream-entry-live {
+  position: relative;
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--accent) 22%, var(--surface)),
+    color-mix(in srgb, var(--accent) 13%, var(--surface))
+  );
+  box-shadow: var(--shadow-raised);
+}
+/* 現れるとき、立ち絵の側（左下）から短く浮かぶ。動きを減らす設定のときは動かさない。 */
+@media (prefers-reduced-motion: no-preference) {
+  .stream-entry-character.stream-entry-live {
+    transition:
+      opacity var(--motion-base) cubic-bezier(0.16, 1, 0.3, 1),
+      translate var(--motion-base) cubic-bezier(0.16, 1, 0.3, 1);
+
+    @starting-style {
+      opacity: 0;
+      translate: -6px 6px;
+    }
+  }
+}
+.stream-tail {
+  position: absolute;
+  inset-block-end: -11px;
+  inset-inline-start: 10px;
+  inline-size: 14px;
+  block-size: 12px;
+  overflow: visible;
+  fill: color-mix(in srgb, var(--accent) 13%, var(--surface));
+  stroke: var(--accent);
+  stroke-linejoin: round;
+  stroke-width: 1;
+}
 /* 返事を待っている間・まだ出していない吹き出しが控えている間、末尾に出す「...」。押せない。 */
 .stream-entry.stream-entry-typing {
   display: flex;
@@ -114,4 +149,11 @@
   font-family: var(--font-mono);
   font-size: var(--font-secondary);
   line-height: var(--line-height-body);
+}
+/* 分が変わらない行の時刻。読み上げには渡したまま、行に触れるかフォーカスが入ったときだけ見せる。 */
+.stream-time-quiet {
+  clip-path: inset(50%);
+}
+.stream-row:is(:hover, :focus-within) .stream-time-quiet {
+  clip-path: none;
 }
