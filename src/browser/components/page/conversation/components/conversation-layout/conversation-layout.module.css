@@ -164,6 +164,14 @@
 .layout-dispatch {
   position: relative;
 }
+/* 広い画面では入力欄にも読む幅の上限（縁を含めて 976px）を置き、中央の列の中で左に寄せる。 */
+@media (min-width: 761px) {
+  .layout-region.layout-dispatch {
+    box-sizing: border-box;
+    inline-size: min(100%, 976px);
+    justify-self: start;
+  }
+}
 /* 仕切りと、比率を戻す口を同じ列に置く入れ物。
    口は仕切りの上に重ねる（口の中に仕切りを入れると、押したつもりがドラッグの始まりになる）。 */
 .layout-divider {

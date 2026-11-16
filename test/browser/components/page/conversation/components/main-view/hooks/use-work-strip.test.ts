@@ -79,7 +79,9 @@ describe("useWorkStrip（時刻に依るもの）", () => {
     )
     expect(
       strip.kind === "working" &&
-        strip.phases.map((slot) => (slot.kind === "phase" ? slot.phase.state : slot.state)),
+        strip.phases.map((slot) =>
+          slot.kind === "phase" ? slot.phase.state : slot.kind === "parallel" ? slot.state : "done",
+        ),
     ).toEqual(["asking", "upcoming"])
   })
 
@@ -167,7 +169,10 @@ describe("useWorkStrip（時刻に依るもの）", () => {
     )
 
     expect(strip).toMatchObject({ kind: "working" })
-    expect(strip.kind === "working" && strip.phases.map((slot) => slot.spanHead)).toEqual([
+    expect(
+      strip.kind === "working" &&
+        strip.phases.map((slot) => slot.kind !== "collapsed" && slot.spanHead),
+    ).toEqual([
       { kind: "head", name: "前", current: false },
       { kind: "head", name: "本", current: false },
       { kind: "none" },

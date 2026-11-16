@@ -102,6 +102,14 @@
 .work-strip-slot[data-phase-state="done"] + .work-strip-slot::before {
   background: var(--accent);
 }
+/* 済んだ丸をまとめた「✓n」。丸と同じ字（等幅・ラベルの大きさ）で、済んだ丸の差し色。 */
+.work-strip-collapsed {
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: var(--font-label);
+  line-height: 1;
+  white-space: nowrap;
+}
 /* 群（前・本・後）の先頭は前の群と線でつながず、間を空けて群の名を置く。今いる群の名だけ差し色。 */
 .work-strip-slot + .work-strip-slot[data-span-head="true"]::before {
   width: 1rem;

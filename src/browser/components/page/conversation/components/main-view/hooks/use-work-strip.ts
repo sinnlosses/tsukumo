@@ -103,9 +103,20 @@ export type WorkStripSlot =
       readonly phases: readonly WorkStripPhase[]
     }
 
-/** 「手順 n」の口と、押すと開く依頼の手順の一覧。 */
+/** 済んだ丸を数にまとめた1つ（「✓4」）。`count` は済んだフェーズの数。 */
+export type WorkStripCollapsed = {
+  readonly kind: "collapsed"
+  readonly key: string
+  readonly count: number
+  readonly label: string
+}
+
+/** 帯に並べる1つ。丸（と並列の囲み）か、済んだ丸をまとめた数。 */
+export type WorkStripTrackSlot = WorkStripSlot | WorkStripCollapsed
+
+/** 「手順 n件」の口と、押すと開く依頼の手順の一覧。 */
 export type WorkStripSteps = {
-  /** 「手順 12 ▾」（開いていれば ▴）。 */
+  /** 「手順 12件 ▾」（開いていれば ▴）。 */
   readonly toggleLabel: string
   /** 一覧が開いているか。`landing` は開いた一覧をどこへ連れていくか。 */
   readonly list:
@@ -134,7 +145,7 @@ export type WorkStripModel =
   | {
       readonly kind: "working"
       readonly result: WorkStripResult
-      readonly phases: readonly WorkStripSlot[]
+      readonly phases: readonly WorkStripTrackSlot[]
       /** 列を畳んでいるあいだの「いま: <節>」。出さないときは空。 */
       readonly readingLabel: string
       readonly headLabel: string
@@ -144,7 +155,7 @@ export type WorkStripModel =
   | {
       readonly kind: "finished"
       readonly result: WorkStripResult
-      readonly phases: readonly WorkStripSlot[]
+      readonly phases: readonly WorkStripTrackSlot[]
       readonly readingLabel: string
       readonly headLabel: string
       readonly sideLabel: string
@@ -231,7 +242,7 @@ export function useWorkStrip(): WorkStripModel {
     },
   )
   const steps: WorkStripSteps = {
-    toggleLabel: `手順 ${String(turnStepList.steps.length)} ${list.kind === "open" ? "▴" : "▾"}`,
+    toggleLabel: `手順 ${String(turnStepList.steps.length)}件 ${list.kind === "open" ? "▴" : "▾"}`,
     list,
     onToggle: () => toggle(exchange),
     phaseRows:
@@ -246,11 +257,13 @@ export function useWorkStrip(): WorkStripModel {
     backgroundList: toBackgroundListView(backgroundTasks),
   }
 
+  const trackSlots = collapsedTrackOf(stripPhases, planned.length)
+
   if (!working) {
     return {
       kind: "finished",
       result,
-      phases: stripPhases,
+      phases: trackSlots,
       readingLabel,
       headLabel: result === "working" && nowPhase.kind === "phase" ? nowPhase.name : completion,
       sideLabel: elapsedLabel,
@@ -260,7 +273,7 @@ export function useWorkStrip(): WorkStripModel {
 
   return {
     kind: "working",
-    phases: stripPhases,
+    phases: trackSlots,
     result,
     readingLabel,
     headLabel: planned.length === 0 ? "" : nowPhase.kind === "phase" ? nowPhase.name : completion,
@@ -342,6 +355,38 @@ function slotsOf(
 }
 
 const NO_SPAN_HEAD = { kind: "none" } as const satisfies WorkStripSpanHead
+
+/** フェーズがこの数以上で、今のフェーズが `COLLAPSE_AFTER_POSITION` 番目（0 始まり）より後ろなら、済んだ丸を数にまとめる。 */
+const COLLAPSE_MIN_PHASES = 9
+const COLLAPSE_AFTER_POSITION = 2
+
+/**
+ * 丸の並びのうち、今の段より前の済んだ丸を「✓n」の1つにまとめる。
+ * 並びが短いか今の段が3つ目までなら、並びをそのまま返す。
+ */
+function collapsedTrackOf(
+  slots: readonly WorkStripSlot[],
+  phaseTotal: number,
+): readonly WorkStripTrackSlot[] {
+  const currentAt = slots.findIndex((slot) =>
+    (slot.kind === "phase" ? [slot.phase] : slot.phases).some(
+      (phase) => phase.state === "current" || phase.state === "asking",
+    ),
+  )
+  const slotSize = (slot: WorkStripSlot): number => (slot.kind === "phase" ? 1 : slot.phases.length)
+  const before = slots.slice(0, Math.max(currentAt, 0))
+  const countBefore = before.reduce((sum, slot) => sum + slotSize(slot), 0)
+  if (phaseTotal < COLLAPSE_MIN_PHASES || currentAt < 0 || countBefore <= COLLAPSE_AFTER_POSITION) {
+    return slots
+  }
+  const collapsed: WorkStripCollapsed = {
+    kind: "collapsed",
+    key: "collapsed-done",
+    count: countBefore,
+    label: `済んだ ${String(countBefore)} フェーズ`,
+  }
+  return [collapsed, ...slots.slice(currentAt)]
+}
 
 function phaseRowSlotOf(
   slot: WorkStripSlot,

@@ -21,9 +21,9 @@ import { useStepsLanding } from "./hooks/use-steps-landing.ts"
 import type {
   WorkStripModel,
   WorkStripPhase,
-  WorkStripSlot,
   WorkStripSpanHead,
   WorkStripSteps,
+  WorkStripTrackSlot,
 } from "./hooks/use-work-strip.ts"
 import styles from "./main-view.module.css"
 
@@ -186,11 +186,21 @@ function PhaseRow(props: { readonly row: StepsPhaseRow }): ReactElement {
  * 並列のフェーズは中の段の丸を1つの囲みに並べ、囲みの中の丸どうしは線でつながない。
  * 群（前・本・後）の先頭の丸の前には群の名を置き、前の群の丸とは線でつながず間を空ける。
  */
-function PhaseTrack(props: { readonly phases: readonly WorkStripSlot[] }): ReactElement {
+function PhaseTrack(props: { readonly phases: readonly WorkStripTrackSlot[] }): ReactElement {
   return (
     <ol className={styles["work-strip-track"]}>
       {props.phases.map((slot) =>
-        slot.kind === "phase" ? (
+        slot.kind === "collapsed" ? (
+          <li
+            key={slot.key}
+            className={clsx(styles["work-strip-slot"], styles["work-strip-collapsed"])}
+            data-phase-state="done"
+            aria-label={slot.label}
+            title={slot.label}
+          >
+            <span aria-hidden="true">{`✓${String(slot.count)}`}</span>
+          </li>
+        ) : slot.kind === "phase" ? (
           <PhaseDot
             key={slot.phase.key}
             phase={slot.phase}

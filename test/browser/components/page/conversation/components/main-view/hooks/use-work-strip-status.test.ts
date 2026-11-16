@@ -147,11 +147,14 @@ describe("useWorkStrip（今の段の丸）", () => {
   function spinningOf(strip: WorkStripModel): boolean[] {
     return strip.kind === "none"
       ? []
-      : strip.phases.flatMap((slot) =>
-          slot.kind === "phase"
+      : strip.phases.flatMap((slot) => {
+          if (slot.kind === "collapsed") {
+            return []
+          }
+          return slot.kind === "phase"
             ? [slot.phase.state === "current"]
-            : slot.phases.map((phase) => phase.state === "current"),
-        )
+            : slot.phases.map((phase) => phase.state === "current")
+        })
   }
 
   it("作業中は今の段の丸だけが今の段になる", () => {

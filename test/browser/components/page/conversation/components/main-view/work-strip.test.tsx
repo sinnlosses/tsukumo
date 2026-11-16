@@ -203,6 +203,45 @@ describe("WorkStrip", () => {
   })
 })
 
+describe("WorkStrip（フェーズが多いとき）", () => {
+  const NAMES = (count: number): string[] =>
+    Array.from({ length: count }, (_, index) => `架空の段${String(index + 1)}`)
+
+  function renderAt(current: number, count: number): void {
+    putSession(stateAfter([REQUEST, plan(current, "", NAMES(count))]))
+    render(<WorkStrip />)
+  }
+
+  it("フェーズが9つ以上で今のフェーズが3つ目より後ろなら、済んだ丸を「✓n」の1つにまとめる", () => {
+    renderAt(4, 10)
+
+    expect(strip().textContent).toContain("✓4")
+    expect(screen.queryByRole("button", { name: /架空の段1(?!\d)/ })).toBeNull()
+    expect(screen.getByRole("button", { name: /架空の段5/ })).not.toBeNull()
+    expect(strip().textContent).toContain("架空の段5")
+  })
+
+  it("フェーズが8つ以下なら、今のフェーズが後ろでも丸は並べたまま", () => {
+    renderAt(4, 8)
+
+    expect(strip().textContent).not.toContain("✓4")
+    expect(screen.getByRole("button", { name: /架空の段1(?!\d)/ })).not.toBeNull()
+  })
+
+  it("今のフェーズが3つ目までなら、フェーズが多くても丸は並べたまま", () => {
+    renderAt(2, 10)
+
+    expect(strip().textContent).not.toContain("✓2")
+    expect(screen.getByRole("button", { name: /架空の段1(?!\d)/ })).not.toBeNull()
+  })
+
+  it("帯の右端の口は「手順 n件」と、何の数かを言う", () => {
+    renderAt(0, 3)
+
+    expect(screen.getByRole("button", { name: /^手順 \d+件/ })).not.toBeNull()
+  })
+})
+
 describe("WorkStrip（段の丸）", () => {
   /** 段A を済ませてまとめを渡し、段B が今の段、段C がまだの段。 */
   function renderProgressed(extra: readonly SessionEvent[] = []): void {

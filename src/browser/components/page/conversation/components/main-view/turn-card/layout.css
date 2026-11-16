@@ -67,6 +67,19 @@
     justify-content: flex-end;
   }
 }
+/* 広い画面では、流れ（と最終レポート）に読む幅の上限を置く。左のセリフと右の投稿が離れすぎない。
+   上限は中央の列の中で左に寄せる（中央に寄せない。立ち絵と流れの距離が幅で変わらない）。
+   余白は上限の外に付ける（内容の幅が 960px）。中くらいの幅（〜1100px）では中央の列が 960px より狭く、上限は効かない。 */
+@media (min-width: 761px) {
+  .turn-card-body {
+    box-sizing: content-box;
+    max-inline-size: 960px;
+  }
+  .turn-card-inquiry {
+    box-sizing: border-box;
+    max-inline-size: 976px;
+  }
+}
 /* 列から飛んだ見出しとレポートの札と、ページ内のリンクから飛んだ先（お願いの部品など）が、貼り付いた頭の下に隠れないようにする。 */
 .turn-card :is(h4, h5, [id], [data-report-step]) {
   scroll-margin-top: calc(var(--turn-card-head-height) + 0.5rem);
