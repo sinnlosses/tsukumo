@@ -45,48 +45,6 @@ afterEach(() => {
   useTaskBoardRequest.setState(useTaskBoardRequest.getInitialState(), true)
 })
 
-describe("Turn（失敗で終わったやり取り）", () => {
-  it("本文が1つも無いまま失敗したやり取りでも、失敗の表示は出す", () => {
-    putSession(INITIAL_SESSION_STATE)
-    render(
-      <Turn
-        turn={{ ...turn([]), failure: { kind: "failed", failure: { kind: "max-turns" } } }}
-        newest={false}
-        freshReport={false}
-      />,
-    )
-
-    expect(screen.getByRole("note", { name: "失敗で終わった" }).textContent).toContain(
-      "往復の上限に当たった",
-    )
-  })
-
-  it("利用上限で終わったやり取りの戻る時刻つきの口を押すと、依頼が入力欄の下書きに入る", () => {
-    putSession({
-      ...INITIAL_SESSION_STATE,
-      rateLimit: {
-        kind: "rejected",
-        bucket: "five-hour",
-        resetsAt: Temporal.Now.instant().add({ hours: 1 }).epochMilliseconds,
-      },
-    })
-    render(
-      <Turn
-        turn={{
-          ...turn([]),
-          failure: { kind: "failed", failure: { kind: "api-error", error: "rate_limit" } },
-        }}
-        newest
-        freshReport={false}
-      />,
-    )
-
-    fireEvent.click(screen.getByRole("button", { name: /に戻る · 依頼を入力欄に戻す$/ }))
-
-    expect(useComposerDraft.getState().draft.text).toBe("架空の依頼")
-  })
-})
-
 describe("Turn（次の一手の行）", () => {
   function reportStep(id: number, mark: MainViewStep["mark"]): MainViewStep {
     const body: MainViewStepBody = {

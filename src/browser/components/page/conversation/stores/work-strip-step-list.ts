@@ -24,6 +24,8 @@ type WorkStripStepsState = {
   readonly landingCount: number
   /** 「手順 n」の口。そのやり取りで開いていれば閉じ、そうでなければ開く。 */
   readonly toggle: (exchange: number) => void
+  /** 先頭を指して開く（開いていても閉じない）。 */
+  readonly openAtTop: (exchange: number) => void
   /** 失敗した手順を指して開く。 */
   readonly openAtFailure: (exchange: number) => void
   /** 段の区切りを指して開く（開いていれば開いたまま転がす）。 */
@@ -41,6 +43,9 @@ export const useWorkStripSteps = create<WorkStripStepsState>()((set) => ({
         ? { kind: "closed" }
         : { kind: "open", exchange, landing: TOP },
     }))
+  },
+  openAtTop: (exchange) => {
+    set({ opened: { kind: "open", exchange, landing: TOP } })
   },
   openAtFailure: (exchange) => {
     set((state) => landedState(state, exchange, (signal) => ({ kind: "failure", signal })))

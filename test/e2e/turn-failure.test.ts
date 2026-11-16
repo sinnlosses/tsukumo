@@ -22,9 +22,9 @@ test.describe("失敗の表示", () => {
     const block = failureBlock(room.page)
     await block.waitFor()
 
-    expect(await block.textContent()).not.toContain("server_error")
-    expect(await block.locator('[title*="server_error"]').count()).toBe(1)
-    expect(await isAtHeadOfCard(block)).toBe(true)
+    expect(await block.textContent()).toContain("（server_error）")
+    expect(await block.locator("[title]").count()).toBe(0)
+    expect(await isAfterRequest(block)).toBe(true)
     await block.getByRole("button", { name: "同じ依頼を入力欄に戻す" }).waitFor()
     await expectReadable(room.page)
 
@@ -44,13 +44,17 @@ function draft(page: Page): Promise<string> {
   return page.locator("textarea").inputValue()
 }
 
-/** 失敗の表示がカードの本文の先頭にあるか（レポートより前）。 */
-function isAtHeadOfCard(block: Locator): Promise<boolean> {
-  return block.evaluate((element) => {
-    const card = element.closest("article")
-    const first = card?.querySelector('[role="note"], [class*="main-step"]')
-    return first === element
-  })
+/** 失敗の表示が、依頼の投稿より後ろ（やり取りの末尾の側）にあるか。 */
+function isAfterRequest(block: Locator): Promise<boolean> {
+  return block.evaluate((element, request) => {
+    const post = [...document.querySelectorAll('[data-region="main"] *')].find(
+      (node) => node.children.length === 0 && node.textContent === request,
+    )
+    return (
+      post !== undefined &&
+      (post.compareDocumentPosition(element) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0
+    )
+  }, FAILURE_REQUEST)
 }
 
 /** 入力欄の下段（道具の口と送信の行）が1段に収まっているか。2段に折れると、行の高さが送信ボタン2つ分を超える。 */

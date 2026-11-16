@@ -5,11 +5,13 @@
 // - `report` は同じ `toolUseId` を持つ `origin.kind === "tool-report"` のステップ
 // - `detail` は、まだ使っていない `origin.kind === "other"` のステップのうち段のまとめを持たないもの（届いた順）
 // - `work-plan` は、直前の `work-plan` の記録との差で段を済ませた記録だけが、同じく段のまとめを持つものを1件（届いた順）取る。段を進めない呼び直しは取らない
-// - 突き合わせの外に残った本文・質問の記録（書きかけの本文など）は、ステップの順に末尾（失敗の表示の手前）へ並べる
+// - 突き合わせの外に残った本文・質問の記録（書きかけの本文など）は、ステップの順に末尾へ並べる
+// - 失敗・中断の表示は、`turn-failure`・`turn-interrupted` の記録の位置に置く
 //
 // 最終レポートがあるやり取りは、最終レポートより前の段の札・セリフ・補足の投稿・質問の記録・本文を、最終レポートの上の「作業の経過」1つに畳む。
 // 依頼の投稿と、最終レポートより後ろの行は畳まない。
 
+import type { TurnFailure } from "../../../../../../../shared/session-driver/turn-failure.ts"
 import type {
   MainViewQuestion,
   MainViewStep,
@@ -40,12 +42,37 @@ export type ProgressItem =
 
 /** 流れの最上位に並べる1件。段の札は「作業の経過」の中にだけ入る。 */
 export type StreamItem =
-  | { readonly kind: "failure" }
+  | {
+      readonly kind: "failure"
+      readonly ending: FailureEnding
+      readonly remains: FailureRemains
+    }
   | Exclude<ProgressItem, PlanItem>
   | { readonly kind: "answer"; readonly entry: MainViewQuestion }
   | { readonly kind: "fold"; readonly items: readonly ProgressItem[] }
 
 type ArrangedItem = StreamItem | PlanItem
+
+/** やり取りの終わり方。失敗は理由を持ち、中断は利用者が止めたことだけを言う。 */
+export type FailureEnding =
+  | { readonly kind: "failed"; readonly failure: TurnFailure }
+  | { readonly kind: "interrupted" }
+
+/**
+ * 記録から導けた、残ったもの。導けない項目は持たない。
+ * `phases` は済んだ段の数 `done`・段の数 `total`・止めた段の名前 `stopped`（並列の段は「・」でつなぐ。全部済んでいれば持たない）。
+ * `files` は書き換えたファイルの数と、最初の1件のファイル名。
+ */
+export type FailureRemains = {
+  readonly phases?: {
+    readonly done: number
+    readonly total: number
+    readonly stopped?: string
+  }
+  readonly files?: { readonly count: number; readonly first: string }
+}
+
+const FILE_WRITING_TOOLS: ReadonlySet<string> = new Set(["Edit", "Write", "MultiEdit"])
 
 /** 流れの描く順の並び。 */
 export function streamItemsOf(
@@ -106,6 +133,14 @@ export function streamItemsOf(
         }
         break
       case "failure":
+        items.push({
+          kind: "failure",
+          ending:
+            row.record.kind === "turn-failure"
+              ? { kind: "failed", failure: row.record.failure }
+              : { kind: "interrupted" },
+          remains: remainsOf(rows.slice(0, index), turn),
+        })
         break
       case "step": {
         if (row.record.kind === "work-plan") {
@@ -165,7 +200,7 @@ export function streamItemsOf(
         ? [item, { kind: "answer", entry: item.entry }]
         : [item],
     )
-  return turn.failure.kind === "failed" ? withFailure(folded) : folded
+  return folded
 }
 
 /** 間隔を揃える1組。`speaker` は組の頭の行が利用者の投稿かどうか。`start` は組の頭の行が全体で何番目か。 */
@@ -232,13 +267,6 @@ export function foldSummaryOf(items: readonly ProgressItem[]): string {
   return `作業の${progressFoldSummary(items.flatMap(entryOf))}`
 }
 
-/** 失敗の表示は、最初の本文（畳み）の手前に置く。本文が無ければ末尾。 */
-function withFailure(items: readonly StreamItem[]): readonly StreamItem[] {
-  const at = items.findIndex((item) => item.kind === "body" || item.kind === "fold")
-  const failure: StreamItem = { kind: "failure" }
-  return at < 0 ? [...items, failure] : [...items.slice(0, at), failure, ...items.slice(at)]
-}
-
 function isStreamItem(item: ArrangedItem): item is StreamItem {
   return item.kind !== "plan"
 }
@@ -275,6 +303,57 @@ function isProgress(item: ArrangedItem): item is ProgressItem {
     item.kind === "say" ||
     (item.kind === "post" && item.origin === "aside")
   )
+}
+
+function remainsOf(before: readonly ConversationStreamRow[], turn: MainViewTurn): FailureRemains {
+  const plan = before
+    .flatMap((row) => (row.kind === "step" && row.record.kind === "work-plan" ? [row.record] : []))
+    .at(-1)
+  const files = writtenFilesOf(turn)
+  const [firstFile] = files
+  return {
+    ...(plan === undefined ? {} : { phases: phasesRemainOf(plan) }),
+    ...(firstFile === undefined
+      ? {}
+      : { files: { count: files.length, first: baseNameOf(firstFile) } }),
+  }
+}
+
+function phasesRemainOf(plan: RecordOf<"work-plan">): NonNullable<FailureRemains["phases"]> {
+  const stopped = plan.phases[plan.current]
+  return {
+    done: plan.current,
+    total: plan.phases.length,
+    ...(stopped === undefined
+      ? {}
+      : { stopped: typeof stopped === "string" ? stopped : stopped.join("・") }),
+  }
+}
+
+/** 成功した書き込み系のツールの `file_path`（重ならない。実行順）。 */
+function writtenFilesOf(turn: MainViewTurn): readonly string[] {
+  const paths = turn.steps.flatMap((step) =>
+    step.actions.flatMap((action) =>
+      action.kind === "tool" &&
+      FILE_WRITING_TOOLS.has(action.name) &&
+      action.status.kind === "finished" &&
+      action.status.result.kind === "succeeded"
+        ? filePathsOf(action.input)
+        : [],
+    ),
+  )
+  return [...new Set(paths)]
+}
+
+function filePathsOf(input: unknown): readonly string[] {
+  if (typeof input !== "object" || input === null || !("file_path" in input)) {
+    return []
+  }
+  return typeof input.file_path === "string" ? [input.file_path] : []
+}
+
+function baseNameOf(path: string): string {
+  return path.slice(path.lastIndexOf("/") + 1)
 }
 
 function entryOf(item: ProgressItem): readonly ProgressEntry[] {

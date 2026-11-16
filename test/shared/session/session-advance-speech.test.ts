@@ -42,7 +42,10 @@ describe("applySessionEvent", () => {
     )
 
     expect(view.partialUtterance).toBe("")
-    expect(mainViewEntries(view)).toEqual([{ kind: "detail", markdown: "途中まで" }])
+    expect(mainViewEntries(view)).toEqual([
+      { kind: "detail", markdown: "途中まで" },
+      { kind: "turn-interrupted" },
+    ])
   })
 
   it("見えない文字だけの本文は積まず、その前の本文を締めの本文から外さない", () => {

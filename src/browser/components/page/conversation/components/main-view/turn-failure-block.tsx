@@ -4,16 +4,15 @@
 import clsx from "clsx"
 import type { ReactElement } from "react"
 
-import type { TurnFailure } from "../../../../../../shared/session-driver/turn-failure.ts"
 import { Button } from "../../../../ui/button/button.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
+import type { FailureEnding, FailureRemains } from "./domain/stream-item-list.ts"
 import { useTurnFailureBlock } from "./hooks/use-turn-failure-block.ts"
 import styles from "./main-view.module.css"
 
-const HEADING = "失敗で終わった"
-
 export function TurnFailureBlock(props: {
-  readonly failure: TurnFailure
+  readonly ending: FailureEnding
+  readonly remains: FailureRemains
   /** 戻す依頼の文。記録に依頼が無ければ空。 */
   readonly requestText: string
   /** いちばん新しいやり取りか。 */
@@ -24,16 +23,40 @@ export function TurnFailureBlock(props: {
 
   return (
     <section
-      className={clsx(styles["main-step"], styles["is-failed"])}
+      className={clsx(styles["main-step"], props.ending.kind === "failed" && styles["is-failed"])}
       role="note"
-      aria-label={HEADING}
+      aria-label={block.heading}
     >
-      <Text element="p" size="label" tone="state-ng" weight="inherit" className={styles["heading"]}>
-        {HEADING}
+      <Text
+        element="p"
+        size="label"
+        tone={props.ending.kind === "failed" ? "state-ng" : "ink"}
+        weight="inherit"
+        className={styles["heading"]}
+      >
+        {block.heading}
       </Text>
-      <Text element="p" size="inherit" tone="inherit" weight="inherit" className={styles["reason"]}>
-        <span title={block.detail}>{block.reason}</span>
-      </Text>
+      {block.reason !== "" && (
+        <Text
+          element="p"
+          size="inherit"
+          tone="inherit"
+          weight="inherit"
+          className={styles["reason"]}
+        >
+          {block.reason}
+        </Text>
+      )}
+      {block.detail !== "" && (
+        <Text element="p" size="label" tone="ink" weight="normal" className={styles["detail"]}>
+          {block.detail}
+        </Text>
+      )}
+      {block.remains !== "" && (
+        <Text element="p" size="label" tone="ink" weight="normal" className={styles["kept"]}>
+          {block.remains}
+        </Text>
+      )}
       {(retry.kind !== "none" || failedSteps.kind === "shown") && (
         <div className={styles["doors"]}>
           {retry.kind !== "none" && (

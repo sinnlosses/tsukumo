@@ -1,12 +1,12 @@
 // `<TurnFailureBlock>` のロジック。理由の語と次の手を、セッションの状態といちばん新しい依頼の手順から用意する。
 
-import type { TurnFailure } from "../../../../../../../shared/session-driver/turn-failure.ts"
 import { useNowWhile } from "../../../../../../stores/clock.ts"
 import { useCurrentTurnSteps } from "../../../../../../stores/current-turn-step-list.ts"
 import { useSession } from "../../../../../../stores/session.ts"
 import { useComposerDraft } from "../../../stores/composer-draft.ts"
 import { useMainViewContent } from "../../../stores/main-view-content.ts"
 import { useWorkStripSteps } from "../../../stores/work-strip-step-list.ts"
+import type { FailureEnding, FailureRemains } from "../domain/stream-item-list.ts"
 import { turnFailureBlockOf, type TurnFailureBlockModel } from "../domain/turn-failure-block.ts"
 
 type TurnFailureBlockView = TurnFailureBlockModel & {
@@ -17,7 +17,8 @@ type TurnFailureBlockView = TurnFailureBlockModel & {
 }
 
 export function useTurnFailureBlock(props: {
-  readonly failure: TurnFailure
+  readonly ending: FailureEnding
+  readonly remains: FailureRemains
   readonly requestText: string
   readonly newest: boolean
 }): TurnFailureBlockView {
@@ -26,6 +27,7 @@ export function useTurnFailureBlock(props: {
   const turnStepList = useCurrentTurnSteps()
   const appendToDraft = useComposerDraft((state) => state.appendToDraft)
   const openAtFailure = useWorkStripSteps((state) => state.openAtFailure)
+  const openAtTop = useWorkStripSteps((state) => state.openAtTop)
   const now = useNowWhile(false)
 
   const stripShown = turnStepList.kind === "turn" && turnStepList.plan.kind === "planned"
@@ -34,17 +36,24 @@ export function useTurnFailureBlock(props: {
 
   return {
     ...turnFailureBlockOf({
-      failure: props.failure,
+      ending: props.ending,
+      remains: props.remains,
       requestText: props.requestText,
       rateLimit,
       newest: props.newest,
       hasFailedStep: content.kind !== "welcome" && hasFailedStep,
+      hasSteps: content.kind !== "welcome" && stripShown,
       now,
     }),
     onRetry: appendToDraft,
     onShowFailedSteps: () => {
-      if (content.kind !== "welcome") {
+      if (content.kind === "welcome") {
+        return
+      }
+      if (props.ending.kind === "failed") {
         openAtFailure(content.exchange)
+      } else {
+        openAtTop(content.exchange)
       }
     },
   }

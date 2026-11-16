@@ -14,11 +14,13 @@ afterEach(() => {
 
 function source(overrides: Partial<TurnFailureBlockSource>): TurnFailureBlockSource {
   return {
-    failure: { kind: "api-error", error: "server_error" },
+    ending: { kind: "failed", failure: { kind: "api-error", error: "server_error" } },
+    remains: {},
     requestText: "架空の依頼",
     rateLimit: { kind: "clear" },
     newest: true,
     hasFailedStep: false,
+    hasSteps: false,
     now: NOW.epochMilliseconds,
     ...overrides,
   }
@@ -28,7 +30,9 @@ describe("turnFailureBlockOf", () => {
   it.each(API_ERROR_KINDS)(
     "理由の語に内部の綴りを出さず、title の全文にだけ出す（%s）",
     (error) => {
-      const block = turnFailureBlockOf(source({ failure: { kind: "api-error", error } }))
+      const block = turnFailureBlockOf(
+        source({ ending: { kind: "failed", failure: { kind: "api-error", error } } }),
+      )
 
       expect(block.reason).not.toContain(error)
       expect(block.detail).toContain(`（${error}）`)
@@ -51,7 +55,7 @@ describe("turnFailureBlockOf", () => {
     vi.spyOn(Temporal.Now, "timeZoneId").mockReturnValue("UTC")
     const block = turnFailureBlockOf(
       source({
-        failure: { kind: "api-error", error: "rate_limit" },
+        ending: { kind: "failed", failure: { kind: "api-error", error: "rate_limit" } },
         rateLimit: {
           kind: "rejected",
           bucket: "five-hour",
@@ -79,6 +83,50 @@ describe("turnFailureBlockOf", () => {
         }),
       ).retry.kind,
     ).toBe("request")
+  })
+
+  it("失敗の詳細は、見える字（detail）として全文を持つ", () => {
+    expect(turnFailureBlockOf(source({})).detail).toBe(
+      "失敗で終わった: API のサーバが応えなかった（server_error）",
+    )
+  })
+
+  it("残ったものは、導けた項目だけを行にする", () => {
+    expect(
+      turnFailureBlockOf(
+        source({
+          remains: {
+            phases: { done: 2, total: 5, stopped: "段C" },
+            files: { count: 3, first: "a.ts" },
+          },
+        }),
+      ).remains,
+    ).toBe("残ったもの　済んだフェーズ 2/5・書き換えた 3 ファイル（a.ts ほか）")
+    expect(turnFailureBlockOf(source({})).remains).toBe("")
+  })
+
+  it("中断は「止めた」と止めた段・続きを頼む文・手順を見る口を持ち、送らない口だけにする", () => {
+    const block = turnFailureBlockOf(
+      source({
+        ending: { kind: "interrupted" },
+        remains: {
+          phases: { done: 1, total: 4, stopped: "段B" },
+          files: { count: 1, first: "a.ts" },
+        },
+        hasSteps: true,
+      }),
+    )
+
+    expect(block.heading).toBe("止めた")
+    expect(block.reason).toBe("フェーズ 2/4「段B」の途中で止めた")
+    expect(block.detail).toBe("")
+    expect(block.remains).toBe("残ったもの　済んだフェーズ 1/4・書き換えた 1 ファイル（a.ts）")
+    expect(block.retry).toEqual({
+      kind: "request",
+      label: "続きを頼む文を入力欄に入れる",
+      request: "続きをお願いします。",
+    })
+    expect(block.failedSteps).toEqual({ kind: "shown", label: "手順を見る" })
   })
 
   it("失敗した手順を見る口は、いちばん新しいやり取りで失敗した手順があるときだけ出す", () => {

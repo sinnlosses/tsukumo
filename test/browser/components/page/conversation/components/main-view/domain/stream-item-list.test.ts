@@ -7,11 +7,15 @@ import {
   type StreamItem,
 } from "../../../../../../../../src/browser/components/page/conversation/components/main-view/domain/stream-item-list.ts"
 import { conversationStreamRows } from "../../../../../../../../src/browser/domain/main-view/conversation-stream.ts"
-import type { MainViewQuestion } from "../../../../../../../../src/shared/session/main-view-shape.ts"
+import type {
+  MainViewQuestion,
+  MainViewToolRun,
+} from "../../../../../../../../src/shared/session/main-view-shape.ts"
 import type { SessionRecord } from "../../../../../../../../src/shared/session/session-record.ts"
 import { splitIntoTurns } from "../../../../../../../../src/shared/session/turn.ts"
 import {
   asideRecord,
+  finishedToolStatus,
   reportRecord,
   requestRecord,
   speechRecord,
@@ -215,17 +219,79 @@ describe("streamItemsOf", () => {
     ).toEqual(["post", "say", "body1", "say", "say", "body2", "say"])
   })
 
-  it("失敗したやり取りは、最初の本文の手前に失敗の表示を置く", () => {
-    const failed = {
-      ...turn([reportStep(0, "fictional-report", "final")]),
-      failure: { kind: "failed", failure: { kind: "max-turns" } },
-    } as const
+  it("失敗の表示は、turn-failure の記録の位置（やり取りの末尾）に置く", () => {
     const items = streamItemsOf(
-      rowsOf([requestRecord(), speechRecord(), reportRecord("本文")]),
-      failed,
+      rowsOf([
+        requestRecord(),
+        speechRecord(),
+        reportWith("fictional-report", "本文"),
+        { kind: "turn-failure", failure: { kind: "max-turns" } },
+      ]),
+      turn([reportStep(0, "fictional-report", "final")]),
     )
 
-    expect(items.map((item) => item.kind)).toEqual(["post", "failure", "fold", "body"])
+    expect(items.map((item) => item.kind)).toEqual(["post", "fold", "body", "failure"])
+    expect(items.at(-1)).toMatchObject({
+      kind: "failure",
+      ending: { kind: "failed", failure: { kind: "max-turns" } },
+    })
+  })
+
+  it("中断の記録は、中断の表示として同じ位置に置く", () => {
+    const items = streamItemsOf(rowsOf([requestRecord(), { kind: "turn-interrupted" }]), turn([]))
+
+    expect(items.at(-1)).toMatchObject({ kind: "failure", ending: { kind: "interrupted" } })
+  })
+
+  it("残ったものは、済んだ段「n/N」・止めた段の名前・書き換えたファイルの数と1件の名前", () => {
+    const written = (path: string, result: "succeeded" | "failed") =>
+      ({
+        kind: "tool",
+        name: "Edit",
+        input: { file_path: path },
+        status: finishedToolStatus({
+          result:
+            result === "succeeded"
+              ? { kind: "succeeded" }
+              : { kind: "failed", output: { head: "x", omittedLength: 0 } },
+        }),
+      }) satisfies MainViewToolRun
+    const items = streamItemsOf(
+      rowsOf([
+        requestRecord(),
+        workPlanRecord({ phases: ["段A", ["段B", "段C"], "段D"], current: 1 }),
+        { kind: "turn-failure", failure: { kind: "execution-error" } },
+      ]),
+      turn([
+        step({
+          id: 0,
+          actions: [
+            written("/work/a.ts", "succeeded"),
+            written("/work/a.ts", "succeeded"),
+            written("/work/b.ts", "succeeded"),
+            written("/work/c.ts", "failed"),
+          ],
+        }),
+      ]),
+    )
+
+    expect(items.at(-1)).toMatchObject({
+      kind: "failure",
+      remains: {
+        phases: { done: 1, total: 3, stopped: "段B・段C" },
+        files: { count: 2, first: "a.ts" },
+      },
+    })
+  })
+
+  it("ワークプランも書き換えも無ければ、残ったものは何も持たない", () => {
+    const items = streamItemsOf(
+      rowsOf([requestRecord(), { kind: "turn-failure", failure: { kind: "max-turns" } }]),
+      turn([]),
+    )
+
+    const last = items.at(-1)
+    expect(last?.kind === "failure" ? last.remains : undefined).toEqual({})
   })
 })
 
@@ -242,7 +308,7 @@ describe("streamGroupsOf", () => {
     kind: "body",
     step: step({ id, body: turnBodyText(`本文${String(id)}`) }),
   })
-  const failure: StreamItem = { kind: "failure" }
+  const failure: StreamItem = { kind: "failure", ending: { kind: "interrupted" }, remains: {} }
   const shapeOf = (items: readonly StreamItem[]) =>
     streamGroupsOf(items).map((group) => group.items.map((item) => item.kind))
 

@@ -1,10 +1,35 @@
-/* 字の段・色は `Text` が持つ。margin・字間だけここに置く。 */
+/* 字の段・色・太さは `Text` が持つ。margin・字間だけここに置く。 */
 .heading {
   margin: 0 0 var(--space-sm);
   letter-spacing: 0.08em;
 }
 .reason {
   margin: 0;
+}
+/* 広い画面だけ、詳細と残ったものを出し、見出しの頭に印（色は字と同じ）を付ける。狭い画面は理由と次の手だけを今のまま出す。 */
+.detail,
+.kept {
+  display: none;
+  margin: 0;
+}
+@media (min-width: 761px) {
+  .detail,
+  .kept {
+    display: block;
+    padding-block-start: var(--stack-tight);
+  }
+  .heading {
+    display: flex;
+    align-items: center;
+    gap: var(--inline-tight);
+  }
+  .heading::before {
+    content: "";
+    inline-size: 8px;
+    block-size: 8px;
+    border-radius: 50%;
+    background: currentColor;
+  }
 }
 /* 次の手の口の行。狭い札では折り返す。 */
 .doors {

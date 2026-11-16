@@ -279,23 +279,45 @@ describe("mainViewTurns（失敗で終わったターン）", () => {
 })
 
 describe("mainViewEntries（中断で終わったターン）", () => {
-  it("中断の記録は entry に出ず、完了で終わった同じ記録と同じ出力になる", () => {
-    const entriesEndingWith = (outcome: "interrupted" | "completed") => {
-      const events: readonly SessionEvent[] = [
-        requestEvent(),
-        { kind: "utterance", text: "架空の本文" },
-        { kind: "turn-finished", outcome: { kind: outcome } },
-      ]
-      return mainViewEntries(
-        events.reduce(
-          (current, event) => applySessionEvent(current, event, 0),
-          INITIAL_SESSION_STATE,
-        ),
-      )
-    }
+  const entriesEndingWith = (outcome: "interrupted" | "completed") => {
+    const events: readonly SessionEvent[] = [
+      requestEvent(),
+      { kind: "utterance", text: "架空の本文" },
+      { kind: "turn-finished", outcome: { kind: outcome } },
+    ]
+    return mainViewEntries(
+      events.reduce(
+        (current, event) => applySessionEvent(current, event, 0),
+        INITIAL_SESSION_STATE,
+      ),
+    )
+  }
 
-    expect(entriesEndingWith("interrupted")).toEqual(entriesEndingWith("completed"))
+  it("中断の記録は turn-interrupted の entry として通り、完了では出ない", () => {
+    expect(entriesEndingWith("interrupted").at(-1)).toEqual({ kind: "turn-interrupted" })
+    expect(entriesEndingWith("completed").some((entry) => entry.kind === "turn-interrupted")).toBe(
+      false,
+    )
   })
+
+  it("中断の記録はステップに入らず、やり取りの failure が interrupted になる", () => {
+    const [turn] = mainViewTurns(mainViewEntries(foldInterrupted()), SETTLED, true)
+
+    expect(turn?.failure).toEqual({ kind: "interrupted" })
+    expect(turn?.steps).toHaveLength(1)
+  })
+
+  function foldInterrupted(): SessionState {
+    const events: readonly SessionEvent[] = [
+      requestEvent(),
+      { kind: "utterance", text: "架空の本文" },
+      { kind: "turn-finished", outcome: { kind: "interrupted" } },
+    ]
+    return events.reduce(
+      (current, event) => applySessionEvent(current, event, 0),
+      INITIAL_SESSION_STATE,
+    )
+  }
 })
 
 describe("mainViewTurns（補足メッセージ）", () => {

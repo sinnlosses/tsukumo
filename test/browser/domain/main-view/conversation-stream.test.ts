@@ -54,10 +54,11 @@ describe("conversationStreamRows（やり取り1つの記録を流れの行に�
     expect(rows.map((row) => row.kind)).toEqual(["post", "say"])
   })
 
-  it("中断の記録は行を作らない", () => {
+  it("中断の記録は失敗の行になり、記録の位置に出る", () => {
     const rows = rowsOf([requestRecord(), speechRecord(), { kind: "turn-interrupted" }])
 
-    expect(rows.map((row) => row.kind)).toEqual(["post", "say"])
+    expect(rows.map((row) => row.kind)).toEqual(["post", "say", "failure"])
+    expect(rows.at(-1)).toEqual({ kind: "failure", record: { kind: "turn-interrupted" } })
   })
 
   it("時刻の無い記録と restored の記録には時刻を付けない", () => {

@@ -3,7 +3,7 @@
 // 依頼・補足は右寄せの投稿、セリフ・反応は左寄せの行、段・質問の記録・レポートは流れの中の札と紙。
 // 最終レポートのある閉じたやり取りは、最終レポートの上に「作業の経過」の1行（段の札・質問の記録・中間の本文を畳んだもの）を置く。
 // ツールの実行は描かない（進行は帯の「いまの作業」が持つ）。
-// 失敗で終わったやり取りは、最初の本文の手前に失敗の表示を出す（色だけでなく字で成功と見分ける）。
+// 失敗で終わった・利用者が止めたやり取りは、その記録の位置（やり取りの末尾）に失敗・中断の表示を出す（色だけでなく字で成功と見分ける）。
 
 import clsx from "clsx"
 import { Fragment, use, useState, type ReactElement, type ReactNode } from "react"
@@ -214,7 +214,7 @@ function endsWithSayAttribute(
 /** 締めのセリフはあとから紙の前に加わるので、紙の `key` を組の `key` にして、加わっても紙を作り直さない。 */
 function groupKey(group: StreamGroup): string {
   const head = group.items.find((item) => item.kind !== "say" || item.closing !== true)
-  return streamItemKey(head ?? { kind: "failure" }, group.start)
+  return head === undefined ? `group:${String(group.start)}` : streamItemKey(head, group.start)
 }
 
 function streamItemKey(item: StreamItem, index: number): string {
@@ -267,15 +267,12 @@ function StreamItemView(props: StreamItemViewProps): ReactNode {
       return <AnswerPost entry={item.entry} redo={item.entry.toolUseId === props.redoToolUseId} />
     case "failure":
       return (
-        <>
-          {turn.failure.kind === "failed" && (
-            <TurnFailureBlock
-              failure={turn.failure.failure}
-              requestText={turn.request?.text ?? ""}
-              newest={props.newest}
-            />
-          )}
-        </>
+        <TurnFailureBlock
+          ending={item.ending}
+          remains={item.remains}
+          requestText={turn.request?.text ?? ""}
+          newest={props.newest}
+        />
       )
     case "fold":
       return (

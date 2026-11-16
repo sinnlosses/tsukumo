@@ -33,6 +33,10 @@
     border-color: var(--panel-edge-quiet);
     box-shadow: var(--panel-paper-lift);
   }
+  /* 上の規則と詳細度が同じで後ろに置くので、失敗の枠の色が広い画面でも勝つ。 */
+  .main-step.is-failed {
+    border-color: var(--state-ng);
+  }
 }
 .main-step {
   composes: surface-edge-rule surface-radius-md surface-tone-surface from "../../../../ui/surface/surface-face.module.css";

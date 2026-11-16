@@ -91,6 +91,8 @@ export type MainViewEntry =
    * ステップには入れない（やり取りの末尾に1つだけ出す印なので、`groupIntoTurns` がステップから外して `MainViewTurn.failure` に移す）。
    */
   | { readonly kind: "turn-failure"; readonly failure: TurnFailure }
+  /** 利用者が止めたターンの印（`SessionRecord` の `turn-interrupted`）。`turn-failure` と同じく、ステップには入れない。 */
+  | { readonly kind: "turn-interrupted" }
   /**
    * 脇の話と、それへの答えのセリフ（`answersAside` の `speech`）。
    * `groupIntoSteps` が対にして、届いた時点で最後のステップの `MainViewStep.asides` に移す。
@@ -216,6 +218,7 @@ export type MainViewAction = MainViewToolRun | MainViewQuestion
 export type MainViewTurnFailure =
   | { readonly kind: "none" }
   | { readonly kind: "failed"; readonly failure: TurnFailure }
+  | { readonly kind: "interrupted" }
 
 /**
  * 1ステップ＝レポート1件と、それに続く出来事。

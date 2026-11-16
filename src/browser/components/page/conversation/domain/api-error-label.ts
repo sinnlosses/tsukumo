@@ -67,7 +67,7 @@ export function turnFailureLabel(failure: TurnFailure): string {
   }
 }
 
-/** 失敗で終わったことの全文（`title` に出す。「失敗で終わった: <語>（<綴り>）」）。 */
+/** 失敗で終わったことの全文（失敗の表示の詳細と、入力欄の行の `title` に出す。「失敗で終わった: <語>（<綴り>）」）。 */
 export function turnFailureDetail(failure: TurnFailure): string {
   return `失敗で終わった: ${turnFailureLabel(failure)}（${turnFailureCode(failure)}）`
 }
@@ -77,7 +77,7 @@ function apiErrorLabel(error: ApiErrorKind): string {
   return API_ERROR_LABEL[error]
 }
 
-/** ターンの失敗の内部の綴り（`server_error`・`max-turns` など）。`title` にだけ出す。 */
+/** ターンの失敗の内部の綴り（`server_error`・`max-turns` など）。詳細の字（`turnFailureDetail`）にだけ出す。 */
 function turnFailureCode(failure: TurnFailure): string {
   return failure.kind === "api-error" ? failure.error : failure.kind
 }

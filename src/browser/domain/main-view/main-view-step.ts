@@ -13,6 +13,7 @@ import {
   type MainViewStepBody,
   type MainViewStepOrigin,
   type MainViewTurn,
+  type MainViewTurnFailure,
   NO_BODY,
 } from "../../../shared/session/main-view-shape.ts"
 import { splitIntoTurns, type TurnRest, turnIdOf } from "../../../shared/session/turn.ts"
@@ -39,7 +40,7 @@ export type GroupedTurn = {
  */
 export function groupIntoTurns(entries: readonly MainViewEntry[]): readonly GroupedTurn[] {
   return splitIntoTurns(entries).map((turn) => {
-    const failure = turn.records.findLast(isTurnFailure)
+    const ending = turn.records.findLast(isOutsideStep)
     const { steps, toolReportIds } = groupIntoSteps(turn.records.filter(isStepEntry))
     return {
       turn: {
@@ -51,8 +52,7 @@ export function groupIntoTurns(entries: readonly MainViewEntry[]): readonly Grou
         steps,
         hasInterimReport: false,
         droppedCount: 0,
-        failure:
-          failure === undefined ? { kind: "none" } : { kind: "failed", failure: failure.failure },
+        failure: failureOf(ending),
         drafts: [],
       },
       toolReportIds,
@@ -60,17 +60,29 @@ export function groupIntoTurns(entries: readonly MainViewEntry[]): readonly Grou
   })
 }
 
-/** やり取りの中の記録のうち、ステップに入らないもの（失敗の印）。 */
-type OutsideStepEntry = Extract<MainViewEntry, { readonly kind: "turn-failure" }>
+/** やり取りの中の記録のうち、ステップに入らないもの（失敗と中断の印）。 */
+type OutsideStepEntry = Extract<
+  MainViewEntry,
+  { readonly kind: "turn-failure" | "turn-interrupted" }
+>
 
 type StepEntry = Exclude<TurnRest<MainViewEntry>, OutsideStepEntry>
 
-function isTurnFailure(entry: TurnRest<MainViewEntry>): entry is OutsideStepEntry {
-  return entry.kind === "turn-failure"
+function isOutsideStep(entry: TurnRest<MainViewEntry>): entry is OutsideStepEntry {
+  return entry.kind === "turn-failure" || entry.kind === "turn-interrupted"
 }
 
 function isStepEntry(entry: TurnRest<MainViewEntry>): entry is StepEntry {
-  return entry.kind !== "turn-failure"
+  return !isOutsideStep(entry)
+}
+
+function failureOf(ending?: OutsideStepEntry): MainViewTurnFailure {
+  if (ending === undefined) {
+    return { kind: "none" }
+  }
+  return ending.kind === "turn-failure"
+    ? { kind: "failed", failure: ending.failure }
+    : { kind: "interrupted" }
 }
 
 /**

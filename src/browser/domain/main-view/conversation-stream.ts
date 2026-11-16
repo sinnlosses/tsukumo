@@ -14,7 +14,7 @@ type RecordOf<K extends SessionRecord["kind"]> = Extract<SessionRecord, { readon
  * - `step`: 段の札（ワークプランの記録・中間の本文）
  * - `question`: 答え終わった質問の記録
  * - `report`: 最終レポートの紙
- * - `failure`: ターンの末尾の失敗の表示
+ * - `failure`: ターンの末尾の失敗・中断の表示
  *
  * `at` は行の脇に出す時刻（エポックミリ秒）。時刻を持たない記録と、時刻が分からない記録（`restored`）は付けない。
  */
@@ -38,7 +38,10 @@ export type ConversationStreamRow =
     }
   | { readonly kind: "question"; readonly record: RecordOf<"question"> }
   | { readonly kind: "report"; readonly record: RecordOf<"report">; readonly at?: number }
-  | { readonly kind: "failure"; readonly record: RecordOf<"turn-failure"> }
+  | {
+      readonly kind: "failure"
+      readonly record: RecordOf<"turn-failure"> | RecordOf<"turn-interrupted">
+    }
 
 /**
  * やり取り1つ（{@link Turn}）の記録を、記録の位置の順のまま流れの行にする。
@@ -71,10 +74,10 @@ function rowOf(record: SessionRecord): readonly ConversationStreamRow[] {
     case "report":
       return [{ kind: "report", record, ...timeOf(record.time) }]
     case "turn-failure":
+    case "turn-interrupted":
       return [{ kind: "failure", record }]
     case "tool":
     case "compact-boundary":
-    case "turn-interrupted":
       return []
   }
 }

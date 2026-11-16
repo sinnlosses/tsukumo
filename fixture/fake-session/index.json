@@ -120,6 +120,7 @@
     "resumed-report",
     "reaction-accepted",
     "api-failure",
+    "turn-interrupted",
     "rate-limit",
     "diary-written",
     "session-list",

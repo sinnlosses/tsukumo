@@ -1,0 +1,74 @@
+{
+  "name": "turn-interrupted",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "並べ替えの保存を足したい（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 200,
+      "event": {
+        "kind": "work-plan",
+        "phaseIds": [],
+        "delegatedRange": { "kind": "none" },
+        "skippedPhases": [],
+        "awaitingSummary": { "kind": "none" },
+        "phases": ["今の形を調べる", "保存の仕組みを足す", "表示をつなぐ", "検証する"],
+        "current": 0,
+        "finishedInGroup": [],
+        "phaseSummary": ""
+      }
+    },
+    {
+      "afterMs": 600,
+      "event": {
+        "kind": "work-plan",
+        "phaseIds": [],
+        "delegatedRange": { "kind": "none" },
+        "skippedPhases": [],
+        "awaitingSummary": { "kind": "none" },
+        "phases": ["今の形を調べる", "保存の仕組みを足す", "表示をつなぐ", "検証する"],
+        "current": 1,
+        "finishedInGroup": [],
+        "phaseSummary": "架空の並べ替えは画面の中だけで持っていて、保存の口が無かった。"
+      }
+    },
+    {
+      "afterMs": 800,
+      "event": {
+        "kind": "tool-started",
+        "toolUseId": "fake-tool-turn-interrupted-1",
+        "name": "Edit",
+        "input": { "file_path": "/tmp/dummy/src/sort-order.ts" }
+      }
+    },
+    {
+      "afterMs": 1000,
+      "event": {
+        "kind": "tool-finished",
+        "toolUseId": "fake-tool-turn-interrupted-1",
+        "content": "ok",
+        "isError": false
+      }
+    },
+    {
+      "afterMs": 1200,
+      "event": {
+        "kind": "speech",
+        "text": "保存の口を足しているところ。",
+        "expression": "default"
+      }
+    },
+    {
+      "afterMs": 1600,
+      "event": {
+        "kind": "turn-finished",
+        "outcome": { "kind": "interrupted" }
+      }
+    }
+  ]
+}
