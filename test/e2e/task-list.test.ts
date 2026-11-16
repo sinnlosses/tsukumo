@@ -26,6 +26,32 @@ test.describe("タスクの一覧", () => {
     await room.settleAndMatchPickedWithMessages(ELAPSED_MS)
   })
 
+  for (const size of [
+    { width: 1400, height: 900 },
+    { width: 1920, height: 1080 },
+  ]) {
+    test(`${String(size.width)}x${String(size.height)} で行を押すとプレビューが画面の内に見える`, async ({
+      run,
+    }) => {
+      const room = await openTaskListRoom(run, `task-list-peek-visible-${String(size.width)}`, [
+        "task-section",
+      ])
+      await room.page.setViewportSize(size)
+      await taskRow(room, "T-001").click()
+      const peek = room.page.getByRole("dialog", { name: "T-001 の詳細" })
+      await peek.waitFor()
+      const box = await peek.boundingBox()
+      expect(box).not.toBeNull()
+      if (box === null) {
+        return
+      }
+      expect(box.x).toBeGreaterThanOrEqual(0)
+      expect(box.y).toBeGreaterThanOrEqual(0)
+      expect(box.x + box.width).toBeLessThanOrEqual(size.width)
+      expect(box.y + box.height).toBeLessThanOrEqual(size.height)
+    })
+  }
+
   test("ドラフトのチップで絞り、プレビューの「計画する」から確認の「頼む」を押すと計画の文面で依頼が送られる", async ({
     run,
   }) => {

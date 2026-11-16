@@ -7,6 +7,8 @@
   position: fixed;
   top: var(--task-peek-top, 0);
   left: var(--task-peek-left, 0);
+  right: auto;
+  bottom: auto;
   z-index: 20;
   box-sizing: border-box;
   display: flex;

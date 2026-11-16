@@ -1,7 +1,8 @@
 // サイドバーのタスクの行から開くプレビュー。
 // 上から、状態の印と語・ID・閉じる口 → 題 → 関わるタスク（依存があるときだけ）→ 本文の頭 → 「全文を開く」「これを始める」。
 //
-// モーダルでない `<dialog open>` を `position: fixed` で行の左に置く。
+// モーダルでない `<dialog open popover="manual">` を最上位の層に出し、`position: fixed` で行の左に置く。
+// サイドバーの領域の `backdrop-filter` が `position: fixed` の基準になるので、最上位の層へ出してビューポートを基準に戻す。
 // `show()` はプレビューの中の口へフォーカスを移すので使わない（フォーカスは押した行に残す）。
 // 位置は行のボタン（`anchorId`）の矩形から決めて style の変数へ書き、プレビューの大きさ・画面の大きさ・スクロールが変わるたびに書き直す。
 
@@ -56,6 +57,7 @@ export function TaskPeek(props: TaskPeekProps): ReactElement {
         return trackAnchor(peek, props.anchorId)
       }}
       open={true}
+      popover="manual"
       id={props.domId}
       aria-label={`${task.id} の詳細`}
       className={styles["task-peek"]}
@@ -196,6 +198,7 @@ function trackAnchor(peek: HTMLDialogElement, anchorId: string): () => void {
       placeBesideRow(peek, anchor.getBoundingClientRect(), view)
     }
   }
+  peek.showPopover()
   place()
   const observer = new ResizeObserver(place)
   observer.observe(peek)
