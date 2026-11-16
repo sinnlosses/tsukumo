@@ -1278,10 +1278,22 @@ body[data-view="chat"] [data-hide~="read"] {
   display: none;
 }
 
-/* ---- 案B の仕上げ（?design=b2）: 探す欄 ---- */
-.tk-tool[aria-pressed="true"] {
-  background: color-mix(in srgb, var(--accent) 16%, transparent);
-  color: var(--accent);
+/* ---- 案B の仕上げ（?design=b2）: 常設の探す欄 ---- */
+
+/* 欄と口を1行にまとめる形（?head=inline）。題は画面に出さず、欄が左、口が右。 */
+body[data-refine="2"] .sb-head[data-form="inline"] {
+  padding: 6px 8px 4px 10px;
+}
+
+.sb-head[data-form="inline"] .sb-search {
+  grid-column: 1;
+  grid-row: 1;
+  margin-inline-end: 0;
+}
+
+.sb-head[data-form="inline"] .sb-tools {
+  grid-column: 2;
+  grid-row: 1;
 }
 
 /* 探す語に当たった所。 */
@@ -1310,11 +1322,6 @@ body[data-view="chat"] [data-hide~="read"] {
 /* 語を消す口は自前の1つにする（ブラウザが検索欄に足す × は出さない）。 */
 .tk-search input::-webkit-search-cancel-button {
   display: none;
-}
-
-.sb-search-keys {
-  grid-column: 1 / -1;
-  margin: 0 0 2px 2px;
 }
 
 .sb-empty {
@@ -1349,10 +1356,6 @@ body[data-view="chat"] [data-hide~="read"] {
   grid-template-columns: minmax(0, 1fr) 440px;
 }
 
-.tb-all[data-form="rows"] .tb-cols {
-  grid-template-columns: 380px minmax(0, 1fr);
-}
-
 .lt-wrap {
   min-inline-size: 0;
   padding: 0 8px 12px;
@@ -1361,14 +1364,7 @@ body[data-view="chat"] [data-hide~="read"] {
   scrollbar-color: rgb(255 255 255 / 24%) transparent;
 }
 
-.tb-all[data-form="rows"] .lt-wrap {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 8px;
-}
-
-/* 表の形: 1行1件。題は残りの幅を使って1行に収め、ほかの列は中身の幅にする。 */
+/* 表の形: 1行1件。列は ID・題・難しさ・ループ可。題は残りの幅を使って1行に収め、ほかの列は中身の幅にする。 */
 .lt {
   inline-size: 100%;
   border-collapse: collapse;
@@ -1426,8 +1422,6 @@ body[data-view="chat"] [data-hide~="read"] {
 }
 
 .lt-row td:first-child {
-  inline-size: 100%;
-  max-inline-size: 0;
   border-start-start-radius: 8px;
   border-end-start-radius: 8px;
 }
@@ -1437,10 +1431,31 @@ body[data-view="chat"] [data-hide~="read"] {
   border-end-end-radius: 8px;
 }
 
+.lt-row td.lt-title {
+  inline-size: 100%;
+  max-inline-size: 0;
+}
+
+/* 状態の印は ID の前。印と ID をひとまとまりで読む。 */
+.lt-id-in {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.lt-id-in .tk-mark .tk-ic {
+  inline-size: 14px;
+  block-size: 14px;
+}
+
+.lt-row td > span {
+  vertical-align: middle;
+}
+
 .lt-title-in {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   min-inline-size: 0;
 }
 
@@ -1455,15 +1470,18 @@ body[data-view="chat"] [data-hide~="read"] {
   color: var(--ink-soft);
 }
 
+/* 待ちの相手は列にせず、題の後ろに添える。 */
 .lt-wait {
+  flex: none;
   font-size: 12px;
+  color: var(--ink-soft);
 }
 
-.lt-loop {
+.lt-loop,
+.lt thead th:last-child {
   text-align: center;
 }
 
-.lt thead th:last-child .tk-ic,
 .lt-loop .tk-ic {
   vertical-align: middle;
 }

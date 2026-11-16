@@ -26,13 +26,20 @@ kbd {
   margin-block-start: -10px;
 }
 
-/* 前後と2つの形は、2列で並べる。 */
+/* 前後は、2列で並べる。 */
 .pair {
   --cols: 2;
 }
 
+/* 一覧モードは1枚を大きく出す（実寸より広げない）。 */
+.single {
+  --cols: 1;
+  max-inline-size: 1100px;
+}
+
 /* 事実の欄は4つを1行に。 */
-.pair .facts {
+.pair .facts,
+.single .facts {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 

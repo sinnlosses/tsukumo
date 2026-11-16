@@ -1,7 +1,8 @@
-// 案B の仕上げのページ。字の大きさの前後・探す欄の4つの状態・一覧モードの2つの形を、見本（index.html?design=b2）で並べる。
-// 数は 1400×900 の見本を実ブラウザで測った値（2026-11-16）。題の字の大きさ（?type）で変わる数は、大きさごとに持つ。
+// 案B の仕上げのページ。字の大きさの前後・常設の探す欄の4つの状態・頭の2つの形・一覧モードの表を、見本（index.html?design=b2）で並べる。
+// 数は 1400×900 の見本を実ブラウザで測った値（2026-11-16）。題の字の大きさ（?type）と頭の形（?head）で変わる数は、組み合わせごとに持つ。
 
 const TYPES = ["13", "12"]
+const HEADS = ["stack", "inline"]
 const SIZES = ["1400x900", "1920x1080"]
 
 const params = new URLSearchParams(location.search)
@@ -11,24 +12,34 @@ function pick(name, allowed) {
   return allowed.includes(value) ? value : allowed[0]
 }
 
-const state = { type: pick("type", TYPES), size: pick("size", SIZES) }
+const state = { type: pick("type", TYPES), head: pick("head", HEADS), size: pick("size", SIZES) }
 
-// 題の字の大きさごとの実測値（サイドバーの通常の場面）。
+// サイドバーの通常の場面の実測値。鍵は「題の字の大きさ-頭の形」。
 const MEASURED = {
-  13: { title: "13px", rowHeight: "50px", shown: "12件中11件", toReady: "153px" },
-  12: { title: "12px", rowHeight: "49px", shown: "12件中11件", toReady: "152px" },
+  "13-stack": { title: "13px", rowHeight: "50px", head: "78px", shown: "12件中10件", toReady: "191px" },
+  "13-inline": { title: "13px", rowHeight: "50px", head: "40px", shown: "12件中11件", toReady: "153px" },
+  "12-stack": { title: "12px", rowHeight: "49px", head: "78px", shown: "12件中10件", toReady: "190px" },
+  "12-inline": { title: "12px", rowHeight: "49px", head: "40px", shown: "12件中11件", toReady: "152px" },
+}
+
+function measured() {
+  return MEASURED[`${state.type}-${state.head}`]
+}
+
+/** 仕上げの見本の URL。字の大きさと頭の形は、上部の切り替えの値を引き継ぐ。 */
+function refinedUrl(view, head = state.head) {
+  return `index.html?design=b2&view=${view}&type=${state.type}&head=${head}`
 }
 
 function typeCards() {
-  const after = MEASURED[state.type]
+  const after = measured()
   return [
     {
-      id: "before",
       letter: "前",
       name: "最初の案B",
       pick: "",
       url: "index.html?design=b&view=rest",
-      idea: "行の題は 14px。今のアプリの本文と同じ段で、ラベルの段（12px）で出している今のサイドバーより大きい。",
+      idea: "行の題は 14px。今のアプリの本文と同じ段で、ラベルの段（12px）で出している今のサイドバーより大きい。探す欄は、虫眼鏡を押すまで出ない。",
       facts: [
         ["行の題", "14px"],
         ["行の高さ（題が1行）", "57px"],
@@ -37,12 +48,11 @@ function typeCards() {
       ],
     },
     {
-      id: "after",
       letter: "後",
       name: "仕上げ",
-      pick: `題 ${after.title}`,
-      url: `index.html?design=b2&view=rest&type=${state.type}`,
-      idea: "行の題を締め、2段目とラベルは下限の 12px のまま。行の余白と印も合わせて締めたので、同じ高さに3件多く入る。",
+      pick: `題 ${after.title}・頭 ${state.head === "stack" ? "2行" : "1行"}`,
+      url: refinedUrl("rest"),
+      idea: "行の題を締め、2段目とラベルは下限の 12px のまま。行の余白と印も合わせて締め、頭に探す欄を常設した。",
       facts: [
         ["行の題", after.title],
         ["行の高さ（題が1行）", after.rowHeight],
@@ -54,13 +64,14 @@ function typeCards() {
 }
 
 function typeRows() {
-  const after = MEASURED[state.type]
+  const after = measured()
   return [
     ["行の題", "14px", after.title],
     ["行の2段目（待ちの相手・ID・難しさ）", "12px", "12px（下限）"],
     ["行の状態の印", "16px", "14px"],
-    ["サイドバーの見出し", "13px", "12px"],
+    ["サイドバーの見出し", "13px", state.head === "stack" ? "12px" : "画面には出さない（読み上げには残す）"],
     ["行の高さ（題が1行）", "57px", after.rowHeight],
+    ["サイドバーの頭の高さ", "44px（探す欄なし）", `${after.head}（探す欄を常設）`],
     ["スクロールなしで見えるタスク", "12件中8件", after.shown],
     ["上端から最初の着手可まで", "170px", after.toReady],
     ["サイドシートの幅", "520px", "480px"],
@@ -73,18 +84,18 @@ function typeRows() {
 const SEARCH_STEPS = [
   {
     view: "rest",
-    name: "押す前",
-    text: "頭の右に、探す・最新化・一覧を見るの3つの口が並ぶ。<kbd>/</kbd> キーでも探す欄が開く。",
+    name: "通常",
+    text: "欄は常に出ている。右端の <kbd>/</kbd> は、欄へ移るキーの案内。虫眼鏡の口は無く、頭の口は最新化と一覧を見るの2つ。",
   },
   {
     view: "search",
-    name: "押した直後",
-    text: "頭の2行目に欄が開き、フォーカスが入る。口は押された状態で残り、もう一度押すと欄が閉じる。一覧は全件のままで、頭の高さは 40px から 108px になる。",
+    name: "欄にフォーカス",
+    text: "欄を押すか <kbd>/</kbd> を打つと、欄に枠が付く。一覧は全件のままで、頭の高さも変わらない。",
   },
   {
     view: "typed",
     name: "入力中",
-    text: "ID・題・本文の部分一致で、段ごとに絞る。当たった語を強調し、件数を欄の右に出す。当たりの無い段は出さず、済みの段は開く。↑↓ の位置は最初の当たりから始まる。",
+    text: "ID・題・本文の部分一致で、段ごとに絞る。当たった語を強調し、欄の右端は件数と × に替わる。当たりの無い段は出さず、済みの段は開く。↑↓ の位置は最初の当たりから始まる。",
   },
   {
     view: "none",
@@ -94,25 +105,37 @@ const SEARCH_STEPS = [
 ]
 
 const SEARCH_KEYS = [
-  ["虫眼鏡を押す・<kbd>/</kbd>", "欄を開いてフォーカスを移す。開いているときに押すと、欄を閉じて語も消す"],
+  ["欄を押す・<kbd>/</kbd>", "欄にフォーカスを移す"],
   ["文字を入力する", "入力のたびに絞る（今のモーダルの検索と同じ規則で、ID・題・本文の部分一致）"],
   ["<kbd>↑</kbd> <kbd>↓</kbd>", "当たりの行を移動する。フォーカスは欄に残す"],
   ["<kbd>Enter</kbd>", "選んでいる行のサイドシートを開く。変換中の Enter は確定に使い、開かない"],
-  ["<kbd>Esc</kbd>", "語があれば語を消す（欄は開いたまま）。語が空なら欄を閉じ、フォーカスを虫眼鏡へ戻す"],
-  ["欄の ×", "語を消す。欄は開いたまま"],
+  ["<kbd>Esc</kbd>", "語があれば語を消す。語が空なら、フォーカスを入力欄（依頼を書く欄）へ戻す"],
+  ["欄の ×", "語を消す。フォーカスは欄に残す"],
   ["「一覧を見る」を押す", "語を引き継いで一覧モードを開く"],
   ["再読み込み", "語は保存しない（今の絞り込みと同じ扱い）"],
+]
+
+const HEAD_STEPS = [
+  {
+    head: "stack",
+    name: "2行に積む",
+    text: "題「タスク」と件数の行の下に、欄を置く。頭の高さは 78px、見えるタスクは12件中10件。題と総件数が常に読める。",
+  },
+  {
+    head: "inline",
+    name: "1行にまとめる",
+    text: "欄と2つの口を1行に置き、題は画面に出さない（欄の薄い字「タスクを探す」が題の代わりになり、読み上げには題を残す）。頭の高さは 40px、見えるタスクは12件中11件。総件数は出ない（段ごとの件数は出る）。",
+  },
 ]
 
 function listCards() {
   return [
     {
-      id: "table",
       letter: "表",
       name: "1行1件の表",
-      pick: "推奨",
-      url: `index.html?design=b2&view=list&list=table&type=${state.type}`,
-      idea: "題は1行に収め、待ちの相手・ID・難しさ・ループ可を列でそろえる。段の区分（いま・つぎ・待ち・ドラフト・済み）はサイドバーと同じ。詳細は右の 440px に出す。",
+      pick: "採用",
+      url: `index.html?design=b2&view=list&type=${state.type}&head=${state.head}`,
+      idea: "列は ID・題・難しさ・ループ可の順。状態の印は ID の前に置き、待ちの相手は列にせず題の後ろに添える（サイドバーの行と同じ「待ち T-104」の語）。段の区分（いま・つぎ・待ち・ドラフト・済み）はサイドバーと同じ。詳細は右の 440px に出す。",
       facts: [
         ["見えるタスク", "15件中15件"],
         ["行の高さ", "30px"],
@@ -121,28 +144,12 @@ function listCards() {
       ],
       pros: [
         "1400×900 で15件すべてがスクロールなしで見える",
-        "列がそろうので、待ちの相手・難しさ・ループ可を縦に比較できる",
-        "サイドバー（2段の行）と役割が分かれ、開く理由が明確になる",
+        "ID が左端にそろうので、番号で探しやすい",
+        "難しさとループ可が右にそろい、縦に比較できる",
       ],
-      cons: ["行の形がサイドバーと異なる（印・語・順序は共通）", "題が長いと末尾を省略する（この見本の15件では切れ 0 件）"],
-    },
-    {
-      id: "rows",
-      letter: "行",
-      name: "サイドバーと同じ2段の行",
-      pick: "",
-      url: `index.html?design=b2&view=list&list=rows&type=${state.type}`,
-      idea: "サイドバーと同じ行を左の 380px に並べ、詳細を広く使う。今のモーダル（左に一覧・右に詳細）に最も近い。",
-      facts: [
-        ["見えるタスク", "15件中10件"],
-        ["行の高さ", "50px"],
-        ["一覧の幅", "380px"],
-        ["詳細の幅", "860px"],
-      ],
-      pros: ["サイドバーと同じ行なので、見た目を覚え直さない", "詳細が広く、長い本文を読みやすい"],
       cons: [
-        "見えるのは10件で、サイドバー（11件）より一覧性が上がらない",
-        "サイドバーを広げただけに近く、モードを分ける理由が弱い",
+        "行の形がサイドバー（2段の行）と異なる（印・語・順序は共通）",
+        "題が長いと末尾を省略する（この見本の15件では切れ 0 件）",
       ],
     },
   ]
@@ -150,7 +157,7 @@ function listCards() {
 
 const OPEN_ITEMS = [
   "<b>題の字の大きさ。</b>13px は、今の字の段（12px・14px）に無い新しい段になる。12px なら今の段のままで、題と2段目の差は色だけになる。",
-  "<b>一覧モードの形。</b>表（推奨）か、サイドバーと同じ2段の行か。",
+  "<b>サイドバーの頭の形。</b>2行に積む（題と総件数が読める・見えるのは10件）か、1行にまとめる（題を出さない・見えるのは11件）か。",
   "<b>一覧モードでのドラフトの分類。</b>今のモーダルは絞り込み「ドラフト」で一括の分類ができる。仕上げではサイドシートに置いたので、一覧モードにも置くかは未決。",
   "<b>一覧モードの表示中の会話。</b>一覧モードは今と同じモーダルで、表示中は会話の流れと入力欄を操作できない。",
   "<b>狭い幅と中間の幅。</b>760px 以下の引き出しと柱の形は、今回も見本に含めていない。",
@@ -170,7 +177,7 @@ function card(item) {
       <header class="card-head">
         <span class="letter">${item.letter}</span>
         <h2>${item.name}</h2>
-        ${item.pick === "" ? "" : `<span class="pick"${item.pick === "推奨" ? ' data-pick="best"' : ""}>${item.pick}</span>`}
+        ${item.pick === "" ? "" : `<span class="pick"${item.pick === "採用" ? ' data-pick="best"' : ""}>${item.pick}</span>`}
       </header>
       <div class="frame">
         <iframe title="${item.name} の見本" loading="lazy" tabindex="-1"></iframe>
@@ -182,8 +189,8 @@ function card(item) {
     </article>`
 }
 
-function step(item, index) {
-  const url = `index.html?design=b2&view=${item.view}&type=${state.type}`
+/** サイドバーの範囲だけを実寸で切り出した1枚。 */
+function step(item, index, url) {
   return `<li class="step">
     <div class="clip">
       <iframe title="${item.name} の見本" src="${url}&bar=0" loading="lazy" tabindex="-1"></iframe>
@@ -222,10 +229,15 @@ function render() {
     <tbody>${typeRows()
       .map(([name, before, after]) => `<tr><th scope="row">${name}</th><td>${before}</td><td>${after}</td></tr>`)
       .join("")}</tbody>`
-  document.querySelector("#search-strip").innerHTML = SEARCH_STEPS.map(step).join("")
+  document.querySelector("#search-strip").innerHTML = SEARCH_STEPS.map((item, index) =>
+    step(item, index, refinedUrl(item.view)),
+  ).join("")
   document.querySelector("#search-keys").innerHTML = `
     <thead><tr><th scope="col">操作</th><th scope="col">挙動</th></tr></thead>
     <tbody>${SEARCH_KEYS.map(([key, text]) => `<tr><th scope="row">${key}</th><td>${text}</td></tr>`).join("")}</tbody>`
+  document.querySelector("#head-strip").innerHTML = HEAD_STEPS.map((item, index) =>
+    step(item, index, refinedUrl("rest", item.head)),
+  ).join("")
   document.querySelector("#list-cards").innerHTML = listCards().map(card).join("")
   document.querySelector("#open-list").innerHTML = listItems(OPEN_ITEMS)
 

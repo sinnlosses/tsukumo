@@ -13,13 +13,14 @@ function choose(name, allowed) {
   return allowed.includes(value) ? value : allowed[0]
 }
 
-// b2 は案B の仕上げ（字を締め、探す欄の動きと一覧モードを足したもの）。組み立ては案B を土台にする。
-// 仕上げだけが読む引数: ?list=table|rows（一覧モードの形）、?type=13|12（行の題の字の大きさ）。
+// b2 は案B の仕上げ（字を締め、探す欄を常設にし、一覧モードを足したもの）。組み立ては案B を土台にする。
+// 仕上げだけが読む引数: ?type=13|12（行の題の字の大きさ）、
+// ?head=stack|inline（サイドバーの頭の形。題と欄を2行に積むか、欄と口を1行にまとめるか）。
 const requested = choose("design", DESIGNS)
 const refined = requested === "b2"
 const design = refined ? "b" : requested
 const view = choose("view", VIEWS)
-const listForm = choose("list", ["table", "rows"])
+const headForm = choose("head", ["stack", "inline"])
 document.body.dataset.design = design
 document.body.dataset.view = view
 if (refined) {
@@ -87,11 +88,12 @@ const of = (...states) => TASKS.filter((task) => states.includes(task.state))
 const OPEN_ID = { rest: "", task: "T-107", list: "T-109", draft: design === "a" ? "T-114" : "", chat: "" }[view]
 // 仕分けの場面で選んである仕分け。
 const SORTED = { "T-114": "drop", "T-115": "plan" }
-// 探す欄を開いている場面と、欄に入っている語。最初の案B は一覧を開く場面で語が入っている。
-// 仕上げは、欄を開いた直後（語なし）・入力中・当たりなしの3場面を持つ。
-const SEARCH_WORDS = refined ? { search: "", typed: "知らせ", none: "請求" } : { list: "知らせ" }
-const searching = view in SEARCH_WORDS
+// 探す欄に入っている語。最初の案B は一覧を開く場面でだけ欄を出し、語が入っている。
+// 仕上げの欄は常設で、語が入るのは入力中と当たりなしの場面。フォーカスを置いて見せるのは search・typed・none の3場面。
+const SEARCH_WORDS = refined ? { typed: "知らせ", none: "請求" } : { list: "知らせ" }
 const SEARCH_WORD = SEARCH_WORDS[view] ?? ""
+const searching = refined || view in SEARCH_WORDS
+const searchFocused = refined && ["search", "typed", "none"].includes(view)
 // 頼む相手の名前。入力欄の「◯◯ への依頼を書く」と同じ名前で呼ぶ（`pack` は器のスクリプトが持つ）。
 const ASK_LABEL = `${pack.name} に頼む`
 
@@ -168,26 +170,24 @@ const USAGE = `<footer class="sb-usage" aria-label="使用量">
 
 /** サイドバーの頭。`search` は探す口の出し方（none は口なし、tool は口だけ、field は欄を開いた状態）。 */
 function head({ widenLabel = "一覧を広げる", widenIcon = "widen", search = "none", hits = 0 } = {}) {
-  // 仕上げの欄は、語を消す口と、キーの案内の行を持つ。件数は語が入っているときだけ出す。
-  const clear = refined && SEARCH_WORD !== "" ? tool("close", "語を消す") : ""
-  const hitCount = !refined || SEARCH_WORD !== "" ? `<span class="tk-search-hit">${hits} 件</span>` : ""
-  const keys = refined
-    ? `<p class="tk-keys sb-search-keys"><kbd>↑↓</kbd>選ぶ<kbd>⏎</kbd>開く<kbd>Esc</kbd>${SEARCH_WORD === "" ? "閉じる" : "語を消す"}</p>`
-    : ""
+  // 仕上げの欄は常設。空のあいだは欄へ移るキーを右端に出し、語が入ると件数と語を消す口に替わる。
+  const inline = refined && headForm === "inline"
+  const fieldEnd = !refined
+    ? `<span class="tk-search-hit">${hits} 件</span>`
+    : SEARCH_WORD === ""
+      ? `<kbd>/</kbd>`
+      : `<span class="tk-search-hit">${hits} 件</span>${tool("close", "語を消す")}`
   const field =
     search === "field"
-      ? `<label class="tk-search sb-search">${ic("search", " tk-ic-sm")}<input type="search" id="side-search" value="${SEARCH_WORD}" placeholder="ID・言葉で探す" aria-label="タスクを探す" />${hitCount}${clear}</label>${keys}`
+      ? `<label class="tk-search sb-search">${ic("search", " tk-ic-sm")}<input type="search" id="side-search" value="${SEARCH_WORD}" placeholder="${inline ? "タスクを探す" : "ID・言葉で探す"}" aria-label="タスクを探す" />${fieldEnd}</label>`
       : ""
-  // 探す口は、欄を開いているあいだ押された状態で残る（もう一度押すと閉じる）。
-  const searchTool =
-    search === "tool"
-      ? tool("search", "探す")
-      : refined && search === "field"
-        ? `<button class="tk-tool" type="button" aria-label="探す" aria-pressed="true" title="探す欄を閉じる">${ic("search")}</button>`
-        : ""
-  return `<header class="sb-head">
-    <h2 class="sb-title">タスク<span class="sb-total">${TASKS.length}</span></h2>
-    <span class="sb-tools">${searchTool}${tool("refresh", "最新化")}${tool(widenIcon, widenLabel)}</span>
+  // 1行にまとめる形は、題を画面に出さず（読み上げには残す）、欄の薄い字が題の代わりになる。
+  const title = inline
+    ? `<h2 class="visually-hidden">タスク</h2>`
+    : `<h2 class="sb-title">タスク<span class="sb-total">${TASKS.length}</span></h2>`
+  return `<header class="sb-head"${refined ? ` data-form="${headForm}"` : ""}>
+    ${title}
+    <span class="sb-tools">${search === "tool" ? tool("search", "探す") : ""}${tool("refresh", "最新化")}${tool(widenIcon, widenLabel)}</span>
     ${field}
   </header>`
 }
@@ -434,21 +434,23 @@ function sheetB() {
   </aside>`
 }
 
-/** 一覧モードの表の1行。題は1行に収め、待ちの相手・ID・難しさ・ループ可を列でそろえる。 */
+/**
+ * 一覧モードの表の1行。列は ID・題・難しさ・ループ可の順で、状態の印は ID の前に置く。
+ * 待ちの相手は列にせず、題の後ろに添える（サイドバーの行の2段目と同じ語）。
+ */
 function tableRow(task) {
   const open = task.id === OPEN_ID
-  const waits = task.state === "blocked" ? task.waits.join("・") : ""
+  const waits = task.state === "blocked" ? `<span class="lt-wait">待ち ${task.waits.join("・")}</span>` : ""
   return `<tr class="lt-row" data-state="${task.state}" aria-selected="${open}">
-    <td class="lt-title"><span class="lt-title-in">${mark(task.state)}<span class="lt-name">${task.title}</span></span></td>
-    <td class="lt-wait">${waits}</td>
-    <td><span class="tk-id">${task.id}</span></td>
+    <td><span class="lt-id-in">${mark(task.state)}<span class="tk-id">${task.id}</span></span></td>
+    <td class="lt-title"><span class="lt-title-in"><span class="lt-name">${task.title}</span>${waits}</span></td>
     <td><span class="tk-model">${meter(task.model)}${task.model}</span></td>
-    <td class="lt-loop">${task.loop ? ic("loop", " tk-ic-sm") : ""}</td>
+    <td class="lt-loop">${task.loop ? `<span title="ループ可">${ic("loop", " tk-ic-sm")}</span>` : ""}</td>
   </tr>`
 }
 
 // 案B の仕上げ: 一覧モード。全件を見渡すための面で、サイドバーの「一覧を見る」と、面の「一覧モードで開く」から開く。
-// 段の分け方と行の印はサイドバーと同じ。?list=table は1行1件の表、?list=rows はサイドバーと同じ2段の行。
+// 1行1件の表で、段の分け方と行の印はサイドバーと同じ。
 function listModeB() {
   const open = byId.get(OPEN_ID)
   const stages = [
@@ -459,16 +461,15 @@ function listModeB() {
     ["済み", of("done")],
   ]
   const table = `<table class="lt">
-    <thead><tr><th scope="col">題</th><th scope="col">待ちの相手</th><th scope="col">ID</th><th scope="col">難しさ</th><th scope="col" aria-label="ループ可" title="ループ可">${ic("loop", " tk-ic-sm")}</th></tr></thead>
+    <thead><tr><th scope="col">ID</th><th scope="col">題</th><th scope="col">難しさ</th><th scope="col">ループ可</th></tr></thead>
     ${stages
       .map(
         ([label, tasks]) =>
-          `<tbody><tr class="lt-stage"><th colspan="5" scope="rowgroup">${label}<b>${tasks.length}</b></th></tr>${tasks.map(tableRow).join("")}</tbody>`,
+          `<tbody><tr class="lt-stage"><th colspan="4" scope="rowgroup">${label}<b>${tasks.length}</b></th></tr>${tasks.map(tableRow).join("")}</tbody>`,
       )
       .join("")}
   </table>`
-  const rows = stages.map(([label, tasks]) => group(label, tasks)).join("")
-  return `<dialog class="tb tb-all" id="board" data-form="${listForm}" aria-label="タスクの一覧">
+  return `<dialog class="tb tb-all" id="board" aria-label="タスクの一覧">
     <header class="tb-head">
       <h2 class="tb-title">タスク<b>${TASKS.length}</b></h2>
       <label class="tk-search">${ic("search", " tk-ic-sm")}<input type="search" placeholder="ID・言葉で探す" aria-label="タスクを探す" /><kbd>/</kbd></label>
@@ -476,7 +477,7 @@ function listModeB() {
     </header>
     <div class="tb-filter">${counts({ withAll: true })}</div>
     <div class="tb-cols">
-      <div class="lt-wrap">${listForm === "rows" ? rows : table}</div>
+      <div class="lt-wrap">${table}</div>
       <div class="tb-detail">${detail(open)}</div>
     </div>
     ${actions(open, { hints: true })}
@@ -575,8 +576,8 @@ if (opensDetail) {
   }
 }
 
-// 仕上げの探す場面は、欄にフォーカスが入った状態（口を押した直後と同じ）で見せる。
-if (refined && searching) {
+// 仕上げの探す場面は、欄にフォーカスが入った状態（欄を押した直後・`/` を打った直後と同じ）で見せる。
+if (searchFocused) {
   const field = sidebar.querySelector("#side-search")
   field.focus()
   field.setSelectionRange(field.value.length, field.value.length)
@@ -587,7 +588,7 @@ if (refined) {
   const views = [
     ["rest", "通常"],
     ["task", "詳細"],
-    ["search", "探す"],
+    ["search", "欄にフォーカス"],
     ["typed", "入力中"],
     ["none", "当たりなし"],
     ["list", "一覧モード"],
