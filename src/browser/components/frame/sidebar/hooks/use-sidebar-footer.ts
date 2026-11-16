@@ -20,9 +20,14 @@ import { type UsePlanUsageResult, usePlanUsage } from "./use-plan-usage.ts"
 
 const PLACEHOLDER = "—"
 
-/** 「文脈 7%」の目盛り。`compact` は自動圧縮が始まる位置（目盛りの縦の線）。 */
-export type ContextGauge = {
-  readonly label: string
+/**
+ * 「コンテキスト 61%」のように、語・割合・細い棒で出す帯の1つ分。コンテキスト・5時間・7日の3つが同じ形。
+ * `compact` は自動圧縮が始まる位置（棒の縦の線）で、コンテキストだけが持つ。
+ */
+export type UsageMeterView = {
+  /** 語。目盛りの字と `title` に同じものを使う。 */
+  readonly word: string
+  readonly ariaLabel: string
   readonly percentageText: string
   /** 塗る幅（%）。 */
   readonly fillWidth: number
@@ -32,20 +37,11 @@ export type ContextGauge = {
   readonly source: UsageSource
 }
 
-/** 枠1つぶんの円と割合。 */
-export type PlanWindowPieView = {
-  readonly label: string
-  readonly percentageText: string
-  readonly slice: { readonly kind: "none" } | { readonly kind: "path"; readonly d: string }
-  readonly warn: boolean
-}
+export type ContextGauge = UsageMeterView
 
 export type PlanGauge = {
-  readonly label: string
-  readonly busy: boolean
-  readonly source: UsageSource
-  readonly fiveHour: PlanWindowPieView
-  readonly sevenDay: PlanWindowPieView
+  readonly fiveHour: UsageMeterView
+  readonly sevenDay: UsageMeterView
 }
 
 export type SidebarFooterView = {
@@ -92,7 +88,8 @@ export function useSidebarFooter(): SidebarFooterView {
 /** `useContextUsage` は前の鍵の値を持ち越さないので、値を出していればいまの鍵で取った値。 */
 function toContextGauge(usage: UseContextUsageResult, finishedTurnCount: number): ContextGauge {
   return {
-    label: contextGaugeLabel(usage),
+    word: "コンテキスト",
+    ariaLabel: contextGaugeLabel(usage),
     percentageText: usage.kind === "ready" ? `${String(usage.percentage)}%` : PLACEHOLDER,
     fillWidth: usage.kind === "ready" ? Math.min(usage.percentage, 100) : 0,
     compact:
@@ -118,39 +115,34 @@ function toPlanGauge(planUsage: UsePlanUsageResult): PlanGauge {
     resetsAt: undefined,
   }
   const shown = windows ?? { fiveHour: unreadable, sevenDay: unreadable }
+  const meter = (word: string, window: WindowDisplay): UsageMeterView =>
+    toPlanWindowMeter(word, window, windows !== undefined, planUsage)
   return {
-    label: windows === undefined ? "プラン使用量 取れていない" : planGaugeLabel(windows),
+    fiveHour: meter("5時間", shown.fiveHour),
+    sevenDay: meter("7日", shown.sevenDay),
+  }
+}
+
+/** 取れていない枠は棒を塗らず、割合を「—」にする。 */
+function toPlanWindowMeter(
+  word: string,
+  window: WindowDisplay,
+  readable: boolean,
+  planUsage: UsePlanUsageResult,
+): UsageMeterView {
+  const utilization = window.utilization
+  const percentageText =
+    utilization === undefined ? PLACEHOLDER : `${String(Math.round(utilization))}%`
+  return {
+    word,
+    ariaLabel: readable ? `${word} ${percentageText}` : `${word}は取れていない`,
+    percentageText,
+    fillWidth: utilization === undefined ? 0 : Math.min(Math.max(utilization, 0), 100),
+    compact: { kind: "none" },
+    warn: isPlanWindowWarn(window),
     busy: planUsage.fetching,
     source: planUsage.source,
-    fiveHour: toPlanWindowPie("5h", shown.fiveHour),
-    sevenDay: toPlanWindowPie("7d", shown.sevenDay),
   }
-}
-
-/** 取れていない枠は扇を塗らず、割合を「—」にする。 */
-function toPlanWindowPie(label: string, window: WindowDisplay): PlanWindowPieView {
-  const utilization = window.utilization
-  return {
-    label,
-    percentageText: utilization === undefined ? PLACEHOLDER : `${String(Math.round(utilization))}%`,
-    slice:
-      utilization !== undefined && utilization > 0
-        ? { kind: "path", d: pieSlicePath(utilization) }
-        : { kind: "none" },
-    warn: isPlanWindowWarn(window),
-  }
-}
-
-/** 中心 (10, 10)・半径 9 の円で、真上から時計回りに `percentage` ぶんの扇を描く道筋。100% 以上は円そのもの。 */
-function pieSlicePath(percentage: number): string {
-  if (percentage >= 100) {
-    return "M10 1 A9 9 0 1 1 9.99 1 Z"
-  }
-  const angle = (percentage / 100) * 2 * Math.PI
-  const x = 10 + 9 * Math.sin(angle)
-  const y = 10 - 9 * Math.cos(angle)
-  const largeArc = percentage > 50 ? 1 : 0
-  return `M10 10 L10 1 A9 9 0 ${String(largeArc)} 1 ${x.toFixed(2)} ${y.toFixed(2)} Z`
 }
 
 /** 目盛りの口の名前。数がある ready だけ割合と量を読む。 */
@@ -162,18 +154,4 @@ function contextGaugeLabel(usage: UseContextUsageResult): string {
     return "コンテキストは取れていない"
   }
   return `コンテキスト ${String(usage.percentage)}%（${formatCount(usage.totalTokens)} / ${formatCount(usage.maxTokens)}）`
-}
-
-/** 円の口の名前。 */
-function planGaugeLabel(windows: {
-  readonly fiveHour: WindowDisplay
-  readonly sevenDay: WindowDisplay
-}): string {
-  return `プラン使用量 5時間 ${windowPercentage(windows.fiveHour)}・7日間 ${windowPercentage(windows.sevenDay)}`
-}
-
-function windowPercentage(window: WindowDisplay): string {
-  return window.utilization === undefined
-    ? PLACEHOLDER
-    : `${String(Math.round(window.utilization))}%`
 }

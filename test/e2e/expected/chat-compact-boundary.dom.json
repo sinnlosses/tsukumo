@@ -961,7 +961,7 @@
                     "type": "button"
                   },
                   "children": [
-                    "文脈",
+                    "コンテキスト",
                     "61%",
                     {
                       "tag": "span",
@@ -972,30 +972,41 @@
                   ]
                 },
                 {
-                  "tag": "span",
-                  "attributes": {
-                    "aria-hidden": "true"
-                  }
-                },
-                {
                   "tag": "button",
                   "attributes": {
-                    "aria-label": "プラン使用量 5時間 34%・7日間 61%",
+                    "aria-label": "5時間 34%",
                     "aria-expanded": "false",
                     "data-finished-turn-count": "1",
                     "type": "button"
                   },
                   "children": [
-                    {
-                      "tag": "svg"
-                    },
-                    "5h",
+                    "5時間",
                     "34%",
                     {
-                      "tag": "svg"
-                    },
-                    "7d",
-                    "61%"
+                      "tag": "span",
+                      "attributes": {
+                        "aria-hidden": "true"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "tag": "button",
+                  "attributes": {
+                    "aria-label": "7日 61%",
+                    "aria-expanded": "false",
+                    "data-finished-turn-count": "1",
+                    "type": "button"
+                  },
+                  "children": [
+                    "7日",
+                    "61%",
+                    {
+                      "tag": "span",
+                      "attributes": {
+                        "aria-hidden": "true"
+                      }
+                    }
                   ]
                 }
               ]

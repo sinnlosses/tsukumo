@@ -1,5 +1,5 @@
 /* サイドバーの下端に敷く帯。区画ではないので `.sidebar-block` の枠も内側スクロールも借りない。
-   1行に、右寄せのコンテキストの目盛り・プラン使用量の円を並べる。
+   1行に、コンテキスト・5時間・7日の3つを幅の比 1.4 : 1 : 1 で並べる。
    地は帯（`screen-nav.module.css`）と同じ、`--ground` と `--surface` を半々に混ぜた色。
 
    左右と下の負のマージンは `.layout-region` の内側の余白（`--region-padding`）を消し切るちょうどの値で、帯の縁は領域の枠の内側にぴたりと着く（角の丸めは領域の `overflow` が切る）。
@@ -17,22 +17,22 @@
   padding: var(--space-md);
   border-top: 1px solid var(--rule);
   background: color-mix(in srgb, var(--ground), var(--surface) 50%);
+  container-type: inline-size;
 }
 .sidebar-footer-usage {
-  display: flex;
-  flex: none;
-  align-items: center;
+  display: grid;
+  flex: 1 1 100%;
+  grid-template-columns: 1.4fr 1fr 1fr;
   gap: var(--space-xs);
-  margin-left: auto;
+  min-width: 0;
 }
-/* 目盛りと円の間の縦の仕切り（飾りなので読み上げない）。 */
-.sidebar-footer-divider {
-  flex: none;
-  width: 1px;
-  height: 26px;
-  background: var(--rule-quiet);
+/* 3つを横に並べると語が切れる幅（サイドバーの最小幅の近く）では、縦に積んで語を切らない。 */
+@container (max-width: 280px) {
+  .sidebar-footer-usage {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
-/* 目盛りか円を押すと、帯の真上に重ねて開く詳しい面。タスクの区画を押し下げない。
+/* 3つのどれかを押すと、帯の真上に重ねて開く詳しい面。タスクの区画を押し下げない。
    プラン使用量のカードが280px未満で棒を畳むための基準（`@container`）もここ。 */
 .sidebar-footer-detail {
   composes: surface-edge-rule surface-radius-lg surface-tone-ground from "../../../ui/surface/surface-face.module.css";

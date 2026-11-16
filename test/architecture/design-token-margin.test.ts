@@ -73,7 +73,7 @@ const MARGIN_DECLARATION_LIMITS: Readonly<Record<string, number>> = {
   "browser/components/frame/sidebar/components/plan-usage-row.module.css": 2,
   "browser/components/frame/sidebar/components/profile-card.module.css": 1,
   "browser/components/frame/sidebar/components/section.module.css": 4,
-  "browser/components/frame/sidebar/components/sidebar-footer.module.css": 2,
+  "browser/components/frame/sidebar/components/sidebar-footer.module.css": 1,
   "browser/components/frame/sidebar/sidebar.module.css": 1,
   "browser/components/page/achievement/achievement.module.css": 1,
   "browser/components/page/achievement/components/bookmark-section/bookmark-section.module.css": 1,

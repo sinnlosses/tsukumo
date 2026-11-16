@@ -46,7 +46,8 @@ describe("SidebarFooter", () => {
       </QueryClientProvider>,
     )
     const context = screen.getByTitle("コンテキスト")
-    const plan = screen.getByTitle("プラン使用量")
+    const plan = screen.getByTitle("5時間")
+    const week = screen.getByTitle("7日")
 
     await waitFor(() => {
       expect(context.getAttribute(ATTRIBUTE)).toBe("0")
@@ -69,6 +70,7 @@ describe("SidebarFooter", () => {
     await waitFor(() => {
       expect(context.getAttribute(ATTRIBUTE)).toBe("2")
       expect(plan.getAttribute(ATTRIBUTE)).toBe("2")
+      expect(week.getAttribute(ATTRIBUTE)).toBe("2")
     })
     expect(context.hasAttribute("aria-busy")).toBe(false)
     expect(plan.hasAttribute("aria-busy")).toBe(false)

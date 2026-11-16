@@ -158,7 +158,8 @@ const FOOTER: SidebarFooterView = {
   contextUsage: { kind: "pending" },
   planUsage: { state: { kind: "pending" }, source: { kind: "none" }, fetching: false, retry: noop },
   contextGauge: {
-    label: "文脈",
+    word: "コンテキスト",
+    ariaLabel: "コンテキスト 7%",
     percentageText: "7%",
     fillWidth: 7,
     compact: { kind: "at", position: 80 },
@@ -167,11 +168,26 @@ const FOOTER: SidebarFooterView = {
     source: { kind: "after", finishedTurnCount: 3 },
   },
   planGauge: {
-    label: "プラン使用量",
-    busy: false,
-    source: { kind: "after", finishedTurnCount: 3 },
-    fiveHour: { label: "5時間", percentageText: "24%", slice: { kind: "none" }, warn: false },
-    sevenDay: { label: "7日", percentageText: "61%", slice: { kind: "none" }, warn: true },
+    fiveHour: {
+      word: "5時間",
+      ariaLabel: "5時間 24%",
+      percentageText: "24%",
+      fillWidth: 24,
+      compact: { kind: "none" },
+      warn: false,
+      busy: false,
+      source: { kind: "after", finishedTurnCount: 3 },
+    },
+    sevenDay: {
+      word: "7日",
+      ariaLabel: "7日 61%",
+      percentageText: "61%",
+      fillWidth: 61,
+      compact: { kind: "none" },
+      warn: true,
+      busy: false,
+      source: { kind: "after", finishedTurnCount: 3 },
+    },
   },
 }
 

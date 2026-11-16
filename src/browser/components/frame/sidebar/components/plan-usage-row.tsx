@@ -77,7 +77,7 @@ export function PlanUsageRow(props: { readonly planUsage: UsePlanUsageResult }):
             resetLabel={resetText(windows.fiveHour, state)}
           />
           <PlanUsageWindowRow
-            label="7日間"
+            label="7日"
             window={windows.sevenDay}
             resetLabel={resetText(windows.sevenDay, state)}
           />

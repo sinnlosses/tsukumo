@@ -6,7 +6,8 @@
         { "tag": "button", "children": ["進行中", "T-003", "架空のタスク（進行中）"] }
       ] },
       { "tag": "button", "attributes": { "aria-label": "コンテキスト 61%（122k / 200k）" } },
-      { "tag": "button", "attributes": { "aria-label": "プラン使用量 5時間 34%・7日間 61%" } }
+      { "tag": "button", "attributes": { "aria-label": "5時間 34%" } },
+      { "tag": "button", "attributes": { "aria-label": "7日 61%" } }
     ] }
   ]
 }

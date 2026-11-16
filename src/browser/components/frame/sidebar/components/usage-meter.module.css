@@ -1,0 +1,62 @@
+/* 使用量1つ分の口。枠も地も無く、hover と開いている間だけ地を敷く。
+   1行目に語（左）と割合（右）、2行目に細い棒。語が長いときは語だけ省略する。 */
+.usage-meter {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: var(--stack-tight) var(--inline-control);
+  min-width: 0;
+  padding: var(--stack-block) var(--inline-tight);
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+.usage-meter:hover,
+.usage-meter[aria-expanded="true"] {
+  background: var(--surface-raised);
+}
+.usage-meter-word {
+  overflow: hidden;
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* 割合は数字が主。等幅で桁が動いても読みやすくする。 */
+.usage-meter-value {
+  font-family: var(--font-mono);
+  font-size: var(--font-label);
+  font-variant-numeric: tabular-nums;
+}
+/* 縦の線（`.usage-meter-compact`）は棒の上下へ少しはみ出す。 */
+.usage-meter-track {
+  position: relative;
+  display: block;
+  grid-column: 1 / -1;
+  height: 3px;
+  border-radius: var(--radius-sm);
+  background: var(--rule-quiet);
+}
+.usage-meter-fill {
+  display: block;
+  height: 100%;
+  border-radius: var(--radius-sm);
+  background: var(--accent);
+}
+.usage-meter-compact {
+  position: absolute;
+  top: -2px;
+  width: 1.5px;
+  height: 7px;
+  background: var(--ink-quiet);
+}
+.usage-meter.is-warn .usage-meter-value {
+  color: var(--state-warn);
+}
+.usage-meter.is-warn .usage-meter-fill {
+  background: var(--state-warn);
+}

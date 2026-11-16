@@ -1,14 +1,13 @@
-// サイドバーの下端の帯。1行に、コンテキストの目盛りとプラン使用量の2つの円を右寄せで並べる。
-// 目盛りと円はどちらもボタンで、押すと帯の上に詳しい面（いまのコンテキストのカードとプラン使用量のカード）が開く。
+// サイドバーの下端の帯。コンテキスト・5時間・7日の3つを、帯の幅いっぱいの3区画に並べる。
+// 3つはどれもボタンで、押すと帯の上に詳しい面（いまのコンテキストのカードとプラン使用量のカード）が開く。
 
 import type { ReactElement } from "react"
 
 import type { SidebarFooterView } from "../hooks/use-sidebar-footer.ts"
-import { ContextUsageGauge } from "./context-usage-gauge.tsx"
 import { ContextUsageRow } from "./context-usage-row.tsx"
-import { PlanUsageGauge } from "./plan-usage-gauge.tsx"
 import { PlanUsageRow } from "./plan-usage-row.tsx"
 import styles from "./sidebar-footer.module.css"
+import { UsageMeter } from "./usage-meter.tsx"
 
 const DETAIL_LABEL = "使用量の詳しい面"
 
@@ -25,16 +24,20 @@ export function PresentationalSidebarFooter({
 }: SidebarFooterView): ReactElement {
   return (
     <div className={styles["sidebar-footer"]} ref={ref}>
-      {/* 目盛りと円はひとまとまりで右へ寄せる（サイドバーが狭くて折り返すときも、2つが離れずに次の行の右端へ移る）。 */}
       <div className={styles["sidebar-footer-usage"]}>
-        <ContextUsageGauge
-          gauge={contextGauge}
+        <UsageMeter meter={contextGauge} open={open} detailId={detailId} onToggle={onToggle} />
+        <UsageMeter
+          meter={planGauge.fiveHour}
           open={open}
           detailId={detailId}
           onToggle={onToggle}
         />
-        <span className={styles["sidebar-footer-divider"]} aria-hidden="true" />
-        <PlanUsageGauge gauge={planGauge} open={open} detailId={detailId} onToggle={onToggle} />
+        <UsageMeter
+          meter={planGauge.sevenDay}
+          open={open}
+          detailId={detailId}
+          onToggle={onToggle}
+        />
       </div>
       {open && (
         <div

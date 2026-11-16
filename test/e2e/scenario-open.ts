@@ -69,8 +69,8 @@ export type ScenarioOptions = {
   readonly cwdFiles?: readonly CwdFile[]
 }
 
-/** サイドバーの使用量の目盛り（コンテキスト・プラン使用量）の口の `title`。 */
-const USAGE_GAUGE_TITLES = ["コンテキスト", "プラン使用量"] as const
+/** サイドバーの使用量の3つ（コンテキスト・5時間・7日）の口の `title`。 */
+const USAGE_GAUGE_TITLES = ["コンテキスト", "5時間", "7日"] as const
 
 /**
  * 起こして開いた1件。シナリオはこれに対して待ち・操作・判定を行う。
