@@ -29,6 +29,8 @@ type SidebarSectionProps = {
   readonly headerExtra?: ReactNode
   /** 見出しの題の横に出す件数（タスク一覧）。無ければ何も足さない。 */
   readonly count?: number
+  /** 見出しの下で止まる帯の中に積む部品（探す欄）。無ければ何も足さない。 */
+  readonly searchField?: ReactNode
   readonly children: ReactNode
 }
 
@@ -72,6 +74,7 @@ export function SidebarSection(props: SidebarSectionProps): ReactElement {
             </Button>
           )}
         </Heading>
+        {props.searchField}
       </div>
       <div
         ref={(element) => {

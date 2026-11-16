@@ -4,7 +4,6 @@ import { afterEach, describe, expect, it } from "vitest"
 
 import { saveLaunchSkill } from "../../../../src/browser/domain/launch-skill.ts"
 import { TaskBoard } from "../../../../src/browser/features/task-board/task-board.tsx"
-import { TaskList } from "../../../../src/browser/features/task-board/task-list.tsx"
 import type {
   TaskSummaryItem,
   TaskSummaryResult,
@@ -17,6 +16,7 @@ import { characterInfo } from "../../../fixture/character.ts"
 import { knownTaskSummary, taskStatusOfWord } from "../../../fixture/session-state.ts"
 import { queryClientWrapper } from "../../query-client.tsx"
 import { type CommandSpy, putSession } from "../../session-store.ts"
+import { TaskList } from "./task-list-harness.tsx"
 
 // フィクスチャはすべて手で書いた架空のタスク（実物のタスクファイルは使わない）。
 

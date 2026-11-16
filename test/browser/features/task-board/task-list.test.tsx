@@ -5,13 +5,13 @@ import { TaskItem } from "../../../../src/browser/features/task-board/components
 import { TaskState } from "../../../../src/browser/features/task-board/components/task-state.tsx"
 import { loadTaskBody } from "../../../../src/browser/features/task-board/deferred-task-body.tsx"
 import { taskStateOf } from "../../../../src/browser/features/task-board/domain/task-board-content.ts"
-import { TaskList } from "../../../../src/browser/features/task-board/task-list.tsx"
 import { useTaskBoardRequest } from "../../../../src/browser/stores/task-board-request.ts"
 import type {
   TaskSummaryItem,
   TaskSummaryResult,
 } from "../../../../src/shared/repository/task-summary.ts"
 import { knownTaskSummary, taskStatusOfWord } from "../../../fixture/session-state.ts"
+import { TaskList } from "./task-list-harness.tsx"
 
 // フィクスチャはすべて手で書いた架空のタスク（タスクファイルの内容は会話ではないが、
 // テストのフィクスチャとしても実物は使わない）。
@@ -149,7 +149,14 @@ describe("taskList", () => {
     const state = taskStateOf(task)
     const { container } = render(
       <>
-        <TaskItem task={task} rowId="row" peek={{ kind: "closed" }} onToggle={() => {}} />
+        <TaskItem
+          task={task}
+          rowId="row"
+          query=""
+          active={false}
+          peek={{ kind: "closed" }}
+          onToggle={() => {}}
+        />
         <div data-testid="modal-row">
           <TaskState state={state} display="labeled" />
         </div>

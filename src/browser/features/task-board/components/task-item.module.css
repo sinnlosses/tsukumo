@@ -33,6 +33,11 @@
   background: var(--surface-accent);
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--rule), var(--accent) 45%);
 }
+/* 探す欄の ↑↓ で選んでいる行。開いている行（差し色の枠）と区別して、淡い面と細い枠で示す。 */
+.task-item-active {
+  background: color-mix(in srgb, var(--ink) 9%, transparent);
+  box-shadow: inset 0 0 0 1px var(--rule);
+}
 .task-item-mark {
   display: inline-flex;
   justify-content: center;

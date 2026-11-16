@@ -1,0 +1,6 @@
+/* 探す語に当たった所。 */
+.task-summary-mark {
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--accent) 30%, transparent);
+  color: inherit;
+}

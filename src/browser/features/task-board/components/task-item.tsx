@@ -9,15 +9,21 @@ import type { ReactElement, ReactNode } from "react"
 import { hasTaskStatus, type TaskSummaryItem } from "../../../../shared/repository/task-summary.ts"
 import { codeSpanParts } from "../../../domain/code-span.ts"
 import { taskStateOf } from "../domain/task-board-content.ts"
+import { isSearching, titleMatchParts } from "../domain/task-search.ts"
 import taskBoardStyles from "../task-board.module.css"
 import { TaskSummaryText } from "../task-summary-text.tsx"
 import { TaskDifficultyWord, TaskLoopMark } from "./task-attribute.tsx"
 import styles from "./task-item.module.css"
 import { TaskState } from "./task-state.tsx"
+import { TaskSummaryHighlight } from "./task-summary-highlight.tsx"
 
 export function TaskItem(props: {
   readonly task: TaskSummaryItem
   readonly rowId: string
+  /** 探している語。空なら題はそのまま描く。 */
+  readonly query: string
+  /** 探す欄の ↑↓ で選んでいる行。 */
+  readonly active: boolean
   readonly peek: TaskItemPeek
   readonly onToggle: () => void
 }): ReactElement {
@@ -32,9 +38,12 @@ export function TaskItem(props: {
         aria-haspopup="dialog"
         aria-expanded={open}
         aria-controls={props.peek.kind === "open" ? props.peek.controls : undefined}
+        aria-selected={props.active ? true : undefined}
+        ref={props.active ? scrollIntoNearest : undefined}
         className={clsx(
           styles["task-item-row"],
           state.kind === "doing" && styles["task-item-doing"],
+          props.active && styles["task-item-active"],
         )}
         onClick={props.onToggle}
       >
@@ -43,7 +52,13 @@ export function TaskItem(props: {
         </span>
         <span className={styles["task-item-text"]}>
           <span className={styles["task-item-summary"]}>
-            <TaskSummaryText parts={codeSpanParts(props.task.summary)} />
+            {isSearching(props.query) ? (
+              <TaskSummaryHighlight
+                parts={titleMatchParts(codeSpanParts(props.task.summary), props.query)}
+              />
+            ) : (
+              <TaskSummaryText parts={codeSpanParts(props.task.summary)} />
+            )}
           </span>
           <span className={styles["task-item-meta"]}>
             {waitingText !== undefined && (
@@ -60,6 +75,11 @@ export function TaskItem(props: {
       {props.peek.kind === "open" && props.peek.element}
     </li>
   )
+}
+
+/** 選んだ行に付けたときだけ呼ばれるよう、モジュールの関数にして参照を変えない。 */
+function scrollIntoNearest(element: HTMLButtonElement | null): void {
+  element?.scrollIntoView({ block: "nearest" })
 }
 
 function showsLoop(task: TaskSummaryItem): boolean {

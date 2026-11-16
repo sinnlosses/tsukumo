@@ -68,6 +68,21 @@ test.describe("タスクの一覧", () => {
     expect(await room.page.getByRole("dialog", { name: "タスクの実行" }).count()).toBe(0)
     await room.settleAndMatchPickedWithMessages(ELAPSED_MS)
   })
+
+  test("探す欄に語を打つと段が絞られ、Enter で選んだ行のプレビューが開き、Esc で語が消える", async ({
+    run,
+  }) => {
+    const room = await openTaskListRoom(run, "task-list-search", ["task-section"])
+    const field = room.page.getByRole("combobox", { name: "タスクを探す" })
+    await field.fill("完了")
+    await taskRow(room, "T-002").waitFor()
+    expect(await taskRow(room, "T-001").count()).toBe(0)
+    await field.press("Enter")
+    await room.page.getByRole("dialog", { name: "T-002 の詳細" }).waitFor()
+    await field.press("Escape")
+    expect(await field.inputValue()).toBe("")
+    await taskRow(room, "T-001").waitFor()
+  })
 })
 
 /** 区画の行のボタン。名前は ID と題をつないだものになるので、DOM の id で当てる。 */

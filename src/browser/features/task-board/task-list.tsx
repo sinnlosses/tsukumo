@@ -9,7 +9,7 @@
 // 区画の枠と見出しはサイドバーの持ち物で、ここは中身だけを描く。
 
 import clsx from "clsx"
-import { useState, type ReactElement } from "react"
+import type { ReactElement, RefObject } from "react"
 
 import {
   hasTaskStatus,
@@ -22,28 +22,26 @@ import { TaskItem, type TaskItemPeek } from "./components/task-item.tsx"
 import { TaskPeek, type TaskPeekRun } from "./components/task-peek.tsx"
 import { TaskSkeleton } from "./components/task-skeleton.tsx"
 import { isTaskRequestable } from "./domain/task-run-prompt.ts"
-import { stageTasks, TASK_STAGE_LABEL, type TaskStageGroup } from "./domain/task-stage.ts"
+import { TASK_STAGE_LABEL, type TaskStageGroup } from "./domain/task-stage.ts"
 import {
   taskPeekDomId,
   taskRowDomId,
-  useTaskPeek,
   type TaskPeekConfirm,
   type TaskPeekControl,
 } from "./hooks/use-task-peek.ts"
 import styles from "./task-board.module.css"
 import listStyles from "./task-list.module.css"
+import type { TaskListModel } from "./use-task-list-model.ts"
 
 type TaskListProps = {
   readonly tasks: TaskSummaryResult
+  readonly model: TaskListModel
+  readonly rootRef: RefObject<HTMLDivElement | null>
 }
 
 export function TaskList(props: TaskListProps): ReactElement {
-  const [doneOpen, setDoneOpen] = useState(false)
-  const groups = props.tasks.kind === "known" ? stageTasks(props.tasks.items) : []
-  const shownIds = groups.flatMap((group) =>
-    group.stage === "done" && !doneOpen ? [] : group.tasks.map((task) => task.id),
-  )
-  const { rootRef, control: peek } = useTaskPeek(shownIds)
+  const { model, rootRef } = props
+  const { peek } = model
 
   if (props.tasks.kind === "loading") {
     return <TaskSkeleton />
@@ -81,17 +79,20 @@ export function TaskList(props: TaskListProps): ReactElement {
   }
 
   return (
-    <div ref={rootRef} onKeyDown={peek.onKeyDown}>
-      {groups.map((group) => (
-        <TaskStageSection
-          key={group.stage}
-          group={group}
-          context={context}
-          doneOpen={doneOpen}
-          onToggleDone={() => {
-            setDoneOpen((open) => !open)
-          }}
-        />
+    <div ref={rootRef} id={model.listId} onKeyDown={peek.onKeyDown}>
+      {model.searching && model.groups.length === 0 && (
+        <Text
+          element="p"
+          size="inherit"
+          tone="ink-quiet"
+          weight="inherit"
+          className={styles["task-empty"]}
+        >
+          {`『${model.query.trim()}』に当たるタスクは無い（ID・題・本文を探した）`}
+        </Text>
+      )}
+      {model.groups.map((group) => (
+        <TaskStageSection key={group.stage} group={group} context={context} model={model} />
       ))}
     </div>
   )
@@ -100,12 +101,11 @@ export function TaskList(props: TaskListProps): ReactElement {
 function TaskStageSection(props: {
   readonly group: TaskStageGroup
   readonly context: PeekContext
-  readonly doneOpen: boolean
-  readonly onToggleDone: () => void
+  readonly model: TaskListModel
 }): ReactElement {
-  const { group, context } = props
-  const foldable = group.stage === "done"
-  const open = !foldable || props.doneOpen
+  const { group, context, model } = props
+  const foldable = group.stage === "done" && !model.searching
+  const open = !foldable || model.doneOpen
   const label = TASK_STAGE_LABEL[group.stage]
   const headId = `task-stage-${group.stage}`
   return (
@@ -116,7 +116,7 @@ function TaskStageSection(props: {
           id={headId}
           aria-expanded={open}
           className={clsx(listStyles["task-stage-head"], listStyles["task-stage-fold"])}
-          onClick={props.onToggleDone}
+          onClick={model.onToggleDone}
         >
           <span className={listStyles["task-stage-chevron"]}>
             <ChevronRightIcon />
@@ -137,6 +137,8 @@ function TaskStageSection(props: {
               key={task.id}
               task={task}
               rowId={taskRowDomId(task.id)}
+              query={model.query}
+              active={model.activeId === task.id}
               peek={peekOf(task, context)}
               onToggle={() => {
                 context.peek.onToggle(task.id)
