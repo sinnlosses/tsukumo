@@ -37,6 +37,7 @@ const COMMON = {
   focusedLabel: { kind: "none" },
   onFocus: noop,
   canAnswer: true,
+  confirm: "once",
   onToggle: noop,
   onChoose: noop,
   onAnswer: noop,
@@ -55,6 +56,7 @@ const QUESTION: ActiveInquiry = {
   writing: false,
   onAnswerWithText: noop,
   onEntrust: noop,
+  entrust: { kind: "offered", label: "任せる（戻せる案から選ぶ）" },
   options: [
     option(1, "新しい順", "更新の新しいものを上に"),
     option(2, "名前順", "あいうえお順"),

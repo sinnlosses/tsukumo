@@ -85,6 +85,8 @@ type InquiryCommon = {
   readonly onFocus: (label: string) => void
   /** 「これで答える」を押せるか（何も選ばず何も書いていなければ押せない）。 */
   readonly canAnswer: boolean
+  /** 戻せない選択肢を選んでいるあいだ `twice`（⏎ だけでは確定せず、⇧⏎ かクリックで確定する）。 */
+  readonly confirm: "once" | "twice"
   readonly onToggle: (label: string) => void
   /** 選んだ瞬間に答える（許可と単一選択。複数選択では使わない）。 */
   readonly onChoose: (label: string) => void
@@ -118,7 +120,13 @@ export type InquiryModel =
       readonly onAnswerWithText: (text: string) => void
       /** この問の判断を任せて確定し、次の問へ進む（最後の1問なら全問ぶんを送る）。入力欄の字は使わず残す。 */
       readonly onEntrust: () => void
+      /** 「任せる」の口。おすすめが戻せない案のときは出さない。 */
+      readonly entrust: InquiryEntrust
     })
+
+export type InquiryEntrust =
+  | { readonly kind: "hidden" }
+  | { readonly kind: "offered"; readonly label: string }
 
 export function useInquiryAnswer(): InquiryModel {
   const pending = useSession((session) => session.state.pending[0])
@@ -225,6 +233,7 @@ function permissionModel(
       figures: [],
     })),
     canAnswer: chosen !== undefined,
+    confirm: "once",
     onToggle: (label) => {
       draft.setAnswer({ ...draft.answer, selections: [[label]] })
     },
@@ -336,6 +345,8 @@ function questionModel(
     writtenAnswer,
     writing: !question.multiSelect && composerWriting,
     canAnswer,
+    confirm: options.some((option) => option.selected && option.irreversible) ? "twice" : "once",
+    entrust: entrustOf(options),
     onToggle: (label) => {
       setFocus(label)
       // 単一選択は選び直しで置き換え、複数選択は押すたびに入り切りする。
@@ -383,6 +394,22 @@ function questionModel(
     },
   }
 }
+
+/**
+ * 「任せる」の口。SDK へ返す文（`ENTRUSTED_ANSWER`）は、おすすめがあればそれを、無ければ戻せる案を選ぶ。
+ * 選ばれる案を名指せるのは、おすすめ（並びの先頭）があるときだけ。
+ */
+function entrustOf(options: readonly InquiryOptionRow[]): InquiryEntrust {
+  const recommended = options.find((option) => option.recommended)
+  if (recommended === undefined) {
+    return { kind: "offered", label: ENTRUST_UNNAMED_LABEL }
+  }
+  return recommended.irreversible
+    ? { kind: "hidden" }
+    : { kind: "offered", label: `おすすめに任せる（${recommended.text}）` }
+}
+
+const ENTRUST_UNNAMED_LABEL = "任せる（戻せる案から選ぶ）"
 
 function focusedLabelOf(label?: string): InquiryFocusedLabel {
   return label === undefined ? { kind: "none" } : { kind: "option", label }

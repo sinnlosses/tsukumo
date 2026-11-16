@@ -49,7 +49,8 @@ const KIND_LABEL = {
   question: "質問",
 } satisfies Record<Exclude<InquiryModel["kind"], "none">, string>
 const BACK_LABEL = "戻る"
-const ENTRUST_LABEL = "任せる"
+const CONFIRM_LABEL = "これで確定する"
+const CONFIRM_NOTE = "戻せない操作。⏎ だけでは確定しない"
 const EXPAND_LABEL = "広げる"
 const COLLAPSE_LABEL = "閉じる"
 const BOARD_LABEL = "お伺い（広げた板）"
@@ -58,6 +59,7 @@ const ANSWER_LABEL = "これで答える"
 const NEXT_LABEL = "次へ"
 /** ボタンに添えるキーの字。 */
 const ENTER_KEY_HINT = "⏎"
+const CONFIRM_KEY_HINT = "⇧⏎"
 const WAITED_PREFIX = "待って"
 /** 単一選択の radio をひとまとまりにする名前（札は1問ずつしか出ないので1つで足りる）。 */
 const OPTION_GROUP_NAME = "inquiry-option"
@@ -203,6 +205,9 @@ function answerKey(
   }
   if (event.key === "Enter" && !(event.target instanceof HTMLButtonElement)) {
     event.preventDefault()
+    if (inquiry.confirm === "twice" && !event.shiftKey) {
+      return
+    }
     // 次の問へ進むと、フォーカスしていた選択肢は作り直されて外れる。札そのものへ預けて、続けてキーを受ける。
     holdFocus()
     onAnswer()
@@ -399,7 +404,18 @@ function InquiryFace(props: {
               {BACK_LABEL}
             </Button>
           )}
-          {inquiry.kind === "question" && (
+          {inquiry.confirm === "twice" && (
+            <Text
+              element="span"
+              size="secondary"
+              tone="state-warn"
+              weight="bold"
+              className={styles["inquiry-confirm-note"]}
+            >
+              {CONFIRM_NOTE}
+            </Text>
+          )}
+          {inquiry.kind === "question" && inquiry.entrust.kind === "offered" && (
             <Button
               variant="outline-hover-warn"
               size="secondary"
@@ -409,7 +425,7 @@ function InquiryFace(props: {
               className={styles["inquiry-back"]}
               onClick={props.onEntrust}
             >
-              {ENTRUST_LABEL}
+              {inquiry.entrust.label}
             </Button>
           )}
           <Button
@@ -422,10 +438,14 @@ function InquiryFace(props: {
             onClick={props.onAnswer}
           >
             <Text element="span" size="inherit" tone="inherit" weight="bold" className="">
-              {inquiry.last ? ANSWER_LABEL : NEXT_LABEL}
+              {inquiry.confirm === "twice"
+                ? CONFIRM_LABEL
+                : inquiry.last
+                  ? ANSWER_LABEL
+                  : NEXT_LABEL}
             </Text>
             <span className={styles["inquiry-key"]} aria-hidden="true">
-              {ENTER_KEY_HINT}
+              {inquiry.confirm === "twice" ? CONFIRM_KEY_HINT : ENTER_KEY_HINT}
             </span>
           </Button>
         </HStack>

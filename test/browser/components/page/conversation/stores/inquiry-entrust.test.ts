@@ -115,3 +115,61 @@ describe("useInquiryAnswer の任せる", () => {
     expect(useComposerDraft.getState().draft.text).toBe("架空の下書き")
   })
 })
+
+describe("useInquiryAnswer の任せるの予告と2段の確定", () => {
+  function briefed(labels: readonly string[], irreversible: readonly string[]): StampedPendingAsk {
+    const shown = question("一", labels)
+    return {
+      kind: "question",
+      id: "ask-1",
+      questions: [shown],
+      imageSizes: [],
+      unshelvedImages: [],
+      askedAt: 0,
+      briefs: [
+        {
+          header: "一",
+          whyAsk: "架空の理由",
+          facts: [],
+          options: labels.map((label) => ({
+            label,
+            irreversible: irreversible.includes(label),
+            figures: [],
+          })),
+        },
+      ],
+    }
+  }
+
+  it("おすすめがあるときは、選ばれる案の名前を口に言う", () => {
+    const { result } = renderRecording(briefed(["A案", "B案 (推奨)"], []))
+    expect(asking(result.current).entrust).toEqual({
+      kind: "offered",
+      label: "おすすめに任せる（B案）",
+    })
+  })
+
+  it("おすすめが無いときは、案を名指さない", () => {
+    const { result } = renderRecording(briefed(["A案", "B案"], []))
+    expect(asking(result.current).entrust).toEqual({
+      kind: "offered",
+      label: "任せる（戻せる案から選ぶ）",
+    })
+  })
+
+  it("おすすめが戻せない案のときは、口を出さない", () => {
+    const { result } = renderRecording(briefed(["A案", "B案 (推奨)"], ["B案 (推奨)"]))
+    expect(asking(result.current).entrust).toEqual({ kind: "hidden" })
+  })
+
+  it("戻せない案を選ぶと確定が2段になり、戻せる案へ選び替えると1段に戻る", () => {
+    const { result } = renderRecording(briefed(["A案", "B案"], ["B案"]))
+    expect(asking(result.current).confirm).toBe("once")
+
+    act(() => asking(result.current).onToggle("B案"))
+    expect(asking(result.current).confirm).toBe("twice")
+
+    act(() => asking(result.current).onToggle("A案"))
+    expect(asking(result.current).confirm).toBe("once")
+  })
+})

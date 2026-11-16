@@ -100,9 +100,9 @@ test.describe("お伺い", () => {
     })
     const inquiry = inquiryOf(room.page)
 
-    await inquiry.getByRole("button", { name: "任せる" }).click()
+    await inquiry.getByRole("button", { name: /^任せる/ }).click()
     await expect.poll(() => inquiry.textContent()).toContain("2 / 2")
-    await inquiry.getByRole("button", { name: "任せる" }).click()
+    await inquiry.getByRole("button", { name: /^任せる/ }).click()
 
     await room.waitForEvent("question-answered")
     await expect.poll(() => inquiry.count()).toBe(0)

@@ -194,6 +194,23 @@ describe("createPendingAnswerQueue", () => {
     })
   })
 
+  it("任せた問の文は、おすすめを先に、無ければ戻せる案を選ぶ規則を言う（画面の「任せる」の予告と同じ規則）", async () => {
+    const queue = briefedQueue()
+
+    const asked = queue.ask(questionRequest())
+    queue.answer("toolu_q", { kind: "answers", answers: [{ kind: "entrusted" }] })
+
+    expect(await asked).toMatchObject({
+      updatedInput: {
+        answers: {
+          "どちらにする？": expect.stringContaining(
+            "おすすめの選択肢があればそれを、無ければあとで戻せる選択肢を選んで",
+          ),
+        },
+      },
+    })
+  })
+
   it("任せた問と選んだ問は、問ごとに文を分けて組み、記録の合図には任せたを写す", async () => {
     const answered: unknown[] = []
     const queue = createPendingAnswerQueue({

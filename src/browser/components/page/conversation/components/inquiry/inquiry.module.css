@@ -273,6 +273,10 @@
   flex: 0 0 auto;
   margin-top: var(--space-md);
 }
+/* 操作の行の左に寄せる。 */
+.inquiry-confirm-note {
+  flex: 1 1 auto;
+}
 /* 顔は `<Button variant="outline-hover-warn">` が持つ。箱だけここに置く。 */
 .inquiry-back {
   flex: 0 0 auto;

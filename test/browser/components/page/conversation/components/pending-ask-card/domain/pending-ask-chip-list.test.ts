@@ -16,6 +16,7 @@ const COMMON = {
   focusedLabel: { kind: "none" },
   onFocus: () => {},
   canAnswer: false,
+  confirm: "once",
   onToggle: () => {},
   onChoose: () => {},
   onAnswer: () => {},
@@ -49,6 +50,7 @@ function question(figures: Parameters<typeof row>[0]): InquiryModel {
     writing: false,
     onAnswerWithText: () => {},
     onEntrust: () => {},
+    entrust: { kind: "hidden" },
     options: [row(figures)],
   }
 }

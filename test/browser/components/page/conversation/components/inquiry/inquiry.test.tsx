@@ -223,11 +223,11 @@ describe("Inquiry（メインビューのお伺いのカード）", () => {
     ])
   })
 
-  it("質問の操作の行に「任せる」を出し、押すと任せた答えを送る。許可要求には出さない", () => {
+  it("質問に「任せる」を出し、押すと任せた答えを送る。許可要求には出さない", () => {
     const calls: unknown[] = []
     renderInquiry([questionPending([question()])], (command) => calls.push(command))
 
-    fireEvent.click(screen.getByRole("button", { name: "任せる" }))
+    fireEvent.click(screen.getByRole("button", { name: /^任せる/ }))
 
     expect(calls).toEqual([
       {
@@ -239,7 +239,7 @@ describe("Inquiry（メインビューのお伺いのカード）", () => {
     cleanup()
 
     renderInquiry([PERMISSION_PENDING])
-    expect(screen.queryByRole("button", { name: "任せる" })).toBeNull()
+    expect(screen.queryByRole("button", { name: /^任せる/ })).toBeNull()
   })
 
   it("広げた板で最後の問を「任せる」と、答えを送って板が閉じる", () => {
@@ -248,7 +248,7 @@ describe("Inquiry（メインビューのお伺いのカード）", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "広げる" }))
     const board = screen.getByRole("dialog", { name: "お伺い（広げた板）" })
-    fireEvent.click(within(board).getByRole("button", { name: "任せる" }))
+    fireEvent.click(within(board).getByRole("button", { name: /^任せる/ }))
 
     expect(calls).toHaveLength(1)
     expect(screen.queryByRole("dialog", { name: "お伺い（広げた板）" })).toBeNull()
