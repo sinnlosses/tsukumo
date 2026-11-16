@@ -1,7 +1,31 @@
 /* 仕事のメインビューの会話の流れ。
    行（セリフ・投稿・時刻）の見た目は `stream-row/stream-row.module.css` と共用で、ここは流れの縦の並びと、段の札・投稿の幅だけを持つ。 */
+/* 狭い画面の行の間は、組を入れる前と同じ 12px のまま。 */
 .conversation-stream {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter-region);
   min-width: 0;
+}
+/* 狭い画面は組の入れ物に見た目を足さない。 */
+.stream-group {
+  display: contents;
+}
+/* 行の間は3段。組の中は 4px、同じ話し手の続きは 16px、利用者の投稿の前後は 16px に 8px を足す。
+   投稿の前後の 8px は、外の余白でなく組の内側の余白で足す。 */
+@media (min-width: 761px) {
+  .conversation-stream {
+    gap: var(--stack-group);
+  }
+  .stream-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--stack-tight);
+    min-width: 0;
+  }
+  .stream-group[data-stream-group="user"] {
+    padding-block: var(--stack-block);
+  }
 }
 /* 依頼の塊は2行の地の文を測るので、吹き出しが痩せないように下限の幅を持たせる。 */
 .stream-post {

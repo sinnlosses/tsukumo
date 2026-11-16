@@ -7,6 +7,10 @@
   margin: 0 0 var(--space-sm);
   letter-spacing: 0.08em;
 }
+/* 済んだフェーズの控えの所要（と飛ばした印）。1行の右端へ寄せる。 */
+.step-heading-time {
+  float: right;
+}
 /* 作業の経過の畳み。最終レポートの上に1行で置き、字は `Text` が持つ。 */
 .progress-fold {
   margin: 0;

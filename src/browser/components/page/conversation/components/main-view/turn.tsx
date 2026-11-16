@@ -24,13 +24,12 @@ import { usePhoneWidth } from "../../../../../hooks/use-phone-width.ts"
 import { useConversationStreamRows } from "../../../../../stores/main-view-turn.ts"
 import { useSession } from "../../../../../stores/session.ts"
 import { Text } from "../../../../ui/text/text.tsx"
-import { VStack } from "../../../../ui/v-stack/v-stack.tsx"
 import { useAwaySeam } from "../../stores/away-seam.ts"
 import { useDraftedReports } from "../../stores/drafted-report.ts"
 import { awaySeamOf, type AwaySeam } from "./domain/away-seam.ts"
 import { revealStepIdOf } from "./domain/draft-reveal.ts"
 import { REPORT_STEP_ATTRIBUTE } from "./domain/outline-report-head.ts"
-import { streamItemsOf, type StreamItem } from "./domain/stream-item-list.ts"
+import { streamGroupsOf, streamItemsOf, type StreamItem } from "./domain/stream-item-list.ts"
 import { DraftReport } from "./draft-report.tsx"
 import { FoldedStep, StepReport } from "./folded-step.tsx"
 import { useReplyPort } from "./hooks/use-reply-port.ts"
@@ -83,6 +82,7 @@ export function Turn(props: TurnProps): ReactElement {
     return !isAskGroupedToLeaf(askSlot, row.record)
   })
   const items = streamItemsOf(shownRows, turn)
+  const groups = streamGroupsOf(items)
   const generation = useSession((session) => session.generation)
   const away = useAwaySeam((state) => state.away)
   // 狭い画面では流れの行を描かないので、線も出さない。
@@ -97,7 +97,7 @@ export function Turn(props: TurnProps): ReactElement {
 
   return (
     <ReplyPortContext value={{ kind: "open", port }}>
-      <div>
+      <div {...endsWithSayAttribute(items, turn.drafts.length)}>
         {turn.droppedCount > 0 && (
           <Text
             element="p"
@@ -110,31 +110,31 @@ export function Turn(props: TurnProps): ReactElement {
           </Text>
         )}
         {hasContent && (
-          <VStack
-            element="div"
-            name={{ kind: "none" }}
-            gap="md"
-            align="stretch"
-            justify="start"
-            wrap="nowrap"
-            className={styles["conversation-stream"]}
-          >
+          <div className={styles["conversation-stream"]}>
             {/* `key` は配列の添字ではなく、記録の位置と本文のステップの `step.id`（`MainViewStep.id`。古いステップを落とす前に振った通し番号）を使う。
               添字だと、古いステップが落ちて残りの添字が1つずつ前へずれた瞬間に React が別のステップの DOM を使い回してしまい、`<details>` の `open` のような制御されていない DOM の状態が別のステップへ乗り移って見える。 */}
-            {items.map((item, index) => (
-              <Fragment key={streamItemKey(item, index)}>
-                {seam.kind === "seam" && seam.before === index && (
-                  <AwaySeamLine label={seam.label} />
-                )}
-                <StreamItemView
-                  item={item}
-                  turn={turn}
-                  tasks={tasks}
-                  newest={props.newest}
-                  isRevealed={(stepId) => stepId === revealStepId}
-                  isLatest={(stepId) => stepId === latestStepId}
-                />
-              </Fragment>
+            {groups.map((group) => (
+              <div
+                key={streamItemKey(group.items[0] ?? { kind: "failure" }, group.start)}
+                className={styles["stream-group"]}
+                data-stream-group={group.speaker}
+              >
+                {group.items.map((item, offset) => (
+                  <Fragment key={streamItemKey(item, group.start + offset)}>
+                    {seam.kind === "seam" && seam.before === group.start + offset && (
+                      <AwaySeamLine label={seam.label} />
+                    )}
+                    <StreamItemView
+                      item={item}
+                      turn={turn}
+                      tasks={tasks}
+                      newest={props.newest}
+                      isRevealed={(stepId) => stepId === revealStepId}
+                      isLatest={(stepId) => stepId === latestStepId}
+                    />
+                  </Fragment>
+                ))}
+              </div>
             ))}
             {/* `key` を `toolUseId` にするので、書いている途中の部品から記録の部品へ移っても面を作り直さない。 */}
             {turn.drafts.map((draft, index) => (
@@ -145,7 +145,7 @@ export function Turn(props: TurnProps): ReactElement {
                 key={`draft:${draft.toolUseId}`}
               />
             ))}
-          </VStack>
+          </div>
         )}
       </div>
     </ReplyPortContext>
@@ -153,6 +153,16 @@ export function Turn(props: TurnProps): ReactElement {
 }
 
 const NO_SEAM = { kind: "none" } as const satisfies AwaySeam
+
+/** 流れの末尾がセリフのとき、続くお伺いの札をそのセリフと1組に見せる印。 */
+function endsWithSayAttribute(
+  items: readonly StreamItem[],
+  draftCount: number,
+): { readonly "data-ends-with-say"?: "" } {
+  return draftCount === 0 && items[items.length - 1]?.kind === "say"
+    ? { "data-ends-with-say": "" }
+    : {}
+}
 
 function streamItemKey(item: StreamItem, index: number): string {
   switch (item.kind) {

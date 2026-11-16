@@ -34,11 +34,15 @@ export function ReportHead(props: ReportHeadProps): ReactElement | undefined {
   }
 
   const meta = [
-    ...(label === "none" ? [] : [<span key="label">{LABEL_TEXT[label]}</span>]),
+    ...(label === "none" || (label === "interim" && phase.kind === "phase")
+      ? []
+      : [<span key="label">{LABEL_TEXT[label]}</span>]),
     ...(phase.kind === "none"
       ? []
       : [
-          <span key="phase">{phase.label}</span>,
+          <span key="phase">
+            <span aria-hidden="true">{phase.skipped ? "－" : "✓"}</span> {phase.label}
+          </span>,
           ...(phase.skipped ? [<span key="phase-skipped">飛ばした</span>] : []),
           <span key="phase-time">所要 {formatMeasured(phase.duration)}</span>,
         ]),

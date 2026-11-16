@@ -47,6 +47,12 @@
   padding-top: var(--stack-group);
   padding-inline: var(--region-padding);
 }
+/* 流れの末尾が聞いたセリフのとき、お伺いの札はそのセリフと1組に見せる（広い画面だけ）。 */
+@media (min-width: 761px) {
+  .turn-card:has([data-ends-with-say]) .turn-card-inquiry {
+    padding-top: var(--stack-tight);
+  }
+}
 /* レポート本文の余白。 */
 .turn-card-body {
   padding: var(--space-lg) var(--space-xl) var(--space-md);
@@ -108,6 +114,12 @@
   border-style: dashed;
   --report-chunk-rule: transparent;
   --report-chunk-ground: var(--surface-raised);
+}
+/* 済んだフェーズの控えは、幅を内容に任せず揃える。 */
+@media (min-width: 761px) {
+  .main-step.is-interim {
+    inline-size: min(100%, 560px);
+  }
 }
 /* 最終レポート（そのやり取りの最後の、中間でない本文。`MainViewStep.final`）。
    狭い画面の既定では箱を持たず、領域の surface を紙にする。中間レポートの破線の箱とは形で見分ける（広い画面は下の media が面を足す）。

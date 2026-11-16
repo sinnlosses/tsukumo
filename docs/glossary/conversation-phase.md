@@ -161,7 +161,7 @@
 
 ### 組
 
-- **英語識別子（予定）**: `StreamGroup`（組にまとめる純関数は `main-view/domain/` に置く）
+- **英語識別子**: `StreamGroup`（組にまとめる純関数は `main-view/domain/` に置く）
 - **定義**: 会話の流れで、記録の位置が隣り合う物（済んだフェーズの札・質問の記録・お伺い・失敗の表示・紙）とセリフを1つにまとめたもの。
   物はすぐ後ろのセリフと組み、後ろがセリフでないときだけすぐ前のセリフと組む。組の中の行の間は、組の外より狭い
   （`docs/architecture/adr/0062-stream-grammar-groups-now-line-inquiry-keys.md` 論点 1）

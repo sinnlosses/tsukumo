@@ -271,10 +271,56 @@ describe("Turn（畳んだ中間レポートの見出し）", () => {
       [...container.querySelectorAll("details.is-interim > summary")].map(
         (node) => node.textContent,
       ),
-    ).toEqual([
-      "中間レポート: 1/2 架空の段 · 所要 0秒",
-      "中間レポート: 2/2 架空の段 · 飛ばした · 所要 0秒",
+    ).toEqual(["✓ 1/2 架空の段 所要 0秒", "－ 2/2 架空の段 飛ばした 所要 0秒"])
+  })
+})
+
+describe("Turn（組の入れ物）", () => {
+  it("投稿は単独の組になり、札は前のセリフと同じ組に入って、前のセリフより前は別の組になる", () => {
+    putSession({
+      ...INITIAL_SESSION_STATE,
+      records: [
+        requestRecord({ turnId: TURN_ID }),
+        speechRecord({ text: "一言目" }),
+        speechRecord({ text: "二言目" }),
+      ],
+    })
+    const { container } = render(
+      <Turn
+        turn={turn([
+          step({
+            id: 0,
+            mark: "interim-folded",
+            body: {
+              kind: "text",
+              report: { kind: "markdown", markdown: "架空のまとめ" },
+              firstLine: "1/2 架空の段",
+              task: { kind: "none" },
+              finishedPhase: {
+                kind: "phase",
+                label: "1/2 架空の段",
+                duration: { kind: "known", milliseconds: 0 },
+                skipped: false,
+              },
+              changeSummary: { kind: "none" },
+            },
+          }),
+        ])}
+        newest
+        freshReport={false}
+      />,
+    )
+
+    const groups = [...container.querySelectorAll("[data-stream-group]")]
+    expect(groups.map((group) => group.getAttribute("data-stream-group"))).toEqual([
+      "user",
+      "other",
+      "other",
     ])
+    expect(groups.map((group) => group.querySelectorAll("details").length)).toEqual([0, 0, 1])
+    expect(groups[2]?.textContent).toContain("二言目")
+    expect(groups[2]?.textContent).toContain("1/2 架空の段")
+    expect(groups[2]?.textContent).toContain("所要 0秒")
   })
 })
 
@@ -302,7 +348,7 @@ describe("Turn（経過の畳み）", () => {
       [...fold.querySelectorAll("details.is-interim > summary")].map(
         (summary) => summary.textContent,
       ),
-    ).toEqual(["中間レポート: 中間0", "中間レポート: 中間1", "中間レポート: 中間2"])
+    ).toEqual(["中間0", "中間1", "中間2"])
 
     expect(
       [...container.querySelectorAll("[data-report-stub]")].map((stub) => stub.textContent),
@@ -369,10 +415,12 @@ describe("Turn（経過の畳み）", () => {
     expect(fold.textContent.indexOf("作業中の一言目")).toBeLessThan(
       fold.textContent.indexOf("作業中の二言目"),
     )
-    const stream = container.querySelector(".conversation-stream")
-    expect(stream?.textContent).toContain("締めの一言")
+    const groups = [...container.querySelectorAll("[data-stream-group]")]
+    expect(groups.map((group) => group.textContent).join("")).toContain("締めの一言")
     expect(
-      [...(stream?.children ?? [])].filter((child) => child.textContent.includes("作業中の")),
+      groups
+        .filter((group) => group.textContent.includes("作業中の"))
+        .map((group) => group.firstElementChild),
     ).toEqual([fold])
   })
 
@@ -445,7 +493,8 @@ describe("Turn（経過の畳み）", () => {
     const fold = typedElement(container.querySelector(".progress-fold"), HTMLDetailsElement, "畳み")
     expect(fold.querySelector(":scope > summary")?.textContent).toBe("作業の経過 1 件 · 質問 1 件")
     const inside = fold.textContent
-    expect(inside.indexOf("中間レポート")).toBeLessThan(inside.indexOf("中間の質問"))
+    expect(inside.indexOf("中間")).toBeGreaterThanOrEqual(0)
+    expect(inside.indexOf("中間")).toBeLessThan(inside.indexOf("中間の質問"))
     // 最終レポートより後ろに届いた質問は、流れの位置のまま畳みの外に残る。
     expect(inside).not.toContain("最終の質問")
     expect(container.textContent).toContain("最終の質問")

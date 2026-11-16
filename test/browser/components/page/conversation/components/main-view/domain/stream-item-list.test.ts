@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest"
 
 import {
   foldSummaryOf,
+  streamGroupsOf,
   streamItemsOf,
+  type StreamItem,
 } from "../../../../../../../../src/browser/components/page/conversation/components/main-view/domain/stream-item-list.ts"
 import { conversationStreamRows } from "../../../../../../../../src/browser/domain/main-view/conversation-stream.ts"
 import type { SessionRecord } from "../../../../../../../../src/shared/session/session-record.ts"
@@ -167,5 +169,57 @@ describe("streamItemsOf", () => {
     )
 
     expect(items.map((item) => item.kind)).toEqual(["post", "failure", "fold", "body"])
+  })
+})
+
+describe("streamGroupsOf", () => {
+  const [say1, say2] = streamItemsOf(
+    rowsOf([speechRecord({ text: "一言目" }), speechRecord({ text: "二言目" })]),
+    turn([]),
+  )
+  const [post] = streamItemsOf(rowsOf([requestRecord()]), turn([]))
+  if (say1 === undefined || say2 === undefined || post === undefined) {
+    throw new Error("見本の行が足りない")
+  }
+  const body = (id: number): StreamItem => ({
+    kind: "body",
+    step: step({ id, body: turnBodyText(`本文${String(id)}`) }),
+  })
+  const failure: StreamItem = { kind: "failure" }
+  const shapeOf = (items: readonly StreamItem[]) =>
+    streamGroupsOf(items).map((group) => group.items.map((item) => item.kind))
+
+  it("セリフ → 札 → セリフは、札が後ろのセリフと組み、前のセリフは単独になる", () => {
+    expect(shapeOf([say1, body(1), say2])).toEqual([["say"], ["body", "say"]])
+  })
+
+  it("札 → セリフは1組になる", () => {
+    expect(shapeOf([body(1), say1])).toEqual([["body", "say"]])
+  })
+
+  it("後ろがセリフでない物は、前のセリフと組む", () => {
+    expect(shapeOf([say1, failure])).toEqual([["say", "failure"]])
+  })
+
+  it("投稿は組に入らず、セリフは単独になる", () => {
+    const groups = streamGroupsOf([post, say1])
+    expect(groups.map((group) => group.speaker)).toEqual(["user", "other"])
+    expect(shapeOf([post, say1])).toEqual([["post"], ["say"]])
+  })
+
+  it("セリフどうし・物どうしは組まない", () => {
+    expect(shapeOf([say1, say2])).toEqual([["say"], ["say"]])
+    expect(shapeOf([body(1), body(2)])).toEqual([["body"], ["body"]])
+  })
+
+  it("組の start は、組の頭の行が全体で何番目か", () => {
+    expect(
+      streamGroupsOf([say1, body(1), say2, failure, post]).map((group) => group.start),
+    ).toEqual([0, 1, 3, 4])
+  })
+
+  it("平らにした組が、入力の並びと同じ", () => {
+    const input = [say1, body(1), say2, failure, post, body(2)]
+    expect(streamGroupsOf(input).flatMap((group) => group.items)).toEqual(input)
   })
 })

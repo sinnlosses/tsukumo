@@ -146,6 +146,55 @@ export function streamItemsOf(
   return turn.failure.kind === "failed" ? withFailure(folded) : folded
 }
 
+/** 間隔を揃える1組。`speaker` は組の頭の行が利用者の投稿かどうか。`start` は組の頭の行が全体で何番目か。 */
+export type StreamGroup = {
+  readonly items: readonly StreamItem[]
+  readonly start: number
+  readonly speaker: "user" | "other"
+}
+
+/**
+ * 隣り合う物とセリフを、並べ替えずに1組へ畳む。
+ * 物は後ろのセリフと先に組み、後ろがセリフでないときだけ前のセリフと組む。1行は1組にしか入らない。
+ */
+export function streamGroupsOf(items: readonly StreamItem[]): readonly StreamGroup[] {
+  const isThing = (item: StreamItem) => item.kind !== "say" && item.kind !== "post"
+  const groups: StreamItem[][] = []
+  // 物と組んだセリフの添字。
+  const used = new Set<number>()
+  items.forEach((item, index) => {
+    if (used.has(index)) {
+      return
+    }
+    if (!isThing(item)) {
+      groups.push([item])
+      return
+    }
+    const next = items[index + 1]
+    if (next?.kind === "say") {
+      used.add(index + 1)
+      groups.push([item, next])
+      return
+    }
+    const previous = groups[groups.length - 1]
+    if (previous?.length === 1 && previous[0]?.kind === "say") {
+      previous.push(item)
+      return
+    }
+    groups.push([item])
+  })
+  let start = 0
+  return groups.map((group) => {
+    const placed: StreamGroup = {
+      items: group,
+      speaker: group[0]?.kind === "post" ? "user" : "other",
+      start,
+    }
+    start += group.length
+    return placed
+  })
+}
+
 /** 「作業の経過」の `<summary>` に出す字。件数・段ごとの所要は `progressFoldSummary` が組む。 */
 export function foldSummaryOf(items: readonly ProgressItem[]): string {
   return `作業の${progressFoldSummary(items.flatMap(entryOf))}`

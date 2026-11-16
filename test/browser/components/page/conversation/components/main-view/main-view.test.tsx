@@ -152,12 +152,12 @@ describe("MainView（中間レポート）", () => {
 
     // 真ん中あたり（i=15）を利用者が開いたことにする。<details> の open はReactが制御しない
     // ネイティブの状態なので、直接プロパティを立てて「開いた」を再現する。
-    const target = findBySummary("中間レポート: 見出し15")
+    const target = findBySummary("見出し15")
     target.open = true
     expect(target.open).toBe(true)
 
     // 別の1件（i=16、まだ開いていない）も、化けていないかの対照として控えておく。
-    const untouchedText = "中間レポート: 見出し16"
+    const untouchedText = "見出し16"
     expect(findBySummary(untouchedText).open).toBe(false)
 
     // 記録がさらに積まれ（46件）、前のほうがもう1件古いほうから落ちる
@@ -167,7 +167,7 @@ describe("MainView（中間レポート）", () => {
     // id を key にしていれば、i=15 の <details> は同じ DOM ノードのまま残り、
     // 開いた状態も中身もそのまま。添字を key にしていた旧実装では、ステップが1つ前へ
     // ずれた分だけ別のステップの中身にこの open な枠が使い回されてしまう。
-    const targetAfter = findBySummary("中間レポート: 見出し15")
+    const targetAfter = findBySummary("見出し15")
     expect(targetAfter.open).toBe(true)
     expect(targetAfter).toBe(target)
 

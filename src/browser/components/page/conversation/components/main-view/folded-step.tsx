@@ -55,7 +55,7 @@ export function FoldedStep(props: FoldedStepProps): ReactElement {
         weight="inherit"
         className={styles["step-heading"]}
       >
-        {interimSummary(props.step.body)}
+        <InterimSummary body={props.step.body} />
       </Text>
       {opened && (
         <StepReport
@@ -156,14 +156,25 @@ function reportLabel(
   return step.mark === "final" && (hasInterimReport || task.kind === "task") ? "final" : "none"
 }
 
-/** 畳んだ中間レポートの `<summary>` に出す文字列。先頭行が無ければラベルだけ。 */
-function interimSummary(body: MainViewStepBody): string {
+/**
+ * 畳んだ中間レポートの `<summary>` の中身。
+ * 済んだフェーズは、印・「n/N 名前」・飛ばしたか・所要（右寄せ）の1行。先頭行が無ければラベルだけ。
+ */
+function InterimSummary(props: { readonly body: MainViewStepBody }): ReactElement {
+  const { body } = props
   if (body.kind === "none" || body.firstLine === "") {
-    return "中間レポート"
+    return <>中間レポート</>
   }
-  const time =
-    body.finishedPhase.kind === "phase"
-      ? `${body.finishedPhase.skipped ? " · 飛ばした" : ""} · 所要 ${formatMeasured(body.finishedPhase.duration)}`
-      : ""
-  return `中間レポート: ${body.firstLine}${time}`
+  if (body.finishedPhase.kind !== "phase") {
+    return <>{body.firstLine}</>
+  }
+  const { skipped, duration } = body.finishedPhase
+  return (
+    <>
+      <span aria-hidden="true">{skipped ? "－" : "✓"}</span> {body.firstLine}
+      <span className={styles["step-heading-time"]}>
+        {skipped ? " 飛ばした" : ""} 所要 {formatMeasured(duration)}
+      </span>
+    </>
+  )
 }
