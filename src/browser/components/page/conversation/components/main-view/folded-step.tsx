@@ -1,6 +1,5 @@
 // ステップの本文の描き方。中間レポートを1行に畳んだ形（`FoldedStep`）と、中間・最終の開いた本文（`StepReport`）。
 
-import clsx from "clsx"
 import { useState, type ReactElement } from "react"
 
 import type { ReportTask } from "../../../../../../shared/report/report-task.ts"
@@ -13,7 +12,7 @@ import { formatMeasured } from "../../../../../../shared/utils/elapsed-time.ts"
 import { withoutPhaseTimes } from "../../../../../domain/main-view/main-view-report-body.ts"
 import { Report } from "../../../../../features/report/report.tsx"
 import { usePhoneWidth } from "../../../../../hooks/use-phone-width.ts"
-import { Text } from "../../../../ui/text/text.tsx"
+import { Disclosure } from "../../../../ui/disclosure/disclosure.tsx"
 import { ExpandableHead } from "./expandable-head.tsx"
 import { useFavorVisibility } from "./hooks/use-favor-visibility.ts"
 import styles from "./main-view.module.css"
@@ -36,27 +35,20 @@ type FoldedStepProps = {
 export function FoldedStep(props: FoldedStepProps): ReactElement {
   const [opened, setOpened] = useState(false)
   return (
-    <details
+    <Disclosure
       onToggle={(event) => {
         if (event.currentTarget.open) {
           setOpened(true)
         }
       }}
-      className={clsx(
-        styles["main-step"],
-        styles["is-interim"],
-        props.phoneHidden && styles["phone-hidden"],
-      )}
+      gap="block"
+      hiddenOnNarrow={props.phoneHidden}
+      summaryTone="ink-quiet"
+      summarySize="label"
+      className={`${styles["main-step"]} ${styles["is-interim"]}`}
+      summaryClassName={styles["step-heading"]}
+      summary={<InterimSummary body={props.step.body} />}
     >
-      <Text
-        element="summary"
-        size="label"
-        tone="ink-quiet"
-        weight="inherit"
-        className={styles["step-heading"]}
-      >
-        <InterimSummary body={props.step.body} />
-      </Text>
       {opened && (
         <StepReport
           step={props.step}
@@ -68,7 +60,7 @@ export function FoldedStep(props: FoldedStepProps): ReactElement {
           phoneHidden={props.phoneHidden}
         />
       )}
-    </details>
+    </Disclosure>
   )
 }
 

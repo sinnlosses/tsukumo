@@ -5,7 +5,7 @@ import { Fragment, type ReactElement } from "react"
 import type { TaskSummaryResult } from "../../../../../../shared/repository/task-summary.ts"
 import type { MainViewTurn } from "../../../../../../shared/session/main-view-shape.ts"
 import { localTimeZoneId } from "../../../../../utils/clock.ts"
-import { Text } from "../../../../ui/text/text.tsx"
+import { Disclosure } from "../../../../ui/disclosure/disclosure.tsx"
 import { VStack } from "../../../../ui/v-stack/v-stack.tsx"
 import { AnswerPost } from "./answer-post.tsx"
 import { foldSummaryOf, type ProgressItem } from "./domain/stream-item-list.ts"
@@ -36,10 +36,15 @@ export function ProgressFold(props: ProgressFoldProps): ReactElement {
     timeZone: localTimeZoneId(),
   })
   return (
-    <details className={styles["progress-fold"]}>
-      <Text element="summary" size="label" tone="ink-quiet" weight="inherit" className="">
-        {foldSummaryOf(props.items)}
-      </Text>
+    <Disclosure
+      gap="none"
+      hiddenOnNarrow={false}
+      summaryTone="ink-quiet"
+      summarySize="label"
+      className={styles["progress-fold"]}
+      summaryClassName=""
+      summary={foldSummaryOf(props.items)}
+    >
       <VStack
         element="div"
         name={{ kind: "none" }}
@@ -98,6 +103,6 @@ export function ProgressFold(props: ProgressFoldProps): ReactElement {
           }
         })}
       </VStack>
-    </details>
+    </Disclosure>
   )
 }

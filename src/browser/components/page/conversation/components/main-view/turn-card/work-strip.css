@@ -319,6 +319,3 @@
   padding-left: var(--inline-group);
   color: var(--ink-quiet);
 }
-.work-strip-plan-steps > summary {
-  cursor: pointer;
-}

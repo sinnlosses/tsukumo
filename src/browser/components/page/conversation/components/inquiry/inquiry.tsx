@@ -21,6 +21,7 @@ import { useInquiryJump } from "../../../../../stores/inquiry-jump.ts"
 import { mergeRefs } from "../../../../../utils/merge-ref.ts"
 import { Button } from "../../../../ui/button/button.tsx"
 import { Dialog } from "../../../../ui/dialog/dialog.tsx"
+import { ExpandButton } from "../../../../ui/expand-button/expand-button.tsx"
 import { FirstNoteList } from "../../../../ui/first-note-list/first-note-list.tsx"
 import { HStack } from "../../../../ui/h-stack/h-stack.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
@@ -52,7 +53,6 @@ const KIND_LABEL = {
 const BACK_LABEL = "戻る"
 const CONFIRM_LABEL = "これで確定する"
 const CONFIRM_NOTE = "戻せない操作。⏎ だけでは確定しない"
-const EXPAND_LABEL = "広げる"
 const COLLAPSE_LABEL = "閉じる"
 const BOARD_LABEL = "お伺い（広げた板）"
 const WRITING_NOTE = "入力欄の答えで答えます"
@@ -305,17 +305,20 @@ function InquiryFace(props: {
           >
             {WAITED_PREFIX} {waitedText(now - inquiry.askedAt)}
           </Text>
-          {props.expand.kind !== "none" && (
+          {props.expand.kind === "open" && (
+            <ExpandButton className={styles["inquiry-expand"]} onClick={props.expand.onOpen} />
+          )}
+          {props.expand.kind === "close" && (
             <Button
               variant="outline-hover-warn"
               size="label"
               pressed="none"
               disabled={false}
-              disclosure={props.expand.kind === "open" ? { kind: "dialog" } : { kind: "none" }}
+              disclosure={{ kind: "none" }}
               className={styles["inquiry-expand"]}
-              onClick={props.expand.kind === "open" ? props.expand.onOpen : props.expand.onClose}
+              onClick={props.expand.onClose}
             >
-              {props.expand.kind === "open" ? EXPAND_LABEL : COLLAPSE_LABEL}
+              {COLLAPSE_LABEL}
             </Button>
           )}
         </HStack>

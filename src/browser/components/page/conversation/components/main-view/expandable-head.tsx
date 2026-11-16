@@ -6,10 +6,9 @@ import type { MainViewStepBody } from "../../../../../../shared/session/main-vie
 import { Report } from "../../../../../features/report/report.tsx"
 import { Button } from "../../../../ui/button/button.tsx"
 import { Dialog } from "../../../../ui/dialog/dialog.tsx"
-import { MaximizeIcon } from "../../../../ui/icon/icon.tsx"
+import { ExpandButton } from "../../../../ui/expand-button/expand-button.tsx"
 import styles from "./main-view.module.css"
 
-const EXPAND_LABEL = "広げる"
 const COLLAPSE_LABEL = "閉じる"
 const BOARD_LABEL = "最終レポート"
 
@@ -33,17 +32,7 @@ export function ExpandableHead(props: ExpandableHeadProps): ReactElement {
     <>
       <div className={styles["report-head-frame"]}>
         {props.head}
-        <Button
-          variant="ghost-hover-rule-soft"
-          size="label"
-          pressed="none"
-          disabled={false}
-          disclosure={{ kind: "dialog" }}
-          className={styles["report-expand"]}
-          onClick={() => setExpanded(true)}
-        >
-          <MaximizeIcon /> {EXPAND_LABEL}
-        </Button>
+        <ExpandButton className={styles["report-expand"]} onClick={() => setExpanded(true)} />
       </div>
       {expanded && (
         <Dialog

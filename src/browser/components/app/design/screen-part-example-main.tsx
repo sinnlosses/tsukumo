@@ -66,7 +66,7 @@ const STRIP_BASE = {
   readingLabel: "",
   sideLabel: "経過 6分12秒",
   steps: {
-    toggleLabel: "手順 12件 ▾",
+    toggleLabel: "手順 12件",
     list: { kind: "closed" },
     onToggle: noop,
     phaseRows: { rows: [], rest: [] },

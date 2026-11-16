@@ -116,7 +116,7 @@ export type WorkStripTrackSlot = WorkStripSlot | WorkStripCollapsed
 
 /** 「手順 n件」の口と、押すと開く依頼の手順の一覧。 */
 export type WorkStripSteps = {
-  /** 「手順 12件 ▾」（開いていれば ▴）。 */
+  /** 「手順 12件」。開閉の印は口の側が付ける。 */
   readonly toggleLabel: string
   /** 一覧が開いているか。`landing` は開いた一覧をどこへ連れていくか。 */
   readonly list:
@@ -242,7 +242,7 @@ export function useWorkStrip(): WorkStripModel {
     },
   )
   const steps: WorkStripSteps = {
-    toggleLabel: `手順 ${String(turnStepList.steps.length)}件 ${list.kind === "open" ? "▴" : "▾"}`,
+    toggleLabel: `手順 ${String(turnStepList.steps.length)}件`,
     list,
     onToggle: () => toggle(exchange),
     phaseRows:

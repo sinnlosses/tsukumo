@@ -53,13 +53,6 @@
   margin: var(--space-sm) 0 0;
   padding: var(--space-sm) var(--space-md);
 }
-/* 字の段・色は `Text` が描く `<summary>` に、この要素選択子で開閉のカーソルだけ残す。 */
-.question-previews > summary {
-  cursor: pointer;
-}
-.question-previews[open] > summary {
-  margin-bottom: var(--space-sm);
-}
 /* preview の持ち主の札。答え待ちの面のカードの見出しと同じ役割。 */
 /* 太さは `Text` が持つ。margin だけここに置く。 */
 .question-preview-label {

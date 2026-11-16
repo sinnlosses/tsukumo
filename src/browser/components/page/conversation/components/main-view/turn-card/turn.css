@@ -2,9 +2,8 @@
 .turn-dropped {
   margin: 0 0 var(--space-md);
 }
-/* 字の段・色は `Text` が持つ。margin・字間だけここに置く。 */
+/* 字の段・色は `Text` が持つ。字間だけここに置く。 */
 .step-heading {
-  margin: 0 0 var(--space-sm);
   letter-spacing: 0.08em;
 }
 /* 済んだフェーズの控えの所要（と飛ばした印）。1行の右端へ寄せる。 */
@@ -15,12 +14,7 @@
 .progress-fold {
   margin: 0;
 }
-/* 押す的の下限（24px）を保つ。 */
-.progress-fold > summary {
-  min-height: 1.5rem;
-  line-height: 1.5rem;
-  cursor: pointer;
-}
+/* 狭い画面では押す的を上下へ広げる。 */
 @media (max-width: 760px) {
   .progress-fold > summary {
     position: relative;

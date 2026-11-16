@@ -442,8 +442,8 @@ describe("Turn（経過の畳み）", () => {
       />,
     )
     const fold = closed.container.querySelector(".progress-fold")
-    expect(fold?.classList.contains("phone-hidden")).toBe(false)
-    expect(fold?.querySelectorAll(".phone-hidden")).toHaveLength(0)
+    expect(fold?.classList.contains("hidden-on-narrow")).toBe(false)
+    expect(fold?.querySelectorAll(".hidden-on-narrow")).toHaveLength(0)
     closed.unmount()
 
     const working = render(
@@ -453,7 +453,9 @@ describe("Turn（経過の畳み）", () => {
         freshReport={false}
       />,
     )
-    expect(working.container.querySelectorAll("details.is-interim.phone-hidden")).toHaveLength(3)
+    expect(working.container.querySelectorAll("details.is-interim.hidden-on-narrow")).toHaveLength(
+      3,
+    )
   })
 
   function askedStep(id: number, questionText: string): MainViewQuestion {

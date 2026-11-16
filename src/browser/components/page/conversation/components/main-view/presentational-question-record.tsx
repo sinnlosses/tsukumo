@@ -9,6 +9,7 @@ import {
   detailBlockClassName,
   QuestionPreviewMarkdown,
 } from "../../../../../features/report/markdown.tsx"
+import { Disclosure } from "../../../../ui/disclosure/disclosure.tsx"
 import { Heading } from "../../../../ui/heading/heading.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
 import { hasDetail, InquiryBrief, InquiryDetail, InquiryOptionList } from "../inquiry/inquiry.tsx"
@@ -130,10 +131,16 @@ function PreviewDetails(props: {
 
   return (
     // 開くまで中身を描かない。一度開いたあとは閉じても外さない（`useQuestionRecord`）。
-    <details className={styles["question-previews"]} onToggle={question.onTogglePreviews}>
-      <Text element="summary" size="secondary" tone="ink-quiet" weight="inherit" className="">
-        {PREVIEWS_SUMMARY}
-      </Text>
+    <Disclosure
+      onToggle={question.onTogglePreviews}
+      gap="block"
+      hiddenOnNarrow={false}
+      summaryTone="ink-quiet"
+      summarySize="secondary"
+      className={styles["question-previews"]}
+      summaryClassName=""
+      summary={PREVIEWS_SUMMARY}
+    >
       {question.previewsOpened &&
         question.previews.map((preview) => (
           <PreviewBlock
@@ -143,7 +150,7 @@ function PreviewDetails(props: {
             key={preview.label}
           />
         ))}
-    </details>
+    </Disclosure>
   )
 }
 
@@ -155,10 +162,16 @@ function BriefDetails(props: {
   const { brief } = props
 
   return (
-    <details className={styles["question-previews"]} onToggle={brief.onToggle}>
-      <Text element="summary" size="secondary" tone="ink-quiet" weight="inherit" className="">
-        {props.summary}
-      </Text>
+    <Disclosure
+      onToggle={brief.onToggle}
+      gap="block"
+      hiddenOnNarrow={false}
+      summaryTone="ink-quiet"
+      summarySize="secondary"
+      className={styles["question-previews"]}
+      summaryClassName=""
+      summary={props.summary}
+    >
       {brief.opened && (
         <>
           <InquiryBrief brief={brief.brief} />
@@ -173,7 +186,7 @@ function BriefDetails(props: {
           ))}
         </>
       )}
-    </details>
+    </Disclosure>
   )
 }
 

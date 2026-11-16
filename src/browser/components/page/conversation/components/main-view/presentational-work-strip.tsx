@@ -13,6 +13,7 @@ import {
 } from "../../../../../features/report/markdown.tsx"
 import { PhaseTimeSummary } from "../../../../../features/report/report.tsx"
 import { Button } from "../../../../ui/button/button.tsx"
+import { Disclosure, DisclosureMark } from "../../../../ui/disclosure/disclosure.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
 import { WORK_STRIP_MARKS, type WorkStripResult } from "../../domain/turn-result-mark.ts"
 import type { StepsLanding } from "../../stores/work-strip-step-list.ts"
@@ -170,12 +171,20 @@ function PhaseRow(props: { readonly row: StepsPhaseRow }): ReactElement {
         )}
       </p>
       {row.stepCount > 0 && (
-        <details open={row.open} className={styles["work-strip-plan-steps"]}>
-          <summary>手順 {row.stepCount}</summary>
+        <Disclosure
+          open={row.open}
+          gap="none"
+          hiddenOnNarrow={false}
+          summaryTone="inherit"
+          summarySize="inherit"
+          className={styles["work-strip-plan-steps"]}
+          summaryClassName=""
+          summary={`手順 ${String(row.stepCount)}`}
+        >
           {row.groups.map((group) => (
             <CurrentWorkStepGroup key={group.key} group={group} runningMark="still" />
           ))}
-        </details>
+        </Disclosure>
       )}
     </li>
   )
@@ -290,6 +299,7 @@ function StepsToggle(props: { readonly steps: WorkStripSteps }): ReactElement {
       className={styles["work-strip-toggle"]}
       onClick={props.steps.onToggle}
     >
+      <DisclosureMark open={props.steps.list.kind === "open"} />
       {props.steps.toggleLabel}
     </Button>
   )

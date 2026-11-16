@@ -526,10 +526,27 @@
                                     "data-elevation": "none",
                                     "data-astryx-pressable": "",
                                     "aria-expanded": "false",
+                                    "aria-label": "手順 3件",
                                     "type": "button"
                                   },
                                   "children": [
-                                    "手順 3件 ▾",
+                                    {
+                                      "tag": "span",
+                                      "attributes": {
+                                        "data-open": "false",
+                                        "aria-hidden": "true"
+                                      },
+                                      "children": [
+                                        {
+                                          "tag": "svg",
+                                          "attributes": {
+                                            "data-size": "sm",
+                                            "data-color": "inherit"
+                                          }
+                                        }
+                                      ]
+                                    },
+                                    "手順 3件",
                                     {
                                       "tag": "span",
                                       "attributes": {
@@ -610,6 +627,21 @@
                                     {
                                       "tag": "summary",
                                       "children": [
+                                        {
+                                          "tag": "span",
+                                          "attributes": {
+                                            "aria-hidden": "true"
+                                          },
+                                          "children": [
+                                            {
+                                              "tag": "svg",
+                                              "attributes": {
+                                                "data-size": "sm",
+                                                "data-color": "inherit"
+                                              }
+                                            }
+                                          ]
+                                        },
                                         {
                                           "tag": "span",
                                           "attributes": {
