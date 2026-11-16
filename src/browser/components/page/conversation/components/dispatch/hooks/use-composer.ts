@@ -93,7 +93,7 @@ export type ComposerModel = {
   readonly promptImage: Omit<PromptImageModel, "reset">
   /** `<textarea>` の上の帯（質問に答えている間だけ出る）。 */
   readonly band: ComposerBand
-  /** 質問に答えている間か（枠を `--state-warn` にし、送るボタンの字を変える）。 */
+  /** 質問に答えている間か（狭い画面だけ枠を `--state-warn` にする。送るボタンの字は広い画面でも変える）。 */
   readonly answering: boolean
   readonly onSubmit: (event: { readonly preventDefault: () => void }) => void
   /** 入力欄の上の「頼みごと」の列。 */
@@ -361,7 +361,7 @@ const ANSWER_LABEL = "質問への答えを書く"
 /** `<textarea>` の上の帯の文言。誰が聞いているかを名前で言い、名前が無いパックでは名前を使わずに書く。 */
 function inquiryBandText(kind: "permission" | "question", subject: string): string {
   return kind === "question"
-    ? `↓ ${subject}質問しています。下の選択肢から選ぶか、ここに書いて答えてください`
+    ? `${subject}質問しています。選択肢から選ぶか、ここに書いて答えられます`
     : `↓ ${subject}実行の許可を待っています`
 }
 

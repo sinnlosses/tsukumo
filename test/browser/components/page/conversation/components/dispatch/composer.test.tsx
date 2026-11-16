@@ -351,9 +351,7 @@ describe("Composer", () => {
     renderComposer({ character: FIXTURE_CHARACTER, pending: [QUESTION_PENDING] })
 
     expect(
-      screen.getByText(
-        "↓ 架空の名前 が質問しています。下の選択肢から選ぶか、ここに書いて答えてください",
-      ),
+      screen.getByText("架空の名前 が質問しています。選択肢から選ぶか、ここに書いて答えられます"),
     ).toBeDefined()
     expect(screen.getByPlaceholderText("選択肢以外の答えを書く…")).toBeDefined()
     expect(screen.queryByPlaceholderText(/依頼を書く/)).toBeNull()

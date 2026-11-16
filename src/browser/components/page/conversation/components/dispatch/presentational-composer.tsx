@@ -193,7 +193,7 @@ export function PresentationalComposer({
       <TurnStatus
         betweenElapsedAndAction={
           <Button
-            variant={answering ? "outline-warn" : "outline-accent"}
+            variant={answering && phone ? "outline-warn" : "outline-accent"}
             size="secondary"
             pressed="none"
             disabled={newSession.disabled}

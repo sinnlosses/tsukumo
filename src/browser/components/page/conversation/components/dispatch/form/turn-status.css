@@ -31,13 +31,9 @@
 .dispatch-elapsed {
   font-family: var(--font-mono);
 }
-/* 円形のボタンの包み。置き場は持たず、答え待ちの色と、狭い画面で隠す口だけを受け持つ。
-   答え待ちの質問がある間は、円形のボタンを答え待ちの色（--state-warn）で塗る。 */
+/* 円形のボタンの包み。置き場は持たず、狭い画面で隠す口だけを受け持つ。色は答え待ちでも変えない（琥珀は帯・カードの縁・入力欄の上の1行が受け持つ）。 */
 .dispatch-action {
   display: contents;
-}
-.dispatch-form.is-answering .dispatch-action {
-  --round-button-color: var(--state-warn);
 }
 /* 狭い画面（760px 以下）では経過を画面の頭が、送信と中断を右の丸ボタン（<PhoneTurnAction>）が持つので、この行には出さない。 */
 @media (max-width: 760px) {
