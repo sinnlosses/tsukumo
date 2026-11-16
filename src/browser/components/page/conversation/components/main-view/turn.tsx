@@ -29,7 +29,12 @@ import { useDraftedReports } from "../../stores/drafted-report.ts"
 import { awaySeamOf, type AwaySeam } from "./domain/away-seam.ts"
 import { revealStepIdOf } from "./domain/draft-reveal.ts"
 import { REPORT_STEP_ATTRIBUTE } from "./domain/outline-report-head.ts"
-import { streamGroupsOf, streamItemsOf, type StreamItem } from "./domain/stream-item-list.ts"
+import {
+  streamGroupsOf,
+  streamItemsOf,
+  type StreamGroup,
+  type StreamItem,
+} from "./domain/stream-item-list.ts"
 import { DraftReport } from "./draft-report.tsx"
 import { FoldedStep, StepReport } from "./folded-step.tsx"
 import { useReplyPort } from "./hooks/use-reply-port.ts"
@@ -115,7 +120,7 @@ export function Turn(props: TurnProps): ReactElement {
               添字だと、古いステップが落ちて残りの添字が1つずつ前へずれた瞬間に React が別のステップの DOM を使い回してしまい、`<details>` の `open` のような制御されていない DOM の状態が別のステップへ乗り移って見える。 */}
             {groups.map((group) => (
               <div
-                key={streamItemKey(group.items[0] ?? { kind: "failure" }, group.start)}
+                key={groupKey(group)}
                 className={styles["stream-group"]}
                 data-stream-group={group.speaker}
               >
@@ -136,6 +141,9 @@ export function Turn(props: TurnProps): ReactElement {
                 ))}
               </div>
             ))}
+            {turn.drafts.length > 0 && (
+              <div aria-hidden="true" data-closing-slot="" className={styles["closing-slot"]} />
+            )}
             {/* `key` を `toolUseId` にするので、書いている途中の部品から記録の部品へ移っても面を作り直さない。 */}
             {turn.drafts.map((draft, index) => (
               <DraftReport
@@ -162,6 +170,12 @@ function endsWithSayAttribute(
   return draftCount === 0 && items[items.length - 1]?.kind === "say"
     ? { "data-ends-with-say": "" }
     : {}
+}
+
+/** 締めのセリフはあとから紙の前に加わるので、紙の `key` を組の `key` にして、加わっても紙を作り直さない。 */
+function groupKey(group: StreamGroup): string {
+  const head = group.items.find((item) => item.kind !== "say" || item.closing !== true)
+  return streamItemKey(head ?? { kind: "failure" }, group.start)
 }
 
 function streamItemKey(item: StreamItem, index: number): string {

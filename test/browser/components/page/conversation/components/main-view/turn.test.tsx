@@ -416,12 +416,20 @@ describe("Turn（経過の畳み）", () => {
       fold.textContent.indexOf("作業中の二言目"),
     )
     const groups = [...container.querySelectorAll("[data-stream-group]")]
-    expect(groups.map((group) => group.textContent).join("")).toContain("締めの一言")
     expect(
       groups
         .filter((group) => group.textContent.includes("作業中の"))
         .map((group) => group.firstElementChild),
     ).toEqual([fold])
+    const closingGroup = groups.find((group) => group.textContent.includes("締めの一言"))
+    expect(closingGroup).not.toBe(groups.find((group) => group.contains(fold)))
+    expect(closingGroup?.textContent.indexOf("締めの一言")).toBeLessThan(
+      closingGroup?.textContent.indexOf("最終") ?? -1,
+    )
+    expect(closingGroup?.querySelector("[data-report-stub]")?.textContent).toBe("最終")
+    expect(fold.compareDocumentPosition(closingGroup ?? fold)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    )
   })
 
   it("経過の畳みの中は狭い画面でも隠さず、働くあいだの畳んだ中間レポートは隠したまま", () => {

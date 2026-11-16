@@ -70,7 +70,8 @@ describe("streamItemsOf", () => {
       turn([reportStep(0, "fictional-report", "final")]),
     )
 
-    expect(items.map((item) => item.kind)).toEqual(["post", "fold", "body", "say"])
+    expect(items.map((item) => item.kind)).toEqual(["post", "fold", "say", "body"])
+    expect(items[2]?.kind === "say" && items[2].closing).toBe(true)
     const fold = items[1]
     expect(fold?.kind === "fold" && fold.items.map((item) => item.kind)).toEqual([
       "say",
@@ -102,6 +103,61 @@ describe("streamItemsOf", () => {
       "body",
     ])
     expect(fold?.kind === "fold" && foldSummaryOf(fold.items)).toBe("作業の経過 1 件 · セリフ 1 件")
+  })
+
+  it("中間レポートの締めのセリフは紙の前へ移り、畳みの中に入る。紙の前のほかの行の並びは変わらない", () => {
+    const items = streamItemsOf(
+      rowsOf([
+        requestRecord(),
+        speechRecord({ text: "作業中" }),
+        reportWith("interim", "中間"),
+        speechRecord({ text: "中間の締め" }),
+        reportWith("last", "最終"),
+        speechRecord({ text: "最終の締め" }),
+      ]),
+      turn([reportStep(0, "interim", "interim-kept"), reportStep(1, "last", "final")]),
+    )
+
+    expect(items.map((item) => item.kind)).toEqual(["post", "fold", "say", "body"])
+    const fold = items[1]
+    expect(fold?.kind === "fold" && fold.items.map((item) => item.kind)).toEqual([
+      "say",
+      "say",
+      "body",
+    ])
+  })
+
+  it("最終レポートの後ろの質問の記録（お願い）は、締めのセリフと紙より後ろ、流れの最下部に来る", () => {
+    const entry = {
+      kind: "question",
+      toolUseId: "ask-1",
+      questions: [],
+      answers: [],
+      briefs: [],
+      imageSizes: [],
+      unshelvedImages: [],
+    } as const
+    const items = streamItemsOf(
+      rowsOf([requestRecord(), reportRecord("本文"), speechRecord({ text: "締め" }), { ...entry }]),
+      turn([
+        step({
+          ...reportStep(0, "fictional-report", "final"),
+          actions: [{ ...entry, questions: [] }],
+        }),
+      ]),
+    )
+
+    expect(items.map((item) => item.kind)).toEqual(["post", "say", "body", "question"])
+  })
+
+  it("本文が引き当たらない report の後ろのセリフは移さない", () => {
+    const items = streamItemsOf(
+      rowsOf([requestRecord(), reportWith("nothing", "本文なし"), speechRecord({ text: "あと" })]),
+      turn([]),
+    )
+
+    expect(items.map((item) => item.kind)).toEqual(["post", "say"])
+    expect(items[1]?.kind === "say" && items[1].closing).toBeUndefined()
   })
 
   it("最終レポートが無いあいだは畳まず、突き合わせの外の本文は末尾に並ぶ", () => {
@@ -210,6 +266,15 @@ describe("streamGroupsOf", () => {
   it("セリフどうし・物どうしは組まない", () => {
     expect(shapeOf([say1, say2])).toEqual([["say"], ["say"]])
     expect(shapeOf([body(1), body(2)])).toEqual([["body"], ["body"]])
+  })
+
+  it("畳みの直後の締めのセリフは、畳みと組まず後ろの紙と組む", () => {
+    if (say1.kind !== "say") {
+      throw new Error("セリフの見本ではない")
+    }
+    const closing: StreamItem = { ...say1, closing: true }
+    const fold: StreamItem = { kind: "fold", items: [] }
+    expect(shapeOf([post, fold, closing, body(1)])).toEqual([["post"], ["fold"], ["say", "body"]])
   })
 
   it("組の start は、組の頭の行が全体で何番目か", () => {

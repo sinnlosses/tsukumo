@@ -3,7 +3,7 @@
 import type { MainViewStep } from "../../../../../../../shared/session/main-view-shape.ts"
 import type { ConversationStreamRow } from "../../../../../../domain/main-view/conversation-stream.ts"
 import type { Away } from "../../../domain/away-seam.ts"
-import type { StreamItem } from "./stream-item-list.ts"
+import type { ProgressItem, StreamItem } from "./stream-item-list.ts"
 
 const MS_PER_MINUTE = 60_000
 
@@ -27,12 +27,14 @@ export function awaySeamOf(input: {
 }): AwaySeam {
   const { away, rows, items } = input
   const added = rows.slice(away.rowCount)
-  const before = added
+  // 締めのセリフは記録より前に描くので、先頭の行ではなく描く位置が最も前のものを選ぶ。
+  const drawn = added
     .map((row) => items.findIndex((item) => drawsRow(item, row)))
-    .find((index) => index >= 0)
-  if (before === undefined) {
+    .filter((index) => index >= 0)
+  if (drawn.length === 0) {
     return { kind: "none" }
   }
+  const before = Math.min(...drawn)
   const phaseCount = added.filter(
     (row) => row.kind === "step" && row.record.kind === "work-plan",
   ).length
@@ -57,7 +59,10 @@ function drawsRow(item: StreamItem, row: ConversationStreamRow): boolean {
   switch (row.kind) {
     case "post":
     case "say":
-      return item === row || (item.kind === "fold" && item.items.includes(row))
+      return (
+        isRowOf(item, row) ||
+        (item.kind === "fold" && item.items.some((entry) => isRowOf(entry, row)))
+      )
     case "failure":
       return item.kind === "failure"
     case "question":
@@ -82,6 +87,14 @@ function drawsRow(item: StreamItem, row: ConversationStreamRow): boolean {
         item.items.some((entry) => entry.kind === "plan" && entry.record === row.record)
       )
   }
+}
+
+/** 締めのセリフは行の写しなので、同じ行かどうかは記録で見る。 */
+function isRowOf(
+  item: StreamItem | ProgressItem,
+  row: Extract<ConversationStreamRow, { readonly kind: "post" | "say" }>,
+): boolean {
+  return (item.kind === "post" || item.kind === "say") && item.record === row.record
 }
 
 function isReportBodyOf(step: MainViewStep, toolUseId: string): boolean {

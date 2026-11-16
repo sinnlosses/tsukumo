@@ -26,16 +26,20 @@ type RecordOf<K extends SessionRecord["kind"]> = Extract<SessionRecord, { readon
 
 type PlanItem = { readonly kind: "plan"; readonly record: RecordOf<"work-plan"> }
 
+type SpokenItem = Extract<ConversationStreamRow, { readonly kind: "post" | "say" }> & {
+  /** 紙の直後に届いたセリフで、紙の前へ移した締めのセリフ。 */
+  readonly closing?: true
+}
+
 /** 作業の経過に畳める1件。 */
 export type ProgressItem =
   | PlanItem
-  | Extract<ConversationStreamRow, { readonly kind: "post" | "say" }>
+  | SpokenItem
   | { readonly kind: "body"; readonly step: MainViewStep }
   | { readonly kind: "question"; readonly entry: MainViewQuestion }
 
 /** 流れの最上位に並べる1件。段の札は「作業の経過」の中にだけ入る。 */
 export type StreamItem =
-  | Extract<ConversationStreamRow, { readonly kind: "post" | "say" }>
   | { readonly kind: "failure" }
   | Exclude<ProgressItem, PlanItem>
   | { readonly kind: "fold"; readonly items: readonly ProgressItem[] }
@@ -88,11 +92,17 @@ export function streamItemsOf(
 
   const items: ArrangedItem[] = []
   let previousPlan: LatestWorkPlan = { kind: "none" }
-  for (const row of rows) {
+  // 紙の前へ移した締めのセリフの、記録の位置。
+  const movedSays = new Set<number>()
+  for (const [index, row] of rows.entries()) {
     switch (row.kind) {
       case "post":
-      case "say":
         items.push(row)
+        break
+      case "say":
+        if (!movedSays.has(index)) {
+          items.push(row)
+        }
         break
       case "failure":
         break
@@ -125,6 +135,11 @@ export function streamItemsOf(
         const step = reportBodies.get(row.record.toolUseId)?.shift()
         if (step !== undefined) {
           placedSteps.add(step)
+          const next = rows[index + 1]
+          if (next?.kind === "say" && next.origin === "speech") {
+            movedSays.add(index + 1)
+            items.push({ ...next, closing: true })
+          }
           items.push({ kind: "body", step })
         }
         break
@@ -166,12 +181,21 @@ export function streamGroupsOf(items: readonly StreamItem[]): readonly StreamGro
     if (used.has(index)) {
       return
     }
+    const next = items[index + 1]
+    if (isClosingSay(item)) {
+      if (next !== undefined && isThing(next)) {
+        used.add(index + 1)
+        groups.push([item, next])
+      } else {
+        groups.push([item])
+      }
+      return
+    }
     if (!isThing(item)) {
       groups.push([item])
       return
     }
-    const next = items[index + 1]
-    if (next?.kind === "say") {
+    if (next?.kind === "say" && !isClosingSay(next)) {
       used.add(index + 1)
       groups.push([item, next])
       return
@@ -211,12 +235,19 @@ function isStreamItem(item: ArrangedItem): item is StreamItem {
   return item.kind !== "plan"
 }
 
+function isClosingSay(item: ArrangedItem): boolean {
+  return item.kind === "say" && item.closing === true
+}
+
+/** 最終レポートの締めのセリフは畳まず、畳みのすぐ後ろに残す。 */
 function foldProgress(items: readonly ArrangedItem[]): readonly ArrangedItem[] {
   const finalAt = items.findIndex((item) => item.kind === "body" && item.step.mark === "final")
   if (finalAt < 0) {
     return items
   }
-  const before = items.slice(0, finalAt)
+  const beforeFinal = items[finalAt - 1]
+  const closingAt = beforeFinal !== undefined && isClosingSay(beforeFinal) ? finalAt - 1 : finalAt
+  const before = items.slice(0, closingAt)
   const folded = before.filter(isProgress)
   if (folded.length === 0) {
     return items
@@ -224,7 +255,7 @@ function foldProgress(items: readonly ArrangedItem[]): readonly ArrangedItem[] {
   return [
     ...before.filter((item) => !isProgress(item)),
     { kind: "fold", items: folded },
-    ...items.slice(finalAt),
+    ...items.slice(closingAt),
   ]
 }
 

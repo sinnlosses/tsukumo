@@ -86,7 +86,7 @@ describe("awaySeamOf（畳みの中に入った行）", () => {
 
   it("畳みに入った新しいセリフの手前では、畳み全体の手前に線を置く", () => {
     const items = streamItemsOf(rows, finalTurn)
-    expect(items.map((item) => item.kind)).toEqual(["post", "fold", "body", "say"])
+    expect(items.map((item) => item.kind)).toEqual(["post", "fold", "say", "body"])
     expect(awaySeamOf({ away, rows, items })).toEqual({
       kind: "seam",
       before: 1,
@@ -94,10 +94,10 @@ describe("awaySeamOf（畳みの中に入った行）", () => {
     })
   })
 
-  it("新しい行が最終レポートのあとの締めだけなら、その手前に置く", () => {
+  it("新しい行が最終レポートと締めだけなら、紙の上に移った締めの手前に置く", () => {
     const items = streamItemsOf(rows, finalTurn)
-    expect(awaySeamOf({ away: { ...away, rowCount: 4 }, rows, items })).toMatchObject({
-      before: 3,
+    expect(awaySeamOf({ away: { ...away, rowCount: 3 }, rows, items })).toMatchObject({
+      before: 2,
     })
   })
 })
