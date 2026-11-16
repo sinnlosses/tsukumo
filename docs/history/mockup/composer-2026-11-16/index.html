@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>入力欄の3案（2026-11-16）</title>
+    <link rel="stylesheet" href="composer.css" />
+    <style>
+      body.is-embed {
+        background: transparent;
+      }
+      body.is-embed .frame {
+        border-radius: 0;
+      }
+    </style>
+  </head>
+  <!--
+    会話画面の入力欄（広い画面）の3案。画面の下 420px を写した枠に、案ごとの入力欄を場面ごとに描く。
+    ?design=a|b|c  ?scene=empty|images|drag|settings|plus|running  ?w=1400|1000  ?embed
+    今の画は同じディレクトリの now-<場面>-<幅>.png（疑似セッションを同梱のキャラクターで撮ったもの）。
+  -->
+  <body>
+    <div id="root"></div>
+    <script src="composer.js"></script>
+  </body>
+</html>
