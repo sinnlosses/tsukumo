@@ -204,6 +204,7 @@ describe("Turn（タスク見出し行と見出し）", () => {
     expect(useTaskBoardRequest.getState().request).toEqual({
       kind: "open",
       focus: { kind: "task", id: "X-7" },
+      query: "",
     })
   })
 

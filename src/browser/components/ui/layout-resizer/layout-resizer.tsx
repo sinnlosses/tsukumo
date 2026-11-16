@@ -3,7 +3,13 @@
 
 import { ResizeHandle } from "@astryxdesign/core/Resizable"
 import clsx from "clsx"
-import { useEffectEvent, type PointerEvent, type ReactElement, type RefObject } from "react"
+import {
+  useEffectEvent,
+  type KeyboardEvent,
+  type PointerEvent,
+  type ReactElement,
+  type RefObject,
+} from "react"
 
 import styles from "./layout-resizer.module.css"
 
@@ -27,6 +33,11 @@ type LayoutResizerProps = {
    * 一度も動かさずに離したときは呼ばない（仕切りを掴んだだけで位置が動いて見えるのを防ぐ）。
    */
   readonly onCommit: (value: number) => void
+  /**
+   * 渡すと仕切りがフォーカスを受け、矢印キー（縦の仕切りは ←→、横の仕切りは ↑↓）でこの px ずつ動く。
+   * 動いた値は `onChange` と `onCommit` の両方へ渡す。
+   */
+  readonly keyboardStepPx?: number
   /** 置き方だけを渡す。 */
   readonly className: string
 }
@@ -78,13 +89,43 @@ export function LayoutResizer(props: LayoutResizerProps): ReactElement {
     target.addEventListener("pointerup", onUp)
   }
 
+  // 仕切りのいまの位置から1歩ずらした所を、pointer がそこにあるときと同じ比率にして値へ換える。
+  function onKeyDown(event: KeyboardEvent<HTMLDivElement>): void {
+    const step = props.keyboardStepPx
+    const delta = step === undefined ? 0 : stepDirection(props.orientation, event.key) * step
+    const rect = props.containerRef.current?.getBoundingClientRect()
+    if (delta === 0 || rect === undefined) {
+      return
+    }
+    event.preventDefault()
+    const own = event.currentTarget.getBoundingClientRect()
+    const ratio =
+      props.orientation === "horizontal"
+        ? (own.top - rect.top + delta) / rect.height
+        : (own.left - rect.left + delta) / rect.width
+    const value = props.toValue(ratio, rect)
+    props.onChange(value)
+    props.onCommit(value)
+  }
+
   return (
     <ResizeHandle
       className={clsx(styles[`layout-resizer-${props.orientation}`], props.className)}
       direction={ORIENTATION_DIRECTION[props.orientation]}
       label={props.ariaLabel}
-      tabIndex={-1}
+      tabIndex={props.keyboardStepPx === undefined ? -1 : 0}
       onPointerDown={onPointerDown}
+      onKeyDown={onKeyDown}
     />
   )
+}
+
+/** 矢印キーが仕切りを動かす向き（前へ -1・後ろへ 1）。仕切りの向きに合わないキーは 0。 */
+function stepDirection(orientation: "horizontal" | "vertical", key: string): -1 | 0 | 1 {
+  const [back, forward] =
+    orientation === "vertical" ? ["ArrowLeft", "ArrowRight"] : ["ArrowUp", "ArrowDown"]
+  if (key === back) {
+    return -1
+  }
+  return key === forward ? 1 : 0
 }

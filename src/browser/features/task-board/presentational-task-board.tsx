@@ -24,7 +24,9 @@ import { TaskBoardAction } from "./components/task-board-action.tsx"
 import { TaskBoardColumns } from "./components/task-board-column-list.tsx"
 import { TaskBoardFilterBar } from "./components/task-board-filter-bar.tsx"
 import { TaskBoardHead } from "./components/task-board-head.tsx"
+import { TaskBoardKeyHint } from "./components/task-board-key-hint.tsx"
 import { TaskBoardList } from "./components/task-board-list.tsx"
+import { TaskBoardSearch } from "./components/task-board-search.tsx"
 import { TaskDetail } from "./components/task-detail.tsx"
 import { TaskRunConfirm } from "./components/task-run-confirm.tsx"
 import { TaskSkeleton } from "./components/task-skeleton.tsx"
@@ -57,7 +59,29 @@ export function PresentationalTaskBoard(props: TaskBoardView): ReactElement {
           tabIndex={-1}
           onKeyDown={props.onKeyDown}
         >
-          <TaskBoardHead onClose={props.onClose} />
+          <TaskBoardHead
+            listed={
+              content.kind === "known"
+                ? {
+                    kind: "some",
+                    total: content.total,
+                    search: (
+                      <TaskBoardSearch
+                        query={content.query}
+                        listId={content.listId}
+                        activeOptionId={content.activeOptionId}
+                        onQueryChange={props.onQueryChange}
+                        onKeyDown={props.onSearchKeyDown}
+                      />
+                    ),
+                  }
+                : { kind: "none" }
+            }
+            onClose={props.onClose}
+          />
+          {content.kind === "known" && (
+            <TaskBoardFilterBar chips={content.chips} onFilter={props.onFilter} />
+          )}
           {content.kind === "loading" && (
             <div className={styles["task-board-message"]}>
               <TaskSkeleton />
@@ -88,42 +112,33 @@ export function PresentationalTaskBoard(props: TaskBoardView): ReactElement {
           {content.kind === "known" && (
             <TaskBoardColumns
               list={
-                <>
-                  <TaskBoardFilterBar
-                    query={content.query}
-                    chips={content.chips}
-                    listId={content.listId}
-                    activeOptionId={content.activeOptionId}
-                    onQueryChange={props.onQueryChange}
-                    onFilter={props.onFilter}
-                  />
-                  <TaskBoardList
-                    listId={content.listId}
-                    rows={content.rows}
-                    omittedClosedCount={content.omittedClosedCount}
-                    onSelect={props.onSelect}
-                  />
-                </>
+                <TaskBoardList
+                  listId={content.listId}
+                  stages={content.stages}
+                  omittedClosedCount={content.omittedClosedCount}
+                  onSelect={props.onSelect}
+                />
               }
               detail={
                 content.selection.kind === "some" && (
-                  <>
-                    <TaskDetail
-                      key={content.selection.detail.id}
-                      detail={content.selection.detail}
-                      titleId="task-board-detail-title"
-                      breadcrumb={content.selection.breadcrumb}
-                      knownIds={content.knownIds}
-                      onJump={content.selection.onJump}
-                      onCopy={content.selection.onCopy}
-                    />
-                    <TaskBoardAction
-                      opener={content.selection.opener}
-                      run={content.selection.run}
-                    />
-                  </>
+                  <TaskDetail
+                    key={content.selection.detail.id}
+                    detail={content.selection.detail}
+                    titleId="task-board-detail-title"
+                    breadcrumb={content.selection.breadcrumb}
+                    knownIds={content.knownIds}
+                    onJump={content.selection.onJump}
+                    onCopy={content.selection.onCopy}
+                  />
                 )
               }
+            />
+          )}
+          {content.kind === "known" && content.selection.kind === "some" && (
+            <TaskBoardAction
+              lead={<TaskBoardKeyHint />}
+              opener={content.selection.opener}
+              run={content.selection.run}
             />
           )}
         </div>

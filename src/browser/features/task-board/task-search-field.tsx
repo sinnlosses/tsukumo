@@ -2,10 +2,9 @@
 // 選んでいる行は `aria-activedescendant` で指し、DOM のフォーカスは欄に残す。
 // 件数と「×」の枠は語が無くても確保し、頭の高さを変えない。
 
-import { Search } from "lucide-react"
 import type { KeyboardEvent, ReactElement } from "react"
 
-import { CloseIcon } from "../../components/ui/icon/icon.tsx"
+import { CloseIcon, SearchIcon } from "../../components/ui/icon/icon.tsx"
 import styles from "./task-search-field.module.css"
 
 export function TaskSearchField(props: {
@@ -20,7 +19,9 @@ export function TaskSearchField(props: {
 }): ReactElement {
   return (
     <div className={styles["task-search"]}>
-      <Search size={14} strokeWidth={2} aria-hidden="true" className={styles["task-search-icon"]} />
+      <span className={styles["task-search-icon"]}>
+        <SearchIcon />
+      </span>
       <input
         type="search"
         role="combobox"

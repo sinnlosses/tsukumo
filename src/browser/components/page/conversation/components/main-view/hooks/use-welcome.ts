@@ -82,7 +82,9 @@ export function useWelcome(): WelcomeModel {
     hasOtherSessions,
     onStart,
     onWrite: requestFocus,
-    onPickTask: openList,
+    onPickTask: () => {
+      openList("")
+    },
     onSeePrevious,
   }
 }

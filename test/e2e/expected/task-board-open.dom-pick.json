@@ -1,10 +1,18 @@
 {
   "task-board": [
     { "tag": "dialog", "attributes": { "aria-label": "タスク", "open": true }, "children": [
-      { "tag": "ul", "attributes": { "role": "listbox", "aria-label": "タスク" }, "children": [
-        { "tag": "li", "attributes": { "role": "option", "aria-selected": "true", "data-state": "ready" }, "children": ["T-001"] },
-        { "tag": "li", "attributes": { "role": "option", "aria-selected": "false" }, "children": ["T-002"] },
-        { "tag": "li", "attributes": { "role": "option", "aria-selected": "false" }, "children": ["T-005"] }
+      { "tag": "div", "attributes": { "role": "listbox", "aria-label": "タスク" }, "children": [
+        { "tag": "div", "attributes": { "aria-hidden": "true" }, "children": ["ID", "題", "難しさ", "ループ可"] },
+        { "tag": "div", "attributes": { "role": "group", "aria-label": "いま 1" }, "children": [
+          { "tag": "div", "attributes": { "role": "option", "aria-selected": "true", "data-state": "doing" }, "children": ["T-001"] }
+        ] },
+        { "tag": "div", "attributes": { "role": "group", "aria-label": "待ち 2" }, "children": [
+          { "tag": "div", "attributes": { "role": "option", "aria-selected": "false", "data-state": "blocked" }, "children": ["T-004", "待ち T-001"] },
+          { "tag": "div", "attributes": { "role": "option", "aria-selected": "false" }, "children": ["T-005"] }
+        ] },
+        { "tag": "div", "attributes": { "role": "group", "aria-label": "済み 1" }, "children": [
+          { "tag": "div", "attributes": { "role": "option", "aria-selected": "false" }, "children": ["T-002"] }
+        ] }
       ] },
       { "tag": "section", "attributes": { "aria-label": "T-001 の詳細" }, "children": [
         { "tag": "h3", "children": ["架空のタスク（", { "tag": "code", "children": ["code"] }, "を含む要約）"] },

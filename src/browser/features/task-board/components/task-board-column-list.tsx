@@ -12,6 +12,9 @@ type TaskBoardColumnsProps = {
   readonly detail: ReactNode
 }
 
+/** 仕切りにフォーカスがあるときの ←→ 1回ぶんの幅。 */
+const KEYBOARD_STEP_PX = 24
+
 export function TaskBoardColumns(props: TaskBoardColumnsProps): ReactElement {
   const { columnsRef, style, toValue, onChange, onCommit } = useTaskBoardListWidth()
   return (
@@ -24,6 +27,7 @@ export function TaskBoardColumns(props: TaskBoardColumnsProps): ReactElement {
         toValue={toValue}
         onChange={onChange}
         onCommit={onCommit}
+        keyboardStepPx={KEYBOARD_STEP_PX}
         className=""
       />
       <div className={taskBoardStyles["task-board-detail-column"]}>{props.detail}</div>

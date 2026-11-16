@@ -25,7 +25,12 @@ export function TaskSection(): ReactElement {
     <SidebarSection
       title="タスク"
       extraClass={styles["sidebar-block-tasks"]}
-      action={{ label: "一覧を見る", onAction: openList }}
+      action={{
+        label: "一覧を見る",
+        onAction: () => {
+          openList(model.query)
+        },
+      }}
       headerExtra={<TaskRefreshButton />}
       count={tasks.kind === "known" ? tasks.items.length : undefined}
       searchField={

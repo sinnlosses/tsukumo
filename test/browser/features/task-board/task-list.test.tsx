@@ -5,6 +5,7 @@ import { TaskItem } from "../../../../src/browser/features/task-board/components
 import { TaskState } from "../../../../src/browser/features/task-board/components/task-state.tsx"
 import { loadTaskBody } from "../../../../src/browser/features/task-board/deferred-task-body.tsx"
 import { taskStateOf } from "../../../../src/browser/features/task-board/domain/task-board-content.ts"
+import { useTaskSearchQuery } from "../../../../src/browser/features/task-board/stores/task-search-query.ts"
 import { useTaskBoardRequest } from "../../../../src/browser/stores/task-board-request.ts"
 import { useTaskSheet } from "../../../../src/browser/stores/task-sheet.ts"
 import type {
@@ -27,6 +28,7 @@ afterEach(() => {
   vi.restoreAllMocks()
   useTaskBoardRequest.setState(useTaskBoardRequest.getInitialState(), true)
   useTaskSheet.setState(useTaskSheet.getInitialState(), true)
+  useTaskSearchQuery.setState(useTaskSearchQuery.getInitialState(), true)
 })
 
 function known(items: readonly TaskSummaryItem[]): TaskSummaryResult {
@@ -396,9 +398,12 @@ describe("taskList", () => {
     expect(sheet()).toBeNull()
   })
 
-  it("「一覧モードで開く」はサイドシートを閉じて行へフォーカスを戻し、タスクのモーダルをそのタスクを選んで開くよう頼む", () => {
+  it("「一覧モードで開く」はサイドシートを閉じて行へフォーカスを戻し、タスクのモーダルをそのタスクを選んで、探す語を載せて開くよう頼む", () => {
     render(<TaskList tasks={known(TASKS)} />)
 
+    fireEvent.change(screen.getByRole("combobox", { name: "タスクを探す" }), {
+      target: { value: "架空" },
+    })
     fireEvent.click(row("X-001"))
     fireEvent.click(screen.getByRole("button", { name: "一覧モードで開く" }))
 
@@ -407,6 +412,7 @@ describe("taskList", () => {
     expect(useTaskBoardRequest.getState().request).toEqual({
       kind: "open",
       focus: { kind: "task", id: "X-001" },
+      query: "架空",
     })
   })
 
@@ -420,6 +426,7 @@ describe("taskList", () => {
     expect(useTaskBoardRequest.getState().request).toEqual({
       kind: "open",
       focus: { kind: "task", id: "X-004" },
+      query: "",
     })
   })
 

@@ -114,7 +114,7 @@ function TaskId(props: { readonly id: string }): ReactElement {
       className={clsx(styles["report-task-id"], styles["report-task-id-link"])}
       aria-haspopup="dialog"
       onClick={() => {
-        openTask(listedId)
+        openTask(listedId, "")
       }}
     >
       {props.id}

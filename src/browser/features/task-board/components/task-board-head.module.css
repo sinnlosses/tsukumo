@@ -1,32 +1,35 @@
+/* 題・検索欄・口の3つを1行に。検索欄は 420px まで伸び、口は右端に寄る。 */
 .task-board-head {
-  display: flex;
+  display: grid;
   flex: none;
-  align-items: center;
-  gap: var(--space-lg);
-  padding: var(--space-lg) var(--space-xl);
-  border-bottom: 1px solid var(--rule-quiet);
-}
-.task-board-title {
-  margin: 0;
-  font-size: var(--font-heading);
-  font-weight: 700;
-}
-.task-board-lead {
-  display: flex;
-  flex: 1;
+  grid-template-columns: auto minmax(0, 420px) 1fr;
   align-items: center;
   gap: var(--inline-group);
+  padding: var(--inline-control) var(--gutter-region) var(--inline-control) var(--gutter-page);
 }
-.task-board-hints {
-  color: var(--ink-quiet);
-  font-size: var(--font-label);
+.task-board-title {
+  display: flex;
+  align-items: baseline;
+  gap: var(--inline-control);
+  margin: 0;
+  font-size: var(--font-subheading);
+  font-weight: 700;
   white-space: nowrap;
 }
-.task-board-hints kbd {
-  padding: 0 var(--space-xs);
-  border: 1px solid var(--rule);
-  border-radius: var(--radius-sm);
+.task-board-total {
+  color: var(--ink-quiet);
   font-family: var(--font-mono);
+  font-size: var(--font-label);
+  font-weight: 500;
+}
+.task-board-search-slot {
+  min-width: 0;
+}
+.task-board-tools {
+  display: inline-flex;
+  align-items: center;
+  justify-self: end;
+  gap: var(--inline-tight);
 }
 /* 箱だけ（大きさ・角丸）。顔は `<Button variant="ghost">` が持つ。 */
 .task-board-close {
@@ -38,10 +41,4 @@
   height: 28px;
   padding: 0;
   border-radius: var(--radius-md);
-}
-/* キーの案内は指で触る画面では読まないので畳む。 */
-@media (max-width: 760px) {
-  .task-board-hints {
-    display: none;
-  }
 }

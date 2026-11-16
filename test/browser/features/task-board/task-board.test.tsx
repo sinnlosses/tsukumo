@@ -1,10 +1,8 @@
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react"
-import type { ReactElement } from "react"
 import { afterEach, beforeAll, describe, expect, it } from "vitest"
 
 import { loadTaskBody } from "../../../../src/browser/features/task-board/deferred-task-body.tsx"
 import { TaskBoard } from "../../../../src/browser/features/task-board/task-board.tsx"
-import type { TaskBoardRequest } from "../../../../src/browser/stores/task-board-request.ts"
 import type {
   TaskSummaryItem,
   TaskSummaryResult,
@@ -13,6 +11,14 @@ import { INITIAL_SESSION_STATE } from "../../../../src/shared/session/session-st
 import { knownTaskSummary, taskStatusOfWord } from "../../../fixture/session-state.ts"
 import { queryClientWrapper } from "../../query-client.tsx"
 import { putSession } from "../../session-store.ts"
+import {
+  isShown,
+  OPEN_FIRST,
+  renderSelectionBoard,
+  searchBox,
+  SELECTION_TASKS,
+  selectionTask,
+} from "./task-board-harness.tsx"
 
 // タスクのモーダルの出し分けと、選んでいる行の移り方・つながりのたどり方。
 // フィクスチャはすべて手で書いた架空の課題。
@@ -49,7 +55,7 @@ function renderBoard(task: TaskSummaryItem): void {
   render(
     <TaskBoard
       tasks={knownTaskSummary([task])}
-      request={{ kind: "open", focus: { kind: "first" } }}
+      request={{ kind: "open", focus: { kind: "first" }, query: "" }}
       onClose={() => {}}
     />,
     { wrapper: queryClientWrapper() },
@@ -71,7 +77,7 @@ describe("タスクのモーダルの閉じたタスクの一言", () => {
     render(
       <TaskBoard
         tasks={tasks}
-        request={{ kind: "open", focus: { kind: "first" } }}
+        request={{ kind: "open", focus: { kind: "first" }, query: "" }}
         onClose={() => {}}
       />,
       { wrapper: queryClientWrapper() },
@@ -140,41 +146,8 @@ describe("タスクのモーダルの属性", () => {
     cleanup()
     renderBoard(beadsTask({ kind: "none" }))
 
-    expect(screen.queryByText("難しさ")).toBeNull()
-    expect(screen.queryByText("ループ")).toBeNull()
-  })
-})
-
-describe("タスクのモーダルの一覧の行の属性", () => {
-  it("行に難しさを語で、loopable は Y のときだけ ∞ の印で出し、「Y」「N」の字は出さない。属性の無い行には出さない", () => {
-    putSession(INITIAL_SESSION_STATE)
-    const base = beadsTask({ kind: "none" })
-    render(
-      <TaskBoard
-        tasks={knownTaskSummary([
-          { ...base, id: "X-021", difficulty: "sonnet", loopable: "Y" },
-          { ...base, id: "X-022", difficulty: "opus", loopable: "N" },
-          { ...base, id: "X-023" },
-        ])}
-        request={{ kind: "open", focus: { kind: "first" } }}
-        onClose={() => {}}
-      />,
-      { wrapper: queryClientWrapper() },
-    )
-
-    const option = (id: string): HTMLElement => screen.getByRole("option", { name: new RegExp(id) })
-    const attributeLabels = (id: string): readonly (string | null)[] =>
-      [...option(id).querySelectorAll("[role='img']")].map((icon) =>
-        icon.getAttribute("aria-label"),
-      )
-    expect(attributeLabels("X-021")).toEqual(["ループ可"])
-    expect(attributeLabels("X-022")).toEqual([])
-    expect(attributeLabels("X-023")).toEqual([])
-    expect(option("X-021").textContent).toContain("sonnet")
-    expect(option("X-022").textContent).toContain("opus")
-    expect(option("X-022").textContent).not.toContain("loop:")
-    const placed = option("X-022").querySelector("[data-attribute]")?.parentElement?.parentElement
-    expect(placed?.className).toContain("task-board-option-attributes")
+    expect(screen.queryByText("難しさ", { selector: "dt" })).toBeNull()
+    expect(screen.queryByText("ループ", { selector: "dt" })).toBeNull()
   })
 })
 
@@ -222,12 +195,21 @@ describe("タスクのモーダルの選択", () => {
       "true",
     )
     expect(screen.queryByRole("navigation", { name: "タスクのつながり" })).toBeNull()
+  })
 
+  it("開き直すと、開く前に選んでいた絞り込みは「すべて」に戻る", () => {
+    const board = renderSelectionBoard(SELECTION_TASKS, OPEN_FIRST)
     fireEvent.click(screen.getByRole("button", { name: /^着手可/ }))
-    board.rerenderWith(SELECTION_TASKS, { kind: "open", focus: { kind: "task", id: "X-002" } })
+    board.rerenderWith(SELECTION_TASKS, {
+      kind: "open",
+      focus: { kind: "task", id: "X-002" },
+      query: "",
+    })
 
+    expect(screen.getByRole("button", { name: /^すべて/ }).getAttribute("aria-pressed")).toBe(
+      "true",
+    )
     expect(isShown("X-002")).toBe(true)
-    expect(screen.getByRole("option", { selected: true }).textContent).toContain("絞り込みの外")
   })
 })
 
@@ -382,61 +364,3 @@ describe("タスクのモーダルの選択（一覧が届き直したとき）"
     expect(isShown("X-000")).toBe(true)
   })
 })
-
-const OPEN_FIRST: TaskBoardRequest = { kind: "open", focus: { kind: "first" } }
-
-function selectionTask(id: string, status: string, body: string): TaskSummaryItem {
-  return {
-    id,
-    summary: `架空の課題（${id}）`,
-    status: taskStatusOfWord(status),
-    dependencies: [],
-    waitingFor: [],
-    labels: [],
-    difficulty: undefined,
-    loopable: undefined,
-    importance: "normal",
-    urgency: "normal",
-    body,
-    location: { kind: "none" },
-  }
-}
-
-const SELECTION_TASKS: readonly TaskSummaryItem[] = [
-  selectionTask("X-001", "todo", "X-002 の保留が解けたら進める。\n"),
-  selectionTask("X-002", "hold", "架空の保留。\n"),
-  selectionTask("X-003", "todo", "架空の本文。\n"),
-]
-
-function renderSelectionBoard(
-  items: readonly TaskSummaryItem[],
-  request: TaskBoardRequest,
-): {
-  readonly rerenderWith: (items: readonly TaskSummaryItem[], request: TaskBoardRequest) => void
-} {
-  putSession(INITIAL_SESSION_STATE)
-  const boardOf = (
-    nextItems: readonly TaskSummaryItem[],
-    nextRequest: TaskBoardRequest,
-  ): ReactElement => (
-    <TaskBoard tasks={knownTaskSummary(nextItems)} request={nextRequest} onClose={() => {}} />
-  )
-  const { rerender } = render(boardOf(items, request), { wrapper: queryClientWrapper() })
-  return {
-    rerenderWith: (nextItems, nextRequest) => {
-      rerender(boardOf(nextItems, nextRequest))
-    },
-  }
-}
-
-function searchBox(): HTMLInputElement {
-  return screen.getByRole<HTMLInputElement>("combobox", { name: "タスクを探す" })
-}
-
-/** 一覧で選んでいる行と、右に出している詳細が、どちらも `id` のタスクか。 */
-function isShown(id: string): boolean {
-  return (
-    screen.getByRole("option", { selected: true }).id === `task-board-option-${id}` &&
-    screen.queryByRole("region", { name: `${id} の詳細` }) !== null
-  )
-}

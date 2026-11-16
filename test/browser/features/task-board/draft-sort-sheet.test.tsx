@@ -182,7 +182,7 @@ describe("タスクのモーダル", () => {
     render(
       <TaskBoard
         tasks={knownTaskSummary(TASKS)}
-        request={{ kind: "open", focus: { kind: "first" } }}
+        request={{ kind: "open", focus: { kind: "first" }, query: "" }}
         onClose={() => {}}
       />,
       { wrapper: queryClientWrapper() },

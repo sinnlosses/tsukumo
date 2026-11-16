@@ -127,7 +127,7 @@ export function PresentationalTaskSheet(props: {
           onCopy={selection.onCopy}
         />
       </div>
-      <TaskBoardAction opener={selection.opener} run={selection.run} />
+      <TaskBoardAction lead={false} opener={selection.opener} run={selection.run} />
       {view.confirm.kind === "open" && (
         <TaskRunConfirm target={view.confirm.target} onClose={view.onConfirmClose} />
       )}

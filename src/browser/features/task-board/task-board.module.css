@@ -50,13 +50,16 @@
    字の大きさは見本のまま（このモーダルの中だけの値で、字の段に丸めない）。
    背景は `<Dialog backdrop="dim">` が持つ。 */
 
-/* 箱。見本は 1320x780 で、帯の下に少し空けて横の中央に置く。ビューポートより大きくしない。 */
+/* 箱。一覧モードの見本（`docs/history/mockup/sidebar-task-board-2026-11-16/` の `view=list`）のとおり、
+   幅は 1240px まで、高さは上下に 48px ずつ空けた残りで、画面の中央に置く。 */
 .task-board {
   composes: surface-edge-rule surface-radius-xl surface-tone-surface from "../../components/ui/surface/surface-face.module.css";
   box-sizing: border-box;
-  width: min(1320px, calc(100vw - 2rem));
-  height: min(780px, calc(100dvh - 84px - 1rem));
-  margin: 84px auto auto;
+  width: min(1240px, calc(100vw - 80px));
+  height: calc(100dvh - 96px);
+  /* `Dialog` の既定の上限（画面の 75%）では 15 件が収まらない。 */
+  max-height: none;
+  margin: auto;
   padding: 0;
   overflow: hidden;
   box-shadow: var(--shadow-overlay);
@@ -81,21 +84,14 @@
   min-height: 0;
 }
 
-/* 左の一覧。既定は 470px で、仕切りのドラッグで決めた幅は `--task-board-list-width` へ入る。詳細が残りの幅を取る。
-   箱が狭まっても詳細に 360px を残す（`taskBoardListWidthFromRatio` の可動域と揃える）。
-   詳細との境の線は仕切り（`LayoutResizer`）が引く。 */
+/* 左の一覧（表）。既定は箱の幅の 64% で、仕切りで決めた幅は `--task-board-list-width` へ入る。詳細が残りの幅を取る。
+   表は 480px より、詳細は 360px より詰めない（`taskBoardListWidthFromRatio` の可動域と揃える。両方は収まらない幅では表を優先する）。 */
 .task-board-list-column {
   display: flex;
   flex: none;
   flex-direction: column;
-  width: clamp(300px, var(--task-board-list-width, 470px), calc(100% - 360px));
+  width: clamp(480px, var(--task-board-list-width, 64%), calc(100% - 360px));
   min-height: 0;
-}
-.task-board-option-head {
-  display: flex;
-  align-items: center;
-  gap: var(--space-md);
-  min-width: 0;
 }
 /* 状態の印と言い方。色だけで伝えないよう、印の形（点・輪・一時停止・チェック・「!」）と字を添える。 */
 .task-state {
@@ -144,6 +140,7 @@ button.task-detail-dependency:hover {
    tsx は幅を測らず広い画面のまま書く。 */
 @media (max-width: 760px) {
   .task-board {
+    width: calc(100vw - 2rem);
     height: calc(100dvh - 2rem);
     margin: var(--space-lg) auto auto;
   }

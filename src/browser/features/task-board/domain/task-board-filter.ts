@@ -5,11 +5,11 @@ import type { TaskBoardFilter, TaskStateView } from "./task-board-view.ts"
 
 export const FILTER_CHIPS = [
   { filter: "all", label: "すべて" },
+  { filter: "doing", label: "進行中" },
   { filter: "ready", label: "着手可" },
   { filter: "blocked", label: "待ち" },
   { filter: "hold", label: "保留" },
   { filter: "draft", label: "ドラフト" },
-  { filter: "doing", label: "進行中" },
   { filter: "done", label: "完了" },
 ] satisfies readonly { readonly filter: TaskBoardFilter; readonly label: string }[]
 

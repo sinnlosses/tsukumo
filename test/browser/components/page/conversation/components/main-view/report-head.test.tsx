@@ -87,6 +87,7 @@ describe("ReportHead のタスクID", () => {
     expect(useTaskBoardRequest.getState().request).toEqual({
       kind: "open",
       focus: { kind: "task", id: "xy-12" },
+      query: "",
     })
   })
 

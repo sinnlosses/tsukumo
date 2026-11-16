@@ -1,53 +1,22 @@
+/* 1行に収める。入りきらない狭い幅では横に転がす（折り返して頭の高さを変えない）。 */
 .task-board-filter {
   display: flex;
   flex: none;
-  flex-direction: column;
-  --task-board-filter-gap: 10px;
-  /* 12px に丸めると 360px で一覧の欄に収まる行が減る */
-  gap: var(--task-board-filter-gap);
-  padding: var(--inset-card);
+  gap: var(--inline-control);
+  padding: 0 var(--gutter-region) var(--inline-control);
+  overflow-x: auto;
   border-bottom: 1px solid var(--rule-quiet);
-}
-.task-board-search {
-  composes: surface-edge-rule surface-radius-md surface-tone-ground from "../../../components/ui/surface/surface-face.module.css";
-  box-sizing: border-box;
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  height: 36px;
-  padding: 0 var(--space-md);
-  color: var(--ink-quiet);
-}
-.task-board-search-input {
-  flex: 1 1 auto;
-  min-width: 0;
-  min-height: 1.5rem;
-  border: none;
-  background: transparent;
-  color: var(--ink);
-  font: inherit;
-  font-size: var(--font-secondary);
-}
-/* 探す欄は開いている間ずっとフォーカスを持つ（↑↓ を受ける口）ので、輪は出さない。 */
-.task-board-search-input:focus-visible {
-  outline: none;
-}
-.task-board-search-input::placeholder {
-  color: var(--ink-quiet);
-}
-.task-board-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-sm);
+  scrollbar-width: none;
 }
 .task-board-chip {
   display: inline-flex;
+  flex: none;
   align-items: center;
-  gap: var(--space-sm);
-  height: 30px;
-  padding: 0 var(--space-md);
-  border: 1px solid var(--rule);
-  border-radius: var(--radius-pill);
+  gap: var(--inline-control);
+  height: 28px;
+  padding: 0 var(--inline-control);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
   background: transparent;
   color: var(--ink-quiet);
   font: inherit;
@@ -65,7 +34,7 @@
   color: var(--ink);
 }
 .task-board-chip-count {
-  color: var(--ink-quiet);
+  color: var(--ink-soft);
   font-family: var(--font-mono);
   font-size: var(--font-label);
 }

@@ -14,9 +14,11 @@ import type {
   TaskBoardContent,
   TaskBoardFilter,
   TaskBoardOpener,
+  TaskBoardRow,
   TaskBoardRun,
   TaskBoardSelection,
   TaskDependencyCard,
+  TaskStage,
   TaskStateKind,
   TaskStateView,
 } from "./task-board-view.ts"
@@ -26,6 +28,13 @@ import { isTaskRequestable, type SingleTaskRequest } from "./task-run-prompt.ts"
 export type BoardEntry = {
   readonly task: TaskSummaryItem
   readonly state: TaskStateView
+}
+
+/** 表の段1つ分の行。`label` は段の名前。 */
+export type BoardStageGroup = {
+  readonly stage: TaskStage
+  readonly label: string
+  readonly entries: readonly BoardEntry[]
 }
 
 /** 一覧で選ばれている行。絞り込みで行が無いときは `none`。 */
@@ -64,6 +73,15 @@ export function boardEntries(items: readonly TaskSummaryItem[]): readonly BoardE
   return items.map((task) => ({ task, state: taskStateOf(task) }))
 }
 
+/** 名指しが無いときに選ぶ行。進行中の先頭、無ければ着手可の先頭、どちらも無ければ先頭の行。 */
+export function defaultBoardRow(rows: readonly BoardEntry[]): BoardSelected {
+  const entry =
+    rows.find((row) => row.state.kind === "doing") ??
+    rows.find((row) => row.state.kind === "ready") ??
+    rows[0]
+  return entry === undefined ? { kind: "none" } : { kind: "some", entry }
+}
+
 /**
  * 状態の言い方。`todo` の着手できるかは `taskReadiness` に従う。
  * 待ちと保留は、まだ済んでいない依存の ID を字で添える（色だけで伝えない）。
@@ -96,11 +114,12 @@ export function taskStateOf(task: TaskSummaryItem): TaskStateView {
   }
 }
 
+/** `groups` は表に出す行を段ごとに並べたもの（段の順・段の中の順のまま表に出す）。 */
 export function boardContent(
   tasks: TaskSummaryResult,
   entries: readonly BoardEntry[],
   byId: ReadonlyMap<string, BoardEntry>,
-  rows: readonly BoardEntry[],
+  groups: readonly BoardStageGroup[],
   selected: BoardSelected,
   isVisible: (entry: BoardEntry) => boolean,
   knownIds: ReadonlySet<string>,
@@ -116,25 +135,36 @@ export function boardContent(
     return { kind: "empty" }
   }
 
+  const rowOf = (entry: BoardEntry, stage: TaskStage): TaskBoardRow => ({
+    id: entry.task.id,
+    optionId: optionIdOf(entry.task.id),
+    stage,
+    summary: codeSpanParts(entry.task.summary),
+    state: entry.state,
+    ...(hasWaiting(entry) ? { waiting: entry.state.text } : {}),
+    difficulty: entry.task.difficulty,
+    loopable: entry.task.loopable,
+    selected: selected.kind === "some" && entry === selected.entry,
+    outOfFilter: !isVisible(entry),
+  })
+  const stages = groups.map((group) => ({
+    stage: group.stage,
+    label: group.label,
+    rows: group.entries.map((entry) => rowOf(entry, group.stage)),
+  }))
+
   return {
     kind: "known",
     listId: TASK_BOARD_LIST_ID,
     query: input.query,
+    total: entries.length,
     chips: FILTER_CHIPS.map((chip) => ({
       ...chip,
       count: entries.filter((entry) => matchesFilter(entry.state, chip.filter)).length,
       pressed: chip.filter === input.filter,
     })),
-    rows: rows.map((entry) => ({
-      id: entry.task.id,
-      optionId: optionIdOf(entry.task.id),
-      summary: codeSpanParts(entry.task.summary),
-      state: entry.state,
-      difficulty: entry.task.difficulty,
-      loopable: entry.task.loopable,
-      selected: selected.kind === "some" && entry === selected.entry,
-      outOfFilter: !isVisible(entry),
-    })),
+    rows: stages.flatMap((stage) => stage.rows),
+    stages,
     omittedClosedCount: tasks.omittedClosedCount,
     activeOptionId: selected.kind === "some" ? optionIdOf(selected.entry.task.id) : undefined,
     selection:
@@ -176,6 +206,14 @@ export function selectionOf(
     opener: openerOf(task.location),
     run: runOf(entry, input),
   }
+}
+
+/** 待ちと、待ちの残る保留。状態の言い方に相手の ID が入っている。 */
+function hasWaiting(entry: BoardEntry): boolean {
+  return (
+    entry.state.kind === "blocked" ||
+    (entry.state.kind === "hold" && entry.task.waitingFor.length > 0)
+  )
 }
 
 function runOf(entry: BoardEntry, input: SelectionInput): TaskBoardRun {

@@ -14,6 +14,7 @@ import type { TaskBoardSelection } from "../domain/task-board-view.ts"
 import { taskRowDomId } from "../domain/task-row-dom-id.ts"
 import type { TaskRunConfirmOutcome } from "../domain/task-run-confirm-outcome.ts"
 import type { TaskRunTarget } from "../domain/task-run-prompt.ts"
+import { useTaskSearchQuery } from "../stores/task-search-query.ts"
 
 /** 頼む口の確認。開いているあいだはサイドシートの Esc を受けない（Esc は上の確認だけを閉じる）。 */
 type TaskSheetConfirm =
@@ -49,6 +50,7 @@ export function useTaskSheetView(
 ): TaskSheetView {
   const focusSignal = useTaskSheet((state) => state.focusSignal)
   const openTask = useTaskBoardRequest((request) => request.openTask)
+  const searchQuery = useTaskSearchQuery((state) => state.query)
   const step = useTaskSheet((state) => state.step)
   const jump = useTaskSheet((state) => state.jump)
   const back = useTaskSheet((state) => state.back)
@@ -105,7 +107,7 @@ export function useTaskSheetView(
           kind: "some",
           onOpen: () => {
             closeToRow()
-            openTask(sheet.id)
+            openTask(sheet.id, searchQuery)
           },
         }
       : { kind: "none" },

@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest"
 import {
   boardContent,
   boardEntries,
+  defaultBoardRow,
   type BoardEntry,
   type BoardSelected,
 } from "../../../../../src/browser/features/task-board/domain/task-board-content.ts"
@@ -94,6 +95,47 @@ describe("boardEntries の状態の言い方", () => {
   })
 })
 
+describe("defaultBoardRow", () => {
+  function chosenId(items: readonly TaskSummaryItem[]): string | undefined {
+    const selected = defaultBoardRow(boardEntries(items))
+    return selected.kind === "some" ? selected.entry.task.id : undefined
+  }
+
+  it("進行中があれば、その先頭を選ぶ", () => {
+    expect(
+      chosenId([
+        taskOf("X-001", { status: taskStatusOfWord("done") }),
+        taskOf("X-002", {}),
+        taskOf("X-003", { status: taskStatusOfWord("doing") }),
+        taskOf("X-004", { status: taskStatusOfWord("doing") }),
+      ]),
+    ).toBe("X-003")
+  })
+
+  it("進行中が無ければ、着手可の先頭を選ぶ", () => {
+    expect(
+      chosenId([
+        taskOf("X-001", { status: taskStatusOfWord("done") }),
+        taskOf("X-002", { status: taskStatusOfWord("hold") }),
+        taskOf("X-003", {}),
+      ]),
+    ).toBe("X-003")
+  })
+
+  it("進行中も着手可も無ければ、先頭の行を選ぶ", () => {
+    expect(
+      chosenId([
+        taskOf("X-001", { status: taskStatusOfWord("done") }),
+        taskOf("X-002", { status: taskStatusOfWord("draft") }),
+      ]),
+    ).toBe("X-001")
+  })
+
+  it("行が0件なら選ばない", () => {
+    expect(chosenId([])).toBeUndefined()
+  })
+})
+
 describe("boardContent", () => {
   const NO_BREADCRUMB: BoardContentInput = {
     query: "",
@@ -117,7 +159,7 @@ describe("boardContent", () => {
       tasks,
       entries,
       byId,
-      entries,
+      [{ stage: "next", label: "つぎ", entries }],
       selectedOf(entries, selectedId),
       (entry) => matchesFilter(entry.state, NO_BREADCRUMB.filter),
       new Set(items.map((item) => item.id)),
@@ -151,11 +193,11 @@ describe("boardContent", () => {
     expect(content.activeOptionId).toBe("task-board-option-X-001")
     expect(content.chips.map((chip) => [chip.filter, chip.count, chip.pressed])).toEqual([
       ["all", 2, true],
+      ["doing", 0, false],
       ["ready", 1, false],
       ["blocked", 0, false],
       ["hold", 0, false],
       ["draft", 0, false],
-      ["doing", 0, false],
       ["done", 1, false],
     ])
   })

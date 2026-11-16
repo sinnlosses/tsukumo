@@ -58,7 +58,7 @@ const ALLOWED_COUNTS: Readonly<Record<string, number>> = {
   "test/browser/features/report/renderer/mermaid-block.test.tsx": 9,
   "test/browser/features/report/renderer/notation.test.tsx": 3,
   "test/browser/features/run-setting/run-setting-group.test.tsx": 1,
-  "test/browser/features/task-board/task-board.test.tsx": 2,
+  "test/browser/features/task-board/task-board.test.tsx": 1,
   "test/browser/features/task-board/task-list.test.tsx": 1,
   "test/browser/features/task-board/task-run.test.tsx": 2,
 }

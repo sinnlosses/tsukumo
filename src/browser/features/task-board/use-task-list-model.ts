@@ -17,6 +17,7 @@ import { useTaskSheet } from "../../stores/task-sheet.ts"
 import { taskRowDomId } from "./domain/task-row-dom-id.ts"
 import { isSearching, moveActiveIndex, searchStages } from "./domain/task-search.ts"
 import type { TaskStageGroup } from "./domain/task-stage.ts"
+import { useTaskSearchQuery } from "./stores/task-search-query.ts"
 
 /** 行とサイドシートのつなぎ。`openId` はサイドシートで開いているタスク（閉じていれば無い）。 */
 export type TaskListSheet = {
@@ -57,7 +58,8 @@ export function useTaskListModel(tasks: TaskSummaryResult): {
 } {
   const listId = useId()
   const rootRef = useRef<HTMLDivElement>(null)
-  const [query, setQuery] = useState("")
+  const query = useTaskSearchQuery((state) => state.query)
+  const setQuery = useTaskSearchQuery((state) => state.setQuery)
   const [activeIndex, setActiveIndex] = useState(-1)
   const [doneOpen, setDoneOpen] = useState(false)
   const requestFocus = useComposerFocus((state) => state.requestFocus)
@@ -92,7 +94,7 @@ export function useTaskListModel(tasks: TaskSummaryResult): {
 
   const onOpenRow = (id: string): void => {
     if (phone) {
-      openTask(id)
+      openTask(id, query)
     } else {
       toggleSheet(id)
     }

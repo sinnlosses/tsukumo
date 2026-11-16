@@ -45,7 +45,7 @@ type BoardAction =
 export function initialBoardState(request: TaskBoardRequest): BoardState {
   return {
     request,
-    query: "",
+    query: queryOnOpen(request),
     filter: "all",
     chosen: chosenOnOpen(request),
     focusSignal: 0,
@@ -56,7 +56,13 @@ export function initialBoardState(request: TaskBoardRequest): BoardState {
 export function boardReducer(state: BoardState, action: BoardAction): BoardState {
   switch (action.kind) {
     case "open":
-      return { ...state, request: action.request, chosen: chosenOnOpen(action.request) }
+      return {
+        ...state,
+        request: action.request,
+        query: queryOnOpen(action.request),
+        filter: "all",
+        chosen: chosenOnOpen(action.request),
+      }
     case "close":
       return {
         request: state.request,
@@ -107,9 +113,13 @@ function chosenOnOpen(request: TaskBoardRequest): ChosenRow {
     : { kind: "first" }
 }
 
+function queryOnOpen(request: TaskBoardRequest): string {
+  return request.kind === "open" ? request.query : ""
+}
+
 /**
- * 一覧を絞り直す前に、選択を出ている行へ寄せる。選んでいた行が消えて先頭へ落ちていたなら、
- * 絞り込みを緩めても元の行へは戻らず先頭の行のまま。行が0件のあいだは元の選択を持ち続ける。
+ * 一覧を絞り直す前に、選択を出ている行へ寄せる。選んでいた行が消えて名指しが無いときと同じ行へ
+ * 落ちていたなら、絞り込みを緩めても元の行へは戻らず落ちた先の行のまま。行が0件のあいだは元の選択を持ち続ける。
  */
 function settledOn(chosen: ChosenRow, shown: ShownRow): ChosenRow {
   if (shown.kind === "none" || isChosen(chosen, shown.id)) {

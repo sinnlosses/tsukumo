@@ -2,6 +2,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, beforeAll, describe, expect, it } from "vitest"
 
 import { loadTaskBody } from "../../../../src/browser/features/task-board/deferred-task-body.tsx"
+import { useTaskSearchQuery } from "../../../../src/browser/features/task-board/stores/task-search-query.ts"
 import { useComposerFocus } from "../../../../src/browser/stores/composer-focus.ts"
 import { useTaskSheet } from "../../../../src/browser/stores/task-sheet.ts"
 import type { TaskSummaryItem } from "../../../../src/shared/repository/task-summary.ts"
@@ -18,6 +19,7 @@ afterEach(() => {
   cleanup()
   useComposerFocus.setState(useComposerFocus.getInitialState(), true)
   useTaskSheet.setState(useTaskSheet.getInitialState(), true)
+  useTaskSearchQuery.setState(useTaskSearchQuery.getInitialState(), true)
 })
 
 function taskOf(id: string, status: string, summary: string): TaskSummaryItem {

@@ -50,19 +50,6 @@ export function TaskDifficultyWord(props: {
   )
 }
 
-/** モーダルの一覧の行の属性。`Y` のときだけ ∞、難しさは目盛りと語。 */
-export function TaskRowAttributes(props: {
-  readonly difficulty?: TaskDifficulty
-  readonly loopable?: TaskLoopable
-}): ReactElement {
-  return (
-    <span className={styles["task-attribute-group"]}>
-      {props.loopable === "Y" && <TaskLoopMark label="ループ可" />}
-      {props.difficulty !== undefined && <TaskDifficultyWord difficulty={props.difficulty} scale />}
-    </span>
-  )
-}
-
 /** 詳細の情報の表のループの行。`Y` は ∞ と「ループ可」、`N` は「手で進める」。 */
 export function TaskLoopableText(props: { readonly loopable: TaskLoopable }): ReactElement {
   if (props.loopable === "Y") {

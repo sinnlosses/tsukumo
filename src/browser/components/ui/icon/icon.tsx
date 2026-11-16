@@ -29,6 +29,7 @@ import {
   Plus,
   RefreshCw,
   RotateCcw,
+  Search,
   Trash2,
   Trophy,
   Upload,
@@ -185,6 +186,11 @@ export function ChevronRightIcon(): ReactElement {
 /** ループで回せる（∞）。 */
 export function InfinityIcon(): ReactElement {
   return <Icon icon={InfinityGlyph} {...ICON_ATTRIBUTES} />
+}
+
+/** 探す（虫眼鏡）。 */
+export function SearchIcon(): ReactElement {
+  return <Icon icon={Search} {...ICON_ATTRIBUTES} />
 }
 
 /** 円に感嘆符。 */

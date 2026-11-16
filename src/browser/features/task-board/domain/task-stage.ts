@@ -2,8 +2,7 @@
 
 import type { TaskSummaryItem } from "../../../../shared/repository/task-summary.ts"
 import { taskStateOf } from "./task-board-content.ts"
-
-export type TaskStage = "now" | "next" | "waiting" | "draft" | "done"
+import type { TaskStage } from "./task-board-view.ts"
 
 export type TaskStageGroup = {
   readonly stage: TaskStage

@@ -1,67 +1,112 @@
 .task-board-list-scroll {
   flex: 1 1 auto;
   min-height: 0;
+  padding: 0 var(--inline-control) var(--inline-control);
   overflow-y: auto;
 }
-.task-board-list {
-  margin: 0;
-  padding: 0;
-  list-style: none;
+/* 表の列。題は残りの幅を使い、ほかの列は中身の幅。段と行は `subgrid` で同じ列に並ぶ。 */
+.task-board-table {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  font-size: var(--font-secondary);
 }
-/* 閉じたタスクを上限で落としたときだけ、一覧の末尾に添える一言。 */
-.task-board-list-omitted {
-  margin: 0;
-  --task-board-omitted-pad-right: 14px;
-  padding: var(--space-md) var(--task-board-omitted-pad-right) var(--space-md) var(--space-lg);
+.task-board-table-head,
+.task-board-stage,
+.task-board-option {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+}
+/* 列の見出しは転がしても上に残す。 */
+.task-board-table-head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  align-items: center;
+  height: 32px;
+  border-bottom: 1px solid var(--rule-quiet);
+  background: var(--surface);
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+  white-space: nowrap;
+}
+.task-board-table-head > span,
+.task-board-option > span {
+  padding: 0 var(--inline-control);
+}
+.task-board-stage-head {
+  display: flex;
+  grid-column: 1 / -1;
+  align-items: baseline;
+  gap: var(--inline-control);
+  padding: var(--inline-control) var(--inline-control) var(--inline-tight);
+  color: var(--ink-soft);
+  font-size: var(--font-label);
+  font-weight: 600;
+}
+.task-board-stage-count {
+  color: var(--ink-quiet);
+  font-family: var(--font-mono);
+  font-weight: 500;
 }
 .task-board-option {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-xs);
-  --task-board-option-pad-block: 10px;
-  --task-board-option-pad-right: 14px;
-  /* 12px に丸めると 360px で一覧の欄に収まる行が減る */
-  padding: var(--task-board-option-pad-block) var(--task-board-option-pad-right)
-    var(--task-board-option-pad-block) var(--space-lg);
+  align-items: center;
+  height: 30px;
   border-bottom: 1px solid var(--rule-quiet);
+  border-radius: var(--radius-md);
+  color: var(--ink-soft);
+  white-space: nowrap;
   cursor: pointer;
 }
 .task-board-option:hover {
   background: color-mix(in srgb, var(--surface), var(--ink) 4%);
 }
-/* 選んでいる行は差し色の地と左端の帯（色だけで伝えないため、帯の形も添える）。 */
+/* 選んでいる行は差し色の地と細い枠（色だけで伝えないため、枠の形も添える）。 */
 .task-board-option[aria-selected="true"] {
   background: var(--surface-accent);
-  box-shadow: inset 3px 0 0 var(--accent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 46%, transparent);
 }
-/* 済んだ行（完了）は薄く出す。 */
-.task-board-option[data-state="done"] {
-  opacity: 0.6;
+/* 状態の印は番号の前。印と番号をひとまとまりで読む。 */
+.task-board-cell-id {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--inline-control);
 }
 .task-board-option-id {
-  flex: none;
   color: var(--ink-quiet);
   font-family: var(--font-mono);
   font-size: var(--font-label);
-  white-space: nowrap;
 }
 .task-board-option[aria-selected="true"] .task-board-option-id {
   color: var(--ink);
 }
-.task-board-option-attributes {
-  margin-left: auto;
+/* 題は1行に収め、入りきらない分は末尾を省く。待ちの相手は題の後ろに縮めずに添える。 */
+.task-board-cell-title {
+  display: flex;
+  align-items: center;
+  gap: var(--inline-group);
+  min-width: 0;
 }
-/* 要約は2行で省略する。 */
 .task-board-option-summary {
-  display: -webkit-box;
+  min-width: 0;
   overflow: hidden;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  font-size: var(--font-secondary);
-  line-height: 1.55;
+  color: var(--ink);
+  text-overflow: ellipsis;
 }
-/* つながりの札から飛んだ先が絞り込み・検索の外にあるときだけ、一覧に一時的に出す行へ添える。 */
+.task-board-option[data-state="done"] .task-board-option-summary {
+  color: var(--ink-soft);
+}
+.task-board-option-waiting,
 .task-board-option-out-of-filter {
+  flex: none;
   color: var(--ink-quiet);
   font-size: var(--font-label);
+}
+.task-board-cell-loop {
+  text-align: center;
+}
+/* 閉じたタスクを上限で落としたときだけ、一覧の末尾に添える一言。 */
+.task-board-list-omitted {
+  margin: 0;
+  padding: var(--inset-card);
 }

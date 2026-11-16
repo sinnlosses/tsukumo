@@ -9,6 +9,9 @@ import type { CodeSpanPart } from "../../../domain/code-span.ts"
 import type { TaskRunConfirmOutcome } from "./task-run-confirm-outcome.ts"
 import type { TaskRunTarget } from "./task-run-prompt.ts"
 
+/** 状態の段（サイドバーの段と一覧モードの表の段）。分け方は `stageTasks`。 */
+export type TaskStage = "now" | "next" | "waiting" | "draft" | "done"
+
 export type TaskStateKind = "ready" | "blocked" | "hold" | "draft" | "doing" | "done" | "other"
 
 /** 状態の言い方。一覧の行・詳細の情報の表・依存の札で同じものを出す。印の形は `kind` で選ぶ。 */
@@ -21,13 +24,23 @@ export type TaskBoardRow = {
   readonly id: string
   /** 一覧の行の DOM の id（検索欄の `aria-activedescendant` が指す）。 */
   readonly optionId: string
+  readonly stage: TaskStage
   readonly summary: readonly CodeSpanPart[]
   readonly state: TaskStateView
+  /** 題の後ろに添える待ちの相手（待ちと、待ちの残る保留だけ）。 */
+  readonly waiting?: string
   readonly difficulty?: TaskDifficulty
   readonly loopable?: TaskLoopable
   readonly selected: boolean
   /** 絞り込み・検索には当たらないが、飛んだ先として一時的に出している行なら真。 */
   readonly outOfFilter: boolean
+}
+
+/** 表の段1つ。`label` は段の名前。 */
+export type TaskBoardStage = {
+  readonly stage: TaskStage
+  readonly label: string
+  readonly rows: readonly TaskBoardRow[]
 }
 
 export type TaskBoardFilter = "all" | "ready" | "blocked" | "hold" | "draft" | "doing" | "done"
@@ -109,8 +122,12 @@ export type TaskBoardContent =
       /** 一覧（`role="listbox"`）の DOM の id。検索欄の `aria-controls` が指す。 */
       readonly listId: string
       readonly query: string
+      /** 一覧に載っている件数（絞り込み・検索より前の全体）。頭の題に添える。 */
+      readonly total: number
       readonly chips: readonly TaskBoardFilterChip[]
+      /** ↑↓ が動く順の行。`stages` を段の順に並べたものと同じ。 */
       readonly rows: readonly TaskBoardRow[]
+      readonly stages: readonly TaskBoardStage[]
       /** 一覧に載せきれず落とした閉じたタスクの件数。0 でなければ一覧の末尾に一言を出す。 */
       readonly omittedClosedCount: number
       /** 選んでいる行の `optionId`。行が無ければ `undefined`（`aria-activedescendant` を付けない）。 */
@@ -144,6 +161,11 @@ export type TaskBoardView = {
   readonly onSelect: (id: string) => void
   /** モーダルの中身の器で受けるキー（↑↓ で行を移る。Alt+← は「戻る」。Esc は `<dialog>` が閉じる）。 */
   readonly onKeyDown: (event: TaskBoardKeyEvent) => void
+  /**
+   * 検索欄だけで受けるキー（Enter で選んでいる行の頼む口の確認を開く）。
+   * 器の `onKeyDown` で受けると、閉じるボタンや件数の帯のボタンの Enter も拾う。
+   */
+  readonly onSearchKeyDown: (event: TaskBoardKeyEvent) => void
   readonly onConfirmClose: (outcome: TaskRunConfirmOutcome) => void
   /**
    * つながりの札・本文中の ID・パンくずの「戻る」を押すたびに増える。詳細が丸ごと作り直り

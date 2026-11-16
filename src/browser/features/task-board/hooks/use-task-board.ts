@@ -11,12 +11,15 @@ import type { TaskBoardRequest } from "../../../stores/task-board-request.ts"
 import {
   boardContent,
   boardEntries,
+  defaultBoardRow,
   type BoardEntry,
   type BoardSelected,
+  type BoardStageGroup,
 } from "../domain/task-board-content.ts"
 import { matchesFilter, matchesQuery } from "../domain/task-board-filter.ts"
 import type { TaskBoardView } from "../domain/task-board-view.ts"
 import type { TaskRunTarget } from "../domain/task-run-prompt.ts"
+import { stageTasks, TASK_STAGE_LABEL } from "../domain/task-stage.ts"
 import {
   boardReducer,
   initialBoardState,
@@ -43,9 +46,15 @@ export function useTaskBoard(
   const byId = new Map(entries.map((entry) => [entry.task.id, entry]))
   const isVisible = (entry: BoardEntry): boolean =>
     matchesFilter(entry.state, filter) && matchesQuery(entry.task, query)
-  const rows = entries.filter((entry) => isVisible(entry) || isPinned(chosen, entry.task.id))
-  // 選んでいた行が絞り込み・検索で消えたときも、一覧の先頭へ落ちる。
-  const selected = rows.find((entry) => isChosen(chosen, entry.task.id)) ?? rows[0]
+  const groups = stageGroups(
+    entries.filter((entry) => isVisible(entry) || isPinned(chosen, entry.task.id)),
+  )
+  const rows = groups.flatMap((group) => group.entries)
+  // 選んでいた行が絞り込み・検索で消えたときも、名指しが無いときと同じ行へ落ちる。
+  const chosenRow = rows.find((entry) => isChosen(chosen, entry.task.id))
+  const selectedView: BoardSelected =
+    chosenRow === undefined ? defaultBoardRow(rows) : { kind: "some", entry: chosenRow }
+  const selected = selectedView.kind === "some" ? selectedView.entry : undefined
   const shown: ShownRow =
     selected === undefined ? { kind: "none" } : { kind: "row", id: selected.task.id }
 
@@ -81,9 +90,7 @@ export function useTaskBoard(
     }
   }
 
-  const selectedView: BoardSelected =
-    selected === undefined ? { kind: "none" } : { kind: "some", entry: selected }
-  const content = boardContent(tasks, entries, byId, rows, selectedView, isVisible, knownIds, {
+  const content = boardContent(tasks, entries, byId, groups, selectedView, isVisible, knownIds, {
     query,
     filter,
     run: (taskId, taskRequest) => {
@@ -128,6 +135,20 @@ export function useTaskBoard(
         move(event.key === "ArrowDown" ? 1 : -1)
       }
     },
+    onSearchKeyDown: (event) => {
+      if (event.nativeEvent.isComposing || event.metaKey || event.ctrlKey || event.altKey) {
+        return
+      }
+      if (
+        event.key === "Enter" &&
+        content.kind === "known" &&
+        content.selection.kind === "some" &&
+        content.selection.run.kind === "available"
+      ) {
+        event.preventDefault()
+        content.selection.run.onRun()
+      }
+    },
     onConfirmClose: (outcome) => {
       setConfirming(undefined)
       if (outcome === "sent") {
@@ -136,4 +157,17 @@ export function useTaskBoard(
     },
     focusSignal: state.focusSignal,
   }
+}
+
+/** ↑↓ もこの並びの順で動く。 */
+function stageGroups(rows: readonly BoardEntry[]): readonly BoardStageGroup[] {
+  const entryOf = new Map(rows.map((entry) => [entry.task, entry]))
+  return stageTasks(rows.map((entry) => entry.task)).map((group) => ({
+    stage: group.stage,
+    label: TASK_STAGE_LABEL[group.stage],
+    entries: group.tasks.flatMap((task) => {
+      const entry = entryOf.get(task)
+      return entry === undefined ? [] : [entry]
+    }),
+  }))
 }

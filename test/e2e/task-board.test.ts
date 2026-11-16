@@ -5,7 +5,7 @@ import { openTaskBoardRoom } from "./task-room.ts"
 const ELAPSED_MS = 60_000
 
 test.describe("タスクのモーダル", () => {
-  test("「一覧を見る」で開き、左の一覧の先頭を選んで右に本文を Markdown で描く", async ({
+  test("「一覧を見る」で開き、段に分けた表の進行中の行を選んで右に本文を Markdown で描く", async ({
     run,
   }) => {
     const room = await openTaskBoardRoom(run, "task-board-open", ["task-board"])

@@ -1,35 +1,57 @@
-// タスクのモーダルの左の一覧（`role="listbox"`）。行は1段目に ID・状態、2段目に要約。
+// タスクのモーダルの一覧（`role="listbox"`）。1行1件の表で、列は番号・題・難しさ・ループ可。
+// 行は状態の段（`role="group"`）に分けて置き、列の見出しの行は読み上げない（行の名前が列の順に読める）。
+// 列は CSS の grid と `subgrid` でそろえる（`<table>` にすると listbox の型で読めない）。
 // 行を押すと選ぶだけで、頼まない（頼むのは操作の帯の頼む口）。
 
 import type { ReactElement } from "react"
 
 import { Text } from "../../../components/ui/text/text.tsx"
-import type { TaskBoardRow } from "../domain/task-board-view.ts"
+import { VisuallyHidden } from "../../../components/ui/visually-hidden/visually-hidden.tsx"
+import type { TaskBoardRow, TaskBoardStage } from "../domain/task-board-view.ts"
 import taskBoardStyles from "../task-board.module.css"
 import { TaskSummaryText } from "../task-summary-text.tsx"
-import { TaskRowAttributes } from "./task-attribute.tsx"
+import { TaskDifficultyWord, TaskLoopMark } from "./task-attribute.tsx"
 import styles from "./task-board-list.module.css"
 import { TaskState } from "./task-state.tsx"
 
 export function TaskBoardList(props: {
   readonly listId: string
-  readonly rows: readonly TaskBoardRow[]
+  readonly stages: readonly TaskBoardStage[]
   readonly omittedClosedCount: number
   readonly onSelect: (id: string) => void
 }): ReactElement {
   return (
     <div className={styles["task-board-list-scroll"]}>
-      <ul
+      <div
         id={props.listId}
         role="listbox"
         aria-label="タスク"
-        className={styles["task-board-list"]}
+        className={styles["task-board-table"]}
       >
-        {props.rows.map((row) => (
-          <TaskBoardOption key={row.id} row={row} onSelect={props.onSelect} />
+        <div className={styles["task-board-table-head"]} aria-hidden="true">
+          <span>ID</span>
+          <span>題</span>
+          <span>難しさ</span>
+          <span className={styles["task-board-cell-loop"]}>ループ可</span>
+        </div>
+        {props.stages.map((stage) => (
+          <div
+            key={stage.stage}
+            role="group"
+            aria-label={`${stage.label} ${String(stage.rows.length)}`}
+            className={styles["task-board-stage"]}
+          >
+            <span className={styles["task-board-stage-head"]} aria-hidden="true">
+              {stage.label}
+              <span className={styles["task-board-stage-count"]}>{String(stage.rows.length)}</span>
+            </span>
+            {stage.rows.map((row) => (
+              <TaskBoardOption key={row.id} row={row} onSelect={props.onSelect} />
+            ))}
+          </div>
         ))}
-      </ul>
-      {props.rows.length === 0 && (
+      </div>
+      {props.stages.length === 0 && (
         <Text
           element="p"
           size="secondary"
@@ -56,13 +78,14 @@ export function TaskBoardList(props: {
   )
 }
 
+/** 名前は番号・題・状態（待ちの相手が無ければ読み上げだけ）・難しさ・ループ可の順に読める。 */
 function TaskBoardOption(props: {
   readonly row: TaskBoardRow
   readonly onSelect: (id: string) => void
 }): ReactElement {
   const row = props.row
   return (
-    <li
+    <div
       id={row.optionId}
       role="option"
       aria-selected={row.selected}
@@ -71,20 +94,30 @@ function TaskBoardOption(props: {
       className={styles["task-board-option"]}
       onClick={() => props.onSelect(row.id)}
     >
-      {row.outOfFilter && (
-        <span className={styles["task-board-option-out-of-filter"]}>絞り込みの外</span>
-      )}
-      <span className={taskBoardStyles["task-board-option-head"]}>
+      <span className={styles["task-board-cell-id"]}>
+        <TaskState state={row.state} display="mark" />
         <span className={styles["task-board-option-id"]}>{row.id}</span>
-        <TaskState state={row.state} display="labeled" />
-        <span className={styles["task-board-option-attributes"]}>
-          <TaskRowAttributes difficulty={row.difficulty} loopable={row.loopable} />
+      </span>
+      <span className={styles["task-board-cell-title"]}>
+        <span className={styles["task-board-option-summary"]}>
+          <TaskSummaryText parts={row.summary} />
         </span>
+        {row.waiting === undefined ? (
+          <VisuallyHidden element="span">{row.state.text}</VisuallyHidden>
+        ) : (
+          <span className={styles["task-board-option-waiting"]}>{row.waiting}</span>
+        )}
+        {row.outOfFilter && (
+          <span className={styles["task-board-option-out-of-filter"]}>絞り込みの外</span>
+        )}
       </span>
-      <span className={styles["task-board-option-summary"]}>
-        <TaskSummaryText parts={row.summary} />
+      <span>
+        {row.difficulty !== undefined && <TaskDifficultyWord difficulty={row.difficulty} scale />}
       </span>
-    </li>
+      <span className={styles["task-board-cell-loop"]}>
+        {row.loopable === "Y" && <TaskLoopMark label="ループ可" />}
+      </span>
+    </div>
   )
 }
 
@@ -92,6 +125,6 @@ function TaskBoardOption(props: {
  * 選んだ行を一覧の内側で見える位置まで送る（↑↓ で画面の外の行へ移ったとき）。
  * 選ばれた行に付けたときだけ呼ばれるよう、モジュールの関数にして参照を変えない。
  */
-function scrollIntoNearest(element: HTMLLIElement | null): void {
+function scrollIntoNearest(element: HTMLDivElement | null): void {
   element?.scrollIntoView({ block: "nearest" })
 }

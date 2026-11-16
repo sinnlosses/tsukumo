@@ -210,9 +210,10 @@ export async function openTaskBoardRoom(
   domRoots: readonly DomRootName[],
 ): Promise<ScenarioRoom> {
   const room = await run.open({ scenario, scene: "none", viewport: "wide", domRoots })
+  // 開いたときに選ばれる進行中の行に、描き方を確かめる本文を持たせる。
   await placeTasks(room, [
     {
-      ...task("t-001", "架空のタスク（`code` を含む要約）", "todo"),
+      ...task("t-001", "架空のタスク（`code` を含む要約）", "doing"),
       description: RICH_DESCRIPTION,
       acceptance: RICH_ACCEPTANCE,
       notes: RICH_NOTES,
@@ -220,7 +221,7 @@ export async function openTaskBoardRoom(
       loopable: "Y",
     },
     task("t-002", "架空のタスク（完了）", "done"),
-    task("t-003", "架空のタスク（進行中）", "doing"),
+    task("t-003", "架空のタスク（着手可）", "todo"),
     {
       ...task("t-004", "架空のタスク（待ち）", "todo", ["t-001"]),
       difficulty: "opus",

@@ -1,0 +1,34 @@
+.task-board-search {
+  composes: surface-edge-rule surface-radius-md surface-tone-ground from "../../../components/ui/surface/surface-face.module.css";
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: var(--inline-control);
+  height: 32px;
+  padding: 0 var(--inline-control);
+  color: var(--ink-quiet);
+}
+/* 開いている間ずっとフォーカスを持つ欄なので、輪の代わりに縁を差し色にする。 */
+.task-board-search:focus-within {
+  box-shadow: inset 0 0 0 1.5px var(--accent);
+}
+.task-board-search-input {
+  flex: 1 1 auto;
+  align-self: stretch;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--font-secondary);
+}
+.task-board-search-input:focus-visible {
+  outline: none;
+}
+.task-board-search-input::placeholder {
+  color: var(--ink-quiet);
+}
+/* ブラウザが足す × は出さない。 */
+.task-board-search-input::-webkit-search-cancel-button {
+  display: none;
+}

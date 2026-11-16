@@ -1,7 +1,7 @@
 // タスクのモーダルの下の操作の帯。置き場所を開くリンク・「<キャラクター名> に頼む」（ドラフトでは「却下する」「計画する」）。
 // 頼む口を押せないときは薄くし、横に理由を添える。
 
-import type { ReactElement } from "react"
+import type { ReactElement, ReactNode } from "react"
 
 import { Button } from "../../../components/ui/button/button.tsx"
 import { ExternalLinkIcon, SendIcon } from "../../../components/ui/icon/icon.tsx"
@@ -10,6 +10,8 @@ import { useAskLabel } from "../hooks/use-ask-label.ts"
 import styles from "./task-board-action.module.css"
 
 export function TaskBoardAction(props: {
+  /** 帯の左端に置くもの（一覧モードのキーの案内）。 */
+  readonly lead: ReactNode
   readonly opener: TaskBoardOpener
   readonly run: TaskBoardRun
 }): ReactElement {
@@ -17,6 +19,7 @@ export function TaskBoardAction(props: {
   const askLabel = useAskLabel()
   return (
     <div className={styles["task-board-action"]}>
+      {props.lead}
       {opener.kind === "issue" && (
         <a
           href={opener.url}

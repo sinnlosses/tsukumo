@@ -79,7 +79,7 @@ function renderBoard(
   renderWithStore(
     <TaskBoard
       tasks={known(tasks)}
-      request={{ kind: "open", focus: { kind: "first" } }}
+      request={{ kind: "open", focus: { kind: "first" }, query: "" }}
       onClose={() => {
         closed.push("モーダル")
       }}
