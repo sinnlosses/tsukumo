@@ -44,7 +44,7 @@ export function TaskDetail(props: {
       <dl className={styles["task-detail-info"]}>
         <dt>着手</dt>
         <dd>
-          <TaskState state={detail.state} />
+          <TaskState state={detail.state} display="labeled" />
         </dd>
         {detail.difficulty !== undefined && (
           <>
@@ -207,7 +207,7 @@ function TaskDependency(props: {
         onClick={() => props.onJump(dependency.id)}
       >
         <span className={styles["task-detail-dependency-id"]}>{dependency.id}</span>
-        <TaskState state={dependency.state} />
+        <TaskState state={dependency.state} display="labeled" />
         <span className={styles["task-detail-dependency-summary"]}>
           <TaskSummaryText parts={dependency.summary} />
         </span>

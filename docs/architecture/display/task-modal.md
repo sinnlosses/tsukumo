@@ -112,10 +112,14 @@ Markdown の詳細**で、見本は `docs/history/mockup/task-board-2026-09-28/`
   13px・行間 1.55・2行で省略。**選んでいる行は `--surface-accent` の地と左端 3px の `--accent`**
   （色だけで伝えないため、左端の帯の形も添える）。選んでいる絞り込みのバッジは一段明るい地と字
   （`--surface-raised`・`--ink`）
-- **状態の印**: 着手可 → `--accent` の点＋「着手可」、待ち → `--state-warn` の輪＋「待ち <ID>」、
-  保留 → `--ink-quiet` の字＋一時停止の印＋相手の ID、
-  ドラフト → `--ink-quiet` の字＋「ドラフト」。サイドバーの行とプレビューの印は `--ink-quiet` の破線の丸
-  （空の丸の未着手と同じ 12px で、枠だけ破線）
+- **状態の印**: サイドバー・プレビュー・モーダルの行・詳細・つながりのカードで、`TaskState`（印は `ui/icon` の絵）が同じものを出す。
+  進行中 → `--accent` の中を塗った円（`CircleDotIcon`）＋「進行中」、着手可 → `--accent` の輪（`CircleIcon`）＋「着手可」、
+  待ち → `--ink-quiet` の砂時計（`HourglassIcon`）＋「待ち <ID>」、
+  保留 → `--state-warn` の円に二本線（`CirclePauseIcon`）＋「保留」（済んでいない依存があれば ID を添える）、
+  ドラフト → `--ink-quiet` の破線の輪（`CircleDashedIcon`）＋「ドラフト」、
+  完了 → `--ink-quiet` の円にチェック（`CircleCheckIcon`）＋「完了」、
+  想定外の値 → `--state-warn` の円に感嘆符（`CircleAlertIcon`）＋値のまま。
+  サイドバーの行は印だけで、語は `title` に持つ
 - **属性のバッジ**: タスクの `difficulty`・`loopable` は、ラベル（枠付きのバッジ）とは別の欄で出す。
   サイドバーの行は幅が狭いので属性を出さない（題の幅を取るため）。モーダルの左の一覧の行は1段目の右端に、字を使わずアイコンだけで置く。
   `difficulty` は点3つ（5px・間 2px）のうち haiku 1・sonnet 2・opus 3 を `--ink` の 80% で塗り、残りは `--rule`。
@@ -165,7 +169,7 @@ Markdown の詳細**で、見本は `docs/history/mockup/task-board-2026-09-28/`
   進行中のカードもカード全体が1つのボタンで、1行目の右端に `›` を置き、ホバーと開いている間は枠を
   `--accent` にする
 - **プレビュー**: 幅 400px（画面が狭ければ `100vw - 16px`）・内側の余白 16px 18px 14px・角丸 16px・地 `--surface`・
-  枠 `--rule`・影 `0 24px 60px rgb(0 0 0 / 0.55)`・塊の間 12px。上から、状態の印（12px）と語・ID（`--accent`・
+  枠 `--rule`・影 `0 24px 60px rgb(0 0 0 / 0.55)`・塊の間 12px。上から、状態の印と語・ID（`--accent`・
   等幅）・右端に閉じるボタン（26px 角の「×」） → 題（15px `--font-body`・太字・行の高さ 1.6） → 関わる
   タスク（12px・`--ink-quiet`、ID は等幅） → `--rule-quiet` の罫線の下に本文の頭 → 下端の行に左「全文を開く ↗」
   （12px の入口）・右「これを始める →」（高さ 32px・角丸 9px・`--accent` を上は明るく下は暗く混ぜた

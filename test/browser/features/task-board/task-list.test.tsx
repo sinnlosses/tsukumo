@@ -1,7 +1,10 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, beforeAll, describe, expect, it } from "vitest"
 
+import { TaskItem } from "../../../../src/browser/features/task-board/components/task-item.tsx"
+import { TaskState } from "../../../../src/browser/features/task-board/components/task-state.tsx"
 import { loadTaskBody } from "../../../../src/browser/features/task-board/deferred-task-body.tsx"
+import { taskStateOf } from "../../../../src/browser/features/task-board/domain/task-board-content.ts"
 import { TaskList } from "../../../../src/browser/features/task-board/task-list.tsx"
 import { useTaskBoardRequest } from "../../../../src/browser/stores/task-board-request.ts"
 import {
@@ -107,34 +110,59 @@ describe("taskList", () => {
   })
 
   it.each([
-    { status: "todo", mark: "todo", done: false },
-    { status: "draft", mark: "draft", done: false },
-    { status: "done", mark: "done", done: true },
-    { status: "archived", mark: "other", done: false },
-    { status: undefined, mark: undefined, done: false },
-  ])("status が $status の行は印が $mark だけで、薄く打ち消すのは $done", (expected) => {
+    { status: "todo", done: false, hasMark: true },
+    { status: "draft", done: false, hasMark: true },
+    { status: "done", done: true, hasMark: true },
+    { status: "archived", done: false, hasMark: true },
+    { status: undefined, done: false, hasMark: false },
+  ])("status が $status の行は印を出すのが $hasMark で、薄く打ち消すのは $done", (expected) => {
     const items = [{ ...taskOf("X-010", "todo"), status: taskStatusOfWord(expected.status) }]
     render(<TaskList tasks={known(items)} selectedStatus="all" />)
 
     const item = screen.getByRole("listitem")
-    for (const mark of ["todo", "draft", "done", "other"]) {
-      expect(item.querySelector(`.task-mark-${mark}`) !== null).toBe(mark === expected.mark)
-    }
+    expect(item.querySelector("[title] svg") !== null).toBe(expected.hasMark)
     expect(item.className.includes("task-done")).toBe(expected.done)
   })
 
   it.each([
-    { name: "依存待ちの todo", status: "todo", waitingFor: ["X-001"], mark: "waiting" },
-    { name: "待ちの無い todo", status: "todo", waitingFor: [], mark: "todo" },
-    { name: "hold", status: "hold", waitingFor: [], mark: "hold" },
-  ])("$name の行は印が $mark だけで、想定外の「!」にならない", (expected) => {
+    { name: "依存待ちの todo", status: "todo", waitingFor: ["X-001"], word: "待ち X-001" },
+    { name: "待ちの無い todo", status: "todo", waitingFor: [], word: "着手可" },
+    { name: "hold", status: "hold", waitingFor: [], word: "保留" },
+  ])("$name の行は印の title が $word で、「未着手」「依存待ち」を出さない", (expected) => {
     const items = [{ ...taskOf("X-010", expected.status), waitingFor: expected.waitingFor }]
     render(<TaskList tasks={known(items)} selectedStatus="all" />)
 
     const item = screen.getByRole("listitem")
-    for (const mark of ["todo", "waiting", "hold", "other"]) {
-      expect(item.querySelector(`.task-mark-${mark}`) !== null).toBe(mark === expected.mark)
-    }
+    expect(item.querySelector(`[title="${expected.word}"]`) !== null).toBe(true)
+    expect(item.querySelector('[title="未着手"], [title="依存待ち"]')).toBeNull()
+  })
+
+  it.each([
+    { status: "doing", waitingFor: [] },
+    { status: "todo", waitingFor: [] },
+    { status: "todo", waitingFor: ["X-001"] },
+    { status: "hold", waitingFor: [] },
+    { status: "draft", waitingFor: [] },
+    { status: "done", waitingFor: [] },
+    { status: "archived", waitingFor: [] },
+  ])("$status（待ち $waitingFor）の行は、モーダルと同じ絵と同じ語を出す", (expected) => {
+    const task = { ...taskOf("X-010", expected.status), waitingFor: expected.waitingFor }
+    const state = taskStateOf(task)
+    const { container } = render(
+      <>
+        <TaskItem task={task} rowId="row" peek={{ kind: "closed" }} onToggle={() => {}} />
+        <div data-testid="modal-row">
+          <TaskState state={state} display="labeled" />
+        </div>
+      </>,
+    )
+
+    const sidebarMark = container.querySelector(`[title="${state.text}"]`)
+    const labeled = screen.getByTestId("modal-row").firstElementChild
+    expect(sidebarMark?.querySelector("svg")?.outerHTML).toBe(
+      labeled?.querySelector("svg")?.outerHTML,
+    )
+    expect(labeled?.textContent).toBe(state.text)
   })
 
   it.each([
@@ -169,7 +197,7 @@ describe("taskList", () => {
 
   it("一覧の上に凡例を出し、行の無いとき（不明・タスクが無い）は出さない", () => {
     const { unmount } = render(<TaskList tasks={known(TASKS)} selectedStatus="all" />)
-    for (const word of ["着手可", "依存待ち", "保留", "ループ可"]) {
+    for (const word of ["着手可", "待ち", "保留", "ループ可"]) {
       expect(screen.getByText(word, { exact: false })).toBeDefined()
     }
     unmount()
@@ -203,7 +231,7 @@ describe("taskList", () => {
     fireEvent.click(row("X-001"))
     expect(row("X-001").getAttribute("aria-expanded")).toBe("true")
     expect(peekTitle()).toBe("X-001 の詳細")
-    expect(peek()?.textContent).toContain("未着手")
+    expect(peek()?.textContent).toContain("着手可")
     expect(peek()?.textContent).toContain("架空のタスク1")
 
     fireEvent.click(row("X-001"))
@@ -225,7 +253,7 @@ describe("taskList", () => {
     fireEvent.click(row("X-007"))
 
     const text = peek()?.textContent ?? ""
-    for (const part of ["未着手", "X-007", "架空の題", "架空の本文の頭。", "全文を開く"]) {
+    for (const part of ["着手可", "X-007", "架空の題", "架空の本文の頭。", "全文を開く"]) {
       expect(text).toContain(part)
     }
     expect(text).not.toContain("作った")

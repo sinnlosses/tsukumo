@@ -4,45 +4,26 @@
   text-overflow: ellipsis;
 }
 .task-state-mark {
-  box-sizing: border-box;
+  display: inline-flex;
   flex: none;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
 }
-.task-state-ready {
-  color: color-mix(in srgb, var(--accent) 45%, var(--ink));
-}
-.task-state-ready .task-state-mark {
-  background: var(--accent);
-}
-.task-state-blocked {
-  color: color-mix(in srgb, var(--state-warn) 60%, var(--ink));
-}
-.task-state-blocked .task-state-mark {
-  border: 1.5px solid var(--state-warn);
-}
-.task-state-hold,
-.task-state-draft,
-.task-state-done {
-  color: var(--ink-quiet);
-}
+.task-state-ready,
 .task-state-doing {
   color: var(--accent);
 }
-.task-state-doing .task-state-mark {
-  background: var(--accent);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 35%, transparent);
+.task-state-ready .task-state-text {
+  color: color-mix(in srgb, var(--accent) 45%, var(--ink));
 }
+.task-state-hold,
 .task-state-other {
   color: var(--state-warn);
 }
-.task-state-other .task-state-mark {
-  width: auto;
-  height: auto;
-  border-radius: 0;
+.task-state-hold .task-state-text,
+.task-state-other .task-state-text {
+  color: color-mix(in srgb, var(--state-warn) 60%, var(--ink));
 }
-.task-state-other .task-state-mark::before {
-  content: "!";
-  font-weight: 700;
+.task-state-blocked,
+.task-state-draft,
+.task-state-done {
+  color: var(--ink-quiet);
 }

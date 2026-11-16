@@ -10,21 +10,18 @@ import { X } from "lucide-react"
 import type { ReactElement } from "react"
 import { clamp } from "remeda"
 
-import type {
-  TaskStatus,
-  TaskSummaryItem,
-  TaskSummaryStatus,
-} from "../../../../shared/repository/task-summary.ts"
+import type { TaskSummaryItem } from "../../../../shared/repository/task-summary.ts"
 import { Button } from "../../../components/ui/button/button.tsx"
 import { codeSpanParts } from "../../../domain/code-span.ts"
 import { TaskBody } from "../deferred-task-body.tsx"
+import { taskStateOf } from "../domain/task-board-content.ts"
 import type { TaskRunConfirmOutcome } from "../domain/task-run-confirm-outcome.ts"
 import type { SingleTaskRequest } from "../domain/task-run-prompt.ts"
 import type { TaskPeekConfirm } from "../hooks/use-task-peek.ts"
 import { TaskSummaryText } from "../task-summary-text.tsx"
-import { TaskMark } from "./task-mark.tsx"
 import styles from "./task-peek.module.css"
 import { TaskRunConfirm } from "./task-run-confirm.tsx"
+import { TaskState } from "./task-state.tsx"
 
 /** プレビューの下端の頼みの口。`available` は「これを始める」（頼めるタスクだけ）、`draft` は「却下する」「計画する」。 */
 export type TaskPeekRun =
@@ -64,8 +61,7 @@ export function TaskPeek(props: TaskPeekProps): ReactElement {
     >
       <span className={styles["task-peek-tail"]} aria-hidden="true" />
       <div className={styles["task-peek-head"]}>
-        <TaskMark status={task.status} waiting={task.waitingFor.length > 0} />
-        <span className={styles["task-peek-state"]}>{statusWordOf(task.status)}</span>
+        <TaskState state={taskStateOf(task)} display="labeled" />
         <span className={styles["task-peek-id"]}>{task.id}</span>
         <Button
           variant="ghost-hover-accent"
@@ -160,26 +156,6 @@ export function TaskPeek(props: TaskPeekProps): ReactElement {
       )}
     </dialog>
   )
-}
-
-const STATUS_WORD = {
-  todo: "未着手",
-  doing: "進行中",
-  done: "完了",
-  hold: "保留",
-  draft: "ドラフト",
-} satisfies Record<TaskStatus, string>
-
-/** 想定外の値はそのまま、読めないときは「—」。 */
-function statusWordOf(status: TaskSummaryStatus): string {
-  switch (status.kind) {
-    case "known":
-      return STATUS_WORD[status.status]
-    case "other":
-      return status.raw
-    case "none":
-      return "—"
-  }
 }
 
 /** 行の左端からプレビューの右端まで。行はサイドバーの枠から約 22px 内にあり、プレビューと枠のあいだを約 20px 空ける。 */

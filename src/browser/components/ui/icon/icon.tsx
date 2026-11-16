@@ -6,7 +6,14 @@ import {
   ArrowLeftRight,
   ArrowRight,
   Briefcase,
+  Circle,
+  CircleAlert,
+  CircleCheck,
+  CircleDashed,
+  CircleDot,
+  CirclePause,
   Coins,
+  Hourglass,
   List,
   Maximize2,
   MessageCircle,
@@ -94,6 +101,41 @@ export function TokenIcon(): ReactElement {
 /** 成果の口（トロフィー）。 */
 export function AchievementIcon(): ReactElement {
   return <Icon icon={Trophy} {...ICON_ATTRIBUTES} />
+}
+
+/** 輪（空の円）。 */
+export function CircleIcon(): ReactElement {
+  return <Icon icon={Circle} {...ICON_ATTRIBUTES} />
+}
+
+/** 中を塗った円（円の中の点）。 */
+export function CircleDotIcon(): ReactElement {
+  return <Icon icon={CircleDot} {...ICON_ATTRIBUTES} />
+}
+
+/** 砂時計。 */
+export function HourglassIcon(): ReactElement {
+  return <Icon icon={Hourglass} {...ICON_ATTRIBUTES} />
+}
+
+/** 円に二本線。 */
+export function CirclePauseIcon(): ReactElement {
+  return <Icon icon={CirclePause} {...ICON_ATTRIBUTES} />
+}
+
+/** 破線の輪。 */
+export function CircleDashedIcon(): ReactElement {
+  return <Icon icon={CircleDashed} {...ICON_ATTRIBUTES} />
+}
+
+/** 円にチェック。 */
+export function CircleCheckIcon(): ReactElement {
+  return <Icon icon={CircleCheck} {...ICON_ATTRIBUTES} />
+}
+
+/** 円に感嘆符。 */
+export function CircleAlertIcon(): ReactElement {
+  return <Icon icon={CircleAlert} {...ICON_ATTRIBUTES} />
 }
 
 const ICON_ATTRIBUTES = { size: "sm", strokeWidth: 1.9 } as const

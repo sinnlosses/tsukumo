@@ -77,7 +77,7 @@ function TaskBoardOption(props: {
       )}
       <span className={taskBoardStyles["task-board-option-head"]}>
         <span className={styles["task-board-option-id"]}>{row.id}</span>
-        <TaskState state={row.state} />
+        <TaskState state={row.state} display="labeled" />
         <span className={styles["task-board-option-attributes"]}>
           <TaskRowAttributes difficulty={row.difficulty} loopable={row.loopable} />
         </span>

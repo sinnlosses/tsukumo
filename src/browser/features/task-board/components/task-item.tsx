@@ -8,10 +8,11 @@ import type { ReactElement, ReactNode } from "react"
 
 import { hasTaskStatus, type TaskSummaryItem } from "../../../../shared/repository/task-summary.ts"
 import { codeSpanParts } from "../../../domain/code-span.ts"
+import { taskStateOf } from "../domain/task-board-content.ts"
 import taskBoardStyles from "../task-board.module.css"
 import { TaskSummaryText } from "../task-summary-text.tsx"
 import styles from "./task-item.module.css"
-import { TaskMark } from "./task-mark.tsx"
+import { TaskState } from "./task-state.tsx"
 
 export function TaskItem(props: {
   readonly task: TaskSummaryItem
@@ -37,7 +38,9 @@ export function TaskItem(props: {
         onClick={props.onToggle}
       >
         <span className={styles["task-item-mark"]}>
-          <TaskMark status={props.task.status} waiting={props.task.waitingFor.length > 0} />
+          {props.task.status.kind !== "none" && (
+            <TaskState state={taskStateOf(props.task)} display="mark" />
+          )}
         </span>
         <span className={taskBoardStyles["task-id"]}>{props.task.id}</span>
         <span className={styles["task-item-summary"]}>

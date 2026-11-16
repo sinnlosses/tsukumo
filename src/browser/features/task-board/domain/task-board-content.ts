@@ -73,6 +73,38 @@ export function boardEntries(items: readonly TaskSummaryItem[]): readonly BoardE
   return items.map((task) => ({ task, state: taskStateOf(task) }))
 }
 
+/**
+ * 状態の言い方。`todo` の着手できるかは `taskReadiness` に従う。
+ * 待ちと保留は、まだ済んでいない依存の ID を字で添える（色だけで伝えない）。
+ */
+export function taskStateOf(task: TaskSummaryItem): TaskStateView {
+  const readiness = taskReadiness(task)
+  if (readiness !== undefined) {
+    return readiness.kind === "ready"
+      ? { kind: "ready", text: "着手可" }
+      : { kind: "blocked", text: `待ち ${readiness.blockedBy.join(", ")}` }
+  }
+
+  if (task.status.kind !== "known") {
+    return { kind: "other", text: statusTextOf(task.status) }
+  }
+  switch (task.status.status) {
+    case "hold":
+      return {
+        kind: "hold",
+        text: task.waitingFor.length === 0 ? "保留" : `保留 · ${task.waitingFor.join(", ")}`,
+      }
+    case "draft":
+      return { kind: "draft", text: "ドラフト" }
+    case "doing":
+      return { kind: "doing", text: "進行中" }
+    case "done":
+      return { kind: "done", text: "完了" }
+    case "todo":
+      return { kind: "other", text: task.status.status }
+  }
+}
+
 export function boardContent(
   tasks: TaskSummaryResult,
   entries: readonly BoardEntry[],
@@ -250,38 +282,6 @@ function dependentsOf(
       state: entry.state,
       summary: codeSpanParts(entry.task.summary),
     }))
-}
-
-/**
- * 状態の言い方。`todo` の着手できるかは `taskReadiness` に従う。
- * 待ちと保留は、まだ済んでいない依存の ID を字で添える（色だけで伝えない）。
- */
-function taskStateOf(task: TaskSummaryItem): TaskStateView {
-  const readiness = taskReadiness(task)
-  if (readiness !== undefined) {
-    return readiness.kind === "ready"
-      ? { kind: "ready", text: "着手可" }
-      : { kind: "blocked", text: `待ち ${readiness.blockedBy.join(", ")}` }
-  }
-
-  if (task.status.kind !== "known") {
-    return { kind: "other", text: statusTextOf(task.status) }
-  }
-  switch (task.status.status) {
-    case "hold":
-      return {
-        kind: "hold",
-        text: task.waitingFor.length === 0 ? "保留" : `保留 · ${task.waitingFor.join(", ")}`,
-      }
-    case "draft":
-      return { kind: "draft", text: "ドラフト" }
-    case "doing":
-      return { kind: "doing", text: "進行中" }
-    case "done":
-      return { kind: "done", text: "完了" }
-    case "todo":
-      return { kind: "other", text: task.status.status }
-  }
 }
 
 function statusTextOf(status: TaskSummaryStatus): string {

@@ -45,10 +45,6 @@
   align-items: center;
   gap: var(--space-sm);
 }
-.task-peek-state {
-  color: var(--ink-quiet);
-  font-size: var(--font-label);
-}
 .task-peek-id {
   margin-right: auto;
   color: var(--accent);
