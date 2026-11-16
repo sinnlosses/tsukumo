@@ -84,14 +84,6 @@ export function InputGroups(): ReactElement {
         parts={["composer-shell", "round-button"]}
       >
         <ComposerShell
-          drawer={{
-            kind: "shown",
-            children: (
-              <Text element="span" size="secondary" tone="ink-quiet" weight="normal" className="">
-                添付の札
-              </Text>
-            ),
-          }}
           input={<textarea aria-label="見本の入力" placeholder="依頼する" rows={2} />}
           tools={
             <Text element="span" size="secondary" tone="ink-quiet" weight="normal" className="">

@@ -9,30 +9,6 @@ afterEach(() => {
 })
 
 describe("ComposerShell", () => {
-  it("引き出しは shown のときだけ出る", () => {
-    const { rerender } = render(
-      <ComposerShell
-        drawer={{ kind: "shown", children: <span>架空の添付</span> }}
-        input={<textarea aria-label="入力" />}
-        tools={<span>道具</span>}
-        actions={<span>操作</span>}
-        className=""
-      />,
-    )
-    expect(screen.getByText("架空の添付")).toBeDefined()
-
-    rerender(
-      <ComposerShell
-        drawer={{ kind: "none" }}
-        input={<textarea aria-label="入力" />}
-        tools={<span>道具</span>}
-        actions={<span>操作</span>}
-        className=""
-      />,
-    )
-    expect(screen.queryByText("架空の添付")).toBeNull()
-  })
-
   it("入力が空でも、差し込んだ送信ボタンは押せて、form を送る（画像だけの下書きを送れる）", () => {
     const onSubmit = vi.fn<() => void>()
     render(
@@ -43,7 +19,6 @@ describe("ComposerShell", () => {
         }}
       >
         <ComposerShell
-          drawer={{ kind: "none" }}
           input={<textarea aria-label="入力" />}
           tools={<span>道具</span>}
           actions={

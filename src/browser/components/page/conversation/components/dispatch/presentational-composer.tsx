@@ -1,5 +1,5 @@
 // 入力欄本体の器。
-// 広い画面は殻（`<ComposerShell>`）の中に、添付の引き出し・入力欄のサーフェス（`<textarea>` かマークダウンエディタ）と補完の候補一覧・道具（画像・`/`・`@`・面の切り替えのボタン）とモデル・effort・許可モードの札・「新規」と送信⇄中断の <TurnStatus> を並べる。
+// 広い画面は殻（`<ComposerShell>`）の中に、添付の札・入力欄のサーフェス（`<textarea>` かマークダウンエディタ）と補完の候補一覧・道具（画像・`/`・`@`・面の切り替えのボタン）と、仕切りを挟んでモデル・effort・許可モードの札・「新規」と送信⇄中断の <TurnStatus> を並べる。
 // 狭い画面（760px 以下）は殻を使わず、欄の左右に ＋ と丸ボタンを置く。
 
 import clsx from "clsx"
@@ -13,7 +13,10 @@ import {
   type RefObject,
 } from "react"
 
-import { PROMPT_IMAGE_MEDIA_TYPES } from "../../../../../../shared/session-driver/prompt-image.ts"
+import {
+  MAX_PROMPT_IMAGES,
+  PROMPT_IMAGE_MEDIA_TYPES,
+} from "../../../../../../shared/session-driver/prompt-image.ts"
 import { RunSettingGroup } from "../../../../../features/run-setting/run-setting-group.tsx"
 import { useExternalSync } from "../../../../../hooks/use-external-sync.ts"
 import { usePhoneWidth } from "../../../../../hooks/use-phone-width.ts"
@@ -65,6 +68,8 @@ export function PresentationalComposer({
 }: PresentationalComposerProps): ReactElement {
   const phone = usePhoneWidth()
   const chips = <PromptImageChips images={images} onRemove={onRemoveImage} />
+  const imagesFull = images.length >= MAX_PROMPT_IMAGES
+  const imageLabel = imagesFull ? IMAGES_FULL_LABEL : IMAGE_LABEL
   const input = (
     <VStack
       element="div"
@@ -75,7 +80,7 @@ export function PresentationalComposer({
       wrap="nowrap"
       className={styles["dispatch-text-wrap"]}
     >
-      {phone && chips}
+      {chips}
       {(mode === "plain" || phone) && (
         <TextAreaSurface
           ref={surfaceRef}
@@ -125,10 +130,10 @@ export function PresentationalComposer({
         variant="ghost"
         size="action"
         pressed="none"
-        disabled={false}
-        ariaLabel="画像を添える"
+        disabled={imagesFull}
+        ariaLabel={imageLabel}
         disclosure={{ kind: "none" }}
-        title="画像を添える"
+        title={imageLabel}
         className={styles["dispatch-tool"]}
         onClick={onPickImages}
       >
@@ -331,11 +336,11 @@ export function PresentationalComposer({
         </>
       ) : (
         <ComposerShell
-          drawer={images.length > 0 ? { kind: "shown", children: chips } : { kind: "none" }}
           input={input}
           tools={
             <>
               {tools}
+              <span className={styles["dispatch-tool-divider"]} aria-hidden="true" />
               <RunSettingGroup placement="composer" />
             </>
           }
@@ -477,6 +482,8 @@ function PhoneAttach({
 }
 
 const ATTACH_LABEL = "添える"
+const IMAGE_LABEL = "画像を添える"
+const IMAGES_FULL_LABEL = `画像は${MAX_PROMPT_IMAGES}枚まで（外すと添えられる）`
 const INQUIRY_JUMP_LABEL = "お伺いへ"
 const FAVOR_JUMP_LABEL = "レポートの末尾へ"
 const RESTART_LABEL = "新しく始める"

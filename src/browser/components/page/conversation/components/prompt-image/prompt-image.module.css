@@ -9,6 +9,26 @@
   padding: 0;
   list-style: none;
 }
+/* 送る前の札の段（入力欄の本体の頭）。札の列と、末尾の枚数を下端で揃える。
+   上の余白は、札の角から外へ出る `×` の分。 */
+.prompt-image-tray {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--inline-group);
+  min-width: 0;
+  padding-block: var(--stack-block);
+}
+/* 札どうしの間は、角から外へ出る `×` が隣の絵に掛からない幅にする。下の余白は段が持つ。 */
+.prompt-images.prompt-images-pending {
+  flex: 0 1 auto;
+  gap: var(--inline-group);
+  margin: 0;
+}
+.prompt-image-count {
+  flex: none;
+  font-variant-numeric: tabular-nums;
+}
 /* 札（送る前）。
    `×` を右上の角に重ねるので、ここが基準になる。
    `max-width: 100%` が無いと幅が中身まかせの auto になり、`.prompt-image` の `max-width: 100%` の基準が絵自身へ循環して効かない（器より横長の絵が `×` ごと器の外へ出て、`.layout-region` に切り取られる）。 */
@@ -63,6 +83,9 @@
   display: block;
   padding: 0;
   line-height: 0;
+  /* Astryx の Button は高さを `var(--size-element-sm)` で固める（28px。宣言の詳細度が高く上書きできない）。
+     固まったままだと絵の下 36px が箱の外へ出て、入力欄では下の `<textarea>` に重なる。 */
+  --size-element-sm: auto;
 }
 /* 虫眼鏡。既定では見えず、ホバー・フォーカスでだけ出す飾り。押せば開くのは見えていなくても同じ（タッチ端末はホバーを持たない）。 */
 .prompt-image-zoom-icon {
@@ -83,17 +106,24 @@
 }
 /* 外す `×`。
    札にだけ付く（控えは送ったあとなので外せない）。
-   絵の右上の角に重ね、絵の外へはみ出さない（はみ出すと入力欄の領域がスクロールする）。 */
+   絵の右上の角に中心を寄せて外へ 7px 出し、絵の中身に重ねない。
+   上へ出た分は `.prompt-image-tray` の上の余白が受け、右へ出た分は札どうしの間が受ける（入力欄の領域の外へ出るとスクロールする）。 */
 .prompt-image-remove {
   position: absolute;
-  top: 0.15rem;
-  right: 0.15rem;
+  top: -7px;
+  right: -7px;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 1.15rem;
-  height: 1.15rem;
+  width: 22px;
+  height: 22px;
   padding: 0;
   border-radius: 50%;
   line-height: 1;
+}
+/* 押せる的は見た目の 22px の外へ 4px ずつ広げた 30px。 */
+.prompt-image-remove::before {
+  content: "";
+  position: absolute;
+  inset: -4px;
 }

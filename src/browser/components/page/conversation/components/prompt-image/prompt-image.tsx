@@ -16,6 +16,7 @@ import { Search, X } from "lucide-react"
 import { useState, type ReactElement } from "react"
 
 import {
+  MAX_PROMPT_IMAGES,
   type PromptImage,
   promptImagePath,
   type RecordedPromptImage,
@@ -24,6 +25,7 @@ import { withOccurrenceKeys } from "../../../../../domain/occurrence-key.ts"
 import { sessionTokenUrl } from "../../../../../domain/session-token-url.ts"
 import { Button } from "../../../../ui/button/button.tsx"
 import { ImageZoom, type ImageZoomFallback } from "../../../../ui/image-zoom/image-zoom.tsx"
+import { Text } from "../../../../ui/text/text.tsx"
 import { useRemadeThumbnail } from "./hooks/use-remade-thumbnail.ts"
 import styles from "./prompt-image.module.css"
 
@@ -47,7 +49,7 @@ type PromptImageChipsProps = {
   readonly onRemove: (index: number) => void
 }
 
-/** 送る前の札（`<textarea>` の上に並ぶ）。縮めた絵（押すと拡大）と、外す `×` を持つ。 */
+/** 送る前の札（`<textarea>` の上に並ぶ）。縮めた絵（押すと拡大）と外す `×` を持ち、末尾に添えた枚数と上限を出す。 */
 export function PromptImageChips(props: PromptImageChipsProps): ReactElement | undefined {
   const [zoomedIndex, setZoomedIndex] = useState<number | undefined>(undefined)
 
@@ -58,8 +60,8 @@ export function PromptImageChips(props: PromptImageChipsProps): ReactElement | u
   const zoomedImage = zoomedIndex === undefined ? undefined : props.images[zoomedIndex]
 
   return (
-    <>
-      <ul className={styles["prompt-images"]}>
+    <div className={styles["prompt-image-tray"]}>
+      <ul className={clsx(styles["prompt-images"], styles["prompt-images-pending"])}>
         {withOccurrenceKeys(props.images, (image) => image.thumbnail).map(
           ({ key, item: image, index }) => (
             <li className={styles["prompt-image-chip"]} key={key}>
@@ -95,6 +97,15 @@ export function PromptImageChips(props: PromptImageChipsProps): ReactElement | u
           ),
         )}
       </ul>
+      <Text
+        element="span"
+        size="secondary"
+        tone="ink-quiet"
+        weight="normal"
+        className={styles["prompt-image-count"]}
+      >
+        {`${props.images.length} / ${MAX_PROMPT_IMAGES} 枚`}
+      </Text>
       {zoomedImage !== undefined && (
         <ImageZoom
           src={zoomedImage.full}
@@ -104,7 +115,7 @@ export function PromptImageChips(props: PromptImageChipsProps): ReactElement | u
           onClose={() => setZoomedIndex(undefined)}
         />
       )}
-    </>
+    </div>
   )
 }
 

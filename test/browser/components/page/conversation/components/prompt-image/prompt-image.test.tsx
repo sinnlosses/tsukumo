@@ -49,6 +49,12 @@ describe("PromptImageChips", () => {
     expect(document.querySelector(".prompt-images")).toBeNull()
   })
 
+  it("札の末尾に、添えた枚数と上限を出す", () => {
+    renderChips([IMAGE_A])
+
+    expect(screen.getByText("1 / 2 枚")).toBeDefined()
+  })
+
   it("絵を押すと、その原寸で拡大の面が開く", () => {
     renderChips([IMAGE_A, IMAGE_B])
 

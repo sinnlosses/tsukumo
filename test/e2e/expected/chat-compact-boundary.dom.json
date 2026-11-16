@@ -558,6 +558,12 @@
                               ]
                             },
                             {
+                              "tag": "span",
+                              "attributes": {
+                                "aria-hidden": "true"
+                              }
+                            },
+                            {
                               "tag": "div",
                               "attributes": {
                                 "role": "group",

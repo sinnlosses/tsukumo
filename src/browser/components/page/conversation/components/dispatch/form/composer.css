@@ -53,6 +53,13 @@
   padding: 0;
   border-radius: var(--radius-pill);
 }
+/* 押せない口（上限まで添えた画像の口）。
+   テーマの押せない印は面の地を敷くが、絵だけの口では押した印（マークダウンの切り替え）と見分けにくいので、地を敷かずに絵を薄くする。
+   字の色（`--ink-quiet`）は入力欄の本体が `--ink-soft` に寄せているので、色では沈まない。 */
+.dispatch-tool[aria-disabled="true"] {
+  background-color: transparent;
+  opacity: 0.45;
+}
 /* 道具の行の右のかたまり。「＋ 新規」・<TurnStatus> を右端へ寄せる。 */
 .dispatch-toolbar-end {
   display: flex;
@@ -82,19 +89,22 @@
     --_chat-composer-radius: 22px;
     container: composer / inline-size;
   }
-  /* 本体は打つ字の読みやすさを優先して、パネルより濃い透ける面にする。引き出しはパネルと同じ面。 */
-  .dispatch-form .dispatch-shell > :not(:global(.astryx-chat-composer-drawer)) {
+  /* 本体は打つ字の読みやすさを優先して、パネルより濃い透ける面にする。 */
+  .dispatch-form .dispatch-shell > * {
     border: 1px solid var(--panel-edge);
     background-color: var(--panel-glass-dense);
     box-shadow: var(--panel-lift);
     backdrop-filter: var(--panel-filter);
     --ink-quiet: var(--ink-soft);
   }
-  .dispatch-form .dispatch-shell > :global(.astryx-chat-composer-drawer) {
-    border-color: var(--panel-edge-quiet);
-    background-color: var(--panel-glass);
-    backdrop-filter: var(--panel-filter);
-    --ink-quiet: var(--ink-soft);
+  /* 書く道具（この依頼に効く）と設定の札（この会話に効く）の境目の縦線。 */
+  .dispatch-tool-divider {
+    flex: none;
+    box-sizing: content-box;
+    width: 1px;
+    height: 18px;
+    padding-inline: var(--inline-control);
+    background: content-box var(--rule);
   }
   .dispatch-shell .dispatch-text {
     box-sizing: border-box;
