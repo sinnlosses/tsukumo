@@ -5,7 +5,7 @@ import { git, initGitRepository } from "../fixture/git-repository.ts"
 import { expectReadable } from "./readability-scan.ts"
 import { expect, test, VIEWPORTS } from "./room-fixture.ts"
 import {
-  openTaskBoardRoomWithDrafts,
+  openTaskListRoomWithDrafts,
   openTaskListRoomWithRunningTask,
   READY_TASK_ID,
 } from "./task-room.ts"
@@ -84,14 +84,14 @@ test.describe("会話の画面の押す的と字", () => {
   }
 })
 
-test.describe("タスク板のドラフトの仕分けの押す的と字", () => {
-  test("行の3択・却下の理由の欄・下端の帯の押せるもの・字が下限を割らない", async ({ run }) => {
-    const room = await openTaskBoardRoomWithDrafts(run, "target-size-draft-sort", [])
-    const board = room.page.getByRole("dialog", { name: "タスク" })
-    await board.getByRole("button", { name: "ドラフト 2", exact: true }).click()
-    const groups = board.getByRole("radiogroup")
+test.describe("サイドシートのドラフトの分類の押す的と字", () => {
+  test("札の3択・却下の理由の欄・下端の帯の押せるもの・字が下限を割らない", async ({ run }) => {
+    const room = await openTaskListRoomWithDrafts(run, "target-size-draft-sort", [])
+    await room.page.getByRole("button", { name: "仕分ける", exact: true }).click()
+    const sheet = room.page.getByRole("complementary", { name: /ドラフトを仕分ける/ })
+    const groups = sheet.getByRole("radiogroup")
     await groups.nth(0).getByRole("radio", { name: "却下" }).click()
-    await room.page.getByText("却下の理由:").waitFor()
+    await room.page.getByText("却下の理由").waitFor()
     await groups.nth(1).getByRole("radio", { name: "計画" }).click()
     await room.page.getByRole("button", { name: "仕分けを戻す" }).waitFor()
     await room.page.getByRole("button", { name: /を頼む$/ }).waitFor()

@@ -144,8 +144,6 @@ const MARGIN_DECLARATION_LIMITS: Readonly<Record<string, number>> = {
   "browser/features/run-setting/run-setting-select.module.css": 2,
   "browser/features/task-board/components/task-board-action.module.css": 2,
   "browser/features/task-board/components/task-board-list.module.css": 1,
-  "browser/features/task-board/components/task-board-sort-band.module.css": 1,
-  "browser/features/task-board/components/task-board-sort-choice.module.css": 2,
   "browser/features/task-board/components/task-body.module.css": 10,
   "browser/features/task-board/components/task-run-confirm.module.css": 3,
   "browser/features/task-board/task-board.module.css": 6,

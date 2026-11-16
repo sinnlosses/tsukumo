@@ -40,6 +40,10 @@ export type TaskListModel = {
   readonly matchCount: number
   readonly listId: string
   readonly sheet: TaskListSheet
+  /** ドラフトの段の「仕分ける」。サイドシートの置き場が無い狭い幅では `none`。 */
+  readonly sort:
+    | { readonly kind: "none" }
+    | { readonly kind: "some"; readonly open: boolean; readonly onToggle: () => void }
   readonly onQueryChange: (query: string) => void
   readonly onToggleDone: () => void
   readonly onSearchKeyDown: (event: KeyboardEvent<HTMLInputElement>) => void
@@ -60,6 +64,7 @@ export function useTaskListModel(tasks: TaskSummaryResult): {
   const sheetState = useTaskSheet((state) => state.sheet)
   const openSheet = useTaskSheet((state) => state.open)
   const toggleSheet = useTaskSheet((state) => state.toggle)
+  const toggleSort = useTaskSheet((state) => state.toggleSort)
   const stepSheet = useTaskSheet((state) => state.step)
   const backSheet = useTaskSheet((state) => state.back)
   const closeSheet = useTaskSheet((state) => state.close)
@@ -182,6 +187,9 @@ export function useTaskListModel(tasks: TaskSummaryResult): {
     matchCount: shownIds.length,
     listId,
     sheet: { ...(openId === undefined ? {} : { openId }), onOpenRow },
+    sort: phone
+      ? { kind: "none" }
+      : { kind: "some", open: sheetState.kind === "sort", onToggle: toggleSort },
     onQueryChange,
     onToggleDone: () => {
       setDoneOpen((open) => !open)

@@ -44,7 +44,7 @@ export type TaskSheetView =
 /** `listModeAvailable` は、タスクのモーダルが置かれている画面か（雑談の画面には置かれず、開く口を出さない）。 */
 export function useTaskSheetView(
   tasks: TaskSummaryResult,
-  sheet: TaskSheetSubject,
+  sheet: Exclude<TaskSheetSubject, { readonly kind: "sort" }>,
   listModeAvailable: boolean,
 ): TaskSheetView {
   const focusSignal = useTaskSheet((state) => state.focusSignal)

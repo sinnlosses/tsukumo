@@ -3,10 +3,14 @@
 
 import { create } from "zustand"
 
-/** `previousId` はつながり・本文中の ID で飛んだときだけ持つ、パンくずの「戻る」先（直前の1つだけ）。 */
+/**
+ * 開いている面の種類。`open` はタスク1件の詳細、`sort` はドラフトの全件を分類する場面。
+ * `previousId` はつながり・本文中の ID で飛んだときだけ持つ、パンくずの「戻る」先（直前の1つだけ）。
+ */
 export type TaskSheetSubject =
   | { readonly kind: "closed" }
   | { readonly kind: "open"; readonly id: string; readonly previousId?: string }
+  | { readonly kind: "sort" }
 
 type TaskSheetState = {
   readonly sheet: TaskSheetSubject
@@ -20,6 +24,8 @@ type TaskSheetState = {
   readonly open: (id: string) => void
   /** 開いている同じタスクなら閉じ、ほかは開く。 */
   readonly toggle: (id: string) => void
+  /** ドラフトの分類の場面を開く。すでに開いていれば閉じる。 */
+  readonly toggleSort: () => void
   /** `order` の隣へ移る。端と、開いているタスクが `order` に無いときは動かない。 */
   readonly step: (delta: 1 | -1) => void
   readonly jump: (id: string) => void
@@ -40,6 +46,10 @@ export const useTaskSheet = create<TaskSheetState>()((set, get) => ({
     set({
       sheet: sheet.kind === "open" && sheet.id === id ? { kind: "closed" } : { kind: "open", id },
     })
+  },
+  toggleSort: () => {
+    const { sheet } = get()
+    set({ sheet: sheet.kind === "sort" ? { kind: "closed" } : { kind: "sort" } })
   },
   step: (delta) => {
     const { sheet, order } = get()

@@ -1,0 +1,152 @@
+/* サイドシートの分類の場面。器と頭の帯は `task-sheet.module.css` の `.task-sheet` を共有し、ここは題・札・3択・下端の口を持つ。
+   形は見本 `docs/history/mockup/sidebar-task-board-2026-11-16/` の `view=draft`（札の縦積みと、下端の「仕分けを戻す・あとで n 件・頼む」）。 */
+.draft-sort-title {
+  display: flex;
+  align-items: baseline;
+  gap: var(--inline-control);
+  margin: 0;
+  padding: var(--stack-tight) var(--inline-control);
+  font-size: var(--font-heading);
+  font-weight: 600;
+}
+.draft-sort-count {
+  color: var(--ink-quiet);
+  font-family: var(--font-mono);
+  font-size: var(--font-label);
+  font-weight: 500;
+}
+/* 札の列。件数が多いときは内側で転がる。 */
+.draft-sort-list {
+  min-height: 0;
+  margin: 0;
+  padding: var(--stack-block) var(--inline-group);
+  overflow-y: auto;
+  list-style: none;
+}
+.draft-sort-card {
+  display: grid;
+  gap: var(--stack-block);
+  padding: var(--stack-group) 0;
+  border-top: 1px solid var(--rule-quiet);
+}
+.draft-sort-card:first-child {
+  border-top: none;
+}
+.draft-sort-top {
+  display: flex;
+  align-items: center;
+  gap: var(--inline-group);
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: var(--font-label);
+}
+.draft-sort-summary {
+  margin: 0;
+  font-size: var(--font-secondary);
+  font-weight: 600;
+  line-height: 1.45;
+}
+.draft-sort-body {
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+  line-height: 1.5;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.draft-sort-group {
+  display: inline-flex;
+  justify-self: start;
+  overflow: hidden;
+  border: 1px solid var(--rule-soft);
+  border-radius: var(--radius-md);
+}
+.draft-sort-button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--inline-tight);
+  min-height: 28px;
+  padding: var(--stack-tight) var(--inline-group);
+  border: none;
+  border-left: 1px solid var(--rule-soft);
+  background: transparent;
+  color: var(--ink-quiet);
+  font: inherit;
+  font-size: var(--font-label);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.draft-sort-button:first-child {
+  border-left: none;
+}
+.draft-sort-button:hover {
+  color: var(--ink);
+}
+/* 選んだ札は字と地の色に加えて左のチェックで言う。却下の地は字の対比が下限を割らない薄さに留める。 */
+.draft-sort-plan.draft-sort-on {
+  background: color-mix(in srgb, var(--state-ok) 18%, transparent);
+  color: var(--state-ok);
+}
+.draft-sort-drop.draft-sort-on {
+  background: color-mix(in srgb, var(--state-ng) 10%, transparent);
+  color: var(--ink);
+}
+.draft-sort-drop .draft-sort-check {
+  color: var(--state-ng);
+}
+.draft-sort-later.draft-sort-on {
+  background: var(--surface-raised);
+  color: var(--ink);
+}
+.draft-sort-check {
+  display: inline-flex;
+}
+.draft-sort-reason {
+  display: grid;
+  gap: var(--stack-tight);
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+}
+.draft-sort-reason-input {
+  min-width: 0;
+  height: 32px;
+  padding: 0 var(--inline-control);
+}
+/* 下端の口。ボタンの箱は操作の帯（`task-board-action.module.css`）と揃える。 */
+.draft-sort-band {
+  box-sizing: border-box;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  --draft-sort-band-gap: 10px;
+  /* 12px に丸めると狭い幅で頼む口が 2 行目へ落ちる */
+  gap: var(--draft-sort-band-gap);
+  min-height: 64px;
+  padding: var(--inline-control) var(--inline-group);
+  border-top: 1px solid var(--rule-quiet);
+  background: color-mix(in srgb, var(--surface), var(--ground) 40%);
+}
+.draft-sort-reset {
+  display: inline-flex;
+  align-items: center;
+  height: 36px;
+  padding: 0 var(--inline-control);
+  border-radius: var(--radius-md);
+}
+.draft-sort-later-count {
+  flex: 1;
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+  text-align: right;
+}
+.draft-sort-request {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--inline-control);
+  height: 40px;
+  --draft-sort-request-pad: 18px;
+  padding: 0 var(--draft-sort-request-pad);
+  border-radius: var(--radius-lg);
+}

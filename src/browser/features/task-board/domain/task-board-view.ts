@@ -6,7 +6,6 @@ import type {
   TaskLoopable,
 } from "../../../../shared/repository/task-summary.ts"
 import type { CodeSpanPart } from "../../../domain/code-span.ts"
-import type { DraftSortChoice } from "./draft-sort.ts"
 import type { TaskRunConfirmOutcome } from "./task-run-confirm-outcome.ts"
 import type { TaskRunTarget } from "./task-run-prompt.ts"
 
@@ -17,31 +16,6 @@ export type TaskStateView = {
   readonly kind: TaskStateKind
   readonly text: string
 }
-
-/** ドラフトの行の仕分け。絞り込み「ドラフト」のドラフトの行だけ `some`。 */
-export type TaskBoardRowSort =
-  | { readonly kind: "none" }
-  | {
-      readonly kind: "some"
-      readonly choice: DraftSortChoice
-      /** 却下の理由（1行）。却下でない行でも持ち、空なら文面に添えない。 */
-      readonly reason: string
-      readonly onChoose: (choice: DraftSortChoice) => void
-      readonly onReason: (reason: string) => void
-    }
-
-/** 下端の帯。絞り込み「ドラフト」で計画か却下が1件以上あるときだけ `some`。 */
-export type TaskBoardSortBand =
-  | { readonly kind: "none" }
-  | {
-      readonly kind: "some"
-      readonly planCount: number
-      readonly dropCount: number
-      /** 触らない（保留の）ドラフトの件数。 */
-      readonly holdCount: number
-      readonly onReset: () => void
-      readonly onRequest: () => void
-    }
 
 export type TaskBoardRow = {
   readonly id: string
@@ -54,7 +28,6 @@ export type TaskBoardRow = {
   readonly selected: boolean
   /** 絞り込み・検索には当たらないが、飛んだ先として一時的に出している行なら真。 */
   readonly outOfFilter: boolean
-  readonly sort: TaskBoardRowSort
 }
 
 export type TaskBoardFilter = "all" | "ready" | "blocked" | "hold" | "draft" | "doing" | "done"
@@ -140,7 +113,6 @@ export type TaskBoardContent =
       readonly rows: readonly TaskBoardRow[]
       /** 一覧に載せきれず落とした閉じたタスクの件数。0 でなければ一覧の末尾に一言を出す。 */
       readonly omittedClosedCount: number
-      readonly sortBand: TaskBoardSortBand
       /** 選んでいる行の `optionId`。行が無ければ `undefined`（`aria-activedescendant` を付けない）。 */
       readonly activeOptionId?: string
       readonly selection: TaskBoardSelection

@@ -1,13 +1,6 @@
 // タスクのモーダルの表示上の状態（検索の文字・絞り込みのバッジ・選んでいる行）と、その移り方。
 
-import { omit } from "remeda"
-
 import type { TaskBoardRequest } from "../../../stores/task-board-request.ts"
-import {
-  EMPTY_DRAFT_SORT,
-  type DraftSortChoice,
-  type DraftSortState,
-} from "../domain/draft-sort.ts"
 import type { TaskBoardFilter } from "../domain/task-board-view.ts"
 
 /** 検索の文字・絞り込みのバッジ・選んでいる行と、詳細を押して切り替えた回数。閉じると `focusSignal` 以外を初めに戻す。 */
@@ -24,8 +17,6 @@ type BoardState = {
    * （一覧の行を選ぶ・↑↓ だけのときはフォーカスは落ちないので増やさない）。
    */
   readonly focusSignal: number
-  /** ドラフトの行ごとの仕分け。閉じると初めに戻す。 */
-  readonly sort: DraftSortState
 }
 
 /**
@@ -50,9 +41,6 @@ type BoardAction =
   | { readonly kind: "select"; readonly id: string }
   | { readonly kind: "jump"; readonly id: string; readonly shownId: string }
   | { readonly kind: "back" }
-  | { readonly kind: "sort"; readonly id: string; readonly choice: DraftSortChoice }
-  | { readonly kind: "dropReason"; readonly id: string; readonly reason: string }
-  | { readonly kind: "sortReset" }
 
 export function initialBoardState(request: TaskBoardRequest): BoardState {
   return {
@@ -61,7 +49,6 @@ export function initialBoardState(request: TaskBoardRequest): BoardState {
     filter: "all",
     chosen: chosenOnOpen(request),
     focusSignal: 0,
-    sort: EMPTY_DRAFT_SORT,
   }
 }
 
@@ -77,25 +64,7 @@ export function boardReducer(state: BoardState, action: BoardAction): BoardState
         filter: "all",
         chosen: { kind: "first" },
         focusSignal: state.focusSignal,
-        sort: EMPTY_DRAFT_SORT,
       }
-    case "sort": {
-      const rest = omit(state.sort.choices, [action.id])
-      return {
-        ...state,
-        sort: {
-          ...state.sort,
-          choices: action.choice === "hold" ? rest : { ...rest, [action.id]: action.choice },
-        },
-      }
-    }
-    case "dropReason":
-      return {
-        ...state,
-        sort: { ...state.sort, reasons: { ...state.sort.reasons, [action.id]: action.reason } },
-      }
-    case "sortReset":
-      return { ...state, sort: EMPTY_DRAFT_SORT }
     case "query":
       return { ...state, query: action.query, chosen: settledOn(state.chosen, action.shown) }
     case "filter":

@@ -1,0 +1,9 @@
+{
+  "task-section": [
+    { "tag": "section", "attributes": { "aria-label": "タスク" }, "children": [
+      { "tag": "h3", "children": ["ドラフト", "2"] },
+      { "tag": "button", "attributes": { "aria-expanded": "false" }, "children": ["架空のタスク（ドラフトその1）", "T-003"] },
+      { "tag": "button", "attributes": { "aria-expanded": "false" }, "children": ["架空のタスク（ドラフトその2）", "T-004"] }
+    ] }
+  ]
+}

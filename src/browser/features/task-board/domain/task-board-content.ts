@@ -8,27 +8,19 @@ import {
   type TaskSummaryStatus,
 } from "../../../../shared/repository/task-summary.ts"
 import { codeSpanParts } from "../../../domain/code-span.ts"
-import {
-  choiceOf,
-  tallyDraftSort,
-  type DraftSortChoice,
-  type DraftSortState,
-} from "./draft-sort.ts"
 import { FILTER_CHIPS, matchesFilter } from "./task-board-filter.ts"
 import type {
   TaskBoardBreadcrumb,
   TaskBoardContent,
   TaskBoardFilter,
   TaskBoardOpener,
-  TaskBoardRowSort,
   TaskBoardRun,
   TaskBoardSelection,
-  TaskBoardSortBand,
   TaskDependencyCard,
   TaskStateKind,
   TaskStateView,
 } from "./task-board-view.ts"
-import { isTaskRequestable, type SingleTaskRequest, type TaskRequest } from "./task-run-prompt.ts"
+import { isTaskRequestable, type SingleTaskRequest } from "./task-run-prompt.ts"
 
 /** 一覧の1件と、その状態の言い方（行・札・件数で何度も使うので1回だけ作る）。 */
 export type BoardEntry = {
@@ -52,11 +44,6 @@ type SelectionInput = {
 type BoardContentInput = SelectionInput & {
   readonly query: string
   readonly filter: TaskBoardFilter
-  readonly sort: DraftSortState
-  readonly onSortChoose: (id: string, choice: DraftSortChoice) => void
-  readonly onSortReason: (id: string, reason: string) => void
-  readonly onSortReset: () => void
-  readonly onSortRequest: (request: Extract<TaskRequest, { readonly kind: "sort" }>) => void
 }
 
 /** 頼む口を押せないときに横に添える理由。保留は待ちが残っているときだけ押せない。 */
@@ -147,10 +134,8 @@ export function boardContent(
       loopable: entry.task.loopable,
       selected: selected.kind === "some" && entry === selected.entry,
       outOfFilter: !isVisible(entry),
-      sort: rowSortOf(entry, input),
     })),
     omittedClosedCount: tasks.omittedClosedCount,
-    sortBand: sortBandOf(entries, input),
     activeOptionId: selected.kind === "some" ? optionIdOf(selected.entry.task.id) : undefined,
     selection:
       selected.kind === "some"
@@ -190,45 +175,6 @@ export function selectionOf(
     onJump: input.onJump,
     opener: openerOf(task.location),
     run: runOf(entry, input),
-  }
-}
-
-function rowSortOf(entry: BoardEntry, input: BoardContentInput): TaskBoardRowSort {
-  if (input.filter !== "draft" || entry.state.kind !== "draft") {
-    return { kind: "none" }
-  }
-  const id = entry.task.id
-  return {
-    kind: "some",
-    choice: choiceOf(input.sort, id),
-    reason: input.sort.reasons[id] ?? "",
-    onChoose: (choice) => {
-      input.onSortChoose(id, choice)
-    },
-    onReason: (reason) => {
-      input.onSortReason(id, reason)
-    },
-  }
-}
-
-function sortBandOf(entries: readonly BoardEntry[], input: BoardContentInput): TaskBoardSortBand {
-  if (input.filter !== "draft") {
-    return { kind: "none" }
-  }
-  const draftIds = entries.filter((entry) => entry.state.kind === "draft").map((e) => e.task.id)
-  const tally = tallyDraftSort(draftIds, input.sort)
-  if (tally.planCount + tally.dropCount === 0) {
-    return { kind: "none" }
-  }
-  return {
-    kind: "some",
-    planCount: tally.planCount,
-    dropCount: tally.dropCount,
-    holdCount: tally.holdCount,
-    onReset: input.onSortReset,
-    onRequest: () => {
-      input.onSortRequest(tally.request)
-    },
   }
 }
 

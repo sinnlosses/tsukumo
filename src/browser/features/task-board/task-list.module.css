@@ -15,9 +15,29 @@
   letter-spacing: 0.02em;
 }
 .task-stage-count {
+  flex: 1;
   color: var(--ink-quiet);
   font-family: var(--font-mono);
   font-weight: 500;
+}
+/* 見出しの右端の口（ドラフトの「仕分ける」）。開いているあいだは地で示す。 */
+.task-stage-action {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--inline-tight);
+  padding: var(--stack-tight) var(--inline-control);
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--ink-soft);
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+}
+.task-stage-action:hover,
+.task-stage-action[aria-expanded="true"] {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+  color: var(--ink);
 }
 /* 畳める段（済み）の見出し。ボタンの既定の枠・背景を落とす。 */
 .task-stage-fold {

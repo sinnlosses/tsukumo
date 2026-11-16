@@ -25,7 +25,6 @@ import { TaskBoardColumns } from "./components/task-board-column-list.tsx"
 import { TaskBoardFilterBar } from "./components/task-board-filter-bar.tsx"
 import { TaskBoardHead } from "./components/task-board-head.tsx"
 import { TaskBoardList } from "./components/task-board-list.tsx"
-import { TaskBoardSortBand } from "./components/task-board-sort-band.tsx"
 import { TaskDetail } from "./components/task-detail.tsx"
 import { TaskRunConfirm } from "./components/task-run-confirm.tsx"
 import { TaskSkeleton } from "./components/task-skeleton.tsx"
@@ -118,19 +117,14 @@ export function PresentationalTaskBoard(props: TaskBoardView): ReactElement {
                       onJump={content.selection.onJump}
                       onCopy={content.selection.onCopy}
                     />
-                    {content.sortBand.kind === "none" && (
-                      <TaskBoardAction
-                        opener={content.selection.opener}
-                        run={content.selection.run}
-                      />
-                    )}
+                    <TaskBoardAction
+                      opener={content.selection.opener}
+                      run={content.selection.run}
+                    />
                   </>
                 )
               }
             />
-          )}
-          {content.kind === "known" && content.sortBand.kind === "some" && (
-            <TaskBoardSortBand band={content.sortBand} />
           )}
         </div>
       )}

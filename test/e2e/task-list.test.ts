@@ -2,7 +2,11 @@ import type { Locator } from "playwright-core"
 
 import { expect, test } from "./room-fixture.ts"
 import type { ScenarioRoom } from "./scenario-open.ts"
-import { openTaskListRoom, openTaskListRoomWithDraft } from "./task-room.ts"
+import {
+  openTaskListRoom,
+  openTaskListRoomWithDraft,
+  openTaskListRoomWithDrafts,
+} from "./task-room.ts"
 
 /** 撮るときの経過（凍らせた瞬間から）。「何秒前」の類いをこの値で揃える。 */
 const ELAPSED_MS = 60_000
@@ -75,6 +79,31 @@ test.describe("タスクの一覧", () => {
     await room.waitForEvent("request")
     await room.waitForEvent("turn-finished")
     expect(await room.page.getByRole("dialog", { name: "タスクの実行" }).count()).toBe(0)
+    await room.settleAndMatchPickedWithMessages(ELAPSED_MS)
+  })
+
+  test("段「ドラフト」の「仕分ける」でサイドシートに分類の場面が開き、計画を選んで頼むと仕分けの文面で依頼が送られる", async ({
+    run,
+  }) => {
+    const room = await openTaskListRoomWithDrafts(run, "task-list-draft-sort", [
+      "task-section",
+      "task-run-confirm",
+    ])
+    await room.page.getByRole("button", { name: "仕分ける", exact: true }).click()
+    const sheet = room.page.getByRole("complementary", { name: /ドラフトを仕分ける/ })
+    await sheet.waitFor()
+    await sheet
+      .getByRole("radiogroup", { name: "T-003 の仕分け" })
+      .getByRole("radio", { name: "計画" })
+      .click()
+    await sheet.getByRole("button", { name: "計画 1 を頼む" }).click()
+    const confirm = room.page.getByRole("dialog", { name: "タスクの実行" })
+    await confirm.waitFor()
+    await confirm.getByRole("button", { name: "仕分ける", exact: true }).click()
+    await room.waitForEvent("request")
+    await room.waitForEvent("turn-finished")
+    expect(await confirm.count()).toBe(0)
+    expect(await sheet.count()).toBe(0)
     await room.settleAndMatchPickedWithMessages(ELAPSED_MS)
   })
 

@@ -7,6 +7,7 @@ import {
   ArrowRight,
   ArrowUp,
   Briefcase,
+  Check,
   ChevronLeft,
   ChevronRight,
   Circle,
@@ -21,6 +22,7 @@ import {
   Hourglass,
   Infinity as InfinityGlyph,
   List,
+  ListChecks,
   Maximize2,
   MessageCircle,
   Pencil,
@@ -143,6 +145,16 @@ export function CircleCheckIcon(): ReactElement {
 /** 頼む・送る（上向きの矢印。入力欄の送信と同じ絵）。 */
 export function SendIcon(): ReactElement {
   return <Icon icon={ArrowUp} {...ICON_ATTRIBUTES} />
+}
+
+/** 選んだ印（チェック）。 */
+export function CheckIcon(): ReactElement {
+  return <Icon icon={Check} {...ICON_ATTRIBUTES} />
+}
+
+/** 仕分ける（チェックの並んだ一覧）。 */
+export function ListChecksIcon(): ReactElement {
+  return <Icon icon={ListChecks} {...ICON_ATTRIBUTES} />
 }
 
 /** 閉じる（×）。 */

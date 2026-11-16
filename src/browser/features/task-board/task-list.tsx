@@ -12,11 +12,11 @@ import clsx from "clsx"
 import type { ReactElement, RefObject } from "react"
 
 import type { TaskSummaryResult } from "../../../shared/repository/task-summary.ts"
-import { ChevronRightIcon } from "../../components/ui/icon/icon.tsx"
+import { ChevronRightIcon, ListChecksIcon } from "../../components/ui/icon/icon.tsx"
 import { Text } from "../../components/ui/text/text.tsx"
 import { TaskItem } from "./components/task-item.tsx"
 import { TaskSkeleton } from "./components/task-skeleton.tsx"
-import { taskRowDomId } from "./domain/task-row-dom-id.ts"
+import { SORT_OPEN_DOM_ID, TASK_SHEET_DOM_ID, taskRowDomId } from "./domain/task-row-dom-id.ts"
 import { TASK_STAGE_LABEL, type TaskStageGroup } from "./domain/task-stage.ts"
 import styles from "./task-board.module.css"
 import listStyles from "./task-list.module.css"
@@ -110,6 +110,19 @@ function TaskStageSection(props: {
         <h3 id={headId} className={listStyles["task-stage-head"]}>
           {label}
           <span className={listStyles["task-stage-count"]}>{group.tasks.length}</span>
+          {group.stage === "draft" && model.sort.kind === "some" && (
+            <button
+              type="button"
+              id={SORT_OPEN_DOM_ID}
+              aria-expanded={model.sort.open}
+              aria-controls={model.sort.open ? TASK_SHEET_DOM_ID : undefined}
+              className={listStyles["task-stage-action"]}
+              onClick={model.sort.onToggle}
+            >
+              <ListChecksIcon />
+              仕分ける
+            </button>
+          )}
         </h3>
       )}
       {open && (
