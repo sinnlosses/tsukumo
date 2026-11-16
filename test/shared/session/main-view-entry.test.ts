@@ -278,6 +278,26 @@ describe("mainViewTurns（失敗で終わったターン）", () => {
   })
 })
 
+describe("mainViewEntries（中断で終わったターン）", () => {
+  it("中断の記録は entry に出ず、完了で終わった同じ記録と同じ出力になる", () => {
+    const entriesEndingWith = (outcome: "interrupted" | "completed") => {
+      const events: readonly SessionEvent[] = [
+        requestEvent(),
+        { kind: "utterance", text: "架空の本文" },
+        { kind: "turn-finished", outcome: { kind: outcome } },
+      ]
+      return mainViewEntries(
+        events.reduce(
+          (current, event) => applySessionEvent(current, event, 0),
+          INITIAL_SESSION_STATE,
+        ),
+      )
+    }
+
+    expect(entriesEndingWith("interrupted")).toEqual(entriesEndingWith("completed"))
+  })
+})
+
 describe("mainViewTurns（補足メッセージ）", () => {
   const plan = (current: number, phaseSummary: string): SessionEvent => ({
     kind: "work-plan",

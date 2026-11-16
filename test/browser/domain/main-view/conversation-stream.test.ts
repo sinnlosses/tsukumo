@@ -54,6 +54,12 @@ describe("conversationStreamRows（やり取り1つの記録を流れの行に�
     expect(rows.map((row) => row.kind)).toEqual(["post", "say"])
   })
 
+  it("中断の記録は行を作らない", () => {
+    const rows = rowsOf([requestRecord(), speechRecord(), { kind: "turn-interrupted" }])
+
+    expect(rows.map((row) => row.kind)).toEqual(["post", "say"])
+  })
+
   it("時刻の無い記録と restored の記録には時刻を付けない", () => {
     const rows = rowsOf([
       requestRecord({ time: { kind: "restored" } }),

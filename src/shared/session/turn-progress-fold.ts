@@ -1,7 +1,7 @@
 // ターンの始まり・続き・終わりが、進み具合と SDK ターンごとの持ち物（`SessionState` の `turn` など）をどう変えるか。
 
 import type { A2uiWrittenComponent } from "../report/a2ui-report-catalog.ts"
-import type { TurnEnding } from "../session-driver/turn-failure.ts"
+import type { TurnEnding, TurnOutcome } from "../session-driver/turn-failure.ts"
 import type { SessionState } from "./session-state.ts"
 import {
   INITIAL_SPEECH_EXPRESSION,
@@ -69,6 +69,13 @@ export function resumeTurn(state: SessionState, at: number): SessionState {
 export function recordTurnFailure(state: SessionState, ending: TurnEnding): SessionState {
   return ending.kind === "failed"
     ? { ...state, records: [...state.records, { kind: "turn-failure", failure: ending.failure }] }
+    : state
+}
+
+/** 利用者が止めたなら、印を記録の末尾に積む（`SessionRecord` の `turn-interrupted`）。 */
+export function recordTurnInterruption(state: SessionState, outcome: TurnOutcome): SessionState {
+  return outcome.kind === "interrupted"
+    ? { ...state, records: [...state.records, { kind: "turn-interrupted" }] }
     : state
 }
 

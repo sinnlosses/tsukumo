@@ -99,6 +99,7 @@ function recordTimes(record: SessionRecord): readonly RecordTime[] {
     case "question":
     case "compact-boundary":
     case "turn-failure":
+    case "turn-interrupted":
     // 待ちの一言はターンが閉じたあとに積むので、ターンの長さに数えない。
     case "reaction":
       return []

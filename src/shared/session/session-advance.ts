@@ -40,6 +40,7 @@ import {
   finishedTurnCountOf,
   holdReportDrafting,
   recordTurnFailure,
+  recordTurnInterruption,
   resumeTurn,
   settleReportDrafting,
   startReportDrafting,
@@ -268,7 +269,7 @@ const SESSION_EVENT_FOLDS = {
     const ending = turnEnding(event.outcome, state.apiTrouble)
     // `diaryWriting` と見直しの欄はここでは動かさない（どちらも会話とは別の使い捨ての問い合わせで並んで進むため）。
     return {
-      ...recordTurnFailure(settleUtterance(state), ending),
+      ...recordTurnInterruption(recordTurnFailure(settleUtterance(state), ending), event.outcome),
       turn: finishTurn(state.turn, at, ending),
       finishedTurnCount: finishedTurnCountOf(state),
       sdkTurn: CLOSED_SDK_TURN,

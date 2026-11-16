@@ -98,6 +98,8 @@
   `rate-limit-changed` が来るまで持つ（戻る時刻を過ぎても、戻ったかは次の知らせでしか分からない）
 - **失敗の理由**は `turn` の `finished` の `ending`（次の依頼まで）と、記録の `turn-failure`（記録ウィンドウから
   落ちるまで）の2か所に残す
+- 利用者が止めたやり取りは、記録の末尾の `turn-interrupted`（中身は持たない。どこで止めたかは最後の `work-plan` の
+  記録から導く）で完了と見分ける。失敗の理由ではない
 
 **記録の時刻**。記録のうち**依頼（`request`）とセリフ（`speech`）の2種類だけ**が `time: RecordTime` を
 持つ。読むのは雑談のログ（`docs/architecture/screen-design.md` 13.7「時刻と日の区切り」）と、キャラビューのセリフのログの依頼の区切りで、

@@ -74,6 +74,7 @@ function rowOf(record: SessionRecord): readonly ConversationStreamRow[] {
       return [{ kind: "failure", record }]
     case "tool":
     case "compact-boundary":
+    case "turn-interrupted":
       return []
   }
 }

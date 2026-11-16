@@ -271,11 +271,35 @@ describe("applySessionEvent（API の不調と失敗）", () => {
     expect(state.turn).toMatchObject({ kind: "finished", ending: { kind: "ended" } })
   })
 
-  it("中断は失敗にせず、記録も積まない", () => {
+  it("中断は失敗にせず、記録の末尾に中断の印を1つだけ積む", () => {
     const state = apply(REQUEST, { kind: "turn-finished", outcome: { kind: "interrupted" } })
 
     expect(state.records.some((record) => record.kind === "turn-failure")).toBe(false)
+    expect(state.records.filter((record) => record.kind === "turn-interrupted")).toHaveLength(1)
+    expect(state.records.at(-1)).toEqual({ kind: "turn-interrupted" })
     expect(state.turn).toMatchObject({ kind: "finished", ending: { kind: "ended" } })
+  })
+
+  it("完了では中断の印を積まず、失敗では失敗の理由だけを積む", () => {
+    const completed = apply(REQUEST, { kind: "turn-finished", outcome: { kind: "completed" } })
+    const failed = apply(REQUEST, {
+      kind: "turn-finished",
+      outcome: { kind: "failed", cause: { kind: "max-turns" } },
+    })
+
+    expect(completed.records.some((record) => record.kind === "turn-interrupted")).toBe(false)
+    expect(failed.records.some((record) => record.kind === "turn-interrupted")).toBe(false)
+    expect(failed.records.at(-1)).toEqual({ kind: "turn-failure", failure: { kind: "max-turns" } })
+  })
+
+  it("中断のあとに次の依頼が続いても、前のターンの中断の印は1つ残る", () => {
+    const state = apply(
+      REQUEST,
+      { kind: "turn-finished", outcome: { kind: "interrupted" } },
+      REQUEST,
+    )
+
+    expect(state.records.filter((record) => record.kind === "turn-interrupted")).toHaveLength(1)
   })
 
   it("上限の失敗は理由をそのまま積む", () => {

@@ -206,3 +206,9 @@ export type SessionRecord =
    * 雑談のログ・依頼の手順・吹き出しは拾わない。
    */
   | { readonly kind: "turn-failure"; readonly failure: TurnFailure }
+  /**
+   * 利用者が止めたターン（`turn-finished` の `outcome` が `interrupted`）の印。そのターンの記録の末尾に1つだけ積む。
+   * 中身を持たない（どこで止めたかは最後の `work-plan` の記録から導く）。
+   * 雑談のログ・依頼の手順・吹き出しは拾わない。
+   */
+  | { readonly kind: "turn-interrupted" }

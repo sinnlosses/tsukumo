@@ -92,7 +92,7 @@ function dependenciesOf(record: SessionRecord, context: TurnContext): readonly E
  * `speech` は落とす（セリフは吹き出しだけに出し、レポートに混ぜない）。脇の話への答えのセリフだけは、補足メッセージの欄に出すので `aside-answer` にする。
  * ターンの通し番号は `request` の記録が持っているので、何を落としても番号はずれない。
  *
- * `compact-boundary` も落とす（圧縮の区切りは雑談のログだけに出す）。`reaction` も落とす（セリフのログだけに出す）。
+ * `compact-boundary` も落とす（圧縮の区切りは雑談のログだけに出す）。`reaction` も落とす（セリフのログだけに出す）。`turn-interrupted` も落とす（止めた印は、今は何も描かない）。
  *
  * `work-plan` は、段が移ったときだけ `phase-shift` にする。
  *
@@ -102,7 +102,11 @@ function toMainViewEntries(record: SessionRecord, context: TurnContext): readonl
   if (record.kind === "speech") {
     return record.answersAside ? [{ kind: "aside-answer", text: record.text }] : []
   }
-  if (record.kind === "compact-boundary" || record.kind === "reaction") {
+  if (
+    record.kind === "compact-boundary" ||
+    record.kind === "reaction" ||
+    record.kind === "turn-interrupted"
+  ) {
     return []
   }
   if (record.kind === "aside") {
