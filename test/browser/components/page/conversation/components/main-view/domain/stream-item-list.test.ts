@@ -83,6 +83,51 @@ describe("streamItemsOf", () => {
     expect(items.map((item) => item.kind)).toEqual(["post", "say", "body"])
   })
 
+  it("段のまとめは、その段を済ませた work_plan の記録の位置に出し、段を進めない呼び直しは取らない", () => {
+    const phases = ["架空の段A", "架空の段B", "架空の段C", "架空の段D"]
+    const phaseStep = (id: number) =>
+      step({
+        id,
+        body: {
+          kind: "text",
+          report: { kind: "markdown", markdown: `まとめ${String(id)}` },
+          firstLine: `まとめ${String(id)}`,
+          task: { kind: "none" },
+          finishedPhase: {
+            kind: "phase",
+            label: `段${String(id)}`,
+            duration: { kind: "unknown" },
+            skipped: false,
+          },
+          changeSummary: { kind: "none" },
+        },
+      })
+    const items = streamItemsOf(
+      rowsOf([
+        requestRecord(),
+        workPlanRecord({ phases, current: 0 }),
+        speechRecord({ text: "段Aのセリフ" }),
+        workPlanRecord({ phases, current: 1, phaseSummary: "まとめ1" }),
+        speechRecord({ text: "段Bのセリフ" }),
+        workPlanRecord({ phases, current: 1 }),
+        speechRecord({ text: "段Bの続き" }),
+        workPlanRecord({ phases, current: 2, phaseSummary: "まとめ2" }),
+        speechRecord({ text: "段Cのセリフ" }),
+      ]),
+      turn([phaseStep(1), phaseStep(2)]),
+    )
+
+    expect(
+      items.map((item) =>
+        item.kind === "body"
+          ? `body${String(item.step.id)}`
+          : item.kind === "say"
+            ? "say"
+            : item.kind,
+      ),
+    ).toEqual(["post", "say", "body1", "say", "say", "body2", "say"])
+  })
+
   it("失敗したやり取りは、最初の本文の手前に失敗の表示を置く", () => {
     const failed = {
       ...turn([reportStep(0, "fictional-report", "final")]),

@@ -4,7 +4,7 @@
 // 本文と記録の突き合わせ:
 // - `report` は同じ `toolUseId` を持つ `origin.kind === "tool-report"` のステップ
 // - `detail` は、まだ使っていない `origin.kind === "other"` のステップのうち段のまとめを持たないもの（届いた順）
-// - `work-plan` は、同じく段のまとめを持つもの（届いた順）。段が移らなかった記録は使わないので、まとめの位置は届いた順の近似
+// - `work-plan` は、直前の `work-plan` の記録との差で段を済ませた記録だけが、同じく段のまとめを持つものを1件（届いた順）取る。段を進めない呼び直しは取らない
 // - 突き合わせの外に残った本文・質問の記録（書きかけの本文など）は、ステップの順に末尾（失敗の表示の手前）へ並べる
 //
 // 最終レポートがあるやり取りは、最終レポートより前の段の札・質問の記録・本文を、最終レポートの上の「作業の経過」1つに畳む。
@@ -15,6 +15,9 @@ import type {
   MainViewTurn,
 } from "../../../../../../../shared/session/main-view-shape.ts"
 import type { SessionRecord } from "../../../../../../../shared/session/session-record.ts"
+import { workPlanOf } from "../../../../../../../shared/session/work-plan-fold.ts"
+import { phaseShiftOf } from "../../../../../../../shared/session/work-plan-shift.ts"
+import type { LatestWorkPlan } from "../../../../../../../shared/session/work-plan.ts"
 import type { ConversationStreamRow } from "../../../../../../domain/main-view/conversation-stream.ts"
 import { progressFoldSummary, type ProgressEntry } from "./turn-arrangement.ts"
 
@@ -82,6 +85,7 @@ export function streamItemsOf(
   }
 
   const items: ArrangedItem[] = []
+  let previousPlan: LatestWorkPlan = { kind: "none" }
   for (const row of rows) {
     switch (row.kind) {
       case "post":
@@ -93,8 +97,16 @@ export function streamItemsOf(
       case "step": {
         if (row.record.kind === "work-plan") {
           items.push({ kind: "plan", record: row.record })
+          const finishesPhase = phaseShiftOf(previousPlan, row.record).finished.kind === "finished"
+          previousPlan = workPlanOf(row.record)
+          if (finishesPhase) {
+            for (const step of takeOther(true)) {
+              items.push({ kind: "body", step })
+            }
+          }
+          break
         }
-        for (const step of takeOther(row.record.kind === "work-plan")) {
+        for (const step of takeOther(false)) {
           items.push({ kind: "body", step })
         }
         break
