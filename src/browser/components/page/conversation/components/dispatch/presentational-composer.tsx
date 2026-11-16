@@ -286,9 +286,12 @@ export function PresentationalComposer({
             disabled={false}
             disclosure={{ kind: "none" }}
             className={styles["dispatch-band-jump"]}
+            title={JUMP_CONDITION_NOTE}
+            ariaDescription={JUMP_CONDITION_NOTE}
             onClick={band.onJump}
           >
             {INQUIRY_JUMP_LABEL}
+            <JumpKeyMark />
           </Button>
         </HStack>
       )}
@@ -318,9 +321,12 @@ export function PresentationalComposer({
             disabled={false}
             disclosure={{ kind: "none" }}
             className={styles["dispatch-band-jump"]}
+            title={JUMP_CONDITION_NOTE}
+            ariaDescription={JUMP_CONDITION_NOTE}
             onClick={band.onJump}
           >
             {FAVOR_JUMP_LABEL}
+            <JumpKeyMark />
           </Button>
         </HStack>
       )}
@@ -484,8 +490,19 @@ function PhoneAttach({
 const ATTACH_LABEL = "添える"
 const IMAGE_LABEL = "画像を添える"
 const IMAGES_FULL_LABEL = `画像は${MAX_PROMPT_IMAGES}枚まで（外すと添えられる）`
-const INQUIRY_JUMP_LABEL = "お伺いへ"
-const FAVOR_JUMP_LABEL = "レポートの末尾へ"
+const INQUIRY_JUMP_LABEL = "選択肢へ"
+const FAVOR_JUMP_LABEL = "お願いへ"
+const JUMP_KEY = "↑"
+const JUMP_CONDITION_NOTE = "入力欄が空のとき ↑ でも移れます"
+
+/** 口に添えるキーの印。見える字だけで、口の名前には入れない。 */
+function JumpKeyMark(): ReactElement {
+  return (
+    <kbd className={styles["dispatch-band-key"]} aria-hidden="true">
+      {JUMP_KEY}
+    </kbd>
+  )
+}
 const RESTART_LABEL = "新しく始める"
 
 /** 道具の口の絵の一辺（px）。口どうしで揃える。 */

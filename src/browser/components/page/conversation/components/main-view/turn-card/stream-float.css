@@ -11,7 +11,13 @@
   bottom: 0.75rem;
   max-width: calc(100% - 2rem);
   border-radius: var(--radius-md);
+  background: var(--surface);
+}
+.stream-float-body.is-warn {
   background: color-mix(in srgb, var(--surface), var(--state-warn) 12%);
+}
+.stream-float-count {
+  color: var(--ink-soft);
 }
 .stream-float-button {
   display: flex;

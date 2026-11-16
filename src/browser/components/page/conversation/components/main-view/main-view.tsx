@@ -44,6 +44,7 @@ import { headingStepOf, neighborTurnId, turnStepOf } from "./domain/turn-step-ke
 import { HeadNotice } from "./head-notice.tsx"
 import { scrollerOf } from "./hooks/scroll-frame.ts"
 import { type ShownTarget, useActiveTurnScroll } from "./hooks/use-active-turn-scroll.ts"
+import { useTailReturn } from "./hooks/use-tail-return.ts"
 import styles from "./main-view.module.css"
 import { NowLine } from "./now-line.tsx"
 import { PhaseList } from "./phase-list.tsx"
@@ -105,6 +106,7 @@ export function MainView(): ReactElement {
     follow: view.kind === "work" && !viewingPast,
   })
 
+  const tail = useTailReturn(rootRef, recordCount, view.kind === "work" && !viewingPast)
   const notice = headNoticeOf({ content, moment, viewingPast, phase })
 
   function onNotice(action: HeadNoticeAction): void {
@@ -238,7 +240,7 @@ export function MainView(): ReactElement {
             </article>
           )}
         </ContentFrame>
-        <StreamFloat notice={notice} viewingPast={viewingPast} onNotice={onNotice} />
+        <StreamFloat notice={notice} viewingPast={viewingPast} onNotice={onNotice} tail={tail} />
       </div>
     </RepositoryFileLinkProvider>
   )

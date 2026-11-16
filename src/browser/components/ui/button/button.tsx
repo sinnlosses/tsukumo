@@ -74,6 +74,8 @@ export type ButtonProps = {
   readonly disclosure: ButtonDisclosure
   /** `disabled` の理由など、hover で読ませたい1行。省略すると付けない。 */
   readonly title?: string
+  /** 名前に足す補足（押せる条件など）。読み上げに伝える。省略すると付けない。 */
+  readonly ariaDescription?: string
   /** 置き方（margin など）と箱（高さ・余白・角丸）だけを渡す。 */
   readonly className: string
   readonly onClick: () => void
@@ -142,6 +144,7 @@ export function Button(props: ButtonProps): ReactElement {
         : undefined,
     "aria-controls": disclosure.kind === "popover" ? disclosure.controls : undefined,
     title: props.title,
+    "aria-description": props.ariaDescription,
     onClick: handleClick,
     children: props.children,
   }

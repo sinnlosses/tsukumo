@@ -361,7 +361,7 @@ describe("Composer", () => {
     stubPhoneWidth()
     renderComposer({ character: FIXTURE_CHARACTER, pending: [QUESTION_PENDING] })
 
-    expect(screen.queryByRole("button", { name: "お伺いへ" })).toBeNull()
+    expect(screen.queryByRole("button", { name: "選択肢へ" })).toBeNull()
     expect(screen.queryByText(/質問しています/)).toBeNull()
     expect(screen.getByPlaceholderText("答えを書くか、上で選ぶ")).toBeDefined()
   })
@@ -373,10 +373,10 @@ describe("Composer", () => {
     expect(screen.getByPlaceholderText(/依頼を書く/)).toBeDefined()
   })
 
-  it("帯の「お伺いへ」は、お伺いのカードへフォーカスを移す通知を出す", () => {
+  it("帯の「選択肢へ」は、お伺いのカードへフォーカスを移す通知を出す", () => {
     renderComposer({ pending: [PERMISSION_PENDING] })
 
-    fireEvent.click(screen.getByRole("button", { name: "お伺いへ" }))
+    fireEvent.click(screen.getByRole("button", { name: "選択肢へ" }))
 
     expect(useInquiryJump.getState().jump).toEqual({ signal: 1, focus: true })
   })

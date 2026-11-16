@@ -258,6 +258,26 @@
                   "children": [
                     "やり取り",
                     {
+                      "tag": "span",
+                      "attributes": {
+                        "aria-hidden": "true"
+                      },
+                      "children": [
+                        {
+                          "tag": "kbd",
+                          "children": [
+                            "["
+                          ]
+                        },
+                        {
+                          "tag": "kbd",
+                          "children": [
+                            "]"
+                          ]
+                        }
+                      ]
+                    },
+                    {
                       "tag": "button",
                       "attributes": {
                         "data-variant": "ghost",
@@ -319,7 +339,27 @@
                           }
                         },
                         "最終",
-                        "架空の結論: 目盛りを 24 に直し、`a.ts` だけで済んだ。"
+                        "架空の結論: 目盛りを 24 に直し、`a.ts` だけで済んだ。",
+                        {
+                          "tag": "span",
+                          "attributes": {
+                            "aria-hidden": "true"
+                          },
+                          "children": [
+                            {
+                              "tag": "kbd",
+                              "children": [
+                                "{"
+                              ]
+                            },
+                            {
+                              "tag": "kbd",
+                              "children": [
+                                "}"
+                              ]
+                            }
+                          ]
+                        }
                       ]
                     }
                   ]
@@ -1483,10 +1523,21 @@
                                 "data-size": "sm",
                                 "data-elevation": "none",
                                 "data-astryx-pressable": "",
+                                "aria-description": "入力欄が空のとき ↑ でも移れます",
+                                "aria-label": "お願いへ",
                                 "type": "button"
                               },
                               "children": [
-                                "レポートの末尾へ",
+                                "お願いへ",
+                                {
+                                  "tag": "kbd",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  },
+                                  "children": [
+                                    "↑"
+                                  ]
+                                },
                                 {
                                   "tag": "span",
                                   "attributes": {

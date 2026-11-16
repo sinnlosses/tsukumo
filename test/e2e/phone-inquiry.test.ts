@@ -57,7 +57,7 @@ test.describe("狭い画面の答え待ちのカード", () => {
       await page.getByPlaceholder("答えを書くか、上で選ぶ").count(),
       "質問のあいだの置き文字",
     ).toBe(1)
-    expect(await page.getByRole("button", { name: "お伺いへ" }).count()).toBe(0)
+    expect(await page.getByRole("button", { name: "選択肢へ" }).count()).toBe(0)
   })
 
   test("「詳しく」の板に1列の形が出て、板の中も横に転がらず、選んで「これで答える」で答えると板が閉じる", async ({

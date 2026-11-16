@@ -91,6 +91,35 @@ test.describe("お伺い", () => {
     await expect.poll(() => inquiry.count()).toBe(0)
   })
 
+  test("質問は、空の入力欄の ↑ で選択肢へ移り、数字キーと Enter で答えられ、Esc で入力欄へ戻る（キーボード）", async ({
+    run,
+  }) => {
+    const room = await run.open({
+      scenario: "inquiry-question-keyboard",
+      scene: "question-pair",
+      viewport: "wide",
+      domRoots: ["main"],
+    })
+    const inquiry = inquiryOf(room.page)
+    const answer = room.page.getByPlaceholder("選択肢以外の答えを書く…")
+
+    await answer.focus()
+    await room.page.keyboard.press("ArrowUp")
+    await expect(inquiry.getByRole("radio").first()).toBeFocused()
+    await room.page.keyboard.press("Escape")
+    await expect(answer).toBeFocused()
+
+    await room.page.keyboard.press("ArrowUp")
+    await room.page.keyboard.press("2")
+    await room.page.keyboard.press("Enter")
+    await expect.poll(() => inquiry.textContent()).toContain("2 / 2")
+    await room.page.keyboard.press("1")
+    await room.page.keyboard.press("Enter")
+
+    await room.waitForEvent("question-answered")
+    await expect.poll(() => inquiry.count()).toBe(0)
+  })
+
   test("質問は、「任せる」で1問ずつ任せて答えられる（マウス）", async ({ run }) => {
     const room = await run.open({
       scenario: "inquiry-question-entrust",

@@ -6,6 +6,7 @@
 //   （`isComposing` と、対応していない古いブラウザ向けの `keyCode === 229` の両方を見る）
 // - Command+Enter と送信ボタンはバックグラウンドタスクが残っていれば脇の話になる送り方で、Command+Shift+Enter はいつも新しい依頼として送る
 //   （脇の話にするかを決めるのはサーバ。`docs/architecture/display.md`「補足メッセージ」）
+// - 入力欄が空のときの ↑ は、待っているお伺い（無ければお願い）の最初の押せる所へフォーカスを移す（字があるときはカーソルの移動のまま。補完が開いているときは補完が先に受ける）
 // - 送信後は入力欄を空にしてフォーカスを残す
 // - 打ちかけは入力が止まったら `localStorage` に保ち（セッションごと・直近10件）、再読み込み後に入力欄が空なら戻す。送信すると消す
 // - `/` 補完は前方一致→部分一致、Tab / Enter は確定だけ（送信しない）。選択の上下移動は
@@ -29,7 +30,11 @@ import { isClearWithArgs } from "../../../domain/slash-clear.ts"
 import "../../../stores/composer-draft-session.ts"
 import { useAwaySeam } from "../../../stores/away-seam.ts"
 import { EMPTY_DRAFT, useComposerDraft, type Draft } from "../../../stores/composer-draft.ts"
-import { favorBandShown, useFavorVisibility } from "../../../stores/favor-visibility.ts"
+import {
+  favorBandShown,
+  favorWaiting,
+  useFavorVisibility,
+} from "../../../stores/favor-visibility.ts"
 import { useInquiryAnswer } from "../../../stores/inquiry-answer.ts"
 import { lastTurnId, settleBatchSent, useReplyBatch } from "../../../stores/reply-batch.ts"
 import { loadComposerMode, saveComposerMode, type ComposerMode } from "../domain/composer-mode.ts"
@@ -47,7 +52,7 @@ import {
 /**
  * `<textarea>` の上の帯。接続が切れているあいだ・会話が終わったあと・`/clear` に続く文を止めたあと・答え待ち（お伺い）があるあいだ・見えていないお願いがあるあいだだけ出す（この順に先）。
  * 答えはメインビューのお伺いのカードで選ぶ（質問ならここに書いて送ってもよい）。
- * `onJump` は「お伺いへ」の口で、お伺いのカードの最初の選択肢へフォーカスを移す。
+ * `onJump` は「選択肢へ」の口で、お伺いのカードの最初の選択肢へフォーカスを移す。
  */
 type ComposerBand =
   | { readonly kind: "none" }
@@ -136,6 +141,7 @@ export function useComposer(): ComposerModel {
   const dispatchAwaited = useSession((session) => session.dispatchAwaited)
   const favorId = useFavorVisibility((state) => state.favorId)
   const favorShown = useFavorVisibility(favorBandShown)
+  const favorIsWaiting = useFavorVisibility(favorWaiting)
   const dismissFavor = useFavorVisibility((state) => state.dismiss)
   const dismissAwaySeam = useAwaySeam((state) => state.dismiss)
   const surfaceRef = useRef<ComposerSurface | null>(null)
@@ -221,6 +227,26 @@ export function useComposer(): ComposerModel {
     surfaceRef.current?.focus()
   }
 
+  const jumpToFavor = (): void => {
+    if (favorId === undefined) {
+      return
+    }
+    const favor = document.getElementById(favorId)
+    favor?.scrollIntoView({ block: "start" })
+    favor?.querySelector<HTMLElement>(FAVOR_FIRST_ACTION_SELECTOR)?.focus({ preventScroll: true })
+  }
+
+  /** 入力欄が空のときの ↑ で移る先。つながりが切れている・会話が終わった・狭い画面では持たない。 */
+  const upwardTarget = (): "inquiry" | "favor" | "none" => {
+    if (linkLost || endedReason !== undefined || phone) {
+      return "none"
+    }
+    if (inquiry.kind !== "none") {
+      return "inquiry"
+    }
+    return favorIsWaiting ? "favor" : "none"
+  }
+
   const composerBand = (): ComposerBand => {
     if (linkLost) {
       return { kind: "disconnected", text: DISCONNECTED_BAND_TEXT }
@@ -251,11 +277,7 @@ export function useComposer(): ComposerModel {
       return {
         kind: "favor",
         text: FAVOR_BAND_TEXT,
-        onJump: () => {
-          if (favorId !== undefined) {
-            document.getElementById(favorId)?.scrollIntoView({ block: "start" })
-          }
-        },
+        onJump: jumpToFavor,
       }
     }
     return { kind: "none" }
@@ -286,6 +308,19 @@ export function useComposer(): ComposerModel {
 
         if (!composing && blurOnEscape(event, surfaceRef.current)) {
           return true
+        }
+
+        if (isPlainArrowUp(event, composing) && draft.text === "") {
+          const target = upwardTarget()
+          if (target !== "none") {
+            event.preventDefault()
+            if (target === "inquiry") {
+              requestInquiryJump({ focus: true })
+            } else {
+              jumpToFavor()
+            }
+            return true
+          }
         }
 
         if (event.key !== "Enter" || composing || !event.metaKey) {
@@ -371,6 +406,15 @@ function inquiryBandText(kind: "permission" | "question", subject: string): stri
  */
 function composerPlaceholder(subject: string): string {
   return `${subject}依頼を書く`
+}
+
+/** お願いの欄の中で最初にフォーカスを受ける口。 */
+const FAVOR_FIRST_ACTION_SELECTOR = "button, a[href], input, textarea, select"
+
+function isPlainArrowUp(event: ComposerKey, composing: boolean): boolean {
+  return (
+    event.key === "ArrowUp" && !composing && !event.metaKey && !event.ctrlKey && !event.shiftKey
+  )
 }
 
 /** IME の変換確定中か。`isComposing` に加え、対応していない古いブラウザ向けに `keyCode` も見る。 */

@@ -2,7 +2,7 @@
 // 頭に種類・`header` かツール名・待っている時間（2問以上のときは「n / N」を前に）・「広げる」、本文に問いの文か対象の全文・添え書きの塊（聞く理由・事実・おすすめの理由）・左に選択肢の縦の並びと右にフォーカスした選択肢の詳細、下端に操作の行を置く。
 // 操作の行は札の下端に残り、本文と選択肢の側が札の内側で転がる。
 //
-// 数字キーと Enter が効くのは、札の中にフォーカスがあるときだけ。
+// 数字キーと Enter が効くのは、札の中にフォーカスがあるときだけ。Esc は入力欄へフォーカスを戻す（広げた板が開いているあいだは板を閉じる Esc に譲る）。
 //
 // 選択の状態と進み方は `useInquiryAnswer` が持つ。
 // 許可要求の入力と質問の本文は会話の内容そのものなので、ここから外へ出す経路は作らない。
@@ -15,6 +15,7 @@ import { formatMinutesSeconds } from "../../../../../../shared/utils/elapsed-tim
 import { truncateForDisplay } from "../../../../../features/current-work/current-work-step.ts"
 import { usePhoneWidth } from "../../../../../hooks/use-phone-width.ts"
 import { useNowWhile } from "../../../../../stores/clock.ts"
+import { returnFocusToComposerOnEscape } from "../../../../../stores/composer-focus.ts"
 import { useFirstNoteList } from "../../../../../stores/first-note-seen.ts"
 import { useInquiryJump } from "../../../../../stores/inquiry-jump.ts"
 import { mergeRefs } from "../../../../../utils/merge-ref.ts"
@@ -120,11 +121,14 @@ export function InquiryCard(props: {
         ref={mergeRefs(cardRef, visibilityRef)}
         tabIndex={-1}
         aria-label={REGION_LABEL}
-        onKeyDown={(event) =>
+        onKeyDown={(event) => {
+          if (returnFocusToComposerOnEscape(event.nativeEvent)) {
+            return
+          }
           answerKey(event, inquiry, inquiry.onAnswer, () =>
             cardRef.current?.focus({ preventScroll: true }),
           )
-        }
+        }}
       >
         <InquiryFace
           inquiry={inquiry}

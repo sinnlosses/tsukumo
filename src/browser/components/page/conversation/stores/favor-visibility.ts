@@ -30,6 +30,13 @@ export const useFavorVisibility = create<FavorVisibilityState>()((set) => ({
   },
 }))
 
+/** お願いが待っているのは、お願いがあり、依頼を送って外したものでないとき（見えているかは問わない）。 */
+export function favorWaiting(
+  state: Pick<FavorVisibilityState, "favorId" | "dismissedId">,
+): boolean {
+  return state.favorId !== undefined && state.dismissedId !== state.favorId
+}
+
 /** 帯を出すのは、お願いがあり・見えておらず・依頼を送って外したものでないときだけ。 */
 export function favorBandShown(
   state: Pick<FavorVisibilityState, "favorId" | "visible" | "dismissedId">,

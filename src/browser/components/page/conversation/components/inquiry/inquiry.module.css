@@ -239,12 +239,21 @@
   min-height: 1.5rem;
   cursor: pointer;
 }
-/* 数字キーで選ぶときの番号。 */
+/* 数字キーで選ぶときの番号。
+   数字キーが効くのは札の中にフォーカスがあるあいだだけなので、外にあるあいだは破線の枠だけにし、入ると実線にする。字の色は変えない。 */
 .inquiry-option-number {
   flex: 0 0 auto;
+  min-width: 1.25rem;
+  padding: 0 var(--inline-tight);
+  border: 1px dashed var(--ink-quiet);
+  border-radius: var(--radius-sm);
   color: var(--ink-quiet);
   font-family: var(--font-mono);
   font-size: var(--font-label);
+  text-align: center;
+}
+.inquiry:focus-within .inquiry-option-number {
+  border-style: solid;
 }
 .inquiry-option-mark {
   flex: 0 0 auto;

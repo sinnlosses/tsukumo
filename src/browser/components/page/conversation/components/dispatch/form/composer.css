@@ -18,6 +18,12 @@
   padding: var(--space-xs) var(--space-sm);
   border-radius: var(--radius-md);
 }
+/* 口に添える ↑ の印。字の濃さは口の字のまま。 */
+.dispatch-band-key {
+  padding-left: var(--inline-control);
+  font-family: var(--font-mono);
+  font-size: var(--font-label);
+}
 /* textarea と / 補完の候補一覧の包み。候補一覧（position: absolute）の基準になる。 */
 .dispatch-text-wrap {
   position: relative;
