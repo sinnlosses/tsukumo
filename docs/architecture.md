@@ -138,3 +138,4 @@
 | `docs/architecture/adr/0058-three-column-single-stream.md`                      | 会話の画面を3列と1本の流れにする: 左の列・会話の流れ・サイドバー                                      | 採用                   |
 | `docs/architecture/adr/0059-progress-and-report-in-stream.md`                   | 進行とレポートの出し方: 帯は位置だけ・「いま」は流れの末尾の1行・お願いは最下部                       | 採用                   |
 | `docs/architecture/adr/0060-report-figure-first.md`                             | 最終レポートを図が先に立つ形にする: 主の図・主張ごとの裏づけ・結果を見て選ぶお願い                    | 採用                   |
+| `docs/architecture/adr/0061-sidebar-task-stages-and-side-sheet.md`              | サイドバーのタスク一覧を段とサイドシートにし、タスクのモーダルを一覧モードの表にする                  | 採用                   |
