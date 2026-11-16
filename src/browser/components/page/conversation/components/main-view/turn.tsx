@@ -8,22 +8,17 @@
 import clsx from "clsx"
 import { Fragment, use, useState, type ReactElement, type ReactNode } from "react"
 
-import type { ReportTask } from "../../../../../../shared/report/report-task.ts"
 import type { TaskSummaryResult } from "../../../../../../shared/repository/task-summary.ts"
 import {
   isInterimStep,
   type MainViewStep,
-  type MainViewStepBody,
   type MainViewTurn,
 } from "../../../../../../shared/session/main-view-shape.ts"
-import { formatMeasured } from "../../../../../../shared/utils/elapsed-time.ts"
-import { withoutPhaseTimes } from "../../../../../domain/main-view/main-view-report-body.ts"
 import {
   AskThreadContext,
   isAskGroupedToLeaf,
 } from "../../../../../features/report/ask-thread-context.ts"
 import { ReplyPortContext } from "../../../../../features/report/reply-port.ts"
-import { Report } from "../../../../../features/report/report.tsx"
 import { useExternalSync } from "../../../../../hooks/use-external-sync.ts"
 import { usePhoneWidth } from "../../../../../hooks/use-phone-width.ts"
 import { useConversationStreamRows } from "../../../../../stores/main-view-turn.ts"
@@ -35,20 +30,14 @@ import { useDraftedReports } from "../../stores/drafted-report.ts"
 import { awaySeamOf, type AwaySeam } from "./domain/away-seam.ts"
 import { revealStepIdOf } from "./domain/draft-reveal.ts"
 import { REPORT_STEP_ATTRIBUTE } from "./domain/outline-report-head.ts"
-import {
-  foldSummaryOf,
-  streamItemsOf,
-  type ProgressItem,
-  type StreamItem,
-} from "./domain/stream-item-list.ts"
+import { streamItemsOf, type StreamItem } from "./domain/stream-item-list.ts"
 import { DraftReport } from "./draft-report.tsx"
-import { ExpandableHead } from "./expandable-head.tsx"
-import { useFavorVisibility } from "./hooks/use-favor-visibility.ts"
+import { FoldedStep, StepReport } from "./folded-step.tsx"
 import { useReplyPort } from "./hooks/use-reply-port.ts"
 import styles from "./main-view.module.css"
+import { ProgressFold } from "./progress-fold.tsx"
 import { QuestionRecord } from "./question-record.tsx"
-import { ReportHead, type ReportLabel } from "./report-head.tsx"
-import { AwaySeamLine, PlanCard, PostRow, SayRow } from "./stream-card.tsx"
+import { AwaySeamLine, PostRow, SayRow } from "./stream-card.tsx"
 import { TurnFailureBlock } from "./turn-failure-block.tsx"
 
 type TurnProps = {
@@ -214,13 +203,7 @@ function StreamItemView(props: StreamItemViewProps): ReactNode {
         </>
       )
     case "fold":
-      return (
-        <ProgressFold
-          items={item.items}
-          turnId={turn.id}
-          hasInterimReport={turn.hasInterimReport}
-        />
-      )
+      return <ProgressFold items={item.items} turn={turn} tasks={props.tasks} />
     case "body":
       return (
         <Step
@@ -232,12 +215,6 @@ function StreamItemView(props: StreamItemViewProps): ReactNode {
         />
       )
   }
-}
-
-/** `Report` が本文の根に重ねる class（ポンの演出と、ステップ末尾の余白の打ち消しが指す綴り）。 */
-const REPORT_CLASS_NAMES = {
-  revealClassName: styles["draft-pop"],
-  blockClassName: styles["detail-block"],
 }
 
 type StepProps = {
@@ -295,182 +272,6 @@ function Step(props: StepProps): ReactElement | undefined {
   )
 }
 
-type FoldedStepProps = {
-  readonly step: MainViewStep
-  readonly turnId: number
-  readonly hasInterimReport: boolean
-  readonly phoneHidden: boolean
-}
-
-/** 中間レポートを `<summary>` の1行に畳んだ形。 */
-function FoldedStep(props: FoldedStepProps): ReactElement {
-  const [opened, setOpened] = useState(false)
-  return (
-    <details
-      onToggle={(event) => {
-        if (event.currentTarget.open) {
-          setOpened(true)
-        }
-      }}
-      className={clsx(
-        styles["main-step"],
-        styles["is-interim"],
-        props.phoneHidden && styles["phone-hidden"],
-      )}
-    >
-      <Text
-        element="summary"
-        size="label"
-        tone="ink-quiet"
-        weight="inherit"
-        className={styles["step-heading"]}
-      >
-        {interimSummary(props.step.body)}
-      </Text>
-      {opened && (
-        <StepReport
-          step={props.step}
-          turnId={props.turnId}
-          reveal={false}
-          latest={false}
-          hasInterimReport={props.hasInterimReport}
-          folded
-          phoneHidden={props.phoneHidden}
-        />
-      )}
-    </details>
-  )
-}
-
-type StepReportProps = {
-  readonly step: MainViewStep
-  readonly turnId: number
-  readonly reveal: boolean
-  readonly latest: boolean
-  readonly hasInterimReport: boolean
-  readonly folded: boolean
-  /** 狭い画面で本文を隠すか。 */
-  readonly phoneHidden: boolean
-}
-
-function StepReport(props: StepReportProps): ReactElement | undefined {
-  const { step } = props
-  const phoneWidth = usePhoneWidth()
-  const favorRef = useFavorVisibility()
-  if (step.body.kind !== "text") {
-    return undefined
-  }
-  // 広い画面の最新のやり取りの所要時間は「手順」の一覧の末尾が持つ
-  const body =
-    props.latest && !phoneWidth
-      ? { ...step.body, report: withoutPhaseTimes(step.body.report) }
-      : step.body
-  const phoneHidden = props.phoneHidden ? styles["phone-hidden"] : ""
-  const label = reportLabel(step, step.body.task, props.hasInterimReport, props.folded)
-  const head = (
-    <ReportHead
-      label={label}
-      task={step.body.task}
-      phase={step.body.finishedPhase}
-      className={phoneHidden}
-    />
-  )
-  return (
-    <>
-      {label === "final" && !props.phoneHidden ? (
-        <ExpandableHead
-          body={body}
-          turnId={props.turnId}
-          head={head}
-          reportClassNames={REPORT_CLASS_NAMES}
-        />
-      ) : (
-        head
-      )}
-      <Report
-        body={body.report}
-        reveal={props.reveal}
-        turnId={props.turnId}
-        className={phoneHidden}
-        reportToolUseId={step.origin.kind === "tool-report" ? step.origin.toolUseId : undefined}
-        nextSteps={
-          props.latest && !props.phoneHidden
-            ? {
-                sessionRemaining: step.body.sessionRemaining ?? { kind: "unrecorded" },
-                ...(step.body.task.kind === "task" ? { outcome: step.body.task.outcome } : {}),
-              }
-            : undefined
-        }
-        favorMark={phoneWidth ? "inline" : "none"}
-        favorRef={props.latest && !props.phoneHidden && !phoneWidth ? favorRef : undefined}
-        {...REPORT_CLASS_NAMES}
-      />
-    </>
-  )
-}
-
-type ProgressFoldProps = {
-  readonly items: readonly ProgressItem[]
-  readonly turnId: number
-  readonly hasInterimReport: boolean
-}
-
-/** 最終レポートの上の「作業の経過」。段の札・質問の記録・本文（1行の畳みの形）を届いた順に入れる。 */
-function ProgressFold(props: ProgressFoldProps): ReactElement {
-  return (
-    <details className={styles["progress-fold"]}>
-      <Text element="summary" size="label" tone="ink-quiet" weight="inherit" className="">
-        {foldSummaryOf(props.items)}
-      </Text>
-      <VStack
-        element="div"
-        name={{ kind: "none" }}
-        gap="md"
-        align="stretch"
-        justify="start"
-        wrap="nowrap"
-        className={styles["progress-fold-steps"]}
-      >
-        {props.items.map((item, index) => {
-          switch (item.kind) {
-            case "plan":
-              return <PlanCard record={item.record} key={`plan:${String(index)}`} />
-            case "question":
-              return <QuestionRecord entry={item.entry} key={`question:${item.entry.toolUseId}`} />
-            case "body":
-              return (
-                <FoldedStep
-                  step={item.step}
-                  turnId={props.turnId}
-                  hasInterimReport={props.hasInterimReport}
-                  phoneHidden={false}
-                  key={`body:${String(item.step.id)}`}
-                />
-              )
-          }
-        })}
-      </VStack>
-    </details>
-  )
-}
-
-/**
- * タスク見出し行の頭に置くラベル。
- * 畳んだ中間レポートは `<summary>` がラベルを持つので置かない。
- * 最終レポートのラベルは、中間レポートのあるやり取りか、`task` があるときだけ。
- */
-function reportLabel(
-  step: MainViewStep,
-  task: ReportTask,
-  hasInterimReport: boolean,
-  folded: boolean,
-): ReportLabel {
-  if (isInterimStep(step)) {
-    return folded ? "none" : "interim"
-  }
-  return step.mark === "final" && (hasInterimReport || task.kind === "task") ? "final" : "none"
-}
-
 /** ステップの器に付ける class。器の形（`is-interim` の破線の箱 / `is-final` の箱なし）は互いに立たない。 */
 function stepClassName(step: MainViewStep): string {
   return clsx(
@@ -487,16 +288,4 @@ function stepClassName(step: MainViewStep): string {
  */
 function finalReportStep(turn: MainViewTurn): MainViewStep | undefined {
   return turn.steps.find((step) => step.mark === "final")
-}
-
-/** 畳んだ中間レポートの `<summary>` に出す文字列。先頭行が無ければラベルだけ。 */
-function interimSummary(body: MainViewStepBody): string {
-  if (body.kind === "none" || body.firstLine === "") {
-    return "中間レポート"
-  }
-  const time =
-    body.finishedPhase.kind === "phase"
-      ? `${body.finishedPhase.skipped ? " · 飛ばした" : ""} · 所要 ${formatMeasured(body.finishedPhase.duration)}`
-      : ""
-  return `中間レポート: ${body.firstLine}${time}`
 }

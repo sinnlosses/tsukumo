@@ -249,6 +249,20 @@ describe("progressFoldSummary", () => {
     expect(summaryOf([], ["q0"])).toBe("経過 0 件 · 質問 1 件")
   })
 
+  it("セリフがあれば件数のあとに「 · セリフ s 件」が付き、0 件なら出ない", () => {
+    expect(
+      progressFoldSummary([
+        { kind: "speech" },
+        { kind: "speech" },
+        { kind: "question", entry: question("q0") },
+        { kind: "aside-post" },
+      ]),
+    ).toBe("経過 0 件 · セリフ 2 件 · 質問 1 件 · 補足 1 件")
+    expect(progressFoldSummary([{ kind: "question", entry: question("q0") }])).toBe(
+      "経過 0 件 · 質問 1 件",
+    )
+  })
+
   it("質問があっても、段のまとめの所要は後ろに添える", () => {
     expect(
       summaryOf(

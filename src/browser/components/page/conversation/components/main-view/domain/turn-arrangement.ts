@@ -19,10 +19,12 @@ import {
 } from "../../../../../../../shared/utils/elapsed-time.ts"
 import type { RemainingAside } from "../../../../../../features/report/ask-thread-context.ts"
 
-/** 経過の畳みの中の1件。中間レポートのステップか、質問の記録か、やり取り全体の補足メッセージ（末尾に1項だけ）。 */
+/** 経過の畳みの中の1件。中間レポートのステップか、セリフ1件か、質問の記録か、補足の投稿1件か、やり取り全体の補足メッセージ（末尾に1項だけ）。 */
 export type ProgressEntry =
   | { readonly kind: "interim"; readonly step: MainViewStep }
+  | { readonly kind: "speech" }
   | { readonly kind: "question"; readonly entry: MainViewQuestion }
+  | { readonly kind: "aside-post" }
   | { readonly kind: "asides"; readonly asides: readonly RemainingAside[] }
 
 /**
@@ -61,17 +63,27 @@ export function arrangeTurn(
 
 /**
  * 経過の畳みの `<summary>` に出す字。
- * 件数は中間レポートの数で、質問の記録があれば「 · 質問 <m> 件」、補足メッセージがあれば「 · 補足 <k> 件」を足す。
+ * 件数は中間レポートの数で、セリフがあれば「 · セリフ <s> 件」、質問の記録があれば「 · 質問 <m> 件」、補足メッセージがあれば「 · 補足 <k> 件」を足す。
  * 段のまとめがあれば「 · 所要 <合計>（<段> <所要> · …）」を添える。
  * 測れなかった段が1つでもあれば合計は出さない。
  */
 export function progressFoldSummary(progress: readonly ProgressEntry[]): string {
   const interims = progress.flatMap((entry) => (entry.kind === "interim" ? [entry.step] : []))
   const questionCount = progress.filter((entry) => entry.kind === "question").length
+  const speechCount = progress.filter((entry) => entry.kind === "speech").length
   const asideCount = sum(
-    progress.map((entry) => (entry.kind === "asides" ? entry.asides.length : 0)),
+    progress.map((entry) => {
+      switch (entry.kind) {
+        case "asides":
+          return entry.asides.length
+        case "aside-post":
+          return 1
+        default:
+          return 0
+      }
+    }),
   )
-  const head = `経過 ${String(interims.length)} 件${questionCount > 0 ? ` · 質問 ${String(questionCount)} 件` : ""}${asideCount > 0 ? ` · 補足 ${String(asideCount)} 件` : ""}`
+  const head = `経過 ${String(interims.length)} 件${speechCount > 0 ? ` · セリフ ${String(speechCount)} 件` : ""}${questionCount > 0 ? ` · 質問 ${String(questionCount)} 件` : ""}${asideCount > 0 ? ` · 補足 ${String(asideCount)} 件` : ""}`
   const phases = interims.flatMap(phaseOf)
   if (phases.length === 0) {
     return head

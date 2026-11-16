@@ -57,7 +57,7 @@ function drawsRow(item: StreamItem, row: ConversationStreamRow): boolean {
   switch (row.kind) {
     case "post":
     case "say":
-      return item === row
+      return item === row || (item.kind === "fold" && item.items.includes(row))
     case "failure":
       return item.kind === "failure"
     case "question":

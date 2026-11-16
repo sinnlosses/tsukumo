@@ -429,14 +429,9 @@ describe("MainView（会話の流れ）", () => {
     ])
   })
 
-  it("畳むものが無ければ作業の経過は出さず、セリフのあとに最終レポートが続く", () => {
-    renderMainView([
-      requestRecord({ text: "架空の依頼", turnId: 0 }),
-      speechRecord({ text: "架空の一言目" }),
-      reportRecord("架空の結論"),
-    ])
+  it("畳むものが無ければ作業の経過は出さず、依頼のあとに最終レポートが続く。最終レポートより前のセリフは畳みに入る", () => {
+    renderMainView([requestRecord({ text: "架空の依頼", turnId: 0 }), reportRecord("架空の結論")])
 
-    expect(screen.getByText("架空の一言目")).toBeTruthy()
     expect(screen.queryByText(/作業の経過/)).toBeNull()
     expect(screen.getByText("架空の結論")).toBeTruthy()
   })

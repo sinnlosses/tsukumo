@@ -7,7 +7,8 @@
 // - `work-plan` は、直前の `work-plan` の記録との差で段を済ませた記録だけが、同じく段のまとめを持つものを1件（届いた順）取る。段を進めない呼び直しは取らない
 // - 突き合わせの外に残った本文・質問の記録（書きかけの本文など）は、ステップの順に末尾（失敗の表示の手前）へ並べる
 //
-// 最終レポートがあるやり取りは、最終レポートより前の段の札・質問の記録・本文を、最終レポートの上の「作業の経過」1つに畳む。
+// 最終レポートがあるやり取りは、最終レポートより前の段の札・セリフ・補足の投稿・質問の記録・本文を、最終レポートの上の「作業の経過」1つに畳む。
+// 依頼の投稿と、最終レポートより後ろの行は畳まない。
 
 import type {
   MainViewQuestion,
@@ -28,6 +29,7 @@ type PlanItem = { readonly kind: "plan"; readonly record: RecordOf<"work-plan"> 
 /** 作業の経過に畳める1件。 */
 export type ProgressItem =
   | PlanItem
+  | Extract<ConversationStreamRow, { readonly kind: "post" | "say" }>
   | { readonly kind: "body"; readonly step: MainViewStep }
   | { readonly kind: "question"; readonly entry: MainViewQuestion }
 
@@ -178,11 +180,21 @@ function foldProgress(items: readonly ArrangedItem[]): readonly ArrangedItem[] {
 }
 
 function isProgress(item: ArrangedItem): item is ProgressItem {
-  return item.kind === "plan" || item.kind === "question" || item.kind === "body"
+  return (
+    item.kind === "plan" ||
+    item.kind === "question" ||
+    item.kind === "body" ||
+    item.kind === "say" ||
+    (item.kind === "post" && item.origin === "aside")
+  )
 }
 
 function entryOf(item: ProgressItem): readonly ProgressEntry[] {
   switch (item.kind) {
+    case "say":
+      return [{ kind: "speech" }]
+    case "post":
+      return [{ kind: "aside-post" }]
     case "plan":
       return []
     case "body":

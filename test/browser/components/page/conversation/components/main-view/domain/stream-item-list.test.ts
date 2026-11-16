@@ -41,7 +41,21 @@ const reportStep = (id: number, toolUseId: string, mark: "interim-kept" | "final
   })
 
 describe("streamItemsOf", () => {
-  it("投稿とセリフと本文を、記録の位置の順に並べる", () => {
+  it("投稿とセリフと本文を、記録の位置の順に並べる（最終レポートが無いあいだは畳まない）", () => {
+    const items = streamItemsOf(
+      rowsOf([
+        requestRecord(),
+        speechRecord({ text: "一言目" }),
+        asideRecord(),
+        speechRecord({ text: "答え", answersAside: true }),
+      ]),
+      turn([]),
+    )
+
+    expect(items.map((item) => item.kind)).toEqual(["post", "say", "post", "say"])
+  })
+
+  it("最終レポートより前のセリフと補足の投稿は届いた順に畳みへ入り、依頼の投稿と最終レポートのあとのセリフは残る", () => {
     const items = streamItemsOf(
       rowsOf([
         requestRecord(),
@@ -49,11 +63,21 @@ describe("streamItemsOf", () => {
         asideRecord(),
         speechRecord({ text: "答え", answersAside: true }),
         reportRecord("本文"),
+        speechRecord({ text: "締め" }),
       ]),
       turn([reportStep(0, "fictional-report", "final")]),
     )
 
-    expect(items.map((item) => item.kind)).toEqual(["post", "say", "post", "say", "body"])
+    expect(items.map((item) => item.kind)).toEqual(["post", "fold", "body", "say"])
+    const fold = items[1]
+    expect(fold?.kind === "fold" && fold.items.map((item) => item.kind)).toEqual([
+      "say",
+      "post",
+      "say",
+    ])
+    expect(fold?.kind === "fold" && foldSummaryOf(fold.items)).toBe(
+      "作業の経過 0 件 · セリフ 2 件 · 補足 1 件",
+    )
   })
 
   it("最終レポートの前の段・質問・中間の本文は、最終レポートの上の作業の経過1つに畳む", () => {
@@ -68,10 +92,14 @@ describe("streamItemsOf", () => {
       turn([reportStep(0, "interim", "interim-kept"), reportStep(1, "last", "final")]),
     )
 
-    expect(items.map((item) => item.kind)).toEqual(["post", "say", "fold", "body"])
-    const fold = items[2]
-    expect(fold?.kind === "fold" && fold.items.map((item) => item.kind)).toEqual(["plan", "body"])
-    expect(fold?.kind === "fold" && foldSummaryOf(fold.items)).toBe("作業の経過 1 件")
+    expect(items.map((item) => item.kind)).toEqual(["post", "fold", "body"])
+    const fold = items[1]
+    expect(fold?.kind === "fold" && fold.items.map((item) => item.kind)).toEqual([
+      "plan",
+      "say",
+      "body",
+    ])
+    expect(fold?.kind === "fold" && foldSummaryOf(fold.items)).toBe("作業の経過 1 件 · セリフ 1 件")
   })
 
   it("最終レポートが無いあいだは畳まず、突き合わせの外の本文は末尾に並ぶ", () => {
@@ -138,6 +166,6 @@ describe("streamItemsOf", () => {
       failed,
     )
 
-    expect(items.map((item) => item.kind)).toEqual(["post", "say", "failure", "body"])
+    expect(items.map((item) => item.kind)).toEqual(["post", "failure", "fold", "body"])
   })
 })

@@ -12,7 +12,12 @@ import type {
 } from "../../../../../../../src/shared/session/main-view-shape.ts"
 import { INITIAL_SESSION_STATE } from "../../../../../../../src/shared/session/session-state.ts"
 import { bodyTextOf } from "../../../../../../fixture/main-view-entry.ts"
-import { step, turn, turnBodyText } from "../../../../../../fixture/turn.ts"
+import {
+  reportRecord,
+  requestRecord,
+  speechRecord,
+} from "../../../../../../fixture/session-record.ts"
+import { step, TURN_ID, turn, turnBodyText } from "../../../../../../fixture/turn.ts"
 import { typedElement } from "../../../../../../typed-element.ts"
 import { putSession } from "../../../../../session-store.ts"
 
@@ -328,6 +333,47 @@ describe("Turn（経過の畳み）", () => {
 
     toggleDetails(first ?? container, false)
     expect(first?.querySelector("[data-report-stub]")?.textContent).toBe("中間0")
+  })
+
+  it("完了後のセリフは最上位に出ず、畳みを開くと届いた順で入っていて、締めのセリフだけが最上位に残る", () => {
+    putSession({
+      ...INITIAL_SESSION_STATE,
+      records: [
+        requestRecord({ turnId: TURN_ID }),
+        speechRecord({ text: "作業中の一言目" }),
+        speechRecord({ text: "作業中の二言目" }),
+        reportRecord("最終"),
+        speechRecord({ text: "締めの一言" }),
+      ],
+    })
+    const { container } = render(
+      <Turn
+        turn={turn([
+          step({
+            id: 3,
+            body: turnBodyText("最終"),
+            origin: { kind: "tool-report", toolUseId: "fictional-report" },
+            mark: "final",
+          }),
+        ])}
+        newest
+        freshReport={false}
+      />,
+    )
+
+    const fold = typedElement(container.querySelector(".progress-fold"), HTMLDetailsElement, "畳み")
+    expect(fold.querySelector(":scope > summary")?.textContent).toBe(
+      "作業の経過 0 件 · セリフ 2 件",
+    )
+    expect(fold.textContent).toContain("作業中の一言目")
+    expect(fold.textContent.indexOf("作業中の一言目")).toBeLessThan(
+      fold.textContent.indexOf("作業中の二言目"),
+    )
+    const stream = container.querySelector(".conversation-stream")
+    expect(stream?.textContent).toContain("締めの一言")
+    expect(
+      [...(stream?.children ?? [])].filter((child) => child.textContent.includes("作業中の")),
+    ).toEqual([fold])
   })
 
   it("経過の畳みの中は狭い画面でも隠さず、働くあいだの畳んだ中間レポートは隠したまま", () => {

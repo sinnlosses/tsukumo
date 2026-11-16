@@ -10,11 +10,12 @@ import { conversationStreamRows } from "../../../../../../../../src/browser/doma
 import type { SessionRecord } from "../../../../../../../../src/shared/session/session-record.ts"
 import { splitIntoTurns } from "../../../../../../../../src/shared/session/turn.ts"
 import {
+  reportRecord,
   requestRecord,
   speechRecord,
   workPlanRecord,
 } from "../../../../../../../fixture/session-record.ts"
-import { turn } from "../../../../../../../fixture/turn.ts"
+import { step, turn, turnBodyText } from "../../../../../../../fixture/turn.ts"
 
 const MINUTE = 60_000
 
@@ -58,6 +59,46 @@ describe("awaySeamOf", () => {
       label: "離れていた 4分のあいだに、フェーズが2つ済んだ",
     })
     expect(seamFor(withPlans, { awayMs: 45_000 })).toMatchObject({ label: "フェーズが2つ済んだ" })
+  })
+})
+
+describe("awaySeamOf（畳みの中に入った行）", () => {
+  const [first] = splitIntoTurns([
+    requestRecord(),
+    speechRecord({ text: "見た行" }),
+    speechRecord({ text: "畳みに入る新しい行" }),
+    reportRecord("最終"),
+    speechRecord({ text: "締め" }),
+  ])
+  if (first === undefined) {
+    throw new Error("やり取りが無い")
+  }
+  const rows = conversationStreamRows(first)
+  const finalTurn = turn([
+    step({
+      id: 0,
+      body: turnBodyText("最終"),
+      origin: { kind: "tool-report", toolUseId: "fictional-report" },
+      mark: "final",
+    }),
+  ])
+  const away: Away = { generation: 1, turnId: 0, rowCount: 2, awayMs: 4 * MINUTE }
+
+  it("畳みに入った新しいセリフの手前では、畳み全体の手前に線を置く", () => {
+    const items = streamItemsOf(rows, finalTurn)
+    expect(items.map((item) => item.kind)).toEqual(["post", "fold", "body", "say"])
+    expect(awaySeamOf({ away, rows, items })).toEqual({
+      kind: "seam",
+      before: 1,
+      label: "離れていた 4分",
+    })
+  })
+
+  it("新しい行が最終レポートのあとの締めだけなら、その手前に置く", () => {
+    const items = streamItemsOf(rows, finalTurn)
+    expect(awaySeamOf({ away: { ...away, rowCount: 4 }, rows, items })).toMatchObject({
+      before: 3,
+    })
   })
 })
 
