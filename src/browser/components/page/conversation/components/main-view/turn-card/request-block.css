@@ -49,12 +49,23 @@
   overflow-wrap: anywhere;
   white-space: pre-wrap;
   font: inherit;
+  font-size: var(--font-secondary);
   color: inherit;
   line-height: 20px;
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   line-clamp: 2;
+}
+/* 広い画面は地の文をセリフの吹き出し（.stream-entry）と同じ字・同じ濃さにそろえる */
+@media (min-width: 761px) {
+  .request-block {
+    color: var(--ink);
+  }
+  .request-lines {
+    font-size: var(--font-input);
+    line-height: var(--line-height-body);
+  }
 }
 /* 開いたあとは全行を折り返して出し、長いときはビューポートの 40% で内側に転がす。 */
 .request-lines.is-expanded {

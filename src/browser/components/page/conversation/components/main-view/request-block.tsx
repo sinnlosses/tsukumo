@@ -82,7 +82,7 @@ export function RequestBlock(props: RequestBlockProps): ReactElement {
       {(hasProse || expanded) && (
         <div className={styles["request-row"]}>
           <p className={clsx(styles["request-lines"], expanded && styles["is-expanded"])} ref={ref}>
-            <Text element="span" size="secondary" tone="inherit" weight="inherit" className="">
+            <Text element="span" size="inherit" tone="inherit" weight="inherit" className="">
               {expanded ? full : chips.prose}
             </Text>
           </p>
