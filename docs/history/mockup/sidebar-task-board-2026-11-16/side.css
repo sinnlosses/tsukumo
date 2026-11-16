@@ -1280,22 +1280,6 @@ body[data-view="chat"] [data-hide~="read"] {
 
 /* ---- 案B の仕上げ（?design=b2）: 常設の探す欄 ---- */
 
-/* 欄と口を1行にまとめる形（?head=inline）。題は画面に出さず、欄が左、口が右。 */
-body[data-refine="2"] .sb-head[data-form="inline"] {
-  padding: 6px 8px 4px 10px;
-}
-
-.sb-head[data-form="inline"] .sb-search {
-  grid-column: 1;
-  grid-row: 1;
-  margin-inline-end: 0;
-}
-
-.sb-head[data-form="inline"] .sb-tools {
-  grid-column: 2;
-  grid-row: 1;
-}
-
 /* 探す語に当たった所。 */
 .tk-hit {
   border-radius: 3px;
@@ -1352,16 +1336,55 @@ body[data-refine="2"] .sb-head[data-form="inline"] {
   color: var(--ink-quiet);
 }
 
+/* 一覧（概要）・仕切り・詳細の3列。詳細の幅は仕切りを引いて決まり、?split=wide は詳細を広げた状態。 */
 .tb-all .tb-cols {
-  grid-template-columns: minmax(0, 1fr) 440px;
+  grid-template-columns: minmax(0, 1fr) 9px var(--detail-w, 440px);
+}
+
+.tb-all[data-split="wide"] {
+  --detail-w: 620px;
 }
 
 .lt-wrap {
   min-inline-size: 0;
   padding: 0 8px 12px;
-  border-inline-end: 1px solid var(--hairline-quiet);
   overflow-y: auto;
   scrollbar-color: rgb(255 255 255 / 24%) transparent;
+}
+
+/* 仕切り。細い線の中央につまみを出し、触れると線とつまみが差し色になる。 */
+.tb-split {
+  position: relative;
+  display: grid;
+  place-items: center;
+  cursor: col-resize;
+}
+
+.tb-split::before {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 4px;
+  inline-size: 1px;
+  background: var(--hairline);
+}
+
+.tb-grip {
+  position: relative;
+  inline-size: 5px;
+  block-size: 36px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--ink) 34%, rgb(27 25 35));
+}
+
+.tb-split:hover::before,
+.tb-split:focus-visible::before {
+  background: var(--accent);
+}
+
+.tb-split:hover .tb-grip,
+.tb-split:focus-visible .tb-grip {
+  background: var(--accent);
 }
 
 /* 表の形: 1行1件。列は ID・題・難しさ・ループ可。題は残りの幅を使って1行に収め、ほかの列は中身の幅にする。 */
@@ -1513,13 +1536,9 @@ body[data-refine="2"] .sb-head[data-form="inline"] {
     inset -1px 0 0 var(--ring);
 }
 
-/* ---- 案B の仕上げ: 字を締める。行の題は 13px（?type=12 で 12px）、2段目とラベルは下限の 12px ---- */
+/* ---- 案B の仕上げ: 字を締める。行の題は 13px、2段目とラベルは下限の 12px ---- */
 body[data-refine="2"] {
   --tk-title-size: 13px;
-}
-
-body[data-refine="2"][data-type="12"] {
-  --tk-title-size: 12px;
 }
 
 body[data-refine="2"] .sb-head {

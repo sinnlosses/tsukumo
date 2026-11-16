@@ -13,19 +13,17 @@ function choose(name, allowed) {
   return allowed.includes(value) ? value : allowed[0]
 }
 
-// b2 は案B の仕上げ（字を締め、探す欄を常設にし、一覧モードを足したもの）。組み立ては案B を土台にする。
-// 仕上げだけが読む引数: ?type=13|12（行の題の字の大きさ）、
-// ?head=stack|inline（サイドバーの頭の形。題と欄を2行に積むか、欄と口を1行にまとめるか）。
+// b2 は案B の仕上げで、実装の見本（字を締め、探す欄を常設にし、一覧モードを表で足したもの）。組み立ては案B を土台にする。
+// 仕上げだけが読む引数: ?split=default|wide（一覧モードの仕切りの位置。つまみで詳細を広げた状態を見る）。
 const requested = choose("design", DESIGNS)
 const refined = requested === "b2"
 const design = refined ? "b" : requested
 const view = choose("view", VIEWS)
-const headForm = choose("head", ["stack", "inline"])
+const split = choose("split", ["default", "wide"])
 document.body.dataset.design = design
 document.body.dataset.view = view
 if (refined) {
   document.body.dataset.refine = "2"
-  document.body.dataset.type = choose("type", ["13", "12"])
 }
 
 // 状態の語と並び。印は同じ名前のスプライト（#tk-<状態>）。
@@ -170,23 +168,19 @@ const USAGE = `<footer class="sb-usage" aria-label="使用量">
 
 /** サイドバーの頭。`search` は探す口の出し方（none は口なし、tool は口だけ、field は欄を開いた状態）。 */
 function head({ widenLabel = "一覧を広げる", widenIcon = "widen", search = "none", hits = 0 } = {}) {
-  // 仕上げの欄は常設。空のあいだは欄へ移るキーを右端に出し、語が入ると件数と語を消す口に替わる。
-  const inline = refined && headForm === "inline"
+  // 仕上げの欄は常設で、題と件数の行の下に置く。語が入ると、右端に件数と語を消す口が出る。
+  // 欄へ移るキーは持たない（`/` は入力欄へ移るキーに使う）。
   const fieldEnd = !refined
     ? `<span class="tk-search-hit">${hits} 件</span>`
     : SEARCH_WORD === ""
-      ? `<kbd>/</kbd>`
+      ? ""
       : `<span class="tk-search-hit">${hits} 件</span>${tool("close", "語を消す")}`
   const field =
     search === "field"
-      ? `<label class="tk-search sb-search">${ic("search", " tk-ic-sm")}<input type="search" id="side-search" value="${SEARCH_WORD}" placeholder="${inline ? "タスクを探す" : "ID・言葉で探す"}" aria-label="タスクを探す" />${fieldEnd}</label>`
+      ? `<label class="tk-search sb-search">${ic("search", " tk-ic-sm")}<input type="search" id="side-search" value="${SEARCH_WORD}" placeholder="ID・言葉で探す" aria-label="タスクを探す" />${fieldEnd}</label>`
       : ""
-  // 1行にまとめる形は、題を画面に出さず（読み上げには残す）、欄の薄い字が題の代わりになる。
-  const title = inline
-    ? `<h2 class="visually-hidden">タスク</h2>`
-    : `<h2 class="sb-title">タスク<span class="sb-total">${TASKS.length}</span></h2>`
-  return `<header class="sb-head"${refined ? ` data-form="${headForm}"` : ""}>
-    ${title}
+  return `<header class="sb-head">
+    <h2 class="sb-title">タスク<span class="sb-total">${TASKS.length}</span></h2>
     <span class="sb-tools">${search === "tool" ? tool("search", "探す") : ""}${tool("refresh", "最新化")}${tool(widenIcon, widenLabel)}</span>
     ${field}
   </header>`
@@ -469,15 +463,17 @@ function listModeB() {
       )
       .join("")}
   </table>`
-  return `<dialog class="tb tb-all" id="board" aria-label="タスクの一覧">
+  // 一覧（概要）と詳細の境は、つまみを引いて動かせる仕切り。?split=wide は詳細を広げた状態。
+  return `<dialog class="tb tb-all" id="board" data-split="${split}" aria-label="タスクの一覧">
     <header class="tb-head">
       <h2 class="tb-title">タスク<b>${TASKS.length}</b></h2>
-      <label class="tk-search">${ic("search", " tk-ic-sm")}<input type="search" placeholder="ID・言葉で探す" aria-label="タスクを探す" /><kbd>/</kbd></label>
+      <label class="tk-search">${ic("search", " tk-ic-sm")}<input type="search" placeholder="ID・言葉で探す" aria-label="タスクを探す" /></label>
       <span class="tb-tools">${tool("refresh", "最新化")}${tool("close", "閉じる")}</span>
     </header>
     <div class="tb-filter">${counts({ withAll: true })}</div>
     <div class="tb-cols">
       <div class="lt-wrap">${table}</div>
+      <div class="tb-split" role="separator" aria-orientation="vertical" aria-label="一覧と詳細の仕切り" tabindex="0"><span class="tb-grip" aria-hidden="true"></span></div>
       <div class="tb-detail">${detail(open)}</div>
     </div>
     ${actions(open, { hints: true })}
