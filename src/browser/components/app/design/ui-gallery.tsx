@@ -5,6 +5,7 @@ import type { ReactElement } from "react"
 import { Badge } from "../../ui/badge/badge.tsx"
 import { Button } from "../../ui/button/button.tsx"
 import { Divider } from "../../ui/divider/divider.tsx"
+import { FirstNoteList } from "../../ui/first-note-list/first-note-list.tsx"
 import { Heading } from "../../ui/heading/heading.tsx"
 import { Note } from "../../ui/note/note.tsx"
 import { Quote } from "../../ui/quote/quote.tsx"
@@ -164,6 +165,12 @@ export function UiGallery(): ReactElement {
             架空の注記の本文
           </Note>
         ))}
+      </Group>
+      <Group title="FirstNoteList（初回だけの説明）" parts={["first-note-list"]}>
+        <FirstNoteList
+          notes={[{ id: "design-first-note", text: "架空の初回の説明" }]}
+          onAcknowledge={() => undefined}
+        />
       </Group>
       <InputGroups />
       <OverlayGroups />
