@@ -100,13 +100,24 @@
   --report-chunk-ground: var(--surface-raised);
 }
 /* 最終レポート（そのやり取りの最後の、中間でない本文。`MainViewStep.final`）。
-   箱を持たず、領域の surface を紙にする。中間レポートの破線の箱とは形で見分ける。
+   狭い画面の既定では箱を持たず、領域の surface を紙にする。中間レポートの破線の箱とは形で見分ける（広い画面は下の media が面を足す）。
    前に何かあるときの上のあきは、直前の中間レポートのタスク見出し行（小さな字だけの1行）と続けて読めないようにするもの。 */
 .main-step.is-final {
   padding: 0;
   border: 0;
   border-radius: 0;
   background: none;
+}
+/* 広い画面では領域が面を持たず背景の絵が透けるので、最終レポートが自分で紙の面（地・縁・角丸・影）を持つ。
+   地はぼかさない濃い面（`--panel-glass-dense`）で、字と背景の絵が重ならないようにする。 */
+@media (min-width: 761px) {
+  .main-step.is-final {
+    padding: var(--inset-card);
+    border: 1px solid var(--panel-edge);
+    border-radius: var(--radius-md);
+    background: var(--panel-glass-dense);
+    box-shadow: var(--panel-paper-lift);
+  }
 }
 .main-step.is-final:not(:first-child) {
   margin-top: var(--space-md);
