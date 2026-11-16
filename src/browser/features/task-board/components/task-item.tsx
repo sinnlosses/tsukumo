@@ -1,5 +1,5 @@
 // 区画の一覧1件分（進行中を除いた「残り」）。行全体が1つのボタンで、押すとプレビューが開く。
-// 印・ID・題（1行で末尾「…」）・`↻`・`›` の5列の grid。属性のうち `loopable` だけを `↻` で出し（難しさは出さない）、`todo` と `hold` の行に限る。
+// 印・ID・題（1行で末尾「…」）・∞・`›` の5列の grid。属性のうち `loopable` だけを ∞ で出し（難しさは出さない）、ループ可の `todo` と `hold` の行に限る。
 // 開いているときは、プレビューをボタンの後ろ（同じ `<li>` の中）に置く。
 
 import clsx from "clsx"
@@ -11,6 +11,7 @@ import { codeSpanParts } from "../../../domain/code-span.ts"
 import { taskStateOf } from "../domain/task-board-content.ts"
 import taskBoardStyles from "../task-board.module.css"
 import { TaskSummaryText } from "../task-summary-text.tsx"
+import { TaskLoopMark } from "./task-attribute.tsx"
 import styles from "./task-item.module.css"
 import { TaskState } from "./task-state.tsx"
 
@@ -46,7 +47,7 @@ export function TaskItem(props: {
         <span className={styles["task-item-summary"]}>
           <TaskSummaryText parts={codeSpanParts(props.task.summary)} />
         </span>
-        <TaskLoopMark task={props.task} />
+        <TaskRowLoop task={props.task} />
         <ChevronRight
           className={taskBoardStyles["task-row-chevron"]}
           size={14}
@@ -59,21 +60,11 @@ export function TaskItem(props: {
   )
 }
 
-/** `↻`。末尾の異体字選択子（U+FE0E）で、絵文字ではなく文字の字形に固定する。 */
-export const LOOP_GLYPH = String.fromCodePoint(0x21bb, 0xfe0e)
-
-/** `todo` と `hold` の行の `↻` 列。列は常に埋め、`todo`・`hold` 以外では空の枠だけを置く。 */
-function TaskLoopMark(props: { readonly task: TaskSummaryItem }): ReactElement {
+/** `todo` と `hold` の行の ∞ 列。列は常に埋め、ループ可の `todo`・`hold` 以外では空の枠だけを置く。 */
+function TaskRowLoop(props: { readonly task: TaskSummaryItem }): ReactElement {
   const { task } = props
-  if (!hasTaskStatus(task, "todo") && !hasTaskStatus(task, "hold")) {
+  if ((!hasTaskStatus(task, "todo") && !hasTaskStatus(task, "hold")) || task.loopable !== "Y") {
     return <span aria-hidden="true" />
-  }
-  if (task.loopable !== "Y") {
-    return (
-      <span className={styles["task-item-loop-none"]} title="ループ不可・未設定">
-        ·
-      </span>
-    )
   }
   const waiting = hasTaskStatus(task, "hold") || task.waitingFor.length > 0
   return (
@@ -81,7 +72,7 @@ function TaskLoopMark(props: { readonly task: TaskSummaryItem }): ReactElement {
       className={clsx(styles["task-item-loop"], waiting && styles["task-item-loop-waiting"])}
       title={waiting ? "ループ可（待ちが解けたら）" : "ループ可"}
     >
-      {LOOP_GLYPH}
+      <TaskLoopMark label={waiting ? "ループ可（待ちが解けたら）" : "ループ可"} />
     </span>
   )
 }

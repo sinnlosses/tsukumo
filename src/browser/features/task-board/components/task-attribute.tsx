@@ -1,15 +1,11 @@
-// タスクの属性（難しさ・ループに載せてよいか）の見せ方。一覧の行はアイコンだけ、詳細は字の札。ラベル（任意のタグ）とは別の見た目。
+// タスクの属性（ループに載せてよいか・難しさ）の見せ方。ループ可は ∞ の印、難しさはモデル名の語（目盛りつきもある）。ラベル（任意のタグ）とは別の見た目。
 
 import clsx from "clsx"
-import { Repeat } from "lucide-react"
 import type { ReactElement } from "react"
 
 import type { TaskDifficulty, TaskLoopable } from "../../../../shared/repository/task-summary.ts"
+import { InfinityIcon } from "../../../components/ui/icon/icon.tsx"
 import styles from "./task-attribute.module.css"
-
-type TaskAttributeValue =
-  | { readonly kind: "difficulty"; readonly value: TaskDifficulty }
-  | { readonly kind: "loopable"; readonly value: TaskLoopable }
 
 const DIFFICULTY_LEVEL = {
   haiku: 1,
@@ -17,53 +13,71 @@ const DIFFICULTY_LEVEL = {
   opus: 3,
 } satisfies Record<TaskDifficulty, number>
 
-const DIFFICULTY_DOTS = [1, 2, 3] as const
+const DIFFICULTY_STEPS = [1, 2, 3] as const
 
-/** 一覧の行の属性。難しさは点3つのうち段の数だけ塗り、`loopable` が `Y` のときだけループのアイコンを添える。字は出さない。 */
-export function TaskRowAttributes(props: {
-  readonly difficulty?: TaskDifficulty
-  readonly loopable?: TaskLoopable
-}): ReactElement {
-  const difficulty = props.difficulty
+/** ∞ の印。名前は `role="img"` の `aria-label` に持つ。 */
+export function TaskLoopMark(props: { readonly label: string }): ReactElement {
   return (
-    <span className={styles["task-attribute-group"]}>
-      {props.loopable === "Y" && (
-        <span className={styles["task-attribute-icon"]} role="img" aria-label="ループで回せる">
-          <Repeat size={12} strokeWidth={2} aria-hidden="true" />
-        </span>
-      )}
-      {difficulty !== undefined && (
-        <span
-          className={styles["task-attribute-dots"]}
-          data-attribute="difficulty"
-          role="img"
-          aria-label={`難しさ ${difficulty}`}
-        >
-          {DIFFICULTY_DOTS.map((dot) => (
-            <span
-              key={dot}
+    <span className={styles["task-attribute-icon"]} role="img" aria-label={props.label}>
+      <InfinityIcon />
+    </span>
+  )
+}
+
+/** モデル名の語。`scale` のとき、語の前に3段の目盛りを添える。 */
+export function TaskDifficultyWord(props: {
+  readonly difficulty: TaskDifficulty
+  readonly scale: boolean
+}): ReactElement {
+  const { difficulty } = props
+  return (
+    <span className={styles["task-attribute-difficulty"]} data-attribute="difficulty">
+      {props.scale && (
+        <span className={styles["task-attribute-scale"]} aria-hidden="true">
+          {DIFFICULTY_STEPS.map((step) => (
+            <i
+              key={step}
               className={clsx(
-                styles["task-attribute-dot"],
-                dot <= DIFFICULTY_LEVEL[difficulty] && styles["task-attribute-dot-filled"],
+                styles["task-attribute-step"],
+                step <= DIFFICULTY_LEVEL[difficulty] && styles["task-attribute-step-on"],
               )}
             />
           ))}
         </span>
       )}
+      {difficulty}
     </span>
   )
 }
 
-/** 詳細の情報の表の字の札。`loopable` が `N` のものだけ枠で目立たせる。 */
-export function TaskAttribute(props: { readonly attribute: TaskAttributeValue }): ReactElement {
-  const attribute = props.attribute
-  const manual = attribute.kind === "loopable" && attribute.value === "N"
+/** モーダルの一覧の行の属性。`Y` のときだけ ∞、難しさは目盛りと語。 */
+export function TaskRowAttributes(props: {
+  readonly difficulty?: TaskDifficulty
+  readonly loopable?: TaskLoopable
+}): ReactElement {
   return (
-    <span
-      className={clsx(styles["task-attribute"], manual && styles["task-attribute-manual"])}
-      data-attribute={attribute.kind}
-    >
-      {attribute.value}
+    <span className={styles["task-attribute-group"]}>
+      {props.loopable === "Y" && <TaskLoopMark label="ループ可" />}
+      {props.difficulty !== undefined && <TaskDifficultyWord difficulty={props.difficulty} scale />}
+    </span>
+  )
+}
+
+/** 詳細の情報の表のループの行。`Y` は ∞ と「ループ可」、`N` は「手で進める」。 */
+export function TaskLoopableText(props: { readonly loopable: TaskLoopable }): ReactElement {
+  if (props.loopable === "Y") {
+    return (
+      <span className={styles["task-attribute-group"]} data-attribute="loopable">
+        <span className={styles["task-attribute-icon"]} aria-hidden="true">
+          <InfinityIcon />
+        </span>
+        ループ可
+      </span>
+    )
+  }
+  return (
+    <span className={styles["task-attribute-group"]} data-attribute="loopable">
+      手で進める
     </span>
   )
 }

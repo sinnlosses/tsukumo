@@ -11,8 +11,13 @@
   font-size: var(--font-heading);
   font-weight: 700;
 }
+.task-board-lead {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: var(--inline-group);
+}
 .task-board-hints {
-  margin-left: auto;
   color: var(--ink-quiet);
   font-size: var(--font-label);
   white-space: nowrap;
@@ -23,14 +28,14 @@
   border-radius: var(--radius-sm);
   font-family: var(--font-mono);
 }
-/* 箱だけ（大きさ・角丸）。顔は `<Button variant="outline">` が持つ。 */
+/* 箱だけ（大きさ・角丸）。顔は `<Button variant="ghost">` が持つ。 */
 .task-board-close {
   display: inline-flex;
   flex: none;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
+  width: 28px;
+  height: 28px;
   padding: 0;
   border-radius: var(--radius-md);
 }

@@ -6,33 +6,29 @@
 .task-attribute-icon {
   display: flex;
   flex: none;
-  color: var(--ink-quiet);
+  color: var(--task-attribute-icon-color, var(--ink-quiet));
 }
-.task-attribute-dots {
+.task-attribute-difficulty {
   display: inline-flex;
   flex: none;
-  gap: var(--space-2xs);
-}
-.task-attribute-dot {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--rule);
-}
-.task-attribute-dot-filled {
-  background: color-mix(in srgb, var(--ink) 80%, transparent);
-}
-.task-attribute {
-  flex: none;
+  align-items: center;
+  gap: var(--space-xs);
   color: var(--ink-quiet);
   font-family: var(--font-mono);
   font-size: var(--font-label);
   white-space: nowrap;
 }
-.task-attribute-manual {
+.task-attribute-scale {
+  display: inline-flex;
   flex: none;
-  padding: 0 var(--space-sm);
-  border: 1px solid var(--state-warn);
-  border-radius: var(--radius-md);
-  color: color-mix(in srgb, var(--state-warn) 60%, var(--ink));
+  gap: var(--space-2xs);
+}
+.task-attribute-step {
+  width: 6px;
+  height: 3px;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--ink) 22%, transparent);
+}
+.task-attribute-step-on {
+  background: var(--ink-soft);
 }

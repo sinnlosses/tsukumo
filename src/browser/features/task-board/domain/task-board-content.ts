@@ -55,7 +55,7 @@ type BoardContentInput = {
   readonly onSortRequest: (request: Extract<TaskRequest, { readonly kind: "sort" }>) => void
 }
 
-/** 「tsukumo に頼む」を押せないときに横に添える理由。保留は待ちが残っているときだけ押せない。 */
+/** 頼む口を押せないときに横に添える理由。保留は待ちが残っているときだけ押せない。 */
 const RUN_UNAVAILABLE_REASON = {
   blocked: "待ちが終わると頼めます",
   hold: "待ちが終わると頼めます",

@@ -174,7 +174,7 @@ describe("taskList", () => {
     { name: "doing の Y", status: "doing", waitingFor: [], loopable: "Y", loop: "absent" },
     { name: "done の Y", status: "done", waitingFor: [], loopable: "Y", loop: "absent" },
     { name: "draft の Y", status: "draft", waitingFor: [], loopable: "Y", loop: "absent" },
-  ] as const)("$name の行の ↻ 列は $loop", (expected) => {
+  ] as const)("$name の行の ∞ 列は $loop", (expected) => {
     const items = [
       {
         ...taskOf("X-010", expected.status),
@@ -187,11 +187,9 @@ describe("taskList", () => {
     const item = screen.getByRole("listitem")
     const shown = item.querySelector(".task-item-loop") !== null
     const dim = item.querySelector(".task-item-loop-waiting") !== null
-    const none = item.querySelector(".task-item-loop-none") !== null
-    expect({ shown, dim, none }).toEqual({
+    expect({ shown, dim }).toEqual({
       shown: expected.loop === "ループ可" || expected.loop === "waiting",
       dim: expected.loop === "waiting",
-      none: expected.loop === "none",
     })
   })
 
@@ -260,7 +258,7 @@ describe("taskList", () => {
     expect(text).not.toContain("loopable:Y")
   })
 
-  it("行には難しさ・loopable・ラベルを、アイコンでも字でも出さない", () => {
+  it("行には難しさ・ラベルを出さず、loopable は Y のときだけ ∞ の印で出す", () => {
     const items: readonly TaskSummaryItem[] = [
       {
         ...taskOf("X-011", "todo"),
@@ -273,8 +271,10 @@ describe("taskList", () => {
     render(<TaskList tasks={known(items)} selectedStatus="all" />)
 
     for (const id of ["X-011", "X-012"]) {
-      expect(row(id).querySelector("[role='img'], [data-attribute]")).toBeNull()
+      expect(row(id).querySelector("[data-attribute]")).toBeNull()
     }
+    expect(row("X-011").querySelector("[role='img']")?.getAttribute("aria-label")).toBe("ループ可")
+    expect(row("X-012").querySelector("[role='img']")).toBeNull()
     for (const word of ["sonnet", "opus", "loop", "任意のタグ"]) {
       expect(row("X-011").textContent).not.toContain(word)
       expect(row("X-012").textContent).not.toContain(word)

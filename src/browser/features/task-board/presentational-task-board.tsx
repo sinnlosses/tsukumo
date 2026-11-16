@@ -115,10 +115,10 @@ export function PresentationalTaskBoard(props: TaskBoardView): ReactElement {
                       breadcrumb={content.selection.breadcrumb}
                       knownIds={content.knownIds}
                       onJump={content.selection.onJump}
+                      onCopy={content.selection.onCopy}
                     />
                     {content.sortBand.kind === "none" && (
                       <TaskBoardAction
-                        onCopy={content.selection.onCopy}
                         opener={content.selection.opener}
                         run={content.selection.run}
                       />

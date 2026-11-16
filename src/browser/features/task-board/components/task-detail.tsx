@@ -1,14 +1,14 @@
-// タスクのモーダルの右の詳細。ID と status の生の値・タイトル・情報の表・つながりの札・本文。
+// タスクのモーダルの右の詳細。押すと番号を写す ID・タイトル・情報の表・つながりの札・本文。
 // 内側で縦に転がし、見出しの帯と操作の帯は動かない。
 //
 // つながりの札（依存・依存元）と本文中の ID は `onJump` で選んでいるタスクを切り替える
 // （`docs/architecture/display.md`「タスクのモーダル」の「つながりをたどる」）。
 
-import { ChevronLeft, ChevronRight } from "lucide-react"
 import type { ReactElement } from "react"
 
 import { Button } from "../../../components/ui/button/button.tsx"
 import { HStack } from "../../../components/ui/h-stack/h-stack.tsx"
+import { ChevronLeftIcon, ChevronRightIcon, CopyIcon } from "../../../components/ui/icon/icon.tsx"
 import { Text } from "../../../components/ui/text/text.tsx"
 import { TaskBody } from "../deferred-task-body.tsx"
 import type {
@@ -18,7 +18,7 @@ import type {
 } from "../domain/task-board-view.ts"
 import taskBoardStyles from "../task-board.module.css"
 import { TaskSummaryText } from "../task-summary-text.tsx"
-import { TaskAttribute } from "./task-attribute.tsx"
+import { TaskDifficultyWord, TaskLoopableText } from "./task-attribute.tsx"
 import styles from "./task-detail.module.css"
 import { TaskState } from "./task-state.tsx"
 
@@ -27,6 +27,7 @@ export function TaskDetail(props: {
   readonly breadcrumb: TaskBoardBreadcrumb
   readonly knownIds: ReadonlySet<string>
   readonly onJump: (id: string) => void
+  readonly onCopy: () => void
 }): ReactElement {
   const detail = props.detail
   return (
@@ -35,14 +36,25 @@ export function TaskDetail(props: {
         <TaskDetailBreadcrumb breadcrumb={props.breadcrumb} currentId={detail.id} />
       )}
       <div className={styles["task-detail-head"]}>
-        <span className={styles["task-detail-id"]}>{detail.id}</span>
-        <span className={styles["task-detail-status"]}>{detail.status}</span>
+        <Button
+          variant="ghost"
+          size="action"
+          pressed="none"
+          disabled={false}
+          disclosure={{ kind: "none" }}
+          title="番号を写す"
+          className={styles["task-detail-id"]}
+          onClick={props.onCopy}
+        >
+          {detail.id}
+          <CopyIcon />
+        </Button>
       </div>
       <h3 className={styles["task-detail-title"]}>
         <TaskSummaryText parts={detail.title} />
       </h3>
       <dl className={styles["task-detail-info"]}>
-        <dt>着手</dt>
+        <dt>状態</dt>
         <dd>
           <TaskState state={detail.state} display="labeled" />
         </dd>
@@ -50,7 +62,7 @@ export function TaskDetail(props: {
           <>
             <dt>難しさ</dt>
             <dd>
-              <TaskAttribute attribute={{ kind: "difficulty", value: detail.difficulty }} />
+              <TaskDifficultyWord difficulty={detail.difficulty} scale />
             </dd>
           </>
         )}
@@ -58,7 +70,7 @@ export function TaskDetail(props: {
           <>
             <dt>ループ</dt>
             <dd>
-              <TaskAttribute attribute={{ kind: "loopable", value: detail.loopable }} />
+              <TaskLoopableText loopable={detail.loopable} />
             </dd>
           </>
         )}
@@ -147,12 +159,9 @@ function TaskDetailBreadcrumb(props: {
         className={styles["task-detail-breadcrumb-back"]}
         onClick={props.breadcrumb.onBack}
       >
-        <ChevronLeft
-          size={14}
-          strokeWidth={2}
-          aria-hidden="true"
-          className={styles["task-detail-breadcrumb-back-chevron"]}
-        />
+        <span className={styles["task-detail-breadcrumb-back-chevron"]} aria-hidden="true">
+          <ChevronLeftIcon />
+        </span>
         {props.breadcrumb.previousId} に戻る
       </Button>
       <span className={styles["task-detail-breadcrumb-separator"]}>›</span>
@@ -211,12 +220,9 @@ function TaskDependency(props: {
         <span className={styles["task-detail-dependency-summary"]}>
           <TaskSummaryText parts={dependency.summary} />
         </span>
-        <ChevronRight
-          size={12}
-          strokeWidth={2}
-          aria-hidden="true"
-          className={styles["task-detail-dependency-chevron"]}
-        />
+        <span className={styles["task-detail-dependency-chevron"]} aria-hidden="true">
+          <ChevronRightIcon />
+        </span>
       </button>
     </li>
   )

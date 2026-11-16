@@ -1,8 +1,8 @@
-// 一覧の上の凡例1行。印（着手可・待ち・保留）と右端の `↻` の意味を言う。
+// 一覧の上の凡例1行。印（着手可・待ち・保留）と右端の ∞ の意味を言う。
 
 import type { ReactElement } from "react"
 
-import { LOOP_GLYPH } from "./task-item.tsx"
+import { InfinityIcon } from "../../../components/ui/icon/icon.tsx"
 import styles from "./task-legend.module.css"
 import { TaskState } from "./task-state.tsx"
 
@@ -19,7 +19,9 @@ export function TaskLegend(): ReactElement {
         <TaskState state={{ kind: "hold", text: "保留" }} display="labeled" />
       </span>
       <span className={styles["task-legend-item"]}>
-        <span className={styles["task-legend-loop"]}>{LOOP_GLYPH}</span>
+        <span className={styles["task-legend-loop"]}>
+          <InfinityIcon />
+        </span>
         ループ可
       </span>
     </p>

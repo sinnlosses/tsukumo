@@ -33,7 +33,7 @@ export function TaskSection(): ReactElement {
       title="タスク"
       extraClass={styles["sidebar-block-tasks"]}
       action={{ label: "一覧を見る", onAction: openList }}
-      headerExtra={<TaskRefreshButton place="sidebar" />}
+      headerExtra={<TaskRefreshButton />}
       filters={
         tasks.kind === "known" && (
           <TaskCountChipList

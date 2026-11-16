@@ -38,7 +38,7 @@ export type TaskPeekControl = {
   readonly onClose: () => void
   /** 「全文を開く」と本文中の ID。タスクのモーダルをそのタスクを選んで開き、プレビューは閉じる。 */
   readonly onOpenFull: (id: string) => void
-  /** 「これを始める」「計画する」「却下する」。確認を重ねる。 */
+  /** 頼む口・「計画する」「却下する」。確認を重ねる。 */
   readonly onRequest: (request: SingleTaskRequest) => void
   readonly onConfirmClose: (outcome: TaskRunConfirmOutcome) => void
 }

@@ -5,7 +5,10 @@ import { Icon } from "@astryxdesign/core/Icon"
 import {
   ArrowLeftRight,
   ArrowRight,
+  ArrowUp,
   Briefcase,
+  ChevronLeft,
+  ChevronRight,
   Circle,
   CircleAlert,
   CircleCheck,
@@ -13,7 +16,10 @@ import {
   CircleDot,
   CirclePause,
   Coins,
+  Copy,
+  ExternalLink,
   Hourglass,
+  Infinity as InfinityGlyph,
   List,
   Maximize2,
   MessageCircle,
@@ -25,6 +31,7 @@ import {
   Trophy,
   Upload,
   UserRound,
+  X,
 } from "lucide-react"
 import type { ReactElement } from "react"
 
@@ -131,6 +138,41 @@ export function CircleDashedIcon(): ReactElement {
 /** 円にチェック。 */
 export function CircleCheckIcon(): ReactElement {
   return <Icon icon={CircleCheck} {...ICON_ATTRIBUTES} />
+}
+
+/** 頼む・送る（上向きの矢印。入力欄の送信と同じ絵）。 */
+export function SendIcon(): ReactElement {
+  return <Icon icon={ArrowUp} {...ICON_ATTRIBUTES} />
+}
+
+/** 閉じる（×）。 */
+export function CloseIcon(): ReactElement {
+  return <Icon icon={X} {...ICON_ATTRIBUTES} />
+}
+
+/** 写す（重なった四角）。 */
+export function CopyIcon(): ReactElement {
+  return <Icon icon={Copy} {...ICON_ATTRIBUTES} />
+}
+
+/** 外のページを開く（四角から出る矢印）。 */
+export function ExternalLinkIcon(): ReactElement {
+  return <Icon icon={ExternalLink} {...ICON_ATTRIBUTES} />
+}
+
+/** 戻る（左向きの山形）。 */
+export function ChevronLeftIcon(): ReactElement {
+  return <Icon icon={ChevronLeft} {...ICON_ATTRIBUTES} />
+}
+
+/** 先へ進む（右向きの山形）。 */
+export function ChevronRightIcon(): ReactElement {
+  return <Icon icon={ChevronRight} {...ICON_ATTRIBUTES} />
+}
+
+/** ループで回せる（∞）。 */
+export function InfinityIcon(): ReactElement {
+  return <Icon icon={InfinityGlyph} {...ICON_ATTRIBUTES} />
 }
 
 /** 円に感嘆符。 */

@@ -1,29 +1,30 @@
 // サイドバーのタスクの行から開くプレビュー。
-// 上から、状態の印と語・ID・閉じる口 → 題 → 関わるタスク（依存があるときだけ）→ 本文の頭 → 「全文を開く」「これを始める」。
+// 上から、状態の印と語・ID・閉じる口 → 題 → 関わるタスク（依存があるときだけ）→ 本文の頭 → 「全文を開く」「<キャラクター名> に頼む」。
 //
 // モーダルでない `<dialog open popover="manual">` を最上位の層に出し、`position: fixed` で行の左に置く。
 // サイドバーの領域の `backdrop-filter` が `position: fixed` の基準になるので、最上位の層へ出してビューポートを基準に戻す。
 // `show()` はプレビューの中の口へフォーカスを移すので使わない（フォーカスは押した行に残す）。
 // 位置は行のボタン（`anchorId`）の矩形から決めて style の変数へ書き、プレビューの大きさ・画面の大きさ・スクロールが変わるたびに書き直す。
 
-import { X } from "lucide-react"
 import type { ReactElement } from "react"
 import { clamp } from "remeda"
 
 import type { TaskSummaryItem } from "../../../../shared/repository/task-summary.ts"
 import { Button } from "../../../components/ui/button/button.tsx"
+import { CloseIcon, SendIcon } from "../../../components/ui/icon/icon.tsx"
 import { codeSpanParts } from "../../../domain/code-span.ts"
 import { TaskBody } from "../deferred-task-body.tsx"
 import { taskStateOf } from "../domain/task-board-content.ts"
 import type { TaskRunConfirmOutcome } from "../domain/task-run-confirm-outcome.ts"
 import type { SingleTaskRequest } from "../domain/task-run-prompt.ts"
+import { useAskLabel } from "../hooks/use-ask-label.ts"
 import type { TaskPeekConfirm } from "../hooks/use-task-peek.ts"
 import { TaskSummaryText } from "../task-summary-text.tsx"
 import styles from "./task-peek.module.css"
 import { TaskRunConfirm } from "./task-run-confirm.tsx"
 import { TaskState } from "./task-state.tsx"
 
-/** プレビューの下端の頼みの口。`available` は「これを始める」（頼めるタスクだけ）、`draft` は「却下する」「計画する」。 */
+/** プレビューの下端の頼みの口。`available` は「<キャラクター名> に頼む」（頼めるタスクだけ）、`draft` は「却下する」「計画する」。 */
 export type TaskPeekRun =
   | { readonly kind: "none" }
   | { readonly kind: "available"; readonly held: boolean; readonly confirm: TaskPeekConfirm }
@@ -44,6 +45,7 @@ type TaskPeekProps = {
 
 export function TaskPeek(props: TaskPeekProps): ReactElement {
   const { task, run } = props
+  const askLabel = useAskLabel()
 
   return (
     <dialog
@@ -73,7 +75,7 @@ export function TaskPeek(props: TaskPeekProps): ReactElement {
           className={styles["task-peek-close"]}
           onClick={props.onClose}
         >
-          <X size={15} strokeWidth={2} aria-hidden="true" />
+          <CloseIcon />
         </Button>
       </div>
       <h3 className={styles["task-peek-title"]}>
@@ -117,7 +119,8 @@ export function TaskPeek(props: TaskPeekProps): ReactElement {
               props.onRequest({ kind: "start", held: run.held })
             }}
           >
-            これを始める →
+            <SendIcon />
+            {askLabel}
           </button>
         )}
         {run.kind === "draft" && (

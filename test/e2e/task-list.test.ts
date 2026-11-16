@@ -8,7 +8,7 @@ import { openTaskListRoom, openTaskListRoomWithDraft } from "./task-room.ts"
 const ELAPSED_MS = 60_000
 
 test.describe("タスクの一覧", () => {
-  test("プレビューの「これを始める」から確認の「実行する」を押すと既定の文面で依頼が送られて確認とプレビューが閉じる", async ({
+  test("プレビューの「<名前> に頼む」から確認の「頼む」を押すと既定の文面で依頼が送られて確認とプレビューが閉じる", async ({
     run,
   }) => {
     const room = await openTaskListRoom(run, "task-list-run-executed", [
@@ -16,9 +16,9 @@ test.describe("タスクの一覧", () => {
       "task-run-confirm",
     ])
     await taskRow(room, "T-001").click()
-    await room.page.getByRole("button", { name: "これを始める →", exact: true }).click()
+    await room.page.getByRole("button", { name: /に頼む$/ }).click()
     await room.page.getByRole("dialog", { name: "タスクの実行" }).waitFor()
-    await room.page.getByRole("button", { name: "実行する", exact: true }).click()
+    await room.page.getByRole("button", { name: "頼む", exact: true }).click()
     await room.waitForEvent("request")
     await room.waitForEvent("turn-finished")
     expect(await room.page.getByRole("dialog", { name: "タスクの実行" }).count()).toBe(0)

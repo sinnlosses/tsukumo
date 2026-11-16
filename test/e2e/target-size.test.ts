@@ -23,11 +23,11 @@ test.describe("会話の画面の押す的と字", () => {
     await expectReadable(room.page)
 
     await room.page.locator(`#task-row-${READY_TASK_ID}`).click()
-    await room.page.getByRole("button", { name: "これを始める →" }).waitFor()
+    await room.page.getByRole("button", { name: /に頼む$/ }).waitFor()
     await expectReadable(room.page)
 
     await room.resize(VIEWPORTS.large)
-    await room.page.getByRole("button", { name: "これを始める →" }).waitFor()
+    await room.page.getByRole("button", { name: /に頼む$/ }).waitFor()
     await expectReadable(room.page)
   })
 

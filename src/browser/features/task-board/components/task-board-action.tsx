@@ -1,33 +1,22 @@
-// タスクのモーダルの下の操作の帯。ID をコピー・置き場所を開くボタン・「tsukumo に頼む」（ドラフトでは「却下する」「計画する」）。
-// 「tsukumo に頼む」を押せないときは薄くし、横に理由を添える。
+// タスクのモーダルの下の操作の帯。置き場所を開くリンク・「<キャラクター名> に頼む」（ドラフトでは「却下する」「計画する」）。
+// 頼む口を押せないときは薄くし、横に理由を添える。
 
-import { Copy, ExternalLink, MessageCircle } from "lucide-react"
 import type { ReactElement } from "react"
 
 import { Button } from "../../../components/ui/button/button.tsx"
+import { ExternalLinkIcon, SendIcon } from "../../../components/ui/icon/icon.tsx"
 import type { TaskBoardOpener, TaskBoardRun } from "../domain/task-board-view.ts"
+import { useAskLabel } from "../hooks/use-ask-label.ts"
 import styles from "./task-board-action.module.css"
 
 export function TaskBoardAction(props: {
-  readonly onCopy: () => void
   readonly opener: TaskBoardOpener
   readonly run: TaskBoardRun
 }): ReactElement {
   const { opener, run } = props
+  const askLabel = useAskLabel()
   return (
     <div className={styles["task-board-action"]}>
-      <Button
-        variant="outline"
-        size="secondary"
-        pressed="none"
-        disabled={false}
-        disclosure={{ kind: "none" }}
-        className={styles["task-board-action-button"]}
-        onClick={props.onCopy}
-      >
-        <Copy size={14} strokeWidth={2} aria-hidden="true" />
-        ID をコピー
-      </Button>
       {opener.kind === "issue" && (
         <a
           href={opener.url}
@@ -35,7 +24,7 @@ export function TaskBoardAction(props: {
           rel="noreferrer"
           className={styles["task-board-action-link"]}
         >
-          <ExternalLink size={14} strokeWidth={2} aria-hidden="true" />
+          <ExternalLinkIcon />
           Issue を開く
         </a>
       )}
@@ -61,7 +50,7 @@ export function TaskBoardAction(props: {
             className={styles["task-board-run-plan"]}
             onClick={run.onPlan}
           >
-            <MessageCircle size={16} strokeWidth={2} aria-hidden="true" />
+            <SendIcon />
             計画する
           </Button>
         </>
@@ -76,8 +65,8 @@ export function TaskBoardAction(props: {
           className={styles["task-board-run"]}
           onClick={run.kind === "available" ? run.onRun : ignoreClick}
         >
-          <MessageCircle size={16} strokeWidth={2} aria-hidden="true" />
-          tsukumo に頼む
+          <SendIcon />
+          {askLabel}
         </Button>
       )}
       {run.kind === "unavailable" && (

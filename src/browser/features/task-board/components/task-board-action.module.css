@@ -6,21 +6,12 @@
   flex-wrap: wrap;
   align-items: center;
   --task-board-action-gap: 10px;
-  /* 12px に丸めると 360px で「tsukumo に頼む」が 2 行目へ落ちる */
+  /* 12px に丸めると 360px で頼む口が 2 行目へ落ちる */
   gap: var(--task-board-action-gap);
   min-height: 64px;
   padding: var(--space-md) var(--space-3xl);
   border-top: 1px solid var(--rule-quiet);
   background: color-mix(in srgb, var(--surface), var(--ground) 40%);
-}
-/* 箱だけ（高さ・余白・角丸と、印と字の並べ方）。顔は `<Button variant="outline">` が持つ。 */
-.task-board-action-button {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-sm);
-  height: 36px;
-  padding: 0 var(--space-md);
-  border-radius: var(--radius-md);
 }
 /* 「Issue を開く」はページを移る口なのでリンクのまま、ボタンと同じ箱と顔にする。 */
 .task-board-action-link {
@@ -47,11 +38,11 @@
   height: 40px;
   margin-left: auto;
   --task-board-run-pad: 18px;
-  /* 20px に丸めると 360px で「tsukumo に頼む」が 2 行目へ落ちる */
+  /* 20px に丸めると 360px で頼む口が 2 行目へ落ちる */
   padding: 0 var(--task-board-run-pad);
   border-radius: var(--radius-lg);
 }
-/* ドラフトの「却下する」は右寄せの組の左端（箱は「ID をコピー」と同じ）、「計画する」は「tsukumo に頼む」と同じ箱で右端。 */
+/* ドラフトの「却下する」は右寄せの組の左端、「計画する」は頼む口と同じ箱で右端。 */
 .task-board-drop {
   display: inline-flex;
   align-items: center;

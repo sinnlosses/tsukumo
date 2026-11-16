@@ -1,28 +1,13 @@
 /* 箱だけ。顔は `<Button>` が持つ。 */
-.task-refresh-sidebar,
-.task-refresh-modal {
+.task-refresh {
   display: inline-flex;
   flex: none;
   align-items: center;
   justify-content: center;
+  width: 28px;
+  height: 28px;
   padding: 0;
-}
-.task-refresh-sidebar {
-  width: 1.5rem;
-  height: 1.5rem;
   border-radius: var(--radius-md);
-}
-/* 閉じるボタン（`task-board-head.module.css`）と同じ 34px。 */
-.task-refresh-modal {
-  width: 34px;
-  height: 34px;
-  border-radius: var(--radius-md);
-}
-/* キーの案内（右寄せの元）を畳む狭い画面では、こちらが右へ寄せる。 */
-@media (max-width: 760px) {
-  .task-refresh-modal {
-    margin-left: auto;
-  }
 }
 /* 行の高さが svg を上へ押さないよう、いつも flex の箱にする。 */
 .task-refresh-icon {

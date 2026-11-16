@@ -25,6 +25,9 @@
 /* 箱だけ（高さ・余白・角丸）。顔は `<Button>` が持つ。 */
 .task-run-cancel,
 .task-run-ok {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--inline-control);
   padding: var(--space-xs) var(--space-md);
   border-radius: var(--radius-md);
 }

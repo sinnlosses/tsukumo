@@ -1,4 +1,4 @@
-// 「tsukumo に頼む」で頼めるタスクと、送る文面。
+// 頼む口で頼めるタスクと、送る文面。
 
 import {
   hasTaskStatus,

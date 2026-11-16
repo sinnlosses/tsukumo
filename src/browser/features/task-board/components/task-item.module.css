@@ -4,7 +4,7 @@
 .task-item-row {
   box-sizing: border-box;
   display: grid;
-  grid-template-columns: 14px 50px minmax(0, 1fr) 12px 16px;
+  grid-template-columns: 14px 50px minmax(0, 1fr) 14px 16px;
   --task-item-column-gap: 10px;
   column-gap: var(--task-item-column-gap);
   align-items: center;
@@ -36,20 +36,13 @@
   display: inline-flex;
   justify-content: center;
 }
-.task-item-loop,
-.task-item-loop-none {
-  text-align: center;
-}
 .task-item-loop {
-  color: var(--state-ok);
-  font-size: var(--font-secondary);
+  display: flex;
+  justify-content: center;
+  --task-attribute-icon-color: var(--state-ok);
 }
 .task-item-loop-waiting {
-  color: color-mix(in srgb, var(--state-ok) 38%, transparent);
-}
-.task-item-loop-none {
-  color: var(--ink-quiet);
-  font-size: var(--font-label);
+  --task-attribute-icon-color: color-mix(in srgb, var(--state-ok) 38%, transparent);
 }
 .task-item-summary {
   overflow: hidden;

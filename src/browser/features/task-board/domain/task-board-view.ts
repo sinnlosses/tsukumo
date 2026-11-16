@@ -105,7 +105,7 @@ export type TaskBoardOpener =
 
 /**
  * 操作の帯の頼みの口。
- * `available` は「tsukumo に頼む」で、押せるのは着手できるタスクと、依存が済んだ保留のタスクだけ。
+ * `available` は頼む口で、押せるのは着手できるタスクと、依存が済んだ保留のタスクだけ。
  * `draft` はドラフトの「計画する」「却下する」。それ以外は理由を添えて押せなくする。
  */
 export type TaskBoardRun =

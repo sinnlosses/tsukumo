@@ -1,5 +1,5 @@
 // 「このタスクを実行しますか」の確認。
-// OK まで行くと、「tsukumo に頼む」の文面（`requestPromptOf`）を入力欄を経由せずに dispatch する（`<Composer>` の下書きには触らない）。
+// OK まで行くと、頼む口の文面（`requestPromptOf`）を入力欄を経由せずに dispatch する（`<Composer>` の下書きには触らない）。
 // 送ったあとは、サーバから返る `request` イベントがメインビューに依頼として並ぶので、打ったのと同じ見え方になる。
 //
 // ターンが動いている間は断る（押せなくするのではなく、押したら理由を出す）。
@@ -10,6 +10,7 @@ import type { ReactElement } from "react"
 
 import { Button } from "../../../components/ui/button/button.tsx"
 import { Dialog } from "../../../components/ui/dialog/dialog.tsx"
+import { SendIcon } from "../../../components/ui/icon/icon.tsx"
 import { Text } from "../../../components/ui/text/text.tsx"
 import { loadLaunchSkill } from "../../../domain/launch-skill.ts"
 import { useSession, useTurnRunning } from "../../../stores/session.ts"
@@ -94,7 +95,7 @@ export function TaskRunConfirm(props: TaskRunConfirmProps): ReactElement {
         </Button>
         {!turnInProgress && (
           <Button
-            variant="outline-accent"
+            variant="solid-accent"
             size="secondary"
             pressed="none"
             disabled={false}
@@ -102,6 +103,7 @@ export function TaskRunConfirm(props: TaskRunConfirmProps): ReactElement {
             className={styles["task-run-ok"]}
             onClick={run}
           >
+            {target.request.kind !== "sort" && <SendIcon />}
             {OK_LABEL_OF[target.request.kind]}
           </Button>
         )}
@@ -124,7 +126,7 @@ function headingOf(target: TaskRunTarget): string {
 }
 
 const OK_LABEL_OF = {
-  start: "実行する",
+  start: "頼む",
   plan: "頼む",
   drop: "頼む",
   sort: "仕分ける",

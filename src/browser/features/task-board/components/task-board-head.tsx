@@ -1,23 +1,25 @@
 // タスクのモーダルの見出しの帯。「タスク」・更新ボタン・キーの案内・閉じるボタン。
 
-import { X } from "lucide-react"
 import type { ReactElement } from "react"
 
 import { Button } from "../../../components/ui/button/button.tsx"
+import { CloseIcon } from "../../../components/ui/icon/icon.tsx"
 import { TaskRefreshButton } from "../task-refresh-button.tsx"
 import styles from "./task-board-head.module.css"
 
 export function TaskBoardHead(props: { readonly onClose: () => void }): ReactElement {
   return (
     <div className={styles["task-board-head"]}>
-      <h2 className={styles["task-board-title"]}>タスク</h2>
-      <TaskRefreshButton place="modal" />
+      <span className={styles["task-board-lead"]}>
+        <h2 className={styles["task-board-title"]}>タスク</h2>
+        <TaskRefreshButton />
+      </span>
       <span className={styles["task-board-hints"]}>
         <kbd>↑↓</kbd> 選ぶ <kbd>Esc</kbd> 閉じる
       </span>
       <Button
-        variant="outline"
-        size="subheading"
+        variant="ghost"
+        size="action"
         pressed="none"
         disabled={false}
         ariaLabel="閉じる"
@@ -25,7 +27,7 @@ export function TaskBoardHead(props: { readonly onClose: () => void }): ReactEle
         className={styles["task-board-close"]}
         onClick={props.onClose}
       >
-        <X size={16} strokeWidth={2} aria-hidden="true" />
+        <CloseIcon />
       </Button>
     </div>
   )

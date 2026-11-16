@@ -13,6 +13,7 @@ import {
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../../../src/shared/session/session-state.ts"
+import { characterInfo } from "../../../fixture/character.ts"
 import { knownTaskSummary, taskStatusOfWord } from "../../../fixture/session-state.ts"
 import { queryClientWrapper } from "../../query-client.tsx"
 import { type CommandSpy, putSession } from "../../session-store.ts"
@@ -91,7 +92,7 @@ function renderWithStore(
   spy: CommandSpy,
   overrides: Partial<SessionState> = {},
 ): void {
-  putSession({ ...INITIAL_SESSION_STATE, ...overrides }, spy)
+  putSession({ ...INITIAL_SESSION_STATE, character: characterInfo(), ...overrides }, spy)
   render(<>{node}</>, { wrapper: queryClientWrapper() })
 }
 
@@ -108,13 +109,13 @@ function confirmDialog(): Element | null {
 }
 
 describe("タスクの実行を頼む", () => {
-  it("ターンが動いている間は「実行する」を出さず、理由を出す", () => {
+  it("ターンが動いている間は確認の「頼む」を出さず、理由を出す", () => {
     const sent: unknown[] = []
     renderList(collectInto(sent), RUNNING_TURN)
 
     startFromPeek("X-002")
 
-    expect(screen.queryByRole("button", { name: "実行する" })).toBeNull()
+    expect(screen.queryByRole("button", { name: "頼む" })).toBeNull()
     expect(confirmDialog()?.textContent).toContain("いまターンが動いているので送れない")
     expect(sent).toEqual([])
   })
@@ -176,7 +177,7 @@ describe("タスクの実行を頼む", () => {
     expect(document.querySelector("dialog.task-board")?.hasAttribute("open")).toBe(true)
   })
 
-  it("区画の一覧で「これを始める」が出るのは、着手できる todo と待ちの無い保留", () => {
+  it("区画の一覧で頼む口が出るのは、着手できる todo と待ちの無い保留", () => {
     const task = (
       id: string,
       status: string,
@@ -195,7 +196,7 @@ describe("タスクの実行を頼む", () => {
       body: "",
       location: { kind: "none" },
     })
-    putSession(INITIAL_SESSION_STATE, () => {})
+    putSession({ ...INITIAL_SESSION_STATE, character: characterInfo() }, () => {})
     render(
       <TaskList
         tasks={known([
@@ -211,7 +212,7 @@ describe("タスクの実行を頼む", () => {
 
     const startable = ["Y-001", "Y-002", "Y-003", "Y-004", "Y-005"].filter((id) => {
       fireEvent.click(rowOf(id))
-      return screen.queryByRole("button", { name: "これを始める →" }) !== null
+      return screen.queryByRole("button", { name: "架空の精霊 に頼む" }) !== null
     })
     expect(startable).toEqual(["Y-003", "Y-004"])
   })
@@ -224,7 +225,7 @@ describe("タスクの実行を頼む", () => {
     )
 
     startFromPeek("X-003")
-    fireEvent.click(screen.getByRole("button", { name: "実行する" }))
+    fireEvent.click(screen.getByRole("button", { name: "頼む" }))
 
     expect(sent).toEqual([
       {
@@ -235,17 +236,17 @@ describe("タスクの実行を頼む", () => {
     ])
   })
 
-  it("ドラフトのプレビューには「計画する」「却下する」が出て、「これを始める」は出ない", () => {
-    putSession(INITIAL_SESSION_STATE, () => {})
+  it("ドラフトのプレビューには「計画する」「却下する」が出て、頼む口は出ない", () => {
+    putSession({ ...INITIAL_SESSION_STATE, character: characterInfo() }, () => {})
     render(<TaskList tasks={known([...TASKS, draftTask("X-004")])} selectedStatus="all" />)
 
     fireEvent.click(rowOf("X-004"))
     expect(screen.getByRole("button", { name: "計画する" })).toBeDefined()
     expect(screen.getByRole("button", { name: "却下する" })).toBeDefined()
-    expect(screen.queryByRole("button", { name: "これを始める →" })).toBeNull()
+    expect(screen.queryByRole("button", { name: "架空の精霊 に頼む" })).toBeNull()
 
     fireEvent.click(rowOf("X-002"))
-    expect(screen.getByRole("button", { name: "これを始める →" })).toBeDefined()
+    expect(screen.getByRole("button", { name: "架空の精霊 に頼む" })).toBeDefined()
     expect(screen.queryByRole("button", { name: "計画する" })).toBeNull()
   })
 
@@ -295,14 +296,14 @@ describe("タスクの実行を頼む", () => {
     ])
   })
 
-  it("モーダルのドラフトには「計画する」「却下する」が出て、「tsukumo に頼む」は出ない", () => {
+  it("モーダルのドラフトには「計画する」「却下する」が出て、頼む口は出ない", () => {
     renderBoard(() => {}, [], [...TASKS, draftTask("X-004")])
 
     fireEvent.click(screen.getByRole("option", { name: /X-004/ }))
 
     expect(screen.getByRole("button", { name: "計画する" })).toBeDefined()
     expect(screen.getByRole("button", { name: "却下する" })).toBeDefined()
-    expect(screen.queryByRole("button", { name: "tsukumo に頼む" })).toBeNull()
+    expect(screen.queryByRole("button", { name: "架空の精霊 に頼む" })).toBeNull()
   })
 
   it("モーダルのドラフトの「計画する」は確認の「頼む」で計画の文面を送り、モーダルを閉じる", () => {
@@ -354,7 +355,7 @@ describe("タスクの実行を頼む", () => {
 
     openRunConfirm("X-003")
     expect(confirmDialog()?.textContent).toContain("着手の前に判断を聞いて")
-    fireEvent.click(screen.getByRole("button", { name: "実行する" }))
+    fireEvent.click(screen.getByRole("button", { name: "頼む" }))
 
     expect(sent).toEqual([
       {
@@ -371,7 +372,7 @@ describe("タスクの実行を頼む", () => {
 
     openRunConfirm("X-002")
     expect(confirmDialog()?.textContent).not.toContain("判断を聞いて")
-    fireEvent.click(screen.getByRole("button", { name: "実行する" }))
+    fireEvent.click(screen.getByRole("button", { name: "頼む" }))
 
     expect(sent).toEqual([
       {
@@ -389,7 +390,7 @@ describe("タスクの実行を頼む", () => {
 
     openRunConfirm("X-002")
     expect(confirmDialog()?.textContent).toContain("/next-task X-002")
-    fireEvent.click(screen.getByRole("button", { name: "実行する" }))
+    fireEvent.click(screen.getByRole("button", { name: "頼む" }))
 
     expect(sent).toEqual([{ procedure: "session.prompt", text: "/next-task X-002", images: [] }])
   })
@@ -411,7 +412,7 @@ describe("タスクの実行を頼む", () => {
 
     fireEvent.click(screen.getByRole("option", { name: /X-003/ }))
 
-    const run = screen.getByRole("button", { name: "tsukumo に頼む" })
+    const run = screen.getByRole("button", { name: "架空の精霊 に頼む" })
     expect(run.getAttribute("aria-disabled")).toBe("true")
     expect(run.getAttribute("title")).toBe("待ちが終わると頼めます")
   })
@@ -455,14 +456,14 @@ function rowOf(taskId: string): HTMLElement {
   return element
 }
 
-/** 区画の一覧で `taskId` の行を押してプレビューを開き、「これを始める」を押す。 */
+/** 区画の一覧で `taskId` の行を押してプレビューを開き、頼む口を押す。 */
 function startFromPeek(taskId: string): void {
   fireEvent.click(rowOf(taskId))
-  fireEvent.click(screen.getByRole("button", { name: "これを始める →" }))
+  fireEvent.click(screen.getByRole("button", { name: "架空の精霊 に頼む" }))
 }
 
-/** モーダルの一覧で `taskId` の行を選び、操作の帯の「tsukumo に頼む」を押す。 */
+/** モーダルの一覧で `taskId` の行を選び、操作の帯の頼む口を押す。 */
 function openRunConfirm(taskId: string): void {
   fireEvent.click(screen.getByRole("option", { name: new RegExp(taskId) }))
-  fireEvent.click(screen.getByRole("button", { name: "tsukumo に頼む" }))
+  fireEvent.click(screen.getByRole("button", { name: "架空の精霊 に頼む" }))
 }

@@ -1,4 +1,4 @@
-// タスク一覧の「最新化」の ↻。置き場（`place`）で変わるのは箱の大きさと枠だけ。
+// タスク一覧の「最新化」の口。サイドバーとタスクのモーダルで同じ大きさ（28px）・枠なし。
 // 読んでいるあいだは `--accent` で回り、押せない。
 
 import clsx from "clsx"
@@ -11,45 +11,25 @@ import styles from "./task-refresh-button.module.css"
 
 const LABEL = "最新化"
 
-export function TaskRefreshButton(props: { readonly place: "sidebar" | "modal" }): ReactElement {
+export function TaskRefreshButton(): ReactElement {
   const { refreshing, refresh } = useRefreshTasks()
-  const icon = (
-    <span
-      className={clsx(styles["task-refresh-icon"], refreshing && styles["task-refresh-spinning"])}
-    >
-      <RefreshIcon />
-    </span>
-  )
-  if (props.place === "sidebar") {
-    return (
-      <Button
-        variant="ghost"
-        size="action"
-        pressed="none"
-        disabled={refreshing}
-        ariaLabel={LABEL}
-        disclosure={{ kind: "none" }}
-        title={LABEL}
-        className={styles["task-refresh-sidebar"]}
-        onClick={refresh}
-      >
-        {icon}
-      </Button>
-    )
-  }
   return (
     <Button
-      variant="outline"
+      variant="ghost"
       size="action"
       pressed="none"
       disabled={refreshing}
       ariaLabel={LABEL}
       disclosure={{ kind: "none" }}
       title={LABEL}
-      className={styles["task-refresh-modal"]}
+      className={styles["task-refresh"]}
       onClick={refresh}
     >
-      {icon}
+      <span
+        className={clsx(styles["task-refresh-icon"], refreshing && styles["task-refresh-spinning"])}
+      >
+        <RefreshIcon />
+      </span>
     </Button>
   )
 }

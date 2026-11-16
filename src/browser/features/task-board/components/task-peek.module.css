@@ -56,8 +56,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 26px;
+  width: 28px;
+  height: 28px;
   padding: 0;
   border-radius: var(--radius-md);
 }
@@ -108,6 +108,9 @@
 }
 /* 見本の地のグラデーションは `<Button>` の顔に無いので、素のボタンで持つ。 */
 .task-peek-start {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--inline-control);
   height: 32px;
   padding: 0 var(--space-lg);
   border: none;

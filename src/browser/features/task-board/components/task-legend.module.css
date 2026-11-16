@@ -17,5 +17,6 @@
   gap: var(--space-xs);
 }
 .task-legend-loop {
+  display: flex;
   color: var(--state-ok);
 }
