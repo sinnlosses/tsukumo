@@ -7,6 +7,7 @@
 // レポートに書かれたパスを押せる部品にする一覧・依頼は `<RepositoryFileLinkProvider>` が配る。
 // メインビューの中でしか描かないので、ここで1回だけ mount する。
 
+import clsx from "clsx"
 import {
   useRef,
   type KeyboardEvent,
@@ -184,7 +185,13 @@ export function MainView(): ReactElement {
             </>
           )}
           {cardTurn !== undefined && (
-            <article className={styles["turn-card"]}>
+            <article
+              className={clsx(
+                styles["turn-card"],
+                cardTurn.turn.steps.some((step) => step.mark === "final") &&
+                  styles["has-final-report"],
+              )}
+            >
               {phoneWidth && notice.kind === "notice" && (
                 <div className={styles["turn-card-phone-notice"]}>
                   <HeadNotice
