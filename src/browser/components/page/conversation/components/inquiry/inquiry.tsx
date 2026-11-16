@@ -15,10 +15,12 @@ import { formatMinutesSeconds } from "../../../../../../shared/utils/elapsed-tim
 import { truncateForDisplay } from "../../../../../features/current-work/current-work-step.ts"
 import { usePhoneWidth } from "../../../../../hooks/use-phone-width.ts"
 import { useNowWhile } from "../../../../../stores/clock.ts"
+import { useFirstNoteList } from "../../../../../stores/first-note-seen.ts"
 import { useInquiryJump } from "../../../../../stores/inquiry-jump.ts"
 import { mergeRefs } from "../../../../../utils/merge-ref.ts"
 import { Button } from "../../../../ui/button/button.tsx"
 import { Dialog } from "../../../../ui/dialog/dialog.tsx"
+import { FirstNoteList } from "../../../../ui/first-note-list/first-note-list.tsx"
 import { HStack } from "../../../../ui/h-stack/h-stack.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
 import {
@@ -224,6 +226,12 @@ function InquiryFace(props: {
       : undefined
   const untouched = focusedLabel.kind === "none"
   const detailed = inquiry.options.some(hasDetail)
+  const hasTermMark =
+    inquiry.kind === "question" &&
+    inquiry.brief !== undefined &&
+    (inquiry.brief.recommended !== undefined ||
+      inquiry.brief.facts.some((fact) => fact.basis === "checked"))
+  const firstNotes = useFirstNoteList(hasTermMark ? ["inquiry-terms"] : [])
 
   return (
     <>
@@ -366,6 +374,7 @@ function InquiryFace(props: {
             {inquiry.writtenAnswer}
           </Text>
         )}
+        <FirstNoteList {...firstNotes} />
       </div>
       {props.layout !== "sheet" && (
         <HStack

@@ -36,14 +36,6 @@
   border-radius: var(--radius-pill);
   white-space: nowrap;
 }
-.reply-hint {
-  margin: 0;
-  padding: var(--inset-control);
-  border: 1px dashed var(--rule-soft);
-  border-radius: var(--radius-lg);
-  color: var(--ink-quiet);
-  font-size: var(--font-secondary);
-}
 @container report-body (min-width: calc(30em + 248px + 24px)) {
   .ask-frame {
     display: grid;
@@ -61,13 +53,6 @@
   .reply-port {
     left: 0;
     right: auto;
-  }
-  .reply-hint {
-    display: block;
-    position: absolute;
-    top: var(--reply-hint-top);
-    left: 0;
-    right: 0;
   }
 }
 @container report-body (max-width: calc(30em + 248px + 24px - 0.02px)) {
@@ -88,13 +73,6 @@
   .reply-port {
     left: auto;
     right: 0;
-  }
-  .reply-hint {
-    display: none;
-    position: static;
-    top: auto;
-    left: auto;
-    right: auto;
   }
 }
 /* 押すと指せる単位。指した単位は左端に差し色の線を引き、地を差し色で染める。 */

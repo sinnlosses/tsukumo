@@ -23,7 +23,7 @@ import { ChangedFilesFold } from "./changed-files-fold.tsx"
 import { FavorJump } from "./checks-verdict.tsx"
 import styles from "./leaf.module.css"
 import { PhaseTimes } from "./phase-time-section.tsx"
-import { checkSourceWord, ChecksTotalLine } from "./proof-band.tsx"
+import { checkSourceWord, ChecksTotalLine, SOURCE_MARK_ATTRIBUTES } from "./proof-band.tsx"
 
 export function WorkRecord(props: {
   readonly head: MainViewSurfaceHead
@@ -211,7 +211,7 @@ function CheckSource(props: {
   return (
     <>
       {"　"}
-      <span className={workRecordClassName("work-record-check-source")}>
+      <span className={workRecordClassName("work-record-check-source")} {...SOURCE_MARK_ATTRIBUTES}>
         {checkSourceWord(props.recorded, props.runCount)}
       </span>
     </>

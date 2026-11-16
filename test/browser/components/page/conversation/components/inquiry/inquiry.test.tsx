@@ -474,7 +474,7 @@ describe("Inquiry の添え書きと詳細のサーフェス", () => {
 
     expect(screen.getByText("事実")).toBeDefined()
     expect(screen.queryByText("おすすめの理由")).toBeNull()
-    expect(screen.queryByText(/確度/)).toBeNull()
+    expect(screen.queryByText(/^確度 /)).toBeNull()
   })
 
   it("単一選択は入力欄に字があるあいだ、案内の1行を出して選択肢を薄くし、字を消すと戻る", () => {

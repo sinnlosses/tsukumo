@@ -8,6 +8,7 @@ import type {
   QuestionBriefCertainty,
   QuestionBriefFactBasis,
 } from "../../../../../../shared/session-driver/question-brief.ts"
+import { FIRST_NOTE_TEXT } from "../../../../../domain/first-note.ts"
 import {
   detailBlockClassName,
   Markdown,
@@ -100,7 +101,7 @@ export function InquiryBrief(props: { readonly brief: InquiryBriefModel }): Reac
           className={styles["inquiry-brief-line"]}
         >
           <BriefLabel text={RECOMMENDED_LABEL} />{" "}
-          <InquiryMark className={styles["inquiry-brief-certainty"]}>
+          <InquiryMark className={styles["inquiry-brief-certainty"]} explained>
             {CERTAINTY_LABEL[recommended.certainty]}
           </InquiryMark>{" "}
           {recommended.reason}
@@ -251,19 +252,35 @@ export function InquiryDetailHint(): ReactElement {
   )
 }
 
-/** 地を塗らない中立の印。 */
+/** 地を塗らない中立の印。`explained` のとき、初回の説明と同じ説明を持たせる。 */
 function InquiryMark(props: {
   readonly className: string
   readonly children: string
+  readonly explained?: boolean
 }): ReactElement {
-  return <span className={clsx(styles["inquiry-mark"], props.className)}>{props.children}</span>
+  const explanation = props.explained === true ? FIRST_NOTE_TEXT["inquiry-terms"] : undefined
+  return (
+    <span
+      className={clsx(styles["inquiry-mark"], props.className)}
+      title={explanation}
+      aria-description={explanation}
+    >
+      {props.children}
+    </span>
+  )
 }
 
 function FactBasisMark(props: { readonly basis: QuestionBriefFactBasis }): ReactElement {
   return props.basis === "checked" ? (
-    <Badge tone="ok" shape="square" className={styles["inquiry-fact-basis"]}>
-      {BASIS_LABEL.checked}
-    </Badge>
+    <span
+      className={styles["inquiry-fact-basis"]}
+      title={FIRST_NOTE_TEXT["inquiry-terms"]}
+      aria-description={FIRST_NOTE_TEXT["inquiry-terms"]}
+    >
+      <Badge tone="ok" shape="square" className="">
+        {BASIS_LABEL.checked}
+      </Badge>
+    </span>
   ) : (
     <InquiryMark className={styles["inquiry-fact-basis"]}>{BASIS_LABEL.copied}</InquiryMark>
   )

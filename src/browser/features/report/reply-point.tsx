@@ -12,6 +12,7 @@ import {
 } from "react"
 
 import { useEventListener } from "../../hooks/use-event-listener.ts"
+import { useFirstNoteSeen } from "../../stores/first-note-seen.ts"
 import type { ReplyUnit } from "./domain/reply-unit.ts"
 import { useMarginCardStack } from "./hooks/use-margin-card-stack.ts"
 import { useNarrowReport } from "./hooks/use-narrow-report.ts"
@@ -38,8 +39,6 @@ export type ReplyPoint =
       readonly pointed?: ReplyUnit
       /** 字を選んで指したときの引用（`quoteOf` の形）。押して指したときは空。 */
       readonly quote: string
-      /** このレポートで一度でも指したか。書き添えは一度も指していないあいだだけ出す。 */
-      readonly touched: boolean
       readonly point: (unit: ReplyUnit) => void
       readonly clear: () => void
       readonly open?: OpenAsk
@@ -74,7 +73,6 @@ const REPLY_KEEP_ATTRIBUTE = "data-reply-keep"
 type PointState = {
   readonly pointed?: ReplyUnit
   readonly quote: string
-  readonly touched: boolean
 }
 
 export function ReplyPointScope(props: {
@@ -82,19 +80,21 @@ export function ReplyPointScope(props: {
   readonly rootRef: RefObject<HTMLElement | null>
   readonly children: ReactNode
 }): ReactElement {
-  const [state, setState] = useState<PointState>({ quote: "", touched: false })
+  const [state, setState] = useState<PointState>({ quote: "" })
+  const markSeen = useFirstNoteSeen((store) => store.markSeen)
   const [outside, setOutside] = useState<SelectionOutside>({ kind: "none" })
   const [opened, setOpened] = useState<{ readonly ask?: OpenAsk; readonly sheet?: SheetTarget }>({})
   const tailRef = useRef<HTMLDivElement>(null)
   const cardStack = useMarginCardStack(props.rootRef, tailRef)
   const narrow = useNarrowReport(props.rootRef)
-  const { pointed, touched } = state
+  const { pointed } = state
   const clear = () => {
-    setState({ quote: "", touched })
+    setState({ quote: "" })
   }
   useSelectionPoint(props.rootRef, {
     onUnit: (unit, quote) => {
-      setState({ pointed: unit, quote, touched: true })
+      setState({ pointed: unit, quote })
+      markSeen("reply-margin")
       setOutside({ kind: "none" })
     },
     onOutside: (shown) => {
@@ -135,7 +135,8 @@ export function ReplyPointScope(props: {
         kind: "available",
         ...state,
         point: (unit) => {
-          setState({ pointed: unit, quote: "", touched: true })
+          setState({ pointed: unit, quote: "" })
+          markSeen("reply-margin")
         },
         clear,
         ...(opened.ask === undefined ? {} : { open: opened.ask }),

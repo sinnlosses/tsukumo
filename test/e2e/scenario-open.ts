@@ -43,6 +43,14 @@ import {
   type ResponseBaseline,
 } from "./scenario-wait.ts"
 import { assertNextStepGap, waitForQuietPoint } from "./scene-schedule.ts"
+
+/** 初回の説明を見たあとの状態を既定にして、ほかの期待値を揺らさない。 */
+const SEEN_FIRST_NOTES_SCRIPT = `(() => {
+  const key = "tsukumo-first-note-seen:v1"
+  if (localStorage.getItem(key) === null) {
+    localStorage.setItem(key, JSON.stringify(["inquiry-terms", "report-terms", "reply-margin"]))
+  }
+})()`
 import {
   type CwdFile,
   makeTempDirectory,
@@ -196,6 +204,7 @@ export async function openRoom(
   const page = await context.newPage()
   await installFixedClock(page)
   await page.addInitScript(RECORD_ANNOUNCEMENTS_SCRIPT)
+  await page.addInitScript(SEEN_FIRST_NOTES_SCRIPT)
 
   const messages = recordMessages(page)
   const responses = recordResponses(page)

@@ -5,6 +5,7 @@ import { useId, type ReactElement } from "react"
 
 import { BLUR_RANGE, FILL_RANGE, VEIL_PERCENT_RANGE } from "../../../../domain/appearance-adjust.ts"
 import type { AppearanceColorKey } from "../../../../domain/appearance-color.ts"
+import { Button } from "../../../ui/button/button.tsx"
 import { HStack } from "../../../ui/h-stack/h-stack.tsx"
 import { Text } from "../../../ui/text/text.tsx"
 import styles from "./screen-nav-settings-look.module.css"
@@ -84,6 +85,28 @@ export function ScreenNavSettingsLookFace(props: ScreenNavSettingsProps): ReactE
         readout={`${adjust.fill}%`}
         onChange={adjust.onChangeFill}
       />
+      <HStack
+        element="div"
+        name={{ kind: "none" }}
+        gap="lg"
+        align="center"
+        justify="between"
+        wrap="nowrap"
+        className={rowStyles["screen-nav-settings-row"]}
+      >
+        <span>初回の説明</span>
+        <Button
+          variant="outline"
+          size="secondary"
+          pressed="none"
+          disabled={false}
+          disclosure={{ kind: "none" }}
+          className=""
+          onClick={settings.onReplayFirstNotes}
+        >
+          初回の説明をもう一度出す
+        </Button>
+      </HStack>
       {settings.colorNotice.kind === "shown" && (
         <Text
           element="p"

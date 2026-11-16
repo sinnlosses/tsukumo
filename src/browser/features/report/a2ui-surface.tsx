@@ -22,7 +22,9 @@ import {
 import type { MainViewSurfaceLeafRegion } from "../../../shared/session/main-view-shape.ts"
 import { Button } from "../../components/ui/button/button.tsx"
 import { Divider } from "../../components/ui/divider/divider.tsx"
+import { FirstNoteList } from "../../components/ui/first-note-list/first-note-list.tsx"
 import { useExternalSync } from "../../hooks/use-external-sync.ts"
+import { useFirstNoteList } from "../../stores/first-note-seen.ts"
 import { notesOf, useReplyNotes, useReplySessionKey } from "../../stores/reply-note-list.ts"
 import { askCountOf, noteCountOf, ReportContext, runIds, useReport } from "./a2ui-report-context.ts"
 import { FailedReport } from "./a2ui-surface-failed.tsx"
@@ -147,53 +149,60 @@ function ReportRoot(): ReactElement {
     view.head.checks,
     bodySections.map(([id]) => id),
   )
+  const firstNotes = useFirstNoteList([
+    ...(view.head.checks.kind === "checks" ? (["report-terms"] as const) : []),
+    ...(replyPort.kind === "open" ? (["reply-margin"] as const) : []),
+  ])
   return (
-    <ReportFrame
-      reveal={report.reveal}
-      turnId={report.turnId}
-      className={report.className}
-      revealClassName={report.revealClassName}
-      blockClassName={report.blockClassName}
-    >
-      <HeadRegion head={view.head} proof={proof} />
-      {view.figure.kind === "leaves" && (
-        <RegionBox
-          region={{ kind: "section", id: view.figure.regionId, askCount: 0, noteCount: 0 }}
-        >
-          <LeafRegionContent region={view.figure} />
-        </RegionBox>
-      )}
-      {bodySections.map(([componentId, section]) => (
-        <RegionBox
-          key={section.regionId}
-          region={{
-            kind: "section",
-            id: section.regionId,
-            askCount: askCountOf(report, askThreads, componentId),
-            noteCount: noteCountOf(report, replyPort, notes, componentId),
-          }}
-        >
-          <SectionContent id={componentId} />
-          {proof.kind === "band" &&
-            proof.sections
-              .filter((entry) => entry.sectionId === componentId)
-              .map((entry) => <SectionProof key={entry.sectionId} section={entry} />)}
-        </RegionBox>
-      ))}
-      <NotDoneRegion notDone={view.head.notDone} />
-      {view.retrospective.kind === "leaves" && (
-        <RegionBox region={{ kind: "retrospective" }}>
-          <LeafRegionContent region={view.retrospective} />
-        </RegionBox>
-      )}
-      <FavorFollowUp
-        favor={view.favor}
-        components={view.components}
-        checks={view.head.checks}
-        favorRef={report.favorRef}
-        nextSteps={report.nextSteps}
-      />
-    </ReportFrame>
+    <>
+      <ReportFrame
+        reveal={report.reveal}
+        turnId={report.turnId}
+        className={report.className}
+        revealClassName={report.revealClassName}
+        blockClassName={report.blockClassName}
+      >
+        <HeadRegion head={view.head} proof={proof} />
+        {view.figure.kind === "leaves" && (
+          <RegionBox
+            region={{ kind: "section", id: view.figure.regionId, askCount: 0, noteCount: 0 }}
+          >
+            <LeafRegionContent region={view.figure} />
+          </RegionBox>
+        )}
+        {bodySections.map(([componentId, section]) => (
+          <RegionBox
+            key={section.regionId}
+            region={{
+              kind: "section",
+              id: section.regionId,
+              askCount: askCountOf(report, askThreads, componentId),
+              noteCount: noteCountOf(report, replyPort, notes, componentId),
+            }}
+          >
+            <SectionContent id={componentId} />
+            {proof.kind === "band" &&
+              proof.sections
+                .filter((entry) => entry.sectionId === componentId)
+                .map((entry) => <SectionProof key={entry.sectionId} section={entry} />)}
+          </RegionBox>
+        ))}
+        <NotDoneRegion notDone={view.head.notDone} />
+        {view.retrospective.kind === "leaves" && (
+          <RegionBox region={{ kind: "retrospective" }}>
+            <LeafRegionContent region={view.retrospective} />
+          </RegionBox>
+        )}
+        <FavorFollowUp
+          favor={view.favor}
+          components={view.components}
+          checks={view.head.checks}
+          favorRef={report.favorRef}
+          nextSteps={report.nextSteps}
+        />
+        <FirstNoteList {...firstNotes} />
+      </ReportFrame>
+    </>
   )
 }
 

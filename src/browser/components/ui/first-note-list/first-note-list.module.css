@@ -1,0 +1,11 @@
+.first-note {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--inline-group);
+  margin: 0;
+  padding: var(--inset-control);
+}
+.first-note-button {
+  flex: 0 0 auto;
+}

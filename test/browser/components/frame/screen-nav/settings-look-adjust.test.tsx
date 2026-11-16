@@ -2,6 +2,7 @@ import { act, cleanup, fireEvent, render, screen, within } from "@testing-librar
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import { ScreenNav } from "../../../../../src/browser/components/frame/screen-nav/screen-nav.tsx"
+import { useFirstNoteSeen } from "../../../../../src/browser/stores/first-note-seen.ts"
 import { useNavDrawer } from "../../../../../src/browser/stores/nav-drawer.ts"
 import { INITIAL_SESSION_STATE } from "../../../../../src/shared/session/session-state.ts"
 import { characterInfo } from "../../../../fixture/character.ts"
@@ -29,6 +30,7 @@ afterEach(() => {
   useNavDrawer.setState(useNavDrawer.getInitialState(), true)
   window.location.hash = ""
   localStorage.clear()
+  useFirstNoteSeen.setState({ seen: [] })
   for (const name of ROOT_TOKENS) {
     document.documentElement.style.removeProperty(name)
   }
@@ -56,6 +58,19 @@ function slider(dialog: HTMLElement, name: string): HTMLInputElement {
 function rootToken(name: string): string {
   return document.documentElement.style.getPropertyValue(name)
 }
+
+describe("設定の歯車（初回の説明）", () => {
+  it("「初回の説明をもう一度出す」で、見た説明の記憶が消える", () => {
+    useFirstNoteSeen.getState().markSeen("inquiry-terms")
+    const dialog = openLookFace()
+    expect(useFirstNoteSeen.getState().seen).toEqual(["inquiry-terms"])
+
+    fireEvent.click(within(dialog).getByRole("button", { name: "初回の説明をもう一度出す" }))
+
+    expect(useFirstNoteSeen.getState().seen).toEqual([])
+    expect(JSON.parse(localStorage.getItem("tsukumo-first-note-seen:v1") ?? "null")).toEqual([])
+  })
+})
 
 describe("設定の歯車（見た目の調整）", () => {
   it("3つの範囲入力が名前つきで、範囲と既定の位置を持つ", () => {

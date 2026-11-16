@@ -471,10 +471,14 @@ describe("MainView（レポートを欄ごとに描く）", () => {
     return body
   }
   const regionsOfBody = (): readonly string[] =>
-    [...reportBody().children].map(
-      (child) =>
-        child.getAttribute("data-report-section") ?? child.getAttribute("data-report-region") ?? "",
-    )
+    [...reportBody().children]
+      .filter((child) => !child.hasAttribute("data-first-note"))
+      .map(
+        (child) =>
+          child.getAttribute("data-report-section") ??
+          child.getAttribute("data-report-region") ??
+          "",
+      )
 
   it("結論に閉じない <div> があっても、節とお願いの欄は結論の入れ物に呑まれない", () => {
     renderMainView([

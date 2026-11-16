@@ -15,6 +15,7 @@ import {
   type ReplyPort,
   ReplyPortContext,
 } from "../../../../src/browser/features/report/reply-port.ts"
+import { useFirstNoteSeen } from "../../../../src/browser/stores/first-note-seen.ts"
 import { useReplyNotes } from "../../../../src/browser/stores/reply-note-list.ts"
 
 const PORT_NAME = "聞く・頼む"
@@ -32,6 +33,8 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup()
+  localStorage.clear()
+  useFirstNoteSeen.setState({ seen: [] })
   document.getSelection()?.removeAllRanges()
   useReplyNotes.setState(useReplyNotes.getInitialState(), true)
 })
@@ -123,6 +126,25 @@ describe("単位の中で選んだ字", () => {
       fireEvent.keyDown(document, { key: "µ", code: "KeyM", metaKey: true, altKey: true })
     })
     expect(textbox().value).toBe("> 架空の本体\n\n")
+  })
+})
+
+describe("余白の案内を見たことの記憶", () => {
+  it("単位を指すと、余白の案内を見たことになり、端末の好みへ残る", () => {
+    renderReport()
+    expect(useFirstNoteSeen.getState().seen).toEqual([])
+
+    selectText("架空の本体")
+
+    expect(useFirstNoteSeen.getState().seen).toEqual(["reply-margin"])
+    expect(JSON.parse(localStorage.getItem("tsukumo-first-note-seen:v1") ?? "[]")).toEqual([
+      "reply-margin",
+    ])
+  })
+
+  it("レポートごとの書き添えは出ない", () => {
+    renderReport()
+    expect(screen.queryByText(/ここに「聞く・頼む」が1つ出る/)).toBeNull()
   })
 })
 

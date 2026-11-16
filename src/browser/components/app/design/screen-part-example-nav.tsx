@@ -109,6 +109,7 @@ const PARTS: ScreenNavParts = {
     },
     revealSpeed: { value: "standard", onChange: noop },
     launchSkill: { value: "", onChange: noop },
+    onReplayFirstNotes: noop,
     resetDisabled: true,
     onReset: noop,
     toggleRef: createRef(),

@@ -23,6 +23,7 @@ import {
 } from "../../../../../shared/session/session-default.ts"
 import type { ModelEffortSupport } from "../../../../../shared/session/session-event-setting.ts"
 import { resolveEffortSelect, type EffortSelect } from "../../../../domain/effort-label.ts"
+import { useFirstNoteSeen } from "../../../../stores/first-note-seen.ts"
 import { useSession } from "../../../../stores/session.ts"
 import { useAppearanceAdjust, type ScreenNavSettingsAdjust } from "./use-appearance-adjust.ts"
 import {
@@ -68,6 +69,8 @@ export type ScreenNavSettings = {
   readonly sessionDefault: ScreenNavSettingsSessionDefault
   readonly revealSpeed: ScreenNavSettingsRevealSpeed
   readonly launchSkill: ScreenNavSettingsLaunchSkill
+  /** 覚えた「初回の説明を見た」を消し、説明をまた初回として出す。 */
+  readonly onReplayFirstNotes: () => void
   /** 上書きが1つも無いときは押せない（戻す先が無い）。 */
   readonly resetDisabled: boolean
   readonly onReset: () => void
@@ -83,6 +86,7 @@ export function useSettings(): ScreenNavSettings {
   const adjust = useAppearanceAdjust()
   const revealSpeed = useRevealSpeedSetting()
   const launchSkill = useLaunchSkillSetting()
+  const resetFirstNotes = useFirstNoteSeen((state) => state.resetAll)
   const [open, setOpen] = useState(false)
   const toggleRef = useRef<HTMLButtonElement>(null)
 
@@ -152,6 +156,7 @@ export function useSettings(): ScreenNavSettings {
     },
     revealSpeed,
     launchSkill,
+    onReplayFirstNotes: resetFirstNotes,
     toggleRef,
   }
 }

@@ -108,6 +108,8 @@ describe("検証のまとめ", () => {
     const seal = container.querySelector("[data-seal]")
     expect(seal?.textContent).toBe("記録あり・3回")
     expect(seal?.getAttribute("data-seal")).toBe("outline")
+    expect(seal?.getAttribute("title")).toContain("実行の記録と照合できた確認")
+    expect(seal?.getAttribute("aria-description")).toContain("実行の記録と照合できた確認")
   })
 
   it("結ばれていない行だけが帯の下に残る", () => {

@@ -107,7 +107,7 @@ describe("ChecksVerdict（面の合図の行）", () => {
     const rendered = verdictOf(regionsOf(MIXED, ""))
 
     expect(rendered.textNodes.filter((text) => text === "申告のみ")).toHaveLength(5)
-    expect(rendered.html).not.toContain("記録あり")
+    expect(rendered.textNodes.some((text) => text.includes("記録あり"))).toBe(false)
   })
 
   it("冒頭のまとめは字の1行で、判定の札を並べない", () => {

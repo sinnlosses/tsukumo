@@ -8,6 +8,7 @@ import {
   type ReportChecksView,
 } from "../../../../shared/report/report-check-view.ts"
 import { plainInline } from "../../../../shared/report/report-inline-markdown.ts"
+import { FIRST_NOTE_TEXT } from "../../../domain/first-note.ts"
 import type { ReportSectionProof } from "../domain/report-proof.ts"
 import styles from "./proof-band.module.css"
 
@@ -16,6 +17,12 @@ type Summary = Extract<ReportChecksView, { readonly kind: "checks" }>["summary"]
 /** 裏取りの印の語。記録あり・申告のみは線の印で言い、色や状態の記号は付けない。 */
 export function checkSourceWord(recorded: boolean, runCount: number): string {
   return recorded ? `記録あり・${String(runCount)}回` : "申告のみ"
+}
+
+/** 「記録あり」「申告のみ」の印に持たせる説明。初回の説明を消したあとも読める。 */
+export const SOURCE_MARK_ATTRIBUTES = {
+  title: FIRST_NOTE_TEXT["report-terms"],
+  "aria-description": FIRST_NOTE_TEXT["report-terms"],
 }
 
 /** 検証のまとめの1行。「確かめたこと n件」「通った a・確かめていない b」「単体 …・E2E …」を字で言う。 */
@@ -48,7 +55,7 @@ export function SectionProof(props: { readonly section: ReportSectionProof }): R
           {`${REPORT_CHECK_PROBLEM_MARKS.ng} ${REPORT_CHECK_PROBLEM_WORDS.ng}`}
         </span>
       ) : (
-        <span className={styles.seal} data-seal="outline">
+        <span className={styles.seal} data-seal="outline" {...SOURCE_MARK_ATTRIBUTES}>
           {checkSourceWord(mark === "recorded", runCount)}
         </span>
       )}
