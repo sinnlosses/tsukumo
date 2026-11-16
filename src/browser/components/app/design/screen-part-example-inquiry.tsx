@@ -1,5 +1,6 @@
 // 見本帳の「画面の部品」のうち、答え待ちのカードと質問の記録の例。
 
+import { PresentationalAnswerPost } from "../../page/conversation/components/main-view/presentational-answer-post.tsx"
 import { PresentationalQuestionRecord } from "../../page/conversation/components/main-view/presentational-question-record.tsx"
 import { PresentationalPendingAskCard } from "../../page/conversation/components/pending-ask-card/presentational-pending-ask-card.tsx"
 import type {
@@ -129,6 +130,7 @@ export const INQUIRY_EXAMPLES: readonly ScreenPartExample[] = [
       <>
         <PresentationalQuestionRecord
           toolUseId="toolu_sample_single"
+          form="card"
           questions={[
             {
               key: "q1",
@@ -160,6 +162,7 @@ export const INQUIRY_EXAMPLES: readonly ScreenPartExample[] = [
         />
         <PresentationalQuestionRecord
           toolUseId="toolu_sample_multi"
+          form="card"
           questions={[
             {
               key: "q1",
@@ -183,6 +186,22 @@ export const INQUIRY_EXAMPLES: readonly ScreenPartExample[] = [
               brief: undefined,
             },
           ]}
+        />
+      </>
+    ),
+  },
+  {
+    frame: "flow",
+    path: "page/conversation/components/main-view/presentational-answer-post.tsx",
+    render: () => (
+      <>
+        <PresentationalAnswerPost
+          post={{ stamp: "答え", lines: ["新しい順"] }}
+          redo={{ kind: "none" }}
+        />
+        <PresentationalAnswerPost
+          post={{ stamp: "任せた", lines: ["並べ方: 任せた", "載せる欄: 見出し、表"] }}
+          redo={{ kind: "offered", onRedo: noop }}
         />
       </>
     ),

@@ -76,13 +76,15 @@ afterEach(() => {
 
 describe("QuestionRecord（質問のときの詳細）", () => {
   it("添え書きの無い問は畳みの行を足さない", () => {
-    const { container } = render(<QuestionRecord entry={entryOf({})} />)
+    const { container } = render(<QuestionRecord entry={entryOf({})} form="card" />)
 
     expect(container.querySelectorAll("summary")).toHaveLength(0)
   })
 
   it("添え書きのある問は畳みの行が1つ増え、開くまで中身を描かない", () => {
-    const { container } = render(<QuestionRecord entry={entryOf({ briefs: [BRIEF] })} />)
+    const { container } = render(
+      <QuestionRecord entry={entryOf({ briefs: [BRIEF] })} form="card" />,
+    )
 
     expect(container.querySelectorAll("summary")).toHaveLength(1)
     expect(summaryOf(container, BRIEF_SUMMARY)).toBeDefined()
@@ -104,7 +106,7 @@ describe("QuestionRecord（質問のときの詳細）", () => {
         },
       ],
     })
-    const { container } = render(<QuestionRecord entry={entry} />)
+    const { container } = render(<QuestionRecord entry={entry} form="card" />)
 
     toggle(container, BRIEF_SUMMARY, true)
 
@@ -128,7 +130,7 @@ describe("QuestionRecord（質問のときの詳細）", () => {
         },
       ],
     })
-    const { container } = render(<QuestionRecord entry={entry} />)
+    const { container } = render(<QuestionRecord entry={entry} form="card" />)
 
     toggle(container, BRIEF_SUMMARY, true)
 
@@ -153,7 +155,7 @@ describe("QuestionRecord（質問のときの詳細）", () => {
         },
       ],
     })
-    const { container } = render(<QuestionRecord entry={entry} />)
+    const { container } = render(<QuestionRecord entry={entry} form="card" />)
 
     toggle(container, BRIEF_SUMMARY, true)
 
@@ -173,7 +175,9 @@ describe("QuestionRecord（質問のときの詳細）", () => {
   })
 
   it("1回開いたあと閉じても、中身は描いたまま", () => {
-    const { container } = render(<QuestionRecord entry={entryOf({ briefs: [BRIEF] })} />)
+    const { container } = render(
+      <QuestionRecord entry={entryOf({ briefs: [BRIEF] })} form="card" />,
+    )
 
     toggle(container, BRIEF_SUMMARY, true)
     toggle(container, BRIEF_SUMMARY, false)
@@ -196,7 +200,7 @@ describe("QuestionRecord（質問のときの詳細）", () => {
         },
       ],
     })
-    const { container } = render(<QuestionRecord entry={entry} />)
+    const { container } = render(<QuestionRecord entry={entry} form="card" />)
 
     toggle(container, BRIEF_SUMMARY, true)
 
@@ -206,7 +210,10 @@ describe("QuestionRecord（質問のときの詳細）", () => {
 
   it("header の合わない添え書きは出さない", () => {
     const { container } = render(
-      <QuestionRecord entry={entryOf({ briefs: [{ ...BRIEF, header: "別の見出し" }] })} />,
+      <QuestionRecord
+        entry={entryOf({ briefs: [{ ...BRIEF, header: "別の見出し" }] })}
+        form="card"
+      />,
     )
 
     expect(container.querySelectorAll("summary")).toHaveLength(0)

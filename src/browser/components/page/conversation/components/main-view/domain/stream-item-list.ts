@@ -42,6 +42,7 @@ export type ProgressItem =
 export type StreamItem =
   | { readonly kind: "failure" }
   | Exclude<ProgressItem, PlanItem>
+  | { readonly kind: "answer"; readonly entry: MainViewQuestion }
   | { readonly kind: "fold"; readonly items: readonly ProgressItem[] }
 
 type ArrangedItem = StreamItem | PlanItem
@@ -157,7 +158,13 @@ export function streamItemsOf(
         : [],
     ),
   ])
-  const folded = foldProgress([...items, ...leftovers]).filter(isStreamItem)
+  const folded = foldProgress([...items, ...leftovers])
+    .filter(isStreamItem)
+    .flatMap((item): StreamItem[] =>
+      item.kind === "question" && item.entry.answers.length > 0
+        ? [item, { kind: "answer", entry: item.entry }]
+        : [item],
+    )
   return turn.failure.kind === "failed" ? withFailure(folded) : folded
 }
 
@@ -173,7 +180,8 @@ export type StreamGroup = {
  * 物は後ろのセリフと先に組み、後ろがセリフでないときだけ前のセリフと組む。1行は1組にしか入らない。
  */
 export function streamGroupsOf(items: readonly StreamItem[]): readonly StreamGroup[] {
-  const isThing = (item: StreamItem) => item.kind !== "say" && item.kind !== "post"
+  const isThing = (item: StreamItem) =>
+    item.kind !== "say" && item.kind !== "post" && item.kind !== "answer"
   const groups: StreamItem[][] = []
   // 物と組んだセリフの添字。
   const used = new Set<number>()
@@ -211,7 +219,7 @@ export function streamGroupsOf(items: readonly StreamItem[]): readonly StreamGro
   return groups.map((group) => {
     const placed: StreamGroup = {
       items: group,
-      speaker: group[0]?.kind === "post" ? "user" : "other",
+      speaker: group[0]?.kind === "post" || group[0]?.kind === "answer" ? "user" : "other",
       start,
     }
     start += group.length

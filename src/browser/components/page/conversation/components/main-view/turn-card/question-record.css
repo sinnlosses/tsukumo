@@ -14,6 +14,19 @@
   padding-top: var(--space-md);
   border-top: 1px solid var(--rule);
 }
+/* 広い画面の聞いた1行。問いの印と題・問いの字、その下に詳細の開閉。選択肢の一覧は持たない。 */
+.question-asked {
+  display: flex;
+  flex-direction: column;
+  gap: var(--stack-tight);
+  min-width: 0;
+}
+.question-asked-line {
+  min-width: 0;
+}
+.question-asked-heading {
+  margin: 0;
+}
 .question-options {
   list-style: none;
   margin: 0;

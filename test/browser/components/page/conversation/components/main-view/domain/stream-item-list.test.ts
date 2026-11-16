@@ -7,6 +7,7 @@ import {
   type StreamItem,
 } from "../../../../../../../../src/browser/components/page/conversation/components/main-view/domain/stream-item-list.ts"
 import { conversationStreamRows } from "../../../../../../../../src/browser/domain/main-view/conversation-stream.ts"
+import type { MainViewQuestion } from "../../../../../../../../src/shared/session/main-view-shape.ts"
 import type { SessionRecord } from "../../../../../../../../src/shared/session/session-record.ts"
 import { splitIntoTurns } from "../../../../../../../../src/shared/session/turn.ts"
 import {
@@ -286,5 +287,85 @@ describe("streamGroupsOf", () => {
   it("平らにした組が、入力の並びと同じ", () => {
     const input = [say1, body(1), say2, failure, post, body(2)]
     expect(streamGroupsOf(input).flatMap((group) => group.items)).toEqual(input)
+  })
+})
+
+describe("answer（答えた質問の投稿）", () => {
+  const entry = (toolUseId: string): MainViewQuestion => ({
+    kind: "question",
+    toolUseId,
+    questions: [
+      {
+        header: "確認",
+        text: "どちらにする？",
+        multiSelect: false,
+        options: [{ label: "案A", description: "", preview: undefined }],
+      },
+    ],
+    answers: [{ kind: "chosen", labels: ["案A"] }],
+    briefs: [],
+    imageSizes: [],
+    unshelvedImages: [],
+  })
+  const questionRecord = (toolUseId: string): SessionRecord => entry(toolUseId)
+  const turnWith = (...ids: readonly string[]) =>
+    turn([step({ id: 0, actions: ids.map((id) => entry(id)) })])
+  const kindsOf = (items: readonly StreamItem[]) => items.map((item) => item.kind)
+  const shapeOf = (items: readonly StreamItem[]) =>
+    streamGroupsOf(items).map((group) => ({
+      kinds: group.items.map((item) => item.kind),
+      speaker: group.speaker,
+    }))
+
+  it("say → question は1組で、answer は利用者の単独の組", () => {
+    const items = streamItemsOf(rowsOf([speechRecord(), questionRecord("q1")]), turnWith("q1"))
+
+    expect(kindsOf(items)).toEqual(["say", "question", "answer"])
+    expect(shapeOf(items)).toEqual([
+      { kinds: ["say", "question"], speaker: "other" },
+      { kinds: ["answer"], speaker: "user" },
+    ])
+  })
+
+  it("question のあとの say は、answer が間に入るので組まず単独になる", () => {
+    const items = streamItemsOf(rowsOf([questionRecord("q1"), speechRecord()]), turnWith("q1"))
+
+    expect(kindsOf(items)).toEqual(["question", "answer", "say"])
+    expect(shapeOf(items)).toEqual([
+      { kinds: ["question"], speaker: "other" },
+      { kinds: ["answer"], speaker: "user" },
+      { kinds: ["say"], speaker: "other" },
+    ])
+  })
+
+  it("say → question → say は、question が前のセリフと組み、answer と後ろの say は単独", () => {
+    const items = streamItemsOf(
+      rowsOf([speechRecord(), questionRecord("q1"), speechRecord()]),
+      turnWith("q1"),
+    )
+
+    expect(shapeOf(items).map((group) => group.kinds)).toEqual([
+      ["say", "question"],
+      ["answer"],
+      ["say"],
+    ])
+  })
+
+  it("最終レポートより前の question は畳みの中の1件のままで、answer を足さない", () => {
+    const items = streamItemsOf(
+      rowsOf([questionRecord("q1"), reportWith("last", "最終")]),
+      turn([step({ id: 0, actions: [entry("q1")] }), reportStep(1, "last", "final")]),
+    )
+
+    expect(kindsOf(items)).toEqual(["fold", "body"])
+  })
+
+  it("最終レポートより後ろの question は answer と並んで最上位に残る", () => {
+    const items = streamItemsOf(
+      rowsOf([reportWith("last", "最終"), questionRecord("q1")]),
+      turn([reportStep(0, "last", "final"), step({ id: 1, actions: [entry("q1")] })]),
+    )
+
+    expect(kindsOf(items)).toEqual(["body", "question", "answer"])
   })
 })

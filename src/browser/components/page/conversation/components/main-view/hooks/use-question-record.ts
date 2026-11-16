@@ -30,6 +30,8 @@ import type { ShelvedSource } from "../../inquiry/inquiry.tsx"
 
 export type QuestionRecordProps = {
   readonly entry: MainViewQuestion
+  /** `card` は狭い画面の1枚の札（選択肢の印と答えを含む）。`asked` は広い画面の聞いた1行（答えは利用者の投稿に出る）。 */
+  readonly form: "card" | "asked"
 }
 
 /** 1つの選択肢・自由入力ぶんの答えの行。 */
@@ -74,6 +76,7 @@ export type QuestionRecordQuestionModel = {
 export type QuestionRecordModel = {
   /** 質問の tool use id。preview の画像はこの id で棚を引く。 */
   readonly toolUseId: string
+  readonly form: QuestionRecordProps["form"]
   readonly questions: readonly QuestionRecordQuestionModel[]
 }
 
@@ -83,6 +86,7 @@ export function useQuestionRecord(props: QuestionRecordProps): QuestionRecordMod
 
   return {
     toolUseId: props.entry.toolUseId,
+    form: props.form,
     questions: props.entry.questions.map((question, index) => {
       const answer = props.entry.answers[index] ?? NO_ANSWER
       const brief = props.entry.briefs.find((candidate) => candidate.header === question.header)

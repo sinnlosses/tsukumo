@@ -31,6 +31,31 @@
 .stream-post {
   min-width: min(28rem, 100%);
 }
+/* 答えた質問の投稿の札・本文の行・「答え直す」。 */
+.answer-post {
+  display: flex;
+  flex-direction: column;
+  gap: var(--stack-tight);
+}
+.answer-post > button {
+  align-self: flex-end;
+}
+.answer-post-body {
+  display: flex;
+  align-items: baseline;
+  gap: var(--inline-control);
+}
+.answer-post-body > span {
+  flex: none;
+  white-space: nowrap;
+}
+.answer-post-lines {
+  display: flex;
+  flex-direction: column;
+}
+.answer-post-line {
+  margin: 0;
+}
 /* 離れていたあいだに足された行の手前の境目の線。左右の罫と中央の文。文の地は不透明にする。 */
 .away-seam {
   display: flex;

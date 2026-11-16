@@ -26,6 +26,7 @@ import { useSession } from "../../../../../stores/session.ts"
 import { Text } from "../../../../ui/text/text.tsx"
 import { useAwaySeam } from "../../stores/away-seam.ts"
 import { useDraftedReports } from "../../stores/drafted-report.ts"
+import { AnswerPost } from "./answer-post.tsx"
 import { awaySeamOf, type AwaySeam } from "./domain/away-seam.ts"
 import { revealStepIdOf } from "./domain/draft-reveal.ts"
 import { REPORT_STEP_ATTRIBUTE } from "./domain/outline-report-head.ts"
@@ -86,7 +87,12 @@ export function Turn(props: TurnProps): ReactElement {
     }
     return !isAskGroupedToLeaf(askSlot, row.record)
   })
-  const items = streamItemsOf(shownRows, turn)
+  // 答えの投稿は広い画面だけ。狭い画面は札のまま。
+  const items = streamItemsOf(shownRows, turn).filter(
+    (item) => !phoneWidth || item.kind !== "answer",
+  )
+  const questionForm = phoneWidth ? "card" : "asked"
+  const redoToolUseId = props.newest ? lastQuestionToolUseId(turn) : NO_QUESTION
   const groups = streamGroupsOf(items)
   const generation = useSession((session) => session.generation)
   const away = useAwaySeam((state) => state.away)
@@ -134,6 +140,8 @@ export function Turn(props: TurnProps): ReactElement {
                       turn={turn}
                       tasks={tasks}
                       newest={props.newest}
+                      questionForm={questionForm}
+                      redoToolUseId={redoToolUseId}
                       isRevealed={(stepId) => stepId === revealStepId}
                       isLatest={(stepId) => stepId === latestStepId}
                     />
@@ -160,6 +168,18 @@ export function Turn(props: TurnProps): ReactElement {
   )
 }
 
+function lastQuestionToolUseId(turn: MainViewTurn): string {
+  return (
+    turn.steps
+      .flatMap((step) => step.actions)
+      .filter((action) => action.kind === "question")
+      .at(-1)?.toolUseId ?? NO_QUESTION
+  )
+}
+
+/** どの `toolUseId` とも一致しない印（質問が無い・古いやり取り）。 */
+const NO_QUESTION = ""
+
 const NO_SEAM = { kind: "none" } as const satisfies AwaySeam
 
 /** 流れの末尾がセリフのとき、続くお伺いの札をそのセリフと1組に見せる印。 */
@@ -184,6 +204,8 @@ function streamItemKey(item: StreamItem, index: number): string {
       return `body:${String(item.step.id)}`
     case "question":
       return `question:${item.entry.toolUseId}`
+    case "answer":
+      return `answer:${item.entry.toolUseId}`
     case "fold":
       return "fold"
     case "failure":
@@ -199,6 +221,9 @@ type StreamItemViewProps = {
   readonly turn: MainViewTurn
   readonly tasks: TaskSummaryResult
   readonly newest: boolean
+  readonly questionForm: "card" | "asked"
+  /** 「答え直す」を付ける答えの `toolUseId`。いちばん新しいやり取りの最後の答え。 */
+  readonly redoToolUseId: string
   /** 書き上げる演出を掛けるステップか。 */
   readonly isRevealed: (stepId: number) => boolean
   /** いちばん新しいやり取りの最後のレポートか。 */
@@ -213,7 +238,9 @@ function StreamItemView(props: StreamItemViewProps): ReactNode {
     case "say":
       return <SayRow row={item} />
     case "question":
-      return <QuestionRecord entry={item.entry} />
+      return <QuestionRecord entry={item.entry} form={props.questionForm} />
+    case "answer":
+      return <AnswerPost entry={item.entry} redo={item.entry.toolUseId === props.redoToolUseId} />
     case "failure":
       return (
         <>
@@ -227,7 +254,15 @@ function StreamItemView(props: StreamItemViewProps): ReactNode {
         </>
       )
     case "fold":
-      return <ProgressFold items={item.items} turn={turn} tasks={props.tasks} />
+      return (
+        <ProgressFold
+          items={item.items}
+          turn={turn}
+          tasks={props.tasks}
+          questionForm={props.questionForm}
+          redoToolUseId={props.redoToolUseId}
+        />
+      )
     case "body":
       return (
         <Step

@@ -24,13 +24,24 @@ import styles from "./main-view.module.css"
 const FREE_TEXT_SUFFIX = "（自由入力）"
 const ENTRUSTED_MARK = "→"
 const PREVIEWS_SUMMARY = "比べた内容"
-const BRIEF_SUMMARY = "質問のときの詳細"
+const CARD_BRIEF_SUMMARY = "質問のときの詳細"
+const ASKED_BRIEF_SUMMARY = "聞いたときの詳細"
+const ASKED_MARK = "?"
 
 type PresentationalQuestionRecordProps = QuestionRecordModel
 
 export function PresentationalQuestionRecord(
   props: PresentationalQuestionRecordProps,
 ): ReactElement {
+  if (props.form === "asked") {
+    return (
+      <section className={styles["question-asked"]}>
+        {props.questions.map((question) => (
+          <AskedLine toolUseId={props.toolUseId} question={question} key={question.key} />
+        ))}
+      </section>
+    )
+  }
   return (
     <section className={styles["tool-block"]}>
       {props.questions.map((question) => (
@@ -63,39 +74,90 @@ function QuestionBlock(props: {
         ))}
       </ul>
       {question.brief !== undefined && (
-        <BriefDetails toolUseId={props.toolUseId} brief={question.brief} />
+        <BriefDetails
+          toolUseId={props.toolUseId}
+          brief={question.brief}
+          summary={CARD_BRIEF_SUMMARY}
+        />
       )}
       {question.previews.length > 0 && (
-        // 開くまで中身を描かない。一度開いたあとは閉じても外さない（`useQuestionRecord`）。
-        <details className={styles["question-previews"]} onToggle={question.onTogglePreviews}>
-          <Text element="summary" size="secondary" tone="ink-quiet" weight="inherit" className="">
-            {PREVIEWS_SUMMARY}
-          </Text>
-          {question.previewsOpened &&
-            question.previews.map((preview) => (
-              <PreviewBlock
-                toolUseId={props.toolUseId}
-                preview={preview}
-                multiSelect={question.multiSelect}
-                key={preview.label}
-              />
-            ))}
-        </details>
+        <PreviewDetails toolUseId={props.toolUseId} question={question} />
       )}
     </div>
+  )
+}
+
+/** 広い画面の聞いた1行。選択肢の一覧は出さない（答えは利用者の投稿に出る）。 */
+function AskedLine(props: {
+  readonly toolUseId: string
+  readonly question: QuestionRecordQuestionModel
+}): ReactElement {
+  const { question } = props
+
+  return (
+    <div className={styles["question-asked-line"]}>
+      <Heading
+        level={4}
+        size="body"
+        tone="inherit"
+        weight="bold"
+        className={styles["question-asked-heading"]}
+      >
+        <Text element="span" size="inherit" tone="accent" weight="inherit" className="">
+          {ASKED_MARK}
+        </Text>{" "}
+        {question.header}: {question.text}
+      </Heading>
+      {question.brief !== undefined && (
+        <BriefDetails
+          toolUseId={props.toolUseId}
+          brief={question.brief}
+          summary={ASKED_BRIEF_SUMMARY}
+        />
+      )}
+      {question.previews.length > 0 && (
+        <PreviewDetails toolUseId={props.toolUseId} question={question} />
+      )}
+    </div>
+  )
+}
+
+function PreviewDetails(props: {
+  readonly toolUseId: string
+  readonly question: QuestionRecordQuestionModel
+}): ReactElement {
+  const { question } = props
+
+  return (
+    // 開くまで中身を描かない。一度開いたあとは閉じても外さない（`useQuestionRecord`）。
+    <details className={styles["question-previews"]} onToggle={question.onTogglePreviews}>
+      <Text element="summary" size="secondary" tone="ink-quiet" weight="inherit" className="">
+        {PREVIEWS_SUMMARY}
+      </Text>
+      {question.previewsOpened &&
+        question.previews.map((preview) => (
+          <PreviewBlock
+            toolUseId={props.toolUseId}
+            preview={preview}
+            multiSelect={question.multiSelect}
+            key={preview.label}
+          />
+        ))}
+    </details>
   )
 }
 
 function BriefDetails(props: {
   readonly toolUseId: string
   readonly brief: QuestionRecordBriefModel
+  readonly summary: string
 }): ReactElement {
   const { brief } = props
 
   return (
     <details className={styles["question-previews"]} onToggle={brief.onToggle}>
       <Text element="summary" size="secondary" tone="ink-quiet" weight="inherit" className="">
-        {BRIEF_SUMMARY}
+        {props.summary}
       </Text>
       {brief.opened && (
         <>

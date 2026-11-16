@@ -48,7 +48,7 @@ describe("QuestionRecord（選んだ印の色）", () => {
       ...NO_BRIEF,
     }
 
-    const { container } = render(<QuestionRecord entry={entry} />)
+    const { container } = render(<QuestionRecord entry={entry} form="card" />)
 
     const marks = [...container.querySelectorAll(".question-option > span")]
     const chosenMark = marks.find((mark) => mark.textContent === "●")
@@ -69,7 +69,7 @@ describe("QuestionRecord（任せた問）", () => {
       ...NO_BRIEF,
     }
 
-    const { container } = render(<QuestionRecord entry={entry} />)
+    const { container } = render(<QuestionRecord entry={entry} form="card" />)
 
     const rows = [...container.querySelectorAll(".question-option")].map((row) => row.textContent)
     expect(rows.at(-1)).toContain("任せた")
@@ -97,7 +97,7 @@ describe("QuestionRecord（単一選択と複数選択で印が変わる）", ()
       ...NO_BRIEF,
     }
 
-    const { container } = render(<QuestionRecord entry={entry} />)
+    const { container } = render(<QuestionRecord entry={entry} form="card" />)
     const details = container.querySelector("details")
     if (details === null) {
       throw new Error("折りたたみが無い")
@@ -137,7 +137,7 @@ describe("QuestionRecord（答えの突き合わせ）", () => {
       ...NO_BRIEF,
     }
 
-    const { container } = render(<QuestionRecord entry={entry} />)
+    const { container } = render(<QuestionRecord entry={entry} form="card" />)
 
     const chosen = [...container.querySelectorAll(".question-option.is-chosen")].map(
       (option) => option.textContent,
@@ -155,7 +155,7 @@ describe("QuestionRecord（答えの突き合わせ）", () => {
       ...NO_BRIEF,
     }
 
-    const { container } = render(<QuestionRecord entry={entry} />)
+    const { container } = render(<QuestionRecord entry={entry} form="card" />)
 
     expect(optionTexts(container)).toEqual([
       "○ 案A",
@@ -183,7 +183,7 @@ describe("QuestionRecord（答えの突き合わせ）", () => {
       ...NO_BRIEF,
     }
 
-    const { container } = render(<QuestionRecord entry={entry} />)
+    const { container } = render(<QuestionRecord entry={entry} form="card" />)
 
     expect(optionTexts(container)).toEqual(["○ 案A", "● 案B", "○ 案C"])
     expect(container.querySelector(".question-option.is-chosen")?.textContent).toBe("● 案B")
@@ -207,7 +207,7 @@ describe("QuestionRecord（答えの突き合わせ）", () => {
       ...NO_BRIEF,
     }
 
-    const { container } = render(<QuestionRecord entry={entry} />)
+    const { container } = render(<QuestionRecord entry={entry} form="card" />)
 
     const records = [...container.querySelectorAll(".question-record")]
     expect(
@@ -255,20 +255,20 @@ describe("QuestionRecord（残す preview）", () => {
       ...NO_BRIEF,
     }
 
-    const { container } = render(<QuestionRecord entry={entry} />)
+    const { container } = render(<QuestionRecord entry={entry} form="card" />)
 
     expect(container.querySelector("details")).toBeNull()
   })
 
   it("preview は折りたたまれていて、開くまで描かない", () => {
-    const { container } = render(<QuestionRecord entry={entryWithPreview()} />)
+    const { container } = render(<QuestionRecord entry={entryWithPreview()} form="card" />)
 
     expect(container.querySelector("details")?.open).toBe(false)
     expect(screen.queryByText("案Aの下書き")).toBeNull()
   })
 
   it("開くと、選択肢ごとの preview が Markdown として出て、札に選ばれた答えの印が付く", () => {
-    const { container } = render(<QuestionRecord entry={entryWithPreview()} />)
+    const { container } = render(<QuestionRecord entry={entryWithPreview()} form="card" />)
 
     openDetails(container)
 
@@ -298,7 +298,7 @@ describe("QuestionRecord（残す preview）", () => {
         },
       ],
     }
-    const { container } = render(<QuestionRecord entry={entry} />)
+    const { container } = render(<QuestionRecord entry={entry} form="card" />)
 
     openDetails(container)
 
@@ -325,7 +325,7 @@ describe("QuestionRecord（残す preview）", () => {
         },
       ],
     }
-    const { container } = render(<QuestionRecord entry={entry} />)
+    const { container } = render(<QuestionRecord entry={entry} form="card" />)
 
     openDetails(container)
 
@@ -333,5 +333,65 @@ describe("QuestionRecord（残す preview）", () => {
     expect(codes).toContain("![架空のスパン](架空/a.png)")
     expect(codes.some((text) => text?.includes("![架空のフェンス](架空/b.png)"))).toBe(true)
     expect(container.querySelector("img")).toBeNull()
+  })
+})
+
+describe("QuestionRecord（広い画面の聞いた1行）", () => {
+  it("印・題・問いを1行で出し、選択肢の印と一覧は出さない", () => {
+    const entry: MainViewQuestion = {
+      kind: "question",
+      toolUseId: "toolu_fictional",
+      questions: [question("確認", "どちらにする？")],
+      answers: [{ kind: "chosen", labels: ["案B"] }],
+      ...NO_BRIEF,
+    }
+
+    const { container } = render(<QuestionRecord entry={entry} form="asked" />)
+
+    expect(container.textContent).toContain("? 確認: どちらにする？")
+    expect(container.textContent).not.toMatch(/[●○]/u)
+    expect(container.textContent).not.toContain("案A")
+  })
+
+  it("2問は問ごとに1行を並べる", () => {
+    const entry: MainViewQuestion = {
+      kind: "question",
+      toolUseId: "toolu_fictional",
+      questions: [question("方針", "どちらにする？"), question("名前", "何と呼ぶ？")],
+      answers: [
+        { kind: "chosen", labels: ["案A"] },
+        { kind: "chosen", labels: ["案B"] },
+      ],
+      ...NO_BRIEF,
+    }
+
+    const { container } = render(<QuestionRecord entry={entry} form="asked" />)
+
+    expect(container.textContent).toContain("? 方針: どちらにする？")
+    expect(container.textContent).toContain("? 名前: 何と呼ぶ？")
+  })
+
+  it("詳細の畳みは「聞いたときの詳細」の字で出す", () => {
+    const entry: MainViewQuestion = {
+      kind: "question",
+      toolUseId: "toolu_fictional",
+      questions: [question("確認", "どちらにする？")],
+      answers: [{ kind: "chosen", labels: ["案B"] }],
+      briefs: [
+        {
+          header: "確認",
+          whyAsk: "架空の聞く理由の文。",
+          facts: [],
+          recommended: { reason: "架空の根拠の文。", certainty: "low" },
+          options: [],
+        },
+      ],
+      imageSizes: [],
+      unshelvedImages: [],
+    }
+
+    const { container } = render(<QuestionRecord entry={entry} form="asked" />)
+
+    expect(container.querySelector("summary")?.textContent).toBe("聞いたときの詳細")
   })
 })
