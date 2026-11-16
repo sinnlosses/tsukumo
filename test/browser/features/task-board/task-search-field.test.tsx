@@ -3,9 +3,10 @@ import { afterEach, beforeAll, describe, expect, it } from "vitest"
 
 import { loadTaskBody } from "../../../../src/browser/features/task-board/deferred-task-body.tsx"
 import { useComposerFocus } from "../../../../src/browser/stores/composer-focus.ts"
+import { useTaskSheet } from "../../../../src/browser/stores/task-sheet.ts"
 import type { TaskSummaryItem } from "../../../../src/shared/repository/task-summary.ts"
 import { knownTaskSummary, taskStatusOfWord } from "../../../fixture/session-state.ts"
-import { TaskList } from "./task-list-harness.tsx"
+import { sheetTitle, TaskList } from "./task-list-harness.tsx"
 
 // フィクスチャはすべて手で書いた架空のタスク。
 
@@ -16,6 +17,7 @@ beforeAll(async () => {
 afterEach(() => {
   cleanup()
   useComposerFocus.setState(useComposerFocus.getInitialState(), true)
+  useTaskSheet.setState(useTaskSheet.getInitialState(), true)
 })
 
 function taskOf(id: string, status: string, summary: string): TaskSummaryItem {
@@ -51,10 +53,6 @@ function type(input: HTMLInputElement, value: string): void {
   fireEvent.change(input, { target: { value } })
 }
 
-function peek(): Element | null {
-  return document.querySelector('dialog[aria-label$=" の詳細"]')
-}
-
 describe("探す欄", () => {
   it("語で段が絞られ、済みの段が開き、当たった語が強調される", () => {
     const input = renderList()
@@ -86,13 +84,25 @@ describe("探す欄", () => {
     expect(input.getAttribute("aria-activedescendant")).toBe("task-row-X-001")
   })
 
-  it("Enter で選んでいる行のプレビューが開く", () => {
+  it("Enter で選んでいる行のサイドシートが開く", () => {
     const input = renderList()
     type(input, "青")
     fireEvent.keyDown(input, { key: "ArrowDown" })
     fireEvent.keyDown(input, { key: "Enter" })
 
-    expect(peek()?.getAttribute("aria-label")).toBe("X-002 の詳細")
+    expect(sheetTitle()).toBe("青い鍵を返す")
+  })
+
+  it("サイドシートが開いているあいだの ↑↓ は当たりの行の中で動き、サイドシートの中身も追う", () => {
+    const input = renderList()
+    type(input, "青")
+    fireEvent.keyDown(input, { key: "Enter" })
+    expect(sheetTitle()).toBe("青い箱を作る")
+
+    fireEvent.keyDown(input, { key: "ArrowDown" })
+    expect(sheetTitle()).toBe("青い鍵を返す")
+    fireEvent.keyDown(input, { key: "ArrowDown" })
+    expect(sheetTitle()).toBe("青い窓を拭く")
   })
 
   it("変換中の Enter では開かない", () => {
@@ -100,7 +110,7 @@ describe("探す欄", () => {
     type(input, "青")
     fireEvent.keyDown(input, { key: "Enter", isComposing: true })
 
-    expect(peek()).toBeNull()
+    expect(sheetTitle()).toBeUndefined()
   })
 
   it("語があるときの Esc は語を消し、フォーカスは入力欄へ送らない", () => {

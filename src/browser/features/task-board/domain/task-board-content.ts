@@ -41,13 +41,17 @@ export type BoardSelected =
   | { readonly kind: "none" }
   | { readonly kind: "some"; readonly entry: BoardEntry }
 
-type BoardContentInput = {
-  readonly query: string
-  readonly filter: TaskBoardFilter
+/** 選んだタスクの詳細と操作の口を組むのに要る呼び先。一覧モードとサイドシートが同じ形で渡す。 */
+type SelectionInput = {
   readonly run: (taskId: string, request: SingleTaskRequest) => void
   readonly onJump: (id: string) => void
   readonly onCopy: (id: string) => void
   readonly breadcrumb: TaskBoardBreadcrumb
+}
+
+type BoardContentInput = SelectionInput & {
+  readonly query: string
+  readonly filter: TaskBoardFilter
   readonly sort: DraftSortState
   readonly onSortChoose: (id: string, choice: DraftSortChoice) => void
   readonly onSortReason: (id: string, reason: string) => void
@@ -156,6 +160,39 @@ export function boardContent(
   }
 }
 
+/** 選んだタスクの詳細・つながり・開く口・頼む口。`entries` はつながりの札を引く一覧の全件。 */
+export function selectionOf(
+  entry: BoardEntry,
+  entries: readonly BoardEntry[],
+  byId: ReadonlyMap<string, BoardEntry>,
+  input: SelectionInput,
+): Extract<TaskBoardSelection, { readonly kind: "some" }> {
+  const task = entry.task
+  return {
+    kind: "some",
+    detail: {
+      id: task.id,
+      status: statusTextOf(task.status),
+      title: codeSpanParts(task.summary),
+      state: entry.state,
+      labels: task.labels,
+      difficulty: task.difficulty,
+      loopable: task.loopable,
+      location: task.location,
+      dependencies: task.dependencies.map((id) => dependencyCardOf(id, byId)),
+      dependents: dependentsOf(task.id, entries),
+      body: task.body,
+    },
+    breadcrumb: input.breadcrumb,
+    onCopy: () => {
+      input.onCopy(task.id)
+    },
+    onJump: input.onJump,
+    opener: openerOf(task.location),
+    run: runOf(entry, input),
+  }
+}
+
 function rowSortOf(entry: BoardEntry, input: BoardContentInput): TaskBoardRowSort {
   if (input.filter !== "draft" || entry.state.kind !== "draft") {
     return { kind: "none" }
@@ -195,39 +232,7 @@ function sortBandOf(entries: readonly BoardEntry[], input: BoardContentInput): T
   }
 }
 
-function selectionOf(
-  entry: BoardEntry,
-  entries: readonly BoardEntry[],
-  byId: ReadonlyMap<string, BoardEntry>,
-  input: BoardContentInput,
-): TaskBoardSelection {
-  const task = entry.task
-  return {
-    kind: "some",
-    detail: {
-      id: task.id,
-      status: statusTextOf(task.status),
-      title: codeSpanParts(task.summary),
-      state: entry.state,
-      labels: task.labels,
-      difficulty: task.difficulty,
-      loopable: task.loopable,
-      location: task.location,
-      dependencies: task.dependencies.map((id) => dependencyCardOf(id, byId)),
-      dependents: dependentsOf(task.id, entries),
-      body: task.body,
-    },
-    breadcrumb: input.breadcrumb,
-    onCopy: () => {
-      input.onCopy(task.id)
-    },
-    onJump: input.onJump,
-    opener: openerOf(task.location),
-    run: runOf(entry, input),
-  }
-}
-
-function runOf(entry: BoardEntry, input: BoardContentInput): TaskBoardRun {
+function runOf(entry: BoardEntry, input: SelectionInput): TaskBoardRun {
   const kind = entry.state.kind
   const taskId = entry.task.id
   if (kind === "draft") {

@@ -56,7 +56,7 @@ export const FROZEN_HUB_REFERENCE_COUNTS = {
   "docs/architecture/display/sidebar.md": 4,
   "docs/architecture/display/speak-tool.md": 3,
   "docs/architecture/display/speech-convention.md": 2,
-  "docs/architecture/display/task-modal.md": 3,
+  "docs/architecture/display/task-modal.md": 2,
   "docs/architecture/display/work-plan-closing.md": 2,
   "docs/architecture/display/work-plan-timing.md": 3,
   "docs/architecture/display/work-plan.md": 8,

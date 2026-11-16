@@ -37,7 +37,7 @@ CSS は分けず1本。サーバは起動時にすべてメモリに読み、`/a
 import するので、食い違うと入口を別のモジュールとして読み React が2つ動く）。
 
 - 使い手は Markdown の部品の入口 `markdown.tsx`（`<Report>`・お伺いと質問の記録の preview）と `deferred-task-body.tsx`
-  （タスクのモーダルの詳細・サイドバーのプレビュー）を使い、描画一式の `renderer/markdown-renderer.tsx`・`task-body.tsx` を直接
+  （タスクのモーダルの詳細・サイドシート）を使い、描画一式の `renderer/markdown-renderer.tsx`・`task-body.tsx` を直接
   import しない（すると一式が入口に戻る）。読み込みの状態の持ち方は2つとも `stores/deferred-module.ts` の `deferredModule`。
   外から引く入口の `markdown.tsx` が遅延読み込みの側で、描画一式は中の `renderer/` に入るので、描画一式を外から直に
   import すると部品の境界の検査（`test/architecture/browser-box.test.ts` の `componentBoundaryViolations`）が落とし、入口から

@@ -15,7 +15,10 @@ import { Dispatch } from "./components/dispatch/dispatch.tsx"
 import { LiveAnnouncer } from "./components/live-announcer/live-announcer.tsx"
 import { MainView, ReportOutline } from "./components/main-view/main-view.tsx"
 import { PendingAskCard } from "./components/pending-ask-card/pending-ask-card.tsx"
-import { RequestedTaskBoard } from "./components/requested-task-board/requested-task-board.tsx"
+import {
+  RequestedTaskBoard,
+  RequestedTaskSheet,
+} from "./components/requested-task-board/requested-task-board.tsx"
 
 type PresentationalConversationProps = {
   readonly chatMode: boolean
@@ -30,6 +33,7 @@ export function PresentationalConversation(props: PresentationalConversationProp
       outline={!props.chatMode && <ReportOutline />}
       dispatch={<Dispatch />}
       inquiry={!props.chatMode && <PendingAskCard />}
+      sheet={<RequestedTaskSheet listModeAvailable={!props.chatMode} />}
       rail={{ badge: !props.chatMode && <TaskDoingCount /> }}
       narrowGround={props.chatMode}
     />

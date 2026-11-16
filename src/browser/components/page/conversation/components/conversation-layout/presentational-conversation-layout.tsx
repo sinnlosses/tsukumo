@@ -29,6 +29,8 @@ type PresentationalConversationLayoutProps = UseConversationLayoutResult & {
   readonly outline: ReactNode
   /** 狭い画面で顔と吹き出しと入力欄のあいだに固定する、答え待ちのカード。 */
   readonly inquiry: ReactNode
+  /** 中央の列のメインビューの区画の右に重ねる、サイドシート。狭い画面では出さない。 */
+  readonly sheet: ReactNode
   readonly rail: {
     /** 中くらいのビューポート幅の柱の、開くボタンの中に置くもの。 */
     readonly badge: ReactNode
@@ -61,6 +63,7 @@ export function PresentationalConversationLayout({
   outline,
   dispatch,
   inquiry,
+  sheet,
   rail: { badge: railBadge },
   narrowGround,
 }: PresentationalConversationLayoutProps): ReactElement {
@@ -116,6 +119,7 @@ export function PresentationalConversationLayout({
         >
           {main}
         </main>
+        <div className={styles["layout-sheet"]}>{sheet}</div>
         <div className={styles["layout-inquiry"]}>{inquiry}</div>
         <section
           className={clsx(styles["layout-region"], styles["layout-dispatch"])}

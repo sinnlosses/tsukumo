@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it } from "vitest"
 
 import { saveLaunchSkill } from "../../../../src/browser/domain/launch-skill.ts"
 import { TaskBoard } from "../../../../src/browser/features/task-board/task-board.tsx"
+import { useTaskSheet } from "../../../../src/browser/stores/task-sheet.ts"
 import type {
   TaskSummaryItem,
   TaskSummaryResult,
@@ -23,6 +24,7 @@ import { TaskList } from "./task-list-harness.tsx"
 afterEach(() => {
   cleanup()
   saveLaunchSkill("")
+  useTaskSheet.setState(useTaskSheet.getInitialState(), true)
 })
 
 function known(items: readonly TaskSummaryItem[]): TaskSummaryResult {
@@ -113,7 +115,7 @@ describe("タスクの実行を頼む", () => {
     const sent: unknown[] = []
     renderList(collectInto(sent), RUNNING_TURN)
 
-    startFromPeek("X-002")
+    startFromSheet("X-002")
 
     expect(screen.queryByRole("button", { name: "頼む" })).toBeNull()
     expect(confirmDialog()?.textContent).toContain("いまターンが動いているので送れない")
@@ -132,17 +134,17 @@ describe("タスクの実行を頼む", () => {
       },
     ],
   ])(
-    "区画の一覧の確認を %s で閉じると、何も送らず確認だけ閉じて、プレビューは残る",
+    "サイドシートの確認を %s で閉じると、何も送らず確認だけ閉じて、サイドシートは残る",
     (_, dismiss) => {
       const sent: unknown[] = []
       renderList(collectInto(sent), {})
 
-      startFromPeek("X-002")
+      startFromSheet("X-002")
       dismiss()
 
       expect(sent).toEqual([])
       expect(confirmDialog()).toBeNull()
-      expect(document.querySelector('dialog[aria-label="X-002 の詳細"]')).not.toBeNull()
+      expect(screen.getByRole("complementary", { name: "架空の未着手タスク" })).toBeDefined()
     },
   )
 
@@ -177,7 +179,7 @@ describe("タスクの実行を頼む", () => {
     expect(document.querySelector("dialog.task-board")?.hasAttribute("open")).toBe(true)
   })
 
-  it("区画の一覧で頼む口が出るのは、着手できる todo と待ちの無い保留", () => {
+  it("サイドシートの頼む口を押せるのは着手できる todo と待ちの無い保留で、ほかは押せない口と理由を出す", () => {
     const task = (
       id: string,
       status: string,
@@ -209,21 +211,28 @@ describe("タスクの実行を頼む", () => {
       />,
     )
 
-    const startable = ["Y-001", "Y-002", "Y-003", "Y-004", "Y-005"].filter((id) => {
+    const runs = ["Y-001", "Y-002", "Y-003", "Y-004", "Y-005"].map((id) => {
       fireEvent.click(rowOf(id))
-      return screen.queryByRole("button", { name: "架空の精霊 に頼む" }) !== null
+      const run = screen.getByRole("button", { name: "架空の精霊 に頼む" })
+      return run.getAttribute("aria-disabled") === "true" ? run.getAttribute("title") : "押せる"
     })
-    expect(startable).toEqual(["Y-003", "Y-004"])
+    expect(runs).toEqual([
+      "着手済みです",
+      "待ちが終わると頼めます",
+      "押せる",
+      "押せる",
+      "待ちが終わると頼めます",
+    ])
   })
 
-  it("区画の一覧から保留を頼むと、判断を聞く旨を添えて送る", () => {
+  it("サイドシートから保留を頼むと、判断を聞く旨を添えて送る", () => {
     const sent: unknown[] = []
     renderWithStore(
       <TaskList tasks={known([...TASKS, holdTask("X-003", [], [])])} />,
       collectInto(sent),
     )
 
-    startFromPeek("X-003")
+    startFromSheet("X-003")
     fireEvent.click(screen.getByRole("button", { name: "頼む" }))
 
     expect(sent).toEqual([
@@ -235,7 +244,7 @@ describe("タスクの実行を頼む", () => {
     ])
   })
 
-  it("ドラフトのプレビューには「計画する」「却下する」が出て、頼む口は出ない", () => {
+  it("ドラフトのサイドシートには「計画する」「却下する」が出て、頼む口は出ない", () => {
     putSession({ ...INITIAL_SESSION_STATE, character: characterInfo() }, () => {})
     render(<TaskList tasks={known([...TASKS, draftTask("X-004")])} />)
 
@@ -249,7 +258,7 @@ describe("タスクの実行を頼む", () => {
     expect(screen.queryByRole("button", { name: "計画する" })).toBeNull()
   })
 
-  it("ドラフトの「計画する」は確認の「頼む」で計画の文面を送り、プレビューを閉じる", () => {
+  it("ドラフトの「計画する」は確認の「頼む」で計画の文面を送り、サイドシートを閉じる", () => {
     const sent: unknown[] = []
     renderWithStore(<TaskList tasks={known([...TASKS, draftTask("X-004")])} />, collectInto(sent))
 
@@ -265,10 +274,10 @@ describe("タスクの実行を頼む", () => {
         images: [],
       },
     ])
-    expect(screen.queryByRole("dialog", { name: "X-004 の詳細" })).toBeNull()
+    expect(screen.queryByRole("complementary")).toBeNull()
   })
 
-  it("ドラフトの「却下する」は却下の文面を送り、キャンセルでは送らずプレビューが残る", () => {
+  it("ドラフトの「却下する」は却下の文面を送り、キャンセルでは送らずサイドシートが残る", () => {
     const sent: unknown[] = []
     renderWithStore(<TaskList tasks={known([...TASKS, draftTask("X-004")])} />, collectInto(sent))
 
@@ -449,8 +458,8 @@ function rowOf(taskId: string): HTMLElement {
   return element
 }
 
-/** 区画の一覧で `taskId` の行を押してプレビューを開き、頼む口を押す。 */
-function startFromPeek(taskId: string): void {
+/** 区画の一覧で `taskId` の行を押してサイドシートを開き、頼む口を押す。 */
+function startFromSheet(taskId: string): void {
   fireEvent.click(rowOf(taskId))
   fireEvent.click(screen.getByRole("button", { name: "架空の精霊 に頼む" }))
 }

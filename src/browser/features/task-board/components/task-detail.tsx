@@ -24,6 +24,8 @@ import { TaskState } from "./task-state.tsx"
 
 export function TaskDetail(props: {
   readonly detail: TaskBoardDetail
+  /** 題の見出しの DOM の id。置き場の器が `aria-labelledby` で指す。 */
+  readonly titleId: string
   readonly breadcrumb: TaskBoardBreadcrumb
   readonly knownIds: ReadonlySet<string>
   readonly onJump: (id: string) => void
@@ -50,7 +52,7 @@ export function TaskDetail(props: {
           <CopyIcon />
         </Button>
       </div>
-      <h3 className={styles["task-detail-title"]}>
+      <h3 id={props.titleId} className={styles["task-detail-title"]}>
         <TaskSummaryText parts={detail.title} />
       </h3>
       <dl className={styles["task-detail-info"]}>
@@ -133,12 +135,7 @@ export function TaskDetail(props: {
         />
       )}
       <article aria-label="本文">
-        <TaskBody
-          text={detail.body}
-          typesetting="detail"
-          knownIds={props.knownIds}
-          onJump={props.onJump}
-        />
+        <TaskBody text={detail.body} knownIds={props.knownIds} onJump={props.onJump} />
       </article>
     </section>
   )

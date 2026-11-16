@@ -39,6 +39,38 @@
 .layout-inquiry {
   display: none;
 }
+/* サイドシートの置き場。メインビューと同じ区画（1行目）の右に重ね、上は進行の帯（メインビューの中の `position: sticky` の頭）の下端に合わせる。
+   行は入力欄の上で終わるので、入力欄は覆わない。
+   帯はメインビューの領域の上端に貼り付く（`turn-card-head.css`）ので、帯の下端は「帯の高さ（広い幅で最小 40px）＋隙間」の定数で持ち、矩形を測って渡す処理は持たない。
+   重なりは進行の帯（`z-index: 1`）より上、柱から開いたサイドバー（`z-index: 3`）より下。
+   帯の分は置き場の内側の余白で空け、余白の上はメインビューへ押せるよう素通しにする（押せるのはサイドシートそのものだけ）。 */
+.layout-sheet {
+  --layout-sheet-strip-height: 40px;
+  position: relative;
+  z-index: 2;
+  display: flex;
+  justify-self: end;
+  box-sizing: border-box;
+  width: min(480px, 100%);
+  min-height: 0;
+  padding-block-start: calc(var(--layout-sheet-strip-height) + var(--stack-block));
+  pointer-events: none;
+}
+.layout-sheet > * {
+  pointer-events: auto;
+}
+.layout-sheet:empty {
+  display: none;
+}
+/* 置き場をメインビューの区画に重ねるため、両方の位置を書く（書かないと自動の配置がメインビューを次の行へ押し出す）。
+   狭い画面では中央の列の箱を外して1列に積み直すので、広い幅だけで書く。 */
+@media (min-width: 761px) {
+  .layout-main,
+  .layout-sheet {
+    grid-row: 1;
+    grid-column: 1;
+  }
+}
 /* 領域そのものは横に転がらない（横にスクロールできると使い勝手が悪い）。
    `overflow-y: auto` だけを書くと、CSS では片方の軸が visible でなくなったときにもう片方の visible も auto に計算されるので、書いていない overflow-x が auto になって領域すべてが横に転がっていた。
    横に長いものは、中身の側が自前のスクロール容器を持つ（レポートの表は .table-scroll、コードは pre-wrap、svg は max-width: 100%、長い語は overflow-wrap: anywhere で折り返す）。 */
@@ -221,6 +253,12 @@
   .layout-grid[data-sidebar-open="true"] .layout-rail {
     border-color: var(--accent);
   }
+  /* 重ねたサイドバー（幅 20rem。右端は中央の列の右端と同じ）の左へずらす。 */
+  .layout-grid[data-sidebar-open="true"] .layout-sheet {
+    --layout-sheet-sidebar-room: calc(20rem + var(--inline-control));
+    width: min(480px + var(--layout-sheet-sidebar-room), 100%);
+    padding-inline-end: var(--layout-sheet-sidebar-room);
+  }
 }
 
 /* 狭い画面（760px 以下）。上から本文・顔と吹き出し・入力欄の縦の1列にし、転がるのは本文だけにする。
@@ -250,7 +288,8 @@
   }
   .layout-outline,
   .layout-divider,
-  .layout-side {
+  .layout-side,
+  .layout-sheet {
     display: none;
   }
   .layout-region.layout-main {

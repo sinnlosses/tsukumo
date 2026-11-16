@@ -1,14 +1,14 @@
-// 区画の一覧1件分。行全体が1つのボタンで、押すとプレビューが開く。
+// 区画の一覧1件分。行全体が1つのボタンで、押すとサイドシートが開く。
 // 1段目は状態の印と題（2行まで）、2段目は待ちの相手・ID・∞・難しさの語。
 // ∞ はループ可の `todo` と `hold` の行に限り、難しさは決まっているときだけ出す。
-// 開いているときは、プレビューをボタンの後ろ（同じ `<li>` の中）に置く。
 
 import clsx from "clsx"
-import type { ReactElement, ReactNode } from "react"
+import type { ReactElement } from "react"
 
 import { hasTaskStatus, type TaskSummaryItem } from "../../../../shared/repository/task-summary.ts"
 import { codeSpanParts } from "../../../domain/code-span.ts"
 import { taskStateOf } from "../domain/task-board-content.ts"
+import { TASK_SHEET_DOM_ID } from "../domain/task-row-dom-id.ts"
 import { isSearching, titleMatchParts } from "../domain/task-search.ts"
 import taskBoardStyles from "../task-board.module.css"
 import { TaskSummaryText } from "../task-summary-text.tsx"
@@ -24,10 +24,11 @@ export function TaskItem(props: {
   readonly query: string
   /** 探す欄の ↑↓ で選んでいる行。 */
   readonly active: boolean
-  readonly peek: TaskItemPeek
+  /** サイドシートで開いている行。 */
+  readonly open: boolean
   readonly onToggle: () => void
 }): ReactElement {
-  const open = props.peek.kind === "open"
+  const { open } = props
   const state = taskStateOf(props.task)
   const waitingText = state.kind === "blocked" || state.kind === "hold" ? state.text : undefined
   return (
@@ -35,9 +36,8 @@ export function TaskItem(props: {
       <button
         type="button"
         id={props.rowId}
-        aria-haspopup="dialog"
         aria-expanded={open}
-        aria-controls={props.peek.kind === "open" ? props.peek.controls : undefined}
+        aria-controls={open ? TASK_SHEET_DOM_ID : undefined}
         aria-selected={props.active ? true : undefined}
         ref={props.active ? scrollIntoNearest : undefined}
         className={clsx(
@@ -72,7 +72,6 @@ export function TaskItem(props: {
           </span>
         </span>
       </button>
-      {props.peek.kind === "open" && props.peek.element}
     </li>
   )
 }
@@ -98,8 +97,3 @@ function TaskRowLoop(props: { readonly task: TaskSummaryItem }): ReactElement {
     </span>
   )
 }
-
-/** 行のプレビュー。開いているときは、プレビューの DOM の id（`aria-controls`）とプレビューそのもの。 */
-export type TaskItemPeek =
-  | { readonly kind: "closed" }
-  | { readonly kind: "open"; readonly controls: string; readonly element: ReactNode }

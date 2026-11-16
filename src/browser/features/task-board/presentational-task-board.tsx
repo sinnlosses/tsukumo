@@ -112,6 +112,7 @@ export function PresentationalTaskBoard(props: TaskBoardView): ReactElement {
                     <TaskDetail
                       key={content.selection.detail.id}
                       detail={content.selection.detail}
+                      titleId="task-board-detail-title"
                       breadcrumb={content.selection.breadcrumb}
                       knownIds={content.knownIds}
                       onJump={content.selection.onJump}

@@ -1,0 +1,46 @@
+/* サイドシート。値は見本 `docs/history/mockup/sidebar-task-board-2026-11-16/side.css` の `body[data-refine="2"] .sh`（幅 480px・角 16px・頭の帯・詳細の余白 8px 20px 20px）を `theme.css` のトークンに写したもの。
+   幅と高さは置き場（`conversation-layout.module.css` の `.layout-sheet`）が決め、ここは置き場いっぱいに広がる。 */
+.task-sheet {
+  composes: surface-edge-rule surface-radius-xl surface-tone-surface from "../../../components/ui/surface/surface-face.module.css";
+  box-sizing: border-box;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  box-shadow: var(--shadow-overlay);
+  color: var(--ink);
+}
+.task-sheet:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.task-sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--stack-block) var(--inline-control) 0;
+}
+.task-sheet-step {
+  display: inline-flex;
+  gap: var(--inline-tight);
+}
+/* 箱だけ。顔は `<Button variant="ghost">` が持つ。 */
+.task-sheet-tool {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border-radius: var(--radius-md);
+}
+.task-sheet-body {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+/* 詳細（`TaskDetail` の `<section>`）の余白は、一覧モードの右の欄（幅が広い）より詰める。 */
+.task-sheet-body > section {
+  padding: var(--stack-block) var(--space-xl) var(--space-xl);
+}
