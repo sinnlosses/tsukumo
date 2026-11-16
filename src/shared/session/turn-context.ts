@@ -23,12 +23,14 @@ export type TurnContext = {
   readonly plan: WorkPlanRecord | "none"
   readonly trail: WorkPlanTrail
   readonly bashByCommand: ReadonlyMap<string, ToolRecord>
+  readonly bashCountByCommand: ReadonlyMap<string, number>
 }
 
 export const EMPTY_TURN_CONTEXT = {
   plan: "none",
   trail: EMPTY_WORK_PLAN_TRAIL,
   bashByCommand: new Map<string, ToolRecord>(),
+  bashCountByCommand: new Map<string, number>(),
 } as const satisfies TurnContext
 
 /** `record` を1件なぞったあとの文脈。`request` で `trail` のほかは空に戻る（`trail` は {@link advanceWorkPlanTrail}）。 */
@@ -41,9 +43,14 @@ export function advanceTurnContext(context: TurnContext, record: SessionRecord):
     return { ...context, plan: record, trail }
   }
   if (isToolRecord(record) && record.name === "Bash") {
+    const command = bashCommandOf(record.input)
     return {
       ...context,
-      bashByCommand: new Map([...context.bashByCommand, [bashCommandOf(record.input), record]]),
+      bashByCommand: new Map([...context.bashByCommand, [command, record]]),
+      bashCountByCommand: new Map([
+        ...context.bashCountByCommand,
+        [command, (context.bashCountByCommand.get(command) ?? 0) + 1],
+      ]),
     }
   }
   return trail === context.trail ? context : { ...context, trail }
@@ -57,6 +64,11 @@ export function latestWorkPlanOf(context: TurnContext): LatestWorkPlan {
 /** `command` をそのまま打った最後の Bash の記録。無ければ `none`。 */
 export function lastBashOf(context: TurnContext, command: string): ToolRecord | "none" {
   return context.bashByCommand.get(command) ?? "none"
+}
+
+/** 同じやり取りで `command` をそのまま打った Bash の回数。打っていなければ 0。 */
+export function bashCommandRuns(context: TurnContext, command: string): number {
+  return context.bashCountByCommand.get(command) ?? 0
 }
 
 /** `command` をそのまま打った最後の Bash の所要時間。無ければ `unknown`。 */

@@ -1,4 +1,4 @@
-// 検証の行を節（主張）ごとの印にまとめ、冒頭の帯の目盛りと数を導く。印の導き方はここだけが持つ。
+// 検証の行を節（主張）ごとの印にまとめる。印の導き方はここだけが持つ。
 
 import type {
   ReportCheckPassedRow,
@@ -6,12 +6,8 @@ import type {
   ReportCheckStatus,
   ReportChecksView,
 } from "../../../../shared/report/report-check-view.ts"
-import type { ReportNotDoneView } from "../../../../shared/report/report-not-done.ts"
 
-/** 節の印。落ちた・申告のみ・記録ありの順が帯の目盛りの並び。 */
-const REPORT_PROOF_MARKS = ["ng", "declared", "recorded"] as const
-
-export type ReportProofMark = (typeof REPORT_PROOF_MARKS)[number]
+export type ReportProofMark = "ng" | "declared" | "recorded"
 
 export type ReportProofRow = {
   readonly status: ReportCheckStatus
@@ -19,6 +15,7 @@ export type ReportProofRow = {
   readonly figure: string
   readonly time: string
   readonly recorded: boolean
+  readonly runCount: number
 }
 
 export type ReportSectionProof = {
@@ -28,15 +25,8 @@ export type ReportSectionProof = {
   readonly rows: readonly ReportProofRow[]
   /** `rows` のうち同じやり取りで打ったコマンドと照らせた行。控えに出す。 */
   readonly receipts: readonly ReportProofRow[]
-}
-
-export type ReportProofTick =
-  | { readonly kind: "section"; readonly sectionId: string; readonly mark: ReportProofMark }
-  | { readonly kind: "not-done"; readonly text: string }
-
-export type ReportProofCount = {
-  readonly kind: ReportProofMark | "not-done"
-  readonly count: number
+  /** `receipts` の打った回数の合計。 */
+  readonly runCount: number
 }
 
 export type ReportProofView =
@@ -44,23 +34,14 @@ export type ReportProofView =
   | {
       readonly kind: "band"
       readonly sections: readonly ReportSectionProof[]
-      readonly ticks: readonly ReportProofTick[]
-      /** 主張の数（結ばれた節の数）。 */
-      readonly claimCount: number
-      /** 種類ごとの数。0 の種類は持たない。 */
-      readonly counts: readonly ReportProofCount[]
       readonly unboundProblems: readonly ReportCheckProblemRow[]
       readonly unboundPassed: readonly ReportCheckPassedRow[]
     }
 
-/**
- * `sectionIds` は根の直下の節の id。これに当たる `supports` を持つ行が1つも無ければ `plain`。
- * `notDone` は目盛りにだけ使い、`plain` かどうかは決めない。
- */
+/** `sectionIds` は根の直下の節の id。これに当たる `supports` を持つ行が1つも無ければ `plain`。 */
 export function reportProofView(
   checks: ReportChecksView,
   sectionIds: readonly string[],
-  notDone: ReportNotDoneView,
 ): ReportProofView {
   if (checks.kind === "none") {
     return { kind: "plain" }
@@ -75,45 +56,26 @@ export function reportProofView(
     const linked = rows
       .filter(({ supports }) => supports.includes(sectionId))
       .map(({ row }) => toProofRow(row))
-    return linked.length === 0
-      ? []
-      : [
-          {
-            sectionId,
-            mark: markOf(linked),
-            rows: linked,
-            receipts: linked.filter((row) => row.recorded),
-          },
-        ]
+    if (linked.length === 0) {
+      return []
+    }
+    const receipts = linked.filter((row) => row.recorded)
+    return [
+      {
+        sectionId,
+        mark: markOf(linked),
+        rows: linked,
+        receipts,
+        runCount: receipts.reduce((sum, row) => sum + row.runCount, 0),
+      },
+    ]
   })
   if (sections.length === 0) {
     return { kind: "plain" }
   }
-  const ordered = REPORT_PROOF_MARKS.flatMap((mark) =>
-    sections.filter((section) => section.mark === mark),
-  )
-  const notDoneItems = notDone.kind === "listed" ? notDone.items : []
-  const ticks: readonly ReportProofTick[] = [
-    ...ordered.map((section) => ({
-      kind: "section" as const,
-      sectionId: section.sectionId,
-      mark: section.mark,
-    })),
-    ...notDoneItems.map((text) => ({ kind: "not-done" as const, text })),
-  ]
-  const counts = [
-    ...REPORT_PROOF_MARKS.map((mark) => ({
-      kind: mark,
-      count: sections.filter((section) => section.mark === mark).length,
-    })),
-    { kind: "not-done" as const, count: notDoneItems.length },
-  ].filter((entry) => entry.count > 0)
   return {
     kind: "band",
     sections,
-    ticks,
-    claimCount: sections.length,
-    counts,
     unboundProblems: checks.problems.filter((row) => !isBound(row.supports)),
     unboundPassed: checks.passed.filter((row) => !isBound(row.supports)),
   }
@@ -126,6 +88,7 @@ function toProofRow(row: ReportCheckProblemRow | ReportCheckPassedRow): ReportPr
     figure: row.figure,
     time: row.time,
     recorded: row.recorded,
+    runCount: row.runCount,
   }
 }
 

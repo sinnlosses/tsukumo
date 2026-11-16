@@ -306,19 +306,6 @@
     font-size: var(--font-secondary);
     color: var(--ink-quiet);
   }
-  & .report-checks-summary-lead {
-    font-weight: 700;
-    color: var(--ink);
-  }
-  & .report-checks-summary-figures {
-    min-width: 0;
-    overflow-wrap: anywhere;
-    font-family: var(--font-mono), var(--font-sans);
-    font-size: var(--font-secondary);
-    font-weight: 400;
-    font-variant-numeric: tabular-nums;
-    color: var(--ink-quiet);
-  }
   /* お願いの印。押す的を 24px 以上にし、末尾のお願いの部品へ転がす（`Anchor`）。 */
   & .report-checks-summary-favor {
     margin-left: auto;
@@ -368,12 +355,15 @@
     overflow-wrap: anywhere;
     color: var(--ink-quiet);
   }
-  /* 裏取りの印（記録あり・申告のみ）。結論より目立たせないよう、枠も地も持たず静かな字にする。 */
+  /* 裏取りの印（記録あり・n回・申告のみ）。線の印（枠だけ・中立）にし、色の塗りと状態の記号を付けない。 */
   & .report-check-source,
   & .report-checks-problem-source,
   & .report-checks-passed-recorded,
   & .report-work-record-check-source {
     flex-shrink: 0;
+    padding: 0 var(--inline-tight);
+    border: 1px solid var(--ink-quiet);
+    border-radius: var(--radius-sm);
     font-size: var(--font-label);
     white-space: nowrap;
     color: var(--ink-quiet);

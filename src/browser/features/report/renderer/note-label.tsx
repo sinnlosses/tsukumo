@@ -24,7 +24,7 @@ export function NoteLabel(props: {
   )
 }
 
-/** お願いを除く種別だけ、ラベルの字に種類の色と頭の記号を付ける。 */
+/** お願いを除く種別は、ラベルの字に種類の色と頭の記号を付ける。お願いは色を持たず、字だけ大きく太くする。 */
 function noteLabelColorClass(kindName: string): string | undefined {
   switch (kindName) {
     case "note":
@@ -37,6 +37,8 @@ function noteLabelColorClass(kindName: string): string | undefined {
       return styles["report-note-label-ask"]
     case "note-memo":
       return styles["report-note-label-memo"]
+    case "note-favor":
+      return styles["report-note-label-favor"]
     default:
       return undefined
   }

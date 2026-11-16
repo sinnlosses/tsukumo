@@ -49,6 +49,7 @@ const CHECKS: ReportChecksView = {
       time: "",
       viaCommand: false,
       recorded: false,
+      runCount: 0,
       supports: [],
       detail: "",
       howToVerify: "架空の手順",
@@ -112,9 +113,21 @@ describe("NextStepRow", () => {
     expect(useComposerDraft.getState().draft.text).toBe("違った: 架空の検証")
   })
 
-  it("口が渡されていない描画には出ない", () => {
-    renderRow(false)
+  it("行の末尾に、押しても送らない案内が出て、押すと下書きが入るだけ", () => {
+    renderRow(true)
+    const group = screen.getByRole("group", { name: "次の一手" })
+
+    expect(group.lastElementChild?.textContent).toBe("押すと、入力欄に下書きが入る（送らない）")
+
+    fireEvent.click(screen.getByRole("button", { name: "再開する" }))
+
+    expect(useComposerDraft.getState().draft.text).toBe("止めたところから再開して。")
+  })
+
+  it("口が渡されていない描画には、ボタンも案内も出ない", () => {
+    const { container } = renderRow(false)
 
     expect(screen.queryAllByRole("button")).toEqual([])
+    expect(container.textContent).not.toContain("送らない")
   })
 })

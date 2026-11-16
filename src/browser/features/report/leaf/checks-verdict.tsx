@@ -16,7 +16,7 @@ import { Badge } from "../../../components/ui/badge/badge.tsx"
 import type { ReportProofView } from "../domain/report-proof.ts"
 import { checksClassName } from "../markdown.tsx"
 import styles from "./leaf.module.css"
-import { ProofBand } from "./proof-band.tsx"
+import { checkSourceWord, ChecksTotalLine } from "./proof-band.tsx"
 
 type Checks = Extract<ReportChecksView, { readonly kind: "checks" }>
 
@@ -36,8 +36,7 @@ export function ChecksVerdict(props: {
     return (
       <div className={checksClassName("verdict")} role="group" aria-label="検証結果">
         <div className={checksClassName("checks")}>
-          <ProofBand band={proof} />
-          <FavorJump favor={summary.favor} />
+          <ChecksSummary summary={summary} />
           {proof.unboundProblems.length > 0 && (
             <div role="table" aria-label="検証結果の問題">
               {proof.unboundProblems.map((row, index) => (
@@ -65,11 +64,6 @@ export function ChecksVerdict(props: {
       </div>
     </div>
   )
-}
-
-/** 裏取りの印の語。色だけで分けない。 */
-export function checkSourceWord(recorded: boolean): string {
-  return recorded ? "記録あり" : "申告のみ"
 }
 
 /** お願いの印を本文の中に出すか。置く側が決め、`"none"` は入力欄の上の帯が知らせるとき。 */
@@ -104,30 +98,10 @@ export function FavorJump(props: { readonly favor: ReportFavorTarget }): ReactEl
 
 /** 総括行。お願いの印は押すと `location.hash` を書かずに飛び先の要素へ転がす（`location.hash` は見ているターンの経路）。 */
 function ChecksSummary(props: { readonly summary: Checks["summary"] }): ReactElement {
-  const { passedCount, figures, problems, favor } = props.summary
-  const figureText = figures.map(plainInline).join(" · ")
   return (
     <div className={checksClassName("checks-summary")}>
-      {passedCount === 0 && <span className={checksClassName("checks-summary-lead")}>検証</span>}
-      {passedCount > 0 && (
-        <Badge tone="ok" shape="square" className={styles["verdict-badge"]}>
-          {`✓ ${String(passedCount)}件 通った`}
-        </Badge>
-      )}
-      {problems.map(({ status, count }) => (
-        <Badge
-          key={status}
-          tone={PROBLEM_TONE[status]}
-          shape="square"
-          className={styles["verdict-badge"]}
-        >
-          {`${REPORT_CHECK_PROBLEM_MARKS[status]} ${String(count)}件 ${REPORT_CHECK_PROBLEM_WORDS[status]}`}
-        </Badge>
-      ))}
-      {passedCount > 0 && figureText !== "" && (
-        <span className={checksClassName("checks-summary-figures")}>{figureText}</span>
-      )}
-      <FavorJump favor={favor} />
+      <ChecksTotalLine summary={props.summary} />
+      <FavorJump favor={props.summary.favor} />
     </div>
   )
 }
@@ -149,7 +123,7 @@ function ProblemRow(props: { readonly row: ReportCheckProblemRow }): ReactElemen
           </span>
           <span className={checksClassName("checks-problem-time")}>{row.time}</span>
           <span className={checksClassName("checks-problem-source")}>
-            {checkSourceWord(row.recorded)}
+            {checkSourceWord(row.recorded, row.runCount)}
           </span>
         </div>
         {row.detail !== "" && (
@@ -169,7 +143,9 @@ function ProblemRow(props: { readonly row: ReportCheckProblemRow }): ReactElemen
 /** 通った項目を畳んだ `<details>`。`<summary>` は件数と label の頭、開くと figure・所要時間つきの一覧。 */
 function PassedFold(props: { readonly passed: readonly ReportCheckPassedRow[] }): ReactElement {
   const { passed } = props
-  const recordedCount = passed.filter((row) => row.recorded).length
+  const recordedRuns = passed
+    .filter((row) => row.recorded)
+    .reduce((sum, row) => sum + row.runCount, 0)
   return (
     <div className={checksClassName("checks-passed")}>
       <details>
@@ -181,11 +157,11 @@ function PassedFold(props: { readonly passed: readonly ReportCheckPassedRow[] })
           </span>
           <span className={checksClassName("checks-passed-labels")}>
             {passed.map((row) => plainInline(row.labelHead)).join(" · ")}
-            {recordedCount > 0 && (
+            {recordedRuns > 0 && (
               <>
                 {"　"}
                 <span className={checksClassName("checks-passed-recorded")}>
-                  {`記録あり ${String(recordedCount)}`}
+                  {checkSourceWord(true, recordedRuns)}
                 </span>
               </>
             )}
@@ -203,7 +179,7 @@ function PassedFold(props: { readonly passed: readonly ReportCheckPassedRow[] })
               <span className={checksClassName("check-figure")}>{plainInline(row.figure)}</span>
               <span className={checksClassName("check-time")}>{row.time}</span>
               <span className={checksClassName("check-source")}>
-                {checkSourceWord(row.recorded)}
+                {checkSourceWord(row.recorded, row.runCount)}
               </span>
             </div>
           ))}

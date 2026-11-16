@@ -241,8 +241,6 @@ export const REPORT_DRAWN_MARK_NAMES = [
   "verdict",
   "checks",
   "checks-summary",
-  "checks-summary-lead",
-  "checks-summary-figures",
   "checks-summary-favor",
   "checks-summary-favor-mark",
   "check",

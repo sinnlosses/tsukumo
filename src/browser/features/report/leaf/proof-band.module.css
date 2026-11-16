@@ -1,70 +1,25 @@
-/* 冒頭の裏づけの帯。目盛りは形で言い分ける: 落ちたは背が高い塗り、申告のみは中抜き、記録ありは塗り、やっていないは破線。 */
-.band {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--stack-tight) var(--inline-group);
-  align-items: flex-end;
-  min-width: 0;
-}
-
-.ticks {
-  display: flex;
-  flex: 1 1 8rem;
-  gap: var(--inline-tight);
-  align-items: flex-end;
-  min-width: 0;
-  height: 1.5rem;
-}
-
-.tick {
-  flex: 1 1 0;
-  min-width: 3px;
-  max-width: 1.5rem;
-  height: 60%;
-  box-sizing: border-box;
-  border: 1px solid var(--ink-soft);
-  border-radius: var(--radius-sm);
-
-  &[data-proof="ng"] {
-    height: 100%;
-    background: var(--state-ng);
-    border-color: var(--state-ng);
-  }
-
-  &[data-proof="declared"] {
-    background: transparent;
-    border-color: var(--ink-soft);
-  }
-
-  &[data-proof="recorded"] {
-    background: var(--state-ok);
-    border-color: var(--state-ok);
-  }
-
-  &[data-proof="not-done"] {
-    background: transparent;
-    border-style: dashed;
-  }
-}
-
-.counts {
+/* 冒頭の検証のまとめ。字の1行で言い、状態の印は持たない。 */
+.total {
   display: flex;
   flex-wrap: wrap;
   gap: var(--stack-tight) var(--inline-group);
   align-items: baseline;
-  margin: 0;
-  padding: 0;
-  list-style: none;
+  min-width: 0;
   font-size: var(--font-secondary);
-  font-variant-numeric: tabular-nums;
   color: var(--ink-soft);
 }
 
-.claims {
+.total-lead {
+  font-weight: 650;
   color: var(--ink);
 }
 
-/* 節の末尾の印と控え。印は記号と語で言い、色は補いにとどめる。 */
+.total-figures {
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+/* 節の末尾の印と控え。落ちたは状態の印、記録あり・申告のみは枠だけの線の印にする。 */
 .proof {
   display: flex;
   flex-wrap: wrap;
@@ -78,14 +33,18 @@
   &[data-proof="ng"] .seal {
     color: var(--state-ng);
   }
-
-  &[data-proof="recorded"] .seal {
-    color: var(--state-ok);
-  }
 }
 
 .seal {
   font-weight: 600;
+
+  &[data-seal="outline"] {
+    padding: 0 var(--inline-tight);
+    border: 1px solid var(--ink-soft);
+    border-radius: var(--radius-sm);
+    font-weight: 400;
+    white-space: nowrap;
+  }
 }
 
 .receipt {

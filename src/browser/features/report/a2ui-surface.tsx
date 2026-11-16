@@ -146,7 +146,6 @@ function ReportRoot(): ReactElement {
   const proof = reportProofView(
     view.head.checks,
     bodySections.map(([id]) => id),
-    view.head.notDone,
   )
   return (
     <ReportFrame

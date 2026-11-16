@@ -71,10 +71,18 @@
   /* お願い（レポートのいちばん最後に置く、利用者にしか決められない・できないこと）。
    枠と地を持たず、上の罫と、題の前の state-warn の点で他の5種と見分ける。 */
   & .report-note-favor {
+    padding-top: var(--stack-section);
     border: 0;
     border-top: 1px solid var(--rule);
     border-radius: 0;
     background: none;
+    font-size: var(--font-size-lg);
+    line-height: var(--line-height-reading);
+  }
+  & .report-note-label-favor {
+    font-size: var(--font-body);
+    font-weight: 700;
+    color: var(--ink);
   }
   & .report-note-favor .report-note-label::before {
     content: "● " / "";

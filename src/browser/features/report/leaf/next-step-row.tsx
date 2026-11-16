@@ -94,6 +94,7 @@ export function NextStepRow(props: {
             </Button>
           ),
         )}
+        <span className={styles["next-step-note"]}>押すと、入力欄に下書きが入る（送らない）</span>
       </div>
       {choosing && alternative?.kind === "alternative" && (
         <div role="group" aria-label="別の案" className={styles["next-step-row"]}>

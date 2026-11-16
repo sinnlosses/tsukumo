@@ -110,6 +110,15 @@ describe("ChecksVerdict（面の合図の行）", () => {
     expect(rendered.html).not.toContain("記録あり")
   })
 
+  it("冒頭のまとめは字の1行で、判定の札を並べない", () => {
+    const rendered = verdictOf(regionsOf(MIXED, ""))
+
+    expect(rendered.textNodes).toContain("確かめたこと 5件")
+    expect(rendered.textNodes).toContain("通った 2・確かめていない 1・止まっている 1・落ちた 1")
+    expect(rendered.textNodes).toContain("単体 12")
+    expect(rendered.textNodes.filter((text) => text.startsWith("✓ "))).toEqual(["✓ 通った 2件"])
+  })
+
   it("お願いの印を押すと、location.hash を書かずにお願いの欄へ転がす", () => {
     const body = regionsOf(MIXED, "架空のお願い。")
     const { container } = render(

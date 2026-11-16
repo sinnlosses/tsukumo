@@ -33,6 +33,7 @@ export type ReportFavorTarget =
  * 問題の1項目。字はバッククォートを落としただけの逃がす前の字。
  * `time` は `command` から測った所要時間の字で、測れなければ空文字。`viaCommand` は `command` が空白だけでないこと。
  * `recorded` は `command` が同じやり取りで打った Bash の記録と照らせたこと（所要時間の字の有無とは別に持つ）。
+ * `runCount` は照らせた行で `command` を打った回数、照らせなかった行は 0。
  * `detail` は空白だけなら空文字、`howToVerify` は `unobserved` で空白だけでないときだけ残す。
  * `supports` は裏づける節の id を入力のまま運ぶ（通った1項目も同じ）。
  */
@@ -43,6 +44,7 @@ export type ReportCheckProblemRow = {
   readonly time: string
   readonly viaCommand: boolean
   readonly recorded: boolean
+  readonly runCount: number
   readonly supports: readonly string[]
   readonly detail: string
   readonly howToVerify: string
@@ -56,6 +58,7 @@ export type ReportCheckPassedRow = {
   readonly time: string
   readonly viaCommand: boolean
   readonly recorded: boolean
+  readonly runCount: number
   readonly supports: readonly string[]
 }
 
@@ -107,6 +110,7 @@ export function reportChecksView(
   rawChecks: readonly ReportCheckInput[],
   commandDuration: (command: string) => MeasuredTime,
   favor: ReportFavorTarget,
+  commandRuns: (command: string) => number,
 ): ReportChecksView {
   if (rawChecks.length === 0) {
     return { kind: "none" }
@@ -118,12 +122,16 @@ export function reportChecksView(
   )
   const measure = (
     check: ReportCheckInput,
-  ): { readonly time: string; readonly recorded: boolean } => {
+  ): { readonly time: string; readonly recorded: boolean; readonly runCount: number } => {
     const duration: MeasuredTime =
       check.command.trim() === "" ? { kind: "unknown" } : commandDuration(check.command)
     return duration.kind === "known"
-      ? { time: formatElapsed(Math.round(duration.milliseconds / 1000)), recorded: true }
-      : { time: "", recorded: false }
+      ? {
+          time: formatElapsed(Math.round(duration.milliseconds / 1000)),
+          recorded: true,
+          runCount: commandRuns(check.command),
+        }
+      : { time: "", recorded: false, runCount: 0 }
   }
   return {
     kind: "checks",

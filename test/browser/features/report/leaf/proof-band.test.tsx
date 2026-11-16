@@ -3,6 +3,7 @@ import type { ReactElement } from "react"
 import { afterEach, describe, expect, it } from "vitest"
 
 import { reportProofView } from "../../../../../src/browser/features/report/domain/report-proof.ts"
+import { SectionProof } from "../../../../../src/browser/features/report/leaf/proof-band.tsx"
 import { HeadRegion } from "../../../../../src/browser/features/report/leaf/report-head-region.tsx"
 import type {
   ReportCheckPassedRow,
@@ -28,6 +29,7 @@ const problem = (label: string, supports: readonly string[]): ReportCheckProblem
   time: "",
   viaCommand: false,
   recorded: false,
+  runCount: 0,
   supports,
   detail: "",
   howToVerify: "",
@@ -40,6 +42,7 @@ const passed = (label: string, supports: readonly string[]): ReportCheckPassedRo
   time: "",
   viaCommand: false,
   recorded: true,
+  runCount: 1,
   supports,
 })
 
@@ -49,7 +52,12 @@ function checksOf(
 ): ReportChecksView {
   return {
     kind: "checks",
-    summary: { passedCount: passedRows.length, figures: [], problems: [], favor: { kind: "none" } },
+    summary: {
+      passedCount: passedRows.length,
+      figures: ["単体 12", "E2E 3"],
+      problems: problems.length === 0 ? [] : [{ status: "ng", count: problems.length }],
+      favor: { kind: "none" },
+    },
     problems,
     passed: passedRows,
   }
@@ -72,28 +80,34 @@ function head(
 }
 
 function headRegion(given: MainViewSurfaceHead, sectionIds: readonly string[]): ReactElement {
-  return (
-    <HeadRegion head={given} proof={reportProofView(given.checks, sectionIds, given.notDone)} />
-  )
+  return <HeadRegion head={given} proof={reportProofView(given.checks, sectionIds)} />
 }
 
-describe("裏づけの帯", () => {
-  it("帯の名前が数を言い、色以外の形の差が出る", () => {
+describe("検証のまとめ", () => {
+  it("字の1行で言い、目盛りの帯は出ない", () => {
     const checks = checksOf([problem("架空の落ち", ["a"])], [passed("架空の通過", ["b"])])
-    const { container } = render(
-      headRegion(head(checks, { notDone: { kind: "listed", items: ["架空の見送り"] } }), [
-        "a",
-        "b",
-      ]),
-    )
+    const { container } = render(headRegion(head(checks), ["a", "b"]))
 
-    const band = screen.getByRole("img")
-    expect(band.getAttribute("aria-label")).toBe("主張 2件: 落ちた 1・記録あり 1・やっていない 1")
-    expect(
-      [...container.querySelectorAll("[data-proof]")].map((el) => el.getAttribute("data-proof")),
-    ).toEqual(["ng", "recorded", "not-done"])
-    expect(container.textContent).toContain("✕ 落ちた 1")
-    expect(container.textContent).toContain("✓ 記録あり 1")
+    expect(screen.queryByRole("img")).toBeNull()
+    expect(container.querySelector("[data-proof]")).toBeNull()
+    expect(screen.getByText("確かめたこと 2件")).toBeTruthy()
+    expect(screen.getByText("通った 1・落ちた 1")).toBeTruthy()
+    expect(screen.getByText("単体 12・E2E 3")).toBeTruthy()
+  })
+
+  it("節の印は、落ちたは状態の印、記録ありは回数つきの線の印になる", () => {
+    const section = {
+      sectionId: "a",
+      mark: "recorded",
+      runCount: 3,
+      rows: [],
+      receipts: [],
+    } as const
+    const { container } = render(<SectionProof section={section} />)
+
+    const seal = container.querySelector("[data-seal]")
+    expect(seal?.textContent).toBe("記録あり・3回")
+    expect(seal?.getAttribute("data-seal")).toBe("outline")
   })
 
   it("結ばれていない行だけが帯の下に残る", () => {
@@ -122,6 +136,7 @@ describe("裏づけの帯", () => {
       headRegion(head(checks, { lead: { kind: "conclusion-lead", text: "架空の結論。" } }), ["a"]),
     )
 
-    expect(screen.getByRole("img").getAttribute("aria-label")).toBe("主張 1件: 記録あり 1")
+    expect(screen.getByText("確かめたこと 1件")).toBeTruthy()
+    expect(screen.getByText("通った 1")).toBeTruthy()
   })
 })

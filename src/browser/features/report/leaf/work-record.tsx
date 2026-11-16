@@ -20,10 +20,10 @@ import { isBlankText } from "../../../../shared/utils/blank-text.ts"
 import type { ReportProofView } from "../domain/report-proof.ts"
 import { InlineMarkdown, workRecordClassName } from "../markdown.tsx"
 import { ChangedFilesFold } from "./changed-files-fold.tsx"
-import { checkSourceWord, FavorJump } from "./checks-verdict.tsx"
+import { FavorJump } from "./checks-verdict.tsx"
 import styles from "./leaf.module.css"
 import { PhaseTimes } from "./phase-time-section.tsx"
-import { ProofBand } from "./proof-band.tsx"
+import { checkSourceWord, ChecksTotalLine } from "./proof-band.tsx"
 
 export function WorkRecord(props: {
   readonly head: MainViewSurfaceHead
@@ -123,7 +123,7 @@ function CheckLines(props: {
   return (
     <>
       {verification.kind === "checked" && <StageTags stages={verification.stages} />}
-      {band !== undefined && <ProofBand band={band} />}
+      {rows !== undefined && band !== undefined && <ChecksTotalLine summary={rows.summary} />}
       <div className={hasStages || band !== undefined ? styles["check-rest"] : undefined}>
         {passed.map((row, index) => (
           <PassedLine key={`${String(index)}:${row.label}`} row={row} />
@@ -158,7 +158,7 @@ function StageTags(props: { readonly stages: readonly VerificationStage[] }): Re
 }
 
 function PassedLine(props: { readonly row: ReportCheckPassedRow }): ReactElement {
-  const { label, figure, recorded } = props.row
+  const { label, figure, recorded, runCount } = props.row
   return (
     <div className={workRecordClassName("work-record-check")}>
       <span
@@ -171,14 +171,14 @@ function PassedLine(props: { readonly row: ReportCheckPassedRow }): ReactElement
       </span>
       <span>
         {lineText(label, figure)}
-        <CheckSource recorded={recorded} />
+        <CheckSource recorded={recorded} runCount={runCount} />
       </span>
     </div>
   )
 }
 
 function ProblemLine(props: { readonly row: ReportCheckProblemRow }): ReactElement {
-  const { status, label, figure, detail, howToVerify, recorded } = props.row
+  const { status, label, figure, detail, howToVerify, recorded, runCount } = props.row
   const tone =
     status === "ng"
       ? workRecordClassName("work-record-check-mark-ng")
@@ -190,7 +190,7 @@ function ProblemLine(props: { readonly row: ReportCheckProblemRow }): ReactEleme
       </span>
       <span>
         {lineText(label, figure)}
-        <CheckSource recorded={recorded} />
+        <CheckSource recorded={recorded} runCount={runCount} />
       </span>
       {detail !== "" && (
         <span className={workRecordClassName("work-record-check-how")}>{plainInline(detail)}</span>
@@ -204,12 +204,15 @@ function ProblemLine(props: { readonly row: ReportCheckProblemRow }): ReactEleme
   )
 }
 
-function CheckSource(props: { readonly recorded: boolean }): ReactElement {
+function CheckSource(props: {
+  readonly recorded: boolean
+  readonly runCount: number
+}): ReactElement {
   return (
     <>
       {"　"}
       <span className={workRecordClassName("work-record-check-source")}>
-        {checkSourceWord(props.recorded)}
+        {checkSourceWord(props.recorded, props.runCount)}
       </span>
     </>
   )

@@ -29,8 +29,11 @@ const check = (
 const proofOf = (
   checks: readonly ReportCheckInput[],
   sectionIds: readonly string[] = ["a", "b", "c"],
-  notDone: Parameters<typeof reportProofView>[2] = { kind: "omitted" },
-) => reportProofView(reportChecksView(checks, duration, { kind: "none" }), sectionIds, notDone)
+) =>
+  reportProofView(
+    reportChecksView(checks, duration, { kind: "none" }, () => 1),
+    sectionIds,
+  )
 
 function bandOf(view: ReturnType<typeof proofOf>) {
   if (view.kind === "plain") {
@@ -45,8 +48,24 @@ describe("reportProofView", () => {
       proofOf([check("ok", "架空の一", ["a"], true), check("ok", "架空の二", ["b"], true)]),
     )
     expect(view.sections.map((section) => section.mark)).toEqual(["recorded", "recorded"])
-    expect(view.ticks).toHaveLength(2)
     expect(view.sections[0]?.receipts).toHaveLength(1)
+  })
+
+  it("目盛りの帯のための値（ticks・counts・claimCount）は持たない", () => {
+    const view = bandOf(proofOf([check("ok", "架空の一", ["a"], true)]))
+    expect(Object.keys(view).toSorted()).toEqual([
+      "kind",
+      "sections",
+      "unboundPassed",
+      "unboundProblems",
+    ])
+  })
+
+  it("節の打った回数は、控えの行の回数の合計", () => {
+    const view = bandOf(
+      proofOf([check("ok", "架空の一", ["a"], true), check("ok", "架空の二", ["a"], true)]),
+    )
+    expect(view.sections[0]?.runCount).toBe(2)
   })
 
   it("照らせない ok がある節は申告のみ", () => {
@@ -55,26 +74,18 @@ describe("reportProofView", () => {
     expect(view.sections[0]?.receipts).toEqual([])
   })
 
-  it("申告のみと記録ありが混ざると目盛りは申告のみが先で、数は種類ごとに出る", () => {
+  it("申告のみと記録ありが混ざると、節ごとの印は節の並びのまま持つ", () => {
     const view = bandOf(
       proofOf([check("ok", "架空の一", ["a"], true), check("ok", "架空の二", ["b"], false)]),
     )
-    expect(view.ticks.map((tick) => tick.kind === "section" && tick.mark)).toEqual([
-      "declared",
-      "recorded",
-    ])
-    expect(view.claimCount).toBe(2)
-    expect(view.counts).toEqual([
-      { kind: "declared", count: 1 },
-      { kind: "recorded", count: 1 },
-    ])
+    expect(view.sections.map((section) => section.mark)).toEqual(["recorded", "declared"])
   })
 
-  it("ng を含む節は落ちたで目盛りの先頭", () => {
+  it("ng を含む節は落ちた", () => {
     const view = bandOf(
       proofOf([check("ok", "架空の一", ["a"], true), check("ng", "架空の落ち", ["b"])]),
     )
-    expect(view.ticks[0]).toEqual({ kind: "section", sectionId: "b", mark: "ng" })
+    expect(view.sections.map((section) => section.mark)).toEqual(["recorded", "ng"])
   })
 
   it("unobserved だけ・blocked だけの節は申告のみ", () => {
@@ -112,18 +123,6 @@ describe("reportProofView", () => {
     expect(view.unboundProblems.map((row) => row.label)).toEqual(["架空の落ち"])
     expect(proofOf([check("ok", "架空の二", [], true)]).kind).toBe("plain")
     expect(proofOf([check("ok", "架空の二", ["zzz"], true)]).kind).toBe("plain")
-  })
-
-  it("notDone は目盛りにだけ載り、plain かどうかは決めない", () => {
-    const base = [check("ok", "架空の一", ["a"], true)]
-    expect(bandOf(proofOf(base, ["a"], { kind: "listed", items: [] })).ticks).toHaveLength(1)
-    const listed = bandOf(proofOf(base, ["a"], { kind: "listed", items: ["架空の一", "架空の二"] }))
-    expect(listed.ticks.filter((tick) => tick.kind === "not-done")).toHaveLength(2)
-    expect(listed.counts.at(-1)).toEqual({ kind: "not-done", count: 2 })
-    expect(bandOf(proofOf(base, ["a"], { kind: "omitted" })).ticks).toHaveLength(1)
-    expect(
-      proofOf([check("ok", "架空の二", [])], ["a"], { kind: "listed", items: ["x"] }).kind,
-    ).toBe("plain")
   })
 
   it("結ばれた行は、どれかの節の行か結ばれていない行に必ず現れる", () => {

@@ -14,6 +14,10 @@
   color: var(--ink-soft);
   font-size: var(--font-secondary);
 }
+.next-step-note {
+  color: var(--ink-soft);
+  font-size: var(--font-secondary);
+}
 .next-step-button {
   min-height: 1.75rem;
   max-width: 100%;

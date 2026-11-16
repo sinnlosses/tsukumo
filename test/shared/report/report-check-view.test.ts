@@ -8,6 +8,7 @@ import {
 import type { MeasuredTime } from "../../../src/shared/utils/elapsed-time.ts"
 
 const UNMEASURED = (): MeasuredTime => ({ kind: "unknown" })
+const NEVER_RUN = (): number => 0
 
 const check = (
   status: ReportCheckInput["status"],
@@ -48,11 +49,11 @@ function labelsOf(view: Extract<ReportChecksView, { readonly kind: "checks" }>):
 
 describe("reportChecksView", () => {
   it("項目が無ければ none", () => {
-    expect(reportChecksView([], UNMEASURED, { kind: "none" })).toEqual({ kind: "none" })
+    expect(reportChecksView([], UNMEASURED, { kind: "none" }, NEVER_RUN)).toEqual({ kind: "none" })
   })
 
   it("問題の行は ng → blocked → unobserved、通った行は入力の順で、総括行は状態ごとの件数を総括の順に持つ", () => {
-    const view = checksOf(reportChecksView(MIXED, UNMEASURED, { kind: "none" }))
+    const view = checksOf(reportChecksView(MIXED, UNMEASURED, { kind: "none" }, NEVER_RUN))
 
     expect(view.problems.map((row) => row.status)).toEqual(["ng", "blocked", "unobserved"])
     expect(view.passed.map((row) => row.label)).toEqual(["架空の一（補足）", "架空の二"])
@@ -69,7 +70,7 @@ describe("reportChecksView", () => {
   })
 
   it("入力の全項目の label が、問題の行か通った行のどちらかにちょうど1回ずつ残る", () => {
-    const view = checksOf(reportChecksView(MIXED, UNMEASURED, { kind: "none" }))
+    const view = checksOf(reportChecksView(MIXED, UNMEASURED, { kind: "none" }, NEVER_RUN))
     const inputLabels = MIXED.map((each) => each.label).toSorted()
     const dropped = { ...view, passed: view.passed.slice(1) }
 
@@ -79,9 +80,12 @@ describe("reportChecksView", () => {
 
   it("label の頭は最初の「（」より前、確かめ方は unobserved だけに残り、バッククォートは落ちる", () => {
     const view = checksOf(
-      reportChecksView([...MIXED, check("ng", "`架空の印`", { detail: "  " })], UNMEASURED, {
-        kind: "none",
-      }),
+      reportChecksView(
+        [...MIXED, check("ng", "`架空の印`", { detail: "  " })],
+        UNMEASURED,
+        { kind: "none" },
+        NEVER_RUN,
+      ),
     )
 
     expect(view.passed.map((row) => row.labelHead)).toEqual(["架空の一", "架空の二"])
@@ -109,6 +113,7 @@ describe("reportChecksView", () => {
           return duration
         },
         { kind: "none" },
+        NEVER_RUN,
       ),
     )
 
@@ -127,6 +132,7 @@ describe("reportChecksView", () => {
         (command) =>
           command === "架空の速い" ? { kind: "known", milliseconds: 1000 } : { kind: "unknown" },
         { kind: "none" },
+        NEVER_RUN,
       ),
     )
 
@@ -136,9 +142,30 @@ describe("reportChecksView", () => {
     expect(view.problems.map((row) => row.viaCommand)).toEqual([false])
   })
 
+  it("打った回数は、照らせた行では回数、打っていない行と command が空の行では 0 で、recorded と整合する", () => {
+    const runs: Readonly<Record<string, number>> = { 架空の二回: 2, 架空の未実行: 0 }
+    const view = checksOf(
+      reportChecksView(
+        [
+          check("ok", "架空の一", { command: "架空の二回" }),
+          check("ok", "架空の二", { command: "架空の未実行" }),
+          check("ng", "架空の三", { command: "  " }),
+        ],
+        (command) =>
+          command === "架空の二回" ? { kind: "known", milliseconds: 1000 } : { kind: "unknown" },
+        { kind: "none" },
+        (command) => runs[command] ?? 0,
+      ),
+    )
+
+    expect(view.passed.map((row) => row.runCount)).toEqual([2, 0])
+    expect(view.problems.map((row) => row.runCount)).toEqual([0])
+    expect(view.passed.map((row) => row.recorded)).toEqual([true, false])
+  })
+
   it("お願いの印は渡した飛び先のまま総括行に載る", () => {
     const favor = { kind: "favor", id: "favor-toolu_fictional" } as const
-    const view = checksOf(reportChecksView([check("ok", "架空の一")], UNMEASURED, favor))
+    const view = checksOf(reportChecksView([check("ok", "架空の一")], UNMEASURED, favor, NEVER_RUN))
 
     expect(view.summary.favor).toEqual(favor)
   })

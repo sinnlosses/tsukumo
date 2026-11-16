@@ -20,6 +20,7 @@ import type { SessionState } from "./session-state.ts"
 import {
   advanceTurnContext,
   bashCommandDuration,
+  bashCommandRuns,
   EMPTY_TURN_CONTEXT,
   lastBashOf,
   latestWorkPlanOf,
@@ -171,6 +172,7 @@ function reportRegionsOf(
     report.checks,
     (command) => bashCommandDuration(context, command),
     isBlankText(report.favor) ? { kind: "none" } : { kind: "favor", id: favorId },
+    (command) => bashCommandRuns(context, command),
   )
   const phaseRows = phaseDurations(context.trail, report.time, report.workPlanClosing)
   const { drawn, layout, imageSource } = reportDrawnPieces(report)
