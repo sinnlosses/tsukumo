@@ -5,17 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>タスク実行中の会話の流れの見本（2026-11-16）</title>
     <link rel="stylesheet" href="flow.css" />
+    <link rel="stylesheet" href="goal.css" />
   </head>
   <!--
     タスク実行中のメインビューの会話の流れ（投稿・セリフ・中間レポート・進行・質問・最終レポート）の見本。
     今の画面の形（form=now）、採用済みの見本どおりの形（form=spec。../report-progress-2026-11-15/ の案2）、
-    その上に5つの提案を重ねた形（form=next）を、同じ架空のやり取りで見比べる。
+    その上に5つの提案を重ねた形（form=next）、設計レビューの指摘を入れて作り直した形（form=goal）を、
+    同じ架空のやり取りで見比べる。
     器（上部の帯・左の列・サイドバー・入力欄）は今の画面を 1400×900 で測った値で組み、どの形でも変えない。
-    中身はすべて架空で、実物の会話ではない。並べて比べるページは compare.html。
-    ?form=now|spec|next          今の形／見本どおり／提案まで
+    中身はすべて架空で、実物の会話ではない。並べて比べるページは compare.html、作り直した形の状態の一覧は states.html。
+    ?form=now|spec|next|goal     今の形／見本どおり／提案まで／作り直し
     ?only=attach|live|dialog|verb|minute  見本どおりの形に提案を1つだけ重ねる（form より優先）
-    ?moment=work|ask|late|read   場面（働く・答える・働く後半・読む）
+    ?moment=work|ask|late|read|fail  場面（働く・答える・働く後半・読む・失敗）
     ?at=end                      読む場面で、流れを末尾（お願いが見える位置）まで送る
+    ?up=1                        作り直した形で、流れを上へ送って読んでいる状態（「末尾へ」の口が出る）
     ?pack=shirasuzu|tsukumo      パックの素材と差し色
     ?bar=0                       上の切り替えの帯を隠す（撮影用）
   -->
@@ -50,10 +53,12 @@
     <header class="mock-bar" aria-label="見本の切り替え">
       <span class="mock-bar-title">会話の流れの見本（中身は架空）</span>
       <a class="mock-bar-link" href="compare.html">並べて比べる</a>
+      <a class="mock-bar-link" href="states.html">状態の一覧</a>
       <span class="mock-bar-group" data-param="form">
         <a data-value="now">今の形</a>
         <a data-value="spec">見本どおり</a>
         <a data-value="next">提案まで</a>
+        <a data-value="goal">作り直し</a>
       </span>
       <span class="mock-bar-group" data-param="only">
         <a data-value="attach">A 添える</a>
@@ -67,6 +72,7 @@
         <a data-value="ask">答える</a>
         <a data-value="late">働く（後半）</a>
         <a data-value="read">読む</a>
+        <a data-value="fail">失敗</a>
       </span>
     </header>
 
@@ -96,6 +102,7 @@
           <nav class="lane" aria-label="やり取り">
             <header class="lane-head">
               <span>やり取り</span>
+              <span class="lane-keys" id="lane-keys"></span>
               <button class="icon-button" type="button" aria-label="やり取りの列を畳む"><svg viewBox="0 0 24 24" class="icon"><use href="#i-chevron-left" /></svg></button>
             </header>
             <ol class="lane-turns" id="lane-turns"></ol>
@@ -133,6 +140,10 @@
         </section>
 
         <section class="side" data-region="sidebar" aria-label="サイドバー">
+          <div class="rail">
+            <button class="icon-button" type="button" aria-label="サイドバーを開く"><svg viewBox="0 0 24 24" class="icon"><use href="#i-chevron-left" /></svg></button>
+            <span class="rail-count" aria-label="作業中 1件">1</span>
+          </div>
           <header class="side-head">
             <span class="side-title">タスク</span>
             <span class="side-count">作業中 1・着手できる 3・待ち 1</span>

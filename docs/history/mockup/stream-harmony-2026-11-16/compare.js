@@ -1,6 +1,6 @@
 // 会話の流れの見比べのページ。見本（index.html）を形ごとの枠に入れ、枠の幅に合わせて縮める。
 
-const MOMENTS = ["work", "ask", "late", "read"]
+const MOMENTS = ["work", "ask", "late", "read", "fail"]
 const params = new URLSearchParams(location.search)
 const moment = MOMENTS.includes(params.get("moment")) ? params.get("moment") : "work"
 const pack = params.get("pack") === "tsukumo" ? "tsukumo" : "shirasuzu"
@@ -9,6 +9,7 @@ const FORMS = [
   ["now", "今の形", "今の画面を測って写した形"],
   ["spec", "見本どおり", "採用済みの見本にあって、今の画面に無い形を入れた"],
   ["next", "提案まで", "見本どおりの上に、提案 A〜E を重ねた"],
+  ["goal", "作り直し", "設計レビューの指摘（中の作業7群と修正点8つ）を入れた"],
 ]
 
 // 提案ごとに、差がいちばん見える場面で、見本どおりの形と並べる。

@@ -1,0 +1,655 @@
+/* 作り直した形（form=goal）と、状態の一覧（states.html）の見た目。
+   flow.css の見本どおりの形（spec）の上に重ねる。器の中くらいの幅（761〜1100px）の柱もここに置く。 */
+
+:root {
+  --ng: #ef6b6b;
+}
+
+/* 行の間は3段。1組の中は狭く、同じ話し手の続きは中、話し手の交代は広く。 */
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+body[data-p~="goal"] :is(.flow, .state-flow) {
+  gap: 16px;
+}
+
+/* 尾のあるセリフのあとの末尾の行は、尾の先に触れないように少し離す。 */
+body[data-p~="goal"] :is(.flow, .state-flow) > .now-pill {
+  margin-block-start: 6px;
+}
+
+.group-user {
+  align-items: flex-end;
+}
+
+.group-user > .row {
+  inline-size: 100%;
+}
+
+/* 尾は、すぐ下に全幅の物が続くときは出さない（物の縁と重なる）。 */
+.group > .row:has(+ .wide) .tail {
+  display: none;
+}
+
+.phase-run {
+  gap: 2px;
+  inline-size: auto;
+  padding-inline: 6px 8px;
+  border-radius: 999px;
+  grid-auto-flow: column;
+}
+
+body[data-p~="goal"] :is(.flow, .state-flow) > :is(.row-user, .group-user) {
+  margin-block: 8px;
+}
+
+/* 流れは進行の帯の下から始める。送っても、行が帯の裏へ潜って字が欠けない。 */
+body[data-p~="goal"] .scroller {
+  inset-block-start: 48px;
+}
+
+/* 広い画面では、流れと入力欄に読む幅の上限を置く。問いと答えが左右に離れすぎない。 */
+body[data-p~="goal"] .flow {
+  max-inline-size: 960px;
+  padding-block-start: 8px;
+}
+
+body[data-p~="goal"] :is(.dock, .strip) {
+  inset-inline-end: auto;
+  inline-size: min(100%, 976px);
+}
+
+/* 声の行。セリフは差し色の面と縁、投稿は色味の無い面で、左右の配置のほかに色でも見分けられる。 */
+body[data-p~="goal"] .bubble-say {
+  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+}
+
+body[data-p~="goal"] .bubble-post {
+  background: color-mix(in srgb, var(--surface), var(--ink) 17%);
+}
+
+/* いまの一言。立ち絵がいま従っているセリフ1件だけを明るくし、尾を左下（立ち絵の側）へ向ける。 */
+body[data-p~="goal"] .bubble-say.is-live {
+  border-color: var(--accent);
+  border-end-start-radius: 4px;
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--accent) 22%, var(--surface)),
+    color-mix(in srgb, var(--accent) 13%, var(--surface))
+  );
+  box-shadow: 0 10px 24px rgb(0 0 0 / 28%);
+}
+
+.tail {
+  position: absolute;
+  inset-block-end: -11px;
+  inset-inline-start: 10px;
+  inline-size: 14px;
+  block-size: 12px;
+  overflow: visible;
+}
+
+.tail path {
+  fill: color-mix(in srgb, var(--accent) 13%, var(--surface));
+  stroke: var(--accent);
+  stroke-linejoin: round;
+  stroke-width: 1;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  body[data-p~="goal"] .bubble-say.is-live {
+    transition:
+      opacity 0.32s cubic-bezier(0.16, 1, 0.3, 1),
+      translate 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+
+    @starting-style {
+      opacity: 0;
+      translate: -6px 6px;
+    }
+  }
+}
+
+/* 分が変わらない行の時刻。行に触れるかフォーカスを置いたときだけ見える。 */
+.ghost-time {
+  align-self: center;
+  padding: 0 4px;
+  border-radius: 10px;
+  background: var(--ground);
+  color: var(--ink-soft);
+  font-family: var(--mono);
+  font-size: 12px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.row:is(:hover, :focus-within) .ghost-time {
+  opacity: 1;
+}
+
+/* 済んだフェーズの控えと、答えた質問の1行。幅をそろえる。 */
+.slip {
+  inline-size: min(100%, 560px);
+  padding: 8px 14px 10px;
+}
+
+.slip .disclose {
+  margin-block-start: 4px;
+  padding-inline-start: 26px;
+}
+
+.group > .row + .wide {
+  border-start-start-radius: 4px;
+}
+
+/* 開閉の表現は1種。山形の印が右を向いていれば閉じていて、開くと下を向く。 */
+.disclose > summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-soft);
+  font-size: 12px;
+  list-style: none;
+  cursor: pointer;
+}
+
+.disclose > summary::-webkit-details-marker {
+  display: none;
+}
+
+.disclose > summary .icon {
+  transition: rotate 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.disclose[open] > summary .icon {
+  rotate: 90deg;
+}
+
+.disclose-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-block-start: 10px;
+  color: var(--ink);
+  font-size: 14px;
+}
+
+.disclose-body .brief {
+  padding: 0;
+  border: 0;
+}
+
+details.disclose::details-content {
+  interpolate-size: allow-keywords;
+  overflow: clip;
+  contain: layout;
+}
+
+details.disclose:not([open])::details-content {
+  block-size: 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  details.disclose::details-content {
+    transition: block-size, content-visibility, display;
+    transition-duration: 0.28s;
+    transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+    transition-behavior: allow-discrete;
+  }
+}
+
+.fold-pill {
+  align-self: flex-start;
+  padding: 2px 12px 2px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ground) 80%, transparent);
+}
+
+.fold-pill[open] {
+  align-self: stretch;
+  padding: 8px 12px 12px;
+  border-radius: 12px;
+}
+
+/* キーの手掛かり。効く場所に、見える形で置く。 */
+.key {
+  display: inline-grid;
+  place-items: center;
+  min-inline-size: 20px;
+  block-size: 20px;
+  padding: 0 5px;
+  border: 1px solid var(--edge);
+  border-radius: 5px;
+  box-shadow: inset 0 -1px 0 var(--edge);
+  background: color-mix(in srgb, var(--ground) 70%, transparent);
+  color: var(--ink-soft);
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.lane-keys {
+  display: inline-flex;
+  gap: 2px;
+  margin-inline: auto 4px;
+}
+
+/* 操作。静かな口（選択肢へ・任せる・答え直す）と、物の中の口（確かめた・戻す）。 */
+.quiet-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 10px;
+  border: 1px solid var(--edge);
+  border-radius: 8px;
+  color: var(--ink-soft);
+  font-size: 12px;
+}
+
+.quiet-button:hover {
+  background: var(--raised);
+  color: var(--ink);
+}
+
+.quiet-button.redo {
+  min-block-size: 24px;
+}
+
+.jump-note {
+  color: var(--ink-soft);
+}
+
+.door-button {
+  padding: 3px 14px;
+  border: 1px solid var(--edge);
+  border-radius: 8px;
+  background: var(--raised);
+  color: var(--ink);
+  font-size: 14px;
+}
+
+.door-button:hover {
+  border-color: var(--ink-soft);
+}
+
+.door-button[disabled] {
+  color: var(--ink-soft);
+  cursor: default;
+}
+
+/* 札の中の印は2系統。状態（塗り）と、中立（線）。 */
+.chip-line {
+  border: 1px solid var(--edge);
+  color: var(--ink-soft);
+  font-weight: 400;
+}
+
+/* お伺い。頭は種類・題・待ち時間・広げる。 */
+body[data-p~="goal"] .inquiry-kind {
+  font-size: 13px;
+}
+
+body[data-p~="goal"] .inquiry-title {
+  font-size: 15px;
+}
+
+body[data-p~="goal"] .option-head {
+  gap: 10px;
+}
+
+.option.is-picked {
+  outline: 1px solid var(--warn);
+}
+
+/* 数字のキーが効くのは、札の中にフォーカスがあるあいだだけ。効かないあいだはキーの札を破線の枠だけにし、字の濃さは変えない。 */
+.options .key {
+  border-style: dashed;
+  background: none;
+  box-shadow: none;
+}
+
+.inquiry:focus-within .options .key {
+  border-style: solid;
+  background: color-mix(in srgb, var(--ground) 70%, transparent);
+  box-shadow: inset 0 -1px 0 var(--edge);
+  color: var(--ink);
+}
+
+.option.is-picked .radio {
+  border-color: var(--warn);
+  background: radial-gradient(var(--warn) 45%, transparent 50%);
+}
+
+.inquiry-step {
+  color: var(--warn);
+  font-size: 12px;
+}
+
+.permit-command {
+  display: block;
+  margin-block: 4px 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--ground) 70%, var(--surface));
+  font-family: var(--mono);
+  font-size: 13px;
+}
+
+.first-hint {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-block-start: 10px;
+  color: var(--ink-soft);
+  font-size: 12px;
+}
+
+/* 最終レポートの中。検証のまとめは字で言い、お願いは利用者の用件として重くする。 */
+.checks-total {
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+body[data-p~="goal"] .checks-row b {
+  margin-inline-end: 12px;
+}
+
+.favor-strong {
+  margin-block-start: 32px;
+  padding: 16px 0 0;
+}
+
+.favor-strong .favor-label {
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.favor-text {
+  margin-block: 4px 12px;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.failure-doors {
+  display: flex;
+  gap: 8px;
+}
+
+/* お願いのあとの、次の一手の行。押しても送らないことを、その場で言う。 */
+.next-step {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-block-start: 16px;
+}
+
+.next-step-label,
+.next-step-note {
+  color: var(--ink-soft);
+  font-size: 12px;
+}
+
+.hinted {
+  padding: 12px 16px 14px;
+}
+
+.draft-line-long {
+  inline-size: 72%;
+}
+
+.draft-line-short {
+  inline-size: 54%;
+}
+
+.lane-sub .lane-keys {
+  margin-inline: auto 0;
+}
+
+/* 失敗と中断。理由・詳細・残ったもの・次の行動を、開かずに読める形で置く。 */
+.failure,
+.halt {
+  padding: 14px 16px 16px;
+}
+
+.failure {
+  border-color: color-mix(in srgb, var(--ng) 55%, transparent);
+}
+
+.failure-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ng);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.halt .failure-head {
+  color: var(--ink-soft);
+}
+
+.failure-mark {
+  inline-size: 8px;
+  block-size: 8px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.failure-reason {
+  margin-block: 6px 4px;
+  font-size: 16px;
+  font-weight: 650;
+}
+
+.failure-detail,
+.failure-kept {
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+
+:is(.failure-detail, .failure-kept) code {
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+.failure-detail code {
+  margin-inline-end: 8px;
+}
+
+.failure-doors {
+  margin-block-start: 12px;
+}
+
+.failure-now-head {
+  margin-block-end: 8px;
+  color: var(--ng);
+  font-size: 12px;
+}
+
+.failure-now p + p {
+  margin-block-start: 8px;
+}
+
+/* 末尾の行が長く掛かっているとき。印の回り方を遅くし、経過と添え書きを濃くする。 */
+.now-pill.is-slow .spinner {
+  animation-duration: 2.4s;
+}
+
+.now-pill.is-slow time,
+.now-note {
+  color: var(--ink);
+}
+
+/* 上へ送って読んでいるあいだだけ出る「末尾へ」の口。 */
+.to-tail {
+  position: absolute;
+  inset-block-end: calc(var(--dock-h) + 36px);
+  inset-inline-end: max(24px, 100% - 952px);
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px 4px 14px;
+  border: 1px solid var(--edge);
+  border-radius: 999px;
+  background: var(--ground);
+  box-shadow: var(--paper-lift);
+  color: var(--ink);
+  font-size: 13px;
+}
+
+.to-tail-count {
+  color: var(--ink-soft);
+  font-size: 12px;
+}
+
+/* 書きかけのレポートと、離席の境目。 */
+.paper.is-draft .draft-line {
+  block-size: 10px;
+  margin-block-start: 12px;
+  border-radius: 5px;
+  background: var(--raised);
+}
+
+.draft-caret {
+  display: inline-block;
+  inline-size: 2px;
+  block-size: 1.1em;
+  margin-inline-start: 2px;
+  background: var(--accent);
+  vertical-align: text-bottom;
+}
+
+.seam {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink-soft);
+  font-size: 12px;
+}
+
+.seam::before,
+.seam::after {
+  content: "";
+  flex: 1;
+  block-size: 1px;
+  background: color-mix(in srgb, var(--accent) 42%, transparent);
+}
+
+.seam b {
+  margin-inline-end: 8px;
+  color: var(--accent);
+}
+
+/* 中くらいの幅（761〜1100px）では、サイドバーを柱に畳む。 */
+.rail {
+  display: none;
+}
+
+@media (max-width: 1100px) {
+  .shell {
+    grid-template-columns: 238px minmax(0, 1fr) 44px;
+  }
+
+  .side > :not(.rail) {
+    display: none;
+  }
+
+  .rail {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding-block: 10px;
+  }
+
+  .rail-count {
+    display: inline-grid;
+    place-items: center;
+    inline-size: 22px;
+    block-size: 22px;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--accent) 30%, var(--surface));
+    font-family: var(--mono);
+    font-size: 12px;
+  }
+}
+
+/* 状態の一覧のページ。 */
+body.page-states {
+  display: block;
+  block-size: auto;
+  min-block-size: 100%;
+  overflow: auto;
+  background: #1c1a23;
+}
+
+.states-head {
+  max-inline-size: 1560px;
+  margin: 0 auto;
+  padding: 32px 24px 0;
+}
+
+.states-head h1 {
+  margin: 0;
+  font-size: 22px;
+  line-height: 1.4;
+}
+
+.states-head p {
+  max-inline-size: 72ch;
+  color: var(--ink-soft);
+}
+
+.states-head a {
+  color: inherit;
+  text-underline-offset: 3px;
+}
+
+.states {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 720px), 1fr));
+  gap: 48px 40px;
+  max-inline-size: 1560px;
+  margin: 0 auto;
+  padding: 32px 24px 64px;
+}
+
+.state {
+  min-inline-size: 0;
+  margin: 0;
+}
+
+.state figcaption {
+  margin-block-end: 14px;
+  padding-block-end: 8px;
+  border-block-end: 1px solid var(--edge);
+}
+
+.state figcaption h2 {
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.state figcaption p {
+  max-inline-size: 64ch;
+  color: var(--ink-soft);
+  font-size: 12px;
+}
+
+.state-flow {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.state-flow .strip {
+  position: static;
+}
