@@ -37,21 +37,11 @@ const BASIS_LABEL = {
   checked: "確かめた",
   copied: "写した",
 } satisfies Record<QuestionBriefFactBasis, string>
-const BASIS_TONE = { checked: "ok", copied: "neutral" } satisfies Record<
-  QuestionBriefFactBasis,
-  "ok" | "neutral"
->
 const CERTAINTY_LABEL = {
   high: "確度 高",
   medium: "確度 中",
   low: "確度 低",
 } satisfies Record<QuestionBriefCertainty, string>
-const CERTAINTY_TONE = { high: "ok", medium: "neutral", low: "warn" } satisfies Record<
-  QuestionBriefCertainty,
-  "ok" | "neutral" | "warn"
->
-
-/** 出どころと確度は印の字で読めるようにし、色だけで分けない。 */
 export function InquiryBrief(props: { readonly brief: InquiryBriefModel }): ReactElement {
   const { whyAsk, facts, recommended } = props.brief
 
@@ -87,13 +77,7 @@ export function InquiryBrief(props: { readonly brief: InquiryBriefModel }): Reac
         <ul className={styles["inquiry-facts"]}>
           {facts.map((fact) => (
             <li className={styles["inquiry-fact"]} key={`${fact.basis}-${fact.text}`}>
-              <Badge
-                tone={BASIS_TONE[fact.basis]}
-                shape="square"
-                className={styles["inquiry-fact-basis"]}
-              >
-                {BASIS_LABEL[fact.basis]}
-              </Badge>
+              <FactBasisMark basis={fact.basis} />
               <Text
                 element="span"
                 size="secondary"
@@ -116,13 +100,9 @@ export function InquiryBrief(props: { readonly brief: InquiryBriefModel }): Reac
           className={styles["inquiry-brief-line"]}
         >
           <BriefLabel text={RECOMMENDED_LABEL} />{" "}
-          <Badge
-            tone={CERTAINTY_TONE[recommended.certainty]}
-            shape="square"
-            className={styles["inquiry-brief-certainty"]}
-          >
+          <InquiryMark className={styles["inquiry-brief-certainty"]}>
             {CERTAINTY_LABEL[recommended.certainty]}
-          </Badge>{" "}
+          </InquiryMark>{" "}
           {recommended.reason}
         </Text>
       )}
@@ -158,26 +138,12 @@ export function InquiryOptionContent(props: {
         {option.text}
       </Text>
       {option.recommended && (
-        <Text
-          element="span"
-          size="label"
-          tone="state-warn"
-          weight="inherit"
-          className={styles["inquiry-option-badge"]}
-        >
-          {RECOMMENDED_BADGE}
-        </Text>
+        <InquiryMark className={styles["inquiry-option-badge"]}>{RECOMMENDED_BADGE}</InquiryMark>
       )}
       {option.irreversible && (
-        <Text
-          element="span"
-          size="label"
-          tone="state-ng"
-          weight="bold"
-          className={styles["inquiry-badge"]}
-        >
+        <Badge tone="ng" shape="square" className={styles["inquiry-badge"]}>
           {IRREVERSIBLE_BADGE}
-        </Text>
+        </Badge>
       )}
     </>
   )
@@ -282,6 +248,24 @@ export function InquiryDetailHint(): ReactElement {
     >
       {DETAIL_HINT}
     </Text>
+  )
+}
+
+/** 地を塗らない中立の印。 */
+function InquiryMark(props: {
+  readonly className: string
+  readonly children: string
+}): ReactElement {
+  return <span className={clsx(styles["inquiry-mark"], props.className)}>{props.children}</span>
+}
+
+function FactBasisMark(props: { readonly basis: QuestionBriefFactBasis }): ReactElement {
+  return props.basis === "checked" ? (
+    <Badge tone="ok" shape="square" className={styles["inquiry-fact-basis"]}>
+      {BASIS_LABEL.checked}
+    </Badge>
+  ) : (
+    <InquiryMark className={styles["inquiry-fact-basis"]}>{BASIS_LABEL.copied}</InquiryMark>
   )
 }
 

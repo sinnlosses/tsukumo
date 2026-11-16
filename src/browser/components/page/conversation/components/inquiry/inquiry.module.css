@@ -56,20 +56,11 @@
 .inquiry:focus {
   outline: none;
 }
-/* 頭の行：「お伺い」のチップ・種類・header かツール名・「n / N · 待って 0:42」。
+/* 頭の行：種類・header かツール名・「n / N」（2問以上）・「待って 0:42」。
    狭い画面では折り返す（横スクロールを出さない）。 */
 .inquiry-head {
   flex: 0 0 auto;
   margin-bottom: var(--space-sm);
-}
-.inquiry-chip {
-  flex: 0 0 auto;
-  padding: var(--space-2xs) var(--space-sm);
-  border-radius: var(--radius-sm);
-  background: var(--state-warn);
-  color: var(--ground);
-  font-size: var(--font-label);
-  font-weight: 700;
 }
 .inquiry-kind {
   flex: 0 0 auto;
@@ -90,8 +81,9 @@
 .inquiry-tool {
   font-family: var(--font-mono);
 }
-/* 「n / N · 待って 0:42」は行の右端へ寄せ、数字の幅を揃える。 */
-.inquiry-progress {
+/* 「n / N」と「待って 0:42」は数字の幅を揃える。 */
+.inquiry-progress,
+.inquiry-waited {
   flex: 0 0 auto;
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
@@ -154,6 +146,16 @@
 .inquiry-fact-basis {
   justify-self: start;
 }
+/* 中立の印（写した・おすすめ・確度）。地を塗らず線だけ。状態の印は `Badge` の塗り。 */
+.inquiry-mark {
+  display: inline-block;
+  padding: 0 var(--space-sm);
+  border: 1px solid var(--ink-quiet);
+  border-radius: var(--radius-sm);
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+  white-space: nowrap;
+}
 .inquiry-fact-text {
   min-width: 0;
   overflow-wrap: anywhere;
@@ -205,12 +207,9 @@
   margin: 0;
   padding: var(--space-sm) var(--space-md);
 }
-/* 戻せない選択肢の印。色に加えて字で示す。 */
+/* 戻せない選択肢の印（`Badge` の塗り）。置き方だけここに置く。 */
 .inquiry-badge {
   flex: 0 0 auto;
-  padding: var(--space-2xs) var(--space-sm);
-  border: 1px solid currentcolor;
-  border-radius: var(--radius-sm);
 }
 .inquiry-option {
   composes: surface-edge-rule surface-radius-md surface-tone-surface from "../../../../ui/surface/surface-face.module.css";
@@ -256,13 +255,9 @@
   flex: 0 1 auto;
   min-width: 0;
 }
-/* ラベル末尾のおすすめの印（`withoutRecommendedMark`）を字から外して載せるバッジ。 */
-/* 字の段・色は `Text` が持つ。箱（枠・角丸・余白）だけここに置く。 */
+/* ラベル末尾のおすすめの印（`withoutRecommendedMark`）を字から外して載せる。顔は `.inquiry-mark`。 */
 .inquiry-option-badge {
   flex: 0 0 auto;
-  padding: var(--space-2xs) var(--space-sm);
-  border: 1px solid var(--state-warn);
-  border-radius: var(--radius-sm);
 }
 /* 詳細のサーフェスの preview と図の Markdown。レポートと同じ語彙（`.detail-block`）に乗せ、余白の打ち消しだけここに置く。 */
 .inquiry-detail .detail-block {
@@ -273,15 +268,10 @@
 .inquiry-written {
   margin: var(--space-sm) 0 0;
 }
-/* 操作の行：左に案内、右に「戻る」と「次へ」/「これで答える」。札の下端に残る。狭い画面では折り返す。 */
+/* 操作の行：右に「戻る」と「次へ」/「これで答える」。札の下端に残る。狭い画面では折り返す。 */
 .inquiry-foot {
   flex: 0 0 auto;
   margin-top: var(--space-md);
-}
-/* 字の段・色は `Text` が持つ。伸び縮みだけここに置く。 */
-.inquiry-hint {
-  flex: 1 1 12rem;
-  min-width: 0;
 }
 /* 顔は `<Button variant="outline-hover-warn">` が持つ。箱だけここに置く。 */
 .inquiry-back {

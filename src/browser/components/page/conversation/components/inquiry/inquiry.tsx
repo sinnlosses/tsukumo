@@ -1,5 +1,5 @@
 // お伺いのカード（答え待ちの許可要求と質問。メインビューの、いまのやり取りの本文の末尾）。
-// 頭に「お伺い」のチップ・種類・`header` かツール名・「n / N」と待っている時間、本文に問いの文か対象の全文・添え書きの塊（聞く理由・事実・おすすめの理由）・左に選択肢の縦の並びと右にフォーカスした選択肢の詳細、下端に操作の行を置く。
+// 頭に種類・`header` かツール名・待っている時間（2問以上のときは「n / N」を前に）・「広げる」、本文に問いの文か対象の全文・添え書きの塊（聞く理由・事実・おすすめの理由）・左に選択肢の縦の並びと右にフォーカスした選択肢の詳細、下端に操作の行を置く。
 // 操作の行は札の下端に残り、本文と選択肢の側が札の内側で転がる。
 //
 // 数字キーと Enter が効くのは、札の中にフォーカスがあるときだけ。
@@ -40,7 +40,8 @@ import {
 } from "./inquiry-detail.tsx"
 import styles from "./inquiry.module.css"
 
-const INQUIRY_CHIP = "お伺い"
+/** 札の `region` の名前。頭には字を出さない。 */
+const REGION_LABEL = "お伺い"
 const KIND_LABEL = {
   permission: "許可",
   question: "質問",
@@ -50,7 +51,6 @@ const ENTRUST_LABEL = "任せる"
 const EXPAND_LABEL = "広げる"
 const COLLAPSE_LABEL = "閉じる"
 const BOARD_LABEL = "お伺い（広げた板）"
-const FREE_TEXT_HINT = "選択肢にない答えは、下の入力欄に書いて送れます"
 const WRITING_NOTE = "入力欄の答えで答えます"
 const ANSWER_LABEL = "これで答える"
 const NEXT_LABEL = "次へ"
@@ -115,7 +115,7 @@ export function InquiryCard(props: {
         className={clsx(styles["inquiry"], props.actions === "none" && styles["is-bare"])}
         ref={mergeRefs(cardRef, visibilityRef)}
         tabIndex={-1}
-        aria-label={INQUIRY_CHIP}
+        aria-label={REGION_LABEL}
         onKeyDown={(event) =>
           answerKey(event, inquiry, inquiry.onAnswer, () =>
             cardRef.current?.focus({ preventScroll: true }),
@@ -152,7 +152,7 @@ export function InquiryCard(props: {
             className={clsx(styles["inquiry"], styles["is-board"])}
             ref={boardRef}
             tabIndex={-1}
-            aria-label={INQUIRY_CHIP}
+            aria-label={REGION_LABEL}
             onKeyDown={(event) =>
               answerKey(event, inquiry, answerOnBoard, () =>
                 boardRef.current?.focus({ preventScroll: true }),
@@ -237,7 +237,6 @@ function InquiryFace(props: {
           wrap="wrap"
           className={styles["inquiry-head"]}
         >
-          <span className={styles["inquiry-chip"]}>{INQUIRY_CHIP}</span>
           <Text
             element="span"
             size="secondary"
@@ -269,14 +268,25 @@ function InquiryFace(props: {
               {inquiry.header}
             </Text>
           )}
+          {inquiry.questionCount > 1 && (
+            <Text
+              element="span"
+              size="label"
+              tone="ink-quiet"
+              weight="inherit"
+              className={styles["inquiry-progress"]}
+            >
+              {inquiry.progressLabel}
+            </Text>
+          )}
           <Text
             element="span"
             size="label"
             tone="ink-quiet"
             weight="inherit"
-            className={styles["inquiry-progress"]}
+            className={styles["inquiry-waited"]}
           >
-            {inquiry.progressLabel} · {WAITED_PREFIX} {waitedText(now - inquiry.askedAt)}
+            {WAITED_PREFIX} {waitedText(now - inquiry.askedAt)}
           </Text>
           {props.expand.kind !== "none" && (
             <Button
@@ -367,17 +377,6 @@ function InquiryFace(props: {
           wrap="wrap"
           className={styles["inquiry-foot"]}
         >
-          {inquiry.kind === "question" && (
-            <Text
-              element="span"
-              size="label"
-              tone="ink-quiet"
-              weight="inherit"
-              className={styles["inquiry-hint"]}
-            >
-              {FREE_TEXT_HINT}
-            </Text>
-          )}
           {inquiry.showBack && (
             <Button
               variant="outline-hover-warn"
