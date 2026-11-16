@@ -43,7 +43,7 @@ export function PersonaMemorySection(): ReactElement {
             }
       }
       headerExtra={undefined}
-      filters={undefined}
+      count={undefined}
     >
       {lines.length === 0 ? (
         <Text element="p" size="inherit" tone="ink-quiet" weight="inherit" className="">

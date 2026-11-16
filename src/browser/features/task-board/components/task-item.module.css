@@ -1,31 +1,32 @@
-/* 行全体のボタン。値は見本 `docs/history/mockup/sidebar-task-peek-2026-10-04.html` の行（印 14px・ID 50px・題・`›` 16px）に、
-   `↻` の列を足したもの。`↻` の列は column-gap（10px）と合わせて題を 22px だけ削る幅（12px）にする。
-   題の列を `minmax(0, 1fr)` にしないと、子の内容ぶんの幅を取りに行って text-overflow が働かない。 */
+/* 行全体のボタン。値は見本 `docs/history/mockup/sidebar-task-board-2026-11-16/` の `.tk-row`（印の列 16px・題 2行まで・2段目 12px・行の高さは最小 50px・題1行で約 57px）。
+   題の列を `minmax(0, 1fr)` にしないと、子の内容ぶんの幅を取りに行って折り返せない。 */
 .task-item-row {
+  --task-title-size: calc((var(--font-label) + var(--font-body)) / 2);
   box-sizing: border-box;
   display: grid;
-  grid-template-columns: 14px 50px minmax(0, 1fr) 14px 16px;
-  --task-item-column-gap: 10px;
-  column-gap: var(--task-item-column-gap);
-  align-items: center;
+  grid-template-columns: 16px minmax(0, 1fr);
+  column-gap: var(--space-md);
+  align-items: start;
   width: 100%;
-  height: 40px;
-  padding: 0 var(--space-sm) 0 var(--space-md);
+  min-height: 50px;
+  padding: var(--space-xs) var(--space-md);
   border: none;
   border-radius: var(--radius-md);
   background: transparent;
   color: inherit;
   text-align: left;
-  text-decoration: inherit;
   cursor: pointer;
 }
 .task-item-row:hover {
   background: rgb(255 255 255 / 0.035);
 }
-.task-item-row:hover > :last-child,
-.task-item-row:focus-visible > :last-child,
-.task-item-row[aria-expanded="true"] > :last-child {
-  color: var(--accent);
+/* 進行中の行。面だけを淡く色づけ、片側の太い縁は付けない。 */
+.task-item-doing {
+  background: linear-gradient(
+    to right,
+    color-mix(in srgb, var(--accent) 16%, transparent),
+    color-mix(in srgb, var(--accent) 5%, transparent)
+  );
 }
 /* プレビューを開いている行。色だけで伝えないよう、細い枠も添える。 */
 .task-item-row[aria-expanded="true"] {
@@ -35,6 +36,36 @@
 .task-item-mark {
   display: inline-flex;
   justify-content: center;
+  padding-block-start: var(--space-2xs);
+}
+.task-item-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-width: 0;
+}
+/* 題は2行まで。文節で折り、1字だけの行を作らない。 */
+.task-item-summary {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-size: var(--task-title-size);
+  line-height: 1.35;
+  word-break: auto-phrase;
+}
+.task-item-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2xs) var(--space-md);
+  min-height: 18px;
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+}
+.task-item-waiting {
+  color: var(--ink-soft);
+  font-size: var(--font-label);
 }
 .task-item-loop {
   display: flex;
@@ -43,10 +74,4 @@
 }
 .task-item-loop-waiting {
   --task-attribute-icon-color: color-mix(in srgb, var(--state-ok) 38%, transparent);
-}
-.task-item-summary {
-  overflow: hidden;
-  font-size: var(--font-label);
-  white-space: nowrap;
-  text-overflow: ellipsis;
 }

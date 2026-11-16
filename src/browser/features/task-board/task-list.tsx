@@ -1,32 +1,28 @@
-// サイドバーの「タスク一覧」。進行中（doing）だけ先頭のカードにまとめ、残りは一覧の順で出す（todo と done は混ざったまま）。
-// `done` は薄く打ち消し線で出す。行とカードは押すとプレビューが開き、頼む口を出すのは依存が済んだ `todo` と保留だけ。
-// 絞り込みで隠れた依存も止めるので、着手できるかは絞る前の全件で判定する。
+// サイドバーの「タスク一覧」。状態の段（いま・つぎ・待ち・ドラフト・済み）に分け、段の見出しに件数を出す。
+// 0件の段は出さず、済みの段は畳んで始まる（見出しを押すと開く）。畳んだ済みの行は DOM にも ↑↓ の順にも入れない。
+// 行は押すとプレビューが開き、頼む口を出すのは依存が済んだ `todo` と保留だけ。
 // 読めない・まだ届いていないときは undefined。
 //
 // 区画には全件を並べ、入りきらない分は区画の内側でスクロールする。
 // 一覧を見渡すのは見出しの「一覧を見る」から開くモーダルの仕事で、ここは直近の並びを視界の端に置いておくだけ。
 //
-// 件数のチップで絞れる。並びは変えず、出す・出さないだけを決めてから `orderTasksForSidebar` に渡す。
-// 絞った結果が0件のときは「タスクが無い」ではなく、選んだ状態の名前を添えた一言にする（全件が0件のときと区別する）。
-//
 // 区画の枠と見出しはサイドバーの持ち物で、ここは中身だけを描く。
 
-import type { ReactElement } from "react"
+import clsx from "clsx"
+import { useState, type ReactElement } from "react"
 
 import {
   hasTaskStatus,
   type TaskSummaryItem,
   type TaskSummaryResult,
 } from "../../../shared/repository/task-summary.ts"
+import { ChevronRightIcon } from "../../components/ui/icon/icon.tsx"
 import { Text } from "../../components/ui/text/text.tsx"
 import { TaskItem, type TaskItemPeek } from "./components/task-item.tsx"
-import { TaskLegend } from "./components/task-legend.tsx"
 import { TaskPeek, type TaskPeekRun } from "./components/task-peek.tsx"
-import { TaskRunningCard } from "./components/task-running-card.tsx"
 import { TaskSkeleton } from "./components/task-skeleton.tsx"
 import { isTaskRequestable } from "./domain/task-run-prompt.ts"
-import { filterTasksForSidebar } from "./domain/task-sidebar-filter.ts"
-import { orderTasksForSidebar, type TaskSidebarOrder } from "./domain/task-sidebar-order.ts"
+import { stageTasks, TASK_STAGE_LABEL, type TaskStageGroup } from "./domain/task-stage.ts"
 import {
   taskPeekDomId,
   taskRowDomId,
@@ -35,19 +31,19 @@ import {
   type TaskPeekControl,
 } from "./hooks/use-task-peek.ts"
 import styles from "./task-board.module.css"
-import { taskListFilterLabel, type TaskListFilterStatus } from "./task-list-count.ts"
+import listStyles from "./task-list.module.css"
 
 type TaskListProps = {
   readonly tasks: TaskSummaryResult
-  readonly selectedStatus: TaskListFilterStatus
 }
 
 export function TaskList(props: TaskListProps): ReactElement {
-  const { running, rest } =
-    props.tasks.kind === "known"
-      ? orderTasksForSidebar(filterTasksForSidebar(props.tasks.items, props.selectedStatus))
-      : EMPTY_ORDER
-  const { rootRef, control: peek } = useTaskPeek([...running, ...rest].map((task) => task.id))
+  const [doneOpen, setDoneOpen] = useState(false)
+  const groups = props.tasks.kind === "known" ? stageTasks(props.tasks.items) : []
+  const shownIds = groups.flatMap((group) =>
+    group.stage === "done" && !doneOpen ? [] : group.tasks.map((task) => task.id),
+  )
+  const { rootRef, control: peek } = useTaskPeek(shownIds)
 
   if (props.tasks.kind === "loading") {
     return <TaskSkeleton />
@@ -78,19 +74,6 @@ export function TaskList(props: TaskListProps): ReactElement {
       </Text>
     )
   }
-  if (running.length === 0 && rest.length === 0 && props.selectedStatus !== "all") {
-    return (
-      <Text
-        element="p"
-        size="inherit"
-        tone="ink-quiet"
-        weight="inherit"
-        className={styles["task-empty"]}
-      >
-        {taskListFilterLabel(props.selectedStatus)}のタスクが無い
-      </Text>
-    )
-  }
 
   const context: PeekContext = {
     peek,
@@ -99,40 +82,72 @@ export function TaskList(props: TaskListProps): ReactElement {
 
   return (
     <div ref={rootRef} onKeyDown={peek.onKeyDown}>
-      <TaskLegend />
-      {running.length > 0 && (
-        <ul className={styles["task-running-list"]}>
-          {running.map((task) => (
-            <TaskRunningCard
+      {groups.map((group) => (
+        <TaskStageSection
+          key={group.stage}
+          group={group}
+          context={context}
+          doneOpen={doneOpen}
+          onToggleDone={() => {
+            setDoneOpen((open) => !open)
+          }}
+        />
+      ))}
+    </div>
+  )
+}
+
+function TaskStageSection(props: {
+  readonly group: TaskStageGroup
+  readonly context: PeekContext
+  readonly doneOpen: boolean
+  readonly onToggleDone: () => void
+}): ReactElement {
+  const { group, context } = props
+  const foldable = group.stage === "done"
+  const open = !foldable || props.doneOpen
+  const label = TASK_STAGE_LABEL[group.stage]
+  const headId = `task-stage-${group.stage}`
+  return (
+    <section className={listStyles["task-stage"]} aria-labelledby={headId}>
+      {foldable ? (
+        <button
+          type="button"
+          id={headId}
+          aria-expanded={open}
+          className={clsx(listStyles["task-stage-head"], listStyles["task-stage-fold"])}
+          onClick={props.onToggleDone}
+        >
+          <span className={listStyles["task-stage-chevron"]}>
+            <ChevronRightIcon />
+          </span>
+          {label}
+          <span className={listStyles["task-stage-count"]}>{group.tasks.length}</span>
+        </button>
+      ) : (
+        <h3 id={headId} className={listStyles["task-stage-head"]}>
+          {label}
+          <span className={listStyles["task-stage-count"]}>{group.tasks.length}</span>
+        </h3>
+      )}
+      {open && (
+        <ul className={styles["task-list"]}>
+          {group.tasks.map((task) => (
+            <TaskItem
               key={task.id}
               task={task}
               rowId={taskRowDomId(task.id)}
               peek={peekOf(task, context)}
               onToggle={() => {
-                peek.onToggle(task.id)
+                context.peek.onToggle(task.id)
               }}
             />
           ))}
         </ul>
       )}
-      <ul className={styles["task-list"]}>
-        {rest.map((task) => (
-          <TaskItem
-            key={task.id}
-            task={task}
-            rowId={taskRowDomId(task.id)}
-            peek={peekOf(task, context)}
-            onToggle={() => {
-              peek.onToggle(task.id)
-            }}
-          />
-        ))}
-      </ul>
-    </div>
+    </section>
   )
 }
-
-const EMPTY_ORDER: TaskSidebarOrder = { running: [], rest: [] }
 
 /** 行ごとのプレビューを組むのに要る、一覧全体で1つの値。 */
 type PeekContext = {

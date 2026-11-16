@@ -876,14 +876,14 @@
                           "tag": "h2",
                           "attributes": {
                             "data-level": "2",
-                            "data-color": "primary",
-                            "data-weight": "bold"
+                            "data-color": "disabled",
+                            "data-weight": "semibold"
                           },
                           "children": [
                             {
                               "tag": "span",
                               "attributes": {
-                                "data-type": "inherit",
+                                "data-type": "supporting",
                                 "data-color": "inherit"
                               },
                               "children": [
@@ -922,14 +922,14 @@
                           "tag": "h2",
                           "attributes": {
                             "data-level": "2",
-                            "data-color": "primary",
-                            "data-weight": "bold"
+                            "data-color": "disabled",
+                            "data-weight": "semibold"
                           },
                           "children": [
                             {
                               "tag": "span",
                               "attributes": {
-                                "data-type": "inherit",
+                                "data-type": "supporting",
                                 "data-color": "inherit"
                               },
                               "children": [

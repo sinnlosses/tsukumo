@@ -52,14 +52,13 @@ test.describe("タスクの一覧", () => {
     })
   }
 
-  test("ドラフトのチップで絞り、プレビューの「計画する」から確認の「頼む」を押すと計画の文面で依頼が送られる", async ({
+  test("段「ドラフト」の行のプレビューの「計画する」から確認の「頼む」を押すと計画の文面で依頼が送られる", async ({
     run,
   }) => {
     const room = await openTaskListRoomWithDraft(run, "task-list-draft-plan", [
       "task-section",
       "task-run-confirm",
     ])
-    await room.page.getByRole("button", { name: "ドラフト 1", exact: true }).click()
     await taskRow(room, "T-003").click()
     await room.page.getByRole("button", { name: "計画する", exact: true }).click()
     await room.page.getByRole("dialog", { name: "タスクの実行" }).waitFor()
@@ -71,7 +70,7 @@ test.describe("タスクの一覧", () => {
   })
 })
 
-/** 区画の行（進行中のカード）のボタン。名前は ID と題をつないだものになるので、DOM の id で当てる。 */
+/** 区画の行のボタン。名前は ID と題をつないだものになるので、DOM の id で当てる。 */
 function taskRow(room: ScenarioRoom, id: string): Locator {
   return room.page.locator(`#task-row-${id}`)
 }

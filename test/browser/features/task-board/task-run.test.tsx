@@ -64,7 +64,7 @@ const RUNNING_TURN: Partial<SessionState> = { turn: { kind: "running", startedAt
 
 /** サイドバーの区画の一覧。確認は姿と送り口が要るので store で包む。 */
 function renderList(spy: CommandSpy, overrides: Partial<SessionState>): void {
-  renderWithStore(<TaskList tasks={known(TASKS)} selectedStatus="all" />, spy, overrides)
+  renderWithStore(<TaskList tasks={known(TASKS)} />, spy, overrides)
 }
 
 /** 見出しの「一覧を見る」で開くタスクのモーダル（開いた状態で描く）。閉じる要求は `closed` に溜まる。 */
@@ -206,7 +206,6 @@ describe("タスクの実行を頼む", () => {
           task("Y-004", "hold", []),
           task("Y-005", "hold", ["Y-001"]),
         ])}
-        selectedStatus="all"
       />,
     )
 
@@ -220,7 +219,7 @@ describe("タスクの実行を頼む", () => {
   it("区画の一覧から保留を頼むと、判断を聞く旨を添えて送る", () => {
     const sent: unknown[] = []
     renderWithStore(
-      <TaskList tasks={known([...TASKS, holdTask("X-003", [], [])])} selectedStatus="all" />,
+      <TaskList tasks={known([...TASKS, holdTask("X-003", [], [])])} />,
       collectInto(sent),
     )
 
@@ -238,7 +237,7 @@ describe("タスクの実行を頼む", () => {
 
   it("ドラフトのプレビューには「計画する」「却下する」が出て、頼む口は出ない", () => {
     putSession({ ...INITIAL_SESSION_STATE, character: characterInfo() }, () => {})
-    render(<TaskList tasks={known([...TASKS, draftTask("X-004")])} selectedStatus="all" />)
+    render(<TaskList tasks={known([...TASKS, draftTask("X-004")])} />)
 
     fireEvent.click(rowOf("X-004"))
     expect(screen.getByRole("button", { name: "計画する" })).toBeDefined()
@@ -252,10 +251,7 @@ describe("タスクの実行を頼む", () => {
 
   it("ドラフトの「計画する」は確認の「頼む」で計画の文面を送り、プレビューを閉じる", () => {
     const sent: unknown[] = []
-    renderWithStore(
-      <TaskList tasks={known([...TASKS, draftTask("X-004")])} selectedStatus="all" />,
-      collectInto(sent),
-    )
+    renderWithStore(<TaskList tasks={known([...TASKS, draftTask("X-004")])} />, collectInto(sent))
 
     fireEvent.click(rowOf("X-004"))
     fireEvent.click(screen.getByRole("button", { name: "計画する" }))
@@ -274,10 +270,7 @@ describe("タスクの実行を頼む", () => {
 
   it("ドラフトの「却下する」は却下の文面を送り、キャンセルでは送らずプレビューが残る", () => {
     const sent: unknown[] = []
-    renderWithStore(
-      <TaskList tasks={known([...TASKS, draftTask("X-004")])} selectedStatus="all" />,
-      collectInto(sent),
-    )
+    renderWithStore(<TaskList tasks={known([...TASKS, draftTask("X-004")])} />, collectInto(sent))
 
     fireEvent.click(rowOf("X-004"))
     fireEvent.click(screen.getByRole("button", { name: "却下する" }))

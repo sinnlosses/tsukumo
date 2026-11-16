@@ -24,66 +24,15 @@
 .task-skeleton-bar:nth-child(3) {
   animation-delay: 0.4s;
 }
-/* 進行中（doing）のタスクのカード（一覧の先頭）。2件以上あれば、この枚数ぶんカードが並ぶ。 */
-.task-running-list {
-  margin: 0 0 var(--space-md);
-  padding: 0;
-  list-style: none;
-}
-/* カード全体が押せるボタン。ボタンの既定の字と揃えを落とす。 */
-.task-running-card {
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: var(--space-sm);
-  width: 100%;
-  --task-running-card-pad-inline: 14px;
-  /* 左右は上下 12px より 2px 広い */
-  padding: var(--space-md) var(--task-running-card-pad-inline);
-  border-radius: var(--radius-lg);
-  background: var(--surface-accent);
-  /* 差し色寄りの枠（素の accent ではなく rule に6割混ぜる）。 */
-  border: 1px solid color-mix(in srgb, var(--rule), var(--accent) 60%);
-  color: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-.task-running-card:hover,
-.task-running-card[aria-expanded="true"] {
-  border-color: var(--accent);
-}
-/* カードの中のIDは、一覧の行の等幅ID（`.task-item .task-id`）と同じ段（`--font-label`）にしつつ、字を差し色寄りにする。
-   一覧の行の「薄く」は opacity だが、地が差し色なので同じ opacity のままだと沈んで読めない。 */
-.task-running-card .task-id {
-  font-size: var(--font-label);
-  color: color-mix(in srgb, var(--ink-quiet), var(--accent) 40%);
-}
+/* 段ごとの行の一覧。ul の既定の余白と行頭の印を落とす。 */
 .task-list {
-  /* 区画の一覧。ul の既定の余白と行頭の印を落とす。
-     上のマージンは 0 で、直前の要素（`.task-count-chips` か `.task-running-list`）の margin-bottom（12px）が隣接マージンの畳み込みでそのまま間隔になる。 */
   margin: 0;
   list-style: none;
   padding-left: 0;
 }
-/* 行どうしは 1px 空ける（罫線は引かない。見本 `docs/history/mockup/sidebar-task-peek-2026-10-04.html`）。 */
+/* 行どうしは 2px 空ける（罫線は引かない）。 */
 .task-item + .task-item {
-  margin-top: calc(var(--space-2xs) / 2);
-}
-/* done は色を薄くし、打ち消し線を引く。
-   テキスト装飾は行のボタンの子（ID・summary）にも見た目上つながって出る（CSS の text-decoration は子孫の描画にまたがる）。
-   プレビューは `position: fixed` なので打ち消し線はつながらない。 */
-.task-item.task-done {
-  color: var(--ink-quiet);
-  text-decoration: line-through;
-}
-/* 行の右端の `›`。押せることの合図で、ホバー・フォーカス・プレビューを開いている行でだけ見える。 */
-.task-row-chevron {
-  color: transparent;
-}
-/* 色が既に薄いので、IDの透けを重ねるとコントラストが 4.5:1 を割る。 */
-.task-item.task-done .task-id {
-  opacity: 1;
+  margin-top: var(--space-2xs);
 }
 /* タスクのIDは機械が付けた名前なので等幅。summary（13px）より一段小さい `--font-label` にして、印・チップ・札と同じ段に揃える。
    `flex: none` と `white-space: nowrap` が要る。
@@ -91,7 +40,6 @@
 .task-item .task-id {
   flex: none;
   overflow: hidden;
-  opacity: 0.8;
   font-family: var(--font-mono);
   font-size: var(--font-label);
   white-space: nowrap;

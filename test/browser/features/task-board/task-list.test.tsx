@@ -7,10 +7,9 @@ import { loadTaskBody } from "../../../../src/browser/features/task-board/deferr
 import { taskStateOf } from "../../../../src/browser/features/task-board/domain/task-board-content.ts"
 import { TaskList } from "../../../../src/browser/features/task-board/task-list.tsx"
 import { useTaskBoardRequest } from "../../../../src/browser/stores/task-board-request.ts"
-import {
-  hasTaskStatus,
-  type TaskSummaryItem,
-  type TaskSummaryResult,
+import type {
+  TaskSummaryItem,
+  TaskSummaryResult,
 } from "../../../../src/shared/repository/task-summary.ts"
 import { knownTaskSummary, taskStatusOfWord } from "../../../fixture/session-state.ts"
 
@@ -91,37 +90,37 @@ const TASKS: readonly TaskSummaryItem[] = [
 
 describe("taskList", () => {
   it("tasks が不明のときは一覧の代わりに「不明」を出す", () => {
-    render(<TaskList tasks={{ kind: "unknown" }} selectedStatus="all" />)
+    render(<TaskList tasks={{ kind: "unknown" }} />)
 
     expect(screen.getByText("不明")).toBeDefined()
   })
 
   it("tasks が読み込み中のときはスケルトンを出し、「不明」は出さない", () => {
-    render(<TaskList tasks={{ kind: "loading" }} selectedStatus="all" />)
+    render(<TaskList tasks={{ kind: "loading" }} />)
 
     expect(screen.getByRole("status", { name: "タスクを読み込み中" })).toBeDefined()
     expect(screen.queryByText("不明")).toBeNull()
   })
 
   it("空配列のときは「タスクが無い」を出す", () => {
-    render(<TaskList tasks={known([])} selectedStatus="all" />)
+    render(<TaskList tasks={known([])} />)
 
     expect(screen.getByText("タスクが無い")).toBeDefined()
   })
 
   it.each([
-    { status: "todo", done: false, hasMark: true },
-    { status: "draft", done: false, hasMark: true },
-    { status: "done", done: true, hasMark: true },
-    { status: "archived", done: false, hasMark: true },
-    { status: undefined, done: false, hasMark: false },
-  ])("status が $status の行は印を出すのが $hasMark で、薄く打ち消すのは $done", (expected) => {
+    { status: "todo", hasMark: true },
+    { status: "draft", hasMark: true },
+    { status: "done", hasMark: true },
+    { status: "archived", hasMark: true },
+    { status: undefined, hasMark: false },
+  ])("status が $status の行は印を出すのが $hasMark", (expected) => {
     const items = [{ ...taskOf("X-010", "todo"), status: taskStatusOfWord(expected.status) }]
-    render(<TaskList tasks={known(items)} selectedStatus="all" />)
+    render(<TaskList tasks={known(items)} />)
+    openDoneStage()
 
     const item = screen.getByRole("listitem")
     expect(item.querySelector("[title] svg") !== null).toBe(expected.hasMark)
-    expect(item.className.includes("task-done")).toBe(expected.done)
   })
 
   it.each([
@@ -130,7 +129,7 @@ describe("taskList", () => {
     { name: "hold", status: "hold", waitingFor: [], word: "保留" },
   ])("$name の行は印の title が $word で、「未着手」「依存待ち」を出さない", (expected) => {
     const items = [{ ...taskOf("X-010", expected.status), waitingFor: expected.waitingFor }]
-    render(<TaskList tasks={known(items)} selectedStatus="all" />)
+    render(<TaskList tasks={known(items)} />)
 
     const item = screen.getByRole("listitem")
     expect(item.querySelector(`[title="${expected.word}"]`) !== null).toBe(true)
@@ -182,7 +181,8 @@ describe("taskList", () => {
         loopable: expected.loopable,
       },
     ]
-    render(<TaskList tasks={known(items)} selectedStatus="all" />)
+    render(<TaskList tasks={known(items)} />)
+    openDoneStage()
 
     const item = screen.getByRole("listitem")
     const shown = item.querySelector(".task-item-loop") !== null
@@ -193,38 +193,42 @@ describe("taskList", () => {
     })
   })
 
-  it("一覧の上に凡例を出し、行の無いとき（不明・タスクが無い）は出さない", () => {
-    const { unmount } = render(<TaskList tasks={known(TASKS)} selectedStatus="all" />)
-    for (const word of ["着手可", "待ち", "保留", "ループ可"]) {
-      expect(screen.getByText(word, { exact: false })).toBeDefined()
-    }
-    unmount()
+  it("段の見出しに件数を出し、0件の段は出さない", () => {
+    const items = [...TASKS, taskOf("X-005", "todo")]
+    render(<TaskList tasks={known(items)} />)
 
-    render(<TaskList tasks={known([])} selectedStatus="all" />)
-    expect(screen.queryByText("ループ可", { exact: false })).toBeNull()
+    const heads = screen.getAllByRole("heading", { level: 3 }).map((head) => head.textContent)
+    expect(heads).toEqual(["いま1", "つぎ2", "待ち1"])
+    expect(screen.getByRole("button", { name: /^済み/ }).textContent).toBe("済み1")
+    expect(screen.queryByText("ドラフト")).toBeNull()
   })
 
-  it("ドラフトで絞ると他の行は消える", () => {
-    const firstTask = TASKS.at(0)
-    if (firstTask === undefined) {
-      throw new Error("タスクのフィクスチャが空")
-    }
-    const draft: TaskSummaryItem = { ...firstTask, id: "X-009", status: taskStatusOfWord("draft") }
-    render(<TaskList tasks={known([...TASKS, draft])} selectedStatus="draft" />)
+  it("済みの段は閉じて始まり、見出しを押すと開き、もう一度押すと閉じる", () => {
+    render(<TaskList tasks={known(TASKS)} />)
+    const fold = screen.getByRole("button", { name: /^済み/ })
 
-    expect(screen.getAllByRole("listitem")).toHaveLength(1)
-    expect(screen.getByText("X-009")).toBeDefined()
+    expect(fold.getAttribute("aria-expanded")).toBe("false")
+    expect(document.getElementById("task-row-X-002")).toBeNull()
+
+    fireEvent.click(fold)
+    expect(fold.getAttribute("aria-expanded")).toBe("true")
+    expect(row("X-002")).toBeDefined()
+
+    fireEvent.click(fold)
+    expect(document.getElementById("task-row-X-002")).toBeNull()
   })
 
-  it("絞った結果が0件のときは選んだ状態の名前を添えた一言を出す", () => {
-    const doneOnly = TASKS.filter((task) => hasTaskStatus(task, "done"))
-    render(<TaskList tasks={known(doneOnly)} selectedStatus="open" />)
+  it("行は1段目に印と題、2段目に番号を持つ", () => {
+    render(<TaskList tasks={known([taskOf("X-001", "todo")])} />)
 
-    expect(screen.getByText("未完了のタスクが無い")).toBeDefined()
+    const button = row("X-001")
+    expect(button.querySelector("[title] svg")).not.toBeNull()
+    expect(button.textContent).toContain("架空のタスク X-001")
+    expect(button.querySelector(".task-id")?.textContent).toBe("X-001")
   })
 
   it("行を押すとプレビューが開き、もう一度押すと閉じる", () => {
-    render(<TaskList tasks={known(TASKS)} selectedStatus="all" />)
+    render(<TaskList tasks={known(TASKS)} />)
 
     fireEvent.click(row("X-001"))
     expect(row("X-001").getAttribute("aria-expanded")).toBe("true")
@@ -246,7 +250,7 @@ describe("taskList", () => {
         body: "架空の本文の頭。\n\n架空の続き。",
       },
     ]
-    render(<TaskList tasks={known(items)} selectedStatus="all" />)
+    render(<TaskList tasks={known(items)} />)
 
     fireEvent.click(row("X-007"))
 
@@ -258,7 +262,7 @@ describe("taskList", () => {
     expect(text).not.toContain("loopable:Y")
   })
 
-  it("行には難しさ・ラベルを出さず、loopable は Y のときだけ ∞ の印で出す", () => {
+  it("行の2段目には難しさの語を出し、ラベルは出さず、loopable は Y のときだけ ∞ の印で出す", () => {
     const items: readonly TaskSummaryItem[] = [
       {
         ...taskOf("X-011", "todo"),
@@ -268,21 +272,17 @@ describe("taskList", () => {
       },
       { ...taskOf("X-012", "todo"), difficulty: "opus", loopable: "N" },
     ]
-    render(<TaskList tasks={known(items)} selectedStatus="all" />)
+    render(<TaskList tasks={known(items)} />)
 
-    for (const id of ["X-011", "X-012"]) {
-      expect(row(id).querySelector("[data-attribute]")).toBeNull()
-    }
+    expect(row("X-011").querySelector("[data-attribute='difficulty']")?.textContent).toBe("sonnet")
+    expect(row("X-012").querySelector("[data-attribute='difficulty']")?.textContent).toBe("opus")
     expect(row("X-011").querySelector("[role='img']")?.getAttribute("aria-label")).toBe("ループ可")
     expect(row("X-012").querySelector("[role='img']")).toBeNull()
-    for (const word of ["sonnet", "opus", "loop", "任意のタグ"]) {
-      expect(row("X-011").textContent).not.toContain(word)
-      expect(row("X-012").textContent).not.toContain(word)
-    }
+    expect(row("X-011").textContent).not.toContain("任意のタグ")
   })
 
-  it("進行中のカードを押しても同じプレビューが開く", () => {
-    render(<TaskList tasks={known(TASKS)} selectedStatus="all" />)
+  it("進行中の行を押しても同じプレビューが開く", () => {
+    render(<TaskList tasks={known(TASKS)} />)
 
     fireEvent.click(row("X-004"))
 
@@ -295,7 +295,7 @@ describe("taskList", () => {
       ...TASKS,
       { ...taskOf("X-005", "todo"), dependencies: ["X-001", "X-009"], waitingFor: ["X-001"] },
     ]
-    render(<TaskList tasks={known(items)} selectedStatus="all" />)
+    render(<TaskList tasks={known(items)} />)
 
     fireEvent.click(row("X-001"))
     expect(peek()?.textContent).not.toContain("関わる")
@@ -304,23 +304,34 @@ describe("taskList", () => {
     expect(peek()?.textContent).toContain("関わる X-001, X-009")
   })
 
-  it("開いている間は ↑↓ で隣の行へ移り、端では止まる", () => {
-    render(<TaskList tasks={known(TASKS)} selectedStatus="all" />)
+  it("開いている間は ↑↓ で画面の上からの順に隣の行へ移り、端では止まる", () => {
+    render(<TaskList tasks={known(TASKS)} />)
 
-    fireEvent.click(row("X-001"))
-    fireEvent.keyDown(row("X-001"), { key: "ArrowDown" })
-    expect(peekTitle()).toBe("X-002 の詳細")
-    expect(document.activeElement).toBe(row("X-002"))
+    fireEvent.click(row("X-004"))
+    fireEvent.keyDown(row("X-004"), { key: "ArrowDown" })
+    expect(peekTitle()).toBe("X-001 の詳細")
+    expect(document.activeElement).toBe(row("X-001"))
 
-    fireEvent.keyDown(row("X-002"), { key: "ArrowUp" })
     fireEvent.keyDown(row("X-001"), { key: "ArrowUp" })
     expect(peekTitle()).toBe("X-004 の詳細")
     fireEvent.keyDown(row("X-004"), { key: "ArrowUp" })
     expect(peekTitle()).toBe("X-004 の詳細")
   })
 
+  it("↑↓ は畳んだ済みの段を飛ばし、開いた済みの段へは進む", () => {
+    render(<TaskList tasks={known(TASKS)} />)
+
+    fireEvent.click(row("X-003"))
+    fireEvent.keyDown(row("X-003"), { key: "ArrowDown" })
+    expect(peekTitle()).toBe("X-003 の詳細")
+
+    openDoneStage()
+    fireEvent.keyDown(row("X-003"), { key: "ArrowDown" })
+    expect(peekTitle()).toBe("X-002 の詳細")
+  })
+
   it("閉じている間の ↑↓ ではプレビューを開かない", () => {
-    render(<TaskList tasks={known(TASKS)} selectedStatus="all" />)
+    render(<TaskList tasks={known(TASKS)} />)
 
     fireEvent.keyDown(row("X-001"), { key: "ArrowDown" })
 
@@ -328,45 +339,56 @@ describe("taskList", () => {
   })
 
   it("Esc と「×」で閉じ、押した行へフォーカスを戻す", () => {
-    render(<TaskList tasks={known(TASKS)} selectedStatus="all" />)
+    render(<TaskList tasks={known(TASKS)} />)
 
     fireEvent.click(row("X-001"))
     fireEvent.keyDown(document, { key: "Escape" })
     expect(peek()).toBeNull()
     expect(document.activeElement).toBe(row("X-001"))
 
-    fireEvent.click(row("X-002"))
+    fireEvent.click(row("X-003"))
     fireEvent.click(screen.getByRole("button", { name: "閉じる" }))
     expect(peek()).toBeNull()
-    expect(document.activeElement).toBe(row("X-002"))
+    expect(document.activeElement).toBe(row("X-003"))
   })
 
-  it("開いている行が絞り込みで消えたら閉じ、戻しても開き直さない", () => {
-    const { rerender } = render(<TaskList tasks={known(TASKS)} selectedStatus="all" />)
+  it("開いている行が畳んだ段に隠れたら閉じ、開き直しても開き直さない", () => {
+    render(<TaskList tasks={known(TASKS)} />)
 
-    fireEvent.click(row("X-001"))
-    rerender(<TaskList tasks={known(TASKS)} selectedStatus="done" />)
+    openDoneStage()
+    fireEvent.click(row("X-002"))
+    expect(peekTitle()).toBe("X-002 の詳細")
+
+    openDoneStage()
     expect(peek()).toBeNull()
 
-    rerender(<TaskList tasks={known(TASKS)} selectedStatus="all" />)
+    openDoneStage()
     expect(peek()).toBeNull()
   })
 
   it("「全文を開く」はタスクのモーダルをそのタスクを選んで開くよう頼み、プレビューを閉じる", () => {
-    render(<TaskList tasks={known(TASKS)} selectedStatus="all" />)
+    render(<TaskList tasks={known(TASKS)} />)
 
-    fireEvent.click(row("X-002"))
+    fireEvent.click(row("X-001"))
     fireEvent.click(screen.getByRole("button", { name: "全文を開く ↗" }))
 
     expect(useTaskBoardRequest.getState().request).toEqual({
       kind: "open",
-      focus: { kind: "task", id: "X-002" },
+      focus: { kind: "task", id: "X-001" },
     })
     expect(peek()).toBeNull()
   })
 })
 
-/** 行（カード）のボタン。 */
+/** 済みの段の見出しを押して開閉する。 */
+function openDoneStage(): void {
+  const fold = screen.queryByRole("button", { name: /^済み/ })
+  if (fold !== null) {
+    fireEvent.click(fold)
+  }
+}
+
+/** 行のボタン。 */
 function row(id: string): HTMLElement {
   const element = document.getElementById(`task-row-${id}`)
   if (element === null) {

@@ -87,36 +87,21 @@ describe("Sidebar のタスクの節", () => {
     expect(section.textContent).toContain("一覧を見る")
   })
 
-  it("チップは1つだけ選べ、押し直しても変わらず、「すべて」で外れ、別のチップで切り替わる", () => {
+  it("見出しの帯は題と件数・最新化・一覧を見るだけで、件数のチップと凡例は無い", () => {
     renderSidebar({
-      tasks: knownTaskSummary([chipTask("X-001", "todo"), chipTask("X-002", "done")]),
+      tasks: knownTaskSummary([listTask("X-001", "todo"), listTask("X-002", "done")]),
     })
-    const shown = (): readonly string[] =>
-      [...document.querySelectorAll("[id^='task-row-']")].map((element) => element.id)
-    const pressed = (): readonly string[] =>
-      screen.getAllByRole("button", { pressed: true }).map((button) => button.textContent ?? "")
 
-    expect(pressed()).toEqual(["すべて 2"])
-
-    fireEvent.click(screen.getByRole("button", { name: "未完了 1" }))
-    expect(pressed()).toEqual(["未完了 1"])
-    expect(shown()).toEqual(["task-row-X-001"])
-
-    fireEvent.click(screen.getByRole("button", { name: "未完了 1" }))
-    expect(pressed()).toEqual(["未完了 1"])
-    expect(shown()).toEqual(["task-row-X-001"])
-
-    fireEvent.click(screen.getByRole("button", { name: "完了 1" }))
-    expect(pressed()).toEqual(["完了 1"])
-    expect(shown()).toEqual(["task-row-X-002"])
-
-    fireEvent.click(screen.getByRole("button", { name: "すべて 2" }))
-    expect(pressed()).toEqual(["すべて 2"])
-    expect(shown()).toEqual(["task-row-X-001", "task-row-X-002"])
+    const section = screen.getByRole("region", { name: "タスク" })
+    const heading = section.querySelector("h2")
+    expect(heading?.textContent).toContain("タスク")
+    expect(heading?.textContent).toContain("2")
+    expect(screen.queryByRole("button", { pressed: true })).toBeNull()
+    expect(section.textContent).not.toContain("ループ可")
   })
 })
 
-function chipTask(id: string, status: string): TaskSummaryItem {
+function listTask(id: string, status: string): TaskSummaryItem {
   return {
     id,
     summary: `架空のタスク ${id}`,

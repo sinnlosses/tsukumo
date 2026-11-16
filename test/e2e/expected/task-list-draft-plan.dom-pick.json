@@ -1,10 +1,8 @@
 {
   "task-section": [
     { "tag": "section", "attributes": { "aria-label": "タスク" }, "children": [
-      { "tag": "ul", "attributes": { "aria-label": "絞り込み" }, "children": [
-        { "tag": "button", "attributes": { "aria-pressed": "true" }, "children": ["ドラフト", "1"] }
-      ] },
-      { "tag": "button", "attributes": { "aria-haspopup": "dialog", "aria-expanded": "false" }, "children": ["T-003", "架空のタスク（ドラフト）"] }
+      { "tag": "h3", "children": ["ドラフト", "1"] },
+      { "tag": "button", "attributes": { "aria-haspopup": "dialog", "aria-expanded": "false" }, "children": ["架空のタスク（ドラフト）", "T-003"] }
     ] }
   ]
 }

@@ -1,4 +1,4 @@
-// サイドバーの区画1つぶんの枠。見出し（`h2`）と `filters` は `.sidebar-block-head` にまとめて止め、
+// サイドバーの区画1つぶんの枠。見出し（`h2`。小さいラベルの段）は `.sidebar-block-head` に止め、
 // 中身だけ `.sidebar-block-scroll` で包んで内側にスクロールさせる。
 //
 // `action` を渡した区画は、見出しの右端にボタンが並ぶ（タスク一覧の「一覧を見る」）。
@@ -27,8 +27,8 @@ type SidebarSectionProps = {
   readonly action?: SidebarSectionAction
   /** 見出しの右端で `action` の左に並べる部品。無ければ `undefined`。 */
   readonly headerExtra?: ReactNode
-  /** 見出しの下に続けて止める行（タスク一覧の絞り込みのチップ）。無ければ何も足さない。 */
-  readonly filters?: ReactNode
+  /** 見出しの題の横に出す件数（タスク一覧）。無ければ何も足さない。 */
+  readonly count?: number
   readonly children: ReactNode
 }
 
@@ -40,19 +40,22 @@ export function SidebarSection(props: SidebarSectionProps): ReactElement {
       <div className={styles["sidebar-block-head"]} data-scrolled={scrolled}>
         <Heading
           level={2}
-          size="subheading"
-          tone="ink"
-          weight="bold"
+          size="label"
+          tone="ink-quiet"
+          weight="semibold"
           className={styles["sidebar-block-heading"]}
         >
           <Text
             element="span"
-            size="inherit"
+            size="label"
             tone="inherit"
             weight="inherit"
             className={styles["sidebar-block-title"]}
           >
             {props.title}
+            {props.count !== undefined && (
+              <span className={styles["sidebar-block-count"]}>{props.count}</span>
+            )}
           </Text>
           {props.headerExtra}
           {props.action !== undefined && (
@@ -69,7 +72,6 @@ export function SidebarSection(props: SidebarSectionProps): ReactElement {
             </Button>
           )}
         </Heading>
-        {props.filters}
       </div>
       <div
         ref={(element) => {

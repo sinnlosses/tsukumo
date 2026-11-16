@@ -1,9 +1,9 @@
-// 区画の一覧1件分（進行中を除いた「残り」）。行全体が1つのボタンで、押すとプレビューが開く。
-// 印・ID・題（1行で末尾「…」）・∞・`›` の5列の grid。属性のうち `loopable` だけを ∞ で出し（難しさは出さない）、ループ可の `todo` と `hold` の行に限る。
+// 区画の一覧1件分。行全体が1つのボタンで、押すとプレビューが開く。
+// 1段目は状態の印と題（2行まで）、2段目は待ちの相手・ID・∞・難しさの語。
+// ∞ はループ可の `todo` と `hold` の行に限り、難しさは決まっているときだけ出す。
 // 開いているときは、プレビューをボタンの後ろ（同じ `<li>` の中）に置く。
 
 import clsx from "clsx"
-import { ChevronRight } from "lucide-react"
 import type { ReactElement, ReactNode } from "react"
 
 import { hasTaskStatus, type TaskSummaryItem } from "../../../../shared/repository/task-summary.ts"
@@ -11,7 +11,7 @@ import { codeSpanParts } from "../../../domain/code-span.ts"
 import { taskStateOf } from "../domain/task-board-content.ts"
 import taskBoardStyles from "../task-board.module.css"
 import { TaskSummaryText } from "../task-summary-text.tsx"
-import { TaskLoopMark } from "./task-attribute.tsx"
+import { TaskDifficultyWord, TaskLoopMark } from "./task-attribute.tsx"
 import styles from "./task-item.module.css"
 import { TaskState } from "./task-state.tsx"
 
@@ -22,50 +22,52 @@ export function TaskItem(props: {
   readonly onToggle: () => void
 }): ReactElement {
   const open = props.peek.kind === "open"
+  const state = taskStateOf(props.task)
+  const waitingText = state.kind === "blocked" || state.kind === "hold" ? state.text : undefined
   return (
-    <li
-      className={clsx(
-        taskBoardStyles["task-item"],
-        hasTaskStatus(props.task, "done") && taskBoardStyles["task-done"],
-      )}
-    >
+    <li className={taskBoardStyles["task-item"]}>
       <button
         type="button"
         id={props.rowId}
         aria-haspopup="dialog"
         aria-expanded={open}
         aria-controls={props.peek.kind === "open" ? props.peek.controls : undefined}
-        className={styles["task-item-row"]}
+        className={clsx(
+          styles["task-item-row"],
+          state.kind === "doing" && styles["task-item-doing"],
+        )}
         onClick={props.onToggle}
       >
         <span className={styles["task-item-mark"]}>
-          {props.task.status.kind !== "none" && (
-            <TaskState state={taskStateOf(props.task)} display="mark" />
-          )}
+          {props.task.status.kind !== "none" && <TaskState state={state} display="mark" />}
         </span>
-        <span className={taskBoardStyles["task-id"]}>{props.task.id}</span>
-        <span className={styles["task-item-summary"]}>
-          <TaskSummaryText parts={codeSpanParts(props.task.summary)} />
+        <span className={styles["task-item-text"]}>
+          <span className={styles["task-item-summary"]}>
+            <TaskSummaryText parts={codeSpanParts(props.task.summary)} />
+          </span>
+          <span className={styles["task-item-meta"]}>
+            {waitingText !== undefined && (
+              <span className={styles["task-item-waiting"]}>{waitingText}</span>
+            )}
+            <span className={taskBoardStyles["task-id"]}>{props.task.id}</span>
+            {showsLoop(props.task) && <TaskRowLoop task={props.task} />}
+            {props.task.difficulty !== undefined && (
+              <TaskDifficultyWord difficulty={props.task.difficulty} scale={false} />
+            )}
+          </span>
         </span>
-        <TaskRowLoop task={props.task} />
-        <ChevronRight
-          className={taskBoardStyles["task-row-chevron"]}
-          size={14}
-          strokeWidth={2}
-          aria-hidden="true"
-        />
       </button>
       {props.peek.kind === "open" && props.peek.element}
     </li>
   )
 }
 
-/** `todo` と `hold` の行の ∞ 列。列は常に埋め、ループ可の `todo`・`hold` 以外では空の枠だけを置く。 */
+function showsLoop(task: TaskSummaryItem): boolean {
+  return (hasTaskStatus(task, "todo") || hasTaskStatus(task, "hold")) && task.loopable === "Y"
+}
+
 function TaskRowLoop(props: { readonly task: TaskSummaryItem }): ReactElement {
   const { task } = props
-  if ((!hasTaskStatus(task, "todo") && !hasTaskStatus(task, "hold")) || task.loopable !== "Y") {
-    return <span aria-hidden="true" />
-  }
   const waiting = hasTaskStatus(task, "hold") || task.waitingFor.length > 0
   return (
     <span

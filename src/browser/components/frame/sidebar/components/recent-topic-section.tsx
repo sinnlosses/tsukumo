@@ -23,7 +23,7 @@ export function RecentTopicSection(): ReactElement {
       extraClass={sidebarStyles["sidebar-block-chat"]}
       action={undefined}
       headerExtra={undefined}
-      filters={undefined}
+      count={undefined}
     >
       {topics.length === 0 ? (
         <Text element="p" size="inherit" tone="ink-quiet" weight="inherit" className="">

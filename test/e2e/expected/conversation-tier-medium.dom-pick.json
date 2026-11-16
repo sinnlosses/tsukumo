@@ -2,8 +2,8 @@
   "sidebar": [
     { "tag": "aside", "attributes": { "data-region": "sidebar", "aria-label": "サイドバー" }, "children": [
       { "tag": "section", "attributes": { "aria-label": "タスク" }, "children": [
-        { "tag": "button", "attributes": { "aria-pressed": "true" }, "children": ["すべて", "3"] },
-        { "tag": "button", "children": ["進行中", "T-003", "架空のタスク（進行中）"] }
+        { "tag": "h3", "children": ["いま", "1"] },
+        { "tag": "button", "children": ["架空のタスク（進行中）", "T-003"] }
       ] },
       { "tag": "button", "attributes": { "aria-label": "コンテキスト 61%（122k / 200k）" } },
       { "tag": "button", "attributes": { "aria-label": "5時間 34%" } },

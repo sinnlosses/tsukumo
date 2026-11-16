@@ -32,6 +32,7 @@ describe("font-size", () => {
       "inherit",
       "var(--balloon-past-scale)",
       "var(--inline-code-size)",
+      "var(--task-title-size)",
     ]
     const rejected = [
       "12px",
@@ -55,6 +56,7 @@ const LOCAL_FONT_SIZE_VARIABLES = [
   "--inline-code-size",
   "--balloon-latest-scale",
   "--balloon-past-scale",
+  "--task-title-size",
 ] as const
 
 function isAllowedFontSize(value: string): boolean {

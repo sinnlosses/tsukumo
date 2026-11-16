@@ -11,7 +11,7 @@
   padding: 0 var(--block-inline-padding);
   font-size: var(--font-secondary);
 }
-/* 見出しと絞り込みの行（`filters`）をまとめた、スクロールしても上に止まる帯。
+/* 見出しの、スクロールしても上に止まる帯。
    左右の負のマージンは `--block-bleed` と `.sidebar-block` の左右の余白を打ち消して帯を領域の枠いっぱいに広げ、
    左右の padding は同じ値を取り戻して見出しの左右端を一覧の左右端にそろえる。
    `--block-bleed` は区画の外側がすでに領域の縁まで出ている分を引くための値で、既定は領域の余白。 */
@@ -22,7 +22,7 @@
   flex: 0 0 auto;
   --head-bleed: var(--block-bleed, var(--region-padding));
   margin: 0 calc(-1 * var(--head-bleed) - var(--block-inline-padding));
-  padding: var(--space-lg) calc(var(--head-bleed) + var(--block-inline-padding)) var(--space-md);
+  padding: var(--space-sm) calc(var(--head-bleed) + var(--block-inline-padding)) var(--space-xs);
 }
 .sidebar-block-head[data-scrolled="true"] {
   border-bottom: 1px solid var(--rule);
@@ -35,6 +35,13 @@
   gap: var(--space-sm);
   flex: 0 0 auto;
   margin: 0;
+  letter-spacing: 0.04em;
+}
+.sidebar-block-count {
+  margin-inline-start: var(--space-sm);
+  font-family: var(--font-mono);
+  font-weight: 500;
+  letter-spacing: 0;
 }
 .sidebar-block p {
   margin: var(--space-xs) 0;
