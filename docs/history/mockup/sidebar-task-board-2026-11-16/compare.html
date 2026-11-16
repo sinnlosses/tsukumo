@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>サイドバーとタスク一覧の課題と3案（2026-11-16）</title>
+    <link rel="stylesheet" href="../conversation-directions-2026-11-15/compare.css" />
+    <link rel="stylesheet" href="compare.css" />
+  </head>
+  <!--
+    サイドバーとタスク一覧モーダルの課題（今の画面を疑似セッションで撮って測ったもの）と、
+    印・語・行の形を統一したうえでの3案（index.html の ?design=a|b|c）を、同じ場面・同じ大きさで比較するページ。
+    画は見本をそのまま縮小して出す。案ごとの文と数は compare.js が持ち、数は 1400×900 の見本を実ブラウザで測った値。
+    ?view=rest|task|list|draft   場面
+    ?size=1400x900|1920x1080     見本の大きさ
+    ?cols=1|2|3                  並べる列の数
+  -->
+  <body>
+    <svg class="sprite" width="0" height="0" aria-hidden="true">
+      <defs>
+        <g id="tk-doing"><circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="4.5" fill="currentColor" stroke="none" /></g>
+        <g id="tk-ready"><circle cx="12" cy="12" r="10" /></g>
+        <g id="tk-blocked"><path d="M5 22h14M5 2h14M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2" /></g>
+        <g id="tk-hold"><circle cx="12" cy="12" r="10" /><path d="M10 15V9M14 15V9" /></g>
+        <g id="tk-draft"><circle cx="12" cy="12" r="10" stroke-dasharray="3.4 3.58" /></g>
+        <g id="tk-done"><circle cx="12" cy="12" r="10" /><path d="m9 12 2 2 4-4" /></g>
+        <g id="tk-loop"><path d="M6 16c5 0 7-8 12-8a4 4 0 0 1 0 8c-5 0-7-8-12-8a4 4 0 1 0 0 8" /></g>
+        <g id="tk-refresh"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8M21 3v5h-5M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16M8 16H3v5" /></g>
+        <g id="tk-widen"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" /></g>
+        <g id="tk-close"><path d="M18 6 6 18M6 6l12 12" /></g>
+        <g id="tk-send"><path d="m5 12 7-7 7 7M12 19V5" /></g>
+      </defs>
+    </svg>
+
+    <header class="top">
+      <div class="top-text">
+        <h1>サイドバーとタスク一覧の課題と3案</h1>
+        <p>
+          今の画面を疑似セッション（架空のタスク15件）で撮影・計測して課題を抽出し、印・語・行の形を統一したうえで構造の異なる3案を用意した。画は見本をそのまま縮小したもので、押すと実寸で開く。中身はすべて架空。
+        </p>
+      </div>
+      <div class="controls">
+        <div class="seg" data-control="view" role="group" aria-label="場面">
+          <button type="button" data-value="rest">通常</button>
+          <button type="button" data-value="task">詳細</button>
+          <button type="button" data-value="list">一覧</button>
+          <button type="button" data-value="draft">ドラフトの分類</button>
+        </div>
+        <div class="seg" data-control="size" role="group" aria-label="見本の大きさ">
+          <button type="button" data-value="1400x900">1400×900</button>
+          <button type="button" data-value="1920x1080">1920×1080</button>
+        </div>
+        <div class="seg" data-control="cols" role="group" aria-label="並べる列の数">
+          <button type="button" data-value="1">1列</button>
+          <button type="button" data-value="2">2列</button>
+          <button type="button" data-value="3">3列</button>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="summary" aria-labelledby="issue-title">
+        <h2 id="issue-title">今の画面の課題</h2>
+        <p>
+          設計のレビューと検出器を別々の担当に分け、互いの結果を見せずに評価した。設計のレビューは Nielsen の10項目で 22/40 点、最低は「一貫性」の 1/4 点。検出器（Impeccable）の指摘は1件（<code>task-body.module.css:93</code> の片側の太い縁）。24×24px を下回る操作対象は 0 件。
+        </p>
+        <ol class="issues" id="issues"></ol>
+      </section>
+
+      <section class="summary" aria-labelledby="base-title">
+        <h2 id="base-title">3案に共通の土台: 印・語・行の形の統一</h2>
+        <p>
+          どの案を選択しても共通で適用する。状態の印は円を基調にした6種に統一し、色は「差し色＝進行中・着手可」「琥珀＝保留」「灰＝その他」の3系統に限定する。アイコンは <code>ui/icon</code> 経由の lucide だけにし、寸法は 14px・16px の2段、線幅は 1.75px の1種にする。
+        </p>
+        <div class="table-wrap">
+          <table id="marks" class="wrap-table"></table>
+        </div>
+        <ul class="rules" id="rules"></ul>
+      </section>
+
+      <section class="summary" aria-labelledby="plan-title">
+        <h2 id="plan-title">構造の3案</h2>
+        <p>相違点は2つ。リストの区分方法（1本・段階のグループ・要約）と、詳細の表示先（プレビューとモーダル・サイドシート・ボード）。上部の切り替えで場面を変更すると、3案が同時に切り替わる。</p>
+      </section>
+
+      <div class="grid" id="cards"></div>
+
+      <section class="summary" aria-labelledby="number-title">
+        <h2 id="number-title">数値の比較（1400×900）</h2>
+        <p>
+          「今」は疑似セッションの画面を撮影の道具で計測した値、3案は見本を実ブラウザで計測した値。距離はサイドバーの上端からの値。行ごとに最良の値を強調した。
+        </p>
+        <div class="table-wrap">
+          <table id="numbers"></table>
+        </div>
+      </section>
+
+      <section class="summary" aria-labelledby="pick-title">
+        <h2 id="pick-title">推奨と導入の順序</h2>
+        <ol class="steps" id="steps"></ol>
+      </section>
+    </main>
+    <script src="compare.js"></script>
+  </body>
+</html>
