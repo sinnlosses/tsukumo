@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>会話の流れの見比べ（2026-11-16）</title>
+    <link rel="stylesheet" href="compare.css" />
+  </head>
+  <!--
+    会話の流れの見本（index.html）を、形ごとに縮めて並べるページ。中身はすべて架空で、実物の会話ではない。
+    ?moment=work|ask|late|read   上の段（3つの形）で見る場面
+    ?pack=shirasuzu|tsukumo      パックの素材と差し色
+  -->
+  <body>
+    <header class="page-head">
+      <h1>会話の流れの見比べ</h1>
+      <p>
+        同じ架空のやり取りを、今の形・採用済みの見本どおりの形・その先の提案まで重ねた形で並べた。枠の題を押すと実寸（1400×900）で開く。
+      </p>
+      <nav class="tabs" id="moments" aria-label="場面">
+        <a data-value="work">働く</a>
+        <a data-value="ask">答える</a>
+        <a data-value="late">働く（後半）</a>
+        <a data-value="read">読む</a>
+      </nav>
+    </header>
+
+    <main>
+      <section aria-labelledby="forms-title">
+        <h2 id="forms-title">3つの形</h2>
+        <div class="grid grid-3" id="forms"></div>
+      </section>
+
+      <section aria-labelledby="gap-title">
+        <h2 id="gap-title">今の形と見本どおりの形の差</h2>
+        <p class="lead">
+          「見本どおり」は、進行とレポートの出し方を決めたときの見本（<a href="../report-progress-2026-11-15/index.html?plan=tail">案2 帯と末尾の行</a>）の形。新しい決定は要らない。
+        </p>
+        <table class="gap">
+          <thead>
+            <tr>
+              <th>要素</th>
+              <th>今の形</th>
+              <th>見本どおり</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>流れの寄せ方</td><td>上から積む。短いあいだは下が空く</td><td>入力欄の側へ寄せる</td></tr>
+            <tr><td>「いま」の行</td><td>列の幅いっぱいの帯。内容の直後に出る</td><td>左の小さな札。入力欄のすぐ上で動かない</td></tr>
+            <tr><td>依頼の投稿</td><td>12px の薄い字</td><td>セリフと同じ大きさの字</td></tr>
+            <tr><td>時刻</td><td>行ごとに外の札</td><td>吹き出しの中</td></tr>
+            <tr><td>済んだフェーズの札</td><td>1つ前の位置に出る。題は「中間レポート n/N … 所要」</td><td>届いた位置に出る。印・名前・所要</td></tr>
+            <tr><td>完了後のセリフ</td><td>流れに残る（質問の記録だけ畳まれる）</td><td>「作業の経過」に畳む</td></tr>
+            <tr><td>締めのセリフ</td><td>レポートとお願いのあと</td><td>紙の上</td></tr>
+            <tr><td>最終レポート</td><td>面が無く、背景の上に直に載る</td><td>紙の面を持つ</td></tr>
+            <tr><td>答え待ちの入力欄</td><td>琥珀の枠が2重</td><td>枠は無く、上に1行</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section aria-labelledby="plus-title">
+        <h2 id="plus-title">その先の提案（見本どおりの形に1つずつ重ねる）</h2>
+        <div id="plus"></div>
+      </section>
+
+      <section aria-labelledby="real-title">
+        <h2 id="real-title">今の画面の実物の画</h2>
+        <p class="lead">
+          架空の疑似セッションを 2026-11-16 の画面で撮った（1400×900）。上の「今の形」は、この画の行の並びと寸法を写している。
+        </p>
+        <div class="grid grid-2">
+          <figure class="shot">
+            <figcaption><a href="real-now-work.png">働く</a><span>流れは上から積まれ、「いま」の行は内容の直後</span></figcaption>
+            <img class="real" src="real-now-work.png" alt="今の画面の働く場面。投稿、セリフ、中間レポート、セリフ、「いま」の行が上から並び、下半分は空いている" />
+          </figure>
+          <figure class="shot">
+            <figcaption><a href="real-now-ask.png">答える</a><span>入力欄の周りに琥珀の枠が2重</span></figcaption>
+            <img class="real" src="real-now-ask.png" alt="今の画面の答える場面。セリフの下にお伺いの札、入力欄の上に質問の帯" />
+          </figure>
+          <figure class="shot">
+            <figcaption><a href="real-now-late.png">働く（後半）</a><span>中間レポートが、そのフェーズのセリフより上に出る</span></figcaption>
+            <img class="real" src="real-now-late.png" alt="今の画面の働く後半の場面。畳んだ中間レポート2件、セリフ、質問の記録、セリフ、中間レポート、セリフの順に並ぶ" />
+          </figure>
+          <figure class="shot">
+            <figcaption><a href="real-now-read.png">読む</a><span>セリフ5件のあとに、面の無い最終レポート</span></figcaption>
+            <img class="real" src="real-now-read.png" alt="今の画面の読む場面。投稿、セリフ5件、作業の経過の行、最終レポートの結論と検証の行" />
+          </figure>
+        </div>
+      </section>
+    </main>
+    <script src="compare.js"></script>
+  </body>
+</html>

@@ -1,0 +1,1593 @@
+/* 会話の流れの見本。器の寸法と色は、今の画面を 1400×900 で測った値。
+   形の差は body の data-p（spec と、提案の attach・live・dialog・verb・minute の並び）で切り替える。 */
+
+:root {
+  --ground: #191720;
+  --surface: #221f2b;
+  --ink: #e8e3ea;
+  --accent: #f9c3cd;
+  --ink-soft: color-mix(in srgb, var(--ink) 72%, transparent);
+  --ink-quiet: color-mix(in srgb, var(--ink) 60%, transparent);
+  --ok: #5fd38a;
+  --warn: #f2b544;
+  --edge: color-mix(in srgb, var(--ink) 10%, transparent);
+  --edge-quiet: color-mix(in srgb, var(--ink) 6%, transparent);
+  --raised: color-mix(in srgb, var(--ink) 10%, transparent);
+  --glass: color-mix(in srgb, color-mix(in srgb, var(--surface), var(--ink) 5%) 45%, transparent);
+  --glass-dense: color-mix(in srgb, color-mix(in srgb, var(--surface), var(--ink) 8%) 88%, transparent);
+  --paper: color-mix(in srgb, color-mix(in srgb, var(--surface), var(--ink) 3%) 94%, transparent);
+  --blur: blur(8px) saturate(1.15);
+  --lift:
+    inset 0 1px 0 color-mix(in srgb, var(--ink) 7%, transparent), 0 14px 32px rgb(0 0 0 / 38%);
+  --paper-lift: 0 16px 36px rgb(0 0 0 / 30%);
+  --mono: ui-monospace, "SF Mono", Menlo, monospace;
+  --art: url("../../../../characters/shirasuzu/background.png");
+  --bar-h: 36px;
+  --dock-h: 120px;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  block-size: 100%;
+  margin: 0;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Segoe UI", Roboto, sans-serif;
+  font-size: 14px;
+  line-height: 1.7;
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--accent) 36%, transparent);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+button {
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+p,
+ol,
+h2,
+h3 {
+  margin: 0;
+}
+
+ol {
+  padding: 0;
+  list-style: none;
+}
+
+.sprite {
+  position: absolute;
+}
+
+.icon {
+  flex: none;
+  inline-size: 16px;
+  block-size: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.icon-sm {
+  inline-size: 12px;
+  block-size: 12px;
+}
+
+.visually-hidden {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* 見本の切り替えの帯 */
+.mock-bar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 16px;
+  block-size: var(--bar-h);
+  padding: 0 16px;
+  overflow-x: auto;
+  background: #0f0e14;
+  color: var(--ink-soft);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+body[data-bar="0"] .mock-bar {
+  display: none;
+}
+
+.mock-bar-title {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.mock-bar a {
+  padding: 2px 8px;
+  border-radius: 6px;
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.mock-bar-link {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.mock-bar a[aria-current="true"] {
+  background: var(--raised);
+  color: var(--ink);
+}
+
+.mock-bar-group {
+  display: inline-flex;
+  gap: 2px;
+  padding-inline-start: 12px;
+  border-inline-start: 1px solid var(--edge);
+}
+
+/* 器 */
+.app {
+  position: relative;
+  flex: 1;
+  min-block-size: 0;
+}
+
+.ground {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(rgb(25 23 32 / 75%), rgb(25 23 32 / 75%)),
+    var(--art) center / cover;
+}
+
+.nav {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  block-size: 40px;
+  padding: 0 24px;
+  border-block-end: 1px solid var(--edge-quiet);
+  background: color-mix(in srgb, var(--ground) 55%, transparent);
+  backdrop-filter: var(--blur);
+  font-size: 13px;
+}
+
+.nav-room {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nav-face {
+  inline-size: 24px;
+  block-size: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: top;
+}
+
+.nav-room-name {
+  font-size: 16px;
+  font-weight: 650;
+}
+
+.nav-room-port,
+.session-tag {
+  color: var(--ink-soft);
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+.nav-sep {
+  color: var(--ink-quiet);
+}
+
+.session-tag {
+  padding: 0;
+  border-block-end: 1px dashed var(--ink-quiet);
+}
+
+.nav-tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.nav-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 10px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: var(--ink-soft);
+}
+
+.nav-tab[aria-current="page"] {
+  border-color: var(--edge);
+  background: var(--raised);
+  color: var(--ink);
+}
+
+.nav-rule {
+  inline-size: 1px;
+  block-size: 16px;
+  margin-inline: 10px;
+  background: var(--edge);
+}
+
+.nav-gear {
+  margin-inline-start: auto;
+}
+
+.icon-button {
+  display: inline-grid;
+  place-items: center;
+  inline-size: 28px;
+  block-size: 28px;
+  border-radius: 8px;
+  color: var(--ink-soft);
+}
+
+.icon-button:hover {
+  background: var(--raised);
+  color: var(--ink);
+}
+
+.shell {
+  position: relative;
+  display: grid;
+  grid-template-columns: 238px minmax(0, 1fr) 310px;
+  gap: 10px;
+  block-size: calc(100% - 40px);
+  padding: 16px 17px 17px 16px;
+}
+
+/* 左の列 */
+.left {
+  position: relative;
+  min-block-size: 0;
+}
+
+.lane {
+  margin: 12px;
+  padding: 8px;
+  border: 1px solid var(--edge);
+  border-radius: 12px;
+  background: var(--glass);
+  box-shadow: var(--lift);
+  backdrop-filter: var(--blur);
+  font-size: 12px;
+}
+
+.lane-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 4px 4px 12px;
+  color: var(--ink-soft);
+}
+
+.lane-turn {
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: var(--raised);
+}
+
+.lane-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow: hidden;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.lane-title::before {
+  content: "";
+  flex: none;
+  inline-size: 8px;
+  block-size: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.lane-sub {
+  display: flex;
+  gap: 8px;
+  margin-block-start: 6px;
+  padding-inline-start: 10px;
+  overflow: hidden;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+.lane-sub.is-current {
+  box-shadow: inset 2px 0 0 var(--accent);
+  color: var(--ink);
+}
+
+.portrait {
+  position: absolute;
+  inset-block-end: 0;
+  inset-inline-start: 13px;
+  inline-size: 214px;
+  block-size: 342px;
+  object-fit: contain;
+  object-position: bottom;
+}
+
+/* 中央の列 */
+.center {
+  position: relative;
+  min-block-size: 0;
+}
+
+.strip {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  block-size: 40px;
+  padding: 0 6px 0 16px;
+  border: 1px solid var(--edge);
+  border-radius: 999px;
+  background: var(--glass);
+  box-shadow: var(--lift);
+  backdrop-filter: var(--blur);
+  color: var(--ink-soft);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.strip-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-inline-size: 84px;
+}
+
+.strip-state::before {
+  content: "";
+  inline-size: 8px;
+  block-size: 8px;
+  border-radius: 50%;
+  background: var(--state, var(--accent));
+}
+
+.strip-phases {
+  display: inline-flex;
+  align-items: center;
+}
+
+.phase-dot {
+  display: inline-grid;
+  place-items: center;
+  inline-size: 20px;
+  block-size: 20px;
+  border: 1px solid var(--edge);
+  border-radius: 50%;
+  color: var(--ink-soft);
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1;
+}
+
+.phase-link {
+  inline-size: 12px;
+  block-size: 1px;
+  background: var(--edge);
+}
+
+.phase-link.is-done {
+  background: color-mix(in srgb, var(--accent) 50%, transparent);
+}
+
+.phase-dot.is-done {
+  border-color: transparent;
+  background: color-mix(in srgb, var(--accent) 34%, var(--surface));
+  color: var(--ink);
+}
+
+.phase-dot.is-current {
+  inline-size: 22px;
+  block-size: 22px;
+  border: 2px solid var(--accent);
+  color: var(--ink);
+}
+
+.phase-dot.is-asking {
+  inline-size: 22px;
+  block-size: 22px;
+  border: 2px solid var(--warn);
+  color: var(--warn);
+}
+
+.phase-dot .icon {
+  inline-size: 12px;
+  block-size: 12px;
+}
+
+.strip-name {
+  flex: 1;
+  min-inline-size: 0;
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 650;
+  text-overflow: ellipsis;
+}
+
+.strip-name.is-plain {
+  font-weight: 400;
+}
+
+.strip-time b {
+  margin-inline-start: 8px;
+  font-family: var(--mono);
+  font-weight: 400;
+}
+
+.strip-steps {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px 3px 12px;
+  border-radius: 999px;
+  background: var(--raised);
+  color: var(--ink);
+  font-size: 14px;
+}
+
+.scroller {
+  position: absolute;
+  inset: 12px 12px calc(var(--dock-h) + 28px);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--ink) 22%, transparent) transparent;
+}
+
+.scroller:focus-visible {
+  outline-offset: -2px;
+}
+
+.flow {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-block-size: 100%;
+  padding: 44px 8px 8px;
+}
+
+.scroll-target {
+  scroll-initial-target: nearest;
+}
+
+/* 声の行（投稿とセリフ） */
+.row {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.row-user {
+  flex-direction: row-reverse;
+}
+
+.bubble {
+  position: relative;
+  max-inline-size: 80%;
+  padding: 8px 16px;
+  border: 1px solid var(--edge-quiet);
+  border-radius: 16px;
+  font-size: 16px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+.bubble-say {
+  border-color: var(--accent);
+  border-end-start-radius: 6px;
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--accent) 16%, var(--surface)),
+    color-mix(in srgb, var(--accent) 9%, var(--surface))
+  );
+}
+
+.bubble-post {
+  min-inline-size: min(28rem, 100%);
+  border-end-end-radius: 6px;
+  background: color-mix(in srgb, var(--surface), var(--ink) 12%);
+  color: var(--ink-soft);
+  font-size: 12px;
+  line-height: 20px;
+  padding-block: 9px;
+}
+
+.bubble-post.is-short {
+  min-inline-size: 0;
+}
+
+.stamp {
+  flex: none;
+  padding: 0 4px;
+  border-radius: 10px;
+  background: var(--ground);
+  color: var(--ink-quiet);
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.post-label {
+  margin-inline-end: 8px;
+  color: var(--ink-soft);
+  font-size: 12px;
+}
+
+/* 今の形: 中間レポートの札 */
+.interim {
+  padding: 12px 16px;
+  border: 1px dashed var(--edge-quiet);
+  border-radius: 10px;
+  background: var(--surface);
+  box-shadow: var(--paper-lift);
+}
+
+.interim-head {
+  display: flex;
+  gap: 16px;
+  margin-block-end: 12px;
+  color: var(--ink-quiet);
+  font-size: 12px;
+}
+
+.interim.is-folded {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink-quiet);
+  font-size: 12px;
+}
+
+.interim.is-folded .icon {
+  inline-size: 12px;
+  block-size: 12px;
+  fill: currentColor;
+  stroke: none;
+}
+
+/* 今の形: 流れの末尾の行 */
+.now-band {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-inline: -20px;
+  padding: 8px 38px;
+  background: var(--ground);
+  color: var(--ink-quiet);
+  font-size: 12px;
+  line-height: 20px;
+}
+
+.now-band code {
+  font-family: var(--mono);
+  white-space: pre;
+}
+
+.spinner {
+  flex: none;
+  inline-size: 12px;
+  block-size: 12px;
+  border: 2px solid color-mix(in srgb, var(--ink) 24%, transparent);
+  border-block-start-color: var(--ink);
+  border-radius: 50%;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .spinner {
+    animation: turn 1s steps(8) infinite;
+  }
+}
+
+@keyframes turn {
+  to {
+    rotate: 1turn;
+  }
+}
+
+/* お伺いの札 */
+.inquiry {
+  margin-inline: -8px;
+  padding: 16px;
+  border: 1px solid color-mix(in srgb, var(--warn) 62%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface), var(--ink) 3%);
+  box-shadow: var(--paper-lift);
+}
+
+.inquiry-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.tag-ask {
+  padding: 0 8px;
+  border-radius: 6px;
+  background: var(--warn);
+  color: var(--ground);
+  font-weight: 700;
+}
+
+.inquiry-kind {
+  color: var(--warn);
+  font-weight: 700;
+}
+
+.inquiry-label {
+  color: var(--ink-quiet);
+}
+
+.inquiry-wait {
+  margin-inline-start: auto;
+  color: var(--ink-quiet);
+  font-family: var(--mono);
+}
+
+.pill-button {
+  padding: 2px 12px;
+  border-radius: 8px;
+  background: var(--raised);
+  color: var(--ink);
+  font-size: 14px;
+}
+
+.inquiry-title {
+  margin-block: 10px 12px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.brief {
+  display: grid;
+  gap: 4px;
+  padding: 12px 4px;
+  border-block: 1px solid var(--edge);
+  font-size: 12px;
+}
+
+.brief dt {
+  color: var(--ink-quiet);
+}
+
+.brief dd {
+  margin: 0;
+}
+
+.brief-line {
+  display: flex;
+  gap: 8px;
+}
+
+.brief-fact {
+  display: grid;
+  grid-template-columns: 76px 1fr;
+  gap: 12px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 20px;
+  white-space: nowrap;
+}
+
+.chip-ok {
+  background: var(--ok);
+  color: var(--ground);
+}
+
+.chip-warn {
+  background: var(--warn);
+  color: var(--ground);
+}
+
+.chip-plain {
+  background: var(--raised);
+  color: var(--ink-soft);
+}
+
+.chip .icon {
+  inline-size: 12px;
+  block-size: 12px;
+  stroke-width: 2.6;
+}
+
+.options {
+  display: grid;
+  gap: 10px;
+  margin-block-start: 14px;
+}
+
+.option {
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--ground) 70%, var(--surface));
+}
+
+.option-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+}
+
+.option-key {
+  color: var(--ink-quiet);
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.radio {
+  inline-size: 12px;
+  block-size: 12px;
+  border: 1px solid var(--ink-quiet);
+  border-radius: 50%;
+}
+
+.tag-recommend {
+  padding: 0 8px;
+  border: 1px solid var(--warn);
+  border-radius: 6px;
+  color: var(--warn);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.option-note {
+  color: var(--ink-quiet);
+  font-size: 12px;
+}
+
+.inquiry-foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-block-start: 12px;
+  font-size: 12px;
+}
+
+.inquiry-foot-note {
+  color: var(--ink-quiet);
+}
+
+.inquiry-foot-gap {
+  margin-inline-start: auto;
+}
+
+.answer-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 16px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--warn) 12%, var(--ground));
+  color: var(--warn);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* 今の形: 答え終わった質問の記録 */
+.q-record {
+  padding: 12px 13px;
+  border: 1px solid var(--edge-quiet);
+  border-radius: 10px;
+  background: var(--surface);
+  box-shadow: var(--paper-lift);
+}
+
+.q-record-title {
+  font-weight: 700;
+}
+
+.q-choice {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-quiet);
+}
+
+.q-choice::before {
+  content: "";
+  inline-size: 10px;
+  block-size: 10px;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+}
+
+.q-choice.is-chosen {
+  color: var(--ink);
+}
+
+.q-choice.is-chosen::before {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+.q-detail {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-block-start: 12px;
+  padding: 8px 12px;
+  border: 1px solid var(--edge-quiet);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--ground) 70%, var(--surface));
+  color: var(--ink-quiet);
+  font-size: 12px;
+}
+
+.q-detail .icon {
+  inline-size: 12px;
+  block-size: 12px;
+  fill: currentColor;
+  stroke: none;
+}
+
+/* 作業の経過の畳み */
+.fold {
+  color: var(--ink-quiet);
+  font-size: 12px;
+}
+
+.fold summary {
+  cursor: pointer;
+}
+
+.fold summary::marker {
+  font-size: 12px;
+}
+
+.fold-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-block-start: 12px;
+  color: var(--ink);
+  font-size: 14px;
+}
+
+details.fold::details-content {
+  interpolate-size: allow-keywords;
+  overflow: clip;
+  contain: layout;
+}
+
+details.fold:not([open])::details-content {
+  block-size: 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  details.fold::details-content {
+    transition: block-size, content-visibility, display;
+    transition-duration: 0.28s;
+    transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+    transition-behavior: allow-discrete;
+  }
+}
+
+/* 最終レポート */
+.report {
+  margin-block-start: 12px;
+}
+
+.report-label {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  color: var(--ink-quiet);
+  font-size: 12px;
+}
+
+.expand-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink);
+  font-size: 14px;
+}
+
+.conclusion {
+  padding-block: 4px 12px;
+  border-block-end: 1px solid var(--edge);
+  font-size: 17px;
+  font-weight: 500;
+  line-height: 1.6;
+}
+
+.checks {
+  display: grid;
+  font-size: 12px;
+}
+
+.checks-line {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-block: 12px;
+  border-block-end: 1px solid var(--edge-quiet);
+}
+
+.checks-figure {
+  color: var(--ink-soft);
+  font-family: var(--mono);
+}
+
+.checks-row {
+  display: grid;
+  grid-template-columns: 136px 1fr;
+  gap: 12px;
+  align-items: start;
+}
+
+.checks-row b {
+  margin-inline-end: 32px;
+  font-size: 14px;
+}
+
+.checks-row div > span,
+.checks-row small {
+  color: var(--ink-quiet);
+  font-size: 12px;
+}
+
+.checks-row small {
+  display: block;
+}
+
+.report h2 {
+  margin-block: 48px 14px;
+  padding-block-end: 8px;
+  border-block-end: 1px solid var(--edge);
+  font-size: 20px;
+  line-height: 1.4;
+  text-wrap: balance;
+}
+
+.report-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 248px;
+  gap: 24px;
+  align-items: start;
+}
+
+.margin-hint {
+  padding: 6px 12px;
+  border: 1px dashed var(--edge);
+  border-radius: 8px;
+  color: var(--ink-quiet);
+  font-size: 12px;
+}
+
+.report-table {
+  margin-block-start: 24px;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.report-table caption {
+  padding-block-end: 4px;
+  color: var(--ink-soft);
+  text-align: start;
+}
+
+.report-table caption small {
+  margin-inline-end: 12px;
+  font-size: 12px;
+}
+
+.report-table th,
+.report-table td {
+  padding: 4px 16px 4px 8px;
+  border-block-end: 1px solid var(--edge-quiet);
+  font-weight: 400;
+  text-align: start;
+}
+
+.report-table th {
+  font-weight: 650;
+}
+
+.favor {
+  margin-block-start: 12px;
+  padding: 10px 12px 0;
+  border-block-start: 1px solid var(--edge);
+}
+
+.favor-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-quiet);
+  font-size: 12px;
+}
+
+.favor-label::before {
+  content: "";
+  inline-size: 8px;
+  block-size: 8px;
+  border-radius: 50%;
+  background: var(--warn);
+}
+
+/* 入力欄 */
+.dock {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 8px;
+  block-size: var(--dock-h);
+  padding: 8px;
+  border: 1px solid transparent;
+}
+
+.band {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-inline: 4px;
+  color: var(--ink-soft);
+  font-size: 12px;
+}
+
+.composer {
+  display: grid;
+  gap: 10px;
+  padding: 16px 16px 12px 24px;
+  border: 2px solid var(--accent);
+  border-radius: 20px;
+  background: var(--glass-dense);
+  box-shadow: var(--lift);
+  backdrop-filter: var(--blur);
+}
+
+.composer-input {
+  inline-size: 100%;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: none;
+  color: var(--ink);
+  caret-color: var(--accent);
+  font: inherit;
+  font-size: 16px;
+  resize: none;
+}
+
+.composer-input::placeholder {
+  color: var(--ink-soft);
+}
+
+.composer-foot,
+.composer-tools,
+.composer-send {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.composer-foot {
+  justify-content: space-between;
+}
+
+.run-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.chip-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 14px;
+  border-radius: 999px;
+  background: var(--raised);
+  color: var(--ink-soft);
+}
+
+.send-button {
+  display: inline-grid;
+  place-items: center;
+  inline-size: 32px;
+  block-size: 32px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--ground);
+}
+
+.send-button.is-stop {
+  border: 1px solid var(--edge);
+  background: var(--raised);
+}
+
+.send-button.is-stop .icon {
+  display: none;
+}
+
+.send-button.is-stop::before {
+  content: "";
+  inline-size: 12px;
+  block-size: 12px;
+  border-radius: 2px;
+  background: var(--ink);
+}
+
+/* 答え待ちの入力欄。今の形は、領域の枠と帯の枠で琥珀の線が2重になる。見本は帯の字だけ。 */
+body[data-moment="ask"] .band {
+  color: var(--warn);
+}
+
+body[data-moment="ask"]:not([data-p~="spec"]) .dock {
+  border-color: var(--warn);
+}
+
+body[data-moment="ask"]:not([data-p~="spec"]) .band {
+  padding: 4px 8px;
+  border: 1px solid color-mix(in srgb, var(--warn) 62%, transparent);
+  border-radius: 12px 12px 0 0;
+}
+
+body[data-moment="ask"]:not([data-p~="spec"]) .send-button {
+  border: 1px solid var(--warn);
+  background: none;
+  color: var(--warn);
+}
+
+body[data-moment="ask"]:not([data-p~="spec"]) .chip-button {
+  color: var(--warn);
+}
+
+/* サイドバー */
+.side {
+  display: flex;
+  flex-direction: column;
+  min-block-size: 0;
+  border: 1px solid var(--edge);
+  border-radius: 16px;
+  background: var(--glass);
+  box-shadow: var(--lift);
+  backdrop-filter: var(--blur);
+  font-size: 12px;
+}
+
+.side-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 14px 16px 8px;
+  color: var(--ink-soft);
+}
+
+.side-title {
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.tasks {
+  flex: 1;
+  padding: 0 8px;
+}
+
+.task {
+  padding: 8px;
+  border-block-end: 1px solid var(--edge-quiet);
+}
+
+.task-state {
+  margin-inline-end: 8px;
+  color: var(--ink-soft);
+}
+
+.task-state.is-doing {
+  color: var(--accent);
+}
+
+.task-id {
+  color: var(--ink-soft);
+  font-family: var(--mono);
+}
+
+.task-name {
+  color: var(--ink);
+  font-size: 14px;
+}
+
+.usage {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+  padding: 14px 20px;
+  border-block-start: 1px solid var(--edge);
+  color: var(--ink-soft);
+}
+
+.usage-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.usage-item b {
+  font-family: var(--mono);
+  font-weight: 400;
+}
+
+.meter {
+  inline-size: 54px;
+  block-size: 6px;
+  border-radius: 3px;
+  background: var(--raised);
+}
+
+.meter span {
+  display: block;
+  block-size: 100%;
+  border-radius: 3px;
+  background: var(--accent);
+}
+
+.pie {
+  inline-size: 20px;
+  block-size: 20px;
+  border: 1px solid var(--edge);
+  border-radius: 50%;
+  background: conic-gradient(var(--accent) var(--share), transparent 0);
+}
+
+/* ───── 見本どおり（spec）: 採用済みの見本にあって、今の画面に無い形 ─────
+   下寄せ・投稿はセリフと同じ字・時刻は吹き出しの中・済んだフェーズの札は印と名前と所要・
+   「いま」は左の小さな札・完了後はセリフも畳む・締めのセリフは紙の上・紙は面を持つ・答え待ちの枠は無い。 */
+body[data-p~="spec"]:not([data-moment="read"]) .flow {
+  justify-content: flex-end;
+}
+
+body[data-p~="spec"] .bubble {
+  padding: 7px 14px;
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+body[data-p~="spec"] .bubble-post {
+  min-inline-size: 0;
+  border-color: var(--edge);
+  background: color-mix(in srgb, var(--surface), var(--ink) 14%);
+  color: var(--ink);
+}
+
+body[data-p~="spec"] .stamp {
+  display: none;
+}
+
+.bubble-time {
+  display: none;
+}
+
+body[data-p~="spec"] .bubble-time {
+  display: inline;
+  margin-inline-start: 12px;
+  color: var(--ink-soft);
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+body[data-p~="spec"] .q-record {
+  border: 1px solid var(--edge);
+  border-radius: 12px;
+  background: var(--paper);
+}
+
+body[data-p~="spec"] :is(.q-detail, .inquiry-label, .inquiry-foot-note, .inquiry-wait) {
+  color: var(--ink-soft);
+}
+
+body[data-p~="spec"] .inquiry {
+  margin-inline: 0;
+  background: var(--paper);
+}
+
+.phase-card {
+  padding: 12px 16px 14px;
+}
+
+.phase-card .slip-head {
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.phase-card .slip-head .phase-dot {
+  inline-size: 22px;
+  block-size: 22px;
+}
+
+.phase-card .slip-note {
+  padding-inline-start: 30px;
+}
+
+body[data-p~="spec"] .fold {
+  align-self: flex-start;
+  padding: 2px 12px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ground) 80%, transparent);
+  color: var(--ink-soft);
+}
+
+body[data-p~="spec"] .fold[open] {
+  align-self: stretch;
+  padding: 8px 12px 12px;
+  border-radius: 12px;
+}
+
+/* ───── 提案 A 添える（attach）: 物を、連れてきたセリフに添える。間は3段 ───── */
+body[data-p~="attach"] .flow {
+  gap: 16px;
+}
+
+body[data-p~="attach"] .row-say + .row-say {
+  margin-block-start: -8px;
+}
+
+/* ───── 提案 B いまの一言（live）: 立ち絵がいま従っているセリフを1件だけ明るくし、尾を立ち絵へ向ける ───── */
+body[data-p~="live"] .bubble-say:not(.is-live) {
+  border-color: color-mix(in srgb, var(--accent) 38%, transparent);
+  background: color-mix(in srgb, var(--accent) 7%, var(--surface));
+}
+
+body[data-p~="live"] .bubble-say.is-live {
+  border-end-start-radius: 16px;
+  box-shadow: 0 10px 24px rgb(0 0 0 / 28%);
+}
+
+body[data-p~="live"]:not([data-moment="read"]) .bubble-say.is-live::after {
+  content: "";
+  position: absolute;
+  inset-block-end: 11px;
+  inset-inline-start: -6px;
+  inline-size: 10px;
+  block-size: 10px;
+  border-block-end: 1px solid var(--accent);
+  border-inline-start: 1px solid var(--accent);
+  border-end-start-radius: 3px;
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface));
+  rotate: 45deg;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  body[data-p~="live"] .bubble-say.is-live {
+    transition:
+      opacity 0.32s cubic-bezier(0.16, 1, 0.3, 1),
+      translate 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+
+    @starting-style {
+      opacity: 0;
+      translate: -8px 6px;
+    }
+  }
+}
+
+/* 物（済んだフェーズの札・質問の札と記録・最終レポートの紙）の面と、セリフへの添え方 */
+.attach {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.thing {
+  border: 1px solid var(--edge);
+  border-radius: 12px;
+  background: var(--paper);
+  box-shadow: var(--paper-lift);
+}
+
+/* 小さな物（済んだフェーズの控え・答えた質問）は、セリフの下に一段下げて添える */
+.tuck {
+  position: relative;
+  align-self: flex-start;
+  max-inline-size: min(100% - 22px, 640px);
+  margin-inline-start: 22px;
+  padding: 8px 14px 10px;
+}
+
+.tuck::before {
+  content: "";
+  position: absolute;
+  inset-block-start: -7px;
+  inset-inline-start: -12px;
+  inline-size: 12px;
+  block-size: 24px;
+  border-block-end: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  border-inline-start: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  border-end-start-radius: 8px;
+}
+
+/* 大きな物（質問の札・最終レポートの紙）は、セリフの真下に全幅で掛ける */
+.hang {
+  border-start-start-radius: 4px;
+}
+
+.inquiry.thing {
+  border-color: color-mix(in srgb, var(--warn) 62%, transparent);
+}
+
+body[data-p~="spec"] :is(.checks-row div > span, .checks-row small, .margin-hint, .favor-label) {
+  color: var(--ink-soft);
+}
+
+.slip-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.slip-head .phase-dot {
+  inline-size: 18px;
+  block-size: 18px;
+}
+
+.slip-time {
+  margin-inline-start: auto;
+  padding-inline-start: 24px;
+  color: var(--ink-soft);
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.slip-note {
+  margin-block-start: 2px;
+  font-size: 14px;
+}
+
+.slip-mark {
+  display: inline-grid;
+  place-items: center;
+  inline-size: 18px;
+  block-size: 18px;
+  border: 1px solid var(--edge);
+  border-radius: 50%;
+  color: var(--ink-soft);
+}
+
+.slip-mark .icon {
+  inline-size: 12px;
+  block-size: 12px;
+}
+
+.slip-more {
+  margin-inline-start: 12px;
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 400;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* 最終レポートの紙 */
+.paper {
+  padding: 18px 24px 20px;
+}
+
+.paper .report {
+  margin-block-start: 0;
+}
+
+.paper .conclusion {
+  padding-block-start: 0;
+}
+
+/* 紙が面を持つと、余白の案内の破線の枠は札の中の札になるので、枠を外して字だけにする。 */
+.paper .margin-hint {
+  padding: 0;
+  border: 0;
+}
+
+.paper-tools {
+  float: inline-end;
+  margin: -4px -8px 0 16px;
+}
+
+/* 流れの末尾の小さな札。見本どおりは「いま」と道具の名前、提案 D（verb）は動詞と対象 */
+.now-pill {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 8px;
+  max-inline-size: 100%;
+  padding: 5px 14px 5px 10px;
+  border: 1px solid var(--edge-quiet);
+  border-radius: 999px;
+  background: var(--ground);
+  color: var(--ink-soft);
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.now-pill b {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.now-pill .now-lead {
+  color: var(--accent);
+}
+
+.now-pill code {
+  min-inline-size: 0;
+  overflow: hidden;
+  font-family: var(--mono);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.now-pill time {
+  font-family: var(--mono);
+  font-size: 12px;
+}

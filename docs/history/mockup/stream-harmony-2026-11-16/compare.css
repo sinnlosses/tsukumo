@@ -1,0 +1,179 @@
+/* 会話の流れの見比べのページ。見本（index.html）を縮めた枠を並べる。 */
+
+:root {
+  --ground: #131118;
+  --surface: #1d1a25;
+  --ink: #e8e3ea;
+  --ink-soft: color-mix(in srgb, var(--ink) 72%, transparent);
+  --edge: color-mix(in srgb, var(--ink) 12%, transparent);
+  --accent: #f9c3cd;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 32px clamp(16px, 3vw, 48px) 64px;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Segoe UI", Roboto, sans-serif;
+  font-size: 14px;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--accent) 36%, transparent);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+a {
+  color: inherit;
+  text-underline-offset: 3px;
+}
+
+h1 {
+  margin: 0;
+  font-size: 24px;
+  line-height: 1.4;
+}
+
+h2 {
+  margin: 56px 0 12px;
+  font-size: 18px;
+  line-height: 1.4;
+}
+
+h3 {
+  margin: 32px 0 4px;
+  font-size: 15px;
+}
+
+p {
+  max-inline-size: 72ch;
+  margin: 4px 0 0;
+  color: var(--ink-soft);
+}
+
+.tabs {
+  display: inline-flex;
+  gap: 2px;
+  margin-block-start: 20px;
+  padding: 3px;
+  border: 1px solid var(--edge);
+  border-radius: 10px;
+}
+
+.tabs a {
+  padding: 2px 14px;
+  border-radius: 7px;
+  color: var(--ink-soft);
+  text-decoration: none;
+}
+
+.tabs a[aria-current="true"] {
+  background: color-mix(in srgb, var(--ink) 12%, transparent);
+  color: var(--ink);
+}
+
+.grid {
+  display: grid;
+  gap: 16px;
+  margin-block-start: 16px;
+}
+
+.grid-3 {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 520px), 1fr));
+}
+
+.grid-2 {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 560px), 1fr));
+}
+
+.shot {
+  margin: 0;
+}
+
+.shot figcaption {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding-block-end: 6px;
+}
+
+.shot figcaption a {
+  font-weight: 650;
+}
+
+.shot figcaption span {
+  color: var(--ink-soft);
+  font-size: 12px;
+}
+
+.frame {
+  position: relative;
+  aspect-ratio: 1400 / 900;
+  overflow: hidden;
+  border: 1px solid var(--edge);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.frame iframe {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: 0;
+  inline-size: 1400px;
+  block-size: 900px;
+  border: 0;
+  transform-origin: 0 0;
+  scale: var(--fit, 0.4);
+}
+
+.real {
+  display: block;
+  inline-size: 100%;
+  block-size: auto;
+  border: 1px solid var(--edge);
+  border-radius: 10px;
+}
+
+.gap {
+  inline-size: min(100%, 960px);
+  margin-block-start: 16px;
+  border-collapse: collapse;
+}
+
+.gap th,
+.gap td {
+  padding: 8px 16px 8px 0;
+  border-block-end: 1px solid var(--edge);
+  text-align: start;
+  vertical-align: top;
+}
+
+.gap th {
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.gap td:first-child {
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.gap td:nth-child(2) {
+  color: var(--ink-soft);
+}
+
+.lead {
+  margin-block-end: 4px;
+}
