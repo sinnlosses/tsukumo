@@ -1,0 +1,103 @@
+/* 案B の仕上げのページで足す分だけ。土台は ../conversation-directions-2026-11-15/compare.css と compare.css */
+
+kbd {
+  display: inline-block;
+  min-inline-size: 20px;
+  padding: 0 5px;
+  border-radius: 5px;
+  box-shadow: inset 0 0 0 1px var(--rule);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-align: center;
+  color: var(--ink-soft);
+}
+
+.summary {
+  display: grid;
+  gap: 16px;
+}
+
+.summary > h2,
+.summary > p {
+  margin-block: 0;
+}
+
+.summary > p {
+  margin-block-start: -10px;
+}
+
+/* 前後と2つの形は、2列で並べる。 */
+.pair {
+  --cols: 2;
+}
+
+/* 事実の欄は4つを1行に。 */
+.pair .facts {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+/* 探す欄の4つの状態。サイドバーの範囲（見本の右端の 330px）だけを実寸で切り出す。 */
+.strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 330px);
+  gap: 28px 24px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.step {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+}
+
+.clip {
+  position: relative;
+  inline-size: 330px;
+  block-size: 560px;
+  overflow: hidden;
+  border: 1px solid var(--rule-soft);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: 0 10px 28px rgb(0 0 0 / 35%);
+}
+
+.clip iframe {
+  position: absolute;
+  inset-block-start: -46px;
+  inset-inline-start: -1064px;
+  inline-size: 1400px;
+  block-size: 900px;
+  border: 0;
+  pointer-events: none;
+}
+
+.step h3 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+  font-weight: 650;
+  color: var(--ink-bright);
+}
+
+.step p {
+  color: var(--ink-soft);
+  text-wrap: pretty;
+}
+
+#search-keys th[scope="row"] {
+  inline-size: 14em;
+  font-weight: 500;
+}
+
+#type-table td:last-child {
+  color: var(--ink-bright);
+}
+
+@media (width < 900px) {
+  .pair {
+    --cols: 1;
+  }
+}

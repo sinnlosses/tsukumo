@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>案B の仕上げ: 字の大きさ・探す欄・一覧モード（2026-11-16）</title>
+    <link rel="stylesheet" href="../conversation-directions-2026-11-15/compare.css" />
+    <link rel="stylesheet" href="compare.css" />
+    <link rel="stylesheet" href="refine.css" />
+  </head>
+  <!--
+    案B（段階グループとサイドシート）を採ったあとの仕上げ（index.html の ?design=b2）を、場面ごとに見るページ。
+    字の大きさの前後、探す欄の4つの状態、一覧モードの2つの形を並べる。3案の比較は compare.html。
+    画は見本をそのまま出す（探す欄はサイドバーの範囲だけを実寸で切り出す）。数は 1400×900 の見本を実ブラウザで測った値。
+    ?type=13|12                 行の題の字の大きさ
+    ?size=1400x900|1920x1080    一覧モードと字の大きさの見本の大きさ
+  -->
+  <body>
+    <header class="top">
+      <div class="top-text">
+        <h1>案B の仕上げ: 字の大きさ・探す欄・一覧モード</h1>
+        <p>
+          案B（段階グループとサイドシート）を土台に、字を締め、探す口を押したあとの動きを決め、全件を見渡す一覧モードを残した。画は見本そのもので、押すと実寸で開く。中身はすべて架空。<a href="compare.html">3案の比較へ</a>
+        </p>
+      </div>
+      <div class="controls">
+        <div class="seg" data-control="type" role="group" aria-label="行の題の字の大きさ">
+          <button type="button" data-value="13">題 13px</button>
+          <button type="button" data-value="12">題 12px</button>
+        </div>
+        <div class="seg" data-control="size" role="group" aria-label="見本の大きさ">
+          <button type="button" data-value="1400x900">1400×900</button>
+          <button type="button" data-value="1920x1080">1920×1080</button>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="summary" aria-labelledby="type-title">
+        <h2 id="type-title">字の大きさ: 行の題を 14px から 13px へ</h2>
+        <p>
+          今のアプリの字の段は 12px（ラベル）と 14px（本文）の2つ。最初の見本は行の題を 14px にしていたので、今の画面（12px）より大きかった。仕上げは題を 13px、2段目とラベルを下限の 12px にし、行の余白と印（16px から 14px）も合わせて締めた。上部の切り替えで、題を 12px にした形も確認できる。
+        </p>
+        <div class="grid pair" id="type-cards"></div>
+        <div class="table-wrap">
+          <table id="type-table"></table>
+        </div>
+      </section>
+
+      <section class="summary" aria-labelledby="search-title">
+        <h2 id="search-title">探す口を押したときの挙動</h2>
+        <p>
+          サイドバーの頭の虫眼鏡（または <kbd>/</kbd> キー）で、頭の2行目に欄が開く。一覧はサイドバーの中でそのまま絞られ、別の面は開かない。下の4枚はサイドバーの範囲を実寸で切り出したもの。
+        </p>
+        <ol class="strip" id="search-strip"></ol>
+        <div class="table-wrap">
+          <table id="search-keys" class="wrap-table"></table>
+        </div>
+      </section>
+
+      <section class="summary" aria-labelledby="list-title">
+        <h2 id="list-title">一覧モード: 全件を見渡す面を残す</h2>
+        <p>
+          1件を読むのはサイドシート、全件を見渡すのは一覧モード、と役割を分離する。入口は2つで、サイドバーの頭の「一覧を見る」と、サイドシートの「一覧モードで開く」（開いているタスクを選択した状態で開く）。段の区分と印はサイドバーと同じ。形は2つ用意した。
+        </p>
+        <div class="grid pair" id="list-cards"></div>
+      </section>
+
+      <section class="summary" aria-labelledby="open-title">
+        <h2 id="open-title">決めていないこと</h2>
+        <ul class="rules" id="open-list"></ul>
+      </section>
+    </main>
+    <script src="refine.js"></script>
+  </body>
+</html>

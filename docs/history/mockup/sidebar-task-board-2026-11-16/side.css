@@ -1278,6 +1278,391 @@ body[data-view="chat"] [data-hide~="read"] {
   display: none;
 }
 
+/* ---- 案B の仕上げ（?design=b2）: 探す欄 ---- */
+.tk-tool[aria-pressed="true"] {
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  color: var(--accent);
+}
+
+/* 探す語に当たった所。 */
+.tk-hit {
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--accent) 30%, transparent);
+  color: var(--ink-bright);
+}
+
+/* ↑↓ で選んでいる行。開いている行（差し色の枠）と区別して、淡い面と細い枠で示す。 */
+.tk-row[data-cursor="true"] {
+  background: color-mix(in srgb, var(--ink) 9%, transparent);
+  box-shadow: inset 0 0 0 1px var(--hairline);
+}
+
+.tk-row[data-cursor="true"] .tk-go {
+  opacity: 1;
+}
+
+.sb-search .tk-tool {
+  inline-size: 24px;
+  block-size: 24px;
+  margin-inline-end: -4px;
+}
+
+/* 語を消す口は自前の1つにする（ブラウザが検索欄に足す × は出さない）。 */
+.tk-search input::-webkit-search-cancel-button {
+  display: none;
+}
+
+.sb-search-keys {
+  grid-column: 1 / -1;
+  margin: 0 0 2px 2px;
+}
+
+.sb-empty {
+  margin: 0;
+  padding: 16px 10px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--ink-soft);
+}
+
+/* ---- 案B の仕上げ: 一覧モード（全件を見渡す面） ---- */
+.tb-all {
+  inline-size: min(1240px, calc(100vw - 80px));
+  block-size: calc(100dvb - 96px);
+}
+
+.tb-all .tb-title {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.tb-all .tb-title b,
+.lt-stage b {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-quiet);
+}
+
+.tb-all .tb-cols {
+  grid-template-columns: minmax(0, 1fr) 440px;
+}
+
+.tb-all[data-form="rows"] .tb-cols {
+  grid-template-columns: 380px minmax(0, 1fr);
+}
+
+.lt-wrap {
+  min-inline-size: 0;
+  padding: 0 8px 12px;
+  border-inline-end: 1px solid var(--hairline-quiet);
+  overflow-y: auto;
+  scrollbar-color: rgb(255 255 255 / 24%) transparent;
+}
+
+.tb-all[data-form="rows"] .lt-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+}
+
+/* 表の形: 1行1件。題は残りの幅を使って1行に収め、ほかの列は中身の幅にする。 */
+.lt {
+  inline-size: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.lt thead th {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 1;
+  padding: 8px 10px 6px;
+  background: rgb(27 25 35);
+  font-size: 12px;
+  font-weight: 500;
+  text-align: start;
+  white-space: nowrap;
+  color: var(--ink-quiet);
+}
+
+.lt-stage th {
+  padding: 10px 10px 3px;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: start;
+  color: var(--ink-soft);
+}
+
+.lt-stage b {
+  margin-inline-start: 6px;
+}
+
+.lt th,
+.lt td {
+  border: 0;
+}
+
+.lt thead th,
+.lt-row td {
+  border-block-end: 1px solid var(--hairline-quiet);
+}
+
+.lt-row td {
+  block-size: 30px;
+  padding: 0 10px;
+  white-space: nowrap;
+  color: var(--ink-soft);
+}
+
+.lt-name code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.lt-row td:first-child {
+  inline-size: 100%;
+  max-inline-size: 0;
+  border-start-start-radius: 8px;
+  border-end-start-radius: 8px;
+}
+
+.lt-row td:last-child {
+  border-start-end-radius: 8px;
+  border-end-end-radius: 8px;
+}
+
+.lt-title-in {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-inline-size: 0;
+}
+
+.lt-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ink-bright);
+}
+
+.lt-row[data-state="done"] .lt-name {
+  color: var(--ink-soft);
+}
+
+.lt-wait {
+  font-size: 12px;
+}
+
+.lt-loop {
+  text-align: center;
+}
+
+.lt thead th:last-child .tk-ic,
+.lt-loop .tk-ic {
+  vertical-align: middle;
+}
+
+.lt-row:hover td {
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
+}
+
+/* 選んでいる行。サイドバーの開いている行と同じ、淡い差し色の面と細い枠。 */
+.lt-row[aria-selected="true"] td {
+  --ring: color-mix(in srgb, var(--accent) 46%, transparent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  box-shadow:
+    inset 0 1px 0 var(--ring),
+    inset 0 -1px 0 var(--ring);
+}
+
+.lt-row[aria-selected="true"] td:first-child {
+  box-shadow:
+    inset 0 1px 0 var(--ring),
+    inset 0 -1px 0 var(--ring),
+    inset 1px 0 0 var(--ring);
+}
+
+.lt-row[aria-selected="true"] td:last-child {
+  box-shadow:
+    inset 0 1px 0 var(--ring),
+    inset 0 -1px 0 var(--ring),
+    inset -1px 0 0 var(--ring);
+}
+
+/* ---- 案B の仕上げ: 字を締める。行の題は 13px（?type=12 で 12px）、2段目とラベルは下限の 12px ---- */
+body[data-refine="2"] {
+  --tk-title-size: 13px;
+}
+
+body[data-refine="2"][data-type="12"] {
+  --tk-title-size: 12px;
+}
+
+body[data-refine="2"] .sb-head {
+  padding-block: 8px 4px;
+}
+
+body[data-refine="2"] .sb-title {
+  font-size: 12px;
+}
+
+body[data-refine="2"] .tk-row {
+  grid-template-columns: 14px minmax(0, 1fr) 14px;
+  gap: 8px;
+  padding: 6px 8px 6px 9px;
+  border-radius: 8px;
+}
+
+body[data-refine="2"] .tk-row .tk-mark {
+  inline-size: 14px;
+  block-size: 14px;
+  margin-block-start: 2px;
+}
+
+body[data-refine="2"] .tk-row .tk-mark .tk-ic {
+  inline-size: 14px;
+  block-size: 14px;
+}
+
+body[data-refine="2"] .tk-text {
+  gap: 2px;
+}
+
+body[data-refine="2"] .tk-title {
+  font-size: var(--tk-title-size);
+  line-height: 1.4;
+}
+
+body[data-refine="2"] .tk-meta {
+  gap: 0 8px;
+  min-block-size: 16px;
+}
+
+body[data-refine="2"] .sb-fold {
+  block-size: 24px;
+}
+
+body[data-refine="2"] .sb-group + .sb-group {
+  margin-block-start: 4px;
+}
+
+body[data-refine="2"] .tk-search {
+  block-size: 30px;
+}
+
+body[data-refine="2"] .tk-search input {
+  font-size: 13px;
+}
+
+/* 面と一覧モードの詳細 */
+body[data-refine="2"] .sh {
+  inline-size: 480px;
+}
+
+body[data-refine="2"] .sh-scroll {
+  padding: 8px 20px 20px;
+}
+
+body[data-refine="2"] .tk-state {
+  font-size: 12px;
+}
+
+body[data-refine="2"] .dt {
+  gap: 12px;
+}
+
+body[data-refine="2"] .dt-title {
+  font-size: 17px;
+}
+
+body[data-refine="2"] .dt-props {
+  gap: 6px 20px;
+  padding-block: 8px;
+}
+
+body[data-refine="2"] .dt-props dd {
+  font-size: 12px;
+}
+
+body[data-refine="2"] .dt-links h4,
+body[data-refine="2"] .dt-body h4 {
+  font-size: 12px;
+}
+
+body[data-refine="2"] .dt-link {
+  padding-block: 6px;
+}
+
+body[data-refine="2"] .dt-link-title {
+  font-size: 13px;
+}
+
+body[data-refine="2"] .dt-body {
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+body[data-refine="2"] .dt-foot {
+  padding: 10px 14px;
+}
+
+body[data-refine="2"] .tk-ask {
+  block-size: 30px;
+  padding: 0 14px 0 10px;
+  font-size: 13px;
+}
+
+body[data-refine="2"] .tk-button {
+  block-size: 28px;
+  padding: 0 10px;
+  font-size: 12px;
+}
+
+body[data-refine="2"] .st-title {
+  font-size: 15px;
+}
+
+body[data-refine="2"] .st-note {
+  font-size: 13px;
+}
+
+body[data-refine="2"] .st-choice {
+  block-size: 26px;
+  font-size: 12px;
+}
+
+body[data-refine="2"] .st-reason input {
+  block-size: 30px;
+  font-size: 13px;
+}
+
+body[data-refine="2"] .sh-title {
+  font-size: 14px;
+}
+
+body[data-refine="2"] .tb-title {
+  font-size: 14px;
+}
+
+body[data-refine="2"] .tb-head {
+  padding-block: 10px 8px;
+}
+
+body[data-refine="2"] .tb-filter .tk-count {
+  block-size: 28px;
+  font-size: 12px;
+}
+
+body[data-refine="2"] .tb > .dt-foot {
+  padding: 10px 16px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .tk-tool,
   .tk-count,

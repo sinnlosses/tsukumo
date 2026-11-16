@@ -8,6 +8,17 @@
   position: absolute;
 }
 
+.top a {
+  color: var(--ink-bright);
+  text-decoration: underline;
+  text-decoration-color: var(--rule);
+  text-underline-offset: 3px;
+}
+
+.top a:hover {
+  text-decoration-color: var(--accent);
+}
+
 code {
   padding: 1px 5px;
   border-radius: 5px;
