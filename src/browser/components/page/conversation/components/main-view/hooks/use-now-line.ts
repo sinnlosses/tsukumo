@@ -1,4 +1,4 @@
-// 流れの末尾の「いまの行」のロジック。狭い画面の「いまの段」と同じ文（`workActivityOf`）を読む。
+// 流れの末尾の「いまの行」のロジック。文は `nowLineStatementOf` が言う。
 
 import { reportDraftingOf } from "../../../../../../../shared/session/turn-progress.ts"
 import { isTurnCounting } from "../../../../../../domain/turn-elapsed.ts"
@@ -6,8 +6,8 @@ import { useNowWhile } from "../../../../../../stores/clock.ts"
 import { useCurrentTurnSteps } from "../../../../../../stores/current-turn-step-list.ts"
 import { useSession } from "../../../../../../stores/session.ts"
 import { useMainViewContent } from "../../../stores/main-view-content.ts"
+import { nowLineStatementOf } from "../domain/now-line-statement.ts"
 import { nowLineOf, type NowLine } from "../domain/now-line.ts"
-import { workActivityOf } from "../domain/work-activity.ts"
 
 export function useNowLine(viewingPast: boolean): NowLine {
   const turnStepList = useCurrentTurnSteps()
@@ -29,7 +29,7 @@ export function useNowLine(viewingPast: boolean): NowLine {
     contentKind,
     turnStepListKind: turnStepList.kind,
     viewingPast,
-    activity: workActivityOf({
+    activity: nowLineStatementOf({
       turnStepList,
       firstPending: pending[0],
       reportDrafting,

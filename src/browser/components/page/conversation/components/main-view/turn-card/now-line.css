@@ -1,27 +1,34 @@
-/* 流れの末尾の1行。面は不透明にし、ぼかしの面の中と後ろに置かない。高さは字1行ぶんで保ち、長い文は末尾を「…」にする。 */
+/* 流れの末尾の1枚の札。面は不透明にし、ぼかしの面の中と後ろに置かない。列の幅いっぱいにせず、長い対象は末尾を「…」にする。 */
 .now-line {
-  display: flex;
+  display: inline-flex;
   align-items: center;
+  align-self: flex-start;
   gap: var(--inline-control);
-  min-width: 0;
+  box-sizing: border-box;
+  max-inline-size: 100%;
   margin: 0;
-  padding: var(--stack-block) var(--gutter-page);
+  padding: var(--stack-tight) var(--gutter-region) var(--stack-tight) var(--inline-control);
+  border: 1px solid var(--rule-quiet);
+  border-radius: var(--radius-pill);
   background: var(--ground);
 }
 .now-line-mark {
   flex: none;
 }
-.now-line-text {
+.now-line-verb {
+  flex: none;
+  white-space: nowrap;
+}
+.now-line-target {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.now-line.is-mono .now-line-text {
+.now-line.is-mono .now-line-target {
   font-family: var(--font-mono);
-  white-space: pre;
 }
-.now-line-retry {
+.now-line-elapsed {
   flex: none;
   font-family: var(--font-mono);
   white-space: nowrap;

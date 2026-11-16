@@ -139,7 +139,9 @@ describe("WorkStrip", () => {
 
     expect(strip().getAttribute("data-work-strip")).toBe("working")
     expect(chipLabel(strip().querySelector("[data-result]"))).toBe("作業中")
-    expect(document.querySelector("[data-now-line]")?.textContent).toContain("再試行中 2/10")
+    const nowLine = document.querySelector("[data-now-line]")?.textContent
+    expect(nowLine).toContain("もう一度試している")
+    expect(nowLine).toContain("2回目")
   })
 
   it("ターンが終わってバックグラウンドタスクだけ残るあいだは、チップが「背景で作業中」の点で言い、今の段の丸は回らない", () => {

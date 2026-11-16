@@ -1,18 +1,21 @@
 // 流れの末尾の「いまの行」を出すかの判定。
 // 出すのは、最新のやり取りの中身が働くあいだで、答え待ちでないとき。答え待ちはお伺いのカードが末尾を持つ。
 
-import type { WorkActivity } from "./work-activity.ts"
+import type { NowLineStatement } from "./now-line-statement.ts"
 
 export type NowLineSource = {
   readonly contentKind: "welcome" | "work" | "report"
   readonly turnStepListKind: "none" | "turn"
   readonly viewingPast: boolean
-  readonly activity: WorkActivity
+  readonly activity: NowLineStatement
 }
 
 export type NowLine =
   | { readonly kind: "none" }
-  | { readonly kind: "shown"; readonly activity: WorkActivity }
+  | {
+      readonly kind: "shown"
+      readonly activity: Extract<NowLineStatement, { readonly kind: "doing" }>
+    }
 
 export function nowLineOf(source: NowLineSource): NowLine {
   const { contentKind, turnStepListKind, viewingPast, activity } = source
@@ -20,7 +23,7 @@ export function nowLineOf(source: NowLineSource): NowLine {
     contentKind !== "work" ||
     turnStepListKind !== "turn" ||
     viewingPast ||
-    activity.tone === "asking"
+    activity.kind === "asking"
   ) {
     return { kind: "none" }
   }

@@ -67,7 +67,7 @@ export function TurnList(): ReactElement {
             >
               <span className={styles["turn-list-mark"]} aria-hidden="true">
                 {working && phoneWidth ? (
-                  <Spinner className="" />
+                  <Spinner className="" slow={false} />
                 ) : working ? (
                   TURN_RESULT_MARKS.working.mark
                 ) : (

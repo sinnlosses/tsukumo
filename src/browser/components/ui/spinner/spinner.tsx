@@ -9,8 +9,17 @@ import "./spinner.css"
 export type SpinnerProps = {
   /** 置き方だけを渡す。 */
   readonly className: string
+  /** 長く掛かっているとき、回る速さを落とす。 */
+  readonly slow: boolean
 }
 
 export function Spinner(props: SpinnerProps): ReactElement {
-  return <AstryxSpinner size="sm" className={props.className} aria-hidden="true" />
+  return (
+    <AstryxSpinner
+      size="sm"
+      className={props.className}
+      data-slow={props.slow ? "" : undefined}
+      aria-hidden="true"
+    />
+  )
 }

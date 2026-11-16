@@ -44,7 +44,7 @@ export type WorkActivity = {
   readonly retry: WorkRetry
 }
 
-type WorkActivitySource = {
+export type WorkActivitySource = {
   readonly turnStepList: Extract<TurnStepList, { readonly kind: "turn" }>
   readonly firstPending?: StampedPendingAsk
   readonly reportDrafting: ReportDrafting
@@ -127,17 +127,11 @@ export function workActivityOf(source: WorkActivitySource): WorkActivity {
   }
 }
 
-function retryOf(turn: TurnProgress, apiTrouble: ApiTrouble): WorkRetry {
-  return turn.kind === "running" && apiTrouble.kind === "retrying"
-    ? { kind: "retrying", ...apiRetryNotice(apiTrouble) }
-    : { kind: "none" }
-}
-
-function currentRequestTextOf(records: readonly SessionRecord[]): string {
+export function currentRequestTextOf(records: readonly SessionRecord[]): string {
   return records.findLast((record) => record.kind === "request")?.text ?? ""
 }
 
-type SteppedBackground =
+export type SteppedBackground =
   | { readonly kind: "agent" }
   | { readonly kind: "workflow"; readonly taskId: TaskId; readonly step: WorkflowStep }
 
@@ -146,7 +140,7 @@ type SteppedBackground =
  * サブエージェントの手順はタスクに結ばれないので、サブエージェント全体で1つの候補とし、始まりは中の手順の最後のもの
  * （復元した手順は始まりが分からず、最古として扱う）。
  */
-function latestSteppedBackground(
+export function latestSteppedBackground(
   source: Pick<WorkActivitySource, "backgroundTasks" | "workflowSteps"> & {
     readonly steps: readonly TurnStep[]
   },
@@ -179,12 +173,21 @@ function latestSteppedBackground(
 /**
  * 選んだワークフロースクリプトの中で、手順が1つでも始まったうえで走っている agent（start・progress）がいる（手順の合間に考えている）か。
  */
-function workflowThinking(workflowProgress: readonly WorkflowProgress[], taskId: TaskId): boolean {
+export function workflowThinking(
+  workflowProgress: readonly WorkflowProgress[],
+  taskId: TaskId,
+): boolean {
   return (
     workflowProgress
       .find((progress) => progress.taskId === taskId)
       ?.agents.some((agent) => agent.state === "start" || agent.state === "progress") === true
   )
+}
+
+function retryOf(turn: TurnProgress, apiTrouble: ApiTrouble): WorkRetry {
+  return turn.kind === "running" && apiTrouble.kind === "retrying"
+    ? { kind: "retrying", ...apiRetryNotice(apiTrouble) }
+    : { kind: "none" }
 }
 
 function pendingLabel(pending: PendingAsk): string {

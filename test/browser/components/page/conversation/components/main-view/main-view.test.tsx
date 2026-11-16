@@ -383,7 +383,7 @@ describe("MainView（流れの末尾のいまの行）", () => {
 
     const lines = document.querySelectorAll("[data-now-line]")
     expect(lines).toHaveLength(1)
-    expect(lines[0]?.textContent).toContain("いま")
+    expect(lines[0]?.textContent).toContain("コマンドを走らせている")
     expect(lines[0]?.textContent).toContain("架空のコマンド")
     const said = screen.getByText("架空の一言目")
     expect(

@@ -5,6 +5,10 @@
 :root {
   --spinner-animation: spinner-turn 1s linear infinite;
 }
+/* 遅い回り方。Astryx の回転の長さを持つ私的な変数を書き換える所は、ここだけにする。 */
+[data-slow] {
+  --_astryx-pre-tempo-duration-slow-min: 1260ms;
+}
 @keyframes spinner-turn {
   to {
     transform: rotate(360deg);

@@ -1,17 +1,21 @@
 import { describe, expect, it } from "vitest"
 
+import type { NowLineStatement } from "../../../../../../../../src/browser/components/page/conversation/components/main-view/domain/now-line-statement.ts"
 import {
   nowLineOf,
   type NowLineSource,
 } from "../../../../../../../../src/browser/components/page/conversation/components/main-view/domain/now-line.ts"
-import type { WorkActivity } from "../../../../../../../../src/browser/components/page/conversation/components/main-view/domain/work-activity.ts"
 
-const QUIET: WorkActivity = {
-  text: "考えている",
-  tone: "quiet",
+const QUIET = {
+  kind: "doing",
+  verb: "考えている",
+  target: "",
   mono: false,
-  retry: { kind: "none" },
-}
+  elapsed: "",
+  remark: "",
+  longRunning: false,
+  retryDetail: "",
+} as const satisfies NowLineStatement
 
 const WORKING: NowLineSource = {
   contentKind: "work",
@@ -26,7 +30,7 @@ describe("nowLineOf", () => {
   })
 
   it("答え待ちなら出さない", () => {
-    expect(nowLineOf({ ...WORKING, activity: { ...QUIET, tone: "asking" } })).toEqual({
+    expect(nowLineOf({ ...WORKING, activity: { kind: "asking" } })).toEqual({
       kind: "none",
     })
   })

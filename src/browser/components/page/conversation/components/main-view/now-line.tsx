@@ -1,4 +1,4 @@
-// 流れの末尾の「いまの行」。回る印・「いま」・走っている手順の文を1行で出す。
+// 流れの末尾の「いまの行」。回る印・動詞・対象・経過・添え書きを1枚の小さな札で出す。
 
 import clsx from "clsx"
 import type { ReactNode } from "react"
@@ -15,29 +15,46 @@ export function NowLine(props: { readonly viewingPast: boolean }): ReactNode {
   }
   const { activity } = nowLine
   return (
-    <p className={clsx(styles["now-line"], activity.mono && styles["is-mono"])} data-now-line="">
-      <Spinner className={styles["now-line-mark"]} />
-      <Text element="span" size="label" tone="ink-quiet" weight="inherit" className="">
-        いま
-      </Text>
+    <p
+      className={clsx(styles["now-line"], activity.mono && styles["is-mono"])}
+      data-now-line=""
+      title={activity.retryDetail === "" ? undefined : activity.retryDetail}
+    >
+      <Spinner className={styles["now-line-mark"]} slow={activity.longRunning} />
       <Text
         element="span"
         size="secondary"
-        tone="ink-quiet"
-        weight="inherit"
-        className={styles["now-line-text"]}
+        tone="ink"
+        weight="semibold"
+        className={styles["now-line-verb"]}
       >
-        {activity.text}
+        {activity.verb}
       </Text>
-      {activity.retry.kind === "retrying" && (
+      {activity.target !== "" && (
         <Text
           element="span"
-          size="secondary"
-          tone="state-warn"
+          size="label"
+          tone="ink-quiet"
           weight="inherit"
-          className={styles["now-line-retry"]}
+          className={styles["now-line-target"]}
         >
-          <span title={activity.retry.detail}>{activity.retry.label}</span>
+          {activity.target}
+        </Text>
+      )}
+      {activity.elapsed !== "" && (
+        <Text
+          element="span"
+          size="label"
+          tone="ink-quiet"
+          weight="inherit"
+          className={styles["now-line-elapsed"]}
+        >
+          {activity.elapsed}
+        </Text>
+      )}
+      {activity.remark !== "" && (
+        <Text element="span" size="secondary" tone="ink" weight="inherit" className="">
+          {activity.remark}
         </Text>
       )}
     </p>
