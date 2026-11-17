@@ -10,6 +10,7 @@ import {
   OUTLINE_PANEL_STORAGE_KEY,
   press,
   renderMainView,
+  renderMainViewBeforeHello,
   stepTurn,
   threeTurns,
   title,
@@ -156,4 +157,48 @@ describe("MainView（やり取りの列: やり取りと見出しの2段）", ()
     expect(within(outline).queryByLabelText("3件")).toBeNull()
     expect(outlineTurnRows()).toHaveLength(3)
   })
+
+  it("hello のあと、やり取りが無いあいだは、題と件数 0 だけの帯が出る（口も行も印も無い）", () => {
+    renderMainView([])
+
+    expect(emptyOutlineBand()).toEqual({
+      text: "やり取り0",
+      hasCountLabel: true,
+      buttons: 0,
+      keyMarks: 0,
+    })
+  })
+
+  it("hello 待ちのあいだは、帯が出ない", () => {
+    renderMainViewBeforeHello()
+
+    expect(screen.queryByRole("navigation", { name: "やり取り" })).toBeNull()
+  })
+
+  it("開くを選んでいても、やり取りが無いあいだは同じ帯が出る", () => {
+    chooseOutlineOpen()
+    renderMainView([])
+
+    expect(emptyOutlineBand()).toEqual({
+      text: "やり取り0",
+      hasCountLabel: true,
+      buttons: 0,
+      keyMarks: 0,
+    })
+  })
 })
+
+function emptyOutlineBand(): {
+  readonly text: string | null
+  readonly hasCountLabel: boolean
+  readonly buttons: number
+  readonly keyMarks: number
+} {
+  const nav = screen.getByRole("navigation", { name: "やり取り" })
+  return {
+    text: nav.textContent,
+    hasCountLabel: within(nav).queryByLabelText("0件") !== null,
+    buttons: within(nav).queryAllByRole("button").length,
+    keyMarks: nav.querySelectorAll("kbd").length,
+  }
+}

@@ -99,6 +99,8 @@
   align-items: baseline;
   justify-content: space-between;
   gap: var(--space-sm);
+  /* 口のボタンがあるときの頭の行の高さ（実測 30.39px）に揃える。口の無い帯でも縮まない。 */
+  min-height: 30.4px;
   padding: var(--space-2xs) var(--space-md) var(--space-sm);
 }
 .outline-toggle {

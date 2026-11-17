@@ -2,6 +2,7 @@
 // 左の列の上に、集計期間の中のやり取りと、見ているやり取りの見出しの一覧を置く。
 // 高さは立ち絵と左上の席に被らないところで止まり（置き場の `<ConversationLayout>` が決める）、超えた分は一覧だけが転がる。
 // 狭い画面（760px 以下）では左の列ごと出さない。
+// やり取りが1件も無いあいだは、題と件数 0 だけの帯を出す。
 
 import clsx from "clsx"
 import { ChevronDown, ChevronUp } from "lucide-react"
@@ -113,6 +114,26 @@ export function PresentationalReportOutline({
           </div>
         </>
       )}
+    </nav>
+  )
+}
+
+export function EmptyReportOutline(): ReactElement {
+  return (
+    <nav
+      className={styles["outline-nav"]}
+      aria-label={OUTLINE_LABEL}
+      data-outline-collapsed={true}
+      title="依頼を送ると、ここに並ぶ"
+    >
+      <div className={styles["outline-list-head"]}>
+        <span className={styles["outline-list-title"]}>
+          {OUTLINE_LABEL}
+          <span className={styles["outline-count"]} role="img" aria-label="0件">
+            0
+          </span>
+        </span>
+      </div>
     </nav>
   )
 }
