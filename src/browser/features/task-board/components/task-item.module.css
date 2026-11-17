@@ -1,7 +1,7 @@
 /* 行全体のボタン。値は見本 `docs/history/mockup/sidebar-task-board-2026-11-16/` の `.tk-row`（印の列 16px・題 2行まで・2段目 12px・行の高さは最小 50px・題1行で約 57px）。
    題の列を `minmax(0, 1fr)` にしないと、子の内容ぶんの幅を取りに行って折り返せない。 */
 .task-item-row {
-  --task-title-size: calc((var(--font-label) + var(--font-body)) / 2);
+  --task-title-size: calc(var(--font-label) + (var(--font-body) - var(--font-label)) / 4);
   box-sizing: border-box;
   display: grid;
   grid-template-columns: 16px minmax(0, 1fr);
