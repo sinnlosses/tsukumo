@@ -1,10 +1,23 @@
-// 立ち絵をいま動かしてよいか、動かすなら5つのうちどれかを決める。
+// 立ち絵をいま動かしてよいか、動かすなら7つのうちどれかを決める。
 // 動くのは利用者の注意が空いているときだけ。優先順位は `resolvePortraitMotion` が持つ。
 
 import type { TurnProgress } from "../../shared/session/turn-progress.ts"
 
 /** 立ち絵がいまとる動き。CSS 側は `data-motion` としてこの値をそのまま受け取る。 */
-export type PortraitMotion = "reading" | "waiting" | "writing" | "success" | "failure"
+export type PortraitMotion =
+  | "reading"
+  | "waiting"
+  | "writing"
+  | "success"
+  | "failure"
+  | "beckon"
+  | "nod"
+
+/** タブの見え隠れ。`returned` は隠れていたタブが見えるようになった時刻を持つ。 */
+export type TabVisibility =
+  | { readonly kind: "visible" }
+  | { readonly kind: "hidden" }
+  | { readonly kind: "returned"; readonly at: number }
 
 /** {@link resolvePortraitMotion} が要る材料。`SessionState` のうち、判定に要る3つだけを抜き出した形。 */
 export type PortraitMotionInput = {
@@ -21,12 +34,33 @@ export type PortraitMotionInput = {
   readonly backgroundRunning?: boolean
   /** いちばん新しいやり取りが、利用者が止めて終わったか（記録の `turn-interrupted`）。`turn` の `ending` は中断を完了と同じ `ended` に畳むので、記録から渡す。省くと止めていない。 */
   readonly interrupted?: boolean
+  /** 答え待ち（質問・許可）の最初の1件が届いた時刻。答え待ちが無ければ省く。 */
+  readonly askedAt?: number
+  /** タブの見え隠れ。省くと見えている。 */
+  readonly tab?: TabVisibility
+  /** このタブが依頼・補足・答えを送る操作をした時刻。省くと送っていない。 */
+  readonly sentAt?: number
+  /** 動きを減らす設定か。省くと減らさない。 */
+  readonly reducedMotion?: boolean
 }
 
 type PortraitMotionTimingInput = Pick<
   PortraitMotionInput,
-  "turn" | "lastToolFailureAt" | "backgroundRunning" | "interrupted"
+  | "turn"
+  | "lastToolFailureAt"
+  | "backgroundRunning"
+  | "interrupted"
+  | "askedAt"
+  | "tab"
+  | "sentAt"
+  | "reducedMotion"
 >
+
+/** 答え待ちが始まってから（隠れていたタブが見えるようになってから）、このミリ秒だけ「呼ぶ」を優先する。 */
+const BECKON_MOTION_WINDOW_MS = 10_800
+
+/** 送る操作をしてから、このミリ秒だけ「うなずく」を優先する。 */
+const NOD_MOTION_WINDOW_MS = 500
 
 /** ツールが失敗してから（ターンが失敗で終わってから）、このミリ秒だけ「失敗でびくっ」を優先する。 */
 const FAILURE_MOTION_WINDOW_MS = 400
@@ -40,8 +74,12 @@ const SUCCESS_MOTION_WINDOW_MS = 700
  * 1. ツールが失敗した直後・ターンが失敗で終わった直後（{@link FAILURE_MOTION_WINDOW_MS} 以内）。ターンが進行中でも、他のツールが動いていても割り込む
  * 2. ターンが完了で終わった直後（{@link SUCCESS_MOTION_WINDOW_MS} 以内）。
  *    失敗・中断で終わったターンと、背景の作業が残っているときには「完了の反応」を出さない
- * 3. ターンが進行中で `report` の引数を書いている最中なら「書いている」
- * 4. ターンが進行中か、背景の作業を待っているあいだは「待っている間の移動」、そうでなければ「呼吸」だけの「読んでいる」
+ * 3. 答え待ちが始まった直後・隠れていたタブが見えるようになった直後（{@link BECKON_MOTION_WINDOW_MS} 以内）は「呼ぶ」。
+ *    タブが隠れているあいだと、動きを減らす設定では出さない
+ * 4. 送る操作の直後（{@link NOD_MOTION_WINDOW_MS} 以内）は「うなずく」。動きを減らす設定では出さない
+ * 5. 答え待ちのあいだは、ターンが進行中でも「呼吸」だけの「読んでいる」
+ * 6. ターンが進行中で `report` の引数を書いている最中なら「書いている」
+ * 7. ターンが進行中か、背景の作業を待っているあいだは「待っている間の移動」、そうでなければ「呼吸」だけの「読んでいる」
  *
  * `now` は呼び出し側が渡す現在時刻（エポックミリ秒）。時計はここでは読まない（サーバとブラウザの結果を揃える）。
  */
@@ -57,6 +95,13 @@ export function resolvePortraitMotion(input: PortraitMotionInput, now: number): 
   ) {
     return "success"
   }
+  const reaction = reactionWindows(input).find((w) => now - w.startedAt < w.durationMs)
+  if (reaction !== undefined) {
+    return reaction.motion
+  }
+  if (input.askedAt !== undefined) {
+    return "reading"
+  }
   if (input.turn.kind === "running" && input.draftingReport) {
     return "writing"
   }
@@ -64,7 +109,7 @@ export function resolvePortraitMotion(input: PortraitMotionInput, now: number): 
 }
 
 /**
- * 「失敗でびくっ」「完了の反応」が続く残り時間のうち、いちばん早く終わるものまでのミリ秒を返す。
+ * 「失敗でびくっ」「完了の反応」「呼ぶ」「うなずく」が続く残り時間のうち、いちばん早く終わるものまでのミリ秒を返す。
  * どちらも起きていない・期間をすでに過ぎているときは undefined（時間経過だけで動きが変わることはない）。
  *
  * 期間が「過ぎた瞬間」には何のイベントも来ない。
@@ -82,8 +127,43 @@ export function nextPortraitMotionTransitionDelayMs(
     isSuccessCandidate(input) && input.turn.kind === "finished"
       ? input.turn.finishedAt + SUCCESS_MOTION_WINDOW_MS - now
       : undefined,
+    ...reactionWindows(input).map((w) => w.startedAt + w.durationMs - now),
   ].filter((ms): ms is number => ms !== undefined && ms > 0)
   return remaining.length === 0 ? undefined : Math.min(...remaining)
+}
+
+type ReactionWindow = {
+  readonly motion: "beckon" | "nod"
+  readonly startedAt: number
+  readonly durationMs: number
+}
+
+/**
+ * 呼ぶ・うなずくの窓を、優先の順に並べる。出せないもの（答え待ちが無い・送っていない・
+ * 呼ぶはタブが隠れているあいだ・動きを減らす設定）は入れない。
+ */
+function reactionWindows(input: PortraitMotionTimingInput): readonly ReactionWindow[] {
+  if (input.reducedMotion === true) {
+    return []
+  }
+  const beckon: readonly ReactionWindow[] =
+    input.askedAt === undefined || input.tab?.kind === "hidden"
+      ? []
+      : [
+          {
+            motion: "beckon",
+            startedAt:
+              input.tab?.kind === "returned" && input.tab.at > input.askedAt
+                ? input.tab.at
+                : input.askedAt,
+            durationMs: BECKON_MOTION_WINDOW_MS,
+          },
+        ]
+  const nod: readonly ReactionWindow[] =
+    input.sentAt === undefined
+      ? []
+      : [{ motion: "nod", startedAt: input.sentAt, durationMs: NOD_MOTION_WINDOW_MS }]
+  return [...beckon, ...nod]
 }
 
 /** 閉じていて、背景の作業も残っておらず、利用者が止めずに完了で終わったか。跳ねるのはこのときだけ。 */

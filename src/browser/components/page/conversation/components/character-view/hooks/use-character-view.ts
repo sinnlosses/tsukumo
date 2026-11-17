@@ -29,6 +29,7 @@ import {
   type PortraitMotion,
   type PortraitMotionInput,
 } from "../../../../../../domain/portrait-motion.ts"
+import { prefersReducedMotion } from "../../../../../../domain/reveal/reduced-motion.ts"
 import { useExternalSync } from "../../../../../../hooks/use-external-sync.ts"
 import { useSession } from "../../../../../../stores/session.ts"
 import { useTurnSelection } from "../../../../../../stores/turn-selection.ts"
@@ -45,6 +46,7 @@ import {
   type PinnedSpeech,
   type ViewedSpeech,
 } from "../domain/pinned-speech.ts"
+import { useTabVisibility } from "./use-tab-visibility.ts"
 import { useWelcomeGreetingRecord } from "./use-welcome-greeting-record.ts"
 
 /** そのターンにセリフが1件も無かったときに当てる表情（`INITIAL_SESSION_STATE` と同じ既定）。 */
@@ -100,6 +102,10 @@ export function useCharacterView(): CharacterViewModel {
   const interrupted = records
     .slice(records.findLastIndex((r) => r.kind === "request") + 1)
     .some((record) => record.kind === "turn-interrupted")
+  const askedAt = useSession((session) => session.state.pending[0]?.askedAt)
+  const sentAt = useSession((session) => session.lastSentAt)
+  const tab = useTabVisibility()
+  const [reducedMotion] = useState(() => prefersReducedMotion((query) => window.matchMedia(query)))
   const waitingDueAt = useWaitingLineDueAt()
   const { cards: welcomeCards } = useWelcomeCards()
   const welcomeHead = welcomeHeadOf(welcomeCards)
@@ -114,7 +120,16 @@ export function useCharacterView(): CharacterViewModel {
   const [speechLogOpen, setSpeechLogOpen] = useState(false)
 
   const now = useCharacterClock(
-    { turn, lastToolFailureAt, backgroundRunning, interrupted },
+    {
+      turn,
+      lastToolFailureAt,
+      backgroundRunning,
+      interrupted,
+      askedAt,
+      tab,
+      sentAt,
+      reducedMotion,
+    },
     waitingDueAt,
   )
   const latestReaction = useShownReaction(welcomeHead, now)
@@ -139,7 +154,17 @@ export function useCharacterView(): CharacterViewModel {
     setViewed(toggledViewedSpeech(current, turnId, index, speechesOfTurn(turnId)?.length ?? 0))
   }
   const motion = resolvePortraitMotion(
-    { turn, lastToolFailureAt, draftingReport, backgroundRunning, interrupted },
+    {
+      turn,
+      lastToolFailureAt,
+      draftingReport,
+      backgroundRunning,
+      interrupted,
+      askedAt,
+      tab,
+      sentAt,
+      reducedMotion,
+    },
     now,
   )
 
@@ -206,7 +231,7 @@ function pastTurnSpeech(
 
 /**
  * 立ち絵の動きと待ちの一言が時間だけで変わる瞬間に読み直すための時計。いまの時刻を返す。
- * 完了の反応・失敗でびくっの期間が過ぎた瞬間と、待ちの一言を出し始める時刻（`waitingDueAt`）にだけ描き直す。
+ * 完了の反応・失敗でびくっ・呼ぶ・うなずくの期間が過ぎた瞬間と、待ちの一言を出し始める時刻（`waitingDueAt`）にだけ描き直す。
  *
  * 期間と期日は同時に効いていることがある（ツールが失敗した直後にターンが終わる、など）。
  * 次の描き直しまでの遅延はいちばん早いものだけなので、1回だけのタイマーだと、発火して `now` を進めたあとに残りがあっても次のタイマーが立たないまま止まる。
@@ -219,11 +244,27 @@ function pastTurnSpeech(
 function useCharacterClock(
   motionInput: Pick<
     PortraitMotionInput,
-    "turn" | "lastToolFailureAt" | "backgroundRunning" | "interrupted"
+    | "turn"
+    | "lastToolFailureAt"
+    | "backgroundRunning"
+    | "interrupted"
+    | "askedAt"
+    | "tab"
+    | "sentAt"
+    | "reducedMotion"
   >,
   waitingDueAt?: number,
 ): number {
-  const { turn, lastToolFailureAt, backgroundRunning, interrupted } = motionInput
+  const {
+    turn,
+    lastToolFailureAt,
+    backgroundRunning,
+    interrupted,
+    askedAt,
+    tab,
+    sentAt,
+    reducedMotion,
+  } = motionInput
   const [now, setNow] = useState(() => nowEpochMilliseconds())
 
   useExternalSync(() => {
@@ -234,7 +275,16 @@ function useCharacterClock(
       setNow(at)
       const delays = [
         nextPortraitMotionTransitionDelayMs(
-          { turn, lastToolFailureAt, backgroundRunning, interrupted },
+          {
+            turn,
+            lastToolFailureAt,
+            backgroundRunning,
+            interrupted,
+            askedAt,
+            tab,
+            sentAt,
+            reducedMotion,
+          },
           at,
         ),
         waitingDueAt === undefined ? undefined : waitingDueAt - at,
@@ -251,7 +301,17 @@ function useCharacterClock(
         clearTimeout(timer)
       }
     }
-  }, [turn, lastToolFailureAt, backgroundRunning, interrupted, waitingDueAt])
+  }, [
+    turn,
+    lastToolFailureAt,
+    backgroundRunning,
+    interrupted,
+    askedAt,
+    tab,
+    sentAt,
+    reducedMotion,
+    waitingDueAt,
+  ])
 
   return now
 }

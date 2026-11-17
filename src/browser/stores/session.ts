@@ -73,6 +73,8 @@ type SessionStoreState = {
   readonly protocol: ProtocolAgreement
   /** `hello`（姿の丸ごとの入れ替え）を受けた回数。姿の差が新しく起きたことかを見分けるのに使う。 */
   readonly generation: number
+  /** このタブが依頼・補足・答えを送った時刻。ほかのタブの送りでは変わらない。まだ送っていなければ無い。 */
+  readonly lastSentAt?: number
   readonly dispatch: SessionDispatch
   readonly dispatchAwaited: AwaitedDispatch
   /** 届いたフレームを畳む。`refresh` は姿を動かさないので呼び出し側が手前で捌く。 */
@@ -82,15 +84,31 @@ type SessionStoreState = {
   readonly attachSocket: (socket?: CommandSocket) => void
 }
 
+/** 送った時刻を残す手続き（`session` の下）。依頼・補足・聞くは `prompt`、答え・おすすめに任せるは `answer`。 */
+const SENT_PROCEDURES = ["prompt", "answer"] satisfies (keyof CommandClient["session"])[]
+
 export const useSession = create<SessionStoreState>()((set, get) => {
   // 繋ぎ直しで入れ替わるが、`dispatch` の参照は変えたくないので閉包に持つ。
   let socket: CommandSocket | undefined = undefined
+  // 依頼・補足・答えを送った時刻を残す。立ち絵がうなずく契機で、記録からは導かない（ほかのタブの送りでは変えない）。
+  const onCommandSent = (path: readonly string[]): void => {
+    const [group, procedure] = path
+    if (
+      socket !== undefined &&
+      group === "session" &&
+      SENT_PROCEDURES.some((name) => name === procedure)
+    ) {
+      set({ lastSentAt: nowEpochMilliseconds() })
+    }
+  }
   // 断られた・切れたときに投げる client。`dispatchAwaited` が結果に畳む。
   const awaitedClient: CommandClient = createORPCClient({
-    call: (path, input, options) =>
-      socket === undefined
+    call: (path, input, options) => {
+      onCommandSent(path)
+      return socket === undefined
         ? Promise.reject(new Error("サーバに繋がっていない"))
-        : socket.commandLink.call(path, input, options),
+        : socket.commandLink.call(path, input, options)
+    },
   })
   return {
     state: INITIAL_SESSION_STATE,
@@ -100,11 +118,13 @@ export const useSession = create<SessionStoreState>()((set, get) => {
     generation: 0,
     // 送った手続きが断られた・接続が切れたときは黙って捨てる（`SessionDispatch`）。
     dispatch: createORPCClient({
-      call: (path, input, options) =>
-        (socket?.commandLink.call(path, input, options) ?? Promise.resolve(undefined)).catch(
+      call: (path, input, options) => {
+        onCommandSent(path)
+        return (socket?.commandLink.call(path, input, options) ?? Promise.resolve(undefined)).catch(
           // 断られた・切れたときは黙って捨てる契約
           () => undefined,
-        ),
+        )
+      },
     }),
     dispatchAwaited: async (call) => {
       try {

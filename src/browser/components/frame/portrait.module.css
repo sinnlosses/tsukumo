@@ -8,12 +8,14 @@
   text-align: center;
   animation: var(--fade-in-name) 0.25s ease-out;
 
-  /* 立ち絵の動きの速さ・大きさ。この5組が唯一の調整箇所。
+  /* 立ち絵の動きの速さ・大きさ。この7組が唯一の調整箇所。
      --portrait-breathe-*: 呼吸（常時のごく小さい上下。「居る」の最小単位）。
      --portrait-walk-*: 待っている間の移動（ターン進行中に領域の中をゆっくり歩く。横方向）。
      --portrait-write-*: 書いている（`report` の引数を書いている間、筆を運ぶように小さく速く横へ揺れる）。
      --portrait-bounce-*: 完了の反応（ターンが終わると小さく跳ねる）。
-     --portrait-flinch-*: 失敗でびくっ（ツールが失敗すると一瞬のけぞる。横に引いて傾く）。 */
+     --portrait-flinch-*: 失敗でびくっ（ツールが失敗すると一瞬のけぞる。横に引いて傾く）。
+     --portrait-beckon-*: 呼ぶ（答え待ちの始まりと、隠れていたタブへ戻った直後だけ、横へ寄って傾く）。
+     --portrait-nod-*: うなずく（送った直後に、下へ小さく傾く）。 */
   --portrait-breathe-amount: 0.2rem;
   --portrait-breathe-duration: 3.2s;
   --portrait-walk-amount: 0.5rem;
@@ -25,6 +27,12 @@
   --portrait-flinch-amount: 0.3rem;
   --portrait-flinch-rotate: 3deg;
   --portrait-flinch-duration: 0.35s;
+  --portrait-beckon-amount: 0.5rem;
+  --portrait-beckon-rotate: 3deg;
+  --portrait-beckon-duration: 3.6s;
+  --portrait-nod-amount: 0.25rem;
+  --portrait-nod-rotate: 2deg;
+  --portrait-nod-duration: 0.36s;
 }
 /* 素材の縦横比を保つ（実測）。
    `height: 100%` と `max-width` を同時に掛けると、置換要素は幅だけ縮む（CSS 2.1 §10.4 の制約表。高さが auto でないまま max-width に当たると、max-height 側の再計算が起きない）。
@@ -70,6 +78,18 @@
 .portrait[data-motion="failure"] {
   animation-name: var(--fade-in-name), portrait-flinch;
   animation-duration: 0.25s, var(--portrait-flinch-duration);
+  animation-timing-function: ease-out, ease-out;
+  animation-iteration-count: 1, 1;
+}
+.portrait[data-motion="beckon"] {
+  animation-name: var(--fade-in-name), portrait-beckon;
+  animation-duration: 0.25s, var(--portrait-beckon-duration);
+  animation-timing-function: ease-out, ease-in-out;
+  animation-iteration-count: 1, 3;
+}
+.portrait[data-motion="nod"] {
+  animation-name: var(--fade-in-name), portrait-nod;
+  animation-duration: 0.25s, var(--portrait-nod-duration);
   animation-timing-function: ease-out, ease-out;
   animation-iteration-count: 1, 1;
 }
@@ -137,5 +157,34 @@
   60% {
     transform: translateX(calc(var(--portrait-flinch-amount) * 0.4))
       rotate(calc(var(--portrait-flinch-rotate) * 0.4));
+  }
+}
+/* 呼ぶ。答え待ちの始まり（隠れていたタブへ戻った直後）から `BECKON_MOTION_WINDOW_MS` のあいだだけ、3回当たる。 */
+@keyframes portrait-beckon {
+  0%,
+  42%,
+  100% {
+    transform: translateX(0) rotate(0deg);
+  }
+  10% {
+    transform: translateX(var(--portrait-beckon-amount)) rotate(var(--portrait-beckon-rotate));
+  }
+  20% {
+    transform: translateX(calc(var(--portrait-beckon-amount) * 0.3))
+      rotate(calc(var(--portrait-beckon-rotate) / 3));
+  }
+  30% {
+    transform: translateX(calc(var(--portrait-beckon-amount) * 0.9))
+      rotate(calc(var(--portrait-beckon-rotate) * 0.8667));
+  }
+}
+/* うなずく。送った直後（`NOD_MOTION_WINDOW_MS`）だけ当たる一度きりの動き。 */
+@keyframes portrait-nod {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  45% {
+    transform: translateY(var(--portrait-nod-amount)) rotate(var(--portrait-nod-rotate));
   }
 }

@@ -1,5 +1,5 @@
 import { ORPCError } from "@orpc/client"
-import { afterEach, describe, expect, it } from "vitest"
+import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import { useSession } from "../../../src/browser/stores/session.ts"
 import { FRAME_ERROR_REASON } from "../../../src/shared/frame-error-reason.ts"
@@ -43,5 +43,52 @@ describe("dispatchAwaited", () => {
       .dispatchAwaited((client) => client.session.switchSession({ sessionId: "架空" }))
 
     expect(result).toEqual({ kind: "failed" })
+  })
+})
+
+describe("lastSentAt", () => {
+  beforeEach(() => {
+    useSession.setState({ lastSentAt: undefined })
+  })
+
+  function attach(): void {
+    useSession.getState().attachSocket({ commandLink: { call: () => Promise.resolve({}) } })
+  }
+
+  it("dispatch で依頼・答えを送ると入る", () => {
+    attach()
+    const { dispatch } = useSession.getState()
+
+    void dispatch.session.prompt({ text: "架空", images: [] })
+    const afterPrompt = useSession.getState().lastSentAt
+    useSession.setState({ lastSentAt: undefined })
+    void dispatch.session.answer({ id: "ask-1", answer: { kind: "allow" } })
+
+    expect(afterPrompt).toBeTypeOf("number")
+    expect(useSession.getState().lastSentAt).toBeTypeOf("number")
+  })
+
+  it("dispatchAwaited で依頼を送ると入る", async () => {
+    attach()
+
+    await useSession
+      .getState()
+      .dispatchAwaited((client) => client.session.prompt({ text: "架空", images: [] }))
+
+    expect(useSession.getState().lastSentAt).toBeTypeOf("number")
+  })
+
+  it("ほかの手続きでは入らない", () => {
+    attach()
+
+    void useSession.getState().dispatch.session.startNewSession()
+
+    expect(useSession.getState().lastSentAt).toBeUndefined()
+  })
+
+  it("接続が無いときは入らない", () => {
+    void useSession.getState().dispatch.session.prompt({ text: "架空", images: [] })
+
+    expect(useSession.getState().lastSentAt).toBeUndefined()
   })
 })

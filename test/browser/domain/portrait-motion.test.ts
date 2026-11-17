@@ -191,6 +191,103 @@ describe("resolvePortraitMotion", () => {
   })
 })
 
+/** 呼ぶ動きが当たる期間（答え待ちの始まりから）。 */
+const BECKON_MOTION_WINDOW_MS = 10_800
+
+/** うなずく動きが当たる期間（送った直後から）。 */
+const NOD_MOTION_WINDOW_MS = 500
+
+describe("呼ぶ・うなずく", () => {
+  const A = 100_000
+  const W = BECKON_MOTION_WINDOW_MS
+  const N = NOD_MOTION_WINDOW_MS
+  const IDLE: PortraitMotionInput = {
+    turn: { kind: "idle" },
+    lastToolFailureAt: undefined,
+    draftingReport: false,
+  }
+  const RUNNING: PortraitMotionInput = { ...IDLE, turn: { kind: "running", startedAt: 0 } }
+
+  it("答え待ちが始まってから呼ぶ期間のあいだは「呼ぶ」", () => {
+    expect(resolvePortraitMotion({ ...IDLE, askedAt: A }, A + W - 1)).toBe("beckon")
+  })
+
+  it("呼ぶ期間を過ぎたら、ターンが走っていても歩かず呼吸", () => {
+    expect(resolvePortraitMotion({ ...RUNNING, askedAt: A }, A + W)).toBe("reading")
+  })
+
+  it("答え待ちでタブが隠れているあいだは呼ばない", () => {
+    expect(resolvePortraitMotion({ ...IDLE, askedAt: A, tab: { kind: "hidden" } }, A + 1)).toBe(
+      "reading",
+    )
+  })
+
+  it("隠れていたタブが見えるようになった時刻から、もう一度だけ呼ぶ", () => {
+    const R = A + W + 5000
+    const input: PortraitMotionInput = { ...IDLE, askedAt: A, tab: { kind: "returned", at: R } }
+    expect(resolvePortraitMotion(input, R + W - 1)).toBe("beckon")
+    expect(resolvePortraitMotion(input, R + W)).toBe("reading")
+  })
+
+  it("見えるようになった時刻が答え待ちより前なら、窓は答え待ちから数える", () => {
+    const input: PortraitMotionInput = {
+      ...IDLE,
+      askedAt: A,
+      tab: { kind: "returned", at: A - 1000 },
+    }
+    expect(resolvePortraitMotion(input, A + W)).toBe("reading")
+  })
+
+  it("答え待ちが無ければ、見えるようになっても呼ばない", () => {
+    expect(resolvePortraitMotion({ ...RUNNING, tab: { kind: "returned", at: A } }, A + 1)).toBe(
+      "waiting",
+    )
+  })
+
+  it("送った直後はうなずき、期間を過ぎたら続く動きへ戻る", () => {
+    const input: PortraitMotionInput = { ...RUNNING, sentAt: A }
+    expect(resolvePortraitMotion(input, A + N - 1)).toBe("nod")
+    expect(resolvePortraitMotion(input, A + N)).toBe("waiting")
+  })
+
+  it("呼ぶはうなずくより優先する", () => {
+    expect(resolvePortraitMotion({ ...IDLE, askedAt: A, sentAt: A }, A + 1)).toBe("beckon")
+  })
+
+  it("跳ねる・びくっはうなずくより優先する", () => {
+    const ended = {
+      kind: "finished",
+      startedAt: 0,
+      finishedAt: A,
+      ending: { kind: "ended" },
+    } as const
+    expect(resolvePortraitMotion({ ...IDLE, turn: ended, sentAt: A }, A + 1)).toBe("success")
+    expect(resolvePortraitMotion({ ...RUNNING, lastToolFailureAt: A, sentAt: A }, A + 1)).toBe(
+      "failure",
+    )
+  })
+
+  it("動きを減らす設定では呼ばず、うなずかない", () => {
+    const reduced = { ...IDLE, reducedMotion: true }
+    expect(resolvePortraitMotion({ ...reduced, askedAt: A }, A + 1)).toBe("reading")
+    expect(resolvePortraitMotion({ ...reduced, sentAt: A }, A + 1)).toBe("reading")
+  })
+
+  it("残り時間は、呼ぶ・うなずくの窓も数える。隠れているあいだと動きを減らす設定では数えない", () => {
+    expect(nextPortraitMotionTransitionDelayMs({ ...IDLE, askedAt: A }, A + 1000)).toBe(W - 1000)
+    expect(nextPortraitMotionTransitionDelayMs({ ...IDLE, sentAt: A }, A + 100)).toBe(N - 100)
+    expect(nextPortraitMotionTransitionDelayMs({ ...IDLE, askedAt: A, sentAt: A }, A + 100)).toBe(
+      N - 100,
+    )
+    expect(
+      nextPortraitMotionTransitionDelayMs({ ...IDLE, askedAt: A, tab: { kind: "hidden" } }, A + 1),
+    ).toBeUndefined()
+    expect(
+      nextPortraitMotionTransitionDelayMs({ ...IDLE, askedAt: A, reducedMotion: true }, A + 1),
+    ).toBeUndefined()
+  })
+})
+
 describe("nextPortraitMotionTransitionDelayMs", () => {
   it("完了も失敗も起きていなければ undefined", () => {
     const input: PortraitMotionInput = {

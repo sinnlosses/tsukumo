@@ -13,7 +13,7 @@
 // 立ち絵そのものは薄めない（要素の `opacity` は地ごと透かす）。
 //
 // これはプロトタイプ。
-// 立ち絵の動きは「待っているか」だけで決めていて、キャラビューが持つ4つの動き（`usePortraitMotion`）は再現していない。
+// 立ち絵の動きは「待っているか」だけで決めていて、キャラビューの動き（`resolvePortraitMotion`）は再現していない。
 
 import { useId, type ReactElement } from "react"
 
