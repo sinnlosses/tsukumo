@@ -767,7 +767,6 @@ button.key[aria-disabled="true"] {
 .turn-pop {
   inline-size: 344px;
   max-block-size: min(70dvb, 560px);
-  margin: 0;
   padding: 8px;
   border: 1px solid color-mix(in srgb, var(--ink) 16%, transparent);
   border-radius: 14px;
@@ -802,7 +801,7 @@ button.key[aria-disabled="true"] {
     inset: auto;
     position-area: block-end span-inline-end;
     position-try-fallbacks: flip-block;
-    margin-block: 6px;
+    margin: 6px 0;
   }
 }
 
@@ -810,6 +809,7 @@ button.key[aria-disabled="true"] {
   .turn-pop {
     position: fixed;
     inset: calc(var(--bar-h) + 104px) auto auto 28px;
+    margin: 0;
   }
 }
 
