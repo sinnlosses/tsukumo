@@ -13,8 +13,7 @@ const BASE = Temporal.ZonedDateTime.from(
 
 const LIVE: PresentationContext = {
   live: true,
-  asking: false,
-  hasDraft: false,
+  follow: true,
   timeZone: TIME_ZONE,
 }
 
@@ -23,30 +22,26 @@ const say = (seconds: number) => ({ kind: "say", at: BASE + seconds * 1000 })
 describe("streamPresentationOf のいまの一言", () => {
   it("作業中は最新のセリフ1件だけが明るく、尾が付く", () => {
     const result = streamPresentationOf([say(0), { kind: "post", at: BASE }, say(10)], LIVE)
-    expect(result.map((row) => row.liveness)).toEqual(["plain", "plain", "live-with-tail"])
+    expect(result.map((row) => row.liveness)).toEqual(["plain", "plain", "live"])
+    expect(result.map((row) => row.followed)).toEqual([false, false, true])
   })
 
-  it("すぐ下に全幅の物が続くときは尾を出さない", () => {
+  it("すぐ下に全幅の物が続くときも、従っているセリフには尾が付く", () => {
     for (const kind of ["question", "body", "failure", "fold"]) {
       const result = streamPresentationOf([say(0), { kind }], LIVE)
-      expect(result[0]?.liveness).toBe("live")
+      expect(result[0]?.followed).toBe(true)
     }
   })
 
-  it("全幅でない物が続くなら尾を出す", () => {
-    expect(streamPresentationOf([say(0), { kind: "post", at: BASE }], LIVE)[0]?.liveness).toBe(
-      "live-with-tail",
-    )
-  })
-
-  it("末尾のセリフは、答え待ちか書きかけの紙が続くとき尾を出さない", () => {
-    expect(streamPresentationOf([say(0)], { ...LIVE, asking: true })[0]?.liveness).toBe("live")
-    expect(streamPresentationOf([say(0)], { ...LIVE, hasDraft: true })[0]?.liveness).toBe("live")
-  })
-
-  it("やり取りが終わっていれば、いまの一言は無い", () => {
+  it("やり取りが終わっていれば明るさは無く、いちばん新しいセリフ（締めのセリフ）に尾が付く", () => {
     const result = streamPresentationOf([say(0), say(10)], { ...LIVE, live: false })
     expect(result.map((row) => row.liveness)).toEqual(["plain", "plain"])
+    expect(result.map((row) => row.followed)).toEqual([false, true])
+  })
+
+  it("定位置の声が従っているあいだは、流れのどのセリフにも尾を付けない", () => {
+    const result = streamPresentationOf([say(0), say(10)], { ...LIVE, follow: false })
+    expect(result.map((row) => row.followed)).toEqual([false, false])
   })
 })
 

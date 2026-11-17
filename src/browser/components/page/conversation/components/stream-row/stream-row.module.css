@@ -33,7 +33,7 @@
   background: color-mix(in srgb, var(--surface), var(--accent) 26%);
   box-shadow: inset 0 0 0 1px var(--accent);
 }
-/* 仕事の流れのいまの一言。差し色を一段濃くして影を付ける。尾は左下（立ち絵の側）へ向ける。 */
+/* 仕事の流れのいまの一言。差し色を一段濃くして影を付ける。 */
 .stream-entry-character.stream-entry-live {
   position: relative;
   background: linear-gradient(
@@ -56,17 +56,9 @@
     }
   }
 }
-.stream-tail {
-  position: absolute;
-  inset-block-end: -11px;
-  inset-inline-start: 10px;
-  inline-size: 14px;
-  block-size: 12px;
-  overflow: visible;
-  fill: color-mix(in srgb, var(--accent) 13%, var(--surface));
-  stroke: var(--accent);
-  stroke-linejoin: round;
-  stroke-width: 1;
+/* 立ち絵が従っているセリフ。尾（`.stream-aim`）の置き場の基準になる。 */
+.stream-entry-aimed {
+  position: relative;
 }
 /* 返事を待っている間・まだ出していない吹き出しが控えている間、末尾に出す「...」。押せない。 */
 .stream-entry.stream-entry-typing {

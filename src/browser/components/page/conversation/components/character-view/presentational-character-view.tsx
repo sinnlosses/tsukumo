@@ -61,7 +61,7 @@ export function PresentationalCharacterView({
         onClose={onCloseSpeechLog}
       />
       <PhoneBalloon face={face} line={phoneLine} onOpenLog={onOpenSpeechLog} />
-      <div className={styles["character-stage"]}>
+      <div className={styles["character-stage"]} data-character-stage="">
         <HStack
           element="div"
           name={{ kind: "none" }}

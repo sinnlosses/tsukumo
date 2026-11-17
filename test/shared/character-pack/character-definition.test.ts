@@ -87,6 +87,15 @@ describe("parseCharacterDefinition", () => {
     expect(parseCharacterDefinition(JSON.stringify({ miniCall: " " }))?.miniCall).toBeUndefined()
   })
 
+  it("任意の faceAt（立ち絵の中の顔の位置）を読む。無い・範囲外・数でない値は undefined", () => {
+    const parse = (faceAt: unknown) => parseCharacterDefinition(JSON.stringify({ faceAt }))?.faceAt
+    expect(parse({ x: 0.5, y: 0.36 })).toEqual({ x: 0.5, y: 0.36 })
+    expect(parse({ x: 1.2, y: 0.3 })).toBeUndefined()
+    expect(parse({ x: "0.5", y: 0.3 })).toBeUndefined()
+    expect(parse({ x: 0.5 })).toBeUndefined()
+    expect(parseCharacterDefinition(FULL_DEFINITION_JSON)?.faceAt).toBeUndefined()
+  })
+
   it("任意の chatAccent（雑談中だけの accent）を読む。無い・壊れた値は undefined", () => {
     expect(parseCharacterDefinition(JSON.stringify({ chatAccent: "#f2984a" }))?.chatAccent).toBe(
       "#f2984a",

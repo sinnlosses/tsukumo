@@ -14,6 +14,12 @@ import { type CharacterBackground, toCharacterBackground } from "./character-bac
 import { isDiaryFontFileName } from "./character-diary-font.ts"
 import { EXPRESSIONS, type Expression, type RemovableExpression } from "./expression.ts"
 
+/** 立ち絵の絵の幅と高さに対する割合で示した顔の位置（左上が 0・0、右下が 1・1）。 */
+export type FaceAt = { readonly x: number; readonly y: number }
+
+/** `faceAt` を持たないパックが使う顔の位置。 */
+export const DEFAULT_FACE_AT: FaceAt = { x: 0.5, y: 0.25 }
+
 /**
  * character.json の中身。`portraits` は「あるものだけでよい」。
  * 無い表情はキーごと消すのではなく値を undefined にして持つ。
@@ -48,6 +54,11 @@ export type CharacterDefinition = {
    * 任意で、無ければ帯には何も出さない（`mini` や `portraits` からのフォールバックはしない）。
    */
   readonly face?: string
+  /**
+   * 立ち絵の絵の中で顔がある位置。絵の幅と高さに対する割合（0〜1）で、吹き出しの尾が顔へ向くのに使う。
+   * 任意で、無い・読めない値のパックは画面側の既定（`x: 0.5`・`y: 0.25`）に落ちる。
+   */
+  readonly faceAt?: FaceAt
   /**
    * 自己紹介文。雑談中のサイドバーのプロフィールで、名前の下に1行添える。
    * 任意で、無いパックは名前だけになる。空白だけの値は無いのと同じに畳む（札に空の行が出ないように）。
@@ -219,12 +230,26 @@ function toCharacterDefinition(value: unknown): CharacterDefinition | undefined 
     portraits: toPortraits(value.portraits),
     mini: typeof value.mini === "string" ? value.mini : undefined,
     face: typeof value.face === "string" ? value.face : undefined,
+    faceAt: toFaceAt(value.faceAt),
     tagline: nonBlankString(value.tagline),
     userCall: nonBlankString(value.userCall),
     miniCall: nonBlankString(value.miniCall),
     background: toCharacterBackground(value.background),
     diaryFont: toDiaryFont(value.diaryFont),
   }
+}
+
+/** `faceAt` を読む。x・y が 0〜1 の数の組だけ通し、それ以外は undefined（既定の位置に落ちる）。 */
+function toFaceAt(value: unknown): FaceAt | undefined {
+  if (!isPlainObject(value)) {
+    return undefined
+  }
+  const { x, y } = value
+  return isUnitInterval(x) && isUnitInterval(y) ? { x, y } : undefined
+}
+
+function isUnitInterval(value: unknown): value is number {
+  return typeof value === "number" && value >= 0 && value <= 1
 }
 
 /** `diaryFont` を読む。文字列でない・パックの外を指す形は undefined（既定の明朝体に落ちる）。 */

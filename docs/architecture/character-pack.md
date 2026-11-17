@@ -45,6 +45,10 @@ characters/<name>/
 
 名前が `parseCharacterPackName` を通らないディレクトリ（日本語・空白入りなど）は一覧に載せず、警告を1行出す。`session.switchCharacter` も同じ規則で見る。
 
+**`faceAt`（立ち絵の中の顔の位置）は `parseCharacterDefinition` が読む。** x・y が 0〜1 の数の組だけ通し、
+それ以外は undefined に畳む。`CharacterInfo.faceAt` へそのまま運び、既定（`DEFAULT_FACE_AT`）へ落とすのは
+描く側（`faceOnScreen`）で、画面から書き換える手続きは無い。
+
 **`systemPrompt` の append を組むのは `system-prompt/core/system-prompt.ts` の `takeSystemPromptAppend` 1つだけ**
 （寄せた理由は `docs/architecture.md`「新しいコードを置く場所」）。**`persona.md` の全文を fs から
 読むのは adapter（`character-pack.ts`）で、組み立てには文字列で渡す**ので、`core` はパックの型も fs

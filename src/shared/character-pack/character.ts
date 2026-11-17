@@ -6,7 +6,7 @@ import { fromKeys } from "remeda"
 
 import { characterAssetPath } from "./character-asset.ts"
 import type { CharacterBackground } from "./character-background.ts"
-import type { CharacterDefinition } from "./character-definition.ts"
+import type { CharacterDefinition, FaceAt } from "./character-definition.ts"
 import type { CharacterPackName } from "./character-pack-name.ts"
 import { type ExpressionChoice, expressionChoices } from "./expression-choice.ts"
 import { type Expression, EXPRESSIONS } from "./expression.ts"
@@ -57,6 +57,8 @@ export type CharacterInfo = {
    * 定義に `face` が無いパックでは undefined で、`portraits.default` へのフォールバックはしない（帯に何も出さない）。
    */
   readonly face?: string
+  /** {@link CharacterDefinition.faceAt}（立ち絵の中の顔の位置）をそのまま持つ。無いパックでは undefined（既定の位置を使う）。 */
+  readonly faceAt?: FaceAt
   /** {@link CharacterDefinition.tagline}（自己紹介文）をそのまま持つ。無いパックでは undefined（名前だけ）。 */
   readonly tagline?: string
   /** {@link CharacterDefinition.userCall}（利用者の呼び名）をそのまま持つ。無いパックでは undefined。 */
@@ -158,6 +160,7 @@ export function toCharacterInfo(source: CharacterInfoSource): CharacterInfo {
     mini: definition?.mini === undefined ? portraits?.default : assetUrl(definition.mini),
     hasOwnMini: definition?.mini !== undefined,
     face: definition?.face === undefined ? undefined : assetUrl(definition.face),
+    faceAt: definition?.faceAt,
     tagline: definition?.tagline,
     userCall: definition?.userCall,
     miniCall: definition?.miniCall,

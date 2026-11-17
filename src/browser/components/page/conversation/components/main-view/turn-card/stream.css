@@ -101,3 +101,28 @@
     --ink-quiet: var(--ink-soft);
   }
 }
+/* 立ち絵が従っているセリフの尾。吹き出しの縁の外枠と同じ座標で描き、先を立ち絵の顔へ向ける（形は `tailAim`）。
+   塗りは吹き出しの下端の色、線は差し色。根元は縁の線の内側に置いて塗りで縁を覆う。 */
+.stream-aim {
+  position: absolute;
+  inset: -1px;
+  inline-size: calc(100% + 2px);
+  block-size: calc(100% + 2px);
+  overflow: visible;
+  pointer-events: none;
+}
+.stream-aim path {
+  fill: color-mix(in srgb, var(--accent) 9%, var(--surface));
+  stroke: var(--accent);
+  stroke-linejoin: round;
+  stroke-width: 1;
+}
+/* いまの一言の下端の色（明るい面）に合わせる。 */
+.stream-aim[data-live] path {
+  fill: color-mix(in srgb, var(--accent) 13%, var(--surface));
+}
+@media (max-width: 760px) {
+  .stream-aim {
+    display: none;
+  }
+}

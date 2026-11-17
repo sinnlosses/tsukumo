@@ -62,6 +62,7 @@ export function ChatLog({
                     selected={row.selected}
                     pop={row.pop}
                     liveness="plain"
+                    aim={undefined}
                     speakerName=""
                     timeShown
                     onToggle={row.onToggle}

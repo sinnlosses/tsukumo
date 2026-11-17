@@ -18,6 +18,7 @@ import { USER_SPEAKER_NAME, type RowPresentation } from "./domain/stream-present
 import type { VoiceSlot } from "./domain/voice-slot.ts"
 import styles from "./main-view.module.css"
 import { RequestBlock } from "./request-block.tsx"
+import { StreamAim } from "./stream-aim.tsx"
 
 type PostRowProps = {
   readonly turn: MainViewTurn
@@ -60,6 +61,11 @@ export function SayRow(props: {
       time={clockOf(props.row.at)}
       timeShown={props.presentation.timeShown}
       liveness={props.presentation.liveness}
+      aim={
+        props.presentation.followed ? (
+          <StreamAim live={props.presentation.liveness === "live"} />
+        ) : undefined
+      }
       speakerName={props.speakerName}
       selected={false}
       pop={false}
@@ -81,6 +87,7 @@ export function VoiceSlotRow(props: {
         time={recordClockStamp(props.time, localTimeZoneId())}
         timeShown
         liveness="live"
+        aim={<StreamAim live />}
         speakerName={props.speakerName}
         selected={false}
         pop={false}

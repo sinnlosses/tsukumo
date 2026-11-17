@@ -31,8 +31,7 @@ export function ProgressFold(props: ProgressFoldProps): ReactElement {
   // 畳みの中は終わった経過なので、いまの一言は無い。時刻は畳みの中の並びで比べる。
   const presentations = streamPresentationOf(props.items, {
     live: false,
-    asking: false,
-    hasDraft: false,
+    follow: false,
     timeZone: localTimeZoneId(),
   })
   return (

@@ -375,26 +375,34 @@
                     {
                       "tag": "div",
                       "attributes": {
-                        "data-direction": "horizontal",
-                        "data-gap": "0",
-                        "data-wrap": "wrap"
+                        "data-character-stage": ""
                       },
                       "children": [
                         {
                           "tag": "div",
                           "attributes": {
-                            "role": "img",
-                            "aria-label": "つくもの精霊（どや顔）",
-                            "data-expression": "proud",
-                            "data-motion": "reading"
+                            "data-direction": "horizontal",
+                            "data-gap": "0",
+                            "data-wrap": "wrap"
                           },
                           "children": [
                             {
-                              "tag": "img",
+                              "tag": "div",
                               "attributes": {
-                                "alt": "つくもの精霊（どや顔）",
-                                "src": "/character/tsukumo-spirit/proud.svg"
-                              }
+                                "role": "img",
+                                "aria-label": "つくもの精霊（どや顔）",
+                                "data-expression": "proud",
+                                "data-motion": "reading"
+                              },
+                              "children": [
+                                {
+                                  "tag": "img",
+                                  "attributes": {
+                                    "alt": "つくもの精霊（どや顔）",
+                                    "src": "/character/tsukumo-spirit/proud.svg"
+                                  }
+                                }
+                              ]
                             }
                           ]
                         }
@@ -671,7 +679,10 @@
                                   },
                                   "children": [
                                     "つくもの精霊",
-                                    "書けたよ！"
+                                    "書けたよ！",
+                                    {
+                                      "tag": "svg"
+                                    }
                                   ]
                                 },
                                 {

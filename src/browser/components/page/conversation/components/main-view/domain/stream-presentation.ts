@@ -5,35 +5,37 @@ import { recordClockStamp, visibleClockFlags } from "../../../domain/clock-stamp
 /** 流れの1行。セリフ・投稿だけが時刻（`at`）を持つ。 */
 type PresentedItem = { readonly kind: string; readonly at?: number }
 
-export type SayLiveness = "plain" | "live" | "live-with-tail"
+export type SayLiveness = "plain" | "live"
 
 export type RowPresentation = {
   /** 時刻を見える字で出すか。 */
   readonly timeShown: boolean
-  /** セリフの明るさと尾。セリフでない行は `plain`。 */
+  /** セリフの明るさ（いまの一言）。セリフでない行は `plain`。 */
   readonly liveness: SayLiveness
+  /** 立ち絵が従っているセリフか（尾を付ける1件）。 */
+  readonly followed: boolean
 }
 
 /** 提示が決まっていない行（並びの外・並びが短い）の既定。 */
 export const PLAIN_PRESENTATION = {
   timeShown: true,
   liveness: "plain",
+  followed: false,
 } as const satisfies RowPresentation
 
 /** 読み上げ用の、利用者の投稿の話し手の名前。 */
 export const USER_SPEAKER_NAME = "あなた"
 
 export type PresentationContext = {
-  /** いちばん新しいやり取りが作業中か答え待ちか。 */
+  /** いちばん新しいやり取りが作業中か答え待ちか。明るくするのは最新のセリフ1件。 */
   readonly live: boolean
-  /** 答え待ち（お伺いの札が流れの末尾に続く）。 */
-  readonly asking: boolean
-  /** 流れの末尾に書きかけの紙が続くか。 */
-  readonly hasDraft: boolean
+  /**
+   * 立ち絵が流れの最新のセリフに従うか。
+   * 入力欄の上の定位置が声を出しているあいだは、立ち絵はそちらに従うので偽にする。
+   */
+  readonly follow: boolean
   readonly timeZone: string
 }
-
-const FULL_WIDTH_KINDS: ReadonlySet<string> = new Set(["question", "body", "failure", "fold"])
 
 export function streamPresentationOf(
   items: readonly PresentedItem[],
@@ -46,15 +48,10 @@ export function streamPresentationOf(
         : recordClockStamp({ kind: "stamped", at: item.at }, context.timeZone),
     ),
   )
-  const liveAt = context.live ? items.findLastIndex((item) => item.kind === "say") : -1
+  const lastSayAt = items.findLastIndex((item) => item.kind === "say")
   return items.map((_item, index) => ({
     timeShown: flags[index] === true,
-    liveness: index === liveAt ? livenessOf(items[index + 1], context) : "plain",
+    liveness: context.live && index === lastSayAt ? "live" : "plain",
+    followed: context.follow && index === lastSayAt,
   }))
-}
-
-function livenessOf(next: PresentedItem | undefined, context: PresentationContext): SayLiveness {
-  const fullWidthBelow =
-    next === undefined ? context.asking || context.hasDraft : FULL_WIDTH_KINDS.has(next.kind)
-  return fullWidthBelow ? "live" : "live-with-tail"
 }

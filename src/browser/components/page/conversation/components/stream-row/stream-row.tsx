@@ -19,8 +19,10 @@ type StreamSpeechRowProps = {
   readonly time: ClockStamp
   readonly selected: boolean
   readonly pop: boolean
-  /** 明るさと尾（仕事のメインビューのいまの一言）。雑談は `plain`。 */
-  readonly liveness: "plain" | "live" | "live-with-tail"
+  /** 明るさ（仕事のメインビューのいまの一言）。雑談は `plain`。 */
+  readonly liveness: "plain" | "live"
+  /** 吹き出しの形の一部として付ける尾（立ち絵が従っているセリフだけ）。付けなければ `undefined`。 */
+  readonly aim: ReactNode
   /** 読み上げ用の話し手の名前。空なら付けない（雑談）。 */
   readonly speakerName: string
   /** 時刻を見える字で出すか。出さなければ、触れるかフォーカスが入ったときだけ見える。 */
@@ -40,6 +42,7 @@ export function StreamSpeechRow(props: StreamSpeechRowProps): ReactElement {
         selected={props.selected}
         pop={props.pop}
         liveness={props.liveness}
+        aim={props.aim}
         speakerName={props.speakerName}
         {...(props.onToggle === undefined ? {} : { onToggle: props.onToggle })}
       />
@@ -95,7 +98,8 @@ type StreamSpeechProps = {
   readonly text: string
   readonly selected: boolean
   readonly pop: boolean
-  readonly liveness: "plain" | "live" | "live-with-tail"
+  readonly liveness: "plain" | "live"
+  readonly aim: ReactNode
   readonly speakerName: string
   readonly onToggle?: () => void
 }
@@ -116,6 +120,7 @@ function StreamSpeech(props: StreamSpeechProps): ReactElement {
     props.selected && styles["is-selected"],
     props.pop && styles["stream-entry-pop"],
     props.liveness !== "plain" && styles["stream-entry-live"],
+    props.aim !== undefined && styles["stream-entry-aimed"],
   )
 
   if (props.onToggle === undefined) {
@@ -123,7 +128,7 @@ function StreamSpeech(props: StreamSpeechProps): ReactElement {
       <div className={className} data-speaker="character">
         <SpeakerName name={props.speakerName} />
         {props.text}
-        {props.liveness === "live-with-tail" && <StreamTail />}
+        {props.aim}
       </div>
     )
   }
@@ -141,15 +146,6 @@ function StreamSpeech(props: StreamSpeechProps): ReactElement {
     >
       {props.text}
     </div>
-  )
-}
-
-/** 吹き出しの左下（立ち絵の側）へ向けた尾。吹き出しの形の一部で、読み上げには渡さない。 */
-function StreamTail(): ReactElement {
-  return (
-    <svg className={styles["stream-tail"]} viewBox="0 0 14 12" aria-hidden="true">
-      <path d="M3 0 0.5 11.5 13 0" />
-    </svg>
   )
 }
 

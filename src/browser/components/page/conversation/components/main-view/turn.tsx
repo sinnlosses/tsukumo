@@ -121,8 +121,7 @@ export function Turn(props: TurnProps): ReactElement {
     useSession((session) => session.state.character?.name) ?? DEFAULT_CHARACTER_NAME
   const presentations = streamPresentationOf(items, {
     live: props.newest && (moment === "work" || moment === "ask"),
-    asking: moment === "ask",
-    hasDraft: turn.drafts.length > 0,
+    follow: !phoneWidth && props.voice?.kind !== "voice",
     timeZone: localTimeZoneId(),
   })
 

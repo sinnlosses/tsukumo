@@ -25,6 +25,10 @@
   "accent": "#f9c3cd",
   "chatAccent": "#7cc8f0",
   "face": "face.png",
+  "faceAt": {
+    "x": 0.5,
+    "y": 0.36
+  },
   "background": {
     "image": "background.png"
   }
