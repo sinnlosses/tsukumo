@@ -279,6 +279,85 @@ figcaption b {
   transform-origin: 50% 100%;
 }
 
+.motions tbody th small {
+  display: block;
+  color: var(--ink-soft);
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+/* 提案 L の聞く姿勢。動きは足さず、姿勢だけを変える。 */
+.motion-figure[data-motion="listen"] {
+  rotate: 3deg;
+  translate: 0.3rem 0;
+}
+
+/* 表情ごとの吹き出しの出方の見本。 */
+.demo-bubble {
+  display: inline-block;
+  padding: 6px 14px;
+  border: 1px solid var(--accent);
+  border-radius: 16px 16px 16px 4px;
+  background: color-mix(in srgb, var(--accent) 16%, var(--surface));
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* 場面ごとのセリフの言い方と、渡す材料の表。 */
+.lines {
+  inline-size: 100%;
+  margin-block-start: 20px;
+  border-collapse: collapse;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.lines th,
+.lines td {
+  padding: 10px 20px 10px 0;
+  border-block-end: 1px solid var(--edge-quiet);
+  text-align: start;
+  vertical-align: top;
+}
+
+.lines thead th {
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.lines tbody th {
+  inline-size: 14%;
+  font-weight: 650;
+}
+
+.lines td:nth-child(2) {
+  inline-size: 27%;
+  color: var(--ink-soft);
+}
+
+.lines td:nth-child(3) {
+  inline-size: 31%;
+}
+
+.lines td:last-child {
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+
+/* 材料の表は、言える一言の列を主にする。 */
+.lines.is-material td:nth-child(2),
+.lines.is-material td:nth-child(3) {
+  inline-size: 20%;
+  color: var(--ink-soft);
+}
+
+.lines.is-material td:last-child {
+  color: var(--ink);
+  font-size: 14px;
+}
+
 .motion-cell.is-changed .motion-stage {
   outline: 1px solid var(--accent);
 }

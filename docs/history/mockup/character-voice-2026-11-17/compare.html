@@ -9,139 +9,206 @@
   </head>
   <!--
     キャラクターの振る舞いと吹き出しの提案を、今の形と並べて比べるページ。
+    最初に出した6つのうち A（声の定位置）・B（姿は局面に従う）は採用が決まり、C〜F は取り下げた。このページは、考え直した G〜M を並べる。
     左右の画は index.html を 1400×900 で開いたもの（縮めて出す）。動きはそのまま動く。中身はすべて架空で、実物の会話ではない。
-    数は 2026-11-17 に、直近7日の記録から数だけを数えたもの（セリフの文面は読んでいない）。
-    shot-*.jpg は index.html を 1400×900（?still=1）で撮った画、real-now-*.jpg は今の画面を疑似セッション
+    数は 2026-11-17 に、今の画面を疑似セッションで測ったものと、直近7日の記録から数だけを数えたもの（セリフの文面は読んでいない）。
+    shot-*.jpg は index.html を 1400×900 で撮った画、real-now-*.jpg は今の画面を疑似セッション
     （welcome-greeting・aside-delegating）で撮った画。
   -->
   <body>
     <header class="page-head">
-      <p class="page-kicker">tsukumo・仕事の画面（広い画面）・2026-11-17</p>
+      <p class="page-kicker">tsukumo・仕事の画面（広い画面）・2026-11-17・第2版</p>
       <h1>キャラクターの振る舞いと吹き出しの提案</h1>
       <p class="page-lead">
-        立ち絵の姿（表情と動き）と、その横の1件のセリフを見れば、部屋の今が分かるようにする。提案は6つで、左が今の形、右が提案。画は動く（1回だけの動きは、画が見えたときに掛かる）。
+        採用が決まった A（声の定位置）と B（姿は局面に従う）の上に、キャラクターの側から考え直した7つを重ねる。吹き出しが立ち絵のものに見えること、表情が体と吹き出しに出ること、話す内容が助けになるか嬉しいこと。左が今の形、右が提案で、画は動く。
       </p>
       <nav class="page-nav" aria-label="このページの中">
         <a href="#numbers">計測した数</a>
-        <a href="#a">A 声の定位置</a>
-        <a href="#b">B 姿は局面に従う</a>
-        <a href="#c">C いまの一言の鮮度</a>
-        <a href="#d">D セリフは受け取り方と合図</a>
-        <a href="#e">E 表情を行に残す</a>
-        <a href="#f">F セリフに返す</a>
+        <a href="#g">G 尻尾は顔を指す</a>
+        <a href="#h">H 押すとその表情</a>
+        <a href="#i">I 表情に合った出方</a>
+        <a href="#j">J 助けになる一言</a>
+        <a href="#k">K 嬉しい一言の材料</a>
+        <a href="#l">L 立ち絵に触れる</a>
+        <a href="#m">M 完了を祝う</a>
         <a href="#motions">動きの一覧</a>
-        <a href="#not">採らなかった案</a>
+        <a href="#adopted">採用済みと取り下げ</a>
       </nav>
     </header>
 
     <section class="block" id="numbers" aria-labelledby="numbers-title">
       <h2 id="numbers-title">計測した数</h2>
       <p class="block-lead">
-        直近7日（2026-11-10〜17）の3つの作業ツリーの記録から、<code>speak</code> の時刻・字数・表情の名前だけを数えた。レポートで終わった作業は 47 件、セリフは 457 件。質問の答え待ちの時間は間隔から除いた。
+        尻尾の向きは、今の画面の働く場面（疑似セッション・1400×900）で吹き出し・尻尾・立ち絵の位置を測った。セリフの数は、直近7日の3つの作業ツリーの記録にある
+        <code>speak</code> 536件を、語の有無だけで数えた目安（文面は出力していない）。
       </p>
       <ul class="tiles">
-        <li><b>131<small>秒</small></b><span>セリフの間隔の中央値</span></li>
-        <li><b>5<small>分</small>25<small>秒</small></b><span>1つの作業でいちばん長い沈黙の中央値</span></li>
-        <li><b>89<small>%</small></b><span>最新のセリフが2分以上前だった時間の割合（作業ごとの中央値）</span></li>
-        <li><b>56<small>字</small></b><span>セリフの字数の中央値。3文以上は 41%（定義は「1〜2文の短い一言」）</span></li>
-        <li><b>45<small>%</small></b><span>表情が既定（default）だったセリフの割合</span></li>
+        <li><b>50<small>度</small></b><span>尻尾の向きと、立ち絵の顔の方向のずれ（尻尾は水平から57度下、顔は7度下）</span></li>
+        <li><b>14<small>件</small></b><span>気持ちを言う語（ふふ・安心・悔しい など）を含むセリフ。536件中</span></li>
+        <li><b>4<small>件</small></b><span>ねぎらい・気づかいの語を含むセリフ。536件中</span></li>
+        <li><b>82<small>件</small></b><span>待ち時間の見込みを言うセリフ。536件中</span></li>
+        <li><b>0<small>種類</small></b><span>キャラクターに渡っている「いまの様子」（時刻・続けて働いた時間・今日の完了件数・使用量）</span></li>
       </ul>
     </section>
 
-    <section class="block" id="a" aria-labelledby="a-title">
-      <p class="block-mark">提案 A・いちばん先に</p>
-      <h2 id="a-title">声の定位置。立ち絵が従っているセリフは、必ず立ち絵の頭の横で読める</h2>
+    <section class="block" id="g" aria-labelledby="g-title">
+      <p class="block-mark">提案 G</p>
+      <h2 id="g-title">尻尾は立ち絵の顔を指す。立ち絵がいま従っているセリフに、1本だけ付ける</h2>
       <p class="block-lead">
-        立ち絵の表情は「いちばん新しいセリフか反応」に従う。そのセリフが画面に無い場面が、広い画面に2つある。流れの外に届く声（迎えの挨拶・待ちの一言・おかえり）を、入力欄のすぐ上の定位置に1件だけ出す。
+        今の尻尾は、吹き出しの左下から下へ向く決まった形で、入力欄の側を指している。尻尾の根元を吹き出しの左下の角のそばに置き、先を立ち絵の顔へ向ける。顔が横にあれば左の辺から、下にあれば下の辺から出す。顔の位置は、パックの定義に任意で持たせ（絵の中の割合）、無ければ絵の中央・上から4分の1を使う。完了のあとも、立ち絵が従っているセリフ（締めの一言・待ちの一言）に付ける。
       </p>
-      <div class="pair">
-        <figure>
-          <div class="frame" data-src="index.html?form=now&moment=greet&bar=0"></div>
-          <figcaption><b>今・迎える</b>挨拶は書かれているのに、行が 0 件（1400×900 で計測）。立ち絵だけが挨拶の表情に替わる。</figcaption>
-        </figure>
-        <figure>
-          <div class="frame" data-src="index.html?form=next&moment=greet&bar=0"></div>
-          <figcaption><b>提案・迎える</b>挨拶を定位置に尾つきで出す。始め方の一覧は挨拶のすぐ上へ寄せ、「何から始める？」の役は挨拶が持つ（挨拶が書けなかったときは見出しを出す）。</figcaption>
-        </figure>
-      </div>
-      <div class="pair">
-        <figure>
-          <div class="frame" data-src="index.html?form=now&moment=idle&bar=0"></div>
-          <figcaption><b>今・読む（完了から2分）</b>待ちの一言は紙の後ろ（流れの末尾）に積まれ、頭から読む画面の外に出る。見えているセリフは締めの一言なのに、立ち絵は待ちの一言の表情になる。</figcaption>
-        </figure>
-        <figure>
-          <div class="frame" data-src="index.html?form=next&moment=idle&bar=0"></div>
-          <figcaption><b>提案・読む（完了から2分）</b>紙の後ろに届く声は、流れに積まずに定位置へ出す。長いレポートを読んでいても、表情とセリフが対で見える。</figcaption>
-        </figure>
-      </div>
-    </section>
-
-    <section class="block" id="b" aria-labelledby="b-title">
-      <p class="block-mark">提案 B</p>
-      <h2 id="b-title">姿は局面に従う。立ち絵の動きで「働いている・あなたの番・終わった」が分かる</h2>
-      <p class="block-lead">
-        今の動きはターンが走っているかどうかで決まる。背景の作業を待つあいだはターンが閉じているので、立ち絵は呼吸だけになり、ターンが閉じるたびに跳ねる。動きを局面（働く・尋ねる・渡す・つまずく）で決め直し、1回だけの動きを2つ足す。
-      </p>
-      <div class="pair">
-        <figure>
-          <div class="frame" data-src="index.html?form=now&moment=ask&bar=0"></div>
-          <figcaption><b>今・答える</b>答え待ちでも、作業中と同じ歩く動き。</figcaption>
-        </figure>
-        <figure>
-          <div class="frame" data-src="index.html?form=next&moment=ask&bar=0"></div>
-          <figcaption><b>提案・答える</b>流れの側へ身を寄せる動き（呼ぶ）を3回して止まる。答え待ちのままタブへ戻ると、もう一度だけ掛かる。</figcaption>
-        </figure>
-      </div>
       <div class="pair">
         <figure>
           <div class="frame" data-src="index.html?form=now&moment=work&bar=0"></div>
-          <figcaption><b>今・働く（セリフが届いた直後）</b>セリフが届いても絵が替わるだけで、体は動かない。</figcaption>
+          <figcaption><b>今・働く</b>尻尾は下を向き、すぐ下の「読んでいる」の行を指している。立ち絵は左にいる。</figcaption>
         </figure>
         <figure>
           <div class="frame" data-src="index.html?form=next&moment=work&bar=0"></div>
-          <figcaption><b>提案・働く（セリフが届いた直後）</b>吹き出しの弾みと同時に、1回うなずく（0.36秒）。表情が替わった瞬間に目が向く。依頼・補足・答えを送った瞬間にも、受け取った合図としてうなずく。</figcaption>
+          <figcaption><b>提案・働く</b>尻尾は吹き出しの左の辺から出て、立ち絵の顔へ向く。</figcaption>
         </figure>
       </div>
     </section>
 
-    <section class="block" id="c" aria-labelledby="c-title">
-      <p class="block-mark">提案 C</p>
-      <h2 id="c-title">いまの一言の鮮度。明るい吹き出しは「いま届いた」だけにする</h2>
+    <section class="block" id="h" aria-labelledby="h-title">
+      <p class="block-mark">提案 H</p>
+      <h2 id="h-title">過去のセリフを押すと、立ち絵がその時の表情になる</h2>
       <p class="block-lead">
-        いまの一言は、届いて何分たっても同じ明るさで出ている。明るさは届いてから2分までにし、過ぎたら尾だけを残して時刻の代わりに「n分前」を出す。下の画は、B の「背景の作業を待つあいだも歩く」も一緒に見える。
-      </p>
-      <div class="pair">
-        <figure>
-          <div class="frame" data-src="index.html?form=now&moment=quiet&bar=0"></div>
-          <figcaption><b>今・働く（背景の作業を待って6分）</b>6分前のセリフが、届いた直後と同じ明るさ。立ち絵は呼吸だけ。</figcaption>
-        </figure>
-        <figure>
-          <div class="frame" data-src="index.html?form=next&moment=quiet&bar=0"></div>
-          <figcaption><b>提案・働く（背景の作業を待って6分）</b>吹き出しは落ち着いた面になり、「6分前」と言う。立ち絵は歩き続ける。部屋へ戻ったとき、明るい吹き出しがあれば新しい知らせだと分かる。</figcaption>
-        </figure>
-      </div>
-    </section>
-
-    <section class="block" id="d" aria-labelledby="d-title">
-      <p class="block-mark">提案 D・E・F</p>
-      <h2 id="d-title">セリフは受け取り方と合図。表情を行に残し、セリフに返せるようにする</h2>
-      <p class="block-lead">
-        <b>D</b> 済んだフェーズの中身は札（<code>phaseSummary</code>）が持つので、セリフは言い直さない。言うのは、その結果をどう受け取ったかと、4つの合図（受け取った・離れてよい・見てほしい・あなたの番）。目安は2文・全角40字。機械では差し戻さず、字数と文の数を計測値に残して見る。
-      </p>
-      <p class="block-lead" id="e">
-        <b>E</b> 表情が動いた行にだけ、パックの表情の語を吹き出しの外に添える。セリフを押すと、立ち絵がその表情に戻る（雑談と狭い画面のログにある操作を、広い画面の仕事の流れにも置く）。
-      </p>
-      <p class="block-lead" id="f">
-        <b>F</b> セリフの行に触れると「返す」が出る。押すと入力欄の頭に返す先の札が付き、補足を書き始められる（送らない）。
+        広い画面の仕事の流れでは、セリフを押せない（雑談と、狭い画面のログでは押せる）。セリフを押すと、立ち絵の表情・尻尾・明るさがそのセリフへ移る。もう一度押す・Esc・立ち絵を押す・新しいセリフが届く、のどれかで最新へ戻る。畳んだ「作業の経過」の中のセリフも押せる。
       </p>
       <div class="pair">
         <figure>
           <div class="frame" data-src="index.html?form=now&moment=late&bar=0"></div>
-          <figcaption><b>今・働く（後半）</b>札とセリフが同じ中身を2回言う。行は押せず、どの行も同じ見た目で、表情は最新の1つしか残らない。</figcaption>
+          <figcaption><b>今・働く（後半）</b>セリフは押せず、立ち絵は最新のセリフの表情だけを見せる。</figcaption>
         </figure>
         <figure>
           <div class="frame" data-src="index.html?form=next&moment=late&touch=1&bar=0"></div>
-          <figcaption><b>提案・働く（後半）</b>セリフは短く、札と重ならない。2つ目のセリフを押して留めた状態で、立ち絵は「きょとん」に戻り、行の脇に「返す」が出ている。</figcaption>
+          <figcaption><b>提案・働く（後半）</b>2つ目のセリフを押して留めた状態。立ち絵は「きょとん」に戻り、尻尾がそのセリフから立ち絵へ向く。ほかのセリフも押して試せる。</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="block" id="i" aria-labelledby="i-title">
+      <p class="block-mark">提案 I</p>
+      <h2 id="i-title">表情に合った出方。セリフが届いた瞬間、吹き出しと立ち絵が表情ごとに動く</h2>
+      <p class="block-lead">
+        今はどの表情でも、吹き出しは同じ弾み方で出て、立ち絵は絵が替わるだけ。B の「うなずく」を表情ごとの1回だけの動きに広げ、吹き出しの出方もそろえる。表情の名前は tsukumo が持つ9つなので、パックの中身には触れない。動きは位置と傾きだけで、1回で終わる。
+      </p>
+      <table class="motions">
+        <thead>
+          <tr><th>表情</th><th>立ち絵の動き</th><th>吹き出しの出方</th></tr>
+        </thead>
+        <tbody id="arrival-rows"></tbody>
+      </table>
+    </section>
+
+    <section class="block" id="j" aria-labelledby="j-title">
+      <p class="block-mark">提案 J・助けになる</p>
+      <h2 id="j-title">セリフは、画面が言わないことを言う。場面ごとに「助けになる一言」を決める</h2>
+      <p class="block-lead">
+        今の規約は「いま何をしていて、そこでどう感じているか」で、実物のセリフは、済んだことや次にすることの実況が多い。それは進行の帯・末尾の行・済んだフェーズの札がもう言っている。セリフの役目を、場面ごとの「利用者の助けになること」に置き直す。字数や文の数では縛らず、差し戻しもしない。
+      </p>
+      <table class="lines">
+        <thead>
+          <tr><th>場面</th><th>今の言い方（架空の例）</th><th>提案の言い方（架空の例）</th><th>助けになる点</th></tr>
+        </thead>
+        <tbody>
+          <tr><th scope="row">着手</th><td>並び替えの保存ですね。まず今の一覧の作りを見てきます。</td><td>並びを覚えさせるんですね。保存の仕組みが要りそうなので、まず今の作りを見ます。</td><td>依頼の受け取り方と、見込んでいる大きさが分かる。違えば早く止められる</td></tr>
+          <tr><th scope="row">想定と違ったとき</th><td>フェーズ1が済みました。並び順は画面のメモリだけにあって…（札と同じ中身）</td><td>……ん、保存する所がそもそも無いんです。思ったより手前から作りますね。</td><td>見込みが変わったことが、最初の一言で分かる</td></tr>
+          <tr><th scope="row">長い待ちの前</th><td>保存の仕組みは実装役に任せます。戻りを待ちますね。</td><td>実装役に任せました。20分ほどかかるので、そのあいだ休んでいてくださいな。</td><td>待つ長さと、離れてよいかが分かる</td></tr>
+          <tr><th scope="row">質問の前</th><td>保存先が2通りあります。どちらにするか決めてください。</td><td>ひとつだけ決めてほしいです。ほかの設定とそろえるなら「端末ごと」です。</td><td>聞かれる数と、おすすめが先に分かる</td></tr>
+          <tr><th scope="row">フェーズの区切り</th><td>フェーズ2が済みました。並び順を端末ごとの好みに保存して…（札と同じ中身）</td><td>ふふ、すんなり入りました。残りは画面につなぐだけです。</td><td>札に無い手応えと、残りの大きさが分かる</td></tr>
+          <tr><th scope="row">完了（締め）</th><td>ふふ、開き直しても並びが残るようになりました。（結論の言い直し）</td><td>ふふ、できました。まず「値が壊れていたとき」の行だけ、見てくださいな。</td><td>レポートのどこから読むかが分かる</td></tr>
+          <tr><th scope="row">待ちの一言</th><td>次に進めるときは、呼んでくださいね。</td><td>今日はこれで5件目です。次は T-107 が着手できますよ。</td><td>次の一手の候補が分かる</td></tr>
+        </tbody>
+      </table>
+      <p class="block-lead">
+        再試行・利用上限・待ちの反応の行にも、迎えの挨拶の <code>{札}</code> と同じ差し込みで事実を入れられるようにする（何回目か・戻る時刻・次に着手できる札）。
+      </p>
+      <div class="pair">
+        <figure>
+          <div class="frame" data-src="index.html?form=now&moment=quiet&bar=0"></div>
+          <figcaption><b>今・働く（背景の作業を待つ）</b>待つことは言うが、どれくらいか・離れてよいかは言わない。</figcaption>
+        </figure>
+        <figure>
+          <div class="frame" data-src="index.html?form=next&moment=quiet&bar=0"></div>
+          <figcaption><b>提案・働く（背景の作業を待つ）</b>待つ長さと、休んでよいことを言う。立ち絵は歩き続ける（B）。</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="block" id="k" aria-labelledby="k-title">
+      <p class="block-mark">提案 K・嬉しい</p>
+      <h2 id="k-title">「いまの様子」を渡す。ねぎらい・祝い・気づかいを、事実にもとづいて言えるようにする</h2>
+      <p class="block-lead">
+        キャラクターに渡っているのは、人格と過去の会話だけ。いま何時か、どれだけ続けて働いたか、今日いくつ終えたかを知らないので、ねぎらいも祝いも言えない。tsukumo が知っている事実を、依頼に添えて渡す。言うかどうか・どう言うかはキャラクターが決め、渡す時機は tsukumo が決める（同じ材料は、条件が変わるまで渡さない）。渡すのは数と決まった語だけで、会話の文面は含まない。
+      </p>
+      <table class="lines is-material">
+        <thead>
+          <tr><th>材料</th><th>出どころ</th><th>渡すとき</th><th>言える一言（架空の例）</th></tr>
+        </thead>
+        <tbody>
+          <tr><th scope="row">時刻の帯（朝・昼・夕・夜・夜更け）</th><td>時計</td><td>帯が変わった最初の依頼と、迎えの挨拶</td><td>夜更けですから、軽い T-105 からにしませんか。</td></tr>
+          <tr><th scope="row">続けて働いた時間</th><td>この部屋の依頼の時刻</td><td>2時間を超えた最初の依頼</td><td>もう2時間です。待つあいだ、休んでくださいな。</td></tr>
+          <tr><th scope="row">今日終えたタスクの数と節目</th><td>成果の記録</td><td>数が増えた直後</td><td>今日はこれで5件目です。</td></tr>
+          <tr><th scope="row">前の依頼からの経過</th><td>この部屋の依頼の時刻</td><td>半日以上あいた最初の依頼</td><td>おかえりなさい。昨日の続きからですね。</td></tr>
+          <tr><th scope="row">使用量の帯（5時間・7日が8割超）</th><td>使用量の記録</td><td>8割を超えた最初の依頼</td><td>5時間の枠が残り少ないです。重い作業は後にしませんか。</td></tr>
+          <tr><th scope="row">次に着手できるタスク</th><td>タスクの一覧</td><td>作業が完了したとき</td><td>次は T-107 が着手できますよ。</td></tr>
+        </tbody>
+      </table>
+      <div class="pair">
+        <figure>
+          <div class="frame" data-src="index.html?form=now&moment=idle&bar=0"></div>
+          <figcaption><b>今・読む（完了から2分）</b>待ちの一言は紙の後ろにあって見えず、中身も「呼んでください」だけ。</figcaption>
+        </figure>
+        <figure>
+          <div class="frame" data-src="index.html?form=next&moment=idle&bar=0"></div>
+          <figcaption><b>提案・読む（完了から2分）</b>定位置（A）に、今日の件数と次に着手できる札を言う待ちの一言が出る。</figcaption>
+        </figure>
+      </div>
+      <div class="pair">
+        <figure>
+          <div class="frame" data-src="index.html?form=now&moment=greet&bar=0"></div>
+          <figcaption><b>今・迎える</b>挨拶の行が出ない（立ち絵だけが挨拶の表情になる）。</figcaption>
+        </figure>
+        <figure>
+          <div class="frame" data-src="index.html?form=next&moment=greet&bar=0"></div>
+          <figcaption><b>提案・迎える</b>定位置（A）の挨拶が、時刻の帯を踏まえておすすめの札を言う。尻尾は立ち絵の顔へ向く（G）。</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="block" id="l" aria-labelledby="l-title">
+      <p class="block-mark">提案 L</p>
+      <h2 id="l-title">立ち絵に触れる。押すといまの一言へ戻り、書いているあいだは耳を傾ける</h2>
+      <p class="block-lead">
+        仕事の画面の立ち絵は、押しても何も起きない。押すと、留めたセリフを解いて、流れをいまの一言まで送り、出方と動きをもう一度掛ける（長いレポートを読んでいる途中でも、キャラクターがいま何と言ったかへ戻れる）。入力欄に字があるあいだは、入力欄の側へ身を寄せて止まる。動きは足さず、姿勢だけを変える。下の画で、立ち絵を押す・入力欄に字を書く、を試せる。
+      </p>
+      <div class="pair">
+        <figure>
+          <div class="frame" data-src="index.html?form=now&moment=late&bar=0"></div>
+          <figcaption><b>今・働く（後半）</b>立ち絵は押せない。書いているあいだも歩き続ける。</figcaption>
+        </figure>
+        <figure>
+          <div class="frame is-live" data-src="index.html?form=next&moment=late&bar=0"></div>
+          <figcaption><b>提案・働く（後半）</b>この画は中を操作できる。立ち絵を押すと最新のセリフが弾み、入力欄に字を書くと立ち絵が身を寄せる。</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="block" id="m" aria-labelledby="m-title">
+      <p class="block-mark">提案 M</p>
+      <h2 id="m-title">完了を祝う。タスクの作業が終わったときだけ、2回跳ねて光を散らす</h2>
+      <p class="block-lead">
+        今はターンが閉じるたびに同じ1回の跳ねが出る。B で「跳ねるのは作業の完了だけ」になるので、その上で、タスクの作業が検証を通して終わったとき（<code>report</code> の <code>task.outcome</code> が <code>finished</code> で、落ちた検証が無い）だけ、2回跳ねて差し色の光を散らす。短い答えの完了は今と同じ1回の跳ね。動きを減らす設定では出さない。
+      </p>
+      <div class="pair">
+        <figure>
+          <div class="frame" data-src="index.html?form=now&moment=done&bar=0"></div>
+          <figcaption><b>今・完了した直後</b>1回跳ねる。締めのセリフに尻尾は無く、結論を言い直している。</figcaption>
+        </figure>
+        <figure>
+          <div class="frame" data-src="index.html?form=next&moment=done&bar=0"></div>
+          <figcaption><b>提案・完了した直後</b>2回跳ねて光が散る。締めのセリフは、レポートのどこから読むかを言い（J）、尻尾が立ち絵へ向く（G）。</figcaption>
         </figure>
       </div>
     </section>
@@ -149,25 +216,25 @@
     <section class="block" id="motions" aria-labelledby="motions-title">
       <h2 id="motions-title">動きの一覧</h2>
       <p class="block-lead">
-        立ち絵は1枚の矩形のまま、位置と傾きだけを動かす。足す動きは「うなずく」と「呼ぶ」の2つで、どちらも1回きり（呼ぶは3回で止まる）。1回だけの動きは、ここでは数秒おきに掛け直している。
+        立ち絵は1枚の矩形のまま、位置と傾きだけを動かす。1回だけの動きは、ここでは数秒おきに掛け直している。B は採用済みで、I・L・M が今回の提案。
       </p>
       <table class="motions">
         <thead>
-          <tr><th>場面</th><th>今</th><th>提案</th><th>確かめ方</th></tr>
+          <tr><th>場面</th><th>今</th><th>提案</th><th>提案・確かめ方</th></tr>
         </thead>
         <tbody id="motion-rows"></tbody>
       </table>
     </section>
 
-    <section class="block" id="not" aria-labelledby="not-title">
-      <h2 id="not-title">採らなかった案</h2>
+    <section class="block" id="adopted" aria-labelledby="adopted-title">
+      <h2 id="adopted-title">採用済みと取り下げ</h2>
       <dl class="rejected">
-        <div><dt>沈黙のあいだ、tsukumo が作った一言を出す</dt><dd>吹き出しの文言はキャラクターが話したものだけ、という約束と合わない。</dd></div>
-        <div><dt>長く待つあいだに出すセリフを、<code>speak</code> に前もって書かせる</dt><dd><code>speak</code> の入力に欄を足さない決定（2026-11-16）と合わない。沈黙は C の「n分前」と末尾の行で読める。</dd></div>
-        <div><dt>時間で表情を替える（退屈・うとうと）</dt><dd>表情の源は <code>speak</code> だけ。自動の上書きは、表情と吹き出しの対を壊すので外してある（2026-09-17）。</dd></div>
-        <div><dt>立ち絵に吹き出しを戻す</dt><dd>セリフは流れの行のまま、という決定（2026-11-16）。A は流れの外に届く声だけを定位置に出す。</dd></div>
-        <div><dt>セリフごとに表情の顔の絵を添える</dt><dd>パックの顔は1枚で、表情ごとの立ち絵のどこが顔かを素材から決められない。語なら今の定義だけで出せる。</dd></div>
-        <div><dt>長いセリフを差し戻す・途中で切る</dt><dd>体裁の差し戻しを増やさない。話した文言は変えない。</dd></div>
+        <div><dt>A 声の定位置（採用）</dt><dd>迎えの挨拶・待ちの一言・おかえりを、入力欄のすぐ上・立ち絵の頭の横に1件だけ出す。</dd></div>
+        <div><dt>B 姿は局面に従う（採用）</dt><dd>背景の作業を待つあいだも歩く。答え待ちは「呼ぶ」。跳ねるのは作業の完了だけで、利用者が止めたときは跳ねない。</dd></div>
+        <div><dt>C いまの一言の鮮度（取り下げ）</dt><dd>「n分前」の札と明るさの切り替え。画面の道具の側の案で、キャラクターの体験を良くするものではなかった。</dd></div>
+        <div><dt>D セリフを短くする（取り下げ）</dt><dd>字数と文の数で縛る案。J に置き換えた（縛るのではなく、言う中身を決める）。</dd></div>
+        <div><dt>E 表情の語の札（取り下げ）</dt><dd>行の脇に表情の語を出す案。押すとその表情になる所だけを H に残し、表情は I の出方で見せる。</dd></div>
+        <div><dt>F セリフに返す（取り下げ）</dt><dd>行の脇の「返す」の口。入力欄から補足を送れば足りる。</dd></div>
       </dl>
     </section>
 

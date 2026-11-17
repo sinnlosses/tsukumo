@@ -12,11 +12,13 @@
     仕事の画面（広い画面）での、キャラクターの振る舞い（表情・動き）と吹き出し（セリフの行）の見本。
     今の形（form=now。2026-11-17 の main を疑似セッションで撮って測った振る舞い）と、提案を重ねた形（form=next）を、
     同じ架空のやり取りで見比べる。器と流れの部品の見た目は ../stream-harmony-2026-11-16/ の flow.css・goal.css を読む。
+    提案の形は、採用済みの A（声の定位置）・B（姿は局面に従う）の上に、G（尻尾は立ち絵の顔を指す）・H（セリフを押すとその表情になる）・
+    I（表情に合った出方）・J（セリフは画面が言わないことを言う）・K（いまの様子を渡す）・L（立ち絵に触れる）・M（完了を祝う）を重ねたもの。
     中身はすべて架空で、実物の会話ではない。並べて比べるページと動きの一覧は compare.html。
-    ?form=now|next                         今の形／提案
-    ?moment=greet|work|quiet|ask|late|idle  迎える／働く（セリフが届いた直後）／働く（背景の作業を待って6分）／答える／働く（後半）／読む（完了から2分）
-    ?touch=1                               提案の働く（後半）で、過去のセリフを押して留めた状態を出す（撮影用）
-    ?still=1                               届いた瞬間の1回だけの動き（うなずく・呼ぶ）を掛けない（撮影用）
+    ?form=now|next                              今の形／提案
+    ?moment=greet|work|quiet|ask|late|done|idle  迎える／働く（セリフが届いた直後）／働く（背景の作業を待って6分）／答える／働く（後半）／完了した直後／読む（完了から2分）
+    ?touch=1                                    提案の働く（後半）で、過去のセリフを押して留めた状態を出す（撮影用）
+    ?still=1                                    届いた瞬間の1回だけの動き（表情ごとの動き・呼ぶ・祝う）を掛けない（撮影用）
     ?pack=shirasuzu|tsukumo                パックの素材と差し色
     ?bar=0                                 上の切り替えの帯を隠す（撮影用）
   -->
@@ -67,6 +69,7 @@
         <a data-value="quiet">働く（6分の沈黙）</a>
         <a data-value="ask">答える</a>
         <a data-value="late">働く（後半）</a>
+        <a data-value="done">完了した直後</a>
         <a data-value="idle">読む（完了から2分）</a>
       </span>
       <button class="mock-bar-replay" id="replay" type="button">
@@ -106,6 +109,16 @@
             <ol class="lane-turns" id="lane-turns"></ol>
           </nav>
           <img class="portrait" id="portrait" alt="" />
+          <span class="sparkle" id="sparkle" hidden aria-hidden="true">
+            <i style="--dx: -135px; --dy: -30px"></i>
+            <i style="--dx: -112px; --dy: -92px"></i>
+            <i style="--dx: -62px; --dy: -132px"></i>
+            <i style="--dx: -8px; --dy: -150px"></i>
+            <i style="--dx: 46px; --dy: -136px"></i>
+            <i style="--dx: 98px; --dy: -98px"></i>
+            <i style="--dx: 126px; --dy: -36px"></i>
+            <i style="--dx: 72px; --dy: -124px"></i>
+          </span>
         </div>
 
         <section class="center" data-region="main" aria-label="会話">
@@ -117,7 +130,6 @@
             <div class="voice" id="voice" hidden></div>
             <p class="band" id="band" hidden></p>
             <form class="composer" aria-label="入力欄">
-              <p class="quote" id="quote" hidden></p>
               <label class="visually-hidden" for="draft">依頼</label>
               <textarea id="draft" class="composer-input" rows="1"></textarea>
               <div class="composer-foot">
