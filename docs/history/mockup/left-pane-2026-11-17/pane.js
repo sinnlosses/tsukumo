@@ -5,7 +5,7 @@
 // 中身はすべて架空で、実物の会話ではない。
 
 const DESIGNS = ["now", "a", "b", "c"]
-const MOMENTS = ["work", "read", "many", "first", "resume"]
+const MOMENTS = ["work", "read", "many", "first"]
 // 畳んだときの形（今の箱・見出しの帯・現在地の帯・小さい札）と、始め方の一覧のあいだの出し方。
 const FOLD_FORMS = ["now", "bar", "here", "chip"]
 const EMPTY_FORMS = ["now", "bar", "guide"]
@@ -106,9 +106,8 @@ const SCENES = {
     },
     strip: { state: "完了", time: "1分", steps: 3 },
   },
-  // 始め方の一覧（迎える）。first はやり取りが1件も無いセッション、resume は前のやり取りが残る続きのセッション。
+  // 始め方の一覧（迎える）。今の画面で始め方の一覧が出るのは、やり取りが1件も無いあいだだけ。
   first: { expression: "default", turns: [], active: -1, welcome: true },
-  resume: { expression: "default", turns: MANY_TURNS, active: -1, welcome: true },
 }
 
 const scene = SCENES[moment]
@@ -233,12 +232,7 @@ function laneEmpty() {
 // 今の形の列。始め方の一覧のあいだは、今の画面では列ごと出ない（empty=now）。
 function laneNow(options) {
   if (scene.welcome) {
-    if (emptyForm === "now") {
-      return ""
-    }
-    if (scene.turns.length === 0) {
-      return laneEmpty()
-    }
+    return emptyForm === "now" ? "" : laneEmpty()
   }
   return folded ? laneFolded() : laneAll(options)
 }
@@ -360,9 +354,6 @@ if (design !== "c" && scrolling !== null) {
     if (active !== null) {
       const over = active.offsetTop + active.offsetHeight - list.offsetTop - list.clientHeight
       list.scrollTop = Math.max(0, over)
-    } else {
-      // 見ているやり取りが無いとき（始め方の一覧）は、新しいほうの端を見せる。
-      list.scrollTop = list.scrollHeight
     }
   }
   new ResizeObserver(limit).observe(left)
@@ -395,7 +386,7 @@ const post = (text, time) =>
   `<div class="row row-user"><div class="bubble bubble-post">${text}</div><span class="stamp">${time}</span></div>`
 const fold = (text) => `<span class="fold">${icon("chevron-right", "icon icon-sm")}${text}</span>`
 
-// 始め方の一覧。続きのセッションでは「前のやり取りを見る」が並ぶ。
+// 始め方の一覧。
 function welcome() {
   const card = (id, title, index) => `<div class="welcome-card${index === 0 ? " is-top" : ""}">
     <p class="welcome-card-id">${id}${index === 0 ? `<span class="welcome-badge">いちばんのおすすめ</span>` : ""}</p>
@@ -403,9 +394,6 @@ function welcome() {
     <p class="welcome-card-send"><span>送られる依頼</span>タスク ${id} を進めて</p>
     <p class="welcome-card-foot"><kbd class="key">${index + 1}</kbd><span class="welcome-start">始める${icon("arrow-right", "icon icon-sm")}</span></p>
   </div>`
-  const back = scene.turns.length > 0
-    ? `<span class="way">${icon("rotate", "icon icon-sm")}前のやり取りを見る<kbd class="key">←</kbd></span>`
-    : ""
   return `<section class="welcome">
     <h1>何から始める？</h1>
     <p class="welcome-lead">tsukumo のおすすめ。「始める」を押すと、カードに書いた依頼がそのまま送られて作業が始まる。</p>
@@ -414,7 +402,7 @@ function welcome() {
     </div>
     <p class="ways"><span class="ways-label">ほかの始め方</span>
       <span class="way">${icon("pencil", "icon icon-sm")}自分で書く<kbd class="key">/</kbd></span>
-      <span class="way">${icon("list", "icon icon-sm")}タスクの一覧から選ぶ</span>${back}
+      <span class="way">${icon("list", "icon icon-sm")}タスクの一覧から選ぶ</span>
     </p>
   </section>`
 }
@@ -463,7 +451,6 @@ const FLOWS = {
       </article>`,
     ].join(""),
   first: welcome,
-  resume: welcome,
 }
 
 const stripElement = document.querySelector("#strip")

@@ -16,7 +16,6 @@ function shot(query, title, note, view) {
 
 const CORNER = { width: 330, height: 250 }
 const WELCOME = { width: 560, height: 330 }
-const RESUME = { width: 700, height: 500 }
 
 document.querySelector("#folded").innerHTML = [
   shot("moment=many&folded=1&form=now", "今の形", "42×54 の箱に山形だけ", CORNER),
@@ -36,9 +35,9 @@ document.querySelector("#first").innerHTML = [
   shot("moment=first&empty=guide", "2 案内つき", "並ぶことと、キーを2行で言う", WELCOME),
 ].join("")
 
-document.querySelector("#resume").innerHTML = [
-  shot("moment=resume&empty=now", "今の形", "前のやり取りが12件あっても、列ごと出ない", RESUME),
-  shot("moment=resume&empty=bar&form=bar", "案（1・2 に共通）", "前のやり取りを最初から並べる。見ているやり取りは無い", RESUME),
+document.querySelector("#sent").innerHTML = [
+  shot("moment=first&empty=bar", "依頼を送る前", "「やり取り 0」の帯", CORNER),
+  shot("moment=work&form=bar", "最初の依頼を送ったあと", "同じ頭の行の下へ1件目が伸びる", CORNER),
 ].join("")
 
 const fit = new ResizeObserver((entries) => {

@@ -1035,8 +1035,7 @@ button.key[aria-disabled="true"] {
 
 body[data-moment="read"] .flow,
 body[data-moment="many"] .flow,
-body[data-moment="first"] .flow,
-body[data-moment="resume"] .flow {
+body[data-moment="first"] .flow {
   justify-content: flex-start;
 }
 
