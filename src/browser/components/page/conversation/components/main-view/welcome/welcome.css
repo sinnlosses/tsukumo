@@ -164,17 +164,31 @@
    上下の行が余った高さを同じだけ分け合い、見出しは上の行の下端、ほかの始め方は下の行の上端に付く。
    カードが無いときは、ほかの始め方が中央の行に入る。
    お伺いの札が下に並ぶあいだは中央に置かず、上から積んで札を押し下げない。 */
+.welcome-scene {
+  display: flex;
+  flex-direction: column;
+}
 @media (min-width: 761px) {
-  .welcome:only-child {
+  /* 声の定位置は1行ぶんの高さを先に取り、挨拶の有無でカードの並びが動かないようにする。 */
+  .welcome-voice-reserve {
+    min-block-size: 4.5rem;
+  }
+  .welcome-voice-reserve [data-speaker="typing"] {
+    inline-size: fit-content;
+  }
+  .welcome-scene:only-child {
+    flex: 1;
+  }
+  .welcome-scene:only-child > .welcome {
     display: grid;
     flex: 1;
     grid-template-rows: 1fr auto 1fr;
     grid-template-columns: minmax(0, 1fr);
   }
-  .welcome:only-child > .head {
+  .welcome-scene:only-child > .welcome > .head {
     align-self: end;
   }
-  .welcome:only-child > .others {
+  .welcome-scene:only-child > .welcome > .others {
     align-self: start;
   }
   /* カードの下に並ぶときだけ、幅の中央に寄せる。 */

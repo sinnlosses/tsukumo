@@ -3,7 +3,10 @@ import { afterEach, beforeAll, describe, expect, it } from "vitest"
 
 import { loadMarkdown } from "../../../../../../../src/browser/features/report/markdown.tsx"
 import type { SessionRecord } from "../../../../../../../src/shared/session/session-record.ts"
-import { INITIAL_SESSION_STATE } from "../../../../../../../src/shared/session/session-state.ts"
+import {
+  INITIAL_SESSION_STATE,
+  type SessionState,
+} from "../../../../../../../src/shared/session/session-state.ts"
 import { FIXTURE_CHARACTER } from "../../../../../../fixture/character-view.tsx"
 import { renderMainView } from "../../../../../../fixture/main-view.tsx"
 import {
@@ -57,6 +60,40 @@ describe("MainView（声の定位置）", () => {
     const slot = document.querySelector("[data-voice-slot]")
     expect(slot?.textContent).toContain(WELCOME_BACK)
     expect(textCount(WELCOME_BACK)).toBe(1)
+  })
+
+  describe("迎える場面", () => {
+    function renderWelcome(welcomeGreeting: SessionState["welcomeGreeting"]): void {
+      renderMainView([])
+      act(() => {
+        putState({ ...INITIAL_SESSION_STATE, character: FIXTURE_CHARACTER, welcomeGreeting })
+      })
+    }
+    const greeting = {
+      withCard: "架空の挨拶 {札}",
+      withoutCard: "架空の挨拶",
+      expression: "default",
+    } as const
+
+    it("書けた挨拶を定位置に1件出す", () => {
+      renderWelcome({ kind: "written", greeting })
+      expect(document.querySelector("[data-voice-slot]")?.textContent).toContain("架空の挨拶")
+      expect(textCount("架空の挨拶")).toBe(1)
+    })
+
+    it("書いている途中は「…」を出し、書けなかったときは空にする", () => {
+      renderWelcome({ kind: "writing" })
+      expect(document.querySelector("[data-voice-slot] [data-speaker='typing']")).not.toBeNull()
+      cleanup()
+      renderWelcome({ kind: "unwritten" })
+      expect(document.querySelector("[data-voice-slot]")).toBeNull()
+    })
+
+    it("狭い画面は定位置を出さない", () => {
+      stubPhoneWidth(true)
+      renderWelcome({ kind: "written", greeting })
+      expect(document.querySelector("[data-voice-slot]")).toBeNull()
+    })
   })
 
   it("狭い画面は定位置を出さない", () => {

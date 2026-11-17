@@ -34,7 +34,10 @@ describe("voiceSlotOf", () => {
       expect(voiceSlotOf(shown(reaction))).toEqual(NO_VOICE_SLOT)
     }
     expect(voiceSlotOf({ kind: "none" })).toEqual(NO_VOICE_SLOT)
-    expect(voiceSlotOf({ kind: "writing" })).toEqual(NO_VOICE_SLOT)
+  })
+
+  it("書いている途中は定位置を「…」にする", () => {
+    expect(voiceSlotOf({ kind: "writing" })).toEqual({ kind: "writing" })
   })
 })
 

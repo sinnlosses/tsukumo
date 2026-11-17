@@ -53,7 +53,7 @@ import styles from "./main-view.module.css"
 import { NowLine } from "./now-line.tsx"
 import { PhaseList } from "./phase-list.tsx"
 import { RequestBlock } from "./request-block.tsx"
-import { VoiceSlotRow } from "./stream-card.tsx"
+import { VoiceSlotRow, WelcomeVoiceSlot } from "./stream-card.tsx"
 import { StreamFloat } from "./stream-float.tsx"
 import { TurnCardHead } from "./turn-card-head.tsx"
 import { Turn } from "./turn.tsx"
@@ -188,7 +188,10 @@ export function MainView(): ReactElement {
         >
           {view.kind === "welcome" && (
             <>
-              <Welcome />
+              <div className={styles["welcome-scene"]}>
+                <Welcome />
+                {!phoneWidth && <WelcomeVoiceSlot voice={shownVoice} speakerName={speakerName} />}
+              </div>
               <Inquiry />
             </>
           )}

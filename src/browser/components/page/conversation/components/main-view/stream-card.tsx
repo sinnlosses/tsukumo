@@ -12,9 +12,10 @@ import { localTimeZoneId } from "../../../../../utils/clock.ts"
 import { Text } from "../../../../ui/text/text.tsx"
 import { recordClockStamp, type ClockStamp } from "../../domain/clock-stamp.ts"
 import { PromptImageThumbnails } from "../prompt-image/prompt-image.tsx"
-import { StreamPostRow, StreamSpeechRow } from "../stream-row/stream-row.tsx"
+import { StreamPostRow, StreamSpeechRow, StreamTyping } from "../stream-row/stream-row.tsx"
 import type { ProgressItem, StreamItem } from "./domain/stream-item-list.ts"
 import { USER_SPEAKER_NAME, type RowPresentation } from "./domain/stream-presentation.ts"
+import type { VoiceSlot } from "./domain/voice-slot.ts"
 import styles from "./main-view.module.css"
 import { RequestBlock } from "./request-block.tsx"
 
@@ -85,6 +86,28 @@ export function VoiceSlotRow(props: {
         pop={false}
         className=""
       />
+    </div>
+  )
+}
+
+/**
+ * 迎える場面の声の定位置。声・「…」・空のどれでも1行ぶんの高さを取り、一覧の位置が動かないようにする。
+ */
+export function WelcomeVoiceSlot(props: {
+  readonly voice: VoiceSlot
+  readonly speakerName: string
+}): ReactElement {
+  const { voice } = props
+  return (
+    <div className={styles["welcome-voice-reserve"]}>
+      {voice.kind === "voice" && (
+        <VoiceSlotRow text={voice.text} time={voice.time} speakerName={props.speakerName} />
+      )}
+      {voice.kind === "writing" && (
+        <div className={styles["voice-slot"]} data-voice-slot="">
+          <StreamTyping />
+        </div>
+      )}
     </div>
   )
 }

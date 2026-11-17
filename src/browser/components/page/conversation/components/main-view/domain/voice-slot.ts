@@ -7,6 +7,8 @@ import type { ConversationStreamRow } from "../../../../../../domain/main-view/c
 /** 定位置に出す声。 */
 export type VoiceSlot =
   | { readonly kind: "none" }
+  /** 声を書いている途中。迎える場面の定位置が「…」を出す。 */
+  | { readonly kind: "writing" }
   | {
       readonly kind: "voice"
       readonly reaction: "welcome" | "idle"
@@ -16,7 +18,12 @@ export type VoiceSlot =
 
 export const NO_VOICE_SLOT = { kind: "none" } as const satisfies VoiceSlot
 
+const WRITING_VOICE_SLOT = { kind: "writing" } as const satisfies VoiceSlot
+
 export function voiceSlotOf(reaction: ShownReaction): VoiceSlot {
+  if (reaction.kind === "writing") {
+    return WRITING_VOICE_SLOT
+  }
   if (reaction.kind !== "shown") {
     return NO_VOICE_SLOT
   }
@@ -36,7 +43,7 @@ export function withoutVoiceRow(
   rows: readonly ConversationStreamRow[],
   voice: VoiceSlot,
 ): readonly ConversationStreamRow[] {
-  if (voice.kind === "none") {
+  if (voice.kind !== "voice") {
     return rows
   }
   const placed = rows.findLastIndex(
