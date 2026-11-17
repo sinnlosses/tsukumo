@@ -52,10 +52,14 @@ const DUE = { kind: "waiting-line-due" } as const satisfies SessionEvent
 const REACTED = {
   kind: "reactions-written",
   reactions: {
-    retrying: { text: "架空の再試行", expression: "flustered" },
+    retrying: {
+      withMark: "架空の{回数}回目",
+      withoutMark: "架空の再試行",
+      expression: "flustered",
+    },
     failed: { text: "架空の失敗", expression: "sad" },
-    limited: { text: "架空の上限", expression: "bored" },
-    idle: { text: "架空の待ち", expression: "default" },
+    limited: { withMark: "架空の{時刻}まで", withoutMark: "架空の上限", expression: "bored" },
+    idle: { withMark: "架空の{札}から", withoutMark: "架空の待ち", expression: "default" },
   } satisfies WrittenReactions,
 } as const satisfies SessionEvent
 
@@ -142,6 +146,21 @@ describe("applySessionEvent の反応の記録", () => {
     expect(reactionRecords(state)).toEqual([])
   })
 
+  it("回数が増えた再試行も、続けて届けば1件に畳む", () => {
+    const second = {
+      kind: "api-retry",
+      retry: { ...RETRY.retry, attempt: 2 },
+    } as const satisfies SessionEvent
+    const state = stateAfter([
+      [0, REACTED],
+      [1, REQUEST],
+      [2, RETRY],
+      [3, second],
+    ])
+
+    expect(reactionRecords(state)).toEqual(["retrying@2:架空の1回目"])
+  })
+
   it("続けて届く再試行は1件に畳み、モデルが何かを出したあとの再試行はもう1件積む", () => {
     const state = stateAfter([
       [0, REACTED],
@@ -152,7 +171,7 @@ describe("applySessionEvent の反応の記録", () => {
       [5, RETRY],
     ])
 
-    expect(reactionRecords(state)).toEqual(["retrying@2:架空の再試行", "retrying@5:架空の再試行"])
+    expect(reactionRecords(state)).toEqual(["retrying@2:架空の1回目", "retrying@5:架空の1回目"])
   })
 
   it("失敗で閉じたターンは失敗の行を積み、反応の行があとから届いたらそのときに積む", () => {
@@ -503,7 +522,7 @@ describe("applySessionEvent の反応の記録", () => {
           [1, RETRY],
           [2, SHOWN_WITH_CARD],
         ],
-        ["retrying@1:架空の再試行"],
+        ["retrying@1:架空の1回目"],
       ],
       [
         "雑談",
@@ -532,10 +551,7 @@ describe("applySessionEvent の反応の記録", () => {
         [4, SHOWN_WITH_CARD],
       ])
 
-      expect(reactionRecords(state)).toEqual([
-        "welcome@1:架空の挨拶だけ",
-        "retrying@2:架空の再試行",
-      ])
+      expect(reactionRecords(state)).toEqual(["welcome@1:架空の挨拶だけ", "retrying@2:架空の1回目"])
     })
 
     it("挨拶を書けたことだけでは積まない（表示の文が届くまで記録は無い）", () => {

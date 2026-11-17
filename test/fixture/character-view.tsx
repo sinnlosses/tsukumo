@@ -17,10 +17,22 @@ export const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = charact
 })
 
 export const REACTIONS = {
-  retrying: { text: "架空の再試行反応", expression: "thinking" },
+  retrying: {
+    withMark: "架空の再試行反応{回数}",
+    withoutMark: "架空の再試行反応",
+    expression: "thinking",
+  },
   failed: { text: "架空の失敗の反応", expression: "sad" },
-  limited: { text: "架空の上限の反応", expression: "default" },
-  idle: { text: "架空の待ちの反応", expression: "default" },
+  limited: {
+    withMark: "架空の上限の反応{時刻}",
+    withoutMark: "架空の上限の反応",
+    expression: "default",
+  },
+  idle: {
+    withMark: "架空の待ちの反応{札}",
+    withoutMark: "架空の待ちの反応",
+    expression: "default",
+  },
 } as const satisfies WrittenReactions
 
 /** 反応の行が書けた姿。 */

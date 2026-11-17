@@ -21,7 +21,8 @@
         "kind": "reactions-written",
         "reactions": {
           "retrying": {
-            "text": "架空の再試行の一言。",
+            "withMark": "架空の{回数}回目の再試行の一言。",
+            "withoutMark": "架空の再試行の一言。",
             "expression": "flustered"
           },
           "failed": {
@@ -29,11 +30,13 @@
             "expression": "sad"
           },
           "limited": {
-            "text": "架空の利用上限の一言。",
+            "withMark": "架空の{時刻}までの利用上限の一言。",
+            "withoutMark": "架空の利用上限の一言。",
             "expression": "bored"
           },
           "idle": {
-            "text": "架空の待ちの一言（書かせた行）。",
+            "withMark": "架空の{札}を勧める待ちの一言（書かせた行）。",
+            "withoutMark": "架空の待ちの一言（書かせた行）。",
             "expression": "default"
           }
         }

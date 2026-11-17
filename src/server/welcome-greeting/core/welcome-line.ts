@@ -27,17 +27,17 @@ const CHECK_REJECTIONS = [
 ] as const satisfies readonly WelcomeRejection[]
 
 /**
- * 空でない・改行を含まない・{@link WELCOME_LINE_CHARS} 字以下で、差し込み口をちょうど `marks` 個持つ1行
+ * 空でない・改行を含まない・{@link WELCOME_LINE_CHARS} 字以下で、差し込み口 `mark`（既定は札の印）をちょうど `marks` 個持つ1行
  * （前後の空白は落とす）。検査はこの順に当たり、最初に落ちたものが理由になる。
  */
-export function welcomeLineSchema(marks: number) {
+export function welcomeLineSchema(marks: number, mark: string = WELCOME_GREETING_CARD_MARK) {
   return z
     .string()
     .trim()
     .min(1, "empty")
     .refine((line) => !line.includes("\n"), "newline")
     .max(WELCOME_LINE_CHARS, "too-long")
-    .refine((line) => line.split(WELCOME_GREETING_CARD_MARK).length - 1 === marks, "mark-count")
+    .refine((line) => line.split(mark).length - 1 === marks, "mark-count")
 }
 
 /** 表情の選択肢にある名前。 */

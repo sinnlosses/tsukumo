@@ -11,10 +11,10 @@ import {
 // すべて手で書いた架空の出力。
 
 const REACTIONS = {
-  retrying: { text: "架空の再試行", expression: "default" },
+  retrying: { withMark: "架空の{回数}回目", withoutMark: "架空の再試行", expression: "default" },
   failed: { text: "架空の失敗", expression: "default" },
-  limited: { text: "架空の上限", expression: "default" },
-  idle: { text: "架空の待ち", expression: "default" },
+  limited: { withMark: "架空の{時刻}まで", withoutMark: "架空の上限", expression: "default" },
+  idle: { withMark: "架空の{札}から", withoutMark: "架空の待ち", expression: "default" },
 }
 
 /** 挨拶の問い合わせか（反応の行の問い合わせは材料の節を持たない）。 */
@@ -64,7 +64,7 @@ describe("createWelcomeGreeter", () => {
 
     createWelcomeGreeter(ports).start(MATERIAL)
     queries[0]?.settle(OUTPUT)
-    queries[1]?.settle({ ...REACTIONS, idle: { text: "", expression: "default" } })
+    queries[1]?.settle({ ...REACTIONS, failed: { text: "", expression: "default" } })
     await flush()
     for (let index = 1; index < 4; index += 1) {
       queries.filter((query) => !isGreetingQuery(query))[index]?.settle({})

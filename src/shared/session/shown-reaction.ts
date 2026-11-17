@@ -7,10 +7,17 @@
 // 迎えるときは、挨拶を書いている途中は「…」、書けていればその文を出し、書けなかったら出さない。
 // 依頼を受けてから最初の `speak` までは「…」を出す。
 // 再試行・失敗・利用上限は、反応の行の問い合わせが書いた行を出し、書けていなければ出さない（挨拶が書けたかは見ない）。
+// 再試行・利用上限・待ちの行は印を持つ文を持ち、値（回数・戻る時刻・先頭の札）が取れれば差し込み、取れなければ印の無い文を出す。
 // 依頼を待つ間が続いたら、Claude Code が `report` に書いた待ちの一言、無ければ書かせた待ちの行を出す。
 // 続きから起こしてまだ依頼が無い間は、前回の待ちの一言、無ければ迎えの挨拶の札の無い文をおかえりとして出す。
 
-import type { ReactionKind, ReactionLine, WrittenReactionKind } from "../recommendation/reaction.ts"
+import {
+  type MarkedReactionKind,
+  REACTION_MARKS,
+  type ReactionKind,
+  type ReactionLine,
+  type WrittenReactionKind,
+} from "../recommendation/reaction.ts"
 import {
   NO_WELCOME_HEAD,
   type WelcomeGreeting,
@@ -43,6 +50,15 @@ type UntimedReaction =
   | Exclude<ShownReaction, { readonly kind: "shown" }>
   | { readonly kind: "shown"; readonly reaction: ReactionKind; readonly line: ReactionLine }
 
+/** 戻る時刻（エポックミリ秒）と現在時刻から、画面に出す時刻の字を組む。 */
+export type ResetTimeText = (resetsAt: number, now: number) => string
+
+type ReactionValues = {
+  readonly head: WelcomeHead
+  readonly now: number
+  readonly resetTimeText?: ResetTimeText
+}
+
 /** ターンが閉じて依頼を待つ間がこのミリ秒続いたら、待ちの一言を出す。 */
 const WAITING_LINE_DELAY_MS = 120_000
 
@@ -54,10 +70,16 @@ const NO_GREETING_ON_SHOW = { kind: "none" } as const satisfies GreetingOnShow
 
 /**
  * `head` は始め方の一覧の先頭の札で、迎えの挨拶の名指しに使う。
- * `now` は呼び出し側が渡す現在時刻（エポックミリ秒）で、待ちの一言を出すかだけに使う。
+ * `now` は呼び出し側が渡す現在時刻（エポックミリ秒）で、待ちの一言を出すかと、戻る時刻の字を組むのに使う。
+ * `resetTimeText` は利用上限の戻る時刻を読む人の時計の字にする関数で、無ければ戻る時刻は差し込まない（読む人の時計を持つ画面だけが渡す）。
  */
-export function shownReaction(state: SessionState, head: WelcomeHead, now: number): ShownReaction {
-  const reaction = untimedReaction(state, head, now)
+export function shownReaction(
+  state: SessionState,
+  head: WelcomeHead,
+  now: number,
+  resetTimeText?: ResetTimeText,
+): ShownReaction {
+  const reaction = untimedReaction(state, { head, now, resetTimeText })
   return reaction.kind === "shown"
     ? { ...reaction, time: reactionTime(state, reaction.reaction) }
     : reaction
@@ -141,10 +163,11 @@ function derivedReactionTime(state: SessionState, reaction: ReactionKind): Recor
   }
 }
 
-function untimedReaction(state: SessionState, head: WelcomeHead, now: number): UntimedReaction {
+function untimedReaction(state: SessionState, values: ReactionValues): UntimedReaction {
   if (state.chatMode || state.character === undefined) {
     return NO_SHOWN_REACTION
   }
+  const { head, now } = values
   const reaction = reactionKindOf(state, now)
   switch (reaction) {
     case "welcome":
@@ -152,13 +175,13 @@ function untimedReaction(state: SessionState, head: WelcomeHead, now: number): U
     case "welcome-back":
       return shownWelcomeBack(state)
     case "idle":
-      return shownWaitingLine(state)
+      return shownWaitingLine(state, values)
     case "accepted":
       return WRITING_REACTION
     case "none":
       return NO_SHOWN_REACTION
     default:
-      return shownWrittenLine(state.writtenReactions, reaction)
+      return shownWrittenLine(state, reaction, values)
   }
 }
 
@@ -203,13 +226,13 @@ function shownWelcomeBack(state: SessionState): UntimedReaction {
  * 依頼を待つ間の吹き出し。いちばん新しい依頼より後の最後の `report` の待ちの一言、
  * 無ければ書かせた待ちの行、それも書けていなければ tsukumo の既定の1文。
  */
-function shownWaitingLine(state: SessionState): UntimedReaction {
+function shownWaitingLine(state: SessionState, values: ReactionValues): UntimedReaction {
   const waitingLine = lastWaitingLine(state.records)
   if (waitingLine.kind === "speech") {
     return { kind: "shown", reaction: "idle", line: reactionLineOf(waitingLine) }
   }
   return state.writtenReactions.kind === "written"
-    ? shownWrittenLine(state.writtenReactions, "idle")
+    ? shownWrittenLine(state, "idle", values)
     : { kind: "shown", reaction: "idle", line: DEFAULT_WAITING_LINE }
 }
 
@@ -219,14 +242,62 @@ const DEFAULT_WAITING_LINE = {
   expression: "default",
 } as const satisfies ReactionLine
 
-/** 反応の行の問い合わせが書いた行。書けていなければ出さない。 */
+/**
+ * 反応の行の問い合わせが書いた行。書けていなければ出さない。
+ * 印を持つ出来事は、差し込む値があれば印を持つ文に値を入れ、無ければ印の無い文を出す。
+ */
 function shownWrittenLine(
-  writtenReactions: SessionState["writtenReactions"],
+  state: SessionState,
   reaction: WrittenReactionKind,
+  values: ReactionValues,
 ): UntimedReaction {
-  return writtenReactions.kind === "written"
-    ? { kind: "shown", reaction, line: writtenReactions.reactions[reaction] }
-    : NO_SHOWN_REACTION
+  const { writtenReactions } = state
+  if (writtenReactions.kind !== "written") {
+    return NO_SHOWN_REACTION
+  }
+  const { reactions } = writtenReactions
+  if (reaction === "failed") {
+    return { kind: "shown", reaction, line: reactions.failed }
+  }
+  const written = reactions[reaction]
+  const value = markValue(state, reaction, values)
+  return {
+    kind: "shown",
+    reaction,
+    line: {
+      text:
+        value.kind === "none"
+          ? written.withoutMark
+          : written.withMark.replace(REACTION_MARKS[reaction], () => value.text),
+      expression: written.expression,
+    },
+  }
+}
+
+/** 印へ差し込む値。取れなければ `none`（印の無い文を出す）。 */
+type MarkValue = { readonly kind: "none" } | { readonly kind: "value"; readonly text: string }
+
+const NO_MARK_VALUE = { kind: "none" } as const satisfies MarkValue
+
+function markValue(
+  state: SessionState,
+  reaction: MarkedReactionKind,
+  { head, now, resetTimeText }: ReactionValues,
+): MarkValue {
+  switch (reaction) {
+    case "retrying":
+      return state.apiTrouble.kind === "retrying"
+        ? { kind: "value", text: String(state.apiTrouble.attempt) }
+        : NO_MARK_VALUE
+    case "limited":
+      return state.rateLimit.kind === "rejected" &&
+        state.rateLimit.resetsAt !== undefined &&
+        resetTimeText !== undefined
+        ? { kind: "value", text: resetTimeText(state.rateLimit.resetsAt, now) }
+        : NO_MARK_VALUE
+    case "idle":
+      return head.kind === "card" ? { kind: "value", text: head.name } : NO_MARK_VALUE
+  }
 }
 
 /** いちばん新しい依頼より後の最後の `report` の待ちの一言。`report` が無ければ書かれていないのと同じ `none`。 */

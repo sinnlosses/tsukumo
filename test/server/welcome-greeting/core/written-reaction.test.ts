@@ -17,10 +17,10 @@ const EXPRESSIONS = [
 const MATERIAL = { persona: "# 架空の人格\n\n架空の口調で話す。", expressions: EXPRESSIONS }
 
 const OUTPUT = {
-  retrying: { text: "架空の再試行", expression: "default" },
+  retrying: { withMark: "架空の{回数}回目", withoutMark: "架空の再試行", expression: "default" },
   failed: { text: "架空の失敗", expression: "default" },
-  limited: { text: "架空の上限", expression: "excited" },
-  idle: { text: "架空の待ち", expression: "default" },
+  limited: { withMark: "架空の{時刻}まで", withoutMark: "架空の上限", expression: "excited" },
+  idle: { withMark: "架空の{札}から", withoutMark: "架空の待ち", expression: "default" },
 }
 
 describe("writtenReactionsQuery", () => {
@@ -34,12 +34,17 @@ describe("writtenReactionsQuery", () => {
   })
 
   it("出力の形で4つの出来事の行を欠かせず、行の表情を選択肢の名前に限る", () => {
-    const line = {
-      properties: { text: { type: "string" }, expression: { enum: ["default", "excited"] } },
+    const expression = { enum: ["default", "excited"] }
+    const plain = {
+      properties: { text: { type: "string" }, expression },
       required: ["text", "expression"],
     }
+    const marked = {
+      properties: { withMark: { type: "string" }, withoutMark: { type: "string" }, expression },
+      required: ["withMark", "withoutMark", "expression"],
+    }
     expect(writtenReactionsQuery(MATERIAL).schema).toMatchObject({
-      properties: { retrying: line, failed: line, limited: line, idle: line },
+      properties: { retrying: marked, failed: plain, limited: marked, idle: marked },
       required: ["retrying", "failed", "limited", "idle"],
       additionalProperties: false,
     })
@@ -50,7 +55,7 @@ describe("parseWrittenReactions", () => {
   it("4行が揃えば、前後の空白を落とした行にする", () => {
     expect(
       parseWrittenReactions(
-        { ...OUTPUT, idle: { text: " 架空の待ち ", expression: "default" } },
+        { ...OUTPUT, failed: { text: " 架空の失敗 ", expression: "default" } },
         EXPRESSIONS,
       ),
     ).toEqual({ kind: "accepted", value: OUTPUT })
@@ -67,17 +72,37 @@ describe("parseWrittenReactions", () => {
     ],
     [
       "行が上限を超える",
-      { ...OUTPUT, limited: { text: "あ".repeat(61), expression: "default" } },
+      { ...OUTPUT, failed: { text: "あ".repeat(61), expression: "default" } },
       "too-long",
     ],
     [
-      "行に差し込み口がある",
-      { ...OUTPUT, idle: { text: "{札} を待つ", expression: "default" } },
+      "印の無い文が印を持つ",
+      { ...OUTPUT, idle: { ...OUTPUT.idle, withoutMark: "{札} を待つ" } },
+      "mark-count",
+    ],
+    [
+      "印を持つ文が印を持たない",
+      { ...OUTPUT, retrying: { ...OUTPUT.retrying, withMark: "印なし" } },
+      "mark-count",
+    ],
+    [
+      "印を持つ文が印を2つ持つ",
+      { ...OUTPUT, limited: { ...OUTPUT.limited, withMark: "{時刻}と{時刻}" } },
+      "mark-count",
+    ],
+    [
+      "失敗の文が自分の印でなく札の印を持つ",
+      { ...OUTPUT, failed: { text: "{札}", expression: "default" } },
+      "mark-count",
+    ],
+    [
+      "印を持つ文が別の出来事の印を持つ",
+      { ...OUTPUT, limited: { ...OUTPUT.limited, withMark: "{回数}まで" } },
       "mark-count",
     ],
     [
       "行が知らない表情",
-      { ...OUTPUT, retrying: { text: "架空", expression: "架空の表情" } },
+      { ...OUTPUT, retrying: { ...OUTPUT.retrying, expression: "架空の表情" } },
       "unknown-expression",
     ],
   ])("%s なら落とす", (_, value, reason) => {

@@ -59,10 +59,10 @@ function report(waitingLine: ReportWaitingLine): SessionEvent {
 const WRITTEN = report({ kind: "speech", text: "架空の待ちの一言", expression: "curious" })
 
 const WRITTEN_REACTIONS = {
-  retrying: { text: "架空の再試行", expression: "flustered" },
+  retrying: { withMark: "架空の{回数}回目", withoutMark: "架空の再試行", expression: "flustered" },
   failed: { text: "架空の失敗", expression: "sad" },
-  limited: { text: "架空の上限", expression: "bored" },
-  idle: { text: "架空の待ち", expression: "default" },
+  limited: { withMark: "架空の{時刻}まで", withoutMark: "架空の上限", expression: "bored" },
+  idle: { withMark: "架空の{札}から", withoutMark: "架空の待ち", expression: "default" },
 } as const satisfies WrittenReactions
 
 const GREETED = {
@@ -133,11 +133,11 @@ describe("shownReaction", () => {
     ["セリフのあとに補足メッセージを送った直後", [REQUEST, SPEECH, ASIDE], "writing"],
     ["補足メッセージへの答えの speak が届いた", [REQUEST, SPEECH, ASIDE, SPEECH], "none"],
     ["claude が自分で始めた続きのターン", [REQUEST, SPEECH, COMPLETED, RESUMED], "none"],
-    ["呼び直しを待っている", [REACTED, REQUEST, RETRY], "retrying:架空の再試行"],
+    ["呼び直しを待っている", [REACTED, REQUEST, RETRY], "retrying:架空の1回目"],
     [
       "セリフのあとに呼び直しを待っている",
       [REACTED, REQUEST, SPEECH, RETRY],
-      "retrying:架空の再試行",
+      "retrying:架空の1回目",
     ],
     ["呼び直しのあと speak が届いた", [REACTED, REQUEST, RETRY, SPEECH], "none"],
     ["API のエラーで閉じた", [REACTED, REQUEST, RETRY, API_FAILED], "failed:架空の失敗"],
@@ -182,7 +182,7 @@ describe("shownReaction", () => {
   it("挨拶が書けなくても、反応の行が書けていれば再試行・失敗・利用上限で出す", () => {
     const unwritten = { kind: "welcome-greeting-changed", state: { kind: "unwritten" } } as const
 
-    expect(shown(stateAfter([unwritten, REACTED, REQUEST, RETRY]))).toBe("retrying:架空の再試行")
+    expect(shown(stateAfter([unwritten, REACTED, REQUEST, RETRY]))).toBe("retrying:架空の1回目")
     expect(shown(stateAfter([unwritten, REACTED, REQUEST, RETRY, API_FAILED]))).toBe(
       "failed:架空の失敗",
     )
@@ -212,7 +212,7 @@ describe("shownReaction", () => {
           RETRY,
         ]),
       ),
-    ).toBe("retrying:架空の再試行")
+    ).toBe("retrying:架空の1回目")
   })
 
   it("反応の行の表情を返す", () => {

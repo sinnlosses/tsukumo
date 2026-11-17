@@ -138,7 +138,8 @@ function recordedTime(
 /**
  * その行をもう出しているか。
  * 待ちの一言は、ターンが閉じてから待ちの記録を積んだか（依頼を待つたびに1件）。
- * ほかは、前の姿でも同じ反応の同じ文を出していたか（続けて届く再試行を1件に畳む）。
+ * ほかは、前の姿でも同じ反応の同じ文を出していたか。
+ * 再試行は呼び直しのたびに回数が変わるので、前の姿でも再試行を出していれば同じとみなす（続けて届く再試行を1件に畳む）。
  */
 function isAlreadyShown(
   before: SessionState,
@@ -163,6 +164,6 @@ function isAlreadyShown(
   return (
     previous.kind === "shown" &&
     previous.reaction === shown.reaction &&
-    previous.line.text === shown.line.text
+    (shown.reaction === "retrying" || previous.line.text === shown.line.text)
   )
 }

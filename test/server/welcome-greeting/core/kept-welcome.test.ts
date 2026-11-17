@@ -29,10 +29,10 @@ const REWRITTEN = {
 } as const satisfies WelcomeGreeting
 
 const REACTIONS = {
-  retrying: { text: "架空の再試行", expression: "default" },
+  retrying: { withMark: "架空の{回数}回目", withoutMark: "架空の再試行", expression: "default" },
   failed: { text: "架空の失敗", expression: "default" },
-  limited: { text: "架空の上限", expression: "default" },
-  idle: { text: "架空の待ち", expression: "default" },
+  limited: { withMark: "架空の{時刻}まで", withoutMark: "架空の上限", expression: "default" },
+  idle: { withMark: "架空の{札}から", withoutMark: "架空の待ち", expression: "default" },
 } as const satisfies WrittenReactions
 
 const GREETING_WRITTEN = greetingWritten(GREETING)

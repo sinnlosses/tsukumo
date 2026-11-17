@@ -20,12 +20,36 @@ export type ReactionLine = {
 }
 
 /** 反応の行の問い合わせが書く出来事（迎えるの行は迎えの挨拶そのもの）。 */
-export const WRITTEN_REACTION_KINDS = ["retrying", "failed", "limited", "idle"] as const
+const WRITTEN_REACTION_KINDS = ["retrying", "failed", "limited", "idle"] as const
 
 export type WrittenReactionKind = (typeof WRITTEN_REACTION_KINDS)[number]
 
-/** 書かせた出来事 → 言う1行。 */
-export type WrittenReactions = Readonly<Record<WrittenReactionKind, ReactionLine>>
+/**
+ * 出来事ごとに画面が事実を差し込む位置の印。失敗は印を持たない。
+ * 再試行は何回目か・利用上限は戻る時刻・待ちは始め方の一覧の先頭の札。
+ */
+export const REACTION_MARKS = {
+  retrying: "{回数}",
+  limited: "{時刻}",
+  idle: "{札}",
+} as const satisfies Partial<Record<WrittenReactionKind, string>>
+
+export type MarkedReactionKind = keyof typeof REACTION_MARKS
+
+/**
+ * 印を持つ出来事の1行。
+ * `withMark` はその出来事の印をちょうど1つ持ち、`withoutMark` は持たない（値が無いときに出す）。
+ */
+export type MarkedReactionLine = {
+  readonly withMark: string
+  readonly withoutMark: string
+  readonly expression: Expression
+}
+
+/** 書かせた出来事 → 言う1行。失敗だけが印を持たない。 */
+export type WrittenReactions = {
+  readonly failed: ReactionLine
+} & Readonly<Record<MarkedReactionKind, MarkedReactionLine>>
 
 /**
  * 状態に持つ反応の行。

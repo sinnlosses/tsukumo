@@ -136,7 +136,7 @@ describe("CharacterView", () => {
       writtenReactions: WRITTEN_REACTIONS,
     })
 
-    expect(document.querySelector(".phone-balloon-text")?.textContent).toBe("架空の再試行反応")
+    expect(document.querySelector(".phone-balloon-text")?.textContent).toBe("架空の再試行反応1")
     expect(document.querySelector(".portrait")?.getAttribute("data-expression")).toBe("thinking")
   })
 

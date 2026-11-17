@@ -12,6 +12,7 @@ import {
   waitingLineDueAt,
 } from "../../../../../shared/session/shown-reaction.ts"
 import { useSession } from "../../../../stores/session.ts"
+import { dayAwareClockTime } from "../../../../utils/clock.ts"
 
 let latest: ShownReaction = { kind: "none" }
 
@@ -22,7 +23,7 @@ export function useWaitingLineDueAt(): number | undefined {
 
 export function useShownReaction(head: WelcomeHead, now: number): ShownReaction {
   return useSession((session) => {
-    latest = replaceEqualDeep(latest, shownReaction(session.state, head, now))
+    latest = replaceEqualDeep(latest, shownReaction(session.state, head, now, dayAwareClockTime))
     return latest
   })
 }
