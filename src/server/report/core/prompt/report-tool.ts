@@ -41,8 +41,8 @@ export const REPORT_FIELD_DESCRIPTIONS = {
   title: `セッション一覧の題（${String(MAX_SESSION_HEADING_LENGTH)}字以内）。話題が変わったときだけ`,
   sessionSummary: `セッション全体の要約。変えたいときだけ（${String(MAX_SESSION_SUMMARY_LENGTH)}字以内）`,
   sessionRemaining: "残っている作業を1〜2文で。無ければ空文字",
-  closing: "締めのセリフ（1〜2文）。レポートの中身を言い直さない",
-  waitingLine: "待ちの一言（1〜2文）。言いたいときだけ",
+  closing: "締めのセリフ（1〜2文）。レポートのどこから読むとよいかを言い、中身は言い直さない",
+  waitingLine: "待ちの一言（1〜2文）。次の一手の候補を言う。言いたいときだけ",
 } as const
 
 /**
@@ -103,10 +103,12 @@ export const REPORT_FIELD_CARD_NOTES = {
   sessionRemaining:
     "次のセッションで続ける作業を書く。書き出しに「残り：」は付けない。" +
     "始め方の一覧の「前回の続き」のカードの題と、次のセッションへ送る依頼の文になる。",
-  closing: "speak と同じ text と expression。レポートを描いたあとに吹き出しに出る。",
+  closing:
+    "speak と同じ text と expression。レポートを描いたあとに吹き出しに出る。" +
+    "レポートのどこから読むとよいかを言う。",
   waitingLine:
     "speak と同じ text と expression。利用者が次の依頼を送らないまましばらく経ったら、吹き出しに1回だけ出る。" +
-    "次の依頼を待っていることを言う一言にし、closing とレポートの中身を言い直さない。" +
+    "次の一手の候補を言う一言にし（いまの様子があればそれも）、closing とレポートの中身を言い直さない。" +
     "省くと書かせた待ちの行、それも無ければ tsukumo の既定の1文が出る。",
 } as const satisfies Record<
   keyof typeof REPORT_FIELD_DESCRIPTIONS | "figure" | "workPlanClosing" | "keyFigures",
