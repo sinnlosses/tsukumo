@@ -190,7 +190,7 @@ const sectionComponentSchema = z.object({
 /** お願いの選択肢1つ。`draft` は押すと入力欄へそのまま入る。 */
 export const favorOptionSchema = z.object({
   name: z.string(),
-  draft: z.string(),
+  draft: z.string().describe("利用者がそのまま送る依頼の文（「〜して」の形）"),
   result: z.string().optional(),
   recommended: z.boolean().optional(),
   irreversible: z.boolean().optional(),

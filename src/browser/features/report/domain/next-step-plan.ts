@@ -1,9 +1,11 @@
 // レポートにすでにある欄（`Options`・`Claims`・`sessionRemaining`・`task.outcome`）から、末尾に並べる次の一手を作る。
+// 下書きは入力欄へそのまま入るので、利用者が打つ依頼の文（命令形）で作る。状態を言う文（`sessionRemaining`）は札の字にだけ使い、下書きへ写さない。
 
 import type { A2uiReportComponent } from "../../../../shared/report/a2ui-report-catalog.ts"
 import type { ReportChecksView } from "../../../../shared/report/report-check-view.ts"
 import type { ReportTaskOutcome } from "../../../../shared/report/report-task.ts"
 import type { SessionRemaining } from "../../../../shared/session/session-digest.ts"
+import { favorOptionsOf } from "./favor-option-list.ts"
 
 export type NextStepAlternative = {
   readonly name: string
@@ -55,7 +57,10 @@ export function unobservedOf(checks: ReportChecksView): readonly NextStepUnobser
     : []
 }
 
-/** `check-result` 以外は種類ごとに最大1つ。並びは 再開する → 続ける → 確かめる → 確かめた・違った（行ごと） → 別の案で進める。元の欄が無い種類は出さない。 */
+/**
+ * `check-result` 以外は種類ごとに最大1つ。並びは 再開する → 続ける → 確かめる → 確かめた・違った（行ごと） → 別の案で進める。元の欄が無い種類は出さない。
+ * お願いの選択肢（`favorOptions`）があるレポートは、書き手が次の依頼を札で並べているので「続ける」を足さない。
+ */
 export function buildNextSteps(source: NextStepSource): readonly NextStep[] {
   const options = source.components.flatMap((component) =>
     component.component === "Options" ? component.items : [],
@@ -69,17 +74,9 @@ export function buildNextSteps(source: NextStepSource): readonly NextStep[] {
     steps.push({ kind: "resume", label: "再開する", draft: "止めたところから再開して。" })
   }
 
-  const remaining = source.sessionRemaining
-  const continueText =
-    remaining.kind === "remaining" && remaining.text.trim() !== ""
-      ? remaining.text.trim()
-      : options.find((item) => item.verdict === "adopt")?.name.trim()
-  if (continueText !== undefined && continueText !== "") {
-    steps.push({
-      kind: "continue",
-      label: `続ける: ${continueText}`,
-      draft: `続けて。${continueText}`,
-    })
+  const continued = continueStepOf(source.sessionRemaining, options)
+  if (continued !== undefined && favorOptionsOf(source.components).length === 0) {
+    steps.push(continued)
   }
 
   const uncertain = claims.filter((claim) => claim.certainty !== "confirmed")
@@ -105,7 +102,7 @@ export function buildNextSteps(source: NextStepSource): readonly NextStep[] {
     steps.push({
       kind: "verify",
       label: `確かめる: ${count}`,
-      draft: ["確かめて。", ...lines].join("\n"),
+      draft: ["次の点を確かめて。", ...lines].join("\n"),
     })
   }
 
@@ -113,17 +110,40 @@ export function buildNextSteps(source: NextStepSource): readonly NextStep[] {
     steps.push({
       kind: "check-result",
       label: row.label,
-      confirmedDraft: `確かめた: ${row.label}`,
-      mismatchDraft: `違った: ${row.label}`,
+      confirmedDraft: `${quoted(row.label)}を確かめた。問題なかった。`,
+      mismatchDraft: `${quoted(row.label)}を確かめたら、違っていた。`,
     })
   }
 
   const alternatives = options
     .filter((item) => item.verdict !== "adopt")
-    .map((item) => ({ name: item.name, draft: `${item.name} で進めて。` }))
+    .map((item) => ({ name: item.name, draft: `${quoted(item.name)}で進めて。` }))
   if (alternatives.length > 0) {
     steps.push({ kind: "alternative", label: "別の案で進める", alternatives })
   }
 
   return steps
+}
+
+/**
+ * 「続ける」の1つ。残りの作業があればそれを札の字にし、下書きは残りの文を写さず「続きを進めて。」にする。
+ * 残りの作業が無く `Options` に採った案があれば、その案で進める依頼にする。
+ */
+function continueStepOf(
+  remaining: SessionRemaining,
+  options: readonly { readonly name: string; readonly verdict: string }[],
+): NextStep | undefined {
+  const remainingText = remaining.kind === "remaining" ? remaining.text.trim() : ""
+  if (remainingText !== "") {
+    return { kind: "continue", label: `続ける: ${remainingText}`, draft: "続きを進めて。" }
+  }
+  const adopted = options.find((item) => item.verdict === "adopt")?.name.trim() ?? ""
+  return adopted === ""
+    ? undefined
+    : { kind: "continue", label: `続ける: ${adopted}`, draft: `${quoted(adopted)}で進めて。` }
+}
+
+/** 名前を依頼の文の中に置くときの括り。名前の中の空白や読点で、文の切れ目が分からなくならないようにする。 */
+function quoted(name: string): string {
+  return `「${name}」`
 }

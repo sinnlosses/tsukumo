@@ -101,7 +101,7 @@ describe("NextStepRow", () => {
     expect(useComposerDraft.getState().draft.text).toBe("")
     fireEvent.click(screen.getByRole("button", { name: "架空の案B" }))
 
-    expect(useComposerDraft.getState().draft.text).toBe("架空の案B で進めて。")
+    expect(useComposerDraft.getState().draft.text).toBe("「架空の案B」で進めて。")
   })
 
   it("確かめていない検証の行から確かめた・違ったの対が出て、押すと下書きが入る", () => {
@@ -110,7 +110,7 @@ describe("NextStepRow", () => {
     fireEvent.click(screen.getByRole("button", { name: "違った" }))
 
     expect(screen.getAllByRole("button", { name: "確かめた" })).toHaveLength(1)
-    expect(useComposerDraft.getState().draft.text).toBe("違った: 架空の検証")
+    expect(useComposerDraft.getState().draft.text).toBe("「架空の検証」を確かめたら、違っていた。")
   })
 
   it("行の末尾に、押しても送らない案内が出て、押すと下書きが入るだけ", () => {

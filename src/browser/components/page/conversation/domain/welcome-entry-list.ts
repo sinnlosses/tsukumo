@@ -94,9 +94,17 @@ function resumeCards(resume: ResumeSource): readonly WelcomeCard[] {
       id: resume.session.heading ?? NO_HEADING_LABEL,
       title: resume.remaining,
       reason: "",
-      request: `前回の続き: ${resume.remaining}`,
+      request: resumeRequestOf(resume.remaining),
     },
   ]
+}
+
+/**
+ * 前回の続きの札が送る依頼。1行目は利用者が打つ依頼の文にする。
+ * 新しいセッションは前回の残りを知らないので、2行目に名前を付けて添える。
+ */
+function resumeRequestOf(remaining: string): string {
+  return `前回の続きを進めて。\n前回の残り: ${remaining}`
 }
 
 function readyTaskCards(tasks: TaskSummaryResult): readonly WelcomeCard[] {

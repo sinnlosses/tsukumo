@@ -46,12 +46,12 @@ describe("buildNextSteps", () => {
     expect(steps[0]).toMatchObject({ draft: "止めたところから再開して。" })
     expect(steps[1]).toMatchObject({
       label: "続ける: 架空の残り",
-      draft: "続けて。架空の残り",
+      draft: "続きを進めて。",
     })
     expect(steps[3]).toMatchObject({
       alternatives: [
-        { name: "架空の案B", draft: "架空の案B で進めて。" },
-        { name: "架空の案C", draft: "架空の案C で進めて。" },
+        { name: "架空の案B", draft: "「架空の案B」で進めて。" },
+        { name: "架空の案C", draft: "「架空の案C」で進めて。" },
       ],
     })
   })
@@ -77,7 +77,28 @@ describe("buildNextSteps", () => {
   it("sessionRemaining が無ければ Options の採った案の題で続ける", () => {
     const steps = buildNextSteps({ unobserved: [], components: [options], sessionRemaining: none })
 
-    expect(steps[0]).toMatchObject({ kind: "continue", label: "続ける: 架空の案A" })
+    expect(steps[0]).toMatchObject({
+      kind: "continue",
+      label: "続ける: 架空の案A",
+      draft: "「架空の案A」で進めて。",
+    })
+  })
+
+  it("お願いの選択肢があるレポートには「続ける」を足さない", () => {
+    const root: A2uiReportComponent = {
+      id: "root",
+      component: "Report",
+      children: ["options-1"],
+      favor: "架空のお願い",
+      favorOptions: [{ name: "架空の選択肢", draft: "架空の選択肢で進めて" }],
+    }
+    const steps = buildNextSteps({
+      unobserved: [],
+      components: [root, options],
+      sessionRemaining: { kind: "remaining", text: "架空の残り" },
+    })
+
+    expect(steps.map((step) => step.kind)).toEqual(["alternative"])
   })
 
   it("推測と未確認が混じれば件数だけ、howToVerify の無い主張は確かめ方の行を持たない", () => {
@@ -91,7 +112,7 @@ describe("buildNextSteps", () => {
       kind: "verify",
       label: "確かめる: 2 件",
       draft: [
-        "確かめて。",
+        "次の点を確かめて。",
         "1. 架空の主張 inferred",
         "   確かめ方: 架空の手順",
         "2. 架空の主張 unverified",
@@ -130,8 +151,8 @@ describe("buildNextSteps の確かめていない検証の行", () => {
       {
         kind: "check-result",
         label: "架空の検証1",
-        confirmedDraft: "確かめた: 架空の検証1",
-        mismatchDraft: "違った: 架空の検証1",
+        confirmedDraft: "「架空の検証1」を確かめた。問題なかった。",
+        mismatchDraft: "「架空の検証1」を確かめたら、違っていた。",
       },
     ])
   })
@@ -147,7 +168,7 @@ describe("buildNextSteps の確かめていない検証の行", () => {
     expect(steps[0]).toEqual({
       kind: "verify",
       label: "確かめる: 1 件",
-      draft: ["確かめて。", "1. 架空の検証3", "   確かめ方: 手順3"].join("\n"),
+      draft: ["次の点を確かめて。", "1. 架空の検証3", "   確かめ方: 手順3"].join("\n"),
     })
   })
 })
