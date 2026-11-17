@@ -24,17 +24,6 @@ export function subscribeScrollFrame(listener: () => void): () => void {
   }
 }
 
-/** 本文を収めた器から外へ辿って、最初に縦に転がる祖先。無ければ文書の転がり。 */
-export function scrollerOf(root: HTMLElement): Element {
-  for (let ancestor = root.parentElement; ancestor !== null; ancestor = ancestor.parentElement) {
-    const overflowY = getComputedStyle(ancestor).overflowY
-    if (overflowY === "auto" || overflowY === "scroll") {
-      return ancestor
-    }
-  }
-  return document.scrollingElement ?? document.documentElement
-}
-
 function onScroll(): void {
   if (frame !== undefined) {
     return

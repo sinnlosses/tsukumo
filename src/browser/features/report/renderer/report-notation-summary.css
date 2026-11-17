@@ -45,8 +45,16 @@
       grid-template-columns: none;
     }
   }
+  /* 余白の札の横に来た `row` は、右を空けると列の幅が足りないので縦に積む。 */
+  & :is([data-report-region], [data-part-column]) > .report-block-row[data-beside-card] {
+    grid-auto-flow: row;
+    grid-auto-columns: auto;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  /* セルの中の部品は、本文の根ではなくセルの幅を器の幅として読む。 */
   & .report-block-row-cell {
     min-inline-size: 0;
+    container: report-body / inline-size;
   }
   & :is(.report-block-row-cell, .report-block-panel) > :first-child {
     margin-block-start: 0;

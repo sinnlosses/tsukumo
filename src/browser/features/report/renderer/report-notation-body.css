@@ -18,6 +18,9 @@
   --report-measure-wide: 63em;
   --report-figure-max: 70cqh;
   --report-figure-min-scale: 0.75;
+  /* 余白の札の列の幅と、本文との間。札のある部品と、札の横に来た塊だけが右を空ける。 */
+  --reply-margin-width: 248px;
+  --reply-margin-gap: 24px;
   margin: 0 0 var(--space-lg);
   line-height: var(--line-height-body);
   text-autospace: normal;
@@ -66,6 +69,11 @@
     .report-matrix:has(tr > :nth-child(7))
   ) {
   max-inline-size: 100%;
+}
+/* ほかの部品の余白の札の横に来た塊（印は本文の根が測って付ける）。札の列と間のぶんだけ右を空ける。
+   塊ごとの `margin` の規則に勝つよう、欄か `Column` の直下という親まで書く。 */
+.detail-block :is([data-report-region], [data-part-column]) > [data-beside-card] {
+  margin-inline-end: calc(var(--reply-margin-width) + var(--reply-margin-gap));
 }
 .detail-block {
   & .report-with-gutter > * {

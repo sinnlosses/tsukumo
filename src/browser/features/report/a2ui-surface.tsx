@@ -11,7 +11,7 @@ import {
   type ReactComponentImplementation,
 } from "@a2ui/react/v0_9"
 import { Catalog, MessageProcessor } from "@a2ui/web_core/v0_9"
-import { type ReactElement, use, useState } from "react"
+import { type ReactElement, use, useRef, useState } from "react"
 
 import type { A2uiReportComponent } from "../../../shared/report/a2ui-report-catalog.ts"
 import {
@@ -41,8 +41,10 @@ import { filterBadges, hasBoundChoicePicker, isSortableTable } from "./domain/a2
 import { beforeAfterPairIdsInOrder, type PairView, pairSwitchLabels } from "./domain/pair-view.ts"
 import { isPlainHeadingText } from "./domain/plain-heading.ts"
 import { reportProofView } from "./domain/report-proof.ts"
+import { useNarrowReport } from "./hooks/use-narrow-report.ts"
 import {
   LeafIdentityContext,
+  NarrowCellContext,
   type SectionPoint,
   SectionPointContext,
 } from "./leaf-point-context.ts"
@@ -309,17 +311,15 @@ function LayoutPart(props: { readonly id: string }): ReactElement {
   switch (part?.component) {
     case "Row":
       return (
-        <div className={arrangedBlockClassNames.row}>
+        <div className={arrangedBlockClassNames.row} data-part-row="">
           {part.children.map((child) => (
-            <div key={child} className={arrangedBlockClassNames.rowCell}>
-              <PartRun lead="" ids={[child]} />
-            </div>
+            <RowCell key={child} id={child} />
           ))}
         </div>
       )
     case "Column":
       return (
-        <div>
+        <div data-part-column="">
           <PartRun lead="" ids={part.children} />
         </div>
       )
@@ -371,6 +371,19 @@ function LayoutPart(props: { readonly id: string }): ReactElement {
       )
     }
   }
+}
+
+/** `Row` の子1つ。余白の列を出せるかは、本文の根ではなくセルの幅で決める。 */
+function RowCell(props: { readonly id: string }): ReactElement {
+  const cellRef = useRef<HTMLDivElement>(null)
+  const narrow = useNarrowReport(cellRef)
+  return (
+    <div ref={cellRef} className={arrangedBlockClassNames.rowCell}>
+      <NarrowCellContext value={narrow}>
+        <PartRun lead="" ids={[props.id]} />
+      </NarrowCellContext>
+    </div>
+  )
 }
 
 function TabsPart(props: {

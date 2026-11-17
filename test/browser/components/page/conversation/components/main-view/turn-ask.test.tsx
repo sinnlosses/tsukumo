@@ -20,7 +20,7 @@ vi.mock("../../../../../../../src/browser/features/report/report.tsx", async () 
       <button
         type="button"
         onClick={() => {
-          slot.port.ask(
+          void slot.port.ask(
             {
               label: { component: "架空の表", row: "架空の行" },
               key: { reportToolUseId: props.reportToolUseId ?? "", componentId: "t1", rowIndex: 2 },

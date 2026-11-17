@@ -5,17 +5,18 @@ import type { ReplyTarget } from "../../../../../../shared/session/reply-target.
 import { useSession } from "../../../../../stores/session.ts"
 import { useAwaySeam } from "../../stores/away-seam.ts"
 
-export function useAskSend(): (target: ReplyTarget, text: string) => void {
+/** 返す約束は、サーバが問いを受け付けたあとに済む（補足のイベントは、受け付けの返事より先に届く）。 */
+export function useAskSend(): (target: ReplyTarget, text: string) => Promise<void> {
   const dispatch = useSession((session) => session.dispatch)
   const sendable = useSession(
     (session) => session.connection === "open" && session.state.endedReason === undefined,
   )
   const dismissAwaySeam = useAwaySeam((state) => state.dismiss)
-  return (target, text) => {
+  return async (target, text) => {
     if (!sendable) {
       return
     }
     dismissAwaySeam()
-    void dispatch.session.prompt({ text, images: [], routing: "ask", target })
+    await dispatch.session.prompt({ text, images: [], routing: "ask", target })
   }
 }

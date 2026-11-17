@@ -18,7 +18,7 @@ function renderFavor(options: Parameters<typeof FavorRegion>[0]["options"], pres
   const port = {
     appendDraft: useComposerDraft.getState().appendParagraphToDraft,
     prependDraft: useComposerDraft.getState().prependToDraft,
-    ask: () => undefined,
+    ask: () => Promise.resolve(),
   }
   return render(
     <ReplyPortContext value={{ kind: "open", port }}>

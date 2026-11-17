@@ -29,11 +29,11 @@ function setup(overrides: Partial<SessionState> = {}) {
 }
 
 describe("useAskSend", () => {
-  it("つながっていれば、指した所つきの補足メッセージ（送り方 ask）として送る", () => {
+  it("つながっていれば、指した所つきの補足メッセージ（送り方 ask）として送る", async () => {
     const { calls, result } = setup()
 
-    act(() => {
-      result.current(TARGET, "架空の問い")
+    await act(async () => {
+      await result.current(TARGET, "架空の問い")
     })
 
     expect(calls).toEqual([
@@ -47,24 +47,24 @@ describe("useAskSend", () => {
     ])
   })
 
-  it("つながっていないときは送らない", () => {
+  it("つながっていないときは送らない", async () => {
     const { calls, result } = setup()
     act(() => {
       useSession.getState().setConnection("closed")
     })
 
-    act(() => {
-      result.current(TARGET, "架空の問い")
+    await act(async () => {
+      await result.current(TARGET, "架空の問い")
     })
 
     expect(calls).toEqual([])
   })
 
-  it("会話が終わったあとは送らない", () => {
+  it("会話が終わったあとは送らない", async () => {
     const { calls, result } = setup({ endedReason: "架空の理由" })
 
-    act(() => {
-      result.current(TARGET, "架空の問い")
+    await act(async () => {
+      await result.current(TARGET, "架空の問い")
     })
 
     expect(calls).toEqual([])

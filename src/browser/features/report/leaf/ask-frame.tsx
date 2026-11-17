@@ -1,6 +1,7 @@
 // 内容部品の外枠に、指せる単位と余白の「聞く・頼む」・余白の札を足す。口が渡され、節の中の内容部品のときだけ包む。
 // それ以外は子をそのまま返す（包みの要素を足さない）。
-// 余白は本文の右の列で、指した単位の上端の高さに「聞く・頼む」を1つ出す。聞いた対・付箋・開いた入力欄は、単位ごとの札にして同じ列に出す。
+// 指した単位の上端の高さに「聞く・頼む」を1つ出す。聞いた対・付箋・開いた入力欄は、単位ごとの札にして本文の右の列（余白）に出す。
+// 余白の列を空けるのは札のある部品だけ（`data-reply-margin`）。札の無い部品は本文の幅いっぱいに描き、口は外枠の右端に重ねる。
 // 開いている入力欄はレポートで1つ（`ReplyPoint` が持つ）。部品全体の欄と行の欄は、同じ状態を取り合う。
 // キーボードは部品ごとに Tab の止まり場を1つ置き（roving tabindex）、中は ↑↓ で単位を動く。Enter か ⌘⌥M で欄を開く。
 // 字を選んで指した単位の欄は、書き始めに選んだ字の引用を入れる。
@@ -15,7 +16,11 @@ import { useLeafAskThread } from "../ask-thread-context.ts"
 import { type AskPair, askLeafKey } from "../domain/ask-thread.ts"
 import { replyTargetOf } from "../domain/reply-target.ts"
 import { isOpenShortcut, type ReplyUnit, replyUnitOf, UNIT_SELECTOR } from "../domain/reply-unit.ts"
-import { LeafIdentityContext, SectionPointContext } from "../leaf-point-context.ts"
+import {
+  LeafIdentityContext,
+  NarrowCellContext,
+  SectionPointContext,
+} from "../leaf-point-context.ts"
 import { type OpenAsk, ReplyPointContext } from "../reply-point.tsx"
 import { ReplyPortContext } from "../reply-port.ts"
 import { AskBox, type AskMode } from "./ask-box.tsx"
@@ -76,7 +81,8 @@ export function AskFrame(props: {
     point.kind === "available" && point.open?.leafKey === leafKey ? point.open : undefined
   const quote = point.kind === "available" ? point.quote : ""
   const pointedSelector = pointed === undefined ? undefined : unitSelectorOf(pointed)
-  const narrow = point.kind === "available" && point.narrow
+  const narrowCell = use(NarrowCellContext)
+  const narrow = point.kind === "available" && (point.narrow || narrowCell)
   const sheet =
     point.kind === "available" && narrow && point.sheet?.leafKey === leafKey
       ? point.sheet
@@ -87,6 +93,11 @@ export function AskFrame(props: {
     open?.scope,
     sheet?.scope,
   )
+  const shownCards = narrow ? [] : cards
+  const margined =
+    shownCards.length > 0 ||
+    (!narrow && point.kind === "available" && point.sending.includes(leafKey))
+  // 余白の列を出し入れすると本体が組み直されるので、そのあとも測り直す。札の上端が要るのは、余白に札を出しているあいだだけ。
   useBeforePaintSync(() => {
     const frame = frameRef.current
     if (frame === null) {
@@ -94,11 +105,11 @@ export function AskFrame(props: {
     }
     const next = marginTopsOf(
       frame,
-      cards.map((card) => card.scope),
+      margined ? cards.map((card) => card.scope) : [],
       pointedSelector,
     )
     setTops((current) => (JSON.stringify(current) === JSON.stringify(next) ? current : next))
-  }, [pointedSelector, cards])
+  }, [pointedSelector, cards, margined])
   useEventListener(
     document,
     "keydown",
@@ -167,7 +178,7 @@ export function AskFrame(props: {
         initialText={opened.initialText}
         requestText={opened.requestText}
         onSend={(text) => {
-          slot.port.ask(target, text)
+          point.holdMargin(leafKey, slot.port.ask(target, text))
         }}
         onNote={(text) => {
           addNote(sessionKey, target, text)
@@ -208,7 +219,6 @@ export function AskFrame(props: {
   }
   const pointedKey = pointed === undefined ? undefined : scopeKeyOf(unitScopeOf(pointed))
   const portShown = pointed !== undefined && !isOpenAt(pointed, open)
-  const shownCards = narrow ? [] : cards
   const sheetCard =
     sheet === undefined ? undefined : cards.find((card) => card.key === scopeKeyOf(sheet.scope))
   const actions = {
@@ -231,6 +241,7 @@ export function AskFrame(props: {
         ref={frameRef}
         className={styles["ask-frame"]}
         data-reply-frame={leafKey}
+        data-reply-margin={margined ? "" : undefined}
         style={{
           "--reply-unit-top": `${String(tops.pointed)}px`,
         }}
@@ -283,11 +294,13 @@ export function AskFrame(props: {
             </ReplySheet>
           )}
           {portShown && !shownCards.some((card) => card.key === pointedKey) && (
-            <ReplyPortButton
-              onClick={() => {
-                openUnit(pointed)
-              }}
-            />
+            <div className={styles["reply-port-float"]}>
+              <ReplyPortButton
+                onClick={() => {
+                  openUnit(pointed)
+                }}
+              />
+            </div>
           )}
         </div>
       </div>

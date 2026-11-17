@@ -35,6 +35,7 @@ import {
 } from "../../../../../src/browser/features/report/reply-port.ts"
 import { useReplyNotes } from "../../../../../src/browser/stores/reply-note-list.ts"
 import type { LeafValue } from "../../../../../src/shared/report/report-leaf-value.ts"
+import { idlePort } from "../../../../fixture/reply-port.ts"
 
 const CAPTION_SELECTOR = `.${leafFrameClassNames.caption}`
 
@@ -242,16 +243,7 @@ describe("FoldedLeafFrame の聞いた問いと答え", () => {
   ) {
     const Wrap = narrow ? NarrowPoint : Passthrough
     return render(
-      <ReplyPortContext
-        value={{
-          kind: "open",
-          port: {
-            appendDraft: vi.fn<ReplyPort["appendDraft"]>(),
-            prependDraft: vi.fn<ReplyPort["prependDraft"]>(),
-            ask: ask ?? vi.fn<ReplyPort["ask"]>(),
-          },
-        }}
-      >
+      <ReplyPortContext value={{ kind: "open", port: idlePort(ask) }}>
         <AskThreadContext value={threads}>
           <ReplyPointScope rootRef={createRef<HTMLElement>()}>
             <Wrap>
@@ -371,16 +363,7 @@ describe("FoldedLeafFrame の聞いた問いと答え", () => {
 
   it("別の部品で欄を開くと、前の部品の欄は閉じる", () => {
     render(
-      <ReplyPortContext
-        value={{
-          kind: "open",
-          port: {
-            appendDraft: vi.fn<ReplyPort["appendDraft"]>(),
-            prependDraft: vi.fn<ReplyPort["prependDraft"]>(),
-            ask: vi.fn<ReplyPort["ask"]>(),
-          },
-        }}
-      >
+      <ReplyPortContext value={{ kind: "open", port: idlePort() }}>
         <AskThreadContext
           value={{
             kind: "grouped",
@@ -425,7 +408,7 @@ describe("FoldedLeafFrame の聞いた問いと答え", () => {
   })
 
   it("続けて聞くで、同じ指した所のその場の入力欄が開く", () => {
-    const ask = vi.fn<ReplyPort["ask"]>()
+    const ask = vi.fn<ReplyPort["ask"]>(() => Promise.resolve())
     threadFrame(threadsOf(answeredPair), NO_CAPTION, ask)
 
     fireEvent.click(screen.getByRole("button", { name: "続けて聞く" }))
@@ -462,7 +445,7 @@ describe("FoldedLeafFrame の聞いた問いと答え", () => {
   })
 
   it("行を指した対の続けて聞くは、同じ行の入力欄を開く", () => {
-    const ask = vi.fn<ReplyPort["ask"]>()
+    const ask = vi.fn<ReplyPort["ask"]>(() => Promise.resolve())
     threadFrame(
       threadsOf({ ...answeredPair, row: { index: 2, label: "架空の行" } }),
       NO_CAPTION,

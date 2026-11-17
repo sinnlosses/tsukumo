@@ -61,7 +61,7 @@ function regions(): MainViewReportRegions {
 
 function renderReport(): HTMLElement {
   const port: ReplyPort = {
-    ask: vi.fn<ReplyPort["ask"]>(),
+    ask: vi.fn<ReplyPort["ask"]>(() => Promise.resolve()),
     appendDraft: vi.fn<ReplyPort["appendDraft"]>(),
     prependDraft: vi.fn<ReplyPort["prependDraft"]>(),
   }

@@ -1,9 +1,8 @@
 /* 内容部品の指せる単位と余白の「聞く・頼む」・余白の札・狭い幅のシート。
-   余白（248px、本文との間 24px）は、本文の容器から引いても本文が 30em 以上残るときだけ右の列に出す。
-   出さない幅では、余白の口を外枠の右端に重ね、指した単位の右に出し、札のかわりにシートを出す。 */
+   余白の列（幅 248px、本文との間 24px。値は本文の根の --reply-margin-width・--reply-margin-gap）は、札のある部品（data-reply-margin）にだけ出す。
+   出すのは、器から余白と間を引いても本文が 30em 以上残るときだけ。
+   列を出していない部品と出せない幅では、余白の口を外枠の右端に重ね、指した単位の右に出す。出せない幅では、札のかわりにシートを出す。 */
 .ask-frame {
-  --reply-margin-width: 248px;
-  --reply-margin-gap: 24px;
   position: relative;
 }
 .ask-main,
@@ -13,9 +12,27 @@
   gap: var(--stack-block);
   min-width: 0;
 }
-.reply-port {
+.ask-main {
+  margin-inline-end: 0;
+  container: none;
+}
+/* 高さを持たない重ねの列。口と札をここに置く。幅は札の幅で、口の字が折れない分は取れる。 */
+.ask-margin {
+  position: absolute;
+  inset: 0 0 auto auto;
+  width: var(--reply-margin-width);
+}
+/* 指した単位の上端に浮かせる口の台。本文の字に重なっても口が読めるよう、地を塗る。 */
+.reply-port-float {
   position: absolute;
   top: var(--reply-unit-top);
+  right: 0;
+  left: auto;
+  display: flex;
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+}
+.reply-port {
   width: max-content;
   min-height: 1.75rem;
   padding: var(--inset-control);
@@ -36,43 +53,15 @@
   border-radius: var(--radius-pill);
   white-space: nowrap;
 }
+/* 札のある部品。本体の右を空けて、重ねの列を余白の列にする。口は列の左端（本体のすぐ右）に出す。 */
 @container report-body (min-width: calc(30em + 248px + 24px)) {
-  .ask-frame {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) var(--reply-margin-width);
-    column-gap: var(--reply-margin-gap);
-  }
-  .ask-main {
+  .ask-frame[data-reply-margin] > .ask-main {
+    margin-inline-end: calc(var(--reply-margin-width) + var(--reply-margin-gap));
     container: report-gutter / inline-size;
   }
-  .ask-margin {
-    position: relative;
-    inset: auto;
-    width: auto;
-  }
-  .reply-port {
-    left: 0;
+  .ask-frame[data-reply-margin] > .ask-margin > .reply-port-float {
     right: auto;
-  }
-}
-@container report-body (max-width: calc(30em + 248px + 24px - 0.02px)) {
-  .ask-frame {
-    display: block;
-    grid-template-columns: none;
-    column-gap: 0;
-  }
-  .ask-main {
-    container: none;
-  }
-  /* 高さを持たない重ねの列。幅は口の字が折れない分だけ取る。 */
-  .ask-margin {
-    position: absolute;
-    inset: 0 0 auto auto;
-    width: var(--reply-margin-width);
-  }
-  .reply-port {
-    left: auto;
-    right: 0;
+    left: 0;
   }
 }
 /* 押すと指せる単位。指した単位は左端に差し色の線を引き、地を差し色で染める。 */
@@ -140,7 +129,6 @@
   border-top: 1px solid var(--rule-soft);
 }
 .margin-card .reply-port {
-  position: static;
   align-self: flex-start;
 }
 /* 狭い幅で、札のかわりに画面の下から出すシート。document.body へ出すので画面を基準に置く。 */
@@ -177,7 +165,6 @@
   border-top: 1px solid var(--rule-soft);
 }
 .reply-sheet-body .reply-port {
-  position: static;
   align-self: flex-start;
 }
 .ask-thread {

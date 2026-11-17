@@ -1,5 +1,6 @@
 // 外枠の中の指せる単位の DOM を引く・測る。
 
+import { scrollerOf } from "../../../utils/scroller.ts"
 import { type ReplyUnit, replyUnitOf, UNIT_SELECTOR } from "../domain/reply-unit.ts"
 
 /** 押しても単位を指さない要素（単位の中のボタン・リンク・入力）。 */
@@ -70,5 +71,35 @@ export function marginTopsOf(
         topOf(frame.querySelector(scopeSelectorOf(scope)) ?? undefined),
       ]),
     ),
+  }
+}
+
+/** 余白の列の出し入れの前に取っておく、単位の要素と画面の中での上端。 */
+export type HeldUnit = {
+  readonly element: Element
+  readonly top: number
+  /** 本文を転がす祖先。単位の側から探すと、表の横スクロールの外枠を拾う。 */
+  readonly scroller: Element
+}
+
+/** 本文の根の中から、部品の鍵と単位で要素を引いて上端を取る。画面に無ければ `undefined`。 */
+export function heldUnitOf(root: Element, leafKey: string, scope: AskScope): HeldUnit | undefined {
+  const frame = [...root.querySelectorAll<HTMLElement>("[data-reply-frame]")].find(
+    (candidate) => candidate.dataset["replyFrame"] === leafKey,
+  )
+  const element = frame?.querySelector(scopeSelectorOf(scope)) ?? undefined
+  return element === undefined
+    ? undefined
+    : { element, top: element.getBoundingClientRect().top, scroller: scrollerOf(root) }
+}
+
+/** 本文が組み直されて単位が動いた分だけ、転がる祖先を動かして元の高さへ戻す。 */
+export function restoreHeldUnit(held: HeldUnit): void {
+  if (!held.element.isConnected) {
+    return
+  }
+  const moved = held.element.getBoundingClientRect().top - held.top
+  if (moved !== 0) {
+    held.scroller.scrollTop += moved
   }
 }

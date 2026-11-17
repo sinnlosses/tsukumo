@@ -31,8 +31,17 @@ export function AskBox(props: AskBoxProps): ReactElement {
   const fieldId = useId()
   const groupName = useId()
   const sendable = text.trim() !== ""
+  // 札は、この欄が載ったあとで指した単位の高さへ動く。
+  // 動く前の位置へ画面を転がさないよう、フォーカスでは転がさず、置き終えた次の描画で欄を画面に入れる。
   useMountEffect(() => {
-    boxRef.current?.querySelector("textarea")?.focus()
+    const box = boxRef.current
+    box?.querySelector("textarea")?.focus({ preventScroll: true })
+    const frame = requestAnimationFrame(() => {
+      box?.scrollIntoView({ block: "nearest", inline: "nearest" })
+    })
+    return () => {
+      cancelAnimationFrame(frame)
+    }
   })
   const send = () => {
     if (sendable) {

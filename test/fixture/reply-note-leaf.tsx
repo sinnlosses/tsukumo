@@ -28,7 +28,7 @@ export function openRequestAt(text: string): HTMLElement {
 }
 
 export function renderNoteLeaf(part: A2uiReportComponent, options: { readonly port: boolean }) {
-  const ask = vi.fn<ReplyPort["ask"]>()
+  const ask = vi.fn<ReplyPort["ask"]>(() => Promise.resolve())
   const slot: ReplyPortSlot = options.port
     ? {
         kind: "open",

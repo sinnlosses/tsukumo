@@ -1,4 +1,4 @@
-// 本文の根の幅が、余白の列を出すのに足りないほど狭いか。
+// 器（本文の根か `Row` のセル。どちらも `report-body` の container）の幅が、余白の列を出すのに足りないほど狭いか。
 // しきい値は ask-box.css の container query（本文 30em ＋ 余白 248px ＋ 間 24px）と揃える。
 
 import { type RefObject, useState } from "react"

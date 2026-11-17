@@ -12,6 +12,7 @@ import { useEventListener } from "../../../../../../hooks/use-event-listener.ts"
 import { useExternalSync } from "../../../../../../hooks/use-external-sync.ts"
 import { useMountEffect } from "../../../../../../hooks/use-mount-effect.ts"
 import { useSession } from "../../../../../../stores/session.ts"
+import { scrollerOf } from "../../../../../../utils/scroller.ts"
 import {
   rememberedPosition,
   useReadingPosition,
@@ -19,7 +20,7 @@ import {
 } from "../../../stores/reading-position.ts"
 import { readingPositionOf, scrollDeltaToRestore } from "../domain/reading-position.ts"
 import { readableHeadings } from "../domain/report-heading.ts"
-import { scrollerOf, subscribeScrollFrame } from "./scroll-frame.ts"
+import { subscribeScrollFrame } from "./scroll-frame.ts"
 
 /** いま出している中身。`none` は先頭へ戻す相手が無い（始め方の一覧を出している）とき。 */
 export type ShownTarget =

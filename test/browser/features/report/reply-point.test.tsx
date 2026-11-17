@@ -76,7 +76,7 @@ function renderReport(): { readonly prependDraft: Mock<ReplyPort["prependDraft"]
       value={{
         kind: "open",
         port: {
-          ask: vi.fn<ReplyPort["ask"]>(),
+          ask: vi.fn<ReplyPort["ask"]>(() => Promise.resolve()),
           appendDraft: vi.fn<ReplyPort["appendDraft"]>(),
           prependDraft,
         },

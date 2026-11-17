@@ -18,3 +18,6 @@ export type LeafIdentity =
   | { readonly kind: "leaf"; readonly componentId: string; readonly componentKind: string }
 
 export const LeafIdentityContext = createContext<LeafIdentity>({ kind: "none" })
+
+/** `Row` のセルの中で、セルの幅が余白の列を出せないほど狭いか。セルの外では偽。 */
+export const NarrowCellContext = createContext(false)

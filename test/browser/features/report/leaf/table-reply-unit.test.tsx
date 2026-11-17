@@ -25,7 +25,7 @@ afterEach(() => {
 })
 
 function renderAskable(options: { readonly port: boolean; readonly reportToolUseId?: string }) {
-  const ask = vi.fn<ReplyPort["ask"]>()
+  const ask = vi.fn<ReplyPort["ask"]>(() => Promise.resolve())
   const slot: ReplyPortSlot = options.port
     ? {
         kind: "open",
@@ -230,7 +230,7 @@ describe("表の行に聞いた印", () => {
           port: {
             appendDraft: vi.fn<ReplyPort["appendDraft"]>(),
             prependDraft: vi.fn<ReplyPort["prependDraft"]>(),
-            ask: vi.fn<ReplyPort["ask"]>(),
+            ask: vi.fn<ReplyPort["ask"]>(() => Promise.resolve()),
           },
         }}
       >

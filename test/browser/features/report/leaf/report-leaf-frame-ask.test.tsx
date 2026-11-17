@@ -5,6 +5,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from "vitest"
 import {
   type LeafIdentity,
   LeafIdentityContext,
+  NarrowCellContext,
   type SectionPoint,
   SectionPointContext,
 } from "../../../../../src/browser/features/report/leaf-point-context.ts"
@@ -21,6 +22,7 @@ import {
 } from "../../../../../src/browser/features/report/reply-port.ts"
 import { useReplyNotes } from "../../../../../src/browser/stores/reply-note-list.ts"
 import type { LeafValue } from "../../../../../src/shared/report/report-leaf-value.ts"
+import { idlePort } from "../../../../fixture/reply-port.ts"
 
 const CAPTION_SELECTOR = `.${leafFrameClassNames.caption}`
 
@@ -44,23 +46,27 @@ function askFrame(options: {
   readonly section: SectionPoint
   readonly leaf: LeafIdentity
   readonly value?: FrameValue
+  /** `Row` の狭いセルの中に置く。 */
+  readonly narrowCell?: boolean
 }) {
   return render(
     <ReplyPortContext value={options.slot}>
       <ReplyPointScope rootRef={createRef<HTMLElement>()}>
         <SectionPointContext value={options.section}>
           <LeafIdentityContext value={options.leaf}>
-            <div data-report-region="section">
-              <FoldedLeafFrame
-                value={options.value ?? VALUE}
-                title="架空の題"
-                fit={false}
-                fold=""
-                swap={false}
-              >
-                <p>架空の本体</p>
-              </FoldedLeafFrame>
-            </div>
+            <NarrowCellContext value={options.narrowCell ?? false}>
+              <div data-report-region="section">
+                <FoldedLeafFrame
+                  value={options.value ?? VALUE}
+                  title="架空の題"
+                  fit={false}
+                  fold=""
+                  swap={false}
+                >
+                  <p>架空の本体</p>
+                </FoldedLeafFrame>
+              </div>
+            </NarrowCellContext>
           </LeafIdentityContext>
         </SectionPointContext>
       </ReplyPointScope>
@@ -72,12 +78,15 @@ function askButtonCount(): number {
   return screen.queryAllByRole("button", { name: /^(聞く|頼む|聞く・頼む)$/ }).length
 }
 
-function idlePort(ask = vi.fn<ReplyPort["ask"]>()): ReplyPort {
-  return {
-    appendDraft: vi.fn<ReplyPort["appendDraft"]>(),
-    prependDraft: vi.fn<ReplyPort["prependDraft"]>(),
-    ask,
-  }
+/** 外枠が余白の列を空けているか。 */
+function isMargined(container: HTMLElement): boolean {
+  return container.querySelector("[data-reply-frame]")?.hasAttribute("data-reply-margin") === true
+}
+
+function openAskBox(): HTMLElement {
+  fireEvent.click(screen.getByText("架空の本体"))
+  fireEvent.click(screen.getByRole("button", { name: "聞く・頼む" }))
+  return screen.getByRole("textbox")
 }
 
 describe("FoldedLeafFrame の「聞く・頼む」", () => {
@@ -139,7 +148,7 @@ describe("FoldedLeafFrame の「聞く・頼む」", () => {
   })
 
   it("「聞く・頼む」で聞くの欄が開き、書いて送ると指した所つきで ask を呼ぶ", () => {
-    const ask = vi.fn<ReplyPort["ask"]>()
+    const ask = vi.fn<ReplyPort["ask"]>(() => Promise.resolve())
     askFrame({ slot: { kind: "open", port: idlePort(ask) }, section: SECTION, leaf: LEAF })
 
     fireEvent.click(screen.getByText("架空の本体"))
@@ -160,7 +169,7 @@ describe("FoldedLeafFrame の「聞く・頼む」", () => {
   })
 
   it("欄を頼むに切り替えて送ると付箋が増えて ask は呼ばれない", () => {
-    const ask = vi.fn<ReplyPort["ask"]>()
+    const ask = vi.fn<ReplyPort["ask"]>(() => Promise.resolve())
     askFrame({ slot: { kind: "open", port: idlePort(ask) }, section: SECTION, leaf: LEAF })
 
     fireEvent.click(screen.getByText("架空の本体"))
@@ -177,6 +186,58 @@ describe("FoldedLeafFrame の「聞く・頼む」", () => {
     expect(notes[0]?.target.key).toEqual({ reportToolUseId: "toolu_1", componentId: "p1" })
     expect(ask).not.toHaveBeenCalled()
     expect(screen.queryByRole("textbox")).toBeNull()
+  })
+
+  it("余白の列を空けるのは欄を開いているあいだだけで、指しただけでは空けない", () => {
+    const { container } = askFrame({
+      slot: { kind: "open", port: idlePort() },
+      section: SECTION,
+      leaf: LEAF,
+    })
+    expect(isMargined(container)).toBe(false)
+    fireEvent.click(screen.getByText("架空の本体"))
+    expect(isMargined(container)).toBe(false)
+
+    fireEvent.click(screen.getByRole("button", { name: "聞く・頼む" }))
+    expect(isMargined(container)).toBe(true)
+    fireEvent.click(screen.getByRole("button", { name: "やめる" }))
+
+    expect(isMargined(container)).toBe(false)
+  })
+
+  it("聞くを送ったあとは、ask の約束が済むまで余白の列を空けたままにする", async () => {
+    const sent = Promise.withResolvers<void>()
+    const { container } = askFrame({
+      slot: { kind: "open", port: idlePort(vi.fn<ReplyPort["ask"]>(() => sent.promise)) },
+      section: SECTION,
+      leaf: LEAF,
+    })
+    const field = openAskBox()
+    fireEvent.change(field, { target: { value: "なぜ？" } })
+    fireEvent.keyDown(field, { key: "Enter", metaKey: true })
+    expect(screen.queryByRole("textbox")).toBeNull()
+    expect(isMargined(container)).toBe(true)
+
+    await act(async () => {
+      sent.resolve()
+      await sent.promise
+    })
+
+    expect(isMargined(container)).toBe(false)
+  })
+
+  it("Row の狭いセルの中では余白の列を空けず、欄をシートに出す", () => {
+    const { container } = askFrame({
+      slot: { kind: "open", port: idlePort() },
+      section: SECTION,
+      leaf: LEAF,
+      narrowCell: true,
+    })
+
+    const field = openAskBox()
+
+    expect(isMargined(container)).toBe(false)
+    expect(screen.getByRole("dialog", { name: "聞く・頼む" }).contains(field)).toBe(true)
   })
 
   it("口が無いか、節の外（図・振り返り・頭の欄）か、内容部品の外（配置の部品の枠）なら、押しても出ない", () => {

@@ -5,13 +5,14 @@ import { useRef, useState, type RefObject } from "react"
 
 import { useExternalSync } from "../../../../../../hooks/use-external-sync.ts"
 import { useMountEffect } from "../../../../../../hooks/use-mount-effect.ts"
+import { scrollerOf } from "../../../../../../utils/scroller.ts"
 import {
   anchorAfterScroll,
   tailReturnOf,
   type TailAnchor,
   type TailReturn,
 } from "../domain/tail-return.ts"
-import { scrollerOf, subscribeScrollFrame } from "./scroll-frame.ts"
+import { subscribeScrollFrame } from "./scroll-frame.ts"
 
 const AT_TAIL = { kind: "at-tail" } as const satisfies TailAnchor
 
