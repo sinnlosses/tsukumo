@@ -24,9 +24,9 @@
   margin: 0 calc(-1 * var(--head-bleed) - var(--block-inline-padding));
   padding: var(--space-sm) calc(var(--head-bleed) + var(--block-inline-padding)) var(--space-xs);
 }
+/* テーマの影（`--shadow-raised`）は暗い地で内側に 1px の輪を描き、帯の上端にも線が出るので付けない。 */
 .sidebar-block-head[data-scrolled="true"] {
   border-bottom: 1px solid var(--rule);
-  box-shadow: var(--shadow-raised);
 }
 /* 区画の見出し。字は `Heading` が持ち、ここに残すのは置き方だけ（横並び・間隔）。 */
 .sidebar-block-heading {

@@ -5,7 +5,7 @@
 // 見出しそのものは押せるようにしない。
 // 区画ごと開閉するのではなく別の場所（モーダル）を開く操作なので、押せる範囲は見出しの文字と分けておく。
 //
-// `.sidebar-block-scroll` がスクロールされている間だけ、止まった帯の下に線と影を出す（`data-scrolled`）。
+// `.sidebar-block-scroll` がスクロールされている間だけ、止まった帯の下に線を出す（`data-scrolled`）。
 
 import clsx from "clsx"
 import { useState, type ReactElement, type ReactNode } from "react"
