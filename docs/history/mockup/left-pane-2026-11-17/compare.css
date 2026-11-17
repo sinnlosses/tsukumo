@@ -1,0 +1,221 @@
+/* 左の列の見比べのページ。見本（index.html）を縮めた枠を並べる。 */
+
+:root {
+  --ground: #131118;
+  --surface: #1d1a25;
+  --ink: #e8e3ea;
+  --ink-soft: color-mix(in srgb, var(--ink) 72%, transparent);
+  --edge: color-mix(in srgb, var(--ink) 12%, transparent);
+  --accent: #6fe3cd;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 32px clamp(16px, 3vw, 48px) 72px;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Segoe UI", Roboto, sans-serif;
+  font-size: 14px;
+  line-height: 1.7;
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+  scrollbar-color: color-mix(in srgb, var(--ink) 24%, transparent) transparent;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--accent) 36%, transparent);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+a {
+  color: inherit;
+  text-underline-offset: 3px;
+}
+
+h1 {
+  margin: 0;
+  font-size: 24px;
+  line-height: 1.4;
+  text-wrap: balance;
+}
+
+h2 {
+  margin: 64px 0 8px;
+  font-size: 18px;
+  line-height: 1.4;
+}
+
+p {
+  max-inline-size: 72ch;
+  margin: 4px 0 0;
+  color: var(--ink-soft);
+}
+
+kbd {
+  display: inline-grid;
+  place-items: center;
+  min-inline-size: 20px;
+  block-size: 20px;
+  padding: 0 3px;
+  border: 1px solid color-mix(in srgb, var(--ink) 40%, transparent);
+  border-radius: 4px;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.tabs {
+  display: inline-flex;
+  gap: 2px;
+  margin-block-start: 20px;
+  padding: 3px;
+  border: 1px solid var(--edge);
+  border-radius: 10px;
+}
+
+.tabs a {
+  padding: 2px 14px;
+  border-radius: 7px;
+  color: var(--ink-soft);
+  text-decoration: none;
+}
+
+.tabs a:hover {
+  color: var(--ink);
+}
+
+.tabs a[aria-current="true"] {
+  background: color-mix(in srgb, var(--ink) 12%, transparent);
+  color: var(--ink);
+}
+
+.grid {
+  display: grid;
+  gap: 20px 16px;
+  margin-block-start: 16px;
+}
+
+.grid-2 {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 560px), 1fr));
+}
+
+.shot {
+  margin: 0;
+}
+
+.shot figcaption {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 12px;
+  padding-block-end: 6px;
+}
+
+.shot figcaption a {
+  font-weight: 650;
+}
+
+.shot figcaption span {
+  color: var(--ink-soft);
+  font-size: 12px;
+}
+
+.frame {
+  position: relative;
+  aspect-ratio: var(--w) / var(--h);
+  overflow: hidden;
+  border: 1px solid var(--edge);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.frame iframe {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: 0;
+  inline-size: calc(var(--w) * 1px);
+  block-size: calc(var(--h) * 1px);
+  border: 0;
+  transform-origin: 0 0;
+  scale: var(--fit, 0.4);
+}
+
+.real {
+  display: block;
+  inline-size: 100%;
+  block-size: auto;
+  border: 1px solid var(--edge);
+  border-radius: 10px;
+}
+
+.table-scroll {
+  max-inline-size: 100%;
+  margin-block-start: 16px;
+  overflow-x: auto;
+}
+
+table {
+  inline-size: min(100%, 1080px);
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 8px 20px 8px 0;
+  border-block-end: 1px solid var(--edge);
+  text-align: start;
+  vertical-align: top;
+}
+
+thead th {
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+tbody th {
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+td.num {
+  white-space: nowrap;
+}
+
+.verdict {
+  white-space: nowrap;
+}
+
+.verdict.is-adopt {
+  color: var(--accent);
+  font-weight: 650;
+}
+
+.verdict.is-pass {
+  color: var(--ink-soft);
+}
+
+.pick {
+  max-inline-size: 72ch;
+  margin-block-start: 12px;
+  padding: 0;
+  list-style: none;
+}
+
+.pick li {
+  padding: 8px 0;
+  border-block-end: 1px solid var(--edge);
+}
+
+.pick b {
+  font-weight: 650;
+}

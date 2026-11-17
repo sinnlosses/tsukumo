@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>左の列の見比べ（2026-11-17）</title>
+    <link rel="stylesheet" href="compare.css" />
+  </head>
+  <!--
+    左の列の見本（index.html）を、形ごとに縮めて並べるページ。中身はすべて架空で、実物の会話ではない。
+    ?moment=work|read|many       上の段（4つの形）で見る場面
+    ?pack=tsukumo|shirasuzu      パックの素材と差し色
+  -->
+  <body>
+    <header>
+      <h1>左の列の見比べ</h1>
+      <p>
+        会話の画面の左の列（やり取りの列・立ち絵・席のアイテム）を、今の形と3つの案で並べた。枠の題を押すと実寸（1400×900）で開き、上の帯で形・場面・パックを切り替えられる。中身はすべて架空で、席の提灯もこの見本のために描いた小物。
+      </p>
+      <nav class="tabs" id="moments" aria-label="場面">
+        <a data-value="work">働く</a>
+        <a data-value="read">読む</a>
+        <a data-value="many">やり取り12件</a>
+      </nav>
+    </header>
+
+    <main>
+      <section aria-labelledby="designs-title">
+        <h2 id="designs-title">4つの形</h2>
+        <p>
+          A と B の差は「やり取り12件」で、B と C の差は「読む」でいちばん見える。
+        </p>
+        <div class="grid grid-2" id="designs"></div>
+      </section>
+
+      <section aria-labelledby="measure-title">
+        <h2 id="measure-title">今の形で測ったこと</h2>
+        <p>疑似セッションを 2026-11-17 の画面で撮って測った。パックは tsukumo（絵は 1145×1374px）。</p>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr><th>測ったもの</th><th>値</th><th>起きていること</th></tr>
+            </thead>
+            <tbody>
+              <tr><th>立ち絵（1400×900）</th><td class="num">箱 214×342 → 絵 214×257</td><td>列の幅（238px）で頭打ちになり、箱の上が 85px 空く</td></tr>
+              <tr><th>立ち絵（1920×1080）</th><td class="num">箱 214×410 → 絵 214×257</td><td>画面が広くなっても絵は同じ大きさで、列の高さ 1007px の 26%</td></tr>
+              <tr><th>提灯（左上の席）</th><td class="num">下端が頭の 53px 上</td><td>箱の上端を基準に置くので、絵が箱より低いと頭から離れて宙に浮く</td></tr>
+              <tr><th>やり取りの題</th><td class="num">全角 11 字ほど</td><td>「集計の関数とスクリプ…」で切れる。レポートの行の題は 3 字ほど</td></tr>
+              <tr><th>やり取りの列の高さ</th><td class="num">1件 137 / 12件 397</td><td>件数に比例して伸び、12件で提灯のすぐ上まで埋まる</td></tr>
+              <tr><th>空き（働く場面）</th><td class="num">264px</td><td>やり取りの列の下端から提灯まで、背景だけが見える</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section aria-labelledby="diff-title">
+        <h2 id="diff-title">3つの案の違い</h2>
+        <p>
+          立ち絵の箱を描かれる絵に合わせること、足元に接地の影を置くこと、見ているやり取りの題を2行まで折り返すことは、3つの案に共通。
+        </p>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr><th></th><th>A 整える</th><th>B いまに絞る</th><th>C 台座</th></tr>
+            </thead>
+            <tbody>
+              <tr><th>列の幅（1400 / 1920）</th><td class="num">266 / 340</td><td class="num">266 / 340</td><td class="num">301 / 380</td></tr>
+              <tr><th>立ち絵（1400）</th><td class="num">242×290</td><td class="num">242×290</td><td class="num">277×332</td></tr>
+              <tr><th>立ち絵（1920）</th><td class="num">316×379</td><td class="num">316×379</td><td class="num">356×427</td></tr>
+              <tr><th>常に出すもの</th><td>全部のやり取りと、見ているやり取りの見出し</td><td>見ているやり取りの題と、その見出し</td><td>見ているやり取りの題と、読んでいる見出しの1行</td></tr>
+              <tr><th>ほかのやり取り</th><td>列の中で転がす</td><td>一覧の口から開く（列より広い面）</td><td>一覧の口から開く（見出しもここで選ぶ）</td></tr>
+              <tr><th>列の高さ（12件）</th><td class="num">466</td><td class="num">217</td><td class="num">96</td></tr>
+              <tr><th>列の高さ（見出し6つ）</th><td class="num">394</td><td class="num">329</td><td class="num">96</td></tr>
+              <tr><th>前後へ移る口</th><td>キー <kbd>[</kbd> <kbd>]</kbd> の印だけ</td><td>キーの印がそのまま押せる口になり、「3 / 12」で位置を言う</td><td>B と同じ</td></tr>
+              <tr><th>やり取りの列の置き場</th><td>列の上</td><td>列の上</td><td>列の下端。入力欄と下端をそろえ、立ち絵がその上に立つ</td></tr>
+              <tr><th>提灯（左上の席）</th><td>頭の左上（絵の箱が基準）</td><td>頭の左上（絵の箱が基準）</td><td>列の上端から紐で吊るす</td></tr>
+              <tr><th>背景</th><td>今のまま</td><td>今のまま</td><td>立ち絵のまわりだけ覆いを薄くする（75% → 44%）</td></tr>
+              <tr><th>中央の列の幅（1400）</th><td class="num">797 → 769</td><td class="num">797 → 769</td><td class="num">797 → 734</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section aria-labelledby="wide-title">
+        <h2 id="wide-title">広い画面（1920×1080）</h2>
+        <p>今の形は列の幅が 238px のままなので、画面が広いほど立ち絵が相対的に小さくなる。3つの案は列の幅が画面の幅に連れて広がる。</p>
+        <div class="grid grid-2" id="wide"></div>
+      </section>
+
+      <section aria-labelledby="opened-title">
+        <h2 id="opened-title">一覧を開いたとき（B・C）</h2>
+        <p>一覧の面は幅 344px で、題を2行まで出す。外を押すか Esc で閉じる。<kbd>[</kbd> <kbd>]</kbd> のキーは、開かなくても効く。</p>
+        <div class="grid grid-2" id="opened"></div>
+      </section>
+
+      <section aria-labelledby="widths-title">
+        <h2 id="widths-title">仕切りで列の幅を変えたとき（B）</h2>
+        <div class="grid grid-2" id="widths"></div>
+      </section>
+
+      <section aria-labelledby="element-title">
+        <h2 id="element-title">左の列に置く要素の検討</h2>
+        <p>候補を「同じ情報は1か所にだけ出す」で照らした。新しく足す情報は残らず、採るのは今ある情報の出し方の2つ。</p>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr><th>候補</th><th>判定</th><th>理由</th></tr>
+            </thead>
+            <tbody>
+              <tr><th>見ているやり取りの現在地</th><td class="verdict is-adopt">採る（B・C）</td><td>何件目か・どの見出しか。やり取りの列がもともと持つ情報を短く言う形で、新しい情報ではない</td></tr>
+              <tr><th>足元の接地の影</th><td class="verdict is-adopt">採る（A〜C）</td><td>立ち絵が背景の床に立って見える。情報は増えない</td></tr>
+              <tr><th>最新のセリフの吹き出し</th><td class="verdict is-pass">見送り</td><td>会話の流れが持つ。立ち絵に付けると同じセリフが2か所に出る（ADR 0058）</td></tr>
+              <tr><th>いまの状態・フェーズ</th><td class="verdict is-pass">見送り</td><td>進行の帯と、流れの末尾の行が持つ</td></tr>
+              <tr><th>タスクと使用量</th><td class="verdict is-pass">見送り</td><td>サイドバーが持つ</td></tr>
+              <tr><th>キャラクターの名前の札</th><td class="verdict is-pass">見送り</td><td>流れのセリフの行と入力欄が名前を出している</td></tr>
+              <tr><th>きょうの成果の件数</th><td class="verdict is-pass">見送り</td><td>成果の画面が持つ。常に出す対象（タスクの状態と使用量）ではない</td></tr>
+              <tr><th>ほかの画面への入口</th><td class="verdict is-pass">見送り</td><td>上部の帯の1か所に集めてある</td></tr>
+              <tr><th>席を増やす（壁の棚など）</th><td class="verdict is-pass">見送り（別件）</td><td>席のデータの形が変わる。背景の絵と噛み合うかはパックごとに違う</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section aria-labelledby="pick-title">
+        <h2 id="pick-title">おすすめは B</h2>
+        <ul class="pick">
+          <li><b>働くあいだは小さく、読むあいだは目次になる。</b>働くあいだは題と途中のレポートの1行だけ（152px）で、最終レポートが出ると見出しが並ぶ。局面に合わせて中身が変わり、置き場は動かない。</li>
+          <li><b>過去のやり取りは、要るときだけ広い面で読める。</b>12件を列に並べると題は 13 字で切れるが、一覧の面なら2行まで出る。</li>
+          <li><b>目次を常に出したまま、立ち絵を大きくできる。</b>C は立ち絵がいちばん大きいが、目次が1行になり、中央の列が 63px 狭くなる。</li>
+          <li><b>C の明かりは、B にも足せる。</b>背景の暗さの下限（70%）を立ち絵のまわりだけ破るので、採るかは別に決める。</li>
+        </ul>
+      </section>
+
+      <section aria-labelledby="real-title">
+        <h2 id="real-title">今の画面の実物の画</h2>
+        <p>架空の疑似セッションを 2026-11-17 の画面で撮った。上の「今の形」は、この画の寸法を写している。</p>
+        <div class="grid grid-2">
+          <figure class="shot">
+            <figcaption><a href="real-now-work.png">働く（1400×900）</a><span>やり取りの列と提灯のあいだが 264px 空く</span></figcaption>
+            <img class="real" src="real-now-work.png" alt="今の画面の働く場面。左の列の上にやり取りの列、中ほどに提灯、下端に立ち絵" />
+          </figure>
+          <figure class="shot">
+            <figcaption><a href="real-now-many.png">やり取り12件（1400×900）</a><span>列が提灯のすぐ上まで埋まる</span></figcaption>
+            <img class="real" src="real-now-many.png" alt="今の画面でやり取りが12件ある場面。やり取りの列が提灯のすぐ上まで伸びている" />
+          </figure>
+          <figure class="shot">
+            <figcaption><a href="real-now-read-1920.png">読む（1920×1080）</a><span>立ち絵は 1400×900 と同じ大きさ</span></figcaption>
+            <img class="real" src="real-now-read-1920.png" alt="今の画面を 1920×1080 で撮った読む場面。左の列の下端に、列の高さの4分の1ほどの立ち絵" />
+          </figure>
+        </div>
+      </section>
+    </main>
+    <script src="compare.js"></script>
+  </body>
+</html>

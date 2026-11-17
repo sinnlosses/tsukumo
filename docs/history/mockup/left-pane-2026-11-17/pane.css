@@ -1,0 +1,1297 @@
+/* 左の列（やり取りの列・立ち絵・席のアイテム）の見本。
+   器（上部の帯・中央の列・サイドバー）の寸法と色は、今の画面を 1400×900 で測った値。
+   形の差は body の data-design（now・a・b・c）で切り替える。 */
+
+:root {
+  --ground: #191720;
+  --surface: #221f2b;
+  --ink: #e8e3ea;
+  --accent: #6fe3cd;
+  --ink-soft: color-mix(in srgb, var(--ink) 72%, transparent);
+  --ink-quiet: color-mix(in srgb, var(--ink) 60%, transparent);
+  --ok: #5fd38a;
+  --warn: #f2b544;
+  --ng: #f0807a;
+  --edge: color-mix(in srgb, var(--ink) 10%, transparent);
+  --edge-quiet: color-mix(in srgb, var(--ink) 6%, transparent);
+  --raised: color-mix(in srgb, var(--ink) 10%, transparent);
+  --tinted: color-mix(in srgb, var(--surface), var(--accent) 12%);
+  --glass: color-mix(in srgb, color-mix(in srgb, var(--surface), var(--ink) 5%) 45%, transparent);
+  --glass-dense: color-mix(in srgb, color-mix(in srgb, var(--surface), var(--ink) 8%) 92%, transparent);
+  --paper: color-mix(in srgb, color-mix(in srgb, var(--surface), var(--ink) 3%) 94%, transparent);
+  --blur: blur(8px) saturate(1.15);
+  --lift:
+    inset 0 1px 0 color-mix(in srgb, var(--ink) 7%, transparent), 0 14px 32px rgb(0 0 0 / 38%);
+  --mono: ui-monospace, "SF Mono", Menlo, monospace;
+  --art: url("../../../../characters/tsukumo/background.png");
+  --bar-h: 36px;
+
+  /* 左の列の幅と立ち絵。今の形は幅 238px で、立ち絵の箱は高さだけで決まる。 */
+  --left: 238px;
+  --art-ratio: 0.8333;
+  --stage-max: clamp(260px, 38dvb, 420px);
+  color-scheme: dark;
+}
+
+/* 案 A・B は列の幅をビューポートに連動させる（1400 で 266px、1920 で 340px）。 */
+body[data-design="a"],
+body[data-design="b"] {
+  --left: clamp(238px, 19vw, 340px);
+  --stage-max: clamp(260px, 46dvb, 520px);
+}
+
+/* 案 C は舞台を広く取る（1400 で 301px、1920 で 380px）。 */
+body[data-design="c"] {
+  --left: clamp(260px, 21.5vw, 380px);
+  --stage-max: clamp(260px, 46dvb, 520px);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  block-size: 100%;
+  margin: 0;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Segoe UI", Roboto, sans-serif;
+  font-size: 14px;
+  line-height: 1.7;
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--accent) 36%, transparent);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+button {
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+p,
+ol,
+h1,
+h2,
+h3 {
+  margin: 0;
+}
+
+ol {
+  padding: 0;
+  list-style: none;
+}
+
+.sprite {
+  position: absolute;
+}
+
+.icon {
+  flex: none;
+  inline-size: 16px;
+  block-size: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.icon-sm {
+  inline-size: 14px;
+  block-size: 14px;
+}
+
+/* 見本の切り替えの帯 */
+.mock-bar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 16px;
+  block-size: var(--bar-h);
+  padding: 0 16px;
+  overflow-x: auto;
+  background: #0f0e14;
+  color: var(--ink-soft);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+body[data-bar="0"] .mock-bar {
+  display: none;
+}
+
+.mock-bar-title {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.mock-bar a {
+  padding: 2px 8px;
+  border-radius: 6px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.mock-bar-link {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.mock-bar a[aria-current="true"] {
+  background: var(--raised);
+  color: var(--ink);
+}
+
+.mock-bar-group {
+  display: inline-flex;
+  gap: 2px;
+  padding-inline-start: 12px;
+  border-inline-start: 1px solid var(--edge);
+}
+
+/* 器 */
+.app {
+  position: relative;
+  flex: 1;
+  min-block-size: 0;
+  isolation: isolate;
+}
+
+/* 背景は絵と覆いの2枚。案 C だけ、立ち絵のまわりの覆いを薄くして舞台の明かりにする。 */
+.ground-art,
+.ground-veil {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+}
+
+.ground-art {
+  background: var(--art) center / cover;
+}
+
+.ground-veil {
+  background: rgb(25 23 32 / 75%);
+}
+
+body[data-design="c"] .ground-veil {
+  mask-image: radial-gradient(
+    ellipse calc(var(--left) * 0.95) 46% at calc(16px + var(--left) / 2) 74%,
+    rgb(0 0 0 / 58%) 0%,
+    rgb(0 0 0 / 72%) 45%,
+    black 100%
+  );
+}
+
+.nav {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  block-size: 40px;
+  padding: 0 24px;
+  border-block-end: 1px solid var(--edge-quiet);
+  background: color-mix(in srgb, var(--ground) 55%, transparent);
+  backdrop-filter: var(--blur);
+  font-size: 13px;
+}
+
+.nav-room {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nav-face {
+  inline-size: 24px;
+  block-size: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: top;
+}
+
+.nav-room-name {
+  font-size: 16px;
+  font-weight: 650;
+}
+
+.nav-room-port,
+.session-tag {
+  color: var(--ink-soft);
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+.session-tag {
+  padding: 0;
+  border-block-end: 1px dashed var(--ink-quiet);
+}
+
+.nav-tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.nav-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 10px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: var(--ink-soft);
+}
+
+.nav-tab[aria-current="page"] {
+  border-color: var(--edge);
+  background: var(--raised);
+  color: var(--ink);
+}
+
+.nav-rule {
+  inline-size: 1px;
+  block-size: 16px;
+  margin-inline: 10px;
+  background: var(--edge);
+}
+
+.nav-gear {
+  margin-inline-start: auto;
+}
+
+.icon-button {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  inline-size: 28px;
+  block-size: 28px;
+  border-radius: 8px;
+  color: var(--ink-soft);
+}
+
+.icon-button:hover {
+  background: var(--raised);
+  color: var(--ink);
+}
+
+.icon-button.is-small {
+  inline-size: 24px;
+  block-size: 24px;
+}
+
+.shell {
+  display: grid;
+  grid-template-columns: var(--left) minmax(0, 1fr) 22.8%;
+  gap: 10px;
+  block-size: calc(100% - 40px);
+  padding: 16px 17px 17px 16px;
+}
+
+/* ───────── 左の列 ───────── */
+.left {
+  position: relative;
+  min-block-size: 0;
+  container: left / inline-size;
+}
+
+/* 仕切りで列を細くしたとき（250px 未満）は、頭の「やり取り」の字を畳んで移る口を残す。 */
+@container left (max-width: 250px) {
+  .lane-focus .lane-title,
+  .lane-count {
+    display: none;
+  }
+}
+
+/* 立ち絵の箱。今の形は「列の幅 × 高さの上限」の箱に絵を収めるので、幅で頭打ちになると箱の上が空く。 */
+.stage {
+  position: absolute;
+  inset-block-end: 0;
+  inset-inline-start: 12px;
+  inline-size: calc(var(--left) - 24px);
+  block-size: var(--stage-max);
+}
+
+/* 案 A〜C は箱を描かれる絵に合わせる。席と影が、絵の頭と足元を基準に置ける。 */
+body:not([data-design="now"]) .stage {
+  inset-inline-start: 50%;
+  inline-size: min(calc(var(--left) - 24px), calc(var(--stage-max) * var(--art-ratio)));
+  block-size: auto;
+  aspect-ratio: var(--art-ratio);
+  translate: -50% 0;
+}
+
+.portrait {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: contain;
+  object-position: center bottom;
+}
+
+/* 足元の接地の影（案 A〜C）。 */
+.floor {
+  display: none;
+}
+
+body:not([data-design="now"]) .floor {
+  position: absolute;
+  inset-block-end: -5px;
+  inset-inline: 20% 14%;
+  z-index: 0;
+  display: block;
+  block-size: 26px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgb(6 5 10 / 62%), rgb(6 5 10 / 24%) 60%, transparent);
+}
+
+/* 席のアイテム。 */
+.seat {
+  position: absolute;
+  display: block;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 6px rgb(8 6 14 / 40%));
+  pointer-events: none;
+}
+
+/* 今の形: 箱の上端から 44px 下がった位置が提灯の下端。絵が箱より低いと頭から離れる。 */
+.seat-top {
+  inset-block-end: calc(100% - 32px);
+  inset-inline-start: 6px;
+  z-index: 0;
+  block-size: 104px;
+  object-position: left bottom;
+}
+
+.seat-right {
+  inset-block-end: 18px;
+  inset-inline-end: 2px;
+  z-index: 2;
+  inline-size: min(80px, 38%);
+}
+
+body:not([data-design="now"]) .seat-top {
+  inset-block-end: calc(100% - 44px);
+  inset-inline-start: -2px;
+  block-size: clamp(96px, 34%, 132px);
+}
+
+body:not([data-design="now"]) .seat-right {
+  inset-block-end: 2px;
+  inset-inline-end: -6px;
+  inline-size: min(92px, 34%);
+}
+
+/* 案 C: 提灯は列の上端から吊るす。紐は上部の帯の罫から下ろす。 */
+.cord {
+  display: none;
+}
+
+body[data-design="c"] .seat-top {
+  inset-block: 22px auto;
+  inset-inline-start: 22px;
+  block-size: clamp(104px, 13dvb, 136px);
+}
+
+body[data-design="c"] .cord {
+  position: absolute;
+  inset-block-start: -16px;
+  inset-inline-start: calc(22px + clamp(104px, 13dvb, 136px) / 3 - 1px);
+  display: block;
+  inline-size: 2px;
+  block-size: 42px;
+  background: color-mix(in srgb, var(--ink) 34%, transparent);
+}
+
+/* 案 C: 立ち絵は台座（やり取りの札）の上に立つ。 */
+body[data-design="c"] .stage {
+  inset-block-end: 104px;
+}
+
+/* ───────── やり取りの列 ───────── */
+.lane {
+  position: absolute;
+  inset: 12px 12px auto;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  padding: 12px 8px;
+  border: 1px solid var(--edge);
+  border-radius: 16px;
+  background: var(--glass);
+  box-shadow: var(--lift);
+  backdrop-filter: var(--blur);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.lane-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 4px 8px 12px;
+  color: var(--ink-soft);
+}
+
+.lane-title {
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  white-space: nowrap;
+}
+
+.lane-count {
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+.lane-head .push {
+  margin-inline-start: auto;
+}
+
+.keys {
+  display: inline-flex;
+  flex: none;
+  gap: 2px;
+}
+
+.key {
+  display: inline-grid;
+  place-items: center;
+  min-inline-size: 20px;
+  block-size: 20px;
+  padding: 0 2px;
+  border: 1px solid var(--ink-quiet);
+  border-radius: 4px;
+  color: var(--ink-quiet);
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1;
+}
+
+/* キーの印を押せる口にした形（案 B・C）。24px の的を持つ。 */
+button.key {
+  min-inline-size: 24px;
+  block-size: 24px;
+  border-color: color-mix(in srgb, var(--ink) 34%, transparent);
+  color: var(--ink-soft);
+}
+
+button.key:hover {
+  border-color: var(--accent);
+  background: var(--tinted);
+  color: var(--ink);
+}
+
+button.key[aria-disabled="true"] {
+  border-color: var(--edge);
+  color: color-mix(in srgb, var(--ink) 34%, transparent);
+  cursor: default;
+}
+
+.lane-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-block-size: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--ink) 22%, transparent) transparent;
+}
+
+.turn-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-radius: 10px;
+}
+
+.turn-group.is-active {
+  padding-block-end: 4px;
+  background: var(--raised);
+}
+
+.turn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  inline-size: 100%;
+  padding: 8px 12px;
+  border-radius: 10px;
+  color: var(--ink-quiet);
+  text-align: start;
+  white-space: nowrap;
+}
+
+.turn:hover {
+  background: var(--tinted);
+}
+
+.turn[aria-current="true"] {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.turn-mark {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  inline-size: 14px;
+  block-size: 20px;
+}
+
+.turn-mark .icon {
+  inline-size: 12px;
+  block-size: 12px;
+}
+
+.turn-mark .dot {
+  inline-size: 9px;
+  block-size: 9px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.turn[data-result="failed"] .turn-mark {
+  color: var(--ng);
+}
+
+.turn[data-result="stopped"] .turn-mark {
+  color: var(--warn);
+}
+
+.turn-text {
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 見ているやり取りの題は2行まで折り返す（案 A〜C）。 */
+.turn.is-wrap {
+  align-items: flex-start;
+  white-space: normal;
+}
+
+.turn.is-wrap .turn-text {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow-wrap: anywhere;
+}
+
+.toc-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  inline-size: 100%;
+  padding: 4px 12px 4px 40px;
+  border-radius: 10px;
+  color: var(--ink-quiet);
+  text-align: start;
+  white-space: nowrap;
+}
+
+.toc-row:hover {
+  background: var(--raised);
+}
+
+.toc-row[data-level="report"] {
+  padding-inline-start: 24px;
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.toc-row[data-level="report"] .turn-text {
+  flex: 1;
+}
+
+.toc-row[data-level="sub"] {
+  padding-inline-start: 56px;
+  font-size: 12px;
+}
+
+.toc-row[aria-current="location"] {
+  background: var(--tinted);
+  color: var(--ink);
+}
+
+.toc-bar {
+  flex: none;
+  inline-size: 0;
+  block-size: 14px;
+  border-radius: 2px;
+  background: var(--accent);
+}
+
+.toc-row[aria-current="location"] .toc-bar {
+  inline-size: 3px;
+}
+
+.toc-label {
+  flex: none;
+  color: var(--ink-quiet);
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+}
+
+/* 案 B: いまのやり取りに絞る。頭は「やり取り [ 3 / 12 ]」と一覧の口。 */
+.stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.stepper-pos {
+  min-inline-size: 44px;
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 12px;
+  text-align: center;
+}
+
+.stepper-pos b {
+  font-weight: 600;
+}
+
+.lane-focus .lane-head {
+  padding-inline-end: 0;
+}
+
+.lane-focus .turn-group.is-active {
+  background: none;
+}
+
+.lane-focus .toc {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-block-start: 4px;
+  padding-block-start: 6px;
+  border-block-start: 1px solid var(--edge);
+}
+
+.lane-focus .toc-row[data-level="report"] {
+  padding-inline-start: 12px;
+}
+
+.lane-focus .toc-row {
+  padding-inline-start: 24px;
+}
+
+.lane-focus .toc-row[data-level="sub"] {
+  padding-inline-start: 40px;
+}
+
+/* 案 C: 台座。列の下端で入力欄と下端をそろえ、立ち絵がその上に立つ。 */
+.lane-plinth {
+  inset: auto 12px 16px;
+  justify-content: center;
+  /* 中身（頭の行・題・読んでいる見出し）が増減しても、立ち絵の足元が動かない高さ。 */
+  block-size: 96px;
+  padding: 10px 8px 10px 12px;
+  background: var(--glass-dense);
+}
+
+.lane-plinth .lane-head {
+  padding: 0 0 6px;
+}
+
+.plinth-title {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  inline-size: 100%;
+  border-radius: 8px;
+  color: var(--ink);
+  font-weight: 600;
+  text-align: start;
+}
+
+.plinth-title .turn-text {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow-wrap: anywhere;
+}
+
+.plinth-title.has-crumb .turn-text {
+  -webkit-line-clamp: 1;
+  line-clamp: 1;
+}
+
+.crumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  inline-size: 100%;
+  margin-block-start: 2px;
+  padding-inline-start: 22px;
+  color: var(--ink-soft);
+  font-size: 12px;
+  text-align: start;
+  white-space: nowrap;
+}
+
+.crumb .turn-text {
+  flex: 1;
+  color: var(--ink);
+}
+
+.crumb-pos {
+  flex: none;
+  font-family: var(--mono);
+}
+
+/* やり取りの一覧（案 B・C の「一覧」の口が開く面）。列より広く取り、題を切らない。 */
+.turn-pop {
+  inline-size: 344px;
+  max-block-size: min(70dvb, 560px);
+  margin: 0;
+  padding: 8px;
+  border: 1px solid color-mix(in srgb, var(--ink) 16%, transparent);
+  border-radius: 14px;
+  background: color-mix(in srgb, color-mix(in srgb, var(--surface), var(--ink) 8%) 97%, transparent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--ink) 7%, transparent),
+    0 24px 48px rgb(0 0 0 / 55%);
+  backdrop-filter: blur(14px);
+  color: var(--ink);
+  font-size: 13px;
+  line-height: 1.5;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--ink) 22%, transparent) transparent;
+}
+
+.turn-pop:popover-open {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* やり取りの列の頭に寄せ、列の左端にそろえて下（台座は上）へ開く。
+   アンカー位置指定が無いブラウザでは、列の左上へ固定で置く。 */
+.lane-head {
+  anchor-name: --lane-head;
+}
+
+@supports (position-area: block-end) {
+  .turn-pop {
+    position-anchor: --lane-head;
+    inset: auto;
+    position-area: block-end span-inline-end;
+    position-try-fallbacks: flip-block;
+    margin-block: 6px;
+  }
+}
+
+@supports not (position-area: block-end) {
+  .turn-pop {
+    position: fixed;
+    inset: calc(var(--bar-h) + 104px) auto auto 28px;
+  }
+}
+
+.turn-pop-head {
+  padding: 4px 12px 6px;
+  color: var(--ink-soft);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+}
+
+.turn-pop .turn {
+  align-items: flex-start;
+  white-space: normal;
+}
+
+.turn-pop .turn[aria-current="true"] {
+  background: var(--raised);
+}
+
+/* ───────── 中央の列 ───────── */
+.center {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-block-size: 0;
+  padding-block-end: 16px;
+}
+
+.strip {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 16px;
+  block-size: 40px;
+  padding: 0 6px 0 16px;
+  border: 1px solid var(--edge);
+  border-radius: 999px;
+  background: var(--glass);
+  box-shadow: var(--lift);
+  backdrop-filter: var(--blur);
+  color: var(--ink-soft);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.strip-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-inline-size: 84px;
+}
+
+.strip-state::before {
+  content: "";
+  inline-size: 8px;
+  block-size: 8px;
+  border-radius: 50%;
+  background: var(--state, var(--accent));
+}
+
+.strip-phases {
+  display: inline-flex;
+  align-items: center;
+}
+
+.phase-dot {
+  display: inline-grid;
+  place-items: center;
+  inline-size: 20px;
+  block-size: 20px;
+  border: 1px solid var(--edge);
+  border-radius: 50%;
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1;
+}
+
+.phase-dot.is-done {
+  border-color: transparent;
+  background: color-mix(in srgb, var(--accent) 34%, var(--surface));
+  color: var(--ink);
+}
+
+.phase-dot.is-current {
+  inline-size: 22px;
+  block-size: 22px;
+  border: 2px solid var(--accent);
+  color: var(--ink);
+}
+
+.phase-dot .icon {
+  inline-size: 12px;
+  block-size: 12px;
+}
+
+.phase-link {
+  inline-size: 12px;
+  block-size: 1px;
+  background: var(--edge);
+}
+
+.strip-name {
+  flex: 1;
+  min-inline-size: 0;
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 14px;
+  text-overflow: ellipsis;
+}
+
+.strip-time b {
+  margin-inline-start: 8px;
+  font-family: var(--mono);
+  font-weight: 400;
+}
+
+.strip-steps {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 12px;
+  border-radius: 999px;
+  background: var(--raised);
+  color: var(--ink);
+  font-size: 14px;
+}
+
+.scroller {
+  flex: 1;
+  min-block-size: 0;
+  padding: 0 12px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--ink) 22%, transparent) transparent;
+}
+
+.flow {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 12px;
+  min-block-size: 100%;
+  padding: 8px;
+}
+
+body[data-moment="read"] .flow,
+body[data-moment="many"] .flow {
+  justify-content: flex-start;
+}
+
+.row {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.row-user {
+  flex-direction: row-reverse;
+}
+
+.bubble {
+  max-inline-size: 80%;
+  padding: 8px 16px;
+  border: 1px solid var(--edge-quiet);
+  border-radius: 16px;
+  font-size: 16px;
+  line-height: 1.7;
+}
+
+.bubble-post {
+  border-end-end-radius: 6px;
+  background: color-mix(in srgb, var(--surface), var(--ink) 12%);
+}
+
+.bubble-say {
+  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+  border-end-start-radius: 6px;
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--accent) 16%, var(--surface)),
+    color-mix(in srgb, var(--accent) 9%, var(--surface))
+  );
+}
+
+.speaker {
+  display: block;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.stamp {
+  flex: none;
+  padding: 0 4px;
+  color: var(--ink-quiet);
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+.card {
+  max-inline-size: 560px;
+  padding: 10px 16px 12px;
+  border: 1px solid var(--edge);
+  border-radius: 10px;
+  background: var(--glass);
+  backdrop-filter: var(--blur);
+}
+
+.card-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink-soft);
+  font-size: 12px;
+}
+
+.card-head .icon {
+  inline-size: 12px;
+  block-size: 12px;
+}
+
+.fold {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-soft);
+  font-size: 12px;
+}
+
+.now-line {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  align-self: flex-start;
+  padding: 2px 12px 2px 10px;
+  border: 1px solid var(--edge);
+  border-radius: 999px;
+  background: var(--glass);
+  color: var(--ink-soft);
+  font-size: 12px;
+}
+
+.now-line::before {
+  content: "";
+  inline-size: 8px;
+  block-size: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.paper {
+  padding: 20px 24px 24px;
+  border: 1px solid var(--edge);
+  border-radius: 12px;
+  background: var(--paper);
+  box-shadow: 0 16px 36px rgb(0 0 0 / 30%);
+}
+
+.paper h1 {
+  font-size: 20px;
+  line-height: 1.5;
+}
+
+.paper h2 {
+  margin-block-start: 28px;
+  font-size: 18px;
+  line-height: 1.5;
+}
+
+.paper h3 {
+  margin-block-start: 18px;
+  font-size: 15px;
+}
+
+.paper p {
+  max-inline-size: 70ch;
+  margin-block-start: 8px;
+  color: var(--ink-soft);
+}
+
+.composer {
+  flex: none;
+  min-block-size: 104px;
+  margin-inline: 8px;
+  padding: 16px 14px 10px 22px;
+  border: 2px solid var(--accent);
+  border-radius: 22px;
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 14%, transparent);
+}
+
+.composer-input {
+  color: var(--ink-quiet);
+  font-size: 16px;
+}
+
+.composer-foot {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-block-start: 12px;
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+
+.run-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+.composer-foot .push {
+  margin-inline-start: auto;
+}
+
+.chip-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: var(--raised);
+  color: var(--ink);
+  font-size: 14px;
+}
+
+.send-button {
+  display: inline-grid;
+  place-items: center;
+  inline-size: 32px;
+  block-size: 32px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #10231f;
+}
+
+/* ───────── サイドバー ───────── */
+.side {
+  display: flex;
+  flex-direction: column;
+  min-block-size: 0;
+  border: 1px solid var(--edge);
+  border-radius: 16px;
+  background: var(--glass);
+  box-shadow: var(--lift);
+  backdrop-filter: var(--blur);
+  font-size: 12px;
+}
+
+.side-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 8px 8px;
+  color: var(--ink-soft);
+  letter-spacing: 0.04em;
+}
+
+.side-head .push {
+  margin-inline-start: auto;
+}
+
+.side-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 8px 4px;
+  padding: 6px 10px;
+  border: 1px solid var(--edge);
+  border-radius: 10px;
+  background: rgb(15 13 20 / 45%);
+  color: var(--ink-quiet);
+}
+
+.side-stage {
+  padding: 6px 20px 2px;
+  color: var(--ink-soft);
+  font-weight: 600;
+}
+
+.side-stage span {
+  margin-inline-start: 8px;
+  font-family: var(--mono);
+  font-weight: 400;
+}
+
+.task {
+  display: grid;
+  grid-template-columns: 16px 1fr;
+  gap: 0 12px;
+  margin: 0 8px 2px;
+  padding: 6px 12px 8px;
+  border-radius: 8px;
+  line-height: 1.6;
+}
+
+.task.is-doing {
+  background: linear-gradient(
+    100deg,
+    color-mix(in srgb, var(--accent) 14%, transparent),
+    color-mix(in srgb, var(--accent) 5%, transparent)
+  );
+}
+
+.task-mark {
+  display: grid;
+  grid-row: 1 / 3;
+  place-items: center;
+  align-self: center;
+  inline-size: 14px;
+  block-size: 14px;
+  border: 1.5px solid var(--accent);
+  border-radius: 50%;
+}
+
+.task.is-doing .task-mark::after {
+  content: "";
+  inline-size: 4px;
+  block-size: 4px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.task-id {
+  color: var(--ink-quiet);
+  font-family: var(--mono);
+}
+
+.side-foot {
+  display: grid;
+  grid-template-columns: 1.45fr 1fr 1fr;
+  gap: 10px;
+  margin-block-start: auto;
+  padding: 20px 14px 22px;
+  border-block-start: 1px solid var(--edge);
+  color: var(--ink-soft);
+}
+
+.meter {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  row-gap: 6px;
+}
+
+.meter b {
+  font-family: var(--mono);
+  font-weight: 600;
+}
+
+.meter i {
+  grid-column: 1 / 3;
+  block-size: 3px;
+  border-radius: 2px;
+  background: linear-gradient(to right, var(--accent) var(--v), var(--raised) var(--v));
+}
+
+/* 開いた状態を撮るとき（open=1）は、開く動きを付けない。 */
+@media (prefers-reduced-motion: no-preference) {
+  body:not([data-open="1"]) .turn-pop {
+    transition:
+      opacity 0.16s ease-out,
+      translate 0.16s cubic-bezier(0.16, 1, 0.3, 1),
+      overlay 0.16s allow-discrete,
+      display 0.16s allow-discrete;
+    opacity: 0;
+    translate: 0 -6px;
+  }
+
+  body:not([data-open="1"]) .turn-pop:popover-open {
+    opacity: 1;
+    translate: 0 0;
+  }
+
+  @starting-style {
+    body:not([data-open="1"]) .turn-pop:popover-open {
+      opacity: 0;
+      translate: 0 -6px;
+    }
+  }
+}

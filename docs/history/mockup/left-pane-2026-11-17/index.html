@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>左の列の見本（2026-11-17）</title>
+    <link rel="stylesheet" href="pane.css" />
+  </head>
+  <!--
+    会話の画面の左の列（やり取りの列・立ち絵・席のアイテム）の見本。
+    今の形（design=now）と、3つの案（a 整える・b いまに絞る・c 台座）を、同じ架空のやり取りで見比べる。
+    器（上部の帯・中央の列・サイドバー）は今の画面を 1400×900 で測った値で組み、どの形でも変えない。
+    中身はすべて架空で、実物の会話ではない。席のアイテムの絵も、この見本のために描いた架空の小物。
+    並べて比べるページは compare.html。
+    ?design=now|a|b|c            今の形／整える／いまに絞る／台座
+    ?moment=work|read|many       場面（働く・読む・やり取り12件）
+    ?open=1                      案 b・c で、やり取りの一覧を開いた状態にする
+    ?pack=tsukumo|shirasuzu      パックの素材と差し色
+    ?bar=0                       上の切り替えの帯を隠す（撮影用）
+  -->
+  <body>
+    <svg class="sprite" width="0" height="0" aria-hidden="true">
+      <defs>
+        <g id="i-image"><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="9" cy="9" r="2" /><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21" /></g>
+        <g id="i-slash"><path d="M17 5 7 19" /></g>
+        <g id="i-at"><circle cx="12" cy="12" r="4" /><path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-4 8" /></g>
+        <g id="i-heading"><path d="M6 4v16M18 4v16M6 12h12" /></g>
+        <g id="i-plus"><path d="M12 5v14M5 12h14" /></g>
+        <g id="i-up"><path d="M12 19V5M5 12l7-7 7 7" /></g>
+        <g id="i-chevron"><path d="m6 9 6 6 6-6" /></g>
+        <g id="i-chevron-right"><path d="m9 6 6 6-6 6" /></g>
+        <g id="i-chevron-left"><path d="m15 18-6-6 6-6" /></g>
+        <g id="i-brief"><rect x="2" y="7" width="20" height="14" rx="2" /><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" /></g>
+        <g id="i-chat"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" /></g>
+        <g id="i-user"><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></g>
+        <g id="i-coins"><circle cx="9" cy="9" r="6" /><path d="M18.1 10.4A6 6 0 1 1 10.3 18" /></g>
+        <g id="i-trophy"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4ZM17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3" /></g>
+        <g id="i-gear"><circle cx="12" cy="12" r="3" /><path d="M12 2v3M12 19v3M4.9 4.9 7 7M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1 7 17M17 7l2.1-2.1" /></g>
+        <g id="i-check"><path d="m5 12 5 5L20 7" /></g>
+        <g id="i-cross"><path d="M6 6l12 12M18 6 6 18" /></g>
+        <g id="i-stop"><rect x="6" y="6" width="12" height="12" rx="2" /></g>
+        <g id="i-list"><path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01" /></g>
+        <g id="i-shield"><path d="M20 13c0 5-3.5 7.5-7.7 8.9a1 1 0 0 1-.6 0C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.2-2.7a1.2 1.2 0 0 1 1.6 0C14.5 3.8 17 5 19 5a1 1 0 0 1 1 1Z" /></g>
+        <g id="i-signal"><path d="M5 20v-2M10 20v-6M15 20V9M20 20V4" /></g>
+        <g id="i-model"><circle cx="12" cy="12" r="9" /><ellipse cx="12" cy="12" rx="3.2" ry="6" /></g>
+        <g id="i-refresh"><path d="M3 12a9 9 0 0 1 15.5-6.3L21 8M21 3v5h-5M21 12a9 9 0 0 1-15.5 6.3L3 16M3 21v-5h5" /></g>
+        <g id="i-search"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></g>
+      </defs>
+    </svg>
+
+    <header class="mock-bar" aria-label="見本の切り替え">
+      <span class="mock-bar-title">左の列の見本（中身は架空）</span>
+      <a class="mock-bar-link" href="compare.html">並べて比べる</a>
+      <span class="mock-bar-group" data-param="design">
+        <a data-value="now">今の形</a>
+        <a data-value="a">A 整える</a>
+        <a data-value="b">B いまに絞る</a>
+        <a data-value="c">C 台座</a>
+      </span>
+      <span class="mock-bar-group" data-param="moment">
+        <a data-value="work">働く</a>
+        <a data-value="read">読む</a>
+        <a data-value="many">やり取り12件</a>
+      </span>
+      <span class="mock-bar-group" data-param="open">
+        <a data-value="0">一覧を閉じる</a>
+        <a data-value="1">一覧を開く</a>
+      </span>
+      <span class="mock-bar-group" data-param="pack">
+        <a data-value="tsukumo">つくも</a>
+        <a data-value="shirasuzu">白鈴</a>
+      </span>
+    </header>
+
+    <div class="app">
+      <div class="ground-art" aria-hidden="true"></div>
+      <div class="ground-veil" aria-hidden="true"></div>
+      <nav class="nav" aria-label="画面の切り替え">
+        <span class="nav-room">
+          <img class="nav-face" src="../../../../characters/tsukumo/face.png" data-pack-src="face.png" alt="" />
+          <span class="nav-room-name">tsukumo-task</span>
+          <span class="nav-room-port">57730</span>
+          <span aria-hidden="true">-</span>
+          <button class="session-tag" type="button" aria-label="セッション FA（押して切り替え）">FA</button>
+        </span>
+        <span class="nav-tabs">
+          <a class="nav-tab" aria-current="page"><svg viewBox="0 0 24 24" class="icon"><use href="#i-brief" /></svg>仕事</a>
+          <a class="nav-tab"><svg viewBox="0 0 24 24" class="icon"><use href="#i-chat" /></svg>雑談</a>
+          <span class="nav-rule"></span>
+          <a class="nav-tab"><svg viewBox="0 0 24 24" class="icon"><use href="#i-user" /></svg>キャラ</a>
+          <a class="nav-tab"><svg viewBox="0 0 24 24" class="icon"><use href="#i-coins" /></svg>トークン</a>
+          <a class="nav-tab"><svg viewBox="0 0 24 24" class="icon"><use href="#i-trophy" /></svg>成果</a>
+        </span>
+        <button class="icon-button nav-gear" type="button" aria-label="設定"><svg viewBox="0 0 24 24" class="icon"><use href="#i-gear" /></svg></button>
+      </nav>
+
+      <div class="shell">
+        <section class="left" id="left" data-region="character" aria-label="キャラクター">
+          <div class="stage" id="stage">
+            <span class="floor" aria-hidden="true"></span>
+            <img class="portrait" id="portrait" src="../../../../characters/tsukumo/default.png" alt="" />
+          </div>
+        </section>
+
+        <section class="center" data-region="main" aria-label="会話">
+          <header class="strip" id="strip" aria-label="進み具合"></header>
+          <div class="scroller" id="scroller" tabindex="0">
+            <div class="flow" id="flow"></div>
+          </div>
+          <div class="composer" aria-label="入力欄">
+            <div class="composer-input" id="draft"></div>
+            <div class="composer-foot">
+              <button class="icon-button" type="button" aria-label="画像を添える"><svg viewBox="0 0 24 24" class="icon"><use href="#i-image" /></svg></button>
+              <button class="icon-button" type="button" aria-label="コマンド"><svg viewBox="0 0 24 24" class="icon"><use href="#i-slash" /></svg></button>
+              <button class="icon-button" type="button" aria-label="ファイルを指す"><svg viewBox="0 0 24 24" class="icon"><use href="#i-at" /></svg></button>
+              <button class="icon-button" type="button" aria-label="書式"><svg viewBox="0 0 24 24" class="icon"><use href="#i-heading" /></svg></button>
+              <span class="nav-rule"></span>
+              <button class="run-chip" type="button"><svg viewBox="0 0 24 24" class="icon"><use href="#i-model" /></svg>Opus<svg viewBox="0 0 24 24" class="icon icon-sm"><use href="#i-chevron" /></svg></button>
+              <button class="run-chip" type="button"><svg viewBox="0 0 24 24" class="icon"><use href="#i-signal" /></svg>Medium<svg viewBox="0 0 24 24" class="icon icon-sm"><use href="#i-chevron" /></svg></button>
+              <button class="run-chip" type="button"><svg viewBox="0 0 24 24" class="icon"><use href="#i-shield" /></svg>自動判定<svg viewBox="0 0 24 24" class="icon icon-sm"><use href="#i-chevron" /></svg></button>
+              <button class="chip-button push" type="button"><svg viewBox="0 0 24 24" class="icon icon-sm"><use href="#i-plus" /></svg>新規</button>
+              <button class="send-button" type="button" aria-label="送る"><svg viewBox="0 0 24 24" class="icon"><use href="#i-up" /></svg></button>
+            </div>
+          </div>
+        </section>
+
+        <aside class="side" data-region="sidebar" aria-label="サイドバー">
+          <header class="side-head">
+            <span>タスク</span>
+            <span class="lane-count">8</span>
+            <button class="icon-button is-small push" type="button" aria-label="最新化"><svg viewBox="0 0 24 24" class="icon icon-sm"><use href="#i-refresh" /></svg></button>
+            <span>一覧を見る</span>
+          </header>
+          <div class="side-search"><svg viewBox="0 0 24 24" class="icon"><use href="#i-search" /></svg>ID・言葉で探す</div>
+          <p class="side-stage">いま<span>3</span></p>
+          <div class="task is-doing"><span class="task-mark"></span><span>架空の課題1</span><span class="task-id">T-101</span></div>
+          <div class="task is-doing"><span class="task-mark"></span><span>架空の課題4</span><span class="task-id">T-104</span></div>
+          <div class="task is-doing"><span class="task-mark"></span><span>架空の課題7</span><span class="task-id">T-107</span></div>
+          <p class="side-stage">つぎ<span>3</span></p>
+          <div class="task"><span class="task-mark"></span><span>架空の課題0</span><span class="task-id">T-100</span></div>
+          <div class="task"><span class="task-mark"></span><span>架空の課題3</span><span class="task-id">T-103</span></div>
+          <div class="task"><span class="task-mark"></span><span>架空の課題6</span><span class="task-id">T-106</span></div>
+          <p class="side-stage">済み<span>2</span></p>
+          <footer class="side-foot">
+            <span class="meter"><span>コンテキスト</span><b>61%</b><i style="--v: 61%"></i></span>
+            <span class="meter"><span>5時間</span><b>34%</b><i style="--v: 34%"></i></span>
+            <span class="meter"><span>7日</span><b>61%</b><i style="--v: 61%"></i></span>
+          </footer>
+        </aside>
+      </div>
+    </div>
+    <script src="pane.js"></script>
+  </body>
+</html>
