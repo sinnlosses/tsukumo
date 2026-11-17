@@ -16,8 +16,8 @@ afterEach(() => {
 function renderTwo(): void {
   render(
     <>
-      <TaskRefreshButton />
-      <TaskRefreshButton />
+      <TaskRefreshButton box="compact" />
+      <TaskRefreshButton box="regular" />
     </>,
     { wrapper: queryClientWrapper() },
   )

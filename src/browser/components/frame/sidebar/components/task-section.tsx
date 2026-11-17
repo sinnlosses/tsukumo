@@ -31,7 +31,7 @@ export function TaskSection(): ReactElement {
           openList(model.query)
         },
       }}
-      headerExtra={<TaskRefreshButton />}
+      headerExtra={<TaskRefreshButton box="compact" />}
       count={tasks.kind === "known" ? tasks.items.length : undefined}
       searchField={
         <TaskSearchField

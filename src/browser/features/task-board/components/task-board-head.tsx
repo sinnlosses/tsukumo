@@ -27,7 +27,7 @@ export function TaskBoardHead(props: {
         {listed.kind === "some" && listed.search}
       </span>
       <span className={styles["task-board-tools"]}>
-        <TaskRefreshButton />
+        <TaskRefreshButton box="regular" />
         <Button
           variant="ghost"
           size="action"

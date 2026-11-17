@@ -1,4 +1,4 @@
-// タスク一覧の「最新化」の口。サイドバーとタスクのモーダルで同じ大きさ（28px）・枠なし。
+// タスク一覧の「最新化」の口。枠なしで、大きさは置き場の段に合わせる（`box`）。
 // 読んでいるあいだは `--accent` で回り、押せない。
 
 import clsx from "clsx"
@@ -11,25 +11,39 @@ import styles from "./task-refresh-button.module.css"
 
 const LABEL = "最新化"
 
-export function TaskRefreshButton(): ReactElement {
+type TaskRefreshButtonProps = {
+  /** `compact` はサイドバーの見出し（小さいラベルの段）に並べる 24px、`regular` は閉じる口とそろえる 28px。 */
+  readonly box: "compact" | "regular"
+}
+
+export function TaskRefreshButton(props: TaskRefreshButtonProps): ReactElement {
   const { refreshing, refresh } = useRefreshTasks()
   return (
-    <Button
-      variant="ghost"
-      size="action"
-      pressed="none"
-      disabled={refreshing}
-      ariaLabel={LABEL}
-      disclosure={{ kind: "none" }}
-      title={LABEL}
-      className={styles["task-refresh"]}
-      onClick={refresh}
+    <span
+      className={
+        props.box === "compact" ? styles["task-refresh-compact"] : styles["task-refresh-regular"]
+      }
     >
-      <span
-        className={clsx(styles["task-refresh-icon"], refreshing && styles["task-refresh-spinning"])}
+      <Button
+        variant="ghost"
+        size="action"
+        pressed="none"
+        disabled={refreshing}
+        ariaLabel={LABEL}
+        disclosure={{ kind: "none" }}
+        title={LABEL}
+        className={styles["task-refresh"]}
+        onClick={refresh}
       >
-        <RefreshIcon />
-      </span>
-    </Button>
+        <span
+          className={clsx(
+            styles["task-refresh-icon"],
+            refreshing && styles["task-refresh-spinning"],
+          )}
+        >
+          <RefreshIcon />
+        </span>
+      </Button>
+    </span>
   )
 }

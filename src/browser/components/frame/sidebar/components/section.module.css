@@ -63,10 +63,11 @@
   flex: 1 1 auto;
   min-width: 0;
 }
-/* 箱だけ（置き方）。顔は `<Button variant="link">` が持つ。 */
+/* 顔は `<Button variant="link">` が持つ。字だけ見出しの題と同じラベルの段にそろえる。 */
 .sidebar-block-action {
   flex: 0 0 auto;
   min-height: 1.5rem;
-  padding-inline: var(--space-sm);
-  margin-inline-end: calc(-1 * var(--space-sm));
+  padding-inline: var(--space-xs);
+  margin-inline-end: calc(-1 * var(--space-xs));
+  font-size: var(--font-label);
 }

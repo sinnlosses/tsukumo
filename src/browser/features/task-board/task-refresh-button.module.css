@@ -1,17 +1,33 @@
+/* 大きさだけを決める包み。箱は作らず、中の `.task-refresh` へ寸法を渡す。 */
+.task-refresh-regular {
+  display: contents;
+  --task-refresh-size: 28px;
+  --task-refresh-icon-size: 16px;
+}
+/* 24px は押す的の下限（WCAG 2.2 の最小）なので、これより縮めない。 */
+.task-refresh-compact {
+  display: contents;
+  --task-refresh-size: 24px;
+  --task-refresh-icon-size: 14px;
+}
 /* 箱だけ。顔は `<Button>` が持つ。 */
 .task-refresh {
   display: inline-flex;
   flex: none;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: var(--task-refresh-size);
+  height: var(--task-refresh-size);
   padding: 0;
   border-radius: var(--radius-md);
 }
 /* 行の高さが svg を上へ押さないよう、いつも flex の箱にする。 */
 .task-refresh-icon {
   display: inline-flex;
+}
+.task-refresh-icon svg {
+  width: var(--task-refresh-icon-size);
+  height: var(--task-refresh-icon-size);
 }
 .task-refresh-spinning {
   animation: var(--spinner-animation);
