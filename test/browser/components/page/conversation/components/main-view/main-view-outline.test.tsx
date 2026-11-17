@@ -1,4 +1,4 @@
-import { act, cleanup, fireEvent, screen, waitFor } from "@testing-library/react"
+import { act, cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react"
 import { afterEach, beforeAll, describe, expect, it } from "vitest"
 
 import { useInquiryDraft } from "../../../../../../../src/browser/components/page/conversation/stores/inquiry-draft.ts"
@@ -149,7 +149,11 @@ describe("MainView（やり取りの列: やり取りと見出しの2段）", ()
     renderMainView(threeTurns())
 
     expect(outlineTurnRows()).toHaveLength(0)
+    const outline = screen.getByRole("navigation", { name: "やり取り" })
+    expect(outline.textContent).toContain("やり取り")
+    expect(within(outline).getByLabelText("3件")).toBeTruthy()
     fireEvent.click(screen.getByRole("button", { name: "やり取りを開く" }))
+    expect(within(outline).queryByLabelText("3件")).toBeNull()
     expect(outlineTurnRows()).toHaveLength(3)
   })
 })

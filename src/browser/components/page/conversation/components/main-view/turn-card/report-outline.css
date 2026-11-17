@@ -18,10 +18,24 @@
   box-sizing: border-box;
   min-height: 0;
   padding: var(--space-md) var(--space-sm);
+  container: outline-nav / inline-size;
 }
-/* 畳んでいる間は開き直すボタンだけが収まる幅にする。 */
-.outline-nav[data-outline-collapsed="true"] {
-  align-self: flex-start;
+/* 畳んでいる間は一覧が無いので、頭の行の下の余白を 0 にする。頭の行の上端と口の位置は開いたときのまま。 */
+.outline-nav[data-outline-collapsed="true"] .outline-list-head {
+  padding-bottom: 0;
+}
+/* 畳んだときだけ題に添える件数。 */
+.outline-count {
+  padding-left: var(--inline-control);
+  font-family: var(--font-mono);
+  letter-spacing: 0;
+}
+/* 題・件数・キーの印・口が頭の行に収まらない幅（列の中身の幅が 182px 以下）では、件数を出さない。
+   収まらないまま出すと、口が頭の行の右の余白へ押し出され、開いたときの位置からずれる。 */
+@container outline-nav (max-width: 182px) {
+  .outline-count {
+    display: none;
+  }
 }
 /* 一覧だけが転がる。送れる方向があるときだけ、その側の端をぼかす（転がせない間は、スクロールの時間軸が働かず、ぼかしの値が 0 のまま）。 */
 @property --outline-fade-start {
@@ -96,6 +110,7 @@
   color: var(--ink-quiet);
   font-size: var(--font-label);
   letter-spacing: 0.1em;
+  white-space: nowrap;
 }
 /* 列の頭に添えるキーの印（`[` `]`・`{` `}`）。字の色は添える先のまま。 */
 .outline-keys {

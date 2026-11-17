@@ -4,7 +4,7 @@
 // 狭い画面（760px 以下）では左の列ごと出さない。
 
 import clsx from "clsx"
-import { ChevronLeft, ChevronRight } from "lucide-react"
+import { ChevronDown, ChevronUp } from "lucide-react"
 import type { ReactElement } from "react"
 
 import { withOccurrenceKeys } from "../../../../../domain/occurrence-key.ts"
@@ -60,39 +60,39 @@ export function PresentationalReportOutline({
       ref={navRef}
       onKeyDown={onNavKeyDown}
     >
-      {collapsed ? (
+      <div className={styles["outline-list-head"]}>
+        <span className={styles["outline-list-title"]} title={TURN_STEP_KEY_HINT}>
+          {OUTLINE_LABEL}
+          {collapsed && (
+            <span
+              className={styles["outline-count"]}
+              role="img"
+              aria-label={`${String(turnRows.length)}件`}
+            >
+              {turnRows.length}
+            </span>
+          )}
+          <KeyMarks keys={TURN_STEP_KEYS} />
+        </span>
         <Button
           variant="ghost"
           size="action"
           pressed="none"
           disabled={false}
-          ariaLabel={EXPAND_LABEL}
-          disclosure={{ kind: "expander", expanded: false }}
+          ariaLabel={collapsed ? EXPAND_LABEL : COLLAPSE_LABEL}
+          disclosure={{ kind: "expander", expanded: !collapsed }}
           className={styles["outline-toggle"]}
           onClick={onToggleCollapse}
         >
-          <ChevronRight size={14} strokeWidth={2} aria-hidden="true" />
+          {collapsed ? (
+            <ChevronDown size={14} strokeWidth={2} aria-hidden="true" />
+          ) : (
+            <ChevronUp size={14} strokeWidth={2} aria-hidden="true" />
+          )}
         </Button>
-      ) : (
+      </div>
+      {!collapsed && (
         <>
-          <div className={styles["outline-list-head"]}>
-            <span className={styles["outline-list-title"]} title={TURN_STEP_KEY_HINT}>
-              {OUTLINE_LABEL}
-              <KeyMarks keys={TURN_STEP_KEYS} />
-            </span>
-            <Button
-              variant="ghost"
-              size="action"
-              pressed="none"
-              disabled={false}
-              ariaLabel={COLLAPSE_LABEL}
-              disclosure={{ kind: "expander", expanded: true }}
-              className={styles["outline-toggle"]}
-              onClick={onToggleCollapse}
-            >
-              <ChevronLeft size={14} strokeWidth={2} aria-hidden="true" />
-            </Button>
-          </div>
           <div className={styles["outline-list"]} ref={listRef}>
             {turnRows.map((turn) => (
               <div

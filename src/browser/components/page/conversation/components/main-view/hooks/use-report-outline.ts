@@ -96,7 +96,7 @@ export type ReportOutlineModel = {
   readonly listRef: RefObject<HTMLDivElement | null>
   readonly onNavKeyDown: (event: KeyboardEvent<HTMLElement>) => void
   readonly onSelect: (index: number) => void
-  /** 畳んでいるか。畳んでいる間は一覧を隠し、開き直すボタンだけ残す。 */
+  /** 畳んでいるか。畳んでいる間は一覧を隠し、頭の行だけ残す。 */
   readonly collapsed: boolean
   readonly onToggleCollapse: () => void
 }
