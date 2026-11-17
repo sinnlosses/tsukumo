@@ -6,6 +6,8 @@
 // 時刻は既定で `STAMPED`（時刻に依らないテストの既定値）。時刻そのものを確かめる
 // テストは `time` を上書きする。
 
+import type { ReportCheck } from "../../src/shared/report/report-check.ts"
+import type { ReportTask } from "../../src/shared/report/report-task.ts"
 import type {
   RecordTime,
   SessionRecord,
@@ -76,7 +78,10 @@ export function detailRecord(markdown = "架空のレポート"): SessionRecord 
  * `report` ツールで受け取ったレポート1件。本文は `conclusion` にだけ置く（`body` は描くときに
  * 整形が掛かるので、渡した文字列がそのまま出るほうを既定にする）。
  */
-export function reportRecord(conclusion = "架空の結論"): SessionRecord {
+export function reportRecord(
+  conclusion = "架空の結論",
+  overrides: { readonly task?: ReportTask; readonly checks?: readonly ReportCheck[] } = {},
+): SessionRecord {
   return {
     kind: "report",
     toolUseId: "fictional-report",
@@ -84,8 +89,8 @@ export function reportRecord(conclusion = "架空の結論"): SessionRecord {
     keyFigures: [],
     favor: "",
     sessionRemaining: { kind: "unrecorded" },
-    checks: [],
-    task: { kind: "none" },
+    checks: overrides.checks ?? [],
+    task: overrides.task ?? { kind: "none" },
     workPlanClosing: "none",
     waitingLine: { kind: "none" },
     changeSummary: { kind: "none" },

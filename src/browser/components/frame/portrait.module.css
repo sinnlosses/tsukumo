@@ -8,11 +8,12 @@
   text-align: center;
   animation: var(--fade-in-name) 0.25s ease-out;
 
-  /* 立ち絵の動きの速さ・大きさ。この10組が唯一の調整箇所。
+  /* 立ち絵の動きの速さ・大きさ。この11組が唯一の調整箇所。
      --portrait-breathe-*: 呼吸（常時のごく小さい上下。「居る」の最小単位）。
      --portrait-walk-*: 待っている間の移動（ターン進行中に領域の中をゆっくり歩く。横方向）。
      --portrait-write-*: 書いている（`report` の引数を書いている間、筆を運ぶように小さく速く横へ揺れる）。
      --portrait-bounce-*: 完了の反応（ターンが終わると小さく跳ねる）。
+     --portrait-celebrate-*: 祝う（タスクの作業が検証を通して終わると、2回跳ねる）。
      --portrait-flinch-*: 失敗でびくっ（ツールが失敗すると一瞬のけぞる。横に引いて傾く）。
      --portrait-beckon-*: 呼ぶ（答え待ちの始まりと、隠れていたタブへ戻った直後だけ、横へ寄って傾く）。
      --portrait-nod-*: うなずく（送った直後に、下へ小さく傾く）。
@@ -27,6 +28,8 @@
   --portrait-write-duration: 0.6s;
   --portrait-bounce-amount: 0.55rem;
   --portrait-bounce-duration: 0.5s;
+  --portrait-celebrate-amount: 0.7rem;
+  --portrait-celebrate-duration: 1s;
   --portrait-flinch-amount: 0.3rem;
   --portrait-flinch-rotate: 3deg;
   --portrait-flinch-duration: 0.35s;
@@ -98,6 +101,12 @@
 .portrait[data-motion="success"] {
   animation-name: var(--fade-in-name), portrait-bounce;
   animation-duration: 0.25s, var(--portrait-bounce-duration);
+  animation-timing-function: ease-out, ease-out;
+  animation-iteration-count: 1, 1;
+}
+.portrait[data-motion="celebrate"] {
+  animation-name: var(--fade-in-name), portrait-celebrate;
+  animation-duration: 0.25s, var(--portrait-celebrate-duration);
   animation-timing-function: ease-out, ease-out;
   animation-iteration-count: 1, 1;
 }
@@ -186,6 +195,23 @@
   }
   65% {
     transform: translateY(calc(var(--portrait-bounce-amount) * 0.2));
+  }
+}
+/* 祝う。タスクの作業が完了で終わった直後の期間（`CELEBRATE_MOTION_WINDOW_MS`）だけ当たる、2回跳ねる一度きりの動き。 */
+@keyframes portrait-celebrate {
+  0%,
+  45%,
+  100% {
+    transform: translateY(0);
+  }
+  20% {
+    transform: translateY(calc(-1 * var(--portrait-celebrate-amount)));
+  }
+  68% {
+    transform: translateY(calc(-0.64 * var(--portrait-celebrate-amount)));
+  }
+  85% {
+    transform: translateY(calc(0.11 * var(--portrait-celebrate-amount)));
   }
 }
 /* 失敗でびくっ。ツールが失敗した直後の期間（`FAILURE_MOTION_WINDOW_MS`）だけ当たる一度きりの動き。 */

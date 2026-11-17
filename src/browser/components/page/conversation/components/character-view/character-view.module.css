@@ -1,6 +1,6 @@
 /* キャラビュー。
    立ち絵をどこにどれだけの大きさで置くかをここが決める（立ち絵そのものの中身と動きは portrait.module.css）。
-   舞台の見た目の本体は `stage/` の layout / balloon / speech-log / phone-balloon / item-seat の各 `*.css` にあり、ここで `@import` する。
+   舞台の見た目の本体は `stage/` の layout / balloon / speech-log / phone-balloon / item-seat / celebrate-spark の各 `*.css` にあり、ここで `@import` する。
    CSS Modules が class 名をファイルごとにハッシュ化しても、`@import` で取り込んだ規則は入口の名前になるので、別の `*.css` の class をまたぐ選択子（`.speech-log-stage:has(.portrait)` など）がそのまま効き、部品はこのファイルの1つから引く。
 
    領域の高さを .character-layout まで継がせ、立ち絵の割合指定（下の --portrait-height）が領域の中で解決されるようにする（vh 基準にすると、下段の行の高さ（既定 40%）より大きくなって領域ごとスクロールする）。 */
@@ -10,6 +10,7 @@
 @import "./stage/speech-log.css";
 @import "./stage/phone-balloon.css";
 @import "./stage/item-seat.css";
+@import "./stage/celebrate-spark.css";
 
 .character-region {
   composes: stage-size from "./stage/stage-size.module.css";

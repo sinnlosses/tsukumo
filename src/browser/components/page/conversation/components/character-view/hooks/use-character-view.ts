@@ -25,6 +25,7 @@ import {
 import { portraitAppearance } from "../../../../../../domain/portrait-appearance.ts"
 import {
   isListeningPose,
+  newestTurnFinishedTask,
   nextPortraitMotionTransitionDelayMs,
   resolvePortraitMotion,
   type PortraitMotion,
@@ -109,6 +110,7 @@ export function useCharacterView(): CharacterViewModel {
   const interrupted = records
     .slice(records.findLastIndex((r) => r.kind === "request") + 1)
     .some((record) => record.kind === "turn-interrupted")
+  const taskFinished = newestTurnFinishedTask(records)
   const askedAt = useSession((session) => session.state.pending[0]?.askedAt)
   const sentAt = useSession((session) => session.lastSentAt)
   const tab = useTabVisibility()
@@ -148,6 +150,7 @@ export function useCharacterView(): CharacterViewModel {
       sentAt,
       arrival,
       reducedMotion,
+      taskFinished,
     },
     waitingDueAt,
   )
@@ -180,6 +183,7 @@ export function useCharacterView(): CharacterViewModel {
       sentAt,
       arrival,
       reducedMotion,
+      taskFinished,
     },
     now,
   )
@@ -255,7 +259,7 @@ function pastTurnSpeech(
 
 /**
  * 立ち絵の動きと待ちの一言が時間だけで変わる瞬間に読み直すための時計。いまの時刻を返す。
- * 完了の反応・失敗でびくっ・呼ぶ・届いた瞬間の動き・うなずくの期間が過ぎた瞬間と、待ちの一言を出し始める時刻（`waitingDueAt`）にだけ描き直す。
+ * 祝う・跳ねる・失敗でびくっ・呼ぶ・届いた瞬間の動き・うなずくの期間が過ぎた瞬間と、待ちの一言を出し始める時刻（`waitingDueAt`）にだけ描き直す。
  *
  * 期間と期日は同時に効いていることがある（ツールが失敗した直後にターンが終わる、など）。
  * 次の描き直しまでの遅延はいちばん早いものだけなので、1回だけのタイマーだと、発火して `now` を進めたあとに残りがあっても次のタイマーが立たないまま止まる。
@@ -277,6 +281,7 @@ function useCharacterClock(
     | "sentAt"
     | "arrival"
     | "reducedMotion"
+    | "taskFinished"
   >,
   waitingDueAt?: number,
 ): number {
@@ -290,6 +295,7 @@ function useCharacterClock(
     sentAt,
     arrival,
     reducedMotion,
+    taskFinished,
   } = motionInput
   const arrivalAt = arrival?.at
   const arrivalMotion = arrival?.motion
@@ -316,6 +322,7 @@ function useCharacterClock(
                 ? undefined
                 : { at: arrivalAt, motion: arrivalMotion },
             reducedMotion,
+            taskFinished,
           },
           at,
         ),
@@ -344,6 +351,7 @@ function useCharacterClock(
     arrivalAt,
     arrivalMotion,
     reducedMotion,
+    taskFinished,
     waitingDueAt,
   ])
 

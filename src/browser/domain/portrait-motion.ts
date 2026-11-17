@@ -1,6 +1,7 @@
-// 立ち絵をいま動かしてよいか、動かすなら10のうちどれかを決める。
+// 立ち絵をいま動かしてよいか、動かすなら11のうちどれかを決める。
 // 動くのは利用者の注意が空いているときだけ。優先順位は `resolvePortraitMotion` が持つ。
 
+import type { SessionRecord } from "../../shared/session/session-record.ts"
 import type { TurnProgress } from "../../shared/session/turn-progress.ts"
 
 /** 立ち絵がいまとる動き。CSS 側は `data-motion` としてこの値をそのまま受け取る。 */
@@ -9,6 +10,7 @@ export type PortraitMotion =
   | "waiting"
   | "writing"
   | "success"
+  | "celebrate"
   | "failure"
   | "beckon"
   | "nod"
@@ -50,6 +52,8 @@ export type PortraitMotionInput = {
   readonly arrival?: { readonly at: number; readonly motion: ArrivalMotion }
   /** 動きを減らす設定か。省くと減らさない。 */
   readonly reducedMotion?: boolean
+  /** いちばん新しいやり取りが、検証を通したタスクの完了で終わったか（{@link newestTurnFinishedTask}）。省くと当たらない。 */
+  readonly taskFinished?: boolean
 }
 
 type PortraitMotionTimingInput = Pick<
@@ -63,6 +67,7 @@ type PortraitMotionTimingInput = Pick<
   | "sentAt"
   | "arrival"
   | "reducedMotion"
+  | "taskFinished"
 >
 
 /** 答え待ちが始まってから（隠れていたタブが見えるようになってから）、このミリ秒だけ「呼ぶ」を優先する。 */
@@ -76,6 +81,9 @@ const FAILURE_MOTION_WINDOW_MS = 400
 
 /** ターンが（失敗でなく）終わってから、このミリ秒だけ「完了の反応」を優先する。 */
 const SUCCESS_MOTION_WINDOW_MS = 700
+
+/** タスクの作業が完了で終わってから、このミリ秒だけ「祝う」を優先する。光（1.1 秒）より短くしない。 */
+const CELEBRATE_MOTION_WINDOW_MS = 1300
 
 /** 届いた瞬間の動きごとに優先する期間（ミリ秒）。動きの長さより長く取る。 */
 const ARRIVAL_MOTION_WINDOW_MS = {
@@ -91,7 +99,8 @@ const ARRIVAL_MOTION_WINDOW_MS = {
  * いま出す動き。優先順位は次の順。
  *
  * 1. ツールが失敗した直後・ターンが失敗で終わった直後（{@link FAILURE_MOTION_WINDOW_MS} 以内）。ターンが進行中でも、他のツールが動いていても割り込む
- * 2. ターンが完了で終わった直後（{@link SUCCESS_MOTION_WINDOW_MS} 以内）。
+ * 2. ターンが完了で終わった直後。タスクの作業の完了（`taskFinished`）なら「祝う」（{@link CELEBRATE_MOTION_WINDOW_MS} 以内。動きを減らす設定では出さず「跳ねる」）、
+ *    そうでなければ「跳ねる」（{@link SUCCESS_MOTION_WINDOW_MS} 以内）。
  *    失敗・中断で終わったターンと、背景の作業が残っているときには「完了の反応」を出さない
  * 3. 答え待ちが始まった直後・隠れていたタブが見えるようになった直後（{@link BECKON_MOTION_WINDOW_MS} 以内）は「呼ぶ」。
  *    タブが隠れているあいだと、動きを減らす設定では出さない
@@ -111,9 +120,9 @@ export function resolvePortraitMotion(input: PortraitMotionInput, now: number): 
   if (
     isSuccessCandidate(input) &&
     input.turn.kind === "finished" &&
-    now - input.turn.finishedAt < SUCCESS_MOTION_WINDOW_MS
+    now - input.turn.finishedAt < finishedWindow(input).durationMs
   ) {
-    return "success"
+    return finishedWindow(input).motion
   }
   const reaction = reactionWindows(input).find((w) => now - w.startedAt < w.durationMs)
   if (reaction !== undefined) {
@@ -129,7 +138,7 @@ export function resolvePortraitMotion(input: PortraitMotionInput, now: number): 
 }
 
 /**
- * 「失敗でびくっ」「完了の反応」「呼ぶ」「届いた瞬間の動き」「うなずく」が続く残り時間のうち、いちばん早く終わるものまでのミリ秒を返す。
+ * 「失敗でびくっ」「祝う・跳ねる」「呼ぶ」「届いた瞬間の動き」「うなずく」が続く残り時間のうち、いちばん早く終わるものまでのミリ秒を返す。
  * どちらも起きていない・期間をすでに過ぎているときは undefined（時間経過だけで動きが変わることはない）。
  *
  * 期間が「過ぎた瞬間」には何のイベントも来ない。
@@ -145,7 +154,7 @@ export function nextPortraitMotionTransitionDelayMs(
   const remaining = [
     failedAt === undefined ? undefined : failedAt + FAILURE_MOTION_WINDOW_MS - now,
     isSuccessCandidate(input) && input.turn.kind === "finished"
-      ? input.turn.finishedAt + SUCCESS_MOTION_WINDOW_MS - now
+      ? input.turn.finishedAt + finishedWindow(input).durationMs - now
       : undefined,
     ...reactionWindows(input).map((w) => w.startedAt + w.durationMs - now),
   ].filter((ms): ms is number => ms !== undefined && ms > 0)
@@ -171,6 +180,21 @@ export function isListeningPose(
   reducedMotion: boolean,
 ): boolean {
   return draftHasText && !reducedMotion && CONTINUING_MOTIONS.some((m) => m === motion)
+}
+
+/**
+ * いちばん新しいやり取り（最後の `request` より後ろ）の最後の `report` が、検証を通したタスクの完了か。
+ * `task.outcome` が `finished` で、`checks` に `ng` が無いときだけ真。`unobserved`・`blocked` は偽にしない。
+ */
+export function newestTurnFinishedTask(records: readonly SessionRecord[]): boolean {
+  const newest = records.slice(records.findLastIndex((r) => r.kind === "request") + 1)
+  const report = newest.findLast((r) => r.kind === "report")
+  return (
+    report !== undefined &&
+    report.task.kind === "task" &&
+    report.task.outcome === "finished" &&
+    report.checks.every((check) => check.status !== "ng")
+  )
 }
 
 type ReactionWindow = {
@@ -217,7 +241,17 @@ function reactionWindows(input: PortraitMotionTimingInput): readonly ReactionWin
   return [...beckon, ...arrived, ...nod]
 }
 
-/** 閉じていて、背景の作業も残っておらず、利用者が止めずに完了で終わったか。跳ねるのはこのときだけ。 */
+/** 完了の反応の動きと窓。タスクの完了は祝う（動きを減らす設定では跳ねる）。 */
+function finishedWindow(input: PortraitMotionTimingInput): {
+  readonly motion: "celebrate" | "success"
+  readonly durationMs: number
+} {
+  return input.taskFinished === true && input.reducedMotion !== true
+    ? { motion: "celebrate", durationMs: CELEBRATE_MOTION_WINDOW_MS }
+    : { motion: "success", durationMs: SUCCESS_MOTION_WINDOW_MS }
+}
+
+/** 閉じていて、背景の作業も残っておらず、利用者が止めずに完了で終わったか。祝う・跳ねるのはこのときだけ。 */
 function isSuccessCandidate(input: PortraitMotionTimingInput): boolean {
   return (
     input.turn.kind === "finished" &&
