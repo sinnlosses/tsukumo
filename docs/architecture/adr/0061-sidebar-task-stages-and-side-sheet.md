@@ -60,6 +60,8 @@
 - 広い画面で 13px、触る画面（Astryx が 14px・16px に組み直す）では 15px になり、2つの段の間に留まる。
 - 2段目・段の見出し・ラベルは `--font-label`（12px）、サイドシートの題は `--font-heading`（17px）、本文は `--font-body`（14px）で、見本の値は既存の段で表せる。
 
+> この論点の値は、利用者の依頼で上書きした。サイドバーの行の題の `--task-title-size` は `var(--font-label)`（広い画面で 12px）にする。下の「採らなかった案」が退けた「12px は2段目と同じ大きさになり、題と2段目の差が消える」には、色の差で答える（2段目は `--ink-quiet`、ID は等幅）。局所のつまみは残し、「利用者が決めたこと」と置き換えの表の「13px」もこの値に読み替える（2026-11-17）。
+
 ### 論点 4: 状態の印を置く部品の境界
 
 **採る: `TaskMark` を消し、`components/task-state.tsx` の `TaskState` を唯一の部品にする。`TaskState` は `TaskStateView` を受け、`display: "mark" | "labeled"` で印だけ・印と語の2つの出し方を持つ。状態の語は `taskStateOf` だけが作り、サイドバーの行もそれを使う（`statusWordOf` はやめる）。**
