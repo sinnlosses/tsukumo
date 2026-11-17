@@ -2,6 +2,7 @@
 //
 // 許可リストが `/report-image/` 以外の `src` を属性ごと落とすので、`src` が無い `img` も札にする（外部の URL を指していた画像など）。
 
+import clsx from "clsx"
 import {
   createContext,
   type JSX,
@@ -34,12 +35,21 @@ const ZOOM_LABEL = "この画像を拡大"
 
 const NO_FALLBACK = { kind: "none" } as const satisfies ImageZoomFallback
 
-const MISSING_LABEL = "画像を出せない"
-const MISSING_REASON = "読めなかったか、tsukumo を起こし直して手放した"
-const MISSING_TEXT = `${MISSING_LABEL}（${MISSING_REASON}）`
+/**
+ * 画像の代わりに出す札の文字。
+ * `pending` は書いている途中のレポートの画像。置き場に置くのは書き終えたあとなので、「出せない」とは言わない。
+ */
+const CARD_TEXT = {
+  missing: { label: "画像を出せない", reason: "読めなかったか、tsukumo を起こし直して手放した" },
+  pending: { label: "画像はまだ出ない", reason: "レポートを書き終えると出る" },
+} as const satisfies Record<string, { readonly label: string; readonly reason: string }>
 
 type ReportImageProps = JSX.IntrinsicElements["img"] &
-  ExtraProps & { "data-change-region"?: string }
+  ExtraProps & {
+    "data-change-region"?: string
+    /** 書いている途中のレポートの画像（取り出し元が `pending`）。`src` を持たず、札は「まだ出ない」になる。 */
+    readonly pending?: boolean
+  }
 
 type SwapSide = "before" | "after"
 
@@ -310,11 +320,13 @@ export function ReportImage(props: ReportImageProps): ReactElement {
   }
 
   if (failed || typeof props.src !== "string" || !props.src.startsWith(REPORT_IMAGE_PATH_PREFIX)) {
+    const pending = props.pending === true
+    const text = CARD_TEXT[pending ? "pending" : "missing"]
     return (
       <span
         role="img"
-        aria-label={alt || MISSING_TEXT}
-        className={styles["report-image-missing"]}
+        aria-label={alt || `${text.label}（${text.reason}）`}
+        className={clsx(styles["report-image-missing"], pending && styles["report-image-pending"])}
         ref={(element) => {
           if (element !== null) {
             reportMissing()
@@ -322,9 +334,9 @@ export function ReportImage(props: ReportImageProps): ReactElement {
         }}
       >
         <span className={styles["report-image-missing-body"]} aria-hidden="true">
-          <MissingImageIcon />
-          <span className={styles["report-image-missing-label"]}>{MISSING_LABEL}</span>
-          <span className={styles["report-image-missing-reason"]}>{MISSING_REASON}</span>
+          <ImageCardIcon struck={!pending} />
+          <span className={styles["report-image-missing-label"]}>{text.label}</span>
+          <span className={styles["report-image-missing-reason"]}>{text.reason}</span>
         </span>
       </span>
     )
@@ -438,7 +450,8 @@ function sameRegion(a?: ImageRegion, b?: ImageRegion): boolean {
   )
 }
 
-function MissingImageIcon(): ReactElement {
+/** 札の画像の印。`struck` は出せない画像で、印に斜線を引く。 */
+function ImageCardIcon(props: { readonly struck: boolean }): ReactElement {
   return (
     <span className={styles["report-image-missing-icon"]}>
       <svg
@@ -453,7 +466,7 @@ function MissingImageIcon(): ReactElement {
       >
         <rect x="3" y="4" width="18" height="16" rx="2.5" />
         <circle cx="9" cy="10" r="1.6" />
-        <path d="M21 16l-5-5-6 6M3 3l18 18" />
+        <path d={props.struck ? "M21 16l-5-5-6 6M3 3l18 18" : "M21 16l-5-5-6 6"} />
       </svg>
     </span>
   )

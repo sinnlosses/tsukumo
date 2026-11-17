@@ -518,6 +518,10 @@
       color-mix(in srgb, var(--ground), var(--ink) 8%) 10px 20px
     );
   }
+  /* 書いている途中のレポートの画像の札。読めなかった札と見分けるため、縞をやめて平らな地にする。 */
+  & .report-image-pending {
+    background: color-mix(in srgb, var(--ground), var(--ink) 4%);
+  }
   & .report-image-missing-body {
     height: 100%;
     display: flex;

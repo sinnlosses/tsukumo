@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest"
 
 import { outlineReportOf } from "../../../../../../src/browser/components/page/conversation/domain/outline-report-row.ts"
-import { mainViewDraftOf } from "../../../../../../src/browser/domain/main-view/a2ui-draft-view.ts"
 import type { ReportTask } from "../../../../../../src/shared/report/report-task.ts"
 import {
   isInterimStep,
@@ -10,6 +9,7 @@ import {
   type MainViewTurn,
 } from "../../../../../../src/shared/session/main-view-shape.ts"
 import { STAGED_PARTS } from "../../../../../fixture/a2ui-component.ts"
+import { partsDraftOf, WRITING_DRAFT } from "../../../../../fixture/a2ui-draft.ts"
 import { noRootA2ui } from "../../../../../fixture/main-view-entry.ts"
 
 function textStep(id: number, firstLine: string, task: ReportTask, final: boolean): MainViewStep {
@@ -50,11 +50,7 @@ function turnOf(
 }
 
 function draftOf(): MainViewDraft {
-  const draft = mainViewDraftOf("toolu_draft", STAGED_PARTS, [])
-  if (draft === undefined) {
-    throw new Error("根のある一覧から草稿が作れなかった")
-  }
-  return draft
+  return partsDraftOf("toolu_draft", STAGED_PARTS, WRITING_DRAFT)
 }
 
 const NO_TASK = { kind: "none" } as const satisfies ReportTask

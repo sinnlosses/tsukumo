@@ -86,8 +86,9 @@
     text-wrap: balance;
   }
 }
-/* 段落と箇条書きは器を持たないので、ブラウザ既定の 1em をここで塊のあきに揃える。 */
-:is(.detail-block, [data-report-region]) > :is(p, ul, ol),
+/* 段落と箇条書きは器を持たないので、ブラウザ既定の 1em をここで塊のあきに揃える。
+   まだ届いていない部品の骨組み（`PendingPart`）も、段落と同じあきを取る。 */
+:is(.detail-block, [data-report-region]) > :is(p, ul, ol, [data-report-pending="part"]),
 :is(.detail-block, [data-report-region]) > .report-with-gutter > :is(p, ul, ol) {
   margin: var(--report-block-gap) 0;
 }

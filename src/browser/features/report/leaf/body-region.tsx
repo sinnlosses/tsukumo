@@ -77,9 +77,9 @@ export function MarkdownReport(
   )
 }
 
-/** 欄の入れ物が持つ印。 */
+/** 欄の入れ物が持つ印。`pending` は、草稿でまだ内容部品が届いていない節の欄。 */
 export type RegionMark =
-  | { readonly kind: "head" | "retrospective" | "markdown" | "not-done" }
+  | { readonly kind: "head" | "retrospective" | "markdown" | "not-done" | "pending" }
   | {
       readonly kind: "section"
       readonly id: number

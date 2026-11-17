@@ -18,9 +18,6 @@ const NOTE_COUNT_ATTRIBUTE = "data-note-count"
 /** 草稿の面の入れ物が付ける属性。草稿の見出しは目次にも読み位置にも数えない。 */
 export const REPORT_DRAFT_ATTRIBUTE = "data-report-draft"
 
-/** 草稿の器の末尾に置く、次の部品を待つ欄の印。 */
-export const DRAFT_SLOT_ATTRIBUTE = "data-report-draft-slot"
-
 /** 目次の見出し1つ。`section` は `##`、`sub` は `###` と、節の中で書かれた余分な `##`。 */
 export type OutlineItem = {
   readonly element: HTMLElement

@@ -2,7 +2,6 @@ import { DataModel } from "@a2ui/web_core/v0_9"
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
-import { mainViewDraftOf } from "../../../../../src/browser/domain/main-view/a2ui-draft-view.ts"
 import { chartConfigOf } from "../../../../../src/browser/features/report/report-diagram-markdown.ts"
 import { reportEvents } from "../../../../../src/server/session-driver/core/message/sdk-report-message.ts"
 import { a2uiWrittenComponentSchema } from "../../../../../src/shared/report/a2ui-report-catalog.ts"
@@ -11,6 +10,7 @@ import { mainViewEntries } from "../../../../../src/shared/session/main-view-ent
 import type { MainViewReportRegions } from "../../../../../src/shared/session/main-view-shape.ts"
 import { applySessionEvent } from "../../../../../src/shared/session/session-fold.ts"
 import { INITIAL_SESSION_STATE } from "../../../../../src/shared/session/session-state.ts"
+import { partsDraftOf, SETTLED_DRAFT } from "../../../../fixture/a2ui-draft.ts"
 import { checkedToolUseId } from "../../../../fixture/tool-use-id.ts"
 
 // `Markdown` 一式は重いので、塊の文字列と図の設定をそのまま出す代役に差し替える。
@@ -102,13 +102,12 @@ function regionsOf(components: readonly unknown[]): MainViewReportRegions {
 
 function draftRegionsOf(components: readonly unknown[]): MainViewReportRegions {
   const written = components.map((part) => a2uiWrittenComponentSchema.parse(part))
-  const draft = mainViewDraftOf(
+  return partsDraftOf(
     "toolu_drafted",
     staticReportComponents(written).components,
+    SETTLED_DRAFT,
     written,
-  )
-  if (draft === undefined) throw new Error("根のある一覧から草稿が作れなかった")
-  return draft.regions
+  ).regions
 }
 
 function renderReport(body: MainViewReportRegions, reveal = false) {

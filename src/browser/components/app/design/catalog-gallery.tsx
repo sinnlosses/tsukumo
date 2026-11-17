@@ -3,7 +3,7 @@
 import type { ReactElement } from "react"
 
 import type { A2uiReportComponent } from "../../../../shared/report/a2ui-report-catalog.ts"
-import { mainViewDraftOf } from "../../../domain/main-view/a2ui-draft-view.ts"
+import { type DraftSource, mainViewDraftOf } from "../../../domain/main-view/a2ui-draft-view.ts"
 import { A2uiReport } from "../../../features/report/a2ui-surface.tsx"
 import { Heading } from "../../ui/heading/heading.tsx"
 import { Surface } from "../../ui/surface/surface.tsx"
@@ -33,11 +33,18 @@ export function CatalogGallery(props: CatalogGalleryProps): ReactElement {
   )
 }
 
+/** 見本は書き終えた一覧で、画像の置き場を持たない。 */
+const GALLERY_SOURCE = {
+  writing: false,
+  imageSource: { kind: "none" },
+} as const satisfies DraftSource
+
 function CatalogPart(props: {
   readonly name: string
   readonly parts: readonly A2uiReportComponent[]
 }): ReactElement {
-  const draft = mainViewDraftOf(`gallery-${props.name}`, props.parts, [])
+  const draft = mainViewDraftOf(`gallery-${props.name}`, props.parts, [], GALLERY_SOURCE)
+  const regions = draft?.kind === "parts" ? draft.regions : undefined
   return (
     <div data-catalog-part={props.name} className={styles["design-catalog-part"]}>
       <Surface
@@ -51,10 +58,10 @@ function CatalogPart(props: {
         <Heading level={3} size="subheading" tone="ink" weight="bold" className="">
           {props.name}
         </Heading>
-        {draft?.regions.a2ui.kind === "surface" ? (
+        {regions?.a2ui.kind === "surface" ? (
           <A2uiReport
-            body={draft.regions}
-            view={draft.regions.a2ui}
+            body={regions}
+            view={regions.a2ui}
             reveal={false}
             turnId={0}
             className=""

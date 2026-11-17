@@ -1,6 +1,6 @@
 // レポートの結論部の頭（タスクの見出しの行とメタの行）。結論の一文はこの下のレポート本文の先頭にある。
 // 見出しの行はタスクID・作業の名前・終わり方の札、メタの行はラベル・終えた段のうちあるものだけを描き、1つも無ければ何も描かない。
-// 終わり方の `stopped` は描かない。
+// 終わり方の `stopped` は描かない。書いている途中のレポートは、まだ終わっていないので終わり方の札を出さない。
 
 import clsx from "clsx"
 import { Fragment, type ReactElement } from "react"
@@ -15,8 +15,8 @@ import { useTaskBoardRequest } from "../../../../../stores/task-board-request.ts
 import { Badge } from "../../../../ui/badge/badge.tsx"
 import styles from "./main-view.module.css"
 
-/** タスク見出し行の頭に置く、何のレポートかの語。 */
-export type ReportLabel = "none" | "interim" | "final"
+/** タスク見出し行の頭に置く、何のレポートかの語。`draft` は書いている途中のレポート。 */
+export type ReportLabel = "none" | "interim" | "final" | "draft"
 
 type ReportHeadProps = {
   readonly label: ReportLabel
@@ -67,7 +67,7 @@ export function ReportHead(props: ReportHeadProps): ReactElement | undefined {
               )}
             </h3>
           )}
-          {task.outcome !== "stopped" && <Outcome outcome={task.outcome} />}
+          {label !== "draft" && task.outcome !== "stopped" && <Outcome outcome={task.outcome} />}
         </div>
       )}
       {meta.length > 0 && <p className={styles["report-meta"]}>{meta}</p>}
@@ -78,6 +78,7 @@ export function ReportHead(props: ReportHeadProps): ReactElement | undefined {
 const LABEL_TEXT = {
   interim: "中間レポート",
   final: "最終レポート",
+  draft: "書きかけのレポート",
 } as const satisfies Record<Exclude<ReportLabel, "none">, string>
 
 const OUTCOME_VIEW = {

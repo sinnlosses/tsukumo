@@ -19,6 +19,7 @@ import type { QuestionBrief } from "../session-driver/question-brief.ts"
 import type { Question, QuestionAnswer } from "../session-driver/question.ts"
 import type { TurnFailure } from "../session-driver/turn-failure.ts"
 import type { MeasuredTime } from "../utils/elapsed-time.ts"
+import type { MainViewDraftPending } from "./main-view-draft-pending.ts"
 import type { ReplyTarget } from "./reply-target.ts"
 import type { SessionRemaining } from "./session-digest.ts"
 import type { ToolRunStatus } from "./session-record.ts"
@@ -338,13 +339,22 @@ export type MainViewTurn = {
 
 /**
  * `a2ui` の版の `report` の草稿1つ。書いている途中の引数か、届いたが確定するまで伏せている記録の部品から作る。
- * `components` は根から辿れる部品だけ。`regions` はそれを描く欄（図・合図の行・所要時間は持たない）。
+ * `blank` は根の `Report` がまだ届いていない書き始めで、紙の骨組みだけを描く。
+ * `parts` の `components` は根から辿れる部品だけ。`regions` はそれを描く欄（図・合図の行・所要時間は持たない）。
+ * `task` は根の `task`（見出しの行に出す）。`pending` はまだ届いていない部品（{@link MainViewDraftPending}）。
+ * `writing` は引数をいま書いている途中か。差し戻されて書き直しを待つ草稿と、届いたが確定を待つ草稿は偽。
  */
-export type MainViewDraft = {
-  readonly toolUseId: string
-  readonly components: readonly A2uiReportComponent[]
-  readonly regions: MainViewReportRegions
-}
+export type MainViewDraft =
+  | { readonly kind: "blank"; readonly toolUseId: string }
+  | {
+      readonly kind: "parts"
+      readonly toolUseId: string
+      readonly writing: boolean
+      readonly components: readonly A2uiReportComponent[]
+      readonly regions: MainViewReportRegions
+      readonly task: ReportTask
+      readonly pending: MainViewDraftPending
+    }
 
 /** やり取りの脇の話を、届いた順に1本にしたもの。 */
 export function turnAsides(turn: MainViewTurn): readonly MainViewAside[] {

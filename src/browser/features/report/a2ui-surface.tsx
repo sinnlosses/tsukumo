@@ -26,7 +26,15 @@ import { FirstNoteList } from "../../components/ui/first-note-list/first-note-li
 import { useExternalSync } from "../../hooks/use-external-sync.ts"
 import { useFirstNoteList } from "../../stores/first-note-seen.ts"
 import { notesOf, useReplyNotes, useReplySessionKey } from "../../stores/reply-note-list.ts"
-import { askCountOf, noteCountOf, ReportContext, runIds, useReport } from "./a2ui-report-context.ts"
+import {
+  askCountOf,
+  noteCountOf,
+  ReportContext,
+  runSlots,
+  sectionHeadingOf,
+  sectionSlots,
+  useReport,
+} from "./a2ui-report-context.ts"
 import { FailedReport } from "./a2ui-surface-failed.tsx"
 import {
   type A2uiReportProps,
@@ -55,6 +63,7 @@ import { DirectLeaf, directLeafViewOf } from "./leaf/direct-leaf-view.tsx"
 import { FavorFollowUp } from "./leaf/favor-follow-up.tsx"
 import { PairViewContext } from "./leaf/pair-view-context.ts"
 import { liveLeafElement, useReevaluatedLeaves } from "./leaf/parameter-knob.tsx"
+import { PendingHeading, PendingPart } from "./leaf/pending-part.tsx"
 import { SectionProof } from "./leaf/proof-band.tsx"
 import { HeadRegion, NotDoneRegion } from "./leaf/report-head-region.tsx"
 import { arrangedBlockClassNames } from "./markdown.tsx"
@@ -144,16 +153,16 @@ function ReportRoot(): ReactElement {
     useReplyNotes((state) => state.notesBySession),
     sessionKey,
   )
-  const bodySections = Object.entries(view.sections).toSorted(
-    ([, left], [, right]) => left.regionId - right.regionId,
-  )
+  const slots = sectionSlots(report)
   const proof = reportProofView(
     view.head.checks,
-    bodySections.map(([id]) => id),
+    slots.flatMap((slot) => (slot.kind === "drawn" ? [slot.componentId] : [])),
   )
+  // 返す層の案内は、指して聞ける本文（`report` の呼び出しの id を持つ）にだけ出す。
+  const askable = replyPort.kind === "open" && report.reportToolUseId !== undefined
   const firstNotes = useFirstNoteList([
     ...(view.head.checks.kind === "checks" ? (["report-terms"] as const) : []),
-    ...(replyPort.kind === "open" ? (["reply-margin"] as const) : []),
+    ...(askable ? (["reply-margin"] as const) : []),
   ])
   return (
     <>
@@ -172,20 +181,25 @@ function ReportRoot(): ReactElement {
             <LeafRegionContent region={view.figure} />
           </RegionBox>
         )}
-        {bodySections.map(([componentId, section]) => (
+        {/* `key` は根の子の ID。骨組みの欄が内容部品の届いた欄に替わっても、欄と見出しを作り直さない。 */}
+        {slots.map((slot) => (
           <RegionBox
-            key={section.regionId}
-            region={{
-              kind: "section",
-              id: section.regionId,
-              askCount: askCountOf(report, askThreads, componentId),
-              noteCount: noteCountOf(report, replyPort, notes, componentId),
-            }}
+            key={slot.componentId}
+            region={
+              slot.kind === "pending"
+                ? { kind: "pending" }
+                : {
+                    kind: "section",
+                    id: slot.regionId,
+                    askCount: askCountOf(report, askThreads, slot.componentId),
+                    noteCount: noteCountOf(report, replyPort, notes, slot.componentId),
+                  }
+            }
           >
-            <SectionContent id={componentId} />
+            <SectionContent id={slot.componentId} />
             {proof.kind === "band" &&
               proof.sections
-                .filter((entry) => entry.sectionId === componentId)
+                .filter((entry) => entry.sectionId === slot.componentId)
                 .map((entry) => <SectionProof key={entry.sectionId} section={entry} />)}
           </RegionBox>
         ))}
@@ -229,25 +243,27 @@ function LeafRegionContent(props: {
   )
 }
 
-/** 根の子1つが写った節の中身。`Section` なら見出しと子、それ以外はその部品を見出し無しで描く。 */
+/**
+ * 根の子1つが写った節の中身。`Section` なら見出しと子、それ以外はその部品を見出し無しで描く。
+ * 草稿でまだ届いていない根の子（次に届く見込みのもの）は、見出しの骨組みを置く（中身の骨組みは `PartRun` が置く）。
+ */
 function SectionContent(props: { readonly id: string }): ReactElement {
   const report = useReport()
   const part = report.parts.get(props.id)
-  const section = report.view.sections[props.id]
-  const headingLine = section?.heading ?? ""
-  const headingText = report.body.sections.find((s) => s.id === section?.regionId)?.heading ?? ""
-  const drawnDirectly = headingLine !== "" && isPlainHeadingText(headingText)
+  const heading = sectionHeadingOf(report, props.id)
+  const drawnDirectly = heading.line !== "" && isPlainHeadingText(heading.text)
   const ids = part?.component === "Section" ? part.children : [props.id]
   const point: SectionPoint =
     report.reportToolUseId === undefined
       ? { kind: "none" }
-      : { kind: "section", reportToolUseId: report.reportToolUseId, heading: headingText }
+      : { kind: "section", reportToolUseId: report.reportToolUseId, heading: heading.text }
   return (
     <>
-      {drawnDirectly && <h4>{headingText}</h4>}
+      {part === undefined && <PendingHeading blink={report.pending?.blink === true} />}
+      {drawnDirectly && <h4>{heading.text}</h4>}
       <SectionPointContext value={point}>
         <ChartTermLinkScope charts={chartLinkInputsOf(ids, report.parts, report.leaves)}>
-          <PartRun lead={drawnDirectly ? "" : headingLine} ids={ids} />
+          <PartRun lead={drawnDirectly ? "" : heading.line} ids={ids} />
         </ChartTermLinkScope>
       </SectionPointContext>
     </>
@@ -256,16 +272,20 @@ function SectionContent(props: { readonly id: string }): ReactElement {
 
 /**
  * ID の並びを描く。`lead`（見出しの行）は欄の描画と同じ手で先頭に描く。
- * 入れ子の `Section` は中の子を同じ並びに開く。
+ * 入れ子の `Section` は中の子を同じ並びに開く。草稿で次に届く見込みの部品の場所には骨組みを置く。
  */
 function PartRun(props: { readonly lead: string; readonly ids: readonly string[] }): ReactElement {
   const report = useReport()
   return (
     <>
       {props.lead !== "" && <RegionChunks markdown={props.lead} />}
-      {runIds(props.ids, report).map((id) => (
-        <PartBody key={id} id={id} />
-      ))}
+      {runSlots(props.ids, report).map((slot) =>
+        slot.kind === "part" ? (
+          <PartBody key={`part:${slot.id}`} id={slot.id} />
+        ) : (
+          <PendingPart key="pending" blink={report.pending?.blink === true} />
+        ),
+      )}
     </>
   )
 }

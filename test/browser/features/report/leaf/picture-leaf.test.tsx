@@ -3,7 +3,11 @@ import { afterEach, beforeAll, describe, expect, it } from "vitest"
 
 import { loadMarkdown } from "../../../../../src/browser/features/report/markdown.tsx"
 import type { ReportImageSource } from "../../../../../src/shared/report/report-image-markdown.ts"
-import { newLeafHtml, oldLeafHtml } from "../../../../fixture/direct-leaf-compare.tsx"
+import {
+  newLeafHtml,
+  oldLeafHtml,
+  renderDirectLeaf,
+} from "../../../../fixture/direct-leaf-compare.tsx"
 
 beforeAll(async () => {
   await loadMarkdown()
@@ -55,5 +59,22 @@ describe("Picture の部品", () => {
 
     expect(newLeafHtml(shelved.block, shelved.part, SHELVED)).toContain("/report-image/toolu_1/")
     expect(newLeafHtml(none.block, none.part, { kind: "none" })).not.toContain("<img")
+  })
+
+  it("書いている途中のレポートの画像は「まだ出ない」の札になり、「出せない」の札と見分けが付く", () => {
+    const { part } = pair("/tmp/架空の画面.png", [])
+
+    const pending = renderDirectLeaf(part, { kind: "pending" }).container.querySelector(
+      'span[role="img"]',
+    )
+    const missing = renderDirectLeaf(part, { kind: "none" }).container.querySelector(
+      'span[role="img"]',
+    )
+
+    expect(pending?.classList.contains("report-image-pending")).toBe(true)
+    expect(pending?.getAttribute("aria-label")).toBe("架空の画面")
+    expect(pending?.textContent).toBe("画像はまだ出ないレポートを書き終えると出る")
+    expect(missing?.classList.contains("report-image-pending")).toBe(false)
+    expect(missing?.textContent).toContain("画像を出せない")
   })
 })

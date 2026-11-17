@@ -4,6 +4,7 @@
 import type { ReactElement, RefCallback } from "react"
 
 import type { MainViewReportBody } from "../../../shared/session/main-view-shape.ts"
+import type { ReportPending } from "./a2ui-surface-model.ts"
 import { A2uiReport } from "./a2ui-surface.tsx"
 import { MarkdownReport, ReportFrame } from "./leaf/body-region.tsx"
 import { FavorMarkContext, type FavorMark } from "./leaf/checks-verdict.tsx"
@@ -11,6 +12,7 @@ import { FavorFollowUp } from "./leaf/favor-follow-up.tsx"
 import type { NextStepsOrigin } from "./leaf/next-step-row.tsx"
 import { HeadRegion } from "./leaf/report-head-region.tsx"
 
+export { PendingPaper } from "./leaf/pending-part.tsx"
 export { PhaseTimeSummary } from "./leaf/phase-time-section.tsx"
 
 type ReportProps = {
@@ -32,6 +34,8 @@ type ReportProps = {
   readonly favorRef?: RefCallback<HTMLElement>
   /** この本文を書いた `report` の呼び出しの id。渡すと節の中の内容部品が「聞く」で指せる。 */
   readonly reportToolUseId?: string
+  /** 書いている途中の草稿が渡す、まだ届いていない部品。渡すとその場所に骨組みを置く。 */
+  readonly pending?: ReportPending
 }
 
 export function Report(props: ReportProps): ReactElement {
@@ -69,6 +73,7 @@ function ReportBody(props: ReportProps): ReactElement {
         nextSteps={props.nextSteps}
         favorRef={props.favorRef}
         reportToolUseId={props.reportToolUseId}
+        pending={props.pending}
       />
     )
   }

@@ -59,7 +59,10 @@ function regions(): MainViewReportRegions {
   return entry.regions
 }
 
-function renderReport(): HTMLElement {
+/** `report` の呼び出しの id を渡した本文は、指して聞ける。草稿と「広げる」の板は渡さない。 */
+const ASKABLE = { reportToolUseId: "toolu_fictional" } as const
+
+function renderReport(target: { readonly reportToolUseId?: string }): HTMLElement {
   const port: ReplyPort = {
     ask: vi.fn<ReplyPort["ask"]>(() => Promise.resolve()),
     appendDraft: vi.fn<ReplyPort["appendDraft"]>(),
@@ -67,14 +70,14 @@ function renderReport(): HTMLElement {
   }
   return render(
     <ReplyPortContext value={{ kind: "open", port }}>
-      <Report reveal={false} turnId={1} {...NO_CLASS_NAMES} body={regions()} />
+      <Report reveal={false} turnId={1} {...NO_CLASS_NAMES} body={regions()} {...target} />
     </ReplyPortContext>,
   ).container
 }
 
 describe("レポートの初回の説明", () => {
   it("検証の語と余白の案内が、レポート本文の中に出る", () => {
-    const container = renderReport()
+    const container = renderReport(ASKABLE)
     const body = container.querySelector("[data-report-body]")
 
     expect(body?.querySelector('[data-first-note="report-terms"]')?.textContent).toMatch(TERMS_TEXT)
@@ -84,7 +87,7 @@ describe("レポートの初回の説明", () => {
   })
 
   it("「分かった」を押した説明は消え、端末の好みへ残り、もう一方は残る", () => {
-    renderReport()
+    renderReport(ASKABLE)
     const [first] = screen.getAllByRole("button", { name: "分かった" })
     if (first === undefined) throw new Error("「分かった」が無い")
     fireEvent.click(first)
@@ -96,9 +99,16 @@ describe("レポートの初回の説明", () => {
     ])
   })
 
+  it("指して聞けない本文には、余白の案内を出さない", () => {
+    renderReport({})
+
+    expect(screen.getByText(TERMS_TEXT)).toBeTruthy()
+    expect(screen.queryByText(MARGIN_TEXT)).toBeNull()
+  })
+
   it("見たことのある説明は、描き直しても出ない", () => {
     useFirstNoteSeen.setState({ seen: ["report-terms", "reply-margin"] })
-    renderReport()
+    renderReport(ASKABLE)
 
     expect(screen.queryByText(TERMS_TEXT)).toBeNull()
     expect(screen.queryByText(MARGIN_TEXT)).toBeNull()

@@ -5,6 +5,7 @@ import type { MessageProcessor, SurfaceModel } from "@a2ui/web_core/v0_9"
 import type { RefCallback } from "react"
 
 import type { A2uiReportComponent } from "../../../shared/report/a2ui-report-catalog.ts"
+import type { MainViewDraftPending } from "../../../shared/session/main-view-draft-pending.ts"
 import type {
   MainViewA2uiReport,
   MainViewReportRegions,
@@ -14,6 +15,12 @@ import type { NextStepsOrigin } from "./leaf/next-step-row.tsx"
 export const SURFACE_ID = "report"
 
 export type SurfaceView = Extract<MainViewA2uiReport, { readonly kind: "surface" }>
+
+/**
+ * 書いている途中の草稿が渡す、まだ届いていない部品（骨組みを置く場所）。
+ * `blink` は、骨組みを明滅させるか（動きを止める設定では偽）。
+ */
+export type ReportPending = MainViewDraftPending & { readonly blink: boolean }
 
 export type A2uiReportProps = {
   readonly body: MainViewReportRegions
@@ -28,6 +35,7 @@ export type A2uiReportProps = {
   readonly nextSteps?: NextStepsOrigin
   readonly favorRef?: RefCallback<HTMLElement>
   readonly reportToolUseId?: string
+  readonly pending?: ReportPending
 }
 
 /** 紙の描画順（図・本文の節・振り返り）の、根の子の id。 */

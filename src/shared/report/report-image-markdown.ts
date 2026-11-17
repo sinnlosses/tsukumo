@@ -10,6 +10,7 @@ import { htmlAttribute, htmlInlineWithCode } from "./report-inline-markdown.ts"
  * `shelved` は描いた `report` の呼び出しの id で棚を引く。`sizes` はサーバが置き場に置いたときに測れた画像の寸法で、無いパスの画像は寸法を付けない。
  * `unshelved` はサーバが置き場に置けなかった・寸法を測れなかったパスで、その画像は `src` を付けず最初から「出せない」の札になる。
  * `none` は置き場に置いていない本文で、画像は「出せない」の札になる。
+ * `pending` は書いている途中の本文。置き場に置くのは書き終えたあとなので、画像は「書き終えると出る」の札になる。
  */
 export type ReportImageSource =
   | {
@@ -19,6 +20,7 @@ export type ReportImageSource =
       readonly unshelved: readonly string[]
     }
   | { readonly kind: "none" }
+  | { readonly kind: "pending" }
 
 /**
  * 画像1枚と、その下の題の行。`src` は棚を引く経路で、置き場に置いていない本文では付けない（描く側が「出せない」の札にする）。
@@ -46,7 +48,7 @@ export function imageMarkdown(
 }
 
 /**
- * 画像の `src` と、分かれば画素の寸法。置き場に置いていない本文・置き場に置けなかったパスは `src` を持たない（描く側が「出せない」の札にする）。
+ * 画像の `src` と、分かれば画素の寸法。置き場に置いていない本文・書いている途中の本文・置き場に置けなかったパスは `src` を持たない（描く側が札にする）。
  */
 export function reportImageProps(
   imageSource: ReportImageSource,
@@ -55,7 +57,7 @@ export function reportImageProps(
   readonly src?: string
   readonly size?: { readonly width: number; readonly height: number }
 } {
-  if (imageSource.kind === "none" || imageSource.unshelved.includes(path)) {
+  if (imageSource.kind !== "shelved" || imageSource.unshelved.includes(path)) {
     return { src: undefined, size: undefined }
   }
   const size = imageSource.sizes.find((candidate) => candidate.path === path)

@@ -65,6 +65,7 @@ export function PictureLeaf(props: {
 
 /**
  * 棚の画像1枚。`src` を持たない（置き場に置いていない・置けなかった）画像は、`ReportImage` が「出せない」の札にする。
+ * 書いている途中のレポートの画像（取り出し元が `pending`）は、「まだ出ない」の札にする。
  * `alt` の先頭の字が前後の見分けに使われる。
  */
 export function PictureImage(props: {
@@ -82,6 +83,7 @@ export function PictureImage(props: {
       width={size?.width}
       height={size?.height}
       data-change-region={props.region}
+      pending={props.imageSource.kind === "pending"}
     />
   )
 }

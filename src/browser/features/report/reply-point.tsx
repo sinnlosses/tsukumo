@@ -19,7 +19,12 @@ import { useMarginCardStack } from "./hooks/use-margin-card-stack.ts"
 import { useNarrowReport } from "./hooks/use-narrow-report.ts"
 import { type SelectionOutside, useSelectionPoint } from "./hooks/use-selection-point.ts"
 import type { AskMode } from "./leaf/ask-box.tsx"
-import { type AskScope, type HeldUnit, heldUnitOf, restoreHeldUnit } from "./leaf/reply-unit-dom.ts"
+import {
+  type AskScope,
+  type HeldUnit,
+  heldUnitsOf,
+  restoreHeldUnit,
+} from "./leaf/reply-unit-dom.ts"
 import { SelectionPort } from "./leaf/selection-port.tsx"
 
 /** 開いている入力欄。レポートで1つだけ開く。 */
@@ -98,7 +103,7 @@ export function ReplyPointScope(props: {
   const [opened, setOpened] = useState<Opened>({})
   const [sending, setSending] = useState<readonly string[]>([])
   const tailRef = useRef<HTMLDivElement>(null)
-  const restoredRef = useRef<HeldUnit | undefined>(undefined)
+  const restoredRef = useRef(new WeakSet<HeldUnit>())
   const { stack, measure: measureCards } = useMarginCardStack(props.rootRef, tailRef)
   const narrow = useNarrowReport(props.rootRef)
   const { pointed } = state
@@ -107,20 +112,18 @@ export function ReplyPointScope(props: {
   }
   const heldOf = (target?: SheetTarget): Pick<Opened, "held"> => {
     const root = props.rootRef.current
-    const held =
-      root === null || target === undefined
-        ? undefined
-        : heldUnitOf(root, target.leafKey, target.scope)
+    const [held] =
+      root === null || target === undefined ? [] : heldUnitsOf(root, target.leafKey, target.scope)
     return held === undefined ? {} : { held }
   }
   // 欄の開け閉めで余白の列が出入りし、本文が組み直される。札の横の印をそろえてから、欄の単位を元の高さへ戻す。
   // 戻すのは開け閉め1回につき1度だけ（そのあとの描き直しで、利用者が転がした位置を動かさない）。
   useBeforePaintSync(() => {
     const held = opened.held
-    if (held === undefined || held === restoredRef.current) {
+    if (held === undefined || restoredRef.current.has(held)) {
       return
     }
-    restoredRef.current = held
+    restoredRef.current.add(held)
     measureCards()
     restoreHeldUnit(held)
   }, [opened, measureCards])

@@ -178,11 +178,11 @@ export function Turn(props: TurnProps): ReactElement {
               <div aria-hidden="true" data-closing-slot="" className={styles["closing-slot"]} />
             )}
             {/* `key` を `toolUseId` にするので、書いている途中の部品から記録の部品へ移っても面を作り直さない。 */}
-            {turn.drafts.map((draft, index) => (
+            {turn.drafts.map((draft) => (
               <DraftReport
                 draft={draft}
                 turnId={turn.id}
-                waiting={index === turn.drafts.length - 1}
+                hasInterimReport={turn.hasInterimReport}
                 key={`draft:${draft.toolUseId}`}
               />
             ))}

@@ -78,7 +78,9 @@ export function mainViewTurns(
 
 /**
  * いちばん新しいやり取りの草稿の後ろに、いま書いている `report` の草稿（`SessionState.sdkTurn` の `reportDrafting`）を足す。
- * 同じ `toolUseId` の草稿が既にあれば足さない。根が届いていなければ何も足さない。
+ * 同じ `toolUseId` の草稿が既にあれば足さない。
+ * 書いている途中（`drafting`）は根が届く前から足し、差し戻されて保留の草稿（`held`）は根が無ければ足さない。
+ * どちらも画像はまだ置き場に無い。
  */
 export function withReportDrafting(
   turns: readonly MainViewTurn[],
@@ -96,6 +98,7 @@ export function withReportDrafting(
     drafting.toolUseId,
     draftComponentsOf(drafting),
     writtenDraftComponentsOf(drafting),
+    { writing: drafting.kind === "drafting", imageSource: { kind: "pending" } },
   )
   return draft === undefined
     ? turns
@@ -168,6 +171,7 @@ function selectToolReports(
 /**
  * {@link selectToolReports} が確定していないとして伏せた最後の `report` を、草稿として描き続ける値。
  * 部品の一覧で描く本文（`a2ui` が `surface`）だけが草稿になる。
+ * 書き終えた記録なので骨組みは置かず、画像は記録の取り出し元から出す。
  */
 function heldReportDrafts(
   turn: MainViewTurn,
@@ -182,11 +186,12 @@ function heldReportDrafts(
   ) {
     return []
   }
-  const { components, written } = held.body.report.a2ui
+  const { components, written, imageSource } = held.body.report.a2ui
   const draft = mainViewDraftOf(
     held.origin.toolUseId,
     components,
     written.kind === "none" ? [] : written.components,
+    { writing: false, imageSource },
   )
   return draft === undefined ? [] : [draft]
 }

@@ -313,7 +313,10 @@ describe("mainViewTurnsOf（report の草稿）", () => {
       ? []
       : (mainViewTurnsOf(state)
           .at(-1)
-          ?.drafts.map((draft) => [draft.toolUseId, draft.components.length]) ?? [])
+          ?.drafts.map((draft) => [
+            draft.toolUseId,
+            draft.kind === "parts" ? draft.components.length : 0,
+          ]) ?? [])
   const shownReportIds = (state?: SessionState) =>
     state === undefined
       ? []
@@ -324,6 +327,12 @@ describe("mainViewTurnsOf（report の草稿）", () => {
               ? [step.origin.toolUseId]
               : [],
           ) ?? [])
+
+  it("書き始めてから根が届くまでは、白紙の草稿が載る", () => {
+    const states = foldEach([requestEvent(), drafting("toolu_d1")])
+
+    expect(draftsOf(states.at(-1))).toEqual([["toolu_d1", 0]])
+  })
 
   it("部品が届くたびに、根から辿れる部品が草稿に載る", () => {
     const states = foldEach([requestEvent(), drafting("toolu_d1"), part("toolu_d1", 0)])

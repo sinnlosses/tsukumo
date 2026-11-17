@@ -82,15 +82,15 @@ export type HeldUnit = {
   readonly scroller: Element
 }
 
-/** 本文の根の中から、部品の鍵と単位で要素を引いて上端を取る。画面に無ければ `undefined`。 */
-export function heldUnitOf(root: Element, leafKey: string, scope: AskScope): HeldUnit | undefined {
+/** 本文の根の中から、部品の鍵と単位で要素を引いて上端を取る。あれば1つ、画面に無ければ空。 */
+export function heldUnitsOf(root: Element, leafKey: string, scope: AskScope): readonly HeldUnit[] {
   const frame = [...root.querySelectorAll<HTMLElement>("[data-reply-frame]")].find(
     (candidate) => candidate.dataset["replyFrame"] === leafKey,
   )
   const element = frame?.querySelector(scopeSelectorOf(scope)) ?? undefined
   return element === undefined
-    ? undefined
-    : { element, top: element.getBoundingClientRect().top, scroller: scrollerOf(root) }
+    ? []
+    : [{ element, top: element.getBoundingClientRect().top, scroller: scrollerOf(root) }]
 }
 
 /** 本文が組み直されて単位が動いた分だけ、転がる祖先を動かして元の高さへ戻す。 */

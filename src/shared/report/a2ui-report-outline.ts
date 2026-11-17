@@ -78,6 +78,22 @@ export function a2uiReachableIds(
     : new Set()
 }
 
+/** 部品が子として参照する ID。内容部品と `ChoicePicker`・`Divider` は持たない。 */
+export function a2uiChildIds(part: A2uiReportComponent): readonly string[] {
+  switch (part.component) {
+    case "Section":
+    case "Row":
+    case "Column":
+      return part.children
+    case "Card":
+      return [part.child]
+    case "Tabs":
+      return part.tabs.map((tab) => tab.child)
+    default:
+      return []
+  }
+}
+
 /** 内容部品なら写す先の塊の `kind`、内容部品でなければ undefined。 */
 export function a2uiLeafKind(part: A2uiReportComponent): string | undefined {
   return LEAF_KINDS.get(part.component)
@@ -97,7 +113,7 @@ function leafIdsOf(
       return []
     }
     seen = new Set([...seen, id])
-    return a2uiLeafKind(part) === undefined ? leafIdsOf(childIdsOf(part), byId, seen) : [id]
+    return a2uiLeafKind(part) === undefined ? leafIdsOf(a2uiChildIds(part), byId, seen) : [id]
   })
 }
 
@@ -110,22 +126,6 @@ function reachableFrom(
     const part = byId.get(id)
     return part === undefined || acc.has(id)
       ? acc
-      : reachableFrom(childIdsOf(part), byId, new Set([...acc, id]))
+      : reachableFrom(a2uiChildIds(part), byId, new Set([...acc, id]))
   }, reached)
-}
-
-/** 部品が子として参照する ID。内容部品と `ChoicePicker`・`Divider` は持たない。 */
-function childIdsOf(part: A2uiReportComponent): readonly string[] {
-  switch (part.component) {
-    case "Section":
-    case "Row":
-    case "Column":
-      return part.children
-    case "Card":
-      return [part.child]
-    case "Tabs":
-      return part.tabs.map((tab) => tab.child)
-    default:
-      return []
-  }
 }

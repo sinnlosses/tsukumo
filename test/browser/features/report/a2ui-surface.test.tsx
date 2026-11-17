@@ -2,14 +2,12 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import type { ReactNode } from "react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
-import { mainViewDraftOf } from "../../../../src/browser/domain/main-view/a2ui-draft-view.ts"
 import { reportEvents } from "../../../../src/server/session-driver/core/message/sdk-report-message.ts"
 import type { A2uiReportComponent } from "../../../../src/shared/report/a2ui-report-catalog.ts"
 import { mainViewEntries } from "../../../../src/shared/session/main-view-entry.ts"
 import type { MainViewReportRegions } from "../../../../src/shared/session/main-view-shape.ts"
 import { applySessionEvent } from "../../../../src/shared/session/session-fold.ts"
 import { INITIAL_SESSION_STATE } from "../../../../src/shared/session/session-state.ts"
-import { STAGED_PARTS } from "../../../fixture/a2ui-component.ts"
 import { checkedToolUseId } from "../../../fixture/tool-use-id.ts"
 
 // `Markdown`（本物は react-markdown 一式で重い）を、渡された塊の文字列をそのまま出す代役に差し替える。
@@ -422,24 +420,6 @@ describe("部品の一覧のある本文（A2UI の面）", () => {
       "架空のお願い。",
     )
     expect(container.querySelector("[data-report-section]")).toBeNull()
-  })
-
-  it("部品の一覧が伸びた本文で描き直すと、同じ面のまま増えた内容部品が出る", () => {
-    const early = mainViewDraftOf("toolu_drafted", STAGED_PARTS.slice(0, 3), [])?.regions
-    const grown = mainViewDraftOf("toolu_drafted", STAGED_PARTS, [])?.regions
-    if (early === undefined || grown === undefined) {
-      throw new Error("根のある一覧から草稿が作れなかった")
-    }
-    const { container, rerender } = render(
-      <Report reveal={false} turnId={1} {...NO_CLASS_NAMES} body={early} />,
-    )
-    const host = container.querySelector("a2ui-react-report")
-    expect(container.textContent).not.toContain("架空の段落三")
-
-    rerender(<Report reveal={false} turnId={1} {...NO_CLASS_NAMES} body={grown} />)
-
-    expect(container.textContent).toContain("架空の段落三")
-    expect(container.querySelector("a2ui-react-report")).toBe(host)
   })
 })
 

@@ -74,9 +74,8 @@ export function buildNextSteps(source: NextStepSource): readonly NextStep[] {
     steps.push({ kind: "resume", label: "再開する", draft: "止めたところから再開して。" })
   }
 
-  const continued = continueStepOf(source.sessionRemaining, options)
-  if (continued !== undefined && favorOptionsOf(source.components).length === 0) {
-    steps.push(continued)
+  if (favorOptionsOf(source.components).length === 0) {
+    steps.push(...continueStepsOf(source.sessionRemaining, options))
   }
 
   const uncertain = claims.filter((claim) => claim.certainty !== "confirmed")
@@ -126,21 +125,22 @@ export function buildNextSteps(source: NextStepSource): readonly NextStep[] {
 }
 
 /**
- * 「続ける」の1つ。残りの作業があればそれを札の字にし、下書きは残りの文を写さず「続きを進めて。」にする。
+ * 「続ける」の一手。あれば1つ、無ければ空。
+ * 残りの作業があればそれを札の字にし、下書きは残りの文を写さず「続きを進めて。」にする。
  * 残りの作業が無く `Options` に採った案があれば、その案で進める依頼にする。
  */
-function continueStepOf(
+function continueStepsOf(
   remaining: SessionRemaining,
   options: readonly { readonly name: string; readonly verdict: string }[],
-): NextStep | undefined {
+): readonly NextStep[] {
   const remainingText = remaining.kind === "remaining" ? remaining.text.trim() : ""
   if (remainingText !== "") {
-    return { kind: "continue", label: `続ける: ${remainingText}`, draft: "続きを進めて。" }
+    return [{ kind: "continue", label: `続ける: ${remainingText}`, draft: "続きを進めて。" }]
   }
   const adopted = options.find((item) => item.verdict === "adopt")?.name.trim() ?? ""
   return adopted === ""
-    ? undefined
-    : { kind: "continue", label: `続ける: ${adopted}`, draft: `${quoted(adopted)}で進めて。` }
+    ? []
+    : [{ kind: "continue", label: `続ける: ${adopted}`, draft: `${quoted(adopted)}で進めて。` }]
 }
 
 /** 名前を依頼の文の中に置くときの括り。名前の中の空白や読点で、文の切れ目が分からなくならないようにする。 */

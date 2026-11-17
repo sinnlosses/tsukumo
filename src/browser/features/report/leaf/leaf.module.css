@@ -12,6 +12,7 @@
 @import "./next-step-row.css";
 @import "./ask-box.css";
 @import "./reply-note.css";
+@import "./pending-part.css";
 
 /* 引用の上下のあき。 */
 .quote-block {

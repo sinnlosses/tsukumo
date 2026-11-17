@@ -1,19 +1,29 @@
 import { describe, expect, it } from "vitest"
 
-import { mainViewDraftOf } from "../../../../src/browser/domain/main-view/a2ui-draft-view.ts"
+import {
+  type DraftSource,
+  mainViewDraftOf,
+} from "../../../../src/browser/domain/main-view/a2ui-draft-view.ts"
 import type { A2uiReportComponent } from "../../../../src/shared/report/a2ui-report-catalog.ts"
 import { mainViewEntries } from "../../../../src/shared/session/main-view-entry.ts"
 import { applySessionEvent } from "../../../../src/shared/session/session-fold.ts"
 import { INITIAL_SESSION_STATE } from "../../../../src/shared/session/session-state.ts"
 import { a2uiParts, STAGED_PARTS } from "../../../fixture/a2ui-component.ts"
+import { partsDraftOf, SETTLED_DRAFT, WRITING_DRAFT } from "../../../fixture/a2ui-draft.ts"
 import { reportEvent } from "../../../fixture/report-event.ts"
 
 const drawnIds = (components: readonly A2uiReportComponent[]) =>
-  mainViewDraftOf("toolu_draft", components, [])?.components.map((part) => part.id)
+  partsDraftOf("toolu_draft", components, WRITING_DRAFT).components.map((part) => part.id)
 
-const markdownLeavesOf = (components: readonly A2uiReportComponent[]) => {
-  const a2ui = mainViewDraftOf("toolu_draft", components, [])?.regions.a2ui
-  return a2ui?.kind === "surface" ? a2ui.markdownLeaves : {}
+const surfaceOf = (
+  components: readonly A2uiReportComponent[],
+  source: DraftSource = WRITING_DRAFT,
+) => {
+  const a2ui = partsDraftOf("toolu_draft", components, source).regions.a2ui
+  if (a2ui.kind !== "surface") {
+    throw new Error("面の値が無い")
+  }
+  return a2ui
 }
 
 /** 根から子の参照をたどって届く ID を、部品の並びと独立に集める。 */
@@ -35,33 +45,52 @@ function reachableFromRoot(components: readonly A2uiReportComponent[]): Readonly
 }
 
 describe("mainViewDraftOf", () => {
-  it("根が先に届いた一覧は、根と届いた子を描き、まだ届かない子は描かない", () => {
-    const arrived = STAGED_PARTS.slice(0, 3)
+  it("根が先に届いた一覧は、根と届いた子を描き、まだ届かない子の先頭を次に届く見込みにする", () => {
+    const draft = partsDraftOf("toolu_draft", STAGED_PARTS.slice(0, 3), WRITING_DRAFT)
 
-    expect(drawnIds(arrived)).toEqual(["root", "s1", "p1"])
-    expect(markdownLeavesOf(arrived)).toEqual({})
+    expect(draft.components.map((part) => part.id)).toEqual(["root", "s1", "p1"])
+    expect(draft.pending).toEqual({ next: "p2", openSections: ["s1", "s2"] })
+    expect(surfaceOf(STAGED_PARTS.slice(0, 3)).markdownLeaves).toEqual({})
   })
 
-  it("根がまだ届いていない一覧は、子が届いていても草稿にしない", () => {
-    expect(mainViewDraftOf("toolu_draft", STAGED_PARTS.slice(1), [])).toBeUndefined()
+  it("根がまだ届いていない一覧は、書いている途中なら白紙の草稿にし、書いていなければ草稿にしない", () => {
+    const rootless = STAGED_PARTS.slice(1)
+
+    expect(mainViewDraftOf("toolu_draft", rootless, [], WRITING_DRAFT)).toEqual({
+      kind: "blank",
+      toolUseId: "toolu_draft",
+    })
+    expect(mainViewDraftOf("toolu_draft", [], [], WRITING_DRAFT)?.kind).toBe("blank")
+    expect(mainViewDraftOf("toolu_draft", rootless, [], SETTLED_DRAFT)).toBeUndefined()
   })
 
-  it("根に繋がらない部品と、内容部品がまだ1つも届いていない節は描かない", () => {
+  it("書いていない草稿は、届いていない部品を数えない", () => {
+    const draft = partsDraftOf("toolu_draft", STAGED_PARTS.slice(0, 3), SETTLED_DRAFT)
+
+    expect(draft.pending).toEqual({ openSections: [] })
+    expect(draft.writing).toBe(false)
+  })
+
+  it("根に繋がらない部品は描かず、内容部品がまだ届いていない節は欄にせず部品にだけ残す", () => {
     const arrived = [
       ...STAGED_PARTS.slice(0, 2),
       ...a2uiParts({ id: "orphan", component: "Paragraph", text: "架空の迷子の段落" }),
     ]
+    const draft = partsDraftOf("toolu_draft", arrived, WRITING_DRAFT)
 
-    expect(drawnIds(arrived)).toEqual(["root"])
+    expect(draft.components.map((part) => part.id)).toEqual(["root", "s1"])
+    expect(draft.regions.sections).toEqual([])
+    expect(Object.keys(surfaceOf(arrived).sections)).toEqual([])
   })
 
-  it("全部が届けば、根から辿れる部品はすべて描く一覧に残る", () => {
+  it("全部が届けば、根から辿れる部品はすべて描く一覧に残り、届いていない部品は無い", () => {
     const all = [
       ...STAGED_PARTS,
       ...a2uiParts({ id: "orphan", component: "Paragraph", text: "架空の迷子の段落" }),
     ]
 
     expect(new Set(drawnIds(all))).toEqual(reachableFromRoot(all))
+    expect(partsDraftOf("toolu_draft", all, WRITING_DRAFT).pending).toEqual({ openSections: [] })
   })
 
   it("草稿の内容部品の値は、記録と同じ関数で番号と欄外注を持つ", () => {
@@ -82,19 +111,16 @@ describe("mainViewDraftOf", () => {
       },
       { id: "m1", component: "Note", tone: "memo", text: "架空の覚え書き。" },
     )
-    const a2ui = mainViewDraftOf("toolu_draft", parts, [])?.regions.a2ui
-    if (a2ui?.kind !== "surface") throw new Error("面の値が無い")
+    const a2ui = surfaceOf(parts)
 
     expect(a2ui.leafValues.t1?.captionNumber).toEqual({ kind: "table", ordinal: 1 })
     expect(a2ui.leafValues.t1?.gutterNotes).toEqual([{ label: "メモ", text: "架空の覚え書き。" }])
     expect(a2ui.leafValues.m1?.mergedIntoPrevious).toBe(true)
   })
 
-  it("草稿の画像の取り出し元は none（置き場に置いていない本文）", () => {
-    const a2ui = mainViewDraftOf("toolu_draft", STAGED_PARTS, [])?.regions.a2ui
-    if (a2ui?.kind !== "surface") throw new Error("面の値が無い")
-
-    expect(a2ui.imageSource).toEqual({ kind: "none" })
+  it("草稿の画像の取り出し元は、出どころが渡したものになる", () => {
+    expect(surfaceOf(STAGED_PARTS, WRITING_DRAFT).imageSource).toEqual({ kind: "pending" })
+    expect(surfaceOf(STAGED_PARTS, SETTLED_DRAFT).imageSource).toEqual({ kind: "none" })
   })
 
   it("Markdown の内容部品の Markdown が、面で描く値に載る", () => {
@@ -105,7 +131,7 @@ describe("mainViewDraftOf", () => {
       { id: "p1", component: "Paragraph", text: "架空の段落" },
     )
 
-    expect(markdownLeavesOf(parts)).toEqual({ m1: "> 架空の引用" })
+    expect(surfaceOf(parts).markdownLeaves).toEqual({ m1: "> 架空の引用" })
   })
 
   it("同じ components から、記録の面と草稿の面で markdownLeaves・leafValues・sections が変わらない", () => {
@@ -133,8 +159,8 @@ describe("mainViewDraftOf", () => {
       ),
     ).find((candidate) => candidate.kind === "report")
     const recorded = entry?.kind === "report" ? entry.regions.a2ui : undefined
-    const drafted = mainViewDraftOf("toolu_draft", parts, [])?.regions.a2ui
-    if (recorded?.kind !== "surface" || drafted?.kind !== "surface") {
+    const drafted = surfaceOf(parts)
+    if (recorded?.kind !== "surface") {
       throw new Error("面の値が無い")
     }
 
@@ -147,15 +173,42 @@ describe("mainViewDraftOf", () => {
   })
 
   it("節の見出しが、面で描く値に載る", () => {
-    const draft = mainViewDraftOf("toolu_draft", STAGED_PARTS, [])
+    const draft = partsDraftOf("toolu_draft", STAGED_PARTS, WRITING_DRAFT)
 
-    expect(draft?.regions.sections.map((section) => section.heading)).toEqual([
+    expect(draft.regions.sections.map((section) => section.heading)).toEqual([
       "架空の節一",
       "架空の節二",
     ])
-    expect(draft?.regions.a2ui.head.lead).toEqual({
+  })
+
+  it("頭の結論の形と数のカードは、確定版と同じ決め方になる", () => {
+    const keyFigures = [
+      { value: "1", label: "架空の数一" },
+      { value: "2", label: "架空の数二" },
+      { value: "3", label: "架空の数三" },
+    ]
+    const [root, ...rest] = STAGED_PARTS
+    const tasked = a2uiParts(
+      {
+        ...root,
+        task: { id: "fictional-task", name: "架空の作業", outcome: "finished" },
+        keyFigures,
+      },
+      ...rest,
+    )
+    const draft = partsDraftOf("toolu_draft", tasked, WRITING_DRAFT)
+
+    expect(surfaceOf(STAGED_PARTS).head.lead).toEqual({
       kind: "conclusion-lead",
       text: "架空の結論。",
     })
+    expect(surfaceOf(STAGED_PARTS).head.keyFigures).toEqual([])
+    expect(draft.task).toMatchObject({ kind: "task", id: "fictional-task", name: "架空の作業" })
+    expect(surfaceOf(tasked).head.lead).toEqual({ kind: "conclusion", text: "架空の結論。" })
+    expect(surfaceOf(tasked).head.keyFigures.map((figure) => figure.label)).toEqual([
+      "架空の数一",
+      "架空の数二",
+      "架空の数三",
+    ])
   })
 })

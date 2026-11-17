@@ -1,6 +1,7 @@
 // 書いている途中のレポート（草稿）の器で、届いた塊にだけ一度ポンの class を付ける。
-// 塊は欄の入れ物（`data-report-region`）の直の子。器が見たことのある要素は覚えておき、描き直しで残った要素には付け直さない。
-// 動きを減らす設定と演出の速さ「切る」では何も付けず、待ちの罫線も出さない（見るのはマウントした時点の値だけ）。
+// 塊は欄の入れ物（`data-report-region`）の直の子で、まだ届いていない部品の骨組み（`data-report-pending`）は数えない。
+// 器が見たことのある要素は覚えておき、描き直しで残った要素には付け直さない。
+// 動きを減らす設定と演出の速さ「切る」では何も付けず、骨組みも明滅させない（見るのはマウントした時点の値だけ）。
 
 import { useRef, useState, type RefObject } from "react"
 
@@ -9,10 +10,10 @@ import { prefersReducedMotion } from "../../../../../../domain/reveal/reduced-mo
 import { useBeforePaintSync } from "../../../../../../hooks/use-before-paint-sync.ts"
 import { playClassOnce } from "../../../../../../utils/play-class-once.ts"
 
-const DRAFT_BLOCK_SELECTOR = "[data-report-region] > *"
+const DRAFT_BLOCK_SELECTOR = "[data-report-region] > :not([data-report-pending])"
 
 /**
- * 草稿の器に付ける ref と、ポンと待ちの罫線を出すか（`motion`）を返す。
+ * 草稿の器に付ける ref と、ポンを掛け骨組みを明滅させるか（`motion`）を返す。
  * `arrivals` は届いた部品の並びで、変わるたびに器の中の新しい塊を探す。
  */
 export function useDraftPop(

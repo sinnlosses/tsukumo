@@ -1,0 +1,36 @@
+/* 書いている途中の草稿で、次に届く見込みの部品の場所に置く骨組み（`PendingPart`・`PendingHeading`・`PendingPaper`）。
+   帯の色と寸法はここが決め、明滅は `Skeleton` が持つ。
+   明滅させない骨組み（`data-pending-blink` の無いもの）は、帯を止めて薄い地にする。
+
+   帯2本で本文2行ぶんの高さを取る（行送り 1.7em の中央に 0.8em の帯）。上下のあきは段落と同じで、`report-notation-body.css` が持つ。 */
+.pending-part {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9em;
+  padding-block: 0.45em;
+}
+/* 書き始めの紙の結論の骨組み。結論の字の大きさで2行を取る。 */
+.pending-lead {
+  font-size: var(--report-heading-3);
+}
+.pending-line,
+.pending-heading-bar {
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--ink) 18%, transparent);
+}
+.pending-line {
+  display: block;
+  height: 0.8em;
+}
+/* 見出しの帯は見出しの行の中に置き、行の高さは見出しの字に任せる。 */
+.pending-heading-bar {
+  display: inline-block;
+  width: 42%;
+  height: 0.8em;
+  vertical-align: middle;
+}
+:not([data-pending-blink]) > :is(.pending-line, .pending-heading-bar) {
+  opacity: 1;
+  background: color-mix(in srgb, var(--ink) 7%, transparent);
+  animation: none;
+}

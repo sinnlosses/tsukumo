@@ -13,7 +13,7 @@
   min-width: 0;
 }
 .ask-main {
-  margin-inline-end: 0;
+  padding-inline-end: 0;
   container: none;
 }
 /* 高さを持たない重ねの列。口と札をここに置く。幅は札の幅で、口の字が折れない分は取れる。 */
@@ -56,7 +56,7 @@
 /* 札のある部品。本体の右を空けて、重ねの列を余白の列にする。口は列の左端（本体のすぐ右）に出す。 */
 @container report-body (min-width: calc(30em + 248px + 24px)) {
   .ask-frame[data-reply-margin] > .ask-main {
-    margin-inline-end: calc(var(--reply-margin-width) + var(--reply-margin-gap));
+    padding-inline-end: calc(var(--reply-margin-width) + var(--reply-margin-gap));
     container: report-gutter / inline-size;
   }
   .ask-frame[data-reply-margin] > .ask-margin > .reply-port-float {

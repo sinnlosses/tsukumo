@@ -2,9 +2,9 @@ import { cleanup, render } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { useDraftedReports } from "../../../../../../../src/browser/components/page/conversation/stores/drafted-report.ts"
-import { mainViewDraftOf } from "../../../../../../../src/browser/domain/main-view/a2ui-draft-view.ts"
 import type { MainViewReportBody } from "../../../../../../../src/shared/session/main-view-shape.ts"
 import { STAGED_PARTS } from "../../../../../../fixture/a2ui-component.ts"
+import { partsDraftOf, WRITING_DRAFT } from "../../../../../../fixture/a2ui-draft.ts"
 import { bodyTextOf } from "../../../../../../fixture/main-view-entry.ts"
 import { step, turn, turnBodyText, TURN_ID } from "../../../../../../fixture/turn.ts"
 
@@ -221,10 +221,7 @@ describe("Turn（書き上げる演出を掛ける相手）", () => {
   })
 
   it("草稿として描いていた report の確定版には掛けず、草稿そのものにも掛けない", () => {
-    const draft = mainViewDraftOf("toolu_drafted", STAGED_PARTS, [])
-    if (draft === undefined) {
-      throw new Error("根のある一覧から草稿が作れなかった")
-    }
+    const draft = partsDraftOf("toolu_drafted", STAGED_PARTS, WRITING_DRAFT)
     const { rerender } = render(
       <Turn turn={{ ...turn([step({ id: 0 })]), drafts: [draft] }} newest freshReport={false} />,
     )
@@ -251,10 +248,7 @@ describe("Turn（書き上げる演出を掛ける相手）", () => {
 
   // ターンが閉じると、働くあいだの中身からレポートの中身へ替わり、やり取りの部品が作り直される（入れ替えたばかりの印つき）。
   it("草稿を描いた部品が作り直されたあとも、入れ替えたばかりの確定版に掛けない", () => {
-    const draft = mainViewDraftOf("toolu_drafted", STAGED_PARTS, [])
-    if (draft === undefined) {
-      throw new Error("根のある一覧から草稿が作れなかった")
-    }
+    const draft = partsDraftOf("toolu_drafted", STAGED_PARTS, WRITING_DRAFT)
     render(<Turn turn={{ ...turn([]), drafts: [draft] }} newest freshReport={false} />)
     cleanup()
     revealed = []
