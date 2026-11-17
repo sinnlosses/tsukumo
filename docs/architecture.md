@@ -140,3 +140,4 @@
 | `docs/architecture/adr/0060-report-figure-first.md`                             | 最終レポートを図が先に立つ形にする: 主の図・主張ごとの裏づけ・結果を見て選ぶお願い                    | 採用                   |
 | `docs/architecture/adr/0061-sidebar-task-stages-and-side-sheet.md`              | サイドバーのタスク一覧を段とサイドシートにし、タスクのモーダルを一覧モードの表にする                  | 採用                   |
 | `docs/architecture/adr/0062-stream-grammar-groups-now-line-inquiry-keys.md`     | 会話の流れの文法: 届いた順の1組・動詞で言ういまの行・お伺いの頭と2段の確定・空の入力欄の ↑            | 採用                   |
+| `docs/architecture/adr/0063-character-voice-place-and-bearing.md`               | キャラクターの声と姿: 声の定位置・局面に従う動き・顔を指す尾・押して遡る・表情の出方・いまの様子      | 採用                   |
