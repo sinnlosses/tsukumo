@@ -96,6 +96,10 @@ export function useCharacterView(): CharacterViewModel {
   const draftingReport = useSession(
     (session) => reportDraftingOf(session.state.sdkTurn).kind === "drafting",
   )
+  const backgroundRunning = useSession((session) => session.state.backgroundTasks.length > 0)
+  const interrupted = records
+    .slice(records.findLastIndex((r) => r.kind === "request") + 1)
+    .some((record) => record.kind === "turn-interrupted")
   const waitingDueAt = useWaitingLineDueAt()
   const { cards: welcomeCards } = useWelcomeCards()
   const welcomeHead = welcomeHeadOf(welcomeCards)
@@ -109,7 +113,10 @@ export function useCharacterView(): CharacterViewModel {
   const [viewed, setViewed] = useState<ViewedSpeech>(LATEST_VIEWED_SPEECH)
   const [speechLogOpen, setSpeechLogOpen] = useState(false)
 
-  const now = useCharacterClock(turn, lastToolFailureAt, waitingDueAt)
+  const now = useCharacterClock(
+    { turn, lastToolFailureAt, backgroundRunning, interrupted },
+    waitingDueAt,
+  )
   const latestReaction = useShownReaction(welcomeHead, now)
   const pastTurn =
     activeTurnId === undefined || newestTurnId === undefined
@@ -131,7 +138,10 @@ export function useCharacterView(): CharacterViewModel {
     const current = pinnedSpeech === undefined ? LATEST_VIEWED_SPEECH : viewed
     setViewed(toggledViewedSpeech(current, turnId, index, speechesOfTurn(turnId)?.length ?? 0))
   }
-  const motion = resolvePortraitMotion({ turn, lastToolFailureAt, draftingReport }, now)
+  const motion = resolvePortraitMotion(
+    { turn, lastToolFailureAt, draftingReport, backgroundRunning, interrupted },
+    now,
+  )
 
   const { portraitUrl, altText } = portraitAppearance(character, expression)
 
@@ -207,10 +217,13 @@ function pastTurnSpeech(
  * 効果が走るまでに時刻をすでに過ぎていると、遅延が負でタイマーが立たず、古い `now` のまま戻らなくなる。
  */
 function useCharacterClock(
-  turn: PortraitMotionInput["turn"],
-  lastToolFailureAt: PortraitMotionInput["lastToolFailureAt"],
+  motionInput: Pick<
+    PortraitMotionInput,
+    "turn" | "lastToolFailureAt" | "backgroundRunning" | "interrupted"
+  >,
   waitingDueAt?: number,
 ): number {
+  const { turn, lastToolFailureAt, backgroundRunning, interrupted } = motionInput
   const [now, setNow] = useState(() => nowEpochMilliseconds())
 
   useExternalSync(() => {
@@ -220,7 +233,10 @@ function useCharacterClock(
       const at = nowEpochMilliseconds()
       setNow(at)
       const delays = [
-        nextPortraitMotionTransitionDelayMs({ turn, lastToolFailureAt }, at),
+        nextPortraitMotionTransitionDelayMs(
+          { turn, lastToolFailureAt, backgroundRunning, interrupted },
+          at,
+        ),
         waitingDueAt === undefined ? undefined : waitingDueAt - at,
       ].filter((ms): ms is number => ms !== undefined && ms > 0)
       if (delays.length === 0) {
@@ -235,7 +251,7 @@ function useCharacterClock(
         clearTimeout(timer)
       }
     }
-  }, [turn, lastToolFailureAt, waitingDueAt])
+  }, [turn, lastToolFailureAt, backgroundRunning, interrupted, waitingDueAt])
 
   return now
 }

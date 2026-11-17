@@ -69,6 +69,55 @@ describe("resolvePortraitMotion", () => {
     expect(resolvePortraitMotion(input, 1000 + SUCCESS_MOTION_WINDOW_MS - 1)).toBe("success")
   })
 
+  const ENDED_TURN = {
+    kind: "finished",
+    startedAt: 0,
+    finishedAt: 1000,
+    ending: { kind: "ended" },
+  } satisfies PortraitMotionInput["turn"]
+
+  it("背景の作業が残ったままターンが閉じたら、跳ねずに「待っている」（歩く）", () => {
+    const input: PortraitMotionInput = {
+      turn: ENDED_TURN,
+      lastToolFailureAt: undefined,
+      draftingReport: false,
+      backgroundRunning: true,
+    }
+    expect(resolvePortraitMotion(input, 1001)).toBe("waiting")
+    expect(nextPortraitMotionTransitionDelayMs(input, 1001)).toBeUndefined()
+  })
+
+  it("背景の作業が無くなって完了で閉じたら跳ねる", () => {
+    const input: PortraitMotionInput = {
+      turn: ENDED_TURN,
+      lastToolFailureAt: undefined,
+      draftingReport: false,
+      backgroundRunning: false,
+    }
+    expect(resolvePortraitMotion(input, 1001)).toBe("success")
+  })
+
+  it("利用者が止めたら、跳ねずに「読んでいる」（呼吸）", () => {
+    const input: PortraitMotionInput = {
+      turn: ENDED_TURN,
+      lastToolFailureAt: undefined,
+      draftingReport: false,
+      interrupted: true,
+    }
+    expect(resolvePortraitMotion(input, 1001)).toBe("reading")
+    expect(resolvePortraitMotion({ ...input, backgroundRunning: true }, 1001)).toBe("reading")
+  })
+
+  it("失敗で閉じたあとは、背景の作業が残っていても歩かない", () => {
+    const input: PortraitMotionInput = {
+      turn: FAILED_TURN,
+      lastToolFailureAt: undefined,
+      draftingReport: false,
+      backgroundRunning: true,
+    }
+    expect(resolvePortraitMotion(input, 1000 + FAILURE_MOTION_WINDOW_MS)).toBe("reading")
+  })
+
   it("完了の反応の期間を過ぎたら「読んでいる」に戻る", () => {
     const input: PortraitMotionInput = {
       turn: { kind: "finished", startedAt: 0, finishedAt: 1000, ending: { kind: "ended" } },

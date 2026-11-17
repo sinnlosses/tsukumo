@@ -17,7 +17,16 @@ export type PortraitMotionInput = {
    * `report` の外に書く本文（背景の委譲を待つ一言など）は画面に出ないので、「書いている」の材料にしない。
    */
   readonly draftingReport: boolean
+  /** 背景の作業（`SessionState.backgroundTasks`）が1件でも残っているか。省くと残っていない。 */
+  readonly backgroundRunning?: boolean
+  /** いちばん新しいやり取りが、利用者が止めて終わったか（記録の `turn-interrupted`）。`turn` の `ending` は中断を完了と同じ `ended` に畳むので、記録から渡す。省くと止めていない。 */
+  readonly interrupted?: boolean
 }
+
+type PortraitMotionTimingInput = Pick<
+  PortraitMotionInput,
+  "turn" | "lastToolFailureAt" | "backgroundRunning" | "interrupted"
+>
 
 /** ツールが失敗してから（ターンが失敗で終わってから）、このミリ秒だけ「失敗でびくっ」を優先する。 */
 const FAILURE_MOTION_WINDOW_MS = 400
@@ -29,10 +38,10 @@ const SUCCESS_MOTION_WINDOW_MS = 700
  * いま出す動き。優先順位は次の順。
  *
  * 1. ツールが失敗した直後・ターンが失敗で終わった直後（{@link FAILURE_MOTION_WINDOW_MS} 以内）。ターンが進行中でも、他のツールが動いていても割り込む
- * 2. ターンが失敗でなく終わった直後（{@link SUCCESS_MOTION_WINDOW_MS} 以内、かつターンが進行中でない）。
- *    失敗で終わったターンには「完了の反応」を出さない（びくっのあとに跳ねると、失敗を喜んで見える）
+ * 2. ターンが完了で終わった直後（{@link SUCCESS_MOTION_WINDOW_MS} 以内）。
+ *    失敗・中断で終わったターンと、背景の作業が残っているときには「完了の反応」を出さない
  * 3. ターンが進行中で `report` の引数を書いている最中なら「書いている」
- * 4. ターンが進行中なら「待っている間の移動」、そうでなければ「呼吸」だけの「読んでいる」
+ * 4. ターンが進行中か、背景の作業を待っているあいだは「待っている間の移動」、そうでなければ「呼吸」だけの「読んでいる」
  *
  * `now` は呼び出し側が渡す現在時刻（エポックミリ秒）。時計はここでは読まない（サーバとブラウザの結果を揃える）。
  */
@@ -42,8 +51,8 @@ export function resolvePortraitMotion(input: PortraitMotionInput, now: number): 
     return "failure"
   }
   if (
+    isSuccessCandidate(input) &&
     input.turn.kind === "finished" &&
-    input.turn.ending.kind === "ended" &&
     now - input.turn.finishedAt < SUCCESS_MOTION_WINDOW_MS
   ) {
     return "success"
@@ -51,7 +60,7 @@ export function resolvePortraitMotion(input: PortraitMotionInput, now: number): 
   if (input.turn.kind === "running" && input.draftingReport) {
     return "writing"
   }
-  return input.turn.kind === "running" ? "waiting" : "reading"
+  return input.turn.kind === "running" || isWaitingInBackground(input) ? "waiting" : "reading"
 }
 
 /**
@@ -64,17 +73,36 @@ export function resolvePortraitMotion(input: PortraitMotionInput, now: number): 
  * `draftingReport` は受け取らない（「書いている」には期間が無く、値が変われば描画自体が {@link resolvePortraitMotion} を呼び直す）。
  */
 export function nextPortraitMotionTransitionDelayMs(
-  input: Pick<PortraitMotionInput, "turn" | "lastToolFailureAt">,
+  input: PortraitMotionTimingInput,
   now: number,
 ): number | undefined {
   const failedAt = lastFailureAt(input)
   const remaining = [
     failedAt === undefined ? undefined : failedAt + FAILURE_MOTION_WINDOW_MS - now,
-    input.turn.kind === "finished" && input.turn.ending.kind === "ended"
+    isSuccessCandidate(input) && input.turn.kind === "finished"
       ? input.turn.finishedAt + SUCCESS_MOTION_WINDOW_MS - now
       : undefined,
   ].filter((ms): ms is number => ms !== undefined && ms > 0)
   return remaining.length === 0 ? undefined : Math.min(...remaining)
+}
+
+/** 閉じていて、背景の作業も残っておらず、利用者が止めずに完了で終わったか。跳ねるのはこのときだけ。 */
+function isSuccessCandidate(input: PortraitMotionTimingInput): boolean {
+  return (
+    input.turn.kind === "finished" &&
+    input.turn.ending.kind === "ended" &&
+    input.backgroundRunning !== true &&
+    input.interrupted !== true
+  )
+}
+
+/** ターンは閉じているが背景の作業が残っているあいだ（失敗・中断のあとは歩かない）。 */
+function isWaitingInBackground(input: PortraitMotionTimingInput): boolean {
+  return (
+    input.backgroundRunning === true &&
+    input.interrupted !== true &&
+    !(input.turn.kind === "finished" && input.turn.ending.kind === "failed")
+  )
 }
 
 /** 直近の失敗の時刻。ツールの失敗（`lastToolFailureAt`）と、失敗で終わったターンの終わった時刻のうち新しいほう。どちらも無ければ undefined。 */
