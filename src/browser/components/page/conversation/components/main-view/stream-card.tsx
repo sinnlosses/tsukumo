@@ -70,11 +70,7 @@ export function SayRow(props: {
       time={clockOf(props.row.at)}
       timeShown={props.presentation.timeShown}
       liveness={props.presentation.liveness}
-      aim={
-        props.presentation.followed ? (
-          <StreamAim live={props.presentation.liveness === "live"} />
-        ) : undefined
-      }
+      aim={props.presentation.followed ? <StreamAim /> : undefined}
       speakerName={props.speakerName}
       selected={props.presentation.pinned}
       pop={false}
@@ -111,7 +107,7 @@ export function VoiceSlotRow(props: {
         time={recordClockStamp(props.time, localTimeZoneId())}
         timeShown
         liveness={pinned ? "plain" : "live"}
-        aim={pinned ? undefined : <StreamAim live />}
+        aim={pinned ? undefined : <StreamAim />}
         speakerName={props.speakerName}
         selected={false}
         pop={false}

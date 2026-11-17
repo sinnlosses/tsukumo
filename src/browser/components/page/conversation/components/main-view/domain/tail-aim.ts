@@ -66,10 +66,16 @@ export function faceOnScreen(input: {
   }
 }
 
-/** 尾の `path` の `d`。座標は吹き出しの左上を原点にした局所の座標で、2辺の線（根元の2点から先へ）だけを引く。 */
-export function tailPath(aim: TailAim, bubble: BubbleRect): string {
+/**
+ * 尾の `path` の `d`。座標は描く面（尾の `svg`）の左上を原点にした局所の座標で、2辺の線（根元の2点から先へ）だけを引く。
+ * 原点は吹き出しでなく描く面の左上を渡す（ずれると根元が縁の線を覆いきれず、縁の線が根元に残る）。
+ */
+export function tailPath(
+  aim: TailAim,
+  origin: { readonly left: number; readonly top: number },
+): string {
   const local = (point: Point): string =>
-    `${(point.x - bubble.left).toFixed(1)} ${(point.y - bubble.top).toFixed(1)}`
+    `${(point.x - origin.left).toFixed(1)} ${(point.y - origin.top).toFixed(1)}`
   return `M${local(aim.base[0])} L${local(aim.tip)} L${local(aim.base[1])}`
 }
 
