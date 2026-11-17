@@ -8,7 +8,7 @@
 // 立ち絵の「動き」は時間相対のアニメーションなので遡らない。
 //
 // セリフのログの行を押すと、そのセリフの表情へ立ち絵が遡る。
-// 留めた状態（`ViewedSpeech`）はここが持ち、セリフのログにも `pinnedSpeech` / `onToggleSpeech` として渡す（床に立つ立ち絵も同じものを共有するため）。
+// 留めた状態（`ViewedSpeech`）はページの `useViewedSpeech` が持ち、ここは読んで、セリフのログにも `pinnedSpeech` / `onToggleSpeech` として渡す（床に立つ立ち絵も同じものを共有するため）。
 
 import { useState } from "react"
 
@@ -35,17 +35,15 @@ import { useSession } from "../../../../../../stores/session.ts"
 import { useTurnSelection } from "../../../../../../stores/turn-selection.ts"
 import { nowEpochMilliseconds } from "../../../../../../utils/clock.ts"
 import { recordClockStampWithDay, type ClockStamp } from "../../../domain/clock-stamp.ts"
-import { welcomeHeadOf } from "../../../domain/welcome-entry-list.ts"
-import { useShownReaction, useWaitingLineDueAt } from "../../../stores/shown-reaction.ts"
-import { useWelcomeCards } from "../../hooks/use-welcome-card-list.ts"
 import {
-  LATEST_VIEWED_SPEECH,
   pinnedSpeechOf,
   resolvePinnedSpeech,
-  toggledViewedSpeech,
   type PinnedSpeech,
-  type ViewedSpeech,
-} from "../domain/pinned-speech.ts"
+} from "../../../domain/pinned-speech.ts"
+import { welcomeHeadOf } from "../../../domain/welcome-entry-list.ts"
+import { useShownReaction, useWaitingLineDueAt } from "../../../stores/shown-reaction.ts"
+import { useViewedSpeech } from "../../../stores/viewed-speech.ts"
+import { useWelcomeCards } from "../../hooks/use-welcome-card-list.ts"
 import { useTabVisibility } from "./use-tab-visibility.ts"
 import { useWelcomeGreetingRecord } from "./use-welcome-greeting-record.ts"
 
@@ -116,7 +114,8 @@ export function useCharacterView(): CharacterViewModel {
   const speechesOfTurn = (turnId: number): readonly Speech[] | undefined =>
     turns.find((t) => t.id === turnId)?.speeches
 
-  const [viewed, setViewed] = useState<ViewedSpeech>(LATEST_VIEWED_SPEECH)
+  const viewed = useViewedSpeech((state) => state.viewed)
+  const toggleSpeech = useViewedSpeech((state) => state.toggle)
   const [speechLogOpen, setSpeechLogOpen] = useState(false)
 
   const now = useCharacterClock(
@@ -149,10 +148,6 @@ export function useCharacterView(): CharacterViewModel {
   // 失効した印を古い行に残すと、表情（最新に戻る）と印の位置が食い違う。
   const pinned = pinnedSpeech === undefined ? undefined : pinnedSpeechOf(viewed)
   const expression = pinnedSpeech?.expression ?? fallbackExpression
-  const toggleSpeech = (turnId: number, index: number): void => {
-    const current = pinnedSpeech === undefined ? LATEST_VIEWED_SPEECH : viewed
-    setViewed(toggledViewedSpeech(current, turnId, index, speechesOfTurn(turnId)?.length ?? 0))
-  }
   const motion = resolvePortraitMotion(
     {
       turn,

@@ -85,7 +85,7 @@
   .stream-entry {
     font-size: var(--font-input);
   }
-  .stream-entry.stream-entry-character {
+  .stream-entry.stream-entry-character:not(.stream-entry-live) {
     background: linear-gradient(
       to bottom,
       color-mix(in srgb, var(--accent) 16%, var(--surface)),

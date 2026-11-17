@@ -1,9 +1,38 @@
 // 仕事の流れの各行に掛ける、いまの一言（明るさと尾）と時刻の出し方。
 
 import { recordClockStamp, visibleClockFlags } from "../../../domain/clock-stamp.ts"
+import type { ViewedSpeech } from "../../../domain/pinned-speech.ts"
 
-/** 流れの1行。セリフ・投稿だけが時刻（`at`）を持つ。 */
-type PresentedItem = { readonly kind: string; readonly at?: number }
+/** 流れの1行。セリフ・投稿だけが時刻（`at`）を持ち、セリフだけがやり取りの中の位置（`speechIndex`）を持つ。 */
+type PresentedItem = {
+  readonly kind: string
+  readonly at?: number
+  readonly speechIndex?: number
+}
+
+/** 留めたセリフが、渡した並びのどこにあるか。 */
+export type PinnedPlace =
+  | { readonly kind: "none" }
+  | { readonly kind: "at"; readonly index: number }
+  | { readonly kind: "outside" }
+
+const NO_PINNED_PLACE = { kind: "none" } as const satisfies PinnedPlace
+
+/** 留めた状態から、`turnId` のやり取りの並び `items` の中の置き場を出す。別のやり取り・別の並び（畳みの中など）にあれば `outside`。 */
+export function pinnedPlaceOf(
+  items: readonly PresentedItem[],
+  turnId: number,
+  viewed: ViewedSpeech,
+): PinnedPlace {
+  if (viewed.kind === "latest") {
+    return NO_PINNED_PLACE
+  }
+  const index =
+    viewed.turnId === turnId
+      ? items.findIndex((item) => item.kind === "say" && item.speechIndex === viewed.index)
+      : -1
+  return index < 0 ? { kind: "outside" } : { kind: "at", index }
+}
 
 export type SayLiveness = "plain" | "live"
 
@@ -14,6 +43,8 @@ export type RowPresentation = {
   readonly liveness: SayLiveness
   /** 立ち絵が従っているセリフか（尾を付ける1件）。 */
   readonly followed: boolean
+  /** 押して留めたセリフか。 */
+  readonly pinned: boolean
 }
 
 /** 提示が決まっていない行（並びの外・並びが短い）の既定。 */
@@ -21,6 +52,7 @@ export const PLAIN_PRESENTATION = {
   timeShown: true,
   liveness: "plain",
   followed: false,
+  pinned: false,
 } as const satisfies RowPresentation
 
 /** 読み上げ用の、利用者の投稿の話し手の名前。 */
@@ -34,6 +66,8 @@ export type PresentationContext = {
    * 入力欄の上の定位置が声を出しているあいだは、立ち絵はそちらに従うので偽にする。
    */
   readonly follow: boolean
+  /** 押して留めたセリフの置き場。留めているあいだは、その1件だけが明るく尾が付き、ほかは落ち着く。 */
+  readonly pinned: PinnedPlace
   readonly timeZone: string
 }
 
@@ -49,9 +83,22 @@ export function streamPresentationOf(
     ),
   )
   const lastSayAt = items.findLastIndex((item) => item.kind === "say")
-  return items.map((_item, index) => ({
-    timeShown: flags[index] === true,
-    liveness: context.live && index === lastSayAt ? "live" : "plain",
-    followed: context.follow && index === lastSayAt,
-  }))
+  return items.map((_item, index): RowPresentation => {
+    const timeShown = flags[index] === true
+    if (context.pinned.kind !== "none") {
+      const pinned = context.pinned.kind === "at" && context.pinned.index === index
+      return {
+        timeShown,
+        liveness: pinned ? "live" : "plain",
+        followed: pinned,
+        pinned,
+      }
+    }
+    return {
+      timeShown,
+      liveness: context.live && index === lastSayAt ? "live" : "plain",
+      followed: context.follow && index === lastSayAt,
+      pinned: false,
+    }
+  })
 }

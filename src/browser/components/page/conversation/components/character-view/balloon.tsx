@@ -15,9 +15,9 @@ import type { ReactionKind } from "../../../../../../shared/recommendation/react
 import { Text } from "../../../../ui/text/text.tsx"
 import { TypingDots } from "../../../../ui/typing-dot-list/typing-dot-list.tsx"
 import type { ClockStamp } from "../../domain/clock-stamp.ts"
+import type { SpeechTarget } from "../../domain/pinned-speech.ts"
 import { useSpeechPress } from "../hooks/use-speech-press.ts"
 import styles from "./character-view.module.css"
-import type { SpeechTarget } from "./domain/pinned-speech.ts"
 
 /**
  * 押せるか（押せるなら、印の状態と押されたときの呼び先を持つ）。

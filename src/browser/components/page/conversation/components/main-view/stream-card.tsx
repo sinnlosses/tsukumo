@@ -11,6 +11,7 @@ import { currentPhaseOf } from "../../../../../../shared/session/work-plan.ts"
 import { localTimeZoneId } from "../../../../../utils/clock.ts"
 import { Text } from "../../../../ui/text/text.tsx"
 import { recordClockStamp, type ClockStamp } from "../../domain/clock-stamp.ts"
+import { useViewedSpeech } from "../../stores/viewed-speech.ts"
 import { PromptImageThumbnails } from "../prompt-image/prompt-image.tsx"
 import { StreamPostRow, StreamSpeechRow, StreamTyping } from "../stream-row/stream-row.tsx"
 import type { ProgressItem, StreamItem } from "./domain/stream-item-list.ts"
@@ -49,12 +50,19 @@ export function PostRow(props: PostRowProps): ReactElement {
   )
 }
 
-/** 左寄せのセリフ・反応。押せない。狭い画面では隠す（セリフは吹き出しが持つ）。 */
+/**
+ * 左寄せのセリフ・反応。押すと立ち絵がそのセリフの表情になる。
+ * 尾の付いている行（留めた行か、留めていないときの最新の行）を押すと最新へ戻る。
+ * 狭い画面では隠す（セリフは吹き出しが持つ）。
+ */
 export function SayRow(props: {
   readonly row: Extract<StreamItem, { readonly kind: "say" }>
+  readonly turnId: number
   readonly presentation: RowPresentation
   readonly speakerName: string
 }): ReactElement {
+  const toggle = useViewedSpeech((state) => state.toggle)
+  const release = useViewedSpeech((state) => state.release)
   return (
     <StreamSpeechRow
       text={props.row.record.text}
@@ -67,30 +75,44 @@ export function SayRow(props: {
         ) : undefined
       }
       speakerName={props.speakerName}
-      selected={false}
+      selected={props.presentation.pinned}
       pop={false}
+      onToggle={() => {
+        if (props.presentation.followed) {
+          release()
+        } else {
+          toggle(props.turnId, props.row.speechIndex)
+        }
+      }}
+      onRelease={release}
       className={styles["phone-hidden"] ?? ""}
     />
   )
 }
 
-/** 入力欄の上の定位置の声。流れのセリフの行と同じ部品で、いまの一言として明るくする。 */
+/**
+ * 入力欄の上の定位置の声。流れのセリフの行と同じ部品で、いまの一言として明るくする。
+ * 押すと最新へ戻る（定位置の声は留める先にしない）。別の行を留めているあいだは落ち着いた面にして尾を付けない。
+ */
 export function VoiceSlotRow(props: {
   readonly text: string
   readonly time: RecordTime
   readonly speakerName: string
 }): ReactElement {
+  const pinned = useViewedSpeech((state) => state.viewed.kind === "pinned")
+  const release = useViewedSpeech((state) => state.release)
   return (
     <div className={styles["voice-slot"]} data-voice-slot="">
       <StreamSpeechRow
         text={props.text}
         time={recordClockStamp(props.time, localTimeZoneId())}
         timeShown
-        liveness="live"
-        aim={<StreamAim live />}
+        liveness={pinned ? "plain" : "live"}
+        aim={pinned ? undefined : <StreamAim live />}
         speakerName={props.speakerName}
         selected={false}
         pop={false}
+        onToggle={release}
         className=""
       />
     </div>

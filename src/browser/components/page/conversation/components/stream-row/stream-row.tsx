@@ -6,8 +6,9 @@
 // 時刻が分からない発言（前のセッションを組み直したもの）には何も出さない。
 
 import clsx from "clsx"
-import type { ReactElement, ReactNode } from "react"
+import type { KeyboardEvent, ReactElement, ReactNode } from "react"
 
+import { isOverlayOpen } from "../../../../../hooks/open-overlay.ts"
 import { TypingDots } from "../../../../ui/typing-dot-list/typing-dot-list.tsx"
 import { VisuallyHidden } from "../../../../ui/visually-hidden/visually-hidden.tsx"
 import type { ClockStamp } from "../../domain/clock-stamp.ts"
@@ -27,8 +28,10 @@ type StreamSpeechRowProps = {
   readonly speakerName: string
   /** 時刻を見える字で出すか。出さなければ、触れるかフォーカスが入ったときだけ見える。 */
   readonly timeShown: boolean
-  /** 渡すと押せる行になる（雑談）。渡さなければ押せない行（仕事のメインビュー）。 */
+  /** 渡すと押せる行になる（雑談・仕事のメインビューのセリフ）。渡さなければ押せない行。 */
   readonly onToggle?: () => void
+  /** `selected` の行にフォーカスがあるときの Esc で呼ぶ（留めを解く）。渡さなければ Esc は何もしない。 */
+  readonly onRelease?: () => void
   /** 行の外側に重ねる class（狭い画面で隠すときなど）。 */
   readonly className: string
 }
@@ -45,6 +48,7 @@ export function StreamSpeechRow(props: StreamSpeechRowProps): ReactElement {
         aim={props.aim}
         speakerName={props.speakerName}
         {...(props.onToggle === undefined ? {} : { onToggle: props.onToggle })}
+        {...(props.onRelease === undefined ? {} : { onRelease: props.onRelease })}
       />
       <StreamTime time={props.time} shown={props.timeShown} />
     </div>
@@ -102,6 +106,7 @@ type StreamSpeechProps = {
   readonly aim: ReactNode
   readonly speakerName: string
   readonly onToggle?: () => void
+  readonly onRelease?: () => void
 }
 
 /**
@@ -142,9 +147,17 @@ function StreamSpeech(props: StreamSpeechProps): ReactElement {
       aria-pressed={props.selected}
       onMouseDown={speech.onMouseDown}
       onClick={speech.onClick}
-      onKeyDown={speech.onKeyDown}
+      onKeyDown={(event) => {
+        if (releasesOnEscape(event, props.selected) && props.onRelease !== undefined) {
+          props.onRelease()
+          return
+        }
+        speech.onKeyDown(event)
+      }}
     >
+      <SpeakerName name={props.speakerName} />
       {props.text}
+      {props.aim}
     </div>
   )
 }
@@ -168,3 +181,17 @@ function SpeakerName(props: { readonly name: string }): ReactNode {
 }
 
 function ignorePress(): void {}
+
+/** 留めた行にフォーカスがある Esc か。変換中・修飾キーつき・重なる面が開いているあいだは譲る。 */
+function releasesOnEscape(event: KeyboardEvent, selected: boolean): boolean {
+  return (
+    selected &&
+    event.key === "Escape" &&
+    !event.nativeEvent.isComposing &&
+    !event.metaKey &&
+    !event.ctrlKey &&
+    !event.altKey &&
+    !event.shiftKey &&
+    !isOverlayOpen()
+  )
+}

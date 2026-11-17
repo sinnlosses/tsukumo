@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 
 import { conversationStreamRows } from "../../../../src/browser/domain/main-view/conversation-stream.ts"
 import type { SessionRecord } from "../../../../src/shared/session/session-record.ts"
+import { turnSpeeches } from "../../../../src/shared/session/turn-speech.ts"
 import { splitIntoTurns } from "../../../../src/shared/session/turn.ts"
 import {
   asideRecord,
@@ -95,6 +96,22 @@ describe("conversationStreamRows（やり取り1つの記録を流れの行に�
       "report",
     ])
     expect(rows[3]).toMatchObject({ kind: "post", origin: "aside" })
+  })
+
+  it("セリフの行の speechIndex は、反応を挟んでも turnSpeeches の添字と同じ", () => {
+    const records = [
+      requestRecord(),
+      speechRecord({ text: "1件目" }),
+      reactionRecord({ text: "反応" }),
+      workPlanRecord(),
+      speechRecord({ text: "3件目" }),
+    ]
+    const [turn] = turnSpeeches(records)
+
+    expect(rowsOf(records).flatMap((row) => (row.kind === "say" ? [row.speechIndex] : []))).toEqual(
+      [0, 1, 2],
+    )
+    expect(turn?.speeches.map((line) => line.text)).toEqual(["1件目", "反応", "3件目"])
   })
 
   it("依頼より前の記録だけのやり取りも流れにする", () => {

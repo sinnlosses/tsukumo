@@ -14,10 +14,30 @@ const BASE = Temporal.ZonedDateTime.from(
 const LIVE: PresentationContext = {
   live: true,
   follow: true,
+  pinned: { kind: "none" },
   timeZone: TIME_ZONE,
 }
 
 const say = (seconds: number) => ({ kind: "say", at: BASE + seconds * 1000 })
+
+describe("streamPresentationOf の留めたセリフ", () => {
+  it("留めた行だけが明るく尾が付き、いまの一言は落ち着く", () => {
+    const result = streamPresentationOf([say(0), say(10)], {
+      ...LIVE,
+      pinned: { kind: "at", index: 0 },
+    })
+    expect(result.map((row) => row.liveness)).toEqual(["live", "plain"])
+    expect(result.map((row) => row.followed)).toEqual([true, false])
+    expect(result.map((row) => row.pinned)).toEqual([true, false])
+  })
+
+  it("留めた行が並びの外なら、どの行も明るくならず尾も付かない", () => {
+    const result = streamPresentationOf([say(0), say(10)], { ...LIVE, pinned: { kind: "outside" } })
+    expect(result.map((row) => row.liveness)).toEqual(["plain", "plain"])
+    expect(result.map((row) => row.followed)).toEqual([false, false])
+    expect(result.map((row) => row.pinned)).toEqual([false, false])
+  })
+})
 
 describe("streamPresentationOf のいまの一言", () => {
   it("作業中は最新のセリフ1件だけが明るく、尾が付く", () => {

@@ -29,6 +29,8 @@ export type ConversationStreamRow =
       readonly kind: "say"
       readonly origin: "speech" | "reaction"
       readonly record: RecordOf<"speech"> | RecordOf<"reaction">
+      /** そのやり取りのセリフ（反応を含む）の中の位置。`turnSpeeches` の `speeches` の添字と同じ。 */
+      readonly speechIndex: number
       readonly at?: number
     }
   | {
@@ -53,10 +55,17 @@ export function conversationStreamRows(
 ): readonly ConversationStreamRow[] {
   const records: readonly SessionRecord[] =
     turn.kind === "request" ? [turn.request, ...turn.records] : turn.records
-  return records.flatMap(rowOf)
+  let spoken = 0
+  return records.flatMap((record) => {
+    const rows = rowOf(record, spoken)
+    if (record.kind === "speech" || record.kind === "reaction") {
+      spoken += 1
+    }
+    return rows
+  })
 }
 
-function rowOf(record: SessionRecord): readonly ConversationStreamRow[] {
+function rowOf(record: SessionRecord, speechIndex: number): readonly ConversationStreamRow[] {
   switch (record.kind) {
     case "request":
       return [{ kind: "post", origin: "request", record, ...timeOf(record.time) }]
@@ -64,7 +73,7 @@ function rowOf(record: SessionRecord): readonly ConversationStreamRow[] {
       return [{ kind: "post", origin: "aside", record, ...timeOf(record.time) }]
     case "speech":
     case "reaction":
-      return [{ kind: "say", origin: record.kind, record, ...timeOf(record.time) }]
+      return [{ kind: "say", origin: record.kind, record, speechIndex, ...timeOf(record.time) }]
     case "work-plan":
       return [{ kind: "step", record, ...timeOf(record.time) }]
     case "detail":

@@ -9,7 +9,7 @@
 // 並びを組み立てるのは開いている間だけ（閉じているときに記録が伸びるたびに作り直さない）。
 //
 // セリフの行を押すとそのセリフの表情へ立ち絵が遡る。
-// 留めた状態そのものは `useCharacterView` が持ち（床の立ち絵と状態を共有するため）、ここは `pinnedSpeech` / `onToggleSpeech` として受け取って印とボタンへ写すだけ。
+// 留めた状態そのものはページの `useViewedSpeech` が持ち（広い画面の流れ・床の立ち絵と状態を共有するため）、ここは `pinnedSpeech` / `onToggleSpeech` として受け取って印とボタンへ写すだけ。
 
 import { useRef, type RefObject } from "react"
 import { sumBy } from "remeda"
@@ -31,7 +31,7 @@ import {
   type MarkedSpeech,
   type PinnedSpeech,
   type SpeechTarget,
-} from "../domain/pinned-speech.ts"
+} from "../../../domain/pinned-speech.ts"
 
 /**
  * セリフの古さの段。最新からいくつ前かで決める。

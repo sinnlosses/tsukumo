@@ -7,9 +7,14 @@ import type { MainViewTurn } from "../../../../../../shared/session/main-view-sh
 import { localTimeZoneId } from "../../../../../utils/clock.ts"
 import { Disclosure } from "../../../../ui/disclosure/disclosure.tsx"
 import { VStack } from "../../../../ui/v-stack/v-stack.tsx"
+import { useViewedSpeech } from "../../stores/viewed-speech.ts"
 import { AnswerPost } from "./answer-post.tsx"
 import { foldSummaryOf, type ProgressItem } from "./domain/stream-item-list.ts"
-import { PLAIN_PRESENTATION, streamPresentationOf } from "./domain/stream-presentation.ts"
+import {
+  PLAIN_PRESENTATION,
+  pinnedPlaceOf,
+  streamPresentationOf,
+} from "./domain/stream-presentation.ts"
 import { FoldedStep } from "./folded-step.tsx"
 import styles from "./main-view.module.css"
 import { QuestionRecord } from "./question-record.tsx"
@@ -28,10 +33,12 @@ type ProgressFoldProps = {
 /** 最終レポートの上の「作業の経過」。段の札・セリフ・補足の投稿・質問の記録・本文（1行の畳みの形）を届いた順に入れる。 */
 export function ProgressFold(props: ProgressFoldProps): ReactElement {
   const { turn } = props
-  // 畳みの中は終わった経過なので、いまの一言は無い。時刻は畳みの中の並びで比べる。
+  const viewed = useViewedSpeech((state) => state.viewed)
+  // 畳みの中は終わった経過なので、いまの一言は無い（留めた行だけが明るくなる）。時刻は畳みの中の並びで比べる。
   const presentations = streamPresentationOf(props.items, {
     live: false,
     follow: false,
+    pinned: pinnedPlaceOf(props.items, turn.id, viewed),
     timeZone: localTimeZoneId(),
   })
   return (
@@ -62,6 +69,7 @@ export function ProgressFold(props: ProgressFoldProps): ReactElement {
               return (
                 <SayRow
                   row={item}
+                  turnId={turn.id}
                   presentation={presentation}
                   speakerName={props.speakerName}
                   key={`say:${String(index)}`}

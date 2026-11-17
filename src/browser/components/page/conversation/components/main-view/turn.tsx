@@ -29,6 +29,7 @@ import { localTimeZoneId } from "../../../../../utils/clock.ts"
 import { Text } from "../../../../ui/text/text.tsx"
 import { useAwaySeam } from "../../stores/away-seam.ts"
 import { useDraftedReports } from "../../stores/drafted-report.ts"
+import { useViewedSpeech } from "../../stores/viewed-speech.ts"
 import { AnswerPost } from "./answer-post.tsx"
 import { awaySeamOf, type AwaySeam } from "./domain/away-seam.ts"
 import { revealStepIdOf } from "./domain/draft-reveal.ts"
@@ -41,6 +42,7 @@ import {
 } from "./domain/stream-item-list.ts"
 import {
   PLAIN_PRESENTATION,
+  pinnedPlaceOf,
   streamPresentationOf,
   type RowPresentation,
 } from "./domain/stream-presentation.ts"
@@ -116,12 +118,14 @@ export function Turn(props: TurnProps): ReactElement {
   const port = useReplyPort()
   const tasks = useSession((session) => session.state.tasks)
   const hasContent = items.length > 0 || turn.drafts.length > 0
+  const viewed = useViewedSpeech((state) => state.viewed)
   const moment = useSession((session) => conversationMoment(session.state))
   const speakerName =
     useSession((session) => session.state.character?.name) ?? DEFAULT_CHARACTER_NAME
   const presentations = streamPresentationOf(items, {
     live: props.newest && (moment === "work" || moment === "ask"),
     follow: !phoneWidth && props.voice?.kind !== "voice",
+    pinned: pinnedPlaceOf(items, turn.id, viewed),
     timeZone: localTimeZoneId(),
   })
 
@@ -262,7 +266,14 @@ function StreamItemView(props: StreamItemViewProps): ReactNode {
         <PostRow turn={turn} tasks={props.tasks} row={item} presentation={props.presentation} />
       )
     case "say":
-      return <SayRow row={item} presentation={props.presentation} speakerName={props.speakerName} />
+      return (
+        <SayRow
+          row={item}
+          turnId={turn.id}
+          presentation={props.presentation}
+          speakerName={props.speakerName}
+        />
+      )
     case "question":
       return <QuestionRecord entry={item.entry} form={props.questionForm} />
     case "answer":

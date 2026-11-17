@@ -675,7 +675,9 @@
                                 {
                                   "tag": "div",
                                   "attributes": {
-                                    "data-speaker": "character"
+                                    "data-speaker": "character",
+                                    "role": "button",
+                                    "aria-pressed": "false"
                                   },
                                   "children": [
                                     "つくもの精霊",
