@@ -47,6 +47,21 @@
   padding-top: var(--stack-group);
   padding-inline: var(--region-padding);
 }
+/* 声の定位置。入力欄の上の1行（お願いの口）より上、入力欄のすぐ上の側に置く。
+   お願いの口と同じ余白・上限の幅にそろえる。 */
+.voice-slot {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  padding-top: var(--stack-group);
+  padding-inline: var(--region-padding);
+}
+@media (min-width: 761px) {
+  .voice-slot {
+    box-sizing: border-box;
+    max-inline-size: 976px;
+  }
+}
 /* 流れの末尾が聞いたセリフのとき、お伺いの札はそのセリフと1組に見せる（広い画面だけ）。 */
 @media (min-width: 761px) {
   .turn-card:has([data-ends-with-say]) .turn-card-inquiry {
@@ -60,6 +75,10 @@
 /* 広い画面で、最終レポートの無いやり取り（作業中・答え待ち・失敗）の流れを入力欄の側へ寄せる。
    「いま」の行が入力欄の決まった上に来て、内容の量でセリフのたびに動かない。最終レポートのあるやり取りは頭から読むので寄せない。 */
 @media (min-width: 761px) {
+  /* 最終レポートのあるやり取りも、本文が短いときに声の定位置と入力欄の上の1行を下端へ押し下げる。 */
+  .turn-card > .turn-card-body {
+    flex: 1;
+  }
   .turn-card:not(.has-final-report) > .turn-card-body {
     display: flex;
     flex: 1;

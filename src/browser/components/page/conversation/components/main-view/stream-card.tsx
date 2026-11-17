@@ -6,6 +6,7 @@ import type { ReactElement } from "react"
 
 import type { TaskSummaryResult } from "../../../../../../shared/repository/task-summary.ts"
 import type { MainViewTurn } from "../../../../../../shared/session/main-view-shape.ts"
+import type { RecordTime } from "../../../../../../shared/session/session-record.ts"
 import { currentPhaseOf } from "../../../../../../shared/session/work-plan.ts"
 import { localTimeZoneId } from "../../../../../utils/clock.ts"
 import { Text } from "../../../../ui/text/text.tsx"
@@ -63,6 +64,28 @@ export function SayRow(props: {
       pop={false}
       className={styles["phone-hidden"] ?? ""}
     />
+  )
+}
+
+/** 入力欄の上の定位置の声。流れのセリフの行と同じ部品で、いまの一言として明るくする。 */
+export function VoiceSlotRow(props: {
+  readonly text: string
+  readonly time: RecordTime
+  readonly speakerName: string
+}): ReactElement {
+  return (
+    <div className={styles["voice-slot"]} data-voice-slot="">
+      <StreamSpeechRow
+        text={props.text}
+        time={recordClockStamp(props.time, localTimeZoneId())}
+        timeShown
+        liveness="live"
+        speakerName={props.speakerName}
+        selected={false}
+        pop={false}
+        className=""
+      />
+    </div>
   )
 }
 

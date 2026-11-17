@@ -44,6 +44,7 @@ import {
   streamPresentationOf,
   type RowPresentation,
 } from "./domain/stream-presentation.ts"
+import { NO_VOICE_SLOT, withoutVoiceRow, type VoiceSlot } from "./domain/voice-slot.ts"
 import { DraftReport } from "./draft-report.tsx"
 import { FoldedStep, StepReport } from "./folded-step.tsx"
 import { useReplyPort } from "./hooks/use-reply-port.ts"
@@ -59,6 +60,8 @@ type TurnProps = {
   readonly newest: boolean
   /** 出し始めた時点で既にある最終レポートも、まだ読まれていないものとして演出するか（地図から入れ替えたばかりのレポート）。 */
   readonly freshReport: boolean
+  /** 入力欄の上の定位置が出している声。その記録は流れの行から除く。 */
+  readonly voice?: VoiceSlot
 }
 
 export function Turn(props: TurnProps): ReactElement {
@@ -83,7 +86,7 @@ export function Turn(props: TurnProps): ReactElement {
   })
   const askSlot = use(AskThreadContext)
   const phoneWidth = usePhoneWidth()
-  const rows = useConversationStreamRows(turn.id)
+  const rows = withoutVoiceRow(useConversationStreamRows(turn.id), props.voice ?? NO_VOICE_SLOT)
   // 部品について聞いた補足は、その部品の余白の札に出る。流れに出すのは、札に束ねられなかった補足だけ。
   // 狭い画面の依頼は、一覧の上の依頼の塊が持つ。
   const shownRows = rows.filter((row) => {

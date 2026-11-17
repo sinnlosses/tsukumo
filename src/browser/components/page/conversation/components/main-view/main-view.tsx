@@ -24,6 +24,7 @@ import {
   plannedPhasesOf,
   type WorkPhase,
 } from "../../../../../../shared/session/work-plan.ts"
+import { DEFAULT_CHARACTER_NAME } from "../../../../../domain/portrait-appearance.ts"
 import { RepositoryFileLinkProvider } from "../../../../../features/report/repository-link.tsx"
 import { useBeforePaintSync } from "../../../../../hooks/use-before-paint-sync.ts"
 import { useExternalSync } from "../../../../../hooks/use-external-sync.ts"
@@ -42,14 +43,17 @@ import { AskThreadProvider } from "./ask-thread-provider.tsx"
 import { CurrentStep } from "./current-step.tsx"
 import { headNoticeOf, type HeadNoticeAction } from "./domain/head-notice.ts"
 import { headingStepOf, neighborTurnId, turnStepOf } from "./domain/turn-step-key.ts"
+import { NO_VOICE_SLOT } from "./domain/voice-slot.ts"
 import { HeadNotice } from "./head-notice.tsx"
 import { scrollerOf } from "./hooks/scroll-frame.ts"
 import { type ShownTarget, useActiveTurnScroll } from "./hooks/use-active-turn-scroll.ts"
 import { useTailReturn } from "./hooks/use-tail-return.ts"
+import { useVoiceSlot } from "./hooks/use-voice-slot.ts"
 import styles from "./main-view.module.css"
 import { NowLine } from "./now-line.tsx"
 import { PhaseList } from "./phase-list.tsx"
 import { RequestBlock } from "./request-block.tsx"
+import { VoiceSlotRow } from "./stream-card.tsx"
 import { StreamFloat } from "./stream-float.tsx"
 import { TurnCardHead } from "./turn-card-head.tsx"
 import { Turn } from "./turn.tsx"
@@ -124,6 +128,10 @@ export function MainView(): ReactElement {
       ? view.card
       : undefined
   const moveHeading = useReadingSection((state) => state.move)
+  const shownVoice = useVoiceSlot()
+  const voice = phoneWidth || viewingPast ? NO_VOICE_SLOT : shownVoice
+  const speakerName =
+    useSession((session) => session.state.character?.name) ?? DEFAULT_CHARACTER_NAME
 
   function onKeyDown(event: KeyboardEvent<HTMLElement>): void {
     const keyEvent = {
@@ -234,11 +242,15 @@ export function MainView(): ReactElement {
                     turn={cardTurn.turn}
                     newest={cardTurn.turn.id === newestTurnId}
                     freshReport={cardTurn.fresh}
+                    voice={voice}
                     key={cardTurn.turn.id}
                   />
                 </AskThreadProvider>
               </div>
               {!phoneWidth && <NowLine viewingPast={viewingPast} />}
+              {voice.kind === "voice" && (
+                <VoiceSlotRow text={voice.text} time={voice.time} speakerName={speakerName} />
+              )}
               {!viewingPast && (
                 <div className={styles["turn-card-inquiry"]}>
                   <Inquiry />

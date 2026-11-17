@@ -435,7 +435,11 @@
                       "detail": ""
                     }
                   ],
-                  "workPlanClosing": "finished"
+                  "workPlanClosing": "finished",
+                  "waitingLine": {
+                    "text": "前のセッションの架空の待ちの一言。続きはここからだよ。",
+                    "expression": "default"
+                  }
                 }
               }
             ]

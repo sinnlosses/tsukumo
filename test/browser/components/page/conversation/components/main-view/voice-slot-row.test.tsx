@@ -1,0 +1,67 @@
+import { act, cleanup } from "@testing-library/react"
+import { afterEach, beforeAll, describe, expect, it } from "vitest"
+
+import { loadMarkdown } from "../../../../../../../src/browser/features/report/markdown.tsx"
+import type { SessionRecord } from "../../../../../../../src/shared/session/session-record.ts"
+import { INITIAL_SESSION_STATE } from "../../../../../../../src/shared/session/session-state.ts"
+import { FIXTURE_CHARACTER } from "../../../../../../fixture/character-view.tsx"
+import { renderMainView } from "../../../../../../fixture/main-view.tsx"
+import {
+  reactionRecord,
+  reportRecord,
+  requestRecord,
+} from "../../../../../../fixture/session-record.ts"
+import { stubPhoneWidth } from "../../../../../phone-width.ts"
+import { putState } from "../../../../../session-store.ts"
+
+beforeAll(async () => {
+  await loadMarkdown()
+})
+
+afterEach(() => {
+  cleanup()
+  window.location.hash = ""
+})
+
+const WELCOME_BACK = "架空のおかえり"
+
+function resumedRecords(): readonly SessionRecord[] {
+  const report = reportRecord()
+  if (report.kind !== "report") {
+    throw new Error("report の記録ではない")
+  }
+  return [
+    requestRecord({ time: { kind: "restored" } }),
+    {
+      ...report,
+      waitingLine: { kind: "speech", text: WELCOME_BACK, expression: "default" },
+    },
+    reactionRecord({ reaction: "welcome", text: WELCOME_BACK }),
+  ]
+}
+
+function renderResumed(): void {
+  renderMainView(resumedRecords())
+  act(() => {
+    putState({ ...INITIAL_SESSION_STATE, records: resumedRecords(), character: FIXTURE_CHARACTER })
+  })
+}
+
+function textCount(text: string): number {
+  return (document.body.textContent.match(new RegExp(text, "gu")) ?? []).length
+}
+
+describe("MainView（声の定位置）", () => {
+  it("続きから起こした直後のおかえりは、入力欄の上の定位置にだけ出て、流れの行には出ない", () => {
+    renderResumed()
+    const slot = document.querySelector("[data-voice-slot]")
+    expect(slot?.textContent).toContain(WELCOME_BACK)
+    expect(textCount(WELCOME_BACK)).toBe(1)
+  })
+
+  it("狭い画面は定位置を出さない", () => {
+    stubPhoneWidth(true)
+    renderResumed()
+    expect(document.querySelector("[data-voice-slot]")).toBeNull()
+  })
+})
