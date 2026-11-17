@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 150" role="img" aria-label="架空の提灯">
+  <!-- 左の列の見本のために描いた架空の小物。利用者の持ち物の絵ではない。 -->
+  <defs>
+    <radialGradient id="glow" cx="50%" cy="42%" r="62%">
+      <stop offset="0" stop-color="#ffe1ad" />
+      <stop offset="0.5" stop-color="#f6a044" />
+      <stop offset="1" stop-color="#c2591a" />
+    </radialGradient>
+  </defs>
+  <circle cx="50" cy="7" r="4.5" fill="none" stroke="#3a3542" stroke-width="2.5" />
+  <path d="M50 11.5v5" stroke="#3a3542" stroke-width="2.5" stroke-linecap="round" />
+  <rect x="33" y="16" width="34" height="9" rx="3.5" fill="#262230" stroke="#4d4759" />
+  <ellipse cx="50" cy="60" rx="35" ry="37" fill="url(#glow)" />
+  <g fill="none" stroke="#9c4712" stroke-opacity="0.5" stroke-width="1.4">
+    <path d="M19 43q31 9 62 0" />
+    <path d="M15.500 56q34.500 10 69 0" />
+    <path d="M16 69q34 10 68 0" />
+    <path d="M22 82q28 8 56 0" />
+  </g>
+  <path d="M41 46c4-9 14-9 18 0-2 9-4 15-9 22-5-7-7-13-9-22Z" fill="#fff3d6" fill-opacity="0.32" />
+  <rect x="35" y="94" width="30" height="8" rx="3.5" fill="#262230" stroke="#4d4759" />
+  <path d="M50 102v13" stroke="#6fe3cd" stroke-width="2" />
+  <circle cx="50" cy="117" r="3.5" fill="#6fe3cd" />
+  <path d="M44.500 120h11l-1.500 26h-8Z" fill="#6fe3cd" />
+  <path d="M47 124v18M50 124v19M53 124v18" stroke="#2f8f7f" stroke-width="0.8" />
+</svg>
