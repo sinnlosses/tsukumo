@@ -155,6 +155,9 @@ function line(entry: DiagnosticEntry): string {
   if (entry.flow === "report-gate-block") {
     return `${when}  ${entry.flow}`
   }
+  if (entry.flow === "present-scene") {
+    return `${when}  ${entry.flow}  ${entry.kinds.join(" ")}`
+  }
   if (entry.flow === "session-event") {
     return `${when}  ${entry.flow}  代${String(entry.generation)}  ${entry.kind}`
   }

@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest"
 
 import {
-  awayBandOf,
   parseWelcomeGreeting,
   welcomeGreetingQuery,
   type WelcomeGreetingMaterial,
@@ -162,25 +161,5 @@ describe("welcomeGreetingQuery（時刻の帯）", () => {
     const query = welcomeGreetingQuery({ ...MATERIAL, calendar: { ...MATERIAL.calendar, hour } })
 
     expect(query.prompt.split("\n")[3]).toBe(`- 時刻の帯: ${band}`)
-  })
-})
-
-describe("awayBandOf", () => {
-  it("境目の手前はその帯、境目ちょうどは次の帯", () => {
-    const hourMs = 3_600_000
-    const boundaries = [
-      { belowMs: hourMs, band: "1時間たらず", next: "数時間" },
-      { belowMs: 6 * hourMs, band: "数時間", next: "半日から1日" },
-      { belowMs: 24 * hourMs, band: "半日から1日", next: "数日" },
-      { belowMs: 7 * 24 * hourMs, band: "数日", next: "1週間以上" },
-    ]
-    for (const { belowMs, band, next } of boundaries) {
-      expect(awayBandOf(belowMs - 1)).toBe(band)
-      expect(awayBandOf(belowMs)).toBe(next)
-    }
-  })
-
-  it("0 は最初の帯", () => {
-    expect(awayBandOf(0)).toBe("1時間たらず")
   })
 })

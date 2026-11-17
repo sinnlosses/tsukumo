@@ -14,6 +14,7 @@ import { z } from "zod"
 
 import { isSessionEventKind } from "../session/session-event-kind.ts"
 import type { SessionEvent } from "../session/session-event.ts"
+import { type PresentSceneFootprint, presentSceneFootprintSchema } from "./present-scene.ts"
 import {
   type RecommendationPressedFootprint,
   recommendationPressedFootprintSchema,
@@ -135,6 +136,7 @@ export type DiagnosticEntry =
   | ReportGateBlockFootprint
   | RecommendationPressedFootprint
   | ToolHookDurationFootprint
+  | PresentSceneFootprint
 
 const VERSION = { v: z.literal(DIAGNOSTIC_FORMAT_VERSION) }
 
@@ -149,6 +151,7 @@ export const diagnosticRecordSchema = z.discriminatedUnion("flow", [
   reportGateBlockFootprintSchema.extend(VERSION),
   recommendationPressedFootprintSchema.extend(VERSION),
   toolHookDurationFootprintSchema.extend(VERSION),
+  presentSceneFootprintSchema.extend(VERSION),
 ])
 
 /** JSONL に書く1行の形。 */

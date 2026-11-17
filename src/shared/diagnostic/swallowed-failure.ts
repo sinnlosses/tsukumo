@@ -68,7 +68,7 @@ const SWALLOWED_FAILURE_PLACES = {
     "read-code-block-start",
     "refresh-tasks",
   ],
-  achievement: ["read-day", "read-calendar"],
+  achievement: ["read-day", "read-calendar", "read-done-today"],
   "character-pack": ["generation-failed"],
   process: ["unhandled-rejection", "uncaught-exception"],
 } as const satisfies Record<string, readonly string[]>

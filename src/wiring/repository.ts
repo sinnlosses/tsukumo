@@ -30,6 +30,7 @@ import {
   type CheckRecordSource,
   IDLE_CHECK_RECORD_SOURCE,
 } from "../server/repository/core/check-record-source.ts"
+import { type NextTask, nextTaskOf } from "../server/session-driver/core/present-scene.ts"
 import type { SessionManagerOptions } from "../server/session/core/session-manager-port.ts"
 import {
   type CodeBlockStartRequest,
@@ -40,6 +41,7 @@ import {
   UNREADABLE_FILE_EXCERPT,
 } from "../shared/repository/file-excerpt.ts"
 import { EMPTY_REPOSITORY_FILE_LIST } from "../shared/repository/repository-file-list.ts"
+import type { TaskSummaryResult } from "../shared/repository/task-summary.ts"
 import type { SessionEvent } from "../shared/session/session-event.ts"
 import { failureDiagnostic } from "./failure-diagnostic.ts"
 import { foldPortFailure } from "./fold-port-failure.ts"
@@ -61,9 +63,13 @@ export function wireRepository(
     SessionManagerOptions,
     "watchTasks" | "changeCountGit" | "checkRecordSource"
   >
+  /** 見張りが最後に届けた一覧の、次に着手できる先頭の札。 */
+  readonly nextTask: () => NextTask
 } {
   const reportFailure = failureDiagnostic(diagnosticLog, context.now)
+  let latestTasks: TaskSummaryResult = { kind: "loading" }
   return {
+    nextTask: () => nextTaskOf(latestTasks),
     // 読みが投げた回は足跡を残して、読めなかったときの値に畳む（候補が出ない・抜き書きや行番号が出ないだけで画面は続く）。
     rpc: {
       listRepositoryFiles: foldPortFailure(
@@ -105,6 +111,7 @@ export function wireRepository(
         const watcher = watchTaskSummary(
           context.cwd,
           (result, change) => {
+            latestTasks = result
             onEvent({ kind: "tasks-changed", tasks: change })
             recommender.observe(result)
           },

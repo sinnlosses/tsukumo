@@ -2,12 +2,8 @@
 // 履歴は会話の中身そのものなので、見るのは依頼の有無と最後の時刻だけにし、文面は戻り値に入れない。
 
 import type { RestoredEvent } from "../../../shared/session/session-event.ts"
-import {
-  awayBandOf,
-  START_VISIT,
-  UNKNOWN_AWAY_BAND,
-  type WelcomeVisit,
-} from "./welcome-greeting.ts"
+import { awayBandOf } from "../../core/time-band.ts"
+import { START_VISIT, UNKNOWN_AWAY_BAND, type WelcomeVisit } from "./welcome-greeting.ts"
 
 /**
  * 組み直した依頼があれば、前回からの経過の帯を持つ続きからの迎え方。無ければ新しく始めるのと同じ迎え方。

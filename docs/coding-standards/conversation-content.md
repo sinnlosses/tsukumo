@@ -30,6 +30,9 @@ transcript と同じ扱いにする。**
   写してから入れ、`error.message`・イベントの中身・パスは入れない（SDK 由来の文字列には会話が
   混じりうる）。任意の文字列を受ける欄を型に作らないことで締め出し、無いことは
   `test/shared/diagnostic/diagnostic-record.test.ts` が守る（線の正典は `src/shared/diagnostic/diagnostic-record.ts`）
+- **同じセッションのモデルへ添えて渡す「いまの様子」は、数と決まった語と Beads の札の ID だけ。**
+  外へ送らず、診断ログには渡した材料の種類の語だけを残す（材料と時機は
+  `docs/architecture/display/speak-tool.md`「いまの様子を、メインの入力に添えて渡す」）
 - **テストのフィクスチャに実物を使わない。** SDK のイベントや JSONL のフィクスチャは、
   手で書いた架空の会話にする
 

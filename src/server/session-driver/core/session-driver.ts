@@ -6,6 +6,7 @@
 
 import type { ExpressionChoice } from "../../../shared/character-pack/expression-choice.ts"
 import type { PromptDelayFootprint } from "../../../shared/diagnostic/diagnostic-record.ts"
+import type { PresentSceneKind } from "../../../shared/diagnostic/present-scene.ts"
 import type { SwallowedFailurePlace } from "../../../shared/diagnostic/swallowed-failure.ts"
 import type { Answer, PendingAsk } from "../../../shared/session-driver/pending-ask.ts"
 import type { ReplyTarget } from "../../../shared/session/reply-target.ts"
@@ -21,6 +22,7 @@ import type { SessionId } from "../../../shared/session/session-id.ts"
 import type { ContextUsageReport } from "../../../shared/usage/context-usage.ts"
 import type { PlanUsageReport } from "../../../shared/usage/plan-usage.ts"
 import type { ChatSummary, PersonaMemory } from "../../core/chat-memory.ts"
+import type { PresentSceneSource } from "./present-scene-keeper.ts"
 import type { ShelvedPromptImage } from "./prompt-image-shelf.ts"
 import type { ToolHookDurationLap } from "./tool-hook-clock.ts"
 
@@ -31,6 +33,8 @@ export type SessionMode =
       readonly kind: "work"
       /** `report` の `figure` の説明に効く、図を置くかの既定（起こすときの `SessionDefault`）。 */
       readonly figurePreference: FigurePreference
+      /** いまの様子のうち、駆動の外にある材料を読む口。 */
+      readonly presentSceneSource: PresentSceneSource
     }
   | {
       readonly kind: "chat"
@@ -103,6 +107,8 @@ export type DriverDiagnostic =
   | ToolHookDurationLap
   /** `report` の関所が `Stop` を止めた。時刻は配線が付ける。 */
   | { readonly flow: "report-gate-block" }
+  /** いまの様子を依頼に添えた。時刻は配線が付ける。 */
+  | { readonly flow: "present-scene"; readonly kinds: readonly PresentSceneKind[] }
   | {
       readonly flow: "swallowed-failure"
       readonly place: SessionFailurePlace

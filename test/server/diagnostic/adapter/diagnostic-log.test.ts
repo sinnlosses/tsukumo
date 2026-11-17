@@ -192,6 +192,20 @@ describe("createDiagnosticLog", () => {
     expect(log.readRange({ startAt: at(0, 0), endAt: at(0, 0, 23) })).toEqual([block])
   })
 
+  it("いまの様子を渡したこと（present-scene）も、種類の語ごと往復する", async () => {
+    const log = createDiagnosticLog(root())
+    const scene: DiagnosticEntry = {
+      flow: "present-scene",
+      at: at(10, 0),
+      kinds: ["time-band", "done-today", "next-task"],
+    }
+
+    log.append([scene])
+    await log.flush()
+
+    expect(log.readRange({ startAt: at(0, 0), endAt: at(0, 0, 23) })).toEqual([scene])
+  })
+
   it("壊れた行・版が違う行・知らない種類の行は読み飛ばす", async () => {
     const path = join(root(), "2026-09-22.jsonl")
     mkdirSync(root(), { recursive: true })

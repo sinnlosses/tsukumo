@@ -2,6 +2,7 @@
 // 機能ごとの組み立て（`wire<機能>`）を並べ、`createSessionManager` と `createSocketRouter` へ結ぶ。
 
 import { basename, dirname } from "node:path"
+import { setTimeout as sleep } from "node:timers/promises"
 
 import type { Config } from "../server/core/config.ts"
 import type { Host } from "../server/host/core/host.ts"
@@ -22,6 +23,7 @@ import { wireDiagnostic } from "./diagnostic.ts"
 import { wireDiary } from "./diary.ts"
 import { wireHost } from "./host.ts"
 import { wireItem } from "./item.ts"
+import { wirePresentScene } from "./present-scene.ts"
 import type { wireRepository } from "./repository.ts"
 import { createSocketRouter } from "./router.ts"
 import { wireSessionLaunch } from "./session-launch.ts"
@@ -76,6 +78,11 @@ export async function startSession(options: SessionStartOptions): Promise<Starte
   const welcomeGreeting = wireWelcomeGreeting(context, diagnosticLog)
   const usageReview = wireUsageReview(context, options.plugins.mountWorkflowPlugin)
   const item = wireItem(context)
+  const presentScene = wirePresentScene({
+    doneToday: options.achievement.doneToday,
+    nextTask: options.repository.nextTask,
+    wait: (ms) => sleep(ms),
+  })
   const launch = wireSessionLaunch({
     context,
     config,
@@ -85,10 +92,15 @@ export async function startSession(options: SessionStartOptions): Promise<Starte
     plugins: options.plugins,
     firstViewer: firstViewer.promise,
     diagnosticLog,
+    presentSceneSourceOf: presentScene.sourceOf,
     onLaunch: (seed, onEvent, restored) => {
       diary.noteLaunched(seed)
       usageReview.noteLaunched(seed)
-      return welcomeGreeting.noteLaunched(seed, onEvent, restored)
+      const observeWelcome = welcomeGreeting.noteLaunched(seed, onEvent, restored)
+      return (event) => {
+        observeWelcome(event)
+        presentScene.observe(event)
+      }
     },
   })
   const chat = wireChat(context, character)

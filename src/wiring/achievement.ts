@@ -9,6 +9,7 @@ import {
 import { todayLocalDateKey } from "../server/adapter/local-time.ts"
 import type { DiagnosticLog } from "../server/diagnostic/core/diagnostic.ts"
 import { listDiaryDates, readDiaryDay } from "../server/diary/adapter/diary.ts"
+import type { DoneTodayRead } from "../server/session-driver/core/present-scene.ts"
 import type { SessionCommandPorts } from "../server/session/core/session-command.ts"
 import { resolveAchievementDateKey } from "../shared/achievement/achievement.ts"
 import { parseDateKey } from "../shared/diary/date-key.ts"
@@ -25,6 +26,8 @@ export function wireAchievement(
   readonly sessionCommands: Pick<SessionCommandPorts, "readAchievementDay">
   /** 成果の画面を初めて開く前に `bd list` を済ませておく。待たない。 */
   readonly warmUp: () => void
+  /** 今日終えたタスクの数。Beads が無い・読めない・投げたときは `unknown`。 */
+  readonly doneToday: () => Promise<DoneTodayRead>
 } {
   const reportFailure = failureDiagnostic(diagnosticLog, context.now)
   const readDay: AchievementProcedurePorts["readAchievementDay"] = async (selection) => {
@@ -87,5 +90,20 @@ export function wireAchievement(
     warmUp: () => {
       void achievementCache.readBeads()
     },
+    doneToday: foldPortFailure(
+      reportFailure,
+      { feature: "achievement", place: "read-done-today" },
+      { kind: "unknown" },
+      async (): Promise<DoneTodayRead> => {
+        const today = parseDateKey(todayLocalDateKey(context.now))
+        if (today === undefined) {
+          return { kind: "unknown" }
+        }
+        const result = await readAchievement(today, today, achievementCache)
+        return result.kind === "ok" && result.achievement.kind === "known"
+          ? { kind: "known", count: result.achievement.doneTasks.length }
+          : { kind: "unknown" }
+      },
+    ),
   }
 }

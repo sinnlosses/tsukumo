@@ -56,6 +56,27 @@ describe("wireAchievement の rpc", () => {
     })
   })
 
+  it("Beads が無ければ、今日終えた数は unknown", async () => {
+    const { doneToday } = wireAchievement(
+      {
+        cwd: "/fictional",
+        now: () => 1_000,
+        inheritedEnv: {},
+        driver: { kind: "sdk" },
+        chatArchive: NOOP_CHAT_ARCHIVE,
+        throwawayQuery: () => undefined,
+      },
+      createAchievementCache(
+        "/fictional",
+        () => 1_000,
+        () => Promise.resolve({ kind: "missing" }),
+      ),
+      { append: () => {}, readRange: () => [] },
+    )
+
+    expect(await doneToday()).toEqual({ kind: "unknown" })
+  })
+
   it("暦の読みが投げたら unavailable を返し、足跡を残す", async () => {
     const { rpc, entries } = wireWithThrowingClock()
 

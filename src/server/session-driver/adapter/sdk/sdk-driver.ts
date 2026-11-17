@@ -27,12 +27,7 @@ import { createExternalToolMark } from "../../core/external-tool-mark.ts"
 import { createInterruptMark, type InterruptMark } from "../../core/interrupt-mark.ts"
 import { isSubagentMessage, toSessionEvents } from "../../core/message/sdk-message.ts"
 import { createPendingAnswerQueue, type PendingAnswerQueue } from "../../core/pending-answer.ts"
-import {
-  createProgressNudge,
-  type ProgressNudgeSend,
-  progressNudgeSendText,
-  stepLimitPromptText,
-} from "../../core/progress-nudge.ts"
+import { progressNudgeSendText, stepLimitPromptText } from "../../core/progress-nudge.ts"
 import { createPromptDelayWatch, type PromptDelayWatch } from "../../core/prompt-delay.ts"
 import { handOffPrompt } from "../../core/prompt-handoff.ts"
 import { recordedPromptImages } from "../../core/prompt-image-shelf.ts"
@@ -54,10 +49,11 @@ import { createStepWatch } from "../../core/step-watch.ts"
 import { createToolHookClock } from "../../core/tool-hook-clock.ts"
 import { isVisibleOutputNudge } from "../../core/visible-output-nudge.ts"
 import { runEventEffect } from "./event-effect-run.ts"
+import { watchProgressNudge } from "./progress-nudge-watch.ts"
 import { createRtkRewrite } from "./rtk-rewrite.ts"
 import { runAskGuard, withAskGuard } from "./sdk-ask-guard.ts"
 import { readContextUsage } from "./sdk-context-usage.ts"
-import { handbackNoteHooks } from "./sdk-handback-note-hook.ts"
+import { handbackNoteHooks, presentSceneKeeperOf } from "./sdk-handback-note-hook.ts"
 import { implementerStopHooks } from "./sdk-implementer-stop-hook.ts"
 import { runLapHook, withLapHook } from "./sdk-lap-hook.ts"
 import { readPlanUsage } from "./sdk-plan-usage.ts"
@@ -110,7 +106,11 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
     sendProgressNudge(progressNudgeSendText(taken, bandPositionText(callReview.latestPlan())))
   })
   const stepWatch = createStepWatch(given.turnStepLimit)
+  const presentScene = presentSceneKeeperOf(given.mode, given.now, (kinds) => {
+    diagnose({ flow: "present-scene", kinds })
+  })
   const deliver = (event: SessionEvent): void => {
+    presentScene.observe(event)
     progressNudge.observe(event)
     if (given.mode.kind === "work" && stepWatch.observe(event) === "exceeded") {
       sendProgressNudge(stepLimitPromptText(given.turnStepLimit))
@@ -173,9 +173,13 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
             ),
             ...postToolUseHooks(options.onEvent, externalToolMark, toolHookClock, diagnose),
             ...implementerStopHooks(callReview),
-            ...handbackNoteHooks(callReview, () => {
-              failedWithoutError("handback-head-mismatch")
-            }),
+            ...handbackNoteHooks(
+              callReview,
+              () => {
+                failedWithoutError("handback-head-mismatch")
+              },
+              presentScene.take,
+            ),
           },
           options.mountWorkflowPlugin,
           (stdin) => runAskGuard(options.workflowTw, stdin),
@@ -283,7 +287,11 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
     answer: (id, answer) => queue.answer(id, answer),
     pending: () => queue.list(),
     readContextUsage: () => readContextUsage(session, failedWithError),
-    readPlanUsage: () => readPlanUsage(session, failedWithError),
+    readPlanUsage: async () => {
+      const report = await readPlanUsage(session, failedWithError)
+      presentScene.notePlanUsage(report)
+      return report
+    },
     readSessionDigest,
     setModel: async (model) => {
       await session.setModel(model)
@@ -308,51 +316,6 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
       queue.settleAll()
       input.end()
       session.close()
-    },
-  }
-}
-
-/**
- * 進みの差し込み（`ProgressNudge`）に時計とタイマーを付ける。
- * タイマーは時計より少し早く発火することがあり、そのときは `take` が何も返さないので、残りの分だけ立て直す。
- */
-function watchProgressNudge(
-  now: () => number,
-  send: (taken: ProgressNudgeSend) => void,
-): { readonly observe: (event: SessionEvent) => void; readonly close: () => void } {
-  const nudge = createProgressNudge()
-  let armedAt: number | undefined = undefined
-  let timer: ReturnType<typeof setTimeout> | undefined = undefined
-
-  const rearm = (): void => {
-    const due = nudge.due()
-    const nextAt = due.kind === "at" ? due.at : undefined
-    if (nextAt === armedAt) {
-      return
-    }
-    clearTimeout(timer)
-    armedAt = nextAt
-    timer = nextAt === undefined ? undefined : setTimeout(ring, Math.max(0, nextAt - now()))
-  }
-  const ring = (): void => {
-    armedAt = undefined
-    timer = undefined
-    const taken = nudge.take(now())
-    if (taken.kind !== "none") {
-      send(taken)
-    }
-    rearm()
-  }
-
-  return {
-    observe: (event) => {
-      nudge.observe(event, now())
-      rearm()
-    },
-    close: () => {
-      clearTimeout(timer)
-      armedAt = undefined
-      timer = undefined
     },
   }
 }

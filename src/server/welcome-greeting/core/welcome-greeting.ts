@@ -13,6 +13,7 @@ import {
 } from "../../../shared/recommendation/welcome-greeting.ts"
 import { structuredOutputSchema } from "../../core/query/structured-output-schema.ts"
 import type { CheckedAnswer, StructuredQuery } from "../../core/query/structured-query.ts"
+import { type AwayBand, type TimeBand, timeBandOf } from "../../core/time-band.ts"
 import {
   checkWelcomeAnswer,
   rejected,
@@ -46,31 +47,13 @@ export type WelcomeCalendar = {
   readonly hour: number
 }
 
-/**
- * 前回からの経過の帯の境目。経過がこのミリ秒未満なら、その語にする（上から先に当たったもの）。
- * どれにも当たらなければ {@link LONG_AWAY_BAND}。
- */
-const AWAY_BANDS = [
-  { belowMs: 3_600_000, band: "1時間たらず" },
-  { belowMs: 21_600_000, band: "数時間" },
-  { belowMs: 86_400_000, band: "半日から1日" },
-  { belowMs: 604_800_000, band: "数日" },
-] as const satisfies readonly { readonly belowMs: number; readonly band: string }[]
-
-const LONG_AWAY_BAND = "1週間以上"
-
 /** 前回の最後の時刻が読めなかったときの帯。 */
 export const UNKNOWN_AWAY_BAND = "分からない"
-
-export type AwayBand =
-  | (typeof AWAY_BANDS)[number]["band"]
-  | typeof LONG_AWAY_BAND
-  | typeof UNKNOWN_AWAY_BAND
 
 /** 迎え方。新しく起こした・`/clear` したときは `start`、続きから起こしたときは `resume`。 */
 export type WelcomeVisit =
   | { readonly kind: "start" }
-  | { readonly kind: "resume"; readonly away: AwayBand }
+  | { readonly kind: "resume"; readonly away: AwayBand | typeof UNKNOWN_AWAY_BAND }
 
 export const START_VISIT = { kind: "start" } as const satisfies WelcomeVisit
 
@@ -109,6 +92,15 @@ const WELCOME_GREETING_INSTRUCTION = `あなたはいま、作業を始めよう
 
 const DAY_OF_WEEK_LABELS = ["月", "火", "水", "木", "金", "土", "日"] as const
 
+/** 挨拶の材料に書く時刻の帯の語。 */
+const TIME_BAND_LABELS = {
+  "late-night": "深夜",
+  morning: "朝",
+  daytime: "昼",
+  evening: "夕方",
+  night: "夜",
+} as const satisfies Record<TimeBand, string>
+
 /** 材料から `query()` に渡すものを組む。人格は指示文の前に置く。 */
 export function welcomeGreetingQuery(material: WelcomeGreetingMaterial): StructuredQuery {
   const { calendar } = material
@@ -123,7 +115,7 @@ export function welcomeGreetingQuery(material: WelcomeGreetingMaterial): Structu
       "## 材料",
       `- 月: ${String(calendar.month)}月`,
       `- 曜日: ${DAY_OF_WEEK_LABELS[calendar.dayOfWeek - 1] ?? ""}曜`,
-      `- 時刻の帯: ${timeBandOf(calendar.hour)}`,
+      `- 時刻の帯: ${TIME_BAND_LABELS[timeBandOf(calendar.hour)]}`,
       ...visitLines(material.visit),
       "",
       "## 表情の選択肢",
@@ -156,28 +148,6 @@ export function parseWelcomeGreeting(
     (text) => text.withCard === withCard || text.withoutCard === withoutCard,
   )
   return repeated ? rejected("repeated") : checked
-}
-
-/** 前回の最後からの経過（ミリ秒）を帯の語にする。 */
-export function awayBandOf(elapsedMs: number): AwayBand {
-  return AWAY_BANDS.find((entry) => elapsedMs < entry.belowMs)?.band ?? LONG_AWAY_BAND
-}
-
-/** 時（0〜23）を時刻の帯の言葉にする。 */
-function timeBandOf(hour: number): string {
-  if (hour < 5) {
-    return "深夜"
-  }
-  if (hour < 10) {
-    return "朝"
-  }
-  if (hour < 16) {
-    return "昼"
-  }
-  if (hour < 19) {
-    return "夕方"
-  }
-  return "夜"
 }
 
 function visitLines(visit: WelcomeVisit): readonly string[] {

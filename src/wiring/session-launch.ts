@@ -24,6 +24,7 @@ import {
   createSessionClaimFile,
   defaultSessionClaimPlace,
 } from "../server/session-driver/adapter/session-claim-file.ts"
+import type { PresentSceneSource } from "../server/session-driver/core/present-scene-keeper.ts"
 import type { SessionDriver, SessionMode } from "../server/session-driver/core/session-driver.ts"
 import {
   createSessionCatalog,
@@ -84,6 +85,8 @@ export function wireSessionLaunch(options: {
   ) => (event: SessionEvent) => void
   /** 診断ログの書き込みの関数。握りつぶした失敗（履歴の組み直し・覚えたことの書き込み）を書く。 */
   readonly diagnosticLog: DiagnosticLog
+  /** 起こす代の組み直した履歴から、いまの様子の駆動の外の材料を読む口を作る。 */
+  readonly presentSceneSourceOf: (restored: Promise<readonly RestoredEvent[]>) => PresentSceneSource
 }): {
   readonly manager: Pick<SessionManagerOptions, "launchSession">
   readonly sessionCommands: Pick<
@@ -138,6 +141,7 @@ export function wireSessionLaunch(options: {
             viewPort,
             onSessionMarked: (sessionId, tag) => sessionCatalog.noteMarked(sessionId, tag),
             onEvent: watched,
+            presentSceneSource: () => options.presentSceneSourceOf(restored),
             reportFailure,
             appendDiagnostic: (entry) => options.diagnosticLog.append([entry]),
           })
@@ -208,6 +212,8 @@ function startDriver(options: {
   /** 印が付いたセッションのIDと、付けた印を受け取る口。 */
   readonly onSessionMarked: (sessionId: SessionId, tag: string) => void
   readonly onEvent: (event: SessionEvent) => void
+  /** いまの様子の駆動の外の材料を読む口を作る（本物の駆動で仕事のときだけ作る）。 */
+  readonly presentSceneSource: () => PresentSceneSource
   /** 握りつぶした失敗を診断ログへ書く口。 */
   readonly reportFailure: (place: SwallowedFailurePlace, error: unknown) => void
   /** 駆動が残した足跡のうち、そのまま書けるものを診断ログへ書く口。 */
@@ -240,7 +246,14 @@ function startRealDriver(
 ): SessionDriver {
   const { seed, context, onEvent } = options
   const memory = chatMemoryOf(seed.pack, context)
-  const mode = sessionMode(seed, context, memory, onEvent, options.reportFailure)
+  const mode = sessionMode(
+    seed,
+    context,
+    memory,
+    onEvent,
+    options.reportFailure,
+    options.presentSceneSource,
+  )
   const tag = sessionTag(seed.pack.name, seed.chat, options.viewPort)
 
   return startSdkDriver({
@@ -282,6 +295,9 @@ function startRealDriver(
         case "report-gate-block":
           options.appendDiagnostic({ flow: "report-gate-block", at: context.now() })
           return
+        case "present-scene":
+          options.appendDiagnostic({ ...diagnostic, at: context.now() })
+          return
         case "swallowed-failure":
           options.reportFailure({ feature: "session", place: diagnostic.place }, diagnostic.error)
           return
@@ -311,9 +327,14 @@ function sessionMode(
   memory: ChatMemoryPorts,
   onEvent: (event: SessionEvent) => void,
   reportFailure: (place: SwallowedFailurePlace, error: unknown) => void,
+  presentSceneSource: () => PresentSceneSource,
 ): SessionMode {
   if (!seed.chat) {
-    return { kind: "work", figurePreference: seed.sessionDefault.figurePreference }
+    return {
+      kind: "work",
+      figurePreference: seed.sessionDefault.figurePreference,
+      presentSceneSource: presentSceneSource(),
+    }
   }
 
   return {

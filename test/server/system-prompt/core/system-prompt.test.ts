@@ -20,6 +20,7 @@ import {
 } from "../../../../src/server/system-prompt/core/system-prompt.ts"
 import { WORK_PLAN_PROMPT } from "../../../../src/server/work-plan/core/work-plan-tool.ts"
 import { fixedChatSummary, inMemoryChatSummary } from "../../../fixture/chat.ts"
+import { FAKE_PRESENT_SCENE_SOURCE } from "../../../fixture/sdk-tool.ts"
 import { checkedSessionId } from "../../../fixture/session-id.ts"
 
 // `systemPrompt` に何が・どの順で載るかを、3通り（仕事・雑談・続きから始めるとき）で固定する
@@ -167,6 +168,7 @@ describe("toSystemPromptMode", () => {
     const sessionMode: SessionMode = {
       kind: "work",
       figurePreference: "chart",
+      presentSceneSource: FAKE_PRESENT_SCENE_SOURCE,
     }
 
     const mode = toSystemPromptMode(sessionMode, READ_RECENT, readChatSummary, {
