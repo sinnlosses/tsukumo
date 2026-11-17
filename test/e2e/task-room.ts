@@ -134,6 +134,24 @@ export async function openTaskListRoom(
   return room
 }
 
+/** 待ちの1件と、それが待つ題の長い1件。つながりの札の題が1行に収まらない。 */
+export async function openTaskListRoomWithLongDependency(
+  run: ScenarioRun,
+  scenario: string,
+  domRoots: readonly DomRootName[],
+): Promise<ScenarioRoom> {
+  const room = await run.open({ scenario, scene: "none", viewport: "wide", domRoots })
+  await placeTasks(room, [
+    task("t-001", "架空のタスク（待ち）", "todo", ["t-002"]),
+    task(
+      "t-002",
+      "架空のタスク（先に終わる）。題がとても長く、サイドシートの幅の中で1行に収まらないときの見え方を確かめる",
+      "todo",
+    ),
+  ])
+  return room
+}
+
 /** 上と同じ2件に、ドラフトの1件を加える。 */
 export async function openTaskListRoomWithDraft(
   run: ScenarioRun,

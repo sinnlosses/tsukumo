@@ -372,15 +372,25 @@ describe("taskList", () => {
     expect(document.activeElement).toBe(row("X-003"))
   })
 
-  it("外側を押しても閉じない", () => {
-    render(<TaskList tasks={known(TASKS)} />)
+  it("サイドバーと入力欄を押しても閉じず、その外を押すと閉じる", () => {
+    render(
+      <>
+        <aside data-region="sidebar">
+          <TaskList tasks={known(TASKS)} />
+        </aside>
+        <section data-region="dispatch">
+          <textarea aria-label="入力欄" />
+        </section>
+      </>,
+    )
 
     fireEvent.click(row("X-001"))
-    fireEvent.pointerDown(document.body)
-    fireEvent.click(document.body)
-    fireEvent.keyDown(document, { key: "Escape" })
-
+    fireEvent.pointerDown(row("X-003"))
+    fireEvent.pointerDown(screen.getByRole("textbox", { name: "入力欄" }))
     expect(sheetTitle()).toBe("架空のタスク1")
+
+    fireEvent.pointerDown(document.body)
+    expect(sheet()).toBeNull()
   })
 
   it("開いている行が畳んだ段に隠れても閉じず、一覧から消えたら閉じる", () => {

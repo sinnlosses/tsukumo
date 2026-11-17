@@ -3,7 +3,6 @@
 // 語と位置は保存しない。
 //
 // サイドシートを開いてもフォーカスは押した行に残り、↑↓・Esc・Alt+← は一覧の器（`rootRef`）が受ける。
-// 外側を押しても閉じない（サイドシートは非モーダルで、開いたまま入力欄に書ける）。
 // 狭い画面（760px 以下）にはサイドシートの置き場が無いので、行を開くとタスクのモーダルをそのタスクを選んで開く。
 
 import { useId, useRef, useState, type KeyboardEvent, type RefObject } from "react"

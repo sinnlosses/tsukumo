@@ -2,19 +2,27 @@
 // 開いているタスクは `useTaskSheet` が持ち、ここはそのタスクの詳細と操作の口を一覧モードと同じ形（`selectionOf`）に畳み、
 // 頼む口の確認の開閉を持つ。
 // 開いているタスクがタスクの一覧から消えたら閉じる。探す語や済みの段の畳みで行が隠れただけでは閉じない。
+// 外側（`KEEPS_SHEET_OPEN` の外）を押しても閉じる。
 
 import { useState, type KeyboardEvent } from "react"
 
 import type { TaskSummaryResult } from "../../../../shared/repository/task-summary.ts"
+import { useEventListener } from "../../../hooks/use-event-listener.ts"
 import { useExternalSync } from "../../../hooks/use-external-sync.ts"
 import { useTaskBoardRequest } from "../../../stores/task-board-request.ts"
 import { useTaskSheet, type TaskSheetSubject } from "../../../stores/task-sheet.ts"
 import { boardEntries, selectionOf } from "../domain/task-board-content.ts"
 import type { TaskBoardSelection } from "../domain/task-board-view.ts"
-import { taskRowDomId } from "../domain/task-row-dom-id.ts"
+import { TASK_SHEET_DOM_ID, taskRowDomId } from "../domain/task-row-dom-id.ts"
 import type { TaskRunConfirmOutcome } from "../domain/task-run-confirm-outcome.ts"
 import type { TaskRunTarget } from "../domain/task-run-prompt.ts"
 import { useTaskSearchQuery } from "../stores/task-search-query.ts"
+
+/**
+ * 押してもサイドシートを閉じない場所。サイドシートそのもの、行を押して切り替えるサイドバー、開いたまま書いて送る入力欄。
+ * 頼む口の確認（`<dialog>`）はサイドシートの中に置かれるので、サイドシートに含まれる。
+ */
+const KEEPS_SHEET_OPEN = `#${TASK_SHEET_DOM_ID}, [data-region="sidebar"], [data-region="dispatch"]`
 
 /** 頼む口の確認。開いているあいだはサイドシートの Esc を受けない（Esc は上の確認だけを閉じる）。 */
 type TaskSheetConfirm =
@@ -68,6 +76,18 @@ export function useTaskSheetView(
       close()
     }
   }, [vanished, close])
+
+  useEventListener(
+    document,
+    "pointerdown",
+    (event) => {
+      // フォーカスは押した先へ移るのに任せ、行へは戻さない。
+      if (event.target instanceof Element && !event.target.closest(KEEPS_SHEET_OPEN)) {
+        close()
+      }
+    },
+    { enabled: sheet.kind === "open" && entry !== undefined && confirm.kind === "closed" },
+  )
 
   if (sheet.kind !== "open" || entry === undefined) {
     return { kind: "closed" }

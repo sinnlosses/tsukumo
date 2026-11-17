@@ -6,6 +6,7 @@ import {
   openTaskListRoom,
   openTaskListRoomWithDraft,
   openTaskListRoomWithDrafts,
+  openTaskListRoomWithLongDependency,
 } from "./task-room.ts"
 
 /** 撮るときの経過（凍らせた瞬間から）。「何秒前」の類いをこの値で揃える。 */
@@ -64,6 +65,32 @@ test.describe("タスクの一覧", () => {
       expect(box.x + box.width).toBeLessThanOrEqual(sidebar.x)
     })
   }
+
+  test("つながりの札の題が長くても、サイドシートの中身と操作の帯はサイドシートの幅に収まる", async ({
+    run,
+  }) => {
+    const room = await openTaskListRoomWithLongDependency(run, "task-list-sheet-long-dependency", [
+      "task-section",
+    ])
+    await taskRow(room, "T-001").click()
+    const sheet = sheetOf(room)
+    await sheet.waitFor()
+    const box = await boxOf(sheet)
+    for (const part of [sheet.locator("section"), sheet.getByRole("button", { name: /に頼む$/ })]) {
+      const partBox = await boxOf(part)
+      expect(partBox.x + partBox.width).toBeLessThanOrEqual(box.x + box.width)
+    }
+  })
+
+  test("サイドシートはメインビューを押すと閉じ、入力欄を押しても開いたまま", async ({ run }) => {
+    const room = await openTaskListRoom(run, "task-list-sheet-outside-click", ["task-section"])
+    await taskRow(room, "T-001").click()
+    await sheetOf(room).waitFor()
+    await room.page.locator('[data-region="dispatch"] textarea').click()
+    expect(await sheetOf(room).count()).toBe(1)
+    await room.page.locator('[data-region="main"]').click({ position: { x: 8, y: 8 } })
+    await sheetOf(room).waitFor({ state: "detached" })
+  })
 
   test("段「ドラフト」の行のサイドシートの「計画する」から確認の「頼む」を押すと計画の文面で依頼が送られる", async ({
     run,
