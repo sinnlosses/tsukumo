@@ -9,12 +9,13 @@
 // ここが持つのは中身の収め方と動きだけ。
 
 import clsx from "clsx"
-import type { ReactElement } from "react"
+import type { KeyboardEvent, ReactElement } from "react"
 import { unique } from "remeda"
 
 import type { Expression } from "../../../shared/character-pack/expression.ts"
 import type { PortraitMotion } from "../../domain/portrait-motion.ts"
 import { useExternalSync } from "../../hooks/use-external-sync.ts"
+import { isActivationKey } from "../../utils/activation-key.ts"
 import styles from "./portrait.module.css"
 
 export type PortraitProps = {
@@ -30,6 +31,18 @@ export type PortraitProps = {
   readonly motion?: PortraitMotion
   /** 置き方（余白・高さ・幅の上限）を足す class 名。足すものが無ければ `undefined`。 */
   readonly className?: string
+  /**
+   * 押せる立ち絵にするときの、読み上げの名前と押したときの処理。
+   * 渡すと `role="button"`・`tabIndex=0` になり、Enter と Space でも押せる。押せない置き方は `undefined`。
+   */
+  readonly press?: PortraitPress
+  /** 聞く姿勢を取るか（`data-listening`）。姿勢の形は CSS が持つ。 */
+  readonly listening?: boolean
+}
+
+export type PortraitPress = {
+  readonly label: string
+  readonly onPress: () => void
 }
 
 /**
@@ -60,13 +73,31 @@ export function usePortraitPreload(portraits?: Readonly<Record<string, string>>)
 }
 
 export function Portrait(props: PortraitProps): ReactElement {
+  const { press } = props
+  const pressProps =
+    press === undefined
+      ? { role: "img", "aria-label": props.altText }
+      : {
+          role: "button",
+          tabIndex: 0,
+          "aria-label": press.label,
+          onClick: press.onPress,
+          onKeyDown: (event: KeyboardEvent) => {
+            if (!isActivationKey(event.key)) {
+              return
+            }
+            // Space はページを1画面送る既定の動作を持つので、押したことにする側で止める。
+            event.preventDefault()
+            press.onPress()
+          },
+        }
   return (
     <div
       className={clsx(styles["portrait"], props.className)}
-      role="img"
-      aria-label={props.altText}
+      {...pressProps}
       data-expression={props.expression}
       data-motion={props.motion}
+      {...(props.listening === true ? { "data-listening": "" } : {})}
     >
       <img className={styles["portrait-image"]} src={props.url} alt={props.altText} />
     </div>

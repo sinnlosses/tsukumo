@@ -133,7 +133,10 @@ function StreamSpeech(props: StreamSpeechProps): ReactElement {
     props.aim !== undefined && styles["stream-entry-aimed"],
   )
 
-  const arrivalAttribute = props.arrival === undefined ? {} : { "data-arrival": props.arrival }
+  const arrivalAttribute = {
+    ...(props.arrival === undefined ? {} : { "data-arrival": props.arrival }),
+    ...(props.aim === undefined ? {} : { "data-followed": "" }),
+  }
 
   if (props.onToggle === undefined) {
     return (

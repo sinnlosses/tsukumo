@@ -44,6 +44,22 @@
   --portrait-sink-amount: 0.35rem;
   --portrait-sink-duration: 0.9s;
 }
+/* 聞く姿勢。入力欄に字があるあいだ、続く動き（呼吸・歩く・書く）を止めて、入力欄の側へ少し傾いて寄る。動きは足さない。
+   位置は `translate` ではなく `transform` で寄せる（置き方の `translate` を上書きして床の位置を失わないため）。
+   1回の動きの最中と動きを減らす設定では、`data-listening` を付けない（`isListeningPose`）。 */
+.portrait[data-listening][data-motion] {
+  animation-name: none;
+  rotate: 3deg;
+  transform: translateX(0.3rem);
+}
+/* 押せる立ち絵（`press`）は指の形のカーソルにする。キーボードの焦点は内側へ寄せた輪で示す（外へ出すと右端のマスクと領域の枠で切れる）。 */
+.portrait[role="button"] {
+  cursor: pointer;
+}
+.portrait[role="button"]:focus-visible {
+  outline: 2px solid currentcolor;
+  outline-offset: -2px;
+}
 /* 素材の縦横比を保つ（実測）。
    `height: 100%` と `max-width` を同時に掛けると、置換要素は幅だけ縮む（CSS 2.1 §10.4 の制約表。高さが auto でないまま max-width に当たると、max-height 側の再計算が起きない）。
    両方 auto ＋ max-width/max-height の組にすると、どちらの上限に当たっても縦横比を保ったまま縮む。 */

@@ -5,7 +5,7 @@ import { expect, test } from "./room-fixture.ts"
 // 閉じた「作業の経過」の中に過去のセリフ「見てくるね。」（`default`）が入る。
 // 開いて押すと立ち絵が `default` になり、留めた行から Esc で `proud` へ戻る。
 
-const PORTRAIT = '[data-character-stage] [role="img"]'
+const PORTRAIT = "[data-character-stage] [data-expression]"
 
 test.describe("仕事の流れのセリフを押すと遡る", () => {
   test("過去のセリフを押すとその表情になり、留めた行の Esc で最新へ戻る", async ({ run }) => {

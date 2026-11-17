@@ -23,8 +23,10 @@ export function PresentationalCharacterView({
   altText,
   expression,
   motion,
+  listeningPose,
   speakerName,
   pinnedSpeech,
+  onPortraitPress,
   onToggleSpeech,
   speechLogOpen,
   onOpenSpeechLog,
@@ -33,13 +35,23 @@ export function PresentationalCharacterView({
   phoneLine,
   seats,
 }: PresentationalCharacterViewProps): ReactElement {
-  const portrait = portraitUrl !== undefined && (
+  const portraitProps = {
+    altText,
+    expression,
+    motion,
+    className: styles["portrait"],
+  }
+  const portrait = portraitUrl !== undefined && <Portrait url={portraitUrl} {...portraitProps} />
+  // 押せるのは舞台の立ち絵だけ。セリフのログの床に立つ立ち絵は押せない。
+  const stagePortrait = portraitUrl !== undefined && (
     <Portrait
       url={portraitUrl}
-      altText={altText}
-      expression={expression}
-      motion={motion}
-      className={styles["portrait"]}
+      {...portraitProps}
+      listening={listeningPose}
+      press={{
+        label: `${speakerName ?? altText}（押すと、いまの一言へ戻る）`,
+        onPress: onPortraitPress,
+      }}
     />
   )
   return (
@@ -71,7 +83,7 @@ export function PresentationalCharacterView({
           wrap="wrap"
           className={styles["character-layout"]}
         >
-          {portrait}
+          {stagePortrait}
         </HStack>
       </div>
       <ItemSeats seats={seats} portraitShown={portraitUrl !== undefined} />

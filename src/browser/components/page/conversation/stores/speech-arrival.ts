@@ -18,6 +18,8 @@ import {
 
 type SpeechArrivalState = {
   readonly arrival: SpeechArrival
+  /** いまの一言（いちばん新しいやり取りの最後の声）が、いま届いたものとして、動きと出方をもう一度掛ける。声が無ければ何もしない。 */
+  readonly replay: (at: number) => void
 }
 
 export const useSpeechArrival = create<SpeechArrivalState>()((set) => {
@@ -42,5 +44,18 @@ export const useSpeechArrival = create<SpeechArrivalState>()((set) => {
     }
   }
   useSession.subscribe(onSessionChange)
-  return { arrival: NO_SPEECH_ARRIVAL }
+  return {
+    arrival: NO_SPEECH_ARRIVAL,
+    replay: (at) => {
+      const voices = newestVoicesOf(useSession.getState().state)
+      const arrival = speechArrivalOf(
+        { turnId: voices.turnId, count: 0, chatMode: false },
+        voices,
+        at,
+      )
+      if (arrival.kind === "arrived") {
+        set({ arrival })
+      }
+    },
+  }
 })

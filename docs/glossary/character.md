@@ -129,7 +129,7 @@
 
 ### 聞く姿勢
 
-- **英語識別子（予定）**: `listeningPose`（立ち絵の属性）
+- **英語識別子**: `listeningPose`（立ち絵の `data-listening` 属性と、取るかを決める関数 `isListeningPose`）
 - **定義**: 入力欄に字があるあいだ、立ち絵が続く動きを止めて入力欄の側へ身を寄せる姿勢。動きは足さず、傾きと位置だけを変える
   （`docs/architecture/adr/0063-character-voice-place-and-bearing.md` 論点 7）
 - **注記**: フォーカスだけでは取らない。1回の動きの最中は、終わってから取る

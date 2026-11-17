@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import {
+  isListeningPose,
   nextPortraitMotionTransitionDelayMs,
   resolvePortraitMotion,
   type ArrivalMotion,
@@ -407,5 +408,27 @@ describe("届いた瞬間の動き", () => {
     expect(nextPortraitMotionTransitionDelayMs({ ...input, sentAt: T }, T + 100)).toBe(
       WINDOWS.nod - 100,
     )
+  })
+})
+
+describe("isListeningPose", () => {
+  it("入力欄に字があるあいだ、続く動き（呼吸・歩く・書く）では聞く姿勢を取る", () => {
+    for (const motion of ["reading", "waiting", "writing"] as const) {
+      expect(isListeningPose(motion, true, false)).toBe(true)
+    }
+  })
+
+  it("入力欄が空なら取らない（フォーカスだけでは取らない）", () => {
+    expect(isListeningPose("reading", false, false)).toBe(false)
+  })
+
+  it("1回の動きの最中は取らず、続く動きへ戻ってから取る", () => {
+    for (const motion of ["success", "failure", "beckon", "nod", "lean", "tilt", "sink"] as const) {
+      expect(isListeningPose(motion, true, false)).toBe(false)
+    }
+  })
+
+  it("動きを減らす設定では取らない", () => {
+    expect(isListeningPose("reading", true, true)).toBe(false)
   })
 })

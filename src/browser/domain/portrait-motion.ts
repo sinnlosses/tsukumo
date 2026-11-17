@@ -152,6 +152,27 @@ export function nextPortraitMotionTransitionDelayMs(
   return remaining.length === 0 ? undefined : Math.min(...remaining)
 }
 
+/** 続く動き（歩く・呼吸・書く）。これだけが聞く姿勢に替わってよい。 */
+const CONTINUING_MOTIONS = [
+  "reading",
+  "waiting",
+  "writing",
+] as const satisfies readonly PortraitMotion[]
+
+/**
+ * 立ち絵が聞く姿勢（`data-listening`）を取るか。
+ * 入力欄に字があるあいだだけ取り、フォーカスだけでは取らない。
+ * 1回の動き（びくっ・祝う・跳ねる・呼ぶ・出方・うなずく）の最中は取らず、終わって続く動きへ戻ってから取る。
+ * 動きを減らす設定では、傾きが変わる瞬間が動きに見えるので取らない。
+ */
+export function isListeningPose(
+  motion: PortraitMotion,
+  draftHasText: boolean,
+  reducedMotion: boolean,
+): boolean {
+  return draftHasText && !reducedMotion && CONTINUING_MOTIONS.some((m) => m === motion)
+}
+
 type ReactionWindow = {
   readonly motion: "beckon" | ArrivalMotion
   readonly startedAt: number

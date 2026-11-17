@@ -14,7 +14,7 @@ import { faceOnScreen, tailAim, tailPath } from "./domain/tail-aim.ts"
 import styles from "./main-view.module.css"
 
 const STAGE_SELECTOR = "[data-character-stage]"
-const PORTRAIT_SELECTOR = `${STAGE_SELECTOR} [role="img"]`
+const PORTRAIT_SELECTOR = `${STAGE_SELECTOR} [data-expression]`
 const SCROLLER_SELECTOR = "[data-main-view]"
 const VOICE_SLOT_SELECTOR = "[data-voice-slot]"
 

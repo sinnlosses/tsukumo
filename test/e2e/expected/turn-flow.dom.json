@@ -389,8 +389,8 @@
                             {
                               "tag": "div",
                               "attributes": {
-                                "role": "img",
-                                "aria-label": "つくもの精霊（どや顔）",
+                                "role": "button",
+                                "aria-label": "つくもの精霊（押すと、いまの一言へ戻る）",
                                 "data-expression": "proud",
                                 "data-motion": "reading"
                               },
@@ -676,6 +676,7 @@
                                   "tag": "div",
                                   "attributes": {
                                     "data-speaker": "character",
+                                    "data-followed": "",
                                     "role": "button",
                                     "aria-pressed": "false"
                                   },

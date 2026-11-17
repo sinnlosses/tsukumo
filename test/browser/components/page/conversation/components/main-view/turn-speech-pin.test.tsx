@@ -72,7 +72,9 @@ function renderBoth(records: readonly SessionRecord[], viewedTurn: "newest" | nu
 }
 
 const expression = (): string | null | undefined =>
-  document.querySelector('[data-character-stage] [role="img"]')?.getAttribute("data-expression")
+  document
+    .querySelector("[data-character-stage] [data-expression]")
+    ?.getAttribute("data-expression")
 
 const row = (text: string): HTMLElement =>
   screen.getByText(text, { selector: '[data-speaker="character"]' })

@@ -24,6 +24,7 @@ import {
 } from "../../../../../../domain/character-face.ts"
 import { portraitAppearance } from "../../../../../../domain/portrait-appearance.ts"
 import {
+  isListeningPose,
   nextPortraitMotionTransitionDelayMs,
   resolvePortraitMotion,
   type PortraitMotion,
@@ -42,10 +43,12 @@ import {
 } from "../../../domain/pinned-speech.ts"
 import { SPEECH_ARRIVALS } from "../../../domain/speech-arrival.ts"
 import { welcomeHeadOf } from "../../../domain/welcome-entry-list.ts"
+import { useComposerDraft } from "../../../stores/composer-draft.ts"
 import { useShownReaction, useWaitingLineDueAt } from "../../../stores/shown-reaction.ts"
 import { useSpeechArrival } from "../../../stores/speech-arrival.ts"
 import { useViewedSpeech } from "../../../stores/viewed-speech.ts"
 import { useWelcomeCards } from "../../hooks/use-welcome-card-list.ts"
+import { scrollToFollowedRow } from "./scroll-to-followed-row.ts"
 import { useTabVisibility } from "./use-tab-visibility.ts"
 import { useWelcomeGreetingRecord } from "./use-welcome-greeting-record.ts"
 
@@ -59,10 +62,14 @@ export type CharacterViewModel = {
   readonly altText: string
   readonly expression: Expression
   readonly motion: PortraitMotion
+  /** 入力欄に字があって、聞く姿勢を取るか（`isListeningPose`）。 */
+  readonly listeningPose: boolean
   /** セリフのログの最新の吹き出しに添える話し手の名前。キャラクターが届いていない・名前が無ければ `undefined`。 */
   readonly speakerName?: string
   /** セリフのログへ渡す、いま留めている行（`<SpeechLog>` と印・表情の状態を共有する）。 */
   readonly pinnedSpeech?: PinnedSpeech
+  /** 立ち絵を押したとき。留めを解き、いまの一言まで流れを送り、その動きと出方をもう一度掛ける。 */
+  readonly onPortraitPress: () => void
   /** セリフのログの行を押したとき（`<SpeechLog>` から呼ぶ。立ち絵の表情が遡る）。 */
   readonly onToggleSpeech: (turnId: number, index: number) => void
   /** セリフのログが開いているか。開く口は狭い画面の吹き出し。 */
@@ -125,6 +132,9 @@ export function useCharacterView(): CharacterViewModel {
 
   const viewed = useViewedSpeech((state) => state.viewed)
   const toggleSpeech = useViewedSpeech((state) => state.toggle)
+  const draftHasText = useComposerDraft((state) => state.draft.text !== "")
+  const releaseSpeech = useViewedSpeech((state) => state.release)
+  const replayArrival = useSpeechArrival((state) => state.replay)
   const [speechLogOpen, setSpeechLogOpen] = useState(false)
 
   const now = useCharacterClock(
@@ -181,8 +191,16 @@ export function useCharacterView(): CharacterViewModel {
     altText,
     expression,
     motion,
+    listeningPose: isListeningPose(motion, draftHasText, reducedMotion),
     speakerName: character?.name,
     pinnedSpeech: pinned,
+    onPortraitPress: () => {
+      releaseSpeech()
+      replayArrival(nowEpochMilliseconds())
+      requestAnimationFrame(() => {
+        scrollToFollowedRow(reducedMotion)
+      })
+    },
     onToggleSpeech: toggleSpeech,
     speechLogOpen,
     onOpenSpeechLog: () => setSpeechLogOpen(true),
