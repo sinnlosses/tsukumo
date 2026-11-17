@@ -1,0 +1,458 @@
+/* キャラクターの振る舞いと吹き出しの見本。器と流れの部品は ../stream-harmony-2026-11-16/ の flow.css・goal.css を読み、
+   ここには今の形（form=now）と提案（form=next）の差だけを置く。形は body の data-form、場面は data-moment で切り替える。 */
+
+[hidden] {
+  display: none !important;
+}
+
+.mock-bar-replay {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-inline-start: auto;
+  padding: 2px 10px;
+  border: 1px solid var(--edge);
+  border-radius: 6px;
+  color: var(--ink);
+  font-size: 12px;
+}
+
+.mock-bar-replay:hover {
+  background: var(--raised);
+}
+
+/* 流れは入力欄の側へ寄せ、最終レポートのあるやり取りは頭から並べる（今の画面と同じ）。 */
+.flow {
+  justify-content: flex-end;
+}
+
+body[data-moment="idle"] .flow {
+  justify-content: flex-start;
+}
+
+/* 迎える場面は、進行の帯とやり取りの列を出さない（今の画面と同じ）。 */
+body[data-moment="greet"] :is(.strip, .lane) {
+  display: none;
+}
+
+/* 行の脇の字。時刻は分が変わった行だけに出し、省いた行は触れるかフォーカスで読める（今の画面と同じ）。 */
+.v-meta {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  align-self: flex-end;
+  gap: 6px;
+  min-block-size: 24px;
+  color: var(--ink-soft);
+  font-size: 12px;
+  line-height: 20px;
+}
+
+.v-time {
+  padding: 0 4px;
+  border-radius: 10px;
+  background: var(--ground);
+  font-family: var(--mono);
+}
+
+.v-time.is-quiet {
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.row:is(:hover, :focus-within) .v-time.is-quiet {
+  opacity: 1;
+}
+
+/* 提案 C: いまの一言の鮮度。届いてから2分を過ぎたら、時刻の代わりに「n分前」を出す。 */
+.v-age {
+  padding: 0 8px;
+  border-radius: 10px;
+  background: var(--ground);
+  color: var(--ink);
+}
+
+/* 提案 C: 明るさは届いてから2分まで。過ぎたら尾だけを残して、ほかのセリフと同じ面に落ち着く。 */
+body[data-p~="goal"] .bubble-say.is-live.is-calm {
+  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+  box-shadow: none;
+}
+
+.bubble-say.is-calm .tail path {
+  fill: color-mix(in srgb, var(--accent) 12%, var(--surface));
+  stroke: color-mix(in srgb, var(--accent) 55%, var(--surface));
+}
+
+/* 提案 E: 表情が前のセリフから変わった行にだけ、パックの表情の語を吹き出しの外に添える。 */
+.v-face {
+  padding: 0 8px;
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+  border-radius: 999px;
+  color: var(--ink);
+  line-height: 18px;
+}
+
+/* 提案 E: セリフを押すと、立ち絵がそのセリフの表情に戻る（雑談・狭い画面のログと同じ操作）。 */
+.bubble-say[role="button"] {
+  cursor: pointer;
+}
+
+.bubble-say[aria-pressed="true"] {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* 提案 F: セリフに返す口。行に触れるかフォーカスが入ったときだけ出る。 */
+.v-reply {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 10px;
+  border: 1px solid var(--edge);
+  border-radius: 8px;
+  background: var(--ground);
+  color: var(--ink);
+  font-size: 12px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.row:is(:hover, :focus-within, .is-touched) .v-reply {
+  opacity: 1;
+}
+
+.v-reply:hover {
+  border-color: var(--ink-soft);
+}
+
+/* 入力欄の頭の、返す先の札。 */
+.quote {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-inline-start: -8px;
+  padding: 2px 6px 2px 10px;
+  border-inline-start: 2px solid var(--accent);
+  border-radius: 4px;
+  background: var(--raised);
+  color: var(--ink-soft);
+  font-size: 12px;
+}
+
+.quote b {
+  flex: 1;
+  min-inline-size: 0;
+  overflow: hidden;
+  color: var(--ink);
+  font-weight: 400;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 提案 A: 声の定位置。流れの外に届く声（迎えの挨拶・待ちの一言・おかえり）を、入力欄のすぐ上・立ち絵の頭の横に出す。 */
+.voice {
+  display: flex;
+  margin-block-end: 6px;
+  padding-inline-start: 12px;
+}
+
+.voice .row {
+  inline-size: 100%;
+}
+
+body[data-voice="1"] {
+  --dock-h: 178px;
+}
+
+/* 迎える場面の始め方の一覧。今の形は頭から、提案は挨拶のすぐ上（入力欄の側）に寄せる。 */
+.welcome {
+  display: grid;
+  gap: 12px;
+}
+
+body[data-form="now"][data-moment="greet"] .flow {
+  justify-content: flex-start;
+  padding-block-start: 16px;
+}
+
+.welcome-title {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.welcome-lead {
+  margin-block-start: -8px;
+  color: var(--ink-soft);
+  font-size: 14px;
+}
+
+body[data-form="next"] .welcome-lead {
+  margin-block-start: 0;
+  font-size: 12px;
+}
+
+.welcome-card {
+  display: grid;
+  gap: 6px;
+  padding: 14px 16px 12px;
+  border: 1px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface));
+  box-shadow: var(--paper-lift);
+}
+
+.welcome-card-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.welcome-badge {
+  padding: 0 8px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--ground);
+}
+
+.welcome-card-title {
+  font-size: 15px;
+}
+
+.welcome-card-reason {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+
+.welcome-card-reason img {
+  inline-size: 18px;
+  block-size: 18px;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: top;
+}
+
+.welcome-card-request {
+  padding: 6px 10px;
+  border-inline-start: 2px solid var(--edge);
+  font-size: 13px;
+}
+
+.welcome-card-request span {
+  color: var(--ink-soft);
+  font-size: 12px;
+}
+
+.welcome-card-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-block-start: 8px;
+  border-block-start: 1px solid var(--edge-quiet);
+}
+
+.welcome-start {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 14px;
+  border-radius: 10px;
+  background: var(--accent);
+  color: var(--ground);
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.welcome-others {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink-soft);
+  font-size: 12px;
+}
+
+.welcome-others button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 10px;
+  background: var(--glass-dense);
+  color: var(--ink);
+  font-size: 14px;
+}
+
+/* サイドバーは中身を出さない（疑似セッションで撮った今の画面と同じ）。使用量の帯だけを置く。 */
+.side-blank {
+  flex: 1;
+}
+
+.usage-now {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr;
+  gap: 12px;
+  padding: 18px 16px 20px;
+  border-block-start: 1px solid var(--edge);
+  color: var(--ink-soft);
+  font-size: 12px;
+}
+
+.usage-now-item {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  padding-block-end: 8px;
+  white-space: nowrap;
+}
+
+.usage-now-item b {
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 400;
+}
+
+.usage-now-item i {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: 0;
+  block-size: 3px;
+  border-radius: 2px;
+  background: linear-gradient(to right, var(--accent) var(--share), var(--raised) var(--share));
+}
+
+/* 立ち絵の動き。値は今の画面（portrait.module.css）と同じで、提案で足すのは「うなずく」と「呼ぶ」の2つ。
+   立ち絵は1枚の矩形のまま、位置と傾きだけを動かす。 */
+.portrait {
+  transform-origin: 50% 100%;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .portrait[data-motion="breathe"],
+  .motion-figure[data-motion="breathe"] {
+    animation: v-breathe 3.2s ease-in-out infinite;
+  }
+
+  .portrait[data-motion="walk"],
+  .motion-figure[data-motion="walk"] {
+    animation: v-walk 4.5s ease-in-out infinite;
+  }
+
+  .portrait[data-motion="bounce"],
+  .motion-figure[data-motion="bounce"] {
+    animation: v-bounce 0.5s ease-out 1;
+  }
+
+  .portrait[data-motion="flinch"],
+  .motion-figure[data-motion="flinch"] {
+    animation: v-flinch 0.35s ease-out 1;
+  }
+
+  /* 提案 B: セリフが届いた瞬間と、依頼・補足・答えを受け取った瞬間に、1回うなずく。 */
+  .portrait[data-motion="nod"],
+  .motion-figure[data-motion="nod"] {
+    animation: v-nod 0.36s ease-out 1;
+  }
+
+  /* 提案 B: 答え待ちのあいだ、流れの側へ身を寄せる動きを3回して止まる。タブへ戻ったときにもう一度だけ。 */
+  .portrait[data-motion="beckon"],
+  .motion-figure[data-motion="beckon"] {
+    animation: v-beckon 3.6s ease-in-out 3;
+  }
+}
+
+@keyframes v-breathe {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-0.2rem);
+  }
+}
+
+@keyframes v-walk {
+  0%,
+  50%,
+  100% {
+    transform: translateX(0);
+  }
+
+  25% {
+    transform: translateX(0.5rem);
+  }
+
+  75% {
+    transform: translateX(-0.5rem);
+  }
+}
+
+@keyframes v-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  40% {
+    transform: translateY(-0.55rem);
+  }
+
+  65% {
+    transform: translateY(0.11rem);
+  }
+}
+
+@keyframes v-flinch {
+  0%,
+  100% {
+    transform: translateX(0) rotate(0deg);
+  }
+
+  30% {
+    transform: translateX(-0.3rem) rotate(-3deg);
+  }
+
+  60% {
+    transform: translateX(0.12rem) rotate(1.2deg);
+  }
+}
+
+@keyframes v-nod {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+
+  45% {
+    transform: translateY(0.25rem) rotate(2deg);
+  }
+}
+
+@keyframes v-beckon {
+  0%,
+  42%,
+  100% {
+    transform: translateX(0) rotate(0deg);
+  }
+
+  10% {
+    transform: translateX(0.5rem) rotate(3deg);
+  }
+
+  20% {
+    transform: translateX(0.15rem) rotate(1deg);
+  }
+
+  30% {
+    transform: translateX(0.45rem) rotate(2.6deg);
+  }
+}
