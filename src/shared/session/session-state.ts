@@ -129,8 +129,8 @@ export type SessionState = {
    */
   readonly tasks: TaskSummaryResult
   /**
-   * 始め方の一覧のおすすめのカード（おすすめの順、`MAX_RECOMMENDATION_CARDS` 枚まで）。
-   * 源は `recommendation-changed` だけで、届くたびに丸ごと置き換える。空は「まだ無い」で、画面は既定の並びを出す。
+   * 始め方の一覧のおすすめのカードに添える理由（前回の続きと、おすすめの順のタスク `MAX_RECOMMENDATION_CARDS` 件まで）。
+   * 源は `recommendation-changed` だけで、届くたびに丸ごと置き換える。空は「まだ無い」で、画面はカードを理由なしで出す。
    * `tasks` と同じく起こし直しをまたいで残す。
    */
   readonly recommendation: readonly RecommendationCard[]

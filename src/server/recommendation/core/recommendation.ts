@@ -4,16 +4,11 @@
 import { uniqueBy } from "remeda"
 import { z } from "zod"
 
-import {
-  MAX_RECOMMENDATION_CARDS,
-  type RecommendationCard,
-} from "../../../shared/recommendation/recommendation-card.ts"
+import type { RecommendationCard } from "../../../shared/recommendation/recommendation-card.ts"
+import type { TaskDifficulty } from "../../../shared/repository/task-summary.ts"
 import { structuredOutputSchema } from "../../core/query/structured-output-schema.ts"
 import type { StructuredQuery } from "../../core/query/structured-query.ts"
-import type {
-  RecommendationCandidate,
-  RecommendationCandidates,
-} from "./recommendation-candidate.ts"
+import type { RecommendationCandidate } from "./recommendation-candidate.ts"
 
 /** 問い合わせを起こすモデル（軽いもの）。 */
 const RECOMMENDATION_MODEL = "haiku"
@@ -27,57 +22,63 @@ const RECOMMENDATION_REASON_CHARS = 40
 /** 「前回の続き」の候補のキー。タスクの候補のキーはタスクの ID。 */
 const RESUME_KEY = "resume"
 
-/** `query()` の `systemPrompt` をそのまま置き換える指示文。 */
-const RECOMMENDATION_INSTRUCTION = `あなたは、これから作業を始める利用者に、どれから始めるとよいかを選んで見せる役目だけを持つ。
+/** 難しさを依頼の文面に書く語。 */
+const DIFFICULTY_WORD = {
+  haiku: "軽い",
+  sonnet: "ふつう",
+  opus: "重い",
+} as const satisfies Record<TaskDifficulty, string>
 
-渡された候補から、始めるのにおすすめのものを1〜${String(MAX_RECOMMENDATION_CARDS)}件、おすすめの順に選び、それぞれに理由を1行で書く。
+/** `query()` の `systemPrompt` をそのまま置き換える指示文。 */
+const RECOMMENDATION_INSTRUCTION = `あなたは、これから作業を始める利用者に、並べてある始め方それぞれのおすすめの理由を書いて見せる役目だけを持つ。
+
+渡された候補は、先に手を付けるとよい順にもう選んで並べてある。候補を選び直さず、並べ替えず、すべての候補に理由を1行ずつ書く。
 
 ## 候補
 
 - \`key: ${RESUME_KEY}\` は「前回の続き」。前のセッションでやり残したことの続きだが、中身は渡されない
-- ほかの候補はタスク。\`key\` はタスクの ID で、要約と、そのタスクを待っている未完了のタスクの ID が添えてある
+- ほかの候補はタスク。\`key\` はタスクの ID で、要約と、並べた決め手が添えてある
+  - 印: 利用者が付けた「急ぎ」「大事」。付いていなければ「なし」
+  - 待っているタスク: このタスクが済むと着手できるようになるタスクの件数
+  - 難しさ: 軽い・ふつう・重い。分からなければ「不明」
+  - 前の作業: 「済んでいる」は、前の作業が済んで着手できるようになったタスク。「なし」は単独のタスク
 
 ## 理由の書き方
 
-- 次の3つのどれか1つが読んで分かる言い方にする
-  - 効き目: ほかの作業より先に効いてくる・あとの作業が楽になる・困りごとが減る
-  - 軽さ: 小さく片づく・肩ならしにちょうどいい・時間のとれる日にまとめてやるとよい
-  - つながり: 前の作業の続きから入れる
-- 「前回の続き」を選ぶときの理由は「つながり」で書く（中身は知らないので、中身を推し量って書かない）
+- 次の3つのどれか1つが読んで分かる言い方にする。添えてある決め手に当てはまるものから選ぶ
+  - 効き目: 印が「急ぎ」か「大事」、または待っているタスクが1件以上（先に片づけたい・あとの作業が動く）
+  - つながり: 前の作業が「済んでいる」（前の作業の続きから入れる）
+  - 軽さ: 難しさが「軽い」（小さく片づく・肩ならしにちょうどいい）
+- 難しさが「軽い」でないタスクに「軽さ」を書かない。待っているタスクが0件のタスクに「あとの作業が動く」と書かない
+- 当てはまる決め手が無いタスクは、要約から読める効き目（何が良くなるか）を書く
+- 「前回の続き」の理由は「つながり」で書く（中身は知らないので、中身を推し量って書かない）
+- 候補どうしで同じ言い回しを繰り返さない
 - 数を競わせる言い方（「最速」「いちばん多い」「最も」「No.1」など）はしない
 - タスクの ID を理由に書かない（カードに ID が並んで出る）
 - ${String(RECOMMENDATION_REASON_CHARS)}字まで、改行を含めない。です・ます調にしない
 
 ## 出力
 
-- \`cards\` に、おすすめの順で \`key\`（候補の key をそのまま）と \`reason\` を並べる
+- \`cards\` に、渡された順のまま、すべての候補の \`key\`（候補の key をそのまま）と \`reason\` を並べる
 - 同じ key を2回書かない`
 
-/**
- * 候補の並びから `query()` に渡すものを組む。
- * 上限で候補に入れなかったタスクがあるときだけ、その件数を依頼の文面の末尾に添える。
- */
-export function recommendationQuery(selection: RecommendationCandidates): StructuredQuery {
-  const omitted =
-    selection.omittedCount === 0
-      ? []
-      : [
-          "",
-          `着手できるタスクがほかに ${String(selection.omittedCount)} 件あるが、候補には渡していない`,
-        ]
+/** 候補の並びから `query()` に渡すものを組む。 */
+export function recommendationQuery(
+  candidates: readonly RecommendationCandidate[],
+): StructuredQuery {
   return {
     kind: "recommendation",
     images: [],
     model: RECOMMENDATION_MODEL,
     systemPrompt: RECOMMENDATION_INSTRUCTION,
-    prompt: ["## 候補", ...selection.candidates.map(candidateLine), ...omitted].join("\n"),
-    schema: structuredOutputSchema(recommendationSchema(selection.candidates)),
+    prompt: ["## 候補", ...candidates.map(candidateLine)].join("\n"),
+    schema: structuredOutputSchema(recommendationSchema(candidates)),
   }
 }
 
 /**
- * 受け取った `structured_output` を検査して札の並びにする。
- * 候補に無いキー・前に出たキー・空か改行入りか上限超えの理由の件は1件ずつ落とし、{@link MAX_RECOMMENDATION_CARDS} 件で切る。
+ * 受け取った `structured_output` を検査して、理由の付いた札を候補の順に並べる。
+ * 候補に無いキー・前に出たキー・空か改行入りか上限超えの理由の件は1件ずつ落とす。
  * 形そのものが崩れている・1件も残らないときは `undefined`（何も配らない側に倒す）。
  */
 export function parseRecommendationResult(
@@ -88,10 +89,16 @@ export function parseRecommendationResult(
   if (!outer.success) {
     return undefined
   }
-  const cards = outer.data.cards
-    .map((entry) => toCard(entry, candidates))
-    .filter((card): card is RecommendationCard => card !== undefined)
-  const kept = uniqueBy(cards, cardKey).slice(0, MAX_RECOMMENDATION_CARDS)
+  const written = uniqueBy(
+    outer.data.cards
+      .map((entry) => toCard(entry, candidates))
+      .filter((card): card is RecommendationCard => card !== undefined),
+    cardKey,
+  )
+  const kept = candidates.flatMap((candidate) => {
+    const card = written.find((each) => cardKey(each) === candidateKey(candidate))
+    return card === undefined ? [] : [card]
+  })
   return kept.length === 0 ? undefined : kept
 }
 
@@ -100,8 +107,23 @@ function candidateLine(candidate: RecommendationCandidate): string {
   if (candidate.kind === "resume") {
     return `- key: ${RESUME_KEY} / 前回の続き（中身は渡さない）`
   }
-  const waitedBy = candidate.waitedBy.length === 0 ? "なし" : candidate.waitedBy.join(", ")
-  return `- key: ${candidate.id} / 待っているタスク: ${waitedBy} / 要約: ${candidate.summary}`
+  return [
+    `- key: ${candidate.id}`,
+    `印: ${markWords(candidate)}`,
+    `待っているタスク: ${String(candidate.waitedBy.length)}件`,
+    `難しさ: ${candidate.difficulty === undefined ? "不明" : DIFFICULTY_WORD[candidate.difficulty]}`,
+    `前の作業: ${candidate.followsDoneWork ? "済んでいる" : "なし"}`,
+    `要約: ${candidate.summary}`,
+  ].join(" / ")
+}
+
+/** 利用者が高く付けた緊急度と重要度を、依頼の文面の語にする。どちらも高くなければ「なし」。 */
+function markWords(candidate: Extract<RecommendationCandidate, { readonly kind: "task" }>): string {
+  const words = [
+    ...(candidate.urgency === "high" ? ["急ぎ"] : []),
+    ...(candidate.importance === "high" ? ["大事"] : []),
+  ]
+  return words.length === 0 ? "なし" : words.join("・")
 }
 
 /** 札1件の形。`key` は候補のキーに限り、`reason` は空でない・改行を含まない・{@link RECOMMENDATION_REASON_CHARS} 字以下の1行（前後の空白は落とす）。 */
@@ -119,7 +141,7 @@ function cardSchema(candidates: readonly RecommendationCandidate[]) {
 
 function recommendationSchema(candidates: readonly RecommendationCandidate[]) {
   return z.object({
-    cards: z.array(cardSchema(candidates)).min(1).max(MAX_RECOMMENDATION_CARDS),
+    cards: z.array(cardSchema(candidates)).min(1).max(candidates.length),
   })
 }
 

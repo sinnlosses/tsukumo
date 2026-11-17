@@ -7,13 +7,13 @@
         "kind": "recommendation-changed",
         "cards": [
           {
+            "kind": "resume",
+            "reason": "架空のつながり。前の作業の続きでそのまま入れる"
+          },
+          {
             "kind": "task",
             "taskId": "T-003",
             "reason": "架空の効き目が大きい。ほかの直しより先に効いてくる"
-          },
-          {
-            "kind": "resume",
-            "reason": "架空のつながり。前の作業の続きでそのまま入れる"
           },
           {
             "kind": "task",

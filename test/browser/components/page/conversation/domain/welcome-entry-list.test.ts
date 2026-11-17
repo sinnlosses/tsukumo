@@ -97,15 +97,16 @@ describe("切り替え画面で選べる行", () => {
 })
 
 describe("おすすめのカード", () => {
-  it("おすすめの並びと理由をそのまま当てる", () => {
+  it("タスクをおすすめの順に3枚並べ、届いた理由を同じタスクの札に当てる", () => {
     const cards = welcomeCardsOf(
       [taskCard("X-3", "理由3"), taskCard("X-1", "理由1")],
       NO_RESUME,
       READY_TASKS,
     )
-    expect(cards.slice(0, 2).map((card) => [card.id, card.reason, card.request])).toEqual([
+    expect(cards.map((card) => [card.id, card.reason, card.request])).toEqual([
+      ["X-4", "", "タスク X-4 を進めて"],
       ["X-3", "理由3", "タスク X-3 を進めて"],
-      ["X-1", "理由1", "タスク X-1 を進めて"],
+      ["X-2", "", "タスク X-2 を進めて"],
     ])
   })
 
@@ -132,51 +133,46 @@ describe("おすすめのカード", () => {
     expect(cards[0]?.id).toBe("（題なし）")
   })
 
-  it("画面が前回の残りを持たないときは前回の続きの札を外し、空いた枠を既定の並びで埋める", () => {
+  it("前回の残りがあれば前回の続きが先頭で、タスクは残りの2枚", () => {
+    const recommendation: readonly RecommendationCard[] = [
+      { kind: "resume", reason: "つながり" },
+      taskCard("X-4", "理由4"),
+    ]
+    const cards = welcomeCardsOf(
+      recommendation,
+      resumeOf(choice("prev", "題"), "架空の残り"),
+      READY_TASKS,
+    )
+    expect(cards.map((card) => [card.id, card.reason])).toEqual([
+      ["題", "つながり"],
+      ["X-4", "理由4"],
+      ["X-3", ""],
+    ])
+  })
+
+  it("画面が前回の残りを持たないときは、前回の続きの理由が届いていても札を出さない", () => {
     const recommendation: readonly RecommendationCard[] = [
       { kind: "resume", reason: "つながり" },
       taskCard("X-2", "理由2"),
     ]
     const cards = welcomeCardsOf(recommendation, NO_RESUME, READY_TASKS)
     expect(cards.map((card) => [card.id, card.reason])).toEqual([
+      ["X-4", ""],
+      ["X-3", ""],
       ["X-2", "理由2"],
-      ["X-1", ""],
+    ])
+  })
+
+  it("理由が1つも届いていないあいだも同じ並びで、理由は空", () => {
+    const cards = welcomeCardsOf([], resumeOf(choice("prev", "題"), "架空の残り"), READY_TASKS)
+    expect(cards.map((card) => [card.id, card.reason])).toEqual([
+      ["題", ""],
+      ["X-4", ""],
       ["X-3", ""],
     ])
   })
 
-  it("いまの着手できる未着手に無いタスクの札は外す", () => {
-    const cards = welcomeCardsOf(
-      [taskCard("GONE-1", "理由"), taskCard("X-4", "理由4")],
-      NO_RESUME,
-      READY_TASKS,
-    )
-    expect(cards.map((card) => card.id)).toEqual(["X-4", "X-1", "X-2"])
-  })
-
-  it("おすすめが空のあいだは既定の並び（続き → 着手できる未着手の上から）で、理由は空", () => {
-    const cards = welcomeCardsOf([], resumeOf(choice("prev", "題"), "架空の残り"), READY_TASKS)
-    expect(cards.map((card) => [card.id, card.reason])).toEqual([
-      ["題", ""],
-      ["X-1", ""],
-      ["X-2", ""],
-    ])
-  })
-
-  it("3枚までで、同じ札の重なりは先頭だけ残す", () => {
-    const cards = welcomeCardsOf(
-      [taskCard("X-1", "a"), taskCard("X-1", "b"), taskCard("X-2", "c"), taskCard("X-3", "d")],
-      NO_RESUME,
-      READY_TASKS,
-    )
-    expect(cards.map((card) => [card.id, card.reason])).toEqual([
-      ["X-1", "a"],
-      ["X-2", "c"],
-      ["X-3", "d"],
-    ])
-  })
-
-  it("依存で止まるもの・済んだものは既定の並びに入らない", () => {
+  it("依存で止まるもの・済んだものは札にならない", () => {
     const cards = welcomeCardsOf(
       [],
       NO_RESUME,
@@ -204,7 +200,7 @@ describe("迎えの挨拶が名指す先頭の札", () => {
   it("先頭がタスクならその ID", () => {
     const cards = welcomeCardsOf([taskCard("X-2", "理由")], NO_RESUME, READY_TASKS)
 
-    expect(welcomeHeadOf(cards)).toEqual({ kind: "card", name: "X-2" })
+    expect(welcomeHeadOf(cards)).toEqual({ kind: "card", name: "X-4" })
   })
 
   it("先頭が前回の続きなら見出しではなく「前回の続き」", () => {

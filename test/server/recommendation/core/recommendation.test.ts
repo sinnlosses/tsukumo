@@ -8,16 +8,36 @@ import {
 
 // すべて手で書いた架空の候補。
 
+type TaskCandidate = Extract<RecommendationCandidate, { readonly kind: "task" }>
+
+function taskCandidate(
+  id: string,
+  summary: string,
+  overrides: Partial<TaskCandidate> = {},
+): TaskCandidate {
+  return {
+    kind: "task",
+    id,
+    summary,
+    waitedBy: [],
+    difficulty: "sonnet",
+    importance: "normal",
+    urgency: "normal",
+    followsDoneWork: false,
+    ...overrides,
+  }
+}
+
 const CANDIDATES: readonly RecommendationCandidate[] = [
   { kind: "resume" },
-  { kind: "task", id: "X-002", summary: "架空の重い直し", waitedBy: ["X-003"] },
-  { kind: "task", id: "X-005", summary: "架空の軽い直し", waitedBy: [] },
-  { kind: "task", id: "X-007", summary: "架空の別の直し", waitedBy: [] },
+  taskCandidate("X-002", "架空の重い直し", { waitedBy: ["X-003"] }),
+  taskCandidate("X-005", "架空の軽い直し"),
+  taskCandidate("X-007", "架空の別の直し"),
 ]
 
 describe("recommendationQuery", () => {
   it("出力のキーを候補のキーに限る", () => {
-    const { schema } = recommendationQuery({ candidates: CANDIDATES, omittedCount: 0 })
+    const { schema } = recommendationQuery(CANDIDATES)
 
     expect(schema).toMatchObject({
       properties: {
@@ -26,33 +46,45 @@ describe("recommendationQuery", () => {
     })
   })
 
-  it("札は1〜3件で、理由の字数の上限も出力の形に出す", () => {
-    const { schema } = recommendationQuery({ candidates: CANDIDATES, omittedCount: 0 })
+  it("札は1件から候補の数までで、理由の字数の上限も出力の形に出す", () => {
+    const { schema } = recommendationQuery(CANDIDATES)
 
     expect(schema).toMatchObject({
       required: ["cards"],
       properties: {
         cards: {
           minItems: 1,
-          maxItems: 3,
+          maxItems: 4,
           items: { properties: { reason: { type: "string", minLength: 1, maxLength: 40 } } },
         },
       },
     })
   })
 
-  it("渡せなかったタスクがあるときだけ、その件数を依頼の文面の末尾に添える", () => {
-    const whole = recommendationQuery({ candidates: CANDIDATES, omittedCount: 0 })
-    const cut = recommendationQuery({ candidates: CANDIDATES, omittedCount: 4 })
+  it("タスクの候補の行に、並べた決め手（印・待っているタスクの件数・難しさ・前の作業）を書く", () => {
+    const { prompt } = recommendationQuery([
+      { kind: "resume" },
+      taskCandidate("X-002", "架空の急ぎの直し", {
+        waitedBy: ["X-003", "X-004"],
+        difficulty: "haiku",
+        importance: "high",
+        urgency: "high",
+        followsDoneWork: true,
+      }),
+      taskCandidate("X-005", "架空の単独の直し", { difficulty: undefined, importance: "low" }),
+    ])
 
-    expect(whole.prompt).not.toContain("ほかに")
-    expect(cut.prompt).toContain("着手できるタスクがほかに 4 件ある")
-    expect(cut.prompt.startsWith(whole.prompt)).toBe(true)
+    expect(prompt.split("\n")).toEqual([
+      "## 候補",
+      "- key: resume / 前回の続き（中身は渡さない）",
+      "- key: X-002 / 印: 急ぎ・大事 / 待っているタスク: 2件 / 難しさ: 軽い / 前の作業: 済んでいる / 要約: 架空の急ぎの直し",
+      "- key: X-005 / 印: なし / 待っているタスク: 0件 / 難しさ: 不明 / 前の作業: なし / 要約: 架空の単独の直し",
+    ])
   })
 })
 
 describe("parseRecommendationResult", () => {
-  it("候補のキーを札にし、前回の続きは中身を持たない札にする", () => {
+  it("候補のキーを札にして候補の順に並べ、前回の続きは中身を持たない札にする", () => {
     expect(
       parseRecommendationResult(
         {
@@ -64,12 +96,12 @@ describe("parseRecommendationResult", () => {
         CANDIDATES,
       ),
     ).toEqual([
-      { kind: "task", taskId: "X-002", reason: "架空の効き目の理由" },
       { kind: "resume", reason: "架空のつながりの理由" },
+      { kind: "task", taskId: "X-002", reason: "架空の効き目の理由" },
     ])
   })
 
-  it("候補に無いキー・重複・空や改行入りや長すぎる理由の件を1件ずつ落とし、3件で切る", () => {
+  it("候補に無いキー・重複・空や改行入りや長すぎる理由の件を1件ずつ落とす", () => {
     expect(
       parseRecommendationResult(
         {
@@ -88,9 +120,10 @@ describe("parseRecommendationResult", () => {
         CANDIDATES,
       ),
     ).toEqual([
+      { kind: "resume", reason: "架空の理由4" },
       { kind: "task", taskId: "X-002", reason: "架空の理由1" },
       { kind: "task", taskId: "X-005", reason: "架空の理由3" },
-      { kind: "resume", reason: "架空の理由4" },
+      { kind: "task", taskId: "X-007", reason: "架空の理由5" },
     ])
   })
 

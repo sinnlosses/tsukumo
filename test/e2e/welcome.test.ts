@@ -9,7 +9,7 @@ import {
 } from "./task-room.ts"
 
 // 依頼前のメインビューの始め方の一覧（docs/architecture/testing.md「E2E のシナリオの一覧」）。
-// 札の並びと理由は疑似セッションの場面 `welcome-recommendation`、続きの要約は `sessionDigests`、タスクは cwd の `FAKE_BEADS_ISSUES_PATH` に架空の課題を置いて用意する。
+// 札の理由は疑似セッションの場面 `welcome-recommendation`、続きの要約は `sessionDigests`、タスクは cwd の `FAKE_BEADS_ISSUES_PATH` に架空の課題を置いて用意する。
 // 要約は手続き（`/rpc`）の応答で届くので、その応答を待ってから、描かれるまで凍らせた時計を進める。
 
 const ELAPSED_MS = 60_000

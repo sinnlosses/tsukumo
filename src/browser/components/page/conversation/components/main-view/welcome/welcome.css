@@ -115,28 +115,6 @@
   object-fit: cover;
 }
 
-.card-request {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2xs);
-  padding: var(--space-sm);
-  border-left: 2px solid var(--rule-quiet);
-  color: var(--ink-quiet);
-  font-size: var(--font-secondary);
-  line-height: 1.6;
-}
-.card-request-label {
-  font-size: var(--font-label);
-}
-.card-request-text {
-  display: -webkit-box;
-  overflow: hidden;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  color: var(--ink);
-  overflow-wrap: anywhere;
-}
-
 .card-foot {
   display: flex;
   align-items: center;
@@ -182,6 +160,28 @@
   align-items: center;
   gap: var(--inline-control);
 }
+/* 広い画面では、カードの並びをメインビューの上下の中央に置く。
+   上下の行が余った高さを同じだけ分け合い、見出しは上の行の下端、ほかの始め方は下の行の上端に付く。
+   カードが無いときは、ほかの始め方が中央の行に入る。
+   お伺いの札が下に並ぶあいだは中央に置かず、上から積んで札を押し下げない。 */
+@media (min-width: 761px) {
+  .welcome:only-child {
+    display: grid;
+    flex: 1;
+    grid-template-rows: 1fr auto 1fr;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .welcome:only-child > .head {
+    align-self: end;
+  }
+  .welcome:only-child > .others {
+    align-self: start;
+  }
+  /* カードの下に並ぶときだけ、幅の中央に寄せる。 */
+  .others:not(.others-large) {
+    justify-content: safe center;
+  }
+}
 .others-label {
   margin-right: var(--inline-tight);
 }
@@ -204,7 +204,7 @@
 }
 
 /* 狭い画面では、札3枚とほかの始め方が入力欄の上の高さ（390x844 で約 600px）にスクロールなしで収まるよう詰める。
-   札は送られる依頼とキーの印を畳み、題を2行・理由を1行で切る。
+   札はキーの印を畳み、題を2行・理由を1行で切る。
    ほかの始め方は見出しを1行に置き、その下にボタンを同じ幅で横1列に並べる（2つでも3つでも1行）。 */
 @media (max-width: 760px) {
   .welcome {
@@ -240,7 +240,6 @@
   .card:not(:has(.card-reason)) .card-title {
     grid-column: 1;
   }
-  .card-request,
   .card-key {
     display: none;
   }

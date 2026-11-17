@@ -1,17 +1,15 @@
-// 始め方の一覧に並べる札を、おすすめの並び・セッションの一覧・前回の残り・タスク一覧から導く。
+// 始め方の一覧に並べる札を、おすすめの理由・セッションの一覧・前回の残り・タスク一覧から導く。
 
 import {
   MAX_RECOMMENDATION_CARDS,
   type RecommendationCard,
 } from "../../../../../shared/recommendation/recommendation-card.ts"
+import { recommendationOrder } from "../../../../../shared/recommendation/recommendation-order.ts"
 import {
   NO_WELCOME_HEAD,
   type WelcomeHead,
 } from "../../../../../shared/recommendation/welcome-greeting.ts"
-import {
-  taskReadiness,
-  type TaskSummaryResult,
-} from "../../../../../shared/repository/task-summary.ts"
+import type { TaskSummaryResult } from "../../../../../shared/repository/task-summary.ts"
 import type { SessionChoice } from "../../../../../shared/session/session-choice.ts"
 
 /** 見出しが無いセッションの代わりに出す字。 */
@@ -55,21 +53,21 @@ export function hasOtherSession(otherSessions: readonly SessionChoice[]): boolea
   return otherSessions.length > 0
 }
 
-/** おすすめの並びを先に当て、足りない枠は既定の並びで理由なしに埋める。 */
+/**
+ * 前回の続き、着手できる未着手のタスクをおすすめの順、と並べた先頭から {@link MAX_RECOMMENDATION_CARDS} 枚。
+ * `recommendation` からは理由だけを当てる（理由が届いていない札の理由は空）。
+ */
 export function welcomeCardsOf(
   recommendation: readonly RecommendationCard[],
   resume: ResumeSource,
   tasks: TaskSummaryResult,
 ): readonly WelcomeCard[] {
-  const available = [...resumeCards(resume), ...readyTaskCards(tasks)]
-  const recommended = uniqueByKey(
-    recommendation.flatMap((card) => {
-      const found = available.find((entry) => entry.key === keyOf(card))
-      return found === undefined ? [] : [{ ...found, reason: card.reason }]
-    }),
-  ).slice(0, MAX_RECOMMENDATION_CARDS)
-  const filler = available.filter((entry) => !recommended.some((card) => card.key === entry.key))
-  return [...recommended, ...filler].slice(0, MAX_RECOMMENDATION_CARDS)
+  return [...resumeCards(resume), ...readyTaskCards(tasks)]
+    .slice(0, MAX_RECOMMENDATION_CARDS)
+    .map((card) => ({
+      ...card,
+      reason: recommendation.find((written) => keyOf(written) === card.key)?.reason ?? "",
+    }))
 }
 
 /** 先頭の札を迎えの挨拶に差し込む名前にする（タスクは ID）。 */
@@ -105,18 +103,12 @@ function readyTaskCards(tasks: TaskSummaryResult): readonly WelcomeCard[] {
   if (tasks.kind !== "known") {
     return []
   }
-  return tasks.items
-    .filter((task) => taskReadiness(task)?.kind === "ready")
-    .map((task) => ({
-      kind: "task" as const,
-      key: task.id,
-      id: task.id,
-      title: task.summary,
-      reason: "",
-      request: `タスク ${task.id} を進めて`,
-    }))
-}
-
-function uniqueByKey(cards: readonly WelcomeCard[]): readonly WelcomeCard[] {
-  return cards.filter((card, index) => cards.findIndex((other) => other.key === card.key) === index)
+  return recommendationOrder(tasks.items).map(({ task }) => ({
+    kind: "task" as const,
+    key: task.id,
+    id: task.id,
+    title: task.summary,
+    reason: "",
+    request: `タスク ${task.id} を進めて`,
+  }))
 }
