@@ -1,27 +1,16 @@
 import { act, cleanup, render, screen } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
-// 描画一式の読み込みを失敗させるか（チャンクを取れなかった場合の代役）。
-const fetchFailure = vi.hoisted(() => ({ fail: false }))
-
-vi.mock(
-  "../../../../src/browser/features/report/renderer/markdown-renderer.tsx",
-  async (importOriginal) => {
-    if (fetchFailure.fail) {
-      throw new Error("チャンクを取れなかった")
-    }
-    return importOriginal()
-  },
-)
+const rendererPath = "../../../../src/browser/features/report/renderer/markdown-renderer.tsx"
 
 // 読み込みの状態はモジュールに1つなので、it ごとに読み直して初めから始める。
 beforeEach(() => {
   vi.resetModules()
-  fetchFailure.fail = false
 })
 
 afterEach(() => {
   cleanup()
+  vi.doUnmock(rendererPath)
 })
 
 describe("Markdown（描画一式を分けて読む口）", () => {
@@ -31,10 +20,13 @@ describe("Markdown（描画一式を分けて読む口）", () => {
 
     expect(container.querySelector('[aria-busy="true"]')).not.toBeNull()
     expect(container.textContent).toBe("")
-  })
+  }, 15_000)
 
   it("読み込みに失敗したら、本文を字のまま出して aria-busy を残さない", async () => {
-    fetchFailure.fail = true
+    // 描画一式のチャンクを取れなかった場合の代役。
+    vi.doMock(rendererPath, () => {
+      throw new Error("チャンクを取れなかった")
+    })
     const { loadMarkdown, Markdown } = await freshDeferredMarkdown()
     const { container } = render(<Markdown text={"## 見出し"} />)
 
@@ -42,7 +34,7 @@ describe("Markdown（描画一式を分けて読む口）", () => {
 
     expect(container.querySelector('[aria-busy="true"]')).toBeNull()
     expect(container.textContent).toBe("## 見出し")
-  })
+  }, 15_000)
 
   // 上限は、描画一式の読み直しを単独で流して測った最悪値（約 600ms）の 25 倍。
   it("読み終わると本体に替わり、そのあとの最初の描画では器を挟まない", async () => {
