@@ -333,6 +333,11 @@
     align-self: flex-start;
     text-align: left;
   }
+  /* 表の題は、包みの幅（表の幅）で折り返す。 */
+  & .report-captioned.report-captioned-table > .report-caption {
+    inline-size: 100%;
+    max-inline-size: 100%;
+  }
   & .report-captioned-table > .report-caption .report-caption-number {
     font-family: inherit;
     font-size: var(--font-secondary);
