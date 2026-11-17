@@ -108,6 +108,14 @@ kbd {
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 560px), 1fr));
 }
 
+.grid-4 {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+}
+
+.grid-3 {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr));
+}
+
 .shot {
   margin: 0;
 }
@@ -129,9 +137,10 @@ kbd {
   font-size: 12px;
 }
 
+/* 枠は見本の全体（--w × --h）を縮めて出す。--vw と --vh を渡すと、左上のその範囲だけを切り出して大きく出す。 */
 .frame {
   position: relative;
-  aspect-ratio: var(--w) / var(--h);
+  aspect-ratio: var(--vw, var(--w)) / var(--vh, var(--h));
   overflow: hidden;
   border: 1px solid var(--edge);
   border-radius: 10px;

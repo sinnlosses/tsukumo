@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>やり取りの列の畳んだ形と迎える場面（2026-11-17）</title>
+    <link rel="stylesheet" href="compare.css" />
+  </head>
+  <!--
+    やり取りの列の「畳んだ形」と「始め方の一覧のあいだの出し方」を並べるページ。
+    やり取りの列を開いたときの形は、今の画面のまま変えない。中身はすべて架空で、実物の会話ではない。
+    ?pack=tsukumo|shirasuzu      パックの素材と差し色
+  -->
+  <body>
+    <header>
+      <h1>やり取りの列の畳んだ形と、迎える場面</h1>
+      <p>
+        やり取りの列を開いたときの形は今のまま変えず、畳んだときの形と、始め方の一覧が出ているあいだの出し方だけを比べる。枠は画面の左上を切り出したもので、題を押すと全体を実寸（1400×900）で開く。中身はすべて架空。
+      </p>
+    </header>
+
+    <main>
+      <section aria-labelledby="folded-title">
+        <h2 id="folded-title">畳んだ形</h2>
+        <p>やり取りが12件あるセッションで、列を畳んだ状態。</p>
+        <div class="grid grid-4" id="folded"></div>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr><th></th><th>大きさ</th><th>畳んだまま読めること</th><th>開閉の口</th></tr>
+            </thead>
+            <tbody>
+              <tr><th>今の形</th><td class="num">42×54</td><td>なし（何の箱かは、押すか触れるまで分からない）</td><td>開くと右端へ 168px 動く</td></tr>
+              <tr><th>1 見出しの帯</th><td class="num">214×50</td><td>名前・件数・前後へ移るキー</td><td>開いても畳んでも同じ位置</td></tr>
+              <tr><th>2 現在地の帯</th><td class="num">214×98</td><td>名前・何件目か・キー・見ているやり取りの題</td><td>開いても畳んでも同じ位置</td></tr>
+              <tr><th>3 小さい札</th><td class="num">121×36</td><td>名前・件数</td><td>札の全体が口。開くと右端へ動く</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section aria-labelledby="toggle-title">
+        <h2 id="toggle-title">見出しの帯は、頭の行がそのまま残る</h2>
+        <p>
+          畳むと一覧だけが消え、頭の行は動かない。上下に畳むので、口の山形を左右から上下の向きに替える（開いたときの形で変わるのは、この山形の向きだけ）。
+        </p>
+        <div class="grid grid-4" id="toggle"></div>
+      </section>
+
+      <section aria-labelledby="first-title">
+        <h2 id="first-title">迎える場面（やり取りがまだ無い）</h2>
+        <p>新しいセッションを開いた直後。今の形は、最初の依頼を送るまで左上に何も出ない。</p>
+        <div class="grid grid-3" id="first"></div>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr><th></th><th>大きさ</th><th>出すもの</th><th>最初の依頼を送ったとき</th></tr>
+            </thead>
+            <tbody>
+              <tr><th>今の形</th><td class="num">なし</td><td>なし</td><td>列が左上に現れる</td></tr>
+              <tr><th>1 見出しの帯</th><td class="num">214×50</td><td>名前と件数（0）。畳んだ形と同じ帯</td><td>帯の下へ1件目が伸びる。頭の行は動かない</td></tr>
+              <tr><th>2 案内つき</th><td class="num">214×96</td><td>名前と、並ぶこと・キーの案内の2行</td><td>案内が1件目に入れ替わる</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section aria-labelledby="resume-title">
+        <h2 id="resume-title">迎える場面（続きのセッション）</h2>
+        <p>
+          前のやり取りが残るセッションを開き直した直後。今の形は、やり取りが12件あっても列ごと出ず、前のやり取りへは「ほかの始め方」の「前のやり取りを見る」からだけ入れる。案は、前のやり取りを最初から列に並べる（畳んでいた人には、畳んだ帯で出る）。
+        </p>
+        <div class="grid grid-2" id="resume"></div>
+      </section>
+
+      <section aria-labelledby="pick-title">
+        <h2 id="pick-title">おすすめは、どちらも「見出しの帯」</h2>
+        <ul class="pick">
+          <li><b>頭の行を、やり取りの列のいちばん小さい形にする。</b>畳んだとき・やり取りがまだ無いとき・やり取りが並んでいるときの3つが、同じ頭の行でつながる。</li>
+          <li><b>口が動かない。</b>畳む・開くを続けて押しても、指を動かさずに済む。今の形と小さい札は、開くたびに口が列の右端へ動く。</li>
+          <li><b>畳んでも、件数とキーが読める。</b>現在地の帯は題まで読めるが、高さが見出しの帯の2倍（98px）になる。</li>
+          <li><b>迎える場面で置き場が先に決まる。</b>最初の依頼を送ったとき、列が現れるのではなく、帯の下へ伸びる。案内の文は、使い慣れたあとは読まない。</li>
+        </ul>
+      </section>
+
+      <section aria-labelledby="real-title">
+        <h2 id="real-title">今の画面の実物の画</h2>
+        <p>架空の疑似セッションを 2026-11-17 の画面で撮った。</p>
+        <div class="grid grid-2">
+          <figure class="shot">
+            <figcaption><a href="real-now-folded.png">畳んだ状態（1400×900）</a><span>左上に 42×54 の箱</span></figcaption>
+            <img class="real" src="real-now-folded.png" alt="今の画面でやり取りの列を畳んだ状態。左上に山形だけの小さい箱がある" />
+          </figure>
+          <figure class="shot">
+            <figcaption><a href="real-now-resume.png">続きのセッションの迎える場面（1400×900）</a><span>列は出ず、「前のやり取りを見る」が並ぶ</span></figcaption>
+            <img class="real" src="real-now-resume.png" alt="今の画面で続きのセッションを開いた直後。左の列には立ち絵だけがあり、中央に始め方の一覧と「前のやり取りを見る」が並ぶ" />
+          </figure>
+        </div>
+      </section>
+    </main>
+    <script src="fold.js"></script>
+  </body>
+</html>

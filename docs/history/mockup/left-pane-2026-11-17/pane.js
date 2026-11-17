@@ -1,10 +1,14 @@
 // 左の列の見本。URL の検索引数から形・場面・パックを読み、やり取りの列・立ち絵・席・中央の列を組む。
 // 今の形（design=now）の寸法は、今の画面を疑似セッションで撮って測った値に合わせてある
-// （列の幅 238px、やり取りの列の左上 28,68、立ち絵の箱 214×342、提灯の下端は箱の上端から 32px 下）。
+// （列の幅 238px、やり取りの列の左上 28,68、立ち絵の箱 214×342、提灯の下端は箱の上端から 32px 下、
+// 畳んだ箱 42×54）。
 // 中身はすべて架空で、実物の会話ではない。
 
 const DESIGNS = ["now", "a", "b", "c"]
-const MOMENTS = ["work", "read", "many"]
+const MOMENTS = ["work", "read", "many", "first", "resume"]
+// 畳んだときの形（今の箱・見出しの帯・現在地の帯・小さい札）と、始め方の一覧のあいだの出し方。
+const FOLD_FORMS = ["now", "bar", "here", "chip"]
+const EMPTY_FORMS = ["now", "bar", "guide"]
 const PACKS = {
   tsukumo: { name: "つくも", accent: "#6fe3cd", ratio: 1145 / 1374 },
   shirasuzu: { name: "白鈴", accent: "#f9c3cd", ratio: 1 },
@@ -19,6 +23,9 @@ function pick(name, allowed) {
 
 const design = pick("design", DESIGNS)
 const moment = pick("moment", MOMENTS)
+const foldForm = pick("form", FOLD_FORMS)
+const emptyForm = pick("empty", EMPTY_FORMS)
+const folded = params.get("folded") === "1"
 const packId = pick("pack", Object.keys(PACKS))
 const pack = PACKS[packId]
 const open = params.get("open") === "1"
@@ -61,6 +68,11 @@ const MANY_TITLES = [
   "今日の作業を振り返って報告して",
 ]
 
+const MANY_TURNS = MANY_TITLES.map((title, index) => ({
+  title,
+  result: index === 6 ? "failed" : index === 3 ? "stopped" : "done",
+}))
+
 const SCENES = {
   work: {
     expression: "thinking",
@@ -82,10 +94,7 @@ const SCENES = {
   },
   many: {
     expression: "default",
-    turns: MANY_TITLES.map((title, index) => ({
-      title,
-      result: index === 6 ? "failed" : index === 3 ? "stopped" : "done",
-    })),
+    turns: MANY_TURNS,
     active: 11,
     report: {
       label: "最終",
@@ -97,6 +106,9 @@ const SCENES = {
     },
     strip: { state: "完了", time: "1分", steps: 3 },
   },
+  // 始め方の一覧（迎える）。first はやり取りが1件も無いセッション、resume は前のやり取りが残る続きのセッション。
+  first: { expression: "default", turns: [], active: -1, welcome: true },
+  resume: { expression: "default", turns: MANY_TURNS, active: -1, welcome: true },
 }
 
 const scene = SCENES[moment]
@@ -145,6 +157,14 @@ function tocRows(report) {
   return head + rows
 }
 
+// 畳む・開くの口。見出しの帯と現在地の帯は上下に畳むので、山形も上下を向く。
+function toggle(isFolded) {
+  const vertical = foldForm === "bar" || foldForm === "here"
+  const glyph = vertical ? (isFolded ? "chevron" : "chevron-up") : isFolded ? "chevron-right" : "chevron-left"
+  return `<button type="button" class="icon-button is-small push" aria-expanded="${!isFolded}"
+    aria-label="${isFolded ? "やり取りを開く" : "やり取りを畳む"}">${icon(glyph, "icon icon-sm")}</button>`
+}
+
 // 今の形と案 A: 集計期間のやり取りを全部並べ、見ているやり取りの下に見出しを出す。
 function laneAll({ count, wrap }) {
   const groups = scene.turns
@@ -160,10 +180,67 @@ function laneAll({ count, wrap }) {
       <span class="lane-title">やり取り</span>
       ${count ? `<span class="lane-count">${scene.turns.length}</span>` : ""}
       ${keys(["[", "]"])}
-      <button type="button" class="icon-button is-small push" aria-label="やり取りを畳む">${icon("chevron-left", "icon icon-sm")}</button>
+      ${toggle(false)}
     </div>
     <div class="lane-list">${groups}</div>
   </nav>`
+}
+
+// 畳んだ形。now は今の画面の箱（山形だけ）、bar は見出しの帯、here は帯に見ているやり取りの1行を足した形、
+// chip は中身の幅だけの小さい札。
+function laneFolded() {
+  const total = scene.turns.length
+  if (foldForm === "now") {
+    return `<nav class="lane lane-fold-now" aria-label="やり取り">
+      <button type="button" class="icon-button is-small" aria-expanded="false" aria-label="やり取りを開く">${icon("chevron-right", "icon icon-sm")}</button>
+    </nav>`
+  }
+  if (foldForm === "chip") {
+    return `<nav class="lane lane-chip" aria-label="やり取り">
+      <button type="button" class="chip-open" aria-expanded="false" aria-label="やり取りを開く（${total}件）" title="やり取りを開く。前後へは [ ] キー">
+        ${icon("list", "icon icon-sm")}<span class="lane-title">やり取り</span><span class="lane-count">${total}</span>
+      </button>
+    </nav>`
+  }
+  const here = foldForm === "here" && activeTurn !== undefined
+  const count = here
+    ? `<span class="lane-count" aria-label="${total}件のうち${scene.active + 1}件目"><b>${scene.active + 1}</b>/${total}</span>`
+    : `<span class="lane-count">${total}</span>`
+  return `<nav class="lane lane-bar" aria-label="やり取り">
+    <div class="lane-head">
+      <span class="lane-title">やり取り</span>${count}
+      ${keys(["[", "]"])}
+      ${toggle(true)}
+    </div>
+    ${here ? `<div class="turn-group is-active">${turnButton(activeTurn, scene.active)}</div>` : ""}
+  </nav>`
+}
+
+// やり取りが1件も無いあいだの形。bar は見出しの帯（件数 0）、guide は案内の2行つき。
+function laneEmpty() {
+  if (emptyForm === "bar") {
+    return `<nav class="lane lane-bar is-empty" aria-label="やり取り" title="依頼を送ると、ここに並ぶ">
+      <div class="lane-head"><span class="lane-title">やり取り</span><span class="lane-count">0</span></div>
+    </nav>`
+  }
+  return `<nav class="lane lane-guide" aria-label="やり取り">
+    <div class="lane-head"><span class="lane-title">やり取り</span></div>
+    <p class="lane-note">依頼を送ると、ここに並ぶ。</p>
+    <p class="lane-note">${keys(["[", "]"])} で前後へ移れる。</p>
+  </nav>`
+}
+
+// 今の形の列。始め方の一覧のあいだは、今の画面では列ごと出ない（empty=now）。
+function laneNow(options) {
+  if (scene.welcome) {
+    if (emptyForm === "now") {
+      return ""
+    }
+    if (scene.turns.length === 0) {
+      return laneEmpty()
+    }
+  }
+  return folded ? laneFolded() : laneAll(options)
 }
 
 // 案 B・C の頭。キーの印が、前後のやり取りへ移る口を兼ねる。
@@ -245,11 +322,12 @@ function turnPopover() {
   </div>`
 }
 
+// 案 B・C の見本は、やり取りを見ている場面（work・read・many）だけを持つ。
 const LANES = {
-  now: () => laneAll({ count: false, wrap: false }),
-  a: () => laneAll({ count: true, wrap: true }),
-  b: () => laneFocus() + turnPopover(),
-  c: () => lanePlinth() + turnPopover(),
+  now: () => laneNow({ count: false, wrap: false }),
+  a: () => laneNow({ count: true, wrap: true }),
+  b: () => (scene.welcome ? "" : laneFocus() + turnPopover()),
+  c: () => (scene.welcome ? "" : lanePlinth() + turnPopover()),
 }
 
 // ───────── 立ち絵と席 ─────────
@@ -270,18 +348,21 @@ if (design === "c") {
 }
 
 // やり取りの列は、立ち絵と左上の席に被らない高さで止める。
-if (design !== "c") {
-  const lane = left.querySelector(".lane")
+const scrolling = left.querySelector(".lane:has(.lane-list)")
+if (design !== "c" && scrolling !== null) {
   const limit = () => {
     const seatTop = left.querySelector(".seat-top").getBoundingClientRect().top
-    const top = lane.getBoundingClientRect().top
-    lane.style.maxBlockSize = `${Math.max(120, seatTop - top - 4)}px`
+    const top = scrolling.getBoundingClientRect().top
+    scrolling.style.maxBlockSize = `${Math.max(120, seatTop - top - 4)}px`
     // 見ているやり取りが一覧の外へ出ないよう、一覧の中だけを送る。
-    const list = lane.querySelector(".lane-list")
+    const list = scrolling.querySelector(".lane-list")
     const active = list.querySelector(".turn-group.is-active")
     if (active !== null) {
       const over = active.offsetTop + active.offsetHeight - list.offsetTop - list.clientHeight
       list.scrollTop = Math.max(0, over)
+    } else {
+      // 見ているやり取りが無いとき（始め方の一覧）は、新しいほうの端を見せる。
+      list.scrollTop = list.scrollHeight
     }
   }
   new ResizeObserver(limit).observe(left)
@@ -313,6 +394,30 @@ const say = (text) =>
 const post = (text, time) =>
   `<div class="row row-user"><div class="bubble bubble-post">${text}</div><span class="stamp">${time}</span></div>`
 const fold = (text) => `<span class="fold">${icon("chevron-right", "icon icon-sm")}${text}</span>`
+
+// 始め方の一覧。続きのセッションでは「前のやり取りを見る」が並ぶ。
+function welcome() {
+  const card = (id, title, index) => `<div class="welcome-card${index === 0 ? " is-top" : ""}">
+    <p class="welcome-card-id">${id}${index === 0 ? `<span class="welcome-badge">いちばんのおすすめ</span>` : ""}</p>
+    <p class="welcome-card-title">${title}</p>
+    <p class="welcome-card-send"><span>送られる依頼</span>タスク ${id} を進めて</p>
+    <p class="welcome-card-foot"><kbd class="key">${index + 1}</kbd><span class="welcome-start">始める${icon("arrow-right", "icon icon-sm")}</span></p>
+  </div>`
+  const back = scene.turns.length > 0
+    ? `<span class="way">${icon("rotate", "icon icon-sm")}前のやり取りを見る<kbd class="key">←</kbd></span>`
+    : ""
+  return `<section class="welcome">
+    <h1>何から始める？</h1>
+    <p class="welcome-lead">tsukumo のおすすめ。「始める」を押すと、カードに書いた依頼がそのまま送られて作業が始まる。</p>
+    <div class="welcome-cards">
+      ${card("T-100", "架空の課題0", 0)}${card("T-103", "架空の課題3", 1)}${card("T-106", "架空の課題6", 2)}
+    </div>
+    <p class="ways"><span class="ways-label">ほかの始め方</span>
+      <span class="way">${icon("pencil", "icon icon-sm")}自分で書く<kbd class="key">/</kbd></span>
+      <span class="way">${icon("list", "icon icon-sm")}タスクの一覧から選ぶ</span>${back}
+    </p>
+  </section>`
+}
 
 const FLOWS = {
   work: () =>
@@ -357,9 +462,16 @@ const FLOWS = {
         <p>E2E の失敗の残り1件と、文書の古い節の書き直し。</p>
       </article>`,
     ].join(""),
+  first: welcome,
+  resume: welcome,
 }
 
-document.querySelector("#strip").innerHTML = strip()
+const stripElement = document.querySelector("#strip")
+if (scene.welcome) {
+  stripElement.hidden = true
+} else {
+  stripElement.innerHTML = strip()
+}
 document.querySelector("#flow").innerHTML = FLOWS[moment]()
 document.querySelector("#draft").textContent = `${pack.name} への依頼を書く`
 
@@ -379,7 +491,15 @@ for (const image of document.querySelectorAll("[data-pack-src]")) {
 }
 document.querySelector("#portrait").src = `../../../../characters/${packId}/${scene.expression}.png`
 
-const current = { design, moment, pack: packId, open: open ? "1" : "0" }
+const current = {
+  design,
+  moment,
+  form: foldForm,
+  folded: folded ? "1" : "0",
+  empty: emptyForm,
+  pack: packId,
+  open: open ? "1" : "0",
+}
 for (const group of document.querySelectorAll(".mock-bar-group")) {
   const name = group.dataset.param
   for (const link of group.querySelectorAll("a")) {

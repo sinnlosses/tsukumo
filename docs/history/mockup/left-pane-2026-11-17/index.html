@@ -11,9 +11,12 @@
     今の形（design=now）と、3つの案（a 整える・b いまに絞る・c 台座）を、同じ架空のやり取りで見比べる。
     器（上部の帯・中央の列・サイドバー）は今の画面を 1400×900 で測った値で組み、どの形でも変えない。
     中身はすべて架空で、実物の会話ではない。席のアイテムの絵も、この見本のために描いた架空の小物。
-    並べて比べるページは compare.html。
+    並べて比べるページは compare.html。畳んだ形と、始め方の一覧のあいだの出し方を比べるページは fold.html。
     ?design=now|a|b|c            今の形／整える／いまに絞る／台座
-    ?moment=work|read|many       場面（働く・読む・やり取り12件）
+    ?moment=work|read|many|first|resume  場面（働く・読む・やり取り12件・迎える・続きのセッションを迎える）
+    ?folded=1                    今の形と案 a で、やり取りの列を畳んだ状態にする
+    ?form=now|bar|here|chip      畳んだときの形（今の箱・見出しの帯・現在地の帯・小さい札）
+    ?empty=now|bar|guide         始め方の一覧のあいだの出し方（出さない・見出しの帯・案内つき）
     ?open=1                      案 b・c で、やり取りの一覧を開いた状態にする
     ?pack=tsukumo|shirasuzu      パックの素材と差し色
     ?bar=0                       上の切り替えの帯を隠す（撮影用）
@@ -28,6 +31,10 @@
         <g id="i-plus"><path d="M12 5v14M5 12h14" /></g>
         <g id="i-up"><path d="M12 19V5M5 12l7-7 7 7" /></g>
         <g id="i-chevron"><path d="m6 9 6 6 6-6" /></g>
+        <g id="i-chevron-up"><path d="m6 15 6-6 6 6" /></g>
+        <g id="i-pencil"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" /></g>
+        <g id="i-rotate"><path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5" /></g>
+        <g id="i-arrow-right"><path d="M5 12h14M13 6l6 6-6 6" /></g>
         <g id="i-chevron-right"><path d="m9 6 6 6-6 6" /></g>
         <g id="i-chevron-left"><path d="m15 18-6-6 6-6" /></g>
         <g id="i-brief"><rect x="2" y="7" width="20" height="14" rx="2" /><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" /></g>
@@ -51,6 +58,7 @@
     <header class="mock-bar" aria-label="見本の切り替え">
       <span class="mock-bar-title">左の列の見本（中身は架空）</span>
       <a class="mock-bar-link" href="compare.html">並べて比べる</a>
+      <a class="mock-bar-link" href="fold.html">畳んだ形と迎える場面</a>
       <span class="mock-bar-group" data-param="design">
         <a data-value="now">今の形</a>
         <a data-value="a">A 整える</a>
@@ -61,6 +69,23 @@
         <a data-value="work">働く</a>
         <a data-value="read">読む</a>
         <a data-value="many">やり取り12件</a>
+        <a data-value="first">迎える</a>
+        <a data-value="resume">迎える（続き）</a>
+      </span>
+      <span class="mock-bar-group" data-param="folded">
+        <a data-value="0">開く</a>
+        <a data-value="1">畳む</a>
+      </span>
+      <span class="mock-bar-group" data-param="form">
+        <a data-value="now">畳み: 今の箱</a>
+        <a data-value="bar">見出しの帯</a>
+        <a data-value="here">現在地の帯</a>
+        <a data-value="chip">小さい札</a>
+      </span>
+      <span class="mock-bar-group" data-param="empty">
+        <a data-value="now">迎え: 出さない</a>
+        <a data-value="bar">帯</a>
+        <a data-value="guide">案内つき</a>
       </span>
       <span class="mock-bar-group" data-param="open">
         <a data-value="0">一覧を閉じる</a>

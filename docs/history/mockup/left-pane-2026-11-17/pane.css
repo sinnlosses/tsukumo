@@ -314,8 +314,14 @@ body[data-design="c"] .ground-veil {
 
 /* 仕切りで列を細くしたとき（250px 未満）は、頭の「やり取り」の字を畳んで移る口を残す。 */
 @container left (max-width: 250px) {
-  .lane-focus .lane-title,
-  .lane-count {
+  .lane-focus .lane-title {
+    display: none;
+  }
+}
+
+/* 頭の行に件数が入りきらない幅（215px 未満）では、件数を畳む。 */
+@container left (max-width: 215px) {
+  .lane-head > .lane-count {
     display: none;
   }
 }
@@ -461,6 +467,7 @@ body[data-design="c"] .stage {
 .lane-count {
   font-family: var(--mono);
   font-size: 12px;
+  white-space: nowrap;
 }
 
 .lane-head .push {
@@ -829,6 +836,76 @@ button.key[aria-disabled="true"] {
   background: var(--raised);
 }
 
+/* ───────── 畳んだ形と、やり取りが無いあいだの形 ───────── */
+
+/* 今の画面の畳んだ形: 山形だけの箱（42×54）。 */
+.lane-fold-now {
+  inset-inline-end: auto;
+}
+
+.lane-fold-now .icon-button {
+  block-size: 28px;
+}
+
+/* 見出しの帯・現在地の帯: 頭の行を残して一覧だけを畳む。開閉の口は、開いているときと同じ位置に残る。 */
+.lane-bar .lane-head,
+.lane-guide .lane-head {
+  min-block-size: 24px;
+  padding-block-end: 0;
+}
+
+.lane-bar .lane-head {
+  gap: 6px;
+}
+
+.lane-bar .lane-count b {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.lane-bar .turn-group {
+  margin-block-start: 8px;
+}
+
+/* 小さい札: 中身の幅だけの口。 */
+.lane-chip {
+  inset-inline-end: auto;
+  padding: 0;
+  border-radius: 12px;
+}
+
+.chip-open {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  block-size: 34px;
+  padding: 0 12px 0 10px;
+  border-radius: 12px;
+  color: var(--ink-soft);
+}
+
+.chip-open:hover {
+  background: var(--tinted);
+  color: var(--ink);
+}
+
+/* 案内つきの空の列。 */
+.lane-guide .lane-head {
+  padding-block-end: 4px;
+}
+
+.lane-note {
+  padding: 0 12px;
+  color: var(--ink-quiet);
+  font-size: 12px;
+  line-height: 1.9;
+}
+
+.lane-note .keys {
+  margin-inline: 2px;
+  vertical-align: middle;
+}
+
 /* ───────── 中央の列 ───────── */
 .center {
   position: relative;
@@ -957,8 +1034,133 @@ button.key[aria-disabled="true"] {
 }
 
 body[data-moment="read"] .flow,
-body[data-moment="many"] .flow {
+body[data-moment="many"] .flow,
+body[data-moment="first"] .flow,
+body[data-moment="resume"] .flow {
   justify-content: flex-start;
+}
+
+.strip[hidden] {
+  display: none;
+}
+
+/* 始め方の一覧 */
+.welcome {
+  padding-block-start: 20px;
+}
+
+.welcome h1 {
+  font-size: 20px;
+  line-height: 1.5;
+}
+
+.welcome-lead {
+  margin-block-start: 4px;
+  color: var(--ink-soft);
+}
+
+.welcome-cards {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr 1fr;
+  gap: 16px;
+  margin-block-start: 20px;
+}
+
+.welcome-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  border: 1px solid var(--edge);
+  border-radius: 12px;
+  background: var(--glass);
+  box-shadow: var(--lift);
+  backdrop-filter: var(--blur);
+}
+
+.welcome-card.is-top {
+  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+}
+
+.welcome-card-id {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink-soft);
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+.welcome-badge {
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #10231f;
+  font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Segoe UI", Roboto, sans-serif;
+  font-weight: 600;
+}
+
+.welcome-card-title {
+  font-size: 15px;
+}
+
+.welcome-card-send {
+  padding-inline-start: 10px;
+  border-inline-start: 1px solid var(--edge);
+  font-size: 13px;
+}
+
+.welcome-card-send span {
+  display: block;
+  color: var(--ink-quiet);
+  font-size: 12px;
+}
+
+.welcome-card-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-block-start: auto;
+  padding-block-start: 10px;
+  border-block-start: 1px solid var(--edge);
+}
+
+.welcome-start {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 14px;
+  border-radius: 8px;
+  background: var(--raised);
+}
+
+.welcome-card.is-top .welcome-start {
+  background: var(--accent);
+  color: #10231f;
+  font-weight: 600;
+}
+
+.ways {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-block-start: 24px;
+}
+
+.ways-label {
+  margin-inline-end: 4px;
+  color: var(--ink-quiet);
+  font-size: 12px;
+}
+
+.way {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: var(--raised);
 }
 
 .row {
