@@ -43,17 +43,89 @@
   );
   box-shadow: var(--shadow-raised);
 }
-/* 現れるとき、立ち絵の側（左下）から短く浮かぶ。動きを減らす設定のときは動かさない。 */
+/* 届いたばかりのセリフの出方（`data-arrival`。値は `SpeechArrivalBubble`）。動きを減らす設定のときは付けない。
+   変形の基準は立ち絵の側（左下）。 */
 @media (prefers-reduced-motion: no-preference) {
-  .stream-entry-character.stream-entry-live {
-    transition:
-      opacity var(--motion-base) cubic-bezier(0.16, 1, 0.3, 1),
-      translate var(--motion-base) cubic-bezier(0.16, 1, 0.3, 1);
-
-    @starting-style {
-      opacity: 0;
-      translate: -6px 6px;
-    }
+  .stream-entry-character[data-arrival] {
+    transform-origin: 0% 100%;
+    animation-fill-mode: both;
+  }
+  .stream-entry-character[data-arrival="pop"] {
+    animation-name: stream-arrival-pop;
+    animation-duration: 0.32s;
+    animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .stream-entry-character[data-arrival="swell"] {
+    animation-name: stream-arrival-swell;
+    animation-duration: 0.46s;
+    animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .stream-entry-character[data-arrival="shake"] {
+    animation-name: stream-arrival-shake;
+    animation-duration: 0.4s;
+    animation-timing-function: ease-out;
+  }
+  .stream-entry-character[data-arrival="ease"] {
+    animation-name: stream-arrival-ease;
+    animation-duration: 0.6s;
+    animation-timing-function: ease-out;
+  }
+  .stream-entry-character[data-arrival="sink"] {
+    animation-name: stream-arrival-sink;
+    animation-duration: 0.7s;
+    animation-timing-function: ease-out;
+  }
+  .stream-entry-character[data-arrival="snap"] {
+    animation-name: var(--fade-in-name);
+    animation-duration: 0.16s;
+    animation-timing-function: ease-out;
+  }
+}
+@keyframes stream-arrival-pop {
+  from {
+    opacity: 0;
+    translate: -6px 6px;
+  }
+}
+@keyframes stream-arrival-swell {
+  from {
+    opacity: 0;
+    scale: 0.86;
+  }
+  60% {
+    opacity: 1;
+    scale: 1.05;
+  }
+}
+@keyframes stream-arrival-shake {
+  from {
+    opacity: 0;
+    translate: -5px 0;
+  }
+  25% {
+    opacity: 1;
+    translate: 4px 0;
+  }
+  50% {
+    translate: -3px 0;
+  }
+  75% {
+    translate: 2px 0;
+  }
+}
+@keyframes stream-arrival-ease {
+  from {
+    opacity: 0;
+    translate: 0 4px;
+  }
+  40% {
+    opacity: 0.4;
+  }
+}
+@keyframes stream-arrival-sink {
+  from {
+    opacity: 0;
+    translate: 0 -8px;
   }
 }
 /* 立ち絵が従っているセリフ。尾（`.stream-aim`）の置き場の基準になる。 */

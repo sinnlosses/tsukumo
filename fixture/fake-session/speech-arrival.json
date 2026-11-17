@@ -1,0 +1,61 @@
+{
+  "name": "speech-arrival",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "表情ごとの出方を確かめたい（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 1500,
+      "event": { "kind": "speech", "text": "架空のセリフ。通常だよ。", "expression": "default" }
+    },
+    {
+      "afterMs": 3500,
+      "event": { "kind": "speech", "text": "架空のセリフ。考え中だよ。", "expression": "thinking" }
+    },
+    {
+      "afterMs": 5500,
+      "event": { "kind": "speech", "text": "架空のセリフ。得意げだよ。", "expression": "proud" }
+    },
+    {
+      "afterMs": 7500,
+      "event": {
+        "kind": "speech",
+        "text": "架空のセリフ。はしゃいでるよ。",
+        "expression": "excited"
+      }
+    },
+    {
+      "afterMs": 9500,
+      "event": { "kind": "speech", "text": "架空のセリフ。慌ててるよ。", "expression": "flustered" }
+    },
+    {
+      "afterMs": 11500,
+      "event": { "kind": "speech", "text": "架空のセリフ。気になるよ。", "expression": "curious" }
+    },
+    {
+      "afterMs": 13500,
+      "event": { "kind": "speech", "text": "架空のセリフ。しょんぼりだよ。", "expression": "sad" }
+    },
+    {
+      "afterMs": 15500,
+      "event": { "kind": "speech", "text": "架空のセリフ。退屈だよ。", "expression": "bored" }
+    },
+    {
+      "afterMs": 17500,
+      "event": { "kind": "speech", "text": "架空のセリフ。真剣だよ。", "expression": "serious" }
+    },
+    {
+      "afterMs": 19500,
+      "event": { "kind": "speech", "text": "架空のセリフ。締めだよ。", "expression": "default" }
+    },
+    {
+      "afterMs": 19600,
+      "event": { "kind": "turn-finished", "outcome": { "kind": "completed" } }
+    }
+  ]
+}

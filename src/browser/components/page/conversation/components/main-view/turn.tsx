@@ -49,6 +49,7 @@ import {
 import { NO_VOICE_SLOT, withoutVoiceRow, type VoiceSlot } from "./domain/voice-slot.ts"
 import { DraftReport } from "./draft-report.tsx"
 import { FoldedStep, StepReport } from "./folded-step.tsx"
+import { useArrivingBubble } from "./hooks/use-arriving-bubble.ts"
 import { useReplyPort } from "./hooks/use-reply-port.ts"
 import styles from "./main-view.module.css"
 import { ProgressFold } from "./progress-fold.tsx"
@@ -122,10 +123,14 @@ export function Turn(props: TurnProps): ReactElement {
   const moment = useSession((session) => conversationMoment(session.state))
   const speakerName =
     useSession((session) => session.state.character?.name) ?? DEFAULT_CHARACTER_NAME
+  const arrivingBubble = useArrivingBubble()
   const presentations = streamPresentationOf(items, {
     live: props.newest && (moment === "work" || moment === "ask"),
     follow: !phoneWidth && props.voice?.kind !== "voice",
     pinned: pinnedPlaceOf(items, turn.id, viewed),
+    ...(props.newest && arrivingBubble.kind === "arriving" && arrivingBubble.turnId === turn.id
+      ? { arriving: { index: arrivingBubble.index, bubble: arrivingBubble.bubble } }
+      : {}),
     timeZone: localTimeZoneId(),
   })
 

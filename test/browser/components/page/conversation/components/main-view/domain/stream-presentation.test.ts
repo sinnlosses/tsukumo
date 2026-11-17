@@ -65,6 +65,36 @@ describe("streamPresentationOf のいまの一言", () => {
   })
 })
 
+describe("streamPresentationOf の届いたばかりのセリフ", () => {
+  const sayAt = (seconds: number, speechIndex: number) => ({ ...say(seconds), speechIndex })
+  const items = [sayAt(0, 0), sayAt(10, 1)]
+  const arriving = { index: 1, bubble: "swell" } as const
+
+  it("従っている行の位置が届いた位置と同じなら、その行にだけ出方が付く", () => {
+    const result = streamPresentationOf(items, { ...LIVE, arriving })
+    expect(result.map((row) => row.arrival)).toEqual([undefined, "swell"])
+  })
+
+  it("位置が違う行には付かない", () => {
+    const result = streamPresentationOf(items, { ...LIVE, arriving: { ...arriving, index: 0 } })
+    expect(result.map((row) => row.arrival)).toEqual([undefined, undefined])
+  })
+
+  it("定位置の声が従っているあいだ（follow が偽）は付かない", () => {
+    const result = streamPresentationOf(items, { ...LIVE, follow: false, arriving })
+    expect(result.map((row) => row.arrival)).toEqual([undefined, undefined])
+  })
+
+  it("留めているあいだは付かない", () => {
+    const result = streamPresentationOf(items, {
+      ...LIVE,
+      pinned: { kind: "at", index: 1 },
+      arriving,
+    })
+    expect(result.map((row) => row.arrival)).toEqual([undefined, undefined])
+  })
+})
+
 describe("streamPresentationOf の時刻", () => {
   it("直前に出した行と分が同じ行は見える字で出さない", () => {
     const result = streamPresentationOf(

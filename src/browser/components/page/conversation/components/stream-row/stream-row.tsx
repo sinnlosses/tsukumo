@@ -12,6 +12,7 @@ import { isOverlayOpen } from "../../../../../hooks/open-overlay.ts"
 import { TypingDots } from "../../../../ui/typing-dot-list/typing-dot-list.tsx"
 import { VisuallyHidden } from "../../../../ui/visually-hidden/visually-hidden.tsx"
 import type { ClockStamp } from "../../domain/clock-stamp.ts"
+import type { SpeechArrivalBubble } from "../../domain/speech-arrival.ts"
 import { useSpeechPress } from "../hooks/use-speech-press.ts"
 import styles from "./stream-row.module.css"
 
@@ -20,6 +21,8 @@ type StreamSpeechRowProps = {
   readonly time: ClockStamp
   readonly selected: boolean
   readonly pop: boolean
+  /** 届いたばかりのセリフの出方。付けなければ省く（雑談・届いた瞬間でない行）。 */
+  readonly arrival?: SpeechArrivalBubble
   /** 明るさ（仕事のメインビューのいまの一言）。雑談は `plain`。 */
   readonly liveness: "plain" | "live"
   /** 吹き出しの形の一部として付ける尾（立ち絵が従っているセリフだけ）。付けなければ `undefined`。 */
@@ -44,6 +47,7 @@ export function StreamSpeechRow(props: StreamSpeechRowProps): ReactElement {
         text={props.text}
         selected={props.selected}
         pop={props.pop}
+        {...(props.arrival === undefined ? {} : { arrival: props.arrival })}
         liveness={props.liveness}
         aim={props.aim}
         speakerName={props.speakerName}
@@ -102,6 +106,7 @@ type StreamSpeechProps = {
   readonly text: string
   readonly selected: boolean
   readonly pop: boolean
+  readonly arrival?: SpeechArrivalBubble
   readonly liveness: "plain" | "live"
   readonly aim: ReactNode
   readonly speakerName: string
@@ -128,9 +133,11 @@ function StreamSpeech(props: StreamSpeechProps): ReactElement {
     props.aim !== undefined && styles["stream-entry-aimed"],
   )
 
+  const arrivalAttribute = props.arrival === undefined ? {} : { "data-arrival": props.arrival }
+
   if (props.onToggle === undefined) {
     return (
-      <div className={className} data-speaker="character">
+      <div className={className} data-speaker="character" {...arrivalAttribute}>
         <SpeakerName name={props.speakerName} />
         {props.text}
         {props.aim}
@@ -142,6 +149,7 @@ function StreamSpeech(props: StreamSpeechProps): ReactElement {
     <div
       className={className}
       data-speaker="character"
+      {...arrivalAttribute}
       role="button"
       tabIndex={0}
       aria-pressed={props.selected}

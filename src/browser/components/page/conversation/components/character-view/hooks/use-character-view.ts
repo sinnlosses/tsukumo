@@ -40,8 +40,10 @@ import {
   resolvePinnedSpeech,
   type PinnedSpeech,
 } from "../../../domain/pinned-speech.ts"
+import { SPEECH_ARRIVALS } from "../../../domain/speech-arrival.ts"
 import { welcomeHeadOf } from "../../../domain/welcome-entry-list.ts"
 import { useShownReaction, useWaitingLineDueAt } from "../../../stores/shown-reaction.ts"
+import { useSpeechArrival } from "../../../stores/speech-arrival.ts"
 import { useViewedSpeech } from "../../../stores/viewed-speech.ts"
 import { useWelcomeCards } from "../../hooks/use-welcome-card-list.ts"
 import { useTabVisibility } from "./use-tab-visibility.ts"
@@ -103,6 +105,13 @@ export function useCharacterView(): CharacterViewModel {
   const askedAt = useSession((session) => session.state.pending[0]?.askedAt)
   const sentAt = useSession((session) => session.lastSentAt)
   const tab = useTabVisibility()
+  const arrived = useSpeechArrival((state) => state.arrival)
+  const arrivalMotion =
+    arrived.kind === "arrived" ? SPEECH_ARRIVALS[arrived.expression].motion : "still"
+  const arrival: PortraitMotionInput["arrival"] =
+    arrived.kind === "arrived" && arrivalMotion !== "still"
+      ? { at: arrived.at, motion: arrivalMotion }
+      : undefined
   const [reducedMotion] = useState(() => prefersReducedMotion((query) => window.matchMedia(query)))
   const waitingDueAt = useWaitingLineDueAt()
   const { cards: welcomeCards } = useWelcomeCards()
@@ -127,6 +136,7 @@ export function useCharacterView(): CharacterViewModel {
       askedAt,
       tab,
       sentAt,
+      arrival,
       reducedMotion,
     },
     waitingDueAt,
@@ -158,6 +168,7 @@ export function useCharacterView(): CharacterViewModel {
       askedAt,
       tab,
       sentAt,
+      arrival,
       reducedMotion,
     },
     now,
@@ -226,7 +237,7 @@ function pastTurnSpeech(
 
 /**
  * 立ち絵の動きと待ちの一言が時間だけで変わる瞬間に読み直すための時計。いまの時刻を返す。
- * 完了の反応・失敗でびくっ・呼ぶ・うなずくの期間が過ぎた瞬間と、待ちの一言を出し始める時刻（`waitingDueAt`）にだけ描き直す。
+ * 完了の反応・失敗でびくっ・呼ぶ・届いた瞬間の動き・うなずくの期間が過ぎた瞬間と、待ちの一言を出し始める時刻（`waitingDueAt`）にだけ描き直す。
  *
  * 期間と期日は同時に効いていることがある（ツールが失敗した直後にターンが終わる、など）。
  * 次の描き直しまでの遅延はいちばん早いものだけなので、1回だけのタイマーだと、発火して `now` を進めたあとに残りがあっても次のタイマーが立たないまま止まる。
@@ -246,6 +257,7 @@ function useCharacterClock(
     | "askedAt"
     | "tab"
     | "sentAt"
+    | "arrival"
     | "reducedMotion"
   >,
   waitingDueAt?: number,
@@ -258,8 +270,11 @@ function useCharacterClock(
     askedAt,
     tab,
     sentAt,
+    arrival,
     reducedMotion,
   } = motionInput
+  const arrivalAt = arrival?.at
+  const arrivalMotion = arrival?.motion
   const [now, setNow] = useState(() => nowEpochMilliseconds())
 
   useExternalSync(() => {
@@ -278,6 +293,10 @@ function useCharacterClock(
             askedAt,
             tab,
             sentAt,
+            arrival:
+              arrivalAt === undefined || arrivalMotion === undefined
+                ? undefined
+                : { at: arrivalAt, motion: arrivalMotion },
             reducedMotion,
           },
           at,
@@ -304,6 +323,8 @@ function useCharacterClock(
     askedAt,
     tab,
     sentAt,
+    arrivalAt,
+    arrivalMotion,
     reducedMotion,
     waitingDueAt,
   ])

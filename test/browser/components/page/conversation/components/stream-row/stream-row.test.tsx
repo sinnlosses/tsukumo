@@ -47,6 +47,41 @@ function renderSpeech(selected: boolean, onRelease: () => void): HTMLElement {
   return entry
 }
 
+describe("StreamSpeechRow の出方", () => {
+  function renderArrival(onToggle?: () => void, arrival?: "swell"): HTMLElement {
+    const { container } = render(
+      <StreamSpeechRow
+        text="架空のセリフ"
+        time={KNOWN}
+        timeShown
+        liveness="plain"
+        aim={undefined}
+        speakerName=""
+        selected={false}
+        pop={false}
+        {...(arrival === undefined ? {} : { arrival })}
+        {...(onToggle === undefined ? {} : { onToggle })}
+        className=""
+      />,
+    )
+    const entry = container.querySelector<HTMLElement>('[data-speaker="character"]')
+    if (entry === null) {
+      throw new Error("セリフの行が無い")
+    }
+    return entry
+  }
+
+  it("arrival を渡すと、押せる行も押せない行も data-arrival がその値になる", () => {
+    expect(renderArrival(() => {}, "swell").getAttribute("data-arrival")).toBe("swell")
+    cleanup()
+    expect(renderArrival(undefined, "swell").getAttribute("data-arrival")).toBe("swell")
+  })
+
+  it("渡さなければ data-arrival を付けない", () => {
+    expect(renderArrival(() => {}).hasAttribute("data-arrival")).toBe(false)
+  })
+})
+
 describe("StreamSpeechRow の押せる行", () => {
   it("話し手の名前と尾も描く", () => {
     const entry = renderSpeech(false, () => {})

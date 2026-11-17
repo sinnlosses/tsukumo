@@ -17,6 +17,7 @@ import { StreamPostRow, StreamSpeechRow, StreamTyping } from "../stream-row/stre
 import type { ProgressItem, StreamItem } from "./domain/stream-item-list.ts"
 import { USER_SPEAKER_NAME, type RowPresentation } from "./domain/stream-presentation.ts"
 import type { VoiceSlot } from "./domain/voice-slot.ts"
+import { useArrivingBubble } from "./hooks/use-arriving-bubble.ts"
 import styles from "./main-view.module.css"
 import { RequestBlock } from "./request-block.tsx"
 import { StreamAim } from "./stream-aim.tsx"
@@ -77,6 +78,7 @@ export function SayRow(props: {
       speakerName={props.speakerName}
       selected={props.presentation.pinned}
       pop={false}
+      {...(props.presentation.arrival === undefined ? {} : { arrival: props.presentation.arrival })}
       onToggle={() => {
         if (props.presentation.followed) {
           release()
@@ -101,6 +103,7 @@ export function VoiceSlotRow(props: {
 }): ReactElement {
   const pinned = useViewedSpeech((state) => state.viewed.kind === "pinned")
   const release = useViewedSpeech((state) => state.release)
+  const arriving = useArrivingBubble()
   return (
     <div className={styles["voice-slot"]} data-voice-slot="">
       <StreamSpeechRow
@@ -112,6 +115,7 @@ export function VoiceSlotRow(props: {
         speakerName={props.speakerName}
         selected={false}
         pop={false}
+        {...(!pinned && arriving.kind === "arriving" ? { arrival: arriving.bubble } : {})}
         onToggle={release}
         className=""
       />

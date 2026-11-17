@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest"
 import {
   nextPortraitMotionTransitionDelayMs,
   resolvePortraitMotion,
+  type ArrivalMotion,
   type PortraitMotionInput,
 } from "../../../src/browser/domain/portrait-motion.ts"
 
@@ -323,5 +324,88 @@ describe("nextPortraitMotionTransitionDelayMs", () => {
       draftingReport: false,
     }
     expect(nextPortraitMotionTransitionDelayMs(input, 1000)).toBe(FAILURE_MOTION_WINDOW_MS)
+  })
+})
+
+describe("届いた瞬間の動き", () => {
+  const T = 200_000
+  const WINDOWS = {
+    nod: 500,
+    lean: 900,
+    tilt: 900,
+    sink: 1100,
+    success: 700,
+    failure: 400,
+  } as const
+  const RUNNING: PortraitMotionInput = {
+    turn: { kind: "running", startedAt: 0 },
+    lastToolFailureAt: undefined,
+    draftingReport: false,
+  }
+  const IDLE: PortraitMotionInput = { ...RUNNING, turn: { kind: "idle" } }
+
+  const CASES: readonly (readonly [ArrivalMotion, number])[] = [
+    ["nod", WINDOWS.nod],
+    ["lean", WINDOWS.lean],
+    ["tilt", WINDOWS.tilt],
+    ["sink", WINDOWS.sink],
+    ["success", WINDOWS.success],
+    ["failure", WINDOWS.failure],
+  ]
+
+  it.each(CASES)("%s は窓の内で出て、窓を過ぎたら続く動きへ戻る", (motion, w) => {
+    const input: PortraitMotionInput = { ...RUNNING, arrival: { at: T, motion } }
+    expect(resolvePortraitMotion(input, T + w - 1)).toBe(motion)
+    expect(resolvePortraitMotion(input, T + w)).toBe("waiting")
+  })
+
+  it("呼ぶは届いた瞬間の動きより優先する", () => {
+    const input: PortraitMotionInput = {
+      ...IDLE,
+      askedAt: T,
+      arrival: { at: T, motion: "lean" },
+    }
+    expect(resolvePortraitMotion(input, T + 1)).toBe("beckon")
+  })
+
+  it("届いた瞬間の動きはうなずくより優先する", () => {
+    const input: PortraitMotionInput = {
+      ...IDLE,
+      sentAt: T,
+      arrival: { at: T, motion: "sink" },
+    }
+    expect(resolvePortraitMotion(input, T + 1)).toBe("sink")
+  })
+
+  it("跳ねる・びくっは届いた瞬間の動きより優先する", () => {
+    const arrival = { at: T, motion: "lean" } as const
+    const ended = {
+      kind: "finished",
+      startedAt: 0,
+      finishedAt: T,
+      ending: { kind: "ended" },
+    } as const
+    expect(resolvePortraitMotion({ ...IDLE, turn: ended, arrival }, T + 1)).toBe("success")
+    expect(resolvePortraitMotion({ ...RUNNING, lastToolFailureAt: T, arrival }, T + 1)).toBe(
+      "failure",
+    )
+  })
+
+  it("動きを減らす設定では出さない", () => {
+    const input: PortraitMotionInput = {
+      ...IDLE,
+      reducedMotion: true,
+      arrival: { at: T, motion: "lean" },
+    }
+    expect(resolvePortraitMotion(input, T + 1)).toBe("reading")
+    expect(nextPortraitMotionTransitionDelayMs(input, T + 1)).toBeUndefined()
+  })
+
+  it("残り時間は届いた瞬間の動きの窓も数える", () => {
+    const input: PortraitMotionInput = { ...IDLE, arrival: { at: T, motion: "sink" } }
+    expect(nextPortraitMotionTransitionDelayMs(input, T + 100)).toBe(WINDOWS.sink - 100)
+    expect(nextPortraitMotionTransitionDelayMs({ ...input, sentAt: T }, T + 100)).toBe(
+      WINDOWS.nod - 100,
+    )
   })
 })

@@ -5,11 +5,16 @@ import { useCharacterView } from "../../../../../../../../src/browser/components
 import { useSession } from "../../../../../../../../src/browser/stores/session.ts"
 import { nowEpochMilliseconds } from "../../../../../../../../src/browser/utils/clock.ts"
 import type { StampedPendingAsk } from "../../../../../../../../src/shared/session-driver/pending-ask.ts"
-import { INITIAL_SESSION_STATE } from "../../../../../../../../src/shared/session/session-state.ts"
+import type { SessionRecord } from "../../../../../../../../src/shared/session/session-record.ts"
+import {
+  INITIAL_SESSION_STATE,
+  type SessionState,
+} from "../../../../../../../../src/shared/session/session-state.ts"
 import { FIXTURE_CHARACTER, speech } from "../../../../../../../fixture/character-view.tsx"
+import { requestRecord, speechRecord } from "../../../../../../../fixture/session-record.ts"
 import { stubPhoneWidth } from "../../../../../../phone-width.ts"
 import { queryClientWrapper } from "../../../../../../query-client.tsx"
-import { putSession, putState } from "../../../../../../session-store.ts"
+import { advanceState, putSession, putState } from "../../../../../../session-store.ts"
 
 afterEach(() => {
   cleanup()
@@ -109,6 +114,47 @@ describe("useCharacterView の動き", () => {
       void useSession.getState().dispatch.session.answer({ id: "ask-1", answer: { kind: "allow" } })
     })
     expect(answered.current()).toBe("nod")
+  })
+
+  describe("声が届いた瞬間", () => {
+    const RUNNING = { kind: "running", startedAt: 0 } as const
+    const request = requestRecord({ turnId: 0 })
+
+    function runningWith(...records: SessionRecord[]): SessionState {
+      return { ...INITIAL_SESSION_STATE, turn: RUNNING, records }
+    }
+
+    it("表情に合った動きを1回掛け、動かない表情なら続く動きのまま", () => {
+      putSession(runningWith(request))
+      const motion = renderMotion()
+      expect(motion.current()).toBe("waiting")
+
+      act(() => {
+        advanceState(runningWith(request, speechRecord({ expression: "thinking" })))
+      })
+      expect(motion.current()).toBe("lean")
+
+      act(() => {
+        advanceState(
+          runningWith(
+            request,
+            speechRecord({ expression: "thinking" }),
+            speechRecord({ expression: "serious" }),
+          ),
+        )
+      })
+      expect(motion.current()).toBe("waiting")
+    })
+
+    it("動きを減らす設定では掛けない", () => {
+      stubPhoneWidth(true)
+      putSession(runningWith(request))
+      const motion = renderMotion()
+      act(() => {
+        advanceState(runningWith(request, speechRecord({ expression: "thinking" })))
+      })
+      expect(motion.current()).toBe("waiting")
+    })
   })
 
   it("動きを減らす設定では、呼ばず、うなずかない", () => {

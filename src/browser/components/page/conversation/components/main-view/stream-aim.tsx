@@ -1,7 +1,7 @@
 // 立ち絵が従っているセリフの吹き出しに付ける尾。先を立ち絵の顔へ向ける。
 // 向きの計算は `tailAim`、ここは画面から数を測って、計算し直す時機を張る。
 //
-// 計算し直すのは、流れの送り・流れと立ち絵の大きさの変化・立ち絵の絵の読み込み（表情の切り替え）・1回の動きの終わり。
+// 計算し直すのは、流れの送り・流れと立ち絵の大きさの変化・立ち絵の絵の読み込み（表情の切り替え）・1回の動きの終わり・吹き出しの出方の終わり。
 // 動きの最中は追わず、動きの止まった位置に向ける。
 // 従っているセリフが替わるときは、尾を持つ吹き出しが作り直されてここが据え直される。
 
@@ -36,7 +36,10 @@ export function StreamAim(props: { readonly live: boolean }): ReactElement {
     const scroller = svg.closest(SCROLLER_SELECTOR)
     scroller?.addEventListener("scroll", aimAgain, { passive: true })
     const onPortraitSettled = (event: Event): void => {
-      if (event.target instanceof Element && event.target.closest(STAGE_SELECTOR) !== null) {
+      if (
+        event.target instanceof Element &&
+        (event.target.closest(STAGE_SELECTOR) !== null || event.target === svg.parentElement)
+      ) {
         aimAgain()
       }
     }

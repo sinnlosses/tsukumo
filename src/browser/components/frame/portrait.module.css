@@ -8,14 +8,17 @@
   text-align: center;
   animation: var(--fade-in-name) 0.25s ease-out;
 
-  /* 立ち絵の動きの速さ・大きさ。この7組が唯一の調整箇所。
+  /* 立ち絵の動きの速さ・大きさ。この10組が唯一の調整箇所。
      --portrait-breathe-*: 呼吸（常時のごく小さい上下。「居る」の最小単位）。
      --portrait-walk-*: 待っている間の移動（ターン進行中に領域の中をゆっくり歩く。横方向）。
      --portrait-write-*: 書いている（`report` の引数を書いている間、筆を運ぶように小さく速く横へ揺れる）。
      --portrait-bounce-*: 完了の反応（ターンが終わると小さく跳ねる）。
      --portrait-flinch-*: 失敗でびくっ（ツールが失敗すると一瞬のけぞる。横に引いて傾く）。
      --portrait-beckon-*: 呼ぶ（答え待ちの始まりと、隠れていたタブへ戻った直後だけ、横へ寄って傾く）。
-     --portrait-nod-*: うなずく（送った直後に、下へ小さく傾く）。 */
+     --portrait-nod-*: うなずく（送った直後に、下へ小さく傾く）。
+     --portrait-lean-*: 身を乗り出す（声が届いた瞬間に、横へ寄って傾く）。
+     --portrait-tilt-*: 首をかしげる（声が届いた瞬間に、傾く）。
+     --portrait-sink-*: 沈む（声が届いた瞬間に、下へ沈む）。 */
   --portrait-breathe-amount: 0.2rem;
   --portrait-breathe-duration: 3.2s;
   --portrait-walk-amount: 0.5rem;
@@ -33,6 +36,13 @@
   --portrait-nod-amount: 0.25rem;
   --portrait-nod-rotate: 2deg;
   --portrait-nod-duration: 0.36s;
+  --portrait-lean-amount: 0.25rem;
+  --portrait-lean-rotate: 2.5deg;
+  --portrait-lean-duration: 0.7s;
+  --portrait-tilt-rotate: 4deg;
+  --portrait-tilt-duration: 0.7s;
+  --portrait-sink-amount: 0.35rem;
+  --portrait-sink-duration: 0.9s;
 }
 /* 素材の縦横比を保つ（実測）。
    `height: 100%` と `max-width` を同時に掛けると、置換要素は幅だけ縮む（CSS 2.1 §10.4 の制約表。高さが auto でないまま max-width に当たると、max-height 側の再計算が起きない）。
@@ -91,6 +101,24 @@
   animation-name: var(--fade-in-name), portrait-nod;
   animation-duration: 0.25s, var(--portrait-nod-duration);
   animation-timing-function: ease-out, ease-out;
+  animation-iteration-count: 1, 1;
+}
+.portrait[data-motion="lean"] {
+  animation-name: var(--fade-in-name), portrait-lean;
+  animation-duration: 0.25s, var(--portrait-lean-duration);
+  animation-timing-function: ease-out, ease-in-out;
+  animation-iteration-count: 1, 1;
+}
+.portrait[data-motion="tilt"] {
+  animation-name: var(--fade-in-name), portrait-tilt;
+  animation-duration: 0.25s, var(--portrait-tilt-duration);
+  animation-timing-function: ease-out, ease-in-out;
+  animation-iteration-count: 1, 1;
+}
+.portrait[data-motion="sink"] {
+  animation-name: var(--fade-in-name), portrait-sink;
+  animation-duration: 0.25s, var(--portrait-sink-duration);
+  animation-timing-function: ease-out, ease-in-out;
   animation-iteration-count: 1, 1;
 }
 @keyframes portrait-breathe {
@@ -186,5 +214,38 @@
   }
   45% {
     transform: translateY(var(--portrait-nod-amount)) rotate(var(--portrait-nod-rotate));
+  }
+}
+/* 身を乗り出す。声が届いた瞬間（`ARRIVAL_MOTION_WINDOW_MS`）だけ当たる一度きりの動き。 */
+@keyframes portrait-lean {
+  0%,
+  100% {
+    transform: translateX(0) rotate(0deg);
+  }
+  35%,
+  70% {
+    transform: translateX(var(--portrait-lean-amount)) rotate(var(--portrait-lean-rotate));
+  }
+}
+/* 首をかしげる。声が届いた瞬間だけ当たる一度きりの動き。 */
+@keyframes portrait-tilt {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  30%,
+  70% {
+    transform: rotate(calc(-1 * var(--portrait-tilt-rotate)));
+  }
+}
+/* 沈む。声が届いた瞬間だけ当たる一度きりの動き。 */
+@keyframes portrait-sink {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  40%,
+  70% {
+    transform: translateY(var(--portrait-sink-amount));
   }
 }

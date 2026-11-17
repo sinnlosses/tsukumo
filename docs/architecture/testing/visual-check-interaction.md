@@ -81,6 +81,7 @@ tsukumo を空きポートで自分で起こし、配信 URL を待って撮り�
 **自然幅が読む面を超える `graph`（1 つの起点から 10 本に分かれる TD）の横スクロールは、場面 `report-graph-scroll`**（`--until-step 99 --wait-for '[class*="is-final_"]'`。`pre.mermaid` が `data-measure="scroll"` になり、`pre` の中で横にスクロールする）。
 **縦に長い図の高さと拡大は場面 `report-tall-figure`**（mermaid・svg・画像。`--reveal-at 30000`。拡大は `--click 'pre.mermaid'`）、**中間レポートの箱の中の部品の枠は場面 `report-interim-nested`**（`--click summary` で畳みを開く）。
 **計画の返却を待つ間のプログレスバー（`delegatedRange` が `pending`。丸が「・」「…」「・」）は、場面 `work-strip-plan-pending`**（`--wait-for 'text=計画を書き直す'`）。
+**セリフが届いた瞬間の出方（9つの表情を2秒おきに言わせ、立ち絵の `data-motion` と吹き出しの `data-arrival` が替わる）は、場面 `speech-arrival`。** 1回の動きの最中は終わりのある動きを待つ `capture-view.ts` では撮れず、動きを減らす設定で撮る口も無いので、属性の移り変わりは実ブラウザのページに `MutationObserver` を差して時刻つきで測り、動きの形は CSS の値と見本の値を並べて照らす。止まった画（`data-arrival` が無い）は `--advance 25000` で撮る。
 **幅で画面が切り替わる境目は 1100px と 760px。** 1100px 以下でサイドバーが柱に畳まれ、760px 以下で
 頭・本文・顔と吹き出し・入力欄の縦の1列と引き出しになる。境目は `--size 1100x900` と `--size 1101x900`、`--size 760x900` と `--size 761x900` の両側を撮る
 （`docs/architecture/screen-design.md`「13.4 Layout」「狭い画面（760px 以下）」）。

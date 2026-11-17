@@ -1,4 +1,4 @@
-// 立ち絵をいま動かしてよいか、動かすなら7つのうちどれかを決める。
+// 立ち絵をいま動かしてよいか、動かすなら10のうちどれかを決める。
 // 動くのは利用者の注意が空いているときだけ。優先順位は `resolvePortraitMotion` が持つ。
 
 import type { TurnProgress } from "../../shared/session/turn-progress.ts"
@@ -12,6 +12,12 @@ export type PortraitMotion =
   | "failure"
   | "beckon"
   | "nod"
+  | "lean"
+  | "tilt"
+  | "sink"
+
+/** 声が届いた瞬間に掛ける1回の動き。 */
+export type ArrivalMotion = "nod" | "lean" | "tilt" | "sink" | "success" | "failure"
 
 /** タブの見え隠れ。`returned` は隠れていたタブが見えるようになった時刻を持つ。 */
 export type TabVisibility =
@@ -40,6 +46,8 @@ export type PortraitMotionInput = {
   readonly tab?: TabVisibility
   /** このタブが依頼・補足・答えを送る操作をした時刻。省くと送っていない。 */
   readonly sentAt?: number
+  /** 声が届いた時刻と、そのとき掛ける動き。届いていない・動かない表情なら省く。 */
+  readonly arrival?: { readonly at: number; readonly motion: ArrivalMotion }
   /** 動きを減らす設定か。省くと減らさない。 */
   readonly reducedMotion?: boolean
 }
@@ -53,6 +61,7 @@ type PortraitMotionTimingInput = Pick<
   | "askedAt"
   | "tab"
   | "sentAt"
+  | "arrival"
   | "reducedMotion"
 >
 
@@ -68,6 +77,16 @@ const FAILURE_MOTION_WINDOW_MS = 400
 /** ターンが（失敗でなく）終わってから、このミリ秒だけ「完了の反応」を優先する。 */
 const SUCCESS_MOTION_WINDOW_MS = 700
 
+/** 届いた瞬間の動きごとに優先する期間（ミリ秒）。動きの長さより長く取る。 */
+const ARRIVAL_MOTION_WINDOW_MS = {
+  nod: NOD_MOTION_WINDOW_MS,
+  lean: 900,
+  tilt: 900,
+  sink: 1100,
+  success: SUCCESS_MOTION_WINDOW_MS,
+  failure: FAILURE_MOTION_WINDOW_MS,
+} as const satisfies Record<ArrivalMotion, number>
+
 /**
  * いま出す動き。優先順位は次の順。
  *
@@ -76,10 +95,11 @@ const SUCCESS_MOTION_WINDOW_MS = 700
  *    失敗・中断で終わったターンと、背景の作業が残っているときには「完了の反応」を出さない
  * 3. 答え待ちが始まった直後・隠れていたタブが見えるようになった直後（{@link BECKON_MOTION_WINDOW_MS} 以内）は「呼ぶ」。
  *    タブが隠れているあいだと、動きを減らす設定では出さない
- * 4. 送る操作の直後（{@link NOD_MOTION_WINDOW_MS} 以内）は「うなずく」。動きを減らす設定では出さない
- * 5. 答え待ちのあいだは、ターンが進行中でも「呼吸」だけの「読んでいる」
- * 6. ターンが進行中で `report` の引数を書いている最中なら「書いている」
- * 7. ターンが進行中か、背景の作業を待っているあいだは「待っている間の移動」、そうでなければ「呼吸」だけの「読んでいる」
+ * 4. 声が届いた直後（動きごとの {@link ARRIVAL_MOTION_WINDOW_MS} 以内）は、その動き。動きを減らす設定では出さない
+ * 5. 送る操作の直後（{@link NOD_MOTION_WINDOW_MS} 以内）は「うなずく」。動きを減らす設定では出さない
+ * 6. 答え待ちのあいだは、ターンが進行中でも「呼吸」だけの「読んでいる」
+ * 7. ターンが進行中で `report` の引数を書いている最中なら「書いている」
+ * 8. ターンが進行中か、背景の作業を待っているあいだは「待っている間の移動」、そうでなければ「呼吸」だけの「読んでいる」
  *
  * `now` は呼び出し側が渡す現在時刻（エポックミリ秒）。時計はここでは読まない（サーバとブラウザの結果を揃える）。
  */
@@ -109,7 +129,7 @@ export function resolvePortraitMotion(input: PortraitMotionInput, now: number): 
 }
 
 /**
- * 「失敗でびくっ」「完了の反応」「呼ぶ」「うなずく」が続く残り時間のうち、いちばん早く終わるものまでのミリ秒を返す。
+ * 「失敗でびくっ」「完了の反応」「呼ぶ」「届いた瞬間の動き」「うなずく」が続く残り時間のうち、いちばん早く終わるものまでのミリ秒を返す。
  * どちらも起きていない・期間をすでに過ぎているときは undefined（時間経過だけで動きが変わることはない）。
  *
  * 期間が「過ぎた瞬間」には何のイベントも来ない。
@@ -133,13 +153,13 @@ export function nextPortraitMotionTransitionDelayMs(
 }
 
 type ReactionWindow = {
-  readonly motion: "beckon" | "nod"
+  readonly motion: "beckon" | ArrivalMotion
   readonly startedAt: number
   readonly durationMs: number
 }
 
 /**
- * 呼ぶ・うなずくの窓を、優先の順に並べる。出せないもの（答え待ちが無い・送っていない・
+ * 呼ぶ・届いた瞬間の動き・うなずくの窓を、優先の順に並べる。出せないもの（答え待ちが無い・届いていない・送っていない・
  * 呼ぶはタブが隠れているあいだ・動きを減らす設定）は入れない。
  */
 function reactionWindows(input: PortraitMotionTimingInput): readonly ReactionWindow[] {
@@ -159,11 +179,21 @@ function reactionWindows(input: PortraitMotionTimingInput): readonly ReactionWin
             durationMs: BECKON_MOTION_WINDOW_MS,
           },
         ]
+  const arrived: readonly ReactionWindow[] =
+    input.arrival === undefined
+      ? []
+      : [
+          {
+            motion: input.arrival.motion,
+            startedAt: input.arrival.at,
+            durationMs: ARRIVAL_MOTION_WINDOW_MS[input.arrival.motion],
+          },
+        ]
   const nod: readonly ReactionWindow[] =
     input.sentAt === undefined
       ? []
       : [{ motion: "nod", startedAt: input.sentAt, durationMs: NOD_MOTION_WINDOW_MS }]
-  return [...beckon, ...nod]
+  return [...beckon, ...arrived, ...nod]
 }
 
 /** 閉じていて、背景の作業も残っておらず、利用者が止めずに完了で終わったか。跳ねるのはこのときだけ。 */

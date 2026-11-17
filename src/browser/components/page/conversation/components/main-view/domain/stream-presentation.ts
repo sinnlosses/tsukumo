@@ -2,6 +2,7 @@
 
 import { recordClockStamp, visibleClockFlags } from "../../../domain/clock-stamp.ts"
 import type { ViewedSpeech } from "../../../domain/pinned-speech.ts"
+import type { SpeechArrivalBubble } from "../../../domain/speech-arrival.ts"
 
 /** 流れの1行。セリフ・投稿だけが時刻（`at`）を持ち、セリフだけがやり取りの中の位置（`speechIndex`）を持つ。 */
 type PresentedItem = {
@@ -45,6 +46,8 @@ export type RowPresentation = {
   readonly followed: boolean
   /** 押して留めたセリフか。 */
   readonly pinned: boolean
+  /** 届いたばかりのセリフに付ける吹き出しの出方。付けない行は省く。 */
+  readonly arrival?: SpeechArrivalBubble
 }
 
 /** 提示が決まっていない行（並びの外・並びが短い）の既定。 */
@@ -68,6 +71,8 @@ export type PresentationContext = {
   readonly follow: boolean
   /** 押して留めたセリフの置き場。留めているあいだは、その1件だけが明るく尾が付き、ほかは落ち着く。 */
   readonly pinned: PinnedPlace
+  /** 届いたばかりの声の、並びの中の位置と出方。従っている行がその位置のときだけ、出方を付ける。 */
+  readonly arriving?: { readonly index: number; readonly bubble: SpeechArrivalBubble }
   readonly timeZone: string
 }
 
@@ -94,11 +99,17 @@ export function streamPresentationOf(
         pinned,
       }
     }
+    const followed = context.follow && index === lastSayAt
     return {
       timeShown,
       liveness: context.live && index === lastSayAt ? "live" : "plain",
-      followed: context.follow && index === lastSayAt,
+      followed,
       pinned: false,
+      ...(followed &&
+      context.arriving !== undefined &&
+      context.arriving.index === items[index]?.speechIndex
+        ? { arrival: context.arriving.bubble }
+        : {}),
     }
   })
 }
