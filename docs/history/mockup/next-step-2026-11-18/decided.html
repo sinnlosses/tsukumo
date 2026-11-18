@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>次の一手の並び — 決めた形（2026-11-18）</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #17151d;
+    --surface: #221f2b;
+    --paper: #2a2733;
+    --ink: #e8e3ea;
+    --ink-soft: color-mix(in srgb, var(--ink) 72%, transparent);
+    --ink-quiet: color-mix(in srgb, var(--ink) 55%, transparent);
+    --line: color-mix(in srgb, var(--ink) 14%, transparent);
+    --accent: #5ad1c0;
+    --accent-soft: color-mix(in srgb, var(--accent) 14%, transparent);
+    --warn: #f2c46b;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.6 system-ui, sans-serif; }
+  header.page { max-width: 1500px; margin: 0 auto; padding: 24px 24px 8px; }
+  header.page h1 { font-size: 20px; margin: 0 0 6px; }
+  header.page p { margin: 0; color: var(--ink-soft); }
+  .grid { max-width: 1500px; margin: 0 auto; padding: 16px 24px 48px; display: grid; grid-template-columns: repeat(auto-fit, minmax(680px, 1fr)); gap: 28px; align-items: start; }
+  .plan { display: flex; flex-direction: column; gap: 10px; }
+  .plan h2 { font-size: 16px; margin: 0; }
+  .plan .why { margin: 0; color: var(--ink-soft); font-size: 13px; }
+
+  .stage { border-radius: 14px; border: 1px solid var(--line); background: linear-gradient(#1c1a24, #15131b); padding: 0 20px 18px; display: flex; flex-direction: column; gap: 10px; }
+  .stage.phone { width: 390px; padding: 0 12px 12px; }
+  .paper { background: var(--paper); border-radius: 0 0 10px 10px; padding: 4px 20px 16px; }
+  .paper .fade { color: var(--ink-quiet); font-size: 13px; border-bottom: 1px dashed var(--line); padding: 8px 0; }
+  .paper .favor { padding-top: 10px; font-size: 13px; }
+  .paper .favor b::before { content: "● "; color: var(--warn); }
+
+  .tray { display: flex; flex-direction: column; gap: 6px; }
+  .tray-head { display: flex; gap: 10px; align-items: baseline; font-size: 12px; color: var(--ink-quiet); }
+  .tray-head b { color: var(--accent); font-size: 12px; letter-spacing: 0.04em; }
+  .tray-head .right { margin-left: auto; display: flex; gap: 12px; align-items: baseline; }
+  .tray-head .favor-note { color: var(--accent); }
+  .tray-head button { border: 1px solid var(--line); background: none; border-radius: 6px; padding: 0 8px; font-size: 12px; color: var(--ink-soft); }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; max-height: calc(2 * 34px + 8px); overflow-y: auto; }
+  .phone .chips { flex-wrap: nowrap; overflow-x: auto; max-height: none; }
+  .chip { border: 1px solid var(--line); background: color-mix(in srgb, var(--ink) 5%, transparent); border-radius: 8px; padding: 5px 12px; font: inherit; font-size: 13.5px; color: var(--ink); white-space: nowrap; cursor: pointer; }
+  .chip.on { border-color: var(--accent); }
+  .chip.in { border-color: var(--accent); background: var(--accent-soft); }
+  .chip.in::before { content: "✓ "; color: var(--accent); }
+  .chip .k { color: var(--ink-quiet); font-size: 12px; margin-right: 6px; }
+  .chip .n { color: var(--accent); font-size: 12px; margin-left: 4px; }
+  .preview { border-left: 2px solid var(--accent); padding: 2px 0 2px 10px; font-size: 13px; white-space: pre-wrap; color: var(--ink-soft); }
+  .preview em { font-style: normal; display: block; color: var(--ink-quiet); font-size: 12px; }
+  .folded { display: flex; gap: 10px; align-items: baseline; font-size: 12px; color: var(--ink-quiet); }
+  .folded b { color: var(--accent); }
+  .folded .right { margin-left: auto; display: flex; gap: 12px; }
+
+  .composer { border: 1.5px solid var(--accent); border-radius: 14px; background: var(--surface); padding: 12px 16px; display: flex; flex-direction: column; gap: 10px; }
+  .composer .text { color: var(--ink-quiet); min-height: 22px; white-space: pre-wrap; }
+  .composer .text.filled { color: var(--ink); }
+  .composer .tools { display: flex; gap: 14px; color: var(--ink-quiet); font-size: 12px; align-items: center; }
+  .composer .send { margin-left: auto; width: 28px; height: 28px; border-radius: 50%; background: var(--accent); }
+  .band { font-size: 12px; color: var(--accent); }
+</style>
+</head>
+<body>
+<header class="page">
+  <h1>次の一手の並び — 決めた形</h1>
+  <p>ADR 0068 の見本。題材は架空。入力欄の頭に「見出し・1行の札・下見」の並びを置き、お願いの知らせは見出しの右端へ合わせる。押すとその場の入力欄に入る（送らない）。</p>
+</header>
+
+<main class="grid">
+  <section class="plan">
+    <h2>1. 開いた形（下書きが空・お願いが見えていない）</h2>
+    <p class="why">見出しは「押すと下の入力欄に入る（送らない）」。右端にお願いの知らせと畳む口。下見は先頭の札の文から始まる。</p>
+    <div class="stage">
+      <div class="paper"><div class="fade">… レポートの本文 …（お願いの欄は紙の末尾、見える範囲の外）</div></div>
+      <div class="tray" role="group" aria-label="次の一手" data-tray>
+        <div class="tray-head"><b>次の一手</b><span class="say">押すと下の入力欄に入る（送らない）</span><span class="right"><span class="favor-note">お願いが1件あります</span><button>お願いへ</button><button>畳む ⌄</button></span></div>
+        <div class="chips">
+          <button class="chip on" data-draft="止めたところから再開して。"><span class="k">再開</span>止めたところから再開して。</button>
+          <button class="chip" data-draft="次の点を確かめて。&#10;1. 架空の移行は既存の設定を壊さない&#10;   確かめ方: 架空の設定を入れた状態で移行を打つ&#10;2. 架空の案Aは大きい入力でも遅くならない"><span class="k">確かめる</span>次の点を確かめて。<span class="n">2点</span></button>
+          <button class="chip" data-draft="「架空の単体」を確かめた。問題なかった。"><span class="k">確かめた</span>「架空の単体」を確かめた。問題なかった。</button>
+          <button class="chip" data-draft="「架空の単体」を確かめたら、違っていた。"><span class="k">違った</span>「架空の単体」を確かめたら、違っていた。</button>
+          <button class="chip" data-draft="「架空の案B」で進めて。"><span class="k">別の案</span>案を選ぶ ▾</button>
+        </div>
+        <div class="preview"><em>押すと入る文</em><span class="pv">止めたところから再開して。</span></div>
+      </div>
+      <div class="composer"><div class="text">つくも への依頼を書く</div><div class="tools">画像 ／ @ H ・ Opus<span class="send"></span></div></div>
+    </div>
+  </section>
+
+  <section class="plan">
+    <h2>2. 押したあと（下書きに字がある）</h2>
+    <p class="why">並びは残る。下書きに文が入っている札だけ ✓ と差し色。見出しは「後ろに足す」に替わる。もう一度押しても二重に足さない。</p>
+    <div class="stage">
+      <div class="paper"><div class="fade">… レポートの本文 …</div><div class="favor"><b>お願い</b> 架空の設定で移行を手元でも一度打ってほしい。</div></div>
+      <div class="tray" role="group" aria-label="次の一手">
+        <div class="tray-head"><b>次の一手</b><span>押すと下の入力欄の後ろに足す（送らない）</span><span class="right"><button>畳む ⌄</button></span></div>
+        <div class="chips">
+          <button class="chip in"><span class="k">再開</span>止めたところから再開して。</button>
+          <button class="chip"><span class="k">確かめる</span>次の点を確かめて。<span class="n">2点</span></button>
+          <button class="chip"><span class="k">確かめた</span>「架空の単体」を確かめた。問題なかった。</button>
+          <button class="chip"><span class="k">違った</span>「架空の単体」を確かめたら、違っていた。</button>
+          <button class="chip"><span class="k">別の案</span>案を選ぶ ▾</button>
+        </div>
+        <div class="preview"><em>押すと入る文</em><span>止めたところから再開して。</span></div>
+      </div>
+      <div class="composer"><div class="text filled">止めたところから再開して。</div><div class="tools">画像 ／ @ H ・ Opus<span class="send"></span></div></div>
+    </div>
+  </section>
+
+  <section class="plan">
+    <h2>3. 畳んだ形</h2>
+    <p class="why">1行に件数と「開く」。お願いの知らせは右端に残る。次の最終レポートが届くと開いた形に戻る。</p>
+    <div class="stage">
+      <div class="paper"><div class="fade">… レポートの本文 …</div></div>
+      <div class="folded"><b>次の一手</b><span>5件</span><span class="right"><span class="band">お願いが1件あります</span><span>お願いへ</span><span>開く ⌃</span></span></div>
+      <div class="composer"><div class="text">つくも への依頼を書く</div><div class="tools">画像 ／ @ H ・ Opus<span class="send"></span></div></div>
+    </div>
+  </section>
+
+  <section class="plan">
+    <h2>4. 390×844</h2>
+    <p class="why">札は1段の横送り、下見は出さない（押すと入力欄に全文が入る）。お願いの知らせはレポートの冒頭の印のまま。</p>
+    <div class="stage phone">
+      <div class="paper"><div class="fade">… レポートの本文 …</div></div>
+      <div class="tray" role="group" aria-label="次の一手">
+        <div class="tray-head"><b>次の一手</b><span>押すと入る（送らない）</span><span class="right"><button>畳む ⌄</button></span></div>
+        <div class="chips">
+          <button class="chip"><span class="k">再開</span>止めたところから再開して。</button>
+          <button class="chip"><span class="k">確かめる</span>次の点を確かめて。<span class="n">2点</span></button>
+          <button class="chip"><span class="k">別の案</span>案を選ぶ ▾</button>
+        </div>
+      </div>
+      <div class="composer"><div class="text">つくも への依頼を書く</div></div>
+    </div>
+  </section>
+</main>
+
+<script>
+  // 1 の並びだけ動く。触れた・フォーカスした札の文を下見に出し、押すと入力欄へ入れる（送らない）。
+  const tray = document.querySelector("[data-tray]")
+  const stage = tray.closest(".stage")
+  const box = stage.querySelector(".composer .text")
+  const pv = tray.querySelector(".pv")
+  const say = tray.querySelector(".say")
+  for (const button of tray.querySelectorAll("[data-draft]")) {
+    const show = () => {
+      pv.textContent = button.dataset.draft
+      for (const other of tray.querySelectorAll(".chip")) other.classList.toggle("on", other === button)
+    }
+    button.addEventListener("mouseenter", show)
+    button.addEventListener("focus", show)
+    button.addEventListener("click", () => {
+      show()
+      const current = box.classList.contains("filled") ? box.textContent : ""
+      if (!current.includes(button.dataset.draft)) {
+        box.textContent = current === "" ? button.dataset.draft : `${current}\n\n${button.dataset.draft}`
+        box.classList.add("filled")
+      }
+      for (const chip of tray.querySelectorAll("[data-draft]")) chip.classList.toggle("in", box.textContent.includes(chip.dataset.draft))
+      say.textContent = "押すと下の入力欄の後ろに足す（送らない）"
+    })
+  }
+</script>
+</body>
+</html>
