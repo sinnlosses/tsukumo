@@ -27,7 +27,15 @@ function seamFor(records: readonly SessionRecord[], away: Partial<Away>) {
   const rows = conversationStreamRows(first)
   const items = streamItemsOf(rows, turn([]))
   return awaySeamOf({
-    away: { generation: 1, turnId: 0, rowCount: 2, awayMs: 4 * MINUTE, ...away },
+    away: {
+      generation: 1,
+      turnId: 0,
+      rowCount: 2,
+      hiddenDoneSegments: 0,
+      visibleDoneSegments: 0,
+      awayMs: 4 * MINUTE,
+      ...away,
+    },
     rows,
     items,
   })
@@ -82,7 +90,14 @@ describe("awaySeamOf（畳みの中に入った行）", () => {
       mark: "final",
     }),
   ])
-  const away: Away = { generation: 1, turnId: 0, rowCount: 2, awayMs: 4 * MINUTE }
+  const away: Away = {
+    generation: 1,
+    turnId: 0,
+    rowCount: 2,
+    hiddenDoneSegments: 0,
+    visibleDoneSegments: 0,
+    awayMs: 4 * MINUTE,
+  }
 
   it("畳みに入った新しいセリフの手前では、畳み全体の手前に線を置く", () => {
     const items = streamItemsOf(rows, finalTurn)

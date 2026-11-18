@@ -10,6 +10,9 @@ export type Away = {
   readonly turnId: number
   /** 隠れた時点の、そのやり取りの流れの行の数。これより後ろの行が新しい。 */
   readonly rowCount: number
+  /** 隠れた時点と見えた時点の、済んだ区間の数。この間に済んだ区間が、隠れていたあいだに済んだ区間。 */
+  readonly hiddenDoneSegments: number
+  readonly visibleDoneSegments: number
   readonly awayMs: number
 }
 

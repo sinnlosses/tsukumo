@@ -54,7 +54,14 @@ describe("MainView（やり取りの移動）", () => {
     renderMainView(threeTurns())
     act(() => {
       useAwaySeam.setState({
-        away: { generation: 0, turnId: 2, rowCount: 1, awayMs: 120_000 },
+        away: {
+          generation: 0,
+          turnId: 2,
+          rowCount: 1,
+          hiddenDoneSegments: 0,
+          visibleDoneSegments: 0,
+          awayMs: 120_000,
+        },
       })
     })
 

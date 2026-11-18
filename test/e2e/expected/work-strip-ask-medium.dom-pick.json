@@ -3,8 +3,8 @@
     { "tag": "section", "attributes": { "aria-label": "進み具合", "data-work-strip": "working" }, "children": [
       { "tag": "span", "attributes": { "data-result": "awaiting-answer", "data-mark": "dot" } },
       "返事を待っています",
-      { "tag": "li", "attributes": { "data-phase-state": "done" } },
-      { "tag": "li", "attributes": { "data-phase-state": "asking" } }
+      { "tag": "li", "children": [{ "tag": "button", "attributes": { "data-segment-state": "done" } }] },
+      { "tag": "li", "children": [{ "tag": "button", "attributes": { "data-segment-state": "asking" } }] }
     ] }
   ]
 }

@@ -4,9 +4,10 @@ import { createRef } from "react"
 
 import type { PhaseRow } from "../../page/conversation/components/main-view/domain/phase-row.ts"
 import type {
-  WorkStripPhase,
-  WorkStripModel,
-} from "../../page/conversation/components/main-view/hooks/use-work-strip.ts"
+  WorkStripSegmentsModel,
+  WorkStripSegmentView,
+} from "../../page/conversation/components/main-view/hooks/use-work-strip-segment-list.ts"
+import type { WorkStripModel } from "../../page/conversation/components/main-view/hooks/use-work-strip.ts"
 import { PresentationalCurrentStep } from "../../page/conversation/components/main-view/presentational-current-step.tsx"
 import { PresentationalPhaseList } from "../../page/conversation/components/main-view/presentational-phase-list.tsx"
 import { PresentationalReportOutline } from "../../page/conversation/components/main-view/presentational-report-outline.tsx"
@@ -43,23 +44,44 @@ const PHASE_ROWS = [
   phaseRow(3, "飛ばした確認", "", true),
 ]
 
-function stripPhase(
+function segmentOf(
   key: string,
-  mark: string,
   label: string,
-  state: WorkStripPhase["state"],
-): WorkStripPhase {
+  state: WorkStripSegmentView["state"],
+): WorkStripSegmentView {
   return {
     key,
-    mark,
-    label,
     state,
-    skipped: false,
-    index: 0,
-    name: label,
-    recapKey: key,
-    onToggle: noop,
+    label,
+    phases: [],
+    openIndex: 0,
+    spanName: "",
+    parallelLabel: "",
+    unseen: false,
+    landing: false,
+    onOpen: noop,
   }
+}
+
+const WORKING_TRACK: WorkStripSegmentsModel = {
+  kind: "shown",
+  position: { kind: "shown", text: "2/3" },
+  onLanded: noop,
+  segments: [
+    segmentOf("s1", "フェーズ 1/3 下調べ（済み）", "done"),
+    segmentOf("s2", "フェーズ 2/3 実装（いま）", "current"),
+    segmentOf("s3", "フェーズ 3/3 確認（これから）", "upcoming"),
+  ],
+}
+
+const FINISHED_TRACK: WorkStripSegmentsModel = {
+  kind: "shown",
+  position: { kind: "none" },
+  onLanded: noop,
+  segments: [
+    segmentOf("s1", "フェーズ 1/2 下調べ（済み）", "done"),
+    segmentOf("s2", "フェーズ 2/2 実装（済み）", "done"),
+  ],
 }
 
 const STRIP_BASE = {
@@ -79,23 +101,6 @@ const WORKING_STRIP: WorkStripModel = {
   ...STRIP_BASE,
   kind: "working",
   result: "working",
-  phases: [
-    {
-      kind: "phase",
-      spanHead: { kind: "none" },
-      phase: stripPhase("p1", "✓", "1. 下調べ（済）", "done"),
-    },
-    {
-      kind: "phase",
-      spanHead: { kind: "none" },
-      phase: stripPhase("p2", "2", "2. 実装（今のフェーズ）", "current"),
-    },
-    {
-      kind: "phase",
-      spanHead: { kind: "none" },
-      phase: stripPhase("p3", "3", "3. 確認", "upcoming"),
-    },
-  ],
   mark: "dot",
   headLabel: "実装",
   statement: "",
@@ -105,18 +110,6 @@ const FINISHED_STRIP: WorkStripModel = {
   ...STRIP_BASE,
   kind: "finished",
   result: "done",
-  phases: [
-    {
-      kind: "phase",
-      spanHead: { kind: "none" },
-      phase: stripPhase("p1", "✓", "1. 下調べ（済）", "done"),
-    },
-    {
-      kind: "phase",
-      spanHead: { kind: "none" },
-      phase: stripPhase("p2", "✓", "2. 実装（済）", "done"),
-    },
-  ],
   mark: "check",
   headLabel: "できました",
   statement: "",
@@ -189,8 +182,16 @@ export const MAIN_VIEW_EXAMPLES: readonly ScreenPartExample[] = [
     path: "page/conversation/components/main-view/presentational-work-strip.tsx",
     render: () => (
       <>
-        <PresentationalWorkStrip strip={WORKING_STRIP} now={{ kind: "none" }} />
-        <PresentationalWorkStrip strip={FINISHED_STRIP} now={{ kind: "none" }} />
+        <PresentationalWorkStrip
+          strip={WORKING_STRIP}
+          now={{ kind: "none" }}
+          track={WORKING_TRACK}
+        />
+        <PresentationalWorkStrip
+          strip={FINISHED_STRIP}
+          now={{ kind: "none" }}
+          track={FINISHED_TRACK}
+        />
       </>
     ),
   },

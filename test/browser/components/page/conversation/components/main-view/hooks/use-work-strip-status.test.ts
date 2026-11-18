@@ -1,6 +1,7 @@
 import { act, cleanup, renderHook } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
+import { useWorkStripSegmentList } from "../../../../../../../../src/browser/components/page/conversation/components/main-view/hooks/use-work-strip-segment-list.ts"
 import {
   useWorkStrip,
   type WorkStripModel,
@@ -123,7 +124,7 @@ describe("useWorkStrip（状態）", () => {
     ).toMatchObject({ kind: "finished", sideLabel: "所要 7秒" })
   })
 
-  it("ワークプランの無いまま本文を出して閉じたら、段の丸の無い完了の帯を残す", () => {
+  it("ワークプランの無いまま本文を出して閉じたら、区間の無い完了の帯を残す", () => {
     const strip = stripAt(
       foldTimed([
         [workRequest, START],
@@ -136,7 +137,6 @@ describe("useWorkStrip（状態）", () => {
     expect(strip).toMatchObject({
       kind: "finished",
       result: "done",
-      phases: [],
       headLabel: "できました",
       sideLabel: "所要 5秒",
     })
@@ -246,21 +246,20 @@ describe("useWorkStrip（状態の印と見出し）", () => {
   })
 })
 
-describe("useWorkStrip（今の段の丸）", () => {
+describe("useWorkStrip（今の区間）", () => {
   function spinningOf(strip: WorkStripModel): boolean[] {
-    return strip.kind === "none"
-      ? []
-      : strip.phases.flatMap((slot) => {
-          if (slot.kind === "collapsed") {
-            return []
-          }
-          return slot.kind === "phase"
-            ? [slot.phase.state === "current"]
-            : slot.phases.map((phase) => phase.state === "current")
-        })
+    if (strip.kind === "none") {
+      return []
+    }
+    const track = renderHook(() => useWorkStripSegmentList()).result.current
+    return track.kind === "shown"
+      ? track.segments.flatMap((segment) =>
+          segment.phases.map((phase) => phase.state === "current"),
+        )
+      : []
   }
 
-  it("作業中は今の段の丸だけが今の段になる", () => {
+  it("作業中は今の区間だけが今の段になる", () => {
     const strip = stripAt(
       foldTimed([
         [workRequest, START],
@@ -285,7 +284,7 @@ describe("useWorkStrip（今の段の丸）", () => {
     expect(spinningOf(strip)).toEqual([false, true, false])
   })
 
-  it("答え待ちのあいだは今の段の丸は答え待ちの印になる", () => {
+  it("答え待ちのあいだは今の区間は答え待ちの印になる", () => {
     const strip = stripAt(
       foldTimed([
         [workRequest, START],
@@ -311,7 +310,7 @@ describe("useWorkStrip（今の段の丸）", () => {
     expect(spinningOf(strip)).toEqual([false, false])
   })
 
-  it("背景で作業中のあいだも今の段の丸だけが今の段になる", () => {
+  it("背景で作業中のあいだも今の区間だけが今の段になる", () => {
     const strip = stripAt(
       foldTimed([
         [workRequest, START],
@@ -338,7 +337,7 @@ describe("useWorkStrip（今の段の丸）", () => {
     expect(spinningOf(stripAt(foldTimed([[workRequest, START]]), START + 5_000))).toEqual([])
   })
 
-  it("並列のフェーズで今の段が複数なら、今の段の丸がすべて今の段になる", () => {
+  it("並列のフェーズで今の段が複数なら、今の区間がすべて今の段になる", () => {
     const grouped: SessionEvent = {
       kind: "work-plan",
       delegatedRange: { kind: "none" },

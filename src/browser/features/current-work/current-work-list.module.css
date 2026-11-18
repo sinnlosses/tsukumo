@@ -65,7 +65,7 @@
   margin-left: var(--space-sm);
   color: var(--ink-quiet);
 }
-/* 頭の丸。帯の段の丸と同じ顔（番号は枠だけ、済んだ段は差し色の地に ✓）。 */
+/* 頭の丸。番号は枠だけ、済んだ段は差し色の地に ✓。 */
 .current-work-plan-phase b {
   display: inline-flex;
   flex: none;

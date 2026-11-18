@@ -176,7 +176,7 @@ describe("WorkStrip", () => {
     expect(sentence).toContain("2回目の再試行")
   })
 
-  it("ターンが終わってバックグラウンドタスクだけ残るあいだは、チップが「背景で作業中」の点で言い、今の段の丸は回らない", () => {
+  it("ターンが終わってバックグラウンドタスクだけ残るあいだは、チップが「背景で作業中」の点で言い、今の区間は回らない", () => {
     putSession(
       stateAfter([
         REQUEST,
@@ -197,10 +197,10 @@ describe("WorkStrip", () => {
     expect(chip?.querySelector("[class*='work-strip-spinner']")).toBeNull()
     expect(chip?.querySelector("[class*='work-strip-dot']")).not.toBeNull()
     expect(strip().querySelector("[data-spinning]")).toBeNull()
-    expect(strip().querySelectorAll("[data-phase-state='current']")).toHaveLength(1)
+    expect(strip().querySelectorAll("[data-segment-state='current']")).toHaveLength(1)
   })
 
-  it("作業中のチップも今の段の丸も回る印を持たない", () => {
+  it("作業中のチップも今の区間も回る印を持たない", () => {
     putSession(stateAfter([REQUEST, plan(1)]))
     render(<WorkStrip />)
 
@@ -209,7 +209,7 @@ describe("WorkStrip", () => {
     expect(chip?.querySelector("[class*='work-strip-spinner']")).toBeNull()
     expect(chip?.querySelector("[class*='work-strip-dot']")).not.toBeNull()
     expect(strip().querySelector("[data-spinning]")).toBeNull()
-    expect(strip().querySelectorAll("[data-phase-state='current']")).toHaveLength(1)
+    expect(strip().querySelectorAll("[data-segment-state='current']")).toHaveLength(1)
   })
 
   it("ターンが閉じると帯は済んだ姿の1行で残り、緑のチェックと「できました」で言う", () => {
@@ -244,27 +244,28 @@ describe("WorkStrip（フェーズが多いとき）", () => {
     render(<WorkStrip />)
   }
 
-  it("フェーズが9つ以上で今のフェーズが3つ目より後ろなら、済んだ丸を「✓n」の1つにまとめる", () => {
+  it("フェーズが多くても、済んだ区間をまとめず区間の数だけ並べ、位置は今/全体で言う", () => {
     renderAt(4, 10)
 
-    expect(strip().textContent).toContain("✓4")
-    expect(screen.queryByRole("button", { name: /架空の段1(?!\d)/ })).toBeNull()
-    expect(screen.getByRole("button", { name: /架空の段5/ })).not.toBeNull()
-    expect(strip().textContent).toContain("架空の段5")
-  })
-
-  it("フェーズが8つ以下なら、今のフェーズが後ろでも丸は並べたまま", () => {
-    renderAt(4, 8)
-
+    expect(strip().querySelectorAll("[data-segment-state]")).toHaveLength(10)
+    expect(strip().querySelectorAll("[data-segment-state='done']")).toHaveLength(4)
+    expect(screen.getByRole("button", { name: "フェーズ 5/10 架空の段5（いま）" })).not.toBeNull()
+    expect(strip().textContent).toContain("5/10")
     expect(strip().textContent).not.toContain("✓4")
-    expect(screen.getByRole("button", { name: /架空の段1(?!\d)/ })).not.toBeNull()
   })
 
-  it("今のフェーズが3つ目までなら、フェーズが多くても丸は並べたまま", () => {
-    renderAt(2, 10)
+  it("全部済んだ姿では位置を出さない", () => {
+    putSession(
+      stateAfter([
+        REQUEST,
+        plan(3, "", NAMES(3)),
+        { kind: "turn-finished", outcome: { kind: "completed" } },
+      ]),
+    )
+    render(<WorkStrip />)
 
-    expect(strip().textContent).not.toContain("✓2")
-    expect(screen.getByRole("button", { name: /架空の段1(?!\d)/ })).not.toBeNull()
+    expect(strip().querySelectorAll("[data-segment-state='done']")).toHaveLength(3)
+    expect(strip().textContent).not.toContain("3/3")
   })
 
   it("帯の右端の口は「手順 n件」と、何の数かを言う", () => {
@@ -274,7 +275,7 @@ describe("WorkStrip（フェーズが多いとき）", () => {
   })
 })
 
-describe("WorkStrip（段の丸）", () => {
+describe("WorkStrip（下線の区間）", () => {
   /** 段A を済ませてまとめを渡し、段B が今の段、段C がまだの段。 */
   function renderProgressed(extra: readonly SessionEvent[] = []): void {
     putSession(
@@ -301,11 +302,14 @@ describe("WorkStrip（段の丸）", () => {
     })
   }
 
-  it("段の丸は button で、押しても吹き出しは出ず、依頼の手順の一覧が開く", () => {
+  it("区間は button で、読み上げの名前に位置・名前・状態を持ち、押しても吹き出しは出ず、依頼の手順の一覧が開く", () => {
     renderProgressed()
     const done = dot(/架空の段A/)
 
     expect(done.tagName).toBe("BUTTON")
+    expect(done.getAttribute("aria-label")).toBe("フェーズ 1/3 架空の段A（済み）")
+    expect(dot(/架空の段B/).getAttribute("aria-label")).toBe("フェーズ 2/3 架空の段B（いま）")
+    expect(dot(/架空の段C/).getAttribute("aria-label")).toBe("フェーズ 3/3 架空の段C（これから）")
     expect(screen.queryByRole("region", { name: "依頼の手順" })).toBeNull()
 
     click(done)
@@ -335,7 +339,7 @@ describe("WorkStrip（段の丸）", () => {
     expect(rows[0]?.textContent).not.toContain("架空の段Aのまとめ。")
   })
 
-  it("丸を押しても一覧は押し直すまで閉じず、同じ丸をもう一度押しても開いたまま", () => {
+  it("区間を押しても一覧は押し直すまで閉じず、同じ区間をもう一度押しても開いたまま", () => {
     renderProgressed()
 
     click(dot(/架空の段A/))
@@ -348,7 +352,7 @@ describe("WorkStrip（段の丸）", () => {
     expect(screen.getAllByRole("region", { name: "依頼の手順" })).toHaveLength(1)
   })
 
-  it("飛ばした段の丸は「/」と「（飛ばした）」で、一覧の行にも飛ばした印が付く", () => {
+  it("飛ばした段の区間は済みで、一覧の行に飛ばした印が付く", () => {
     putSession(
       stateAfter([
         REQUEST,
@@ -358,11 +362,9 @@ describe("WorkStrip（段の丸）", () => {
       ]),
     )
     render(<WorkStrip />)
-    const skipped = dot(/架空の段A（飛ばした）/)
+    const skipped = dot(/架空の段A/)
 
-    expect(skipped.textContent).toBe("/")
-    expect(skipped.closest("li")?.getAttribute("data-phase-state")).toBe("done")
-    expect(skipped.closest("li")?.getAttribute("data-phase-skipped")).toBe("true")
+    expect(skipped.getAttribute("data-segment-state")).toBe("done")
 
     click(skipped)
 
@@ -372,15 +374,7 @@ describe("WorkStrip（段の丸）", () => {
     expect(row?.textContent).toContain("架空の段A（飛ばした）")
   })
 
-  it("済んだ段の丸は飛ばした印を持たず「✓」のまま", () => {
-    renderProgressed()
-    const done = dot(/架空の段A（済）/)
-
-    expect(done.textContent).toBe("✓")
-    expect(done.closest("li")?.hasAttribute("data-phase-skipped")).toBe(false)
-  })
-
-  it("答え待ちの今の段の丸も押せて、一覧の行は開いた手順を持つ", () => {
+  it("答え待ちの今の区間も押せて、一覧の行は開いた手順を持つ", () => {
     renderProgressed([
       {
         kind: "pending-changed",
@@ -395,7 +389,10 @@ describe("WorkStrip（段の丸）", () => {
       },
     ])
 
-    click(dot(/架空の段B（答え待ち）/))
+    const asking = dot(/架空の段B（いま）/)
+    expect(asking.getAttribute("data-segment-state")).toBe("asking")
+
+    click(asking)
 
     const row = screen
       .getByRole("region", { name: "依頼の手順" })
@@ -403,7 +400,7 @@ describe("WorkStrip（段の丸）", () => {
     expect(row?.querySelector("details")?.open).toBe(true)
   })
 
-  it("並列のフェーズの中の丸は押せ、並列のフェーズの囲みは button を持たない", () => {
+  it("並列のフェーズは区間1つで、名前を「・」でつなぎ、押すと一覧が開く", () => {
     putSession(
       stateAfter([
         REQUEST,
@@ -412,16 +409,14 @@ describe("WorkStrip（段の丸）", () => {
     )
     render(<WorkStrip />)
 
-    const group = strip().querySelector("li[aria-label^='並列']")
-    expect(group?.querySelectorAll(":scope > button")).toHaveLength(0)
-    expect(group?.querySelectorAll("button")).toHaveLength(2)
+    expect(strip().querySelectorAll("[data-segment-state]")).toHaveLength(2)
 
-    click(dot(/架空の段C/))
+    click(dot(/架空の段B・架空の段C（いま）/))
     const list = screen.getByRole("region", { name: "依頼の手順" })
     expect(list.querySelectorAll("li[data-phase-state]")).toHaveLength(3)
   })
 
-  it("丸を押すと一覧が開き、そのフェーズの行が一覧の上端へ転がる", () => {
+  it("区間を押すと一覧が開き、そのフェーズの行が一覧の上端へ転がる", () => {
     renderProgressed()
     vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function (
       this: HTMLElement,

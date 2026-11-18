@@ -16,6 +16,6 @@ export function nowStatementOf(page: Page): Locator {
 
 export async function phaseStates(strip: Locator): Promise<readonly (string | null)[]> {
   return strip
-    .locator("[data-phase-state]")
-    .evaluateAll((items) => items.map((item) => item.getAttribute("data-phase-state")))
+    .locator("[data-segment-state]")
+    .evaluateAll((items) => items.map((item) => item.getAttribute("data-segment-state")))
 }

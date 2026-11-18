@@ -66,7 +66,7 @@ test.describe("進み具合のプログレスバー", () => {
     await expect.poll(() => clippedTextOf(nowStatementOf(room.page))).toEqual([])
   })
 
-  test("状態が作業中から背景で作業中に替わっても、段の丸の並びの左端は動かない", async ({
+  test("状態が作業中から背景で作業中に替わっても、下線の区間の並びの左端は動かない", async ({
     run,
   }) => {
     const room = await run.open({
@@ -89,7 +89,7 @@ test.describe("進み具合のプログレスバー", () => {
     expect(await leftOf(track)).toBe(workingLeft)
   })
 
-  test("1024x768 で許可の答え待ちが届くと、今の段の丸が答え待ちになり、一文は無く、札の口は覆われない", async ({
+  test("1024x768 で許可の答え待ちが届くと、今の区間が答え待ちになり、一文は無く、札の口は覆われない", async ({
     run,
   }) => {
     const room = await run.open({

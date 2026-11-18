@@ -446,7 +446,8 @@
                               "tag": "section",
                               "attributes": {
                                 "aria-label": "進み具合",
-                                "data-work-strip": "finished"
+                                "data-work-strip": "finished",
+                                "data-result": "done"
                               },
                               "children": [
                                 {
@@ -528,6 +529,32 @@
                                         "role": "status",
                                         "aria-live": "polite"
                                       }
+                                    }
+                                  ]
+                                },
+                                {
+                                  "tag": "ol",
+                                  "children": [
+                                    {
+                                      "tag": "li",
+                                      "children": [
+                                        {
+                                          "tag": "button",
+                                          "attributes": {
+                                            "aria-label": "作業（済み）",
+                                            "data-segment-state": "done",
+                                            "type": "button"
+                                          },
+                                          "children": [
+                                            {
+                                              "tag": "span",
+                                              "attributes": {
+                                                "aria-hidden": "true"
+                                              }
+                                            }
+                                          ]
+                                        }
+                                      ]
                                     }
                                   ]
                                 }

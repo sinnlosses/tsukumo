@@ -1,6 +1,10 @@
 import { act, cleanup, renderHook } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
+import {
+  useWorkStripSegmentList,
+  type WorkStripSegmentView,
+} from "../../../../../../../../src/browser/components/page/conversation/components/main-view/hooks/use-work-strip-segment-list.ts"
 import { useWorkStrip } from "../../../../../../../../src/browser/components/page/conversation/components/main-view/hooks/use-work-strip.ts"
 import { useMainViewContent } from "../../../../../../../../src/browser/components/page/conversation/stores/main-view-content.ts"
 import {
@@ -25,6 +29,12 @@ afterEach(() => {
   cleanup()
   vi.restoreAllMocks()
 })
+
+/** 直前の `stripAt` が置いたセッションの、下線の区間。 */
+function segmentsNow(): readonly WorkStripSegmentView[] {
+  const track = renderHook(() => useWorkStripSegmentList()).result.current
+  return track.kind === "shown" ? track.segments : []
+}
 
 function bashStarted(id: string): SessionEvent {
   return {
@@ -77,12 +87,8 @@ describe("useWorkStrip（時刻に依るもの）", () => {
     expect(activityTextAt(state, START + 18_000)).toBe(
       "お伺いが届いた · 許可: Bash  架空のコマンド · 答え待ち 7秒",
     )
-    expect(
-      strip.kind === "working" &&
-        strip.phases.map((slot) =>
-          slot.kind === "phase" ? slot.phase.state : slot.kind === "parallel" ? slot.state : "done",
-        ),
-    ).toEqual(["asking", "upcoming"])
+    expect(strip.kind).toBe("working")
+    expect(segmentsNow().map((segment) => segment.state)).toEqual(["asking", "upcoming"])
   })
 
   it("答え待ちと同じ id の手順が無くても、届いた時刻から秒を添える", () => {
@@ -146,13 +152,14 @@ describe("useWorkStrip（時刻に依るもの）", () => {
       headLabel: "架空の計画",
       sideLabel: "経過 5秒",
     })
-    expect(
-      strip.kind === "working" &&
-        strip.phases.map((slot) => slot.kind === "phase" && slot.phase.mark),
-    ).toEqual(["1", "…", "1"])
+    expect(segmentsNow().flatMap((segment) => segment.phases.map((phase) => phase.mark))).toEqual([
+      "1",
+      "…",
+      "1",
+    ])
   })
 
-  it("範囲があれば、群の先頭の丸に群の名を付け、今の群の名を目立たせ、右端に群の中の位置を出す", () => {
+  it("範囲があれば、群の先頭の区間に群の名を付ける", () => {
     const ranged: SessionEvent = {
       ...plan,
       delegatedRange: { kind: "range", first: 1, count: 2 },
@@ -169,20 +176,14 @@ describe("useWorkStrip（時刻に依るもの）", () => {
     )
 
     expect(strip).toMatchObject({ kind: "working" })
-    expect(
-      strip.kind === "working" &&
-        strip.phases.map((slot) => slot.kind !== "collapsed" && slot.spanHead),
-    ).toEqual([
-      { kind: "head", name: "前", current: false },
-      { kind: "head", name: "本", current: false },
-      { kind: "none" },
-      { kind: "head", name: "後", current: true },
-      { kind: "none" },
+    expect(segmentsNow().map((segment) => segment.spanName)).toEqual(["前", "本", "", "後", ""])
+    expect(segmentsNow().flatMap((segment) => segment.phases.map((phase) => phase.mark))).toEqual([
+      "✓",
+      "✓",
+      "✓",
+      "1",
+      "2",
     ])
-    expect(
-      strip.kind === "working" &&
-        strip.phases.map((slot) => slot.kind === "phase" && slot.phase.mark),
-    ).toEqual(["✓", "✓", "✓", "1", "2"])
   })
 
   it("範囲の中が全部済んで外の段が残ったまま閉じたら、結果の見出しは全部の段で数える", () => {
@@ -251,10 +252,7 @@ describe("useWorkStrip（時刻に依るもの）", () => {
       headLabel: "架空の段B",
       sideLabel: "経過 1分12秒",
     })
-    expect(strip.kind === "working" && strip.phases.map((slot) => slot.kind)).toEqual([
-      "phase",
-      "phase",
-    ])
+    expect(segmentsNow()).toHaveLength(2)
   })
 })
 
@@ -305,7 +303,7 @@ describe("useWorkStrip（並列のフェーズ）", () => {
     phaseSummary: current > 0 || finishedInGroup.length > 0 ? "架空のまとめ。" : "",
   })
 
-  it("並列のフェーズは中の段の丸を1つにまとめ、今の段が2つなら頭の字と位置をつなぐ", () => {
+  it("並列のフェーズは配列を区間1つにまとめ、今の段が2つなら頭の字と位置をつなぐ", () => {
     const state = foldTimed([
       [workRequest, START],
       [groupedPlan(1, []), START + 1_000],
@@ -318,11 +316,11 @@ describe("useWorkStrip（並列のフェーズ）", () => {
       headLabel: "架空の段B・架空の段C",
       sideLabel: "経過 5秒",
     })
-    expect(strip.kind === "working" && strip.phases).toMatchObject([
-      { kind: "phase", phase: { mark: "✓", state: "done" } },
+    expect(segmentsNow()).toMatchObject([
+      { parallelLabel: "", phases: [{ mark: "✓", state: "done" }] },
       {
-        kind: "parallel",
-        label: "並列 2–3",
+        parallelLabel: "並列 2–3",
+        label: "フェーズ 2/2 架空の段B・架空の段C（いま）",
         phases: [
           { mark: "2", state: "current" },
           { mark: "3", state: "current" },
@@ -341,7 +339,7 @@ describe("useWorkStrip（並列のフェーズ）", () => {
     const strip = stripAt(state, START + 5_000)
 
     expect(strip).toMatchObject({ headLabel: "架空の段B", sideLabel: "経過 5秒" })
-    expect(strip.kind === "working" && strip.phases[1]).toMatchObject({
+    expect(segmentsNow()[1]).toMatchObject({
       phases: [
         { mark: "2", state: "current" },
         { mark: "✓", state: "done" },
@@ -421,14 +419,13 @@ describe("useWorkStrip（読んでいる節）", () => {
 })
 
 describe("useWorkStrip（ワークプランが届く前）", () => {
-  it("送った直後から、段の丸の無い帯を作業中の見出しで出す", () => {
+  it("送った直後から、位置の無い帯を作業中の見出しで出す", () => {
     const state = foldTimed([[workRequest, START]])
 
     const strip = stripAt(state, START + 12_000)
 
     expect(strip).toMatchObject({
       kind: "working",
-      phases: [],
       result: "working",
       headLabel: "作業中",
       sideLabel: "経過 12秒",

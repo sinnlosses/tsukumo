@@ -6,7 +6,7 @@ import type { CurrentWorkStepGroup } from "../../../../../../features/current-wo
 
 type StepsPhaseState = "done" | "current" | "asking" | "upcoming"
 
-/** 行の元になるフェーズ1つ。丸の並びの `WorkStripPhase` と同じ印・状態・飛ばしたかを持つ。 */
+/** 行の元になるフェーズ1つ。区間の `WorkSegmentPhase` と同じ印・状態・飛ばしたかを持つ。 */
 export type StepsPhaseSource = {
   readonly index: number
   readonly name: string
@@ -17,7 +17,7 @@ export type StepsPhaseSource = {
   readonly duration: MeasuredTime
 }
 
-/** 丸の並びの1つぶん（フェーズ1つ、または並列のフェーズ）。`spanName` は群の先頭だけ「前」「本」「後」、`parallelLabel` は並列のときだけ「並列 …」。 */
+/** 区間1つぶん（フェーズ1つ、または並列のフェーズ）。`spanName` は群の先頭だけ「前」「本」「後」、`parallelLabel` は並列のときだけ「並列 …」。 */
 export type StepsPhaseSlotSource = {
   readonly spanName: string
   readonly parallelLabel: string

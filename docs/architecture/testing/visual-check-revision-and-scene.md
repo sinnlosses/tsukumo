@@ -75,8 +75,8 @@ Network タブで `/ws` の upgrade が101を返し、`hello` フレーム（購
 ことを確かめる（`docs/architecture/screen-design.md` 13.9「バックグラウンドタスク」）。
 
 **並列のフェーズ（`docs/architecture/display.md`「ワークプラン」）の描き方を確かめるときは、疑似セッションの場面
-`work-strip-parallel`・`work-strip-parallel-ask`・`work-plan-parallel` を使う。** 前の2つはプログレスバーで並列のフェーズの中のフェーズの丸が
-1つの囲みに並び今のフェーズの丸がどれも今の丸として強調されること（お伺いでは囲みの中の丸がどれも「?」）、`work-plan-parallel` は
+`work-strip-parallel`・`work-strip-parallel-ask`・`work-plan-parallel` を使う。** 前の2つはプログレスバーで並列のフェーズの配列が
+下線の区間1つになり、今の区間が太く伸びる線を持つこと（お伺いでは今の区間が琥珀で止まる）、`work-plan-parallel` は
 並列のフェーズの中のフェーズを後ろの番号から済ませて閉じ、プログレスバーが全部 ✓ になることと、最終レポートのフェーズごとの時間に
 「並列 2–3」の壁時計の行と字下げした中のフェーズの行が出ることを見る（`docs/architecture/screen-design.md`
 「進み具合のプログレスバー」「レポートの頭（合図の行）」）。

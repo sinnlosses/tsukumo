@@ -1,4 +1,4 @@
-// 進み具合のプログレスバーの器。状態の印・見出し・一文・段の丸の並び・経過・手順の口の1行と、押すと開く依頼の手順の一覧。
+// 進み具合のプログレスバーの器。状態の印・見出し・一文・位置・経過・手順の口の1行と、その下端に沿う区間の下線と、押すと開く依頼の手順の一覧。
 //
 // `aria-live` は付けない。
 
@@ -23,27 +23,28 @@ import type { StepsPhaseRow } from "./domain/steps-phase-row.ts"
 import type { WorkStripMark } from "./domain/work-strip-status.ts"
 import { useStepsLanding } from "./hooks/use-steps-landing.ts"
 import type { WorkStripNow } from "./hooks/use-work-strip-now.ts"
-import type {
-  WorkStripModel,
-  WorkStripPhase,
-  WorkStripSpanHead,
-  WorkStripSteps,
-  WorkStripTrackSlot,
-} from "./hooks/use-work-strip.ts"
+import type { WorkStripSegmentsModel } from "./hooks/use-work-strip-segment-list.ts"
+import type { WorkStripModel, WorkStripSteps } from "./hooks/use-work-strip.ts"
 import styles from "./main-view.module.css"
 
 export function PresentationalWorkStrip(props: {
   readonly strip: WorkStripModel
   readonly now: WorkStripNow
+  readonly track: WorkStripSegmentsModel
 }): ReactElement | undefined {
-  const { strip, now } = props
+  const { strip, now, track } = props
 
   if (strip.kind === "none") {
     return undefined
   }
 
   return (
-    <section aria-label="進み具合" className={styles["work-strip"]} data-work-strip={strip.kind}>
+    <section
+      aria-label="進み具合"
+      className={styles["work-strip"]}
+      data-work-strip={strip.kind}
+      data-result={strip.result}
+    >
       <div className={styles["work-strip-line"]}>
         <StateMark result={strip.result} mark={strip.mark} />
         <Text
@@ -82,7 +83,9 @@ export function PresentationalWorkStrip(props: {
             {strip.readingLabel}
           </Text>
         )}
-        {strip.phases.length > 0 && <PhaseTrack phases={strip.phases} />}
+        {track.kind === "shown" && track.position.kind === "shown" && (
+          <span className={styles["work-strip-position"]}>{track.position.text}</span>
+        )}
         <Text
           element="span"
           size="secondary"
@@ -93,6 +96,7 @@ export function PresentationalWorkStrip(props: {
           {strip.sideLabel}
         </Text>
         <StepsToggle steps={strip.steps} />
+        {track.kind === "shown" && <SegmentTrack track={track} />}
       </div>
       {strip.steps.list.kind === "open" && (
         <StepsList
@@ -341,100 +345,35 @@ function PhaseRow(props: { readonly row: StepsPhaseRow }): ReactElement {
 }
 
 /**
- * 段の丸を1本の線でつないだ並び。名前は `title` と読み上げで持ち、見えている名前は今の段の字だけ。
- * 並列のフェーズは中の段の丸を1つの囲みに並べ、囲みの中の丸どうしは線でつながない。
- * 群（前・本・後）の先頭の丸の前には群の名を置き、前の群の丸とは線でつながず間を空ける。
+ * 帯の下端に沿う、フェーズを等分した区間の並び。区間はそれぞれボタンで、名前は読み上げと `title` で持つ。
+ * 押すと依頼の手順の一覧が、その区間のフェーズの位置で開く。
  */
-function PhaseTrack(props: { readonly phases: readonly WorkStripTrackSlot[] }): ReactElement {
-  return (
-    <ol className={styles["work-strip-track"]}>
-      {props.phases.map((slot) =>
-        slot.kind === "collapsed" ? (
-          <li
-            key={slot.key}
-            className={clsx(styles["work-strip-slot"], styles["work-strip-collapsed"])}
-            data-phase-state="done"
-            aria-label={slot.label}
-            title={slot.label}
-          >
-            <span aria-hidden="true">{`✓${String(slot.count)}`}</span>
-          </li>
-        ) : slot.kind === "phase" ? (
-          <PhaseDot
-            key={slot.phase.key}
-            phase={slot.phase}
-            spanHead={slot.spanHead}
-            className={clsx(styles["work-strip-slot"], styles["work-strip-phase"])}
-          />
-        ) : (
-          <li
-            key={slot.key}
-            className={styles["work-strip-slot"]}
-            data-phase-state={slot.state}
-            data-span-head={slot.spanHead.kind === "head" ? "true" : undefined}
-            aria-label={slot.label}
-          >
-            <SpanName spanHead={slot.spanHead} />
-            <ol className={styles["work-strip-group"]}>
-              {slot.phases.map((phase) => (
-                <PhaseDot
-                  key={phase.key}
-                  phase={phase}
-                  spanHead={NO_SPAN_HEAD}
-                  className={styles["work-strip-phase"]}
-                />
-              ))}
-            </ol>
-          </li>
-        ),
-      )}
-    </ol>
-  )
-}
-
-const NO_SPAN_HEAD = { kind: "none" } as const satisfies WorkStripSpanHead
-
-/** 群の名。読み上げは丸の `aria-label`（「後1. 受け入れ」）が群を言うので隠す。 */
-function SpanName(props: { readonly spanHead: WorkStripSpanHead }): ReactElement | undefined {
-  const { spanHead } = props
-  if (spanHead.kind === "none") {
-    return undefined
-  }
-  return (
-    <span
-      aria-hidden="true"
-      className={styles["work-strip-span"]}
-      data-current={spanHead.current ? "true" : undefined}
-    >
-      {spanHead.name}
-    </span>
-  )
-}
-
-function PhaseDot(props: {
-  readonly phase: WorkStripPhase
-  readonly spanHead: WorkStripSpanHead
-  readonly className: string
+function SegmentTrack(props: {
+  readonly track: Extract<WorkStripSegmentsModel, { readonly kind: "shown" }>
 }): ReactElement {
-  const { phase } = props
+  const { track } = props
   return (
-    <li
-      className={props.className}
-      data-phase-state={phase.state}
-      data-phase-skipped={phase.skipped ? "true" : undefined}
-      data-span-head={props.spanHead.kind === "head" ? "true" : undefined}
-    >
-      <SpanName spanHead={props.spanHead} />
-      <button
-        type="button"
-        className={styles["work-strip-phase-dot"]}
-        aria-label={phase.label}
-        title={phase.label}
-        onClick={phase.onToggle}
-      >
-        <span aria-hidden="true">{phase.mark}</span>
-      </button>
-    </li>
+    <ol className={styles["work-strip-segment-list"]}>
+      {track.segments.map((segment) => (
+        <li key={segment.key}>
+          <button
+            type="button"
+            className={styles["work-strip-segment"]}
+            aria-label={segment.label}
+            title={segment.label}
+            data-segment-state={segment.state}
+            data-unseen={segment.unseen ? "true" : undefined}
+            data-landing={segment.landing ? "true" : undefined}
+            onClick={segment.onOpen}
+            onAnimationEnd={() => {
+              track.onLanded(segment.key)
+            }}
+          >
+            <span aria-hidden="true" className={styles["work-strip-segment-line"]} />
+          </button>
+        </li>
+      ))}
+    </ol>
   )
 }
 

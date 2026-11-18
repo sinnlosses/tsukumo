@@ -30,7 +30,14 @@ function renderTurn(): void {
 }
 
 function awayOf(turnId: number, rowCount: number) {
-  return { generation: useSession.getState().generation, turnId, rowCount, awayMs: 4 * 60_000 }
+  return {
+    generation: useSession.getState().generation,
+    turnId,
+    rowCount,
+    hiddenDoneSegments: 0,
+    visibleDoneSegments: 0,
+    awayMs: 4 * 60_000,
+  }
 }
 
 describe("Turn の離れていたあいだの線", () => {
