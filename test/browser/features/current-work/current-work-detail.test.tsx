@@ -66,7 +66,7 @@ describe("いまの作業（押すと開く依頼の手順の一覧）。語・�
       ending: { kind: "ended" },
     } satisfies SessionState["turn"]
 
-    it("開くと「背景で動いているもの」に種類と説明が並び、終わると札の要約と一覧から消える", () => {
+    it("開くと「バックグラウンドタスク」に種類と説明が並び、終わると札の要約と一覧から消える", () => {
       renderCurrentWork({
         turn: FINISHED_TURN,
         records: [requestRecord()],
@@ -76,7 +76,7 @@ describe("いまの作業（押すと開く依頼の手順の一覧）。語・�
       fireEvent.click(workToggle())
 
       expect(document.querySelector(".current-work-background-heading")?.textContent).toBe(
-        "背景で動いているもの（2 件）",
+        "バックグラウンドタスク（2 件）",
       )
       expect(
         [...document.querySelectorAll(".current-work-background li")].map((row) => row.textContent),

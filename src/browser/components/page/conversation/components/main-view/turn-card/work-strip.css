@@ -122,9 +122,9 @@
   border-radius: var(--radius-pill);
   background: color-mix(in srgb, var(--accent) 22%, transparent);
 }
-/* 働くあいだ、今の区間の中を線が始端から終端まで伸び、消えてまた始端から伸びる（2.4 秒で 1 周）。transform だけを間引かずに動かす。
+/* 働くあいだ（バックグラウンドで作業中も含む）、今の区間の中を線が始端から終端まで伸び、消えてまた始端から伸びる（2.4 秒で 1 周）。transform だけを間引かずに動かす。
    静止画でも途中まで伸びた形に見えるよう、周期の途中から始める。 */
-.work-strip[data-work-strip="working"][data-result="working"]
+.work-strip[data-work-strip="working"]:is([data-result="working"], [data-result="background"])
   .work-strip-segment[data-segment-state="current"]
   > .work-strip-segment-line::after {
   position: absolute;
@@ -165,7 +165,7 @@
   box-shadow: inset 0 0 0 1px var(--ink-quiet);
 }
 @media (prefers-reduced-motion: reduce) {
-  .work-strip[data-work-strip="working"][data-result="working"]
+  .work-strip[data-work-strip="working"]:is([data-result="working"], [data-result="background"])
     .work-strip-segment[data-segment-state="current"]
     > .work-strip-segment-line::after {
     animation: none;

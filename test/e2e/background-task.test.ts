@@ -26,7 +26,7 @@ test.describe("バックグラウンドタスク", () => {
     const backgroundLine = room.page.locator(
       '[data-region="main"] [data-work-strip] [data-work-strip-now]',
       {
-        hasText: /背景で\s*架空の短い待ち（2秒）/u,
+        hasText: /バックグラウンドで\s*架空の短い待ち（2秒）/u,
       },
     )
     await backgroundLine.waitFor()

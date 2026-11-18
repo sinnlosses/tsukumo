@@ -58,18 +58,18 @@ export type WorkStripSteps = {
   readonly phaseRows: StepsPhaseRows
   /** 済んだ姿のときだけ一覧の末尾に出す、最終レポートの段ごとの所要時間。作業中は `none`。 */
   readonly phaseTimes: PhaseTimesView
-  /** 実行中の手順と依頼の手順の間に出す「背景で動いているもの」の区画。 */
+  /** 実行中の手順と依頼の手順の間に出す「バックグラウンドタスク」の区画。 */
   readonly backgroundList: CurrentWorkBackgroundList
 }
 
 /**
- * 帯に出す形。`mark` は状態の印の形、`headLabel` はその右の見出し、`statement` は見出しの右の一文（作業中・背景で作業中は空）、`sideLabel` は右端の等幅の字。
+ * 帯に出す形。`mark` は状態の印の形、`headLabel` はその右の見出し、`statement` は見出しの右の一文（作業中・バックグラウンドで作業中は空）、`sideLabel` は右端の等幅の字。
  *
  * - `none`: 帯ごと出さない（本文が1つも無いまま閉じた依頼と、ワークプランも働きも無いとき）
  * - `working`: 中身が働くあいだ。送った直後から出す。見出しは今の段の名前（ワークプランが届く前は「作業中」）・「経過 6分12秒」
  * - `finished`: 中身がレポートに入れ替わったあと。状態の見出し・「所要 21分49秒」の1行
  *
- * `result` は状態の印の状態。`working` は作業中・答え待ち・背景で作業中（ターンが終わってバックグラウンドタスクだけ残る）、`finished` は完了・答え待ち・止めた・失敗。
+ * `result` は状態の印の状態。`working` は作業中・答え待ち・バックグラウンドで作業中（ターンが終わってバックグラウンドタスクだけ残る）、`finished` は完了・答え待ち・止めた・失敗。
  */
 export type WorkStripModel =
   | { readonly kind: "none" }

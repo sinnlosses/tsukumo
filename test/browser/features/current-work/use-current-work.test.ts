@@ -117,14 +117,14 @@ describe("useCurrentWork の札の語・印・要約（状態の強さの順）"
       { word: "作業中" },
     ],
     [
-      "ターンが終わってもバックグラウンドタスクが動いていれば背景で作業中で、要約は説明",
+      "ターンが終わってもバックグラウンドタスクが動いていればバックグラウンドで作業中で、要約は説明",
       { turn: FINISHED, records: [requestRecord()], backgroundTasks: [SHELL_TASK] },
-      { word: "背景で作業中", mark: "●", summary: "架空の待ち" },
+      { word: "バックグラウンドで作業中", mark: "●", summary: "架空の待ち" },
     ],
     [
       "バックグラウンドタスクが2件なら新しいほうに「ほか n件」を添え、説明が無ければ種類の語",
       { turn: FINISHED, backgroundTasks: [SHELL_TASK, AGENT_TASK] },
-      { word: "背景で作業中", summary: "サブエージェント ほか1件" },
+      { word: "バックグラウンドで作業中", summary: "サブエージェント ほか1件" },
     ],
     [
       "ターンが走っている間はバックグラウンドタスクがあっても作業中",

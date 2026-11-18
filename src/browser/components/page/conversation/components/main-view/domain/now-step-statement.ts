@@ -32,13 +32,13 @@ const NOW_STEP_VERBS: Readonly<Record<string, string>> = {
   WebFetch: "調べています",
   WebSearch: "調べています",
 }
-const BACKGROUND_LEAD = "背景で"
+const BACKGROUND_LEAD = "バックグラウンドで"
 
 export type NowStepStatement =
   | { readonly kind: "asking" }
   | {
       readonly kind: "doing"
-      /** 対象の前に置く語（「背景で」）。無ければ空。 */
+      /** 対象の前に置く語（「バックグラウンドで」）。無ければ空。 */
       readonly lead: string
       /** 道具の手順なら道具の名前（文に出さず、手順の替わり目を見分ける）。道具でなければ空。 */
       readonly tool: string

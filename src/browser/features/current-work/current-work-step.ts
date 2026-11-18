@@ -120,7 +120,7 @@ type CurrentWorkBackgroundTask = {
   readonly description: string
 }
 
-/** 一覧の「背景で動いているもの」の区画。状態の語に関わらず、動いているものがあれば出す。 */
+/** 一覧の「バックグラウンドタスク」の区画。状態の語に関わらず、動いているものがあれば出す。 */
 export type CurrentWorkBackgroundList =
   | { readonly kind: "none" }
   | {
@@ -135,7 +135,7 @@ export function toBackgroundListView(tasks: readonly BackgroundTask[]): CurrentW
   }
   return {
     kind: "tasks",
-    headingLabel: `背景で動いているもの（${String(tasks.length)} 件）`,
+    headingLabel: `バックグラウンドタスク（${String(tasks.length)} 件）`,
     tasks: tasks.map((task) => ({
       key: task.taskId,
       kindLabel: BACKGROUND_TASK_KIND_LABEL[task.kind],

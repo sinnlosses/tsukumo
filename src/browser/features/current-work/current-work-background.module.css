@@ -1,4 +1,4 @@
-/* 背景で動いているもの。見出しと行の形は依頼の手順に揃える。色は `Text` が持つ。 */
+/* バックグラウンドタスク。見出しと行の形は依頼の手順に揃える。色は `Text` が持つ。 */
 .current-work-background-heading {
   margin: var(--space-sm) 0 var(--space-xs);
 }

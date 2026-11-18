@@ -9,7 +9,7 @@ export type WorkStripMark = "dot" | "square" | "cross" | "check"
 export type WorkStripStatus = {
   readonly mark: WorkStripMark
   readonly heading: string
-  /** 見出しの右に添える一文。作業中・背景で作業中は、いまの手順の一文が別に置くので空。 */
+  /** 見出しの右に添える一文。作業中・バックグラウンドで作業中は、いまの手順の一文が別に置くので空。 */
   readonly statement: string
 }
 

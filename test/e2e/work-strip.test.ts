@@ -66,7 +66,7 @@ test.describe("進み具合のプログレスバー", () => {
     await expect.poll(() => clippedTextOf(nowStatementOf(room.page))).toEqual([])
   })
 
-  test("状態が作業中から背景で作業中に替わっても、下線の区間の並びの左端は動かない", async ({
+  test("状態が作業中からバックグラウンドで作業中に替わっても、下線の区間の並びの左端は動かず、今の区間の線は伸び続ける", async ({
     run,
   }) => {
     const room = await run.open({
@@ -87,6 +87,9 @@ test.describe("進み具合のプログレスバー", () => {
       .poll(() => strip.locator("[data-result]").getAttribute("data-result"))
       .toBe("background")
     expect(await leftOf(track)).toBe(workingLeft)
+
+    await room.page.emulateMedia({ reducedMotion: "no-preference" })
+    await expect.poll(() => currentLineAnimationOf(strip)).toContain("work-strip-segment-fill")
   })
 
   test("1024x768 で許可の答え待ちが届くと、今の区間が答え待ちになり、一文は無く、札の口は覆われない", async ({
@@ -175,6 +178,14 @@ async function topOf(locator: Locator): Promise<number> {
 
 async function leftOf(locator: Locator): Promise<number> {
   return locator.evaluate((element) => element.getBoundingClientRect().left)
+}
+
+/** 今の区間の線の上を伸びる線（`::after`）の動きの名前。動いていなければ "none"。 */
+async function currentLineAnimationOf(strip: Locator): Promise<string> {
+  return strip
+    .locator("[data-segment-state='current'] > span")
+    .first()
+    .evaluate((line) => getComputedStyle(line, "::after").animationName)
 }
 
 async function scrollMainToBottom(page: Page): Promise<void> {

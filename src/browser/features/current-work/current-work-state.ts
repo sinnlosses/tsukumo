@@ -12,7 +12,7 @@ export const WORK_WORD_LABEL = {
   pending: "答え待ち",
   running: "作業中",
   diary: "振り返り中",
-  background: "背景で作業中",
+  background: "バックグラウンドで作業中",
   idle: "依頼待ち",
 } satisfies Record<CurrentWorkState, string>
 

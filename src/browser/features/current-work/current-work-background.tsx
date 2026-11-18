@@ -1,4 +1,4 @@
-// 一覧の「背景で動いているもの」の区画。
+// 一覧の「バックグラウンドタスク」の区画。
 
 import clsx from "clsx"
 import type { ReactElement } from "react"

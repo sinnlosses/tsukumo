@@ -38,7 +38,7 @@ test.describe("委譲中の補足メッセージ", () => {
       useInnerText: true,
     })
     await expect(main.locator("[data-work-strip] [data-work-strip-now]")).toContainText(
-      /背景で\s*架空の委譲/u,
+      /バックグラウンドで\s*架空の委譲/u,
       { useInnerText: true },
     )
     await expect(

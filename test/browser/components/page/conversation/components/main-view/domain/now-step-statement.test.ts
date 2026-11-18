@@ -147,14 +147,14 @@ describe("nowStepStatementOf", () => {
       ),
     )
     expect(statement).toMatchObject({
-      lead: "背景で",
+      lead: "バックグラウンドで",
       target: "架空の段",
       particle: "を",
       verb: "進めています",
     })
   })
 
-  it("背景の手順が走っていれば対象の前に「背景で」を添える", () => {
+  it("背景の手順が走っていれば対象の前に「バックグラウンドで」を添える", () => {
     const statement = doing(
       nowStepStatementOf(
         sourceOf({
@@ -174,7 +174,7 @@ describe("nowStepStatementOf", () => {
       ),
     )
     expect(statement).toMatchObject({
-      lead: "背景で",
+      lead: "バックグラウンドで",
       target: "架空",
       particle: "",
       verb: "",
@@ -182,7 +182,7 @@ describe("nowStepStatementOf", () => {
     })
   })
 
-  it("手順を持たないバックグラウンドタスクは「背景で <説明>」と言う", () => {
+  it("手順を持たないバックグラウンドタスクは「バックグラウンドで <説明>」と言う", () => {
     const statement = doing(
       nowStepStatementOf(
         sourceOf({
@@ -193,7 +193,7 @@ describe("nowStepStatementOf", () => {
       ),
     )
     expect(statement).toMatchObject({
-      lead: "背景で",
+      lead: "バックグラウンドで",
       target: "架空の待ち",
       particle: "",
       verb: "",
@@ -201,7 +201,7 @@ describe("nowStepStatementOf", () => {
     })
   })
 
-  it("背景で委譲先が動いていれば「背景で <役> に任せています」と言う", () => {
+  it("バックグラウンドで委譲先が動いていれば「バックグラウンドで <役> に任せています」と言う", () => {
     const statement = doing(
       nowStepStatementOf(
         sourceOf(
@@ -225,7 +225,7 @@ describe("nowStepStatementOf", () => {
       ),
     )
     expect(statement).toMatchObject({
-      lead: "背景で",
+      lead: "バックグラウンドで",
       target: "架空の役",
       particle: "に",
       verb: "任せています",

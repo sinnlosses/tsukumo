@@ -55,7 +55,7 @@ describe("useWorkStrip（状態）", () => {
     expect(resultAfter([workRequest, plan, askedPending()])).toBe("awaiting-answer")
   })
 
-  it("ターンが終わってバックグラウンドタスクだけ残るあいだは背景で作業中、答え待ちがあれば答え待ち、背景が無ければ今までどおり", () => {
+  it("ターンが終わってバックグラウンドタスクだけ残るあいだはバックグラウンドで作業中、答え待ちがあれば答え待ち、背景が無ければ今までどおり", () => {
     const left: SessionEvent = {
       kind: "background-tasks-changed",
       tasks: [{ taskId: checkedTaskId("fake-bg-1"), kind: "shell", description: "架空の待ち" }],
@@ -192,7 +192,7 @@ describe("useWorkStrip（状態の印と見出し）", () => {
     })
   })
 
-  it("背景で作業中も、点と今のフェーズの名前", () => {
+  it("バックグラウンドで作業中も、点と今のフェーズの名前", () => {
     const left: SessionEvent = {
       kind: "background-tasks-changed",
       tasks: [{ taskId: checkedTaskId("fake-bg-1"), kind: "shell", description: "架空の待ち" }],
@@ -310,7 +310,7 @@ describe("useWorkStrip（今の区間）", () => {
     expect(spinningOf(strip)).toEqual([false, false])
   })
 
-  it("背景で作業中のあいだも今の区間だけが今の段になる", () => {
+  it("バックグラウンドで作業中のあいだも今の区間だけが今の段になる", () => {
     const strip = stripAt(
       foldTimed([
         [workRequest, START],

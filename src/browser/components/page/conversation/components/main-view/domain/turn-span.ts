@@ -80,7 +80,7 @@ function spanOf(requestTime: RecordTime, records: readonly SessionRecord[]): Tur
     : { kind: "spanned", startedAt, endedAt: Math.max(...times) }
 }
 
-/** 記録1件が持つ時刻。ツールは始まりと、終わっていれば終わり（背景で走らせたものは完了の知らせ）。 */
+/** 記録1件が持つ時刻。ツールは始まりと、終わっていれば終わり（バックグラウンドで走らせたものは完了の知らせ）。 */
 function recordTimes(record: SessionRecord): readonly RecordTime[] {
   switch (record.kind) {
     case "request":

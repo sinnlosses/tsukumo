@@ -273,7 +273,7 @@ describe("PhoneHead", () => {
     expect(title()).toBe("架空の段B")
   })
 
-  it("背景で作業中は「背景で作業中」", () => {
+  it("バックグラウンドで作業中は「バックグラウンドで作業中」", () => {
     renderHead({
       turn: { kind: "finished", startedAt: 0, finishedAt: 0, ending: { kind: "ended" } },
       backgroundTasks: [
@@ -282,7 +282,7 @@ describe("PhoneHead", () => {
       records: [requestRecord()],
     })
 
-    expect(word()).toBe("背景で作業中")
+    expect(word()).toBe("バックグラウンドで作業中")
   })
 
   it("雑談中の依頼待ちは題が「雑談」で、2行目を出さない", () => {

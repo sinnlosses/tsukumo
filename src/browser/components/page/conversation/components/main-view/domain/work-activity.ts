@@ -27,7 +27,7 @@ import { backgroundSummaryLabel } from "../../../../../../features/current-work/
 import { apiRetryNotice } from "../../../domain/api-error-label.ts"
 import { isSlashClear } from "../../../domain/slash-clear.ts"
 
-const BACKGROUND_THINKING = "背景で · 考えている"
+const BACKGROUND_THINKING = "バックグラウンドで · 考えている"
 
 /** 再試行の知らせ。 */
 type WorkRetry =
@@ -60,7 +60,7 @@ export type WorkActivitySource = {
 /**
  * 強い順に1つ: 答え待ち → report を書いている途中 → 走っている手順 →
  * 手順を持つバックグラウンドタスクのうちいちばん新しく手順が始まったもの
- * （サブエージェントは「背景で · 考えている」、ワークフロースクリプトは走っている手順と秒、手順の合間は「背景で · 考えている」）→
+ * （サブエージェントは「バックグラウンドで · 考えている」、ワークフロースクリプトは走っている手順と秒、手順の合間は「バックグラウンドで · 考えている」）→
  * 手順を持たないものも含めたバックグラウンドタスクの説明 →
  * 考えている（依頼が会話の片付けのときは「会話を片付けている」）。
  * 答え待ちの秒は、答え待ちが届いた時刻から数える。
@@ -105,7 +105,7 @@ export function workActivityOf(source: WorkActivitySource): WorkActivity {
     if (step.running) {
       const seconds = formatElapsed(Math.max(0, Math.floor((now - step.startedAt) / 1000)))
       return {
-        text: `背景で · ${toolLine(step.name, step.input)} · ${seconds}`,
+        text: `バックグラウンドで · ${toolLine(step.name, step.input)} · ${seconds}`,
         tone: "quiet",
         mono: true,
         retry,
@@ -117,7 +117,7 @@ export function workActivityOf(source: WorkActivitySource): WorkActivity {
   }
   const background = backgroundSummaryLabel(source.backgroundTasks)
   if (background !== undefined) {
-    return { text: `背景で ${background}`, tone: "quiet", mono: false, retry }
+    return { text: `バックグラウンドで ${background}`, tone: "quiet", mono: false, retry }
   }
   return {
     text: isSlashClear(currentRequestTextOf(source.records)) ? "会話を片付けている" : "考えている",

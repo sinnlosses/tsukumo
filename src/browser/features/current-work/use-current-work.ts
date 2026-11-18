@@ -336,7 +336,7 @@ function toPlanView(turnStepList: TurnStepList, turnInProgress: boolean): Curren
 /**
  * {@link CurrentWorkSummary} を組み立てる。
  * 答え待ちの先頭が質問なら、実行中の手順の要約より質問の要約を優先する。
- * 背景で作業中ならバックグラウンドタスクの要約、振り返り中は「<日付>の日記を書いています」を出す。
+ * バックグラウンドで作業中ならバックグラウンドタスクの要約、振り返り中は「<日付>の日記を書いています」を出す。
  * メインが `report` の引数を書いている途中（{@link ReportDrafting}）は、実行中の手順の要約より優先する。
  */
 function toSummaryView(
