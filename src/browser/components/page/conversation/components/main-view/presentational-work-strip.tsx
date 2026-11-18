@@ -155,17 +155,6 @@ function NowSentence(props: {
       title={statement.retryDetail === "" ? undefined : statement.retryDetail}
       onAnimationEnd={props.onAnimationEnd}
     >
-      {statement.lead !== "" && (
-        <Text
-          element="span"
-          size="label"
-          tone="ink-quiet"
-          weight="inherit"
-          className={styles["work-strip-now-fixed"]}
-        >
-          {statement.lead}
-        </Text>
-      )}
       {statement.target !== "" && (
         <span
           className={clsx(

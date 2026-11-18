@@ -32,14 +32,11 @@ const NOW_STEP_VERBS: Readonly<Record<string, string>> = {
   WebFetch: "調べています",
   WebSearch: "調べています",
 }
-const BACKGROUND_LEAD = "バックグラウンドで"
 
 export type NowStepStatement =
   | { readonly kind: "asking" }
   | {
       readonly kind: "doing"
-      /** 対象の前に置く語（「バックグラウンドで」）。無ければ空。 */
-      readonly lead: string
       /** 道具の手順なら道具の名前（文に出さず、手順の替わり目を見分ける）。道具でなければ空。 */
       readonly tool: string
       readonly target: string
@@ -58,7 +55,6 @@ export type NowStepStatement =
 export type Doing = Extract<NowStepStatement, { readonly kind: "doing" }>
 
 const PLAIN = {
-  lead: "",
   tool: "",
   target: "",
   particle: "",
@@ -100,7 +96,6 @@ export function nowStepStatementOf(source: WorkActivitySource): NowStepStatement
       input: running.input,
       ...(startedAt === undefined ? {} : { startedAt }),
       now,
-      lead: "",
     })
   }
   const stepped = latestSteppedBackground({
@@ -114,7 +109,6 @@ export function nowStepStatementOf(source: WorkActivitySource): NowStepStatement
     )
     const description = source.backgroundTasks.findLast((task) => task.kind === "agent")
     return delegationStatement(
-      BACKGROUND_LEAD,
       delegation === undefined
         ? { role: "", description: description?.description ?? "" }
         : delegationOf(delegation.input),
@@ -128,7 +122,6 @@ export function nowStepStatementOf(source: WorkActivitySource): NowStepStatement
         input: step.input,
         startedAt: step.startedAt,
         now,
-        lead: BACKGROUND_LEAD,
       })
     }
     const agent = source.workflowProgress
@@ -140,7 +133,6 @@ export function nowStepStatementOf(source: WorkActivitySource): NowStepStatement
       return {
         kind: "doing",
         ...PLAIN,
-        lead: BACKGROUND_LEAD,
         target: agent.phaseTitle,
         particle: "を",
         verb: "進めています",
@@ -152,7 +144,6 @@ export function nowStepStatementOf(source: WorkActivitySource): NowStepStatement
     return {
       kind: "doing",
       ...PLAIN,
-      lead: BACKGROUND_LEAD,
       target: background,
       verb: "",
     }
@@ -168,7 +159,7 @@ export function nowStepStatementOf(source: WorkActivitySource): NowStepStatement
 
 /** 文の鍵。手順が替わったかを言う。秒と添え書きは含めない。 */
 export function nowStepKeyOf(doing: Doing): string {
-  return [doing.lead, doing.tool, doing.target, doing.particle, doing.verb].join("\u0000")
+  return [doing.tool, doing.target, doing.particle, doing.verb].join("\u0000")
 }
 
 /**
@@ -201,21 +192,19 @@ function toolStatement(tool: {
   readonly input: unknown
   readonly startedAt?: number
   readonly now: number
-  readonly lead: string
 }): Doing {
-  const { name, input, startedAt, now, lead } = tool
+  const { name, input, startedAt, now } = tool
   const seconds =
     startedAt === undefined ? undefined : Math.max(0, Math.floor((now - startedAt) / 1000))
   const elapsed = seconds === undefined ? "" : formatElapsed(seconds)
   if (name === "Agent" || name === "Task") {
-    return { ...delegationStatement(lead, delegationOf(input)), elapsed }
+    return { ...delegationStatement(delegationOf(input)), elapsed }
   }
   const known = NOW_STEP_VERBS[name]
   const target = known === undefined ? name : summarizeToolInput(name, input)
   return {
     ...PLAIN,
     kind: "doing",
-    lead,
     tool: name,
     target,
     verb: target === "" ? (known ?? "") : "",
@@ -224,14 +213,13 @@ function toolStatement(tool: {
   }
 }
 
-function delegationStatement(
-  lead: string,
-  delegation: { readonly role: string; readonly description: string },
-): Doing {
+function delegationStatement(delegation: {
+  readonly role: string
+  readonly description: string
+}): Doing {
   return {
     ...PLAIN,
     kind: "doing",
-    lead,
     target: delegation.role === "" ? FALLBACK_DELEGATE : delegation.role,
     particle: DELEGATING.particle,
     verb: DELEGATING.verb,

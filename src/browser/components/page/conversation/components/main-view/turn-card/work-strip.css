@@ -217,9 +217,12 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-/* 見出しは縮めない。幅が足りないときは一文が縮む。 */
+/* 見出しは幅が足りないとき一文と一緒に縮み、末尾を「…」にする。右の位置・経過・手順のボタンを帯の外へ押し出さない。 */
 .work-strip-head {
-  flex: none;
+  flex: 0 1 auto;
+  min-width: 4em;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 .work-strip-rule {
