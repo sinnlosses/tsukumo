@@ -38,6 +38,19 @@ describe("尾の向きと長さ", () => {
     expect(tailAim({ bubble: BUBBLE, face: { x: 410, y: 700 }, gapBelow: 100 }).side).toBe("bottom")
   })
 
+  it("顔が吹き出しより上にあるときは下の辺から出さず、先を吹き出しの外へ向ける", () => {
+    // 締めの吹き出しが画面の下の外にあり、顔がずっと上に見える配置。
+    const below = { left: 288, top: 1668, bottom: 1710 } as const
+    const aim = tailAim({
+      bubble: below,
+      face: { x: 133, y: 761 },
+      gapBelow: Number.POSITIVE_INFINITY,
+    })
+
+    expect(aim.side).toBe("left")
+    expect(aim.tip.x).toBeLessThan(below.left)
+  })
+
   it("すぐ下の空きが20px未満なら、顔が下にあっても左の辺から出す", () => {
     expect(tailAim({ bubble: BUBBLE, face: { x: 410, y: 700 }, gapBelow: 6 }).side).toBe("left")
     expect(tailAim({ bubble: BUBBLE, face: { x: 410, y: 700 }, gapBelow: 13 }).side).toBe("left")

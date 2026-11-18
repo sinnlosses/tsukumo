@@ -97,11 +97,15 @@ export function tailPath(
   }
 }
 
-/** 尾を顔へ向ける。顔が横にあるか下の空きが狭いときは左の辺から、そうでなければ下の辺から出す。 */
+/**
+ * 尾を顔へ向ける。顔が横か上にあるか、下の空きが狭いときは左の辺から、そうでなければ下の辺から出す。
+ * 顔が上にあるのに下の辺から出すと、先が吹き出しの内側へ向いて縁の中に山の形が描かれる（吹き出しが画面の下の外にあるときに起きる）。
+ */
 export function tailAim(input: TailAimInput): TailAim {
   const { bubble, face, gapBelow } = input
   const sideways = Math.abs(face.x - bubble.left) >= Math.abs(face.y - bubble.bottom)
-  const side = sideways || gapBelow < MIN_GAP_FOR_BOTTOM ? "left" : "bottom"
+  const faceBelow = face.y > bubble.bottom
+  const side = sideways || !faceBelow || gapBelow < MIN_GAP_FOR_BOTTOM ? "left" : "bottom"
   const root: Point =
     side === "left"
       ? {

@@ -36,8 +36,9 @@ export function StreamAim(): ReactElement {
     }
     aimAgain()
 
+    // 流れを送るのはメインビューの外側の領域なので、どの要素の scroll も捕捉の段で拾う（scroll は泡立たない）。
+    document.addEventListener("scroll", aimAgain, { capture: true, passive: true })
     const scroller = svg.closest(SCROLLER_SELECTOR)
-    scroller?.addEventListener("scroll", aimAgain, { passive: true })
     const onPortraitSettled = (event: Event): void => {
       if (
         event.target instanceof Element &&
@@ -56,7 +57,7 @@ export function StreamAim(): ReactElement {
       }
     }
     return () => {
-      scroller?.removeEventListener("scroll", aimAgain)
+      document.removeEventListener("scroll", aimAgain, { capture: true })
       document.removeEventListener("load", onPortraitSettled, { capture: true })
       document.removeEventListener("animationend", onPortraitSettled)
       observer.disconnect()
