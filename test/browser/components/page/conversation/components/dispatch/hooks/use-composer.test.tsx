@@ -1,5 +1,5 @@
 import { act, cleanup, renderHook } from "@testing-library/react"
-import { afterEach, beforeEach, describe, expect, it } from "vitest"
+import { afterEach, describe, expect, it } from "vitest"
 
 import type { ComposerKey } from "../../../../../../../../src/browser/components/page/conversation/components/dispatch/domain/composer-surface.ts"
 import { useComposer } from "../../../../../../../../src/browser/components/page/conversation/components/dispatch/hooks/use-composer.ts"
@@ -11,7 +11,6 @@ import {
   EMPTY_DRAFT,
   useComposerDraft,
 } from "../../../../../../../../src/browser/components/page/conversation/stores/composer-draft.ts"
-import { useFavorVisibility } from "../../../../../../../../src/browser/components/page/conversation/stores/favor-visibility.ts"
 import { useInquiryDraft } from "../../../../../../../../src/browser/components/page/conversation/stores/inquiry-draft.ts"
 import { useSession } from "../../../../../../../../src/browser/stores/session.ts"
 import {
@@ -463,77 +462,5 @@ describe("useComposer の打ちかけの保存", () => {
       putState(identified("a"))
     })
     expect(result.current.input.draft.text).toBe("いま打った字")
-  })
-})
-
-describe("useComposer のお願いの帯", () => {
-  beforeEach(() => {
-    useFavorVisibility.setState(useFavorVisibility.getInitialState(), true)
-  })
-  afterEach(() => {
-    useFavorVisibility.setState(useFavorVisibility.getInitialState(), true)
-  })
-
-  it("お願いがあり見えていないと favor、見えると none", () => {
-    const { result } = renderUseComposer()
-    expect(result.current.band.kind).toBe("none")
-
-    act(() => {
-      useFavorVisibility.getState().attach("favor-a")
-    })
-    expect(result.current.band.kind).toBe("favor")
-
-    act(() => {
-      useFavorVisibility.getState().setVisible(true)
-    })
-    expect(result.current.band.kind).toBe("none")
-  })
-
-  it("切断の帯はお願いの帯より先に出す", () => {
-    const { result } = renderUseComposer()
-    act(() => {
-      useFavorVisibility.getState().attach("favor-a")
-      useSession.getState().setConnection("closed")
-    })
-    act(() => {
-      useSession.getState().setConnection("connecting")
-    })
-
-    expect(result.current.band.kind).toBe("disconnected")
-  })
-
-  it("依頼を送ると none になる", () => {
-    const { result } = renderUseComposer()
-    act(() => {
-      useFavorVisibility.getState().attach("favor-a")
-    })
-    type(result, "架空の依頼")
-
-    press(result, key("Enter", { meta: true }))
-
-    expect(result.current.band.kind).toBe("none")
-  })
-
-  it("onJump は欄を見える範囲へ送る", () => {
-    const { result } = renderUseComposer()
-    act(() => {
-      useFavorVisibility.getState().attach("favor-a")
-    })
-    const target = document.createElement("div")
-    target.id = "favor-a"
-    const scrolled: (boolean | ScrollIntoViewOptions | undefined)[] = []
-    target.scrollIntoView = (options) => {
-      scrolled.push(options)
-    }
-    document.body.append(target)
-
-    const band = result.current.band
-    if (band.kind !== "favor") {
-      throw new Error("favor の帯が出ていない")
-    }
-    band.onJump()
-    target.remove()
-
-    expect(scrolled).toEqual([{ block: "start" }])
   })
 })

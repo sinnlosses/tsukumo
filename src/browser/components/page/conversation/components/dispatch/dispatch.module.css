@@ -8,6 +8,7 @@
 @import "./form/format-bar.css";
 @import "./form/file-suggestion-list.css";
 @import "./form/command-suggestion-list.css";
+@import "./form/next-step-tray.css";
 
 .dispatch {
   height: 100%;

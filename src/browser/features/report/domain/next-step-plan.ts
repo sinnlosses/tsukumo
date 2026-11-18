@@ -7,6 +7,12 @@ import type { ReportTaskOutcome } from "../../../../shared/report/report-task.ts
 import type { SessionRemaining } from "../../../../shared/session/session-digest.ts"
 import { favorOptionsOf } from "./favor-option-list.ts"
 
+/** 次の一手の元になる、ステップの本文の外の欄。 */
+export type NextStepsOrigin = {
+  readonly sessionRemaining: SessionRemaining
+  readonly outcome?: ReportTaskOutcome
+}
+
 export type NextStepAlternative = {
   readonly name: string
   /** 入力欄に足す下書き。 */
@@ -25,6 +31,7 @@ const MAX_CHECK_RESULT_ROWS = 2
  * `alternative` は押すと案を選ぶ欄を開き、選んだ案の下書きを入れる。
  * `check-result` は「確かめた」「違った」の対で、押すとそれぞれの下書きを入れる。ほかは押すとそのまま `draft` を入れる。
  * 札の字は `kindLabel`（種類の語）・`label`（主の字。`draft` の1行目）・`note`（添え書き。下書きの2行目以降、または続ける対象）。
+ * `points` は下書きが並べる点の数（点を並べない下書きは 0）。
  */
 export type NextStep =
   | {
@@ -33,6 +40,7 @@ export type NextStep =
       readonly label: string
       readonly note: string
       readonly draft: string
+      readonly points: number
     }
   | {
       readonly kind: "alternative"
@@ -102,7 +110,13 @@ export function buildNextSteps(source: NextStepSource): readonly NextStep[] {
       return how === "" ? [head] : [head, `   確かめ方: ${how}`]
     })
     steps.push(
-      draftStep("verify", `確かめる: ${count}`, ["次の点を確かめて。", ...lines].join("\n"), ""),
+      draftStep(
+        "verify",
+        `確かめる: ${count}`,
+        ["次の点を確かめて。", ...lines].join("\n"),
+        "",
+        total,
+      ),
     )
   }
 
@@ -160,9 +174,17 @@ function draftStep(
   kindLabel: string,
   draft: string,
   extra: string,
+  points = 0,
 ): NextStep {
   const [head = "", ...rest] = draft.split("\n")
-  return { kind, kindLabel, label: head, note: [...rest, extra].filter(Boolean).join("\n"), draft }
+  return {
+    kind,
+    kindLabel,
+    label: head,
+    note: [...rest, extra].filter(Boolean).join("\n"),
+    draft,
+    points,
+  }
 }
 
 /** 名前を依頼の文の中に置くときの括り。名前の中の空白や読点で、文の切れ目が分からなくならないようにする。 */

@@ -6,7 +6,7 @@
 //   （`isComposing` と、対応していない古いブラウザ向けの `keyCode === 229` の両方を見る）
 // - Command+Enter と送信ボタンはバックグラウンドタスクが残っていれば脇の話になる送り方で、Command+Shift+Enter はいつも新しい依頼として送る
 //   （脇の話にするかを決めるのはサーバ。`docs/architecture/display.md`「補足メッセージ」）
-// - 入力欄が空のときの ↑ は、待っているお伺い（無ければお願い）の最初の押せる所へフォーカスを移す（字があるときはカーソルの移動のまま。補完が開いているときは補完が先に受ける）
+// - 入力欄が空のときの ↑ は、待っているお伺い → 次の一手の並び（開いているとき）の先頭の札 → お願い の順に、最初にあるものの押せる所へフォーカスを移す（字があるときはカーソルの移動のまま。補完が開いているときは補完が先に受ける）
 // - 送信後は入力欄を空にしてフォーカスを残す
 // - 打ちかけは入力が止まったら `localStorage` に保ち（セッションごと・直近10件）、再読み込み後に入力欄が空なら戻す。送信すると消す
 // - `/` 補完は前方一致→部分一致、Tab / Enter は確定だけ（送信しない）。選択の上下移動は
@@ -35,9 +35,26 @@ import {
   useFavorVisibility,
 } from "../../../stores/favor-visibility.ts"
 import { useInquiryAnswer } from "../../../stores/inquiry-answer.ts"
+import {
+  nextStepTrayFolded,
+  nextStepTrayShown,
+  useNextStepTray,
+} from "../../../stores/next-step-tray.ts"
+import {
+  composerBand,
+  upwardTarget,
+  type ComposerBand,
+  type ComposerBandState,
+} from "../domain/composer-band.ts"
 import { loadComposerMode, saveComposerMode, type ComposerMode } from "../domain/composer-mode.ts"
 import type { ComposerKey, ComposerSurface } from "../domain/composer-surface.ts"
 import { blurOnEscape, useComposerFocusTiming } from "./use-composer-focus.ts"
+import { useFavorJump } from "./use-favor-jump.ts"
+import {
+  focusNextStepTray,
+  useNextStepTrayModel,
+  type NextStepTrayModel,
+} from "./use-next-step-tray.ts"
 import { usePromptImage, type PromptImageModel } from "./use-prompt-image.ts"
 import {
   insertedTrigger,
@@ -45,24 +62,6 @@ import {
   type ActiveSuggestions,
   type CompletionTrigger,
 } from "./use-suggestion.ts"
-
-/**
- * `<textarea>` の上の帯。接続が切れているあいだ・会話が終わったあと・`/clear` に続く文を止めたあと・答え待ち（お伺い）があるあいだ・見えていないお願いがあるあいだだけ出す（この順に先）。
- * 答えはメインビューのお伺いのカードで選ぶ（質問ならここに書いて送ってもよい）。
- * `onJump` は「選択肢へ」の口で、お伺いのカードの最初の選択肢へフォーカスを移す。
- */
-type ComposerBand =
-  | { readonly kind: "none" }
-  | { readonly kind: "inquiry"; readonly text: string; readonly onJump: () => void }
-  | {
-      readonly kind: "favor"
-      readonly text: string
-      /** お願いの欄を見える範囲へ送る。 */
-      readonly onJump: () => void
-    }
-  | { readonly kind: "disconnected"; readonly text: string }
-  | { readonly kind: "clear-dropped"; readonly text: string }
-  | { readonly kind: "ended"; readonly text: string; readonly onRestart: () => void }
 
 /**
  * `<Composer>` が画面に出す形。
@@ -95,6 +94,8 @@ export type ComposerModel = {
   readonly promptImage: Omit<PromptImageModel, "reset">
   /** `<textarea>` の上の帯（質問に答えている間だけ出る）。 */
   readonly band: ComposerBand
+  /** 帯の下・入力欄の上の次の一手の並び。 */
+  readonly tray: NextStepTrayModel
   /** 質問に答えている間か（狭い画面だけ枠を `--state-warn` にする。送るボタンの字は広い画面でも変える）。 */
   readonly answering: boolean
   readonly onSubmit: (event: { readonly preventDefault: () => void }) => void
@@ -130,10 +131,13 @@ export function useComposer(): ComposerModel {
   const replaceDraft = useComposerDraft((state) => state.replaceDraft)
   // `/clear` の続きがあって送らなかった文。下書きがこの文のままのあいだだけ帯を出す。
   const [blockedClearText, setBlockedClearText] = useState<string | undefined>(undefined)
-  const favorId = useFavorVisibility((state) => state.favorId)
+  const jumpToFavor = useFavorJump()
   const favorShown = useFavorVisibility(favorBandShown)
   const favorIsWaiting = useFavorVisibility(favorWaiting)
   const dismissFavor = useFavorVisibility((state) => state.dismiss)
+  const dismissTray = useNextStepTray((state) => state.dismiss)
+  const trayShown = useNextStepTray(nextStepTrayShown)
+  const trayFolded = useNextStepTray(nextStepTrayFolded)
   const dismissAwaySeam = useAwaySeam((state) => state.dismiss)
   const surfaceRef = useRef<ComposerSurface | null>(null)
   const [mode, setMode] = useState<ComposerMode>(loadComposerMode)
@@ -178,6 +182,7 @@ export function useComposer(): ComposerModel {
       return
     } else {
       dismissFavor()
+      dismissTray()
       dismissAwaySeam()
       void dispatch.session.prompt({ text: trimmed, images: promptImage.images, routing })
     }
@@ -203,61 +208,19 @@ export function useComposer(): ComposerModel {
     surfaceRef.current?.focus()
   }
 
-  const jumpToFavor = (): void => {
-    if (favorId === undefined) {
-      return
-    }
-    const favor = document.getElementById(favorId)
-    favor?.scrollIntoView({ block: "start" })
-    favor?.querySelector<HTMLElement>(FAVOR_FIRST_ACTION_SELECTOR)?.focus({ preventScroll: true })
+  const bandState: ComposerBandState = {
+    linkLost,
+    endedReason,
+    clearDropped: blockedClearText === draft.text.trim(),
+    phone,
+    inquiry: inquiry.kind,
+    askerSubject,
+    favorShown,
+    favorWaiting: favorIsWaiting,
+    trayShown,
+    trayFolded,
   }
-
-  /** 入力欄が空のときの ↑ で移る先。つながりが切れている・会話が終わった・狭い画面では持たない。 */
-  const upwardTarget = (): "inquiry" | "favor" | "none" => {
-    if (linkLost || endedReason !== undefined || phone) {
-      return "none"
-    }
-    if (inquiry.kind !== "none") {
-      return "inquiry"
-    }
-    return favorIsWaiting ? "favor" : "none"
-  }
-
-  const composerBand = (): ComposerBand => {
-    if (linkLost) {
-      return { kind: "disconnected", text: DISCONNECTED_BAND_TEXT }
-    }
-    if (endedReason !== undefined) {
-      return {
-        kind: "ended",
-        text: `会話が終了しました（理由: ${endedReason}）。新しく始めると、また頼めます`,
-        onRestart: () => {
-          void dispatch.session.startNewSession()
-        },
-      }
-    }
-    if (inquiry.kind !== "question" && blockedClearText === draft.text.trim()) {
-      return { kind: "clear-dropped", text: CLEAR_DROPPED_BAND_TEXT }
-    }
-    if (phone) {
-      return { kind: "none" }
-    }
-    if (inquiry.kind !== "none") {
-      return {
-        kind: "inquiry",
-        text: inquiryBandText(inquiry.kind, askerSubject),
-        onJump: () => requestInquiryJump({ focus: true }),
-      }
-    }
-    if (favorShown) {
-      return {
-        kind: "favor",
-        text: FAVOR_BAND_TEXT,
-        onJump: jumpToFavor,
-      }
-    }
-    return { kind: "none" }
-  }
+  const tray = useNextStepTrayModel(bandState, jumpToFavor)
 
   return {
     input: {
@@ -287,11 +250,13 @@ export function useComposer(): ComposerModel {
         }
 
         if (isPlainArrowUp(event, composing) && draft.text === "") {
-          const target = upwardTarget()
+          const target = upwardTarget(bandState)
           if (target !== "none") {
             event.preventDefault()
             if (target === "inquiry") {
               requestInquiryJump({ focus: true })
+            } else if (target === "tray") {
+              focusNextStepTray()
             } else {
               jumpToFavor()
             }
@@ -326,7 +291,14 @@ export function useComposer(): ComposerModel {
       onSelect: suggestion.onSelect,
     },
     promptImage,
-    band: composerBand(),
+    band: composerBand(bandState, {
+      onRestart: () => {
+        void dispatch.session.startNewSession()
+      },
+      onInquiryJump: () => requestInquiryJump({ focus: true }),
+      onFavorJump: jumpToFavor,
+    }),
+    tray,
     answering: inquiry.kind === "question",
     onSubmit: (event) => {
       event.preventDefault()
@@ -357,23 +329,8 @@ function answerPlaceholder(phone: boolean): string {
   return phone ? PHONE_ANSWER_PLACEHOLDER : ANSWER_PLACEHOLDER
 }
 
-const DISCONNECTED_BAND_TEXT =
-  "サーバとつながっていません。送れず、下書きは残してあります。サーバを起こし直したなら、ページを開き直してください"
-
-const CLEAR_DROPPED_BAND_TEXT =
-  "/clear のあとの文は捨てられるので、送っていません。/clear だけを送り、続きを書き直してください"
-
-const FAVOR_BAND_TEXT = "お願いが1件あります"
-
 const REQUEST_LABEL = "依頼を書く"
 const ANSWER_LABEL = "質問への答えを書く"
-
-/** `<textarea>` の上の帯の文言。誰が聞いているかを名前で言い、名前が無いパックでは名前を使わずに書く。 */
-function inquiryBandText(kind: "permission" | "question", subject: string): string {
-  return kind === "question"
-    ? `${subject}質問しています。選択肢から選ぶか、ここに書いて答えられます`
-    : `↓ ${subject}実行の許可を待っています`
-}
 
 /**
  * 入力欄のプレースホルダ。依頼先はキャラクターなので、`character.name` から組み立てる。
@@ -382,9 +339,6 @@ function inquiryBandText(kind: "permission" | "question", subject: string): stri
 function composerPlaceholder(subject: string): string {
   return `${subject}依頼を書く`
 }
-
-/** お願いの欄の中で最初にフォーカスを受ける口。 */
-const FAVOR_FIRST_ACTION_SELECTOR = "button, a[href], input, textarea, select"
 
 function isPlainArrowUp(event: ComposerKey, composing: boolean): boolean {
   return (

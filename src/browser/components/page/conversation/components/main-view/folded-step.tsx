@@ -10,11 +10,14 @@ import {
 } from "../../../../../../shared/session/main-view-shape.ts"
 import { formatMeasured } from "../../../../../../shared/utils/elapsed-time.ts"
 import { withoutPhaseTimes } from "../../../../../domain/main-view/main-view-report-body.ts"
+import { nextStepsOfReport, type NextStep } from "../../../../../features/report/next-step.ts"
 import { Report } from "../../../../../features/report/report.tsx"
 import { usePhoneWidth } from "../../../../../hooks/use-phone-width.ts"
 import { Disclosure } from "../../../../ui/disclosure/disclosure.tsx"
+import { nextStepReportKey } from "../../stores/next-step-tray.ts"
 import { ExpandableHead } from "./expandable-head.tsx"
 import { useFavorVisibility } from "./hooks/use-favor-visibility.ts"
+import { useNextStepTraySource } from "./hooks/use-next-step-tray-source.ts"
 import styles from "./main-view.module.css"
 import { ReportHead, type ReportLabel } from "./report-head.tsx"
 
@@ -23,6 +26,8 @@ const REPORT_CLASS_NAMES = {
   revealClassName: styles["draft-pop"],
   blockClassName: styles["detail-block"],
 }
+
+const NO_NEXT_STEPS: readonly NextStep[] = []
 
 type FoldedStepProps = {
   readonly step: MainViewStep
@@ -79,6 +84,17 @@ export function StepReport(props: StepReportProps): ReactElement | undefined {
   const { step } = props
   const phoneWidth = usePhoneWidth()
   const favorRef = useFavorVisibility()
+  // 次の一手と押せるお願いの選択肢は、最新のやり取りの最終レポートだけが持つ。
+  const replyable = props.latest && !props.phoneHidden
+  useNextStepTraySource(
+    nextStepReportKey(props.turnId, step.id),
+    replyable && step.body.kind === "text"
+      ? nextStepsOfReport(step.body.report, {
+          sessionRemaining: step.body.sessionRemaining ?? { kind: "unrecorded" },
+          ...(step.body.task.kind === "task" ? { outcome: step.body.task.outcome } : {}),
+        })
+      : NO_NEXT_STEPS,
+  )
   if (step.body.kind !== "text") {
     return undefined
   }
@@ -114,16 +130,9 @@ export function StepReport(props: StepReportProps): ReactElement | undefined {
         reveal={props.reveal}
         turnId={props.turnId}
         className={phoneHidden}
-        nextSteps={
-          props.latest && !props.phoneHidden
-            ? {
-                sessionRemaining: step.body.sessionRemaining ?? { kind: "unrecorded" },
-                ...(step.body.task.kind === "task" ? { outcome: step.body.task.outcome } : {}),
-              }
-            : undefined
-        }
+        favorPressable={replyable}
         favorMark={phoneWidth ? "inline" : "none"}
-        favorRef={props.latest && !props.phoneHidden && !phoneWidth ? favorRef : undefined}
+        favorRef={replyable && !phoneWidth ? favorRef : undefined}
         {...REPORT_CLASS_NAMES}
       />
     </>

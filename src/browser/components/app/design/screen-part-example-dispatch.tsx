@@ -34,6 +34,7 @@ const COMPOSER: ComposerModel = {
     onImagesChosen: noop,
   },
   band: { kind: "none" },
+  tray: { kind: "none" },
   answering: false,
   onSubmit: noop,
   onInsertTrigger: noop,

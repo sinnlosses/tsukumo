@@ -29,9 +29,8 @@ export function FailedReport(props: A2uiReportProps & { readonly error: unknown 
       <FavorFollowUp
         favor={view.favor}
         components={view.components}
-        checks={view.head.checks}
         favorRef={props.favorRef}
-        nextSteps={props.nextSteps}
+        pressable={props.favorPressable}
       />
     </ReportFrame>
   )

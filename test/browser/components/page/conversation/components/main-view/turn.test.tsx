@@ -23,10 +23,8 @@ import { putSession } from "../../../../../session-store.ts"
 
 // 本物の `Report`（react-markdown 一式と演出の配線を持つ）ではなく、本文だけを描く代役に差し替える。
 vi.mock("../../../../../../../src/browser/features/report/report.tsx", () => ({
-  Report: (props: { readonly body: MainViewReportBody; readonly nextSteps?: unknown }) => (
-    <div data-report-stub="yes" data-next-steps={props.nextSteps === undefined ? "no" : "yes"}>
-      {bodyTextOf(props.body)}
-    </div>
+  Report: (props: { readonly body: MainViewReportBody }) => (
+    <div data-report-stub="yes">{bodyTextOf(props.body)}</div>
   ),
 }))
 
@@ -43,38 +41,6 @@ afterEach(() => {
   cleanup()
   useComposerDraft.setState(useComposerDraft.getInitialState(), true)
   useTaskBoardRequest.setState(useTaskBoardRequest.getInitialState(), true)
-})
-
-describe("Turn（次の一手の行）", () => {
-  function reportStep(id: number, mark: MainViewStep["mark"]): MainViewStep {
-    const body: MainViewStepBody = {
-      kind: "text",
-      report: { kind: "markdown", markdown: `架空の本文${id}` },
-      firstLine: `架空の本文${id}`,
-      task: { kind: "none" },
-      finishedPhase: { kind: "none" },
-      changeSummary: { kind: "none" },
-      sessionRemaining: { kind: "remaining", text: "架空の残り" },
-    }
-    return step({ id, body, mark })
-  }
-
-  const nextStepsOf = (container: HTMLElement): (string | null)[] =>
-    [...container.querySelectorAll("[data-report-stub]")].map((stub) =>
-      stub.getAttribute("data-next-steps"),
-    )
-
-  it("いちばん新しいやり取りの最後のレポートにだけ渡す", () => {
-    putSession(INITIAL_SESSION_STATE)
-    const steps = [reportStep(0, "interim-kept"), reportStep(1, "final")]
-    const newest = render(<Turn turn={turn(steps)} newest freshReport={false} />)
-    const newestMarks = nextStepsOf(newest.container)
-    cleanup()
-    const past = render(<Turn turn={turn(steps)} newest={false} freshReport={false} />)
-
-    expect(newestMarks.filter((mark) => mark === "yes")).toHaveLength(1)
-    expect(nextStepsOf(past.container)).not.toContain("yes")
-  })
 })
 
 describe("Turn（タスク見出し行と見出し）", () => {

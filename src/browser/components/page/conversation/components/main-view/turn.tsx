@@ -306,7 +306,7 @@ type StepProps = {
   /** このステップが載っているやり取り（`<Report>` から筆先へ渡る）。 */
   readonly turnId: number
   readonly reveal: boolean
-  /** いちばん新しいやり取りの最後のレポートか。末尾に次の一手の行を出す。 */
+  /** いちばん新しいやり取りの最後のレポートか。その次の一手を入力欄の頭の並びへ載せる。 */
   readonly latest: boolean
   /** このステップが載っているやり取りに中間レポートがあるか（`MainViewTurn.hasInterimReport`）。 */
   readonly hasInterimReport: boolean

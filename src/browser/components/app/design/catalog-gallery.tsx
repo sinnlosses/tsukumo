@@ -67,6 +67,7 @@ function CatalogPart(props: {
             className=""
             revealClassName=""
             blockClassName=""
+            favorPressable={false}
           />
         ) : (
           <Text element="p" size="body" tone="ink-quiet" weight="normal" className="">

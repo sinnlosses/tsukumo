@@ -182,9 +182,8 @@ function ReportRoot(): ReactElement {
         <FavorFollowUp
           favor={view.favor}
           components={view.components}
-          checks={view.head.checks}
           favorRef={report.favorRef}
-          nextSteps={report.nextSteps}
+          pressable={report.favorPressable}
         />
         <FirstNoteList {...firstNotes} />
       </ReportFrame>

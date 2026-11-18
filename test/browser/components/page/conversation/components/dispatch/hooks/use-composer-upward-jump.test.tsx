@@ -5,6 +5,8 @@ import type { ComposerKey } from "../../../../../../../../src/browser/components
 import { useComposer } from "../../../../../../../../src/browser/components/page/conversation/components/dispatch/hooks/use-composer.ts"
 import { useComposerDraft } from "../../../../../../../../src/browser/components/page/conversation/stores/composer-draft.ts"
 import { useFavorVisibility } from "../../../../../../../../src/browser/components/page/conversation/stores/favor-visibility.ts"
+import { useNextStepTray } from "../../../../../../../../src/browser/components/page/conversation/stores/next-step-tray.ts"
+import type { NextStep } from "../../../../../../../../src/browser/features/report/domain/next-step-plan.ts"
 import { useInquiryJump } from "../../../../../../../../src/browser/stores/inquiry-jump.ts"
 import type { StampedPendingAsk } from "../../../../../../../../src/shared/session-driver/pending-ask.ts"
 import {
@@ -27,7 +29,19 @@ const PERMISSION_PENDING = {
 type Rendered = { readonly current: ReturnType<typeof useComposer> }
 type PressedKey = ComposerKey & { readonly prevented: () => boolean }
 
+const STEPS: readonly NextStep[] = [
+  {
+    kind: "resume",
+    kindLabel: "再開する",
+    label: "架空の再開",
+    note: "",
+    draft: "架空の再開",
+    points: 0,
+  },
+]
+
 function reset(): void {
+  useNextStepTray.setState(useNextStepTray.getInitialState(), true)
   useFavorVisibility.setState(useFavorVisibility.getInitialState(), true)
   useInquiryJump.setState(useInquiryJump.getInitialState(), true)
   useComposerDraft.setState(useComposerDraft.getInitialState(), true)
@@ -138,6 +152,50 @@ describe("useComposer の ↑ で用件へ移る", () => {
     press(result, key("ArrowUp"))
 
     expect(useInquiryJump.getState().jump).toEqual({ signal: 1, focus: true })
+  })
+
+  function placeTrayAndFavor(): { readonly chip: HTMLElement; readonly favorAction: HTMLElement } {
+    const tray = document.createElement("div")
+    tray.id = "next-step-tray"
+    const chip = document.createElement("button")
+    chip.setAttribute("data-next-step-chip", "")
+    tray.append(chip)
+    const favor = document.createElement("div")
+    favor.id = "favor-a"
+    favor.scrollIntoView = () => {}
+    const favorAction = document.createElement("button")
+    favor.append(favorAction)
+    document.body.append(tray, favor)
+    act(() => {
+      useNextStepTray.getState().attach("1:0", STEPS)
+      useFavorVisibility.getState().attach("favor-a")
+    })
+    return { chip, favorAction }
+  }
+
+  it("↑ は お伺い → 次の一手の並びの先頭の札 → お願い の順に、最初にあるものへ移る", () => {
+    const withInquiry = renderUseComposer({ pending: [PERMISSION_PENDING] })
+    const { chip } = placeTrayAndFavor()
+    press(withInquiry, key("ArrowUp"))
+    expect(useInquiryJump.getState().jump).toEqual({ signal: 1, focus: true })
+    cleanup()
+
+    const result = renderUseComposer()
+    press(result, key("ArrowUp"))
+
+    expect(document.activeElement).toBe(chip)
+  })
+
+  it("並びを畳んでいるときの ↑ は並びを飛ばしてお願いへ移る", () => {
+    const result = renderUseComposer()
+    const { favorAction } = placeTrayAndFavor()
+    act(() => {
+      useNextStepTray.getState().fold()
+    })
+
+    press(result, key("ArrowUp"))
+
+    expect(document.activeElement).toBe(favorAction)
   })
 
   it("依頼を送って外したお願いへは移らない", () => {

@@ -10,7 +10,6 @@ import type {
   MainViewA2uiReport,
   MainViewReportRegions,
 } from "../../../shared/session/main-view-shape.ts"
-import type { NextStepsOrigin } from "./leaf/next-step-row.tsx"
 
 export const SURFACE_ID = "report"
 
@@ -32,7 +31,7 @@ export type A2uiReportProps = {
   readonly revealClassName: string
   /** 本文の根に重ねて付ける class（置く側のステップの末尾の余白の打ち消しが指す綴り）。 */
   readonly blockClassName: string
-  readonly nextSteps?: NextStepsOrigin
+  readonly favorPressable: boolean
   readonly favorRef?: RefCallback<HTMLElement>
   readonly pending?: ReportPending
 }

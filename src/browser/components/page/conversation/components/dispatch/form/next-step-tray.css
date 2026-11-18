@@ -1,0 +1,140 @@
+/* 入力欄の頭の次の一手の並び。見出しの1行・1行の札・下見の3段。
+   札の並びは2段までの高さで、超えた分は並びの中で縦に送る（下見は送る範囲の外に置くので、札の段数で動かない）。 */
+.next-step-tray {
+  --_chip-height: 1.875rem;
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  gap: var(--stack-tight);
+  padding-block-end: var(--stack-block);
+}
+.next-step-tray-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--stack-tight) var(--inline-control);
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+}
+.next-step-tray-title {
+  color: var(--accent);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+/* 見出しの右端（お願いの知らせ・口）。 */
+.next-step-tray-end {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: var(--inline-control);
+}
+.next-step-tray-favor {
+  color: var(--accent);
+}
+.next-step-tray-action {
+  min-height: 1.5rem;
+  padding: 0 var(--inline-control);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--ink-soft);
+  font: inherit;
+  cursor: pointer;
+}
+.next-step-tray-action:hover {
+  border-color: var(--accent);
+  color: var(--ink);
+}
+.next-step-tray-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--inline-control);
+  max-height: calc(2 * var(--_chip-height) + var(--inline-control));
+  overflow-y: auto;
+}
+/* 種類の語・主の字・点の数のあいだは gap で空ける（字のあいだの空白は読み上げの名前のために残してある）。 */
+.next-step-chip {
+  display: inline-flex;
+  flex: 0 1 auto;
+  align-items: baseline;
+  gap: var(--inline-tight);
+  box-sizing: border-box;
+  min-height: var(--_chip-height);
+  max-width: 100%;
+  padding: var(--stack-tight) var(--gutter-region);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--ink) 5%, transparent);
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--font-secondary);
+  text-align: left;
+  cursor: pointer;
+}
+.next-step-chip:hover,
+.next-step-chip.is-previewed {
+  border-color: var(--accent);
+}
+/* 下書きにその札の文が入っているあいだの印（✓ と差し色の枠）。 */
+.next-step-chip.is-held {
+  border-color: var(--accent);
+  background: var(--surface-accent);
+}
+.next-step-chip-held {
+  flex: none;
+  color: var(--accent);
+}
+.next-step-chip-kind {
+  flex: none;
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+}
+.next-step-chip-label {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.next-step-chip-points {
+  flex: none;
+  color: var(--accent);
+  font-size: var(--font-label);
+}
+.next-step-tray-preview {
+  padding-inline-start: var(--inline-control);
+  border-left: 2px solid var(--accent);
+  color: var(--ink-soft);
+  font-size: var(--font-secondary);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.next-step-tray-preview-label {
+  display: block;
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+}
+/* 広い画面の札は背景の絵の上に載るので、入力欄の本体と同じ透ける面で字を読ませる（透ける面の値は 761px 以上だけにある）。 */
+@media (min-width: 761px) {
+  .next-step-chip {
+    background: var(--panel-glass-dense);
+  }
+  .next-step-chip.is-held {
+    background: color-mix(in srgb, var(--accent) 18%, var(--panel-glass-dense));
+  }
+}
+/* 狭い画面（760px 以下）は札を1段の横送りにする（下見は描かない）。並びとの間はフォームの gap が持つ。 */
+@media (max-width: 760px) {
+  .next-step-tray {
+    padding-block-end: 0;
+  }
+  .next-step-tray-chips {
+    flex-wrap: nowrap;
+    max-height: none;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+  .next-step-chip {
+    flex: none;
+    max-width: none;
+    white-space: nowrap;
+  }
+}

@@ -1366,79 +1366,6 @@
                                                       ]
                                                     }
                                                   ]
-                                                },
-                                                {
-                                                  "tag": "div",
-                                                  "attributes": {
-                                                    "role": "group",
-                                                    "aria-label": "次の一手"
-                                                  },
-                                                  "children": [
-                                                    {
-                                                      "tag": "span",
-                                                      "attributes": {
-                                                        "aria-hidden": "true"
-                                                      },
-                                                      "children": [
-                                                        "次の一手"
-                                                      ]
-                                                    },
-                                                    "押すと、入力欄に下書きが入る（送らない）",
-                                                    {
-                                                      "tag": "span",
-                                                      "attributes": {
-                                                        "role": "group",
-                                                        "aria-label": "狭いビューポートでの見た目"
-                                                      },
-                                                      "children": [
-                                                        "狭いビューポートでの見た目",
-                                                        {
-                                                          "tag": "button",
-                                                          "attributes": {
-                                                            "data-variant": "secondary",
-                                                            "data-size": "sm",
-                                                            "data-elevation": "none",
-                                                            "data-astryx-pressable": "",
-                                                            "aria-label": "",
-                                                            "type": "button"
-                                                          },
-                                                          "children": [
-                                                            "確かめた",
-                                                            "「狭いビューポートでの見た目」を確かめた。問題なかった。",
-                                                            {
-                                                              "tag": "span",
-                                                              "attributes": {
-                                                                "role": "status",
-                                                                "aria-live": "polite"
-                                                              }
-                                                            }
-                                                          ]
-                                                        },
-                                                        {
-                                                          "tag": "button",
-                                                          "attributes": {
-                                                            "data-variant": "secondary",
-                                                            "data-size": "sm",
-                                                            "data-elevation": "none",
-                                                            "data-astryx-pressable": "",
-                                                            "aria-label": "",
-                                                            "type": "button"
-                                                          },
-                                                          "children": [
-                                                            "違った",
-                                                            "「狭いビューポートでの見た目」を確かめたら、違っていた。",
-                                                            {
-                                                              "tag": "span",
-                                                              "attributes": {
-                                                                "role": "status",
-                                                                "aria-live": "polite"
-                                                              }
-                                                            }
-                                                          ]
-                                                        }
-                                                      ]
-                                                    }
-                                                  ]
                                                 }
                                               ]
                                             }
@@ -1505,50 +1432,76 @@
                         {
                           "tag": "div",
                           "attributes": {
-                            "data-direction": "horizontal",
-                            "data-gap": "2",
-                            "data-wrap": "wrap"
+                            "role": "group",
+                            "aria-label": "次の一手"
                           },
                           "children": [
                             {
-                              "tag": "p",
+                              "tag": "span",
                               "attributes": {
-                                "data-type": "supporting",
-                                "data-color": "accent"
+                                "aria-hidden": "true"
                               },
                               "children": [
-                                "お願いが1件あります"
+                                "次の一手"
+                              ]
+                            },
+                            "押すと下の入力欄に入る（送らない）",
+                            "お願いが1件あります",
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "type": "button"
+                              },
+                              "children": [
+                                "お願いへ"
                               ]
                             },
                             {
                               "tag": "button",
                               "attributes": {
-                                "data-variant": "secondary",
-                                "data-size": "sm",
-                                "data-elevation": "none",
-                                "data-astryx-pressable": "",
-                                "aria-description": "入力欄が空のとき ↑ でも移れます",
-                                "aria-label": "お願いへ",
+                                "aria-expanded": "true",
                                 "type": "button"
                               },
                               "children": [
-                                "お願いへ",
+                                "畳む",
                                 {
-                                  "tag": "kbd",
+                                  "tag": "span",
                                   "attributes": {
                                     "aria-hidden": "true"
                                   },
                                   "children": [
-                                    "↑"
+                                    "⌄"
                                   ]
-                                },
-                                {
-                                  "tag": "span",
-                                  "attributes": {
-                                    "role": "status",
-                                    "aria-live": "polite"
-                                  }
                                 }
+                              ]
+                            },
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "data-next-step-chip": "",
+                                "type": "button"
+                              },
+                              "children": [
+                                "確かめた",
+                                "「狭いビューポートでの見た目」を確かめた。問題なかった。"
+                              ]
+                            },
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "data-next-step-chip": "",
+                                "type": "button"
+                              },
+                              "children": [
+                                "違った",
+                                "「狭いビューポートでの見た目」を確かめたら、違っていた。"
+                              ]
+                            },
+                            {
+                              "tag": "p",
+                              "children": [
+                                "押すと入る文",
+                                "「狭いビューポートでの見た目」を確かめた。問題なかった。"
                               ]
                             }
                           ]

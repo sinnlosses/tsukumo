@@ -1,7 +1,8 @@
-import { cleanup, render } from "@testing-library/react"
+import { cleanup, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 import type { MainViewReportBody } from "../../../../src/shared/session/main-view-shape.ts"
+import { noRootA2ui } from "../../../fixture/main-view-entry.ts"
 
 // `Markdown`（本物は react-markdown 一式で重い）を、呼ばれた回数と引数だけ記録する代役に
 // 差し替える。塊ごとに何を渡したかを直接数える。
@@ -66,5 +67,23 @@ describe("Report（空行で塊に割る）", () => {
     expect(calls).toEqual(["同じ段落", "同じ段落"])
     expect(error).not.toHaveBeenCalled()
     error.mockRestore()
+  })
+})
+
+describe("Report（紙に次の一手を出さない）", () => {
+  it("最新の最終レポートとして描いても、紙に次の一手の group は無い", () => {
+    render(
+      <Report
+        reveal={false}
+        turnId={1}
+        className=""
+        revealClassName=""
+        blockClassName=""
+        favorPressable
+        body={{ kind: "regions", sections: [], a2ui: noRootA2ui() }}
+      />,
+    )
+
+    expect(screen.queryByRole("group", { name: "次の一手" })).toBeNull()
   })
 })

@@ -9,7 +9,6 @@ import { A2uiReport } from "./a2ui-surface.tsx"
 import { MarkdownReport, ReportFrame } from "./leaf/body-region.tsx"
 import { FavorMarkContext, type FavorMark } from "./leaf/checks-verdict.tsx"
 import { FavorFollowUp } from "./leaf/favor-follow-up.tsx"
-import type { NextStepsOrigin } from "./leaf/next-step-row.tsx"
 import { HeadRegion } from "./leaf/report-head-region.tsx"
 
 export { PendingPaper } from "./leaf/pending-part.tsx"
@@ -27,7 +26,8 @@ type ReportProps = {
   readonly revealClassName: string
   /** 本文の根に重ねて付ける class。 */
   readonly blockClassName: string
-  readonly nextSteps?: NextStepsOrigin
+  /** お願いの選択肢の札を押せるか。無指定は押せない。 */
+  readonly favorPressable?: boolean
   /** 冒頭にお願いの印を出すか。無指定は出す。 */
   readonly favorMark?: FavorMark
   /** お願いの欄が付く・外れるときに呼ばれる。無指定は何もしない。 */
@@ -68,7 +68,7 @@ function ReportBody(props: ReportProps): ReactElement {
         className={props.className}
         revealClassName={props.revealClassName}
         blockClassName={props.blockClassName}
-        nextSteps={props.nextSteps}
+        favorPressable={props.favorPressable ?? false}
         favorRef={props.favorRef}
         pending={props.pending}
       />
@@ -86,9 +86,8 @@ function ReportBody(props: ReportProps): ReactElement {
       <FavorFollowUp
         favor={body.a2ui.favor}
         components={[]}
-        checks={body.a2ui.head.checks}
         favorRef={props.favorRef}
-        nextSteps={props.nextSteps}
+        pressable={props.favorPressable ?? false}
       />
     </ReportFrame>
   )

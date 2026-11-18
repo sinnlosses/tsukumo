@@ -123,7 +123,7 @@ export type SessionRecord =
       readonly conclusion: string
       readonly keyFigures: KeyFigures
       readonly favor: string
-      /** 残っていること。本文には描かず、末尾の次の一手の元になる。 */
+      /** 残っていること。本文には描かず、入力欄の頭の次の一手の並びの元になる。 */
       readonly sessionRemaining: SessionRemaining
       readonly checks: readonly ReportCheck[]
       readonly task: ReportTask

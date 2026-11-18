@@ -9,7 +9,7 @@ export type ReplyPort = {
   readonly prependDraft: (text: string) => void
 }
 
-/** 口が渡されていない描画は `none`。次の一手の行と、選んだ字を引く口は出さない。 */
+/** 口が渡されていない描画は `none`。お願いの選択肢の札と、選んだ字を引く口は出さない。 */
 export type ReplyPortSlot =
   | { readonly kind: "none" }
   | { readonly kind: "open"; readonly port: ReplyPort }

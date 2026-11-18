@@ -156,6 +156,7 @@ describe("buildNextSteps", () => {
         "   確かめ方: 架空の手順",
         "2. 架空の主張 unverified",
       ].join("\n"),
+      points: 2,
     })
   })
 
@@ -210,6 +211,7 @@ describe("buildNextSteps の確かめていない検証の行", () => {
       label: "次の点を確かめて。",
       note: ["1. 架空の検証3", "   確かめ方: 手順3"].join("\n"),
       draft: ["次の点を確かめて。", "1. 架空の検証3", "   確かめ方: 手順3"].join("\n"),
+      points: 1,
     })
   })
 })
