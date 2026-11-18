@@ -1,6 +1,5 @@
 /* コマンドパレット。背景と横の中央寄せは `<Dialog backdrop="dim">` が持つ。
-   上端を帯の下に留め、絞り込んで行が減ったら下から縮む（中央に置くと箱が上下に跳ねる）。
-   キーの字は行の名前より2段控え、選んだ行でだけ1段上げる（キーを読むのは探す人だけなので、並びの主役にしない）。 */
+   上端を帯の下に留め、絞り込んで行が減ったら下から縮む（中央に置くと箱が上下に跳ねる）。 */
 
 .command-palette {
   composes: surface-edge-rule surface-radius-xl surface-tone-surface from "../../ui/surface/surface-face.module.css";
@@ -61,7 +60,6 @@
   color: var(--ink-quiet);
   font-size: var(--font-label);
 }
-/* 選んでいる行は地で示す。 */
 .command-palette-row {
   display: flex;
   align-items: center;
@@ -88,7 +86,6 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-/* 枠も地も持たない字だけのキー。 */
 .command-palette-key {
   flex: none;
   color: color-mix(in srgb, var(--ink-quiet) 70%, transparent);

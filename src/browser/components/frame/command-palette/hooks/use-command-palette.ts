@@ -1,5 +1,4 @@
 // コマンドパレットの中身（操作と画面の行）と、画面全体のショートカットの受け口。
-// ショートカットとパレットの行は同じ操作を呼ぶので、操作の実体はここに1つだけ持つ。
 //
 // ほかの重なる面（設定・切り替え画面など）が開いているあいだはショートカットを読まない。
 // パレットが開いているときだけは、パレットを閉じてから操作を走らせる。
@@ -26,7 +25,6 @@ export type PaletteCommand = {
   readonly id: string
   readonly label: string
   readonly group: CommandGroup
-  /** 割り当てたショートカットの字。無い行もある。 */
   readonly keyLabel?: string
   readonly disabled: boolean
   readonly title?: string
@@ -189,7 +187,6 @@ function actionCommand(
   }
 }
 
-/** いま出している画面へ移る行は出さない。 */
 function isCurrentScreen(id: string, screen: Screen, chatMode: boolean): boolean {
   if (screen === "conversation") {
     return id === (chatMode ? "screen-chat" : "screen-work")

@@ -19,7 +19,6 @@ export type ShortcutKeyEvent = {
   readonly target?: EventTarget
 }
 
-/** パレットの行の脇に出すキーの字。`/` のほかは ⌘ を伴う。 */
 export const SHORTCUT_KEY_LABEL = {
   "command-palette": "⌘K",
   composer: "/",
