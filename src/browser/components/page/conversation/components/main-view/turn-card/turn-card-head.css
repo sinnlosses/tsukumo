@@ -8,7 +8,7 @@
 }
 /* 広い画面では、頭に読む幅の上限（縁を含めて 976px）を置く。
    帯の左右の端は、頭の左右の余白（`--gutter-region`）で入力欄にそろえる。
-   帯の上下の外には、流れが帯の裏へ潜って字が欠けて見えないよう、地の色の覆いを敷く（帯の下は流れの始まりまでの隙間）。 */
+   帯の上下の外には、流れが帯の裏へ潜って字が欠けて見えないよう、帯と同じ幅で地の色の覆いを敷く（帯の下は流れの始まりまでの隙間）。 */
 @media (min-width: 761px) {
   .turn-card-head {
     box-sizing: border-box;
@@ -18,11 +18,19 @@
   .turn-card-head::before {
     content: "";
     position: absolute;
-    inset: calc(-1 * var(--region-padding, 0px)) 0 calc(-1 * var(--stack-block)) 0;
+    inset: calc(-1 * var(--region-padding, 0px)) var(--gutter-region) calc(-1 * var(--stack-block));
     z-index: -1;
     background: linear-gradient(
       to bottom,
       var(--character-veil, var(--ground)) calc(100% - var(--stack-block)),
+      transparent
+    );
+    /* 覆いは帯の幅に収め、左右の端は帯の丸い端の内側で消す（帯の外に四角い影を出さない）。 */
+    mask-image: linear-gradient(
+      to right,
+      transparent,
+      black var(--radius-xl),
+      black calc(100% - var(--radius-xl)),
       transparent
     );
     pointer-events: none;
