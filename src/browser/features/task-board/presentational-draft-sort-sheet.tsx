@@ -1,6 +1,6 @@
 // サイドシートの分類の場面の器だけ。フックも算出も持たず、受け取った値と呼び先をそのまま置く。
 //
-// 中身（題・札・下端の口）は一覧モードと同じ `DraftSortPanel`・`DraftSortBand` で、ここは3段の grid の器に入れる。
+// 中身（題・札・下端の口）は `DraftSortPanel`・`DraftSortBand` で、ここは3段の grid の器に入れる。
 // 確認（`TaskRunConfirm`）はモーダルの `<dialog>` で最上位の層に出るので、サイドシートの上に重なる。
 
 import type { ReactElement } from "react"

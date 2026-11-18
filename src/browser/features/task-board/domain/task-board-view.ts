@@ -138,7 +138,7 @@ export type TaskBoardContent =
       readonly knownIds: ReadonlySet<string>
     }
 
-/** ドラフトの分類の場面（サイドシートと一覧モード）の札1枚。 */
+/** ドラフトの分類の場面の札1枚。 */
 export type DraftSortCard = {
   readonly id: string
   readonly state: TaskStateView

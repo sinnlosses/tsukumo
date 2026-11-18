@@ -242,6 +242,27 @@ describe("タスクのモーダル", () => {
     expect(screen.queryByRole("button", { name: "仕分ける" })).toBeNull()
   })
 
+  it("開いているあいだにドラフトが無くなると閉じ、届き直しても開き直さない", () => {
+    putSession(INITIAL_SESSION_STATE, () => {})
+    const request = { kind: "open", focus: { kind: "first" }, query: "" } as const
+    const { rerender } = render(
+      <TaskBoard tasks={knownTaskSummary(TASKS)} request={request} onClose={() => {}} />,
+      { wrapper: queryClientWrapper() },
+    )
+    fireEvent.click(screen.getByRole("button", { name: "仕分ける" }))
+    rerender(
+      <TaskBoard
+        tasks={knownTaskSummary([taskOf("X-002", "todo")])}
+        request={request}
+        onClose={() => {}}
+      />,
+    )
+    rerender(<TaskBoard tasks={knownTaskSummary(TASKS)} request={request} onClose={() => {}} />)
+
+    expect(sortPane()).toBeNull()
+    expect(screen.getByRole("button", { name: "仕分ける", expanded: false })).toBeDefined()
+  })
+
   function sortPaneElement(): HTMLElement {
     const pane = sortPane()
     if (pane === null) {

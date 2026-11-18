@@ -7,6 +7,7 @@
 import { useReducer, useState } from "react"
 
 import type { TaskSummaryResult } from "../../../../shared/repository/task-summary.ts"
+import { useExternalSync } from "../../../hooks/use-external-sync.ts"
 import type { TaskBoardRequest } from "../../../stores/task-board-request.ts"
 import { draftTasksOf } from "../domain/draft-sort-sheet-content.ts"
 import {
@@ -51,7 +52,13 @@ export function useTaskBoard(
   const { query, filter, chosen } = state
   const items = tasks.kind === "known" ? tasks.items : []
   const drafts = draftTasksOf(items)
-  // ドラフトが1件も無くなったら分類の場面は閉じた扱いにする（次に開くときは選びを戻してから開く）。
+  // ドラフトが1件も無くなったら分類の場面を閉じる。閉じるのは描いたあとなので、その間も開いて見せない。
+  const draftsGone = tasks.kind !== "loading" && drafts.length === 0
+  useExternalSync(() => {
+    if (draftsGone) {
+      setSorting(false)
+    }
+  }, [draftsGone])
   const sortOpen = sorting && drafts.length > 0
   const draftSort = useDraftSort(drafts, setConfirming)
   const entries = boardEntries(items)

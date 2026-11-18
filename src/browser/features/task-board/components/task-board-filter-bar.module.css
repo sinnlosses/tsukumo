@@ -46,7 +46,7 @@
   font-family: var(--font-mono);
   font-size: var(--font-label);
 }
-/* サイドバーの段の見出しの口（`task-list.module.css` の `.task-stage-action`）と同じ顔。開いているあいだは地で示す。 */
+/* 「仕分ける」の口。開いているあいだは地で示す。 */
 .task-board-sort-open {
   display: inline-flex;
   flex: none;

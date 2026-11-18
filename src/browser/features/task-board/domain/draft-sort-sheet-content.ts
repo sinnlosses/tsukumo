@@ -1,4 +1,4 @@
-// ドラフトの分類の場面（サイドシートと一覧モードの右の欄）に並べるドラフトの札。一覧の順のまま、ドラフトの全件を札にする。
+// ドラフトの分類の場面に並べるドラフトの札。一覧の順のまま、ドラフトの全件を札にする。
 
 import type { TaskSummaryItem } from "../../../../shared/repository/task-summary.ts"
 import { codeSpanParts } from "../../../domain/code-span.ts"

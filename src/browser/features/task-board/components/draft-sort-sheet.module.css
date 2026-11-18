@@ -1,4 +1,4 @@
-/* ドラフトの分類の場面（サイドシートと一覧モードの右の欄）。頭の帯は `task-sheet.module.css` を共有し、ここは題・札・3択・下端の口を持つ。
+/* ドラフトの分類の場面。頭の帯は `task-sheet.module.css` を共有し、ここは題・札・3択・下端の口を持つ。
    形は見本 `docs/history/mockup/sidebar-task-board-2026-11-16/` の `view=draft`（札の縦積みと、下端の「仕分けを戻す・あとで n 件・頼む」）。 */
 .draft-sort-title {
   display: flex;
