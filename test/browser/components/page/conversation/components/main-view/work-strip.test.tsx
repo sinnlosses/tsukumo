@@ -120,7 +120,7 @@ describe("WorkStrip", () => {
       "架空のコマンド",
     )
     expect(sentence?.textContent).toContain("toolu_1")
-    expect(sentence?.textContent).toContain("走らせています")
+    expect(sentence?.textContent).not.toContain("走らせています")
     expect(sentence?.textContent).toContain("秒")
     expect(strip().querySelector("[class*='work-strip-rule']")).not.toBeNull()
 

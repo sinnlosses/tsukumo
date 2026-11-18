@@ -29,14 +29,14 @@ test.describe("進み具合のプログレスバー", () => {
       .poll(() => phaseStates(strip))
       .toEqual(["current", "upcoming", "upcoming", "upcoming"])
     await expect.poll(() => strip.textContent()).toContain("今の形を調べる")
-    await expect.poll(() => nowStatementText(room.page)).toContain("読んでいます")
+    await expect.poll(() => nowStatementText(room.page)).toContain("/tmp/dummy/metric")
 
     await room.waitForEvent("tool-started", LONG_TOOL_OCCURRENCE)
     await expect.poll(() => phaseStates(strip)).toEqual(["done", "current", "upcoming", "upcoming"])
     await expect.poll(() => strip.textContent()).toContain("集計の関数とスクリプト")
     await expect
       .poll(() => nowStatementText(room.page))
-      .toMatch(/pnpm exec vitest run\s*\/tmp\/dummy\/metric.*走らせています/u)
+      .toMatch(/pnpm exec vitest run\s*\/tmp\/dummy\/metric/u)
 
     const topBefore = await topOf(strip)
     await scrollMainToBottom(room.page)
@@ -48,7 +48,7 @@ test.describe("進み具合のプログレスバー", () => {
     await expectReadable(room.page)
   })
 
-  test("1000x800 でも、いまの手順の一文は対象の頭だけが縮み、動詞と秒が右端で切れない", async ({
+  test("1000x800 でも、いまの手順の一文は対象の頭だけが縮み、最後の語と秒が右端で切れない", async ({
     run,
   }) => {
     const room = await run.open({
@@ -60,7 +60,7 @@ test.describe("進み具合のプログレスバー", () => {
     await room.waitForEvent("tool-started", LONG_TOOL_OCCURRENCE)
     await expect
       .poll(() => nowStatementText(room.page))
-      .toMatch(/pnpm exec vitest run\s*\/tmp\/dummy\/metric.*走らせています/u)
+      .toMatch(/pnpm exec vitest run\s*\/tmp\/dummy\/metric/u)
     await room.resize({ width: 1000, height: 800 })
 
     await expect.poll(() => clippedTextOf(nowStatementOf(room.page))).toEqual([])

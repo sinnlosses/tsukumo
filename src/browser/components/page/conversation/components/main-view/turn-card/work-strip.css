@@ -17,7 +17,7 @@
     justify-content: center;
     container: work-strip / inline-size;
     min-height: 40px;
-    padding: var(--stack-tight) var(--stack-tight) var(--stack-tight) var(--inline-group);
+    padding: var(--stack-tight) var(--inline-control) var(--stack-tight) var(--inline-group);
     border: 1px solid var(--panel-edge);
     border-radius: var(--radius-pill);
     background: var(--panel-glass);
@@ -319,10 +319,14 @@
   font-family: var(--font-mono);
   white-space: nowrap;
 }
+/* 帯の縁から上下左右に同じだけ内側へ収める低いピル。 */
 .work-strip-toggle {
   flex: none;
+  box-sizing: border-box;
+  block-size: 24px;
+  min-block-size: 0;
   font-size: var(--font-secondary);
-  padding: var(--space-xs) var(--space-md);
+  padding: 0 var(--space-md);
   border-radius: var(--radius-pill);
   white-space: nowrap;
 }

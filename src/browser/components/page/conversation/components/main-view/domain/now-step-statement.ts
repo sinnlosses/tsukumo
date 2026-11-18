@@ -1,4 +1,4 @@
-// プログレスバーのいまの手順の一文。「対象 を 動詞」の敬体で、手順の秒と添え書きを添える。
+// プログレスバーのいまの手順の一文。道具の手順は対象だけ、それ以外は「対象 に 動詞」か動詞だけの敬体で、手順の秒と添え書きを添える。
 // 動詞の表は ADR 0062 の「末尾の行（いまの行）の文」と ADR 0070 の論点 2 が正。狭い画面の1行は `workActivityOf` が別に持つ。
 
 import { isPlainObject } from "remeda"
@@ -19,22 +19,19 @@ import {
 const DELEGATING = { particle: "に", verb: "任せています" }
 const FALLBACK_DELEGATE = "委譲先"
 
-const NOW_STEP_VERBS: Readonly<
-  Record<string, { readonly particle: string; readonly verb: string }>
-> = {
-  Read: { particle: "を", verb: "読んでいます" },
-  Grep: { particle: "を", verb: "探しています" },
-  Glob: { particle: "を", verb: "探しています" },
-  Edit: { particle: "を", verb: "書き換えています" },
-  MultiEdit: { particle: "を", verb: "書き換えています" },
-  NotebookEdit: { particle: "を", verb: "書き換えています" },
-  Write: { particle: "を", verb: "書いています" },
-  Bash: { particle: "を", verb: "走らせています" },
-  WebFetch: { particle: "を", verb: "調べています" },
-  WebSearch: { particle: "を", verb: "調べています" },
+// 道具の手順は対象（入力の要約）だけを出し、動詞は対象が引けないときにだけ言う。
+const NOW_STEP_VERBS: Readonly<Record<string, string>> = {
+  Read: "読んでいます",
+  Grep: "探しています",
+  Glob: "探しています",
+  Edit: "書き換えています",
+  MultiEdit: "書き換えています",
+  NotebookEdit: "書き換えています",
+  Write: "書いています",
+  Bash: "走らせています",
+  WebFetch: "調べています",
+  WebSearch: "調べています",
 }
-
-const UNKNOWN_TOOL = { particle: "を", verb: "使っています" }
 const BACKGROUND_LEAD = "背景で"
 
 export type NowStepStatement =
@@ -43,6 +40,8 @@ export type NowStepStatement =
       readonly kind: "doing"
       /** 対象の前に置く語（「背景で」）。無ければ空。 */
       readonly lead: string
+      /** 道具の手順なら道具の名前（文に出さず、手順の替わり目を見分ける）。道具でなければ空。 */
+      readonly tool: string
       readonly target: string
       /** 対象のあとのつなぎ（「を」「に」）。対象が無ければ空。 */
       readonly particle: string
@@ -60,6 +59,7 @@ export type Doing = Extract<NowStepStatement, { readonly kind: "doing" }>
 
 const PLAIN = {
   lead: "",
+  tool: "",
   target: "",
   particle: "",
   mono: false,
@@ -154,8 +154,7 @@ export function nowStepStatementOf(source: WorkActivitySource): NowStepStatement
       ...PLAIN,
       lead: BACKGROUND_LEAD,
       target: background,
-      particle: "を",
-      verb: "走らせています",
+      verb: "",
     }
   }
   return {
@@ -169,7 +168,7 @@ export function nowStepStatementOf(source: WorkActivitySource): NowStepStatement
 
 /** 文の鍵。手順が替わったかを言う。秒と添え書きは含めない。 */
 export function nowStepKeyOf(doing: Doing): string {
-  return [doing.lead, doing.target, doing.particle, doing.verb].join("\u0000")
+  return [doing.lead, doing.tool, doing.target, doing.particle, doing.verb].join("\u0000")
 }
 
 /**
@@ -212,15 +211,14 @@ function toolStatement(tool: {
     return { ...delegationStatement(lead, delegationOf(input)), elapsed }
   }
   const known = NOW_STEP_VERBS[name]
-  const wording = known ?? UNKNOWN_TOOL
   const target = known === undefined ? name : summarizeToolInput(name, input)
   return {
     ...PLAIN,
     kind: "doing",
     lead,
+    tool: name,
     target,
-    particle: target === "" ? "" : wording.particle,
-    verb: wording.verb,
+    verb: target === "" ? (known ?? "") : "",
     mono: target !== "",
     elapsed,
   }

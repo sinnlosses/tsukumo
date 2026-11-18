@@ -384,7 +384,7 @@ describe("MainView（プログレスバーのいまの手順の一文）", () =>
     const sentences = document.querySelectorAll("[data-work-strip] [data-work-strip-now]")
     expect(sentences).toHaveLength(1)
     expect(sentences[0]?.textContent).toContain("架空のコマンド")
-    expect(sentences[0]?.textContent).toContain("走らせています")
+    expect(sentences[0]?.textContent).not.toContain("走らせています")
   })
 
   it("狭い画面では一文を出さない", () => {

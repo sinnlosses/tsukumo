@@ -204,15 +204,17 @@ function NowSentence(props: {
           {statement.particle}
         </Text>
       )}
-      <Text
-        element="span"
-        size="secondary"
-        tone="ink"
-        weight="semibold"
-        className={styles["work-strip-now-fixed"]}
-      >
-        {statement.verb}
-      </Text>
+      {statement.verb !== "" && (
+        <Text
+          element="span"
+          size="secondary"
+          tone="ink"
+          weight="semibold"
+          className={styles["work-strip-now-fixed"]}
+        >
+          {statement.verb}
+        </Text>
+      )}
       {statement.elapsed !== "" && (
         <Text
           element="span"

@@ -54,7 +54,7 @@ describe("useWorkStripNow", () => {
 
     expect(result.current).toMatchObject({
       kind: "shown",
-      statement: { target: "/架空/a.ts", verb: "読んでいます", elapsed: "7秒" },
+      statement: { tool: "Read", target: "/架空/a.ts", verb: "", elapsed: "7秒" },
       leaving: { kind: "none" },
     })
   })
@@ -82,7 +82,7 @@ describe("useWorkStripNow", () => {
 
     expect(result.current).toMatchObject({
       kind: "shown",
-      statement: { target: "架空のコマンド", verb: "走らせています", elapsed: "9秒" },
+      statement: { tool: "Bash", target: "架空のコマンド", verb: "", elapsed: "9秒" },
     })
   })
 
@@ -151,8 +151,8 @@ describe("useWorkStripNow", () => {
     })
     expect(result.current).toMatchObject({
       kind: "shown",
-      statement: { verb: "走らせています" },
-      leaving: { kind: "statement", statement: { verb: "読んでいます", target: "/架空/a.ts" } },
+      statement: { tool: "Bash" },
+      leaving: { kind: "statement", statement: { tool: "Read", target: "/架空/a.ts" } },
     })
 
     act(() => {

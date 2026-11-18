@@ -72,7 +72,7 @@
 ### いまの手順の一文
 
 - **英語識別子**: `NowStepStatement`（`src/browser/components/page/conversation/components/main-view/domain/now-step-statement.ts`）
-- **定義**: 広い画面の進み具合のプログレスバーの1行で、縦線の右に出す「対象 を 動詞」の敬体の文と手順の秒。
+- **定義**: 広い画面の進み具合のプログレスバーの1行で、縦線の右に出す、いまの手順の対象（道具の手順。動詞は付けない）か動詞の敬体の文と、手順の秒。
   文は `nowStepStatementOf` が言う
 - **注記**: ターンが走っているあいだはいつも出し、続きのターンでも出す。答え待ち・止めた・失敗・完了は状態の表の一文が持つ。
   回る印は持たない。狭い画面は「いまの段」の下の1行（`workActivityOf`）のまま

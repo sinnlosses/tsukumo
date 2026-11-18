@@ -52,37 +52,42 @@ function doing(statement: NowStepStatement) {
 
 describe("nowStepStatementOf", () => {
   it.each([
-    ["Read", { file_path: "/a/b.ts" }, "を", "読んでいます", "/a/b.ts"],
-    ["Grep", { pattern: "架空" }, "を", "探しています", "架空"],
-    ["Glob", { pattern: "*.ts" }, "を", "探しています", "*.ts"],
-    ["Edit", { file_path: "/a.ts" }, "を", "書き換えています", "/a.ts"],
-    ["MultiEdit", { file_path: "/a.ts" }, "を", "書き換えています", "/a.ts"],
-    ["NotebookEdit", { file_path: "/a.ipynb" }, "を", "書き換えています", "/a.ipynb"],
-    ["Write", { file_path: "/a.ts" }, "を", "書いています", "/a.ts"],
-    ["Bash", { command: "pnpm run test" }, "を", "走らせています", "pnpm run test"],
-    ["WebFetch", { url: "https://example.test" }, "を", "調べています", "https://example.test"],
-    ["WebSearch", { query: "架空" }, "を", "調べています", "架空"],
-  ])("走っている %s は「対象 を 動詞」と経過で言う", (name, input, particle, verb, target) => {
+    ["Read", { file_path: "/a/b.ts" }, "/a/b.ts"],
+    ["Grep", { pattern: "架空" }, "架空"],
+    ["Glob", { pattern: "*.ts" }, "*.ts"],
+    ["Edit", { file_path: "/a.ts" }, "/a.ts"],
+    ["MultiEdit", { file_path: "/a.ts" }, "/a.ts"],
+    ["NotebookEdit", { file_path: "/a.ipynb" }, "/a.ipynb"],
+    ["Write", { file_path: "/a.ts" }, "/a.ts"],
+    ["Bash", { command: "pnpm run test" }, "pnpm run test"],
+    ["WebFetch", { url: "https://example.test" }, "https://example.test"],
+    ["WebSearch", { query: "架空" }, "架空"],
+  ])("走っている %s は対象と経過だけを言い、つなぎと動詞を付けない", (name, input, target) => {
     const statement = doing(nowStepStatementOf(sourceOf({}, [runningStep(name, input)])))
     expect(statement).toMatchObject({
       lead: "",
       target,
-      particle,
-      verb,
+      particle: "",
+      verb: "",
       mono: true,
       elapsed: "5秒",
       aside: "",
     })
   })
 
-  it("表に無い道具・MCP の道具は「<道具の名前> を使っています」と等幅で言う", () => {
+  it("対象が引けない道具の手順は動詞だけで言う", () => {
+    const statement = doing(nowStepStatementOf(sourceOf({}, [runningStep("Read", {})])))
+    expect(statement).toMatchObject({ target: "", particle: "", verb: "読んでいます" })
+  })
+
+  it("表に無い道具・MCP の道具は道具の名前だけを等幅で言う", () => {
     const statement = doing(
       nowStepStatementOf(sourceOf({}, [runningStep("mcp__架空__道具", { a: "b" })])),
     )
     expect(statement).toMatchObject({
       target: "mcp__架空__道具",
-      particle: "を",
-      verb: "使っています",
+      particle: "",
+      verb: "",
       mono: true,
     })
   })
@@ -171,13 +176,13 @@ describe("nowStepStatementOf", () => {
     expect(statement).toMatchObject({
       lead: "背景で",
       target: "架空",
-      particle: "を",
-      verb: "走らせています",
+      particle: "",
+      verb: "",
       elapsed: "5秒",
     })
   })
 
-  it("手順を持たないバックグラウンドタスクは「背景で <説明> を走らせています」と言う", () => {
+  it("手順を持たないバックグラウンドタスクは「背景で <説明>」と言う", () => {
     const statement = doing(
       nowStepStatementOf(
         sourceOf({
@@ -190,8 +195,8 @@ describe("nowStepStatementOf", () => {
     expect(statement).toMatchObject({
       lead: "背景で",
       target: "架空の待ち",
-      particle: "を",
-      verb: "走らせています",
+      particle: "",
+      verb: "",
       mono: false,
     })
   })
@@ -340,14 +345,14 @@ describe("nowStepKeyOf", () => {
     expect(nowStepKeyOf(later)).toBe(nowStepKeyOf(read))
   })
 
-  it("対象か動詞が違えば別の鍵", () => {
+  it("対象か道具が違えば別の鍵", () => {
     const otherTarget = doing(
       nowStepStatementOf(sourceOf({}, [runningStep("Read", { file_path: "/a/c.ts" })])),
     )
-    const otherVerb = doing(
+    const otherTool = doing(
       nowStepStatementOf(sourceOf({}, [runningStep("Write", { file_path: "/a/b.ts" })])),
     )
     expect(nowStepKeyOf(otherTarget)).not.toBe(nowStepKeyOf(read))
-    expect(nowStepKeyOf(otherVerb)).not.toBe(nowStepKeyOf(read))
+    expect(nowStepKeyOf(otherTool)).not.toBe(nowStepKeyOf(read))
   })
 })
