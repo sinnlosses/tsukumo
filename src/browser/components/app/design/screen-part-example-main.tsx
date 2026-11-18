@@ -189,8 +189,8 @@ export const MAIN_VIEW_EXAMPLES: readonly ScreenPartExample[] = [
     path: "page/conversation/components/main-view/presentational-work-strip.tsx",
     render: () => (
       <>
-        <PresentationalWorkStrip strip={WORKING_STRIP} />
-        <PresentationalWorkStrip strip={FINISHED_STRIP} />
+        <PresentationalWorkStrip strip={WORKING_STRIP} now={{ kind: "none" }} />
+        <PresentationalWorkStrip strip={FINISHED_STRIP} now={{ kind: "none" }} />
       </>
     ),
   },

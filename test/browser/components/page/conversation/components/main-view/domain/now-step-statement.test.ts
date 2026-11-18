@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest"
 
 import {
-  nowLineStatementOf,
-  type NowLineStatement,
-} from "../../../../../../../../src/browser/components/page/conversation/components/main-view/domain/now-line-statement.ts"
+  nowStepKeyOf,
+  nowStepStatementOf,
+  targetPartsOf,
+  type NowStepStatement,
+} from "../../../../../../../../src/browser/components/page/conversation/components/main-view/domain/now-step-statement.ts"
 import type { WorkActivitySource } from "../../../../../../../../src/browser/components/page/conversation/components/main-view/domain/work-activity.ts"
 import type { BackgroundTask } from "../../../../../../../../src/shared/session-driver/background-task.ts"
 import type { TurnStep } from "../../../../../../../../src/shared/session/turn-step.ts"
@@ -41,14 +43,14 @@ function sourceOf(overrides: Partial<WorkActivitySource> = {}, steps: readonly T
   } satisfies WorkActivitySource
 }
 
-function doing(statement: NowLineStatement) {
+function doing(statement: NowStepStatement) {
   if (statement.kind !== "doing") {
     throw new Error("doing を期待した")
   }
   return statement
 }
 
-describe("nowLineStatementOf", () => {
+describe("nowStepStatementOf", () => {
   it.each([
     ["Read", { file_path: "/a/b.ts" }, "を", "読んでいます", "/a/b.ts"],
     ["Grep", { pattern: "架空" }, "を", "探しています", "架空"],
@@ -61,7 +63,7 @@ describe("nowLineStatementOf", () => {
     ["WebFetch", { url: "https://example.test" }, "を", "調べています", "https://example.test"],
     ["WebSearch", { query: "架空" }, "を", "調べています", "架空"],
   ])("走っている %s は「対象 を 動詞」と経過で言う", (name, input, particle, verb, target) => {
-    const statement = doing(nowLineStatementOf(sourceOf({}, [runningStep(name, input)])))
+    const statement = doing(nowStepStatementOf(sourceOf({}, [runningStep(name, input)])))
     expect(statement).toMatchObject({
       lead: "",
       target,
@@ -75,7 +77,7 @@ describe("nowLineStatementOf", () => {
 
   it("表に無い道具・MCP の道具は「<道具の名前> を使っています」と等幅で言う", () => {
     const statement = doing(
-      nowLineStatementOf(sourceOf({}, [runningStep("mcp__架空__道具", { a: "b" })])),
+      nowStepStatementOf(sourceOf({}, [runningStep("mcp__架空__道具", { a: "b" })])),
     )
     expect(statement).toMatchObject({
       target: "mcp__架空__道具",
@@ -87,7 +89,7 @@ describe("nowLineStatementOf", () => {
 
   it("走っている Agent は役（綴りのまま）に任せ、説明を添え書きにする。役が無ければ「委譲先」", () => {
     const both = doing(
-      nowLineStatementOf(
+      nowStepStatementOf(
         sourceOf({}, [
           runningStep("Agent", { subagent_type: "架空の役", description: "架空の説明" }),
         ]),
@@ -102,7 +104,7 @@ describe("nowLineStatementOf", () => {
       elapsed: "5秒",
     })
     const only = doing(
-      nowLineStatementOf(sourceOf({}, [runningStep("Task", { description: "架空の説明" })])),
+      nowStepStatementOf(sourceOf({}, [runningStep("Task", { description: "架空の説明" })])),
     )
     expect(only).toMatchObject({ target: "委譲先", verb: "任せています", aside: "架空の説明" })
   })
@@ -115,7 +117,7 @@ describe("nowLineStatementOf", () => {
 
   it("背景のワークフロースクリプトの agent が手順の合間に走っていれば段の題を対象にする", () => {
     const statement = doing(
-      nowLineStatementOf(
+      nowStepStatementOf(
         sourceOf({
           backgroundTasks: [WORKFLOW],
           workflowSteps: [
@@ -149,7 +151,7 @@ describe("nowLineStatementOf", () => {
 
   it("背景の手順が走っていれば対象の前に「背景で」を添える", () => {
     const statement = doing(
-      nowLineStatementOf(
+      nowStepStatementOf(
         sourceOf({
           backgroundTasks: [WORKFLOW],
           workflowSteps: [
@@ -177,7 +179,7 @@ describe("nowLineStatementOf", () => {
 
   it("手順を持たないバックグラウンドタスクは「背景で <説明> を走らせています」と言う", () => {
     const statement = doing(
-      nowLineStatementOf(
+      nowStepStatementOf(
         sourceOf({
           backgroundTasks: [
             { taskId: checkedTaskId("bash-1"), kind: "shell", description: "架空の待ち" },
@@ -196,7 +198,7 @@ describe("nowLineStatementOf", () => {
 
   it("背景で委譲先が動いていれば「背景で <役> に任せています」と言う", () => {
     const statement = doing(
-      nowLineStatementOf(
+      nowStepStatementOf(
         sourceOf(
           {
             backgroundTasks: [
@@ -228,7 +230,7 @@ describe("nowLineStatementOf", () => {
 
   it("report を書いている途中は「レポートを書いています」", () => {
     const statement = doing(
-      nowLineStatementOf(
+      nowStepStatementOf(
         sourceOf({
           reportDrafting: { kind: "drafting", toolUseId: "tu-r", components: [], held: [] },
         }),
@@ -243,7 +245,7 @@ describe("nowLineStatementOf", () => {
   })
 
   it("何も走っていなければ「考えています」、依頼が会話の片付けなら「会話を片付けています」", () => {
-    expect(doing(nowLineStatementOf(sourceOf()))).toMatchObject({
+    expect(doing(nowStepStatementOf(sourceOf()))).toMatchObject({
       verb: "考えています",
       target: "",
       particle: "",
@@ -257,14 +259,14 @@ describe("nowLineStatementOf", () => {
         time: { kind: "stamped", at: START },
       },
     ]
-    expect(doing(nowLineStatementOf(sourceOf({ records })))).toMatchObject({
+    expect(doing(nowStepStatementOf(sourceOf({ records })))).toMatchObject({
       verb: "会話を片付けています",
     })
   })
 
   it("API の再試行中は「API の応答 を待っています」に回数を添え書きにし、詳細を title 用に持つ", () => {
     const statement = doing(
-      nowLineStatementOf(
+      nowStepStatementOf(
         sourceOf({
           apiTrouble: {
             kind: "retrying",
@@ -288,7 +290,7 @@ describe("nowLineStatementOf", () => {
 
   it("答え待ちは行を出さない", () => {
     expect(
-      nowLineStatementOf(
+      nowStepStatementOf(
         sourceOf({
           firstPending: {
             kind: "permission",
@@ -304,10 +306,48 @@ describe("nowLineStatementOf", () => {
 
   it("手順が 121 秒続いても添え書きを付けず、秒だけが伸びる", () => {
     const statement = doing(
-      nowLineStatementOf(
+      nowStepStatementOf(
         sourceOf({ now: START + 121_000 }, [runningStep("Bash", { command: "x" })]),
       ),
     )
     expect(statement).toMatchObject({ aside: "", elapsed: "2分01秒" })
+  })
+})
+
+describe("targetPartsOf", () => {
+  it.each([
+    ["pnpm run test sort-order", true, "pnpm run test", "sort-order"],
+    ["src/a/sort-order.ts", true, "src/a/", "sort-order.ts"],
+    ["sort-order", true, "sort-order", ""],
+    ["架空の API の応答", false, "架空の API の応答", ""],
+    ["a/b c", false, "a/b c", ""],
+  ])("%s（等幅 %s）は頭と最後の語に分ける", (target, mono, head, tail) => {
+    expect(targetPartsOf(target, mono)).toEqual({ head, tail })
+  })
+})
+
+describe("nowStepKeyOf", () => {
+  const read = doing(
+    nowStepStatementOf(sourceOf({}, [runningStep("Read", { file_path: "/a/b.ts" })])),
+  )
+
+  it("秒だけ違う2つは同じ鍵", () => {
+    const later = doing(
+      nowStepStatementOf(
+        sourceOf({ now: START + 60_000 }, [runningStep("Read", { file_path: "/a/b.ts" })]),
+      ),
+    )
+    expect(nowStepKeyOf(later)).toBe(nowStepKeyOf(read))
+  })
+
+  it("対象か動詞が違えば別の鍵", () => {
+    const otherTarget = doing(
+      nowStepStatementOf(sourceOf({}, [runningStep("Read", { file_path: "/a/c.ts" })])),
+    )
+    const otherVerb = doing(
+      nowStepStatementOf(sourceOf({}, [runningStep("Write", { file_path: "/a/b.ts" })])),
+    )
+    expect(nowStepKeyOf(otherTarget)).not.toBe(nowStepKeyOf(read))
+    expect(nowStepKeyOf(otherVerb)).not.toBe(nowStepKeyOf(read))
   })
 })

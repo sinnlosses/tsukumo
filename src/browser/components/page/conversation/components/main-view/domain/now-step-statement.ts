@@ -1,4 +1,4 @@
-// 広い画面の流れの末尾の行の文。「対象 を 動詞」の敬体で、手順の秒と添え書きを添える。
+// プログレスバーのいまの手順の一文。「対象 を 動詞」の敬体で、手順の秒と添え書きを添える。
 // 動詞の表は ADR 0062 の「末尾の行（いまの行）の文」と ADR 0070 の論点 2 が正。狭い画面の1行は `workActivityOf` が別に持つ。
 
 import { isPlainObject } from "remeda"
@@ -19,7 +19,7 @@ import {
 const DELEGATING = { particle: "に", verb: "任せています" }
 const FALLBACK_DELEGATE = "委譲先"
 
-const NOW_LINE_VERBS: Readonly<
+const NOW_STEP_VERBS: Readonly<
   Record<string, { readonly particle: string; readonly verb: string }>
 > = {
   Read: { particle: "を", verb: "読んでいます" },
@@ -37,7 +37,7 @@ const NOW_LINE_VERBS: Readonly<
 const UNKNOWN_TOOL = { particle: "を", verb: "使っています" }
 const BACKGROUND_LEAD = "背景で"
 
-export type NowLineStatement =
+export type NowStepStatement =
   | { readonly kind: "asking" }
   | {
       readonly kind: "doing"
@@ -56,7 +56,7 @@ export type NowLineStatement =
       readonly retryDetail: string
     }
 
-type Doing = Extract<NowLineStatement, { readonly kind: "doing" }>
+export type Doing = Extract<NowStepStatement, { readonly kind: "doing" }>
 
 const PLAIN = {
   lead: "",
@@ -73,7 +73,7 @@ const PLAIN = {
  * 手順を持つバックグラウンドタスク（いちばん新しく手順が始まったもの）→ 手順を持たないバックグラウンドタスク →
  * 考えている（依頼が会話の片付けのときは「会話を片付けている」）。
  */
-export function nowLineStatementOf(source: WorkActivitySource): NowLineStatement {
+export function nowStepStatementOf(source: WorkActivitySource): NowStepStatement {
   const { turnStepList, now } = source
   if (source.firstPending !== undefined) {
     return { kind: "asking" }
@@ -167,6 +167,36 @@ export function nowLineStatementOf(source: WorkActivitySource): NowLineStatement
   }
 }
 
+/** 文の鍵。手順が替わったかを言う。秒と添え書きは含めない。 */
+export function nowStepKeyOf(doing: Doing): string {
+  return [doing.lead, doing.target, doing.particle, doing.verb].join("\u0000")
+}
+
+/**
+ * 対象を、縮めてよい頭と縮めない最後の語に分ける。
+ * 等幅の対象は、最後の空白の後ろ、空白が無ければ最後の `/` の後ろを最後の語にする。
+ * 空白で分けたとき空白は頭にも最後の語にも含めず、`/` で分けたとき `/` は頭に残す。
+ */
+export function targetPartsOf(
+  target: string,
+  mono: boolean,
+): { readonly head: string; readonly tail: string } {
+  const whole = { head: target, tail: "" }
+  if (!mono) {
+    return whole
+  }
+  const space = target.lastIndexOf(" ")
+  if (space >= 0) {
+    return space === 0 || space === target.length - 1
+      ? whole
+      : { head: target.slice(0, space), tail: target.slice(space + 1) }
+  }
+  const slash = target.lastIndexOf("/")
+  return slash < 0 || slash === target.length - 1
+    ? whole
+    : { head: target.slice(0, slash + 1), tail: target.slice(slash + 1) }
+}
+
 function toolStatement(tool: {
   readonly name: string
   readonly input: unknown
@@ -181,7 +211,7 @@ function toolStatement(tool: {
   if (name === "Agent" || name === "Task") {
     return { ...delegationStatement(lead, delegationOf(input)), elapsed }
   }
-  const known = NOW_LINE_VERBS[name]
+  const known = NOW_STEP_VERBS[name]
   const wording = known ?? UNKNOWN_TOOL
   const target = known === undefined ? name : summarizeToolInput(name, input)
   return {

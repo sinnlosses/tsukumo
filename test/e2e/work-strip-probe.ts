@@ -9,9 +9,9 @@ export function stripOf(page: Page): Locator {
   return page.locator('[data-region="main"] section[aria-label="進み具合"]')
 }
 
-/** 流れの末尾の「いま」の行。 */
-export function nowLineOf(page: Page): Locator {
-  return page.locator('[data-region="main"] [data-now-line]')
+/** プログレスバーの縦線の右の、いまの手順の一文。 */
+export function nowStatementOf(page: Page): Locator {
+  return page.locator('[data-region="main"] [data-work-strip] [data-work-strip-now]')
 }
 
 export async function phaseStates(strip: Locator): Promise<readonly (string | null)[]> {

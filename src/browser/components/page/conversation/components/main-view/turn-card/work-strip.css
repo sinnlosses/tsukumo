@@ -204,9 +204,10 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-/* 見出しは縮めない。幅が足りないときは一文が縮む。 */
+/* 幅が足りないときは、一文が縮みきったあとに見出しが「…」で縮む（経過と手順のボタンを押し出さない）。 */
 .work-strip-head {
-  flex: none;
+  flex: 0 1 auto;
+  min-width: 2em;
   max-width: 16em;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -225,6 +226,92 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* いまの手順の一文。替わり目は抜ける文と入る文を同じ1マスに重ね、上へ抜けて下から入れる（transform と opacity だけ）。
+   対象は、最後の語を残して頭から「…」で縮め、幅が足りないときは添え書きから先に譲る。
+   器の最小幅は文の min-content（頭の 3ch・最後の語・つなぎ・動詞・秒）で、器ごと縮めて右を切らない。 */
+.work-strip-now {
+  display: grid;
+  flex: 0 2 auto;
+  grid-template-columns: minmax(min-content, 1fr);
+  min-width: min-content;
+  overflow: clip;
+}
+.work-strip-now-sentence {
+  display: flex;
+  grid-area: 1 / 1;
+  align-items: baseline;
+  gap: var(--inline-control);
+  animation-duration: 0.32s;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  animation-fill-mode: both;
+}
+.work-strip-now-sentence[data-motion="entering"] {
+  animation-name: work-strip-now-enter;
+}
+.work-strip-now-sentence[data-motion="leaving"] {
+  animation-name: work-strip-now-leave;
+}
+/* 頭の列の下限を 3ch にして、組全体の最小幅を「3ch と最後の語」にする（flex だと頭の字の幅が最小幅に入り、最後の語が潰れる）。 */
+.work-strip-now-target {
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-columns: minmax(3ch, auto);
+}
+.work-strip-now-target.is-mono {
+  font-family: var(--font-mono);
+}
+.work-strip-now-target.is-spaced {
+  column-gap: 0.6em;
+}
+.work-strip-now-head {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.work-strip-now-fixed {
+  flex: none;
+  white-space: nowrap;
+}
+.work-strip-now-elapsed {
+  flex: none;
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+.work-strip-now-aside {
+  flex: 0 100 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@keyframes work-strip-now-enter {
+  from {
+    transform: translateY(0.45rem);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+@keyframes work-strip-now-leave {
+  from {
+    transform: none;
+    opacity: 1;
+  }
+  to {
+    transform: translateY(-0.45rem);
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .work-strip-now-sentence {
+    animation: none;
+  }
+  .work-strip-now-sentence[data-motion="leaving"] {
+    display: none;
+  }
+}
 .work-strip-side {
   flex: none;
   font-family: var(--font-mono);
@@ -235,6 +322,15 @@
   padding: var(--space-xs) var(--space-md);
   border-radius: var(--radius-pill);
   white-space: nowrap;
+}
+/* 狭い幅では、1行に収めるために間隔と余白を詰める。 */
+@media (max-width: 1100px) {
+  .work-strip-line {
+    gap: var(--inline-control);
+  }
+  .work-strip-toggle {
+    padding-inline: var(--inline-control);
+  }
 }
 /* 開いた依頼の手順の一覧。帯の真下に本文を押し下げて開き、高さを超えたら内側で転がす。 */
 .work-strip-steps {

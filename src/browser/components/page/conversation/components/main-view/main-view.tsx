@@ -49,7 +49,6 @@ import { type ShownTarget, useActiveTurnScroll } from "./hooks/use-active-turn-s
 import { useTailReturn } from "./hooks/use-tail-return.ts"
 import { useVoiceSlot } from "./hooks/use-voice-slot.ts"
 import styles from "./main-view.module.css"
-import { NowLine } from "./now-line.tsx"
 import { PhaseList } from "./phase-list.tsx"
 import { RequestBlock } from "./request-block.tsx"
 import { VoiceSlotRow, WelcomeVoiceSlot } from "./stream-card.tsx"
@@ -247,7 +246,6 @@ export function MainView(): ReactElement {
                   key={cardTurn.turn.id}
                 />
               </div>
-              {!phoneWidth && <NowLine viewingPast={viewingPast} />}
               {voice.kind === "voice" && (
                 <VoiceSlotRow text={voice.text} time={voice.time} speakerName={speakerName} />
               )}

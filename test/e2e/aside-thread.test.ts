@@ -37,7 +37,9 @@ test.describe("委譲中の補足メッセージ", () => {
     expect(await main.locator('section[aria-label="進み具合"]').innerText()).toContain(
       "委譲先に任せる",
     )
-    expect(await main.locator("[data-now-line]").innerText()).toMatch(/背景で\s*架空の委譲/u)
+    expect(await main.locator("[data-work-strip] [data-work-strip-now]").innerText()).toMatch(
+      /背景で\s*架空の委譲/u,
+    )
     expect(
       await main
         .locator('[data-speaker="character"]', { hasText: "いまは委譲先が段2を進めている" })

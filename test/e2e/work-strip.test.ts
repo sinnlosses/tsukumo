@@ -2,7 +2,7 @@ import type { Locator, Page } from "playwright-core"
 
 import { expectReadable } from "./readability-scan.ts"
 import { expect, test } from "./room-fixture.ts"
-import { LONG_TOOL_OCCURRENCE, nowLineOf, phaseStates, stripOf } from "./work-strip-probe.ts"
+import { LONG_TOOL_OCCURRENCE, nowStatementOf, phaseStates, stripOf } from "./work-strip-probe.ts"
 
 // 進み具合のプログレスバー（docs/architecture/testing.md「E2E のシナリオの一覧」）。
 // 場面 `work-strip-running` は1つ目の手順のあと間を空け、4つ目の手順（長い Bash）が十数秒走るので、そこで撮る。
@@ -29,14 +29,14 @@ test.describe("進み具合のプログレスバー", () => {
       .poll(() => phaseStates(strip))
       .toEqual(["current", "upcoming", "upcoming", "upcoming"])
     await expect.poll(() => strip.textContent()).toContain("今の形を調べる")
-    await expect.poll(() => nowLineText(room.page)).toContain("読んでいます")
+    await expect.poll(() => nowStatementText(room.page)).toContain("読んでいます")
 
     await room.waitForEvent("tool-started", LONG_TOOL_OCCURRENCE)
     await expect.poll(() => phaseStates(strip)).toEqual(["done", "current", "upcoming", "upcoming"])
     await expect.poll(() => strip.textContent()).toContain("集計の関数とスクリプト")
     await expect
-      .poll(() => nowLineText(room.page))
-      .toContain("pnpm exec vitest run /tmp/dummy/metric")
+      .poll(() => nowStatementText(room.page))
+      .toMatch(/pnpm exec vitest run\s*\/tmp\/dummy\/metric.*走らせています/u)
 
     const topBefore = await topOf(strip)
     await scrollMainToBottom(room.page)
@@ -46,6 +46,24 @@ test.describe("進み具合のプログレスバー", () => {
 
     await room.page.getByRole("button", { name: /手順/ }).waitFor()
     await expectReadable(room.page)
+  })
+
+  test("1000x800 でも、いまの手順の一文は対象の頭だけが縮み、動詞と秒が右端で切れない", async ({
+    run,
+  }) => {
+    const room = await run.open({
+      scenario: "work-strip-running",
+      scene: "work-strip-running",
+      viewport: "large",
+      domRoots: ["work-strip"],
+    })
+    await room.waitForEvent("tool-started", LONG_TOOL_OCCURRENCE)
+    await expect
+      .poll(() => nowStatementText(room.page))
+      .toMatch(/pnpm exec vitest run\s*\/tmp\/dummy\/metric.*走らせています/u)
+    await room.resize({ width: 1000, height: 800 })
+
+    await expect.poll(() => clippedTextOf(nowStatementOf(room.page))).toEqual([])
   })
 
   test("状態が作業中から背景で作業中に替わっても、段の丸の並びの左端は動かない", async ({
@@ -71,7 +89,7 @@ test.describe("進み具合のプログレスバー", () => {
     expect(await leftOf(track)).toBe(workingLeft)
   })
 
-  test("1024x768 で許可の答え待ちが届くと、今の段の丸が答え待ちになり、「いま」の行は無く、札の口は覆われない", async ({
+  test("1024x768 で許可の答え待ちが届くと、今の段の丸が答え待ちになり、一文は無く、札の口は覆われない", async ({
     run,
   }) => {
     const room = await run.open({
@@ -83,7 +101,7 @@ test.describe("進み具合のプログレスバー", () => {
     const strip = stripOf(room.page)
 
     await expect.poll(() => phaseStates(strip)).toEqual(["done", "asking"])
-    await expect(nowLineOf(room.page)).toHaveCount(0)
+    await expect(nowStatementOf(room.page)).toHaveCount(0)
     const inquiry = room.page.getByRole("region", { name: "お伺い" })
     for (const name of ["許可", "拒否"]) {
       await expectUncovered(inquiry.getByRole("radio", { name }))
@@ -128,8 +146,27 @@ test.describe("進み具合のプログレスバー", () => {
   })
 })
 
-async function nowLineText(page: Page): Promise<string> {
-  return (await nowLineOf(page).textContent()) ?? ""
+async function nowStatementText(page: Page): Promise<string> {
+  return (await nowStatementOf(page).textContent()) ?? ""
+}
+
+/**
+ * 一文の中で、右端が一文の器からはみ出している字の塊。
+ * 頭の字と添え書き（「…」で縮める塊）は除き、残り（最後の語・つなぎ・動詞・秒）を測る。
+ */
+async function clippedTextOf(now: Locator): Promise<readonly string[]> {
+  return now.evaluate((container) => {
+    const sentence = container.lastElementChild
+    if (sentence === null) return ["(一文なし)"]
+    const limit = container.getBoundingClientRect().right + 0.5
+    const leaves = [...sentence.querySelectorAll("span")].filter(
+      (span) => span.children.length === 0,
+    )
+    const fixed = leaves.filter((span) => getComputedStyle(span).textOverflow !== "ellipsis")
+    return fixed
+      .filter((span) => span.getBoundingClientRect().right > limit)
+      .map((span) => span.textContent ?? "")
+  })
 }
 
 async function topOf(locator: Locator): Promise<number> {

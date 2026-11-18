@@ -366,14 +366,14 @@ describe("MainView（答えた質問の記録）", () => {
   })
 })
 
-describe("MainView（流れの末尾のいまの行）", () => {
+describe("MainView（プログレスバーのいまの手順の一文）", () => {
   const RECORDS = [
     requestRecord({ text: "架空の依頼", turnId: 0 }),
     workPlanRecord({ phases: ["架空の段A", "架空の段B"], current: 0 }),
     speechRecord({ text: "架空の一言目" }),
   ]
 
-  it("作業中は、流れの最後の行の後ろに「いま」の行が1つあり、文は走っている手順の要約になる", () => {
+  it("作業中は、走っている手順の文が進み具合の区画の中に1つある", () => {
     stubPhoneWidth(false)
 
     renderMainView(
@@ -381,30 +381,26 @@ describe("MainView（流れの末尾のいまの行）", () => {
       { kind: "running", startedAt: 0 },
     )
 
-    const lines = document.querySelectorAll("[data-now-line]")
-    expect(lines).toHaveLength(1)
-    expect(lines[0]?.textContent).toContain("架空のコマンドを走らせています")
-    expect(lines[0]?.textContent).toContain("架空のコマンド")
-    const said = screen.getByText("架空の一言目")
-    expect(
-      said.compareDocumentPosition(lines[0] ?? said) & Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy()
+    const sentences = document.querySelectorAll("[data-work-strip] [data-work-strip-now]")
+    expect(sentences).toHaveLength(1)
+    expect(sentences[0]?.textContent).toContain("架空のコマンド")
+    expect(sentences[0]?.textContent).toContain("走らせています")
   })
 
-  it("狭い画面では描かない", () => {
+  it("狭い画面では一文を出さない", () => {
     stubPhoneWidth(true)
 
     renderMainView(RECORDS, { kind: "running", startedAt: 0 })
 
-    expect(document.querySelector("[data-now-line]")).toBeNull()
+    expect(document.querySelector("[data-work-strip-now]")).toBeNull()
   })
 
-  it("閉じたあとは描かない", () => {
+  it("閉じたあとは出さない", () => {
     stubPhoneWidth(false)
 
     renderMainView([...RECORDS, reportRecord("架空の結論")])
 
-    expect(document.querySelector("[data-now-line]")).toBeNull()
+    expect(document.querySelector("[data-work-strip-now]")).toBeNull()
   })
 })
 

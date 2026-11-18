@@ -1,7 +1,6 @@
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
-import { NowLine } from "../../../../../../../src/browser/components/page/conversation/components/main-view/now-line.tsx"
 import { WorkStrip } from "../../../../../../../src/browser/components/page/conversation/components/main-view/work-strip.tsx"
 import { useWorkStripSteps } from "../../../../../../../src/browser/components/page/conversation/stores/work-strip-step-list.ts"
 import type { SessionEvent } from "../../../../../../../src/shared/session/session-event.ts"
@@ -112,7 +111,45 @@ describe("WorkStrip", () => {
     expect(screen.queryByRole("region", { name: "依頼の手順" })).toBeNull()
   })
 
-  it("API の再試行は流れの末尾の行に何回目かを出す", () => {
+  it("作業中は縦線の右にいまの手順の一文と秒を出し、答え待ちでは一文を出さず状態の表の「許可 n件」を出す", () => {
+    putSession(stateAfter([REQUEST, plan(0), bashStarted("toolu_1")]))
+    render(<WorkStrip />)
+
+    const sentence = strip().querySelector("[data-work-strip-now]")
+    expect(sentence?.querySelector("[class*='work-strip-now-head']")?.textContent).toBe(
+      "架空のコマンド",
+    )
+    expect(sentence?.textContent).toContain("toolu_1")
+    expect(sentence?.textContent).toContain("走らせています")
+    expect(sentence?.textContent).toContain("秒")
+    expect(strip().querySelector("[class*='work-strip-rule']")).not.toBeNull()
+
+    act(() => {
+      putSession(
+        stateAfter([
+          REQUEST,
+          plan(0),
+          bashStarted("toolu_1"),
+          {
+            kind: "pending-changed",
+            pending: [
+              {
+                kind: "permission",
+                id: "toolu_1",
+                toolName: "Bash",
+                input: { command: "架空のコマンド" },
+              },
+            ],
+          },
+        ]),
+      )
+    })
+
+    expect(strip().querySelector("[data-work-strip-now]")).toBeNull()
+    expect(strip().textContent).toContain("許可 1件")
+  })
+
+  it("API の再試行はプログレスバーの一文に何回目かを出す", () => {
     putSession(
       stateAfter([
         REQUEST,
@@ -129,19 +166,14 @@ describe("WorkStrip", () => {
         },
       ]),
     )
-    render(
-      <>
-        <WorkStrip />
-        <NowLine viewingPast={false} />
-      </>,
-    )
+    render(<WorkStrip />)
 
     expect(strip().getAttribute("data-work-strip")).toBe("working")
     expect(strip().querySelector("[data-result]")?.getAttribute("data-result")).toBe("working")
     expect(headLabel()).toBe("架空の段A")
-    const nowLine = document.querySelector("[data-now-line]")?.textContent
-    expect(nowLine).toContain("API の応答を待っています")
-    expect(nowLine).toContain("2回目の再試行")
+    const sentence = strip().querySelector("[data-work-strip-now]")?.textContent
+    expect(sentence).toContain("API の応答を待っています")
+    expect(sentence).toContain("2回目の再試行")
   })
 
   it("ターンが終わってバックグラウンドタスクだけ残るあいだは、チップが「背景で作業中」の点で言い、今の段の丸は回らない", () => {

@@ -18,9 +18,11 @@ import { CheckIcon, CloseIcon } from "../../../../ui/icon/icon.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
 import type { WorkStripResult } from "../../domain/turn-result-mark.ts"
 import type { StepsLanding } from "../../stores/work-strip-step-list.ts"
+import { nowStepKeyOf, targetPartsOf, type Doing } from "./domain/now-step-statement.ts"
 import type { StepsPhaseRow } from "./domain/steps-phase-row.ts"
 import type { WorkStripMark } from "./domain/work-strip-status.ts"
 import { useStepsLanding } from "./hooks/use-steps-landing.ts"
+import type { WorkStripNow } from "./hooks/use-work-strip-now.ts"
 import type {
   WorkStripModel,
   WorkStripPhase,
@@ -32,8 +34,9 @@ import styles from "./main-view.module.css"
 
 export function PresentationalWorkStrip(props: {
   readonly strip: WorkStripModel
+  readonly now: WorkStripNow
 }): ReactElement | undefined {
-  const { strip } = props
+  const { strip, now } = props
 
   if (strip.kind === "none") {
     return undefined
@@ -52,18 +55,22 @@ export function PresentationalWorkStrip(props: {
         >
           {strip.headLabel}
         </Text>
-        {strip.statement !== "" && (
+        {(strip.statement !== "" || now.kind === "shown") && (
           <span aria-hidden="true" className={styles["work-strip-rule"]} />
         )}
-        <Text
-          element="span"
-          size="secondary"
-          tone="ink-quiet"
-          weight="inherit"
-          className={styles["work-strip-statement"]}
-        >
-          {strip.statement}
-        </Text>
+        {now.kind === "shown" ? (
+          <NowStatement now={now} />
+        ) : (
+          <Text
+            element="span"
+            size="secondary"
+            tone="ink-quiet"
+            weight="inherit"
+            className={styles["work-strip-statement"]}
+          >
+            {strip.statement}
+          </Text>
+        )}
         {strip.readingLabel !== "" && (
           <Text
             element="span"
@@ -96,6 +103,135 @@ export function PresentationalWorkStrip(props: {
         />
       )}
     </section>
+  )
+}
+
+/**
+ * いまの手順の一文。手順が替わるあいだは、抜ける文と入る文を同じ1マスに重ね、上へ抜けて下から入れる。
+ * 抜ける文の動きが終わったら `onLeft` で消す。
+ */
+function NowStatement(props: {
+  readonly now: Extract<WorkStripNow, { readonly kind: "shown" }>
+}): ReactElement {
+  const { now } = props
+  return (
+    <span className={styles["work-strip-now"]} data-work-strip-now="">
+      {now.leaving.kind === "statement" && (
+        <NowSentence
+          statement={now.leaving.statement}
+          motion="leaving"
+          onAnimationEnd={now.onLeft}
+          key={`leaving:${nowStepKeyOf(now.leaving.statement)}`}
+        />
+      )}
+      <NowSentence
+        statement={now.statement}
+        motion={now.leaving.kind === "statement" ? "entering" : "still"}
+        key={now.key}
+      />
+    </span>
+  )
+}
+
+function NowSentence(props: {
+  readonly statement: Doing
+  readonly motion: "still" | "entering" | "leaving"
+  readonly onAnimationEnd?: () => void
+}): ReactElement {
+  const { statement, motion } = props
+  const { head, tail } = targetPartsOf(statement.target, statement.mono)
+  return (
+    <span
+      className={styles["work-strip-now-sentence"]}
+      data-motion={motion}
+      aria-hidden={motion === "leaving" ? "true" : undefined}
+      title={statement.retryDetail === "" ? undefined : statement.retryDetail}
+      onAnimationEnd={props.onAnimationEnd}
+    >
+      {statement.lead !== "" && (
+        <Text
+          element="span"
+          size="label"
+          tone="ink-quiet"
+          weight="inherit"
+          className={styles["work-strip-now-fixed"]}
+        >
+          {statement.lead}
+        </Text>
+      )}
+      {statement.target !== "" && (
+        <span
+          className={clsx(
+            styles["work-strip-now-target"],
+            statement.mono && styles["is-mono"],
+            tail !== "" && !head.endsWith("/") && styles["is-spaced"],
+          )}
+        >
+          <Text
+            element="span"
+            size="label"
+            tone="ink"
+            weight="inherit"
+            className={styles["work-strip-now-head"]}
+          >
+            {head}
+          </Text>
+          {tail !== "" && (
+            <Text
+              element="span"
+              size="label"
+              tone="ink"
+              weight="inherit"
+              className={styles["work-strip-now-fixed"]}
+            >
+              {tail}
+            </Text>
+          )}
+        </span>
+      )}
+      {statement.particle !== "" && (
+        <Text
+          element="span"
+          size="label"
+          tone="ink-quiet"
+          weight="inherit"
+          className={styles["work-strip-now-fixed"]}
+        >
+          {statement.particle}
+        </Text>
+      )}
+      <Text
+        element="span"
+        size="secondary"
+        tone="ink"
+        weight="semibold"
+        className={styles["work-strip-now-fixed"]}
+      >
+        {statement.verb}
+      </Text>
+      {statement.elapsed !== "" && (
+        <Text
+          element="span"
+          size="label"
+          tone="ink-quiet"
+          weight="inherit"
+          className={styles["work-strip-now-elapsed"]}
+        >
+          {statement.elapsed}
+        </Text>
+      )}
+      {statement.aside !== "" && (
+        <Text
+          element="span"
+          size="label"
+          tone="ink-quiet"
+          weight="inherit"
+          className={styles["work-strip-now-aside"]}
+        >
+          {statement.aside}
+        </Text>
+      )}
+    </span>
   )
 }
 
