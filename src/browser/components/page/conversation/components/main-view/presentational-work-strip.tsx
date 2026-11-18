@@ -1,4 +1,4 @@
-// 進み具合のプログレスバーの器。状態のチップ・段の丸の並び・今の段・経過・手順の口の1行と、押すと開く依頼の手順の一覧。
+// 進み具合のプログレスバーの器。状態の印・見出し・一文・段の丸の並び・経過・手順の口の1行と、押すと開く依頼の手順の一覧。
 //
 // `aria-live` は付けない。
 
@@ -14,10 +14,12 @@ import {
 import { PhaseTimeSummary } from "../../../../../features/report/report.tsx"
 import { Button } from "../../../../ui/button/button.tsx"
 import { Disclosure, DisclosureMark } from "../../../../ui/disclosure/disclosure.tsx"
+import { CheckIcon, CloseIcon } from "../../../../ui/icon/icon.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
-import { WORK_STRIP_MARKS, type WorkStripResult } from "../../domain/turn-result-mark.ts"
+import type { WorkStripResult } from "../../domain/turn-result-mark.ts"
 import type { StepsLanding } from "../../stores/work-strip-step-list.ts"
 import type { StepsPhaseRow } from "./domain/steps-phase-row.ts"
+import type { WorkStripMark } from "./domain/work-strip-status.ts"
 import { useStepsLanding } from "./hooks/use-steps-landing.ts"
 import type {
   WorkStripModel,
@@ -40,7 +42,28 @@ export function PresentationalWorkStrip(props: {
   return (
     <section aria-label="進み具合" className={styles["work-strip"]} data-work-strip={strip.kind}>
       <div className={styles["work-strip-line"]}>
-        <StateChip result={strip.result} />
+        <StateMark result={strip.result} mark={strip.mark} />
+        <Text
+          element="span"
+          size="body"
+          tone={strip.result === "awaiting-answer" ? "state-warn" : "ink"}
+          weight="bold"
+          className={styles["work-strip-head"]}
+        >
+          {strip.headLabel}
+        </Text>
+        {strip.statement !== "" && (
+          <span aria-hidden="true" className={styles["work-strip-rule"]} />
+        )}
+        <Text
+          element="span"
+          size="secondary"
+          tone="ink-quiet"
+          weight="inherit"
+          className={styles["work-strip-statement"]}
+        >
+          {strip.statement}
+        </Text>
         {strip.readingLabel !== "" && (
           <Text
             element="span"
@@ -53,15 +76,6 @@ export function PresentationalWorkStrip(props: {
           </Text>
         )}
         {strip.phases.length > 0 && <PhaseTrack phases={strip.phases} />}
-        <Text
-          element="span"
-          size="body"
-          tone="ink"
-          weight={strip.kind === "working" ? "bold" : "normal"}
-          className={styles["work-strip-head"]}
-        >
-          {strip.headLabel}
-        </Text>
         <Text
           element="span"
           size="secondary"
@@ -86,24 +100,24 @@ export function PresentationalWorkStrip(props: {
 }
 
 /**
- * 状態のチップ。印は色の点。
- * 全部の語を同じ格子のセルに重ね、一番長い語の幅を取らせる。見えるのは今の語だけで、ほかは隠して読み上げない。
+ * 状態の印。見出しの左端が状態で動かないよう、印は点・四角・✕・チェックのどれも同じ 16px の箱に収める。
+ * 状態は右の見出しが字で言うので、印は読み上げない。
  */
-function StateChip(props: { readonly result: WorkStripResult }): ReactElement {
+function StateMark(props: {
+  readonly result: WorkStripResult
+  readonly mark: WorkStripMark
+}): ReactElement {
   return (
-    <span className={styles["work-strip-chip"]} data-result={props.result}>
-      <span className={styles["work-strip-dot"]} aria-hidden="true" />
-      <span className={styles["work-strip-chip-labels"]}>
-        {Object.entries(WORK_STRIP_MARKS).map(([result, { label }]) =>
-          result === props.result ? (
-            <span key={result}>{label}</span>
-          ) : (
-            <span key={result} aria-hidden="true" className={styles["work-strip-chip-spare"]}>
-              {label}
-            </span>
-          ),
-        )}
-      </span>
+    <span
+      className={styles["work-strip-mark-box"]}
+      data-result={props.result}
+      data-mark={props.mark}
+      aria-hidden="true"
+    >
+      {props.mark === "dot" && <span className={styles["work-strip-dot"]} />}
+      {props.mark === "square" && <span className={styles["work-strip-square"]} />}
+      {props.mark === "cross" && <CloseIcon />}
+      {props.mark === "check" && <CheckIcon />}
     </span>
   )
 }

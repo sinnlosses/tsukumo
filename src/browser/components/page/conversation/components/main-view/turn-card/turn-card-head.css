@@ -6,12 +6,14 @@
   top: calc(-1 * var(--region-padding, 0px));
   z-index: 1;
 }
-/* 広い画面では、帯に読む幅の上限（縁を含めて 976px）を置き、中央の列の中で左に寄せる。
+/* 広い画面では、頭に読む幅の上限（縁を含めて 976px）を置き、中央の列の中で左に寄せる。
+   帯の左右の端は、頭の左右の余白（`--gutter-region`）で入力欄にそろえる。
    帯の上下の外には、流れが帯の裏へ潜って字が欠けて見えないよう、地の色の覆いを敷く（帯の下は流れの始まりまでの隙間）。 */
 @media (min-width: 761px) {
   .turn-card-head {
     box-sizing: border-box;
     max-inline-size: 976px;
+    padding-inline: var(--gutter-region);
   }
   .turn-card-head::before {
     content: "";

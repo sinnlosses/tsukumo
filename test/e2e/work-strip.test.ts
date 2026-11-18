@@ -48,7 +48,7 @@ test.describe("進み具合のプログレスバー", () => {
     await expectReadable(room.page)
   })
 
-  test("状態のチップの語が「作業中」から「背景で作業中」に替わっても、段の丸の並びの左端は動かない", async ({
+  test("状態が作業中から背景で作業中に替わっても、段の丸の並びの左端は動かない", async ({
     run,
   }) => {
     const room = await run.open({

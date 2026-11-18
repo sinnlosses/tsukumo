@@ -5,7 +5,6 @@ import { groupBy } from "remeda"
 import type { PhaseTimesView } from "../../../../../../../shared/report/report-phase-time.ts"
 import { conversationMoment } from "../../../../../../../shared/session/conversation-moment.ts"
 import {
-  completionText,
   type PhaseNumber,
   phaseNumberOf,
   phaseOrdinalText,
@@ -45,6 +44,7 @@ import {
   useReadingSection,
 } from "../../../../../../stores/reading-section.ts"
 import { useSession } from "../../../../../../stores/session.ts"
+import { turnFailureLabel } from "../../../domain/api-error-label.ts"
 import { type PhaseRecap, phaseRecapsOf } from "../../../domain/phase-recap.ts"
 import type { WorkStripResult } from "../../../domain/turn-result-mark.ts"
 import { turnResultsOf, type TurnResult } from "../../../domain/turn-result.ts"
@@ -55,6 +55,7 @@ import {
   type StepsPhaseSlotSource,
   stepsPhaseRowsOf,
 } from "../domain/steps-phase-row.ts"
+import { type WorkStripMark, workStripStatusOf } from "../domain/work-strip-status.ts"
 
 /** 段の丸1つの状態。`asking` は今の段で答え待ちが来ているとき。 */
 type WorkStripPhaseState = "done" | "current" | "asking" | "upcoming"
@@ -132,13 +133,13 @@ export type WorkStripSteps = {
 }
 
 /**
- * 帯に出す形。`headLabel` は丸の右の字、`sideLabel` は右端の等幅の字。
+ * 帯に出す形。`mark` は状態の印の形、`headLabel` はその右の見出し、`statement` は見出しの右の一文（作業中・背景で作業中は空）、`sideLabel` は右端の等幅の字。
  *
  * - `none`: 帯ごと出さない（本文が1つも無いまま閉じた依頼と、ワークプランも働きも無いとき）
- * - `working`: 中身が働くあいだ。送った直後から出す。今の段の名前・「経過 6分12秒」（ワークプランが届く前は段の丸が無く字は空。チップが「作業中」を言うので重ねない）
- * - `finished`: 中身がレポートに入れ替わったあと。済んだ姿の字・「所要 21分49秒」の1行（ワークプランが無ければ字は空）
+ * - `working`: 中身が働くあいだ。送った直後から出す。見出しは今の段の名前（ワークプランが届く前は「作業中」）・「経過 6分12秒」
+ * - `finished`: 中身がレポートに入れ替わったあと。状態の見出し・「所要 21分49秒」の1行
  *
- * `result` は状態のチップの状態。`working` は作業中・答え待ち・背景で作業中（ターンが終わってバックグラウンドタスクだけ残る）、`finished` は完了・答え待ち・止めた・失敗。
+ * `result` は状態の印の状態。`working` は作業中・答え待ち・背景で作業中（ターンが終わってバックグラウンドタスクだけ残る）、`finished` は完了・答え待ち・止めた・失敗。
  */
 export type WorkStripModel =
   | { readonly kind: "none" }
@@ -148,7 +149,9 @@ export type WorkStripModel =
       readonly phases: readonly WorkStripTrackSlot[]
       /** 列を畳んでいるあいだの「いま: <節>」。出さないときは空。 */
       readonly readingLabel: string
+      readonly mark: WorkStripMark
       readonly headLabel: string
+      readonly statement: string
       readonly sideLabel: string
       readonly steps: WorkStripSteps
     }
@@ -157,7 +160,9 @@ export type WorkStripModel =
       readonly result: WorkStripResult
       readonly phases: readonly WorkStripTrackSlot[]
       readonly readingLabel: string
+      readonly mark: WorkStripMark
       readonly headLabel: string
+      readonly statement: string
       readonly sideLabel: string
       readonly steps: WorkStripSteps
     }
@@ -216,7 +221,14 @@ export function useWorkStrip(): WorkStripModel {
   }
 
   const nowPhase = currentPhaseOf(plan)
-  const completion = plan.kind === "planned" ? completionText(plan) : ""
+  const status = workStripStatusOf({
+    result,
+    phaseName: nowPhase.kind === "phase" ? nowPhase.name : "",
+    planned: planned.length > 0,
+    pending,
+    failureReason:
+      newestTurn?.failure.kind === "failed" ? turnFailureLabel(newestTurn.failure.failure) : "",
+  })
   const { exchange } = content
   const firstPending = pending[0]
   const list: WorkStripSteps["list"] =
@@ -265,7 +277,9 @@ export function useWorkStrip(): WorkStripModel {
       result,
       phases: trackSlots,
       readingLabel,
-      headLabel: result === "working" && nowPhase.kind === "phase" ? nowPhase.name : completion,
+      mark: status.mark,
+      headLabel: status.heading,
+      statement: status.statement,
       sideLabel: elapsedLabel,
       steps,
     }
@@ -276,7 +290,9 @@ export function useWorkStrip(): WorkStripModel {
     phases: trackSlots,
     result,
     readingLabel,
-    headLabel: planned.length === 0 ? "" : nowPhase.kind === "phase" ? nowPhase.name : completion,
+    mark: status.mark,
+    headLabel: status.heading,
+    statement: status.statement,
     sideLabel: elapsedLabel,
     steps,
   }

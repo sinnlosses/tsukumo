@@ -137,8 +137,111 @@ describe("useWorkStrip（状態）", () => {
       kind: "finished",
       result: "done",
       phases: [],
-      headLabel: "",
+      headLabel: "できました",
       sideLabel: "所要 5秒",
+    })
+  })
+})
+
+describe("useWorkStrip（状態の印と見出し）", () => {
+  const failed: SessionEvent = {
+    kind: "turn-finished",
+    outcome: { kind: "failed", cause: { kind: "max-turns" } },
+  }
+
+  function headOf(events: readonly SessionEvent[]) {
+    const strip = stripAt(
+      foldTimed(events.map((event, index) => [event, START + index * 1_000] as const)),
+      START + 60_000,
+    )
+    if (strip.kind === "none") {
+      throw new Error("帯が出ていない")
+    }
+    return { mark: strip.mark, headLabel: strip.headLabel, statement: strip.statement }
+  }
+
+  function questionPending(count: number): SessionEvent {
+    return {
+      kind: "pending-changed",
+      pending: [
+        {
+          kind: "question",
+          id: "toolu_question",
+          questions: Array.from({ length: count }, (_, index) => ({
+            text: `架空の質問${String(index)}`,
+            header: `架空${String(index)}`,
+            options: [
+              { label: "はい", description: "" },
+              { label: "いいえ", description: "" },
+            ],
+            multiSelect: false,
+          })),
+          briefs: [],
+          imageSizes: [],
+          unshelvedImages: [],
+        },
+      ],
+    }
+  }
+
+  it("作業中は差し色の点と今のフェーズの名前で、一文は空", () => {
+    expect(headOf([workRequest, plan])).toEqual({
+      mark: "dot",
+      headLabel: "架空の段A",
+      statement: "",
+    })
+  })
+
+  it("背景で作業中も、点と今のフェーズの名前", () => {
+    const left: SessionEvent = {
+      kind: "background-tasks-changed",
+      tasks: [{ taskId: checkedTaskId("fake-bg-1"), kind: "shell", description: "架空の待ち" }],
+    }
+    expect(headOf([workRequest, plan, left, completed])).toEqual({
+      mark: "dot",
+      headLabel: "架空の段A",
+      statement: "",
+    })
+  })
+
+  it("ワークプランの無いターンの見出しは作業中", () => {
+    expect(headOf([workRequest])).toEqual({ mark: "dot", headLabel: "作業中", statement: "" })
+  })
+
+  it("答え待ちは「返事を待っています」と質問の件数、許可のお伺いは許可の件数で言う", () => {
+    expect(headOf([workRequest, plan, questionPending(2)])).toEqual({
+      mark: "dot",
+      headLabel: "返事を待っています",
+      statement: "質問 2件",
+    })
+    expect(headOf([workRequest, plan, askedPending()])).toEqual({
+      mark: "dot",
+      headLabel: "返事を待っています",
+      statement: "許可 1件",
+    })
+  })
+
+  it("止めたは灰の四角と「止めました」、今のフェーズの途中と添える", () => {
+    expect(headOf([workRequest, plan, taskOf("stopped"), completed])).toEqual({
+      mark: "square",
+      headLabel: "止めました",
+      statement: "架空の段Aの途中",
+    })
+  })
+
+  it("失敗は ✕ と「失敗しました」、失敗の表示と同じ理由の語を添える", () => {
+    expect(headOf([workRequest, plan, failed])).toEqual({
+      mark: "cross",
+      headLabel: "失敗しました",
+      statement: "往復の上限に当たった",
+    })
+  })
+
+  it("完了はチェックと「できました」で、一文は無い", () => {
+    expect(headOf([workRequest, plan, taskOf("finished"), completed])).toEqual({
+      mark: "check",
+      headLabel: "できました",
+      statement: "",
     })
   })
 })

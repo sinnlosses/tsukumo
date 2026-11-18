@@ -1,7 +1,8 @@
 {
   "work-strip": [
     { "tag": "section", "attributes": { "aria-label": "進み具合", "data-work-strip": "finished" }, "children": [
-      { "tag": "span", "attributes": { "data-result": "done" }, "children": ["完了"] }
+      { "tag": "span", "attributes": { "data-result": "done", "data-mark": "check" } },
+      "できました"
     ] }
   ],
   "turn-outline": [

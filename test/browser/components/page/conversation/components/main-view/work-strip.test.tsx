@@ -24,10 +24,9 @@ afterEach(() => {
 
 const REQUEST = requestEvent()
 
-/** チップの語のうち読み上げられる（隠していない）もの。 */
-function chipLabel(chip?: Element | null): string | null | undefined {
-  return chip?.querySelector("[class*='work-strip-chip-labels'] > span:not([aria-hidden])")
-    ?.textContent
+/** 状態の印の右の見出し。 */
+function headLabel(): string | null | undefined {
+  return strip().querySelector("[class*='work-strip-head']")?.textContent
 }
 
 function plan(
@@ -138,7 +137,8 @@ describe("WorkStrip", () => {
     )
 
     expect(strip().getAttribute("data-work-strip")).toBe("working")
-    expect(chipLabel(strip().querySelector("[data-result]"))).toBe("作業中")
+    expect(strip().querySelector("[data-result]")?.getAttribute("data-result")).toBe("working")
+    expect(headLabel()).toBe("架空の段A")
     const nowLine = document.querySelector("[data-now-line]")?.textContent
     expect(nowLine).toContain("もう一度試している")
     expect(nowLine).toContain("2回目")
@@ -161,7 +161,7 @@ describe("WorkStrip", () => {
     const chip = strip().querySelector("[data-result]")
     expect(strip().getAttribute("data-work-strip")).toBe("working")
     expect(chip?.getAttribute("data-result")).toBe("background")
-    expect(chipLabel(chip)).toBe("背景で作業中")
+    expect(headLabel()).toBe("架空の段B")
     expect(chip?.querySelector("[class*='work-strip-spinner']")).toBeNull()
     expect(chip?.querySelector("[class*='work-strip-dot']")).not.toBeNull()
     expect(strip().querySelector("[data-spinning]")).toBeNull()
@@ -180,7 +180,7 @@ describe("WorkStrip", () => {
     expect(strip().querySelectorAll("[data-phase-state='current']")).toHaveLength(1)
   })
 
-  it("ターンが閉じると帯は済んだ姿の1行で残り、段の数だけ済んだと言う", () => {
+  it("ターンが閉じると帯は済んだ姿の1行で残り、緑のチェックと「できました」で言う", () => {
     putSession(
       stateAfter([
         REQUEST,
@@ -194,11 +194,11 @@ describe("WorkStrip", () => {
     render(<WorkStrip />)
 
     expect(strip().getAttribute("data-work-strip")).toBe("finished")
-    expect(strip().textContent).toContain("3フェーズすべて済み")
+    expect(headLabel()).toBe("できました")
     const chip = strip().querySelector("[data-result]")
     expect(chip?.getAttribute("data-result")).toBe("done")
-    expect(chipLabel(chip)).toBe("完了")
-    expect(chip?.querySelector("[aria-hidden]")?.textContent).toBe("")
+    expect(chip?.getAttribute("data-mark")).toBe("check")
+    expect(chip?.querySelector("[class*='work-strip-dot']")).toBeNull()
     expect(strip().querySelector("p")).toBeNull()
   })
 })

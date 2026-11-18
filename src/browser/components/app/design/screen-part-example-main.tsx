@@ -96,7 +96,9 @@ const WORKING_STRIP: WorkStripModel = {
       phase: stripPhase("p3", "3", "3. 確認", "upcoming"),
     },
   ],
+  mark: "dot",
   headLabel: "実装",
+  statement: "",
 }
 
 const FINISHED_STRIP: WorkStripModel = {
@@ -115,7 +117,9 @@ const FINISHED_STRIP: WorkStripModel = {
       phase: stripPhase("p2", "✓", "2. 実装（済）", "done"),
     },
   ],
-  headLabel: "全部のフェーズが済んだ",
+  mark: "check",
+  headLabel: "できました",
+  statement: "",
   sideLabel: "所要 21分49秒",
 }
 

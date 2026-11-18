@@ -53,4 +53,4 @@
 | `docs/architecture/screen-design/setting-place.md`                     | 13.6 設定の置き場所の前半。                                                                                                                                                                       |
 | `docs/architecture/screen-design/stage-and-paper-yardstick.md`         | 「舞台と紙」（案A）に作り直す画面の6場面（迎える・頼む・待つ・答える・読む・戻る）ごとの合格の画・数の物差しと目標・手本の製品と、作り直す前の画面の値。                                          |
 | `docs/architecture/screen-design/token-usage-review.md`                | トークン消費の画面の「減らし方を見てもらう」区画の文言・配置・押せない条件・経過時間の書式と、結果の場面。                                                                                        |
-| `docs/architecture/screen-design/work-strip.md`                        | 会話の画面のメインビューのカードの頭に固定する進み具合のプログレスバー（状態のチップ・フェーズの丸・手順のボタンと開く一覧）と、走っている手順を出す流れの末尾の「いま」の行。                    |
+| `docs/architecture/screen-design/work-strip.md`                        | 会話の画面のメインビューのカードの頭に固定する進み具合のプログレスバー（状態の印と見出し・フェーズの丸・手順のボタンと開く一覧）と、走っている手順を出す流れの末尾の「いま」の行。                |

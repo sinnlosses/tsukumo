@@ -1,7 +1,8 @@
 {
   "work-strip": [
     { "tag": "section", "attributes": { "aria-label": "進み具合", "data-work-strip": "working" }, "children": [
-      { "tag": "span", "attributes": { "data-result": "awaiting-answer" }, "children": ["答え待ち"] },
+      { "tag": "span", "attributes": { "data-result": "awaiting-answer", "data-mark": "dot" } },
+      "返事を待っています",
       { "tag": "li", "attributes": { "data-phase-state": "done" } },
       { "tag": "li", "attributes": { "data-phase-state": "asking" } }
     ] }

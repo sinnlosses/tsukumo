@@ -35,49 +35,36 @@
   gap: var(--space-md);
   min-width: 0;
 }
-/* 状態のチップ。状態の色は点だけに乗り、字は常に `--ink-soft`。 */
-.work-strip-chip {
-  --work-strip-dot: var(--ink-quiet);
-
-  display: inline-flex;
+/* 状態の印の箱。点・四角・✕・チェックのどれも 16px の箱に収め、見出しの左端を状態で動かさない。印は動かさない。 */
+.work-strip-mark-box {
+  display: inline-grid;
   flex: none;
-  align-items: center;
-  gap: var(--space-sm);
+  place-items: center;
+  width: 1rem;
+  height: 1rem;
   color: var(--ink-soft);
-  font-size: var(--font-secondary);
-  font-weight: 400;
-  line-height: 1.4;
-  white-space: nowrap;
 }
-.work-strip-chip[data-result="working"],
-.work-strip-chip[data-result="background"] {
-  --work-strip-dot: var(--accent);
+.work-strip-mark-box[data-result="done"] {
+  color: var(--state-ok);
 }
-.work-strip-chip[data-result="awaiting-answer"] {
-  --work-strip-dot: var(--state-warn);
+.work-strip-mark-box[data-result="failed"] {
+  color: var(--state-ng);
 }
-.work-strip-chip[data-result="done"] {
-  --work-strip-dot: var(--state-ok);
-}
-.work-strip-chip[data-result="failed"] {
-  --work-strip-dot: var(--state-ng);
-}
-.work-strip-chip-labels {
-  display: grid;
-  justify-items: start;
-}
-.work-strip-chip-labels > span {
-  grid-area: 1 / 1;
-}
-.work-strip-chip-spare {
-  visibility: hidden;
-}
-.work-strip-dot {
-  flex: none;
+.work-strip-dot,
+.work-strip-square {
   width: 0.5rem;
   height: 0.5rem;
+  background: var(--accent);
+}
+.work-strip-dot {
   border-radius: 50%;
-  background: var(--work-strip-dot);
+}
+.work-strip-mark-box[data-result="awaiting-answer"] > .work-strip-dot {
+  background: var(--state-warn);
+}
+.work-strip-square {
+  border-radius: var(--radius-sm);
+  background: var(--ink-soft);
 }
 .work-strip-track {
   display: flex;
@@ -217,7 +204,21 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* 見出しは縮めない。幅が足りないときは一文が縮む。 */
 .work-strip-head {
+  flex: none;
+  max-width: 16em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.work-strip-rule {
+  flex: none;
+  width: 1px;
+  height: 0.875rem;
+  background: var(--rule);
+}
+.work-strip-statement {
   flex: 1 1 auto;
   min-width: 0;
   overflow: hidden;

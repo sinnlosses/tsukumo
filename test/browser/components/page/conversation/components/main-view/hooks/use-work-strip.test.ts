@@ -122,7 +122,7 @@ describe("useWorkStrip（時刻に依るもの）", () => {
 
     expect(strip).toMatchObject({
       kind: "finished",
-      headLabel: "2フェーズすべて済み",
+      headLabel: "できました",
       sideLabel: "所要 2分05秒",
     })
   })
@@ -201,8 +201,8 @@ describe("useWorkStrip（時刻に依るもの）", () => {
         START + 6_000,
       )
 
-    expect(closed(3)).toMatchObject({ kind: "finished", headLabel: "4フェーズのうち3フェーズ済み" })
-    expect(closed(4)).toMatchObject({ kind: "finished", headLabel: "4フェーズすべて済み" })
+    expect(closed(3)).toMatchObject({ kind: "finished", headLabel: "止めました" })
+    expect(closed(4)).toMatchObject({ kind: "finished", headLabel: "できました" })
   })
 
   it("閉じたあとの続きのターンが走っているあいだは、済み具合でなく今の段の名前を出す", () => {
@@ -361,7 +361,7 @@ describe("useWorkStrip（並列のフェーズ）", () => {
 
     expect(stripAt(state, START + 600_000)).toMatchObject({
       kind: "finished",
-      headLabel: "3フェーズすべて済み",
+      headLabel: "できました",
       sideLabel: "所要 1分00秒",
     })
   })
@@ -421,7 +421,7 @@ describe("useWorkStrip（読んでいる節）", () => {
 })
 
 describe("useWorkStrip（ワークプランが届く前）", () => {
-  it("送った直後から、段の丸も見出しの字も無い帯を作業中の状態で出す", () => {
+  it("送った直後から、段の丸の無い帯を作業中の見出しで出す", () => {
     const state = foldTimed([[workRequest, START]])
 
     const strip = stripAt(state, START + 12_000)
@@ -430,7 +430,7 @@ describe("useWorkStrip（ワークプランが届く前）", () => {
       kind: "working",
       phases: [],
       result: "working",
-      headLabel: "",
+      headLabel: "作業中",
       sideLabel: "経過 12秒",
     })
   })

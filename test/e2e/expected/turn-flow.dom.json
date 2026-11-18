@@ -452,60 +452,17 @@
                                 {
                                   "tag": "span",
                                   "attributes": {
-                                    "data-result": "done"
+                                    "data-result": "done",
+                                    "data-mark": "check",
+                                    "aria-hidden": "true"
                                   },
                                   "children": [
                                     {
-                                      "tag": "span",
+                                      "tag": "svg",
                                       "attributes": {
-                                        "aria-hidden": "true"
+                                        "data-size": "sm",
+                                        "data-color": "inherit"
                                       }
-                                    },
-                                    "完了",
-                                    {
-                                      "tag": "span",
-                                      "attributes": {
-                                        "aria-hidden": "true"
-                                      },
-                                      "children": [
-                                        "答え待ち"
-                                      ]
-                                    },
-                                    {
-                                      "tag": "span",
-                                      "attributes": {
-                                        "aria-hidden": "true"
-                                      },
-                                      "children": [
-                                        "止めた"
-                                      ]
-                                    },
-                                    {
-                                      "tag": "span",
-                                      "attributes": {
-                                        "aria-hidden": "true"
-                                      },
-                                      "children": [
-                                        "失敗"
-                                      ]
-                                    },
-                                    {
-                                      "tag": "span",
-                                      "attributes": {
-                                        "aria-hidden": "true"
-                                      },
-                                      "children": [
-                                        "作業中"
-                                      ]
-                                    },
-                                    {
-                                      "tag": "span",
-                                      "attributes": {
-                                        "aria-hidden": "true"
-                                      },
-                                      "children": [
-                                        "背景で作業中"
-                                      ]
                                     }
                                   ]
                                 },
@@ -514,6 +471,16 @@
                                   "attributes": {
                                     "data-type": "body",
                                     "data-color": "primary"
+                                  },
+                                  "children": [
+                                    "できました"
+                                  ]
+                                },
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "data-type": "supporting",
+                                    "data-color": "disabled"
                                   }
                                 },
                                 {
