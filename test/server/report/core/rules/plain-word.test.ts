@@ -172,6 +172,40 @@ test("口は複合語の綴りで登録し、単独の綴りと別の意味の�
   expect(PLAIN_WORDS.find((word) => word.spelling === "押す口")?.replacement).toBe("ボタン")
 })
 
+test("紙・器・舞台・見本は複合語の綴りで登録し、単独の綴りと別の意味の語は登録しない", () => {
+  const spellings = PLAIN_WORDS.map((word) => word.spelling)
+  expect(spellings).toEqual(
+    expect.arrayContaining([
+      "草稿の紙",
+      "書きかけの紙",
+      "紙の結論",
+      "紙の末尾",
+      "狭い器",
+      "舞台と紙",
+      "見本を組",
+      "次の一手の札",
+      "進行の帯",
+    ]),
+  )
+  for (const spelling of [
+    "紙",
+    "器",
+    "舞台",
+    "見本",
+    "札",
+    "帯",
+    "口",
+    "見本帳",
+    "着手の印",
+    "送り出し",
+  ]) {
+    expect(spellings).not.toContain(spelling)
+  }
+  expect(PLAIN_WORDS.find((word) => word.spelling === "草稿の紙")?.replacement).toBe(
+    "草稿のレポート",
+  )
+})
+
 test("脇の話は複合語の綴りで登録し、単独の綴りと据え置いた語は登録しない", () => {
   const spellings = PLAIN_WORDS.map((word) => word.spelling)
   expect(spellings).toEqual(

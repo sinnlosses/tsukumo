@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest"
 
 import type { ReportDraft } from "../../../../../../src/server/report/core/rules/draft.ts"
-import { plainWordSpellingsIn as spellingsOf } from "../../../../../../src/server/report/core/rules/prose/plain-word-find.ts"
+import {
+  plainWordSpellingsIn as spellingsOf,
+  plainWordSpellingsInSpeech,
+} from "../../../../../../src/server/report/core/rules/prose/plain-word-find.ts"
 import {
   reportRejectionText,
   reportViolations,
@@ -393,6 +396,37 @@ describe("plainWordSpellingsIn", () => {
 
   it("表に無い語は通る", () => {
     expect(plainWordSpellingsIn(draft([reportDraftText("架空の普通の文。")]))).toEqual([])
+  })
+
+  it("紙・器・舞台・見本・札・帯の複合語は、表の順に地の文とセリフで見つかる", () => {
+    const text =
+      "架空の草稿の紙と紙の末尾と狭い器と舞台と紙と見本を組む話と次の一手の札と進行の帯。"
+    const expected = [
+      "草稿の紙",
+      "紙の末尾",
+      "狭い器",
+      "舞台と紙",
+      "見本を組",
+      "次の一手の札",
+      "進行の帯",
+    ]
+    expect(plainWordSpellingsIn(draft([reportDraftText(text)]))).toEqual(expected)
+    expect(plainWordSpellingsInSpeech(text)).toEqual(expected)
+  })
+
+  it("見本帳・手紙・容器・着手の印・送り出しは、紙・器・見本・印・送り出しの複合語に当たらない", () => {
+    expect(
+      plainWordSpellingsInSpeech(
+        "架空の見本帳を開き、手紙と容器を置き、着手の印を立てて送り出す。",
+      ),
+    ).toEqual([])
+  })
+
+  it("既知の巻き込み: 白紙の末尾と楽器が狭いは、部分一致で当たる", () => {
+    expect(plainWordSpellingsInSpeech("架空の白紙の末尾と楽器が狭い話。")).toEqual([
+      "紙の末尾",
+      "器が狭",
+    ])
   })
 })
 

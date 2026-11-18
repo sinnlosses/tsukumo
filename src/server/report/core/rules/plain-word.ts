@@ -474,4 +474,64 @@ export const PLAIN_WORDS = [
     replacement: "補足メッセージのあいだ",
     meaning: "補足メッセージが届いて進んでいる間",
   },
+  {
+    spelling: "草稿の紙",
+    replacement: "草稿のレポート",
+    meaning: "確定する前の、書きかけのレポート",
+  },
+  {
+    spelling: "書きかけの紙",
+    replacement: "書きかけのレポート",
+    meaning: "まだ書き終えていないレポート",
+  },
+  {
+    spelling: "紙の結論",
+    replacement: "レポートの結論",
+    meaning: "レポートの頭に置く、結論の文",
+  },
+  {
+    spelling: "紙の末尾",
+    replacement: "レポートの末尾",
+    meaning: "レポートの終わりの部分",
+  },
+  {
+    spelling: "紙の見せ方",
+    replacement: "レポートの見せ方",
+    meaning: "レポートを画面に表示するときの見た目の決め方",
+  },
+  {
+    spelling: "狭い器",
+    replacement: "狭いコンテナ",
+    meaning: "幅の狭い、部品を載せる領域（コンテナ）",
+  },
+  {
+    spelling: "器が狭",
+    replacement: "コンテナが狭",
+    meaning: "部品を載せる領域（コンテナ）の幅が狭いこと",
+  },
+  {
+    spelling: "舞台と紙",
+    replacement: "キャラクター領域とレポート",
+    meaning: "立ち絵を出す領域と、レポートを出す領域の組",
+  },
+  {
+    spelling: "舞台の立ち絵",
+    replacement: "キャラクター領域の立ち絵",
+    meaning: "キャラクターを出す領域に表示する立ち絵",
+  },
+  {
+    spelling: "見本を組",
+    replacement: "モックアップを組",
+    meaning: "画面の仕上がりを確かめるために、試作の画面を作ること",
+  },
+  {
+    spelling: "次の一手の札",
+    replacement: "次の一手のカード",
+    meaning: "次にやることの候補を1件ずつ載せた、画面の四角い区画",
+  },
+  {
+    spelling: "進行の帯",
+    replacement: "プログレスバー",
+    meaning: "いま計画のどこまで進んだかを見せる、画面の端の表示",
+  },
 ] as const satisfies readonly PlainWord[]
