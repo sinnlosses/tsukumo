@@ -18,6 +18,8 @@ export type LayoutScreens = {
   readonly skipLink: ReactElement
   /** 画面のナビの帯（狭い画面の引き出しの中身を差し込み済み）。 */
   readonly nav: ReactElement
+  /** コマンドパレットと画面全体のショートカットの受け口。どの画面でも効くので、帯と同じく画面を選ぶ分岐の外に置く。 */
+  readonly commandPalette: ReactElement
   readonly diaryNotice: ReactElement
   readonly conversation: ReactElement
   readonly overlay: Record<Exclude<Screen, "conversation">, ReactElement>
@@ -39,6 +41,7 @@ export function Layout(props: { readonly screens: LayoutScreens }): ReactElement
       {/* 画面のナビの帯。どの画面でも最上部に出るので、画面を選ぶ分岐の外に置く。
           会話の画面の `<ConversationLayout>` は、帯が奪う高さを CSS の変数（theme.css）から読んで縮む。 */}
       {screens.nav}
+      {screens.commandPalette}
       {/* 書き終わりの知らせ。成果の画面でだけ出す。
           ほかの画面へ移っても「×」で消したかどうかを忘れないよう、外さずに `<Activity>` で隠す。 */}
       <Activity mode={screen === "achievement" ? "visible" : "hidden"}>

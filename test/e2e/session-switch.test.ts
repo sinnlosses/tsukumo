@@ -81,4 +81,41 @@ test.describe("セッションの切り替え", () => {
 
     await room.settleAndMatchPicked(ELAPSED_MS)
   })
+
+  // コマンドパレットの行とショートカットは、上の札と同じ切り替え画面を開く。
+  test("⌘K のパレットで絞って Enter で切り替え画面を開き、⌘J でも開き、Ctrl+K は入力欄に譲る", async ({
+    run,
+  }) => {
+    const room = await run.open({
+      scenario: "session-switch-palette",
+      scene: "session-list",
+      viewport: "wide",
+      domRoots: ["session-switcher"],
+    })
+    await room.waitForEvent("sessions-changed")
+    const page = room.page
+    const palette = page.getByRole("dialog", { name: "コマンドパレット" })
+    const switcher = page.getByRole("dialog", { name: "セッションを切り替える" })
+    const composer = page.getByRole("textbox", { name: "依頼を書く" })
+
+    await composer.focus()
+    await page.keyboard.press("Control+k")
+    expect(await palette.count()).toBe(0)
+
+    await page.keyboard.press("Meta+k")
+    const search = page.getByRole("combobox", { name: "操作を探す" })
+    await search.fill("切り替")
+    await search.press("Enter")
+    await switcher.waitFor()
+    expect(await palette.count()).toBe(0)
+
+    await page.keyboard.press("Escape")
+    await page.locator("body").press("Meta+j")
+    await switcher.waitFor()
+
+    await page.keyboard.press("Escape")
+    await composer.blur()
+    await page.locator("body").press("/")
+    await expect(composer).toBeFocused()
+  })
 })

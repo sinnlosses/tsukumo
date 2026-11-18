@@ -1,0 +1,101 @@
+/* コマンドパレット。背景と横の中央寄せは `<Dialog backdrop="dim">` が持つ。
+   上端を帯の下に留め、絞り込んで行が減ったら下から縮む（中央に置くと箱が上下に跳ねる）。
+   キーの字は行の名前より2段控え、選んだ行でだけ1段上げる（キーを読むのは探す人だけなので、並びの主役にしない）。 */
+
+.command-palette {
+  composes: surface-edge-rule surface-radius-xl surface-tone-surface from "../../ui/surface/surface-face.module.css";
+  box-sizing: border-box;
+  width: min(34rem, calc(100vw - 2rem));
+  max-height: calc(100dvh - 12rem);
+  top: 6rem;
+  bottom: auto;
+  padding: 0;
+  overflow: hidden;
+  box-shadow: var(--shadow-overlay);
+  color: var(--ink);
+}
+.command-palette-frame {
+  display: flex;
+  flex-direction: column;
+  max-height: inherit;
+}
+.command-palette-search {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--inline-control);
+  padding: 0 var(--gutter-page);
+  border-bottom: 1px solid var(--rule-quiet);
+  color: var(--ink-quiet);
+}
+.command-palette-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 3rem;
+  border: none;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--font-body);
+}
+/* 探す欄は開いている間ずっとフォーカスを持つ（↑↓ と Enter を受ける口）ので、輪は出さない。 */
+.command-palette-input:focus-visible {
+  outline: none;
+}
+.command-palette-input::placeholder {
+  color: var(--ink-quiet);
+}
+.command-palette-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: var(--stack-tight) var(--inline-control) var(--stack-block);
+  overflow-y: auto;
+}
+.command-palette-empty {
+  padding: var(--inset-card);
+  color: var(--ink-quiet);
+  font-size: var(--font-secondary);
+}
+.command-palette-group-label {
+  padding: var(--stack-block) var(--gutter-region) var(--stack-tight);
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+}
+/* 選んでいる行は地で示す。 */
+.command-palette-row {
+  display: flex;
+  align-items: center;
+  gap: var(--inline-group);
+  min-height: 2.25rem;
+  padding: 0 var(--gutter-region);
+  border-radius: var(--radius-md);
+  color: var(--ink-soft);
+  font-size: var(--font-secondary);
+  cursor: pointer;
+}
+.command-palette-row[aria-selected="true"] {
+  background: var(--surface-accent);
+  color: var(--ink);
+}
+.command-palette-row[aria-disabled="true"] {
+  color: var(--ink-quiet);
+  cursor: not-allowed;
+}
+.command-palette-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* 枠も地も持たない字だけのキー。 */
+.command-palette-key {
+  flex: none;
+  color: color-mix(in srgb, var(--ink-quiet) 70%, transparent);
+  font-family: var(--font-sans);
+  font-size: var(--font-label);
+  letter-spacing: 0.08em;
+}
+.command-palette-row[aria-selected="true"] .command-palette-key {
+  color: var(--ink-quiet);
+}

@@ -82,7 +82,11 @@ const SERVER_CHILD_IMPORTS = {
   },
 }
 
-const BROWSER_FRAMES = ["components/frame/screen-nav", "components/frame/sidebar"]
+const BROWSER_FRAMES = [
+  "components/frame/screen-nav",
+  "components/frame/sidebar",
+  "components/frame/command-palette",
+]
 const BROWSER_SCREENS = [
   "components/page/conversation",
   "components/page/character",

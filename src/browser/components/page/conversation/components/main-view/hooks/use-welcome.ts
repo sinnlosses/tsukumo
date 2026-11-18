@@ -67,9 +67,6 @@ export function useWelcome(): WelcomeModel {
         event.preventDefault()
         onStart(card)
       }
-    } else if (key.kind === "write") {
-      event.preventDefault()
-      requestFocus()
     } else if (hasOtherSessions) {
       event.preventDefault()
       onSeePrevious()

@@ -1,9 +1,7 @@
-// 始め方の一覧で札を始めるキー（`1`〜`3`）・入力欄へ移るキー（`/`）・前のやり取りを見るキー（`←`）の読み取り。
+// 始め方の一覧で札を始めるキー（`1`〜`3`）・前のやり取りを見るキー（`←`）の読み取り。
+// 入力欄へ移る `/` は画面全体のショートカット（`shortcutOf`）が持つ。
 
-type WelcomeKey =
-  | { readonly kind: "card"; readonly index: number }
-  | { readonly kind: "write" }
-  | { readonly kind: "previous" }
+type WelcomeKey = { readonly kind: "card"; readonly index: number } | { readonly kind: "previous" }
 
 export type WelcomeKeyEvent = {
   readonly key: string
@@ -29,8 +27,6 @@ export function welcomeKeyOf(event: WelcomeKeyEvent): WelcomeKey | undefined {
     case "2":
     case "3":
       return { kind: "card", index: Number(event.key) - 1 }
-    case "/":
-      return { kind: "write" }
     case "ArrowLeft":
       return { kind: "previous" }
     default:

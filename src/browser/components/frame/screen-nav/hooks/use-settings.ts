@@ -5,9 +5,9 @@
 //
 // 既定は次に起こすときから効くので、送ってもいまのセッションのモデル・許可モードは変わらない（帯のドロップダウンはセッション限りの別物）。
 //
-// 開閉はダイアログ（`ui/dialog`）に合わせて持ち、開閉のたびに色の注意書きを消す。
+// 開閉は歯車とショートカットで共有する `useSettingsRequest` に持ち、開閉のたびに色の注意書きを消す。
 
-import { useRef, useState, type RefObject } from "react"
+import { useRef, type RefObject } from "react"
 
 import {
   isEffortLevel,
@@ -25,6 +25,7 @@ import type { ModelEffortSupport } from "../../../../../shared/session/session-e
 import { resolveEffortSelect, type EffortSelect } from "../../../../domain/effort-label.ts"
 import { useFirstNoteSeen } from "../../../../stores/first-note-seen.ts"
 import { useSession } from "../../../../stores/session.ts"
+import { useSettingsRequest } from "../../../../stores/settings-request.ts"
 import { useAppearanceAdjust, type ScreenNavSettingsAdjust } from "./use-appearance-adjust.ts"
 import {
   useAppearanceColor,
@@ -87,17 +88,19 @@ export function useSettings(): ScreenNavSettings {
   const revealSpeed = useRevealSpeedSetting()
   const launchSkill = useLaunchSkillSetting()
   const resetFirstNotes = useFirstNoteSeen((state) => state.resetAll)
-  const [open, setOpen] = useState(false)
+  const open = useSettingsRequest((state) => state.open)
+  const openSettings = useSettingsRequest((state) => state.openSettings)
+  const closeSettings = useSettingsRequest((state) => state.closeSettings)
   const toggleRef = useRef<HTMLButtonElement>(null)
 
   function onOpen(): void {
-    setOpen(true)
+    openSettings()
     color.clearNotice()
   }
 
   // `<dialog>` の `close` はどの閉じ方（Esc・×・背景）でも届くので、歯車へ戻すのはここ1箇所。
   function onClose(): void {
-    setOpen(false)
+    closeSettings()
     color.clearNotice()
     toggleRef.current?.focus()
   }

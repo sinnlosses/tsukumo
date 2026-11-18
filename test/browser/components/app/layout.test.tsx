@@ -41,6 +41,7 @@ function stubScreens(): LayoutScreens {
   return {
     skipLink: <div />,
     nav: <nav aria-label="画面のナビ" />,
+    commandPalette: <div />,
     diaryNotice: stubElement("diary-notice"),
     conversation: stubElement("conversation"),
     overlay: {

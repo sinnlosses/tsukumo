@@ -33,7 +33,11 @@ import {
 //
 // 会話の画面の4つの領域（`main-view` など）は `conversation/components/` の下の部品なので、
 // 画面 `components/page/conversation` の一部として扱われる。
-const BROWSER_FRAMES = ["components/frame/screen-nav", "components/frame/sidebar"] as const
+const BROWSER_FRAMES = [
+  "components/frame/screen-nav",
+  "components/frame/sidebar",
+  "components/frame/command-palette",
+] as const
 const BROWSER_SCREENS = [
   "components/page/conversation",
   "components/page/character",

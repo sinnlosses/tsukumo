@@ -1,0 +1,198 @@
+// コマンドパレットの中身（操作と画面の行）と、画面全体のショートカットの受け口。
+// ショートカットとパレットの行は同じ操作を呼ぶので、操作の実体はここに1つだけ持つ。
+//
+// ほかの重なる面（設定・切り替え画面など）が開いているあいだはショートカットを読まない。
+// パレットが開いているときだけは、パレットを閉じてから操作を走らせる。
+
+import { useState } from "react"
+
+import { FRAME_ERROR_REASON } from "../../../../../shared/frame-error-reason.ts"
+import { isOverlayOpen } from "../../../../hooks/open-overlay.ts"
+import { useEventListener } from "../../../../hooks/use-event-listener.ts"
+import { useComposerFocus } from "../../../../stores/composer-focus.ts"
+import { SCREEN_NAV_ITEMS, type NavScreen, type Screen } from "../../../../stores/location-hash.ts"
+import { navigateTo, useScreen } from "../../../../stores/screen.tsx"
+import { useSessionSwitcherRequest } from "../../../../stores/session-switcher-request.ts"
+import { useRestartRefused, useSession } from "../../../../stores/session.ts"
+import { useSettingsRequest } from "../../../../stores/settings-request.ts"
+import { useTaskBoardRequest } from "../../../../stores/task-board-request.ts"
+import { nowEpochMilliseconds } from "../../../../utils/clock.ts"
+import { SHORTCUT_KEY_LABEL, shortcutOf, type Shortcut } from "../domain/shortcut-key.ts"
+
+export type CommandGroup = "action" | "screen"
+
+/** パレットの行1つ。押せない行は理由を `title` に持つ。 */
+export type PaletteCommand = {
+  readonly id: string
+  readonly label: string
+  readonly group: CommandGroup
+  /** 割り当てたショートカットの字。無い行もある。 */
+  readonly keyLabel?: string
+  readonly disabled: boolean
+  readonly title?: string
+  readonly run: () => void
+}
+
+export type CommandPaletteModel = {
+  readonly open: boolean
+  readonly onClose: () => void
+  readonly commands: readonly PaletteCommand[]
+  /** 行を選んで走らせる。パレットを閉じてから操作を呼ぶ。 */
+  readonly onRun: (command: PaletteCommand) => void
+}
+
+export const COMMAND_GROUP_LABEL = {
+  action: "操作",
+  screen: "画面へ移る",
+} satisfies Record<CommandGroup, string>
+
+const SCREEN_COMMAND_LABEL = {
+  conversation: "会話",
+  character: "キャラクター",
+  "token-usage": "トークンの使用量",
+  achievement: "成果",
+} satisfies Record<NavScreen, string>
+
+export function useCommandPaletteModel(): CommandPaletteModel {
+  const [open, setOpen] = useState(false)
+  const close = (): void => {
+    setOpen(false)
+  }
+  const actions = useShortcutActions()
+  const screen = useScreen()
+  const chatMode = useSession((session) => session.state.chatMode)
+  const dispatch = useSession((session) => session.dispatch)
+  const restartRefused = useRestartRefused()
+
+  useEventListener(document, "keydown", (event) => {
+    const shortcut = shortcutOf({
+      key: event.key,
+      metaKey: event.metaKey,
+      ctrlKey: event.ctrlKey,
+      altKey: event.altKey,
+      shiftKey: event.shiftKey,
+      isComposing: event.isComposing,
+      target: event.target ?? undefined,
+    })
+    if (shortcut === "none" || (isOverlayOpen() && !open)) {
+      return
+    }
+    event.preventDefault()
+    if (shortcut === "command-palette") {
+      setOpen(!open)
+      return
+    }
+    close()
+    actions[shortcut]()
+  })
+
+  function goToConversation(chat: boolean): void {
+    navigateTo("conversation")
+    if (chat !== chatMode && !restartRefused) {
+      void dispatch.session.setChatMode({ chat })
+    }
+  }
+
+  const modeBlocked = (chat: boolean): boolean => chat !== chatMode && restartRefused
+
+  const allCommands: readonly PaletteCommand[] = [
+    actionCommand("composer", "入力欄へ移る", actions.composer),
+    actionCommand("session-switcher", "セッションを切り替える", actions["session-switcher"]),
+    {
+      id: "new-session",
+      label: "新しいセッションを始める",
+      group: "action",
+      disabled: restartRefused,
+      title: restartRefused ? FRAME_ERROR_REASON.sessionSwitchDuringTurn : undefined,
+      run: () => {
+        if (!restartRefused) {
+          void dispatch.session.startNewSession()
+        }
+      },
+    },
+    actionCommand("task-board", "タスクの一覧を開く", actions["task-board"]),
+    actionCommand("settings", "設定を開く", actions.settings),
+    ...[false, true].map((chat): PaletteCommand => ({
+      id: chat ? "screen-chat" : "screen-work",
+      label: chat ? "雑談" : "仕事",
+      group: "screen",
+      disabled: modeBlocked(chat),
+      title: modeBlocked(chat) ? FRAME_ERROR_REASON.chatModeSwitchDuringTurn : undefined,
+      run: () => {
+        goToConversation(chat)
+      },
+    })),
+    ...SCREEN_NAV_ITEMS.filter((item) => item.screen !== "conversation").map(
+      (item): PaletteCommand => ({
+        id: `screen-${item.screen}`,
+        label: SCREEN_COMMAND_LABEL[item.screen],
+        group: "screen",
+        disabled: false,
+        run: () => {
+          navigateTo(item.screen)
+        },
+      }),
+    ),
+  ]
+
+  return {
+    open,
+    onClose: close,
+    commands: allCommands.filter((command) => !isCurrentScreen(command.id, screen, chatMode)),
+    onRun: (command) => {
+      if (command.disabled) {
+        return
+      }
+      close()
+      command.run()
+    },
+  }
+}
+
+/** ショートカットを持つ操作の実体。会話の画面にしか無い面（入力欄・タスクのモーダル）は、会話の画面へ移ってから開く。 */
+function useShortcutActions(): Record<Exclude<Shortcut, "command-palette">, () => void> {
+  const requestFocus = useComposerFocus((state) => state.requestFocus)
+  const openSwitcher = useSessionSwitcherRequest((state) => state.openSwitcher)
+  const openList = useTaskBoardRequest((state) => state.openList)
+  const openSettings = useSettingsRequest((state) => state.openSettings)
+  function onComposer(): void {
+    navigateTo("conversation")
+    requestFocus()
+  }
+  function onSessionSwitcher(): void {
+    openSwitcher(nowEpochMilliseconds())
+  }
+  function onTaskBoard(): void {
+    navigateTo("conversation")
+    openList("")
+  }
+  return {
+    composer: onComposer,
+    "session-switcher": onSessionSwitcher,
+    "task-board": onTaskBoard,
+    settings: openSettings,
+  }
+}
+
+function actionCommand(
+  shortcut: Exclude<Shortcut, "command-palette">,
+  label: string,
+  run: () => void,
+): PaletteCommand {
+  return {
+    id: shortcut,
+    label,
+    group: "action",
+    keyLabel: SHORTCUT_KEY_LABEL[shortcut],
+    disabled: false,
+    run,
+  }
+}
+
+/** いま出している画面へ移る行は出さない。 */
+function isCurrentScreen(id: string, screen: Screen, chatMode: boolean): boolean {
+  if (screen === "conversation") {
+    return id === (chatMode ? "screen-chat" : "screen-work")
+  }
+  return id === `screen-${screen}`
+}

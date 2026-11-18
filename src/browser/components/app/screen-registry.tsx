@@ -2,6 +2,7 @@
 // 画面どうしの import を避けるため、すべての画面を知ってよいこのディレクトリが持つ。
 
 import { RunSettingGroup } from "../../features/run-setting/run-setting-group.tsx"
+import { CommandPalette } from "../frame/command-palette/command-palette.tsx"
 import { ScreenNav } from "../frame/screen-nav/screen-nav.tsx"
 import { SidebarTaskPane } from "../frame/sidebar/components/sidebar-task-pane.tsx"
 import { UsagePane } from "../frame/sidebar/components/usage-pane.tsx"
@@ -36,6 +37,7 @@ export const LAYOUT_SCREENS = {
       }}
     />
   ),
+  commandPalette: <CommandPalette />,
   diaryNotice: <DiaryNotice />,
   conversation: <Conversation />,
   overlay: {
