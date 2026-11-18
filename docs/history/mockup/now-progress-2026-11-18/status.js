@@ -1,0 +1,682 @@
+// いまの行と進み具合の置き場の見本。URL の検索引数から形・場面を読み、進み具合・会話の流れ・入力欄・立ち絵を組む。
+// 今の形（form=now）は、2026-11-18 の main を疑似セッション（work-plan・delegated-range）で撮って測った形に合わせてある。
+// 案A は進行の帯に、案B は入力欄の頭に、案C は立ち絵の手元に、進み具合といまの手順を1か所にまとめる。
+// 中身はすべて架空で、実物の会話ではない。
+
+const FORMS = ["now", "a", "b", "c"]
+const MOMENTS = ["work", "long", "late", "deleg", "ask", "done"]
+const PACK = { id: "shirasuzu", name: "白鈴", accent: "#f9c3cd", face: { x: 0.5, y: 0.36 } }
+
+const params = new URLSearchParams(location.search)
+
+function pick(name, allowed) {
+  const value = params.get(name)
+  return allowed.includes(value) ? value : allowed[0]
+}
+
+const form = pick("form", FORMS)
+const moment = pick("moment", MOMENTS)
+const open = params.get("open") === "steps"
+const up = params.get("up") === "1"
+
+document.body.dataset.p = "spec goal"
+document.body.dataset.form = form
+document.body.dataset.moment = moment
+if (params.get("bar") === "0") {
+  document.body.dataset.bar = "0"
+}
+if (open) {
+  document.body.dataset.open = "steps"
+}
+
+function one(selector) {
+  return document.querySelector(selector)
+}
+
+function icon(name, extra = "") {
+  return `<svg viewBox="0 0 24 24" class="icon${extra}" aria-hidden="true"><use href="#i-${name}" /></svg>`
+}
+
+function asset(file) {
+  return `../../../../characters/${PACK.id}/${file}`
+}
+
+const REQUEST = "タスク一覧の並び替えを、開き直しても残るようにしたい"
+
+const PHASES = [
+  {
+    name: "今の一覧を調べる",
+    time: "48秒",
+    note: "並び順は画面のメモリだけにあり、開き直すと既定に戻っていた。保存先の候補は2つある。",
+    steps: [
+      ["Read", "task-list.tsx"],
+      ["Grep", "sortOrder"],
+      ["Read", "local-preference.ts"],
+    ],
+  },
+  {
+    name: "保存の仕組みを足す",
+    time: "2分10秒",
+    note: "並び順を端末ごとの好みに保存し、読み込みで戻す仕組みを足した。単体テスト 6 件が通った。",
+    steps: [
+      ["Read", "sort-order.ts"],
+      ["Edit", "sort-order.ts"],
+      ["Bash", "pnpm run test sort-order"],
+    ],
+  },
+  {
+    name: "一覧の画面に反映する",
+    time: "1分32秒",
+    note: "",
+    steps: [
+      ["Read", "task-list.tsx"],
+      ["Edit", "task-list.tsx"],
+    ],
+  },
+  { name: "検証する", time: "2分10秒", note: "", steps: [["Bash", "pnpm run check"]] },
+]
+
+const SAY = {
+  got: {
+    text: "並びを覚えさせるんですね。保存の仕組みが要りそうなので、まず今の作りを見ます。",
+    time: "14:25",
+    expression: "thinking",
+  },
+  found: {
+    text: "……ん、保存する所がそもそも無いんです。思ったより手前から作りますね。",
+    time: "14:26",
+    expression: "curious",
+  },
+  hand: {
+    text: "実装役に任せました。20分ほどかかるので、そのあいだ休んでいてくださいな。",
+    time: "14:26",
+    expression: "default",
+  },
+  ask: {
+    text: "ひとつだけ決めてほしいです。ほかの設定とそろえるなら「端末ごと」です。",
+    time: "14:27",
+    expression: "curious",
+  },
+  shape: {
+    text: "端末ごとにしますね。古い形の値が残っていても読めるように、読み込みの側で直します。",
+    time: "14:28",
+    expression: "default",
+  },
+  test: {
+    text: "単体テストを先に書きました。壊れた値を渡すと既定の並びに戻ることも確かめます。",
+    time: "14:29",
+    expression: "thinking",
+  },
+  saved: {
+    text: "ふふ、すんなり入りました。残りは画面につなぐだけです。",
+    time: "14:30",
+    expression: "proud",
+  },
+  done: {
+    text: "ふふ、できました。まず「値が壊れていたとき」の行だけ、見てくださいな。",
+    time: "14:32",
+    expression: "proud",
+  },
+}
+
+const QUESTION = {
+  label: "保存先",
+  text: "並び順はどこに保存しますか？",
+  options: [
+    ["端末ごとに保存", "この端末のブラウザにだけ残す。ほかの端末には引き継がない。"],
+    ["設定ファイルに保存", "プロジェクトの設定に書く。端末をまたいで同じ並びになる。"],
+  ],
+}
+
+/**
+ * 場面ごとの進み具合。current は今のフェーズ（0始まり。4 は全部済み）。
+ * now は走っている手順（動詞・対象・経過）で、作業中だけ持つ。対象の字は道具の入力の要約のまま。
+ */
+const STATUS = {
+  work: {
+    state: "作業中",
+    current: 1,
+    elapsed: ["経過", "1分52秒"],
+    phaseTime: "52秒〜",
+    steps: 5,
+    now: { verb: "書き換えている", target: "sort-order.ts", time: "18秒", mono: true },
+    running: 1,
+  },
+  long: {
+    state: "作業中",
+    current: 1,
+    elapsed: ["経過", "4分40秒"],
+    phaseTime: "3分40秒〜",
+    steps: 5,
+    now: {
+      verb: "コマンドを走らせている",
+      target: "pnpm run test sort-order",
+      time: "2分18秒",
+      mono: true,
+      remark: "長く掛かっている",
+    },
+    running: 1,
+  },
+  late: {
+    state: "作業中",
+    current: 2,
+    elapsed: ["経過", "5分12秒"],
+    phaseTime: "40秒〜",
+    steps: 8,
+    now: { verb: "書き換えている", target: "task-list.tsx", time: "6秒", mono: true },
+    running: 1,
+  },
+  deleg: {
+    state: "背景で作業中",
+    current: 1,
+    elapsed: ["経過", "7分02秒"],
+    phaseTime: "6分14秒〜",
+    steps: 4,
+    now: {
+      verb: "背景で 委譲先に任せている",
+      target: "実装役 · 保存の仕組みを足す",
+      time: "6分12秒",
+      mono: false,
+    },
+    running: 0,
+  },
+  ask: {
+    state: "答え待ち",
+    current: 1,
+    asking: true,
+    elapsed: ["経過", "2分20秒"],
+    phaseTime: "1分20秒〜",
+    steps: 4,
+  },
+  done: { state: "完了", current: 4, elapsed: ["所要", "6分40秒"], steps: 9 },
+}
+
+const status = STATUS[moment]
+const finished = status.current >= PHASES.length
+const STATE_COLOR = {
+  作業中: "var(--accent)",
+  背景で作業中: "var(--accent)",
+  答え待ち: "var(--warn)",
+  完了: "var(--ok)",
+}
+
+// 立ち絵が従っているセリフ（その場面でいちばん新しいセリフ）。表情はこのセリフのもの。
+const FOLLOWED = {
+  work: "found",
+  long: "found",
+  late: "saved",
+  deleg: "hand",
+  ask: "ask",
+  done: "done",
+}[moment]
+
+// 時刻は分が変わった行だけに出す（今の画面と同じ）。
+let lastMinute = ""
+
+function timeOf(time) {
+  const changed = time !== lastMinute
+  lastMinute = time
+  return `<time class="v-time${changed ? "" : " is-quiet"}">${time}</time>`
+}
+
+function post(text, time, label) {
+  const lead = label === undefined ? "" : `<span class="post-label">${label}</span>`
+  return `<div class="row row-user"><div class="bubble bubble-post${label === undefined ? "" : " is-short"}"><span class="visually-hidden">あなた: </span>${lead}${text}</div><span class="v-meta">${timeOf(time)}</span></div>`
+}
+
+/** セリフの行。live はいまの一言（明るさ）、follow は立ち絵が従っているセリフ（尾が付く）。 */
+function say(key, options = {}) {
+  const line = SAY[key]
+  const live = options.live === true
+  const follow = options.follow === true
+  const shape = `bubble bubble-say${live ? " is-live" : ""}${follow ? " is-followed" : ""}`
+  return `<div class="row row-say" data-say="${key}">
+    <div class="${shape}" data-expression="${line.expression}" role="button" tabindex="0" aria-pressed="false"><span class="visually-hidden">${PACK.name}: </span>${line.text}</div>
+    <span class="v-meta">${timeOf(line.time)}</span>
+  </div>`
+}
+
+function slip(index) {
+  const phase = PHASES[index]
+  return `<section class="thing slip">
+    <header class="slip-head"><span class="phase-dot is-done">${icon("check")}</span><span>${index + 1}/${PHASES.length} ${phase.name}</span><time class="slip-time">${phase.time}</time></header>
+    <p class="slip-note">${phase.note}</p>
+  </section>`
+}
+
+function group(...items) {
+  return `<div class="group">${items.join("")}</div>`
+}
+
+function disclose(summary, body, extra = "") {
+  return `<details class="disclose${extra}"><summary>${icon("chevron-right", " icon-sm")}<span>${summary}</span></summary><div class="disclose-body">${body}</div></details>`
+}
+
+/** 今の形の、流れの末尾のいまの行（左寄せの小さな札）。 */
+function nowPill() {
+  const now = status.now
+  const target = now.mono ? `<code>${now.target}</code>` : `<span class="now-target">${now.target}</span>`
+  const remark = now.remark === undefined ? "" : `<span class="now-remark">${now.remark}</span>`
+  return `<p class="now-pill scroll-target${now.remark === undefined ? "" : " is-slow"}"><span class="spinner"></span><b>${now.verb}</b>${target}<time>${now.time}</time>${remark}</p>`
+}
+
+function inquiry() {
+  const options = QUESTION.options
+    .map(
+      ([label, note], index) => `<li class="option">
+        <div class="option-head"><kbd class="key">${index + 1}</kbd><span class="radio"></span>${label}${index === 0 ? '<span class="chip chip-line">おすすめ</span>' : ""}</div>
+        <p class="option-note">${note}</p>
+      </li>`,
+    )
+    .join("")
+  return `<section class="inquiry thing wide scroll-target">
+    <header class="inquiry-head">
+      <span class="inquiry-kind">質問</span><span class="inquiry-label">${QUESTION.label}</span>
+      <span class="inquiry-wait">待って 0:42</span><button class="expand-button" type="button">${icon("expand")}広げる</button>
+    </header>
+    <h3 class="inquiry-title">${QUESTION.text}</h3>
+    <ol class="options">${options}</ol>
+    <footer class="inquiry-foot"><button class="quiet-button" type="button">おすすめに任せる（${QUESTION.options[0][0]}）</button><span class="inquiry-foot-gap"></span><button class="answer-button" type="button">これで答える ${icon("enter", " icon-sm")}</button></footer>
+  </section>`
+}
+
+function questionSlip() {
+  return `<section class="thing slip">
+    <header class="slip-head"><span class="slip-mark">${icon("question")}</span><span>${QUESTION.label}: ${QUESTION.text}</span></header>
+  </section>`
+}
+
+function paper() {
+  return `<section class="thing paper wide">
+    <span class="paper-tools"><button class="expand-button" type="button">${icon("expand")}広げる</button></span>
+    <div class="report">
+      <p class="conclusion">タスク一覧の並び替えが、開き直しても残るようになった。</p>
+      <div class="checks">
+        <div class="checks-line"><span class="checks-total">確かめたこと 2件</span><span class="checks-figure">通った 2</span><span class="checks-figure">単体 3152・E2E 71</span></div>
+        <div class="checks-line checks-row"><span><span class="chip chip-ok">${icon("check")}通った</span></span><div><b>pnpm run check</b><span class="chip chip-line">記録あり・1回</span></div></div>
+        <div class="checks-line checks-row"><span><span class="chip chip-ok">${icon("check")}通った</span></span><div><b>開き直したあとの並び</b><span class="chip chip-line">記録あり・1回</span></div></div>
+      </div>
+      <h2>並び順は端末ごとに保存する</h2>
+      <p>並び替えるたびに端末ごとの好みへ保存し、一覧を開いたときに読み戻す。保存した値が壊れていたら既定の並びで開く。</p>
+      <h2>ほかの端末には引き継がない</h2>
+      <p>保存先は端末ごとなので、別の端末では既定の並びから始まる。引き継ぎたくなったら、設定ファイルへ移す道が残っている。</p>
+    </div>
+  </section>`
+}
+
+function flowRows() {
+  const request = () => post(REQUEST, "14:25")
+  const followed = (key) => say(key, { live: true, follow: true })
+  // 今の形だけ、流れの末尾にいまの行を置く。
+  const tail = form === "now" && status.now !== undefined ? [nowPill()] : []
+  switch (moment) {
+    case "work":
+    case "long":
+      return [request(), say("got"), group(slip(0), followed("found")), ...tail]
+    case "deleg":
+      return [request(), say("got"), group(slip(0), followed("hand")), ...tail]
+    case "ask":
+      return [request(), say("got"), group(slip(0), say("found")), group(followed("ask"), inquiry())]
+    case "late":
+      return [
+        request(),
+        say("got"),
+        group(slip(0), say("found")),
+        group(say("ask"), questionSlip()),
+        post(QUESTION.options[0][0], "14:28", "答え"),
+        say("shape"),
+        say("test"),
+        group(slip(1), followed("saved")),
+        ...tail,
+      ]
+    default: {
+      const journey = [say("got"), group(slip(0), say("found")), group(slip(1), say("saved"))].join("")
+      lastMinute = ""
+      return [
+        request(),
+        disclose("作業の経過　4フェーズ・6分40秒・セリフ 6件・質問 1件", journey, " fold-pill"),
+        group(say("done", { follow: true }), paper()),
+      ]
+    }
+  }
+}
+
+/** フェーズの丸の並び。済んだ丸は印、今の丸は枠、答え待ちは「?」。 */
+function dots() {
+  return PHASES.map((_, index) => {
+    if (index < status.current) {
+      return `<span class="phase-dot is-done">${icon("check")}</span>`
+    }
+    if (index === status.current) {
+      return status.asking === true
+        ? '<span class="phase-dot is-asking">?</span>'
+        : `<span class="phase-dot is-current">${index + 1}</span>`
+    }
+    return `<span class="phase-dot">${index + 1}</span>`
+  })
+    .map((dot, index) =>
+      index === 0 ? dot : `<i class="phase-link${index <= status.current ? " is-done" : ""}"></i>${dot}`,
+    )
+    .join("")
+}
+
+function phaseName() {
+  return finished ? `${PHASES.length}フェーズすべて済み` : PHASES[status.current].name
+}
+
+/** 状態の札（点と字）。案A〜C では、作業中は走っている手順がこの位置に入り、札は出さない。 */
+function stateChip() {
+  return `<span class="strip-state" style="--state: ${STATE_COLOR[status.state]}">${status.state}</span>`
+}
+
+/** 案A〜C の、いまの手順の1かたまり（回る印・動詞・対象・経過）。作業中でなければ状態の札。 */
+function nowUnit(extra = "") {
+  const now = status.now
+  if (now === undefined) {
+    const note = status.asking === true ? '<span class="now-sub">質問 1件</span>' : ""
+    return `<span class="now-unit is-state${extra}">${stateChip()}${note}</span>`
+  }
+  const target = `<span class="now-target${now.mono ? " is-mono" : ""}">${now.target}</span>`
+  const remark = now.remark === undefined ? "" : `<span class="now-remark">${now.remark}</span>`
+  const slow = now.remark === undefined ? "" : " is-slow"
+  return `<span class="now-unit${slow}${extra}"><span class="spinner"></span><b class="now-verb">${now.verb}</b>${target}<time class="now-time">${now.time}</time>${remark}</span>`
+}
+
+function stepsButton() {
+  return `<button class="strip-steps" type="button" aria-expanded="${open}">${icon(open ? "chevron" : "chevron-right", " icon-sm")}手順 ${status.steps}件</button>`
+}
+
+/** 今の形の進行の帯（2026-11-18 の main と同じ並び）。 */
+function stripNow() {
+  return `
+    ${stateChip()}
+    <span class="strip-phases">${dots()}</span>
+    <span class="strip-name${finished ? " is-plain" : ""}">${phaseName()}</span>
+    <span class="strip-time">${status.elapsed[0]}<b>${status.elapsed[1]}</b></span>
+    ${stepsButton()}`
+}
+
+/**
+ * 案A・B の、位置（丸と今のフェーズ）と、そのフェーズの中で走っている手順を「›」でつないだかたまり。
+ * 全部済んだら手順は無いので、今の形と同じく状態の札を頭に置き、「›」でつながない。
+ */
+function crumb() {
+  if (finished) {
+    return `${stateChip()}<span class="strip-phases">${dots()}</span><span class="crumb"><span class="strip-name is-plain">${phaseName()}</span></span>`
+  }
+  return `
+    <span class="strip-phases">${dots()}</span>
+    <span class="crumb">
+      <span class="strip-name">${phaseName()}</span>
+      <span class="crumb-sep" aria-hidden="true">›</span>
+      ${nowUnit()}
+    </span>`
+}
+
+/** 案A: 帯の1行に、位置と、その下で走っている手順を並べる。 */
+function stripA() {
+  return `
+    ${crumb()}
+    <span class="strip-time">${status.elapsed[0]}<b>${status.elapsed[1]}</b></span>
+    ${stepsButton()}`
+}
+
+/** 案B: 入力欄の頭の1行。答え待ちは知らせと「選択肢へ」の口もここに入る（入力欄の上の帯は出さない）。 */
+function railB() {
+  const ask =
+    status.asking === true
+      ? `<button class="status-rail-go" type="button">選択肢へ<kbd class="key">↑</kbd></button>`
+      : ""
+  return `
+    ${crumb()}
+    ${ask}
+    <span class="strip-time">${status.elapsed[0]}<b>${status.elapsed[1]}</b></span>
+    ${stepsButton()}`
+}
+
+/** 案C: 立ち絵の頭の上の札。丸と経過、今のフェーズ、走っている手順、手順の口を縦に積む。 */
+function tagC() {
+  const now = status.now
+  const body =
+    now === undefined
+      ? `<p class="tag-now is-state">${stateChip()}${status.asking === true ? '<span class="now-sub">質問 1件</span>' : ""}</p>`
+      : `<p class="tag-now${now.remark === undefined ? "" : " is-slow"}"><span class="spinner"></span><b class="now-verb">${now.verb}</b></p>
+         <p class="tag-target${now.mono ? " is-mono" : ""}"><span>${now.target}</span><time class="now-time">${now.time}</time></p>
+         ${now.remark === undefined ? "" : `<p class="tag-target"><span class="now-remark">${now.remark}</span></p>`}`
+  return `
+    <p class="tag-head"><span class="strip-phases">${dots()}</span></p>
+    <p class="tag-name${finished ? " is-plain" : ""}">${phaseName()}</p>
+    ${body}
+    <p class="tag-foot"><span class="strip-time">${status.elapsed[0]}<b>${status.elapsed[1]}</b></span>${stepsButton()}</p>`
+}
+
+/** 手順の一覧。全フェーズを1行ずつ並べ、済んだフェーズは畳み、今のフェーズは開いて手順を並べる。 */
+function stepsList() {
+  const rows = PHASES.map((phase, index) => {
+    const state = index < status.current ? "done" : index === status.current ? "current" : "todo"
+    const mark =
+      state === "done"
+        ? `<span class="phase-dot is-done">${icon("check")}</span>`
+        : state === "current"
+          ? status.asking === true
+            ? '<span class="phase-dot is-asking">?</span>'
+            : `<span class="phase-dot is-current">${index + 1}</span>`
+          : `<span class="phase-dot">${index + 1}</span>`
+    const time = state === "done" ? phase.time : state === "current" ? status.phaseTime : ""
+    const head = `<p class="steps-head" data-state="${state}">${mark}<span class="steps-name">${phase.name}</span><time>${time}</time></p>`
+    if (state === "done") {
+      return `<li>${head}<p class="steps-fold">${icon("chevron-right", " icon-sm")}手順 ${phase.steps.length}</p></li>`
+    }
+    if (state === "todo") {
+      return `<li>${head}</li>`
+    }
+    const shown = moment === "deleg" ? [["Agent", "実装役 · 保存の仕組みを足す"]] : phase.steps.slice(0, phase.steps.length - status.running + 1)
+    const items = shown
+      .map(([tool, target], at) => {
+        const runningRow = status.now !== undefined && at === shown.length - 1
+        return `<li class="steps-step${runningRow ? " is-running" : ""}"><span class="steps-tool">${tool}</span><code>${target}</code>${runningRow ? '<span class="steps-live">走っている</span>' : ""}</li>`
+      })
+      .join("")
+    return `<li>${head}<ol class="steps-steps">${items}</ol></li>`
+  }).join("")
+  const close = `<button class="icon-button steps-close" type="button" aria-label="手順の一覧を閉じる">${icon("close")}</button>`
+  return `<header class="steps-title"><span>依頼の手順</span>${close}</header><ol class="steps-rows">${rows}</ol>`
+}
+
+function buildStatus() {
+  const strip = one("#strip")
+  const rail = one("#status-rail")
+  const tag = one("#tag")
+  if (form === "now") {
+    strip.innerHTML = stripNow()
+  } else if (form === "a") {
+    strip.innerHTML = stripA()
+  } else if (form === "b") {
+    strip.hidden = true
+    rail.hidden = false
+    rail.innerHTML = railB()
+  } else {
+    strip.hidden = true
+    tag.hidden = false
+    tag.innerHTML = tagC()
+  }
+  const steps = one("#steps")
+  steps.hidden = !open
+  if (open) {
+    steps.innerHTML = stepsList()
+  }
+}
+
+function buildLane() {
+  const sub = {
+    late: '<p class="lane-sub is-current"><span>レポート</span><b>2/4 保存の仕組…</b></p>',
+    done: '<p class="lane-sub is-current"><span>最終</span><b>タスク一覧の…</b><span class="lane-keys"><kbd class="key">{</kbd><kbd class="key">}</kbd></span></p>',
+  }[moment]
+  const report = '<p class="lane-sub is-current"><span>レポート</span><b>1/4 今の一覧を…</b></p>'
+  one("#lane-turns").innerHTML =
+    `<li class="lane-turn"><p class="lane-title">タスク一覧の並び替えを…</p>${sub ?? report}</li>`
+}
+
+function buildDock() {
+  const band = one("#band")
+  const draft = one("#draft")
+  const working = status.now !== undefined
+  draft.placeholder = working ? `${PACK.name} への補足を書く` : `${PACK.name} への依頼を書く`
+  if (working) {
+    one("#send").classList.add("is-stop")
+    one("#send").setAttribute("aria-label", "止める")
+    one("#send-icon").setAttribute("href", "#i-stop")
+  }
+  if (moment === "ask") {
+    draft.placeholder = "選択肢以外の答えを書く…"
+    // 案B は、答え待ちの知らせを入力欄の頭の1行が持つ。ほかは入力欄の上の帯。
+    if (form !== "b") {
+      band.hidden = false
+      band.innerHTML = `<span>${PACK.name} が質問しています。選択肢から選ぶか、ここに書いて答えられます</span><button class="quiet-button" type="button">選択肢へ<kbd class="key">↑</kbd></button>`
+    }
+  }
+}
+
+const portrait = one("#portrait")
+
+function buildFlow() {
+  lastMinute = ""
+  one("#flow").innerHTML = flowRows().join("")
+  const scroller = one("#scroller")
+  if (moment === "done" || up) {
+    scroller.scrollTop = 0
+  } else {
+    scroller.scrollTop = scroller.scrollHeight
+  }
+}
+
+/** 立ち絵の絵の中の顔の位置（画面の座標）。絵は箱の下端に寄せて、縦横比を保って収まっている。 */
+function facePoint() {
+  const box = portrait.getBoundingClientRect()
+  const ratio = portrait.naturalWidth > 0 ? portrait.naturalWidth / portrait.naturalHeight : 1
+  const width = Math.min(box.width, box.height * ratio)
+  const height = width / ratio
+  return {
+    x: box.left + (box.width - width) / 2 + width * PACK.face.x,
+    y: box.bottom - height + height * PACK.face.y,
+    top: box.bottom - height,
+  }
+}
+
+const TAIL_LENGTH = 20
+const TAIL_HALF = 6
+
+function gapBelow(bubble, rect) {
+  const row = bubble.closest(".row")
+  const below = row.nextElementSibling ?? row.parentElement.nextElementSibling
+  return below === null ? Number.POSITIVE_INFINITY : below.getBoundingClientRect().top - rect.bottom
+}
+
+/** 尾を、立ち絵が従っているセリフ1件にだけ描き、立ち絵の顔へ向ける（今の画面と同じ規則。ADR 0063 論点 3）。 */
+function aimTail() {
+  for (const old of document.querySelectorAll(".aim")) {
+    old.remove()
+  }
+  for (const bubble of document.querySelectorAll(".bubble-say.has-aim")) {
+    bubble.classList.remove("has-aim")
+  }
+  const bubble = one(".bubble-say.is-followed")
+  if (bubble === null) {
+    return
+  }
+  const rect = bubble.getBoundingClientRect()
+  const face = facePoint()
+  const gap = gapBelow(bubble, rect)
+  const corner = { x: rect.left, y: rect.bottom }
+  const sideways = Math.abs(face.x - corner.x) >= Math.abs(face.y - corner.y)
+  const fromLeft = sideways || gap < 12
+  const root = fromLeft
+    ? {
+        x: rect.left,
+        y: Math.min(rect.bottom - 4 - TAIL_HALF, Math.max(rect.top + 16 + TAIL_HALF, face.y)),
+      }
+    : { x: rect.left + 4 + TAIL_HALF + 4, y: rect.bottom }
+  const distance = Math.hypot(face.x - root.x, face.y - root.y)
+  const unit = { x: (face.x - root.x) / distance, y: (face.y - root.y) / distance }
+  const reach = fromLeft ? rect.bottom + gap - 2 - root.y : gap - 3
+  const room = unit.y > 0.2 && Number.isFinite(gap) ? reach / unit.y : TAIL_LENGTH
+  const length = Math.max(8, Math.min(TAIL_LENGTH, room, distance - 12))
+  const tip = { x: root.x + unit.x * length, y: root.y + unit.y * length }
+  const base = fromLeft
+    ? [
+        { x: rect.left + 1.5, y: root.y - TAIL_HALF },
+        { x: rect.left + 1.5, y: root.y + TAIL_HALF },
+      ]
+    : [
+        { x: root.x + TAIL_HALF, y: rect.bottom - 1.5 },
+        { x: root.x - TAIL_HALF, y: rect.bottom - 1.5 },
+      ]
+  const local = (point) => `${(point.x - rect.left).toFixed(1)} ${(point.y - rect.top).toFixed(1)}`
+  bubble.classList.add("has-aim")
+  bubble.insertAdjacentHTML(
+    "beforeend",
+    `<svg class="aim" aria-hidden="true"><path d="M${local(base[0])} L${local(tip)} L${local(base[1])}" /></svg>`,
+  )
+}
+
+/** 案C の札を、立ち絵の頭のすぐ上に置く。頭の位置は、絵の上端と顔の位置（パックの faceAt）から求める。 */
+function placeTag() {
+  if (form !== "c") {
+    return
+  }
+  const tag = one("#tag")
+  const left = one(".left").getBoundingClientRect()
+  const face = facePoint()
+  // 頭のてっぺんは、絵の上端から顔の中心までの 3割ほどの所。そこから 8px 空けて札の下端を置く。
+  const headTop = face.top + (face.y - face.top) * 0.3
+  document.documentElement.style.setProperty(
+    "--tag-bottom",
+    `${Math.max(0, left.bottom - headTop + 8).toFixed(0)}px`,
+  )
+}
+
+function markBar() {
+  for (const bar of document.querySelectorAll(".mock-bar-group")) {
+    const name = bar.dataset.param
+    const current = { form, moment, open: open ? "steps" : "" }[name]
+    for (const link of bar.querySelectorAll("a")) {
+      const query = new URLSearchParams(location.search)
+      if (link.dataset.value === "") {
+        query.delete(name)
+      } else {
+        query.set(name, link.dataset.value)
+      }
+      link.href = `?${query.toString()}`
+      if (current === link.dataset.value) {
+        link.setAttribute("aria-current", "true")
+      }
+    }
+  }
+}
+
+function applyPack() {
+  const root = document.documentElement
+  root.style.setProperty("--accent", PACK.accent)
+  root.style.setProperty("--art", `url("${asset("background.png")}")`)
+  for (const image of document.querySelectorAll("[data-pack-src]")) {
+    image.src = asset(image.dataset.packSrc)
+  }
+  portrait.src = asset(`${SAY[FOLLOWED].expression}.png`)
+  portrait.dataset.motion = moment === "ask" || moment === "done" ? "breathe" : "walk"
+}
+
+function layout() {
+  placeTag()
+  aimTail()
+}
+
+applyPack()
+buildStatus()
+buildLane()
+buildDock()
+buildFlow()
+markBar()
+portrait.addEventListener("load", layout)
+window.addEventListener("resize", layout)
+one("#scroller").addEventListener("scroll", aimTail, { passive: true })
+layout()

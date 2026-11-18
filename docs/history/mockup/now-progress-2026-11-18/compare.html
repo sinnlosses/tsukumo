@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>いまの行と進み具合の置き場の提案（2026-11-18）</title>
+    <link rel="stylesheet" href="compare.css" />
+  </head>
+  <!--
+    走っている手順を言う「いまの行」と、進み具合のプログレスバー（進行の帯）の置き場の提案を、今の形と並べて比べるページ。
+    枠の画は index.html を 1400×900 で開いたもの（縮めて出す。回る印はそのまま回る）。中身はすべて架空で、実物の会話ではない。
+    real-now-*.jpg は今の画面を疑似セッション（work-plan・delegated-range）で撮った画、crop-*.jpg は index.html の下端を切り出した画。
+    数は 2026-11-18 に測った値。今の画面は疑似セッション、案は見本を、どちらも capture-view.ts の --measure で測った。
+  -->
+  <body>
+    <header class="page-head">
+      <h1>いまの行と進み具合を、1か所にまとめる</h1>
+      <p class="page-lead">
+        仕事の画面（広い画面）で、走っている手順を言う「いまの行」が最新のセリフと入力欄の間に挟まり、進み具合の帯とは画面の上と下に分かれている。2026-11-18 の今の形と、3つのまとめ方を同じ架空のやり取りで並べた。どの案も、いまの行を流れから出して進み具合と同じ所に置き、セリフと入力欄の間には何も挟まない。
+      </p>
+      <nav class="page-nav" aria-label="このページの中">
+        <a href="#issues">今の形で困っていること</a>
+        <a href="#forms">3つの案と測った数</a>
+        <a href="#bottom">下端の拡大</a>
+        <a href="#work">働く</a>
+        <a href="#long">長く掛かる</a>
+        <a href="#up">読み返す</a>
+        <a href="#deleg">委譲を待つ</a>
+        <a href="#ask">答える</a>
+        <a href="#done">完了した直後</a>
+        <a href="#steps">手順を開く</a>
+        <a href="#extras">どの案にも足せる施策</a>
+        <a href="#pick">おすすめ</a>
+      </nav>
+    </header>
+
+    <section class="block" id="issues" aria-labelledby="issues-title">
+      <h2 id="issues-title">今の形で困っていること</h2>
+      <p class="block-lead">
+        今の画面を疑似セッションで撮り、位置を測った。独立のレビュー役にも同じ画面を見てもらい、課題を洗ってもらった（案は渡していない）。
+      </p>
+      <ul class="tiles">
+        <li><b>652<small>px</small></b><span>進行の帯の中心と、いまの行の中心の縦の距離（1400×900）。1920×1080 では 832px</span></li>
+        <li><b>3<small>通り</small></b><span>下端の三段（最新のセリフ・いまの行・入力欄）の左端。284・264・276px で揃っていない</span></li>
+        <li><b>0<small>か所</small></b><span>流れを上へ送って読み返しているあいだ、走っている手順が見える場所</span></li>
+        <li><b>2<small>か所</small></b><span>経過の時間の置き場。帯の右上に「経過 2分11秒」、いまの行に「2分10秒」</span></li>
+      </ul>
+      <div class="evidence">
+        <img src="real-now-work-1400.jpg" alt="今の画面の働く場面。帯は上端、いまの行は最新のセリフのすぐ下" width="1400" height="900" />
+        <ol class="issues">
+          <li><b>セリフの注記に見える。</b>いまの行は最新のセリフの 12px 下、入力欄の 24px 上にあり、上の間が下の半分しかない。セリフの尾の先がいまの行の左端の真上を指すので、セリフに添えた注のように読める。</li>
+          <li><b>上下に目が往復する。</b>今のフェーズの名前は右上（x≈479）、走っている手順は左下（x≈295）にある。帯の下から依頼の行までは約 345px の空白で、両方を読むには画面を斜めに横切る。</li>
+          <li><b>読み返すと消える。</b>帯は上に留まるが、いまの行は流れの中にあるので、上へ送ると画面から動くものが無くなる。</li>
+          <li><b>いまの行が動く。</b>流れの末尾がセリフかどうかで 12px 上下し、幅は中身に合わせて 103〜405px で伸び縮みする。決めたときの「動かない」と合わない。</li>
+          <li><b>原因。</b>いまの行を流れの末尾に移したとき（ADR 0059）は、セリフに明るさも尾も無かった。その後、最新のセリフが明るくなり尾が付き（ADR 0062）、入力欄のすぐ上が声の定位置になった（ADR 0063）。入力欄の上がキャラクターの場所に替わったのに、いまの行だけが元の位置に残った。</li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="block" id="forms" aria-labelledby="forms-title">
+      <h2 id="forms-title">3つの案と測った数</h2>
+      <p class="block-lead">
+        3案とも、位置（フェーズの丸と今のフェーズの名前）と走っている手順を「›」でつなぎ、手順がそのフェーズの中の一歩だと読めるようにした。作業中は回る印と動詞が状態の札の代わりをし、答え待ち・完了のときだけ札を出す。違うのは置き場だけ。数は見本の働く場面（1400×900）で測った。
+      </p>
+      <table class="measure">
+        <caption>働く場面の測った数（見本・1400×900。括弧は 1920×1080）</caption>
+        <thead>
+          <tr><th></th><th>今の形</th><th>案A 帯にまとめる</th><th>案B 入力欄の頭にまとめる</th><th>案C 立ち絵の手元にまとめる</th></tr>
+        </thead>
+        <tbody>
+          <tr><th>置き場</th><td>位置は上端の帯、手順は流れの末尾</td><td>上端の帯の1行</td><td>入力欄の枠の中の、頭の1行</td><td>立ち絵の頭の上の札（左の列）</td></tr>
+          <tr><th>位置と手順の距離</th><td class="is-bad">縦 635px（815px）</td><td class="is-good">同じ行</td><td class="is-good">同じ行</td><td class="is-good">同じ札の中（縦 54px）</td></tr>
+          <tr><th>最新のセリフと手順の距離</th><td>縦 58px（すぐ下に挟まる）</td><td class="is-bad">縦 631px（801px）</td><td class="is-good">縦 87px（入力欄の頭）</td><td>横 約 420px。立ち絵の顔の約 85px 上</td></tr>
+          <tr><th>セリフと入力欄の間の物</th><td class="is-bad">1つ（いまの行）</td><td class="is-good">無し</td><td class="is-good">無し（入力欄の枠の中）</td><td class="is-good">無し</td></tr>
+          <tr><th>流れの高さ</th><td>631px（811px）</td><td>631px（811px）</td><td>621px（801px）</td><td class="is-good">667px（847px）</td></tr>
+          <tr><th>上へ送って読み返すとき</th><td class="is-bad">手順が見えない</td><td class="is-good">見える</td><td class="is-good">見える</td><td class="is-good">見える</td></tr>
+          <tr><th>中くらいの幅（1000px）</th><td>帯の名前が縮む</td><td>名前と対象が縮む</td><td>名前と経過を省く（丸と手順だけ）</td><td class="is-good">変わらない（左の列の幅は 238px のまま）</td></tr>
+          <tr><th>答え待ちの知らせ</th><td>入力欄の上の帯</td><td>入力欄の上の帯</td><td class="is-good">同じ1行に入る（帯が要らない）</td><td>入力欄の上の帯</td></tr>
+          <tr><th>「手順」の一覧が開く所</th><td>帯の真下</td><td>帯の真下</td><td>入力欄の真上</td><td>札の右（流れの上に重なる）</td></tr>
+          <tr><th>改める決まり</th><td>—</td><td>ADR 0059 論点 1・2（帯は位置だけ・回る印は末尾の行だけ）</td><td>左に加えて ADR 0058 の帯の置き場、0059 論点 3・5、0062 論点 13（流れは帯の下から）</td><td>左に加えて ADR 0058 の帯の置き場と左の列の中身、0059 論点 3、0062 論点 13</td></tr>
+        </tbody>
+      </table>
+      <p class="block-lead" style="margin-block-start: 12px">
+        どの案も、回る印をぼかしの面（帯・入力欄・札）の中へ戻す。ADR 0058 論点 9 は面の中の回る印を <code>steps()</code> にすれば許しているが、負荷の上限（止まった画面で、ぼかしを外した版と CPU が 2 倍以内）は実装の前に測り直す。
+      </p>
+    </section>
+
+    <section class="block" id="bottom" aria-labelledby="bottom-title">
+      <h2 id="bottom-title">下端の拡大。セリフと入力欄の間に挟まる物が無くなる</h2>
+      <p class="block-lead">見本の働く場面の下端を、等倍で切り出した。今の形は、明るいセリフ・いまの行・入力欄の三段で、左端が揃わない。</p>
+      <div class="crops">
+        <figure><img src="crop-now.jpg" alt="今の形の下端" width="1070" height="365" /><figcaption><b>今の形</b>セリフの尾の先に、いまの行が下がっている。</figcaption></figure>
+        <figure><img src="crop-a.jpg" alt="案A の下端" width="1070" height="365" /><figcaption><b>案A</b>セリフのすぐ下が入力欄。手順は上端の帯に出ている（この切り出しの外）。</figcaption></figure>
+        <figure><img src="crop-b.jpg" alt="案B の下端" width="1070" height="365" /><figcaption><b>案B</b>入力欄の頭の1行が、丸・今のフェーズ・走っている手順・経過・手順の口を持つ。止める口と同じ枠の中。</figcaption></figure>
+        <figure><img src="crop-c.jpg" alt="案C の下端" width="1070" height="365" /><figcaption><b>案C</b>立ち絵の頭の上の札が、丸・今のフェーズ・走っている手順を縦に持つ。</figcaption></figure>
+      </div>
+    </section>
+
+    <section class="block" id="work" aria-labelledby="work-title">
+      <h2 id="work-title">働く（道具が走っている）</h2>
+      <p class="block-lead">フェーズ 2/4 で、ファイルを書き換えている。最新のセリフは明るく、尾は立ち絵の顔を指す（今の画面と同じ）。</p>
+      <div class="quad">
+        <figure><div class="frame" data-src="index.html?form=now&moment=work&bar=0"></div><figcaption><b>今の形</b>位置は上端、手順は最新のセリフのすぐ下。</figcaption></figure>
+        <figure><div class="frame" data-src="index.html?form=a&moment=work&bar=0"></div><figcaption><b>案A 帯にまとめる</b>「保存の仕組みを足す › 書き換えている sort-order.ts 18秒」を帯の1行で読む。</figcaption></figure>
+        <figure><div class="frame" data-src="index.html?form=b&moment=work&bar=0"></div><figcaption><b>案B 入力欄の頭にまとめる</b>帯は無くなり、流れは列の上端から始まる。</figcaption></figure>
+        <figure><div class="frame" data-src="index.html?form=c&moment=work&bar=0"></div><figcaption><b>案C 立ち絵の手元にまとめる</b>帯は無くなり、立ち絵が「いま何をしているか」を頭の上に掲げる。</figcaption></figure>
+      </div>
+    </section>
+
+    <section class="block" id="long" aria-labelledby="long-title">
+      <h2 id="long-title">長く掛かる（同じ手順が 120 秒を超えた）</h2>
+      <p class="block-lead">回る印を遅くして「長く掛かっている」を添える規則は今のまま。今は帯に何も出ないので、上だけを見ていると止まって見えるかが分からない。案A〜C は、位置と同じ所に出る。</p>
+      <div class="quad">
+        <figure><div class="frame" data-src="index.html?form=now&moment=long&bar=0"></div><figcaption><b>今の形</b>添え書きは下端のいまの行だけ。帯は経過が伸びるだけ。</figcaption></figure>
+        <figure><div class="frame" data-src="index.html?form=a&moment=long&bar=0"></div><figcaption><b>案A</b>1400px では対象のコマンドが縮む。1920px では全部読める。</figcaption></figure>
+        <figure><div class="frame" data-src="index.html?form=b&moment=long&bar=0"></div><figcaption><b>案B</b>止める口の隣に「長く掛かっている」が出る。</figcaption></figure>
+        <figure><div class="frame" data-src="index.html?form=c&moment=long&bar=0"></div><figcaption><b>案C</b>札が1行伸びる。</figcaption></figure>
+      </div>
+    </section>
+
+    <section class="block" id="up" aria-labelledby="up-title">
+      <h2 id="up-title">上へ送って読み返す</h2>
+      <p class="block-lead">働く（後半）で、流れを上端まで送った。今の形はいまの行が流れと一緒に画面の外へ出る。</p>
+      <div class="quad">
+        <figure><div class="frame" data-src="index.html?form=now&moment=late&up=1&bar=0"></div><figcaption><b>今の形</b>帯は「作業中」と言うが、何をしているかは見えない。</figcaption></figure>
+        <figure><div class="frame" data-src="index.html?form=a&moment=late&up=1&bar=0"></div><figcaption><b>案A</b>帯が手順ごと残る。</figcaption></figure>
+        <figure><div class="frame" data-src="index.html?form=b&moment=late&up=1&bar=0"></div><figcaption><b>案B</b>入力欄の頭が手順ごと残る。</figcaption></figure>
+        <figure><div class="frame" data-src="index.html?form=c&moment=late&up=1&bar=0"></div><figcaption><b>案C</b>札が手順ごと残る。</figcaption></figure>
+      </div>
+    </section>
+
+    <section class="block" id="deleg" aria-labelledby="deleg-title">
+      <h2 id="deleg-title">委譲を待つ（背景で委譲先に任せている）</h2>
+      <p class="block-lead">今の形は、帯の札「背景で作業中」といまの行「背景で 委譲先に任せている」が、同じ「背景で」を2か所で言う。案A〜C は札を出さず、手順の行だけが言う。</p>
+      <div class="quad">
+        <figure><div class="frame" data-src="index.html?form=now&moment=deleg&bar=0"></div><figcaption><b>今の形</b>上と下で「背景で」が2回。</figcaption></figure>
+        <figure><div class="frame" data-src="index.html?form=a&moment=deleg&bar=0"></div><figcaption><b>案A</b>委譲先の役と段の題が長く、今のフェーズの名前が縮む。</figcaption></figure>
+        <figure><div class="frame" data-src="index.html?form=b&moment=deleg&bar=0"></div><figcaption><b>案B</b>同じく名前が縮む。</figcaption></figure>
+        <figure><div class="frame" data-src="index.html?form=c&moment=deleg&bar=0"></div><figcaption><b>案C</b>縦に積むので、名前も役も縮まない。</figcaption></figure>
+      </div>
+    </section>
+
+    <section class="block" id="ask" aria-labelledby="ask-title">
+      <h2 id="ask-title">答える（質問が届いた）</h2>
+      <p class="block-lead">お伺いのカードは流れの末尾のまま。今の形と案A・C は入力欄の上に知らせの帯が出る。案B は知らせが入力欄の頭の1行に入り、積む物が1つ減る。</p>
+      <div class="quad">
+        <figure><div class="frame" data-src="index.html?form=now&moment=ask&bar=0"></div><figcaption><b>今の形</b>カード・知らせの帯・入力欄の三段。</figcaption></figure>
+        <figure><div class="frame" data-src="index.html?form=a&moment=ask&bar=0"></div><figcaption><b>案A</b>帯は「› 答え待ち 質問 1件」。知らせの帯は今のまま。</figcaption></figure>
+        <figure><div class="frame" data-src="index.html?form=b&moment=ask&bar=0"></div><figcaption><b>案B</b>「答え待ち 質問 1件」と「選択肢へ ↑」が入力欄の頭に入る。</figcaption></figure>
+        <figure><div class="frame" data-src="index.html?form=c&moment=ask&bar=0"></div><figcaption><b>案C</b>札の縁が琥珀になる。知らせの帯は今のまま。</figcaption></figure>
+      </div>
+    </section>
+
+    <section class="block" id="done" aria-labelledby="done-title">
+      <h2 id="done-title">完了した直後（レポートを頭から読む）</h2>
+      <p class="block-lead">手順が無くなるので、どの案も今の形と同じく状態の札（完了）を頭に置く。</p>
+      <div class="quad">
+        <figure><div class="frame" data-src="index.html?form=now&moment=done&bar=0"></div><figcaption><b>今の形</b>帯が上端に残る。</figcaption></figure>
+        <figure><div class="frame" data-src="index.html?form=a&moment=done&bar=0"></div><figcaption><b>案A</b>今の形と同じ。</figcaption></figure>
+        <figure><div class="frame" data-src="index.html?form=b&moment=done&bar=0"></div><figcaption><b>案B</b>紙は列の上端から始まり、結果の1行は入力欄の頭に残る。</figcaption></figure>
+        <figure><div class="frame" data-src="index.html?form=c&moment=done&bar=0"></div><figcaption><b>案C</b>札が「完了・所要」を言う。</figcaption></figure>
+      </div>
+    </section>
+
+    <section class="block" id="steps" aria-labelledby="steps-title">
+      <h2 id="steps-title">「手順」の一覧を開く</h2>
+      <p class="block-lead">一覧は、押した口の隣から開く。今の形と案A は帯の真下、案B は入力欄の真上、案C は札の右。</p>
+      <div class="quad">
+        <figure><div class="frame" data-src="index.html?form=now&moment=work&open=steps&bar=0"></div><figcaption><b>今の形</b>一覧の走っている行と、下端のいまの行が別の言い方で同じ手順を言う。</figcaption></figure>
+        <figure><div class="frame" data-src="index.html?form=a&moment=work&open=steps&bar=0"></div><figcaption><b>案A</b>帯の真下に開く。</figcaption></figure>
+        <figure><div class="frame" data-src="index.html?form=b&moment=work&open=steps&bar=0"></div><figcaption><b>案B</b>入力欄の真上に開き、流れの末尾に重なる。</figcaption></figure>
+        <figure><div class="frame" data-src="index.html?form=c&moment=work&open=steps&bar=0"></div><figcaption><b>案C</b>札の右に開き、流れの左側に重なる。</figcaption></figure>
+      </div>
+    </section>
+
+    <section class="block" id="extras" aria-labelledby="extras-title">
+      <h2 id="extras-title">どの案にも足せる施策</h2>
+      <p class="block-lead">レビュー役が見つけた食い違いと、まだ埋まっていない場面。置き場の案とは別に、1つずつ選べる。</p>
+      <ul class="extras">
+        <li><b>中断したやり取りを「止めた」と言う</b>止めたやり取りで、帯の札とやり取りの列の点が緑の「完了」と言い、流れの札だけが「止めた（2/4 の途中）」と言う。今のフェーズの丸も「今」の枠のまま残る。中断の記録（<code>turn-interrupted</code>）はもうあるので、帯と列の印もそこから導く。<span class="scope">不具合・案を問わない</span></li>
+        <li><b>走っている手順の言い方を1つにする</b>「手順」の一覧の走っている行は「··· Edit: …」、いまの行は「書き換えている …」と、同じ手順を別の言い方で言う。一覧の走っている行も同じ動詞で言う。<span class="scope">案を問わない</span></li>
+        <li><b>手順の無いやり取りで「手順 0件」の口を出さない</b>失敗したやり取りや本文だけのやり取りでも、押しても空の口が出ている。<span class="scope">案を問わない</span></li>
+        <li><b>許可の知らせの矢印をそろえる</b>同じ1行で「↓ …待っています」と「選択肢へ ↑」が逆を向く。お伺いは上にあるので、上向きにそろえる。<span class="scope">案A・C（案B は1行に畳むので起きない）</span></li>
+        <li><b>見ていないあいだに済んだ丸に印を付ける</b>離席から戻ると、何が進んだかは帯と離席の境目の線を往復して読むしかない。見ていないあいだに済んだフェーズの丸に、見るまで小さな印を残す。<span class="scope">案を問わない</span></li>
+        <li><b>タブの題に位置と「長く掛かっている」を出す</b>複数の部屋を覗くとき、題は状態の印だけで、どの段にいるか・止まって見えるかが分からない。題の頭を「◜ 2/4 部屋の名前」のようにし、長く掛かっているあいだは印を替える。<span class="scope">案を問わない</span></li>
+        <li><b>委譲が生きていることを見せる</b>委譲には「長く掛かっている」を付けない決まりで、並列のときは対象も空になる。生きているかは秒が増えることでしか分からない。委譲中は「最後の手順から n秒」を添える（委譲先の手順の始まりと終わりはもう画面に運ばれている）。<span class="scope">案を問わない</span></li>
+        <li><b>動きを減らす設定でも作業中と分かる形にする</b>回る印が止まると、作業中か止まっているかの手がかりが秒の数字だけになる。止まった形の印（点を3つ並べるなど）に替え、秒を毎秒進める。<span class="scope">案を問わない</span></li>
+      </ul>
+    </section>
+
+    <section class="block" id="pick" aria-labelledby="pick-title">
+      <h2 id="pick-title">おすすめは案B「入力欄の頭にまとめる」</h2>
+      <div class="pick">
+        <strong>目が居る所に、状態を1行で置く。</strong>
+        <p>働くあいだ、流れは入力欄の側へ寄せて描き、新しいセリフも入力欄のすぐ上に届く。目はほとんど下端に居るので、位置と手順を同じ下端の1行に置くと、セリフから 87px で読める（案A は 631px）。止める口と同じ枠の中なので、何を止めるのかが隣に書いてある。答え待ちの知らせも同じ1行に入り、入力欄の上に積む物が1つ減る。帯が無くなるので、流れと紙は列の上端から始まる。</p>
+        <p>弱いところは3つ。入力欄が 43px 高くなり、流れは 10px 減る。中くらいの幅では今のフェーズの名前と経過を省く。差し色の縁の中に状態が入るので、書く所と読む所を区切る線の見え方を実物で確かめる要がある。</p>
+        <p><b>案C</b> は、キャラクターと一緒に働く感じを強く出したいときの案。幅に強く（中くらいの幅でも同じ形）、流れがいちばん高い。そのかわり、札は 214px の幅に縦に積むので読む字が増え、一覧は流れの上に重なり、札の位置はパックの顔の位置（<code>faceAt</code>）に頼る。立ち絵の頭の上の札が吹き出しに見えないかも確かめる要がある。<b>案A</b> は変える量がいちばん小さいが、最新のセリフと手順が 631px 離れ、下で起きたことを上で読む往復が残る。</p>
+      </div>
+    </section>
+
+    <script src="compare.js"></script>
+  </body>
+</html>

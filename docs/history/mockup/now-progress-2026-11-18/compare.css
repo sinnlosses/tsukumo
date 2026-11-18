@@ -1,0 +1,383 @@
+/* 並べて比べるページ。色は見本（flow.css）と同じ値。 */
+
+:root {
+  --ground: #191720;
+  --surface: #221f2b;
+  --ink: #e8e3ea;
+  --accent: #f9c3cd;
+  --warn: #f2b544;
+  --ok: #5fd38a;
+  --ink-soft: color-mix(in srgb, var(--ink) 72%, transparent);
+  --edge: color-mix(in srgb, var(--ink) 12%, transparent);
+  --edge-quiet: color-mix(in srgb, var(--ink) 6%, transparent);
+  --raised: color-mix(in srgb, var(--ink) 10%, transparent);
+  --mono: ui-monospace, "SF Mono", Menlo, monospace;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 40px clamp(16px, 4vw, 56px) 96px;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Segoe UI", Roboto, sans-serif;
+  font-size: 15px;
+  line-height: 1.8;
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--accent) 36%, transparent);
+}
+
+h1,
+h2,
+h3,
+p,
+ul,
+ol,
+figure {
+  margin: 0;
+}
+
+ul,
+ol {
+  padding: 0;
+  list-style: none;
+}
+
+code {
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--raised);
+  font-family: var(--mono);
+  font-size: 0.9em;
+}
+
+a {
+  color: inherit;
+  text-underline-offset: 3px;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.page-head,
+.block {
+  max-inline-size: 1480px;
+  margin-inline: auto;
+}
+
+h1 {
+  margin-block-end: 12px;
+  font-size: 30px;
+  line-height: 1.35;
+  text-wrap: balance;
+}
+
+.page-lead {
+  max-inline-size: 78ch;
+  color: var(--ink-soft);
+}
+
+.page-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-block-start: 20px;
+}
+
+.page-nav a {
+  padding: 2px 12px;
+  border: 1px solid var(--edge);
+  border-radius: 999px;
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.page-nav a:hover {
+  background: var(--raised);
+}
+
+.block {
+  margin-block-start: 72px;
+}
+
+h2 {
+  margin-block-end: 8px;
+  font-size: 22px;
+  line-height: 1.45;
+  text-wrap: balance;
+}
+
+h3 {
+  margin-block: 28px 8px;
+  font-size: 16px;
+}
+
+.block-lead {
+  max-inline-size: 78ch;
+  color: var(--ink-soft);
+}
+
+.block-lead b,
+.issues b,
+.extras b {
+  color: var(--ink);
+}
+
+/* 数の並び */
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 12px;
+  margin-block-start: 20px;
+}
+
+.tiles li {
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  padding: 14px 16px;
+  border: 1px solid var(--edge-quiet);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.tiles b {
+  font-family: var(--mono);
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.tiles small {
+  margin-inline-start: 2px;
+  color: var(--ink-soft);
+  font-family: inherit;
+  font-size: 13px;
+}
+
+.tiles span {
+  color: var(--ink-soft);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+/* 今の形の画と、困っていることの並び */
+.evidence {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+  margin-block-start: 20px;
+}
+
+.evidence img {
+  inline-size: 100%;
+  border: 1px solid var(--edge);
+  border-radius: 10px;
+}
+
+.issues {
+  display: grid;
+  gap: 12px;
+  counter-reset: issue;
+}
+
+.issues li {
+  position: relative;
+  padding-inline-start: 32px;
+  color: var(--ink-soft);
+  font-size: 14px;
+  line-height: 1.75;
+  counter-increment: issue;
+}
+
+.issues li::before {
+  content: counter(issue);
+  position: absolute;
+  inset-block-start: 2px;
+  inset-inline-start: 0;
+  display: inline-grid;
+  place-items: center;
+  inline-size: 22px;
+  block-size: 22px;
+  border-radius: 50%;
+  background: var(--raised);
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+/* 4つの形を並べる枠。画は index.html を 1400×900 で開いたもの（縮めて出す） */
+.quad {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px 16px;
+  margin-block-start: 20px;
+}
+
+.frame {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 1400 / 900;
+  border: 1px solid var(--edge);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.frame iframe {
+  position: absolute;
+  inset: 0 auto auto 0;
+  inline-size: 1400px;
+  block-size: 900px;
+  border: 0;
+  transform: scale(var(--k, 0.5));
+  transform-origin: 0 0;
+}
+
+figcaption {
+  margin-block-start: 8px;
+  color: var(--ink-soft);
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+figcaption b {
+  margin-inline-end: 8px;
+  color: var(--ink);
+}
+
+figcaption a {
+  margin-inline-start: 6px;
+  color: var(--ink-soft);
+  font-size: 12px;
+}
+
+/* 下端の拡大 */
+.crops {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px 16px;
+  margin-block-start: 20px;
+}
+
+.crops img {
+  inline-size: 100%;
+  border: 1px solid var(--edge);
+  border-radius: 10px;
+}
+
+/* 測った数の表 */
+.measure {
+  inline-size: 100%;
+  margin-block-start: 20px;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.measure caption {
+  padding-block-end: 8px;
+  color: var(--ink-soft);
+  font-size: 13px;
+  text-align: start;
+}
+
+.measure th,
+.measure td {
+  padding: 10px 12px;
+  border-block-end: 1px solid var(--edge-quiet);
+  text-align: start;
+  vertical-align: top;
+}
+
+.measure thead th {
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.measure tbody th {
+  inline-size: 18%;
+  font-weight: 600;
+}
+
+.measure td {
+  color: var(--ink-soft);
+}
+
+.measure .is-good {
+  color: var(--ok);
+}
+
+.measure .is-bad {
+  color: var(--warn);
+}
+
+/* どの案にも足せる施策 */
+.extras {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 12px 28px;
+  margin-block-start: 20px;
+}
+
+.extras li {
+  padding-block: 12px;
+  border-block-start: 1px solid var(--edge-quiet);
+  color: var(--ink-soft);
+  font-size: 14px;
+  line-height: 1.75;
+}
+
+.extras li > b {
+  display: block;
+  margin-block-end: 4px;
+  font-size: 15px;
+}
+
+.extras .scope {
+  display: inline-block;
+  margin-block-start: 6px;
+  padding: 0 8px;
+  border: 1px solid var(--edge);
+  border-radius: 999px;
+  font-size: 12px;
+}
+
+/* おすすめ */
+.pick {
+  display: grid;
+  gap: 10px;
+  max-inline-size: 86ch;
+  margin-block-start: 20px;
+  padding: 20px 24px;
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--accent) 6%, var(--surface));
+}
+
+.pick p {
+  color: var(--ink-soft);
+}
+
+.pick strong {
+  color: var(--ink);
+  font-size: 17px;
+}
+
+@media (max-width: 900px) {
+  .quad,
+  .crops,
+  .evidence {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
