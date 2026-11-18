@@ -46,7 +46,7 @@ describe("WorkStrip", () => {
       ]),
     )
     render(<WorkStrip />)
-    const toggle = screen.getByRole("button", { name: "手順" })
+    const toggle = screen.getByRole("button", { name: /^手順 \d+件$/ })
 
     act(() => {
       fireEvent.click(toggle)
@@ -221,18 +221,18 @@ describe("WorkStrip（フェーズが多いとき）", () => {
     expect(strip().textContent).not.toContain("3/3")
   })
 
-  it("1行には経過の字が無く、開いた一覧の下端に経過を出す", () => {
+  it("1行に経過と手順の件数を出し、開いた一覧には経過を重ねて出さない", () => {
     renderAt(0, 3)
 
-    expect(screen.getByRole("button", { name: "手順" })).not.toBeNull()
-    expect(strip().textContent).not.toMatch(/経過|所要/)
+    expect(screen.getByRole("button", { name: /^手順 \d+件$/ })).not.toBeNull()
+    expect(strip().textContent).toMatch(/経過 \d/)
 
     act(() => {
-      fireEvent.click(screen.getByRole("button", { name: "手順" }))
+      fireEvent.click(screen.getByRole("button", { name: /^手順/ }))
     })
 
     const list = screen.getByRole("region", { name: "依頼の手順" })
-    expect(list.lastElementChild?.textContent).toMatch(/^経過 /)
+    expect(list.textContent).not.toMatch(/経過|所要 \d/)
   })
 })
 
@@ -316,7 +316,7 @@ describe("WorkStrip（下線の区間）", () => {
 
   it("「手順」を押すと全体の詳細が開き、外を押す・Esc・もう一度押すで閉じ、Esc では「手順」へフォーカスが戻る", () => {
     renderProgressed()
-    const toggle = screen.getByRole("button", { name: "手順" })
+    const toggle = screen.getByRole("button", { name: /^手順 \d+件$/ })
 
     click(toggle)
     const insideList = screen.getByRole("region", { name: "依頼の手順" })

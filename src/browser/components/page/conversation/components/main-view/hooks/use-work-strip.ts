@@ -169,7 +169,7 @@ export function useWorkStrip(): WorkStripModel {
     phaseTimes:
       newestTurn === undefined || working ? NO_PHASE_TIMES : finalPhaseTimesOf(newestTurn),
     backgroundTasks,
-    footLabel: elapsedLabel,
+    elapsedLabel: elapsedLabel,
     onToggle: () => {
       toggle(exchange)
     },

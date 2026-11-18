@@ -121,7 +121,7 @@ describe("useWorkStrip（状態）", () => {
         ]),
         START + 8_000,
       ),
-    ).toMatchObject({ kind: "finished", steps: { footLabel: "所要 7秒" } })
+    ).toMatchObject({ kind: "finished", steps: { elapsedLabel: "所要 7秒" } })
   })
 
   it("ワークプランの無いまま本文を出して閉じたら、区間の無い完了の帯を残す", () => {
@@ -138,7 +138,7 @@ describe("useWorkStrip（状態）", () => {
       kind: "finished",
       result: "done",
       headLabel: "できました",
-      steps: { footLabel: "所要 5秒" },
+      steps: { elapsedLabel: "所要 5秒" },
     })
   })
 })

@@ -103,6 +103,7 @@ const STRIP_BASE = {
   readingLabel: "",
   steps: {
     list: { kind: "closed" },
+    toggleLabel: "手順 12件",
     onToggle: noop,
     onExpandDone: noop,
     onExpandSteps: noop,
@@ -111,7 +112,7 @@ const STRIP_BASE = {
     rest: [],
     phaseTimes: { kind: "none" },
     backgroundList: { kind: "none" },
-    footLabel: "経過 6分12秒",
+    elapsedLabel: "経過 6分12秒",
     estimate: { kind: "none" },
   },
   estimate: { kind: "none" },

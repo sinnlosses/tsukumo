@@ -63,7 +63,7 @@ test.describe("進み具合のプログレスバー", () => {
     const stripBefore = await boxOf(strip)
     const flowTopBefore = (await boxOf(flowHead)).top
 
-    await strip.getByRole("button", { name: "手順", exact: true }).click()
+    await strip.getByRole("button", { name: /^手順 \d+件$/ }).click()
 
     const list = strip.getByRole("region", { name: "依頼の手順" })
     await expect(list).toBeVisible()

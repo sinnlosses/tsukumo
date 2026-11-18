@@ -97,6 +97,15 @@ export function PresentationalWorkStrip(props: {
             あと{strip.estimate.low}〜{strip.estimate.high}分
           </Text>
         )}
+        <Text
+          element="span"
+          size="label"
+          tone="ink-quiet"
+          weight="inherit"
+          className={styles["work-strip-elapsed"]}
+        >
+          {strip.steps.elapsedLabel}
+        </Text>
         <div ref={rootRef} className={styles["work-strip-steps-root"]}>
           <StepsToggle steps={strip.steps} toggleRef={toggleRef} />
           {strip.steps.list.kind === "open" && (
@@ -322,7 +331,7 @@ function StepsToggle(props: {
       className={styles["work-strip-toggle"]}
       onClick={props.steps.onToggle}
     >
-      手順
+      {props.steps.toggleLabel}
       <span
         aria-hidden="true"
         className={styles["work-strip-toggle-mark"]}

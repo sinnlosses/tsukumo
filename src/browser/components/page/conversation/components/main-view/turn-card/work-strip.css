@@ -197,6 +197,13 @@
     display: none;
   }
 }
+/* 依頼全体の経過「経過 6分12秒」。手順の口の左。 */
+.work-strip-elapsed {
+  flex: none;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
 /* 手順の一覧の行に付ける群の名と並列の札。 */
 .work-strip-span {
   flex: none;

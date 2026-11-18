@@ -42,9 +42,11 @@ export type WorkStripSteps = {
   readonly phaseTimes: PhaseTimesView
   /** 実行中の手順と依頼の手順の間に出す「バックグラウンドタスク」の区画。 */
   readonly backgroundList: CurrentWorkBackgroundList
-  /** 下端の依頼全体の経過（作業中は「経過 …」、閉じたあとは「所要 …」）。 */
-  readonly footLabel: string
-  /** 下端の経過の右に添える目安の残り。出さないときは `none`。 */
+  /** 「手順」の口の字（「手順 12件」）。 */
+  readonly toggleLabel: string
+  /** 1行目の右端に出す依頼全体の経過（作業中は「経過 …」、閉じたあとは「所要 …」）。 */
+  readonly elapsedLabel: string
+  /** 下端に添える目安の残り。出さないときは `none`。 */
   readonly estimate: RemainingEstimate
 }
 
@@ -57,7 +59,7 @@ export function workStripStepsOf(input: {
   readonly finished: boolean
   readonly phaseTimes: PhaseTimesView
   readonly backgroundTasks: readonly BackgroundTask[]
-  readonly footLabel: string
+  readonly elapsedLabel: string
   readonly onToggle: () => void
   readonly onExpandDone: () => void
   readonly onExpandSteps: () => void
@@ -72,6 +74,7 @@ export function workStripStepsOf(input: {
       : { rows: [], rest: [] }
   return {
     list,
+    toggleLabel: `手順 ${String(input.steps.length)}件`,
     onToggle: input.onToggle,
     onExpandDone: input.onExpandDone,
     onExpandSteps: input.onExpandSteps,
@@ -89,7 +92,7 @@ export function workStripStepsOf(input: {
     rest: planRows.rest,
     phaseTimes: input.phaseTimes,
     backgroundList: toBackgroundListView(input.backgroundTasks),
-    footLabel: input.footLabel,
+    elapsedLabel: input.elapsedLabel,
     estimate: input.estimate,
   }
 }

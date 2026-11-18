@@ -71,7 +71,7 @@ describe("MainView（失敗の表示から帯の手順へ）", () => {
   it("すでに全体の詳細が開いていても、押したあとに開いていて失敗の行が出る", () => {
     renderFailed()
     act(() => {
-      fireEvent.click(screen.getByRole("button", { name: "手順" }))
+      fireEvent.click(screen.getByRole("button", { name: /^手順 \d+件$/ }))
     })
     expect(screen.queryByRole("region", { name: "依頼の手順" })).not.toBeNull()
 

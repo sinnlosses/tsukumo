@@ -485,6 +485,16 @@
                                   }
                                 },
                                 {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "data-type": "supporting",
+                                    "data-color": "disabled"
+                                  },
+                                  "children": [
+                                    "所要 0秒"
+                                  ]
+                                },
+                                {
                                   "tag": "button",
                                   "attributes": {
                                     "data-variant": "secondary",
@@ -492,11 +502,11 @@
                                     "data-elevation": "none",
                                     "data-astryx-pressable": "",
                                     "aria-expanded": "false",
-                                    "aria-label": "手順",
+                                    "aria-label": "手順 3件",
                                     "type": "button"
                                   },
                                   "children": [
-                                    "手順",
+                                    "手順 3件",
                                     {
                                       "tag": "span",
                                       "attributes": {
