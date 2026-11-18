@@ -13,10 +13,11 @@
     仕事の画面（広い画面）で、走っている手順を言う「いまの行」と、進み具合のプログレスバー（進行の帯）の置き場を比べる見本。
     今の形（form=now。2026-11-18 の main を疑似セッションで撮って測った形）と、3つの案を同じ架空のやり取りで見比べる。
     器と流れの部品の見た目は ../stream-harmony-2026-11-16/ の flow.css・goal.css と、../character-voice-2026-11-17/ の voice.css を読む。
-    中身はすべて架空で、実物の会話ではない。並べて比べるページは compare.html。
-    ?form=now|a|b|c              今の形／案A 帯にまとめる／案B 入力欄の頭にまとめる／案C 立ち絵の手元にまとめる
-    ?moment=work|long|late|deleg|ask|done  働く／長く掛かる／働く（後半。流れが長い）／委譲を待つ／答える／完了した直後
-    ?open=steps                  「手順」の一覧を開いた形
+    中身はすべて架空で、実物の会話ではない。3案を並べて比べるページは compare.html、練った案を今の形と並べるページは plan.html。
+    ?form=now|a|b|c|d            今の形／案A 帯にまとめる／案B 入力欄の頭にまとめる／案C 立ち絵の手元にまとめる／練った案（帯を計画の一覧に育てる。説明は plan.html）
+    ?moment=work|long|late|deleg|ask|stop|away|done  働く／長く掛かる／働く（後半。流れが長い）／委譲を待つ／答える／止めた／離れて戻った／完了した直後
+    ?open=steps                  「手順」の一覧を開いた形（練った案では、済んだ段の手順を開いた形）
+    ?fold=1                      練った案の計画を畳んだ形（今の段の行だけを残す）
     ?up=1                        流れを上へ送って読み返している形（撮影用。働く〔後半〕で使う）
     ?bar=0                       上の切り替えの帯を隠す（撮影用）
   -->
@@ -54,11 +55,13 @@
     <header class="mock-bar" aria-label="見本の切り替え">
       <span class="mock-bar-title">いまの行と進み具合の見本（中身は架空）</span>
       <a class="mock-bar-link" href="compare.html">並べて比べる</a>
+      <a class="mock-bar-link" href="plan.html">練った案の説明</a>
       <span class="mock-bar-group" data-param="form">
         <a data-value="now">今の形</a>
         <a data-value="a">案A 帯</a>
         <a data-value="b">案B 入力欄の頭</a>
         <a data-value="c">案C 立ち絵の手元</a>
+        <a data-value="d">練った案 計画の一覧</a>
       </span>
       <span class="mock-bar-group" data-param="moment">
         <a data-value="work">働く</a>
@@ -66,11 +69,17 @@
         <a data-value="late">働く（後半）</a>
         <a data-value="deleg">委譲を待つ</a>
         <a data-value="ask">答える</a>
+        <a data-value="stop">止めた</a>
+        <a data-value="away">離れて戻った</a>
         <a data-value="done">完了した直後</a>
       </span>
       <span class="mock-bar-group" data-param="open">
         <a data-value="">閉じる</a>
         <a data-value="steps">手順を開く</a>
+      </span>
+      <span class="mock-bar-group" data-param="fold">
+        <a data-value="">計画を開く</a>
+        <a data-value="1">計画を畳む</a>
       </span>
     </header>
 

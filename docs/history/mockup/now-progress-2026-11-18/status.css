@@ -26,8 +26,29 @@ body[data-moment="done"] .flow {
   background: var(--edge);
 }
 
-body[data-moment="ask"]:not([data-form="b"]) {
+body[data-moment="ask"]:not([data-form="b"], [data-form="d"]) {
   --dock-h: 148px;
+}
+
+/* 離れていたあいだに足された行の手前の境目の線（今の画面と同じ）。 */
+.away-seam {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--ink-soft);
+  font-size: 12px;
+}
+
+.away-seam::before,
+.away-seam::after {
+  content: "";
+  flex: 1;
+  block-size: 1px;
+  background: var(--edge);
+}
+
+.slip.is-stopped .slip-head {
+  color: var(--ink);
 }
 
 /* 今の形のいまの行で、等幅でない対象（委譲先の役と段の題）。 */
@@ -269,6 +290,366 @@ body[data-moment="ask"] .tag {
 
 .tag-foot .strip-time b {
   margin-inline-start: 6px;
+}
+
+/* ───── 練った案: 進行の帯を、判定の行と計画の一覧に育てる ─────
+   形は 2026-11-15 に戻した器の紙の頭（履歴 b789339c9 の work-plan-paper.css の .work-plan-stamp・.work-plan-phase・.work-plan-live）。
+   走っている手順は今の段の行の中の枠に入り、流れの末尾には何も置かない。 */
+body[data-form="d"] .strip {
+  display: block;
+  block-size: auto;
+  padding: 0;
+  border-radius: 16px;
+  white-space: normal;
+}
+
+body[data-form="d"] .scroller {
+  inset-block-start: calc(var(--plan-h, 40px) + 8px);
+}
+
+.plan-stamp {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  block-size: 40px;
+  padding: 0 6px 0 10px;
+  color: var(--ink-soft);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.plan-verdict {
+  --verdict: var(--accent);
+
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 7px;
+  padding: 3px 10px 3px 9px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--verdict) 15%, transparent);
+  color: var(--verdict);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.plan-verdict[data-verdict="asking"] {
+  --verdict: var(--warn);
+}
+
+.plan-verdict[data-verdict="finished"] {
+  --verdict: var(--ok);
+}
+
+.plan-verdict[data-verdict="stopped"] {
+  --verdict: var(--ink);
+}
+
+.plan-dot {
+  inline-size: 7px;
+  block-size: 7px;
+  border-radius: 50%;
+  background: currentcolor;
+}
+
+.plan-verdict .icon {
+  inline-size: 13px;
+  block-size: 13px;
+}
+
+.lamps {
+  display: inline-flex;
+  flex: none;
+  align-items: flex-end;
+}
+
+.lamp {
+  flex: none;
+  inline-size: 15px;
+  block-size: 15px;
+  overflow: visible;
+}
+
+.lamp.is-now {
+  inline-size: 20px;
+  block-size: 20px;
+}
+
+.lamp-fill {
+  fill: var(--accent);
+}
+
+.lamp.is-done .lamp-fill {
+  fill-opacity: 0.62;
+}
+
+.lamp-line {
+  fill: none;
+  stroke: var(--ink-quiet);
+  stroke-width: 1.3;
+}
+
+.lamp.is-stopped .lamp-line {
+  stroke: var(--ink);
+  stroke-dasharray: 2 2.4;
+}
+
+.lamp-unseen {
+  fill: var(--ink);
+  stroke: var(--surface);
+  stroke-width: 1.5;
+}
+
+.plan-position {
+  flex: 0 1 auto;
+  min-inline-size: 0;
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 13px;
+  text-overflow: ellipsis;
+}
+
+.plan-elapsed {
+  flex: none;
+  margin-inline-start: auto;
+}
+
+.plan-elapsed b {
+  margin-inline-start: 6px;
+  font-family: var(--mono);
+  font-weight: 400;
+}
+
+.plan-toggle {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 4px;
+  min-block-size: 28px;
+  padding: 0 10px 0 12px;
+  border-radius: 999px;
+  background: var(--raised);
+  color: var(--ink);
+  font-size: 13px;
+}
+
+.plan-toggle.is-open .icon {
+  rotate: 180deg;
+}
+
+/* 計画の一覧。灯りの列と本文の列で、灯りの下に次の段までの縦の線を引く。 */
+.plan-list {
+  display: grid;
+  padding: 8px 14px 10px 10px;
+  border-block-start: 1px solid var(--edge);
+}
+
+.plan-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  column-gap: 8px;
+  padding-block-end: 4px;
+}
+
+.plan-row::before {
+  content: "";
+  position: absolute;
+  inset-block: 24px 0;
+  inset-inline-start: 10.5px;
+  inline-size: 1px;
+  background: var(--edge);
+}
+
+.plan-row:last-child::before {
+  display: none;
+}
+
+.plan-row > .lamp {
+  justify-self: center;
+  translate: 0 4px;
+}
+
+.plan-row-main {
+  display: grid;
+  gap: 4px;
+  min-inline-size: 0;
+}
+
+.plan-row-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-block-size: 24px;
+}
+
+.plan-row-title {
+  flex: 0 1 auto;
+  min-inline-size: 0;
+  overflow: hidden;
+  color: var(--ink-soft);
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.plan-row[data-state="now"] .plan-row-title,
+.plan-row[data-state="stopped"] .plan-row-title {
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.plan-row[data-state="todo"] .plan-row-title {
+  color: var(--ink-quiet);
+}
+
+.plan-row-time {
+  flex: none;
+  margin-inline-start: auto;
+  color: var(--ink-quiet);
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+.plan-row[data-state="now"] .plan-row-time {
+  color: var(--ink-soft);
+}
+
+.plan-row-steps {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 2px;
+  min-block-size: 24px;
+  padding-inline: 4px 6px;
+  border-radius: 6px;
+  color: var(--ink-quiet);
+  font-size: 12px;
+}
+
+.plan-row-steps:hover {
+  background: var(--raised);
+  color: var(--ink);
+}
+
+.plan-tag {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 3px;
+  padding: 0 7px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.plan-tag.is-ask {
+  background: color-mix(in srgb, var(--warn) 16%, transparent);
+  color: var(--warn);
+}
+
+.plan-tag.is-unseen {
+  background: var(--raised);
+  color: var(--ink);
+}
+
+/* 今の段の枠。「いま」「できた」「任せた」を、語・中身・時の3列に並べる。 */
+.plan-live {
+  display: grid;
+  gap: 4px;
+  margin-block-end: 4px;
+  padding: 7px 10px;
+  border-radius: 10px;
+  background: var(--raised);
+  font-size: 12px;
+}
+
+.plan-act {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  min-block-size: 22px;
+}
+
+.plan-act-kind {
+  color: var(--ink-quiet);
+  font-weight: 650;
+}
+
+.plan-act[data-kind="touched"] .plan-act-kind {
+  color: var(--ok);
+}
+
+.plan-act[data-kind="delegate"] .plan-act-kind {
+  color: var(--accent);
+}
+
+.plan-act-body {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-inline-size: 0;
+  color: var(--ink-soft);
+}
+
+.plan-act-body b {
+  flex: none;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.plan-act-body .spinner {
+  inline-size: 11px;
+  block-size: 11px;
+}
+
+.plan-act-target {
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.plan-act-target.is-mono {
+  font-family: var(--mono);
+}
+
+.plan-act-remark {
+  flex: none;
+  color: var(--warn);
+  font-weight: 650;
+}
+
+.plan-act-when {
+  color: var(--ink-quiet);
+  font-family: var(--mono);
+}
+
+.plan-steps {
+  display: grid;
+  gap: 2px;
+  margin-block-end: 4px;
+  padding-inline-start: 2px;
+  color: var(--ink-soft);
+  font-size: 12px;
+}
+
+.plan-steps li {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.plan-steps span {
+  min-inline-size: 4.5em;
+  color: var(--ink);
+}
+
+.plan-steps code {
+  font-family: var(--mono);
 }
 
 /* ───── 「手順」の一覧。今の形と案A は帯の真下、案B は入力欄の頭の真上、案C は札の右に開く ───── */

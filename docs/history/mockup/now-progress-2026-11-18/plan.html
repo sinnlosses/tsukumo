@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>練った案: 帯を計画の一覧に育てる（2026-11-18）</title>
+    <link rel="stylesheet" href="compare.css" />
+  </head>
+  <!--
+    いまの行と進み具合の置き場の、練った1案を今の形と並べるページ。3案の比べは compare.html。
+    土台は 2026-11-15 に戻した器（履歴 b789339c9）の紙の頭のプログレス。old-*.jpg はその器の画の回帰の画（test/e2e/expected/stage-look-*-1400.png）で、桃色の帯は回帰の画の伏せ字。
+    枠の画は index.html を 1400×900 で開いたもの（form=now が今の形、form=d が練った案）。plan-*.jpg は練った案を別の幅で撮った画。
+    中身はすべて架空で、実物の会話ではない。数は 2026-11-18 に見本を capture-view.ts の --measure で測った値。
+  -->
+  <body>
+    <header class="page-head">
+      <h1>帯を計画の一覧に育て、「いま」を今の段の中へ入れる</h1>
+      <p class="page-lead">
+        2026-11-15 に戻した器（舞台と紙）の紙の頭にあったプログレス、つまり判定の札・灯りの並び・「4段のうち2段目」・計画の一覧を土台にした1案。今の3列の器の進行の帯をこの形に育て、走っている手順を今の段の行の中の枠へ入れる。流れの末尾のいまの行と「手順 n件」の口は無くなり、最新のセリフのすぐ下が入力欄になる。
+      </p>
+      <nav class="page-nav" aria-label="このページの中">
+        <a href="#origin">戻した器のプログレス</a>
+        <a href="#carry">引き継ぐもの・変えるもの</a>
+        <a href="#numbers">測った数</a>
+        <a href="#work">働く</a>
+        <a href="#long">長く掛かる</a>
+        <a href="#up">読み返す</a>
+        <a href="#deleg">委譲を待つ</a>
+        <a href="#ask">答える</a>
+        <a href="#stop">止めた</a>
+        <a href="#away">離れて戻った</a>
+        <a href="#done">完了した直後</a>
+        <a href="#steps">手順を開く・畳む</a>
+        <a href="#widths">幅を変える</a>
+        <a href="#rules">改める決まり</a>
+        <a href="#open">決めること</a>
+      </nav>
+    </header>
+
+    <section class="block" id="origin" aria-labelledby="origin-title">
+      <h2 id="origin-title">戻した器のプログレスは、位置と「いま」が最初から同じ所にあった</h2>
+      <p class="block-lead">
+        戻す前の画の回帰の画（1400×900）。紙の頭に判定の札と灯りの並びと「4段のうち2段目」があり、その下の計画の一覧で、今の段の行の中に「いま」「できた」の枠が開いていた。セリフは左の舞台にあり、紙とは混ざらない。
+      </p>
+      <div class="evidence">
+        <img src="old-running-1400.jpg" alt="戻した器の働く場面。紙の頭に判定の札と灯りと4段のうち2段目、その下に計画の一覧があり、今の段の中に「いま」と「できた」の枠がある" width="1400" height="900" />
+        <ol class="issues">
+          <li><b>判定の札。</b>「働いている」「あなたの番」「あなたが止めた」「失敗で止まった」を、色だけでなく語で言い分けた。</li>
+          <li><b>灯りと位置の語。</b>段ごとの狐火を並べ、今の段だけを大きくした。隣に「4段のうち2段目」と経過を置いた。</li>
+          <li><b>計画の一覧。</b>段を縦の線でつなぎ、済んだ段・今の段・これからの段を一度に読ませた。今の段は太字で、所要に「〜」を付けた。</li>
+          <li><b>今の段の枠。</b>今の段の行の中に「いま（走っている手順と何秒前）」「できた（書き終えたファイル）」「任せた（役と最後の報せ）」を並べた。走っている手順は、どの段の中の一歩かが位置で分かった。</li>
+          <li><b>利用者が気に入っていた所。</b>2026-11-14、器を作り直す際に「紙の頭の灯りと『n段のうちm段目』、紙の中の計画の一覧」は変えないよう頼まれていた。</li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="block" id="carry" aria-labelledby="carry-title">
+      <h2 id="carry-title">形は引き継ぎ、置き場と中身の分け方は今の器に合わせる</h2>
+      <p class="block-lead">戻した器では、セリフは左の舞台、進行は紙と、置き場が分かれていた。今の器ではセリフも中間レポートも中央の流れにあるので、同じことを2か所で言わないよう中身を分け直した。</p>
+      <table class="measure">
+        <caption>部分ごとの、戻した器と練った案の違い</caption>
+        <thead>
+          <tr><th></th><th>戻した器</th><th>練った案</th><th>わけ</th></tr>
+        </thead>
+        <tbody>
+          <tr><th>置き場</th><td>紙の頭（中央の列の上端）</td><td>今の進行の帯の位置（中央の列の上端）</td><td>帯の位置は変えないので、流れ・入力欄・立ち絵・やり取りの列は今のまま</td></tr>
+          <tr><th>判定の札</th><td>字の記号（◌ ● ■ ✕）と語</td><td>描いた点・印と語（働いている・背景で働いている・あなたの番・あなたが止めた・完了）</td><td>止めたやり取りで帯が「完了」と言う今の食い違いも、ここで消える</td></tr>
+          <tr><th>灯りと位置の語</th><td>狐火の並び・「4段のうち2段目」・経過</td><td>同じ</td><td>利用者が気に入っていた形をそのまま使う。炎の形は成果の画面の灯りと同じ</td></tr>
+          <tr><th>計画の一覧</th><td>済んだ段の下に要約</td><td>済んだ段は名前・所要・「手順 n」だけ</td><td>要約は流れの中間レポートだけが持つ（同じ情報は1か所）</td></tr>
+          <tr><th>今の段の枠</th><td>いま・できた・任せた・止まって見える</td><td>いま・できた・任せた。「いま」の文は今の動詞・対象・経過。長く掛かったら「長く掛かっている」</td><td>止まって見えるときの言い方は、今の規則（ADR 0062 論点 3）を使う</td></tr>
+          <tr><th>回る印</th><td>判定の札と枠の2か所</td><td>「いま」の行の頭の1個だけ（<code>steps()</code>）</td><td>動くものを1つに絞る今の決まりを保つ</td></tr>
+          <tr><th>離れて戻ったとき</th><td>紙の頭のまとめの文と、一覧の既読の印</td><td>流れの境目の線（今のまま）と、帯の「見ていない間に済んだ」の札・灯りの点</td><td>まとめの文は境目の線が言うので、帯は印だけにする</td></tr>
+          <tr><th>終わったあと</th><td>紙の末尾に「この結論に至った道筋」</td><td>帯が判定の行1行に畳まれ、「道筋」で一覧を開ける</td><td>最終レポートが流れの頭から読める</td></tr>
+          <tr><th>道具の手順</th><td>無し</td><td>済んだ段の「手順 n」で、その段の手順を同じ動詞で開く</td><td>「手順」の一覧（ADR 0059 論点 3）の役目を引き継ぐ</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="block" id="numbers" aria-labelledby="numbers-title">
+      <h2 id="numbers-title">位置と「いま」は同じ帯に入り、セリフと入力欄の間は空く</h2>
+      <p class="block-lead">見本の働く場面（1400×900。括弧は 1920×1080）で測った。今の形の数は compare.html と同じ測り方。</p>
+      <ul class="tiles">
+        <li><b>635<small>px</small></b><span>今の形の、帯の位置と流れの末尾のいまの行の縦の距離。練った案では同じ帯の中で、今の段の名前から「いま」の行まで 34px</span></li>
+        <li><b>0<small>個</small></b><span>練った案で、最新のセリフと入力欄の間に挟まる物。セリフの下端から入力欄まで 38px で、今の形はここにいまの行があった</span></li>
+        <li><b>454<small>px</small></b><span>練った案の働くあいだの流れの高さ（今の形は 631px）。帯を畳むと 538px、終わったあとは帯が1行に戻る</span></li>
+        <li><b>217<small>px</small></b><span>練った案の帯の高さ（4段・枠1行）。委譲中と長く掛かるとき 243px、畳むと 133px、終わったあと 42px</span></li>
+      </ul>
+      <table class="measure">
+        <caption>場面ごとの、今の形と練った案の違い</caption>
+        <thead>
+          <tr><th></th><th>今の形</th><th>練った案</th></tr>
+        </thead>
+        <tbody>
+          <tr><th>走っている手順の置き場</th><td class="is-bad">流れの末尾（最新のセリフの 12px 下）</td><td class="is-good">帯の中の、今の段の行の枠</td></tr>
+          <tr><th>流れの高さ</th><td class="is-good">631px（811px）</td><td class="is-bad">454px（634px）。畳むと 538px（718px）</td></tr>
+          <tr><th>最新のセリフと「いま」の距離</th><td>58px</td><td class="is-bad">527px（「いま」は上端の帯の中）</td></tr>
+          <tr><th>上へ送って読み返すとき</th><td class="is-bad">手順が見えない</td><td class="is-good">帯ごと残る</td></tr>
+          <tr><th>これからの段の名前</th><td>「手順」を開くと読める</td><td class="is-good">開かずに読める</td></tr>
+          <tr><th>止めたとき</th><td class="is-bad">帯の札が緑の「完了」</td><td class="is-good">「あなたが止めた」「4段のうち2段目で止めた」</td></tr>
+          <tr><th>委譲を待つとき</th><td class="is-bad">「背景で」を帯と末尾の行の2か所で言い、生きているかは秒だけで分かる</td><td class="is-good">任せた役の最後の報せ「1分前」と、委譲先の走っている手順「4秒」</td></tr>
+          <tr><th>答え待ちを言う所</th><td>帯の札・入力欄の上の知らせ・お伺いの3か所</td><td class="is-good">帯の判定とお伺いの2か所。お伺いが見えているあいだは入力欄の上の知らせを出さない（ADR 0059 論点 5 の決まりどおり）</td></tr>
+          <tr><th>離れて戻ったとき</th><td>流れの境目の線</td><td class="is-good">境目の線と、帯の「見ていない間に済んだ」</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="block" id="work" aria-labelledby="work-title">
+      <h2 id="work-title">働く（道具が走っている）</h2>
+      <p class="block-lead">フェーズ 2/4 で、ファイルを書き換えている。</p>
+      <div class="quad">
+        <figure><div class="frame" data-src="index.html?form=now&moment=work&bar=0"></div><figcaption><b>今の形</b>位置は上端、手順は最新のセリフのすぐ下。</figcaption></figure>
+        <figure><div class="frame" data-src="index.html?form=d&moment=work&bar=0"></div><figcaption><b>練った案</b>「保存の仕組みを足す」の行の中で「いま 書き換えている sort-order.ts 18秒」と読める。セリフのすぐ下は入力欄。</figcaption></figure>
+      </div>
+    </section>
+
+    <section class="block" id="long" aria-labelledby="long-title">
+      <h2 id="long-title">長く掛かる（同じ手順が 120 秒を超えた）</h2>
+      <p class="block-lead">回る印を遅くして「長く掛かっている」を添える規則は今のまま。練った案では、その段で書き終えたファイルも「できた」の行に出る。</p>
+      <div class="quad">
+        <figure><div class="frame" data-src="index.html?form=now&moment=long&bar=0"></div><figcaption><b>今の形</b>添え書きは下端のいまの行だけ。</figcaption></figure>
+        <figure><div class="frame" data-src="index.html?form=d&moment=long&bar=0"></div><figcaption><b>練った案</b>「いま」の行に琥珀の「長く掛かっている」、下に「できた」の行。</figcaption></figure>
+      </div>
+    </section>
+
+    <section class="block" id="up" aria-labelledby="up-title">
+      <h2 id="up-title">上へ送って読み返す</h2>
+      <p class="block-lead">働く（後半）で、流れを上端まで送った。</p>
+      <div class="quad">
+        <figure><div class="frame" data-src="index.html?form=now&moment=late&up=1&bar=0"></div><figcaption><b>今の形</b>帯は「作業中」と言うが、何をしているかは見えない。</figcaption></figure>
+        <figure><div class="frame" data-src="index.html?form=d&moment=late&up=1&bar=0"></div><figcaption><b>練った案</b>帯が計画と「いま」ごと残る。</figcaption></figure>
+      </div>
+    </section>
+
+    <section class="block" id="deleg" aria-labelledby="deleg-title">
+      <h2 id="deleg-title">委譲を待つ（背景で委譲先に任せている）</h2>
+      <p class="block-lead">委譲先の手順の始まりと終わりは、今も画面に届いている（<code>workflow-step-started</code>・<code>workflow-step-finished</code>）。練った案はそれを「いま」の行に出し、任せた役の最後の報せを「任せた」の行に出す。</p>
+      <div class="quad">
+        <figure><div class="frame" data-src="index.html?form=now&moment=deleg&bar=0"></div><figcaption><b>今の形</b>上と下で「背景で」が2回。</figcaption></figure>
+        <figure><div class="frame" data-src="index.html?form=d&moment=deleg&bar=0"></div><figcaption><b>練った案</b>「任せた 実装役 … 1分前」と「いま 書き換えている local-preference.ts 4秒」。</figcaption></figure>
+      </div>
+    </section>
+
+    <section class="block" id="ask" aria-labelledby="ask-title">
+      <h2 id="ask-title">答える（質問が届いた）</h2>
+      <p class="block-lead">お伺いのカードは流れの末尾のまま。練った案では、帯の判定が「あなたの番」になり、今の段の行に「質問 1件 ↓」の札が付く。</p>
+      <div class="quad">
+        <figure><div class="frame" data-src="index.html?form=now&moment=ask&bar=0"></div><figcaption><b>今の形</b>カード・知らせの帯・入力欄の三段。</figcaption></figure>
+        <figure><div class="frame" data-src="index.html?form=d&moment=ask&bar=0"></div><figcaption><b>練った案</b>カードのすぐ下が入力欄。答える場所は下、判定は上。</figcaption></figure>
+      </div>
+    </section>
+
+    <section class="block" id="stop" aria-labelledby="stop-title">
+      <h2 id="stop-title">止めた（2段目の途中で止めた）</h2>
+      <p class="block-lead">今の形は、流れの札が「止めた」と言うのに、帯の札は緑の「完了」と言い、2段目の丸も「今」の枠のまま残る。</p>
+      <div class="quad">
+        <figure><div class="frame" data-src="index.html?form=now&moment=stop&bar=0"></div><figcaption><b>今の形</b>帯「完了」と流れ「止めた」が食い違う。</figcaption></figure>
+        <figure><div class="frame" data-src="index.html?form=d&moment=stop&bar=0"></div><figcaption><b>練った案</b>帯が1行に畳まれ、「あなたが止めた」「4段のうち2段目で止めた」。止めた段の灯りは破線。</figcaption></figure>
+      </div>
+    </section>
+
+    <section class="block" id="away" aria-labelledby="away-title">
+      <h2 id="away-title">離れて戻った（見ていない間に1段済んだ）</h2>
+      <p class="block-lead">境目の線は今のまま。練った案では、見ていない間に済んだ段に札が付き、帯の灯りにも小さな点が付く。</p>
+      <div class="quad">
+        <figure><div class="frame" data-src="index.html?form=now&moment=away&bar=0"></div><figcaption><b>今の形</b>何が済んだかは、境目の線と流れの札を読んで知る。</figcaption></figure>
+        <figure><div class="frame" data-src="index.html?form=d&moment=away&bar=0"></div><figcaption><b>練った案</b>「保存の仕組みを足す 見ていない間に済んだ」。</figcaption></figure>
+      </div>
+    </section>
+
+    <section class="block" id="done" aria-labelledby="done-title">
+      <h2 id="done-title">完了した直後（レポートを頭から読む）</h2>
+      <p class="block-lead">練った案の帯は、終わると判定の行1行（42px）に戻る。「道筋」で計画の一覧を開ける。</p>
+      <div class="quad">
+        <figure><div class="frame" data-src="index.html?form=now&moment=done&bar=0"></div><figcaption><b>今の形</b>帯が上端に残る。</figcaption></figure>
+        <figure><div class="frame" data-src="index.html?form=d&moment=done&bar=0"></div><figcaption><b>練った案</b>「完了 4段すべて済んだ 所要 6分40秒」。</figcaption></figure>
+      </div>
+    </section>
+
+    <section class="block" id="steps" aria-labelledby="steps-title">
+      <h2 id="steps-title">手順を開く・計画を畳む</h2>
+      <p class="block-lead">練った案は「手順」の口を持たず、済んだ段ごとに「手順 n」で開く。帯の「畳む」で、今の段の行だけを残す（133px）。</p>
+      <div class="quad">
+        <figure><div class="frame" data-src="index.html?form=d&moment=work&open=steps&bar=0"></div><figcaption><b>練った案・手順を開く</b>「読んだ task-list.tsx」のように、「いま」と同じ動詞で言う。</figcaption></figure>
+        <figure><div class="frame" data-src="index.html?form=d&moment=work&fold=1&bar=0"></div><figcaption><b>練った案・畳む</b>判定の行と、今の段の行と「いま」だけ。</figcaption></figure>
+      </div>
+    </section>
+
+    <section class="block" id="widths" aria-labelledby="widths-title">
+      <h2 id="widths-title">幅を変えても形は同じ</h2>
+      <p class="block-lead">中くらいの幅（1000×800）と広い幅（1920×1080）。帯の幅は流れと同じ（上限 976px）で、長い対象は行の中で省く。</p>
+      <div class="crops">
+        <figure><img src="plan-deleg-1000.jpg" alt="練った案の委譲を待つ場面を1000pxの幅で撮った画" width="1000" height="800" /><figcaption><b>1000×800・委譲を待つ</b>任せた役の報せも1行に収まる。</figcaption></figure>
+        <figure><img src="plan-work-1920.jpg" alt="練った案の働く場面を1920pxの幅で撮った画" width="1920" height="1080" /><figcaption><b>1920×1080・働く</b>帯は 976px で止まり、流れの高さは 634px。</figcaption></figure>
+      </div>
+    </section>
+
+    <section class="block" id="rules" aria-labelledby="rules-title">
+      <h2 id="rules-title">改める決まり</h2>
+      <ul class="extras">
+        <li><b>ADR 0059 論点 1（実行中の手順の置き場）</b>「帯は位置だけの1行、走っている手順は流れの末尾の1行」を、「帯は判定の行と計画の一覧、走っている手順は今の段の行の枠」に改める。<span class="scope">置き場</span></li>
+        <li><b>ADR 0059 論点 2（回る印）</b>回る印は「いま」の行の頭の1個のまま、置き場が帯の中へ移る。ぼかしの面の中なので <code>steps()</code> で回し、ADR 0058 論点 9 の負荷の上限（止まった画面で、ぼかし無しの版と CPU が 2 倍以内）を測り直す。<span class="scope">動き</span></li>
+        <li><b>ADR 0059 論点 3（「手順」の一覧）</b>帯そのものが一覧になるので、帯の下に開く一覧と「手順 n件」の口をやめ、段ごとの「手順 n」に移す。所要時間の帯の置き場（一覧の末尾）は「道筋」を開いた末尾へ移す。<span class="scope">一覧</span></li>
+        <li><b>今のまま守る決まり</b>お伺いと入力欄の上の知らせ（ADR 0059 論点 5）、離席の境目（論点 6）、流れは帯の下から始める（ADR 0062）、最新のセリフの明るさと尾（ADR 0062・0063）、狭い画面（760px 以下）。<span class="scope">変えない</span></li>
+      </ul>
+    </section>
+
+    <section class="block" id="open" aria-labelledby="open-title">
+      <h2 id="open-title">決めること</h2>
+      <ul class="extras">
+        <li><b>働くあいだの流れの高さ</b>帯が 217px になり、流れは 631px から 454px に減る。高さが 800px 未満の窓では最初から畳む（133px）か、いつも開くかを決める。</li>
+        <li><b>「段」と「フェーズ」</b>帯は戻した器の「4段のうち2段目」、流れの中間レポート・境目の線・作業の経過は「フェーズ」と言う。どちらかにそろえる。</li>
+        <li><b>済んだ段を押したとき</b>見本では「手順 n」を開くだけ。流れの中間レポートへ送る口も足すか。</li>
+        <li><b>セリフと「いま」の距離</b>位置と「いま」は同じ帯に入るが、最新のセリフ（下端）からは 527px 離れる。戻した器でも、セリフは左、進行は紙の頭と離れていた。</li>
+        <li><b>見込みの時間</b>戻した器にあった「あと約 4分（似た段 9 件の中央値から）」は入れていない（ADR 0059 で後回しにしたもの）。</li>
+      </ul>
+    </section>
+
+    <script src="compare.js"></script>
+  </body>
+</html>

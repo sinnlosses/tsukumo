@@ -1,10 +1,12 @@
 // いまの行と進み具合の置き場の見本。URL の検索引数から形・場面を読み、進み具合・会話の流れ・入力欄・立ち絵を組む。
 // 今の形（form=now）は、2026-11-18 の main を疑似セッション（work-plan・delegated-range）で撮って測った形に合わせてある。
 // 案A は進行の帯に、案B は入力欄の頭に、案C は立ち絵の手元に、進み具合といまの手順を1か所にまとめる。
+// 練った案（form=d）は、進行の帯を、2026-11-15 に戻した器（履歴 b789339c9）の紙の頭の判定・灯り・計画の一覧の形に育て、
+// 走っている手順を今の段の行の中へ入れる。
 // 中身はすべて架空で、実物の会話ではない。
 
-const FORMS = ["now", "a", "b", "c"]
-const MOMENTS = ["work", "long", "late", "deleg", "ask", "done"]
+const FORMS = ["now", "a", "b", "c", "d"]
+const MOMENTS = ["work", "long", "late", "deleg", "ask", "stop", "away", "done"]
 const PACK = { id: "shirasuzu", name: "白鈴", accent: "#f9c3cd", face: { x: 0.5, y: 0.36 } }
 
 const params = new URLSearchParams(location.search)
@@ -18,6 +20,7 @@ const form = pick("form", FORMS)
 const moment = pick("moment", MOMENTS)
 const open = params.get("open") === "steps"
 const up = params.get("up") === "1"
+const fold = params.get("fold") === "1"
 
 document.body.dataset.p = "spec goal"
 document.body.dataset.form = form
@@ -188,6 +191,19 @@ const STATUS = {
     phaseTime: "1分20秒〜",
     steps: 4,
   },
+  // 今の形は、止めたやり取りでも帯の札が「完了」と言う（2026-11-18 の main で見つかった食い違い）。
+  stop: { state: "完了", current: 1, elapsed: ["経過", "2分02秒"], phaseTime: "1分02秒", steps: 4 },
+  // 答えたあと離れ、そのあいだに2段目が済んだ。unseen は見ていないあいだに済んだ段。
+  away: {
+    state: "作業中",
+    current: 2,
+    elapsed: ["経過", "16分40秒"],
+    phaseTime: "38秒〜",
+    steps: 8,
+    now: { verb: "書き換えている", target: "task-list.tsx", time: "12秒", mono: true },
+    running: 1,
+    unseen: [1],
+  },
   done: { state: "完了", current: 4, elapsed: ["所要", "6分40秒"], steps: 9 },
 }
 
@@ -207,6 +223,8 @@ const FOLLOWED = {
   late: "saved",
   deleg: "hand",
   ask: "ask",
+  stop: "found",
+  away: "saved",
   done: "done",
 }[moment]
 
@@ -280,6 +298,18 @@ function inquiry() {
   </section>`
 }
 
+/** 止めたやり取りの末尾の札（今の画面と同じく、流れの札は「止めた」と言う）。 */
+function stopSlip() {
+  return `<section class="thing slip is-stopped">
+    <header class="slip-head"><span class="slip-mark">${icon("stop")}</span><span>止めた　2/${PHASES.length} ${PHASES[1].name} の途中</span></header>
+  </section>`
+}
+
+/** 離れていたあいだに足された行の手前の境目の線（今の画面の固定の文）。 */
+function awaySeam() {
+  return '<p class="away-seam"><span>離れていた 12分のあいだに、フェーズが1つ済んだ</span></p>'
+}
+
 function questionSlip() {
   return `<section class="thing slip">
     <header class="slip-head"><span class="slip-mark">${icon("question")}</span><span>${QUESTION.label}: ${QUESTION.text}</span></header>
@@ -324,6 +354,21 @@ function flowRows() {
         group(slip(0), say("found")),
         group(say("ask"), questionSlip()),
         post(QUESTION.options[0][0], "14:28", "答え"),
+        say("shape"),
+        say("test"),
+        group(slip(1), followed("saved")),
+        ...tail,
+      ]
+    case "stop":
+      return [request(), say("got"), group(slip(0), followed("found")), stopSlip()]
+    case "away":
+      return [
+        request(),
+        say("got"),
+        group(slip(0), say("found")),
+        group(say("ask"), questionSlip()),
+        post(QUESTION.options[0][0], "14:28", "答え"),
+        awaySeam(),
         say("shape"),
         say("test"),
         group(slip(1), followed("saved")),
@@ -483,12 +528,158 @@ function stepsList() {
   return `<header class="steps-title"><span>依頼の手順</span>${close}</header><ol class="steps-rows">${rows}</ol>`
 }
 
+/* ───── 練った案（form=d） ───── */
+
+// 戻した器の狐火と同じ炎の形（履歴 b789339c9 の lamp.tsx の FLAME_PATH）。
+const FLAME =
+  "M12 2.5c1.6 3.7 5.5 5.6 5.5 10.6a5.5 5.5 0 0 1-11 0c0-2.7 1.4-4.2 2.6-5.6.2 1.4 1 2.3 2 2.6-.4-2.8.3-5.3.9-7.6z"
+
+/** 判定の札の語と印。印は描いた形で、字の記号にしない。 */
+const VERDICT = {
+  running: { label: "働いている", mark: "dot" },
+  background: { label: "背景で働いている", mark: "dot" },
+  asking: { label: "あなたの番", mark: "dot" },
+  finished: { label: "完了", mark: "check" },
+  stopped: { label: "あなたが止めた", mark: "stop" },
+}
+
+/**
+ * 場面ごとの判定と、今の段の行に開く枠の中身。
+ * live の now は走っている手順（欄を書かなければ STATUS の now）、touched は書き終えたファイル、delegate は任せた役と最後の報せ。
+ * tag は今の段の行の札、folded は計画を判定の行だけに畳む場面（終わったあと）。
+ */
+const PLAN = {
+  work: { verdict: "running", live: [{ kind: "now" }] },
+  long: {
+    verdict: "running",
+    live: [{ kind: "now" }, { kind: "touched", files: ["sort-order.ts", "sort-order.test.ts"] }],
+  },
+  late: { verdict: "running", live: [{ kind: "now" }] },
+  deleg: {
+    verdict: "background",
+    live: [
+      {
+        kind: "delegate",
+        name: "実装役",
+        text: "単体テストを書き終え、読み込みの側を直している",
+        since: "1分前",
+      },
+      { kind: "now", verb: "書き換えている", target: "local-preference.ts", time: "4秒", mono: true },
+    ],
+  },
+  ask: { verdict: "asking", tag: "質問 1件" },
+  stop: { verdict: "stopped", folded: true },
+  away: { verdict: "running", live: [{ kind: "now" }] },
+  done: { verdict: "finished", folded: true },
+}[moment]
+
+const TOOL_VERB = { Read: "読んだ", Grep: "探した", Edit: "書き換えた", Bash: "走らせた" }
+
+function positionText() {
+  if (PLAN.verdict === "finished") {
+    return `${PHASES.length}段すべて済んだ`
+  }
+  const position = `${PHASES.length}段のうち${status.current + 1}段目`
+  return PLAN.verdict === "stopped" ? `${position}で止めた` : position
+}
+
+function phaseState(index) {
+  if (index < status.current) {
+    return "done"
+  }
+  if (index === status.current) {
+    return PLAN.verdict === "stopped" ? "stopped" : "now"
+  }
+  return "todo"
+}
+
+/** 段の灯り。済みは塗り、今は大きく濃く、これからは輪郭、止めた段は破線の輪郭。見ていないあいだに済んだ段は小さな点を足す。 */
+function lamp(state, unseen) {
+  const outlined = state === "todo" || state === "stopped"
+  const dot = unseen ? '<circle class="lamp-unseen" cx="20" cy="5" r="3.2" />' : ""
+  return `<svg viewBox="0 0 24 24" class="lamp is-${state}" aria-hidden="true"><path class="${outlined ? "lamp-line" : "lamp-fill"}" d="${FLAME}" />${dot}</svg>`
+}
+
+function isUnseen(index) {
+  return (status.unseen ?? []).includes(index)
+}
+
+function planStamp() {
+  const verdict = VERDICT[PLAN.verdict]
+  const mark =
+    verdict.mark === "dot" ? '<span class="plan-dot" aria-hidden="true"></span>' : icon(verdict.mark, " icon-sm")
+  const closed = PLAN.folded === true
+  const expanded = !closed && !fold
+  const toggle = closed ? "道筋" : fold ? "計画を開く" : "畳む"
+  const lamps = PHASES.map((_, index) => lamp(phaseState(index), isUnseen(index))).join("")
+  return `<p class="plan-stamp">
+    <span class="plan-verdict" data-verdict="${PLAN.verdict}">${mark}${verdict.label}</span>
+    <span class="lamps">${lamps}</span>
+    <span class="plan-position">${positionText()}</span>
+    <span class="plan-elapsed">${status.elapsed[0]}<b>${status.elapsed[1]}</b></span>
+    <button class="plan-toggle${expanded ? " is-open" : ""}" type="button" aria-expanded="${expanded}">${toggle}${icon("chevron", " icon-sm")}</button>
+  </p>`
+}
+
+/** 今の段の行に開く枠。走っている手順・書き終えたファイル・任せた役を、語・中身・時の3列に並べる。 */
+function planLive() {
+  const acts = (PLAN.live ?? []).map((act) => {
+    if (act.kind === "touched") {
+      return `<div class="plan-act" data-kind="touched"><span class="plan-act-kind">できた</span><span class="plan-act-body"><span class="plan-act-target is-mono">${act.files.join("　")}</span></span><span></span></div>`
+    }
+    if (act.kind === "delegate") {
+      return `<div class="plan-act" data-kind="delegate"><span class="plan-act-kind">任せた</span><span class="plan-act-body"><b>${act.name}</b><span class="plan-act-target">${act.text}</span></span><time class="plan-act-when">${act.since}</time></div>`
+    }
+    const now = { ...status.now, ...act }
+    const remark = now.remark === undefined ? "" : `<span class="plan-act-remark">${now.remark}</span>`
+    return `<div class="plan-act${now.remark === undefined ? "" : " is-slow"}" data-kind="now"><span class="plan-act-kind">いま</span><span class="plan-act-body"><span class="spinner"></span><b>${now.verb}</b><span class="plan-act-target${now.mono ? " is-mono" : ""}">${now.target}</span>${remark}</span><time class="plan-act-when">${now.time}</time></div>`
+  })
+  return acts.length === 0 ? "" : `<div class="plan-live">${acts.join("")}</div>`
+}
+
+/** 済んだ段の手順。手順の一覧と同じ動詞で言う。 */
+function planSteps(phase) {
+  const items = phase.steps
+    .map(([tool, target]) => `<li><span>${TOOL_VERB[tool]}</span><code>${target}</code></li>`)
+    .join("")
+  return `<ol class="plan-steps">${items}</ol>`
+}
+
+function planRow(phase, index) {
+  const state = phaseState(index)
+  const time = state === "done" ? phase.time : state === "now" ? status.phaseTime : ""
+  const tag =
+    state === "now" && PLAN.tag !== undefined
+      ? `<span class="plan-tag is-ask">${PLAN.tag}${icon("arrow-down", " icon-sm")}</span>`
+      : ""
+  const unseen = isUnseen(index) ? '<span class="plan-tag is-unseen">見ていない間に済んだ</span>' : ""
+  const opened = open && state === "done" && index === 0
+  const steps =
+    state === "done"
+      ? `<button class="plan-row-steps" type="button" aria-expanded="${opened}">${icon(opened ? "chevron" : "chevron-right", " icon-sm")}手順 ${phase.steps.length}</button>`
+      : ""
+  const head = `<div class="plan-row-head"><span class="plan-row-title">${phase.name}</span>${tag}${unseen}${steps}<time class="plan-row-time">${time}</time></div>`
+  const body = state === "now" ? planLive() : opened ? planSteps(phase) : ""
+  return `<li class="plan-row" data-state="${state}">${lamp(state, isUnseen(index))}<div class="plan-row-main">${head}${body}</div></li>`
+}
+
+/** 練った案の帯。判定の行と、計画の一覧（畳むと今の段の行だけ。終わったあとは判定の行だけ）。 */
+function planCard() {
+  if (PLAN.folded === true) {
+    return planStamp()
+  }
+  const rows = PHASES.map(planRow).filter((_, index) => !fold || index === status.current)
+  return `${planStamp()}<ol class="plan-list">${rows.join("")}</ol>`
+}
+
 function buildStatus() {
   const strip = one("#strip")
   const rail = one("#status-rail")
   const tag = one("#tag")
   if (form === "now") {
     strip.innerHTML = stripNow()
+  } else if (form === "d") {
+    strip.innerHTML = planCard()
   } else if (form === "a") {
     strip.innerHTML = stripA()
   } else if (form === "b") {
@@ -500,10 +691,19 @@ function buildStatus() {
     tag.hidden = false
     tag.innerHTML = tagC()
   }
+  // 練った案は、手順を計画の一覧の行の中で開く。
   const steps = one("#steps")
-  steps.hidden = !open
-  if (open) {
+  steps.hidden = !open || form === "d"
+  if (!steps.hidden) {
     steps.innerHTML = stepsList()
+  }
+}
+
+/** 練った案の帯の高さを、流れの上端に渡す（流れは帯の下から始める）。 */
+function measurePlan() {
+  if (form === "d") {
+    const height = one("#strip").getBoundingClientRect().height
+    document.documentElement.style.setProperty("--plan-h", `${height.toFixed(0)}px`)
   }
 }
 
@@ -529,8 +729,8 @@ function buildDock() {
   }
   if (moment === "ask") {
     draft.placeholder = "選択肢以外の答えを書く…"
-    // 案B は、答え待ちの知らせを入力欄の頭の1行が持つ。ほかは入力欄の上の帯。
-    if (form !== "b") {
+    // 案B は、答え待ちの知らせを入力欄の頭の1行が持つ。練った案は、お伺いが見えているあいだは帯を出さない（ADR 0059 論点 5 の決まりどおり）。ほかは入力欄の上の帯。
+    if (form !== "b" && form !== "d") {
       band.hidden = false
       band.innerHTML = `<span>${PACK.name} が質問しています。選択肢から選ぶか、ここに書いて答えられます</span><button class="quiet-button" type="button">選択肢へ<kbd class="key">↑</kbd></button>`
     }
@@ -638,7 +838,7 @@ function placeTag() {
 function markBar() {
   for (const bar of document.querySelectorAll(".mock-bar-group")) {
     const name = bar.dataset.param
-    const current = { form, moment, open: open ? "steps" : "" }[name]
+    const current = { form, moment, open: open ? "steps" : "", fold: fold ? "1" : "" }[name]
     for (const link of bar.querySelectorAll("a")) {
       const query = new URLSearchParams(location.search)
       if (link.dataset.value === "") {
@@ -666,12 +866,14 @@ function applyPack() {
 }
 
 function layout() {
+  measurePlan()
   placeTag()
   aimTail()
 }
 
 applyPack()
 buildStatus()
+measurePlan()
 buildLane()
 buildDock()
 buildFlow()
