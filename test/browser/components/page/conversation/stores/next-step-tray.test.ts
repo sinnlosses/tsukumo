@@ -37,18 +37,24 @@ describe("useNextStepTray", () => {
     expect(nextStepTrayShown(useNextStepTray.getState())).toBe(true)
   })
 
-  it("畳んだのは今の元だけで、同じ元が付き直しても畳んだまま、次の元が付くと開く", () => {
+  it("並びは畳んだ形で出て、開いたのは今の元だけで、同じ元が付き直しても開いたまま、次の元が付くと畳む", () => {
     const store = useNextStepTray.getState()
     store.attach("1:0", STEPS)
-    store.fold()
     expect(nextStepTrayFolded(useNextStepTray.getState())).toBe(true)
+
+    store.unfold()
+    expect(nextStepTrayFolded(useNextStepTray.getState())).toBe(false)
 
     store.detach("1:0")
     store.attach("1:0", STEPS)
-    expect(nextStepTrayFolded(useNextStepTray.getState())).toBe(true)
+    expect(nextStepTrayFolded(useNextStepTray.getState())).toBe(false)
 
     store.attach("2:0", STEPS)
-    expect(nextStepTrayFolded(useNextStepTray.getState())).toBe(false)
+    expect(nextStepTrayFolded(useNextStepTray.getState())).toBe(true)
+
+    store.unfold()
+    store.fold()
+    expect(nextStepTrayFolded(useNextStepTray.getState())).toBe(true)
   })
 
   it("外すのは今の元だけで、先に付いた次の元は残す", () => {

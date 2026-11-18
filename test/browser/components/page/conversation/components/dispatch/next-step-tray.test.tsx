@@ -193,7 +193,6 @@ describe("NextStepTray（キーと畳む）", () => {
 
   it("畳んだ形は件数と「開く」の1行で、押すと開く", () => {
     useNextStepTray.getState().attach("1:0", [])
-    useNextStepTray.getState().fold()
     const steps = buildNextSteps({
       components: COMPONENTS,
       unobserved: [],
@@ -205,7 +204,7 @@ describe("NextStepTray（キーと畳む）", () => {
     expect(screen.getByRole("group", { name: "次の一手" }).textContent).toBe("次の一手4件開く")
     fireEvent.click(screen.getByRole("button", { name: "開く" }))
 
-    expect(useNextStepTray.getState().foldedKey).toBeUndefined()
+    expect(useNextStepTray.getState().unfoldedKey).toBe("1:0")
   })
 })
 

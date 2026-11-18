@@ -11,8 +11,8 @@ type NextStepTrayState = {
   readonly steps: readonly NextStep[]
   /** 依頼を送って外した並びの元の鍵。 */
   readonly dismissedKey?: string
-  /** 畳んだ並びの元の鍵。次の最終レポートが付くと鍵が替わって開く（タブのメモリだけに持つ）。 */
-  readonly foldedKey?: string
+  /** 開いた並びの元の鍵。並びは畳んだ形で出し、次の最終レポートが付くと鍵が替わって畳んだ形に戻る（タブのメモリだけに持つ）。 */
+  readonly unfoldedKey?: string
   readonly attach: (reportKey: string, steps: readonly NextStep[]) => void
   /** 今の元が `reportKey` のときだけ外す（次の元が先に付いていれば、それを残す）。 */
   readonly detach: (reportKey: string) => void
@@ -24,10 +24,10 @@ type NextStepTrayState = {
 export const useNextStepTray = create<NextStepTrayState>()((set) => ({
   steps: [],
   fold: () => {
-    set((state) => ({ foldedKey: state.reportKey }))
+    set({ unfoldedKey: undefined })
   },
   unfold: () => {
-    set({ foldedKey: undefined })
+    set((state) => ({ unfoldedKey: state.reportKey }))
   },
   attach: (reportKey, steps) => {
     set({ reportKey, steps })
@@ -53,9 +53,9 @@ export function nextStepTrayShown(
 
 /** 今の元の並びを畳んでいるか。 */
 export function nextStepTrayFolded(
-  state: Pick<NextStepTrayState, "reportKey" | "foldedKey">,
+  state: Pick<NextStepTrayState, "reportKey" | "unfoldedKey">,
 ): boolean {
-  return state.reportKey !== undefined && state.foldedKey === state.reportKey
+  return state.reportKey !== undefined && state.unfoldedKey !== state.reportKey
 }
 
 /** 並びの元の最終レポートの鍵。やり取りの番号とステップの `id` から組む。 */

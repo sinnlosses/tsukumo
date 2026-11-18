@@ -118,7 +118,7 @@ test.describe("report → メインビュー", () => {
     await room.settleAndMatchPicked(ELAPSED_MS)
   })
 
-  test("入力欄の頭の次の一手の札を押すと、入力欄に下書きが入ってフォーカスが移り、会話へは送られない", async ({
+  test("入力欄の頭の次の一手は畳んだ形で出て、開いて札を押すと、入力欄に下書きが入ってフォーカスが移り、会話へは送られない", async ({
     run,
   }) => {
     const room = await run.open({
@@ -129,9 +129,9 @@ test.describe("report → メインビュー", () => {
     })
 
     await room.waitForEvent("turn-finished")
-    const button = room.page
-      .getByRole("group", { name: "次の一手" })
-      .getByRole("button", { name: /^続ける 案Aの移行の手順を書いて。/ })
+    const tray = room.page.getByRole("group", { name: "次の一手" })
+    await tray.getByRole("button", { name: "開く" }).click()
+    const button = tray.getByRole("button", { name: /^続ける 案Aの移行の手順を書いて。/ })
     await button.waitFor()
     await button.click()
 

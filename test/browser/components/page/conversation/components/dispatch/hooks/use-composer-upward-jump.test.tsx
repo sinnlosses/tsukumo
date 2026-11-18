@@ -173,7 +173,7 @@ describe("useComposer の ↑ で用件へ移る", () => {
     return { chip, favorAction }
   }
 
-  it("↑ は お伺い → 次の一手の並びの先頭の札 → お願い の順に、最初にあるものへ移る", () => {
+  it("↑ は お伺い → 開いた次の一手の並びの先頭の札 → お願い の順に、最初にあるものへ移る", () => {
     const withInquiry = renderUseComposer({ pending: [PERMISSION_PENDING] })
     const { chip } = placeTrayAndFavor()
     press(withInquiry, key("ArrowUp"))
@@ -181,17 +181,17 @@ describe("useComposer の ↑ で用件へ移る", () => {
     cleanup()
 
     const result = renderUseComposer()
+    act(() => {
+      useNextStepTray.getState().unfold()
+    })
     press(result, key("ArrowUp"))
 
     expect(document.activeElement).toBe(chip)
   })
 
-  it("並びを畳んでいるときの ↑ は並びを飛ばしてお願いへ移る", () => {
+  it("並びを畳んでいるとき（既定）の ↑ は並びを飛ばしてお願いへ移る", () => {
     const result = renderUseComposer()
     const { favorAction } = placeTrayAndFavor()
-    act(() => {
-      useNextStepTray.getState().fold()
-    })
 
     press(result, key("ArrowUp"))
 
