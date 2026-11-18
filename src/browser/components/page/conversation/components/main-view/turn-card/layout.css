@@ -1,7 +1,9 @@
 /* `--turn-card-head-height` は札の頭（進み具合のプログレスバー）の外寸で、貼り付いた帯の真下を指す位置に使う。
-   帯を出さないあいだは 0 で、帯があれば `useTurnCardHeadHeight` が実測した高さを同じ名前で書き込む。 */
+   帯を出さないあいだは 0 で、帯があれば `useTurnCardHeadHeight` が実測した高さを同じ名前で書き込む。
+   `--gutter-stream` は広い画面の流れと声の定位置の左右の余白で、左へ最大 `TAIL_LENGTH_MAX`（20px）伸びる吹き出しの尾が領域の縁で切れない幅。 */
 .main-turns {
   --turn-card-head-height: 0px;
+  --gutter-stream: calc(2 * var(--gutter-region));
   display: flex;
   flex-direction: column;
   /* 札が短くても、やり取りの列が領域の下端まで届くよう、領域の内寸を最低の高さにする（札は余白を打ち消して縁まで広がる）。 */
@@ -61,6 +63,11 @@
     box-sizing: border-box;
     max-inline-size: 976px;
   }
+  /* 札の中では、札が領域の縁まで広がるので、左右の余白を流れ（`.turn-card-body`）と同じ `--gutter-stream` にして、吹き出しの左端を流れのセリフとそろえる。     上限の幅も、流れの内容の幅（960px）に余白を足した外寸にそろえる。 */
+  .turn-card > .voice-slot {
+    max-inline-size: calc(960px + 2 * var(--gutter-stream));
+    padding-inline: var(--gutter-stream);
+  }
 }
 /* 流れの末尾が聞いたセリフのとき、お伺いの札はそのセリフと1組に見せる（広い画面だけ）。 */
 @media (min-width: 761px) {
@@ -93,6 +100,7 @@
   .turn-card-body {
     box-sizing: content-box;
     max-inline-size: 960px;
+    padding-inline: var(--gutter-stream);
   }
   .turn-card-inquiry {
     box-sizing: border-box;
