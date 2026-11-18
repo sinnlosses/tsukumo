@@ -97,7 +97,7 @@ export function reportEvents(
       brokenFenceCount: legacy?.brokenFenceCount ?? 0,
       title: optionalString(fields.title),
       sessionSummary: nonBlankString(fields.sessionSummary),
-      sessionRemaining: sessionRemainingOf(fields.sessionRemaining, task),
+      sessionRemaining: sessionRemainingOf(fields.sessionRemaining, fields.continueRequest, task),
       components: a2ui?.components ?? [],
       imageSizes: [],
       unshelvedImages: [],
@@ -105,10 +105,14 @@ export function reportEvents(
   ]
 }
 
-function sessionRemainingOf(value: unknown, task: ReportTask): SessionRemaining {
+function sessionRemainingOf(value: unknown, request: unknown, task: ReportTask): SessionRemaining {
   if (typeof value !== "string") {
     const finished = task.kind === "task" && task.outcome === "finished"
     return finished ? { kind: "none" } : { kind: "unrecorded" }
   }
-  return value.trim() === "" ? { kind: "none" } : { kind: "remaining", text: value }
+  if (value.trim() === "") return { kind: "none" }
+  const requestText = typeof request === "string" ? request.trim() : ""
+  return requestText === ""
+    ? { kind: "remaining", text: value }
+    : { kind: "remaining", text: value, request: requestText }
 }

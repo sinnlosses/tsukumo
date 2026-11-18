@@ -34,6 +34,23 @@ const claims = (items: ReturnType<typeof claim>[]): A2uiReportComponent => ({
 const none = { kind: "none" } as const
 
 describe("buildNextSteps", () => {
+  it("続きの依頼の文（request）があれば「続ける」の下書きになり、無ければ「続きを進めて。」", () => {
+    const draftOf = (request?: string) =>
+      buildNextSteps({
+        unobserved: [],
+        components: [],
+        sessionRemaining: {
+          kind: "remaining",
+          text: "架空の残り",
+          ...(request === undefined ? {} : { request }),
+        },
+        outcome: "finished",
+      }).find((step) => step.kind === "continue")
+
+    expect(draftOf("  架空の手順を書いて。 ")).toMatchObject({ draft: "架空の手順を書いて。" })
+    expect(draftOf()).toMatchObject({ draft: "続きを進めて。" })
+  })
+
   it("4つの種類が 再開する → 続ける → 確かめる → 別の案で進める の順に出る", () => {
     const steps = buildNextSteps({
       unobserved: [],

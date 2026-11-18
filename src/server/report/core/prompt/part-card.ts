@@ -85,6 +85,7 @@ function reportCardSchemas() {
       title: noted(shape.title, "title"),
       sessionSummary: noted(shape.sessionSummary, "sessionSummary"),
       sessionRemaining: noted(shape.sessionRemaining, "sessionRemaining"),
+      continueRequest: noted(shape.continueRequest, "continueRequest"),
       closing: noted(shape.closing, "closing"),
       waitingLine: noted(shape.waitingLine, "waitingLine"),
     }),

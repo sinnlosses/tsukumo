@@ -236,7 +236,7 @@ test.describe("report → メインビュー", () => {
     await button.click()
 
     const textArea = room.page.locator("textarea")
-    await expect.poll(() => textArea.inputValue()).toBe("続きを進めて。")
+    await expect.poll(() => textArea.inputValue()).toBe("案Aの移行の手順を書いて。")
     await expect
       .poll(() => room.page.evaluate(() => document.activeElement?.tagName))
       .toBe("TEXTAREA")

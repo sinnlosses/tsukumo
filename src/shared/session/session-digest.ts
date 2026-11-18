@@ -13,7 +13,7 @@ export const MAX_SESSION_SUMMARY_LENGTH = 1200
  */
 export type SessionRemaining =
   | { readonly kind: "none" }
-  | { readonly kind: "remaining"; readonly text: string }
+  | { readonly kind: "remaining"; readonly text: string; readonly request?: string }
   | { readonly kind: "unrecorded" }
 
 export type SessionDigest =

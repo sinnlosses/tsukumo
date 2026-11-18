@@ -143,3 +143,4 @@
 | `docs/architecture/adr/0063-character-voice-place-and-bearing.md`               | キャラクターの声と姿: 声の定位置・局面に従う動き・顔を指す尾・押して遡る・表情の出方・いまの様子      | 採用                   |
 | `docs/architecture/adr/0064-report-draft-paper-and-margin-on-demand.md`         | 草稿は最終レポートと同じ紙に描き、骨組みは次に届く1か所、余白の列は札のある部品だけ、下書きは依頼の文 | 採用                   |
 | `docs/architecture/adr/0065-report-grid-layout-part.md`                         | レポートの配置の部品に、器の幅で折り返す格子 `Grid` を足す                                            | 採用                   |
+| `docs/architecture/adr/0066-continue-request-draft.md`                          | 「続ける」の下書きに、書き手が渡す続きの依頼の文を使えるようにする                                    | 採用                   |

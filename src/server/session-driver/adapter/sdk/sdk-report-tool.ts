@@ -178,6 +178,7 @@ function a2uiInputShape(
     title: shape.title.describe(described.title),
     sessionSummary: shape.sessionSummary.describe(described.sessionSummary),
     sessionRemaining: shape.sessionRemaining.describe(described.sessionRemaining),
+    continueRequest: shape.continueRequest.describe(described.continueRequest),
     closing: speech.describe(described.closing),
     waitingLine: speech.describe(described.waitingLine),
   })

@@ -41,7 +41,8 @@
 ### セッションの要約
 
 - **英語識別子**: `sessionSummary`（`report` の引数）/ `sessionRemaining`（`report` の引数。残っていること）/
-  `SessionRemaining`（`report` のイベントに写した残り。`none`・`remaining`・`unrecorded`）/
+  `continueRequest`（`report` の引数。続きの依頼の文。任意）/
+  `SessionRemaining`（`report` のイベントに写した残り。`none`・`remaining`・`unrecorded`。`remaining` は任意の `request` に `continueRequest` を持つ）/
   `SessionDigest`（切り替え画面に配る1件の中身。残りは欄 `remaining`）
 - **定義**: そのセッションでここまでにしたことを claude が書いた数段落。`report` の引数
   `sessionSummary` で変えたいときだけ書かせ（省くと直近5ターンの `conclusion` の1文目の箇条が代わりになる）、切り替え画面が transcript の最後に通った `report` から

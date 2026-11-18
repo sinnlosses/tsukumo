@@ -41,6 +41,7 @@ export const REPORT_FIELD_DESCRIPTIONS = {
   title: `セッション一覧の題（${String(MAX_SESSION_HEADING_LENGTH)}字以内）。話題が変わったときだけ`,
   sessionSummary: `セッション全体の要約。変えたいときだけ（${String(MAX_SESSION_SUMMARY_LENGTH)}字以内）`,
   sessionRemaining: "残っている作業を1〜2文で。無ければ空文字",
+  continueRequest: "続きの依頼の文（〜して の形）。sessionRemaining と一緒に、続きがあるときだけ",
   closing: "締めのセリフ（1〜2文）。レポートのどこから読むとよいかを言い、中身は言い直さない",
   waitingLine: "待ちの一言（1〜2文）。次の一手の候補を言う。言いたいときだけ",
 } as const
@@ -103,6 +104,8 @@ export const REPORT_FIELD_CARD_NOTES = {
   sessionRemaining:
     "次のセッションで続ける作業を書く。書き出しに「残り：」は付けない。" +
     "始め方の一覧の「前回の続き」のカードの題と、次のセッションへ送る依頼の文になる。",
+  continueRequest:
+    "「続ける」を押すと利用者の入力欄へそのまま入る。利用者がそのまま送る依頼の文（〜して の形）で書く。",
   closing:
     "speak と同じ text と expression。レポートを描いたあとに吹き出しに出る。" +
     "レポートのどこから読むとよいかを言う。",

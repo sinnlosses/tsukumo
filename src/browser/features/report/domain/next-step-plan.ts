@@ -126,7 +126,7 @@ export function buildNextSteps(source: NextStepSource): readonly NextStep[] {
 
 /**
  * 「続ける」の一手。あれば1つ、無ければ空。
- * 残りの作業があればそれを札の字にし、下書きは残りの文を写さず「続きを進めて。」にする。
+ * 残りの作業があればそれを札の字にする。下書きは残りの文を写さず、書き手が渡した続きの依頼の文があればそれ、無ければ「続きを進めて。」にする。
  * 残りの作業が無く `Options` に採った案があれば、その案で進める依頼にする。
  */
 function continueStepsOf(
@@ -135,7 +135,14 @@ function continueStepsOf(
 ): readonly NextStep[] {
   const remainingText = remaining.kind === "remaining" ? remaining.text.trim() : ""
   if (remainingText !== "") {
-    return [{ kind: "continue", label: `続ける: ${remainingText}`, draft: "続きを進めて。" }]
+    const request = remaining.kind === "remaining" ? (remaining.request?.trim() ?? "") : ""
+    return [
+      {
+        kind: "continue",
+        label: `続ける: ${remainingText}`,
+        draft: request === "" ? "続きを進めて。" : request,
+      },
+    ]
   }
   const adopted = options.find((item) => item.verdict === "adopt")?.name.trim() ?? ""
   return adopted === ""

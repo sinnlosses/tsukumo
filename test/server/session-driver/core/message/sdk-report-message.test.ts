@@ -239,6 +239,33 @@ describe("toSessionEvents（report ツール）", () => {
     ])
   })
 
+  it("report の continueRequest は remaining の request に畳まれ、sessionRemaining が空なら捨てる", () => {
+    const remainings = [
+      { sessionRemaining: "架空の残り", continueRequest: " 架空の続きを書いて。 " },
+      { sessionRemaining: "架空の残り", continueRequest: "   " },
+      { sessionRemaining: "", continueRequest: "架空の続きを書いて。" },
+    ].map((fields) => {
+      const [event] = toSessionEvents(
+        assistantMessageWithoutUuid([
+          {
+            type: "tool_use",
+            id: "toolu_r2",
+            name: REPORT_TOOL_FULL_NAME,
+            input: { conclusion: "架空の結論。", ...fields },
+          },
+        ]),
+        EXPRESSIONS,
+      )
+      return event?.kind === "report" ? event.sessionRemaining : "report でない"
+    })
+
+    expect(remainings).toEqual([
+      { kind: "remaining", text: "架空の残り", request: "架空の続きを書いて。" },
+      { kind: "remaining", text: "架空の残り" },
+      { kind: "none" },
+    ])
+  })
+
   it("finished の report で sessionRemaining を省いたら none、finished 以外は unrecorded に畳む", () => {
     const remainings = ["finished", "stopped"].map((outcome) => {
       const [event] = toSessionEvents(

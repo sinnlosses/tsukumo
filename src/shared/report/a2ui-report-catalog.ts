@@ -244,6 +244,7 @@ const reportComponentSchema = z.object({
   title: z.string().optional(),
   sessionSummary: z.string().optional(),
   sessionRemaining: z.string().optional(),
+  continueRequest: z.string().optional(),
   closing: speechSchema.optional(),
   waitingLine: speechSchema.optional(),
 })
