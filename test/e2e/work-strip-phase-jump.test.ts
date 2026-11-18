@@ -35,6 +35,10 @@ test.describe("進み具合のフェーズの詳細", () => {
     expect(detailBox.top).toBeGreaterThanOrEqual(segmentBox.bottom)
     expect(detailBox.left).toBeGreaterThanOrEqual(stripBox.left)
     expect(detailBox.right).toBeLessThanOrEqual(stripBox.right)
+    expect(detailBox.top - stripBox.bottom).toBeLessThanOrEqual(16)
+    const segmentCenter = segmentBox.left + segmentBox.width / 2
+    expect(detailBox.left).toBeLessThanOrEqual(segmentCenter)
+    expect(detailBox.right).toBeGreaterThanOrEqual(segmentCenter)
     expect(await topOf(flowHead)).toBe(flowTopBefore)
 
     await room.page.mouse.click(stripBox.left + stripBox.width / 2, stripBox.bottom + 400)

@@ -32,7 +32,7 @@ const POP_EDGE_GAP = 8
 /** 面を帯の下端から離す幅。 */
 const POP_BELOW_GAP = 8
 
-/** 面の置き場所。`left`・`top` は面を置く要素（区間の並びを持つ行）の左上からの px。 */
+/** 面の置き場所。`left`・`top` は面の配置の基準（区間の並びの offsetParent）の左上からの px。 */
 type PopPlace = { readonly left: number; readonly top: number }
 
 type OpenPopup = {
@@ -106,9 +106,10 @@ export function useWorkStripPhaseDetail(): WorkStripPhaseDetail {
       return
     }
     const strip = button.closest("section")
-    const row = rootRef.current?.parentElement
-    if (strip !== null && row !== null && row !== undefined) {
-      setPlace(placeOf(strip.getBoundingClientRect(), row.getBoundingClientRect(), button))
+    // 包む要素は `display: contents` で箱を持たないので、面と同じ配置の基準（区間の並びの offsetParent）で測る。
+    const base = button.closest("ol")?.offsetParent
+    if (strip !== null && base !== null && base !== undefined) {
+      setPlace(placeOf(strip.getBoundingClientRect(), base.getBoundingClientRect(), button))
     }
     togglePhase(content.exchange, segmentKey)
   }
@@ -120,14 +121,14 @@ export function useWorkStripPhaseDetail(): WorkStripPhaseDetail {
  * 押した区間の中央に面の中央を合わせ、帯の左右の端とビューポートの端から `POP_EDGE_GAP` の内に収める。上は帯の下端から `POP_BELOW_GAP`。
  * 面の幅は `min(POP_WIDTH, 帯の幅)`。
  */
-function placeOf(strip: DOMRect, row: DOMRect, button: HTMLElement): PopPlace {
+function placeOf(strip: DOMRect, base: DOMRect, button: HTMLElement): PopPlace {
   const at = button.getBoundingClientRect()
   const width = Math.min(POP_WIDTH, strip.width)
   const wanted = at.left + at.width / 2 - width / 2
   const low = Math.max(strip.left, POP_EDGE_GAP)
   const high = Math.min(strip.right, window.innerWidth - POP_EDGE_GAP) - width
   const left = Math.min(Math.max(wanted, low), Math.max(high, low))
-  return { left: left - row.left, top: strip.bottom + POP_BELOW_GAP - row.top }
+  return { left: left - base.left, top: strip.bottom + POP_BELOW_GAP - base.top }
 }
 
 function popupOf(input: {
