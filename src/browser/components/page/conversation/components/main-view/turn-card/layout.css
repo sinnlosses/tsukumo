@@ -63,7 +63,8 @@
     box-sizing: border-box;
     max-inline-size: 976px;
   }
-  /* 札の中では、札が領域の縁まで広がるので、左右の余白を流れ（`.turn-card-body`）と同じ `--gutter-stream` にして、吹き出しの左端を流れのセリフとそろえる。     上限の幅も、流れの内容の幅（960px）に余白を足した外寸にそろえる。 */
+  /* 札の中では、札が領域の縁まで広がるので、左右の余白を流れ（`.turn-card-body`）と同じ `--gutter-stream` にして、吹き出しの左端を流れのセリフとそろえる。
+     上限の幅も、流れの内容の幅（960px）に余白を足した外寸にそろえる。 */
   .turn-card > .voice-slot {
     max-inline-size: calc(960px + 2 * var(--gutter-stream));
     padding-inline: var(--gutter-stream);
