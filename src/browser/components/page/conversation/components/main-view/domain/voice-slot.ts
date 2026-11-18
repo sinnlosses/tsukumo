@@ -27,7 +27,6 @@ export function voiceSlotOf(reaction: ShownReaction): VoiceSlot {
   if (reaction.kind !== "shown") {
     return NO_VOICE_SLOT
   }
-  // 待ちの一言は流れの行のまま、記録の位置に出す。
   if (reaction.reaction !== "welcome") {
     return NO_VOICE_SLOT
   }
