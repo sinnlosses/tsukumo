@@ -13,13 +13,15 @@
     仕事の画面（広い画面）で、走っている手順を言う「いまの行」と、進み具合のプログレスバー（進行の帯）の置き場を比べる見本。
     今の形（form=now。2026-11-18 の main を疑似セッションで撮って測った形）と、3つの案を同じ架空のやり取りで見比べる。
     器と流れの部品の見た目は ../stream-harmony-2026-11-16/ の flow.css・goal.css と、../character-voice-2026-11-17/ の voice.css を読む。
-    中身はすべて架空で、実物の会話ではない。3案を並べて比べるページは compare.html、練った案を今の形と並べるページは plan.html。
-    ?form=now|a|b|c|d            今の形／案A 帯にまとめる／案B 入力欄の頭にまとめる／案C 立ち絵の手元にまとめる／練った案（帯を計画の一覧に育てる。説明は plan.html）
+    中身はすべて架空で、実物の会話ではない。3案を並べて比べるページは compare.html、練った案を今の形と並べるページは plan.html、新案の説明は island.html。
+    ?form=now|a|b|c|d|e          今の形／案A 帯にまとめる／案B 入力欄の頭にまとめる／案C 立ち絵の手元にまとめる／練った案（帯を計画の一覧に育てる。説明は plan.html）／新案（ステータスピル。説明は island.html）
     ?moment=work|long|late|deleg|ask|stop|away|done  働く／長く掛かる／働く（後半。流れが長い）／委譲を待つ／答える／止めた／離れて戻った／完了した直後
     ?open=steps                  「手順」の一覧を開いた形（練った案では、済んだ段の手順を開いた形）
     ?fold=1                      練った案の計画を畳んだ形（今の段の行だけを残す）
     ?many=fold|window            帯の丸を12フェーズ（前1・本9・後2）にする。fold は今の決まりで畳み、window は提案の決まり（今の丸の前後だけを残す）で畳む（今の形・案A〜C）
     ?at=1〜12                    12フェーズのときの今のフェーズ（既定 3）
+    ?place=dock                  新案のピルを入力欄の真上に置き、開くと上へ伸ばす（既定は会話の列の上端）
+    ?live=1                      新案のピルを動かす（いまの手順を3.6秒ごとに入れ替え、4回ごとにフェーズを1つ進める）
     ?up=1                        流れを上へ送って読み返している形（撮影用。働く〔後半〕で使う）
     ?bar=0                       上の切り替えの帯を隠す（撮影用）
   -->
@@ -58,12 +60,14 @@
       <span class="mock-bar-title">いまの行と進み具合の見本（中身は架空）</span>
       <a class="mock-bar-link" href="compare.html">並べて比べる</a>
       <a class="mock-bar-link" href="plan.html">練った案の説明</a>
+      <a class="mock-bar-link" href="island.html">新案の説明</a>
       <span class="mock-bar-group" data-param="form">
         <a data-value="now">今の形</a>
         <a data-value="a">案A 帯</a>
         <a data-value="b">案B 入力欄の頭</a>
         <a data-value="c">案C 立ち絵の手元</a>
         <a data-value="d">練った案 計画の一覧</a>
+        <a data-value="e">新案 ステータスピル</a>
       </span>
       <span class="mock-bar-group" data-param="moment">
         <a data-value="work">働く</a>
@@ -93,6 +97,14 @@
         <a data-value="">3つ目</a>
         <a data-value="7">7つ目</a>
         <a data-value="11">11個目</a>
+      </span>
+      <span class="mock-bar-group" data-param="place">
+        <a data-value="">ピルを上端に</a>
+        <a data-value="dock">ピルを入力欄の真上に</a>
+      </span>
+      <span class="mock-bar-group" data-param="live">
+        <a data-value="">止めて見る</a>
+        <a data-value="1">動かして見る</a>
       </span>
     </header>
 

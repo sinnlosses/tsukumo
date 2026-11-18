@@ -5,7 +5,7 @@
 // 走っている手順を今の段の行の中へ入れる。
 // 中身はすべて架空で、実物の会話ではない。
 
-const FORMS = ["now", "a", "b", "c", "d"]
+const FORMS = ["now", "a", "b", "c", "d", "e"]
 const MOMENTS = ["work", "long", "late", "deleg", "ask", "stop", "away", "done"]
 const PACK = { id: "shirasuzu", name: "白鈴", accent: "#f9c3cd", face: { x: 0.5, y: 0.36 } }
 
@@ -611,6 +611,209 @@ function tagC() {
     <p class="tag-foot"><span class="strip-time">${status.elapsed[0]}<b>${status.elapsed[1]}</b></span>${stepsButton()}</p>`
 }
 
+/**
+ * 新案（form=e）ステータスピル。1本のピルが、状態の灯り・今のフェーズ・いまの手順の一文・手順の秒・位置・目安の残りを持ち、
+ * ピルの下線が全フェーズを等分した進み具合になる（フェーズが何個でも下線の長さは変わらない）。
+ * 押すと同じ面が伸びて、計画の一覧と今のフェーズの手順を見せる。答え待ち・止めた・完了は、ピルの色と語で言う。
+ * 同じことを流れ（質問の札・作業の経過・離席の境目）が言う場面では、ピルは状態の語だけにして繰り返さない。
+ * ?place=dock で、ピルを入力欄の真上に置き、開くと上へ伸ばす（既定は上端）。
+ * ?many=fold|window のとき（どちらでも）、計画を12フェーズにする。at は今のフェーズ（1始まり）。
+ */
+const ISLAND = {
+  work: { now: ["sort-order.ts", "を書き換えています"], time: "18秒", eta: [3, 5] },
+  long: {
+    now: ["pnpm run test sort-order", "を走らせています"],
+    time: "2分18秒",
+    remark: "いつもより長い",
+    eta: [4, 7],
+  },
+  late: { now: ["task-list.tsx", "を書き換えています"], time: "6秒", eta: [1, 3] },
+  deleg: { now: ["", "実装役に任せています"], time: "6分12秒", aside: "最後の動きは 14秒前", eta: [5, 9] },
+  ask: { tone: "ask", title: "返事を待っています", now: ["", "質問 1件"] },
+  stop: { tone: "stop", title: "止めました", action: ["続きを頼む", "enter"] },
+  away: { now: ["task-list.tsx", "を書き換えています"], time: "12秒", eta: [1, 2] },
+  done: { tone: "done", title: "できました" },
+}
+const place = params.get("place") === "dock" ? "dock" : "top"
+document.body.dataset.place = place
+
+/** 新案が使う計画（名前の並び）と今の位置。済んだフェーズの所要は4フェーズの計画だけが持つ。 */
+function islandPlan() {
+  if (many !== "") {
+    return { names: LONG_PLAN.map(([, name]) => name), current: longCurrent, unseen: [] }
+  }
+  return { names: PHASES.map((phase) => phase.name), current: status.current, unseen: status.unseen ?? [] }
+}
+
+/**
+ * いまの手順の一文。対象（等幅）が長いときは、末尾の語を残して中ほどを「…」で縮める（コマンドやパスは末尾が見分けの手がかり）。
+ */
+function islandNow(parts) {
+  const [code, rest] = parts
+  if (code === "") {
+    return `<span class="isl-verb">${rest}</span>`
+  }
+  const cut = code.lastIndexOf(" ")
+  const target =
+    cut < 0
+      ? `<code class="isl-code"><span class="isl-code-head">${code}</span></code>`
+      : `<code class="isl-code"><span class="isl-code-head">${code.slice(0, cut)}</span><span class="isl-code-tail is-split">${code.slice(cut + 1)}</span></code>`
+  return `${target}<span class="isl-verb">${rest}</span>`
+}
+
+/** ピルの下線。フェーズを等分し、済んだ・今・まだを塗り分ける。見ていないあいだに済んだフェーズは濃く塗る。 */
+function islandTrack(plan, tone) {
+  const items = plan.names
+    .map((_, index) => {
+      const state =
+        tone === "done" || index < plan.current ? "done" : index === plan.current ? "current" : "todo"
+      const unseen = plan.unseen.includes(index) ? " is-unseen" : ""
+      return `<li class="isl-seg${unseen}" data-state="${state}"></li>`
+    })
+    .join("")
+  return `<ol class="isl-track" aria-hidden="true">${items}</ol>`
+}
+
+/** 目安の残り（分の幅）。12フェーズの見本は、残りのフェーズの数から決める。 */
+function islandEta(plan, data) {
+  if (data.eta === undefined) {
+    return undefined
+  }
+  if (many === "") {
+    return data.eta
+  }
+  const left = plan.names.length - plan.current - 1
+  return [Math.max(1, Math.round(left * 0.7)), Math.max(2, Math.round(left * 1.2))]
+}
+
+/** 依頼全体の経過。12フェーズの見本は、畳んだ済みのフェーズの所要と今のフェーズの所要を足した値。 */
+function islandElapsed() {
+  return many === "" ? status.elapsed[1] : "9分22秒"
+}
+
+/** タブの題。別のタブにいても、位置と状態が読める。 */
+function islandTitle(plan, data, tone) {
+  const total = plan.names.length
+  const head =
+    tone === "run"
+      ? `${plan.current + 1}/${total} ${plan.names[plan.current]}`
+      : tone === "ask"
+        ? "返事待ち"
+        : data.title
+  return `${head} · tsukumo`
+}
+
+function islandRow(plan, data, tone) {
+  const total = plan.names.length
+  const phase = plan.names[Math.min(plan.current, total - 1)]
+  const mark =
+    tone === "done"
+      ? icon("check")
+      : tone === "stop"
+        ? '<span class="isl-stop-mark"></span>'
+        : '<span class="isl-lamp"></span>'
+  const lamp = `<span class="isl-lamp-box">${mark}</span>`
+  // 開いたあいだは今のフェーズの名を一覧の行が言うので、見出しは計画全体の名に替える。
+  const head = data.title !== undefined ? data.title : open ? `${total} フェーズの計画` : phase
+  const now = tone === "stop" ? ["", `${phase}の途中`] : data.now
+  // 手順の秒と添え書きは一文と同じ枠に入れ、手順が替わるときは一文ごと入れ替える（秒だけが横へ跳ばない）。
+  const slow = data.remark === undefined ? "" : " is-slow"
+  const time = data.time === undefined ? "" : `<time class="isl-time${slow}">${data.time}</time>`
+  const remark = data.remark === undefined ? "" : `<span class="isl-remark">${data.remark}</span>`
+  const nowPart =
+    now === undefined
+      ? ""
+      : `<span class="isl-rule" aria-hidden="true"></span><span class="isl-now">${islandNow(now)}${time}${remark}</span>`
+  const aside = data.aside === undefined ? "" : `<span class="isl-aside">${data.aside}</span>`
+  const minutes = islandEta(plan, data)
+  const eta = minutes === undefined ? "" : `<span class="isl-eta">あと${minutes[0]}〜${minutes[1]}分</span>`
+  const position = tone === "done" ? "" : `<span class="isl-pos"><b>${plan.current + 1}</b>/${total}</span>`
+  const action =
+    data.action === undefined
+      ? ""
+      : `<button class="isl-action" type="button">${data.action[0]}${icon(data.action[1], " icon-sm")}</button>`
+  const toggle = `<button class="isl-toggle" type="button" aria-expanded="${open}">${open ? "閉じる" : "計画"}${icon("chevron", " icon-sm")}</button>`
+  return `<div class="isl-row">
+    ${lamp}
+    <span class="isl-head">${head}</span>
+    ${nowPart}${aside}
+    <span class="isl-end">${position}${eta}${action}${toggle}</span>
+  </div>`
+}
+
+/**
+ * 開いたときの計画の一覧。作業中は、済んだフェーズが3つ以上なら1行に畳み、まだのフェーズは3つまで見せて残りを数で言う。
+ * 完了したら畳まずに全フェーズを所要つきで並べる。
+ */
+function islandCard(plan, data, tone) {
+  const total = plan.names.length
+  const rows = []
+  const doneCount = tone === "done" ? total : plan.current
+  if (doneCount >= 3 && tone !== "done") {
+    rows.push(
+      `<li class="isl-plan-row" data-state="fold"><span class="isl-mark">${icon("chevron-right")}</span><span class="isl-name">済んだ ${doneCount} フェーズ</span><time>${many === "" ? "4分12秒" : "8分30秒"}</time></li>`,
+    )
+  } else {
+    for (let index = 0; index < doneCount; index += 1) {
+      const time = many === "" ? PHASES[index].time : ""
+      rows.push(
+        `<li class="isl-plan-row" data-state="done"><span class="isl-mark">${icon("check")}</span><span class="isl-name">${plan.names[index]}</span><time>${time}</time></li>`,
+      )
+    }
+  }
+  if (doneCount < total) {
+    const steps = many === "" ? PHASES[plan.current].steps : [["Read", "settings-panel.tsx"], ["Grep", "sortOrder"]]
+    const past = steps
+      .filter(([tool]) => tool === "Read" || tool === "Grep")
+      .slice(0, 2)
+      .map(
+        ([tool, target]) =>
+          `<li><span class="isl-mark">${icon("check")}</span><code>${target}</code><span>を${TOOL_VERB[tool]}</span></li>`,
+      )
+      .join("")
+    const live =
+      tone === "run"
+        ? `<li class="is-live"><span class="isl-mark"><span class="isl-lamp"></span></span>${islandNow(data.now)}<time>${data.time}</time></li>`
+        : tone === "ask"
+          ? `<li class="is-live"><span class="isl-mark"><span class="isl-lamp"></span></span><span>「保存先」の質問への返事を待っています</span></li>`
+          : ""
+    const acts = `<ul class="isl-acts">${live}${past}</ul><button class="isl-more" type="button">手順 ${status.steps}件をすべて見る</button>`
+    rows.push(
+      `<li class="isl-plan-row" data-state="current"><span class="isl-mark"><span class="isl-ring"></span></span><span class="isl-name">${plan.names[plan.current]}</span><time>${status.phaseTime ?? ""}</time>${acts}</li>`,
+    )
+    const rest = plan.names.slice(plan.current + 1)
+    for (const name of rest.slice(0, 3)) {
+      rows.push(
+        `<li class="isl-plan-row" data-state="todo"><span class="isl-mark"><span class="isl-hollow"></span></span><span class="isl-name">${name}</span></li>`,
+      )
+    }
+    if (rest.length > 3) {
+      rows.push(
+        `<li class="isl-plan-row" data-state="rest"><span class="isl-mark"></span><span class="isl-name">ほか ${rest.length - 3} フェーズ</span></li>`,
+      )
+    }
+  }
+  const minutes = islandEta(plan, data)
+  const eta =
+    minutes === undefined
+      ? ""
+      : `<span title="済んだフェーズの所要の幅から出した目安">目安の残り<b>${minutes[0]}〜${minutes[1]}分</b></span>`
+  return `<div class="isl-card"><ol class="isl-plan">${rows.join("")}</ol><footer class="isl-foot"><span>${status.elapsed[0]}<b>${islandElapsed()}</b></span>${eta}</footer></div>`
+}
+
+/** 上端に置くときは、行・下線・開いた面の順。入力欄の上に置くときは、開いた面を上へ伸ばし、下線を入力欄の側に置く。 */
+function island() {
+  const data = ISLAND[moment]
+  const tone = data.tone ?? "run"
+  const plan = islandPlan()
+  document.title = islandTitle(plan, data, tone)
+  const card = open ? islandCard(plan, data, tone) : ""
+  const row = islandRow(plan, data, tone)
+  const track = islandTrack(plan, tone)
+  const parts = place === "dock" ? `${card}${row}${track}` : `${row}${track}${card}`
+  return `<div class="isl" data-tone="${tone}" data-place="${place}"${open ? " data-open" : ""}>${parts}</div>`
+}
+
 /** 手順の一覧。全フェーズを1行ずつ並べ、済んだフェーズは畳み、今のフェーズは開いて手順を並べる。 */
 function stepsList() {
   const rows = PHASES.map((phase, index) => {
@@ -798,6 +1001,11 @@ function buildStatus() {
     strip.innerHTML = planCard()
   } else if (form === "a") {
     strip.innerHTML = stripA()
+  } else if (form === "e" && place === "dock") {
+    strip.hidden = true
+    one("#dock").insertAdjacentHTML("afterbegin", `<div class="isl-dock">${island()}</div>`)
+  } else if (form === "e") {
+    strip.innerHTML = island()
   } else if (form === "b") {
     strip.hidden = true
     rail.hidden = false
@@ -809,7 +1017,7 @@ function buildStatus() {
   }
   // 練った案は、手順を計画の一覧の行の中で開く。
   const steps = one("#steps")
-  steps.hidden = !open || form === "d"
+  steps.hidden = !open || form === "d" || form === "e"
   if (!steps.hidden) {
     steps.innerHTML = stepsList()
   }
@@ -846,7 +1054,7 @@ function buildDock() {
   if (moment === "ask") {
     draft.placeholder = "選択肢以外の答えを書く…"
     // 案B は、答え待ちの知らせを入力欄の頭の1行が持つ。練った案は、お伺いが見えているあいだは帯を出さない（ADR 0059 論点 5 の決まりどおり）。ほかは入力欄の上の帯。
-    if (form !== "b" && form !== "d") {
+    if (form !== "b" && form !== "d" && form !== "e") {
       band.hidden = false
       band.innerHTML = `<span>${PACK.name} が質問しています。選択肢から選ぶか、ここに書いて答えられます</span><button class="quiet-button" type="button">選択肢へ<kbd class="key">↑</kbd></button>`
     }
@@ -961,6 +1169,8 @@ function markBar() {
       fold: fold ? "1" : "",
       many,
       at: params.get("at") ?? "",
+      place: place === "dock" ? "dock" : "",
+      live: params.get("live") === "1" ? "1" : "",
     }[name]
     for (const link of bar.querySelectorAll("a")) {
       const query = new URLSearchParams(location.search)
@@ -1030,7 +1240,73 @@ buildLane()
 buildDock()
 buildFlow()
 markBar()
+/**
+ * ?live=1 で、新案のいまの手順を数秒ごとに入れ替え、秒を毎秒進める（手触りを確かめる用。撮影では使わない）。
+ * 入れ替えは古い一文が上へ抜け、新しい一文が下から入る。手順を4つ進めるごとにフェーズが1つ済み、下線の区切りが満ちる。
+ */
+const LIVE_ACTS = [
+  ["sort-order.ts", "を読んでいます"],
+  ["sortOrder", "を探しています"],
+  ["sort-order.ts", "を書き換えています"],
+  ["pnpm run test sort-order", "を走らせています"],
+]
+
+/** 古い中身を上へ抜き、新しい中身を下から入れる。 */
+function roll(element, html) {
+  element.classList.add("is-leaving")
+  setTimeout(() => {
+    element.innerHTML = html
+    element.classList.replace("is-leaving", "is-entering")
+    requestAnimationFrame(() => requestAnimationFrame(() => element.classList.remove("is-entering")))
+  }, 200)
+}
+
+function startLive() {
+  if (form !== "e" || params.get("live") !== "1" || ISLAND[moment].tone !== undefined) {
+    return
+  }
+  const plan = islandPlan()
+  const now = one(".isl-row .isl-now")
+  const head = one(".isl-row .isl-head")
+  const position = one(".isl-row .isl-pos b")
+  const eta = one(".isl-row .isl-eta")
+  const segments = [...document.querySelectorAll(".isl-seg")]
+  // 目安の残りは、フェーズが1つ済むたびに上下の端を詰める（下の端は1分、上の端は2分より縮めない）。
+  let range = islandEta(plan, ISLAND[moment]) ?? [1, 2]
+  let seconds = Number.parseInt(one(".isl-row .isl-time").textContent, 10) || 0
+  let index = 2
+  let swaps = 0
+  let current = plan.current
+  setInterval(() => {
+    seconds += 1
+    const time = one(".isl-row .isl-time")
+    if (time !== null) {
+      time.textContent = `${seconds}秒`
+    }
+  }, 1000)
+  setInterval(() => {
+    index = (index + 1) % LIVE_ACTS.length
+    swaps += 1
+    seconds = 0
+    roll(now, `${islandNow(LIVE_ACTS[index])}<time class="isl-time">0秒</time>`)
+    if (swaps % 4 === 0 && current < plan.names.length - 1) {
+      segments[current].dataset.state = "done"
+      segments[current].classList.add("is-landing")
+      current += 1
+      segments[current].dataset.state = "current"
+      position.textContent = String(current + 1)
+      range = [Math.max(1, range[0] - 2), Math.max(2, range[1] - 2)]
+      if (eta !== null) {
+        eta.textContent = `あと${range[0]}〜${range[1]}分`
+      }
+      roll(head, plan.names[current])
+      document.title = `${current + 1}/${plan.names.length} ${plan.names[current]} · tsukumo`
+    }
+  }, 3600)
+}
+
 portrait.addEventListener("load", layout)
 window.addEventListener("resize", layout)
 one("#scroller").addEventListener("scroll", aimTail, { passive: true })
 layout()
+startLive()
