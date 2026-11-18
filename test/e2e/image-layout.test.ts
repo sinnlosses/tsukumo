@@ -19,6 +19,7 @@ test.describe("レポートの画像の寸法", () => {
       cwdFiles: [{ path: "report-image-fixture/tall.png", content: fictionalPng(180, 900) }],
     })
 
+    await room.waitForEvent("turn-finished")
     const image = room.page.getByAltText("架空の縦に長い画面")
     await image.waitFor()
     await expect.poll(() => naturalWidthOf(image)).toBeGreaterThan(0)
@@ -33,20 +34,22 @@ test.describe("レポートの画像の寸法", () => {
   })
 
   test("画像の読み込みの前後で、画像の次の要素の位置が動かない", async ({ run }) => {
+    let release: () => void = () => undefined
+    const released = new Promise<void>((resolve) => {
+      release = resolve
+    })
     const room = await run.open({
       scenario: "image-layout-shift",
       scene: "report-image",
       viewport: "wide",
       domRoots: ["main"],
       cwdFiles: [{ path: "report-image-fixture/after.png", content: fictionalPng(8, 4) }],
-    })
-    let release: () => void = () => undefined
-    const released = new Promise<void>((resolve) => {
-      release = resolve
-    })
-    await room.page.route(REPORT_IMAGE_ROUTE, async (route) => {
-      await released
-      await route.continue()
+      preparePage: async (page) => {
+        await page.route(REPORT_IMAGE_ROUTE, async (route) => {
+          await released
+          await route.continue()
+        })
+      },
     })
 
     // 確定を待つ草稿にも同じ画像が出る。草稿から記録の紙へ替わる前に測らないよう、ターンの終わりを待ってから測る。

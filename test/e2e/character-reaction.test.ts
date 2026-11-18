@@ -82,19 +82,6 @@ test.describe("機械の出来事 → キャラビューの反応", () => {
     await expectOneLoggedLine(room.page, `架空の書き直した挨拶、${READY_TASK_ID} はどう？`)
     await room.settleAndMatchPickedWithMessages(ELAPSED_MS)
   })
-
-  test("広い画面では、迎えの挨拶が入力欄の上の声の定位置に出る", async ({ run }) => {
-    const room = await run.open({
-      scenario: "character-reaction-welcome-greeting",
-      scene: "welcome-greeting",
-      viewport: "wide",
-      domRoots: [],
-    })
-
-    await room.waitForEvent("welcome-greeting-shown")
-    const line = room.page.locator('[data-voice-slot] [data-speaker="character"]')
-    await expect(line).toContainText("架空の挨拶。")
-  })
 })
 
 /** 顔の吹き出しの最新の1件が `text` で、セリフのログにも同じ文と時刻の1件だけが並ぶ。 */

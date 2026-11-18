@@ -30,6 +30,8 @@ test.describe("狭い画面の答え待ちのカード", () => {
       expect(dispatchBox).not.toBeNull()
       return (dispatchBox?.y ?? 0) - ((cardBox?.y ?? 0) + (cardBox?.height ?? 0))
     }
+    // 本文の読み込み待ちが残るあいだは高さが変わりうるので、済んでから基準の位置を読む。
+    await expect(page.locator('[data-region="main"] [aria-busy="true"]')).toHaveCount(0)
     const before = await card.boundingBox()
     // 本文を転がるほど長くして、いちばん下まで転がす。
     const scrolled = await page.evaluate(() => {
@@ -44,9 +46,8 @@ test.describe("狭い画面の答え待ちのカード", () => {
       return main.scrollTop
     })
     expect(scrolled).toBeGreaterThan(0)
-    const after = await card.boundingBox()
 
-    expect(after?.y).toBe(before?.y)
+    await expect.poll(async () => (await card.boundingBox())?.y).toBe(before?.y)
     expect(await gap()).toBeLessThanOrEqual(1)
     const overflow = await page.evaluate(() => ({
       x: document.documentElement.scrollWidth - document.documentElement.clientWidth,
@@ -78,11 +79,15 @@ test.describe("狭い画面の答え待ちのカード", () => {
     expect(await detail.count()).toBe(0)
     await sheet.getByRole("radio", { name: /まとめて張り替える/ }).click()
     await detail.waitFor()
-    const [last, panel] = await Promise.all([
-      sheet.getByRole("radio", { name: /やめておく/ }).boundingBox(),
-      detail.boundingBox(),
-    ])
-    expect(last !== null && panel !== null && panel.y >= last.y + last.height).toBe(true)
+    await expect
+      .poll(async () => {
+        const [last, panel] = await Promise.all([
+          sheet.getByRole("radio", { name: /やめておく/ }).boundingBox(),
+          detail.boundingBox(),
+        ])
+        return last !== null && panel !== null && panel.y >= last.y + last.height
+      })
+      .toBe(true)
     const overflow = await page.evaluate(() => {
       const body = document.querySelector('dialog[open] [class*="bottom-sheet-body"]')
       return {

@@ -2,6 +2,14 @@
   "name": "question-preview-image",
   "steps": [
     {
+      "afterMs": 1300,
+      "event": {
+        "kind": "speech",
+        "text": "画面の形を画像で並べたよ。",
+        "expression": "excited"
+      }
+    },
+    {
       "afterMs": 1500,
       "event": {
         "kind": "pending-changed",
@@ -41,14 +49,6 @@
             ]
           }
         ]
-      }
-    },
-    {
-      "afterMs": 1700,
-      "event": {
-        "kind": "speech",
-        "text": "画面の形を画像で並べたよ。",
-        "expression": "excited"
       }
     }
   ]

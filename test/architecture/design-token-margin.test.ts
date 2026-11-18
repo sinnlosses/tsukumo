@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest"
 
-import { REPOSITORY_SCAN_TIMEOUT_MS } from "../fixture/repository-scan-timeout.ts"
 import {
   compareWithLimits,
   countByBrowserCss,
@@ -8,22 +7,18 @@ import {
 } from "./design-token-declaration.ts"
 
 describe("design-token-margin", () => {
-  it(
-    "部品の CSS が 0 でない margin を宣言する数が、ファイルごとの上限を超えない",
-    () => {
-      const { increased, decreased } = compareWithLimits(
-        countByBrowserCss(marginDeclarationCount),
-        MARGIN_DECLARATION_LIMITS,
-      )
+  it("部品の CSS が 0 でない margin を宣言する数が、ファイルごとの上限を超えない", () => {
+    const { increased, decreased } = compareWithLimits(
+      countByBrowserCss(marginDeclarationCount),
+      MARGIN_DECLARATION_LIMITS,
+    )
 
-      expect(increased, "部品が外の余白を持たない。親の gap で間を決める").toBe("")
-      expect(
-        decreased,
-        "margin の宣言が減った。MARGIN_DECLARATION_LIMITS の件数を減らす（0 になったら行を消す）",
-      ).toBe("")
-    },
-    REPOSITORY_SCAN_TIMEOUT_MS,
-  )
+    expect(increased, "部品が外の余白を持たない。親の gap で間を決める").toBe("")
+    expect(
+      decreased,
+      "margin の宣言が減った。MARGIN_DECLARATION_LIMITS の件数を減らす（0 になったら行を消す）",
+    ).toBe("")
+  })
 })
 
 describe("marginDeclarationCount", () => {

@@ -11,7 +11,6 @@ import {
   TASK_WRITING_LIMIT,
 } from "../../scripts/shared/addition-budget.ts"
 import { REPOSITORY_ROOT } from "../../scripts/shared/repository-root.ts"
-import { REPOSITORY_SCAN_TIMEOUT_MS } from "../fixture/repository-scan-timeout.ts"
 
 // 常設の文章の上限の値は、各 LIMIT 定数だけが持つ。
 // 文書は定数の名前で指し、値を字数として書き写さない。
@@ -53,22 +52,18 @@ describe("常設の文章の上限の値", () => {
     expect(findLimitCopies("定数名で指す", [6504])).toEqual([])
   })
 
-  it(
-    "docs/（history を除く）・AGENTS.md・README.md に字数として書き写さない",
-    () => {
-      const files = [
-        ...listMarkdownFiles(join(REPOSITORY_ROOT, "docs")),
-        join(REPOSITORY_ROOT, "AGENTS.md"),
-        join(REPOSITORY_ROOT, "README.md"),
-      ]
-      const copies = files.flatMap((path) =>
-        findLimitCopies(readFileSync(path, "utf8"), LIMITS).map(
-          (limit) => `${relative(REPOSITORY_ROOT, path)}: ${limit}`,
-        ),
-      )
+  it("docs/（history を除く）・AGENTS.md・README.md に字数として書き写さない", () => {
+    const files = [
+      ...listMarkdownFiles(join(REPOSITORY_ROOT, "docs")),
+      join(REPOSITORY_ROOT, "AGENTS.md"),
+      join(REPOSITORY_ROOT, "README.md"),
+    ]
+    const copies = files.flatMap((path) =>
+      findLimitCopies(readFileSync(path, "utf8"), LIMITS).map(
+        (limit) => `${relative(REPOSITORY_ROOT, path)}: ${limit}`,
+      ),
+    )
 
-      expect(copies).toEqual([])
-    },
-    REPOSITORY_SCAN_TIMEOUT_MS,
-  )
+    expect(copies).toEqual([])
+  })
 })

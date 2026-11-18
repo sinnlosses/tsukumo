@@ -15,6 +15,9 @@ const PHONE_ELAPSED_MS = 5_000
 
 const RESIZE_SETTLE_TIMEOUT_MS = 15_000
 
+/** 撮ったあと（時計を止めたあと）に板が閉じるのを待つとき、1回に進める時計の幅（ms）。 */
+const CLOSE_CLOCK_STEP_MS = 100
+
 function railToggle(page: Page): Locator {
   return page.getByRole("button", { name: "サイドバー", exact: true })
 }
@@ -308,11 +311,15 @@ test.describe("会話の画面の段", () => {
     await page.getByRole("dialog", { name: "中間レポート" }).waitFor()
     expect(await page.evaluate(() => document.querySelector("dialog:modal") !== null)).toBe(true)
 
+    // 板は広げると閉じる。撮ったあとは時計が止まっていて閉じる動きのタイマーが鳴らないので、進めながら待つ。
     await room.resize(VIEWPORTS.large)
     await sidebar(page).waitFor()
-    await page.waitForFunction(() => document.querySelector("dialog:modal") === null, undefined, {
-      timeout: RESIZE_SETTLE_TIMEOUT_MS,
-    })
+    await expect
+      .poll(async () => {
+        await page.clock.runFor(CLOSE_CLOCK_STEP_MS)
+        return page.evaluate(() => document.querySelector("dialog:modal") === null)
+      })
+      .toBe(true)
     await page
       .getByRole("button", { name: "手順", exact: false })
       .first()

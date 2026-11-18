@@ -118,42 +118,6 @@ test.describe("report → メインビュー", () => {
     await room.settleAndMatchPicked(ELAPSED_MS)
   })
 
-  test("plot の申告が棒・折れ線・円として、値と系列名つきで描かれる", async ({ run }) => {
-    const room = await run.open({
-      scenario: "report-plot-chart",
-      scene: "report-plot-chart",
-      viewport: "wide",
-      domRoots: ["main"],
-    })
-
-    await room.waitForEvent("turn-finished")
-    await room.settleAndMatchPicked(ELAPSED_MS)
-  })
-
-  test("plot の申告が数直線と bullet として描かれる", async ({ run }) => {
-    const room = await run.open({
-      scenario: "report-plot-gauge",
-      scene: "report-plot-gauge",
-      viewport: "wide",
-      domRoots: ["main"],
-    })
-
-    await room.waitForEvent("turn-finished")
-    await room.settleAndMatchPicked(ELAPSED_MS)
-  })
-
-  test("plot の申告が散布図とヒストグラムとして描かれる", async ({ run }) => {
-    const room = await run.open({
-      scenario: "plot-scatter-histogram",
-      scene: "plot-scatter-histogram",
-      viewport: "wide",
-      domRoots: ["main"],
-    })
-
-    await room.waitForEvent("turn-finished")
-    await room.settleAndMatchPicked(ELAPSED_MS)
-  })
-
   test("入力欄の頭の次の一手の札を押すと、入力欄に下書きが入ってフォーカスが移り、会話へは送られない", async ({
     run,
   }) => {

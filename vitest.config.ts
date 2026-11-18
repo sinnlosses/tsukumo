@@ -1,6 +1,8 @@
 import { defineConfig } from "vitest/config"
 
 import { WITHOUT_UNUSED_EXPORT_ENV } from "./scripts/dev/lib/check-stage.ts"
+import { CONVENTION_TEST_PATHS } from "./scripts/dev/lib/convention-test.ts"
+import { REPOSITORY_SCAN_TIMEOUT_MS } from "./test/fixture/repository-scan-timeout.ts"
 
 // DOM のグローバルを借りるテスト。ほかのテストには happy-dom を読ませない。
 export const DOM_TEST_FILES = [
@@ -14,6 +16,9 @@ const GLOBAL_SETUP_FILES = [
   "./test/beads-template-setup.ts",
   "./test/architecture/source-table-setup.ts",
 ]
+const CONVENTION_TEST_GLOBS = CONVENTION_TEST_PATHS.map(
+  (directory) => `${directory}**/*.test.{ts,tsx}`,
+)
 const DOM_SETUP_FILES = ["./test/dom-setup.ts", "./test/popover-setup.ts"]
 
 // 指定すると既定の2つ（package.json・vitest/vite の設定）が上書きされるので、先頭に書き足す。
@@ -60,10 +65,23 @@ export default defineConfig({
             "**/node_modules/**",
             "test/e2e/**",
             ...DOM_TEST_FILES,
+            ...CONVENTION_TEST_GLOBS,
+          ],
+        },
+      },
+      // リポジトリ全体を読むので、並べて走る検証の負荷で既定の 5 秒を超える。
+      {
+        extends: true,
+        test: {
+          name: "convention",
+          include: CONVENTION_TEST_GLOBS,
+          exclude: [
+            "**/node_modules/**",
             ...(process.env[WITHOUT_UNUSED_EXPORT_ENV] === "1"
               ? ["test/architecture/unused-export.test.ts"]
               : []),
           ],
+          testTimeout: REPOSITORY_SCAN_TIMEOUT_MS,
         },
       },
     ],

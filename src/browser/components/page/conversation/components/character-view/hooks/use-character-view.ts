@@ -202,7 +202,7 @@ export function useCharacterView(): CharacterViewModel {
       releaseSpeech()
       replayArrival(nowEpochMilliseconds())
       requestAnimationFrame(() => {
-        scrollToFollowedRow(reducedMotion)
+        scrollToFollowedRow()
       })
     },
     onToggleSpeech: toggleSpeech,

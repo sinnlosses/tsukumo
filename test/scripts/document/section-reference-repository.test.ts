@@ -20,7 +20,6 @@ import {
   formatStrayReference,
 } from "../../../scripts/document/section-reference.ts"
 import { REPOSITORY_ROOT } from "../../../scripts/shared/repository-root.ts"
-import { REPOSITORY_SCAN_TIMEOUT_MS } from "../../fixture/repository-scan-timeout.ts"
 import { useTempDir } from "../../fixture/temp-dir.ts"
 import { FROZEN_HUB_REFERENCE_COUNTS } from "./lib/frozen-hub-reference.ts"
 
@@ -30,45 +29,29 @@ import { FROZEN_HUB_REFERENCE_COUNTS } from "./lib/frozen-hub-reference.ts"
 // `node scripts/document/find-stray-reference.ts`。
 
 describe("節の参照", () => {
-  it(
-    "引いている句はすべて参照先のファイルに残っている",
-    () => {
-      expect(collectStrayReferences(REPOSITORY_ROOT).map(formatStrayReference)).toEqual([])
-    },
-    REPOSITORY_SCAN_TIMEOUT_MS,
-  )
+  it("引いている句はすべて参照先のファイルに残っている", () => {
+    expect(collectStrayReferences(REPOSITORY_ROOT).map(formatStrayReference)).toEqual([])
+  })
 
-  it(
-    "docs/ 以下の .md を指すパスはすべて実在する",
-    () => {
-      expect(collectMissingFileReferences(REPOSITORY_ROOT).map(formatMissingFileReference)).toEqual(
-        [],
-      )
-    },
-    REPOSITORY_SCAN_TIMEOUT_MS,
-  )
+  it("docs/ 以下の .md を指すパスはすべて実在する", () => {
+    expect(collectMissingFileReferences(REPOSITORY_ROOT).map(formatMissingFileReference)).toEqual(
+      [],
+    )
+  })
 
-  it(
-    "ハブを句付きで指す参照は、凍結した一覧の件数と合う",
-    () => {
-      const actual = countBySource(collectHubReferences(REPOSITORY_ROOT))
-      expect(
-        findHubReferenceDrifts(actual, FROZEN_HUB_REFERENCE_COUNTS).map(formatHubReferenceDrift),
-      ).toEqual([])
-    },
-    REPOSITORY_SCAN_TIMEOUT_MS,
-  )
+  it("ハブを句付きで指す参照は、凍結した一覧の件数と合う", () => {
+    const actual = countBySource(collectHubReferences(REPOSITORY_ROOT))
+    expect(
+      findHubReferenceDrifts(actual, FROZEN_HUB_REFERENCE_COUNTS).map(formatHubReferenceDrift),
+    ).toEqual([])
+  })
 
-  it(
-    "文書が指す test/・scripts/・src/ のパスはすべて実在する",
-    () => {
-      expect(
-        collectMissingSourcePathReferences(REPOSITORY_ROOT).map(formatMissingFileReference),
-        "これから置くファイルは、ディレクトリとファイル名を分けて書く（`scripts/shared/` に置く `x.ts` のように、パス全体をバッククォートで囲まない。拾う書き方は `scripts/document/source-path-reference.ts` の冒頭）",
-      ).toEqual([])
-    },
-    REPOSITORY_SCAN_TIMEOUT_MS,
-  )
+  it("文書が指す test/・scripts/・src/ のパスはすべて実在する", () => {
+    expect(
+      collectMissingSourcePathReferences(REPOSITORY_ROOT).map(formatMissingFileReference),
+      "これから置くファイルは、ディレクトリとファイル名を分けて書く（`scripts/shared/` に置く `x.ts` のように、パス全体をバッククォートで囲まない。拾う書き方は `scripts/document/source-path-reference.ts` の冒頭）",
+    ).toEqual([])
+  })
 })
 
 // このファイル自身も拾われる側なので、`docs/` で始まる `.md` のパスは定数から組み立てて書く。
@@ -79,13 +62,9 @@ const HISTORY = `${DOCS}/history`
 describe("作業ツリーから外した記録への参照", () => {
   const tempDir = useTempDir("history-reference")
 
-  it(
-    "src/・scripts/・docs/ に tasks.md・progress.md を指す参照が無い",
-    () => {
-      expect(collectHistoryFileReferences(REPOSITORY_ROOT)).toEqual([])
-    },
-    REPOSITORY_SCAN_TIMEOUT_MS,
-  )
+  it("src/・scripts/・docs/ に tasks.md・progress.md を指す参照が無い", () => {
+    expect(collectHistoryFileReferences(REPOSITORY_ROOT)).toEqual([])
+  })
 
   it("src/・scripts/・docs/ の中の参照を拾い、残す記録・ディレクトリ名だけ・history 自身・test/ は拾わない", () => {
     const root = tempDir()

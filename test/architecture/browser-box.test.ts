@@ -2,7 +2,6 @@ import { existsSync, readdirSync } from "node:fs"
 
 import { describe, expect, it } from "vitest"
 
-import { REPOSITORY_SCAN_TIMEOUT_MS } from "../fixture/repository-scan-timeout.ts"
 import {
   featureReadersOf,
   listSourceFiles,
@@ -75,34 +74,30 @@ const KEPT_SHARED_FILES = {
 } as const satisfies Record<string, string>
 
 describe("browser/ の機能をまたぐ箱", () => {
-  it(
-    "browser/lib/・domain/・stores/・hooks/・components/frame/ 直下に、1つの機能だけが読むファイルは無い",
-    () => {
-      const files = listSourceFiles(SRC_ROOT).filter(
-        (relPath) =>
-          SHARED_BROWSER_BOXES.some((box) => relPath.startsWith(`browser/${box}/`)) ||
-          isDirectBrowserComponentsFrameFile(relPath),
+  it("browser/lib/・domain/・stores/・hooks/・components/frame/ 直下に、1つの機能だけが読むファイルは無い", () => {
+    const files = listSourceFiles(SRC_ROOT).filter(
+      (relPath) =>
+        SHARED_BROWSER_BOXES.some((box) => relPath.startsWith(`browser/${box}/`)) ||
+        isDirectBrowserComponentsFrameFile(relPath),
+    )
+    expect(files.length).toBeGreaterThan(0)
+
+    const offenders = files.flatMap((relPath) => {
+      if (relPath in KEPT_SHARED_FILES) {
+        return []
+      }
+      const readers = featureReadersOf(
+        relPath,
+        "browser/",
+        (path) => browserFeatureOf(path)?.name ?? uiPartOf(path),
       )
-      expect(files.length).toBeGreaterThan(0)
+      return readers.features.length === 1 && readers.outsideFeatureCount === 0
+        ? [`src/${relPath}（読むのは ${readers.features.join("")} だけ）`]
+        : []
+    })
 
-      const offenders = files.flatMap((relPath) => {
-        if (relPath in KEPT_SHARED_FILES) {
-          return []
-        }
-        const readers = featureReadersOf(
-          relPath,
-          "browser/",
-          (path) => browserFeatureOf(path)?.name ?? uiPartOf(path),
-        )
-        return readers.features.length === 1 && readers.outsideFeatureCount === 0
-          ? [`src/${relPath}（読むのは ${readers.features.join("")} だけ）`]
-          : []
-      })
-
-      expect(offenders.join("\n")).toBe("")
-    },
-    REPOSITORY_SCAN_TIMEOUT_MS,
-  )
+    expect(offenders.join("\n")).toBe("")
+  })
 })
 
 // `components/ui/` の置き方（docs/architecture/directory.md「1部品1フォルダは真似しない」の例外）を検査で守る。
@@ -111,37 +106,33 @@ describe("browser/ の機能をまたぐ箱", () => {
 // （`index.tsx`）で束ねていないかは、ここが `<部品>.tsx` の存在を見ることで同時に落ちる
 // （`index.tsx` しか無いディレクトリは `<部品>.tsx` が無いので違反になる）。
 describe("components/ui/ の置き方", () => {
-  it(
-    "components/ui/ 直下にファイルは無く、ui/<部品>/ には <部品>.tsx がある",
-    () => {
-      const files = listSourceFiles(SRC_ROOT).filter((relPath) =>
-        relPath.startsWith("browser/components/ui/"),
-      )
-      expect(files.length).toBeGreaterThan(0)
+  it("components/ui/ 直下にファイルは無く、ui/<部品>/ には <部品>.tsx がある", () => {
+    const files = listSourceFiles(SRC_ROOT).filter((relPath) =>
+      relPath.startsWith("browser/components/ui/"),
+    )
+    expect(files.length).toBeGreaterThan(0)
 
-      const directFiles = files.filter((relPath) => relPath.split("/").length === 4)
-      const directories = [
-        ...new Set(
-          files
-            .filter((relPath) => relPath.split("/").length >= 5)
-            .map((relPath) => relPath.split("/")[3]),
-        ),
-      ]
-      const directoriesMissingComponent = directories.filter(
-        (name) => !files.includes(`browser/components/ui/${name}/${name}.tsx`),
-      )
+    const directFiles = files.filter((relPath) => relPath.split("/").length === 4)
+    const directories = [
+      ...new Set(
+        files
+          .filter((relPath) => relPath.split("/").length >= 5)
+          .map((relPath) => relPath.split("/")[3]),
+      ),
+    ]
+    const directoriesMissingComponent = directories.filter(
+      (name) => !files.includes(`browser/components/ui/${name}/${name}.tsx`),
+    )
 
-      const offenders = [
-        ...directFiles.map((relPath) => `src/${relPath}（components/ui/ の直下に置かれている）`),
-        ...directoriesMissingComponent.map(
-          (name) => `browser/components/ui/${name}/ に ${name}.tsx が無い`,
-        ),
-      ]
+    const offenders = [
+      ...directFiles.map((relPath) => `src/${relPath}（components/ui/ の直下に置かれている）`),
+      ...directoriesMissingComponent.map(
+        (name) => `browser/components/ui/${name}/ に ${name}.tsx が無い`,
+      ),
+    ]
 
-      expect(offenders.join("\n")).toBe("")
-    },
-    REPOSITORY_SCAN_TIMEOUT_MS,
-  )
+    expect(offenders.join("\n")).toBe("")
+  })
 })
 
 // ページの形（`docs/architecture/directory.md`「ページの形」）。`components/page/<ページ>/` の直下は
@@ -182,37 +173,25 @@ const PAGE_ROOT_RULE: PageNodeRule = {
 }
 
 describe("components/page/ の形", () => {
-  it(
-    "ページ・部品の直下は、名前から作る対・CSS・domain/・hooks/・components/（と部品の概念のディレクトリ）だけ",
-    () => {
-      const offenders = BROWSER_SCREENS.flatMap((screen) =>
-        pageNodeViolations(`browser/${screen}`, screen.split("/").pop() ?? "", PAGE_ROOT_RULE),
-      )
+  it("ページ・部品の直下は、名前から作る対・CSS・domain/・hooks/・components/（と部品の概念のディレクトリ）だけ", () => {
+    const offenders = BROWSER_SCREENS.flatMap((screen) =>
+      pageNodeViolations(`browser/${screen}`, screen.split("/").pop() ?? "", PAGE_ROOT_RULE),
+    )
 
-      expect(offenders.join("\n")).toBe("")
-    },
-    REPOSITORY_SCAN_TIMEOUT_MS,
-  )
+    expect(offenders.join("\n")).toBe("")
+  })
 
-  it(
-    "部品のディレクトリの外から import してよいのは <部品>.tsx だけ（main.tsx / app.tsx とテストは除く）",
-    () => {
-      const offenders = componentBoundaryViolations()
+  it("部品のディレクトリの外から import してよいのは <部品>.tsx だけ（main.tsx / app.tsx とテストは除く）", () => {
+    const offenders = componentBoundaryViolations()
 
-      expect(offenders.join("\n")).toBe("")
-    },
-    REPOSITORY_SCAN_TIMEOUT_MS,
-  )
+    expect(offenders.join("\n")).toBe("")
+  })
 
-  it(
-    "部品の <部品>.tsx は、自分の components/ と概念のディレクトリの中を export … from で再エクスポートしない",
-    () => {
-      const offenders = componentReexportViolations()
+  it("部品の <部品>.tsx は、自分の components/ と概念のディレクトリの中を export … from で再エクスポートしない", () => {
+    const offenders = componentReexportViolations()
 
-      expect(offenders.join("\n")).toBe("")
-    },
-    REPOSITORY_SCAN_TIMEOUT_MS,
-  )
+    expect(offenders.join("\n")).toBe("")
+  })
 })
 
 /** ページ・部品1件の直下を検査する（`docs/architecture/directory.md`「ページの形」）。 */

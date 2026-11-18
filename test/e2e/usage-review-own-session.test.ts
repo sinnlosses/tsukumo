@@ -31,6 +31,8 @@ test.describe("トークンの画面の見直し", () => {
     })
     const work = room.page
     await room.waitForEvent("tool-started")
+    // 取得中の表示が済んでから基準を読む（済む前に読むと、あとで中身が変わって食い違う）。
+    await expect(work.locator(`${MAIN_VIEW} [aria-busy="true"]`)).toHaveCount(0)
     const before = await mainViewContent(work)
 
     const tokens = await work.context().newPage()
@@ -47,7 +49,7 @@ test.describe("トークンの画面の見直し", () => {
     await section.getByText("架空のツールの結果が大きい").waitFor()
     expect(await section.getByRole("article").count()).toBe(2)
 
-    expect(await mainViewContent(work)).toEqual(before)
+    await expect.poll(() => mainViewContent(work)).toEqual(before)
     await tokens.close()
   })
 })

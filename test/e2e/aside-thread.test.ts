@@ -34,18 +34,17 @@ test.describe("委譲中の補足メッセージ", () => {
     await room.waitForEvent("turn-finished", ASIDE_TURN_FINISHED_OCCURRENCE)
     await main.locator('[data-speaker="user"]', { hasText: "いまどこ？" }).waitFor()
 
-    expect(await main.locator('section[aria-label="進み具合"]').innerText()).toContain(
-      "委譲先に任せる",
-    )
-    expect(await main.locator("[data-work-strip] [data-work-strip-now]").innerText()).toMatch(
+    await expect(main.locator('section[aria-label="進み具合"]')).toContainText("委譲先に任せる", {
+      useInnerText: true,
+    })
+    await expect(main.locator("[data-work-strip] [data-work-strip-now]")).toContainText(
       /背景で\s*架空の委譲/u,
+      { useInnerText: true },
     )
-    expect(
-      await main
-        .locator('[data-speaker="character"]', { hasText: "いまは委譲先が段2を進めている" })
-        .innerText(),
-    ).toContain("いまは委譲先が段2を進めているところ。")
-    expect(await room.page.locator('[data-region="character"] [data-outline-turn]').count()).toBe(1)
+    await expect(
+      main.locator('[data-speaker="character"]', { hasText: "いまは委譲先が段2を進めている" }),
+    ).toContainText("いまは委譲先が段2を進めているところ。", { useInnerText: true })
+    await expect(room.page.locator('[data-region="character"] [data-outline-turn]')).toHaveCount(1)
     await room.settleAndMatchPickedWithMessages(ELAPSED_MS)
   })
 })

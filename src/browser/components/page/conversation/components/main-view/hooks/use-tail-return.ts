@@ -6,6 +6,7 @@ import { useRef, useState, type RefObject } from "react"
 import { useExternalSync } from "../../../../../../hooks/use-external-sync.ts"
 import { useMountEffect } from "../../../../../../hooks/use-mount-effect.ts"
 import { scrollerOf } from "../../../../../../utils/scroller.ts"
+import { smoothScrollBehavior } from "../../../../../../utils/smooth-scroll.ts"
 import {
   anchorAfterScroll,
   tailReturnOf,
@@ -64,7 +65,7 @@ export function useTailReturn(
         return
       }
       const scroller = scrollerOf(root)
-      scroller.scrollTo({ top: scroller.scrollHeight, behavior: "smooth" })
+      scroller.scrollTo({ top: scroller.scrollHeight, behavior: smoothScrollBehavior() })
     },
   }
 }

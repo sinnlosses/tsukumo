@@ -42,7 +42,7 @@ import {
   nextAnimationFrame,
   type ResponseBaseline,
 } from "./scenario-wait.ts"
-import { assertNextStepGap, waitForQuietPoint } from "./scene-schedule.ts"
+import { sceneProgress, waitForQuietPoint } from "./scene-schedule.ts"
 
 /** 初回の説明を見たあとの状態を既定にして、ほかの期待値を揺らさない。 */
 const SEEN_FIRST_NOTES_SCRIPT = `(() => {
@@ -75,6 +75,11 @@ export type ScenarioOptions = {
   readonly domRoots: readonly DomRootName[]
   /** 起こす前に cwd へ置くファイル（cwd からの相対パスと中身の並び）。手元の画像など、場面が指すファイル。 */
   readonly cwdFiles?: readonly CwdFile[]
+  /**
+   * ページを開く前に掛ける細工（画像の応答を止める `page.route` など）。場面の手より先に要るもの。
+   * 開いたあとに掛けると、最初の静かな区切りから次の手までの間合いの検査に掛かる。
+   */
+  readonly preparePage?: (page: Page) => Promise<void>
 }
 
 /** サイドバーの使用量の3つ（コンテキスト・5時間・7日）の口の `title`。 */
@@ -85,6 +90,11 @@ const USAGE_GAUGE_TITLES = ["コンテキスト", "5時間", "7日"] as const
  * 渡した時点で、`opening` と名指しの場面の予定のうち最初の静かな区切り（`QUIET_GAP_MS`）までの手は届いている。
  */
 export type ScenarioRoom = {
+  /**
+   * 場面の手を何も待たずに取り出すと、渡した時点（最初の静かな区切り）から場面の予定の次の手まで
+   * 触り終える間合いがあることを確かめる（`SceneProgress.assertRoomToAct`）。
+   * 場面の手を待つ前に要る細工は `ScenarioOptions.preparePage` で渡す。
+   */
   readonly page: Page
   /**
    * 起こした tsukumo の cwd（`realpath` を通した絶対パス）。cwd の課題のファイルを読む
@@ -208,10 +218,13 @@ export async function openRoom(
 
   const messages = recordMessages(page)
   const responses = recordResponses(page)
+  await options.preparePage?.(page)
   await page.goto(viewUrl, { waitUntil: "domcontentloaded" })
   await waitForQuietPoint(messages, options.scene)
 
-  let lastAwaited: { readonly kind: string; readonly occurrence: number } | undefined
+  const progress = sceneProgress(options.scene)
+  /** 渡してからまだ何も待っていない（位置が渡した時点の静かな区切りのまま）。 */
+  let waitedNothing = true
 
   const replacements: readonly (readonly [string, string])[] = [
     // 長いものから置き換える（一時のディレクトリは互いの前置きにならないが、根は短い）。
@@ -236,9 +249,7 @@ export async function openRoom(
     readonly texts: Readonly<Record<ArtifactKind, string>>
     readonly outDir: string
   }> => {
-    if (lastAwaited !== undefined) {
-      assertNextStepGap(options.scenario, options.scene, lastAwaited)
-    }
+    progress.assertRoomToAct(options.scenario, "撮る")
     const outDir = path.join(OUTPUT_ROOT, options.scenario)
     mkdirSync(outDir, { recursive: true })
     // 撮る時刻へ進める前に、ターンの終わりに始まった取り直しを済ませる。
@@ -266,13 +277,19 @@ export async function openRoom(
   }
 
   return {
-    page,
+    get page() {
+      if (waitedNothing) {
+        progress.assertRoomToAct(options.scenario, "何も待たずに page を取り出した")
+      }
+      return page
+    },
     cwd: cwd.real,
     home: home.real,
     waitForEvent: async (kind, occurrence = 1) => {
       await messages.waitForEvent(kind, occurrence)
       await nextAnimationFrame(page)
-      lastAwaited = { kind, occurrence }
+      waitedNothing = false
+      progress.reach(kind, occurrence)
     },
     waitForTasksContaining: async (ids) => {
       await messages.waitForEventMatching("tasks-changed", (event) => {
@@ -284,16 +301,19 @@ export async function openRoom(
         const presentIds = new Set(order.map((id) => String(id).toLowerCase()))
         return ids.every((id) => presentIds.has(id.toLowerCase()))
       })
+      waitedNothing = false
       await nextAnimationFrame(page)
     },
     revealAfterResponse: async (target, { response, baseline }) => {
       const counted = await countedBefore(baseline, () => responses.count(response))
       await responses.waitForCount(response, counted + 1)
+      waitedNothing = false
       await advanceClockUntilVisible(page, target)
     },
     revealUsageAfterTurn: async (occurrence) => {
       await messages.waitForEvent("turn-finished", occurrence)
-      lastAwaited = { kind: "turn-finished", occurrence }
+      waitedNothing = false
+      progress.reach("turn-finished", occurrence)
       for (const title of USAGE_GAUGE_TITLES) {
         await advanceClockUntilVisible(
           page,
@@ -309,6 +329,8 @@ export async function openRoom(
           ? event["pending"].some((ask) => String(asRecord(ask)["id"]) === id)
           : false,
       )
+      waitedNothing = false
+      progress.reachPending(id)
       await nextAnimationFrame(page)
     },
     resize: async (viewport) => {

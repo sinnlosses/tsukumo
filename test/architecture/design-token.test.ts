@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest"
 
-import { REPOSITORY_SCAN_TIMEOUT_MS } from "../fixture/repository-scan-timeout.ts"
 import {
   compareWithLimits,
   countByBrowserCss,
@@ -12,22 +11,18 @@ import {
 } from "./design-token-declaration.ts"
 
 describe("design-token", () => {
-  it(
-    "src/browser/ の *.css で、theme.css 以外の余白・角丸・影・transition の時間の直書きが、除外の一覧の件数を超えない",
-    () => {
-      const { increased, decreased } = compareWithLimits(
-        countByBrowserCss((css) => hardcodedDeclarations(css).length),
-        EXCLUDED_DECLARATION_COUNTS,
-      )
+  it("src/browser/ の *.css で、theme.css 以外の余白・角丸・影・transition の時間の直書きが、除外の一覧の件数を超えない", () => {
+    const { increased, decreased } = compareWithLimits(
+      countByBrowserCss((css) => hardcodedDeclarations(css).length),
+      EXCLUDED_DECLARATION_COUNTS,
+    )
 
-      expect(increased, "直書きを増やしている。トークン（theme.css）を使う").toBe("")
-      expect(
-        decreased,
-        "直書きが減った。EXCLUDED_DECLARATION_COUNTS の件数を減らす（0 になったら行を消す）",
-      ).toBe("")
-    },
-    REPOSITORY_SCAN_TIMEOUT_MS,
-  )
+    expect(increased, "直書きを増やしている。トークン（theme.css）を使う").toBe("")
+    expect(
+      decreased,
+      "直書きが減った。EXCLUDED_DECLARATION_COUNTS の件数を減らす（0 になったら行を消す）",
+    ).toBe("")
+  })
 
   it("余白の判定は、0・auto・トークン・局所のつまみ・em・%・尺度に乗る calc・env() を含む値を通し、px・rem の直書きと尺度の外の calc を拒む", () => {
     const allowed = [

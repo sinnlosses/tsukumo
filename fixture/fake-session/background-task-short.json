@@ -69,20 +69,20 @@
       }
     },
     {
-      "afterMs": 2500,
+      "afterMs": 6500,
       "event": {
         "kind": "background-tasks-changed",
         "tasks": []
       }
     },
     {
-      "afterMs": 2600,
+      "afterMs": 6600,
       "event": {
         "kind": "turn-resumed"
       }
     },
     {
-      "afterMs": 2900,
+      "afterMs": 6900,
       "event": {
         "kind": "speech",
         "text": "短い背景の待ちが終わったよ。",
@@ -90,14 +90,14 @@
       }
     },
     {
-      "afterMs": 3200,
+      "afterMs": 7200,
       "event": {
         "kind": "utterance",
         "text": "## 短い背景の待ちが終わった\n\nこれは架空の本文で、実物の会話ではない。**依頼なしで始めた続きのターン**の報告で、前の本文は中間レポートに回る。"
       }
     },
     {
-      "afterMs": 3500,
+      "afterMs": 7500,
       "event": {
         "kind": "turn-finished",
         "outcome": {

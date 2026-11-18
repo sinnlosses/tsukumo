@@ -6,6 +6,7 @@ import { useRef, type RefObject } from "react"
 
 import { useExternalSync } from "../../../../../../hooks/use-external-sync.ts"
 import type { InquiryJump } from "../../../../../../stores/inquiry-jump.ts"
+import { smoothScrollBehavior } from "../../../../../../utils/smooth-scroll.ts"
 import type { InquiryModel } from "../../../stores/inquiry-answer.ts"
 
 /** 札の中で最初にフォーカスを受ける選択肢。 */
@@ -36,7 +37,7 @@ export function useInquiryScroll(
     if (askId === undefined) {
       return
     }
-    cardRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" })
+    cardRef.current?.scrollIntoView({ block: "nearest", behavior: smoothScrollBehavior() })
   }, [askId])
 
   useExternalSync(() => {
@@ -51,7 +52,7 @@ export function useInquiryScroll(
       heightRef.current = box.height
       // 利用者が札の頭を見ているときだけ送る。転がして札から離れていたら動かさない。
       if (grew && isTopInView(box, viewportOf(card))) {
-        card.scrollIntoView({ block: "nearest", behavior: "smooth" })
+        card.scrollIntoView({ block: "nearest", behavior: smoothScrollBehavior() })
       }
     })
     observer.observe(card)
@@ -64,7 +65,7 @@ export function useInquiryScroll(
     if (focusedLabel === undefined) {
       return
     }
-    cardRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" })
+    cardRef.current?.scrollIntoView({ block: "nearest", behavior: smoothScrollBehavior() })
   }, [focusedLabel])
 
   useExternalSync(() => {
@@ -73,7 +74,7 @@ export function useInquiryScroll(
     }
     handledSignalRef.current = jump.signal
     const card = cardRef.current
-    card?.scrollIntoView({ block: "nearest", behavior: "smooth" })
+    card?.scrollIntoView({ block: "nearest", behavior: smoothScrollBehavior() })
     if (jump.focus) {
       card?.querySelector<HTMLElement>(FIRST_CHOICE_SELECTOR)?.focus({ preventScroll: true })
     }

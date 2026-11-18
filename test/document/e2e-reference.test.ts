@@ -3,6 +3,7 @@ import { join } from "node:path"
 
 import { describe, expect, it } from "vitest"
 
+import { listSourcePaths } from "../../scripts/document/lib/source-file-list.ts"
 import { REPOSITORY_ROOT } from "../../scripts/shared/repository-root.ts"
 
 // E2E の期待値・`DOM_ROOT_SELECTORS` の口・疑似セッションの場面が、使い手のいないまま残らないことを見る。
@@ -16,16 +17,13 @@ function readText(path: string): string {
   return readFileSync(join(REPOSITORY_ROOT, path), "utf8")
 }
 
+const SOURCE_PATHS = listSourcePaths(REPOSITORY_ROOT)
+
 function listFiles(directory: string, extensions: readonly string[]): readonly string[] {
-  return readdirSync(join(REPOSITORY_ROOT, directory), { withFileTypes: true }).flatMap((entry) => {
-    const path = `${directory}/${entry.name}`
-    if (entry.isDirectory()) {
-      return entry.name === "node_modules" || entry.name === "expected"
-        ? []
-        : listFiles(path, extensions)
-    }
-    return extensions.some((extension) => entry.name.endsWith(extension)) ? [path] : []
-  })
+  return SOURCE_PATHS.filter(
+    (path) =>
+      path.startsWith(`${directory}/`) && extensions.some((extension) => path.endsWith(extension)),
+  )
 }
 
 /** 引用符・バッククォートで囲まれた文字列を、囲みを除いて全部拾う。 */

@@ -7,7 +7,10 @@ import { DOCUMENT_CHECK_TEST_PATHS } from "./check-stage.ts"
 
 const ARCHITECTURE_TEST_DIRECTORY = "test/architecture/"
 
-const CONVENTION_TEST_PATHS = [ARCHITECTURE_TEST_DIRECTORY, ...DOCUMENT_CHECK_TEST_PATHS] as const
+export const CONVENTION_TEST_PATHS = [
+  ARCHITECTURE_TEST_DIRECTORY,
+  ...DOCUMENT_CHECK_TEST_PATHS,
+] as const
 
 /**
  * テストファイルのパスに見える引数（`test/` で始まるか `.test.ts(x)` で終わる）があるときだけ、

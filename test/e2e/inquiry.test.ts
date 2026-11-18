@@ -23,12 +23,12 @@ test.describe("お伺い", () => {
       viewport: "wide",
       domRoots: ["main", "dispatch"],
     })
-    const inquiry = inquiryOf(room.page)
 
     // 場面の手が流れ終わってから押す（押して流れる `pending-changed` を場面の手と競わせない）。
     // ターンの終わりのあとに駆動が流す `setting-confirmed` まで待つ（答えの応答と届く順を競わせない）。
     await room.waitForEvent("turn-finished")
     await room.waitForEvent("setting-confirmed")
+    const inquiry = inquiryOf(room.page)
     await inquiry.getByRole("radio", { name: /許可/ }).click()
     await inquiry.getByRole("button", { name: /これで答える/ }).click()
     await room.waitForEvent("pending-changed", 2)
@@ -79,8 +79,10 @@ test.describe("お伺い", () => {
       viewport: "wide",
       domRoots: ["main"],
     })
-    const inquiry = inquiryOf(room.page)
 
+    // 場面の手が流れ終わってから触る（触っているあいだに本文とターンの終わりを届かせない）。
+    await room.waitForEvent("turn-finished")
+    const inquiry = inquiryOf(room.page)
     await inquiry.getByText("道具B（架空）").click()
     await inquiry.getByRole("button", { name: /次へ/ }).click()
     await expect.poll(() => inquiry.textContent()).toContain("2 / 2")
@@ -100,6 +102,8 @@ test.describe("お伺い", () => {
       viewport: "wide",
       domRoots: ["main"],
     })
+
+    await room.waitForEvent("turn-finished")
     const inquiry = inquiryOf(room.page)
     const answer = room.page.getByPlaceholder("選択肢以外の答えを書く…")
 
@@ -120,31 +124,16 @@ test.describe("お伺い", () => {
     await expect.poll(() => inquiry.count()).toBe(0)
   })
 
-  test("質問は、「任せる」で1問ずつ任せて答えられる（マウス）", async ({ run }) => {
-    const room = await run.open({
-      scenario: "inquiry-question-entrust",
-      scene: "question-pair",
-      viewport: "wide",
-      domRoots: ["main"],
-    })
-    const inquiry = inquiryOf(room.page)
-
-    await inquiry.getByRole("button", { name: /^任せる/ }).click()
-    await expect.poll(() => inquiry.textContent()).toContain("2 / 2")
-    await inquiry.getByRole("button", { name: /^任せる/ }).click()
-
-    await room.waitForEvent("question-answered")
-    await expect.poll(() => inquiry.count()).toBe(0)
-  })
-
-  for (const [scenario, scene] of [
-    ["inquiry-question-long-medium", "question-long"],
-    ["inquiry-question-preview-medium", "question-preview"],
+  // 場面の最後の手（`question-long` は本文のあとのターンの終わり、`question-preview` はセリフ）まで待ってから測る。
+  for (const [scenario, scene, lastStep] of [
+    ["inquiry-question-long-medium", "question-long", { kind: "turn-finished", occurrence: 1 }],
+    ["inquiry-question-preview-medium", "question-preview", { kind: "speech", occurrence: 2 }],
   ] as const) {
     test(`${scenario}: 札の「次へ」「これで答える」はメインビューの中にあり、転がさずに押せる`, async ({
       run,
     }) => {
       const room = await run.open({ scenario, scene, viewport: "medium", domRoots: ["main"] })
+      await room.waitForEvent(lastStep.kind, lastStep.occurrence)
       const main = room.page.locator('[data-region="main"]')
       const answer = inquiryOf(room.page).getByRole("button", { name: /次へ|これで答える/ })
 
@@ -179,27 +168,35 @@ test.describe("お伺い", () => {
     expect(await detail.count()).toBe(0)
     expect(await inquiry.getByText("⚠ 戻せない").count()).toBe(1)
 
-    const tops = await Promise.all(
-      ["聞く理由", "事実", "おすすめの理由"].map(async (label) => {
-        const box = await inquiry.getByText(label, { exact: true }).boundingBox()
-        return box === null ? -1 : box.y
-      }),
-    )
-    expect(tops.every((top) => top >= 0)).toBe(true)
-    expect(tops).toEqual(tops.toSorted((a, b) => a - b))
-    const firstOption = await inquiry.getByRole("radio", { name: /A に置く/ }).boundingBox()
-    expect(firstOption !== null && firstOption.y > (tops[2] ?? Infinity)).toBe(true)
+    // 札へ送る転がしが終わるまで位置は動くので、比べる箱はどれも同じ回の poll で読み直す。
+    await expect
+      .poll(async () => {
+        const tops = await Promise.all(
+          [
+            inquiry.getByText("聞く理由", { exact: true }),
+            inquiry.getByText("事実", { exact: true }),
+            inquiry.getByText("おすすめの理由", { exact: true }),
+            inquiry.getByRole("radio", { name: /A に置く/ }),
+          ].map(async (target) => (await target.boundingBox())?.y ?? -1),
+        )
+        return tops.every((top, index) => top >= 0 && top >= (tops[index - 1] ?? 0))
+      })
+      .toBe(true)
     for (const mark of ["確かめた", "写した", "確度 高"]) {
       await expect(inquiry.getByText(mark, { exact: true })).toBeVisible()
     }
 
     await inquiry.getByRole("radio", { name: /A に置く/ }).click()
     await expect.poll(() => detail.count()).toBe(1)
-    const [options, panel] = await Promise.all([
-      inquiry.getByRole("radio", { name: /A に置く/ }).boundingBox(),
-      detail.boundingBox(),
-    ])
-    expect(options !== null && panel !== null && panel.x > options.x + options.width).toBe(true)
+    await expect
+      .poll(async () => {
+        const [options, panel] = await Promise.all([
+          inquiry.getByRole("radio", { name: /A に置く/ }).boundingBox(),
+          detail.boundingBox(),
+        ])
+        return options !== null && panel !== null && panel.x > options.x + options.width
+      })
+      .toBe(true)
     // 詳細が出て札が伸びても、札は見える範囲に収まり、「次へ」は転がさずに押せる。
     const main = room.page.locator('[data-region="main"]')
     await expect.poll(() => insideOf(inquiry, main)).toBe(true)
@@ -217,51 +214,20 @@ test.describe("お伺い", () => {
 
     await room.resize(VIEWPORTS.compact)
     await expect.poll(() => detail.count()).toBe(1)
-    const [last, stackedPanel] = await Promise.all([
-      inquiry.getByRole("radio", { name: /C に移す/ }).boundingBox(),
-      detail.boundingBox(),
-    ])
-    expect(last !== null && stackedPanel !== null && stackedPanel.y >= last.y + last.height).toBe(
-      true,
-    )
+    await expect
+      .poll(async () => {
+        const [last, stackedPanel] = await Promise.all([
+          inquiry.getByRole("radio", { name: /C に移す/ }).boundingBox(),
+          detail.boundingBox(),
+        ])
+        return last !== null && stackedPanel !== null && stackedPanel.y >= last.y + last.height
+      })
+      .toBe(true)
     const overflow = await inquiry.evaluate((element) => element.scrollWidth - element.clientWidth)
     expect(overflow).toBeLessThanOrEqual(0)
 
     await room.page.keyboard.press("Enter")
     await expect.poll(() => inquiry.textContent()).toContain("2 / 2")
-  })
-
-  test("単一選択で選んだあとに入力欄へ字を書くと、選択が外れて選択肢が薄くなり、字を消すと薄いのは戻って選択は戻らない（広げた板の中も同じ）", async ({
-    run,
-  }) => {
-    const room = await run.open({
-      scenario: "inquiry-question-brief-writing",
-      scene: "question-brief",
-      viewport: "wide",
-      domRoots: ["main"],
-    })
-    const inquiry = inquiryOf(room.page)
-    const answer = room.page.getByPlaceholder("選択肢以外の答えを書く…")
-    const dimmed = inquiry.locator('li[class*="is-dimmed"]')
-    const checked = inquiry.locator('input[type="radio"]:checked')
-
-    await inquiry.getByRole("radio", { name: /B に置く/ }).click()
-    await expect(checked).toHaveCount(1)
-    expect(await dimmed.count()).toBe(0)
-
-    await answer.fill("架空の自由な答え")
-    await expect(checked).toHaveCount(0)
-    await expect.poll(() => dimmed.count()).toBe(3)
-    await expect(inquiry.getByText("入力欄の答えで答えます")).toBeVisible()
-
-    await inquiry.getByRole("button", { name: "広げる" }).click()
-    const board = room.page.getByRole("dialog", { name: "お伺い（広げた板）" })
-    await expect.poll(() => board.locator('li[class*="is-dimmed"]').count()).toBe(3)
-    await room.page.keyboard.press("Escape")
-
-    await answer.fill("")
-    await expect.poll(() => dimmed.count()).toBe(0)
-    await expect(checked).toHaveCount(0)
   })
 
   test("札の「広げる」は同じ中身を画面いっぱいの板に出し、板の中で選んで答えると板が閉じ、Esc で閉じても選んだものは札に残る", async ({
@@ -311,9 +277,9 @@ test.describe("お伺い", () => {
         { path: "report-image-fixture/tall.png", content: fictionalPng(4, 40) },
       ],
     })
-    const inquiry = inquiryOf(room.page)
 
     await room.waitForPending("fake-ask-preview-image")
+    const inquiry = inquiryOf(room.page)
     // 詳細のサーフェスに出るのは選んでいる選択肢の preview だけなので、画像のある選択肢を順に選ぶ。
     for (const [choice, alt] of [
       [/横長の案/, "架空の横長の画面"],

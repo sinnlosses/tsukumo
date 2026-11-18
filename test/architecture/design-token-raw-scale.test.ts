@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest"
 
-import { REPOSITORY_SCAN_TIMEOUT_MS } from "../fixture/repository-scan-timeout.ts"
 import {
   compareWithLimits,
   countByBrowserCss,
@@ -8,25 +7,21 @@ import {
 } from "./design-token-declaration.ts"
 
 describe("design-token-raw-scale", () => {
-  it(
-    "部品の CSS が生の --space-* を引く宣言の数が、ファイルごとの上限を超えない",
-    () => {
-      const { increased, decreased } = compareWithLimits(
-        countByBrowserCss(rawScaleReferenceCount),
-        RAW_SCALE_REFERENCE_LIMITS,
-      )
+  it("部品の CSS が生の --space-* を引く宣言の数が、ファイルごとの上限を超えない", () => {
+    const { increased, decreased } = compareWithLimits(
+      countByBrowserCss(rawScaleReferenceCount),
+      RAW_SCALE_REFERENCE_LIMITS,
+    )
 
-      expect(
-        increased,
-        "生の --space-* の参照を増やしている。意味のトークン（--inset-*・--stack-*・--inline-*・--gutter-*）を使う",
-      ).toBe("")
-      expect(
-        decreased,
-        "生の --space-* の参照が減った。RAW_SCALE_REFERENCE_LIMITS の件数を減らす（0 になったら行を消す）",
-      ).toBe("")
-    },
-    REPOSITORY_SCAN_TIMEOUT_MS,
-  )
+    expect(
+      increased,
+      "生の --space-* の参照を増やしている。意味のトークン（--inset-*・--stack-*・--inline-*・--gutter-*）を使う",
+    ).toBe("")
+    expect(
+      decreased,
+      "生の --space-* の参照が減った。RAW_SCALE_REFERENCE_LIMITS の件数を減らす（0 になったら行を消す）",
+    ).toBe("")
+  })
 })
 
 /** 部品の CSS が生の `--space-*` を引く宣言の、ファイルごとの上限。意味のトークンへ寄せて減らす向きにだけ動かす。 */
