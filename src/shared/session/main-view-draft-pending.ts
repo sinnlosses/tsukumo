@@ -8,5 +8,7 @@
  */
 export type MainViewDraftPending = {
   readonly next?: string
+  /** `next` が `Tabs` のタブの中にあるとき、そのタブの子の ID。 */
+  readonly nextTab?: string
   readonly openSections: readonly string[]
 }

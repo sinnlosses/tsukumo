@@ -9,7 +9,8 @@ export const NO_DRAFT_PENDING = { openSections: [] } as const satisfies MainView
 
 /**
  * 根から子の参照をたどり、まだ届いていない部品を集める。根の `Report` が無ければ空。
- * `figure` と `retrospective.blocks` の参照はたどらない（草稿は図と振り返りを描かない）。
+ * `figure` と `retrospective.blocks` の参照はたどらない（草稿は図を届いたらその場で描くだけで、骨組みを置かない。振り返りは描かない）。
+ * 次に届く見込みの部品が `Tabs` のタブの中にあるときは、そのタブの子の ID を `nextTab` に持つ。
  * 2か所から名指された部品は最初の1か所で数え、辿った部品は二度たどらない。
  */
 export function draftPendingOf(
@@ -31,7 +32,38 @@ export function draftPendingOf(
     { walk: { pending: [], visited: new Set([A2UI_ROOT_ID]) }, openSections: [] },
   )
   const [next] = walked.walk.pending
-  return { ...(next === undefined ? {} : { next }), openSections: walked.openSections }
+  if (next === undefined) {
+    return { openSections: walked.openSections }
+  }
+  return { next, ...tabHolding(next, byId), openSections: walked.openSections }
+}
+
+/** `id` の部品を子孫に持つ `Tabs` の、そのタブの子の ID。どのタブの中でもなければ空。 */
+function tabHolding(
+  id: string,
+  byId: ReadonlyMap<string, A2uiReportComponent>,
+): { readonly nextTab?: string } {
+  const [nextTab] = [...byId.values()]
+    .flatMap((part) => (part.component === "Tabs" ? part.tabs.map((tab) => tab.child) : []))
+    .filter((child) => holds(child, id, byId, new Set()))
+  return nextTab === undefined ? {} : { nextTab }
+}
+
+function holds(
+  from: string,
+  id: string,
+  byId: ReadonlyMap<string, A2uiReportComponent>,
+  seen: Set<string>,
+): boolean {
+  if (from === id) {
+    return true
+  }
+  const part = byId.get(from)
+  if (part === undefined || seen.has(from)) {
+    return false
+  }
+  seen.add(from)
+  return a2uiChildIds(part).some((child) => holds(child, id, byId, seen))
 }
 
 type Walk = {

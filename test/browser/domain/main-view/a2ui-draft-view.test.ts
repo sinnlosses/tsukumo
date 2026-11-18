@@ -118,6 +118,31 @@ describe("mainViewDraftOf", () => {
     expect(a2ui.leafValues.m1?.mergedIntoPrevious).toBe(true)
   })
 
+  it("主の図が届いていれば、草稿でも図の欄として描き、届いていなければ欄にしない", () => {
+    const figure: A2uiReportComponent = {
+      id: "f1",
+      component: "Mermaid",
+      title: "架空の図",
+      source: "flowchart TD\n  A --> B",
+      fold: "",
+      aside: "",
+    }
+    const body = a2uiParts(
+      {
+        id: "root",
+        component: "Report",
+        conclusion: ["架空の結論。"],
+        children: ["s1"],
+        figure: "f1",
+      },
+      { id: "s1", component: "Section", heading: "架空の節", children: ["p1"] },
+      { id: "p1", component: "Paragraph", text: "架空の段落" },
+    )
+
+    expect(surfaceOf([...body, figure]).figure.kind).toBe("leaves")
+    expect(surfaceOf(body).figure.kind).toBe("none")
+  })
+
   it("草稿の画像の取り出し元は、出どころが渡したものになる", () => {
     expect(surfaceOf(STAGED_PARTS, WRITING_DRAFT).imageSource).toEqual({ kind: "pending" })
     expect(surfaceOf(STAGED_PARTS, SETTLED_DRAFT).imageSource).toEqual({ kind: "none" })

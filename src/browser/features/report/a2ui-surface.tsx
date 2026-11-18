@@ -383,6 +383,7 @@ function RowCell(props: { readonly id: string }): ReactElement {
 function TabsPart(props: {
   readonly tabs: Extract<A2uiReportComponent, { readonly component: "Tabs" }>["tabs"]
 }): ReactElement {
+  const report = useReport()
   const [selected, setSelected] = useState(0)
   const current = props.tabs[selected] ?? props.tabs[0]
   return (
@@ -402,6 +403,11 @@ function TabsPart(props: {
             }}
           >
             {typeof tab.title === "string" ? tab.title : ""}
+            {index !== selected && report.pending?.nextTab === tab.child && (
+              <span aria-hidden="true" data-report-pending="tab">
+                {" …"}
+              </span>
+            )}
           </Button>
         ))}
       </div>

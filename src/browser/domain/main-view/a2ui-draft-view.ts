@@ -61,7 +61,9 @@ export function mainViewDraftOf(
     return source.writing ? { kind: "blank", toolUseId } : undefined
   }
   const reachable = a2uiReachableIds(byId)
-  const parts = [...byId.values()].filter((part) => reachable.has(part.id))
+  const parts = [...byId.values()].filter(
+    (part) => reachable.has(part.id) || part.id === root.figure,
+  )
   const task = parseReportTask(root.task)
   return {
     kind: "parts",
@@ -92,7 +94,7 @@ function draftRegions(
     (part) => part.component !== "Section" || a2uiLeafIds([part.id], byId).length > 0,
   )
   const conclusion = (root.conclusion ?? []).join("")
-  const drawnReport = drawnReportOf(drawn, conclusion, "body")
+  const drawnReport = drawnReportOf(drawn, conclusion, "draft")
   const tidied = drawnReport.sections.map((section) => section.section)
   const layout = reportLeafLayoutOf(tidied)
   return {

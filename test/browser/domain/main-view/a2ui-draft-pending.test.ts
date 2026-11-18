@@ -81,7 +81,36 @@ describe("draftPendingOf", () => {
       { id: "x", ...PARAGRAPH },
     )
 
-    expect(pending).toEqual({ next: "y", openSections: ["s1"] })
+    expect(pending).toEqual({ next: "y", nextTab: "y", openSections: ["s1"] })
+  })
+
+  it("次に届く見込みが Tabs のタブの中にあれば、そのタブの子の ID を持つ", () => {
+    const pending = pendingOf(
+      { ...ROOT, children: ["s1"] },
+      { ...S1, children: ["t1"] },
+      {
+        id: "t1",
+        component: "Tabs",
+        tabs: [
+          { title: "架空のタブ一", child: "x" },
+          { title: "架空のタブ二", child: "c2" },
+        ],
+      },
+      { id: "x", ...PARAGRAPH },
+      { id: "c2", component: "Card", child: "deep" },
+    )
+
+    expect(pending).toEqual({ next: "deep", nextTab: "c2", openSections: ["s1"] })
+  })
+
+  it("Tabs の外が次に届く見込みなら、タブの子の ID は持たない", () => {
+    const pending = pendingOf(
+      { ...ROOT, children: ["s1"] },
+      { ...S1, children: ["p0", "t1"] },
+      { id: "t1", component: "Tabs", tabs: [{ title: "架空のタブ一", child: "y" }] },
+    )
+
+    expect(pending).toEqual({ next: "p0", openSections: ["s1"] })
   })
 
   it("図と振り返りの参照はたどらない", () => {

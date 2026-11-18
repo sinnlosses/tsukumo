@@ -12,8 +12,8 @@ import {
 import { retrospectiveDraftsLine } from "./report-retrospective.ts"
 import { tidyReportOutline } from "./report-tidy.ts"
 
-/** `body` は本文の節だけ、`whole` は図と振り返りも描く。 */
-export type DrawnScope = "body" | "whole"
+/** `draft` は書いている途中の草稿で、図と本文の節を描く（振り返りは描かない）。`whole` は振り返りも描く。 */
+export type DrawnScope = "draft" | "whole"
 
 /** セクションの部品1つ。`leafId` が無いのは、内容部品に由来しない塊（振り返りの要約とドラフトの行）。 */
 export type DrawnEntry = {
@@ -49,7 +49,7 @@ export function drawnReportOf(
 ): DrawnReport {
   const outline = reportOutline(components)
   const tidied = tidyReportOutline({ conclusion, outline })
-  const figure = scope === "whole" ? entriesOfLeaves(tidied.outline.figure) : []
+  const figure = entriesOfLeaves(tidied.outline.figure)
   const body = tidied.outline.sections.flatMap((section) => {
     const entries = entriesOfLeaves(section.leaves)
     return entries.length === 0

@@ -122,14 +122,15 @@ describe("drawnReportOf", () => {
     expect([...drawn.droppedLeafIds].toSorted()).toEqual(["p1", "p2"])
   })
 
-  it("body は図と振り返りを含めず、本文の節に根の子の部品の ID を添える", () => {
-    const drawn = drawnReportOf(WITH_DROPPED, CONCLUSION, "body")
+  it("draft は図と本文の節を含め、振り返りを含めない", () => {
+    const drawn = drawnReportOf(WITH_DROPPED, CONCLUSION, "draft")
 
     expect(drawn.sections.map((entry) => [entry.role, entry.componentId])).toEqual([
+      ["figure", undefined],
       ["body", "s2"],
       ["body", "l1"],
     ])
-    expect(drawnReportOf(WITH_RETROSPECTIVE, CONCLUSION, "body").sections).toHaveLength(1)
+    expect(drawnReportOf(WITH_RETROSPECTIVE, CONCLUSION, "draft").sections).toHaveLength(1)
   })
 
   it("振り返りの要約とドラフトの行は内容部品の ID を持たず、内容部品は ID を持つ", () => {
