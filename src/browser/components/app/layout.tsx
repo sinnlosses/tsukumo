@@ -18,7 +18,7 @@ export type LayoutScreens = {
   readonly skipLink: ReactElement
   /** 画面のナビの帯（狭い画面の引き出しの中身を差し込み済み）。 */
   readonly nav: ReactElement
-  /** コマンドパレットと画面全体のショートカットの受け口。どの画面でも効くので、帯と同じく画面を選ぶ分岐の外に置く。 */
+  /** コマンドパレットと画面全体のショートカットの受け口。どの画面でも効くので、画面を選ぶ分岐の外に置く。 */
   readonly commandPalette: ReactElement
   readonly diaryNotice: ReactElement
   readonly conversation: ReactElement

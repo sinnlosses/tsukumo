@@ -1,6 +1,4 @@
 // 画面全体のショートカットの読み取り。
-// 割り当てるのは ⌘ と英字（設定だけ macOS の慣例の ⌘,）と、打っていないときの `/` だけ。
-// Ctrl・Option を伴う押し方は読まず、入力欄の macOS のカーソル移動（Ctrl+A・Ctrl+K など）とブラウザに譲る。
 
 export type Shortcut =
   | "command-palette"

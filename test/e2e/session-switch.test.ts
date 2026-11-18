@@ -82,7 +82,6 @@ test.describe("セッションの切り替え", () => {
     await room.settleAndMatchPicked(ELAPSED_MS)
   })
 
-  // コマンドパレットの行とショートカットは、上の札と同じ切り替え画面を開く。
   test("⌘K のパレットで絞って Enter で切り替え画面を開き、⌘J でも開き、Ctrl+K は入力欄に譲る", async ({
     run,
   }) => {

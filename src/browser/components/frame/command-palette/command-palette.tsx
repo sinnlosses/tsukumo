@@ -1,4 +1,4 @@
-// コマンドパレット。⌘K で開き、探す欄で絞って ↑↓ で選び、Enter で走らせる（Esc と外側のクリックは `<Dialog>` が閉じる）。
+// コマンドパレット。
 // 中身は開いている間だけ描くので、開き直すと探す欄と選びが初めに戻る。
 
 import { Search } from "lucide-react"
@@ -20,7 +20,6 @@ const NO_MATCH = "当たる操作が無い"
 
 const GROUP_ORDER = ["action", "screen"] as const satisfies readonly CommandGroup[]
 
-/** 選んでいる行。絞り込みを変えたら先頭へ戻す。 */
 type Choice = { readonly kind: "first" } | { readonly kind: "command"; readonly id: string }
 
 const FIRST: Choice = { kind: "first" }

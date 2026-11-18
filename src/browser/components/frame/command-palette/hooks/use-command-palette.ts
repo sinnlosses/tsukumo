@@ -1,7 +1,4 @@
 // コマンドパレットの中身（操作と画面の行）と、画面全体のショートカットの受け口。
-//
-// ほかの重なる面（設定・切り替え画面など）が開いているあいだはショートカットを読まない。
-// パレットが開いているときだけは、パレットを閉じてから操作を走らせる。
 
 import { useState } from "react"
 
@@ -35,7 +32,7 @@ export type CommandPaletteModel = {
   readonly open: boolean
   readonly onClose: () => void
   readonly commands: readonly PaletteCommand[]
-  /** 行を選んで走らせる。パレットを閉じてから操作を呼ぶ。 */
+  /** パレットを閉じてから操作を呼ぶ。 */
   readonly onRun: (command: PaletteCommand) => void
 }
 
@@ -108,7 +105,7 @@ export function useCommandPaletteModel(): CommandPaletteModel {
         }
       },
     },
-    actionCommand("task-board", "タスクの一覧を開く", actions["task-board"]),
+    actionCommand("task-board", "タスクの一覧モードを開く", actions["task-board"]),
     actionCommand("settings", "設定を開く", actions.settings),
     ...[false, true].map((chat): PaletteCommand => ({
       id: chat ? "screen-chat" : "screen-work",

@@ -5,7 +5,7 @@
 //
 // 既定は次に起こすときから効くので、送ってもいまのセッションのモデル・許可モードは変わらない（帯のドロップダウンはセッション限りの別物）。
 //
-// 開閉は歯車とショートカットで共有する `useSettingsRequest` に持ち、開閉のたびに色の注意書きを消す。
+// 開閉は `useSettingsRequest` に持ち、開閉のたびに色の注意書きを消す。
 
 import { useRef, type RefObject } from "react"
 
