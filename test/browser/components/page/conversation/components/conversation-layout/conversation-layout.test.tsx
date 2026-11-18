@@ -117,8 +117,8 @@ describe("ConversationLayout", () => {
     fireEvent.click(screen.getByRole("button", RESET_PILL))
 
     expect(loadSplit()).toEqual(DEFAULT_SPLIT)
-    expect(grid.style.getPropertyValue("--layout-left-width")).toBe("238px")
-    expect(grid.style.getPropertyValue("--layout-sidebar-width")).toBe("22.8%")
+    expect(grid.style.getPropertyValue("--layout-left-width")).toBe("258px")
+    expect(grid.style.getPropertyValue("--layout-sidebar-width")).toBe("21.6%")
     expect(screen.queryByRole("button", RESET_PILL)).toBeNull()
   })
 

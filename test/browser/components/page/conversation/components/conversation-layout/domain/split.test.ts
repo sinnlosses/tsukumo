@@ -24,8 +24,8 @@ afterEach(() => {
 })
 
 describe("loadSplit", () => {
-  it("保存が無い（初回起動）ときは既定（左の列 238px・サイドバー 22.8%）で開く", () => {
-    expect(loadSplit()).toEqual({ leftPx: 238, sidebar: 22.8 })
+  it("保存が無い（初回起動）ときは既定（左の列 258px・サイドバー 21.6%）で開く", () => {
+    expect(loadSplit()).toEqual({ leftPx: 258, sidebar: 21.6 })
     expect(loadSplit()).toEqual(DEFAULT_SPLIT)
   })
 

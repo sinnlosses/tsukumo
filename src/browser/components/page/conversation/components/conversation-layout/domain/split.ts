@@ -19,10 +19,10 @@ type SavedSplit = {
   readonly sidebar: number
 }
 
-// 既定は見本（1400x900）の左の列 238px・サイドバー 319px。
+// 既定は利用者が 1477x949 で合わせた左の列 258px・サイドバー 21.6%（1400px で約 302px）。
 export const DEFAULT_SPLIT: Split = {
-  leftPx: 238,
-  sidebar: 22.8,
+  leftPx: 258,
+  sidebar: 21.6,
 }
 
 /** 左の列の仕切りの `toValue` にそのまま渡す。器の左端からの位置を、可動域つきの px にする。 */

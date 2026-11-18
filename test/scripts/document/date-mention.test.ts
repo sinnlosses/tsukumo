@@ -15,7 +15,7 @@ const OTHER_DATE = ["2026", "09", "01"].join("-")
 // 日付の行を直したら値を下げる（下げ忘れも落ちる）。増やす変更は通らない。
 const FROZEN_DATE_LINE_COUNTS = {
   "architecture/display": 7,
-  "architecture/screen-design": 20,
+  "architecture/screen-design": 19,
   "architecture/testing": 2,
   requirements: 2,
 } as const satisfies Record<string, number>
