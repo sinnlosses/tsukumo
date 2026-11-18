@@ -15,8 +15,13 @@ const TAIL_HALF_WIDTH = 6
 const CORNER_RADIUS = 4
 /** 吹き出しの上の角のそばに根元を置かない余白（px）。 */
 const TOP_MARGIN = 16
-/** すぐ下の物までの空きがこれ未満なら、下の辺からは出さない（px）。 */
-const MIN_GAP_FOR_BOTTOM = 12
+/**
+ * すぐ下の物までの空きがこれ未満なら、下の辺からは出さない（px）。
+ * 空きが狭いと下の辺の尾は 10px ほどしか伸びず、顔が斜め下にあると左の角の下でレ点の形に潰れる。左の辺からなら同じ空きでも長さが取れる。
+ */
+const MIN_GAP_FOR_BOTTOM = 20
+/** 下の辺から出すとき、先を根元の中心から横へずらす上限（px）。根元の2点のあいだに収め、尾が角の下へ折れ返る形にしない。 */
+const BOTTOM_TIP_SHIFT_MAX = TAIL_HALF_WIDTH - 1
 /** 根元の2点を縁の線の内側へ入れる量。塗りで縁の線を覆う（px）。 */
 const BASE_INSET = 1.5
 /**
@@ -108,15 +113,24 @@ export function tailAim(input: TailAimInput): TailAim {
         }
       : { x: bubble.left + CORNER_RADIUS + TAIL_HALF_WIDTH + CORNER_RADIUS, y: bubble.bottom }
   const distance = Math.hypot(face.x - root.x, face.y - root.y)
-  const unit =
+  const toFace =
     distance === 0
       ? { x: -1, y: 0 }
       : { x: (face.x - root.x) / distance, y: (face.y - root.y) / distance }
+  const unit = side === "left" ? tiltedOutwardAtMost45(toFace) : toFace
   // 先が下の物の縁を越えない長さ。左の辺から出すときも、下へ向くぶんだけ縮める。
   const reach = side === "left" ? bubble.bottom + gapBelow - 2 - root.y : gapBelow - 3
   const room = unit.y > 0.2 && Number.isFinite(gapBelow) ? reach / unit.y : TAIL_LENGTH_MAX
   const length = Math.max(TAIL_LENGTH_MIN, Math.min(TAIL_LENGTH_MAX, room, distance - 12))
-  const tip = { x: root.x + unit.x * length, y: root.y + unit.y * length }
+  const shift = unit.x * length
+  const tip = {
+    x:
+      root.x +
+      (side === "bottom"
+        ? Math.max(-BOTTOM_TIP_SHIFT_MAX, Math.min(BOTTOM_TIP_SHIFT_MAX, shift))
+        : shift),
+    y: root.y + unit.y * length,
+  }
   const base: readonly [Point, Point] =
     side === "left"
       ? [
@@ -128,4 +142,15 @@ export function tailAim(input: TailAimInput): TailAim {
           { x: root.x - TAIL_HALF_WIDTH, y: bubble.bottom - BASE_INSET },
         ]
   return { side, root, tip, base }
+}
+
+/**
+ * 左の辺の尾の向きを、外（左）から上下へ45度以内に寄せる。
+ * 顔が真下寄りや右下にあると、そのままでは尾が縁に沿う細い棘になるか、吹き出しの内側へ向く。
+ */
+function tiltedOutwardAtMost45(unit: Point): Point {
+  if (-unit.x >= Math.abs(unit.y)) {
+    return unit
+  }
+  return { x: -Math.SQRT1_2, y: unit.y < 0 ? -Math.SQRT1_2 : Math.SQRT1_2 }
 }

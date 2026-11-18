@@ -38,8 +38,40 @@ describe("尾の向きと長さ", () => {
     expect(tailAim({ bubble: BUBBLE, face: { x: 410, y: 700 }, gapBelow: 100 }).side).toBe("bottom")
   })
 
-  it("すぐ下の空きが12px未満なら、顔が下にあっても左の辺から出す", () => {
+  it("すぐ下の空きが20px未満なら、顔が下にあっても左の辺から出す", () => {
     expect(tailAim({ bubble: BUBBLE, face: { x: 410, y: 700 }, gapBelow: 6 }).side).toBe("left")
+    expect(tailAim({ bubble: BUBBLE, face: { x: 410, y: 700 }, gapBelow: 13 }).side).toBe("left")
+  })
+
+  it("すぐ下に紙が迫り顔が左下にあっても、尾は左の辺から伸びて先が根元の幅からレ点の形にはみ出さない", () => {
+    const aim = tailAim({ bubble: BUBBLE, face: { x: 250, y: 650 }, gapBelow: 13 })
+
+    expect(aim.side).toBe("left")
+    expect(Math.hypot(aim.tip.x - aim.root.x, aim.tip.y - aim.root.y)).toBeGreaterThanOrEqual(14)
+  })
+
+  it("左の辺から出すときは、顔が真下寄りや右下にあっても、先を外へ45度以内に向けて縁に沿う細い棘にしない", () => {
+    for (const face of [
+      { x: 250, y: 650 },
+      { x: 410, y: 700 },
+    ]) {
+      const aim = tailAim({ bubble: BUBBLE, face, gapBelow: 6 })
+      const outward = aim.root.x - aim.tip.x
+
+      expect(aim.side).toBe("left")
+      expect(outward).toBeGreaterThan(0)
+      expect(outward).toBeGreaterThanOrEqual(Math.abs(aim.tip.y - aim.root.y) - 0.001)
+    }
+  })
+
+  it("下の辺から出すときは、顔が斜め下にあっても先を根元の2点のあいだに収める", () => {
+    const aim = tailAim({ bubble: BUBBLE, face: { x: 260, y: 700 }, gapBelow: 100 })
+    const [right, left] = aim.base
+
+    expect(aim.side).toBe("bottom")
+    expect(aim.tip.x).toBeGreaterThan(left.x)
+    expect(aim.tip.x).toBeLessThan(right.x)
+    expect(aim.tip.x).toBeLessThan(aim.root.x)
   })
 
   it("先がすぐ下の物の縁を越えない", () => {
