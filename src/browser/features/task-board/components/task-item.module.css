@@ -68,9 +68,15 @@
   color: var(--ink-quiet);
   font-size: var(--font-label);
 }
-.task-item-waiting {
-  color: var(--ink-soft);
-  font-size: var(--font-label);
+/* 難しさと ∞ の置き場。中身が無い行も同じ幅を取り、行をまたいで縦の位置がそろう。
+   幅は目盛り（6px の段3つと間2つ）と ∞ の印の大きさ。 */
+.task-item-difficulty {
+  display: flex;
+  min-inline-size: 22px;
+}
+.task-item-loop-slot {
+  display: flex;
+  min-inline-size: 16px;
 }
 .task-item-loop {
   display: flex;

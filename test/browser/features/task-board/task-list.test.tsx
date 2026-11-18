@@ -287,7 +287,7 @@ describe("taskList", () => {
     }
   })
 
-  it("行の2段目には難しさの語を出し、ラベルは出さず、loopable は Y のときだけ ∞ の印で出す", () => {
+  it("行の2段目には難しさを3段の目盛りで出し、ラベルは出さず、loopable は Y のときだけ ∞ の印で出す", () => {
     const items: readonly TaskSummaryItem[] = [
       {
         ...taskOf("X-011", "todo"),
@@ -299,10 +299,15 @@ describe("taskList", () => {
     ]
     render(<TaskList tasks={known(items)} />)
 
-    expect(row("X-011").querySelector("[data-attribute='difficulty']")?.textContent).toBe("sonnet")
-    expect(row("X-012").querySelector("[data-attribute='difficulty']")?.textContent).toBe("opus")
-    expect(row("X-011").querySelector("[role='img']")?.getAttribute("aria-label")).toBe("ループ可")
-    expect(row("X-012").querySelector("[role='img']")).toBeNull()
+    expect(
+      row("X-011").querySelector("[data-attribute='difficulty']")?.getAttribute("aria-label"),
+    ).toBe("難しさ sonnet")
+    expect(
+      row("X-012").querySelector("[data-attribute='difficulty']")?.getAttribute("aria-label"),
+    ).toBe("難しさ opus")
+    expect(row("X-011").textContent).not.toContain("sonnet")
+    expect(row("X-011").querySelector("[aria-label='ループ可']")).not.toBeNull()
+    expect(row("X-012").querySelector("[aria-label='ループ可']")).toBeNull()
     expect(row("X-011").textContent).not.toContain("任意のタグ")
   })
 

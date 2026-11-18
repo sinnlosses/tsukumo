@@ -1,5 +1,7 @@
 // 区画の一覧1件分。行全体が1つのボタンで、押すとサイドシートが開く。
-// 1段目は状態の印と題（2行まで）、2段目は待ちの相手・ID・∞・難しさの語。
+// 1段目は状態の印と題（2行まで）、2段目は ID・難しさの目盛り・∞ の順。
+// 保留・待ちは状態の印が言うので字にしない。
+// 難しさと ∞ は無いときも幅を取る空欄にして、行をまたいで縦の位置をそろえる。
 // ∞ はループ可の `todo` と `hold` の行に限り、難しさは決まっているときだけ出す。
 
 import clsx from "clsx"
@@ -12,7 +14,7 @@ import { TASK_SHEET_DOM_ID } from "../domain/task-row-dom-id.ts"
 import { isSearching, titleMatchParts } from "../domain/task-search.ts"
 import taskBoardStyles from "../task-board.module.css"
 import { TaskSummaryText } from "../task-summary-text.tsx"
-import { TaskDifficultyWord, TaskLoopMark } from "./task-attribute.tsx"
+import { TaskDifficultyScale, TaskLoopMark } from "./task-attribute.tsx"
 import styles from "./task-item.module.css"
 import { TaskState } from "./task-state.tsx"
 import { TaskSummaryHighlight } from "./task-summary-highlight.tsx"
@@ -30,7 +32,6 @@ export function TaskItem(props: {
 }): ReactElement {
   const { open } = props
   const state = taskStateOf(props.task)
-  const waitingText = state.kind === "blocked" || state.kind === "hold" ? state.text : undefined
   return (
     <li className={taskBoardStyles["task-item"]}>
       <button
@@ -61,14 +62,15 @@ export function TaskItem(props: {
             )}
           </span>
           <span className={styles["task-item-meta"]}>
-            {waitingText !== undefined && (
-              <span className={styles["task-item-waiting"]}>{waitingText}</span>
-            )}
             <span className={taskBoardStyles["task-id"]}>{props.task.id}</span>
-            {showsLoop(props.task) && <TaskRowLoop task={props.task} />}
-            {props.task.difficulty !== undefined && (
-              <TaskDifficultyWord difficulty={props.task.difficulty} scale={false} />
-            )}
+            <span className={styles["task-item-difficulty"]}>
+              {props.task.difficulty !== undefined && (
+                <TaskDifficultyScale difficulty={props.task.difficulty} />
+              )}
+            </span>
+            <span className={styles["task-item-loop-slot"]}>
+              {showsLoop(props.task) && <TaskRowLoop task={props.task} />}
+            </span>
           </span>
         </span>
       </button>

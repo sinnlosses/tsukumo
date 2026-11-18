@@ -1,4 +1,4 @@
-// タスクの属性（ループに載せてよいか・難しさ）の見せ方。ループ可は ∞ の印、難しさはモデル名の語（目盛りつきもある）。ラベル（任意のタグ）とは別の見た目。
+// タスクの属性（ループに載せてよいか・難しさ）の見せ方。ループ可は ∞ の印、難しさは3段の目盛りかモデル名の語。ラベル（任意のタグ）とは別の見た目。
 
 import clsx from "clsx"
 import type { ReactElement } from "react"
@@ -32,20 +32,24 @@ export function TaskDifficultyWord(props: {
   const { difficulty } = props
   return (
     <span className={styles["task-attribute-difficulty"]} data-attribute="difficulty">
-      {props.scale && (
-        <span className={styles["task-attribute-scale"]} aria-hidden="true">
-          {DIFFICULTY_STEPS.map((step) => (
-            <i
-              key={step}
-              className={clsx(
-                styles["task-attribute-step"],
-                step <= DIFFICULTY_LEVEL[difficulty] && styles["task-attribute-step-on"],
-              )}
-            />
-          ))}
-        </span>
-      )}
+      {props.scale && <DifficultySteps difficulty={difficulty} />}
       {difficulty}
+    </span>
+  )
+}
+
+/** 3段の目盛りだけ。モデル名は読み上げの名前と hover の title に持つ。 */
+export function TaskDifficultyScale(props: { readonly difficulty: TaskDifficulty }): ReactElement {
+  const label = `難しさ ${props.difficulty}`
+  return (
+    <span
+      className={styles["task-attribute-difficulty"]}
+      data-attribute="difficulty"
+      role="img"
+      aria-label={label}
+      title={label}
+    >
+      <DifficultySteps difficulty={props.difficulty} />
     </span>
   )
 }
@@ -65,6 +69,22 @@ export function TaskLoopableText(props: { readonly loopable: TaskLoopable }): Re
   return (
     <span className={styles["task-attribute-group"]} data-attribute="loopable">
       手で進める
+    </span>
+  )
+}
+
+function DifficultySteps(props: { readonly difficulty: TaskDifficulty }): ReactElement {
+  return (
+    <span className={styles["task-attribute-scale"]} aria-hidden="true">
+      {DIFFICULTY_STEPS.map((step) => (
+        <i
+          key={step}
+          className={clsx(
+            styles["task-attribute-step"],
+            step <= DIFFICULTY_LEVEL[props.difficulty] && styles["task-attribute-step-on"],
+          )}
+        />
+      ))}
     </span>
   )
 }

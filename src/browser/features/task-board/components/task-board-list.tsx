@@ -10,7 +10,7 @@ import { VisuallyHidden } from "../../../components/ui/visually-hidden/visually-
 import type { TaskBoardRow, TaskBoardStage } from "../domain/task-board-view.ts"
 import taskBoardStyles from "../task-board.module.css"
 import { TaskSummaryText } from "../task-summary-text.tsx"
-import { TaskDifficultyWord, TaskLoopMark } from "./task-attribute.tsx"
+import { TaskDifficultyScale, TaskLoopMark } from "./task-attribute.tsx"
 import styles from "./task-board-list.module.css"
 import { TaskState } from "./task-state.tsx"
 
@@ -112,7 +112,7 @@ function TaskBoardOption(props: {
         )}
       </span>
       <span>
-        {row.difficulty !== undefined && <TaskDifficultyWord difficulty={row.difficulty} scale />}
+        {row.difficulty !== undefined && <TaskDifficultyScale difficulty={row.difficulty} />}
       </span>
       <span className={styles["task-board-cell-loop"]}>
         {row.loopable === "Y" && <TaskLoopMark label="ループ可" />}

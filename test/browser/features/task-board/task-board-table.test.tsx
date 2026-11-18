@@ -54,20 +54,22 @@ describe("タスクのモーダルの一覧の表", () => {
   it("列は番号・題・難しさ・ループ可の順で、∞ は Y の行だけ。属性の無い行は空ける", () => {
     renderSelectionBoard(TABLE_TASKS, OPEN_FIRST)
 
-    expect(cellsOf("X-021")).toEqual(["X-021", "架空の課題（X-021）着手可", "sonnet", ""])
-    expect(cellsOf("X-022")).toEqual(["X-022", "架空の課題（X-022）進行中", "opus", ""])
-    expect(cellsOf("X-024")).toEqual(["X-024", "架空の課題（X-024）完了", "", ""])
+    expect(cellsOf("X-021")).toEqual(["X-021", "架空の課題（X-021）着手可", "", ""])
+    expect(within(option("X-021")).getByRole("img", { name: "難しさ sonnet" })).toBeDefined()
+    expect(within(option("X-022")).getByRole("img", { name: "難しさ opus" })).toBeDefined()
+    expect(within(option("X-024")).queryByRole("img")).toBeNull()
     expect(
       within(option("X-021")).getByRole("img", { name: "ループ可" }).getAttribute("aria-label"),
     ).toBe("ループ可")
-    expect(within(option("X-022")).queryByRole("img")).toBeNull()
+    expect(within(option("X-022")).queryByRole("img", { name: "ループ可" })).toBeNull()
   })
 
   it("待ちの相手は題の後ろに「待ち <相手>」で添え、名前は番号・題・状態・難しさの順に読める", () => {
     renderSelectionBoard(TABLE_TASKS, OPEN_FIRST)
 
     expect(cellsOf("X-023")[1]).toBe("架空の課題（X-023）待ち X-021, X-022")
-    expect(option("X-022").textContent).toBe("X-022架空の課題（X-022）進行中opus")
+    expect(option("X-022").textContent).toBe("X-022架空の課題（X-022）進行中")
+    expect(screen.getByRole("option", { name: /X-022.*進行中.*難しさ opus/ })).toBeDefined()
   })
 
   it("列の見出しの行は読み上げない", () => {
