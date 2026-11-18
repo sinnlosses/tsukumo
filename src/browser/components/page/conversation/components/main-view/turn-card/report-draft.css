@@ -24,6 +24,6 @@
 @media (min-width: 761px) {
   .closing-slot {
     display: block;
-    block-size: calc(var(--stack-block) * 2 + var(--font-input) * var(--line-height-body) + 2px);
+    block-size: calc(var(--stack-block) * 2 + var(--font-body) * var(--line-height-body) + 2px);
   }
 }

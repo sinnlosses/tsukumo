@@ -63,7 +63,7 @@
     color: var(--ink);
   }
   .request-lines {
-    font-size: var(--font-input);
+    font-size: var(--font-body);
     line-height: var(--line-height-body);
   }
 }
