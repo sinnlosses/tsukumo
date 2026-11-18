@@ -381,7 +381,7 @@ describe("Turn（経過の畳み）", () => {
     ).toEqual([fold])
     const closingGroup = groups.find((group) => group.textContent.includes("締めの一言"))
     expect(closingGroup).not.toBe(groups.find((group) => group.contains(fold)))
-    expect(closingGroup?.textContent.indexOf("締めの一言")).toBeLessThan(
+    expect(closingGroup?.textContent.indexOf("締めの一言")).toBeGreaterThan(
       closingGroup?.textContent.indexOf("最終") ?? -1,
     )
     expect(closingGroup?.querySelector("[data-report-stub]")?.textContent).toBe("最終")

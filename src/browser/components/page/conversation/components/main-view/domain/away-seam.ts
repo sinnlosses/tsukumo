@@ -27,7 +27,6 @@ export function awaySeamOf(input: {
 }): AwaySeam {
   const { away, rows, items } = input
   const added = rows.slice(away.rowCount)
-  // 締めのセリフは記録より前に描くので、先頭の行ではなく描く位置が最も前のものを選ぶ。
   const drawn = added
     .map((row) => items.findIndex((item) => drawsRow(item, row)))
     .filter((index) => index >= 0)
@@ -89,7 +88,7 @@ function drawsRow(item: StreamItem, row: ConversationStreamRow): boolean {
   }
 }
 
-/** 締めのセリフは行の写しなので、同じ行かどうかは記録で見る。 */
+/** 同じ行かどうかは記録で見る。 */
 function isRowOf(
   item: StreamItem | ProgressItem,
   row: Extract<ConversationStreamRow, { readonly kind: "post" | "say" }>,

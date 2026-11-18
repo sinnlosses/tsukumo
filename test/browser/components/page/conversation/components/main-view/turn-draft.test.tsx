@@ -75,25 +75,6 @@ describe("Turn（report の草稿）", () => {
     expect(sections[1]?.textContent).toContain("架空の結論。")
   })
 
-  it("締めのセリフの場所は草稿の前に1つだけ押さえ、草稿が無ければ出さない", () => {
-    putSession(INITIAL_SESSION_STATE)
-    const { container, rerender } = render(
-      <Turn turn={{ ...turn([]), drafts: [draft, draft] }} newest freshReport={false} />,
-    )
-    const slots = container.querySelectorAll("[data-closing-slot]")
-    expect(slots).toHaveLength(1)
-    expect(slots[0]?.nextElementSibling?.hasAttribute(REPORT_DRAFT_ATTRIBUTE)).toBe(true)
-
-    rerender(
-      <Turn
-        turn={turn([step({ id: 0, body: turnBodyText("中間"), mark: "interim-kept" })])}
-        newest
-        freshReport={false}
-      />,
-    )
-    expect(container.querySelector("[data-closing-slot]")).toBeNull()
-  })
-
   it("締めのセリフがあとから届いても、紙は作り直さない", () => {
     const finalTurn = turn([
       step({

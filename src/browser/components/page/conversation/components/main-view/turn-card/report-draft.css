@@ -14,16 +14,3 @@
     transform: none;
   }
 }
-
-/* 書いているあいだ、締めのセリフが入る場所を1行ぶん空けて押さえる。書き終えたとき紙が動かないよう、セリフ1行の高さに合わせる。
-   紙との間は、書いているあいだが流れの間（`--stack-group`）、書き終えたあとが組の中の間（`--stack-tight`）と最終レポートの上の余白で、どちらも同じ大きさになる。
-   狭い画面は締めのセリフの行を描かないので押さえない。 */
-.closing-slot {
-  display: none;
-}
-@media (min-width: 761px) {
-  .closing-slot {
-    display: block;
-    block-size: calc(var(--stack-block) * 2 + var(--font-body) * var(--line-height-body) + 2px);
-  }
-}

@@ -167,9 +167,6 @@ export function Turn(props: TurnProps): ReactElement {
                 ))}
               </div>
             ))}
-            {turn.drafts.length > 0 && (
-              <div aria-hidden="true" data-closing-slot="" className={styles["closing-slot"]} />
-            )}
             {/* `key` を `toolUseId` にするので、書いている途中の部品から記録の部品へ移っても面を作り直さない。 */}
             {turn.drafts.map((draft) => (
               <DraftReport
@@ -210,9 +207,9 @@ function endsWithSayAttribute(
     : {}
 }
 
-/** 締めのセリフはあとから紙の前に加わるので、紙の `key` を組の `key` にして、加わっても紙を作り直さない。 */
+/** 締めのセリフはあとから紙の後ろに加わるので、頭の行の `key` を組の `key` にして、加わっても紙を作り直さない。 */
 function groupKey(group: StreamGroup): string {
-  const head = group.items.find((item) => item.kind !== "say" || item.closing !== true)
+  const head = group.items[0]
   return head === undefined ? `group:${String(group.start)}` : streamItemKey(head, group.start)
 }
 

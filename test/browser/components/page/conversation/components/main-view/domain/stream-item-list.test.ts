@@ -75,8 +75,7 @@ describe("streamItemsOf", () => {
       turn([reportStep(0, "fictional-report", "final")]),
     )
 
-    expect(items.map((item) => item.kind)).toEqual(["post", "fold", "say", "body"])
-    expect(items[2]?.kind === "say" && items[2].closing).toBe(true)
+    expect(items.map((item) => item.kind)).toEqual(["post", "fold", "body", "say"])
     const fold = items[1]
     expect(fold?.kind === "fold" && fold.items.map((item) => item.kind)).toEqual([
       "say",
@@ -110,7 +109,7 @@ describe("streamItemsOf", () => {
     expect(fold?.kind === "fold" && foldSummaryOf(fold.items)).toBe("作業の経過 1 件 · セリフ 1 件")
   })
 
-  it("中間レポートの締めのセリフは紙の前へ移り、畳みの中に入る。紙の前のほかの行の並びは変わらない", () => {
+  it("締めのセリフは記録の順のまま紙の後ろに置き、中間レポートの締めは畳みの中、最終レポートの締めは紙の下に残る", () => {
     const items = streamItemsOf(
       rowsOf([
         requestRecord(),
@@ -123,12 +122,13 @@ describe("streamItemsOf", () => {
       turn([reportStep(0, "interim", "interim-kept"), reportStep(1, "last", "final")]),
     )
 
-    expect(items.map((item) => item.kind)).toEqual(["post", "fold", "say", "body"])
+    expect(items.map((item) => item.kind)).toEqual(["post", "fold", "body", "say"])
+    expect(items[3]?.kind === "say" && items[3].record.text).toBe("最終の締め")
     const fold = items[1]
     expect(fold?.kind === "fold" && fold.items.map((item) => item.kind)).toEqual([
       "say",
-      "say",
       "body",
+      "say",
     ])
   })
 
@@ -152,17 +152,7 @@ describe("streamItemsOf", () => {
       ]),
     )
 
-    expect(items.map((item) => item.kind)).toEqual(["post", "say", "body", "question"])
-  })
-
-  it("本文が引き当たらない report の後ろのセリフは移さない", () => {
-    const items = streamItemsOf(
-      rowsOf([requestRecord(), reportWith("nothing", "本文なし"), speechRecord({ text: "あと" })]),
-      turn([]),
-    )
-
-    expect(items.map((item) => item.kind)).toEqual(["post", "say"])
-    expect(items[1]?.kind === "say" && items[1].closing).toBeUndefined()
+    expect(items.map((item) => item.kind)).toEqual(["post", "body", "say", "question"])
   })
 
   it("最終レポートが無いあいだは畳まず、突き合わせの外の本文は末尾に並ぶ", () => {
@@ -335,13 +325,9 @@ describe("streamGroupsOf", () => {
     expect(shapeOf([body(1), body(2)])).toEqual([["body"], ["body"]])
   })
 
-  it("畳みの直後の締めのセリフは、畳みと組まず後ろの紙と組む", () => {
-    if (say1.kind !== "say") {
-      throw new Error("セリフの見本ではない")
-    }
-    const closing: StreamItem = { ...say1, closing: true }
+  it("畳みの後ろの紙は、畳みと組まず後ろの締めのセリフと組む", () => {
     const fold: StreamItem = { kind: "fold", items: [] }
-    expect(shapeOf([post, fold, closing, body(1)])).toEqual([["post"], ["fold"], ["say", "body"]])
+    expect(shapeOf([post, fold, body(1), say1])).toEqual([["post"], ["fold"], ["body", "say"]])
   })
 
   it("組の start は、組の頭の行が全体で何番目か", () => {

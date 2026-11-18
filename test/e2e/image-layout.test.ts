@@ -49,7 +49,7 @@ test.describe("レポートの画像の寸法", () => {
       await route.continue()
     })
 
-    // 確定を待つ草稿にも同じ画像が出る。そのあいだに締めのセリフが流れへ入って紙が動くので、ターンの終わりを待ってから測る。
+    // 確定を待つ草稿にも同じ画像が出る。草稿から記録の紙へ替わる前に測らないよう、ターンの終わりを待ってから測る。
     await room.waitForEvent("turn-finished")
     const image = room.page.getByAltText("架空の札の見出しが 21px になった画面")
     await image.waitFor()

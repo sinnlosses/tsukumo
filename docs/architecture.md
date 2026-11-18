@@ -146,3 +146,4 @@
 | `docs/architecture/adr/0066-continue-request-draft.md`                          | 「続ける」の下書きに、書き手が渡す続きの依頼の文を使えるようにする                                    | 採用                   |
 | `docs/architecture/adr/0067-remove-report-ask-and-request.md`                   | レポートの「聞く」「頼む」を外す                                                                      | 採用                   |
 | `docs/architecture/adr/0068-next-step-tray-above-composer.md`                   | 次の一手を入力欄の頭の札の並びにする                                                                  | 採用                   |
+| `docs/architecture/adr/0069-closing-speech-below-paper.md`                      | 締めのセリフを紙の下に置く                                                                            | 採用                   |
