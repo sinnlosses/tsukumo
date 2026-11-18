@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>次の一手の札 — 見比べ（2026-11-18）</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #17151d;
+    --surface: #221f2b;
+    --paper: #2a2733;
+    --ink: #e8e3ea;
+    --ink-soft: color-mix(in srgb, var(--ink) 72%, transparent);
+    --ink-quiet: color-mix(in srgb, var(--ink) 55%, transparent);
+    --line: color-mix(in srgb, var(--ink) 14%, transparent);
+    --accent: #5ad1c0;
+    --accent-ink: #0f2b27;
+    --accent-soft: color-mix(in srgb, var(--accent) 16%, transparent);
+    --warn: #f2c46b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 14px/1.6 system-ui, sans-serif;
+  }
+  header.page { max-width: 1500px; margin: 0 auto; padding: 24px 24px 8px; }
+  header.page h1 { font-size: 20px; margin: 0 0 6px; }
+  header.page p { margin: 0; color: var(--ink-soft); }
+  .problems { margin: 12px 0 0; padding-left: 20px; color: var(--ink-soft); }
+  .grid {
+    max-width: 1500px;
+    margin: 0 auto;
+    padding: 16px 24px 48px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(680px, 1fr));
+    gap: 28px;
+  }
+  .plan { display: flex; flex-direction: column; gap: 10px; }
+  .plan h2 { font-size: 16px; margin: 0; display: flex; gap: 8px; align-items: baseline; }
+  .plan h2 .tag { font-size: 12px; padding: 1px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); }
+  .plan .why { margin: 0; color: var(--ink-soft); font-size: 13px; }
+  .plan ul.pros { margin: 0; padding-left: 18px; font-size: 13px; color: var(--ink-soft); }
+
+  /* 画面の切り抜き: 紙の末尾と入力欄 */
+  .stage {
+    position: relative;
+    border-radius: 14px;
+    border: 1px solid var(--line);
+    background:
+      radial-gradient(120% 80% at 20% 10%, #2b2638 0%, transparent 60%),
+      linear-gradient(#1c1a24, #15131b);
+    padding: 0 20px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-height: 470px;
+  }
+  .paper {
+    background: var(--paper);
+    border-radius: 0 0 10px 10px;
+    padding: 4px 20px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    box-shadow: 0 8px 20px rgb(0 0 0 / 0.25);
+  }
+  .paper .fade { color: var(--ink-quiet); font-size: 13px; border-bottom: 1px dashed var(--line); padding: 8px 0; }
+  .favor { border-top: 1px solid var(--line); padding-top: 12px; }
+  .favor b { display: inline-flex; gap: 6px; align-items: center; font-size: 13px; }
+  .favor b::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--warn); }
+  .favor p { margin: 4px 0 0; font-size: 14px; }
+  .composer {
+    margin-top: auto;
+    border: 1.5px solid var(--accent);
+    border-radius: 14px;
+    background: var(--surface);
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .composer .text { color: var(--ink-quiet); min-height: 22px; white-space: pre-wrap; }
+  .composer .text.filled { color: var(--ink); }
+  .composer .tools { display: flex; gap: 14px; color: var(--ink-quiet); font-size: 12px; align-items: center; }
+  .composer .send { margin-left: auto; width: 28px; height: 28px; border-radius: 50%; background: var(--accent); }
+
+  /* 今 */
+  .now-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 13px; }
+  .now-row .t { color: var(--ink-soft); }
+  .pill { border: 1px solid var(--line); background: color-mix(in srgb, var(--ink) 6%, transparent); color: var(--ink); border-radius: 999px; padding: 3px 12px; font: inherit; font-size: 13px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+  .pill.first { border-color: var(--accent); background: var(--accent-soft); }
+  .now-note { color: var(--ink-quiet); font-size: 12px; }
+
+  /* 案A: 紙の下の独立した札 */
+  .deck {
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--surface) 70%, var(--accent) 6%);
+    border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+    padding: 12px 14px;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .deck-head { display: flex; align-items: baseline; gap: 10px; }
+  .deck-head b { font-size: 13px; color: var(--accent); letter-spacing: 0.04em; }
+  .deck-head span { font-size: 12px; color: var(--ink-quiet); }
+  .deck-head .close { margin-left: auto; color: var(--ink-quiet); font-size: 12px; }
+  .opt {
+    display: grid; grid-template-columns: 5.5em 1fr auto; gap: 10px; align-items: start;
+    padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line);
+    background: color-mix(in srgb, var(--ink) 4%, transparent);
+    cursor: pointer; text-align: left; color: inherit; font: inherit; width: 100%;
+  }
+  .opt:hover, .opt:focus-visible { border-color: var(--accent); outline: none; background: var(--accent-soft); }
+  .opt.rec { border-color: color-mix(in srgb, var(--accent) 60%, transparent); }
+  .opt .kind { font-size: 12px; color: var(--ink-soft); padding-top: 2px; }
+  .opt .say { font-size: 14px; white-space: pre-wrap; }
+  .opt .say small { display: block; color: var(--ink-quiet); font-size: 12px; margin-top: 2px; }
+  .opt .go { font-size: 12px; color: var(--ink-quiet); padding-top: 2px; white-space: nowrap; }
+  .opt .badge { font-size: 11px; color: var(--accent-ink); background: var(--accent); border-radius: 4px; padding: 0 5px; margin-left: 6px; }
+
+  /* 案B: 入力欄の頭のトレイ */
+  .tray { display: flex; flex-direction: column; gap: 6px; }
+  .tray-head { display: flex; gap: 10px; align-items: baseline; font-size: 12px; color: var(--ink-quiet); }
+  .tray-head b { color: var(--accent); font-size: 12px; letter-spacing: 0.04em; }
+  .tray-head .close { margin-left: auto; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    max-width: 100%; text-align: left;
+    border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+    background: color-mix(in srgb, var(--surface) 80%, var(--accent) 8%);
+    color: var(--ink); border-radius: 12px; padding: 6px 12px; font: inherit; font-size: 13.5px; cursor: pointer;
+  }
+  .chip.rec { border-color: var(--accent); background: var(--accent-soft); }
+  .chip:hover, .chip:focus-visible { border-color: var(--accent); outline: none; }
+  .chip .k { color: var(--ink-quiet); font-size: 11.5px; margin-right: 6px; }
+  .chip .more { color: var(--ink-quiet); font-size: 12px; }
+
+  /* 案C: 紙の末尾に区画を立て、入る文を下に見せる */
+  .zone {
+    margin: 4px -20px -18px; padding: 12px 20px 14px;
+    background: color-mix(in srgb, var(--paper) 70%, var(--accent) 8%);
+    border-top: 2px solid var(--accent);
+    border-radius: 0 0 10px 10px;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .zone .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .zone .row b { font-size: 13px; color: var(--accent); margin-right: 4px; }
+  .verb { border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 999px; padding: 3px 12px; font: inherit; font-size: 13px; cursor: pointer; }
+  .verb.on, .verb:hover, .verb:focus-visible { border-color: var(--accent); background: var(--accent-soft); outline: none; }
+  .preview { font-size: 13px; color: var(--ink-soft); border-left: 2px solid var(--line); padding-left: 10px; white-space: pre-wrap; }
+  .preview em { font-style: normal; color: var(--ink-quiet); font-size: 12px; display: block; }
+
+  footer.page { max-width: 1500px; margin: 0 auto; padding: 0 24px 40px; color: var(--ink-soft); font-size: 13px; }
+  footer.page table { border-collapse: collapse; margin-top: 8px; }
+  footer.page th, footer.page td { border-bottom: 1px solid var(--line); padding: 6px 12px; text-align: left; vertical-align: top; }
+</style>
+</head>
+<body>
+<header class="page">
+  <h1>次の一手の札 — 見比べ</h1>
+  <p>題材は架空。どの案も「押すと入力欄に入る文（下書き）」を札にそのまま出し、送らない作りは今のまま。押すと各案の入力欄に入る文が出る。</p>
+  <ul class="problems">
+    <li>今の札は「続ける: 」の後ろに残りの作業の文（sessionRemaining）を1行で入れて省略記号で切る。押して入る文は札のどこにも出ていない。</li>
+    <li>行は紙の中、お願いの下に地の文と同じ色・同じ字の大きさで並び、レポートの続きに見える。</li>
+  </ul>
+</header>
+
+<main class="grid">
+  <!-- 今 -->
+  <section class="plan" data-plan="now">
+    <h2>今の形</h2>
+    <p class="why">札の字は残りの作業の文。入る文は押すまで分からない。</p>
+    <div class="stage">
+      <div class="paper">
+        <div class="fade">… レポートの本文の末尾 …</div>
+        <div class="favor"><b>お願い</b><p>架空の設定を入れた状態で、移行を手元でも一度打って結果を見てほしい。</p></div>
+        <div class="now-row">
+          <span class="t">次の一手</span>
+          <button class="pill first" data-draft="止めたところから再開して。">再開する</button>
+          <button class="pill" style="max-width: 360px" data-draft="案Aの移行の手順を書いて。">続ける: 案Aの移行の手順が未着手。あわせて架空の設定の読み込みの穴が未登録で、後続は…</button>
+          <button class="pill" data-draft="次の点を確かめて。&#10;- 架空の移行は既存の設定を壊さない&#10;- 架空の案Aは大きい入力でも遅くならない">確かめる: 2 件</button>
+          <button class="pill" data-draft="「架空の案B」で進めて。">別の案で進める…</button>
+        </div>
+        <div class="now-note">押すと、入力欄に下書きが入る（送らない）</div>
+      </div>
+      <div class="composer"><div class="text">つくも への依頼を書く</div><div class="tools">画像 ／ @ H ・ Opus ・ Medium<span class="send"></span></div></div>
+    </div>
+  </section>
+
+  <!-- 案A -->
+  <section class="plan" data-plan="a">
+    <h2>案A 紙の下の札 <span class="tag">置き場は今と同じ並び</span></h2>
+    <p class="why">紙を閉じたあとに、縁取りと見出しのある別の札を置く。1行に1案で、入る文を折り返して全部出す。</p>
+    <div class="stage">
+      <div class="paper">
+        <div class="fade">… レポートの本文の末尾 …</div>
+        <div class="favor"><b>お願い</b><p>架空の設定を入れた状態で、移行を手元でも一度打って結果を見てほしい。</p></div>
+      </div>
+      <div class="deck" role="group" aria-label="次の一手">
+        <div class="deck-head"><b>次の一手</b><span>押すと入力欄に入る（送らない）</span></div>
+        <button class="opt rec" data-draft="案Aの移行の手順を書いて。"><span class="kind">続ける</span><span class="say">案Aの移行の手順を書いて。<span class="badge">おすすめ</span></span><span class="go">入れる ↵</span></button>
+        <button class="opt" data-draft="次の点を確かめて。&#10;- 架空の移行は既存の設定を壊さない&#10;- 架空の案Aは大きい入力でも遅くならない"><span class="kind">確かめる</span><span class="say">次の2点を確かめて。<small>架空の移行は既存の設定を壊さない ／ 架空の案Aは大きい入力でも遅くならない</small></span><span class="go">入れる ↵</span></button>
+        <button class="opt" data-draft="止めたところから再開して。"><span class="kind">再開</span><span class="say">止めたところから再開して。</span><span class="go">入れる ↵</span></button>
+        <button class="opt" data-draft="「架空の案B」で進めて。"><span class="kind">別の案</span><span class="say">「架空の案B」で進めて。 ／ 「架空の案C」で進めて。</span><span class="go">選ぶ ▾</span></button>
+      </div>
+      <div class="composer"><div class="text">つくも への依頼を書く</div><div class="tools">画像 ／ @ H ・ Opus ・ Medium<span class="send"></span></div></div>
+    </div>
+    <ul class="pros">
+      <li>入る文が全部読める。案の数だけ背が伸びる（4案で 262px）。</li>
+      <li>紙の続きではなく別の札に見える。読み終えて下へ送った先にある。</li>
+    </ul>
+  </section>
+
+  <!-- 案B -->
+  <section class="plan" data-plan="b">
+    <h2>案B 入力欄の頭 <span class="tag">おすすめ</span></h2>
+    <p class="why">紙から外し、入力欄のすぐ上に並べる。札は入る文そのもので、長い文は2行まで折り返す。紙のどこを読んでいても目に入る。</p>
+    <div class="stage">
+      <div class="paper">
+        <div class="fade">… レポートの本文の末尾 …</div>
+        <div class="favor"><b>お願い</b><p>架空の設定を入れた状態で、移行を手元でも一度打って結果を見てほしい。</p></div>
+      </div>
+      <div class="tray" role="group" aria-label="次の一手" style="margin-top:auto">
+        <div class="tray-head"><b>次の一手</b>押すと下の入力欄に入る（送らない）<span class="close">畳む ⌄</span></div>
+        <div class="chips">
+          <button class="chip rec" data-draft="案Aの移行の手順を書いて。"><span class="k">続ける</span>案Aの移行の手順を書いて。</button>
+          <button class="chip" data-draft="次の点を確かめて。&#10;- 架空の移行は既存の設定を壊さない&#10;- 架空の案Aは大きい入力でも遅くならない"><span class="k">確かめる</span>次の2点を確かめて。<span class="more">（2点）</span></button>
+          <button class="chip" data-draft="止めたところから再開して。"><span class="k">再開</span>止めたところから再開して。</button>
+          <button class="chip" data-draft="「架空の案B」で進めて。"><span class="k">別の案</span>「架空の案B」で進めて。</button>
+        </div>
+      </div>
+      <div class="composer" style="margin-top:0"><div class="text">つくも への依頼を書く</div><div class="tools">画像 ／ @ H ・ Opus ・ Medium<span class="send"></span></div></div>
+    </div>
+    <ul class="pros">
+      <li>押す場所と入る場所が隣り合う。紙をさかのぼって読んでいても消えない。</li>
+      <li>入力欄の上の「お願いが1件あります」の行と同じ場所なので、その行と一つにまとめる（同じ情報を2か所に出さない）。</li>
+      <li>最新のやり取りの最終レポートにだけ出る今の決まりと合う。</li>
+    </ul>
+  </section>
+
+  <!-- 案C -->
+  <section class="plan" data-plan="c">
+    <h2>案C 紙の末尾の区画と下見 <span class="tag">背丈が最も小さい</span></h2>
+    <p class="why">紙の中に残すが、差し色の区切りと地の色で区画を立てる。札は短い動詞のまま、触れた札の入る文を下に全文で出す。</p>
+    <div class="stage">
+      <div class="paper">
+        <div class="fade">… レポートの本文の末尾 …</div>
+        <div class="favor"><b>お願い</b><p>架空の設定を入れた状態で、移行を手元でも一度打って結果を見てほしい。</p></div>
+        <div class="zone" role="group" aria-label="次の一手">
+          <div class="row"><b>次の一手</b>
+            <button class="verb on" data-draft="案Aの移行の手順を書いて。">続ける</button>
+            <button class="verb" data-draft="次の点を確かめて。&#10;- 架空の移行は既存の設定を壊さない&#10;- 架空の案Aは大きい入力でも遅くならない">確かめる（2点）</button>
+            <button class="verb" data-draft="止めたところから再開して。">再開する</button>
+            <button class="verb" data-draft="「架空の案B」で進めて。">別の案…</button>
+          </div>
+          <div class="preview"><em>押すと入力欄に入る文</em><span class="pv">案Aの移行の手順を書いて。</span></div>
+        </div>
+      </div>
+      <div class="composer"><div class="text">つくも への依頼を書く</div><div class="tools">画像 ／ @ H ・ Opus ・ Medium<span class="send"></span></div></div>
+    </div>
+    <ul class="pros">
+      <li>背が低い。入る文は触れる・選ぶまで1つしか見えない（タッチでは押す前に見えない）。</li>
+      <li>紙の中に残るので、読み終えた位置から動かずに押せる。</li>
+    </ul>
+  </section>
+</main>
+
+<footer class="page">
+  <b>物差し</b>
+  <table>
+    <tr><th></th><th>押す前に入る文が読める</th><th>レポートと見分けられる</th><th>背丈（4案）</th><th>紙をさかのぼっても見える</th></tr>
+    <tr><td>今</td><td>読めない</td><td>見分けにくい</td><td>56px（実物・1行に収まったとき）</td><td>見えない</td></tr>
+    <tr><td>案A</td><td>全文</td><td>別の札</td><td>262px</td><td>見えない</td></tr>
+    <tr><td>案B</td><td>全文（2行まで）</td><td>紙の外</td><td>104px（入力欄の上）</td><td>見える</td></tr>
+    <tr><td>案C</td><td>触れた1つだけ</td><td>区画で分かる</td><td>105px</td><td>見えない</td></tr>
+  </table>
+</footer>
+
+<script>
+  // 押すとその案の入力欄に入る文を出す（送らない）。案C は触れた札の文を下見に出す。
+  for (const plan of document.querySelectorAll(".plan")) {
+    const box = plan.querySelector(".composer .text")
+    const pv = plan.querySelector(".pv")
+    for (const button of plan.querySelectorAll("[data-draft]")) {
+      button.addEventListener("click", () => {
+        box.textContent = button.dataset.draft
+        box.classList.add("filled")
+      })
+      if (pv !== null) {
+        const show = () => {
+          pv.textContent = button.dataset.draft
+          for (const other of plan.querySelectorAll(".verb")) other.classList.toggle("on", other === button)
+        }
+        button.addEventListener("mouseenter", show)
+        button.addEventListener("focus", show)
+      }
+    }
+  }
+</script>
+</body>
+</html>
