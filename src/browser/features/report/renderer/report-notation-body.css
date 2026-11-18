@@ -313,11 +313,11 @@
   & td.report-table-depth-3 {
     padding-inline-start: 4.5em;
   }
-  /* 表の凡例。題の直下に左揃えで置く。 */
+  /* 表の凡例。題の直下に中央寄せで置く。 */
   & .report-captioned > .report-table-status-legend {
     display: flex;
     flex-wrap: wrap;
-    justify-content: flex-start;
+    justify-content: center;
     max-inline-size: min(100%, var(--report-measure-wide));
     gap: var(--space-xs) var(--space-lg);
     margin-bottom: var(--space-xs);
