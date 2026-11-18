@@ -133,11 +133,11 @@ describe("presentSceneNote", () => {
   it("6つを全部渡すと、見出しと6行がこの順に並ぶ", () => {
     expect(presentSceneNote(ALL).split("\n")).toEqual([
       "いまの様子（tsukumo が添える。言うかどうかは任せる）",
-      "- 時刻の帯: 夜更け",
+      "- 時間帯: 夜更け",
       "- 続けて働いた時間: 3時間を超えた",
       "- 今日終えたタスクの数: 4件",
       "- 前の依頼からの経過: 半日から1日",
-      "- 使用量の帯: 5時間の枠と7日の枠が8割を超えた",
+      "- 使用量の集計期間: 5時間の枠と7日の枠が8割を超えた",
       "- 次に着手できるタスク: bd-a4",
     ])
   })
@@ -148,11 +148,11 @@ describe("presentSceneNote", () => {
 
   it("どの行も、数と決まった語と ID だけの形に当たる", () => {
     const shapes = [
-      /^- 時刻の帯: (夜更け|朝|昼|夕|夜)$/,
+      /^- 時間帯: (夜更け|朝|昼|夕|夜)$/,
       /^- 続けて働いた時間: \d+時間を超えた$/,
       /^- 今日終えたタスクの数: \d+件$/,
       /^- 前の依頼からの経過: (半日から1日|数日|1週間以上)$/,
-      /^- 使用量の帯: (5時間の枠|7日の枠|5時間の枠と7日の枠)が8割を超えた$/,
+      /^- 使用量の集計期間: (5時間の枠|7日の枠|5時間の枠と7日の枠)が8割を超えた$/,
       /^- 次に着手できるタスク: [A-Za-z0-9._-]+$/,
     ]
     const lines = presentSceneNote(ALL).split("\n").slice(1)
@@ -161,6 +161,6 @@ describe("presentSceneNote", () => {
 
   it("空白や改行を含む ID は行にならない", () => {
     expect(presentSceneNote({ nextTaskId: "bd-a5 本文" })).toBe("")
-    expect(presentSceneNote({ nextTaskId: "bd-a5\n- 時刻の帯: 夜" })).toBe("")
+    expect(presentSceneNote({ nextTaskId: "bd-a5\n- 時間帯: 夜" })).toBe("")
   })
 })

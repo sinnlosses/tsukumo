@@ -40,7 +40,7 @@ describe("welcomeGreetingQuery", () => {
         "## 材料",
         "- 月: 10月",
         "- 曜日: 土曜",
-        "- 時刻の帯: 朝",
+        "- 時間帯: 朝",
         "- 迎え方: 新しく始める",
         "",
         "## 表情の選択肢",
@@ -62,7 +62,7 @@ describe("welcomeGreetingQuery", () => {
         "## 材料",
         "- 月: 10月",
         "- 曜日: 土曜",
-        "- 時刻の帯: 朝",
+        "- 時間帯: 朝",
         "- 迎え方: 前回の続きに戻ってきた",
         "- 前回から: 数時間",
       ].join("\n"),
@@ -160,6 +160,6 @@ describe("welcomeGreetingQuery（時刻の帯）", () => {
   ])("%d 時は %s", (hour, band) => {
     const query = welcomeGreetingQuery({ ...MATERIAL, calendar: { ...MATERIAL.calendar, hour } })
 
-    expect(query.prompt.split("\n")[3]).toBe(`- 時刻の帯: ${band}`)
+    expect(query.prompt.split("\n")[3]).toBe(`- 時間帯: ${band}`)
   })
 })

@@ -38,7 +38,7 @@ const WRITTEN_REACTIONS_INSTRUCTION = `あなたはいま、このセッショ�
 
 - \`retrying\` の印 \`${REACTION_MARKS.retrying}\`: 何回目の呼び直しか（数）
 - \`limited\` の印 \`${REACTION_MARKS.limited}\`: 上限が戻る時刻
-- \`idle\` の印 \`${REACTION_MARKS.idle}\`: 次に着手できる札の名前
+- \`idle\` の印 \`${REACTION_MARKS.idle}\`: 次に着手できるタスクの名前
 
 \`withMark\` は印をちょうど1つ、\`withoutMark\` は印を含めない。値が分からないときは \`withoutMark\` が出るので、どちらも単独で通じる一言にする。
 

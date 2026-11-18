@@ -118,7 +118,7 @@ function presentSceneLines(delivery: PresentSceneDelivery): readonly PresentScen
   const groups: readonly (readonly PresentSceneLine[])[] = [
     timeBand === undefined
       ? []
-      : [{ kind: "time-band", line: `- 時刻の帯: ${TIME_BAND_WORDS[timeBand]}` }],
+      : [{ kind: "time-band", line: `- 時間帯: ${TIME_BAND_WORDS[timeBand]}` }],
     workedHours === undefined
       ? []
       : [{ kind: "worked-time", line: `- 続けて働いた時間: ${String(workedHours)}時間を超えた` }],
@@ -131,7 +131,7 @@ function presentSceneLines(delivery: PresentSceneDelivery): readonly PresentScen
       : [
           {
             kind: "plan-usage",
-            line: `- 使用量の帯: ${overUsage.map((name) => USAGE_WINDOW_WORDS[name]).join("と")}が8割を超えた`,
+            line: `- 使用量の集計期間: ${overUsage.map((name) => USAGE_WINDOW_WORDS[name]).join("と")}が8割を超えた`,
           },
         ],
     nextTaskId === undefined || !isTaskIdWord(nextTaskId)

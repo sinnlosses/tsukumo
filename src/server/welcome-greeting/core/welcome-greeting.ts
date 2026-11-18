@@ -78,7 +78,7 @@ const WELCOME_GREETING_INSTRUCTION = `あなたはいま、作業を始めよう
 ## 書き方
 
 - 挨拶の2つは、どちらも1〜2文、${String(WELCOME_LINE_REQUESTED_CHARS)}字まで、改行を含めない
-- 材料の月・曜日・時刻の帯は、挨拶の手がかりに使ってよい（毎回すべてに触れなくてよい）
+- 材料の月・曜日・時間帯は、挨拶の手がかりに使ってよい（毎回すべてに触れなくてよい）
 - 直近の挨拶と同じ言い回し・同じ書き出しを避け、毎回ちがう印象にする
 - カードの中身は知らないので、中身を推し量って書かない
 - 数を競わせる言い方（「最速」「いちばん多い」「最も」など）はしない
@@ -87,7 +87,7 @@ const WELCOME_GREETING_INSTRUCTION = `あなたはいま、作業を始めよう
 
 材料の迎え方が「前回の続きに戻ってきた」なら、挨拶のどちらの文も、前回の作業の続きに戻ってきた利用者へのおかえりとして書く。
 
-- 前回からの経過の帯は手がかりに使ってよい（「分からない」なら触れない）
+- 前回からの経過時間の区分は手がかりに使ってよい（「分からない」なら触れない）
 - 前回に何をしたかは知らないので、中身を推し量って書かない`
 
 const DAY_OF_WEEK_LABELS = ["月", "火", "水", "木", "金", "土", "日"] as const
@@ -115,7 +115,7 @@ export function welcomeGreetingQuery(material: WelcomeGreetingMaterial): Structu
       "## 材料",
       `- 月: ${String(calendar.month)}月`,
       `- 曜日: ${DAY_OF_WEEK_LABELS[calendar.dayOfWeek - 1] ?? ""}曜`,
-      `- 時刻の帯: ${TIME_BAND_LABELS[timeBandOf(calendar.hour)]}`,
+      `- 時間帯: ${TIME_BAND_LABELS[timeBandOf(calendar.hour)]}`,
       ...visitLines(material.visit),
       "",
       "## 表情の選択肢",

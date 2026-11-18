@@ -42,7 +42,7 @@ describe("createPresentSceneKeeper", () => {
   it("同じ材料を2回続けて渡さない", async () => {
     const { keeper } = keeperWith()
 
-    expect(await keeper.take()).toContain("- 時刻の帯: 昼")
+    expect(await keeper.take()).toContain("- 時間帯: 昼")
     expect(await keeper.take()).toBe("")
   })
 
@@ -73,7 +73,7 @@ describe("createPresentSceneKeeper", () => {
     keeper.observe({ kind: "conversation-cleared" })
     const again = await keeper.take()
 
-    expect(again).toContain("- 時刻の帯: 昼")
+    expect(again).toContain("- 時間帯: 昼")
     expect(again).toContain("- 続けて働いた時間: 2時間を超えた")
   })
 
@@ -87,7 +87,7 @@ describe("createPresentSceneKeeper", () => {
       kind: "ready",
       usage: { fiveHour: { utilization: 85 }, sevenDay: {} },
     })
-    expect(await keeper.take()).toContain("- 使用量の帯: 5時間の枠が8割を超えた")
+    expect(await keeper.take()).toContain("- 使用量の集計期間: 5時間の枠が8割を超えた")
   })
 
   it("組み直した依頼の時刻が、観た依頼の前に並ぶ", async () => {
