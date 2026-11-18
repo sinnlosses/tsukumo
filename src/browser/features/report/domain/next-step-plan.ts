@@ -11,7 +11,17 @@ import { favorOptionsOf } from "./favor-option-list.ts"
 export type NextStepsOrigin = {
   readonly sessionRemaining: SessionRemaining
   readonly outcome?: ReportTaskOutcome
+  /** 着手できるタスクをおすすめの順に。タスクを終えたレポートだけが先頭から使う。 */
+  readonly nextTasks?: readonly NextTaskCandidate[]
 }
+
+export type NextTaskCandidate = {
+  readonly id: string
+  readonly summary: string
+}
+
+/** タスクを終えたあとに並べる次のタスクの上限。 */
+const MAX_NEXT_TASKS = 2
 
 export type NextStepAlternative = {
   readonly name: string
@@ -43,6 +53,15 @@ export type NextStep =
       readonly points: number
     }
   | {
+      readonly kind: "next-task"
+      readonly taskId: string
+      readonly kindLabel: string
+      readonly label: string
+      readonly note: string
+      readonly draft: string
+      readonly points: number
+    }
+  | {
       readonly kind: "alternative"
       readonly kindLabel: string
       readonly alternatives: readonly NextStepAlternative[]
@@ -54,11 +73,9 @@ export type NextStep =
       readonly mismatchDraft: string
     }
 
-type NextStepSource = {
+type NextStepSource = NextStepsOrigin & {
   readonly components: readonly A2uiReportComponent[]
   readonly unobserved: readonly NextStepUnobserved[]
-  readonly sessionRemaining: SessionRemaining
-  readonly outcome?: ReportTaskOutcome
 }
 
 /** 検証結果のうち、確かめていなくて確かめ方を持つ行。 */
@@ -69,7 +86,7 @@ export function unobservedOf(checks: ReportChecksView): readonly NextStepUnobser
 }
 
 /**
- * `check-result` 以外は種類ごとに最大1つ。並びは 再開する → 続ける → 確かめる → 確かめた・違った（行ごと） → 別の案で進める。元の欄が無い種類は出さない。
+ * `check-result` と `next-task` 以外は種類ごとに最大1つ。並びは 再開する → 続ける → 確かめる → 確かめた・違った（行ごと） → 別の案で進める → 次のタスク（タスクを終えたときだけ、{@link MAX_NEXT_TASKS} 件まで）。元の欄が無い種類は出さない。
  * お願いの選択肢（`favorOptions`）があるレポートは、書き手が次の依頼を札で並べているので「続ける」を足さない。
  */
 export function buildNextSteps(source: NextStepSource): readonly NextStep[] {
@@ -140,7 +157,25 @@ export function buildNextSteps(source: NextStepSource): readonly NextStep[] {
     })
   }
 
+  if (source.outcome === "finished") {
+    steps.push(...(source.nextTasks ?? []).slice(0, MAX_NEXT_TASKS).map(nextTaskStep))
+  }
+
   return steps
+}
+
+/** 主の字は送る依頼の文。題は2行目に添え、下見と依頼の両方で何のタスクかが読めるようにする。 */
+function nextTaskStep(task: NextTaskCandidate): NextStep {
+  const request = `タスク ${task.id} を進めて`
+  return {
+    kind: "next-task",
+    taskId: task.id,
+    kindLabel: "次のタスク",
+    label: request,
+    note: task.summary,
+    draft: `${request}\n${task.summary}`,
+    points: 0,
+  }
 }
 
 /**

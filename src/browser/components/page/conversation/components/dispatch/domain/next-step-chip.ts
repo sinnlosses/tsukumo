@@ -49,7 +49,7 @@ export function nextStepChipsOf(steps: readonly NextStep[]): readonly NextStepCh
     return [
       {
         kind: "draft",
-        key: step.kind,
+        key: step.kind === "next-task" ? `next-task:${step.taskId}` : step.kind,
         kindLabel: step.kindLabel,
         label: step.label,
         points: step.points,

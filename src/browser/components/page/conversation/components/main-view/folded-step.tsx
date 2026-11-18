@@ -10,9 +10,14 @@ import {
 } from "../../../../../../shared/session/main-view-shape.ts"
 import { formatMeasured } from "../../../../../../shared/utils/elapsed-time.ts"
 import { withoutPhaseTimes } from "../../../../../domain/main-view/main-view-report-body.ts"
-import { nextStepsOfReport, type NextStep } from "../../../../../features/report/next-step.ts"
+import {
+  nextStepsOfReport,
+  nextTaskCandidatesOf,
+  type NextStep,
+} from "../../../../../features/report/next-step.ts"
 import { Report } from "../../../../../features/report/report.tsx"
 import { usePhoneWidth } from "../../../../../hooks/use-phone-width.ts"
+import { useSession } from "../../../../../stores/session.ts"
 import { Disclosure } from "../../../../ui/disclosure/disclosure.tsx"
 import { nextStepReportKey } from "../../stores/next-step-tray.ts"
 import { ExpandableHead } from "./expandable-head.tsx"
@@ -86,12 +91,18 @@ export function StepReport(props: StepReportProps): ReactElement | undefined {
   const favorRef = useFavorVisibility()
   // 次の一手と押せるお願いの選択肢は、最新のやり取りの最終レポートだけが持つ。
   const replyable = props.latest && !props.phoneHidden
+  const tasks = useSession((session) => session.state.tasks)
   useNextStepTraySource(
     nextStepReportKey(props.turnId, step.id),
     replyable && step.body.kind === "text"
       ? nextStepsOfReport(step.body.report, {
           sessionRemaining: step.body.sessionRemaining ?? { kind: "unrecorded" },
-          ...(step.body.task.kind === "task" ? { outcome: step.body.task.outcome } : {}),
+          ...(step.body.task.kind === "task"
+            ? {
+                outcome: step.body.task.outcome,
+                nextTasks: nextTaskCandidatesOf(tasks, step.body.task.id),
+              }
+            : {}),
         })
       : NO_NEXT_STEPS,
   )

@@ -173,6 +173,46 @@ describe("buildNextSteps", () => {
   })
 })
 
+describe("buildNextSteps の次のタスク", () => {
+  const candidates = [
+    { id: "T-1", summary: "架空のタスク1" },
+    { id: "T-2", summary: "架空のタスク2" },
+    { id: "T-3", summary: "架空のタスク3" },
+  ]
+  const stepsOf = (outcome: "finished" | "stopped" | "no-task", nextTasks = candidates) =>
+    buildNextSteps({
+      components: [],
+      unobserved: [],
+      sessionRemaining: none,
+      ...(outcome === "no-task" ? {} : { outcome }),
+      nextTasks,
+    })
+
+  it("タスクを終えたレポートは、候補の先頭2件を末尾に並べ、押すとその ID の依頼と題が入る", () => {
+    expect(stepsOf("finished")).toEqual([
+      {
+        kind: "next-task",
+        taskId: "T-1",
+        kindLabel: "次のタスク",
+        label: "タスク T-1 を進めて",
+        note: "架空のタスク1",
+        draft: "タスク T-1 を進めて\n架空のタスク1",
+        points: 0,
+      },
+      expect.objectContaining({ kind: "next-task", taskId: "T-2" }),
+    ])
+  })
+
+  it("止めたタスクとタスクに紐付かないレポートには出さない", () => {
+    expect(stepsOf("stopped").some((step) => step.kind === "next-task")).toBe(false)
+    expect(stepsOf("no-task")).toEqual([])
+  })
+
+  it("候補が無ければ出さない", () => {
+    expect(stepsOf("finished", [])).toEqual([])
+  })
+})
+
 describe("buildNextSteps の確かめていない検証の行", () => {
   const rows = (count: number) =>
     Array.from({ length: count }, (_, index) => ({
