@@ -26,7 +26,7 @@
 }
 /* 左の列に立つ立ち絵。セリフのログの床にも立ち絵が立つので、舞台の立ち絵だけを直接の子で指す。
    高さは見本の値（`--stage-portrait-height`）で、列の幅いっぱいの箱に画を収める。
-   画は縦横比を保ったまま箱に収め、下端で揃える（`.portrait` の flex が下端・中央に寄せる）。表情ごとに構図が違うので、顔の位置を決め打ちした切り抜きはしない。
+   画は縦横比を保ったまま箱に収め、下端で揃える（`.portrait` の flex が下端に寄せる）。表情ごとに構図が違うので、顔の位置を決め打ちした切り抜きはしない。
    押しを受けるのは描いた画の矩形だけで、箱の画の無い所（正方形の画なら頭の上）は受けない。箱の高さは頭上の席の位置の基準なので縮めない。
    列が狭いときに右端を抜くと絵が欠けて見えるので、マスクは外す。
    `.character-layout` に stacking context を作ると、席と立ち絵の重なりの順が壊れる。 */
@@ -40,7 +40,15 @@
   mask-image: none;
   pointer-events: none;
 }
+/* 画は列の幅いっぱいまで拡大し、高さは縦横比から決める（箱より小さい素材も拡大する）。
+   箱より縦長の画だけは高さが箱で頭打ちになり、そのぶん左右が `object-fit` の余白になる。 */
 .character-layout > .portrait img {
+  width: 100%;
+  height: auto;
+  max-width: none;
+  max-height: 100%;
+  object-fit: contain;
+  object-position: center bottom;
   pointer-events: auto;
 }
 

@@ -119,7 +119,7 @@
   }
 }
 /* つつける立ち絵（`NudgePortrait`）。
-   立ち絵を包む `<button>` がそのまま立ち絵の置き場所なので、置き方（下端で揃える・幅の上限・床へ沈める量）はここが持ち、`.chat-portrait` は中でいっぱいに広がるだけにする。
+   立ち絵を包む `<button>` がそのまま立ち絵の置き場所なので、置き方（下端で揃える・幅の上限・床へ沈める量）はここが持ち、`.chat-portrait` の箱は中でいっぱいに広がり、画はその下端に縦横比のまま収まる。
 
    ボタンの地・枠・余白は全部落とす（枠を持たないのはキャラクターだけ）。
    見えるのは立ち絵と、載せている間だけ出る案内の2つ。 */
@@ -216,7 +216,14 @@
 .chat-portrait {
   pointer-events: none;
 }
+/* 画は幅いっぱいまで拡大し、高さは縦横比から決める（箱より縦長の画だけ高さが箱で頭打ちになる）。 */
 .chat-portrait img {
+  width: 100%;
+  height: auto;
+  max-width: none;
+  max-height: 100%;
+  object-fit: contain;
+  object-position: center bottom;
   pointer-events: auto;
 }
 /* 狭い画面（760px 以下）では立ち絵を出さない（顔だけを入力欄の上に出す）。 */
