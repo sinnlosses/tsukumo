@@ -1,6 +1,7 @@
 // 対（前と後）のある紙の、見せ方（並べる・後だけ・前だけ）の値と、その切り替えを置く対・切り替えの字。
 
 import type { A2uiReportComponent } from "../../../../shared/report/a2ui-report-catalog.ts"
+import { a2uiChildIds } from "../../../../shared/report/a2ui-report-outline.ts"
 
 export type PairView = "side" | "after" | "before"
 
@@ -20,7 +21,7 @@ export function beforeAfterPairIdsInOrder(
     if (part === undefined) {
       return []
     }
-    return isBeforeAfter(part) ? [id] : beforeAfterPairIdsInOrder(childIdsOf(part), parts)
+    return isBeforeAfter(part) ? [id] : beforeAfterPairIdsInOrder(a2uiChildIds(part), parts)
   })
 }
 
@@ -45,19 +46,4 @@ function uniformHeadingLabel(pairs: readonly BeforeAfterPart[], index: number): 
 
 function isBeforeAfter(part: A2uiReportComponent): part is BeforeAfterPart {
   return part.component === "Compare" && part.relation === "before-after"
-}
-
-function childIdsOf(part: A2uiReportComponent): readonly string[] {
-  switch (part.component) {
-    case "Section":
-    case "Row":
-    case "Column":
-      return part.children
-    case "Card":
-      return [part.child]
-    case "Tabs":
-      return part.tabs.map((tab) => tab.child)
-    default:
-      return []
-  }
 }

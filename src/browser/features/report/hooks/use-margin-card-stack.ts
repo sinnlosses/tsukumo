@@ -17,8 +17,8 @@ export type MarginCardStack = {
 
 const CARD_GAP = 8
 const BLOCK_SELECTOR = ":is([data-report-region], [data-part-column]) > :not([data-part-column])"
-/** `Row` は丸ごと1つの塊として右を空ける（セルの中の塊には印を付けない）。 */
-const ROW_SELECTOR = "[data-part-row]"
+/** `Row` と `Grid` は丸ごと1つの塊として右を空ける（セルの中の塊には印を付けない）。 */
+const ROW_SELECTOR = ":is([data-part-row], [data-part-grid])"
 const BESIDE_CARD_ATTRIBUTE = "data-beside-card"
 /** 自分の札のために余白の列を空けている外枠の印。 */
 const OWN_MARGIN_ATTRIBUTE = "data-reply-margin"

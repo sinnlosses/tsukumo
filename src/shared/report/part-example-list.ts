@@ -206,6 +206,39 @@ export const PART_EXAMPLES = {
     { id: "p1", component: "Paragraph", text: "架空の左の欄。" },
     { id: "p2", component: "Paragraph", text: "架空の右の欄。" },
   ],
+  Grid: [
+    { id: "g1", component: "Grid", children: ["t1", "t2", "t3"] },
+    {
+      id: "t1",
+      component: "Table",
+      title: "架空の lint（秒）",
+      columns: ["回", "秒"],
+      rows: [
+        ["前", "31"],
+        ["後", "30"],
+      ],
+    },
+    {
+      id: "t2",
+      component: "Table",
+      title: "架空の型の検査（秒）",
+      columns: ["回", "秒"],
+      rows: [
+        ["前", "48"],
+        ["後", "71"],
+      ],
+    },
+    {
+      id: "t3",
+      component: "Table",
+      title: "架空の単体（秒）",
+      columns: ["回", "秒"],
+      rows: [
+        ["前", "120"],
+        ["後", "118"],
+      ],
+    },
+  ],
   Column: [
     { id: "c1", component: "Column", children: ["p1", "p2"] },
     { id: "p1", component: "Paragraph", text: "架空の上の段。" },

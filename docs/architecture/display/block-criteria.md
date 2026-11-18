@@ -100,6 +100,15 @@
   `Row` に `chart` を並べると目盛りが揃わないため部品に上げた（梯子の 4。理由は `section-and-block.md` の `ChartGrid` の項）。
   `Section.children` に置け、`Report.figure` には置けない。見え方は疑似セッションの場面 `a2ui-chart-grid` で撮る
 
+## 部品を並べる配置の部品
+
+- `Row`: 2〜4 個を1行で読み比べる（左に数と段落、右にコードなど）。器が 760px 以下なら縦に積む
+- `Grid`: 同格の部品（数の札・短い表・図・`Card`）を、器の幅に合わせて段に折り返して並べる。子は2つ以上で、列の数は書き手が書かず描く側が決める。
+  長い段落とコードは格子の外に置く（縛りの検査は無く、カードが言う）。全幅に出したい部品も格子の外に置く
+- 目盛りを揃えて比べる図の並びは、`Row`・`Grid` ではなく `ChartGrid`（上の項）
+
+どれも余白の札の横に来たら縦に積む。決定は ADR 0065（`docs/architecture/adr/0065-report-grid-layout-part.md`）。
+
 ## 図の値と本文の数の照合
 
 `plot` の `Q` 列の値と、同じレポートの本文の数（`conclusion`・`keyFigures` の `before`・`value`・`total`・セクションの `text` の部品）のずれを、

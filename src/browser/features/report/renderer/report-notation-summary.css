@@ -30,13 +30,17 @@
     border-radius: var(--radius-md);
     background: var(--surface-raised);
   }
-  /* 読む順・因果の無い並列の区画（`list` の `cards`）と、部品を横に並べる `row`。
-   子の数で等分した横 1 行にし、器の幅が 760px 以下なら縦（既定の 1 列のまま）。 */
-  & :is(.report-cards, .report-block-row) {
+  /* 読む順・因果の無い並列の区画（`list` の `cards`）と、部品を横に並べる `row`、段に折り返す格子 `grid`。
+   `cards` と `row` は子の数で等分した横 1 行にし、器の幅が 760px 以下なら縦（既定の 1 列のまま）。 */
+  & :is(.report-cards, .report-block-row, .report-block-grid) {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     gap: var(--space-md);
     margin: var(--report-block-gap) 0;
+  }
+  /* `grid` の列の数は `useGridColumnCount` が格子の幅から測って渡す（余白の札の横では 1）。 */
+  & .report-block-grid {
+    grid-template-columns: repeat(var(--report-grid-columns, 1), minmax(0, 1fr));
   }
   @container report-body (min-width: 761px) {
     & :is(.report-cards, .report-block-row) {

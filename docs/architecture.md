@@ -142,3 +142,4 @@
 | `docs/architecture/adr/0062-stream-grammar-groups-now-line-inquiry-keys.md`     | 会話の流れの文法: 届いた順の1組・動詞で言ういまの行・お伺いの頭と2段の確定・空の入力欄の ↑            | 採用                   |
 | `docs/architecture/adr/0063-character-voice-place-and-bearing.md`               | キャラクターの声と姿: 声の定位置・局面に従う動き・顔を指す尾・押して遡る・表情の出方・いまの様子      | 採用                   |
 | `docs/architecture/adr/0064-report-draft-paper-and-margin-on-demand.md`         | 草稿は最終レポートと同じ紙に描き、骨組みは次に届く1か所、余白の列は札のある部品だけ、下書きは依頼の文 | 採用                   |
+| `docs/architecture/adr/0065-report-grid-layout-part.md`                         | レポートの配置の部品に、器の幅で折り返す格子 `Grid` を足す                                            | 採用                   |

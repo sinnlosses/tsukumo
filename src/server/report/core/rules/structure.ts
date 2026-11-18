@@ -311,7 +311,7 @@ function filterTargetTexts(props: Readonly<Record<string, unknown>>): readonly s
 }
 
 /** 子を持つ配置の部品。`ChoicePicker` と `Divider` は子を持たないので入れ子の深さに数えない。 */
-const CONTAINERS: ReadonlySet<string> = new Set(["Row", "Column", "Card", "Tabs"])
+const CONTAINERS: ReadonlySet<string> = new Set(["Row", "Column", "Grid", "Card", "Tabs"])
 
 /** 配置の部品の入れ子の上限。 */
 const MAX_LAYOUT_DEPTH = 3
@@ -354,6 +354,7 @@ function referencesOf(part: ReturnType<typeof partOf>, index: number): readonly 
       return idList(props.children, `${base}/children`, "section-child")
     case "Row":
     case "Column":
+    case "Grid":
       return idList(props.children, `${base}/children`, "layout")
     case "Card":
       return typeof props.child === "string"

@@ -97,6 +97,7 @@ describe("A2UI のカタログ文書", () => {
   const expected = [
     "Report",
     "Section",
+    "Grid",
     ...Object.values(KIND_TO_COMPONENT),
     "ParameterSlider",
     "ParameterCheckBox",
@@ -109,8 +110,8 @@ describe("A2UI のカタログ文書", () => {
     )
   })
 
-  it("根・節・内容部品 22 種・つまみ 2 種・基本 6 部品の 32 部品が全部残る", () => {
-    expect(expected).toHaveLength(32)
+  it("根・節・格子・内容部品 22 種・つまみ 2 種・基本 6 部品の 33 部品が全部残る", () => {
+    expect(expected).toHaveLength(33)
     expect(findMissingComponents(document, expected)).toEqual([])
   })
 
@@ -276,7 +277,7 @@ describe("A2UI のカタログ文書", () => {
     expect(leaf).not.toContain('"kind"')
   })
 
-  it("受理の形の表は文書と同じ 32 部品を持つ", () => {
+  it("受理の形の表は文書と同じ 33 部品を持つ", () => {
     expect(Object.keys(REPORT_COMPONENT_SCHEMAS).toSorted()).toEqual(expected.toSorted())
   })
 

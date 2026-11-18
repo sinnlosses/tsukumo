@@ -187,6 +187,19 @@ const sectionComponentSchema = z.object({
   children: z.array(z.string()).min(1),
 })
 
+/** 器の幅で段に折り返す格子。列の数は描く側が器の幅から決めるので、書き手は子だけを渡す。 */
+const gridComponentSchema = z.object({
+  id: z.string(),
+  component: z.literal("Grid"),
+  children: partCardNote(
+    z
+      .array(z.string())
+      .min(2)
+      .describe("同格の部品の ID を2つ以上。広い紙では横に並び、狭い器では段に折り返す"),
+    "向くのは数の札・短い表・図・Card。長い段落とコードは格子の外に置く。2〜4個を1行で読み比べるなら Row、全幅に出したい部品は格子の外。列の数は書かない",
+  ),
+})
+
 /** お願いの選択肢1つ。`draft` は押すと入力欄へそのまま入る。 */
 export const favorOptionSchema = z.object({
   name: z.string(),
@@ -251,11 +264,12 @@ const OWN_COMPONENT_SCHEMAS = {
   Report: writtenReportComponentSchema,
   Section: sectionComponentSchema,
   ...WRITTEN_LEAF_COMPONENTS,
+  Grid: gridComponentSchema,
   ParameterSlider: parameterSliderSchema,
   ParameterCheckBox: parameterCheckBoxSchema,
 } as const
 
-/** 部品名と書き手が書く形。根・節・内容部品 22 種・つまみ 2 種・基本 6 部品の 32。 */
+/** 部品名と書き手が書く形。根・節・格子・内容部品 22 種・つまみ 2 種・基本 6 部品の 33。 */
 export const REPORT_COMPONENT_SCHEMAS = {
   ...OWN_COMPONENT_SCHEMAS,
   ...BASIC_PART_SCHEMAS,
@@ -263,12 +277,13 @@ export const REPORT_COMPONENT_SCHEMAS = {
 
 /**
  * 静的な一覧（式を初期値で評価した後）の部品 1 つの受理の形。
- * 式もつまみも持たず、塊の形は今のまま（30 部品のどれか）。
+ * 式もつまみも持たず、塊の形は今のまま（31 部品のどれか）。
  * 受け口で静的にする前の、書き手が書いた形は {@link REPORT_COMPONENT_SCHEMAS}。
  */
 export const a2uiReportComponentSchema = z.discriminatedUnion("component", [
   reportComponentSchema,
   sectionComponentSchema,
+  gridComponentSchema,
   ...Object.values(LEAF_COMPONENTS),
   ...Object.values(BASIC_PART_SCHEMAS),
 ])
@@ -282,6 +297,7 @@ export type A2uiReportComponent = z.infer<typeof a2uiReportComponentSchema>
 export const a2uiWrittenComponentSchema = z.discriminatedUnion("component", [
   writtenReportComponentSchema,
   sectionComponentSchema,
+  gridComponentSchema,
   ...Object.values(WRITTEN_LEAF_COMPONENTS),
   parameterSliderSchema,
   parameterCheckBoxSchema,

@@ -121,6 +121,7 @@ const COMPONENT_PURPOSES = {
   Markdown: "Markdown の本文",
   Row: "子を横に並べる配置",
   Column: "子を縦に並べる配置",
+  Grid: "同格の子を器の幅で段に折り返して並べる配置",
   Card: "子を 1 つ枠に入れる配置",
   Tabs: "子を切り替えて見せる配置",
   Divider: "節の部品の間に引く区切り線",

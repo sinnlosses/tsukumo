@@ -74,8 +74,8 @@ describe("partCardOf", () => {
     },
   )
 
-  it("引ける名前は 32 部品", () => {
-    expect(NAMES).toHaveLength(32)
+  it("引ける名前は 33 部品", () => {
+    expect(NAMES).toHaveLength(33)
   })
 
   it.each(["ParameterSlider", "ParameterCheckBox", "Stats", "Paragraph", "Chart", "ChartGrid"])(

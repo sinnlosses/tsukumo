@@ -57,6 +57,7 @@ export function chartPartsOfSection(
       case "Section":
       case "Row":
       case "Column":
+      case "Grid":
         return chartPartsOfSection(part.children, parts)
       case "Card":
         return chartPartsOfSection([part.child], parts)

@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>Grid の見本（架空の題材）</title>
+<style>
+  body { margin: 0; padding: 24px; background: #1c1b22; color: #e6e3ea; font: 15px/1.6 system-ui, sans-serif; }
+  h2 { font-size: 14px; color: #a9a4b4; margin: 24px 0 8px; font-weight: 500; }
+  .paper { background: #26252d; border: 1px solid #3a3842; border-radius: 10px; padding: 17px; box-sizing: content-box; }
+  .grid { display: grid; gap: 12px; grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); }
+  table { border-collapse: collapse; width: 100%; }
+  caption { text-align: left; font-size: 13px; color: #a9a4b4; padding-bottom: 4px; }
+  td, th { text-align: left; padding: 4px 8px; border-bottom: 1px solid #3a3842; }
+  .card { border: 1px solid #3a3842; border-radius: 8px; padding: 12px; }
+  .stat { font-size: 28px; font-weight: 600; }
+  .label { font-size: 12px; color: #a9a4b4; }
+  .bars { display: flex; gap: 12px; align-items: end; height: 140px; padding: 8px; border: 1px solid #3a3842; border-radius: 8px; }
+  .bar { flex: 1; background: #5fc9b8; }
+</style>
+</head>
+<body>
+<!-- 紙の内側の幅は ?w=<px> で渡す（1400×900 の紙は 724.92、1920×1080 は 882）。 -->
+<div id="root"></div>
+<script>
+  // 列の数: 子の最小幅 200px と間 12px で入る数を出し、段の数を変えずに列を均す
+  function columnsOf(count, width) {
+    const fit = Math.max(1, Math.floor((width + 12) / (200 + 12)))
+    const capped = Math.min(count, fit)
+    const rows = Math.ceil(count / capped)
+    return Math.ceil(count / rows)
+  }
+  const table = (t, a, b) => `<table><caption>${t}</caption><tr><th>回</th><th>秒</th></tr><tr><td>前</td><td>${a}</td></tr><tr><td>後</td><td>${b}</td></tr></table>`
+  const card = (l, v, p) => `<div class="card"><div class="stat">${v}</div><div class="label">${l}</div><p>${p}</p></div>`
+  const chart = (t, a, b) => `<div><div class="label">${t}</div><div class="bars"><div class="bar" style="height:${a / 7}px"></div><div class="bar" style="height:${b / 7}px"></div></div></div>`
+  const examples = [
+    ["4つの表", [table("架空の lint", 31, 30), table("架空の型の検査", 48, 71), table("架空の単体", 120, 118), table("架空の E2E", 210, 209)]],
+    ["3つの Card", [card("架空の開発環境の失敗", 0, "直近の 30 回すべて通った。"), card("架空の検証環境の失敗", 4, "証明書の期限で 4 回落ちた。"), card("架空の本番の失敗", 0, "切り替えのあとも落ちていない。")]],
+    ["4つの図", [chart("架空のホーム（ms）", 320, 300), chart("架空の一覧（ms）", 410, 620), chart("架空の詳細（ms）", 280, 270), chart("架空の設定（ms）", 150, 140)]],
+  ]
+  const width = Number(new URLSearchParams(location.search).get("w") ?? "724.92")
+  document.getElementById("root").innerHTML = examples.map(([name, kids]) =>
+    `<h2>${name}・紙の内側 ${width}px・${columnsOf(kids.length, width)} 列</h2><div class="paper" style="width:${width}px"><div class="grid" style="--cols:${columnsOf(kids.length, width)}">${kids.join("")}</div></div>`
+  ).join("")
+</script>
+</body>
+</html>

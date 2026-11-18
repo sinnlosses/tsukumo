@@ -49,6 +49,7 @@ import { filterBadges, hasBoundChoicePicker, isSortableTable } from "./domain/a2
 import { beforeAfterPairIdsInOrder, type PairView, pairSwitchLabels } from "./domain/pair-view.ts"
 import { isPlainHeadingText } from "./domain/plain-heading.ts"
 import { reportProofView } from "./domain/report-proof.ts"
+import { useGridColumnCount } from "./hooks/use-grid-column-count.ts"
 import { useNarrowReport } from "./hooks/use-narrow-report.ts"
 import {
   LeafIdentityContext,
@@ -318,7 +319,7 @@ function PartBody(props: { readonly id: string }): ReactElement {
 }
 
 /**
- * 配置の部品。`Row` は旧い `row` と、`Card` は旧い `panel` と同じ class を使い、`Column` は子を順に積む。
+ * 配置の部品。`Row` は旧い `row` と、`Card` は旧い `panel` と同じ class を使い、`Column` は子を順に積み、`Grid` は器の幅で段に折り返す。
  * `Tabs` は題の並びと選んだ子1つ。`Divider` は `ui/` の罫。操作できる `Table` と `ChoicePicker` は別のファイルの `InteractiveTable`・`ChoicePicker`。
  */
 function LayoutPart(props: { readonly id: string }): ReactElement {
@@ -343,6 +344,8 @@ function LayoutPart(props: { readonly id: string }): ReactElement {
           <PartRun lead="" ids={part.children} />
         </div>
       )
+    case "Grid":
+      return <GridPart ids={part.children} />
     case "Card":
       return (
         <div className={arrangedBlockClassNames.panel}>
@@ -393,7 +396,25 @@ function LayoutPart(props: { readonly id: string }): ReactElement {
   }
 }
 
-/** `Row` の子1つ。余白の列を出せるかは、本文の根ではなくセルの幅で決める。 */
+/** 器の幅で段に折り返す格子。セルは `Row` のセルと同じく器にする。 */
+function GridPart(props: { readonly ids: readonly string[] }): ReactElement {
+  const gridRef = useRef<HTMLDivElement>(null)
+  const columns = useGridColumnCount(gridRef, props.ids.length)
+  return (
+    <div
+      ref={gridRef}
+      className={arrangedBlockClassNames.grid}
+      data-part-grid=""
+      style={{ "--report-grid-columns": columns }}
+    >
+      {props.ids.map((child) => (
+        <RowCell key={child} id={child} />
+      ))}
+    </div>
+  )
+}
+
+/** `Row` と `Grid` の子1つ。余白の列を出せるかは、本文の根ではなくセルの幅で決める。 */
 function RowCell(props: { readonly id: string }): ReactElement {
   const cellRef = useRef<HTMLDivElement>(null)
   const narrow = useNarrowReport(cellRef)

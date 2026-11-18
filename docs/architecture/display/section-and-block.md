@@ -31,6 +31,10 @@
   差し戻しの検査は子にもセクションの部品と同じく掛かり、隣り合う `note` は縦に積む `Card` の中では数え、横に並ぶ `Row` の中では数えない。
   使い方は `report_part_card` の `Row`・`Column`・`Card` のカードが持つ。
   見え方は疑似セッションの場面 `row-panel-decision`（候補の比較）と `row-panel-status`（件数と一覧）で撮る。
+- **同格の部品を器の幅で段に折り返して並べる `Grid` は、tsukumo のカタログの自作の部品として `components` で書く**（基本カタログの写しではない）。
+  書き手は子の ID を2つ以上渡すだけで、列の数は描く側が格子の幅から決める（子の最小幅 14em と間で入る数を出し、段の数を変えずに列を均す。
+  `src/browser/features/report/domain/grid-column-count.ts` の `gridColumnCount`）。余白の札の横では1列に積み、セルは `Row` のセルと同じく器になる。
+  子の番号と欄外注は `Row` と同じく平らに並べた順で付く。使い方は `report_part_card` の `Grid` のカードが持ち、決定は ADR 0065。
   旧い `sections` の `row`・`panel` は書き手が書く欄が無く、旧い transcript の復元だけが読む（`src/server/report/core/body/legacy-report-section-list.ts`。ADR 0039「追記（2026-10-28）」）。
   読んだ `row` は `Row`、`panel` は題を先頭の段落にした `Card` に組み直す。画面に描くセクションの型 `ReportSection` は内容部品だけを持つ
 - **数の推移・割合は `chart` の部品で見せる**。書き手は種類（`bar` / `line` / `pie` / `arrow` / `slope` / `span` / `share`）・項目・

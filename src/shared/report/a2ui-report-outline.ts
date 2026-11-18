@@ -84,6 +84,7 @@ export function a2uiChildIds(part: A2uiReportComponent): readonly string[] {
     case "Section":
     case "Row":
     case "Column":
+    case "Grid":
       return part.children
     case "Card":
       return [part.child]

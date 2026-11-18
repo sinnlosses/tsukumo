@@ -13,7 +13,7 @@
 - **英語識別子**: `ReportSection`（`src/shared/report/report-block.ts`。画面に描くセクション）/ `sections`（旧い引数と
   記録の欄）/ `heading`（セクションの見出し）
 - **定義**: **レポートの本文を区切る1段**。見出し（`heading`）と、その下に並ぶ部品の並び（`LeafComponent`）を持つ。
-  配置は `components` の `Row`・`Card` が持つ。見出しが空のセクションは見出しを描かない
+  配置は `components` の `Row`・`Grid`・`Card` が持つ。見出しが空のセクションは見出しを描かない
 - **注記**: `report` の引数 `components` の `Section` がこの形に写り、セクションが2つ以上なら全部に見出しを付けさせる（無ければ
   差し戻す）。旧い引数 `sections` や、文字列の `body` だったころの記録は、呼び出しをイベントに変える境目
   （`sdk-report-message.ts` の `reportEvents`）で見出しの無いセクション1つ・逃げ道の部品1つに畳むので、描く側は文字列の
@@ -36,7 +36,7 @@
   `rows`（`timeline` の行の並び。`name`・`start`・`end`〔省くと一点〕・`extra`・`uncertain`・`after`・`lane`）・`start` / `end`（`timeline` の行の開始と終了。`HH:MM`・ISO の日時・分の数のどれかで、1つの部品の中で混ぜない）・
   `extra`（`timeline` の行の `end` より後へ延びた区切りの時刻の昇順の並び）・`uncertain`（`timeline` の行の終わり〔`extra` があればその最後〕より後ろに続く、止まりうる区間。終わりの時刻 `until` と一言 `label`）・`after`（`timeline` の行が待つ行の `name` の並び。待たれる行の終わりからこの行の開始へ矢印で描く）・`until`（`uncertain` の区間の終わりの時刻）・`lane`（`timeline` の行の役ごとのまとまり）・`events`（`timeline` の出来事の印の並び。`at` と `label`）・`at`（出来事の時刻）/
   `LeafComponentField`（使われ方の記録で数える欄の名前）
-- **定義**: **セクションの中に並ぶ、種類の決まった本文の1単位**。中身を持つものを内容部品、並びや枠を決めるもの（`Row`・`Card`・`Section`）を配置部品と呼び分け、この項は内容部品（`LeafComponent`）を指す。種類ごとに決まった形で Markdown に組んで
+- **定義**: **セクションの中に並ぶ、種類の決まった本文の1単位**。中身を持つものを内容部品、並びや枠を決めるもの（`Row`・`Grid`・`Card`・`Section`）を配置部品と呼び分け、この項は内容部品（`LeafComponent`）を指す。種類ごとに決まった形で Markdown に組んで
   描く（`reportSectionsMarkdown`）。部品の文字は行頭の部品の記法と `<` を逃がし、インラインの記法
   （inline code・太字・リンク）だけが効く。`fold` のある部品は `<details>` に畳む
 - **注記**: **`markdown` の部品が逃げ道**で、中身は逃がさず今の本文と同じ経路で描き、行を落とす整形

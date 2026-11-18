@@ -48,6 +48,7 @@ export const detailBlockClassName = notationStyles["detail-block"]
 export const arrangedBlockClassNames = {
   row: notationStyles["report-block-row"],
   rowCell: notationStyles["report-block-row-cell"],
+  grid: notationStyles["report-block-grid"],
   panel: notationStyles["report-block-panel"],
 } as const
 

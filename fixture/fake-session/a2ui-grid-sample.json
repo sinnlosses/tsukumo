@@ -1,0 +1,205 @@
+{
+  "name": "a2ui-grid-sample",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "架空の検査の段・環境・画面の様子を、並べて見せて（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 1500,
+      "event": {
+        "kind": "report",
+        "toolUseId": "fake-a2ui-grid-sample",
+        "components": [
+          {
+            "id": "root",
+            "component": "Report",
+            "conclusion": [
+              "架空の結論: 遅くなったのは型の検査と一覧の画面で、検証環境だけ手を入れる。"
+            ],
+            "figureNone": "no-shape",
+            "children": ["sec-stage", "sec-env", "sec-screen"],
+            "closing": { "text": "並べてみたよ！", "expression": "proud" }
+          },
+          {
+            "id": "sec-stage",
+            "component": "Section",
+            "heading": "架空の段ごとの所要",
+            "children": ["stage-grid"]
+          },
+          {
+            "id": "stage-grid",
+            "component": "Grid",
+            "children": ["stage-lint", "stage-type", "stage-unit", "stage-e2e"]
+          },
+          {
+            "id": "stage-lint",
+            "component": "Table",
+            "title": "架空の lint",
+            "columns": ["回", "秒"],
+            "rows": [
+              ["前", "31"],
+              ["後", "30"],
+              ["差", "−1"]
+            ]
+          },
+          {
+            "id": "stage-type",
+            "component": "Table",
+            "title": "架空の型の検査",
+            "columns": ["回", "秒"],
+            "rows": [
+              ["前", "48"],
+              ["後", "71"],
+              ["差", "+23"]
+            ]
+          },
+          {
+            "id": "stage-unit",
+            "component": "Table",
+            "title": "架空の単体",
+            "columns": ["回", "秒"],
+            "rows": [
+              ["前", "120"],
+              ["後", "118"],
+              ["差", "−2"]
+            ]
+          },
+          {
+            "id": "stage-e2e",
+            "component": "Table",
+            "title": "架空の E2E",
+            "columns": ["回", "秒"],
+            "rows": [
+              ["前", "210"],
+              ["後", "209"],
+              ["差", "−1"]
+            ]
+          },
+          {
+            "id": "sec-env",
+            "component": "Section",
+            "heading": "架空の環境ごとの様子",
+            "children": ["env-grid"]
+          },
+          {
+            "id": "env-grid",
+            "component": "Grid",
+            "children": ["env-dev", "env-stage", "env-prod"]
+          },
+          { "id": "env-dev", "component": "Card", "child": "env-dev-body" },
+          {
+            "id": "env-dev-body",
+            "component": "Column",
+            "children": ["env-dev-stats", "env-dev-text"]
+          },
+          {
+            "id": "env-dev-stats",
+            "component": "Paragraph",
+            "text": "**架空の開発環境: 失敗 0 回**"
+          },
+          {
+            "id": "env-dev-text",
+            "component": "Paragraph",
+            "text": "架空の開発環境は、直近の 30 回すべて通った。"
+          },
+          { "id": "env-stage", "component": "Card", "child": "env-stage-body" },
+          {
+            "id": "env-stage-body",
+            "component": "Column",
+            "children": ["env-stage-stats", "env-stage-text"]
+          },
+          {
+            "id": "env-stage-stats",
+            "component": "Paragraph",
+            "text": "**架空の検証環境: 失敗 1 → 4 回**"
+          },
+          {
+            "id": "env-stage-text",
+            "component": "Paragraph",
+            "text": "架空の検証環境は、証明書の期限で 4 回落ちた。"
+          },
+          { "id": "env-prod", "component": "Card", "child": "env-prod-body" },
+          {
+            "id": "env-prod-body",
+            "component": "Column",
+            "children": ["env-prod-stats", "env-prod-text"]
+          },
+          {
+            "id": "env-prod-stats",
+            "component": "Paragraph",
+            "text": "**架空の本番: 失敗 0 回**"
+          },
+          {
+            "id": "env-prod-text",
+            "component": "Paragraph",
+            "text": "架空の本番は、切り替えのあとも落ちていない。"
+          },
+          {
+            "id": "sec-screen",
+            "component": "Section",
+            "heading": "架空の画面ごとの読み込み",
+            "children": ["screen-grid"]
+          },
+          {
+            "id": "screen-grid",
+            "component": "Grid",
+            "children": ["screen-home", "screen-list", "screen-detail", "screen-setting"]
+          },
+          {
+            "id": "screen-home",
+            "component": "Chart",
+            "chartKind": "bar",
+            "title": "架空のホーム（ms）",
+            "labels": ["前", "後"],
+            "series": [{ "name": "ms", "values": [320, 300] }]
+          },
+          {
+            "id": "screen-list",
+            "component": "Chart",
+            "chartKind": "bar",
+            "title": "架空の一覧（ms）",
+            "labels": ["前", "後"],
+            "series": [{ "name": "ms", "values": [410, 620] }]
+          },
+          {
+            "id": "screen-detail",
+            "component": "Chart",
+            "chartKind": "bar",
+            "title": "架空の詳細（ms）",
+            "labels": ["前", "後"],
+            "series": [{ "name": "ms", "values": [280, 270] }]
+          },
+          {
+            "id": "screen-setting",
+            "component": "Chart",
+            "chartKind": "bar",
+            "title": "架空の設定（ms）",
+            "labels": ["前", "後"],
+            "series": [{ "name": "ms", "values": [150, 140] }]
+          }
+        ]
+      }
+    },
+    {
+      "afterMs": 1550,
+      "event": {
+        "kind": "tool-finished",
+        "toolUseId": "fake-a2ui-grid-sample",
+        "content": "ok",
+        "isError": false
+      }
+    },
+    {
+      "afterMs": 2300,
+      "event": {
+        "kind": "turn-finished",
+        "outcome": { "kind": "completed" }
+      }
+    }
+  ]
+}

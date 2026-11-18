@@ -4,6 +4,7 @@ import {
   type A2uiReportComponent,
   a2uiReportComponentSchema,
 } from "../../../../shared/report/a2ui-report-catalog.ts"
+import { a2uiChildIds } from "../../../../shared/report/a2ui-report-outline.ts"
 import { PART_EXAMPLES } from "../../../../shared/report/part-example-list.ts"
 import { PARAMETER_COMPONENT_NAMES } from "../../../../shared/report/report-expression-block.ts"
 
@@ -48,21 +49,6 @@ function wrapped(parts: readonly A2uiReportComponent[]): readonly A2uiReportComp
 
 /** ほかの部品の子として引かれていない部品の ID（例の中で並べる単位）。 */
 function topLevelIds(parts: readonly A2uiReportComponent[]): readonly string[] {
-  const referenced = new Set(
-    parts.flatMap((part) => {
-      switch (part.component) {
-        case "Row":
-        case "Column":
-        case "Section":
-          return part.children
-        case "Card":
-          return [part.child]
-        case "Tabs":
-          return part.tabs.map((tab) => tab.child)
-        default:
-          return []
-      }
-    }),
-  )
+  const referenced = new Set(parts.flatMap((part) => a2uiChildIds(part)))
   return parts.filter((part) => !referenced.has(part.id)).map((part) => part.id)
 }
