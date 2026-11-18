@@ -19,7 +19,7 @@
   overflow-wrap: anywhere;
 }
 
-/* 節の末尾の印と控え。落ちたは状態の印、記録あり・申告のみは枠だけの線の印にする。 */
+/* 節の末尾の印と控え。落ちたは状態の印、記録ありは枠だけの線の印にする。 */
 .proof {
   display: flex;
   flex-wrap: wrap;
@@ -37,14 +37,14 @@
 
 .seal {
   font-weight: 600;
+}
 
-  &[data-seal="outline"] {
-    padding: 0 var(--inline-tight);
-    border: 1px solid var(--ink-soft);
-    border-radius: var(--radius-sm);
-    font-weight: 400;
-    white-space: nowrap;
-  }
+.seal-outline {
+  padding: 0 var(--inline-tight);
+  border: 1px solid var(--ink-soft);
+  border-radius: var(--radius-sm);
+  font-weight: 400;
+  white-space: nowrap;
 }
 
 .receipt {

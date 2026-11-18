@@ -116,7 +116,7 @@ describe("検証のまとめ", () => {
     expect(screen.getByText("確かめたこと 2件")).toBeTruthy()
   })
 
-  it("節の印は、落ちたは状態の印、記録ありは回数つきの線の印になる", () => {
+  it("節の印は、記録ありは回数つきの印になり、照らせない節には印を付けない", () => {
     const section = {
       sectionId: "a",
       mark: "recorded",
@@ -124,13 +124,14 @@ describe("検証のまとめ", () => {
       rows: [],
       receipts: [],
     } as const
-    const { container } = render(<SectionProof section={section} />)
+    const { rerender } = render(<SectionProof section={section} />)
 
-    const seal = container.querySelector("[data-seal]")
-    expect(seal?.textContent).toBe("記録あり・3回")
-    expect(seal?.getAttribute("data-seal")).toBe("outline")
-    expect(seal?.getAttribute("title")).toContain("実行の記録と照合できた確認")
-    expect(seal?.getAttribute("aria-description")).toContain("実行の記録と照合できた確認")
+    const seal = screen.getByText("記録あり・3回")
+    expect(seal.getAttribute("title")).toContain("実行の記録と照合できた確認")
+    expect(seal.getAttribute("aria-description")).toContain("実行の記録と照合できた確認")
+
+    rerender(<SectionProof section={{ ...section, mark: "declared" }} />)
+    expect(screen.queryByText(/記録あり|申告のみ/u)).toBeNull()
   })
 
   it("結ばれていない行だけが帯の下に残る", () => {

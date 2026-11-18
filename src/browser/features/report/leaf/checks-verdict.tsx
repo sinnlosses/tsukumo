@@ -16,7 +16,7 @@ import { Badge } from "../../../components/ui/badge/badge.tsx"
 import type { ReportProofView } from "../domain/report-proof.ts"
 import { checksClassName } from "../markdown.tsx"
 import styles from "./leaf.module.css"
-import { checkSourceWord, ChecksTotalLine, SOURCE_MARK_ATTRIBUTES } from "./proof-band.tsx"
+import { ChecksTotalLine, RecordedMark } from "./proof-band.tsx"
 
 type Checks = Extract<ReportChecksView, { readonly kind: "checks" }>
 
@@ -122,9 +122,12 @@ function ProblemRow(props: { readonly row: ReportCheckProblemRow }): ReactElemen
             {plainInline(row.figure)}
           </span>
           <span className={checksClassName("checks-problem-time")}>{row.time}</span>
-          <span className={checksClassName("checks-problem-source")} {...SOURCE_MARK_ATTRIBUTES}>
-            {checkSourceWord(row.recorded, row.runCount)}
-          </span>
+          {row.recorded && (
+            <RecordedMark
+              runCount={row.runCount}
+              className={checksClassName("checks-problem-source")}
+            />
+          )}
         </div>
         {row.detail !== "" && (
           <div className={checksClassName("checks-problem-detail")}>{plainInline(row.detail)}</div>
@@ -160,12 +163,10 @@ function PassedFold(props: { readonly passed: readonly ReportCheckPassedRow[] })
             {recordedRuns > 0 && (
               <>
                 {"　"}
-                <span
+                <RecordedMark
+                  runCount={recordedRuns}
                   className={checksClassName("checks-passed-recorded")}
-                  {...SOURCE_MARK_ATTRIBUTES}
-                >
-                  {checkSourceWord(true, recordedRuns)}
-                </span>
+                />
               </>
             )}
           </span>
@@ -181,9 +182,9 @@ function PassedFold(props: { readonly passed: readonly ReportCheckPassedRow[] })
               <span className={checksClassName("check-label")}>{plainInline(row.label)}</span>
               <span className={checksClassName("check-figure")}>{plainInline(row.figure)}</span>
               <span className={checksClassName("check-time")}>{row.time}</span>
-              <span className={checksClassName("check-source")} {...SOURCE_MARK_ATTRIBUTES}>
-                {checkSourceWord(row.recorded, row.runCount)}
-              </span>
+              {row.recorded && (
+                <RecordedMark runCount={row.runCount} className={checksClassName("check-source")} />
+              )}
             </div>
           ))}
         </div>

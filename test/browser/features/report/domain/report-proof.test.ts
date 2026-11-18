@@ -68,13 +68,13 @@ describe("reportProofView", () => {
     expect(view.sections[0]?.runCount).toBe(2)
   })
 
-  it("照らせない ok がある節は申告のみ", () => {
+  it("照らせない ok がある節は declared", () => {
     const view = bandOf(proofOf([check("ok", "架空の一", ["a"], false)]))
     expect(view.sections[0]?.mark).toBe("declared")
     expect(view.sections[0]?.receipts).toEqual([])
   })
 
-  it("申告のみと記録ありが混ざると、節ごとの印は節の並びのまま持つ", () => {
+  it("declared と記録ありが混ざると、節ごとの印は節の並びのまま持つ", () => {
     const view = bandOf(
       proofOf([check("ok", "架空の一", ["a"], true), check("ok", "架空の二", ["b"], false)]),
     )
@@ -88,7 +88,7 @@ describe("reportProofView", () => {
     expect(view.sections.map((section) => section.mark)).toEqual(["recorded", "ng"])
   })
 
-  it("unobserved だけ・blocked だけの節は申告のみ", () => {
+  it("unobserved だけ・blocked だけの節は declared", () => {
     const view = bandOf(
       proofOf([
         check("unobserved", "架空の未確認", ["a"]),

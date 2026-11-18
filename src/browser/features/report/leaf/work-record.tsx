@@ -23,7 +23,7 @@ import { ChangedFilesFold } from "./changed-files-fold.tsx"
 import { FavorJump } from "./checks-verdict.tsx"
 import styles from "./leaf.module.css"
 import { PhaseTimes } from "./phase-time-section.tsx"
-import { checkSourceWord, ChecksTotalLine, SOURCE_MARK_ATTRIBUTES } from "./proof-band.tsx"
+import { ChecksTotalLine, RecordedMark } from "./proof-band.tsx"
 
 export function WorkRecord(props: {
   readonly head: MainViewSurfaceHead
@@ -173,7 +173,7 @@ function PassedLine(props: { readonly row: ReportCheckPassedRow }): ReactElement
       </span>
       <span>
         {lineText(label, figure)}
-        <CheckSource recorded={recorded} runCount={runCount} />
+        {recorded && <CheckSource runCount={runCount} />}
       </span>
     </div>
   )
@@ -192,7 +192,7 @@ function ProblemLine(props: { readonly row: ReportCheckProblemRow }): ReactEleme
       </span>
       <span>
         {lineText(label, figure)}
-        <CheckSource recorded={recorded} runCount={runCount} />
+        {recorded && <CheckSource runCount={runCount} />}
       </span>
       {detail !== "" && (
         <span className={workRecordClassName("work-record-check-how")}>{plainInline(detail)}</span>
@@ -206,16 +206,14 @@ function ProblemLine(props: { readonly row: ReportCheckProblemRow }): ReactEleme
   )
 }
 
-function CheckSource(props: {
-  readonly recorded: boolean
-  readonly runCount: number
-}): ReactElement {
+function CheckSource(props: { readonly runCount: number }): ReactElement {
   return (
     <>
       {"　"}
-      <span className={workRecordClassName("work-record-check-source")} {...SOURCE_MARK_ATTRIBUTES}>
-        {checkSourceWord(props.recorded, props.runCount)}
-      </span>
+      <RecordedMark
+        runCount={props.runCount}
+        className={workRecordClassName("work-record-check-source")}
+      />
     </>
   )
 }

@@ -103,10 +103,10 @@ describe("ChecksVerdict（面の合図の行）", () => {
     expect(fresh.textNodes.length).toBeGreaterThan(0)
   })
 
-  it("照らせる Bash の記録が無い行には「申告のみ」の語が出て、畳みの見出しに「記録あり」の件数は出ない", () => {
+  it("照らせる Bash の記録が無い行には裏取りの印を付けず、畳みの見出しに「記録あり」の件数も出ない", () => {
     const rendered = verdictOf(regionsOf(MIXED, ""))
 
-    expect(rendered.textNodes.filter((text) => text === "申告のみ")).toHaveLength(5)
+    expect(rendered.textNodes.some((text) => text.includes("申告のみ"))).toBe(false)
     expect(rendered.textNodes.some((text) => text.includes("記録あり"))).toBe(false)
   })
 

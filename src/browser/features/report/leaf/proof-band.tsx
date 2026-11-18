@@ -14,15 +14,23 @@ import styles from "./proof-band.module.css"
 
 type Summary = Extract<ReportChecksView, { readonly kind: "checks" }>["summary"]
 
-/** 裏取りの印の語。記録あり・申告のみは線の印で言い、色や状態の記号は付けない。 */
-export function checkSourceWord(recorded: boolean, runCount: number): string {
-  return recorded ? `記録あり・${String(runCount)}回` : "申告のみ"
-}
-
-/** 「記録あり」「申告のみ」の印に持たせる説明。初回の説明を消したあとも読める。 */
-export const SOURCE_MARK_ATTRIBUTES = {
-  title: FIRST_NOTE_TEXT["report-terms"],
-  "aria-description": FIRST_NOTE_TEXT["report-terms"],
+/**
+ * 打ったコマンドの記録と照らせた行の印。照らせない行には印を付けない。
+ * 説明は初回の説明を消したあとも読めるよう、印にも持たせる。
+ */
+export function RecordedMark(props: {
+  readonly runCount: number
+  readonly className?: string
+}): ReactElement {
+  return (
+    <span
+      className={props.className}
+      title={FIRST_NOTE_TEXT["report-terms"]}
+      aria-description={FIRST_NOTE_TEXT["report-terms"]}
+    >
+      {`記録あり・${String(props.runCount)}回`}
+    </span>
+  )
 }
 
 /**
@@ -59,14 +67,13 @@ export function SectionProof(props: { readonly section: ReportSectionProof }): R
   const { mark, receipts, runCount } = props.section
   return (
     <p className={styles.proof} data-proof={mark}>
-      {mark === "ng" ? (
+      {mark === "ng" && (
         <span className={styles.seal} data-seal="state">
           {`${REPORT_CHECK_PROBLEM_MARKS.ng} ${REPORT_CHECK_PROBLEM_WORDS.ng}`}
         </span>
-      ) : (
-        <span className={styles.seal} data-seal="outline" {...SOURCE_MARK_ATTRIBUTES}>
-          {checkSourceWord(mark === "recorded", runCount)}
-        </span>
+      )}
+      {mark === "recorded" && (
+        <RecordedMark runCount={runCount} className={styles["seal-outline"]} />
       )}
       {receipts.map((row, index) => (
         <span key={`${String(index)}:${row.label}`} className={styles.receipt}>

@@ -13,7 +13,7 @@ export type FirstNoteId = (typeof FIRST_NOTE_IDS)[number]
 export const FIRST_NOTE_TEXT = {
   "inquiry-terms":
     "「確かめた」は今回の作業で実行して確認した事実、「確度」はおすすめへの自信の程度",
-  "report-terms": "「記録あり」は実行の記録と照合できた確認、「申告のみ」は記録と照合できない申告",
+  "report-terms": "「記録あり」は実行の記録と照合できた確認。照合できない行には印を付けない",
 } satisfies Record<FirstNoteId, string>
 
 // 端末には、もう無い説明の鍵が残っていることがある。知らない鍵だけを落とし、ほかの記憶は保つ。
