@@ -1,11 +1,19 @@
+/* 札の列と右端の「仕分ける」の口を1行に並べる。 */
+.task-board-filter-row {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--inline-control);
+  padding: 0 var(--gutter-region) var(--inline-control);
+  border-bottom: 1px solid var(--rule-quiet);
+}
 /* 1行に収める。入りきらない狭い幅では横に転がす（折り返して頭の高さを変えない）。 */
 .task-board-filter {
   display: flex;
-  flex: none;
+  flex: 1 1 auto;
   gap: var(--inline-control);
-  padding: 0 var(--gutter-region) var(--inline-control);
+  min-width: 0;
   overflow-x: auto;
-  border-bottom: 1px solid var(--rule-quiet);
   scrollbar-width: none;
 }
 .task-board-chip {
@@ -37,4 +45,27 @@
   color: var(--ink-soft);
   font-family: var(--font-mono);
   font-size: var(--font-label);
+}
+/* サイドバーの段の見出しの口（`task-list.module.css` の `.task-stage-action`）と同じ顔。開いているあいだは地で示す。 */
+.task-board-sort-open {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: var(--inline-tight);
+  height: 28px;
+  padding: 0 var(--inline-control);
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: var(--font-label);
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.task-board-sort-open:hover,
+.task-board-sort-open[aria-expanded="true"] {
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+  color: var(--ink);
 }

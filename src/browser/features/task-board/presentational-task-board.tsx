@@ -20,6 +20,7 @@ import { useRef } from "react"
 import { Dialog } from "../../components/ui/dialog/dialog.tsx"
 import { Text } from "../../components/ui/text/text.tsx"
 import { useExternalSync } from "../../hooks/use-external-sync.ts"
+import { DraftSortBand, DraftSortPanel } from "./components/draft-sort-panel.tsx"
 import { TaskBoardAction } from "./components/task-board-action.tsx"
 import { TaskBoardColumns } from "./components/task-board-column-list.tsx"
 import { TaskBoardFilterBar } from "./components/task-board-filter-bar.tsx"
@@ -31,7 +32,10 @@ import { TaskDetail } from "./components/task-detail.tsx"
 import { TaskRunConfirm } from "./components/task-run-confirm.tsx"
 import { TaskSkeleton } from "./components/task-skeleton.tsx"
 import type { TaskBoardView } from "./domain/task-board-view.ts"
+import { BOARD_SORT_PANE_DOM_ID } from "./domain/task-row-dom-id.ts"
 import styles from "./task-board.module.css"
+
+const SORT_TITLE_ID = "task-board-sort-title"
 
 export function PresentationalTaskBoard(props: TaskBoardView): ReactElement {
   const content = props.content
@@ -80,7 +84,11 @@ export function PresentationalTaskBoard(props: TaskBoardView): ReactElement {
             onClose={props.onClose}
           />
           {content.kind === "known" && (
-            <TaskBoardFilterBar chips={content.chips} onFilter={props.onFilter} />
+            <TaskBoardFilterBar
+              chips={content.chips}
+              draftSort={props.draftSort}
+              onFilter={props.onFilter}
+            />
           )}
           {content.kind === "loading" && (
             <div className={styles["task-board-message"]}>
@@ -120,19 +128,38 @@ export function PresentationalTaskBoard(props: TaskBoardView): ReactElement {
                 />
               }
               detail={
-                content.selection.kind === "some" && (
-                  <TaskDetail
-                    key={content.selection.detail.id}
-                    detail={content.selection.detail}
-                    titleId="task-board-detail-title"
-                    breadcrumb={content.selection.breadcrumb}
-                    knownIds={content.knownIds}
-                    onJump={content.selection.onJump}
-                    onCopy={content.selection.onCopy}
-                  />
-                )
+                <>
+                  {props.draftSort.kind === "open" && (
+                    <section
+                      id={BOARD_SORT_PANE_DOM_ID}
+                      aria-labelledby={SORT_TITLE_ID}
+                      className={styles["task-board-sort-pane"]}
+                      onKeyDown={props.draftSort.onPaneKeyDown}
+                    >
+                      <DraftSortPanel
+                        panel={props.draftSort.panel}
+                        titleId={SORT_TITLE_ID}
+                        onClose={props.draftSort.onClose}
+                      />
+                    </section>
+                  )}
+                  {content.selection.kind === "some" && (
+                    <TaskDetail
+                      key={content.selection.detail.id}
+                      detail={content.selection.detail}
+                      titleId="task-board-detail-title"
+                      breadcrumb={content.selection.breadcrumb}
+                      knownIds={content.knownIds}
+                      onJump={content.selection.onJump}
+                      onCopy={content.selection.onCopy}
+                    />
+                  )}
+                </>
               }
             />
+          )}
+          {content.kind === "known" && props.draftSort.kind === "open" && (
+            <DraftSortBand band={props.draftSort.panel.band} />
           )}
           {content.kind === "known" && content.selection.kind === "some" && (
             <TaskBoardAction

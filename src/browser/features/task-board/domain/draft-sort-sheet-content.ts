@@ -1,22 +1,10 @@
-// サイドシートの分類の場面に並べるドラフトの札。一覧の順のまま、ドラフトの全件を札にする。
+// ドラフトの分類の場面（サイドシートと一覧モードの右の欄）に並べるドラフトの札。一覧の順のまま、ドラフトの全件を札にする。
 
-import type { TaskDifficulty, TaskSummaryItem } from "../../../../shared/repository/task-summary.ts"
-import { codeSpanParts, type CodeSpanPart } from "../../../domain/code-span.ts"
-import { choiceOf, type DraftSortChoice, type DraftSortState } from "./draft-sort.ts"
+import type { TaskSummaryItem } from "../../../../shared/repository/task-summary.ts"
+import { codeSpanParts } from "../../../domain/code-span.ts"
+import { choiceOf, type DraftSortState } from "./draft-sort.ts"
 import { taskStateOf } from "./task-board-content.ts"
-import type { TaskStateView } from "./task-board-view.ts"
-
-export type DraftSortCard = {
-  readonly id: string
-  readonly state: TaskStateView
-  readonly difficulty?: TaskDifficulty
-  readonly summary: readonly CodeSpanPart[]
-  /** 本文の頭。見出しと空行を除いた先頭の数行を1行に畳んだもの。無ければ空。 */
-  readonly bodyHead: string
-  readonly choice: DraftSortChoice
-  /** 却下の理由（1行）。却下でない札でも持つ。 */
-  readonly reason: string
-}
+import type { DraftSortCard } from "./task-board-view.ts"
 
 const BODY_HEAD_LENGTH = 140
 

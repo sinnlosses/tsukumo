@@ -1,4 +1,4 @@
-/* サイドシートの分類の場面。器と頭の帯は `task-sheet.module.css` の `.task-sheet` を共有し、ここは題・札・3択・下端の口を持つ。
+/* ドラフトの分類の場面（サイドシートと一覧モードの右の欄）。頭の帯は `task-sheet.module.css` を共有し、ここは題・札・3択・下端の口を持つ。
    形は見本 `docs/history/mockup/sidebar-task-board-2026-11-16/` の `view=draft`（札の縦積みと、下端の「仕分けを戻す・あとで n 件・頼む」）。 */
 .draft-sort-title {
   display: flex;
@@ -15,8 +15,9 @@
   font-size: var(--font-label);
   font-weight: 500;
 }
-/* 札の列。件数が多いときは内側で転がる。 */
+/* 札の列。件数が多いときは内側で転がる。一覧モードの縦の flex でも残りの高さを取る。 */
 .draft-sort-list {
+  flex: 1 1 auto;
   min-height: 0;
   margin: 0;
   padding: var(--stack-block) var(--inline-group);

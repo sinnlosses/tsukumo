@@ -177,20 +177,76 @@ describe("ドラフトの分類（サイドシート）", () => {
 })
 
 describe("タスクのモーダル", () => {
-  it("絞り込み「ドラフト」でも、行ごとの3択と下端の仕分けの帯は出ない", () => {
-    putSession(INITIAL_SESSION_STATE, () => {})
+  function renderBoard(
+    spy: CommandSpy = () => {},
+    tasks: readonly TaskSummaryItem[] = TASKS,
+  ): void {
+    putSession(INITIAL_SESSION_STATE, spy)
     render(
       <TaskBoard
-        tasks={knownTaskSummary(TASKS)}
+        tasks={knownTaskSummary(tasks)}
         request={{ kind: "open", focus: { kind: "first" }, query: "" }}
         onClose={() => {}}
       />,
       { wrapper: queryClientWrapper() },
     )
-    fireEvent.click(screen.getByRole("button", { name: /^ドラフト/ }))
+  }
 
-    expect(screen.queryByRole("radiogroup")).toBeNull()
-    expect(screen.queryByRole("button", { name: /を頼む/ })).toBeNull()
-    expect(screen.getByRole("button", { name: "計画する" })).toBeDefined()
+  function sortPane(): HTMLElement | null {
+    return screen.queryByRole("region", { name: /ドラフトを仕分ける/ })
+  }
+
+  it("「仕分ける」で右の欄が分類の場面に替わり、選んだぶんを1通で送る", () => {
+    const sent: unknown[] = []
+    renderBoard(collectInto(sent))
+    fireEvent.click(screen.getByRole("button", { name: "仕分ける", expanded: false }))
+
+    expect(sortPane()?.textContent).toContain("ドラフトを仕分ける3")
+    expect(screen.queryByRole("option", { selected: true })).toBeNull()
+    chooseSort("X-004", "計画")
+    chooseSort("X-005", "却下")
+    fireEvent.change(screen.getByLabelText("却下の理由"), { target: { value: "重複" } })
+    fireEvent.click(screen.getByRole("button", { name: "計画 1・却下 1 を頼む" }))
+    fireEvent.click(within(confirmDialogElement()).getByRole("button", { name: "仕分ける" }))
+
+    expect(sent).toEqual([
+      expect.objectContaining({
+        text: "/plan-tasks ドラフトを仕分けた。計画（承認済み）: X-004。却下: X-005（重複）",
+      }),
+    ])
   })
+
+  it("一覧の行を押すと、その行の詳細に戻る", () => {
+    renderBoard()
+    fireEvent.click(screen.getByRole("button", { name: "仕分ける" }))
+    fireEvent.click(screen.getByRole("option", { name: /X-002/ }))
+
+    expect(sortPane()).toBeNull()
+    expect(screen.getByRole("option", { name: /X-002/, selected: true })).toBeDefined()
+  })
+
+  it("閉じて開き直すと選びは初めに戻る", () => {
+    renderBoard()
+    fireEvent.click(screen.getByRole("button", { name: "仕分ける" }))
+    chooseSort("X-004", "計画")
+    fireEvent.click(within(sortPaneElement()).getByRole("button", { name: "閉じる" }))
+    expect(sortPane()).toBeNull()
+
+    fireEvent.click(screen.getByRole("button", { name: "仕分ける" }))
+    expect(isLater("X-004")).toBe(true)
+  })
+
+  it("ドラフトが無ければ「仕分ける」の口は出ない", () => {
+    renderBoard(() => {}, [taskOf("X-002", "todo")])
+
+    expect(screen.queryByRole("button", { name: "仕分ける" })).toBeNull()
+  })
+
+  function sortPaneElement(): HTMLElement {
+    const pane = sortPane()
+    if (pane === null) {
+      throw new Error("分類の場面が無い")
+    }
+    return pane
+  }
 })

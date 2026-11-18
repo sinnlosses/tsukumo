@@ -111,6 +111,13 @@
   min-width: 0;
   min-height: 0;
 }
+/* 右の欄の分類の場面（`DraftSortPanel`）。題の帯・札の列・下端の口を縦に積み、札の列だけが転がる。 */
+.task-board-sort-pane {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
 /* 一覧に無い依存（押せない）は `<li>` に直接、押せる札は中の `<button>` に付く。 */
 .task-detail-dependency {
   composes: surface-edge-rule surface-radius-md surface-tone-ground from "../../components/ui/surface/surface-face.module.css";

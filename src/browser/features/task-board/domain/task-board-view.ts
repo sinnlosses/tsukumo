@@ -6,6 +6,7 @@ import type {
   TaskLoopable,
 } from "../../../../shared/repository/task-summary.ts"
 import type { CodeSpanPart } from "../../../domain/code-span.ts"
+import type { DraftSortChoice } from "./draft-sort.ts"
 import type { TaskRunConfirmOutcome } from "./task-run-confirm-outcome.ts"
 import type { TaskRunTarget } from "./task-run-prompt.ts"
 
@@ -137,6 +138,54 @@ export type TaskBoardContent =
       readonly knownIds: ReadonlySet<string>
     }
 
+/** ドラフトの分類の場面（サイドシートと一覧モード）の札1枚。 */
+export type DraftSortCard = {
+  readonly id: string
+  readonly state: TaskStateView
+  readonly difficulty?: TaskDifficulty
+  readonly summary: readonly CodeSpanPart[]
+  /** 本文の頭。見出しと空行を除いた先頭の数行を1行に畳んだもの。無ければ空。 */
+  readonly bodyHead: string
+  readonly choice: DraftSortChoice
+  /** 却下の理由（1行）。却下でない札でも持つ。 */
+  readonly reason: string
+}
+
+/** ドラフトの分類の場面の中身（札と下端の口）。 */
+export type DraftSortPanelView = {
+  readonly cards: readonly DraftSortCard[]
+  /** 下端の口。計画か却下を1件以上選んだときだけ `some`。 */
+  readonly band:
+    | { readonly kind: "none"; readonly laterCount: number }
+    | {
+        readonly kind: "some"
+        readonly planCount: number
+        readonly dropCount: number
+        readonly laterCount: number
+        readonly onReset: () => void
+        readonly onRequest: () => void
+      }
+  readonly onChoose: (id: string, choice: DraftSortChoice) => void
+  readonly onReason: (id: string, reason: string) => void
+}
+
+/**
+ * 件数の帯の右端の「仕分ける」と、右の欄に出すドラフトの分類の場面。
+ * ドラフトが1件も無ければ `none`。`open` のあいだは右の欄が詳細の代わりに分類の場面になる。
+ */
+export type TaskBoardDraftSort =
+  | { readonly kind: "none" }
+  | { readonly kind: "closed"; readonly onToggle: () => void }
+  | {
+      readonly kind: "open"
+      readonly onToggle: () => void
+      readonly panel: DraftSortPanelView
+      /** 分類の場面の「×」。閉じてフォーカスを「仕分ける」の口へ戻す。 */
+      readonly onClose: () => void
+      /** 分類の場面の中で打った ↑↓ を、一覧の選択を動かす器へ伝えない。 */
+      readonly onPaneKeyDown: (event: { readonly stopPropagation: () => void }) => void
+    }
+
 type TaskBoardConfirm =
   | { readonly kind: "closed" }
   | { readonly kind: "open"; readonly target: TaskRunTarget }
@@ -154,6 +203,7 @@ type TaskBoardKeyEvent = {
 export type TaskBoardView = {
   readonly open: boolean
   readonly content: TaskBoardContent
+  readonly draftSort: TaskBoardDraftSort
   readonly confirm: TaskBoardConfirm
   readonly onClose: () => void
   readonly onQueryChange: (query: string) => void
