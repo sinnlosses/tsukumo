@@ -206,18 +206,18 @@
 .chat-poke:focus-visible .chat-poke-hint {
   opacity: 1;
 }
-/* 立ち絵は包んだボタンいっぱいに広がる（置き方は `.chat-poke` が持つ）。 */
+/* 立ち絵は包んだボタンいっぱいの箱に、画を縦横比のまま下端で収める（置き方は `.chat-poke` が持つ）。
+   押しを受けるのは描いた画の矩形だけで、箱の画の無い所（正方形の画なら頭の上）は受けない。 */
 .chat-portrait {
   width: 100%;
   height: 100%;
 }
+.chat-poke,
+.chat-portrait {
+  pointer-events: none;
+}
 .chat-portrait img {
-  width: 100%;
-  height: 100%;
-  max-width: none;
-  max-height: none;
-  object-fit: contain;
-  object-position: center bottom;
+  pointer-events: auto;
 }
 /* 狭い画面（760px 以下）では立ち絵を出さない（顔だけを入力欄の上に出す）。 */
 @media (max-width: 760px) {

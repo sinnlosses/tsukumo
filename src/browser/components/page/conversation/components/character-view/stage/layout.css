@@ -26,7 +26,8 @@
 }
 /* 左の列に立つ立ち絵。セリフのログの床にも立ち絵が立つので、舞台の立ち絵だけを直接の子で指す。
    高さは見本の値（`--stage-portrait-height`）で、列の幅いっぱいの箱に画を収める。
-   画は縦横比を保ったまま箱に収め（`object-fit: contain`）、下端で揃える。表情ごとに構図が違うので、顔の位置を決め打ちした切り抜きはしない。
+   画は縦横比を保ったまま箱に収め、下端で揃える（`.portrait` の flex が下端・中央に寄せる）。表情ごとに構図が違うので、顔の位置を決め打ちした切り抜きはしない。
+   押しを受けるのは描いた画の矩形だけで、箱の画の無い所（正方形の画なら頭の上）は受けない。箱の高さは頭上の席の位置の基準なので縮めない。
    列が狭いときに右端を抜くと絵が欠けて見えるので、マスクは外す。
    `.character-layout` に stacking context を作ると、席と立ち絵の重なりの順が壊れる。 */
 .character-layout > .portrait {
@@ -37,14 +38,10 @@
   translate: 0 var(--stage-portrait-drop);
   -webkit-mask-image: none;
   mask-image: none;
+  pointer-events: none;
 }
 .character-layout > .portrait img {
-  width: 100%;
-  height: 100%;
-  max-width: none;
-  max-height: none;
-  object-fit: contain;
-  object-position: center bottom;
+  pointer-events: auto;
 }
 
 /* 狭い画面（760px 以下）では立ち絵を出さない（代わりは `<PhoneBalloon>`）。 */
