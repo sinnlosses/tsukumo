@@ -15,6 +15,7 @@ import {
   type TableSort,
   visibleRowOrder,
 } from "../domain/a2ui-table-view.ts"
+import { reportExportMark } from "../report-export-copy.ts"
 import styles from "./leaf.module.css"
 import { TableFigure } from "./table-leaf.tsx"
 
@@ -106,11 +107,17 @@ export function ChoicePicker(props: ChoicePickerProps): ReactElement {
   const fixed = Array.isArray(part.value) ? part.value : NO_SELECTION
   const selected = path === undefined ? fixed : Array.isArray(bound) ? bound : NO_SELECTION
   const multiple = part.variant === "multipleSelection"
+  const label = typeof part.label === "string" ? part.label : undefined
+  const selectedText = part.options
+    .filter((option) => selected.includes(option.value))
+    .map((option) => (typeof option.label === "string" ? option.label : option.value))
+    .join("・")
   return (
     <div
       role="group"
-      aria-label={typeof part.label === "string" ? part.label : undefined}
+      aria-label={label}
       className={styles["interactive-view-group"]}
+      {...reportExportMark.value(label === undefined ? selectedText : `${label}: ${selectedText}`)}
     >
       {part.options.map((option) => {
         const on = selected.includes(option.value)

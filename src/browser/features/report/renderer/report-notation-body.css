@@ -151,6 +151,10 @@
 .report-fold-more-button {
   margin-block: var(--space-xs);
 }
+/* 書き出しの写しで落とす印を付けるためだけの包み。箱を作らず、中の部品を親の並びにそのまま置く。 */
+.report-export-drop {
+  display: contents;
+}
 /* 題を持たない表は、表の幅まで縮めてレポートの幅の左端に置く（題つきの表は包み `.report-captioned` が置く）。 */
 :is(.detail-block, [data-report-region]) > .table-scroll {
   inline-size: fit-content;

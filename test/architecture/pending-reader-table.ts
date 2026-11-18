@@ -41,6 +41,14 @@ export const PENDING_READERS: readonly PendingReader[] = [
       "読むのは `astryx theme build`（`theme:build` と lint の `--check`）で、`src/`・`scripts/` の import には現れない",
     removeWhen: "外部の道具が読む export を、この検査が読み手として数える",
   },
+  {
+    file: "src/browser/features/report/report-export-copy.ts",
+    missingReader: "production",
+    exportName: "reportExport",
+    reason:
+      "最終レポートの写しと CSS を作る口だけが先に入り、写しを送る「HTML で保存」のボタンがまだ無い（ADR 0073）",
+    removeWhen: "「HTML で保存」のボタンが reportExport を呼ぶ",
+  },
 ]
 
 /** `"production"` の行から、`<パス>#<名前>` と理由の対応を作る。 */

@@ -1235,27 +1235,35 @@
                                                 "ほか 3 件（一覧は省略）",
                                                 "src/a.ts",
                                                 {
-                                                  "tag": "button",
+                                                  "tag": "span",
                                                   "attributes": {
-                                                    "data-variant": "ghost",
-                                                    "data-size": "sm",
-                                                    "data-elevation": "none",
-                                                    "data-astryx-pressable": "",
-                                                    "aria-label": "コピー",
-                                                    "data-astryx-edge-comp": "",
-                                                    "type": "button"
+                                                    "data-report-export": "drop"
                                                   },
                                                   "children": [
                                                     {
-                                                      "tag": "svg"
-                                                    },
-                                                    "コピー",
-                                                    {
-                                                      "tag": "span",
+                                                      "tag": "button",
                                                       "attributes": {
-                                                        "role": "status",
-                                                        "aria-live": "polite"
-                                                      }
+                                                        "data-variant": "ghost",
+                                                        "data-size": "sm",
+                                                        "data-elevation": "none",
+                                                        "data-astryx-pressable": "",
+                                                        "aria-label": "コピー",
+                                                        "data-astryx-edge-comp": "",
+                                                        "type": "button"
+                                                      },
+                                                      "children": [
+                                                        {
+                                                          "tag": "svg"
+                                                        },
+                                                        "コピー",
+                                                        {
+                                                          "tag": "span",
+                                                          "attributes": {
+                                                            "role": "status",
+                                                            "aria-live": "polite"
+                                                          }
+                                                        }
+                                                      ]
                                                     }
                                                   ]
                                                 },

@@ -6,6 +6,7 @@ import { type ReactElement, use } from "react"
 import { Button } from "../../../components/ui/button/button.tsx"
 import type { PairView } from "../domain/pair-view.ts"
 import styles from "../renderer/report-notation.module.css"
+import { reportExportMark } from "../report-export-copy.ts"
 import { PairViewContext } from "./pair-view-context.ts"
 
 /** 図の左右（前が左・後が右）と同じ順に並べる。 */
@@ -15,7 +16,12 @@ export function PairViewSwitch(): ReactElement {
   const { view, setView, labels } = use(PairViewContext)
   const words = { side: "並べる", after: labels.after, before: labels.before }
   return (
-    <div role="group" aria-label="見せ方" className={styles["report-pair-switch"]}>
+    <div
+      role="group"
+      aria-label="見せ方"
+      className={styles["report-pair-switch"]}
+      {...reportExportMark.drop}
+    >
       {CHOICES.map((choice) => (
         <Button
           key={choice}

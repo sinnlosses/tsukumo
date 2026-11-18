@@ -57,6 +57,8 @@ import { PendingHeading, PendingPart } from "./leaf/pending-part.tsx"
 import { SectionProof } from "./leaf/proof-band.tsx"
 import { HeadRegion, NotDoneRegion } from "./leaf/report-head-region.tsx"
 import { arrangedBlockClassNames } from "./markdown.tsx"
+import notationStyles from "./renderer/report-notation.module.css"
+import { reportExportMark } from "./report-export-copy.ts"
 
 /**
  * 本文1つぶんの面。面は本文ごとに1つで、最初の一覧で作る。
@@ -187,7 +189,11 @@ function ReportRoot(): ReactElement {
           favorRef={report.favorRef}
           pressable={report.favorPressable}
         />
-        <FirstNoteList {...firstNotes} />
+        {firstNotes.notes.length > 0 && (
+          <div {...reportExportMark.drop} className={notationStyles["report-export-drop"]}>
+            <FirstNoteList {...firstNotes} />
+          </div>
+        )}
       </ReportFrame>
     </>
   )
@@ -387,9 +393,10 @@ function TabsPart(props: {
   const report = useReport()
   const [selected, setSelected] = useState(0)
   const current = props.tabs[selected] ?? props.tabs[0]
+  const currentTitle = typeof current?.title === "string" ? current.title : ""
   return (
     <div>
-      <div role="tablist">
+      <div role="tablist" {...reportExportMark.value(currentTitle)}>
         {props.tabs.map((tab, index) => (
           <Button
             key={tab.child}

@@ -13,6 +13,7 @@ import {
   type WrittenReportView,
 } from "../../../../shared/report/report-static-component-list.ts"
 import { partViewPath } from "../../../../shared/report/table-view.ts"
+import { reportExportMark } from "../report-export-copy.ts"
 import { type DataModel, useDataPath } from "./a2ui-interactive-view.tsx"
 import { useReportRevealing } from "./body-region.tsx"
 import { FailedChartLeaf } from "./chart-leaf.tsx"
@@ -119,12 +120,17 @@ function ParameterKnob(props: {
   const inputId = useId()
   const disabled = props.locked || revealing
   if (knob.component === "ParameterCheckBox") {
+    const checked = typeof stored === "boolean" ? stored : knob.initial
     return (
-      <div className={styles["parameter-knob"]} data-parameter-knob={knob.id}>
+      <div
+        className={styles["parameter-knob"]}
+        data-parameter-knob={knob.id}
+        {...reportExportMark.value(`${knob.label}: ${checked ? "オン" : "オフ"}`)}
+      >
         <label className={styles["parameter-knob-check"]}>
           <input
             type="checkbox"
-            checked={typeof stored === "boolean" ? stored : knob.initial}
+            checked={checked}
             disabled={disabled}
             onChange={(event) => {
               dataModel.set(path, event.currentTarget.checked)
@@ -137,7 +143,11 @@ function ParameterKnob(props: {
   }
   const value = typeof stored === "number" ? stored : knob.initial
   return (
-    <div className={styles["parameter-knob"]} data-parameter-knob={knob.id}>
+    <div
+      className={styles["parameter-knob"]}
+      data-parameter-knob={knob.id}
+      {...reportExportMark.value(`${knob.label}: ${String(value)}`)}
+    >
       <label htmlFor={inputId}>{knob.label}</label>
       <output htmlFor={inputId} className={styles["parameter-knob-value"]}>
         {String(value)}

@@ -36,6 +36,7 @@ import { isActivationKey } from "../../utils/activation-key.ts"
 import type { PointedLines } from "./domain/pointed-line-range.ts"
 import { FileExcerptPeek } from "./file-excerpt-peek.tsx"
 import { useFileExcerptPeek } from "./hooks/use-file-excerpt-peek.ts"
+import { reportExportMark } from "./report-export-copy.ts"
 
 /** 末尾の `:行`・`:行:桁`・`:行-行`（数字だけ）。1つ目の組が頭の行、2つ目の組が範囲の終わりの行。 */
 const LINE_SUFFIX_PATTERN = /:(\d+)(?::\d+|-(\d+))?$/
@@ -151,6 +152,7 @@ export function RepositoryFileLinkTarget(props: RepositoryFileLinkTargetProps): 
         title={props.title}
         className={props.className}
         aria-describedby={state.kind === "shown" ? peekId : undefined}
+        {...reportExportMark.plain}
         onClick={(event) => {
           if (event.currentTarget.ownerDocument.getSelection()?.isCollapsed === false) {
             return

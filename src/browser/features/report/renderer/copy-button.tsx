@@ -5,6 +5,7 @@ import { Check, Copy } from "lucide-react"
 import { useState, type ReactElement } from "react"
 
 import { Button } from "../../../components/ui/button/button.tsx"
+import { reportExportMark } from "../report-export-copy.ts"
 import styles from "./report-notation.module.css"
 
 /** 「コピーした」の文字を保つ長さ（ミリ秒）。 */
@@ -14,38 +15,40 @@ export function CopyButton(props: { readonly text: string }): ReactElement {
   const [copied, setCopied] = useState(false)
 
   return (
-    <Button
-      variant="ghost-hover-accent"
-      size="label"
-      pressed="none"
-      disabled={false}
-      disclosure={{ kind: "none" }}
-      className={styles["code-copy"]}
-      onClick={() => {
-        void navigator.clipboard
-          .writeText(props.text)
-          .then(() => {
-            setCopied(true)
-            setTimeout(() => {
-              setCopied(false)
-            }, COPIED_LABEL_DURATION_MS)
-          })
-          .catch(() => {
-            // クリップボードへ書けなかったときは「コピーした」表示を出さないだけにする
-          })
-      }}
-    >
-      {copied ? (
-        <>
-          <Check size={12} strokeWidth={2} aria-hidden="true" />
-          コピーした
-        </>
-      ) : (
-        <>
-          <Copy size={12} strokeWidth={2} aria-hidden="true" />
-          コピー
-        </>
-      )}
-    </Button>
+    <span {...reportExportMark.drop} className={styles["report-export-drop"]}>
+      <Button
+        variant="ghost-hover-accent"
+        size="label"
+        pressed="none"
+        disabled={false}
+        disclosure={{ kind: "none" }}
+        className={styles["code-copy"]}
+        onClick={() => {
+          void navigator.clipboard
+            .writeText(props.text)
+            .then(() => {
+              setCopied(true)
+              setTimeout(() => {
+                setCopied(false)
+              }, COPIED_LABEL_DURATION_MS)
+            })
+            .catch(() => {
+              // クリップボードへ書けなかったときは「コピーした」表示を出さないだけにする
+            })
+        }}
+      >
+        {copied ? (
+          <>
+            <Check size={12} strokeWidth={2} aria-hidden="true" />
+            コピーした
+          </>
+        ) : (
+          <>
+            <Copy size={12} strokeWidth={2} aria-hidden="true" />
+            コピー
+          </>
+        )}
+      </Button>
+    </span>
   )
 }

@@ -1,0 +1,265 @@
+import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { afterEach, beforeAll, describe, expect, it, vi } from "vitest"
+
+import { loadMarkdown } from "../../../../src/browser/features/report/markdown.tsx"
+import { Markdown } from "../../../../src/browser/features/report/renderer/markdown-renderer.tsx"
+import { reportExport } from "../../../../src/browser/features/report/report-export-copy.ts"
+import { Report } from "../../../../src/browser/features/report/report.tsx"
+import { UNREADABLE_FILE_EXCERPT } from "../../../../src/shared/repository/file-excerpt.ts"
+import { PLAIN_LEAF_VALUE, renderDirectLeaf } from "../../../fixture/direct-leaf-compare.tsx"
+import { stubRepositoryFileLink } from "../../../fixture/repository-file-link.tsx"
+import { regionsOf } from "../../../fixture/table-report-part.ts"
+
+beforeAll(async () => {
+  await loadMarkdown()
+})
+
+afterEach(() => {
+  cleanup()
+  vi.restoreAllMocks()
+  document.head.replaceChildren()
+  document.body.replaceChildren()
+})
+
+/** 写しの HTML を、文書に繋がない要素に読み戻す。 */
+function parsed(html: string): Element {
+  const holder = document.createElement("div")
+  holder.innerHTML = html
+  const [copy] = holder.children
+  if (copy === undefined) throw new Error("写しが空")
+  return copy
+}
+
+function firstChild(container: HTMLElement): Element {
+  const root = container.firstElementChild
+  if (root === null) throw new Error("根が描かれていない")
+  return root
+}
+
+const COMPARE_VIEW_KEY = "tsukumo-compare-view:v1"
+
+const side = (heading: string, point: string) => ({ kind: "points", heading, points: [point] })
+
+const PARTS = [
+  { id: "root", component: "Report", conclusion: ["架空の結論。"], children: ["s1"] },
+  {
+    id: "s1",
+    component: "Section",
+    heading: "架空の節",
+    children: ["tabs", "pair", "k", "pick", "t1"],
+  },
+  {
+    id: "tabs",
+    component: "Tabs",
+    tabs: [
+      { title: "架空の一", child: "p1" },
+      { title: "架空の二", child: "p2" },
+    ],
+  },
+  { id: "p1", component: "Paragraph", text: "架空の段落一" },
+  { id: "p2", component: "Paragraph", text: "架空の段落二" },
+  {
+    id: "pair",
+    component: "Compare",
+    title: "架空の対",
+    relation: "before-after",
+    sides: [side("今", "左A"), side("採ったあと", "右A")],
+    fold: "",
+    aside: "",
+  },
+  {
+    id: "k",
+    component: "ParameterSlider",
+    name: "n",
+    label: "架空の件数",
+    min: 1,
+    max: 4,
+    step: 1,
+    initial: 2,
+  },
+  {
+    id: "pick",
+    component: "ChoicePicker",
+    label: "架空の種別",
+    options: [
+      { label: "甲", value: "甲" },
+      { label: "乙", value: "乙" },
+    ],
+    value: { path: "/view/t1/filter" },
+  },
+  {
+    id: "t1",
+    component: "Table",
+    title: "架空の表",
+    columns: ["架空の名", "架空の種別"],
+    rows: [
+      ["ぼ", "甲"],
+      ["あ", "乙"],
+      ["ん", "甲"],
+    ],
+    filterable: true,
+  },
+]
+
+describe("最終レポートの写し", () => {
+  it("切り替えた形のまま写し、切り替えの口とつまみは値の1行に替え、隠れた中身は写さない", () => {
+    const { container } = render(
+      <Report
+        reveal={false}
+        turnId={1}
+        className=""
+        revealClassName=""
+        blockClassName=""
+        body={regionsOf(PARTS)}
+      />,
+    )
+    fireEvent.click(screen.getByRole("button", { name: "架空の二" }))
+    fireEvent.click(screen.getByRole("button", { name: "採ったあとだけ" }))
+    fireEvent.click(screen.getByRole("button", { name: "甲" }))
+    const root = firstChild(container)
+    const screenBefore = root.outerHTML
+
+    const copy = parsed(reportExport(root).html)
+
+    expect(root.outerHTML).toBe(screenBefore)
+    expect(copy.querySelector('[role="tablist"]')).toBeNull()
+    expect(copy.querySelector('[role="group"]')).toBeNull()
+    expect(copy.querySelector("input")).toBeNull()
+    expect(copy.querySelector("[data-report-export]")).toBeNull()
+    const lines = [...copy.querySelectorAll("p")].map((line) => line.textContent)
+    expect(lines).toEqual(expect.arrayContaining(["架空の二", "架空の件数: 2", "架空の種別: 甲"]))
+    expect(copy.textContent).toContain("架空の段落二")
+    expect(copy.textContent).not.toContain("架空の段落一")
+    expect(copy.textContent).toContain("右A")
+    expect(copy.textContent).not.toContain("左A")
+    const rows = (element: Element) =>
+      [...element.querySelectorAll("tbody tr")].map((row) => row.textContent)
+    expect(rows(copy)).toEqual(["ぼ甲", "ん甲"])
+    expect(rows(copy)).toEqual(rows(root))
+  })
+
+  it.each([
+    ["並べる", "side"],
+    ["切り替え", "switch"],
+    ["重ねる", "overlay"],
+  ])(
+    "画像の前後比べは「%s」の見せ方のまま写し、見せ方の口・見本・つまみを落とす",
+    (choice, view) => {
+      localStorage.removeItem(COMPARE_VIEW_KEY)
+      const { container } = renderDirectLeaf(
+        {
+          id: "b1",
+          component: "Compare",
+          title: "架空の前後",
+          relation: "before-after",
+          sides: [
+            { heading: "", kind: "image", path: "架空/before.png" },
+            { heading: "", kind: "image", path: "架空/after.png" },
+          ],
+          fold: "",
+          aside: "",
+        },
+        { kind: "shelved", toolUseId: "fictional-report", sizes: [], unshelved: [] },
+        { ...PLAIN_LEAF_VALUE, captionNumber: { kind: "figure", ordinal: 1 } },
+      )
+      for (const image of container.querySelectorAll("img")) {
+        Object.defineProperty(image, "naturalWidth", { value: 40 })
+        Object.defineProperty(image, "naturalHeight", { value: 20 })
+        fireEvent.load(image)
+      }
+      fireEvent.click(screen.getByRole("button", { name: choice }))
+      const root = firstChild(container)
+      const notZoom = (element: Element) =>
+        [...element.querySelectorAll("button")].filter(
+          (button) => button.getAttribute("aria-label") !== "この画像を拡大",
+        )
+      expect(root.querySelector("[data-view]")?.getAttribute("data-view")).toBe(view)
+      expect(notZoom(root).length).toBeGreaterThan(0)
+
+      const copy = parsed(reportExport(root).html)
+      localStorage.removeItem(COMPARE_VIEW_KEY)
+
+      expect(copy.querySelector("[data-view]")?.getAttribute("data-view")).toBe(view)
+      expect(copy.querySelector('[role="group"]')).toBeNull()
+      expect(copy.querySelector("input")).toBeNull()
+      expect(notZoom(copy)).toEqual([])
+      expect(copy.querySelector("[data-report-export]")).toBeNull()
+      expect(copy.querySelectorAll("img")).toHaveLength(2)
+    },
+  )
+
+  it("コピーのボタンを落とし、押せるパスは押せない code の字にし、コードの中身は変えない", () => {
+    const stub = stubRepositoryFileLink(["src/fictional.ts"], UNREADABLE_FILE_EXCERPT)
+    const { container } = render(
+      stub.wrap(
+        <Markdown text={"見て `src/fictional.ts:12` を直した\n\n```ts\nconst 架空 = 1\n```"} />,
+      ),
+    )
+    stub.restore()
+    const root = container
+    expect(root.querySelector('[role="button"]')).not.toBeNull()
+    expect(root.textContent).toContain("コピー")
+
+    const copy = parsed(reportExport(root).html)
+
+    expect(copy.querySelector('[role="button"]')).toBeNull()
+    expect(copy.querySelector("button")).toBeNull()
+    expect(copy.textContent).not.toContain("コピー")
+    const codes = [...copy.querySelectorAll("code")].map((code) => code.textContent)
+    expect(codes).toEqual(expect.arrayContaining(["src/fictional.ts:12"]))
+    expect(copy.querySelector("pre")?.textContent).toContain("const 架空 = 1")
+    expect(copy.textContent).toBe(root.textContent?.replace(/コピー/g, ""))
+  })
+
+  it("canvas は描いた画を img に替える", () => {
+    vi.spyOn(HTMLCanvasElement.prototype, "toDataURL").mockReturnValue("data:image/png;base64,AAAA")
+    const root = document.createElement("div")
+    root.innerHTML =
+      '<figure><canvas aria-label="架空の図" width="40" height="20"></canvas></figure>'
+    document.body.append(root)
+
+    const copy = parsed(reportExport(root).html)
+
+    expect(root.querySelector("canvas")).not.toBeNull()
+    expect(copy.querySelector("canvas")).toBeNull()
+    const image = copy.querySelector("img")
+    expect(image?.getAttribute("src")).toBe("data:image/png;base64,AAAA")
+    expect(image?.getAttribute("alt")).toBe("架空の図")
+  })
+})
+
+describe("書き出しの CSS", () => {
+  it("写しに当たる規則と、それが参照する custom property だけを集め、当たらない規則は集めない", () => {
+    const style = document.createElement("style")
+    style.textContent = `
+:root { --ink: #123456; --lead-ink: var(--ink); --unused: red; }
+.paper { padding: 4px; }
+.lead { color: var(--lead-ink); }
+.lead::before { content: "※"; }
+.absent { color: blue; }
+@media (max-width: 640px) { .lead { font-size: 12px; } .absent { margin: 0; } }
+@media print { .absent { display: none; } }
+@keyframes lead-in { from { opacity: 0; } }
+@keyframes unused-in { from { opacity: 0; } }
+.paper { animation: lead-in 1s; }
+`
+    document.head.append(style)
+    const root = document.createElement("div")
+    root.className = "paper"
+    root.innerHTML = `<p class="lead">架空の結論</p>`
+    document.body.append(root)
+
+    const { css } = reportExport(root)
+
+    expect(css).toContain(".paper { padding: 4px; }")
+    expect(css).toContain(".lead { color: var(--lead-ink); }")
+    expect(css).toContain('.lead::before { content: "※"; }')
+    expect(css).toMatch(/@media \(max-width: 640px\) \{\s*\.lead \{ font-size: 12px; \}\s*\}/)
+    expect(css).toContain("@keyframes lead-in")
+    expect(css).toMatch(/:root \{[^}]*--lead-ink: #123456;[^}]*\}/)
+    expect(css).not.toContain(".absent")
+    expect(css).not.toContain("@media print")
+    expect(css).not.toContain("unused-in")
+    expect(css).not.toContain("--unused")
+  })
+})

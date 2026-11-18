@@ -25,6 +25,7 @@ import { Button } from "../../../components/ui/button/button.tsx"
 import { ImageZoom, type ImageZoomFallback } from "../../../components/ui/image-zoom/image-zoom.tsx"
 import { sessionTokenUrl } from "../../../domain/session-token-url.ts"
 import type { ChangedRegion } from "../domain/changed-region.ts"
+import { reportExportMark } from "../report-export-copy.ts"
 import { compareLoadedImages } from "./compare-loaded-image.ts"
 import { type CompareView, loadCompareView, saveCompareView } from "./compare-view.ts"
 import { CompareZoom } from "./compare-zoom.tsx"
@@ -230,7 +231,12 @@ export function CompareSwap(props: CompareSwapProps): ReactElement {
       >
         {props.children}
         {!missing && !pairOnly && (
-          <div role="group" aria-label="見せ方" className={styles["report-compare-swap-views"]}>
+          <div
+            role="group"
+            aria-label="見せ方"
+            className={styles["report-compare-swap-views"]}
+            {...reportExportMark.drop}
+          >
             {SWAP_VIEWS.filter(
               (choice) =>
                 (choice !== "overlay" || overlayable) &&
@@ -260,11 +266,12 @@ export function CompareSwap(props: CompareSwapProps): ReactElement {
             value={position}
             aria-label="前後の境"
             className={styles["report-compare-swap-slider"]}
+            {...reportExportMark.drop}
             onChange={(event) => setPosition(event.currentTarget.valueAsNumber)}
           />
         )}
         {switches && (
-          <div className={styles["report-compare-swap-thumbs"]}>
+          <div className={styles["report-compare-swap-thumbs"]} {...reportExportMark.drop}>
             {SWAP_SIDES.map((side) => {
               const thumb = thumbs.find((candidate) => candidate.side === side)
               return (
