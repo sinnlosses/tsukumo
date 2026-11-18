@@ -3,8 +3,8 @@ import { describe, expect, it } from "vitest"
 import { gridColumnCount } from "../../../../../src/browser/features/report/domain/grid-column-count.ts"
 
 /** 本文の字は 14px、列の間は 12px。幅は紙の内側（1400×900 で 724.92px、1920×1080 で 882px）。 */
-const measure = (childCount: number, inlineSize: number, besideCard = false) =>
-  gridColumnCount({ childCount, inlineSize, fontSize: 14, gap: 12, besideCard })
+const measure = (childCount: number, inlineSize: number) =>
+  gridColumnCount({ childCount, inlineSize, fontSize: 14, gap: 12 })
 
 describe("gridColumnCount", () => {
   it.each([
@@ -17,9 +17,5 @@ describe("gridColumnCount", () => {
     ["まだ置かれていない（幅 0）は 1 列", 4, 0, 1],
   ] as const)("%s", (_, childCount, inlineSize, expected) => {
     expect(measure(childCount, inlineSize)).toBe(expected)
-  })
-
-  it("余白の札の横では、広い器でも 1 列に積む", () => {
-    expect(measure(4, 882, true)).toBe(1)
   })
 })

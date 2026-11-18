@@ -107,7 +107,7 @@
   長い段落とコードは格子の外に置く（縛りの検査は無く、カードが言う）。全幅に出したい部品も格子の外に置く
 - 目盛りを揃えて比べる図の並びは、`Row`・`Grid` ではなく `ChartGrid`（上の項）
 
-どれも余白の札の横に来たら縦に積む。決定は ADR 0065（`docs/architecture/adr/0065-report-grid-layout-part.md`）。
+`Grid` の決定は ADR 0065（`docs/architecture/adr/0065-report-grid-layout-part.md`）。
 
 ## 図の値と本文の数の照合
 

@@ -10,17 +10,15 @@ type GridMeasure = {
   readonly fontSize: number
   /** 列の間（px）。 */
   readonly gap: number
-  /** 余白の札の横に来ている。 */
-  readonly besideCard: boolean
 }
 
 /**
  * 格子に入る列の数を出し、子の数より多ければ子の数に縮め、段の数を変えずに列を均す（4つで3列入るなら 2×2）。
- * 余白の札の横とまだ置かれていない格子は1列。
+ * まだ置かれていない格子は1列。
  */
 export function gridColumnCount(measure: GridMeasure): number {
-  const { childCount, inlineSize, fontSize, gap, besideCard } = measure
-  if (besideCard || inlineSize <= 0 || childCount <= 1) {
+  const { childCount, inlineSize, fontSize, gap } = measure
+  if (inlineSize <= 0 || childCount <= 1) {
     return 1
   }
   const cellMin = GRID_CELL_MIN_EM * fontSize

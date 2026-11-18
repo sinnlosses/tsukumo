@@ -38,7 +38,7 @@
     gap: var(--space-md);
     margin: var(--report-block-gap) 0;
   }
-  /* `grid` の列の数は `useGridColumnCount` が格子の幅から測って渡す（余白の札の横では 1）。 */
+  /* `grid` の列の数は `useGridColumnCount` が格子の幅から測って渡す。 */
   & .report-block-grid {
     grid-template-columns: repeat(var(--report-grid-columns, 1), minmax(0, 1fr));
   }

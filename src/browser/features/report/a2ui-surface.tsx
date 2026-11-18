@@ -11,7 +11,7 @@ import {
   type ReactComponentImplementation,
 } from "@a2ui/react/v0_9"
 import { Catalog, MessageProcessor } from "@a2ui/web_core/v0_9"
-import { type ReactElement, useState } from "react"
+import { type ReactElement, useRef, useState } from "react"
 
 import type { A2uiReportComponent } from "../../../shared/report/a2ui-report-catalog.ts"
 import {
