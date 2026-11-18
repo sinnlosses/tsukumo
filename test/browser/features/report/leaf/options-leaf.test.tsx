@@ -1,12 +1,8 @@
-import { act, cleanup, fireEvent, screen } from "@testing-library/react"
-import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest"
+import { cleanup } from "@testing-library/react"
+import { afterEach, beforeAll, describe, expect, it } from "vitest"
 
 import { loadMarkdown } from "../../../../../src/browser/features/report/markdown.tsx"
-import { useReplyNotes } from "../../../../../src/browser/stores/reply-note-list.ts"
 import { newLeafHtml, renderDirectLeaf } from "../../../../fixture/direct-leaf-compare.tsx"
-import { openRequestAt, renderNoteLeaf } from "../../../../fixture/reply-note-leaf.tsx"
-
-const CARD_SELECTOR = "[data-margin-card]"
 
 beforeAll(async () => {
   await loadMarkdown()
@@ -50,110 +46,5 @@ describe("Options の部品", () => {
     expect(fresh).toContain('<span aria-hidden="true">✓</span>採る</span>')
     expect(fresh).toContain('<span aria-hidden="true">〜</span>検討</span>')
     expect(fresh).toContain('<span aria-hidden="true">–</span>採らない</span>')
-  })
-})
-
-describe("Options の案を指して頼む", () => {
-  const part = {
-    id: "o1",
-    component: "Options",
-    title: "架空の題",
-    items: ITEMS,
-    fold: "",
-    aside: "",
-  } as const
-
-  beforeEach(() => {
-    useReplyNotes.setState(useReplyNotes.getInitialState(), true)
-  })
-
-  /** 案乙を指して頼むの欄を開き、書き始めの字のまま付箋にする。 */
-  function noteSecondOption(): void {
-    const field = openRequestAt("架空の案乙")
-    fireEvent.keyDown(field, { key: "Enter", metaKey: true })
-  }
-
-  it("何も押していないときはボタンが無く、採らなかった案も押すと「聞く・頼む」が1つ出る", () => {
-    renderNoteLeaf(part, { port: true })
-    expect(screen.queryAllByRole("button")).toHaveLength(0)
-
-    fireEvent.click(screen.getByText("架空の案丙"))
-
-    expect(screen.getAllByRole("button").map((button) => button.textContent)).toEqual([
-      "聞く・頼む",
-    ])
-  })
-
-  it("頼むに切り替えると欄の書き始めが「この案で進めて。」になり、送ると案を指した付箋が1件でき ask は呼ばれない", () => {
-    const { ask } = renderNoteLeaf(part, { port: true })
-
-    expect(openRequestAt("架空の案乙")).toHaveProperty("value", "この案で進めて。")
-    fireEvent.keyDown(screen.getByRole("textbox"), { key: "Enter", metaKey: true })
-
-    const notes = Object.values(useReplyNotes.getState().notesBySession).flat()
-    expect(notes).toHaveLength(1)
-    expect(notes[0]?.body).toBe("この案で進めて。")
-    expect(notes[0]?.target.label).toEqual({
-      section: "架空の節",
-      component: "架空の題",
-      row: "架空の案乙",
-    })
-    expect(notes[0]?.target.key.rowIndex).toBe(1)
-    expect(ask).not.toHaveBeenCalled()
-  })
-
-  it("聞くに戻すと書き始めの字を外す", () => {
-    renderNoteLeaf(part, { port: true })
-    openRequestAt("架空の案乙")
-
-    fireEvent.click(screen.getByRole("radio", { name: "聞く" }))
-
-    expect(screen.getByRole("textbox")).toHaveProperty("value", "")
-  })
-
-  it("付箋は頼んだ単位の余白の札に出て、本体の中には出ず、× で外せる", () => {
-    const { container } = renderNoteLeaf(part, { port: true })
-    expect(container.querySelector(CARD_SELECTOR)).toBeNull()
-
-    noteSecondOption()
-
-    const card = container.querySelector(CARD_SELECTOR)
-    expect(card).not.toBeNull()
-    expect(card?.closest('[class*="ask-margin"]')).not.toBeNull()
-    expect(card?.closest('[class*="ask-main"]')).toBeNull()
-    expect(card?.textContent).toContain("頼 1")
-    expect(card?.textContent).toContain("架空の案乙")
-    expect(card?.textContent).toContain("この案で進めて。")
-    expect(card?.textContent).toContain("まだ送っていない")
-    expect(card?.contains(screen.getByRole("button", { name: "付箋を外す" }))).toBe(true)
-    const mark = screen.getByRole("button", { name: "頼 1" })
-    expect(mark.closest("[data-reply-row]")?.textContent).toContain("架空の案乙")
-
-    fireEvent.click(screen.getByRole("button", { name: "付箋を外す" }))
-
-    expect(container.querySelector(CARD_SELECTOR)).toBeNull()
-  })
-
-  it("送った付箋は余白の札に「送った → やり取り n で作業中」と残り、外すボタンは出ない", () => {
-    const { container } = renderNoteLeaf(part, { port: true })
-    noteSecondOption()
-    const [note] = Object.entries(useReplyNotes.getState().notesBySession).flatMap(
-      ([sessionKey, notes]) => notes.map((candidate) => ({ sessionKey, id: candidate.id })),
-    )
-    if (note === undefined) throw new Error("付箋が無い")
-
-    act(() => {
-      useReplyNotes.getState().markSent(note.sessionKey, [note.id], 3)
-    })
-
-    const card = container.querySelector(CARD_SELECTOR)
-    expect(card?.textContent).toContain("送った → やり取り 3 で作業中")
-    expect(screen.queryByRole("button", { name: "付箋を外す" })).toBeNull()
-  })
-
-  it("口が無い描画では押してもボタンが出ない", () => {
-    renderNoteLeaf(part, { port: false })
-    fireEvent.click(screen.getByText("架空の案乙"))
-    expect(screen.queryAllByRole("button")).toHaveLength(0)
   })
 })

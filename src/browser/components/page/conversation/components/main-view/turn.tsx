@@ -6,7 +6,7 @@
 // 失敗で終わった・利用者が止めたやり取りは、その記録の位置（やり取りの末尾）に失敗・中断の表示を出す（色だけでなく字で成功と見分ける）。
 
 import clsx from "clsx"
-import { Fragment, use, useState, type ReactElement, type ReactNode } from "react"
+import { Fragment, useState, type ReactElement, type ReactNode } from "react"
 
 import type { TaskSummaryResult } from "../../../../../../shared/repository/task-summary.ts"
 import { conversationMoment } from "../../../../../../shared/session/conversation-moment.ts"
@@ -16,10 +16,6 @@ import {
   type MainViewTurn,
 } from "../../../../../../shared/session/main-view-shape.ts"
 import { DEFAULT_CHARACTER_NAME } from "../../../../../domain/portrait-appearance.ts"
-import {
-  AskThreadContext,
-  isAskGroupedToLeaf,
-} from "../../../../../features/report/ask-thread-context.ts"
 import { ReplyPortContext } from "../../../../../features/report/reply-port.ts"
 import { useExternalSync } from "../../../../../hooks/use-external-sync.ts"
 import { usePhoneWidth } from "../../../../../hooks/use-phone-width.ts"
@@ -87,20 +83,12 @@ export function Turn(props: TurnProps): ReactElement {
     stepIdAtMount,
     draftedToolUseIds,
   })
-  const askSlot = use(AskThreadContext)
   const phoneWidth = usePhoneWidth()
   const rows = withoutVoiceRow(useConversationStreamRows(turn.id), props.voice ?? NO_VOICE_SLOT)
-  // 部品について聞いた補足は、その部品の余白の札に出る。流れに出すのは、札に束ねられなかった補足だけ。
   // 狭い画面の依頼は、一覧の上の依頼の塊が持つ。
-  const shownRows = rows.filter((row) => {
-    if (row.kind !== "post") {
-      return true
-    }
-    if (row.record.kind === "request") {
-      return !phoneWidth
-    }
-    return !isAskGroupedToLeaf(askSlot, row.record)
-  })
+  const shownRows = rows.filter(
+    (row) => !phoneWidth || row.kind !== "post" || row.record.kind !== "request",
+  )
   // 答えの投稿は広い画面だけ。狭い画面は札のまま。
   const items = streamItemsOf(shownRows, turn).filter(
     (item) => !phoneWidth || item.kind !== "answer",

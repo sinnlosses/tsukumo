@@ -2,7 +2,7 @@
 // 列の揃え・数の棒・状態の凡例・濃淡の段は全行から決め、札の色は内容部品の値から受ける。数えない。
 
 import clsx from "clsx"
-import { type ComponentProps, Fragment, type ReactElement, type ReactNode, use } from "react"
+import { type ComponentProps, Fragment, type ReactElement, type ReactNode } from "react"
 
 import type { A2uiReportComponent } from "../../../../shared/report/a2ui-report-catalog.ts"
 import type { A2uiReportPart } from "../../../../shared/report/a2ui-report-outline.ts"
@@ -41,7 +41,6 @@ import {
 } from "../markdown.tsx"
 import { ColumnMarked, type HeadSort, LeafTable, type LeafTableRow } from "./leaf-table.tsx"
 import styles from "./leaf.module.css"
-import { type RowAsk, RowAskContext } from "./reply-unit-row.tsx"
 import { FoldedLeafFrame } from "./report-leaf-frame.tsx"
 
 type TablePart = A2uiReportPart<"Table">
@@ -144,8 +143,7 @@ function TableGrid(
   },
 ): ReactElement {
   const { part, figure, value, rowOrder, ...tableProps } = props
-  const rowAsk = use(RowAskContext)
-  return <LeafTable {...tableProps} rows={bodyRows(part, figure, value, rowOrder, rowAsk)} />
+  return <LeafTable {...tableProps} rows={bodyRows(part, figure, value, rowOrder)} />
 }
 
 function headCells(
@@ -255,7 +253,6 @@ function bodyRows(
   figure: FigureLayout,
   value: LeafValue,
   rowOrder: readonly number[],
-  rowAsk: RowAsk,
 ): readonly LeafTableRow[] {
   const { layout, heat, totals } = figure
   return rowOrder.flatMap((index, position) => {
@@ -309,16 +306,6 @@ function bodyRows(
       {
         key: String(index),
         depth: tableRowDepth(row),
-        unit:
-          rowAsk.kind === "none"
-            ? undefined
-            : {
-                index,
-                label: firstCell,
-                pointed: rowAsk.isPointed(index),
-                tabIndex: rowAsk.tabIndexOf(index),
-                active: rowAsk.isOpen(index),
-              },
         detail:
           detail === undefined
             ? undefined

@@ -5,10 +5,8 @@ import type { ReactElement } from "react"
 import type { A2uiReportComponent } from "../../../../shared/report/a2ui-report-catalog.ts"
 import type { LeafValue } from "../../../../shared/report/report-leaf-value.ts"
 import { Badge } from "../../../components/ui/badge/badge.tsx"
-import { claimNoteBody } from "../domain/reply-note.ts"
 import { InlineMarkdown, textLeafClassNames } from "../markdown.tsx"
 import styles from "./leaf.module.css"
-import { ReplyUnitRow } from "./reply-unit-row.tsx"
 import { LeafFold, ReportLeafFrame } from "./report-leaf-frame.tsx"
 
 type ClaimsPart = Extract<A2uiReportComponent, { readonly component: "Claims" }>
@@ -32,7 +30,7 @@ export function ClaimsLeaf(props: {
       <LeafFold fold={part.fold} empty={false}>
         <div className={textLeafClassNames.claims}>
           {part.items.map((item, index) => (
-            <ClaimRow key={`${String(index)}:${item.claim}`} item={item} index={index} />
+            <ClaimRow key={`${String(index)}:${item.claim}`} item={item} />
           ))}
         </div>
       </LeafFold>
@@ -40,19 +38,11 @@ export function ClaimsLeaf(props: {
   )
 }
 
-function ClaimRow(props: {
-  readonly item: ClaimsPart["items"][number]
-  readonly index: number
-}): ReactElement {
+function ClaimRow(props: { readonly item: ClaimsPart["items"][number] }): ReactElement {
   const { claim, certainty, basis, howToVerify } = props.item
   const { mark, label, tone } = CERTAINTIES[certainty]
   return (
-    <ReplyUnitRow
-      index={props.index}
-      label={claim}
-      requestText={claimNoteBody(howToVerify)}
-      className={textLeafClassNames.claim}
-    >
+    <div className={textLeafClassNames.claim}>
       <p>
         <span className={textLeafClassNames.claimCertainty}>
           <Badge tone={tone} shape="square" className={styles["verdict-badge"]}>
@@ -68,7 +58,7 @@ function ClaimRow(props: {
         <ClaimField className={textLeafClassNames.claimBasis} name="根拠" text={basis} />
         <ClaimField className={textLeafClassNames.claimHow} name="確かめ方" text={howToVerify} />
       </p>
-    </ReplyUnitRow>
+    </div>
   )
 }
 

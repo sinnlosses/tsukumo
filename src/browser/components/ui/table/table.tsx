@@ -60,32 +60,14 @@ export type TableRowProps = {
   readonly className: string
   /** 先頭の行（見出しの行）か。 */
   readonly header: boolean
-  /** 押して指せる行の印。レポートの余白の口が `data-reply-*` を読んで指す行を決める。 */
-  readonly point?: TableRowPoint
   readonly children: ReactNode
 }
 
-export type TableRowPoint = {
-  /** 書いた並びの添字。 */
-  readonly index: number
-  /** 1列目の字。 */
-  readonly label: string
-  readonly pointed: boolean
-  /** 部品の中の Tab の止まり場なら 0、ほかは -1。 */
-  readonly tabIndex: 0 | -1
-}
-
 export function TableRow(props: TableRowProps): ReactElement {
-  const { point } = props
   return (
     <AstryxTableRow
       isHeaderRow={props.header}
       className={props.className === "" ? undefined : props.className}
-      data-reply-unit={point === undefined ? undefined : "row"}
-      data-reply-row={point?.index}
-      data-reply-label={point?.label}
-      data-pointed={point?.pointed === true ? "" : undefined}
-      tabIndex={point?.tabIndex}
     >
       {props.children}
     </AstryxTableRow>

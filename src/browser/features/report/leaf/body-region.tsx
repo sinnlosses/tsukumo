@@ -12,7 +12,7 @@ import { isBlankText } from "../../../../shared/utils/blank-text.ts"
 import { useReportReveal } from "../../../domain/reveal/use-report-reveal.ts"
 import { splitReportBlocks } from "../domain/block-split.ts"
 import { detailBlockClassName, Markdown } from "../markdown.tsx"
-import { ReplyPointScope } from "../reply-point.tsx"
+import { SelectionPort } from "./selection-port.tsx"
 
 type ReportFrameProps = {
   /** 書き上げていくように見せるか。見るのはマウントした時点の値だけ。 */
@@ -31,7 +31,7 @@ type ReportFrameProps = {
 
 const RevealingContext = createContext(false)
 
-/** 本文の根（`data-report-body`）。書き上げの演出の最中かと、指している単位を子へ配る。 */
+/** 本文の根（`data-report-body`）。書き上げの演出の最中かを子へ配り、選んだ字を引く口を添える。 */
 export function ReportFrame(props: ReportFrameProps): ReactElement {
   const { rootRef, revealing } = useReportReveal(props.reveal, () => {}, props.revealClassName)
 
@@ -45,7 +45,8 @@ export function ReportFrame(props: ReportFrameProps): ReactElement {
       data-report-body=""
     >
       <RevealingContext value={revealing}>
-        <ReplyPointScope rootRef={rootRef}>{props.children}</ReplyPointScope>
+        {props.children}
+        <SelectionPort rootRef={rootRef} />
       </RevealingContext>
     </div>
   )
@@ -80,12 +81,7 @@ export function MarkdownReport(
 /** 欄の入れ物が持つ印。`pending` は、草稿でまだ内容部品が届いていない節の欄。 */
 export type RegionMark =
   | { readonly kind: "head" | "retrospective" | "markdown" | "not-done" | "pending" }
-  | {
-      readonly kind: "section"
-      readonly id: number
-      readonly askCount: number
-      readonly noteCount: number
-    }
+  | { readonly kind: "section"; readonly id: number }
   | { readonly kind: "favor"; readonly id: string }
 
 /**
@@ -104,12 +100,6 @@ export function RegionBox(props: {
       ref={favorRef}
       data-report-region={region.kind}
       data-report-section={region.kind === "section" ? String(region.id) : undefined}
-      data-ask-count={
-        region.kind === "section" && region.askCount > 0 ? region.askCount : undefined
-      }
-      data-note-count={
-        region.kind === "section" && region.noteCount > 0 ? region.noteCount : undefined
-      }
       id={region.kind === "favor" ? region.id : undefined}
     >
       {props.children}

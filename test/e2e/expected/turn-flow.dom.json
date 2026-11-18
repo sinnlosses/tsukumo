@@ -897,116 +897,162 @@
                                                 "data-report-section": "0"
                                               },
                                               "children": [
+                                                "表 1",
+                                                "直したファイルと結果（架空の数）",
                                                 {
-                                                  "tag": "div",
+                                                  "tag": "span",
                                                   "attributes": {
-                                                    "data-reply-frame": "fake-report-call-2\u0000section-1-1"
+                                                    "aria-hidden": "true"
                                                   },
                                                   "children": [
                                                     {
-                                                      "tag": "div",
+                                                      "tag": "span",
                                                       "attributes": {
-                                                        "data-reply-unit": "leaf"
+                                                        "data-variant": "success",
+                                                        "data-tone": "ok",
+                                                        "data-shape": "square"
                                                       },
                                                       "children": [
-                                                        "表 1",
-                                                        "直したファイルと結果（架空の数）"
+                                                        "✓",
+                                                        "OK"
                                                       ]
-                                                    },
+                                                    }
+                                                  ]
+                                                },
+                                                {
+                                                  "tag": "span",
+                                                  "attributes": {
+                                                    "aria-hidden": "true"
+                                                  },
+                                                  "children": [
                                                     {
                                                       "tag": "span",
                                                       "attributes": {
-                                                        "aria-hidden": "true"
+                                                        "data-variant": "warning",
+                                                        "data-tone": "warn",
+                                                        "data-shape": "square"
                                                       },
                                                       "children": [
-                                                        {
-                                                          "tag": "span",
-                                                          "attributes": {
-                                                            "data-variant": "success",
-                                                            "data-tone": "ok",
-                                                            "data-shape": "square"
-                                                          },
-                                                          "children": [
-                                                            "✓",
-                                                            "OK"
-                                                          ]
-                                                        }
+                                                        "！",
+                                                        "要注意"
                                                       ]
-                                                    },
+                                                    }
+                                                  ]
+                                                },
+                                                {
+                                                  "tag": "span",
+                                                  "attributes": {
+                                                    "aria-hidden": "true"
+                                                  },
+                                                  "children": [
                                                     {
                                                       "tag": "span",
                                                       "attributes": {
-                                                        "aria-hidden": "true"
+                                                        "data-variant": "error",
+                                                        "data-tone": "ng",
+                                                        "data-shape": "square"
                                                       },
                                                       "children": [
-                                                        {
-                                                          "tag": "span",
-                                                          "attributes": {
-                                                            "data-variant": "warning",
-                                                            "data-tone": "warn",
-                                                            "data-shape": "square"
-                                                          },
-                                                          "children": [
-                                                            "！",
-                                                            "要注意"
-                                                          ]
-                                                        }
+                                                        "✕",
+                                                        "NG"
                                                       ]
-                                                    },
+                                                    }
+                                                  ]
+                                                },
+                                                {
+                                                  "tag": "table",
+                                                  "children": [
                                                     {
-                                                      "tag": "span",
-                                                      "attributes": {
-                                                        "aria-hidden": "true"
-                                                      },
+                                                      "tag": "thead",
                                                       "children": [
                                                         {
-                                                          "tag": "span",
-                                                          "attributes": {
-                                                            "data-variant": "error",
-                                                            "data-tone": "ng",
-                                                            "data-shape": "square"
-                                                          },
-                                                          "children": [
-                                                            "✕",
-                                                            "NG"
-                                                          ]
-                                                        }
-                                                      ]
-                                                    },
-                                                    {
-                                                      "tag": "table",
-                                                      "children": [
-                                                        {
-                                                          "tag": "thead",
+                                                          "tag": "tr",
                                                           "children": [
                                                             {
-                                                              "tag": "tr",
+                                                              "tag": "th",
+                                                              "attributes": {
+                                                                "data-density": "compact"
+                                                              },
+                                                              "children": [
+                                                                "ファイル"
+                                                              ]
+                                                            },
+                                                            {
+                                                              "tag": "th",
+                                                              "attributes": {
+                                                                "data-density": "compact"
+                                                              },
+                                                              "children": [
+                                                                "変えたこと"
+                                                              ]
+                                                            },
+                                                            {
+                                                              "tag": "th",
+                                                              "attributes": {
+                                                                "data-density": "compact"
+                                                              },
+                                                              "children": [
+                                                                "状態"
+                                                              ]
+                                                            }
+                                                          ]
+                                                        }
+                                                      ]
+                                                    },
+                                                    {
+                                                      "tag": "tbody",
+                                                      "children": [
+                                                        {
+                                                          "tag": "tr",
+                                                          "children": [
+                                                            {
+                                                              "tag": "td",
+                                                              "attributes": {
+                                                                "data-density": "compact"
+                                                              },
                                                               "children": [
                                                                 {
-                                                                  "tag": "th",
-                                                                  "attributes": {
-                                                                    "data-density": "compact"
-                                                                  },
+                                                                  "tag": "code",
                                                                   "children": [
-                                                                    "ファイル"
+                                                                    "a.ts"
                                                                   ]
-                                                                },
+                                                                }
+                                                              ]
+                                                            },
+                                                            {
+                                                              "tag": "td",
+                                                              "attributes": {
+                                                                "data-density": "compact"
+                                                              },
+                                                              "children": [
+                                                                "目盛りを 12 から 24 へ"
+                                                              ]
+                                                            },
+                                                            {
+                                                              "tag": "td",
+                                                              "attributes": {
+                                                                "data-density": "compact"
+                                                              },
+                                                              "children": [
                                                                 {
-                                                                  "tag": "th",
+                                                                  "tag": "span",
                                                                   "attributes": {
-                                                                    "data-density": "compact"
+                                                                    "data-variant": "success",
+                                                                    "data-tone": "ok",
+                                                                    "data-shape": "square"
                                                                   },
                                                                   "children": [
-                                                                    "変えたこと"
-                                                                  ]
-                                                                },
-                                                                {
-                                                                  "tag": "th",
-                                                                  "attributes": {
-                                                                    "data-density": "compact"
-                                                                  },
-                                                                  "children": [
-                                                                    "状態"
+                                                                    {
+                                                                      "tag": "span",
+                                                                      "attributes": {
+                                                                        "role": "img",
+                                                                        "aria-label": "OK"
+                                                                      },
+                                                                      "children": [
+                                                                        "✓"
+                                                                      ]
+                                                                    },
+                                                                    "OK"
                                                                   ]
                                                                 }
                                                               ]
@@ -1014,256 +1060,56 @@
                                                           ]
                                                         },
                                                         {
-                                                          "tag": "tbody",
+                                                          "tag": "tr",
                                                           "children": [
                                                             {
-                                                              "tag": "tr",
+                                                              "tag": "td",
                                                               "attributes": {
-                                                                "data-reply-unit": "row",
-                                                                "data-reply-row": "0",
-                                                                "data-reply-label": "`a.ts`"
+                                                                "data-density": "compact"
                                                               },
                                                               "children": [
                                                                 {
-                                                                  "tag": "td",
-                                                                  "attributes": {
-                                                                    "data-density": "compact"
-                                                                  },
+                                                                  "tag": "code",
                                                                   "children": [
-                                                                    {
-                                                                      "tag": "code",
-                                                                      "children": [
-                                                                        "a.ts"
-                                                                      ]
-                                                                    }
-                                                                  ]
-                                                                },
-                                                                {
-                                                                  "tag": "td",
-                                                                  "attributes": {
-                                                                    "data-density": "compact"
-                                                                  },
-                                                                  "children": [
-                                                                    "目盛りを 12 から 24 へ"
-                                                                  ]
-                                                                },
-                                                                {
-                                                                  "tag": "td",
-                                                                  "attributes": {
-                                                                    "data-density": "compact"
-                                                                  },
-                                                                  "children": [
-                                                                    {
-                                                                      "tag": "span",
-                                                                      "attributes": {
-                                                                        "data-variant": "success",
-                                                                        "data-tone": "ok",
-                                                                        "data-shape": "square"
-                                                                      },
-                                                                      "children": [
-                                                                        {
-                                                                          "tag": "span",
-                                                                          "attributes": {
-                                                                            "role": "img",
-                                                                            "aria-label": "OK"
-                                                                          },
-                                                                          "children": [
-                                                                            "✓"
-                                                                          ]
-                                                                        },
-                                                                        "OK"
-                                                                      ]
-                                                                    }
+                                                                    "b.ts"
                                                                   ]
                                                                 }
                                                               ]
                                                             },
                                                             {
-                                                              "tag": "tr",
+                                                              "tag": "td",
                                                               "attributes": {
-                                                                "data-reply-unit": "row",
-                                                                "data-reply-row": "1",
-                                                                "data-reply-label": "`b.ts`"
+                                                                "data-density": "compact"
                                                               },
                                                               "children": [
-                                                                {
-                                                                  "tag": "td",
-                                                                  "attributes": {
-                                                                    "data-density": "compact"
-                                                                  },
-                                                                  "children": [
-                                                                    {
-                                                                      "tag": "code",
-                                                                      "children": [
-                                                                        "b.ts"
-                                                                      ]
-                                                                    }
-                                                                  ]
-                                                                },
-                                                                {
-                                                                  "tag": "td",
-                                                                  "attributes": {
-                                                                    "data-density": "compact"
-                                                                  },
-                                                                  "children": [
-                                                                    "読むだけなので変えない"
-                                                                  ]
-                                                                },
-                                                                {
-                                                                  "tag": "td",
-                                                                  "attributes": {
-                                                                    "data-density": "compact"
-                                                                  },
-                                                                  "children": [
-                                                                    {
-                                                                      "tag": "span",
-                                                                      "attributes": {
-                                                                        "data-variant": "warning",
-                                                                        "data-tone": "warn",
-                                                                        "data-shape": "square"
-                                                                      },
-                                                                      "children": [
-                                                                        {
-                                                                          "tag": "span",
-                                                                          "attributes": {
-                                                                            "role": "img",
-                                                                            "aria-label": "要注意"
-                                                                          },
-                                                                          "children": [
-                                                                            "！"
-                                                                          ]
-                                                                        },
-                                                                        "キャッシュが古いまま"
-                                                                      ]
-                                                                    }
-                                                                  ]
-                                                                }
+                                                                "読むだけなので変えない"
                                                               ]
                                                             },
                                                             {
-                                                              "tag": "tr",
+                                                              "tag": "td",
                                                               "attributes": {
-                                                                "data-reply-unit": "row",
-                                                                "data-reply-row": "2",
-                                                                "data-reply-label": "`c.ts`"
+                                                                "data-density": "compact"
                                                               },
                                                               "children": [
                                                                 {
-                                                                  "tag": "td",
+                                                                  "tag": "span",
                                                                   "attributes": {
-                                                                    "data-density": "compact"
-                                                                  },
-                                                                  "children": [
-                                                                    {
-                                                                      "tag": "code",
-                                                                      "children": [
-                                                                        "c.ts"
-                                                                      ]
-                                                                    }
-                                                                  ]
-                                                                },
-                                                                {
-                                                                  "tag": "td",
-                                                                  "attributes": {
-                                                                    "data-density": "compact"
-                                                                  },
-                                                                  "children": [
-                                                                    "型の食い違いが残る"
-                                                                  ]
-                                                                },
-                                                                {
-                                                                  "tag": "td",
-                                                                  "attributes": {
-                                                                    "data-density": "compact"
+                                                                    "data-variant": "warning",
+                                                                    "data-tone": "warn",
+                                                                    "data-shape": "square"
                                                                   },
                                                                   "children": [
                                                                     {
                                                                       "tag": "span",
                                                                       "attributes": {
-                                                                        "data-variant": "error",
-                                                                        "data-tone": "ng",
-                                                                        "data-shape": "square"
+                                                                        "role": "img",
+                                                                        "aria-label": "要注意"
                                                                       },
                                                                       "children": [
-                                                                        {
-                                                                          "tag": "span",
-                                                                          "attributes": {
-                                                                            "role": "img",
-                                                                            "aria-label": "NG"
-                                                                          },
-                                                                          "children": [
-                                                                            "✕"
-                                                                          ]
-                                                                        },
-                                                                        "NG"
+                                                                        "！"
                                                                       ]
-                                                                    }
-                                                                  ]
-                                                                }
-                                                              ]
-                                                            }
-                                                          ]
-                                                        }
-                                                      ]
-                                                    },
-                                                    {
-                                                      "tag": "div",
-                                                      "attributes": {
-                                                        "data-reply-keep": ""
-                                                      }
-                                                    }
-                                                  ]
-                                                },
-                                                {
-                                                  "tag": "div",
-                                                  "attributes": {
-                                                    "data-reply-frame": "fake-report-call-2\u0000section-1-2"
-                                                  },
-                                                  "children": [
-                                                    {
-                                                      "tag": "div",
-                                                      "attributes": {
-                                                        "data-reply-unit": "leaf"
-                                                      },
-                                                      "children": [
-                                                        "表 2",
-                                                        "目盛りの数（架空の数）"
-                                                      ]
-                                                    },
-                                                    {
-                                                      "tag": "table",
-                                                      "children": [
-                                                        {
-                                                          "tag": "thead",
-                                                          "children": [
-                                                            {
-                                                              "tag": "tr",
-                                                              "children": [
-                                                                {
-                                                                  "tag": "th",
-                                                                  "attributes": {
-                                                                    "data-density": "compact"
-                                                                  },
-                                                                  "children": [
-                                                                    "場所"
-                                                                  ]
-                                                                },
-                                                                {
-                                                                  "tag": "th",
-                                                                  "attributes": {
-                                                                    "data-density": "compact"
-                                                                  },
-                                                                  "children": [
-                                                                    "前"
-                                                                  ]
-                                                                },
-                                                                {
-                                                                  "tag": "th",
-                                                                  "attributes": {
-                                                                    "data-density": "compact"
-                                                                  },
-                                                                  "children": [
-                                                                    "後"
+                                                                    },
+                                                                    "キャッシュが古いまま"
                                                                   ]
                                                                 }
                                                               ]
@@ -1271,78 +1117,56 @@
                                                           ]
                                                         },
                                                         {
-                                                          "tag": "tbody",
+                                                          "tag": "tr",
                                                           "children": [
                                                             {
-                                                              "tag": "tr",
+                                                              "tag": "td",
                                                               "attributes": {
-                                                                "data-reply-unit": "row",
-                                                                "data-reply-row": "0",
-                                                                "data-reply-label": "帯"
+                                                                "data-density": "compact"
                                                               },
                                                               "children": [
                                                                 {
-                                                                  "tag": "td",
-                                                                  "attributes": {
-                                                                    "data-density": "compact"
-                                                                  },
+                                                                  "tag": "code",
                                                                   "children": [
-                                                                    "帯"
-                                                                  ]
-                                                                },
-                                                                {
-                                                                  "tag": "td",
-                                                                  "attributes": {
-                                                                    "data-density": "compact"
-                                                                  },
-                                                                  "children": [
-                                                                    "12"
-                                                                  ]
-                                                                },
-                                                                {
-                                                                  "tag": "td",
-                                                                  "attributes": {
-                                                                    "data-density": "compact"
-                                                                  },
-                                                                  "children": [
-                                                                    "24"
+                                                                    "c.ts"
                                                                   ]
                                                                 }
                                                               ]
                                                             },
                                                             {
-                                                              "tag": "tr",
+                                                              "tag": "td",
                                                               "attributes": {
-                                                                "data-reply-unit": "row",
-                                                                "data-reply-row": "1",
-                                                                "data-reply-label": "札"
+                                                                "data-density": "compact"
+                                                              },
+                                                              "children": [
+                                                                "型の食い違いが残る"
+                                                              ]
+                                                            },
+                                                            {
+                                                              "tag": "td",
+                                                              "attributes": {
+                                                                "data-density": "compact"
                                                               },
                                                               "children": [
                                                                 {
-                                                                  "tag": "td",
+                                                                  "tag": "span",
                                                                   "attributes": {
-                                                                    "data-density": "compact"
+                                                                    "data-variant": "error",
+                                                                    "data-tone": "ng",
+                                                                    "data-shape": "square"
                                                                   },
                                                                   "children": [
-                                                                    "札"
-                                                                  ]
-                                                                },
-                                                                {
-                                                                  "tag": "td",
-                                                                  "attributes": {
-                                                                    "data-density": "compact"
-                                                                  },
-                                                                  "children": [
-                                                                    "6"
-                                                                  ]
-                                                                },
-                                                                {
-                                                                  "tag": "td",
-                                                                  "attributes": {
-                                                                    "data-density": "compact"
-                                                                  },
-                                                                  "children": [
-                                                                    "12"
+                                                                    {
+                                                                      "tag": "span",
+                                                                      "attributes": {
+                                                                        "role": "img",
+                                                                        "aria-label": "NG"
+                                                                      },
+                                                                      "children": [
+                                                                        "✕"
+                                                                      ]
+                                                                    },
+                                                                    "NG"
                                                                   ]
                                                                 }
                                                               ]
@@ -1350,16 +1174,123 @@
                                                           ]
                                                         }
                                                       ]
-                                                    },
-                                                    "ほか 3 件（一覧は省略）",
-                                                    {
-                                                      "tag": "div",
-                                                      "attributes": {
-                                                        "data-reply-keep": ""
-                                                      }
                                                     }
                                                   ]
                                                 },
+                                                "表 2",
+                                                "目盛りの数（架空の数）",
+                                                {
+                                                  "tag": "table",
+                                                  "children": [
+                                                    {
+                                                      "tag": "thead",
+                                                      "children": [
+                                                        {
+                                                          "tag": "tr",
+                                                          "children": [
+                                                            {
+                                                              "tag": "th",
+                                                              "attributes": {
+                                                                "data-density": "compact"
+                                                              },
+                                                              "children": [
+                                                                "場所"
+                                                              ]
+                                                            },
+                                                            {
+                                                              "tag": "th",
+                                                              "attributes": {
+                                                                "data-density": "compact"
+                                                              },
+                                                              "children": [
+                                                                "前"
+                                                              ]
+                                                            },
+                                                            {
+                                                              "tag": "th",
+                                                              "attributes": {
+                                                                "data-density": "compact"
+                                                              },
+                                                              "children": [
+                                                                "後"
+                                                              ]
+                                                            }
+                                                          ]
+                                                        }
+                                                      ]
+                                                    },
+                                                    {
+                                                      "tag": "tbody",
+                                                      "children": [
+                                                        {
+                                                          "tag": "tr",
+                                                          "children": [
+                                                            {
+                                                              "tag": "td",
+                                                              "attributes": {
+                                                                "data-density": "compact"
+                                                              },
+                                                              "children": [
+                                                                "帯"
+                                                              ]
+                                                            },
+                                                            {
+                                                              "tag": "td",
+                                                              "attributes": {
+                                                                "data-density": "compact"
+                                                              },
+                                                              "children": [
+                                                                "12"
+                                                              ]
+                                                            },
+                                                            {
+                                                              "tag": "td",
+                                                              "attributes": {
+                                                                "data-density": "compact"
+                                                              },
+                                                              "children": [
+                                                                "24"
+                                                              ]
+                                                            }
+                                                          ]
+                                                        },
+                                                        {
+                                                          "tag": "tr",
+                                                          "children": [
+                                                            {
+                                                              "tag": "td",
+                                                              "attributes": {
+                                                                "data-density": "compact"
+                                                              },
+                                                              "children": [
+                                                                "札"
+                                                              ]
+                                                            },
+                                                            {
+                                                              "tag": "td",
+                                                              "attributes": {
+                                                                "data-density": "compact"
+                                                              },
+                                                              "children": [
+                                                                "6"
+                                                              ]
+                                                            },
+                                                            {
+                                                              "tag": "td",
+                                                              "attributes": {
+                                                                "data-density": "compact"
+                                                              },
+                                                              "children": [
+                                                                "12"
+                                                              ]
+                                                            }
+                                                          ]
+                                                        }
+                                                      ]
+                                                    }
+                                                  ]
+                                                },
+                                                "ほか 3 件（一覧は省略）",
                                                 "src/a.ts",
                                                 {
                                                   "tag": "button",

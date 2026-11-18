@@ -1,0 +1,15 @@
+/* 本文で選んだ字の横に出す「引いて聞く」。ビューポートの座標で置くので fixed。left は本文の右端で、口の右端をそこへそろえる。 */
+.selection-port {
+  position: fixed;
+  z-index: 3;
+  display: flex;
+  translate: -100% 0;
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+}
+.selection-port-button {
+  min-height: 1.75rem;
+  padding: var(--inset-control);
+  border-radius: var(--radius-pill);
+  white-space: nowrap;
+}

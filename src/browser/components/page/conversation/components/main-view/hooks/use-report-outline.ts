@@ -238,12 +238,7 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
       const items = readableOutlineItems(content, headedIds)
       itemsRef.current = items
       showHeadings(
-        items.map((item): ReportOutlineEntry => ({
-          level: item.level,
-          text: item.text,
-          ...(item.askCount > 0 ? { askCount: item.askCount } : {}),
-          ...(item.noteCount > 0 ? { noteCount: item.noteCount } : {}),
-        })),
+        items.map((item): ReportOutlineEntry => ({ level: item.level, text: item.text })),
       )
       observeHeadings(false)
       updateActive()
@@ -264,7 +259,7 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
       childList: true,
       subtree: true,
       attributes: true,
-      attributeFilter: ["open", REVEAL_PENDING_ATTRIBUTE, "data-note-count"],
+      attributeFilter: ["open", REVEAL_PENDING_ATTRIBUTE],
     })
     const unsubscribeScroll = subscribeScrollFrame(onFrame)
     // ビューポート・上下の境界・キャラ欄の畳みなど、どの経路でも器の寸法が変われば読む線と帯を引き直す。

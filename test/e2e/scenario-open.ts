@@ -48,7 +48,7 @@ import { assertNextStepGap, waitForQuietPoint } from "./scene-schedule.ts"
 const SEEN_FIRST_NOTES_SCRIPT = `(() => {
   const key = "tsukumo-first-note-seen:v1"
   if (localStorage.getItem(key) === null) {
-    localStorage.setItem(key, JSON.stringify(["inquiry-terms", "report-terms", "reply-margin"]))
+    localStorage.setItem(key, JSON.stringify(["inquiry-terms", "report-terms"]))
   }
 })()`
 import {

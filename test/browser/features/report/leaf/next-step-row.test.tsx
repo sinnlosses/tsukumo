@@ -64,7 +64,6 @@ function renderRow(withPort: boolean, checks: ReportChecksView = { kind: "none" 
   const port = {
     appendDraft: useComposerDraft.getState().appendParagraphToDraft,
     prependDraft: useComposerDraft.getState().prependToDraft,
-    ask: () => Promise.resolve(),
   }
   return render(
     <ReplyPortContext value={withPort ? { kind: "open", port } : { kind: "none" }}>

@@ -11,7 +11,7 @@ import {
   type ReactComponentImplementation,
 } from "@a2ui/react/v0_9"
 import { Catalog, MessageProcessor } from "@a2ui/web_core/v0_9"
-import { type ReactElement, use, useRef, useState } from "react"
+import { type ReactElement, useState } from "react"
 
 import type { A2uiReportComponent } from "../../../shared/report/a2ui-report-catalog.ts"
 import {
@@ -25,10 +25,7 @@ import { Divider } from "../../components/ui/divider/divider.tsx"
 import { FirstNoteList } from "../../components/ui/first-note-list/first-note-list.tsx"
 import { useExternalSync } from "../../hooks/use-external-sync.ts"
 import { useFirstNoteList } from "../../stores/first-note-seen.ts"
-import { notesOf, useReplyNotes, useReplySessionKey } from "../../stores/reply-note-list.ts"
 import {
-  askCountOf,
-  noteCountOf,
   ReportContext,
   runSlots,
   sectionHeadingOf,
@@ -43,20 +40,12 @@ import {
   type ReportSurface,
   SURFACE_ID,
 } from "./a2ui-surface-model.ts"
-import { AskThreadContext } from "./ask-thread-context.ts"
 import { loadReportCatalogApis } from "./domain/a2ui-catalog-load.ts"
 import { filterBadges, hasBoundChoicePicker, isSortableTable } from "./domain/a2ui-table-view.ts"
 import { beforeAfterPairIdsInOrder, type PairView, pairSwitchLabels } from "./domain/pair-view.ts"
 import { isPlainHeadingText } from "./domain/plain-heading.ts"
 import { reportProofView } from "./domain/report-proof.ts"
 import { useGridColumnCount } from "./hooks/use-grid-column-count.ts"
-import { useNarrowReport } from "./hooks/use-narrow-report.ts"
-import {
-  LeafIdentityContext,
-  NarrowCellContext,
-  type SectionPoint,
-  SectionPointContext,
-} from "./leaf-point-context.ts"
 import { ChoicePicker, InteractiveTable } from "./leaf/a2ui-interactive-view.tsx"
 import { RegionBox, RegionChunks, ReportFrame } from "./leaf/body-region.tsx"
 import { ChartTermLinkScope, chartLinkInputsOf } from "./leaf/chart-term-link.tsx"
@@ -68,7 +57,6 @@ import { PendingHeading, PendingPart } from "./leaf/pending-part.tsx"
 import { SectionProof } from "./leaf/proof-band.tsx"
 import { HeadRegion, NotDoneRegion } from "./leaf/report-head-region.tsx"
 import { arrangedBlockClassNames } from "./markdown.tsx"
-import { ReplyPortContext } from "./reply-port.ts"
 
 /**
  * 本文1つぶんの面。面は本文ごとに1つで、最初の一覧で作る。
@@ -147,24 +135,14 @@ function reportSurfaceOf(components: readonly A2uiReportComponent[]): ReportSurf
 function ReportRoot(): ReactElement {
   const report = useReport()
   const { view } = report
-  const askThreads = use(AskThreadContext)
-  const replyPort = use(ReplyPortContext)
-  const sessionKey = useReplySessionKey()
-  const notes = notesOf(
-    useReplyNotes((state) => state.notesBySession),
-    sessionKey,
-  )
   const slots = sectionSlots(report)
   const proof = reportProofView(
     view.head.checks,
     slots.flatMap((slot) => (slot.kind === "drawn" ? [slot.componentId] : [])),
   )
-  // 返す層の案内は、指して聞ける本文（`report` の呼び出しの id を持つ）にだけ出す。
-  const askable = replyPort.kind === "open" && report.reportToolUseId !== undefined
-  const firstNotes = useFirstNoteList([
-    ...(view.head.checks.kind === "checks" ? (["report-terms"] as const) : []),
-    ...(askable ? (["reply-margin"] as const) : []),
-  ])
+  const firstNotes = useFirstNoteList(
+    view.head.checks.kind === "checks" ? (["report-terms"] as const) : [],
+  )
   return (
     <>
       <ReportFrame
@@ -176,9 +154,7 @@ function ReportRoot(): ReactElement {
       >
         <HeadRegion head={view.head} proof={proof} />
         {view.figure.kind === "leaves" && (
-          <RegionBox
-            region={{ kind: "section", id: view.figure.regionId, askCount: 0, noteCount: 0 }}
-          >
+          <RegionBox region={{ kind: "section", id: view.figure.regionId }}>
             <LeafRegionContent region={view.figure} />
           </RegionBox>
         )}
@@ -187,14 +163,7 @@ function ReportRoot(): ReactElement {
           <RegionBox
             key={slot.componentId}
             region={
-              slot.kind === "pending"
-                ? { kind: "pending" }
-                : {
-                    kind: "section",
-                    id: slot.regionId,
-                    askCount: askCountOf(report, askThreads, slot.componentId),
-                    noteCount: noteCountOf(report, replyPort, notes, slot.componentId),
-                  }
+              slot.kind === "pending" ? { kind: "pending" } : { kind: "section", id: slot.regionId }
             }
           >
             <SectionContent id={slot.componentId} />
@@ -254,19 +223,13 @@ function SectionContent(props: { readonly id: string }): ReactElement {
   const heading = sectionHeadingOf(report, props.id)
   const drawnDirectly = heading.line !== "" && isPlainHeadingText(heading.text)
   const ids = part?.component === "Section" ? part.children : [props.id]
-  const point: SectionPoint =
-    report.reportToolUseId === undefined
-      ? { kind: "none" }
-      : { kind: "section", reportToolUseId: report.reportToolUseId, heading: heading.text }
   return (
     <>
       {part === undefined && <PendingHeading blink={report.pending?.blink === true} />}
       {drawnDirectly && <h4>{heading.text}</h4>}
-      <SectionPointContext value={point}>
-        <ChartTermLinkScope charts={chartLinkInputsOf(ids, report.parts, report.leaves)}>
-          <PartRun lead={drawnDirectly ? "" : heading.line} ids={ids} />
-        </ChartTermLinkScope>
-      </SectionPointContext>
+      <ChartTermLinkScope charts={chartLinkInputsOf(ids, report.parts, report.leaves)}>
+        <PartRun lead={drawnDirectly ? "" : heading.line} ids={ids} />
+      </ChartTermLinkScope>
     </>
   )
 }
@@ -340,7 +303,7 @@ function LayoutPart(props: { readonly id: string }): ReactElement {
       )
     case "Column":
       return (
-        <div data-part-column="">
+        <div>
           <PartRun lead="" ids={part.children} />
         </div>
       )
@@ -367,18 +330,12 @@ function LayoutPart(props: { readonly id: string }): ReactElement {
     default: {
       if (part !== undefined && isInteractiveTable(part)) {
         return (
-          <LeafIdentityContext
-            value={{ kind: "leaf", componentId: part.id, componentKind: part.component }}
-          >
-            <InteractiveTable
-              dataModel={report.dataModel}
-              part={part}
-              value={report.view.leafValues[part.id]}
-              badges={
-                hasBoundChoicePicker(report.parts.values(), part.id) ? [] : filterBadges(part)
-              }
-            />
-          </LeafIdentityContext>
+          <InteractiveTable
+            dataModel={report.dataModel}
+            part={part}
+            value={report.view.leafValues[part.id]}
+            badges={hasBoundChoicePicker(report.parts.values(), part.id) ? [] : filterBadges(part)}
+          />
         )
       }
       const view = part === undefined ? undefined : directLeafViewOf(part)
@@ -414,15 +371,11 @@ function GridPart(props: { readonly ids: readonly string[] }): ReactElement {
   )
 }
 
-/** `Row` と `Grid` の子1つ。余白の列を出せるかは、本文の根ではなくセルの幅で決める。 */
+/** `Row` と `Grid` の子1つ。 */
 function RowCell(props: { readonly id: string }): ReactElement {
-  const cellRef = useRef<HTMLDivElement>(null)
-  const narrow = useNarrowReport(cellRef)
   return (
-    <div ref={cellRef} className={arrangedBlockClassNames.rowCell}>
-      <NarrowCellContext value={narrow}>
-        <PartRun lead="" ids={[props.id]} />
-      </NarrowCellContext>
+    <div className={arrangedBlockClassNames.rowCell}>
+      <PartRun lead="" ids={[props.id]} />
     </div>
   )
 }

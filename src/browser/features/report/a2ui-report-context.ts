@@ -7,11 +7,8 @@ import { createContext, use } from "react"
 import type { A2uiReportComponent } from "../../../shared/report/a2ui-report-catalog.ts"
 import { A2UI_ROOT_ID } from "../../../shared/report/a2ui-report-outline.ts"
 import { sectionHeadingMarkdown } from "../../../shared/report/drawn-entry-markdown.ts"
-import type { ReplyNote } from "../../stores/reply-note-list.ts"
 import type { A2uiReportProps } from "./a2ui-surface-model.ts"
-import { type AskThreadSlot, sectionAskCount } from "./ask-thread-context.ts"
 import type { useReevaluatedLeaves } from "./leaf/parameter-knob.tsx"
-import type { ReplyPortSlot } from "./reply-port.ts"
 
 export type ReportContextValue = A2uiReportProps & {
   readonly parts: ReadonlyMap<string, A2uiReportComponent>
@@ -27,39 +24,6 @@ export function useReport(): ReportContextValue {
     throw new Error("A2UI の面の部品が A2uiReport の外で描かれた")
   }
   return value
-}
-
-export function askCountOf(
-  report: ReportContextValue,
-  threads: AskThreadSlot,
-  sectionId: string,
-): number {
-  if (report.reportToolUseId === undefined) {
-    return 0
-  }
-  const part = report.parts.get(sectionId)
-  const ids = part?.component === "Section" ? part.children : [sectionId]
-  return sectionAskCount(threads, report.reportToolUseId, runIds(ids, report))
-}
-
-/** 節の中の内容部品に付いた未送信の付箋の数。口が無い描画は付箋を読まない。 */
-export function noteCountOf(
-  report: ReportContextValue,
-  port: ReplyPortSlot,
-  notes: readonly ReplyNote[],
-  sectionId: string,
-): number {
-  if (port.kind === "none" || report.reportToolUseId === undefined) {
-    return 0
-  }
-  const part = report.parts.get(sectionId)
-  const ids = runIds(part?.component === "Section" ? part.children : [sectionId], report)
-  return notes.filter(
-    (note) =>
-      note.state.kind === "unsent" &&
-      note.target.key.reportToolUseId === report.reportToolUseId &&
-      ids.includes(note.target.key.componentId),
-  ).length
 }
 
 /**
@@ -132,11 +96,6 @@ export function sectionHeadingOf(
   const pending = report.pending?.openSections.includes(id) === true
   const text = pending && part?.component === "Section" ? part.heading.trim() : ""
   return { line: sectionHeadingMarkdown(text), text }
-}
-
-/** 並びの中の届いた部品の ID。入れ子の `Section` は中の子を同じ並びに開く。 */
-function runIds(ids: readonly string[], report: ReportContextValue): readonly string[] {
-  return runSlots(ids, report).flatMap((slot) => (slot.kind === "part" ? [slot.id] : []))
 }
 
 /** 草稿で次に届く見込みの部品か。骨組みを置くのは、この部品の場所だけ。 */

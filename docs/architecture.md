@@ -128,11 +128,11 @@
 | `docs/architecture/adr/0048-report-parameters-and-expressions.md`               | 触れるレポート: つまみの部品と、独自関数 `expr` の中置の式・名前つきの式で値を結ぶ                    | 採用                   |
 | `docs/architecture/adr/0049-sdk-tool-boundary-and-shared-drawing-vocabulary.md` | SDK の道具の境界と、ブラウザだけが読むように見える shared の描画の語彙の置き場                        | 提案                   |
 | `docs/architecture/adr/0050-eperm-is-alive.md`                                  | 別の利用者のプロセス（`EPERM`）は生きている扱いに揃え、生死の判定を1つにする                          | 採用                   |
-| `docs/architecture/adr/0051-report-reply-layer.md`                              | 返す層: レポートの部品を指して「聞く」「頼む」、末尾から「続き」を選ぶ                                | 置き換え済み（→ 0055） |
+| `docs/architecture/adr/0051-report-reply-layer.md`                              | 返す層: レポートの部品を指して「聞く」「頼む」、末尾から「続き」を選ぶ                                | 置き換え済み（→ 0067） |
 | `docs/architecture/adr/0052-astryx-design-system.md`                            | デザインシステムを Astryx へ移す: テーマの組み立て・CSS の層・`ui/` の部品の当て方                    | 置き換え済み（→ 0053） |
 | `docs/architecture/adr/0053-astryx-look.md`                                     | デザインシステムを Astryx の見た目に寄せる: 色は tsukumo から写し、形と大きさは Astryx に従う         | 採用                   |
 | `docs/architecture/adr/0054-question-design-human-ai-guidelines.md`             | 質問の設計を Guidelines for Human-AI Interaction の則から決める                                       | 採用                   |
-| `docs/architecture/adr/0055-report-reply-margin-notes.md`                       | 返す層の見た目: 選んだ所の横の余白に「聞く・頼む」を1つ出し、欄と答えは余白の札にする                 | 採用                   |
+| `docs/architecture/adr/0055-report-reply-margin-notes.md`                       | 返す層の見た目: 選んだ所の横の余白に「聞く・頼む」を1つ出し、欄と答えは余白の札にする                 | 置き換え済み（→ 0067） |
 | `docs/architecture/adr/0056-report-progress-contract.md`                        | レポートと進み具合の契約: 1枚の紙・確かさの台帳・判定・次の手                                         | 置き換え済み（→ 0059） |
 | `docs/architecture/adr/0057-stage-and-paper-layout.md`                          | 「舞台と紙」の器: 4局面の姿勢・右から重ねる紙・2つの入口・新旧の切り替え                              | 置き換え済み（→ 0058） |
 | `docs/architecture/adr/0058-three-column-single-stream.md`                      | 会話の画面を3列と1本の流れにする: 左の列・会話の流れ・サイドバー                                      | 採用                   |
@@ -144,3 +144,4 @@
 | `docs/architecture/adr/0064-report-draft-paper-and-margin-on-demand.md`         | 草稿は最終レポートと同じ紙に描き、骨組みは次に届く1か所、余白の列は札のある部品だけ、下書きは依頼の文 | 採用                   |
 | `docs/architecture/adr/0065-report-grid-layout-part.md`                         | レポートの配置の部品に、器の幅で折り返す格子 `Grid` を足す                                            | 採用                   |
 | `docs/architecture/adr/0066-continue-request-draft.md`                          | 「続ける」の下書きに、書き手が渡す続きの依頼の文を使えるようにする                                    | 採用                   |
+| `docs/architecture/adr/0067-remove-report-ask-and-request.md`                   | レポートの「聞く」「頼む」を外す                                                                      | 採用                   |

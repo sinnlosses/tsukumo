@@ -16,7 +16,6 @@ import {
 } from "../../../components/ui/table/table.tsx"
 import { FoldedTableBody, tableLeafClassNames } from "../markdown.tsx"
 import styles from "./leaf.module.css"
-import { ReplyUnitMark } from "./reply-unit-row.tsx"
 
 export type LeafTableAlign = ColumnAlign | "center"
 
@@ -27,15 +26,6 @@ export type LeafTableRow = {
   readonly detail?: { readonly label: string; readonly content: ReactNode }
   /** 1列目の字下げの段（0 は寄せない）。 */
   readonly depth: number
-  /** 押すと指せる行。`index` は書いた並びの添字、`label` は1列目の字、`active` はこの行について入力欄を開いているか。 */
-  readonly unit?: {
-    readonly index: number
-    readonly label: string
-    readonly pointed: boolean
-    /** 部品の中の Tab の止まり場なら 0、ほかは -1。 */
-    readonly tabIndex: 0 | -1
-    readonly active: boolean
-  }
 }
 
 type LeafTableProps = {
@@ -134,17 +124,10 @@ function BodyRow(props: {
 }): ReactElement {
   const { row, alignOf, spaced } = props
   const [open, setOpen] = useState(false)
-  const { detail, unit } = row
+  const { detail } = row
   return (
     <>
-      <TableRow
-        header={false}
-        className={clsx(
-          unit !== undefined && styles["reply-unit"],
-          unit?.active === true && styles["ask-row-active"],
-        )}
-        {...(unit !== undefined && { point: unit })}
-      >
+      <TableRow header={false} className="">
         {row.cells.map((cell, index) => (
           <TableCell
             key={`${row.key}-${String(index)}`}
@@ -177,7 +160,6 @@ function BodyRow(props: {
               <span className={styles["table-detail-spacer"]} aria-hidden="true" />
             )}
             {cell}
-            {index === 0 && unit !== undefined && <ReplyUnitMark index={unit.index} />}
           </TableCell>
         ))}
       </TableRow>

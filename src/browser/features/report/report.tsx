@@ -32,8 +32,6 @@ type ReportProps = {
   readonly favorMark?: FavorMark
   /** お願いの欄が付く・外れるときに呼ばれる。無指定は何もしない。 */
   readonly favorRef?: RefCallback<HTMLElement>
-  /** この本文を書いた `report` の呼び出しの id。渡すと節の中の内容部品が「聞く」で指せる。 */
-  readonly reportToolUseId?: string
   /** 書いている途中の草稿が渡す、まだ届いていない部品。渡すとその場所に骨組みを置く。 */
   readonly pending?: ReportPending
 }
@@ -72,7 +70,6 @@ function ReportBody(props: ReportProps): ReactElement {
         blockClassName={props.blockClassName}
         nextSteps={props.nextSteps}
         favorRef={props.favorRef}
-        reportToolUseId={props.reportToolUseId}
         pending={props.pending}
       />
     )

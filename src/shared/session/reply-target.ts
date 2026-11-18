@@ -1,4 +1,4 @@
-// 返す層の「聞く」が指した所（レポートの部品や表の行）。
+// 送り方 `ask` の補足メッセージが指した所（レポートの部品や表の行）。
 
 import { z } from "zod"
 
@@ -32,11 +32,3 @@ export const replyTargetSchema = z.object({
 export type ReplyTargetKey = z.infer<typeof replyTargetKeySchema>
 
 export type ReplyTarget = z.infer<typeof replyTargetSchema>
-
-export function sameReplyKey(a: ReplyTargetKey, b: ReplyTargetKey): boolean {
-  return (
-    a.reportToolUseId === b.reportToolUseId &&
-    a.componentId === b.componentId &&
-    a.rowIndex === b.rowIndex
-  )
-}

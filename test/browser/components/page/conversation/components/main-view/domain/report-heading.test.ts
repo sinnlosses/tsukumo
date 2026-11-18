@@ -21,15 +21,12 @@ function sectionWith(heading: string, attribute?: string): HTMLElement {
   return section
 }
 
-describe("readableOutlineItems の聞いた数", () => {
-  function regionWith(askCount: string, ...headings: readonly string[]): HTMLElement {
+describe("readableOutlineItems の段", () => {
+  function regionWith(...headings: readonly string[]): HTMLElement {
     const block = document.createElement("div")
     block.className = detailBlockClassName
     const region = document.createElement("div")
     region.setAttribute("data-report-section", "1")
-    if (askCount !== "") {
-      region.setAttribute("data-ask-count", askCount)
-    }
     for (const text of headings) {
       const h4 = document.createElement("h4")
       h4.textContent = text
@@ -39,40 +36,17 @@ describe("readableOutlineItems の聞いた数", () => {
     return block
   }
 
-  it("節の行は欄の持つ聞いた数を読み、聞いていない節と節の中の2つ目の見出しは 0", () => {
+  it("見出しのある節の欄の最初の h4 だけが節の行で、節の中の2つ目の見出しは sub", () => {
     const content = document.createElement("div")
-    content.append(regionWith("2", "架空の節", "架空の余分な見出し"))
-    const other = regionWith("", "架空の聞いていない節")
+    content.append(regionWith("架空の節", "架空の余分な見出し"))
+    const other = regionWith("架空の別の節")
     other.firstElementChild?.setAttribute("data-report-section", "2")
     content.append(other)
 
-    expect(
-      readableOutlineItems(content, [1, 2]).map((item) => [item.level, item.askCount]),
-    ).toEqual([
-      ["section", 2],
-      ["sub", 0],
-      ["section", 0],
-    ])
-  })
-})
-
-describe("readableOutlineItems の付箋の数", () => {
-  it("節の行は欄の持つ付箋の数（data-note-count）を読み、持たない節と2つ目の見出しは 0", () => {
-    const block = document.createElement("div")
-    block.className = detailBlockClassName
-    const region = document.createElement("div")
-    region.setAttribute("data-report-section", "1")
-    region.setAttribute("data-note-count", "2")
-    for (const text of ["架空の節", "架空の余分な見出し"]) {
-      const h4 = document.createElement("h4")
-      h4.textContent = text
-      region.append(h4)
-    }
-    block.append(region)
-
-    expect(readableOutlineItems(block, [1]).map((item) => [item.level, item.noteCount])).toEqual([
-      ["section", 2],
-      ["sub", 0],
+    expect(readableOutlineItems(content, [1, 2]).map((item) => [item.level, item.text])).toEqual([
+      ["section", "架空の節"],
+      ["sub", "架空の余分な見出し"],
+      ["section", "架空の別の節"],
     ])
   })
 })

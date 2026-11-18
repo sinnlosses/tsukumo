@@ -114,7 +114,6 @@ export function StepReport(props: StepReportProps): ReactElement | undefined {
         reveal={props.reveal}
         turnId={props.turnId}
         className={phoneHidden}
-        reportToolUseId={step.origin.kind === "tool-report" ? step.origin.toolUseId : undefined}
         nextSteps={
           props.latest && !props.phoneHidden
             ? {

@@ -6,7 +6,7 @@ import { z } from "zod"
 
 import { localPreference } from "../utils/local-preference.ts"
 
-const FIRST_NOTE_IDS = ["inquiry-terms", "report-terms", "reply-margin"] as const
+const FIRST_NOTE_IDS = ["inquiry-terms", "report-terms"] as const
 
 export type FirstNoteId = (typeof FIRST_NOTE_IDS)[number]
 
@@ -14,12 +14,12 @@ export const FIRST_NOTE_TEXT = {
   "inquiry-terms":
     "「確かめた」は今回の作業で実行して確認した事実、「確度」はおすすめへの自信の程度",
   "report-terms": "「記録あり」は実行の記録と照合できた確認、「申告のみ」は記録と照合できない申告",
-  "reply-margin": "本文の字・行・案を選ぶと、その横に「聞く・頼む」が出る",
 } satisfies Record<FirstNoteId, string>
 
+// 端末には、もう無い説明の鍵が残っていることがある。知らない鍵だけを落とし、ほかの記憶は保つ。
 const seenPreference = localPreference(
   "tsukumo-first-note-seen:v1",
-  z.array(z.enum(FIRST_NOTE_IDS)),
+  z.array(z.string()).transform((ids) => ids.filter(isFirstNoteId)),
   [],
 )
 
@@ -27,4 +27,8 @@ export const loadSeenFirstNotes: () => readonly FirstNoteId[] = seenPreference.l
 
 export function saveSeenFirstNotes(value: readonly FirstNoteId[]): void {
   seenPreference.save([...value])
+}
+
+function isFirstNoteId(id: string): id is FirstNoteId {
+  return FIRST_NOTE_IDS.some((known) => known === id)
 }

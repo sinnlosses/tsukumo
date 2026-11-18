@@ -34,7 +34,6 @@ export type A2uiReportProps = {
   readonly blockClassName: string
   readonly nextSteps?: NextStepsOrigin
   readonly favorRef?: RefCallback<HTMLElement>
-  readonly reportToolUseId?: string
   readonly pending?: ReportPending
 }
 
