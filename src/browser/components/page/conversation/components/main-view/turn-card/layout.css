@@ -75,10 +75,10 @@
     box-sizing: border-box;
     max-inline-size: 976px;
   }
-  /* 札の中では、札が領域の縁まで広がるので、左右の余白を流れ（`.turn-card-body`）と同じ `--gutter-stream` にして、吹き出しの左端を流れのセリフとそろえる。
-     上限の幅も、流れの内容の幅（960px）に余白を足した外寸にそろえる。 */
+  /* 札の中では、左右の余白を流れ（`.turn-card-body`）と同じ `--gutter-stream` にして、吹き出しの左端を流れのセリフとそろえる。
+     幅は流れと同じく札の組で決まる。 */
   .turn-card > .voice-slot {
-    max-inline-size: calc(960px + 2 * var(--gutter-stream));
+    max-inline-size: none;
     padding-inline: var(--gutter-stream);
   }
 }
@@ -106,12 +106,9 @@
     justify-content: flex-end;
   }
 }
-/* 広い画面では、流れ（と最終レポート）に読む幅の上限を置く。左のセリフと右の投稿が離れすぎない。
-   余白は上限の外に付ける（内容の幅が 960px）。中くらいの幅（〜1100px）では中央の列が 960px より狭く、上限は効かない。 */
+/* 広い画面では、流れ（と最終レポート）の幅は札の組（`--center-read-width`）で決まり、左右の余白はその内側に取る。左のセリフと右の投稿が離れすぎない。 */
 @media (min-width: 761px) {
   .turn-card-body {
-    box-sizing: content-box;
-    max-inline-size: 960px;
     padding-inline: var(--gutter-stream);
   }
   .turn-card-inquiry {
