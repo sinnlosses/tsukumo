@@ -111,7 +111,7 @@
   min-width: 0;
   min-height: 0;
 }
-/* 右の欄の分類の場面（`DraftSortPanel`）。題の帯・札の列・下端の口を縦に積み、札の列だけが転がる。 */
+/* 右の欄の分類の場面（`DraftSortPanel`）。題の帯と札の列を縦に積み、札の列だけが転がる。 */
 .task-board-sort-pane {
   display: flex;
   flex: 1 1 auto;
