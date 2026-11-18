@@ -839,8 +839,8 @@ body[data-form="c"] .steps {
 
 /* ───── 新案: ステータスピル ─────
    1本のピルが、灯り・今のフェーズ・いまの手順の一文・位置・目安の残りを1行で持ち、
-   ピルの下線が全フェーズを等分した進み具合になる。開くと同じ面が伸びて計画の一覧になる。
-   色は灯りと下線と1つのボタンにだけ乗せ、字は白の濃淡で段を付ける。
+   ピルの下線が全フェーズを等分した進み具合になる。区間を押すとそのフェーズの詳細、「手順」を押すと全体の詳細が重なって出る。
+   色は灯りと下線にだけ乗せ、字は白の濃淡で段を付ける。緑は完了のチェックの印だけに使う。
    上端に置くときは、左右の縁を入力欄に、上端をやり取りの列にそろえ、流れはピルの下でぼかす。 */
 body[data-form="e"] .strip {
   inset-block-start: 12px;
@@ -862,17 +862,7 @@ body[data-form="e"][data-place="top"] .scroller {
   mask-image: linear-gradient(to bottom, transparent 0 46px, #000 74px);
 }
 
-/* 開いたあいだは流れの上に重なるので、下の字が透けない濃さにする。 */
-.isl[data-open] {
-  border-radius: inherit;
-}
-
-body[data-form="e"][data-open="steps"] :is(.strip, .isl-dock .isl) {
-  background: var(--glass-dense);
-  box-shadow: 0 18px 40px rgb(0 0 0 / 38%);
-}
-
-/* 入力欄の真上に置くとき。入力欄と同じ幅の面で、開くと上へ伸びる（入力欄の箱は動かさない）。 */
+/* 入力欄の真上に置くとき。入力欄と同じ幅の面で、詳細は上へ出る（入力欄の箱は動かさない）。 */
 body[data-form="e"][data-place="dock"] {
   --dock-h: 176px;
 }
@@ -909,7 +899,7 @@ body[data-form="e"][data-place="dock"] .flow {
   white-space: nowrap;
 }
 
-/* 灯り。箱は 16px に決めて、状態が替わっても見出しの位置を動かさない。働くあいだは輪が広がって消える（2秒に1度）。 */
+/* 灯り。箱は 16px に決めて、状態が替わっても見出しの位置を動かさない。動きは持たせない（働いている印は下線の今の区間が言う）。 */
 .isl-lamp-box {
   display: inline-grid;
   flex: none;
@@ -919,33 +909,10 @@ body[data-form="e"][data-place="dock"] .flow {
 }
 
 .isl-lamp {
-  position: relative;
   inline-size: 8px;
   block-size: 8px;
   border-radius: 50%;
   background: var(--accent);
-}
-
-.isl[data-tone="run"] .isl-row .isl-lamp::after {
-  position: absolute;
-  inset: 0;
-  border: 1.5px solid var(--accent);
-  border-radius: 50%;
-  animation: isl-pulse 2s steps(16) infinite;
-  content: "";
-}
-
-@keyframes isl-pulse {
-  from {
-    transform: scale(1);
-    opacity: 0.8;
-  }
-
-  70%,
-  to {
-    transform: scale(2.6);
-    opacity: 0;
-  }
 }
 
 .isl[data-tone="ask"] .isl-lamp {
@@ -1054,17 +1021,6 @@ body[data-form="e"][data-place="dock"] .flow {
   font-variant-numeric: tabular-nums;
 }
 
-.isl-time.is-slow {
-  color: var(--warn);
-}
-
-.isl-remark {
-  flex: none;
-  margin-inline-start: 2px;
-  color: var(--warn);
-  font-size: 12px;
-}
-
 .isl-aside {
   flex: 0 1 auto;
   min-inline-size: 0;
@@ -1124,7 +1080,7 @@ body[data-form="e"][data-place="dock"] .flow {
   background: color-mix(in srgb, var(--ok) 12%, transparent);
 }
 
-/* 計画を開くボタン。印だけにせず「計画」「閉じる」の語を出して、入口と分かるようにする。 */
+/* 全体の詳細を開くボタン。印だけにせず「手順」の語を出して、入口と分かるようにする。 */
 .isl-toggle {
   display: inline-flex;
   align-items: center;
@@ -1138,6 +1094,7 @@ body[data-form="e"][data-place="dock"] .flow {
 }
 
 .isl-toggle:hover,
+.isl-toggle[data-active],
 .isl-action:hover {
   background: color-mix(in srgb, var(--ink) 14%, transparent);
   color: var(--ink);
@@ -1147,7 +1104,7 @@ body[data-form="e"][data-place="dock"] .flow {
   transition: transform 0.24s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.isl-toggle[aria-expanded="true"] .icon {
+.isl-toggle[data-active] .icon {
   transform: rotate(180deg);
 }
 
@@ -1155,24 +1112,47 @@ body[data-form="e"][data-place="dock"] .flow {
   transform: rotate(180deg);
 }
 
-.isl[data-place="dock"] .isl-toggle[aria-expanded="true"] .icon {
+.isl[data-place="dock"] .isl-toggle[data-active] .icon {
   transform: none;
 }
 
-/* 下線。フェーズを等分した塗り分けで、今の区切りだけを太くする。 */
+/* 下線。フェーズを等分した塗り分けで、区間ごとに押せる（押せる高さは線の上下に広げ、隣の区間と隙間なく並べる）。 */
 .isl-track {
   display: flex;
+  margin: -2px 18px 0;
+  padding: 0 0 3px;
+  list-style: none;
+}
+
+.isl-track > li {
+  display: flex;
+  flex: 1;
+}
+
+.isl-hit {
+  display: flex;
+  flex: 1;
   align-items: center;
-  gap: 3px;
-  block-size: 5px;
-  margin: 0 20px;
-  padding-block-end: 9px;
-  box-sizing: content-box;
+  block-size: 14px;
+  padding: 0 1.5px;
+  border-radius: 7px;
+  cursor: pointer;
+}
+
+.isl-hit:is(:hover, [data-active]) {
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
+}
+
+.isl-hit:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 0;
 }
 
 .isl-seg {
+  position: relative;
   flex: 1;
   block-size: 3px;
+  overflow: hidden;
   border-radius: 2px;
   background: color-mix(in srgb, var(--ink) 12%, transparent);
 }
@@ -1188,8 +1168,34 @@ body[data-form="e"][data-place="dock"] .flow {
 .isl-seg[data-state="current"] {
   block-size: 5px;
   border-radius: 3px;
-  background: color-mix(in srgb, var(--accent) 40%, transparent);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 70%, transparent);
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+/* 働くあいだ、今の区間の中を線が始端から終端まで伸び、消えてまた始端から伸びる（2.4秒で1周）。
+   静止画でも途中まで伸びた形に見えるよう、周期の途中から始める。 */
+.isl[data-tone="run"] .isl-seg[data-state="current"]::after {
+  position: absolute;
+  inset: 0;
+  background: var(--accent);
+  transform-origin: left center;
+  animation: isl-fill 2.4s cubic-bezier(0.4, 0, 0.2, 1) -1s infinite;
+  content: "";
+}
+
+@keyframes isl-fill {
+  from {
+    transform: scaleX(0);
+  }
+
+  82% {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+
+  to {
+    transform: scaleX(1);
+    opacity: 0;
+  }
 }
 
 /* 区切りが済んだ瞬間。白く光ってから済んだ色に落ち着く。 */
@@ -1205,7 +1211,6 @@ body[data-form="e"][data-place="dock"] .flow {
 
 .isl[data-tone="ask"] .isl-seg[data-state="current"] {
   background: color-mix(in srgb, var(--warn) 72%, transparent);
-  box-shadow: none;
 }
 
 .isl[data-tone="stop"] .isl-seg[data-state="current"] {
@@ -1213,18 +1218,96 @@ body[data-form="e"][data-place="dock"] .flow {
   box-shadow: inset 0 0 0 1px var(--ink-quiet);
 }
 
-.isl[data-tone="done"] .isl-seg {
-  background: color-mix(in srgb, var(--ok) 72%, transparent);
+/* 詳細。ピルの下（入力欄の真上に置くときは上）に、最上層で重なる。外を押すか Esc で閉じる。 */
+.isl-pop {
+  position: fixed;
+  inset: auto;
+  inline-size: 340px;
+  max-block-size: min(70vh, 560px);
+  margin: 0;
+  padding: 12px 10px;
+  overflow: auto;
+  border: 1px solid var(--edge);
+  border-radius: 16px;
+  background: var(--paper);
+  box-shadow: 0 18px 40px rgb(0 0 0 / 38%);
+  backdrop-filter: var(--blur);
+  color: var(--ink-soft);
+  font-size: 13px;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition:
+    opacity 0.18s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.18s cubic-bezier(0.16, 1, 0.3, 1),
+    overlay 0.18s allow-discrete,
+    display 0.18s allow-discrete;
 }
 
-/* 入力欄の真上では、下線を入力欄の側（下端）に置き、開いた面との仕切りは面の下の罫で引く。 */
-.isl[data-place="dock"] .isl-card {
-  border-block-end: 1px solid var(--edge-quiet);
+.isl-pop.is-plan {
+  inline-size: 480px;
 }
 
-/* 開いたときの計画の一覧。下線が見出しとの仕切りになる。 */
-.isl-card {
-  padding: 4px 10px 12px;
+.isl-pop:popover-open {
+  opacity: 1;
+  transform: none;
+}
+
+@starting-style {
+  .isl-pop:popover-open {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+.isl[data-place="dock"] .isl-pop:not(:popover-open) {
+  transform: translateY(4px);
+}
+
+.isl-pop-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 8px 8px;
+}
+
+.isl-pop-head b {
+  color: var(--ink);
+  font-size: 13.5px;
+  font-weight: 650;
+}
+
+.isl-pop-head .isl-mark {
+  color: var(--ink-soft);
+}
+
+.isl-pop-meta {
+  margin-inline-start: auto;
+  color: var(--ink-quiet);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.isl-pop-meta time {
+  font-family: var(--mono);
+}
+
+.isl-pop-note {
+  margin: 0 8px 8px 36px;
+  color: var(--ink);
+  font-size: 12.5px;
+  line-height: 1.65;
+}
+
+.isl-pop.is-phase .isl-acts {
+  margin: 0 8px 0 36px;
+}
+
+.isl-plan-note {
+  grid-column: 2 / -1;
+  margin: 0 0 6px;
+  color: var(--ink-quiet);
+  font-size: 12px;
+  line-height: 1.6;
 }
 
 .isl-plan {
@@ -1372,15 +1455,9 @@ body[data-form="e"][data-place="dock"] .flow {
   font-weight: 500;
 }
 
-/* 開いたあいだは、いまの手順を一覧の中で言うので、行からは外す。 */
-.isl[data-open] .isl-row :is(.isl-rule, .isl-now, .isl-aside) {
-  display: none;
-}
-
-/* 幅が足りないときは、位置の数（下線が言う）と添え書きの語（秒の色が言う）から譲る。 */
+/* 幅が足りないときは、位置の数（下線が言う）と委譲先の添え書きから譲る。 */
 @container (inline-size < 720px) {
   .isl-pos,
-  .isl-remark,
   .isl-aside {
     display: none;
   }
@@ -1392,7 +1469,7 @@ body[data-form="e"][data-place="dock"] .flow {
   }
 }
 
-/* さらに狭いときは、いまの手順の一文を2行目へ下ろす（見出しと計画のボタンは1行目に残す）。 */
+/* さらに狭いときは、いまの手順の一文を2行目へ下ろす（見出しと手順のボタンは1行目に残す）。 */
 @container (inline-size < 480px) {
   .isl-row {
     flex-wrap: wrap;
@@ -1412,13 +1489,19 @@ body[data-form="e"][data-place="dock"] .flow {
   }
 }
 
+/* 動きを減らす設定では、今の区間の線は半分まで伸びた形で止め、入れ替えと着地と詳細の出入りを止める。 */
 @media (prefers-reduced-motion: reduce) {
-  .isl[data-tone="run"] .isl-row .isl-lamp::after,
+  .isl[data-tone="run"] .isl-seg[data-state="current"]::after {
+    transform: scaleX(0.5);
+    animation: none;
+  }
+
   .isl-seg.is-landing {
     animation: none;
   }
 
-  .isl-row :is(.isl-now, .isl-head) {
+  .isl-row :is(.isl-now, .isl-head),
+  .isl-pop {
     transition: none;
   }
 }

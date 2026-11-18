@@ -8,31 +8,43 @@
   </head>
   <!--
     いまの行と進み具合の置き場の新案（ステータスピル）を説明するページ。見本は index.html?form=e（入力欄の真上に置く形は &place=dock）。
-    今までの決まり（ADR 0059 ほか）と工数を外して、作業を待つ人の問いから組み直した。
+    今までの決まり（ADR 0059 ほか）と工数を外して、作業を待つ人の問いから組み直した。利用者は上端に置く形を採り、5つの注文を足した（#decided）。
     island-*.jpg は index.html を capture-view.ts で撮って切り出した画。中身はすべて架空で、実物の会話ではない。
   -->
   <body>
     <header class="page-head">
-      <h1>プログレスといまの手順を、1本のピルにまとめる</h1>
+      <h1>プログレスといまの手順を、上端の1本のピルにまとめる</h1>
       <p class="page-lead">
-        決まりと工数を外して、作業を待つ人が何を知りたいかから組み直した案。番号つきの丸の並びをやめ、ピルの下線そのものを進み具合にする。ピルは「今のフェーズ｜いまの手順の一文」と「位置・目安の残り」を1行で言い、「計画」を押すと同じ面が伸びて計画の一覧になる。置き場は、会話の列の上端と、入力欄の真上の2つを並べた。
+        決まりと工数を外して、作業を待つ人が何を知りたいかから組み直した案。番号つきの丸の並びをやめ、ピルの下線そのものを進み具合にする。ピルは「今のフェーズ｜いまの手順の一文」と「位置・目安の残り」を1行で言う。下線の区間を押すとそのフェーズの詳細、右端の「手順」を押すと全体の詳細が重なって出て、外を押すと閉じる。
       </p>
       <nav class="page-nav" aria-label="このページの中">
+        <a href="#decided">決まった形</a>
         <a href="#questions">待つ人の問い</a>
         <a href="#anatomy">ピルの中身</a>
-        <a href="#place">置き場</a>
         <a href="#moments">場面</a>
-        <a href="#open">開いた形</a>
+        <a href="#detail">詳細</a>
         <a href="#many">フェーズが多いとき</a>
         <a href="#diff">案A との差</a>
         <a href="#motion">動き</a>
+        <a href="#place">置き場の比べ</a>
         <a href="#review">レビューで直したこと</a>
         <a href="#dropped">外した決まり</a>
-        <a href="#decide">決めること</a>
+        <a href="#open-questions">残る問い</a>
         <a href="index.html?form=e&amp;moment=work&amp;live=1">動く見本を開く</a>
         <a href="compare.html">3案の比べ（別のページ）</a>
       </nav>
     </header>
+
+    <section class="block" id="decided" aria-labelledby="decided-title">
+      <h2 id="decided-title">利用者は上端に置く形を採り、5つの注文を足した</h2>
+      <ol class="issues">
+        <li><b>完了の色。</b>緑になるのは灯りのチェックの印だけ。下線は差し色のまま満ちる。</li>
+        <li><b>「いつもより長い」は出さない。</b>手順の秒がそのまま長さを言うので、添え書きは冗長。秒の色も替えない。</li>
+        <li><b>今の区間の線。</b>働くあいだ、今のフェーズの区間の中を線が始端から終端まで伸び、また始端から伸びる。</li>
+        <li><b>下線を押すと、そのフェーズの詳細。</b>押した区間の下に重なって出て、詳細の外を押すと閉じる。</li>
+        <li><b>右端の「手順」を押すと、全体の詳細。</b>ピルの右端にそろえて重なって出て、詳細の外を押すと閉じる。</li>
+      </ol>
+    </section>
 
     <section class="block" id="questions" aria-labelledby="questions-title">
       <h2 id="questions-title">待つ人の6つの問いに、ピルの1か所ずつが答える</h2>
@@ -43,53 +55,29 @@
           <tr><th>問い</th><th>ピルの答え</th><th>根拠</th></tr>
         </thead>
         <tbody>
-          <tr><th>動いている？</th><td>灯りから輪が2秒に1度広がり、手順の秒が毎秒進む。同じ手順が長いと秒が琥珀になり「いつもより長い」が付く</td><td>待ちの表示は「処理が続いている」という不安を減らす（<a href="https://www.nngroup.com/articles/progress-indicators/">nngroup.com</a>）</td></tr>
+          <tr><th>動いている？</th><td>今の区間の中を線が始端から終端へ伸び続け、手順の秒が毎秒進む</td><td>待ちの表示は「処理が続いている」という不安を減らす（<a href="https://www.nngroup.com/articles/progress-indicators/">nngroup.com</a>）</td></tr>
           <tr><th>いま何をしている？</th><td>「sort-order.ts を書き換えています」の一文。手順が替わると、古い文が上へ抜けて新しい文が下から入る</td><td>働いている様子が見えると、待ちが同じでも結果を高く感じる（Buell・Norton 2011、<a href="https://www.econbiz.de/Record/the-labor-illusion-how-operational-transparency-increases-perceived-value/10009293054">econbiz.de</a>）</td></tr>
           <tr><th>どこまで進んだ？</th><td>下線の塗り（フェーズの数で等分し、今の区間だけ太い）と「2/4」</td><td>10秒を超える待ちには、進んだ割合の表示を（<a href="https://www.uxtigers.com/post/progress-indicators">uxtigers.com</a>）</td></tr>
           <tr><th>あとどれくらい？</th><td>「あと3〜5分」。済んだフェーズの所要の幅から出す目安なので、1つの数ではなく幅で言う。フェーズが済むたびに幅が縮む</td><td>同じ記事。表示は止まらず、嘘をつかず、巻き戻らないこと</td></tr>
           <tr><th>私の出番？</th><td>灯りと見出しと下線の今の区間が琥珀になり「返事を待っています｜質問 1件」。答えるボタンは、入力欄のそばの質問の札にだけ置く</td><td>色と語の2つで言うので、色だけに頼らない</td></tr>
-          <tr><th>終わった？ 留守のあいだは？</th><td>完了は下線が全部緑に満ちて「できました」。離れていたあいだに済んだ区間は濃く塗って残す。ブラウザのタブの題も「2/4 保存の仕組みを足す」「返事待ち」「できました」と替わる</td><td>流れを遡らなくても、別のタブにいても、何が変わったかが分かる</td></tr>
+          <tr><th>終わった？ 留守のあいだは？</th><td>完了は灯りが緑のチェックになり、下線が差し色で満ちて「できました」。離れていたあいだに済んだ区間は濃く塗って残す。ブラウザのタブの題も「2/4 保存の仕組みを足す」「返事待ち」「できました」と替わる</td><td>流れを遡らなくても、別のタブにいても、何が変わったかが分かる</td></tr>
         </tbody>
       </table>
     </section>
 
     <section class="block" id="anatomy" aria-labelledby="anatomy-title">
       <h2 id="anatomy-title">ピルの中身は、左が「いま」、右が「全体」</h2>
-      <p class="block-lead">左から、灯り・今のフェーズ・いまの手順の一文と秒。右端に寄せて、位置・目安の残り・「計画」ボタン。下線は全フェーズを等分した進み具合。色は灯りと下線にだけ乗せ、字は白の濃淡で段を付ける。</p>
+      <p class="block-lead">左から、灯り・今のフェーズ・いまの手順の一文と秒。右端に寄せて、位置・目安の残り・「手順」ボタン。下線は全フェーズを等分した進み具合。色は灯りと下線にだけ乗せ、字は白の濃淡で段を付ける。</p>
       <div class="anatomy">
-        <img src="island-zoom.jpg" alt="新案のピルを2倍に拡大した画。左に桃色の灯りと太字の「保存の仕組みを足す」、縦線のあとに「sort-order.ts を書き換えています 18秒」、右に「2/4 あと3〜5分」と「計画」ボタン、下に4つに区切った下線があり、1つ目が塗られ、2つ目が太い枠で描かれている" width="1624" height="144" />
+        <img src="island-zoom.jpg" alt="新案のピルを2倍に拡大した画。左に桃色の灯りと太字の「保存の仕組みを足す」、縦線のあとに「sort-order.ts を書き換えています 18秒」、右に「2/4 あと3〜5分」と「手順」ボタン、下に4つに区切った下線があり、1つ目が塗られ、太い2つ目の区間の途中まで線が伸びている" width="1624" height="144" />
         <dl>
-          <dt>灯り</dt><dd>状態の印。働く＝桃の点（輪が広がる）、答え待ち＝琥珀の点、止めた＝灰の四角、完了＝緑のチェック。どれも 16px の箱に収め、見出しの位置を動かさない</dd>
+          <dt>灯り</dt><dd>状態の印。働く＝桃の点、答え待ち＝琥珀の点、止めた＝灰の四角、完了＝緑のチェック。どれも 16px の箱に収め、見出しの位置を動かさない。灯りは動かさない</dd>
           <dt>今のフェーズ</dt><dd>太字。答え待ち・止めた・完了では、ここが状態の語（「返事を待っています」など）になる。幅が足りなくても縮めない</dd>
           <dt>いまの手順と秒</dt><dd>対象（等幅）と動詞を、日本語の語順の一文で言う。狭いと対象の頭から「…」で縮め、ファイル名やコマンドの最後の語は残す。秒は一文と一緒に入れ替わる</dd>
           <dt>位置と目安の残り</dt><dd>「2/4」と「あと3〜5分」。全体の割合は下線が言うので、数は小さく</dd>
-          <dt>計画ボタン</dt><dd>計画の一覧と今のフェーズの手順を開く。開いたあいだは「閉じる」になる</dd>
-          <dt>下線</dt><dd>フェーズの数で等分。済んだ区間は桃、今の区間は太く縁取り、まだの区間は白の薄塗り。離れていたあいだに済んだ区間は濃い桃</dd>
+          <dt>手順ボタン</dt><dd>全体の詳細（全フェーズの一覧と、今のフェーズの手順）を重ねて出す。出ているあいだは山形の印が上を向く</dd>
+          <dt>下線</dt><dd>フェーズの数で等分。済んだ区間は桃、今の区間は太く、その中を線が伸びる。まだの区間は白の薄塗り。離れていたあいだに済んだ区間は濃い桃。区間ごとに押せて、押すとそのフェーズの詳細を出す（押せる高さは線の上下に 14px）</dd>
         </dl>
-      </div>
-    </section>
-
-    <section class="block" id="place" aria-labelledby="place-title">
-      <h2 id="place-title">置き場は2つ。上端は流れを邪魔せず、入力欄の真上は目の近くにある</h2>
-      <p class="block-lead">ピルの中身はどちらも同じで、違うのは置く場所と開く向きだけ。どちらも左右の端を入力欄にそろえた。上端の形は、流れがピルの下に潜るところをぼかし、入力欄の真上の形は、入力欄と同じガラスの面にして、開くと上へ伸びる（入力欄は動かない）。</p>
-      <div class="bands is-wide">
-        <figure><img src="island-place.jpg" alt="同じ場面を、ピルを上端に置いた画（左）と入力欄の真上に置いた画（右）で並べたもの" width="1400" height="450" /><figcaption><b>左が上端、右が入力欄の真上</b>どちらも 1400×900 の働く場面を半分に縮めた。</figcaption></figure>
-      </div>
-      <table class="measure">
-        <caption>2つの置き場の違い</caption>
-        <thead>
-          <tr><th></th><th>上端（?form=e）</th><th>入力欄の真上（?form=e&amp;place=dock）</th></tr>
-        </thead>
-        <tbody>
-          <tr><th>最新のセリフとの距離</th><td class="is-bad">画面の高さぶん離れる（1400×900 で約 600px）</td><td class="is-good">セリフのすぐ下で、入力欄の上。目を上下に動かさない</td></tr>
-          <tr><th>セリフと入力欄のあいだ</th><td class="is-good">何も挟まない</td><td>ピルが挟まる。ただし浮いた1行ではなく、入力欄と同じ面の部品として据わる</td></tr>
-          <tr><th>開いたとき</th><td>下へ伸び、流れの上の方に重なる</td><td>上へ伸び、流れの下の方（最新のセリフ）に重なる</td></tr>
-          <tr><th>流れの見える量</th><td>上端に 76px の余白</td><td>入力欄の上に 66px（ピルの高さと間）</td></tr>
-        </tbody>
-      </table>
-      <div class="quad">
-        <figure><div class="frame" data-src="index.html?form=e&moment=work&live=1&bar=0"></div><figcaption><b>上端（動く見本）</b>いまの手順が3.6秒ごとに入れ替わり、4回ごとにフェーズが1つ進む。</figcaption></figure>
-        <figure><div class="frame" data-src="index.html?form=e&moment=work&live=1&place=dock&bar=0"></div><figcaption><b>入力欄の真上（動く見本）</b>中身と動きは同じ。開くと上へ伸びる。</figcaption></figure>
       </div>
     </section>
 
@@ -97,19 +85,20 @@
       <h2 id="moments-title">場面が変わっても、ピルの形は変わらず、灯りと語と色だけが替わる</h2>
       <p class="block-lead">1400 の幅で、上から働く・長く掛かる・委譲を待つ・答え待ち・止めた・離れて戻った・完了。ボタンが出るのは、止めたときの「続きを頼む」だけ（ほかの場面でするべきことは、質問の札やレポートのそばにある）。</p>
       <div class="bands">
-        <figure><img src="island-states.jpg" alt="新案のピルを7つの場面で縦に並べた画" width="812" height="504" /><figcaption><b>7つの場面</b>止めたときは灯りが灰の四角になり、今の区間は灰の縁だけが残る。離れて戻ったときは、そのあいだに済んだ区間が濃い。完了は下線が全部緑になる。</figcaption></figure>
+        <figure><img src="island-states.jpg" alt="新案のピルを7つの場面で縦に並べた画" width="812" height="504" /><figcaption><b>7つの場面</b>止めたときは灯りが灰の四角になり、今の区間は灰の縁だけが残る。離れて戻ったときは、そのあいだに済んだ区間が濃い。完了は灯りだけが緑のチェックになり、下線は差し色で満ちる。</figcaption></figure>
       </div>
       <div class="quad">
+        <figure><div class="frame" data-src="index.html?form=e&moment=work&live=1&bar=0"></div><figcaption><b>働く（動く見本）</b>今の区間の線が伸び続け、いまの手順が3.6秒ごとに入れ替わり、4回ごとにフェーズが1つ進む。</figcaption></figure>
         <figure><div class="frame" data-src="index.html?form=e&moment=ask&bar=0"></div><figcaption><b>答え待ち</b>ピルは琥珀で「返事を待っています」と言い、選択肢は入力欄のそばの札にある。入力欄の上の帯は出さない。</figcaption></figure>
-        <figure><div class="frame" data-src="index.html?form=e&moment=done&bar=0"></div><figcaption><b>完了</b>下線が全部緑になり、灯りが緑のチェックに替わる。</figcaption></figure>
       </div>
     </section>
 
-    <section class="block" id="open" aria-labelledby="open-title">
-      <h2 id="open-title">開くと同じ面が伸びて、計画の一覧と今のフェーズの手順になる</h2>
-      <p class="block-lead">開いたあいだは、見出しが「4 フェーズの計画」に替わり、いまの手順の一文は一覧の今の行の中へ移る（同じ文を2か所に出さない）。今の行には、走っている手順と直前の手順を並べ、全部は「手順 5件をすべて見る」で開く。下端は依頼全体の経過と目安の残り。</p>
+    <section class="block" id="detail" aria-labelledby="detail-title">
+      <h2 id="detail-title">詳細は2種類で、どちらもピルに重なって出て、外を押すと閉じる</h2>
+      <p class="block-lead">下線の区間を押すと、押した区間の下にそのフェーズの詳細が出る。済んだフェーズはまとめと手順、今のフェーズは走っている手順と直前の手順、まだのフェーズは名前と「これから」。右端の「手順」を押すと、ピルの右端にそろえて全体の詳細が出る。済んだフェーズにはまとめを1〜2行で添え、今のフェーズの行の中に手順を並べ、下端に依頼全体の経過と目安の残りを置く。どちらも詳細の外を押すか Esc で閉じ、ピルの行は開いているあいだも替わらない。</p>
       <div class="bands is-wide">
-        <figure><img src="island-open.jpg" alt="開いた形の4フェーズと12フェーズの画" width="1624" height="372" /><figcaption><b>4フェーズ（左）と12フェーズの7つ目（右）</b>済んだフェーズが3つ以上なら「済んだ 6 フェーズ」の1行に畳み、まだのフェーズは3つまで見せて「ほか 2 フェーズ」と数で言う。</figcaption></figure>
+        <figure><img src="island-phase.jpg" alt="下線の1つ目の区間を押して済んだフェーズの詳細を出した画と、2つ目の区間を押して今のフェーズの詳細を出した画" width="1624" height="260" /><figcaption><b>フェーズの詳細。済んだ1つ目（左）と今の2つ目（右）</b>まとめはフェーズが済んだときに書かれるので、今のフェーズには無い。</figcaption></figure>
+        <figure><img src="island-open.jpg" alt="「手順」を押して全体の詳細を出した画の、4フェーズと12フェーズ" width="1624" height="450" /><figcaption><b>全体の詳細。4フェーズ（左）と12フェーズの7つ目（右）</b>済んだフェーズが3つ以上なら「済んだ 6 フェーズ」の1行に畳み、まだのフェーズは3つまで見せて「ほか 2 フェーズ」と数で言う。</figcaption></figure>
       </div>
     </section>
 
@@ -122,7 +111,7 @@
     </section>
 
     <section class="block" id="diff" aria-labelledby="diff-title">
-      <h2 id="diff-title">案A から、丸と番号と口を下線と一文にまとめた</h2>
+      <h2 id="diff-title">案A から、丸と番号を下線と一文にまとめた</h2>
       <div class="bands">
         <figure><img src="island-before.jpg" alt="同じ場面の案A の帯と新案のピルを上下に並べた画" width="812" height="144" /><figcaption><b>上が案A、下が新案</b>どちらも 1400 の幅の働く場面。</figcaption></figure>
       </div>
@@ -134,8 +123,8 @@
         <tbody>
           <tr><th>位置</th><td>番号つきの丸と線の並び</td><td class="is-good">下線の塗りと「2/4」</td></tr>
           <tr><th>いまの手順</th><td>回る印・動詞・対象（「書き換えている sort-order.ts」）</td><td class="is-good">一文（「sort-order.ts を書き換えています」）</td></tr>
-          <tr><th>時間</th><td>依頼全体の経過</td><td class="is-good">手順の秒と目安の残り。経過は開いた面の下端</td></tr>
-          <tr><th>手順の一覧</th><td>「手順 n件」で、帯の下に別の面</td><td class="is-good">「計画」ボタン1つで、同じ面が伸びる</td></tr>
+          <tr><th>時間</th><td>依頼全体の経過</td><td class="is-good">手順の秒と目安の残り。経過は全体の詳細の下端</td></tr>
+          <tr><th>手順の一覧</th><td>「手順 n件」で、帯の下に別の面</td><td class="is-good">区間を押すとそのフェーズ、「手順」を押すと全体の詳細が重なって出る</td></tr>
           <tr><th>答え待ち</th><td>帯と、入力欄の上の帯の2か所</td><td class="is-good">ピルの1か所（答えるボタンは質問の札にだけ）</td></tr>
           <tr><th>高さ</th><td>40px</td><td class="is-bad">58px（下線のぶん）</td></tr>
         </tbody>
@@ -143,23 +132,44 @@
     </section>
 
     <section class="block" id="motion" aria-labelledby="motion-title">
-      <h2 id="motion-title">動きは3つだけで、どれも意味を持つ</h2>
+      <h2 id="motion-title">動きは4つだけで、どれも意味を持つ</h2>
       <ol class="issues">
-        <li><b>灯りの輪。</b>働くあいだだけ、灯りから輪が2秒に1度広がって消える（<code>steps(16)</code> で描き直しを抑える）。答え待ち・止めた・完了では動かないので、「止まっている」ことも動きの有無で分かる。</li>
+        <li><b>今の区間の線。</b>働くあいだだけ、今の区間の中を線が始端から終端まで伸び、消えてまた始端から伸びる（2.4秒で1周、<code>transform</code> だけを動かす）。答え待ち・止めた・完了では動かないので、「止まっている」ことも動きの有無で分かる。</li>
         <li><b>一文の入れ替え。</b>手順が替わると、古い文が上へ 7px 抜けて薄れ、新しい文が下から入る（0.32秒・指数の減速）。フェーズが替わるときは見出しも同じ動きで替わる。</li>
         <li><b>区間の着地。</b>フェーズが済むと、その区間が一瞬白く光ってから済んだ色に落ち着き、隣の区間が太くなる。目安の残りの幅も縮む。</li>
+        <li><b>詳細の出入り。</b>詳細は 4px 上から 0.18秒で現れ、同じ時間で消える。</li>
       </ol>
-      <p class="block-lead">動きを減らす設定では、輪・入れ替え・着地を止め、秒の進みだけを残す。灯りは点滅させない。</p>
+      <p class="block-lead">動きを減らす設定では、今の区間の線を半分まで伸びた形で止め、入れ替え・着地・詳細の出入りを止める。秒の進みだけを残す。灯りは点滅させない。</p>
+    </section>
+
+    <section class="block" id="place" aria-labelledby="place-title">
+      <h2 id="place-title">置き場の比べ（上端に決まった）</h2>
+      <p class="block-lead">ピルの中身はどちらも同じで、違うのは置く場所と詳細の出る向きだけ。どちらも左右の端を入力欄にそろえた。上端の形は、流れがピルの下に潜るところをぼかす。利用者は、最新のセリフと入力欄のあいだに何も挟まない上端を採った。</p>
+      <div class="bands is-wide">
+        <figure><img src="island-place.jpg" alt="同じ場面を、ピルを上端に置いた画（左）と入力欄の真上に置いた画（右）で並べたもの" width="1400" height="450" /><figcaption><b>左が上端（採った形）、右が入力欄の真上</b>どちらも 1400×900 の働く場面を半分に縮めた。</figcaption></figure>
+      </div>
+      <table class="measure">
+        <caption>2つの置き場の違い</caption>
+        <thead>
+          <tr><th></th><th>上端（?form=e）</th><th>入力欄の真上（?form=e&amp;place=dock）</th></tr>
+        </thead>
+        <tbody>
+          <tr><th>最新のセリフとの距離</th><td class="is-bad">画面の高さぶん離れる（1400×900 で約 600px）</td><td class="is-good">セリフのすぐ下で、入力欄の上。目を上下に動かさない</td></tr>
+          <tr><th>セリフと入力欄のあいだ</th><td class="is-good">何も挟まない</td><td>ピルが挟まる。ただし浮いた1行ではなく、入力欄と同じ面の部品として据わる</td></tr>
+          <tr><th>詳細</th><td>下へ出て、流れの上の方に重なる</td><td>上へ出て、流れの下の方（最新のセリフ）に重なる</td></tr>
+          <tr><th>流れの見える量</th><td>上端に 76px の余白</td><td>入力欄の上に 66px（ピルの高さと間）</td></tr>
+        </tbody>
+      </table>
     </section>
 
     <section class="block" id="review" aria-labelledby="review-title">
       <h2 id="review-title">設計レビュー（10点中6点）で直したこと</h2>
       <ol class="issues">
         <li><b>上端は目の置き場から遠い。</b>入力欄の真上に置く形（<code>?place=dock</code>）を足し、2つを並べた。</li>
-        <li><b>同じことを2か所で言っていた。</b>答え待ちの「答える」、完了の「レポートへ」、戻ったときの「1 フェーズ進みました」の1行を外した。開いたあいだは、いまの手順の一文を一覧の中だけで言う。</li>
-        <li><b>静止画で「今どこ」が読めない。</b>下線を流れる光をやめ、今の区間を太く縁取った。働いている印は灯りの輪に移した。</li>
+        <li><b>同じことを2か所で言っていた。</b>答え待ちの「答える」、完了の「レポートへ」、戻ったときの「1 フェーズ進みました」の1行を外した。</li>
+        <li><b>静止画で「今どこ」が読めない。</b>今の区間を太くした（流れる光は、利用者の注文で「区間の中を線が伸びる」形に改めた）。</li>
         <li><b>秒が一文から離れて横に跳ぶ。</b>秒を一文と同じ枠に入れ、一緒に入れ替わるようにした。</li>
-        <li><b>狭い幅で崩れる。</b>ピルの幅で段を決め、720px より狭いと位置と添え書き、560px より狭いと目安の残りを譲り、480px より狭いと一文を2行目へ下ろす。対象は頭から縮めて最後の語を残す。</li>
+        <li><b>狭い幅で崩れる。</b>ピルの幅で段を決め、720px より狭いと位置と委譲先の添え書き、560px より狭いと目安の残りを譲り、480px より狭いと一文を2行目へ下ろす。対象は頭から縮めて最後の語を残す。</li>
         <li><b>灯りの大きさが状態で替わり、見出しが揺れる。</b>灯りを 16px の箱に収め、止めたときの印を四角にした。</li>
         <li><b>端が入力欄とそろわない。</b>左右の端を入力欄にそろえ、上端をやり取りの列にそろえた。</li>
         <li><b>目安の残りが言い切りすぎ。</b>「あと約4分」を「あと3〜5分」の幅にした。タブの題も替わるようにした。</li>
@@ -170,16 +180,15 @@
       <h2 id="dropped-title">この案のために外した決まり</h2>
       <ol class="issues">
         <li><b>帯は位置だけを言い、回る印は流れの末尾の行だけに置く（ADR 0059 論点 1・2）。</b>いまの手順をピルへ移し、流れの末尾のいまの行は無くす。</li>
-        <li><b>手順の一覧は帯の下の別の面（ADR 0059 論点 3）。</b>ピルの面が伸びる形にし、一覧は今のフェーズの行の中に入れる。</li>
+        <li><b>手順の一覧は帯の下の別の面（ADR 0059 論点 3）。</b>ピルに重なって出る2種類の詳細にする。</li>
         <li><b>群（前・本・後）の名と、群ごとに1から数える番号。</b>ピルは「2/4」の通し番号だけを言う。委譲の範囲の数が未定のあいだは、決まった数だけで割る。</li>
         <li><b>答え待ちの入力欄の上の帯。</b>ピルが言うので出さない。</li>
       </ol>
     </section>
 
-    <section class="block" id="decide" aria-labelledby="decide-title">
-      <h2 id="decide-title">決めること</h2>
+    <section class="block" id="open-questions" aria-labelledby="open-questions-title">
+      <h2 id="open-questions-title">残る問い</h2>
       <ol class="issues">
-        <li><b>置き場。</b>上端か、入力欄の真上か。おすすめは上端で、最初の課題（セリフと入力欄のあいだに挟まる）をそのまま解くから。目の近さを優先するなら入力欄の真上。</li>
         <li><b>目安の残りの出し方。</b>済んだフェーズが1つも無いあいだは出さない、で足りるか。委譲の範囲の数が未定のあいだも出さないか。</li>
         <li><b>完了のあとのピル。</b>次の依頼まで「できました」を残すか、レポートを読んだら細く畳むか。</li>
         <li><b>狭い画面（760px 以下）。</b>今のアプリは別の作りに切り替わる。見本はピルの幅で段を決めているので、同じ部品のまま2行に折れる。</li>
