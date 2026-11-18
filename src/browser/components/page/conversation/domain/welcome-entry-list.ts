@@ -4,7 +4,10 @@ import {
   MAX_RECOMMENDATION_CARDS,
   type RecommendationCard,
 } from "../../../../../shared/recommendation/recommendation-card.ts"
-import { recommendationOrder } from "../../../../../shared/recommendation/recommendation-order.ts"
+import {
+  readyTasksInOrder,
+  taskStartRequest,
+} from "../../../../../shared/recommendation/recommendation-order.ts"
 import {
   NO_WELCOME_HEAD,
   type WelcomeHead,
@@ -108,15 +111,12 @@ function resumeRequestOf(remaining: string): string {
 }
 
 function readyTaskCards(tasks: TaskSummaryResult): readonly WelcomeCard[] {
-  if (tasks.kind !== "known") {
-    return []
-  }
-  return recommendationOrder(tasks.items).map(({ task }) => ({
+  return readyTasksInOrder(tasks).map((task) => ({
     kind: "task" as const,
     key: task.id,
     id: task.id,
     title: task.summary,
     reason: "",
-    request: `タスク ${task.id} を進めて`,
+    request: taskStartRequest(task.id),
   }))
 }

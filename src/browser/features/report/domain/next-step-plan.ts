@@ -1,6 +1,7 @@
 // レポートにすでにある欄（`Options`・`Claims`・`sessionRemaining`・`task.outcome`）から、末尾に並べる次の一手を作る。
 // 下書きは入力欄へそのまま入るので、利用者が打つ依頼の文（命令形）で作る。状態を言う文（`sessionRemaining`）は札の字にだけ使い、下書きへ写さない。
 
+import { taskStartRequest } from "../../../../shared/recommendation/recommendation-order.ts"
 import type { A2uiReportComponent } from "../../../../shared/report/a2ui-report-catalog.ts"
 import type { ReportChecksView } from "../../../../shared/report/report-check-view.ts"
 import type { ReportTaskOutcome } from "../../../../shared/report/report-task.ts"
@@ -166,7 +167,7 @@ export function buildNextSteps(source: NextStepSource): readonly NextStep[] {
 
 /** 主の字は送る依頼の文。題は2行目に添え、下見と依頼の両方で何のタスクかが読めるようにする。 */
 function nextTaskStep(task: NextTaskCandidate): NextStep {
-  const request = `タスク ${task.id} を進めて`
+  const request = taskStartRequest(task.id)
   return {
     kind: "next-task",
     taskId: task.id,

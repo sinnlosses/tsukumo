@@ -9,6 +9,7 @@ import {
   type TaskDifficulty,
   type TaskImportance,
   type TaskSummaryItem,
+  type TaskSummaryResult,
 } from "../repository/task-summary.ts"
 
 /** 並べた1件。 */
@@ -27,6 +28,16 @@ const DIFFICULTY_ORDER = {
   sonnet: 1,
   opus: 2,
 } as const satisfies Record<TaskDifficulty, number>
+
+/** 一覧が届いていれば、着手できる未着手のタスクをおすすめの順に並べる。届いていなければ空。 */
+export function readyTasksInOrder(tasks: TaskSummaryResult): readonly TaskSummaryItem[] {
+  return tasks.kind === "known" ? recommendationOrder(tasks.items).map(({ task }) => task) : []
+}
+
+/** おすすめのタスクの札が送る・入れる依頼の文。 */
+export function taskStartRequest(taskId: string): string {
+  return `タスク ${taskId} を進めて`
+}
 
 /**
  * 着手できる未着手のタスクを、おすすめの順に並べる。
