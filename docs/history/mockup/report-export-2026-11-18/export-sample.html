@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="generator" content="tsukumo" />
+<title>ID の変換を両方の形に対応させる — 最終レポート</title>
+<!-- 書き出したファイルの見本（架空の内容）。1ファイルで完結し、外部の読み込みは無い。 -->
+<style>
+  :root {
+    color-scheme: light dark;
+    --page: #f6f3ef;
+    --paper: #fffdfa;
+    --ink: #2a2530;
+    --ink-soft: color-mix(in srgb, var(--ink) 74%, transparent);
+    --ink-quiet: color-mix(in srgb, var(--ink) 56%, transparent);
+    --rule: color-mix(in srgb, var(--ink) 14%, transparent);
+    --rule-soft: color-mix(in srgb, var(--ink) 8%, transparent);
+    --accent: #b8503a;
+    --accent-soft: color-mix(in srgb, var(--accent) 10%, transparent);
+    --ok: #2f7d4f;
+    --ok-soft: color-mix(in srgb, var(--ok) 12%, transparent);
+    --code-bg: color-mix(in srgb, var(--ink) 5%, var(--paper));
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --page: #17151d;
+      --paper: #221f2b;
+      --ink: #e8e3ea;
+      --accent: #f2b0a0;
+      --ok: #7fd6a0;
+      --code-bg: #1a1822;
+    }
+  }
+  /* 見本を撮るためだけの切り替え（?scheme=dark）。書き出す本物のファイルには入れない。 */
+  :root[data-scheme="dark"] {
+    color-scheme: dark;
+    --page: #17151d;
+    --paper: #221f2b;
+    --ink: #e8e3ea;
+    --accent: #f2b0a0;
+    --ok: #7fd6a0;
+    --code-bg: #1a1822;
+  }
+  * { box-sizing: border-box; }
+  html { background: var(--page); }
+  body {
+    margin: 0;
+    color: var(--ink);
+    font: 15px/1.75 system-ui, "Hiragino Sans", "Noto Sans JP", sans-serif;
+    font-feature-settings: "palt" 0;
+  }
+  main {
+    max-width: 760px;
+    margin: 40px auto 64px;
+    padding: 40px 48px 48px;
+    background: var(--paper);
+    border-radius: 12px;
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.06), 0 8px 28px rgb(0 0 0 / 0.06);
+  }
+  /* 表紙の帯: 何の・いつの・どこのレポートか */
+  .masthead { display: grid; gap: 6px; padding-bottom: 20px; border-bottom: 1px solid var(--rule); }
+  .kicker { display: flex; gap: 10px; align-items: center; font-size: 12px; color: var(--ink-quiet); letter-spacing: 0.04em; }
+  .kicker .id { font-family: ui-monospace, SFMono-Regular, monospace; color: var(--accent); }
+  .kicker .outcome { display: inline-flex; gap: 4px; align-items: center; padding: 0 8px; border-radius: 999px; background: var(--ok-soft); color: var(--ok); font-weight: 600; }
+  h1 { margin: 0; font-size: 22px; line-height: 1.45; letter-spacing: 0.01em; }
+  .meta { margin: 0; display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 12.5px; color: var(--ink-quiet); }
+  .meta dt { display: inline; }
+  .meta dt::after { content: " "; }
+  .meta dd { display: inline; margin: 0; color: var(--ink-soft); }
+  .meta div { display: inline; }
+
+  .conclusion { margin: 24px 0 0; font-size: 18px; line-height: 1.7; font-weight: 600; }
+  .checks { margin: 20px 0 0; padding: 12px 16px; border-radius: 8px; background: var(--rule-soft); display: grid; gap: 6px; font-size: 13px; }
+  .checks .row { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: baseline; }
+  .checks .ok { color: var(--ok); font-weight: 600; }
+  .checks code { font-size: 12px; color: var(--ink-soft); }
+  .checks .fig { font-variant-numeric: tabular-nums; color: var(--ink-soft); }
+
+  h2 { margin: 36px 0 10px; font-size: 17px; line-height: 1.5; }
+  p { margin: 0 0 12px; }
+  ul { margin: 0 0 12px; padding-left: 1.3em; }
+  code { font-family: ui-monospace, SFMono-Regular, monospace; font-size: 0.88em; padding: 0 4px; border-radius: 4px; background: var(--code-bg); }
+  pre { margin: 0 0 12px; padding: 14px 16px; border-radius: 8px; background: var(--code-bg); overflow-x: auto; font-size: 12.5px; line-height: 1.6; }
+  pre code { padding: 0; background: none; font-size: inherit; }
+  .pathref { font-family: ui-monospace, SFMono-Regular, monospace; font-size: 0.86em; color: var(--accent); }
+
+  figure { margin: 0 0 16px; }
+  .compare { display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; align-items: center; }
+  .compare .side { display: grid; gap: 6px; }
+  .compare .tag { justify-self: start; font-size: 11px; padding: 0 8px; border-radius: 999px; background: var(--rule-soft); color: var(--ink-soft); }
+  .compare .tag.after { background: var(--accent-soft); color: var(--accent); }
+  .compare .shot { aspect-ratio: 16 / 10; border-radius: 8px; border: 1px solid var(--rule); background: linear-gradient(135deg, #8db6c4, #5f93a8); display: grid; place-items: center; }
+  .compare .shot span { width: 56%; height: 10%; border-radius: 999px; border: 2px solid rgb(255 255 255 / 0.85); }
+  .compare .shot.before span { align-self: start; margin-top: 4%; width: 40%; }
+  .compare .arrow { color: var(--ink-quiet); }
+  figcaption { margin-top: 8px; font-size: 12.5px; color: var(--ink-quiet); text-align: center; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; margin: 0 0 12px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  th { font-size: 12px; color: var(--ink-quiet); font-weight: 600; }
+  th.num, td.num { font-variant-numeric: tabular-nums; text-align: right; }
+
+  details { margin: 0 0 12px; border: 1px solid var(--rule); border-radius: 8px; padding: 8px 14px; }
+  summary { cursor: pointer; font-size: 13px; color: var(--ink-soft); }
+
+  footer { max-width: 760px; margin: -48px auto 48px; padding: 0 48px; font-size: 11.5px; color: var(--ink-quiet); display: flex; justify-content: space-between; }
+
+  @media print {
+    html { background: none; }
+    main { margin: 0; padding: 0; box-shadow: none; max-width: none; }
+    footer { margin: 24px 0 0; padding: 0; }
+    details { border: none; padding: 0; }
+    details > summary { display: none; }
+    h2 { break-after: avoid; }
+    figure, table, pre { break-inside: avoid; }
+  }
+  @media (max-width: 640px) {
+    main { margin: 0; border-radius: 0; padding: 24px 20px 32px; }
+    .compare { grid-template-columns: 1fr; }
+    .compare .arrow { display: none; }
+    footer { margin: 16px 0 32px; padding: 0 20px; }
+  }
+</style>
+<script>
+  if (new URLSearchParams(location.search).get("scheme") === "dark") {
+    document.documentElement.dataset.scheme = "dark"
+  }
+</script>
+</head>
+<body>
+<main>
+  <header class="masthead">
+    <div class="kicker">
+      <span>最終レポート</span>
+      <span class="id">GH-1234</span>
+      <span class="outcome">✓ 完了</span>
+    </div>
+    <h1>ID の変換を両方の形に対応させる</h1>
+    <dl class="meta">
+      <div><dt>依頼</dt><dd>ID の変換を両方の形に対応させたい（架空の依頼）</dd></div>
+      <div><dt>日時</dt><dd>2026-11-18 20:20</dd></div>
+      <div><dt>所要</dt><dd>10秒</dd></div>
+      <div><dt>場所</dt><dd>tsukumo-3（main @ 662940bb4）</dd></div>
+    </dl>
+  </header>
+
+  <p class="conclusion">架空の結論: ID の変換が新旧どちらの形も受け付けるようになった。</p>
+
+  <section class="checks" aria-label="確かめたこと">
+    <div class="row"><span class="ok">✓ 通った</span><span>単体テスト <code>pnpm run test</code></span><span class="fig">12 / 12</span></div>
+    <div class="row"><span class="ok">✓ 通った</span><span>全段の検査 <code>pnpm run check</code></span><span class="fig">E2E 99</span></div>
+  </section>
+
+  <h2>前と後</h2>
+  <figure>
+    <div class="compare">
+      <div class="side"><span class="tag">前</span><div class="shot before"><span></span></div></div>
+      <span class="arrow" aria-hidden="true">→</span>
+      <div class="side"><span class="tag after">後</span><div class="shot"><span></span></div></div>
+    </div>
+    <figcaption>図 1　架空の札の見出しを 18px から 21px にした画面（画像はファイルの中に埋め込み済み）</figcaption>
+  </figure>
+
+  <h2>変えたところ</h2>
+  <ul>
+    <li><code>toId</code> が新旧2つの形を読み分ける <span class="pathref">src/shared/id/to-id.ts:24</span></li>
+    <li>メモに2つの形の例を足した（架空）</li>
+  </ul>
+  <pre><code>export function toId(raw: string): Id {
+  return raw.startsWith("GH-") ? parseNew(raw) : parseLegacy(raw)
+}</code></pre>
+
+  <h2>数の前後</h2>
+  <table>
+    <thead><tr><th>観点</th><th class="num">前</th><th class="num">後</th></tr></thead>
+    <tbody>
+      <tr><td>受け付ける形</td><td class="num">1</td><td class="num">2</td></tr>
+      <tr><td>失敗した変換（直近7日）</td><td class="num">8</td><td class="num">0</td></tr>
+    </tbody>
+  </table>
+
+  <details>
+    <summary>コマンドの出力（畳んだ部品は開閉できる。印刷では開いて出る）</summary>
+    <pre><code>Test Files  42 passed (42)
+     Tests  12 passed (12)</code></pre>
+  </details>
+</main>
+<footer>
+  <span>tsukumo で書き出した最終レポート</span>
+  <span>2026-11-18 21:40 に保存</span>
+</footer>
+</body>
+</html>

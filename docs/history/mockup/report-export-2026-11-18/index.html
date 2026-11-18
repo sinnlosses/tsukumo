@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>最終レポートの HTML 書き出し — デザイン案（2026-11-18）</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #17151d;
+    --surface: #221f2b;
+    --ink: #e8e3ea;
+    --ink-bright: #f7f6f8;
+    --ink-soft: color-mix(in srgb, var(--ink) 72%, transparent);
+    --ink-quiet: color-mix(in srgb, var(--ink) 60%, transparent);
+    --rule: color-mix(in srgb, var(--surface), var(--ink) 32%);
+    --rule-soft: color-mix(in srgb, var(--surface), var(--ink) 12%);
+    --accent: #f2b0a0;
+    --accent-soft: color-mix(in srgb, var(--accent) 14%, transparent);
+    --ok: #7fd6a0;
+    --ng: #f08a8a;
+    --card: color-mix(in srgb, #3a3542 78%, transparent);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.6 system-ui, "Hiragino Sans", sans-serif; }
+  .page { max-width: 1240px; margin: 0 auto; padding: 28px 28px 64px; }
+  h1 { font-size: 21px; margin: 0 0 6px; }
+  .lead { margin: 0; color: var(--ink-soft); max-width: 72ch; }
+  .points { margin: 14px 0 0; padding-left: 20px; color: var(--ink-soft); }
+  .points b { color: var(--ink); font-weight: 600; }
+  h2 { font-size: 16px; margin: 40px 0 6px; }
+  h2 + p { margin: 0 0 14px; color: var(--ink-soft); font-size: 13px; }
+
+  /* 舞台: 実物の会話の流れの背景を模した面 */
+  .stage {
+    border-radius: 14px;
+    border: 1px solid var(--rule-soft);
+    background:
+      radial-gradient(80% 70% at 15% 20%, #3b2a33 0%, transparent 60%),
+      radial-gradient(60% 60% at 85% 80%, #2a2236 0%, transparent 60%),
+      linear-gradient(#1f1a24, #15131b);
+    padding: 24px;
+    display: grid;
+    gap: 22px;
+  }
+  .state { display: grid; grid-template-columns: 120px 750px; gap: 18px; align-items: start; }
+  .state > .label { padding-top: 14px; font-size: 12px; color: var(--ink-quiet); line-height: 1.5; }
+  .state > .label b { display: block; color: var(--ink); font-size: 13px; }
+
+  /* 最終レポートの紙（実物 1400x900 の幅 750px） */
+  .card {
+    background: var(--card);
+    backdrop-filter: blur(6px);
+    border: 1px solid var(--rule-soft);
+    border-radius: 10px;
+    padding: 14px 16px 18px;
+    display: grid;
+    gap: 10px;
+  }
+  .head { display: flex; align-items: center; gap: 8px; min-height: 28px; }
+  .head .kicker { font-size: 12px; color: var(--ink-quiet); margin-right: auto; }
+  .act {
+    display: inline-flex; align-items: center; gap: 4px;
+    height: 28px; padding: 0 8px;
+    border: 1px solid transparent; border-radius: 6px;
+    background: none; color: var(--ink-soft);
+    font: inherit; font-size: 13px; cursor: pointer;
+    transition: color 120ms, background-color 120ms, border-color 120ms;
+  }
+  .act svg { width: 15px; height: 15px; flex: none; }
+  .act:hover, .act.is-hover { color: var(--ink-bright); background: var(--rule-soft); }
+  .act:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .act.is-busy { color: var(--ink-quiet); cursor: progress; }
+  .act.is-busy svg { animation: drop 900ms steps(6) infinite; }
+  @keyframes drop { from { transform: translateY(-2px); opacity: 0.4; } to { transform: translateY(2px); opacity: 1; } }
+  .act.is-done { color: var(--ok); }
+  .sep { width: 1px; height: 16px; background: var(--rule); }
+  .tip {
+    position: absolute; translate: -50% 0; margin-top: 34px; white-space: nowrap;
+    font-size: 12px; padding: 4px 8px; border-radius: 6px; background: #0e0d12; color: var(--ink-soft);
+    border: 1px solid var(--rule-soft);
+  }
+  .tip kbd { font: 11px ui-monospace, monospace; padding: 0 4px; border: 1px solid var(--rule); border-radius: 4px; margin-left: 6px; }
+
+  .conclusion { font-size: 16.5px; margin: 0; color: var(--ink-bright); }
+  .checkline { display: flex; gap: 14px; font-size: 12.5px; color: var(--ink-soft); }
+  .checkline b { color: var(--ink); }
+  .fade { height: 34px; border-radius: 6px; background: linear-gradient(var(--rule-soft), transparent); }
+
+  /* 保存の知らせ: 見出しの行のすぐ下、紙の中の1行 */
+  .saved {
+    display: flex; align-items: center; gap: 10px;
+    padding: 6px 8px 6px 12px; border-radius: 8px;
+    background: color-mix(in srgb, var(--ok) 9%, transparent);
+    border: 1px solid color-mix(in srgb, var(--ok) 28%, transparent);
+    font-size: 12.5px;
+  }
+  .saved.is-ng { background: color-mix(in srgb, var(--ng) 9%, transparent); border-color: color-mix(in srgb, var(--ng) 30%, transparent); }
+  .saved .mark { color: var(--ok); font-weight: 600; white-space: nowrap; }
+  .saved.is-ng .mark { color: var(--ng); }
+  .saved .path { font: 12px ui-monospace, SFMono-Regular, monospace; color: var(--ink-soft); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; flex: 1; direction: rtl; text-align: left; }
+  .saved .path bdi { direction: ltr; }
+  .saved .msg { color: var(--ink-soft); flex: 1; }
+  .saved .btn {
+    height: 26px; padding: 0 10px; border-radius: 6px; border: 1px solid var(--rule);
+    background: none; color: var(--ink); font: inherit; font-size: 12.5px; cursor: pointer; white-space: nowrap;
+  }
+  .saved .btn:hover { border-color: var(--accent); }
+  .saved .x { width: 26px; padding: 0; color: var(--ink-quiet); border-color: transparent; }
+
+  /* 広げた板 */
+  .board { width: 100%; border-radius: 14px; border: 1px solid var(--rule-soft); background: #1d1a23; overflow: hidden; }
+  .board-head { display: flex; align-items: center; gap: 8px; padding: 10px 16px; border-bottom: 1px solid var(--rule-soft); }
+  .board-head .title { font-size: 13px; color: var(--ink-quiet); margin-right: auto; }
+  .board-body { padding: 18px 28px 28px; display: grid; gap: 10px; }
+  .board-body .fade { height: 120px; }
+
+  /* 書き出したファイルの見本 */
+  .file { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .file figure { margin: 0; display: grid; gap: 6px; }
+  .file figcaption { font-size: 12px; color: var(--ink-quiet); }
+  .file img { display: block; width: 100%; height: auto; border: 1px solid var(--rule-soft); border-radius: 10px; }
+
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--rule-soft); vertical-align: top; }
+  th { color: var(--ink-quiet); font-weight: 600; font-size: 12px; }
+  td:first-child { white-space: nowrap; color: var(--ink); }
+  td { color: var(--ink-soft); }
+  .keep { color: var(--ok); } .flat { color: var(--accent); } .drop { color: var(--ink-quiet); }
+  code { font: 12px ui-monospace, SFMono-Regular, monospace; padding: 0 4px; border-radius: 4px; background: var(--rule-soft); }
+
+  .open { margin: 0; padding-left: 20px; color: var(--ink-soft); }
+  .open li { margin-bottom: 6px; }
+  .open b { color: var(--ink); }
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>最終レポートを HTML で書き出す</h1>
+  <p class="lead">最終レポートの見出しの行に「HTML で保存」を置き、押すと同じレポートを1ファイルで完結した HTML にしてディスクへ保存する。会話の背景や立ち絵は持ち出さず、明るい紙・暗い紙・印刷のどれでも読めるレポート単体の文書にする。</p>
+  <ul class="points">
+    <li><b>置き場は「広げる」の左隣の1か所。</b>広げた板の頭にも同じボタンを置く（板は同じレポートの別の見せ方なので、口も同じ）。</li>
+    <li><b>押した結果は、押した場所のすぐ下に1行で返す。</b>保存先のパスと「開く」「Finder で表示」。別の場所に知らせを出さない。</li>
+    <li><b>保存はサーバが行う。</b>画像は今 <code>/tmp</code> などのローカルパスなので、サーバが読んで埋め込む。保存先は <code>~/Downloads/</code>。</li>
+    <li><b>出るのは確定した最終レポートだけ。</b>書いている途中の草稿と、段のまとめ（中間レポート）には出さない。</li>
+  </ul>
+
+  <h2>1. 見出しの行の4つの状態（実寸・幅 750px）</h2>
+  <p>アイコンは「広げる」と同じ線の太さ・同じ大きさ。字は「HTML で保存」で、何が起きるかを語で言う（アイコンだけにしない）。</p>
+  <div class="stage">
+    <div class="state">
+      <div class="label"><b>ふだん</b>「広げる」と同じ控えめな字のボタン</div>
+      <div class="card">
+        <div class="head">
+          <span class="kicker">最終レポート</span>
+          <button class="act" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>HTML で保存</button>
+          <span class="sep" aria-hidden="true"></span>
+          <button class="act" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg>広げる</button>
+        </div>
+        <p class="conclusion">架空の結論: ID の変換が新旧どちらの形も受け付けるようになった。</p>
+        <div class="checkline"><b>確かめたこと 1件</b><span>通った 1</span><span>12 / 12</span></div>
+        <div class="fade"></div>
+      </div>
+    </div>
+
+    <div class="state">
+      <div class="label"><b>触れた</b>面が少し明るくなり、保存先を添えた案内が出る</div>
+      <div class="card">
+        <div class="head" style="position: relative;">
+          <span class="kicker">最終レポート</span>
+          <span style="position: relative; display: inline-flex;">
+            <button class="act is-hover" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>HTML で保存</button>
+            <span class="tip" style="left: 50%;">~/Downloads に1ファイルで保存</span>
+          </span>
+          <span class="sep" aria-hidden="true"></span>
+          <button class="act" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg>広げる</button>
+        </div>
+        <p class="conclusion" style="margin-top: 22px;">架空の結論: ID の変換が新旧どちらの形も受け付けるようになった。</p>
+        <div class="fade"></div>
+      </div>
+    </div>
+
+    <div class="state">
+      <div class="label"><b>保存した</b>字が「保存した」に替わり、見出しの下に1行が出る。× で消すか、次のやり取りが来るまで残る</div>
+      <div class="card">
+        <div class="head">
+          <span class="kicker">最終レポート</span>
+          <button class="act is-done" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"/></svg>保存した</button>
+          <span class="sep" aria-hidden="true"></span>
+          <button class="act" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg>広げる</button>
+        </div>
+        <div class="saved" role="status">
+          <span class="mark">✓ 保存した</span>
+          <span class="path"><bdi>~/Downloads/tsukumo-report-GH-1234-20261118-2140.html</bdi></span>
+          <button class="btn" type="button">ブラウザで開く</button>
+          <button class="btn" type="button">Finder で表示</button>
+          <button class="btn x" type="button" aria-label="知らせを閉じる">×</button>
+        </div>
+        <p class="conclusion">架空の結論: ID の変換が新旧どちらの形も受け付けるようになった。</p>
+        <div class="fade"></div>
+      </div>
+    </div>
+
+    <div class="state">
+      <div class="label"><b>保存できなかった</b>理由を1文で言い、もう一度押せる</div>
+      <div class="card">
+        <div class="head">
+          <span class="kicker">最終レポート</span>
+          <button class="act" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>HTML で保存</button>
+          <span class="sep" aria-hidden="true"></span>
+          <button class="act" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg>広げる</button>
+        </div>
+        <div class="saved is-ng" role="alert">
+          <span class="mark">保存できなかった</span>
+          <span class="msg">~/Downloads に書き込めない（権限が無い）</span>
+          <button class="btn" type="button">もう一度</button>
+          <button class="btn x" type="button" aria-label="知らせを閉じる">×</button>
+        </div>
+        <p class="conclusion">架空の結論: ID の変換が新旧どちらの形も受け付けるようになった。</p>
+      </div>
+    </div>
+  </div>
+
+  <h2>2. 広げた板の頭</h2>
+  <p>板の頭は「最終レポート」の題と「閉じる」だけなので、「閉じる」の左に同じボタンを置く。知らせの1行も板の頭のすぐ下に出す。</p>
+  <div class="stage">
+    <div class="board">
+      <div class="board-head">
+        <span class="title">最終レポート</span>
+        <button class="act" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>HTML で保存</button>
+        <span class="sep" aria-hidden="true"></span>
+        <button class="act" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>閉じる</button>
+      </div>
+      <div class="board-body">
+        <p class="conclusion">架空の結論: ID の変換が新旧どちらの形も受け付けるようになった。</p>
+        <div class="fade"></div>
+      </div>
+    </div>
+  </div>
+
+  <h2>3. 書き出したファイル</h2>
+  <p>1ファイルで完結し、外部の読み込みは無い。開いた環境の明暗に合わせて紙の色が替わり、印刷では背景を落として畳みを開く。左が明るい環境、右が暗い環境での見え方。</p>
+  <div class="file">
+    <figure>
+      <a href="export-sample.html"><img src="export-light.png" alt="書き出したファイル（明るい環境）" /></a>
+      <figcaption>明るい環境（既定）。押すと見本のファイルを開く</figcaption>
+    </figure>
+    <figure>
+      <a href="export-sample.html?scheme=dark"><img src="export-dark.png" alt="書き出したファイル（暗い環境）" /></a>
+      <figcaption>暗い環境（<code>prefers-color-scheme: dark</code>）</figcaption>
+    </figure>
+  </div>
+
+  <h2>4. 書き出す中身の決まり</h2>
+  <p>中身は画面のレポートと同じで、削る・並べ替える・言い換えることはしない。動く部品だけを、そのとき見えている形で止める。</p>
+  <table>
+    <thead><tr><th>部品・欄</th><th>扱い</th><th>ファイルでの形</th></tr></thead>
+    <tbody>
+      <tr><td>表紙の帯</td><td class="keep">足す</td><td>種類（最終レポート）・タスク ID・終わり方・作業の名前・依頼の1行目・日時・所要・作業ツリーと HEAD</td></tr>
+      <tr><td>結論・確かめたこと・節・表・コード・図</td><td class="keep">そのまま</td><td>描いた DOM と同じ構造。図（Mermaid・Graph・Svg・Chart）は描いた SVG を埋め込む</td></tr>
+      <tr><td>画像（Picture・Compare の画）</td><td class="keep">埋め込む</td><td>サーバがローカルのファイルを読み、<code>data:</code> の URL にする。読めない画像は「画像を読めなかった: パス」の1行</td></tr>
+      <tr><td>畳んだ部品（fold）</td><td class="keep">開閉できる</td><td><code>&lt;details&gt;</code> のまま。印刷では開いて出す</td></tr>
+      <tr><td>Tabs・前後の切り替え</td><td class="flat">止める</td><td>タブは全部を順に並べ、前後は「並べる」の形で出す</td></tr>
+      <tr><td>ParameterSlider・ChoicePicker</td><td class="flat">止める</td><td>保存したときの値で描いた形。部品は値の1行に替える</td></tr>
+      <tr><td><code>path:line</code> のリンク</td><td class="flat">字にする</td><td>押せない等幅の字（ファイルの外では開けないので）</td></tr>
+      <tr><td>コピーのボタン・欄外注の札・「分かった」</td><td class="drop">落とす</td><td>画面の操作だけのもの</td></tr>
+      <tr><td>締めのセリフ・待ちの一言・立ち絵・背景</td><td class="drop">落とす</td><td>キャラクターの声は画面の側に属する。レポート本文は中立の技術文なので、それだけで読める</td></tr>
+    </tbody>
+  </table>
+
+  <h2>5. 決めておきたいこと</h2>
+  <ul class="open">
+    <li><b>保存先は <code>~/Downloads/</code> でよいか。</b>ブラウザのダウンロードにする手もあるが、Orca のタブでダウンロードがどう扱われるかが確かめられていないので、サーバが書いて「開く」「Finder で表示」を返す形を推す。</li>
+    <li><b>ファイル名は <code>tsukumo-report-&lt;タスクID か題&gt;-&lt;年月日&gt;-&lt;時分&gt;.html</code>。</b>タスクの無いやり取りはセッションの題を短くして使う。同じ名前があれば末尾に <code>-2</code> を足す。</li>
+    <li><b>キーの割り当ては付けない。</b>押す頻度が低く、入力欄のキーとぶつけたくないので、ボタンだけにする。</li>
+  </ul>
+</div>
+</body>
+</html>
