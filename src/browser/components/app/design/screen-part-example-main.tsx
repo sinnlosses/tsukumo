@@ -112,7 +112,9 @@ const STRIP_BASE = {
     phaseTimes: { kind: "none" },
     backgroundList: { kind: "none" },
     footLabel: "経過 6分12秒",
+    estimate: { kind: "none" },
   },
+  estimate: { kind: "none" },
 } as const
 
 const STEPS_ROW_BASE = {
@@ -134,6 +136,7 @@ const WORKING_STRIP: WorkStripModel = {
   mark: "dot",
   headLabel: "実装",
   statement: "",
+  estimate: { kind: "shown", low: 3, high: 5 },
 }
 
 const FINISHED_STRIP: WorkStripModel = {

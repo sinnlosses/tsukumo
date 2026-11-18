@@ -12,6 +12,7 @@ import {
 import type { PhaseRecap } from "../../../domain/phase-recap.ts"
 import type { WorkStripSegment } from "../../../domain/work-segment.ts"
 import type { StepsLanding } from "../../../stores/work-strip-step-list.ts"
+import type { RemainingEstimate } from "../domain/remaining-estimate.ts"
 import { phaseRowSlotOf, stepsPhaseRowsOf } from "../domain/steps-phase-row.ts"
 import { type StepsPlanItem, stepsPlanCardOf } from "../domain/steps-plan-card.ts"
 
@@ -43,9 +44,12 @@ export type WorkStripSteps = {
   readonly backgroundList: CurrentWorkBackgroundList
   /** 下端の依頼全体の経過（作業中は「経過 …」、閉じたあとは「所要 …」）。 */
   readonly footLabel: string
+  /** 下端の経過の右に添える目安の残り。出さないときは `none`。 */
+  readonly estimate: RemainingEstimate
 }
 
 export function workStripStepsOf(input: {
+  readonly estimate: RemainingEstimate
   readonly list: WorkStripStepsList
   readonly steps: readonly TurnStep[]
   readonly segments: readonly WorkStripSegment[]
@@ -86,5 +90,6 @@ export function workStripStepsOf(input: {
     phaseTimes: input.phaseTimes,
     backgroundList: toBackgroundListView(input.backgroundTasks),
     footLabel: input.footLabel,
+    estimate: input.estimate,
   }
 }

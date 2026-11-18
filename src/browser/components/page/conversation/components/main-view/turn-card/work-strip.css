@@ -186,6 +186,17 @@
     display: none;
   }
 }
+/* 目安の残り「あとN〜M分」。位置の右。幅が足りないときは位置の次に譲る。 */
+.work-strip-eta {
+  flex: none;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+@container work-strip (inline-size < 560px) {
+  .work-strip-eta {
+    display: none;
+  }
+}
 /* 手順の一覧の行に付ける群の名と並列の札。 */
 .work-strip-span {
   flex: none;

@@ -59,7 +59,20 @@ export function PresentationalStepsList(props: {
           </div>
         </div>
       )}
-      <p className={styles["work-strip-steps-foot"]}>{steps.footLabel}</p>
+      <p className={styles["work-strip-steps-foot"]}>
+        <span>{steps.footLabel}</span>
+        {steps.estimate.kind === "shown" && (
+          <span
+            className={styles["work-strip-steps-foot-eta"]}
+            title="済んだフェーズの所要から出した目安"
+          >
+            目安の残り{" "}
+            <b>
+              {steps.estimate.low}〜{steps.estimate.high}分
+            </b>
+          </span>
+        )}
+      </p>
     </div>
   )
 }

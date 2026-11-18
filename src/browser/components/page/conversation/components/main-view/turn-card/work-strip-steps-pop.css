@@ -146,10 +146,17 @@
   flex: 1;
 }
 .work-strip-steps-foot {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--inline-tight);
   margin: 0;
   padding: var(--stack-tight) var(--inline-control) 0;
   border-top: 1px solid var(--rule-quiet);
   color: var(--ink-quiet);
   font-family: var(--font-mono);
   font-size: var(--font-label);
+}
+.work-strip-steps-foot-eta {
+  flex: none;
+  white-space: nowrap;
 }

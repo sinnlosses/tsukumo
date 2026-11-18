@@ -86,6 +86,17 @@ export function PresentationalWorkStrip(props: {
         {track.kind === "shown" && track.position.kind === "shown" && (
           <span className={styles["work-strip-position"]}>{track.position.text}</span>
         )}
+        {strip.estimate.kind === "shown" && (
+          <Text
+            element="span"
+            size="label"
+            tone="ink-quiet"
+            weight="inherit"
+            className={styles["work-strip-eta"]}
+          >
+            あと{strip.estimate.low}〜{strip.estimate.high}分
+          </Text>
+        )}
         <div ref={rootRef} className={styles["work-strip-steps-root"]}>
           <StepsToggle steps={strip.steps} toggleRef={toggleRef} />
           {strip.steps.list.kind === "open" && (

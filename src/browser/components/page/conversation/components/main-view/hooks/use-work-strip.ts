@@ -2,6 +2,7 @@
 
 import type { PhaseTimesView } from "../../../../../../../shared/report/report-phase-time.ts"
 import { conversationMoment } from "../../../../../../../shared/session/conversation-moment.ts"
+import { phaseDurations } from "../../../../../../../shared/session/phase-duration.ts"
 import {
   currentPhaseOf,
   finishedPhaseCount,
@@ -17,6 +18,7 @@ import {
   turnElapsedLabel,
   turnElapsedText,
 } from "../../../../../../domain/turn-elapsed.ts"
+import { usePhoneWidth } from "../../../../../../hooks/use-phone-width.ts"
 import { useNowWhile } from "../../../../../../stores/clock.ts"
 import { useCurrentTurnSteps } from "../../../../../../stores/current-turn-step-list.ts"
 import { useMainViewTurns } from "../../../../../../stores/main-view-turn.ts"
@@ -33,6 +35,7 @@ import { turnResultsOf, type TurnResult } from "../../../domain/turn-result.ts"
 import { workSegmentsOf } from "../../../domain/work-segment.ts"
 import { useMainViewContent } from "../../../stores/main-view-content.ts"
 import { useWorkStripSteps } from "../../../stores/work-strip-step-list.ts"
+import { type RemainingEstimate, remainingEstimateOf } from "../domain/remaining-estimate.ts"
 import { type WorkStripMark, workStripStatusOf } from "../domain/work-strip-status.ts"
 import { type WorkStripSteps, workStripStepsOf } from "./use-work-strip-step-list.ts"
 
@@ -55,6 +58,8 @@ export type WorkStripModel =
       readonly mark: WorkStripMark
       readonly headLabel: string
       readonly statement: string
+      /** 位置の右に出す目安の残り。出さないときは `none`。 */
+      readonly estimate: RemainingEstimate
       readonly steps: WorkStripSteps
     }
   | {
@@ -64,12 +69,15 @@ export type WorkStripModel =
       readonly mark: WorkStripMark
       readonly headLabel: string
       readonly statement: string
+      readonly estimate: RemainingEstimate
       readonly steps: WorkStripSteps
     }
 
 const NO_PLAN = { kind: "none" } as const satisfies LatestWorkPlan
 
 const NO_PHASE_TIMES = { kind: "none" } as const satisfies PhaseTimesView
+
+const NO_ESTIMATE = { kind: "none" } as const satisfies RemainingEstimate
 
 const NO_RECAPS = new Map<string, PhaseRecap>()
 
@@ -94,6 +102,7 @@ export function useWorkStrip(): WorkStripModel {
   })
   const shown = content.kind !== "welcome" && result !== undefined
   const now = useNowWhile(shown && isTurnCounting(turn, backgroundTasks.length))
+  const phoneWidth = usePhoneWidth()
   const planned = plan.kind === "planned" ? plannedPhasesOf(plan) : []
   const readingLabel = useReadingSection((state) =>
     state.outlineCollapsed ? readingLabelOf(readingSectionOf(state)) : "",
@@ -137,7 +146,21 @@ export function useWorkStrip(): WorkStripModel {
     asking: working && firstPending !== undefined,
     finished: !working,
   })
+  const estimate =
+    plan.kind === "planned"
+      ? remainingEstimateOf({
+          rows: phaseDurations(
+            turnStepList.trail,
+            { kind: "stamped", at: turnCountedUntil(turn, backgroundTasks.length, now) },
+            "none",
+          ),
+          current: plan.current,
+          rangePending: plan.delegatedRange.kind === "pending",
+          shown: (result === "working" || result === "background") && !phoneWidth,
+        })
+      : NO_ESTIMATE
   const steps = workStripStepsOf({
+    estimate,
     list,
     steps: turnStepList.steps,
     segments,
@@ -166,6 +189,7 @@ export function useWorkStrip(): WorkStripModel {
       mark: status.mark,
       headLabel: status.heading,
       statement: status.statement,
+      estimate: NO_ESTIMATE,
       steps,
     }
   }
@@ -177,6 +201,7 @@ export function useWorkStrip(): WorkStripModel {
     mark: status.mark,
     headLabel: status.heading,
     statement: status.statement,
+    estimate,
     steps,
   }
 }

@@ -13,6 +13,7 @@ import {
   plan,
   stateAfter,
 } from "../../../../../../fixture/work-strip-event.ts"
+import { foldTimed, START } from "../../../../../../fixture/work-strip.ts"
 import { putSession } from "../../../../../session-store.ts"
 
 afterEach(() => {
@@ -461,6 +462,40 @@ describe("WorkStrip（下線の区間）", () => {
     })
 
     expect(detailOf("架空の段A")).toBeNull()
+  })
+})
+
+describe("WorkStrip（目安の残り）", () => {
+  const TIMED_EVENTS = [
+    [REQUEST, START],
+    [plan(0), START],
+    [plan(1), START + 120_000],
+  ] as const
+
+  function renderAt(now: number): void {
+    vi.spyOn(Temporal.Now, "instant").mockReturnValue(Temporal.Instant.fromEpochMilliseconds(now))
+    putSession(foldTimed(TIMED_EVENTS))
+    render(<WorkStrip />)
+  }
+
+  it("位置の右に「あと1〜2分」の形で出す", () => {
+    renderAt(START + 120_000 + 30_000)
+
+    expect(screen.getByText("あと4〜5分")).toBeTruthy()
+    expect(strip().textContent).toContain("2/3あと4〜5分")
+  })
+
+  it("全体の詳細の下端に、済んだフェーズの所要から出した目安だと分かる title つきで出す", () => {
+    renderAt(START + 120_000 + 30_000)
+    act(() => {
+      fireEvent.click(screen.getByRole("button", { name: /^手順/ }))
+    })
+
+    const foot = screen
+      .getByRole("region", { name: "依頼の手順" })
+      .querySelector("[title='済んだフェーズの所要から出した目安']")
+
+    expect(foot?.textContent).toBe("目安の残り 4〜5分")
   })
 })
 

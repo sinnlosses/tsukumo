@@ -441,3 +441,89 @@ describe("useWorkStrip（ワークプランが届く前）", () => {
     expect(stripAt(state, START + 6_000)).toEqual({ kind: "none" })
   })
 })
+
+describe("useWorkStrip（目安の残り）", () => {
+  const threePhases = (current: number): SessionEvent => ({
+    ...plan,
+    phases: ["架空の段A", "架空の段B", "架空の段C"],
+    current,
+  })
+
+  // 段Aが 120 秒、段Bが 120 秒で済み、段C が今。
+  const afterTwoPhases = foldTimed([
+    [workRequest, START],
+    [threePhases(0), START],
+    [threePhases(1), START + 120_000],
+    [threePhases(2), START + 240_000],
+  ])
+  const afterOnePhase = foldTimed([
+    [workRequest, START],
+    [threePhases(0), START],
+    [threePhases(1), START + 120_000],
+  ])
+
+  function estimateAt(state: Parameters<typeof stripAt>[0], now: number): unknown {
+    const strip = stripAt(state, now)
+    return strip.kind === "working" ? strip.estimate : strip.kind
+  }
+
+  it("済んだ区間があれば、残りの区間の数と済んだ所要から出す", () => {
+    expect(estimateAt(afterOnePhase, START + 120_000)).toEqual({ kind: "shown", low: 4, high: 5 })
+  })
+
+  it("同じ分のうちは時計が進んでも変わらず、分が替わると変わる", () => {
+    const at = (seconds: number) => estimateAt(afterOnePhase, START + 120_000 + seconds * 1000)
+
+    expect(at(59)).toEqual(at(0))
+    expect(at(60)).toEqual({ kind: "shown", low: 3, high: 4 })
+  })
+
+  it("フェーズが替わると、残りの区間の数が替わって変わる", () => {
+    expect(estimateAt(afterTwoPhases, START + 240_000)).toEqual({ kind: "shown", low: 2, high: 3 })
+  })
+
+  it("済んだ区間が無いあいだは出さない", () => {
+    const state = foldTimed([
+      [workRequest, START],
+      [threePhases(0), START],
+    ])
+
+    expect(estimateAt(state, START + 30_000)).toEqual({ kind: "none" })
+  })
+
+  it("答え待ちでは出さない", () => {
+    const state = foldTimed([
+      [workRequest, START],
+      [threePhases(0), START],
+      [threePhases(1), START + 120_000],
+      [
+        {
+          kind: "pending-changed",
+          pending: [
+            {
+              kind: "permission",
+              id: "toolu_ask",
+              toolName: "Bash",
+              input: { command: "架空のコマンド" },
+            },
+          ],
+        },
+        START + 130_000,
+      ],
+    ])
+
+    expect(estimateAt(state, START + 140_000)).toEqual({ kind: "none" })
+  })
+
+  it("ターンが終わったあとの帯（finished）は出さない", () => {
+    const state = foldTimed([
+      [workRequest, START],
+      [threePhases(0), START],
+      [threePhases(1), START + 120_000],
+      [{ kind: "turn-finished", outcome: { kind: "completed" } }, START + 130_000],
+    ])
+    const strip = stripAt(state, START + 140_000)
+
+    expect(strip.kind === "finished" ? strip.estimate : strip.kind).toEqual({ kind: "none" })
+  })
+})

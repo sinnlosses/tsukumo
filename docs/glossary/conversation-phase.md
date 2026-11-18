@@ -78,6 +78,14 @@
   回る印は持たない。狭い画面は「いまの段」の下の1行（`workActivityOf`）のまま
 - **避ける言い方**: いまの行（流れの末尾にあった置き場）、ピル、2行目（進み具合のプログレスバーにあった置き場の名前）、実況
 
+### 目安の残り
+
+- **英語識別子**: `RemainingEstimate`・`remainingEstimateOf`（`src/browser/components/page/conversation/components/main-view/domain/remaining-estimate.ts`）
+- **定義**: 同じ依頼の中で済んだ区間の所要の最短と最長から出した、残りの幅（「あと 3〜5分」）。進み具合のプログレスバーの位置の右と、全体の詳細の下端に出す
+- **注記**: 済んだ区間が無い・範囲の数が未定・答え待ち・止めた・失敗・完了・ワークプランの無いターンでは出さない。
+  「済んだフェーズの所要から出した目安」であることを下端の字に添える
+- **避ける言い方**: ETA、残り時間
+
 ### お伺い
 
 - **英語識別子**: `Inquiry`（中身は `PendingAsk` の許可要求と質問。質問は添え書きの並び `briefs` も持つ。質問1問の型は `Question`〔`src/shared/session-driver/question.ts`〕で、サーバの機能は `src/server/question/`）
