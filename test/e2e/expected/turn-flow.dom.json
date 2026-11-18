@@ -470,7 +470,7 @@
                                 {
                                   "tag": "span",
                                   "attributes": {
-                                    "data-type": "body",
+                                    "data-type": "supporting",
                                     "data-color": "primary"
                                   },
                                   "children": [

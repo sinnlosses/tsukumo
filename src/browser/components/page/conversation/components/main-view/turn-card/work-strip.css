@@ -94,8 +94,9 @@
   background: none;
   cursor: pointer;
 }
-.work-strip-segment:hover {
-  background: color-mix(in srgb, var(--ink) 8%, transparent);
+/* 押せる高さは1行目に重なるので、hover は地を敷かず線の周りだけを薄く縁取る。 */
+.work-strip-segment:hover > .work-strip-segment-line {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ink) 16%, transparent);
 }
 .work-strip-segment:focus-visible {
   outline: 2px solid var(--accent);
@@ -208,13 +209,9 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-/* 幅が足りないときは、一文が縮みきったあとに見出しが「…」で縮む（経過と手順のボタンを押し出さない）。 */
+/* 見出しは縮めない。幅が足りないときは一文が縮む。 */
 .work-strip-head {
-  flex: 0 1 auto;
-  min-width: 2em;
-  max-width: 16em;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  flex: none;
   white-space: nowrap;
 }
 .work-strip-rule {
@@ -232,10 +229,11 @@
 }
 /* いまの手順の一文。替わり目は抜ける文と入る文を同じ1マスに重ね、上へ抜けて下から入れる（transform と opacity だけ）。
    対象は、最後の語を残して頭から「…」で縮め、幅が足りないときは添え書きから先に譲る。
-   器の最小幅は文の min-content（頭の 3ch・最後の語・つなぎ・動詞・秒）で、器ごと縮めて右を切らない。 */
+   器の最小幅は文の min-content（頭の 3ch・最後の語・つなぎ・動詞・秒）で、器ごと縮めて右を切らない。
+   器は残りの幅を埋め、右の位置・経過・手順のボタンを文の長さで動かさない。 */
 .work-strip-now {
   display: grid;
-  flex: 0 2 auto;
+  flex: 1 2 auto;
   grid-template-columns: minmax(min-content, 1fr);
   min-width: min-content;
   overflow: clip;
@@ -323,6 +321,7 @@
 }
 .work-strip-toggle {
   flex: none;
+  font-size: var(--font-secondary);
   padding: var(--space-xs) var(--space-md);
   border-radius: var(--radius-pill);
   white-space: nowrap;

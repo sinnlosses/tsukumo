@@ -49,7 +49,7 @@ export function PresentationalWorkStrip(props: {
         <StateMark result={strip.result} mark={strip.mark} />
         <Text
           element="span"
-          size="body"
+          size="secondary"
           tone={strip.result === "awaiting-answer" ? "state-warn" : "ink"}
           weight="bold"
           className={styles["work-strip-head"]}
