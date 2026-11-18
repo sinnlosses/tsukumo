@@ -20,6 +20,7 @@ function renderLayout(narrowGround = false): void {
       outline="outline"
       dispatch="dispatch"
       inquiry="inquiry"
+      voice="voice"
       sheet="sheet"
       rail={{ badge: "railBadge" }}
       narrowGround={narrowGround}

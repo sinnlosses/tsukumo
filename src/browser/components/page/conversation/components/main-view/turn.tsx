@@ -52,6 +52,7 @@ import { ProgressFold } from "./progress-fold.tsx"
 import { QuestionRecord } from "./question-record.tsx"
 import { AwaySeamLine, PostRow, SayRow } from "./stream-card.tsx"
 import { TurnFailureBlock } from "./turn-failure-block.tsx"
+import { VoiceBandPortal } from "./voice-band.tsx"
 
 type TurnProps = {
   readonly turn: MainViewTurn
@@ -61,6 +62,8 @@ type TurnProps = {
   readonly freshReport: boolean
   /** 入力欄の上の定位置が出している声。その記録は流れの行から除く。 */
   readonly voice?: VoiceSlot
+  /** 直近のセリフ1件を流れから外し、入力欄の上の声の帯に描くか。 */
+  readonly band?: boolean
 }
 
 export function Turn(props: TurnProps): ReactElement {
@@ -95,18 +98,11 @@ export function Turn(props: TurnProps): ReactElement {
   )
   const questionForm = phoneWidth ? "card" : "asked"
   const redoToolUseId = props.newest ? lastQuestionToolUseId(turn) : NO_QUESTION
-  const groups = streamGroupsOf(items)
   const generation = useSession((session) => session.generation)
   const away = useAwaySeam((state) => state.away)
-  // 狭い画面では流れの行を描かないので、線も出さない。
-  const seam =
-    !phoneWidth && away?.generation === generation && away.turnId === turn.id
-      ? awaySeamOf({ away, rows, items })
-      : NO_SEAM
   const latestStepId = props.newest ? finalStep?.id : undefined
   const port = useReplyPort()
   const tasks = useSession((session) => session.state.tasks)
-  const hasContent = items.length > 0 || turn.drafts.length > 0
   const viewed = useViewedSpeech((state) => state.viewed)
   const moment = useSession((session) => conversationMoment(session.state))
   const speakerName =
@@ -121,10 +117,35 @@ export function Turn(props: TurnProps): ReactElement {
       : {}),
     timeZone: localTimeZoneId(),
   })
+  // 尾・明るさ・出方は帯へ移すセリフも流れの中の位置で決めてから、流れの並びから外す。
+  const bandIndex = props.band === true ? items.findLastIndex((item) => item.kind === "say") : -1
+  const bandItem = items[bandIndex]
+  const streamItems = items.filter((_item, index) => index !== bandIndex)
+  const streamPresentations = presentations.filter((_presentation, index) => index !== bandIndex)
+  const groups = streamGroupsOf(streamItems)
+  const hasContent = streamItems.length > 0 || turn.drafts.length > 0
+  // 狭い画面では流れの行を描かないので、線も出さない。
+  const seam =
+    !phoneWidth && away?.generation === generation && away.turnId === turn.id
+      ? awaySeamOf({ away, rows, items: streamItems })
+      : NO_SEAM
 
   return (
     <ReplyPortContext value={{ kind: "open", port }}>
-      <div {...endsWithSayAttribute(items, turn.drafts.length)}>
+      {bandItem?.kind === "say" && (
+        <VoiceBandPortal>
+          <SayRow
+            row={bandItem}
+            turnId={turn.id}
+            presentation={{
+              ...(presentations[bandIndex] ?? PLAIN_PRESENTATION),
+              timeShown: true,
+            }}
+            speakerName={speakerName}
+          />
+        </VoiceBandPortal>
+      )}
+      <div {...endsWithSayAttribute(streamItems, turn.drafts.length)}>
         {turn.droppedCount > 0 && (
           <Text
             element="p"
@@ -155,7 +176,7 @@ export function Turn(props: TurnProps): ReactElement {
                       item={item}
                       turn={turn}
                       tasks={tasks}
-                      presentation={presentations[group.start + offset] ?? PLAIN_PRESENTATION}
+                      presentation={streamPresentations[group.start + offset] ?? PLAIN_PRESENTATION}
                       speakerName={speakerName}
                       newest={props.newest}
                       questionForm={questionForm}

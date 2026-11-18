@@ -9,9 +9,6 @@
       ] },
       { "tag": "div", "attributes": { "data-speaker": "user" }, "children": [
         "いまどこ？（架空の補足メッセージ）"
-      ] },
-      { "tag": "div", "attributes": { "data-speaker": "character" }, "children": [
-        "いまは委譲先が段2を進めているところ。落ちたものはまだ無いよ。"
       ] }
     ] }
   ]

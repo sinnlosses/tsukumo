@@ -1,7 +1,10 @@
 import { QueryClientProvider } from "@tanstack/react-query"
 import { act, fireEvent, render, screen, type RenderResult } from "@testing-library/react"
 
-import { MainView } from "../../src/browser/components/page/conversation/components/main-view/main-view.tsx"
+import {
+  MainView,
+  VoiceBand,
+} from "../../src/browser/components/page/conversation/components/main-view/main-view.tsx"
 import { ReportOutline } from "../../src/browser/components/page/conversation/components/main-view/report-outline.tsx"
 import { useSession } from "../../src/browser/stores/session.ts"
 import type { SessionRecord } from "../../src/shared/session/session-record.ts"
@@ -54,6 +57,7 @@ function renderPage(): RenderResult {
     <QueryClientProvider client={createTestQueryClient()}>
       <ReportOutline />
       <MainView />
+      <VoiceBand />
     </QueryClientProvider>,
   )
 }

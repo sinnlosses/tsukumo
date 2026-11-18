@@ -3,7 +3,10 @@ import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, beforeAll, describe, expect, it } from "vitest"
 
 import { CharacterView } from "../../../../../../../src/browser/components/page/conversation/components/character-view/character-view.tsx"
-import { MainView } from "../../../../../../../src/browser/components/page/conversation/components/main-view/main-view.tsx"
+import {
+  MainView,
+  VoiceBand,
+} from "../../../../../../../src/browser/components/page/conversation/components/main-view/main-view.tsx"
 import { LATEST_VIEWED_SPEECH } from "../../../../../../../src/browser/components/page/conversation/domain/pinned-speech.ts"
 import { useViewedSpeech } from "../../../../../../../src/browser/components/page/conversation/stores/viewed-speech.ts"
 import { loadMarkdown } from "../../../../../../../src/browser/features/report/markdown.tsx"
@@ -66,6 +69,7 @@ function renderBoth(records: readonly SessionRecord[], viewedTurn: "newest" | nu
   render(
     <QueryClientProvider client={createTestQueryClient()}>
       <MainView />
+      <VoiceBand />
       <CharacterView />
     </QueryClientProvider>,
   )

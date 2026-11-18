@@ -61,26 +61,16 @@
   padding-top: var(--stack-group);
   padding-inline: var(--region-padding);
 }
-/* 声の定位置。入力欄の上の1行（お願いの口）より上、入力欄のすぐ上の側に置く。
-   お願いの口と同じ余白・上限の幅にそろえる。 */
-.voice-slot {
-  position: sticky;
-  bottom: 0;
-  z-index: 1;
-  padding-top: var(--stack-group);
-  padding-inline: var(--region-padding);
+/* 声の帯。メインビューの領域の外（入力欄のすぐ上）に吹き出し1件ぶんの高さを先に取り、
+   セリフの有無や入れ替わりでメインビューの高さが動かないようにする。
+   左右の余白は流れ（`.turn-card-body`）と同じにして、吹き出しの左端を流れのセリフとそろえる。 */
+.voice-band {
+  box-sizing: border-box;
+  min-block-size: 2.75rem;
+  padding-inline: calc(2 * var(--gutter-region));
 }
-@media (min-width: 761px) {
-  .voice-slot {
-    box-sizing: border-box;
-    max-inline-size: 976px;
-  }
-  /* 札の中では、左右の余白を流れ（`.turn-card-body`）と同じ `--gutter-stream` にして、吹き出しの左端を流れのセリフとそろえる。
-     幅は流れと同じく札の組で決まる。 */
-  .turn-card > .voice-slot {
-    max-inline-size: none;
-    padding-inline: var(--gutter-stream);
-  }
+.voice-band [data-speaker="typing"] {
+  inline-size: fit-content;
 }
 /* 流れの末尾が聞いたセリフのとき、お伺いの札はそのセリフと1組に見せる（広い画面だけ）。 */
 @media (min-width: 761px) {

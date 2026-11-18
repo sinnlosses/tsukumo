@@ -151,3 +151,4 @@
 | `docs/architecture/adr/0071-waiting-line-in-stream.md`                          | 待ちの一言を流れの行に戻す                                                                            | 採用                   |
 | `docs/architecture/adr/0072-center-read-width-in-center-column.md`              | 読む幅の組を中央の列の中央に置く                                                                      | 採用                   |
 | `docs/architecture/adr/0073-report-html-export.md`                              | 最終レポートを HTML の1ファイルに書き出す                                                             | 採用                   |
+| `docs/architecture/adr/0074-latest-speech-in-voice-band.md`                     | 直近のセリフを入力欄の上の声の帯に置く                                                                | 採用                   |

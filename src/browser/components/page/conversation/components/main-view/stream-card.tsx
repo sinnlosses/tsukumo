@@ -2,11 +2,10 @@
 // 依頼は依頼の塊（札と地の文）、補足は文面と添えた画像を投稿にする。
 
 import clsx from "clsx"
-import type { ReactElement } from "react"
+import type { ReactElement, ReactNode } from "react"
 
 import type { TaskSummaryResult } from "../../../../../../shared/repository/task-summary.ts"
 import type { MainViewTurn } from "../../../../../../shared/session/main-view-shape.ts"
-import type { RecordTime } from "../../../../../../shared/session/session-record.ts"
 import { currentPhaseOf } from "../../../../../../shared/session/work-plan.ts"
 import { localTimeZoneId } from "../../../../../utils/clock.ts"
 import { Text } from "../../../../ui/text/text.tsx"
@@ -89,55 +88,38 @@ export function SayRow(props: {
 }
 
 /**
- * 入力欄の上の定位置の声。流れのセリフの行と同じ部品で、いまの一言として明るくする。
- * 押すと最新へ戻る（定位置の声は留める先にしない）。別の行を留めているあいだは落ち着いた面にして尾を付けない。
+ * 声の帯に出す迎える反応（迎えの挨拶・おかえり）。流れのセリフの行と同じ部品で、いまの一言として明るくする。
+ * 押すと最新へ戻る（帯の迎える反応は留める先にしない）。別の行を留めているあいだは落ち着いた面にして尾を付けない。
+ * 書いている途中は「…」を出す。
  */
 export function VoiceSlotRow(props: {
-  readonly text: string
-  readonly time: RecordTime
+  readonly voice: VoiceSlot
   readonly speakerName: string
-}): ReactElement {
+}): ReactNode {
   const pinned = useViewedSpeech((state) => state.viewed.kind === "pinned")
   const release = useViewedSpeech((state) => state.release)
   const arriving = useArrivingBubble()
-  return (
-    <div className={styles["voice-slot"]} data-voice-slot="">
-      <StreamSpeechRow
-        text={props.text}
-        time={recordClockStamp(props.time, localTimeZoneId())}
-        timeShown
-        liveness={pinned ? "plain" : "live"}
-        aim={pinned ? undefined : <StreamAim />}
-        speakerName={props.speakerName}
-        selected={false}
-        pop={false}
-        {...(!pinned && arriving.kind === "arriving" ? { arrival: arriving.bubble } : {})}
-        onToggle={release}
-        className=""
-      />
-    </div>
-  )
-}
-
-/**
- * 迎える場面の声の定位置。声・「…」・空のどれでも1行ぶんの高さを取り、一覧の位置が動かないようにする。
- */
-export function WelcomeVoiceSlot(props: {
-  readonly voice: VoiceSlot
-  readonly speakerName: string
-}): ReactElement {
   const { voice } = props
+  if (voice.kind === "writing") {
+    return <StreamTyping />
+  }
+  if (voice.kind !== "voice") {
+    return undefined
+  }
   return (
-    <div className={styles["welcome-voice-reserve"]}>
-      {voice.kind === "voice" && (
-        <VoiceSlotRow text={voice.text} time={voice.time} speakerName={props.speakerName} />
-      )}
-      {voice.kind === "writing" && (
-        <div className={styles["voice-slot"]} data-voice-slot="">
-          <StreamTyping />
-        </div>
-      )}
-    </div>
+    <StreamSpeechRow
+      text={voice.text}
+      time={recordClockStamp(voice.time, localTimeZoneId())}
+      timeShown
+      liveness={pinned ? "plain" : "live"}
+      aim={pinned ? undefined : <StreamAim />}
+      speakerName={props.speakerName}
+      selected={false}
+      pop={false}
+      {...(!pinned && arriving.kind === "arriving" ? { arrival: arriving.bubble } : {})}
+      onToggle={release}
+      className=""
+    />
   )
 }
 

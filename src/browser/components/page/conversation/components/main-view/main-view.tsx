@@ -51,14 +51,16 @@ import { useVoiceSlot } from "./hooks/use-voice-slot.ts"
 import styles from "./main-view.module.css"
 import { PhaseList } from "./phase-list.tsx"
 import { RequestBlock } from "./request-block.tsx"
-import { VoiceSlotRow, WelcomeVoiceSlot } from "./stream-card.tsx"
+import { VoiceSlotRow } from "./stream-card.tsx"
 import { StreamFloat } from "./stream-float.tsx"
 import { TurnCardHead } from "./turn-card-head.tsx"
 import { Turn } from "./turn.tsx"
+import { VoiceBandPortal } from "./voice-band.tsx"
 import { Welcome } from "./welcome.tsx"
 import { WorkStrip } from "./work-strip.tsx"
 
 export { ReportOutline } from "./report-outline.tsx"
+export { VoiceBand } from "./voice-band.tsx"
 
 /** 画面に出す中身。`card` は札に載せるターンで、`fresh` は働くあいだの中身から入れ替えたばかりのレポートか。 */
 type ShownView =
@@ -188,8 +190,12 @@ export function MainView(): ReactElement {
             <>
               <div className={styles["welcome-scene"]}>
                 <Welcome />
-                {!phoneWidth && <WelcomeVoiceSlot voice={shownVoice} speakerName={speakerName} />}
               </div>
+              {!phoneWidth && (
+                <VoiceBandPortal>
+                  <VoiceSlotRow voice={shownVoice} speakerName={speakerName} />
+                </VoiceBandPortal>
+              )}
               <Inquiry />
             </>
           )}
@@ -243,11 +249,19 @@ export function MainView(): ReactElement {
                   newest={cardTurn.turn.id === newestTurnId}
                   freshReport={cardTurn.fresh}
                   voice={voice}
+                  band={
+                    !phoneWidth &&
+                    !viewingPast &&
+                    voice.kind !== "voice" &&
+                    cardTurn.turn.id === newestTurnId
+                  }
                   key={cardTurn.turn.id}
                 />
               </div>
               {voice.kind === "voice" && (
-                <VoiceSlotRow text={voice.text} time={voice.time} speakerName={speakerName} />
+                <VoiceBandPortal>
+                  <VoiceSlotRow voice={voice} speakerName={speakerName} />
+                </VoiceBandPortal>
               )}
               {!viewingPast && (
                 <div className={styles["turn-card-inquiry"]}>

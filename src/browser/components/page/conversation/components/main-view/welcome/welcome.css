@@ -175,13 +175,6 @@
     align-self: center;
     inline-size: min(100%, var(--center-read-width));
   }
-  /* 声の定位置は1行ぶんの高さを先に取り、挨拶の有無でカードの並びが動かないようにする。 */
-  .welcome-voice-reserve {
-    min-block-size: 4.5rem;
-  }
-  .welcome-voice-reserve [data-speaker="typing"] {
-    inline-size: fit-content;
-  }
   .welcome-scene:only-child {
     flex: 1;
   }

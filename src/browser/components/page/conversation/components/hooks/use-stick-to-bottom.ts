@@ -84,9 +84,13 @@ export function useStickToBottom(
     scroller.addEventListener("scroll", updateNearBottom)
     const observer = new MutationObserver(stickToBottom)
     observer.observe(log, { subtree: true, childList: true })
+    // 入れ物の外（入力欄の上の声の帯など）が伸びて転がる区画が縮んだときも、下端を読んでいれば寄せ直す。
+    const resize = new ResizeObserver(stickToBottom)
+    resize.observe(scroller)
     return () => {
       scroller.removeEventListener("scroll", updateNearBottom)
       observer.disconnect()
+      resize.disconnect()
       logRef.current = undefined
     }
   }

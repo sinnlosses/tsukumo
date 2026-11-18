@@ -15,6 +15,7 @@ type ConversationLayoutProps = {
   readonly dispatch: ReactNode
   readonly outline: ReactNode
   readonly inquiry: ReactNode
+  readonly voice: ReactNode
   readonly sheet: ReactNode
   readonly rail: { readonly badge: ReactNode }
   readonly narrowGround: boolean

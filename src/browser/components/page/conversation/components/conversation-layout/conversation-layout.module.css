@@ -41,6 +41,23 @@
 .layout-inquiry {
   display: none;
 }
+/* 声の帯の席。広い画面でだけ、メインビュー（1行目）と入力欄のあいだの行に入る。 */
+.layout-voice {
+  box-sizing: border-box;
+  inline-size: min(100%, var(--center-read-width));
+  min-width: 0;
+  justify-self: center;
+}
+/* 中身が何も無い（雑談・セリフの無いやり取り）あいだは行ごと畳み、メインビューの高さを削らない。 */
+.layout-voice:empty,
+.layout-voice:has(> :empty) {
+  display: none;
+}
+@media (max-width: 760px) {
+  .layout-voice {
+    display: none;
+  }
+}
 /* サイドシートの置き場。メインビューと同じ区画（1行目）の右に重ね、上は進行の帯（メインビューの中の `position: sticky` の頭）の下端に合わせる。
    行は入力欄の上で終わるので、入力欄は覆わない。
    帯はメインビューの領域の上端に貼り付く（`turn-card-head.css`）ので、帯の下端は「帯の高さ（広い幅で最小 40px）＋隙間」の定数で持ち、矩形を測って渡す処理は持たない。

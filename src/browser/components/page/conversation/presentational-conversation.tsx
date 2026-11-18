@@ -13,7 +13,7 @@ import { ChatStage, ChatView, ChatViewProvider } from "./components/chat-view/ch
 import { ConversationLayout } from "./components/conversation-layout/conversation-layout.tsx"
 import { Dispatch } from "./components/dispatch/dispatch.tsx"
 import { LiveAnnouncer } from "./components/live-announcer/live-announcer.tsx"
-import { MainView, ReportOutline } from "./components/main-view/main-view.tsx"
+import { MainView, ReportOutline, VoiceBand } from "./components/main-view/main-view.tsx"
 import { PendingAskCard } from "./components/pending-ask-card/pending-ask-card.tsx"
 import {
   RequestedTaskBoard,
@@ -33,6 +33,7 @@ export function PresentationalConversation(props: PresentationalConversationProp
       outline={!props.chatMode && <ReportOutline />}
       dispatch={<Dispatch />}
       inquiry={!props.chatMode && <PendingAskCard />}
+      voice={!props.chatMode && <VoiceBand />}
       sheet={<RequestedTaskSheet listModeAvailable={!props.chatMode} />}
       rail={{ badge: !props.chatMode && <TaskDoingCount /> }}
       narrowGround={props.chatMode}

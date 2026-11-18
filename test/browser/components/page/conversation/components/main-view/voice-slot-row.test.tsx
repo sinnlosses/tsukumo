@@ -13,6 +13,7 @@ import {
   reactionRecord,
   reportRecord,
   requestRecord,
+  speechRecord,
 } from "../../../../../../fixture/session-record.ts"
 import { stubPhoneWidth } from "../../../../../phone-width.ts"
 import { putState } from "../../../../../session-store.ts"
@@ -86,19 +87,39 @@ describe("MainView（声の定位置）", () => {
       expect(document.querySelector("[data-voice-slot] [data-speaker='typing']")).not.toBeNull()
       cleanup()
       renderWelcome({ kind: "unwritten" })
-      expect(document.querySelector("[data-voice-slot]")).toBeNull()
+      expect(bandChildCount()).toBe(0)
     })
 
     it("狭い画面は定位置を出さない", () => {
       stubPhoneWidth(true)
       renderWelcome({ kind: "written", greeting })
-      expect(document.querySelector("[data-voice-slot]")).toBeNull()
+      expect(bandChildCount()).toBe(0)
     })
   })
 
   it("狭い画面は定位置を出さない", () => {
     stubPhoneWidth(true)
     renderResumed()
-    expect(document.querySelector("[data-voice-slot]")).toBeNull()
+    expect(bandChildCount()).toBe(0)
+  })
+
+  it("作業中のやり取りは直近のセリフ1件だけを定位置に出し、それより前のセリフは流れに残す", () => {
+    renderMainView(
+      [
+        requestRecord({ turnId: 0 }),
+        speechRecord({ text: "架空の着手の一言" }),
+        speechRecord({ text: "架空の直近の一言" }),
+      ],
+      { kind: "running", startedAt: 0 },
+    )
+    const slot = document.querySelector("[data-voice-slot]")
+    expect(slot?.textContent).toContain("架空の直近の一言")
+    expect(slot?.textContent).not.toContain("架空の着手の一言")
+    expect(textCount("架空の直近の一言")).toBe(1)
+    expect(textCount("架空の着手の一言")).toBe(1)
   })
 })
+
+function bandChildCount(): number {
+  return document.querySelector("[data-voice-slot]")?.childElementCount ?? 0
+}

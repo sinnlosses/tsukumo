@@ -3,7 +3,7 @@ import { expect, test } from "./room-fixture.ts"
 // 委譲中の脇の話（docs/architecture/testing.md「E2E のシナリオの一覧」）。場面 `aside-delegating` は
 // 段2で背景の委譲を1件残したままターンを閉じる。そこへ入力欄から ⌘Enter で送ると、サーバが脇の話と決めて
 // `aside` が戻り、次の場面 `aside-answer` のセリフが答えになる。札が増えず、帯が親のワークプランのまま残り、
-// 流れに言葉（右寄せの投稿）と答え（左寄せの行）が出ることを、DOM の構造とメッセージの列で確かめる。
+// 流れに言葉（右寄せの投稿）が出て、答え（直近のセリフ）が入力欄の上の声の帯に出ることを、DOM の構造とメッセージの列で確かめる。
 
 /** 撮るときの経過（凍らせた瞬間から）。「何秒前」の類いをこの値で揃える。 */
 const ELAPSED_MS = 60_000
@@ -12,7 +12,7 @@ const ELAPSED_MS = 60_000
 const ASIDE_TURN_FINISHED_OCCURRENCE = 2
 
 test.describe("委譲中の補足メッセージ", () => {
-  test("バックグラウンドタスクが残っているあいだに送っても札は増えず、帯は親のワークプランのまま、流れに言葉と答えが出る", async ({
+  test("バックグラウンドタスクが残っているあいだに送っても札は増えず、帯は親のワークプランのまま、流れに言葉、声の帯に答えが出る", async ({
     run,
   }) => {
     const room = await run.open({
@@ -42,7 +42,9 @@ test.describe("委譲中の補足メッセージ", () => {
       { useInnerText: true },
     )
     await expect(
-      main.locator('[data-speaker="character"]', { hasText: "いまは委譲先が段2を進めている" }),
+      room.page.locator('[data-speaker="character"]', {
+        hasText: "いまは委譲先が段2を進めている",
+      }),
     ).toContainText("いまは委譲先が段2を進めているところ。", { useInnerText: true })
     await expect(room.page.locator('[data-region="character"] [data-outline-turn]')).toHaveCount(1)
     await room.settleAndMatchPickedWithMessages(ELAPSED_MS)
