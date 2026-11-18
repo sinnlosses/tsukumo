@@ -1420,7 +1420,7 @@
                                 "次の一手"
                               ]
                             },
-                            "押すと下の入力欄に入る（送らない）",
+                            "2件",
                             "お願いが1件あります",
                             {
                               "tag": "button",
@@ -1434,46 +1434,17 @@
                             {
                               "tag": "button",
                               "attributes": {
-                                "aria-expanded": "true",
+                                "aria-expanded": "false",
                                 "type": "button"
                               },
                               "children": [
-                                "畳む",
+                                "開く",
                                 {
                                   "tag": "span",
                                   "attributes": {
                                     "aria-hidden": "true"
                                   }
                                 }
-                              ]
-                            },
-                            {
-                              "tag": "button",
-                              "attributes": {
-                                "data-next-step-chip": "",
-                                "type": "button"
-                              },
-                              "children": [
-                                "確かめた",
-                                "「狭いビューポートでの見た目」を確かめた。問題なかった。"
-                              ]
-                            },
-                            {
-                              "tag": "button",
-                              "attributes": {
-                                "data-next-step-chip": "",
-                                "type": "button"
-                              },
-                              "children": [
-                                "違った",
-                                "「狭いビューポートでの見た目」を確かめたら、違っていた。"
-                              ]
-                            },
-                            {
-                              "tag": "p",
-                              "children": [
-                                "押すと入る文",
-                                "「狭いビューポートでの見た目」を確かめた。問題なかった。"
                               ]
                             }
                           ]
