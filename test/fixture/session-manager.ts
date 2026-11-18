@@ -18,6 +18,7 @@ import { type PreviousUsageReview, usageProposalKey } from "../../src/shared/usa
 import type { CommandRouterPorts } from "../../src/wiring/router.ts"
 import { NOOP_CHAT_ARCHIVE } from "./chat.ts"
 import { createCommandClient } from "./command-client.ts"
+import { UNUSED_REPORT_EXPORT_PORTS } from "./report-export.ts"
 import { createStubDriver } from "./session-driver.ts"
 import { CHARACTER_EVENT, requestEvent } from "./session-event.ts"
 import { checkedToolUseId } from "./tool-use-id.ts"
@@ -160,6 +161,7 @@ export function createSessionManager(
       chat: { forgetRememberedLine },
       usageReview: { dismissUsageProposal, runner },
       host: { openFile },
+      reportExport: UNUSED_REPORT_EXPORT_PORTS,
       workflowSetting: {
         changeWorkflowSetting: () => Promise.reject(new Error("ワークフローの設定は使わない")),
       },

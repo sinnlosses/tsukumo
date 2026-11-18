@@ -14,20 +14,6 @@ export type PendingReader = PendingReaderBase &
 
 export const PENDING_READERS: readonly PendingReader[] = [
   {
-    file: "src/server/report/core/export/report-export-document.ts",
-    missingReader: "production",
-    exportName: "buildReportExportDocument",
-    reason: "最終レポートの書き出しの核。書く・開くの口が後段のタスクで付く",
-    removeWhen: "書き出しの口が文書を組む関数を呼ぶ",
-  },
-  {
-    file: "src/server/report/core/export/report-export-file-name.ts",
-    missingReader: "production",
-    exportName: "reportExportFileName",
-    reason: "最終レポートの書き出しの核。書く・開くの口が後段のタスクで付く",
-    removeWhen: "書き出しの口がファイル名を決める関数を呼ぶ",
-  },
-  {
     file: "src/shared/report/a2ui-report-input.ts",
     missingReader: "browser",
     reason: "草稿の組み立てが読まなくなり、server の引数の字数の数え直しだけが読む",

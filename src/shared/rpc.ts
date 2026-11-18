@@ -20,6 +20,7 @@ import { frameContract } from "./contract/frame.ts"
 import { hostContract } from "./contract/host.ts"
 import { itemContract } from "./contract/item.ts"
 import { planUsageContract } from "./contract/plan-usage.ts"
+import { reportExportContract } from "./contract/report-export.ts"
 import { repositoryContract } from "./contract/repository.ts"
 import { sessionClaimContract } from "./contract/session-claim.ts"
 import { sessionDigestContract } from "./contract/session-digest.ts"
@@ -56,6 +57,7 @@ export const commandContract = {
   chat: chatContract,
   usageReview: usageReviewContract,
   host: hostContract,
+  reportExport: reportExportContract,
   workflowSetting: workflowSettingCommandContract,
   diagnostic: diagnosticContract,
   experienceMetric: experienceMetricContract,

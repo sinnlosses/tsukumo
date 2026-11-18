@@ -24,6 +24,7 @@ import { wireDiary } from "./diary.ts"
 import { wireHost } from "./host.ts"
 import { wireItem } from "./item.ts"
 import { wirePresentScene } from "./present-scene.ts"
+import { wireReportExport } from "./report-export.ts"
 import type { wireRepository } from "./repository.ts"
 import { createSocketRouter } from "./router.ts"
 import { wireSessionLaunch } from "./session-launch.ts"
@@ -144,6 +145,10 @@ export async function startSession(options: SessionStartOptions): Promise<Starte
     chat: chat.commands,
     usageReview: usageReview.commands,
     host: host.commands,
+    reportExport: wireReportExport(context, {
+      state: () => manager.commandSession.state(),
+      reportImageShelf: options.reportImageShelf,
+    }),
     workflowSetting: options.workflowSetting,
     diagnostic: wireDiagnostic(context, diagnosticLog).commands,
     experienceMetric: { recordSplit: manager.recordSplit },

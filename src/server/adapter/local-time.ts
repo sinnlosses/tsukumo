@@ -63,6 +63,11 @@ export function localCalendarAt(epochMilliseconds: number): {
   return { month: local.month, dayOfWeek: local.dayOfWeek, hour: local.hour }
 }
 
+/** ローカル時刻の年月日と時分秒。 */
+export function localPlainDateTimeAt(epochMilliseconds: number): Temporal.PlainDateTime {
+  return localTimeAt(epochMilliseconds).toPlainDateTime()
+}
+
 /** ISO 8601（オフセット付き）。行だけで時刻が決まる。 */
 export function isoWithOffset(epochMilliseconds: number): string {
   // 秒より下は書かない（既に積んだ行と同じ書式を保つ）。

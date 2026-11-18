@@ -3,6 +3,7 @@
 // `open` コマンドを呼ぶのはこのファイルだけ（この境界は検査が落とす）。
 //   showView → open <url>。呼ぶたびに OS の既定のブラウザが開く（起動時の1回だけ呼ばれる）。
 //   openFile → open <path>。拡張子に結び付いた OS の既定のアプリが開く。
+//   openExportedFile → open <path> か open -R <path>。書き出した最終レポートを開く・Finder で表示する（ホストの種類に関わらず使う）。
 
 import { execFile } from "node:child_process"
 
@@ -19,6 +20,16 @@ const OPEN_COMMAND_TIMEOUT_MS = 5_000
 /** ブラウザのアダプタを作る。`open` が無い環境でも、失敗を返すだけで例外は投げない。 */
 export function createBrowserHost(): Host {
   return { showView: (url) => showView(url), openFile: (path) => openTarget(path) }
+}
+
+/**
+ * 書き出した最終レポートを開く（`browser` は `open <パス>`、`finder` は `open -R <パス>`）。
+ * ホストの種類に関わらず `open` を使う（Orca のホストの `openFile` はエディタで開くため）。
+ * 渡すのは書き出した側が書いたと覚えているパスだけ。
+ */
+export async function openExportedFile(path: string, mode: "browser" | "finder"): Promise<boolean> {
+  const opened = await openTarget(path, mode === "finder" ? ["-R"] : [])
+  return opened.kind === "ok"
 }
 
 async function showView(url: string): Promise<ShowViewResult> {
@@ -39,11 +50,11 @@ async function showView(url: string): Promise<ShowViewResult> {
  * `open` を1回呼ぶ。理由には実行したコマンドラインを入れない（引数の URL の起動トークンやパスが紛れ込むため）。
  * `--` を挟み、`-` で始まる値をオプションと読ませない。
  */
-function openTarget(target: string): Promise<HostResult> {
+function openTarget(target: string, flags: readonly string[] = []): Promise<HostResult> {
   return new Promise((resolve) => {
     execFile(
       OPEN_COMMAND,
-      ["--", target],
+      [...flags, "--", target],
       { encoding: "utf8", timeout: OPEN_COMMAND_TIMEOUT_MS },
       (error) => {
         if (error === null) {

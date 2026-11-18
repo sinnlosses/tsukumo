@@ -21,6 +21,7 @@ import type { socketContract } from "../../../../../src/shared/rpc.ts"
 import { INITIAL_SESSION_STATE } from "../../../../../src/shared/session/session-state.ts"
 import { SESSION_SOCKET_PATH } from "../../../../../src/shared/view-server/session-socket.ts"
 import { createSocketRouter } from "../../../../../src/wiring/router.ts"
+import { UNUSED_REPORT_EXPORT_PORTS } from "../../../../fixture/report-export.ts"
 
 // 会話は流さない（フレームの中身は初期状態と架空のセリフだけ）。
 const TOKEN = createStartupToken()
@@ -118,6 +119,7 @@ async function start(openFileResult = true): Promise<Started> {
           return Promise.resolve(openFileResult)
         },
       },
+      reportExport: UNUSED_REPORT_EXPORT_PORTS,
       workflowSetting: { changeWorkflowSetting: unexpected },
       diagnostic: { reportBrowserError: unexpected, reportRecommendationPressed: unexpected },
       experienceMetric: { recordSplit: unexpected },

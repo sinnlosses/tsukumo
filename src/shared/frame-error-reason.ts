@@ -31,6 +31,11 @@ export const FRAME_ERROR_REASON = {
   usageProposalNotFound: "その提案が見つからない（見直しをやり直すと出てくる）",
   usageReviewInterruptFailed: "見直しを止められなかった",
   openFileFailed: "ファイルを開けなかった",
+  reportExportNotFinal:
+    "書き出せるのは、閉じたやり取りの最終レポートだけ（草稿・中間レポート・雑談は書き出せない）",
+  reportExportTooLarge: "書き出す文書が大きすぎる",
+  reportExportWriteFailed: "保存先に書き込めなかった",
+  reportExportOpenFailed: "書き出したファイルを開けなかった",
   achievementReflectionWriting:
     "いま日記を書いている最中は、ほかの日を振り返れない（書き終わると頼める）",
   achievementReflectionUnavailable: "その日の成果が読めない、または振り返る成果が無い",

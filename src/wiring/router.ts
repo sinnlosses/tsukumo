@@ -22,6 +22,8 @@ import { hostProcedure } from "../server/host/adapter/host-procedure.ts"
 import type { HostCommandPorts } from "../server/host/core/host-command.ts"
 import { itemProcedure } from "../server/item/adapter/item-procedure.ts"
 import type { ItemCommandPorts } from "../server/item/core/item-command.ts"
+import { reportExportProcedure } from "../server/report/adapter/report-export-procedure.ts"
+import type { ReportExportCommandPorts } from "../server/report/core/export/report-export-command.ts"
 import {
   type RepositoryProcedurePorts,
   repositoryProcedure,
@@ -103,6 +105,7 @@ export type CommandRouterPorts = {
   readonly chat: ChatCommandPorts
   readonly usageReview: UsageReviewCommandPorts
   readonly host: HostCommandPorts
+  readonly reportExport: ReportExportCommandPorts
   readonly workflowSetting: Pick<WorkflowSettingProcedurePorts, "changeWorkflowSetting">
   readonly diagnostic: DiagnosticProcedurePorts
   readonly experienceMetric: ExperienceMetricProcedurePorts
@@ -136,6 +139,7 @@ function createCommandRouter(ports: CommandRouterPorts) {
       chat: chatProcedure(ports.chat),
       usageReview: usageReviewProcedure(ports.usageReview),
       host: hostProcedure(ports.host),
+      reportExport: reportExportProcedure(ports.reportExport),
       workflowSetting: workflowSettingCommandProcedure(ports.workflowSetting),
       diagnostic: diagnosticProcedure(ports.diagnostic),
       experienceMetric: experienceMetricProcedure(ports.experienceMetric),

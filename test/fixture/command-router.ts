@@ -21,6 +21,7 @@ import { INITIAL_SESSION_STATE, type SessionState } from "../../src/shared/sessi
 import { usageProposalKey } from "../../src/shared/usage/usage-review.ts"
 import type { CommandRouterPorts } from "../../src/wiring/router.ts"
 import { createCommandClient } from "./command-client.ts"
+import { UNUSED_REPORT_EXPORT_PORTS } from "./report-export.ts"
 import { createStubDriver, type StubDriver } from "./session-driver.ts"
 import { CHARACTER_EVENT, ITEMS_EVENT, requestEvent } from "./session-event.ts"
 
@@ -191,6 +192,7 @@ export function createRecordingPorts(
         return Promise.resolve(writeResult === "written")
       },
     },
+    reportExport: UNUSED_REPORT_EXPORT_PORTS,
     workflowSetting: {
       changeWorkflowSetting: () => Promise.reject(new Error("ワークフローの設定は使わない")),
     },
