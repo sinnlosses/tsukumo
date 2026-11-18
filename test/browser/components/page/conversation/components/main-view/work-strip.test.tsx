@@ -4,15 +4,15 @@ import { afterEach, describe, expect, it, vi } from "vitest"
 import { WorkStrip } from "../../../../../../../src/browser/components/page/conversation/components/main-view/work-strip.tsx"
 import { useWorkStripSteps } from "../../../../../../../src/browser/components/page/conversation/stores/work-strip-step-list.ts"
 import type { SessionEvent } from "../../../../../../../src/shared/session/session-event.ts"
-import { applySessionEvent } from "../../../../../../../src/shared/session/session-fold.ts"
-import {
-  INITIAL_SESSION_STATE,
-  type SessionState,
-} from "../../../../../../../src/shared/session/session-state.ts"
 import { reportEvent } from "../../../../../../fixture/report-event.ts"
 import { requestEvent } from "../../../../../../fixture/session-event.ts"
 import { checkedTaskId } from "../../../../../../fixture/task-id.ts"
-import { checkedToolUseId } from "../../../../../../fixture/tool-use-id.ts"
+import {
+  bashFinished,
+  bashStarted,
+  plan,
+  stateAfter,
+} from "../../../../../../fixture/work-strip-event.ts"
 import { putSession } from "../../../../../session-store.ts"
 
 afterEach(() => {
@@ -26,54 +26,6 @@ const REQUEST = requestEvent()
 /** 状態の印の右の見出し。 */
 function headLabel(): string | null | undefined {
   return strip().querySelector("[class*='work-strip-head']")?.textContent
-}
-
-function plan(
-  current: number,
-  phaseSummary = "",
-  phases: Extract<SessionEvent, { readonly kind: "work-plan" }>["phases"] = [
-    "架空の段A",
-    "架空の段B",
-    "架空の段C",
-  ],
-): Extract<SessionEvent, { readonly kind: "work-plan" }> {
-  return {
-    kind: "work-plan",
-    delegatedRange: { kind: "none" },
-    skippedPhases: [],
-    awaitingSummary: { kind: "none" },
-    phaseIds: [],
-    phases,
-    current,
-    finishedInGroup: [],
-    phaseSummary,
-  }
-}
-
-function bashStarted(id: string): SessionEvent {
-  return {
-    kind: "tool-started",
-    toolUseId: checkedToolUseId(id),
-    name: "Bash",
-    input: { command: `架空のコマンド ${id}` },
-    parentToolUseId: undefined,
-  }
-}
-
-function bashFinished(id: string): SessionEvent {
-  return {
-    kind: "tool-finished",
-    toolUseId: checkedToolUseId(id),
-    content: "架空の結果",
-    isError: false,
-  }
-}
-
-function stateAfter(events: readonly SessionEvent[]): SessionState {
-  return events.reduce(
-    (state, event, index) => applySessionEvent(state, event, index),
-    INITIAL_SESSION_STATE,
-  )
 }
 
 function strip(): HTMLElement {
@@ -302,7 +254,15 @@ describe("WorkStrip（下線の区間）", () => {
     })
   }
 
-  it("区間は button で、読み上げの名前に位置・名前・状態を持ち、押しても吹き出しは出ず、依頼の手順の一覧が開く", () => {
+  function openSteps(): void {
+    click(screen.getByRole("button", { name: /^手順/ }))
+  }
+
+  function detailOf(name: string): HTMLElement | null {
+    return screen.queryByRole("region", { name: `${name} の詳細` })
+  }
+
+  it("区間は button で、読み上げの名前に位置・名前・状態を持ち、押すとその区間のフェーズの詳細が開く", () => {
     renderProgressed()
     const done = dot(/架空の段A/)
 
@@ -310,18 +270,45 @@ describe("WorkStrip（下線の区間）", () => {
     expect(done.getAttribute("aria-label")).toBe("フェーズ 1/3 架空の段A（済み）")
     expect(dot(/架空の段B/).getAttribute("aria-label")).toBe("フェーズ 2/3 架空の段B（いま）")
     expect(dot(/架空の段C/).getAttribute("aria-label")).toBe("フェーズ 3/3 架空の段C（これから）")
-    expect(screen.queryByRole("region", { name: "依頼の手順" })).toBeNull()
+    expect(done.getAttribute("aria-expanded")).toBe("false")
+    expect(detailOf("架空の段A")).toBeNull()
 
     click(done)
 
-    expect(screen.queryByRole("dialog")).toBeNull()
-    expect(screen.getByRole("region", { name: "依頼の手順" })).not.toBeNull()
+    expect(done.getAttribute("aria-expanded")).toBe("true")
+    expect(detailOf("架空の段A")).not.toBeNull()
+    expect(screen.queryByRole("region", { name: "依頼の手順" })).toBeNull()
+  })
+
+  it("今のフェーズは走っている手順を、まだのフェーズは一言を出す", () => {
+    renderProgressed()
+
+    click(dot(/架空の段B/))
+    const current = detailOf("架空の段B")?.textContent ?? ""
+    click(dot(/架空の段C/))
+    const upcoming = detailOf("架空の段C")?.textContent ?? ""
+
+    expect(current).toContain("2/3 · いま")
+    expect(current).toContain("架空のコマンド toolu_2")
+    expect(upcoming).toContain("3/3 · これから")
+    expect(upcoming).toContain("今のフェーズが済んだら始めます。")
+  })
+
+  it("済んだフェーズの詳細は、見出しに「1/3 · 済み」を出し、まとめと手順を持つ", () => {
+    renderProgressed()
+
+    click(dot(/架空の段A/))
+
+    const detail = detailOf("架空の段A")
+    expect(detail?.textContent).toContain("1/3 · 済み")
+    expect(detail?.textContent).toContain("架空の段Aのまとめ。")
+    expect(detail?.textContent).toContain("架空のコマンド toolu_1")
   })
 
   it("一覧は全フェーズを順に並べ、済んだ段の手順は畳み、今の段の手順は開き、まだの段は名前だけ", () => {
     renderProgressed()
 
-    click(dot(/架空の段A/))
+    openSteps()
 
     const rows = [
       ...screen
@@ -339,19 +326,6 @@ describe("WorkStrip（下線の区間）", () => {
     expect(rows[0]?.textContent).not.toContain("架空の段Aのまとめ。")
   })
 
-  it("区間を押しても一覧は押し直すまで閉じず、同じ区間をもう一度押しても開いたまま", () => {
-    renderProgressed()
-
-    click(dot(/架空の段A/))
-    click(dot(/架空の段C/))
-    click(dot(/架空の段C/))
-    act(() => {
-      fireEvent.pointerDown(document.body)
-    })
-
-    expect(screen.getAllByRole("region", { name: "依頼の手順" })).toHaveLength(1)
-  })
-
   it("飛ばした段の区間は済みで、一覧の行に飛ばした印が付く", () => {
     putSession(
       stateAfter([
@@ -366,7 +340,7 @@ describe("WorkStrip（下線の区間）", () => {
 
     expect(skipped.getAttribute("data-segment-state")).toBe("done")
 
-    click(skipped)
+    openSteps()
 
     const row = screen
       .getByRole("region", { name: "依頼の手順" })
@@ -374,7 +348,7 @@ describe("WorkStrip（下線の区間）", () => {
     expect(row?.textContent).toContain("架空の段A（飛ばした）")
   })
 
-  it("答え待ちの今の区間も押せて、一覧の行は開いた手順を持つ", () => {
+  it("答え待ちの今の区間も押せて、詳細は「答え待ち」と言い、一覧の行は開いた手順を持つ", () => {
     renderProgressed([
       {
         kind: "pending-changed",
@@ -393,6 +367,8 @@ describe("WorkStrip（下線の区間）", () => {
     expect(asking.getAttribute("data-segment-state")).toBe("asking")
 
     click(asking)
+    expect(detailOf("架空の段B")?.textContent).toContain("2/3 · 答え待ち")
+    openSteps()
 
     const row = screen
       .getByRole("region", { name: "依頼の手順" })
@@ -400,7 +376,7 @@ describe("WorkStrip（下線の区間）", () => {
     expect(row?.querySelector("details")?.open).toBe(true)
   })
 
-  it("並列のフェーズは区間1つで、名前を「・」でつなぎ、押すと一覧が開く", () => {
+  it("並列のフェーズは区間1つで、名前を「・」でつなぎ、押すと詳細が開く", () => {
     putSession(
       stateAfter([
         REQUEST,
@@ -412,30 +388,11 @@ describe("WorkStrip（下線の区間）", () => {
     expect(strip().querySelectorAll("[data-segment-state]")).toHaveLength(2)
 
     click(dot(/架空の段B・架空の段C（いま）/))
-    const list = screen.getByRole("region", { name: "依頼の手順" })
-    expect(list.querySelectorAll("li[data-phase-state]")).toHaveLength(3)
+
+    expect(detailOf("架空の段B・架空の段C")).not.toBeNull()
   })
 
-  it("区間を押すと一覧が開き、そのフェーズの行が一覧の上端へ転がる", () => {
-    renderProgressed()
-    vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function (
-      this: HTMLElement,
-    ) {
-      return new DOMRect(0, this.hasAttribute("data-phase-indexes") ? 300 : 100, 10, 10)
-    })
-
-    click(dot(/架空の段A/))
-
-    expect(screen.queryByRole("dialog")).toBeNull()
-    const list = screen.getByRole("region", { name: "依頼の手順" })
-    const indexes = [...list.querySelectorAll("[data-phase-indexes]")].map((heading) =>
-      heading.getAttribute("data-phase-indexes"),
-    )
-    expect(indexes).toEqual(["0", "1", "2"])
-    expect(list.scrollTop).toBe(200)
-  })
-
-  it("やり取りが替わると一覧は閉じる", () => {
+  it("やり取りが替わると詳細は閉じる", () => {
     renderProgressed()
     click(dot(/架空の段A/))
 
@@ -443,7 +400,7 @@ describe("WorkStrip（下線の区間）", () => {
       putSession(stateAfter([REQUEST, plan(0), REQUEST, plan(1)]))
     })
 
-    expect(screen.queryByRole("region", { name: "依頼の手順" })).toBeNull()
+    expect(detailOf("架空の段A")).toBeNull()
   })
 })
 

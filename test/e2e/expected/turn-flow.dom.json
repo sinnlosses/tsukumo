@@ -542,6 +542,8 @@
                                           "tag": "button",
                                           "attributes": {
                                             "aria-label": "作業（済み）",
+                                            "aria-expanded": "false",
+                                            "data-segment-key": "whole",
                                             "data-segment-state": "done",
                                             "type": "button"
                                           },

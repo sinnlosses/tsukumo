@@ -3,12 +3,14 @@
 import { createRef } from "react"
 
 import type { PhaseRow } from "../../page/conversation/components/main-view/domain/phase-row.ts"
+import type { WorkStripPhaseDetail } from "../../page/conversation/components/main-view/hooks/use-work-strip-phase-detail.ts"
 import type {
   WorkStripSegmentsModel,
   WorkStripSegmentView,
 } from "../../page/conversation/components/main-view/hooks/use-work-strip-segment-list.ts"
 import type { WorkStripModel } from "../../page/conversation/components/main-view/hooks/use-work-strip.ts"
 import { PresentationalCurrentStep } from "../../page/conversation/components/main-view/presentational-current-step.tsx"
+import { PresentationalPhaseDetail } from "../../page/conversation/components/main-view/presentational-phase-detail.tsx"
 import { PresentationalPhaseList } from "../../page/conversation/components/main-view/presentational-phase-list.tsx"
 import { PresentationalReportOutline } from "../../page/conversation/components/main-view/presentational-report-outline.tsx"
 import { PresentationalWorkStrip } from "../../page/conversation/components/main-view/presentational-work-strip.tsx"
@@ -54,13 +56,18 @@ function segmentOf(
     state,
     label,
     phases: [],
-    openIndex: 0,
     spanName: "",
     parallelLabel: "",
     unseen: false,
     landing: false,
-    onOpen: noop,
   }
+}
+
+const CLOSED_PHASE_DETAIL: WorkStripPhaseDetail = {
+  rootRef: createRef<HTMLDivElement>(),
+  onSegmentPress: noop,
+  popup: { kind: "closed" },
+  place: { left: 0, top: 0 },
 }
 
 const WORKING_TRACK: WorkStripSegmentsModel = {
@@ -186,13 +193,34 @@ export const MAIN_VIEW_EXAMPLES: readonly ScreenPartExample[] = [
           strip={WORKING_STRIP}
           now={{ kind: "none" }}
           track={WORKING_TRACK}
+          phaseDetail={CLOSED_PHASE_DETAIL}
         />
         <PresentationalWorkStrip
           strip={FINISHED_STRIP}
           now={{ kind: "none" }}
           track={FINISHED_TRACK}
+          phaseDetail={CLOSED_PHASE_DETAIL}
         />
       </>
+    ),
+  },
+  {
+    frame: "popup",
+    path: "page/conversation/components/main-view/presentational-phase-detail.tsx",
+    render: () => (
+      <PresentationalPhaseDetail
+        detail={{
+          state: "done",
+          name: "下調べ",
+          meta: "1/3 · 済み · 48秒",
+          number: "",
+          summary: "関連する部品と呼び出しの流れを読み、直す箇所を絞った。",
+          groups: [],
+          note: "",
+        }}
+        left={0}
+        top={0}
+      />
     ),
   },
   {

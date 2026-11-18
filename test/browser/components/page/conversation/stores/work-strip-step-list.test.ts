@@ -6,23 +6,54 @@ afterEach(() => {
   useWorkStripSteps.setState(useWorkStripSteps.getInitialState(), true)
 })
 
-describe("useWorkStripSteps の openAtPhase", () => {
-  it("段を指して開き、開いたままもう一度指すと閉じずに合図だけ進む", () => {
-    useWorkStripSteps.getState().openAtPhase(3, 0)
-    const first = useWorkStripSteps.getState().opened
+describe("useWorkStripSteps のフェーズの詳細", () => {
+  it("togglePhase で開き、同じ区間をもう一度押すと閉じ、別の区間なら入れ替わる", () => {
+    const { togglePhase } = useWorkStripSteps.getState()
 
-    useWorkStripSteps.getState().openAtPhase(3, 0)
-    const second = useWorkStripSteps.getState().opened
+    togglePhase(2, "segment-0")
+    const opened = useWorkStripSteps.getState().opened
+    togglePhase(2, "segment-1")
+    const swapped = useWorkStripSteps.getState().opened
+    togglePhase(2, "segment-1")
+    const closed = useWorkStripSteps.getState().opened
 
-    expect(first).toEqual({
-      kind: "open",
-      exchange: 3,
-      landing: { kind: "phase", phaseIndex: 0, signal: 1 },
-    })
-    expect(second).toEqual({
-      kind: "open",
-      exchange: 3,
-      landing: { kind: "phase", phaseIndex: 0, signal: 2 },
-    })
+    expect(opened).toEqual({ kind: "phase", exchange: 2, segmentKey: "segment-0" })
+    expect(swapped).toEqual({ kind: "phase", exchange: 2, segmentKey: "segment-1" })
+    expect(closed).toEqual({ kind: "closed" })
+  })
+
+  it("手順の一覧を開く操作（toggle・openAtTop・openAtFailure）でフェーズの詳細は閉じる", () => {
+    const state = useWorkStripSteps.getState()
+
+    state.togglePhase(2, "segment-0")
+    state.toggle(2)
+    const afterToggle = useWorkStripSteps.getState().opened
+    state.togglePhase(2, "segment-0")
+    state.openAtTop(2)
+    const afterTop = useWorkStripSteps.getState().opened
+    state.togglePhase(2, "segment-0")
+    state.openAtFailure(2)
+    const afterFailure = useWorkStripSteps.getState().opened
+
+    expect(afterToggle.kind).toBe("steps")
+    expect(afterTop.kind).toBe("steps")
+    expect(afterFailure.kind).toBe("steps")
+  })
+
+  it("togglePhase で手順の一覧は閉じ、closePhase は一覧を触らない", () => {
+    const state = useWorkStripSteps.getState()
+
+    state.toggle(2)
+    state.togglePhase(2, "segment-0")
+    const phase = useWorkStripSteps.getState().opened
+    state.closePhase()
+    const closed = useWorkStripSteps.getState().opened
+    state.toggle(2)
+    state.closePhase()
+    const stepsKept = useWorkStripSteps.getState().opened.kind
+
+    expect(phase.kind).toBe("phase")
+    expect(closed).toEqual({ kind: "closed" })
+    expect(stepsKept).toBe("steps")
   })
 })

@@ -23,16 +23,19 @@ import type { StepsPhaseRow } from "./domain/steps-phase-row.ts"
 import type { WorkStripMark } from "./domain/work-strip-status.ts"
 import { useStepsLanding } from "./hooks/use-steps-landing.ts"
 import type { WorkStripNow } from "./hooks/use-work-strip-now.ts"
+import type { WorkStripPhaseDetail } from "./hooks/use-work-strip-phase-detail.ts"
 import type { WorkStripSegmentsModel } from "./hooks/use-work-strip-segment-list.ts"
 import type { WorkStripModel, WorkStripSteps } from "./hooks/use-work-strip.ts"
 import styles from "./main-view.module.css"
+import { PresentationalPhaseDetail } from "./presentational-phase-detail.tsx"
 
 export function PresentationalWorkStrip(props: {
   readonly strip: WorkStripModel
   readonly now: WorkStripNow
   readonly track: WorkStripSegmentsModel
+  readonly phaseDetail: WorkStripPhaseDetail
 }): ReactElement | undefined {
-  const { strip, now, track } = props
+  const { strip, now, track, phaseDetail } = props
 
   if (strip.kind === "none") {
     return undefined
@@ -96,7 +99,7 @@ export function PresentationalWorkStrip(props: {
           {strip.sideLabel}
         </Text>
         <StepsToggle steps={strip.steps} />
-        {track.kind === "shown" && <SegmentTrack track={track} />}
+        {track.kind === "shown" && <SegmentTrack track={track} phaseDetail={phaseDetail} />}
       </div>
       {strip.steps.list.kind === "open" && (
         <StepsList
@@ -348,34 +351,45 @@ function PhaseRow(props: { readonly row: StepsPhaseRow }): ReactElement {
 
 /**
  * 帯の下端に沿う、フェーズを等分した区間の並び。区間はそれぞれボタンで、名前は読み上げと `title` で持つ。
- * 押すと依頼の手順の一覧が、その区間のフェーズの位置で開く。
+ * 押すとその区間の下にフェーズの詳細が重なって出る。区間の並びと詳細は1つの要素で包み、外の押下はその外で数える。
  */
 function SegmentTrack(props: {
   readonly track: Extract<WorkStripSegmentsModel, { readonly kind: "shown" }>
+  readonly phaseDetail: WorkStripPhaseDetail
 }): ReactElement {
-  const { track } = props
+  const { track, phaseDetail } = props
+  const { popup, place, rootRef, onSegmentPress } = phaseDetail
   return (
-    <ol className={styles["work-strip-segment-list"]}>
-      {track.segments.map((segment) => (
-        <li key={segment.key}>
-          <button
-            type="button"
-            className={styles["work-strip-segment"]}
-            aria-label={segment.label}
-            title={segment.label}
-            data-segment-state={segment.state}
-            data-unseen={segment.unseen ? "true" : undefined}
-            data-landing={segment.landing ? "true" : undefined}
-            onClick={segment.onOpen}
-            onAnimationEnd={() => {
-              track.onLanded(segment.key)
-            }}
-          >
-            <span aria-hidden="true" className={styles["work-strip-segment-line"]} />
-          </button>
-        </li>
-      ))}
-    </ol>
+    <div ref={rootRef} className={styles["work-strip-segment-root"]}>
+      <ol className={styles["work-strip-segment-list"]}>
+        {track.segments.map((segment) => (
+          <li key={segment.key}>
+            <button
+              type="button"
+              className={styles["work-strip-segment"]}
+              aria-label={segment.label}
+              title={segment.label}
+              aria-expanded={popup.kind === "open" && popup.segmentKey === segment.key}
+              data-segment-key={segment.key}
+              data-segment-state={segment.state}
+              data-unseen={segment.unseen ? "true" : undefined}
+              data-landing={segment.landing ? "true" : undefined}
+              onClick={(event) => {
+                onSegmentPress(segment.key, event.currentTarget)
+              }}
+              onAnimationEnd={() => {
+                track.onLanded(segment.key)
+              }}
+            >
+              <span aria-hidden="true" className={styles["work-strip-segment-line"]} />
+            </button>
+          </li>
+        ))}
+      </ol>
+      {popup.kind === "open" && (
+        <PresentationalPhaseDetail detail={popup.detail} left={place.left} top={place.top} />
+      )}
+    </div>
   )
 }
 

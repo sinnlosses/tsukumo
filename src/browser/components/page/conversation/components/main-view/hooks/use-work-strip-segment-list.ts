@@ -13,7 +13,6 @@ import {
 } from "../../../domain/work-segment.ts"
 import { useAwaySeam } from "../../../stores/away-seam.ts"
 import { useMainViewContent } from "../../../stores/main-view-content.ts"
-import { useWorkStripSteps } from "../../../stores/work-strip-step-list.ts"
 
 /** 区間1つの描画の元。 */
 export type WorkStripSegmentView = WorkStripSegment & {
@@ -21,8 +20,6 @@ export type WorkStripSegmentView = WorkStripSegment & {
   readonly unseen: boolean
   /** 今から済んだに変わった描画の区間（一度だけ光る）。 */
   readonly landing: boolean
-  /** 押すと依頼の手順の一覧をこの区間のフェーズの位置で開く。 */
-  readonly onOpen: () => void
 }
 
 export type WorkStripSegmentsModel =
@@ -48,7 +45,6 @@ export function useWorkStripSegmentList(): WorkStripSegmentsModel {
   const generation = useSession((session) => session.generation)
   const newestTurnId = useMainViewTurns().at(-1)?.id
   const away = useAwaySeam((state) => state.away)
-  const openAtPhase = useWorkStripSteps((state) => state.openAtPhase)
   const [seen, setSeen] = useState<Seen>(NONE)
 
   if (content.kind === "welcome" || turnStepList.kind !== "turn") {
@@ -77,7 +73,6 @@ export function useWorkStripSegmentList(): WorkStripSegmentsModel {
     doneCount <= away.visibleDoneSegments
       ? away
       : undefined
-  const { exchange } = content
   return {
     kind: "shown",
     position,
@@ -88,9 +83,6 @@ export function useWorkStripSegmentList(): WorkStripSegmentsModel {
         awayHere.hiddenDoneSegments <= index &&
         index < awayHere.visibleDoneSegments,
       landing: landing.includes(segment.key),
-      onOpen: () => {
-        openAtPhase(exchange, segment.openIndex)
-      },
     })),
     onLanded: (key) => {
       setSeen((previous) =>

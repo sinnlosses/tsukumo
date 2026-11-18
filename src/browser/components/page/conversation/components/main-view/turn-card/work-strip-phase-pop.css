@@ -1,0 +1,82 @@
+/* 下線の区間を押すと出るフェーズの詳細。区間の並びと面を包む要素は箱を持たず、面は1行目（位置の基準）に絶対配置で重ねる。
+   左と上は押した区間を測って `style` で渡し、幅は帯の幅を超えない。流れは押し下げず、頭と一緒に動く。
+   見出しの印の箱の幅（`--work-strip-pop-mark`）は、まとめと手順の字頭をそろえるために共有する。 */
+.work-strip-segment-root {
+  display: contents;
+}
+.work-strip-phase-pop {
+  --work-strip-pop-mark: 1.25rem;
+  position: absolute;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: var(--stack-block);
+  inline-size: min(21.25rem, 100cqw);
+  max-block-size: min(70vh, 35rem);
+  padding: var(--inset-control);
+  overflow-y: auto;
+  border: 1px solid var(--panel-edge);
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+  box-shadow: var(--shadow-overlay);
+  color: var(--ink-soft);
+  font-size: var(--font-secondary);
+  font-weight: 400;
+  line-height: 1.5;
+}
+.work-strip-phase-pop-head {
+  display: flex;
+  align-items: center;
+  gap: var(--inline-control);
+}
+.work-strip-phase-pop-mark {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  inline-size: var(--work-strip-pop-mark);
+  color: var(--ink-soft);
+}
+.work-strip-phase-pop-ring {
+  box-sizing: border-box;
+  inline-size: 0.625rem;
+  block-size: 0.625rem;
+  border: 2px solid var(--accent);
+  border-radius: var(--radius-round);
+}
+.work-strip-phase-pop-hollow {
+  box-sizing: border-box;
+  inline-size: 0.5rem;
+  block-size: 0.5rem;
+  border: 1px solid var(--ink-quiet);
+  border-radius: var(--radius-round);
+}
+.work-strip-phase-pop-number {
+  flex: none;
+  padding: 0 0.3em;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-sm);
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+}
+.work-strip-phase-pop-name {
+  flex: 1;
+  min-inline-size: 0;
+  color: var(--ink);
+  font-weight: 650;
+  overflow-wrap: anywhere;
+}
+.work-strip-phase-pop-meta {
+  flex: none;
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+  font-variant-numeric: tabular-nums;
+}
+.work-strip-phase-pop-note,
+.work-strip-phase-pop-steps {
+  padding-inline-start: calc(var(--work-strip-pop-mark) + var(--inline-control));
+}
+.work-strip-phase-pop-note {
+  margin: 0;
+  color: var(--ink);
+  line-height: 1.65;
+}

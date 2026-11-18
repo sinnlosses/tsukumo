@@ -3,6 +3,8 @@
 import type { MeasuredTime } from "../../../../../../../shared/utils/elapsed-time.ts"
 import { formatMeasured } from "../../../../../../../shared/utils/elapsed-time.ts"
 import type { CurrentWorkStepGroup } from "../../../../../../features/current-work/current-work-step.ts"
+import type { PhaseRecap } from "../../../domain/phase-recap.ts"
+import type { WorkStripSegment } from "../../../domain/work-segment.ts"
 
 type StepsPhaseState = "done" | "current" | "asking" | "upcoming"
 
@@ -88,6 +90,30 @@ export function stepsPhaseRowsOf(
     }),
   )
   return { rows, rest: groups.filter((group) => !claimed.has(group.key)) }
+}
+
+const UNKNOWN_RECAP = {
+  duration: { kind: "unknown" },
+  summary: "",
+} as const satisfies PhaseRecap
+
+/** 区間1つを行の元にする。フェーズごとの所要は `recaps` から引き、引けなければ不明。 */
+export function phaseRowSlotOf(
+  segment: WorkStripSegment,
+  recaps: ReadonlyMap<string, PhaseRecap>,
+): StepsPhaseSlotSource {
+  return {
+    spanName: segment.spanName,
+    parallelLabel: segment.parallelLabel,
+    phases: segment.phases.map((phase) => ({
+      index: phase.index,
+      name: phase.name,
+      mark: phase.mark,
+      state: phase.state,
+      skipped: phase.skipped,
+      duration: (recaps.get(phase.recapKey) ?? UNKNOWN_RECAP).duration,
+    })),
+  }
 }
 
 const NO_HEADING = { kind: "none" } as const satisfies CurrentWorkStepGroup["heading"]

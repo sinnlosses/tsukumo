@@ -35,14 +35,10 @@ import { turnFailureLabel } from "../../../domain/api-error-label.ts"
 import { type PhaseRecap, phaseRecapsOf } from "../../../domain/phase-recap.ts"
 import type { WorkStripResult } from "../../../domain/turn-result-mark.ts"
 import { turnResultsOf, type TurnResult } from "../../../domain/turn-result.ts"
-import { workSegmentsOf, type WorkStripSegment } from "../../../domain/work-segment.ts"
+import { workSegmentsOf } from "../../../domain/work-segment.ts"
 import { useMainViewContent } from "../../../stores/main-view-content.ts"
 import { type StepsLanding, useWorkStripSteps } from "../../../stores/work-strip-step-list.ts"
-import {
-  type StepsPhaseRows,
-  type StepsPhaseSlotSource,
-  stepsPhaseRowsOf,
-} from "../domain/steps-phase-row.ts"
+import { phaseRowSlotOf, type StepsPhaseRows, stepsPhaseRowsOf } from "../domain/steps-phase-row.ts"
 import { type WorkStripMark, workStripStatusOf } from "../domain/work-strip-status.ts"
 
 /** 「手順 n件」の口と、押すと開く依頼の手順の一覧。 */
@@ -101,11 +97,6 @@ const NO_PHASE_TIMES = { kind: "none" } as const satisfies PhaseTimesView
 
 const NO_RECAPS = new Map<string, PhaseRecap>()
 
-const UNKNOWN_RECAP = {
-  duration: { kind: "unknown" },
-  summary: "",
-} as const satisfies PhaseRecap
-
 export function useWorkStrip(): WorkStripModel {
   const turnStepList = useCurrentTurnSteps()
   const content = useMainViewContent((state) => state.content)
@@ -146,7 +137,7 @@ export function useWorkStrip(): WorkStripModel {
   const { exchange } = content
   const firstPending = pending[0]
   const list: WorkStripSteps["list"] =
-    opened.kind === "open" && opened.exchange === exchange
+    opened.kind === "steps" && opened.exchange === exchange
       ? { kind: "open", landing: opened.landing }
       : { kind: "closed" }
   const elapsedWord =
@@ -227,22 +218,4 @@ function stripResultOf(
     return undefined
   }
   return finishedPhaseCount(plan) < phaseCount(plan.phases) ? "stopped" : "done"
-}
-
-function phaseRowSlotOf(
-  segment: WorkStripSegment,
-  recaps: ReadonlyMap<string, PhaseRecap>,
-): StepsPhaseSlotSource {
-  return {
-    spanName: segment.spanName,
-    parallelLabel: segment.parallelLabel,
-    phases: segment.phases.map((phase) => ({
-      index: phase.index,
-      name: phase.name,
-      mark: phase.mark,
-      state: phase.state,
-      skipped: phase.skipped,
-      duration: (recaps.get(phase.recapKey) ?? UNKNOWN_RECAP).duration,
-    })),
-  }
 }

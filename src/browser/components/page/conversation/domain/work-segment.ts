@@ -19,6 +19,9 @@ import {
 } from "../../../../../shared/session/work-plan.ts"
 import { phaseMarkOf } from "../../../../domain/phase-mark.ts"
 
+/** ワークプランの無いターンの区間の `key`。フェーズが無いので詳細ではなく手順の一覧を開く。 */
+export const WHOLE_SEGMENT_KEY = "whole"
+
 export type WorkSegmentState = "done" | "current" | "asking" | "upcoming"
 
 /** 区間の中のフェーズ1つ。手順の一覧の行の元になる。 */
@@ -34,7 +37,7 @@ export type WorkSegmentPhase = {
 }
 
 /**
- * 下線の区間1つ。`label` は読み上げの名前「フェーズ 2/4 名前（いま）」、`openIndex` は押したときに手順の一覧を開くフェーズの位置。
+ * 下線の区間1つ。`label` は読み上げの名前「フェーズ 2/4 名前（いま）」。
  * `spanName`・`parallelLabel` は手順の一覧の行にだけ使う群の名（群の先頭の区間だけ）と並列の札（並列の区間だけ）。
  */
 export type WorkStripSegment = {
@@ -42,7 +45,6 @@ export type WorkStripSegment = {
   readonly state: WorkSegmentState
   readonly label: string
   readonly phases: readonly WorkSegmentPhase[]
-  readonly openIndex: number
   readonly spanName: string
   readonly parallelLabel: string
 }
@@ -88,11 +90,10 @@ export function workSegmentsOf(plan: LatestWorkPlan, flags: WorkSegmentFlags): W
     return {
       segments: [
         {
-          key: "whole",
+          key: WHOLE_SEGMENT_KEY,
           state,
           label: `作業（${STATE_WORDS[state]}）`,
           phases: [],
-          openIndex: 0,
           spanName: "",
           parallelLabel: "",
         },
@@ -138,7 +139,6 @@ export function workSegmentsOf(plan: LatestWorkPlan, flags: WorkSegmentFlags): W
       state,
       label: `フェーズ ${String(position + 1)}/${String(entries.length)} ${names.join(NAME_SEPARATOR)}（${STATE_WORDS[state]}）`,
       phases,
-      openIndex: phases[0]?.index ?? 0,
       spanName: previous === undefined || spanOf(previous) !== span ? PHASE_SPAN_NAMES[span] : "",
       parallelLabel: phases.length > 1 ? (ordinal === "" ? "並列" : `並列 ${ordinal}`) : "",
     }

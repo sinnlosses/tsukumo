@@ -1,5 +1,4 @@
-// 行や段を指して依頼の手順の一覧を開いたとき、指した先へ連れていくフック。
-// 失敗した手順は最初の失敗の行までスクロールしてフォーカスを移し、下線の区間は一覧の中だけをスクロールしてそのフェーズの行を一覧の上端に置く。
+// 失敗した手順を指して依頼の手順の一覧を開いたとき、最初の失敗の行までスクロールしてフォーカスを移すフック。
 
 import { useRef, type RefObject } from "react"
 
@@ -18,19 +17,9 @@ export function useStepsLanding(landing: StepsLanding): RefObject<HTMLDivElement
     if (list === null || landing.kind === "top") {
       return
     }
-    if (landing.kind === "failure") {
-      const summary = list.querySelector<HTMLElement>(FAILED_STEP_SUMMARY)
-      summary?.scrollIntoView({ block: "nearest" })
-      summary?.focus({ preventScroll: true })
-      return
-    }
-    // プログレスバーのフェーズの行（PhaseRow の li）に付く `data-phase-indexes`。
-    const heading = list.querySelector<HTMLElement>(
-      `[data-phase-indexes~="${String(landing.phaseIndex)}"]`,
-    )
-    if (heading !== null) {
-      list.scrollTop += heading.getBoundingClientRect().top - list.getBoundingClientRect().top
-    }
+    const summary = list.querySelector<HTMLElement>(FAILED_STEP_SUMMARY)
+    summary?.scrollIntoView({ block: "nearest" })
+    summary?.focus({ preventScroll: true })
   }, [landing])
 
   return listRef
