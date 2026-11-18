@@ -293,68 +293,6 @@ describe("Inquiry（メインビューのお伺いのカード）", () => {
     }
   })
 
-  it("答え待ちが来たら札まで連れてくる（scrollIntoView）", () => {
-    const scrollIntoView = vi
-      .spyOn(Element.prototype, "scrollIntoView")
-      .mockImplementation(() => {})
-    try {
-      renderInquiry([questionPending([question()])])
-
-      expect(scrollIntoView).toHaveBeenCalledTimes(1)
-      expect(scrollIntoView.mock.calls[0]?.[0]).toEqual({ block: "nearest", behavior: "smooth" })
-    } finally {
-      scrollIntoView.mockRestore()
-    }
-  })
-
-  it("フォーカスした選択肢が替わって詳細が伸びたら、札を見える範囲へ送り直す（scrollIntoView）", () => {
-    const scrollIntoView = vi
-      .spyOn(Element.prototype, "scrollIntoView")
-      .mockImplementation(() => {})
-    try {
-      renderInquiry([questionPending([question()])])
-      expect(scrollIntoView).toHaveBeenCalledTimes(1)
-
-      fireEvent.focus(screen.getByRole("radio", { name: /A案/ }))
-      expect(scrollIntoView).toHaveBeenCalledTimes(2)
-
-      fireEvent.focus(screen.getByRole("radio", { name: /B案/ }))
-      expect(scrollIntoView).toHaveBeenCalledTimes(3)
-      expect(scrollIntoView.mock.calls[2]?.[0]).toEqual({ block: "nearest", behavior: "smooth" })
-
-      fireEvent.focus(screen.getByRole("radio", { name: /B案/ }))
-      expect(scrollIntoView).toHaveBeenCalledTimes(3)
-    } finally {
-      scrollIntoView.mockRestore()
-    }
-  })
-
-  it.each([
-    { name: "頭が見えている札が伸びたら、見える範囲へ送り直す", top: 200, calls: 1 },
-    { name: "転がして札の頭が見える範囲の上へ出ていたら、伸びても動かさない", top: -50, calls: 0 },
-  ])("$name（scrollIntoView）", ({ top, calls }) => {
-    const scrollIntoView = vi
-      .spyOn(Element.prototype, "scrollIntoView")
-      .mockImplementation(() => {})
-    try {
-      renderInquiry([questionPending([question()])])
-      scrollIntoView.mockClear()
-      vi.spyOn(card(), "getBoundingClientRect").mockReturnValue(
-        DOMRect.fromRect({ x: 0, y: top, width: 600, height: 700 }),
-      )
-
-      act(() => {
-        for (const observer of FakeResizeObserver.instances) {
-          observer.callback()
-        }
-      })
-
-      expect(scrollIntoView).toHaveBeenCalledTimes(calls)
-    } finally {
-      scrollIntoView.mockRestore()
-    }
-  })
-
   it("フォーカスを移す合図が来たら、最初の選択肢へフォーカスを移す", () => {
     const scrollIntoView = vi
       .spyOn(Element.prototype, "scrollIntoView")

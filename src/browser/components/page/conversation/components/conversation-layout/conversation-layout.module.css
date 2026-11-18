@@ -48,9 +48,8 @@
   min-width: 0;
   justify-self: center;
 }
-/* 中身が何も無い（雑談・セリフの無いやり取り）あいだは行ごと畳み、メインビューの高さを削らない。 */
-.layout-voice:empty,
-.layout-voice:has(> :empty) {
+/* 帯を置かない雑談では行ごと畳む。 */
+.layout-voice:empty {
   display: none;
 }
 @media (max-width: 760px) {

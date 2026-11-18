@@ -87,20 +87,20 @@ describe("MainView（声の定位置）", () => {
       expect(document.querySelector("[data-voice-slot] [data-speaker='typing']")).not.toBeNull()
       cleanup()
       renderWelcome({ kind: "unwritten" })
-      expect(bandChildCount()).toBe(0)
+      expect(bandSpeakerCount()).toBe(0)
     })
 
     it("狭い画面は定位置を出さない", () => {
       stubPhoneWidth(true)
       renderWelcome({ kind: "written", greeting })
-      expect(bandChildCount()).toBe(0)
+      expect(bandSpeakerCount()).toBe(0)
     })
   })
 
   it("狭い画面は定位置を出さない", () => {
     stubPhoneWidth(true)
     renderResumed()
-    expect(bandChildCount()).toBe(0)
+    expect(bandSpeakerCount()).toBe(0)
   })
 
   it("作業中のやり取りは直近のセリフ1件だけを定位置に出し、それより前のセリフは流れに残す", () => {
@@ -120,6 +120,6 @@ describe("MainView（声の定位置）", () => {
   })
 })
 
-function bandChildCount(): number {
-  return document.querySelector("[data-voice-slot]")?.childElementCount ?? 0
+function bandSpeakerCount(): number {
+  return document.querySelectorAll("[data-voice-slot] [data-speaker]").length
 }

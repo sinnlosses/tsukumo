@@ -71,8 +71,7 @@
 }
 .voice-band [data-speaker="typing"] {
   inline-size: fit-content;
-}
-/* 流れの末尾が聞いたセリフのとき、お伺いの札はそのセリフと1組に見せる（広い画面だけ）。 */
+} /* 流れの末尾が聞いたセリフのとき、お伺いの札はそのセリフと1組に見せる（広い画面だけ）。 */
 @media (min-width: 761px) {
   .turn-card:has([data-ends-with-say]) .turn-card-inquiry {
     padding-top: var(--stack-tight);

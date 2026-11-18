@@ -33,11 +33,17 @@ export function useInquiryScroll(
       ? inquiry.focusedLabel.label
       : undefined
 
+  // 中身が入れ替わって先頭へ戻すスクロール（`useActiveTurnScroll`。親の effect なので札より後に走る）に打ち消されないよう、次の描画で連れてくる。
   useExternalSync(() => {
     if (askId === undefined) {
-      return
+      return undefined
     }
-    cardRef.current?.scrollIntoView({ block: "nearest", behavior: smoothScrollBehavior() })
+    const frame = requestAnimationFrame(() => {
+      cardRef.current?.scrollIntoView({ block: "nearest", behavior: smoothScrollBehavior() })
+    })
+    return () => {
+      cancelAnimationFrame(frame)
+    }
   }, [askId])
 
   useExternalSync(() => {
