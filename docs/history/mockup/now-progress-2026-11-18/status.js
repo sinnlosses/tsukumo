@@ -388,6 +388,9 @@ function flowRows() {
 
 /** フェーズの丸の並び。済んだ丸は印、今の丸は枠、答え待ちは「?」。 */
 function dots() {
+  if (many !== "") {
+    return longDots()
+  }
   return PHASES.map((_, index) => {
     if (index < status.current) {
       return `<span class="phase-dot is-done">${icon("check")}</span>`
@@ -405,7 +408,120 @@ function dots() {
     .join("")
 }
 
+/**
+ * ?many=fold|window で、帯の丸と今のフェーズの名前だけを12段の計画（委譲の範囲がある並び。前1・本9・後2）に替える。at は今の段（1始まり。既定 3）。
+ * 丸の番号は群（前・本・後）ごとに1から数える（本物の帯と同じ）。
+ * fold は今の決まり: 9段以上で、今の段の前に3つ以上済んでいれば、済んだ丸を「✓n」に畳む（今の段より先は畳まない。n は群をまたいだ数）。
+ * window は提案: 今いる群の名を頭に置き、その群の済んだ丸を「✓n」に、次の丸より先を「あと n」に畳む。丸の並びの幅は段の数によらず一定になる。
+ * 見本は12段で畳むが、提案の決まりでは丸を全部並べた幅が畳んだ幅を越える6段から畳む。
+ */
+const LONG_PLAN = [
+  ["前", "計画を確かめる"],
+  ["本", "型を足す"],
+  ["本", "保存の仕組みを足す"],
+  ["本", "読み込みで並びを戻す"],
+  ["本", "一覧の画面に反映する"],
+  ["本", "並べ替えの口を足す"],
+  ["本", "設定の画面に足す"],
+  ["本", "古い値を読み替える"],
+  ["本", "E2E を足す"],
+  ["本", "文書をそろえる"],
+  ["後", "受け入れ"],
+  ["後", "振り返り"],
+]
+const many = ["fold", "window"].includes(params.get("many")) ? params.get("many") : ""
+const longAt = Math.min(Math.max(Number(params.get("at") ?? "3") || 3, 1), LONG_PLAN.length) - 1
+const longCurrent = finished ? LONG_PLAN.length : longAt
+
+function isSpanHead(index) {
+  return index === 0 || LONG_PLAN[index - 1][0] !== LONG_PLAN[index][0]
+}
+
+function spanStart(index) {
+  let start = index
+  while (!isSpanHead(start)) {
+    start -= 1
+  }
+  return start
+}
+
+/** 帯に並べる要素。head は前に群の名を置くか（置いた要素は前の要素と線でつながない）。 */
+function longItems() {
+  const total = LONG_PLAN.length
+  const cur = longCurrent
+  if (many === "fold") {
+    const all = LONG_PLAN.map((_, index) => ({ kind: "dot", index, head: isSpanHead(index) }))
+    return cur >= total || cur <= 2 ? all : [{ kind: "fold", count: cur, head: false }, ...all.slice(cur)]
+  }
+  if (cur >= total) {
+    return [{ kind: "fold", count: total, head: false }]
+  }
+  const start = spanStart(cur)
+  const items = []
+  if (cur - start >= 2) {
+    items.push({ kind: "fold", count: cur - start, head: true })
+  } else if (cur - start === 1) {
+    items.push({ kind: "dot", index: start, head: true })
+  }
+  items.push({ kind: "dot", index: cur, head: start === cur })
+  if (cur + 1 < total) {
+    items.push({ kind: "dot", index: cur + 1, head: isSpanHead(cur + 1) })
+  }
+  // 残りが1つなら「あと 1」より丸のほうが狭く、名前も読めるので丸のまま置く。
+  const rest = total - cur - 2
+  if (rest === 1) {
+    items.push({ kind: "dot", index: total - 1, head: isSpanHead(total - 1) })
+  } else if (rest > 1) {
+    items.push({ kind: "rest", count: rest, head: false })
+  }
+  return items
+}
+
+function longDot(index) {
+  const cur = longCurrent
+  if (index < cur) {
+    return `<span class="phase-dot is-done">${icon("check")}</span>`
+  }
+  const number = index - spanStart(index) + 1
+  if (index === cur) {
+    return status.asking === true
+      ? '<span class="phase-dot is-asking">?</span>'
+      : `<span class="phase-dot is-current">${number}</span>`
+  }
+  return `<span class="phase-dot">${number}</span>`
+}
+
+/** 12段の計画の丸の並び。群の名の前は線でつながず、「あと n」の前は点線でつなぐ。 */
+function longDots() {
+  const items = longItems()
+  const currentSpan = LONG_PLAN[longCurrent]?.[0]
+  return items
+    .map((item, position) => {
+      if (item.kind === "rest") {
+        return `<i class="phase-link is-more"></i><span class="phase-rest" title="残り ${item.count} フェーズ">あと<b>${item.count}</b></span>`
+      }
+      const previous = items[position - 1]
+      const span = item.kind === "fold" ? currentSpan : LONG_PLAN[item.index][0]
+      const label =
+        item.head && span !== undefined
+          ? `<span class="phase-span${span === currentSpan ? " is-current" : ""}">${span}</span>`
+          : ""
+      const done = previous !== undefined && (previous.kind === "fold" || previous.index < longCurrent)
+      const link =
+        previous === undefined || item.head ? "" : `<i class="phase-link${done ? " is-done" : ""}"></i>`
+      const body =
+        item.kind === "fold"
+          ? `<span class="phase-fold" title="済んだ ${item.count} フェーズ">${icon("check")}${item.count}</span>`
+          : longDot(item.index)
+      return `${link}${label}${body}`
+    })
+    .join("")
+}
+
 function phaseName() {
+  if (many !== "") {
+    return finished ? `${LONG_PLAN.length}フェーズすべて済み` : LONG_PLAN[longCurrent][1]
+  }
   return finished ? `${PHASES.length}フェーズすべて済み` : PHASES[status.current].name
 }
 
@@ -838,7 +954,14 @@ function placeTag() {
 function markBar() {
   for (const bar of document.querySelectorAll(".mock-bar-group")) {
     const name = bar.dataset.param
-    const current = { form, moment, open: open ? "steps" : "", fold: fold ? "1" : "" }[name]
+    const current = {
+      form,
+      moment,
+      open: open ? "steps" : "",
+      fold: fold ? "1" : "",
+      many,
+      at: params.get("at") ?? "",
+    }[name]
     for (const link of bar.querySelectorAll("a")) {
       const query = new URLSearchParams(location.search)
       if (link.dataset.value === "") {
@@ -865,7 +988,36 @@ function applyPack() {
   portrait.dataset.motion = moment === "ask" || moment === "done" ? "breathe" : "walk"
 }
 
+/**
+ * 提案の決まり（many=window）の案A で、帯の1行に収まらないときに譲る順。
+ * 対象とフェーズの名前は先に「…」で縮み、それでも対象が詰まり切るなら、経過の合計を、次にフェーズの名前を、最後に対象を隠す。
+ * 残した丸・回る印・動詞・手順の秒・添え書き・「手順 n件」は譲らない。
+ */
+function fitStrip() {
+  if (form !== "a" || many !== "window") {
+    return
+  }
+  const strip = one("#strip")
+  delete strip.dataset.tight
+  for (const level of ["", "1", "2", "3"]) {
+    if (level !== "") {
+      strip.dataset.tight = level
+    }
+    const unit = strip.querySelector(".now-unit")
+    const target = strip.querySelector(".now-target")
+    if (unit === null) {
+      return
+    }
+    const squeezed =
+      unit.scrollWidth > unit.clientWidth + 1 || (target !== null && target.clientWidth < 48)
+    if (!squeezed) {
+      return
+    }
+  }
+}
+
 function layout() {
+  fitStrip()
   measurePlan()
   placeTag()
   aimTail()

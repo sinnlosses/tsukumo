@@ -18,6 +18,8 @@
     ?moment=work|long|late|deleg|ask|stop|away|done  働く／長く掛かる／働く（後半。流れが長い）／委譲を待つ／答える／止めた／離れて戻った／完了した直後
     ?open=steps                  「手順」の一覧を開いた形（練った案では、済んだ段の手順を開いた形）
     ?fold=1                      練った案の計画を畳んだ形（今の段の行だけを残す）
+    ?many=fold|window            帯の丸を12フェーズ（前1・本9・後2）にする。fold は今の決まりで畳み、window は提案の決まり（今の丸の前後だけを残す）で畳む（今の形・案A〜C）
+    ?at=1〜12                    12フェーズのときの今のフェーズ（既定 3）
     ?up=1                        流れを上へ送って読み返している形（撮影用。働く〔後半〕で使う）
     ?bar=0                       上の切り替えの帯を隠す（撮影用）
   -->
@@ -80,6 +82,17 @@
       <span class="mock-bar-group" data-param="fold">
         <a data-value="">計画を開く</a>
         <a data-value="1">計画を畳む</a>
+      </span>
+      <span class="mock-bar-group" data-param="many">
+        <a data-value="">4フェーズ</a>
+        <a data-value="fold">12フェーズ 今の決まり</a>
+        <a data-value="window">12フェーズ 前後だけ残す</a>
+      </span>
+      <span class="mock-bar-group" data-param="at">
+        <a data-value="1">1つ目</a>
+        <a data-value="">3つ目</a>
+        <a data-value="7">7つ目</a>
+        <a data-value="11">11個目</a>
       </span>
     </header>
 

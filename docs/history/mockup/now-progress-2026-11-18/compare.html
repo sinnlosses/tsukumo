@@ -29,6 +29,7 @@
         <a href="#ask">答える</a>
         <a href="#done">完了した直後</a>
         <a href="#steps">手順を開く</a>
+        <a href="#many">フェーズが多いとき</a>
         <a href="#extras">どの案にも足せる施策</a>
         <a href="#pick">おすすめ</a>
         <a href="plan.html">練った案（別のページ）</a>
@@ -171,6 +172,16 @@
         <figure><div class="frame" data-src="index.html?form=a&moment=work&open=steps&bar=0"></div><figcaption><b>案A</b>帯の真下に開く。</figcaption></figure>
         <figure><div class="frame" data-src="index.html?form=b&moment=work&open=steps&bar=0"></div><figcaption><b>案B</b>入力欄の真上に開き、流れの末尾に重なる。</figcaption></figure>
         <figure><div class="frame" data-src="index.html?form=c&moment=work&open=steps&bar=0"></div><figcaption><b>案C</b>札の右に開き、流れの左側に重なる。</figcaption></figure>
+      </div>
+    </section>
+
+    <section class="block" id="many" aria-labelledby="many-title">
+      <h2 id="many-title">フェーズが多いとき（案A）。今の丸の前後だけを残して畳み、帯の幅を段の数によらず一定にする</h2>
+      <p class="block-lead">12フェーズ（前1・本9・後2）の計画を、1400 の幅で帯だけ切り出した。丸の番号は群ごとに1から数える（今の帯と同じ）。見本の <code>index.html?form=a&amp;many=fold|window&amp;at=1〜12</code> で位置を替えて開ける。</p>
+      <div class="bands">
+        <figure><img src="many-now.jpg" alt="今の決まりで畳んだ12フェーズの帯" width="812" height="188" /><figcaption><b>今の決まり</b>9段以上で、今の段の前に3つ以上済んだときだけ済んだ丸を「✓n」に畳む。3つ目では12個の丸が全部並び（幅 422px）、動詞が経過の上に重なる。7つ目では「✓6」のすぐ隣に今の丸「6」が来て、数が食い違って見える（✓ は群をまたいだ数、丸は群の中の番号）。3段目は長く掛かる手順で、帯が読めなくなる。</figcaption></figure>
+        <figure><img src="many-window.jpg" alt="提案の決まりで畳んだ12フェーズの帯" width="812" height="368" /><figcaption><b>提案: 前後だけを残す</b>頭に今いる群の名、その群の済んだ丸を「✓n」、今の丸と次の丸、その先を「あと n」。上から1・3・7・10・11個目と、7つ目の答え待ち。丸の並びは 70〜182px に収まる（4フェーズを全部並べると 118px）。残りが1つなら「あと 1」でなく丸を置く。</figcaption></figure>
+        <figure><img src="many-tight.jpg" alt="1行に収まらないときに譲った帯" width="812" height="188" /><figcaption><b>提案: 収まらないときに譲る順</b>対象とフェーズの名前が先に「…」で縮み、それでも足りなければ経過の合計、フェーズの名前、対象の順に隠す。残した丸・回る印・動詞・手順の秒・「長く掛かっている」・「手順 n件」は譲らない。上から 1400 の長く掛かる手順、1000 の働く、1000 の長く掛かる手順。</figcaption></figure>
       </div>
     </section>
 

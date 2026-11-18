@@ -276,6 +276,21 @@ figcaption a {
   border-radius: 10px;
 }
 
+/* フェーズが多いときの帯の切り出し（帯は横長なので1列に積む） */
+.bands {
+  display: grid;
+  gap: 20px;
+  max-inline-size: 840px;
+  margin-block-start: 20px;
+}
+
+.bands img {
+  inline-size: 100%;
+  block-size: auto;
+  border: 1px solid var(--edge);
+  border-radius: 10px;
+}
+
 /* 測った数の表 */
 .measure {
   inline-size: 100%;

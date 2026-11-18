@@ -142,6 +142,82 @@ body[data-form="a"] .strip {
   padding-inline-start: 12px;
 }
 
+/* ───── フェーズが多いとき（?many）の丸の並び ─────
+   群（前・本・後）の名は前の丸と線でつながず間を空ける。済んだ丸を畳んだ数は済んだ丸と同じ塗り、
+   まだ先の丸を畳んだ「あと n」はまだの丸と同じ枠で描き、点線でつなぐ。 */
+.phase-span {
+  margin-inline: 12px 5px;
+  color: var(--ink-quiet);
+  font-size: 11px;
+  line-height: 1;
+}
+
+.phase-span:first-child {
+  margin-inline-start: 0;
+}
+
+.phase-span.is-current {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.phase-fold,
+.phase-rest {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  box-sizing: border-box;
+  block-size: 20px;
+  padding-inline: 6px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  line-height: 1;
+}
+
+.phase-fold {
+  background: color-mix(in srgb, var(--accent) 34%, var(--surface));
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+.phase-fold .icon {
+  inline-size: 12px;
+  block-size: 12px;
+}
+
+.phase-rest {
+  padding-inline: 8px;
+  border: 1px solid var(--edge);
+  color: var(--ink-soft);
+}
+
+.phase-rest b {
+  margin-inline-start: 4px;
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.phase-link.is-more {
+  block-size: 0;
+  border-block-start: 1px dashed var(--edge);
+  background: none;
+}
+
+/* 提案の決まりの案A で、1行に収まらないときに隠すもの（譲る順は status.js の fitStrip）。 */
+.strip[data-tight] .strip-time {
+  display: none;
+}
+
+.strip:is([data-tight="2"], [data-tight="3"]) :is(.crumb .strip-name, .crumb-sep) {
+  display: none;
+}
+
+.strip[data-tight="3"] .now-target {
+  display: none;
+}
+
 /* ───── 案B: 入力欄の頭に、進み具合の1行を置く。帯は出さず、流れは列の上端から始める ───── */
 body[data-form="b"] {
   --dock-h: 166px;
