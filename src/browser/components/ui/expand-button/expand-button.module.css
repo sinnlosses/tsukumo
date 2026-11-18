@@ -4,6 +4,9 @@
   gap: var(--inline-tight);
 }
 @media (max-width: 760px) {
+  .label {
+    display: none;
+  }
   .target {
     position: relative;
   }

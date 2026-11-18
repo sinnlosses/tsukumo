@@ -1,0 +1,22 @@
+.content {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--inline-tight);
+}
+.bar {
+  padding: var(--inline-tight) var(--inline-control);
+  border-radius: var(--radius-md);
+}
+@media (max-width: 760px) {
+  .label {
+    display: none;
+  }
+  .target {
+    position: relative;
+  }
+  .target::before {
+    content: "";
+    position: absolute;
+    inset: -10px 0;
+  }
+}

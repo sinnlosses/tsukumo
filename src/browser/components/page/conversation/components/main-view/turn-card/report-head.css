@@ -50,9 +50,76 @@
   flex: 1 1 auto;
   min-width: 0;
 }
+/* 「HTML で保存」・縦線・「広げる」の組。見出しが2行になっても、縦線はボタンの高さの中央に来る。 */
+.report-head-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: var(--inline-control);
+  margin-left: auto;
+}
+.report-save {
+  flex: 0 0 auto;
+}
 .report-expand {
   flex: 0 0 auto;
-  margin-left: auto;
+}
+/* 「HTML で保存」と「広げる」のあいだの縦線。 */
+.report-head-rule {
+  flex: 0 0 auto;
+  width: 1px;
+  height: 16px;
+  background: var(--rule);
+}
+/* 保存の結果の1行。紙では見出しの行のすぐ下、板では下端の帯のすぐ上。 */
+.report-export-slot {
+  padding-bottom: var(--stack-block);
+}
+.report-export-notice {
+  display: flex;
+  align-items: center;
+  gap: var(--inline-control);
+  padding: var(--inline-tight) var(--inline-tight) var(--inline-tight) var(--inline-control);
+  border: 1px solid color-mix(in srgb, var(--state-ok) 28%, transparent);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--state-ok) 9%, transparent);
+  font-size: var(--font-action);
+}
+.report-export-notice[data-failed] {
+  border-color: color-mix(in srgb, var(--state-ng) 30%, transparent);
+  background: color-mix(in srgb, var(--state-ng) 9%, transparent);
+}
+.report-export-mark {
+  flex: 0 0 auto;
+  font-weight: 600;
+  color: var(--state-ok);
+  white-space: nowrap;
+}
+.report-export-notice[data-failed] .report-export-mark {
+  color: var(--state-ng);
+}
+/* パスは頭を省き末尾を残す。 */
+.report-export-path {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  direction: rtl;
+  text-align: left;
+  font-family: var(--font-mono);
+  color: var(--ink-soft);
+}
+.report-export-notice[data-failed] .report-export-path {
+  direction: ltr;
+  font-family: inherit;
+}
+.report-export-action {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+.report-export-close {
+  flex: 0 0 auto;
 }
 /* 広げた板。ビューポートいっぱいに取り、レポートは板の内側で転がる。 */
 .report-board {
@@ -75,6 +142,7 @@
 .report-board-bar {
   display: flex;
   justify-content: flex-end;
+  gap: var(--inline-control);
   flex: 0 0 auto;
   margin-top: var(--space-md);
   padding-top: var(--space-sm);

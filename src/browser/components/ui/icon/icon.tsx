@@ -3,6 +3,7 @@
 
 import { Icon } from "@astryxdesign/core/Icon"
 import {
+  ArrowDownToLine,
   ArrowLeftRight,
   ArrowRight,
   ArrowUp,
@@ -76,6 +77,11 @@ export function ArrowRightIcon(): ReactElement {
 /** 広げる（四隅を指す矢印）。 */
 export function MaximizeIcon(): ReactElement {
   return <Icon icon={Maximize2} {...ICON_ATTRIBUTES} />
+}
+
+/** ファイルに保存する（下線へ向かう下向きの矢印）。 */
+export function SaveFileIcon(): ReactElement {
+  return <Icon icon={ArrowDownToLine} {...ICON_ATTRIBUTES} />
 }
 
 /** 一覧から選ぶ（行の並び）。 */

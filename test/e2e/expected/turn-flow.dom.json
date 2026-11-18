@@ -682,6 +682,41 @@
                                         "data-size": "sm",
                                         "data-elevation": "none",
                                         "data-astryx-pressable": "",
+                                        "aria-label": "HTML で保存",
+                                        "data-astryx-edge-comp": "",
+                                        "type": "button"
+                                      },
+                                      "children": [
+                                        {
+                                          "tag": "svg",
+                                          "attributes": {
+                                            "data-size": "sm",
+                                            "data-color": "inherit"
+                                          }
+                                        },
+                                        "HTML で保存",
+                                        {
+                                          "tag": "span",
+                                          "attributes": {
+                                            "role": "status",
+                                            "aria-live": "polite"
+                                          }
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "tag": "span",
+                                      "attributes": {
+                                        "aria-hidden": "true"
+                                      }
+                                    },
+                                    {
+                                      "tag": "button",
+                                      "attributes": {
+                                        "data-variant": "ghost",
+                                        "data-size": "sm",
+                                        "data-elevation": "none",
+                                        "data-astryx-pressable": "",
                                         "aria-haspopup": "dialog",
                                         "aria-label": "広げる",
                                         "data-astryx-edge-comp": "",

@@ -7,6 +7,7 @@ import { Button } from "../../ui/button/button.tsx"
 import { Disclosure } from "../../ui/disclosure/disclosure.tsx"
 import { Divider } from "../../ui/divider/divider.tsx"
 import { ExpandButton } from "../../ui/expand-button/expand-button.tsx"
+import { SaveButton } from "../../ui/expand-button/save-button.tsx"
 import { FirstNoteList } from "../../ui/first-note-list/first-note-list.tsx"
 import { Heading } from "../../ui/heading/heading.tsx"
 import { Note } from "../../ui/note/note.tsx"
@@ -131,6 +132,7 @@ export function UiGallery(): ReactElement {
       </Group>
       <Group title="ExpandButton（広げる）" parts={["expand-button"]}>
         <ExpandButton className="" onClick={() => {}} />
+        <SaveButton placement="head" state="idle" className="" onClick={() => {}} />
       </Group>
       <Group title="Heading・Text（字の段）" parts={["heading", "text"]}>
         <Heading level={3} size="heading" tone="ink" weight="bold" className="">
