@@ -44,6 +44,7 @@ const SERVER_CHILD_IMPORTS = {
     image: ["rules"],
     prompt: ["aside"],
     body: [],
+    export: ["image"],
   },
   "session-driver/core": {
     message: [],
