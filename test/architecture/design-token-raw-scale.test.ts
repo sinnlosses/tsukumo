@@ -75,7 +75,7 @@ const RAW_SCALE_REFERENCE_LIMITS: Readonly<Record<string, number>> = {
   "browser/components/page/conversation/components/character-view/stage/phone-balloon.css": 4,
   "browser/components/page/conversation/components/character-view/stage/speech-log.css": 8,
   "browser/components/page/conversation/components/chat-view/chat-view.module.css": 8,
-  "browser/components/page/conversation/components/conversation-layout/conversation-layout.module.css": 10,
+  "browser/components/page/conversation/components/conversation-layout/conversation-layout.module.css": 8,
   "browser/components/page/conversation/components/dispatch/dispatch.module.css": 9,
   "browser/components/page/conversation/components/stream-row/stream-row.module.css": 4,
   "browser/components/page/conversation/components/dispatch/form/composer.css": 11,

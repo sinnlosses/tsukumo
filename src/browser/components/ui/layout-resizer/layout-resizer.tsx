@@ -38,6 +38,8 @@ type LayoutResizerProps = {
    * 動いた値は `onChange` と `onCommit` の両方へ渡す。
    */
   readonly keyboardStepPx?: number
+  /** 渡すと、仕切りのダブルクリックで呼ばれる。 */
+  readonly onReset?: () => void
   /** 置き方だけを渡す。 */
   readonly className: string
 }
@@ -116,6 +118,7 @@ export function LayoutResizer(props: LayoutResizerProps): ReactElement {
       tabIndex={props.keyboardStepPx === undefined ? -1 : 0}
       onPointerDown={onPointerDown}
       onKeyDown={onKeyDown}
+      onDoubleClick={props.onReset}
     />
   )
 }

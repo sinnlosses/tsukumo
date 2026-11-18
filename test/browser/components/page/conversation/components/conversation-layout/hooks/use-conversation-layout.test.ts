@@ -25,35 +25,31 @@ afterEach(() => {
 })
 
 describe("useConversationLayout", () => {
-  it("初期状態は保存済みの幅を読み、まだ動かしていない", () => {
+  it("初期状態は保存済みの幅を読む", () => {
     saveSplit({ leftPx: 300, sidebar: 30 })
 
     const { result } = renderHook(() => useConversationLayout())
 
     expect(result.current.splitters.gridStyle["--layout-left-width"]).toBe("300px")
     expect(result.current.splitters.gridStyle["--layout-sidebar-width"]).toBe("30%")
-    expect(result.current.splitters.moved).toBe("none")
   })
 
-  it("離した仕切りを覚え、保存し、既定に戻すと両方が戻って印も消える", () => {
+  it("離した仕切りを保存し、既定に戻すと両方が戻る", () => {
     const { result } = renderHook(() => useConversationLayout())
 
     act(() => {
       result.current.splitters.left.onCommit(320)
     })
-    expect(result.current.splitters.moved).toBe("left")
     expect(loadSplit()).toEqual({ ...DEFAULT_SPLIT, leftPx: 320 })
 
     act(() => {
       result.current.splitters.sidebar.onCommit(30)
     })
-    expect(result.current.splitters.moved).toBe("sidebar")
     expect(loadSplit()).toEqual({ leftPx: 320, sidebar: 30 })
 
     act(() => {
       result.current.splitters.onReset()
     })
-    expect(result.current.splitters.moved).toBe("none")
     expect(loadSplit()).toEqual(DEFAULT_SPLIT)
   })
 

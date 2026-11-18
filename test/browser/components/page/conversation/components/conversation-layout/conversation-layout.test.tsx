@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import { ConversationLayout } from "../../../../../../../src/browser/components/page/conversation/components/conversation-layout/conversation-layout.tsx"
@@ -6,6 +6,7 @@ import {
   DEFAULT_SPLIT,
   loadSplit,
 } from "../../../../../../../src/browser/components/page/conversation/components/conversation-layout/domain/split.ts"
+import { useLayoutSplitReset } from "../../../../../../../src/browser/stores/layout-split-reset.ts"
 
 /**
  * 4領域は中身の判別さえできればよいので、部品名の文字列だけ渡す
@@ -51,7 +52,23 @@ function gridElement(): HTMLElement {
   )
 }
 
-const RESET_PILL = { name: "比率を既定に戻す" } as const
+function dragBoth(): void {
+  fireEvent.pointerUp(drag("キャラビューとメインビューの境界", 258, 300), {
+    clientX: 300,
+    clientY: 0,
+  })
+  fireEvent.pointerUp(drag("メインビューとサイドバーの境界", 770, 700), {
+    clientX: 700,
+    clientY: 0,
+  })
+}
+
+function gridWidths(grid: HTMLElement): readonly string[] {
+  return [
+    grid.style.getPropertyValue("--layout-left-width"),
+    grid.style.getPropertyValue("--layout-sidebar-width"),
+  ]
+}
 
 function drag(separator: string, from: number, to: number): HTMLElement {
   const resizer = screen.getByRole("separator", { name: separator })
@@ -70,56 +87,48 @@ afterEach(() => {
 })
 
 describe("ConversationLayout", () => {
-  it("動かすまでは、2本の仕切りのどちらの脇にも「比率を既定に戻す」は出ない", () => {
-    renderLayout()
-
-    expect(screen.queryByRole("button", RESET_PILL)).toBeNull()
-  })
-
-  it("サイドバーの仕切りを動かして確定すると、その脇にだけ「比率を既定に戻す」が出る", () => {
+  it("画面に戻す札は置かない", () => {
     renderLayout()
     stubBoundingRect(gridElement(), 1000, 400)
 
-    const resizer = drag("メインビューとサイドバーの境界", 770, 700)
-    fireEvent.pointerUp(resizer, { clientX: 700, clientY: 0 })
-
-    const pill = screen.getByRole("button", RESET_PILL)
-    const sidebarDivider = requireElement(resizer.parentElement, "サイドバーの仕切りの入れ物")
-    expect(sidebarDivider.contains(pill)).toBe(true)
-  })
-
-  it("左の列の仕切りを動かして確定すると、その脇に「比率を既定に戻す」が出る", () => {
-    renderLayout()
-    stubBoundingRect(gridElement(), 1000, 400)
-
-    const resizer = drag("キャラビューとメインビューの境界", 238, 300)
-    fireEvent.pointerUp(resizer, { clientX: 300, clientY: 0 })
-
-    const leftDivider = requireElement(resizer.parentElement, "左の列の仕切りの入れ物")
-    expect(leftDivider.contains(screen.getByRole("button", RESET_PILL))).toBe(true)
-  })
-
-  it("ピルを押すと、左の列の幅とサイドバーの幅の両方が既定に戻り、ピルも消える", () => {
-    renderLayout()
-    const grid = gridElement()
-    stubBoundingRect(grid, 1000, 400)
-
-    fireEvent.pointerUp(drag("キャラビューとメインビューの境界", 238, 300), {
-      clientX: 300,
-      clientY: 0,
-    })
     fireEvent.pointerUp(drag("メインビューとサイドバーの境界", 770, 700), {
       clientX: 700,
       clientY: 0,
     })
+
+    expect(screen.queryByRole("button", { name: /比率を既定に戻す/ })).toBeNull()
+  })
+
+  it.each(["キャラビューとメインビューの境界", "メインビューとサイドバーの境界"])(
+    "%sをダブルクリックすると、左の列の幅とサイドバーの幅の両方が既定に戻る",
+    (separator) => {
+      renderLayout()
+      const grid = gridElement()
+      stubBoundingRect(grid, 1000, 400)
+      dragBoth()
+
+      fireEvent.doubleClick(screen.getByRole("separator", { name: separator }))
+
+      expect(loadSplit()).toEqual(DEFAULT_SPLIT)
+      expect(gridWidths(grid)).toEqual(["258px", "21.6%"])
+    },
+  )
+
+  it("コマンドパレットからの合図で既定に戻る。開いた時点までの合図では戻さない", () => {
+    useLayoutSplitReset.getState().requestReset()
+    renderLayout()
+    const grid = gridElement()
+    stubBoundingRect(grid, 1000, 400)
+    dragBoth()
+
     expect(loadSplit()).toEqual({ leftPx: 300, sidebar: 30 })
 
-    fireEvent.click(screen.getByRole("button", RESET_PILL))
+    act(() => {
+      useLayoutSplitReset.getState().requestReset()
+    })
 
     expect(loadSplit()).toEqual(DEFAULT_SPLIT)
-    expect(grid.style.getPropertyValue("--layout-left-width")).toBe("258px")
-    expect(grid.style.getPropertyValue("--layout-sidebar-width")).toBe("21.6%")
-    expect(screen.queryByRole("button", RESET_PILL)).toBeNull()
+    expect(gridWidths(grid)).toEqual(["258px", "21.6%"])
   })
 
   it("ドラッグ中は CSS カスタムプロパティだけが追随し、離したときに保存される", () => {
@@ -149,7 +158,6 @@ describe("ConversationLayout", () => {
     fireEvent.pointerUp(resizer, { clientX: 700, clientY: 0 })
 
     expect(localStorage.getItem("tsukumo-layout-split:v2")).toBeNull()
-    expect(screen.queryByRole("button", RESET_PILL)).toBeNull()
   })
 
   it("やり取りの列に仕切りは無く、仕切りは左の列とサイドバーの2本だけ", () => {

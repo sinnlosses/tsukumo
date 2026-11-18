@@ -6,6 +6,7 @@ import { FRAME_ERROR_REASON } from "../../../../../shared/frame-error-reason.ts"
 import { isOverlayOpen } from "../../../../hooks/open-overlay.ts"
 import { useEventListener } from "../../../../hooks/use-event-listener.ts"
 import { useComposerFocus } from "../../../../stores/composer-focus.ts"
+import { useLayoutSplitReset } from "../../../../stores/layout-split-reset.ts"
 import { SCREEN_NAV_ITEMS, type NavScreen, type Screen } from "../../../../stores/location-hash.ts"
 import { navigateTo, useScreen } from "../../../../stores/screen.tsx"
 import { useSessionSwitcherRequest } from "../../../../stores/session-switcher-request.ts"
@@ -58,6 +59,7 @@ export function useCommandPaletteModel(): CommandPaletteModel {
   const chatMode = useSession((session) => session.state.chatMode)
   const dispatch = useSession((session) => session.dispatch)
   const restartRefused = useRestartRefused()
+  const requestSplitReset = useLayoutSplitReset((state) => state.requestReset)
 
   useEventListener(document, "keydown", (event) => {
     const shortcut = shortcutOf({
@@ -107,6 +109,13 @@ export function useCommandPaletteModel(): CommandPaletteModel {
     },
     actionCommand("task-board", "タスクの一覧モードを開く", actions["task-board"]),
     actionCommand("settings", "設定を開く", actions.settings),
+    {
+      id: "reset-split",
+      label: "比率を既定に戻す",
+      group: "action",
+      disabled: false,
+      run: requestSplitReset,
+    },
     ...[false, true].map((chat): PaletteCommand => ({
       id: chat ? "screen-chat" : "screen-work",
       label: chat ? "雑談" : "仕事",
@@ -133,7 +142,7 @@ export function useCommandPaletteModel(): CommandPaletteModel {
   return {
     open,
     onClose: close,
-    commands: allCommands.filter((command) => !isCurrentScreen(command.id, screen, chatMode)),
+    commands: allCommands.filter((command) => !isHiddenOn(command.id, screen, chatMode)),
     onRun: (command) => {
       if (command.disabled) {
         return
@@ -184,7 +193,11 @@ function actionCommand(
   }
 }
 
-function isCurrentScreen(id: string, screen: Screen, chatMode: boolean): boolean {
+// 今いる画面へ移る行と、仕切りの無い画面での比率を戻す行を隠す。
+function isHiddenOn(id: string, screen: Screen, chatMode: boolean): boolean {
+  if (id === "reset-split") {
+    return screen !== "conversation"
+  }
   if (screen === "conversation") {
     return id === (chatMode ? "screen-chat" : "screen-work")
   }

@@ -15,7 +15,9 @@ import {
 } from "react"
 
 import { useEventListener } from "../../../../../../hooks/use-event-listener.ts"
+import { useExternalSync } from "../../../../../../hooks/use-external-sync.ts"
 import { usePopover } from "../../../../../../hooks/use-popover.ts"
+import { useLayoutSplitReset } from "../../../../../../stores/layout-split-reset.ts"
 import { reportSplitRelease } from "../domain/split-release-report.ts"
 import { DEFAULT_SPLIT, loadSplit, saveSplit, type Split } from "../domain/split.ts"
 
@@ -25,9 +27,6 @@ const RAIL_TIER_QUERY = "(min-width: 761px) and (max-width: 1100px)"
 // 幅を持つ CSS カスタムプロパティ。CSS 側のフォールバック値（conversation-layout.module.css）は `DEFAULT_SPLIT` と一致させること。
 const LEFT_WIDTH_VARIABLE = "--layout-left-width"
 const SIDEBAR_WIDTH_VARIABLE = "--layout-sidebar-width"
-
-/** 動かした仕切り。「比率を既定に戻す」を、この仕切りの脇に出す。 */
-type MovedDivider = "none" | "left" | "sidebar"
 
 export type UseConversationLayoutResult = {
   readonly splitters: {
@@ -44,9 +43,8 @@ export type UseConversationLayoutResult = {
       readonly onChange: (percent: number) => void
       readonly onCommit: (percent: number) => void
     }
+    /** 仕切りのダブルクリックで呼ぶ。左の列の幅とサイドバーの幅の両方を既定に戻す。 */
     readonly onReset: () => void
-    /** 開いてから動かした仕切り。まだ動かしていなければ `none`（「比率を既定に戻す」を出さない）。 */
-    readonly moved: MovedDivider
   }
   readonly sidebarDisclosure: {
     /** 柱とサイドバーを包む要素。この外を押すと、柱から開いたサイドバーが閉じる。 */
@@ -61,7 +59,9 @@ export type UseConversationLayoutResult = {
 
 export function useConversationLayout(): UseConversationLayoutResult {
   const [split, setSplit] = useState<Split>(loadSplit)
-  const [moved, setMoved] = useState<MovedDivider>("none")
+  const resetSignal = useLayoutSplitReset((state) => state.signal)
+  // 開いた時点の回数。これより増えたときだけ戻す（開くたびに戻らないように）。
+  const handledResetSignal = useRef(resetSignal)
   const gridRef = useRef<HTMLDivElement>(null)
   const sideRef = useRef<HTMLDivElement>(null)
   const sidebarId = useId()
@@ -86,6 +86,13 @@ export function useConversationLayout(): UseConversationLayoutResult {
     saveSplit(next)
   }
 
+  useExternalSync(() => {
+    if (resetSignal !== handledResetSignal.current) {
+      handledResetSignal.current = resetSignal
+      commitSplit(DEFAULT_SPLIT)
+    }
+  }, [resetSignal])
+
   return {
     splitters: {
       gridRef,
@@ -98,7 +105,6 @@ export function useConversationLayout(): UseConversationLayoutResult {
           gridRef.current?.style.setProperty(LEFT_WIDTH_VARIABLE, `${String(px)}px`)
         },
         onCommit: (px) => {
-          setMoved("left")
           commitSplit({ ...split, leftPx: px })
         },
       },
@@ -109,15 +115,12 @@ export function useConversationLayout(): UseConversationLayoutResult {
         onCommit: (percent) => {
           // 体験の記録の語彙は「メインの幅の比」のまま（左の列は px で記録の形に合わないので送らない）。
           reportSplitRelease("topLeft", 100 - percent, 100 - split.sidebar)
-          setMoved("sidebar")
           commitSplit({ ...split, sidebar: percent })
         },
       },
       onReset: () => {
-        setMoved("none")
         commitSplit(DEFAULT_SPLIT)
       },
-      moved,
     },
     sidebarDisclosure: {
       rootRef: sideRef,

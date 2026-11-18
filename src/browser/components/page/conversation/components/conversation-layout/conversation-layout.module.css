@@ -190,32 +190,11 @@
     justify-self: center;
   }
 }
-/* 仕切りと、比率を戻す口を同じ列に置く入れ物。
-   口は仕切りの上に重ねる（口の中に仕切りを入れると、押したつもりがドラッグの始まりになる）。 */
+/* 仕切りを置く列の入れ物。 */
 .layout-divider {
   position: relative;
   display: flex;
   min-height: 0;
-}
-/* 領域の幅を既定に戻すピル（`<ConversationLayout>` が直接描く）。
-   動かした仕切りの脇にだけ出て、押すと左の列の幅とサイドバーの幅の両方が既定に戻る。
-   仕切りの列は 0.6rem しかないので、口は両隣の領域へはみ出して仕切りの線の真上に中央を合わせる。 */
-/* 顔は `<Button variant="tinted-accent">` が持つ。
-   箱（位置・重なり・並べ・余白・角丸・字の大きさ・行送り・折り返し・浮かせ方）だけここに置く。 */
-.layout-reset-split {
-  position: absolute;
-  top: var(--gutter-region);
-  left: 50%;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-  padding: var(--space-xs) var(--space-sm);
-  border-radius: var(--radius-pill);
-  font-size: var(--font-label);
-  line-height: 1;
-  white-space: nowrap;
-  transform: translateX(-50%);
 }
 
 /* 柱とサイドバーを包む要素。外側を押したかの判定にだけ使い、grid の並びには加わらない。 */
@@ -248,7 +227,7 @@
     display: none;
   }
   /* 左の列はこの段では 22vw で頭打ちになり、仕切りの位置に幅が付いてこない。
-     動かせない仕切りと戻す口を見せないよう、列の幅は残して中身だけ隠す。 */
+     動かせない仕切りを見せないよう、列の幅は残して中身だけ隠す。 */
   .layout-divider:not(.layout-divider-sidebar) > * {
     visibility: hidden;
   }

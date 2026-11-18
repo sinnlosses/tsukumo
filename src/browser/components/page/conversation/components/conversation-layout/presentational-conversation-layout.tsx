@@ -11,7 +11,7 @@
 // 中くらいのビューポート幅ではサイドバーを柱に畳む。柱を出すか・サイドバーを重ねるかも CSS が決め、ここは開閉の印（`data-sidebar-open`）を立てるだけ。
 
 import clsx from "clsx"
-import { PanelRightClose, PanelRightOpen, RotateCw } from "lucide-react"
+import { PanelRightClose, PanelRightOpen } from "lucide-react"
 import type { ReactElement, ReactNode } from "react"
 
 import { Button } from "../../../../ui/button/button.tsx"
@@ -42,16 +42,11 @@ type PresentationalConversationLayoutProps = UseConversationLayoutResult & {
 }
 
 /**
- * 比率を戻す口の字。字そのものが見えているピルなので、`aria-label` / `title` は持たない。
- */
-const RESET_SPLIT_LABEL = "比率を既定に戻す"
-
-/**
  * props はここだけ分解して受ける。
  * ref を持つ入れ物を `props.splitters.gridRef` の形で描画中に読むと、lint の `react(refs)` が落ちるため。
  */
 export function PresentationalConversationLayout({
-  splitters: { gridRef, gridStyle, left, sidebar: sidebarSplitter, onReset, moved },
+  splitters: { gridRef, gridStyle, left, sidebar: sidebarSplitter, onReset },
   sidebarDisclosure: {
     rootRef: sideRef,
     id: sidebarId,
@@ -70,22 +65,6 @@ export function PresentationalConversationLayout({
   rail: { badge: railBadge },
   narrowGround,
 }: PresentationalConversationLayoutProps): ReactElement {
-  // 押して消えたあとのフォーカスは動かさず、body へ落ちるのに任せる。
-  // 仕切り `role="separator"` はキー操作を持たないので、そこへ移すと押せないものにフォーカスが残る。
-  const resetButton = (
-    <Button
-      variant="tinted-accent"
-      size="action"
-      pressed="none"
-      disabled={false}
-      disclosure={{ kind: "none" }}
-      className={styles["layout-reset-split"]}
-      onClick={onReset}
-    >
-      <RotateCw size={14} />
-      {RESET_SPLIT_LABEL}
-    </Button>
-  )
   return (
     <div
       className={clsx(styles["layout-grid"], styles["layout-ground"])}
@@ -110,9 +89,9 @@ export function PresentationalConversationLayout({
           toValue={leftPxFromRatio}
           onChange={left.onChange}
           onCommit={left.onCommit}
+          onReset={onReset}
           className=""
         />
-        {moved === "left" && resetButton}
       </div>
       <div className={styles["layout-center"]}>
         <main
@@ -141,9 +120,9 @@ export function PresentationalConversationLayout({
           toValue={sidebarPercentFromRatio}
           onChange={sidebarSplitter.onChange}
           onCommit={sidebarSplitter.onCommit}
+          onReset={onReset}
           className=""
         />
-        {moved === "sidebar" && resetButton}
       </div>
       <div className={styles["layout-side"]} ref={sideRef}>
         <aside
