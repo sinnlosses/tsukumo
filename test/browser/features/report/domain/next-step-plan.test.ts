@@ -62,7 +62,9 @@ describe("buildNextSteps", () => {
     expect(steps.map((step) => step.kind)).toEqual(["resume", "continue", "verify", "alternative"])
     expect(steps[0]).toMatchObject({ draft: "止めたところから再開して。" })
     expect(steps[1]).toMatchObject({
-      label: "続ける: 架空の残り",
+      kindLabel: "続ける",
+      label: "続きを進めて。",
+      note: "架空の残り",
       draft: "続きを進めて。",
     })
     expect(steps[3]).toMatchObject({
@@ -71,6 +73,21 @@ describe("buildNextSteps", () => {
         { name: "架空の案C", draft: "「架空の案C」で進めて。" },
       ],
     })
+  })
+
+  it("どの札も、主の字が押すと入る文の1行目と一致する", () => {
+    const steps = buildNextSteps({
+      unobserved: [],
+      components: [options, claims([claim("inferred", "架空の手順")])],
+      sessionRemaining: { kind: "remaining", text: "架空の残り" },
+      outcome: "stopped",
+    })
+
+    for (const step of steps) {
+      if (step.kind !== "alternative" && step.kind !== "check-result") {
+        expect(step.label).toBe(step.draft.split("\n")[0])
+      }
+    }
   })
 
   it("元の欄が無い種類は出さず、1つも無ければ空になる", () => {
@@ -96,7 +113,8 @@ describe("buildNextSteps", () => {
 
     expect(steps[0]).toMatchObject({
       kind: "continue",
-      label: "続ける: 架空の案A",
+      kindLabel: "続ける",
+      label: "「架空の案A」で進めて。",
       draft: "「架空の案A」で進めて。",
     })
   })
@@ -127,7 +145,11 @@ describe("buildNextSteps", () => {
 
     expect(step).toEqual({
       kind: "verify",
-      label: "確かめる: 2 件",
+      kindLabel: "確かめる: 2 件",
+      label: "次の点を確かめて。",
+      note: ["1. 架空の主張 inferred", "   確かめ方: 架空の手順", "2. 架空の主張 unverified"].join(
+        "\n",
+      ),
       draft: [
         "次の点を確かめて。",
         "1. 架空の主張 inferred",
@@ -143,7 +165,7 @@ describe("buildNextSteps", () => {
         unobserved: [],
         components: [claims([claim(certainty, "手順")])],
         sessionRemaining: none,
-      })[0]?.label
+      }).flatMap((step) => (step.kind === "verify" ? [step.kindLabel] : []))[0]
 
     expect(labelOf("unverified")).toBe("確かめる: 未確認 1 件")
     expect(labelOf("inferred")).toBe("確かめる: 推測 1 件")
@@ -184,7 +206,9 @@ describe("buildNextSteps の確かめていない検証の行", () => {
     expect(steps.map((step) => step.kind)).toEqual(["verify", "check-result", "check-result"])
     expect(steps[0]).toEqual({
       kind: "verify",
-      label: "確かめる: 1 件",
+      kindLabel: "確かめる: 1 件",
+      label: "次の点を確かめて。",
+      note: ["1. 架空の検証3", "   確かめ方: 手順3"].join("\n"),
       draft: ["次の点を確かめて。", "1. 架空の検証3", "   確かめ方: 手順3"].join("\n"),
     })
   })

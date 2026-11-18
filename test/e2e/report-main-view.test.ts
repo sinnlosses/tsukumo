@@ -165,7 +165,7 @@ test.describe("report → メインビュー", () => {
     })
 
     await room.waitForEvent("turn-finished")
-    const button = room.page.getByRole("button", { name: "続ける: 案Aの移行の手順を書く" })
+    const button = room.page.getByRole("button", { name: /^続ける 案Aの移行の手順を書いて。/ })
     await button.waitFor()
     await button.click()
 

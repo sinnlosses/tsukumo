@@ -1,4 +1,4 @@
-/* レポート末尾の次の一手の行。ボタンを横に並べ、字は1行に収めてはみ出す分は省略記号で切る。 */
+/* レポート末尾の次の一手の行。ボタンを横に並べ、字は切らずに折り返して全部出す。 */
 .next-step {
   display: flex;
   flex-direction: column;
@@ -19,10 +19,13 @@
   font-size: var(--font-secondary);
 }
 .next-step-button {
+  height: auto;
   min-height: 1.75rem;
   max-width: 100%;
   padding: var(--inset-control);
   border-radius: var(--radius-pill);
+  white-space: normal;
+  text-align: left;
 }
 .next-step-check {
   display: inline-flex;
@@ -33,7 +36,15 @@
 }
 .next-step-label {
   display: block;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.next-step-kind {
+  color: var(--ink-soft);
+  font-size: var(--font-secondary);
+}
+.next-step-extra {
+  display: block;
+  color: var(--ink-soft);
+  font-size: var(--font-secondary);
 }

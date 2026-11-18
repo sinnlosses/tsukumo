@@ -41,6 +41,7 @@ export function NextStepRow(props: {
         <span className={styles["next-step-title"]} aria-hidden="true">
           次の一手
         </span>
+        <span className={styles["next-step-note"]}>押すと、入力欄に下書きが入る（送らない）</span>
         {steps.map((step, index) =>
           step.kind === "check-result" ? (
             <span
@@ -49,9 +50,7 @@ export function NextStepRow(props: {
               aria-label={step.label}
               className={styles["next-step-check"]}
             >
-              <span className={styles["next-step-label"]} title={step.label}>
-                {step.label}
-              </span>
+              <span className={styles["next-step-label"]}>{step.label}</span>
               {[
                 { name: "確かめた", draft: step.confirmedDraft },
                 { name: "違った", draft: step.mismatchDraft },
@@ -63,11 +62,10 @@ export function NextStepRow(props: {
                   pressed="none"
                   disabled={false}
                   disclosure={{ kind: "none" }}
-                  title={draft}
                   className={styles["next-step-button"]}
                   onClick={() => port.appendDraft(draft)}
                 >
-                  <span className={styles["next-step-label"]}>{name}</span>
+                  <NextStepLabel kindLabel={name} label={draft} note="" />
                 </Button>
               ))}
             </span>
@@ -83,18 +81,20 @@ export function NextStepRow(props: {
                   ? { kind: "expander", expanded: choosing }
                   : { kind: "none" }
               }
-              title={step.label}
               className={styles["next-step-button"]}
               onClick={() => pressed(step, port.appendDraft, () => setChoosing(!choosing))}
             >
-              <span className={styles["next-step-label"]}>
-                {step.label}
-                {step.kind === "alternative" && <span aria-hidden="true">…</span>}
-              </span>
+              {step.kind === "alternative" ? (
+                <span className={styles["next-step-label"]}>
+                  {step.kindLabel}
+                  <span aria-hidden="true">…</span>
+                </span>
+              ) : (
+                <NextStepLabel kindLabel={step.kindLabel} label={step.label} note={step.note} />
+              )}
             </Button>
           ),
         )}
-        <span className={styles["next-step-note"]}>押すと、入力欄に下書きが入る（送らない）</span>
       </div>
       {choosing && alternative?.kind === "alternative" && (
         <div role="group" aria-label="別の案" className={styles["next-step-row"]}>
@@ -106,19 +106,32 @@ export function NextStepRow(props: {
               pressed="none"
               disabled={false}
               disclosure={{ kind: "none" }}
-              title={option.name}
               className={styles["next-step-button"]}
               onClick={() => {
                 port.appendDraft(option.draft)
                 setChoosing(false)
               }}
             >
-              <span className={styles["next-step-label"]}>{option.name}</span>
+              <NextStepLabel kindLabel={option.name} label={option.draft} note="" />
             </Button>
           ))}
         </div>
       )}
     </div>
+  )
+}
+
+/** 種類の語・主の字（押すと入る文の1行目）・添え書きを、切らずに折り返して出す。 */
+function NextStepLabel(props: {
+  readonly kindLabel: string
+  readonly label: string
+  readonly note: string
+}): ReactElement {
+  return (
+    <span className={styles["next-step-label"]}>
+      <span className={styles["next-step-kind"]}>{props.kindLabel}</span> <span>{props.label}</span>
+      {props.note !== "" && <span className={styles["next-step-extra"]}>{props.note}</span>}
+    </span>
   )
 }
 

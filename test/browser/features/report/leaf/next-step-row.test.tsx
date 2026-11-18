@@ -77,18 +77,47 @@ describe("NextStepRow", () => {
     renderRow(true)
 
     expect(screen.getAllByRole("button").map((button) => button.textContent)).toEqual([
-      "再開する",
-      "続ける: 架空の案A",
-      "確かめる: 推測 1 件",
+      "再開する 止めたところから再開して。",
+      "続ける 「架空の案A」で進めて。",
+      "確かめる: 推測 1 件 次の点を確かめて。1. 架空の主張\n   確かめ方: 架空の手順",
       "別の案で進める…",
     ])
+  })
+
+  it("長い下書きでも札の主の字は下書きと一致し、切り詰めない", () => {
+    const longName = "架空の長い案の名前".repeat(12)
+    const components: readonly A2uiReportComponent[] = [
+      {
+        id: "options-1",
+        component: "Options",
+        title: "架空の比べ",
+        items: [{ name: longName, verdict: "adopt", reason: "理由" }],
+        fold: "",
+        aside: "",
+      },
+    ]
+    const port = {
+      appendDraft: useComposerDraft.getState().appendParagraphToDraft,
+      prependDraft: useComposerDraft.getState().prependToDraft,
+      ask: () => Promise.resolve(),
+    }
+    render(
+      <ReplyPortContext value={{ kind: "open", port }}>
+        <NextStepRow origin={ORIGIN} components={components} checks={{ kind: "none" }} />
+      </ReplyPortContext>,
+    )
+
+    const button = screen.getByRole("button", { name: /^続ける/ })
+
+    expect(button.textContent).toBe(`続ける 「${longName}」で進めて。`)
+    expect(button.textContent).not.toContain("…")
   })
 
   it("押すと下書きが入るだけで、入力欄に字があれば空行を挟んで後ろに足す", () => {
     useComposerDraft.getState().replaceDraft({ text: "打ちかけ", caret: 4 })
     renderRow(true)
 
-    fireEvent.click(screen.getByRole("button", { name: "再開する" }))
+    fireEvent.click(screen.getByRole("button", { name: /^再開する/ }))
 
     expect(useComposerDraft.getState().draft.text).toBe("打ちかけ\n\n止めたところから再開して。")
   })
@@ -98,7 +127,7 @@ describe("NextStepRow", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "別の案で進める" }))
     expect(useComposerDraft.getState().draft.text).toBe("")
-    fireEvent.click(screen.getByRole("button", { name: "架空の案B" }))
+    fireEvent.click(screen.getByRole("button", { name: /^架空の案B/ }))
 
     expect(useComposerDraft.getState().draft.text).toBe("「架空の案B」で進めて。")
   })
@@ -106,19 +135,19 @@ describe("NextStepRow", () => {
   it("確かめていない検証の行から確かめた・違ったの対が出て、押すと下書きが入る", () => {
     renderRow(true, CHECKS)
 
-    fireEvent.click(screen.getByRole("button", { name: "違った" }))
+    fireEvent.click(screen.getByRole("button", { name: /^違った/ }))
 
-    expect(screen.getAllByRole("button", { name: "確かめた" })).toHaveLength(1)
+    expect(screen.getAllByRole("button", { name: /^確かめた/ })).toHaveLength(1)
     expect(useComposerDraft.getState().draft.text).toBe("「架空の検証」を確かめたら、違っていた。")
   })
 
-  it("行の末尾に、押しても送らない案内が出て、押すと下書きが入るだけ", () => {
+  it("行の頭に、押しても送らない案内が出て、押すと下書きが入るだけ", () => {
     renderRow(true)
     const group = screen.getByRole("group", { name: "次の一手" })
 
-    expect(group.lastElementChild?.textContent).toBe("押すと、入力欄に下書きが入る（送らない）")
+    expect(group.children[1]?.textContent).toBe("押すと、入力欄に下書きが入る（送らない）")
 
-    fireEvent.click(screen.getByRole("button", { name: "再開する" }))
+    fireEvent.click(screen.getByRole("button", { name: /^再開する/ }))
 
     expect(useComposerDraft.getState().draft.text).toBe("止めたところから再開して。")
   })

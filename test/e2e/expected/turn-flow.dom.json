@@ -1403,6 +1403,7 @@
                                                     "次の一手"
                                                   ]
                                                 },
+                                                "押すと、入力欄に下書きが入る（送らない）",
                                                 {
                                                   "tag": "span",
                                                   "attributes": {
@@ -1418,11 +1419,12 @@
                                                         "data-size": "sm",
                                                         "data-elevation": "none",
                                                         "data-astryx-pressable": "",
-                                                        "aria-label": "確かめた",
+                                                        "aria-label": "",
                                                         "type": "button"
                                                       },
                                                       "children": [
                                                         "確かめた",
+                                                        "「狭いビューポートでの見た目」を確かめた。問題なかった。",
                                                         {
                                                           "tag": "span",
                                                           "attributes": {
@@ -1439,11 +1441,12 @@
                                                         "data-size": "sm",
                                                         "data-elevation": "none",
                                                         "data-astryx-pressable": "",
-                                                        "aria-label": "違った",
+                                                        "aria-label": "",
                                                         "type": "button"
                                                       },
                                                       "children": [
                                                         "違った",
+                                                        "「狭いビューポートでの見た目」を確かめたら、違っていた。",
                                                         {
                                                           "tag": "span",
                                                           "attributes": {
@@ -1454,8 +1457,7 @@
                                                       ]
                                                     }
                                                   ]
-                                                },
-                                                "押すと、入力欄に下書きが入る（送らない）"
+                                                }
                                               ]
                                             }
                                           ]

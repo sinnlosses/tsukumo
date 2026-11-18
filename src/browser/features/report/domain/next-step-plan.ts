@@ -24,16 +24,19 @@ const MAX_CHECK_RESULT_ROWS = 2
 /**
  * `alternative` は押すと案を選ぶ欄を開き、選んだ案の下書きを入れる。
  * `check-result` は「確かめた」「違った」の対で、押すとそれぞれの下書きを入れる。ほかは押すとそのまま `draft` を入れる。
+ * 札の字は `kindLabel`（種類の語）・`label`（主の字。`draft` の1行目）・`note`（添え書き。下書きの2行目以降、または続ける対象）。
  */
 export type NextStep =
   | {
       readonly kind: "resume" | "continue" | "verify"
+      readonly kindLabel: string
       readonly label: string
+      readonly note: string
       readonly draft: string
     }
   | {
       readonly kind: "alternative"
-      readonly label: string
+      readonly kindLabel: string
       readonly alternatives: readonly NextStepAlternative[]
     }
   | {
@@ -71,7 +74,7 @@ export function buildNextSteps(source: NextStepSource): readonly NextStep[] {
   const steps: NextStep[] = []
 
   if (source.outcome === "stopped") {
-    steps.push({ kind: "resume", label: "再開する", draft: "止めたところから再開して。" })
+    steps.push(draftStep("resume", "再開する", "止めたところから再開して。", ""))
   }
 
   if (favorOptionsOf(source.components).length === 0) {
@@ -98,11 +101,9 @@ export function buildNextSteps(source: NextStepSource): readonly NextStep[] {
       const how = line.how.trim()
       return how === "" ? [head] : [head, `   確かめ方: ${how}`]
     })
-    steps.push({
-      kind: "verify",
-      label: `確かめる: ${count}`,
-      draft: ["次の点を確かめて。", ...lines].join("\n"),
-    })
+    steps.push(
+      draftStep("verify", `確かめる: ${count}`, ["次の点を確かめて。", ...lines].join("\n"), ""),
+    )
   }
 
   for (const row of source.unobserved.slice(0, MAX_CHECK_RESULT_ROWS)) {
@@ -118,7 +119,11 @@ export function buildNextSteps(source: NextStepSource): readonly NextStep[] {
     .filter((item) => item.verdict !== "adopt")
     .map((item) => ({ name: item.name, draft: `${quoted(item.name)}で進めて。` }))
   if (alternatives.length > 0) {
-    steps.push({ kind: "alternative", label: "別の案で進める", alternatives })
+    steps.push({
+      kind: "alternative",
+      kindLabel: "別の案で進める",
+      alternatives,
+    })
   }
 
   return steps
@@ -137,17 +142,27 @@ function continueStepsOf(
   if (remainingText !== "") {
     const request = remaining.kind === "remaining" ? (remaining.request?.trim() ?? "") : ""
     return [
-      {
-        kind: "continue",
-        label: `続ける: ${remainingText}`,
-        draft: request === "" ? "続きを進めて。" : request,
-      },
+      draftStep(
+        "continue",
+        "続ける",
+        request === "" ? "続きを進めて。" : request,
+        request === "" ? remainingText : "",
+      ),
     ]
   }
   const adopted = options.find((item) => item.verdict === "adopt")?.name.trim() ?? ""
-  return adopted === ""
-    ? []
-    : [{ kind: "continue", label: `続ける: ${adopted}`, draft: `${quoted(adopted)}で進めて。` }]
+  return adopted === "" ? [] : [draftStep("continue", "続ける", `${quoted(adopted)}で進めて。`, "")]
+}
+
+/** 主の字は下書きの1行目、2行目以降は添え書きの頭に回す。`extra` は続ける対象など、下書きの外から足す添え書き。 */
+function draftStep(
+  kind: "resume" | "continue" | "verify",
+  kindLabel: string,
+  draft: string,
+  extra: string,
+): NextStep {
+  const [head = "", ...rest] = draft.split("\n")
+  return { kind, kindLabel, label: head, note: [...rest, extra].filter(Boolean).join("\n"), draft }
 }
 
 /** 名前を依頼の文の中に置くときの括り。名前の中の空白や読点で、文の切れ目が分からなくならないようにする。 */
