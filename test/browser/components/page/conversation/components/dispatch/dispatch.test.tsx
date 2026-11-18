@@ -9,6 +9,7 @@ import {
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../../../../../../src/shared/session/session-state.ts"
+import { requestRecord, workPlanRecord } from "../../../../../../fixture/session-record.ts"
 import { createTestQueryClient } from "../../../../../query-client.tsx"
 import { putSession } from "../../../../../session-store.ts"
 
@@ -47,5 +48,33 @@ describe("Dispatch", () => {
     })
 
     expect(document.title).toBe("● tsukumo")
+  })
+
+  it("作業中でワークプランがあれば、印の後ろに位置と今のフェーズの名前を足す", () => {
+    document.title = "tsukumo"
+    renderDispatch({
+      turn: { kind: "running", startedAt: 0 },
+      records: [requestRecord(), workPlanRecord({ current: 1 })],
+    })
+
+    expect(document.title).toBe("… 2/2 架空の段B · tsukumo")
+  })
+
+  it("ワークプランの無い作業中は印だけ", () => {
+    document.title = "tsukumo"
+    renderDispatch({ turn: { kind: "running", startedAt: 0 }, records: [requestRecord()] })
+
+    expect(document.title).toBe("… tsukumo")
+  })
+
+  it("雑談モードでは位置もフェーズの名前も足さない", () => {
+    document.title = "tsukumo"
+    renderDispatch({
+      chatMode: true,
+      turn: { kind: "running", startedAt: 0 },
+      records: [requestRecord(), workPlanRecord({ current: 1 })],
+    })
+
+    expect(document.title).toBe("tsukumo")
   })
 })

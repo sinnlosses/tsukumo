@@ -1,7 +1,10 @@
 // タブの題の頭に付ける状態の印。最新のやり取りの結果と、ページが隠れているあいだに終わったかから決める。
+// 作業中だけは印の後ろに、位置と今のフェーズの名前（「2/4 名前」）を足す。
 
+import { currentPhaseOf, type LatestWorkPlan } from "../../../../../shared/session/work-plan.ts"
 import { TURN_RESULT_MARKS } from "./turn-result-mark.ts"
 import type { TurnResult } from "./turn-result.ts"
+import { workSegmentsOf } from "./work-segment.ts"
 
 /** 答え待ち（お伺いがある）の印。やり取りの結果の印「?」とは別で、前から変わらない。 */
 const PENDING_MARK = "●"
@@ -45,7 +48,30 @@ export function endedWhileHiddenOf(
   return hidden && wasOpen && (next === "done" || next === "stopped")
 }
 
-/** 題を組む。印が空なら元の題のまま。 */
-export function tabTitleOf(originalTitle: string, mark: string): string {
-  return mark === "" ? originalTitle : `${mark} ${originalTitle}`
+/**
+ * 作業中の題に足す「2/4 今のフェーズの名前」。足さないときは空。
+ * 作業中（答え待ちでない）でワークプランがあり、今のフェーズがあるときだけ。位置はプログレスバーと同じ区間の数え方。
+ */
+export function tabTitleProgressOf(input: {
+  readonly pendingActive: boolean
+  readonly newestResult: TurnResult
+  readonly plan: LatestWorkPlan
+}): string {
+  if (input.pendingActive || input.newestResult !== "working") {
+    return ""
+  }
+  const phase = currentPhaseOf(input.plan)
+  const { position } = workSegmentsOf(input.plan, { asking: false, finished: false })
+  if (phase.kind !== "phase" || position.kind !== "shown") {
+    return ""
+  }
+  return `${position.text} ${phase.name}`
+}
+
+/** 題を組む。印が空なら元の題のまま。足す文があれば印と元の題のあいだに「 · 」で挟む。 */
+export function tabTitleOf(originalTitle: string, mark: string, progress = ""): string {
+  if (mark === "") {
+    return originalTitle
+  }
+  return progress === "" ? `${mark} ${originalTitle}` : `${mark} ${progress} · ${originalTitle}`
 }

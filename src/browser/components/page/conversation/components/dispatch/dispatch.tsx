@@ -4,19 +4,29 @@
 import { useState, type ReactElement } from "react"
 
 import { conversationMoment } from "../../../../../../shared/session/conversation-moment.ts"
+import type { LatestWorkPlan } from "../../../../../../shared/session/work-plan.ts"
 import { useExternalSync } from "../../../../../hooks/use-external-sync.ts"
+import { useCurrentTurnSteps } from "../../../../../stores/current-turn-step-list.ts"
 import { useMainViewTurns } from "../../../../../stores/main-view-turn.ts"
 import { useSession } from "../../../../../stores/session.ts"
 import { VStack } from "../../../../ui/v-stack/v-stack.tsx"
-import { endedWhileHiddenOf, tabTitleMarkOf, tabTitleOf } from "../../domain/tab-title-mark.ts"
+import {
+  endedWhileHiddenOf,
+  tabTitleMarkOf,
+  tabTitleOf,
+  tabTitleProgressOf,
+} from "../../domain/tab-title-mark.ts"
 import { turnResultsOf } from "../../domain/turn-result.ts"
 import { Composer } from "./composer.tsx"
 import styles from "./dispatch.module.css"
+
+const NO_PLAN = { kind: "none" } as const satisfies LatestWorkPlan
 
 export function Dispatch(): ReactElement {
   const pendingActive = useSession((session) => session.state.pending.length > 0)
   const turns = useMainViewTurns()
   const moment = useSession((session) => conversationMoment(session.state))
+  const turnStepList = useCurrentTurnSteps()
   const chatMode = useSession((session) => session.state.chatMode)
   // 雑談モードは答え待ちの印だけ。
   const newestResult = chatMode ? "no-report" : (turnResultsOf(turns, moment).at(-1) ?? "no-report")
@@ -44,12 +54,19 @@ export function Dispatch(): ReactElement {
     }
   }, [])
 
+  const progress = tabTitleProgressOf({
+    pendingActive,
+    newestResult,
+    plan: turnStepList.kind === "turn" ? turnStepList.plan : NO_PLAN,
+  })
+
   useExternalSync(() => {
     document.title = tabTitleOf(
       originalTitle,
       tabTitleMarkOf({ pendingActive, newestResult, endedWhileHidden }),
+      progress,
     )
-  }, [pendingActive, newestResult, endedWhileHidden, originalTitle])
+  }, [pendingActive, newestResult, endedWhileHidden, originalTitle, progress])
 
   return (
     <VStack

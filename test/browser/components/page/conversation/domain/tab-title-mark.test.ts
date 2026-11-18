@@ -4,7 +4,9 @@ import {
   endedWhileHiddenOf,
   tabTitleMarkOf,
   tabTitleOf,
+  tabTitleProgressOf,
 } from "../../../../../../src/browser/components/page/conversation/domain/tab-title-mark.ts"
+import { GROUPED, PHASES, planned } from "../../../../../fixture/work-plan-draft.ts"
 
 describe("tabTitleMarkOf", () => {
   it("答え待ちがあれば、ほかの状態より先に「●」", () => {
@@ -72,5 +74,36 @@ describe("tabTitleOf", () => {
   it("印があれば頭に付け、無ければ元の題", () => {
     expect(tabTitleOf("題", "…")).toBe("… 題")
     expect(tabTitleOf("題", "")).toBe("題")
+  })
+
+  it("足す文があれば印と元の題のあいだに挟み、印が無ければ足さない", () => {
+    expect(tabTitleOf("題", "…", "2/4 名前")).toBe("… 2/4 名前 · 題")
+    expect(tabTitleOf("題", "", "2/4 名前")).toBe("題")
+  })
+})
+
+describe("tabTitleProgressOf", () => {
+  const working = { pendingActive: false, newestResult: "working" } as const
+
+  it("作業中でワークプランがあれば、位置と今のフェーズの名前", () => {
+    expect(tabTitleProgressOf({ ...working, plan: planned(PHASES, 1) })).toBe("2/3 架空の段B")
+  })
+
+  it("並列のフェーズは、区間で数えた位置と名前を「・」でつなぐ", () => {
+    expect(tabTitleProgressOf({ ...working, plan: planned(GROUPED, 1) })).toBe(
+      "2/3 架空の段B・架空の段C",
+    )
+  })
+
+  it("ワークプランが無い作業中は空", () => {
+    expect(tabTitleProgressOf({ ...working, plan: { kind: "none" } })).toBe("")
+  })
+
+  it("答え待ち・失敗・完了・止めた・答え無しは空", () => {
+    const plan = planned(PHASES, 1)
+    expect(tabTitleProgressOf({ ...working, pendingActive: true, plan })).toBe("")
+    for (const newestResult of ["failed", "done", "stopped", "no-report"] as const) {
+      expect(tabTitleProgressOf({ pendingActive: false, newestResult, plan })).toBe("")
+    }
   })
 })
