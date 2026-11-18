@@ -8,7 +8,8 @@ import type { PairView } from "../domain/pair-view.ts"
 import styles from "../renderer/report-notation.module.css"
 import { PairViewContext } from "./pair-view-context.ts"
 
-const CHOICES = ["side", "after", "before"] as const satisfies readonly PairView[]
+/** 図の左右（前が左・後が右）と同じ順に並べる。 */
+const CHOICES = ["side", "before", "after"] as const satisfies readonly PairView[]
 
 export function PairViewSwitch(): ReactElement {
   const { view, setView, labels } = use(PairViewContext)

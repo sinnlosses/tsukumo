@@ -185,13 +185,18 @@
     justify-content: center;
   }
   & .report-captioned.report-compare-swap .report-compare-swap-thumb {
+    min-height: 24px;
+    /* Button は大きさごとに高さを決め打つので、絵と札の2段が入る高さに戻す。 */
+    height: auto;
+    padding: var(--space-xs);
+    border-radius: var(--radius-md);
+  }
+  /* Button は中身を内側の span で包むので、縦の並びはその span に掛ける。 */
+  & .report-captioned.report-compare-swap .report-compare-swap-thumb > span > span {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: var(--space-xs);
-    min-height: 24px;
-    padding: var(--space-xs);
-    border-radius: var(--radius-md);
   }
   & .report-captioned.report-compare-swap .report-compare-swap-thumb img {
     display: block;
@@ -210,6 +215,9 @@
   }
   & .report-captioned.report-compare-swap[data-view="switch"] .report-compare-figure-side {
     grid-area: 1 / 1;
+    /* 側を画像の幅に縮めて中央に置く（列いっぱいだと札だけ左端に離れる）。 */
+    justify-self: center;
+    max-width: 100%;
     opacity: 0;
     visibility: hidden;
   }

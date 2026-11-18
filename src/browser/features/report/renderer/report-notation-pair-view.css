@@ -16,6 +16,12 @@
     border-radius: var(--radius-md);
     white-space: nowrap;
   }
+  /* 画像の前後の題に切り替えを添えるときは、題を中央に置き、切り替えをその下の中央に置く。 */
+  & .report-captioned.report-compare-swap > .report-caption:has(> .report-pair-switch) {
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+  }
   /* 「後だけ」「前だけ」の対は選んだ側の1枚だけ（矢印も無い）。3列の格子のままだと1枚が3分の1の幅になる。 */
   & .report-compare-figure:has(> .report-compare-figure-side:only-child) {
     grid-template-columns: minmax(0, 1fr);
