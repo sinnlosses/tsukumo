@@ -123,7 +123,9 @@ function CheckLines(props: {
   return (
     <>
       {verification.kind === "checked" && <StageTags stages={verification.stages} />}
-      {rows !== undefined && band !== undefined && <ChecksTotalLine summary={rows.summary} />}
+      {rows !== undefined && band !== undefined && (
+        <ChecksTotalLine summary={rows.summary} leadWord={false} />
+      )}
       <div className={hasStages || band !== undefined ? styles["check-rest"] : undefined}>
         {passed.map((row, index) => (
           <PassedLine key={`${String(index)}:${row.label}`} row={row} />

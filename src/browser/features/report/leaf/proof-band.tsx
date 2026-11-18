@@ -25,8 +25,15 @@ export const SOURCE_MARK_ATTRIBUTES = {
   "aria-description": FIRST_NOTE_TEXT["report-terms"],
 }
 
-/** 検証のまとめの1行。「確かめたこと n件」「通った a・確かめていない b」「単体 …・E2E …」を字で言う。 */
-export function ChecksTotalLine(props: { readonly summary: Summary }): ReactElement {
+/**
+ * 検証のまとめの1行。「確かめたこと n件」「通った a・確かめていない b」「単体 …・E2E …」を字で言う。
+ * 欄の題「確かめたこと」の中に置くときは leadWord を false にして件数だけにする。
+ */
+export function ChecksTotalLine(props: {
+  readonly summary: Summary
+  readonly leadWord?: boolean
+}): ReactElement {
+  const { leadWord = true } = props
   const { passedCount, figures, problems } = props.summary
   const total = problems.reduce((sum, { count }) => sum + count, passedCount)
   const verdicts = [
@@ -38,7 +45,9 @@ export function ChecksTotalLine(props: { readonly summary: Summary }): ReactElem
   const figureText = figures.map(plainInline).join("・")
   return (
     <div className={styles.total}>
-      <span className={styles["total-lead"]}>{`確かめたこと ${String(total)}件`}</span>
+      <span className={styles["total-lead"]}>
+        {`${leadWord ? "確かめたこと " : ""}${String(total)}件`}
+      </span>
       {verdicts.length > 0 && <span>{verdicts.join("・")}</span>}
       {figureText !== "" && <span className={styles["total-figures"]}>{figureText}</span>}
     </div>

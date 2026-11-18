@@ -3,7 +3,10 @@ import type { ReactElement } from "react"
 import { afterEach, describe, expect, it } from "vitest"
 
 import { reportProofView } from "../../../../../src/browser/features/report/domain/report-proof.ts"
-import { SectionProof } from "../../../../../src/browser/features/report/leaf/proof-band.tsx"
+import {
+  ChecksTotalLine,
+  SectionProof,
+} from "../../../../../src/browser/features/report/leaf/proof-band.tsx"
 import { HeadRegion } from "../../../../../src/browser/features/report/leaf/report-head-region.tsx"
 import type {
   ReportCheckPassedRow,
@@ -90,9 +93,27 @@ describe("検証のまとめ", () => {
 
     expect(screen.queryByRole("img")).toBeNull()
     expect(container.querySelector("[data-proof]")).toBeNull()
-    expect(screen.getByText("確かめたこと 2件")).toBeTruthy()
+    expect(screen.getByText("2件")).toBeTruthy()
+    expect(container.textContent?.split("確かめたこと").length).toBe(2)
     expect(screen.getByText("通った 1・落ちた 1")).toBeTruthy()
     expect(screen.getByText("単体 12・E2E 3")).toBeTruthy()
+  })
+
+  it("欄の題の中に置く形は、語を外して件数だけから始める", () => {
+    const summary = {
+      passedCount: 1,
+      figures: [],
+      problems: [{ status: "ng", count: 1 }],
+      favor: { kind: "none" },
+    } as const
+    const { rerender } = render(<ChecksTotalLine summary={summary} leadWord={false} />)
+
+    expect(screen.getByText("2件")).toBeTruthy()
+    expect(screen.queryByText("確かめたこと 2件")).toBeNull()
+
+    rerender(<ChecksTotalLine summary={summary} />)
+
+    expect(screen.getByText("確かめたこと 2件")).toBeTruthy()
   })
 
   it("節の印は、落ちたは状態の印、記録ありは回数つきの線の印になる", () => {
