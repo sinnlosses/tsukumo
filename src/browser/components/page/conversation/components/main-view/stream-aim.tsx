@@ -17,15 +17,14 @@ const STAGE_SELECTOR = "[data-character-stage]"
 const PORTRAIT_SELECTOR = `${STAGE_SELECTOR} [data-expression]`
 const SCROLLER_SELECTOR = "[data-main-view]"
 const VOICE_SLOT_SELECTOR = "[data-voice-slot]"
-/** 吹き出しの縁の太さ（px）。尾の座標は縁の外枠から 1px 外を原点にする（`.stream-aim` の `inset: -1px`）。 */
+/** 吹き出しの縁の太さ（px）。尾の描く面は縁の外枠と重なる（`.stream-aim`）ので、地の階調はこの座標で縁の内側に掛かる。 */
 const BORDER_WIDTH = 1
 
 export function StreamAim(): ReactElement {
   const svgRef = useRef<SVGSVGElement>(null)
   const fillId = useId()
   const faceAt = useSession((session) => session.state.character?.faceAt)
-  const [path, setPath] = useState("")
-  const [bubbleHeight, setBubbleHeight] = useState(0)
+  const [shape, setShape] = useState<TailShape>(NO_TAIL)
 
   useExternalSync(() => {
     const svg = svgRef.current
@@ -33,8 +32,7 @@ export function StreamAim(): ReactElement {
       return undefined
     }
     const aimAgain = (): void => {
-      setPath(measuredPath(svg, faceAt))
-      setBubbleHeight(svg.parentElement?.getBoundingClientRect().height ?? 0)
+      setShape(measuredShape(svg, faceAt))
     }
     aimAgain()
 
@@ -67,39 +65,49 @@ export function StreamAim(): ReactElement {
 
   return (
     <svg ref={svgRef} className={styles["stream-aim"]} aria-hidden="true">
-      {path !== "" && (
+      {shape !== NO_TAIL && (
         <>
-          {/* 吹き出しの地と同じ縦の階調を、地と同じ高さに敷く。
-              地の階調は縁の内側（この座標で上端 2px から下端の縁まで）に掛かるので、根元で地と同じ色になって継ぎ目が出ない。 */}
+          {/* 吹き出しの地と同じ縦の階調を、地と同じ高さ（縁の内側）に敷く。
+              塗りが縁の線を越えて地へ入り込む所で地と同じ色になるので、継ぎ目の線が出ない。 */}
           <linearGradient
             id={fillId}
             gradientUnits="userSpaceOnUse"
             x1="0"
-            y1={BORDER_WIDTH * 2}
+            y1={BORDER_WIDTH}
             x2="0"
-            y2={Math.max(bubbleHeight, BORDER_WIDTH * 2 + 1)}
+            y2={Math.max(shape.bubbleHeight - BORDER_WIDTH, BORDER_WIDTH + 1)}
           >
             <stop offset="0" className={styles["stream-aim-fill-top"]} />
             <stop offset="1" className={styles["stream-aim-fill-bottom"]} />
           </linearGradient>
-          <path d={path} fill={`url(#${fillId})`} />
+          <path className={styles["stream-aim-fill"]} d={shape.fill} fill={`url(#${fillId})`} />
+          <path className={styles["stream-aim-stroke"]} d={shape.stroke} />
         </>
       )}
     </svg>
   )
 }
 
-/** 吹き出し（この尾の親）から立ち絵の顔へ向けた尾の `d`。立ち絵が見えていない（狭い画面など）なら空。 */
-function measuredPath(svg: SVGSVGElement, faceAt?: FaceAt): string {
+type TailShape = {
+  readonly fill: string
+  readonly stroke: string
+  readonly bubbleHeight: number
+}
+
+/** 尾を描かないときの形。 */
+const NO_TAIL: TailShape = { fill: "", stroke: "", bubbleHeight: 0 }
+
+/** 吹き出し（この尾の親）から立ち絵の顔へ向けた尾の形。立ち絵が見えていない（狭い画面など）なら `NO_TAIL`。 */
+function measuredShape(svg: SVGSVGElement, faceAt?: FaceAt): TailShape {
   const bubble = svg.parentElement
   const portrait = document.querySelector(PORTRAIT_SELECTOR)
   const image = portrait?.querySelector("img")
   if (bubble === null || portrait === null || image === null || image === undefined) {
-    return ""
+    return NO_TAIL
   }
   const box = portrait.getBoundingClientRect()
   if (box.width === 0 || box.height === 0) {
-    return ""
+    return NO_TAIL
   }
   const rect = bubble.getBoundingClientRect()
   const face = faceOnScreen({
@@ -108,10 +116,8 @@ function measuredPath(svg: SVGSVGElement, faceAt?: FaceAt): string {
     naturalHeight: image.naturalHeight,
     ...(faceAt === undefined ? {} : { faceAt }),
   })
-  return tailPath(
-    tailAim({ bubble: rect, face, gapBelow: gapBelow(bubble, rect) }),
-    svg.getBoundingClientRect(),
-  )
+  const path = tailPath(tailAim({ bubble: rect, face, gapBelow: gapBelow(bubble, rect) }), rect)
+  return { ...path, bubbleHeight: rect.height }
 }
 
 /** 吹き出しのすぐ下に続く物までの空き（px）。声の定位置は下に入力欄が続くので 0、下に何も無ければ無限大。 */

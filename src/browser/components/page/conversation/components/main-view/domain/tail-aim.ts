@@ -19,6 +19,11 @@ const TOP_MARGIN = 16
 const MIN_GAP_FOR_BOTTOM = 12
 /** 根元の2点を縁の線の内側へ入れる量。塗りで縁の線を覆う（px）。 */
 const BASE_INSET = 1.5
+/**
+ * 塗りだけを根元からさらに吹き出しの内側へ伸ばす量（px）。
+ * 縁の線は端末の画素に寄せて描かれ、吹き出しの位置が端数だと最大で半画素ずれるので、根元の位置ちょうどまでの塗りでは縁の線が細く残る。
+ */
+const FILL_DEPTH = 1.5
 
 export type Point = { readonly x: number; readonly y: number }
 
@@ -67,16 +72,24 @@ export function faceOnScreen(input: {
 }
 
 /**
- * 尾の `path` の `d`。座標は描く面（尾の `svg`）の左上を原点にした局所の座標で、2辺の線（根元の2点から先へ）だけを引く。
- * 原点は吹き出しでなく描く面の左上を渡す（ずれると根元が縁の線を覆いきれず、縁の線が根元に残る）。
+ * 尾の塗りと線の `path` の `d`。座標は吹き出しの左上を原点にした局所の座標。
+ * 線は2辺（根元の2点から先へ）だけを引き、塗りは根元から吹き出しの内側へ `FILL_DEPTH` だけ伸ばして縁の線を覆いきる。
  */
 export function tailPath(
   aim: TailAim,
-  origin: { readonly left: number; readonly top: number },
-): string {
+  bubble: BubbleRect,
+): { readonly fill: string; readonly stroke: string } {
   const local = (point: Point): string =>
-    `${(point.x - origin.left).toFixed(1)} ${(point.y - origin.top).toFixed(1)}`
-  return `M${local(aim.base[0])} L${local(aim.tip)} L${local(aim.base[1])}`
+    `${(point.x - bubble.left).toFixed(1)} ${(point.y - bubble.top).toFixed(1)}`
+  const inward = (point: Point): Point =>
+    aim.side === "left"
+      ? { x: point.x + FILL_DEPTH, y: point.y }
+      : { x: point.x, y: point.y - FILL_DEPTH }
+  const [start, end] = aim.base
+  return {
+    fill: `M${local(inward(start))} L${local(start)} L${local(aim.tip)} L${local(end)} L${local(inward(end))} Z`,
+    stroke: `M${local(start)} L${local(aim.tip)} L${local(end)}`,
+  }
 }
 
 /** 尾を顔へ向ける。顔が横にあるか下の空きが狭いときは左の辺から、そうでなければ下の辺から出す。 */

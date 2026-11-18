@@ -103,7 +103,7 @@
 }
 /* 立ち絵が従っているセリフの尾。吹き出しの縁の外枠と同じ座標で描き、先を立ち絵の顔へ向ける（形は `tailAim`）。
    塗りは吹き出しの地と同じ2色の階調（--entry-fill-top・--entry-fill-bottom は吹き出しから継ぐ）、線は差し色。
-   根元は縁の線の内側に置いて塗りで縁を覆う。 */
+   塗りは根元より少し深く吹き出しの内側まで入れて縁の線を覆い、線は塗りの上に2辺だけ引く。 */
 .stream-aim {
   position: absolute;
   inset: -1px;
@@ -112,7 +112,11 @@
   overflow: visible;
   pointer-events: none;
 }
-.stream-aim path {
+.stream-aim-fill {
+  stroke: none;
+}
+.stream-aim-stroke {
+  fill: none;
   stroke: var(--accent);
   stroke-linejoin: round;
   stroke-width: 1;
