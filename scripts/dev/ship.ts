@@ -42,6 +42,7 @@ import {
   ACCEPTOR_VERDICT_JSON_SCHEMA,
   buildAcceptorPrompt,
   createShipReviewMarks,
+  MAX_REJECTIONS,
   parseAgentDefinition,
   reviewDiff,
   type AcceptorCriteria,
@@ -348,7 +349,7 @@ function describeFailure(
       return `${primaryBranch} を出している作業ツリーに未コミットの変更がある`
     case "review-rejected":
       return [
-        "REVIEW_REJECTED\t受け入れ役が差し戻した。直してコミットし、打ち直す（差し戻しはあと0回）",
+        `REVIEW_REJECTED\t受け入れ役が差し戻した。直してコミットし、打ち直す（差し戻しは ${String(MAX_REJECTIONS)} 回まで）`,
         ...failure.findings.map((finding) => `- ${finding}`),
       ].join("\n")
     case "review-exhausted":

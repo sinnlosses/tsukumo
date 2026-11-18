@@ -13,7 +13,8 @@ const REVIEWED_PATH_PREFIXES = ["src/", "scripts/", "test/"] as const satisfies 
 const ACCEPTED_DIRECTORY = "accepted"
 const REJECTED_DIRECTORY = "rejected"
 const ACCEPTED_MARK_LIFETIME_MS = 30 * 24 * 60 * 60 * 1000
-const MAX_REJECTIONS = 1
+/** 同じ作業を差し戻せる回数。超えた次の不合格は `exhausted` で人に回す。 */
+export const MAX_REJECTIONS = 5
 
 const acceptorVerdictSchema = z.object({
   verdict: z.enum(["pass", "fail"]),

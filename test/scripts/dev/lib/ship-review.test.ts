@@ -7,6 +7,7 @@ import { afterEach, describe, expect, test } from "vitest"
 import {
   buildAcceptorPrompt,
   createShipReviewMarks,
+  MAX_REJECTIONS,
   parseAgentDefinition,
   reviewDiff,
   type ShipReviewDeps,
@@ -85,9 +86,13 @@ describe("reviewDiff", () => {
     expect(acceptorCalls()).toBe(0)
   })
 
-  test("差し戻しのあとにまた通らなければ止まって報告に回す", () => {
+  test("差し戻しが上限の回数に達したあとにまた通らなければ止まって報告に回す", () => {
     const directory = temporaryDirectory()
-    expect(reviewDiff(fakeDeps(CODE_PATHS, () => FAIL_TEXT, directory).deps).kind).toBe("rejected")
+    for (let attempt = 0; attempt < MAX_REJECTIONS; attempt += 1) {
+      expect(reviewDiff(fakeDeps(CODE_PATHS, () => FAIL_TEXT, directory).deps).kind).toBe(
+        "rejected",
+      )
+    }
     expect(reviewDiff(fakeDeps(CODE_PATHS, () => FAIL_TEXT, directory).deps)).toEqual({
       kind: "exhausted",
       findings: [FINDING],
