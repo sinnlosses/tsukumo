@@ -17,6 +17,8 @@ export type StepsPhaseSource = {
   readonly skipped: boolean
   /** そのフェーズの所要。まだ始まっていない・飛ばしたフェーズでは読まれない。 */
   readonly duration: MeasuredTime
+  /** 済んだフェーズのまとめ。ほかは空。 */
+  readonly summary: string
 }
 
 /** 区間1つぶん（フェーズ1つ、または並列のフェーズ）。`spanName` は群の先頭だけ「前」「本」「後」、`parallelLabel` は並列のときだけ「並列 …」。 */
@@ -42,6 +44,10 @@ export type StepsPhaseRow = {
   readonly parallelLabel: string
   /** 「1分40秒」「20秒〜」。まだのフェーズ・飛ばしたフェーズ・測れなかったときは空。 */
   readonly duration: string
+  /** 畳みの1行の計に足すための、測った所要。 */
+  readonly measured: MeasuredTime
+  /** 済んだフェーズのまとめ。済んだフェーズ以外は空。 */
+  readonly summary: string
   readonly groups: readonly CurrentWorkStepGroup[]
   readonly stepCount: number
   readonly open: boolean
@@ -80,6 +86,8 @@ export function stepsPhaseRowsOf(
         spanName: position === 0 ? slot.spanName : "",
         parallelLabel: position === 0 ? slot.parallelLabel : "",
         duration: durationTextOf(phase),
+        measured: phase.duration,
+        summary: phase.state === "done" ? phase.summary : "",
         groups: bare,
         stepCount: bare.reduce((sum, group) => sum + group.steps.length, 0),
         open:
@@ -112,6 +120,7 @@ export function phaseRowSlotOf(
       state: phase.state,
       skipped: phase.skipped,
       duration: (recaps.get(phase.recapKey) ?? UNKNOWN_RECAP).duration,
+      summary: (recaps.get(phase.recapKey) ?? UNKNOWN_RECAP).summary,
     })),
   }
 }

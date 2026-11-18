@@ -3,39 +3,36 @@
 // `aria-live` は付けない。
 
 import clsx from "clsx"
-import type { ReactElement } from "react"
+import type { ReactElement, RefObject } from "react"
 
-import { CurrentWorkBackground } from "../../../../../features/current-work/current-work-background.tsx"
-import { CurrentWorkStepGroup } from "../../../../../features/current-work/current-work-step-group.tsx"
-import {
-  detailBlockClassName,
-  phaseTimesClassName,
-} from "../../../../../features/report/markdown.tsx"
-import { PhaseTimeSummary } from "../../../../../features/report/report.tsx"
 import { Button } from "../../../../ui/button/button.tsx"
-import { Disclosure, DisclosureMark } from "../../../../ui/disclosure/disclosure.tsx"
-import { CheckIcon, CloseIcon } from "../../../../ui/icon/icon.tsx"
+import { CheckIcon, ChevronRightIcon, CloseIcon } from "../../../../ui/icon/icon.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
 import type { WorkStripResult } from "../../domain/turn-result-mark.ts"
-import type { StepsLanding } from "../../stores/work-strip-step-list.ts"
 import { nowStepKeyOf, targetPartsOf, type Doing } from "./domain/now-step-statement.ts"
-import type { StepsPhaseRow } from "./domain/steps-phase-row.ts"
 import type { WorkStripMark } from "./domain/work-strip-status.ts"
-import { useStepsLanding } from "./hooks/use-steps-landing.ts"
 import type { WorkStripNow } from "./hooks/use-work-strip-now.ts"
 import type { WorkStripPhaseDetail } from "./hooks/use-work-strip-phase-detail.ts"
 import type { WorkStripSegmentsModel } from "./hooks/use-work-strip-segment-list.ts"
-import type { WorkStripModel, WorkStripSteps } from "./hooks/use-work-strip.ts"
+import type { WorkStripSteps } from "./hooks/use-work-strip-step-list.ts"
+import type { WorkStripStepsPop } from "./hooks/use-work-strip-steps-pop.ts"
+import type { WorkStripModel } from "./hooks/use-work-strip.ts"
 import styles from "./main-view.module.css"
 import { PresentationalPhaseDetail } from "./presentational-phase-detail.tsx"
+import { PresentationalStepsList } from "./presentational-steps-list.tsx"
+
+/** 「手順」の口が開く全体の詳細の id。 */
+const STEPS_ID = "work-strip-steps"
 
 export function PresentationalWorkStrip(props: {
   readonly strip: WorkStripModel
   readonly now: WorkStripNow
   readonly track: WorkStripSegmentsModel
   readonly phaseDetail: WorkStripPhaseDetail
+  readonly stepsPop: WorkStripStepsPop
 }): ReactElement | undefined {
   const { strip, now, track, phaseDetail } = props
+  const { rootRef, toggleRef } = props.stepsPop
 
   if (strip.kind === "none") {
     return undefined
@@ -89,26 +86,18 @@ export function PresentationalWorkStrip(props: {
         {track.kind === "shown" && track.position.kind === "shown" && (
           <span className={styles["work-strip-position"]}>{track.position.text}</span>
         )}
-        <Text
-          element="span"
-          size="secondary"
-          tone="ink-quiet"
-          weight="inherit"
-          className={styles["work-strip-side"]}
-        >
-          {strip.sideLabel}
-        </Text>
-        <StepsToggle steps={strip.steps} />
-        {track.kind === "shown" && <SegmentTrack track={track} phaseDetail={phaseDetail} />}
+        <div ref={rootRef} className={styles["work-strip-steps-root"]}>
+          <StepsToggle steps={strip.steps} toggleRef={toggleRef} />
+          {strip.steps.list.kind === "open" && (
+            <PresentationalStepsList
+              id={STEPS_ID}
+              steps={strip.steps}
+              landing={strip.steps.list.landing}
+            />
+          )}
+          {track.kind === "shown" && <SegmentTrack track={track} phaseDetail={phaseDetail} />}
+        </div>
       </div>
-      {strip.steps.list.kind === "open" && (
-        <StepsList
-          phaseRows={strip.steps.phaseRows}
-          phaseTimes={strip.steps.phaseTimes}
-          backgroundList={strip.steps.backgroundList}
-          landing={strip.steps.list.landing}
-        />
-      )}
     </section>
   )
 }
@@ -268,88 +257,6 @@ function StateMark(props: {
 }
 
 /**
- * 押すと開く依頼の手順の一覧。ワークプランの全フェーズを1行ずつ並べ、行の下にそのフェーズの手順を置く。
- * 失敗した手順・段を指して開いたときは、その行・区切りへ連れてくる。
- */
-function StepsList(props: {
-  readonly phaseRows: WorkStripSteps["phaseRows"]
-  readonly phaseTimes: WorkStripSteps["phaseTimes"]
-  readonly backgroundList: WorkStripSteps["backgroundList"]
-  readonly landing: StepsLanding
-}): ReactElement {
-  const listRef = useStepsLanding(props.landing)
-  const { rows, rest } = props.phaseRows
-  return (
-    <div ref={listRef} role="region" aria-label="依頼の手順" className={styles["work-strip-steps"]}>
-      <CurrentWorkBackground list={props.backgroundList} runningMark="still" />
-      {rows.length > 0 && (
-        <ol className={styles["work-strip-plan"]}>
-          {rows.map((row) => (
-            <PhaseRow key={row.key} row={row} />
-          ))}
-        </ol>
-      )}
-      {rest.map((group) => (
-        <CurrentWorkStepGroup key={group.key} group={group} runningMark="still" />
-      ))}
-      {props.phaseTimes.kind === "times" && (
-        <div className={clsx(detailBlockClassName, styles["work-strip-phase-times"])}>
-          <div className={phaseTimesClassName("phase-times")}>
-            <PhaseTimeSummary view={props.phaseTimes} />
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
-
-/** フェーズの行。印・名前・所要と、その下の手順（済んだフェーズは畳み、今のフェーズは開く）。これからのフェーズは名前だけ。 */
-function PhaseRow(props: { readonly row: StepsPhaseRow }): ReactElement {
-  const { row } = props
-  return (
-    <li
-      className={styles["work-strip-plan-row"]}
-      data-phase-indexes={String(row.phaseIndex)}
-      data-phase-state={row.state}
-      data-phase-skipped={row.skipped ? "true" : undefined}
-    >
-      <p className={styles["work-strip-plan-head"]}>
-        <span aria-hidden="true" className={styles["work-strip-plan-mark"]}>
-          {row.mark}
-        </span>
-        {row.spanName !== "" && <span className={styles["work-strip-span"]}>{row.spanName}</span>}
-        {row.parallelLabel !== "" && (
-          <span className={styles["work-strip-span"]}>{row.parallelLabel}</span>
-        )}
-        <span className={styles["work-strip-plan-name"]}>
-          {row.name}
-          {row.skipped && "（飛ばした）"}
-        </span>
-        {row.duration !== "" && (
-          <span className={styles["work-strip-plan-time"]}>{row.duration}</span>
-        )}
-      </p>
-      {row.stepCount > 0 && (
-        <Disclosure
-          open={row.open}
-          gap="none"
-          hiddenOnNarrow={false}
-          summaryTone="inherit"
-          summarySize="inherit"
-          className={styles["work-strip-plan-steps"]}
-          summaryClassName=""
-          summary={`手順 ${String(row.stepCount)}`}
-        >
-          {row.groups.map((group) => (
-            <CurrentWorkStepGroup key={group.key} group={group} runningMark="still" />
-          ))}
-        </Disclosure>
-      )}
-    </li>
-  )
-}
-
-/**
  * 帯の下端に沿う、フェーズを等分した区間の並び。区間はそれぞれボタンで、名前は読み上げと `title` で持つ。
  * 押すとその区間の下にフェーズの詳細が重なって出る。区間の並びと詳細は1つの要素で包み、外の押下はその外で数える。
  */
@@ -393,19 +300,36 @@ function SegmentTrack(props: {
   )
 }
 
-function StepsToggle(props: { readonly steps: WorkStripSteps }): ReactElement {
+/** 「手順」の口。山形は閉じていれば下、開いていれば上を向く。 */
+function StepsToggle(props: {
+  readonly steps: WorkStripSteps
+  readonly toggleRef: RefObject<HTMLButtonElement | null>
+}): ReactElement {
+  const open = props.steps.list.kind === "open"
   return (
     <Button
       variant="outline"
       size="secondary"
       pressed="none"
       disabled={false}
-      disclosure={{ kind: "expander", expanded: props.steps.list.kind === "open" }}
+      disclosure={{
+        kind: "popover",
+        popup: "none",
+        ref: props.toggleRef,
+        expanded: open,
+        controls: STEPS_ID,
+      }}
       className={styles["work-strip-toggle"]}
       onClick={props.steps.onToggle}
     >
-      <DisclosureMark open={props.steps.list.kind === "open"} />
-      {props.steps.toggleLabel}
+      手順
+      <span
+        aria-hidden="true"
+        className={styles["work-strip-toggle-mark"]}
+        data-open={String(open)}
+      >
+        <ChevronRightIcon />
+      </span>
     </Button>
   )
 }

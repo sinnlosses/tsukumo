@@ -61,7 +61,7 @@ export function Disclosure(props: DisclosureProps): ReactElement {
 }
 
 /** 開閉の印。読み上げからは外す。`open` はボタンの開閉を写すときだけ渡す（`<details>` の中は CSS が回す）。 */
-export function DisclosureMark(props: { readonly open?: boolean }): ReactElement {
+function DisclosureMark(props: { readonly open?: boolean }): ReactElement {
   return (
     <span
       className={styles["mark"]}

@@ -18,6 +18,7 @@ function phase(index: number, overrides: Partial<StepsPhaseSource> = {}): StepsP
     state: "upcoming",
     skipped: false,
     duration: { kind: "unknown" },
+    summary: "",
     ...overrides,
   }
 }
@@ -98,6 +99,18 @@ describe("stepsPhaseRowsOf", () => {
     )
 
     expect(rows.map((row) => row.open)).toEqual([false, true, true])
+  })
+
+  it("まとめは済んだ行にだけ写る", () => {
+    const { rows } = stepsPhaseRowsOf(
+      [
+        slot([phase(0, { state: "done", summary: "架空のまとめ" })]),
+        slot([phase(1, { state: "current", summary: "架空のまとめ" })]),
+      ],
+      [],
+    )
+
+    expect(rows.map((row) => row.summary)).toEqual(["架空のまとめ", ""])
   })
 
   it("失敗した手順を持つ済んだフェーズは、行き先の行が見えるよう開く", () => {

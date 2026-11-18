@@ -47,7 +47,7 @@ function bashStarted(id: string): SessionEvent {
 }
 
 describe("useWorkStrip（時刻に依るもの）", () => {
-  it("走っている手順の要約に、その手順が始まってからの秒を添え、右端は依頼からの経過", () => {
+  it("走っている手順の要約に、その手順が始まってからの秒を添え、全体の詳細の下端は依頼からの経過", () => {
     const state = foldTimed([
       [workRequest, START],
       [plan, START + 1_000],
@@ -58,7 +58,7 @@ describe("useWorkStrip（時刻に依るもの）", () => {
 
     expect(strip.kind).toBe("working")
     expect(activityTextAt(state, START + 72_000)).toBe("Bash  架空のコマンド · 12秒")
-    expect(strip.kind === "working" && strip.sideLabel).toBe("経過 1分12秒")
+    expect(strip.kind === "working" && strip.steps.footLabel).toBe("経過 1分12秒")
   })
 
   it("答え待ちの秒は、答え待ちが届いた時刻から数える", () => {
@@ -129,7 +129,7 @@ describe("useWorkStrip（時刻に依るもの）", () => {
     expect(strip).toMatchObject({
       kind: "finished",
       headLabel: "できました",
-      sideLabel: "所要 2分05秒",
+      steps: { footLabel: "所要 2分05秒" },
     })
   })
 
@@ -150,7 +150,7 @@ describe("useWorkStrip（時刻に依るもの）", () => {
     expect(strip).toMatchObject({
       kind: "working",
       headLabel: "架空の計画",
-      sideLabel: "経過 5秒",
+      steps: { footLabel: "経過 5秒" },
     })
     expect(segmentsNow().flatMap((segment) => segment.phases.map((phase) => phase.mark))).toEqual([
       "1",
@@ -250,7 +250,7 @@ describe("useWorkStrip（時刻に依るもの）", () => {
     expect(strip).toMatchObject({
       kind: "working",
       headLabel: "架空の段B",
-      sideLabel: "経過 1分12秒",
+      steps: { footLabel: "経過 1分12秒" },
     })
     expect(segmentsNow()).toHaveLength(2)
   })
@@ -314,7 +314,7 @@ describe("useWorkStrip（並列のフェーズ）", () => {
     expect(strip).toMatchObject({
       kind: "working",
       headLabel: "架空の段B・架空の段C",
-      sideLabel: "経過 5秒",
+      steps: { footLabel: "経過 5秒" },
     })
     expect(segmentsNow()).toMatchObject([
       { parallelLabel: "", phases: [{ mark: "✓", state: "done" }] },
@@ -338,7 +338,7 @@ describe("useWorkStrip（並列のフェーズ）", () => {
 
     const strip = stripAt(state, START + 5_000)
 
-    expect(strip).toMatchObject({ headLabel: "架空の段B", sideLabel: "経過 5秒" })
+    expect(strip).toMatchObject({ headLabel: "架空の段B", steps: { footLabel: "経過 5秒" } })
     expect(segmentsNow()[1]).toMatchObject({
       phases: [
         { mark: "2", state: "current" },
@@ -360,7 +360,7 @@ describe("useWorkStrip（並列のフェーズ）", () => {
     expect(stripAt(state, START + 600_000)).toMatchObject({
       kind: "finished",
       headLabel: "できました",
-      sideLabel: "所要 1分00秒",
+      steps: { footLabel: "所要 1分00秒" },
     })
   })
 })
@@ -428,7 +428,7 @@ describe("useWorkStrip（ワークプランが届く前）", () => {
       kind: "working",
       result: "working",
       headLabel: "作業中",
-      sideLabel: "経過 12秒",
+      steps: { footLabel: "経過 12秒" },
     })
   })
 

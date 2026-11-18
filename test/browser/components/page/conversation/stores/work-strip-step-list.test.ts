@@ -40,6 +40,39 @@ describe("useWorkStripSteps のフェーズの詳細", () => {
     expect(afterFailure.kind).toBe("steps")
   })
 
+  it("expandDone・expandSteps で畳みを開き、閉じて開き直すと畳んだ姿に戻る", () => {
+    const state = useWorkStripSteps.getState()
+
+    state.toggle(2)
+    state.expandDone(2)
+    state.expandSteps(2)
+    const expanded = useWorkStripSteps.getState().opened
+    state.closeSteps()
+    state.toggle(2)
+    const reopened = useWorkStripSteps.getState().opened
+    state.expandDone(2)
+    state.openAtFailure(2)
+    const failure = useWorkStripSteps.getState().opened
+
+    expect(expanded).toMatchObject({ kind: "steps", doneExpanded: true, stepsExpanded: true })
+    expect(reopened).toMatchObject({ doneExpanded: false, stepsExpanded: false })
+    expect(failure).toMatchObject({ doneExpanded: false, stepsExpanded: false })
+  })
+
+  it("closeSteps は全体の詳細だけを閉じ、フェーズの詳細は触らない", () => {
+    const state = useWorkStripSteps.getState()
+
+    state.togglePhase(2, "segment-0")
+    state.closeSteps()
+    const phaseKept = useWorkStripSteps.getState().opened.kind
+    state.toggle(2)
+    state.closeSteps()
+    const closed = useWorkStripSteps.getState().opened
+
+    expect(phaseKept).toBe("phase")
+    expect(closed).toEqual({ kind: "closed" })
+  })
+
   it("togglePhase で手順の一覧は閉じ、closePhase は一覧を触らない", () => {
     const state = useWorkStripSteps.getState()
 

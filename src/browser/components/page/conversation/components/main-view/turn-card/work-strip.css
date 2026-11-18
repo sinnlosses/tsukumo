@@ -9,7 +9,7 @@
   border-bottom: 1px solid var(--rule-quiet);
   background: var(--ground);
 }
-/* 広い画面では高さ 40px のカプセルの透ける面（値は `conversation-layout/panel/panel.css`）。開いた手順の一覧を持つあいだは角を丸めすぎない。
+/* 広い画面では高さ 40px のカプセルの透ける面（値は `conversation-layout/panel/panel.css`）。
    帯の中で無限に動くのは、今の区間の線だけ（transform だけを動かす）。 */
 @media (min-width: 761px) {
   .work-strip {
@@ -24,9 +24,6 @@
     box-shadow: var(--panel-lift);
     backdrop-filter: var(--panel-filter);
     --ink-quiet: var(--ink-soft);
-  }
-  .work-strip:has(.work-strip-steps) {
-    border-radius: var(--radius-xl);
   }
 }
 /* 1行目。今の段の名前だけが縮んで末尾を「…」にする（7段でも狭いビューポートでも1行）。 */
@@ -314,11 +311,6 @@
     display: none;
   }
 }
-.work-strip-side {
-  flex: none;
-  font-family: var(--font-mono);
-  white-space: nowrap;
-}
 /* 帯の縁から上下左右に同じだけ内側へ収める低いピル。 */
 /* 下線の区間の押せる高さが下端に重なるので、ボタンを区間より上に重ねて押せるようにする。 */
 .work-strip-toggle {
@@ -341,88 +333,4 @@
   .work-strip-toggle {
     padding-inline: var(--inline-control);
   }
-}
-/* 開いた依頼の手順の一覧。帯の真下に本文を押し下げて開き、高さを超えたら内側で転がす。 */
-.work-strip-steps {
-  max-height: 40dvh;
-  overflow-y: auto;
-  padding-top: var(--space-sm);
-  border-top: 1px solid var(--rule-quiet);
-  font-size: var(--font-secondary);
-}
-/* 一覧の末尾に置く所要時間の計と帯。囲みの class はレポートの帯の規則を借りる。 */
-.work-strip-phase-times {
-  padding-top: var(--stack-group);
-}
-/* フェーズの行の並び。行の下に、そのフェーズの手順を畳みか開きで置く。 */
-.work-strip-plan {
-  display: flex;
-  flex-direction: column;
-  gap: var(--stack-block);
-  margin: 0;
-  padding: 0 var(--inline-control);
-  list-style: none;
-}
-.work-strip-plan-row {
-  display: flex;
-  flex-direction: column;
-  gap: var(--stack-tight);
-}
-.work-strip-plan-head {
-  display: flex;
-  align-items: center;
-  gap: var(--inline-tight);
-  margin: 0;
-  color: var(--ink-quiet);
-}
-.work-strip-plan-mark {
-  display: inline-flex;
-  flex: none;
-  align-items: center;
-  justify-content: center;
-  box-sizing: border-box;
-  width: 1.25rem;
-  height: 1.25rem;
-  border: 1.5px solid var(--rule);
-  border-radius: 50%;
-  font-family: var(--font-mono);
-  font-size: var(--font-label);
-  line-height: 1;
-}
-.work-strip-plan-name {
-  min-width: 0;
-  flex: 1;
-}
-.work-strip-plan-time {
-  flex: none;
-  font-family: var(--font-mono);
-  font-size: var(--font-label);
-}
-.work-strip-plan-row[data-phase-state="done"] .work-strip-plan-mark {
-  border-color: transparent;
-  background: color-mix(in srgb, var(--surface), var(--accent) 30%);
-  color: var(--accent);
-}
-.work-strip-plan-row[data-phase-skipped="true"] .work-strip-plan-mark {
-  border-color: var(--rule);
-  border-style: dashed;
-  background: none;
-  color: var(--ink-quiet);
-}
-.work-strip-plan-row[data-phase-state="current"] .work-strip-plan-head,
-.work-strip-plan-row[data-phase-state="asking"] .work-strip-plan-head {
-  color: var(--ink);
-  font-weight: 700;
-}
-.work-strip-plan-row[data-phase-state="current"] .work-strip-plan-mark {
-  border: 2px solid var(--accent);
-  color: var(--accent);
-}
-.work-strip-plan-row[data-phase-state="asking"] .work-strip-plan-mark {
-  border: 2px solid var(--state-warn);
-  color: var(--state-warn);
-}
-.work-strip-plan-steps {
-  padding-left: var(--inline-group);
-  color: var(--ink-quiet);
 }

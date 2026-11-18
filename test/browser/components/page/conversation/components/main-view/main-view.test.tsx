@@ -1,4 +1,4 @@
-import { act, cleanup, fireEvent, screen, within } from "@testing-library/react"
+import { act, cleanup, screen } from "@testing-library/react"
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { useInquiryDraft } from "../../../../../../../src/browser/components/page/conversation/stores/inquiry-draft.ts"
@@ -23,7 +23,6 @@ import { componentsOfSections } from "../../../../../../fixture/report-event.ts"
 import {
   asideRecord,
   detailRecord,
-  finishedToolStatus,
   reportRecord,
   requestRecord,
   speechRecord,
@@ -257,43 +256,6 @@ describe("MainView（閉じたときの入れ替えとフォーカス）", () =>
 
     expect(shownContent()).toBe("report")
     expect(document.activeElement).toBe(document.body)
-  })
-})
-
-describe("MainView（失敗の表示から帯の手順へ）", () => {
-  it("失敗した手順を見る口を押すと、帯の手順の一覧が開き、失敗の行が1つ出る", () => {
-    renderMainView(
-      [
-        requestRecord({ text: "架空の依頼", turnId: 0 }),
-        workPlanRecord({ phases: ["架空の段A", "架空の段B"], current: 0 }),
-        toolRecord({
-          toolUseId: "fake-ok",
-          status: finishedToolStatus(),
-        }),
-        toolRecord({
-          toolUseId: "fake-failed",
-          status: finishedToolStatus({
-            result: { kind: "failed", output: { head: "架空のエラー出力", omittedLength: 0 } },
-          }),
-        }),
-        { kind: "turn-failure", failure: { kind: "execution-error" } },
-      ],
-      {
-        kind: "finished",
-        startedAt: 0,
-        finishedAt: 100,
-        ending: { kind: "failed", failure: { kind: "execution-error" } },
-      },
-    )
-    expect(screen.queryByRole("region", { name: "依頼の手順" })).toBeNull()
-
-    const block = screen.getByRole("note", { name: "失敗で終わった" })
-    act(() => {
-      fireEvent.click(within(block).getByRole("button", { name: "失敗した手順を見る" }))
-    })
-
-    const steps = screen.getByRole("region", { name: "依頼の手順" })
-    expect(steps.querySelectorAll("[data-step-failed]")).toHaveLength(1)
   })
 })
 

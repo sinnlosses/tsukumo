@@ -90,6 +90,26 @@ export function phaseDetailOf(source: PhaseDetailSource): PhaseDetail {
   }
 }
 
+/** 群の並びの末尾から `count` 手順だけを残す。手順が残らない群は外す。 */
+export function lastStepsOf(
+  groups: readonly CurrentWorkStepGroup[],
+  count: number,
+): readonly CurrentWorkStepGroup[] {
+  let left = count
+  const kept: CurrentWorkStepGroup[] = []
+  for (const group of groups.toReversed()) {
+    if (left === 0) {
+      break
+    }
+    const steps = group.steps.slice(-left)
+    left -= steps.length
+    if (steps.length > 0) {
+      kept.unshift({ ...group, steps })
+    }
+  }
+  return kept
+}
+
 function numberTextOf(number: PhaseNumber): string {
   return number.kind === "numbered" && number.span === "delegated"
     ? `${PHASE_SPAN_NAMES.delegated} ${number.ordinals}`
@@ -107,26 +127,6 @@ function stepsShownOf(
     return []
   }
   return lastStepsOf(groups, RECENT_STEP_COUNT)
-}
-
-/** 群の並びの末尾から `count` 手順だけを残す。手順が残らない群は外す。 */
-function lastStepsOf(
-  groups: readonly CurrentWorkStepGroup[],
-  count: number,
-): readonly CurrentWorkStepGroup[] {
-  let left = count
-  const kept: CurrentWorkStepGroup[] = []
-  for (const group of groups.toReversed()) {
-    if (left === 0) {
-      break
-    }
-    const steps = group.steps.slice(-left)
-    left -= steps.length
-    if (steps.length > 0) {
-      kept.unshift({ ...group, steps })
-    }
-  }
-  return kept
 }
 
 function noteOf(state: WorkSegmentState, previousState: WorkSegmentState | "none"): string {

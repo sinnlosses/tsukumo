@@ -17,11 +17,6 @@ import {
   turnElapsedLabel,
   turnElapsedText,
 } from "../../../../../../domain/turn-elapsed.ts"
-import {
-  currentWorkStepGroups,
-  toBackgroundListView,
-  type CurrentWorkBackgroundList,
-} from "../../../../../../features/current-work/current-work-step.ts"
 import { useNowWhile } from "../../../../../../stores/clock.ts"
 import { useCurrentTurnSteps } from "../../../../../../stores/current-turn-step-list.ts"
 import { useMainViewTurns } from "../../../../../../stores/main-view-turn.ts"
@@ -37,33 +32,16 @@ import type { WorkStripResult } from "../../../domain/turn-result-mark.ts"
 import { turnResultsOf, type TurnResult } from "../../../domain/turn-result.ts"
 import { workSegmentsOf } from "../../../domain/work-segment.ts"
 import { useMainViewContent } from "../../../stores/main-view-content.ts"
-import { type StepsLanding, useWorkStripSteps } from "../../../stores/work-strip-step-list.ts"
-import { phaseRowSlotOf, type StepsPhaseRows, stepsPhaseRowsOf } from "../domain/steps-phase-row.ts"
+import { useWorkStripSteps } from "../../../stores/work-strip-step-list.ts"
 import { type WorkStripMark, workStripStatusOf } from "../domain/work-strip-status.ts"
-
-/** 「手順 n件」の口と、押すと開く依頼の手順の一覧。 */
-export type WorkStripSteps = {
-  /** 「手順 12件」。開閉の印は口の側が付ける。 */
-  readonly toggleLabel: string
-  /** 一覧が開いているか。`landing` は開いた一覧をどこへ連れていくか。 */
-  readonly list:
-    | { readonly kind: "closed" }
-    | { readonly kind: "open"; readonly landing: StepsLanding }
-  readonly onToggle: () => void
-  /** ワークプランの全フェーズの行と、どの行にも付かない手順の群。ワークプランが無ければ行は空。 */
-  readonly phaseRows: StepsPhaseRows
-  /** 済んだ姿のときだけ一覧の末尾に出す、最終レポートの段ごとの所要時間。作業中は `none`。 */
-  readonly phaseTimes: PhaseTimesView
-  /** 実行中の手順と依頼の手順の間に出す「バックグラウンドタスク」の区画。 */
-  readonly backgroundList: CurrentWorkBackgroundList
-}
+import { type WorkStripSteps, workStripStepsOf } from "./use-work-strip-step-list.ts"
 
 /**
- * 帯に出す形。`mark` は状態の印の形、`headLabel` はその右の見出し、`statement` は見出しの右の一文（作業中・バックグラウンドで作業中は空）、`sideLabel` は右端の等幅の字。
+ * 帯に出す形。`mark` は状態の印の形、`headLabel` はその右の見出し、`statement` は見出しの右の一文（作業中・バックグラウンドで作業中は空）。
  *
  * - `none`: 帯ごと出さない（本文が1つも無いまま閉じた依頼と、ワークプランも働きも無いとき）
- * - `working`: 中身が働くあいだ。送った直後から出す。見出しは今の段の名前（ワークプランが届く前は「作業中」）・「経過 6分12秒」
- * - `finished`: 中身がレポートに入れ替わったあと。状態の見出し・「所要 21分49秒」の1行
+ * - `working`: 中身が働くあいだ。送った直後から出す。見出しは今の段の名前（ワークプランが届く前は「作業中」）
+ * - `finished`: 中身がレポートに入れ替わったあと。状態の見出しの1行
  *
  * `result` は状態の印の状態。`working` は作業中・答え待ち・バックグラウンドで作業中（ターンが終わってバックグラウンドタスクだけ残る）、`finished` は完了・答え待ち・止めた・失敗。
  */
@@ -77,7 +55,6 @@ export type WorkStripModel =
       readonly mark: WorkStripMark
       readonly headLabel: string
       readonly statement: string
-      readonly sideLabel: string
       readonly steps: WorkStripSteps
     }
   | {
@@ -87,7 +64,6 @@ export type WorkStripModel =
       readonly mark: WorkStripMark
       readonly headLabel: string
       readonly statement: string
-      readonly sideLabel: string
       readonly steps: WorkStripSteps
     }
 
@@ -105,6 +81,8 @@ export function useWorkStrip(): WorkStripModel {
   const backgroundTasks = useSession((session) => session.state.backgroundTasks)
   const opened = useWorkStripSteps((state) => state.opened)
   const toggle = useWorkStripSteps((state) => state.toggle)
+  const expandDone = useWorkStripSteps((state) => state.expandDone)
+  const expandSteps = useWorkStripSteps((state) => state.expandSteps)
   const turns = useMainViewTurns()
   const moment = useSession((session) => conversationMoment(session.state))
   const plan = turnStepList.kind === "turn" ? turnStepList.plan : NO_PLAN
@@ -138,7 +116,12 @@ export function useWorkStrip(): WorkStripModel {
   const firstPending = pending[0]
   const list: WorkStripSteps["list"] =
     opened.kind === "steps" && opened.exchange === exchange
-      ? { kind: "open", landing: opened.landing }
+      ? {
+          kind: "open",
+          landing: opened.landing,
+          doneExpanded: opened.doneExpanded,
+          stepsExpanded: opened.stepsExpanded,
+        }
       : { kind: "closed" }
   const elapsedWord =
     result === "failed" ? FINISHED_LABEL : turnElapsedLabel(turn, backgroundTasks.length)
@@ -154,21 +137,26 @@ export function useWorkStrip(): WorkStripModel {
     asking: working && firstPending !== undefined,
     finished: !working,
   })
-  const steps: WorkStripSteps = {
-    toggleLabel: `手順 ${String(turnStepList.steps.length)}件`,
+  const steps = workStripStepsOf({
     list,
-    onToggle: () => toggle(exchange),
-    phaseRows:
-      list.kind === "open"
-        ? stepsPhaseRowsOf(
-            segments.map((segment) => phaseRowSlotOf(segment, recaps)),
-            currentWorkStepGroups(turnStepList.steps),
-          )
-        : { rows: [], rest: [] },
+    steps: turnStepList.steps,
+    segments,
+    recaps,
+    finished: !working,
     phaseTimes:
       newestTurn === undefined || working ? NO_PHASE_TIMES : finalPhaseTimesOf(newestTurn),
-    backgroundList: toBackgroundListView(backgroundTasks),
-  }
+    backgroundTasks,
+    footLabel: elapsedLabel,
+    onToggle: () => {
+      toggle(exchange)
+    },
+    onExpandDone: () => {
+      expandDone(exchange)
+    },
+    onExpandSteps: () => {
+      expandSteps(exchange)
+    },
+  })
 
   if (!working) {
     return {
@@ -178,7 +166,6 @@ export function useWorkStrip(): WorkStripModel {
       mark: status.mark,
       headLabel: status.heading,
       statement: status.statement,
-      sideLabel: elapsedLabel,
       steps,
     }
   }
@@ -190,7 +177,6 @@ export function useWorkStrip(): WorkStripModel {
     mark: status.mark,
     headLabel: status.heading,
     statement: status.statement,
-    sideLabel: elapsedLabel,
     steps,
   }
 }

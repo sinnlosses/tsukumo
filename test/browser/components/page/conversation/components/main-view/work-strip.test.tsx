@@ -45,7 +45,7 @@ describe("WorkStrip", () => {
       ]),
     )
     render(<WorkStrip />)
-    const toggle = screen.getByRole("button", { name: /^手順 2/ })
+    const toggle = screen.getByRole("button", { name: "手順" })
 
     act(() => {
       fireEvent.click(toggle)
@@ -220,10 +220,18 @@ describe("WorkStrip（フェーズが多いとき）", () => {
     expect(strip().textContent).not.toContain("3/3")
   })
 
-  it("帯の右端の口は「手順 n件」と、何の数かを言う", () => {
+  it("1行には経過の字が無く、開いた一覧の下端に経過を出す", () => {
     renderAt(0, 3)
 
-    expect(screen.getByRole("button", { name: /^手順 \d+件/ })).not.toBeNull()
+    expect(screen.getByRole("button", { name: "手順" })).not.toBeNull()
+    expect(strip().textContent).not.toMatch(/経過|所要/)
+
+    act(() => {
+      fireEvent.click(screen.getByRole("button", { name: "手順" }))
+    })
+
+    const list = screen.getByRole("region", { name: "依頼の手順" })
+    expect(list.lastElementChild?.textContent).toMatch(/^経過 /)
   })
 })
 
@@ -305,6 +313,57 @@ describe("WorkStrip（下線の区間）", () => {
     expect(detail?.textContent).toContain("架空のコマンド toolu_1")
   })
 
+  it("「手順」を押すと全体の詳細が開き、外を押す・Esc・もう一度押すで閉じ、Esc では「手順」へフォーカスが戻る", () => {
+    renderProgressed()
+    const toggle = screen.getByRole("button", { name: "手順" })
+
+    click(toggle)
+    const insideList = screen.getByRole("region", { name: "依頼の手順" })
+    act(() => {
+      fireEvent.pointerDown(insideList)
+    })
+    const keptInside = screen.queryByRole("region", { name: "依頼の手順" })
+    act(() => {
+      fireEvent.pointerDown(document.body)
+    })
+    const closedByOutside = screen.queryByRole("region", { name: "依頼の手順" })
+
+    click(toggle)
+    act(() => {
+      fireEvent.keyDown(document, { key: "Escape" })
+    })
+    const closedByEscape = screen.queryByRole("region", { name: "依頼の手順" })
+    const focus = document.activeElement
+
+    click(toggle)
+    click(toggle)
+
+    expect(keptInside).not.toBeNull()
+    expect(closedByOutside).toBeNull()
+    expect(closedByEscape).toBeNull()
+    expect(focus).toBe(toggle)
+    expect(screen.queryByRole("region", { name: "依頼の手順" })).toBeNull()
+  })
+
+  it("区間を押すと全体の詳細は閉じてフェーズの詳細だけになり、「手順」を押すと逆になる", () => {
+    renderProgressed()
+
+    openSteps()
+    click(dot(/架空の段A/))
+    const afterSegment = [
+      screen.queryByRole("region", { name: "依頼の手順" }),
+      detailOf("架空の段A"),
+    ]
+    openSteps()
+    const afterToggle = [
+      screen.queryByRole("region", { name: "依頼の手順" }),
+      detailOf("架空の段A"),
+    ]
+
+    expect(afterSegment.map((element) => element === null)).toEqual([true, false])
+    expect(afterToggle.map((element) => element === null)).toEqual([false, true])
+  })
+
   it("一覧は全フェーズを順に並べ、済んだ段の手順は畳み、今の段の手順は開き、まだの段は名前だけ", () => {
     renderProgressed()
 
@@ -323,7 +382,8 @@ describe("WorkStrip（下線の区間）", () => {
     const details = rows.map((row) => row.querySelector("details")?.open)
     expect(details).toEqual([false, true, undefined])
     expect(rows[2]?.textContent).toContain("架空の段C")
-    expect(rows[0]?.textContent).not.toContain("架空の段Aのまとめ。")
+    expect(rows[0]?.textContent).toContain("架空の段Aのまとめ。")
+    expect(rows[1]?.textContent).not.toContain("まとめ")
   })
 
   it("飛ばした段の区間は済みで、一覧の行に飛ばした印が付く", () => {
@@ -437,7 +497,6 @@ describe("WorkStrip（所要時間）", () => {
 
     const list = openSteps()
 
-    expect(list.textContent).not.toContain("3 フェーズ")
     expect(list.querySelector("[class*='phase-band']")).toBeNull()
   })
 

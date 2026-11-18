@@ -7,7 +7,7 @@ import { LONG_TOOL_OCCURRENCE, phaseStates, stripOf } from "./work-strip-probe.t
 // 場面 `work-strip-running` の4つ目の手順（長い Bash）が走り出したあと、1つ目の区間が済み、2つ目が今になる。
 
 test.describe("進み具合のフェーズの詳細", () => {
-  test("済んだ区間を押すと詳細が区間の下に重なって出て、外を押すと閉じ、「手順」を押すと一覧に替わる", async ({
+  test("済んだ区間を押すと詳細が区間の下に重なって出て、外を押すと閉じ、「手順」を押すと重なる全体の詳細に替わる", async ({
     run,
   }) => {
     const room = await run.open({

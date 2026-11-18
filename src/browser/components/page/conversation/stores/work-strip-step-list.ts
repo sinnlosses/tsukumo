@@ -18,7 +18,15 @@ export type StepsLanding =
  */
 type WorkStripStepsOpened =
   | { readonly kind: "closed" }
-  | { readonly kind: "steps"; readonly exchange: number; readonly landing: StepsLanding }
+  | {
+      readonly kind: "steps"
+      readonly exchange: number
+      readonly landing: StepsLanding
+      /** 畳んだ「済んだ n フェーズ」を開いたか。閉じると値ごと消える。 */
+      readonly doneExpanded: boolean
+      /** 今のフェーズの手順を全部開いたか。 */
+      readonly stepsExpanded: boolean
+    }
   | { readonly kind: "phase"; readonly exchange: number; readonly segmentKey: string }
 
 type WorkStripStepsState = {
@@ -35,22 +43,30 @@ type WorkStripStepsState = {
   readonly togglePhase: (exchange: number, segmentKey: string) => void
   /** フェーズの詳細を閉じる。手順の一覧は触らない。 */
   readonly closePhase: () => void
+  /** 全体の詳細だけを閉じる。フェーズの詳細は触らない。 */
+  readonly closeSteps: () => void
+  /** 畳んだ「済んだ n フェーズ」を開く。 */
+  readonly expandDone: (exchange: number) => void
+  /** 今のフェーズの手順を全部開く。 */
+  readonly expandSteps: (exchange: number) => void
 }
 
 const TOP = { kind: "top" } as const satisfies StepsLanding
+
+function stepsOpenedOf(exchange: number, landing: StepsLanding): WorkStripStepsOpened {
+  return { kind: "steps", exchange, landing, doneExpanded: false, stepsExpanded: false }
+}
 
 export const useWorkStripSteps = create<WorkStripStepsState>()((set) => ({
   opened: { kind: "closed" },
   landingCount: 0,
   toggle: (exchange) => {
     set((state) => ({
-      opened: isOpenFor(state.opened, exchange)
-        ? { kind: "closed" }
-        : { kind: "steps", exchange, landing: TOP },
+      opened: isOpenFor(state.opened, exchange) ? { kind: "closed" } : stepsOpenedOf(exchange, TOP),
     }))
   },
   openAtTop: (exchange) => {
-    set({ opened: { kind: "steps", exchange, landing: TOP } })
+    set({ opened: stepsOpenedOf(exchange, TOP) })
   },
   openAtFailure: (exchange) => {
     set((state) => landedState(state, exchange, (signal) => ({ kind: "failure", signal })))
@@ -68,6 +84,23 @@ export const useWorkStripSteps = create<WorkStripStepsState>()((set) => ({
   closePhase: () => {
     set((state) => (state.opened.kind === "phase" ? { opened: { kind: "closed" } } : state))
   },
+  closeSteps: () => {
+    set((state) => (state.opened.kind === "steps" ? { opened: { kind: "closed" } } : state))
+  },
+  expandDone: (exchange) => {
+    set((state) =>
+      isOpenFor(state.opened, exchange) && state.opened.kind === "steps"
+        ? { opened: { ...state.opened, doneExpanded: true } }
+        : state,
+    )
+  },
+  expandSteps: (exchange) => {
+    set((state) =>
+      isOpenFor(state.opened, exchange) && state.opened.kind === "steps"
+        ? { opened: { ...state.opened, stepsExpanded: true } }
+        : state,
+    )
+  },
 }))
 
 function landedState(
@@ -76,7 +109,7 @@ function landedState(
   landingOf: (signal: number) => StepsLanding,
 ): Pick<WorkStripStepsState, "opened" | "landingCount"> {
   const landingCount = state.landingCount + 1
-  return { landingCount, opened: { kind: "steps", exchange, landing: landingOf(landingCount) } }
+  return { landingCount, opened: stepsOpenedOf(exchange, landingOf(landingCount)) }
 }
 
 function isOpenFor(opened: WorkStripStepsOpened, exchange: number): boolean {

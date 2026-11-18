@@ -65,6 +65,8 @@ function row(
     spanName: "",
     parallelLabel: "",
     duration,
+    measured: { kind: "unknown" },
+    summary: "",
     groups,
     stepCount: 0,
     open: false,

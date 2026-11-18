@@ -48,6 +48,37 @@ test.describe("進み具合のプログレスバー", () => {
     await expectReadable(room.page)
   })
 
+  test("「手順」を押すと全体の詳細が帯の右端にそろって重なり、流れの頭の位置と帯の高さは動かず、外を押すと閉じる", async ({
+    run,
+  }) => {
+    const room = await run.open({
+      scenario: "work-strip-running",
+      scene: "work-strip-running",
+      viewport: "large",
+      domRoots: ["work-strip"],
+    })
+    const strip = stripOf(room.page)
+    await room.waitForEvent("tool-started", LONG_TOOL_OCCURRENCE)
+    const flowHead = room.page.locator('[data-region="main"] [class*="request-block"]').first()
+    const stripBefore = await boxOf(strip)
+    const flowTopBefore = (await boxOf(flowHead)).top
+
+    await strip.getByRole("button", { name: "手順", exact: true }).click()
+
+    const list = strip.getByRole("region", { name: "依頼の手順" })
+    await expect(list).toBeVisible()
+    const listBox = await boxOf(list)
+    const stripBox = await boxOf(strip)
+    expect(listBox.top).toBeGreaterThanOrEqual(stripBox.bottom)
+    expect(listBox.right).toBeLessThanOrEqual(stripBox.right)
+    expect(stripBox.right - listBox.right).toBeLessThan(24)
+    expect(stripBox.height).toBe(stripBefore.height)
+    expect((await boxOf(flowHead)).top).toBe(flowTopBefore)
+
+    await room.page.mouse.click(stripBox.left + stripBox.width / 2, stripBox.bottom + 400)
+    await expect(list).toHaveCount(0)
+  })
+
   test("1000x800 でも、いまの手順の一文は対象の頭だけが縮み、最後の語と秒が右端で切れない", async ({
     run,
   }) => {
@@ -178,6 +209,27 @@ async function topOf(locator: Locator): Promise<number> {
 
 async function leftOf(locator: Locator): Promise<number> {
   return locator.evaluate((element) => element.getBoundingClientRect().left)
+}
+
+async function boxOf(locator: Locator): Promise<{
+  top: number
+  bottom: number
+  right: number
+  height: number
+  width: number
+  left: number
+}> {
+  return locator.evaluate((element) => {
+    const box = element.getBoundingClientRect()
+    return {
+      top: box.top,
+      bottom: box.bottom,
+      right: box.right,
+      left: box.left,
+      height: box.height,
+      width: box.width,
+    }
+  })
 }
 
 /** 今の区間の線の上を伸びる線（`::after`）の動きの名前。動いていなければ "none"。 */

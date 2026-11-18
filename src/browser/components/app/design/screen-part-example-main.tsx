@@ -3,16 +3,19 @@
 import { createRef } from "react"
 
 import type { PhaseRow } from "../../page/conversation/components/main-view/domain/phase-row.ts"
+import type { StepsPhaseRow } from "../../page/conversation/components/main-view/domain/steps-phase-row.ts"
 import type { WorkStripPhaseDetail } from "../../page/conversation/components/main-view/hooks/use-work-strip-phase-detail.ts"
 import type {
   WorkStripSegmentsModel,
   WorkStripSegmentView,
 } from "../../page/conversation/components/main-view/hooks/use-work-strip-segment-list.ts"
+import type { WorkStripStepsPop } from "../../page/conversation/components/main-view/hooks/use-work-strip-steps-pop.ts"
 import type { WorkStripModel } from "../../page/conversation/components/main-view/hooks/use-work-strip.ts"
 import { PresentationalCurrentStep } from "../../page/conversation/components/main-view/presentational-current-step.tsx"
 import { PresentationalPhaseDetail } from "../../page/conversation/components/main-view/presentational-phase-detail.tsx"
 import { PresentationalPhaseList } from "../../page/conversation/components/main-view/presentational-phase-list.tsx"
 import { PresentationalReportOutline } from "../../page/conversation/components/main-view/presentational-report-outline.tsx"
+import { PresentationalStepsList } from "../../page/conversation/components/main-view/presentational-steps-list.tsx"
 import { PresentationalWorkStrip } from "../../page/conversation/components/main-view/presentational-work-strip.tsx"
 import type { ScreenPartExample } from "./screen-part-example-type.ts"
 
@@ -70,6 +73,11 @@ const CLOSED_PHASE_DETAIL: WorkStripPhaseDetail = {
   place: { left: 0, top: 0 },
 }
 
+const STEPS_POP: WorkStripStepsPop = {
+  rootRef: createRef<HTMLDivElement>(),
+  toggleRef: createRef<HTMLButtonElement>(),
+}
+
 const WORKING_TRACK: WorkStripSegmentsModel = {
   kind: "shown",
   position: { kind: "shown", text: "2/3" },
@@ -93,16 +101,31 @@ const FINISHED_TRACK: WorkStripSegmentsModel = {
 
 const STRIP_BASE = {
   readingLabel: "",
-  sideLabel: "経過 6分12秒",
   steps: {
-    toggleLabel: "手順 12件",
     list: { kind: "closed" },
     onToggle: noop,
-    phaseRows: { rows: [], rest: [] },
+    onExpandDone: noop,
+    onExpandSteps: noop,
+    phaseCountLabel: "",
+    card: [],
+    rest: [],
     phaseTimes: { kind: "none" },
     backgroundList: { kind: "none" },
+    footLabel: "経過 6分12秒",
   },
 } as const
+
+const STEPS_ROW_BASE = {
+  skipped: false,
+  spanName: "",
+  parallelLabel: "",
+  duration: "",
+  measured: { kind: "unknown" },
+  summary: "",
+  groups: [],
+  stepCount: 0,
+  open: false,
+} as const satisfies Partial<StepsPhaseRow>
 
 const WORKING_STRIP: WorkStripModel = {
   ...STRIP_BASE,
@@ -120,7 +143,6 @@ const FINISHED_STRIP: WorkStripModel = {
   mark: "check",
   headLabel: "できました",
   statement: "",
-  sideLabel: "所要 21分49秒",
 }
 
 const OUTLINE_BASE = {
@@ -194,14 +216,60 @@ export const MAIN_VIEW_EXAMPLES: readonly ScreenPartExample[] = [
           now={{ kind: "none" }}
           track={WORKING_TRACK}
           phaseDetail={CLOSED_PHASE_DETAIL}
+          stepsPop={STEPS_POP}
         />
         <PresentationalWorkStrip
           strip={FINISHED_STRIP}
           now={{ kind: "none" }}
           track={FINISHED_TRACK}
           phaseDetail={CLOSED_PHASE_DETAIL}
+          stepsPop={STEPS_POP}
         />
       </>
+    ),
+  },
+  {
+    frame: "flow",
+    path: "page/conversation/components/main-view/presentational-steps-list.tsx",
+    render: () => (
+      <PresentationalStepsList
+        id="steps-example"
+        landing={{ kind: "top" }}
+        steps={{
+          ...STRIP_BASE.steps,
+          phaseCountLabel: "2 フェーズ",
+          card: [
+            {
+              kind: "phase",
+              hiddenStepCount: 0,
+              groups: [],
+              row: {
+                ...STEPS_ROW_BASE,
+                key: "phase-0",
+                phaseIndex: 0,
+                name: "調べる",
+                mark: "✓",
+                state: "done",
+                duration: "48秒",
+                summary: "構成を読み、変える箇所を決めた。",
+              },
+            },
+            {
+              kind: "phase",
+              hiddenStepCount: 0,
+              groups: [],
+              row: {
+                ...STEPS_ROW_BASE,
+                key: "phase-1",
+                phaseIndex: 1,
+                name: "実装",
+                mark: "2",
+                state: "current",
+              },
+            },
+          ],
+        }}
+      />
     ),
   },
   {

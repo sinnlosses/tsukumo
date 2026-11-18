@@ -5,6 +5,7 @@ import type { ReactElement } from "react"
 import { useWorkStripNow } from "./hooks/use-work-strip-now.ts"
 import { useWorkStripPhaseDetail } from "./hooks/use-work-strip-phase-detail.ts"
 import { useWorkStripSegmentList } from "./hooks/use-work-strip-segment-list.ts"
+import { useWorkStripStepsPop } from "./hooks/use-work-strip-steps-pop.ts"
 import { useWorkStrip } from "./hooks/use-work-strip.ts"
 import { PresentationalWorkStrip } from "./presentational-work-strip.tsx"
 
@@ -15,6 +16,7 @@ export function WorkStrip(): ReactElement {
       now={useWorkStripNow()}
       track={useWorkStripSegmentList()}
       phaseDetail={useWorkStripPhaseDetail()}
+      stepsPop={useWorkStripStepsPop()}
     />
   )
 }
