@@ -148,3 +148,4 @@
 | `docs/architecture/adr/0068-next-step-tray-above-composer.md`                   | 次の一手を入力欄の頭の札の並びにする                                                                  | 採用                   |
 | `docs/architecture/adr/0069-closing-speech-below-paper.md`                      | 締めのセリフを紙の下に置く                                                                            | 採用                   |
 | `docs/architecture/adr/0070-work-strip-pill-with-now-and-segments.md`           | 進み具合のプログレスバーに、いまの手順と目安の残りをまとめ、下線を進み具合にする                      | 採用                   |
+| `docs/architecture/adr/0071-waiting-line-in-stream.md`                          | 待ちの一言を流れの行に戻す                                                                            | 採用                   |
