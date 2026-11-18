@@ -122,7 +122,7 @@ export const imageBlockSchema = z
     caption: partCardNote(inlineText, "何が見えるかの1行。数と向きで主張を言う1文。評価語なし"),
     notes: partCardNote(
       omittable(z.array(inlineText), []),
-      `画像のどこを見るか・何が変わったか。1項目1文で、場所の言葉（左上の帯・2行目のラベル）から書く。番号は書かない（並びの順に振って描く）`,
+      `画像のどこを見るか・何が変わったか。1項目1文で、場所の言葉（左上のバー・2行目のラベル）から書く。番号は書かない（並びの順に振って描く）`,
     ),
     fold,
     aside,

@@ -187,7 +187,7 @@ const sectionComponentSchema = z.object({
   children: z.array(z.string()).min(1),
 })
 
-/** 器の幅で段に折り返す格子。列の数は描く側が器の幅から決めるので、書き手は子だけを渡す。 */
+/** コンテナの幅で段に折り返す格子。列の数は描く側がコンテナの幅から決めるので、書き手は子だけを渡す。 */
 const gridComponentSchema = z.object({
   id: z.string(),
   component: z.literal("Grid"),
@@ -195,8 +195,8 @@ const gridComponentSchema = z.object({
     z
       .array(z.string())
       .min(2)
-      .describe("同格の部品の ID を2つ以上。広い紙では横に並び、狭い器では段に折り返す"),
-    "向くのは数の札・短い表・図・Card。長い段落とコードは格子の外に置く。2〜4個を1行で読み比べるなら Row、全幅に出したい部品は格子の外。列の数は書かない",
+      .describe("同格の部品の ID を2つ以上。横に並び、狭いコンテナでは段に折り返す"),
+    "向くのは数のカード・短い表・図・Card。長い段落とコードは格子の外に置く。2〜4個を1行で読み比べるなら Row、全幅に出したい部品は格子の外。列の数は書かない",
   ),
 })
 

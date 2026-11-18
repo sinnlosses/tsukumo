@@ -148,7 +148,7 @@ export const compareBlockSchema = z
     aside,
   })
   .describe(
-    "2つを左右に並べて見比べる（案A と案B も、画面の撮影・構造の前と後も）。relation が versus（既定）なら対等な2つで、側の heading が札。before-after なら左が前・右が後で間に矢印、札は「前」「後」（heading は札に添える）。側ごとに image / code / points / mermaid / svg のどれか（左右で違ってよい。時間の順の前後は mermaid の側）。1行の設定や文言の変更には使わない。ファイル名の箇条書きで変更を説明しない。採否は options、値を揃えるなら table（3つ以上も table）。数の前後は stats の before、行ごとの差分は code の diff",
+    "2つを左右に並べて見比べる（案A と案B も、画面の撮影・構造の前と後も）。relation が versus（既定）なら対等な2つで、側の heading がラベル。before-after なら左が前・右が後で間に矢印、ラベルは「前」「後」（heading はラベルに添える）。側ごとに image / code / points / mermaid / svg のどれか（左右で違ってよい。時間の順の前後は mermaid の側）。1行の設定や文言の変更には使わない。ファイル名の箇条書きで変更を説明しない。採否は options、値を揃えるなら table（3つ以上も table）。数の前後は stats の before、行ごとの差分は code の diff",
   )
 
 /** 質問の添え書きの `compare`。書けるのは対等な2つの見出しと箇条だけで、読んだ値は `compare` の塊と同じ形。 */
@@ -184,7 +184,7 @@ export const statItemsSchema = z
       value: z.string(),
       total: partCardNote(
         omittable(z.string(), ""),
-        "全体の数（割合を帯で添える。value が全体のうちの数のとき）",
+        "全体の数（割合をバーで添える。value が全体のうちの数のとき）",
       ),
       label: inlineText,
       series: partCardNote(

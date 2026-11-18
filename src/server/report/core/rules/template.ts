@@ -44,7 +44,7 @@ export function isTemplateViolation(violation: {
 
 /** 雛形の違反を、差し戻すときの1行の文面にする。 */
 export function templateViolationMessage(violation: TemplateViolation): string {
-  return `申告した依頼の型の雛形から外れた点がある（${violation.misses.join("・")}）。数の帯 \`keyFigures\` を足すか、図 1 を型の第一候補の種類にする`
+  return `申告した依頼の型の雛形から外れた点がある（${violation.misses.join("・")}）。主要な数値 \`keyFigures\` を足すか、図 1 を型の第一候補の種類にする`
 }
 
 const REQUEST_TEMPLATES = {

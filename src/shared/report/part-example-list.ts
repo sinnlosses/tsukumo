@@ -142,7 +142,7 @@ const LEAF_BLOCK_EXAMPLES = {
     kind: "image",
     path: "shots/sample.png",
     caption: "架空の一覧の行が3行から5行に増えた",
-    notes: ["右上の帯に件数が出る"],
+    notes: ["右上のバッジに件数が出る"],
   },
   plot: {
     kind: "plot",
