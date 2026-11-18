@@ -66,6 +66,14 @@
   padding: var(--space-sm) var(--space-xs);
   overflow-y: auto;
 }
+/* 広い画面では、入力欄と同じ幅（`--center-read-width`）の組を列の中央に置き、入力欄と左右の端をそろえる。
+   転がる器はログのままなので、余白の上で転がしても効く。 */
+@media (min-width: 761px) {
+  .chat-log {
+    --chat-log-read-inset: max(var(--inline-tight), calc((100% - var(--center-read-width)) / 2));
+    padding-inline: var(--chat-log-read-inset);
+  }
+}
 /* 下端から積む。
    件数が少ないうちに上へ貼り付くと、立ち絵の顔の高さと話が合わない（LINE / Discord も新しい発言が下に来る）。
    `justify-content: flex-end` は使わない。column flex で使うと、溢れた分が block-start（上）側へ出るのに scrollable overflow は end 方向にしか伸びないため、上へ出た分がクリップされて掴めなくなる。

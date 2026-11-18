@@ -40,6 +40,18 @@
   flex-direction: column;
   margin: calc(-1 * var(--region-padding));
 }
+/* 広い画面では、読む幅の上限を置いた帯・流れ・お伺い・声の定位置の組を、中央の列の中で左右の中央に置く。
+   組の外寸は入力欄と同じ `--center-read-width` で、余りを左右の余白に振り分ける。
+   札は領域の余白を打ち消して広がるので、`100%`（領域の内寸）に打ち消したぶんを足して札の幅にする。 */
+@media (min-width: 761px) {
+  .turn-card {
+    --turn-card-read-inset: max(
+      0px,
+      calc((100% + 2 * var(--region-padding) - var(--center-read-width)) / 2)
+    );
+    padding-inline: var(--turn-card-read-inset);
+  }
+}
 /* 狭い画面で、一覧の上に出す依頼の全文の入れ物。左右はレポート本文の余白に揃える。 */
 .turn-card-request {
   padding: var(--space-lg) var(--space-xl) 0;
@@ -95,7 +107,6 @@
   }
 }
 /* 広い画面では、流れ（と最終レポート）に読む幅の上限を置く。左のセリフと右の投稿が離れすぎない。
-   上限は中央の列の中で左に寄せる（中央に寄せない。立ち絵と流れの距離が幅で変わらない）。
    余白は上限の外に付ける（内容の幅が 960px）。中くらいの幅（〜1100px）では中央の列が 960px より狭く、上限は効かない。 */
 @media (min-width: 761px) {
   .turn-card-body {

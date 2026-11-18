@@ -169,6 +169,12 @@
   flex-direction: column;
 }
 @media (min-width: 761px) {
+  /* 入力欄と同じ上限の幅にし、中央の列の中央に置いて入力欄と左右の端をそろえる。 */
+  .welcome-scene {
+    box-sizing: border-box;
+    align-self: center;
+    inline-size: min(100%, var(--center-read-width));
+  }
   /* 声の定位置は1行ぶんの高さを先に取り、挨拶の有無でカードの並びが動かないようにする。 */
   .welcome-voice-reserve {
     min-block-size: 4.5rem;

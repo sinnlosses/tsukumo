@@ -26,8 +26,11 @@
   /* 背景の擬似要素（下の `.layout-ground::before`）を器の後ろへ回す。 */
   isolation: isolate;
 }
-/* 中央の列。メインビューが残りの高さを取り、入力欄は中身の高さで下端に付く。 */
+/* 中央の列。メインビューが残りの高さを取り、入力欄は中身の高さで下端に付く。
+   `--center-read-width` は、広い画面で列の中央に置く読む組の外寸（帯と入力欄の縁を含めた上限と同じ）。
+   メインビューの札・始め方の一覧・雑談のログがこの幅の組を中央に置き、同じ幅の入力欄と左右の端がそろう。 */
 .layout-center {
+  --center-read-width: 976px;
   display: grid;
   grid-template-rows: minmax(0, 1fr) auto auto;
   gap: var(--space-sm);
@@ -164,12 +167,12 @@
 .layout-dispatch {
   position: relative;
 }
-/* 広い画面では入力欄にも読む幅の上限（縁を含めて 976px）を置き、中央の列の中で左に寄せる。 */
+/* 広い画面では入力欄にも読む幅の上限を置き、中央の列の中央に置く。 */
 @media (min-width: 761px) {
   .layout-region.layout-dispatch {
     box-sizing: border-box;
-    inline-size: min(100%, 976px);
-    justify-self: start;
+    inline-size: min(100%, var(--center-read-width));
+    justify-self: center;
   }
 }
 /* 仕切りと、比率を戻す口を同じ列に置く入れ物。
