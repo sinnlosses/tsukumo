@@ -165,7 +165,7 @@ export const REPORT_ENTRIES: readonly CatalogEntry[] = [
   {
     name: "report-proof-mixed",
     scene: "report-proof-mixed",
-    label: "裏づけの帯（落ちた・申告のみ・記録あり・やっていない）と結ばれていない行",
+    label: "節の印（落ちた・記録あり・印なし）とやっていないこと、結ばれていない行",
     homeSetup: { kind: "default" },
     workspaceSetup: { kind: "repository" },
     prepare: [],
@@ -175,7 +175,7 @@ export const REPORT_ENTRIES: readonly CatalogEntry[] = [
   {
     name: "report-proof-work-record",
     scene: "report-proof-work-record",
-    label: "裏づけの帯（したことを持つ記録の側。申告のみと落ちたが並ぶ）",
+    label: "節の印（したことを持つ記録の側。印なしと落ちたが並ぶ）",
     homeSetup: { kind: "default" },
     workspaceSetup: { kind: "repository" },
     prepare: [],

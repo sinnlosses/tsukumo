@@ -140,9 +140,11 @@ function ReportRoot(): ReactElement {
     view.head.checks,
     slots.flatMap((slot) => (slot.kind === "drawn" ? [slot.componentId] : [])),
   )
-  const firstNotes = useFirstNoteList(
-    view.head.checks.kind === "checks" ? (["report-terms"] as const) : [],
-  )
+  // 説明する「記録あり」の印は、照らせた行が1つ以上あるときだけ画面に出る。
+  const hasRecordedRow =
+    view.head.checks.kind === "checks" &&
+    [...view.head.checks.problems, ...view.head.checks.passed].some((row) => row.recorded)
+  const firstNotes = useFirstNoteList(hasRecordedRow ? (["report-terms"] as const) : [])
   return (
     <>
       <ReportFrame

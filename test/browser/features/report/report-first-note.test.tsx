@@ -22,40 +22,71 @@ const NO_CLASS_NAMES = { className: "", revealClassName: "", blockClassName: "" 
 
 const TERMS_TEXT = /「記録あり」は実行の記録と照合できた確認/
 
-const PARTS = [
-  {
-    id: "root",
-    component: "Report",
-    conclusion: ["架空の結論。"],
-    children: ["s1"],
-    checks: [
-      {
-        status: "ok",
-        label: "架空の検証",
-        figure: "",
-        command: "",
-        detail: "",
-        howToVerify: "",
-        supports: ["s1"],
-      },
-    ],
-  },
-  { id: "s1", component: "Section", heading: "架空の一", children: ["p1"] },
-  { id: "p1", component: "Markdown", markdown: "架空の一の段落。" },
-]
+const COMMAND = "pnpm run fictional-check"
 
-function regions(): MainViewReportRegions {
-  const [event] = reportEvents(checkedToolUseId("toolu_fictional"), { components: PARTS }, [])
+function parts(command: string): readonly unknown[] {
+  return [
+    {
+      id: "root",
+      component: "Report",
+      conclusion: ["架空の結論。"],
+      children: ["s1"],
+      checks: [
+        {
+          status: "ok",
+          label: "架空の検証",
+          figure: "",
+          command,
+          detail: "",
+          howToVerify: "",
+          supports: ["s1"],
+        },
+      ],
+    },
+    { id: "s1", component: "Section", heading: "架空の一", children: ["p1"] },
+    { id: "p1", component: "Markdown", markdown: "架空の一の段落。" },
+  ]
+}
+
+/** `recorded` なら、検証の行のコマンドを同じやり取りで打ち終えた Bash の記録を先に置く。 */
+function regions(recorded: boolean): MainViewReportRegions {
+  const started = applySessionEvent(
+    INITIAL_SESSION_STATE,
+    {
+      kind: "tool-started",
+      toolUseId: checkedToolUseId("toolu_bash"),
+      name: "Bash",
+      input: { command: COMMAND },
+      parentToolUseId: undefined,
+    },
+    0,
+  )
+  const bash = applySessionEvent(
+    started,
+    {
+      kind: "tool-finished",
+      toolUseId: checkedToolUseId("toolu_bash"),
+      content: "架空の出力",
+      isError: false,
+    },
+    1000,
+  )
+  const before = recorded ? bash : INITIAL_SESSION_STATE
+  const [event] = reportEvents(
+    checkedToolUseId("toolu_fictional"),
+    { components: parts(recorded ? COMMAND : "") },
+    [],
+  )
   if (event?.kind !== "report") throw new Error("report にならなかった")
-  const entry = mainViewEntries(applySessionEvent(INITIAL_SESSION_STATE, event, 0)).find(
+  const entry = mainViewEntries(applySessionEvent(before, event, 0)).find(
     (candidate) => candidate.kind === "report",
   )
   if (entry?.kind !== "report") throw new Error("レポートの記録が無い")
   return entry.regions
 }
 
-function renderReport(): HTMLElement {
-  return render(<Report reveal={false} turnId={1} {...NO_CLASS_NAMES} body={regions()} />).container
+function renderReport(body = regions(true)): HTMLElement {
+  return render(<Report reveal={false} turnId={1} {...NO_CLASS_NAMES} body={body} />).container
 }
 
 describe("レポートの初回の説明", () => {
@@ -75,6 +106,12 @@ describe("レポートの初回の説明", () => {
     expect(JSON.parse(localStorage.getItem("tsukumo-first-note-seen:v1") ?? "[]")).toEqual([
       "report-terms",
     ])
+  })
+
+  it("照らせた行が無いレポートには、説明する印が無いので説明も出さない", () => {
+    renderReport(regions(false))
+
+    expect(screen.queryByText(TERMS_TEXT)).toBeNull()
   })
 
   it("見たことのある説明は、描き直しても出ない", () => {
