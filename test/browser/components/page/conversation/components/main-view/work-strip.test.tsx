@@ -140,8 +140,8 @@ describe("WorkStrip", () => {
     expect(strip().querySelector("[data-result]")?.getAttribute("data-result")).toBe("working")
     expect(headLabel()).toBe("架空の段A")
     const nowLine = document.querySelector("[data-now-line]")?.textContent
-    expect(nowLine).toContain("もう一度試している")
-    expect(nowLine).toContain("2回目")
+    expect(nowLine).toContain("API の応答を待っています")
+    expect(nowLine).toContain("2回目の再試行")
   })
 
   it("ターンが終わってバックグラウンドタスクだけ残るあいだは、チップが「背景で作業中」の点で言い、今の段の丸は回らない", () => {

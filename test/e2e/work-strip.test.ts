@@ -29,7 +29,7 @@ test.describe("進み具合のプログレスバー", () => {
       .poll(() => phaseStates(strip))
       .toEqual(["current", "upcoming", "upcoming", "upcoming"])
     await expect.poll(() => strip.textContent()).toContain("今の形を調べる")
-    await expect.poll(() => nowLineText(room.page)).toContain("読んでいる")
+    await expect.poll(() => nowLineText(room.page)).toContain("読んでいます")
 
     await room.waitForEvent("tool-started", LONG_TOOL_OCCURRENCE)
     await expect.poll(() => phaseStates(strip)).toEqual(["done", "current", "upcoming", "upcoming"])

@@ -1,4 +1,4 @@
-// 流れの末尾の「いまの行」。回る印・動詞・対象・経過・添え書きを1枚の小さな札で出す。
+// 流れの末尾の「いまの行」。回る印・対象・つなぎと動詞・経過・添え書きを1枚の小さな札で出す。
 
 import clsx from "clsx"
 import type { ReactNode } from "react"
@@ -20,7 +20,40 @@ export function NowLine(props: { readonly viewingPast: boolean }): ReactNode {
       data-now-line=""
       title={activity.retryDetail === "" ? undefined : activity.retryDetail}
     >
-      <Spinner className={styles["now-line-mark"]} slow={activity.longRunning} />
+      <Spinner className={styles["now-line-mark"]} />
+      {activity.lead !== "" && (
+        <Text
+          element="span"
+          size="label"
+          tone="ink-quiet"
+          weight="inherit"
+          className={styles["now-line-lead"]}
+        >
+          {activity.lead}
+        </Text>
+      )}
+      {activity.target !== "" && (
+        <span className={styles["now-line-subject"]}>
+          <Text
+            element="span"
+            size="label"
+            tone="ink-quiet"
+            weight="inherit"
+            className={styles["now-line-target"]}
+          >
+            {activity.target}
+          </Text>
+          <Text
+            element="span"
+            size="label"
+            tone="ink-quiet"
+            weight="inherit"
+            className={styles["now-line-particle"]}
+          >
+            {activity.particle}
+          </Text>
+        </span>
+      )}
       <Text
         element="span"
         size="secondary"
@@ -30,17 +63,6 @@ export function NowLine(props: { readonly viewingPast: boolean }): ReactNode {
       >
         {activity.verb}
       </Text>
-      {activity.target !== "" && (
-        <Text
-          element="span"
-          size="label"
-          tone="ink-quiet"
-          weight="inherit"
-          className={styles["now-line-target"]}
-        >
-          {activity.target}
-        </Text>
-      )}
       {activity.elapsed !== "" && (
         <Text
           element="span"
@@ -52,9 +74,15 @@ export function NowLine(props: { readonly viewingPast: boolean }): ReactNode {
           {activity.elapsed}
         </Text>
       )}
-      {activity.remark !== "" && (
-        <Text element="span" size="secondary" tone="ink" weight="inherit" className="">
-          {activity.remark}
+      {activity.aside !== "" && (
+        <Text
+          element="span"
+          size="label"
+          tone="ink-quiet"
+          weight="inherit"
+          className={styles["now-line-aside"]}
+        >
+          {activity.aside}
         </Text>
       )}
     </p>

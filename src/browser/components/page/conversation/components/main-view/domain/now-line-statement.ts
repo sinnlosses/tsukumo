@@ -1,5 +1,5 @@
-// 広い画面の流れの末尾の行の文。していること（動詞）・対象・経過・長く掛かっているときの添え書きで言う。
-// 動詞の表は ADR 0062 の「末尾の行（いまの行）の文」が正。狭い画面の1行は `workActivityOf` が別に持つ。
+// 広い画面の流れの末尾の行の文。「対象 を 動詞」の敬体で、手順の秒と添え書きを添える。
+// 動詞の表は ADR 0062 の「末尾の行（いまの行）の文」と ADR 0070 の論点 2 が正。狭い画面の1行は `workActivityOf` が別に持つ。
 
 import { isPlainObject } from "remeda"
 
@@ -16,41 +16,42 @@ import {
   type WorkActivitySource,
 } from "./work-activity.ts"
 
-const DELEGATING = "委譲先に任せている"
+const DELEGATING = { particle: "に", verb: "任せています" }
+const FALLBACK_DELEGATE = "委譲先"
 
-const NOW_LINE_VERBS: Readonly<Record<string, string>> = {
-  Read: "読んでいる",
-  Grep: "探している",
-  Glob: "探している",
-  Edit: "書き換えている",
-  MultiEdit: "書き換えている",
-  NotebookEdit: "書き換えている",
-  Write: "書いている",
-  Bash: "コマンドを走らせている",
-  Agent: DELEGATING,
-  Task: DELEGATING,
-  WebFetch: "調べている",
-  WebSearch: "調べている",
+const NOW_LINE_VERBS: Readonly<
+  Record<string, { readonly particle: string; readonly verb: string }>
+> = {
+  Read: { particle: "を", verb: "読んでいます" },
+  Grep: { particle: "を", verb: "探しています" },
+  Glob: { particle: "を", verb: "探しています" },
+  Edit: { particle: "を", verb: "書き換えています" },
+  MultiEdit: { particle: "を", verb: "書き換えています" },
+  NotebookEdit: { particle: "を", verb: "書き換えています" },
+  Write: { particle: "を", verb: "書いています" },
+  Bash: { particle: "を", verb: "走らせています" },
+  WebFetch: { particle: "を", verb: "調べています" },
+  WebSearch: { particle: "を", verb: "調べています" },
 }
 
-const UNKNOWN_TOOL_VERB = "道具を使っている"
-const BACKGROUND_PREFIX = "背景で"
-
-/** 同じ状態がこの秒数を超えたら「長く掛かっている」を添える。 */
-const LONG_RUNNING_SECONDS = 120
-const LONG_RUNNING_REMARK = "長く掛かっている"
+const UNKNOWN_TOOL = { particle: "を", verb: "使っています" }
+const BACKGROUND_LEAD = "背景で"
 
 export type NowLineStatement =
   | { readonly kind: "asking" }
   | {
       readonly kind: "doing"
-      readonly verb: string
+      /** 対象の前に置く語（「背景で」）。無ければ空。 */
+      readonly lead: string
       readonly target: string
+      /** 対象のあとのつなぎ（「を」「に」）。対象が無ければ空。 */
+      readonly particle: string
+      readonly verb: string
       /** 対象を等幅で組むか（道具の入力の要約と道具の名前）。 */
       readonly mono: boolean
       readonly elapsed: string
-      readonly remark: string
-      readonly longRunning: boolean
+      /** 幅が足りないとき先に譲る添え書き（委譲の説明・再試行の回数）。 */
+      readonly aside: string
       /** 再試行中の理由と待ち時間（`title` で読ませる）。再試行中でなければ空。 */
       readonly retryDetail: string
     }
@@ -58,11 +59,12 @@ export type NowLineStatement =
 type Doing = Extract<NowLineStatement, { readonly kind: "doing" }>
 
 const PLAIN = {
+  lead: "",
   target: "",
+  particle: "",
   mono: false,
   elapsed: "",
-  remark: "",
-  longRunning: false,
+  aside: "",
   retryDetail: "",
 } satisfies Omit<Doing, "kind" | "verb">
 
@@ -80,13 +82,15 @@ export function nowLineStatementOf(source: WorkActivitySource): NowLineStatement
     return {
       kind: "doing",
       ...PLAIN,
-      verb: "もう一度試している",
-      target: `API の応答待ち · ${String(source.apiTrouble.attempt)}回目`,
+      target: "API の応答",
+      particle: "を",
+      verb: "待っています",
+      aside: `${String(source.apiTrouble.attempt)}回目の再試行`,
       retryDetail: apiRetryNotice(source.apiTrouble).detail,
     }
   }
   if (source.reportDrafting.kind === "drafting") {
-    return { kind: "doing", ...PLAIN, verb: "レポートを書いている" }
+    return { kind: "doing", ...PLAIN, verb: "レポートを書いています" }
   }
   const running = turnStepList.steps.findLast((step) => step.status.kind === "running")
   if (running !== undefined) {
@@ -96,7 +100,7 @@ export function nowLineStatementOf(source: WorkActivitySource): NowLineStatement
       input: running.input,
       ...(startedAt === undefined ? {} : { startedAt }),
       now,
-      prefix: "",
+      lead: "",
     })
   }
   const stepped = latestSteppedBackground({
@@ -109,15 +113,12 @@ export function nowLineStatementOf(source: WorkActivitySource): NowLineStatement
       (step) => step.name === "Agent" || step.name === "Task",
     )
     const description = source.backgroundTasks.findLast((task) => task.kind === "agent")
-    return {
-      kind: "doing",
-      ...PLAIN,
-      verb: `${BACKGROUND_PREFIX} ${DELEGATING}`,
-      target:
-        delegation === undefined
-          ? (description?.description ?? "")
-          : delegationTarget(delegation.input),
-    }
+    return delegationStatement(
+      BACKGROUND_LEAD,
+      delegation === undefined
+        ? { role: "", description: description?.description ?? "" }
+        : delegationOf(delegation.input),
+    )
   }
   if (stepped !== undefined) {
     const { step } = stepped
@@ -127,7 +128,7 @@ export function nowLineStatementOf(source: WorkActivitySource): NowLineStatement
         input: step.input,
         startedAt: step.startedAt,
         now,
-        prefix: BACKGROUND_PREFIX,
+        lead: BACKGROUND_LEAD,
       })
     }
     const agent = source.workflowProgress
@@ -139,19 +140,30 @@ export function nowLineStatementOf(source: WorkActivitySource): NowLineStatement
       return {
         kind: "doing",
         ...PLAIN,
-        verb: `${BACKGROUND_PREFIX} ${DELEGATING}`,
+        lead: BACKGROUND_LEAD,
         target: agent.phaseTitle,
+        particle: "を",
+        verb: "進めています",
       }
     }
   }
   const background = backgroundSummaryLabel(source.backgroundTasks)
   if (background !== undefined) {
-    return { kind: "doing", ...PLAIN, verb: BACKGROUND_PREFIX, target: background }
+    return {
+      kind: "doing",
+      ...PLAIN,
+      lead: BACKGROUND_LEAD,
+      target: background,
+      particle: "を",
+      verb: "走らせています",
+    }
   }
   return {
     kind: "doing",
     ...PLAIN,
-    verb: isSlashClear(currentRequestTextOf(source.records)) ? "会話を片付けている" : "考えている",
+    verb: isSlashClear(currentRequestTextOf(source.records))
+      ? "会話を片付けています"
+      : "考えています",
   }
 }
 
@@ -160,37 +172,54 @@ function toolStatement(tool: {
   readonly input: unknown
   readonly startedAt?: number
   readonly now: number
-  readonly prefix: string
+  readonly lead: string
 }): Doing {
-  const { name, input, startedAt, now, prefix } = tool
-  const known = NOW_LINE_VERBS[name]
-  const verb = known ?? UNKNOWN_TOOL_VERB
+  const { name, input, startedAt, now, lead } = tool
   const seconds =
     startedAt === undefined ? undefined : Math.max(0, Math.floor((now - startedAt) / 1000))
-  const delegating = verb === DELEGATING
-  const longRunning = !delegating && seconds !== undefined && seconds > LONG_RUNNING_SECONDS
+  const elapsed = seconds === undefined ? "" : formatElapsed(seconds)
+  if (name === "Agent" || name === "Task") {
+    return { ...delegationStatement(lead, delegationOf(input)), elapsed }
+  }
+  const known = NOW_LINE_VERBS[name]
+  const wording = known ?? UNKNOWN_TOOL
+  const target = known === undefined ? name : summarizeToolInput(name, input)
   return {
+    ...PLAIN,
     kind: "doing",
-    verb: prefix === "" ? verb : `${prefix} ${verb}`,
-    target: delegating
-      ? delegationTarget(input)
-      : known === undefined
-        ? name
-        : summarizeToolInput(name, input),
-    mono: !delegating,
-    elapsed: seconds === undefined ? "" : formatElapsed(seconds),
-    remark: longRunning ? LONG_RUNNING_REMARK : "",
-    longRunning,
-    retryDetail: "",
+    lead,
+    target,
+    particle: target === "" ? "" : wording.particle,
+    verb: wording.verb,
+    mono: target !== "",
+    elapsed,
   }
 }
 
-/** 委譲先の役（`subagent_type`）と説明（`description`）。無い欄は飛ばす。 */
-function delegationTarget(input: unknown): string {
-  if (!isPlainObject(input)) {
-    return ""
+function delegationStatement(
+  lead: string,
+  delegation: { readonly role: string; readonly description: string },
+): Doing {
+  return {
+    ...PLAIN,
+    kind: "doing",
+    lead,
+    target: delegation.role === "" ? FALLBACK_DELEGATE : delegation.role,
+    particle: DELEGATING.particle,
+    verb: DELEGATING.verb,
+    aside: delegation.description,
   }
-  return [input["subagent_type"], input["description"]]
-    .filter((part): part is string => typeof part === "string" && part !== "")
-    .join(" · ")
+}
+
+/** 委譲先の役（`subagent_type` の綴りのまま）と説明（`description`）。無い欄は空。 */
+function delegationOf(input: unknown): { readonly role: string; readonly description: string } {
+  if (!isPlainObject(input)) {
+    return { role: "", description: "" }
+  }
+  const role = input["subagent_type"]
+  const description = input["description"]
+  return {
+    role: typeof role === "string" ? role : "",
+    description: typeof description === "string" ? description : "",
+  }
 }

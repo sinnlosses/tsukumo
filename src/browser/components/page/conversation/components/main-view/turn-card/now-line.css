@@ -15,9 +15,15 @@
 .now-line-mark {
   flex: none;
 }
+.now-line-lead,
+.now-line-particle,
 .now-line-verb {
   flex: none;
   white-space: nowrap;
+}
+.now-line-subject {
+  display: flex;
+  min-width: 0;
 }
 .now-line-target {
   min-width: 0;
@@ -27,6 +33,13 @@
 }
 .now-line.is-mono .now-line-target {
   font-family: var(--font-mono);
+}
+.now-line-aside {
+  flex: 0 100 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .now-line-elapsed {
   flex: none;

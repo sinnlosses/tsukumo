@@ -58,7 +58,7 @@ export function PhoneHead(props: PhoneHeadProps): ReactElement {
               data-chat-idle={head.status.chatIdle}
             >
               {head.status.mark === "spinner" ? (
-                <Spinner className={styles["phone-head-spinner"]} slow={false} />
+                <Spinner className={styles["phone-head-spinner"]} />
               ) : (
                 <span className={styles["phone-head-mark"]} aria-hidden="true">
                   {head.status.mark}

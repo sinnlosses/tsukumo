@@ -100,7 +100,7 @@ export function LayoutGroups(): ReactElement {
         <Skeleton className={styles["design-skeleton"]}>{undefined}</Skeleton>
       </Group>
       <Group title="Spinner（回る輪）" parts={["spinner"]}>
-        <Spinner className="" slow={false} />
+        <Spinner className="" />
       </Group>
       <Group title="TypingDots（書いている点）" parts={["typing-dot-list"]}>
         <TypingDots />

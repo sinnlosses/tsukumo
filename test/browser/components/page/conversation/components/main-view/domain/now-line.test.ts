@@ -8,12 +8,13 @@ import {
 
 const QUIET = {
   kind: "doing",
-  verb: "考えている",
+  lead: "",
   target: "",
+  particle: "",
+  verb: "考えています",
   mono: false,
   elapsed: "",
-  remark: "",
-  longRunning: false,
+  aside: "",
   retryDetail: "",
 } as const satisfies NowLineStatement
 
