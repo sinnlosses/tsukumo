@@ -202,7 +202,7 @@ describe("NextStepTray（キーと畳む）", () => {
     })
     render(<NextStepTray steps={steps} folded favor={{ kind: "none" }} />)
 
-    expect(screen.getByRole("group", { name: "次の一手" }).textContent).toBe("次の一手4件開く ⌃")
+    expect(screen.getByRole("group", { name: "次の一手" }).textContent).toBe("次の一手4件開く")
     fireEvent.click(screen.getByRole("button", { name: "開く" }))
 
     expect(useNextStepTray.getState().foldedKey).toBeUndefined()

@@ -83,7 +83,8 @@ export function NextStepTray(props: NextStepTrayProps): ReactElement {
           <span className={styles["next-step-tray-end"]}>
             {favorNote}
             <TrayAction expanded={false} onClick={unfold}>
-              開く<span aria-hidden="true"> ⌃</span>
+              開く
+              <TrayChevron direction="up" />
             </TrayAction>
           </span>
         </div>
@@ -107,7 +108,8 @@ export function NextStepTray(props: NextStepTrayProps): ReactElement {
         <span className={styles["next-step-tray-end"]}>
           {favorNote}
           <TrayAction expanded onClick={fold}>
-            畳む<span aria-hidden="true"> ⌄</span>
+            畳む
+            <TrayChevron direction="down" />
           </TrayAction>
         </span>
       </div>
@@ -178,6 +180,19 @@ function TrayAction(props: {
     >
       {props.children}
     </button>
+  )
+}
+
+/** 畳む・開くの向きの線画。字の ⌄・⌃ は書体によって小さく、下や上へ寄るので使わない。 */
+function TrayChevron(props: { readonly direction: "up" | "down" }): ReactElement {
+  return (
+    <span
+      className={clsx(
+        styles["next-step-tray-chevron"],
+        props.direction === "up" && styles["is-up"],
+      )}
+      aria-hidden="true"
+    />
   )
 }
 

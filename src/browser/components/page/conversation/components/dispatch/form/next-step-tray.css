@@ -33,6 +33,9 @@
   color: var(--accent);
 }
 .next-step-tray-action {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--inline-tight);
   min-height: 1.5rem;
   padding: 0 var(--inline-control);
   border: 1px solid var(--rule);
@@ -45,6 +48,17 @@
 .next-step-tray-action:hover {
   border-color: var(--accent);
   color: var(--ink);
+}
+/* 色は `currentColor` で、口の字の色と hover に揃う。 */
+.next-step-tray-chevron {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  background: currentColor;
+  mask: var(--icon-chevron-down) center / contain no-repeat;
+}
+.next-step-tray-chevron.is-up {
+  transform: rotate(180deg);
 }
 .next-step-tray-chips {
   display: flex;

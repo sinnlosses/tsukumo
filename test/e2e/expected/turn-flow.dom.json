@@ -1435,10 +1435,7 @@
                                   "tag": "span",
                                   "attributes": {
                                     "aria-hidden": "true"
-                                  },
-                                  "children": [
-                                    "⌄"
-                                  ]
+                                  }
                                 }
                               ]
                             },
