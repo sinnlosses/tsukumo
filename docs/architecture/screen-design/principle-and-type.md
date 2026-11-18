@@ -104,8 +104,8 @@
   別の変数（`--font-heading-1`〜`-3`）にしてある
 - **レポートの結論部の見出しと `##` は、入力欄と同じ大きさを別のつまみで持つ**。
   `--report-heading-2`（21px）・`--report-heading-3`（17px）は `--font-heading-2`/`-3` を参照せず
-  値を直に持つので、入力欄のマークダウンエディタの見出しとは別に動く（`theme.css`）。`##` は 21px・700・行間 1.4・字間 0.01em・`palt`・`ink-bright`、
-  `###` は `--report-heading-3`（17px）・700・罫なし。
+  値を直に持つので、入力欄のマークダウンエディタの見出しとは別に動く（`theme.css`）。`##` は `--report-heading-3`（17px）・700・行間 1.4・字間 0.01em・`palt`・`ink-bright`・下に罫、
+  `###` は `--font-subheading`（14px）・700・罫なし。21px の `##` は本文（14px）に対して大きすぎると利用者に言われ、結論の1文目より一段小さくした。
   **結論の1文目も `--report-heading-2`（21px）で、行間 32px・700・`ink-bright`**（結論部の大胆さはここ1か所。作業の名前は `--font-body`（14px）・600 に下げてタスクの ID・状態のバッジと同じ行に置き、2文目は `--font-body`・`ink-soft`。13.2）
 - **依頼の全文（`RequestBlock`）は、見出し「依頼」を `--font-secondary`・`ink-quiet`、依頼の行を
   `--font-secondary`・`--ink-soft` で、baseline をそろえた1行に置く**（カードの頭に題の行は置かず本文の頭へ置き、畳みは1行。見本は

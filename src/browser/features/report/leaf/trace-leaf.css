@@ -10,7 +10,7 @@
 [data-report-region] .trace-row {
   position: relative;
   display: grid;
-  grid-template-columns: 22px minmax(0, 1fr) auto;
+  grid-template-columns: 22px minmax(0, 1fr) fit-content(45%);
   column-gap: var(--space-md);
   max-inline-size: none;
   margin: 0;
@@ -71,7 +71,6 @@
   color: var(--ink-quiet);
   font-family: var(--font-mono);
   font-size: var(--font-label);
-  white-space: nowrap;
 }
 [data-report-region] .trace-output {
   grid-column: 2 / -1;
