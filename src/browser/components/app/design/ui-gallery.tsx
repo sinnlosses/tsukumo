@@ -33,7 +33,8 @@ import { OverlayGroups } from "./ui-gallery-overlay.tsx"
 const BADGE_TONES = ["neutral", "ok", "warn", "ng", "accent"] as const
 const BADGE_SHAPES = ["pill", "square"] as const
 const DIVIDER_TONES = ["strong", "soft", "quiet"] as const
-const SURFACE_TONES = ["surface", "raised", "accent"] as const
+const SURFACE_TONES = ["surface", "raised", "accent", "ground"] as const
+const SURFACE_RADII = ["sm", "md", "lg", "xl"] as const
 const SURFACE_SHADOWS = ["none", "raised", "overlay"] as const
 const NOTE_TONES = ["info", "warn", "ng", "ask"] as const
 const BUTTON_VARIANTS = ["outline", "solid-accent", "solid-danger", "ghost", "link"] as const
@@ -49,7 +50,7 @@ export function UiGallery(): ReactElement {
       wrap="nowrap"
       className=""
     >
-      <Group title="Surface（地 × 影）" parts={["surface"]}>
+      <Group title="Surface（地 × 影・角丸）" parts={["surface"]}>
         {SURFACE_TONES.flatMap((tone) =>
           SURFACE_SHADOWS.map((shadow) => (
             <Surface
@@ -67,6 +68,21 @@ export function UiGallery(): ReactElement {
             </Surface>
           )),
         )}
+        {SURFACE_RADII.map((radius) => (
+          <Surface
+            key={`radius-${radius}`}
+            element="div"
+            tone="surface"
+            space="md"
+            radius={radius}
+            shadow="none"
+            className=""
+          >
+            <Text element="span" size="secondary" tone="ink" weight="normal" className="">
+              radius {radius}
+            </Text>
+          </Surface>
+        ))}
       </Group>
       <Group title="Badge（色 × 形）" parts={["badge"]}>
         {BADGE_TONES.flatMap((tone) =>

@@ -7,6 +7,9 @@
 .surface-tone-surface {
   background: var(--surface);
 }
+.surface-radius-sm {
+  border-radius: var(--radius-sm);
+}
 .surface-radius-md {
   border-radius: var(--radius-md);
 }

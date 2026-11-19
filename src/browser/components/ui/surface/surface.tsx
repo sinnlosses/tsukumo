@@ -1,14 +1,19 @@
 // 箱の顔（地・枠・角丸・内側の余白・影）を寄せる部品。中身は Astryx の `Card`。
 // 置き方（margin・flex・align-self など）は呼び出し側が `className` で渡す。
+// `Card` に口が無い地（ground）と角丸（sm・md・xl）は顔の class を重ねる。
+// CSS Modules は層に入らないので、`astryx-base` の層の `Card` の宣言に勝つ。
 
 import { Card, type CardProps, type CardVariant } from "@astryxdesign/core/Card"
+import { clsx } from "clsx"
 import type { ReactElement, ReactNode } from "react"
+
+import styles from "./surface-face.module.css"
 
 type SpacingStep = NonNullable<CardProps["padding"]>
 type Elevation = NonNullable<CardProps["elevation"]>
 
 type SurfaceElement = "div" | "section"
-type SurfaceTone = "surface" | "raised" | "accent"
+type SurfaceTone = "surface" | "raised" | "accent" | "ground"
 type SurfaceSpace = "none" | "xs" | "sm" | "md" | "lg" | "xl" | "2xl"
 type SurfaceRadius = "sm" | "md" | "lg" | "xl"
 type SurfaceShadow = "none" | "raised" | "overlay"
@@ -19,7 +24,7 @@ export type SurfaceProps = {
   readonly tone: SurfaceTone
   /** 内側の余白。 */
   readonly space: SurfaceSpace
-  /** `Card` の角丸は一段なので、見た目には使わない。 */
+  /** `Card` の角丸は `lg` の一段なので、`lg` 以外は顔の class を重ねる。 */
   readonly radius: SurfaceRadius
   readonly shadow: SurfaceShadow
   /** 置き方（margin・flex・align-self など）だけを渡す。 */
@@ -32,7 +37,22 @@ const TONE_VARIANT = {
   surface: "default",
   raised: "default",
   accent: "accent",
+  ground: "default",
 } satisfies Record<SurfaceTone, CardVariant>
+
+const TONE_FACE = {
+  surface: "",
+  raised: "",
+  accent: "",
+  ground: styles["surface-tone-ground"],
+} satisfies Record<SurfaceTone, string>
+
+const RADIUS_FACE = {
+  sm: styles["surface-radius-sm"],
+  md: styles["surface-radius-md"],
+  lg: "",
+  xl: styles["surface-radius-xl"],
+} satisfies Record<SurfaceRadius, string>
 
 const SPACE_PADDING = {
   none: 0,
@@ -56,7 +76,7 @@ export function Surface(props: SurfaceProps): ReactElement {
       variant={TONE_VARIANT[props.tone]}
       padding={SPACE_PADDING[props.space]}
       elevation={SHADOW_ELEVATION[props.shadow]}
-      className={props.className}
+      className={clsx(TONE_FACE[props.tone], RADIUS_FACE[props.radius], props.className)}
     >
       {props.children}
     </Card>
