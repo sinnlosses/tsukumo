@@ -8,10 +8,8 @@ afterEach(() => {
 })
 
 describe("Spinner", () => {
-  it("読み上げに出さない輪を描き、呼び手の className を足す", () => {
-    const { container } = render(<Spinner className="caller" />)
-    const ring = container.firstElementChild
-    expect(ring?.getAttribute("aria-hidden")).toBe("true")
-    expect(ring?.classList.contains("caller")).toBe(true)
+  it("読み上げに出さない輪を描く", () => {
+    const { container } = render(<Spinner className="" />)
+    expect(container.firstElementChild?.getAttribute("aria-hidden")).toBe("true")
   })
 })

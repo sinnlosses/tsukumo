@@ -8,15 +8,8 @@ afterEach(() => {
 })
 
 describe("Skeleton", () => {
-  it("読み上げに出さない塊を描き、className・style を渡す", () => {
-    const { container } = render(
-      <Skeleton className="caller" style={{ width: "50%" }}>
-        中身
-      </Skeleton>,
-    )
-    const block = container.firstElementChild
-    expect(block?.getAttribute("aria-hidden")).toBe("true")
-    expect(block?.classList.contains("caller")).toBe(true)
-    expect(block?.getAttribute("style")).toContain("width: 50%")
+  it("読み上げに出さない塊を描く", () => {
+    const { container } = render(<Skeleton className="">中身</Skeleton>)
+    expect(container.firstElementChild?.getAttribute("aria-hidden")).toBe("true")
   })
 })

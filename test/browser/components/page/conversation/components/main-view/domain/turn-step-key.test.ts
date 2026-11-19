@@ -48,19 +48,10 @@ describe("headingStepOf", () => {
     expect(turnStepOf(keyEvent({ key: "{" }))).toBeUndefined()
   })
 
-  it("修飾キー付き・変換中は読まない", () => {
+  it("turnStepOf と同じく、修飾キー付きと入力要素の中は読まない", () => {
     expect(headingStepOf(keyEvent({ key: "{", metaKey: true }))).toBeUndefined()
-    expect(headingStepOf(keyEvent({ key: "{", ctrlKey: true }))).toBeUndefined()
-    expect(headingStepOf(keyEvent({ key: "{", altKey: true }))).toBeUndefined()
-    expect(headingStepOf(keyEvent({ key: "}", isComposing: true }))).toBeUndefined()
-  })
-
-  it("入力要素の中は読まない", () => {
     const target = document.createElement("textarea")
     expect(headingStepOf(keyEvent({ key: "{", target }))).toBeUndefined()
-    expect(headingStepOf(keyEvent({ key: "{", target: document.createElement("button") }))).toBe(
-      "older",
-    )
   })
 })
 

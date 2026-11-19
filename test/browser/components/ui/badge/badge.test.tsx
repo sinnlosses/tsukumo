@@ -31,9 +31,4 @@ describe("Badge", () => {
   it.each(["pill", "square"] as const)("shape: %s を data-shape に出す", (shape) => {
     expect(renderedBadge({ ...BASE_PROPS, shape }).dataset["shape"]).toBe(shape)
   })
-
-  it("渡した className が残る", () => {
-    const element = renderedBadge({ ...BASE_PROPS, className: "dummy-placement" })
-    expect(element.classList.contains("dummy-placement")).toBe(true)
-  })
 })

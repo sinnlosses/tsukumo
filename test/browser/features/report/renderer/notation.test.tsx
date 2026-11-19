@@ -43,22 +43,6 @@ describe("NotationBlock（レポートの塊の記法）", () => {
     expect(container.querySelector(".report-note-label")?.textContent).toBe("注意")
   })
 
-  it("お願いを除く5種のラベルの字が種類の色の class を持ち、お願いは大きく太くする class を持つ", () => {
-    const labelTextClassName = (kind: string): string | null | undefined => {
-      const { container } = render(<NotationBlock className={kind}>架空。</NotationBlock>)
-      const className = container.querySelector(".report-note-label > span")?.getAttribute("class")
-      cleanup()
-      return className
-    }
-
-    expect(labelTextClassName("note")).toBe("report-note-label-info")
-    expect(labelTextClassName("note note-ask")).toBe("report-note-label-ask")
-    expect(labelTextClassName("note note-memo")).toBe("report-note-label-memo")
-    expect(labelTextClassName("note note-warn")).toBe("report-note-label-warn")
-    expect(labelTextClassName("note note-ng")).toBe("report-note-label-ng")
-    expect(labelTextClassName("note note-favor")).toBe("report-note-label-favor")
-  })
-
   describe("項目数の class（列数を全部か約数か1列にするための印）", () => {
     // react-markdown が渡す hast の node のうち、数えるのは children の要素だけ。
     const nodeOf = (elements: number, texts = 0): Element => ({

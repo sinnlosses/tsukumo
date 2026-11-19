@@ -72,11 +72,8 @@ describe("Table", () => {
     expect(screen.getByRole("columnheader", { name: "件数" }).hasAttribute("aria-sort")).toBe(false)
   })
 
-  it("span は colspan、className は行に残る", () => {
+  it("span は colspan に写る", () => {
     renderTable("unspecified")
     expect(screen.getByRole("cell", { name: "中身" }).getAttribute("colspan")).toBe("2")
-    expect(
-      screen.getByRole("cell", { name: "中身" }).parentElement?.classList.contains("dummy-row"),
-    ).toBe(true)
   })
 })

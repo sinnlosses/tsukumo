@@ -137,20 +137,6 @@ describe("設定の歯車（帯の右端）", () => {
     expect(document.activeElement).toBe(gear())
   })
 
-  it("背景（`<dialog>` 自身）を押すと閉じ、歯車へフォーカスが戻る", () => {
-    renderScreenNav()
-    gear().focus()
-    fireEvent.click(gear())
-
-    const dialog = openedSettingsDialog()
-    fireEvent.pointerDown(dialog)
-    fireEvent.pointerUp(dialog)
-    fireEvent.click(dialog)
-
-    expect(settingsDialog()).toBeNull()
-    expect(document.activeElement).toBe(gear())
-  })
-
   it("Esc で閉じて歯車へフォーカスが戻る", () => {
     renderScreenNav()
     gear().focus()

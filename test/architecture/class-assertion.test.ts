@@ -47,7 +47,6 @@ const ALLOWED_COUNTS: Readonly<Record<string, number>> = {
   "test/browser/components/page/token-usage/components/context-usage-card/context-usage-card.test.tsx": 5,
   "test/browser/components/page/token-usage/components/usage-review-card/usage-review-card.test.tsx": 6,
   "test/browser/components/page/token-usage/presentational-token-usage.test.tsx": 8,
-  "test/browser/components/ui/stack/stack.test.tsx": 1,
   "test/browser/features/current-work/current-work-detail.test.tsx": 17,
   "test/browser/features/current-work/current-work.test.tsx": 11,
   "test/browser/features/report/renderer/markdown-renderer-code.test.tsx": 27,

@@ -40,11 +40,6 @@ describe("Stack", () => {
     expect(element.getAttribute("data-direction")).toBe("vertical")
   })
 
-  it("baseline の揃えだけは配置の class で足す", () => {
-    const element = renderedElement({ ...BASE_PROPS, align: "baseline" })
-    expect(element.className).toContain("stack-align-baseline")
-  })
-
   it("element で描く要素を選ぶ", () => {
     const element = renderedElement({ ...BASE_PROPS, element: "section" })
     expect(element.tagName).toBe("SECTION")

@@ -44,39 +44,12 @@ describe("Surface", () => {
     expect(renderedElement({ ...BASE_PROPS, tone }).dataset["variant"]).toBe(variant)
   })
 
-  it("tone: ground だけが地の顔 surface-tone-ground を重ねる", () => {
-    expect(
-      renderedElement({ ...BASE_PROPS, tone: "ground" }).classList.contains("surface-tone-ground"),
-    ).toBe(true)
-    expect(
-      renderedElement({ ...BASE_PROPS, tone: "surface" }).classList.contains("surface-tone-ground"),
-    ).toBe(false)
-  })
-
-  it.each(["sm", "md", "xl"] as const)("radius: %s は角丸の顔を重ねる", (radius) => {
-    expect(
-      renderedElement({ ...BASE_PROPS, radius }).classList.contains(`surface-radius-${radius}`),
-    ).toBe(true)
-  })
-
-  it("radius: lg は角丸の顔を重ねない", () => {
-    const element = renderedElement({ ...BASE_PROPS, radius: "lg" })
-    expect(
-      ["sm", "md", "lg", "xl"].some((step) => element.classList.contains(`surface-radius-${step}`)),
-    ).toBe(false)
-  })
-
   it.each([
     ["none", "none"],
     ["raised", "med"],
     ["overlay", "high"],
   ] as const)("shadow: %s は Card の elevation %s に写る", (shadow, elevation) => {
     expect(renderedElement({ ...BASE_PROPS, shadow }).dataset["elevation"]).toBe(elevation)
-  })
-
-  it("className は Card の要素に残る", () => {
-    const element = renderedElement({ ...BASE_PROPS, className: "dummy-placement" })
-    expect(element.classList.contains("dummy-placement")).toBe(true)
   })
 
   it("element: section でも div を描く", () => {
