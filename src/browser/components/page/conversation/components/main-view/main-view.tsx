@@ -203,7 +203,8 @@ export function MainView(): ReactElement {
             <article
               className={clsx(
                 styles["turn-card"],
-                cardTurn.turn.steps.some((step) => step.mark === "final") &&
+                (cardTurn.turn.steps.some((step) => step.mark === "final") ||
+                  cardTurn.turn.drafts.length > 0) &&
                   styles["has-final-report"],
               )}
             >
@@ -241,7 +242,11 @@ export function MainView(): ReactElement {
                   turnId={cardTurn.turn.id}
                   key={`phase-list:${String(cardTurn.turn.id)}`}
                 />
-                {phoneWidth && !viewingPast && view.kind === "work" && <CurrentStep />}
+                {/* 草稿が出たら「いまの段」を外す。確定で消える行を草稿のあいだも置くと、確定で紙が行の高さだけ跳ねる。 */}
+                {phoneWidth &&
+                  !viewingPast &&
+                  view.kind === "work" &&
+                  cardTurn.turn.drafts.length === 0 && <CurrentStep />}
                 {/* `key` にターンの番号を渡す。
                   前後へ移っても同じ位置の `<Turn>` を使い回すと、「このターンを出し始めた時点で既にあった本文」（演出の対象を決める材料）が最初のターンのものに留まってしまう。 */}
                 <Turn

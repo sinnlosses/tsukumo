@@ -144,6 +144,7 @@
     "reading-position",
     "closing-narration-quick",
     "report-task-finished",
+    "report-draft-held",
     "report-task-verdict",
     "session-resume",
     "ended-ready",

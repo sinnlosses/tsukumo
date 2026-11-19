@@ -53,6 +53,7 @@ export const E2E_WATCHED_REGIONS = {
   "test/e2e/phone-composer.test.ts": ["dispatch", "character"],
   "test/e2e/phone-inquiry.test.ts": ["main", "dispatch", "character"],
   "test/e2e/report-main-view.test.ts": ["main", "dispatch"],
+  "test/e2e/report-draft-position.test.ts": ["main"],
   "test/e2e/report-spacing.test.ts": ["main"],
   "test/e2e/spacing-media.test.ts": ["main"],
   "test/e2e/spacing-verdict.test.ts": ["main"],
