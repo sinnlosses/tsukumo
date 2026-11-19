@@ -13,13 +13,13 @@ import { waitForQueuedMessages } from "./queued-message-wait.ts"
 
 /**
  * `UserPromptSubmit` フックを1つ登録し、メインの入力に `additionalContext` を添える。
- * ふつうの依頼・補足・tsukumo の差し込みも、委譲先の返却も、このフックを1回通る（SDK 0.3.326 の実測。ふつうの依頼でも `agent_id` も `source` も来ない）。
+ * ふつうの依頼・補足・tsukumo の差し込みも、委譲先の返却も、このフックを1回通る。ふつうの依頼でも `agent_id` も `source` も来ない。
  * 返却は、メインが手すきでもターンの途中でも `<agent-message` で始まる `prompt` として届く。
- * `source` は SDK 0.3.288 の実測で常に undefined なので見ない。
+ * 返却でも `source` は来ないので見ない。入力の欄の変化は、アーキテクチャテストの「同梱の Agent SDK の UserPromptSubmitHookInput」が見張る。
  *
  * 注記を読む前に {@link waitForQueuedMessages} で待つ。
  *
- * フックの入力には返却を見分ける欄が無い（SDK 0.3.288 の実測で、`source` も `origin` も来ない）ので、見分けは包みの頭のまま。
+ * フックの入力には返却を見分ける欄が無い（`source` も `origin` も来ない）ので、見分けは包みの頭のまま。
  * 頭の合わないメインの入力が届いたときに注記が溜まったままなら、包みの形が変わったとみて `reportHeadMismatch` を呼ぶ（注記は添えない）。
  * いまの様子（`takePresentScene`）は入力の種類を見分けずに取り出し、返却の注記があればその後ろに空行でつなぐ。
  * サブエージェントの中の入力では、どちらも取り出さない。
