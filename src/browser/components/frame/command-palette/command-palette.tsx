@@ -5,6 +5,7 @@ import { Search } from "lucide-react"
 import { useId, useState, type KeyboardEvent, type ReactElement } from "react"
 
 import { Dialog } from "../../ui/dialog/dialog.tsx"
+import { Surface } from "../../ui/surface/surface.tsx"
 import styles from "./command-palette.module.css"
 import {
   COMMAND_GROUP_LABEL,
@@ -83,7 +84,14 @@ function CommandPaletteBody(props: { readonly model: CommandPaletteModel }): Rea
   }
 
   return (
-    <div className={styles["command-palette-frame"]}>
+    <Surface
+      element="div"
+      tone="surface"
+      space="none"
+      radius="xl"
+      shadow="none"
+      className={styles["command-palette-frame"]}
+    >
       <div className={styles["command-palette-search"]}>
         <Search size={16} strokeWidth={2} aria-hidden="true" />
         <input
@@ -148,7 +156,7 @@ function CommandPaletteBody(props: { readonly model: CommandPaletteModel }): Rea
           )
         })}
       </div>
-    </div>
+    </Surface>
   )
 }
 

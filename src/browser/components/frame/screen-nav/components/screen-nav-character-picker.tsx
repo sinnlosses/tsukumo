@@ -6,6 +6,7 @@ import clsx from "clsx"
 import { useId, type ReactElement } from "react"
 
 import { Button } from "../../../ui/button/button.tsx"
+import { Surface } from "../../../ui/surface/surface.tsx"
 import { Text } from "../../../ui/text/text.tsx"
 import { CharacterFace } from "../../character-face.tsx"
 import type { ScreenNavCharacterPicker as Picker } from "../hooks/use-character-picker.ts"
@@ -56,53 +57,59 @@ export function ScreenNavCharacterPicker(props: ScreenNavCharacterPickerProps): 
         />
       </Button>
       {picker.open && (
-        <ul
-          id={panelId}
-          className={clsx(
-            styles["screen-nav-character-picker-panel"],
-            shellStyles["screen-nav-character-picker-panel"],
-          )}
-          aria-label="キャラクター"
+        <Surface
+          element="div"
+          tone="surface"
+          space="none"
+          radius="md"
+          shadow="none"
+          className={`${styles["screen-nav-character-picker-panel"]} ${shellStyles["screen-nav-character-picker-panel"]}`}
         >
-          {picker.options.map((option) => (
-            <li key={option.name}>
-              <button
-                type="button"
-                className={styles["screen-nav-character-picker-option"]}
-                aria-current={option.inUse}
-                disabled={picker.blocked && !option.inUse}
-                title={option.inUse ? undefined : picker.blockedTitle}
-                onClick={() => picker.onPick(option.name)}
-              >
-                <CharacterFace
-                  url={option.face.url}
-                  alt=""
-                  className={styles["screen-nav-character-picker-face"]}
-                />
-                <Text
-                  element="span"
-                  size="inherit"
-                  tone="inherit"
-                  weight="inherit"
-                  className={styles["screen-nav-character-picker-name"]}
+          <ul
+            id={panelId}
+            className={styles["screen-nav-character-picker-list"]}
+            aria-label="キャラクター"
+          >
+            {picker.options.map((option) => (
+              <li key={option.name}>
+                <button
+                  type="button"
+                  className={styles["screen-nav-character-picker-option"]}
+                  aria-current={option.inUse}
+                  disabled={picker.blocked && !option.inUse}
+                  title={option.inUse ? undefined : picker.blockedTitle}
+                  onClick={() => picker.onPick(option.name)}
                 >
-                  {option.label}
-                </Text>
-                {option.inUse && (
+                  <CharacterFace
+                    url={option.face.url}
+                    alt=""
+                    className={styles["screen-nav-character-picker-face"]}
+                  />
                   <Text
                     element="span"
-                    size="label"
-                    tone="accent"
+                    size="inherit"
+                    tone="inherit"
                     weight="inherit"
-                    className={styles["screen-nav-character-picker-in-use"]}
+                    className={styles["screen-nav-character-picker-name"]}
                   >
-                    {IN_USE_MARK}
+                    {option.label}
                   </Text>
-                )}
-              </button>
-            </li>
-          ))}
-        </ul>
+                  {option.inUse && (
+                    <Text
+                      element="span"
+                      size="label"
+                      tone="accent"
+                      weight="inherit"
+                      className={styles["screen-nav-character-picker-in-use"]}
+                    >
+                      {IN_USE_MARK}
+                    </Text>
+                  )}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </Surface>
       )}
     </div>
   )

@@ -8,12 +8,21 @@
       },
       "children": [
         {
-          "tag": "button",
+          "tag": "div",
           "attributes": {
-            "type": "button"
+            "data-variant": "default",
+            "data-elevation": "none"
           },
           "children": [
-            "入力欄へ移る"
+            {
+              "tag": "button",
+              "attributes": {
+                "type": "button"
+              },
+              "children": [
+                "入力欄へ移る"
+              ]
+            }
           ]
         },
         {

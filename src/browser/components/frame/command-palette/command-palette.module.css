@@ -2,7 +2,6 @@
    上端を帯の下に留め、絞り込んで行が減ったら下から縮む（中央に置くと箱が上下に跳ねる）。 */
 
 .command-palette {
-  composes: surface-edge-rule surface-radius-xl surface-tone-surface from "../../ui/surface/surface-face.module.css";
   box-sizing: border-box;
   width: min(34rem, calc(100vw - 2rem));
   max-height: calc(100dvh - 12rem);
@@ -10,6 +9,9 @@
   bottom: auto;
   padding: 0;
   overflow: hidden;
+  border: none;
+  border-radius: var(--radius-xl);
+  background: transparent;
   box-shadow: var(--shadow-overlay);
   color: var(--ink);
 }
@@ -17,6 +19,8 @@
   display: flex;
   flex-direction: column;
   max-height: inherit;
+  min-width: 0;
+  overflow: hidden;
 }
 .command-palette-search {
   display: flex;

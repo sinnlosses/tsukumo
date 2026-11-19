@@ -44,13 +44,22 @@
 
 /* 消す前の確認。`showModal()` は top layer に積むので、サイドバーの上に必ず重なる。 */
 .sidebar-persona-memory-confirm {
-  composes: surface-edge-rule surface-radius-lg surface-tone-surface from "../../../ui/surface/surface-face.module.css";
   box-sizing: border-box;
   width: min(24rem, calc(100vw - 2rem));
   margin: auto;
-  padding: var(--space-lg);
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-lg);
+  background: transparent;
   color: var(--ink);
   font-size: var(--font-secondary);
+}
+/* 縦の flex にして、`.sidebar-block p` の margin が子どうしで潰れないようにする（Astryx の Dialog が中身を並べていたのと同じ組み）。 */
+.sidebar-persona-memory-confirm-face {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: var(--space-lg);
 }
 .sidebar-persona-memory-confirm-question {
   margin: 0;

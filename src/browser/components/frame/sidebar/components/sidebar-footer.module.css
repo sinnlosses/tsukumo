@@ -35,13 +35,14 @@
 /* 3つのどれかを押すと、帯の真上に重ねて開く詳しい面。タスクの区画を押し下げない。
    プラン使用量のカードが280px未満で棒を畳むための基準（`@container`）もここ。 */
 .sidebar-footer-detail {
-  composes: surface-edge-rule surface-radius-lg surface-tone-ground from "../../../ui/surface/surface-face.module.css";
   position: absolute;
   right: 0.75rem;
   bottom: calc(100% + 0.4rem);
   left: 0.75rem;
   z-index: 2;
-  padding: var(--inset-card);
   box-shadow: var(--shadow-overlay);
+}
+.sidebar-footer-detail-body {
+  padding: var(--inset-card);
   container-type: inline-size;
 }

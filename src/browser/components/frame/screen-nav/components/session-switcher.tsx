@@ -13,6 +13,7 @@ import type { CharacterFaceInfo } from "../../../../domain/character-face.ts"
 import { Button } from "../../../ui/button/button.tsx"
 import { Dialog } from "../../../ui/dialog/dialog.tsx"
 import { Heading } from "../../../ui/heading/heading.tsx"
+import { Surface } from "../../../ui/surface/surface.tsx"
 import { Text } from "../../../ui/text/text.tsx"
 import { CharacterFace } from "../../character-face.tsx"
 import type { SessionDigestView } from "../hooks/use-session-digest.ts"
@@ -85,7 +86,14 @@ function SessionSwitcherBody(props: SessionSwitcherProps): ReactElement {
   const grouped = worktreeBlocks.length > 1
 
   return (
-    <div className={styles["session-switcher-frame"]}>
+    <Surface
+      element="div"
+      tone="surface"
+      space="none"
+      radius="xl"
+      shadow="none"
+      className={styles["session-switcher-frame"]}
+    >
       <div className={styles["session-switcher-search"]}>
         <Search size={18} strokeWidth={2} aria-hidden="true" />
         <input
@@ -270,7 +278,7 @@ function SessionSwitcherBody(props: SessionSwitcherProps): ReactElement {
           <kbd>Esc</kbd> 閉じる
         </Text>
       </div>
-    </div>
+    </Surface>
   )
 }
 

@@ -12,6 +12,7 @@ import { useId, useRef, type ReactElement, type ReactNode } from "react"
 
 import { useCloseWhenWide } from "../../../../hooks/use-close-when-wide.ts"
 import { Dialog } from "../../../ui/dialog/dialog.tsx"
+import { Surface } from "../../../ui/surface/surface.tsx"
 import type { NavDrawerView, ScreenNavParts } from "../hooks/use-screen-nav.ts"
 import shellStyles from "../screen-nav.module.css"
 import styles from "./nav-drawer.module.css"
@@ -149,22 +150,31 @@ function NavDrawerTabs(props: {
 
   return (
     <>
-      <div className={styles["nav-drawer-tabs"]} role="tablist">
-        {drawer.tabs.map((tab) => (
-          <button
-            type="button"
-            key={tab.tab}
-            id={tabId(tab.tab)}
-            role="tab"
-            className={styles["nav-drawer-tab"]}
-            aria-selected={tab.selected}
-            aria-controls={panelId}
-            onClick={() => drawer.onSelectTab(tab.tab)}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
+      <Surface
+        element="div"
+        tone="ground"
+        space="none"
+        radius="lg"
+        shadow="none"
+        className={styles["nav-drawer-tabs"]}
+      >
+        <div className={styles["nav-drawer-tablist"]} role="tablist">
+          {drawer.tabs.map((tab) => (
+            <button
+              type="button"
+              key={tab.tab}
+              id={tabId(tab.tab)}
+              role="tab"
+              className={styles["nav-drawer-tab"]}
+              aria-selected={tab.selected}
+              aria-controls={panelId}
+              onClick={() => drawer.onSelectTab(tab.tab)}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      </Surface>
       <div
         id={panelId}
         className={styles["nav-drawer-panel"]}

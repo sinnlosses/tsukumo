@@ -7,6 +7,7 @@ import { BLUR_RANGE, FILL_RANGE, VEIL_PERCENT_RANGE } from "../../../../domain/a
 import type { AppearanceColorKey } from "../../../../domain/appearance-color.ts"
 import { Button } from "../../../ui/button/button.tsx"
 import { HStack } from "../../../ui/h-stack/h-stack.tsx"
+import { Surface } from "../../../ui/surface/surface.tsx"
 import { Text } from "../../../ui/text/text.tsx"
 import styles from "./screen-nav-settings-look.module.css"
 import rowStyles from "./screen-nav-settings.module.css"
@@ -55,7 +56,16 @@ export function ScreenNavSettingsLookFace(props: ScreenNavSettingsProps): ReactE
                 color.onChange(event.target.value)
               }}
             />
-            <span className={styles["hex"]}>{color.value}</span>
+            <Surface
+              element="div"
+              tone="ground"
+              space="none"
+              radius="md"
+              shadow="none"
+              className={styles["hex-face"]}
+            >
+              <span className={styles["hex"]}>{color.value}</span>
+            </Surface>
           </div>
         </HStack>
       ))}

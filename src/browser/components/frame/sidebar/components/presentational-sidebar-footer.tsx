@@ -3,6 +3,7 @@
 
 import type { ReactElement } from "react"
 
+import { Surface } from "../../../ui/surface/surface.tsx"
 import type { SidebarFooterView } from "../hooks/use-sidebar-footer.ts"
 import { ContextUsageRow } from "./context-usage-row.tsx"
 import { PlanUsageRow } from "./plan-usage-row.tsx"
@@ -40,15 +41,24 @@ export function PresentationalSidebarFooter({
         />
       </div>
       {open && (
-        <div
-          id={detailId}
+        <Surface
+          element="div"
+          tone="ground"
+          space="none"
+          radius="lg"
+          shadow="none"
           className={styles["sidebar-footer-detail"]}
-          role="region"
-          aria-label={DETAIL_LABEL}
         >
-          <ContextUsageRow usage={contextUsage} />
-          <PlanUsageRow planUsage={planUsage} />
-        </div>
+          <div
+            id={detailId}
+            className={styles["sidebar-footer-detail-body"]}
+            role="region"
+            aria-label={DETAIL_LABEL}
+          >
+            <ContextUsageRow usage={contextUsage} />
+            <PlanUsageRow planUsage={planUsage} />
+          </div>
+        </Surface>
       )}
     </div>
   )

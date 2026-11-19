@@ -64,8 +64,11 @@
   font-size: var(--font-label);
   font-variant-numeric: tabular-nums;
 }
+.hex-face {
+  display: inline-block;
+}
 .hex {
-  composes: surface-edge-rule surface-radius-md surface-tone-ground from "../../../ui/surface/surface-face.module.css";
+  display: block;
   padding: var(--space-xs) var(--space-md);
   color: var(--ink-quiet);
   font-family: var(--font-mono);

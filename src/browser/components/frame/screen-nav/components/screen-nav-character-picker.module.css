@@ -34,19 +34,20 @@
 }
 /* 選択メニュー。顔の真下に、左端を揃えて重ねる（下の領域を押し下げない）。 */
 .screen-nav-character-picker-panel {
-  composes: surface-edge-rule surface-radius-md surface-tone-surface from "../../../ui/surface/surface-face.module.css";
   position: absolute;
   top: calc(100% + 0.4rem);
   left: 0;
   z-index: 21;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2xs);
   width: max-content;
   min-width: 12rem;
   max-width: 20rem;
   max-height: 70dvh;
   overflow-y: auto;
+}
+.screen-nav-character-picker-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xs);
   margin: 0;
   padding: var(--space-sm);
   list-style: none;

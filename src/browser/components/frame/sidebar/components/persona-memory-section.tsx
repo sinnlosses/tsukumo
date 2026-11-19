@@ -15,6 +15,7 @@ import { useSession } from "../../../../stores/session.ts"
 import { Button } from "../../../ui/button/button.tsx"
 import { Dialog } from "../../../ui/dialog/dialog.tsx"
 import { HStack } from "../../../ui/h-stack/h-stack.tsx"
+import { Surface } from "../../../ui/surface/surface.tsx"
 import { Text } from "../../../ui/text/text.tsx"
 import sidebarStyles from "../sidebar.module.css"
 import styles from "./persona-memory-section.module.css"
@@ -124,56 +125,65 @@ function PersonaMemoryForgetConfirm(props: PersonaMemoryForgetConfirmProps): Rea
       onClose={props.onClose}
       className={styles["sidebar-persona-memory-confirm"]}
     >
-      <Text
-        element="p"
-        size="heading"
-        tone="inherit"
-        weight="semibold"
-        className={styles["sidebar-persona-memory-confirm-question"]}
-      >
-        「{props.line}」を消しますか
-      </Text>
-      <Text
-        element="p"
-        size="inherit"
-        tone="ink-quiet"
-        weight="inherit"
-        className={styles["sidebar-persona-memory-confirm-note"]}
-      >
-        消すと元に戻せない。
-      </Text>
-      <HStack
+      <Surface
         element="div"
-        name={{ kind: "none" }}
-        gap="sm"
-        align="stretch"
-        justify="end"
-        wrap="nowrap"
-        className={styles["sidebar-persona-memory-confirm-actions"]}
+        tone="surface"
+        space="lg"
+        radius="lg"
+        shadow="none"
+        className={styles["sidebar-persona-memory-confirm-face"]}
       >
-        <Button
-          variant="outline"
-          size="secondary"
-          pressed="none"
-          disabled={false}
-          disclosure={{ kind: "none" }}
-          className={styles["sidebar-persona-memory-confirm-cancel"]}
-          onClick={props.onClose}
+        <Text
+          element="p"
+          size="heading"
+          tone="inherit"
+          weight="semibold"
+          className={styles["sidebar-persona-memory-confirm-question"]}
         >
-          キャンセル
-        </Button>
-        <Button
-          variant="outline-warn"
-          size="secondary"
-          pressed="none"
-          disabled={false}
-          disclosure={{ kind: "none" }}
-          className={styles["sidebar-persona-memory-confirm-ok"]}
-          onClick={forget}
+          「{props.line}」を消しますか
+        </Text>
+        <Text
+          element="p"
+          size="inherit"
+          tone="ink-quiet"
+          weight="inherit"
+          className={styles["sidebar-persona-memory-confirm-note"]}
         >
-          消す
-        </Button>
-      </HStack>
+          消すと元に戻せない。
+        </Text>
+        <HStack
+          element="div"
+          name={{ kind: "none" }}
+          gap="sm"
+          align="stretch"
+          justify="end"
+          wrap="nowrap"
+          className={styles["sidebar-persona-memory-confirm-actions"]}
+        >
+          <Button
+            variant="outline"
+            size="secondary"
+            pressed="none"
+            disabled={false}
+            disclosure={{ kind: "none" }}
+            className={styles["sidebar-persona-memory-confirm-cancel"]}
+            onClick={props.onClose}
+          >
+            キャンセル
+          </Button>
+          <Button
+            variant="outline-warn"
+            size="secondary"
+            pressed="none"
+            disabled={false}
+            disclosure={{ kind: "none" }}
+            className={styles["sidebar-persona-memory-confirm-ok"]}
+            onClick={forget}
+          >
+            消す
+          </Button>
+        </HStack>
+      </Surface>
     </Dialog>
   )
 }
