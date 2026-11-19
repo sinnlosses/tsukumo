@@ -20,6 +20,8 @@ import {
   linkDependencies,
   overlayHarness,
   removeReplayWorktree,
+  sweepStaleReplayWorktrees,
+  type ReplayWorktree,
 } from "../shared/replay-worktree.ts"
 import { REPOSITORY_ROOT as ROOT } from "../shared/repository-root.ts"
 
@@ -32,6 +34,22 @@ if (options === "invalid") {
 }
 
 const brief = options.brief === undefined ? undefined : readBrief(options.brief)
+
+const swept = sweepStaleReplayWorktrees(ROOT)
+if (swept > 0) {
+  process.stderr.write(`前回の再試の残り ${swept} 件（作業ツリーと枝）を消しました\n`)
+}
+
+const running = new Set<ReplayWorktree>()
+for (const [signal, code] of [
+  ["SIGTERM", 143],
+  ["SIGINT", 130],
+] as const) {
+  process.on(signal, () => {
+    for (const worktree of running) removeReplayWorktree(ROOT, worktree)
+    process.exit(code)
+  })
+}
 
 for (const id of options.tasks) {
   const script = readReplayCase(ROOT, id)
@@ -56,6 +74,7 @@ function readBrief(path: string): string {
 
 function replayOnce(script: ReplayCase, taskText: string): ReplayRun {
   const worktree = createReplayWorktree(ROOT, script.id, script.base)
+  running.add(worktree)
   try {
     linkDependencies(ROOT, worktree)
     overlayHarness(ROOT, worktree)
@@ -72,5 +91,6 @@ function replayOnce(script: ReplayCase, taskText: string): ReplayRun {
     return { passed: check.status === 0, ...claude }
   } finally {
     removeReplayWorktree(ROOT, worktree)
+    running.delete(worktree)
   }
 }
