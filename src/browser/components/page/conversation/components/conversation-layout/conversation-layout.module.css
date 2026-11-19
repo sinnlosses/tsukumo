@@ -1,5 +1,6 @@
 /* 会話の画面のレイアウト。
    広い画面（1101px 以上）は、左（立ち絵と席）・中央（メインビューと、その下端の入力欄）・右（サイドバー）の3列を1つの grid に並べ、器の全面に背景を敷く。
+   `data-collapse-character` が立つと（雑談モード）左の列を外した2列にする。
    左の列の幅とサイドバーの幅は CSS カスタムプロパティで持つ（<ConversationLayout> がドラッグに応じて style で書き換える）。
    ここに書いた var() の第2引数（フォールバック値）は `DEFAULT_SPLIT` と一致させること。
 
@@ -25,6 +26,17 @@
   );
   /* 背景の擬似要素（下の `.layout-ground::before`）を器の後ろへ回す。 */
   isolation: isolate;
+}
+/* 左の列を畳んだ2列（雑談モード）。左の列と左の仕切りは描かれないので、その2列ぶんを外す。 */
+.layout-grid[data-collapse-character="true"] {
+  grid-template-columns: minmax(0, 1fr) auto var(--layout-sidebar-width, 21.6%);
+}
+/* 2列のメインビューは枠・角丸・地を持たず、器の背景の上に直接置く。
+   `.layout-region` が compose する面の3項目を打ち消すので、詳細度は `.layout-region.layout-main` を上回らせる。 */
+.layout-grid[data-collapse-character="true"] .layout-region.layout-main {
+  border: none;
+  border-radius: 0;
+  background-color: transparent;
 }
 /* 中央の列。メインビューが残りの高さを取り、入力欄は中身の高さで下端に付く。
    `--center-read-width` は、広い画面で列の中央に置く読む組の外寸（帯と入力欄の縁を含めた上限と同じ）。 */
@@ -163,7 +175,7 @@
   pointer-events: none;
 }
 /* 枠も地の色も持たず、器の背景の上に直接置く領域。
-   左の列（仕事ではキャラビュー、雑談では立ち絵）は常にこちら（付喪神は器物に宿るのであって、ウィジェットの中に座っているのではない）。
+   左の列（キャラビュー）は常にこちら（付喪神は器物に宿るのであって、ウィジェットの中に座っているのではない）。
    枠も角丸も付けないのは変えない。 */
 .layout-region.layout-bare {
   border: none;
@@ -222,6 +234,9 @@
     grid-template-columns: min(var(--layout-left-width, 258px), 22vw) auto minmax(0, 1fr) 3rem;
     /* 柱と中央の列の間に仕切りの列は無いので、隙間を grid が持つ。 */
     column-gap: var(--space-sm);
+  }
+  .layout-grid[data-collapse-character="true"] {
+    grid-template-columns: minmax(0, 1fr) 3rem;
   }
   .layout-divider-sidebar {
     display: none;

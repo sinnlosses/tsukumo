@@ -1,6 +1,6 @@
-// 雑談ビューの入口。雑談モードの間だけ出る。
+// 雑談ビューの入口。雑談モードの間だけ、メインビューに立ち絵と席・会話のログを並べて出す。
 //
-// 立ち絵（左の列。`ChatStage`）と会話のログ（中央の列。`ChatView`）は置き場所が違うので、表情などの state は `ChatViewProvider` が1つだけ持ち、両方が読む。
+// 表情などの state は `ChatViewProvider` が1つだけ持ち、`ChatView` が読む。
 // 仕事のときのメインビューとは並びの規則が違うので、部品を分けてある。
 // あちらは依頼を境目にやり取りへまとめてタブで遡り、こちらは素直な時系列で積む。
 //
@@ -9,24 +9,25 @@
 
 import type { ReactElement, ReactNode } from "react"
 
+import type { ItemSeatMap } from "../../../../../../shared/item/item.ts"
+import { useSession } from "../../../../../stores/session.ts"
 import { ChatViewContext, useChatViewModel } from "./hooks/use-chat-view-model.ts"
 import { useChatView } from "./hooks/use-chat-view.ts"
 import { PresentationalChatView } from "./presentational-chat-view.tsx"
 
-export { ChatStage } from "./chat-stage.tsx"
+const EMPTY_SEATS: ItemSeatMap = {
+  topLeft: undefined,
+  belowLeft: undefined,
+  belowRight: undefined,
+}
 
-/** 中央の列に出す雑談のログ。`ChatViewProvider` の中に置く。 */
+/** メインビューに出す雑談の立ち絵・席・ログ。`ChatViewProvider` の中に置く。 */
 export function ChatView(): ReactElement {
-  const { logRef, rows, showTyping, showEmptyMessage, face } = useChatViewModel()
-  return (
-    <PresentationalChatView
-      logRef={logRef}
-      rows={rows}
-      showTyping={showTyping}
-      showEmptyMessage={showEmptyMessage}
-      face={face}
-    />
-  )
+  const model = useChatViewModel()
+  const character = useSession((session) => session.state.character)
+  const itemSeats = useSession((session) => session.state.itemSeats)
+  const seats = (character === undefined ? undefined : itemSeats[character.pack]) ?? EMPTY_SEATS
+  return <PresentationalChatView {...model} seats={seats} />
 }
 
 /**

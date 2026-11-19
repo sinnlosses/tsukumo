@@ -19,6 +19,7 @@ type ConversationLayoutProps = {
   readonly sheet: ReactNode
   readonly rail: { readonly badge: ReactNode }
   readonly narrowGround: boolean
+  readonly collapseCharacter: boolean
 }
 
 export function ConversationLayout(props: ConversationLayoutProps): ReactElement {

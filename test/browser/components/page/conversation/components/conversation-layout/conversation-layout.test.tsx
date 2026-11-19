@@ -1,4 +1,5 @@
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
+import type { ReactElement } from "react"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import { ConversationLayout } from "../../../../../../../src/browser/components/page/conversation/components/conversation-layout/conversation-layout.tsx"
@@ -12,8 +13,10 @@ import { useLayoutSplitReset } from "../../../../../../../src/browser/stores/lay
  * 4領域は中身の判別さえできればよいので、部品名の文字列だけ渡す
  * （`<ConversationLayout>` は他の `features/` を import しない。層のエッジの検査が守る）。
  */
-function renderLayout(narrowGround = false): void {
-  render(
+function renderLayout(
+  flags: { readonly narrowGround?: boolean; readonly collapseCharacter?: boolean } = {},
+): (collapseCharacter: boolean) => void {
+  const layout = (collapseCharacter: boolean): ReactElement => (
     <ConversationLayout
       main="main"
       sidebar="sidebar"
@@ -24,9 +27,14 @@ function renderLayout(narrowGround = false): void {
       voice="voice"
       sheet="sheet"
       rail={{ badge: "railBadge" }}
-      narrowGround={narrowGround}
-    />,
+      narrowGround={flags.narrowGround ?? false}
+      collapseCharacter={collapseCharacter}
+    />
   )
+  const { rerender } = render(layout(flags.collapseCharacter ?? false))
+  return (collapseCharacter) => {
+    rerender(layout(collapseCharacter))
+  }
 }
 
 /** 仕切りの位置は container の矩形から出るので、happy-dom の 0 のままでは測れない。 */
@@ -166,10 +174,31 @@ describe("ConversationLayout", () => {
     expect(screen.getAllByRole("separator")).toHaveLength(2)
   })
 
-  it("雑談モード（狭い画面で背景を敷く）でも左の列と仕切り2本を描く", () => {
-    renderLayout(true)
+  it("狭い画面で背景を敷く旗だけでは、左の列と仕切り2本を描く", () => {
+    renderLayout({ narrowGround: true })
 
     expect(document.querySelector('[data-region="character"]')).not.toBeNull()
     expect(screen.getAllByRole("separator")).toHaveLength(2)
+  })
+
+  it("左の列を畳む旗が立つと、左の列と左の仕切りを描かず、サイドバーの仕切りだけ残す", () => {
+    renderLayout({ narrowGround: true, collapseCharacter: true })
+
+    expect(document.querySelector('[data-region="character"]')).toBeNull()
+    expect(screen.queryByRole("separator", { name: "キャラビューとメインビューの境界" })).toBeNull()
+    expect(screen.getByRole("separator", { name: "メインビューとサイドバーの境界" })).toBeDefined()
+  })
+
+  it("雑談で畳んだあと旗を外すと、覚えた `--layout-left-width` の幅の左の列が戻る", () => {
+    localStorage.setItem("tsukumo-layout-split:v2", JSON.stringify({ leftPx: 320, sidebar: 25 }))
+    const setCollapse = renderLayout({ collapseCharacter: true })
+
+    setCollapse(false)
+
+    expect(document.querySelector('[data-region="character"]')).not.toBeNull()
+    expect(
+      screen.getByRole("separator", { name: "キャラビューとメインビューの境界" }),
+    ).toBeDefined()
+    expect(gridWidths(gridElement())).toEqual(["320px", "25%"])
   })
 })

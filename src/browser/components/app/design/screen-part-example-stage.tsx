@@ -40,6 +40,14 @@ const CHARACTER: CharacterViewModel = {
   seats: { topLeft: undefined, belowLeft: undefined, belowRight: undefined },
 }
 
+const CHAT_STAGE = {
+  altText: CHARACTER.altText,
+  expression: CHARACTER.expression,
+  turnInProgress: false,
+  onNudge: noop,
+  seats: CHARACTER.seats,
+}
+
 export const STAGE_EXAMPLES: readonly ScreenPartExample[] = [
   {
     frame: "flow",
@@ -96,6 +104,7 @@ export const STAGE_EXAMPLES: readonly ScreenPartExample[] = [
       <>
         <StageBox>
           <PresentationalChatView
+            {...CHAT_STAGE}
             logRef={noop}
             showTyping={false}
             showEmptyMessage={false}
@@ -117,6 +126,7 @@ export const STAGE_EXAMPLES: readonly ScreenPartExample[] = [
         </StageBox>
         <StageBox>
           <PresentationalChatView
+            {...CHAT_STAGE}
             logRef={noop}
             showTyping
             showEmptyMessage={false}

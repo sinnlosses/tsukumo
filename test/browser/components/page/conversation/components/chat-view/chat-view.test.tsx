@@ -2,7 +2,6 @@ import { QueryClientProvider } from "@tanstack/react-query"
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
-import { ChatStage } from "../../../../../../../src/browser/components/page/conversation/components/chat-view/chat-stage.tsx"
 import {
   ChatView,
   ChatViewProvider,
@@ -49,7 +48,6 @@ function renderChatView(stateOverrides: Partial<SessionState>, spy: CommandSpy =
   render(
     <QueryClientProvider client={createTestQueryClient()}>
       <ChatViewProvider>
-        <ChatStage />
         <ChatView />
       </ChatViewProvider>
     </QueryClientProvider>,
@@ -104,6 +102,54 @@ describe("ChatView", () => {
     const row = document.querySelector(".chat-face-row")
     expect(row?.querySelector(".chat-face")?.getAttribute("src")).toBe("/character/face.png")
     expect(row?.textContent).toBe("")
+  })
+})
+
+describe("ChatView の舞台（立ち絵と席）", () => {
+  const LANTERN = { id: "1", name: "提灯", url: "/item/1.png?v=1" }
+
+  function shownSeats(): readonly (string | null)[] {
+    return [...document.querySelectorAll("img[data-seat]")].map((img) =>
+      img.getAttribute("data-seat"),
+    )
+  }
+
+  it("立ち絵とセリフのログを、同じ雑談ビューの組に並べる", () => {
+    renderChatView({
+      records: [speechRecord({ text: "架空のセリフ" })],
+      character: FIXTURE_CHARACTER,
+    })
+
+    const region = document.querySelector(".chat-region")
+    expect(region?.querySelector("[data-expression]")).not.toBeNull()
+    expect(region?.querySelector("[data-speaker]")?.textContent).toContain("架空のセリフ")
+  })
+
+  it("使用中のパックの席のアイテムを、左上・左下・右下に出す", () => {
+    renderChatView({
+      records: [],
+      character: FIXTURE_CHARACTER,
+      itemSeats: {
+        [FIXTURE_CHARACTER.pack]: { topLeft: LANTERN, belowLeft: LANTERN, belowRight: LANTERN },
+      },
+    })
+
+    expect(shownSeats()).toEqual(["topLeft", "belowLeft", "belowRight"])
+  })
+
+  it("立ち絵の素材が無いパックでは、立ち絵・つつくボタン・席を出さず、ログだけ出す", () => {
+    renderChatView({
+      records: [speechRecord({ text: "架空のセリフ" })],
+      character: characterInfo(),
+      itemSeats: {
+        [FIXTURE_CHARACTER.pack]: { topLeft: LANTERN, belowLeft: undefined, belowRight: undefined },
+      },
+    })
+
+    expect(document.querySelector("[data-expression]")).toBeNull()
+    expect(document.querySelector("button")).toBeNull()
+    expect(shownSeats()).toEqual([])
+    expect(screen.getByText("架空のセリフ")).toBeTruthy()
   })
 })
 

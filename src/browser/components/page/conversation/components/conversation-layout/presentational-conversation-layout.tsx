@@ -1,9 +1,12 @@
 // `<ConversationLayout>` の器。
 //
-// 広い画面では左（立ち絵と席）・中央（メインビューと、その下端の入力欄）・右（サイドバー）の3列を、器の全面に敷いた背景の上に並べる。
+// 広い画面では左（立ち絵と席）・中央（メインビューと、その下端の入力欄）・右（サイドバー）の3列を、器の全面に敷いた背景の上に並べる（旗 `collapseCharacter` が立つと左を除いた2列）。
 // 4領域は `data-region` でも名乗る。
 // class 名は組み立てのたびにハッシュ化される（CSS Modules）ので、外から領域を指す口（画面を撮って位置と大きさを測る `node scripts/capture/capture-view.ts` や、開発者ツール）はこちらを使う。
 //
+// 旗 `collapseCharacter` を立てると、左の列と左の仕切りを描かず、中央・右の2列にする（雑談モード）。
+// 列の幅（`--layout-left-width`）は書き換えないので、旗を外すと覚えた幅の3列に戻る。
+// 印 `data-collapse-character` は旗が立つときだけ付け、仕事の画面の DOM には足さない。
 // 旗 `narrowGround` を立てると、狭い画面（760px 以下）で左の列を出さず背景の絵を敷く（`data-narrow-ground`）。
 //
 // 狭い画面では縦の1列に積み、サイドバーと仕切りを出さない。
@@ -39,6 +42,8 @@ type PresentationalConversationLayoutProps = UseConversationLayoutResult & {
   }
   /** 狭い画面（760px 以下）で、左の列を出さず、背景の絵を敷くか（雑談モード）。 */
   readonly narrowGround: boolean
+  /** 左の列と左の仕切りを描かず、2列にするか（雑談モード）。 */
+  readonly collapseCharacter: boolean
 }
 
 /**
@@ -64,35 +69,41 @@ export function PresentationalConversationLayout({
   sheet,
   rail: { badge: railBadge },
   narrowGround,
+  collapseCharacter,
 }: PresentationalConversationLayoutProps): ReactElement {
   return (
     <div
       className={clsx(styles["layout-grid"], styles["layout-ground"])}
       ref={gridRef}
       data-narrow-ground={narrowGround}
+      data-collapse-character={collapseCharacter ? "true" : undefined}
       data-sidebar-open={sidebarOpen}
       style={gridStyle}
     >
-      <section
-        className={clsx(styles["layout-region"], styles["layout-bare"], styles["layout-left"])}
-        data-region="character"
-        aria-label="キャラクター"
-      >
-        <div className={styles["layout-outline"]}>{outline}</div>
-        {character}
-      </section>
-      <div className={styles["layout-divider"]}>
-        <LayoutResizer
-          orientation="vertical"
-          containerRef={gridRef}
-          ariaLabel="キャラビューとメインビューの境界"
-          toValue={leftPxFromRatio}
-          onChange={left.onChange}
-          onCommit={left.onCommit}
-          onReset={onReset}
-          className=""
-        />
-      </div>
+      {!collapseCharacter && (
+        <>
+          <section
+            className={clsx(styles["layout-region"], styles["layout-bare"], styles["layout-left"])}
+            data-region="character"
+            aria-label="キャラクター"
+          >
+            <div className={styles["layout-outline"]}>{outline}</div>
+            {character}
+          </section>
+          <div className={styles["layout-divider"]}>
+            <LayoutResizer
+              orientation="vertical"
+              containerRef={gridRef}
+              ariaLabel="キャラビューとメインビューの境界"
+              toValue={leftPxFromRatio}
+              onChange={left.onChange}
+              onCommit={left.onCommit}
+              onReset={onReset}
+              className=""
+            />
+          </div>
+        </>
+      )}
       <div className={styles["layout-center"]}>
         <main
           className={clsx(styles["layout-region"], styles["layout-main"])}
