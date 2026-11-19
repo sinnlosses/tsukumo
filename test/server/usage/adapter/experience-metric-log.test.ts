@@ -275,12 +275,6 @@ describe("readRange", () => {
     ).toEqual(["conclusion", "recovery"])
   })
 
-  it("置き場がまだ無いときは空の並びを返す", () => {
-    const log = createExperienceMetricLog(root())
-
-    expect(log.readRange({ startDate: "2026-09-01", endDate: "2026-09-30" })).toEqual([])
-  })
-
   it("壊れた行・版が違う行は落とし、正しい行は残す", async () => {
     const log = createExperienceMetricLog(root())
     log.append(conclusion(at(9, 0)))

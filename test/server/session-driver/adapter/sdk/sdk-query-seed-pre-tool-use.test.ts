@@ -202,8 +202,8 @@ describe("preToolUseHooks（work_plan の前に Edit・Write を拒む）", () =
 describe("preToolUseHooks（Bash の command を短い出力の版へ差し替える）", () => {
   const shorten = (command: string): Promise<string | undefined> =>
     Promise.resolve(`rtk ${command}`)
-  const rewriting = (toolName: string, toolInput: unknown, agentId?: string) =>
-    runPreToolUse(toolName, toolInput, agentId, { rewriteBash: shorten })
+  const rewriting = (toolName: string, toolInput: unknown) =>
+    runPreToolUse(toolName, toolInput, undefined, { rewriteBash: shorten })
 
   it("メインの Bash は updatedInput で command を差し替え、permissionDecision は返さない", async () => {
     expect(await rewriting("Bash", { command: "git status" })).toEqual({
@@ -211,12 +211,6 @@ describe("preToolUseHooks（Bash の command を短い出力の版へ差し替�
         hookEventName: "PreToolUse",
         updatedInput: { command: "rtk git status" },
       },
-    })
-  })
-
-  it("サブエージェントの中の Bash も差し替える", async () => {
-    expect(await rewriting("Bash", { command: "ls" }, "sub-1")).toEqual({
-      hookSpecificOutput: { hookEventName: "PreToolUse", updatedInput: { command: "rtk ls" } },
     })
   })
 

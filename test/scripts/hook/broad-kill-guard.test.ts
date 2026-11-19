@@ -1,6 +1,7 @@
 // 広い `kill` を止める PreToolUse hook の契約（終了コード 2 で実行を止める）を、
 // スクリプトを実際に起こして確かめる。判定だけを取り出して呼ぶと、hook が守るべき
 // 「終了コードで伝える」という約束のほうが抜けるため。
+// 判定の表は findBroadKillDenial のテストが持ち、ここは止める・通すを1本ずつ見る。
 
 import process from "node:process"
 
@@ -11,66 +12,18 @@ import { runSubprocess } from "../../fixture/subprocess.ts"
 const HOOK_PATH = "scripts/hook/bash-guard.ts"
 
 describe("広い kill を拒否する hook", () => {
-  test.each([
-    ["パターンで薙ぐ pkill", "pkill -f 'pnpm run'"],
-    ["エントリポイントを狙う pkill", 'pkill -f "src/cli.ts"'],
-    ["名前で薙ぐ killall", "killall node"],
-    ["pgrep から kill へ流す形", "pgrep -f pnpm | xargs kill"],
-    ["前段のコマンドに続けて書いた pkill", "echo stopping && pkill -f tsukumo"],
-    ["vitest を名前で狙う pkill", "pkill -f vitest"],
-    ["引用符の中に vitest を書いた pkill", 'pkill -9 -f "vitest run --reporter=dot"'],
-    ["chrome を名前で狙う killall", "killall chrome"],
-    ["playwright を狙う pkill", "pkill -f playwright"],
-    ["開発用スクリプトの名前と引数を狙う pkill", 'pkill -f "check.ts --full"'],
-    ["開発用スクリプトの名前だけを狙う pkill", "pkill -f check.ts"],
-    ["tw のサブコマンドを狙う pkill", 'pkill -f "tw ship"'],
-    ["取り合う語を含まない相手を狙う pkill", "pkill -f my-python-worker"],
-    ["bash -c の中の pkill", 'bash -c "pkill -f node"'],
-    ["パスを付けた pkill", "/usr/bin/pkill -f node"],
-    ["sudo -u 越しの pkill", "sudo -u x pkill node"],
-    ["env -u 越しの pkill", "env -u FOO pkill node"],
-    ["全プロセスを指す kill", "kill -9 -1"],
-    [
-      "引数の置換の中の lsof を持つ xargs kill",
-      "pgrep node | xargs kill $(lsof -ti tcp:7398 -sTCP:LISTEN)",
-    ],
-    ["置換文字列を使う xargs kill", "pgrep node | xargs -I{} kill {}"],
-    ["別の文の lsof を持つ xargs kill", "lsof -ti tcp:7398 -sTCP:LISTEN; pgrep node | xargs kill"],
-    ["pgrep の結果を渡す kill", "kill $(pgrep -f node)"],
-    ["ps から xargs kill へ流す形", "ps aux | grep node | xargs kill"],
-  ])("%s は止める", async (_name, command) => {
-    expect(await runHook(command)).toBe(2)
+  test("名前で薙ぐ pkill は止める", async () => {
+    expect(await runHook("pkill -f vitest")).toBe(2)
   })
 
-  test.each([
-    ["pid を名指しする kill", "kill 34390"],
-    ["ポートから引いた pid を渡す kill", "kill $(lsof -ti tcp:7398 -sTCP:LISTEN)"],
-    ["語として書いただけの grep", 'grep -rn "pkill" docs/workflow.md'],
-    ["引用符の中に語を書いた grep", "grep -rn 'pkill\\|killall' .claude/"],
-    ["コミットメッセージに語を書いた git commit", 'git commit -m "node の pkill を止める hook"'],
-    [
-      "heredoc の本文に語を書いた tw new",
-      "tw new --body-file - <<'EOF'\npkill -f vitest\nkillall node\nEOF",
-    ],
-  ])("%s は通す", async (_name, command) => {
-    expect(await runHook(command)).toBe(0)
-  })
-
-  test("Bash 以外のツールには関わらない", async () => {
-    expect(await runHook("pkill -f pnpm", "Read")).toBe(0)
-  })
-
-  test("形が違う入力では実行を止めない", async () => {
-    expect(await runRaw("これは JSON ではない")).toBe(0)
+  test("pid を名指しする kill は通す", async () => {
+    expect(await runHook("kill 34390")).toBe(0)
   })
 })
 
-function runHook(command: string, toolName = "Bash"): Promise<number | undefined> {
-  return runRaw(JSON.stringify({ tool_name: toolName, tool_input: { command } }))
-}
-
 /** hook を起こして終了コードを返す（シグナルで終わったときは `undefined`）。stderr は拒否の理由が入るので見ない。 */
-async function runRaw(input: string): Promise<number | undefined> {
+async function runHook(command: string): Promise<number | undefined> {
+  const input = JSON.stringify({ tool_name: "Bash", tool_input: { command } })
   const result = await runSubprocess(process.execPath, [HOOK_PATH], { input })
   return result.exitCode
 }

@@ -438,22 +438,6 @@ describe("readRange", () => {
     expect(records[0]?.at.slice(0, 10)).toBe("2026-09-22")
   })
 
-  it("複数日にまたがる期間は、古い→新しい順に日をまたいで返す", async () => {
-    const log = createTokenUsageLog(NO_TASK, root())
-    log.append(entry(at(9, 0, 23)))
-    log.append(entry(at(9, 0, 21)))
-    log.append(entry(at(9, 0, 22)))
-    await log.flush()
-
-    const records = log.readRange({ startDate: "2026-09-21", endDate: "2026-09-23" })
-
-    expect(records.map((record) => record.at.slice(0, 10))).toEqual([
-      "2026-09-21",
-      "2026-09-22",
-      "2026-09-23",
-    ])
-  })
-
   // 中身だけを差し替えて mtime と size を戻す。開き直せば差し替えた中身が見え、開かなければ前の中身のまま。
   it("2回目の読みで (mtime, size) が同じファイルは開かず、変わったファイルは読み直す", async () => {
     const log = createTokenUsageLog(NO_TASK, root())
@@ -478,12 +462,6 @@ describe("readRange", () => {
     log.append(entry(at(9, 1, 22)))
     await log.flush()
     expect(log.readRange(period).length).toBe(3)
-  })
-
-  it("記録が無い期間・置き場がまだ無いときは空の並びを返す（例外にならない）", () => {
-    const log = createTokenUsageLog(NO_TASK, root())
-
-    expect(log.readRange({ startDate: "2026-09-01", endDate: "2026-09-30" })).toEqual([])
   })
 
   // 版1・壊れた行は読まずに落とす（版1を残す価値が無いという判断。

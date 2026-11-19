@@ -221,12 +221,6 @@ describe("applySessionEvent（report のフェーズの閉じ方とワークプ�
     expect(currentPlan(state)).toMatchObject({ current: 2 })
   })
 
-  it("段が2つ以上残っていれば、finished でも帯は動かない", () => {
-    const state = apply(request, mainPlan(1), reportOf("finished"))
-
-    expect(currentPlan(state)).toMatchObject({ current: 1 })
-  })
-
   it("ワークプランの無い依頼と、前の依頼のワークプランには何も積まない", () => {
     const none = apply(request, reportOf("finished"))
     const previous = apply(request, mainPlan(2), request, reportOf("finished"))

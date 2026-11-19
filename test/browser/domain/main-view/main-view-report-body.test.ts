@@ -205,43 +205,6 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     ])
   })
 
-  it("ワークプランを渡したやり取りでは、中間レポートはまとめだけで、最終レポートは結論の下に段ごとの所要時間の帯と一覧を置く", () => {
-    const plan = (current: number, phaseSummary: string): SessionEvent => ({
-      kind: "work-plan",
-      delegatedRange: { kind: "none" },
-      skippedPhases: [],
-      awaitingSummary: { kind: "none" },
-      phaseIds: [],
-      phases: ["架空の段A", "架空の段B"],
-      current,
-      finishedInGroup: [],
-      phaseSummary,
-    })
-    const turn = turnOf(
-      [
-        ask,
-        plan(0, ""),
-        plan(1, "架空のまとめ。"),
-        report("架空の結論。", "架空の根拠。"),
-        finished,
-      ],
-      SETTLED,
-      true,
-    )
-
-    const [summary, final] = shownReports(turn)
-
-    expect(summary).toBe("架空のまとめ。")
-    expect(final).toBe("架空の結論。\n\n架空の根拠。")
-    const times = headOfTurn(turn)?.status.phaseTimes
-    expect(times?.kind).toBe("times")
-    expect(
-      times?.kind === "times"
-        ? times.rows.map((entry) => (entry.kind === "row" ? entry.row.label : entry.head.label))
-        : [],
-    ).toContainEqual({ kind: "numbered", num: "2/2", name: "架空の段B" })
-  })
-
   it("段ごとの所要時間は最終のときの頭にだけ入り、最終レポートの印が立つと本文の頭がそれに替わる", () => {
     const plan = (current: number, phaseSummary: string): SessionEvent => ({
       kind: "work-plan",

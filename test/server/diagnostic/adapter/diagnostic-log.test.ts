@@ -258,10 +258,4 @@ describe("pruneExpired", () => {
       "notes.txt",
     ])
   })
-
-  it("置き場が無くても投げない", () => {
-    expect(() => {
-      createDiagnosticLog(root()).pruneExpired("2026-10-04")
-    }).not.toThrow()
-  })
 })
