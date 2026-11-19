@@ -114,29 +114,6 @@
   letter-spacing: 0.1em;
   white-space: nowrap;
 }
-/* 列の頭に添えるキーの印（`[` `]`・`{` `}`）。字の色は添える先のまま。 */
-.outline-keys {
-  display: inline-flex;
-  flex: none;
-  gap: var(--inline-tight);
-  padding-left: var(--inline-control);
-}
-/* 最終レポートの行は、題を伸ばして `{` `}` を右端へ寄せる。 */
-.outline-row[data-level="report"] .outline-row-text {
-  flex: 1 1 auto;
-}
-.outline-key {
-  min-width: 1.25rem;
-  padding: 0 var(--inline-tight);
-  border: 1px solid var(--ink-quiet);
-  border-radius: var(--radius-sm);
-  color: var(--ink-quiet);
-  font-family: var(--font-mono);
-  font-size: var(--font-label);
-  font-weight: normal;
-  letter-spacing: 0;
-  text-align: center;
-}
 /* やり取り1件ぶん（やり取りの行と、見ているやり取りなら子の見出しの行）。
    見ているやり取りは子の行ごと面に載せる。 */
 .outline-turn-group {

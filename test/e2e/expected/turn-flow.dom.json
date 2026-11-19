@@ -258,26 +258,6 @@
                   "children": [
                     "やり取り",
                     {
-                      "tag": "span",
-                      "attributes": {
-                        "aria-hidden": "true"
-                      },
-                      "children": [
-                        {
-                          "tag": "kbd",
-                          "children": [
-                            "["
-                          ]
-                        },
-                        {
-                          "tag": "kbd",
-                          "children": [
-                            "]"
-                          ]
-                        }
-                      ]
-                    },
-                    {
                       "tag": "button",
                       "attributes": {
                         "data-variant": "ghost",
@@ -339,27 +319,7 @@
                           }
                         },
                         "最終",
-                        "架空の結論: 目盛りを 24 に直し、`a.ts` だけで済んだ。",
-                        {
-                          "tag": "span",
-                          "attributes": {
-                            "aria-hidden": "true"
-                          },
-                          "children": [
-                            {
-                              "tag": "kbd",
-                              "children": [
-                                "{"
-                              ]
-                            },
-                            {
-                              "tag": "kbd",
-                              "children": [
-                                "}"
-                              ]
-                            }
-                          ]
-                        }
+                        "架空の結論: 目盛りを 24 に直し、`a.ts` だけで済んだ。"
                       ]
                     }
                   ]

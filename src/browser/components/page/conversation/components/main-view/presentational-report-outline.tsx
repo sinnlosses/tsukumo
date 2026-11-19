@@ -25,8 +25,7 @@ const COLLAPSE_LABEL = "やり取りを畳む"
 const EXPAND_LABEL = "やり取りを開く"
 
 const TURN_STEP_KEY_HINT = "前後のやり取りへは [ ] キー"
-const TURN_STEP_KEYS = ["[", "]"]
-const HEADING_STEP_KEYS = ["{", "}"]
+const HEADING_STEP_KEY_HINT = "レポートの見出しへは { } キー"
 
 const ACTIVE_TURN_MARK = "●"
 
@@ -73,7 +72,6 @@ export function PresentationalReportOutline({
               {turnRows.length}
             </span>
           )}
-          <KeyMarks keys={TURN_STEP_KEYS} />
         </span>
         <Button
           variant="ghost"
@@ -138,19 +136,6 @@ export function EmptyReportOutline(): ReactElement {
   )
 }
 
-/** 列の頭に添えるキーの印。見える字だけで、名前には入れない。 */
-function KeyMarks(props: { readonly keys: readonly string[] }): ReactElement {
-  return (
-    <span className={styles["outline-keys"]} aria-hidden="true">
-      {props.keys.map((key) => (
-        <kbd className={styles["outline-key"]} key={key}>
-          {key}
-        </kbd>
-      ))}
-    </span>
-  )
-}
-
 function TurnRow(props: {
   readonly turn: ReportOutlineTurnRow
   readonly onSelectTurn: (turnId: number) => void
@@ -200,7 +185,7 @@ function HeadingRows(props: {
           className={styles["outline-row"]}
           data-level="report"
           aria-current={reportRow.isActive ? "location" : undefined}
-          title={reportRow.title}
+          title={`${reportRow.title}\n${HEADING_STEP_KEY_HINT}`}
           onClick={props.onSelectReport}
         >
           <span className={styles["outline-row-mark"]} aria-hidden="true" />
@@ -208,7 +193,6 @@ function HeadingRows(props: {
             {REPORT_LABEL_TEXT[reportRow.label]}
           </span>
           <span className={styles["outline-row-text"]}>{reportRow.title}</span>
-          <KeyMarks keys={HEADING_STEP_KEYS} />
         </button>
       )}
       {withOccurrenceKeys(props.rows, (row) => `${row.level}:${row.text}`).map(

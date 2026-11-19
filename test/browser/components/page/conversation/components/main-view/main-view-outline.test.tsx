@@ -69,7 +69,7 @@ describe("MainView（やり取りの列: やり取りと見出しの2段）", ()
       "✓1つ目",
       "✓2つ目",
       "●3つ目",
-      "最終節の一{}",
+      "最終節の一",
       "節の一",
       "小節",
       "節の二",
@@ -101,7 +101,7 @@ describe("MainView（やり取りの列: やり取りと見出しの2段）", ()
     expect(title()).toBe("1つ目")
     // 見出しは描いた本文の DOM の変化（`MutationObserver`）で拾い直すので、次のタスクで替わる。
     await waitFor(() => {
-      expect(outlineRowTexts()).toEqual(["●1つ目", "最終1つ目のレポート{}", "✓2つ目", "✓3つ目"])
+      expect(outlineRowTexts()).toEqual(["●1つ目", "最終1つ目のレポート", "✓2つ目", "✓3つ目"])
     })
   })
 
@@ -121,7 +121,7 @@ describe("MainView（やり取りの列: やり取りと見出しの2段）", ()
     fireEvent.keyDown(nav, { key: "ArrowDown" })
     expect(document.activeElement?.textContent).toBe("●3つ目")
     fireEvent.keyDown(nav, { key: "ArrowDown" })
-    expect(document.activeElement?.textContent).toBe("最終節の一{}")
+    expect(document.activeElement?.textContent).toBe("最終節の一")
     fireEvent.keyDown(nav, { key: "ArrowUp" })
     fireEvent.keyDown(nav, { key: "ArrowUp" })
     fireEvent.keyDown(nav, { key: "ArrowUp" })
@@ -134,7 +134,7 @@ describe("MainView（やり取りの列: やり取りと見出しの2段）", ()
     })
     expect(title()).toBe("1つ目")
     await waitFor(() => {
-      expect(outlineRowTexts()).toEqual(["●1つ目", "最終1つ目のレポート{}", "✓2つ目", "✓3つ目"])
+      expect(outlineRowTexts()).toEqual(["●1つ目", "最終1つ目のレポート", "✓2つ目", "✓3つ目"])
     })
   })
 
@@ -158,14 +158,13 @@ describe("MainView（やり取りの列: やり取りと見出しの2段）", ()
     expect(outlineTurnRows()).toHaveLength(3)
   })
 
-  it("hello のあと、やり取りが無いあいだは、題と件数 0 だけの帯が出る（口も行も印も無い）", () => {
+  it("hello のあと、やり取りが無いあいだは、題と件数 0 だけの帯が出る（口も行も無い）", () => {
     renderMainView([])
 
     expect(emptyOutlineBand()).toEqual({
       text: "やり取り0",
       hasCountLabel: true,
       buttons: 0,
-      keyMarks: 0,
     })
   })
 
@@ -183,7 +182,6 @@ describe("MainView（やり取りの列: やり取りと見出しの2段）", ()
       text: "やり取り0",
       hasCountLabel: true,
       buttons: 0,
-      keyMarks: 0,
     })
   })
 })
@@ -192,13 +190,11 @@ function emptyOutlineBand(): {
   readonly text: string | null
   readonly hasCountLabel: boolean
   readonly buttons: number
-  readonly keyMarks: number
 } {
   const nav = screen.getByRole("navigation", { name: "やり取り" })
   return {
     text: nav.textContent,
     hasCountLabel: within(nav).queryByLabelText("0件") !== null,
     buttons: within(nav).queryAllByRole("button").length,
-    keyMarks: nav.querySelectorAll("kbd").length,
   }
 }
