@@ -1,0 +1,514 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>設定の改善 — 今と案の見比べ（2026-11-20）</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #15131b;
+    --ground: #191720;
+    --surface: #221f2b;
+    --raised: #2a2733;
+    --ink: #e8e3ea;
+    --ink-soft: color-mix(in srgb, var(--ink) 74%, transparent);
+    --ink-quiet: color-mix(in srgb, var(--ink) 56%, transparent);
+    --line: color-mix(in srgb, var(--ink) 12%, transparent);
+    --accent: #5ad1c0;
+    --accent-soft: color-mix(in srgb, var(--accent) 16%, transparent);
+    --warn: #f2c46b;
+    --ng: #f08a8a;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.6 system-ui, "Hiragino Sans", sans-serif; }
+  button, input, select { font: inherit; color: inherit; }
+
+  header.page { padding: 20px 28px 4px; max-width: 1560px; margin: 0 auto; }
+  header.page h1 { font-size: 20px; margin: 0 0 4px; }
+  header.page p { margin: 0; color: var(--ink-soft); font-size: 13px; }
+  kbd { font: 12px ui-monospace, monospace; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 5px; padding: 0 5px; }
+
+  .layout { display: grid; grid-template-columns: 380px 1fr; gap: 28px; padding: 16px 28px 40px; max-width: 1560px; margin: 0 auto; align-items: start; }
+
+  /* 左の列: 観点の一覧と説明 */
+  .rail { display: flex; flex-direction: column; gap: 14px; position: sticky; top: 16px; }
+  .views { display: flex; flex-direction: column; gap: 2px; margin: 0; padding: 0; list-style: none; }
+  .views button { width: 100%; display: grid; grid-template-columns: 22px 1fr auto; gap: 8px; align-items: center; text-align: left; background: none; border: 0; border-radius: 8px; padding: 6px 10px; cursor: pointer; font-size: 13px; }
+  .views button:hover { background: var(--surface); }
+  .views button[aria-current="true"] { background: var(--accent-soft); color: var(--ink); }
+  .views .no { font-size: 12px; color: var(--ink-quiet); font-variant-numeric: tabular-nums; }
+  .prio { font-size: 12px; padding: 0 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--ink-soft); }
+  .prio[data-p="1"] { border-color: var(--ng); color: var(--ng); }
+  .prio[data-p="2"] { border-color: var(--accent); color: var(--accent); }
+  .explain { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: grid; gap: 10px; }
+  .explain h2 { margin: 0; font-size: 16px; }
+  .explain dl { margin: 0; display: grid; grid-template-columns: 44px 1fr; gap: 6px 10px; font-size: 13px; }
+  .explain dt { color: var(--ink-quiet); }
+  .explain dd { margin: 0; }
+  .explain a { color: var(--accent); }
+
+  /* 右の列: 切り替えと画面 */
+  .viewer { display: flex; flex-direction: column; gap: 12px; }
+  .switch { display: inline-flex; align-self: flex-start; border: 1px solid var(--line); border-radius: 10px; padding: 3px; gap: 3px; background: var(--surface); }
+  .switch button { border: 0; background: none; padding: 4px 18px; border-radius: 7px; cursor: pointer; font-size: 13px; color: var(--ink-soft); }
+  .switch button[aria-pressed="true"] { background: var(--accent); color: #0f2b27; font-weight: 600; }
+  .stage { position: relative; width: 920px; height: 640px; border-radius: 16px; border: 1px solid var(--line); padding: 20px;
+    background: radial-gradient(120% 80% at 15% 10%, #2b2638 0%, transparent 60%), linear-gradient(#1c1a24, #121017); }
+  .now-shot { position: absolute; inset: 20px; width: 878px; height: 598px; border-radius: 14px; display: none; }
+  .stage[data-mode="now"] .now-shot { display: block; }
+  .stage[data-mode="now"] .dialog, .stage[data-mode="now"] .palette { display: none; }
+  .tag-mode { position: absolute; top: -11px; right: 18px; font-size: 12px; padding: 0 10px; border-radius: 999px; background: var(--raised); border: 1px solid var(--line); }
+
+  /* 案のダイアログ（今の器: 880×600・頭 54px・ナビ 232px） */
+  .dialog { width: 880px; height: 600px; border-radius: 16px; background: var(--surface); border: 1px solid color-mix(in srgb, var(--ink) 20%, transparent);
+    box-shadow: 0 20px 50px rgb(0 0 0 / .45); display: grid; grid-template-rows: 54px 1fr; overflow: hidden; font-size: 13px; position: relative; }
+  .d-head { display: flex; align-items: center; gap: 8px; padding: 0 16px; border-bottom: 1px solid var(--line); }
+  .d-head b { font-size: 15px; }
+  .d-head .x { margin-left: auto; width: 32px; height: 32px; border-radius: 8px; border: 0; background: none; cursor: pointer; font-size: 18px; color: var(--ink-soft); }
+  .d-head .x:hover { background: var(--raised); }
+  .d-main { display: grid; grid-template-columns: 232px 1fr; min-height: 0; }
+  .nav { border-right: 1px solid var(--line); padding: 14px 12px; display: flex; flex-direction: column; gap: 2px; min-height: 0; }
+  .search { display: flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: var(--ground); border-radius: 8px; padding: 0 10px; height: 34px; margin-bottom: 10px; }
+  .search input { border: 0; background: none; outline: 0; width: 100%; font-size: 13px; }
+  .search:focus-within { border-color: var(--accent); }
+  .nav-group { font-size: 12px; color: var(--ink-quiet); padding: 8px 10px 4px; display: flex; justify-content: space-between; }
+  .nav-item { display: flex; align-items: center; gap: 8px; height: 34px; padding: 0 10px; border-radius: 8px; border: 0; background: none; cursor: pointer; text-align: left; position: relative; font-size: 13px; }
+  .nav-item .ic { color: var(--ink-soft); flex: none; }
+  .nav-item:hover { background: var(--raised); }
+  .nav-item[aria-current="page"] { background: color-mix(in srgb, var(--accent) 14%, var(--surface)); font-weight: 600; }
+  .nav-item[aria-current="page"]::before { content: ""; position: absolute; left: 0; top: 8px; bottom: 8px; width: 3px; border-radius: 2px; background: var(--accent); }
+  .nav-badge { margin-left: auto; font-size: 12px; min-width: 20px; text-align: center; border-radius: 999px; background: var(--accent-soft); color: var(--accent); padding: 0 6px; }
+  .nav-dot { margin-left: auto; width: 8px; height: 8px; border-radius: 50%; background: var(--warn); }
+  .nav-foot { margin-top: auto; display: flex; flex-direction: column; gap: 2px; border-top: 1px solid var(--line); padding-top: 8px; }
+  .nav-foot button { background: none; border: 0; text-align: left; padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; color: var(--ink-soft); }
+  .nav-foot button:hover { background: var(--raised); color: var(--ink); }
+
+  .face { display: grid; grid-template-rows: auto 1fr auto; min-height: 0; }
+  .face-head { padding: 18px 28px 8px; }
+  .face-head h3 { margin: 0; font-size: 17px; }
+  .store { margin-top: 2px; font-size: 12px; color: var(--ink-quiet); display: flex; gap: 6px; align-items: center; }
+  .store code { font: 12px ui-monospace, monospace; color: var(--ink-soft); }
+  .scope { font-size: 12px; padding: 0 7px; border-radius: 999px; border: 1px solid var(--line); }
+  .scope.repo { border-color: var(--warn); color: var(--warn); }
+  .face-body { overflow: auto; padding: 4px 28px 16px; min-height: 0;
+    mask-image: linear-gradient(to bottom, #000 calc(100% - 28px), transparent); }
+  .face-foot { display: flex; align-items: center; justify-content: flex-end; gap: 10px; padding: 10px 28px 14px; border-top: 1px solid var(--line); }
+  .btn { border: 1px solid var(--line); background: var(--raised); border-radius: 8px; padding: 4px 12px; cursor: pointer; font-size: 13px; }
+  .btn:hover { border-color: color-mix(in srgb, var(--ink) 30%, transparent); }
+  .btn.primary { background: var(--accent); color: #0f2b27; border-color: var(--accent); font-weight: 600; }
+  .btn[disabled] { opacity: .45; cursor: default; }
+
+  /* 行 */
+  .row { display: grid; grid-template-columns: 1fr 210px 28px; gap: 4px 14px; align-items: center; padding: 10px 0 10px 12px; border-bottom: 1px solid var(--line); position: relative; }
+  .row.mod::before { content: ""; position: absolute; left: 0; top: 10px; bottom: 10px; width: 3px; border-radius: 2px; background: var(--accent); }
+  .row-label { font-weight: 600; }
+  .row-desc { grid-column: 1; font-size: 12px; color: var(--ink-quiet); line-height: 1.5; }
+  .row .ctl { grid-row: 1 / span 2; grid-column: 2; }
+  .row .row-reset { grid-row: 1 / span 2; grid-column: 3; width: 28px; height: 28px; border-radius: 6px; border: 0; background: none; cursor: pointer; color: var(--ink-quiet); visibility: hidden; font-size: 15px; }
+  .row.mod .row-reset { visibility: visible; }
+  .row .row-reset:hover { background: var(--raised); color: var(--ink); }
+  select.ctl { width: 100%; height: 32px; border-radius: 8px; border: 1px solid var(--line); background: var(--ground); padding: 0 8px; }
+  input[type=range].ctl { accent-color: var(--accent); }
+  .sub { font-size: 12px; color: var(--ink-quiet); margin: 14px 0 0; }
+
+  details.more { margin-top: 12px; border: 1px solid var(--line); border-radius: 10px; padding: 0 12px; }
+  details.more summary { cursor: pointer; padding: 9px 0; font-size: 13px; color: var(--ink-soft); }
+  details.more summary span { font-size: 12px; color: var(--ink-quiet); margin-left: 6px; }
+  details.more[open] summary { border-bottom: 1px solid var(--line); }
+  details.more .row:last-child { border-bottom: 0; }
+
+  /* 見た目: テーマの見本 */
+  .presets { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 6px 0 4px; }
+  .preset { border: 1px solid var(--line); border-radius: 10px; padding: 8px; background: none; cursor: pointer; text-align: left; display: grid; gap: 6px; font-size: 12px; }
+  .preset[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+  .preset .sw { height: 40px; border-radius: 6px; display: flex; align-items: center; gap: 6px; padding: 0 8px; font-size: 12px; }
+  .preset .sw i { display: inline-block; padding: 0 6px; border-radius: 4px; font-style: normal; }
+
+  /* 演出: 見本 */
+  .preview { display: grid; grid-template-columns: 74px 1fr; gap: 10px; align-items: end; border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px 0 8px; margin: 6px 0 4px; background: var(--ground); overflow: hidden; }
+  .preview img { width: 74px; height: auto; display: block; }
+  .bubble { align-self: center; background: var(--raised); border-radius: 12px 12px 12px 4px; padding: 8px 12px; min-height: 40px; font-size: 13px; position: relative; }
+  .bubble small { display: block; font-size: 12px; color: var(--ink-quiet); margin-top: 4px; }
+  .preview .again { position: absolute; right: 8px; bottom: 6px; font-size: 12px; background: none; border: 0; color: var(--accent); cursor: pointer; }
+
+  /* ワークフロー */
+  .chips { display: flex; gap: 8px; align-items: center; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin: 6px 0; }
+  .chip { border-radius: 999px; background: var(--raised); padding: 2px 10px; font-size: 12px; }
+  .chip.changed { background: var(--accent-soft); color: var(--accent); outline: 1px dashed var(--accent); }
+  .dirty-bar { display: flex; align-items: center; gap: 8px; width: 100%; }
+  .dirty-bar .msg { margin-right: auto; color: var(--warn); font-size: 12px; display: flex; gap: 6px; align-items: center; }
+  .dirty-bar .msg::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--warn); }
+  .confirm { position: absolute; inset: 0; background: rgb(0 0 0 / .5); display: none; place-items: center; z-index: 5; }
+  .confirm.open { display: grid; }
+  .confirm .box { width: 360px; background: var(--raised); border-radius: 12px; padding: 16px; display: grid; gap: 12px; border: 1px solid var(--line); }
+  .confirm .box div { display: flex; gap: 8px; justify-content: flex-end; }
+
+  /* 探した結果 */
+  .results { display: grid; gap: 4px; }
+  .result { text-align: left; border: 0; background: none; border-radius: 8px; padding: 8px 10px; cursor: pointer; display: grid; gap: 2px; }
+  .result:hover { background: var(--raised); }
+  .result b mark { background: var(--accent-soft); color: var(--accent); border-radius: 3px; }
+  .result span { font-size: 12px; color: var(--ink-quiet); }
+
+  /* ⌘K のパレット（観点「開き方」） */
+  .palette { position: absolute; left: 50%; top: 56px; translate: -50% 0; width: 560px; background: var(--raised); border: 1px solid color-mix(in srgb, var(--ink) 20%, transparent); border-radius: 14px; box-shadow: 0 20px 40px rgb(0 0 0 / .5); display: none; z-index: 6; }
+  .palette.open { display: block; }
+  .palette .q { padding: 12px 16px; border-bottom: 1px solid var(--line); }
+  .palette ul { list-style: none; margin: 0; padding: 6px; }
+  .palette li { display: grid; grid-template-columns: 1fr auto; padding: 7px 10px; border-radius: 8px; font-size: 13px; }
+  .palette li:first-child { background: var(--accent-soft); }
+  .palette li span { font-size: 12px; color: var(--ink-quiet); }
+  .palette .hint { border-top: 1px solid var(--line); padding: 8px 16px; font-size: 12px; color: var(--ink-quiet); }
+  .dim { position: absolute; inset: 20px; border-radius: 14px; background: rgb(0 0 0 / .35); display: none; z-index: 4; }
+  .dim.open { display: block; }
+
+  /* 観点で指す場所 */
+  .spot { outline: 2px solid var(--warn); outline-offset: 2px; border-radius: 8px; }
+  .flash { animation: flash 1.2s ease-out; }
+  @keyframes flash { from { background: color-mix(in srgb, var(--accent) 30%, transparent); } }
+  @media (prefers-reduced-motion: reduce) { .flash { animation: none; } }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<header class="page">
+  <h1>設定の改善 — 今と案の見比べ</h1>
+  <p>左で観点を選ぶと、案のダイアログがその観点のページを開き、変わった場所を黄色の枠で指す。<kbd>T</kbd> で今と案を切り替え、<kbd>↑</kbd><kbd>↓</kbd> で観点を移る。今の画は fake driver の疑似セッションを 1400×900 で撮ったもの。案のダイアログは今と同じ 880×600 で、押して触れる。選択の欄はブラウザの標準の部品で描いていて、今の器の見た目ではない。</p>
+</header>
+
+<div class="layout">
+  <aside class="rail">
+    <ol class="views" id="views"></ol>
+    <section class="explain" aria-live="polite">
+      <h2 id="ex-title"></h2>
+      <dl>
+        <dt>今</dt><dd id="ex-now"></dd>
+        <dt>手本</dt><dd id="ex-model"></dd>
+        <dt>案</dt><dd id="ex-plan"></dd>
+      </dl>
+    </section>
+  </aside>
+
+  <section class="viewer">
+    <div class="switch" role="group" aria-label="今と案">
+      <button type="button" data-mode="now" aria-pressed="false">今</button>
+      <button type="button" data-mode="plan" aria-pressed="true">案</button>
+    </div>
+    <div class="stage" id="stage" data-mode="plan">
+      <span class="tag-mode" id="tag-mode">案</span>
+      <img class="now-shot" id="now-shot" alt="今の設定ダイアログ" />
+      <div class="dim" id="dim"></div>
+      <div class="palette" id="palette" role="dialog" aria-label="コマンドパレットの案">
+        <div class="q">🔍 動き</div>
+        <ul>
+          <li>動き <span>設定 › 演出</span></li>
+          <li>動きを「減らす」にする <span>設定 › 演出</span></li>
+          <li>書き上げる速さ <span>設定 › 演出</span></li>
+        </ul>
+        <div class="hint">設定の項目名と説明の1行でも当たる。<kbd>⌘,</kbd> は前回のページ（演出）から開く。</div>
+      </div>
+
+      <div class="dialog" id="dialog" role="dialog" aria-label="設定の案">
+        <div class="d-head">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+          <b>設定</b>
+          <button type="button" class="x" id="close" aria-label="閉じる（Esc）">×</button>
+        </div>
+        <div class="d-main">
+          <nav class="nav" aria-label="設定の項目">
+            <label class="search" id="search-box">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+              <input id="search" type="search" placeholder="設定を探す" aria-label="設定を探す" />
+            </label>
+            <div class="nav-group" data-spot="scope"><span>あなた</span><span>全リポジトリ</span></div>
+            <button type="button" class="nav-item" data-page="look"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="8" cy="10" r="1"/><circle cx="12" cy="7" r="1"/><circle cx="16" cy="10" r="1"/></svg>見た目<span class="nav-badge" data-spot="badge">2</span></button>
+            <button type="button" class="nav-item" data-page="session"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M14 2v4M8 10v4M16 18v4"/></svg>新しいセッション<span class="nav-badge" data-spot="badge">1</span></button>
+            <button type="button" class="nav-item" data-page="reveal"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/></svg>演出</button>
+            <button type="button" class="nav-item" data-page="launch"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3l14 9-14 9z"/></svg>タスクの実行</button>
+            <div class="nav-group" data-spot="scope"><span>このリポジトリ</span><span>tsukumo-task</span></div>
+            <button type="button" class="nav-item" data-page="workflow"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="2"/><path d="M7 11v4a2 2 0 0 0 2 2h4"/><rect x="13" y="13" width="8" height="8" rx="2"/></svg>ワークフロー<span class="nav-dot" data-spot="dirty" title="未保存の変更がある"></span></button>
+            <div class="nav-foot">
+              <button type="button">初回の説明をもう一度出す</button>
+              <button type="button" data-spot="file">設定をファイルで開く（state.json）</button>
+            </div>
+          </nav>
+
+          <!-- 見た目 -->
+          <section class="face" data-face="look">
+            <div class="face-head">
+              <h3>見た目</h3>
+              <div class="store" data-spot="store"><span class="scope">あなた</span>保存先 <code>~/.tsukumo/state.json</code>・どのブラウザで開いても同じ</div>
+            </div>
+            <div class="face-body">
+              <div class="presets" data-spot="presets" role="group" aria-label="テーマ">
+                <button type="button" class="preset" aria-pressed="true"><span class="sw" style="background:#191720;color:#e8e3ea"><i style="background:#221f2b">領域</i>夜</span>夜（既定）</button>
+                <button type="button" class="preset" aria-pressed="false"><span class="sw" style="background:#101012;color:#d9d9de"><i style="background:#1b1b1f">領域</i>墨</span>墨</button>
+                <button type="button" class="preset" aria-pressed="false"><span class="sw" style="background:#141a26;color:#e2e8f2"><i style="background:#1d2534">領域</i>宵</span>宵</button>
+                <button type="button" class="preset" aria-pressed="false"><span class="sw" style="background:#1d1915;color:#efe6da"><i style="background:#2a241e">領域</i>行灯</span>行灯</button>
+              </div>
+              <details class="more">
+                <summary>カスタムの色<span>地・領域・字の3色を 16 進で決める</span></summary>
+                <div class="row"><span class="row-label">地の色</span><span class="row-desc">画面のいちばん奥の色</span><input class="ctl" type="color" value="#191720" /><button type="button" class="row-reset" aria-label="既定に戻す">↺</button></div>
+                <div class="row"><span class="row-label">領域の色</span><span class="row-desc">紙・入力欄・パネルの地</span><input class="ctl" type="color" value="#221f2b" /><button type="button" class="row-reset" aria-label="既定に戻す">↺</button></div>
+                <div class="row"><span class="row-label">字の色</span><span class="row-desc">本文の字。地との差が足りないと警告を出す</span><input class="ctl" type="color" value="#e8e3ea" /><button type="button" class="row-reset" aria-label="既定に戻す">↺</button></div>
+              </details>
+              <div class="row mod" data-spot="mod"><span class="row-label">背景の暗さ</span><span class="row-desc">背景の絵に掛ける暗幕。既定はキャラクターのパックの値（75%）</span><input class="ctl" type="range" min="40" max="95" value="82" /><button type="button" class="row-reset" aria-label="既定に戻す" title="既定（75%）に戻す">↺</button></div>
+              <div class="row mod" data-spot="mod"><span class="row-label">パネルのぼかし</span><span class="row-desc">パネルの後ろの背景をぼかす量（既定 8px）</span><input class="ctl" type="range" min="0" max="24" value="14" /><button type="button" class="row-reset" aria-label="既定に戻す" title="既定（8px）に戻す">↺</button></div>
+              <div class="row"><span class="row-label">パネルの濃さ</span><span class="row-desc">パネルの地の不透明さ（既定 45%）</span><input class="ctl" type="range" min="0" max="100" value="45" /><button type="button" class="row-reset" aria-label="既定に戻す">↺</button></div>
+            </div>
+            <div class="face-foot"><button type="button" class="btn" data-spot="reset">このページを既定に戻す（2件）</button></div>
+          </section>
+
+          <!-- 新しいセッション -->
+          <section class="face" data-face="session" hidden>
+            <div class="face-head">
+              <h3>新しいセッション</h3>
+              <div class="store" data-spot="store"><span class="scope">あなた</span>保存先 <code>~/.tsukumo/state.json</code>・次に始めるセッションから効く</div>
+            </div>
+            <div class="face-body">
+              <div class="row mod" data-k="model" data-spot="mod"><span class="row-label">モデル</span><span class="row-desc" data-spot="desc">新しいセッションで最初に使うモデル。入力欄でセッションごとに変えられる</span><select class="ctl"><option>Sonnet</option><option selected>Opus</option><option>Haiku</option></select><button type="button" class="row-reset" data-spot="rowreset" aria-label="既定に戻す" title="既定（Sonnet）に戻す">↺</button></div>
+              <div class="row"><span class="row-label">effort（考える深さ）</span><span class="row-desc" data-spot="desc">深いほど答えが遅く、使用量も増える</span><select class="ctl"><option>Low</option><option selected>Medium</option><option>High</option></select><button type="button" class="row-reset" aria-label="既定に戻す">↺</button></div>
+              <div class="row"><span class="row-label">許可モード</span><span class="row-desc" data-spot="desc">ファイルの書き換えやコマンドを、聞いてから行うか自動で判定するか</span><select class="ctl"><option selected>自動判定</option><option>毎回聞く</option><option>編集だけ許す</option></select><button type="button" class="row-reset" aria-label="既定に戻す">↺</button></div>
+              <div class="row"><span class="row-label">図の既定</span><span class="row-desc" data-spot="desc">レポートに図を置くか、文を主にするか</span><select class="ctl"><option selected>図を置く</option><option>文を主にする</option></select><button type="button" class="row-reset" aria-label="既定に戻す">↺</button></div>
+              <details class="more" data-spot="more">
+                <summary>裏方のモデル<span>画面の小さな文を作るモデル（4件・既定のままでよい）</span></summary>
+                <div class="row"><span class="row-label">おすすめ</span><span class="row-desc">サイドバーの「次のタスク」の理由の文</span><select class="ctl"><option selected>Haiku</option><option>Sonnet</option></select><button type="button" class="row-reset">↺</button></div>
+                <div class="row"><span class="row-label">迎えの一言</span><span class="row-desc">起動したときにキャラクターが言う一言</span><select class="ctl"><option>Haiku</option><option selected>Sonnet</option></select><button type="button" class="row-reset">↺</button></div>
+                <div class="row"><span class="row-label">雑談の記憶の整理</span><span class="row-desc">雑談のあらすじと「覚えたこと」をまとめる</span><select class="ctl"><option selected>Haiku</option><option>Sonnet</option></select><button type="button" class="row-reset">↺</button></div>
+                <div class="row"><span class="row-label">キャラクターの生成</span><span class="row-desc">キャラ画面で新しいキャラクターを作る</span><select class="ctl"><option>Haiku</option><option selected>Sonnet</option></select><button type="button" class="row-reset">↺</button></div>
+              </details>
+            </div>
+            <div class="face-foot"><button type="button" class="btn" data-spot="reset">このページを既定に戻す（1件）</button></div>
+          </section>
+
+          <!-- 演出 -->
+          <section class="face" data-face="reveal" hidden>
+            <div class="face-head">
+              <h3>演出</h3>
+              <div class="store" data-spot="store"><span class="scope">あなた</span>保存先 <code>~/.tsukumo/state.json</code></div>
+            </div>
+            <div class="face-body">
+              <div class="preview" data-spot="preview" style="position:relative">
+                <img src="face.png" alt="" />
+                <div class="bubble"><span id="bubble-text"></span><small id="bubble-note"></small></div>
+                <button type="button" class="again" id="again">▶ 見本をもう一度</button>
+              </div>
+              <div class="row"><span class="row-label">書き上げる速さ</span><span class="row-desc">レポートとセリフを書き上げる演出の速さ</span><select class="ctl" id="speed"><option value="18">ゆっくり</option><option value="45" selected>標準</option><option value="120">速い</option><option value="0">すぐ出す</option></select><button type="button" class="row-reset">↺</button></div>
+              <div class="row"><span class="row-label">動き</span><span class="row-desc">立ち絵や点々の常時の動き</span><select class="ctl"><option selected>OS の設定に従う</option><option>減らす</option></select><button type="button" class="row-reset">↺</button></div>
+              <p class="sub">話しかける間合い</p>
+              <div class="row"><span class="row-label">待ちの一言</span><span class="row-desc">きみが黙っているとき、次の一手を言うまでの間</span><select class="ctl" id="wait"><option>1分</option><option selected>2分</option><option>5分</option><option>出さない</option></select><button type="button" class="row-reset">↺</button></div>
+              <div class="row"><span class="row-label">進み具合の催促</span><span class="row-desc">長い作業で、様子を言うよう促すまでの間</span><select class="ctl"><option>3分</option><option selected>5分</option><option>10分</option><option>しない</option></select><button type="button" class="row-reset">↺</button></div>
+            </div>
+            <div class="face-foot"><button type="button" class="btn" disabled>このページを既定に戻す（0件）</button></div>
+          </section>
+
+          <!-- タスクの実行 -->
+          <section class="face" data-face="launch" hidden>
+            <div class="face-head">
+              <h3>タスクの実行</h3>
+              <div class="store" data-spot="store"><span class="scope">あなた</span>保存先 <code>~/.tsukumo/state.json</code></div>
+            </div>
+            <div class="face-body">
+              <div class="row"><span class="row-label">起動するスキル</span><span class="row-desc">タスクの実行で呼ぶスキル。未設定なら「タスク GH-xxxx を進めて」と送る</span><select class="ctl"><option selected>未設定</option><option>/next-task</option></select><button type="button" class="row-reset">↺</button></div>
+            </div>
+            <div class="face-foot"><button type="button" class="btn" disabled>このページを既定に戻す（0件）</button></div>
+          </section>
+
+          <!-- ワークフロー -->
+          <section class="face" data-face="workflow" hidden>
+            <div class="face-head">
+              <h3>ワークフロー</h3>
+              <div class="store" data-spot="store"><span class="scope repo">このリポジトリ</span>保存先 <code>.tw/config.toml</code>・リポジトリに入り、ほかの人にも効く</div>
+            </div>
+            <div class="face-body">
+              <div class="row"><span class="row-label">流れ</span><span class="row-desc">タスクの段を進める流れ。plugin のワークフロースクリプト task-flow</span><select class="ctl"><option selected>ワークフロースクリプト</option></select><span></span></div>
+              <p class="sub">並び（上から順に進める）</p>
+              <div class="chips"><span class="chip">1 実装</span>→<span class="chip">2 受け入れ</span>→<span class="chip changed">3 振り返り（外した）</span></div>
+              <div class="row mod"><span class="row-label">振り返り</span><span class="row-desc">受け入れのあとに改善の候補を探す段</span><select class="ctl"><option>並びに入れる</option><option selected>外す</option></select><span></span></div>
+            </div>
+            <div class="face-foot">
+              <div class="dirty-bar" data-spot="dirty">
+                <span class="msg">未保存の変更 1件。閉じる・ほかのページへ移るときに確かめる</span>
+                <button type="button" class="btn">やめる</button><button type="button" class="btn primary">保存</button>
+              </div>
+            </div>
+          </section>
+
+          <!-- 探した結果 -->
+          <section class="face" data-face="results" hidden>
+            <div class="face-head"><h3 id="results-title">「」で探した結果</h3></div>
+            <div class="face-body"><div class="results" id="results"></div></div>
+            <div class="face-foot"></div>
+          </section>
+        </div>
+        <div class="confirm" id="confirm" role="alertdialog" aria-label="未保存の変更">
+          <div class="box">
+            <b>ワークフローの変更が保存されていない</b>
+            <span style="font-size:13px;color:var(--ink-soft)">.tw/config.toml へまだ書いていない変更が1件ある。</span>
+            <div><button type="button" class="btn" data-confirm="discard">捨てて閉じる</button><button type="button" class="btn primary" data-confirm="save">保存して閉じる</button></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+const VIEWS = [
+  { title: "既定に戻す", p: 1, page: "session", spots: ["reset", "rowreset"], now: "now-session.png",
+    nowText: "どのページの「既定に戻す」も、見た目の色・調整と動きの3つだけを戻す。「セッションの既定」で押すとモデルは戻らず色が戻る。",
+    model: "VS Code は項目ごとに既定へ戻せる。", modelUrl: "https://code.visualstudio.com/docs/configure/settings",
+    plan: "下の帯は「このページを既定に戻す（n件）」にして、開いているページの項目だけを戻す。変えた行には ↺ を出し、1項目ずつ戻せる。" },
+  { title: "既定との差", p: 2, page: "look", spots: ["mod", "badge"], now: "now-look.png",
+    nowText: "どの項目を変えたかが画面から分からない。",
+    model: "VS Code は変えた項目の左に色の線を引き、@modified で絞れる。", modelUrl: "https://code.visualstudio.com/docs/configure/settings",
+    plan: "変えた行の左に差し色の線、ナビのページ名に変えた数を出す。既定に戻すと線と数が消える。" },
+  { title: "開き方", p: 2, page: "reveal", spots: [], palette: true, now: "now-palette.png",
+    nowText: "開くたび先頭の「見た目」から始まる。⌘K で「動き」と打っても「当たる操作が無い」。",
+    model: "Apple HIG は直近に見たページを開き直し、⌘, を入口にする。", modelUrl: "https://developer.apple.com/design/human-interface-guidelines/settings",
+    plan: "最後に見たページを覚えて開く。⌘K のパレットで設定の項目名にも当て、選ぶとそのページのその行へ飛ぶ。" },
+  { title: "範囲の分け方", p: 2, page: "workflow", spots: ["scope", "store"], now: "now-workflow.png",
+    nowText: "「あなたの好み」の見出しの下に、リポジトリのファイルを書く「ワークフロー」が並ぶ。",
+    model: "Linear はワークスペースと個人、Zed は UserSettings と ProjectSettings を分ける。", modelUrl: "https://zed.dev/blog/settings-ui",
+    plan: "ナビを「あなた」と「このリポジトリ」の2群に割り、ページの頭に範囲と保存先を出す。" },
+  { title: "言葉と説明", p: 2, page: "session", spots: ["desc"], now: "now-session.png",
+    nowText: "説明の文は「タスクの実行」の1行だけ。「effort」は英語のまま。",
+    model: "VS Code・macOS は項目名の下に1行の説明を置く。", modelUrl: "https://code.visualstudio.com/docs/configure/settings",
+    plan: "全項目に「何が変わるか」の1行を足す。effort には「考える深さ」を添え、「セッションの既定」は「新しいセッション」と呼ぶ。" },
+  { title: "保存のしかた", p: 3, page: "workflow", spots: ["dirty"], now: "now-workflow.png",
+    nowText: "4ページは即時に効き、ワークフローだけ「保存」が要る。未保存のまま閉じると黙って捨てる。",
+    model: "macOS の設定は即時に効く。共有のファイルを書くものだけ明示の保存にする。", modelUrl: "https://developer.apple.com/design/human-interface-guidelines/settings",
+    plan: "混在は残す。未保存のときはナビに黄色の点と帯の文を出し、× を押すと確かめる（右上の × で試せる）。" },
+  { title: "探す", p: 3, page: "look", spots: ["search"], search: "動き", now: "now-look.png",
+    nowText: "探す欄が無い。14項目を5ページに分けている。",
+    model: "VS Code・macOS・Zed は設定の頭に探す欄を置く。", modelUrl: "https://code.visualstudio.com/docs/configure/settings",
+    plan: "ナビの頭に探す欄を置き、項目名と説明の1行で当てる。結果を押すとそのページの行へ飛ぶ。" },
+  { title: "項目の数", p: 3, page: "session", spots: ["more"], now: "now-session.png",
+    nowText: "「セッションの既定」に裏方のモデルが4行並び、600px の高さで下が切れる。続きの印も無い。",
+    model: "Linear は「既定で正しくすべきもの」と「好み」を分け、好みだけを設定にする。", modelUrl: "https://linear.app/blog/settings-are-not-a-design-failure",
+    plan: "裏方のモデルは「既定のままでよい」と添えて畳む。本文の下端は薄くぼかし、続きがあると分かるようにする。" },
+  { title: "見た目", p: 3, page: "look", spots: ["presets"], now: "now-look.png",
+    nowText: "地・領域・字の3色を 16 進で直に選ぶ。「初回の説明をもう一度出す」が見た目の中にある。",
+    model: "Slack・Linear はテーマの見本を並べ、カスタムを別に持つ。", modelUrl: "https://linear.app/docs/account-preferences",
+    plan: "テーマの見本を4枚並べ、16 進は「カスタムの色」に畳む。初回の説明はナビの下端へ移す。" },
+  { title: "キャラクターの側", p: 3, page: "reveal", spots: ["preview"], now: "now-reveal.png",
+    nowText: "演出の値を変えても、効き目はダイアログを閉じて使うまで見えない。",
+    model: "なし（tsukumo 独自）。見た目のページには色の見本の帯がある。", modelUrl: "",
+    plan: "ページの頭でつくもが見本のセリフを書き上げる。「書き上げる速さ」を変えるとその場で書き直す。" },
+  { title: "置き場の揃え", p: 3, page: "look", spots: ["store", "file"], now: "now-look.png",
+    nowText: "見た目と起動するスキルはブラウザの localStorage、セッションの既定などは state.json にある。",
+    model: "Zed は設定のファイルを UI の軸にし、settings.json を直に書ける口を残す。", modelUrl: "https://zed.dev/blog/settings-ui",
+    plan: "あなたの値は state.json に寄せ、ページの頭に保存先を出す。ナビの下端に「設定をファイルで開く」を置く。" },
+];
+
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const stage = $("#stage"), dialog = $("#dialog");
+let current = 0, typing = 0;
+
+function showPage(page) {
+  $$(".face", dialog).forEach((f) => (f.hidden = f.dataset.face !== page));
+  $$(".nav-item", dialog).forEach((b) => b.setAttribute("aria-current", b.dataset.page === page ? "page" : "false"));
+  if (page === "reveal") playPreview();
+}
+
+function search(q) {
+  const box = $("#results");
+  box.textContent = "";
+  if (!q) { showPage(VIEWS[current].page); return; }
+  $("#results-title").textContent = `「${q}」で探した結果`;
+  $$(".face[data-face] .row", dialog).forEach((row) => {
+    const face = row.closest(".face").dataset.face;
+    if (face === "results") return;
+    const label = row.querySelector(".row-label")?.textContent ?? "";
+    const desc = row.querySelector(".row-desc")?.textContent ?? "";
+    if (!(label + desc).includes(q)) return;
+    const pageName = $(`.nav-item[data-page="${face}"]`, dialog).childNodes[1].textContent;
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "result";
+    const t = document.createElement("b");
+    label.split(q).forEach((part, i) => { if (i) { const m = document.createElement("mark"); m.textContent = q; t.append(m); } t.append(part); });
+    const s = document.createElement("span"); s.textContent = `${pageName} — ${desc}`;
+    b.append(t, s);
+    b.onclick = () => { $("#search").value = ""; showPage(face); row.scrollIntoView({ block: "center" }); row.classList.remove("flash"); void row.offsetWidth; row.classList.add("flash"); };
+    box.append(b);
+  });
+  $$(".face", dialog).forEach((f) => (f.hidden = f.dataset.face !== "results"));
+}
+
+function playPreview() {
+  const speed = Number($("#speed").value);
+  const text = "テストを走らせてるぞ。2分くらいで戻るから、離れてても大丈夫なのだ。";
+  const el = $("#bubble-text");
+  $("#bubble-note").textContent = `書き上げる速さ「${$("#speed").selectedOptions[0].text}」・待ちの一言は${$("#wait").selectedOptions[0].text}黙ったら`;
+  cancelAnimationFrame(typing);
+  if (!speed || matchMedia("(prefers-reduced-motion: reduce)").matches) { el.textContent = text; return; }
+  const start = performance.now();
+  const step = (now) => {
+    const n = Math.min(text.length, Math.floor(((now - start) / 1000) * speed));
+    el.textContent = text.slice(0, n);
+    if (n < text.length) typing = requestAnimationFrame(step);
+  };
+  typing = requestAnimationFrame(step);
+}
+
+function select(i) {
+  current = (i + VIEWS.length) % VIEWS.length;
+  const v = VIEWS[current];
+  $$("#views button").forEach((b, j) => b.setAttribute("aria-current", String(j === current)));
+  $("#ex-title").textContent = `${current + 1}. ${v.title}`;
+  $("#ex-now").textContent = v.nowText;
+  const m = $("#ex-model"); m.textContent = v.model;
+  if (v.modelUrl) { const a = document.createElement("a"); a.href = v.modelUrl; a.textContent = ` ${new URL(v.modelUrl).hostname}`; a.target = "_blank"; m.append(a); }
+  $("#ex-plan").textContent = v.plan;
+  $("#now-shot").src = v.now;
+  $("#confirm").classList.remove("open");
+  $("#search").value = v.search ?? "";
+  showPage(v.page);
+  if (v.search) search(v.search);
+  $("#palette").classList.toggle("open", !!v.palette);
+  $("#dim").classList.toggle("open", !!v.palette && stage.dataset.mode === "plan");
+  $$(".spot").forEach((e) => e.classList.remove("spot"));
+  v.spots.forEach((s) => {
+    if (s === "search") { $("#search-box").classList.add("spot"); return; }
+    $$(`[data-spot="${s}"]`, dialog).forEach((e) => { if (!e.closest("[hidden]")) e.classList.add("spot"); });
+  });
+}
+
+function setMode(mode) {
+  stage.dataset.mode = mode;
+  $("#tag-mode").textContent = mode === "now" ? "今" : "案";
+  $$(".switch button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.mode === mode)));
+  $("#dim").classList.toggle("open", mode === "plan" && !!VIEWS[current].palette);
+}
+
+VIEWS.forEach((v, i) => {
+  const li = document.createElement("li");
+  const b = document.createElement("button");
+  b.type = "button";
+  b.innerHTML = `<span class="no">${i + 1}</span><span></span><span class="prio" data-p="${v.p}">優先${v.p}</span>`;
+  b.children[1].textContent = v.title;
+  b.onclick = () => select(i);
+  li.append(b);
+  $("#views").append(li);
+});
+$$(".switch button").forEach((b) => (b.onclick = () => setMode(b.dataset.mode)));
+$$(".nav-item", dialog).forEach((b) => (b.onclick = () => { $("#search").value = ""; showPage(b.dataset.page); }));
+$("#search").addEventListener("input", (e) => search(e.target.value.trim()));
+$("#speed").addEventListener("change", playPreview);
+$("#wait").addEventListener("change", playPreview);
+$("#again").onclick = playPreview;
+$("#close").onclick = () => { if (!$('.face[data-face="workflow"]').hidden) $("#confirm").classList.add("open"); };
+$$("[data-confirm]").forEach((b) => (b.onclick = () => $("#confirm").classList.remove("open")));
+$("#dim").onclick = () => { $("#palette").classList.remove("open"); $("#dim").classList.remove("open"); };
+document.addEventListener("keydown", (e) => {
+  if (e.target.matches("input, select")) return;
+  if (e.key === "t" || e.key === "T") setMode(stage.dataset.mode === "now" ? "plan" : "now");
+  else if (e.key === "ArrowDown") { e.preventDefault(); select(current + 1); }
+  else if (e.key === "ArrowUp") { e.preventDefault(); select(current - 1); }
+});
+select(0);
+</script>
+</body>
+</html>
