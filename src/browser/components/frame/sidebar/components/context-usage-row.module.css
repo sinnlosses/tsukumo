@@ -63,7 +63,7 @@
 }
 /* 「詳しく」は幅 0 に畳んでおき、`›` のホバー・フォーカスで左へ伸ばしながら浮かべる。
    `›` との間は gap ではなく自分の padding で取り、畳むときは padding も 0 にする（間だけが残らないように）。
-   動きを減らす設定では `theme.css` の全体規則が transition を潰す。 */
+   動きを減らす設定では `styles/reduced-motion.css` の全体規則が transition を潰す。 */
 .context-usage-row-link-text {
   display: inline-block;
   max-width: 0;

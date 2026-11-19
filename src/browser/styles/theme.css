@@ -287,17 +287,6 @@ body {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    /* 計算値が `1e-05s` と指数で出る長さだと、Astryx の `BottomSheet` が閉じ待ちの長さを読めず、閉じたあとも `:modal` のまま残る。 */
-    transition-duration: 1ms !important;
-  }
-}
-
 /* 不透明度だけで現れる動き。`animation-name: var(--fade-in-name)` で指す
    （CSS Modules は `animation` の名前を付け替えるので、別ファイルの `@keyframes` は名前ごと `var()` に包んで渡す）。
    周期・イージング・ほかの動きとの並びは呼び手が持つ。 */

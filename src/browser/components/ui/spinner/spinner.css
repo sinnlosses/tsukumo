@@ -1,7 +1,7 @@
 /* 回るもの全部が使う `@keyframes` と、その呼び方（`--spinner-animation`）の唯一の置き場所。
    CSS Modules は `animation` の名前を付け替えて他のファイルの `@keyframes` を指せなくするので、
    名前ごと `var()` に包んで渡す（`var()` の中は付け替えの対象にならない）。
-   回転は間引かず `linear` で毎フレーム描く（`prefers-reduced-motion` は `styles/theme.css` の全体規則が止める）。 */
+   回転は間引かず `linear` で毎フレーム描く（動きを減らす設定は `styles/reduced-motion.css` の全体規則が止める）。 */
 :root {
   --spinner-animation: spinner-turn 1s linear infinite;
 }

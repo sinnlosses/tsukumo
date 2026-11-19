@@ -123,6 +123,6 @@ react-markdown
 - **`<Portrait>` の動きは領域の外へ出さない。**（祝う光も左の列の箱の中で切る。）**レポートの上に出てよいのはミニ立ち絵だけ**
   （`docs/requirements.md` 4.3）で、メインビュー側の別の部品が矩形を描く `components/frame/portrait.tsx` を
   共有する（「1枚の矩形しか動かさない」原則は崩れない）
-- `prefers-reduced-motion: reduce` を尊重する（`src/browser/styles/theme.css`）
+- 動きを減らす設定（OS の `prefers-reduced-motion: reduce` と歯車の「動き」）を尊重する（`src/browser/styles/reduced-motion.css`）
 - 動きは CSS の `@keyframes` と `transform` で足りる。**`<canvas>` もアニメーションの
   ライブラリも要らない**（矩形しか動かさないため）

@@ -64,7 +64,7 @@ import するので、食い違うと入口を別のモジュールとして読�
 部品の `.tsx` の隣に同じ名前で置く（container / presenter の対は対の名前）。自分の見た目を持つ共有部品も
 隣に置く（`components/frame/portrait.module.css`）。**tsukumo が書くグローバルな CSS は `styles/layer-order.css`（層の順の宣言だけ）・`styles/theme.css`（`fade-in`）・`ui/spinner/spinner.css`（`spinner-turn`）の3つだけ**
 （Astryx の `astryx.css` と組み立て済みのテーマの CSS を除く）で、
-`theme.css` はトークン（`:root`）・`body`・`prefers-reduced-motion` と、`@layer tsukumo-base` に入れた要素への規則
+`theme.css` はトークン（`:root`）・`body` と、`@layer tsukumo-base` に入れた要素への規則
 （フォーム部品の書体・フォーカスの輪・リンク・見出しと段落の既定の打ち消し）を持つ。層の順は `reset`・`tsukumo-base`・`astryx-base`・`astryx-theme` で、
 層なしの CSS（トークン・`*.module.css`）はどの層にも勝つ。共有する `@keyframes` は CSS Modules が名前を付け替えるので、名前ごと `var()`（`--fade-in-name`・`--spinner-animation`）で渡す。
 **16進の色を書いてよいのもそこだけ**（`docs/architecture/screen-design.md` 13.2）。同居に移した理由は `docs/history/decision.md`

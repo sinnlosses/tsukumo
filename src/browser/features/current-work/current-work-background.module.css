@@ -13,7 +13,7 @@
 .current-work-background-kind {
   font-family: var(--font-mono);
 }
-/* 回る印は実行中の手順と同じ（`prefers-reduced-motion: reduce` では `theme.css` の全体の規則が止める）。 */
+/* 回る印は実行中の手順と同じ（`prefers-reduced-motion: reduce` では `reduced-motion.css` の全体の規則が止める）。 */
 .current-work-background-mark {
   display: inline-block;
 }

@@ -41,6 +41,10 @@ import {
   type ScreenNavSettingsLaunchSkill,
 } from "./use-launch-skill-setting.ts"
 import {
+  useMotionPreferenceSetting,
+  type ScreenNavSettingsMotion,
+} from "./use-motion-preference-setting.ts"
+import {
   useRevealSpeedSetting,
   type ScreenNavSettingsRevealSpeed,
 } from "./use-reveal-speed-setting.ts"
@@ -80,6 +84,7 @@ export type ScreenNavSettings = {
   readonly sessionDefault: ScreenNavSettingsSessionDefault
   readonly backgroundModels: ScreenNavSettingsBackgroundModels
   readonly revealSpeed: ScreenNavSettingsRevealSpeed
+  readonly motion: ScreenNavSettingsMotion
   readonly launchSkill: ScreenNavSettingsLaunchSkill
   /** 覚えた「初回の説明を見た」を消し、説明をまた初回として出す。 */
   readonly onReplayFirstNotes: () => void
@@ -98,6 +103,7 @@ export function useSettings(): ScreenNavSettings {
   const color = useAppearanceColor()
   const adjust = useAppearanceAdjust()
   const revealSpeed = useRevealSpeedSetting()
+  const motion = useMotionPreferenceSetting()
   const launchSkill = useLaunchSkillSetting()
   const resetFirstNotes = useFirstNoteSeen((state) => state.resetAll)
   const open = useSettingsRequest((state) => state.open)
@@ -143,10 +149,11 @@ export function useSettings(): ScreenNavSettings {
     colors: color.colors,
     colorNotice: color.colorNotice,
     adjust: adjust.adjust,
-    resetDisabled: color.resetDisabled && adjust.resetDisabled,
+    resetDisabled: color.resetDisabled && adjust.resetDisabled && motion.resetDisabled,
     onReset: () => {
       color.onReset()
       adjust.onReset()
+      motion.onReset()
     },
     sessionDefault: {
       model: sessionDefault.model,
@@ -179,6 +186,7 @@ export function useSettings(): ScreenNavSettings {
     },
     backgroundModels: { values: backgroundModels, onChange: onChangeBackgroundModel },
     revealSpeed,
+    motion: motion.motion,
     launchSkill,
     onReplayFirstNotes: resetFirstNotes,
     toggleRef,

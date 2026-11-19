@@ -180,7 +180,7 @@ describe("設定の歯車（帯の右端）", () => {
 
     showFace("演出")
 
-    expect(faceLabels()).toEqual(["書き上げる速さ"])
+    expect(faceLabels()).toEqual(["書き上げる速さ", "動き"])
   })
 
   it("開き直すと「見た目」から始まる", () => {

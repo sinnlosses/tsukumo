@@ -178,4 +178,5 @@ const EXCLUDED_DECLARATION_COUNTS: Readonly<Record<string, number>> = {
   "browser/components/page/token-usage/components/period-choice-list/period-choice-list.module.css": 1,
   "browser/components/page/token-usage/components/period-usage-card/period-usage-card.module.css": 1,
   "browser/features/report/renderer/report-notation-prose.css": 1,
+  "browser/styles/reduced-motion.css": 1,
 }

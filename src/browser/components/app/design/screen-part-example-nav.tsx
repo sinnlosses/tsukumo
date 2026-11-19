@@ -110,6 +110,7 @@ const PARTS: ScreenNavParts = {
     },
     backgroundModels: { values: BUILTIN_BACKGROUND_MODELS, onChange: noop },
     revealSpeed: { value: "standard", onChange: noop },
+    motion: { value: "system", onChange: noop },
     launchSkill: { value: "", onChange: noop },
     onReplayFirstNotes: noop,
     resetDisabled: true,

@@ -1,7 +1,7 @@
 // 確定したレポートを「書き上げていくように見せる」演出の入口。
 // 塊（節）を上から順に、間隔を空けてポンと出す（`startPop`）。ここはいつ始めるかだけを決める。
 //
-// `prefers-reduced-motion: reduce` では演出ごと無効（`theme.css` の規則は CSS のアニメーションにしか効かず、塊を隠すのはここなので、ここでも見る）。
+// `prefers-reduced-motion: reduce` では演出ごと無効（`styles/reduced-motion.css` の規則は CSS のアニメーションにしか効かず、塊を隠すのはここなので、ここでも見る）。
 
 import { useEffectEvent, useRef, useState, type RefObject } from "react"
 

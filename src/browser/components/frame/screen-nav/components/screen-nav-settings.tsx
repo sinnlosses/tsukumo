@@ -9,6 +9,7 @@ import {
   type FigurePreference,
 } from "../../../../../shared/session/session-default.ts"
 import { EFFORT_PLACEHOLDER_VALUE } from "../../../../domain/effort-label.ts"
+import { MOTION_PREFERENCE_LABELS } from "../../../../domain/motion-preference.ts"
 import { REVEAL_SPEED_LABELS } from "../../../../domain/reveal-speed.ts"
 import {
   RunSettingName,
@@ -31,6 +32,13 @@ export type ScreenNavSettingsProps = {
 }
 
 const REVEAL_SPEED_OPTIONS = REVEAL_SPEED_LABELS.map(([value, label]): RunSettingSelectOption => ({
+  value,
+  disabled: false,
+  icon: undefined,
+  row: <RunSettingName danger={false}>{label}</RunSettingName>,
+}))
+
+const MOTION_OPTIONS = MOTION_PREFERENCE_LABELS.map(([value, label]): RunSettingSelectOption => ({
   value,
   disabled: false,
   icon: undefined,
@@ -246,6 +254,31 @@ export function ScreenNavSettingsRevealFace(props: ScreenNavSettingsProps): Reac
           title={undefined}
           dot="none"
           onChange={settings.revealSpeed.onChange}
+        />
+      </HStack>
+      <HStack
+        element="div"
+        name={{ kind: "none" }}
+        gap="lg"
+        align="center"
+        justify="between"
+        wrap="nowrap"
+        className={styles["screen-nav-settings-row"]}
+      >
+        <label htmlFor={`${fieldId}-motion`}>動き</label>
+        <RunSettingSelect
+          id={`${fieldId}-motion`}
+          ariaLabel="動きを減らすか"
+          heading="動き"
+          value={settings.motion.value}
+          options={MOTION_OPTIONS}
+          disabled={false}
+          danger={false}
+          layout="list"
+          mouth="field"
+          title={undefined}
+          dot="none"
+          onChange={settings.motion.onChange}
         />
       </HStack>
     </>

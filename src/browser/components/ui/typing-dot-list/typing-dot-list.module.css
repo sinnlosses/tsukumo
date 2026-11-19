@@ -1,5 +1,5 @@
 /* ドット3つが順にひと呼吸ぶん弾む。色は accent（強調色の立場）。
-   `prefers-reduced-motion` は `styles/theme.css` の全体規則が `animation-duration` を潰すので、ここでは重ねて書かない。 */
+   動きを減らす設定は `styles/reduced-motion.css` の全体規則が `animation-duration` を潰すので、ここでは重ねて書かない。 */
 .typing-dots {
   display: inline-flex;
   align-items: center;

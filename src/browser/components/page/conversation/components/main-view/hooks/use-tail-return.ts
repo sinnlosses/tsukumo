@@ -6,7 +6,7 @@ import { useRef, useState, type RefObject } from "react"
 import { useExternalSync } from "../../../../../../hooks/use-external-sync.ts"
 import { useMountEffect } from "../../../../../../hooks/use-mount-effect.ts"
 import { scrollerOf } from "../../../../../../utils/scroller.ts"
-import { smoothScrollBehavior } from "../../../../../../utils/smooth-scroll.ts"
+import { smoothScrollBehavior } from "../../hooks/smooth-scroll.ts"
 import {
   anchorAfterScroll,
   tailReturnOf,

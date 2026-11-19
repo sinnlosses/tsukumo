@@ -36,7 +36,7 @@
 .current-work-step-mark {
   display: inline-block;
 }
-/* 実行中の印だけ回す（`prefers-reduced-motion: reduce` では `theme.css` の全体の規則が止める）。 */
+/* 実行中の印だけ回す（`prefers-reduced-motion: reduce` では `reduced-motion.css` の全体の規則が止める）。 */
 .current-work-step-mark-running {
   animation: var(--spinner-animation);
 }

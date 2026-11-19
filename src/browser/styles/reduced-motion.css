@@ -1,0 +1,9 @@
+/* 動きを減らす規則。OS の設定と歯車の「減らす」のどちらかが立つと `<html data-motion="reduce">` が付く（`motion-preference-root`）。 */
+:root[data-motion="reduce"] *,
+:root[data-motion="reduce"] *::before,
+:root[data-motion="reduce"] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  /* 計算値が `1e-05s` と指数で出る長さだと、Astryx の `BottomSheet` が閉じ待ちの長さを読めず、閉じたあとも `:modal` のまま残る。 */
+  transition-duration: 1ms !important;
+}

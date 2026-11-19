@@ -98,7 +98,7 @@
 12. **滑らかなスクロールの途中で位置を測らない。** `scrollIntoView`・`scrollTo` の `behavior: "smooth"` は、
     Playwright の `reducedMotion: "reduce"` でも実時間で流れ、2つの箱を別々に1回ずつ読むと転がる途中の
     位置どうしを比べる（`inquiry` の添え書き付きの質問: 札へ送る転がしの途中で、選択肢と詳細の箱を比べて
-    落ちた）。画面の側は `src/browser/utils/smooth-scroll.ts` の `smoothScrollBehavior()` を渡し、
+    落ちた）。画面の側は `src/browser/components/page/conversation/components/hooks/smooth-scroll.ts` の `smoothScrollBehavior()` を渡し、
     動きを減らす設定では一度で送る（利用者の設定にも沿う）。**規約のテストが機械で見る**:
     `test/architecture/smooth-scroll.test.ts` が、`src/browser` でこのファイルの外に `"smooth"` を書いた
     ファイルを落とす。テストの側は、比べる箱を両方とも `expect.poll` の中で読み直す
