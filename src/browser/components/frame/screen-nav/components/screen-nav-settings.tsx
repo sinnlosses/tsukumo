@@ -3,6 +3,7 @@
 
 import { useId, type ReactElement } from "react"
 
+import type { BackgroundModelRole } from "../../../../../shared/session/background-model.ts"
 import {
   SESSION_DEFAULT_PERMISSION_MODES,
   type FigurePreference,
@@ -50,7 +51,14 @@ const FIGURE_PREFERENCE_OPTIONS = FIGURE_PREFERENCE_LABELS.map(
   }),
 )
 
-/** セッションの既定の面（見出しなし）。 */
+const BACKGROUND_MODEL_LABELS = [
+  ["recommendation", "おすすめ"],
+  ["welcomeGreeting", "迎えの一言"],
+  ["chatConsolidation", "雑談の記憶の整理"],
+  ["characterGeneration", "キャラクターの生成"],
+] as const satisfies readonly (readonly [BackgroundModelRole, string])[]
+
+/** セッションの既定の面（見出しなし）。下に裏方のモデルの群を並べる。 */
 export function ScreenNavSettingsSessionDefaultFace(props: ScreenNavSettingsProps): ReactElement {
   const { settings } = props
   const fieldId = useId()
@@ -165,6 +173,45 @@ export function ScreenNavSettingsSessionDefaultFace(props: ScreenNavSettingsProp
           onChange={settings.sessionDefault.onChangeFigurePreference}
         />
       </HStack>
+      <Text
+        element="p"
+        size="label"
+        tone="ink-quiet"
+        weight="inherit"
+        className={styles["screen-nav-settings-heading"]}
+      >
+        裏方のモデル
+      </Text>
+      {BACKGROUND_MODEL_LABELS.map(([role, label]) => (
+        <HStack
+          key={role}
+          element="div"
+          name={{ kind: "none" }}
+          gap="lg"
+          align="center"
+          justify="between"
+          wrap="nowrap"
+          className={styles["screen-nav-settings-row"]}
+        >
+          <label htmlFor={`${fieldId}-background-${role}`}>{label}</label>
+          <RunSettingSelect
+            id={`${fieldId}-background-${role}`}
+            ariaLabel={`裏方のモデル（${label}）`}
+            heading={label}
+            value={settings.backgroundModels.values[role]}
+            options={modelSelectOptions(settings.sessionDefault.modelEffortSupport)}
+            disabled={false}
+            danger={false}
+            layout="list"
+            mouth="field"
+            title={undefined}
+            dot="none"
+            onChange={(value) => {
+              settings.backgroundModels.onChange(role, value)
+            }}
+          />
+        </HStack>
+      ))}
     </>
   )
 }

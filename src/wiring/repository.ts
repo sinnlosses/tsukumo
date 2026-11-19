@@ -31,6 +31,7 @@ import {
   IDLE_CHECK_RECORD_SOURCE,
 } from "../server/repository/core/check-record-source.ts"
 import { type NextTask, nextTaskOf } from "../server/session-driver/core/present-scene.ts"
+import { readRememberedBackgroundModels } from "../server/session/adapter/remembered-default.ts"
 import type { SessionManagerOptions } from "../server/session/core/session-manager-port.ts"
 import {
   type CodeBlockStartRequest,
@@ -225,6 +226,7 @@ function startRealRecommender(
     onFailure: (place, error) => {
       reportFailure({ feature: "recommendation", place }, error)
     },
+    readModel: () => readRememberedBackgroundModels().recommendation,
     readCache: () => readRecommendationCache(),
     writeCache: (entries) => {
       writeRecommendationCache(entries)

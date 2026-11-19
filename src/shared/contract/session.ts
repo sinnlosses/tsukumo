@@ -161,4 +161,17 @@ export const sessionContract = {
       figurePreference: z.enum(FIGURE_PREFERENCES),
     }),
   ),
+  /**
+   * 裏方のモデル（おすすめ・迎えの一言と反応・雑談の記憶の整理・キャラクターの生成の4つの問い合わせ）を覚える（歯車）。
+   * いま走っている問い合わせには効かず、効くのは次に起こす問い合わせから。
+   * 覚え先が1組で書き換わるので4つを1つのコマンドで運ぶ（役は `BackgroundModelRole`）。
+   */
+  setBackgroundModels: commandBase.input(
+    z.object({
+      recommendation: z.enum(MODEL_ALIASES),
+      welcomeGreeting: z.enum(MODEL_ALIASES),
+      chatConsolidation: z.enum(MODEL_ALIASES),
+      characterGeneration: z.enum(MODEL_ALIASES),
+    }),
+  ),
 }

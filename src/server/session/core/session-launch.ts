@@ -7,6 +7,7 @@
 // 外の世界（パックの読み込み・覚えた値・claude の transcript）には触らず、すべて渡された関数（`SessionLaunchPorts`）越しに頼む。
 
 import { swallowedFailureFootprint } from "../../../shared/diagnostic/swallowed-failure.ts"
+import type { BackgroundModels } from "../../../shared/session/background-model.ts"
 import type { SessionChoice } from "../../../shared/session/session-choice.ts"
 import type { SessionDefault } from "../../../shared/session/session-default.ts"
 import type { RestoredEvent, SessionEvent } from "../../../shared/session/session-event.ts"
@@ -50,6 +51,8 @@ export type SessionLaunchPorts<Pack extends NamedCharacterPack> = {
    * 覚えた値が無い・読めないときは同梱の既定へ畳んだあとの値が返るので、ここから先に「無い」は出ない。
    */
   readonly readSessionDefault: () => SessionDefault
+  /** 覚えた「裏方のモデル」を読む。役ごとに同梱の既定へ畳んだあとの値が返る。 */
+  readonly readBackgroundModels: () => BackgroundModels
   /** いま出しているパックを画面へ流す形（立ち絵の URL・選択肢・画面から変えられるか）。 */
   readonly characterEvent: (pack: Pack) => SessionEvent
   /** いまのアイテムの一覧と全パックの席を流す形（`items-changed`）。起こすたびに読み直す。 */
@@ -97,7 +100,7 @@ export type SessionLaunchPorts<Pack extends NamedCharacterPack> = {
  * 順序は起動時も起こし直しも同じ:
  * パックを決める → 画面から名前が届いたときだけ覚える → `character-changed`・`chat-mode-changed`・
  * （雑談のときだけ `chat-topics-changed` と `remembered-lines-changed`）・
- * `session-default-changed` を流す →
+ * `session-default-changed`・`background-models-changed` を流す →
  * 続きのセッションを決める → 駆動を起こす（切り替え先の一覧は読み終えたときに流す） →
  * 続きから始まったなら履歴を組み直して流し終える → 一覧の読み直しを始める → 駆動を返す。
  * 読み直しは起こし直し（2代目以降）だけで、読み直した一覧を採ったときだけ切り替え先の一覧をもう一度流す。
@@ -141,6 +144,8 @@ export function createSessionLaunch<Pack extends NamedCharacterPack>(
     // 読むのはここ1回だけで、同じ値をこれから起こす駆動にも渡す。
     const sessionDefault = ports.readSessionDefault()
     onEvent({ kind: "session-default-changed", sessionDefault })
+    // 裏方のモデルも同じ理由で流し直す（歯車が読む値）。
+    onEvent({ kind: "background-models-changed", backgroundModels: ports.readBackgroundModels() })
 
     const start = sessionStartOf(request.resume)
     // 切り替え先の一覧も、起こすたびに流し直す（画面はこのイベントでしか一覧を知れず、起こし直すと状態が初期値へ戻る）。

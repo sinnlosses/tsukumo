@@ -9,6 +9,10 @@
 
 import { useRef, type RefObject } from "react"
 
+import type {
+  BackgroundModelRole,
+  BackgroundModels,
+} from "../../../../../shared/session/background-model.ts"
 import {
   isEffortLevel,
   isModelAlias,
@@ -59,6 +63,12 @@ type ScreenNavSettingsSessionDefault = {
   readonly onChangeFigurePreference: (value: string) => void
 }
 
+/** 裏方のモデルの操作子。表示はサーバから届いた値だけに従い、押した側へ先に倒さない。 */
+type ScreenNavSettingsBackgroundModels = {
+  readonly values: BackgroundModels
+  readonly onChange: (role: BackgroundModelRole, value: string) => void
+}
+
 export type ScreenNavSettings = {
   readonly open: boolean
   readonly onOpen: () => void
@@ -68,6 +78,7 @@ export type ScreenNavSettings = {
   readonly colorNotice: ScreenNavSettingsColorNotice
   readonly adjust: ScreenNavSettingsAdjust
   readonly sessionDefault: ScreenNavSettingsSessionDefault
+  readonly backgroundModels: ScreenNavSettingsBackgroundModels
   readonly revealSpeed: ScreenNavSettingsRevealSpeed
   readonly launchSkill: ScreenNavSettingsLaunchSkill
   /** 覚えた「初回の説明を見た」を消し、説明をまた初回として出す。 */
@@ -82,6 +93,7 @@ export type ScreenNavSettings = {
 export function useSettings(): ScreenNavSettings {
   const dispatch = useSession((session) => session.dispatch)
   const sessionDefault = useSession((session) => session.state.sessionDefault)
+  const backgroundModels = useSession((session) => session.state.backgroundModels)
   const modelEffortSupport = useSession((session) => session.state.modelEffortSupport)
   const color = useAppearanceColor()
   const adjust = useAppearanceAdjust()
@@ -114,6 +126,14 @@ export function useSettings(): ScreenNavSettings {
       figurePreference: sessionDefault.figurePreference,
       ...change,
     })
+  }
+
+  /** 4つで1組なので、変えた1役に、ほかの3役はいまの値を写して送る。 */
+  function onChangeBackgroundModel(role: BackgroundModelRole, value: string): void {
+    // 知らない値は送らない（`<select>` の選択肢の外から来たときは何もしない）。
+    if (isModelAlias(value)) {
+      void dispatch.session.setBackgroundModels({ ...backgroundModels, [role]: value })
+    }
   }
 
   return {
@@ -157,6 +177,7 @@ export function useSettings(): ScreenNavSettings {
         }
       },
     },
+    backgroundModels: { values: backgroundModels, onChange: onChangeBackgroundModel },
     revealSpeed,
     launchSkill,
     onReplayFirstNotes: resetFirstNotes,

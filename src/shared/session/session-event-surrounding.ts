@@ -6,6 +6,7 @@ import type { ReactionLine, WrittenReactions } from "../recommendation/reaction.
 import type { RecommendationCard } from "../recommendation/recommendation-card.ts"
 import type { WelcomeGreetingState } from "../recommendation/welcome-greeting.ts"
 import type { TaskSummaryChange } from "../repository/task-summary-change.ts"
+import type { BackgroundModels } from "./background-model.ts"
 import type { SessionChoice } from "./session-choice.ts"
 import type { SessionDefault } from "./session-default.ts"
 import type { SessionId } from "./session-id.ts"
@@ -108,6 +109,11 @@ export type SurroundingEvent =
    * 運ぶのは覚えた値（読めなければ同梱の既定へ畳んだあとの値）で、いま動いているセッションの値ではない（そちらは `session-info` の `model` / `permissionMode`）。
    */
   | { readonly kind: "session-default-changed"; readonly sessionDefault: SessionDefault }
+  /**
+   * 裏方のモデルが分かった。駆動を起こしたときと、起こし直したときの1回ずつと、歯車から `session.setBackgroundModels` で覚え直したときに流れる。
+   * 運ぶのは覚えた値（読めなければ役ごとに同梱の既定へ畳んだあとの値）。
+   */
+  | { readonly kind: "background-models-changed"; readonly backgroundModels: BackgroundModels }
   /**
    * claude 自身の圧縮（`/compact`）が起きた（SDK の `system` / `compact_boundary`）。
    * 数値（`compact_metadata` の `pre_tokens` / `post_tokens` / `duration_ms`）は運ばない（画面に出さないものを契約に入れない）。

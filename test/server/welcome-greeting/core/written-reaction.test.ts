@@ -24,8 +24,12 @@ const OUTPUT = {
 }
 
 describe("writtenReactionsQuery", () => {
+  it("渡したモデルを問い合わせに載せる", () => {
+    expect(writtenReactionsQuery(MATERIAL, "haiku").model).toBe("haiku")
+  })
+
   it("人格を指示文の前に置き、依頼の文面は表情の選択肢だけ（暦・迎え方・直近の挨拶を渡さない）", () => {
-    const query = writtenReactionsQuery(MATERIAL)
+    const query = writtenReactionsQuery(MATERIAL, "sonnet")
 
     expect(query.systemPrompt.startsWith("# 架空の人格")).toBe(true)
     expect(query.prompt).toBe(
@@ -43,7 +47,7 @@ describe("writtenReactionsQuery", () => {
       properties: { withMark: { type: "string" }, withoutMark: { type: "string" }, expression },
       required: ["withMark", "withoutMark", "expression"],
     }
-    expect(writtenReactionsQuery(MATERIAL).schema).toMatchObject({
+    expect(writtenReactionsQuery(MATERIAL, "sonnet").schema).toMatchObject({
       properties: { retrying: marked, failed: plain, limited: marked, idle: marked },
       required: ["retrying", "failed", "limited", "idle"],
       additionalProperties: false,

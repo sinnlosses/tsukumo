@@ -6,12 +6,10 @@ import { z } from "zod"
 
 import type { RecommendationCard } from "../../../shared/recommendation/recommendation-card.ts"
 import type { TaskDifficulty } from "../../../shared/repository/task-summary.ts"
+import type { ModelAlias } from "../../../shared/session/run-setting-value.ts"
 import { structuredOutputSchema } from "../../core/query/structured-output-schema.ts"
 import type { StructuredQuery } from "../../core/query/structured-query.ts"
 import type { RecommendationCandidate } from "./recommendation-candidate.ts"
-
-/** 問い合わせを起こすモデル（軽いもの）。 */
-const RECOMMENDATION_MODEL = "haiku"
 
 /** 問い合わせ1回の時間切れ（ミリ秒）。 */
 export const RECOMMENDATION_TIMEOUT_MS = 60_000
@@ -62,14 +60,15 @@ const RECOMMENDATION_INSTRUCTION = `あなたは、これから作業を始め�
 - \`cards\` に、渡された順のまま、すべての候補の \`key\`（候補の key をそのまま）と \`reason\` を並べる
 - 同じ key を2回書かない`
 
-/** 候補の並びから `query()` に渡すものを組む。 */
+/** 候補の並びと問い合わせを起こすモデルから `query()` に渡すものを組む。 */
 export function recommendationQuery(
   candidates: readonly RecommendationCandidate[],
+  model: ModelAlias,
 ): StructuredQuery {
   return {
     kind: "recommendation",
     images: [],
-    model: RECOMMENDATION_MODEL,
+    model,
     systemPrompt: RECOMMENDATION_INSTRUCTION,
     prompt: ["## 候補", ...candidates.map(candidateLine)].join("\n"),
     schema: structuredOutputSchema(recommendationSchema(candidates)),

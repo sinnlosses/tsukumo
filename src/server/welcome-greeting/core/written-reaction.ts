@@ -11,9 +11,10 @@ import {
   REACTION_MARKS,
   type WrittenReactions,
 } from "../../../shared/recommendation/reaction.ts"
+import type { ModelAlias } from "../../../shared/session/run-setting-value.ts"
 import { structuredOutputSchema } from "../../core/query/structured-output-schema.ts"
 import type { CheckedAnswer, StructuredQuery } from "../../core/query/structured-query.ts"
-import { WELCOME_GREETING_MODEL, type WelcomeGreetingMaterial } from "./welcome-greeting.ts"
+import type { WelcomeGreetingMaterial } from "./welcome-greeting.ts"
 import {
   checkWelcomeAnswer,
   WELCOME_LINE_REQUESTED_CHARS,
@@ -49,12 +50,15 @@ const WRITTEN_REACTIONS_INSTRUCTION = `あなたはいま、このセッショ�
 - 作業の中身は知らないので、中身を推し量って書かない
 - 数を競わせる言い方（「最速」「いちばん多い」「最も」など）はしない`
 
-/** 材料から `query()` に渡すものを組む。人格は指示文の前に置く。 */
-export function writtenReactionsQuery(material: WrittenReactionsMaterial): StructuredQuery {
+/** 材料と問い合わせを起こすモデルから `query()` に渡すものを組む。人格は指示文の前に置く。 */
+export function writtenReactionsQuery(
+  material: WrittenReactionsMaterial,
+  model: ModelAlias,
+): StructuredQuery {
   return {
     kind: "welcome-reactions",
     images: [],
-    model: WELCOME_GREETING_MODEL,
+    model,
     systemPrompt: [material.persona, WRITTEN_REACTIONS_INSTRUCTION]
       .filter((part) => part.trim() !== "")
       .join("\n\n"),

@@ -6,6 +6,7 @@
 //
 import { z } from "zod"
 
+import type { ModelAlias } from "../../../../shared/session/run-setting-value.ts"
 import { byteLength } from "../../../../shared/utils/byte-length.ts"
 import type { ChatSummary } from "../../../core/chat-memory.ts"
 import { structuredOutputSchema } from "../../../core/query/structured-output-schema.ts"
@@ -16,9 +17,6 @@ import { CHAT_MEMORY_BUDGET } from "../memory/chat-memory-budget.ts"
 
 /** サイドバーの「最近の話題」に出す見出しの件数の上限。 */
 const CHAT_TOPIC_LIMIT = 3
-
-/** 定着を起こすモデル（軽いもの）。 */
-const CHAT_CONSOLIDATION_MODEL = "haiku"
 
 /** 定着1回の時間切れ（ミリ秒）。 */
 export const CHAT_CONSOLIDATION_TIMEOUT_MS = 120_000
@@ -128,11 +126,14 @@ export type ChatConsolidationResult = {
   readonly topics: readonly string[]
 }
 
-/** 材料から `query()` に渡すものを組む。 */
-export function chatConsolidationQuery(material: ChatConsolidationMaterial): StructuredQuery {
+/** 材料と問い合わせを起こすモデルから `query()` に渡すものを組む。 */
+export function chatConsolidationQuery(
+  material: ChatConsolidationMaterial,
+  model: ModelAlias,
+): StructuredQuery {
   return {
     kind: "chat-consolidation",
-    model: CHAT_CONSOLIDATION_MODEL,
+    model,
     systemPrompt: CHAT_CONSOLIDATION_INSTRUCTION,
     prompt: chatConsolidationPrompt(material),
     images: [],

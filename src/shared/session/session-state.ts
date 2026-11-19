@@ -16,6 +16,7 @@ import type { BackgroundTask } from "../session-driver/background-task.ts"
 import type { StampedPendingAsk } from "../session-driver/pending-ask.ts"
 import type { RateLimit } from "../session-driver/rate-limit.ts"
 import type { PreviousUsageReview, UsageProposalRun, UsageReview } from "../usage/usage-review.ts"
+import { BUILTIN_BACKGROUND_MODELS, type BackgroundModels } from "./background-model.ts"
 import type { CommandDescription } from "./command-description.ts"
 import type { EffortLevel } from "./run-setting-value.ts"
 import type { SessionChoice } from "./session-choice.ts"
@@ -183,8 +184,7 @@ export type SessionState = {
   readonly chatMode: boolean
   /**
    * 雑談のサイドバーの「最近の話題」に出す見出し（新しい順）。要約の本文ではなく、写しから取り出した見出しだけ。
-   * 源は `chat-topics-changed` だけで、届くたびに丸ごと置き換える。
-   * 起こし直すと初期値の空へ戻り、雑談で起こしたときだけサーバから流れ直す（仕事のときは空のまま）。
+   * 源は `chat-topics-changed` だけ。雑談で起こしたときだけサーバから流れ直す（仕事のときは空のまま）。
    */
   readonly chatTopics: readonly string[]
   /**
@@ -199,10 +199,12 @@ export type SessionState = {
   readonly rememberedLines: readonly string[]
   /**
    * 新しいセッションを起こすときの既定（帯の右端の歯車が読み書きする）。
-   * いま動いているセッションの値ではない（そちらは {@link SessionState.model} と {@link SessionInfo} の `permissionMode` で、帯から変えてもここは変わらない）。
-   * 源は `session-default-changed` だけ。起こし直すと状態が初期値へ戻るので、サーバから流れ直す（届くまでは同梱の既定）。
+   * いま動いているセッションの値ではない（帯から変えてもここは変わらない）。
+   * 源は `session-default-changed` だけ（届くまでは同梱の既定）。
    */
   readonly sessionDefault: SessionDefault
+  /** 裏方の問い合わせ4つのモデル。源は `background-models-changed` だけ（届くまでは同梱の既定）。 */
+  readonly backgroundModels: BackgroundModels
   /**
    * 契約プラン。トークン消費の画面の題の右の札に出す。源は `plan` だけ。
    * まだ届いていない・取れなかったのどちらも同じ undefined（画面は区別しないので、型でも分けない）。
@@ -304,6 +306,7 @@ export const INITIAL_SESSION_STATE: SessionState = {
   chatConsolidationHalt: { halted: false },
   rememberedLines: [],
   sessionDefault: BUILTIN_SESSION_DEFAULT,
+  backgroundModels: BUILTIN_BACKGROUND_MODELS,
   plan: undefined,
   backgroundTasks: [],
   workflowSteps: [],

@@ -117,6 +117,7 @@ function createPorts(
       summaryPacks.push(packName)
       return chatSummary
     },
+    readModel: () => "haiku",
     query: (request, signal) => {
       queries.push(request)
       return query(request, signal)

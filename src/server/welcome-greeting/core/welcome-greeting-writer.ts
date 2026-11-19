@@ -7,6 +7,7 @@ import type {
   WelcomeWritingResult,
 } from "../../../shared/diagnostic/welcome-writing.ts"
 import type { WelcomeGreetingState } from "../../../shared/recommendation/welcome-greeting.ts"
+import type { ModelAlias } from "../../../shared/session/run-setting-value.ts"
 import {
   type RetriedQueryPorts,
   type RetriedQueryTrace,
@@ -23,6 +24,8 @@ import {
 } from "./welcome-greeting.ts"
 
 export type WelcomeGreetingWriterPorts = RetriedQueryPorts & {
+  /** 迎えの一言と反応の問い合わせを起こすモデル。問い合わせを書き始めるたびに読む。 */
+  readonly readModel: () => ModelAlias
   /** 直近の挨拶を新しい順に読む（無い・読めないときは空）。 */
   readonly readRecent: () => readonly WelcomeGreetingText[]
   /** 直近の挨拶を丸ごと書く。失敗しても例外を投げない。 */
@@ -64,7 +67,7 @@ export async function greetWelcome(
 
   const outcome = await runRetriedQuery(
     ports,
-    welcomeGreetingQuery(full),
+    welcomeGreetingQuery(full, ports.readModel()),
     (answer) => parseWelcomeGreeting(answer, full),
     signal,
     timeoutMs,

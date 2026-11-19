@@ -4,11 +4,14 @@ import { join } from "node:path"
 import { describe, expect, it } from "vitest"
 
 import {
+  readRememberedBackgroundModels,
   readRememberedCharacter,
   readRememberedSessionDefault,
+  writeRememberedBackgroundModels,
   writeRememberedCharacter,
   writeRememberedSessionDefault,
 } from "../../../../src/server/session/adapter/remembered-default.ts"
+import { BUILTIN_BACKGROUND_MODELS } from "../../../../src/shared/session/background-model.ts"
 import { BUILTIN_SESSION_DEFAULT } from "../../../../src/shared/session/session-default.ts"
 import { useTempDir } from "../../../fixture/temp-dir.ts"
 
@@ -203,5 +206,74 @@ describe("writeRememberedSessionDefault", () => {
       figurePreference: "text",
     })
     expect(readRememberedCharacter(statePath())).toBe("kagami")
+  })
+})
+
+describe("readRememberedBackgroundModels", () => {
+  it("ファイルが無いときは4つとも同梱の既定", () => {
+    expect(readRememberedBackgroundModels(statePath())).toEqual(BUILTIN_BACKGROUND_MODELS)
+  })
+
+  it("欄が無いときは4つとも同梱の既定", () => {
+    writeFileSync(statePath(), JSON.stringify({ character: "tsukumo" }))
+    expect(readRememberedBackgroundModels(statePath())).toEqual(BUILTIN_BACKGROUND_MODELS)
+  })
+
+  it("知らない値・欠けた役はその役だけ同梱の既定に落ち、ほかの役は読める", () => {
+    writeFileSync(
+      statePath(),
+      JSON.stringify({ backgroundModels: { recommendation: "opus", welcomeGreeting: "gpt-9" } }),
+    )
+    expect(readRememberedBackgroundModels(statePath())).toEqual({
+      ...BUILTIN_BACKGROUND_MODELS,
+      recommendation: "opus",
+    })
+  })
+
+  it("裏方のモデルの欄が壊れていても、キャラクターと新しいセッションの既定は読める", () => {
+    writeFileSync(
+      statePath(),
+      JSON.stringify({
+        character: "kagami",
+        sessionDefault: {
+          model: "sonnet",
+          effort: "high",
+          permissionMode: "plan",
+          figurePreference: "text",
+        },
+        backgroundModels: "壊れた",
+      }),
+    )
+    expect(readRememberedBackgroundModels(statePath())).toEqual(BUILTIN_BACKGROUND_MODELS)
+    expect(readRememberedCharacter(statePath())).toBe("kagami")
+    expect(readRememberedSessionDefault(statePath()).model).toBe("sonnet")
+  })
+})
+
+describe("writeRememberedBackgroundModels", () => {
+  it("書いた値を読め、覚えたキャラクターと既定は残る", () => {
+    writeRememberedCharacter("tsukumo", statePath())
+    writeRememberedSessionDefault(
+      { model: "sonnet", effort: "high", permissionMode: "plan", figurePreference: "text" },
+      statePath(),
+    )
+    writeRememberedBackgroundModels(
+      { ...BUILTIN_BACKGROUND_MODELS, chatConsolidation: "sonnet" },
+      statePath(),
+    )
+
+    expect(readRememberedBackgroundModels(statePath()).chatConsolidation).toBe("sonnet")
+    expect(readRememberedCharacter(statePath())).toBe("tsukumo")
+    expect(readRememberedSessionDefault(statePath()).model).toBe("sonnet")
+  })
+
+  it("キャラクターを覚え直しても裏方のモデルは残る", () => {
+    writeRememberedBackgroundModels(
+      { ...BUILTIN_BACKGROUND_MODELS, characterGeneration: "sonnet" },
+      statePath(),
+    )
+    writeRememberedCharacter("kagami", statePath())
+
+    expect(readRememberedBackgroundModels(statePath()).characterGeneration).toBe("sonnet")
   })
 })

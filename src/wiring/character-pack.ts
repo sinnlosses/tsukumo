@@ -7,6 +7,7 @@ import type {
   PortraitGeneration,
 } from "../server/character-pack/core/character-pack-command.ts"
 import type { DiagnosticLog } from "../server/diagnostic/core/diagnostic.ts"
+import { readRememberedBackgroundModels } from "../server/session/adapter/remembered-default.ts"
 import type { CurrentCharacter } from "./current-character.ts"
 import { failureDiagnostic } from "./failure-diagnostic.ts"
 import { foldPortFailure } from "./fold-port-failure.ts"
@@ -42,6 +43,7 @@ export function wireCharacterPack(
                 signal,
               ),
             portrait,
+            readRememberedBackgroundModels().characterGeneration,
             new AbortController().signal,
           )
           if (generated === undefined) {

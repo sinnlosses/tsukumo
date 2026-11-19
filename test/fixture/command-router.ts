@@ -115,6 +115,10 @@ export function createRecordingPorts(
         remembered.push(sessionDefault)
         return { kind: "session-default-changed", sessionDefault }
       },
+      rememberBackgroundModels: (backgroundModels) => ({
+        kind: "background-models-changed",
+        backgroundModels,
+      }),
       readAchievementDay,
       diary,
       reserveSession: (sessionId) => {

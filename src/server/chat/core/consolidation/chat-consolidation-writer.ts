@@ -12,6 +12,7 @@
 // 書いてよい範囲と定着の `query()` へ渡してよい範囲は `docs/coding-standards.md`「会話内容の扱い」の例外の表が決めている。
 
 import type { CharacterPackName } from "../../../../shared/character-pack/character.ts"
+import type { ModelAlias } from "../../../../shared/session/run-setting-value.ts"
 import type { ChatFoldPoint, ChatSummary, ChatSummaryFold } from "../../../core/chat-memory.ts"
 import {
   runWithDeadline,
@@ -115,6 +116,8 @@ export type ChatConsolidationWriterPorts = {
   readonly lockConsolidation: QueryLockPort<CharacterPackName>
   /** パック1つぶんのあらすじの読み書きの関数（書くのは起こした時点のパックのファイル）。 */
   readonly chatSummary: (packName: CharacterPackName) => ChatSummary
+  /** 定着の問い合わせを起こすモデル。問い合わせを起こすたびに読む。 */
+  readonly readModel: () => ModelAlias
   /** 使い捨ての `query()`。返すのは `structured_output` のまま（検査はここでする）。 */
   readonly query: (request: StructuredQuery, signal: AbortSignal) => Promise<unknown>
   /** いまの時刻（エポックミリ秒）。錠の古さを測るのに使う。 */
@@ -327,7 +330,7 @@ async function foldBatch(
   signal: AbortSignal,
 ): Promise<FoldedBatch | Extract<ChatConsolidationOutcome, { kind: "failed" }>> {
   const previousSynopsis = chatSummary.read()?.summary ?? ""
-  const request = chatConsolidationQuery({ entries, previousSynopsis })
+  const request = chatConsolidationQuery({ entries, previousSynopsis }, ports.readModel())
   const check = parseChatConsolidationResult(await ports.query(request, signal))
   // 中断・時間切れのあとに届いた結果は書かない（呼び出し側はもう次の1本を起こしうる）。
   if (signal.aborted) {

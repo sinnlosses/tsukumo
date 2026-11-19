@@ -3,6 +3,7 @@
 
 import type { RecommendationCard } from "../../../shared/recommendation/recommendation-card.ts"
 import type { TaskSummaryResult } from "../../../shared/repository/task-summary.ts"
+import type { ModelAlias } from "../../../shared/session/run-setting-value.ts"
 import type { StructuredQuery } from "../../core/query/structured-query.ts"
 import {
   type RecommendationCandidate,
@@ -29,6 +30,8 @@ export type RecommenderPorts = {
   readonly readCache: () => readonly RecommendationCacheEntry[]
   /** キャッシュを丸ごと書く。失敗しても例外を投げない。 */
   readonly writeCache: (entries: readonly RecommendationCacheEntry[]) => void
+  /** 問い合わせを起こすモデル。問い合わせを起こすたびに読む。 */
+  readonly readModel: () => ModelAlias
   /** 問い合わせを1回走らせ、`structured_output` をそのまま返す。失敗・中断では reject する。 */
   readonly query: (request: StructuredQuery, signal: AbortSignal) => Promise<unknown>
   /** 札の並びを配る（空は「まだ無い」）。 */
@@ -103,7 +106,7 @@ async function recommend(
   const bounded = AbortSignal.any([signal, AbortSignal.timeout(RECOMMENDATION_TIMEOUT_MS)])
   try {
     const cards = parseRecommendationResult(
-      await ports.query(recommendationQuery(candidates), bounded),
+      await ports.query(recommendationQuery(candidates, ports.readModel()), bounded),
       candidates,
     )
     if (cards === undefined || bounded.aborted) {

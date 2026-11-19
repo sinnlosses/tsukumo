@@ -58,7 +58,7 @@ describe("generateCharacter（出力の検査）", () => {
 })
 
 describe("generateCharacter", () => {
-  it("立ち絵を画像1枚として Opus の問い合わせに渡し、検査した欄の値を返す", async () => {
+  it("立ち絵を画像1枚として渡したモデルの問い合わせに渡し、検査した欄の値を返す", async () => {
     const requests: StructuredQuery[] = []
 
     const generated = await generateCharacter(
@@ -67,12 +67,13 @@ describe("generateCharacter", () => {
         return Promise.resolve(GENERATED)
       },
       PORTRAIT_PNG_DATA_URL,
+      "sonnet",
       NOT_ABORTED,
     )
 
     expect(generated).toEqual(GENERATED)
     expect(requests.map((request) => [request.kind, request.model, request.images])).toEqual([
-      ["character-generation", "opus", [{ mediaType: "image/png", base64: PORTRAIT_BASE64 }]],
+      ["character-generation", "sonnet", [{ mediaType: "image/png", base64: PORTRAIT_BASE64 }]],
     ])
   })
 
@@ -81,6 +82,7 @@ describe("generateCharacter", () => {
       await generateCharacter(
         () => Promise.reject(new Error("架空の失敗")),
         PORTRAIT_PNG_DATA_URL,
+        "opus",
         NOT_ABORTED,
       ),
     ).toBeUndefined()
@@ -95,6 +97,7 @@ describe("generateCharacter", () => {
         return Promise.resolve(GENERATED)
       },
       `data:image/svg+xml;base64,${Buffer.from("<svg/>").toString("base64")}`,
+      "opus",
       NOT_ABORTED,
     )
 
@@ -104,5 +107,10 @@ describe("generateCharacter", () => {
 })
 
 function generatedFrom(output: unknown): Promise<unknown> {
-  return generateCharacter(() => Promise.resolve(output), PORTRAIT_PNG_DATA_URL, NOT_ABORTED)
+  return generateCharacter(
+    () => Promise.resolve(output),
+    PORTRAIT_PNG_DATA_URL,
+    "opus",
+    NOT_ABORTED,
+  )
 }

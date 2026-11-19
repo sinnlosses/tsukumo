@@ -98,6 +98,10 @@ function defaultSessionManagerOptions() {
       kind: "session-default-changed",
       sessionDefault,
     }),
+    rememberBackgroundModels: (backgroundModels) => ({
+      kind: "background-models-changed",
+      backgroundModels,
+    }),
     editCharacter: () => Promise.resolve(undefined),
     createCharacter: () => Promise.resolve(undefined),
     deleteCharacter: () => Promise.resolve(undefined),
@@ -124,6 +128,7 @@ export function createSessionManager(
   const options = { ...defaultSessionManagerOptions(), ...overrides }
   const {
     rememberSessionDefault,
+    rememberBackgroundModels,
     readAchievementDay,
     diary,
     editCharacter,
@@ -141,6 +146,7 @@ export function createSessionManager(
       session: {
         promptImageShelf: rest.promptImageShelf,
         rememberSessionDefault,
+        rememberBackgroundModels,
         readAchievementDay,
         diary,
         reserveSession: () => Promise.resolve("reserved"),

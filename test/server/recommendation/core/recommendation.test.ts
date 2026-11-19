@@ -36,8 +36,12 @@ const CANDIDATES: readonly RecommendationCandidate[] = [
 ]
 
 describe("recommendationQuery", () => {
+  it("渡したモデルを問い合わせに載せる", () => {
+    expect(recommendationQuery(CANDIDATES, "opus").model).toBe("opus")
+  })
+
   it("出力のキーを候補のキーに限る", () => {
-    const { schema } = recommendationQuery(CANDIDATES)
+    const { schema } = recommendationQuery(CANDIDATES, "haiku")
 
     expect(schema).toMatchObject({
       properties: {
@@ -47,7 +51,7 @@ describe("recommendationQuery", () => {
   })
 
   it("札は1件から候補の数までで、理由の字数の上限も出力の形に出す", () => {
-    const { schema } = recommendationQuery(CANDIDATES)
+    const { schema } = recommendationQuery(CANDIDATES, "haiku")
 
     expect(schema).toMatchObject({
       required: ["cards"],
@@ -62,17 +66,20 @@ describe("recommendationQuery", () => {
   })
 
   it("タスクの候補の行に、並べた決め手（印・待っているタスクの件数・難しさ・前の作業）を書く", () => {
-    const { prompt } = recommendationQuery([
-      { kind: "resume" },
-      taskCandidate("X-002", "架空の急ぎの直し", {
-        waitedBy: ["X-003", "X-004"],
-        difficulty: "haiku",
-        importance: "high",
-        urgency: "high",
-        followsDoneWork: true,
-      }),
-      taskCandidate("X-005", "架空の単独の直し", { difficulty: undefined, importance: "low" }),
-    ])
+    const { prompt } = recommendationQuery(
+      [
+        { kind: "resume" },
+        taskCandidate("X-002", "架空の急ぎの直し", {
+          waitedBy: ["X-003", "X-004"],
+          difficulty: "haiku",
+          importance: "high",
+          urgency: "high",
+          followsDoneWork: true,
+        }),
+        taskCandidate("X-005", "架空の単独の直し", { difficulty: undefined, importance: "low" }),
+      ],
+      "haiku",
+    )
 
     expect(prompt.split("\n")).toEqual([
       "## 候補",

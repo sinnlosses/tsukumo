@@ -9,6 +9,7 @@ import {
   type ChatConsolidationSource,
   createChatConsolidationWriter,
 } from "../server/chat/core/consolidation/chat-consolidation-writer.ts"
+import { readRememberedBackgroundModels } from "../server/session/adapter/remembered-default.ts"
 import type { SessionManagerOptions } from "../server/session/core/session-manager-port.ts"
 import type { CurrentCharacter } from "./current-character.ts"
 import type { WiringContext } from "./wiring-context.ts"
@@ -56,6 +57,7 @@ function chatConsolidationSource(context: WiringContext): ChatConsolidationSourc
       archive: chatArchive,
       lockConsolidation: createQueryLock(chatConsolidationLockPath),
       chatSummary: (packName) => createChatSummary(packName),
+      readModel: () => readRememberedBackgroundModels().chatConsolidation,
       query: (request, signal) =>
         queryStructured(request, { cwd, env: inheritedEnv, record: throwawayQuery, now }, signal),
       now,

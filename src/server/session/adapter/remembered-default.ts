@@ -1,5 +1,5 @@
 // 次に起こすときの初期値をホームの状態ファイル（`~/.tsukumo/state.json`）に覚える。
-// 覚えるのは2つ。直前まで出していたキャラクターパックの名前と、新しいセッションの既定（モデル・effort・許可モード・図の既定）。
+// 覚えるのは3つ。直前まで出していたキャラクターパックの名前と、新しいセッションの既定（モデル・effort・許可モード・図の既定）と、裏方の問い合わせ4つのモデル。
 //
 // 状態ファイルに触るのはここだけ。
 // 書き込みがファイル丸ごとの置き換えなので、別々のモジュールから書くと、後から書いたほうが相手の欄を消す。
@@ -11,7 +11,16 @@
 
 import { z } from "zod"
 
-import { EFFORT_LEVELS, MODEL_ALIASES } from "../../../shared/session/run-setting-value.ts"
+import {
+  BUILTIN_BACKGROUND_MODELS,
+  type BackgroundModelRole,
+  type BackgroundModels,
+} from "../../../shared/session/background-model.ts"
+import {
+  EFFORT_LEVELS,
+  MODEL_ALIASES,
+  type ModelAlias,
+} from "../../../shared/session/run-setting-value.ts"
 import {
   BUILTIN_SESSION_DEFAULT,
   FIGURE_PREFERENCES,
@@ -40,6 +49,11 @@ const sessionDefaultStateSchema = z.object({
   }),
 })
 
+// 裏方のモデルは役ごとに別の値として読む。1つの役が知らない値でも、ほかの役と欄の外は落とさない。
+const backgroundModelsStateSchema = z.object({
+  backgroundModels: z.record(z.string(), z.unknown()),
+})
+
 /**
  * 読み出した状態ファイル。
  * 欄が `| undefined` なのは外の世界を写した直後だから（`docs/coding-standards.md`「「無いかもしれない」値」の例外1）。
@@ -48,6 +62,7 @@ const sessionDefaultStateSchema = z.object({
 type RememberedState = {
   readonly character?: string
   readonly sessionDefault?: SessionDefault
+  readonly backgroundModels?: BackgroundModels
 }
 
 /**
@@ -69,6 +84,16 @@ export function readRememberedSessionDefault(path: string = defaultStatePath()):
 }
 
 /**
+ * 覚えた「裏方のモデル」を読む。
+ * 欄が無い・壊れている・知らない値の役は、その役だけ同梱の既定（`BUILTIN_BACKGROUND_MODELS`）。
+ */
+export function readRememberedBackgroundModels(
+  path: string = defaultStatePath(),
+): BackgroundModels {
+  return readState(path).backgroundModels ?? BUILTIN_BACKGROUND_MODELS
+}
+
+/**
  * 覚えた名前を書く。失敗しても例外を投げず、書けなかった回はその回を諦めて次へ進む。
  * ディレクトリが無ければ作る。
  */
@@ -76,8 +101,7 @@ export function writeRememberedCharacter(
   character: string,
   path: string = defaultStatePath(),
 ): void {
-  const state = readState(path)
-  writeState({ character, sessionDefault: state.sessionDefault }, path)
+  writeState({ ...readState(path), character }, path)
 }
 
 /** 覚えた「新しいセッションの既定」を書く（失敗の扱いは {@link writeRememberedCharacter} と同じ）。 */
@@ -85,8 +109,15 @@ export function writeRememberedSessionDefault(
   sessionDefault: SessionDefault,
   path: string = defaultStatePath(),
 ): void {
-  const state = readState(path)
-  writeState({ character: state.character, sessionDefault }, path)
+  writeState({ ...readState(path), sessionDefault }, path)
+}
+
+/** 覚えた「裏方のモデル」を書く（失敗の扱いは {@link writeRememberedCharacter} と同じ）。 */
+export function writeRememberedBackgroundModels(
+  backgroundModels: BackgroundModels,
+  path: string = defaultStatePath(),
+): void {
+  writeState({ ...readState(path), backgroundModels }, path)
 }
 
 /** 状態ファイルを読む。読めない欄はその欄だけ undefined（ファイルごと捨てない）。 */
@@ -94,7 +125,11 @@ function readState(path: string): RememberedState {
   const parsed = readJsonFile(path)
   const character = characterStateSchema.safeParse(parsed)
   const sessionDefault = sessionDefaultStateSchema.safeParse(parsed)
+  const backgroundModels = backgroundModelsStateSchema.safeParse(parsed)
   return {
+    backgroundModels: backgroundModels.success
+      ? foldBackgroundModels(backgroundModels.data.backgroundModels)
+      : undefined,
     character: character.success ? character.data.character : undefined,
     sessionDefault: sessionDefault.success
       ? {
@@ -107,6 +142,21 @@ function readState(path: string): RememberedState {
             BUILTIN_SESSION_DEFAULT.figurePreference,
         }
       : undefined,
+  }
+}
+
+/** 役ごとに読み、読めない役だけ同梱の既定へ畳む。 */
+function foldBackgroundModels(raw: Readonly<Record<string, unknown>>): BackgroundModels {
+  const modelSchema = z.enum(MODEL_ALIASES)
+  const pick = (role: BackgroundModelRole): ModelAlias => {
+    const model = modelSchema.safeParse(raw[role])
+    return model.success ? model.data : BUILTIN_BACKGROUND_MODELS[role]
+  }
+  return {
+    recommendation: pick("recommendation"),
+    welcomeGreeting: pick("welcomeGreeting"),
+    chatConsolidation: pick("chatConsolidation"),
+    characterGeneration: pick("characterGeneration"),
   }
 }
 

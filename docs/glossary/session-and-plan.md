@@ -29,6 +29,13 @@
   ポートの塞がりと印の目印は使用中の判定に使わない（`docs/architecture/adr/0026-session-claim-file.md`）
 - **避ける言い方**: セッションの名乗り（旧称）、ロック、使用中フラグ
 
+### 裏方のモデル
+
+- **英語識別子**: `BackgroundModels`（役は `BackgroundModelRole`、同梱の既定は `BUILTIN_BACKGROUND_MODELS`、イベントは `background-models-changed`、コマンドは `setBackgroundModels`）
+- **定義**: 会話とは別に tsukumo が裏で起こす使い捨ての問い合わせ4つ（おすすめ・迎えの一言と反応・雑談の記憶の整理・キャラクターの生成）が、役ごとに使うモデル
+- **注記**: 覚え先は `~/.tsukumo/state.json`。役ごとに別々に選び、変えると次に起こす問い合わせから効く。新しいセッションの既定（`SessionDefault`）には混ぜない。日記と使い方の見直しは、呼び出し側が会話のいまのモデルを渡すので対象外
+- **避ける言い方**: 裏のモデル、バックグラウンドモデル
+
 ### 短縮ID
 
 - **英語識別子**: `shortId`（組み立ては `shortSessionIds`）

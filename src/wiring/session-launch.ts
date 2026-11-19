@@ -33,7 +33,9 @@ import {
 import { createSessionClaim } from "../server/session-driver/core/session/session-claim.ts"
 import { sessionTag } from "../server/session-driver/core/session/session-mark.ts"
 import {
+  readRememberedBackgroundModels,
   readRememberedSessionDefault,
+  writeRememberedBackgroundModels,
   writeRememberedSessionDefault,
 } from "../server/session/adapter/remembered-default.ts"
 import type { SessionCommandPorts } from "../server/session/core/session-command.ts"
@@ -50,6 +52,7 @@ import {
 import { expressionChoices, expressionNames } from "../shared/character-pack/expression-choice.ts"
 import type { DiagnosticEntry } from "../shared/diagnostic/diagnostic-record.ts"
 import type { SwallowedFailurePlace } from "../shared/diagnostic/swallowed-failure.ts"
+import type { BackgroundModels } from "../shared/session/background-model.ts"
 import type { SessionDefault } from "../shared/session/session-default.ts"
 import type { RestoredEvent, SessionEvent } from "../shared/session/session-event.ts"
 import type { SessionId } from "../shared/session/session-id.ts"
@@ -91,7 +94,10 @@ export function wireSessionLaunch(options: {
   readonly manager: Pick<SessionManagerOptions, "launchSession">
   readonly sessionCommands: Pick<
     SessionCommandPorts,
-    "rememberSessionDefault" | "reserveSession" | "withdrawSessionClaim"
+    | "rememberSessionDefault"
+    | "rememberBackgroundModels"
+    | "reserveSession"
+    | "withdrawSessionClaim"
   >
   /** このプロセスの占有ファイルを消す（プロセスを閉じるとき）。 */
   readonly releaseSessionClaim: () => void
@@ -114,6 +120,7 @@ export function wireSessionLaunch(options: {
         rememberPack: (pack) => character.remember(pack),
         // 覚えた既定は起こすたびに読む（歯車で書き換えたあと、起こし直しで効く）。
         readSessionDefault: () => readRememberedSessionDefault(),
+        readBackgroundModels: () => readRememberedBackgroundModels(),
         characterEvent: () => character.event(),
         itemsEvent: options.itemsEvent,
         readChatTopics: (pack) => readChatTopics(chatMemoryOf(pack, context).chatSummary),
@@ -170,6 +177,7 @@ export function wireSessionLaunch(options: {
     sessionCommands: {
       // 歯車から届いた既定は、覚えてから画面へ流し直すだけ（いまのセッションには効かない）。
       rememberSessionDefault: (sessionDefault) => rememberSessionDefault(sessionDefault),
+      rememberBackgroundModels: (backgroundModels) => rememberBackgroundModels(backgroundModels),
       reserveSession: (sessionId) => sessionClaim.reserve(sessionId),
       withdrawSessionClaim: () => sessionClaim.withdraw(),
     },
@@ -315,6 +323,12 @@ function startRealDriver(
 function rememberSessionDefault(sessionDefault: SessionDefault): SessionEvent {
   writeRememberedSessionDefault(sessionDefault)
   return { kind: "session-default-changed", sessionDefault }
+}
+
+/** 歯車から届いた「裏方のモデル」を覚え、画面へ流すイベントを返す（失敗の扱いは {@link rememberSessionDefault} と同じ）。 */
+function rememberBackgroundModels(backgroundModels: BackgroundModels): SessionEvent {
+  writeRememberedBackgroundModels(backgroundModels)
+  return { kind: "background-models-changed", backgroundModels }
 }
 
 /**

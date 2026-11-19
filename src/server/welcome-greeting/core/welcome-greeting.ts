@@ -11,6 +11,7 @@ import {
   WELCOME_GREETING_CARD_MARK,
   type WelcomeGreeting,
 } from "../../../shared/recommendation/welcome-greeting.ts"
+import type { ModelAlias } from "../../../shared/session/run-setting-value.ts"
 import { structuredOutputSchema } from "../../core/query/structured-output-schema.ts"
 import type { CheckedAnswer, StructuredQuery } from "../../core/query/structured-query.ts"
 import { type AwayBand, type TimeBand, timeBandOf } from "../../core/time-band.ts"
@@ -21,9 +22,6 @@ import {
   welcomeExpressionSchema,
   welcomeLineSchema,
 } from "./welcome-line.ts"
-
-/** 問い合わせを起こすモデル。 */
-export const WELCOME_GREETING_MODEL = "sonnet"
 
 /** 書き始め（問い合わせ直しを含めた全体）からの締め切り（ミリ秒）。 */
 export const WELCOME_GREETING_TIMEOUT_MS = 60_000
@@ -101,13 +99,16 @@ const TIME_BAND_LABELS = {
   night: "夜",
 } as const satisfies Record<TimeBand, string>
 
-/** 材料から `query()` に渡すものを組む。人格は指示文の前に置く。 */
-export function welcomeGreetingQuery(material: WelcomeGreetingMaterial): StructuredQuery {
+/** 材料と問い合わせを起こすモデルから `query()` に渡すものを組む。人格は指示文の前に置く。 */
+export function welcomeGreetingQuery(
+  material: WelcomeGreetingMaterial,
+  model: ModelAlias,
+): StructuredQuery {
   const { calendar } = material
   return {
     kind: "welcome-greeting",
     images: [],
-    model: WELCOME_GREETING_MODEL,
+    model,
     systemPrompt: [material.persona, WELCOME_GREETING_INSTRUCTION]
       .filter((part) => part.trim() !== "")
       .join("\n\n"),

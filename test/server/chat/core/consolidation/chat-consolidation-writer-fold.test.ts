@@ -78,6 +78,7 @@ function createHarness() {
     archive: recordingArchive,
     lockConsolidation: () => ({ release: () => {} }),
     chatSummary,
+    readModel: () => "haiku",
     query: (request) => {
       queries.push(request)
       if (faults.queryRejects) {

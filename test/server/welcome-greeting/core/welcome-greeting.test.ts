@@ -31,8 +31,12 @@ const OUTPUT = {
 }
 
 describe("welcomeGreetingQuery", () => {
+  it("渡したモデルを問い合わせに載せる", () => {
+    expect(welcomeGreetingQuery(MATERIAL, "haiku").model).toBe("haiku")
+  })
+
   it("人格を指示文の前に置き、材料・表情の選択肢・直近の挨拶を依頼の文面に書く", () => {
-    const query = welcomeGreetingQuery(MATERIAL)
+    const query = welcomeGreetingQuery(MATERIAL, "sonnet")
 
     expect(query.systemPrompt.startsWith("# 架空の人格")).toBe(true)
     expect(query.prompt).toBe(
@@ -55,7 +59,10 @@ describe("welcomeGreetingQuery", () => {
   })
 
   it("続きから起こしたときは、続きからの印と前回からの経過の帯を書き、指示文に続きから迎えるときの節がある", () => {
-    const query = welcomeGreetingQuery({ ...MATERIAL, visit: { kind: "resume", away: "数時間" } })
+    const query = welcomeGreetingQuery(
+      { ...MATERIAL, visit: { kind: "resume", away: "数時間" } },
+      "sonnet",
+    )
 
     expect(query.prompt.split("\n\n")[0]).toBe(
       [
@@ -71,20 +78,20 @@ describe("welcomeGreetingQuery", () => {
   })
 
   it("人格が空なら指示文だけ", () => {
-    const query = welcomeGreetingQuery({ ...MATERIAL, persona: "" })
+    const query = welcomeGreetingQuery({ ...MATERIAL, persona: "" }, "sonnet")
 
     expect(query.systemPrompt.startsWith("あなたはいま")).toBe(true)
   })
 
   it("指示文は検査の上限より短い字数を頼む", () => {
-    const { systemPrompt } = welcomeGreetingQuery(MATERIAL)
+    const { systemPrompt } = welcomeGreetingQuery(MATERIAL, "sonnet")
 
     expect(systemPrompt).toContain(`${String(WELCOME_LINE_REQUESTED_CHARS)}字まで`)
     expect(systemPrompt).not.toContain(`${String(LINE_LIMIT_CHARS)}字まで`)
   })
 
   it("出力の形は挨拶の2文と表情だけで、表情を選択肢の名前に限る", () => {
-    expect(welcomeGreetingQuery(MATERIAL).schema).toMatchObject({
+    expect(welcomeGreetingQuery(MATERIAL, "sonnet").schema).toMatchObject({
       properties: { expression: { enum: ["default", "excited"] } },
       required: ["withCard", "withoutCard", "expression"],
       additionalProperties: false,
@@ -158,7 +165,10 @@ describe("welcomeGreetingQuery（時刻の帯）", () => {
     [19, "夜"],
     [23, "夜"],
   ])("%d 時は %s", (hour, band) => {
-    const query = welcomeGreetingQuery({ ...MATERIAL, calendar: { ...MATERIAL.calendar, hour } })
+    const query = welcomeGreetingQuery(
+      { ...MATERIAL, calendar: { ...MATERIAL.calendar, hour } },
+      "sonnet",
+    )
 
     expect(query.prompt.split("\n")[3]).toBe(`- 時間帯: ${band}`)
   })

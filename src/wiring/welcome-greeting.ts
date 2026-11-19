@@ -7,6 +7,7 @@ import { localCalendarAt } from "../server/adapter/local-time.ts"
 import { queryStructured } from "../server/adapter/sdk-structured-query.ts"
 import type { CharacterPack } from "../server/character-pack/adapter/character-pack.ts"
 import type { DiagnosticLog } from "../server/diagnostic/core/diagnostic.ts"
+import { readRememberedBackgroundModels } from "../server/session/adapter/remembered-default.ts"
 import type { SessionLaunchSeed } from "../server/session/core/session-launch.ts"
 import {
   readRecentWelcomeGreetings,
@@ -50,6 +51,7 @@ export function wireWelcomeGreeting(
       }
       const kept = keeper.noteLaunched(seed.start, onEvent)
       const greeter = createWelcomeGreeter({
+        readModel: () => readRememberedBackgroundModels().welcomeGreeting,
         readRecent: () => readRecentWelcomeGreetings(seed.pack.name),
         writeRecent: (recent) => {
           writeRecentWelcomeGreetings(seed.pack.name, recent)

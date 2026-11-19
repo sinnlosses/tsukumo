@@ -67,6 +67,7 @@ const SESSION_EVENT_KINDS = {
   "remembered-lines-changed": true,
   "items-changed": true,
   "session-default-changed": true,
+  "background-models-changed": true,
   "compact-boundary": true,
   "background-tasks-changed": true,
   "usage-review-started": true,

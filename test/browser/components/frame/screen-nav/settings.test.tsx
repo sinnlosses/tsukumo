@@ -176,7 +176,7 @@ describe("設定の歯車（帯の右端）", () => {
     showFace("セッションの既定")
 
     expect(current()).toEqual([null, "page", null, null, null])
-    expect(faceLabels()).toEqual(["モデル", "effort", "許可モード", "図の既定"])
+    expect(faceLabels().slice(0, 4)).toEqual(["モデル", "effort", "許可モード", "図の既定"])
 
     showFace("演出")
 

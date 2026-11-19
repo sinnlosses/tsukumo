@@ -56,6 +56,7 @@ function createHarness(initialCache: readonly RecommendationCacheEntry[] = []) {
     readonly fail: () => void
   }[] = []
   const recommender = createRecommender({
+    readModel: () => "sonnet",
     readCache: () => cache,
     writeCache: (entries) => {
       cache = entries
@@ -91,6 +92,7 @@ describe("createRecommender", () => {
     await flush()
 
     expect(harness.emitted).toEqual([[], CARDS])
+    expect(harness.queries[0]?.request.model).toBe("sonnet")
     expect(harness.cache()).toEqual([
       { key: recommendationKey(recommendationCandidates(tasksOf("X-001"))), cards: CARDS },
       older,

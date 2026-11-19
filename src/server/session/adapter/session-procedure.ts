@@ -80,5 +80,11 @@ export function sessionProcedure(ports: SessionCommandPorts) {
         errors,
       ),
     ),
+    setBackgroundModels: procedure.setBackgroundModels.handler(({ input, context, errors }) =>
+      refusedUnlessAccepted(
+        receiveSessionCommand(table.setBackgroundModels, input, context.session),
+        errors,
+      ),
+    ),
   })
 }

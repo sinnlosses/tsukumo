@@ -18,9 +18,6 @@ import type { ModelAlias } from "../../../shared/session/run-setting-value.ts"
 import { structuredOutputSchema } from "../../core/query/structured-output-schema.ts"
 import { runWithDeadline, type StructuredQuery } from "../../core/query/structured-query.ts"
 
-/** 問い合わせを起こすモデル。 */
-const CHARACTER_GENERATION_MODEL = "opus" satisfies ModelAlias
-
 /** 問い合わせ1回の締め切り（ミリ秒）。 */
 const CHARACTER_GENERATION_TIMEOUT_MS = 120_000
 
@@ -31,12 +28,13 @@ export type CharacterGenerationPort = (
 ) => Promise<unknown>
 
 /**
- * 立ち絵の data URL から欄の値を生成する。
+ * 立ち絵の data URL から、渡したモデルで欄の値を生成する。
  * 画像として読めない・問い合わせが投げた・`signal` か締め切りで中断した・返った値が形に合わないときは undefined。
  */
 export async function generateCharacter(
   query: CharacterGenerationPort,
   portrait: string,
+  model: ModelAlias,
   signal: AbortSignal,
 ): Promise<GeneratedCharacter | undefined> {
   const image = parsePromptImage(portrait)
@@ -48,7 +46,7 @@ export async function generateCharacter(
       signal,
       CHARACTER_GENERATION_TIMEOUT_MS,
       async (bounded) =>
-        toGeneratedCharacter(await query(characterGenerationQuery(image), bounded)),
+        toGeneratedCharacter(await query(characterGenerationQuery(image, model), bounded)),
       undefined,
     )
   } catch {
@@ -58,10 +56,10 @@ export async function generateCharacter(
 }
 
 /** 画像1枚から `query()` に渡すものを組む。 */
-function characterGenerationQuery(image: PromptImageSource): StructuredQuery {
+function characterGenerationQuery(image: PromptImageSource, model: ModelAlias): StructuredQuery {
   return {
     kind: "character-generation",
-    model: CHARACTER_GENERATION_MODEL,
+    model,
     systemPrompt: CHARACTER_GENERATION_INSTRUCTION,
     prompt: "この立ち絵のキャラクターの id・名前・差し色2つ・人格を書いてください。",
     images: [image],

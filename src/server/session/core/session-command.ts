@@ -12,6 +12,7 @@ import type { DateKey } from "../../../shared/diary/date-key.ts"
 import { FRAME_ERROR_REASON } from "../../../shared/frame-error-reason.ts"
 import type { ReactionLine } from "../../../shared/recommendation/reaction.ts"
 import { isWelcomeGreetingLine } from "../../../shared/recommendation/welcome-greeting.ts"
+import type { BackgroundModels } from "../../../shared/session/background-model.ts"
 import {
   BUILTIN_SESSION_DEFAULT,
   type SessionDefault,
@@ -40,6 +41,11 @@ export type SessionCommandPorts = {
    * 書き込みは失敗しても投げない口なので、返すイベントは常に1つ。
    */
   readonly rememberSessionDefault: (sessionDefault: SessionDefault) => SessionEvent
+  /**
+   * 裏方のモデルを覚え、画面へ流す `background-models-changed` イベントを返す。
+   * いま走っている問い合わせには効かない（効くのは次に起こす問い合わせから）。
+   */
+  readonly rememberBackgroundModels: (backgroundModels: BackgroundModels) => SessionEvent
   /**
    * 成果の日記書きを受けたときに、その日の成果を数え直す口。
    * 画面が出している手続き `achievement.day` と同じ数え方を使う。
@@ -200,6 +206,18 @@ export function sessionCommands(ports: SessionCommandPorts): SessionCommandTable
           figurePreference: input.figurePreference,
         }),
       failure: FRAME_ERROR_REASON.sessionDefaultFailed,
+    },
+    // 新しいセッションの既定と同じく、起こし直さず、覚えた値を画面へ流すだけ。
+    setBackgroundModels: {
+      kind: "write",
+      receive: (input) =>
+        ports.rememberBackgroundModels({
+          recommendation: input.recommendation,
+          welcomeGreeting: input.welcomeGreeting,
+          chatConsolidation: input.chatConsolidation,
+          characterGeneration: input.characterGeneration,
+        }),
+      failure: FRAME_ERROR_REASON.backgroundModelsFailed,
     },
   }
 }

@@ -64,6 +64,7 @@ function createHarness() {
       return { release: () => {} }
     },
     chatSummary: () => chatSummary,
+    readModel: () => "haiku",
     query: (_request, signal) => {
       queries += 1
       switch (reply) {

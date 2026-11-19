@@ -355,6 +355,10 @@ const SESSION_EVENT_FOLDS = {
     ...state,
     sessionDefault: event.sessionDefault,
   }),
+  "background-models-changed": (state, event) => ({
+    ...state,
+    backgroundModels: event.backgroundModels,
+  }),
   "compact-boundary": (state) => ({
     ...state,
     records: [...state.records, { kind: "compact-boundary" }],

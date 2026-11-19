@@ -59,13 +59,16 @@ const VALID_OUTPUT = {
 } satisfies ChatConsolidationResult
 
 describe("chatConsolidationQuery", () => {
-  it("軽いモデルで、行番号つきの行・日付の見出し・前のあらすじを文面に載せる", () => {
-    const query = chatConsolidationQuery({
-      entries: ENTRIES,
-      previousSynopsis: "架空の前のあらすじ",
-    })
+  it("渡したモデルで、行番号つきの行・日付の見出し・前のあらすじを文面に載せる", () => {
+    const query = chatConsolidationQuery(
+      {
+        entries: ENTRIES,
+        previousSynopsis: "架空の前のあらすじ",
+      },
+      "sonnet",
+    )
 
-    expect(query.model).toBe("haiku")
+    expect(query.model).toBe("sonnet")
     for (const fragment of [
       "### 2026-09-20",
       "1. 利用者: 架空の発言1",
@@ -81,20 +84,23 @@ describe("chatConsolidationQuery", () => {
 
   it("仕事の行には印とプロジェクトの名前を添え、結論の行は「したこと」として渡す", () => {
     const origin = { mode: "work", project: "架空プロジェクト" } as const
-    const query = chatConsolidationQuery({
-      entries: [
-        { at: "2026-09-22T10:00:00+09:00", kind: "request", origin, text: "架空の依頼" },
-        { at: "2026-09-22T10:05:00+09:00", kind: "conclusion", origin, text: "架空の結論" },
-      ],
-      previousSynopsis: "",
-    })
+    const query = chatConsolidationQuery(
+      {
+        entries: [
+          { at: "2026-09-22T10:00:00+09:00", kind: "request", origin, text: "架空の依頼" },
+          { at: "2026-09-22T10:05:00+09:00", kind: "conclusion", origin, text: "架空の結論" },
+        ],
+        previousSynopsis: "",
+      },
+      "haiku",
+    )
 
     expect(query.prompt).toContain("1. [仕事: 架空プロジェクト] 利用者: 架空の依頼")
     expect(query.prompt).toContain("2. [仕事: 架空プロジェクト] したこと: 架空の結論")
   })
 
   it("指示文は「雑談の会話」と言わず、印の読み方を添える", () => {
-    const query = chatConsolidationQuery({ entries: ENTRIES, previousSynopsis: "" })
+    const query = chatConsolidationQuery({ entries: ENTRIES, previousSynopsis: "" }, "haiku")
 
     expect(query.systemPrompt).not.toContain("雑談の会話")
     expect(query.systemPrompt).toContain("したこと:")
@@ -102,13 +108,13 @@ describe("chatConsolidationQuery", () => {
   })
 
   it("前のあらすじが空文字なら「（なし）」を載せる", () => {
-    const query = chatConsolidationQuery({ entries: ENTRIES, previousSynopsis: "" })
+    const query = chatConsolidationQuery({ entries: ENTRIES, previousSynopsis: "" }, "haiku")
 
     expect(query.prompt).toContain("## 前のあらすじ\n\n（なし）")
   })
 
   it("出力の形は json_schema で、synopsis / topics だけを持つ", () => {
-    const query = chatConsolidationQuery({ entries: ENTRIES, previousSynopsis: "" })
+    const query = chatConsolidationQuery({ entries: ENTRIES, previousSynopsis: "" }, "haiku")
 
     expect(query.schema).toMatchObject({
       type: "object",

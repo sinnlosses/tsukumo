@@ -72,7 +72,7 @@ async function writeReactions(
 ): Promise<void> {
   const outcome = await runRetriedQuery(
     ports,
-    writtenReactionsQuery(material),
+    writtenReactionsQuery(material, ports.readModel()),
     (answer) => parseWrittenReactions(answer, material.expressions),
     new AbortController().signal,
     timeoutMs,

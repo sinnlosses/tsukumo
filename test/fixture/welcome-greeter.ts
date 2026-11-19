@@ -57,6 +57,7 @@ export function welcomeGreeterHarness(recent: readonly WelcomeGreetingText[] = [
   }[] = []
   let clock = WELCOME_START_AT
   const ports: WelcomeGreeterPorts = {
+    readModel: () => "sonnet",
     readRecent: () => recent,
     writeRecent: (entries) => {
       written.push(entries)
