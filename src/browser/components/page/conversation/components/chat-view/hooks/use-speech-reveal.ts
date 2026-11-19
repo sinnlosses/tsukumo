@@ -96,8 +96,10 @@ export function useRevealedChatLog(
     }
   }, [stale, openAt, entries.length, generation])
 
-  // 時刻を読み直すあいだは、出すかどうかが決まっていないので「...」を出さない。
-  return { entries: shown, pending: !stale && advanced.count < entries.length }
+  // 時刻を読み直すあいだも、まだ出していないセリフがあれば「...」を出し続ける。
+  // 1拍だけ消すと、末尾の高さが「... → なし → ...」と往復してログが揺れる。
+  const pending = entries.slice(advanced.count).some((entry) => entry.speaker === "character")
+  return { entries: shown, pending }
 }
 
 /** {@link advanceReveal} の結果。`gated` は次のセリフが `openAt`（エポックミリ秒）まで足止めされている。 */

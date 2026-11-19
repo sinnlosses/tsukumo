@@ -90,6 +90,23 @@ describe("useRevealedChatLog の足止め", () => {
     expect(result.current.pending).toBe(false)
   })
 
+  it("セリフが届いて時刻を読み直すあいだも、控えがあると知らせ続ける", () => {
+    const { result, rerender } = renderHook(
+      ({ entries }: { readonly entries: readonly ChatLogEntry[] }) =>
+        useRevealedChatLog(entries, 0),
+      { initialProps: { entries: speeches(0) } },
+    )
+
+    // 読み直しのタイマーが鳴る前の1拍。
+    rerender({ entries: speeches(1) })
+    expect(result.current.entries).toHaveLength(0)
+    expect(result.current.pending).toBe(true)
+
+    flushClockRead()
+    expect(result.current.entries).toHaveLength(1)
+    expect(result.current.pending).toBe(false)
+  })
+
   it("足止めのあいだはタイマーが1つで、空く時刻に1回だけ描き直す", () => {
     const { renders, rerender } = openWithFirstSpeech()
     rerender(speeches(2))

@@ -186,18 +186,21 @@
   flex-direction: row-reverse;
   justify-content: flex-start;
 }
-/* 現れるとき短く弾む行。`prefers-reduced-motion` は `styles/theme.css` の全体規則が潰す。 */
+/* 現れるときふわっと浮かぶ行。透明から、少し下・少し小さいところから、立ち絵の側（左下）を基準に定位置へ寄る。
+   動かすのは見た目だけ（`translate`・`scale`・`opacity`）で、行の箱の高さは最初から決まっているのでログの並びを揺らさない。
+   `prefers-reduced-motion` は `styles/theme.css` の全体規則が潰す。 */
 .stream-entry-pop {
+  transform-origin: 0% 100%;
   animation-name: stream-entry-pop;
-  animation-duration: 0.2s;
-  animation-timing-function: ease-out;
+  animation-duration: 0.45s;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  animation-fill-mode: both;
 }
 @keyframes stream-entry-pop {
-  0% {
-    transform: scale(0.92);
-  }
-  100% {
-    transform: scale(1);
+  from {
+    opacity: 0;
+    translate: 0 8px;
+    scale: 0.97;
   }
 }
 /* 行ごとの時刻（`HH:MM`）。地は `ground` 一色を1枚（背景の絵の上に字が直に乗らないように）。 */
