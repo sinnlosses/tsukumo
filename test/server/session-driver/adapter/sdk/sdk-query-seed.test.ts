@@ -23,6 +23,7 @@ const BASE_OPTIONS: SessionDriverOptions = {
   mode: WORK_MODE,
   disallowedTools: ["NotebookEdit", "Artifact"],
   turnStepLimit: 200,
+  progressNudgeSilence: "5m",
   inheritedEnv: { PATH: "/usr/bin", HOME: "/tmp/tsukumo-home" },
   claudeConfigDir: undefined,
   mountWorkflowPlugin: true,

@@ -21,6 +21,7 @@ import { replyTargetSchema } from "../session/reply-target.ts"
 import { EFFORT_LEVELS, MODEL_ALIASES, PERMISSION_MODES } from "../session/run-setting-value.ts"
 import { FIGURE_PREFERENCES, SESSION_DEFAULT_PERMISSION_MODES } from "../session/session-default.ts"
 import { sessionIdSchema } from "../session/session-id.ts"
+import { PROGRESS_NUDGE_SILENCES, WAITING_LINE_DELAYS } from "../session/speaking-pace.ts"
 
 /**
  * 送った言葉をどう扱うか。
@@ -172,6 +173,16 @@ export const sessionContract = {
       welcomeGreeting: z.enum(MODEL_ALIASES),
       chatConsolidation: z.enum(MODEL_ALIASES),
       characterGeneration: z.enum(MODEL_ALIASES),
+    }),
+  ),
+  /**
+   * 話しかける間合い（待ちの一言の間・進み具合の催促の黙りの間）を覚える（歯車）。
+   * 効くのは次に起こすセッションから。いま動いているセッションの時刻は変えない。
+   */
+  setSpeakingPace: commandBase.input(
+    z.object({
+      waitingLine: z.enum(WAITING_LINE_DELAYS),
+      progressNudge: z.enum(PROGRESS_NUDGE_SILENCES),
     }),
   ),
 }

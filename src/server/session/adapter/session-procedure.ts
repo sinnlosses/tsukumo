@@ -86,5 +86,11 @@ export function sessionProcedure(ports: SessionCommandPorts) {
         errors,
       ),
     ),
+    setSpeakingPace: procedure.setSpeakingPace.handler(({ input, context, errors }) =>
+      refusedUnlessAccepted(
+        receiveSessionCommand(table.setSpeakingPace, input, context.session),
+        errors,
+      ),
+    ),
   })
 }

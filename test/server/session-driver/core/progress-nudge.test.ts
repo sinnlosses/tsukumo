@@ -124,14 +124,14 @@ describe("フェーズの切れ目の差し込み", () => {
       [NONE],
     ],
   ])("%s", (_name, scene, takes, expected) => {
-    const watch = createProgressNudge()
+    const watch = createProgressNudge("5m")
     scene.forEach(([event, at]) => watch.observe(event, at))
 
     expect(takes.map((at) => watch.take(at))).toEqual(expected)
   })
 
   it("ターンの終わりまで預け、終わったら取り出す", () => {
-    const watch = createProgressNudge()
+    const watch = createProgressNudge("5m")
     DELEGATING.forEach(([event, at]) => watch.observe(event, at))
     watch.observe({ kind: "turn-resumed" }, PHASE_AT - 5)
     watch.observe(done(1), PHASE_AT)
@@ -208,7 +208,7 @@ describe("ProgressNudge", () => {
       [NONE],
     ],
   ])("%s", (_name, scene, takes, expected) => {
-    const watch = createProgressNudge()
+    const watch = createProgressNudge("5m")
     scene.forEach(([event, at]) => watch.observe(event, at))
 
     expect(takes.map((at) => watch.take(at))).toEqual(expected)
@@ -243,7 +243,7 @@ describe("ProgressNudge", () => {
         [NONE],
       ],
     ])("%s", (_name, scene, takes, expected) => {
-      const watch = createProgressNudge()
+      const watch = createProgressNudge("5m")
       scene.forEach(([event, at]) => watch.observe(event, at))
 
       expect(takes.map((at) => watch.take(at))).toEqual(expected)
@@ -258,7 +258,7 @@ describe("ProgressNudge", () => {
   })
 
   it("差し込んだあとは、次の要約から差し込んだ時刻を起点に次の5分を測る", () => {
-    const watch = createProgressNudge()
+    const watch = createProgressNudge("5m")
     DELEGATING.forEach(([event, at]) => watch.observe(event, at))
     watch.observe(progress("架空の進み1"), 2_000)
     watch.take(DUE_AT)
@@ -269,6 +269,27 @@ describe("ProgressNudge", () => {
     expect(watch.due()).toEqual({ kind: "at", at: DUE_AT + PROGRESS_NUDGE_SILENCE_MS })
     expect(watch.take(DUE_AT + PROGRESS_NUDGE_SILENCE_MS - 1)).toEqual(NONE)
     expect(watch.take(DUE_AT + PROGRESS_NUDGE_SILENCE_MS)).toEqual(nudge("架空の進み2"))
+  })
+
+  it("黙りの間が10分なら、5分の黙りでは差し込まず、10分で要約を返す", () => {
+    const watch = createProgressNudge("10m")
+    DELEGATING.forEach(([event, at]) => watch.observe(event, at))
+    watch.observe(progress("架空の進み"), 2_000)
+
+    expect(watch.take(DUE_AT)).toEqual(NONE)
+    expect(watch.take(SPOKEN_AT + 2 * PROGRESS_NUDGE_SILENCE_MS)).toEqual(nudge("架空の進み"))
+  })
+
+  it("「しない」なら、黙りが何分でも差し込まず、フェーズの切れ目の差し込みは残る", () => {
+    const watch = createProgressNudge("off")
+    DELEGATING.forEach(([event, at]) => watch.observe(event, at))
+    watch.observe(progress("架空の進み"), 2_000)
+
+    expect(watch.due()).toEqual({ kind: "none" })
+    expect(watch.take(SPOKEN_AT + 100 * PROGRESS_NUDGE_SILENCE_MS)).toEqual(NONE)
+
+    watch.observe(done(1), PHASE_AT)
+    expect(watch.take(PHASE_AT)).toEqual(advanced(1))
   })
 
   it.each<readonly [string, readonly (readonly [SessionEvent, number])[], ProgressNudgeTake]>([
@@ -286,7 +307,7 @@ describe("ProgressNudge", () => {
       NONE,
     ],
   ])("ターンの途中は差し込まず預ける: %s", (_name, after, expected) => {
-    const watch = createProgressNudge()
+    const watch = createProgressNudge("5m")
     DELEGATING.forEach(([event, at]) => watch.observe(event, at))
     watch.observe(progress("架空の進み"), 2_000)
     watch.observe({ kind: "turn-resumed" }, DUE_AT - 10)

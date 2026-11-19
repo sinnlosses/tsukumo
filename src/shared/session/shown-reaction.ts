@@ -28,6 +28,7 @@ import { conversationMoment } from "./conversation-moment.ts"
 import type { ReportWaitingLine } from "./session-event-report.ts"
 import type { RecordTime, SessionRecord } from "./session-record.ts"
 import type { SessionState } from "./session-state.ts"
+import { waitingLineDelayMs } from "./speaking-pace.ts"
 
 export type ShownReaction =
   | { readonly kind: "none" }
@@ -58,9 +59,6 @@ type ReactionValues = {
   readonly now: number
   readonly resetTimeText?: ResetTimeText
 }
-
-/** ターンが閉じて依頼を待つ間がこのミリ秒続いたら、待ちの一言を出す。 */
-const WAITING_LINE_DELAY_MS = 120_000
 
 const NO_SHOWN_REACTION = { kind: "none" } as const satisfies ShownReaction
 const WRITING_REACTION = { kind: "writing" } as const satisfies ShownReaction
@@ -94,8 +92,8 @@ export function greetingOnShow(state: SessionState): GreetingOnShow {
 }
 
 /**
- * 待ちの一言を出し始める時刻（エポックミリ秒）。ターンが閉じた時刻から {@link WAITING_LINE_DELAY_MS} 後。
- * 依頼を待つ間（局面が渡す）でない・雑談・いちばん新しい依頼が組み直した記録（続きから起こした直後）なら undefined。
+ * 待ちの一言を出し始める時刻（エポックミリ秒）。ターンが閉じた時刻から、このセッションを起こしたときの待ちの一言の間だけ後。
+ * 依頼を待つ間（局面が渡す）でない・雑談・間が「出さない」・いちばん新しい依頼が組み直した記録（続きから起こした直後）なら undefined。
  *
  * 時刻が来た瞬間には何のイベントも来ないので、ブラウザはこの時刻に1回描き直し、サーバはこの時刻に `waiting-line-due` を流す。
  */
@@ -106,7 +104,8 @@ export function waitingLineDueAt(state: SessionState): number | undefined {
   if (!state.records.some(isRequestRecord) || isResumedWithoutRequest(state.records)) {
     return undefined
   }
-  return state.turn.finishedAt + WAITING_LINE_DELAY_MS
+  const delay = waitingLineDelayMs(state.speakingPace.launchedWaitingLine)
+  return delay === undefined ? undefined : state.turn.finishedAt + delay
 }
 
 /**

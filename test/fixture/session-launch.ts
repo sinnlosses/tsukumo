@@ -4,6 +4,7 @@ import type { DiagnosticEntry } from "../../src/shared/diagnostic/diagnostic-rec
 import { BUILTIN_BACKGROUND_MODELS } from "../../src/shared/session/background-model.ts"
 import { BUILTIN_SESSION_DEFAULT } from "../../src/shared/session/session-default.ts"
 import type { RestoredEvent, SessionEvent } from "../../src/shared/session/session-event.ts"
+import { BUILTIN_SPEAKING_PACE } from "../../src/shared/session/speaking-pace.ts"
 import {
   characterChangedEvent,
   characterPackEntry,
@@ -93,6 +94,7 @@ export function createHarness(overrides: Partial<SessionLaunchPorts<Pack>> = {})
       return BUILTIN_SESSION_DEFAULT
     },
     readBackgroundModels: () => BUILTIN_BACKGROUND_MODELS,
+    readSpeakingPace: () => BUILTIN_SPEAKING_PACE,
     itemsEvent: () => ITEMS_EVENT,
     characterEvent: (pack: Pack) =>
       characterChangedEvent(

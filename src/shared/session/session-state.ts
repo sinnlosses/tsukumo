@@ -25,6 +25,7 @@ import type { ModelEffortSupport } from "./session-event-setting.ts"
 import type { SessionInfo } from "./session-info.ts"
 import type { SessionRecord } from "./session-record.ts"
 import { NO_SETTING_MARK, type SettingMarks } from "./setting-mark.ts"
+import { INITIAL_SPEAKING_PACE_STATE, type SpeakingPaceState } from "./speaking-pace.ts"
 import {
   CLOSED_SDK_TURN,
   INITIAL_SPEECH_EXPRESSION,
@@ -205,6 +206,8 @@ export type SessionState = {
   readonly sessionDefault: SessionDefault
   /** 裏方の問い合わせ4つのモデル。源は `background-models-changed` だけ（届くまでは同梱の既定）。 */
   readonly backgroundModels: BackgroundModels
+  /** 話しかける間合い。源は `speaking-pace-changed` だけ。 */
+  readonly speakingPace: SpeakingPaceState
   /**
    * 契約プラン。トークン消費の画面の題の右の札に出す。源は `plan` だけ。
    * まだ届いていない・取れなかったのどちらも同じ undefined（画面は区別しないので、型でも分けない）。
@@ -307,6 +310,7 @@ export const INITIAL_SESSION_STATE: SessionState = {
   rememberedLines: [],
   sessionDefault: BUILTIN_SESSION_DEFAULT,
   backgroundModels: BUILTIN_BACKGROUND_MODELS,
+  speakingPace: INITIAL_SPEAKING_PACE_STATE,
   plan: undefined,
   backgroundTasks: [],
   workflowSteps: [],
@@ -317,9 +321,4 @@ export const INITIAL_SESSION_STATE: SessionState = {
   diaryWriting: { kind: "idle" },
   apiTrouble: { kind: "none" },
   rateLimit: { kind: "clear" },
-}
-
-/** 駆動を起こし直すコマンドを断るべきか。ターンが進行中か、委譲先（`backgroundTasks`）が動いている間は断る。 */
-export function restartRefused(state: SessionState): boolean {
-  return state.turn.kind === "running" || state.backgroundTasks.length > 0
 }

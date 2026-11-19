@@ -1,4 +1,5 @@
 import type { SessionEvent } from "../../../../shared/session/session-event.ts"
+import type { ProgressNudgeSilence } from "../../../../shared/session/speaking-pace.ts"
 import { createProgressNudge, type ProgressNudgeSend } from "../../core/progress-nudge.ts"
 
 /**
@@ -7,9 +8,10 @@ import { createProgressNudge, type ProgressNudgeSend } from "../../core/progress
  */
 export function watchProgressNudge(
   now: () => number,
+  silence: ProgressNudgeSilence,
   send: (taken: ProgressNudgeSend) => void,
 ): { readonly observe: (event: SessionEvent) => void; readonly close: () => void } {
-  const nudge = createProgressNudge()
+  const nudge = createProgressNudge(silence)
   let armedAt: number | undefined = undefined
   let timer: ReturnType<typeof setTimeout> | undefined = undefined
 

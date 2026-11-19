@@ -19,6 +19,7 @@ import type { FigurePreference } from "../../../shared/session/session-default.t
 import type { SessionDigest } from "../../../shared/session/session-digest.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import type { SessionId } from "../../../shared/session/session-id.ts"
+import type { ProgressNudgeSilence } from "../../../shared/session/speaking-pace.ts"
 import type { ContextUsageReport } from "../../../shared/usage/context-usage.ts"
 import type { PlanUsageReport } from "../../../shared/usage/plan-usage.ts"
 import type { ChatSummary, PersonaMemory } from "../../core/chat-memory.ts"
@@ -80,6 +81,8 @@ export type SessionDriverOptions = {
   readonly disallowedTools: readonly string[]
   /** 仕事の会話で、1 ターンのツール呼び出しがこの回数を超えたら `speak` で知らせさせる（`Config.turnStepLimit`）。 */
   readonly turnStepLimit: number
+  /** 委譲中に吹き出しが黙り続けて進み具合の催促を差し込むまでの間（起こすときに読んだ `SpeakingPace.progressNudge`）。 */
+  readonly progressNudgeSilence: ProgressNudgeSilence
   /**
    * 子プロセス（claude）へ引き継ぐ環境変数（`Config.inheritedEnv`）。駆動はこれに
    * Claude Code の催促を止める変数を足して渡す（`childProcessEnv`）。

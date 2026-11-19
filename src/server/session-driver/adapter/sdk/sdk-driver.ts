@@ -102,7 +102,7 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
   const ending = createSessionEnding(given.onEvent, (error) => {
     failedWithError("event-handler", error)
   })
-  const progressNudge = watchProgressNudge(given.now, (taken) => {
+  const progressNudge = watchProgressNudge(given.now, given.progressNudgeSilence, (taken) => {
     sendProgressNudge(progressNudgeSendText(taken, bandPositionText(callReview.latestPlan())))
   })
   const stepWatch = createStepWatch(given.turnStepLimit)

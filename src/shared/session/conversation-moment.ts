@@ -1,7 +1,12 @@
 // 仕事のセッションの会話の画面がいまどの局面にあるか（`ConversationMoment`）。セッションの状態から導くだけで、別の状態は持たない。
 
 import { mainViewEntries } from "./main-view-entry.ts"
-import { restartRefused, type SessionState } from "./session-state.ts"
+import type { SessionState } from "./session-state.ts"
+
+/** 駆動を起こし直すコマンドを断るべきか。ターンが進行中か、委譲先（`backgroundTasks`）が動いている間は断る。 */
+export function restartRefused(state: SessionState): boolean {
+  return state.turn.kind === "running" || state.backgroundTasks.length > 0
+}
 
 /**
  * 局面。中身は始め方の一覧（`greet`）・働くあいだのカード（`work` / `ask`）・レポート（`deliver` / `stumble`）の3つ。

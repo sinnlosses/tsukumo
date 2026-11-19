@@ -5,6 +5,7 @@ import { createRef } from "react"
 
 import { BUILTIN_BACKGROUND_MODELS } from "../../../../shared/session/background-model.ts"
 import { parseSessionId } from "../../../../shared/session/session-id.ts"
+import { BUILTIN_SPEAKING_PACE } from "../../../../shared/session/speaking-pace.ts"
 import type {
   ScreenNavGate,
   ScreenNavParts,
@@ -109,6 +110,11 @@ const PARTS: ScreenNavParts = {
       onChangeFigurePreference: noop,
     },
     backgroundModels: { values: BUILTIN_BACKGROUND_MODELS, onChange: noop },
+    speakingPace: {
+      values: BUILTIN_SPEAKING_PACE,
+      onChangeWaitingLine: noop,
+      onChangeProgressNudge: noop,
+    },
     revealSpeed: { value: "standard", onChange: noop },
     motion: { value: "system", onChange: noop },
     launchSkill: { value: "", onChange: noop },

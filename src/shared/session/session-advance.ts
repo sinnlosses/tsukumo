@@ -359,6 +359,13 @@ const SESSION_EVENT_FOLDS = {
     ...state,
     backgroundModels: event.backgroundModels,
   }),
+  "speaking-pace-changed": (state, event) => ({
+    ...state,
+    speakingPace:
+      event.scope === "launch"
+        ? { remembered: event.speakingPace, launchedWaitingLine: event.speakingPace.waitingLine }
+        : { ...state.speakingPace, remembered: event.speakingPace },
+  }),
   "compact-boundary": (state) => ({
     ...state,
     records: [...state.records, { kind: "compact-boundary" }],

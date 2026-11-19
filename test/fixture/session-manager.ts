@@ -102,6 +102,11 @@ function defaultSessionManagerOptions() {
       kind: "background-models-changed",
       backgroundModels,
     }),
+    rememberSpeakingPace: (speakingPace) => ({
+      kind: "speaking-pace-changed",
+      speakingPace,
+      scope: "remembered",
+    }),
     editCharacter: () => Promise.resolve(undefined),
     createCharacter: () => Promise.resolve(undefined),
     deleteCharacter: () => Promise.resolve(undefined),
@@ -129,6 +134,7 @@ export function createSessionManager(
   const {
     rememberSessionDefault,
     rememberBackgroundModels,
+    rememberSpeakingPace,
     readAchievementDay,
     diary,
     editCharacter,
@@ -147,6 +153,7 @@ export function createSessionManager(
         promptImageShelf: rest.promptImageShelf,
         rememberSessionDefault,
         rememberBackgroundModels,
+        rememberSpeakingPace,
         readAchievementDay,
         diary,
         reserveSession: () => Promise.resolve("reserved"),

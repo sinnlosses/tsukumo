@@ -66,6 +66,34 @@ const BACKGROUND_MODEL_LABELS = [
   ["characterGeneration", "キャラクターの生成"],
 ] as const satisfies readonly (readonly [BackgroundModelRole, string])[]
 
+const WAITING_LINE_OPTIONS = (
+  [
+    ["1m", "1分"],
+    ["2m", "2分"],
+    ["5m", "5分"],
+    ["off", "出さない"],
+  ] as const satisfies readonly (readonly [string, string])[]
+).map(([value, label]): RunSettingSelectOption => ({
+  value,
+  disabled: false,
+  icon: undefined,
+  row: <RunSettingName danger={false}>{label}</RunSettingName>,
+}))
+
+const PROGRESS_NUDGE_OPTIONS = (
+  [
+    ["3m", "3分"],
+    ["5m", "5分"],
+    ["10m", "10分"],
+    ["off", "しない"],
+  ] as const satisfies readonly (readonly [string, string])[]
+).map(([value, label]): RunSettingSelectOption => ({
+  value,
+  disabled: false,
+  icon: undefined,
+  row: <RunSettingName danger={false}>{label}</RunSettingName>,
+}))
+
 /** セッションの既定の面（見出しなし）。下に裏方のモデルの群を並べる。 */
 export function ScreenNavSettingsSessionDefaultFace(props: ScreenNavSettingsProps): ReactElement {
   const { settings } = props
@@ -279,6 +307,65 @@ export function ScreenNavSettingsRevealFace(props: ScreenNavSettingsProps): Reac
           title={undefined}
           dot="none"
           onChange={settings.motion.onChange}
+        />
+      </HStack>
+      <Text
+        element="p"
+        size="label"
+        tone="ink-quiet"
+        weight="inherit"
+        className={styles["screen-nav-settings-heading"]}
+      >
+        話しかける間合い
+      </Text>
+      <HStack
+        element="div"
+        name={{ kind: "none" }}
+        gap="lg"
+        align="center"
+        justify="between"
+        wrap="nowrap"
+        className={styles["screen-nav-settings-row"]}
+      >
+        <label htmlFor={`${fieldId}-waiting-line`}>待ちの一言</label>
+        <RunSettingSelect
+          id={`${fieldId}-waiting-line`}
+          ariaLabel="話しかける間合い（待ちの一言）"
+          heading="待ちの一言"
+          value={settings.speakingPace.values.waitingLine}
+          options={WAITING_LINE_OPTIONS}
+          disabled={false}
+          danger={false}
+          layout="list"
+          mouth="field"
+          title={undefined}
+          dot="none"
+          onChange={settings.speakingPace.onChangeWaitingLine}
+        />
+      </HStack>
+      <HStack
+        element="div"
+        name={{ kind: "none" }}
+        gap="lg"
+        align="center"
+        justify="between"
+        wrap="nowrap"
+        className={styles["screen-nav-settings-row"]}
+      >
+        <label htmlFor={`${fieldId}-progress-nudge`}>進み具合の催促</label>
+        <RunSettingSelect
+          id={`${fieldId}-progress-nudge`}
+          ariaLabel="話しかける間合い（進み具合の催促）"
+          heading="進み具合の催促"
+          value={settings.speakingPace.values.progressNudge}
+          options={PROGRESS_NUDGE_OPTIONS}
+          disabled={false}
+          danger={false}
+          layout="list"
+          mouth="field"
+          title={undefined}
+          dot="none"
+          onChange={settings.speakingPace.onChangeProgressNudge}
         />
       </HStack>
     </>

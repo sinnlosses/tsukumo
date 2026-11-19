@@ -195,4 +195,30 @@ describe("applySessionEvent", () => {
     expect(after.session).toEqual(identified.session)
     expect(after.model).toBe("haiku")
   })
+
+  it("speaking-pace-changed は、覚え直し（remembered）では起こしたときの待ちの一言の間を変えない", () => {
+    const launched = applySessionEvent(
+      INITIAL_SESSION_STATE,
+      {
+        kind: "speaking-pace-changed",
+        speakingPace: { waitingLine: "1m", progressNudge: "3m" },
+        scope: "launch",
+      },
+      0,
+    )
+    const after = applySessionEvent(
+      launched,
+      {
+        kind: "speaking-pace-changed",
+        speakingPace: { waitingLine: "5m", progressNudge: "10m" },
+        scope: "remembered",
+      },
+      0,
+    )
+
+    expect(after.speakingPace).toEqual({
+      remembered: { waitingLine: "5m", progressNudge: "10m" },
+      launchedWaitingLine: "1m",
+    })
+  })
 })

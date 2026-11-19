@@ -35,8 +35,10 @@ import { sessionTag } from "../server/session-driver/core/session/session-mark.t
 import {
   readRememberedBackgroundModels,
   readRememberedSessionDefault,
+  readRememberedSpeakingPace,
   writeRememberedBackgroundModels,
   writeRememberedSessionDefault,
+  writeRememberedSpeakingPace,
 } from "../server/session/adapter/remembered-default.ts"
 import type { SessionCommandPorts } from "../server/session/core/session-command.ts"
 import {
@@ -56,6 +58,7 @@ import type { BackgroundModels } from "../shared/session/background-model.ts"
 import type { SessionDefault } from "../shared/session/session-default.ts"
 import type { RestoredEvent, SessionEvent } from "../shared/session/session-event.ts"
 import type { SessionId } from "../shared/session/session-id.ts"
+import type { SpeakingPace } from "../shared/session/speaking-pace.ts"
 import type { CurrentCharacter } from "./current-character.ts"
 import { failureDiagnostic } from "./failure-diagnostic.ts"
 import type { SessionPlugins } from "./startup-prerequisite.ts"
@@ -96,6 +99,7 @@ export function wireSessionLaunch(options: {
     SessionCommandPorts,
     | "rememberSessionDefault"
     | "rememberBackgroundModels"
+    | "rememberSpeakingPace"
     | "reserveSession"
     | "withdrawSessionClaim"
   >
@@ -121,6 +125,7 @@ export function wireSessionLaunch(options: {
         // 覚えた既定は起こすたびに読む（歯車で書き換えたあと、起こし直しで効く）。
         readSessionDefault: () => readRememberedSessionDefault(),
         readBackgroundModels: () => readRememberedBackgroundModels(),
+        readSpeakingPace: () => readRememberedSpeakingPace(),
         characterEvent: () => character.event(),
         itemsEvent: options.itemsEvent,
         readChatTopics: (pack) => readChatTopics(chatMemoryOf(pack, context).chatSummary),
@@ -178,6 +183,7 @@ export function wireSessionLaunch(options: {
       // 歯車から届いた既定は、覚えてから画面へ流し直すだけ（いまのセッションには効かない）。
       rememberSessionDefault: (sessionDefault) => rememberSessionDefault(sessionDefault),
       rememberBackgroundModels: (backgroundModels) => rememberBackgroundModels(backgroundModels),
+      rememberSpeakingPace: (speakingPace) => rememberSpeakingPace(speakingPace),
       reserveSession: (sessionId) => sessionClaim.reserve(sessionId),
       withdrawSessionClaim: () => sessionClaim.withdraw(),
     },
@@ -285,6 +291,7 @@ function startRealDriver(
     mode,
     disallowedTools: options.disallowedTools,
     turnStepLimit: options.turnStepLimit,
+    progressNudgeSilence: seed.speakingPace.progressNudge,
     inheritedEnv,
     claudeConfigDir: options.claudeConfigDir,
     mountWorkflowPlugin: options.mountWorkflowPlugin,
@@ -329,6 +336,12 @@ function rememberSessionDefault(sessionDefault: SessionDefault): SessionEvent {
 function rememberBackgroundModels(backgroundModels: BackgroundModels): SessionEvent {
   writeRememberedBackgroundModels(backgroundModels)
   return { kind: "background-models-changed", backgroundModels }
+}
+
+/** 歯車から届いた「話しかける間合い」を覚え、画面へ流すイベントを返す。動いているセッションの待ちの一言の間は変わらない。 */
+function rememberSpeakingPace(speakingPace: SpeakingPace): SessionEvent {
+  writeRememberedSpeakingPace(speakingPace)
+  return { kind: "speaking-pace-changed", speakingPace, scope: "remembered" }
 }
 
 /**

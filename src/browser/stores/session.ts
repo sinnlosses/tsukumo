@@ -9,13 +9,10 @@ import { create } from "zustand"
 import { type CommandRefusalReason, isCommandRefusalReason } from "../../shared/command.ts"
 import { PROTOCOL_VERSION, type ServerFrame } from "../../shared/frame.ts"
 import type { CommandClient } from "../../shared/rpc.ts"
+import { restartRefused } from "../../shared/session/conversation-moment.ts"
 import type { StampedEvent } from "../../shared/session/session-event.ts"
 import { applySessionEvent } from "../../shared/session/session-fold.ts"
-import {
-  INITIAL_SESSION_STATE,
-  restartRefused,
-  type SessionState,
-} from "../../shared/session/session-state.ts"
+import { INITIAL_SESSION_STATE, type SessionState } from "../../shared/session/session-state.ts"
 import { SESSION_SOCKET_PATH } from "../../shared/view-server/session-socket.ts"
 import { invalidateAchievement } from "../domain/achievement-cache.ts"
 import { applyRefresh } from "../domain/refresh.ts"

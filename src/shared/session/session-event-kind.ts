@@ -68,6 +68,7 @@ const SESSION_EVENT_KINDS = {
   "items-changed": true,
   "session-default-changed": true,
   "background-models-changed": true,
+  "speaking-pace-changed": true,
   "compact-boundary": true,
   "background-tasks-changed": true,
   "usage-review-started": true,

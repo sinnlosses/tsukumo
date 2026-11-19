@@ -46,6 +46,7 @@ describe("createSessionLaunch", () => {
       "chat-mode-changed",
       "session-default-changed",
       "background-models-changed",
+      "speaking-pace-changed",
       "sessions-changed",
     ])
     expect(harness.driverEvents).toContainEqual({
@@ -100,6 +101,7 @@ describe("createSessionLaunch", () => {
       "chat-mode-changed",
       "session-default-changed",
       "background-models-changed",
+      "speaking-pace-changed",
       "sessions-changed",
     ])
     expect(harness.stub.calls).toEqual(["prompt:request:架空の依頼"])
@@ -453,6 +455,7 @@ describe("createSessionLaunch", () => {
       "chat-mode-changed",
       "session-default-changed",
       "background-models-changed",
+      "speaking-pace-changed",
       "sessions-changed",
     ])
     // restoreEvents が組み直した履歴は onRestoredEvents 側だけに、1回で乗る。
@@ -466,6 +469,7 @@ describe("createSessionLaunch", () => {
       "chat-mode-changed",
       "session-default-changed",
       "background-models-changed",
+      "speaking-pace-changed",
       "sessions-changed",
       "utterance",
       "utterance",

@@ -92,6 +92,7 @@ async function start(openFileResult = true): Promise<Started> {
         promptImageShelf: createPromptImageShelf(() => crypto.randomUUID()),
         rememberSessionDefault: unexpected,
         rememberBackgroundModels: unexpected,
+        rememberSpeakingPace: unexpected,
         readAchievementDay: unexpected,
         diary: { kind: "dont-write" },
         reserveSession: unexpected,

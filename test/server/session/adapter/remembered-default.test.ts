@@ -7,12 +7,15 @@ import {
   readRememberedBackgroundModels,
   readRememberedCharacter,
   readRememberedSessionDefault,
+  readRememberedSpeakingPace,
   writeRememberedBackgroundModels,
   writeRememberedCharacter,
   writeRememberedSessionDefault,
+  writeRememberedSpeakingPace,
 } from "../../../../src/server/session/adapter/remembered-default.ts"
 import { BUILTIN_BACKGROUND_MODELS } from "../../../../src/shared/session/background-model.ts"
 import { BUILTIN_SESSION_DEFAULT } from "../../../../src/shared/session/session-default.ts"
+import { BUILTIN_SPEAKING_PACE } from "../../../../src/shared/session/speaking-pace.ts"
 import { useTempDir } from "../../../fixture/temp-dir.ts"
 
 const dir = useTempDir("remembered-default")
@@ -275,5 +278,69 @@ describe("writeRememberedBackgroundModels", () => {
     writeRememberedCharacter("kagami", statePath())
 
     expect(readRememberedBackgroundModels(statePath()).characterGeneration).toBe("sonnet")
+  })
+})
+
+describe("readRememberedSpeakingPace", () => {
+  it("ファイルが無いときは2分・5分", () => {
+    expect(readRememberedSpeakingPace(statePath())).toEqual(BUILTIN_SPEAKING_PACE)
+  })
+
+  it("欄が無いときは2分・5分", () => {
+    writeFileSync(statePath(), JSON.stringify({ character: "tsukumo" }))
+    expect(readRememberedSpeakingPace(statePath())).toEqual({
+      waitingLine: "2m",
+      progressNudge: "5m",
+    })
+  })
+
+  it("片方が知らない値ならその欄だけ既定に落ち、もう片方は読める", () => {
+    writeFileSync(
+      statePath(),
+      JSON.stringify({ speakingPace: { waitingLine: "9m", progressNudge: "off" } }),
+    )
+    expect(readRememberedSpeakingPace(statePath())).toEqual({
+      waitingLine: "2m",
+      progressNudge: "off",
+    })
+  })
+
+  it("欄が壊れていても、キャラクター・新しいセッションの既定・裏方のモデルは読める", () => {
+    writeFileSync(
+      statePath(),
+      JSON.stringify({
+        character: "kagami",
+        sessionDefault: {
+          model: "sonnet",
+          effort: "high",
+          permissionMode: "plan",
+          figurePreference: "text",
+        },
+        backgroundModels: { recommendation: "opus" },
+        speakingPace: "壊れた",
+      }),
+    )
+    expect(readRememberedSpeakingPace(statePath())).toEqual(BUILTIN_SPEAKING_PACE)
+    expect(readRememberedCharacter(statePath())).toBe("kagami")
+    expect(readRememberedSessionDefault(statePath()).model).toBe("sonnet")
+    expect(readRememberedBackgroundModels(statePath()).recommendation).toBe("opus")
+  })
+})
+
+describe("writeRememberedSpeakingPace", () => {
+  it("書いた値を読め、ほかの欄は消えない", () => {
+    writeRememberedCharacter("tsukumo", statePath())
+    writeRememberedBackgroundModels(
+      { ...BUILTIN_BACKGROUND_MODELS, chatConsolidation: "sonnet" },
+      statePath(),
+    )
+    writeRememberedSpeakingPace({ waitingLine: "off", progressNudge: "10m" }, statePath())
+
+    expect(readRememberedSpeakingPace(statePath())).toEqual({
+      waitingLine: "off",
+      progressNudge: "10m",
+    })
+    expect(readRememberedCharacter(statePath())).toBe("tsukumo")
+    expect(readRememberedBackgroundModels(statePath()).chatConsolidation).toBe("sonnet")
   })
 })

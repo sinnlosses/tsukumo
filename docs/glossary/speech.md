@@ -82,7 +82,7 @@
 ### 待ちの一言
 
 - **英語識別子**: `waitingLine`（`report` の引数と、イベント・記録の欄。値は `ReportWaitingLine`）・
-  `WAITING_LINE_DELAY_MS`（ターンが閉じてから出すまでの間）。導く関数は `src/shared/session/shown-reaction.ts` の
+  `waitingLineDelayMs`（ターンが閉じてから出すまでの間。選べる値は `話しかける間合い`）。導く関数は `src/shared/session/shown-reaction.ts` の
   `shownReaction` と `waitingLineDueAt`
 - **定義**: 依頼を待つ間に吹き出しへ出す一言。Claude Code がターンの終わりに `report` の引数で前もって書く
   （`closing` と同じ文と表情の組）

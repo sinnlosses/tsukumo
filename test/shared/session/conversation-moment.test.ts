@@ -4,10 +4,10 @@ import {
   type ConversationMoment,
   conversationMoment,
   isExchangeClosed,
+  restartRefused,
 } from "../../../src/shared/session/conversation-moment.ts"
 import {
   INITIAL_SESSION_STATE,
-  restartRefused,
   type SessionState,
 } from "../../../src/shared/session/session-state.ts"
 import { detailRecord, requestRecord, speechRecord } from "../../fixture/session-record.ts"

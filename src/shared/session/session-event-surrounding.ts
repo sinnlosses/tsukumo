@@ -10,6 +10,7 @@ import type { BackgroundModels } from "./background-model.ts"
 import type { SessionChoice } from "./session-choice.ts"
 import type { SessionDefault } from "./session-default.ts"
 import type { SessionId } from "./session-id.ts"
+import type { SpeakingPace } from "./speaking-pace.ts"
 
 export type SurroundingEvent =
   /**
@@ -114,6 +115,14 @@ export type SurroundingEvent =
    * 運ぶのは覚えた値（読めなければ役ごとに同梱の既定へ畳んだあとの値）。
    */
   | { readonly kind: "background-models-changed"; readonly backgroundModels: BackgroundModels }
+  /**
+   * 話しかける間合いが分かった。`launch` は駆動を起こしたときに読んだ値、`remembered` は歯車から覚え直した値。
+   */
+  | {
+      readonly kind: "speaking-pace-changed"
+      readonly speakingPace: SpeakingPace
+      readonly scope: "launch" | "remembered"
+    }
   /**
    * claude 自身の圧縮（`/compact`）が起きた（SDK の `system` / `compact_boundary`）。
    * 数値（`compact_metadata` の `pre_tokens` / `post_tokens` / `duration_ms`）は運ばない（画面に出さないものを契約に入れない）。

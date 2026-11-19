@@ -119,6 +119,11 @@ export function createRecordingPorts(
         kind: "background-models-changed",
         backgroundModels,
       }),
+      rememberSpeakingPace: (speakingPace) => ({
+        kind: "speaking-pace-changed",
+        speakingPace,
+        scope: "remembered",
+      }),
       readAchievementDay,
       diary,
       reserveSession: (sessionId) => {

@@ -13,7 +13,7 @@ const PHONE_BUBBLE = '[class*="phone-balloon-bubble"]'
 /** 撮るときの経過（凍らせた瞬間から）。「何秒前」の類いをこの値で揃える。 */
 const ELAPSED_MS = 60_000
 
-/** ターンが閉じてから待ちの一言を出すまでの間（`WAITING_LINE_DELAY_MS`）。 */
+/** ターンが閉じてから待ちの一言を出すまでの間（既定の2分）。 */
 const WAITING_LINE_DELAY_MS = 120_000
 
 /** 依頼を待つ間の撮る経過。ターンが閉じてから待ちの一言を出すまでの間を越える。 */

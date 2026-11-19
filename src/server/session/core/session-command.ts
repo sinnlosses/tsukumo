@@ -22,6 +22,7 @@ import { isWelcomeGreetingRecorded } from "../../../shared/session/session-fold.
 import type { SessionId } from "../../../shared/session/session-id.ts"
 import type { SessionState } from "../../../shared/session/session-state.ts"
 import { greetingOnShow } from "../../../shared/session/shown-reaction.ts"
+import type { SpeakingPace } from "../../../shared/session/speaking-pace.ts"
 import type { DispatchResult } from "../../core/command-receiver.ts"
 import type { DiaryDayTask } from "../../diary/core/diary-tool.ts"
 import type { DiaryWriteRequest, DiaryWriterSource } from "../../diary/core/diary-writer.ts"
@@ -46,6 +47,11 @@ export type SessionCommandPorts = {
    * いま走っている問い合わせには効かない（効くのは次に起こす問い合わせから）。
    */
   readonly rememberBackgroundModels: (backgroundModels: BackgroundModels) => SessionEvent
+  /**
+   * 話しかける間合いを覚え、画面へ流す `speaking-pace-changed`（`remembered`）を返す。
+   * いま動いているセッションの時刻は変えない（効くのは次に起こすセッションから）。
+   */
+  readonly rememberSpeakingPace: (speakingPace: SpeakingPace) => SessionEvent
   /**
    * 成果の日記書きを受けたときに、その日の成果を数え直す口。
    * 画面が出している手続き `achievement.day` と同じ数え方を使う。
@@ -218,6 +224,15 @@ export function sessionCommands(ports: SessionCommandPorts): SessionCommandTable
           characterGeneration: input.characterGeneration,
         }),
       failure: FRAME_ERROR_REASON.backgroundModelsFailed,
+    },
+    setSpeakingPace: {
+      kind: "write",
+      receive: (input) =>
+        ports.rememberSpeakingPace({
+          waitingLine: input.waitingLine,
+          progressNudge: input.progressNudge,
+        }),
+      failure: FRAME_ERROR_REASON.speakingPaceFailed,
     },
   }
 }

@@ -26,6 +26,11 @@ import {
   type SessionDefaultPermissionMode,
 } from "../../../../../shared/session/session-default.ts"
 import type { ModelEffortSupport } from "../../../../../shared/session/session-event-setting.ts"
+import {
+  isProgressNudgeSilence,
+  isWaitingLineDelay,
+  type SpeakingPace,
+} from "../../../../../shared/session/speaking-pace.ts"
 import { resolveEffortSelect, type EffortSelect } from "../../../../domain/effort-label.ts"
 import { useFirstNoteSeen } from "../../../../stores/first-note-seen.ts"
 import { useSession } from "../../../../stores/session.ts"
@@ -73,6 +78,13 @@ type ScreenNavSettingsBackgroundModels = {
   readonly onChange: (role: BackgroundModelRole, value: string) => void
 }
 
+/** 話しかける間合いの操作子。表示はサーバから届いた覚えた値だけに従う。 */
+type ScreenNavSettingsSpeakingPace = {
+  readonly values: SpeakingPace
+  readonly onChangeWaitingLine: (value: string) => void
+  readonly onChangeProgressNudge: (value: string) => void
+}
+
 export type ScreenNavSettings = {
   readonly open: boolean
   readonly onOpen: () => void
@@ -83,6 +95,7 @@ export type ScreenNavSettings = {
   readonly adjust: ScreenNavSettingsAdjust
   readonly sessionDefault: ScreenNavSettingsSessionDefault
   readonly backgroundModels: ScreenNavSettingsBackgroundModels
+  readonly speakingPace: ScreenNavSettingsSpeakingPace
   readonly revealSpeed: ScreenNavSettingsRevealSpeed
   readonly motion: ScreenNavSettingsMotion
   readonly launchSkill: ScreenNavSettingsLaunchSkill
@@ -99,6 +112,7 @@ export function useSettings(): ScreenNavSettings {
   const dispatch = useSession((session) => session.dispatch)
   const sessionDefault = useSession((session) => session.state.sessionDefault)
   const backgroundModels = useSession((session) => session.state.backgroundModels)
+  const speakingPace = useSession((session) => session.state.speakingPace.remembered)
   const modelEffortSupport = useSession((session) => session.state.modelEffortSupport)
   const color = useAppearanceColor()
   const adjust = useAppearanceAdjust()
@@ -139,6 +153,19 @@ export function useSettings(): ScreenNavSettings {
     // 知らない値は送らない（`<select>` の選択肢の外から来たときは何もしない）。
     if (isModelAlias(value)) {
       void dispatch.session.setBackgroundModels({ ...backgroundModels, [role]: value })
+    }
+  }
+
+  /** 2つで1組なので、変えた1つに、もう1つはいまの値を写して送る。知らない値は送らない。 */
+  function onChangeWaitingLine(value: string): void {
+    if (isWaitingLineDelay(value)) {
+      void dispatch.session.setSpeakingPace({ ...speakingPace, waitingLine: value })
+    }
+  }
+
+  function onChangeProgressNudge(value: string): void {
+    if (isProgressNudgeSilence(value)) {
+      void dispatch.session.setSpeakingPace({ ...speakingPace, progressNudge: value })
     }
   }
 
@@ -185,6 +212,7 @@ export function useSettings(): ScreenNavSettings {
       },
     },
     backgroundModels: { values: backgroundModels, onChange: onChangeBackgroundModel },
+    speakingPace: { values: speakingPace, onChangeWaitingLine, onChangeProgressNudge },
     revealSpeed,
     motion: motion.motion,
     launchSkill,

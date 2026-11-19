@@ -12,6 +12,7 @@ import type { SessionChoice } from "../../../shared/session/session-choice.ts"
 import type { SessionDefault } from "../../../shared/session/session-default.ts"
 import type { RestoredEvent, SessionEvent } from "../../../shared/session/session-event.ts"
 import type { SessionId } from "../../../shared/session/session-id.ts"
+import type { SpeakingPace } from "../../../shared/session/speaking-pace.ts"
 import type {
   CharacterSelection,
   NamedCharacterPack,
@@ -35,6 +36,8 @@ export type SessionLaunchSeed<Pack extends NamedCharacterPack> = {
    * 読むのは起こすたびに1回（{@link SessionLaunchPorts.readSessionDefault}）で、同じ値が画面へ流す `session-default-changed` にも渡る（画面に出る既定と、実際に起こした既定がずれない）。
    */
   readonly sessionDefault: SessionDefault
+  /** 起こすときに読んだ話しかける間合い。同じ値が `speaking-pace-changed`（`launch`）にも渡る。 */
+  readonly speakingPace: SpeakingPace
 }
 
 /** 一続きの中で外の世界に頼むこと。 */
@@ -53,6 +56,8 @@ export type SessionLaunchPorts<Pack extends NamedCharacterPack> = {
   readonly readSessionDefault: () => SessionDefault
   /** 覚えた「裏方のモデル」を読む。役ごとに同梱の既定へ畳んだあとの値が返る。 */
   readonly readBackgroundModels: () => BackgroundModels
+  /** 覚えた「話しかける間合い」を読む。欄ごとに同梱の既定へ畳んだあとの値が返る。 */
+  readonly readSpeakingPace: () => SpeakingPace
   /** いま出しているパックを画面へ流す形（立ち絵の URL・選択肢・画面から変えられるか）。 */
   readonly characterEvent: (pack: Pack) => SessionEvent
   /** いまのアイテムの一覧と全パックの席を流す形（`items-changed`）。起こすたびに読み直す。 */
@@ -146,6 +151,9 @@ export function createSessionLaunch<Pack extends NamedCharacterPack>(
     onEvent({ kind: "session-default-changed", sessionDefault })
     // 裏方のモデルも同じ理由で流し直す（歯車が読む値）。
     onEvent({ kind: "background-models-changed", backgroundModels: ports.readBackgroundModels() })
+    // 話しかける間合いも同じ理由で流し直す。読むのはここ1回で、同じ値を駆動にも渡す。
+    const speakingPace = ports.readSpeakingPace()
+    onEvent({ kind: "speaking-pace-changed", speakingPace, scope: "launch" })
 
     const start = sessionStartOf(request.resume)
     // 切り替え先の一覧も、起こすたびに流し直す（画面はこのイベントでしか一覧を知れず、起こし直すと状態が初期値へ戻る）。
@@ -162,7 +170,7 @@ export function createSessionLaunch<Pack extends NamedCharacterPack>(
     const listed = ports.listSessions(pack, chat)
     const restored = Promise.withResolvers<readonly RestoredEvent[]>()
     const driver = ports.startDriver(
-      { pack, start, chat, sessionDefault },
+      { pack, start, chat, sessionDefault, speakingPace },
       onEvent,
       restored.promise,
     )

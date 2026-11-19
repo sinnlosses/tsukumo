@@ -1,6 +1,6 @@
 // 進みの差し込み。委譲中に吹き出しが黙り続けたとき、委譲先の進みの1行（`delegate-progress`）をメインへ差し込む。
 // 背景のサブエージェントがいなくて背景の Bash だけを待っているときは、要約の代わりに待っている件数だけを差し込む。
-// 5分の黙りで差し込むかは3つの状態だけで決め、要約の文面は見ない:
+// 黙りの間（既定5分）で差し込むかは3つの状態だけで決め、要約の文面は見ない:
 // 委譲中か（背景のサブエージェントか Bash が顔ぶれにいる）、最後に描いたセリフからの経過、
 // そのあとに新しい要約が届いたか（背景の Bash だけの待ちでは要らない）。
 // これとは別に、`phase_result` が帯を動かしたとき（`delegate-returned` の `phase-done`・`phase-skipped`）は黙りを待たずに差し込む。
@@ -14,9 +14,10 @@
 
 import type { TaskId } from "../../../shared/session-driver/task-id.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
-
-/** 最後に描いたセリフ（か差し込み・委譲の始まり）から差し込むまでの黙っている時間。 */
-const PROGRESS_NUDGE_SILENCE_MS = 5 * 60 * 1000
+import {
+  progressNudgeSilenceMs,
+  type ProgressNudgeSilence,
+} from "../../../shared/session/speaking-pace.ts"
 
 export type ProgressNudgeDue =
   | { readonly kind: "none" }
@@ -55,8 +56,12 @@ type PhaseAdvanced =
 
 const NO_PHASE_ADVANCED: PhaseAdvanced = { kind: "none" }
 
-/** {@link ProgressNudge} を1つ作る。セッション1つに1つ。 */
-export function createProgressNudge(): ProgressNudge {
+/**
+ * {@link ProgressNudge} を1つ作る。セッション1つに1つ。
+ * `silence` は、最後に描いたセリフ（か差し込み・委譲の始まり）から差し込むまでの黙りの間。「しない」なら黙りでは差し込まない。
+ */
+export function createProgressNudge(silence: ProgressNudgeSilence): ProgressNudge {
+  const silenceMs = progressNudgeSilenceMs(silence)
   let delegates: ReadonlySet<TaskId> = new Set()
   let shells: ReadonlySet<TaskId> = new Set()
   let silentSince = 0
@@ -69,8 +74,10 @@ export function createProgressNudge(): ProgressNudge {
     if (inTurn) {
       return { kind: "none" }
     }
-    const silent = (delegates.size > 0 && latest.kind === "fresh") || waitingOnShellsOnly()
-    const silentAt = silentSince + PROGRESS_NUDGE_SILENCE_MS
+    const silent =
+      silenceMs !== undefined &&
+      ((delegates.size > 0 && latest.kind === "fresh") || waitingOnShellsOnly())
+    const silentAt = silentSince + (silenceMs ?? 0)
     if (phaseAdvanced.kind === "phase-advanced") {
       return {
         kind: "at",

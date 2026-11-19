@@ -15,6 +15,7 @@ export const FRAME_ERROR_REASON = {
   itemEditFailed: "アイテムを変えられなかった",
   sessionDefaultFailed: "新しいセッションの既定を覚えられなかった",
   backgroundModelsFailed: "裏方のモデルを覚えられなかった",
+  speakingPaceFailed: "話しかける間合いを覚えられなかった",
   switchDuringTurn:
     "ターン進行中か委譲中はキャラクターを切り替えられない（中断するか委譲を止めると切り替えられる）",
   sessionSwitchDuringTurn:
