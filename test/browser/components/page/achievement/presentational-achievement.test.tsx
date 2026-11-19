@@ -117,7 +117,7 @@ describe("PresentationalAchievement", () => {
     // 日の切り替えの外枠は `HStack` に置き換わって固有の class を持たないので、中身
     // （`.achievement-day-switch-nav`）で見分ける。
     expect(children[0]?.querySelector(".achievement-day-switch-nav")).not.toBeNull()
-    expect(children[1]?.className).toBe("achievement-calendar")
+    expect(children[1]?.querySelector(".achievement-calendar")).not.toBeNull()
     expect(children[2]?.className).toContain("achievement-diary")
   })
 

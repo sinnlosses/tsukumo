@@ -65,11 +65,11 @@
 .character-create-dialog {
   composes: character-create-dialog from "../../character.module.css";
 }
-.character-create-dialog[open] {
-  overflow: hidden;
+.character-create-dialog-face {
+  composes: character-create-dialog-face from "../../character.module.css";
   display: flex;
   flex-direction: column;
-  gap: var(--space-xl);
+  gap: var(--space-xs);
 }
 .character-create-body {
   flex: 1 1 auto;

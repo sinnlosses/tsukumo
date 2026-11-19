@@ -9,6 +9,7 @@ import { Button } from "../../../../ui/button/button.tsx"
 import { Dialog } from "../../../../ui/dialog/dialog.tsx"
 import { Field } from "../../../../ui/field/field.tsx"
 import { Heading } from "../../../../ui/heading/heading.tsx"
+import { Surface } from "../../../../ui/surface/surface.tsx"
 import { TextField } from "../../../../ui/text-field/text-field.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
 import styles from "../../character.module.css"
@@ -35,7 +36,14 @@ export function ItemAddDialog(props: { readonly dialog: OpenDialog }): ReactElem
       onClose={dialog.onClose}
       className={styles["character-create-dialog"]}
     >
-      <div>
+      <Surface
+        element="div"
+        tone="surface"
+        space="none"
+        radius="xl"
+        shadow="none"
+        className={styles["character-create-dialog-face"]}
+      >
         <Heading
           level={2}
           size="heading"
@@ -101,7 +109,7 @@ export function ItemAddDialog(props: { readonly dialog: OpenDialog }): ReactElem
             </Text>
           </Button>
         </div>
-      </div>
+      </Surface>
     </Dialog>
   )
 }

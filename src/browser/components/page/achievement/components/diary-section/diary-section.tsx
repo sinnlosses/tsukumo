@@ -9,6 +9,7 @@ import { useReportReveal } from "../../../../../domain/reveal/use-report-reveal.
 import { Portrait } from "../../../../frame/portrait.tsx"
 import { Button } from "../../../../ui/button/button.tsx"
 import { Heading } from "../../../../ui/heading/heading.tsx"
+import { Surface } from "../../../../ui/surface/surface.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
 import type { DiaryWriterPortrait } from "../../domain/diary-writer.ts"
 import type {
@@ -199,20 +200,22 @@ function Progress(props: { readonly stage: DiaryStage }): ReactElement {
 function DoneTaskCard(props: { readonly value: string }): ReactElement {
   return (
     <div className={styles["achievement-cards"]}>
-      <section className={styles["achievement-card"]}>
-        <Heading level={3} size="label" tone="ink-quiet" weight="normal" className="">
-          {DONE_TASK_CARD_LABEL}
-        </Heading>
-        <Text
-          element="p"
-          size="heading"
-          tone="ink"
-          weight="inherit"
-          className={styles["achievement-card-value"]}
-        >
-          {props.value}
-        </Text>
-      </section>
+      <Surface element="div" tone="surface" space="none" radius="lg" shadow="none" className="">
+        <section className={styles["achievement-card"]}>
+          <Heading level={3} size="label" tone="ink-quiet" weight="normal" className="">
+            {DONE_TASK_CARD_LABEL}
+          </Heading>
+          <Text
+            element="p"
+            size="heading"
+            tone="ink"
+            weight="inherit"
+            className={styles["achievement-card-value"]}
+          >
+            {props.value}
+          </Text>
+        </section>
+      </Surface>
     </div>
   )
 }

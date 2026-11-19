@@ -6,6 +6,7 @@ import { keys } from "remeda"
 import type { DateKey } from "../../../../../../shared/diary/date-key.ts"
 import { HStack } from "../../../../ui/h-stack/h-stack.tsx"
 import { Heading } from "../../../../ui/heading/heading.tsx"
+import { Surface } from "../../../../ui/surface/surface.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
 import { LAMP_LABEL } from "../../domain/lamp-label.ts"
 import type { AchievementCalendarView, CalendarCell } from "../../hooks/use-achievement-calendar.ts"
@@ -34,50 +35,52 @@ export function LanternCalendar(props: LanternCalendarProps): ReactElement {
   const { calendar } = props
 
   return (
-    <section aria-label="灯りの暦" className={styles["achievement-calendar"]}>
-      <HStack
-        element="div"
-        name={{ kind: "none" }}
-        gap="md"
-        align="center"
-        justify="start"
-        wrap="wrap"
-        className=""
-      >
-        <Heading level={2} size="subheading" tone="ink" weight="bold" className="">
-          灯りの暦
-          <Text
-            element="span"
-            size="secondary"
-            tone="ink-quiet"
-            weight="normal"
-            className={styles["achievement-calendar-note"]}
-          >
-            成果のあった日に狐火がともります · 押すとその日を選びます
+    <Surface element="div" tone="surface" space="none" radius="xl" shadow="none" className="">
+      <section aria-label="灯りの暦" className={styles["achievement-calendar"]}>
+        <HStack
+          element="div"
+          name={{ kind: "none" }}
+          gap="md"
+          align="center"
+          justify="start"
+          wrap="wrap"
+          className=""
+        >
+          <Heading level={2} size="subheading" tone="ink" weight="bold" className="">
+            灯りの暦
+            <Text
+              element="span"
+              size="secondary"
+              tone="ink-quiet"
+              weight="normal"
+              className={styles["achievement-calendar-note"]}
+            >
+              成果のあった日に狐火がともります · 押すとその日を選びます
+            </Text>
+          </Heading>
+          <Legend />
+        </HStack>
+        {calendar.kind === "loading" ? (
+          <Grid
+            cells={PLACEHOLDER_CELLS}
+            rangeLabel={PLACEHOLDER_RANGE_LABEL}
+            viewedDate={undefined}
+            onSelectDate={props.onSelectDate}
+          />
+        ) : calendar.kind === "unknown" ? (
+          <Text element="p" size="body" tone="ink-quiet" weight="inherit" className="">
+            灯りの暦を取れなかった。
           </Text>
-        </Heading>
-        <Legend />
-      </HStack>
-      {calendar.kind === "loading" ? (
-        <Grid
-          cells={PLACEHOLDER_CELLS}
-          rangeLabel={PLACEHOLDER_RANGE_LABEL}
-          viewedDate={undefined}
-          onSelectDate={props.onSelectDate}
-        />
-      ) : calendar.kind === "unknown" ? (
-        <Text element="p" size="body" tone="ink-quiet" weight="inherit" className="">
-          灯りの暦を取れなかった。
-        </Text>
-      ) : (
-        <Grid
-          cells={calendar.cells}
-          rangeLabel={calendar.rangeLabel}
-          viewedDate={props.viewedDate}
-          onSelectDate={props.onSelectDate}
-        />
-      )}
-    </section>
+        ) : (
+          <Grid
+            cells={calendar.cells}
+            rangeLabel={calendar.rangeLabel}
+            viewedDate={props.viewedDate}
+            onSelectDate={props.onSelectDate}
+          />
+        )}
+      </section>
+    </Surface>
   )
 }
 

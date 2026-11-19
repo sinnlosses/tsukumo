@@ -5,6 +5,7 @@ import type { ReactElement } from "react"
 
 import { Button } from "../../../../ui/button/button.tsx"
 import { HStack } from "../../../../ui/h-stack/h-stack.tsx"
+import { Surface } from "../../../../ui/surface/surface.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
 import { Bell } from "../bell/bell.tsx"
 import styles from "./diary-notice.module.css"
@@ -21,46 +22,55 @@ export function DiaryNotice(): ReactElement | undefined {
   }
 
   return (
-    <div role="status" className={styles["diary-notice"]}>
-      <HStack
-        element="span"
-        name={{ kind: "none" }}
-        gap="none"
-        align="stretch"
-        justify="start"
-        wrap="nowrap"
-        className={styles["diary-notice-icon"]}
-      >
-        <Bell size={18} />
-      </HStack>
-      <Text element="span" size="subheading" tone="ink" weight="inherit" className="">
-        {`${view.dateLabel}のページができました`}
-      </Text>
-      <Button
-        variant="solid-accent"
-        size="secondary"
-        pressed="none"
-        disabled={false}
-        disclosure={{ kind: "none" }}
-        className={styles["diary-notice-open"]}
-        onClick={view.onOpen}
-      >
-        <Text element="span" size="inherit" tone="inherit" weight="bold" className="">
-          {OPEN_LABEL}
+    <Surface
+      element="div"
+      tone="surface"
+      space="none"
+      radius="xl"
+      shadow="none"
+      className={styles["diary-notice-frame"]}
+    >
+      <div role="status" className={styles["diary-notice"]}>
+        <HStack
+          element="span"
+          name={{ kind: "none" }}
+          gap="none"
+          align="stretch"
+          justify="start"
+          wrap="nowrap"
+          className={styles["diary-notice-icon"]}
+        >
+          <Bell size={18} />
+        </HStack>
+        <Text element="span" size="subheading" tone="ink" weight="inherit" className="">
+          {`${view.dateLabel}のページができました`}
         </Text>
-      </Button>
-      <Button
-        variant="ghost"
-        size="body"
-        pressed="none"
-        disabled={false}
-        ariaLabel={DISMISS_SR_LABEL}
-        disclosure={{ kind: "none" }}
-        className={styles["diary-notice-dismiss"]}
-        onClick={view.onDismiss}
-      >
-        {DISMISS_LABEL}
-      </Button>
-    </div>
+        <Button
+          variant="solid-accent"
+          size="secondary"
+          pressed="none"
+          disabled={false}
+          disclosure={{ kind: "none" }}
+          className={styles["diary-notice-open"]}
+          onClick={view.onOpen}
+        >
+          <Text element="span" size="inherit" tone="inherit" weight="bold" className="">
+            {OPEN_LABEL}
+          </Text>
+        </Button>
+        <Button
+          variant="ghost"
+          size="body"
+          pressed="none"
+          disabled={false}
+          ariaLabel={DISMISS_SR_LABEL}
+          disclosure={{ kind: "none" }}
+          className={styles["diary-notice-dismiss"]}
+          onClick={view.onDismiss}
+        >
+          {DISMISS_LABEL}
+        </Button>
+      </div>
+    </Surface>
   )
 }

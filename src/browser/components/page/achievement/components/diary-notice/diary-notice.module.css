@@ -1,22 +1,24 @@
 /* 書き終わりの知らせ。画面の下の中央に浮く札。
    `--screen-nav` の帯（z-index 20）より上に出す。 */
 
-.diary-notice {
-  composes: surface-edge-rule surface-radius-xl surface-tone-surface from "../../../../ui/surface/surface-face.module.css";
+.diary-notice-frame {
   position: fixed;
   left: 50%;
   bottom: 40px;
   transform: translateX(-50%);
   z-index: 30;
+  box-shadow: var(--shadow-overlay);
+  box-sizing: border-box;
+  max-width: calc(100vw - 32px);
+}
+.diary-notice {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
   gap: var(--space-lg);
   padding: var(--space-md) var(--space-lg) var(--space-md) var(--space-xl);
-  box-shadow: var(--shadow-overlay);
   box-sizing: border-box;
-  max-width: calc(100vw - 32px);
 }
 
 .diary-notice-icon {
