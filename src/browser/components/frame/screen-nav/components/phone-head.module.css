@@ -189,8 +189,8 @@
     font-size: var(--font-subheading);
     font-weight: 700;
   }
-  /* 「手順 n」で開く依頼の手順の一覧。一覧の箱の枠と地は板が持つので外す(属性で詳細度を上げ、一覧の class に勝つ)。 */
-  .phone-head-steps[role="region"] {
+  /* 「手順 n」で開く依頼の手順の一覧。一覧の箱の枠と地は板が持つので、領域の中の箱から外す(属性で詳細度を上げ、箱の class に勝つ)。 */
+  .phone-head-steps[role="region"] > div {
     padding: 0;
     overflow: visible;
     border: none;

@@ -11,6 +11,7 @@ import type { ReactElement } from "react"
 import { Button } from "../../../components/ui/button/button.tsx"
 import { Dialog } from "../../../components/ui/dialog/dialog.tsx"
 import { SendIcon } from "../../../components/ui/icon/icon.tsx"
+import { Surface } from "../../../components/ui/surface/surface.tsx"
 import { Text } from "../../../components/ui/text/text.tsx"
 import { loadLaunchSkill } from "../../../domain/launch-skill.ts"
 import { useSession, useTurnRunning } from "../../../stores/session.ts"
@@ -57,57 +58,66 @@ export function TaskRunConfirm(props: TaskRunConfirmProps): ReactElement {
       onClose={dismiss}
       className={styles["task-run-confirm"]}
     >
-      <Text element="p" size="heading" tone="inherit" weight="semibold" className="">
-        {headingOf(target)}
-      </Text>
-      {turnInProgress ? (
-        <Text
-          element="p"
-          size="inherit"
-          tone="ink-quiet"
-          weight="inherit"
-          className={styles["task-run-note"]}
-        >
-          いまターンが動いているので送れない。終わってからもう一度押す。
+      <Surface
+        element="div"
+        tone="surface"
+        space="none"
+        radius="lg"
+        shadow="none"
+        className={styles["task-run-confirm-surface"]}
+      >
+        <Text element="p" size="heading" tone="inherit" weight="semibold" className="">
+          {headingOf(target)}
         </Text>
-      ) : (
-        <Text
-          element="p"
-          size="inherit"
-          tone="ink-quiet"
-          weight="inherit"
-          className={styles["task-run-note"]}
-        >
-          入力欄に <code className={styles["task-run-prompt"]}>{prompt}</code> と打つのと同じ。
-        </Text>
-      )}
-      <div className={styles["task-run-actions"]}>
-        <Button
-          variant="outline"
-          size="secondary"
-          pressed="none"
-          disabled={false}
-          disclosure={{ kind: "none" }}
-          className={styles["task-run-cancel"]}
-          onClick={dismiss}
-        >
-          キャンセル
-        </Button>
-        {!turnInProgress && (
+        {turnInProgress ? (
+          <Text
+            element="p"
+            size="inherit"
+            tone="ink-quiet"
+            weight="inherit"
+            className={styles["task-run-note"]}
+          >
+            いまターンが動いているので送れない。終わってからもう一度押す。
+          </Text>
+        ) : (
+          <Text
+            element="p"
+            size="inherit"
+            tone="ink-quiet"
+            weight="inherit"
+            className={styles["task-run-note"]}
+          >
+            入力欄に <code className={styles["task-run-prompt"]}>{prompt}</code> と打つのと同じ。
+          </Text>
+        )}
+        <div className={styles["task-run-actions"]}>
           <Button
-            variant="solid-accent"
+            variant="outline"
             size="secondary"
             pressed="none"
             disabled={false}
             disclosure={{ kind: "none" }}
-            className={styles["task-run-ok"]}
-            onClick={run}
+            className={styles["task-run-cancel"]}
+            onClick={dismiss}
           >
-            {target.request.kind !== "sort" && <SendIcon />}
-            {OK_LABEL_OF[target.request.kind]}
+            キャンセル
           </Button>
-        )}
-      </div>
+          {!turnInProgress && (
+            <Button
+              variant="solid-accent"
+              size="secondary"
+              pressed="none"
+              disabled={false}
+              disclosure={{ kind: "none" }}
+              className={styles["task-run-ok"]}
+              onClick={run}
+            >
+              {target.request.kind !== "sort" && <SendIcon />}
+              {OK_LABEL_OF[target.request.kind]}
+            </Button>
+          )}
+        </div>
+      </Surface>
     </Dialog>
   )
 }

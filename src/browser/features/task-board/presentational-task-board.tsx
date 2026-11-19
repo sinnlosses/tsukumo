@@ -18,6 +18,7 @@ import type { ReactElement } from "react"
 import { useRef } from "react"
 
 import { Dialog } from "../../components/ui/dialog/dialog.tsx"
+import { Surface } from "../../components/ui/surface/surface.tsx"
 import { Text } from "../../components/ui/text/text.tsx"
 import { useExternalSync } from "../../hooks/use-external-sync.ts"
 import { DraftSortBand, DraftSortPanel } from "./components/draft-sort-panel.tsx"
@@ -57,118 +58,127 @@ export function PresentationalTaskBoard(props: TaskBoardView): ReactElement {
       className={styles["task-board"]}
     >
       {props.open && (
-        <div
-          ref={frameRef}
-          className={styles["task-board-frame"]}
-          tabIndex={-1}
-          onKeyDown={props.onKeyDown}
+        <Surface
+          element="div"
+          tone="surface"
+          space="none"
+          radius="xl"
+          shadow="overlay"
+          className={styles["task-board-surface"]}
         >
-          <TaskBoardHead
-            listed={
-              content.kind === "known"
-                ? {
-                    kind: "some",
-                    total: content.total,
-                    search: (
-                      <TaskBoardSearch
-                        query={content.query}
-                        listId={content.listId}
-                        activeOptionId={content.activeOptionId}
-                        onQueryChange={props.onQueryChange}
-                        onKeyDown={props.onSearchKeyDown}
-                      />
-                    ),
-                  }
-                : { kind: "none" }
-            }
-            onClose={props.onClose}
-          />
-          {content.kind === "known" && (
-            <TaskBoardFilterBar
-              chips={content.chips}
-              draftSort={props.draftSort}
-              onFilter={props.onFilter}
-            />
-          )}
-          {content.kind === "loading" && (
-            <div className={styles["task-board-message"]}>
-              <TaskSkeleton />
-            </div>
-          )}
-          {content.kind === "unknown" && (
-            <Text
-              element="p"
-              size="secondary"
-              tone="ink-quiet"
-              weight="inherit"
-              className={styles["task-board-message"]}
-            >
-              タスクの一覧が読めない
-            </Text>
-          )}
-          {content.kind === "empty" && (
-            <Text
-              element="p"
-              size="secondary"
-              tone="ink-quiet"
-              weight="inherit"
-              className={styles["task-board-message"]}
-            >
-              タスクが無い
-            </Text>
-          )}
-          {content.kind === "known" && (
-            <TaskBoardColumns
-              list={
-                <TaskBoardList
-                  listId={content.listId}
-                  stages={content.stages}
-                  omittedClosedCount={content.omittedClosedCount}
-                  onSelect={props.onSelect}
-                />
+          <div
+            ref={frameRef}
+            className={styles["task-board-frame"]}
+            tabIndex={-1}
+            onKeyDown={props.onKeyDown}
+          >
+            <TaskBoardHead
+              listed={
+                content.kind === "known"
+                  ? {
+                      kind: "some",
+                      total: content.total,
+                      search: (
+                        <TaskBoardSearch
+                          query={content.query}
+                          listId={content.listId}
+                          activeOptionId={content.activeOptionId}
+                          onQueryChange={props.onQueryChange}
+                          onKeyDown={props.onSearchKeyDown}
+                        />
+                      ),
+                    }
+                  : { kind: "none" }
               }
-              detail={
-                <>
-                  {props.draftSort.kind === "open" && (
-                    <section
-                      id={BOARD_SORT_PANE_DOM_ID}
-                      aria-labelledby={SORT_TITLE_ID}
-                      className={styles["task-board-sort-pane"]}
-                      onKeyDown={props.draftSort.onPaneKeyDown}
-                    >
-                      <DraftSortPanel
-                        panel={props.draftSort.panel}
-                        titleId={SORT_TITLE_ID}
-                        onClose={props.draftSort.onClose}
+              onClose={props.onClose}
+            />
+            {content.kind === "known" && (
+              <TaskBoardFilterBar
+                chips={content.chips}
+                draftSort={props.draftSort}
+                onFilter={props.onFilter}
+              />
+            )}
+            {content.kind === "loading" && (
+              <div className={styles["task-board-message"]}>
+                <TaskSkeleton />
+              </div>
+            )}
+            {content.kind === "unknown" && (
+              <Text
+                element="p"
+                size="secondary"
+                tone="ink-quiet"
+                weight="inherit"
+                className={styles["task-board-message"]}
+              >
+                タスクの一覧が読めない
+              </Text>
+            )}
+            {content.kind === "empty" && (
+              <Text
+                element="p"
+                size="secondary"
+                tone="ink-quiet"
+                weight="inherit"
+                className={styles["task-board-message"]}
+              >
+                タスクが無い
+              </Text>
+            )}
+            {content.kind === "known" && (
+              <TaskBoardColumns
+                list={
+                  <TaskBoardList
+                    listId={content.listId}
+                    stages={content.stages}
+                    omittedClosedCount={content.omittedClosedCount}
+                    onSelect={props.onSelect}
+                  />
+                }
+                detail={
+                  <>
+                    {props.draftSort.kind === "open" && (
+                      <section
+                        id={BOARD_SORT_PANE_DOM_ID}
+                        aria-labelledby={SORT_TITLE_ID}
+                        className={styles["task-board-sort-pane"]}
+                        onKeyDown={props.draftSort.onPaneKeyDown}
+                      >
+                        <DraftSortPanel
+                          panel={props.draftSort.panel}
+                          titleId={SORT_TITLE_ID}
+                          onClose={props.draftSort.onClose}
+                        />
+                      </section>
+                    )}
+                    {content.selection.kind === "some" && (
+                      <TaskDetail
+                        key={content.selection.detail.id}
+                        detail={content.selection.detail}
+                        titleId="task-board-detail-title"
+                        breadcrumb={content.selection.breadcrumb}
+                        knownIds={content.knownIds}
+                        onJump={content.selection.onJump}
+                        onCopy={content.selection.onCopy}
                       />
-                    </section>
-                  )}
-                  {content.selection.kind === "some" && (
-                    <TaskDetail
-                      key={content.selection.detail.id}
-                      detail={content.selection.detail}
-                      titleId="task-board-detail-title"
-                      breadcrumb={content.selection.breadcrumb}
-                      knownIds={content.knownIds}
-                      onJump={content.selection.onJump}
-                      onCopy={content.selection.onCopy}
-                    />
-                  )}
-                </>
-              }
-            />
-          )}
-          {content.kind === "known" && props.draftSort.kind === "open" && (
-            <DraftSortBand band={props.draftSort.panel.band} />
-          )}
-          {content.kind === "known" && content.selection.kind === "some" && (
-            <TaskBoardAction
-              lead={<TaskBoardKeyHint />}
-              opener={content.selection.opener}
-              run={content.selection.run}
-            />
-          )}
-        </div>
+                    )}
+                  </>
+                }
+              />
+            )}
+            {content.kind === "known" && props.draftSort.kind === "open" && (
+              <DraftSortBand band={props.draftSort.panel.band} />
+            )}
+            {content.kind === "known" && content.selection.kind === "some" && (
+              <TaskBoardAction
+                lead={<TaskBoardKeyHint />}
+                opener={content.selection.opener}
+                run={content.selection.run}
+              />
+            )}
+          </div>
+        </Surface>
       )}
       {props.confirm.kind === "open" && (
         <TaskRunConfirm target={props.confirm.target} onClose={props.onConfirmClose} />

@@ -6,6 +6,7 @@ import clsx from "clsx"
 import type { ReactElement } from "react"
 
 import { Button } from "../../components/ui/button/button.tsx"
+import { Surface } from "../../components/ui/surface/surface.tsx"
 import { Text } from "../../components/ui/text/text.tsx"
 import { CurrentWorkBackground } from "./current-work-background.tsx"
 import styles from "./current-work-list.module.css"
@@ -26,99 +27,112 @@ export function CurrentWorkList(props: CurrentWorkListProps): ReactElement {
   const { work } = props
 
   return (
-    <div id={props.id} className={clsx(styles["current-work-list"], props.className)} role="region">
-      <Text
-        element="p"
-        size="inherit"
-        tone="inherit"
-        weight="semibold"
-        className={styles["current-work-heading"]}
+    <div
+      id={props.id}
+      className={clsx(styles["current-work-list-region"], props.className)}
+      role="region"
+    >
+      <Surface
+        element="div"
+        tone="surface"
+        space="none"
+        radius="md"
+        shadow="none"
+        className={styles["current-work-list"]}
       >
-        {work.wordLabel}
-      </Text>
-      {work.pendingHint.kind === "inquiry" && (
-        <Button
-          variant="link"
-          size="label"
-          pressed="none"
-          disabled={false}
-          disclosure={{ kind: "none" }}
-          className={styles["current-work-go-to-inquiry"]}
-          onClick={work.pendingHint.onGoToInquiry}
+        <Text
+          element="p"
+          size="inherit"
+          tone="inherit"
+          weight="semibold"
+          className={styles["current-work-heading"]}
         >
-          {GO_TO_INQUIRY_LABEL}
-        </Button>
-      )}
-      {work.plan.kind === "planned" && (
-        <>
-          <Text
-            element="p"
-            size="inherit"
-            tone="ink-quiet"
-            weight="inherit"
-            className={styles["current-work-plan-heading"]}
-          >
-            {work.plan.headingLabel}
-          </Text>
-          <div className={styles["current-work-plan-spans"]}>
-            {work.plan.spans.map((span) => (
-              <CurrentWorkPlanSpan key={span.key} span={span} />
-            ))}
-          </div>
-        </>
-      )}
-      {work.runningStep.kind !== "none" && (
-        <div className={styles["current-work-full"]}>
-          <Text
-            element="p"
-            size="inherit"
-            tone="ink-quiet"
-            weight="inherit"
-            className={styles["current-work-full-heading"]}
-          >
-            実行中の {work.runningStep.toolName}
-          </Text>
-          <pre className={styles["current-work-full-text"]}>
-            <code>{work.runningStep.fullText}</code>
-          </pre>
-        </div>
-      )}
-      <CurrentWorkBackground list={work.backgroundList} runningMark="spin" />
-      {work.stepList.kind === "steps" ? (
-        <>
-          <Text
-            element="p"
-            size="inherit"
-            tone="ink-quiet"
-            weight="inherit"
-            className={styles["current-work-steps-heading"]}
-          >
-            {work.stepList.headingLabel}
-          </Text>
-          {work.stepList.groups.map((group) => (
-            <CurrentWorkStepGroup key={group.key} group={group} runningMark="spin" />
-          ))}
-          {work.stepList.toggleAll.kind === "expandable" && (
-            <Button
-              variant="link"
-              size="label"
-              pressed="none"
-              disabled={false}
-              disclosure={{ kind: "none" }}
-              className={styles["current-work-toggle-all"]}
-              onClick={work.stepList.onToggleExpanded}
-            >
-              {work.stepList.toggleAll.label}
-            </Button>
-          )}
-        </>
-      ) : (
-        <Text element="p" size="inherit" tone="ink-quiet" weight="inherit" className="">
-          {work.stepList.kind === "no-request"
-            ? "まだ依頼が無い"
-            : "この依頼ではまだツールを使っていない"}
+          {work.wordLabel}
         </Text>
-      )}
+        {work.pendingHint.kind === "inquiry" && (
+          <Button
+            variant="link"
+            size="label"
+            pressed="none"
+            disabled={false}
+            disclosure={{ kind: "none" }}
+            className={styles["current-work-go-to-inquiry"]}
+            onClick={work.pendingHint.onGoToInquiry}
+          >
+            {GO_TO_INQUIRY_LABEL}
+          </Button>
+        )}
+        {work.plan.kind === "planned" && (
+          <>
+            <Text
+              element="p"
+              size="inherit"
+              tone="ink-quiet"
+              weight="inherit"
+              className={styles["current-work-plan-heading"]}
+            >
+              {work.plan.headingLabel}
+            </Text>
+            <div className={styles["current-work-plan-spans"]}>
+              {work.plan.spans.map((span) => (
+                <CurrentWorkPlanSpan key={span.key} span={span} />
+              ))}
+            </div>
+          </>
+        )}
+        {work.runningStep.kind !== "none" && (
+          <div className={styles["current-work-full"]}>
+            <Text
+              element="p"
+              size="inherit"
+              tone="ink-quiet"
+              weight="inherit"
+              className={styles["current-work-full-heading"]}
+            >
+              実行中の {work.runningStep.toolName}
+            </Text>
+            <pre className={styles["current-work-full-text"]}>
+              <code>{work.runningStep.fullText}</code>
+            </pre>
+          </div>
+        )}
+        <CurrentWorkBackground list={work.backgroundList} runningMark="spin" />
+        {work.stepList.kind === "steps" ? (
+          <>
+            <Text
+              element="p"
+              size="inherit"
+              tone="ink-quiet"
+              weight="inherit"
+              className={styles["current-work-steps-heading"]}
+            >
+              {work.stepList.headingLabel}
+            </Text>
+            {work.stepList.groups.map((group) => (
+              <CurrentWorkStepGroup key={group.key} group={group} runningMark="spin" />
+            ))}
+            {work.stepList.toggleAll.kind === "expandable" && (
+              <Button
+                variant="link"
+                size="label"
+                pressed="none"
+                disabled={false}
+                disclosure={{ kind: "none" }}
+                className={styles["current-work-toggle-all"]}
+                onClick={work.stepList.onToggleExpanded}
+              >
+                {work.stepList.toggleAll.label}
+              </Button>
+            )}
+          </>
+        ) : (
+          <Text element="p" size="inherit" tone="ink-quiet" weight="inherit" className="">
+            {work.stepList.kind === "no-request"
+              ? "まだ依頼が無い"
+              : "この依頼ではまだツールを使っていない"}
+          </Text>
+        )}
+      </Surface>
     </div>
   )
 }

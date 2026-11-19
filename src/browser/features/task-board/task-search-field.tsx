@@ -5,6 +5,7 @@
 import type { KeyboardEvent, ReactElement } from "react"
 
 import { CloseIcon, SearchIcon } from "../../components/ui/icon/icon.tsx"
+import { Surface } from "../../components/ui/surface/surface.tsx"
 import styles from "./task-search-field.module.css"
 
 export function TaskSearchField(props: {
@@ -18,7 +19,14 @@ export function TaskSearchField(props: {
   readonly onKeyDown: (event: KeyboardEvent<HTMLInputElement>) => void
 }): ReactElement {
   return (
-    <div className={styles["task-search"]}>
+    <Surface
+      element="div"
+      tone="ground"
+      space="none"
+      radius="md"
+      shadow="none"
+      className={styles["task-search"]}
+    >
       <span className={styles["task-search-icon"]}>
         <SearchIcon />
       </span>
@@ -54,6 +62,6 @@ export function TaskSearchField(props: {
           <CloseIcon />
         </button>
       </span>
-    </div>
+    </Surface>
   )
 }

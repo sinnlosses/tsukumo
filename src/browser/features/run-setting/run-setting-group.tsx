@@ -7,6 +7,7 @@ import { useId, type ReactElement } from "react"
 
 import { isModelAlias } from "../../../shared/session/run-setting-value.ts"
 import { permissionModeValue } from "../../../shared/session/session-info.ts"
+import { Surface } from "../../components/ui/surface/surface.tsx"
 import { EFFORT_PLACEHOLDER_VALUE, effortLabel } from "../../domain/effort-label.ts"
 import { modelLabel } from "./model-label.ts"
 import { type SettingDot, useModelPermission } from "./model-permission.ts"
@@ -47,58 +48,67 @@ export function RunSettingGroup(props: { readonly placement: RunSettingPlacement
       role="group"
       aria-label="実行の設定"
     >
-      <RunSettingSelect
-        id={modelSelectId}
-        ariaLabel={`モデル ${modelText}`}
-        heading="モデル"
-        value={control.model}
-        options={[
-          ...modelSelectOptions(control.modelEffortSupport),
-          ...(isModelAlias(control.model) ? [] : [unknownModelOption(control.model)]),
-        ]}
-        disabled={false}
-        danger={false}
-        layout="list"
-        mouth={mouth}
-        title={dotTitle(`モデル ${modelText}`, control.modelDot)}
-        dot={control.modelDot}
-        onChange={control.onSetModel}
-      />
-      <span className={styles["run-setting-divider"]} aria-hidden="true" />
-      <RunSettingSelect
-        id={effortSelectId}
-        ariaLabel={`effort ${effortName}`}
-        heading="effort"
-        value={effortValue}
-        options={effortSelectOptions(effort)}
-        disabled={effort.kind !== "known"}
-        danger={false}
-        layout="row"
-        mouth={mouth}
-        title={dotTitle(`effort ${effortName}`, control.effortDot)}
-        dot={control.effortDot}
-        onChange={control.onSetEffort}
-      />
-      <span className={styles["run-setting-divider"]} aria-hidden="true" />
-      <RunSettingSelect
-        id={permissionModeSelectId}
-        ariaLabel={`許可モード ${permissionModeText}`}
-        heading="許可モード"
-        value={permissionModeValue(control.permissionMode)}
-        options={[
-          ...permissionModeSelectOptions(PERMISSION_MODE_LABELS.map(([mode]) => mode)),
-          ...(typeof control.permissionMode === "string"
-            ? []
-            : [unknownPermissionModeOption(control.permissionMode.raw)]),
-        ]}
-        disabled={false}
-        danger={control.permissionModeDangerous}
-        layout="list"
-        mouth={mouth}
-        title={dotTitle(`許可モード ${permissionModeText}`, control.permissionModeDot)}
-        dot={control.permissionModeDot}
-        onChange={control.onSetPermissionMode}
-      />
+      <Surface
+        element="div"
+        tone="ground"
+        space="none"
+        radius="lg"
+        shadow="none"
+        className={styles["run-setting-group-face"]}
+      >
+        <RunSettingSelect
+          id={modelSelectId}
+          ariaLabel={`モデル ${modelText}`}
+          heading="モデル"
+          value={control.model}
+          options={[
+            ...modelSelectOptions(control.modelEffortSupport),
+            ...(isModelAlias(control.model) ? [] : [unknownModelOption(control.model)]),
+          ]}
+          disabled={false}
+          danger={false}
+          layout="list"
+          mouth={mouth}
+          title={dotTitle(`モデル ${modelText}`, control.modelDot)}
+          dot={control.modelDot}
+          onChange={control.onSetModel}
+        />
+        <span className={styles["run-setting-divider"]} aria-hidden="true" />
+        <RunSettingSelect
+          id={effortSelectId}
+          ariaLabel={`effort ${effortName}`}
+          heading="effort"
+          value={effortValue}
+          options={effortSelectOptions(effort)}
+          disabled={effort.kind !== "known"}
+          danger={false}
+          layout="row"
+          mouth={mouth}
+          title={dotTitle(`effort ${effortName}`, control.effortDot)}
+          dot={control.effortDot}
+          onChange={control.onSetEffort}
+        />
+        <span className={styles["run-setting-divider"]} aria-hidden="true" />
+        <RunSettingSelect
+          id={permissionModeSelectId}
+          ariaLabel={`許可モード ${permissionModeText}`}
+          heading="許可モード"
+          value={permissionModeValue(control.permissionMode)}
+          options={[
+            ...permissionModeSelectOptions(PERMISSION_MODE_LABELS.map(([mode]) => mode)),
+            ...(typeof control.permissionMode === "string"
+              ? []
+              : [unknownPermissionModeOption(control.permissionMode.raw)]),
+          ]}
+          disabled={false}
+          danger={control.permissionModeDangerous}
+          layout="list"
+          mouth={mouth}
+          title={dotTitle(`許可モード ${permissionModeText}`, control.permissionModeDot)}
+          dot={control.permissionModeDot}
+          onChange={control.onSetPermissionMode}
+        />
+      </Surface>
     </div>
   )
 }

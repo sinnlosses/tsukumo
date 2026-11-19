@@ -19,6 +19,7 @@ import {
   CloseIcon,
   MaximizeIcon,
 } from "../../components/ui/icon/icon.tsx"
+import { Surface } from "../../components/ui/surface/surface.tsx"
 import { useExternalSync } from "../../hooks/use-external-sync.ts"
 import { TaskBoardAction } from "./components/task-board-action.tsx"
 import { TaskDetail } from "./components/task-detail.tsx"
@@ -47,90 +48,99 @@ export function PresentationalTaskSheet(props: {
   }
   const { selection } = view
   return (
-    <aside
-      ref={asideRef}
-      id={TASK_SHEET_DOM_ID}
-      aria-labelledby={TITLE_ID}
-      tabIndex={-1}
-      className={styles["task-sheet"]}
-      onKeyDown={view.onKeyDown}
+    <Surface
+      element="div"
+      tone="surface"
+      space="none"
+      radius="xl"
+      shadow="none"
+      className={styles["task-sheet-face"]}
     >
-      <div className={styles["task-sheet-head"]}>
-        <span className={styles["task-sheet-step"]}>
-          <Button
-            variant="ghost"
-            size="action"
-            pressed="none"
-            disabled={false}
-            ariaLabel="前のタスク"
-            disclosure={{ kind: "none" }}
-            className={styles["task-sheet-tool"]}
-            onClick={() => {
-              view.onStep(-1)
-            }}
-          >
-            <ChevronLeftIcon />
-          </Button>
-          <Button
-            variant="ghost"
-            size="action"
-            pressed="none"
-            disabled={false}
-            ariaLabel="次のタスク"
-            disclosure={{ kind: "none" }}
-            className={styles["task-sheet-tool"]}
-            onClick={() => {
-              view.onStep(1)
-            }}
-          >
-            <ChevronRightIcon />
-          </Button>
-        </span>
-        <span className={styles["task-sheet-step"]}>
-          {view.listMode.kind === "some" && (
+      <aside
+        ref={asideRef}
+        id={TASK_SHEET_DOM_ID}
+        aria-labelledby={TITLE_ID}
+        tabIndex={-1}
+        className={styles["task-sheet"]}
+        onKeyDown={view.onKeyDown}
+      >
+        <div className={styles["task-sheet-head"]}>
+          <span className={styles["task-sheet-step"]}>
             <Button
               variant="ghost"
               size="action"
               pressed="none"
               disabled={false}
-              ariaLabel="一覧モードで開く"
-              disclosure={{ kind: "dialog" }}
-              title="一覧モードで開く"
+              ariaLabel="前のタスク"
+              disclosure={{ kind: "none" }}
               className={styles["task-sheet-tool"]}
-              onClick={view.listMode.onOpen}
+              onClick={() => {
+                view.onStep(-1)
+              }}
             >
-              <MaximizeIcon />
+              <ChevronLeftIcon />
             </Button>
-          )}
-          <Button
-            variant="ghost"
-            size="action"
-            pressed="none"
-            disabled={false}
-            ariaLabel="閉じる"
-            disclosure={{ kind: "none" }}
-            className={styles["task-sheet-tool"]}
-            onClick={view.onClose}
-          >
-            <CloseIcon />
-          </Button>
-        </span>
-      </div>
-      <div className={styles["task-sheet-body"]}>
-        <TaskDetail
-          key={selection.detail.id}
-          detail={selection.detail}
-          titleId={TITLE_ID}
-          breadcrumb={selection.breadcrumb}
-          knownIds={view.knownIds}
-          onJump={selection.onJump}
-          onCopy={selection.onCopy}
-        />
-      </div>
-      <TaskBoardAction lead={false} opener={selection.opener} run={selection.run} />
-      {view.confirm.kind === "open" && (
-        <TaskRunConfirm target={view.confirm.target} onClose={view.onConfirmClose} />
-      )}
-    </aside>
+            <Button
+              variant="ghost"
+              size="action"
+              pressed="none"
+              disabled={false}
+              ariaLabel="次のタスク"
+              disclosure={{ kind: "none" }}
+              className={styles["task-sheet-tool"]}
+              onClick={() => {
+                view.onStep(1)
+              }}
+            >
+              <ChevronRightIcon />
+            </Button>
+          </span>
+          <span className={styles["task-sheet-step"]}>
+            {view.listMode.kind === "some" && (
+              <Button
+                variant="ghost"
+                size="action"
+                pressed="none"
+                disabled={false}
+                ariaLabel="一覧モードで開く"
+                disclosure={{ kind: "dialog" }}
+                title="一覧モードで開く"
+                className={styles["task-sheet-tool"]}
+                onClick={view.listMode.onOpen}
+              >
+                <MaximizeIcon />
+              </Button>
+            )}
+            <Button
+              variant="ghost"
+              size="action"
+              pressed="none"
+              disabled={false}
+              ariaLabel="閉じる"
+              disclosure={{ kind: "none" }}
+              className={styles["task-sheet-tool"]}
+              onClick={view.onClose}
+            >
+              <CloseIcon />
+            </Button>
+          </span>
+        </div>
+        <div className={styles["task-sheet-body"]}>
+          <TaskDetail
+            key={selection.detail.id}
+            detail={selection.detail}
+            titleId={TITLE_ID}
+            breadcrumb={selection.breadcrumb}
+            knownIds={view.knownIds}
+            onJump={selection.onJump}
+            onCopy={selection.onCopy}
+          />
+        </div>
+        <TaskBoardAction lead={false} opener={selection.opener} run={selection.run} />
+        {view.confirm.kind === "open" && (
+          <TaskRunConfirm target={view.confirm.target} onClose={view.onConfirmClose} />
+        )}
+      </aside>
+    </Surface>
   )
 }

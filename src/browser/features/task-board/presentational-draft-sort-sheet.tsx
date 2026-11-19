@@ -5,6 +5,7 @@
 
 import type { ReactElement } from "react"
 
+import { Surface } from "../../components/ui/surface/surface.tsx"
 import { DraftSortBand, DraftSortPanel } from "./components/draft-sort-panel.tsx"
 import { TaskRunConfirm } from "./components/task-run-confirm.tsx"
 import sheetStyles from "./components/task-sheet.module.css"
@@ -18,18 +19,27 @@ export function PresentationalDraftSortSheet(props: {
 }): ReactElement {
   const { view } = props
   return (
-    <aside
-      id={TASK_SHEET_DOM_ID}
-      aria-labelledby={TITLE_ID}
-      tabIndex={-1}
-      className={sheetStyles["task-sheet"]}
-      onKeyDown={view.onKeyDown}
+    <Surface
+      element="div"
+      tone="surface"
+      space="none"
+      radius="xl"
+      shadow="none"
+      className={sheetStyles["task-sheet-face"]}
     >
-      <DraftSortPanel panel={view.panel} titleId={TITLE_ID} onClose={view.onClose} />
-      <DraftSortBand band={view.panel.band} />
-      {view.confirm.kind === "open" && (
-        <TaskRunConfirm target={view.confirm.target} onClose={view.onConfirmClose} />
-      )}
-    </aside>
+      <aside
+        id={TASK_SHEET_DOM_ID}
+        aria-labelledby={TITLE_ID}
+        tabIndex={-1}
+        className={sheetStyles["task-sheet"]}
+        onKeyDown={view.onKeyDown}
+      >
+        <DraftSortPanel panel={view.panel} titleId={TITLE_ID} onClose={view.onClose} />
+        <DraftSortBand band={view.panel.band} />
+        {view.confirm.kind === "open" && (
+          <TaskRunConfirm target={view.confirm.target} onClose={view.onConfirmClose} />
+        )}
+      </aside>
+    </Surface>
   )
 }

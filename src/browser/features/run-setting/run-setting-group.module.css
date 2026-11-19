@@ -1,10 +1,15 @@
 /* モデル・effort・許可モードの操作子の組。3つの絵の口を1つの枠に並べ、細い仕切りで分ける。 */
 .run-setting-group {
-  composes: surface-edge-rule surface-radius-lg surface-tone-ground from "../../components/ui/surface/surface-face.module.css";
+  display: flex;
+  flex: none;
+}
+.run-setting-group-face {
   display: flex;
   flex: none;
   align-items: center;
+  min-width: auto;
   padding: 0 var(--space-2xs);
+  overflow: visible;
 }
 .run-setting-divider {
   flex: none;
@@ -13,11 +18,11 @@
   background: var(--rule);
 }
 /* 狭い画面の引き出しでは、仕事・雑談の門の右に並べる。 */
-.run-setting-group-drawer {
+.run-setting-group-drawer .run-setting-group-face {
   padding: var(--space-xs) var(--space-2xs);
 }
 /* 広い幅の入力欄の下の行では、3つの札を枠も仕切りも無しで並べる。 */
-.run-setting-group.run-setting-group-composer {
+.run-setting-group-composer .run-setting-group-face {
   gap: var(--inline-tight);
   padding: 0;
   border: none;

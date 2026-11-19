@@ -4,6 +4,7 @@
 import type { KeyboardEvent, ReactElement } from "react"
 
 import { SearchIcon } from "../../../components/ui/icon/icon.tsx"
+import { Surface } from "../../../components/ui/surface/surface.tsx"
 import styles from "./task-board-search.module.css"
 
 export function TaskBoardSearch(props: {
@@ -15,22 +16,31 @@ export function TaskBoardSearch(props: {
   readonly onKeyDown: (event: KeyboardEvent<HTMLInputElement>) => void
 }): ReactElement {
   return (
-    <label className={styles["task-board-search"]}>
-      <SearchIcon />
-      <input
-        type="search"
-        className={styles["task-board-search-input"]}
-        aria-label="タスクを探す"
-        placeholder="ID・言葉で探す"
-        value={props.query}
-        role="combobox"
-        aria-expanded={true}
-        aria-controls={props.listId}
-        aria-activedescendant={props.activeOptionId}
-        ref={markAutofocus}
-        onChange={(event) => props.onQueryChange(event.target.value)}
-        onKeyDown={props.onKeyDown}
-      />
+    <label className={styles["task-board-search-label"]}>
+      <Surface
+        element="div"
+        tone="ground"
+        space="none"
+        radius="md"
+        shadow="none"
+        className={styles["task-board-search"]}
+      >
+        <SearchIcon />
+        <input
+          type="search"
+          className={styles["task-board-search-input"]}
+          aria-label="タスクを探す"
+          placeholder="ID・言葉で探す"
+          value={props.query}
+          role="combobox"
+          aria-expanded={true}
+          aria-controls={props.listId}
+          aria-activedescendant={props.activeOptionId}
+          ref={markAutofocus}
+          onChange={(event) => props.onQueryChange(event.target.value)}
+          onKeyDown={props.onKeyDown}
+        />
+      </Surface>
     </label>
   )
 }

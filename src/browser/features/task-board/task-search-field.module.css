@@ -1,8 +1,9 @@
 /* 高さは固定。語の有無とフォーカスで変えない。 */
 .task-search {
-  composes: surface-edge-rule surface-radius-md surface-tone-ground from "../../components/ui/surface/surface-face.module.css";
   box-sizing: border-box;
   display: flex;
+  min-width: auto;
+  overflow: visible;
   align-items: center;
   gap: var(--inline-control);
   height: 34px;

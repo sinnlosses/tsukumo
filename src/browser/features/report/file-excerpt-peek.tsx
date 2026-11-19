@@ -5,6 +5,7 @@ import clsx from "clsx"
 import type { ReactElement } from "react"
 import { createPortal } from "react-dom"
 
+import { Surface } from "../../components/ui/surface/surface.tsx"
 import type { LineRange } from "./domain/pointed-line-range.ts"
 import type { PeekAnchor, ShownFileExcerpt } from "./hooks/use-file-excerpt-peek.ts"
 import styles from "./repository-link.module.css"
@@ -34,36 +35,45 @@ export function FileExcerptPeek(props: FileExcerptPeekProps): ReactElement {
         placeNearAnchor(node, props.anchor)
       }}
     >
-      <div className={styles["peek-head"]}>
-        {props.path} · {headRangeOf(excerpt, pointed)}
-      </div>
-      {excerpt.kind === "lines" && (
-        <pre className={styles["peek-code"]}>
-          {excerpt.lines.map((line) => {
-            const isPointed = line.number >= pointed.startLine && line.number <= pointed.endLine
-            return (
-              <span
-                key={line.number}
-                className={clsx(styles["peek-line"], isPointed && styles["peek-line-pointed"])}
-                data-pointed={isPointed}
-              >
-                <span className={styles["peek-text"]} data-line-text="">
-                  {line.text}
-                  {line.truncated && "…"}
-                </span>
-                {line.number === pointed.startLine && (
-                  <span className={styles["peek-mark"]} data-line-mark="">
-                    ← {lineRangeLabel(pointed)}
+      <Surface
+        element="div"
+        tone="surface"
+        space="none"
+        radius="md"
+        shadow="none"
+        className={styles["peek-face"]}
+      >
+        <div className={styles["peek-head"]}>
+          {props.path} · {headRangeOf(excerpt, pointed)}
+        </div>
+        {excerpt.kind === "lines" && (
+          <pre className={styles["peek-code"]}>
+            {excerpt.lines.map((line) => {
+              const isPointed = line.number >= pointed.startLine && line.number <= pointed.endLine
+              return (
+                <span
+                  key={line.number}
+                  className={clsx(styles["peek-line"], isPointed && styles["peek-line-pointed"])}
+                  data-pointed={isPointed}
+                >
+                  <span className={styles["peek-text"]} data-line-text="">
+                    {line.text}
+                    {line.truncated && "…"}
                   </span>
-                )}
-              </span>
-            )
-          })}
-        </pre>
-      )}
-      {excerpt.kind !== "lines" && (
-        <p className={styles["peek-note"]}>{noteOf(excerpt, pointed)}</p>
-      )}
+                  {line.number === pointed.startLine && (
+                    <span className={styles["peek-mark"]} data-line-mark="">
+                      ← {lineRangeLabel(pointed)}
+                    </span>
+                  )}
+                </span>
+              )
+            })}
+          </pre>
+        )}
+        {excerpt.kind !== "lines" && (
+          <p className={styles["peek-note"]}>{noteOf(excerpt, pointed)}</p>
+        )}
+      </Surface>
     </div>,
     document.body,
   )

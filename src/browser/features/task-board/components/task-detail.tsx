@@ -9,6 +9,7 @@ import type { ReactElement } from "react"
 import { Button } from "../../../components/ui/button/button.tsx"
 import { HStack } from "../../../components/ui/h-stack/h-stack.tsx"
 import { ChevronLeftIcon, ChevronRightIcon, CopyIcon } from "../../../components/ui/icon/icon.tsx"
+import { Surface } from "../../../components/ui/surface/surface.tsx"
 import { Text } from "../../../components/ui/text/text.tsx"
 import { TaskBody } from "../deferred-task-body.tsx"
 import type {
@@ -199,28 +200,48 @@ function TaskDependency(props: {
   const dependency = props.dependency
   if (dependency.kind === "unlisted") {
     return (
-      <li className={taskBoardStyles["task-detail-dependency"]}>
-        <span className={styles["task-detail-dependency-id"]}>{dependency.id}</span>
-        <span className={styles["task-detail-dependency-unlisted"]}>一覧に無い</span>
+      <li>
+        <Surface
+          element="div"
+          tone="ground"
+          space="none"
+          radius="md"
+          shadow="none"
+          className={taskBoardStyles["task-detail-dependency-face"]}
+        >
+          <div className={taskBoardStyles["task-detail-dependency"]}>
+            <span className={styles["task-detail-dependency-id"]}>{dependency.id}</span>
+            <span className={styles["task-detail-dependency-unlisted"]}>一覧に無い</span>
+          </div>
+        </Surface>
       </li>
     )
   }
   return (
     <li>
-      <button
-        type="button"
-        className={taskBoardStyles["task-detail-dependency"]}
-        onClick={() => props.onJump(dependency.id)}
+      <Surface
+        element="div"
+        tone="ground"
+        space="none"
+        radius="md"
+        shadow="none"
+        className={taskBoardStyles["task-detail-dependency-face"]}
       >
-        <span className={styles["task-detail-dependency-id"]}>{dependency.id}</span>
-        <TaskState state={dependency.state} display="labeled" />
-        <span className={styles["task-detail-dependency-summary"]}>
-          <TaskSummaryText parts={dependency.summary} />
-        </span>
-        <span className={styles["task-detail-dependency-chevron"]} aria-hidden="true">
-          <ChevronRightIcon />
-        </span>
-      </button>
+        <button
+          type="button"
+          className={taskBoardStyles["task-detail-dependency"]}
+          onClick={() => props.onJump(dependency.id)}
+        >
+          <span className={styles["task-detail-dependency-id"]}>{dependency.id}</span>
+          <TaskState state={dependency.state} display="labeled" />
+          <span className={styles["task-detail-dependency-summary"]}>
+            <TaskSummaryText parts={dependency.summary} />
+          </span>
+          <span className={styles["task-detail-dependency-chevron"]} aria-hidden="true">
+            <ChevronRightIcon />
+          </span>
+        </button>
+      </Surface>
     </li>
   )
 }

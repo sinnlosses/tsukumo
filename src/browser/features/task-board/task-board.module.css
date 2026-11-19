@@ -53,7 +53,6 @@
 /* 箱。一覧モードの見本（`docs/history/mockup/sidebar-task-board-2026-11-16/` の `view=list`）のとおり、
    幅は 1240px まで、高さは上下に 48px ずつ空けた残りで、画面の中央に置く。 */
 .task-board {
-  composes: surface-edge-rule surface-radius-xl surface-tone-surface from "../../components/ui/surface/surface-face.module.css";
   box-sizing: border-box;
   width: min(1240px, calc(100vw - 80px));
   height: calc(100dvh - 96px);
@@ -62,8 +61,17 @@
   margin: auto;
   padding: 0;
   overflow: hidden;
+  border: none;
+  border-radius: var(--radius-xl);
+  background: transparent;
   box-shadow: var(--shadow-overlay);
   color: var(--ink);
+}
+.task-board-surface {
+  box-sizing: border-box;
+  height: 100%;
+  min-width: 0;
+  overflow: hidden;
 }
 /* ↑↓ を受ける器。押せない所を押したときにフォーカスを受けるだけなので輪は出さない。 */
 .task-board-frame {
@@ -118,9 +126,13 @@
   flex-direction: column;
   min-height: 0;
 }
-/* 一覧に無い依存（押せない）は `<li>` に直接、押せる札は中の `<button>` に付く。 */
+.task-detail-dependency-face {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+}
+/* 一覧に無い依存（押せない）は顔の中の `<div>` に、押せる札は中の `<button>` に付く。 */
 .task-detail-dependency {
-  composes: surface-edge-rule surface-radius-md surface-tone-ground from "../../components/ui/surface/surface-face.module.css";
   box-sizing: border-box;
   display: flex;
   align-items: center;
@@ -133,6 +145,9 @@
   text-align: left;
 }
 button.task-detail-dependency {
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
   cursor: pointer;
 }
 button.task-detail-dependency:hover {
