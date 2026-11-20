@@ -3,13 +3,14 @@
 
 import clsx from "clsx"
 import { Settings, X } from "lucide-react"
-import { Fragment, type ReactElement } from "react"
+import { Fragment, useState, type ReactElement } from "react"
 
 import { useSettingsRequest } from "../../../../stores/settings-request.ts"
 import { Button } from "../../../ui/button/button.tsx"
 import { Dialog } from "../../../ui/dialog/dialog.tsx"
 import { Text } from "../../../ui/text/text.tsx"
 import { useWorkflowRepositoryName } from "../hooks/use-workflow-repository-name.ts"
+import { useWorkflowDraft } from "../hooks/workflow-draft-store.ts"
 import shellStyles from "../screen-nav.module.css"
 import styles from "./screen-nav-settings-dialog.module.css"
 import { ScreenNavSettingsFaceFrame } from "./screen-nav-settings-face-frame.tsx"
@@ -20,12 +21,16 @@ import type { ScreenNavSettingsProps } from "./screen-nav-settings.tsx"
 /** 読み上げに渡す名前（歯車は絵だけなので、名前は `aria-label` と `title` で渡す）。 */
 const SETTINGS_LABEL = "設定"
 
+/** 保存するまで書かない面。未保存の印はこの面のナビにだけ出す。 */
+const WORKFLOW_FACE_KEY = "workflow"
+
 /** 帯の右端の歯車とダイアログ。置くのは広い画面の帯だけ（狭い画面では CSS の `@media` が帯から消す）。 */
 export function ScreenNavSettingsGear(props: ScreenNavSettingsProps): ReactElement {
   const { settings } = props
   // 預け先はここで分解して受ける。
   // `settings.toggleRef` の形のまま `ref` に渡すと、`react(refs)` が `settings` への参照ごとレンダー中の ref の読み書きとみなして落ちる。
   const { toggleRef } = settings
+  const guard = useDraftGuard(settings.onClose)
 
   // `shellStyles` の class は見た目を持たず、`screen-nav.module.css` の `@media` の選択子を当てるためだけに重ねる。
   return (
@@ -46,19 +51,95 @@ export function ScreenNavSettingsGear(props: ScreenNavSettingsProps): ReactEleme
         ariaLabel={SETTINGS_LABEL}
         backdrop="dim"
         placement={{ kind: "auto" }}
-        onClose={settings.onClose}
+        onClose={guard.requestClose}
         className={styles["dialog"]}
       >
-        {settings.open && <ScreenNavSettingsDialogBody settings={settings} />}
+        {settings.open && <ScreenNavSettingsDialogBody settings={settings} guard={guard} />}
       </Dialog>
     </div>
   )
 }
 
-function ScreenNavSettingsDialogBody(props: ScreenNavSettingsProps): ReactElement {
-  const { settings } = props
-  const selectedKey = useSettingsRequest((state) => state.faceKey)
+type DraftTarget = { readonly kind: "close" } | { readonly kind: "face"; readonly key: string }
+
+type DraftPending = DraftTarget | { readonly kind: "none" }
+
+type DraftGuard = {
+  readonly draftCount: number
+  readonly pending: DraftPending
+  /** × ・Esc・背景の押下の口。確認が出ているあいだは確認をやめて面へ戻る。 */
+  readonly requestClose: () => void
+  readonly requestFace: (key: string) => void
+  readonly onDiscard: () => void
+  readonly onSave: () => void
+  readonly canSave: boolean
+}
+
+/** 閉じる・ページを移るの口を1つにまとめ、ワークフローに未保存の下書きがあれば確認を挟む。 */
+function useDraftGuard(close: () => void): DraftGuard {
+  const entry = useWorkflowDraft((state) => state.entry)
   const selectFace = useSettingsRequest((state) => state.selectFace)
+  const selectedKey = useSettingsRequest((state) => state.faceKey)
+  const [pending, setPending] = useState<DraftPending>({ kind: "none" })
+  const draftCount = entry?.count ?? 0
+
+  function proceed(target: DraftTarget): void {
+    setPending({ kind: "none" })
+    if (target.kind === "close") {
+      close()
+    } else {
+      selectFace(target.key)
+    }
+  }
+  function request(target: DraftTarget): void {
+    if (draftCount === 0) {
+      proceed(target)
+    } else {
+      setPending(target)
+    }
+  }
+  async function saveThenProceed(save: () => Promise<boolean>, target: DraftTarget): Promise<void> {
+    if (await save()) {
+      proceed(target)
+    } else {
+      setPending({ kind: "none" })
+    }
+  }
+
+  return {
+    draftCount,
+    pending,
+    canSave: entry?.canSave ?? true,
+    requestClose: () => {
+      if (pending.kind === "none") {
+        request({ kind: "close" })
+      } else {
+        setPending({ kind: "none" })
+      }
+    },
+    requestFace: (key) => {
+      if (key !== (selectedKey ?? FACES[0].key)) {
+        request({ kind: "face", key })
+      }
+    },
+    onDiscard: () => {
+      if (pending.kind !== "none") {
+        proceed(pending)
+      }
+    },
+    onSave: () => {
+      if (pending.kind !== "none" && entry !== undefined) {
+        void saveThenProceed(entry.save, pending)
+      }
+    },
+  }
+}
+
+function ScreenNavSettingsDialogBody(
+  props: ScreenNavSettingsProps & { readonly guard: DraftGuard },
+): ReactElement {
+  const { settings, guard } = props
+  const selectedKey = useSettingsRequest((state) => state.faceKey)
   const selected: Face = FACES.find((face) => face.key === selectedKey) ?? FACES[0]
   const repositoryName = useWorkflowRepositoryName()
 
@@ -79,7 +160,7 @@ function ScreenNavSettingsDialogBody(props: ScreenNavSettingsProps): ReactElemen
           type="button"
           className={styles["close"]}
           aria-label="閉じる（Esc）"
-          onClick={settings.onClose}
+          onClick={guard.requestClose}
         >
           <X size={18} strokeWidth={1.8} />
         </button>
@@ -110,9 +191,11 @@ function ScreenNavSettingsDialogBody(props: ScreenNavSettingsProps): ReactElemen
                       type="button"
                       key={face.key}
                       title={
-                        changedCount > 0
-                          ? `既定と違う項目が ${String(changedCount)} 件ある`
-                          : undefined
+                        face.key === WORKFLOW_FACE_KEY && guard.draftCount > 0
+                          ? "未保存の変更がある"
+                          : changedCount > 0
+                            ? `既定と違う項目が ${String(changedCount)} 件ある`
+                            : undefined
                       }
                       className={clsx(
                         styles["nav-item"],
@@ -120,11 +203,14 @@ function ScreenNavSettingsDialogBody(props: ScreenNavSettingsProps): ReactElemen
                       )}
                       aria-current={isSelected ? "page" : undefined}
                       onClick={() => {
-                        selectFace(face.key)
+                        guard.requestFace(face.key)
                       }}
                     >
                       <Icon size={16} strokeWidth={1.8} />
                       {face.label}
+                      {face.key === WORKFLOW_FACE_KEY && guard.draftCount > 0 && (
+                        <span className={styles["nav-dirty"]} aria-hidden="true" />
+                      )}
                       {changedCount > 0 && (
                         <span className={styles["nav-count"]} aria-hidden="true">
                           {changedCount}
@@ -141,6 +227,59 @@ function ScreenNavSettingsDialogBody(props: ScreenNavSettingsProps): ReactElemen
           <SelectedFace face={selected} settings={settings} />
         </section>
       </div>
+      {guard.pending.kind !== "none" && (
+        <div className={styles["confirm"]}>
+          <div
+            className={styles["confirm-box"]}
+            role="alertdialog"
+            aria-label="未保存の変更"
+            aria-modal="true"
+          >
+            <Text
+              element="p"
+              size="body"
+              tone="ink"
+              weight="bold"
+              className={styles["confirm-title"]}
+            >
+              ワークフローの変更が保存されていない
+            </Text>
+            <Text
+              element="p"
+              size="label"
+              tone="ink-quiet"
+              weight="inherit"
+              className={styles["confirm-title"]}
+            >
+              {`.tw/config.toml へまだ書いていない変更が ${String(guard.draftCount)} 件ある。`}
+            </Text>
+            <div className={styles["confirm-actions"]}>
+              <Button
+                variant="outline"
+                size="label"
+                pressed="none"
+                disabled={false}
+                disclosure={{ kind: "none" }}
+                className={styles["confirm-button"]}
+                onClick={guard.onDiscard}
+              >
+                {guard.pending.kind === "close" ? "捨てて閉じる" : "捨てて移る"}
+              </Button>
+              <Button
+                variant="solid-ink"
+                size="label"
+                pressed="none"
+                disabled={!guard.canSave}
+                disclosure={{ kind: "none" }}
+                className={styles["confirm-button"]}
+                onClick={guard.onSave}
+              >
+                {guard.pending.kind === "close" ? "保存して閉じる" : "保存して移る"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }

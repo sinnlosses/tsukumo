@@ -7,6 +7,7 @@ import styles from "./workflow-save-band.module.css"
 
 export function WorkflowSaveBand(props: {
   readonly change: ScreenNavWorkflowSettingDraftChange
+  readonly draftCount: number
   readonly busy: boolean
   readonly canSave: boolean
   readonly onSave: () => void
@@ -25,6 +26,17 @@ export function WorkflowSaveBand(props: {
         >
           <span aria-hidden="true">● </span>
           {props.change.text}
+        </Text>
+      )}
+      {props.draftCount > 0 && (
+        <Text
+          element="p"
+          size="label"
+          tone="ink-quiet"
+          weight="inherit"
+          className={styles["count"]}
+        >
+          {`未保存の変更 ${String(props.draftCount)}件`}
         </Text>
       )}
       <Button

@@ -108,7 +108,7 @@ describe("設定のダイアログの「ワークフロー」の面（読み取�
     expect(bandText()).toBe("やめる保存")
 
     fireEvent.click(menuItem("架空の甲", "ひとつ下へ"))
-    expect(bandText()).toBe("● 並びを変えたやめる保存")
+    expect(bandText()).toBe("● 並びを変えた未保存の変更 1件やめる保存")
     expect(isDisabled("保存")).toBe(false)
 
     fireEvent.click(bandButton("保存"))

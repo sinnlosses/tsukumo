@@ -279,7 +279,7 @@ describe("設定のダイアログの「ワークフロー」の面（つかん�
     expect(rowClasses(list).some((name) => name.includes("step-drop"))).toBe(false)
     expect(announcement()).toBe("架空の甲 を 3 番目へ置いた")
     expect(typedElement(dialog().querySelector("footer"), HTMLElement, "下の帯").textContent).toBe(
-      "● 並びを変えたやめる保存",
+      "● 並びを変えた未保存の変更 1件やめる保存",
     )
     expect(setCommands(sent)).toEqual([])
   })
@@ -391,7 +391,7 @@ describe("設定のダイアログの「ワークフロー」の面（リポジ�
     operate()
 
     expect(typedElement(dialog().querySelector("footer"), HTMLElement, "下の帯").textContent).toBe(
-      `● ${text}やめる保存`,
+      `● ${text}未保存の変更 1件やめる保存`,
     )
     expect(bandButton("保存").getAttribute("aria-disabled")).toBeNull()
   })

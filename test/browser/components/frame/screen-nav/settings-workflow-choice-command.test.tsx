@@ -124,7 +124,7 @@ describe("設定のダイアログの「ワークフロー」の面（選択と�
     expect(radio("架空のベータ").checked).toBe(true)
     expect(isSaveDisabled()).toBe(false)
     expect(setCommands(sent)).toEqual([])
-    expect(bandText()).toBe("● 架空の選択を変えたやめる保存")
+    expect(bandText()).toBe("● 架空の選択を変えた未保存の変更 1件やめる保存")
   })
 
   it("テキストを替えて保存すると、欄のキーと入力した文字列で1回だけ書き、返った面で描き直す", async () => {
@@ -232,7 +232,7 @@ describe("設定のダイアログの「ワークフロー」の面（選択と�
 
     fireEvent.click(menuItem("架空の乙", "並びから外す"))
     fireEvent.click(radio("架空のベータ"))
-    expect(bandText()).toBe("● 設定を変えたやめる保存")
+    expect(bandText()).toBe("● 設定を変えた未保存の変更 2件やめる保存")
     fireEvent.click(bandButton("保存"))
 
     await waitFor(() => {

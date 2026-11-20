@@ -5,9 +5,12 @@
 // 下の帯に「やめる」「保存」を置き、操作は保存するまで書かない。
 // 欄はワークフローの設定コマンドから来たものだけで、出せないときは欄を出さずに何が無いかを1文で言う。
 
-import type { ReactElement } from "react"
+import { useRef, type ReactElement } from "react"
 
+import { useExternalSync } from "../../../../hooks/use-external-sync.ts"
+import { useUnmountEffect } from "../../../../hooks/use-mount-effect.ts"
 import { useWorkflowSetting } from "../hooks/use-workflow-setting.ts"
+import { useWorkflowDraft } from "../hooks/workflow-draft-store.ts"
 import { ScreenNavSettingsFaceFrame } from "./screen-nav-settings-face-frame.tsx"
 import type { ScreenNavSettingsStoreProps } from "./screen-nav-settings-store.tsx"
 import { WorkflowField } from "./workflow-field/workflow-field.tsx"
@@ -20,6 +23,26 @@ export function ScreenNavSettingsWorkflowFace(props: {
   readonly store: ScreenNavSettingsStoreProps
 }): ReactElement {
   const setting = useWorkflowSetting()
+  // 保存の口は描くたびに作り直されるので、預けるのは最新の口を呼ぶ1つの関数だけにして、件数が変わったときに預け直す。
+  const latestSave = useRef<() => Promise<boolean>>(() => Promise.resolve(true))
+  const draftCount = setting.kind === "available" ? setting.draftCount : 0
+  const canSave = setting.kind === "available" ? setting.canSave : true
+  useExternalSync(() => {
+    if (setting.kind === "available") {
+      latestSave.current = setting.saveAndWait
+    }
+  }, [setting])
+  useExternalSync(() => {
+    const { register, clear } = useWorkflowDraft.getState()
+    if (draftCount > 0) {
+      register({ count: draftCount, canSave, save: () => latestSave.current() })
+    } else {
+      clear()
+    }
+  }, [draftCount, canSave])
+  useUnmountEffect(() => {
+    useWorkflowDraft.getState().clear()
+  })
 
   switch (setting.kind) {
     case "loading":
@@ -49,6 +72,7 @@ export function ScreenNavSettingsWorkflowFace(props: {
           foot={
             <WorkflowSaveBand
               change={setting.change}
+              draftCount={setting.draftCount}
               busy={setting.busy}
               onSave={setting.onSave}
               onCancel={setting.onCancel}

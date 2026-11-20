@@ -1,6 +1,7 @@
 /* 設定のダイアログ。880×600（高さは画面の 86% まで）の箱に、頭・ナビ・面を置く。 */
 
 .dialog[open] {
+  position: relative;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
@@ -128,6 +129,48 @@
   color: var(--ground);
   font-size: var(--font-label);
   font-weight: 700;
+}
+/* ワークフローに未保存の変更があるとき、ページ名の右に出す黄色の点。 */
+.nav-dirty {
+  position: absolute;
+  top: 50%;
+  right: var(--inline-control);
+  width: 8px;
+  height: 8px;
+  translate: 0 -50%;
+  border-radius: var(--radius-pill);
+  background: var(--state-warn);
+}
+/* 未保存の確認。設定の箱の全面を覆い、箱を真ん中に置く。 */
+.confirm {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--ground) 55%, transparent);
+}
+.confirm-box {
+  display: grid;
+  gap: var(--stack-block);
+  box-sizing: border-box;
+  width: min(360px, calc(100% - 2rem));
+  padding: var(--inline-group);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+.confirm-title {
+  margin: 0;
+}
+.confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--inline-control);
+}
+.confirm-button {
+  flex: none;
+  border-radius: var(--radius-md);
 }
 .face {
   display: flex;

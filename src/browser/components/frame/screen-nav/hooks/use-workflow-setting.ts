@@ -127,6 +127,10 @@ type ScreenNavWorkflowSetting =
       readonly rows: readonly ScreenNavWorkflowSettingRow[]
       readonly change: ScreenNavWorkflowSettingDraftChange
       readonly onSave: () => void
+      /** 書いて、書けたかを返す。 */
+      readonly saveAndWait: () => Promise<boolean>
+      /** 下書きのある欄の数。 */
+      readonly draftCount: number
       readonly onCancel: () => void
       /** 偽のあいだ「保存」は押せない（空のコマンドが下書きにある）。 */
       readonly canSave: boolean
@@ -211,6 +215,14 @@ export function useWorkflowSetting(): ScreenNavWorkflowSetting {
   const setTextDraft = (key: string, next: string): void => {
     setTextDrafts((previous) => new Map(previous).set(key, next))
   }
+  const writes = dirtyFields.flatMap((field): FieldWrite[] => {
+    if (field.kind === "steps") {
+      const draft = drafts.get(field.key)
+      return draft === undefined ? [] : [{ key: field.key, value: JSON.stringify(draft) }]
+    }
+    const draft = textDrafts.get(field.key)
+    return draft === undefined ? [] : [{ key: field.key, value: draft }]
+  })
   return {
     kind: "available",
     repository: repositoryLine(view.repository),
@@ -239,18 +251,18 @@ export function useWorkflowSetting(): ScreenNavWorkflowSetting {
     }),
     change: draftChange(dirtyFields, drafts),
     onSave: () => {
-      const writes = dirtyFields.flatMap((field): FieldWrite[] => {
-        if (field.kind === "steps") {
-          const draft = drafts.get(field.key)
-          return draft === undefined ? [] : [{ key: field.key, value: JSON.stringify(draft) }]
-        }
-        const draft = textDrafts.get(field.key)
-        return draft === undefined ? [] : [{ key: field.key, value: draft }]
-      })
       if (writes.length > 0) {
         mutation.mutate(writes)
       }
     },
+    saveAndWait: async () => {
+      if (writes.length === 0) {
+        return true
+      }
+      const outcome = await mutation.mutateAsync(writes)
+      return outcome.kind === "saved"
+    },
+    draftCount: dirtyFields.length,
     onCancel: () => {
       setDrafts(new Map())
       setTextDrafts(new Map())
