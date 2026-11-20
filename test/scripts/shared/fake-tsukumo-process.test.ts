@@ -24,6 +24,45 @@ afterEach(() => {
   }
 })
 
+function isAlive(pid: number): boolean {
+  try {
+    process.kill(pid, 0)
+    return true
+  } catch {
+    return false
+  }
+}
+
+describe("spawnFakeTsukumo", () => {
+  test("起こした側が止め損ねたまま終わっても、子は残らない", async () => {
+    const entry = join(home(), "sleeper.js")
+    writeFileSync(entry, "setTimeout(() => {}, 60000)")
+    const module = join(process.cwd(), "scripts/shared/fake-tsukumo-process.ts")
+    const parentScript = `
+      import { spawnFakeTsukumo } from ${JSON.stringify(module)}
+      const child = spawnFakeTsukumo({ entry: ${JSON.stringify(entry)}, cwd: ${JSON.stringify(home())},
+        port: 0, home: ${JSON.stringify(home())}, extraEnv: {}, dropInheritedTsukumoEnv: false,
+        stderr: "pipe", detached: false })
+      process.stdout.write(String(child.pid), () => process.exit(0))
+    `
+    const parent = spawn("node", ["--input-type=module", "-e", parentScript], {
+      stdio: ["ignore", "pipe", "pipe"],
+    })
+    children.push(parent)
+    let out = ""
+    parent.stdout.on("data", (chunk: Buffer) => {
+      out += chunk.toString("utf8")
+    })
+    await new Promise((resolve) => parent.once("exit", resolve))
+    const grandchild = Number(out)
+    expect(grandchild).toBeGreaterThan(0)
+    for (let waited = 0; isAlive(grandchild) && waited < 3000; waited += 50) {
+      await new Promise((resolve) => setTimeout(resolve, 50))
+    }
+    expect(isAlive(grandchild)).toBe(false)
+  })
+})
+
 describe("waitForViewUrl", () => {
   test("子の pid の所在のファイルに書かれた URL を返す。stdout の URL は見ない", async () => {
     const child = spawnScript(

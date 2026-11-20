@@ -32,7 +32,7 @@ export function spawnFakeTsukumo(options: FakeTsukumoOptions): ChildProcess {
         Object.entries(process.env).filter(([name]) => !name.startsWith("TSUKUMO_")),
       )
     : process.env
-  return spawn("node", [options.entry], {
+  const child = spawn("node", [options.entry], {
     cwd: options.cwd,
     env: {
       ...inherited,
@@ -47,6 +47,8 @@ export function spawnFakeTsukumo(options: FakeTsukumoOptions): ChildProcess {
     stdio: ["ignore", "pipe", options.stderr],
     detached: options.detached,
   })
+  stopWithParent(child, options.detached)
+  return child
 }
 
 /**
@@ -93,6 +95,46 @@ export function waitForViewUrl(
     })
   })
 }
+
+/**
+ * 起こした側が終わる・signal で落とされるときに、子（detached なら子のグループ）を止める。
+ * 呼び手が `close` や `stopTsukumo` を呼び損ねても、待ち受けが親より長く残らない。
+ * signal を受けたときは子を止めたあと、既定の動作で終わらせるために同じ signal を送り直す。
+ */
+function stopWithParent(child: ChildProcess, detached: boolean): void {
+  const pid = child.pid
+  if (pid === undefined) {
+    return
+  }
+  const stopChild = (): void => {
+    try {
+      process.kill(detached ? -pid : pid, "SIGTERM")
+    } catch {
+      // すでに終わっている
+    }
+  }
+  const handlers = PARENT_STOP_SIGNALS.map((signal) => ({
+    signal,
+    handler: () => {
+      stopChild()
+      release()
+      process.kill(process.pid, signal)
+    },
+  }))
+  const release = (): void => {
+    process.off("exit", stopChild)
+    for (const { signal, handler } of handlers) {
+      process.off(signal, handler)
+    }
+  }
+  process.on("exit", stopChild)
+  for (const { signal, handler } of handlers) {
+    process.on(signal, handler)
+  }
+  child.once("exit", release)
+}
+
+const PARENT_STOP_SIGNALS = ["SIGINT", "SIGTERM", "SIGHUP"] as const
 
 /** 所在のファイルを見に行く間隔（ミリ秒）。 */
 const LOCATION_POLL_INTERVAL_MS = 50
