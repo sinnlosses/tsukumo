@@ -14,7 +14,11 @@ export const REPORT_PART_CHOICE_GUIDE =
   "数の大きさと前後は `Chart`・`keyFigures`、済み・未了の並びは `ItemList` の check、" +
   "試した手の成否は `Trace`、" +
   "名前と値の対は `DescriptionList`、" +
-  "複数の観点で揃える 3 行以上だけ `Table`、文で足りる説明は `Paragraph`"
+  "複数の観点で揃える 3 行以上だけ `Table`、文で足りる説明は `Paragraph`。" +
+  "題材が合えば: いつ何が起きどこで延びたかは `Timeline`（区間の長さを比べるだけなら `Chart` の span）、" +
+  "やり取りの順・状態の移り変わりは `Mermaid`（名前のつながりと分岐は `Graph`）、案×観点の可否の格子は `Matrix`、" +
+  "相関・分布・目標に対する値は `Plot`、同じ軸の図を群ごとに並べるなら `ChartGrid`、" +
+  "原文をそのまま引くなら `Quote`（コード・コマンド・エラー文は `Code`）、前提の値で結論が変わるなら `ParameterSlider`"
 
 /**
  * メインビューが HTML を描けることを前提に、出力スタイルのレポート規約を上書きする文面。

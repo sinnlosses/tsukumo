@@ -160,7 +160,7 @@ export const claimsBlockSchema = z
     aside,
   })
   .describe(
-    "確かめていないこと・推測を、主張ごとに確度・根拠・確かめ方で1行ずつ書く。テスト・型検査の結果は checks",
+    "確かめていないこと・推測を、主張ごとに確度・根拠・確かめ方で1行ずつ書く。確定でない項目は howToVerify 必須。テスト・型検査の結果は checks",
   )
 
 export const quoteBlockSchema = z.object({
@@ -190,10 +190,7 @@ export const descriptionListBlockSchema = z.object({
 
 export const markdownBlockSchema = z.object({
   kind: z.literal("markdown"),
-  markdown: partCardNote(
-    z.string(),
-    "どの部品にも当てはまらない記法（svg・区切り線・区画の格子 cols / card・ラベル badge）だけ",
-  ),
+  markdown: partCardNote(z.string(), "どの部品にも当てはまらない記法（ラベル badge など）だけ"),
   fold,
   aside,
 })

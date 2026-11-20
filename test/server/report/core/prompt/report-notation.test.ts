@@ -137,8 +137,22 @@ describe("REPORT_NOTATION_PROMPT", () => {
     }
   })
 
+  it("条 9 に少ない部品7種の名前がある", () => {
+    for (const name of [
+      "Timeline",
+      "Mermaid",
+      "Matrix",
+      "Plot",
+      "ChartGrid",
+      "Quote",
+      "ParameterSlider",
+    ]) {
+      expect(REPORT_NOTATION_PROMPT).toContain(`\`${name}\``)
+    }
+  })
+
   it("文面の字数は上限以下に収まり、条を足すと落ちる", () => {
-    const limit = 1625
+    const limit = 1883
     const length = REPORT_NOTATION_PROMPT.length
 
     expect(

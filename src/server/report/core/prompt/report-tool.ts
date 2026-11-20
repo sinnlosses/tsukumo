@@ -126,15 +126,16 @@ export const REPORT_FIELD_CARD_NOTES = {
 export function reportFigureDescription(preference: FigurePreference): string {
   const head = "図1つ（図の部品の ID）。"
   const parts = "図の部品（image・mermaid・graph・svg・timeline・compare・chart・stats・plot）"
+  const notFigure = "表（Table）・箇条書きは図の部品ではないので、節に置く。"
   const conditions =
     "名前が3つ以上出てきてつながる・流れや分岐がある・構造の前後がある・数が3つ以上ある"
   if (preference === "text") {
     return (
       `${head}利用者は文を主に読む設定なので、次のどれかがあるセクションがなければ図は置かない（figure を省く。省くと何も描かれない）: ${conditions}。` +
-      `あるセクションには${parts}を置いてよい。`
+      `あるセクションには${parts}を置いてよい。${notFigure}`
     )
   }
-  return `${head}次のどれかがあれば${parts}を置く: ${conditions}。無ければ省く。`
+  return `${head}次のどれかがあれば${parts}を置く: ${conditions}。無ければ省く。${notFigure}`
 }
 
 /**
