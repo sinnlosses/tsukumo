@@ -140,6 +140,13 @@
   text-align: left;
   cursor: pointer;
 }
+/* ページではなく操作なので、ナビの下端に寄せて並びと切り離す。 */
+.nav-spacer {
+  flex: 1;
+}
+.nav-foot {
+  font-size: var(--font-label);
+}
 .nav-item:hover {
   color: var(--ink);
 }

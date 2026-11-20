@@ -53,7 +53,7 @@ const MARGIN_DECLARATION_LIMITS: Readonly<Record<string, number>> = {
   "browser/components/frame/screen-nav/components/phone-head.module.css": 2,
   "browser/components/frame/screen-nav/components/screen-nav-settings-dialog.module.css": 2,
   "browser/components/frame/screen-nav/components/screen-nav-settings-face-frame.module.css": 1,
-  "browser/components/frame/screen-nav/components/screen-nav-settings-look.module.css": 2,
+  "browser/components/frame/screen-nav/components/screen-nav-settings-look.module.css": 1,
   "browser/components/frame/screen-nav/components/screen-nav-settings.module.css": 5,
   "browser/components/frame/screen-nav/components/session-switcher.module.css": 5,
   "browser/components/frame/screen-nav/components/workflow-field/workflow-choice-field.module.css": 1,

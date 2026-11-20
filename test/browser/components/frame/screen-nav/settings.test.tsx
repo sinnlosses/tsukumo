@@ -237,20 +237,6 @@ describe("設定の歯車（帯の右端）", () => {
     expect(faceLabels()).toEqual(["書き上げる速さ", "動き", "待ちの一言", "進み具合の催促"])
   })
 
-  it("見た目の面の見本の帯が、選んだ色を映す", () => {
-    renderScreenNav()
-    fireEvent.click(gear())
-
-    fireEvent.change(colorInput("地の色"), { target: { value: "#101010" } })
-
-    const band = typedElement(
-      openedSettingsDialog().querySelector('[class*="band"]'),
-      HTMLElement,
-      "見本の帯",
-    )
-    expect(band.style.backgroundColor).toBe("#101010")
-  })
-
   it("色を変えると documentElement へすぐ反映し、少し待つと覚えさせる", async () => {
     const sent: SentCommand[] = []
     renderScreenNav({}, (command) => {
@@ -399,7 +385,7 @@ describe("設定の歯車（新しいセッションの既定）", () => {
     ])
   })
 
-  it("引き出しの設定の面は、引き出しに出す4つの面の見出しをこの順に並べ、見た目の面は見本の帯つきで、ワークフローは出さない", () => {
+  it("引き出しの設定の面は、引き出しに出す4つの面の見出しをこの順に並べ、見た目の面はテーマの札つきで、ワークフローは出さない", () => {
     renderScreenNav()
     fireEvent.click(screen.getByRole("button", { name: "やり取りとタスクを開く" }))
     const drawer = screen.getByRole("dialog", { name: "引き出し" })
@@ -410,7 +396,7 @@ describe("設定の歯車（新しいセッションの既定）", () => {
         .getAllByText(/^(見た目|新しいセッション|演出|タスクの実行|ワークフロー)$/u)
         .map((heading) => heading.textContent),
     ).toEqual(["見た目", "新しいセッション", "演出", "タスクの実行"])
-    expect(within(drawer).getByText("領域の中の字")).toBeDefined()
+    expect(within(drawer).getByRole("group", { name: "テーマ" })).toBeDefined()
   })
 
   // 狭い画面では帯の歯車が消え、同じ中身が引き出しの設定の面に出る。

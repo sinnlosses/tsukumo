@@ -1,31 +1,60 @@
-/* 設定のダイアログの「見た目」の面。帯の地・領域・字の色は利用者が選んだ値を inline で受ける。 */
+/* 設定のダイアログの「見た目」の面。札の地・領域・字の色はテーマの組を inline で受ける（札は選んでいる色に左右されない）。 */
 
-.band {
-  display: flex;
-  align-items: center;
-  gap: var(--space-lg);
-  box-sizing: border-box;
-  height: 54px;
-  margin-bottom: var(--space-xs);
-  padding: 0 var(--space-lg);
+.presets {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 7rem), 1fr));
+  gap: var(--inline-group);
+  margin-bottom: var(--stack-tight);
+}
+.preset {
+  display: grid;
+  gap: var(--stack-block);
+  padding: var(--inset-card);
   border: 1px solid var(--rule);
   border-radius: var(--radius-lg);
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--font-label);
+  text-align: left;
+  cursor: pointer;
 }
-.band-surface {
+.preset[aria-pressed="true"] {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+.preset-sample {
   display: flex;
   align-items: center;
-  height: 30px;
-  padding: 0 var(--space-lg);
+  gap: var(--inline-control);
+  flex-wrap: wrap;
+  min-width: 0;
+  min-height: 40px;
+  padding: var(--inline-control) var(--inline-group);
   border-radius: var(--radius-md);
+  font-size: var(--font-label);
 }
-/* 差し色の輪。色は `accent`（パックの持ち物）で、ここでは選べない。 */
-.band-ring {
-  box-sizing: border-box;
-  width: 18px;
-  height: 18px;
-  margin-left: auto;
-  border: 2px solid var(--accent);
-  border-radius: 50%;
+.preset-surface {
+  padding-inline: var(--inline-control);
+  border-radius: var(--radius-sm);
+  font-style: normal;
+}
+.custom-summary {
+  display: flex;
+  align-items: baseline;
+  gap: var(--inline-group);
+  padding-block: var(--stack-block);
+  cursor: pointer;
+}
+.custom-summary::before {
+  content: "▸";
+}
+details[open] > .custom-summary::before {
+  content: "▾";
+}
+.custom-note {
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
 }
 .control {
   display: flex;

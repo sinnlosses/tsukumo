@@ -38,6 +38,7 @@ import {
   isWaitingLineDelay,
   type SpeakingPace,
 } from "../../../../../shared/session/speaking-pace.ts"
+import type { AppearanceTheme } from "../../../../domain/appearance-color.ts"
 import {
   effortLabel,
   resolveEffortSelect,
@@ -133,6 +134,8 @@ export type ScreenNavSettings = {
   readonly onClose: () => void
   readonly colors: readonly ScreenNavSettingsColor[]
   readonly colorNotice: ScreenNavSettingsColorNotice
+  readonly themeId: AppearanceTheme["id"] | "custom"
+  readonly onChooseTheme: (theme: AppearanceTheme) => void
   readonly adjust: ScreenNavSettingsAdjust
   readonly sessionDefault: ScreenNavSettingsSessionDefault
   readonly backgroundModels: ScreenNavSettingsBackgroundModels
@@ -357,6 +360,8 @@ export function useSettings(): ScreenNavSettings {
     items,
     colors: color.colors,
     colorNotice: color.colorNotice,
+    themeId: color.themeId,
+    onChooseTheme: color.onChooseTheme,
     adjust: adjust.adjust,
     pageReset,
     resetAll: {

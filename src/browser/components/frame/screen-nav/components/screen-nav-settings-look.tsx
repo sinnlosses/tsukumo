@@ -1,13 +1,11 @@
-// 設定のダイアログの「見た目」の面。3色の見本の帯と、色ごとの行（色見本の四角＋16進の読み出し）、背景の暗さ・パネルのぼかし・パネルの濃さの範囲入力を置く。
-// 色の読み書きは `ScreenNavSettings.colors`（`useAppearanceColor`）のままで、帯はその値をそのまま描く。
+// 設定のダイアログの「見た目」の面。テーマの見本の札と、畳んだ「カスタムの色」（色ごとの行：色見本の四角＋16進の読み出し）、背景の暗さ・パネルのぼかし・パネルの濃さの範囲入力を置く。
+// 色の読み書きは `ScreenNavSettings.colors` と `themeId`・`onChooseTheme`（`useAppearanceColor`）のままで、どの組とも違う色のときだけカスタムを開く。
 
 import { useId, type ReactElement } from "react"
 
 import { BLUR_RANGE, FILL_RANGE } from "../../../../../shared/session/gear-preference.ts"
 import { VEIL_PERCENT_RANGE } from "../../../../domain/appearance-adjust.ts"
-import type { AppearanceColorKey } from "../../../../domain/appearance-color.ts"
-import { Button } from "../../../ui/button/button.tsx"
-import { HStack } from "../../../ui/h-stack/h-stack.tsx"
+import { APPEARANCE_THEMES } from "../../../../domain/appearance-color.ts"
 import { Surface } from "../../../ui/surface/surface.tsx"
 import { Text } from "../../../ui/text/text.tsx"
 import type { ScreenNavSettingsItem, SettingItemKey } from "../hooks/use-settings.ts"
@@ -21,52 +19,68 @@ export function ScreenNavSettingsLookFace(props: ScreenNavSettingsProps): ReactE
   const { adjust } = settings
   const fieldId = useId()
 
-  function colorOf(key: AppearanceColorKey): string {
-    return settings.colors.find((color) => color.key === key)?.value ?? "transparent"
-  }
-
   return (
     <>
-      <div className={styles["band"]} style={{ backgroundColor: colorOf("ground") }}>
-        <span
-          className={styles["band-surface"]}
-          style={{ backgroundColor: colorOf("surface"), color: colorOf("ink") }}
-        >
-          領域の中の字
-        </span>
-        <span style={{ color: colorOf("ink") }}>地の上の字 あ Aa</span>
-        <span className={styles["band-ring"]} title="差し色はキャラクターが決める" />
-      </div>
-      {settings.colors.map((color) => (
-        <ScreenNavSettingsRow
-          key={color.key}
-          itemKey={`color-${color.key}`}
-          item={settings.items[`color-${color.key}`]}
-          name={<label htmlFor={`${fieldId}-${color.key}`}>{color.label}</label>}
-        >
-          <div className={styles["control"]}>
-            <input
-              id={`${fieldId}-${color.key}`}
-              className={styles["swatch"]}
-              type="color"
-              value={color.value}
-              onChange={(event) => {
-                color.onChange(event.target.value)
-              }}
-            />
-            <Surface
-              element="div"
-              tone="ground"
-              space="none"
-              radius="md"
-              shadow="none"
-              className={styles["hex-face"]}
+      <div className={styles["presets"]} role="group" aria-label="テーマ">
+        {APPEARANCE_THEMES.map((theme) => (
+          <button
+            key={theme.id}
+            type="button"
+            className={styles["preset"]}
+            aria-pressed={settings.themeId === theme.id}
+            onClick={() => {
+              settings.onChooseTheme(theme)
+            }}
+          >
+            <span
+              className={styles["preset-sample"]}
+              style={{ backgroundColor: theme.ground, color: theme.ink }}
             >
-              <span className={styles["hex"]}>{color.value}</span>
-            </Surface>
-          </div>
-        </ScreenNavSettingsRow>
-      ))}
+              <i className={styles["preset-surface"]} style={{ backgroundColor: theme.surface }}>
+                領域
+              </i>
+              {theme.name}
+            </span>
+            {theme.id === "night" ? "夜（既定）" : theme.name}
+          </button>
+        ))}
+      </div>
+      <details open={settings.themeId === "custom"}>
+        <summary className={styles["custom-summary"]}>
+          カスタムの色
+          <span className={styles["custom-note"]}>地・領域・字の3色を 16 進で決める</span>
+        </summary>
+        {settings.colors.map((color) => (
+          <ScreenNavSettingsRow
+            key={color.key}
+            itemKey={`color-${color.key}`}
+            item={settings.items[`color-${color.key}`]}
+            name={<label htmlFor={`${fieldId}-${color.key}`}>{color.label}</label>}
+          >
+            <div className={styles["control"]}>
+              <input
+                id={`${fieldId}-${color.key}`}
+                className={styles["swatch"]}
+                type="color"
+                value={color.value}
+                onChange={(event) => {
+                  color.onChange(event.target.value)
+                }}
+              />
+              <Surface
+                element="div"
+                tone="ground"
+                space="none"
+                radius="md"
+                shadow="none"
+                className={styles["hex-face"]}
+              >
+                <span className={styles["hex"]}>{color.value}</span>
+              </Surface>
+            </div>
+          </ScreenNavSettingsRow>
+        ))}
+      </details>
       <RangeRow
         itemKey="veil"
         item={settings.items.veil}
@@ -99,28 +113,6 @@ export function ScreenNavSettingsLookFace(props: ScreenNavSettingsProps): ReactE
         readout={`${adjust.fill}%`}
         onChange={adjust.onChangeFill}
       />
-      <HStack
-        element="div"
-        name={{ kind: "none" }}
-        gap="lg"
-        align="center"
-        justify="between"
-        wrap="nowrap"
-        className={rowStyles["screen-nav-settings-row"]}
-      >
-        <span>初回の説明</span>
-        <Button
-          variant="outline"
-          size="secondary"
-          pressed="none"
-          disabled={false}
-          disclosure={{ kind: "none" }}
-          className=""
-          onClick={settings.onReplayFirstNotes}
-        >
-          初回の説明をもう一度出す
-        </Button>
-      </HStack>
       {settings.colorNotice.kind === "shown" && (
         <Text
           element="p"

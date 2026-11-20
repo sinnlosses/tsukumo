@@ -121,6 +121,8 @@ const PARTS: ScreenNavParts = {
       },
     ],
     colorNotice: { kind: "none" },
+    themeId: "night",
+    onChooseTheme: noop,
     adjust: {
       veilPercent: 75,
       veilFollowsPack: true,

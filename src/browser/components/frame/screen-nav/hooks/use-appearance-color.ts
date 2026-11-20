@@ -20,8 +20,11 @@ import {
 } from "../../../../../shared/session/gear-preference.ts"
 import {
   changeAppearanceColor,
+  matchingThemeId,
+  themeOverride,
   type AppearanceColorChange,
   type AppearanceColorKey,
+  type AppearanceTheme,
 } from "../../../../domain/appearance-color.ts"
 import { useDebouncedCallback } from "../../../../hooks/use-debounced-callback.ts"
 import {
@@ -50,6 +53,9 @@ export type ScreenNavSettingsColorNotice =
 type AppearanceColor = {
   readonly colors: readonly ScreenNavSettingsColor[]
   readonly colorNotice: ScreenNavSettingsColorNotice
+  /** いま見えている3色と同じ組のテーマ。どの組とも違えば `custom`。 */
+  readonly themeId: AppearanceTheme["id"] | "custom"
+  readonly onChooseTheme: (theme: AppearanceTheme) => void
   /** 上書きしてある色の数。 */
   readonly changedCount: number
   readonly onReset: () => void
@@ -121,17 +127,25 @@ export function useAppearanceColor(): AppearanceColor {
     setDisplayColor((current) => ({ ...current, [key]: readCurrentColor(key) }))
   }
 
-  function onReset(): void {
-    applyAppearanceColorOverride(DEFAULT_APPEARANCE_COLOR_OVERRIDE)
-    setOverride(DEFAULT_APPEARANCE_COLOR_OVERRIDE)
+  function replaceOverride(next: AppearanceColorOverride): void {
+    applyAppearanceColorOverride(next)
+    setOverride(next)
     setColorNotice(NO_COLOR_NOTICE)
-    saveOverride(APPEARANCE_COLOR_SAVE_KEY, DEFAULT_APPEARANCE_COLOR_OVERRIDE)
-    // 上書きを外した直後の `:root` の既定値を読み直す（既定に戻したあとの操作子は既定を指す）。
+    saveOverride(APPEARANCE_COLOR_SAVE_KEY, next)
+    // 反映した直後の `:root` の値を読み直す（既定に戻したあとの操作子は既定を指す）。
     setDisplayColor({
       ground: readCurrentColor("ground"),
       surface: readCurrentColor("surface"),
       ink: readCurrentColor("ink"),
     })
+  }
+
+  function chooseTheme(theme: AppearanceTheme): void {
+    replaceOverride(themeOverride(theme))
+  }
+
+  function onReset(): void {
+    replaceOverride(DEFAULT_APPEARANCE_COLOR_OVERRIDE)
   }
 
   return {
@@ -148,6 +162,8 @@ export function useAppearanceColor(): AppearanceColor {
       },
     })),
     colorNotice,
+    themeId: matchingThemeId(displayColor),
+    onChooseTheme: chooseTheme,
     changedCount: countOverride(override),
     onReset,
     clearNotice: () => {

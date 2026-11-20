@@ -30,7 +30,7 @@ describe("設定のダイアログの範囲の群分け", () => {
       "タスクの実行",
     ])
     expect(lines[5]).toMatch(/^このリポジトリ/)
-    expect(lines.slice(6)).toEqual(["ワークフロー"])
+    expect(lines.slice(6)).toEqual(["ワークフロー", "", "初回の説明をもう一度出す"])
   })
 
   it("「このリポジトリ」の見出しの右にリポジトリの名前を出す", async () => {

@@ -33,6 +33,70 @@ const APPEARANCE_COLOR_KEYS = [
  */
 const BACKGROUND_VEIL_FLOOR_TOKEN_NAME = "--character-background-veil-floor"
 
+export type AppearanceTheme = {
+  readonly id: "night" | "ink" | "dusk" | "lantern"
+  readonly name: string
+  readonly ground: HexColor
+  readonly surface: HexColor
+  readonly ink: HexColor
+}
+
+/**
+ * 設定の「見た目」に並べるテーマの組。差し色はキャラクターのパックの持ち物なので入れない。
+ * `night` は `theme.css` の `:root` の既定と同じ値で、選ぶと上書きを外す（既定の色が変わっても追随する）。
+ * 見本の札を描くために16進を持つ。
+ */
+export const APPEARANCE_THEMES = [
+  {
+    id: "night",
+    name: "夜",
+    ground: hexColorSchema.parse("#191720"),
+    surface: hexColorSchema.parse("#221f2b"),
+    ink: hexColorSchema.parse("#e8e3ea"),
+  },
+  {
+    id: "ink",
+    name: "墨",
+    ground: hexColorSchema.parse("#101012"),
+    surface: hexColorSchema.parse("#1b1b1f"),
+    ink: hexColorSchema.parse("#d9d9de"),
+  },
+  {
+    id: "dusk",
+    name: "宵",
+    ground: hexColorSchema.parse("#141a26"),
+    surface: hexColorSchema.parse("#1d2534"),
+    ink: hexColorSchema.parse("#e2e8f2"),
+  },
+  {
+    id: "lantern",
+    name: "行灯",
+    ground: hexColorSchema.parse("#1d1915"),
+    surface: hexColorSchema.parse("#2a241e"),
+    ink: hexColorSchema.parse("#efe6da"),
+  },
+] as const satisfies readonly AppearanceTheme[]
+
+/** テーマを選んだときの上書き。`night` は既定なので上書きしない。 */
+export function themeOverride(theme: AppearanceTheme): AppearanceColorOverride {
+  return theme.id === "night"
+    ? { ground: undefined, surface: undefined, ink: undefined }
+    : { ground: theme.ground, surface: theme.surface, ink: theme.ink }
+}
+
+/** いま見えている3色と同じ組のテーマの id。どの組とも違えば `custom`。 */
+export function matchingThemeId(
+  shown: Record<AppearanceColorKey, string>,
+): AppearanceTheme["id"] | "custom" {
+  const found = APPEARANCE_THEMES.find(
+    (theme) =>
+      theme.ground === shown.ground.toLowerCase() &&
+      theme.surface === shown.surface.toLowerCase() &&
+      theme.ink === shown.ink.toLowerCase(),
+  )
+  return found === undefined ? "custom" : found.id
+}
+
 /** `:root` に差す1つのトークン。`value` が `undefined` なら差さずに外す（既定に戻す）。 */
 export type RootTokenWrite = {
   readonly name: string

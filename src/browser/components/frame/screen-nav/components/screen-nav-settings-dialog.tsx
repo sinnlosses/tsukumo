@@ -237,6 +237,14 @@ function ScreenNavSettingsDialogBody(
               </Fragment>
             )
           })}
+          <span className={styles["nav-spacer"]} />
+          <button
+            type="button"
+            className={clsx(styles["nav-item"], styles["nav-foot"])}
+            onClick={settings.onReplayFirstNotes}
+          >
+            初回の説明をもう一度出す
+          </button>
         </nav>
         {word === "" ? (
           <section className={styles["face"]} aria-label={selected.label}>

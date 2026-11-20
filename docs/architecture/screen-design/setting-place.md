@@ -64,6 +64,7 @@
 「このキャラクターの見た目」** で、変えたくなる時機も持ち先（`~/.tsukumo/state.json` と
 `~/.tsukumo/characters/<name>/`）も違う。色の検証は `src/shared/session/gear-preference.ts`、
 `:root` への差し方は `src/browser/domain/appearance-color.ts` に置く。
+**揃った3色の組は、テーマの見本4枚（夜・墨・宵・行灯）として見た目の面の頭に並べ**、16進は畳んだ「カスタムの色」に入れる（組は `APPEARANCE_THEMES`。差し色は組に入れない）。
 
 **背景の暗さ・パネルのぼかし・パネルの濃さは、色の下に並ぶ標準の範囲入力**（`src/browser/domain/appearance-adjust.ts`。`state.json` の欄は色と別の1つ）。
 背景の暗さは動かすまで値を持たず、その間はパックの `veil`（省略時 0.75）に従う。動かすと利用者の値が `veil` の前の項に入り、70% と地と字の色で決まる下限は割らない。

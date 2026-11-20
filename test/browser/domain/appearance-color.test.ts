@@ -1,6 +1,13 @@
+import { readFileSync } from "node:fs"
+
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
-import { changeAppearanceColor } from "../../../src/browser/domain/appearance-color.ts"
+import {
+  APPEARANCE_THEMES,
+  changeAppearanceColor,
+  matchingThemeId,
+  themeOverride,
+} from "../../../src/browser/domain/appearance-color.ts"
 import {
   applyAppearanceColorOverride,
   readCurrentColor,
@@ -222,5 +229,35 @@ describe("changeAppearanceColor", () => {
       kind: "accepted",
       override: { ground: undefined, surface: undefined, ink: "#f5f5f5" },
     })
+  })
+})
+
+describe("テーマの組", () => {
+  it.each(APPEARANCE_THEMES.map((theme) => [theme.name, theme] as const))(
+    "%s は地と字の差が下限を満たす",
+    (_name, theme) => {
+      expect(contrastOfVeiled(theme.ground, "#000000", 1, theme.ink)).toBeGreaterThanOrEqual(
+        MIN_CONTRAST,
+      )
+    },
+  )
+
+  it("夜は theme.css の既定と同じ値で、選ぶと上書きを外す", () => {
+    const css = readFileSync("src/browser/styles/theme.css", "utf8")
+    const night = APPEARANCE_THEMES[0]
+    expect(css).toContain(`--ground: ${night.ground};`)
+    expect(css).toContain(`--surface: ${night.surface};`)
+    expect(css).toContain(`--ink: ${night.ink};`)
+    expect(themeOverride(night)).toEqual(DEFAULT_APPEARANCE_COLOR_OVERRIDE)
+  })
+
+  it("見えている3色が組と同じならそのテーマ、違えばカスタム", () => {
+    const dusk = APPEARANCE_THEMES[2]
+    expect(matchingThemeId({ ground: "#141A26", surface: dusk.surface, ink: dusk.ink })).toBe(
+      "dusk",
+    )
+    expect(matchingThemeId({ ground: "#000000", surface: dusk.surface, ink: dusk.ink })).toBe(
+      "custom",
+    )
   })
 })
