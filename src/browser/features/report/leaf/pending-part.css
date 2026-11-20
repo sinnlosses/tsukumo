@@ -43,16 +43,18 @@
 }
 
 /* ミニ立ち絵。高さは下限 60px（それより小さいと姿が判別できない）から上限 96px のあいだでビューポートに追随する。
-   書く仕草は足元を軸に揺らし、出てくるときに一度だけ跳ねる。 */
+   書く仕草は足元を軸に揺らし、出てくるときに一度だけ跳ねる。
+   跳ねは外の箱、揺れは画に掛ける。同じ要素の transform に2本重ねると合成スレッドに載らず、
+   部品を描くメインスレッドの仕事と取り合って揺れが詰まる。 */
 .pending-mini {
   height: clamp(60px, 8vmin, 96px);
-  transform-origin: 50% 100%;
   pointer-events: none;
 }
 .pending-mini[data-mini-motion] {
-  animation:
-    pending-mini-hop 260ms ease-out,
-    pending-mini-scribble 0.55s ease-in-out 260ms infinite alternate;
+  animation: pending-mini-hop 260ms ease-out;
+}
+.pending-mini[data-mini-motion] > .pending-mini-body {
+  animation: pending-mini-scribble 0.55s ease-in-out 260ms infinite alternate;
 }
 @keyframes pending-mini-hop {
   40% {
@@ -76,6 +78,7 @@
   display: block;
   width: auto;
   height: 100%;
+  transform-origin: 50% 100%;
   filter: drop-shadow(0 0 4px var(--pending-mini-glow))
     drop-shadow(0 0 4px var(--pending-mini-glow)) drop-shadow(0 0 1px var(--pending-mini-rim))
     drop-shadow(0 0 1px var(--pending-mini-rim));
