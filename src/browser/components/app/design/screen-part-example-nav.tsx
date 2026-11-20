@@ -18,6 +18,8 @@ import type { ScreenPartExample } from "./screen-part-example-type.ts"
 
 const noop = (): void => {}
 
+const UNCHANGED_ITEM = { changed: false, resetTitle: "既定に戻す", onReset: noop }
+
 // 帯の `data-screen="conversation"` は body ごと縦に固定する組み方へ切り替えるので、見本帳（縦に流れる1枚）では会話以外の画面を名乗らせる。
 
 const FACE_IMAGE =
@@ -87,7 +89,37 @@ const PARTS: ScreenNavParts = {
     open: false,
     onOpen: noop,
     onClose: noop,
-    colors: [{ key: "ground", label: "地の色", value: "#f7f4ee", onChange: noop }],
+    items: {
+      "color-ground": UNCHANGED_ITEM,
+      "color-surface": UNCHANGED_ITEM,
+      "color-ink": UNCHANGED_ITEM,
+      veil: UNCHANGED_ITEM,
+      blur: UNCHANGED_ITEM,
+      fill: UNCHANGED_ITEM,
+      model: UNCHANGED_ITEM,
+      effort: UNCHANGED_ITEM,
+      permissionMode: UNCHANGED_ITEM,
+      figurePreference: UNCHANGED_ITEM,
+      "background-recommendation": UNCHANGED_ITEM,
+      "background-welcomeGreeting": UNCHANGED_ITEM,
+      "background-chatConsolidation": UNCHANGED_ITEM,
+      "background-characterGeneration": UNCHANGED_ITEM,
+      revealSpeed: UNCHANGED_ITEM,
+      motion: UNCHANGED_ITEM,
+      waitingLine: UNCHANGED_ITEM,
+      progressNudge: UNCHANGED_ITEM,
+      launchSkill: UNCHANGED_ITEM,
+    },
+    colors: [
+      {
+        key: "ground",
+        label: "地の色",
+        value: "#f7f4ee",
+        onChange: noop,
+        changed: false,
+        onReset: noop,
+      },
+    ],
     colorNotice: { kind: "none" },
     adjust: {
       veilPercent: 75,

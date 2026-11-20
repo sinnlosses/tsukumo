@@ -105,6 +105,24 @@
   border-radius: var(--radius-sm);
   background: var(--accent);
 }
+/* ページ名の右に出す、既定と違う件数の丸い数。 */
+.nav-count {
+  position: absolute;
+  top: 8px;
+  right: var(--inline-control);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 var(--inline-tight);
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+  color: var(--ground);
+  font-size: var(--font-label);
+  font-weight: 700;
+}
 .face {
   display: flex;
   flex: 1;

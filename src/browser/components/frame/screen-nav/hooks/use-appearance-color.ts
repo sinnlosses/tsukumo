@@ -36,6 +36,10 @@ export type ScreenNavSettingsColor = {
   readonly label: string
   readonly value: string
   readonly onChange: (value: string) => void
+  /** 上書きしてあるか。 */
+  readonly changed: boolean
+  /** この色だけ上書きを外す。 */
+  readonly onReset: () => void
 }
 
 /** 色を受け取らなかった理由の1行。 */
@@ -107,6 +111,16 @@ export function useAppearanceColor(): AppearanceColor {
     setDisplayColor((current) => ({ ...current, [key]: value }))
   }
 
+  function resetColor(key: AppearanceColorKey): void {
+    const next: AppearanceColorOverride = { ...override, [key]: undefined }
+    applyAppearanceColorOverride(next)
+    setOverride(next)
+    setColorNotice(NO_COLOR_NOTICE)
+    saveOverride(APPEARANCE_COLOR_SAVE_KEY, next)
+    // 外した直後の `:root` の既定値を読み直す。
+    setDisplayColor((current) => ({ ...current, [key]: readCurrentColor(key) }))
+  }
+
   function onReset(): void {
     applyAppearanceColorOverride(DEFAULT_APPEARANCE_COLOR_OVERRIDE)
     setOverride(DEFAULT_APPEARANCE_COLOR_OVERRIDE)
@@ -127,6 +141,10 @@ export function useAppearanceColor(): AppearanceColor {
       value: displayColor[field.key],
       onChange: (value) => {
         changeColor(field.key, value)
+      },
+      changed: override[field.key] !== undefined,
+      onReset: () => {
+        resetColor(field.key)
       },
     })),
     colorNotice,

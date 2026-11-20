@@ -10,7 +10,9 @@ import { Button } from "../../../ui/button/button.tsx"
 import { HStack } from "../../../ui/h-stack/h-stack.tsx"
 import { Surface } from "../../../ui/surface/surface.tsx"
 import { Text } from "../../../ui/text/text.tsx"
+import type { ScreenNavSettingsItem } from "../hooks/use-settings.ts"
 import styles from "./screen-nav-settings-look.module.css"
+import { ScreenNavSettingsRow } from "./screen-nav-settings-row.tsx"
 import rowStyles from "./screen-nav-settings.module.css"
 import type { ScreenNavSettingsProps } from "./screen-nav-settings.tsx"
 
@@ -36,16 +38,7 @@ export function ScreenNavSettingsLookFace(props: ScreenNavSettingsProps): ReactE
         <span className={styles["band-ring"]} title="差し色はキャラクターが決める" />
       </div>
       {settings.colors.map((color) => (
-        <HStack
-          element="div"
-          name={{ kind: "none" }}
-          gap="lg"
-          align="center"
-          justify="between"
-          wrap="nowrap"
-          className={rowStyles["screen-nav-settings-row"]}
-          key={color.key}
-        >
+        <ScreenNavSettingsRow key={color.key} item={settings.items[`color-${color.key}`]}>
           <label htmlFor={`${fieldId}-${color.key}`}>{color.label}</label>
           <div className={styles["control"]}>
             <input
@@ -68,9 +61,10 @@ export function ScreenNavSettingsLookFace(props: ScreenNavSettingsProps): ReactE
               <span className={styles["hex"]}>{color.value}</span>
             </Surface>
           </div>
-        </HStack>
+        </ScreenNavSettingsRow>
       ))}
       <RangeRow
+        item={settings.items.veil}
         id={`${fieldId}-veil`}
         label="背景の暗さ"
         range={VEIL_PERCENT_RANGE}
@@ -81,6 +75,7 @@ export function ScreenNavSettingsLookFace(props: ScreenNavSettingsProps): ReactE
         onChange={adjust.onChangeVeilPercent}
       />
       <RangeRow
+        item={settings.items.blur}
         id={`${fieldId}-blur`}
         label="パネルのぼかし"
         range={BLUR_RANGE}
@@ -89,6 +84,7 @@ export function ScreenNavSettingsLookFace(props: ScreenNavSettingsProps): ReactE
         onChange={adjust.onChangeBlur}
       />
       <RangeRow
+        item={settings.items.fill}
         id={`${fieldId}-fill`}
         label="パネルの濃さ"
         range={FILL_RANGE}
@@ -134,6 +130,7 @@ export function ScreenNavSettingsLookFace(props: ScreenNavSettingsProps): ReactE
 }
 
 function RangeRow(props: {
+  readonly item: ScreenNavSettingsItem
   readonly id: string
   readonly label: string
   readonly range: { readonly min: number; readonly max: number }
@@ -142,15 +139,7 @@ function RangeRow(props: {
   readonly onChange: (value: number) => void
 }): ReactElement {
   return (
-    <HStack
-      element="div"
-      name={{ kind: "none" }}
-      gap="lg"
-      align="center"
-      justify="between"
-      wrap="nowrap"
-      className={rowStyles["screen-nav-settings-row"]}
-    >
+    <ScreenNavSettingsRow item={props.item}>
       <label htmlFor={props.id}>{props.label}</label>
       <div className={styles["control"]}>
         <input
@@ -169,6 +158,6 @@ function RangeRow(props: {
           {props.readout}
         </output>
       </div>
-    </HStack>
+    </ScreenNavSettingsRow>
   )
 }

@@ -4,10 +4,7 @@
 import { useId, type ReactElement } from "react"
 
 import type { BackgroundModelRole } from "../../../../../shared/session/background-model.ts"
-import {
-  SESSION_DEFAULT_PERMISSION_MODES,
-  type FigurePreference,
-} from "../../../../../shared/session/session-default.ts"
+import { SESSION_DEFAULT_PERMISSION_MODES } from "../../../../../shared/session/session-default.ts"
 import { EFFORT_PLACEHOLDER_VALUE } from "../../../../domain/effort-label.ts"
 import { REVEAL_SPEED_LABELS } from "../../../../domain/reveal-speed.ts"
 import {
@@ -20,44 +17,27 @@ import {
   RunSettingSelect,
   type RunSettingSelectOption,
 } from "../../../../features/run-setting/run-setting-select.tsx"
-import { HStack } from "../../../ui/h-stack/h-stack.tsx"
 import { Text } from "../../../ui/text/text.tsx"
 import { MOTION_PREFERENCE_LABELS } from "../domain/motion-preference.ts"
+import {
+  FIGURE_PREFERENCE_LABELS,
+  PROGRESS_NUDGE_LABELS,
+  WAITING_LINE_LABELS,
+} from "../domain/setting-label.ts"
 import { useLaunchSkillOptions } from "../hooks/use-launch-skill-setting.ts"
 import type { ScreenNavSettings } from "../hooks/use-settings.ts"
+import { ScreenNavSettingsRow } from "./screen-nav-settings-row.tsx"
 import styles from "./screen-nav-settings.module.css"
 
 export type ScreenNavSettingsProps = {
   readonly settings: ScreenNavSettings
 }
 
-const REVEAL_SPEED_OPTIONS = REVEAL_SPEED_LABELS.map(([value, label]): RunSettingSelectOption => ({
-  value,
-  disabled: false,
-  icon: undefined,
-  row: <RunSettingName danger={false}>{label}</RunSettingName>,
-}))
-
-const MOTION_OPTIONS = MOTION_PREFERENCE_LABELS.map(([value, label]): RunSettingSelectOption => ({
-  value,
-  disabled: false,
-  icon: undefined,
-  row: <RunSettingName danger={false}>{label}</RunSettingName>,
-}))
-
-const FIGURE_PREFERENCE_LABELS = [
-  ["chart", "図を置く"],
-  ["text", "文を主にする"],
-] as const satisfies readonly (readonly [FigurePreference, string])[]
-
-const FIGURE_PREFERENCE_OPTIONS = FIGURE_PREFERENCE_LABELS.map(
-  ([value, label]): RunSettingSelectOption => ({
-    value,
-    disabled: false,
-    icon: undefined,
-    row: <RunSettingName danger={false}>{label}</RunSettingName>,
-  }),
-)
+const REVEAL_SPEED_OPTIONS = labelOptions(REVEAL_SPEED_LABELS)
+const MOTION_OPTIONS = labelOptions(MOTION_PREFERENCE_LABELS)
+const FIGURE_PREFERENCE_OPTIONS = labelOptions(FIGURE_PREFERENCE_LABELS)
+const WAITING_LINE_OPTIONS = labelOptions(WAITING_LINE_LABELS)
+const PROGRESS_NUDGE_OPTIONS = labelOptions(PROGRESS_NUDGE_LABELS)
 
 const BACKGROUND_MODEL_LABELS = [
   ["recommendation", "おすすめ"],
@@ -66,34 +46,6 @@ const BACKGROUND_MODEL_LABELS = [
   ["characterGeneration", "キャラクターの生成"],
 ] as const satisfies readonly (readonly [BackgroundModelRole, string])[]
 
-const WAITING_LINE_OPTIONS = (
-  [
-    ["1m", "1分"],
-    ["2m", "2分"],
-    ["5m", "5分"],
-    ["off", "出さない"],
-  ] as const satisfies readonly (readonly [string, string])[]
-).map(([value, label]): RunSettingSelectOption => ({
-  value,
-  disabled: false,
-  icon: undefined,
-  row: <RunSettingName danger={false}>{label}</RunSettingName>,
-}))
-
-const PROGRESS_NUDGE_OPTIONS = (
-  [
-    ["3m", "3分"],
-    ["5m", "5分"],
-    ["10m", "10分"],
-    ["off", "しない"],
-  ] as const satisfies readonly (readonly [string, string])[]
-).map(([value, label]): RunSettingSelectOption => ({
-  value,
-  disabled: false,
-  icon: undefined,
-  row: <RunSettingName danger={false}>{label}</RunSettingName>,
-}))
-
 /** セッションの既定の面（見出しなし）。下に裏方のモデルの群を並べる。 */
 export function ScreenNavSettingsSessionDefaultFace(props: ScreenNavSettingsProps): ReactElement {
   const { settings } = props
@@ -101,15 +53,7 @@ export function ScreenNavSettingsSessionDefaultFace(props: ScreenNavSettingsProp
 
   return (
     <>
-      <HStack
-        element="div"
-        name={{ kind: "none" }}
-        gap="lg"
-        align="center"
-        justify="between"
-        wrap="nowrap"
-        className={styles["screen-nav-settings-row"]}
-      >
+      <ScreenNavSettingsRow item={settings.items.model}>
         <label htmlFor={`${fieldId}-default-model`}>モデル</label>
         <RunSettingSelect
           id={`${fieldId}-default-model`}
@@ -125,16 +69,8 @@ export function ScreenNavSettingsSessionDefaultFace(props: ScreenNavSettingsProp
           dot="none"
           onChange={settings.sessionDefault.onChangeModel}
         />
-      </HStack>
-      <HStack
-        element="div"
-        name={{ kind: "none" }}
-        gap="lg"
-        align="center"
-        justify="between"
-        wrap="nowrap"
-        className={styles["screen-nav-settings-row"]}
-      >
+      </ScreenNavSettingsRow>
+      <ScreenNavSettingsRow item={settings.items.effort}>
         <label htmlFor={`${fieldId}-default-effort`}>effort</label>
         <RunSettingSelect
           id={`${fieldId}-default-effort`}
@@ -158,16 +94,8 @@ export function ScreenNavSettingsSessionDefaultFace(props: ScreenNavSettingsProp
           dot="none"
           onChange={settings.sessionDefault.onChangeEffort}
         />
-      </HStack>
-      <HStack
-        element="div"
-        name={{ kind: "none" }}
-        gap="lg"
-        align="center"
-        justify="between"
-        wrap="nowrap"
-        className={styles["screen-nav-settings-row"]}
-      >
+      </ScreenNavSettingsRow>
+      <ScreenNavSettingsRow item={settings.items.permissionMode}>
         <label htmlFor={`${fieldId}-default-permission-mode`}>許可モード</label>
         <RunSettingSelect
           id={`${fieldId}-default-permission-mode`}
@@ -183,16 +111,8 @@ export function ScreenNavSettingsSessionDefaultFace(props: ScreenNavSettingsProp
           dot="none"
           onChange={settings.sessionDefault.onChangePermissionMode}
         />
-      </HStack>
-      <HStack
-        element="div"
-        name={{ kind: "none" }}
-        gap="lg"
-        align="center"
-        justify="between"
-        wrap="nowrap"
-        className={styles["screen-nav-settings-row"]}
-      >
+      </ScreenNavSettingsRow>
+      <ScreenNavSettingsRow item={settings.items.figurePreference}>
         <label htmlFor={`${fieldId}-default-figure-preference`}>図の既定</label>
         <RunSettingSelect
           id={`${fieldId}-default-figure-preference`}
@@ -208,7 +128,7 @@ export function ScreenNavSettingsSessionDefaultFace(props: ScreenNavSettingsProp
           dot="none"
           onChange={settings.sessionDefault.onChangeFigurePreference}
         />
-      </HStack>
+      </ScreenNavSettingsRow>
       <Text
         element="p"
         size="label"
@@ -219,16 +139,7 @@ export function ScreenNavSettingsSessionDefaultFace(props: ScreenNavSettingsProp
         裏方のモデル
       </Text>
       {BACKGROUND_MODEL_LABELS.map(([role, label]) => (
-        <HStack
-          key={role}
-          element="div"
-          name={{ kind: "none" }}
-          gap="lg"
-          align="center"
-          justify="between"
-          wrap="nowrap"
-          className={styles["screen-nav-settings-row"]}
-        >
+        <ScreenNavSettingsRow key={role} item={settings.items[`background-${role}`]}>
           <label htmlFor={`${fieldId}-background-${role}`}>{label}</label>
           <RunSettingSelect
             id={`${fieldId}-background-${role}`}
@@ -246,7 +157,7 @@ export function ScreenNavSettingsSessionDefaultFace(props: ScreenNavSettingsProp
               settings.backgroundModels.onChange(role, value)
             }}
           />
-        </HStack>
+        </ScreenNavSettingsRow>
       ))}
     </>
   )
@@ -259,15 +170,7 @@ export function ScreenNavSettingsRevealFace(props: ScreenNavSettingsProps): Reac
 
   return (
     <>
-      <HStack
-        element="div"
-        name={{ kind: "none" }}
-        gap="lg"
-        align="center"
-        justify="between"
-        wrap="nowrap"
-        className={styles["screen-nav-settings-row"]}
-      >
+      <ScreenNavSettingsRow item={settings.items.revealSpeed}>
         <label htmlFor={`${fieldId}-reveal-speed`}>書き上げる速さ</label>
         <RunSettingSelect
           id={`${fieldId}-reveal-speed`}
@@ -283,16 +186,8 @@ export function ScreenNavSettingsRevealFace(props: ScreenNavSettingsProps): Reac
           dot="none"
           onChange={settings.revealSpeed.onChange}
         />
-      </HStack>
-      <HStack
-        element="div"
-        name={{ kind: "none" }}
-        gap="lg"
-        align="center"
-        justify="between"
-        wrap="nowrap"
-        className={styles["screen-nav-settings-row"]}
-      >
+      </ScreenNavSettingsRow>
+      <ScreenNavSettingsRow item={settings.items.motion}>
         <label htmlFor={`${fieldId}-motion`}>動き</label>
         <RunSettingSelect
           id={`${fieldId}-motion`}
@@ -308,7 +203,7 @@ export function ScreenNavSettingsRevealFace(props: ScreenNavSettingsProps): Reac
           dot="none"
           onChange={settings.motion.onChange}
         />
-      </HStack>
+      </ScreenNavSettingsRow>
       <Text
         element="p"
         size="label"
@@ -318,15 +213,7 @@ export function ScreenNavSettingsRevealFace(props: ScreenNavSettingsProps): Reac
       >
         話しかける間合い
       </Text>
-      <HStack
-        element="div"
-        name={{ kind: "none" }}
-        gap="lg"
-        align="center"
-        justify="between"
-        wrap="nowrap"
-        className={styles["screen-nav-settings-row"]}
-      >
+      <ScreenNavSettingsRow item={settings.items.waitingLine}>
         <label htmlFor={`${fieldId}-waiting-line`}>待ちの一言</label>
         <RunSettingSelect
           id={`${fieldId}-waiting-line`}
@@ -342,16 +229,8 @@ export function ScreenNavSettingsRevealFace(props: ScreenNavSettingsProps): Reac
           dot="none"
           onChange={settings.speakingPace.onChangeWaitingLine}
         />
-      </HStack>
-      <HStack
-        element="div"
-        name={{ kind: "none" }}
-        gap="lg"
-        align="center"
-        justify="between"
-        wrap="nowrap"
-        className={styles["screen-nav-settings-row"]}
-      >
+      </ScreenNavSettingsRow>
+      <ScreenNavSettingsRow item={settings.items.progressNudge}>
         <label htmlFor={`${fieldId}-progress-nudge`}>進み具合の催促</label>
         <RunSettingSelect
           id={`${fieldId}-progress-nudge`}
@@ -367,7 +246,7 @@ export function ScreenNavSettingsRevealFace(props: ScreenNavSettingsProps): Reac
           dot="none"
           onChange={settings.speakingPace.onChangeProgressNudge}
         />
-      </HStack>
+      </ScreenNavSettingsRow>
     </>
   )
 }
@@ -380,15 +259,7 @@ export function ScreenNavSettingsLaunchSkillFace(props: ScreenNavSettingsProps):
 
   return (
     <>
-      <HStack
-        element="div"
-        name={{ kind: "none" }}
-        gap="lg"
-        align="center"
-        justify="between"
-        wrap="nowrap"
-        className={styles["screen-nav-settings-row"]}
-      >
+      <ScreenNavSettingsRow item={settings.items.launchSkill}>
         <label htmlFor={`${fieldId}-launch-skill`}>起動するスキル</label>
         <RunSettingSelect
           id={`${fieldId}-launch-skill`}
@@ -409,7 +280,7 @@ export function ScreenNavSettingsLaunchSkillFace(props: ScreenNavSettingsProps):
           dot="none"
           onChange={settings.launchSkill.onChange}
         />
-      </HStack>
+      </ScreenNavSettingsRow>
       <Text
         element="p"
         size="label"
@@ -421,4 +292,15 @@ export function ScreenNavSettingsLaunchSkillFace(props: ScreenNavSettingsProps):
       </Text>
     </>
   )
+}
+
+function labelOptions(
+  table: readonly (readonly [string, string])[],
+): readonly RunSettingSelectOption[] {
+  return table.map(([value, label]): RunSettingSelectOption => ({
+    value,
+    disabled: false,
+    icon: undefined,
+    row: <RunSettingName danger={false}>{label}</RunSettingName>,
+  }))
 }

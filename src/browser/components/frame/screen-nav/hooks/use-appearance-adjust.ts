@@ -33,6 +33,13 @@ type AppearanceAdjustControl = {
   /** 既定から動かしてある調整の数。 */
   readonly changedCount: number
   readonly onReset: () => void
+  /** 3つそれぞれが既定から動いているかと、その1つだけ既定へ戻す口。 */
+  readonly items: Readonly<Record<"veil" | "blur" | "fill", AdjustItem>>
+}
+
+type AdjustItem = {
+  readonly changed: boolean
+  readonly onReset: () => void
 }
 
 export function useAppearanceAdjust(): AppearanceAdjustControl {
@@ -65,6 +72,26 @@ export function useAppearanceAdjust(): AppearanceAdjustControl {
       fill: value.fill,
       onChangeFill: (percent) => {
         commit({ ...value, fill: percent })
+      },
+    },
+    items: {
+      veil: {
+        changed: value.veil !== undefined,
+        onReset: () => {
+          commit({ ...value, veil: DEFAULT_APPEARANCE_ADJUST.veil })
+        },
+      },
+      blur: {
+        changed: value.blur !== DEFAULT_APPEARANCE_ADJUST.blur,
+        onReset: () => {
+          commit({ ...value, blur: DEFAULT_APPEARANCE_ADJUST.blur })
+        },
+      },
+      fill: {
+        changed: value.fill !== DEFAULT_APPEARANCE_ADJUST.fill,
+        onReset: () => {
+          commit({ ...value, fill: DEFAULT_APPEARANCE_ADJUST.fill })
+        },
       },
     },
     changedCount: countAppearanceAdjust(value),

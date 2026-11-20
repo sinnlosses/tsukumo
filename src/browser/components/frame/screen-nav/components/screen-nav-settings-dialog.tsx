@@ -96,10 +96,14 @@ function ScreenNavSettingsDialogBody(props: ScreenNavSettingsProps): ReactElemen
           {FACES.map((face) => {
             const Icon = face.icon
             const isSelected = face.key === selected.key
+            const changedCount = face.foot === "reset" ? settings.pageReset[face.key].count : 0
             return (
               <button
                 type="button"
                 key={face.key}
+                title={
+                  changedCount > 0 ? `既定と違う項目が ${String(changedCount)} 件ある` : undefined
+                }
                 className={clsx(styles["nav-item"], isSelected && styles["nav-item-selected"])}
                 aria-current={isSelected ? "page" : undefined}
                 onClick={() => {
@@ -108,6 +112,11 @@ function ScreenNavSettingsDialogBody(props: ScreenNavSettingsProps): ReactElemen
               >
                 <Icon size={16} strokeWidth={1.8} />
                 {face.label}
+                {changedCount > 0 && (
+                  <span className={styles["nav-count"]} aria-hidden="true">
+                    {changedCount}
+                  </span>
+                )}
               </button>
             )
           })}

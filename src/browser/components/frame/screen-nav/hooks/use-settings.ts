@@ -15,6 +15,10 @@ import type {
 } from "../../../../../shared/session/background-model.ts"
 import { BUILTIN_BACKGROUND_MODELS } from "../../../../../shared/session/background-model.ts"
 import {
+  DEFAULT_APPEARANCE_ADJUST,
+  BUILTIN_GEAR_PREFERENCES,
+} from "../../../../../shared/session/gear-preference.ts"
+import {
   isEffortLevel,
   isModelAlias,
   type ModelAlias,
@@ -34,10 +38,24 @@ import {
   isWaitingLineDelay,
   type SpeakingPace,
 } from "../../../../../shared/session/speaking-pace.ts"
-import { resolveEffortSelect, type EffortSelect } from "../../../../domain/effort-label.ts"
+import {
+  effortLabel,
+  resolveEffortSelect,
+  type EffortSelect,
+} from "../../../../domain/effort-label.ts"
+import { REVEAL_SPEED_LABELS } from "../../../../domain/reveal-speed.ts"
+import { MODEL_LABELS } from "../../../../features/run-setting/model-label.ts"
+import { PERMISSION_MODE_LABELS } from "../../../../features/run-setting/permission-mode-label.ts"
 import { useFirstNoteSeen } from "../../../../stores/first-note-seen.ts"
 import { useSession } from "../../../../stores/session.ts"
 import { useSettingsRequest } from "../../../../stores/settings-request.ts"
+import { MOTION_PREFERENCE_LABELS } from "../domain/motion-preference.ts"
+import {
+  FIGURE_PREFERENCE_LABELS,
+  PROGRESS_NUDGE_LABELS,
+  WAITING_LINE_LABELS,
+  labelOfValue,
+} from "../domain/setting-label.ts"
 import { useAppearanceAdjust, type ScreenNavSettingsAdjust } from "./use-appearance-adjust.ts"
 import {
   useAppearanceColor,
@@ -97,6 +115,32 @@ export type ScreenNavSettingsReset = {
   readonly onReset: () => void
 }
 
+/** 項目1つ。既定と違うか、既定へ戻す押し口の title、その項目だけ戻す動き。 */
+export type ScreenNavSettingsItem = {
+  readonly changed: boolean
+  readonly resetTitle: string
+  readonly onReset: () => void
+}
+
+/** 項目の名前（行ごとに1つ）。 */
+export type SettingItemKey =
+  | "color-ground"
+  | "color-surface"
+  | "color-ink"
+  | "veil"
+  | "blur"
+  | "fill"
+  | "model"
+  | "effort"
+  | "permissionMode"
+  | "figurePreference"
+  | `background-${BackgroundModelRole}`
+  | "revealSpeed"
+  | "motion"
+  | "waitingLine"
+  | "progressNudge"
+  | "launchSkill"
+
 export type ScreenNavSettings = {
   readonly open: boolean
   readonly onOpen: () => void
@@ -115,6 +159,8 @@ export type ScreenNavSettings = {
   readonly onReplayFirstNotes: () => void
   /** 「既定に戻す」を持つページごとの口。 */
   readonly pageReset: Readonly<Record<ResetFaceKey, ScreenNavSettingsReset>>
+  /** 項目ごとの「既定と違うか」と戻す口。 */
+  readonly items: Readonly<Record<SettingItemKey, ScreenNavSettingsItem>>
   /** 全ページをまとめて戻す口。 */
   readonly resetAll: ScreenNavSettingsReset
   /** 帯の歯車の `<button>` を預ける口（閉じたときのフォーカスの戻り先）。 */
@@ -213,10 +259,117 @@ export function useSettings(): ScreenNavSettings {
     "launch-skill": { count: launchSkill.changedCount, onReset: launchSkill.onReset },
   } satisfies Record<ResetFaceKey, ScreenNavSettingsReset>
 
+  const colorItem = (key: "ground" | "surface" | "ink"): ScreenNavSettingsItem => {
+    const found = color.colors.find((candidate) => candidate.key === key)
+    return {
+      changed: found?.changed ?? false,
+      resetTitle: "既定の色に戻す",
+      onReset: found?.onReset ?? (() => {}),
+    }
+  }
+  const backgroundItem = (role: BackgroundModelRole): ScreenNavSettingsItem => ({
+    changed: backgroundModels[role] !== BUILTIN_BACKGROUND_MODELS[role],
+    resetTitle: resetTitleOf(labelOfValue(MODEL_LABELS, BUILTIN_BACKGROUND_MODELS[role])),
+    onReset: () => {
+      onChangeBackgroundModel(role, BUILTIN_BACKGROUND_MODELS[role])
+    },
+  })
+  const items = {
+    "color-ground": colorItem("ground"),
+    "color-surface": colorItem("surface"),
+    "color-ink": colorItem("ink"),
+    veil: {
+      ...adjust.items.veil,
+      resetTitle: resetTitleOf("パックの値"),
+    },
+    blur: {
+      ...adjust.items.blur,
+      resetTitle: resetTitleOf(`${String(DEFAULT_APPEARANCE_ADJUST.blur)}px`),
+    },
+    fill: {
+      ...adjust.items.fill,
+      resetTitle: resetTitleOf(`${String(DEFAULT_APPEARANCE_ADJUST.fill)}%`),
+    },
+    model: {
+      changed: sessionDefault.model !== BUILTIN_SESSION_DEFAULT.model,
+      resetTitle: resetTitleOf(labelOfValue(MODEL_LABELS, BUILTIN_SESSION_DEFAULT.model)),
+      onReset: () => {
+        sendSessionDefault({ model: BUILTIN_SESSION_DEFAULT.model })
+      },
+    },
+    effort: {
+      changed: sessionDefault.effort !== BUILTIN_SESSION_DEFAULT.effort,
+      resetTitle: resetTitleOf(effortLabel(BUILTIN_SESSION_DEFAULT.effort)),
+      onReset: () => {
+        sendSessionDefault({ effort: BUILTIN_SESSION_DEFAULT.effort })
+      },
+    },
+    permissionMode: {
+      changed: sessionDefault.permissionMode !== BUILTIN_SESSION_DEFAULT.permissionMode,
+      resetTitle: resetTitleOf(
+        labelOfValue(PERMISSION_MODE_LABELS, BUILTIN_SESSION_DEFAULT.permissionMode),
+      ),
+      onReset: () => {
+        sendSessionDefault({ permissionMode: BUILTIN_SESSION_DEFAULT.permissionMode })
+      },
+    },
+    figurePreference: {
+      changed: sessionDefault.figurePreference !== BUILTIN_SESSION_DEFAULT.figurePreference,
+      resetTitle: resetTitleOf(
+        labelOfValue(FIGURE_PREFERENCE_LABELS, BUILTIN_SESSION_DEFAULT.figurePreference),
+      ),
+      onReset: () => {
+        sendSessionDefault({ figurePreference: BUILTIN_SESSION_DEFAULT.figurePreference })
+      },
+    },
+    "background-recommendation": backgroundItem("recommendation"),
+    "background-welcomeGreeting": backgroundItem("welcomeGreeting"),
+    "background-chatConsolidation": backgroundItem("chatConsolidation"),
+    "background-characterGeneration": backgroundItem("characterGeneration"),
+    revealSpeed: {
+      changed: revealSpeed.changedCount > 0,
+      resetTitle: resetTitleOf(
+        labelOfValue(REVEAL_SPEED_LABELS, BUILTIN_GEAR_PREFERENCES.revealSpeed),
+      ),
+      onReset: revealSpeed.onReset,
+    },
+    motion: {
+      changed: motion.changedCount > 0,
+      resetTitle: resetTitleOf(
+        labelOfValue(MOTION_PREFERENCE_LABELS, BUILTIN_GEAR_PREFERENCES.motionPreference),
+      ),
+      onReset: motion.onReset,
+    },
+    waitingLine: {
+      changed: speakingPace.waitingLine !== BUILTIN_SPEAKING_PACE.waitingLine,
+      resetTitle: resetTitleOf(
+        labelOfValue(WAITING_LINE_LABELS, BUILTIN_SPEAKING_PACE.waitingLine),
+      ),
+      onReset: () => {
+        onChangeWaitingLine(BUILTIN_SPEAKING_PACE.waitingLine)
+      },
+    },
+    progressNudge: {
+      changed: speakingPace.progressNudge !== BUILTIN_SPEAKING_PACE.progressNudge,
+      resetTitle: resetTitleOf(
+        labelOfValue(PROGRESS_NUDGE_LABELS, BUILTIN_SPEAKING_PACE.progressNudge),
+      ),
+      onReset: () => {
+        onChangeProgressNudge(BUILTIN_SPEAKING_PACE.progressNudge)
+      },
+    },
+    launchSkill: {
+      changed: launchSkill.changedCount > 0,
+      resetTitle: resetTitleOf("未設定"),
+      onReset: launchSkill.onReset,
+    },
+  } satisfies Record<SettingItemKey, ScreenNavSettingsItem>
+
   return {
     open,
     onOpen,
     onClose,
+    items,
     colors: color.colors,
     colorNotice: color.colorNotice,
     adjust: adjust.adjust,
@@ -266,6 +419,10 @@ export function useSettings(): ScreenNavSettings {
     onReplayFirstNotes: resetFirstNotes,
     toggleRef,
   }
+}
+
+function resetTitleOf(defaultLabel: string): string {
+  return `既定（${defaultLabel}）に戻す`
 }
 
 /** 同じ項目名の値のうち、既定と違うものの数。 */
