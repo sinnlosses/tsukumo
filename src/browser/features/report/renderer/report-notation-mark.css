@@ -43,4 +43,141 @@
     inset-inline-start: 0;
     background: var(--ink-soft);
   }
+
+  /* 出典の番号札。札は紙（この器）を基準に、番号の下へ紙の内側に収まる向きで出す。
+     段落やセルを基準にすると、段落の高さに収めようとして札が番号に重なり、表の横スクロールの器で切れる。 */
+  &:has(.report-mark-cite) {
+    position: relative;
+  }
+  & .report-mark-cite-group {
+    white-space: nowrap;
+  }
+  & .report-mark-cite {
+    anchor-scope: --report-cite;
+    display: inline;
+    padding-inline: 0.1em;
+  }
+  & .report-mark-cite-badge,
+  & .report-mark-cite-pending {
+    anchor-name: --report-cite;
+    display: inline-grid;
+    place-items: center;
+    min-inline-size: 1.45em;
+    block-size: 1.45em;
+    padding-inline: 0.25em;
+    border-radius: var(--radius-sm);
+    vertical-align: 0.35em;
+    font-family: var(--font-mono);
+    font-size: var(--font-label);
+    font-weight: 600;
+    line-height: 1;
+    color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 16%, transparent);
+    text-decoration: none;
+  }
+  & .report-mark-cite-pending {
+    color: var(--ink-quiet);
+    background: color-mix(in srgb, var(--ink) 8%, transparent);
+  }
+  & .report-mark-cite-badge:is(:hover, :focus-visible) {
+    color: var(--ground);
+    background: var(--accent);
+    outline: none;
+  }
+  & .report-mark-cite-card {
+    position: absolute;
+    position-anchor: --report-cite;
+    position-area: block-end span-inline-end;
+    position-try-fallbacks: flip-inline;
+    z-index: 5;
+    display: block;
+    inline-size: max-content;
+    max-inline-size: min(300px, 100%);
+    translate: 0 var(--stack-tight);
+    padding: var(--inset-control);
+    border: 1px solid color-mix(in srgb, var(--ink) 20%, transparent);
+    border-radius: var(--radius-md);
+    background: var(--surface-raised);
+    box-shadow: var(--shadow-raised);
+    font-size: var(--font-label);
+    line-height: 1.6;
+    white-space: normal;
+    color: var(--ink);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--motion-fast) ease var(--motion-base);
+  }
+  & .report-mark-cite:is(:hover, :focus-within) .report-mark-cite-card {
+    opacity: 1;
+    pointer-events: auto;
+    transition: opacity var(--motion-fast) ease;
+  }
+  & .report-mark-cite-title {
+    display: block;
+    font-weight: 600;
+  }
+  & .report-mark-cite-host {
+    font-family: var(--font-mono);
+    color: var(--ink-quiet);
+  }
+  /* 狭い器では浮かせず、番号の行の下に本文を押し下げて出す（本文と出典の一覧に重ねない）。 */
+  @container report-body (max-width: 691px) {
+    & .report-mark-cite-card {
+      position: static;
+      display: none;
+      inline-size: auto;
+      max-inline-size: none;
+      translate: none;
+      box-shadow: none;
+      opacity: 1;
+      transition: none;
+    }
+    & .report-mark-cite:is(:hover, :focus-within) .report-mark-cite-card {
+      display: block;
+      transition: none;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    & .report-mark-cite-card {
+      transition: none;
+    }
+  }
+
+  /* 本文の末尾の出典の一覧。番号・題・ホスト名を番号の順に並べる。 */
+  & .report-cite-list {
+    padding-block-start: var(--stack-block);
+    border-block-start: 1px solid color-mix(in srgb, var(--ink) 13%, transparent);
+    font-size: var(--font-label);
+
+    & ol {
+      display: grid;
+      gap: var(--stack-tight);
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    & li {
+      display: grid;
+      grid-template-columns: 2em 1fr;
+      align-items: baseline;
+    }
+  }
+  & .report-cite-list-heading {
+    margin: 0;
+    padding-block-end: var(--stack-tight);
+    font-size: var(--font-label);
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: var(--ink-quiet);
+  }
+  & .report-cite-list-number {
+    font-family: var(--font-mono);
+    font-weight: 600;
+    color: var(--accent);
+  }
+  & .report-cite-list-host {
+    padding-inline-start: var(--inline-tight);
+    font-family: var(--font-mono);
+    color: var(--ink-quiet);
+  }
 }

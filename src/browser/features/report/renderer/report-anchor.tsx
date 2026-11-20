@@ -36,6 +36,7 @@ export function Anchor(props: AnchorProps): ReactElement {
         href={href}
         title={title}
         className={className}
+        aria-describedby={props["aria-describedby"]}
         onClick={(event) => {
           event.preventDefault()
           event.currentTarget.ownerDocument

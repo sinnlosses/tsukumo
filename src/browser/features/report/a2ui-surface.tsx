@@ -49,6 +49,7 @@ import { useGridColumnCount } from "./hooks/use-grid-column-count.ts"
 import { ChoicePicker, InteractiveTable } from "./leaf/a2ui-interactive-view.tsx"
 import { RegionBox, RegionChunks, ReportFrame } from "./leaf/body-region.tsx"
 import { ChartTermLinkScope, chartLinkInputsOf } from "./leaf/chart-term-link.tsx"
+import { CitationList, CitationScope, reportCitationTable } from "./leaf/citation-list.tsx"
 import { DirectLeaf, directLeafViewOf } from "./leaf/direct-leaf-view.tsx"
 import { FavorFollowUp } from "./leaf/favor-follow-up.tsx"
 import { PairViewContext } from "./leaf/pair-view-context.ts"
@@ -147,8 +148,9 @@ function ReportRoot(): ReactElement {
     view.head.checks.kind === "checks" &&
     [...view.head.checks.problems, ...view.head.checks.passed].some((row) => row.recorded)
   const firstNotes = useFirstNoteList(hasRecordedRow ? (["report-terms"] as const) : [])
+  const citations = reportCitationTable(view.components, report.turnId)
   return (
-    <>
+    <CitationScope table={citations}>
       <ReportFrame
         reveal={report.reveal}
         turnId={report.turnId}
@@ -177,6 +179,7 @@ function ReportRoot(): ReactElement {
                 .map((entry) => <SectionProof key={entry.sectionId} section={entry} />)}
           </RegionBox>
         ))}
+        <CitationList table={citations} />
         <NotDoneRegion notDone={view.head.notDone} />
         {view.retrospective.kind === "leaves" && (
           <RegionBox region={{ kind: "retrospective" }}>
@@ -195,7 +198,7 @@ function ReportRoot(): ReactElement {
           </div>
         )}
       </ReportFrame>
-    </>
+    </CitationScope>
   )
 }
 

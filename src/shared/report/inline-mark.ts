@@ -1,12 +1,16 @@
-// 文中に置く行内の印 `{{12 → 8}}`（前後の差）・`{{spark: 3 5 4 8}}`（折れ線）・`{{3 / 5}}`（帯）の読み方と、素の文字への畳み。
+// 文中に置く行内の印 `{{12 → 8}}`（前後の差）・`{{spark: 3 5 4 8}}`（折れ線）・`{{3 / 5}}`（帯）・`{{cite: s1}}`（出典の番号札）の読み方と、素の文字への畳み。
 // 書式に当たらない `{{` は壊れた印で、畳みも描画もせず字のまま残す。inline code の中は読まない。
 
 import { sumBy } from "remeda"
+
+/** 出典の id の形。印の中の id と `sources` の id が同じ定数を読む。 */
+export const SOURCE_ID_PATTERN = /^[a-z0-9][a-z0-9-]{0,15}$/
 
 type InlineMark =
   | { readonly kind: "diff"; readonly from: string; readonly to: string }
   | { readonly kind: "spark"; readonly values: readonly number[] }
   | { readonly kind: "ratio"; readonly part: string; readonly whole: string }
+  | { readonly kind: "cite"; readonly ids: readonly string[] }
 
 type InlineSegment =
   | { readonly kind: "text"; readonly text: string }
@@ -20,6 +24,7 @@ const BRACES = /\{\{[^{}\n]*\}\}|\{\{/g
 
 const NUMBER = "-?\\d+(?:\\.\\d+)?"
 const SPARK_BODY = /^spark:\s*(.*)$/
+const CITE_BODY = /^cite:\s*(.*)$/
 const RATIO_BODY = /^(\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)$/
 const SPARK_NUMBER = new RegExp(`^${NUMBER}$`)
 const DIFF_FORBIDDEN = /[`*_~[\]<>|\\]/
@@ -35,7 +40,7 @@ const MAX_DIFF_SIDE_WIDTH = 16
 
 const SPARK_LEVELS = "▁▂▃▄▅▆▇█"
 
-/** 印を素の文字へ畳む（`12 → 8`・block 文字の列・`3/5`）。壊れた印と inline code の中はそのまま。 */
+/** 印を素の文字へ畳む（`12 → 8`・block 文字の列・`3/5`・出典は空）。壊れた印と inline code の中はそのまま。 */
 export function foldInlineMarks(text: string): string {
   return parseInlineMarks(text)
     .map((segment) => (segment.kind === "mark" ? foldedMark(segment.mark) : segment.text))
@@ -82,6 +87,8 @@ function foldedMark(mark: InlineMark): string {
       return sparkBlocks(mark.values)
     case "ratio":
       return `${mark.part}/${mark.whole}`
+    case "cite":
+      return ""
   }
 }
 
@@ -128,6 +135,13 @@ function markOf(body: string): InlineMark | undefined {
   const spark = SPARK_BODY.exec(body)
   if (spark !== null) {
     return sparkOf(spark[1] ?? "")
+  }
+  const cite = CITE_BODY.exec(body)
+  if (cite !== null) {
+    const ids = (cite[1] ?? "").split(/[\s,]+/).filter((id) => id !== "")
+    return ids.length > 0 && ids.every((id) => SOURCE_ID_PATTERN.test(id))
+      ? { kind: "cite", ids }
+      : undefined
   }
   const ratio = RATIO_BODY.exec(body)
   if (ratio !== null) {

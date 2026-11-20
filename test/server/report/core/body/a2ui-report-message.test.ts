@@ -176,6 +176,15 @@ describe("a2uiReportInput", () => {
     expect(components).toHaveLength(COMPONENTS.length)
   })
 
+  it("根の sources は components の Report に残る", () => {
+    const [root, ...rest] = COMPONENTS
+    const sources = [{ id: "s1", title: "架空の出典", url: "https://example.com/a" }]
+    const { components, droppedCount } = a2uiReportInput([{ ...root, sources }, ...rest])
+
+    expect(droppedCount).toBe(0)
+    expect(components.find((part) => part.component === "Report")).toMatchObject({ sources })
+  })
+
   it("入れ子の Section と根の子の内容部品も、落とさずに節へ写す", () => {
     const { input } = a2uiReportInput([
       { id: "root", component: "Report", conclusion: ["架空。"], children: ["s", "lone"] },

@@ -30,5 +30,11 @@ export const SENTENCE_CELL_LENGTH = 35
 /** `list` の項目数の上限。超える分は最後の項目に「ほか n 件」と書く。 */
 export const MAX_LIST_ITEMS = 10
 
+/** `sources` の件数の上限。 */
+export const MAX_SOURCES = 10
+
+/** 出典の `title` の長さの上限（字数）。 */
+export const MAX_SOURCE_TITLE = 60
+
 /** `marks` の無い `code` の行数の上限。 */
 export const MAX_PLAIN_CODE_LINES = 45

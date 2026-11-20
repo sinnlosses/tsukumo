@@ -73,4 +73,9 @@ export const REPORT_REJECTION_MODES = {
   "broken-inline-mark": "count",
   "plot-title-without-number": "count",
   "template-miss": "count",
+  "unknown-cite": "reject",
+  "uncited-source": "reject",
+  "duplicate-source-id": "reject",
+  "duplicate-source-url": "reject",
+  "misplaced-cite": "reject",
 } as const satisfies Record<ReportRejectionReason, ReportRejectionMode>

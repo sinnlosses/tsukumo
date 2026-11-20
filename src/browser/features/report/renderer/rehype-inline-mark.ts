@@ -1,13 +1,20 @@
-// 文中の行内の印（`{{12 → 8}}`・`{{spark: 3 5 4 8}}`・`{{3 / 5}}`）を、サニタイズのあとの木で `span` に替える rehype のプラグイン。
-// 印の `span` の文字は `foldInlineMarks` が畳んだ素の文字と同じにする（装飾の要素は文字を持たない）。
+// 文中の行内の印（`{{12 → 8}}`・`{{spark: 3 5 4 8}}`・`{{3 / 5}}`・`{{cite: s1}}`）を、サニタイズのあとの木で `span` に替える rehype のプラグイン。
+// 前後の差・折れ線・帯の `span` の文字は `foldInlineMarks` が畳んだ素の文字と同じにする（装飾の要素は文字を持たない）。
+// 出典の印だけは畳むと空で、描くときは番号と札の題・ホスト名を字に持つ。番号の表を渡さない（レポートの外の）ときは何も描かない。
 // 壊れた印と inline code（`code`・`pre`）の中は元の文字のまま残す。
 
-import type { Element, ElementContent, Root, RootContent } from "hast"
+import type { Element, ElementContent, Properties, Root, RootContent } from "hast"
 
 import { foldInlineMarks, parseInlineMarks } from "../../../../shared/report/inline-mark.ts"
+import type { CitationTable } from "../domain/citation-number.ts"
 import styles from "./report-notation.module.css"
 
 type MarkSegment = Extract<ReturnType<typeof parseInlineMarks>[number], { readonly kind: "mark" }>
+
+type InlineMarkOptions = {
+  /** レポートの出典の番号の表。無ければ出典の印は何も描かない。 */
+  readonly citations?: CitationTable
+}
 
 const MARK_CLASS_NAMES = {
   "report-mark-diff": styles["report-mark-diff"],
@@ -17,11 +24,27 @@ const MARK_CLASS_NAMES = {
   "report-mark-ratio-bar": styles["report-mark-ratio-bar"],
   "report-mark-ratio-fill": styles["report-mark-ratio-fill"],
   "report-mark-ratio-value": styles["report-mark-ratio-value"],
+  "report-mark-cite-group": styles["report-mark-cite-group"],
+  "report-mark-cite": styles["report-mark-cite"],
+  "report-mark-cite-badge": styles["report-mark-cite-badge"],
+  "report-mark-cite-pending": styles["report-mark-cite-pending"],
+  "report-mark-cite-card": styles["report-mark-cite-card"],
+  "report-mark-cite-title": styles["report-mark-cite-title"],
+  "report-mark-cite-host": styles["report-mark-cite-host"],
 } as const
 
 const SKIPPED_TAG_NAMES: ReadonlySet<string> = new Set(["code", "pre"])
 
-export function rehypeInlineMark(): (tree: Root) => Root {
+export function rehypeInlineMark(options: InlineMarkOptions = {}): (tree: Root) => Root {
+  const rewriteContent = (node: ElementContent): ElementContent[] => {
+    if (node.type === "text") {
+      return markNodes(node.value, options)
+    }
+    if (node.type !== "element" || SKIPPED_TAG_NAMES.has(node.tagName)) {
+      return [node]
+    }
+    return [{ ...node, children: node.children.flatMap(rewriteContent) }]
+  }
   return (tree) => ({
     ...tree,
     children: tree.children.flatMap((child): RootContent[] =>
@@ -30,26 +53,16 @@ export function rehypeInlineMark(): (tree: Root) => Root {
   })
 }
 
-function rewriteContent(node: ElementContent): ElementContent[] {
-  if (node.type === "text") {
-    return markNodes(node.value)
-  }
-  if (node.type !== "element" || SKIPPED_TAG_NAMES.has(node.tagName)) {
-    return [node]
-  }
-  return [{ ...node, children: node.children.flatMap(rewriteContent) }]
-}
-
-function markNodes(value: string): ElementContent[] {
+function markNodes(value: string, options: InlineMarkOptions): ElementContent[] {
   if (!value.includes("{{")) {
     return [{ type: "text", value }]
   }
   return parseInlineMarks(value).map((segment): ElementContent =>
-    segment.kind === "mark" ? markElement(segment) : { type: "text", value: segment.text },
+    segment.kind === "mark" ? markElement(segment, options) : { type: "text", value: segment.text },
   )
 }
 
-function markElement(segment: MarkSegment): Element {
+function markElement(segment: MarkSegment, options: InlineMarkOptions): ElementContent {
   const { mark } = segment
   switch (mark.kind) {
     case "diff":
@@ -62,11 +75,44 @@ function markElement(segment: MarkSegment): Element {
     case "ratio":
       return span("report-mark-ratio", [
         span("report-mark-ratio-bar", [
-          span("report-mark-ratio-fill", [], `width: ${String(ratioPercent(mark))}%`),
+          span("report-mark-ratio-fill", [], { style: `width: ${String(ratioPercent(mark))}%` }),
         ]),
         span("report-mark-ratio-value", [{ type: "text", value: `${mark.part}/${mark.whole}` }]),
       ])
+    case "cite": {
+      const { citations } = options
+      return citations === undefined
+        ? { type: "text", value: "" }
+        : span(
+            "report-mark-cite-group",
+            mark.ids.map((id) => citeElement(id, citations)),
+          )
+    }
   }
+}
+
+/** 番号のバッジ（末尾の一覧の行へ飛ぶ）と、触れるか焦点で出る題とホスト名の札。表に無い id は控えめな「…」。 */
+function citeElement(id: string, citations: CitationTable): Element {
+  const entry = citations.get(id)
+  if (entry === undefined) {
+    return span("report-mark-cite", [
+      span("report-mark-cite-pending", [{ type: "text", value: "…" }]),
+    ])
+  }
+  return span("report-mark-cite", [
+    element("a", "report-mark-cite-badge", [{ type: "text", value: String(entry.number) }], {
+      href: `#${entry.rowId}`,
+      ariaDescribedBy: [entry.rowId],
+    }),
+    span(
+      "report-mark-cite-card",
+      [
+        span("report-mark-cite-title", [{ type: "text", value: entry.title }]),
+        span("report-mark-cite-host", [{ type: "text", value: entry.host }]),
+      ],
+      { role: "tooltip" },
+    ),
+  ])
 }
 
 function ratioPercent(mark: { readonly part: string; readonly whole: string }): number {
@@ -76,15 +122,21 @@ function ratioPercent(mark: { readonly part: string; readonly whole: string }): 
 function span(
   name: keyof typeof MARK_CLASS_NAMES,
   children: ElementContent[],
-  style?: string,
+  properties: Properties = {},
+): Element {
+  return element("span", name, children, properties)
+}
+
+function element(
+  tagName: string,
+  name: keyof typeof MARK_CLASS_NAMES,
+  children: ElementContent[],
+  properties: Properties,
 ): Element {
   return {
     type: "element",
-    tagName: "span",
-    properties: {
-      className: [MARK_CLASS_NAMES[name]],
-      ...(style === undefined ? {} : { style }),
-    },
+    tagName,
+    properties: { className: [MARK_CLASS_NAMES[name]], ...properties },
     children,
   }
 }

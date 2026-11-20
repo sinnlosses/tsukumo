@@ -39,6 +39,7 @@ import remarkGfm from "remark-gfm"
 import type { CodeMark } from "../../../../shared/report/code-mark.ts"
 import { markdownInline } from "../../../../shared/report/report-inline-markdown.ts"
 import type { ChartTermLinks } from "../domain/chart-term-link.ts"
+import type { CitationTable } from "../domain/citation-number.ts"
 import {
   breakPathText,
   repositoryFileTarget,
@@ -127,7 +128,9 @@ const REPORT_REHYPE_PLUGINS = [
   [rehypeSanitize, REPORT_SANITIZE_SCHEMA],
   rehypeInlineMark,
   rehypeHighlight,
-] satisfies NonNullable<Options["rehypePlugins"]>
+] satisfies RehypePlugins
+
+type RehypePlugins = NonNullable<Options["rehypePlugins"]>
 
 export { InlineCodeText } from "./inline-code-text.tsx"
 export { FenceFigure } from "./fence-figure.tsx"
@@ -136,6 +139,8 @@ export type MarkdownProps = {
   readonly text: string
   /** 地の文の語と同じ節の図の項目を結ぶ対応。`InlineMarkdown` だけが読む。 */
   readonly chartTerms?: ChartTermLinks
+  /** レポートの出典の番号の表。`InlineMarkdown` だけが読む。 */
+  readonly citations?: CitationTable
 }
 
 /** レポート1件分（または `splitReportBlocks` で割った1塊）の Markdown を描く。 */
@@ -196,11 +201,16 @@ export function InlineMarkdown(props: MarkdownProps): ReactElement {
   return (
     <ReactMarkdown
       remarkPlugins={REPORT_REMARK_PLUGINS}
-      rehypePlugins={
-        props.chartTerms === undefined
-          ? REPORT_REHYPE_PLUGINS
-          : [...REPORT_REHYPE_PLUGINS, [rehypeChartTerm, { terms: props.chartTerms }]]
-      }
+      rehypePlugins={[
+        ...REPORT_REHYPE_PLUGINS,
+        // 同じプラグインをもう一度渡すと、unified は元の位置のまま設定だけを替える。
+        ...(props.citations === undefined
+          ? []
+          : ([[rehypeInlineMark, { citations: props.citations }]] satisfies RehypePlugins)),
+        ...(props.chartTerms === undefined
+          ? []
+          : ([[rehypeChartTerm, { terms: props.chartTerms }]] satisfies RehypePlugins)),
+      ]}
       remarkRehypeOptions={FOOTNOTE_OPTIONS}
       components={REPORT_COMPONENTS}
       disallowedElements={["p"]}

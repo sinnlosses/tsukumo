@@ -1,7 +1,11 @@
 import { cleanup, render } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
-import { Markdown } from "../../../../../src/browser/features/report/renderer/markdown-renderer.tsx"
+import type { CitationTable } from "../../../../../src/browser/features/report/domain/citation-number.ts"
+import {
+  InlineMarkdown,
+  Markdown,
+} from "../../../../../src/browser/features/report/renderer/markdown-renderer.tsx"
 import { foldInlineMarks } from "../../../../../src/shared/report/inline-mark.ts"
 
 afterEach(() => {
@@ -43,5 +47,53 @@ describe("rehypeInlineMark（Markdown を通した描画）", () => {
     expect(kindsIn(container)).toEqual({ diff: false, spark: false, ratio: false })
     expect(container.textContent).toBe("{{3 / 5}} と {{3 / 5 と {{x}} と {{5 / 3}}")
     expect(container.querySelector("code")?.textContent).toBe("{{3 / 5}}")
+  })
+})
+
+describe("rehypeInlineMark の出典の番号札", () => {
+  const entry = (number: number, id: string) => ({
+    number,
+    title: `架空の出典${String(number)}`,
+    host: "example.com",
+    url: `https://example.com/${id}`,
+    rowId: `report-source-1-${id}`,
+  })
+  const citations: CitationTable = new Map([
+    ["s1", entry(1, "s1")],
+    ["s2", entry(2, "s2")],
+  ])
+  const badges = (container: HTMLElement) =>
+    [...container.querySelectorAll('a[class*="report-mark-cite-badge"]')].map((badge) => ({
+      text: badge.textContent,
+      href: badge.getAttribute("href"),
+      describedBy: badge.getAttribute("aria-describedby"),
+    }))
+
+  it("表があれば番号のバッジ・一覧の行への行き先・題とホスト名の札が出て、同じ id は同じ番号", () => {
+    const { container } = render(
+      <InlineMarkdown text="架空{{cite: s2 s1}}と{{cite: s2}}。" citations={citations} />,
+    )
+
+    expect(badges(container)).toEqual([
+      { text: "2", href: "#report-source-1-s2", describedBy: "report-source-1-s2" },
+      { text: "1", href: "#report-source-1-s1", describedBy: "report-source-1-s1" },
+      { text: "2", href: "#report-source-1-s2", describedBy: "report-source-1-s2" },
+    ])
+    const card = container.querySelector('[role="tooltip"]')
+    expect(card?.textContent).toBe("架空の出典2example.com")
+  })
+
+  it("表に無い id は控えめな「…」で、行き先を持たない", () => {
+    const { container } = render(<InlineMarkdown text="架空{{cite: s9}}。" citations={citations} />)
+
+    expect(badges(container)).toEqual([])
+    expect(container.querySelector('[class*="report-mark-cite-pending"]')?.textContent).toBe("…")
+  })
+
+  it("表が無いとき（レポートの外）は何も出さず、畳んだ素の文字と同じ", () => {
+    const { container } = render(<InlineMarkdown text="架空{{cite: s1}}。" />)
+
+    expect(container.querySelector('[class*="report-mark-cite"]')).toBeNull()
+    expect(container.textContent).toBe(foldInlineMarks("架空{{cite: s1}}。"))
   })
 })

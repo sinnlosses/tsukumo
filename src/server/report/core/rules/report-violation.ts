@@ -1,5 +1,5 @@
 // `report` ツールで受け取ったレポートの検査（「検査 → 整形 → 描画」の検査の段）の入口。
-// 家族（文章・塊・図・checks・雛形）の検出を並べて上限を超えたものを返し、差し戻し文と構造の差し戻し文にする。
+// 家族（文章・塊・図・checks・雛形・出典）の検出を並べて上限を超えたものを返し、差し戻し文と構造の差し戻し文にする。
 //
 // 検査するのは「レポートの記法」（`REPORT_NOTATION_PROMPT`）の条のうち、機械で判定できるものだけ。
 // 読み手によって結論が変わる条（効能書き・根拠の量・前置きと締めの行など）は入れない。
@@ -21,6 +21,12 @@ import {
   detectCheckViolations,
   isCheckViolation,
 } from "./check.ts"
+import {
+  type CitationViolation,
+  citationViolationMessage,
+  detectCitationViolations,
+  isCitationViolation,
+} from "./citation.ts"
 import type { ReportDraft } from "./draft.ts"
 import {
   detectFigureViolations,
@@ -61,6 +67,7 @@ export type ReportViolation =
   | CheckViolation
   | NotDoneViolation
   | TemplateViolation
+  | CitationViolation
 
 /** 違反にしない上限（これを超えたら違反）。 */
 const VIOLATION_THRESHOLDS = {
@@ -113,6 +120,11 @@ const VIOLATION_THRESHOLDS = {
   "broken-inline-mark": 0,
   "plot-title-without-number": 0,
   "template-miss": 0,
+  "unknown-cite": 0,
+  "uncited-source": 0,
+  "duplicate-source-id": 0,
+  "duplicate-source-url": 0,
+  "misplaced-cite": 0,
 } as const satisfies Record<ReportViolation["kind"], number>
 
 export const REPORT_VIOLATION_KINDS = keys(VIOLATION_THRESHOLDS)
@@ -197,5 +209,10 @@ const FAMILIES: readonly RuleFamily[] = [
     detect: detectTemplateViolations,
     owns: isTemplateViolation,
     message: templateViolationMessage,
+  }),
+  family({
+    detect: detectCitationViolations,
+    owns: isCitationViolation,
+    message: citationViolationMessage,
   }),
 ]

@@ -20,6 +20,9 @@ const BROKEN = [
   "{{a_b → c}}",
   "{{x}}",
   "{{3 ／ 5}}",
+  "{{cite: }}",
+  "{{cite: S1}}",
+  `{{cite: ${"a".repeat(17)}}}`,
 ] as const
 
 describe("foldInlineMarks", () => {
@@ -52,6 +55,20 @@ describe("foldInlineMarks", () => {
     expect(textOutsideInlineMarks(broken)).toBe(broken)
   })
 
+  it("出典の印は id を空白かカンマで割って読み、畳むと空になる", () => {
+    const ids = (text: string) =>
+      parseInlineMarks(text).flatMap((segment) =>
+        segment.kind === "mark" && segment.mark.kind === "cite" ? [segment.mark.ids] : [],
+      )
+    expect(ids("{{cite: s1}}")).toEqual([["s1"]])
+    expect(ids("{{cite: s1 s2}}")).toEqual([["s1", "s2"]])
+    expect(ids("{{cite: s1,s2}}")).toEqual([["s1", "s2"]])
+    expect(ids(`{{cite: ${"a".repeat(16)}}}`)).toEqual([["a".repeat(16)]])
+    expect(foldInlineMarks("速い{{cite: s1 s2}}。")).toBe("速い。")
+    expect(ids("`{{cite: s1}}`")).toEqual([])
+    expect(foldInlineMarks("`{{cite: s1}}`")).toBe("`{{cite: s1}}`")
+  })
+
   it("入れ子は外側の {{ が壊れ、内側は印になる", () => {
     expect(foldInlineMarks("{{ {{3 / 5}} }}")).toBe("{{ 3/5 }}")
   })
@@ -80,7 +97,7 @@ describe("印が出力に全部残る自己テスト", () => {
 
   const inputs = [
     ...BROKEN,
-    "{{12 → 8}}と{{3 / 5}}と{{spark: 1 2 3}}",
+    "{{12 → 8}}と{{3 / 5}}と{{spark: 1 2 3}}と{{cite: s1}}",
     "{{ {{3 / 5}} }}",
     "`{{3 / 5}}` {{3 / 5}} `{{",
     ...Array.from({ length: 60 }, (_, seed) => randomInput(seed)),

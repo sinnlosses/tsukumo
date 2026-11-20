@@ -12,6 +12,7 @@ import type {
 } from "../../../shared/report/report-notation.ts"
 import type { TIMELINE_MARK_NAMES } from "../../../shared/report/timeline-markdown.ts"
 import { deferredModule } from "../../stores/deferred-module.ts"
+import { useCitationScope } from "./leaf/citation-list.tsx"
 import styles from "./markdown.module.css"
 import type { ChartTooltipControl } from "./renderer/chart-tooltip.ts"
 import type { FenceFigureLanguage } from "./renderer/fence-figure.tsx"
@@ -370,13 +371,20 @@ export function CodeFence(props: CodeFenceProps): ReactElement {
 /** 1行の字の行内の記法（太字・inline code・リンク・`{{…}}`）。段落の `p` は付けない。読み込み中は空の `span` に `aria-busy` を出す。 */
 export function InlineMarkdown(props: MarkdownProps): ReactElement {
   const state = markdownRenderer.useLoadState()
+  const citations = useCitationScope()
   switch (state.kind) {
     case "loading":
       return <PendingInline />
     case "failed":
       return <>{props.text}</>
     case "ready":
-      return <state.module.InlineMarkdown text={props.text} chartTerms={props.chartTerms} />
+      return (
+        <state.module.InlineMarkdown
+          text={props.text}
+          chartTerms={props.chartTerms}
+          {...(citations.kind === "report" && { citations: citations.table })}
+        />
+      )
   }
 }
 

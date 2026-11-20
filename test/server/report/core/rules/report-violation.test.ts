@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 
 import { isBlockViolation } from "../../../../../src/server/report/core/rules/block.ts"
 import { isCheckViolation } from "../../../../../src/server/report/core/rules/check.ts"
+import { isCitationViolation } from "../../../../../src/server/report/core/rules/citation.ts"
 import type { ReportDraft } from "../../../../../src/server/report/core/rules/draft.ts"
 import { isFigureViolation } from "../../../../../src/server/report/core/rules/figure.ts"
 import { isNotDoneViolation } from "../../../../../src/server/report/core/rules/not-done.ts"
@@ -28,6 +29,7 @@ describe("違反の種類の持ち主", () => {
       isCheckViolation,
       isNotDoneViolation,
       isTemplateViolation,
+      isCitationViolation,
     ]
 
     expect(

@@ -51,6 +51,15 @@ export function tableRowDetail(row: TableRow): string | undefined {
   return "detail" in row ? row.detail : undefined
 }
 
+/** 行のセルの地の文（文字・`text`・`tag`。ほかのセルは空）と、あれば行の詳細。 */
+export function tableRowTexts(row: TableRow): readonly string[] {
+  const detail = tableRowDetail(row)
+  const cells = tableRowCells(row).map((cell) =>
+    typeof cell === "string" ? cell : "text" in cell ? cell.text : "tag" in cell ? cell.tag : "",
+  )
+  return detail === undefined ? cells : [...cells, detail]
+}
+
 export function tableRowDepth(row: TableRow): number {
   return "depth" in row ? (row.depth ?? 0) : 0
 }
