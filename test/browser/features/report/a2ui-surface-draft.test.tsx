@@ -2,8 +2,11 @@ import { cleanup, render } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 import type { A2uiReportComponent } from "../../../../src/shared/report/a2ui-report-catalog.ts"
+import { INITIAL_SESSION_STATE } from "../../../../src/shared/session/session-state.ts"
 import { a2uiParts, STAGED_PARTS } from "../../../fixture/a2ui-component.ts"
 import { partsDraftOf, WRITING_DRAFT } from "../../../fixture/a2ui-draft.ts"
+import { characterInfo, shownPortraits } from "../../../fixture/character.ts"
+import { putSession } from "../../session-store.ts"
 
 // `Markdown`（本物は react-markdown 一式で重い）を、渡された塊の文字列をそのまま出す代役に差し替える。
 vi.mock("../../../../src/browser/features/report/markdown.tsx", () => ({
@@ -25,12 +28,20 @@ const { Report } = await import("../../../../src/browser/features/report/report.
 
 afterEach(() => {
   cleanup()
+  putSession(INITIAL_SESSION_STATE)
 })
 
 const SKELETON = "[data-report-pending]"
 const PART_SKELETON = '[data-report-pending="part"]'
 const HEADING_SKELETON = '[data-report-pending="heading"]'
 const PENDING_REGION = '[data-report-region="pending"]'
+
+/** 手で書いた架空のキャラクターのミニ立ち絵。 */
+const MINI_URL = "/character/mini.png"
+const MINI_CHARACTER = characterInfo({
+  ...shownPortraits({ default: "/character/default.png" }),
+  mini: MINI_URL,
+})
 
 /** 書いている途中の草稿を、骨組みつきで描く要素。 */
 function draftElement(components: readonly A2uiReportComponent[], blink = true) {
@@ -144,6 +155,27 @@ describe("Report（書いている途中の草稿）", () => {
 
     expect(container.querySelector(PART_SKELETON)).toBe(skeleton)
     expect(skeleton?.previousElementSibling?.textContent).toContain("架空の段落一")
+  })
+
+  it("骨組みの右にミニ立ち絵が1体立ち、部品が届くとミニ立ち絵だけを作り直す", () => {
+    putSession({ ...INITIAL_SESSION_STATE, character: MINI_CHARACTER })
+    const { container, rerender } = render(draftElement(STAGED_PARTS.slice(0, 2)))
+    const images = container.querySelectorAll(`${PART_SKELETON} img`)
+    expect(images).toHaveLength(1)
+    expect(images[0]?.getAttribute("src")).toBe(MINI_URL)
+
+    rerender(draftElement(STAGED_PARTS.slice(0, 3)))
+
+    expect(container.querySelectorAll(`${PART_SKELETON} img`)).toHaveLength(1)
+    expect(container.querySelector(`${PART_SKELETON} img`)).not.toBe(images[0])
+  })
+
+  it("ミニ立ち絵の素材が無いと、骨組みの帯だけを置く", () => {
+    putSession({ ...INITIAL_SESSION_STATE, character: undefined })
+    const { container } = render(draftElement(STAGED_PARTS.slice(0, 2)))
+
+    expect(container.querySelector(PART_SKELETON)).not.toBeNull()
+    expect(container.querySelector("img")).toBeNull()
   })
 
   it("届いていない部品を渡さない本文は、骨組みも内容部品の無い節も描かない", () => {

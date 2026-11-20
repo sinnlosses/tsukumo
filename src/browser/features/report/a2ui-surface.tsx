@@ -254,7 +254,11 @@ function PartRun(props: { readonly lead: string; readonly ids: readonly string[]
         slot.kind === "part" ? (
           <PartBody key={`part:${slot.id}`} id={slot.id} />
         ) : (
-          <PendingPart key="pending" blink={report.pending?.blink === true} />
+          <PendingPart
+            key="pending"
+            blink={report.pending?.blink === true}
+            next={report.pending?.next ?? ""}
+          />
         ),
       )}
     </>

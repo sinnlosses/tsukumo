@@ -1,10 +1,12 @@
 // 書いている途中の草稿で、次に届く見込みの部品の場所に置く骨組み。
 // 紙に置くのは1か所だけ。読み上げには出さない（書いている途中であることは草稿の器が言う）。
+// 骨組みの帯の右にはミニ立ち絵が立つ。骨組みが1か所なので、ミニ立ち絵も1体だけになる。
 
 import clsx from "clsx"
 import type { ReactElement } from "react"
 
 import { Skeleton } from "../../../components/ui/skeleton/skeleton.tsx"
+import { useSession } from "../../../stores/session.ts"
 import { detailBlockClassName } from "../markdown.tsx"
 import { RegionBox } from "./body-region.tsx"
 import styles from "./leaf.module.css"
@@ -14,11 +16,15 @@ type PendingProps = {
   readonly blink: boolean
 }
 
-/** 塊1つぶんの骨組み（本文2行）。 */
-export function PendingPart(props: PendingProps): ReactElement {
+/**
+ * 塊1つぶんの骨組み（本文2行）と、その右に立つミニ立ち絵。
+ * 骨組みは作り直さずに次の場所へ移り、ミニ立ち絵だけを次に届く部品（`next`）ごとに作り直して、届くたびに跳ねる出方を掛ける。
+ */
+export function PendingPart(props: PendingProps & { readonly next: string }): ReactElement {
   return (
     <div className={styles["pending-part"]} {...pendingMark("part", props.blink)}>
       <PendingLines />
+      <PendingMini key={props.next} blink={props.blink} />
     </div>
   )
 }
@@ -49,11 +55,14 @@ export function PendingPaper(props: {
           {...pendingMark("part", props.blink)}
         >
           <PendingLines />
+          <PendingMini blink={props.blink} />
         </div>
       </RegionBox>
       <RegionBox region={{ kind: "pending" }}>
         <PendingHeading blink={false} />
-        <PendingPart blink={false} />
+        <div className={styles["pending-part"]} {...pendingMark("part", false)}>
+          <PendingLines />
+        </div>
       </RegionBox>
     </div>
   )
@@ -64,13 +73,37 @@ const LINE_WIDTHS = ["100%", "64%"] as const
 
 function PendingLines(): ReactElement {
   return (
-    <>
+    <div className={styles["pending-lines"]}>
       {LINE_WIDTHS.map((width) => (
         <Skeleton key={width} className={styles["pending-line"]} style={{ width }}>
           {undefined}
         </Skeleton>
       ))}
-    </>
+    </div>
+  )
+}
+
+/** `character.json` に `miniCall` が無いパックで alt に使う呼び名（キャラクターの世界の言葉はパックが持つ）。 */
+const MINI_CALL_FALLBACK = "ミニ立ち絵"
+
+/**
+ * 骨組みの右に立つミニ立ち絵。素材は `CharacterInfo.mini`（無いパックは `portraits.default` に落ちたものが届く）。
+ * 明滅させるあいだだけ、出てくるときに小さく跳ね、そのあと揺れて書く仕草をする。止めた骨組みでは立っているだけ。
+ */
+function PendingMini(props: PendingProps): ReactElement {
+  const character = useSession((session) => session.state.character)
+  if (character?.mini === undefined) {
+    return <></>
+  }
+  return (
+    <div className={styles["pending-mini"]} {...(props.blink ? { "data-mini-motion": "" } : {})}>
+      <img
+        src={character.mini}
+        alt={`${character.name}の${character.miniCall ?? MINI_CALL_FALLBACK}`}
+        className={styles["pending-mini-body"]}
+        draggable={false}
+      />
+    </div>
   )
 }
 

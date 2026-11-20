@@ -2,12 +2,19 @@
    帯の色と寸法はここが決め、明滅は `Skeleton` が持つ。
    明滅させない骨組み（`data-pending-blink` の無いもの）は、帯を止めて薄い地にする。
 
-   帯2本で本文2行ぶんの高さを取る（行送り 1.7em の中央に 0.8em の帯）。上下のあきは段落と同じで、`report-notation-body.css` が持つ。 */
+   帯2本で本文2行ぶんの高さを取る（行送り 1.7em の中央に 0.8em の帯）。上下のあきは段落と同じで、`report-notation-body.css` が持つ。
+   ミニ立ち絵は帯の右の列に立ち、足元を帯の下端に揃える。 */
 .pending-part {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 0.75em;
+  align-items: end;
+  padding-block: 0.45em;
+}
+.pending-lines {
   display: flex;
   flex-direction: column;
   gap: 0.9em;
-  padding-block: 0.45em;
 }
 /* 書き始めの紙の結論の骨組み。結論の字の大きさで2行を取る。 */
 .pending-lead {
@@ -29,8 +36,47 @@
   height: 0.8em;
   vertical-align: middle;
 }
-:not([data-pending-blink]) > :is(.pending-line, .pending-heading-bar) {
+[data-report-pending]:not([data-pending-blink]) :is(.pending-line, .pending-heading-bar) {
   opacity: 1;
   background: color-mix(in srgb, var(--ink) 7%, transparent);
   animation: none;
+}
+
+/* ミニ立ち絵。高さは下限 60px（それより小さいと姿が判別できない）から上限 96px のあいだでビューポートに追随する。
+   書く仕草は足元を軸に揺らし、出てくるときに一度だけ跳ねる。 */
+.pending-mini {
+  height: clamp(60px, 8vmin, 96px);
+  transform-origin: 50% 100%;
+  pointer-events: none;
+}
+.pending-mini[data-mini-motion] {
+  animation:
+    pending-mini-hop 260ms ease-out,
+    pending-mini-scribble 0.55s ease-in-out 260ms infinite alternate;
+}
+@keyframes pending-mini-hop {
+  40% {
+    transform: translateY(-8px);
+  }
+}
+@keyframes pending-mini-scribble {
+  from {
+    transform: translateX(-4px) rotate(-4deg);
+  }
+  to {
+    transform: translateX(4px) rotate(4deg);
+  }
+}
+/* 縁取り（地の色）と暈（差し色）で、暗い地の上でも本文の帯の横でも輪郭を立てる。
+   drop-shadow は素材の alpha をなぞるので姿の形に付き、半透明の色なので重ねて濃くする。 */
+.pending-mini-body {
+  --pending-mini-rim: color-mix(in srgb, var(--surface) 85%, transparent);
+  --pending-mini-glow: color-mix(in srgb, var(--accent) 80%, transparent);
+
+  display: block;
+  width: auto;
+  height: 100%;
+  filter: drop-shadow(0 0 4px var(--pending-mini-glow))
+    drop-shadow(0 0 4px var(--pending-mini-glow)) drop-shadow(0 0 1px var(--pending-mini-rim))
+    drop-shadow(0 0 1px var(--pending-mini-rim));
 }
