@@ -67,7 +67,7 @@ const LEAF_COMPONENTS = {
     ),
     filterable: partCardNote(
       z.boolean().optional(),
-      'true と filterColumn で、その列の値と件数のバッジ（2〜6 種類）が出て押すと絞れる。ChoicePicker の value を {path: "/view/<この表のID>/filter"} に結ぶとバッジは出ず、そちらで絞る',
+      "true と filterColumn で、その列の値と件数のバッジ（2〜6 種類）が出て押すと絞れる",
     ),
     filterColumn: partCardNote(
       z.number().int().min(0).optional(),
@@ -196,7 +196,7 @@ const gridComponentSchema = z.object({
       .array(z.string())
       .min(2)
       .describe("同格の部品の ID を2つ以上。横に並び、狭いコンテナでは段に折り返す"),
-    "向くのは数のカード・短い表・図・Card。長い段落とコードは格子の外に置く。2〜4個を1行で読み比べるなら Row、全幅に出したい部品は格子の外。列の数は書かない",
+    "向くのは数のカード・短い表・図。長い段落とコードは格子の外に置く。全幅に出したい部品は格子の外。列の数は書かない",
   ),
 })
 
@@ -270,15 +270,21 @@ const OWN_COMPONENT_SCHEMAS = {
   ParameterCheckBox: parameterCheckBoxSchema,
 } as const
 
-/** 部品名と書き手が書く形。根・節・格子・内容部品 22 種・つまみ 2 種・基本 6 部品の 33。 */
+/**
+ * 書き手に見せる基本の部品。`Row`・`Column`・`Card`・`Divider`・`ChoicePicker` は
+ * `Grid`・`Section`・`Table` の絞り込みで足りるので外し、`Tabs` だけ残す（読み戻しは {@link a2uiWrittenComponentSchema} が基本の 6 部品を全部受ける）。
+ */
+const WRITTEN_BASIC_PART_SCHEMAS = { Tabs: BASIC_PART_SCHEMAS.Tabs } as const
+
+/** 部品名と書き手が書く形。根・節・格子・内容部品 22 種・つまみ 2 種・`Tabs` の 28。 */
 export const REPORT_COMPONENT_SCHEMAS = {
   ...OWN_COMPONENT_SCHEMAS,
-  ...BASIC_PART_SCHEMAS,
+  ...WRITTEN_BASIC_PART_SCHEMAS,
 } as const
 
 /**
  * 静的な一覧（式を初期値で評価した後）の部品 1 つの受理の形。
- * 式もつまみも持たず、塊の形は今のまま（31 部品のどれか）。
+ * 式もつまみも持たず、塊の形は今のまま（基本の 6 部品を含め 31 部品のどれか）。
  * 受け口で静的にする前の、書き手が書いた形は {@link REPORT_COMPONENT_SCHEMAS}。
  */
 export const a2uiReportComponentSchema = z.discriminatedUnion("component", [
@@ -292,7 +298,9 @@ export const a2uiReportComponentSchema = z.discriminatedUnion("component", [
 export type A2uiReportComponent = z.infer<typeof a2uiReportComponentSchema>
 
 /**
- * 書き手が書いた部品 1 つの受理の形（式・つまみ・`defs` を持つ）。
+ * 書いた部品 1 つを読む形（式・つまみ・`defs` を持つ）。記録済みの呼び出しの読み戻しが通す。
+ * 記録済みの `components` は外す前の `Row`・`Column`・`Card`・`Divider`・`ChoicePicker` を持つので、基本の 6 部品を全部受ける。
+ * 書き手の受理を狭くするのは {@link REPORT_COMPONENT_SCHEMAS}（`report` ツールの入力）と構造の検査。
  * 初期値で評価した静的な一覧にする前の形で、{@link a2uiReportComponentSchema} はその後の形。
  */
 export const a2uiWrittenComponentSchema = z.discriminatedUnion("component", [
@@ -309,7 +317,7 @@ export type A2uiWrittenComponent = z.infer<typeof a2uiWrittenComponentSchema>
 
 const CATALOG_ID = "https://tsukumo.example/catalogs/report/v1"
 
-/** AI に渡し、`Catalog.fromJson` に読ませるカタログ文書（自作分は zod から出し、基本の 6 部品は定数）。 */
+/** AI に渡し、`Catalog.fromJson` に読ませるカタログ文書（自作分は zod から出し、基本の 6 部品は読み戻しのため定数）。 */
 export function buildReportCatalogDocument() {
   const schemas = mapValues(OWN_COMPONENT_SCHEMAS, (schema) =>
     z.toJSONSchema(schema, { io: "input" }),

@@ -6,6 +6,7 @@ import { reportEvents } from "../../../../src/server/session-driver/core/message
 import type { A2uiReportComponent } from "../../../../src/shared/report/a2ui-report-catalog.ts"
 import { mainViewEntries } from "../../../../src/shared/session/main-view-entry.ts"
 import type { MainViewReportRegions } from "../../../../src/shared/session/main-view-shape.ts"
+import type { ReportCalledEvent } from "../../../../src/shared/session/session-event.ts"
 import { applySessionEvent } from "../../../../src/shared/session/session-fold.ts"
 import { INITIAL_SESSION_STATE } from "../../../../src/shared/session/session-state.ts"
 import { checkedToolUseId } from "../../../fixture/tool-use-id.ts"
@@ -136,7 +137,7 @@ describe("操作できる Table と ChoicePicker", () => {
   })
 
   it("ChoicePicker の選択で行が絞られ、選び直すと戻る", () => {
-    const body = regionsOf({ components: INTERACTIVE_PARTS })
+    const body = readBackRegionsOf(INTERACTIVE_PARTS)
     const { container } = render(
       <Report reveal={false} turnId={1} {...NO_CLASS_NAMES} body={body} />,
     )
@@ -157,7 +158,7 @@ describe("操作できる Table と ChoicePicker", () => {
         ? { ...part, options: [...(part.options ?? []), { label: "丙", value: "丙" }] }
         : part,
     )
-    const body = regionsOf({ components: parts })
+    const body = readBackRegionsOf(parts)
     const { container } = render(
       <Report reveal={false} turnId={1} {...NO_CLASS_NAMES} body={body} />,
     )
@@ -205,7 +206,7 @@ describe("Divider", () => {
   ]
 
   it("Section の中の 2 つの部品の間に罫が 1 つ引かれる", () => {
-    const body = regionsOf({ components: dividerParts({}) })
+    const body = readBackRegionsOf(dividerParts({}))
     const { container } = render(
       <Report reveal={false} turnId={1} {...NO_CLASS_NAMES} body={body} />,
     )
@@ -218,7 +219,7 @@ describe("Divider", () => {
   })
 
   it("axis が vertical なら縦の罫になる", () => {
-    const body = regionsOf({ components: dividerParts({ axis: "vertical" }) })
+    const body = readBackRegionsOf(dividerParts({ axis: "vertical" }))
     const { container } = render(
       <Report reveal={false} turnId={1} {...NO_CLASS_NAMES} body={body} />,
     )
@@ -342,7 +343,7 @@ describe("部品の一覧のある本文（A2UI の面）", () => {
   })
 
   it("Row は節の欄の中に子の数だけ区画を並べ、Card は枠で包み、前後の内容部品は欄の塊のまま", () => {
-    const body = regionsOf({ components: ROW_PARTS })
+    const body = readBackRegionsOf(ROW_PARTS)
     const { container } = render(
       <Report reveal={false} turnId={1} {...NO_CLASS_NAMES} body={body} />,
     )
@@ -435,6 +436,15 @@ function rejectedPart(): A2uiReportComponent {
 function regionsOf(input: Readonly<Record<string, unknown>>): MainViewReportRegions {
   const [event] = reportEvents(checkedToolUseId("toolu_fictional"), input, [])
   if (event?.kind !== "report") throw new Error("report にならなかった")
+  return regionsOfEvent(event)
+}
+
+/** 記録済みの呼び出しの読み戻し。`reportEvents` を通すので外した基本の部品も描ける。 */
+function readBackRegionsOf(parts: readonly unknown[]): MainViewReportRegions {
+  return regionsOf({ components: parts })
+}
+
+function regionsOfEvent(event: ReportCalledEvent): MainViewReportRegions {
   const entry = mainViewEntries(applySessionEvent(INITIAL_SESSION_STATE, event, 0)).find(
     (candidate) => candidate.kind === "report",
   )

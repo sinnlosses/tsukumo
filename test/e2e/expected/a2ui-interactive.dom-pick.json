@@ -3,12 +3,12 @@
     { "tag": "a2ui-react-report", "children": [
       { "tag": "div", "attributes": { "data-report-region": "section", "data-report-section": "0" }, "children": [
         { "tag": "h4", "children": ["架空の一覧"] },
-        { "tag": "div", "attributes": { "role": "group", "aria-label": "種別" }, "children": [
-          { "tag": "button", "attributes": { "aria-pressed": "false" }, "children": ["甲"] },
-          { "tag": "button", "attributes": { "aria-pressed": "true" }, "children": ["乙"] },
-          { "tag": "button", "attributes": { "aria-pressed": "false" }, "children": ["丙"] }
-        ] },
         "表 1",
+        { "tag": "div", "attributes": { "role": "group", "aria-label": "絞り込み" }, "children": [
+          { "tag": "button", "attributes": { "aria-pressed": "false", "aria-label": "甲2件" } },
+          { "tag": "button", "attributes": { "aria-pressed": "true", "aria-label": "乙2件" } },
+          { "tag": "button", "attributes": { "aria-pressed": "false", "aria-label": "丙1件" } }
+        ] },
         { "tag": "table", "children": [
           { "tag": "thead", "children": [
             { "tag": "tr", "children": [

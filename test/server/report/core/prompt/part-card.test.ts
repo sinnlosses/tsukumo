@@ -74,9 +74,16 @@ describe("partCardOf", () => {
     },
   )
 
-  it("引ける名前は 33 部品", () => {
-    expect(NAMES).toHaveLength(33)
+  it("引ける名前は 28 部品", () => {
+    expect(NAMES).toHaveLength(28)
   })
+
+  it.each(["Row", "Column", "Card", "Divider", "ChoicePicker"])(
+    "外した基本の部品 %s は知らない部品として返る",
+    (name) => {
+      expect(partCardOf(name).kind).toBe("unknown-component")
+    },
+  )
 
   it.each(["ParameterSlider", "ParameterCheckBox", "Stats", "Paragraph", "Chart", "ChartGrid"])(
     "%s のカードに、式の書き方と式を結ぶ例が載り、例は構造の検査に通る",

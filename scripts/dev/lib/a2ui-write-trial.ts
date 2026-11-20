@@ -119,13 +119,8 @@ const COMPONENT_PURPOSES = {
   Picture: "手元の画像",
   Plot: "散布図などの統計の図",
   Markdown: "Markdown の本文",
-  Row: "子を横に並べる配置",
-  Column: "子を縦に並べる配置",
   Grid: "同格の子を器の幅で段に折り返して並べる配置",
-  Card: "子を 1 つ枠に入れる配置",
   Tabs: "子を切り替えて見せる配置",
-  Divider: "節の部品の間に引く区切り線",
-  ChoicePicker: "選択肢。Table の絞り込みと path で結ぶ",
   ParameterSlider: "読み手が振る数のつまみ。式から name で読む",
   ParameterCheckBox: "読み手が切り替える真偽のつまみ。式から name で読む",
 } as const satisfies Record<keyof typeof REPORT_COMPONENT_SCHEMAS, string>
@@ -516,11 +511,7 @@ function usesControl(component: unknown): boolean {
   if (!isPlainObject(component)) {
     return false
   }
-  return (
-    component["component"] === "ChoicePicker" ||
-    component["sortable"] === true ||
-    component["filterable"] === true
-  )
+  return component["sortable"] === true || component["filterable"] === true
 }
 
 function schemaCodeOf(issue: z.core.$ZodIssue): string {

@@ -37,7 +37,7 @@ test.describe("report → メインビュー", () => {
     await room.settleAndMatchPicked(ELAPSED_MS)
   })
 
-  test("操作できる Table は、ChoicePicker の選択で行が絞られ、列名のボタンで並べ替わる", async ({
+  test("操作できる Table は、種別のバッジで行が絞られ、列名のボタンで並べ替わる", async ({
     run,
   }) => {
     const room = await run.open({
@@ -48,7 +48,10 @@ test.describe("report → メインビュー", () => {
     })
 
     await room.waitForEvent("turn-finished")
-    await room.page.getByRole("button", { name: "乙", exact: true }).click()
+    await room.page
+      .getByRole("group", { name: "絞り込み" })
+      .getByRole("button", { name: /^乙/ })
+      .click()
     await room.page.getByRole("button", { name: "件数", exact: true }).click()
     await room.settleAndMatchPicked(ELAPSED_MS)
   })

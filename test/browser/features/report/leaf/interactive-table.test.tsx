@@ -4,7 +4,11 @@ import { afterEach, beforeAll, describe, expect, it } from "vitest"
 import { loadMarkdown } from "../../../../../src/browser/features/report/markdown.tsx"
 import { Report } from "../../../../../src/browser/features/report/report.tsx"
 import type { MainViewReportRegions } from "../../../../../src/shared/session/main-view-shape.ts"
-import { INTERACTIVE, regionsOf, reportParts } from "../../../../fixture/table-report-part.ts"
+import {
+  INTERACTIVE,
+  readBackRegionsOf as regionsOf,
+  reportParts,
+} from "../../../../fixture/table-report-part.ts"
 
 beforeAll(async () => {
   await loadMarkdown()

@@ -26,24 +26,12 @@
             "id": "s1",
             "component": "Section",
             "heading": "架空の一覧",
-            "children": ["p1", "pick", "t1"]
+            "children": ["p1", "t1"]
           },
           {
             "id": "p1",
             "component": "Paragraph",
-            "text": "種別のボタンで行を絞り、列の名前のボタンで並べ替える。"
-          },
-          {
-            "id": "pick",
-            "component": "ChoicePicker",
-            "label": "種別",
-            "variant": "multipleSelection",
-            "options": [
-              { "label": "甲", "value": "甲" },
-              { "label": "乙", "value": "乙" },
-              { "label": "丙", "value": "丙" }
-            ],
-            "value": { "path": "/view/t1/filter" }
+            "text": "種別のバッジで行を絞り、列の名前のボタンで並べ替える。"
           },
           {
             "id": "t1",

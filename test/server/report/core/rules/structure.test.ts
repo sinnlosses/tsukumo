@@ -6,7 +6,7 @@ import {
 } from "../../../../../src/server/report/core/rules/structure.ts"
 import { REPORT_COMPONENT_SCHEMAS } from "../../../../../src/shared/report/a2ui-report-catalog.ts"
 
-// 正しい一覧。節 2 つ、`Row` の中に `Card`、図と振り返りの根拠が内容部品を参照する。
+// 正しい一覧。節 2 つ、`Grid` の中に `Tabs`、図と振り返りの根拠が内容部品を参照する。
 const VALID = [
   {
     id: "root",
@@ -17,8 +17,8 @@ const VALID = [
     children: ["sec-1", "sec-2"],
   },
   { id: "sec-1", component: "Section", heading: "架空の節", children: ["row", "p-1"] },
-  { id: "row", component: "Row", children: ["card", "p-2"] },
-  { id: "card", component: "Card", child: "p-3" },
+  { id: "row", component: "Grid", children: ["card", "p-2"] },
+  { id: "card", component: "Tabs", tabs: [{ title: "架空の題", child: "p-3" }] },
   { id: "p-1", component: "Paragraph", text: "架空の文。" },
   { id: "p-2", component: "Paragraph", text: "架空の文。" },
   { id: "p-3", component: "Paragraph", text: "架空の文。" },
@@ -46,90 +46,30 @@ const section = (id: string, children: readonly string[]) => ({
   children,
 })
 
-const filterTable = (extra: object = {}) => ({
-  id: "t",
-  component: "Table",
-  columns: ["名前", "種別"],
-  rows: [
-    ["a", { status: "ok", text: "良" }],
-    ["b", { tag: "新" }],
-  ],
-  filterable: true,
-  ...extra,
-})
-
-const picker = (path: string, values: readonly string[]) => ({
-  id: "c",
-  component: "ChoicePicker",
-  options: values.map((value) => ({ label: value, value })),
-  value: { path },
-})
-
-const filterList = (table: object, choice: object) => [
-  report(["s"]),
-  section("s", ["t", "c"]),
-  table,
-  choice,
-]
-
-describe("a2uiStructureFaults の絞り込みの結び", () => {
-  it("実在する filterable な Table のセルにある値を選ぶ ChoicePicker は通る", () => {
-    const components = filterList(filterTable(), picker("/view/t/filter", ["a", "良", "新"]))
-
-    expect(a2uiStructureFaults(components)).toEqual([])
-  })
-
+describe("a2uiStructureFaults の外した基本の部品", () => {
   it.each([
+    { name: "Row", part: { id: "x", component: "Row", children: ["p"] } },
+    { name: "Column", part: { id: "x", component: "Column", children: ["p"] } },
+    { name: "Card", part: { id: "x", component: "Card", child: "p" } },
+    { name: "Divider", part: { id: "x", component: "Divider" } },
     {
-      name: "path の Table が無い",
-      components: filterList(filterTable(), picker("/view/nothing/filter", ["a"])),
-      faults: [{ kind: "filter-target-missing", pointer: "/components/3/value/path" }],
+      name: "ChoicePicker",
+      part: {
+        id: "x",
+        component: "ChoicePicker",
+        options: [{ label: "a", value: "a" }],
+        value: { path: "/view/t/filter" },
+      },
     },
-    {
-      name: "Table が filterable でない",
-      components: filterList(filterTable({ filterable: false }), picker("/view/t/filter", ["a"])),
-      faults: [{ kind: "filter-target-not-filterable", pointer: "/components/3/value/path" }],
-    },
-    {
-      name: "選択肢の値が絞り込む列のセルに無い",
-      components: filterList(
-        filterTable({ filterColumn: 0 }),
-        picker("/view/t/filter", ["a", "良"]),
-      ),
-      faults: [{ kind: "filter-option-not-in-cells", pointer: "/components/3/options/1/value" }],
-    },
-  ])("$name を拾う", ({ components, faults }) => {
-    expect(a2uiStructureFaults(components)).toEqual(faults)
-  })
-})
+  ])("書き手が $name を書くと知らない部品として差し戻る", ({ part }) => {
+    const faults = a2uiStructureFaults([
+      report(["s"]),
+      section("s", ["p", "x"]),
+      paragraph("p"),
+      part,
+    ])
 
-describe("a2uiStructureFaults の Divider", () => {
-  const divider = { id: "d", component: "Divider" }
-
-  it.each([
-    {
-      name: "Section の子",
-      components: [report(["s"]), section("s", ["p", "d"]), paragraph("p"), divider],
-      faults: [],
-    },
-    {
-      name: "Row の子",
-      components: [
-        report(["s"]),
-        section("s", ["r"]),
-        { id: "r", component: "Row", children: ["p", "d"] },
-        paragraph("p"),
-        divider,
-      ],
-      faults: [],
-    },
-    {
-      name: "Report の子",
-      components: [report(["d"]), divider],
-      faults: [{ kind: "report-child-not-section", pointer: "/components/0/children/0" }],
-    },
-  ])("$name に置いたときの違反", ({ components, faults }) => {
-    expect(a2uiStructureFaults(components)).toEqual(faults)
+    expect(faults).toContainEqual({ kind: "unknown-component", pointer: "/components/3/component" })
   })
 })
 
@@ -261,9 +201,9 @@ describe("a2uiStructureFaults", () => {
       components: [
         report(["s"]),
         section("s", ["r1"]),
-        { id: "r1", component: "Row", children: ["r2"] },
-        { id: "r2", component: "Card", child: "r3" },
-        { id: "r3", component: "Column", children: ["p"] },
+        { id: "r1", component: "Grid", children: ["r2"] },
+        { id: "r2", component: "Tabs", tabs: [{ title: "架空の題", child: "r3" }] },
+        { id: "r3", component: "Grid", children: ["p"] },
         paragraph("p"),
       ],
       faults: [],
@@ -273,20 +213,20 @@ describe("a2uiStructureFaults", () => {
       components: [
         report(["s"]),
         section("s", ["r1"]),
-        { id: "r1", component: "Row", children: ["r2"] },
-        { id: "r2", component: "Column", children: ["r3"] },
-        { id: "r3", component: "Card", child: "r4" },
-        { id: "r4", component: "Row", children: ["p"] },
+        { id: "r1", component: "Grid", children: ["r2"] },
+        { id: "r2", component: "Grid", children: ["r3"] },
+        { id: "r3", component: "Tabs", tabs: [{ title: "架空の題", child: "r4" }] },
+        { id: "r4", component: "Grid", children: ["p"] },
         paragraph("p"),
       ],
-      faults: [{ kind: "deep-layout", pointer: "/components/4/child" }],
+      faults: [{ kind: "deep-layout", pointer: "/components/4/tabs/0/child" }],
     },
     {
       name: "配置の部品の子に Section",
       components: [
         report(["s"]),
         section("s", ["r"]),
-        { id: "r", component: "Row", children: ["inner"] },
+        { id: "r", component: "Grid", children: ["inner"] },
         section("inner", ["p"]),
         paragraph("p"),
       ],
@@ -326,7 +266,7 @@ describe("a2uiStructureFaults の寄せ先の無い memo", () => {
       components: [
         report(["s"]),
         section("s", ["r", "p"]),
-        { id: "r", component: "Row", children: ["n"] },
+        { id: "r", component: "Grid", children: ["n"] },
         note("n", "memo"),
         paragraph("p"),
       ],

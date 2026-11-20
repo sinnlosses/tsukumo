@@ -18,7 +18,7 @@ const TABLE = {
   rows: [["架空", "1"]],
 }
 
-// 正しい一覧。節 2 つ（1 つ目は `Row` の中に `Card`）、図と振り返りの根拠が内容部品を参照する。
+// 正しい一覧。節 2 つ（1 つ目は `Grid` の中に `Tabs`）、図と振り返りの根拠が内容部品を参照する。
 const COMPONENTS = [
   {
     id: "root",
@@ -32,8 +32,8 @@ const COMPONENTS = [
     children: ["sec-1", "sec-2"],
   },
   { id: "sec-1", component: "Section", heading: "架空の節", children: ["row", "p-1"] },
-  { id: "row", component: "Row", children: ["card", "tbl"] },
-  { id: "card", component: "Card", child: "p-2" },
+  { id: "row", component: "Grid", children: ["card", "tbl"] },
+  { id: "card", component: "Tabs", tabs: [{ title: "架空の題", child: "p-2" }] },
   paragraph("p-1", "架空の一つ目。"),
   paragraph("p-2", "架空の二つ目。"),
   TABLE,

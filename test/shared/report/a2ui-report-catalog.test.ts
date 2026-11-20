@@ -6,6 +6,7 @@ import { partCardOf } from "../../../src/server/report/core/prompt/part-card.ts"
 import { BASIC_PART_SCHEMAS, BASIC_PARTS } from "../../../src/shared/report/a2ui-basic-part-list.ts"
 import {
   a2uiReportComponentSchema,
+  a2uiWrittenComponentSchema,
   buildReportCatalogDocument,
   FIGURE_COMPONENTS,
   LEAF_COMPONENT_KINDS,
@@ -41,6 +42,21 @@ const KIND_TO_COMPONENT = {
 } as const
 
 const BASIC_COMPONENTS = ["Row", "Column", "Card", "Tabs", "Divider", "ChoicePicker"]
+
+const REMOVED_BASIC_COMPONENTS = ["Row", "Column", "Card", "Divider", "ChoicePicker"] as const
+
+const REMOVED_BASIC_EXAMPLES = {
+  Row: { id: "x", component: "Row", children: ["p"] },
+  Column: { id: "x", component: "Column", children: ["p"] },
+  Card: { id: "x", component: "Card", child: "p" },
+  Divider: { id: "x", component: "Divider" },
+  ChoicePicker: {
+    id: "x",
+    component: "ChoicePicker",
+    options: [{ label: "a", value: "a" }],
+    value: { path: "/view/t/filter" },
+  },
+} as const
 
 type Document = ReturnType<typeof buildReportCatalogDocument>
 
@@ -277,8 +293,18 @@ describe("A2UI のカタログ文書", () => {
     expect(leaf).not.toContain('"kind"')
   })
 
-  it("受理の形の表は文書と同じ 33 部品を持つ", () => {
-    expect(Object.keys(REPORT_COMPONENT_SCHEMAS).toSorted()).toEqual(expected.toSorted())
+  it("書き手に見せる表は文書の 33 部品から外した基本の 5 部品を除いた 28 部品を持つ", () => {
+    expect(Object.keys(REPORT_COMPONENT_SCHEMAS).toSorted()).toEqual(
+      expected.filter((name) => !Object.hasOwn(REMOVED_BASIC_EXAMPLES, name)).toSorted(),
+    )
+  })
+
+  it.each(REMOVED_BASIC_COMPONENTS)("書き手の表に %s は無く、読み戻しの部品は受ける", (name) => {
+    const part = REMOVED_BASIC_EXAMPLES[name]
+
+    expect(a2uiWrittenComponentSchema.safeParse(part).success).toBe(true)
+    expect(Object.hasOwn(REPORT_COMPONENT_SCHEMAS, name)).toBe(false)
+    expect(a2uiReportComponentSchema.safeParse(part).success).toBe(true)
   })
 
   it("Trace は題と状態の 1 行で通り、items が空・status が語彙の外・title が無ければ拒み、supplement・output・fold・aside を受ける", () => {
@@ -340,7 +366,7 @@ describe("A2UI のカタログ文書", () => {
   })
 
   it("Divider は axis だけを受け、axis の不正な値は拒む", () => {
-    const divider = REPORT_COMPONENT_SCHEMAS.Divider
+    const divider = BASIC_PART_SCHEMAS.Divider
 
     expect(divider.safeParse({ id: "d", component: "Divider" }).success).toBe(true)
     expect(divider.safeParse({ id: "d", component: "Divider", axis: "vertical" }).success).toBe(

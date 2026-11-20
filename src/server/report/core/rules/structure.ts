@@ -9,7 +9,6 @@ import {
   REPORT_COMPONENT_SCHEMAS,
 } from "../../../../shared/report/a2ui-report-catalog.ts"
 import type { A2uiExpressionFault } from "../../../../shared/report/report-expression-slot.ts"
-import { tableIdOfFilterPath, tableRowFilterTexts } from "../../../../shared/report/table-view.ts"
 import type { ToolErrorField } from "../../../../shared/report/tool-error-field.ts"
 import { expressionFaults } from "./expression-structure.ts"
 import { favorOptionsFaults, type FavorOptionsFaultKind } from "./favor-option-fault.ts"
@@ -30,9 +29,6 @@ export type A2uiStructureFaultKind =
   | "figure-not-figure-part"
   | "supports-not-section"
   | "unreferenced-component"
-  | "filter-target-missing"
-  | "filter-target-not-filterable"
-  | "filter-option-not-in-cells"
 
 /**
  * 違反 1 つ。`pointer` は引数の根からの JSON Pointer（`/components/2/children/0`）。
@@ -161,7 +157,7 @@ export function a2uiStructureFaults(components: readonly unknown[]): readonly A2
   if (rootIndex !== undefined && parts[rootIndex]?.component === "Report") {
     faults.push(...favorOptionsFaults(parts[rootIndex].props, rootIndex))
   }
-  faults.push(...filterBindingFaults(parts, indexById), ...expressionFaults(components))
+  faults.push(...expressionFaults(components))
   return faults
 }
 
@@ -211,9 +207,6 @@ const A2UI_STRUCTURE_FAULT_REASONS = {
   "figure-not-figure-part": "Report.figure には図の部品の id を置く",
   "supports-not-section": "checks の supports には Section の id だけを置く",
   "unreferenced-component": "どこからも参照されない部品",
-  "filter-target-missing": "value の path が指す id の Table が無い（/view/<Table の id>/filter）",
-  "filter-target-not-filterable": "value の path が指す Table に filterable: true が無い",
-  "filter-option-not-in-cells": "選択肢の value が、絞り込む Table のセルの文字に無い",
 } as const satisfies Record<A2uiStructureFaultKind, string>
 
 const ROOT_ID = "root"
@@ -260,58 +253,7 @@ function isMemoNote(part?: ReturnType<typeof partOf>): boolean {
   return part?.component === "Note" && part.props.tone === "memo"
 }
 
-/**
- * `value` を `/view/<TableのID>/filter` に結んだ `ChoicePicker` が、実在する `filterable` な `Table` を指し、
- * 選択肢の値がその表のセル（`filterColumn` があればその列）の文字に完全一致で現れるかを見る。
- * ほかの path は読まない。
- */
-function filterBindingFaults(
-  parts: readonly ReturnType<typeof partOf>[],
-  indexById: ReadonlyMap<string, number>,
-): readonly A2uiStructureFault[] {
-  return parts.flatMap((part, index): readonly A2uiStructureFault[] => {
-    if (part.component !== "ChoicePicker" || !isPlainObject(part.props.value)) {
-      return []
-    }
-    const tableId = tableIdOfFilterPath(part.props.value.path)
-    if (tableId === undefined) {
-      return []
-    }
-    const base = `/components/${String(index)}`
-    const tableIndex = indexById.get(tableId)
-    const table = tableIndex === undefined ? undefined : parts[tableIndex]
-    if (table?.component !== "Table") {
-      return [{ kind: "filter-target-missing" as const, pointer: `${base}/value/path` }]
-    }
-    if (table.props.filterable !== true) {
-      return [{ kind: "filter-target-not-filterable" as const, pointer: `${base}/value/path` }]
-    }
-    const texts = new Set(filterTargetTexts(table.props))
-    const options: unknown = part.props.options
-    return Array.isArray(options)
-      ? options.flatMap((option: unknown, position) =>
-          isPlainObject(option) && typeof option.value === "string" && !texts.has(option.value)
-            ? [
-                {
-                  kind: "filter-option-not-in-cells" as const,
-                  pointer: `${base}/options/${String(position)}/value`,
-                },
-              ]
-            : [],
-        )
-      : []
-  })
-}
-
-/** `Table` の絞り込みの対象のセルが持つ文字を全行ぶん集める。 */
-function filterTargetTexts(props: Readonly<Record<string, unknown>>): readonly string[] {
-  const column = typeof props.filterColumn === "number" ? props.filterColumn : undefined
-  const rows: unknown = props.rows
-  return Array.isArray(rows) ? rows.flatMap((row: unknown) => tableRowFilterTexts(row, column)) : []
-}
-
-/** 子を持つ配置の部品。`ChoicePicker` と `Divider` は子を持たないので入れ子の深さに数えない。 */
-const CONTAINERS: ReadonlySet<string> = new Set(["Row", "Column", "Grid", "Card", "Tabs"])
+const CONTAINERS: ReadonlySet<string> = new Set(["Grid", "Tabs"])
 
 /** 配置の部品の入れ子の上限。 */
 const MAX_LAYOUT_DEPTH = 3
@@ -352,14 +294,8 @@ function referencesOf(part: ReturnType<typeof partOf>, index: number): readonly 
       ]
     case "Section":
       return idList(props.children, `${base}/children`, "section-child")
-    case "Row":
-    case "Column":
     case "Grid":
       return idList(props.children, `${base}/children`, "layout")
-    case "Card":
-      return typeof props.child === "string"
-        ? [{ slot: "layout", id: props.child, pointer: `${base}/child` }]
-        : []
     case "Tabs":
       return Array.isArray(props.tabs)
         ? props.tabs.flatMap((tab: unknown, tabIndex) =>

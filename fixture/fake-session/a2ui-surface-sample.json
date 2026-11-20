@@ -193,7 +193,7 @@
           },
           {
             "id": "r1",
-            "component": "Row",
+            "component": "Grid",
             "children": ["p4", "p5"]
           },
           {

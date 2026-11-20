@@ -201,11 +201,6 @@ export const PART_EXAMPLES = {
     { id: "p1", component: "Paragraph", text: "架空の取り込みは 120 件すべてが通った。" },
     { id: "n1", component: "Note", tone: "warn", text: "架空の書き出しは戻せない。" },
   ],
-  Row: [
-    { id: "r1", component: "Row", children: ["p1", "p2"], justify: "spaceBetween" },
-    { id: "p1", component: "Paragraph", text: "架空の左の欄。" },
-    { id: "p2", component: "Paragraph", text: "架空の右の欄。" },
-  ],
   Grid: [
     { id: "g1", component: "Grid", children: ["t1", "t2", "t3"] },
     {
@@ -239,15 +234,6 @@ export const PART_EXAMPLES = {
       ],
     },
   ],
-  Column: [
-    { id: "c1", component: "Column", children: ["p1", "p2"] },
-    { id: "p1", component: "Paragraph", text: "架空の上の段。" },
-    { id: "p2", component: "Paragraph", text: "架空の下の段。" },
-  ],
-  Card: [
-    { id: "k1", component: "Card", child: "p1" },
-    { id: "p1", component: "Paragraph", text: "架空の枠の中の一文。" },
-  ],
   Tabs: [
     {
       id: "t1",
@@ -259,36 +245,6 @@ export const PART_EXAMPLES = {
     },
     { id: "p1", component: "Paragraph", text: "架空の案Aの説明。" },
     { id: "p2", component: "Paragraph", text: "架空の案Bの説明。" },
-  ],
-  Divider: [
-    { id: "s1", component: "Section", heading: "架空の結果", children: ["p1", "d1", "p2"] },
-    { id: "p1", component: "Paragraph", text: "架空の取り込みは 120 件すべてが通った。" },
-    { id: "d1", component: "Divider" },
-    { id: "p2", component: "Paragraph", text: "架空の書き出しは次のセクションで扱う。" },
-  ],
-  ChoicePicker: [
-    {
-      id: "tbl1",
-      component: "Table",
-      title: "架空の取り込みの結果",
-      columns: ["状態", "件名"],
-      rows: [
-        [{ status: "ok", text: "通った" }, "架空の取り込み"],
-        [{ status: "ng", text: "落ちた" }, "架空の書き出し"],
-      ],
-      filterable: true,
-    },
-    {
-      id: "cp1",
-      component: "ChoicePicker",
-      label: "架空の表示",
-      variant: "mutuallyExclusive",
-      options: [
-        { label: "すべて", value: "all" },
-        { label: "落ちたものだけ", value: "ng" },
-      ],
-      value: { path: "/view/tbl1/filter" },
-    },
   ],
   ParameterSlider: [
     { id: "s1", component: "Section", heading: "架空の上限", children: ["w1", "p1"] },

@@ -42,7 +42,12 @@ export function InteractiveTable(props: InteractiveTableProps): ReactElement {
   }
   const badgeGroup =
     badges.length === 0 ? undefined : (
-      <div role="group" aria-label="絞り込み" className={styles["interactive-view-group"]}>
+      <div
+        role="group"
+        aria-label="絞り込み"
+        className={styles["interactive-view-group"]}
+        {...reportExportMark.drop}
+      >
         {badges.map((badge) => {
           const on = filter.includes(badge.value)
           return (

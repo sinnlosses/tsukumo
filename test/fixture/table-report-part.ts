@@ -1,6 +1,7 @@
 import { reportEvents } from "../../src/server/session-driver/core/message/sdk-report-message.ts"
 import { mainViewEntries } from "../../src/shared/session/main-view-entry.ts"
 import type { MainViewReportRegions } from "../../src/shared/session/main-view-shape.ts"
+import type { ReportCalledEvent } from "../../src/shared/session/session-event.ts"
 import { applySessionEvent } from "../../src/shared/session/session-fold.ts"
 import { INITIAL_SESSION_STATE } from "../../src/shared/session/session-state.ts"
 import { checkedToolUseId } from "./tool-use-id.ts"
@@ -44,9 +45,19 @@ export function reportParts(table: Readonly<Record<string, unknown>>, withPicker
   ].filter((part) => withPicker || part.id !== "pick")
 }
 
+/** 書き手の入り口を通した呼び出しの本文。 */
 export function regionsOf(components: readonly unknown[]): MainViewReportRegions {
   const [event] = reportEvents(checkedToolUseId("toolu_fictional"), { components }, [])
   if (event?.kind !== "report") throw new Error("report にならなかった")
+  return regionsOfEvent(event)
+}
+
+/** 記録済みの呼び出しの読み戻し。`reportEvents` を通すので、外した `ChoicePicker` を結んだ旧い表も描ける。 */
+export function readBackRegionsOf(components: readonly unknown[]): MainViewReportRegions {
+  return regionsOf(components)
+}
+
+function regionsOfEvent(event: ReportCalledEvent): MainViewReportRegions {
   const entry = mainViewEntries(applySessionEvent(INITIAL_SESSION_STATE, event, 0)).find(
     (candidate) => candidate.kind === "report",
   )

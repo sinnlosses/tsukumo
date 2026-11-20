@@ -53,14 +53,7 @@ describe("judgeComponents", () => {
     expect(judged.retryText).toContain("VALIDATION_FAILED")
   })
 
-  test("filterable の無い表を ChoicePicker が結ぶと path の整合の違反になる", () => {
-    const table = {
-      id: "t1",
-      component: "Table",
-      title: "架空の表",
-      columns: ["案件", "種別"],
-      rows: [["架空の案件", "甲"]],
-    }
+  test("ChoicePicker は外した部品なので、書くと知らない部品の違反になる", () => {
     const picker = {
       id: "pick",
       component: "ChoicePicker",
@@ -69,15 +62,9 @@ describe("judgeComponents", () => {
       value: { path: "/view/t1/filter" },
     }
 
-    const judged = judgeComponents([
-      report,
-      { ...section, children: ["pick", "t1"] },
-      picker,
-      table,
-    ])
+    const judged = judgeComponents([report, { ...section, children: ["pick"] }, picker])
 
-    expect(judged.faults).toEqual([{ source: "structure", code: "filter-target-not-filterable" }])
-    expect(judged.usedControls).toBe(true)
+    expect(judged.faults.map((fault) => fault.code)).toContain("unknown-component")
   })
 
   test("配列でない出力は入力検査の層で落ちる", () => {
@@ -187,9 +174,9 @@ describe("judgeOutput", () => {
 
 describe("requestedCards", () => {
   test("CARD の行で引かれた、カタログにある部品名だけを重複なく取る", () => {
-    expect(requestedCards("CARD Table\nCARD Table\nCARD Unknown\nCARD Row")).toEqual([
+    expect(requestedCards("CARD Table\nCARD Table\nCARD Unknown\nCARD Grid")).toEqual([
       "Table",
-      "Row",
+      "Grid",
     ])
   })
 })
@@ -238,7 +225,7 @@ describe("混ぜる形", () => {
     )
 
     expect(loadedNames).toEqual(expect.arrayContaining(["Report", "Section", "Table"]))
-    expect(restNames).toEqual(expect.arrayContaining(["Chart", "ChoicePicker"]))
+    expect(restNames).toEqual(expect.arrayContaining(["Chart", "Tabs"]))
     expect(loadedNames.length + restNames.length).toBe(Object.keys(REPORT_COMPONENT_SCHEMAS).length)
     for (const name of restNames) {
       expect(prompt).toContain(`- ${name}: `)
@@ -310,8 +297,11 @@ describe("規約を破らせる題材の違反", () => {
     heading: "架空の入れ子",
     children: ["p1"],
   }
-  const layer = (id: string, component: string, child: string): unknown =>
-    component === "Card" ? { id, component, child } : { id, component, children: [child] }
+  const layer = (id: string, child: string): unknown => ({
+    id,
+    component: "Tabs",
+    tabs: [{ title: "架空の題", child }],
+  })
 
   test.each([
     [
@@ -329,11 +319,11 @@ describe("規約を破らせる題材の違反", () => {
       [
         report,
         { ...section, children: ["l1"] },
-        layer("l1", "Row", "l2"),
-        layer("l2", "Column", "l3"),
-        layer("l3", "Card", "l4"),
-        layer("l4", "Row", "l5"),
-        layer("l5", "Card", "p1"),
+        layer("l1", "l2"),
+        layer("l2", "l3"),
+        layer("l3", "l4"),
+        layer("l4", "l5"),
+        layer("l5", "p1"),
         paragraph,
       ],
       "deep-layout",

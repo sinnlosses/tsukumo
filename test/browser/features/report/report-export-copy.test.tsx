@@ -46,7 +46,7 @@ const PARTS = [
     id: "s1",
     component: "Section",
     heading: "架空の節",
-    children: ["tabs", "pair", "k", "pick", "t1"],
+    children: ["tabs", "pair", "k", "t1"],
   },
   {
     id: "tabs",
@@ -78,16 +78,6 @@ const PARTS = [
     initial: 2,
   },
   {
-    id: "pick",
-    component: "ChoicePicker",
-    label: "架空の種別",
-    options: [
-      { label: "甲", value: "甲" },
-      { label: "乙", value: "乙" },
-    ],
-    value: { path: "/view/t1/filter" },
-  },
-  {
     id: "t1",
     component: "Table",
     title: "架空の表",
@@ -98,6 +88,7 @@ const PARTS = [
       ["ん", "甲"],
     ],
     filterable: true,
+    filterColumn: 1,
   },
 ]
 
@@ -115,7 +106,7 @@ describe("最終レポートの写し", () => {
     )
     fireEvent.click(screen.getByRole("button", { name: "架空の二" }))
     fireEvent.click(screen.getByRole("button", { name: "採ったあとだけ" }))
-    fireEvent.click(screen.getByRole("button", { name: "甲" }))
+    fireEvent.click(screen.getByRole("button", { name: /^甲/ }))
     const root = firstChild(container)
     const screenBefore = root.outerHTML
 
@@ -127,7 +118,7 @@ describe("最終レポートの写し", () => {
     expect(copy.querySelector("input")).toBeNull()
     expect(copy.querySelector("[data-report-export]")).toBeNull()
     const lines = [...copy.querySelectorAll("p")].map((line) => line.textContent)
-    expect(lines).toEqual(expect.arrayContaining(["架空の二", "架空の件数: 2", "架空の種別: 甲"]))
+    expect(lines).toEqual(expect.arrayContaining(["架空の二", "架空の件数: 2"]))
     expect(copy.textContent).toContain("架空の段落二")
     expect(copy.textContent).not.toContain("架空の段落一")
     expect(copy.textContent).toContain("右A")

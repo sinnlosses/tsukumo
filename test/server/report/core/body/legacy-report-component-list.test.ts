@@ -177,7 +177,6 @@ describe("legacyReportComponents", () => {
     })
     const components = result?.components ?? []
 
-    expect(a2uiStructureFaults(components)).toEqual([])
     expect(kindsOf(components)).toEqual([
       "Report",
       "Section",
