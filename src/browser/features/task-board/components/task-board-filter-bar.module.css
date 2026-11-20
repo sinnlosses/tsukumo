@@ -2,6 +2,7 @@
 .task-board-filter-row {
   display: flex;
   flex: none;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--inline-control);
   padding: 0 var(--gutter-region) var(--inline-control);
@@ -15,6 +16,10 @@
   min-width: 0;
   overflow-x: auto;
   scrollbar-width: none;
+}
+/* 作業先の札の列は状態の札の下の行に、幅いっぱいで置く。 */
+.task-board-work-repos {
+  flex: 1 0 100%;
 }
 .task-board-chip {
   display: inline-flex;

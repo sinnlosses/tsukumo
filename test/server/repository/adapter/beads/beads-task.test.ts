@@ -100,6 +100,12 @@ describe("knownTaskSummaryOfBeadsIssues の一覧", () => {
     ])
   })
 
+  it("作業先は要約へ写る", () => {
+    const [item] = itemsOf([issue({ id: "gh-5", status: "open", workRepo: "架空の作業先" })])
+
+    expect(item?.workRepo).toBe("架空の作業先")
+  })
+
   it("番号つきの ID と依存は tw と同じ大文字の形にし、番号の無い ID・題・ラベルは字のまま写す", () => {
     const [item] = itemsOf([
       issue({

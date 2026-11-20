@@ -70,7 +70,9 @@ describe("探す欄", () => {
     const input = renderList()
     type(input, "緑")
 
-    expect(screen.getByText("『緑』に当たるタスクは無い（ID・題・本文を探した）")).toBeDefined()
+    expect(
+      screen.getByText("『緑』に当たるタスクは無い（ID・題・本文・作業先を探した）"),
+    ).toBeDefined()
     expect(screen.queryAllByRole("heading", { level: 3 })).toHaveLength(0)
   })
 

@@ -24,6 +24,8 @@ export type BeadsIssue = {
   readonly difficulty?: TaskDifficulty
   /** metadata の `loopable`。無い・表に無い値は `undefined`。 */
   readonly loopable?: TaskLoopable
+  /** metadata の `work_repo`。無い・文字列でない・空文字列は `undefined`。 */
+  readonly workRepo?: string
   /** metadata の `importance`。無い・表に無い値は `normal`。 */
   readonly importance: TaskImportance
   /** metadata の `urgency`。無い・表に無い値は `normal`。 */

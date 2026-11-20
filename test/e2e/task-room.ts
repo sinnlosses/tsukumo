@@ -35,6 +35,8 @@ type TaskFixture = {
   readonly notes: string
   readonly difficulty?: TaskDifficulty
   readonly loopable?: TaskLoopable
+  /** metadata の `work_repo`。 */
+  readonly workRepo?: string
 }
 
 /** 本文を指定しないタスクの本文（`## 目的・背景` の中身）。 */
@@ -97,12 +99,16 @@ function beadsIssueOf(fixture: TaskFixture, index: number): Readonly<Record<stri
     description: fixture.description,
     acceptance_criteria: fixture.acceptance,
     notes: fixture.notes,
-    ...(fixture.difficulty === undefined && fixture.loopable === undefined && !isDraft(fixture)
+    ...(fixture.difficulty === undefined &&
+    fixture.loopable === undefined &&
+    fixture.workRepo === undefined &&
+    !isDraft(fixture)
       ? {}
       : {
           metadata: {
             difficulty: fixture.difficulty,
             loopable: fixture.loopable,
+            ...(fixture.workRepo === undefined ? {} : { work_repo: fixture.workRepo }),
             ...(isDraft(fixture) ? { draft: "Y" } : {}),
           },
         }),
@@ -239,7 +245,7 @@ export async function openTaskBoardRoom(
       loopable: "Y",
     },
     task("t-002", "架空のタスク（完了）", "done"),
-    task("t-003", "架空のタスク（着手可）", "todo"),
+    { ...task("t-003", "架空のタスク（着手可）", "todo"), workRepo: "架空の作業先" },
     {
       ...task("t-004", "架空のタスク（待ち）", "todo", ["t-001"]),
       difficulty: "opus",

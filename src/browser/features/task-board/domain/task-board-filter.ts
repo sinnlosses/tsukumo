@@ -18,13 +18,14 @@ export function matchesFilter(state: TaskStateView, filter: TaskBoardFilter): bo
   return filter === "all" || filter === state.kind
 }
 
-/** 検索。ID・要約・本文の部分一致で、大文字小文字を区別しない。ID の形は決め打ちしない。 */
+/** 検索。ID・要約・本文・作業先の部分一致で、大文字小文字を区別しない。ID の形は決め打ちしない。 */
 export function matchesQuery(task: TaskSummaryItem, query: string): boolean {
   const needle = query.trim().toLowerCase()
   return (
     needle === "" ||
     task.id.toLowerCase().includes(needle) ||
     task.summary.toLowerCase().includes(needle) ||
-    task.body.toLowerCase().includes(needle)
+    task.body.toLowerCase().includes(needle) ||
+    (task.workRepo?.toLowerCase().includes(needle) ?? false)
   )
 }

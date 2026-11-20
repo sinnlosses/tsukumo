@@ -95,6 +95,8 @@ export function PresentationalTaskBoard(props: TaskBoardView): ReactElement {
             {content.kind === "known" && (
               <TaskBoardFilterBar
                 chips={content.chips}
+                workRepos={content.workRepos}
+                onWorkRepo={props.onWorkRepo}
                 draftSort={props.draftSort}
                 onFilter={props.onFilter}
               />

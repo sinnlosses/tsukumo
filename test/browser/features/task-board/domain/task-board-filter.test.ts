@@ -68,4 +68,9 @@ describe("matchesQuery", () => {
     expect(matchesQuery(task, "BETA")).toBe(true)
     expect(matchesQuery(task, "gamma")).toBe(false)
   })
+
+  it("作業先の名前の語で当たり、作業先の無いタスクは当たらない", () => {
+    expect(matchesQuery({ ...task, workRepo: "Repo-Name" }, "repo-n")).toBe(true)
+    expect(matchesQuery(task, "repo-n")).toBe(false)
+  })
 })

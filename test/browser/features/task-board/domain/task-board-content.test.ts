@@ -202,6 +202,34 @@ describe("boardContent", () => {
     ])
   })
 
+  it("作業先の札は件数を全体で数えて出た順に並べ、作業先の無い一覧では空", () => {
+    const withRepos = contentOf(
+      known([
+        taskOf("X-001", { workRepo: "repo-b" }),
+        taskOf("X-002", {}),
+        taskOf("X-003", { workRepo: "repo-a" }),
+        taskOf("X-004", { workRepo: "repo-b" }),
+      ]),
+      "X-001",
+    )
+    const without = contentOf(known([taskOf("X-001", {})]), "X-001")
+    if (withRepos.kind !== "known" || without.kind !== "known") {
+      throw new Error("known のはず")
+    }
+
+    expect(withRepos.workRepos).toEqual([
+      { name: "repo-b", count: 2, pressed: false },
+      { name: "repo-a", count: 1, pressed: false },
+    ])
+    expect(withRepos.rows.map((row) => row.workRepo)).toEqual([
+      "repo-b",
+      undefined,
+      "repo-a",
+      "repo-b",
+    ])
+    expect(without.workRepos).toEqual([])
+  })
+
   it("詳細に依存と依存元の札・置き場所の口・頼めるかを畳む", () => {
     const content = contentOf(
       known([

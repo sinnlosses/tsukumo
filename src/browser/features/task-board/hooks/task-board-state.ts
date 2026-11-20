@@ -9,6 +9,8 @@ type BoardState = {
   readonly request: TaskBoardRequest
   readonly query: string
   readonly filter: TaskBoardFilter
+  /** 絞っている作業先。無ければ全部。 */
+  readonly workRepo?: string
   readonly chosen: ChosenRow
   /**
    * つながりの札・本文中の ID・パンくずの「戻る」で切り替えるたびに増える。押した要素は
@@ -38,6 +40,11 @@ type BoardAction =
   | { readonly kind: "close" }
   | { readonly kind: "query"; readonly query: string; readonly shown: ShownRow }
   | { readonly kind: "filter"; readonly filter: TaskBoardFilter; readonly shown: ShownRow }
+  | {
+      readonly kind: "workRepo"
+      readonly workRepo?: string
+      readonly shown: ShownRow
+    }
   | { readonly kind: "select"; readonly id: string }
   | { readonly kind: "jump"; readonly id: string; readonly shownId: string }
   | { readonly kind: "back" }
@@ -61,6 +68,7 @@ export function boardReducer(state: BoardState, action: BoardAction): BoardState
         request: action.request,
         query: queryOnOpen(action.request),
         filter: "all",
+        workRepo: undefined,
         chosen: chosenOnOpen(action.request),
       }
     case "close":
@@ -75,6 +83,8 @@ export function boardReducer(state: BoardState, action: BoardAction): BoardState
       return { ...state, query: action.query, chosen: settledOn(state.chosen, action.shown) }
     case "filter":
       return { ...state, filter: action.filter, chosen: settledOn(state.chosen, action.shown) }
+    case "workRepo":
+      return { ...state, workRepo: action.workRepo, chosen: settledOn(state.chosen, action.shown) }
     case "select":
       return { ...state, chosen: { kind: "row", id: action.id, pinned: false } }
     case "jump":

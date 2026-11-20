@@ -27,6 +27,7 @@ function item(id: string, overrides: Partial<TaskSummaryItem> = {}): TaskSummary
     labels: [],
     difficulty: undefined,
     loopable: undefined,
+    workRepo: undefined,
     importance: "normal",
     urgency: "normal",
     body: "本文",
@@ -44,6 +45,7 @@ describe("タスク一覧の記憶", () => {
         labels: ["任意のタグ"],
         difficulty: "opus",
         loopable: "N",
+        workRepo: "架空の作業先",
       }),
       item("t-2", { location: { kind: "issue", url: "https://example.test/2" } }),
     ]

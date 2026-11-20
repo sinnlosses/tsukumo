@@ -61,6 +61,12 @@ export function TaskDetail(props: {
         <dd>
           <TaskState state={detail.state} display="labeled" />
         </dd>
+        {detail.workRepo !== undefined && (
+          <>
+            <dt>作業先</dt>
+            <dd>{detail.workRepo}</dd>
+          </>
+        )}
         {detail.difficulty !== undefined && (
           <>
             <dt>難しさ</dt>

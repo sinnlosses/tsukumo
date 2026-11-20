@@ -21,6 +21,7 @@ import type {
   TaskStage,
   TaskStateKind,
   TaskStateView,
+  TaskBoardWorkRepoChip,
 } from "./task-board-view.ts"
 import { isTaskRequestable, type SingleTaskRequest } from "./task-run-prompt.ts"
 
@@ -53,6 +54,8 @@ type SelectionInput = {
 type BoardContentInput = SelectionInput & {
   readonly query: string
   readonly filter: TaskBoardFilter
+  /** 絞っている作業先。無ければ全部。 */
+  readonly workRepo?: string
 }
 
 /** 頼む口を押せないときに横に添える理由。保留は待ちが残っているときだけ押せない。 */
@@ -144,6 +147,7 @@ export function boardContent(
     ...(hasWaiting(entry) ? { waiting: entry.state.text } : {}),
     difficulty: entry.task.difficulty,
     loopable: entry.task.loopable,
+    ...(entry.task.workRepo === undefined ? {} : { workRepo: entry.task.workRepo }),
     selected: selected.kind === "some" && entry === selected.entry,
     outOfFilter: !isVisible(entry),
   })
@@ -163,6 +167,7 @@ export function boardContent(
       count: entries.filter((entry) => matchesFilter(entry.state, chip.filter)).length,
       pressed: chip.filter === input.filter,
     })),
+    workRepos: workRepoChipsOf(entries, input.workRepo),
     rows: stages.flatMap((stage) => stage.rows),
     stages,
     omittedClosedCount: tasks.omittedClosedCount,
@@ -193,6 +198,7 @@ export function selectionOf(
       labels: task.labels,
       difficulty: task.difficulty,
       loopable: task.loopable,
+      ...(task.workRepo === undefined ? {} : { workRepo: task.workRepo }),
       location: task.location,
       dependencies: task.dependencies.map((id) => dependencyCardOf(id, byId)),
       dependents: dependentsOf(task.id, entries),
@@ -206,6 +212,21 @@ export function selectionOf(
     opener: openerOf(task.location),
     run: runOf(entry, input),
   }
+}
+
+/** 作業先で絞る札。名前は一覧に出た順の重複なしで、件数は絞り込み・検索より前の全体。 */
+function workRepoChipsOf(
+  entries: readonly BoardEntry[],
+  chosen?: string,
+): readonly TaskBoardWorkRepoChip[] {
+  const counts = new Map<string, number>()
+  for (const entry of entries) {
+    const name = entry.task.workRepo
+    if (name !== undefined) {
+      counts.set(name, (counts.get(name) ?? 0) + 1)
+    }
+  }
+  return [...counts].map(([name, count]) => ({ name, count, pressed: name === chosen }))
 }
 
 /** 待ちと、待ちの残る保留。状態の言い方に相手の ID が入っている。 */

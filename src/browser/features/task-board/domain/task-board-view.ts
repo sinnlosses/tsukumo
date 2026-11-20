@@ -32,6 +32,7 @@ export type TaskBoardRow = {
   readonly waiting?: string
   readonly difficulty?: TaskDifficulty
   readonly loopable?: TaskLoopable
+  readonly workRepo?: string
   readonly selected: boolean
   /** 絞り込み・検索には当たらないが、飛んだ先として一時的に出している行なら真。 */
   readonly outOfFilter: boolean
@@ -49,6 +50,13 @@ export type TaskBoardFilter = "all" | "ready" | "blocked" | "hold" | "draft" | "
 export type TaskBoardFilterChip = {
   readonly filter: TaskBoardFilter
   readonly label: string
+  readonly count: number
+  readonly pressed: boolean
+}
+
+/** 作業先で絞る札1枚。`pressed` は選んでいる作業先。 */
+export type TaskBoardWorkRepoChip = {
+  readonly name: string
   readonly count: number
   readonly pressed: boolean
 }
@@ -78,6 +86,7 @@ export type TaskBoardDetail = {
   readonly labels: readonly string[]
   readonly difficulty?: TaskDifficulty
   readonly loopable?: TaskLoopable
+  readonly workRepo?: string
   readonly location: TaskLocation
   readonly dependencies: readonly TaskDependencyCard[]
   /** いまの一覧のうち、このタスクを依存に持つもの。 */
@@ -126,6 +135,8 @@ export type TaskBoardContent =
       /** 一覧に載っている件数（絞り込み・検索より前の全体）。頭の題に添える。 */
       readonly total: number
       readonly chips: readonly TaskBoardFilterChip[]
+      /** 作業先で絞る札。作業先の付いたタスクが1件も無ければ空（帯を出さない）。件数は絞り込み・検索より前の全体。 */
+      readonly workRepos: readonly TaskBoardWorkRepoChip[]
       /** ↑↓ が動く順の行。`stages` を段の順に並べたものと同じ。 */
       readonly rows: readonly TaskBoardRow[]
       readonly stages: readonly TaskBoardStage[]
@@ -208,6 +219,8 @@ export type TaskBoardView = {
   readonly onClose: () => void
   readonly onQueryChange: (query: string) => void
   readonly onFilter: (filter: TaskBoardFilter) => void
+  /** 作業先で絞る。`undefined` は全部に戻す。 */
+  readonly onWorkRepo: (workRepo?: string) => void
   readonly onSelect: (id: string) => void
   /** モーダルの中身の器で受けるキー（↑↓ で行を移る。Alt+← は「戻る」。Esc は `<dialog>` が閉じる）。 */
   readonly onKeyDown: (event: TaskBoardKeyEvent) => void

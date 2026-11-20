@@ -51,6 +51,8 @@ export type TaskSummaryItem = {
   readonly labels: readonly string[]
   readonly difficulty?: TaskDifficulty
   readonly loopable?: TaskLoopable
+  /** metadata の `work_repo`。無ければ `undefined`。 */
+  readonly workRepo?: string
   /** 重要度。読み元に無い・語彙の外は `normal`。 */
   readonly importance: TaskImportance
   /** 緊急度。読み元に無い・語彙の外は `normal`。 */

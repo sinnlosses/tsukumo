@@ -1,0 +1,14 @@
+/* 作業先の札。長い名前は1行で省略記号に切る。 */
+.task-work-repo {
+  flex: 0 1 auto;
+  min-inline-size: 0;
+  max-inline-size: 9em;
+  overflow: hidden;
+  padding-inline: var(--inline-tight);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

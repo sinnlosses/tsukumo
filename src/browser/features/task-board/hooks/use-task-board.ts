@@ -49,7 +49,7 @@ export function useTaskBoard(
   const [confirming, setConfirming] = useState<TaskRunTarget | undefined>(undefined)
   const [sorting, setSorting] = useState(false)
 
-  const { query, filter, chosen } = state
+  const { query, filter, workRepo, chosen } = state
   const items = tasks.kind === "known" ? tasks.items : []
   const drafts = draftTasksOf(items)
   // ドラフトが1件も無くなったら分類の場面を閉じる。閉じるのは描いたあとなので、その間も開いて見せない。
@@ -64,7 +64,9 @@ export function useTaskBoard(
   const entries = boardEntries(items)
   const byId = new Map(entries.map((entry) => [entry.task.id, entry]))
   const isVisible = (entry: BoardEntry): boolean =>
-    matchesFilter(entry.state, filter) && matchesQuery(entry.task, query)
+    matchesFilter(entry.state, filter) &&
+    matchesQuery(entry.task, query) &&
+    (workRepo === undefined || entry.task.workRepo === workRepo)
   const groups = stageGroups(
     entries.filter((entry) => isVisible(entry) || isPinned(chosen, entry.task.id)),
   )
@@ -125,6 +127,7 @@ export function useTaskBoard(
   const content = boardContent(tasks, entries, byId, groups, selectedView, isVisible, knownIds, {
     query,
     filter,
+    workRepo,
     run: (taskId, taskRequest) => {
       setConfirming({ kind: "task", taskId, request: taskRequest })
     },
@@ -150,6 +153,9 @@ export function useTaskBoard(
     },
     onFilter: (nextFilter) => {
       send({ kind: "filter", filter: nextFilter, shown })
+    },
+    onWorkRepo: (nextWorkRepo) => {
+      send({ kind: "workRepo", workRepo: nextWorkRepo, shown })
     },
     onSelect: select,
     onKeyDown: (event) => {

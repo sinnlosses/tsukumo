@@ -38,7 +38,19 @@ function draftOf(extra: Record<string, unknown>): boolean | undefined {
   return outcome.kind === "issues" ? outcome.issues[0]?.draft : undefined
 }
 
+function workRepoOf(extra: Record<string, unknown>): string | undefined {
+  const outcome = beadsOutcomeOf(JSON.stringify([issueOf(extra)]))
+  return outcome.kind === "issues" ? outcome.issues[0]?.workRepo : undefined
+}
+
 describe("beadsOutcomeOf の metadata", () => {
+  it("work_repo は空でない文字列のときだけ workRepo に載る", () => {
+    expect(workRepoOf({ metadata: { work_repo: "架空の作業先" } })).toBe("架空の作業先")
+    expect(workRepoOf({ metadata: {} })).toBeUndefined()
+    expect(workRepoOf({ metadata: { work_repo: 3 } })).toBeUndefined()
+    expect(workRepoOf({ metadata: { work_repo: "" } })).toBeUndefined()
+  })
+
   it("draft が Y なら draft、無いか Y 以外なら draft でない", () => {
     expect(draftOf({ metadata: { draft: "Y" } })).toBe(true)
     expect(draftOf({ metadata: {} })).toBe(false)

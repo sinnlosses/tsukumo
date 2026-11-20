@@ -213,6 +213,36 @@ describe("タスクのモーダルの選択", () => {
   })
 })
 
+describe("タスクのモーダルの作業先の絞り込み", () => {
+  const REPO_TASKS = [
+    { ...selectionTask("X-001", "todo", "本文\n"), workRepo: "repo-a" },
+    { ...selectionTask("X-002", "todo", "本文\n"), workRepo: "repo-b" },
+    selectionTask("X-003", "todo", "本文\n"),
+  ]
+
+  it("作業先の札を押すとその作業先の行だけに絞れ、閉じて開き直すと全部に戻る", () => {
+    const board = renderSelectionBoard(REPO_TASKS, OPEN_FIRST)
+    const group = within(screen.getByRole("group", { name: "作業先で絞る" }))
+
+    fireEvent.click(group.getByRole("button", { name: /^repo-b/ }))
+
+    const optionIds = (): readonly string[] =>
+      screen.getAllByRole("option").map((option) => option.id)
+    expect(optionIds()).toEqual(["task-board-option-X-002"])
+
+    board.rerenderWith(REPO_TASKS, { kind: "closed" })
+    board.rerenderWith(REPO_TASKS, OPEN_FIRST)
+
+    expect(optionIds()).toHaveLength(3)
+  })
+
+  it("作業先の付いたタスクが無ければ帯を出さない", () => {
+    renderSelectionBoard(SELECTION_TASKS, OPEN_FIRST)
+
+    expect(screen.queryByRole("group", { name: "作業先で絞る" })).toBeNull()
+  })
+})
+
 describe("タスクのモーダルの検索欄と本文のリンク", () => {
   // 単体テストには Compiler が掛からないので、本文のリンクは描くたびに作り直される（組み立てた画面でも打鍵ごとに作り直される）。
   it("検索欄に打っているあいだも打ったあともフォーカスは検索欄に留まり、そのあと本文中の ID を押すと飛べる", () => {

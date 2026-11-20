@@ -272,6 +272,7 @@ function listBeadsIssues(cwd: string, args: readonly string[]): Promise<BeadsOut
 const metadataSchema = z.record(z.string(), z.unknown())
 const difficultySchema = z.enum(TASK_DIFFICULTIES)
 const loopableSchema = z.enum(TASK_LOOPABLES)
+const workRepoSchema = z.string().min(1)
 const importanceSchema = z.enum(TASK_IMPORTANCES).catch("normal")
 const urgencySchema = z.enum(TASK_URGENCIES).catch("normal")
 const DRAFT_MARK = "Y"
@@ -290,6 +291,7 @@ function beadsIssueOf(issue: z.infer<typeof beadsIssueSchema>): BeadsIssue {
     labels: issue.labels ?? [],
     difficulty: difficulty.success ? difficulty.data : undefined,
     loopable: loopable.success ? loopable.data : undefined,
+    workRepo: workRepoSchema.safeParse(metadata.data?.["work_repo"]).data,
     importance: importanceSchema.parse(metadata.data?.["importance"]),
     urgency: urgencySchema.parse(metadata.data?.["urgency"]),
     draft: metadata.data?.["draft"] === DRAFT_MARK,

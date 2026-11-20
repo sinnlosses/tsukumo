@@ -72,6 +72,19 @@ describe("タスクのモーダルの一覧の表", () => {
     expect(screen.getByRole("option", { name: /X-022.*進行中.*難しさ opus/ })).toBeDefined()
   })
 
+  it("作業先の札は作業先のある行の題の欄にだけ出る", () => {
+    renderSelectionBoard(
+      [
+        { ...selectionTask("X-021", "todo", "架空の本文。\n"), workRepo: "架空の作業先" },
+        selectionTask("X-022", "doing", "架空の本文。\n"),
+      ],
+      OPEN_FIRST,
+    )
+
+    expect(cellsOf("X-021")[1]).toBe("架空の課題（X-021）着手可架空の作業先")
+    expect(cellsOf("X-022")[1]).toBe("架空の課題（X-022）進行中")
+  })
+
   it("列の見出しの行は読み上げない", () => {
     renderSelectionBoard(TABLE_TASKS, OPEN_FIRST)
 

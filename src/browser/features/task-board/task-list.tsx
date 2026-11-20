@@ -71,7 +71,7 @@ export function TaskList(props: TaskListProps): ReactElement {
           weight="inherit"
           className={styles["task-empty"]}
         >
-          {`『${model.query.trim()}』に当たるタスクは無い（ID・題・本文を探した）`}
+          {`『${model.query.trim()}』に当たるタスクは無い（ID・題・本文・作業先を探した）`}
         </Text>
       )}
       {model.groups.map((group) => (

@@ -13,6 +13,7 @@ import { TaskSummaryText } from "../task-summary-text.tsx"
 import { TaskDifficultyScale, TaskLoopMark } from "./task-attribute.tsx"
 import styles from "./task-board-list.module.css"
 import { TaskState } from "./task-state.tsx"
+import { TaskWorkRepo } from "./task-work-repo.tsx"
 
 export function TaskBoardList(props: {
   readonly listId: string
@@ -78,7 +79,7 @@ export function TaskBoardList(props: {
   )
 }
 
-/** 名前は番号・題・状態（待ちの相手が無ければ読み上げだけ）・難しさ・ループ可の順に読める。 */
+/** 名前は番号・題・状態（待ちの相手が無ければ読み上げだけ）・作業先・難しさ・ループ可の順に読める。 */
 function TaskBoardOption(props: {
   readonly row: TaskBoardRow
   readonly onSelect: (id: string) => void
@@ -107,6 +108,7 @@ function TaskBoardOption(props: {
         ) : (
           <span className={styles["task-board-option-waiting"]}>{row.waiting}</span>
         )}
+        {row.workRepo !== undefined && <TaskWorkRepo name={row.workRepo} />}
         {row.outOfFilter && (
           <span className={styles["task-board-option-out-of-filter"]}>絞り込みの外</span>
         )}
