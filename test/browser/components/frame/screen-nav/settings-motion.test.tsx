@@ -79,7 +79,7 @@ describe("設定の「動き」", () => {
 
     fireEvent.click(
       within(screen.getByRole("dialog", { name: "設定" })).getByRole("button", {
-        name: "既定に戻す",
+        name: /^このページを既定に戻す/u,
       }),
     )
 

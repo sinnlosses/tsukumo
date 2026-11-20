@@ -6,7 +6,15 @@ import { z } from "zod"
 
 import { localPreference, RAW_STRING_CODEC } from "../utils/local-preference.ts"
 
-const preference = localPreference("tsukumo-launch-skill:v1", z.string(), "", RAW_STRING_CODEC)
+/** 未設定（固定の文面で送る）。 */
+export const DEFAULT_LAUNCH_SKILL = ""
+
+const preference = localPreference(
+  "tsukumo-launch-skill:v1",
+  z.string(),
+  DEFAULT_LAUNCH_SKILL,
+  RAW_STRING_CODEC,
+)
 
 export const loadLaunchSkill = preference.load
 export const saveLaunchSkill = preference.save

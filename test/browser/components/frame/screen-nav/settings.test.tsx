@@ -112,10 +112,6 @@ function colorInput(label: string): HTMLInputElement {
   return controlOf(label, HTMLInputElement, `ラベル「${label}」が結ぶ入力欄`)
 }
 
-function resetButton(): HTMLElement {
-  return within(openedSettingsDialog()).getByRole("button", { name: "既定に戻す" })
-}
-
 function readToken(name: string): string {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim()
 }
@@ -298,35 +294,6 @@ describe("設定の歯車（帯の右端）", () => {
     fireEvent.click(gear())
 
     expect(colorInput("地の色").value).toBe("#0a0a0a")
-  })
-
-  it("上書きが無ければ「既定に戻す」は押せない", () => {
-    renderScreenNav()
-    fireEvent.click(gear())
-
-    expect(resetButton().getAttribute("aria-disabled")).toBe("true")
-  })
-
-  it("「既定に戻す」で3色とも上書きが外れ、操作子も既定を指す", async () => {
-    renderScreenNav()
-    fireEvent.click(gear())
-
-    fireEvent.change(colorInput("地の色"), { target: { value: "#101010" } })
-    expect(resetButton().getAttribute("aria-disabled")).toBeNull()
-
-    fireEvent.click(resetButton())
-
-    expect(readToken("--ground")).toBe("#191720")
-    expect(colorInput("地の色").value).toBe("#191720")
-
-    await vi.waitFor(() => {
-      expect(localStorage.getItem(COLOR_STORAGE_KEY)).not.toBeNull()
-    })
-    expect(JSON.parse(localStorage.getItem(COLOR_STORAGE_KEY) ?? "{}")).toEqual({
-      ground: undefined,
-      surface: undefined,
-      ink: undefined,
-    })
   })
 })
 

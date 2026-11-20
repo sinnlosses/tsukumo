@@ -7,6 +7,7 @@ import { Fragment, type ComponentType, type ReactElement } from "react"
 import { Button } from "../../../ui/button/button.tsx"
 import { HStack } from "../../../ui/h-stack/h-stack.tsx"
 import { Text } from "../../../ui/text/text.tsx"
+import type { ResetFaceKey } from "../hooks/use-settings.ts"
 import { ScreenNavSettingsLookFace } from "./screen-nav-settings-look.tsx"
 import { ScreenNavSettingsWorkflowFace } from "./screen-nav-settings-workflow.tsx"
 import styles from "./screen-nav-settings.module.css"
@@ -18,7 +19,7 @@ import {
 } from "./screen-nav-settings.tsx"
 
 /**
- * `reset` の面はダイアログが枠を組み、下の帯に画面の色の「既定に戻す」を置く。引き出しにも出せる（`inDrawer`）。
+ * `reset` の面はダイアログが枠を組み、下の帯にその面の項目だけを戻す「既定に戻す」を置く（`key` は `pageReset` の口の名前）。引き出しにも出せる（`inDrawer`）。
  * `own` の面は色と関わらない値を書くので、自分で `ScreenNavSettingsFaceFrame` を組んで自分の下の帯を渡す。引き出しには置かない。
  */
 export type Face = {
@@ -27,6 +28,7 @@ export type Face = {
   readonly icon: ComponentType<{ readonly size: number; readonly strokeWidth: number }>
 } & (
   | {
+      readonly key: ResetFaceKey
       readonly foot: "reset"
       readonly inDrawer: boolean
       readonly Body: (props: ScreenNavSettingsProps) => ReactElement
@@ -119,10 +121,10 @@ export function ScreenNavSettingsBody(props: ScreenNavSettingsProps): ReactEleme
           variant="link"
           size="label"
           pressed="none"
-          disabled={settings.resetDisabled}
+          disabled={settings.resetAll.count === 0}
           disclosure={{ kind: "none" }}
           className={styles["screen-nav-settings-reset"]}
-          onClick={settings.onReset}
+          onClick={settings.resetAll.onReset}
         >
           既定に戻す
         </Button>

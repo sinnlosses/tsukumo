@@ -12,7 +12,7 @@ import { localPreference, RAW_STRING_CODEC } from "../utils/local-preference.ts"
 
 export type RevealSpeed = "standard" | "fast" | "off"
 
-const DEFAULT_REVEAL_SPEED: RevealSpeed = "standard"
+export const DEFAULT_REVEAL_SPEED: RevealSpeed = "standard"
 
 /** `<select>` に出す順とラベル。 */
 export const REVEAL_SPEED_LABELS = [

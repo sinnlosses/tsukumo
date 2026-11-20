@@ -13,12 +13,14 @@ import type {
   BackgroundModelRole,
   BackgroundModels,
 } from "../../../../../shared/session/background-model.ts"
+import { BUILTIN_BACKGROUND_MODELS } from "../../../../../shared/session/background-model.ts"
 import {
   isEffortLevel,
   isModelAlias,
   type ModelAlias,
 } from "../../../../../shared/session/run-setting-value.ts"
 import {
+  BUILTIN_SESSION_DEFAULT,
   isFigurePreference,
   isSessionDefaultPermissionMode,
   type FigurePreference,
@@ -27,6 +29,7 @@ import {
 } from "../../../../../shared/session/session-default.ts"
 import type { ModelEffortSupport } from "../../../../../shared/session/session-event-setting.ts"
 import {
+  BUILTIN_SPEAKING_PACE,
   isProgressNudgeSilence,
   isWaitingLineDelay,
   type SpeakingPace,
@@ -85,6 +88,15 @@ type ScreenNavSettingsSpeakingPace = {
   readonly onChangeProgressNudge: (value: string) => void
 }
 
+/** 「既定に戻す」を持つページの key（`FACES` の `foot: "reset"` の面）。 */
+export type ResetFaceKey = "look" | "session-default" | "reveal" | "launch-skill"
+
+/** 既定と違う項目の数と、それを既定へ戻す動き。数が 0 なら戻す先が無い。 */
+export type ScreenNavSettingsReset = {
+  readonly count: number
+  readonly onReset: () => void
+}
+
 export type ScreenNavSettings = {
   readonly open: boolean
   readonly onOpen: () => void
@@ -101,9 +113,10 @@ export type ScreenNavSettings = {
   readonly launchSkill: ScreenNavSettingsLaunchSkill
   /** 覚えた「初回の説明を見た」を消し、説明をまた初回として出す。 */
   readonly onReplayFirstNotes: () => void
-  /** 上書きが1つも無いときは押せない（戻す先が無い）。 */
-  readonly resetDisabled: boolean
-  readonly onReset: () => void
+  /** 「既定に戻す」を持つページごとの口。 */
+  readonly pageReset: Readonly<Record<ResetFaceKey, ScreenNavSettingsReset>>
+  /** 全ページをまとめて戻す口。 */
+  readonly resetAll: ScreenNavSettingsReset
   /** 帯の歯車の `<button>` を預ける口（閉じたときのフォーカスの戻り先）。 */
   readonly toggleRef: RefObject<HTMLButtonElement | null>
 }
@@ -169,6 +182,37 @@ export function useSettings(): ScreenNavSettings {
     }
   }
 
+  const pageReset = {
+    look: {
+      count: color.changedCount + adjust.changedCount,
+      onReset: () => {
+        color.onReset()
+        adjust.onReset()
+      },
+    },
+    "session-default": {
+      count:
+        countDifferent(sessionDefault, BUILTIN_SESSION_DEFAULT) +
+        countDifferent(backgroundModels, BUILTIN_BACKGROUND_MODELS),
+      onReset: () => {
+        void dispatch.session.setSessionDefault(BUILTIN_SESSION_DEFAULT)
+        void dispatch.session.setBackgroundModels(BUILTIN_BACKGROUND_MODELS)
+      },
+    },
+    reveal: {
+      count:
+        revealSpeed.changedCount +
+        motion.changedCount +
+        countDifferent(speakingPace, BUILTIN_SPEAKING_PACE),
+      onReset: () => {
+        revealSpeed.onReset()
+        motion.onReset()
+        void dispatch.session.setSpeakingPace(BUILTIN_SPEAKING_PACE)
+      },
+    },
+    "launch-skill": { count: launchSkill.changedCount, onReset: launchSkill.onReset },
+  } satisfies Record<ResetFaceKey, ScreenNavSettingsReset>
+
   return {
     open,
     onOpen,
@@ -176,11 +220,14 @@ export function useSettings(): ScreenNavSettings {
     colors: color.colors,
     colorNotice: color.colorNotice,
     adjust: adjust.adjust,
-    resetDisabled: color.resetDisabled && adjust.resetDisabled && motion.resetDisabled,
-    onReset: () => {
-      color.onReset()
-      adjust.onReset()
-      motion.onReset()
+    pageReset,
+    resetAll: {
+      count: Object.values(pageReset).reduce((sum, page) => sum + page.count, 0),
+      onReset: () => {
+        for (const page of Object.values(pageReset)) {
+          page.onReset()
+        }
+      },
     },
     sessionDefault: {
       model: sessionDefault.model,
@@ -213,10 +260,18 @@ export function useSettings(): ScreenNavSettings {
     },
     backgroundModels: { values: backgroundModels, onChange: onChangeBackgroundModel },
     speakingPace: { values: speakingPace, onChangeWaitingLine, onChangeProgressNudge },
-    revealSpeed,
+    revealSpeed: revealSpeed.revealSpeed,
     motion: motion.motion,
-    launchSkill,
+    launchSkill: launchSkill.launchSkill,
     onReplayFirstNotes: resetFirstNotes,
     toggleRef,
   }
+}
+
+/** 同じ項目名の値のうち、既定と違うものの数。 */
+function countDifferent(
+  current: Readonly<Record<string, string>>,
+  builtin: Readonly<Record<string, string>>,
+): number {
+  return Object.entries(builtin).filter(([key, value]) => current[key] !== value).length
 }

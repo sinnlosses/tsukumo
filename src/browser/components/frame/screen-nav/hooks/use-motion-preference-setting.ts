@@ -19,8 +19,8 @@ export type ScreenNavSettingsMotion = {
 
 type MotionPreferenceControl = {
   readonly motion: ScreenNavSettingsMotion
-  /** 「OS の設定に従う」のままなら押せない（戻す先が無い）。 */
-  readonly resetDisabled: boolean
+  /** 「OS の設定に従う」のままなら 0、変えてあれば 1。 */
+  readonly changedCount: number
   readonly onReset: () => void
 }
 
@@ -42,7 +42,7 @@ export function useMotionPreferenceSetting(): MotionPreferenceControl {
         }
       },
     },
-    resetDisabled: value === DEFAULT_MOTION_PREFERENCE,
+    changedCount: value === DEFAULT_MOTION_PREFERENCE ? 0 : 1,
     onReset: () => {
       commit(DEFAULT_MOTION_PREFERENCE)
     },

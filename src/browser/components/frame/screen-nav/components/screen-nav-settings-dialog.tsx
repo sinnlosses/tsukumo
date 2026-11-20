@@ -128,6 +128,7 @@ function SelectedFace(props: {
   if (face.foot === "own") {
     return <face.Body title={face.label} />
   }
+  const reset = settings.pageReset[face.key]
   return (
     <ScreenNavSettingsFaceFrame
       title={face.label}
@@ -136,12 +137,12 @@ function SelectedFace(props: {
           variant="outline"
           size="label"
           pressed="none"
-          disabled={settings.resetDisabled}
+          disabled={reset.count === 0}
           disclosure={{ kind: "none" }}
           className={styles["reset"]}
-          onClick={settings.onReset}
+          onClick={reset.onReset}
         >
-          既定に戻す
+          {`このページを既定に戻す（${String(reset.count)}件）`}
         </Button>
       }
     >

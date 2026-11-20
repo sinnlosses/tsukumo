@@ -5,7 +5,11 @@
 import { useQuery } from "@tanstack/react-query"
 import { useState } from "react"
 
-import { loadLaunchSkill, saveLaunchSkill } from "../../../../domain/launch-skill.ts"
+import {
+  DEFAULT_LAUNCH_SKILL,
+  loadLaunchSkill,
+  saveLaunchSkill,
+} from "../../../../domain/launch-skill.ts"
 import { rpc } from "../../../../stores/rpc.ts"
 
 const UNSET_LABEL = "未設定"
@@ -22,7 +26,14 @@ export type ScreenNavSettingsLaunchSkill = {
   readonly onChange: (value: string) => void
 }
 
-export function useLaunchSkillSetting(): ScreenNavSettingsLaunchSkill {
+type LaunchSkillControl = {
+  readonly launchSkill: ScreenNavSettingsLaunchSkill
+  /** 未設定のままなら 0、スキルを選んであれば 1。 */
+  readonly changedCount: number
+  readonly onReset: () => void
+}
+
+export function useLaunchSkillSetting(): LaunchSkillControl {
   const [launchSkill, setLaunchSkill] = useState<string>(loadLaunchSkill)
 
   function onChange(value: string): void {
@@ -30,7 +41,13 @@ export function useLaunchSkillSetting(): ScreenNavSettingsLaunchSkill {
     saveLaunchSkill(value)
   }
 
-  return { value: launchSkill, onChange }
+  return {
+    launchSkill: { value: launchSkill, onChange },
+    changedCount: launchSkill === DEFAULT_LAUNCH_SKILL ? 0 : 1,
+    onReset: () => {
+      onChange(DEFAULT_LAUNCH_SKILL)
+    },
+  }
 }
 
 /** 面を開いたときだけ入口のスキルを引き、選択肢にする。読めないときは未設定（と保存済みの名前）だけ。 */

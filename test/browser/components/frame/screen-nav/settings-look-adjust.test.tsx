@@ -111,7 +111,7 @@ describe("設定の歯車（見た目の調整）", () => {
     fireEvent.change(slider(dialog, "背景の暗さ"), { target: { value: "90" } })
     fireEvent.change(slider(dialog, "パネルのぼかし"), { target: { value: "20" } })
 
-    fireEvent.click(within(dialog).getByRole("button", { name: "既定に戻す" }))
+    fireEvent.click(within(dialog).getByRole("button", { name: /^このページを既定に戻す/u }))
 
     expect(rootToken("--character-background-veil-user")).toBe("")
     expect(rootToken("--panel-blur-user")).toBe("8px")

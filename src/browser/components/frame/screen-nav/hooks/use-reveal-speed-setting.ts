@@ -4,6 +4,7 @@
 import { useState } from "react"
 
 import {
+  DEFAULT_REVEAL_SPEED,
   isRevealSpeed,
   loadRevealSpeed,
   saveRevealSpeed,
@@ -16,17 +17,34 @@ export type ScreenNavSettingsRevealSpeed = {
   readonly onChange: (value: string) => void
 }
 
-export function useRevealSpeedSetting(): ScreenNavSettingsRevealSpeed {
+type RevealSpeedControl = {
+  readonly revealSpeed: ScreenNavSettingsRevealSpeed
+  /** 既定（標準）のままなら 0、変えてあれば 1。 */
+  readonly changedCount: number
+  readonly onReset: () => void
+}
+
+export function useRevealSpeedSetting(): RevealSpeedControl {
   // 選ぶたびに保存する（色のようにドラッグで連続しないので、まとめる必要が無い）。
   const [revealSpeed, setRevealSpeed] = useState<RevealSpeed>(loadRevealSpeed)
+
+  function commit(value: RevealSpeed): void {
+    setRevealSpeed(value)
+    saveRevealSpeed(value)
+  }
 
   function onChange(value: string): void {
     // 知らない値は受け取らない（`<select>` の選択肢の外から来たときは何もしない）。
     if (isRevealSpeed(value)) {
-      setRevealSpeed(value)
-      saveRevealSpeed(value)
+      commit(value)
     }
   }
 
-  return { value: revealSpeed, onChange }
+  return {
+    revealSpeed: { value: revealSpeed, onChange },
+    changedCount: revealSpeed === DEFAULT_REVEAL_SPEED ? 0 : 1,
+    onReset: () => {
+      commit(DEFAULT_REVEAL_SPEED)
+    },
+  }
 }

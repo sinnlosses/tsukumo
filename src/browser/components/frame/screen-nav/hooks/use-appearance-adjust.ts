@@ -6,7 +6,7 @@ import { useState } from "react"
 
 import {
   DEFAULT_APPEARANCE_ADJUST,
-  hasAppearanceAdjust,
+  countAppearanceAdjust,
   loadAppearanceAdjust,
   saveAppearanceAdjust,
   type AppearanceAdjust,
@@ -31,8 +31,8 @@ export type ScreenNavSettingsAdjust = {
 
 type AppearanceAdjustControl = {
   readonly adjust: ScreenNavSettingsAdjust
-  /** 1つも動かしていないときは押せない（戻す先が無い）。 */
-  readonly resetDisabled: boolean
+  /** 既定から動かしてある調整の数。 */
+  readonly changedCount: number
   readonly onReset: () => void
 }
 
@@ -63,7 +63,7 @@ export function useAppearanceAdjust(): AppearanceAdjustControl {
         commit({ ...value, fill: percent })
       },
     },
-    resetDisabled: !hasAppearanceAdjust(value),
+    changedCount: countAppearanceAdjust(value),
     onReset: () => {
       commit(DEFAULT_APPEARANCE_ADJUST)
     },

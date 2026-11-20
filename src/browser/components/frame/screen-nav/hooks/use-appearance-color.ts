@@ -44,8 +44,8 @@ export type ScreenNavSettingsColorNotice =
 type AppearanceColor = {
   readonly colors: readonly ScreenNavSettingsColor[]
   readonly colorNotice: ScreenNavSettingsColorNotice
-  /** 上書きが1つも無いときは押せない（戻す先が無い）。 */
-  readonly resetDisabled: boolean
+  /** 上書きしてある色の数。 */
+  readonly changedCount: number
   readonly onReset: () => void
   readonly clearNotice: () => void
 }
@@ -125,7 +125,7 @@ export function useAppearanceColor(): AppearanceColor {
       },
     })),
     colorNotice,
-    resetDisabled: !hasOverride(override),
+    changedCount: countOverride(override),
     onReset,
     clearNotice: () => {
       setColorNotice(NO_COLOR_NOTICE)
@@ -140,8 +140,7 @@ function colorNoticeOf(change: AppearanceColorChange): ScreenNavSettingsColorNot
     : NO_COLOR_NOTICE
 }
 
-function hasOverride(override: AppearanceColorOverride): boolean {
-  return (
-    override.ground !== undefined || override.surface !== undefined || override.ink !== undefined
-  )
+function countOverride(override: AppearanceColorOverride): number {
+  return [override.ground, override.surface, override.ink].filter((color) => color !== undefined)
+    .length
 }

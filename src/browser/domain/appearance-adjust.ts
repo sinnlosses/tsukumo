@@ -68,13 +68,13 @@ export const loadAppearanceAdjust: () => AppearanceAdjust = preference.load
 
 export const saveAppearanceAdjust: (value: AppearanceAdjust) => void = preference.save
 
-/** 1つでも既定から動かしてあるか。「既定に戻す」を押せるかの判断に使う。 */
-export function hasAppearanceAdjust(value: AppearanceAdjust): boolean {
-  return (
-    value.veil !== undefined ||
-    value.blur !== DEFAULT_APPEARANCE_ADJUST.blur ||
-    value.fill !== DEFAULT_APPEARANCE_ADJUST.fill
-  )
+/** 既定から動かしてある調整の数（0〜3）。 */
+export function countAppearanceAdjust(value: AppearanceAdjust): number {
+  return [
+    value.veil !== undefined,
+    value.blur !== DEFAULT_APPEARANCE_ADJUST.blur,
+    value.fill !== DEFAULT_APPEARANCE_ADJUST.fill,
+  ].filter(Boolean).length
 }
 
 /** 3つの調整を `:root` のトークンへ差す内容。動かしていない背景の暗さはトークンを外す。 */
