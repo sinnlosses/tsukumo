@@ -20,7 +20,7 @@ describe("設定のダイアログの範囲の群分け", () => {
     )
     const nav = within(dialog()).getByRole("navigation", { name: "設定の項目" })
 
-    const lines = [...nav.children].map((node) => node.textContent?.replace(/\d+$/, ""))
+    const lines = [...nav.children].slice(1).map((node) => node.textContent?.replace(/\d+$/, ""))
 
     expect(lines.slice(0, 5)).toEqual([
       "あなた全リポジトリ",

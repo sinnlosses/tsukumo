@@ -102,7 +102,9 @@ function openFace(name: string): void {
 }
 
 function faceLabels(): (string | null)[] {
-  return [...openedSettingsDialog().querySelectorAll("label")].map((node) => node.textContent)
+  return [...openedSettingsDialog().querySelectorAll("section label")].map(
+    (node) => node.textContent,
+  )
 }
 
 /** 面の中の操作子（ラベルは `<label for>` で結んである）。 */

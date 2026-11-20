@@ -5,9 +5,11 @@ import clsx from "clsx"
 import { Settings, X } from "lucide-react"
 import { Fragment, useState, type ReactElement } from "react"
 
+import { SETTING_ENTRIES, SETTING_FACE_LABEL } from "../../../../domain/setting-entry.ts"
 import { useSettingsRequest } from "../../../../stores/settings-request.ts"
 import { Button } from "../../../ui/button/button.tsx"
 import { Dialog } from "../../../ui/dialog/dialog.tsx"
+import { TextField } from "../../../ui/text-field/text-field.tsx"
 import { Text } from "../../../ui/text/text.tsx"
 import { useWorkflowRepositoryName } from "../hooks/use-workflow-repository-name.ts"
 import { useWorkflowDraft } from "../hooks/workflow-draft-store.ts"
@@ -141,7 +143,10 @@ function ScreenNavSettingsDialogBody(
   const { settings, guard } = props
   const selectedKey = useSettingsRequest((state) => state.faceKey)
   const selected: Face = FACES.find((face) => face.key === selectedKey) ?? FACES[0]
+  const openSettings = useSettingsRequest((state) => state.openSettings)
   const repositoryName = useWorkflowRepositoryName()
+  const [query, setQuery] = useState("")
+  const word = query.trim()
 
   return (
     <>
@@ -167,6 +172,16 @@ function ScreenNavSettingsDialogBody(
       </header>
       <div className={styles["main"]}>
         <nav className={styles["nav"]} aria-label="設定の項目">
+          <div>
+            <TextField
+              element="input"
+              id="settings-search"
+              className={styles["search-input"]}
+              value={query}
+              placeholder="設定を探す"
+              onChange={setQuery}
+            />
+          </div>
           {FACE_GROUPS.map((faceGroup) => {
             const aside = faceGroup.group === "repository" ? repositoryName : faceGroup.aside
             return (
@@ -223,9 +238,21 @@ function ScreenNavSettingsDialogBody(
             )
           })}
         </nav>
-        <section className={styles["face"]} aria-label={selected.label}>
-          <SelectedFace face={selected} settings={settings} />
-        </section>
+        {word === "" ? (
+          <section className={styles["face"]} aria-label={selected.label}>
+            <SelectedFace face={selected} settings={settings} />
+          </section>
+        ) : (
+          <section className={styles["face"]} aria-label="探した結果">
+            <SearchResults
+              word={word}
+              onPick={(target) => {
+                openSettings(target)
+                setQuery("")
+              }}
+            />
+          </section>
+        )}
       </div>
       {guard.pending.kind !== "none" && (
         <div className={styles["confirm"]}>
@@ -281,6 +308,84 @@ function ScreenNavSettingsDialogBody(
         </div>
       )}
     </>
+  )
+}
+
+/** 当たった字を差し色にして返す。大文字小文字は区別しない。 */
+function Highlighted(props: { readonly text: string; readonly word: string }): ReactElement {
+  const { text, word } = props
+  const at = text.toLowerCase().indexOf(word.toLowerCase())
+  if (at < 0) {
+    return <>{text}</>
+  }
+  const end = at + word.length
+  return (
+    <>
+      {text.slice(0, at)}
+      <mark className={styles["hit"]}>{text.slice(at, end)}</mark>
+      {text.slice(end)}
+    </>
+  )
+}
+
+/** 名前か説明に語を含む項目を、宣言の並びのまま出す。当てる元は `SETTING_ENTRIES` だけ。 */
+function SearchResults(props: {
+  readonly word: string
+  readonly onPick: (target: { readonly faceKey: string; readonly itemKey: string }) => void
+}): ReactElement {
+  const { word, onPick } = props
+  const needle = word.toLowerCase()
+  const hits = SETTING_ENTRIES.filter(
+    (entry) =>
+      entry.label.toLowerCase().includes(needle) ||
+      entry.description.toLowerCase().includes(needle),
+  )
+  return (
+    <div className={styles["results"]}>
+      <Text
+        element="p"
+        size="subheading"
+        tone="ink"
+        weight="bold"
+        className={styles["results-head"]}
+      >
+        {`「${word}」で探した結果`}
+      </Text>
+      {hits.length === 0 ? (
+        <Text
+          element="p"
+          size="secondary"
+          tone="ink-quiet"
+          weight="inherit"
+          className={styles["results-empty"]}
+        >
+          当たる設定が無い
+        </Text>
+      ) : (
+        <ul className={styles["result-list"]}>
+          {hits.map((entry) => (
+            <li key={entry.itemKey}>
+              <button
+                type="button"
+                className={styles["result"]}
+                onClick={() => {
+                  onPick({ faceKey: entry.faceKey, itemKey: entry.itemKey })
+                }}
+              >
+                <span className={styles["result-name"]}>
+                  <Highlighted text={entry.label} word={word} />
+                </span>
+                <span className={styles["result-note"]}>
+                  {SETTING_FACE_LABEL[entry.faceKey]}
+                  {" — "}
+                  <Highlighted text={entry.description} word={word} />
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   )
 }
 
