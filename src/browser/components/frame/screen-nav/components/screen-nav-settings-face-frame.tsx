@@ -5,10 +5,15 @@ import type { ReactElement, ReactNode } from "react"
 
 import { Text } from "../../../ui/text/text.tsx"
 import styles from "./screen-nav-settings-face-frame.module.css"
+import {
+  ScreenNavSettingsStore,
+  type ScreenNavSettingsStoreProps,
+} from "./screen-nav-settings-store.tsx"
 import gearStyles from "./screen-nav-settings.module.css"
 
 export function ScreenNavSettingsFaceFrame(props: {
   readonly title: string
+  readonly store: ScreenNavSettingsStoreProps
   readonly children: ReactNode
   readonly foot?: ReactNode
 }): ReactElement {
@@ -18,6 +23,7 @@ export function ScreenNavSettingsFaceFrame(props: {
         <Text element="p" size="heading" tone="ink" weight="bold" className={styles["face-title"]}>
           {props.title}
         </Text>
+        <ScreenNavSettingsStore {...props.store} />
         <div className={gearStyles["screen-nav-settings-table"]}>{props.children}</div>
       </div>
       {props.foot !== undefined && <footer className={styles["foot"]}>{props.foot}</footer>}

@@ -66,7 +66,13 @@
   background: color-mix(in srgb, var(--ground) 40%, transparent);
 }
 .nav-group {
-  margin: 0 0 var(--space-sm) var(--space-sm);
+  display: flex;
+  gap: var(--inline-control);
+  justify-content: space-between;
+  margin: var(--stack-group) var(--inline-control) var(--stack-block);
+}
+.nav-group:first-child {
+  margin-top: 0;
 }
 .nav-item {
   position: relative;

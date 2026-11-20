@@ -9,30 +9,34 @@ import type { ReactElement } from "react"
 
 import { useWorkflowSetting } from "../hooks/use-workflow-setting.ts"
 import { ScreenNavSettingsFaceFrame } from "./screen-nav-settings-face-frame.tsx"
+import type { ScreenNavSettingsStoreProps } from "./screen-nav-settings-store.tsx"
 import { WorkflowField } from "./workflow-field/workflow-field.tsx"
 import { WorkflowMessage } from "./workflow-message/workflow-message.tsx"
 import { WorkflowRepository } from "./workflow-repository/workflow-repository.tsx"
 import { WorkflowSaveBand } from "./workflow-save-band/workflow-save-band.tsx"
 
-export function ScreenNavSettingsWorkflowFace(props: { readonly title: string }): ReactElement {
+export function ScreenNavSettingsWorkflowFace(props: {
+  readonly title: string
+  readonly store: ScreenNavSettingsStoreProps
+}): ReactElement {
   const setting = useWorkflowSetting()
 
   switch (setting.kind) {
     case "loading":
       return (
-        <ScreenNavSettingsFaceFrame title={props.title} foot={undefined}>
+        <ScreenNavSettingsFaceFrame title={props.title} store={props.store} foot={undefined}>
           <WorkflowMessage text="ワークフローの設定を読んでいる…" tone="ink-quiet" />
         </ScreenNavSettingsFaceFrame>
       )
     case "unreachable":
       return (
-        <ScreenNavSettingsFaceFrame title={props.title} foot={undefined}>
+        <ScreenNavSettingsFaceFrame title={props.title} store={props.store} foot={undefined}>
           <WorkflowMessage text={setting.message} tone="state-warn" />
         </ScreenNavSettingsFaceFrame>
       )
     case "unavailable":
       return (
-        <ScreenNavSettingsFaceFrame title={props.title} foot={undefined}>
+        <ScreenNavSettingsFaceFrame title={props.title} store={props.store} foot={undefined}>
           <WorkflowRepository repository={setting.repository} />
           <WorkflowMessage text={setting.message} tone="ink" />
         </ScreenNavSettingsFaceFrame>
@@ -41,6 +45,7 @@ export function ScreenNavSettingsWorkflowFace(props: { readonly title: string })
       return (
         <ScreenNavSettingsFaceFrame
           title={props.title}
+          store={props.store}
           foot={
             <WorkflowSaveBand
               change={setting.change}

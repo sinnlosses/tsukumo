@@ -1,0 +1,21 @@
+/* 面の名前の下の、範囲の札と保存先の1行。 */
+
+.store {
+  display: flex;
+  gap: var(--inline-control);
+  align-items: center;
+  padding-bottom: var(--stack-group);
+}
+.scope {
+  padding: 0 var(--inline-control);
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+}
+.scope-repository {
+  border-color: var(--state-warn);
+  color: var(--state-warn);
+}
+.path {
+  font-family: var(--font-mono);
+  color: var(--ink-soft);
+}

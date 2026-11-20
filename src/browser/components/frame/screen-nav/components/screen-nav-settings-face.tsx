@@ -10,6 +10,7 @@ import { HStack } from "../../../ui/h-stack/h-stack.tsx"
 import { Text } from "../../../ui/text/text.tsx"
 import type { ResetFaceKey } from "../hooks/use-settings.ts"
 import { ScreenNavSettingsLookFace } from "./screen-nav-settings-look.tsx"
+import type { ScreenNavSettingsStoreProps } from "./screen-nav-settings-store.tsx"
 import { ScreenNavSettingsWorkflowFace } from "./screen-nav-settings-workflow.tsx"
 import styles from "./screen-nav-settings.module.css"
 import {
@@ -26,6 +27,10 @@ import {
 export type Face = {
   readonly key: string
   readonly label: string
+  /** ナビで並べる群。値がだれに効くか（`you` は利用者のホーム、`repository` はリポジトリの設定ファイル）。 */
+  readonly group: ScreenNavSettingsStoreProps["group"]
+  /** 値の保存先（実物の持ち先）。 */
+  readonly store: string
   readonly icon: ComponentType<{ readonly size: number; readonly strokeWidth: number }>
 } & (
   | {
@@ -37,15 +42,32 @@ export type Face = {
   | {
       readonly foot: "own"
       readonly inDrawer: false
-      readonly Body: (props: { readonly title: string }) => ReactElement
+      readonly Body: (props: {
+        readonly title: string
+        readonly store: ScreenNavSettingsStoreProps
+      }) => ReactElement
     }
 )
+
+const STATE_JSON = "~/.tsukumo/state.json"
+
+/** ナビの群の並びと見出し。`aside` は見出しの右の語で、`repository` の分はリポジトリの名前が読めたときにダイアログが足す。 */
+export const FACE_GROUPS = [
+  { group: "you", label: "あなた", aside: "全リポジトリ" },
+  { group: "repository", label: "このリポジトリ", aside: "" },
+] as const satisfies readonly {
+  readonly group: Face["group"]
+  readonly label: string
+  readonly aside: string
+}[]
 
 export const FACES = [
   {
     key: "look",
     label: SETTING_FACE_LABEL.look,
     icon: Palette,
+    group: "you",
+    store: STATE_JSON,
     Body: ScreenNavSettingsLookFace,
     foot: "reset",
     inDrawer: true,
@@ -54,6 +76,8 @@ export const FACES = [
     key: "session-default",
     label: SETTING_FACE_LABEL["session-default"],
     icon: SlidersHorizontal,
+    group: "you",
+    store: STATE_JSON,
     Body: ScreenNavSettingsSessionDefaultFace,
     foot: "reset",
     inDrawer: true,
@@ -62,6 +86,8 @@ export const FACES = [
     key: "reveal",
     label: SETTING_FACE_LABEL.reveal,
     icon: Sparkles,
+    group: "you",
+    store: STATE_JSON,
     Body: ScreenNavSettingsRevealFace,
     foot: "reset",
     inDrawer: true,
@@ -70,6 +96,8 @@ export const FACES = [
     key: "launch-skill",
     label: SETTING_FACE_LABEL["launch-skill"],
     icon: Play,
+    group: "you",
+    store: STATE_JSON,
     Body: ScreenNavSettingsLaunchSkillFace,
     foot: "reset",
     inDrawer: true,
@@ -79,6 +107,8 @@ export const FACES = [
     key: "workflow",
     label: "ワークフロー",
     icon: Workflow,
+    group: "repository",
+    store: ".tw/config.toml",
     Body: ScreenNavSettingsWorkflowFace,
     foot: "own",
     inDrawer: false,
