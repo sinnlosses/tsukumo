@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>レポートの出典の番号と用語の注 — 見本（2026-11-20）</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #15131b;
+    --ground: #191720;
+    --surface: #221f2b;
+    --raised: #2c2836;
+    --ink: #e8e3ea;
+    --ink-soft: color-mix(in srgb, var(--ink) 74%, transparent);
+    --ink-quiet: color-mix(in srgb, var(--ink) 56%, transparent);
+    --line: color-mix(in srgb, var(--ink) 13%, transparent);
+    --accent: #f2b0a0;
+    --accent-soft: color-mix(in srgb, var(--accent) 16%, transparent);
+    --ok: #7fd3a2;
+    --warn: #f2c46b;
+    --mono: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.7 system-ui, "Hiragino Sans", sans-serif; }
+  button { font: inherit; color: inherit; }
+
+  header.page { max-width: 1560px; margin: 0 auto; padding: 20px 28px 8px; }
+  header.page h1 { font-size: 20px; margin: 0 0 4px; }
+  header.page p { margin: 0; color: var(--ink-soft); font-size: 13px; max-width: 70em; }
+
+  .bar { max-width: 1560px; margin: 0 auto; padding: 8px 28px; display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+  .switch { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; padding: 3px; gap: 3px; background: var(--surface); }
+  .switch button { border: 0; background: none; padding: 4px 16px; border-radius: 7px; cursor: pointer; font-size: 13px; color: var(--ink-soft); }
+  .switch button[aria-pressed="true"] { background: var(--accent); color: #2b1712; font-weight: 600; }
+  .bar .hint { font-size: 12px; color: var(--ink-quiet); }
+
+  .layout { max-width: 1560px; margin: 0 auto; padding: 8px 28px 48px; display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 28px; align-items: start; }
+
+  /* 舞台: 今のアプリのメインビューに近い幅（紙 730px）で描く */
+  .stage { border-radius: 16px; border: 1px solid var(--line); padding: 28px 0;
+    background: radial-gradient(120% 70% at 20% 0%, #2d2433 0%, transparent 60%), linear-gradient(#1d1922, #121017);
+    display: flex; justify-content: center; }
+  .stage[data-width="narrow"] .paper { width: 390px; padding: 18px 16px 20px; }
+  .paper { width: 730px; background: color-mix(in srgb, #2a2733 86%, transparent); border: 1px solid var(--line); border-radius: 12px; padding: 22px 26px 26px; backdrop-filter: blur(6px); position: relative; }
+  .paper .conclusion { font-size: 17px; line-height: 1.6; margin: 0 0 18px; }
+  .paper h2 { font-size: 15px; margin: 22px 0 8px; }
+  .paper p { margin: 0 0 10px; }
+  .paper code { font: 12px var(--mono); background: color-mix(in srgb, var(--ink) 8%, transparent); border-radius: 4px; padding: 1px 5px; }
+
+  /* 今: 出典は本文の中のドメインの札 */
+  .domain { font: 12px var(--mono); border: 1px solid var(--line); border-radius: 4px; padding: 0 5px; color: var(--ink-soft); text-decoration: none; white-space: nowrap; }
+
+  /* 案: 出典の番号（Citation の number 型） */
+  .cite { position: relative; display: inline-block; vertical-align: 0.35em; margin: 0 1px; }
+  .cite > a { display: inline-grid; place-items: center; min-width: 1.45em; height: 1.45em; padding: 0 3px; border-radius: 5px;
+    font: 600 11px/1 var(--mono); color: var(--accent); background: var(--accent-soft); text-decoration: none; }
+  .cite > a:hover, .cite > a:focus-visible { background: var(--accent); color: #2b1712; outline: none; }
+
+  /* 案: 用語の注（InfoTip）。初出の語だけ点線、触れるか焦点で注が出る */
+  .term { position: relative; display: inline; }
+  .term > button { all: unset; cursor: help; border-bottom: 1px dotted color-mix(in srgb, var(--ink) 60%, transparent); }
+  .term > button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
+
+  /* 浮く札（HoverCard） */
+  .card { position: absolute; z-index: 5; left: 50%; bottom: calc(100% + 8px); translate: -50% 0; width: max-content; max-width: 300px;
+    background: var(--raised); border: 1px solid color-mix(in srgb, var(--ink) 20%, transparent); border-radius: 10px; padding: 10px 12px;
+    box-shadow: 0 10px 28px rgb(0 0 0 / 45%); font-size: 12px; line-height: 1.6; color: var(--ink); white-space: normal;
+    opacity: 0; pointer-events: none; transition: opacity 120ms ease 200ms; }
+  .card .title { font-weight: 600; font-size: 13px; display: block; margin-bottom: 2px; }
+  .card .host { font: 11px var(--mono); color: var(--ink-quiet); }
+  .card .kind { display: block; font-size: 11px; color: var(--ink-quiet); margin-bottom: 4px; }
+  .cite:hover .card, .cite:focus-within .card, .term:hover .card, .term:focus-within .card, .card[data-pinned] { opacity: 1; pointer-events: auto; transition-delay: 0ms; }
+  @media (prefers-reduced-motion: reduce) { .card { transition: none; } }
+  .stage[data-width="narrow"] .card { position: fixed; left: 50%; bottom: 24px; translate: -50% 0; max-width: 360px; width: calc(100vw - 32px); }
+
+  /* 案: 末尾の出典の一覧 */
+  .sources { margin-top: 22px; padding-top: 12px; border-top: 1px solid var(--line); }
+  .sources h3 { font-size: 12px; color: var(--ink-quiet); font-weight: 600; margin: 0 0 6px; letter-spacing: 0.04em; }
+  .sources ol { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; font-size: 12px; }
+  .sources li { display: grid; grid-template-columns: 2em 1fr; align-items: baseline; }
+  .sources li .no { font: 600 11px var(--mono); color: var(--accent); }
+  .sources li .host { font: 11px var(--mono); color: var(--ink-quiet); margin-left: 6px; }
+  .sources li:target { background: var(--accent-soft); border-radius: 4px; }
+  .sources dl { margin: 0; display: grid; grid-template-columns: max-content 1fr; gap: 3px 12px; font-size: 12px; }
+  .sources dt { font-weight: 600; }
+  .sources dd { margin: 0; color: var(--ink-soft); }
+
+  /* 状態の出し分け */
+  [data-only] { display: none; }
+  .stage[data-mode="now"] [data-only~="now"],
+  .stage[data-mode="plan"] [data-only~="plan"],
+  .stage[data-mode="export"] [data-only~="export"] { display: revert; }
+  .stage[data-mode="export"] .paper { background: #fbfaf8; color: #222; border-color: #ddd; backdrop-filter: none; }
+  .stage[data-mode="export"] .paper code { background: #eee; }
+  .stage[data-mode="export"] .cite > a { color: #a2493a; background: #f6e1db; }
+  .stage[data-mode="export"] .term > button { border-bottom-color: #999; }
+  .stage[data-mode="export"] .card { display: none; }
+  .stage[data-mode="export"] .sources { border-top-color: #ddd; }
+  .stage[data-mode="export"] .sources h3, .stage[data-mode="export"] .sources .host { color: #777; }
+  .stage[data-mode="export"] .sources dd { color: #444; }
+  .stage[data-mode="export"] .sources .no { color: #a2493a; }
+  .stage[data-mode="export"] .sources li:target { background: #f6e1db; }
+  .stage[data-mode="export"] .term-sup { display: inline; }
+  .term-sup { display: none; font: 600 10px var(--mono); color: #a2493a; vertical-align: 0.4em; margin-left: 1px; }
+
+  /* 右の列 */
+  .rail { display: grid; gap: 14px; position: sticky; top: 16px; }
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
+  .panel h2 { margin: 0 0 8px; font-size: 15px; }
+  .panel ul { margin: 0; padding-left: 1.2em; font-size: 13px; color: var(--ink-soft); display: grid; gap: 4px; }
+  .panel pre { margin: 0; font: 11.5px/1.55 var(--mono); white-space: pre-wrap; color: var(--ink-soft); background: var(--ground); border-radius: 8px; padding: 10px; }
+  .panel .measure { font-size: 12px; color: var(--ink-quiet); margin-top: 8px; }
+</style>
+</head>
+<body>
+<header class="page">
+  <h1>レポートの出典の番号（Citation）と用語の注（InfoTip）— 見本</h1>
+  <p>同じ架空の調べもののレポートを、今の書き方と案で描き分けた。案は astryx 0.7.10 の <code>Citation</code>（number 型）と <code>HoverCard</code> を写した見た目で、書き手は部品ではなく Report の欄（出典の一覧・用語の注）と本文の番号の印だけを書く。紙の幅 730px・本文 14px・補足 12px は今のアプリに合わせた。</p>
+</header>
+
+<div class="bar">
+  <div class="switch" role="group" aria-label="描き分け">
+    <button type="button" data-set-mode="now" aria-pressed="false">今</button>
+    <button type="button" data-set-mode="plan" aria-pressed="true">案</button>
+    <button type="button" data-set-mode="export" aria-pressed="false">案の HTML 書き出し</button>
+  </div>
+  <div class="switch" role="group" aria-label="幅">
+    <button type="button" data-set-width="wide" aria-pressed="true">広い（紙 730px）</button>
+    <button type="button" data-set-width="narrow" aria-pressed="false">狭い（390px）</button>
+  </div>
+  <span class="hint">案では番号と点線の語に触れるか Tab で焦点を当てると札が出る。狭い幅では札が画面の下に出る。</span>
+</div>
+
+<div class="layout">
+  <div class="stage" id="stage" data-mode="plan" data-width="wide">
+    <article class="paper">
+      <p class="conclusion">架空の結論: 再試行の上限は 3 回のままでよく、待ち時間だけを指数で延ばす。</p>
+
+      <h2>上限を増やしても成功率はほぼ変わらない</h2>
+
+      <!-- 今 -->
+      <p data-only="now">再試行の4回目以降に成功する要求は全体の 0.2% に満たないと報告されている <a class="domain" href="#">example.com</a>（架空）。待ち時間を一定にすると、失敗した要求が同じ瞬間に戻ってきて相手の負荷が跳ねる（いわゆるサンダリングハード。多数の待ち手が同時に起きて同じ資源へ殺到すること）<a class="domain" href="#">www.example.org</a>（架空）。</p>
+      <p data-only="now">指数バックオフ（待ち時間を失敗のたびに倍にしていく再試行の間隔の決め方）に揺らぎを足すと、戻りがばらけて負荷の山が消える <a class="domain" href="#">www.example.org</a>（架空）。</p>
+
+      <!-- 案と書き出し -->
+      <p data-only="plan export">再試行の4回目以降に成功する要求は全体の 0.2% に満たないと報告されている<span class="cite"><a href="#src-1" aria-describedby="c1">1</a><span class="card" role="tooltip" id="c1"><span class="title">再試行の回数と成功率の実測（架空）</span><span class="host">example.com</span></span></span>。待ち時間を一定にすると、失敗した要求が同じ瞬間に戻ってきて相手の負荷が跳ねる（<span class="term"><button type="button" aria-describedby="t1">サンダリングハード</button><sup class="term-sup">注1</sup><span class="card" role="tooltip" id="t1"><span class="kind">用語</span>多数の待ち手が同時に起きて、同じ資源へ殺到すること。</span></span>）<span class="cite"><a href="#src-2" aria-describedby="c2">2</a><span class="card" role="tooltip" id="c2"><span class="title">待ち時間の設計の手引き（架空）</span><span class="host">www.example.org</span></span></span>。</p>
+      <p data-only="plan export"><span class="term"><button type="button" aria-describedby="t2">指数バックオフ</button><sup class="term-sup">注2</sup><span class="card" role="tooltip" id="t2"><span class="kind">用語</span>失敗のたびに待ち時間を倍にしていく、再試行の間隔の決め方。</span></span>に揺らぎを足すと、戻りがばらけて負荷の山が消える<span class="cite"><a href="#src-2" aria-describedby="c3">2</a><span class="card" role="tooltip" id="c3"><span class="title">待ち時間の設計の手引き（架空）</span><span class="host">www.example.org</span></span></span>。</p>
+
+      <h2>今の設定の置き場</h2>
+      <p>上限は <code>src/dummy/retry.ts:14</code> の定数で、待ち時間は同じファイルの <code>delayOf</code> が一定の 500ms を返している（架空）。</p>
+
+      <!-- 案: 末尾の一覧 -->
+      <section class="sources" data-only="plan export" aria-label="出典">
+        <h3>出典</h3>
+        <ol>
+          <li id="src-1"><span class="no">1</span><span>再試行の回数と成功率の実測（架空）<span class="host">example.com</span></span></li>
+          <li id="src-2"><span class="no">2</span><span>待ち時間の設計の手引き（架空）<span class="host">www.example.org</span></span></li>
+        </ol>
+      </section>
+      <section class="sources" data-only="export" aria-label="用語">
+        <h3>用語</h3>
+        <dl>
+          <dt>注1 サンダリングハード</dt><dd>多数の待ち手が同時に起きて、同じ資源へ殺到すること。</dd>
+          <dt>注2 指数バックオフ</dt><dd>失敗のたびに待ち時間を倍にしていく、再試行の間隔の決め方。</dd>
+        </dl>
+      </section>
+    </article>
+  </div>
+
+  <aside class="rail">
+    <section class="panel">
+      <h2>書き手が書く形（案）</h2>
+      <pre>Report:
+  sources:
+    - id: s1
+      title: 再試行の回数と成功率の実測（架空）
+      url: https://example.com/…
+    - id: s2
+      title: 待ち時間の設計の手引き（架空）
+      url: https://www.example.org/…
+  terms:
+    - term: サンダリングハード
+      note: 多数の待ち手が同時に起きて…
+    - term: 指数バックオフ
+      note: 失敗のたびに待ち時間を倍に…
+
+Paragraph.text:
+  "…満たないと報告されている[^s1]。…"</pre>
+      <p class="measure">番号は描く側が初出の順に振り、同じ出典は同じ番号にする。用語の注は本文で最初に出た1か所にだけ付く（書き手は本文に印を書かない）。</p>
+    </section>
+    <section class="panel">
+      <h2>見比べるところ</h2>
+      <ul>
+        <li>本文の長さ: 今は用語の説明と出典の札が文の流れに入る。案は番号と点線だけになる</li>
+        <li>同じ出典の二度書き: 今は <code>www.example.org</code> が2回。案は同じ「2」</li>
+        <li>書き出し: 浮く札は出せないので、用語は「注n」と末尾の一覧に開く</li>
+        <li>狭い幅: 札が語の上でなく画面の下に出て、指で隠れない</li>
+      </ul>
+    </section>
+    <section class="panel">
+      <h2>まだ決めていないこと</h2>
+      <ul>
+        <li>本文の番号の印の書き方（<code>[^s1]</code> か、主張ごとの欄か）</li>
+        <li>Claims の basis や表のセルにも番号を許すか</li>
+        <li>用語の注を、同じセッションの次のレポートでも付け直すか</li>
+      </ul>
+    </section>
+  </aside>
+</div>
+
+<script>
+  const stage = document.getElementById("stage")
+  for (const button of document.querySelectorAll("[data-set-mode]")) {
+    button.addEventListener("click", () => {
+      stage.dataset.mode = button.dataset.setMode
+      for (const other of document.querySelectorAll("[data-set-mode]")) other.setAttribute("aria-pressed", String(other === button))
+    })
+  }
+  for (const button of document.querySelectorAll("[data-set-width]")) {
+    button.addEventListener("click", () => {
+      stage.dataset.width = button.dataset.setWidth
+      for (const other of document.querySelectorAll("[data-set-width]")) other.setAttribute("aria-pressed", String(other === button))
+    })
+  }
+  // 撮影用: ?mode=…&width=…&pin=<札の id> で状態を決めて開く
+  const query = new URLSearchParams(location.search)
+  if (query.has("mode")) document.querySelector(`[data-set-mode="${query.get("mode")}"]`)?.click()
+  if (query.has("width")) document.querySelector(`[data-set-width="${query.get("width")}"]`)?.click()
+  if (query.has("pin")) document.getElementById(query.get("pin"))?.setAttribute("data-pinned", "")
+</script>
+</body>
+</html>
