@@ -32,4 +32,4 @@
 
 ## 結果
 
-- 欄の説明は `reportFigureDescription(preference)`、設定の面は「セッションの既定」の「図の既定」
+- 欄の説明は `reportFigureDescription(preference)`、設定の面は「新しいセッション」の「図の既定」

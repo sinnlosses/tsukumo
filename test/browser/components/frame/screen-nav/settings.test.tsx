@@ -175,17 +175,22 @@ describe("設定の歯車（帯の右端）", () => {
     renderScreenNav()
     fireEvent.click(gear())
     const dialog = openedSettingsDialog()
-    const names = ["見た目", "セッションの既定", "演出", "タスクの実行", "ワークフロー"]
+    const names = ["見た目", "新しいセッション", "演出", "タスクの実行", "ワークフロー"]
 
     const current = (): (string | null)[] =>
       names.map((name) => within(dialog).getByRole("button", { name }).getAttribute("aria-current"))
 
     expect(current()).toEqual(["page", null, null, null, null])
 
-    showFace("セッションの既定")
+    showFace("新しいセッション")
 
     expect(current()).toEqual([null, "page", null, null, null])
-    expect(faceLabels().slice(0, 4)).toEqual(["モデル", "effort", "許可モード", "図の既定"])
+    expect(faceLabels().slice(0, 4)).toEqual([
+      "モデル",
+      "effort（考える深さ）",
+      "許可モード",
+      "図の既定",
+    ])
 
     showFace("演出")
 
@@ -202,6 +207,20 @@ describe("設定の歯車（帯の右端）", () => {
         (entry) => entry.label,
       )
       expect(faceLabels(), faceLabel).toEqual(declared)
+    }
+  })
+
+  it("宣言の説明が、各行の名前の下に1つずつ出る", () => {
+    renderScreenNav()
+    fireEvent.click(gear())
+
+    for (const [faceKey, faceLabel] of Object.entries(SETTING_FACE_LABEL)) {
+      showFace(faceLabel)
+      for (const entry of SETTING_ENTRIES.filter((candidate) => candidate.faceKey === faceKey)) {
+        const found = within(openedSettingsDialog()).getAllByText(entry.description)
+        expect(found, entry.label).toHaveLength(1)
+        expect(found[0]?.previousElementSibling?.textContent, entry.label).toBe(entry.label)
+      }
     }
   })
 
@@ -332,7 +351,7 @@ describe("設定の歯車（新しいセッションの既定）", () => {
         figurePreference: "chart",
       },
     })
-    openFace("セッションの既定")
+    openFace("新しいセッション")
 
     expect(defaultSelect("モデル").value).toBe("sonnet")
     expect(defaultSelect("許可モード").value).toBe("plan")
@@ -340,7 +359,7 @@ describe("設定の歯車（新しいセッションの既定）", () => {
 
   it("許可モードの選択肢に「全部許す」は並ばない", () => {
     renderScreenNav()
-    openFace("セッションの既定")
+    openFace("新しいセッション")
 
     expect([...defaultSelect("許可モード").options].map((option) => option.value)).toEqual([
       "default",
@@ -363,7 +382,7 @@ describe("設定の歯車（新しいセッションの既定）", () => {
       },
       (command) => sent.push(command),
     )
-    openFace("セッションの既定")
+    openFace("新しいセッション")
 
     fireEvent.change(defaultSelect("モデル"), { target: { value: "sonnet" } })
 
@@ -386,9 +405,9 @@ describe("設定の歯車（新しいセッションの既定）", () => {
 
     expect(
       within(drawer)
-        .getAllByText(/^(見た目|セッションの既定|演出|タスクの実行|ワークフロー)$/u)
+        .getAllByText(/^(見た目|新しいセッション|演出|タスクの実行|ワークフロー)$/u)
         .map((heading) => heading.textContent),
-    ).toEqual(["見た目", "セッションの既定", "演出", "タスクの実行"])
+    ).toEqual(["見た目", "新しいセッション", "演出", "タスクの実行"])
     expect(within(drawer).getByText("領域の中の字")).toBeDefined()
   })
 
@@ -438,7 +457,7 @@ describe("設定の歯車（新しいセッションの既定）", () => {
       },
       (command) => sent.push(command),
     )
-    openFace("セッションの既定")
+    openFace("新しいセッション")
 
     fireEvent.change(defaultSelect("許可モード"), { target: { value: "acceptEdits" } })
 
@@ -484,9 +503,9 @@ describe("設定の歯車（新しいセッションの既定の effort）", () 
       },
       modelEffortSupport: [OPUS_SUPPORT, HAIKU_SUPPORT],
     })
-    openFace("セッションの既定")
+    openFace("新しいセッション")
 
-    expect(defaultSelect("effort").disabled).toBe(true)
+    expect(defaultSelect("effort（考える深さ）").disabled).toBe(true)
   })
 
   it("effort を選ぶと、いまのモデル・許可モードと一緒に session.setSessionDefault を送る", () => {
@@ -503,9 +522,9 @@ describe("設定の歯車（新しいセッションの既定の effort）", () 
       },
       (command) => sent.push(command),
     )
-    openFace("セッションの既定")
+    openFace("新しいセッション")
 
-    fireEvent.change(defaultSelect("effort"), { target: { value: "xhigh" } })
+    fireEvent.change(defaultSelect("effort（考える深さ）"), { target: { value: "xhigh" } })
 
     expect(sent).toEqual([
       {

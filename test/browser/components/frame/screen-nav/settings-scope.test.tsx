@@ -25,7 +25,7 @@ describe("設定のダイアログの範囲の群分け", () => {
     expect(lines.slice(0, 5)).toEqual([
       "あなた全リポジトリ",
       "見た目",
-      "セッションの既定",
+      "新しいセッション",
       "演出",
       "タスクの実行",
     ])
@@ -45,7 +45,7 @@ describe("設定のダイアログの範囲の群分け", () => {
   it("どのページも面の名前の下に範囲の札と保存先を出す", () => {
     renderWorkflowFace(() => ({ kind: "pending" }))
 
-    for (const name of ["見た目", "セッションの既定", "演出", "タスクの実行"]) {
+    for (const name of ["見た目", "新しいセッション", "演出", "タスクの実行"]) {
       expect(show(name)).toContain(`${name}あなた保存先 ~/.tsukumo/state.json`)
     }
     expect(show("ワークフロー")).toContain("ワークフローこのリポジトリ保存先 .tw/config.toml")

@@ -69,7 +69,7 @@ describe("コマンドパレットの設定の項目", () => {
       "page",
     )
     const label = [...dialog.querySelectorAll("label")].find((node) => node.textContent === "動き")
-    expect(label?.parentElement?.dataset["found"]).toBe("true")
+    expect(label?.parentElement?.parentElement?.dataset["found"]).toBe("true")
     expect(scrolled).toHaveBeenCalledWith({ block: "center" })
   })
 
@@ -83,7 +83,7 @@ describe("コマンドパレットの設定の項目", () => {
 
     const dialog = screen.getByRole("dialog", { name: "設定" })
     const label = [...dialog.querySelectorAll("label")].find((node) => node.textContent === "動き")
-    expect(label?.parentElement?.dataset["found"]).toBeUndefined()
+    expect(label?.parentElement?.parentElement?.dataset["found"]).toBeUndefined()
     expect(scrolled).toHaveBeenCalledWith({ block: "center" })
   })
 })

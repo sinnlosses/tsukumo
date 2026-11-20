@@ -42,8 +42,8 @@ export function ScreenNavSettingsLookFace(props: ScreenNavSettingsProps): ReactE
           key={color.key}
           itemKey={`color-${color.key}`}
           item={settings.items[`color-${color.key}`]}
+          name={<label htmlFor={`${fieldId}-${color.key}`}>{color.label}</label>}
         >
-          <label htmlFor={`${fieldId}-${color.key}`}>{color.label}</label>
           <div className={styles["control"]}>
             <input
               id={`${fieldId}-${color.key}`}
@@ -147,8 +147,11 @@ function RangeRow(props: {
   readonly onChange: (value: number) => void
 }): ReactElement {
   return (
-    <ScreenNavSettingsRow itemKey={props.itemKey} item={props.item}>
-      <label htmlFor={props.id}>{props.label}</label>
+    <ScreenNavSettingsRow
+      itemKey={props.itemKey}
+      item={props.item}
+      name={<label htmlFor={props.id}>{props.label}</label>}
+    >
       <div className={styles["control"]}>
         <input
           id={props.id}

@@ -11,7 +11,7 @@ import { stubPhoneWidth } from "../../../phone-width.ts"
 import { queryClientWrapper } from "../../../query-client.tsx"
 import { putSession } from "../../../session-store.ts"
 
-// 設定の「セッションの既定」の面の、図の既定（`figurePreference`）の行。
+// 設定の「新しいセッション」の面の、図の既定（`figurePreference`）の行。
 
 beforeEach(() => {
   stubPhoneWidth(true)
@@ -43,7 +43,7 @@ function figureSelect(): HTMLSelectElement {
     ),
   )
   const dialog = screen.getByRole("dialog", { name: "設定" })
-  fireEvent.click(within(dialog).getByRole("button", { name: "セッションの既定" }))
+  fireEvent.click(within(dialog).getByRole("button", { name: "新しいセッション" }))
   return typedElement(
     dialog.querySelector("select[aria-label='新しいセッションの図の既定']"),
     HTMLSelectElement,

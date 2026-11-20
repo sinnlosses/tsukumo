@@ -1,4 +1,4 @@
-// 設定の面のうち、セッションの既定・演出・タスクの実行の中身。面の表は `FACES`。
+// 設定の面のうち、新しいセッション・演出・タスクの実行の中身。面の表は `FACES`。
 // id は `useId()` でこの器ごとに振る（`<label for>` が指す先が重ならないようにする）。
 
 import { useId, type ReactElement } from "react"
@@ -46,15 +46,18 @@ const BACKGROUND_MODEL_LABELS = [
   ["characterGeneration", "キャラクターの生成"],
 ] as const satisfies readonly (readonly [BackgroundModelRole, string])[]
 
-/** セッションの既定の面（見出しなし）。下に裏方のモデルの群を並べる。 */
+/** 新しいセッションの面（見出しなし）。下に裏方のモデルの群を並べる。 */
 export function ScreenNavSettingsSessionDefaultFace(props: ScreenNavSettingsProps): ReactElement {
   const { settings } = props
   const fieldId = useId()
 
   return (
     <>
-      <ScreenNavSettingsRow itemKey="model" item={settings.items.model}>
-        <label htmlFor={`${fieldId}-default-model`}>モデル</label>
+      <ScreenNavSettingsRow
+        itemKey="model"
+        item={settings.items.model}
+        name={<label htmlFor={`${fieldId}-default-model`}>モデル</label>}
+      >
         <RunSettingSelect
           id={`${fieldId}-default-model`}
           ariaLabel="新しいセッションの既定のモデル"
@@ -70,8 +73,11 @@ export function ScreenNavSettingsSessionDefaultFace(props: ScreenNavSettingsProp
           onChange={settings.sessionDefault.onChangeModel}
         />
       </ScreenNavSettingsRow>
-      <ScreenNavSettingsRow itemKey="effort" item={settings.items.effort}>
-        <label htmlFor={`${fieldId}-default-effort`}>effort</label>
+      <ScreenNavSettingsRow
+        itemKey="effort"
+        item={settings.items.effort}
+        name={<label htmlFor={`${fieldId}-default-effort`}>effort（考える深さ）</label>}
+      >
         <RunSettingSelect
           id={`${fieldId}-default-effort`}
           ariaLabel="新しいセッションの既定の effort"
@@ -95,8 +101,11 @@ export function ScreenNavSettingsSessionDefaultFace(props: ScreenNavSettingsProp
           onChange={settings.sessionDefault.onChangeEffort}
         />
       </ScreenNavSettingsRow>
-      <ScreenNavSettingsRow itemKey="permissionMode" item={settings.items.permissionMode}>
-        <label htmlFor={`${fieldId}-default-permission-mode`}>許可モード</label>
+      <ScreenNavSettingsRow
+        itemKey="permissionMode"
+        item={settings.items.permissionMode}
+        name={<label htmlFor={`${fieldId}-default-permission-mode`}>許可モード</label>}
+      >
         <RunSettingSelect
           id={`${fieldId}-default-permission-mode`}
           ariaLabel="新しいセッションの既定の許可モード"
@@ -112,8 +121,11 @@ export function ScreenNavSettingsSessionDefaultFace(props: ScreenNavSettingsProp
           onChange={settings.sessionDefault.onChangePermissionMode}
         />
       </ScreenNavSettingsRow>
-      <ScreenNavSettingsRow itemKey="figurePreference" item={settings.items.figurePreference}>
-        <label htmlFor={`${fieldId}-default-figure-preference`}>図の既定</label>
+      <ScreenNavSettingsRow
+        itemKey="figurePreference"
+        item={settings.items.figurePreference}
+        name={<label htmlFor={`${fieldId}-default-figure-preference`}>図の既定</label>}
+      >
         <RunSettingSelect
           id={`${fieldId}-default-figure-preference`}
           ariaLabel="新しいセッションの図の既定"
@@ -143,8 +155,8 @@ export function ScreenNavSettingsSessionDefaultFace(props: ScreenNavSettingsProp
           key={role}
           itemKey={`background-${role}`}
           item={settings.items[`background-${role}`]}
+          name={<label htmlFor={`${fieldId}-background-${role}`}>{label}</label>}
         >
-          <label htmlFor={`${fieldId}-background-${role}`}>{label}</label>
           <RunSettingSelect
             id={`${fieldId}-background-${role}`}
             ariaLabel={`裏方のモデル（${label}）`}
@@ -174,8 +186,11 @@ export function ScreenNavSettingsRevealFace(props: ScreenNavSettingsProps): Reac
 
   return (
     <>
-      <ScreenNavSettingsRow itemKey="revealSpeed" item={settings.items.revealSpeed}>
-        <label htmlFor={`${fieldId}-reveal-speed`}>書き上げる速さ</label>
+      <ScreenNavSettingsRow
+        itemKey="revealSpeed"
+        item={settings.items.revealSpeed}
+        name={<label htmlFor={`${fieldId}-reveal-speed`}>書き上げる速さ</label>}
+      >
         <RunSettingSelect
           id={`${fieldId}-reveal-speed`}
           ariaLabel="書き上げる演出の速さ"
@@ -191,8 +206,11 @@ export function ScreenNavSettingsRevealFace(props: ScreenNavSettingsProps): Reac
           onChange={settings.revealSpeed.onChange}
         />
       </ScreenNavSettingsRow>
-      <ScreenNavSettingsRow itemKey="motion" item={settings.items.motion}>
-        <label htmlFor={`${fieldId}-motion`}>動き</label>
+      <ScreenNavSettingsRow
+        itemKey="motion"
+        item={settings.items.motion}
+        name={<label htmlFor={`${fieldId}-motion`}>動き</label>}
+      >
         <RunSettingSelect
           id={`${fieldId}-motion`}
           ariaLabel="動きを減らすか"
@@ -217,8 +235,11 @@ export function ScreenNavSettingsRevealFace(props: ScreenNavSettingsProps): Reac
       >
         話しかける間合い
       </Text>
-      <ScreenNavSettingsRow itemKey="waitingLine" item={settings.items.waitingLine}>
-        <label htmlFor={`${fieldId}-waiting-line`}>待ちの一言</label>
+      <ScreenNavSettingsRow
+        itemKey="waitingLine"
+        item={settings.items.waitingLine}
+        name={<label htmlFor={`${fieldId}-waiting-line`}>待ちの一言</label>}
+      >
         <RunSettingSelect
           id={`${fieldId}-waiting-line`}
           ariaLabel="話しかける間合い（待ちの一言）"
@@ -234,8 +255,11 @@ export function ScreenNavSettingsRevealFace(props: ScreenNavSettingsProps): Reac
           onChange={settings.speakingPace.onChangeWaitingLine}
         />
       </ScreenNavSettingsRow>
-      <ScreenNavSettingsRow itemKey="progressNudge" item={settings.items.progressNudge}>
-        <label htmlFor={`${fieldId}-progress-nudge`}>進み具合の催促</label>
+      <ScreenNavSettingsRow
+        itemKey="progressNudge"
+        item={settings.items.progressNudge}
+        name={<label htmlFor={`${fieldId}-progress-nudge`}>進み具合の催促</label>}
+      >
         <RunSettingSelect
           id={`${fieldId}-progress-nudge`}
           ariaLabel="話しかける間合い（進み具合の催促）"
@@ -263,8 +287,11 @@ export function ScreenNavSettingsLaunchSkillFace(props: ScreenNavSettingsProps):
 
   return (
     <>
-      <ScreenNavSettingsRow itemKey="launchSkill" item={settings.items.launchSkill}>
-        <label htmlFor={`${fieldId}-launch-skill`}>起動するスキル</label>
+      <ScreenNavSettingsRow
+        itemKey="launchSkill"
+        item={settings.items.launchSkill}
+        name={<label htmlFor={`${fieldId}-launch-skill`}>起動するスキル</label>}
+      >
         <RunSettingSelect
           id={`${fieldId}-launch-skill`}
           ariaLabel="起動するスキル"
@@ -285,15 +312,6 @@ export function ScreenNavSettingsLaunchSkillFace(props: ScreenNavSettingsProps):
           onChange={settings.launchSkill.onChange}
         />
       </ScreenNavSettingsRow>
-      <Text
-        element="p"
-        size="label"
-        tone="ink-quiet"
-        weight="inherit"
-        className={styles["screen-nav-settings-notice"]}
-      >
-        タスクの実行で呼ぶスキル。未設定なら「タスク GH-xxxx を進めて」と送る。
-      </Text>
     </>
   )
 }

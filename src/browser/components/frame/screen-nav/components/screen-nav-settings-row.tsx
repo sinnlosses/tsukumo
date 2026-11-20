@@ -4,9 +4,11 @@
 import { RotateCcw } from "lucide-react"
 import { useRef, type ReactElement, type ReactNode } from "react"
 
+import { SETTING_ENTRIES } from "../../../../domain/setting-entry.ts"
 import { useMountEffect } from "../../../../hooks/use-mount-effect.ts"
 import { useSettingsRequest } from "../../../../stores/settings-request.ts"
 import { HStack } from "../../../ui/h-stack/h-stack.tsx"
+import { Text } from "../../../ui/text/text.tsx"
 import type { ScreenNavSettingsItem, SettingItemKey } from "../hooks/use-settings.ts"
 import styles from "./screen-nav-settings.module.css"
 
@@ -15,9 +17,13 @@ const FOUND_MILLISECONDS = 1200
 export function ScreenNavSettingsRow(props: {
   readonly itemKey: SettingItemKey
   readonly item: ScreenNavSettingsItem
+  /** 名前の `<label>`。下に宣言の説明が付く。 */
+  readonly name: ReactNode
+  /** 操作子。 */
   readonly children: ReactNode
 }): ReactElement {
   const { item, itemKey } = props
+  const description = SETTING_ENTRIES.find((entry) => entry.itemKey === itemKey)?.description
   const rowRef = useRef<HTMLElement>(null)
 
   useMountEffect(() => {
@@ -51,6 +57,20 @@ export function ScreenNavSettingsRow(props: {
       wrap="nowrap"
       className={styles["screen-nav-settings-row"]}
     >
+      <div className={styles["screen-nav-settings-name"]}>
+        {props.name}
+        {description !== undefined && (
+          <Text
+            element="p"
+            size="label"
+            tone="ink-quiet"
+            weight="inherit"
+            className={styles["screen-nav-settings-description"]}
+          >
+            {description}
+          </Text>
+        )}
+      </div>
       {props.children}
       {item.changed && (
         <button

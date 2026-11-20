@@ -61,8 +61,16 @@
   background: var(--accent);
 }
 /* 名前は左へ寄せ、操作子と ↺ を右にまとめる（引き出しの狭い幅でも重ならない）。 */
-.screen-nav-settings-row > label {
+.screen-nav-settings-name {
+  display: flex;
   flex: 1;
+  flex-direction: column;
+  gap: var(--space-xs);
+  min-width: 0;
+}
+.screen-nav-settings-description {
+  margin: 0;
+  line-height: 1.5;
 }
 /* その項目だけ既定へ戻すボタン。行の右端に付く。 */
 .screen-nav-settings-item-reset {
@@ -91,15 +99,9 @@
   padding: var(--space-md) 0 var(--space-md) var(--inline-control);
   border-bottom: 1px solid var(--rule-quiet);
 }
-/* 操作は名前の隣から左へ詰める（行の余白を操作子の右の自動マージンが吸い、↺ は右端へ寄る）。 */
-.screen-nav-settings-table .screen-nav-settings-row > :nth-child(2) {
-  margin-right: auto;
-}
-/* 名前の列は 132。`HStack` の間隔は 16 なので、列の間の 20 に 4 足りない分を右の余白で補う。 */
-.screen-nav-settings-table .screen-nav-settings-row > label {
-  flex: none;
-  width: 132px;
-  margin-right: var(--space-xs);
+/* 名前と説明の列は余りを取り、下の説明が折り返しても操作子を押さない。操作子と ↺ は右へまとまる。 */
+.screen-nav-settings-table .screen-nav-settings-row > .screen-nav-settings-name {
+  min-width: 132px;
 }
 /* 色を受け取らなかった理由の1行。面の幅を押し広げないように、幅は行の並びに任せて折り返す。 */
 .screen-nav-settings-notice {

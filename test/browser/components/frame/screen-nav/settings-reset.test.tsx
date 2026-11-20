@@ -113,7 +113,7 @@ describe("設定の「既定に戻す」（ページごと）", () => {
     })
   })
 
-  it("セッションの既定のページで押すとモデルが戻り、見た目の色は戻らない", () => {
+  it("新しいセッションのページで押すとモデルが戻り、見た目の色は戻らない", () => {
     const sent: unknown[] = []
     renderScreenNav(
       {
@@ -128,7 +128,7 @@ describe("設定の「既定に戻す」（ページごと）", () => {
     )
     openGear()
     fireEvent.change(groundInput(), { target: { value: "#101010" } })
-    showFace("セッションの既定")
+    showFace("新しいセッション")
 
     expect(resetButton().textContent).toBe("このページを既定に戻す（1件）")
     fireEvent.click(resetButton())

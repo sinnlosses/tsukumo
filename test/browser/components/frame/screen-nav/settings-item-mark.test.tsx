@@ -57,7 +57,7 @@ describe("設定の既定と違う項目の印", () => {
       },
     )
     const dialog = openGear()
-    fireEvent.click(within(dialog).getByRole("button", { name: "セッションの既定" }))
+    fireEvent.click(within(dialog).getByRole("button", { name: "新しいセッション" }))
 
     // モデルと effort は既定と違い、許可モードと図の既定は既定のまま。
     expect(within(dialog).getAllByRole("button", { name: /に戻す$/u })).toHaveLength(2)
@@ -85,8 +85,8 @@ describe("設定の既定と違う項目の印", () => {
     })
     const nav = within(openGear()).getByRole("navigation", { name: "設定の項目" })
 
-    expect(within(nav).getByRole("button", { name: "セッションの既定" }).textContent).toBe(
-      "セッションの既定3",
+    expect(within(nav).getByRole("button", { name: "新しいセッション" }).textContent).toBe(
+      "新しいセッション3",
     )
     expect(within(nav).getByRole("button", { name: "見た目" }).textContent).toBe("見た目")
   })
