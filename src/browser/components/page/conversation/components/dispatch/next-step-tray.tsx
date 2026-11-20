@@ -76,17 +76,10 @@ export function NextStepTray(props: NextStepTrayProps): ReactElement {
         onKeyDown={returnOnKey}
       >
         <div className={styles["next-step-tray-head"]}>
-          <span className={styles["next-step-tray-title"]} aria-hidden="true">
-            {TRAY_LABEL}
-          </span>
-          <span>{`${String(nextStepChipsOf(props.steps).length)}件`}</span>
-          <span className={styles["next-step-tray-end"]}>
-            {favorNote}
-            <TrayAction expanded={false} onClick={unfold}>
-              開く
-              <TrayChevron direction="up" />
-            </TrayAction>
-          </span>
+          <TrayToggle expanded={false} onClick={unfold}>
+            {`${String(nextStepChipsOf(props.steps).length)}件`}
+          </TrayToggle>
+          <span className={styles["next-step-tray-end"]}>{favorNote}</span>
         </div>
       </div>
     )
@@ -101,17 +94,9 @@ export function NextStepTray(props: NextStepTrayProps): ReactElement {
       onKeyDown={returnOnKey}
     >
       <div className={styles["next-step-tray-head"]}>
-        <span className={styles["next-step-tray-title"]} aria-hidden="true">
-          {TRAY_LABEL}
-        </span>
+        <TrayToggle expanded onClick={fold} />
         <span>{trayNote(draftText === "", phone)}</span>
-        <span className={styles["next-step-tray-end"]}>
-          {favorNote}
-          <TrayAction expanded onClick={fold}>
-            畳む
-            <TrayChevron direction="down" />
-          </TrayAction>
-        </span>
+        <span className={styles["next-step-tray-end"]}>{favorNote}</span>
       </div>
       <div className={styles["next-step-tray-chips"]} onKeyDown={moveAmongChips}>
         {chips.map((chip) => {
@@ -165,20 +150,37 @@ export function NextStepTray(props: NextStepTrayProps): ReactElement {
 const TRAY_LABEL = "次の一手"
 const FAVOR_JUMP_LABEL = "お願いへ"
 
-/** 見出しの右端の口（お願いへ・畳む・開く）。`expanded` は畳む・開くだけが持つ。 */
+/** 見出しの右端の口（お願いへ）。 */
 function TrayAction(props: {
-  readonly expanded?: boolean
   readonly onClick: () => void
   readonly children: ReactNode
+}): ReactElement {
+  return (
+    <button type="button" className={styles["next-step-tray-action"]} onClick={props.onClick}>
+      {props.children}
+    </button>
+  )
+}
+
+/**
+ * 見出しの「次の一手」の字そのものが、並びを開閉する口になる。
+ * 読み上げの名前は「次の一手」で、開いているかは `aria-expanded` が言う。畳んだ形では件数（`children`）も口に含める。
+ */
+function TrayToggle(props: {
+  readonly expanded: boolean
+  readonly onClick: () => void
+  readonly children?: ReactNode
 }): ReactElement {
   return (
     <button
       type="button"
       aria-expanded={props.expanded}
-      className={styles["next-step-tray-action"]}
+      className={styles["next-step-tray-toggle"]}
       onClick={props.onClick}
     >
+      <span className={styles["next-step-tray-title"]}>{TRAY_LABEL}</span>
       {props.children}
+      <TrayChevron direction={props.expanded ? "down" : "up"} />
     </button>
   )
 }

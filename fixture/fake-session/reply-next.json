@@ -27,6 +27,7 @@
             "favor": "架空の設定を入れた状態で、移行を手元でも一度打って結果を見てほしい。",
             "sessionRemaining": "案Aの移行の手順を書く",
             "continueRequest": "案Aの移行の手順を書いて。",
+            "nextSteps": [{ "name": "タスクにする", "draft": "案Aへの移行をタスクに登録して。" }],
             "conclusion": ["架空の結論: 置き場は案Aに寄せたが、移行の確認の途中で止めた。"],
             "children": ["s1"],
             "closing": {

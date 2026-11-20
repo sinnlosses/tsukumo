@@ -18,6 +18,7 @@ export const REPORT_ARGUMENT_FIELDS = [
   "sessionSummary",
   "sessionRemaining",
   "continueRequest",
+  "nextSteps",
   "closing",
   "waitingLine",
 ] as const satisfies readonly string[]

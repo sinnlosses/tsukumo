@@ -209,6 +209,12 @@ export const favorOptionSchema = z.object({
   irreversible: z.boolean().optional(),
 })
 
+/** 書き手が勧める次の一手1つ。入力欄の頭の次の一手の並びに札として出る。 */
+const nextStepSuggestionSchema = z.object({
+  name: z.string().describe("札の頭に小さく出す種類の語（4〜8字）"),
+  draft: z.string().describe("押すと入力欄に入る、利用者がそのまま送る依頼の文（「〜して」の形）"),
+})
+
 /** 根。`children` は `Section` の ID、`figure` は図の部品の ID。 */
 const reportComponentSchema = z.object({
   id: z.string(),
@@ -245,6 +251,7 @@ const reportComponentSchema = z.object({
   sessionSummary: z.string().optional(),
   sessionRemaining: z.string().optional(),
   continueRequest: z.string().optional(),
+  nextSteps: z.array(nextStepSuggestionSchema).max(3).optional(),
   closing: speechSchema.optional(),
   waitingLine: speechSchema.optional(),
 })

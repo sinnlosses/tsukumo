@@ -1421,42 +1421,48 @@
                         {
                           "tag": "div",
                           "attributes": {
-                            "role": "group",
-                            "aria-label": "次の一手"
+                            "data-direction": "horizontal",
+                            "data-gap": "2",
+                            "data-wrap": "wrap"
                           },
                           "children": [
                             {
-                              "tag": "span",
+                              "tag": "p",
                               "attributes": {
-                                "aria-hidden": "true"
+                                "data-type": "supporting",
+                                "data-color": "accent"
                               },
                               "children": [
-                                "次の一手"
-                              ]
-                            },
-                            "2件",
-                            "お願いが1件あります",
-                            {
-                              "tag": "button",
-                              "attributes": {
-                                "type": "button"
-                              },
-                              "children": [
-                                "お願いへ"
+                                "お願いが1件あります"
                               ]
                             },
                             {
                               "tag": "button",
                               "attributes": {
-                                "aria-expanded": "false",
+                                "data-variant": "secondary",
+                                "data-size": "sm",
+                                "data-elevation": "none",
+                                "data-astryx-pressable": "",
+                                "aria-description": "入力欄が空のとき ↑ でも移れます",
+                                "aria-label": "お願いへ",
                                 "type": "button"
                               },
                               "children": [
-                                "開く",
+                                "お願いへ",
+                                {
+                                  "tag": "kbd",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  },
+                                  "children": [
+                                    "↑"
+                                  ]
+                                },
                                 {
                                   "tag": "span",
                                   "attributes": {
-                                    "aria-hidden": "true"
+                                    "role": "status",
+                                    "aria-live": "polite"
                                   }
                                 }
                               ]

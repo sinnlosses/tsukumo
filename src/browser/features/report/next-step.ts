@@ -5,7 +5,6 @@ import type { TaskSummaryResult } from "../../../shared/repository/task-summary.
 import type { MainViewReportBody } from "../../../shared/session/main-view-shape.ts"
 import {
   buildNextSteps,
-  unobservedOf,
   type NextStep,
   type NextStepsOrigin,
   type NextTaskCandidate,
@@ -33,7 +32,6 @@ export function nextStepsOfReport(
   }
   return buildNextSteps({
     components: report.a2ui.kind === "surface" ? report.a2ui.components : [],
-    unobserved: unobservedOf(report.a2ui.head.checks),
     ...origin,
   })
 }

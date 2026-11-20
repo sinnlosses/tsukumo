@@ -133,7 +133,7 @@ test.describe("report → メインビュー", () => {
 
     await room.waitForEvent("turn-finished")
     const tray = room.page.getByRole("group", { name: "次の一手" })
-    await tray.getByRole("button", { name: "開く" }).click()
+    await tray.getByRole("button", { name: /^次の一手/u }).click()
     const button = tray.getByRole("button", { name: /^続ける 案Aの移行の手順を書いて。/ })
     await button.waitFor()
     await button.click()

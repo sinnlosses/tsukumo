@@ -4,13 +4,9 @@ import { afterEach, describe, expect, it } from "vitest"
 import { NextStepTray } from "../../../../../../../src/browser/components/page/conversation/components/dispatch/next-step-tray.tsx"
 import { useComposerDraft } from "../../../../../../../src/browser/components/page/conversation/stores/composer-draft.ts"
 import { useNextStepTray } from "../../../../../../../src/browser/components/page/conversation/stores/next-step-tray.ts"
-import {
-  buildNextSteps,
-  unobservedOf,
-} from "../../../../../../../src/browser/features/report/domain/next-step-plan.ts"
+import { buildNextSteps } from "../../../../../../../src/browser/features/report/domain/next-step-plan.ts"
 import { useComposerFocus } from "../../../../../../../src/browser/stores/composer-focus.ts"
 import type { A2uiReportComponent } from "../../../../../../../src/shared/report/a2ui-report-catalog.ts"
-import type { ReportChecksView } from "../../../../../../../src/shared/report/report-check-view.ts"
 
 // 札・下見の出し分けと、押したときに下書きへ入る文だけを測る。フィクスチャはすべて手で書いた架空のもの。
 
@@ -42,45 +38,16 @@ const COMPONENTS: readonly A2uiReportComponent[] = [
   },
 ]
 
-const CHECKS: ReportChecksView = {
-  kind: "checks",
-  summary: {
-    passedCount: 0,
-    figures: [],
-    problems: [{ status: "unobserved", count: 1 }],
-    favor: { kind: "none" },
-  },
-  problems: [
-    {
-      status: "unobserved",
-      label: "架空の検証",
-      figure: "",
-      time: "",
-      viaCommand: false,
-      recorded: false,
-      runCount: 0,
-      supports: [],
-      detail: "",
-      howToVerify: "架空の手順",
-    },
-  ],
-  passed: [],
-}
-
-/** 見出しの口（畳む・お願いへ）を除いた札。 */
+/** 見出しの口（開閉・お願いへ）を除いた札。 */
 function chipButtons(): HTMLElement[] {
   return screen
     .getAllByRole("button")
     .filter((button) => button.hasAttribute("data-next-step-chip"))
 }
 
-function renderTray(
-  components: readonly A2uiReportComponent[] = COMPONENTS,
-  checks: ReportChecksView = { kind: "none" },
-) {
+function renderTray(components: readonly A2uiReportComponent[] = COMPONENTS) {
   const steps = buildNextSteps({
     components,
-    unobserved: unobservedOf(checks),
     sessionRemaining: { kind: "none" },
     outcome: "stopped",
   })
@@ -139,13 +106,19 @@ describe("NextStepTray", () => {
     expect(useComposerDraft.getState().draft.text).toBe("「架空の案B」で進めて。")
   })
 
-  it("確かめていない検証の行から確かめた・違ったの2つの札が出て、押すとそれぞれの下書きが入る", () => {
-    renderTray(COMPONENTS, CHECKS)
+  it("書き手の勧めは種類の語を書き手の name にした札になり、押すとその依頼の文が入る", () => {
+    renderTray([
+      {
+        id: "root",
+        component: "Report",
+        children: ["s1"],
+        nextSteps: [{ name: "架空の撮影", draft: "架空の狭い幅でも撮って。" }],
+      },
+    ])
 
-    fireEvent.click(screen.getByRole("button", { name: /^違った/ }))
+    fireEvent.click(screen.getByRole("button", { name: /^架空の撮影 架空の狭い幅でも撮って。/ }))
 
-    expect(screen.getAllByRole("button", { name: /^確かめた/ })).toHaveLength(1)
-    expect(useComposerDraft.getState().draft.text).toBe("「架空の検証」を確かめたら、違っていた。")
+    expect(useComposerDraft.getState().draft.text).toBe("架空の狭い幅でも撮って。")
   })
 
   it("見出しに押しても送らない案内が出て、下見は先頭の札の文から始まり、フォーカスした札の全文に替わる", () => {
@@ -191,20 +164,33 @@ describe("NextStepTray（キーと畳む）", () => {
     expect(useComposerFocus.getState().signal).toBe(2)
   })
 
-  it("畳んだ形は件数と「開く」の1行で、押すと開く", () => {
+  it("畳んだ形は「次の一手」と件数の1行で、その字を押すと開く", () => {
     useNextStepTray.getState().attach("1:0", [])
     const steps = buildNextSteps({
       components: COMPONENTS,
-      unobserved: [],
       sessionRemaining: { kind: "none" },
       outcome: "stopped",
     })
     render(<NextStepTray steps={steps} folded favor={{ kind: "none" }} />)
 
-    expect(screen.getByRole("group", { name: "次の一手" }).textContent).toBe("次の一手4件開く")
-    fireEvent.click(screen.getByRole("button", { name: "開く" }))
+    expect(screen.getByRole("group", { name: "次の一手" }).textContent).toBe("次の一手4件")
+    const toggle = screen.getByRole("button", { name: /^次の一手\s*4件$/u })
+    expect(toggle.getAttribute("aria-expanded")).toBe("false")
+    fireEvent.click(toggle)
 
     expect(useNextStepTray.getState().unfoldedKey).toBe("1:0")
+  })
+
+  it("開いた形は見出しの「次の一手」の字を押すと畳む", () => {
+    useNextStepTray.getState().attach("1:0", [])
+    useNextStepTray.getState().unfold()
+    renderTray()
+    const toggle = screen.getByRole("button", { name: "次の一手" })
+    expect(toggle.getAttribute("aria-expanded")).toBe("true")
+
+    fireEvent.click(toggle)
+
+    expect(useNextStepTray.getState().unfoldedKey).toBeUndefined()
   })
 })
 
@@ -255,7 +241,6 @@ describe("NextStepTray（押したあと）", () => {
       <NextStepTray
         steps={buildNextSteps({
           components: [],
-          unobserved: [],
           sessionRemaining: { kind: "none" },
           outcome: "stopped",
         })}

@@ -11,10 +11,26 @@
 .next-step-tray-head {
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
+  align-items: center;
   gap: var(--stack-tight) var(--inline-control);
   color: var(--ink-quiet);
   font-size: var(--font-label);
+}
+/* 見出しの「次の一手」の字と件数・向きの線画をまとめた開閉の口。枠は持たず、触れると字が濃くなる。 */
+.next-step-tray-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--inline-tight);
+  min-height: 1.5rem;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--ink-quiet);
+  font: inherit;
+  cursor: pointer;
+}
+.next-step-tray-toggle:hover {
+  color: var(--ink);
 }
 .next-step-tray-title {
   color: var(--accent);
@@ -25,7 +41,7 @@
 .next-step-tray-end {
   display: flex;
   flex: 1 1 auto;
-  align-items: baseline;
+  align-items: center;
   justify-content: flex-end;
   gap: var(--inline-control);
 }

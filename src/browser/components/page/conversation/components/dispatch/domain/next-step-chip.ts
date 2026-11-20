@@ -24,15 +24,9 @@ export type NextStepChip =
       readonly options: readonly NextStepChip[]
     }
 
-/** 並びの順は `steps` のまま。確かめた・違ったの対は、対ごとに2つの札にする。 */
+/** 並びの順は `steps` のまま。 */
 export function nextStepChipsOf(steps: readonly NextStep[]): readonly NextStepChip[] {
   return steps.flatMap((step): readonly NextStepChip[] => {
-    if (step.kind === "check-result") {
-      return [
-        draftChip(`confirmed:${step.label}`, "確かめた", step.confirmedDraft),
-        draftChip(`mismatch:${step.label}`, "違った", step.mismatchDraft),
-      ]
-    }
     if (step.kind === "alternative") {
       return [
         {
@@ -49,7 +43,7 @@ export function nextStepChipsOf(steps: readonly NextStep[]): readonly NextStepCh
     return [
       {
         kind: "draft",
-        key: step.kind === "next-task" ? `next-task:${step.taskId}` : step.kind,
+        key: chipKeyOf(step),
         kindLabel: step.kindLabel,
         label: step.label,
         points: step.points,
@@ -66,7 +60,19 @@ export function draftHolds(draftText: string, chipDraft: string): boolean {
 
 const ALTERNATIVE_LABEL = "案を選ぶ"
 
-/** 1行の下書きの札（確かめた・違ったと、案の札）。 */
+/** 札の鍵。種類ごとに1つの札は種類、複数になりうる札は種類に中身を添える。 */
+function chipKeyOf(step: Exclude<NextStep, { readonly kind: "alternative" }>): string {
+  switch (step.kind) {
+    case "next-task":
+      return `next-task:${step.taskId}`
+    case "suggestion":
+      return `suggestion:${step.draft}`
+    default:
+      return step.kind
+  }
+}
+
+/** 1行の下書きの札（案の札）。 */
 function draftChip(key: string, kindLabel: string, draft: string): NextStepChip {
   return { kind: "draft", key, kindLabel, label: draft, points: 0, draft }
 }

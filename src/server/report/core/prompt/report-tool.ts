@@ -42,6 +42,8 @@ export const REPORT_FIELD_DESCRIPTIONS = {
   sessionSummary: `セッション全体の要約。変えたいときだけ（${String(MAX_SESSION_SUMMARY_LENGTH)}字以内）`,
   sessionRemaining: "残っている作業を1〜2文で。無ければ空文字",
   continueRequest: "続きの依頼の文（〜して の形）。sessionRemaining と一緒に、続きがあるときだけ",
+  nextSteps:
+    "このレポートを読んだ利用者が次に頼むと助けになる依頼（3つまで）。入力欄の上に札で出る。無ければ省く",
   closing: "締めのセリフ（1〜2文）。レポートのどこから読むとよいかを言い、中身は言い直さない",
   waitingLine: "待ちの一言（1〜2文）。次の一手の候補を言う。言いたいときだけ",
 } as const
@@ -106,6 +108,11 @@ export const REPORT_FIELD_CARD_NOTES = {
     "始め方の一覧の「前回の続き」のカードの題と、次のセッションへ送る依頼の文になる。",
   continueRequest:
     "「続ける」を押すと利用者の入力欄へそのまま入る。利用者がそのまま送る依頼の文（〜して の形）で書く。",
+  nextSteps:
+    "押すと draft が利用者の入力欄へ入る（送らない）。" +
+    "レポートの中身と利用者のこれまでの依頼の流れから、次に頼みそうで、頼むと実際に作業が進むものを選ぶ" +
+    "（例: 見つけた隣の不具合を直す・変えた画面を別の幅でも撮る・決めた案をタスクにする・同じ直しをほかの箇所へ広げる）。" +
+    "検証の結果を報告させるだけの依頼（「確かめた」「違った」）、continueRequest・favorOptions と同じ依頼、何でも当てはまる依頼（「ほかに改善点を探して」）は書かない。",
   closing:
     "speak と同じ text と expression。レポートを描いたあとに吹き出しに出る。" +
     "レポートのどこから読むとよいかを言う。",
