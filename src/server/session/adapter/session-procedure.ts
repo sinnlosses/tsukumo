@@ -92,5 +92,11 @@ export function sessionProcedure(ports: SessionCommandPorts) {
         errors,
       ),
     ),
+    setGearPreference: procedure.setGearPreference.handler(({ input, context, errors }) =>
+      refusedUnlessAccepted(
+        receiveSessionCommand(table.setGearPreference, input, context.session),
+        errors,
+      ),
+    ),
   })
 }

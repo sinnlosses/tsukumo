@@ -5,10 +5,16 @@
 
 import { useEffectEvent, useRef, useState, type RefObject } from "react"
 
+import type { RevealSpeed } from "../../../shared/session/gear-preference.ts"
 import { useBeforePaintSync } from "../../hooks/use-before-paint-sync.ts"
-import { loadRevealSpeed, popIntervalOf } from "../reveal-speed.ts"
-import { prefersReducedMotion } from "./reduced-motion.ts"
+import { popIntervalOf } from "../reveal-speed.ts"
 import { startPop } from "./start-pop.ts"
+
+/** 演出を掛けるかを決める、マウントした時点の歯車の「書き上げる速さ」と、動きを減らすか。 */
+export type RevealMotion = {
+  readonly revealSpeed: RevealSpeed
+  readonly reducedMotion: boolean
+}
 
 /**
  * レポートの根に付ける ref を返す。`reveal` が立っていたら、マウントした直後から塊を順に出す。
@@ -19,16 +25,18 @@ import { startPop } from "./start-pop.ts"
  * `onPlayed` は、マウント時の `reveal` が真だったときに1回だけ呼ぶ（呼び出し元が「もう見せた」を覚える口）。
  * 「書き上げる演出の速さ」もマウント時の値だけを見る（速さを変えても、出している最中の演出は前の速さのまま進み切る）。
  * `revealing` は塊を出している最中か。マウント時の `reveal` が真なら真で始まり、出し切るか演出しないと決まったら偽になる。
+ * `readMotion` はマウントした時点で1回だけ呼ぶ。
  */
 export function useReportReveal(
   reveal: boolean,
   onPlayed: () => void,
   popClassName: string,
+  readMotion: () => RevealMotion,
 ): { readonly rootRef: RefObject<HTMLDivElement | null>; readonly revealing: boolean } {
   const rootRef = useRef<HTMLDivElement>(null)
   const played = useEffectEvent(onPlayed)
   const [revealOnMount] = useState(reveal)
-  const [revealSpeed] = useState(loadRevealSpeed)
+  const [{ revealSpeed, reducedMotion }] = useState(readMotion)
   const [revealing, setRevealing] = useState(reveal)
   // 同じ本文を二度出さない。
   // `<Activity mode="hidden">` は部品の状態を残したまま効果だけを外すので、戻ってきたときにこの効果がもう一度走る。
@@ -47,7 +55,7 @@ export function useReportReveal(
       revealedOnce.current ||
       root === null ||
       revealSpeed === "off" ||
-      prefersReducedMotion((query) => window.matchMedia(query))
+      reducedMotion
     ) {
       setRevealing(false)
       return undefined
@@ -58,7 +66,7 @@ export function useReportReveal(
       popClassName,
       onFinish: () => setRevealing(false),
     })
-  }, [revealOnMount, revealSpeed, popClassName])
+  }, [revealOnMount, revealSpeed, reducedMotion, popClassName])
 
   return { rootRef, revealing }
 }

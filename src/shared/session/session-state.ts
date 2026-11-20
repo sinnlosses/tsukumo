@@ -1,7 +1,7 @@
 // セッションの状態。サーバとブラウザの両方が同じものを回す。
 // 型とフィールドの doc コメントが契約の置き場。
 //
-// ここが持つのは「状態そのもの」だけで、イベント1件でどう変わるか（`advanceSessionState`）や、姿から導くだけのもの（メインビューに出す形・`/` 補完の候補など）は置かない。
+// ここが持つのは「状態そのもの」だけで、イベント1件でどう変わるか（`advanceSessionState`）や、姿から導くだけのもの（`/` 補完の候補など）は置かない。
 
 import type { CharacterInfo, CharacterPackEntry } from "../character-pack/character.ts"
 import type { Expression } from "../character-pack/expression.ts"
@@ -17,7 +17,9 @@ import type { StampedPendingAsk } from "../session-driver/pending-ask.ts"
 import type { RateLimit } from "../session-driver/rate-limit.ts"
 import type { PreviousUsageReview, UsageProposalRun, UsageReview } from "../usage/usage-review.ts"
 import { BUILTIN_BACKGROUND_MODELS, type BackgroundModels } from "./background-model.ts"
+import type { ChatConsolidationHalt } from "./chat-consolidation-halt.ts"
 import type { CommandDescription } from "./command-description.ts"
+import type { GearPreferences } from "./gear-preference.ts"
 import type { EffortLevel } from "./run-setting-value.ts"
 import type { SessionChoice } from "./session-choice.ts"
 import { BUILTIN_SESSION_DEFAULT, type SessionDefault } from "./session-default.ts"
@@ -34,10 +36,6 @@ import {
 } from "./turn-progress.ts"
 import type { Speech } from "./turn-speech.ts"
 import type { WorkflowProgress, WorkflowStep } from "./workflow-step.ts"
-
-export type ChatConsolidationHalt =
-  | { readonly halted: false }
-  | { readonly halted: true; readonly failures: number }
 
 /**
  * セッションの今の姿。イベントを1件ずつ畳んで作るので、ここに無い情報は画面にも出ない。
@@ -96,7 +94,7 @@ export type SessionState = {
   readonly settingMarks: SettingMarks
   /**
    * 入力欄の `/` 補完に出せるコマンド名（`init` のたびに上書きされる）。端末専用（`terminal_slash_commands`）は除いてある。
-   * `init` は最初の依頼を送るまで届かない（実測。SDK の `system`/`init` はターンのたびに届く仕組みで、セッション開始直後には来ない）ので、それまでは空配列のまま。
+   * `init` はセッション開始直後には来ず、最初の依頼を送るまで届かない（実測）ので、それまでは空配列のまま。
    */
   readonly slashCommands: readonly string[]
   /** SDK の `init` で届いたスキルの名前（`init` のたびに上書きされる）。`init` が届く前は空配列。 */
@@ -208,6 +206,7 @@ export type SessionState = {
   readonly backgroundModels: BackgroundModels
   /** 話しかける間合い。源は `speaking-pace-changed` だけ。 */
   readonly speakingPace: SpeakingPaceState
+  readonly gearPreferences?: GearPreferences
   /**
    * 契約プラン。トークン消費の画面の題の右の札に出す。源は `plan` だけ。
    * まだ届いていない・取れなかったのどちらも同じ undefined（画面は区別しないので、型でも分けない）。

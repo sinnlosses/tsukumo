@@ -8,6 +8,7 @@
 
 import { swallowedFailureFootprint } from "../../../shared/diagnostic/swallowed-failure.ts"
 import type { BackgroundModels } from "../../../shared/session/background-model.ts"
+import type { GearPreferences } from "../../../shared/session/gear-preference.ts"
 import type { SessionChoice } from "../../../shared/session/session-choice.ts"
 import type { SessionDefault } from "../../../shared/session/session-default.ts"
 import type { RestoredEvent, SessionEvent } from "../../../shared/session/session-event.ts"
@@ -58,6 +59,8 @@ export type SessionLaunchPorts<Pack extends NamedCharacterPack> = {
   readonly readBackgroundModels: () => BackgroundModels
   /** 覚えた「話しかける間合い」を読む。欄ごとに同梱の既定へ畳んだあとの値が返る。 */
   readonly readSpeakingPace: () => SpeakingPace
+  /** 覚えた「歯車の見た目と演出の設定」を読む。欄ごとに同梱の既定へ畳んだあとの値が返る。 */
+  readonly readGearPreferences: () => GearPreferences
   /** いま出しているパックを画面へ流す形（立ち絵の URL・選択肢・画面から変えられるか）。 */
   readonly characterEvent: (pack: Pack) => SessionEvent
   /** いまのアイテムの一覧と全パックの席を流す形（`items-changed`）。起こすたびに読み直す。 */
@@ -154,6 +157,8 @@ export function createSessionLaunch<Pack extends NamedCharacterPack>(
     // 話しかける間合いも同じ理由で流し直す。読むのはここ1回で、同じ値を駆動にも渡す。
     const speakingPace = ports.readSpeakingPace()
     onEvent({ kind: "speaking-pace-changed", speakingPace, scope: "launch" })
+    // 歯車の見た目と演出の設定も同じ理由で流し直す（別のページで覚え直した値もここで揃う）。
+    onEvent({ kind: "gear-preferences-changed", gearPreferences: ports.readGearPreferences() })
 
     const start = sessionStartOf(request.resume)
     // 切り替え先の一覧も、起こすたびに流し直す（画面はこのイベントでしか一覧を知れず、起こし直すと状態が初期値へ戻る）。

@@ -11,6 +11,10 @@ import {
   type ViewServer,
 } from "../../src/server/view-server/adapter/server.ts"
 import { UNREADABLE_FILE_EXCERPT } from "../../src/shared/repository/file-excerpt.ts"
+import {
+  foldGearPreferences,
+  type FoldedGearPreferences,
+} from "../../src/shared/session/gear-preference.ts"
 import { UNAVAILABLE_SESSION_DIGEST } from "../../src/shared/session/session-digest.ts"
 import { UNAVAILABLE_CONTEXT_USAGE } from "../../src/shared/usage/context-usage.ts"
 import { UNAVAILABLE_PLAN_USAGE } from "../../src/shared/usage/plan-usage.ts"
@@ -88,6 +92,7 @@ export async function startView(
   findReportImage: FindReportImage = noReportImage,
   onRuntimeError: (error: unknown) => void = () => {},
   serveItemAsset: ServeItemAsset = noItemAsset,
+  readGearPreferences: () => FoldedGearPreferences = () => foldGearPreferences({}),
 ): Promise<ViewServer> {
   const server = await startViewServer(0, {
     ui: () => ({
@@ -106,6 +111,7 @@ export async function startView(
     rpcRouter: createRpcRouter({ ...EMPTY_RPC_PORTS, ...rpcPorts }),
     token: TOKEN,
     onRuntimeError,
+    readGearPreferences,
   })
   trackView(server)
   return server

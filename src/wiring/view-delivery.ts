@@ -7,6 +7,7 @@ import process from "node:process"
 import type { DiagnosticLog } from "../server/diagnostic/core/diagnostic.ts"
 import type { ReportImageShelf } from "../server/report/core/image/report-image-shelf.ts"
 import type { PromptImageShelf } from "../server/session-driver/core/prompt-image-shelf.ts"
+import { readRememberedGearPreferences } from "../server/session/adapter/remembered-default.ts"
 import type { UiBundle } from "../server/view-server/adapter/build/bundle.ts"
 import { startUiDevServer } from "../server/view-server/adapter/build/ui-dev-server.ts"
 import { attachSessionSocket } from "../server/view-server/adapter/rpc/session-socket.ts"
@@ -110,6 +111,7 @@ export async function startViewDelivery(options: ViewDeliveryOptions): Promise<V
       rpcRouter,
       token,
       onRuntimeError: (error) => reportSwallowedFailure(options, "http-server-error", error),
+      readGearPreferences: () => readRememberedGearPreferences(),
     }),
   )
   if (started.kind === "failed") {

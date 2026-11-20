@@ -1,49 +1,27 @@
-// 使う人が変えられる3色（`ground` / `surface` / `ink`）を `localStorage` に持つ。
-// 既定値は `theme.css` の `:root` にしかないので、ここでは「上書きしない」を `undefined` で表し、JS 側に既定の16進を持たない。
+// 使う人が変えられる3色（`ground` / `surface` / `ink`）の検査と、`:root` へ差す内容の判断。
+// 既定値は `theme.css` の `:root` にしかないので、「上書きしない」を `undefined` で表し、JS 側に既定の16進を持たない。
 // 上書きが無いときの実際の色は、`:root` のトークンを読む側（`appearance-color-root`）が計算済みスタイルから読む。
 //
-// `localStorage` から読み戻す値・`<input type="color">` が渡す値のどちらも、型を確定させるのはここだけ。
-
-import { isPlainObject } from "remeda"
-import { z } from "zod"
+// `<input type="color">` が渡す値の型を確定させるのはここだけ。
 
 import {
   MAX_BACKGROUND_VEIL,
   MIN_BACKGROUND_VEIL,
 } from "../../shared/character-pack/character-background.ts"
-import { localPreference } from "../utils/local-preference.ts"
+import {
+  APPEARANCE_COLOR_TOKEN_NAME,
+  hexColorSchema,
+  type AppearanceColorOverride,
+  type HexColor,
+} from "../../shared/session/gear-preference.ts"
 import { relativeLuminance } from "../utils/relative-luminance.ts"
 
 export type AppearanceColorKey = "ground" | "surface" | "ink"
 
-const hexColorSchema = z
-  .string()
-  .regex(/^#[0-9a-f]{6}$/i)
-  .brand<"HexColor">()
-
-/** `#rrggbb` の6桁であることを検査済みの色。作れるのは、このファイルの検査（{@link parseHexColor}、保存値の読み戻し）だけ。 */
-export type HexColor = z.infer<typeof hexColorSchema>
-
-export type AppearanceColorOverride = {
-  readonly ground?: HexColor
-  readonly surface?: HexColor
-  readonly ink?: HexColor
-}
-
-export const DEFAULT_APPEARANCE_COLOR_OVERRIDE: AppearanceColorOverride = {
-  ground: undefined,
-  surface: undefined,
-  ink: undefined,
-}
-
 // `ground` と `ink` の組が本文を読める下限。WCAG 2.1 SC 1.4.3（AA、通常テキスト）と同じ 4.5:1 を採る。
 const MIN_CONTRAST = 4.5
 
-const TOKEN_NAME = {
-  ground: "--ground",
-  surface: "--surface",
-  ink: "--ink",
-} as const satisfies Record<AppearanceColorKey, string>
+const TOKEN_NAME = APPEARANCE_COLOR_TOKEN_NAME
 const APPEARANCE_COLOR_KEYS = [
   "ground",
   "surface",
@@ -54,29 +32,6 @@ const APPEARANCE_COLOR_KEYS = [
  * 読むのは `conversation-layout.module.css` の `.layout-ground` 1箇所で、パックが書いた `veil` とこの下限の大きいほうが効く。
  */
 const BACKGROUND_VEIL_FLOOR_TOKEN_NAME = "--character-background-veil-floor"
-
-// 3色は項ごとに畳む（1色が壊れていても他の色は生かす）。キーが欠けた項は `undefined` として項の schema に渡す。
-const hexColorOrUndefined = hexColorSchema.optional().catch(undefined)
-
-const preference = localPreference(
-  "tsukumo-appearance-color:v1",
-  z.preprocess(
-    (stored) =>
-      isPlainObject(stored)
-        ? { ground: stored["ground"], surface: stored["surface"], ink: stored["ink"] }
-        : stored,
-    z.object({
-      ground: hexColorOrUndefined,
-      surface: hexColorOrUndefined,
-      ink: hexColorOrUndefined,
-    }),
-  ),
-  DEFAULT_APPEARANCE_COLOR_OVERRIDE,
-)
-
-export const loadAppearanceColorOverride: () => AppearanceColorOverride = preference.load
-
-export const saveAppearanceColorOverride: (value: AppearanceColorOverride) => void = preference.save
 
 /** `:root` に差す1つのトークン。`value` が `undefined` なら差さずに外す（既定に戻す）。 */
 export type RootTokenWrite = {

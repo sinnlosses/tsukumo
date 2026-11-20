@@ -2,6 +2,7 @@ import type { CharacterSelection } from "../../src/server/character-pack/core/ch
 import type { SessionLaunchPorts } from "../../src/server/session/core/session-launch.ts"
 import type { DiagnosticEntry } from "../../src/shared/diagnostic/diagnostic-record.ts"
 import { BUILTIN_BACKGROUND_MODELS } from "../../src/shared/session/background-model.ts"
+import { BUILTIN_GEAR_PREFERENCES } from "../../src/shared/session/gear-preference.ts"
 import { BUILTIN_SESSION_DEFAULT } from "../../src/shared/session/session-default.ts"
 import type { RestoredEvent, SessionEvent } from "../../src/shared/session/session-event.ts"
 import { BUILTIN_SPEAKING_PACE } from "../../src/shared/session/speaking-pace.ts"
@@ -95,6 +96,7 @@ export function createHarness(overrides: Partial<SessionLaunchPorts<Pack>> = {})
     },
     readBackgroundModels: () => BUILTIN_BACKGROUND_MODELS,
     readSpeakingPace: () => BUILTIN_SPEAKING_PACE,
+    readGearPreferences: () => BUILTIN_GEAR_PREFERENCES,
     itemsEvent: () => ITEMS_EVENT,
     characterEvent: (pack: Pack) =>
       characterChangedEvent(

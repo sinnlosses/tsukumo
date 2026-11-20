@@ -3,9 +3,9 @@ import type { ReactElement } from "react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { useDraftPop } from "../../../../../../../../src/browser/components/page/conversation/components/main-view/hooks/use-draft-pop.ts"
-import { saveRevealSpeed } from "../../../../../../../../src/browser/domain/reveal-speed.ts"
+import { useSession } from "../../../../../../../../src/browser/stores/session.ts"
+import { putGearPreferences } from "../../../../../../session-store.ts"
 
-const REVEAL_SPEED_STORAGE_KEY = "tsukumo-reveal-speed:v1"
 const POP = "pop"
 
 /** 届いた部品を1つずつ塊として描く草稿の器（頭の欄と節の欄）。 */
@@ -44,7 +44,7 @@ function stubReducedMotion(matches: boolean): void {
 afterEach(() => {
   cleanup()
   vi.restoreAllMocks()
-  localStorage.removeItem(REVEAL_SPEED_STORAGE_KEY)
+  useSession.setState(useSession.getInitialState(), true)
 })
 
 describe("useDraftPop（届いた塊をポンと出す）", () => {
@@ -81,7 +81,7 @@ describe("useDraftPop（届いた塊をポンと出す）", () => {
 
   it("演出の速さが「切る」では付けない", () => {
     stubReducedMotion(false)
-    saveRevealSpeed("off")
+    putGearPreferences({ revealSpeed: "off" })
     const { rerender } = render(<Probe arrived={["架空の結論"]} />)
     rerender(<Probe arrived={["架空の結論", "架空の段落一"]} />)
 

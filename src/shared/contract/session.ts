@@ -17,6 +17,7 @@ import {
   parsePromptImage,
   parsePromptImageThumbnail,
 } from "../session-driver/prompt-image.ts"
+import { gearPreferenceChangeSchema } from "../session/gear-preference.ts"
 import { replyTargetSchema } from "../session/reply-target.ts"
 import { EFFORT_LEVELS, MODEL_ALIASES, PERMISSION_MODES } from "../session/run-setting-value.ts"
 import { FIGURE_PREFERENCES, SESSION_DEFAULT_PERMISSION_MODES } from "../session/session-default.ts"
@@ -185,4 +186,9 @@ export const sessionContract = {
       progressNudge: z.enum(PROGRESS_NUDGE_SILENCES),
     }),
   ),
+  /**
+   * 歯車の見た目と演出の設定を1欄だけ覚える（歯車）。
+   * 1欄ずつ運ぶのは、別のページが古い値でほかの欄を上書きしないため。
+   */
+  setGearPreference: commandBase.input(gearPreferenceChangeSchema),
 }

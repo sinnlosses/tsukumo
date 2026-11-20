@@ -14,6 +14,7 @@ import type {
   CharacterDelete,
   CharacterEdit,
 } from "../../src/shared/contract/character-pack.ts"
+import { BUILTIN_GEAR_PREFERENCES } from "../../src/shared/session/gear-preference.ts"
 import type { SessionDefault } from "../../src/shared/session/session-default.ts"
 import type { SessionEvent } from "../../src/shared/session/session-event.ts"
 import { applySessionEvent } from "../../src/shared/session/session-fold.ts"
@@ -123,6 +124,10 @@ export function createRecordingPorts(
         kind: "speaking-pace-changed",
         speakingPace,
         scope: "remembered",
+      }),
+      rememberGearPreference: (change) => ({
+        kind: "gear-preferences-changed",
+        gearPreferences: { ...BUILTIN_GEAR_PREFERENCES, [change.field]: change.value },
       }),
       readAchievementDay,
       diary,

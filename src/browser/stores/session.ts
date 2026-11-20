@@ -20,6 +20,11 @@ import { sessionTokenUrl } from "../domain/session-token-url.ts"
 import { useMountEffect } from "../hooks/use-mount-effect.ts"
 import { type CommandLink, connectSessionSocket, type ConnectionStatus } from "../lib/socket.ts"
 import { nowEpochMilliseconds } from "../utils/clock.ts"
+import {
+  sendMigratingGearPreferences,
+  withMigratingGearPreferences,
+} from "./gear-preference-legacy.ts"
+import { applyGearPreferences } from "./gear-preference-root.ts"
 import { rpc } from "./rpc.ts"
 
 /**
@@ -141,18 +146,30 @@ export const useSession = create<SessionStoreState>()((set, get) => {
         return
       }
       if (frame.type === "hello" && current.protocol === "mismatched") {
-        set({ state: frame.state, protocol: "compatible", generation: current.generation + 1 })
+        set({
+          state: keepPageGearPreferences(frame.state, current.state),
+          protocol: "compatible",
+          generation: current.generation + 1,
+        })
         return
       }
       if (current.protocol === "mismatched") {
         return
       }
-      const state = applyFrame(current.state, frame)
+      const folded = applyFrame(current.state, frame)
+      const state = frame.type === "hello" ? keepPageGearPreferences(folded, current.state) : folded
       const generation = frame.type === "hello" ? current.generation + 1 : current.generation
       if (state === current.state && generation === current.generation) {
         return
       }
       set({ state, generation })
+      // 別のページで覚え直した値も、ここで `:root` に効かせる（歯車の部品が開いていなくても）。
+      if (
+        state.gearPreferences !== undefined &&
+        state.gearPreferences !== current.state.gearPreferences
+      ) {
+        applyGearPreferences(withMigratingGearPreferences(state.gearPreferences))
+      }
     },
     setConnection: (status) => {
       const current = get()
@@ -206,6 +223,15 @@ export function useSessionConnection(): void {
           ) {
             invalidateAchievement(rpc.achievement)
           }
+          if (frame.type === "hello") {
+            // 2回目からは送る欄が残っていないので何もしない。
+            void sendMigratingGearPreferences(async (change) => {
+              const result = await useSession
+                .getState()
+                .dispatchAwaited((client) => client.session.setGearPreference(change))
+              return result.kind === "ok"
+            })
+          }
           frames.push(frame)
         },
         onStatusChange: setConnection,
@@ -218,6 +244,21 @@ export function useSessionConnection(): void {
       attachSocket(undefined)
     }
   })
+}
+
+/**
+ * `hello` の姿の歯車の設定は、起こしたときに読んだ値のことがある（ほかのポートの tsukumo が `state.json` を書き換えても届かない）。
+ * ページに焼かれた塊は開くたびに読むのでそれより新しく、`hello` では畳まずにページの値を保つ。
+ * 開いたあとに届く `gear-preferences-changed` だけで入れ替える。
+ */
+function keepPageGearPreferences(next: SessionState, current: SessionState): SessionState {
+  if (next.gearPreferences === current.gearPreferences) {
+    return next
+  }
+  const { gearPreferences: _received, ...rest } = next
+  return current.gearPreferences === undefined
+    ? rest
+    : { ...rest, gearPreferences: current.gearPreferences }
 }
 
 function resultOfFailure(error: unknown): CommandResult<never> {

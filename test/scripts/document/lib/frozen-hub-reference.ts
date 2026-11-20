@@ -81,7 +81,7 @@ export const FROZEN_HUB_REFERENCE_COUNTS = {
   "docs/architecture/screen-design/principle-and-type.md": 1,
   "docs/architecture/screen-design/report-head.md": 2,
   "docs/architecture/screen-design/scene-behavior.md": 3,
-  "docs/architecture/screen-design/setting-place.md": 3,
+  "docs/architecture/screen-design/setting-place.md": 2,
   "docs/architecture/screen-design/token-usage-review.md": 1,
   "docs/architecture/screen-design/work-strip.md": 5,
   "docs/architecture/session-restore.md": 1,

@@ -13,7 +13,7 @@ import { Dialog } from "../../../components/ui/dialog/dialog.tsx"
 import { SendIcon } from "../../../components/ui/icon/icon.tsx"
 import { Surface } from "../../../components/ui/surface/surface.tsx"
 import { Text } from "../../../components/ui/text/text.tsx"
-import { loadLaunchSkill } from "../../../domain/launch-skill.ts"
+import { currentGearPreferences } from "../../../stores/gear-preference-seed.ts"
 import { useSession, useTurnRunning } from "../../../stores/session.ts"
 import type { TaskRunConfirmOutcome } from "../domain/task-run-confirm-outcome.ts"
 import { requestPromptOf, type TaskRequest, type TaskRunTarget } from "../domain/task-run-prompt.ts"
@@ -39,7 +39,7 @@ export function TaskRunConfirm(props: TaskRunConfirmProps): ReactElement {
   const dispatch = useSession((session) => session.dispatch)
   const turnInProgress = useTurnRunning()
   const { target } = props
-  const prompt = requestPromptOf(target, loadLaunchSkill())
+  const prompt = requestPromptOf(target, currentGearPreferences().launchSkill)
 
   const run = (): void => {
     void dispatch.session.prompt({ text: prompt, images: [] })

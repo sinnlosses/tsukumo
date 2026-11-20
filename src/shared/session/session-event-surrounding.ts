@@ -7,6 +7,7 @@ import type { RecommendationCard } from "../recommendation/recommendation-card.t
 import type { WelcomeGreetingState } from "../recommendation/welcome-greeting.ts"
 import type { TaskSummaryChange } from "../repository/task-summary-change.ts"
 import type { BackgroundModels } from "./background-model.ts"
+import type { GearPreferences } from "./gear-preference.ts"
 import type { SessionChoice } from "./session-choice.ts"
 import type { SessionDefault } from "./session-default.ts"
 import type { SessionId } from "./session-id.ts"
@@ -123,6 +124,11 @@ export type SurroundingEvent =
       readonly speakingPace: SpeakingPace
       readonly scope: "launch" | "remembered"
     }
+  /**
+   * 歯車の見た目と演出の設定が分かった。駆動を起こしたときと、歯車から `session.setGearPreference` で覚え直したときに流れる。
+   * 運ぶのは書いたあと読み直した5欄（読めない欄は同梱の既定へ畳んだあとの値）。
+   */
+  | { readonly kind: "gear-preferences-changed"; readonly gearPreferences: GearPreferences }
   /**
    * claude 自身の圧縮（`/compact`）が起きた（SDK の `system` / `compact_boundary`）。
    * 数値（`compact_metadata` の `pre_tokens` / `post_tokens` / `duration_ms`）は運ばない（画面に出さないものを契約に入れない）。

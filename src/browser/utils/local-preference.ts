@@ -58,3 +58,45 @@ export function localPreference<Value>(
     },
   }
 }
+
+/** 持ち先を移した鍵を1回読むときの結果。鍵が無い・読める値がある・壊れている、を分ける。 */
+export type LegacyPreferenceRead<Value> =
+  | { readonly kind: "absent" }
+  | { readonly kind: "value"; readonly value: Value }
+  | { readonly kind: "broken" }
+
+export type LegacyPreference<Value> = {
+  readonly read: () => LegacyPreferenceRead<Value>
+  /** 鍵を消す。消せないとき（保存先が使えない）は握りつぶし、次に開いたときにまた読まれる。 */
+  readonly remove: () => void
+}
+
+/** 持ち先を移した鍵を、移す処理が1回だけ読んで消すための口。 */
+export function legacyPreference<Value>(
+  key: string,
+  schema: z.ZodType<Value>,
+  codec: Pick<LocalPreferenceCodec<unknown>, "parse"> = JSON_CODEC,
+): LegacyPreference<Value> {
+  return {
+    read: () => {
+      try {
+        const raw = localStorage.getItem(key)
+        if (raw === null) {
+          return { kind: "absent" }
+        }
+        const parsed = schema.safeParse(codec.parse(raw))
+        return parsed.success ? { kind: "value", value: parsed.data } : { kind: "broken" }
+      } catch {
+        // 保存先が使えないときも、鍵が無いのと同じく移すものは無い
+        return { kind: "absent" }
+      }
+    },
+    remove: () => {
+      try {
+        localStorage.removeItem(key)
+      } catch {
+        // 消せなくても、`state.json` に値が入れば次に開いたときに古い鍵として消える。
+      }
+    },
+  }
+}

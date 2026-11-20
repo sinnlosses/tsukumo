@@ -1,5 +1,5 @@
 // 次に起こすときの初期値をホームの状態ファイル（`~/.tsukumo/state.json`）に覚える。
-// 覚えるのは4つ。直前まで出していたキャラクターパックの名前と、新しいセッションの既定（モデル・effort・許可モード・図の既定）と、裏方の問い合わせ4つのモデルと、話しかける間合い（待ちの一言・進み具合の催促）。
+// 覚えるのは5つ。直前まで出していたキャラクターパックの名前と、新しいセッションの既定（モデル・effort・許可モード・図の既定）と、裏方の問い合わせ4つのモデルと、話しかける間合い（待ちの一言・進み具合の催促）と、歯車の見た目と演出の設定（`GearPreferences` の5欄）。
 //
 // 状態ファイルに触るのはここだけ。
 // 書き込みがファイル丸ごとの置き換えなので、別々のモジュールから書くと、後から書いたほうが相手の欄を消す。
@@ -16,6 +16,13 @@ import {
   type BackgroundModelRole,
   type BackgroundModels,
 } from "../../../shared/session/background-model.ts"
+import {
+  foldGearPreferences,
+  pickStoredGearPreferences,
+  type FoldedGearPreferences,
+  type GearPreferenceChange,
+  type StoredGearPreferences,
+} from "../../../shared/session/gear-preference.ts"
 import {
   EFFORT_LEVELS,
   MODEL_ALIASES,
@@ -70,7 +77,7 @@ const speakingPaceStateSchema = z.object({
  * 欄が `| undefined` なのは外の世界を写した直後だから（`docs/coding-standards.md`「「無いかもしれない」値」の例外1）。
  * 畳むのは読む関数の出口で、ここから外へは `| undefined` のまま出ない。
  */
-type RememberedState = {
+type RememberedState = StoredGearPreferences & {
   readonly character?: string
   readonly sessionDefault?: SessionDefault
   readonly backgroundModels?: BackgroundModels
@@ -111,6 +118,27 @@ export function readRememberedBackgroundModels(
  */
 export function readRememberedSpeakingPace(path: string = defaultStatePath()): SpeakingPace {
   return readState(path).speakingPace ?? BUILTIN_SPEAKING_PACE
+}
+
+/**
+ * 覚えた「歯車の見た目と演出の設定」を読む。
+ * 欄が無い・壊れている・知らない値の欄は、その欄だけ同梱の既定（`BUILTIN_GEAR_PREFERENCES`）にし、`stored` を偽にする。
+ */
+export function readRememberedGearPreferences(
+  path: string = defaultStatePath(),
+): FoldedGearPreferences {
+  return foldGearPreferences(readJsonFile(path))
+}
+
+/**
+ * 覚えた「歯車の見た目と演出の設定」を1欄だけ書く（失敗の扱いは {@link writeRememberedCharacter} と同じ）。
+ * ほかの欄は読み直した値のまま残すので、別のページが古い値でほかの欄を上書きしない。
+ */
+export function writeRememberedGearPreference(
+  change: GearPreferenceChange,
+  path: string = defaultStatePath(),
+): void {
+  writeState({ ...readState(path), [change.field]: change.value }, path)
 }
 
 /**
@@ -156,6 +184,7 @@ function readState(path: string): RememberedState {
   const backgroundModels = backgroundModelsStateSchema.safeParse(parsed)
   const speakingPace = speakingPaceStateSchema.safeParse(parsed)
   return {
+    ...pickStoredGearPreferences(parsed),
     speakingPace: speakingPace.success
       ? foldSpeakingPace(speakingPace.data.speakingPace)
       : undefined,

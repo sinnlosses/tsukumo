@@ -10,6 +10,7 @@ import { createContext, type ReactElement, type ReactNode, type RefCallback, use
 
 import { isBlankText } from "../../../../shared/utils/blank-text.ts"
 import { useReportReveal } from "../../../domain/reveal/use-report-reveal.ts"
+import { revealMotionNow } from "../../../stores/gear-preference-seed.ts"
 import { splitReportBlocks } from "../domain/block-split.ts"
 import { detailBlockClassName, Markdown } from "../markdown.tsx"
 import { SelectionPort } from "./selection-port.tsx"
@@ -33,7 +34,12 @@ const RevealingContext = createContext(false)
 
 /** 本文の根（`data-report-body`）。書き上げの演出の最中かを子へ配り、選んだ字を引く口を添える。 */
 export function ReportFrame(props: ReportFrameProps): ReactElement {
-  const { rootRef, revealing } = useReportReveal(props.reveal, () => {}, props.revealClassName)
+  const { rootRef, revealing } = useReportReveal(
+    props.reveal,
+    () => {},
+    props.revealClassName,
+    revealMotionNow,
+  )
 
   return (
     // `.detail-block` を2つ重ねる。

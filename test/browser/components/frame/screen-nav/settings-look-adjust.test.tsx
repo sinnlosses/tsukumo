@@ -4,17 +4,27 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest"
 import { ScreenNav } from "../../../../../src/browser/components/frame/screen-nav/screen-nav.tsx"
 import { useFirstNoteSeen } from "../../../../../src/browser/stores/first-note-seen.ts"
 import { useNavDrawer } from "../../../../../src/browser/stores/nav-drawer.ts"
+import {
+  BUILTIN_GEAR_PREFERENCES,
+  type AppearanceAdjust,
+} from "../../../../../src/shared/session/gear-preference.ts"
 import { INITIAL_SESSION_STATE } from "../../../../../src/shared/session/session-state.ts"
 import { characterInfo } from "../../../../fixture/character.ts"
 import { typedElement } from "../../../../typed-element.ts"
 import { EMPTY_NAV_DRAWER_SLOTS } from "../../../nav-drawer-slot.tsx"
 import { stubPhoneWidth } from "../../../phone-width.ts"
 import { queryClientWrapper } from "../../../query-client.tsx"
-import { putSession, putState, stateWith } from "../../../session-store.ts"
+import {
+  echoGearPreference,
+  putSession,
+  putState,
+  stateWith,
+  type CommandSpy,
+  type SentCommand,
+} from "../../../session-store.ts"
 
 // 設定の「見た目」の面の、背景の暗さ・パネルのぼかし・パネルの濃さの範囲入力。
 
-const STORAGE_KEY = "tsukumo-appearance-adjust:v1"
 const ROOT_TOKENS = [
   "--character-background-veil-user",
   "--panel-blur-user",
@@ -36,8 +46,18 @@ afterEach(() => {
   }
 })
 
-function openLookFace(): HTMLElement {
-  putSession(INITIAL_SESSION_STATE, () => undefined)
+function openLookFace(
+  sent: SentCommand[] = [],
+  appearanceAdjust: AppearanceAdjust = BUILTIN_GEAR_PREFERENCES.appearanceAdjust,
+  spy: CommandSpy = echoGearPreference(sent),
+): HTMLElement {
+  putSession(
+    {
+      ...INITIAL_SESSION_STATE,
+      gearPreferences: { ...BUILTIN_GEAR_PREFERENCES, appearanceAdjust },
+    },
+    spy,
+  )
   render(<ScreenNav drawer={EMPTY_NAV_DRAWER_SLOTS} />, { wrapper: queryClientWrapper() })
   fireEvent.click(
     typedElement(
@@ -86,8 +106,9 @@ describe("設定の歯車（見た目の調整）", () => {
     expect(within(dialog).getByText("75%（パックの値）")).toBeTruthy()
   })
 
-  it("動かすと値が documentElement のトークンと localStorage に出る", () => {
-    const dialog = openLookFace()
+  it("動かすと値が documentElement のトークンに出て、3つ揃えた値を覚えさせる", () => {
+    const sent: SentCommand[] = []
+    const dialog = openLookFace(sent)
 
     fireEvent.change(slider(dialog, "背景の暗さ"), { target: { value: "90" } })
     fireEvent.change(slider(dialog, "パネルのぼかし"), { target: { value: "0" } })
@@ -98,12 +119,29 @@ describe("設定の歯車（見た目の調整）", () => {
       rootToken("--panel-blur-user"),
       rootToken("--panel-fill-user"),
     ]).toEqual(["0.9", "0px", "70%"])
-    expect(JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "null")).toEqual({
-      veil: 0.9,
-      blur: 0,
-      fill: 70,
+    expect(sent.at(-1)).toEqual({
+      procedure: "session.setGearPreference",
+      field: "appearanceAdjust",
+      value: { veil: 0.9, blur: 0, fill: 70 },
     })
     expect(within(dialog).queryByText(/パックの値/)).toBeNull()
+  })
+
+  it("覚えた値が届く前に続けて動かしても、前に動かした値を消さずに覚えさせる", () => {
+    const sent: SentCommand[] = []
+    const dialog = openLookFace(sent, BUILTIN_GEAR_PREFERENCES.appearanceAdjust, (command) => {
+      sent.push(command)
+    })
+
+    fireEvent.change(slider(dialog, "背景の暗さ"), { target: { value: "90" } })
+    fireEvent.change(slider(dialog, "パネルのぼかし"), { target: { value: "18" } })
+    fireEvent.change(slider(dialog, "パネルの濃さ"), { target: { value: "70" } })
+
+    expect(sent.at(-1)).toEqual({
+      procedure: "session.setGearPreference",
+      field: "appearanceAdjust",
+      value: { veil: 0.9, blur: 18, fill: 70 },
+    })
   })
 
   it("既定に戻すと、背景の暗さのトークンが外れてパックの値へ戻る", () => {
@@ -137,10 +175,8 @@ describe("設定の歯車（見た目の調整）", () => {
     expect(slider(dialog, "背景の暗さ").value).toBe("90")
   })
 
-  it("保存済みの値で開くと、操作子がその値を出す", () => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ veil: 0.85, blur: 16, fill: 30 }))
-
-    const dialog = openLookFace()
+  it("覚えた値で開くと、操作子がその値を出す", () => {
+    const dialog = openLookFace([], { veil: 0.85, blur: 16, fill: 30 })
 
     expect([
       slider(dialog, "背景の暗さ").value,

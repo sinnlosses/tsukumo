@@ -1,12 +1,12 @@
 // 画面の色を `document.documentElement`（`:root`）のトークンへ差す・そこから読む。色の検査と差す内容の判断は `appearance-color`。
 
+import type { AppearanceColorOverride } from "../../shared/session/gear-preference.ts"
 import {
   ACCENT_TOKEN_NAME,
   appearanceTokenName,
   appearanceTokenWrites,
   backgroundVeilFloorWrite,
   type AppearanceColorKey,
-  type AppearanceColorOverride,
   type RootTokenWrite,
 } from "../domain/appearance-color.ts"
 

@@ -1,13 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
-import {
-  changeAppearanceColor,
-  DEFAULT_APPEARANCE_COLOR_OVERRIDE,
-  loadAppearanceColorOverride,
-  saveAppearanceColorOverride,
-  type AppearanceColorOverride,
-  type HexColor,
-} from "../../../src/browser/domain/appearance-color.ts"
+import { changeAppearanceColor } from "../../../src/browser/domain/appearance-color.ts"
 import {
   applyAppearanceColorOverride,
   readCurrentColor,
@@ -16,20 +9,22 @@ import {
   MAX_BACKGROUND_VEIL,
   MIN_BACKGROUND_VEIL,
 } from "../../../src/shared/character-pack/character-background.ts"
-
-const STORAGE_KEY = "tsukumo-appearance-color:v1"
+import {
+  DEFAULT_APPEARANCE_COLOR_OVERRIDE,
+  foldGearPreferences,
+  hexColorSchema,
+  type AppearanceColorOverride,
+  type HexColor,
+} from "../../../src/shared/session/gear-preference.ts"
 
 const MIN_CONTRAST = 4.5
 
-// 検査済みの色を作る口は保存値の読み戻しだけなので、そこを通して得る。
 function hex(value: string): HexColor {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify({ ground: value }))
-  const color = loadAppearanceColorOverride().ground
-  localStorage.removeItem(STORAGE_KEY)
-  if (color === undefined) {
-    throw new Error(`テストの色が16進でない: ${value}`)
-  }
-  return color
+  return hexColorSchema.parse(value)
+}
+
+function foldColor(raw: unknown): AppearanceColorOverride {
+  return foldGearPreferences({ appearanceColor: raw }).values.appearanceColor
 }
 
 /**
@@ -61,7 +56,6 @@ function contrastOfVeiled(ground: string, image: string, veil: number, ink: stri
 let themeStyleElement: HTMLStyleElement | undefined
 
 beforeEach(() => {
-  localStorage.removeItem(STORAGE_KEY)
   document.documentElement.style.removeProperty("--ground")
   document.documentElement.style.removeProperty("--surface")
   document.documentElement.style.removeProperty("--ink")
@@ -71,7 +65,6 @@ beforeEach(() => {
 })
 
 afterEach(() => {
-  localStorage.removeItem(STORAGE_KEY)
   document.documentElement.style.removeProperty("--ground")
   document.documentElement.style.removeProperty("--surface")
   document.documentElement.style.removeProperty("--ink")
@@ -79,43 +72,28 @@ afterEach(() => {
   themeStyleElement = undefined
 })
 
-describe("loadAppearanceColorOverride", () => {
-  it("何も保存していなければ既定（上書き無し）を返す", () => {
-    expect(loadAppearanceColorOverride()).toEqual(DEFAULT_APPEARANCE_COLOR_OVERRIDE)
+describe("覚えた色の読み戻し", () => {
+  it("覚えた値が無ければ既定（上書き無し）を返す", () => {
+    expect(foldColor(undefined)).toEqual(DEFAULT_APPEARANCE_COLOR_OVERRIDE)
   })
 
-  it("保存した値をそのまま読み戻す", () => {
+  it("覚えた値をそのまま読み戻す", () => {
     const saved: AppearanceColorOverride = {
       ground: hex("#000000"),
       surface: undefined,
       ink: hex("#ffffff"),
     }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(saved))
-    expect(loadAppearanceColorOverride()).toEqual(saved)
-  })
-
-  it("壊れた JSON は既定へ落ちる", () => {
-    localStorage.setItem(STORAGE_KEY, "{not json")
-    expect(loadAppearanceColorOverride()).toEqual(DEFAULT_APPEARANCE_COLOR_OVERRIDE)
+    expect(foldColor(saved)).toEqual(saved)
   })
 
   it("16進として不正な値は既定（undefined）へ落ちる", () => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ ground: "red", surface: 1, ink: "#zzzzzz" }))
-    expect(loadAppearanceColorOverride()).toEqual(DEFAULT_APPEARANCE_COLOR_OVERRIDE)
+    expect(foldColor({ ground: "red", surface: 1, ink: "#zzzzzz" })).toEqual(
+      DEFAULT_APPEARANCE_COLOR_OVERRIDE,
+    )
   })
 })
 
-describe("saveAppearanceColorOverride / applyAppearanceColorOverride", () => {
-  it("保存した値を loadAppearanceColorOverride で読み戻せる", () => {
-    const value: AppearanceColorOverride = {
-      ground: hex("#101010"),
-      surface: undefined,
-      ink: hex("#eeeeee"),
-    }
-    saveAppearanceColorOverride(value)
-    expect(loadAppearanceColorOverride()).toEqual(value)
-  })
-
+describe("applyAppearanceColorOverride", () => {
   it("documentElement の CSS カスタムプロパティに反映する", () => {
     applyAppearanceColorOverride({
       ground: hex("#123456"),

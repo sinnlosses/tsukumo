@@ -3,6 +3,12 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import { useSession } from "../../../src/browser/stores/session.ts"
 import { FRAME_ERROR_REASON } from "../../../src/shared/frame-error-reason.ts"
+import { PROTOCOL_VERSION, type ServerFrame } from "../../../src/shared/frame.ts"
+import {
+  BUILTIN_GEAR_PREFERENCES,
+  type GearPreferences,
+} from "../../../src/shared/session/gear-preference.ts"
+import { INITIAL_SESSION_STATE } from "../../../src/shared/session/session-state.ts"
 
 afterEach(() => {
   useSession.getState().attachSocket(undefined)
@@ -90,5 +96,40 @@ describe("lastSentAt", () => {
     void useSession.getState().dispatch.session.prompt({ text: "架空", images: [] })
 
     expect(useSession.getState().lastSentAt).toBeUndefined()
+  })
+})
+
+describe("歯車の設定", () => {
+  beforeEach(() => {
+    useSession.setState(useSession.getInitialState(), true)
+  })
+
+  const hello = (gearPreferences: GearPreferences): ServerFrame => ({
+    type: "hello",
+    protocolVersion: PROTOCOL_VERSION,
+    state: { ...INITIAL_SESSION_STATE, gearPreferences },
+  })
+
+  it("hello の値（起こしたときに読んだ値）では入れ替えず、開いたあとに届いた変更で入れ替える", () => {
+    const { receive } = useSession.getState()
+
+    receive(hello({ ...BUILTIN_GEAR_PREFERENCES, revealSpeed: "off" }))
+    expect(useSession.getState().state.gearPreferences).toBeUndefined()
+
+    receive({
+      type: "events",
+      events: [
+        {
+          at: 0,
+          event: {
+            kind: "gear-preferences-changed",
+            gearPreferences: { ...BUILTIN_GEAR_PREFERENCES, revealSpeed: "fast" },
+          },
+        },
+      ],
+    })
+    receive(hello({ ...BUILTIN_GEAR_PREFERENCES, revealSpeed: "off" }))
+
+    expect(useSession.getState().state.gearPreferences?.revealSpeed).toBe("fast")
   })
 })

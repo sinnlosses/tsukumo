@@ -6,14 +6,21 @@ import { describe, expect, it } from "vitest"
 import {
   readRememberedBackgroundModels,
   readRememberedCharacter,
+  readRememberedGearPreferences,
   readRememberedSessionDefault,
   readRememberedSpeakingPace,
   writeRememberedBackgroundModels,
   writeRememberedCharacter,
+  writeRememberedGearPreference,
   writeRememberedSessionDefault,
   writeRememberedSpeakingPace,
 } from "../../../../src/server/session/adapter/remembered-default.ts"
 import { BUILTIN_BACKGROUND_MODELS } from "../../../../src/shared/session/background-model.ts"
+import {
+  BLUR_RANGE,
+  BUILTIN_GEAR_PREFERENCES,
+  hexColorSchema,
+} from "../../../../src/shared/session/gear-preference.ts"
 import { BUILTIN_SESSION_DEFAULT } from "../../../../src/shared/session/session-default.ts"
 import { BUILTIN_SPEAKING_PACE } from "../../../../src/shared/session/speaking-pace.ts"
 import { useTempDir } from "../../../fixture/temp-dir.ts"
@@ -342,5 +349,111 @@ describe("writeRememberedSpeakingPace", () => {
     })
     expect(readRememberedCharacter(statePath())).toBe("tsukumo")
     expect(readRememberedBackgroundModels(statePath()).chatConsolidation).toBe("sonnet")
+  })
+})
+
+describe("readRememberedGearPreferences", () => {
+  it("ファイルが無いときは5欄とも同梱の既定で、stored は全部偽", () => {
+    expect(readRememberedGearPreferences(statePath())).toEqual({
+      values: BUILTIN_GEAR_PREFERENCES,
+      stored: {
+        appearanceColor: false,
+        appearanceAdjust: false,
+        revealSpeed: false,
+        motionPreference: false,
+        launchSkill: false,
+      },
+    })
+  })
+
+  it("欠けた・壊れた・知らない値の欄だけ既定に畳まれて stored が偽になり、ほかの欄は読んだ値のまま", () => {
+    writeFileSync(
+      statePath(),
+      JSON.stringify({
+        appearanceColor: "壊れた",
+        appearanceAdjust: { veil: 0.8, blur: 12, fill: 60 },
+        revealSpeed: "とても速い",
+        motionPreference: "reduce",
+      }),
+    )
+    expect(readRememberedGearPreferences(statePath())).toEqual({
+      values: {
+        appearanceColor: BUILTIN_GEAR_PREFERENCES.appearanceColor,
+        appearanceAdjust: { veil: 0.8, blur: 12, fill: 60 },
+        revealSpeed: BUILTIN_GEAR_PREFERENCES.revealSpeed,
+        motionPreference: "reduce",
+        launchSkill: BUILTIN_GEAR_PREFERENCES.launchSkill,
+      },
+      stored: {
+        appearanceColor: false,
+        appearanceAdjust: true,
+        revealSpeed: false,
+        motionPreference: true,
+        launchSkill: false,
+      },
+    })
+  })
+
+  it("欄の中は項ごとに畳み、範囲の外の数は範囲へ収める", () => {
+    writeFileSync(
+      statePath(),
+      JSON.stringify({
+        appearanceColor: { ground: "#112233", ink: "青" },
+        appearanceAdjust: { blur: 99, fill: "濃い" },
+      }),
+    )
+    const read = readRememberedGearPreferences(statePath())
+    expect(read.values.appearanceColor).toEqual({ ground: "#112233" })
+    expect(read.values.appearanceAdjust).toEqual({
+      blur: BLUR_RANGE.max,
+      fill: BUILTIN_GEAR_PREFERENCES.appearanceAdjust.fill,
+    })
+    expect(read.stored.appearanceColor).toBe(true)
+    expect(read.stored.appearanceAdjust).toBe(true)
+  })
+})
+
+describe("writeRememberedGearPreference", () => {
+  it("1欄を書いても、ほかの4欄と覚えたキャラクター・新しいセッションの既定・話しかける間合いは残る", () => {
+    writeRememberedCharacter("kagami", statePath())
+    writeRememberedSessionDefault({ ...BUILTIN_SESSION_DEFAULT, model: "sonnet" }, statePath())
+    writeRememberedSpeakingPace({ waitingLine: "off", progressNudge: "10m" }, statePath())
+    writeRememberedGearPreference({ field: "revealSpeed", value: "fast" }, statePath())
+    writeRememberedGearPreference({ field: "motionPreference", value: "reduce" }, statePath())
+    writeRememberedGearPreference({ field: "launchSkill", value: "next-task" }, statePath())
+    writeRememberedGearPreference(
+      { field: "appearanceAdjust", value: { blur: 4, fill: 70 } },
+      statePath(),
+    )
+
+    writeRememberedGearPreference(
+      { field: "appearanceColor", value: { ground: hexColorSchema.parse("#223344") } },
+      statePath(),
+    )
+
+    expect(readRememberedGearPreferences(statePath()).values).toEqual({
+      appearanceColor: { ground: "#223344" },
+      appearanceAdjust: { blur: 4, fill: 70 },
+      revealSpeed: "fast",
+      motionPreference: "reduce",
+      launchSkill: "next-task",
+    })
+    expect(readRememberedCharacter(statePath())).toBe("kagami")
+    expect(readRememberedSessionDefault(statePath()).model).toBe("sonnet")
+    expect(readRememberedSpeakingPace(statePath())).toEqual({
+      waitingLine: "off",
+      progressNudge: "10m",
+    })
+  })
+
+  it("書いていない欄は state.json に現れず、stored は偽のまま", () => {
+    writeRememberedGearPreference({ field: "launchSkill", value: "next-task" }, statePath())
+    expect(readRememberedGearPreferences(statePath()).stored).toEqual({
+      appearanceColor: false,
+      appearanceAdjust: false,
+      revealSpeed: false,
+      motionPreference: false,
+      launchSkill: true,
+    })
   })
 })

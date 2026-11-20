@@ -3,7 +3,8 @@
 
 import { useId, type ReactElement } from "react"
 
-import { BLUR_RANGE, FILL_RANGE, VEIL_PERCENT_RANGE } from "../../../../domain/appearance-adjust.ts"
+import { BLUR_RANGE, FILL_RANGE } from "../../../../../shared/session/gear-preference.ts"
+import { VEIL_PERCENT_RANGE } from "../../../../domain/appearance-adjust.ts"
 import type { AppearanceColorKey } from "../../../../domain/appearance-color.ts"
 import { Button } from "../../../ui/button/button.tsx"
 import { HStack } from "../../../ui/h-stack/h-stack.tsx"

@@ -366,6 +366,10 @@ const SESSION_EVENT_FOLDS = {
         ? { remembered: event.speakingPace, launchedWaitingLine: event.speakingPace.waitingLine }
         : { ...state.speakingPace, remembered: event.speakingPace },
   }),
+  "gear-preferences-changed": (state, event) => ({
+    ...state,
+    gearPreferences: event.gearPreferences,
+  }),
   "compact-boundary": (state) => ({
     ...state,
     records: [...state.records, { kind: "compact-boundary" }],

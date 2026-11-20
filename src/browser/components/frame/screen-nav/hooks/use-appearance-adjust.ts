@@ -1,17 +1,16 @@
-// 帯の設定の、背景の暗さ・パネルのぼかし・パネルの濃さ。利用者の端末の設定（`localStorage`）。
-// 動かすたびに `documentElement` へ反映して保存する（範囲入力の連続した変更でも、書く先は小さな1つの入れ物）。
+// 帯の設定の、背景の暗さ・パネルのぼかし・パネルの濃さ。覚え先は `~/.tsukumo/state.json`（手続き `setGearPreference`）。
+// 動かすたびに `documentElement` へ反映して覚えさせる。操作子に出すのは、動かすまでは届いた値（覚えた値）、動かしたあとは動かした値。
 // 背景の暗さは動かすまで値を持たず、その間はパックの値に従う。操作子にはパックの値を出し、読み出しで「パックの値」と分かるようにする。
 
 import { useState } from "react"
 
 import {
   DEFAULT_APPEARANCE_ADJUST,
-  countAppearanceAdjust,
-  loadAppearanceAdjust,
-  saveAppearanceAdjust,
   type AppearanceAdjust,
-} from "../../../../domain/appearance-adjust.ts"
+} from "../../../../../shared/session/gear-preference.ts"
+import { countAppearanceAdjust } from "../../../../domain/appearance-adjust.ts"
 import { applyAppearanceAdjust } from "../../../../stores/appearance-adjust-root.ts"
+import { useGearPreferences } from "../../../../stores/gear-preference-seed.ts"
 import { useSession } from "../../../../stores/session.ts"
 
 // パックが背景の `veil` を持たないときに操作子へ出す値。パックの定義で `veil` を省略したときの値と同じ。
@@ -37,14 +36,19 @@ type AppearanceAdjustControl = {
 }
 
 export function useAppearanceAdjust(): AppearanceAdjustControl {
-  const [value, setValue] = useState<AppearanceAdjust>(loadAppearanceAdjust)
+  const stored = useGearPreferences().appearanceAdjust
+  // 3つは1欄にまとめて書くので、覚えた値が届く前に続けて動かすと、届く前の値に重ねて前の動きを消してしまう。
+  // 一度動かしたら、このあとは自分が動かした値に重ねる。
+  const [committed, setCommitted] = useState<AppearanceAdjust>()
+  const value = committed ?? stored
+  const dispatch = useSession((session) => session.dispatch)
   const packVeil =
     useSession((session) => session.state.character?.background?.veil) ?? FALLBACK_PACK_VEIL
 
   function commit(next: AppearanceAdjust): void {
+    setCommitted(next)
     applyAppearanceAdjust(next)
-    setValue(next)
-    saveAppearanceAdjust(next)
+    void dispatch.session.setGearPreference({ field: "appearanceAdjust", value: next })
   }
 
   return {

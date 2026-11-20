@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
 
+import { BUILTIN_GEAR_PREFERENCES } from "../../../src/shared/session/gear-preference.ts"
 import { applySessionEvent } from "../../../src/shared/session/session-fold.ts"
 import { INITIAL_SESSION_STATE } from "../../../src/shared/session/session-state.ts"
 import { checkedSessionId } from "../../fixture/session-id.ts"
@@ -220,5 +221,18 @@ describe("applySessionEvent", () => {
       remembered: { waitingLine: "5m", progressNudge: "10m" },
       launchedWaitingLine: "1m",
     })
+  })
+
+  it("gear-preferences-changed が届くまでは歯車の設定を持たず、届いたら5欄を丸ごと置き換える", () => {
+    expect(INITIAL_SESSION_STATE.gearPreferences).toBeUndefined()
+    const gearPreferences = { ...BUILTIN_GEAR_PREFERENCES, motionPreference: "reduce" } as const
+
+    const after = applySessionEvent(
+      INITIAL_SESSION_STATE,
+      { kind: "gear-preferences-changed", gearPreferences },
+      0,
+    )
+
+    expect(after.gearPreferences).toEqual(gearPreferences)
   })
 })

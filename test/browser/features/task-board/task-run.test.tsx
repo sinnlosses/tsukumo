@@ -2,13 +2,13 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import type { ReactNode } from "react"
 import { afterEach, describe, expect, it } from "vitest"
 
-import { saveLaunchSkill } from "../../../../src/browser/domain/launch-skill.ts"
 import { TaskBoard } from "../../../../src/browser/features/task-board/task-board.tsx"
 import { useTaskSheet } from "../../../../src/browser/stores/task-sheet.ts"
 import type {
   TaskSummaryItem,
   TaskSummaryResult,
 } from "../../../../src/shared/repository/task-summary.ts"
+import { BUILTIN_GEAR_PREFERENCES } from "../../../../src/shared/session/gear-preference.ts"
 import {
   INITIAL_SESSION_STATE,
   type SessionState,
@@ -23,7 +23,6 @@ import { TaskList } from "./task-list-harness.tsx"
 
 afterEach(() => {
   cleanup()
-  saveLaunchSkill("")
   useTaskSheet.setState(useTaskSheet.getInitialState(), true)
 })
 
@@ -63,6 +62,11 @@ const TASKS: readonly TaskSummaryItem[] = [
 ]
 
 const RUNNING_TURN: Partial<SessionState> = { turn: { kind: "running", startedAt: 0 } }
+
+/** 歯車で起動するスキルを覚えた姿。 */
+function launchSkillState(launchSkill: string): Partial<SessionState> {
+  return { gearPreferences: { ...BUILTIN_GEAR_PREFERENCES, launchSkill } }
+}
 
 /** サイドバーの区画の一覧。確認は姿と送り口が要るので store で包む。 */
 function renderList(spy: CommandSpy, overrides: Partial<SessionState>): void {
@@ -386,9 +390,8 @@ describe("タスクの実行を頼む", () => {
   })
 
   it("起動スキルを設定していれば、確認に出る文面も送る文面も「/スキル名 ID」になる", () => {
-    saveLaunchSkill("/next-task")
     const sent: unknown[] = []
-    renderBoard(collectInto(sent))
+    renderBoard(collectInto(sent), [], TASKS, launchSkillState("/next-task"))
 
     openRunConfirm("X-002")
     expect(confirmDialog()?.textContent).toContain("/next-task X-002")
@@ -398,9 +401,8 @@ describe("タスクの実行を頼む", () => {
   })
 
   it("起動スキルを設定していても、ドラフトの計画の文面は変わらない", () => {
-    saveLaunchSkill("next-task")
     const sent: unknown[] = []
-    renderBoard(collectInto(sent), [], [draftTask("X-004")])
+    renderBoard(collectInto(sent), [], [draftTask("X-004")], launchSkillState("next-task"))
 
     fireEvent.click(screen.getByRole("option", { name: /X-004/ }))
     fireEvent.click(screen.getByRole("button", { name: "計画する" }))

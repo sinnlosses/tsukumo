@@ -1,7 +1,7 @@
-// 帯の設定の、画面の色の上書き。色は利用者の端末の設定（`localStorage`）。
+// 帯の設定の、画面の色の上書き。覚え先は `~/.tsukumo/state.json`（手続き `setGearPreference`）。
 //
-// 色の見た目（`documentElement`）は `onChange` のたびそのまま反映し、`localStorage` への書き込みだけ `useDebouncedCallback` で 200ms まとめる。
-// 保存は3色まとめて1つの入れ物を書くので、鍵は1つにする。
+// 色の見た目（`documentElement`）は `onChange` のたびそのまま反映し、覚えさせる手続きだけ `useDebouncedCallback` で 200ms まとめる。
+// 3色まとめて1つの欄を書くので、鍵は1つにする。
 // 色ごとにタイマーを分けると最後の1回しか効かず、1つにしておくと「既定に戻す」が引きずり中の書き込みを必ず追い越す。
 //
 // `ground` と `ink` の差が足りずに受け取らなかった色は、その理由を面の中に1行出す（`ScreenNavSettings.colorNotice`）。
@@ -15,19 +15,21 @@
 import { useState } from "react"
 
 import {
-  changeAppearanceColor,
   DEFAULT_APPEARANCE_COLOR_OVERRIDE,
-  loadAppearanceColorOverride,
-  saveAppearanceColorOverride,
+  type AppearanceColorOverride,
+} from "../../../../../shared/session/gear-preference.ts"
+import {
+  changeAppearanceColor,
   type AppearanceColorChange,
   type AppearanceColorKey,
-  type AppearanceColorOverride,
 } from "../../../../domain/appearance-color.ts"
 import { useDebouncedCallback } from "../../../../hooks/use-debounced-callback.ts"
 import {
   applyAppearanceColorOverride,
   readCurrentColor,
 } from "../../../../stores/appearance-color-root.ts"
+import { useGearPreferences } from "../../../../stores/gear-preference-seed.ts"
+import { useSession } from "../../../../stores/session.ts"
 
 export type ScreenNavSettingsColor = {
   readonly key: AppearanceColorKey
@@ -69,13 +71,16 @@ const NO_COLOR_NOTICE = { kind: "none" } as const satisfies ScreenNavSettingsCol
 
 const APPEARANCE_COLOR_DEBOUNCE_MS = 200
 
-/** 書き込みをまとめる鍵。3色を1つの入れ物で保存するので、色ごとには分けない。 */
+/** 書き込みをまとめる鍵。3色を1つの欄で覚えるので、色ごとには分けない。 */
 const APPEARANCE_COLOR_SAVE_KEY = "appearance-color"
 
 export function useAppearanceColor(): AppearanceColor {
-  // 上書きの正典は `localStorage`。反映（`documentElement`）は入口が済ませているので、
-  // ここは「次の1色を足すための下地」として読むだけ。
-  const [override, setOverride] = useState<AppearanceColorOverride>(loadAppearanceColorOverride)
+  // 上書きの正典は `state.json`。反映（`documentElement`）は入口と、イベントを受けた store が済ませているので、
+  // ここは「次の1色を足すための下地」として、マウント時の値から手元で持ち続ける。
+  // 送るのを 200ms まとめるので、届いた値を下地にすると、続けて別の色を変えたときに前の色が落ちる。
+  const stored = useGearPreferences().appearanceColor
+  const [override, setOverride] = useState<AppearanceColorOverride>(stored)
+  const dispatch = useSession((session) => session.dispatch)
   const [displayColor, setDisplayColor] = useState<Record<AppearanceColorKey, string>>(() => ({
     ground: readCurrentColor("ground"),
     surface: readCurrentColor("surface"),
@@ -83,7 +88,7 @@ export function useAppearanceColor(): AppearanceColor {
   }))
   const [colorNotice, setColorNotice] = useState<ScreenNavSettingsColorNotice>(NO_COLOR_NOTICE)
   const saveOverride = useDebouncedCallback<string, AppearanceColorOverride>((_key, value) => {
-    saveAppearanceColorOverride(value)
+    void dispatch.session.setGearPreference({ field: "appearanceColor", value })
   }, APPEARANCE_COLOR_DEBOUNCE_MS)
 
   function changeColor(key: AppearanceColorKey, value: string): void {

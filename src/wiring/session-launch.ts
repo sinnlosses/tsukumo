@@ -34,9 +34,11 @@ import { createSessionClaim } from "../server/session-driver/core/session/sessio
 import { sessionTag } from "../server/session-driver/core/session/session-mark.ts"
 import {
   readRememberedBackgroundModels,
+  readRememberedGearPreferences,
   readRememberedSessionDefault,
   readRememberedSpeakingPace,
   writeRememberedBackgroundModels,
+  writeRememberedGearPreference,
   writeRememberedSessionDefault,
   writeRememberedSpeakingPace,
 } from "../server/session/adapter/remembered-default.ts"
@@ -55,6 +57,7 @@ import { expressionChoices, expressionNames } from "../shared/character-pack/exp
 import type { DiagnosticEntry } from "../shared/diagnostic/diagnostic-record.ts"
 import type { SwallowedFailurePlace } from "../shared/diagnostic/swallowed-failure.ts"
 import type { BackgroundModels } from "../shared/session/background-model.ts"
+import type { GearPreferenceChange } from "../shared/session/gear-preference.ts"
 import type { SessionDefault } from "../shared/session/session-default.ts"
 import type { RestoredEvent, SessionEvent } from "../shared/session/session-event.ts"
 import type { SessionId } from "../shared/session/session-id.ts"
@@ -100,6 +103,7 @@ export function wireSessionLaunch(options: {
     | "rememberSessionDefault"
     | "rememberBackgroundModels"
     | "rememberSpeakingPace"
+    | "rememberGearPreference"
     | "reserveSession"
     | "withdrawSessionClaim"
   >
@@ -126,6 +130,7 @@ export function wireSessionLaunch(options: {
         readSessionDefault: () => readRememberedSessionDefault(),
         readBackgroundModels: () => readRememberedBackgroundModels(),
         readSpeakingPace: () => readRememberedSpeakingPace(),
+        readGearPreferences: () => readRememberedGearPreferences().values,
         characterEvent: () => character.event(),
         itemsEvent: options.itemsEvent,
         readChatTopics: (pack) => readChatTopics(chatMemoryOf(pack, context).chatSummary),
@@ -184,6 +189,7 @@ export function wireSessionLaunch(options: {
       rememberSessionDefault: (sessionDefault) => rememberSessionDefault(sessionDefault),
       rememberBackgroundModels: (backgroundModels) => rememberBackgroundModels(backgroundModels),
       rememberSpeakingPace: (speakingPace) => rememberSpeakingPace(speakingPace),
+      rememberGearPreference: (change) => rememberGearPreference(change),
       reserveSession: (sessionId) => sessionClaim.reserve(sessionId),
       withdrawSessionClaim: () => sessionClaim.withdraw(),
     },
@@ -342,6 +348,15 @@ function rememberBackgroundModels(backgroundModels: BackgroundModels): SessionEv
 function rememberSpeakingPace(speakingPace: SpeakingPace): SessionEvent {
   writeRememberedSpeakingPace(speakingPace)
   return { kind: "speaking-pace-changed", speakingPace, scope: "remembered" }
+}
+
+/** 歯車から届いた1欄を覚え、読み直した5欄を画面へ流すイベントを返す（ほかのページが覚えた欄もそのまま運ぶ）。 */
+function rememberGearPreference(change: GearPreferenceChange): SessionEvent {
+  writeRememberedGearPreference(change)
+  return {
+    kind: "gear-preferences-changed",
+    gearPreferences: readRememberedGearPreferences().values,
+  }
 }
 
 /**

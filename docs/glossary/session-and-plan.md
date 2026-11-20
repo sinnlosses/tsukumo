@@ -44,6 +44,14 @@
 - **状態の持ち方**: `SpeakingPaceState`（歯車が出す覚えた値 `remembered` と、起こしたときに読んだ待ちの一言の間 `launchedWaitingLine`）。源はイベント `speaking-pace-changed` だけ。歯車からは手続き `setSpeakingPace` で覚える
 - **避ける言い方**: 喋る頻度、おしゃべり設定
 
+### 歯車の見た目と演出の設定
+
+- **英語識別子**: `GearPreferences`（欄の名前は `GearPreferenceField` で `appearanceColor`・`appearanceAdjust`・`revealSpeed`・`motionPreference`・`launchSkill`、同梱の既定は `BUILTIN_GEAR_PREFERENCES`）
+- **定義**: 歯車で選ぶ5つの値。地・領域・字の色、背景の暗さ・パネルのぼかし・パネルの濃さ、書き上げる演出の速さ、動きを減らす、起動するスキル
+- **注記**: 覚え先は `~/.tsukumo/state.json`（欄ごとに読み、欠けた・壊れた欄だけ既定へ畳む）。ポートの違う起動でも同じ値が出る。描き始める前の値は、ページの HTML に焼いたデータの塊から読む（ADR 0076）
+- **状態の持ち方**: 源はイベント `gear-preferences-changed`（5欄を丸ごと運ぶ）だけ。歯車からは手続き `setGearPreference` で1欄ずつ覚える
+- **避ける言い方**: 見た目の設定ファイル、ローカル設定
+
 ### 短縮ID
 
 - **英語識別子**: `shortId`（組み立ては `shortSessionIds`）

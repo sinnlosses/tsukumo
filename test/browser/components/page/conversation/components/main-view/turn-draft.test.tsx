@@ -4,8 +4,11 @@ import { afterEach, describe, expect, it, vi } from "vitest"
 import { REPORT_STEP_ATTRIBUTE } from "../../../../../../../src/browser/components/page/conversation/components/main-view/domain/outline-report-head.ts"
 import { REPORT_DRAFT_ATTRIBUTE } from "../../../../../../../src/browser/components/page/conversation/components/main-view/domain/report-heading.ts"
 import { useDraftedReports } from "../../../../../../../src/browser/components/page/conversation/stores/drafted-report.ts"
-import { saveRevealSpeed } from "../../../../../../../src/browser/domain/reveal-speed.ts"
 import type { ReportPending } from "../../../../../../../src/browser/features/report/a2ui-surface-model.ts"
+import {
+  BUILTIN_GEAR_PREFERENCES,
+  type RevealSpeed,
+} from "../../../../../../../src/shared/session/gear-preference.ts"
 import type {
   MainViewDraft,
   MainViewReportBody,
@@ -39,8 +42,15 @@ const { Turn } =
 
 const DRAFT_SELECTOR = `[${REPORT_DRAFT_ATTRIBUTE}]`
 
-function renderDraft(draft: MainViewDraft, hasInterimReport = false) {
-  putSession(INITIAL_SESSION_STATE)
+function renderDraft(
+  draft: MainViewDraft,
+  hasInterimReport = false,
+  revealSpeed: RevealSpeed = "standard",
+) {
+  putSession({
+    ...INITIAL_SESSION_STATE,
+    gearPreferences: { ...BUILTIN_GEAR_PREFERENCES, revealSpeed },
+  })
   return render(
     <Turn turn={{ ...turn([]), hasInterimReport, drafts: [draft] }} newest freshReport={false} />,
   )
@@ -131,10 +141,8 @@ describe("Turn（report の草稿）", () => {
     ).toBe("true")
     moving.unmount()
 
-    saveRevealSpeed("off")
-    const still = renderDraft(draft)
-    const blank = renderDraft({ kind: "blank", toolUseId: "toolu_blank" })
-    localStorage.removeItem("tsukumo-reveal-speed:v1")
+    const still = renderDraft(draft, false, "off")
+    const blank = renderDraft({ kind: "blank", toolUseId: "toolu_blank" }, false, "off")
 
     expect(
       still.container.querySelector("[data-report-stub]")?.getAttribute("data-pending-blink"),

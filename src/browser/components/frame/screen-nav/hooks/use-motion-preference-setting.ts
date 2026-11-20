@@ -1,16 +1,14 @@
-// 帯の設定の、動きを減らす好み。利用者の端末の設定（`localStorage`）。
+// 帯の設定の、動きを減らす好み。覚え先は `~/.tsukumo/state.json`（手続き `setGearPreference`）。表示は届いた値に従う。
 // 文書の根の属性（CSS の動き）はその場で差し直す。JavaScript 側の演出はマウント時の値を読むので、開いている最中の演出には効かない。
 
-import { useState } from "react"
-
 import {
-  DEFAULT_MOTION_PREFERENCE,
-  isMotionPreference,
-  loadMotionPreference,
-  saveMotionPreference,
+  BUILTIN_GEAR_PREFERENCES,
   type MotionPreference,
-} from "../../../../domain/motion-preference.ts"
+} from "../../../../../shared/session/gear-preference.ts"
+import { useGearPreferences } from "../../../../stores/gear-preference-seed.ts"
 import { applyMotionPreference } from "../../../../stores/motion-preference-root.ts"
+import { useSession } from "../../../../stores/session.ts"
+import { isMotionPreference } from "../domain/motion-preference.ts"
 
 export type ScreenNavSettingsMotion = {
   readonly value: MotionPreference
@@ -25,12 +23,12 @@ type MotionPreferenceControl = {
 }
 
 export function useMotionPreferenceSetting(): MotionPreferenceControl {
-  const [value, setValue] = useState<MotionPreference>(loadMotionPreference)
+  const value = useGearPreferences().motionPreference
+  const dispatch = useSession((session) => session.dispatch)
 
   function commit(next: MotionPreference): void {
-    setValue(next)
-    saveMotionPreference(next)
     applyMotionPreference(next)
+    void dispatch.session.setGearPreference({ field: "motionPreference", value: next })
   }
 
   return {
@@ -42,9 +40,9 @@ export function useMotionPreferenceSetting(): MotionPreferenceControl {
         }
       },
     },
-    changedCount: value === DEFAULT_MOTION_PREFERENCE ? 0 : 1,
+    changedCount: value === BUILTIN_GEAR_PREFERENCES.motionPreference ? 0 : 1,
     onReset: () => {
-      commit(DEFAULT_MOTION_PREFERENCE)
+      commit(BUILTIN_GEAR_PREFERENCES.motionPreference)
     },
   }
 }

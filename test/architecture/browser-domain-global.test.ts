@@ -21,10 +21,6 @@ const EXEMPT_FILES = new Map<string, string>([
     "演出の本体。根の DOM を動かし、飛ばす合図を window で聞く",
   ],
   [
-    "browser/domain/reveal/use-report-reveal.ts",
-    "演出の hook。動きを減らす設定を window.matchMedia で読む",
-  ],
-  [
     "browser/components/page/conversation/domain/prompt-image-thumbnail.ts",
     "画像を canvas で縮める。DOM の描画が仕事の本体",
   ],

@@ -5,6 +5,7 @@ import type { ShelvedPromptImage } from "../../src/server/session-driver/core/pr
 import type { PromptRouting } from "../../src/shared/contract/session.ts"
 import { FRAME_ERROR_REASON } from "../../src/shared/frame-error-reason.ts"
 import type { PromptImage } from "../../src/shared/session-driver/prompt-image.ts"
+import { BUILTIN_GEAR_PREFERENCES } from "../../src/shared/session/gear-preference.ts"
 import { createCommandClient } from "../fixture/command-client.ts"
 import {
   CHAT_MODE_EVENT,
@@ -204,6 +205,24 @@ describe("createSocketRouter（session）", () => {
         },
       },
     ])
+  })
+
+  it("session.setGearPreference を1欄覚えさせ、5欄を運ぶイベントを配る（駆動には触らない）", async () => {
+    const { commands, emitted, stub } = startRouter()
+
+    const result = await commands.session.setGearPreference({
+      field: "revealSpeed",
+      value: "fast",
+    })
+
+    expect(result).toEqual({ ok: true })
+    expect(emitted).toEqual([
+      {
+        kind: "gear-preferences-changed",
+        gearPreferences: { ...BUILTIN_GEAR_PREFERENCES, revealSpeed: "fast" },
+      },
+    ])
+    expect(stub.calls).toEqual([])
   })
 
   describe("キャラクターから話しかけてもらう（nudge）", () => {

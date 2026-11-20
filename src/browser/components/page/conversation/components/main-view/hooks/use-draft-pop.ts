@@ -5,9 +5,11 @@
 
 import { useRef, useState, type RefObject } from "react"
 
-import { loadRevealSpeed } from "../../../../../../domain/reveal-speed.ts"
-import { prefersReducedMotion } from "../../../../../../domain/reveal/reduced-motion.ts"
 import { useBeforePaintSync } from "../../../../../../hooks/use-before-paint-sync.ts"
+import {
+  currentGearPreferences,
+  prefersReducedMotionNow,
+} from "../../../../../../stores/gear-preference-seed.ts"
 import { playClassOnce } from "../../../../../../utils/play-class-once.ts"
 
 const DRAFT_BLOCK_SELECTOR = "[data-report-region] > :not([data-report-pending])"
@@ -23,7 +25,7 @@ export function useDraftPop(
   const ref = useRef<HTMLElement>(null)
   const seen = useRef(new WeakSet<Element>())
   const [motion] = useState(
-    () => loadRevealSpeed() !== "off" && !prefersReducedMotion((query) => window.matchMedia(query)),
+    () => currentGearPreferences().revealSpeed !== "off" && !prefersReducedMotionNow(),
   )
 
   // 描画の前に付けないと、届いた塊が1フレームだけ止まった形で見えてしまう。

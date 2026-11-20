@@ -9,16 +9,21 @@ import "./lib/zod-jitless.ts"
 import "./styles/layer-order.css"
 import { createRoot } from "react-dom/client"
 
+import { GEAR_PREFERENCE_SEED_ELEMENT_ID } from "../shared/session/gear-preference.ts"
 import { App } from "./app.tsx"
-import { loadAppearanceAdjust } from "./domain/appearance-adjust.ts"
-import { loadAppearanceColorOverride } from "./domain/appearance-color.ts"
-import { loadMotionPreference } from "./domain/motion-preference.ts"
+import { planGearPreferenceMigration } from "./domain/gear-preference-migration.ts"
+import { parseGearPreferenceSeed } from "./domain/gear-preference-seed.ts"
 import { loadMarkdown } from "./features/report/markdown.tsx"
 import { loadTaskBody } from "./features/task-board/deferred-task-body.tsx"
-import { applyAppearanceAdjust } from "./stores/appearance-adjust-root.ts"
-import { applyAppearanceColorOverride } from "./stores/appearance-color-root.ts"
 import { reportBrowserError } from "./stores/browser-error-report.ts"
-import { applyMotionPreference, followOsMotionPreference } from "./stores/motion-preference-root.ts"
+import {
+  holdMigratingGearPreferences,
+  readLegacyGearPreferences,
+  removeLegacyGearPreferences,
+} from "./stores/gear-preference-legacy.ts"
+import { applyGearPreferences } from "./stores/gear-preference-root.ts"
+import { currentGearPreferences, holdGearPreferenceSeed } from "./stores/gear-preference-seed.ts"
+import { followOsMotionPreference } from "./stores/motion-preference-root.ts"
 // ページ全体の下地（トークン・body・要素への規則）。
 import "./styles/theme.css"
 import "./styles/reduced-motion.css"
@@ -35,13 +40,19 @@ if (!isTemporalSupported(globalThis)) {
     showUnsupportedBrowserNotice(appRoot)
   }
 } else {
-  // 保存済みの画面の色を `documentElement` へ反映する1回。
+  // 覚えた画面の色を `documentElement` へ反映する1回。値はページに焼かれた塊から同期で読む。
   // 最初の描画より前に差す必要があるので、色を持つ部品（帯の歯車）の初期化には任せない。
-  // 任せると、保存した色が一瞬だけ既定で描かれてから入れ替わる。
-  applyAppearanceColorOverride(loadAppearanceColorOverride())
-  applyAppearanceAdjust(loadAppearanceAdjust())
-  applyMotionPreference(loadMotionPreference())
-  followOsMotionPreference()
+  // 任せると、覚えた色が一瞬だけ既定で描かれてから入れ替わる。
+  // `localStorage` に持っていたころの値は、`state.json` に無い欄だけここで描き始める値にし、サーバへは最初の `hello` で写す。
+  const seed = parseGearPreferenceSeed(
+    document.getElementById(GEAR_PREFERENCE_SEED_ELEMENT_ID)?.textContent ?? undefined,
+  )
+  const migration = planGearPreferenceMigration(seed.stored, readLegacyGearPreferences())
+  holdGearPreferenceSeed(seed)
+  holdMigratingGearPreferences(migration.toSend)
+  removeLegacyGearPreferences(migration.removeNow)
+  applyGearPreferences(currentGearPreferences())
+  followOsMotionPreference(() => currentGearPreferences().motionPreference)
 
   window.addEventListener("error", (event) => {
     reportBrowserError("onerror", event.error)

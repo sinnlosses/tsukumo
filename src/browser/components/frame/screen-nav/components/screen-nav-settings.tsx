@@ -9,7 +9,6 @@ import {
   type FigurePreference,
 } from "../../../../../shared/session/session-default.ts"
 import { EFFORT_PLACEHOLDER_VALUE } from "../../../../domain/effort-label.ts"
-import { MOTION_PREFERENCE_LABELS } from "../../../../domain/motion-preference.ts"
 import { REVEAL_SPEED_LABELS } from "../../../../domain/reveal-speed.ts"
 import {
   RunSettingName,
@@ -23,6 +22,7 @@ import {
 } from "../../../../features/run-setting/run-setting-select.tsx"
 import { HStack } from "../../../ui/h-stack/h-stack.tsx"
 import { Text } from "../../../ui/text/text.tsx"
+import { MOTION_PREFERENCE_LABELS } from "../domain/motion-preference.ts"
 import { useLaunchSkillOptions } from "../hooks/use-launch-skill-setting.ts"
 import type { ScreenNavSettings } from "../hooks/use-settings.ts"
 import styles from "./screen-nav-settings.module.css"

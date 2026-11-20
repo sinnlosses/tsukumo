@@ -13,6 +13,7 @@ import { FRAME_ERROR_REASON } from "../../../shared/frame-error-reason.ts"
 import type { ReactionLine } from "../../../shared/recommendation/reaction.ts"
 import { isWelcomeGreetingLine } from "../../../shared/recommendation/welcome-greeting.ts"
 import type { BackgroundModels } from "../../../shared/session/background-model.ts"
+import type { GearPreferenceChange } from "../../../shared/session/gear-preference.ts"
 import {
   BUILTIN_SESSION_DEFAULT,
   type SessionDefault,
@@ -52,6 +53,11 @@ export type SessionCommandPorts = {
    * いま動いているセッションの時刻は変えない（効くのは次に起こすセッションから）。
    */
   readonly rememberSpeakingPace: (speakingPace: SpeakingPace) => SessionEvent
+  /**
+   * 歯車の見た目と演出の設定を1欄だけ覚え、書いたあと読み直した5欄を運ぶ `gear-preferences-changed` を返す。
+   * 書き込みは失敗しても投げない口なので、返すイベントは常に1つ。
+   */
+  readonly rememberGearPreference: (change: GearPreferenceChange) => SessionEvent
   /**
    * 成果の日記書きを受けたときに、その日の成果を数え直す口。
    * 画面が出している手続き `achievement.day` と同じ数え方を使う。
@@ -233,6 +239,12 @@ export function sessionCommands(ports: SessionCommandPorts): SessionCommandTable
           progressNudge: input.progressNudge,
         }),
       failure: FRAME_ERROR_REASON.speakingPaceFailed,
+    },
+    // セッションを起こさないキャラクター画面からも同じページの口で届く。起こし直さず、覚えた値を画面へ流すだけ。
+    setGearPreference: {
+      kind: "write",
+      receive: (input) => ports.rememberGearPreference(input),
+      failure: FRAME_ERROR_REASON.gearPreferenceFailed,
     },
   }
 }

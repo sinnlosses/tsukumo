@@ -31,8 +31,8 @@ import {
   type PortraitMotion,
   type PortraitMotionInput,
 } from "../../../../../../domain/portrait-motion.ts"
-import { prefersReducedMotion } from "../../../../../../domain/reveal/reduced-motion.ts"
 import { useExternalSync } from "../../../../../../hooks/use-external-sync.ts"
+import { prefersReducedMotionNow } from "../../../../../../stores/gear-preference-seed.ts"
 import { useSession } from "../../../../../../stores/session.ts"
 import { useTurnSelection } from "../../../../../../stores/turn-selection.ts"
 import { nowEpochMilliseconds } from "../../../../../../utils/clock.ts"
@@ -121,7 +121,7 @@ export function useCharacterView(): CharacterViewModel {
     arrived.kind === "arrived" && arrivalMotion !== "still"
       ? { at: arrived.at, motion: arrivalMotion }
       : undefined
-  const [reducedMotion] = useState(() => prefersReducedMotion((query) => window.matchMedia(query)))
+  const [reducedMotion] = useState(prefersReducedMotionNow)
   const waitingDueAt = useWaitingLineDueAt()
   const { cards: welcomeCards } = useWelcomeCards()
   const welcomeHead = welcomeHeadOf(welcomeCards)

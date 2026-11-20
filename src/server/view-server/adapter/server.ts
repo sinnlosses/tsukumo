@@ -24,6 +24,7 @@ import { ITEM_ASSET_PATH_PREFIX } from "../../../shared/item/item-asset.ts"
 import { REPORT_IMAGE_PATH_PREFIX } from "../../../shared/report/report-image.ts"
 import { RPC_PATH } from "../../../shared/rpc.ts"
 import { PROMPT_IMAGE_PATH_PREFIX } from "../../../shared/session-driver/prompt-image.ts"
+import type { FoldedGearPreferences } from "../../../shared/session/gear-preference.ts"
 import { SESSION_TOKEN_QUERY_NAME } from "../../../shared/view-server/session-socket.ts"
 import { VENDOR_PATH_PREFIX } from "../../../shared/view-server/vendor-asset.ts"
 import { createRpcHandler, serveRpc } from "./rpc-bridge.ts"
@@ -84,6 +85,8 @@ export type ViewServerOptions = {
   readonly token: string
   /** 動作中（listen のあと）にサーバそのものが失敗したときに呼ぶ。stderr への1行は変えない。 */
   readonly onRuntimeError: (error: unknown) => void
+  /** ページの HTML に焼く歯車の設定を読む。ページを配るたびに呼ぶので、開き直すと最新の値が乗る。 */
+  readonly readGearPreferences: () => FoldedGearPreferences
 }
 
 export type ViewServer = {
@@ -177,7 +180,12 @@ const ROUTES = [
     method: "ANY",
     requiresToken: false,
     handle: (request, response, _path, { options }) =>
-      writeLayoutPage(request.url ?? LAYOUT_PATH, response, options.ui()),
+      writeLayoutPage(
+        request.url ?? LAYOUT_PATH,
+        response,
+        options.ui(),
+        options.readGearPreferences(),
+      ),
   },
   {
     match: { kind: "exact", path: uiScriptPath() },

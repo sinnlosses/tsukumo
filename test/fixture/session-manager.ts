@@ -13,6 +13,7 @@ import type { ExperienceMetricLog } from "../../src/server/usage/core/experience
 import type { TokenUsageLog } from "../../src/server/usage/core/token-usage.ts"
 import type { CharacterEdit } from "../../src/shared/contract/character-pack.ts"
 import type { UsageProposalKeyInput } from "../../src/shared/contract/usage-review.ts"
+import { BUILTIN_GEAR_PREFERENCES } from "../../src/shared/session/gear-preference.ts"
 import type { SessionEvent } from "../../src/shared/session/session-event.ts"
 import { type PreviousUsageReview, usageProposalKey } from "../../src/shared/usage/usage-review.ts"
 import type { CommandRouterPorts } from "../../src/wiring/router.ts"
@@ -107,6 +108,10 @@ function defaultSessionManagerOptions() {
       speakingPace,
       scope: "remembered",
     }),
+    rememberGearPreference: (change) => ({
+      kind: "gear-preferences-changed",
+      gearPreferences: { ...BUILTIN_GEAR_PREFERENCES, [change.field]: change.value },
+    }),
     editCharacter: () => Promise.resolve(undefined),
     createCharacter: () => Promise.resolve(undefined),
     deleteCharacter: () => Promise.resolve(undefined),
@@ -135,6 +140,7 @@ export function createSessionManager(
     rememberSessionDefault,
     rememberBackgroundModels,
     rememberSpeakingPace,
+    rememberGearPreference,
     readAchievementDay,
     diary,
     editCharacter,
@@ -154,6 +160,7 @@ export function createSessionManager(
         rememberSessionDefault,
         rememberBackgroundModels,
         rememberSpeakingPace,
+        rememberGearPreference,
         readAchievementDay,
         diary,
         reserveSession: () => Promise.resolve("reserved"),

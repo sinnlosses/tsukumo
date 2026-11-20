@@ -4,8 +4,8 @@
 
 import { useState } from "react"
 
-import { prefersReducedMotion } from "../../../../../../domain/reveal/reduced-motion.ts"
 import { useExternalSync } from "../../../../../../hooks/use-external-sync.ts"
+import { prefersReducedMotionNow } from "../../../../../../stores/gear-preference-seed.ts"
 import { nowEpochMilliseconds } from "../../../../../../utils/clock.ts"
 import {
   arrivingBubbleOf,
@@ -17,7 +17,7 @@ import { useSpeechArrival } from "../../../stores/speech-arrival.ts"
 
 export function useArrivingBubble(): ArrivingBubble {
   const arrival = useSpeechArrival((state) => state.arrival)
-  const [reducedMotion] = useState(() => prefersReducedMotion((query) => window.matchMedia(query)))
+  const [reducedMotion] = useState(prefersReducedMotionNow)
   const [now, setNow] = useState(() => nowEpochMilliseconds())
   useExternalSync(() => {
     if (arrival.kind === "none") {

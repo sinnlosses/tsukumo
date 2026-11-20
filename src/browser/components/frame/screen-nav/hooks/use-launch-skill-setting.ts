@@ -1,16 +1,13 @@
-// 帯の設定の、タスクの実行で呼ぶスキル。利用者の端末の設定（`localStorage`）。
+// 帯の設定の、タスクの実行で呼ぶスキル。覚え先は `~/.tsukumo/state.json`（手続き `setGearPreference`）。表示は届いた値に従う。
 // 確認ダイアログが開くたびに読むので、変えたあとに開く確認から効く。
 // 選択肢は「未設定」と、ワークフローが返す入口のスキル。
 
 import { useQuery } from "@tanstack/react-query"
-import { useState } from "react"
 
-import {
-  DEFAULT_LAUNCH_SKILL,
-  loadLaunchSkill,
-  saveLaunchSkill,
-} from "../../../../domain/launch-skill.ts"
+import { BUILTIN_GEAR_PREFERENCES } from "../../../../../shared/session/gear-preference.ts"
+import { useGearPreferences } from "../../../../stores/gear-preference-seed.ts"
 import { rpc } from "../../../../stores/rpc.ts"
+import { useSession } from "../../../../stores/session.ts"
 
 const UNSET_LABEL = "未設定"
 const UNKNOWN_SUFFIX = "（一覧に無い）"
@@ -34,18 +31,18 @@ type LaunchSkillControl = {
 }
 
 export function useLaunchSkillSetting(): LaunchSkillControl {
-  const [launchSkill, setLaunchSkill] = useState<string>(loadLaunchSkill)
+  const launchSkill = useGearPreferences().launchSkill
+  const dispatch = useSession((session) => session.dispatch)
 
   function onChange(value: string): void {
-    setLaunchSkill(value)
-    saveLaunchSkill(value)
+    void dispatch.session.setGearPreference({ field: "launchSkill", value })
   }
 
   return {
     launchSkill: { value: launchSkill, onChange },
-    changedCount: launchSkill === DEFAULT_LAUNCH_SKILL ? 0 : 1,
+    changedCount: launchSkill === BUILTIN_GEAR_PREFERENCES.launchSkill ? 0 : 1,
     onReset: () => {
-      onChange(DEFAULT_LAUNCH_SKILL)
+      onChange(BUILTIN_GEAR_PREFERENCES.launchSkill)
     },
   }
 }

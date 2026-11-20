@@ -2,10 +2,8 @@ import { act, cleanup, fireEvent, render } from "@testing-library/react"
 import type { ReactElement } from "react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
-import { saveRevealSpeed } from "../../../../src/browser/domain/reveal-speed.ts"
 import { useReportReveal } from "../../../../src/browser/domain/reveal/use-report-reveal.ts"
-
-const REVEAL_SPEED_STORAGE_KEY = "tsukumo-reveal-speed:v1"
+import type { RevealSpeed } from "../../../../src/shared/session/gear-preference.ts"
 
 // ポンの見え方（animation）は実ブラウザでしか確かめられないので、ここで守るのは隠す・順に出す・打ち切るの配線だけ。
 
@@ -20,8 +18,17 @@ const SECTION_TEXT = "架空の本文。".repeat(15)
 function Probe(props: {
   readonly reveal: boolean
   readonly sections: readonly string[]
+  readonly revealSpeed?: RevealSpeed
 }): ReactElement {
-  const { rootRef, revealing } = useReportReveal(props.reveal, () => {}, POP_CLASS_NAME)
+  const { rootRef, revealing } = useReportReveal(
+    props.reveal,
+    () => {},
+    POP_CLASS_NAME,
+    () => ({
+      revealSpeed: props.revealSpeed ?? "standard",
+      reducedMotion: false,
+    }),
+  )
 
   return (
     <div data-testid="root" ref={rootRef} data-probe-revealing={String(revealing)}>
@@ -45,8 +52,10 @@ function Probe(props: {
   )
 }
 
-function renderProbe(reveal: boolean, count = 3): void {
-  render(<Probe reveal={reveal} sections={Array(count).fill(SECTION_TEXT)} />)
+function renderProbe(reveal: boolean, count = 3, revealSpeed: RevealSpeed = "standard"): void {
+  render(
+    <Probe reveal={reveal} sections={Array(count).fill(SECTION_TEXT)} revealSpeed={revealSpeed} />,
+  )
 }
 
 function root(): HTMLElement {
@@ -85,7 +94,6 @@ beforeEach(() => {
 afterEach(() => {
   cleanup()
   vi.useRealTimers()
-  localStorage.removeItem(REVEAL_SPEED_STORAGE_KEY)
 })
 
 describe("useReportReveal（塊を順にポンで出す配線）", () => {
@@ -115,8 +123,7 @@ describe("useReportReveal（塊を順にポンで出す配線）", () => {
   })
 
   it("「速い」なら間隔は標準の半分", () => {
-    saveRevealSpeed("fast")
-    renderProbe(true)
+    renderProbe(true, 3, "fast")
 
     vi.advanceTimersByTime(STANDARD_INTERVAL_MS / 2)
     expect(states()).toEqual(["素", "出た", "出た", "隠れている", "隠れている"])
@@ -203,8 +210,7 @@ describe("useReportReveal（演出中かの状態）", () => {
   })
 
   it("速さが「切る」なら演出せず偽", () => {
-    saveRevealSpeed("off")
-    renderProbe(true)
+    renderProbe(true, 3, "off")
 
     expect(revealing()).toBe("false")
   })
@@ -217,10 +223,8 @@ describe("useReportReveal（演出中かの状態）", () => {
 })
 
 describe("useReportReveal（書き上げる演出の速さが「切る」のとき）", () => {
-  it("演出の相手でも、マウント時点で「切る」が保存されていれば何も隠さない", () => {
-    saveRevealSpeed("off")
-
-    render(<Probe reveal={true} sections={Array(3).fill(SECTION_TEXT)} />)
+  it("演出の相手でも、マウント時点で「切る」なら何も隠さない", () => {
+    renderProbe(true, 3, "off")
 
     expect(root().hasAttribute("data-revealing")).toBe(false)
     expect(states()).toEqual(["素", "素", "素", "素", "素"])

@@ -10,18 +10,16 @@ import { typedElement } from "../../../../typed-element.ts"
 import { EMPTY_NAV_DRAWER_SLOTS } from "../../../nav-drawer-slot.tsx"
 import { stubPhoneWidth } from "../../../phone-width.ts"
 import { queryClientWrapper } from "../../../query-client.tsx"
-import { putSession, type CommandSpy } from "../../../session-store.ts"
+import { putSession, type CommandSpy, type SentCommand } from "../../../session-store.ts"
 
 // 設定のダイアログの下の帯の「このページを既定に戻す」。開いているページの項目だけを戻す。
 
-const COLOR_STORAGE_KEY = "tsukumo-appearance-color:v1"
 const COLOR_TOKENS = ["--ground", "--surface", "--ink"] as const
 
 let themeStyleElement: HTMLStyleElement | undefined
 
 beforeEach(() => {
   stubPhoneWidth(true)
-  localStorage.removeItem(COLOR_STORAGE_KEY)
   themeStyleElement = document.createElement("style")
   themeStyleElement.textContent =
     ":root { --ground: #191720; --surface: #221f2b; --ink: #e8e3ea; --accent: #f2b0a0; }"
@@ -31,7 +29,6 @@ beforeEach(() => {
 afterEach(() => {
   cleanup()
   vi.restoreAllMocks()
-  localStorage.removeItem(COLOR_STORAGE_KEY)
   for (const token of COLOR_TOKENS) {
     document.documentElement.style.removeProperty(token)
   }
@@ -90,7 +87,10 @@ describe("設定の「既定に戻す」（ページごと）", () => {
   })
 
   it("見た目のページで押すと3色とも上書きが外れ、操作子も既定を指す", async () => {
-    renderScreenNav()
+    const sent: SentCommand[] = []
+    renderScreenNav({}, (command) => {
+      sent.push(command)
+    })
     openGear()
 
     fireEvent.change(groundInput(), { target: { value: "#101010" } })
@@ -101,11 +101,13 @@ describe("設定の「既定に戻す」（ページごと）", () => {
     expect(readToken("--ground")).toBe("#191720")
     expect(groundInput().value).toBe("#191720")
     await vi.waitFor(() => {
-      expect(JSON.parse(localStorage.getItem(COLOR_STORAGE_KEY) ?? "{}")).toEqual({
-        ground: undefined,
-        surface: undefined,
-        ink: undefined,
-      })
+      expect(
+        sent.filter(
+          (command) =>
+            command.procedure === "session.setGearPreference" &&
+            command["field"] === "appearanceColor",
+        ),
+      ).toContainEqual(expect.objectContaining({ value: {} }))
     })
   })
 

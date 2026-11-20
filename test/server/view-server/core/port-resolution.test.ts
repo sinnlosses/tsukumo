@@ -11,6 +11,7 @@ import {
   VIEW_PORT_FALLBACK_ATTEMPTS,
 } from "../../../../src/server/view-server/core/port-resolution.ts"
 import { UNREADABLE_FILE_EXCERPT } from "../../../../src/shared/repository/file-excerpt.ts"
+import { foldGearPreferences } from "../../../../src/shared/session/gear-preference.ts"
 import { UNAVAILABLE_SESSION_DIGEST } from "../../../../src/shared/session/session-digest.ts"
 import { UNAVAILABLE_CONTEXT_USAGE } from "../../../../src/shared/usage/context-usage.ts"
 import { UNAVAILABLE_PLAN_USAGE } from "../../../../src/shared/usage/plan-usage.ts"
@@ -56,6 +57,7 @@ const emptyViewServerOptions: ViewServerOptions = {
   }),
   token: "架空の起動トークン",
   onRuntimeError: () => {},
+  readGearPreferences: () => foldGearPreferences({}),
 }
 
 /** `node:http` の `listen` が投げるエラーに似せた、`code` 付きのエラーを作る。 */

@@ -9,6 +9,12 @@ import {
   parsePromptImage,
   promptImageIdSchema,
 } from "../../../shared/session-driver/prompt-image.ts"
+import {
+  APPEARANCE_COLOR_TOKEN_NAME,
+  GEAR_PREFERENCE_SEED_ELEMENT_ID,
+  type AppearanceColorOverride,
+  type FoldedGearPreferences,
+} from "../../../shared/session/gear-preference.ts"
 import { vendorAssetPath } from "../../../shared/view-server/vendor-asset.ts"
 import type { UiBundle } from "./build/bundle.ts"
 import type {
@@ -43,17 +49,23 @@ export function styleSheetPath(): string {
  * ページを配る。`dev` のときは開発サーバが HMR の client を差し込んだものを配り、
  * 差し込めなかったら 500 にする。
  */
-export function writeLayoutPage(url: string, response: ServerResponse, ui: ViewUi): void {
+export function writeLayoutPage(
+  url: string,
+  response: ServerResponse,
+  ui: ViewUi,
+  gearPreferences: FoldedGearPreferences,
+): void {
   if (ui.kind === "bundle") {
     writeHtml(
       response,
-      buildLayoutPage([styleSheetPath()], uiScriptPath(), PRELOADED_CHUNK_NAMES),
+      buildLayoutPage(gearPreferences, [styleSheetPath()], uiScriptPath(), PRELOADED_CHUNK_NAMES),
       PAGE_CONTENT_SECURITY_POLICY.bundle,
     )
     return
   }
 
-  ui.devServer.transformPage(url, buildLayoutPage([], ui.devServer.entryScriptPath)).then(
+  const page = buildLayoutPage(gearPreferences, [], ui.devServer.entryScriptPath)
+  ui.devServer.transformPage(url, page).then(
     (html) => writeHtml(response, html, PAGE_CONTENT_SECURITY_POLICY.dev),
     () => {
       response.writeHead(500, { "content-type": "text/plain; charset=utf-8" })
@@ -255,6 +267,7 @@ const CHARACTER_ASSET_CONTENT_SECURITY_POLICY =
  * メインビュー・キャラビュー・サイドバー・入力欄のすべてが React の部品で、ブラウザ側の入口が1つの root として mount する。
  */
 function buildLayoutPage(
+  gearPreferences: FoldedGearPreferences,
   ownStyleSheets: readonly string[],
   script: string,
   preloadedChunkNames: readonly string[] = [],
@@ -269,7 +282,7 @@ function buildLayoutPage(
   ].join("\n")
 
   return `<!doctype html>
-<html lang="ja">
+<html lang="ja"${appearanceColorStyleAttribute(gearPreferences.values.appearanceColor)}>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content">
@@ -277,11 +290,32 @@ function buildLayoutPage(
 ${styleSheetLinks}
 </head>
 <body>
+<script type="application/json" id="${GEAR_PREFERENCE_SEED_ELEMENT_ID}">${scriptSafeJson(gearPreferences)}</script>
 <div id="app"></div>
 <script type="module" src="${script}"></script>
 </body>
 </html>
 `
+}
+
+/**
+ * 整えた3色を `<html>` の `style` に焼く属性。ブラウザのスクリプトが動く前の最初の描画も、この色で塗られる。
+ * 値は `#rrggbb` に検査済みなので、属性の中でそのまま書ける。上書きが無ければ属性を付けない。
+ */
+function appearanceColorStyleAttribute(color: AppearanceColorOverride): string {
+  const declarations = (["ground", "surface", "ink"] as const).flatMap((key) => {
+    const value = color[key]
+    return value === undefined ? [] : [`${APPEARANCE_COLOR_TOKEN_NAME[key]}:${value}`]
+  })
+  return declarations.length === 0 ? "" : ` style="${declarations.join(";")}"`
+}
+
+/**
+ * `<script>` の中に置ける JSON。`<` を `<` にしておかないと、値に `</script>` があったところで塊が切れる。
+ * 実行されない `type="application/json"` なので、CSP の `script-src` には当たらない。
+ */
+function scriptSafeJson(value: unknown): string {
+  return JSON.stringify(value).replaceAll("<", "\\u003c")
 }
 
 function writeHtml(response: ServerResponse, html: string, contentSecurityPolicy: string): void {

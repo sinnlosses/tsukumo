@@ -93,6 +93,7 @@ async function start(openFileResult = true): Promise<Started> {
         rememberSessionDefault: unexpected,
         rememberBackgroundModels: unexpected,
         rememberSpeakingPace: unexpected,
+        rememberGearPreference: unexpected,
         readAchievementDay: unexpected,
         diary: { kind: "dont-write" },
         reserveSession: unexpected,

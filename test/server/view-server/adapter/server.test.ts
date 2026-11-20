@@ -1,6 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
 
+import { parseGearPreferenceSeed } from "../../../../src/browser/domain/gear-preference-seed.ts"
 import { startViewServer } from "../../../../src/server/view-server/adapter/server.ts"
+import {
+  foldGearPreferences,
+  type FoldedGearPreferences,
+} from "../../../../src/shared/session/gear-preference.ts"
 import { createRpcRouter } from "../../../../src/wiring/router.ts"
 import {
   closeRunningView,
@@ -44,12 +49,22 @@ function pageHtml(links: readonly string[], script: string): string {
     ...links,
     "</head>",
     "<body>",
+    `<script type="application/json" id="tsukumo-gear-preferences">${JSON.stringify(foldGearPreferences({}))}</script>`,
     '<div id="app"></div>',
     `<script type="module" src="${script}"></script>`,
     "</body>",
     "</html>",
     "",
   ].join("\n")
+}
+
+/** ブラウザが読むのと同じ読み方で、ページから塊を読む。 */
+function seedOf(body: string): FoldedGearPreferences {
+  return parseGearPreferenceSeed(
+    /<script type="application\/json" id="tsukumo-gear-preferences">(.*?)<\/script>/.exec(
+      body,
+    )?.[1],
+  )
 }
 
 describe("startViewServer", () => {
@@ -83,6 +98,65 @@ describe("startViewServer", () => {
         "/assets/ui.js",
       ),
     )
+  })
+
+  it("/ のページに、配るたびに読んだ歯車の設定を JSON の塊として焼く", async () => {
+    let launchSkill = "next-task"
+    const server = await startView(
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      () => foldGearPreferences({ revealSpeed: "fast", launchSkill }),
+    )
+
+    const first = seedOf(await (await fetch(server.layoutUrl)).text())
+    launchSkill = "plan-tasks"
+    const second = seedOf(await (await fetch(server.layoutUrl)).text())
+
+    expect(first.values.revealSpeed).toBe("fast")
+    expect(first.values.launchSkill).toBe("next-task")
+    expect(first.stored.revealSpeed).toBe(true)
+    expect(first.stored.appearanceColor).toBe(false)
+    expect(second.values.launchSkill).toBe("plan-tasks")
+  })
+
+  it("整えた色だけを <html> の style に焼き、整えていなければ style を付けない", async () => {
+    const tinted = await startView(
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      () => foldGearPreferences({ appearanceColor: { ground: "#203040", ink: "#f0f0f0" } }),
+    )
+    const plain = await startView()
+
+    const tintedBody = await (await fetch(tinted.layoutUrl)).text()
+    const plainBody = await (await fetch(plain.layoutUrl)).text()
+
+    expect(tintedBody).toContain('<html lang="ja" style="--ground:#203040;--ink:#f0f0f0">')
+    expect(plainBody).toContain('<html lang="ja">')
+  })
+
+  it("値に </script> を含んでも、塊はそこで切れない", async () => {
+    const server = await startView(
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      () => foldGearPreferences({ launchSkill: "</script><script>alert(1)</script>" }),
+    )
+
+    const body = await (await fetch(server.layoutUrl)).text()
+
+    expect(body.match(/<\/script>/g)).toHaveLength(2)
+    expect(seedOf(body).values.launchSkill).toBe("</script><script>alert(1)</script>")
   })
 
   it("/ の応答は、スクリプトを同じオリジンのファイルだけに絞る CSP を付ける", async () => {
@@ -173,6 +247,7 @@ describe("startViewServer", () => {
       rpcRouter: createRpcRouter(EMPTY_RPC_PORTS),
       token: TOKEN,
       onRuntimeError: () => {},
+      readGearPreferences: () => foldGearPreferences({}),
     })
     trackView(server)
     const origin = viewOrigin(server)

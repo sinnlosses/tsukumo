@@ -4,6 +4,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { ScreenNav } from "../../../../../src/browser/components/frame/screen-nav/screen-nav.tsx"
 import { useNavDrawer } from "../../../../../src/browser/stores/nav-drawer.ts"
 import {
+  BUILTIN_GEAR_PREFERENCES,
+  hexColorSchema,
+} from "../../../../../src/shared/session/gear-preference.ts"
+import {
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../../../../src/shared/session/session-state.ts"
@@ -11,24 +15,29 @@ import { typedElement } from "../../../../typed-element.ts"
 import { EMPTY_NAV_DRAWER_SLOTS } from "../../../nav-drawer-slot.tsx"
 import { stubPhoneWidth } from "../../../phone-width.ts"
 import { queryClientWrapper } from "../../../query-client.tsx"
-import { putSession, type CommandSpy } from "../../../session-store.ts"
+import { putSession, type CommandSpy, type SentCommand } from "../../../session-store.ts"
 
 // 帯の右端の歯車で開く設定（docs/architecture/screen-design.md「設定の置き場所」「画面のナビゲーション」）。
 // いまここにある群は「画面の色」・
 // 「新しいセッションの既定」・「書き上げる演出の速さ」の3つ。
-// 保存の仕方は `saveAppearanceColorOverride` のままなので、鍵も検証も
-// 同じものを見ている。演出の速さの保存は `saveRevealSpeed`（同じ鍵）。
+// 色と演出の速さを覚えるのはサーバ（手続き `session.setGearPreference`）。
 
-const COLOR_STORAGE_KEY = "tsukumo-appearance-color:v1"
 const COLOR_TOKENS = ["--ground", "--surface", "--ink"] as const
-const REVEAL_SPEED_STORAGE_KEY = "tsukumo-reveal-speed:v1"
 
 let themeStyleElement: HTMLStyleElement | undefined
 
+/** 送った手続きのうち、色を覚えさせたものの値。 */
+function sentColors(sent: readonly SentCommand[]): readonly unknown[] {
+  return sent
+    .filter(
+      (command) =>
+        command.procedure === "session.setGearPreference" && command["field"] === "appearanceColor",
+    )
+    .map((command) => command["value"])
+}
+
 beforeEach(() => {
   stubPhoneWidth(true)
-  localStorage.removeItem(COLOR_STORAGE_KEY)
-  localStorage.removeItem(REVEAL_SPEED_STORAGE_KEY)
   for (const token of COLOR_TOKENS) {
     document.documentElement.style.removeProperty(token)
   }
@@ -44,8 +53,6 @@ afterEach(() => {
   vi.restoreAllMocks()
   useNavDrawer.setState(useNavDrawer.getInitialState(), true)
   window.location.hash = ""
-  localStorage.removeItem(COLOR_STORAGE_KEY)
-  localStorage.removeItem(REVEAL_SPEED_STORAGE_KEY)
   for (const token of COLOR_TOKENS) {
     document.documentElement.style.removeProperty(token)
   }
@@ -211,26 +218,28 @@ describe("設定の歯車（帯の右端）", () => {
     expect(band.style.backgroundColor).toBe("#101010")
   })
 
-  it("色を変えると documentElement へすぐ反映し、少し待つと localStorage に残る", async () => {
-    renderScreenNav()
+  it("色を変えると documentElement へすぐ反映し、少し待つと覚えさせる", async () => {
+    const sent: SentCommand[] = []
+    renderScreenNav({}, (command) => {
+      sent.push(command)
+    })
     fireEvent.click(gear())
 
     fireEvent.change(colorInput("地の色"), { target: { value: "#101010" } })
 
     expect(readToken("--ground")).toBe("#101010")
-    expect(localStorage.getItem(COLOR_STORAGE_KEY)).toBeNull()
+    expect(sentColors(sent)).toEqual([])
 
     await vi.waitFor(() => {
-      expect(JSON.parse(localStorage.getItem(COLOR_STORAGE_KEY) ?? "{}")).toEqual({
-        ground: "#101010",
-        surface: undefined,
-        ink: undefined,
-      })
+      expect(sentColors(sent)).toEqual([{ ground: "#101010" }])
     })
   })
 
-  it("連続して色を変えても、書き込みは最後の値の1回にまとまる", async () => {
-    renderScreenNav()
+  it("連続して色を変えても、送るのは最後の値の1回にまとまる", async () => {
+    const sent: SentCommand[] = []
+    renderScreenNav({}, (command) => {
+      sent.push(command)
+    })
     fireEvent.click(gear())
     const input = colorInput("領域の色")
 
@@ -239,11 +248,7 @@ describe("設定の歯車（帯の右端）", () => {
     fireEvent.change(input, { target: { value: "#333333" } })
 
     await vi.waitFor(() => {
-      expect(JSON.parse(localStorage.getItem(COLOR_STORAGE_KEY) ?? "{}")).toEqual({
-        ground: undefined,
-        surface: "#333333",
-        ink: undefined,
-      })
+      expect(sentColors(sent)).toEqual([{ surface: "#333333" }])
     })
   })
 
@@ -251,7 +256,10 @@ describe("設定の歯車（帯の右端）", () => {
   it("ground を ink と同じ色にしようとすると受け取らず、既定のまま", async () => {
     vi.useFakeTimers()
     try {
-      renderScreenNav()
+      const sent: SentCommand[] = []
+      renderScreenNav({}, (command) => {
+        sent.push(command)
+      })
       fireEvent.click(gear())
 
       // 疑似 :root の --ink は #e8e3ea。同じ値にしようとする。
@@ -260,37 +268,40 @@ describe("設定の歯車（帯の右端）", () => {
       expect(readToken("--ground")).toBe("#191720")
       await vi.advanceTimersByTimeAsync(250)
 
-      expect(JSON.parse(localStorage.getItem(COLOR_STORAGE_KEY) ?? "{}")).toEqual({
-        ground: undefined,
-        surface: undefined,
-        ink: undefined,
-      })
+      expect(sentColors(sent)).toEqual([])
     } finally {
       vi.useRealTimers()
     }
   })
 
-  it("開いただけでは localStorage に書き込まない", async () => {
+  it("開いただけでは覚えさせない", async () => {
     vi.useFakeTimers()
     try {
-      renderScreenNav()
+      const sent: SentCommand[] = []
+      renderScreenNav({}, (command) => {
+        sent.push(command)
+      })
       fireEvent.click(gear())
 
       await vi.advanceTimersByTimeAsync(250)
 
-      expect(localStorage.getItem(COLOR_STORAGE_KEY)).toBeNull()
+      expect(sentColors(sent)).toEqual([])
     } finally {
       vi.useRealTimers()
     }
   })
 
-  // 保存済みの上書きを `documentElement` へ差すのは入口（`applyAppearanceColorOverride` の起動時の呼び出し）なので、
+  // 覚えた上書きを `documentElement` へ差すのは入口（`applyGearPreferences` の起動時の呼び出し）なので、
   // ここではその後の状態（= リロードして戻ってきた形）を作ってから開く。
-  it("保存済みの上書きが、開いたときの操作子の値に出る", () => {
-    localStorage.setItem(COLOR_STORAGE_KEY, JSON.stringify({ ground: "#0a0a0a" }))
+  it("覚えた上書きが、開いたときの操作子の値に出る", () => {
     document.documentElement.style.setProperty("--ground", "#0a0a0a")
 
-    renderScreenNav()
+    renderScreenNav({
+      gearPreferences: {
+        ...BUILTIN_GEAR_PREFERENCES,
+        appearanceColor: { ground: hexColorSchema.parse("#0a0a0a") },
+      },
+    })
     fireEvent.click(gear())
 
     expect(colorInput("地の色").value).toBe("#0a0a0a")
@@ -501,23 +512,24 @@ function defaultSelect(label: string): HTMLSelectElement {
   return controlOf(label, HTMLSelectElement, `ラベル「${label}」が結ぶ <select>`)
 }
 
-// 書き上げる演出の速さ（docs/architecture/screen-design.md「設定の置き場所」。`saveRevealSpeed`）。利用者の設定
-// なので色と同じ `localStorage`（保存先は違う鍵）。
+// 書き上げる演出の速さ（docs/architecture/screen-design.md「設定の置き場所」）。覚えるのはサーバで、表示は届いた値に従う。
 describe("設定の歯車（書き上げる演出の速さ）", () => {
-  it("選ぶとすぐ localStorage に保存される（色と違いデバウンスしない）", () => {
-    renderScreenNav()
+  it("選ぶとすぐ session.setGearPreference を送る（色と違いまとめない）", () => {
+    const sent: SentCommand[] = []
+    renderScreenNav({}, (command) => {
+      sent.push(command)
+    })
     openFace("演出")
 
     fireEvent.change(defaultSelect("書き上げる速さ"), { target: { value: "fast" } })
 
-    expect(localStorage.getItem(REVEAL_SPEED_STORAGE_KEY)).toBe("fast")
+    expect(sent).toEqual([
+      { procedure: "session.setGearPreference", field: "revealSpeed", value: "fast" },
+    ])
   })
 
-  // 保存済みの選択を `useState` の初期値として読むだけなので、リロードして開き直した形を作る。
-  it("保存済みの選択が、開いたときの操作子の値に出る（リロードしても残る）", () => {
-    localStorage.setItem(REVEAL_SPEED_STORAGE_KEY, "fast")
-
-    renderScreenNav()
+  it("届いた選択が、開いたときの操作子の値に出る", () => {
+    renderScreenNav({ gearPreferences: { ...BUILTIN_GEAR_PREFERENCES, revealSpeed: "fast" } })
     openFace("演出")
 
     expect(defaultSelect("書き上げる速さ").value).toBe("fast")

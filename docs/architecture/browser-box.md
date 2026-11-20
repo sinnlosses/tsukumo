@@ -53,7 +53,7 @@
   `hooks/use-before-paint-sync.ts` はラッパーの置き場として規約が名指ししているので、読み手が1つの領域でも
   `hooks/` に残す。テストの `KEPT_SHARED_FILES`）
 - **`domain/` と `lib/` の線は、tsukumo の語彙を名乗るか、固有のライブラリ（`orpc` のような）を
-  包むかで引く。** `domain/appearance-color.ts` は `localStorage` を包むが名前が指すのは**画面の色**
+  包むかで引く。** `domain/first-note.ts` は `localStorage` を包むが名前が指すのは**最初の一度だけ出す案内**
   なので `domain/`、`domain/tool-summary.ts` は純関数で `remeda`（用途を問わない汎用ライブラリ）しか
   使わず、`shared/` の型にも依存する（`utils/` の歯止め3を満たさない）ので、`lib/` ではなく `domain/`
 - エッジの検査は `.dependency-cruiser.cjs`（領域と置かれる機能の一覧が横のエッジを、箱の一覧が縦のエッジを落とす）。1機能しか読まない検査と `components/` の形は `test/architecture/browser-box.test.ts`
