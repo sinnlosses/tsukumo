@@ -1,0 +1,49 @@
+/* 演出の面の頭の見本。立ち絵を左に小さく、吹き出しを右に置く。 */
+.sample {
+  display: grid;
+  gap: var(--stack-block);
+  padding-bottom: var(--stack-tight);
+}
+.stage {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--inline-group);
+}
+.portrait {
+  flex: none;
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+}
+.bubble {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  min-height: 3rem;
+  padding: var(--inline-control) var(--inline-group);
+  border-radius: var(--radius-lg) var(--radius-lg) var(--radius-lg) var(--radius-sm);
+  background: var(--rule-soft);
+  color: var(--ink);
+  font-size: var(--font-label);
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.foot {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--inline-group);
+  flex-wrap: wrap;
+}
+.summary {
+  margin: 0;
+}
+.again {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-size: var(--font-label);
+  cursor: pointer;
+}

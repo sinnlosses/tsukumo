@@ -7,6 +7,7 @@ import type { BackgroundModelRole } from "../../../../../shared/session/backgrou
 import { SESSION_DEFAULT_PERMISSION_MODES } from "../../../../../shared/session/session-default.ts"
 import { EFFORT_PLACEHOLDER_VALUE } from "../../../../domain/effort-label.ts"
 import { REVEAL_SPEED_LABELS } from "../../../../domain/reveal-speed.ts"
+import { prefersReducedMotion } from "../../../../domain/reveal/reduced-motion.ts"
 import {
   RunSettingName,
   effortSelectOptions,
@@ -28,6 +29,7 @@ import {
 } from "../domain/setting-label.ts"
 import { useLaunchSkillOptions } from "../hooks/use-launch-skill-setting.ts"
 import type { ScreenNavSettings } from "../hooks/use-settings.ts"
+import { ScreenNavSettingsRevealSample } from "./screen-nav-settings-reveal-sample.tsx"
 import { ScreenNavSettingsRow } from "./screen-nav-settings-row.tsx"
 import styles from "./screen-nav-settings.module.css"
 
@@ -198,8 +200,18 @@ export function ScreenNavSettingsRevealFace(props: ScreenNavSettingsProps): Reac
   const { settings } = props
   const fieldId = useId()
 
+  const reducedMotion = prefersReducedMotion(
+    (query) => window.matchMedia(query),
+    settings.motion.value,
+  )
+
   return (
     <>
+      <ScreenNavSettingsRevealSample
+        revealSpeed={settings.revealSpeed.value}
+        reducedMotion={reducedMotion}
+        pace={settings.speakingPace.values}
+      />
       <ScreenNavSettingsRow
         itemKey="revealSpeed"
         item={settings.items.revealSpeed}
