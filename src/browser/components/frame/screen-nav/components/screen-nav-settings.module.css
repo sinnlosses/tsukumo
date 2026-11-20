@@ -32,6 +32,10 @@
 .screen-nav-settings-heading ~ .screen-nav-settings-heading {
   margin-top: var(--space-md);
 }
+/* 畳んだ裏方のモデルの1行。上の群との間を空ける。 */
+.screen-nav-settings-background {
+  padding-top: var(--stack-block);
+}
 /* ラベルと操作子の2列。並べ・間隔・揃えは `HStack` が持つ。 */
 .screen-nav-settings-row {
   position: relative;

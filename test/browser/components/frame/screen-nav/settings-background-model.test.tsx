@@ -3,7 +3,10 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import { ScreenNav } from "../../../../../src/browser/components/frame/screen-nav/screen-nav.tsx"
 import { useNavDrawer } from "../../../../../src/browser/stores/nav-drawer.ts"
-import { INITIAL_SESSION_STATE } from "../../../../../src/shared/session/session-state.ts"
+import {
+  INITIAL_SESSION_STATE,
+  type SessionState,
+} from "../../../../../src/shared/session/session-state.ts"
 import { typedElement } from "../../../../typed-element.ts"
 import { EMPTY_NAV_DRAWER_SLOTS } from "../../../nav-drawer-slot.tsx"
 import { stubPhoneWidth } from "../../../phone-width.ts"
@@ -22,16 +25,19 @@ afterEach(() => {
   window.location.hash = ""
 })
 
-function openedDialog(sent: unknown[]): HTMLElement {
+function openedDialog(
+  sent: unknown[],
+  backgroundModels: SessionState["backgroundModels"] = {
+    recommendation: "haiku",
+    welcomeGreeting: "sonnet",
+    chatConsolidation: "haiku",
+    characterGeneration: "opus",
+  },
+): HTMLElement {
   putSession(
     {
       ...INITIAL_SESSION_STATE,
-      backgroundModels: {
-        recommendation: "haiku",
-        welcomeGreeting: "sonnet",
-        chatConsolidation: "haiku",
-        characterGeneration: "opus",
-      },
+      backgroundModels,
     },
     (command) => sent.push(command),
   )
@@ -56,7 +62,29 @@ function select(dialog: HTMLElement, label: string): HTMLSelectElement {
   )
 }
 
+function backgroundFold(dialog: HTMLElement): HTMLDetailsElement {
+  return typedElement(
+    within(dialog)
+      .getByText(/^裏方のモデル\s*画面の小さな文を作るモデル/)
+      .closest("details"),
+    HTMLDetailsElement,
+    "裏方のモデルの区画",
+  )
+}
+
 describe("設定の歯車（裏方のモデル）", () => {
+  it("既定のままなら畳まれ、既定と違う値があれば開いて出る", () => {
+    const folded = openedDialog([], INITIAL_SESSION_STATE.backgroundModels)
+    expect(backgroundFold(folded).open).toBe(false)
+    cleanup()
+
+    const opened = openedDialog([], {
+      ...INITIAL_SESSION_STATE.backgroundModels,
+      welcomeGreeting: "haiku",
+    })
+    expect(backgroundFold(opened).open).toBe(true)
+  })
+
   it("届いた値を役ごとに出す", () => {
     const dialog = openedDialog([])
 

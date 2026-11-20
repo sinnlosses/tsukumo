@@ -1,10 +1,29 @@
 /* 設定のダイアログの面の枠。面の名前と中身はスクロールし、下の帯は面の下端に留まる。 */
 
+/* 下へ続くとき（スクロールできるとき）だけ、下端の 28px を薄くぼかす。
+   スクロールしきるまでの最後の 28px で消える。スクロールの時間軸が無い環境では印が出ない。 */
+@property --face-fade {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+@keyframes face-fade-out {
+  from {
+    --face-fade: 28px;
+  }
+  to {
+    --face-fade: 0px;
+  }
+}
 .face-scroll {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
   padding: var(--space-2xl) var(--space-3xl);
+  mask-image: linear-gradient(to bottom, black calc(100% - var(--face-fade)), transparent);
+  animation: face-fade-out linear both;
+  animation-timeline: scroll(self);
+  animation-range: calc(100% - 28px) 100%;
 }
 .face-title {
   margin: 0 0 var(--space-xs);

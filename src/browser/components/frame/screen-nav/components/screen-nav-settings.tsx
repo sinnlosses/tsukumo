@@ -1,7 +1,7 @@
 // 設定の面のうち、新しいセッション・演出・タスクの実行の中身。面の表は `FACES`。
 // id は `useId()` でこの器ごとに振る（`<label for>` が指す先が重ならないようにする）。
 
-import { useId, type ReactElement } from "react"
+import { useId, useState, type ReactElement } from "react"
 
 import type { BackgroundModelRole } from "../../../../../shared/session/background-model.ts"
 import { SESSION_DEFAULT_PERMISSION_MODES } from "../../../../../shared/session/session-default.ts"
@@ -17,6 +17,8 @@ import {
   RunSettingSelect,
   type RunSettingSelectOption,
 } from "../../../../features/run-setting/run-setting-select.tsx"
+import { useSettingsRequest } from "../../../../stores/settings-request.ts"
+import { Disclosure } from "../../../ui/disclosure/disclosure.tsx"
 import { Text } from "../../../ui/text/text.tsx"
 import { MOTION_PREFERENCE_LABELS } from "../domain/motion-preference.ts"
 import {
@@ -50,6 +52,13 @@ const BACKGROUND_MODEL_LABELS = [
 export function ScreenNavSettingsSessionDefaultFace(props: ScreenNavSettingsProps): ReactElement {
   const { settings } = props
   const fieldId = useId()
+  const [backgroundOpen, setBackgroundOpen] = useState(() => {
+    const requestedKey = useSettingsRequest.getState().itemKey
+    return (
+      BACKGROUND_MODEL_LABELS.some(([role]) => settings.items[`background-${role}`].changed) ||
+      BACKGROUND_MODEL_LABELS.some(([role]) => requestedKey === `background-${role}`)
+    )
+  })
 
   return (
     <>
@@ -141,40 +150,45 @@ export function ScreenNavSettingsSessionDefaultFace(props: ScreenNavSettingsProp
           onChange={settings.sessionDefault.onChangeFigurePreference}
         />
       </ScreenNavSettingsRow>
-      <Text
-        element="p"
-        size="label"
-        tone="ink-quiet"
-        weight="inherit"
-        className={styles["screen-nav-settings-heading"]}
+      <Disclosure
+        open={backgroundOpen}
+        onToggle={(event) => {
+          setBackgroundOpen(event.currentTarget.open)
+        }}
+        gap="block"
+        hiddenOnNarrow={false}
+        summaryTone="ink-quiet"
+        summarySize="label"
+        className={styles["screen-nav-settings-background"]}
+        summaryClassName=""
+        summary={`裏方のモデル　画面の小さな文を作るモデル（${BACKGROUND_MODEL_LABELS.length}件・既定のままでよい）`}
       >
-        裏方のモデル
-      </Text>
-      {BACKGROUND_MODEL_LABELS.map(([role, label]) => (
-        <ScreenNavSettingsRow
-          key={role}
-          itemKey={`background-${role}`}
-          item={settings.items[`background-${role}`]}
-          name={<label htmlFor={`${fieldId}-background-${role}`}>{label}</label>}
-        >
-          <RunSettingSelect
-            id={`${fieldId}-background-${role}`}
-            ariaLabel={`裏方のモデル（${label}）`}
-            heading={label}
-            value={settings.backgroundModels.values[role]}
-            options={modelSelectOptions(settings.sessionDefault.modelEffortSupport)}
-            disabled={false}
-            danger={false}
-            layout="list"
-            mouth="field"
-            title={undefined}
-            dot="none"
-            onChange={(value) => {
-              settings.backgroundModels.onChange(role, value)
-            }}
-          />
-        </ScreenNavSettingsRow>
-      ))}
+        {BACKGROUND_MODEL_LABELS.map(([role, label]) => (
+          <ScreenNavSettingsRow
+            key={role}
+            itemKey={`background-${role}`}
+            item={settings.items[`background-${role}`]}
+            name={<label htmlFor={`${fieldId}-background-${role}`}>{label}</label>}
+          >
+            <RunSettingSelect
+              id={`${fieldId}-background-${role}`}
+              ariaLabel={`裏方のモデル（${label}）`}
+              heading={label}
+              value={settings.backgroundModels.values[role]}
+              options={modelSelectOptions(settings.sessionDefault.modelEffortSupport)}
+              disabled={false}
+              danger={false}
+              layout="list"
+              mouth="field"
+              title={undefined}
+              dot="none"
+              onChange={(value) => {
+                settings.backgroundModels.onChange(role, value)
+              }}
+            />
+          </ScreenNavSettingsRow>
+        ))}
+      </Disclosure>
     </>
   )
 }
