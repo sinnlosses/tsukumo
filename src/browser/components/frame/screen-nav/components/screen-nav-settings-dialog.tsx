@@ -1,10 +1,11 @@
 // 設定のダイアログの中身。頭（歯車の線画・「設定」・×）、左のナビ、右の面を組む。
-// 選んでいる面はこの部品の `useState` が持つ。ダイアログを閉じると部品ごと消えるので、開くたび先頭の面から始まる。
+// 選んでいる面は開閉の店（`useSettingsRequest`）が持つので、閉じて開き直しても最後に見た面で開く。
 
 import clsx from "clsx"
 import { Settings, X } from "lucide-react"
-import { useState, type ReactElement } from "react"
+import type { ReactElement } from "react"
 
+import { useSettingsRequest } from "../../../../stores/settings-request.ts"
 import { Button } from "../../../ui/button/button.tsx"
 import { Dialog } from "../../../ui/dialog/dialog.tsx"
 import { Text } from "../../../ui/text/text.tsx"
@@ -57,7 +58,8 @@ export function ScreenNavSettingsGear(props: ScreenNavSettingsProps): ReactEleme
 
 function ScreenNavSettingsDialogBody(props: ScreenNavSettingsProps): ReactElement {
   const { settings } = props
-  const [selectedKey, setSelectedKey] = useState<string>(FACES[0].key)
+  const selectedKey = useSettingsRequest((state) => state.faceKey)
+  const selectFace = useSettingsRequest((state) => state.selectFace)
   const selected: Face = FACES.find((face) => face.key === selectedKey) ?? FACES[0]
 
   return (
@@ -107,7 +109,7 @@ function ScreenNavSettingsDialogBody(props: ScreenNavSettingsProps): ReactElemen
                 className={clsx(styles["nav-item"], isSelected && styles["nav-item-selected"])}
                 aria-current={isSelected ? "page" : undefined}
                 onClick={() => {
-                  setSelectedKey(face.key)
+                  selectFace(face.key)
                 }}
               >
                 <Icon size={16} strokeWidth={1.8} />

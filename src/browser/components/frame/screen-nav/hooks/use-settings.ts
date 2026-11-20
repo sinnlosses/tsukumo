@@ -44,6 +44,7 @@ import {
   type EffortSelect,
 } from "../../../../domain/effort-label.ts"
 import { REVEAL_SPEED_LABELS } from "../../../../domain/reveal-speed.ts"
+import type { SettingEntryKey, SettingFaceKey } from "../../../../domain/setting-entry.ts"
 import { MODEL_LABELS } from "../../../../features/run-setting/model-label.ts"
 import { PERMISSION_MODE_LABELS } from "../../../../features/run-setting/permission-mode-label.ts"
 import { useFirstNoteSeen } from "../../../../stores/first-note-seen.ts"
@@ -107,7 +108,7 @@ type ScreenNavSettingsSpeakingPace = {
 }
 
 /** 「既定に戻す」を持つページの key（`FACES` の `foot: "reset"` の面）。 */
-export type ResetFaceKey = "look" | "session-default" | "reveal" | "launch-skill"
+export type ResetFaceKey = SettingFaceKey
 
 /** 既定と違う項目の数と、それを既定へ戻す動き。数が 0 なら戻す先が無い。 */
 export type ScreenNavSettingsReset = {
@@ -122,24 +123,8 @@ export type ScreenNavSettingsItem = {
   readonly onReset: () => void
 }
 
-/** 項目の名前（行ごとに1つ）。 */
-export type SettingItemKey =
-  | "color-ground"
-  | "color-surface"
-  | "color-ink"
-  | "veil"
-  | "blur"
-  | "fill"
-  | "model"
-  | "effort"
-  | "permissionMode"
-  | "figurePreference"
-  | `background-${BackgroundModelRole}`
-  | "revealSpeed"
-  | "motion"
-  | "waitingLine"
-  | "progressNudge"
-  | "launchSkill"
+/** 項目の名前（行ごとに1つ）。宣言は `SETTING_ENTRIES`。 */
+export type SettingItemKey = SettingEntryKey
 
 export type ScreenNavSettings = {
   readonly open: boolean

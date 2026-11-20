@@ -10,7 +10,7 @@ import { Button } from "../../../ui/button/button.tsx"
 import { HStack } from "../../../ui/h-stack/h-stack.tsx"
 import { Surface } from "../../../ui/surface/surface.tsx"
 import { Text } from "../../../ui/text/text.tsx"
-import type { ScreenNavSettingsItem } from "../hooks/use-settings.ts"
+import type { ScreenNavSettingsItem, SettingItemKey } from "../hooks/use-settings.ts"
 import styles from "./screen-nav-settings-look.module.css"
 import { ScreenNavSettingsRow } from "./screen-nav-settings-row.tsx"
 import rowStyles from "./screen-nav-settings.module.css"
@@ -38,7 +38,11 @@ export function ScreenNavSettingsLookFace(props: ScreenNavSettingsProps): ReactE
         <span className={styles["band-ring"]} title="差し色はキャラクターが決める" />
       </div>
       {settings.colors.map((color) => (
-        <ScreenNavSettingsRow key={color.key} item={settings.items[`color-${color.key}`]}>
+        <ScreenNavSettingsRow
+          key={color.key}
+          itemKey={`color-${color.key}`}
+          item={settings.items[`color-${color.key}`]}
+        >
           <label htmlFor={`${fieldId}-${color.key}`}>{color.label}</label>
           <div className={styles["control"]}>
             <input
@@ -64,6 +68,7 @@ export function ScreenNavSettingsLookFace(props: ScreenNavSettingsProps): ReactE
         </ScreenNavSettingsRow>
       ))}
       <RangeRow
+        itemKey="veil"
         item={settings.items.veil}
         id={`${fieldId}-veil`}
         label="背景の暗さ"
@@ -75,6 +80,7 @@ export function ScreenNavSettingsLookFace(props: ScreenNavSettingsProps): ReactE
         onChange={adjust.onChangeVeilPercent}
       />
       <RangeRow
+        itemKey="blur"
         item={settings.items.blur}
         id={`${fieldId}-blur`}
         label="パネルのぼかし"
@@ -84,6 +90,7 @@ export function ScreenNavSettingsLookFace(props: ScreenNavSettingsProps): ReactE
         onChange={adjust.onChangeBlur}
       />
       <RangeRow
+        itemKey="fill"
         item={settings.items.fill}
         id={`${fieldId}-fill`}
         label="パネルの濃さ"
@@ -130,6 +137,7 @@ export function ScreenNavSettingsLookFace(props: ScreenNavSettingsProps): ReactE
 }
 
 function RangeRow(props: {
+  readonly itemKey: SettingItemKey
   readonly item: ScreenNavSettingsItem
   readonly id: string
   readonly label: string
@@ -139,7 +147,7 @@ function RangeRow(props: {
   readonly onChange: (value: number) => void
 }): ReactElement {
   return (
-    <ScreenNavSettingsRow item={props.item}>
+    <ScreenNavSettingsRow itemKey={props.itemKey} item={props.item}>
       <label htmlFor={props.id}>{props.label}</label>
       <div className={styles["control"]}>
         <input

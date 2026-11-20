@@ -38,6 +38,18 @@
   min-height: 1.9rem;
   padding-left: var(--inline-control);
 }
+/* パレットから指された行を一瞬光らせる（動きを減らす設定のときは付かない）。 */
+.screen-nav-settings-row[data-found="true"] {
+  animation: screen-nav-settings-found 1.2s ease-out;
+}
+@keyframes screen-nav-settings-found {
+  from {
+    background: color-mix(in srgb, var(--accent) 30%, transparent);
+  }
+  to {
+    background: transparent;
+  }
+}
 /* 既定と違う行は左端に差し色の縦線を引く。 */
 .screen-nav-settings-row-mark {
   position: absolute;

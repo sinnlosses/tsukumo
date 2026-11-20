@@ -53,7 +53,7 @@ export function ScreenNavSettingsSessionDefaultFace(props: ScreenNavSettingsProp
 
   return (
     <>
-      <ScreenNavSettingsRow item={settings.items.model}>
+      <ScreenNavSettingsRow itemKey="model" item={settings.items.model}>
         <label htmlFor={`${fieldId}-default-model`}>モデル</label>
         <RunSettingSelect
           id={`${fieldId}-default-model`}
@@ -70,7 +70,7 @@ export function ScreenNavSettingsSessionDefaultFace(props: ScreenNavSettingsProp
           onChange={settings.sessionDefault.onChangeModel}
         />
       </ScreenNavSettingsRow>
-      <ScreenNavSettingsRow item={settings.items.effort}>
+      <ScreenNavSettingsRow itemKey="effort" item={settings.items.effort}>
         <label htmlFor={`${fieldId}-default-effort`}>effort</label>
         <RunSettingSelect
           id={`${fieldId}-default-effort`}
@@ -95,7 +95,7 @@ export function ScreenNavSettingsSessionDefaultFace(props: ScreenNavSettingsProp
           onChange={settings.sessionDefault.onChangeEffort}
         />
       </ScreenNavSettingsRow>
-      <ScreenNavSettingsRow item={settings.items.permissionMode}>
+      <ScreenNavSettingsRow itemKey="permissionMode" item={settings.items.permissionMode}>
         <label htmlFor={`${fieldId}-default-permission-mode`}>許可モード</label>
         <RunSettingSelect
           id={`${fieldId}-default-permission-mode`}
@@ -112,7 +112,7 @@ export function ScreenNavSettingsSessionDefaultFace(props: ScreenNavSettingsProp
           onChange={settings.sessionDefault.onChangePermissionMode}
         />
       </ScreenNavSettingsRow>
-      <ScreenNavSettingsRow item={settings.items.figurePreference}>
+      <ScreenNavSettingsRow itemKey="figurePreference" item={settings.items.figurePreference}>
         <label htmlFor={`${fieldId}-default-figure-preference`}>図の既定</label>
         <RunSettingSelect
           id={`${fieldId}-default-figure-preference`}
@@ -139,7 +139,11 @@ export function ScreenNavSettingsSessionDefaultFace(props: ScreenNavSettingsProp
         裏方のモデル
       </Text>
       {BACKGROUND_MODEL_LABELS.map(([role, label]) => (
-        <ScreenNavSettingsRow key={role} item={settings.items[`background-${role}`]}>
+        <ScreenNavSettingsRow
+          key={role}
+          itemKey={`background-${role}`}
+          item={settings.items[`background-${role}`]}
+        >
           <label htmlFor={`${fieldId}-background-${role}`}>{label}</label>
           <RunSettingSelect
             id={`${fieldId}-background-${role}`}
@@ -170,7 +174,7 @@ export function ScreenNavSettingsRevealFace(props: ScreenNavSettingsProps): Reac
 
   return (
     <>
-      <ScreenNavSettingsRow item={settings.items.revealSpeed}>
+      <ScreenNavSettingsRow itemKey="revealSpeed" item={settings.items.revealSpeed}>
         <label htmlFor={`${fieldId}-reveal-speed`}>書き上げる速さ</label>
         <RunSettingSelect
           id={`${fieldId}-reveal-speed`}
@@ -187,7 +191,7 @@ export function ScreenNavSettingsRevealFace(props: ScreenNavSettingsProps): Reac
           onChange={settings.revealSpeed.onChange}
         />
       </ScreenNavSettingsRow>
-      <ScreenNavSettingsRow item={settings.items.motion}>
+      <ScreenNavSettingsRow itemKey="motion" item={settings.items.motion}>
         <label htmlFor={`${fieldId}-motion`}>動き</label>
         <RunSettingSelect
           id={`${fieldId}-motion`}
@@ -213,7 +217,7 @@ export function ScreenNavSettingsRevealFace(props: ScreenNavSettingsProps): Reac
       >
         話しかける間合い
       </Text>
-      <ScreenNavSettingsRow item={settings.items.waitingLine}>
+      <ScreenNavSettingsRow itemKey="waitingLine" item={settings.items.waitingLine}>
         <label htmlFor={`${fieldId}-waiting-line`}>待ちの一言</label>
         <RunSettingSelect
           id={`${fieldId}-waiting-line`}
@@ -230,7 +234,7 @@ export function ScreenNavSettingsRevealFace(props: ScreenNavSettingsProps): Reac
           onChange={settings.speakingPace.onChangeWaitingLine}
         />
       </ScreenNavSettingsRow>
-      <ScreenNavSettingsRow item={settings.items.progressNudge}>
+      <ScreenNavSettingsRow itemKey="progressNudge" item={settings.items.progressNudge}>
         <label htmlFor={`${fieldId}-progress-nudge`}>進み具合の催促</label>
         <RunSettingSelect
           id={`${fieldId}-progress-nudge`}
@@ -259,7 +263,7 @@ export function ScreenNavSettingsLaunchSkillFace(props: ScreenNavSettingsProps):
 
   return (
     <>
-      <ScreenNavSettingsRow item={settings.items.launchSkill}>
+      <ScreenNavSettingsRow itemKey="launchSkill" item={settings.items.launchSkill}>
         <label htmlFor={`${fieldId}-launch-skill`}>起動するスキル</label>
         <RunSettingSelect
           id={`${fieldId}-launch-skill`}

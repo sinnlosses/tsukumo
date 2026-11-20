@@ -2,7 +2,12 @@ import { cleanup, fireEvent, render, screen, within } from "@testing-library/rea
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { ScreenNav } from "../../../../../src/browser/components/frame/screen-nav/screen-nav.tsx"
+import {
+  SETTING_ENTRIES,
+  SETTING_FACE_LABEL,
+} from "../../../../../src/browser/domain/setting-entry.ts"
 import { useNavDrawer } from "../../../../../src/browser/stores/nav-drawer.ts"
+import { useSettingsRequest } from "../../../../../src/browser/stores/settings-request.ts"
 import {
   BUILTIN_GEAR_PREFERENCES,
   hexColorSchema,
@@ -51,6 +56,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup()
   vi.restoreAllMocks()
+  useSettingsRequest.setState(useSettingsRequest.getInitialState(), true)
   useNavDrawer.setState(useNavDrawer.getInitialState(), true)
   window.location.hash = ""
   for (const token of COLOR_TOKENS) {
@@ -186,7 +192,20 @@ describe("設定の歯車（帯の右端）", () => {
     expect(faceLabels()).toEqual(["書き上げる速さ", "動き", "待ちの一言", "進み具合の催促"])
   })
 
-  it("開き直すと「見た目」から始まる", () => {
+  it("パレットに出す設定の行の宣言が、各ページの行の名前と食い違わない", () => {
+    renderScreenNav()
+    fireEvent.click(gear())
+
+    for (const [faceKey, faceLabel] of Object.entries(SETTING_FACE_LABEL)) {
+      showFace(faceLabel)
+      const declared = SETTING_ENTRIES.filter((entry) => entry.faceKey === faceKey).map(
+        (entry) => entry.label,
+      )
+      expect(faceLabels(), faceLabel).toEqual(declared)
+    }
+  })
+
+  it("閉じて開き直すと、最後に見たページで開く", () => {
     renderScreenNav()
     fireEvent.click(gear())
     showFace("演出")
@@ -194,14 +213,7 @@ describe("設定の歯車（帯の右端）", () => {
 
     fireEvent.click(gear())
 
-    expect(faceLabels()).toEqual([
-      "地の色",
-      "領域の色",
-      "字の色",
-      "背景の暗さ",
-      "パネルのぼかし",
-      "パネルの濃さ",
-    ])
+    expect(faceLabels()).toEqual(["書き上げる速さ", "動き", "待ちの一言", "進み具合の催促"])
   })
 
   it("見た目の面の見本の帯が、選んだ色を映す", () => {

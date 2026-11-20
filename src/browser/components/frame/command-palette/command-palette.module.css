@@ -83,6 +83,12 @@
   color: var(--ink-quiet);
   cursor: not-allowed;
 }
+/* 設定の項目の行き先（「設定 › ページ名」）。名前の右に薄く添える。 */
+.command-palette-hint {
+  flex: none;
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+}
 .command-palette-label {
   flex: 1 1 auto;
   min-width: 0;

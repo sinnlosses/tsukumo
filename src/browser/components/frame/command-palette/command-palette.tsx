@@ -19,7 +19,7 @@ const DIALOG_LABEL = "コマンドパレット"
 const SEARCH_PLACEHOLDER = "操作や画面を探す"
 const NO_MATCH = "当たる操作が無い"
 
-const GROUP_ORDER = ["action", "screen"] as const satisfies readonly CommandGroup[]
+const GROUP_ORDER = ["action", "screen", "setting"] as const satisfies readonly CommandGroup[]
 
 type Choice = { readonly kind: "first" } | { readonly kind: "command"; readonly id: string }
 
@@ -146,6 +146,9 @@ function CommandPaletteBody(props: { readonly model: CommandPaletteModel }): Rea
                     }}
                   >
                     <span className={styles["command-palette-label"]}>{command.label}</span>
+                    {command.hint !== undefined && (
+                      <span className={styles["command-palette-hint"]}>{command.hint}</span>
+                    )}
                     {command.keyLabel !== undefined && (
                       <kbd className={styles["command-palette-key"]}>{command.keyLabel}</kbd>
                     )}
@@ -162,5 +165,9 @@ function CommandPaletteBody(props: { readonly model: CommandPaletteModel }): Rea
 
 function matches(command: PaletteCommand, query: string): boolean {
   const needle = query.trim().toLowerCase()
+  // 設定の項目は数が多いので、何か打つまでは並べない。
+  if (command.group === "setting") {
+    return needle !== "" && command.label.toLowerCase().includes(needle)
+  }
   return needle === "" || command.label.toLowerCase().includes(needle)
 }

@@ -2,6 +2,7 @@ import { cleanup, fireEvent, render, screen, within } from "@testing-library/rea
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { ScreenNav } from "../../../../../src/browser/components/frame/screen-nav/screen-nav.tsx"
+import { useSettingsRequest } from "../../../../../src/browser/stores/settings-request.ts"
 import {
   INITIAL_SESSION_STATE,
   type SessionState,
@@ -29,6 +30,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup()
   vi.restoreAllMocks()
+  useSettingsRequest.setState(useSettingsRequest.getInitialState(), true)
   for (const token of COLOR_TOKENS) {
     document.documentElement.style.removeProperty(token)
   }

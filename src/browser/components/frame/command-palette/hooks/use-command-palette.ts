@@ -3,6 +3,7 @@
 import { useState } from "react"
 
 import { FRAME_ERROR_REASON } from "../../../../../shared/frame-error-reason.ts"
+import { SETTING_ENTRIES, SETTING_FACE_LABEL } from "../../../../domain/setting-entry.ts"
 import { isOverlayOpen } from "../../../../hooks/open-overlay.ts"
 import { useEventListener } from "../../../../hooks/use-event-listener.ts"
 import { useComposerFocus } from "../../../../stores/composer-focus.ts"
@@ -16,12 +17,14 @@ import { useTaskBoardRequest } from "../../../../stores/task-board-request.ts"
 import { nowEpochMilliseconds } from "../../../../utils/clock.ts"
 import { SHORTCUT_KEY_LABEL, shortcutOf, type Shortcut } from "../domain/shortcut-key.ts"
 
-export type CommandGroup = "action" | "screen"
+export type CommandGroup = "action" | "screen" | "setting"
 
 /** パレットの行1つ。押せない行は理由を `title` に持つ。 */
 export type PaletteCommand = {
   readonly id: string
   readonly label: string
+  /** 名前の横に添える行き先（設定の項目の「設定 › ページ名」）。 */
+  readonly hint?: string
   readonly group: CommandGroup
   readonly keyLabel?: string
   readonly disabled: boolean
@@ -40,6 +43,7 @@ export type CommandPaletteModel = {
 export const COMMAND_GROUP_LABEL = {
   action: "操作",
   screen: "画面へ移る",
+  setting: "設定の項目",
 } satisfies Record<CommandGroup, string>
 
 const SCREEN_COMMAND_LABEL = {
@@ -60,6 +64,7 @@ export function useCommandPaletteModel(): CommandPaletteModel {
   const dispatch = useSession((session) => session.dispatch)
   const restartRefused = useRestartRefused()
   const requestSplitReset = useLayoutSplitReset((state) => state.requestReset)
+  const openSettings = useSettingsRequest((state) => state.openSettings)
 
   useEventListener(document, "keydown", (event) => {
     const shortcut = shortcutOf({
@@ -124,6 +129,16 @@ export function useCommandPaletteModel(): CommandPaletteModel {
       title: modeBlocked(chat) ? FRAME_ERROR_REASON.chatModeSwitchDuringTurn : undefined,
       run: () => {
         goToConversation(chat)
+      },
+    })),
+    ...SETTING_ENTRIES.map((entry): PaletteCommand => ({
+      id: `setting-${entry.itemKey}`,
+      label: entry.label,
+      hint: `設定 › ${SETTING_FACE_LABEL[entry.faceKey]}`,
+      group: "setting",
+      disabled: false,
+      run: () => {
+        openSettings({ faceKey: entry.faceKey, itemKey: entry.itemKey })
       },
     })),
     ...SCREEN_NAV_ITEMS.filter((item) => item.screen !== "conversation").map(

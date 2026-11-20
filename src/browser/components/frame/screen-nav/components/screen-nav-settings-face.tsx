@@ -4,6 +4,7 @@
 import { Palette, Play, SlidersHorizontal, Sparkles, Workflow } from "lucide-react"
 import { Fragment, type ComponentType, type ReactElement } from "react"
 
+import { SETTING_FACE_LABEL } from "../../../../domain/setting-entry.ts"
 import { Button } from "../../../ui/button/button.tsx"
 import { HStack } from "../../../ui/h-stack/h-stack.tsx"
 import { Text } from "../../../ui/text/text.tsx"
@@ -43,7 +44,7 @@ export type Face = {
 export const FACES = [
   {
     key: "look",
-    label: "見た目",
+    label: SETTING_FACE_LABEL.look,
     icon: Palette,
     Body: ScreenNavSettingsLookFace,
     foot: "reset",
@@ -51,7 +52,7 @@ export const FACES = [
   },
   {
     key: "session-default",
-    label: "セッションの既定",
+    label: SETTING_FACE_LABEL["session-default"],
     icon: SlidersHorizontal,
     Body: ScreenNavSettingsSessionDefaultFace,
     foot: "reset",
@@ -59,7 +60,7 @@ export const FACES = [
   },
   {
     key: "reveal",
-    label: "演出",
+    label: SETTING_FACE_LABEL.reveal,
     icon: Sparkles,
     Body: ScreenNavSettingsRevealFace,
     foot: "reset",
@@ -67,7 +68,7 @@ export const FACES = [
   },
   {
     key: "launch-skill",
-    label: "タスクの実行",
+    label: SETTING_FACE_LABEL["launch-skill"],
     icon: Play,
     Body: ScreenNavSettingsLaunchSkillFace,
     foot: "reset",
