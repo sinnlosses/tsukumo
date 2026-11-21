@@ -4,16 +4,11 @@
 export const REPORT_EXPORT_STYLE = `
 :root {
   color-scheme: light dark;
-  --page: #f6f3ef;
-  --paper: #fffdfa;
-  --ink: #2a2530;
   --ink-soft: color-mix(in srgb, var(--ink) 74%, transparent);
   --ink-quiet: color-mix(in srgb, var(--ink) 56%, transparent);
   --rule: color-mix(in srgb, var(--ink) 14%, transparent);
   --rule-soft: color-mix(in srgb, var(--ink) 8%, transparent);
-  --accent: #b8503a;
   --accent-soft: color-mix(in srgb, var(--accent) 10%, transparent);
-  --ok: #2f7d4f;
   --ok-soft: color-mix(in srgb, var(--ok) 12%, transparent);
   --code-bg: color-mix(in srgb, var(--ink) 5%, var(--paper));
 }
@@ -65,4 +60,67 @@ pre { overflow-x: auto; }
 }
 @media (max-width: 640px) {
   main { margin: 0; border-radius: 0; padding: 24px 20px 32px; }}
+`
+
+// 明るい環境の色のトークン。画面の CSS を集めたもの（画面はいつも暗い見た目）の後ろに置き、集めた暗い側の値に勝たせる。
+// 暗い環境では包みが当たらず、集めた画面の値がそのまま効く。
+export const REPORT_EXPORT_LIGHT_TOKENS = `
+@media not (prefers-color-scheme: dark) {
+  :root {
+    --page: #f6f3ef;
+    --paper: #fffdfa;
+    --ink: #2a2530;
+    --accent: #b8503a;
+    --ok: #2f7d4f;
+    --ground: var(--page);
+    --surface: var(--paper);
+    --ink-bright: #17131c;
+    --ink-soft: color-mix(in srgb, var(--ink) 78%, transparent);
+    --ink-quiet: color-mix(in srgb, var(--ink) 66%, transparent);
+    --rule: color-mix(in srgb, var(--surface), var(--ink) 20%);
+    --rule-control: color-mix(in srgb, var(--surface), var(--ink) 44%);
+    --rule-quiet: color-mix(in srgb, var(--surface), var(--ink) 6%);
+    --rule-soft: color-mix(in srgb, var(--surface), var(--ink) 10%);
+    --surface-accent: color-mix(in srgb, var(--surface), var(--accent) 10%);
+    --surface-raised: color-mix(in srgb, var(--ink) 6%, transparent);
+    --accent-soft: color-mix(in srgb, var(--accent) 10%, transparent);
+    --ok-soft: color-mix(in srgb, var(--ok) 12%, transparent);
+    --code-bg: color-mix(in srgb, var(--ink) 5%, var(--paper));
+    --state-ok: #2f7d4f;
+    --state-warn: #8a5a00;
+    --state-ng: #b3261e;
+    --state-info: #1f5f9e;
+    --state-ask: #6b45b0;
+    --state-memo: var(--ink);
+    --chart-series-1: #2f6fb8;
+    --chart-series-2: #c4552f;
+    --chart-series-3: #7a52c4;
+    --chart-series-4: #5d7a1c;
+    --chart-series-5: #b43f84;
+    --chart-series-6: #8f6d12;
+    --chart-series-other: #6f6a78;
+    --report-code-surface: color-mix(in srgb, var(--ink) 5%, var(--surface));
+    --color-text-primary: var(--ink);
+    --color-text-secondary: color-mix(in srgb, var(--ink) 78%, transparent);
+    --color-border: var(--rule-quiet);
+    --color-border-emphasized: var(--rule);
+    --color-accent: var(--accent);
+    --color-error: var(--state-ng);
+    --color-success: var(--state-ok);
+    --color-warning: var(--state-warn);
+    --color-error-muted: color-mix(in srgb, var(--surface), var(--state-ng) 13%);
+    --color-success-muted: color-mix(in srgb, var(--surface), var(--state-ok) 13%);
+    --color-text-info: var(--state-info);
+    --color-text-success: var(--state-ok);
+    --color-text-warning: var(--state-warn);
+    --color-text-error: var(--state-ng);
+    --color-background-gray: #e2e2e2;
+    --color-text-gray: #1b1b1b;
+    --focus-outline-color: var(--accent);
+    --shadow-ring: 0 0 0 2px var(--accent);
+    --shadow-inset-error: inset 0 0 0 0.125rem color-mix(in srgb, var(--state-ng) 30%, transparent);
+    --shadow-inset-success: inset 0 0 0 0.125rem color-mix(in srgb, var(--state-ok) 30%, transparent);
+    --shadow-inset-warning: inset 0 0 0 0.125rem color-mix(in srgb, var(--state-warn) 30%, transparent);
+  }
+}
 `

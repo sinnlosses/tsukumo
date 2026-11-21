@@ -8,7 +8,7 @@ import {
 import { escapeHtml } from "../../../../shared/utils/escape-html.ts"
 import { escapeRegExp } from "../../../../shared/utils/escape-regexp.ts"
 import type { ReportImageShelf } from "../image/report-image-shelf.ts"
-import { REPORT_EXPORT_STYLE } from "./report-export-style.ts"
+import { REPORT_EXPORT_LIGHT_TOKENS, REPORT_EXPORT_STYLE } from "./report-export-style.ts"
 
 /** 表紙の帯に出す値。`title` 以外は無ければ行ごと出さない。 */
 export type ReportExportMasthead = {
@@ -43,7 +43,7 @@ export function buildReportExportDocument(input: ReportExportInput): string {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="generator" content="tsukumo">
 <title>${escapeHtml(masthead.title)} — ${escapeHtml(masthead.kind)}</title>
-<style>${styleText(REPORT_EXPORT_STYLE)}${styleText(input.css)}</style>
+<style>${styleText(REPORT_EXPORT_STYLE)}${styleText(input.css)}${styleText(REPORT_EXPORT_LIGHT_TOKENS)}</style>
 </head>
 <body>
 <main>

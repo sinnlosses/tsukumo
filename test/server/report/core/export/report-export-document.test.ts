@@ -53,6 +53,18 @@ describe("buildReportExportDocument", () => {
     expect(html).not.toContain('class="outcome"')
   })
 
+  it("画面から集めた :root の色が、明るい環境の色を上書きしない", () => {
+    const collected = ":root { --ink: #e8e3ea; --ink-bright: #f7f6f8 }"
+    const html = build({ css: collected })
+    const collectedAt = html.indexOf(collected)
+    const wrapAt = html.indexOf("@media not (prefers-color-scheme: dark)")
+    expect(collectedAt).toBeGreaterThan(-1)
+    expect(wrapAt).toBeGreaterThan(collectedAt)
+    const wrap = html.slice(wrapAt)
+    expect(wrap).toMatch(/--ink: #2a2530;/)
+    expect(wrap).toMatch(/--ink-bright: #17131c;/)
+  })
+
   it("集めた CSS が style を閉じられない", () => {
     expect(build({ css: "a{}</style><p>x" })).not.toContain("</style><p>x")
   })
