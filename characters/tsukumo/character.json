@@ -31,6 +31,17 @@
     "excited": "excited.png",
     "bored": "bored.png"
   },
+  "faceAtByExpression": {
+    "default": { "x": 0.5, "y": 0.22 },
+    "thinking": { "x": 0.52, "y": 0.5 },
+    "proud": { "x": 0.42, "y": 0.2 },
+    "flustered": { "x": 0.45, "y": 0.27 },
+    "serious": { "x": 0.48, "y": 0.22 },
+    "curious": { "x": 0.5, "y": 0.24 },
+    "sad": { "x": 0.5, "y": 0.24 },
+    "excited": { "x": 0.48, "y": 0.22 },
+    "bored": { "x": 0.55, "y": 0.7 }
+  },
   "background": {
     "image": "background.png"
   },

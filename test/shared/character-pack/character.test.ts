@@ -1,10 +1,14 @@
 import { describe, expect, it } from "vitest"
 
-import { parseCharacterDefinition } from "../../../src/shared/character-pack/character-definition.ts"
+import {
+  DEFAULT_FACE_AT,
+  parseCharacterDefinition,
+} from "../../../src/shared/character-pack/character-definition.ts"
 import {
   type CharacterInfo,
   type CharacterInfoSource,
   effectiveAccent,
+  faceAtOf,
   parseCharacterPackName,
   toCharacterInfo,
 } from "../../../src/shared/character-pack/character.ts"
@@ -26,6 +30,22 @@ function infoOf(
         editable: true,
       })
 }
+
+describe("faceAtOf の引き方", () => {
+  const withBoth = infoOf(
+    JSON.stringify({
+      faceAt: { x: 0.4, y: 0.3 },
+      faceAtByExpression: { thinking: { x: 0.5, y: 0.6 } },
+    }),
+  )
+
+  it("表情の値があればそれ、無ければ faceAt、それも無ければ既定", () => {
+    expect(faceAtOf("thinking", withBoth)).toEqual({ x: 0.5, y: 0.6 })
+    expect(faceAtOf("sad", withBoth)).toEqual({ x: 0.4, y: 0.3 })
+    expect(faceAtOf("sad", infoOf("{}"))).toEqual(DEFAULT_FACE_AT)
+    expect(faceAtOf("default")).toEqual(DEFAULT_FACE_AT)
+  })
+})
 
 describe("toCharacterInfo の畳み方", () => {
   const withoutThinking = JSON.stringify({ portraits: { default: "default.svg" } })

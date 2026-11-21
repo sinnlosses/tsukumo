@@ -6,7 +6,7 @@ import { fromKeys } from "remeda"
 
 import { characterAssetPath } from "./character-asset.ts"
 import type { CharacterBackground } from "./character-background.ts"
-import type { CharacterDefinition, FaceAt } from "./character-definition.ts"
+import { type CharacterDefinition, DEFAULT_FACE_AT, type FaceAt } from "./character-definition.ts"
 import type { CharacterPackName } from "./character-pack-name.ts"
 import { type ExpressionChoice, expressionChoices } from "./expression-choice.ts"
 import { type Expression, EXPRESSIONS } from "./expression.ts"
@@ -59,6 +59,8 @@ export type CharacterInfo = {
   readonly face?: string
   /** {@link CharacterDefinition.faceAt}（立ち絵の中の顔の位置）をそのまま持つ。無いパックでは undefined（既定の位置を使う）。 */
   readonly faceAt?: FaceAt
+  /** {@link CharacterDefinition.faceAtByExpression}（表情ごとの顔の位置）をそのまま持つ。引くのは {@link faceAtOf}。 */
+  readonly faceAtByExpression?: Readonly<Partial<Record<Expression, FaceAt>>>
   /** {@link CharacterDefinition.tagline}（自己紹介文）をそのまま持つ。無いパックでは undefined（名前だけ）。 */
   readonly tagline?: string
   /** {@link CharacterDefinition.userCall}（利用者の呼び名）をそのまま持つ。無いパックでは undefined。 */
@@ -161,6 +163,7 @@ export function toCharacterInfo(source: CharacterInfoSource): CharacterInfo {
     hasOwnMini: definition?.mini !== undefined,
     face: definition?.face === undefined ? undefined : assetUrl(definition.face),
     faceAt: definition?.faceAt,
+    faceAtByExpression: definition?.faceAtByExpression,
     tagline: definition?.tagline,
     userCall: definition?.userCall,
     miniCall: definition?.miniCall,
@@ -185,6 +188,14 @@ export function effectiveAccent(
     return undefined
   }
   return chatMode ? (character.chatAccent ?? character.accent) : character.accent
+}
+
+/** 表情の顔の位置。表情ごとの値 → `faceAt` → {@link DEFAULT_FACE_AT} の順に引く。 */
+export function faceAtOf(
+  expression: Expression,
+  character?: Pick<CharacterInfo, "faceAt" | "faceAtByExpression">,
+): FaceAt {
+  return character?.faceAtByExpression?.[expression] ?? character?.faceAt ?? DEFAULT_FACE_AT
 }
 
 /** 背景の素材のファイル名を素材の URL に変える（覆いの濃さはそのまま）。 */

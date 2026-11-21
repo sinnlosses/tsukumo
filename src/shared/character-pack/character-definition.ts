@@ -60,6 +60,11 @@ export type CharacterDefinition = {
    */
   readonly faceAt?: FaceAt
   /**
+   * 表情ごとの顔の位置。立ち絵は表情で構図が変わるので、`faceAt` より先に引く。
+   * 任意で、あるものだけでよい。読めない値の表情は持たず、`faceAt` に落ちる。
+   */
+  readonly faceAtByExpression?: Readonly<Partial<Record<Expression, FaceAt>>>
+  /**
    * 自己紹介文。雑談中のサイドバーのプロフィールで、名前の下に1行添える。
    * 任意で、無いパックは名前だけになる。空白だけの値は無いのと同じに畳む（札に空の行が出ないように）。
    */
@@ -231,6 +236,7 @@ function toCharacterDefinition(value: unknown): CharacterDefinition | undefined 
     mini: typeof value.mini === "string" ? value.mini : undefined,
     face: typeof value.face === "string" ? value.face : undefined,
     faceAt: toFaceAt(value.faceAt),
+    faceAtByExpression: toFaceAtByExpression(value.faceAtByExpression),
     tagline: nonBlankString(value.tagline),
     userCall: nonBlankString(value.userCall),
     miniCall: nonBlankString(value.miniCall),
@@ -246,6 +252,16 @@ function toFaceAt(value: unknown): FaceAt | undefined {
   }
   const { x, y } = value
   return isUnitInterval(x) && isUnitInterval(y) ? { x, y } : undefined
+}
+
+/** `faceAtByExpression` を読む。表情名のキーで、`faceAt` と同じ検証を通った値だけ残す。読めなければ空の表。 */
+function toFaceAtByExpression(value: unknown): Readonly<Partial<Record<Expression, FaceAt>>> {
+  const record = isPlainObject(value) ? value : {}
+  const entries = EXPRESSIONS.flatMap((expression) => {
+    const faceAt = toFaceAt(record[expression])
+    return faceAt === undefined ? [] : [[expression, faceAt] as const]
+  })
+  return Object.fromEntries(entries)
 }
 
 function isUnitInterval(value: unknown): value is number {

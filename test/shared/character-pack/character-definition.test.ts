@@ -96,6 +96,22 @@ describe("parseCharacterDefinition", () => {
     expect(parseCharacterDefinition(FULL_DEFINITION_JSON)?.faceAt).toBeUndefined()
   })
 
+  it("任意の faceAtByExpression を読む。表情名でないキー・範囲外・数でない値は捨て、残らなければ空の表", () => {
+    const parse = (value: unknown) =>
+      parseCharacterDefinition(JSON.stringify({ faceAtByExpression: value }))?.faceAtByExpression
+    expect(
+      parse({
+        thinking: { x: 0.52, y: 0.5 },
+        bored: { x: 1.5, y: 0.7 },
+        proud: { x: "0.4", y: 0.2 },
+        unknown: { x: 0.5, y: 0.5 },
+      }),
+    ).toEqual({ thinking: { x: 0.52, y: 0.5 } })
+    expect(parse({ unknown: { x: 0.5, y: 0.5 } })).toEqual({})
+    expect(parse("thinking")).toEqual({})
+    expect(parseCharacterDefinition(FULL_DEFINITION_JSON)?.faceAtByExpression).toEqual({})
+  })
+
   it("任意の chatAccent（雑談中だけの accent）を読む。無い・壊れた値は undefined", () => {
     expect(parseCharacterDefinition(JSON.stringify({ chatAccent: "#f2984a" }))?.chatAccent).toBe(
       "#f2984a",

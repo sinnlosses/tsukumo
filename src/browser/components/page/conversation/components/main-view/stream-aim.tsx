@@ -7,7 +7,11 @@
 
 import { useId, useRef, useState, type ReactElement } from "react"
 
-import type { FaceAt } from "../../../../../../shared/character-pack/character-definition.ts"
+import { type CharacterInfo, faceAtOf } from "../../../../../../shared/character-pack/character.ts"
+import {
+  type Expression,
+  isExpression,
+} from "../../../../../../shared/character-pack/expression.ts"
 import { useExternalSync } from "../../../../../hooks/use-external-sync.ts"
 import { useSession } from "../../../../../stores/session.ts"
 import { faceOnScreen, tailAim, tailPath } from "./domain/tail-aim.ts"
@@ -23,7 +27,7 @@ const BORDER_WIDTH = 1
 export function StreamAim(): ReactElement {
   const svgRef = useRef<SVGSVGElement>(null)
   const fillId = useId()
-  const faceAt = useSession((session) => session.state.character?.faceAt)
+  const character = useSession((session) => session.state.character)
   const [shape, setShape] = useState<TailShape>(NO_TAIL)
 
   useExternalSync(() => {
@@ -32,7 +36,7 @@ export function StreamAim(): ReactElement {
       return undefined
     }
     const aimAgain = (): void => {
-      setShape(measuredShape(svg, faceAt))
+      setShape(measuredShape(svg, character))
     }
     aimAgain()
 
@@ -62,7 +66,7 @@ export function StreamAim(): ReactElement {
       document.removeEventListener("animationend", onPortraitSettled)
       observer.disconnect()
     }
-  }, [faceAt])
+  }, [character])
 
   return (
     <svg ref={svgRef} className={styles["stream-aim"]} aria-hidden="true">
@@ -98,8 +102,8 @@ type TailShape = {
 /** 尾を描かないときの形。 */
 const NO_TAIL: TailShape = { fill: "", stroke: "", bubbleHeight: 0 }
 
-/** 吹き出し（この尾の親）から立ち絵の顔へ向けた尾の形。立ち絵が見えていない（狭い画面など）なら `NO_TAIL`。 */
-function measuredShape(svg: SVGSVGElement, faceAt?: FaceAt): TailShape {
+/** 吹き出し（この尾の親）から、立ち絵が今出している表情の顔へ向けた尾の形。立ち絵が見えていない（狭い画面など）なら `NO_TAIL`。 */
+function measuredShape(svg: SVGSVGElement, character?: CharacterInfo): TailShape {
   const bubble = svg.parentElement
   const portrait = document.querySelector(PORTRAIT_SELECTOR)
   const image = portrait?.querySelector("img")
@@ -115,10 +119,16 @@ function measuredShape(svg: SVGSVGElement, faceAt?: FaceAt): TailShape {
     box,
     naturalWidth: image.naturalWidth,
     naturalHeight: image.naturalHeight,
-    ...(faceAt === undefined ? {} : { faceAt }),
+    faceAt: faceAtOf(shownExpression(portrait), character),
   })
   const path = tailPath(tailAim({ bubble: rect, face, gapBelow: gapBelow(bubble, rect) }), rect)
   return { ...path, bubbleHeight: rect.height }
+}
+
+/** 立ち絵が今出している表情。表情名でない値（読めない）なら `default`。 */
+function shownExpression(portrait: Element): Expression {
+  const value = portrait.getAttribute("data-expression")
+  return value !== null && isExpression(value) ? value : "default"
 }
 
 /** 吹き出しのすぐ下に続く物までの空き（px）。声の定位置は下に入力欄が続くので 0、下に何も無ければ無限大。 */

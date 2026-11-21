@@ -54,6 +54,7 @@ export function characterInfo(overrides: Partial<CharacterInfo> = {}): Character
     mini: undefined,
     hasOwnMini: false,
     face: undefined,
+    faceAtByExpression: {},
     tagline: undefined,
     userCall: undefined,
     miniCall: undefined,
