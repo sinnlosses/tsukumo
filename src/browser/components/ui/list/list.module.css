@@ -1,0 +1,10 @@
+.label {
+  display: block;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.description {
+  display: block;
+  line-height: var(--line-height-reading);
+  overflow-wrap: anywhere;
+}

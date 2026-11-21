@@ -4,14 +4,20 @@ import type { ReactElement } from "react"
 
 import { Badge } from "../../ui/badge/badge.tsx"
 import { Button } from "../../ui/button/button.tsx"
+import { CodeBlock } from "../../ui/code-block/code-block.tsx"
+import { Collapsible } from "../../ui/collapsible/collapsible.tsx"
 import { Disclosure } from "../../ui/disclosure/disclosure.tsx"
 import { Divider } from "../../ui/divider/divider.tsx"
 import { ExpandButton } from "../../ui/expand-button/expand-button.tsx"
 import { SaveButton } from "../../ui/expand-button/save-button.tsx"
 import { FirstNoteList } from "../../ui/first-note-list/first-note-list.tsx"
 import { Heading } from "../../ui/heading/heading.tsx"
+import { Kbd } from "../../ui/kbd/kbd.tsx"
+import { List, ListItem } from "../../ui/list/list.tsx"
+import { MetadataList, MetadataListItem } from "../../ui/metadata-list/metadata-list.tsx"
 import { Note } from "../../ui/note/note.tsx"
 import { Quote } from "../../ui/quote/quote.tsx"
+import { Step, Stepper } from "../../ui/stepper/stepper.tsx"
 import { Surface } from "../../ui/surface/surface.tsx"
 import {
   Table,
@@ -207,6 +213,52 @@ export function UiGallery(): ReactElement {
             架空の注記の本文
           </Note>
         ))}
+      </Group>
+      <Group title="List（長いラベルは折り返す）" parts={["list"]}>
+        <List hasDividers numbered={false}>
+          <ListItem
+            mark="●"
+            label="架空の長いラベルの項目で、器の幅を越えても1行で切れずに折り返して全文が読めることを確かめるために、わざと同じような言い回しを重ねて長くしてある。折り返した2行目も、1行目の頭にそろって読める"
+            description="架空の説明の行。行の高さは本文の読みやすい高さにそろう"
+            end="済"
+          />
+          <ListItem label="短いラベル" />
+        </List>
+      </Group>
+      <Group title="MetadataList（名前と値）" parts={["metadata-list"]}>
+        <MetadataList title="架空の見出し">
+          <MetadataListItem label="名前">架空の値</MetadataListItem>
+          <MetadataListItem label="場所">架空の場所</MetadataListItem>
+        </MetadataList>
+      </Group>
+      <Group title="Stepper（手順）" parts={["stepper"]}>
+        <Stepper activeStep={1} label="架空の手順">
+          <Step step={0} label="架空の1つ目">
+            架空の1つ目の本文
+          </Step>
+          <Step step={1} label="架空の2つ目">
+            架空の2つ目の本文
+          </Step>
+          <Step step={2} label="架空の3つ目" />
+        </Stepper>
+      </Group>
+      <Group title="Collapsible（開いた形・閉じた形）" parts={["collapsible"]}>
+        <Collapsible trigger="開いた形" defaultOpen>
+          架空の本文。字の大きさは本文の段にそろう
+        </Collapsible>
+        <Collapsible trigger="閉じた形" defaultOpen={false}>
+          架空の本文
+        </Collapsible>
+      </Group>
+      <Group title="CodeBlock（長い行は横にスクロール）" parts={["code-block"]}>
+        <CodeBlock
+          language="typescript"
+          code={`const sample = "架空の非常に長い行がここに入り、折り返さず横にスクロールして読めることを確かめるための文字列を続ける、続ける、続ける、続ける、続ける"\nconsole.log(sample)`}
+        />
+      </Group>
+      <Group title="Kbd（キー）" parts={["kbd"]}>
+        <Kbd keys="mod+k" />
+        <Kbd keys="shift+enter" />
       </Group>
       <Group title="FirstNoteList（初回だけの説明）" parts={["first-note-list"]}>
         <FirstNoteList

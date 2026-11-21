@@ -1,0 +1,22 @@
+// 見出しを押して開閉する箱を描く部品。中身は Astryx の `Collapsible`。
+// 開く側の字は本文の段（`--font-body`）にそろえる。
+
+import { Collapsible as AstryxCollapsible } from "@astryxdesign/core/Collapsible"
+import type { ReactElement, ReactNode } from "react"
+
+import styles from "./collapsible.module.css"
+
+export type CollapsibleProps = {
+  readonly trigger: ReactNode
+  /** 最初から開いているか。 */
+  readonly defaultOpen: boolean
+  readonly children: ReactNode
+}
+
+export function Collapsible(props: CollapsibleProps): ReactElement {
+  return (
+    <AstryxCollapsible trigger={props.trigger} defaultIsOpen={props.defaultOpen}>
+      <div className={styles["body"]}>{props.children}</div>
+    </AstryxCollapsible>
+  )
+}
