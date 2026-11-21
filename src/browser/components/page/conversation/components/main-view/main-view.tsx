@@ -179,9 +179,10 @@ export function MainView(): ReactElement {
         onKeyDown={onKeyDown}
         data-main-view=""
       >
-        {/* 中身の種類が替わったときだけ作り直し、そのときだけ現れる動きが1回掛かる。 */}
+        {/* 中身の種類が替わったときだけ作り直し、そのときだけ現れる動きが1回掛かる。
+            働くあいだの中身からレポートへの入れ替えは同じ器のまま描き替える。作り直すと、描き終えた本文・図・表を閉じた瞬間に全部描き直す。 */}
         <ContentFrame
-          key={view.kind}
+          key={contentFrameKey(view.kind)}
           kind={view.kind}
           rootRef={rootRef}
           carriedFocusRef={carriedFocusRef}
@@ -311,8 +312,41 @@ function ContentFrame({
       carriedFocusRef.current = frame !== null && frame.contains(document.activeElement)
     }
   }, [rootRef, carriedFocusRef])
+  // 作り直さずに種類が替わったときも、中で外れた要素のフォーカスを根へ移す。
+  // 外れる要素の blur で下ろすと移せないので、下ろすのは blur のあとも要素が文書に残っているときだけ。
+  const focusInsideRef = useRef(false)
+  const shownKindRef = useRef(kind)
+  useBeforePaintSync(() => {
+    if (shownKindRef.current === kind) {
+      return
+    }
+    shownKindRef.current = kind
+    const frame = frameRef.current
+    if (focusInsideRef.current && frame !== null && !frame.contains(document.activeElement)) {
+      focusInsideRef.current = false
+      rootRef.current?.focus({ preventScroll: true })
+    }
+  }, [kind, rootRef])
   return (
-    <div ref={frameRef} className={styles["main-view-content"]} data-main-view-content={kind}>
+    <div
+      ref={frameRef}
+      className={styles["main-view-content"]}
+      data-main-view-content={kind}
+      onFocus={() => {
+        focusInsideRef.current = true
+      }}
+      onBlur={(event) => {
+        if (event.currentTarget.contains(event.relatedTarget)) {
+          return
+        }
+        const left = event.target
+        queueMicrotask(() => {
+          if (left.isConnected) {
+            focusInsideRef.current = false
+          }
+        })
+      }}
+    >
       {children}
     </div>
   )
@@ -359,6 +393,11 @@ function planCountOf(turnStepList: TurnStepList): number {
 }
 
 const NO_CARD = { kind: "none" } as const satisfies ShownCard
+
+/** 中身の器を作り直す単位。働くあいだの中身とレポートは同じ器。 */
+function contentFrameKey(kind: ShownView["kind"]): string {
+  return kind === "work" || kind === "report" ? "turn" : kind
+}
 
 function shownTargetOf(view: ShownView): ShownTarget {
   if (view.kind === "welcome" || view.kind === "waiting" || view.card.kind === "none") {

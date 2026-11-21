@@ -215,17 +215,20 @@ describe("MainView（閉じたときの入れ替えとフォーカス）", () =>
     return found
   }
 
-  it("中にフォーカスがあっても、閉じた瞬間にレポートへ入れ替わり、フォーカスはメインビューの根に残る", () => {
+  it("閉じた瞬間にレポートへ入れ替わっても器は作り直さず、残る要素のフォーカスはそのまま", () => {
     renderRunning()
+    const frame = document.querySelector("[data-main-view-content]")
     act(() => {
       focusableInFrame().focus()
     })
+    const focused = document.activeElement
     close()
 
     expect(shownContent()).toBe("report")
     expect(screen.getByText("届いた結論")).toBeDefined()
     expect(screen.queryByRole("button", { name: "レポートが届いた" })).toBeNull()
-    expect(document.activeElement?.hasAttribute("data-main-view")).toBe(true)
+    expect(document.querySelector("[data-main-view-content]")).toBe(frame)
+    expect(document.activeElement).toBe(focused)
   })
 
   it("中身の種類が変わらない更新では、中にあるフォーカスをメインビューの根へ移さない", () => {

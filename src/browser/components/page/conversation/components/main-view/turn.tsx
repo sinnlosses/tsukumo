@@ -75,7 +75,7 @@ export function Turn(props: TurnProps): ReactElement {
   const [stepIdAtMount] = useState(props.freshReport ? undefined : finalStep?.id)
   const draftedToolUseIds = useDraftedReports((state) => state.toolUseIds)
   const rememberDrafts = useDraftedReports((state) => state.remember)
-  // 草稿は確定版がステップに出た時点で外れ、この部品も中身の切り替えで作り直されるので、描いたことは部品の外の store に書く。
+  // 草稿は確定版がステップに出た時点で外れ、この部品もやり取りを選び直すと作り直されるので、描いたことは部品の外の store に書く。
   // 描画中に書くとほかの部品の描画中の更新になるので、描いたあとに書く。
   useExternalSync(() => {
     rememberDrafts(turn.drafts.map((draft) => draft.toolUseId))

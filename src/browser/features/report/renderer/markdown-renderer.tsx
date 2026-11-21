@@ -129,8 +129,14 @@ const REPORT_REHYPE_PLUGINS = [
   rehypeStyleAllowlist,
   [rehypeSanitize, REPORT_SANITIZE_SCHEMA],
   rehypeInlineMark,
-  rehypeHighlight,
+  rehypeHighlightShared,
 ] satisfies RehypePlugins
+
+/**
+ * `rehype-highlight` は呼ぶたびに既定の言語をすべて登録し直し、react-markdown は描画のたびに段を呼び直す。
+ * 変換は1つだけ作り、{@link rehypeHighlightShared} がそれを返す。
+ */
+const HIGHLIGHT_TRANSFORM = rehypeHighlight()
 
 type RehypePlugins = NonNullable<Options["rehypePlugins"]>
 
@@ -187,7 +193,7 @@ export function CodeFence(props: CodeFenceProps): ReactElement {
   return (
     <CodeLineDiffContext value={props.lineDiff}>
       <ReactMarkdown
-        rehypePlugins={[() => () => tree, rehypeHighlight]}
+        rehypePlugins={[() => () => tree, rehypeHighlightShared]}
         remarkRehypeOptions={FOOTNOTE_OPTIONS}
         components={REPORT_COMPONENTS}
       >
@@ -402,4 +408,8 @@ function Table(props: TableProps): ReactElement {
       <table {...rest}>{children}</table>
     </div>
   )
+}
+
+function rehypeHighlightShared(): typeof HIGHLIGHT_TRANSFORM {
+  return HIGHLIGHT_TRANSFORM
 }
