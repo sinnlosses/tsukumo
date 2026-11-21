@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>設定の行の見出しと説明の字の段（見本）</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #15131b;
+    --ground: #191720;
+    --surface: #221f2b;
+    --ink: #e8e3ea;
+    --ink-soft: color-mix(in srgb, var(--ink) 74%, transparent);
+    --ink-quiet: color-mix(in srgb, var(--ink) 56%, transparent);
+    --line: color-mix(in srgb, var(--ink) 12%, transparent);
+    --accent: #f59a9a;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 24px; background: var(--bg); color: var(--ink);
+    font-family: system-ui, "Hiragino Sans", sans-serif; }
+  .grid { display: grid; grid-template-columns: repeat(2, 600px); gap: 20px; }
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px 20px 8px; }
+  .panel > h2 { margin: 0 0 4px; font-size: 14px; font-weight: 600; }
+  .panel > .spec { margin: 0 0 8px; font-size: 12px; color: var(--ink-quiet); font-family: ui-monospace, monospace; }
+  .row { display: flex; gap: 24px; align-items: center; justify-content: space-between;
+    padding: 12px 0 12px 8px; border-bottom: 1px solid var(--line); }
+  .row:last-child { border-bottom: none; }
+  .name { flex: 1; min-width: 132px; display: flex; flex-direction: column; gap: 4px; }
+  .name label { color: var(--ink); }
+  .name p { margin: 0; color: var(--ink-quiet); font-size: 12px; line-height: 1.5; }
+  .control { display: flex; align-items: center; gap: 10px; width: 300px; flex: none; }
+  .swatch { width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--line); }
+  .hex { font: 12px ui-monospace, monospace; padding: 7px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--ground); color: var(--ink-soft); }
+  .range { width: 140px; height: 8px; border-radius: 4px; background: #3a3742; position: relative; }
+  .range i { position: absolute; inset: 0 auto 0 0; border-radius: 4px; background: var(--accent); }
+  .range b { position: absolute; top: 50%; width: 16px; height: 16px; margin: -8px 0 0 -8px; border-radius: 50%; background: var(--accent); }
+  .readout { font-size: 12px; color: var(--ink-soft); }
+
+  /* 現状: 名前も説明も 12px・400。差は色だけ */
+  .now .name label { font-size: 12px; font-weight: 400; }
+  /* 案A: 名前を本文の段（14px・500）へ一段上げる */
+  .a .name label { font-size: 14px; font-weight: 500; }
+  .a .name { gap: 2px; }
+  /* 案B: 大きさは据え置き、名前の太さだけ 600 */
+  .b .name label { font-size: 12px; font-weight: 600; }
+  /* 案C: 案A ＋ 操作子を名前の行の高さに上揃え */
+  .c .name label { font-size: 14px; font-weight: 500; line-height: 30px; }
+  .c .name { gap: 0; }
+  .c .row { align-items: flex-start; }
+</style>
+</head>
+<body>
+<div class="grid" id="grid"></div>
+<template id="rows">
+  <div class="row"><div class="name"><label>地の色</label><p>画面のいちばん奥の色</p></div>
+    <div class="control"><span class="swatch" style="background:#191720"></span><span class="hex">#191720</span></div></div>
+  <div class="row"><div class="name"><label>字の色</label><p>本文の字の色。地との差が足りない色は受け取らず、理由を出す</p></div>
+    <div class="control"><span class="swatch" style="background:#e8e3ea"></span><span class="hex">#e8e3ea</span></div></div>
+  <div class="row"><div class="name"><label>背景の暗さ</label><p>背景の絵に掛ける暗幕。既定の濃さはキャラクターごとに決まっている</p></div>
+    <div class="control"><span class="range"><i style="width:20%"></i><b style="left:20%"></b></span><span class="readout">75%（パックの値）</span></div></div>
+  <div class="row"><div class="name"><label>パネルのぼかし</label><p>パネルの後ろの背景をぼかす量</p></div>
+    <div class="control"><span class="range"><i style="width:50%"></i><b style="left:50%"></b></span><span class="readout">12px</span></div></div>
+</template>
+<script>
+  const panels = [
+    ["now", "現状", "名前 12px/400 ・ 説明 12px/400（差は色だけ）"],
+    ["a", "案A 名前を一段上げる（推奨）", "名前 14px/500 ・ 説明 12px/400 ・ 間 2px"],
+    ["b", "案B 太さだけで分ける", "名前 12px/600 ・ 説明 12px/400"],
+    ["c", "案C 案A＋操作子を上揃え", "案A ＋ 操作子を名前の1行目の高さへ"],
+  ]
+  const grid = document.getElementById("grid")
+  const rows = document.getElementById("rows").innerHTML
+  for (const [cls, title, spec] of panels) {
+    const el = document.createElement("section")
+    el.className = `panel ${cls}`
+    el.innerHTML = `<h2>${title}</h2><p class="spec">${spec}</p>${rows}`
+    grid.append(el)
+  }
+</script>
+</body>
+</html>
