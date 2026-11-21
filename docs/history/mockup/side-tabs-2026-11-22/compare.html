@@ -1,0 +1,509 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>左右の列のタブ — 見本（2026-11-22）</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --ground: #191720;
+    --surface: #221f2b;
+    --ink: #e8e3ea;
+    --ink-bright: #f7f6f8;
+    --ink-soft: color-mix(in srgb, var(--ink) 72%, transparent);
+    --ink-quiet: color-mix(in srgb, var(--ink) 60%, transparent);
+    --accent: #f2b0a0;
+    --accent-soft: color-mix(in srgb, var(--accent) 16%, transparent);
+    --line: color-mix(in srgb, var(--ink) 12%, transparent);
+    --raised: color-mix(in srgb, var(--ink) 10%, transparent);
+    --panel: color-mix(in srgb, var(--surface) 45%, transparent);
+    --ok: #5fd38a;
+    --warn: #f2b544;
+    --ng: #ef6b6b;
+    --mono: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body { margin: 0; background: #0f0e13; color: var(--ink); font: 14px/1.6 system-ui, -apple-system, "Hiragino Sans", sans-serif; }
+  button { font: inherit; color: inherit; }
+
+  /* ===== ページの頭（見本の操作） ===== */
+  .page-head { width: 1400px; margin: 0 auto; padding: 20px 0 12px; display: flex; flex-wrap: wrap; gap: 10px 20px; align-items: end; }
+  .page-head h1 { font-size: 20px; margin: 0; }
+  .page-head p { margin: 2px 0 0; color: var(--ink-soft); font-size: 13px; }
+  .scenes { margin-left: auto; display: flex; gap: 6px; flex-wrap: wrap; }
+  .scenes button {
+    all: unset; cursor: pointer; padding: 4px 14px; border-radius: 999px; border: 1px solid var(--line);
+    font-size: 13px; color: var(--ink-soft);
+  }
+  .scenes button[aria-pressed="true"] { background: var(--accent-soft); color: var(--ink); border-color: transparent; }
+  .scenes button:focus-visible { outline: 2px solid var(--accent); }
+  .scenes .sep { width: 1px; background: var(--line); margin: 2px 4px; }
+
+  /* ===== アプリの枠（1400×900） ===== */
+  .app {
+    position: relative; width: 1400px; height: 900px; margin: 0 auto; overflow: clip; border-radius: 10px;
+    border: 1px solid var(--line);
+    background:
+      linear-gradient(color-mix(in srgb, var(--ground) 75%, transparent), color-mix(in srgb, var(--ground) 75%, transparent)),
+      url("../../../../characters/tsukumo/background.png") center / cover;
+  }
+  .topbar { position: absolute; inset: 0 0 auto 0; height: 40px; display: flex; align-items: center; gap: 14px; padding: 0 16px; border-bottom: 1px solid var(--line); background: color-mix(in srgb, var(--ground) 60%, transparent); }
+  .topbar .face { width: 24px; height: 24px; border-radius: 50%; background: url("../../../../characters/tsukumo/face.png") center / cover; }
+  .topbar .room { font-size: 16px; font-weight: 600; }
+  .topbar .mode { display: flex; gap: 4px; margin-left: 8px; }
+  .topbar .mode span { font-size: 13px; padding: 2px 10px; border-radius: 6px; color: var(--ink-soft); }
+  .topbar .mode span.on { background: var(--raised); color: var(--ink); }
+
+  .col { position: absolute; top: 56px; bottom: 17px; }
+  .left { left: 16px; width: 258px; display: flex; flex-direction: column; gap: 10px; }
+  .center { left: 284px; width: 795px; display: flex; flex-direction: column; gap: 10px; }
+  .right { left: 1088px; width: 296px; }
+
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; backdrop-filter: blur(12px); }
+
+  /* ===== タブの帯 ===== */
+  .tabs { display: flex; gap: 2px; padding: 6px 6px 0; border-bottom: 1px solid var(--line); }
+  .tab {
+    all: unset; cursor: pointer; position: relative; display: flex; align-items: center; gap: 5px;
+    padding: 5px 6px 7px; font-size: 12px; color: var(--ink-quiet); border-radius: 6px 6px 0 0; white-space: nowrap;
+  }
+  .right .tab { flex: 1 1 auto; justify-content: center; gap: 4px; padding-inline: 4px; }
+  .right .tab .dot { left: auto; right: 2px; top: 3px; }
+  .tab svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+  .tab:hover { color: var(--ink-soft); }
+  .tab[aria-selected="true"] { color: var(--ink-bright); }
+  .tab[aria-selected="true"]::after { content: ""; position: absolute; left: 6px; right: 6px; bottom: -1px; height: 2px; border-radius: 2px; background: var(--accent); }
+  .tab:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .tab .dot { position: absolute; top: 4px; left: 15px; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 2px var(--surface); }
+  .tab .dot.warn { background: var(--warn); }
+  .tab .dot.ng { background: var(--ng); }
+  .tab .count { font-size: 12px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px; background: var(--warn); color: #241a05; display: grid; place-items: center; font-weight: 600; line-height: 1; }
+  .tab-body { overflow: auto; scrollbar-width: thin; }
+
+  /* ===== 左の列 ===== */
+  .left .nav { max-height: 330px; display: flex; flex-direction: column; }
+  .left .nav .tab-body { padding: 8px; flex: 1; }
+  .outline-row { display: flex; gap: 8px; align-items: center; padding: 6px 8px; border-radius: 8px; font-size: 13px; }
+  .outline-row.on { background: var(--raised); }
+  .outline-row .mk { width: 8px; height: 8px; border-radius: 50%; background: var(--ink-quiet); flex: none; }
+  .outline-row.on .mk { background: var(--accent); }
+  .outline-row .t { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .outline-row .sub { color: var(--ink-quiet); font-size: 12px; margin-left: auto; flex: none; }
+  .room-row { all: unset; cursor: pointer; display: grid; grid-template-columns: auto 1fr auto; gap: 2px 8px; padding: 8px; border-radius: 8px; width: 100%; box-sizing: border-box; }
+  .room-row:hover { background: var(--raised); }
+  .room-row.here { background: var(--raised); }
+  .room-row .st { grid-row: span 2; width: 10px; height: 10px; border-radius: 50%; margin-top: 5px; }
+  .room-row .name { font-size: 13px; font-weight: 600; }
+  .room-row .when { font-size: 12px; color: var(--ink-quiet); }
+  .room-row .what { grid-column: 2 / 4; font-size: 12px; color: var(--ink-soft); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .st.run { background: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .st.ask { background: var(--warn); box-shadow: 0 0 0 3px color-mix(in srgb, var(--warn) 22%, transparent); }
+  .st.done { background: var(--ok); }
+  .st.idle { background: transparent; border: 1.5px solid var(--ink-quiet); }
+  .room-row .ask-tag { font-size: 12px; color: var(--warn); }
+  .portrait-area { position: relative; flex: 1; min-height: 0; overflow: clip; }
+  .portrait-area img { position: absolute; left: 50%; bottom: -8px; height: 108%; translate: -50% 0; object-fit: contain; filter: drop-shadow(0 8px 24px #0008); }
+  .seat { position: absolute; width: 34px; height: 34px; border-radius: 8px; background: var(--raised); border: 1px solid var(--line); display: grid; place-items: center; font-size: 16px; }
+
+  /* ===== 中央の列 ===== */
+  .pill { height: 38px; display: flex; align-items: center; gap: 10px; padding: 0 14px; border-radius: 999px; font-size: 13px; }
+  .pill .bar { flex: 1; height: 3px; border-radius: 2px; background: var(--line); position: relative; overflow: hidden; }
+  .pill .bar i { position: absolute; inset: 0 auto 0 0; width: 58%; background: var(--accent); border-radius: 2px; }
+  .pill .meta { color: var(--ink-quiet); font-size: 12px; }
+  .stream { flex: 1; overflow: auto; padding: 8px 8px 8px 6px; display: flex; flex-direction: column; gap: 14px; }
+  .bubble-me { align-self: flex-end; max-width: 70%; padding: 10px 16px; border-radius: 14px; background: color-mix(in srgb, var(--ink) 14%, transparent); }
+  .speech { align-self: flex-start; padding: 6px 14px; border-radius: 14px; border: 1px solid var(--accent); background: color-mix(in srgb, var(--ground) 70%, transparent); font-size: 14px; }
+  .stage-card { padding: 12px 16px; }
+  .stage-card h3 { margin: 0 0 6px; font-size: 12px; color: var(--ink-quiet); font-weight: 500; }
+  .stage-card p { margin: 0 0 8px; }
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .chip { all: unset; cursor: pointer; font: 12px/1.5 var(--mono); padding: 2px 8px; border-radius: 6px; background: var(--raised); color: var(--ink-soft); }
+  .chip:hover, .chip:focus-visible { background: var(--accent-soft); color: var(--ink); outline: none; }
+  .chip.check { font-family: inherit; }
+  .follow-hint { font-size: 12px; color: var(--ink-quiet); }
+  .composer { height: 104px; border-radius: 14px; border: 1.5px solid color-mix(in srgb, var(--accent) 70%, transparent); background: color-mix(in srgb, var(--surface) 70%, transparent); padding: 14px 18px; color: var(--ink-quiet); }
+
+  /* ===== 右の列 ===== */
+  .right .panel { height: 100%; display: flex; flex-direction: column; overflow: hidden; }
+  .right .tab-body { flex: 1; padding: 10px 12px; }
+  .usage { border-top: 1px solid var(--line); background: color-mix(in srgb, var(--ground) 40%, transparent); padding: 10px 14px 12px; display: grid; gap: 8px; }
+  .usage .u { display: grid; grid-template-columns: 1fr auto; font-size: 12px; color: var(--ink-soft); }
+  .usage .u i { grid-column: 1 / 3; height: 3px; border-radius: 2px; background: var(--line); margin-top: 4px; position: relative; }
+  .usage .u i b { position: absolute; inset: 0 auto 0 0; background: var(--accent); border-radius: 2px; }
+
+  .sec-h { font-size: 12px; color: var(--ink-quiet); margin: 2px 0 6px; display: flex; gap: 6px; align-items: baseline; }
+  .sec-h .r { margin-left: auto; }
+  .list { display: grid; gap: 2px; margin-bottom: 12px; }
+  .task { display: grid; grid-template-columns: 14px 1fr; gap: 0 8px; padding: 6px 6px; border-radius: 8px; font-size: 12px; }
+  .task.now { background: var(--accent-soft); }
+  .task .ring { width: 12px; height: 12px; border-radius: 50%; border: 1.5px solid var(--ink-quiet); margin-top: 3px; }
+  .task.now .ring { border-color: var(--accent); background: radial-gradient(var(--accent) 40%, transparent 45%); }
+  .task .ring.done { border-color: var(--ok); background: radial-gradient(var(--ok) 40%, transparent 45%); }
+  .task .id { grid-column: 2; color: var(--ink-quiet); font-family: var(--mono); }
+
+  .summary-line { display: flex; gap: 10px; flex-wrap: wrap; font-size: 12px; color: var(--ink-soft); padding: 8px 10px; border-radius: 8px; background: var(--raised); margin-bottom: 12px; }
+  .summary-line b { color: var(--ink-bright); font-weight: 600; }
+  .file { all: unset; cursor: pointer; display: grid; grid-template-columns: 14px 1fr auto; gap: 6px; align-items: center; padding: 4px 6px; border-radius: 6px; font: 12px/1.6 var(--mono); width: 100%; box-sizing: border-box; }
+  .file:hover { background: var(--raised); }
+  .file[aria-current="true"] { background: var(--accent-soft); }
+  .file .k { font-family: inherit; font-weight: 700; text-align: center; }
+  .file .k.m { color: var(--warn); } .file .k.a { color: var(--ok); } .file .k.d { color: var(--ng); }
+  .file .n { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; direction: rtl; text-align: left; }
+  .file .pm { color: var(--ink-quiet); }
+  .file .pm .p { color: var(--ok); } .file .pm .q { color: var(--ng); }
+  .diff { margin: 6px 0 12px; border-radius: 8px; border: 1px solid var(--line); overflow: hidden; font: 12px/1.55 var(--mono); }
+  .diff div { padding: 0 8px; white-space: pre; overflow: hidden; text-overflow: ellipsis; }
+  .diff .h { color: var(--ink-quiet); background: var(--raised); }
+  .diff .a { background: color-mix(in srgb, var(--ok) 14%, transparent); }
+  .diff .d { background: color-mix(in srgb, var(--ng) 14%, transparent); }
+  .commit { font-size: 12px; padding: 4px 6px; display: grid; grid-template-columns: auto 1fr; gap: 8px; color: var(--ink-soft); }
+  .commit code { font-family: var(--mono); color: var(--ink-quiet); }
+  .commit.local code { color: var(--accent); }
+
+  .vrow { display: grid; grid-template-columns: 16px 1fr auto; gap: 8px; align-items: center; padding: 6px; font-size: 12px; border-radius: 6px; }
+  .vrow .ic { width: 14px; height: 14px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; line-height: 1; }
+  .vrow .ic.ok { color: var(--ok); } .vrow .ic.ng { color: var(--ng); } .vrow .ic.wait { border: 1.5px dashed var(--ink-quiet); }
+  .vrow .ic.run { border: 2px solid var(--accent); border-right-color: transparent; animation: spin 1.1s linear infinite; }
+  @keyframes spin { to { rotate: 360deg; } }
+  @media (prefers-reduced-motion: reduce) { .vrow .ic.run { animation: none; } }
+  .vrow .tm { color: var(--ink-quiet); font-family: var(--mono); }
+  .vrow.cur { background: var(--accent-soft); }
+  .vrow .sub { grid-column: 2 / 4; color: var(--ink-quiet); }
+  .vbar { grid-column: 2 / 4; height: 3px; background: var(--line); border-radius: 2px; position: relative; }
+  .vbar b { position: absolute; inset: 0 auto 0 0; width: 62%; background: var(--accent); border-radius: 2px; }
+  .log { margin: 4px 0 12px; padding: 8px; border-radius: 8px; background: #0d0c11cc; font: 12px/1.55 var(--mono); color: var(--ink-soft); white-space: pre-wrap; }
+  .log .e { color: var(--ng); }
+
+  .shots { display: grid; gap: 10px; }
+  .shot { border-radius: 8px; overflow: hidden; border: 1px solid var(--line); background: var(--raised); }
+  .shot .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--line); }
+  .shot img { display: block; width: 100%; aspect-ratio: 878 / 598; object-fit: cover; }
+  .shot .cap { font-size: 12px; padding: 6px 8px; color: var(--ink-soft); display: flex; gap: 6px; }
+  .shot .cap .tag { color: var(--ink-quiet); margin-left: auto; }
+  .shot .lbl { display: grid; grid-template-columns: 1fr 1fr; font-size: 12px; color: var(--ink-quiet); text-align: center; padding-top: 3px; }
+
+  .ctx-bar { display: flex; height: 10px; border-radius: 5px; overflow: hidden; margin: 6px 0 10px; }
+  .ctx-bar i { display: block; height: 100%; }
+  .ctx-row { display: grid; grid-template-columns: 10px 1fr auto; gap: 8px; align-items: center; font-size: 12px; padding: 3px 4px; }
+  .ctx-row i { width: 10px; height: 10px; border-radius: 3px; }
+  .ctx-row .v { font-family: var(--mono); color: var(--ink-soft); }
+  .ctx-files { margin-top: 12px; }
+  .ctx-files .f { font: 12px/1.7 var(--mono); color: var(--ink-soft); display: flex; gap: 8px; }
+  .ctx-files .f span:last-child { margin-left: auto; color: var(--ink-quiet); }
+
+  /* 今の形（比べる用） */
+  .now-only { display: none; }
+  .app[data-form="now"] .now-only { display: block; }
+  .app[data-form="now"] .new-only { display: none; }
+  .now-outline-h { font-size: 12px; color: var(--ink-quiet); padding: 10px 14px 4px; }
+
+  /* ===== 下の説明 ===== */
+  .notes { width: 1400px; margin: 18px auto 48px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .note { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
+  .note h2 { font-size: 15px; margin: 0 0 6px; }
+  .note p, .note li { font-size: 13px; color: var(--ink-soft); margin: 0 0 4px; }
+  .note ul { margin: 0; padding-left: 18px; }
+  .note .where { font-size: 12px; color: var(--ink-quiet); }
+  .note.hl { border-color: var(--accent); }
+</style>
+</head>
+<body>
+
+<header class="page-head">
+  <div>
+    <h1>左右の列のタブ — 見本</h1>
+    <p>左は「どこを見るか」（行き先）、右は「エージェントの手元をのぞく」。立ち絵と使用量の帯はタブの外に常駐する。データはすべて架空。1400×900 の実寸。</p>
+  </div>
+  <div class="scenes" role="group" aria-label="場面">
+    <button type="button" data-scene="now">今の画面</button>
+    <span class="sep" aria-hidden="true"></span>
+    <button type="button" data-scene="verify" aria-pressed="true">検査を待つ</button>
+    <button type="button" data-scene="ship">送る前</button>
+    <button type="button" data-scene="look">見た目の直し</button>
+    <button type="button" data-scene="rooms">ほかの部屋が答え待ち</button>
+    <button type="button" data-scene="context">使用量が重い</button>
+  </div>
+</header>
+
+<div class="app" id="app" data-form="new">
+  <div class="topbar">
+    <span class="face" aria-hidden="true"></span>
+    <span class="room">tsukumo-3</span>
+    <span class="mode"><span class="on">仕事</span><span>雑談</span></span>
+  </div>
+
+  <!-- 左の列 -->
+  <div class="col left">
+    <section class="panel nav new-only" aria-label="行き先">
+      <div class="tabs" role="tablist" aria-label="左の列" data-side="left">
+        <button class="tab" role="tab" data-tab="outline">
+          <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>やり取り
+        </button>
+        <button class="tab" role="tab" data-tab="rooms">
+          <svg viewBox="0 0 24 24"><rect x="3" y="4" width="7" height="7" rx="1.5"/><rect x="14" y="4" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>部屋<span class="count" data-badge="rooms">1</span>
+        </button>
+      </div>
+      <div class="tab-body" role="tabpanel" data-panel="outline">
+        <div class="outline-row"><span class="mk"></span><span class="t">設定の見出しの大きさ</span><span class="sub">済</span></div>
+        <div class="outline-row"><span class="mk"></span><span class="t">書き出しから所要を外す</span><span class="sub">済</span></div>
+        <div class="outline-row on"><span class="mk"></span><span class="t">左右の列にタブを足す</span><span class="sub">2/4</span></div>
+      </div>
+      <div class="tab-body" role="tabpanel" data-panel="rooms" hidden>
+        <button class="room-row here" type="button"><span class="st run"></span><span class="name">tsukumo-3</span><span class="when">いま</span><span class="what">左右の列にタブを足す · 手順 2/4</span></button>
+        <button class="room-row" type="button"><span class="st ask"></span><span class="name">tsukumo-1</span><span class="ask-tag">答え待ち</span><span class="what">質問 2件 · 書き出しの範囲を広げるか</span></button>
+        <button class="room-row" type="button"><span class="st run"></span><span class="name">tsukumo-2</span><span class="when">12分</span><span class="what">架空のタスク · 受け入れ中</span></button>
+        <button class="room-row" type="button"><span class="st done"></span><span class="name">tsukumo-4</span><span class="when">3分前</span><span class="what">レポートが届いた · main へ送った</span></button>
+        <button class="room-row" type="button"><span class="st idle"></span><span class="name">tsukumo-plugins</span><span class="when">昨日</span><span class="what">休み</span></button>
+      </div>
+    </section>
+    <section class="panel now-only" aria-label="やり取り（今）" style="max-height:200px">
+      <div class="now-outline-h">やり取り</div>
+      <div style="padding:0 8px 8px">
+        <div class="outline-row"><span class="mk"></span><span class="t">設定の見出しの大きさ</span></div>
+        <div class="outline-row"><span class="mk"></span><span class="t">書き出しから所要を外す</span></div>
+        <div class="outline-row on"><span class="mk"></span><span class="t">左右の列にタブを足す</span></div>
+      </div>
+    </section>
+    <div class="portrait-area" aria-label="立ち絵">
+      <img src="../../../../characters/tsukumo/default.png" alt="" />
+      <span class="seat" style="left:4px;bottom:8px">🍵</span>
+      <span class="seat" style="right:4px;bottom:8px">📜</span>
+    </div>
+  </div>
+
+  <!-- 中央の列 -->
+  <div class="col center">
+    <div class="panel pill"><span>手順 2/4</span><span class="bar"><i></i></span><span class="meta">実装</span></div>
+    <div class="stream">
+      <div class="bubble-me">左右の列にタブを足して（架空の依頼）</div>
+      <div class="panel stage-card">
+        <h3>手順 1 · 今の形を読む · 済み</h3>
+        <p>左の列は幅 258px、サイドバーは 296px。サイドバーの中身はタスク一覧と使用量の帯だった。</p>
+      </div>
+      <div class="panel stage-card">
+        <h3>手順 2 · 実装 · 進行中</h3>
+        <p>タブの定義の表と、右の列の差し込み口を足した。触ったファイルと検査は右のタブで追える。</p>
+        <div class="chips">
+          <button class="chip" type="button" data-follow="changes" data-file="1">side-tabs.tsx</button>
+          <button class="chip" type="button" data-follow="changes" data-file="0">presentational-conversation-layout.tsx</button>
+          <button class="chip check" type="button" data-follow="verify">検査 4/6</button>
+        </div>
+        <p class="follow-hint new-only" style="margin:8px 0 0">↑ 札を押すと、右の列が該当のタブで開く（追従）。</p>
+      </div>
+      <div class="speech">いまは単体テストを待っているわ。一分ほどよ。</div>
+    </div>
+    <div class="composer">唐傘 への依頼を書く</div>
+  </div>
+
+  <!-- 右の列 -->
+  <div class="col right">
+    <section class="panel" aria-label="手元">
+      <div class="tabs new-only" role="tablist" aria-label="右の列" data-side="right">
+        <button class="tab" role="tab" data-tab="tasks" title="タスク">
+          <svg viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1.3"/><circle cx="4.5" cy="12" r="1.3"/><circle cx="4.5" cy="18" r="1.3"/></svg>タスク
+        </button>
+        <button class="tab" role="tab" data-tab="changes" title="変更">
+          <svg viewBox="0 0 24 24"><circle cx="6" cy="6" r="2.2"/><circle cx="6" cy="18" r="2.2"/><circle cx="18" cy="9" r="2.2"/><path d="M6 8.2v7.6M18 11.2c0 4-6 3-11 5.2"/></svg>変更<span class="dot" data-badge="changes" hidden></span>
+        </button>
+        <button class="tab" role="tab" data-tab="verify" title="検証">
+          <svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg>検証<span class="dot" data-badge="verify" hidden></span>
+        </button>
+        <button class="tab" role="tab" data-tab="shots" title="画">
+          <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.8"/><path d="M21 16l-5-5-8 8"/></svg>画<span class="dot" data-badge="shots" hidden></span>
+        </button>
+        <button class="tab" role="tab" data-tab="context" title="文脈">
+          <svg viewBox="0 0 24 24"><path d="M4 5h16v4H4zM4 11h10v4H4zM4 17h6v2H4z"/></svg>文脈
+        </button>
+      </div>
+
+      <!-- タスク -->
+      <div class="tab-body" role="tabpanel" data-panel="tasks">
+        <div class="sec-h">いま<span>1</span></div>
+        <div class="list">
+          <div class="task now"><span class="ring"></span><span>左右の列にタブを足す（架空）</span><span class="id">GH-9001</span></div>
+        </div>
+        <div class="sec-h">つぎ<span>3</span></div>
+        <div class="list">
+          <div class="task"><span class="ring"></span><span>変更のタブに差分の折りたたみを足す</span><span class="id">GH-9002</span></div>
+          <div class="task"><span class="ring"></span><span>部屋のタブの状態を session の記録から読む</span><span class="id">GH-9003</span></div>
+          <div class="task"><span class="ring"></span><span>文脈のタブの内訳を context-usage から引く</span><span class="id">GH-9004</span></div>
+        </div>
+        <div class="sec-h">済み<span>12</span><span class="r">▸</span></div>
+      </div>
+
+      <!-- 変更 -->
+      <div class="tab-body" role="tabpanel" data-panel="changes" hidden>
+        <div class="summary-line"><span>未コミット <b>3</b></span><span>main より先 <b>2</b> コミット</span><span><b style="color:var(--ok)">+142</b> <b style="color:var(--ng)">−38</b></span></div>
+        <div class="sec-h">未コミットのファイル<span class="r">押すと差分</span></div>
+        <div class="list" id="files">
+          <button class="file" type="button" data-i="0"><span class="k m">M</span><span class="n">src/browser/…/presentational-conversation-layout.tsx</span><span class="pm"><span class="p">+18</span> <span class="q">−6</span></span></button>
+          <button class="file" type="button" data-i="1"><span class="k a">A</span><span class="n">src/browser/…/side-tabs/side-tabs.tsx</span><span class="pm"><span class="p">+96</span></span></button>
+          <button class="file" type="button" data-i="2"><span class="k m">M</span><span class="n">src/browser/…/conversation-layout.module.css</span><span class="pm"><span class="p">+28</span> <span class="q">−32</span></span></button>
+        </div>
+        <div class="diff" id="diff"></div>
+        <div class="sec-h">main より先のコミット</div>
+        <div class="commit local"><code>a1b2c3d</code><span>タブの定義の表を足した（架空）</span></div>
+        <div class="commit local"><code>e4f5a6b</code><span>右の列に差し込み口を開けた（架空）</span></div>
+        <div class="commit"><code>1646507</code><span>main</span></div>
+      </div>
+
+      <!-- 検証 -->
+      <div class="tab-body" role="tabpanel" data-panel="verify" hidden>
+        <div class="summary-line"><span>pnpm run check</span><span>4/6 段</span><span>経過 <b>2:41</b> · 見込み 4分</span></div>
+        <div class="vrow"><span class="ic ok">✓</span><span>整形</span><span class="tm">3s</span></div>
+        <div class="vrow"><span class="ic ok">✓</span><span>lint</span><span class="tm">41s</span></div>
+        <div class="vrow"><span class="ic ok">✓</span><span>型検査</span><span class="tm">22s</span></div>
+        <div class="vrow" data-ng-row hidden><span class="ic ng">✕</span><span>規約テスト</span><span class="tm">12s</span></div>
+        <div class="log" data-ng-row hidden>test/architecture/outside-world.test.ts
+<span class="e">✕ 起こしてよい外部コマンドだけを使う</span>
+  side-tabs.tsx が git を直接起こしている（架空）</div>
+        <div class="vrow cur" data-run-row><span class="ic run"></span><span>単体テスト</span><span class="tm">58s</span><span class="vbar"><b></b></span><span class="sub">6,210 / 9,988 件</span></div>
+        <div class="vrow"><span class="ic wait"></span><span>E2E</span><span class="tm">—</span></div>
+        <div class="vrow"><span class="ic wait"></span><span>受け入れ役</span><span class="tm">—</span></div>
+        <div class="sec-h" style="margin-top:14px">前回</div>
+        <div class="vrow"><span class="ic ok">✓</span><span>tw verify · 昨日 23:40</span><span class="tm">3m58s</span></div>
+      </div>
+
+      <!-- 画 -->
+      <div class="tab-body" role="tabpanel" data-panel="shots" hidden>
+        <div class="sec-h">このやり取りで撮った画<span>3</span><span class="r">押すと大きく</span></div>
+        <div class="shots">
+          <div class="shot">
+            <div class="pair"><img src="../settings-2026-11-20/now-look.png" alt="" /><img src="../settings-2026-11-20/now-palette.png" alt="" /></div>
+            <div class="lbl"><span>前</span><span>後</span></div>
+            <div class="cap"><span>設定の見た目のページ</span><span class="tag">1400×900</span></div>
+          </div>
+          <div class="shot">
+            <img src="../settings-2026-11-20/now-session.png" alt="" />
+            <div class="cap"><span>新しいセッションのページ</span><span class="tag">720×900</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 文脈 -->
+      <div class="tab-body" role="tabpanel" data-panel="context" hidden>
+        <div class="summary-line"><span>コンテキスト <b>122k</b> / 200k</span><span>61%</span></div>
+        <div class="ctx-bar" aria-hidden="true">
+          <i style="width:9%;background:#8a84a0"></i><i style="width:7%;background:#c9a0dc"></i><i style="width:11%;background:#7fb8d6"></i><i style="width:6%;background:#e6c27a"></i><i style="width:20%;background:#f2b0a0"></i><i style="width:8%;background:#86d1a8"></i>
+        </div>
+        <div class="ctx-row"><i style="background:#8a84a0"></i><span>システムと道具の定義</span><span class="v">18k</span></div>
+        <div class="ctx-row"><i style="background:#c9a0dc"></i><span>指示書（CLAUDE.md・AGENTS.md）</span><span class="v">14k</span></div>
+        <div class="ctx-row"><i style="background:#7fb8d6"></i><span>スキルの一覧と本文</span><span class="v">22k</span></div>
+        <div class="ctx-row"><i style="background:#e6c27a"></i><span>記憶（MEMORY.md）</span><span class="v">12k</span></div>
+        <div class="ctx-row"><i style="background:#f2b0a0"></i><span>会話と道具の結果</span><span class="v">40k</span></div>
+        <div class="ctx-row"><i style="background:#86d1a8"></i><span>読んだファイル</span><span class="v">16k</span></div>
+        <div class="ctx-files">
+          <div class="sec-h">重い読み込み</div>
+          <div class="f"><span>docs/…/0058-three-column-single-stream.md</span><span>6.1k</span></div>
+          <div class="f"><span>docs/…/display/sidebar.md</span><span>4.8k</span></div>
+          <div class="f"><span>presentational-conversation-layout.tsx</span><span>2.2k</span></div>
+        </div>
+      </div>
+
+      <div class="usage">
+        <div class="u"><span>コンテキスト</span><span>61%</span><i><b style="width:61%"></b></i></div>
+        <div class="u"><span>5時間</span><span>34%</span><i><b style="width:34%"></b></i></div>
+        <div class="u"><span>7日</span><span>82%</span><i><b style="width:82%"></b></i></div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<section class="notes" aria-label="タブごとの説明">
+  <div class="note" data-note="changes"><h2>変更（右）</h2><p>作業ツリーの未コミットのファイル、main より先のコミット、増減の行数。ファイルを押すと差分の頭が開く。</p><p class="where">出どころ: 手元の git。会話の内容は読まない。</p><p class="where">効く場面: 送る前の確かめ・未コミットのまま消える事故の予防。</p></div>
+  <div class="note" data-note="verify"><h2>検証（右）</h2><p>いま走っている検査の段ごとの状態と所要、落ちた段のログの要る行。前回の結果も1行で残す。</p><p class="where">出どころ: check・tw verify の記録。</p><p class="where">効く場面: 十数分の全段の検査を、流れを遡らずに見張る。</p></div>
+  <div class="note" data-note="rooms"><h2>部屋（左）</h2><p>並行しているセッションの状態（作業中・答え待ち・済み・休み）。答え待ちはタブに数で出る。押すとその部屋へ移る。</p><p class="where">出どころ: 未確認（セッションの印のファイルが候補）。</p><p class="where">効く場面: 複数の部屋を並べて進めるとき、止まっている部屋に気づく。</p></div>
+  <div class="note" data-note="shots"><h2>画（右）</h2><p>このやり取りで撮った画面。前後の対は並べて出す。</p><p class="where">出どころ: 撮影の道具が書いた画像。</p><p class="where">効く場面: 見た目の直しで、レポートを開かずに前後を見比べる。</p></div>
+  <div class="note" data-note="context"><h2>文脈（右）</h2><p>いまコンテキストに入っているものの内訳と、重い読み込み。下端の帯の「コンテキスト 61%」の中身にあたる。</p><p class="where">出どころ: context-usage の記録。</p><p class="where">効く場面: 使用量が重いとき、何が効いているかを見る。</p></div>
+  <div class="note" data-note="rules"><h2>共通の決まり</h2><ul><li>立ち絵・席・使用量の帯はタブの外に常駐</li><li>見ていないタブで状態が変わったら印だけ付ける（中身は写さない）</li><li>流れの札を押すと、右が該当のタブで開く</li><li>タスクは今の形のまま右の1つ目のタブ</li><li>狭い画面（760px 以下）の形は変えない</li></ul></div>
+</section>
+
+<script>
+const app = document.getElementById("app")
+const DIFFS = [
+  [["h", "@@ -88,6 +88,12 @@ PresentationalConversationLayout"], ["", "      <div className={styles[\"layout-side\"]}>"], ["d", "        <aside data-region=\"sidebar\">{sidebar}</aside>"], ["a", "        <aside data-region=\"sidebar\">"], ["a", "          <SideTabs side=\"right\" tabs={rightTabs} />"], ["a", "        </aside>"]],
+  [["h", "@@ -0,0 +1,96 @@"], ["a", "// 左右の列のタブの帯と中身の切り替え。"], ["a", "export function SideTabs({ side, tabs }) {"], ["a", "  const [selected, select] = useSideTab(side)"], ["a", "  return <TabList …>"]],
+  [["h", "@@ -140,8 +140,4 @@ .layout-sidebar"], ["d", "  display: grid;"], ["d", "  grid-template-rows: 1fr auto;"], ["a", "  display: flex;"], ["a", "  flex-direction: column;"]],
+]
+
+function selectTab(side, name) {
+  const list = document.querySelector(`[data-side="${side}"]`)
+  const panelRoot = list.closest("section")
+  for (const tab of list.querySelectorAll(".tab")) {
+    const on = tab.dataset.tab === name
+    tab.setAttribute("aria-selected", String(on))
+    tab.tabIndex = on ? 0 : -1
+  }
+  for (const panel of panelRoot.querySelectorAll(":scope > .tab-body")) {
+    panel.hidden = panel.dataset.panel !== name
+  }
+  const dot = list.querySelector(`[data-badge="${name}"]`)
+  if (dot !== null && dot.classList.contains("dot")) dot.hidden = true
+  for (const note of document.querySelectorAll(".note[data-note]")) {
+    note.classList.toggle("hl", note.dataset.note === name)
+  }
+}
+
+function showDiff(i) {
+  for (const f of document.querySelectorAll("#files .file")) f.setAttribute("aria-current", String(f.dataset.i === String(i)))
+  const box = document.getElementById("diff")
+  box.replaceChildren(...DIFFS[i].map(([k, t]) => { const d = document.createElement("div"); d.className = k; d.textContent = (k === "a" ? "+ " : k === "d" ? "− " : k === "h" ? "" : "  ") + t; return d }))
+}
+
+function setBadges(map) {
+  for (const [name, tone] of Object.entries(map)) {
+    const el = document.querySelector(`.dot[data-badge="${name}"]`)
+    el.hidden = tone === undefined
+    el.className = `dot ${tone ?? ""}`
+  }
+}
+
+function setVerify(ng) {
+  for (const el of document.querySelectorAll("[data-ng-row]")) el.hidden = !ng
+  document.querySelector("[data-run-row]").hidden = ng
+}
+
+const SCENES = {
+  now: () => { app.dataset.form = "now"; selectTab("right", "tasks") },
+  verify: () => { selectTab("left", "outline"); selectTab("right", "verify"); setVerify(false); setBadges({ changes: "", shots: undefined }) },
+  ship: () => { selectTab("left", "outline"); selectTab("right", "changes"); showDiff(1); setVerify(false); setBadges({ verify: undefined, shots: undefined }) },
+  look: () => { selectTab("left", "outline"); selectTab("right", "shots"); setVerify(true); setBadges({ changes: "", verify: "ng" }) },
+  rooms: () => { selectTab("left", "rooms"); selectTab("right", "tasks"); setVerify(false); setBadges({ changes: "", verify: "", shots: undefined }) },
+  context: () => { selectTab("left", "outline"); selectTab("right", "context"); setVerify(false); setBadges({ changes: undefined, verify: undefined, shots: undefined }) },
+}
+
+function playScene(name) {
+  app.dataset.form = "new"
+  for (const b of document.querySelectorAll("[data-scene]")) b.setAttribute("aria-pressed", String(b.dataset.scene === name))
+  SCENES[name]()
+  history.replaceState(null, "", `?scene=${name}`)
+}
+
+for (const b of document.querySelectorAll("[data-scene]")) b.addEventListener("click", () => playScene(b.dataset.scene))
+for (const list of document.querySelectorAll("[role=tablist]")) {
+  list.addEventListener("click", (e) => { const t = e.target.closest(".tab"); if (t) selectTab(list.dataset.side, t.dataset.tab) })
+  list.addEventListener("keydown", (e) => {
+    if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return
+    const tabs = [...list.querySelectorAll(".tab")]
+    const i = tabs.indexOf(document.activeElement)
+    const next = tabs[(i + (e.key === "ArrowRight" ? 1 : tabs.length - 1)) % tabs.length]
+    selectTab(list.dataset.side, next.dataset.tab); next.focus()
+  })
+}
+for (const f of document.querySelectorAll("#files .file")) f.addEventListener("click", () => showDiff(Number(f.dataset.i)))
+for (const c of document.querySelectorAll("[data-follow]")) c.addEventListener("click", () => {
+  if (app.dataset.form === "now") return
+  selectTab("right", c.dataset.follow)
+  if (c.dataset.file !== undefined) showDiff(Number(c.dataset.file))
+})
+for (const r of document.querySelectorAll(".room-row")) r.addEventListener("click", () => {
+  for (const x of document.querySelectorAll(".room-row")) x.classList.toggle("here", x === r)
+})
+
+showDiff(0)
+playScene(new URLSearchParams(location.search).get("scene") ?? "verify")
+</script>
+</body>
+</html>
