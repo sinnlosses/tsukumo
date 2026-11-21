@@ -246,8 +246,8 @@
     <div class="card">
       <h3>見本の決まり</h3>
       <ul>
-        <li><b>採用</b>の印は、1回目の見本で採ると決まったもの（しょんぼり・わくわく・たいくつ・タスクの完了・失敗・答え待ち）</li>
-        <li>練り直しの6つは、案を3つずつ並べた。上の札か <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> で切り替える。採った6つに合わせ、記号がはっきり見える大きさにしてある</li>
+        <li>12件すべて採用が決まった。1回目で6つ（しょんぼり・わくわく・たいくつ・タスクの完了・失敗・答え待ち）、練り直しで6つ（にっと ♪・ふむ 考え雲・えへん キラキラ・あわわ 大粒の汗・きりっ 目の光・きょとん 驚き線）</li>
+        <li>練り直しの6つは、採らなかった案も残してある。上の札か <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> で切り替える。開いたときは採用の案が出る</li>
         <li>出どころは表情ごとの「頭の位置」。ふむ・たいくつは画の下半分に頭がある（赤い丸で確かめられる）</li>
         <li>どれも1回で消える。「動きを減らす」では出さない</li>
       </ul>
@@ -261,42 +261,42 @@ const IMG = (name) => `../../../../characters/tsukumo/${name}.png`
 // ax, ay: 立ち絵の箱の中の頭の位置（0〜1）。パックの定義に持たせる想定の値
 const ITEMS = [
   { group: "表情", id: "default", name: "にっと", img: "default", ax: 0.5, ay: 0.22, baked: "",
-    why: "最も多く届く表情。1つだけ出して、すぐ消える。",
+    why: "最も多く届く表情。1つだけ出して、すぐ消える。", chosen: 0,
     variants: [
       { name: "音符", fx: "noteOne", what: "頭の横に大きな ♪ が1つ、弾んで揺れる。" },
       { name: "花", fx: "flowerPop", what: "頭のまわりに花が2つ、ぽんと咲く。" },
       { name: "ハート", fx: "heartPop", what: "頬の横にハートが1つ、ぽんと出て昇る。" },
     ] },
   { group: "表情", id: "thinking", name: "ふむ", img: "thinking", ax: 0.52, ay: 0.5, baked: "",
-    why: "考えている間合いを見せる。画は机に向かう姿で頭が低いので、出どころも下げてある。",
+    why: "考えている間合いを見せる。画は机に向かう姿で頭が低いので、出どころも下げてある。", chosen: 0,
     variants: [
       { name: "考え雲", fx: "thinkCloud", what: "小さな丸が続いて、雲の中に「…」が浮かぶ。" },
       { name: "歯車", fx: "gears", what: "頭の横で大小の歯車がくるっと噛み合って回る。" },
       { name: "擬音「ふむ」", fx: "fumuText", what: "頭の上に「ふむ…」の文字がぽんと出る。" },
     ] },
   { group: "表情", id: "proud", name: "えへん", img: "proud", ax: 0.42, ay: 0.2, baked: "集中線・キラ",
-    why: "画の集中線は止まっているので、動く記号で得意げさを足す。",
+    why: "画の集中線は止まっているので、動く記号で得意げさを足す。", chosen: 2,
     variants: [
       { name: "ドヤッ", fx: "doya", what: "頭の横に「ドヤッ」の擬音が大きく叩きつけられる。" },
       { name: "ふんすっ", fx: "funsu", what: "大きな鼻息の雲が左右に噴いて、「ふんすっ」の文字が添う。" },
       { name: "キラキラ", fx: "bigTwinkle", what: "頭のまわりで大きな ✦ が3つ、順に瞬く。" },
     ] },
   { group: "表情", id: "flustered", name: "あわわ", img: "flustered", ax: 0.45, ay: 0.27, baked: "!?・汗・揺れ線",
-    why: "!? は画にあるので重ねない。慌てた瞬間の勢いを足す。",
+    why: "!? は画にあるので重ねない。慌てた瞬間の勢いを足す。", chosen: 0,
     variants: [
       { name: "大粒の汗", fx: "bigSweat", what: "頭から大粒の汗が3つ噴き出して、垂れて消える。" },
       { name: "青ざめ", fx: "pale", what: "顔の上半分に青い縦線がさっと下りる。" },
       { name: "ぐるぐる", fx: "guru", what: "頭の上で渦がぐるぐる回る（目が回る）。" },
     ] },
   { group: "表情", id: "serious", name: "きりっ", img: "serious", ax: 0.48, ay: 0.22, baked: "",
-    why: "危ない操作の確認で出る表情。はしゃがず、締まった見せ方にする。",
+    why: "危ない操作の確認で出る表情。はしゃがず、締まった見せ方にする。", chosen: 2,
     variants: [
       { name: "集中線", fx: "speedLines", what: "立ち絵の後ろに集中線が一瞬走る。" },
       { name: "擬音「キリッ」", fx: "kiri", what: "頭の横に「キリッ」の文字が鋭く出る。" },
       { name: "目の光", fx: "eyeStar", what: "目の横で大きな ✦ が1つ、鋭く光る。" },
     ] },
   { group: "表情", id: "curious", name: "きょとん", img: "curious", ax: 0.5, ay: 0.24, baked: "？・揺れ線",
-    why: "？は画にあるので、気づいた瞬間の驚きを足す。",
+    why: "？は画にあるので、気づいた瞬間の驚きを足す。", chosen: 1,
     variants: [
       { name: "！", fx: "exclaim", what: "頭の上に大きな「！」が跳び出す。" },
       { name: "驚き線", fx: "surprise", what: "頭のまわりから太い線が5本、ピッと跳ねる。" },
@@ -399,9 +399,9 @@ function renderList() {
     const b = document.createElement("button")
     b.type = "button"
     b.setAttribute("aria-current", String(i === current))
-    const mark = it.adopted ? '<span class="adopted">採用</span>' : it.variants ? '<span class="adopted" style="background:var(--accent-soft);color:var(--accent)">3案</span>' : ""
+    const mark = it.adopted || it.chosen !== undefined ? '<span class="adopted">採用</span>' : ""
     b.innerHTML = `<span>${it.name}${mark}</span><span class="baked">${it.baked ? "画に " + it.baked : ""}</span>`
-    b.addEventListener("click", () => { current = i; variant = 0; show() })
+    b.addEventListener("click", () => { current = i; variant = it.chosen ?? 0; show() })
     nav.append(b)
   })
 }
@@ -429,7 +429,7 @@ function renderVariants() {
     const b = document.createElement("button")
     b.type = "button"
     b.setAttribute("aria-pressed", String(i === variant))
-    b.textContent = `${i + 1}. ${v.name}`
+    b.textContent = `${i + 1}. ${v.name}${i === it.chosen ? "（採用）" : ""}`
     b.addEventListener("click", () => { variant = i; show() })
     box.append(b)
   })
@@ -460,8 +460,8 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "r" || e.key === "R") play()
   else if (e.key === "t" || e.key === "T") $("toggle").click()
   else if (["1", "2", "3"].includes(e.key) && ITEMS[current].variants) { variant = Number(e.key) - 1; show() }
-  else if (e.key === "ArrowDown") { current = (current + 1) % ITEMS.length; variant = 0; show(); e.preventDefault() }
-  else if (e.key === "ArrowUp") { current = (current - 1 + ITEMS.length) % ITEMS.length; variant = 0; show(); e.preventDefault() }
+  else if (e.key === "ArrowDown") { current = (current + 1) % ITEMS.length; variant = ITEMS[current].chosen ?? 0; show(); e.preventDefault() }
+  else if (e.key === "ArrowUp") { current = (current - 1 + ITEMS.length) % ITEMS.length; variant = ITEMS[current].chosen ?? 0; show(); e.preventDefault() }
 })
 show()
 </script>
