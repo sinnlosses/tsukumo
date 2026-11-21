@@ -16,6 +16,7 @@ import { CelebrateSpark } from "./celebrate-spark.tsx"
 import styles from "./character-view.module.css"
 import type { CharacterViewModel } from "./hooks/use-character-view.ts"
 import { ItemSeats } from "./item-seat-list.tsx"
+import { Manpu } from "./manpu.tsx"
 import { PhoneBalloon } from "./phone-balloon.tsx"
 import { SpeechLog } from "./speech-log.tsx"
 type PresentationalCharacterViewProps = CharacterViewModel
@@ -33,6 +34,7 @@ export function PresentationalCharacterView({
   speechLogOpen,
   onOpenSpeechLog,
   onCloseSpeechLog,
+  manpu,
   face,
   phoneLine,
   seats,
@@ -88,6 +90,9 @@ export function PresentationalCharacterView({
           {stagePortrait}
         </HStack>
         {portraitUrl !== undefined && motion === "celebrate" && <CelebrateSpark />}
+        {portraitUrl !== undefined && manpu.kind === "shown" && (
+          <Manpu key={manpu.at} manpu={manpu.manpu} faceAt={manpu.faceAt} />
+        )}
       </div>
       <ItemSeats seats={seats} portraitShown={portraitUrl !== undefined} />
     </VStack>

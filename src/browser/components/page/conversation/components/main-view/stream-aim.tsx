@@ -14,7 +14,8 @@ import {
 } from "../../../../../../shared/character-pack/expression.ts"
 import { useExternalSync } from "../../../../../hooks/use-external-sync.ts"
 import { useSession } from "../../../../../stores/session.ts"
-import { faceOnScreen, tailAim, tailPath } from "./domain/tail-aim.ts"
+import { faceOnScreen } from "../../domain/face-on-screen.ts"
+import { tailAim, tailPath } from "./domain/tail-aim.ts"
 import styles from "./main-view.module.css"
 
 const STAGE_SELECTOR = "[data-character-stage]"

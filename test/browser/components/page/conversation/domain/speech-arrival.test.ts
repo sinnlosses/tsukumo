@@ -156,15 +156,15 @@ describe("SPEECH_ARRIVALS", () => {
   it("9つの表情のキーを持ち、動きと出方が決めた対応どおり", () => {
     expect(Object.keys(SPEECH_ARRIVALS).toSorted()).toEqual([...EXPRESSIONS].toSorted())
     expect(SPEECH_ARRIVALS).toEqual({
-      default: { motion: "nod", bubble: "pop" },
-      thinking: { motion: "lean", bubble: "ease" },
-      proud: { motion: "success", bubble: "swell" },
-      excited: { motion: "success", bubble: "swell" },
-      flustered: { motion: "failure", bubble: "shake" },
-      curious: { motion: "tilt", bubble: "ease" },
-      sad: { motion: "sink", bubble: "sink" },
-      bored: { motion: "sink", bubble: "sink" },
-      serious: { motion: "still", bubble: "snap" },
+      default: { motion: "nod", bubble: "pop", manpu: "note" },
+      thinking: { motion: "lean", bubble: "ease", manpu: "think" },
+      proud: { motion: "success", bubble: "swell", manpu: "twinkle" },
+      excited: { motion: "success", bubble: "swell", manpu: "none" },
+      flustered: { motion: "failure", bubble: "shake", manpu: "sweat" },
+      curious: { motion: "tilt", bubble: "ease", manpu: "none" },
+      sad: { motion: "sink", bubble: "sink", manpu: "none" },
+      bored: { motion: "sink", bubble: "sink", manpu: "none" },
+      serious: { motion: "still", bubble: "snap", manpu: "glint" },
     })
   })
 })

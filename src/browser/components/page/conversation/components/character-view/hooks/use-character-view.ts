@@ -12,6 +12,11 @@
 
 import { useState } from "react"
 
+import type { FaceAt } from "../../../../../../../shared/character-pack/character-definition.ts"
+import {
+  faceAtOf,
+  type CharacterInfo,
+} from "../../../../../../../shared/character-pack/character.ts"
 import type { Expression } from "../../../../../../../shared/character-pack/expression.ts"
 import type { ItemSeatMap } from "../../../../../../../shared/item/item.ts"
 import type { ShownReaction } from "../../../../../../../shared/session/shown-reaction.ts"
@@ -42,7 +47,11 @@ import {
   resolvePinnedSpeech,
   type PinnedSpeech,
 } from "../../../domain/pinned-speech.ts"
-import { SPEECH_ARRIVALS } from "../../../domain/speech-arrival.ts"
+import {
+  SPEECH_ARRIVALS,
+  type SpeechArrival,
+  type SpeechManpu,
+} from "../../../domain/speech-arrival.ts"
 import { welcomeHeadOf } from "../../../domain/welcome-entry-list.ts"
 import { useComposerDraft } from "../../../stores/composer-draft.ts"
 import { useShownReaction, useWaitingLineDueAt } from "../../../stores/shown-reaction.ts"
@@ -77,6 +86,8 @@ export type CharacterViewModel = {
   readonly speechLogOpen: boolean
   readonly onOpenSpeechLog: () => void
   readonly onCloseSpeechLog: () => void
+  /** セリフが届いた瞬間の漫符。出さないときは `none`。`at` が替わるたびに作り直して1回だけ再生させる。 */
+  readonly manpu: ArrivalManpu
   /** 狭い画面の顔（パックの `face` の1枚）。 */
   readonly face: CharacterFaceInfo
   /** 狭い画面の吹き出しに出す最新の1件。 */
@@ -84,6 +95,18 @@ export type CharacterViewModel = {
   /** 使用中のパックの3つの席に置いたアイテム。行が無ければ全席が空。 */
   readonly seats: ItemSeatMap
 }
+
+/** 漫符を出す窓（ミリ秒）。いちばん長い漫符（1.8 秒）より長く取り、開き直した画面で古い届きを再生しない。 */
+const MANPU_WINDOW_MS = 3000
+
+export type ArrivalManpu =
+  | { readonly kind: "none" }
+  | {
+      readonly kind: "shown"
+      readonly manpu: Exclude<SpeechManpu, "none">
+      readonly at: number
+      readonly faceAt: FaceAt
+    }
 
 /**
  * 狭い画面の吹き出しに出す最新の1件。
@@ -209,10 +232,27 @@ export function useCharacterView(): CharacterViewModel {
     speechLogOpen,
     onOpenSpeechLog: () => setSpeechLogOpen(true),
     onCloseSpeechLog: () => setSpeechLogOpen(false),
+    manpu: arrivalManpuOf(arrived, reducedMotion, now, character),
     face: characterFaceInfo(character),
     phoneLine: phoneLineOf(reaction, activeSpeeches, now),
     seats: (character === undefined ? undefined : itemSeats[character.pack]) ?? EMPTY_SEATS,
   }
+}
+
+/** 動きを減らす設定では出さない。動きが `still` の表情でも、届いた表情から出す。 */
+function arrivalManpuOf(
+  arrived: SpeechArrival,
+  reducedMotion: boolean,
+  now: number,
+  character?: CharacterInfo,
+): ArrivalManpu {
+  if (arrived.kind === "none" || reducedMotion || now - arrived.at >= MANPU_WINDOW_MS) {
+    return { kind: "none" }
+  }
+  const manpu = SPEECH_ARRIVALS[arrived.expression].manpu
+  return manpu === "none"
+    ? { kind: "none" }
+    : { kind: "shown", manpu, at: arrived.at, faceAt: faceAtOf(arrived.expression, character) }
 }
 
 const EMPTY_SEATS: ItemSeatMap = {

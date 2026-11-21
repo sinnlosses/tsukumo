@@ -1,10 +1,7 @@
 // 吹き出しの尾の根元・向き・長さを、立ち絵の顔の位置から決める。
 // 座標はすべて画面（viewport）の座標。測る・描くのは呼ぶ側で、ここは数だけを扱う。
 
-import {
-  DEFAULT_FACE_AT,
-  type FaceAt,
-} from "../../../../../../../shared/character-pack/character-definition.ts"
+import type { Point } from "../../../domain/face-on-screen.ts"
 
 /** 尾の長さの上限と下限（px）。 */
 const TAIL_LENGTH_MAX = 20
@@ -30,7 +27,7 @@ const BASE_INSET = 1.5
  */
 const FILL_DEPTH = 1.5
 
-export type Point = { readonly x: number; readonly y: number }
+export type { Point }
 
 export type BubbleRect = {
   readonly left: number
@@ -51,29 +48,6 @@ export type TailAim = {
   readonly tip: Point
   /** 根元の2点（吹き出しの縁の線の内側）。 */
   readonly base: readonly [Point, Point]
-}
-
-/** パックの `faceAt`（無ければ既定）を、立ち絵の箱と絵の縦横比から画面の座標にする。絵は箱の下端に寄せ、縦横比を保って収まる。 */
-export function faceOnScreen(input: {
-  readonly box: {
-    readonly left: number
-    readonly bottom: number
-    readonly width: number
-    readonly height: number
-  }
-  readonly naturalWidth: number
-  readonly naturalHeight: number
-  readonly faceAt?: FaceAt
-}): Point {
-  const faceAt = input.faceAt ?? DEFAULT_FACE_AT
-  const ratio =
-    input.naturalWidth > 0 && input.naturalHeight > 0 ? input.naturalWidth / input.naturalHeight : 1
-  const width = Math.min(input.box.width, input.box.height * ratio)
-  const height = width / ratio
-  return {
-    x: input.box.left + (input.box.width - width) / 2 + width * faceAt.x,
-    y: input.box.bottom - height + height * faceAt.y,
-  }
 }
 
 /**

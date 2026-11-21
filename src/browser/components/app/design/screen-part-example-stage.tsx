@@ -35,6 +35,7 @@ const CHARACTER: CharacterViewModel = {
   speechLogOpen: false,
   onOpenSpeechLog: noop,
   onCloseSpeechLog: noop,
+  manpu: { kind: "none" },
   face: NO_FACE,
   phoneLine: { kind: "text", text: "READMEを見直すね。", time: TIME },
   seats: { topLeft: undefined, belowLeft: undefined, belowRight: undefined },
