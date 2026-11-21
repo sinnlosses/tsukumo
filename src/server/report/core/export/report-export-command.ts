@@ -11,7 +11,6 @@ import { isExchangeClosed } from "../../../../shared/session/conversation-moment
 import { recordTimeAt, type SessionRecord } from "../../../../shared/session/session-record.ts"
 import type { SessionState } from "../../../../shared/session/session-state.ts"
 import { splitIntoTurns, type Turn, turnIdOf } from "../../../../shared/session/turn.ts"
-import { formatElapsed } from "../../../../shared/utils/elapsed-time.ts"
 import type { CallReceiver } from "../../../core/command-receiver.ts"
 import type { ReportImageShelf } from "../image/report-image-shelf.ts"
 import { buildReportExportDocument, type ReportExportMasthead } from "./report-export-document.ts"
@@ -51,8 +50,6 @@ export type ReportExportCommandPorts = {
   readonly now: () => number
   /** エポックミリ秒が指す、利用者のローカル時刻。 */
   readonly localTimeAt: (epochMilliseconds: number) => Temporal.PlainDateTime
-  /** 表紙の帯の「場所」（作業ツリーと HEAD）。空なら行ごと出さない。 */
-  readonly location: () => Promise<string>
   readonly folder: ReportExportFolder
 }
 
@@ -75,8 +72,7 @@ export async function saveReportExport(
   const document = buildReportExportDocument({
     bodyHtml: input.bodyHtml,
     css: input.css,
-    masthead: mastheadOf(final, await ports.location(), ports.localTimeAt),
-    savedAt: displayTime(ports.localTimeAt(now)),
+    masthead: mastheadOf(final, ports.localTimeAt),
     findImage: ports.findImage,
   })
   if (document.length > MAX_REPORT_EXPORT_DOCUMENT_LENGTH) {
@@ -184,17 +180,12 @@ function requestOf(turn: Turn<SessionRecord>): Pick<FinalReport, "request" | "re
 
 function mastheadOf(
   final: FinalReport,
-  location: string,
   localTimeAt: ReportExportCommandPorts["localTimeAt"],
 ): ReportExportMasthead {
   const title =
     final.task?.name ??
     (firstLine(final.conclusion ?? "") || firstLine(final.request ?? "") || MASTHEAD_KIND)
   const at = final.reportedAt ?? final.requestedAt
-  const duration =
-    final.requestedAt !== undefined && final.reportedAt !== undefined
-      ? formatElapsed(Math.max(0, Math.round((final.reportedAt - final.requestedAt) / 1000)))
-      : undefined
   return {
     kind: MASTHEAD_KIND,
     title,
@@ -203,8 +194,6 @@ function mastheadOf(
       : { taskId: final.task.id, outcome: OUTCOME_TEXT[final.task.outcome] }),
     ...(final.request === undefined ? {} : { request: firstLine(final.request) }),
     ...(at === undefined ? {} : { at: displayTime(localTimeAt(at)) }),
-    ...(duration === undefined ? {} : { duration }),
-    ...(location === "" ? {} : { location }),
   }
 }
 

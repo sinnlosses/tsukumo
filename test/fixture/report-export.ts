@@ -9,7 +9,6 @@ export const UNUSED_REPORT_EXPORT_PORTS = {
   findImage: () => undefined,
   now: () => 0,
   localTimeAt: () => Temporal.PlainDateTime.from("2026-01-01T00:00"),
-  location: () => Promise.resolve(""),
   folder: {
     write: () => Promise.resolve({ kind: "failed" }),
     openInBrowser: () => Promise.resolve(false),

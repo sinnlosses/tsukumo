@@ -1,5 +1,5 @@
 // 最終レポートの書き出し。画面が描いた DOM の写しと集めた CSS から、外部の読み込みを持たない1つの HTML 文書を組む。
-// 時計も棚の読み出しも持たない。保存の時刻の文字列と画像を引く関数は呼ぶ側が渡す。
+// 時計も棚の読み出しも持たない。画像を引く関数は呼ぶ側が渡す。
 
 import {
   readReportImageRoute,
@@ -18,8 +18,6 @@ export type ReportExportMasthead = {
   readonly title: string
   readonly request?: string
   readonly at?: string
-  readonly duration?: string
-  readonly location?: string
 }
 
 export type ReportExportInput = {
@@ -28,8 +26,6 @@ export type ReportExportInput = {
   /** 画面で集めた CSS。 */
   readonly css: string
   readonly masthead: ReportExportMasthead
-  /** 保存した日時の表示。 */
-  readonly savedAt: string
   readonly findImage: ReportImageShelf["find"]
 }
 
@@ -54,7 +50,6 @@ export function buildReportExportDocument(input: ReportExportInput): string {
 ${mastheadHtml(masthead)}
 ${embedImages(input.bodyHtml, input.findImage)}
 </main>
-<footer class="export-footer"><span>tsukumo で書き出した${escapeHtml(masthead.kind)}</span><span>${escapeHtml(input.savedAt)} に保存</span></footer>
 </body>
 </html>
 `
@@ -73,8 +68,6 @@ function mastheadHtml(masthead: ReportExportMasthead): string {
   const meta = [
     ["依頼", masthead.request],
     ["日時", masthead.at],
-    ["所要", masthead.duration],
-    ["場所", masthead.location],
   ].flatMap(([label, value]) =>
     value === undefined || value === ""
       ? []

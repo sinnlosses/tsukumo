@@ -20,7 +20,6 @@ function build(overrides: {
     bodyHtml: overrides.bodyHtml ?? "<p>架空の本文</p>",
     css: overrides.css ?? "",
     masthead: { kind: "最終レポート", title: "架空の題", ...overrides.masthead },
-    savedAt: "2026-01-02 03:04",
     findImage: (toolUseId, path) =>
       toolUseId === "toolu_1" && path === "shots/a.png" ? fictionalImage : undefined,
   })
@@ -44,12 +43,13 @@ describe("buildReportExportDocument", () => {
   })
 
   it("表紙の帯は無い項目を出さず、字を逃がす", () => {
-    const html = build({ masthead: { title: "<b>題</b>", taskId: "PROJ-1", duration: "3秒" } })
+    const html = build({
+      masthead: { title: "<b>題</b>", taskId: "PROJ-1", at: "2026-01-02 03:04" },
+    })
     expect(html).toContain("&lt;b&gt;題&lt;/b&gt;")
     expect(html).toContain("PROJ-1")
-    expect(html).toContain("所要")
+    expect(html).toContain("<dt>日時</dt>")
     expect(html).not.toContain("<dt>依頼</dt>")
-    expect(html).not.toContain("<dt>場所</dt>")
     expect(html).not.toContain('class="outcome"')
   })
 

@@ -55,18 +55,14 @@ pre { overflow-x: auto; }
 .meta dt::after { content: " "; }
 .meta dd { display: inline; margin: 0; color: var(--ink-soft); }
 .export-missing-image { color: var(--ink-quiet); font-size: 12.5px; }
-.export-footer { max-width: 760px; margin: -48px auto 48px; padding: 0 48px; font-size: 11.5px; color: var(--ink-quiet); display: flex; justify-content: space-between; }
 @media print {
   html { background: none; }
   main { margin: 0; padding: 0; box-shadow: none; max-width: none; }
-  .export-footer { margin: 24px 0 0; padding: 0; }
   details { border: none; padding: 0; }
   details > summary { display: none; }
   h2 { break-after: avoid; }
   figure, table, pre { break-inside: avoid; }
 }
 @media (max-width: 640px) {
-  main { margin: 0; border-radius: 0; padding: 24px 20px 32px; }
-  .export-footer { margin: 16px 0 32px; padding: 0 20px; }
-}
+  main { margin: 0; border-radius: 0; padding: 24px 20px 32px; }}
 `

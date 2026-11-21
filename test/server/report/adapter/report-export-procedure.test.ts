@@ -59,7 +59,6 @@ function setUp(options: { readonly state?: SessionState; readonly directory?: st
       findImage: () => undefined,
       now: () => 0,
       localTimeAt: () => Temporal.PlainDateTime.from("2026-01-02T03:04"),
-      location: () => Promise.resolve("架空の作業ツリー @ abc1234"),
       folder: createReportExportFolder({
         directory: options.directory ?? directory,
         launch: (path, mode) => {
@@ -101,7 +100,6 @@ describe("reportExport の手続き", () => {
     expect(written).toMatch(/^<!doctype html>/)
     expect(written).toContain("架空の作業")
     expect(written).toContain("架空の依頼の1行目")
-    expect(written).toContain("架空の作業ツリー @ abc1234")
   })
 
   it("同じ名前が既にあれば上書きせず、末尾に -2 を足した名前で書く", async () => {
