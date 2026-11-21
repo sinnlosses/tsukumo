@@ -29,6 +29,7 @@ export type A2uiStructureFaultKind =
   | "figure-not-figure-part"
   | "supports-not-section"
   | "unreferenced-component"
+  | "shared-reference"
 
 /**
  * 違反 1 つ。`pointer` は引数の根からの JSON Pointer（`/components/2/children/0`）。
@@ -134,7 +135,10 @@ export function a2uiStructureFaults(components: readonly unknown[]): readonly A2
         if (reference.slot === "supports") {
           continue
         }
-        if (!reached.has(target)) {
+        // 参照された場所ごとに描かれるので、2か所目からの参照は同じ部品を二重に出す
+        if (reached.has(target)) {
+          faults.push({ kind: "shared-reference", pointer: reference.pointer })
+        } else {
           reached.add(target)
           visit(
             target,
@@ -207,6 +211,8 @@ const A2UI_STRUCTURE_FAULT_REASONS = {
   "figure-not-figure-part": "Report.figure には図の部品の id を置く",
   "supports-not-section": "checks の supports には Section の id だけを置く",
   "unreferenced-component": "どこからも参照されない部品",
+  "shared-reference":
+    "同じ部品をほかの欄でも参照している（参照した場所ごとに描かれて二重に出る）。Report.figure に置いた図は節に置かず、1つの部品は1か所からだけ参照する",
 } as const satisfies Record<A2uiStructureFaultKind, string>
 
 const ROOT_ID = "root"

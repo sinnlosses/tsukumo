@@ -242,6 +242,20 @@ describe("a2uiStructureFaults", () => {
       ],
       faults: [{ kind: "figure-not-figure-part", pointer: "/components/0/figure" }],
     },
+    {
+      name: "図に置いた部品を節にも置く",
+      components: [
+        report(["s"], { figure: "g" }),
+        section("s", ["g"]),
+        { id: "g", component: "Graph", source: "A -> B" },
+      ],
+      faults: [{ kind: "shared-reference", pointer: "/components/0/figure" }],
+    },
+    {
+      name: "同じ部品を2つの節に置く",
+      components: [report(["s", "t"]), section("s", ["p"]), section("t", ["p"]), paragraph("p")],
+      faults: [{ kind: "shared-reference", pointer: "/components/2/children/0" }],
+    },
   ])("$name を拾う", ({ components, faults }) => {
     expect(a2uiStructureFaults(components)).toEqual(faults)
   })

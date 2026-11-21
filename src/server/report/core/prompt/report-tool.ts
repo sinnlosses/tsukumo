@@ -56,7 +56,7 @@ export const REPORT_FIELD_DESCRIPTIONS = {
  * 図の部品ごとの使いどころは部品カード（`partCardOf`）が持つ。
  */
 export function reportFigureDescription(preference: FigurePreference): string {
-  const head = "図1つ（図の部品の ID）。"
+  const head = "図1つ（図の部品の ID。同じ部品を節には置かない）。"
   const parts = "図の部品（image・mermaid・graph・svg・timeline・compare・chart・stats・plot）"
   const notFigure = "表（Table）・箇条書きは図の部品ではないので、節に置く。"
   const conditions =
