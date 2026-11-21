@@ -1,9 +1,13 @@
-// 見本帳の `ui/` の節のうち、重なる面の部品（Dialog・BottomSheet・Menu・ImageZoom）。開くボタンを置き、押すと出る。
+// 見本帳の `ui/` の節のうち、重なる面の部品（Dialog・BottomSheet・CommandPalette・Menu・ImageZoom）。開くボタンを置き、押すと出る。
 
 import { useState, type ReactElement } from "react"
 
 import { BottomSheet } from "../../ui/bottom-sheet/bottom-sheet.tsx"
 import { Button } from "../../ui/button/button.tsx"
+import {
+  CommandPalette,
+  type CommandPaletteRow,
+} from "../../ui/command-palette/command-palette.tsx"
 import { Dialog } from "../../ui/dialog/dialog.tsx"
 import { ImageZoom } from "../../ui/image-zoom/image-zoom.tsx"
 import { Menu, type MenuItem } from "../../ui/menu/menu.tsx"
@@ -44,10 +48,17 @@ const MENU_ITEMS = [
   },
 ] as const satisfies readonly MenuItem[]
 
+const PALETTE_ROWS = [
+  { id: "a", label: "操作その1", group: "操作", keys: "mod+k", hiddenUntilTyped: false },
+  { id: "b", label: "操作その2", group: "操作", hiddenUntilTyped: false },
+  { id: "c", label: "画面その1", group: "画面へ移る", hiddenUntilTyped: false },
+] as const satisfies readonly CommandPaletteRow[]
+
 export function OverlayGroups(): ReactElement {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [sheetOpen, setSheetOpen] = useState(false)
   const [zoomOpen, setZoomOpen] = useState(false)
+  const [paletteOpen, setPaletteOpen] = useState(false)
 
   return (
     <>
@@ -85,6 +96,19 @@ export function OverlayGroups(): ReactElement {
             板の中身（760px 以下の幅でだけ開いたままになる）
           </Text>
         </BottomSheet>
+      </Group>
+      <Group title="CommandPalette（開くと出る）" parts={["command-palette"]}>
+        <Opener label="CommandPalette を開く" onOpen={() => setPaletteOpen(true)} />
+        <CommandPalette
+          open={paletteOpen}
+          ariaLabel="見本のコマンドパレット"
+          placeholder="操作を探す"
+          searchLabel="操作を探す"
+          emptyText="当たる操作が無い"
+          rows={PALETTE_ROWS}
+          onClose={() => setPaletteOpen(false)}
+          onRun={() => {}}
+        />
       </Group>
       <Group title="Menu（開くと出る）" parts={["menu"]}>
         <Menu triggerLabel="見本のメニュー" disabled={false} items={MENU_ITEMS} className="" />
