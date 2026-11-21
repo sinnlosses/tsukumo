@@ -19,7 +19,12 @@ export const reportExportMark = {
   term: (note: string) => ({ [MARK]: "term", [MARK_VALUE]: note }),
   /** 末尾の用語の一覧の雛形。写しでは開いた語があれば表にして出し、無ければ外す。 */
   termList: { [MARK]: "term-list" },
+  /** 描くときに色のトークンから hex へ解いた SVG の入れ物。`map` は小文字の hex からトークン名への JSON。写しでは焼いた hex を `var(--トークン, #hex)` に戻す。 */
+  themedSvg: (map: string) => ({ [MARK]: "themed-svg", [MARK_VALUE]: map }),
 } as const
+
+const COLOR = /#[0-9a-f]{6}\b|rgb\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*\)/gi
+const COLOR_ATTRIBUTES = ["fill", "stroke", "style"] as const
 
 /** 根の要素の写し（画面の操作を落とし動く部品を止めた形の HTML）と、写しに当たる CSS。 */
 export function reportExport(root: Element): { readonly html: string; readonly css: string } {
@@ -139,9 +144,52 @@ function applyMark(element: Element): void {
     case "term":
     case "term-list":
       return
+    case "themed-svg":
+      restoreTokens(element)
+      return
     default:
       element.removeAttribute(MARK)
   }
+}
+
+/** 入れ物の中の `<style>` の文と色の属性にある、対応のある hex を `var(--トークン, #hex)` にして、印を外す。 */
+function restoreTokens(element: Element): void {
+  const tokens = parseTokenMap(element.getAttribute(MARK_VALUE) ?? "")
+  const restore = (text: string): string =>
+    text.replace(COLOR, (color) => {
+      const token = tokens.get(hexOf(color))
+      return token === undefined ? color : `var(${token}, ${color})`
+    })
+  for (const style of element.querySelectorAll("style")) {
+    style.textContent = restore(style.textContent)
+  }
+  for (const attribute of COLOR_ATTRIBUTES) {
+    for (const target of element.querySelectorAll(`[${attribute}]`)) {
+      target.setAttribute(attribute, restore(target.getAttribute(attribute) ?? ""))
+    }
+  }
+  element.removeAttribute(MARK)
+  element.removeAttribute(MARK_VALUE)
+}
+
+/** 色の表記を小文字の `#rrggbb` にする。`<style>` の文は mermaid の通ったあと `rgb(r, g, b)` で並ぶことがある。 */
+function hexOf(color: string): string {
+  if (color.startsWith("#")) {
+    return color.toLowerCase()
+  }
+  const channels = color.match(/\d+/g) ?? []
+  return `#${channels.map((value) => Number(value).toString(16).padStart(2, "0")).join("")}`
+}
+
+function parseTokenMap(json: string): ReadonlyMap<string, string> {
+  const parsed: unknown = JSON.parse(json)
+  return new Map(
+    typeof parsed === "object" && parsed !== null
+      ? Object.entries(parsed).filter(
+          (entry): entry is [string, string] => typeof entry[1] === "string",
+        )
+      : [],
+  )
 }
 
 /** 押せるパスの中身を押せない `code` にする。中身がすでに `code` 1つなら、それだけを残す。 */

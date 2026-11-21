@@ -8,7 +8,8 @@ import { stubIntersectionObserver } from "../../../../fixture/intersection.ts"
 vi.mock("../../../../../src/browser/features/report/renderer/theme-color.ts", () => ({
   resolveColor: () => "rgb(0, 0, 0)",
   resolveHex: () => "#000000",
-  resolveHexOver: () => "#000000",
+  resolveHexOver: (_node: unknown, property: string) =>
+    property === "--surface-raised" ? "#112233" : "#000000",
 }))
 
 const scripts: Node[] = []
@@ -97,6 +98,20 @@ describe("MermaidBlock の描いた SVG の使い回し", () => {
         expect(svg.outerHTML).not.toContain(other)
       }
     }
+  })
+
+  it("図が1枚だけでも、ノードの塗りのトークンを書き出し用の対応表に残す", async () => {
+    const view = render(<MermaidBlock code="graph T1" />)
+    await finishLoading()
+    await waitFor(() => {
+      expect(view.container.querySelector("svg")).not.toBeNull()
+    })
+
+    const marked = [...view.container.querySelectorAll("pre")].find((pre) =>
+      pre.getAttributeNames().some((name) => name.startsWith("data-")),
+    )
+    const raw = marked?.getAttributeNames().map((name) => marked.getAttribute(name) ?? "")
+    expect(raw?.join("")).toContain("--surface-raised")
   })
 
   it("違うソースは別々に描くが、初期化は1回のまま", async () => {

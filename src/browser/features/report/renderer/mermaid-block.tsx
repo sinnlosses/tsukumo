@@ -19,6 +19,7 @@ import { useMountEffect } from "../../../hooks/use-mount-effect.ts"
 import { errorMessage } from "../../../utils/error-message.ts"
 import { mergeRefs } from "../../../utils/merge-ref.ts"
 import { useSeenOnce } from "../hooks/use-seen-once.ts"
+import { reportExportMark } from "../report-export-copy.ts"
 import { figureZoomTriggerProps, SvgZoom } from "./figure-zoom.tsx"
 import styles from "./mermaid-block.module.css"
 import { isReadableTextPx, pickMeasure, topDownSource } from "./mermaid-figure-measure.ts"
@@ -73,8 +74,7 @@ export function MermaidBlock(props: MermaidBlockProps): ReactElement {
     if (!seen || themeNode === null) {
       return
     }
-    const themeVariables = resolveThemeVariables(themeNode)
-    syncTheme(themeVariables)
+    const themeVariables = resolveAndSyncTheme(themeNode)
     const fit = (node: HTMLPreElement): Promise<void> =>
       fitTopDown({ node, code, themeNode, themeVariables, isCancelled: () => cancelled })
     const reportError = (reason: unknown): void => {
@@ -168,8 +168,8 @@ function newDiagramId(): string {
  * mermaid の `themeVariables` をページの色のトークンから作る。`base` だけが差せて、値は hex しか受け取らない。
  */
 function resolveThemeVariables(node: HTMLElement): Readonly<Record<string, string | boolean>> {
-  const hex = (property: string): string => resolveHex(node, property)
-  const hexOnSurface = (property: string): string => resolveHexOver(node, property, "--surface")
+  const hex = (property: string): string => recordToken(property, resolveHex(node, property))
+  const hexOnSurface = (property: string): string => hexOverSurface(node, property)
   return {
     darkMode: true,
     background: hex("--surface"),
@@ -193,17 +193,48 @@ function resolveThemeVariables(node: HTMLElement): Readonly<Record<string, strin
  * ソースの中の `var(--…)` を hex にする。mermaid の `classDef` / `linkStyle` は色の値を hex でしか受け取れない。
  */
 function resolveTokens(code: string, node: HTMLElement): string {
-  return code.replace(/var\((--[\w-]+)\)/g, (_, property: string) =>
-    resolveHexOver(node, property, "--surface"),
-  )
+  return code.replace(/var\((--[\w-]+)\)/g, (_, property: string) => hexOverSurface(node, property))
 }
 
-function syncTheme(themeVariables: Readonly<Record<string, string | boolean>>): void {
+/**
+ * 解いた hex と元のトークンの対応。書き出しの写しが、SVG に焼いた色をトークンに戻すのに使う。
+ * 同じ hex に複数のトークンが当たれば先に解いたほうを採る。テーマが変わったら `syncTheme` が空にする。
+ */
+const tokenOfHex = new Map<string, string>()
+
+function recordToken(property: string, hex: string): string {
+  const key = hex.toLowerCase()
+  if (!tokenOfHex.has(key)) {
+    tokenOfHex.set(key, property)
+  }
+  return hex
+}
+
+function hexOverSurface(node: HTMLElement, property: string): string {
+  return recordToken(property, resolveHexOver(node, property, "--surface"))
+}
+
+function markThemed(node: HTMLPreElement): void {
+  const marks = reportExportMark.themedSvg(JSON.stringify(Object.fromEntries(tokenOfHex)))
+  for (const [name, value] of Object.entries(marks)) {
+    node.setAttribute(name, value)
+  }
+}
+
+/**
+ * テーマ変数を解く。前と変わっていたら描いた図と対応表を空にし、解き直して対応表を作り直す
+ * （空にしたあとに記録しないと、ノードの塗りなどのトークンが対応表から消える）。
+ */
+function resolveAndSyncTheme(node: HTMLElement): Readonly<Record<string, string | boolean>> {
+  let themeVariables = resolveThemeVariables(node)
   const key = JSON.stringify(themeVariables)
   if (key !== drawnTheme) {
     drawn.clear()
+    tokenOfHex.clear()
     drawnTheme = key
+    themeVariables = resolveThemeVariables(node)
   }
+  return themeVariables
 }
 
 function initializeFor(
@@ -237,13 +268,13 @@ function initializeFor(
  */
 function figureThemeCss(node: HTMLElement): string {
   const radius = getComputedStyle(node).getPropertyValue("--radius-md").trim()
-  const soft = resolveHexOver(node, "--ink-soft", "--surface")
+  const soft = hexOverSurface(node, "--ink-soft")
   return [
     "rect, polygon, circle, ellipse, path { filter: none; }",
     `.node rect, .node .label-container, rect.actor { rx: ${radius}; ry: ${radius}; }`,
     ".edgeLabel, .edgeLabel p, .edgeLabel span, .labelBkg { background-color: transparent; }",
     // 状態遷移の span.edgeLabel は mermaid の `.label div .edgeLabel`（詳細度が上）が色を決めるので、同じ詳細度で後に並べる
-    `.edgeLabel span, .label div .edgeLabel { color: ${soft}; -webkit-text-stroke: 5px ${resolveHex(node, "--surface")}; paint-order: stroke fill; }`,
+    `.edgeLabel span, .label div .edgeLabel { color: ${soft}; -webkit-text-stroke: 5px ${recordToken("--surface", resolveHex(node, "--surface"))}; paint-order: stroke fill; }`,
     `.messageText { fill: ${soft}; }`,
   ].join("\n")
 }
@@ -254,6 +285,7 @@ function figureThemeCss(node: HTMLElement): string {
 function insertDiagram(node: HTMLPreElement, diagram: DrawnDiagram): boolean {
   node.innerHTML = diagram.svg.replaceAll(diagram.id, newDiagramId())
   node.dataset["processed"] = "true"
+  markThemed(node)
   return placeInMeasure(node)
 }
 
@@ -264,6 +296,7 @@ function showRendered(
 ): boolean {
   node.innerHTML = rendered.svg
   node.dataset["processed"] = "true"
+  markThemed(node)
   rendered.bindFunctions?.(node)
   return placeInMeasure(node)
 }

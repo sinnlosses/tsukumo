@@ -218,6 +218,56 @@ describe("最終レポートの写し", () => {
     expect(image?.getAttribute("alt")).toBe("架空の図")
   })
 
+  describe("焼いた色のトークンへの復元", () => {
+    const SVG_NS = "http://www.w3.org/2000/svg"
+    const MAP = '{"#aabbcc":"--surface-raised","#112233":"--ink"}'
+    const figure = (themed: boolean): HTMLPreElement => {
+      const pre = document.createElement("pre")
+      if (themed) {
+        pre.setAttribute("data-report-export", "themed-svg")
+        pre.setAttribute("data-report-export-value", MAP)
+      }
+      const svg = document.createElementNS(SVG_NS, "svg")
+      const style = document.createElementNS(SVG_NS, "style")
+      style.textContent = ".a { fill: #AABBCC; stroke: #112233; color: rgb(17, 34, 51); }"
+      const rect = document.createElementNS(SVG_NS, "rect")
+      rect.setAttribute("fill", "#aabbcc")
+      rect.setAttribute("stroke", "#445566")
+      rect.setAttribute("style", "color:#112233")
+      svg.append(style, rect)
+      pre.append(svg)
+      return pre
+    }
+
+    it("印の付いた SVG の style と属性にある対応の hex だけを var(--トークン, #hex) にし、印を外す", () => {
+      const root = document.createElement("div")
+      root.append(figure(true))
+      document.body.append(root)
+
+      const { html } = reportExport(root)
+
+      expect(html).toContain(
+        ".a { fill: var(--surface-raised, #AABBCC); stroke: var(--ink, #112233); color: var(--ink, rgb(17, 34, 51)); }",
+      )
+      expect(html).toContain('fill="var(--surface-raised, #aabbcc)"')
+      expect(html).toContain('stroke="#445566"')
+      expect(html).toContain('style="color:var(--ink, #112233)"')
+      expect(html).not.toContain("data-report-export")
+    })
+
+    it("印の外にある同じ hex は替えない", () => {
+      const root = document.createElement("div")
+      root.append(figure(false), figure(true))
+      document.body.append(root)
+
+      const [outside, inside] = reportExport(root).html.split("</pre>")
+
+      expect(outside).toContain('fill="#aabbcc"')
+      expect(outside).toContain(".a { fill: #AABBCC; stroke: #112233; color: rgb(17, 34, 51); }")
+      expect(inside).toContain('fill="var(--surface-raised, #aabbcc)"')
+    })
+  })
+
   describe("出典と用語の注", () => {
     const withNotes = (terms: readonly { term: string; note: string }[]) => [
       {
