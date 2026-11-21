@@ -160,20 +160,23 @@
   animation: manpu-sweat 1.3s ease-in 1 forwards;
 }
 @keyframes manpu-sweat {
+  /* 回転（rotate）より前に効く translate で動かす。transform で動かすと回った向きへ斜めに落ちる */
   0% {
     opacity: 0;
-    transform: translateY(-6px) scale(0.6);
+    translate: -50% calc(-50% - 6px);
+    scale: 0.6;
   }
   20% {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    translate: -50% -50%;
+    scale: 1;
   }
   75% {
     opacity: 1;
   }
   100% {
     opacity: 0;
-    transform: translateY(46px);
+    translate: -50% calc(-50% + 46px);
   }
 }
 
