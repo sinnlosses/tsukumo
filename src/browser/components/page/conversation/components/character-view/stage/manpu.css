@@ -338,3 +338,50 @@
     transform: translateY(-50px) rotate(220deg);
   }
 }
+
+/* タスクの完了: 頭の左右から星を3つ、外へ跳ねさせる。光（celebrate-spark）と並べて出す */
+.manpu-finish-star {
+  font:
+    900 30px/1 "Hiragino Maru Gothic ProN",
+    system-ui,
+    sans-serif;
+  color: var(--manpu-star);
+  -webkit-text-stroke: 2px var(--manpu-star-line);
+  paint-order: stroke fill;
+  animation: manpu-pop 1.2s cubic-bezier(0.2, 0.9, 0.3, 1.3) 1 forwards;
+}
+
+/* 失敗: ガーンの稲妻が2つ瞬き、影がしょんぼりより短く下りる */
+.manpu-shock {
+  font: 34px/1 system-ui;
+  color: var(--manpu-vline);
+  translate: -50% -50%;
+  animation: manpu-shock 0.8s steps(2) 1 forwards;
+}
+@keyframes manpu-shock {
+  0% {
+    opacity: 0;
+  }
+  20%,
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+.manpu[data-manpu="shock"] .manpu-gloom-shade {
+  animation-duration: 1s;
+}
+
+/* 答え待ち: 頭の横に「？」がぽんと出る */
+.manpu-ask {
+  font:
+    900 38px/1 "Hiragino Maru Gothic ProN",
+    system-ui,
+    sans-serif;
+  color: var(--manpu-fill);
+  -webkit-text-stroke: 3px var(--manpu-line);
+  paint-order: stroke fill;
+  animation: manpu-pop 1.2s cubic-bezier(0.2, 0.9, 0.3, 1.3) 1 forwards;
+}

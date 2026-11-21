@@ -6,6 +6,7 @@ import { useRef, type CSSProperties, type ReactElement } from "react"
 import { createPortal } from "react-dom"
 
 import type { FaceAt } from "../../../../../../shared/character-pack/character-definition.ts"
+import type { EndingManpu } from "../../../../../domain/portrait-motion.ts"
 import { useExternalSync } from "../../../../../hooks/use-external-sync.ts"
 import { faceOnScreen, gloomOnScreen, pictureOnScreen } from "../../domain/face-on-screen.ts"
 import type { SpeechManpu } from "../../domain/speech-arrival.ts"
@@ -41,12 +42,22 @@ const NOTES: readonly (Piece & { readonly glyph: string; readonly kind: "note" |
   { glyph: "★", kind: "star", x: 0, y: -26, vars: { "--dx": "-40px", "--dy": "-100px" } },
 ]
 const SWIRL: Offset = { x: 52, y: -52 }
+const FINISH_STARS: readonly Piece[] = [
+  { x: -90, y: 36, vars: { "--x": "calc(var(--pic-w) * -0.3)", "--dx": "-40px", "--dy": "-90px" } },
+  { x: 90, y: 36, vars: { "--x": "calc(var(--pic-w) * 0.3)", "--dx": "40px", "--dy": "-100px" } },
+  { x: 108, y: 36, vars: { "--x": "calc(var(--pic-w) * 0.36)", "--dx": "20px", "--dy": "-40px" } },
+]
+const SHOCKS: readonly Piece[] = [
+  { x: 60, y: -24 },
+  { x: -60, y: -12 },
+]
+const ASK: Piece = { x: 60, y: -15, vars: { "--dx": "0px", "--dy": "-14px" } }
 
 export function Manpu({
   manpu,
   faceAt,
 }: {
-  readonly manpu: SpeechManpu
+  readonly manpu: SpeechManpu | EndingManpu
   readonly faceAt: FaceAt
 }): ReactElement {
   const anchorRef = useRef<HTMLSpanElement>(null)
@@ -81,6 +92,7 @@ export function Manpu({
       naturalHeight: image.naturalHeight,
     })
     const gloom = gloomOnScreen({ portrait: picture, area })
+    anchor.style.setProperty("--pic-w", `${picture.width}px`)
     anchor.style.setProperty("--gloom-left", `${gloom.left}px`)
     anchor.style.setProperty("--gloom-top", `${gloom.top}px`)
     anchor.style.setProperty("--gloom-width", `${gloom.width}px`)
@@ -109,8 +121,35 @@ function Gloom(): ReactElement {
   )
 }
 
-function pieces(manpu: SpeechManpu): ReactElement {
+function pieces(manpu: SpeechManpu | EndingManpu): ReactElement {
   switch (manpu) {
+    case "stars":
+      return (
+        <>
+          {FINISH_STARS.map((piece) => (
+            <span key={piece.x} className={styles["manpu-finish-star"]} style={pieceStyle(piece)}>
+              ★
+            </span>
+          ))}
+        </>
+      )
+    case "shock":
+      return (
+        <>
+          <Gloom />
+          {SHOCKS.map((piece) => (
+            <span key={piece.x} className={styles["manpu-shock"]} style={pieceStyle(piece)}>
+              ϟ
+            </span>
+          ))}
+        </>
+      )
+    case "ask":
+      return (
+        <span className={styles["manpu-ask"]} style={pieceStyle(ASK)}>
+          ？
+        </span>
+      )
     case "surprise":
       return (
         <>

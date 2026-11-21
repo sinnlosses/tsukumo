@@ -161,6 +161,50 @@ export function nextPortraitMotionTransitionDelayMs(
   return remaining.length === 0 ? undefined : Math.min(...remaining)
 }
 
+/** ターンの終わり方に添える漫符。完了の星・失敗の稲妻と影・答え待ちの「？」。 */
+export type EndingManpu = "stars" | "shock" | "ask"
+
+export type EndingManpuShown =
+  | { readonly kind: "none" }
+  | { readonly kind: "shown"; readonly manpu: EndingManpu; readonly at: number }
+
+/** 終わり方の漫符を出す窓（ミリ秒）。いちばん長い漫符（1.6 秒）より長く取り、開き直した画面で古い終わり方を再生しない。 */
+const ENDING_MANPU_WINDOW_MS = 3000
+
+/**
+ * 終わり方の漫符（完了・失敗・答え待ち）。出す窓の中にあるもののうち、いちばん新しいもの1つ。
+ * `at` は再生の起点で、呼ぶ側が `key` にして1回だけ再生させる。動きを減らす設定では出さない。
+ *
+ * 失敗は {@link lastFailureAt}（ツールの失敗・失敗で終わったターン）だけ。声が届いた瞬間の `failure`（あわわ）は材料に入れない。
+ * 完了は「祝う」と同じ条件（タスクの完了で、背景の作業が残らず、止めずに終わった）。
+ * 答え待ちは「呼ぶ」と同じ契機（始まった直後・隠れていたタブが見えるようになった直後）で、隠れているあいだは出さない。
+ */
+export function endingManpuOf(input: PortraitMotionTimingInput, now: number): EndingManpuShown {
+  if (input.reducedMotion === true) {
+    return { kind: "none" }
+  }
+  const failedAt = lastFailureAt(input)
+  const candidates: readonly { readonly manpu: EndingManpu; readonly at: number }[] = [
+    ...(failedAt === undefined ? [] : [{ manpu: "shock" as const, at: failedAt }]),
+    ...(input.taskFinished === true && isSuccessCandidate(input) && input.turn.kind === "finished"
+      ? [{ manpu: "stars" as const, at: input.turn.finishedAt }]
+      : []),
+    ...(input.askedAt === undefined || input.tab?.kind === "hidden"
+      ? []
+      : [
+          {
+            manpu: "ask" as const,
+            at:
+              input.tab?.kind === "returned" && input.tab.at > input.askedAt
+                ? input.tab.at
+                : input.askedAt,
+          },
+        ]),
+  ].filter((c) => now - c.at < ENDING_MANPU_WINDOW_MS)
+  const [latest] = candidates.toSorted((a, b) => b.at - a.at)
+  return latest === undefined ? { kind: "none" } : { kind: "shown", ...latest }
+}
+
 /** 続く動き（歩く・呼吸・書く）。これだけが聞く姿勢に替わってよい。 */
 const CONTINUING_MOTIONS = [
   "reading",

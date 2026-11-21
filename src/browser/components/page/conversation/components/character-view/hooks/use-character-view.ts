@@ -29,10 +29,13 @@ import {
 } from "../../../../../../domain/character-face.ts"
 import { portraitAppearance } from "../../../../../../domain/portrait-appearance.ts"
 import {
+  endingManpuOf,
   isListeningPose,
   newestTurnFinishedTask,
   nextPortraitMotionTransitionDelayMs,
   resolvePortraitMotion,
+  type EndingManpu,
+  type EndingManpuShown,
   type PortraitMotion,
   type PortraitMotionInput,
 } from "../../../../../../domain/portrait-motion.ts"
@@ -103,7 +106,7 @@ export type ArrivalManpu =
   | { readonly kind: "none" }
   | {
       readonly kind: "shown"
-      readonly manpu: SpeechManpu
+      readonly manpu: SpeechManpu | EndingManpu
       readonly at: number
       readonly faceAt: FaceAt
     }
@@ -232,11 +235,35 @@ export function useCharacterView(): CharacterViewModel {
     speechLogOpen,
     onOpenSpeechLog: () => setSpeechLogOpen(true),
     onCloseSpeechLog: () => setSpeechLogOpen(false),
-    manpu: arrivalManpuOf(arrived, reducedMotion, now, character),
+    manpu: newerManpu(
+      arrivalManpuOf(arrived, reducedMotion, now, character),
+      endingManpuOf(
+        {
+          turn,
+          lastToolFailureAt,
+          backgroundRunning,
+          interrupted,
+          askedAt,
+          tab,
+          reducedMotion,
+          taskFinished,
+        },
+        now,
+      ),
+      faceAtOf(expression, character),
+    ),
     face: characterFaceInfo(character),
     phoneLine: phoneLineOf(reaction, activeSpeeches, now),
     seats: (character === undefined ? undefined : itemSeats[character.pack]) ?? EMPTY_SEATS,
   }
+}
+
+/** 声が届いた漫符と終わり方の漫符のうち新しいほう。終わり方の漫符は今の表情の顔の位置に出す。 */
+function newerManpu(arrival: ArrivalManpu, ending: EndingManpuShown, faceAt: FaceAt): ArrivalManpu {
+  if (ending.kind === "none" || (arrival.kind === "shown" && arrival.at > ending.at)) {
+    return arrival
+  }
+  return { kind: "shown", manpu: ending.manpu, at: ending.at, faceAt }
 }
 
 /** 動きを減らす設定では出さない。動きが `still` の表情でも、届いた表情から出す。 */
