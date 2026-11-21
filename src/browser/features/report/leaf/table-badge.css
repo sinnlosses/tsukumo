@@ -1,7 +1,14 @@
-/* 表の系統（`Table`・`Matrix`）の `Badge` の置き方だけ。顔（色・地・角丸・字）は `Badge` が持つ。 */
+/* 表の系統（`Table`・`Matrix`）の `Badge` の置き方だけ。顔（色・地・字）は `Badge` が持つ。 */
 
+/* Astryx の Badge は1行の高さに固定して折り返さないので、長い文の札が列幅を取り切る。
+   セルの幅で折り返し、2行以上でも角が膨らまない角丸にする。 */
 .table-cell-badge {
   gap: 0.35em;
+  block-size: auto;
+  line-height: 1.5;
+  border-radius: var(--radius-md);
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .matrix-mark-badge {

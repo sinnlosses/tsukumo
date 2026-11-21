@@ -160,6 +160,10 @@
   inline-size: fit-content;
   margin-inline: 0 auto;
 }
+/* 1列目は行の名前を読む列なので、ほかの列の長い文に押されて数字ずつ折り返す幅まで潰さない。 */
+:is(.detail-block, [data-report-region]) .table-scroll :is(th, td):first-child {
+  min-inline-size: 6em;
+}
 .detail-block {
   /* 状態の列にある、状態を持たないセル。読ませる補助の字にする。 */
   & .report-cell-status-none {
