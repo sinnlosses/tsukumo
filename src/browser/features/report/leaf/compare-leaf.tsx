@@ -85,17 +85,15 @@ export function CompareLeaf(props: {
       paperSwitch: part.relation === "before-after" && pair.ownerId !== undefined,
     }
   const ownsSwitch = pair.ownerId === part.id
-  const hasCaption = props.value.captionNumber.kind !== "none"
   return (
     <>
-      {ownsSwitch && !hasCaption && <PairViewSwitch />}
+      {ownsSwitch && <PairViewSwitch />}
       <FoldedLeafFrame
         value={props.value}
         title={part.title}
         fit={false}
         fold={part.fold}
         swap={swap}
-        captionAside={ownsSwitch && hasCaption ? <PairViewSwitch /> : undefined}
       >
         <div
           className={clsx(

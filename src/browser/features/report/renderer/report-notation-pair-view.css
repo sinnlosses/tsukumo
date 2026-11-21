@@ -1,5 +1,9 @@
 .detail-block {
-  /* 紙の見せ方の切り替え（最初の `before-after` の対の題の行の右）。見えている値は `aria-pressed` が言う。 */
+  /* 紙の見せ方の切り替え（最初の `before-after` の対の図の右上）。見えている値は `aria-pressed` が言う。 */
+  & .report-pair-switch-row {
+    display: flex;
+    justify-content: flex-end;
+  }
   & .report-pair-switch {
     display: inline-flex;
     flex: none;
@@ -15,12 +19,6 @@
     padding: 0 var(--inline-control);
     border-radius: var(--radius-md);
     white-space: nowrap;
-  }
-  /* 画像の前後の題に切り替えを添えるときは、題を中央に置き、切り替えをその下の中央に置く。 */
-  & .report-captioned.report-compare-swap > .report-caption:has(> .report-pair-switch) {
-    flex-direction: column;
-    justify-content: flex-start;
-    align-items: center;
   }
   /* 「後だけ」「前だけ」の対は選んだ側の1枚だけ（矢印も無い）。3列の格子のままだと1枚が3分の1の幅になる。 */
   & .report-compare-figure:has(> .report-compare-figure-side:only-child) {
