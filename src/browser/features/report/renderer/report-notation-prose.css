@@ -206,27 +206,53 @@
   }
   /* チェックリスト（`- [ ]` / `- [x]`）の印。
    `remark-gfm` が出す <input type="checkbox"> は許可リストに無く、`rehypeTaskCheck` がこの span に書き替える。
-   済みと未了は枠の中の印（✓）で見分け、済みには差し色を重ねる（印の文字は tsukumo が必ず入れるので、色だけで済みを伝えることにはならない）。
-   意味を固定した色（state-ok）にしないのは、済みは良し悪しではないため。
-   行頭の点は印と二重になるので消す。 */
+   済みは塗った丸に線で描いたチェック、未了は線だけの丸で見分ける（形が違うので色だけで伝えない）。
+   印の文字（✓）は選択・コピー・読み上げのために DOM に残し、見た目は丸の外へ送って線のチェックに任せる（字形がフォントで揺れるため）。
+   色は検証の行の ✓ と同じ state-ok にそろえる。
+   行頭の点は印と二重になるので消す。印は行の左の余白に吊り、折り返した2行目を本文の頭にそろえる。 */
   & .report-task-item {
+    position: relative;
+    padding-left: 1.65em;
     list-style: none;
   }
   & .report-task-check {
-    display: inline-block;
-    width: 1.1em;
-    height: 1.1em;
-    margin-right: 0.35em;
-    border: 1px solid var(--ink-quiet);
-    border-radius: var(--radius-sm);
-    line-height: 1.1;
-    text-align: center;
-    vertical-align: -0.15em;
+    position: absolute;
+    top: calc((1lh - 1.05em) / 2);
+    left: 0;
+    box-sizing: border-box;
+    width: 1.05em;
+    height: 1.05em;
+    overflow: hidden;
+    border: 1.5px solid color-mix(in srgb, var(--ink-quiet), transparent 30%);
+    border-radius: 50%;
+    text-indent: 200%;
+    white-space: nowrap;
   }
   & .report-task-check-done {
-    border-color: var(--state-ok);
-    background: color-mix(in srgb, var(--surface), var(--state-ok) 12%);
-    color: var(--state-ok);
+    border-color: transparent;
+    background: color-mix(in srgb, var(--state-ok), var(--surface) 12%);
+    color: var(--ground);
+  }
+  & .report-task-check-done::after {
+    position: absolute;
+    top: 45%;
+    left: 50%;
+    width: 0.26em;
+    height: 0.5em;
+    border: solid currentcolor;
+    border-width: 0 0.12em 0.12em 0;
+    content: "";
+    transform: translate(-50%, -50%) rotate(45deg);
+  }
+  /* 名前つきの並びでは印が格子の1列目に座るので、吊らずに格子へ戻す。 */
+  & .report-labeled-list .report-task-item {
+    position: static;
+    padding-left: 0;
+  }
+  & .report-labeled-list .report-task-check {
+    position: relative;
+    top: calc((1lh - 1.05em) / 2);
+    left: auto;
   }
   /* 記法の表に無いが許可リスト（`REPORT_SANITIZE_SCHEMA`）が通す要素のうち、ブラウザ既定のままだとこの配色・このタイプスケールから外れるもの。
    figure は既定で左右に 40px の字下げが付き（img を通さないこの面では svg や表に説明を添える器にしかならないので、字下げは邪魔にしかならない）、small は4段のどれでもない大きさになる。 */

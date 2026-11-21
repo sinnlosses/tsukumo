@@ -128,7 +128,7 @@ const MARGIN_DECLARATION_LIMITS: Readonly<Record<string, number>> = {
   "browser/features/report/renderer/report-notation-compare-code.css": 2,
   "browser/features/report/renderer/report-notation-figure.css": 10,
   "browser/features/report/renderer/report-notation-inline.css": 9,
-  "browser/features/report/renderer/report-notation-prose.css": 18,
+  "browser/features/report/renderer/report-notation-prose.css": 17,
   "browser/features/report/renderer/report-notation-result.css": 15,
   "browser/features/report/renderer/report-notation-stat.css": 7,
   "browser/features/report/renderer/report-notation-summary.css": 13,
