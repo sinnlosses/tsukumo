@@ -1,14 +1,25 @@
 /* 表の系統（`Table`・`Matrix`）の `Badge` の置き方だけ。顔（色・地・字）は `Badge` が持つ。 */
 
 /* Astryx の Badge は1行の高さに固定して折り返さないので、長い文の札が列幅を取り切る。
-   セルの幅で折り返し、2行以上でも角が膨らまない角丸にする。 */
+   セルの幅で折り返し、2行以上でも角が膨らまない角丸にする。
+   折り返すのは空白と句読点だけにする。字の間でも折れると、表が列の最小幅を1字まで縮め、
+   隣の列の長い文に押された短い札（「担える」）が語の途中で割れる。 */
 .table-cell-badge {
   gap: 0.35em;
   block-size: auto;
   line-height: 1.5;
   border-radius: var(--radius-md);
   white-space: normal;
-  overflow-wrap: anywhere;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+/* Astryx の Badge は中身を1つの span に包む。記号と文を同じ行に並べ、折り返すのは文の側だけにする。 */
+.table-cell-badge > span {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.35em;
+  min-inline-size: 0;
 }
 
 .matrix-mark-badge {
