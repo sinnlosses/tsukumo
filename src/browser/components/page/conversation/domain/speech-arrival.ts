@@ -15,8 +15,17 @@ export type SpeechArrivalBubble = "pop" | "ease" | "swell" | "shake" | "sink" | 
 /** 出方が付いている長さ（ミリ秒）。いちばん長い出方（0.7 秒）より長く取る。 */
 const ARRIVING_BUBBLE_WINDOW_MS = 800
 
-/** 立ち絵の顔のまわりに1回だけ出る漫符の種類。形と動きは CSS（`stage/manpu.css`）が持つ。`none` は出さない。 */
-export type SpeechManpu = "none" | "note" | "think" | "twinkle" | "sweat" | "glint"
+/** 立ち絵の顔のまわりに1回だけ出る漫符の種類。形と動きは CSS（`stage/manpu.css`）が持つ。 */
+export type SpeechManpu =
+  | "note"
+  | "think"
+  | "twinkle"
+  | "sweat"
+  | "glint"
+  | "surprise"
+  | "gloom"
+  | "notes"
+  | "swirl"
 
 /** 表情ごとの、立ち絵の1回の動き（`still` は動かない）・吹き出しの出方・漫符。漫符は動きと独立に、届いた表情から決まる。 */
 export const SPEECH_ARRIVALS = {
@@ -25,10 +34,10 @@ export const SPEECH_ARRIVALS = {
   proud: { motion: "success", bubble: "swell", manpu: "twinkle" },
   flustered: { motion: "failure", bubble: "shake", manpu: "sweat" },
   serious: { motion: "still", bubble: "snap", manpu: "glint" },
-  curious: { motion: "tilt", bubble: "ease", manpu: "none" },
-  sad: { motion: "sink", bubble: "sink", manpu: "none" },
-  excited: { motion: "success", bubble: "swell", manpu: "none" },
-  bored: { motion: "sink", bubble: "sink", manpu: "none" },
+  curious: { motion: "tilt", bubble: "ease", manpu: "surprise" },
+  sad: { motion: "sink", bubble: "sink", manpu: "gloom" },
+  excited: { motion: "success", bubble: "swell", manpu: "notes" },
+  bored: { motion: "sink", bubble: "sink", manpu: "swirl" },
 } as const satisfies Record<
   Expression,
   {

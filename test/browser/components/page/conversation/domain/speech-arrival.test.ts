@@ -159,11 +159,11 @@ describe("SPEECH_ARRIVALS", () => {
       default: { motion: "nod", bubble: "pop", manpu: "note" },
       thinking: { motion: "lean", bubble: "ease", manpu: "think" },
       proud: { motion: "success", bubble: "swell", manpu: "twinkle" },
-      excited: { motion: "success", bubble: "swell", manpu: "none" },
+      excited: { motion: "success", bubble: "swell", manpu: "notes" },
       flustered: { motion: "failure", bubble: "shake", manpu: "sweat" },
-      curious: { motion: "tilt", bubble: "ease", manpu: "none" },
-      sad: { motion: "sink", bubble: "sink", manpu: "none" },
-      bored: { motion: "sink", bubble: "sink", manpu: "none" },
+      curious: { motion: "tilt", bubble: "ease", manpu: "surprise" },
+      sad: { motion: "sink", bubble: "sink", manpu: "gloom" },
+      bored: { motion: "sink", bubble: "sink", manpu: "swirl" },
       serious: { motion: "still", bubble: "snap", manpu: "glint" },
     })
   })

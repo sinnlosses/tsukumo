@@ -49,6 +49,10 @@ describe("CharacterView（セリフが届いた瞬間の漫符）", () => {
     ["proud", "twinkle"],
     ["flustered", "sweat"],
     ["serious", "glint"],
+    ["curious", "surprise"],
+    ["sad", "gloom"],
+    ["excited", "notes"],
+    ["bored", "swirl"],
   ]
 
   for (const [expression, manpu] of cases) {
@@ -61,13 +65,6 @@ describe("CharacterView（セリフが届いた瞬間の漫符）", () => {
       expect(document.querySelector("[data-manpu]")?.getAttribute("aria-hidden")).toBe("true")
     })
   }
-
-  it("漫符の無い表情（きょとん）が届いても出ない", () => {
-    renderCharacterView({ character: FIXTURE_CHARACTER })
-    arriveWith("curious")
-
-    expect(document.querySelector("[data-manpu]")).toBeNull()
-  })
 
   it("動きを減らす設定では出ない", () => {
     stubPhoneWidth(true)

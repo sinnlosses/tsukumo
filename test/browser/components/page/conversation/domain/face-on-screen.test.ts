@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest"
 
-import { faceOnScreen } from "../../../../../../src/browser/components/page/conversation/domain/face-on-screen.ts"
+import {
+  faceOnScreen,
+  gloomOnScreen,
+} from "../../../../../../src/browser/components/page/conversation/domain/face-on-screen.ts"
 
 describe("顔の位置", () => {
   const box = { left: 0, bottom: 900, width: 400, height: 800 }
@@ -23,5 +26,31 @@ describe("顔の位置", () => {
 
     expect(point.x).toBeCloseTo(200)
     expect(point.y).toBeCloseTo(100 + 800 * 0.25)
+  })
+})
+
+describe("しょんぼりの影の置き場", () => {
+  const portrait = { left: 500, top: 100, width: 400, height: 500 }
+
+  it("領域が十分広ければ、立ち絵の箱を左右へ60%ずつ広げ、上端を10%上・高さを80%にした矩形になる", () => {
+    const area = { left: 0, top: 0, width: 2000, height: 1000 }
+
+    expect(gloomOnScreen({ portrait, area })).toEqual({
+      left: 260,
+      top: 50,
+      width: 880,
+      height: 400,
+    })
+  })
+
+  it("領域が狭ければ、左右と上が領域の端で切られる", () => {
+    const area = { left: 400, top: 80, width: 600, height: 1000 }
+
+    expect(gloomOnScreen({ portrait, area })).toEqual({
+      left: 400,
+      top: 80,
+      width: 600,
+      height: 370,
+    })
   })
 })

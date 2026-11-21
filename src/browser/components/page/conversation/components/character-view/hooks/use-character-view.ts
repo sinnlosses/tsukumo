@@ -103,7 +103,7 @@ export type ArrivalManpu =
   | { readonly kind: "none" }
   | {
       readonly kind: "shown"
-      readonly manpu: Exclude<SpeechManpu, "none">
+      readonly manpu: SpeechManpu
       readonly at: number
       readonly faceAt: FaceAt
     }
@@ -249,10 +249,12 @@ function arrivalManpuOf(
   if (arrived.kind === "none" || reducedMotion || now - arrived.at >= MANPU_WINDOW_MS) {
     return { kind: "none" }
   }
-  const manpu = SPEECH_ARRIVALS[arrived.expression].manpu
-  return manpu === "none"
-    ? { kind: "none" }
-    : { kind: "shown", manpu, at: arrived.at, faceAt: faceAtOf(arrived.expression, character) }
+  return {
+    kind: "shown",
+    manpu: SPEECH_ARRIVALS[arrived.expression].manpu,
+    at: arrived.at,
+    faceAt: faceAtOf(arrived.expression, character),
+  }
 }
 
 const EMPTY_SEATS: ItemSeatMap = {
