@@ -16,11 +16,11 @@
 
 ### 論点 1: 3層の構成
 
-| 層                                      | 持つもの                                                                                                                 | 持たないもの                       |
-| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ---------------------------------- |
-| `components/ui/`                        | Astryx の包み。List・MetadataList・Stepper・Collapsible・CodeBlock・Kbd・TabList・Slider・Switch を足す                  | レポートの語（部品の名前・欄）     |
-| `features/report/leaf/`                 | 内容部品の欄を `ui/` の部品の props へ写すこと。CSS は並べ方（`display`・`grid`・`gap`・幅）だけ                         | 色・枠・角丸・字の段・印の形の宣言 |
-| `features/report/renderer/`（Markdown） | `REPORT_COMPONENTS` で `ul`・`ol`・`li` を List、`pre` を CodeBlock、`kbd` を Kbd、`details` を Collapsible へ割り当てる | 割り当てた要素の見た目の CSS       |
+| 層                                      | 持つもの                                                                                                   | 持たないもの                       |
+| --------------------------------------- | ---------------------------------------------------------------------------------------------------------- | ---------------------------------- |
+| `components/ui/`                        | Astryx の包み。List・MetadataList・Stepper・Collapsible・CodeBlock・Kbd・TabList・Slider・Switch を足す    | レポートの語（部品の名前・欄）     |
+| `features/report/leaf/`                 | 内容部品の欄を `ui/` の部品の props へ写すこと。CSS は並べ方（`display`・`grid`・`gap`・幅）だけ           | 色・枠・角丸・字の段・印の形の宣言 |
+| `features/report/renderer/`（Markdown） | `REPORT_COMPONENTS` で `ul`・`ol`・`li` を List、`pre` を CodeBlock、`details` を Collapsible へ割り当てる | 割り当てた要素の見た目の CSS       |
 
 - 図の本体（Graph・Chart・ChartGrid・Mermaid・Timeline・Plot・Matrix・Compare・Svg）は Astryx に部品が無いので対象にしない。表と脚注と地の文の中の字飾りも CSS のまま残す
 - `ui/` の包みは ADR 0053 と同じく Astryx の見た目を作り直さない。包みが決めてよいのは次の3つだけ
@@ -47,14 +47,14 @@
 
 ## 後段
 
-| 段                     | すること                                                                                                       | 依存               |
-| ---------------------- | -------------------------------------------------------------------------------------------------------------- | ------------------ |
-| `ui/` の包み           | List・MetadataList・Stepper・Collapsible・CodeBlock・Kbd の包みを足し、見本帳（`#design`）に並べる             | なし               |
-| 自前の `ui/` の部品    | Astryx を読まない5つを Astryx の部品へ置き換える。置き換えられないものは理由をこの ADR に書き足す              | `ui/` の包み       |
-| 並びの内容部品         | `ItemList` の `bullet`・`check`・`ordered`・名前つき・`flow` を List と Stepper で描く                         | `ui/` の包み       |
-| 名前と値・コード・成否 | `DescriptionList` を MetadataList、`Code` を CodeBlock、`Trace` を List・Icon・Collapsible で描く              | `ui/` の包み       |
-| Markdown の経路        | `REPORT_COMPONENTS` に List・CodeBlock・Kbd・Collapsible を割り当て、`rehypeTaskCheck` を縮め、印の CSS を消す | 並びの内容部品     |
-| 画面の残り             | 画面の `kbd`（5ファイル）を Kbd、やり取りの列の `role="tab"` を TabList、`parameter-knob` を Slider・Switch へ | `ui/` の包み       |
-| 規約テスト             | 論点 5 の上限の表を足す                                                                                        | 上の段がすべて済む |
+| 段                     | すること                                                                                                                                                    | 依存               |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
+| `ui/` の包み           | List・MetadataList・Stepper・Collapsible・CodeBlock・Kbd の包みを足し、見本帳（`#design`）に並べる                                                          | なし               |
+| 自前の `ui/` の部品    | Astryx を読まない5つを Astryx の部品へ置き換える。置き換えられないものは理由をこの ADR に書き足す                                                           | `ui/` の包み       |
+| 並びの内容部品         | `ItemList` の `bullet`・`check`・`ordered`・名前つき・`flow` を List と Stepper で描く                                                                      | `ui/` の包み       |
+| 名前と値・コード・成否 | `DescriptionList` を MetadataList、`Code` を CodeBlock、`Trace` を List・Icon・Collapsible で描く                                                           | `ui/` の包み       |
+| Markdown の経路        | `REPORT_COMPONENTS` の `ul`・`ol`・`li` に List、`details` に Collapsible を割り当て、`rehypeTaskCheck` を縮め、印の CSS を消す（`pre` はコードの段が移す） | 並びの内容部品     |
+| 画面の残り             | 画面の `kbd`（5ファイル）を Kbd、やり取りの列の `role="tab"` を TabList、`parameter-knob` を Slider・Switch へ                                              | `ui/` の包み       |
+| 規約テスト             | 論点 5 の上限の表を足す                                                                                                                                     | 上の段がすべて済む |
 
 各段は見本帳と E2E の写しを撮り直し、前後の画をレポートに載せる。
