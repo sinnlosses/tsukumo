@@ -253,7 +253,7 @@ describe("Turn（経過の畳み）", () => {
     step({ id, body: turnBodyText(`中間${String(id)}`), mark: "interim-folded" }),
   )
 
-  it("閉じたやり取りでは、最終レポートの上に作業の経過の畳みが1つだけ出て、中は届いた順の1行の畳み", () => {
+  it("閉じたやり取りでは、最終レポートの上に作業の経過の畳みが1つだけ出て、中は届いた順の開いた中間レポート", () => {
     putSession(INITIAL_SESSION_STATE)
     const { container } = render(
       <Turn
@@ -274,19 +274,13 @@ describe("Turn（経過の畳み）", () => {
       ),
     ).toEqual(["中間0", "中間1", "中間2"])
 
-    expect(
-      [...container.querySelectorAll("[data-report-stub]")].map((stub) => stub.textContent),
-    ).toEqual(["最終"])
-
-    for (const details of fold.querySelectorAll("details.is-interim")) {
-      toggleDetails(details, true)
-    }
+    expect([...fold.querySelectorAll("details")].every((details) => details.open)).toBe(true)
     const stubs = [...container.querySelectorAll("[data-report-stub]")]
     expect(stubs.map((stub) => stub.textContent)).toEqual(["中間0", "中間1", "中間2", "最終"])
     expect(stubs.slice(0, 3).every((stub) => fold.contains(stub))).toBe(true)
   })
 
-  it("畳んだ中間レポートは開いたときに描かれ、閉じ直しても DOM に残る", () => {
+  it("後ろにレポートが来た中間レポートも既定で開いて描かれ、閉じても DOM に残る", () => {
     putSession(INITIAL_SESSION_STATE)
     const { container } = render(
       <Turn
@@ -295,14 +289,16 @@ describe("Turn（経過の畳み）", () => {
         freshReport={false}
       />,
     )
-    const first = container.querySelector("details.is-interim")
-    expect(first?.querySelector("[data-report-stub]")).toBeNull()
+    const first = typedElement(
+      container.querySelector("details.is-interim"),
+      HTMLDetailsElement,
+      "中間レポートの畳み",
+    )
+    expect(first.open).toBe(true)
+    expect(first.querySelector("[data-report-stub]")?.textContent).toBe("中間0")
 
-    toggleDetails(first ?? container, true)
-    expect(first?.querySelector("[data-report-stub]")?.textContent).toBe("中間0")
-
-    toggleDetails(first ?? container, false)
-    expect(first?.querySelector("[data-report-stub]")?.textContent).toBe("中間0")
+    toggleDetails(first, false)
+    expect(first.querySelector("[data-report-stub]")?.textContent).toBe("中間0")
   })
 
   it("完了後のセリフは最上位に出ず、畳みを開くと届いた順で入っていて、締めのセリフだけが最上位に残る", () => {

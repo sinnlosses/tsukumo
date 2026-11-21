@@ -341,8 +341,8 @@ type StepProps = {
  * 最終レポート（`step.mark` が `final`）は箱を外し（`.main-step.is-final`）、タスク見出し行にラベルを載せる。
  * ラベルを出すのは `finalLabel` が立っているとき（中間レポートのあるやり取りか、本文に `task` があるときだけ。どちらも無ければ「最終」が何も区別しない）。
  *
- * 後ろに別のレポートが現れた中間レポート（`interim-folded`）は、何件も開いたまま積まれると見通しが悪いので畳む。
- * 畳んだ分は `<details>` にして、開いたときに初めて中身を描き、開いたあとは閉じても DOM に残す。まだ追い越されていない最後の中間レポートは開いた `<section>` のまま。
+ * 後ろに別のレポートが現れた中間レポート（`interim-folded`）は `<details>` にして、利用者が1行に畳めるようにする。既定は開いている。
+ * まだ追い越されていない最後の中間レポートは `<section>` のまま。
  */
 function Step(props: StepProps): ReactElement | undefined {
   const { step } = props

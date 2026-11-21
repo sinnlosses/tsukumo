@@ -47,7 +47,9 @@ function renderFinal(options: { readonly newest: boolean; readonly phone: boolea
     throw new Error("やり取りが無い")
   }
   const { container } = render(<Turn turn={turn} newest={options.newest} freshReport={false} />)
-  return container.querySelector("[data-report-stub]")?.getAttribute("data-phase-times") ?? ""
+  // 中間レポートも既定で開いて描かれるので、最後の札（最終レポート）を読む。
+  const stubs = [...container.querySelectorAll("[data-report-stub]")]
+  return stubs.at(-1)?.getAttribute("data-phase-times") ?? ""
 }
 
 describe("Turn（所要時間の置き場）", () => {

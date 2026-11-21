@@ -41,15 +41,14 @@ type FoldedStepProps = {
   readonly phoneHidden: boolean
 }
 
-/** 中間レポートを `<summary>` の1行に畳んだ形。 */
+/** 中間レポートを `<summary>` の1行に畳める形。既定は開いている。 */
 export function FoldedStep(props: FoldedStepProps): ReactElement {
-  const [opened, setOpened] = useState(false)
+  const [open, setOpen] = useState(true)
   return (
     <Disclosure
+      open={open}
       onToggle={(event) => {
-        if (event.currentTarget.open) {
-          setOpened(true)
-        }
+        setOpen(event.currentTarget.open)
       }}
       gap="block"
       hiddenOnNarrow={props.phoneHidden}
@@ -59,17 +58,15 @@ export function FoldedStep(props: FoldedStepProps): ReactElement {
       summaryClassName={styles["step-heading"]}
       summary={<InterimSummary body={props.step.body} />}
     >
-      {opened && (
-        <StepReport
-          step={props.step}
-          turnId={props.turnId}
-          reveal={false}
-          latest={false}
-          hasInterimReport={props.hasInterimReport}
-          folded
-          phoneHidden={props.phoneHidden}
-        />
-      )}
+      <StepReport
+        step={props.step}
+        turnId={props.turnId}
+        reveal={false}
+        latest={false}
+        hasInterimReport={props.hasInterimReport}
+        folded
+        phoneHidden={props.phoneHidden}
+      />
     </Disclosure>
   )
 }

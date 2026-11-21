@@ -154,12 +154,6 @@
   --report-chunk-rule: transparent;
   --report-chunk-ground: var(--surface-raised);
 }
-/* 済んだフェーズの控えは、幅を内容に任せず揃える。 */
-@media (min-width: 761px) {
-  .main-step.is-interim {
-    inline-size: min(100%, 560px);
-  }
-}
 /* 最終レポート（そのやり取りの最後の、中間でない本文。`MainViewStep.final`）と、書いている途中のレポート（`DraftReport` の `is-draft`）。
    書いている途中のレポートは最終レポートと同じ紙の面と幅に置き、書き終えたときに字の折り返しが変わらないようにする。
    狭い画面の既定では箱を持たず、領域の surface を紙にする。中間レポートの破線の箱とは形で見分ける（広い画面は下の media が面を足す）。

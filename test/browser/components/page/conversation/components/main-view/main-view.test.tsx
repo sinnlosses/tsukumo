@@ -120,7 +120,7 @@ describe("MainView（依頼の全文）", () => {
 })
 
 describe("MainView（中間レポート）", () => {
-  it("上限を超えて古いステップが落ちても、開いた <details> が別のステップに化けない", () => {
+  it("上限を超えて古いステップが落ちても、閉じた <details> が別のステップに化けない", () => {
     // 十分な数の中間レポート（それぞれ report + tool の対）を積み、1つのやり取りが画面に出す
     // 記録の上限（40。ツールの実行は数えないので、数えるのはレポートの件数）を超えさせる。
     // 全部のあとに非中間の締めの report を置くので、手前は全部 superseded = true になり
@@ -149,29 +149,29 @@ describe("MainView（中間レポート）", () => {
       return typedElement(details, HTMLDetailsElement, `summary "${text}" を持つ <details>`)
     }
 
-    // 真ん中あたり（i=15）を利用者が開いたことにする。<details> の open はReactが制御しない
-    // ネイティブの状態なので、直接プロパティを立てて「開いた」を再現する。
+    // 真ん中あたり（i=15）を利用者が閉じたことにする（既定は開いている）。
+    // 直接プロパティを下ろして「閉じた」を再現する。
     const target = findBySummary("見出し15")
-    target.open = true
-    expect(target.open).toBe(true)
+    target.open = false
+    expect(target.open).toBe(false)
 
-    // 別の1件（i=16、まだ開いていない）も、化けていないかの対照として控えておく。
+    // 別の1件（i=16、触っていない）も、化けていないかの対照として控えておく。
     const untouchedText = "見出し16"
-    expect(findBySummary(untouchedText).open).toBe(false)
+    expect(findBySummary(untouchedText).open).toBe(true)
 
     // 記録がさらに積まれ（46件）、前のほうがもう1件古いほうから落ちる
     // （i=15 自体はまだ残る範囲）。
     rerenderMainView(buildRecords(46))
 
     // id を key にしていれば、i=15 の <details> は同じ DOM ノードのまま残り、
-    // 開いた状態も中身もそのまま。添字を key にしていた旧実装では、ステップが1つ前へ
-    // ずれた分だけ別のステップの中身にこの open な枠が使い回されてしまう。
+    // 閉じた状態も中身もそのまま。添字を key にすると、ステップが1つ前へ
+    // ずれた分だけ別のステップの中身にこの閉じた枠が使い回されてしまう。
     const targetAfter = findBySummary("見出し15")
-    expect(targetAfter.open).toBe(true)
+    expect(targetAfter.open).toBe(false)
     expect(targetAfter).toBe(target)
 
-    // 触っていない別の1件も、化けて開いたままにならない。
-    expect(findBySummary(untouchedText).open).toBe(false)
+    // 触っていない別の1件も、化けて閉じたままにならない。
+    expect(findBySummary(untouchedText).open).toBe(true)
   })
 })
 
@@ -323,7 +323,10 @@ describe("MainView（答えた質問の記録）", () => {
     expect(folds[0]?.contains(first)).toBe(true)
     expect(folds[0]?.contains(second)).toBe(true)
     expect(folds[0]?.textContent).toContain("架空の中間レポート")
-    expect([...document.querySelectorAll("details")].every((details) => !details.open)).toBe(true)
+    expect(folds[0]).toHaveProperty("open", false)
+    expect(
+      [...(folds[0]?.querySelectorAll("details") ?? [])].every((details) => details.open),
+    ).toBe(true)
     expect(first.compareDocumentPosition(second) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   })
 })
