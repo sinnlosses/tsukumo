@@ -2,12 +2,7 @@ import { cleanup, render } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
 import { Report } from "../../../../src/browser/features/report/report.tsx"
-import { reportEvents } from "../../../../src/server/session-driver/core/message/sdk-report-message.ts"
-import { mainViewEntries } from "../../../../src/shared/session/main-view-entry.ts"
-import type { MainViewReportRegions } from "../../../../src/shared/session/main-view-shape.ts"
-import { applySessionEvent } from "../../../../src/shared/session/session-fold.ts"
-import { INITIAL_SESSION_STATE } from "../../../../src/shared/session/session-state.ts"
-import { checkedToolUseId } from "../../../fixture/tool-use-id.ts"
+import { regionsOfInput } from "../../../fixture/report-region.ts"
 
 afterEach(() => {
   cleanup()
@@ -40,18 +35,8 @@ function partsWith(root: Readonly<Record<string, unknown>>) {
   ]
 }
 
-function regionsOf(input: Readonly<Record<string, unknown>>): MainViewReportRegions {
-  const [event] = reportEvents(checkedToolUseId("toolu_fictional"), input, [])
-  if (event?.kind !== "report") throw new Error("report にならなかった")
-  const entry = mainViewEntries(applySessionEvent(INITIAL_SESSION_STATE, event, 0)).find(
-    (candidate) => candidate.kind === "report",
-  )
-  if (entry?.kind !== "report") throw new Error("レポートの記録が無い")
-  return entry.regions
-}
-
 function renderProof(root: Readonly<Record<string, unknown>>): HTMLElement {
-  const body = regionsOf({ components: partsWith(root) })
+  const body = regionsOfInput({ components: partsWith(root) })
   return render(<Report reveal={false} turnId={1} {...NO_CLASS_NAMES} body={body} />).container
 }
 

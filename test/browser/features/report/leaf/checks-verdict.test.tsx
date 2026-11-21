@@ -3,13 +3,9 @@ import { afterEach, beforeAll, describe, expect, it, vi } from "vitest"
 
 import { loadMarkdown } from "../../../../../src/browser/features/report/markdown.tsx"
 import { Report } from "../../../../../src/browser/features/report/report.tsx"
-import { reportEvents } from "../../../../../src/server/session-driver/core/message/sdk-report-message.ts"
-import { mainViewEntries } from "../../../../../src/shared/session/main-view-entry.ts"
 import type { MainViewReportRegions } from "../../../../../src/shared/session/main-view-shape.ts"
-import { applySessionEvent } from "../../../../../src/shared/session/session-fold.ts"
-import { INITIAL_SESSION_STATE } from "../../../../../src/shared/session/session-state.ts"
 import { normalized, textNodesOf } from "../../../../fixture/direct-leaf-compare.tsx"
-import { checkedToolUseId } from "../../../../fixture/tool-use-id.ts"
+import { regionsOfParts } from "../../../../fixture/report-region.ts"
 
 beforeAll(async () => {
   await loadMarkdown()
@@ -43,29 +39,17 @@ const MIXED = [
 ]
 
 function regionsOf(checks: readonly unknown[], favor: string): MainViewReportRegions {
-  const [event] = reportEvents(
-    checkedToolUseId("toolu_fictional"),
+  return regionsOfParts([
     {
-      components: [
-        {
-          id: "root",
-          component: "Report",
-          conclusion: ["架空の結論。"],
-          children: ["p1"],
-          checks,
-          favor,
-        },
-        { id: "p1", component: "Markdown", markdown: "架空の段落。" },
-      ],
+      id: "root",
+      component: "Report",
+      conclusion: ["架空の結論。"],
+      children: ["p1"],
+      checks,
+      favor,
     },
-    [],
-  )
-  if (event?.kind !== "report") throw new Error("report にならなかった")
-  const entry = mainViewEntries(applySessionEvent(INITIAL_SESSION_STATE, event, 0)).find(
-    (candidate) => candidate.kind === "report",
-  )
-  if (entry?.kind !== "report") throw new Error("レポートの記録が無い")
-  return entry.regions
+    { id: "p1", component: "Markdown", markdown: "架空の段落。" },
+  ])
 }
 
 /** 合図の行の包み（`status`）を描いた DOM。 */

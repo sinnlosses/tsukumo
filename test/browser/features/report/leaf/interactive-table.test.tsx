@@ -4,11 +4,8 @@ import { afterEach, beforeAll, describe, expect, it } from "vitest"
 import { loadMarkdown } from "../../../../../src/browser/features/report/markdown.tsx"
 import { Report } from "../../../../../src/browser/features/report/report.tsx"
 import type { MainViewReportRegions } from "../../../../../src/shared/session/main-view-shape.ts"
-import {
-  INTERACTIVE,
-  readBackRegionsOf as regionsOf,
-  reportParts,
-} from "../../../../fixture/table-report-part.ts"
+import { regionsOfParts } from "../../../../fixture/report-region.ts"
+import { INTERACTIVE, reportParts } from "../../../../fixture/table-report-part.ts"
 
 beforeAll(async () => {
   await loadMarkdown()
@@ -39,12 +36,12 @@ function names(container: HTMLElement): readonly string[] {
 
 describe("操作できる Table", () => {
   it("全行を見せているときの表は、操作できない Table と同じ DOM", () => {
-    const interactive = renderRegions(regionsOf(reportParts({ filterable: true }, false)))
+    const interactive = renderRegions(regionsOfParts(reportParts({ filterable: true }, false)))
     const shown = interactive.container.querySelector(
       "[data-report-region] .table-scroll",
     )?.outerHTML
     cleanup()
-    const plain = renderRegions(regionsOf(reportParts({}, false)))
+    const plain = renderRegions(regionsOfParts(reportParts({}, false)))
 
     expect(shown).toBeDefined()
     expect(shown).toBe(
@@ -53,7 +50,7 @@ describe("操作できる Table", () => {
   })
 
   it("見出しを押すと昇順 → 降順 → 元の順に並ぶ", () => {
-    const { container } = renderRegions(regionsOf(reportParts(INTERACTIVE)))
+    const { container } = renderRegions(regionsOfParts(reportParts(INTERACTIVE)))
     expect(names(container)).toEqual(["ぼ", "あ", "ん"])
     expect(screen.queryByRole("group", { name: "並べ替え" })).toBeNull()
     const heading = () => screen.getByRole("columnheader", { name: /架空の数/ })
@@ -77,25 +74,25 @@ describe("操作できる Table", () => {
 
   it("6 行の表は sortable を書かなくても見出しのボタンで並べ替えられ、false なら付かない", () => {
     const rows = ["ぼ", "あ", "ん", "う", "え", "お"].map((name, i) => [name, "甲", String(i)])
-    const { container } = renderRegions(regionsOf(reportParts({ rows }, false)))
+    const { container } = renderRegions(regionsOfParts(reportParts({ rows }, false)))
 
     fireEvent.click(screen.getByRole("button", { name: "架空の名" }))
     expect(names(container)).toEqual(["あ", "う", "え", "お", "ぼ", "ん"])
     cleanup()
 
-    renderRegions(regionsOf(reportParts({ rows, sortable: false }, false)))
+    renderRegions(regionsOfParts(reportParts({ rows, sortable: false }, false)))
     expect(screen.queryAllByRole("button")).toEqual([])
   })
 
   it("並べ替えられない表の見出しには aria-sort もボタンも付けない", () => {
-    const { container } = renderRegions(regionsOf(reportParts({ filterable: true }, false)))
+    const { container } = renderRegions(regionsOfParts(reportParts({ filterable: true }, false)))
 
     expect(container.querySelector("thead th[aria-sort]")).toBeNull()
     expect(container.querySelector("thead button")).toBeNull()
   })
 
   it("絞り込んでも、数の棒は全行の最大値に照らしたまま", () => {
-    const { container } = renderRegions(regionsOf(reportParts(INTERACTIVE)))
+    const { container } = renderRegions(regionsOfParts(reportParts(INTERACTIVE)))
 
     fireEvent.click(screen.getByRole("button", { name: "乙" }))
 
@@ -106,7 +103,7 @@ describe("操作できる Table", () => {
   })
 
   it("どの行にも当たらなければ、見出しの行だけの表と「該当する行はありません」が出る", () => {
-    const { container } = renderRegions(regionsOf(reportParts(INTERACTIVE)))
+    const { container } = renderRegions(regionsOfParts(reportParts(INTERACTIVE)))
 
     fireEvent.click(screen.getByRole("button", { name: "丙" }))
 
@@ -126,7 +123,7 @@ describe("操作できる Table", () => {
       ["ん", "甲", "3"],
     ]
     const { container } = renderRegions(
-      regionsOf(reportParts({ ...INTERACTIVE, rows, filterColumn: 1 }, false)),
+      regionsOfParts(reportParts({ ...INTERACTIVE, rows, filterColumn: 1 }, false)),
     )
     const badges = screen.getByRole("group", { name: "絞り込み" })
     const caption = badges.parentElement
@@ -141,18 +138,20 @@ describe("操作できる Table", () => {
   })
 
   it("結んだ ChoicePicker がある表・filterColumn が無い表・値が 1 種類の表はバッジを出さない", () => {
-    const bound = renderRegions(regionsOf(reportParts({ ...INTERACTIVE, filterColumn: 1 }, true)))
+    const bound = renderRegions(
+      regionsOfParts(reportParts({ ...INTERACTIVE, filterColumn: 1 }, true)),
+    )
     expect(screen.queryByRole("group", { name: "絞り込み" })).toBeNull()
     expect(bound.container.querySelector("button")).not.toBeNull()
     cleanup()
 
-    renderRegions(regionsOf(reportParts(INTERACTIVE, false)))
+    renderRegions(regionsOfParts(reportParts(INTERACTIVE, false)))
     expect(screen.queryByRole("group", { name: "絞り込み" })).toBeNull()
     cleanup()
 
     const same = ["ぼ", "甲", "1"]
     renderRegions(
-      regionsOf(reportParts({ ...INTERACTIVE, rows: [same, same], filterColumn: 1 }, false)),
+      regionsOfParts(reportParts({ ...INTERACTIVE, rows: [same, same], filterColumn: 1 }, false)),
     )
     expect(screen.queryByRole("group", { name: "絞り込み" })).toBeNull()
   })
@@ -163,7 +162,7 @@ describe("操作できる Table", () => {
       "甲",
       String(index + 1),
     ])
-    const { container } = renderRegions(regionsOf(reportParts({ ...INTERACTIVE, rows: many })))
+    const { container } = renderRegions(regionsOfParts(reportParts({ ...INTERACTIVE, rows: many })))
     expect(names(container)).toHaveLength(11)
 
     fireEvent.click(screen.getByRole("button", { name: /ほか 2 件/ }))

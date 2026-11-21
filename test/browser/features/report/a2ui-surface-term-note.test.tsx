@@ -2,12 +2,7 @@ import { cleanup, render } from "@testing-library/react"
 import type { ReactNode } from "react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
-import { reportEvents } from "../../../../src/server/session-driver/core/message/sdk-report-message.ts"
-import { mainViewEntries } from "../../../../src/shared/session/main-view-entry.ts"
-import type { MainViewReportRegions } from "../../../../src/shared/session/main-view-shape.ts"
-import { applySessionEvent } from "../../../../src/shared/session/session-fold.ts"
-import { INITIAL_SESSION_STATE } from "../../../../src/shared/session/session-state.ts"
-import { checkedToolUseId } from "../../../fixture/tool-use-id.ts"
+import { regionsOfInput } from "../../../fixture/report-region.ts"
 
 // `InlineMarkdown` は代役にし、欄が受け取った注の語と札の id を印に出す（点線と札の描き方は rehype-term-note のテストが見る）。
 vi.mock("../../../../src/browser/features/report/markdown.tsx", async () => {
@@ -73,7 +68,7 @@ afterEach(() => {
 
 describe("用語の注の初出", () => {
   it("2つの節の段落に同じ語があっても、最初の節の段落の1か所だけが注を受け取る", () => {
-    const body = regionsOf({
+    const body = regionsOfInput({
       components: [
         {
           id: "root",
@@ -98,7 +93,7 @@ describe("用語の注の初出", () => {
   })
 
   it("terms の無いレポートでは、どの欄も注を受け取らない", () => {
-    const body = regionsOf({
+    const body = regionsOfInput({
       components: [
         {
           id: "root",
@@ -116,13 +111,3 @@ describe("用語の注の初出", () => {
     expect(container.querySelectorAll("mark[data-term]")).toHaveLength(0)
   })
 })
-
-function regionsOf(input: Readonly<Record<string, unknown>>): MainViewReportRegions {
-  const [event] = reportEvents(checkedToolUseId("toolu_fictional"), input, [])
-  if (event?.kind !== "report") throw new Error("report にならなかった")
-  const entry = mainViewEntries(applySessionEvent(INITIAL_SESSION_STATE, event, 0)).find(
-    (candidate) => candidate.kind === "report",
-  )
-  if (entry?.kind !== "report") throw new Error("レポートの記録が無い")
-  return entry.regions
-}

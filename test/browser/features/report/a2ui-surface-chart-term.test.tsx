@@ -3,12 +3,7 @@ import { useImperativeHandle, type ReactNode, type Ref } from "react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import type { ChartTooltipControl } from "../../../../src/browser/features/report/renderer/chart-tooltip.ts"
-import { reportEvents } from "../../../../src/server/session-driver/core/message/sdk-report-message.ts"
-import { mainViewEntries } from "../../../../src/shared/session/main-view-entry.ts"
-import type { MainViewReportRegions } from "../../../../src/shared/session/main-view-shape.ts"
-import { applySessionEvent } from "../../../../src/shared/session/session-fold.ts"
-import { INITIAL_SESSION_STATE } from "../../../../src/shared/session/session-state.ts"
-import { checkedToolUseId } from "../../../fixture/tool-use-id.ts"
+import { regionsOfInput } from "../../../fixture/report-region.ts"
 
 const figureControl = vi.hoisted(() => ({
   show: vi.fn<(index: number) => void>(),
@@ -79,7 +74,7 @@ const CHART = {
   aside: "",
 } as const
 
-const BODY = regionsOf({
+const BODY = regionsOfInput({
   components: [
     { id: "root", component: "Report", conclusion: ["架空の結論。"], children: ["s1", "s2"] },
     { id: "s1", component: "Section", heading: "架空の一", children: ["c1", "p1"] },
@@ -131,13 +126,3 @@ describe("地の文の語と同じ節の図を結ぶ", () => {
     expect(figureControl.show).not.toHaveBeenCalled()
   })
 })
-
-function regionsOf(input: Readonly<Record<string, unknown>>): MainViewReportRegions {
-  const [event] = reportEvents(checkedToolUseId("toolu_fictional"), input, [])
-  if (event?.kind !== "report") throw new Error("report にならなかった")
-  const entry = mainViewEntries(applySessionEvent(INITIAL_SESSION_STATE, event, 0)).find(
-    (candidate) => candidate.kind === "report",
-  )
-  if (entry?.kind !== "report") throw new Error("レポートの記録が無い")
-  return entry.regions
-}

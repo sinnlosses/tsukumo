@@ -2,14 +2,9 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import type { ReactNode } from "react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
-import { reportEvents } from "../../../../src/server/session-driver/core/message/sdk-report-message.ts"
 import type { A2uiReportComponent } from "../../../../src/shared/report/a2ui-report-catalog.ts"
-import { mainViewEntries } from "../../../../src/shared/session/main-view-entry.ts"
 import type { MainViewReportRegions } from "../../../../src/shared/session/main-view-shape.ts"
-import type { ReportCalledEvent } from "../../../../src/shared/session/session-event.ts"
-import { applySessionEvent } from "../../../../src/shared/session/session-fold.ts"
-import { INITIAL_SESSION_STATE } from "../../../../src/shared/session/session-state.ts"
-import { checkedToolUseId } from "../../../fixture/tool-use-id.ts"
+import { regionsOfInput, regionsOfParts } from "../../../fixture/report-region.ts"
 
 // `Markdown`（本物は react-markdown 一式で重い）を、渡された塊の文字列をそのまま出す代役に差し替える。
 // 2つの描き方が同じ塊を同じ入れ子で渡すかは、代役の DOM の一致で確かめられる。
@@ -120,7 +115,7 @@ function bodyRowNames(container: HTMLElement): readonly string[] {
 
 describe("操作できる Table と ChoicePicker", () => {
   it("見出しを押すと並びが変わり、押し直すと降順、もう一度で元に戻る", () => {
-    const body = regionsOf({ components: INTERACTIVE_PARTS })
+    const body = regionsOfInput({ components: INTERACTIVE_PARTS })
     const { container } = render(
       <Report reveal={false} turnId={1} {...NO_CLASS_NAMES} body={body} />,
     )
@@ -137,7 +132,7 @@ describe("操作できる Table と ChoicePicker", () => {
   })
 
   it("ChoicePicker の選択で行が絞られ、選び直すと戻る", () => {
-    const body = readBackRegionsOf(INTERACTIVE_PARTS)
+    const body = regionsOfParts(INTERACTIVE_PARTS)
     const { container } = render(
       <Report reveal={false} turnId={1} {...NO_CLASS_NAMES} body={body} />,
     )
@@ -158,7 +153,7 @@ describe("操作できる Table と ChoicePicker", () => {
         ? { ...part, options: [...(part.options ?? []), { label: "丙", value: "丙" }] }
         : part,
     )
-    const body = readBackRegionsOf(parts)
+    const body = regionsOfParts(parts)
     const { container } = render(
       <Report reveal={false} turnId={1} {...NO_CLASS_NAMES} body={body} />,
     )
@@ -178,7 +173,7 @@ describe("操作できる Table と ChoicePicker", () => {
     const plainParts = INTERACTIVE_PARTS.filter((part) => part.id !== "pick").map((part) =>
       part.id === "t1" ? { ...part, sortable: undefined, filterable: undefined } : part,
     )
-    const body = regionsOf({
+    const body = regionsOfInput({
       components: plainParts.map((part) =>
         part.id === "s1" ? { ...part, children: ["t1"] } : part,
       ),
@@ -206,7 +201,7 @@ describe("Divider", () => {
   ]
 
   it("Section の中の 2 つの部品の間に罫が 1 つ引かれる", () => {
-    const body = readBackRegionsOf(dividerParts({}))
+    const body = regionsOfParts(dividerParts({}))
     const { container } = render(
       <Report reveal={false} turnId={1} {...NO_CLASS_NAMES} body={body} />,
     )
@@ -219,7 +214,7 @@ describe("Divider", () => {
   })
 
   it("axis が vertical なら縦の罫になる", () => {
-    const body = readBackRegionsOf(dividerParts({ axis: "vertical" }))
+    const body = regionsOfParts(dividerParts({ axis: "vertical" }))
     const { container } = render(
       <Report reveal={false} turnId={1} {...NO_CLASS_NAMES} body={body} />,
     )
@@ -232,7 +227,7 @@ describe("Divider", () => {
 
 describe("Quote", () => {
   it("Section の中の Quote は欄の Markdown を通らず、文と出典を直接描く", () => {
-    const body = regionsOf({
+    const body = regionsOfInput({
       components: [
         { id: "root", component: "Report", conclusion: ["架空の結論。"], children: ["s1"] },
         { id: "s1", component: "Section", heading: "架空の引用", children: ["p1", "q1"] },
@@ -257,7 +252,7 @@ describe("Quote", () => {
 
 describe("DescriptionList", () => {
   it("Section の中の DescriptionList は欄の Markdown を通らず、dl で直接描く", () => {
-    const body = regionsOf({
+    const body = regionsOfInput({
       components: [
         { id: "root", component: "Report", conclusion: ["架空の結論。"], children: ["s1"] },
         { id: "s1", component: "Section", heading: "架空の前提", children: ["d1"] },
@@ -291,7 +286,7 @@ describe("頭とお願い（A2UI の面）", () => {
       { before: "", value: "9", total: "", label: "架空の未了", series: [], better: "" },
       { before: "", value: "21", total: "", label: "架空の済み", series: [], better: "" },
     ]
-    const body = regionsOf({
+    const body = regionsOfInput({
       components: PARTS.map((part) =>
         part.id === "root" ? { ...part, keyFigures, favor: "架空のお願い。" } : part,
       ),
@@ -318,7 +313,7 @@ describe("頭とお願い（A2UI の面）", () => {
 
 describe("部品の一覧のある本文（A2UI の面）", () => {
   it("配置の部品の無い一覧は、面の入れ物を 1 枚だけ挟んで内容部品を描く", () => {
-    const body = regionsOf({ components: PARTS })
+    const body = regionsOfInput({ components: PARTS })
     expect(body.a2ui.kind).toBe("surface")
 
     const { container } = render(
@@ -334,7 +329,7 @@ describe("部品の一覧のある本文（A2UI の面）", () => {
   })
 
   it("演出は面の中の本文の根に掛かる（根を描いた時点で本文が揃っている）", () => {
-    const body = regionsOf({ components: PARTS })
+    const body = regionsOfInput({ components: PARTS })
     const { container } = render(
       <Report reveal={true} turnId={1} {...NO_CLASS_NAMES} body={body} />,
     )
@@ -343,7 +338,7 @@ describe("部品の一覧のある本文（A2UI の面）", () => {
   })
 
   it("Row は節の欄の中に子の数だけ区画を並べ、Card は枠で包み、前後の内容部品は欄の塊のまま", () => {
-    const body = readBackRegionsOf(ROW_PARTS)
+    const body = regionsOfParts(ROW_PARTS)
     const { container } = render(
       <Report reveal={false} turnId={1} {...NO_CLASS_NAMES} body={body} />,
     )
@@ -365,7 +360,7 @@ describe("部品の一覧のある本文（A2UI の面）", () => {
   })
 
   it("記法の字を含む見出しは、h4 を React で描かず欄の Markdown に任せる", () => {
-    const body = regionsOf({
+    const body = regionsOfInput({
       components: ROW_PARTS.map((part) =>
         part.component === "Section" ? { ...part, heading: "架空の `code` 見出し" } : part,
       ),
@@ -379,7 +374,7 @@ describe("部品の一覧のある本文（A2UI の面）", () => {
   })
 
   it("面が作れなかった本文は、節を落として「本文を描けませんでした」を出し、頭とお願いは描いて、原因を診断ログへ送る", () => {
-    const body = regionsOf({ components: withFavor(PARTS) })
+    const body = regionsOfInput({ components: withFavor(PARTS) })
     if (body.a2ui.kind !== "surface") throw new Error("面にならなかった")
     const broken: MainViewReportRegions = {
       ...body,
@@ -403,7 +398,7 @@ describe("部品の一覧のある本文（A2UI の面）", () => {
   })
 
   it("根の Report が無い一覧は、頭とお願いだけを値から描く", () => {
-    const body = regionsOf({ components: withFavor(PARTS) })
+    const body = regionsOfInput({ components: withFavor(PARTS) })
     if (body.a2ui.kind !== "surface") throw new Error("面にならなかった")
     const noRoot: MainViewReportRegions = {
       ...body,
@@ -431,23 +426,4 @@ function withFavor(parts: typeof PARTS) {
 /** A2UI の検証が拒む部品（`Markdown` の `markdown` が文字列でない）。型の外の値なので JSON から読む。 */
 function rejectedPart(): A2uiReportComponent {
   return JSON.parse('{"id":"bad","component":"Markdown","markdown":5}')
-}
-
-function regionsOf(input: Readonly<Record<string, unknown>>): MainViewReportRegions {
-  const [event] = reportEvents(checkedToolUseId("toolu_fictional"), input, [])
-  if (event?.kind !== "report") throw new Error("report にならなかった")
-  return regionsOfEvent(event)
-}
-
-/** 記録済みの呼び出しの読み戻し。`reportEvents` を通すので外した基本の部品も描ける。 */
-function readBackRegionsOf(parts: readonly unknown[]): MainViewReportRegions {
-  return regionsOf({ components: parts })
-}
-
-function regionsOfEvent(event: ReportCalledEvent): MainViewReportRegions {
-  const entry = mainViewEntries(applySessionEvent(INITIAL_SESSION_STATE, event, 0)).find(
-    (candidate) => candidate.kind === "report",
-  )
-  if (entry?.kind !== "report") throw new Error("レポートの記録が無い")
-  return entry.regions
 }

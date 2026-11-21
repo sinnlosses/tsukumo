@@ -2,12 +2,7 @@ import { cleanup, render } from "@testing-library/react"
 import type { ReactNode } from "react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
-import { reportEvents } from "../../../../src/server/session-driver/core/message/sdk-report-message.ts"
-import { mainViewEntries } from "../../../../src/shared/session/main-view-entry.ts"
-import type { MainViewReportRegions } from "../../../../src/shared/session/main-view-shape.ts"
-import { applySessionEvent } from "../../../../src/shared/session/session-fold.ts"
-import { INITIAL_SESSION_STATE } from "../../../../src/shared/session/session-state.ts"
-import { checkedToolUseId } from "../../../fixture/tool-use-id.ts"
+import { regionsOfInput } from "../../../fixture/report-region.ts"
 
 // `Markdown` は代役にする（行内の印の描き方は rehype-inline-mark のテストが見る）。
 vi.mock("../../../../src/browser/features/report/markdown.tsx", () => ({
@@ -56,7 +51,7 @@ afterEach(() => {
 
 describe("本文の末尾の出典の一覧", () => {
   it("本文で初めて指された順に番号を振り、番号・題・ホスト名を並べ、行の id はレポートごとに一意", () => {
-    const body = regionsOf({
+    const body = regionsOfInput({
       components: [
         {
           id: "root",
@@ -83,7 +78,7 @@ describe("本文の末尾の出典の一覧", () => {
   })
 
   it("sources の無いレポートでは一覧を出さない", () => {
-    const body = regionsOf({
+    const body = regionsOfInput({
       components: [
         { id: "root", component: "Report", conclusion: ["架空の結論。"], children: ["p1"] },
         paragraph("p1", "架空の段落。"),
@@ -96,13 +91,3 @@ describe("本文の末尾の出典の一覧", () => {
     expect(container.querySelector('section[aria-label="出典"]')).toBeNull()
   })
 })
-
-function regionsOf(input: Readonly<Record<string, unknown>>): MainViewReportRegions {
-  const [event] = reportEvents(checkedToolUseId("toolu_fictional"), input, [])
-  if (event?.kind !== "report") throw new Error("report にならなかった")
-  const entry = mainViewEntries(applySessionEvent(INITIAL_SESSION_STATE, event, 0)).find(
-    (candidate) => candidate.kind === "report",
-  )
-  if (entry?.kind !== "report") throw new Error("レポートの記録が無い")
-  return entry.regions
-}

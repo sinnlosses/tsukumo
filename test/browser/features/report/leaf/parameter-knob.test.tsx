@@ -3,15 +3,11 @@ import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { chartConfigOf } from "../../../../../src/browser/features/report/report-diagram-markdown.ts"
-import { reportEvents } from "../../../../../src/server/session-driver/core/message/sdk-report-message.ts"
 import { a2uiWrittenComponentSchema } from "../../../../../src/shared/report/a2ui-report-catalog.ts"
 import { staticReportComponents } from "../../../../../src/shared/report/report-static-component-list.ts"
-import { mainViewEntries } from "../../../../../src/shared/session/main-view-entry.ts"
 import type { MainViewReportRegions } from "../../../../../src/shared/session/main-view-shape.ts"
-import { applySessionEvent } from "../../../../../src/shared/session/session-fold.ts"
-import { INITIAL_SESSION_STATE } from "../../../../../src/shared/session/session-state.ts"
 import { partsDraftOf, SETTLED_DRAFT } from "../../../../fixture/a2ui-draft.ts"
-import { checkedToolUseId } from "../../../../fixture/tool-use-id.ts"
+import { regionsOfParts } from "../../../../fixture/report-region.ts"
 
 // `Markdown` 一式は重いので、塊の文字列と図の設定をそのまま出す代役に差し替える。
 vi.mock("../../../../../src/browser/features/report/markdown.tsx", () => ({
@@ -90,16 +86,6 @@ const PARTS = [
   { id: "long", component: "Paragraph", text: "架空の長い段落。".repeat(40) },
 ]
 
-function regionsOf(components: readonly unknown[]): MainViewReportRegions {
-  const [event] = reportEvents(checkedToolUseId("toolu_fictional"), { components }, [])
-  if (event?.kind !== "report") throw new Error("report にならなかった")
-  const entry = mainViewEntries(applySessionEvent(INITIAL_SESSION_STATE, event, 0)).find(
-    (candidate) => candidate.kind === "report",
-  )
-  if (entry?.kind !== "report") throw new Error("レポートの記録が無い")
-  return entry.regions
-}
-
 function draftRegionsOf(components: readonly unknown[]): MainViewReportRegions {
   const written = components.map((part) => a2uiWrittenComponentSchema.parse(part))
   return partsDraftOf(
@@ -148,7 +134,7 @@ describe("つまみ（ParameterSlider・ParameterCheckBox）", () => {
   it("つまみが初期値で描かれ、振った値は /view/<ID>/value に置かれ、通信はしない", () => {
     const set = vi.spyOn(DataModel.prototype, "set")
     const fetchSpy = vi.spyOn(globalThis, "fetch")
-    renderReport(regionsOf(PARTS))
+    renderReport(regionsOfParts(PARTS))
 
     expect(slider()).toHaveProperty("value", "2")
     expect(checkbox()).toHaveProperty("checked", false)
@@ -163,7 +149,7 @@ describe("つまみ（ParameterSlider・ParameterCheckBox）", () => {
   })
 
   it("描き直す（部品を作り直す）と初期値に戻る", () => {
-    const body = regionsOf(PARTS)
+    const body = regionsOfParts(PARTS)
     const { unmount } = renderReport(body)
     fireEvent.change(slider(), { target: { value: "4" } })
     expect(slider()).toHaveProperty("value", "4")
@@ -176,7 +162,7 @@ describe("つまみ（ParameterSlider・ParameterCheckBox）", () => {
   })
 
   it("振ると Stats・Paragraph・Chart（強調を含む）が描き替わる", () => {
-    renderReport(regionsOf(PARTS))
+    renderReport(regionsOfParts(PARTS))
     expect(statValue()).toContain("4")
     expect(screen.getByText("架空の比は 5")).toBeTruthy()
     expect(chartSpec()).toBe(chartSpecOf([6, 5, 7], ["乙"]))
@@ -189,7 +175,7 @@ describe("つまみ（ParameterSlider・ParameterCheckBox）", () => {
   })
 
   it("評価に誤りが出た値は「—」になり、ほかの部品は計算し直される", () => {
-    renderReport(regionsOf(PARTS))
+    renderReport(regionsOfParts(PARTS))
 
     fireEvent.change(slider(), { target: { value: "4" } })
     fireEvent.click(checkbox())
@@ -202,7 +188,7 @@ describe("つまみ（ParameterSlider・ParameterCheckBox）", () => {
   })
 
   it("演出の最中は操作できず、演出は初期値の DOM に掛かり、出し切ると操作できる", () => {
-    renderReport(regionsOf(PARTS), true)
+    renderReport(regionsOfParts(PARTS), true)
 
     expect(document.querySelector("[data-revealing]")).not.toBeNull()
     expect(slider()).toHaveProperty("disabled", true)

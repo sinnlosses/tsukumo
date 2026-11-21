@@ -3,12 +3,7 @@ import { afterEach, beforeAll, describe, expect, it } from "vitest"
 
 import { loadMarkdown } from "../../../../src/browser/features/report/markdown.tsx"
 import { Report } from "../../../../src/browser/features/report/report.tsx"
-import { reportEvents } from "../../../../src/server/session-driver/core/message/sdk-report-message.ts"
-import { mainViewEntries } from "../../../../src/shared/session/main-view-entry.ts"
-import type { MainViewReportRegions } from "../../../../src/shared/session/main-view-shape.ts"
-import { applySessionEvent } from "../../../../src/shared/session/session-fold.ts"
-import { INITIAL_SESSION_STATE } from "../../../../src/shared/session/session-state.ts"
-import { checkedToolUseId } from "../../../fixture/tool-use-id.ts"
+import { regionsOfParts } from "../../../fixture/report-region.ts"
 
 beforeAll(async () => {
   await loadMarkdown()
@@ -32,19 +27,9 @@ const pairPart = (id: string, relation: string, title: string, left: string, rig
   aside: "",
 })
 
-function regionsOf(components: readonly unknown[]): MainViewReportRegions {
-  const [event] = reportEvents(checkedToolUseId("toolu_fictional"), { components }, [])
-  if (event?.kind !== "report") throw new Error("report にならなかった")
-  const entry = mainViewEntries(applySessionEvent(INITIAL_SESSION_STATE, event, 0)).find(
-    (candidate) => candidate.kind === "report",
-  )
-  if (entry?.kind !== "report") throw new Error("レポートの記録が無い")
-  return entry.regions
-}
-
 function renderReport(components: readonly unknown[]) {
   return render(
-    <Report reveal={false} turnId={1} {...NO_CLASS_NAMES} body={regionsOf(components)} />,
+    <Report reveal={false} turnId={1} {...NO_CLASS_NAMES} body={regionsOfParts(components)} />,
   )
 }
 

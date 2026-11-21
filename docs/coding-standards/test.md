@@ -23,8 +23,11 @@
   （`/tdd` の `mocking.md` が正典）
 - **事象の列を数える・畳むテストの入力は、手で並べず本番の変換（`createSpeechReview(...).pass` など）の出力を通して組む**。
   手で並べた列は、本番では起きない列でも通るため
-- **単体の `node` project はファイルごとに隔離して走る（Vitest の既定の `isolate: true`）**。
-  `vi.mock` はファイル単位で効くので、ファイルの頭に書いてよい。
+- **単体の `node` project はファイルごとの隔離を外して走る（`isolate: false`）**。
+  worker がモジュールの記録・環境変数・グローバル・作業ディレクトリを次のファイルへ持ち越すので、
+  `vi.mock`・`vi.doMock`・`vi.resetModules`・`vi.stubEnv`・`vi.stubGlobal`・`process.chdir` を書いたファイルは、
+  設定が自動で `node-isolated` project へ移し、隔離したまま走らせる。`vi.mock` はそのファイルの頭に書いてよい。
+  `dom` project は、ストアや document の持ち越しで順によって落ちるファイルがあるので隔離したまま走らせる。
   **`vi.spyOn` の差し替えは設定の `restoreMocks: true` が it のたびに戻す**ので、`afterEach` で `vi.restoreAllMocks()` を書かなくてよい
   （`test/architecture/test-isolation.test.ts` が設定の有効を確かめる）。`vi.stubGlobal` / `vi.stubEnv` は戻らないので `unstubAllGlobals` / `unstubAllEnvs` を自分で呼ぶ
 - **単体テストのプロセスのタイムゾーンは UTC に固定してある**（単体テストの設定の `test.env.TZ`。

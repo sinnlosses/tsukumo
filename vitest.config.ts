@@ -1,3 +1,5 @@
+import { globSync, readFileSync } from "node:fs"
+
 import { defineConfig } from "vitest/config"
 
 import { WITHOUT_UNUSED_EXPORT_ENV } from "./scripts/dev/lib/check-stage.ts"
@@ -20,6 +22,22 @@ const CONVENTION_TEST_GLOBS = CONVENTION_TEST_PATHS.map(
   (directory) => `${directory}**/*.test.{ts,tsx}`,
 )
 const DOM_SETUP_FILES = ["./test/dom-setup.ts", "./test/popover-setup.ts"]
+
+// 分離を外した worker では、モジュールの記録・環境変数・グローバル・作業ディレクトリが前のファイルから持ち越される。
+// 持ち越すと効かなくなる差し替えを書いたファイルだけを、分離したまま走らせる。
+const WORKER_STATE_REWRITE =
+  /\bvi\.(?:mock|doMock|resetModules|stubEnv|stubGlobal)\(|process\.chdir\(/
+
+const NODE_REWRITING_TEST_FILES = globSync("test/**/*.test.{ts,tsx}", {
+  exclude: ["test/e2e/**", ...DOM_TEST_FILES],
+}).filter((file) => WORKER_STATE_REWRITE.test(readFileSync(file, "utf8")))
+
+const NODE_TEST_EXCLUDE = [
+  "**/node_modules/**",
+  "test/e2e/**",
+  ...DOM_TEST_FILES,
+  ...CONVENTION_TEST_GLOBS,
+]
 
 // 指定すると既定の2つ（package.json・vitest/vite の設定）が上書きされるので、先頭に書き足す。
 const FORCE_RERUN_TRIGGERS = [
@@ -45,6 +63,7 @@ export default defineConfig({
     forceRerunTriggers: FORCE_RERUN_TRIGGERS,
     maxWorkers: "40%",
     projects: [
+      // 分離を外すと、ストアや document の持ち越しで順によって落ちるファイルがあるので、分離したまま走らせる。
       {
         extends: true,
         test: {
@@ -57,16 +76,21 @@ export default defineConfig({
           setupFiles: DOM_SETUP_FILES,
         },
       },
+      // ファイルごとの環境の作り直しと import のやり直しを省く。
       {
         extends: true,
         test: {
           name: "node",
-          exclude: [
-            "**/node_modules/**",
-            "test/e2e/**",
-            ...DOM_TEST_FILES,
-            ...CONVENTION_TEST_GLOBS,
-          ],
+          isolate: false,
+          exclude: [...NODE_TEST_EXCLUDE, ...NODE_REWRITING_TEST_FILES],
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: "node-isolated",
+          include: NODE_REWRITING_TEST_FILES,
+          exclude: NODE_TEST_EXCLUDE,
         },
       },
       // リポジトリ全体を読むので、並べて走る検証の負荷で既定の 5 秒を超える。

@@ -3,11 +3,8 @@ import { describe, expect, it } from "vitest"
 import { reportHeadedSections } from "../../../src/browser/domain/main-view/main-view-report-body.ts"
 import { reportEvents } from "../../../src/server/session-driver/core/message/sdk-report-message.ts"
 import { reportFigureOf } from "../../../src/shared/report/report-outline.ts"
-import { mainViewEntries } from "../../../src/shared/session/main-view-entry.ts"
-import type { MainViewReportRegions } from "../../../src/shared/session/main-view-shape.ts"
 import type { ReportCalledEvent } from "../../../src/shared/session/session-event.ts"
-import { applySessionEvent } from "../../../src/shared/session/session-fold.ts"
-import { INITIAL_SESSION_STATE } from "../../../src/shared/session/session-state.ts"
+import { regionsOfEvent } from "../../fixture/report-region.ts"
 import { staticOf } from "../../fixture/static-component-list.ts"
 import { checkedToolUseId } from "../../fixture/tool-use-id.ts"
 
@@ -49,8 +46,8 @@ describe("a2ui の版の記録の本文", () => {
   })
 
   it("見出しのある節の ID と見出しは components から導き、components が無ければ面も節も無い", () => {
-    const withComponents = regionsOf(event)
-    const withoutComponents = regionsOf({ ...event, components: [] })
+    const withComponents = regionsOfEvent(event)
+    const withoutComponents = regionsOfEvent({ ...event, components: [] })
 
     expect(withComponents.a2ui.kind).toBe("surface")
     expect(reportHeadedSections(withComponents)).toEqual([
@@ -63,7 +60,7 @@ describe("a2ui の版の記録の本文", () => {
 
   it("markdownLeaves は Markdown の内容部品だけを持ち、欄外注と畳みを包んだ Markdown を当てる", () => {
     const reported = reportOf({ components: MARKDOWN_PARTS })
-    const { a2ui } = regionsOf(reported)
+    const { a2ui } = regionsOfEvent(reported)
     if (a2ui.kind !== "surface") throw new Error("面の値が無い")
 
     expect(Object.keys(a2ui.markdownLeaves).toSorted()).toEqual(["m1", "m2"])
@@ -78,7 +75,7 @@ describe("a2ui の版の記録の本文", () => {
         part.id === "m1" ? { ...part, markdown: "以上です" } : part,
       ),
     })
-    const { a2ui } = regionsOf(reported)
+    const { a2ui } = regionsOfEvent(reported)
     if (a2ui.kind !== "surface") throw new Error("面の値が無い")
 
     expect(a2ui.markdownLeaves.m1).toBe("")
@@ -86,7 +83,7 @@ describe("a2ui の版の記録の本文", () => {
   })
 
   it("塊の残らない節は欄を持たず、図があると欄の ID は 1 から振る", () => {
-    const { a2ui } = regionsOf(event)
+    const { a2ui } = regionsOfEvent(event)
     if (a2ui.kind !== "surface") throw new Error("面の値が無い")
 
     expect(a2ui.sections).toEqual({
@@ -126,7 +123,7 @@ describe("a2ui の版の記録の本文", () => {
       },
     ]
     const reported = reportOf({ components: parts })
-    const { a2ui } = regionsOf(reported)
+    const { a2ui } = regionsOfEvent(reported)
     if (a2ui.kind !== "surface") throw new Error("面の値が無い")
 
     expect(Object.keys(a2ui.leafValues).toSorted()).toEqual(["fig", "m1", "rt", "t1"])
@@ -157,7 +154,7 @@ describe("a2ui の版の記録の本文", () => {
       { id: "p1", component: "Paragraph", text: "架空の段落。" },
       { id: "rt", component: "Markdown", markdown: "> 架空の引用" },
     ]
-    const { a2ui } = regionsOf(reportOf({ components: parts }))
+    const { a2ui } = regionsOfEvent(reportOf({ components: parts }))
     if (a2ui.kind !== "surface") throw new Error("面の値が無い")
 
     expect(a2ui.figure).toEqual({
@@ -178,7 +175,9 @@ describe("a2ui の版の記録の本文", () => {
     })
     expect(a2ui.markdownLeaves.rt).toBe("> 架空の引用")
 
-    const plain = regionsOf(reportOf({ components: PARTS.filter((part) => part.id !== "fig") }))
+    const plain = regionsOfEvent(
+      reportOf({ components: PARTS.filter((part) => part.id !== "fig") }),
+    )
     expect(plain.a2ui.kind === "surface" ? plain.a2ui.figure : undefined).toEqual({ kind: "none" })
   })
 
@@ -187,7 +186,7 @@ describe("a2ui の版の記録の本文", () => {
       part.id === "root" ? { ...part, figure: undefined, figureNone: "short-answer" } : part,
     )
     const withoutFigure = reportOf({ components: parts })
-    const { a2ui } = regionsOf(withoutFigure)
+    const { a2ui } = regionsOfEvent(withoutFigure)
     expect(reportFigureOf(staticOf(withoutFigure.components))).toEqual({
       kind: "none",
       reason: "short-answer",
@@ -204,7 +203,7 @@ describe("a2ui の版の記録の本文", () => {
       { id: "s1", component: "Section", heading: "架空の節", children: ["p1"] },
       { id: "p1", component: "Paragraph", text: "架空の段落。" },
     ]
-    const { a2ui } = regionsOf(reportOf({ components: parts }))
+    const { a2ui } = regionsOfEvent(reportOf({ components: parts }))
     if (a2ui.kind !== "surface") throw new Error("面の値が無い")
 
     expect(a2ui.sections).toEqual({ s1: { regionId: 0, heading: "## 架空の節" } })
@@ -214,8 +213,8 @@ describe("a2ui の版の記録の本文", () => {
     const withWorkDone = PARTS.map((part) =>
       part.id === "root" ? { ...part, workDone: "架空の `file.ts` を直した。" } : part,
     )
-    const given = regionsOf(reportOf({ components: withWorkDone })).a2ui
-    const omitted = regionsOf(reportOf({ components: PARTS })).a2ui
+    const given = regionsOfEvent(reportOf({ components: withWorkDone })).a2ui
+    const omitted = regionsOfEvent(reportOf({ components: PARTS })).a2ui
 
     expect(given.head.workDone).toBe("架空の `file.ts` を直した。")
     expect(omitted.head.workDone).toBe("")
@@ -223,7 +222,7 @@ describe("a2ui の版の記録の本文", () => {
 
   it("Report.notDone は、省くと omitted・空の並びは listed の空・中身ありは listed で面の頭に載る", () => {
     const notDoneOf = (notDone?: readonly string[]) =>
-      regionsOf(
+      regionsOfEvent(
         reportOf({
           components: PARTS.map((part) =>
             part.id === "root" && notDone !== undefined ? { ...part, notDone } : part,
@@ -242,7 +241,7 @@ describe("a2ui の版の記録の本文", () => {
   it("根が Report でなければ none", () => {
     const parts = PARTS.filter((part) => part.id !== "root")
 
-    expect(regionsOf(reportOf({ components: parts })).a2ui).toMatchObject({
+    expect(regionsOfEvent(reportOf({ components: parts })).a2ui).toMatchObject({
       kind: "none",
       head: { keyFigures: [], checks: { kind: "none" } },
       favor: { id: "favor-toolu_fictional" },
@@ -268,12 +267,4 @@ function reportOf(input: Readonly<Record<string, unknown>>): ReportCalledEvent {
   const [event] = reportEvents(checkedToolUseId("toolu_fictional"), input, [])
   if (event?.kind !== "report") throw new Error("report にならなかった")
   return event
-}
-
-function regionsOf(event: ReportCalledEvent): MainViewReportRegions {
-  const entry = mainViewEntries(applySessionEvent(INITIAL_SESSION_STATE, event, 0)).find(
-    (candidate) => candidate.kind === "report",
-  )
-  if (entry?.kind !== "report") throw new Error("レポートの記録が無い")
-  return entry.regions
 }

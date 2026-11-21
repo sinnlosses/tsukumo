@@ -7,8 +7,8 @@ import { reportExport } from "../../../../src/browser/features/report/report-exp
 import { Report } from "../../../../src/browser/features/report/report.tsx"
 import { UNREADABLE_FILE_EXCERPT } from "../../../../src/shared/repository/file-excerpt.ts"
 import { PLAIN_LEAF_VALUE, renderDirectLeaf } from "../../../fixture/direct-leaf-compare.tsx"
+import { regionsOfParts } from "../../../fixture/report-region.ts"
 import { stubRepositoryFileLink } from "../../../fixture/repository-file-link.tsx"
-import { regionsOf } from "../../../fixture/table-report-part.ts"
 
 beforeAll(async () => {
   await loadMarkdown()
@@ -101,7 +101,7 @@ describe("最終レポートの写し", () => {
         className=""
         revealClassName=""
         blockClassName=""
-        body={regionsOf(PARTS)}
+        body={regionsOfParts(PARTS)}
       />,
     )
     fireEvent.click(screen.getByRole("button", { name: "架空の二" }))
@@ -302,7 +302,7 @@ describe("最終レポートの写し", () => {
           className=""
           revealClassName=""
           blockClassName=""
-          body={regionsOf(withNotes(terms))}
+          body={regionsOfParts(withNotes(terms))}
         />,
       )
 
