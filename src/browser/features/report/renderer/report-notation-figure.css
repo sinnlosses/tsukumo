@@ -315,7 +315,7 @@
     margin: var(--report-figure-gap) auto;
   }
   /* 縮めた包みは本体の幅まで縮むが、縮尺の本文の段（42em）より狭くはならない。
-   図を持つ包みと表の包みは本文の列の左端から始める。画像の包みは画像の幅まで縮め、題はその幅の中で中央にする。 */
+   図を持つ包みは本文の列の左端から始め、表の包みは紙の中央に置く。画像の包みは画像の幅まで縮め、題はその幅の中で中央にする。 */
   & .report-captioned-fit {
     inline-size: max-content;
     min-inline-size: min(100%, var(--report-measure));
@@ -327,7 +327,7 @@
   & .report-captioned:has(> :is(.report-compare, .report-compare-figure)) {
     align-items: stretch;
   }
-  /* 表の題は、包みの幅（表の幅）で折り返す。包みは紙の中央に置く。番号は中立の色。 */
+  /* 表の題は、包みの幅（表の幅）で折り返す。番号は中立の色。 */
   & .report-captioned.report-captioned-table > .report-caption {
     inline-size: 100%;
     max-inline-size: 100%;
