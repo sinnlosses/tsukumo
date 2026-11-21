@@ -5,6 +5,7 @@ import {
   htmlInlineSegments,
   htmlInlineWithCode,
   markdownInline,
+  plainInlineMarkdown,
 } from "../../../src/shared/report/report-inline-markdown.ts"
 import { fencedFigureCaptioned, markdownOf } from "../../fixture/report-markdown.ts"
 
@@ -57,6 +58,18 @@ describe("reportSectionsMarkdown", () => {
       expect(htmlInlineWithCode("`{{3 / 5}}` と {{3 / 5}} と {{x")).toBe(
         "<code>{{3 / 5}}</code> と 3/5 と {{x",
       )
+    })
+  })
+
+  describe("plainInlineMarkdown", () => {
+    it("inline code・太字・リンクの記法を外して素の字にする", () => {
+      expect(plainInlineMarkdown("`a.ts` と **太字** と [出典](https://example.com/a)")).toBe(
+        "a.ts と 太字 と 出典",
+      )
+    })
+
+    it("inline code の中の ** と [ は外さない", () => {
+      expect(plainInlineMarkdown("`**x** [y](z)`")).toBe("**x** [y](z)")
     })
   })
 

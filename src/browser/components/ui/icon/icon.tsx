@@ -17,6 +17,7 @@ import {
   CircleDashed,
   CircleDot,
   CirclePause,
+  CircleX,
   Coins,
   Copy,
   ExternalLink,
@@ -147,6 +148,11 @@ export function CircleDashedIcon(): ReactElement {
 /** 円にチェック。 */
 export function CircleCheckIcon(): ReactElement {
   return <Icon icon={CircleCheck} {...ICON_ATTRIBUTES} />
+}
+
+/** 円に×。 */
+export function CircleXIcon(): ReactElement {
+  return <Icon icon={CircleX} {...ICON_ATTRIBUTES} />
 }
 
 /** 頼む・送る（上向きの矢印。入力欄の送信と同じ絵）。 */

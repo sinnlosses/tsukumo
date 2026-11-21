@@ -15,7 +15,10 @@ export type CollapsibleProps = {
 
 export function Collapsible(props: CollapsibleProps): ReactElement {
   return (
-    <AstryxCollapsible trigger={props.trigger} defaultIsOpen={props.defaultOpen}>
+    <AstryxCollapsible
+      trigger={<span className={styles["trigger"]}>{props.trigger}</span>}
+      defaultIsOpen={props.defaultOpen}
+    >
       <div className={styles["body"]}>{props.children}</div>
     </AstryxCollapsible>
   )

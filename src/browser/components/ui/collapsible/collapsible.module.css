@@ -1,3 +1,8 @@
 .body {
   font-size: var(--font-body);
 }
+
+.trigger {
+  font-size: var(--font-body);
+  font-weight: 400;
+}

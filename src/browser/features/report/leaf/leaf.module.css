@@ -2,8 +2,6 @@
    子部品ごとの `*.css` をここで `@import` する。並びは規則の重なり順なので、入れ替えると同じ詳細度の規則の勝ち負けが変わる。 */
 
 @import "./interactive-view.css";
-@import "./description-list-leaf.css";
-@import "./trace-leaf.css";
 @import "./chart-grid-leaf.css";
 @import "./table-badge.css";
 @import "./table-detail.css";
@@ -20,6 +18,10 @@
 .check-mark-open {
   display: inline-flex;
   color: var(--ink-quiet);
+}
+.trace-mark-ng {
+  display: inline-flex;
+  color: var(--state-ng);
 }
 .item-name {
   padding-inline-end: 0.75em;

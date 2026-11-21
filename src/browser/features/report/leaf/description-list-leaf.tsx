@@ -3,9 +3,13 @@
 import type { ReactElement } from "react"
 
 import type { A2uiReportComponent } from "../../../../shared/report/a2ui-report-catalog.ts"
+import { plainInlineMarkdown } from "../../../../shared/report/report-inline-markdown.ts"
 import type { LeafValue } from "../../../../shared/report/report-leaf-value.ts"
+import {
+  MetadataList,
+  MetadataListItem,
+} from "../../../components/ui/metadata-list/metadata-list.tsx"
 import { InlineMarkdown } from "../markdown.tsx"
-import styles from "./leaf.module.css"
 import { LeafFold, ReportLeafFrame } from "./report-leaf-frame.tsx"
 
 export function DescriptionListLeaf(props: {
@@ -19,18 +23,16 @@ export function DescriptionListLeaf(props: {
   return (
     <ReportLeafFrame value={value} title="" fit={false}>
       <LeafFold fold={part.fold} empty={false}>
-        <dl className={styles["description-list-leaf"]}>
+        <MetadataList>
           {part.items.map((item, index) => (
-            <div key={`${String(index)}:${item.term}`} className={styles["description-list-row"]}>
-              <dt className={styles["description-list-term"]}>
-                <InlineMarkdown text={item.term} />
-              </dt>
-              <dd className={styles["description-list-description"]}>
-                <InlineMarkdown text={item.description} />
-              </dd>
-            </div>
+            <MetadataListItem
+              key={`${String(index)}:${item.term}`}
+              label={plainInlineMarkdown(item.term)}
+            >
+              <InlineMarkdown text={item.description} />
+            </MetadataListItem>
           ))}
-        </dl>
+        </MetadataList>
       </LeafFold>
     </ReportLeafFrame>
   )

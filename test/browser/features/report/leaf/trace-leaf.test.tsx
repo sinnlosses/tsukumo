@@ -1,4 +1,4 @@
-import { cleanup, render } from "@testing-library/react"
+import { cleanup, fireEvent, render } from "@testing-library/react"
 import { afterEach, beforeAll, describe, expect, it } from "vitest"
 
 import {
@@ -60,7 +60,7 @@ function drawn(extra: {
 }
 
 describe("Trace の部品", () => {
-  it("行の数だけ ol の li が並び、題・状態の記号と語・補足が出る", () => {
+  it("行の数だけ ul の li が並び、題・状態の絵と語・補足が出る", () => {
     const container = drawn({
       items: [
         { ...ITEM, title: "架空の **読み込み** を確かめた", supplement: "架空.ts:42" },
@@ -69,23 +69,23 @@ describe("Trace の部品", () => {
       ],
     })
 
-    const rows = [...container.querySelectorAll("ol > li")]
+    const rows = [...container.querySelectorAll("ul > li")]
     expect(rows).toHaveLength(3)
     expect(rows[0]?.querySelector("strong")?.textContent).toBe("読み込み")
     expect(
       rows.map((row) => {
         const mark = row.querySelector('[role="img"]')
-        return [mark?.textContent, mark?.getAttribute("aria-label")]
+        return [mark?.getAttribute("aria-label"), mark?.querySelector("svg") !== null]
       }),
     ).toEqual([
-      ["✓", "済み"],
-      ["✕", "落ちた"],
-      ["○", "未着手"],
+      ["済み", true],
+      ["落ちた", true],
+      ["未着手", true],
     ])
     expect(rows[1]?.textContent).toContain("2.1 秒")
   })
 
-  it("出力のある行だけ details で開け、出力は記法を通さず pre にそのまま入る", () => {
+  it("出力のある行だけ開閉でき、開くと出力は記法を通さず pre にそのまま入る", () => {
     const container = drawn({
       items: [
         { ...ITEM, output: "架空: **太字にならない**\n  2 行目" },
@@ -93,19 +93,22 @@ describe("Trace の部品", () => {
       ],
     })
 
-    const details = [...container.querySelectorAll("li details")]
-    expect(details).toHaveLength(1)
-    expect(details[0]?.hasAttribute("open")).toBe(false)
-    expect(details[0]?.querySelector("summary")?.textContent).toBe("出力を見る")
-    expect(details[0]?.querySelector("pre")?.textContent).toBe("架空: **太字にならない**\n  2 行目")
-    expect(details[0]?.querySelector("strong")).toBeNull()
+    expect(container.querySelectorAll('li [aria-expanded="false"]')).toHaveLength(1)
+    const toggle = container.querySelector('li [aria-expanded="false"]')
+    expect(toggle).not.toBeNull()
+    if (toggle !== null) {
+      fireEvent.click(toggle)
+    }
+    const pre = container.querySelector("li pre")
+    expect(pre?.textContent).toBe("架空: **太字にならない**\n  2 行目")
+    expect(pre?.querySelector("strong")).toBeNull()
   })
 
   it("fold があれば並びごと details で畳む", () => {
     const container = drawn({ fold: "架空の経過" })
 
     expect(container.querySelector("details > summary")?.textContent).toBe("架空の経過")
-    expect(container.querySelector("details > ol > li")).not.toBeNull()
+    expect(container.querySelector("details ul > li")).not.toBeNull()
   })
 
   it("欄外注があれば欄外注の列に欄外注が付く", () => {

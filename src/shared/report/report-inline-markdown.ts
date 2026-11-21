@@ -28,6 +28,18 @@ export function plainInline(text: string): string {
   return foldInlineMarks(text).replace(/\s+/g, " ").trim()
 }
 
+/**
+ * `plainInline` に加え、inline code・太字・リンクの記法を外した素の字（字しか受けない欄に渡す）。
+ * inline code の中の字は記法として読まない。
+ */
+export function plainInlineMarkdown(text: string): string {
+  return mapCodeSpans(
+    plainInline(text),
+    (part) => part.replace(/\*\*([\s\S]+?)\*\*/g, "$1").replace(/\[([^\]]*)\]\([^)]*\)/g, "$1"),
+    codeSpanContent,
+  )
+}
+
 /** 二重引用符で囲む HTML 属性の値に埋める1行の文字。`htmlInline` が `"` も逃がすのでそのまま使える。 */
 export function htmlAttribute(text: string): string {
   return htmlInline(text)

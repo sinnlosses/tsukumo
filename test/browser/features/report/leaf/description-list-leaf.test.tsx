@@ -69,7 +69,7 @@ describe("DescriptionList の部品", () => {
     ])
   })
 
-  it("名前と値のインラインの記法（inline code・太字・リンク）が要素になる", () => {
+  it("名前は素の字になり、値のインラインの記法（太字・リンク）は要素になる", () => {
     const container = drawn({
       items: [
         {
@@ -79,7 +79,8 @@ describe("DescriptionList の部品", () => {
       ],
     })
 
-    expect(container.querySelector("dt code")?.textContent).toBe("a.ts")
+    expect(container.querySelector("dt")?.textContent).toBe("a.ts")
+    expect(container.querySelector("dt code")).toBeNull()
     expect(container.querySelector("dd strong")?.textContent).toBe("太字")
     expect(container.querySelector("dd a")?.getAttribute("href")).toBe("https://example.com/a")
   })
