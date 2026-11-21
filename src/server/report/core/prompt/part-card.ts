@@ -7,12 +7,8 @@ import { z } from "zod"
 import { REPORT_COMPONENT_SCHEMAS } from "../../../../shared/report/a2ui-report-catalog.ts"
 import { PART_CARD_NOTES, partCardNote } from "../../../../shared/report/part-card-note.ts"
 import { PART_EXAMPLES } from "../../../../shared/report/part-example-list.ts"
-import {
-  REPORT_FIELD_CARD_NOTES,
-  REPORT_FIELD_DESCRIPTIONS,
-  REPORT_SECTIONS_CARD_NOTE,
-  REPORT_SECTIONS_DESCRIPTION,
-} from "./report-tool.ts"
+import { REPORT_FIELD_CARD_NOTES, REPORT_SECTIONS_CARD_NOTE } from "./field-card-note.ts"
+import { REPORT_FIELD_DESCRIPTIONS, REPORT_SECTIONS_DESCRIPTION } from "./report-tool.ts"
 
 /** `report_part_card` ツールの説明文。 */
 export const PART_CARD_TOOL_DESCRIPTION =
@@ -82,6 +78,8 @@ function reportCardSchemas() {
       favor: noted(shape.favor, "favor"),
       favorOptions: noted(shape.favorOptions, "favorOptions"),
       checks: noted(shape.checks, "checks"),
+      sources: noted(shape.sources, "sources"),
+      terms: noted(shape.terms, "terms"),
       title: noted(shape.title, "title"),
       sessionSummary: noted(shape.sessionSummary, "sessionSummary"),
       sessionRemaining: noted(shape.sessionRemaining, "sessionRemaining"),

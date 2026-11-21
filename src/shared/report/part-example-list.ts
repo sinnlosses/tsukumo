@@ -191,10 +191,15 @@ export const PART_EXAMPLES = {
       component: "Report",
       conclusion: ["架空の取り込みは上限を 60 にすると切れなくなった。"],
       figureNone: "short-answer",
+      sources: [{ id: "s1", title: "架空の取り込みの仕様", url: "https://example.com/spec" }],
       children: ["s1"],
     },
     { id: "s1", component: "Section", heading: "架空の結果", children: ["p1"] },
-    { id: "p1", component: "Paragraph", text: "架空の取り込みは 120 件すべてが通った。" },
+    {
+      id: "p1",
+      component: "Paragraph",
+      text: "架空の取り込みは 120 件すべてが通った。{{cite: s1}}",
+    },
   ],
   Section: [
     { id: "s1", component: "Section", heading: "架空の結果", children: ["p1", "n1"] },

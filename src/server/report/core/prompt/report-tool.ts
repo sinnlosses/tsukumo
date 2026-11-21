@@ -27,7 +27,7 @@ export const REPORT_TOOL_DESCRIPTION =
 
 /**
  * `report` の定義に載せる `Report` の欄の説明。毎ターン文脈に入るので、書き損じると差し戻しが増える条だけを短く持つ。
- * 細かい書き方は {@link REPORT_FIELD_CARD_NOTES} に置き、`Report` の部品カードにだけ載せる。
+ * 細かい書き方は `REPORT_FIELD_CARD_NOTES` に置き、`Report` の部品カードにだけ載せる。
  * 結果を `conclusion` と `sections` に書かない条は `REPORT_NOTATION_PROMPT` の「結論は `conclusion` に1〜2文で書く」が持つ。
  * `report` はターンを閉じるので、締めの一言はあとから `speak` で言えず、`closing` で受け取る。
  */
@@ -38,6 +38,8 @@ export const REPORT_FIELD_DESCRIPTIONS = {
   favor: "利用者が取る行動が残るときだけ1つ。取る手段まで書く",
   favorOptions: "お願いの選択肢（3つまで）。favor があるときだけ",
   checks: "検証の結果。検証していないターンでは省く。文字に記法を使わない",
+  sources: "主張を裏づける外の文書。本文の {{cite: id}} で指すときだけ",
+  terms: "読み手が知らない外の用語の注。本文に出る字で、1文で書く。付けるときだけ",
   title: `セッション一覧の題（${String(MAX_SESSION_HEADING_LENGTH)}字以内）。話題が変わったときだけ`,
   sessionSummary: `セッション全体の要約。変えたいときだけ（${String(MAX_SESSION_SUMMARY_LENGTH)}字以内）`,
   sessionRemaining: "残っている作業を1〜2文で。無ければ空文字",
@@ -49,85 +51,8 @@ export const REPORT_FIELD_DESCRIPTIONS = {
 } as const
 
 /**
- * `Report` の欄の細かい書き方。`Report` の部品カードにだけ、{@link REPORT_FIELD_DESCRIPTIONS} のあとに載る。
- * 報告の種類ごとの既定の節の並び（`task`）と、利用者へのお願いの書き方（`favor`）はここだけが持つ。
- * `retrospective` はどのワークフローのフェーズかは見ず、欄があるときだけ描く。
- * `waitingLine` を出す時刻と回数は tsukumo が決める（`waitingLineDueAt`）ので、ここでは何を言うかだけを言う。
- * `title` で利用者の `/rename` を上書きしない判断はモデルに任せず、`decideSessionTitle` が持つ。
- * `sessionSummary` の値は transcript の `report` の入力に残り、切り替え画面はそれを読み戻す（tsukumo は別の場所へ書き出さない）。
- */
-export const REPORT_FIELD_CARD_NOTES = {
-  task:
-    "タスクID・作業の名前・終わり方・種類を渡すと、結論の上にタスク見出し行と作業の名前の見出しが描かれる（変更の量は tsukumo が git から数える）。" +
-    "genre を入れると、sections のセクションをその種類の既定の並びで書く（セクションの数は縛らない）。" +
-    "work: 変化 → 証拠 → 変更の要所 → 限界と変えていないもの → お願い。" +
-    "decision: 決めたこと → 理由と採らなかった案（options）→ 結果 → 未決。" +
-    "research: 分かったこと → 根拠（出典か path:line）→ 何を意味するか → 確かめていないこと（claims）→ 次。" +
-    "status は research、diagnosis・timeline・structure・screen は work の並び。" +
-    "stopped は種類によらず: どこで止まったか → 原因 → 残したものと戻したもの → 再開に要るもの（favor）。" +
-    "genre を省くと並びは縛らない。タスクに紐付かないターンでは task を省く。",
-  workPlanClosing:
-    "フェーズの閉じ方。同じ依頼で work_plan を渡したときは必ず入れる。" +
-    "finished（全部終えた。最後のフェーズにいるときに渡すと tsukumo がプログレスバーを全部済みにする）/ " +
-    "stopped（途中で止めた。プログレスバーは今のフェーズのまま残る）。ワークプランの無い依頼では省く。",
-  keyFigures:
-    "結論に効く数（件数・割合・前後の差）を3〜4個、結論の直下にカードで並べる。3つに満たなければ省いて結論の文に入れる。" +
-    "項目の形と欄の書き方は Stats の items と同じ（Stats のカードに載る）。目標があれば target と better、差は targetGap。",
-  figure:
-    "checks の下・sections の上に「図 1」として描かれ、sections の図の番号はそのあとに続く。" +
-    "作業のレポートの最小の形は、ここに図1つと、sections に表か箇条書き。" +
-    "主の図は種類で決まる: 画面は前後の画、数は前後を重ねた chart、構造は前後の構成図、不具合は前後と原因の流れ、案の比較は今と採ったあとの compare、" +
-    "調べものと時間の順は分かったことの図1枚、止めたときは狙いと今、戻せない操作の前は今としたあと。" +
-    "対の見出しは題材に合わせて読み替える（今｜採ったあと、狙い｜今、今｜したあと。compare の heading）。" +
-    "調べものや短い答えのように対にならない題材は、無理に対へ寄せない。",
-  retrospective:
-    "振り返りのフェーズがあったときだけ渡す。見出し「振り返り」のセクションとして最後に描く。",
-  notDone:
-    "task を渡すときは必ず渡す。タスクで手を付けなかったことを1要素1件で並べ、無ければ空の並びを渡す（省くのは「無い」とは言わず黙ること）。",
-  favor:
-    "行動は作業を終えた・止めたあとに残る、書き手が代わりにできないことに限る（2件あってもまとめる）。報告・感想・提案は書かず、行動が無ければ省く。" +
-    "打つコマンドはそのコマンドを inline code で、開く場所・押す操作は場所と名前を書く。" +
-    "順番があるときは「1. …　2. …」と番号を振って順に並べる。",
-  favorOptions:
-    "利用者が選ぶ案をカードで並べる。draft は利用者が送る文の形で書く。result は選ぶと何が起きるかを短く言う。" +
-    "戻せない操作を含む案は irreversible を付け、わけは favor の本文に書く。recommended は1つまで。favor が無ければ渡さない。",
-  checks:
-    "結論の下に総括行と、落ちた・確かめていない項目の行で描かれ、通った項目は畳む。" +
-    "結果の数は figure に、打ったコマンドは command に分ける。" +
-    "label・figure・detail・howToVerify は素の文字で描かれる。" +
-    "supports には、その行が裏づける節（Section）の id を並べる。",
-  title:
-    "セッションの中心の話題が変わったときだけ新しい題を渡し、変わっていなければ省く。" +
-    "/clear のあとの新しいセッションには前の題が残っていることがあるので、要約の中心と違うなら付け直す。",
-  sessionSummary:
-    "このセッションでここまでにしたことの要約で、セッションの切り替え画面に出る（レポートには描かれない）。" +
-    "変えたいときだけ、前の要約を踏まえて全体を書く。一度も書かないうちは、省くと直近5ターンの結論の1文目の箇条が要約になる。" +
-    "書くなら中立の文体の日本語で2〜3段落、段落は空行で区切る。残っていることは要約に書かず sessionRemaining に書く。",
-  sessionRemaining:
-    "次のセッションで続ける作業を書く。書き出しに「残り：」は付けない。" +
-    "始め方の一覧の「前回の続き」のカードの題と、次のセッションへ送る依頼の文になる。",
-  continueRequest:
-    "「続ける」を押すと利用者の入力欄へそのまま入る。利用者がそのまま送る依頼の文（〜して の形）で書く。",
-  nextSteps:
-    "押すと draft が利用者の入力欄へ入る（送らない）。" +
-    "レポートの中身と利用者のこれまでの依頼の流れから、次に頼みそうで、頼むと実際に作業が進むものを選ぶ" +
-    "（例: 見つけた隣の不具合を直す・変えた画面を別の幅でも撮る・決めた案をタスクにする・同じ直しをほかの箇所へ広げる）。" +
-    "検証の結果を報告させるだけの依頼（「確かめた」「違った」）、continueRequest・favorOptions と同じ依頼、何でも当てはまる依頼（「ほかに改善点を探して」）は書かない。",
-  closing:
-    "speak と同じ text と expression。レポートを描いたあとに吹き出しに出る。" +
-    "レポートのどこから読むとよいかを言う。",
-  waitingLine:
-    "speak と同じ text と expression。利用者が次の依頼を送らないまましばらく経ったら、吹き出しに1回だけ出る。" +
-    "次の一手の候補を言う一言にし（いまの様子があればそれも）、closing とレポートの中身を言い直さない。" +
-    "省くと書かせた待ちの行、それも無ければ tsukumo の既定の1文が出る。",
-} as const satisfies Record<
-  keyof typeof REPORT_FIELD_DESCRIPTIONS | "figure" | "workPlanClosing" | "keyFigures",
-  string
->
-
-/**
  * `report` の `figure` 引数（レポートの図1つか、置かない理由）の説明。
- * 図を置く条件はここだけが持つ。描かれる位置と作業のレポートの最小形は {@link REPORT_FIELD_CARD_NOTES} が持つ。
+ * 図を置く条件はここだけが持つ。描かれる位置と作業のレポートの最小形は `REPORT_FIELD_CARD_NOTES` が持つ。
  * 図の部品ごとの使いどころは部品カード（`partCardOf`）が持つ。
  */
 export function reportFigureDescription(preference: FigurePreference): string {
@@ -151,13 +76,6 @@ export function reportFigureDescription(preference: FigurePreference): string {
  */
 export const REPORT_SECTIONS_DESCRIPTION =
   "結論のあとの根拠・比較・手順。部品の文字で効くのはインラインの記法だけ"
-
-/** `Section` の部品カードにだけ載せる、部品の fold・aside の書き方。 */
-export const REPORT_SECTIONS_CARD_NOTE =
-  "節は主張の見出し・図・注記（図の直後に2行まで）の順で書き、変えていないことは「変えていないこと」の見出しの節に分ける。" +
-  "差が小さい数は棒にせず、Table の前から後のセルで前と後を並べる。" +
-  "部品の fold に見出しを書くと畳んで描く（畳んでも結論が通る部品だけ）。" +
-  "部品の aside に出典・どこを見るかを1行で書くと、本文の流れの外（本文の右の余白）に置く。"
 
 /** `a2ui` の版の `components` 引数（A2UI のカタログの部品の平らな一覧）の説明。 */
 export const REPORT_A2UI_COMPONENTS_DESCRIPTION =

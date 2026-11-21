@@ -1,10 +1,13 @@
 import { describe, expect, it } from "vitest"
 
+import { isCitationViolation } from "../../../../../src/server/report/core/rules/citation.ts"
 import type { ReportDraft } from "../../../../../src/server/report/core/rules/draft.ts"
 import {
   reportRejectionText,
   reportViolations,
 } from "../../../../../src/server/report/core/rules/report-violation.ts"
+import { a2uiReportComponentSchema } from "../../../../../src/shared/report/a2ui-report-catalog.ts"
+import { PART_EXAMPLES } from "../../../../../src/shared/report/part-example-list.ts"
 import type { LeafComponent } from "../../../../../src/shared/report/report-block.ts"
 import type { ReportSource } from "../../../../../src/shared/report/report-source.ts"
 import { draft, reportDraftText } from "../../../../fixture/report-draft-block.ts"
@@ -113,6 +116,13 @@ describe("出典の照らし合わせ", () => {
       [S1],
     )
     expect(reportViolations(report)).toEqual([{ kind: "misplaced-cite", count: 2 }])
+  })
+
+  it("部品の例の Report は出典の差し戻しに掛からない", () => {
+    const components = PART_EXAMPLES.Report.map((part) => a2uiReportComponentSchema.parse(part))
+    const report = { ...draft([]), components }
+
+    expect(reportViolations(report).filter(isCitationViolation)).toEqual([])
   })
 
   it("差し戻しの文に本文と出典の題・URL の字を写さない", () => {

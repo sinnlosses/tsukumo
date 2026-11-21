@@ -175,6 +175,8 @@ function a2uiInputShape(
     retrospective: shape.retrospective.describe(described.retrospective),
     favor: shape.favor.describe(described.favor),
     checks: shape.checks.describe(described.checks),
+    sources: shape.sources.describe(described.sources),
+    terms: shape.terms.describe(described.terms),
     title: shape.title.describe(described.title),
     sessionSummary: shape.sessionSummary.describe(described.sessionSummary),
     sessionRemaining: shape.sessionRemaining.describe(described.sessionRemaining),
