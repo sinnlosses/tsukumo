@@ -105,7 +105,13 @@
 }
 /* 名前と説明の列は余りを取り、下の説明が折り返しても操作子を押さない。操作子と ↺ は右へまとまる。 */
 .screen-nav-settings-table .screen-nav-settings-row > .screen-nav-settings-name {
+  gap: var(--space-2xs);
   min-width: 132px;
+}
+/* 名前は説明より一段大きく中太にして、色だけに頼らず見出しと説明を分ける。 */
+.screen-nav-settings-table .screen-nav-settings-name > label {
+  font-size: var(--font-subheading);
+  font-weight: 500;
 }
 /* 色を受け取らなかった理由の1行。面の幅を押し広げないように、幅は行の並びに任せて折り返す。 */
 .screen-nav-settings-notice {
