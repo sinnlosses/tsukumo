@@ -286,7 +286,34 @@ function insertDiagram(node: HTMLPreElement, diagram: DrawnDiagram): boolean {
   node.innerHTML = diagram.svg.replaceAll(diagram.id, newDiagramId())
   node.dataset["processed"] = "true"
   markThemed(node)
+  alignClusterLabelsStart(node)
   return placeInMeasure(node)
+}
+
+/** 群の題を群の枠の左上へ寄せる余白（px）。 */
+const CLUSTER_LABEL_INSET = 8
+
+/**
+ * 群の題を、mermaid が置く上辺の中央から左端へ寄せる。
+ * 中央のままだと、群の外から中央のノードへ入る矢印が題の字を貫く。
+ * 題の位置が `translate(x, y)` 1つで、枠の矩形が `x` を持つ群だけを動かす（形の違う群は触らない）。
+ */
+function alignClusterLabelsStart(node: HTMLElement): void {
+  for (const cluster of node.querySelectorAll("g.cluster")) {
+    const frame = cluster.querySelector(":scope > rect")
+    const label = cluster.querySelector(":scope > g.cluster-label")
+    const left = Number(frame?.getAttribute("x"))
+    const placed = /^translate\(\s*(-?[\d.]+)[\s,]+(-?[\d.]+)\s*\)$/.exec(
+      label?.getAttribute("transform") ?? "",
+    )
+    if (label === null || placed === null || !Number.isFinite(left)) {
+      continue
+    }
+    label.setAttribute(
+      "transform",
+      `translate(${String(left + CLUSTER_LABEL_INSET)}, ${placed[2] ?? "0"})`,
+    )
+  }
 }
 
 /** 描いたばかりの SVG を差し、段に置けたかを返す。 */
@@ -297,6 +324,7 @@ function showRendered(
   node.innerHTML = rendered.svg
   node.dataset["processed"] = "true"
   markThemed(node)
+  alignClusterLabelsStart(node)
   rendered.bindFunctions?.(node)
   return placeInMeasure(node)
 }

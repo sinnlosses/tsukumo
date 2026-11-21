@@ -315,14 +315,13 @@
     margin: var(--report-figure-gap) auto;
   }
   /* 縮めた包みは本体の幅まで縮むが、縮尺の本文の段（42em）より狭くはならない。
-   図を持つ包みは本文の列の左端から始め、表の包みは紙の中央に置く。画像の包みは画像の幅まで縮め、題はその幅の中で中央にする。 */
+   図と表の包みは紙の中央に置く。画像の包みは画像の幅まで縮め、題はその幅の中で中央にする。 */
   & .report-captioned-fit {
     inline-size: max-content;
     min-inline-size: min(100%, var(--report-measure));
   }
   & .report-captioned-fit:has(> :is(.report-image-zoom, .report-image-missing)) {
     min-inline-size: 0;
-    margin-inline: 0 auto;
   }
   & .report-captioned:has(> :is(.report-compare, .report-compare-figure)) {
     align-items: stretch;
@@ -349,13 +348,12 @@
     inline-size: min(100%, var(--figure-measure, var(--report-measure)));
   }
   /* mermaid の図の幅の段は `<pre>` の `data-measure`（`MermaidBlock` が字の大きさを測って決める）。
-   無いとき（描き終わる前）と body は縮尺の本文の段（42em）で、wide と full は本文の列の左端から始める。
+   無いとき（描き終わる前）と body は縮尺の本文の段（42em）。
    題と凡例の幅は `--figure-measure` で包みの段にそろう。 */
   & .report-captioned:has(pre:global(.mermaid)) {
     inline-size: min(100%, var(--figure-measure, var(--report-measure)));
     min-inline-size: 0;
     align-items: stretch;
-    margin-inline: 0;
   }
   /* 段が決まって `<pre>` が描いた図の幅を持ったら（`data-figure-fit`）、包みを図の幅に縮め、題を図の幅の中で中央にする。測っている間は段の幅のまま。 */
   & .report-captioned:has(> pre:global(.mermaid)[data-figure-fit]) {
@@ -366,7 +364,6 @@
     inline-size: fit-content;
     max-inline-size: 100%;
     min-inline-size: 0;
-    margin-inline: 0;
   }
   & .report-captioned:has(> :is(.report-svg-figure, pre:global(.mermaid))) > .report-graph-legend {
     contain: inline-size;

@@ -425,8 +425,8 @@ export const tsukumoTheme = {
         "color": "var(--color-text-pink)"
       },
       "variant:gray": {
-        "backgroundColor": "var(--color-background-gray)",
-        "color": "var(--color-text-gray)"
+        "backgroundColor": "var(--rule)",
+        "color": "var(--ink)"
       },
       "variant:accent": {
         "backgroundColor": "var(--surface-accent)",

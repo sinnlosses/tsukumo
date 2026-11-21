@@ -8,6 +8,7 @@ import {
   type ReportChecksView,
 } from "../../../../shared/report/report-check-view.ts"
 import { plainInline } from "../../../../shared/report/report-inline-markdown.ts"
+import { Badge } from "../../../components/ui/badge/badge.tsx"
 import { FIRST_NOTE_TEXT } from "../../../domain/first-note.ts"
 import type { ReportSectionProof } from "../domain/report-proof.ts"
 import styles from "./proof-band.module.css"
@@ -68,9 +69,9 @@ export function SectionProof(props: { readonly section: ReportSectionProof }): R
   return (
     <p className={styles.proof} data-proof={mark}>
       {mark === "ng" && (
-        <span className={styles.seal} data-seal="state">
+        <Badge tone="ng" shape="square" className={styles["seal"]}>
           {`${REPORT_CHECK_PROBLEM_MARKS.ng} ${REPORT_CHECK_PROBLEM_WORDS.ng}`}
-        </span>
+        </Badge>
       )}
       {mark === "recorded" && (
         <RecordedMark runCount={runCount} className={styles["seal-outline"]} />

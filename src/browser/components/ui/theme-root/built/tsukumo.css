@@ -532,8 +532,8 @@
   }
 
   .astryx-badge[data-variant="gray"] {
-    background-color: var(--color-background-gray);
-    color: var(--color-text-gray);
+    background-color: var(--rule);
+    color: var(--ink);
   }
 
   .astryx-badge[data-variant="accent"] {

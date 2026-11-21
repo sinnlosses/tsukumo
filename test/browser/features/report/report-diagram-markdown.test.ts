@@ -37,6 +37,7 @@ describe("chartConfigOf", () => {
     { name: "架空の前", values: [1, 2] },
     { name: "架空の後", values: [3, 0] },
   ]
+  const integerScale = { scales: { y: { ticks: { precision: 0 } } } }
   const direct = (mode: "arrow" | "slope" | "span") => ({
     "tsukumo-direct-label": { mode, names: ["架空の前", "架空の後"] },
   })
@@ -68,13 +69,24 @@ describe("chartConfigOf", () => {
 
   it.each([
     [
-      "bar",
+      "bar の値が整数だけなら目盛りも整数に限る",
       "bar",
       one,
       false,
       {
         type: "bar",
         data: { labels, datasets: [{ label: "架空系列", data: [1, 2] }] },
+        options: integerScale,
+      },
+    ],
+    [
+      "bar の値に小数があれば目盛りは既定のまま",
+      "bar",
+      [{ name: "架空系列", values: [0.5, 2] }],
+      false,
+      {
+        type: "bar",
+        data: { labels, datasets: [{ label: "架空系列", data: [0.5, 2] }] },
         options: {},
       },
     ],
@@ -98,7 +110,7 @@ describe("chartConfigOf", () => {
       {
         type: "line",
         data: { labels, datasets: [{ label: "架空系列", data: [1, 2] }] },
-        options: {},
+        options: integerScale,
       },
     ],
     [
@@ -115,7 +127,7 @@ describe("chartConfigOf", () => {
             { label: "架空系列2", data: [3, 4] },
           ],
         },
-        options: {},
+        options: integerScale,
       },
     ],
     [
@@ -328,7 +340,7 @@ describe("chartConfigOf", () => {
     }
 
     it("系列名を datasets の位置に直して plugin に渡し、名指しの外れた注記は落とす", () => {
-      expect(chartConfigOf(marked).options).toEqual({ plugins: marks })
+      expect(chartConfigOf(marked).options).toEqual({ plugins: marks, ...integerScale })
     })
 
     it("plot 由来の値の印と並べて渡す", () => {
@@ -337,8 +349,8 @@ describe("chartConfigOf", () => {
       })
     })
 
-    it("基準線も注記も無ければ何も足さない", () => {
-      expect(chartConfigOf(chartOf("line", one, false)).options).toEqual({})
+    it("基準線も注記も無ければ plugin を足さない", () => {
+      expect(chartConfigOf(chartOf("line", one, false)).options).toEqual(integerScale)
     })
 
     const marksOf = (block: ChartBlock) => {

@@ -2,7 +2,7 @@
 .favor-options {
   display: flex;
   flex-direction: column;
-  gap: var(--stack-tight);
+  gap: var(--stack-block);
 }
 
 .warn {
@@ -17,7 +17,7 @@
 .choices {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
-  gap: var(--stack-tight);
+  gap: var(--stack-block);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -44,7 +44,7 @@
   box-sizing: border-box;
   min-width: 0;
   padding: var(--inset-control);
-  border: 1px solid var(--ink-soft);
+  border: 1px solid var(--rule-control);
   border-radius: var(--radius-sm);
   background: transparent;
   color: inherit;

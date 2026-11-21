@@ -4,6 +4,7 @@ import { sumBy } from "remeda"
 
 import type { ReportChartTone } from "../../../shared/report/report-block-diagram.ts"
 import type { LeafComponent } from "../../../shared/report/report-block.ts"
+import { integerScaleOf, type IntegerValueScale } from "./chart-integer-scale.ts"
 
 type ChartConfig = ChartBody | (ChartBody & { readonly tsukumo: { readonly height: number } })
 
@@ -36,6 +37,10 @@ type ChartBody = {
         readonly plugins: SeriesPlugins
       }
     | Record<string, never>
+    | {
+        readonly scales: IntegerValueScale
+        readonly plugins?: Partial<SeriesPlugins & MarksPlugins>
+      }
     | { readonly plugins: SeriesPlugins }
     | { readonly plugins: MarksPlugins }
     | { readonly plugins: DirectLabelPlugins }
@@ -201,7 +206,7 @@ export function chartConfigOf(
   if (block.chartKind === "line") {
     const marks = marksPluginsOf(block)
     if (!annotation.values) {
-      return { type: block.chartKind, data, options: marks }
+      return { type: block.chartKind, data, options: { ...marks, ...integerScaleOf(block) } }
     }
     const direct = {
       "tsukumo-direct-label": { mode: "values", names: [] },
@@ -227,7 +232,10 @@ export function chartConfigOf(
   return {
     type: block.chartKind,
     data,
-    options: { ...seriesAndMarksOf(block) },
+    options: {
+      ...seriesAndMarksOf(block),
+      ...(block.chartKind === "bar" ? integerScaleOf(block) : {}),
+    },
   }
 }
 

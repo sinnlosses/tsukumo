@@ -11,12 +11,11 @@
     gap: var(--space-md);
     margin: var(--report-block-gap) 0;
   }
-  /* 題つきの `stats` の包みは札の並びの幅まで縮めて本文の列の左端に置く。題は札の並びの幅の中で中央。 */
+  /* 題つきの `stats` の包みは札の並びの幅まで縮めて紙の中央に置く。題は札の並びの幅の中で中央。 */
   & .report-captioned:has(> .report-stats) {
     inline-size: fit-content;
     max-inline-size: 100%;
     min-inline-size: 0;
-    margin-inline: 0;
   }
   /* `stats` の列数は、項目数（`stats-of-<n>`。`NotationBlock` が足す）の全部か約数か1列にする（3＋1 のような半端な段を作らない）。
    既定は1列で、器の幅が列の最小幅（10rem。折れ線・値・分母の `36 / 48` が1行に収まる幅）とすき間 0.75rem を足した幅に届くたびに、次に大きい約数の列数へ広げる。

@@ -19,7 +19,7 @@
   overflow-wrap: anywhere;
 }
 
-/* 節の末尾の印と控え。落ちたは状態の印、記録ありは枠だけの線の印にする。 */
+/* 節の末尾の印と控え。落ちたは検証結果の欄と同じ塗りの印、記録ありは枠だけの線の印にする。 */
 .proof {
   display: flex;
   flex-wrap: wrap;
@@ -29,14 +29,10 @@
   font-size: var(--font-secondary);
   color: var(--ink-soft);
   overflow-wrap: anywhere;
-
-  &[data-proof="ng"] .seal {
-    color: var(--state-ng);
-  }
 }
 
 .seal {
-  font-weight: 600;
+  align-self: center;
 }
 
 .seal-outline {
