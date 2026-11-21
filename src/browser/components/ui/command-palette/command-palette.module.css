@@ -1,0 +1,38 @@
+/* 上端を帯の下に留め、絞り込んで行が減ったら下から縮む（中央に置くと箱が上下に跳ねる）。
+   横の中央寄せは Astryx の Dialog が持つ。 */
+.command-palette {
+  top: 6rem;
+  bottom: auto;
+}
+
+/* 下端のキー案内の帯は出さない。footer に空を渡しても Astryx は区切りつきの器を残す。 */
+.command-palette :global(.astryx-layout-footer) {
+  display: none;
+}
+
+/* 探す欄は開いている間ずっとフォーカスを持つ（↑↓ と Enter を受ける口）ので、全体の輪は出さない。 */
+.command-palette input:focus-visible {
+  outline: none;
+}
+
+.row {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: var(--inline-group);
+  min-width: 0;
+}
+
+.label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hint {
+  flex: none;
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+}

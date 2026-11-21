@@ -2,7 +2,6 @@
 
 import { useState } from "react"
 
-import { FRAME_ERROR_REASON } from "../../../../../shared/frame-error-reason.ts"
 import { SETTING_ENTRIES, SETTING_FACE_LABEL } from "../../../../domain/setting-entry.ts"
 import { isOverlayOpen } from "../../../../hooks/open-overlay.ts"
 import { useEventListener } from "../../../../hooks/use-event-listener.ts"
@@ -19,7 +18,6 @@ import { SHORTCUT_KEYS, shortcutOf, type Shortcut } from "../domain/shortcut-key
 
 export type CommandGroup = "action" | "screen" | "setting"
 
-/** パレットの行1つ。押せない行は理由を `title` に持つ。 */
 export type PaletteCommand = {
   readonly id: string
   readonly label: string
@@ -28,8 +26,6 @@ export type PaletteCommand = {
   readonly group: CommandGroup
   /** `Kbd` の `keys`（`mod+k` のように `+` で区切る）。 */
   readonly keys?: string
-  readonly disabled: boolean
-  readonly title?: string
   readonly run: () => void
 }
 
@@ -96,8 +92,6 @@ export function useCommandPaletteModel(): CommandPaletteModel {
     }
   }
 
-  const modeBlocked = (chat: boolean): boolean => chat !== chatMode && restartRefused
-
   const allCommands: readonly PaletteCommand[] = [
     actionCommand("composer", "入力欄へ移る", actions.composer),
     actionCommand("session-switcher", "セッションを切り替える", actions["session-switcher"]),
@@ -105,12 +99,8 @@ export function useCommandPaletteModel(): CommandPaletteModel {
       id: "new-session",
       label: "新しいセッションを始める",
       group: "action",
-      disabled: restartRefused,
-      title: restartRefused ? FRAME_ERROR_REASON.sessionSwitchDuringTurn : undefined,
       run: () => {
-        if (!restartRefused) {
-          void dispatch.session.startNewSession()
-        }
+        void dispatch.session.startNewSession()
       },
     },
     actionCommand("task-board", "タスクの一覧モードを開く", actions["task-board"]),
@@ -119,15 +109,12 @@ export function useCommandPaletteModel(): CommandPaletteModel {
       id: "reset-split",
       label: "比率を既定に戻す",
       group: "action",
-      disabled: false,
       run: requestSplitReset,
     },
     ...[false, true].map((chat): PaletteCommand => ({
       id: chat ? "screen-chat" : "screen-work",
       label: chat ? "雑談" : "仕事",
       group: "screen",
-      disabled: modeBlocked(chat),
-      title: modeBlocked(chat) ? FRAME_ERROR_REASON.chatModeSwitchDuringTurn : undefined,
       run: () => {
         goToConversation(chat)
       },
@@ -137,7 +124,6 @@ export function useCommandPaletteModel(): CommandPaletteModel {
       label: entry.label,
       hint: `設定 › ${SETTING_FACE_LABEL[entry.faceKey]}`,
       group: "setting",
-      disabled: false,
       run: () => {
         openSettings({ faceKey: entry.faceKey, itemKey: entry.itemKey })
       },
@@ -147,7 +133,6 @@ export function useCommandPaletteModel(): CommandPaletteModel {
         id: `screen-${item.screen}`,
         label: SCREEN_COMMAND_LABEL[item.screen],
         group: "screen",
-        disabled: false,
         run: () => {
           navigateTo(item.screen)
         },
@@ -158,11 +143,12 @@ export function useCommandPaletteModel(): CommandPaletteModel {
   return {
     open,
     onClose: close,
-    commands: allCommands.filter((command) => !isHiddenOn(command.id, screen, chatMode)),
+    commands: allCommands.filter(
+      (command) =>
+        !isHiddenOn(command.id, screen, chatMode) &&
+        !isRefusedDuringTurn(command.id, chatMode, restartRefused),
+    ),
     onRun: (command) => {
-      if (command.disabled) {
-        return
-      }
       close()
       command.run()
     },
@@ -204,9 +190,16 @@ function actionCommand(
     label,
     group: "action",
     keys: SHORTCUT_KEYS[shortcut],
-    disabled: false,
     run,
   }
+}
+
+// ターンの進行中で起こし直せないあいだ、新しいセッションと、いまと違うモードの会話の行を出さない。
+function isRefusedDuringTurn(id: string, chatMode: boolean, restartRefused: boolean): boolean {
+  if (!restartRefused) {
+    return false
+  }
+  return id === "new-session" || id === (chatMode ? "screen-work" : "screen-chat")
 }
 
 // 今いる画面へ移る行と、仕切りの無い画面での比率を戻す行を隠す。

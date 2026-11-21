@@ -45,24 +45,26 @@ function openPaletteAndType(text: string): void {
 }
 
 describe("コマンドパレットの設定の項目", () => {
-  it("「動き」と打つと、設定の「動き」の行が「設定 › 演出」を添えて当たる", () => {
+  it("「動き」と打つと、設定の「動き」の行が「設定 › 演出」を添えて当たる", async () => {
     openPaletteAndType("動き")
 
-    const option = screen.getByRole("option", { name: /動き/ })
+    const option = await screen.findByRole("option", { name: /動き/ })
     expect(option.textContent).toContain("設定 › 演出")
   })
 
-  it("何も打たないあいだは、設定の項目を並べない", () => {
+  it("何も打たないあいだは、設定の項目を並べない", async () => {
     fireEvent.keyDown(document, { key: "k", metaKey: true })
 
+    await screen.findByRole("option", { name: /入力欄へ移る/ })
     expect(screen.queryByRole("option", { name: /動き/ })).toBeNull()
   })
 
-  it("行を選ぶと、演出のページで設定が開き、「動き」の行を見える位置へ送って光らせる", () => {
+  it("行を選ぶと、演出のページで設定が開き、「動き」の行を見える位置へ送って光らせる", async () => {
     openPaletteAndType("動き")
+    const option = await screen.findByRole("option", { name: /動き/ })
 
     act(() => {
-      fireEvent.click(screen.getByRole("option", { name: /動き/ }))
+      fireEvent.click(option)
     })
 
     const dialog = screen.getByRole("dialog", { name: "設定" })
@@ -73,12 +75,13 @@ describe("コマンドパレットの設定の項目", () => {
     expect(scrolled).toHaveBeenCalledWith({ block: "center" })
   })
 
-  it("動きを減らす設定のときは、行へ送るだけで光らせない", () => {
+  it("動きを減らす設定のときは、行へ送るだけで光らせない", async () => {
     document.documentElement.dataset["motion"] = "reduce"
     openPaletteAndType("動き")
+    const option = await screen.findByRole("option", { name: /動き/ })
 
     act(() => {
-      fireEvent.click(screen.getByRole("option", { name: /動き/ }))
+      fireEvent.click(option)
     })
 
     const dialog = screen.getByRole("dialog", { name: "設定" })

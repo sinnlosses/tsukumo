@@ -82,7 +82,7 @@ test.describe("セッションの切り替え", () => {
     await room.settleAndMatchPicked(ELAPSED_MS)
   })
 
-  test("⌘K のパレットで絞って Enter で切り替え画面を開き、⌘J でも開き、Ctrl+K は入力欄に譲る", async ({
+  test("⌘K のパレットは上端に留まって絞ると下から縮み、Enter で切り替え画面を開き、外側のクリックで閉じ、⌘J でも開き、Ctrl+K は入力欄に譲る", async ({
     run,
   }) => {
     const room = await run.open({
@@ -103,7 +103,14 @@ test.describe("セッションの切り替え", () => {
 
     await page.keyboard.press("Meta+k")
     const search = page.getByRole("combobox", { name: "操作を探す" })
+    await expect(search).toHaveAttribute("aria-activedescendant", /.+/u)
+    const opened = await palette.boundingBox()
     await search.fill("切り替")
+    await expect(palette.getByRole("option")).toHaveCount(1)
+    await expect(search).toHaveAttribute("aria-activedescendant", /.+/u)
+    const narrowed = await palette.boundingBox()
+    expect(narrowed?.y).toBe(opened?.y)
+    expect(narrowed?.height ?? 0).toBeLessThan(opened?.height ?? 0)
     await search.press("Enter")
     await switcher.waitFor()
     expect(await palette.count()).toBe(0)
@@ -113,6 +120,12 @@ test.describe("セッションの切り替え", () => {
     await switcher.waitFor()
 
     await page.keyboard.press("Escape")
+    await page.locator("body").press("Meta+k")
+    await palette.waitFor()
+    // 覆いの左上の角。
+    await page.mouse.click(4, 4)
+    await expect(palette).toHaveCount(0)
+
     await composer.blur()
     await page.locator("body").press("/")
     await expect(composer).toBeFocused()
