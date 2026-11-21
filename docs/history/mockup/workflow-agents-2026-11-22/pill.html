@@ -107,7 +107,7 @@
 
   /* ===== 「手順」の面（全体の詳細） ===== */
   .detail {
-    position: absolute; top: 48px; right: 0; width: 680px; border-radius: 14px; background: var(--surface);
+    position: absolute; top: 48px; left: 0; right: 0; border-radius: 14px; background: var(--surface);
     border: 1px solid var(--line); box-shadow: 0 22px 60px #000b; overflow: hidden;
   }
   .detail > header { display: flex; align-items: baseline; gap: 10px; padding: 12px 16px 6px; }
@@ -244,6 +244,7 @@
 
 <section class="notes">
   <div class="note hl"><h2>押したときだけ出る図</h2>
+    <p>面の幅はピルの幅にそろえる（左右の端をピルにそろえて重ねる）。部品はできる限り Astryx（ui/）で組む。</p>
     <p>ピルの右端の「手順」（ADR 0070 論点 8 の全体の詳細）の頭に、ワークフローの図を置く。列はフェーズで、ピルの下線の区間と同じ並び・同じ色。箱1つがエージェント1体で、矢印が順番、橙の矢印が差し戻し。</p>
     <p>走っている体は差し色の縁と流れる矢印、済んだ体は結果の一言、待ちの体は点線、失敗は赤い縁と理由。</p></div>
   <div class="note"><h2>箱を押すと手元が見える</h2>
@@ -378,7 +379,7 @@ function layout(s) {
   const startPad = s.start ? 26 : 0;
   stage.querySelectorAll(".node").forEach((el) => {
     const n = s.nodes.find((x) => x.id === el.dataset.node);
-    const w = Math.min(210, colW - 16 - (n.col === 0 ? startPad : 0));
+    const w = Math.min(228, colW - 28 - (n.col === 0 ? startPad : 0));
     el.style.width = w + "px";
     el.style.left = (n.col * (colW + 8) + (colW - w) / 2 + (n.col === 0 ? startPad / 2 : 0)) + "px";
   });
