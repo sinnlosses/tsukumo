@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>レポートの部品を Astryx に寄せる — 構成の提案と前後の比較（2026-11-21）</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #15131b;
+    --surface: #1f1c27;
+    --ink: #ece7ef;
+    --ink-soft: color-mix(in srgb, var(--ink) 72%, transparent);
+    --ink-quiet: color-mix(in srgb, var(--ink) 52%, transparent);
+    --line: color-mix(in srgb, var(--ink) 12%, transparent);
+    --accent: #6fe3cd;
+    --ok: #5fcf8a;
+    --warn: #e8b85c;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.7 system-ui, sans-serif; }
+  main { max-width: 1040px; margin: 0 auto; padding: 28px 24px 80px; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  h2 { font-size: 17px; margin: 40px 0 10px; padding-top: 12px; border-top: 1px solid var(--line); }
+  h3 { font-size: 15px; margin: 24px 0 6px; }
+  p, li { color: var(--ink-soft); }
+  .lead { color: var(--ink-soft); margin: 0 0 8px; }
+  code { font: 12.5px/1.5 ui-monospace, monospace; background: color-mix(in srgb, var(--ink) 8%, transparent); padding: 1px 5px; border-radius: 4px; }
+  table { width: 100%; border-collapse: collapse; margin: 8px 0 16px; font-size: 13px; }
+  th, td { text-align: left; vertical-align: top; padding: 7px 10px; border-bottom: 1px solid var(--line); }
+  th { color: var(--ink-quiet); font-weight: 600; }
+  td { color: var(--ink-soft); }
+  .layers { display: grid; gap: 10px; margin: 12px 0 20px; }
+  .layer { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; }
+  .layer b { color: var(--ink); }
+  .layer .arrow { color: var(--accent); }
+  figure { margin: 12px 0 8px; }
+  figure img { width: 100%; border-radius: 10px; border: 1px solid var(--line); display: block; }
+  figcaption { color: var(--ink-quiet); font-size: 12.5px; margin-top: 6px; text-align: center; }
+  .verdict { display: inline-block; font-size: 12px; padding: 1px 9px; border-radius: 999px; margin-left: 8px; vertical-align: 2px; }
+  .ok { background: color-mix(in srgb, var(--ok) 18%, transparent); color: var(--ok); }
+  .adj { background: color-mix(in srgb, var(--warn) 18%, transparent); color: var(--warn); }
+  ul.notes { margin: 4px 0 0; padding-left: 1.3em; }
+  nav.toc { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; margin: 10px 0 0; }
+  nav.toc a { color: var(--accent); text-decoration: none; }
+</style>
+</head>
+<body>
+<main>
+  <h1>レポートの部品を Astryx に寄せる</h1>
+  <p class="lead">構成の再提案と、寄せる前後の比較（2026-11-21）。前は今の自前の部品、後は同じ中身を Astryx 0.7.16 の部品で描いたもの。どちらも 1400×900 の見本帳で、同じ色のテーマの上で撮った。後は試作で、包みの調整はまだ入れていない。</p>
+  <nav class="toc">
+    <a href="#now">今の形</a><a href="#proposal">提案する構成</a><a href="#compare">前後の比較</a><a href="#steps">移行の段</a><a href="#decide">決めてほしいこと</a>
+  </nav>
+
+  <h2 id="now">今の形: 描き方が3通りある</h2>
+  <table>
+    <tr><th>描き方</th><th>中身</th><th>Astryx との関係</th></tr>
+    <tr><td><code>components/ui/</code></td><td>29の部品（Button・Note・Table・Icon など）</td><td>Astryx を読める唯一の場所（dependency-cruiser が検査）。ADR 0053 で見た目は Astryx のまま。ただし disclosure・expand-button・round-button・typing-dot-list の4つは Astryx を読まない自前</td></tr>
+    <tr><td><code>features/report/leaf/</code></td><td>レポートの内容部品41個</td><td>ui/ を使うのは13個だけ。残りは自前の React と CSS</td></tr>
+    <tr><td>Markdown の経路</td><td>react-markdown と <code>REPORT_COMPONENTS</code>（pre・ul・li・table など14要素の割り当て）、<code>renderer/</code> の CSS 23ファイル</td><td>Astryx を通らない。チェックの印も <code>rehypeTaskCheck</code> が作る span に CSS で描いている</td></tr>
+  </table>
+  <p>同じ「並び」でも、ui/ の画面・内容部品・Markdown の箇条書きで余白と印と字の段が別々に決まっていて、これが統一感の欠けの元になっている。</p>
+
+  <h2 id="proposal">提案する構成: ui/ を通る1本の道にする</h2>
+  <div class="layers">
+    <div class="layer"><b>層1 ui/（Astryx への唯一の入口のまま広げる）</b><br />List・MetadataList・Stepper・Collapsible・CodeBlock・Kbd・TabList・Slider・Switch・Citation の包みを足す。包みが決めるのは tsukumo 共通の約束だけ（ラベルは折り返す、本文の行の高さは <code>--line-height-reading</code>、状態の色は <code>state-*</code>）。見た目そのものは ADR 0053 のとおり Astryx のまま。自前の4つは Collapsible・IconButton へ置き換える。</div>
+    <div class="layer"><span class="arrow">↓</span> <b>層2 内容部品（leaf/）は ui/ だけで組む</b><br />ItemList の check・labeled・flow、DescriptionList、Code、Trace の折り畳みなどを ui/ の部品で描く。leaf/ の CSS に残すのは並べ方（grid・gap）だけにし、色・枠・角丸・字の段を宣言しないことを規約テストで検査する。</div>
+    <div class="layer"><span class="arrow">↓</span> <b>層3 Markdown の経路も同じ部品へ写す</b><br />すでにある <code>REPORT_COMPONENTS</code> の割り当てを継ぎ目にして、ul・ol・li → List、pre → CodeBlock、kbd → Kbd、details → Collapsible を当てる。<code>- [x]</code> は <code>rehypeTaskCheck</code> が span ではなく印の情報を残し、li の割り当てが List の印として描く。表・脚注・地の文の中の字飾りは Astryx に対応が無いので CSS のまま残す。</div>
+  </div>
+  <h3>対象にしないもの</h3>
+  <p>Graph・Chart・ChartGrid・Mermaid・Timeline・Plot・Matrix・Compare の図の本体は Astryx に部品が無いので今のまま。ただし図の枠・題・切り替えのボタンは層1の部品（Surface・ButtonGroup など）へ寄せる。</p>
+  <h3>今の決定との関係</h3>
+  <table>
+    <tr><th>ADR</th><th>関係</th></tr>
+    <tr><td>0053（Astryx の見た目に寄せる）</td><td>延長。0053 は ui/ の中を決めた。この提案は ui/ の外（内容部品と Markdown の経路）も ui/ を通すと決める</td></tr>
+    <tr><td>0042（内容部品を React で直に描く）</td><td>前提のまま。直に描く部品の中身を ui/ の部品にする</td></tr>
+    <tr><td>0052（Astryx の採用と境界）</td><td>境界の検査はそのまま。Astryx を読むのは ui/ だけ</td></tr>
+  </table>
+
+  <h2 id="compare">前後の比較（7種類）</h2>
+
+  <h3>1. チェックリスト<span class="verdict ok">そのまま寄せられる</span></h3>
+  <figure><img src="1-check.png" alt="チェックリストの前後。後は Icon の CircleCheck と Circle で印を描いている" /><figcaption>図 1　チェックリスト（左が今、右が Astryx の List と Icon）</figcaption></figure>
+  <ul class="notes"><li>印は lucide の CircleCheck・Circle を Astryx の Icon で描く。今日直した CSS の丸が要らなくなる。</li><li>Astryx の印は線の丸で、今の塗った丸より軽い。塗りを残したいなら包みで CircleCheck の塗りの版を選ぶ。</li><li>ListItem は文字列のラベルを1行で切る。包みでラベルを要素に包んで折り返すと決める（試作の最初の撮影では「son…」で切れた）。</li></ul>
+
+  <h3>2. 名前つきの並び<span class="verdict ok">そのまま寄せられる</span></h3>
+  <figure><img src="2-labeled.png" alt="名前つきの並びの前後。後は List の label と description" /><figcaption>図 2　名前つきの並び（右は List の label と description、区切り線つき）</figcaption></figure>
+  <ul class="notes"><li>名前が太字の小見出しから、本文の大きさの見出しになり、説明が一段小さく控えめになる。</li><li>説明の行の高さが Astryx の既定のままで詰まる。包みで <code>--line-height-reading</code> を当てる。</li></ul>
+
+  <h3>3. 流れ<span class="verdict adj">寄せられるが色を決める</span></h3>
+  <figure><img src="3-flow.png" alt="流れの前後。後は Stepper の縦向き" /><figcaption>図 3　流れ（右は Stepper の vertical）</figcaption></figure>
+  <ul class="notes"><li>Stepper は済んだ段に差し色の縦棒と丸を付ける。流れは「進み具合」ではなく「手順の並び」なので、差し色ではなく ink-quiet の線に落とすか、status を付けない形にする。</li><li>番号の丸は今より小さい。</li></ul>
+
+  <h3>4. 名前と値<span class="verdict ok">そのまま寄せられる</span></h3>
+  <figure><img src="4-dl.png" alt="名前と値の前後。後は MetadataList が名前と値を横に並べる" /><figcaption>図 4　名前と値（右は MetadataList）</figcaption></figure>
+  <ul class="notes"><li>名前と値が横に並び、3件の高さが撮った画でおよそ 206px から 84px になった。</li><li>値の中のコード（パス）は、今は地の付いた札、後は書体だけ。包みで地の付いたコードに合わせるかを決める。</li><li>狭い器では MetadataList が縦積みに戻るかを、実装のときに確かめる（試作では測っていない）。</li></ul>
+
+  <h3>5. コード<span class="verdict adj">寄せられるが折り返しを決める</span></h3>
+  <figure><img src="5-code.png" alt="コードの前後。後は CodeBlock で行番号つき、長い行が右で切れている" /><figcaption>図 5　コード（右は CodeBlock。行番号とコピーのボタンつき）</figcaption></figure>
+  <ul class="notes"><li>CodeBlock は折り返さず横にスクロールする。今は折り返す。読み物のレポートでは折り返しが要るので、包みで折り返すか、横スクロールを受け入れるかを決める。</li><li>行番号・言語名・コピーのボタンが付き、地が一段暗くなる。</li><li>色付けは CodeBlock 自身が持つ。今の rehype-highlight の配色と揃うかは実装のときに見る。</li></ul>
+
+  <h3>6. 試した手の成否と折り畳み<span class="verdict adj">印は寄せる・折り畳みは調整</span></h3>
+  <figure><img src="6-trace.png" alt="Trace の前後。後は List と Icon、失敗の行だけ Collapsible で開く" /><figcaption>図 6　試した手の成否（右は List と Icon。失敗の行を Collapsible で開いた）</figcaption></figure>
+  <ul class="notes"><li>成否の印は Icon（CircleCheck・CircleX・CircleDashed）で揃う。</li><li>今の縦の線（段のつながり）が消え、補足の数が右端に寄る。</li><li>Collapsible の開く側の字が見出しの大きさになり、行の中で浮いている。包みで本文の段に揃える必要がある。</li></ul>
+
+  <h3>7. キーの印<span class="verdict ok">そのまま寄せられる</span></h3>
+  <figure><img src="7-kbd.png" alt="キーの印の前後。後は Kbd がキーを1つずつ分ける" /><figcaption>図 7　キーの印（右は Kbd。⌘ と ⏎ を別のキーに分ける）</figcaption></figure>
+  <ul class="notes"><li>画面に散っている kbd（入力欄・やり取りの列の題・コマンドパレット）を1つにできる。</li></ul>
+
+  <h2 id="steps">移行の段</h2>
+  <table>
+    <tr><th>段</th><th>すること</th><th>見た目が変わる場所</th></tr>
+    <tr><td>0. 設計</td><td>この構成を ADR として書き、下の「決めてほしいこと」の答えを焼く</td><td>なし</td></tr>
+    <tr><td>1. ui/ の包み</td><td>List・MetadataList・Stepper・Collapsible・CodeBlock・Kbd の包みを足し、見本帳に並べる。自前の4つを置き換える</td><td>見本帳、disclosure を使う画面</td></tr>
+    <tr><td>2. 内容部品</td><td>ItemList（check・labeled・flow）、DescriptionList、Code、Trace を ui/ で描き直す。leaf/ の CSS から見た目の宣言を消す</td><td>レポートの本文</td></tr>
+    <tr><td>3. Markdown の経路</td><td><code>REPORT_COMPONENTS</code> に List・CodeBlock・Kbd・Collapsible を割り当て、<code>rehypeTaskCheck</code> を印の情報だけに縮める</td><td>レポートの地の文の箇条書きとコード</td></tr>
+    <tr><td>4. 画面の残り</td><td>kbd・やり取りの列の role=tab・引数の調整（parameter-knob）を Kbd・TabList・Slider・Switch へ</td><td>入力欄、左の列、ParameterSlider</td></tr>
+    <tr><td>5. 検査</td><td>leaf/ と renderer/ の CSS が色・枠・角丸・字の段を宣言しないことを規約テストにする</td><td>なし</td></tr>
+  </table>
+  <p>段1〜4は1段ずつ main へ送れる。各段は見本帳と E2E の写しを撮り直す。</p>
+
+  <h2 id="decide">決めてほしいこと</h2>
+  <table>
+    <tr><th>論点</th><th>選べる形</th><th>おすすめ</th></tr>
+    <tr><td>コードの長い行</td><td>折り返す ／ 横にスクロールする（Astryx の既定）</td><td>折り返す。レポートは読み物で、横スクロールは見落とされる</td></tr>
+    <tr><td>流れの色</td><td>差し色の縦棒（Stepper の既定） ／ ink-quiet の線</td><td>ink-quiet の線。差し色はキャラクターの色で、手順の並びに使うと進み具合と紛れる</td></tr>
+    <tr><td>チェックの印</td><td>線の丸（Astryx の既定） ／ 塗った丸（今）</td><td>線の丸。ほかの Icon と線の太さが揃う</td></tr>
+  </table>
+</main>
+</body>
+</html>
