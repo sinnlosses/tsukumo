@@ -1805,13 +1805,24 @@
                                 {
                                   "tag": "button",
                                   "attributes": {
-                                    "aria-label": "送信",
+                                    "data-variant": "primary",
+                                    "data-size": "md",
+                                    "data-elevation": "none",
+                                    "data-astryx-pressable": "",
                                     "data-emphasis": "solid",
+                                    "aria-label": "送信",
                                     "type": "submit"
                                   },
                                   "children": [
                                     {
                                       "tag": "svg"
+                                    },
+                                    {
+                                      "tag": "span",
+                                      "attributes": {
+                                        "role": "status",
+                                        "aria-live": "polite"
+                                      }
                                     }
                                   ]
                                 }

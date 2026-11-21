@@ -27,6 +27,10 @@
   - 文字列のラベル・説明は要素で包んで渡し、1行で切らずに折り返す（Astryx の ListItem は文字列を渡すと1行で切る）
   - 説明・本文の行の高さに `--line-height-reading` を当てる
   - Collapsible の開く側の字を本文の段にそろえる（既定のままだと見出しの大きさになる）
+- `round-button` は Astryx の IconButton で描く（送信・中断の口と props は変えない）
+- `expand-button`・`first-note-list` は `ui/` の Button と Text を組んだ部品で、すでに Astryx を通して描いているので残す
+- `disclosure` は残す。`<details>` の `onToggle` で中身を開いたときに読み込む呼び出しがあり、要約の字の色・段と狭い幅での非表示を props で受け、開閉の DOM を E2E が読むため（Collapsible は開閉を押すボタンの行になり、要約を字の行として置けない）
+- `typing-dot-list` は残す。点3つの書き込み中の印に当たる Astryx の部品が無く、Spinner は形が違う
 - `rehypeTaskCheck` は `- [x]`・`- [ ]` を span の印に書き替えるのをやめ、済み・未了の情報だけを li に残す。印は li の割り当てが List と Icon で描く
 
 ### 論点 2: コードの長い行は横にスクロールする（利用者決定）
