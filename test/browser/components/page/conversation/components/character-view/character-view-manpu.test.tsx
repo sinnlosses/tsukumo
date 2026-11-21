@@ -42,48 +42,55 @@ function arriveWith(expression: Expression, ageMs = 0): void {
 const shownManpu = (): string | null | undefined =>
   document.querySelector("[data-manpu]")?.getAttribute("data-manpu")
 
-describe("CharacterView（セリフが届いた瞬間の漫符）", () => {
+describe("CharacterView（セリフが届いた瞬間のエフェクト）", () => {
   const cases: readonly (readonly [Expression, SpeechManpu])[] = [
-    ["default", "note"],
-    ["thinking", "think"],
-    ["proud", "twinkle"],
+    ["thinking", "ring"],
+    ["proud", "sparkle"],
     ["flustered", "sweat"],
-    ["serious", "glint"],
-    ["curious", "surprise"],
-    ["sad", "gloom"],
-    ["excited", "notes"],
-    ["bored", "swirl"],
+    ["serious", "flash"],
+    ["curious", "ripple"],
+    ["sad", "rain"],
+    ["excited", "petals"],
+    ["bored", "bubbles"],
   ]
 
   for (const [expression, manpu] of cases) {
-    it(`${expression} が届くと、${manpu} の漫符が舞台に1つ出る（立ち絵の動きが still でも）`, () => {
+    it(`${expression} が届くと、${manpu} のエフェクトが舞台に1つ、控えめの印つきで出る（立ち絵の動きが still でも）`, () => {
       renderCharacterView({ character: FIXTURE_CHARACTER })
       arriveWith(expression)
 
       expect(document.querySelectorAll("[data-manpu]")).toHaveLength(1)
       expect(shownManpu()).toBe(manpu)
+      expect(document.querySelector("[data-manpu]")?.getAttribute("data-calm")).toBe("true")
       expect(document.querySelector("[data-manpu]")?.getAttribute("aria-hidden")).toBe("true")
     })
   }
 
+  it("default が届いても出ない", () => {
+    renderCharacterView({ character: FIXTURE_CHARACTER })
+    arriveWith("default")
+
+    expect(document.querySelector("[data-manpu]")).toBeNull()
+  })
+
   it("動きを減らす設定では出ない", () => {
     stubPhoneWidth(true)
     renderCharacterView({ character: FIXTURE_CHARACTER })
-    arriveWith("default")
+    arriveWith("excited")
 
     expect(document.querySelector("[data-manpu]")).toBeNull()
   })
 
   it("届いてから窓を過ぎた古い届き（画面を開き直した場合）では出ない", () => {
     renderCharacterView({ character: FIXTURE_CHARACTER })
-    arriveWith("default", 60_000)
+    arriveWith("excited", 60_000)
 
     expect(document.querySelector("[data-manpu]")).toBeNull()
   })
 
   it("立ち絵の素材が無ければ出ない", () => {
     renderCharacterView({ character: undefined })
-    arriveWith("default")
+    arriveWith("excited")
 
     expect(document.querySelector("[data-manpu]")).toBeNull()
   })

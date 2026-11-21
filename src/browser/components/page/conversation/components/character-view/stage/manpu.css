@@ -1,9 +1,12 @@
-/* セリフが届いた瞬間の漫符。左の列の領域が中身を切るので、body へ出して画面の座標（fixed）に置く。
+/* セリフが届いた瞬間やターンの終わりのエフェクト。左の列の領域が中身を切るので、body へ出して画面の座標（fixed）に置く。
    錨（.manpu）は大きさの無い点で、顔の位置を測ったあと（data-placed）に出す。部品はその点からの距離（--x・--y）に置く。
-   どれも1回で消え、立ち絵の手前に重なる。下の立ち絵は押せるまま。 */
+   どれも1回で消え、立ち絵の手前に重なる。下の立ち絵は押せるまま。
+   --u は絵の幅に比例する単位（絵の幅 292px で 1px）。普段のエフェクト（data-calm）は一段小さく薄く出す。
+   錨に transform・filter・scale を掛けない。掛けると中の fixed の箱（影・雨）が画面の座標から外れる。 */
 .manpu {
   --manpu-fill: color-mix(in srgb, var(--accent) 10%, white);
   --manpu-line: color-mix(in srgb, var(--accent) 20%, black);
+  --u: calc(var(--pic-w, 292px) / 292);
   position: fixed;
   left: var(--face-x);
   top: var(--face-y);
@@ -13,27 +16,21 @@
   visibility: hidden;
   pointer-events: none;
 }
+.manpu[data-calm="true"] {
+  --u: calc(var(--pic-w, 292px) / 292 * 0.85);
+  opacity: 0.8;
+}
 .manpu[data-placed] {
   visibility: visible;
 }
+/* 部品の中心を点に合わせるときは、外の余白ではなく半分の幅と高さ（--hw・--hh）を渡す */
 .manpu > * {
   position: absolute;
-  left: var(--x);
-  top: var(--y);
+  left: calc(var(--x) - var(--hw, 0px));
+  top: calc(var(--y) - var(--hh, 0px));
   opacity: 0;
 }
 
-/* にっと: 大きな ♪ が1つ弾む */
-.manpu-note {
-  font:
-    900 64px/1 "Hiragino Maru Gothic ProN",
-    system-ui,
-    sans-serif;
-  color: var(--manpu-note);
-  -webkit-text-stroke: 3px var(--manpu-note-line);
-  paint-order: stroke fill;
-  animation: manpu-pop 1.2s cubic-bezier(0.2, 0.9, 0.3, 1.3) 1 forwards;
-}
 @keyframes manpu-pop {
   0% {
     opacity: 0;
@@ -53,146 +50,237 @@
   }
 }
 
-/* ふむ: 小さな丸が続いて、考え雲の中に「…」 */
-.manpu > .manpu-think {
-  opacity: 1;
-  translate: -50% -50%;
-}
-.manpu-think > i,
-.manpu-think > span {
-  position: absolute;
-  border: 2.5px solid var(--manpu-line);
+/* ふむ: 思索の輪。光の粒が2つ昇り、細い輪が描かれ、輪の上を3つの粒が巡る */
+.manpu-ring-bead {
+  width: var(--s);
+  height: var(--s);
+  --hw: calc(var(--s) / 2);
+  --hh: calc(var(--s) / 2);
   border-radius: 50%;
-  background: var(--manpu-fill);
-  opacity: 0;
-  animation: manpu-bubble 1.8s ease-out 1 forwards;
+  background: radial-gradient(
+    circle at 35% 30%,
+    white,
+    var(--manpu-glow-cool) 45%,
+    transparent 72%
+  );
+  animation: manpu-rise 1.4s ease-out var(--d) 1 forwards;
 }
-.manpu-think > i:nth-child(1) {
-  left: -40px;
-  top: 46px;
-  width: 10px;
-  height: 10px;
-}
-.manpu-think > i:nth-child(2) {
-  left: -28px;
-  top: 24px;
-  width: 16px;
-  height: 16px;
-  animation-delay: 0.12s;
-}
-.manpu-think > span {
-  left: -10px;
-  top: -30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 96px;
-  height: 56px;
-  border-radius: 50% / 55%;
-  font: 900 26px/1 system-ui;
-  letter-spacing: 2px;
-  color: var(--manpu-line);
-  animation-delay: 0.24s;
-}
-@keyframes manpu-bubble {
+@keyframes manpu-rise {
   0% {
     opacity: 0;
+    transform: translate(0, calc(var(--u) * 10)) scale(0.4);
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--dx), var(--dy)) scale(1);
+  }
+}
+.manpu-ring {
+  width: calc(var(--u) * 84);
+  height: calc(var(--u) * 84);
+  --hw: calc(var(--u) * 42);
+  --hh: calc(var(--u) * 42);
+  overflow: visible;
+  filter: drop-shadow(0 0 6px var(--manpu-glow-cool));
+  animation: manpu-hold 1.9s ease-out 1 forwards;
+}
+.manpu-ring-track {
+  fill: none;
+  stroke: var(--manpu-glow-cool);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-dasharray: 230;
+  stroke-dashoffset: 230;
+  transform-origin: center;
+  rotate: -90deg;
+  animation: manpu-draw 0.9s cubic-bezier(0.6, 0, 0.2, 1) 0.25s 1 forwards;
+}
+.manpu-ring-orbit {
+  fill: white;
+  transform-origin: 42px 42px;
+  animation: manpu-orbit 1.9s cubic-bezier(0.4, 0, 0.2, 1) 1 forwards;
+}
+@keyframes manpu-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes manpu-orbit {
+  from {
+    rotate: -40deg;
+  }
+  to {
+    rotate: 200deg;
+  }
+}
+@keyframes manpu-hold {
+  0% {
+    opacity: 0;
+    scale: 0.85;
+  }
+  18% {
+    opacity: 1;
+    scale: 1;
+  }
+  72% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    scale: 1.06;
+  }
+}
+
+/* えへん: スパークル。光の星が2つ順に瞬き、金の粉が散る。きりっの閃きの星も同じ形 */
+.manpu-sparkle,
+.manpu-flare {
+  width: var(--s);
+  height: var(--s);
+  --hw: calc(var(--s) / 2);
+  --hh: calc(var(--s) / 2);
+  overflow: visible;
+}
+.manpu-sparkle {
+  --star-edge: var(--manpu-glow-gold);
+  filter: drop-shadow(0 0 6px var(--manpu-glow-gold));
+  animation: manpu-sparkle 1.1s cubic-bezier(0.3, 1.4, 0.5, 1) var(--d) 1 forwards;
+}
+@keyframes manpu-sparkle {
+  0% {
+    opacity: 0;
+    scale: 0;
+    rotate: -60deg;
+  }
+  35% {
+    opacity: 1;
+    scale: 1.15;
+    rotate: 0deg;
+  }
+  60% {
+    opacity: 1;
+    scale: 0.9;
+  }
+  100% {
+    opacity: 0;
+    scale: 0.2;
+    rotate: 30deg;
+  }
+}
+.manpu-dust {
+  width: 4px;
+  height: 4px;
+  --hw: 2px;
+  --hh: 2px;
+  border-radius: 50%;
+  background: white;
+  filter: drop-shadow(0 0 3px var(--manpu-glow-gold));
+  animation: manpu-scatter 1.3s ease-out var(--d) 1 forwards;
+}
+@keyframes manpu-scatter {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.5);
+  }
+  25% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--dx), var(--dy)) scale(1);
+  }
+}
+
+/* あわわ: 光る雫。角を1つだけ尖らせた正方形を傾けて雫の形にし（尖りが上）、頭の横から外へ飛ばして先で散らす */
+.manpu-drop {
+  width: var(--s);
+  height: var(--s);
+  --hw: calc(var(--s) / 2);
+  --hh: calc(var(--s) / 2);
+  border: 1px solid color-mix(in srgb, white 80%, transparent);
+  border-radius: 50% 0 50% 50%;
+  background:
+    radial-gradient(circle at 38% 58%, white 0 14%, transparent 30%),
+    linear-gradient(225deg, var(--manpu-sweat-light), var(--manpu-sweat));
+  box-shadow: inset -2px -2px 3px color-mix(in srgb, var(--manpu-sweat-line) 35%, transparent);
+  filter: drop-shadow(0 0 5px var(--manpu-sweat));
+  rotate: calc(var(--rot) - 45deg);
+  animation: manpu-drop 0.85s cubic-bezier(0.2, 0.9, 0.4, 1) var(--d) 1 forwards;
+}
+@keyframes manpu-drop {
+  /* 回転（rotate）より前に効く translate で動かす。transform で動かすと回った向きへ斜めに飛ぶ */
+  0% {
+    opacity: 0;
+    translate: 0 0;
     scale: 0.3;
   }
-  15%,
-  80% {
+  18% {
     opacity: 1;
+    translate: calc(var(--dx) * 0.5) calc(var(--dy) * 0.6);
+    scale: 1.1;
+  }
+  65% {
+    opacity: 1;
+    translate: var(--dx) var(--dy);
     scale: 1;
   }
   100% {
     opacity: 0;
-    scale: 1;
+    translate: calc(var(--dx) * 1.1) calc(var(--dy) + var(--u) * 18);
+    scale: 0.85;
   }
 }
-
-/* えへん: 大きな ✦ が3つ、順に瞬く。きりっの目の星も同じ瞬き */
-.manpu-twinkle,
-.manpu-eye-star {
-  translate: -50% -50%;
-  animation: manpu-twinkle 0.7s ease-out 1 forwards;
+.manpu-splash {
+  width: 5px;
+  height: 5px;
+  --hw: 2.5px;
+  --hh: 2.5px;
+  border-radius: 50%;
+  background: var(--manpu-sweat-light);
+  filter: drop-shadow(0 0 3px var(--manpu-sweat));
+  animation: manpu-splash 0.5s ease-out var(--d) 1 forwards;
 }
-.manpu-twinkle {
-  font: 46px/1 system-ui;
-  color: var(--manpu-star);
-  -webkit-text-stroke: 2px var(--manpu-star-line);
-  paint-order: stroke fill;
-  animation-delay: var(--delay);
-}
-@keyframes manpu-twinkle {
+@keyframes manpu-splash {
   0% {
     opacity: 0;
     scale: 0.2;
-    rotate: -45deg;
   }
-  50% {
+  30% {
     opacity: 1;
     scale: 1.2;
-    rotate: 0deg;
   }
   100% {
     opacity: 0;
-    scale: 0.6;
+    scale: 0.4;
   }
 }
 
-/* あわわ: 大粒の汗が1つ、こめかみから頬へ流れ落ちる。しずくの尖りが上 */
-.manpu-sweat {
-  width: 22px;
-  height: 22px;
-  border: 2.5px solid var(--manpu-sweat-line);
-  border-radius: 50% 0 50% 50%;
-  background: linear-gradient(135deg, var(--manpu-sweat), var(--manpu-sweat-light) 70%);
-  translate: -50% -50%;
-  rotate: -45deg;
-  animation: manpu-sweat 1.3s ease-in 1 forwards;
+/* きりっ: 閃光。頭の横を細い光の筋が斜めに走り、光が一度だけ弾ける。顔は横切らない */
+.manpu-slash {
+  width: var(--w);
+  height: 2px;
+  --hw: calc(var(--w) / 2);
+  --hh: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--manpu-glow-cool) 40%,
+    white 50%,
+    var(--manpu-glow-cool) 60%,
+    transparent
+  );
+  filter: drop-shadow(0 0 6px var(--manpu-glow-cool));
+  rotate: -22deg;
+  animation: manpu-slash 0.7s cubic-bezier(0.7, 0, 0.2, 1) 1 forwards;
 }
-@keyframes manpu-sweat {
-  /* 回転（rotate）より前に効く translate で動かす。transform で動かすと回った向きへ斜めに落ちる */
+@keyframes manpu-slash {
   0% {
-    opacity: 0;
-    translate: -50% calc(-50% - 6px);
-    scale: 0.6;
-  }
-  20% {
     opacity: 1;
-    translate: -50% -50%;
-    scale: 1;
-  }
-  75% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-    translate: -50% calc(-50% + 46px);
-  }
-}
-
-/* きりっ: 目の横で大きな ✦ が1つ光る */
-.manpu-eye-star {
-  font: 60px/1 system-ui;
-  color: var(--manpu-star);
-  -webkit-text-stroke: 2px var(--manpu-star-line);
-  paint-order: stroke fill;
-}
-.manpu-glint {
-  width: 120px;
-  height: 4px;
-  background: linear-gradient(90deg, transparent, white, transparent);
-  rotate: -25deg;
-  translate: -50% -50%;
-  animation: manpu-glint 0.6s ease-out 1 forwards;
-}
-@keyframes manpu-glint {
-  0% {
-    opacity: 0;
     clip-path: inset(0 100% 0 0);
   }
-  40% {
+  45% {
     opacity: 1;
     clip-path: inset(0 0 0 0);
   }
@@ -201,40 +289,89 @@
     clip-path: inset(0 0 0 100%);
   }
 }
-
-/* きょとん: 頭のまわりから太い驚き線が5本、ピッと跳ねる */
-.manpu-surprise {
-  width: 7px;
-  height: 30px;
-  border: 2.5px solid var(--manpu-line);
-  border-radius: var(--radius-pill);
-  background: var(--manpu-fill);
-  translate: -50% 0;
-  transform-origin: 50% 100%;
-  rotate: var(--r);
-  animation: manpu-surprise 0.7s cubic-bezier(0.2, 1.5, 0.4, 1) 1 forwards;
+.manpu-flare {
+  --s: calc(var(--u) * 54);
+  --star-edge: var(--manpu-glow-cool);
+  filter: drop-shadow(0 0 6px var(--manpu-glow-cool));
+  animation: manpu-flare 0.8s ease-out 0.22s 1 forwards;
 }
-@keyframes manpu-surprise {
+@keyframes manpu-flare {
   0% {
     opacity: 0;
-    transform: translateY(0) scaleY(0.1);
+    scale: 0.2;
+    rotate: -45deg;
   }
   30% {
     opacity: 1;
-    transform: translateY(-24px) scaleY(1.1);
-  }
-  75% {
-    opacity: 1;
-    transform: translateY(-28px) scaleY(1);
+    scale: 1.2;
+    rotate: 0deg;
   }
   100% {
     opacity: 0;
-    transform: translateY(-34px) scaleY(0.6);
+    scale: 0.5;
+    rotate: 15deg;
   }
 }
 
-/* しょんぼり: 上から影が下りて、縦線が垂れて消える。影の箱は領域で切り、中の影は端を透明へ落として角を見せない。
-   錨は transform を持たないので、fixed の箱は画面の座標で置かれる */
+/* きょとん: 波紋。頭の上で細い光の輪が広がり、短い光の線が4本伸びる */
+.manpu-ripple {
+  width: calc(var(--u) * 40);
+  height: calc(var(--u) * 40);
+  --hw: calc(var(--u) * 20);
+  --hh: calc(var(--u) * 20);
+  border: 2px solid color-mix(in srgb, var(--accent) 50%, white);
+  border-radius: 50%;
+  box-shadow: inset 0 0 8px color-mix(in srgb, var(--accent) 35%, transparent);
+  filter: drop-shadow(0 0 5px color-mix(in srgb, var(--accent) 50%, transparent));
+  animation: manpu-ripple 1.1s cubic-bezier(0.1, 0.6, 0.3, 1) 1 forwards;
+}
+@keyframes manpu-ripple {
+  0% {
+    opacity: 0;
+    scale: 0.3;
+  }
+  15%,
+  45% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    scale: 3;
+  }
+}
+.manpu-ray {
+  width: 3px;
+  height: calc(var(--u) * 26);
+  --hw: 1.5px;
+  --hh: calc(var(--u) * 13);
+  border-radius: 999px;
+  background: linear-gradient(
+    transparent,
+    color-mix(in srgb, var(--accent) 25%, white) 50%,
+    transparent
+  );
+  filter: drop-shadow(0 0 4px var(--accent));
+  rotate: var(--r);
+  animation: manpu-ray 0.75s cubic-bezier(0.2, 0.8, 0.3, 1) 1 forwards;
+}
+@keyframes manpu-ray {
+  0% {
+    opacity: 0;
+    scale: 1 0.2;
+  }
+  35% {
+    opacity: 1;
+    scale: 1 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(calc(var(--u) * -46));
+    scale: 1 0.4;
+  }
+}
+
+/* しょんぼり（雨の帳）と失敗の影は、領域で切る同じ箱に入る。
+   箱は錨の transform に頼らず画面の座標で置かれ、中の影や帳は端を透明へ落として角を見せない */
 .manpu > .manpu-gloom {
   position: fixed;
   left: var(--gloom-left);
@@ -270,72 +407,179 @@
     opacity: 0;
   }
 }
-.manpu-vline {
-  width: 3px;
-  height: 64px;
-  translate: -50% 0;
-  background: linear-gradient(
-    transparent,
-    var(--manpu-vline) 30%,
-    var(--manpu-vline) 80%,
+
+/* しょんぼり: 雨の帳。上から藍の帳が下り、細い雨の筋が落ちて、肩のあたりで小さな輪が広がる */
+.manpu-rain-veil {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    35% 90% at 50% 0%,
+    var(--manpu-gloom),
+    var(--manpu-gloom-soft) 55%,
+    transparent 85%
+  );
+  opacity: 0;
+  animation: manpu-gloom 2.2s ease-in-out 1 forwards;
+}
+.manpu-rain {
+  position: absolute;
+  top: 0;
+  left: var(--left);
+  width: 1.5px;
+  height: calc(var(--u) * 38);
+  border-radius: 999px;
+  background: linear-gradient(transparent, var(--manpu-rain));
+  rotate: 8deg;
+  opacity: 0;
+  animation: manpu-rain 0.9s linear var(--d) 2 forwards;
+}
+@keyframes manpu-rain {
+  0% {
+    opacity: 0;
+    translate: 0 calc(var(--u) * -40);
+  }
+  15% {
+    opacity: 1;
+  }
+  85% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+    translate: 0 calc(var(--u) * 220);
+  }
+}
+.manpu-drip {
+  width: calc(var(--u) * 18);
+  height: calc(var(--u) * 6);
+  --hw: calc(var(--u) * 9);
+  --hh: calc(var(--u) * 3);
+  border: 1px solid var(--manpu-rain);
+  border-radius: 50%;
+  animation: manpu-drip 0.8s ease-out var(--d) 1 forwards;
+}
+@keyframes manpu-drip {
+  0% {
+    opacity: 0;
+    scale: 0.2;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    scale: 2.2;
+  }
+}
+
+/* わくわく: 花吹雪。頭の上でやわらかい光がふくらみ、花びらが弧を描いて舞い落ちる */
+.manpu-bloom {
+  width: calc(var(--u) * 120);
+  height: calc(var(--u) * 120);
+  --hw: calc(var(--u) * 60);
+  --hh: calc(var(--u) * 60);
+  border-radius: 50%;
+  background: radial-gradient(
+    closest-side,
+    color-mix(in srgb, var(--manpu-glow-gold) 55%, transparent),
+    color-mix(in srgb, var(--manpu-petal) 18%, transparent) 55%,
     transparent
   );
-  animation: manpu-vline 1.6s ease-in 1 forwards;
+  animation: manpu-bloom 1s ease-out 1 forwards;
 }
-@keyframes manpu-vline {
+@keyframes manpu-bloom {
   0% {
     opacity: 0;
-    transform: translateY(-40px) scaleY(0.4);
+    scale: 0.3;
   }
-  30%,
-  70% {
-    opacity: 0.9;
-    transform: translateY(0) scaleY(1);
+  30% {
+    opacity: 1;
   }
   100% {
     opacity: 0;
-    transform: translateY(14px);
+    scale: 1.5;
   }
 }
-
-/* わくわく: 音符と星が弾みながら昇る */
-.manpu-notes-note,
-.manpu-notes-star {
-  font:
-    900 26px/1 "Hiragino Maru Gothic ProN",
-    system-ui,
-    sans-serif;
-  -webkit-text-stroke: 2px var(--manpu-note-line);
-  paint-order: stroke fill;
-  animation: manpu-pop 1.2s cubic-bezier(0.2, 0.9, 0.3, 1.3) 1 forwards;
+.manpu-petal {
+  --petal: var(--manpu-petal);
+  width: calc(var(--u) * 20);
+  height: calc(var(--u) * 13);
+  --hw: calc(var(--u) * 10);
+  --hh: calc(var(--u) * 6.5);
+  border-radius: 80% 0;
+  background: linear-gradient(135deg, white 10%, var(--petal) 70%);
+  filter: drop-shadow(0 0 4px var(--petal));
+  animation: manpu-petal 1.9s cubic-bezier(0.15, 0.7, 0.4, 1) var(--d) 1 forwards;
 }
-.manpu-notes-note {
-  color: var(--manpu-note);
+.manpu-petal[data-color="note"] {
+  --petal: var(--manpu-note);
 }
-.manpu-notes-star {
-  color: var(--manpu-star);
-  -webkit-text-stroke-color: var(--manpu-star-line);
+.manpu-petal[data-color="accent"] {
+  --petal: var(--accent);
 }
-
-/* たいくつ: もやもやの渦が1つ、ゆっくり昇って消える */
-.manpu-swirl {
-  font: 30px/1 system-ui;
-  color: var(--manpu-swirl);
-  translate: -50% -50%;
-  animation: manpu-swirl 1.8s ease-in-out 1 forwards;
+.manpu-petal[data-color="star"] {
+  --petal: var(--manpu-star);
 }
-@keyframes manpu-swirl {
+@keyframes manpu-petal {
   0% {
     opacity: 0;
-    transform: translateY(0) rotate(0);
+    transform: translate(0, 0) rotate(0) scale(0.4);
   }
-  30%,
-  70% {
-    opacity: 0.9;
+  12% {
+    opacity: 1;
+  }
+  40% {
+    transform: translate(calc(var(--dx) * 0.8), var(--dy)) rotate(calc(var(--rot) * 0.5)) scale(1);
   }
   100% {
     opacity: 0;
-    transform: translateY(-50px) rotate(220deg);
+    transform: translate(var(--dx), calc(var(--dy) + var(--u) * 120)) rotate(var(--rot)) scale(0.8);
+  }
+}
+
+/* たいくつ: 泡沫。ガラスのような泡が揺れながらゆっくり昇り、ぱちんと消える */
+.manpu-bubble {
+  width: var(--s);
+  height: var(--s);
+  --hw: calc(var(--s) / 2);
+  --hh: calc(var(--s) / 2);
+  border: 1.5px solid var(--manpu-bubble);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 32% 28%, white 0 9%, transparent 30%),
+    radial-gradient(
+      circle,
+      color-mix(in srgb, var(--manpu-bubble) 15%, transparent) 0 55%,
+      var(--manpu-bubble) 68%,
+      color-mix(in srgb, var(--manpu-petal) 25%, white) 74%,
+      transparent 77%
+    );
+  box-shadow: inset 0 0 8px color-mix(in srgb, var(--manpu-petal) 25%, white);
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--manpu-bubble) 60%, transparent));
+  animation: manpu-bubble 2s ease-in-out var(--d) 1 forwards;
+}
+@keyframes manpu-bubble {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.4);
+  }
+  15% {
+    opacity: 1;
+  }
+  40% {
+    transform: translate(calc(var(--dx) * 0.5 + var(--u) * 6), calc(var(--dy) * 0.4)) scale(1);
+  }
+  70% {
+    opacity: 1;
+    transform: translate(calc(var(--dx) * 0.8 - var(--u) * 6), calc(var(--dy) * 0.75)) scale(1);
+  }
+  88% {
+    opacity: 0.9;
+    transform: translate(var(--dx), var(--dy)) scale(1.1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--dx), var(--dy)) scale(1.5);
   }
 }
 
@@ -374,14 +618,60 @@
   animation-duration: 1s;
 }
 
-/* 答え待ち: 頭の横に「？」がぽんと出る */
+/* 答え待ち: 問い。頭の横に札が浮かび、「？」が灯って輪が一度鳴る。
+   錨の opacity の中では backdrop-filter が後ろを拾えないので、札は半透明の塗りだけで描く */
+.manpu-ask,
+.manpu-ask-ping {
+  width: calc(var(--u) * 40);
+  height: calc(var(--u) * 40);
+  --hw: calc(var(--u) * 20);
+  --hh: calc(var(--u) * 20);
+  border-radius: 30%;
+}
 .manpu-ask {
-  font:
-    900 38px/1 "Hiragino Maru Gothic ProN",
-    system-ui,
-    sans-serif;
+  display: grid;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, white 35%, transparent);
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--accent) 30%, var(--surface)),
+    color-mix(in srgb, var(--accent) 8%, var(--surface))
+  );
+  filter: drop-shadow(0 0 8px color-mix(in srgb, var(--accent) 35%, transparent));
+  font: 700 calc(var(--u) * 22) / 1 system-ui;
   color: var(--manpu-fill);
-  -webkit-text-stroke: 3px var(--manpu-line);
-  paint-order: stroke fill;
-  animation: manpu-pop 1.2s cubic-bezier(0.2, 0.9, 0.3, 1.3) 1 forwards;
+  text-shadow: 0 0 8px var(--accent);
+  animation: manpu-ask 1.8s cubic-bezier(0.3, 1.5, 0.5, 1) 1 forwards;
+}
+@keyframes manpu-ask {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.5) rotate(-8deg);
+  }
+  22% {
+    opacity: 1;
+    transform: none;
+  }
+  75% {
+    opacity: 1;
+    transform: translateY(-4px);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+}
+.manpu-ask-ping {
+  border: 1.5px solid var(--accent);
+  animation: manpu-ping 0.9s ease-out 0.3s 1 forwards;
+}
+@keyframes manpu-ping {
+  0% {
+    opacity: 0.9;
+    scale: 1;
+  }
+  100% {
+    opacity: 0;
+    scale: 1.8;
+  }
 }

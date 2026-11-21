@@ -59,10 +59,11 @@ describe("CharacterView（祝う光）", () => {
     expect(stageMotion()).toBe("celebrate")
   })
 
-  it("完了の星が光と並んで1回だけ出る。動きを減らす設定では出ない", () => {
+  it("完了の星が光と並んで、普段のエフェクトのように控えめにせず1回だけ出る。動きを減らす設定では出ない", () => {
     renderCharacterView(closed(reportRecord("架空", { task: FINISHED_TASK })))
 
     expect(document.querySelectorAll('[data-manpu="stars"]')).toHaveLength(1)
+    expect(document.querySelector('[data-manpu="stars"]')?.getAttribute("data-calm")).toBe("false")
     expect(sparks()).toHaveLength(1)
     cleanup()
 

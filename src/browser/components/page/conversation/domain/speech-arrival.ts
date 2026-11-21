@@ -15,35 +15,37 @@ export type SpeechArrivalBubble = "pop" | "ease" | "swell" | "shake" | "sink" | 
 /** 出方が付いている長さ（ミリ秒）。いちばん長い出方（0.7 秒）より長く取る。 */
 const ARRIVING_BUBBLE_WINDOW_MS = 800
 
-/** 立ち絵の顔のまわりに1回だけ出る漫符の種類。形と動きは CSS（`stage/manpu.css`）が持つ。 */
+/** 立ち絵の顔のまわりに1回だけ出るエフェクトの種類。形と動きは CSS（`stage/manpu.css`）が持つ。 */
 export type SpeechManpu =
-  | "note"
-  | "think"
-  | "twinkle"
+  | "ring"
+  | "sparkle"
   | "sweat"
-  | "glint"
-  | "surprise"
-  | "gloom"
-  | "notes"
-  | "swirl"
+  | "flash"
+  | "ripple"
+  | "rain"
+  | "petals"
+  | "bubbles"
 
-/** 表情ごとの、立ち絵の1回の動き（`still` は動かない）・吹き出しの出方・漫符。漫符は動きと独立に、届いた表情から決まる。 */
+/**
+ * 表情ごとの、立ち絵の1回の動き（`still` は動かない）・吹き出しの出方・エフェクト（`none` は出さない）。
+ * エフェクトは動きと独立に、届いた表情から決まる。
+ */
 export const SPEECH_ARRIVALS = {
-  default: { motion: "nod", bubble: "pop", manpu: "note" },
-  thinking: { motion: "lean", bubble: "ease", manpu: "think" },
-  proud: { motion: "success", bubble: "swell", manpu: "twinkle" },
+  default: { motion: "nod", bubble: "pop", manpu: "none" },
+  thinking: { motion: "lean", bubble: "ease", manpu: "ring" },
+  proud: { motion: "success", bubble: "swell", manpu: "sparkle" },
   flustered: { motion: "failure", bubble: "shake", manpu: "sweat" },
-  serious: { motion: "still", bubble: "snap", manpu: "glint" },
-  curious: { motion: "tilt", bubble: "ease", manpu: "surprise" },
-  sad: { motion: "sink", bubble: "sink", manpu: "gloom" },
-  excited: { motion: "success", bubble: "swell", manpu: "notes" },
-  bored: { motion: "sink", bubble: "sink", manpu: "swirl" },
+  serious: { motion: "still", bubble: "snap", manpu: "flash" },
+  curious: { motion: "tilt", bubble: "ease", manpu: "ripple" },
+  sad: { motion: "sink", bubble: "sink", manpu: "rain" },
+  excited: { motion: "success", bubble: "swell", manpu: "petals" },
+  bored: { motion: "sink", bubble: "sink", manpu: "bubbles" },
 } as const satisfies Record<
   Expression,
   {
     readonly motion: ArrivalMotion | "still"
     readonly bubble: SpeechArrivalBubble
-    readonly manpu: SpeechManpu
+    readonly manpu: SpeechManpu | "none"
   }
 >
 

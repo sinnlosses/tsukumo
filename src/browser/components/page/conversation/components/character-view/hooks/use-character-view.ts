@@ -99,7 +99,7 @@ export type CharacterViewModel = {
   readonly seats: ItemSeatMap
 }
 
-/** 漫符を出す窓（ミリ秒）。いちばん長い漫符（1.8 秒）より長く取り、開き直した画面で古い届きを再生しない。 */
+/** エフェクトを出す窓（ミリ秒）。いちばん長いエフェクト（泡沫の 2.6 秒）より長く取り、開き直した画面で古い届きを再生しない。 */
 const MANPU_WINDOW_MS = 3000
 
 export type ArrivalManpu =
@@ -276,9 +276,13 @@ function arrivalManpuOf(
   if (arrived.kind === "none" || reducedMotion || now - arrived.at >= MANPU_WINDOW_MS) {
     return { kind: "none" }
   }
+  const manpu = SPEECH_ARRIVALS[arrived.expression].manpu
+  if (manpu === "none") {
+    return { kind: "none" }
+  }
   return {
     kind: "shown",
-    manpu: SPEECH_ARRIVALS[arrived.expression].manpu,
+    manpu,
     at: arrived.at,
     faceAt: faceAtOf(arrived.expression, character),
   }

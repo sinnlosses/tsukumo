@@ -73,17 +73,20 @@
   --graph-tone-fill-e: color-mix(in srgb, var(--chart-series-5) 12%, var(--surface));
   --graph-return: #f0a35e;
 
-  /* 立ち絵の顔のまわりに出す漫符の記号の色。パックの差し色では変えない（差し色が桃色だと汗が汗に見えなくなる） */
+  /* 立ち絵の顔のまわりに出すエフェクトの色。パックの差し色では変えない（差し色が桃色だと汗が汗に見えなくなる） */
   --manpu-gloom: rgb(40 30 70 / 0.6);
   --manpu-gloom-soft: rgb(40 30 70 / 0.25);
+  --manpu-glow-cool: #bfe9ff;
+  --manpu-glow-gold: #ffe6a3;
   --manpu-note: #ffad5c;
-  --manpu-note-line: #5a2d0c;
+  --manpu-petal: #ff8fb1;
+  --manpu-rain: rgb(190 210 255 / 0.85);
+  --manpu-bubble: rgb(225 238 255 / 0.75);
   --manpu-star: #ffd84a;
   --manpu-star-line: #5c4300;
   --manpu-sweat: #6cc8ff;
   --manpu-sweat-light: #e8f7ff;
   --manpu-sweat-line: #1e4466;
-  --manpu-swirl: #c9c3dc;
   --manpu-vline: #b9b2d9;
 
   /* 最終レポートのフェーズごとの時間の帯。一番長い区間だけ `--accent` をわずかに沈めた色、ほかは `--surface` に混ぜて沈めた色で、欠片と色の印も同じ値を読む。

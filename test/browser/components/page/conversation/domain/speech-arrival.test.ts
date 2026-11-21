@@ -156,15 +156,15 @@ describe("SPEECH_ARRIVALS", () => {
   it("9つの表情のキーを持ち、動きと出方が決めた対応どおり", () => {
     expect(Object.keys(SPEECH_ARRIVALS).toSorted()).toEqual([...EXPRESSIONS].toSorted())
     expect(SPEECH_ARRIVALS).toEqual({
-      default: { motion: "nod", bubble: "pop", manpu: "note" },
-      thinking: { motion: "lean", bubble: "ease", manpu: "think" },
-      proud: { motion: "success", bubble: "swell", manpu: "twinkle" },
-      excited: { motion: "success", bubble: "swell", manpu: "notes" },
+      default: { motion: "nod", bubble: "pop", manpu: "none" },
+      thinking: { motion: "lean", bubble: "ease", manpu: "ring" },
+      proud: { motion: "success", bubble: "swell", manpu: "sparkle" },
+      excited: { motion: "success", bubble: "swell", manpu: "petals" },
       flustered: { motion: "failure", bubble: "shake", manpu: "sweat" },
-      curious: { motion: "tilt", bubble: "ease", manpu: "surprise" },
-      sad: { motion: "sink", bubble: "sink", manpu: "gloom" },
-      bored: { motion: "sink", bubble: "sink", manpu: "swirl" },
-      serious: { motion: "still", bubble: "snap", manpu: "glint" },
+      curious: { motion: "tilt", bubble: "ease", manpu: "ripple" },
+      sad: { motion: "sink", bubble: "sink", manpu: "rain" },
+      bored: { motion: "sink", bubble: "sink", manpu: "bubbles" },
+      serious: { motion: "still", bubble: "snap", manpu: "flash" },
     })
   })
 })
