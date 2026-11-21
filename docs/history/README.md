@@ -23,3 +23,9 @@ git show history/2026-10-26:docs/history/<ファイル名>
 `<ファイル名>` は `tasks.md` か `progress.md`。
 
 完了タスクの原文は Beads（`tw show <ID>`）と git log が持つ。
+
+どこからも指されていない古い見本・調べ物・文書メンテナンスの記録も、作業ツリーから外した。消したコミットは次で探し、その親のコミットから読む。
+
+```bash
+git log --diff-filter=D --name-only -- docs/history/
+```
