@@ -156,3 +156,4 @@
 | `docs/architecture/adr/0076-gear-preferences-in-state-json.md`                  | 歯車の設定の localStorage の5つを state.json へ寄せる                                                 | 採用                   |
 | `docs/architecture/adr/0077-report-drop-redundant-basic-parts.md`               | `report` の書き手に見せる部品から、基本の5部品を外す                                                  | 採用                   |
 | `docs/architecture/adr/0078-report-citation-and-term-note.md`                   | レポートの出典を番号札と末尾の一覧で、用語を初出の注で示す                                            | 採用                   |
+| `docs/architecture/adr/0079-workflow-part-contract.md`                          | ワークフローの部品の契約を、印・タスクの ID・結果の語の3つにする                                      | 採用                   |

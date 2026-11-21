@@ -42,6 +42,7 @@ tsukumo の契約は口（`work_plan`・`report`・`phase_result`）を残し、
 - **並びの設定（`schema: 2` の `steps`）は欄の形を残し、値をワークフロースクリプトの段の名前に替える。** 候補は `implement`・`accept`・`retrospect` で、`tw config --schema` が返す。ワークフロースクリプトは `args.steps` に含まれる段だけを走らせる（振り返りを外すと `retrospect` を飛ばす）。tsukumo は今までどおり `steps` を読まない
 - 送り出しはワークフロースクリプトの段にしない。ワークフロースクリプトはシェルに触れないので、完了通知を受けたメインが `tw finish` を打つ
 - 並びの段の印（スキルの frontmatter の `workflow-step: "true"`）は、旧い流れを消すときに一緒に消す
+  - 2026-11-21: この項は `docs/architecture/adr/0079-workflow-part-contract.md` で置き換えた。印を戻し、印のあるスキルを `steps` の候補に足して、`task-flow` が段として走らせる（候補は `implement`・`accept`・`retrospect` の3つに限らない）
 
 ### 2. 関門と計測
 
