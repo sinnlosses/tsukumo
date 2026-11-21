@@ -61,8 +61,18 @@ function PlainList(props: {
           <span aria-hidden="true">•</span>
         ) : undefined
       }
-      label={<InlineMarkdown text={item.label.trim() !== "" ? item.label : item.text} />}
-      description={item.label.trim() !== "" ? <InlineMarkdown text={item.text} /> : undefined}
+      label={
+        item.label.trim() !== "" ? (
+          <>
+            <strong className={styles["item-name"]}>
+              <InlineMarkdown text={item.label} />
+            </strong>
+            <InlineMarkdown text={item.text} />
+          </>
+        ) : (
+          <InlineMarkdown text={item.text} />
+        )
+      }
     />
   ))
   const numbered = props.style === "ordered"

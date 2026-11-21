@@ -39,6 +39,7 @@ export type ListItemProps = {
 export function ListItem(props: ListItemProps): ReactElement {
   return (
     <AstryxListItem
+      align="first-line"
       startContent={props.mark}
       label={<span className={styles["label"]}>{props.label}</span>}
       description={

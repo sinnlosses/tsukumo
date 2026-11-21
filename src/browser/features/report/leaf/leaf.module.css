@@ -21,6 +21,9 @@
   display: inline-flex;
   color: var(--ink-quiet);
 }
+.item-name {
+  padding-inline-end: 0.75em;
+}
 
 /* 流れの段の本文の下に添える出どころ。 */
 .flow-source {
