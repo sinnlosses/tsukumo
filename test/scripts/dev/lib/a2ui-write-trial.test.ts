@@ -47,7 +47,12 @@ describe("judgeComponents", () => {
   })
 
   test("Report の子に Paragraph を置くと構造の検査で落ちる", () => {
-    const judged = judgeComponents([{ ...report, children: ["s1", "p1"] }, section, paragraph])
+    const judged = judgeComponents([
+      { ...report, children: ["s1", "p2"] },
+      section,
+      paragraph,
+      { ...paragraph, id: "p2" },
+    ])
 
     expect(judged.faults).toEqual([{ source: "structure", code: "report-child-not-section" }])
     expect(judged.retryText).toContain("VALIDATION_FAILED")
