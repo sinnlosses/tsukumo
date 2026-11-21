@@ -20,6 +20,29 @@
     border-radius: var(--radius-md);
     white-space: nowrap;
   }
+  /* 題のある画像の対では、紙の切り替えと画像の見せ方の組を1つの枠に並べ、間を縦線で区切る。中身が無ければ枠ごと消す。 */
+  & .report-captioned.report-compare-swap .report-compare-swap-tools {
+    grid-area: 1 / 2;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--inline-tight);
+    padding: var(--inline-tight);
+    border: 1px solid var(--rule-soft);
+    border-radius: var(--radius-lg);
+    background: var(--ground);
+  }
+  & .report-captioned.report-compare-swap .report-compare-swap-tools:empty {
+    display: none;
+  }
+  & .report-compare-swap-tools .report-pair-switch {
+    padding: 0;
+    border: 0;
+    background: none;
+  }
+  & .report-compare-swap-tools > * + * {
+    padding-inline-start: var(--inline-tight);
+    border-inline-start: 1px solid var(--rule-soft);
+  }
   /* 「後だけ」「前だけ」の対は選んだ側の1枚だけ（矢印も無い）。3列の格子のままだと1枚が3分の1の幅になる。 */
   & .report-compare-figure:has(> .report-compare-figure-side:only-child) {
     grid-template-columns: minmax(0, 1fr);

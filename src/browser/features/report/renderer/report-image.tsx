@@ -137,6 +137,8 @@ const SWAP_VIEWS = ["side", "switch", "overlay"] as const satisfies readonly Com
 type CompareSwapProps = {
   readonly className?: string
   readonly settings: SwapSettings
+  /** 見せ方の組と同じ行の左に並べる子（紙の見せ方の切り替え）。 */
+  readonly lead?: ReactNode
   readonly children: ReactNode
 }
 
@@ -230,33 +232,31 @@ export function CompareSwap(props: CompareSwapProps): ReactElement {
         onKeyDown={toggleShown}
       >
         {props.children}
-        {!missing && !pairOnly && (
-          <div
-            role="group"
-            aria-label="見せ方"
-            className={styles["report-compare-swap-views"]}
-            {...reportExportMark.drop}
-          >
-            {SWAP_VIEWS.filter(
-              (choice) =>
-                (choice !== "overlay" || overlayable) &&
-                (choice !== "side" || !props.settings.paperSwitch),
-            ).map((choice) => (
-              <Button
-                key={choice}
-                variant="ghost"
-                size="label"
-                pressed={view === choice ? "on" : "off"}
-                disabled={false}
-                disclosure={{ kind: "none" }}
-                className={styles["report-compare-swap-view"]}
-                onClick={() => chooseView(choice)}
-              >
-                {SWAP_VIEW_LABEL[choice]}
-              </Button>
-            ))}
-          </div>
-        )}
+        <div className={styles["report-compare-swap-tools"]} {...reportExportMark.drop}>
+          {props.lead}
+          {!missing && !pairOnly && (
+            <div role="group" aria-label="見せ方" className={styles["report-compare-swap-views"]}>
+              {SWAP_VIEWS.filter(
+                (choice) =>
+                  (choice !== "overlay" || overlayable) &&
+                  (choice !== "side" || !props.settings.paperSwitch),
+              ).map((choice) => (
+                <Button
+                  key={choice}
+                  variant="ghost"
+                  size="label"
+                  pressed={view === choice ? "on" : "off"}
+                  disabled={false}
+                  disclosure={{ kind: "none" }}
+                  className={styles["report-compare-swap-view"]}
+                  onClick={() => chooseView(choice)}
+                >
+                  {SWAP_VIEW_LABEL[choice]}
+                </Button>
+              ))}
+            </div>
+          )}
+        </div>
         {view === "overlay" && (
           <input
             type="range"

@@ -85,15 +85,18 @@ export function CompareLeaf(props: {
       paperSwitch: part.relation === "before-after" && pair.ownerId !== undefined,
     }
   const ownsSwitch = pair.ownerId === part.id
+  // 画像の見比べは題があるときだけ見せ方の組を持つので、紙の切り替えをその組と同じ行に並べる
+  const leadsSwap = swap !== false && props.value.captionNumber.kind !== "none"
   return (
     <>
-      {ownsSwitch && <PairViewSwitch />}
+      {ownsSwitch && !leadsSwap && <PairViewSwitch />}
       <FoldedLeafFrame
         value={props.value}
         title={part.title}
         fit={false}
         fold={part.fold}
         swap={swap}
+        swapLead={ownsSwitch && leadsSwap ? <PairViewSwitch /> : undefined}
       >
         <div
           className={clsx(

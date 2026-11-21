@@ -46,7 +46,12 @@ export function ReportLeafFrame(props: ReportLeafFrameProps): ReactElement {
  * `swap` が設定なら題の包みを、並べる・切り替えの口を持つ `CompareSwap` にする（両側が画像の見比べの部品）。
  */
 export function FoldedLeafFrame(
-  props: ReportLeafFrameProps & { readonly fold: string; readonly swap: false | SwapSettings },
+  props: ReportLeafFrameProps & {
+    readonly fold: string
+    readonly swap: false | SwapSettings
+    /** `swap` の見せ方の組と同じ行の左に並べる子。 */
+    readonly swapLead?: ReactNode
+  },
 ): ReactElement {
   const { captionNumber, gutterNotes } = props.value
   const caption =
@@ -68,7 +73,7 @@ export function FoldedLeafFrame(
       {captionNumber.kind === "none" ? (
         props.children
       ) : (
-        <CaptionedBox className={captionedClassName} swap={props.swap}>
+        <CaptionedBox className={captionedClassName} swap={props.swap} swapLead={props.swapLead}>
           {captionNumber.kind === "table" && caption}
           {props.children}
           {captionNumber.kind === "figure" && caption}
@@ -121,10 +126,11 @@ export function LeafFold(props: {
 function CaptionedBox(props: {
   readonly className: string
   readonly swap: false | SwapSettings
+  readonly swapLead?: ReactNode
   readonly children: ReactNode
 }): ReactElement {
   return props.swap !== false ? (
-    <CompareSwap className={props.className} settings={props.swap}>
+    <CompareSwap className={props.className} settings={props.swap} lead={props.swapLead}>
       {props.children}
     </CompareSwap>
   ) : (

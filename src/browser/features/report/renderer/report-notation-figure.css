@@ -117,13 +117,8 @@
     grid-row: 4;
   }
   & .report-captioned.report-compare-swap .report-compare-swap-views {
-    grid-area: 1 / 2;
     display: inline-flex;
     gap: var(--space-2xs);
-    padding: var(--space-xs);
-    border: 1px solid var(--rule-soft);
-    border-radius: var(--radius-lg);
-    background: var(--ground);
   }
   & .report-captioned.report-compare-swap .report-compare-swap-view {
     min-width: 24px;
@@ -332,11 +327,7 @@
   & .report-captioned:has(> :is(.report-compare, .report-compare-figure)) {
     align-items: stretch;
   }
-  /* 表の包みは左に置き、題・表・凡例は包みの幅の中で中央にそろえる。番号は中立の色。 */
-  & .report-captioned-table {
-    margin-inline: 0 auto;
-  }
-  /* 表の題は、包みの幅（表の幅）で折り返す。 */
+  /* 表の題は、包みの幅（表の幅）で折り返す。包みは紙の中央に置く。番号は中立の色。 */
   & .report-captioned.report-captioned-table > .report-caption {
     inline-size: 100%;
     max-inline-size: 100%;
