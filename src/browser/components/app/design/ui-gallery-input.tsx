@@ -1,4 +1,4 @@
-// 見本帳の `ui/` の節のうち、入力の部品（Field・TextField・Select）。
+// 見本帳の `ui/` の節のうち、入力の部品（Field・TextField・Select・TabList・Slider・Switch）。
 
 import { ArrowUp, Square } from "lucide-react"
 import { useState, type ReactElement } from "react"
@@ -7,6 +7,9 @@ import { ComposerShell } from "../../ui/composer-shell/composer-shell.tsx"
 import { Field } from "../../ui/field/field.tsx"
 import { RoundButton } from "../../ui/round-button/round-button.tsx"
 import { Select } from "../../ui/select/select.tsx"
+import { Slider } from "../../ui/slider/slider.tsx"
+import { Switch } from "../../ui/switch/switch.tsx"
+import { TabList } from "../../ui/tab-list/tab-list.tsx"
 import { TextField } from "../../ui/text-field/text-field.tsx"
 import { Text } from "../../ui/text/text.tsx"
 import styles from "./design.module.css"
@@ -21,6 +24,9 @@ export function InputGroups(): ReactElement {
   const [line, setLine] = useState("短い一行")
   const [area, setArea] = useState("複数行の\n入力欄")
   const [choice, setChoice] = useState("a")
+  const [tab, setTab] = useState<"one" | "two" | "three">("one")
+  const [amount, setAmount] = useState(3)
+  const [enabled, setEnabled] = useState(false)
 
   return (
     <>
@@ -140,8 +146,50 @@ export function InputGroups(): ReactElement {
           onChange={setChoice}
         />
       </Group>
+      <Group title="TabList（切り替え）" parts={["tab-list"]}>
+        <TabList
+          label="見本のタブ"
+          value={tab}
+          tabs={SAMPLE_TABS}
+          panelId="design-tab-panel"
+          onChange={setTab}
+        />
+        <div role="tabpanel" id="design-tab-panel" aria-labelledby={`design-tab-${tab}`}>
+          選んだタブ: {tab}
+        </div>
+      </Group>
+      <Group title="Slider（動かせる・押せない）" parts={["slider"]}>
+        <Slider
+          label="動かせる"
+          value={amount}
+          min={0}
+          max={10}
+          step={1}
+          disabled={false}
+          onChange={setAmount}
+        />
+        <Slider
+          label="押せない"
+          value={amount}
+          min={0}
+          max={10}
+          step={1}
+          disabled={true}
+          onChange={setAmount}
+        />
+      </Group>
+      <Group title="Switch（切り替えられる・押せない）" parts={["switch"]}>
+        <Switch label="切り替えられる" value={enabled} disabled={false} onChange={setEnabled} />
+        <Switch label="押せない" value={enabled} disabled={true} onChange={setEnabled} />
+      </Group>
     </>
   )
 }
+
+const SAMPLE_TABS = [
+  { value: "one", label: "ひとつめ", id: "design-tab-one" },
+  { value: "two", label: "ふたつめ", id: "design-tab-two" },
+  { value: "three", label: "みっつめ", id: "design-tab-three" },
+] as const
 
 function noop(): void {}

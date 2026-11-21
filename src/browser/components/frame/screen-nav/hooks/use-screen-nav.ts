@@ -86,7 +86,6 @@ export type ScreenNavParts = {
 type NavDrawerTabView = {
   readonly tab: NavDrawerTab
   readonly label: string
-  readonly selected: boolean
 }
 
 /**
@@ -255,7 +254,6 @@ export function useScreenNav(): ScreenNavView {
       tabs: TAB_ORDER.map((tab) => ({
         tab,
         label: tab === "tasks" && chatMode ? CHAT_TASKS_LABEL : TAB_LABELS[tab],
-        selected: tab === drawerTab,
       })),
       tab: drawerTab,
       onSelectTab: selectTab,

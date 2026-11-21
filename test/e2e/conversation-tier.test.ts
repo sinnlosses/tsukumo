@@ -233,6 +233,10 @@ test.describe("会話の画面の段", () => {
       expect(await drawer.getByRole("tab", { name: tab }).getAttribute("aria-selected")).toBe(
         "true",
       )
+      const tabId = await drawer.getByRole("tab", { name: tab }).getAttribute("id")
+      const panelId = await drawer.getByRole("tab", { name: tab }).getAttribute("aria-controls")
+      expect(await drawer.getByRole("tabpanel").getAttribute("id")).toBe(panelId)
+      expect(await drawer.getByRole("tabpanel").getAttribute("aria-labelledby")).toBe(tabId)
       expect(await scrollWidth(page)).toBeLessThanOrEqual(390)
     }
     await drawer.getByRole("button", { name: "設定", exact: true }).click()

@@ -214,10 +214,8 @@ describe("ScreenNav", () => {
       expect(within(drawer).getByRole("link", { name: "雑談" })).toBeDefined()
       expect(drawer.querySelector('[data-slot="runSetting"]')).not.toBeNull()
       expect(
-        within(drawer)
-          .getAllByRole("tab")
-          .map((tab) => tab.textContent),
-      ).toEqual(["やり取り", "タスク", "使用量"])
+        ["やり取り", "タスク", "使用量"].map((name) => screen.getByRole("tab", { name })),
+      ).toEqual(screen.getAllByRole("tab"))
       const order = [
         typedElement(drawer.querySelector(".nav-drawer-identity"), HTMLElement, "名乗りの行"),
         typedElement(drawer.querySelector(".nav-drawer-run-setting"), HTMLElement, "動き方の段"),
@@ -254,10 +252,8 @@ describe("ScreenNav", () => {
       fireEvent.click(drawerToggle())
 
       expect(
-        within(openedDrawer())
-          .getAllByRole("tab")
-          .map((tab) => tab.textContent),
-      ).toEqual(["やり取り", "話題", "使用量"])
+        ["やり取り", "話題", "使用量"].map((name) => screen.getByRole("tab", { name })),
+      ).toEqual(screen.getAllByRole("tab"))
     })
 
     it("「＋ 新しいやり取り」で startNewSession を1回送って閉じる", () => {

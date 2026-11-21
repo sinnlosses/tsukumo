@@ -183,9 +183,9 @@ const NAV: ScreenNavView = {
     onOpen: noop,
     onClose: noop,
     tabs: [
-      { tab: "turns", label: "やり取り", selected: true },
-      { tab: "tasks", label: "タスク", selected: false },
-      { tab: "usage", label: "使用量", selected: false },
+      { tab: "turns", label: "やり取り" },
+      { tab: "tasks", label: "タスク" },
+      { tab: "usage", label: "使用量" },
     ],
     tab: "turns",
     onSelectTab: noop,

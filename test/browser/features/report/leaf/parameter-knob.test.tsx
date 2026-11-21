@@ -110,7 +110,10 @@ function renderReport(body: MainViewReportRegions, reveal = false) {
 }
 
 const slider = () => screen.getByRole("slider", { name: "架空の件数" })
-const checkbox = () => screen.getByRole("checkbox", { name: "架空の E2E" })
+const checkbox = () => screen.getByRole("switch", { name: "架空の E2E" })
+const sliderValue = () => slider().getAttribute("aria-valuenow")
+const press = (key: string) => fireEvent.keyDown(slider(), { key })
+const isDisabled = (element: HTMLElement) => element.getAttribute("aria-disabled")
 const statValue = () => screen.getByText("架空の合計").parentElement?.textContent ?? ""
 const chartSpec = () => document.querySelector("[data-figure-spec]")?.textContent ?? ""
 
@@ -136,28 +139,28 @@ describe("つまみ（ParameterSlider・ParameterCheckBox）", () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch")
     renderReport(regionsOfParts(PARTS))
 
-    expect(slider()).toHaveProperty("value", "2")
+    expect(sliderValue()).toBe("2")
     expect(checkbox()).toHaveProperty("checked", false)
 
-    fireEvent.change(slider(), { target: { value: "3" } })
+    press("ArrowRight")
     fireEvent.click(checkbox())
 
     expect(set).toHaveBeenCalledWith("/view/k/value", 3)
     expect(set).toHaveBeenCalledWith("/view/e/value", true)
-    expect(slider()).toHaveProperty("value", "3")
+    expect(sliderValue()).toBe("3")
     expect(fetchSpy).not.toHaveBeenCalled()
   })
 
   it("描き直す（部品を作り直す）と初期値に戻る", () => {
     const body = regionsOfParts(PARTS)
     const { unmount } = renderReport(body)
-    fireEvent.change(slider(), { target: { value: "4" } })
-    expect(slider()).toHaveProperty("value", "4")
+    press("End")
+    expect(sliderValue()).toBe("4")
 
     unmount()
     renderReport(body)
 
-    expect(slider()).toHaveProperty("value", "2")
+    expect(sliderValue()).toBe("2")
     expect(statValue()).toContain("4")
   })
 
@@ -167,7 +170,7 @@ describe("つまみ（ParameterSlider・ParameterCheckBox）", () => {
     expect(screen.getByText("架空の比は 5")).toBeTruthy()
     expect(chartSpec()).toBe(chartSpecOf([6, 5, 7], ["乙"]))
 
-    fireEvent.change(slider(), { target: { value: "1" } })
+    press("Home")
 
     expect(statValue()).toContain("2")
     expect(screen.getByText("架空の比は 10")).toBeTruthy()
@@ -177,7 +180,7 @@ describe("つまみ（ParameterSlider・ParameterCheckBox）", () => {
   it("評価に誤りが出た値は「—」になり、ほかの部品は計算し直される", () => {
     renderReport(regionsOfParts(PARTS))
 
-    fireEvent.change(slider(), { target: { value: "4" } })
+    press("End")
     fireEvent.click(checkbox())
 
     expect(screen.queryByText(/^架空の比は/)).toBeNull()
@@ -191,22 +194,22 @@ describe("つまみ（ParameterSlider・ParameterCheckBox）", () => {
     renderReport(regionsOfParts(PARTS), true)
 
     expect(document.querySelector("[data-revealing]")).not.toBeNull()
-    expect(slider()).toHaveProperty("disabled", true)
-    expect(checkbox()).toHaveProperty("disabled", true)
+    expect(isDisabled(slider())).toBe("true")
+    expect(isDisabled(checkbox())).toBe("true")
     expect(statValue()).toContain("4")
 
     act(() => {
       fireEvent.keyDown(window)
     })
 
-    expect(slider()).toHaveProperty("disabled", false)
-    expect(checkbox()).toHaveProperty("disabled", false)
+    expect(isDisabled(slider())).not.toBe("true")
+    expect(isDisabled(checkbox())).not.toBe("true")
   })
 
   it("草稿ではつまみを操作できない", () => {
     renderReport(draftRegionsOf(PARTS))
 
-    expect(slider()).toHaveProperty("disabled", true)
-    expect(checkbox()).toHaveProperty("disabled", true)
+    expect(isDisabled(slider())).toBe("true")
+    expect(isDisabled(checkbox())).toBe("true")
   })
 })

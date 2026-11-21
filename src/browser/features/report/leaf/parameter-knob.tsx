@@ -2,7 +2,7 @@
 // 振った値は面のデータモデルの `/view/<つまみのID>/value` に置き、イベントにも記録にも載せない。
 // 面は本文ごとに作り直さないが、部品を作り直すとデータモデルごと空に戻り、つまみは初期値から描き直す。
 
-import { type ReactElement, useId, useSyncExternalStore } from "react"
+import { type ReactElement, useSyncExternalStore } from "react"
 
 import type { A2uiWrittenComponent } from "../../../../shared/report/a2ui-report-catalog.ts"
 import type { ExprParams } from "../../../../shared/report/report-expression-evaluate.ts"
@@ -13,6 +13,8 @@ import {
   type WrittenReportView,
 } from "../../../../shared/report/report-static-component-list.ts"
 import { partViewPath } from "../../../../shared/report/table-view.ts"
+import { Slider } from "../../../components/ui/slider/slider.tsx"
+import { Switch } from "../../../components/ui/switch/switch.tsx"
 import { reportExportMark } from "../report-export-copy.ts"
 import { type DataModel, useDataPath } from "./a2ui-interactive-view.tsx"
 import { useReportRevealing } from "./body-region.tsx"
@@ -117,7 +119,6 @@ function ParameterKnob(props: {
   const path = partViewPath(knob.id, "value")
   const stored = useDataPath<unknown>(dataModel, path)
   const revealing = useReportRevealing()
-  const inputId = useId()
   const disabled = props.locked || revealing
   if (knob.component === "ParameterCheckBox") {
     const checked = typeof stored === "boolean" ? stored : knob.initial
@@ -127,17 +128,14 @@ function ParameterKnob(props: {
         data-parameter-knob={knob.id}
         {...reportExportMark.value(`${knob.label}: ${checked ? "オン" : "オフ"}`)}
       >
-        <label className={styles["parameter-knob-check"]}>
-          <input
-            type="checkbox"
-            checked={checked}
-            disabled={disabled}
-            onChange={(event) => {
-              dataModel.set(path, event.currentTarget.checked)
-            }}
-          />
-          {knob.label}
-        </label>
+        <Switch
+          label={knob.label}
+          value={checked}
+          disabled={disabled}
+          onChange={(next) => {
+            dataModel.set(path, next)
+          }}
+        />
       </div>
     )
   }
@@ -148,21 +146,15 @@ function ParameterKnob(props: {
       data-parameter-knob={knob.id}
       {...reportExportMark.value(`${knob.label}: ${String(value)}`)}
     >
-      <label htmlFor={inputId}>{knob.label}</label>
-      <output htmlFor={inputId} className={styles["parameter-knob-value"]}>
-        {String(value)}
-      </output>
-      <input
-        id={inputId}
-        type="range"
-        className={styles["parameter-knob-range"]}
+      <Slider
+        label={knob.label}
         min={knob.min}
         max={knob.max}
         step={knob.step}
         value={value}
         disabled={disabled}
-        onChange={(event) => {
-          dataModel.set(path, event.currentTarget.valueAsNumber)
+        onChange={(next) => {
+          dataModel.set(path, next)
         }}
       />
     </div>

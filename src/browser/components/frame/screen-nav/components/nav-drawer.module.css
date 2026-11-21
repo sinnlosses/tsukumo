@@ -74,29 +74,6 @@
     flex: none;
     margin: 0 var(--space-lg);
   }
-  .nav-drawer-tablist {
-    display: flex;
-    gap: var(--space-xs);
-    padding: var(--space-xs);
-  }
-  .nav-drawer-tab {
-    flex: 1 1 0;
-    height: 34px;
-    padding: 0;
-    border: none;
-    border-radius: var(--radius-md);
-    background: transparent;
-    color: var(--ink-quiet);
-    font: inherit;
-    font-size: var(--font-secondary);
-    font-weight: 400;
-    cursor: pointer;
-  }
-  .nav-drawer-tab[aria-selected="true"] {
-    background: var(--surface-raised);
-    color: var(--ink);
-    font-weight: 600;
-  }
   /* タブの中身と設定の面。ここだけが転がる（タスク一覧のように中身が自分で転がるものは、高さを全部渡す）。 */
   .nav-drawer-panel {
     display: flex;

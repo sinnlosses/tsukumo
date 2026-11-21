@@ -68,7 +68,7 @@ test.describe("report → メインビュー", () => {
 
     await room.waitForEvent("turn-finished")
     const slider = room.page.getByRole("slider", { name: "worker 数" })
-    const check = room.page.getByRole("checkbox", { name: /E2E を含める/ })
+    const check = room.page.getByRole("switch", { name: /E2E を含める/ })
     const body = room.page.locator("[data-report-body]").filter({ visible: true })
     await expect(slider).toBeEnabled()
     await expect(body).toContainText("いまの w = 4 は最速より 8 秒遅い")
@@ -90,7 +90,9 @@ test.describe("report → メインビュー", () => {
     await room.page.clock.runFor(1000)
     await expect.poll(emphasizedBars).toEqual([5])
 
-    await slider.fill("2")
+    await slider.focus()
+    await room.page.keyboard.press("Home")
+    await room.page.keyboard.press("ArrowRight")
     await expect(body).toContainText("いまの w = 2 は最速より 56 秒遅い")
     await expect(body).toContainText("132")
     await expect.poll(emphasizedBars).toEqual([5])
@@ -101,7 +103,7 @@ test.describe("report → メインビュー", () => {
     await expect.poll(emphasizedBars).toEqual([7])
 
     await room.page.reload({ waitUntil: "domcontentloaded" })
-    await expect(slider).toHaveValue("4")
+    await expect(slider).toHaveAttribute("aria-valuenow", "4")
     await expect(check).not.toBeChecked()
     await expect(body).toContainText("いまの w = 4 は最速より 8 秒遅い")
     await body.locator("canvas").scrollIntoViewIfNeeded()
