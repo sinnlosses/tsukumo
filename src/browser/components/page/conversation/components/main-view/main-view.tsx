@@ -312,18 +312,19 @@ function ContentFrame({
       carriedFocusRef.current = frame !== null && frame.contains(document.activeElement)
     }
   }, [rootRef, carriedFocusRef])
-  // 作り直さずに種類が替わったときも、中で外れた要素のフォーカスを根へ移す。
-  // 外れる要素の blur で下ろすと移せないので、下ろすのは blur のあとも要素が文書に残っているときだけ。
-  const focusInsideRef = useRef(false)
+  // 作り直さずに種類が替わったときも、器の中で消えた要素から行き場を失ったフォーカスだけを根へ移す。
+  // フォーカスが器の外（入力欄など）にあるときは動かさない。
+  const lastFocusedRef = useRef<{ readonly element?: Element }>({})
   const shownKindRef = useRef(kind)
   useBeforePaintSync(() => {
     if (shownKindRef.current === kind) {
       return
     }
     shownKindRef.current = kind
-    const frame = frameRef.current
-    if (focusInsideRef.current && frame !== null && !frame.contains(document.activeElement)) {
-      focusInsideRef.current = false
+    const last = lastFocusedRef.current.element
+    const lost = document.activeElement === null || document.activeElement === document.body
+    if (last !== undefined && !last.isConnected && lost) {
+      lastFocusedRef.current = {}
       rootRef.current?.focus({ preventScroll: true })
     }
   }, [kind, rootRef])
@@ -332,19 +333,8 @@ function ContentFrame({
       ref={frameRef}
       className={styles["main-view-content"]}
       data-main-view-content={kind}
-      onFocus={() => {
-        focusInsideRef.current = true
-      }}
-      onBlur={(event) => {
-        if (event.currentTarget.contains(event.relatedTarget)) {
-          return
-        }
-        const left = event.target
-        queueMicrotask(() => {
-          if (left.isConnected) {
-            focusInsideRef.current = false
-          }
-        })
+      onFocus={(event) => {
+        lastFocusedRef.current = { element: event.target }
       }}
     >
       {children}

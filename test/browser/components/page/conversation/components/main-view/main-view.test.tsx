@@ -231,6 +231,47 @@ describe("MainView（閉じたときの入れ替えとフォーカス）", () =>
     expect(document.activeElement).toBe(focused)
   })
 
+  /** 器の中に置いた要素にフォーカスしてから、その要素を外す（閉じた瞬間に消える要素の代わり）。 */
+  function focusThenRemoveInFrame(): void {
+    const frame = document.querySelector("[data-main-view-content]")
+    if (frame === null) {
+      throw new Error("中身の器が無い")
+    }
+    const vanishing = document.createElement("button")
+    frame.append(vanishing)
+    act(() => {
+      vanishing.focus()
+    })
+    vanishing.remove()
+  }
+
+  it("器の中でフォーカスのあった要素が消えたまま閉じると、フォーカスはメインビューの根へ移る", () => {
+    renderRunning()
+    focusThenRemoveInFrame()
+    expect(document.activeElement).toBe(document.body)
+    close()
+
+    expect(shownContent()).toBe("report")
+    expect(document.activeElement).toBe(
+      document.querySelector("[data-main-view-content]")?.parentElement,
+    )
+  })
+
+  it("器の中の要素が消えたあと器の外へフォーカスを移していれば、閉じてもそこから動かさない", () => {
+    renderRunning()
+    focusThenRemoveInFrame()
+    const outside = document.createElement("input")
+    document.body.append(outside)
+    act(() => {
+      outside.focus()
+    })
+    close()
+
+    expect(shownContent()).toBe("report")
+    expect(document.activeElement).toBe(outside)
+    outside.remove()
+  })
+
   it("中身の種類が変わらない更新では、中にあるフォーカスをメインビューの根へ移さない", () => {
     renderRunning()
     act(() => {
