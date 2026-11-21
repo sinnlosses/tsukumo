@@ -38,6 +38,8 @@ export type PortraitProps = {
   readonly press?: PortraitPress
   /** 聞く姿勢を取るか（`data-listening`）。姿勢の形は CSS が持つ。 */
   readonly listening?: boolean
+  /** 立ち絵の画に重ね、立ち絵の動きに付いて動く要素。重ねない置き方は `undefined`。 */
+  readonly overlay?: ReactElement
 }
 
 export type PortraitPress = {
@@ -100,6 +102,7 @@ export function Portrait(props: PortraitProps): ReactElement {
       {...(props.listening === true ? { "data-listening": "" } : {})}
     >
       <img className={styles["portrait-image"]} src={props.url} alt={props.altText} />
+      {props.overlay}
     </div>
   )
 }

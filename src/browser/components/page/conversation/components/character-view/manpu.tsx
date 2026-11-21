@@ -18,8 +18,6 @@ const AREA_SELECTOR = "[data-character-stage] > *"
 /** 顔の位置（原点）からの距離（px）。 */
 type Offset = { readonly x: number; readonly y: number }
 
-type Piece = Offset & { readonly vars?: Readonly<Record<string, string>> }
-
 /** 絵の幅に比例する単位（`--u`）での位置と、部品ごとの値。値の数は CSS が `--u` を掛ける。 */
 type UnitPiece = Offset & { readonly vars?: Readonly<Record<string, number | string>> }
 
@@ -41,9 +39,11 @@ const FINISH_SPARKLES: readonly UnitPiece[] = [
   { x: -72, y: 46, vars: { "--s": 20, "--d": "0.55s" } },
   { x: 8, y: -110, vars: { "--s": 26, "--d": "0.38s" } },
 ]
-const SHOCKS: readonly Piece[] = [
-  { x: 60, y: -24 },
-  { x: -60, y: -12 },
+const FAIL_SHARDS: readonly UnitPiece[] = [
+  { x: -50, y: -50, vars: { "--r": "10deg", "--d": "0.1s" } },
+  { x: -20, y: -50, vars: { "--r": "-6deg", "--d": "0.25s" } },
+  { x: 30, y: -50, vars: { "--r": "8deg", "--d": "0.15s" } },
+  { x: 60, y: -50, vars: { "--r": "-10deg", "--d": "0.32s" } },
 ]
 
 const RING_BEADS: readonly UnitPiece[] = [
@@ -179,6 +179,19 @@ export function Manpu({
   )
 }
 
+/** 失敗の翳り。立ち絵の画の形に重ね、色を抜く層と縁を暗くする層を置く。`<Portrait>` の中に置く。 */
+export function FailShade({ url }: { readonly url: string }): ReactElement {
+  return (
+    <span
+      className={styles["manpu-fail-shade"]}
+      style={{ "--portrait-image": `url(${JSON.stringify(url)})` }}
+    >
+      <span className={styles["manpu-fail-fade"]} />
+      <span className={styles["manpu-fail-rim"]} />
+    </span>
+  )
+}
+
 /** 花びらを頭の上から弧に散らす。`spread` は弧の広さ（π の倍数）、`reach` は飛ぶ距離の倍率。 */
 function petalPieces(count: number, spread: number, reach: number): readonly PetalPiece[] {
   return Array.from({ length: count }, (_, i) => {
@@ -198,10 +211,6 @@ function petalPieces(count: number, spread: number, reach: number): readonly Pet
   })
 }
 
-function pieceStyle({ x, y, vars }: Piece): CSSProperties {
-  return { "--x": `${x}px`, "--y": `${y}px`, ...vars }
-}
-
 /** 位置と数の値に `--u` を掛ける。文字の値（秒・角度）はそのまま渡す。 */
 function unitStyle({ x, y, vars = {} }: UnitPiece): CSSProperties {
   const scaled = Object.fromEntries(
@@ -211,15 +220,6 @@ function unitStyle({ x, y, vars = {} }: UnitPiece): CSSProperties {
     ]),
   )
   return { "--x": `calc(var(--u) * ${x})`, "--y": `calc(var(--u) * ${y})`, ...scaled }
-}
-
-/** 外側が領域で切る箱、内側が下りる影。 */
-function Gloom(): ReactElement {
-  return (
-    <span className={styles["manpu-gloom"]}>
-      <span className={styles["manpu-gloom-shade"]} />
-    </span>
-  )
 }
 
 /** 4方向に伸びる光の星。塗りのグラデーションは部品ごとに id を分ける。 */
@@ -288,11 +288,8 @@ function pieces(manpu: SpeechManpu | EndingManpu): ReactElement {
     case "shock":
       return (
         <>
-          <Gloom />
-          {SHOCKS.map((piece) => (
-            <span key={piece.x} className={styles["manpu-shock"]} style={pieceStyle(piece)}>
-              ϟ
-            </span>
+          {FAIL_SHARDS.map((piece) => (
+            <span key={piece.x} className={styles["manpu-shard"]} style={unitStyle(piece)} />
           ))}
         </>
       )

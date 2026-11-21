@@ -31,6 +31,7 @@
    列が狭いときに右端を抜くと絵が欠けて見えるので、マスクは外す。
    `.character-layout` に stacking context を作ると、席と立ち絵の重なりの順が壊れる。 */
 .character-layout > .portrait {
+  position: relative;
   width: 100%;
   max-width: none;
   height: var(--stage-portrait-height);

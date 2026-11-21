@@ -38,7 +38,7 @@ describe("終わり方の漫符", () => {
     expect(endingManpuOf({ turn: ENDED }, F + 1)).toEqual({ kind: "none" })
   })
 
-  it("失敗で終わったターンとツールの失敗では稲妻が出る", () => {
+  it("失敗で終わったターンとツールの失敗では翳りが出る", () => {
     expect(endingManpuOf({ turn: FAILED }, F + 1)).toEqual({
       kind: "shown",
       manpu: "shock",
@@ -51,7 +51,7 @@ describe("終わり方の漫符", () => {
     })
   })
 
-  it("あわわのセリフが届いた瞬間の failure の動きでは稲妻が出ない", () => {
+  it("あわわのセリフが届いた瞬間の failure の動きでは翳りが出ない", () => {
     const input = {
       turn: RUNNING,
       arrival: { at: F, motion: "failure" },

@@ -352,8 +352,8 @@
   }
 }
 
-/* しょんぼり（雨の帳）と失敗の影は、領域で切る同じ箱に入る。
-   箱は錨の transform に頼らず画面の座標で置かれ、中の影や帳は端を透明へ落として角を見せない */
+/* しょんぼり（雨の帳）と祝光は、領域で切る同じ箱に入る。
+   箱は錨の transform に頼らず画面の座標で置かれ、中の帳は端を透明へ落として角を見せない */
 .manpu > .manpu-gloom {
   position: fixed;
   left: var(--gloom-left);
@@ -370,18 +370,6 @@
   top: calc(var(--face-y) - var(--gloom-top));
   width: 0;
   height: 0;
-}
-.manpu-gloom-shade {
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(
-    ellipse 50% 70% at 50% 0%,
-    var(--manpu-gloom),
-    var(--manpu-gloom-soft) 55%,
-    transparent 100%
-  );
-  opacity: 0;
-  animation: manpu-gloom 1.6s ease-in-out 1 forwards;
 }
 @keyframes manpu-gloom {
   0% {
@@ -663,27 +651,28 @@
   }
 }
 
-/* 失敗: ガーンの稲妻が2つ瞬き、影がしょんぼりより短く下りる */
-.manpu-shock {
-  font: 34px/1 system-ui;
-  color: var(--manpu-vline);
-  translate: -50% -50%;
-  animation: manpu-shock 0.8s steps(2) 1 forwards;
+/* 失敗: 翳り。細い欠片が4つ落ちる（立ち絵の色が抜けて縁が暗くなる重ねは fail-shade.css） */
+.manpu-shard {
+  width: calc(var(--u) * 2);
+  height: calc(var(--u) * 30);
+  --hw: var(--u);
+  --hh: calc(var(--u) * 15);
+  background: linear-gradient(transparent, var(--manpu-vline));
+  rotate: var(--r);
+  animation: manpu-shard 1.1s ease-in var(--d) 1 forwards;
 }
-@keyframes manpu-shock {
+@keyframes manpu-shard {
   0% {
     opacity: 0;
+    transform: translateY(calc(var(--u) * -20));
   }
-  20%,
-  80% {
+  25% {
     opacity: 1;
   }
   100% {
     opacity: 0;
+    transform: translateY(calc(var(--u) * 40));
   }
-}
-.manpu[data-manpu="shock"] .manpu-gloom-shade {
-  animation-duration: 1s;
 }
 
 /* 答え待ち: 問い。頭の横に札が浮かび、「？」が灯って輪が一度鳴る。

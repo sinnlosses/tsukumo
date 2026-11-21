@@ -14,7 +14,7 @@ import { VStack } from "../../../../ui/v-stack/v-stack.tsx"
 import styles from "./character-view.module.css"
 import type { CharacterViewModel } from "./hooks/use-character-view.ts"
 import { ItemSeats } from "./item-seat-list.tsx"
-import { Manpu } from "./manpu.tsx"
+import { FailShade, Manpu } from "./manpu.tsx"
 import { PhoneBalloon } from "./phone-balloon.tsx"
 import { SpeechLog } from "./speech-log.tsx"
 type PresentationalCharacterViewProps = CharacterViewModel
@@ -50,6 +50,11 @@ export function PresentationalCharacterView({
       url={portraitUrl}
       {...portraitProps}
       listening={listeningPose}
+      overlay={
+        manpu.kind === "shown" && manpu.manpu === "shock" ? (
+          <FailShade key={manpu.at} url={portraitUrl} />
+        ) : undefined
+      }
       press={{
         label: `${speakerName ?? altText}（押すと、いまの一言へ戻る）`,
         onPress: onPortraitPress,

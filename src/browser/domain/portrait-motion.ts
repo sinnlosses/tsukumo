@@ -161,7 +161,7 @@ export function nextPortraitMotionTransitionDelayMs(
   return remaining.length === 0 ? undefined : Math.min(...remaining)
 }
 
-/** ターンの終わり方に添える漫符。完了の星・失敗の稲妻と影・答え待ちの「？」。 */
+/** ターンの終わり方に添える漫符。完了の星・失敗の翳り・答え待ちの「？」。 */
 export type EndingManpu = "stars" | "shock" | "ask"
 
 export type EndingManpuShown =

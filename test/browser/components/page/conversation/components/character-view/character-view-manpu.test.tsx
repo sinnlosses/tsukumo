@@ -8,6 +8,7 @@ import {
 import { useSpeechArrival } from "../../../../../../../src/browser/components/page/conversation/stores/speech-arrival.ts"
 import { nowEpochMilliseconds } from "../../../../../../../src/browser/utils/clock.ts"
 import type { Expression } from "../../../../../../../src/shared/character-pack/expression.ts"
+import type { SessionState } from "../../../../../../../src/shared/session/session-state.ts"
 import {
   FIXTURE_CHARACTER,
   renderCharacterView,
@@ -93,5 +94,61 @@ describe("CharacterView（セリフが届いた瞬間のエフェクト）", () 
     arriveWith("excited")
 
     expect(document.querySelector("[data-manpu]")).toBeNull()
+  })
+})
+
+/** 失敗で閉じた姿。`closedAgoMs` は閉じてからの経過。 */
+function failedTurn(closedAgoMs = 0): Partial<SessionState> {
+  const finishedAt = nowEpochMilliseconds() - closedAgoMs
+  return {
+    turn: {
+      kind: "finished",
+      startedAt: finishedAt - 100,
+      finishedAt,
+      ending: { kind: "failed", failure: { kind: "execution-error" } },
+    },
+    character: FIXTURE_CHARACTER,
+  }
+}
+
+const STAGE_PORTRAIT = "[data-character-stage] .character-layout [data-expression]"
+const failShade = (): NodeListOf<Element> =>
+  document.querySelectorAll('[class*="manpu-fail-shade"]')
+
+describe("CharacterView（失敗の翳り）", () => {
+  it("失敗で閉じた直後は、欠片4つの翳りが出て、ϟ の文字は出ない", () => {
+    renderCharacterView(failedTurn())
+
+    const manpu = document.querySelectorAll('[data-manpu="shock"]')
+    expect(manpu).toHaveLength(1)
+    expect(manpu[0]?.getAttribute("data-calm")).toBe("false")
+    expect(manpu[0]?.querySelectorAll('[class*="manpu-shard"]')).toHaveLength(4)
+    expect(manpu[0]?.textContent).not.toContain("ϟ")
+  })
+
+  it("暗くする重ねは舞台の立ち絵の中に1つだけあり、立ち絵の画の URL を持つ。セリフのログの床の立ち絵には無い", () => {
+    renderCharacterView(failedTurn())
+
+    expect(failShade()).toHaveLength(1)
+    const shade = document.querySelector(`${STAGE_PORTRAIT} [class*="manpu-fail-shade"]`)
+    expect(shade?.getAttribute("style")).toContain("/character/default.png")
+  })
+
+  it("動きを減らす設定・窓より前に閉じた記録・立ち絵の素材が無いときは出ない", () => {
+    stubPhoneWidth(true)
+    renderCharacterView(failedTurn())
+    expect(document.querySelector('[data-manpu="shock"]')).toBeNull()
+    expect(failShade()).toHaveLength(0)
+    cleanup()
+    vi.unstubAllGlobals()
+
+    renderCharacterView(failedTurn(60_000))
+    expect(document.querySelector('[data-manpu="shock"]')).toBeNull()
+    expect(failShade()).toHaveLength(0)
+    cleanup()
+
+    renderCharacterView({ ...failedTurn(), character: undefined })
+    expect(document.querySelector('[data-manpu="shock"]')).toBeNull()
+    expect(failShade()).toHaveLength(0)
   })
 })

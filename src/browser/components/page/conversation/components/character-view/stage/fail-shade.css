@@ -1,0 +1,38 @@
+/* 失敗の翳り。舞台の立ち絵の中に、絵の形（透明でない画素）だけで重ねる。
+   立ち絵の動き（びくっ・呼吸）に付いて動くので、画面の座標へ固定せず `<Portrait>` の箱いっぱいに置く。
+   周りの画面を拾う `backdrop-filter` は使わない。暗くなるのは絵だけ。 */
+.manpu-fail-shade {
+  --manpu-fail-rim: rgb(10 8 20 / 0.75);
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  -webkit-mask: var(--portrait-image) center bottom / contain no-repeat;
+  mask: var(--portrait-image) center bottom / contain no-repeat;
+}
+.manpu-fail-fade,
+.manpu-fail-rim {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  animation: manpu-fail-shade 1.6s ease-in-out 1 forwards;
+}
+/* 色を抜く。mask が作る重なりの中では下の画と混ぜられないので、同じ画を色を抜いて敷き直す */
+.manpu-fail-fade {
+  background: var(--portrait-image) center bottom / contain no-repeat;
+  filter: grayscale(0.75) brightness(0.85);
+}
+.manpu-fail-rim {
+  background: radial-gradient(120% 90% at 50% 40%, transparent 35%, var(--manpu-fail-rim));
+}
+@keyframes manpu-fail-shade {
+  0% {
+    opacity: 0;
+  }
+  18%,
+  60% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
