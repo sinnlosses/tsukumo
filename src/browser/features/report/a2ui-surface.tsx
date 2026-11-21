@@ -57,6 +57,7 @@ import { liveLeafElement, useReevaluatedLeaves } from "./leaf/parameter-knob.tsx
 import { PendingHeading, PendingPart } from "./leaf/pending-part.tsx"
 import { SectionProof } from "./leaf/proof-band.tsx"
 import { HeadRegion, NotDoneRegion } from "./leaf/report-head-region.tsx"
+import { reportTermNoteTable, TermNoteLeafScope, TermNoteScope } from "./leaf/term-note-scope.tsx"
 import { arrangedBlockClassNames } from "./markdown.tsx"
 import notationStyles from "./renderer/report-notation.module.css"
 import { reportExportMark } from "./report-export-copy.ts"
@@ -149,55 +150,60 @@ function ReportRoot(): ReactElement {
     [...view.head.checks.problems, ...view.head.checks.passed].some((row) => row.recorded)
   const firstNotes = useFirstNoteList(hasRecordedRow ? (["report-terms"] as const) : [])
   const citations = reportCitationTable(view.components, report.turnId)
+  const termNotes = reportTermNoteTable(view.components, report.turnId)
   return (
     <CitationScope table={citations}>
-      <ReportFrame
-        reveal={report.reveal}
-        turnId={report.turnId}
-        className={report.className}
-        revealClassName={report.revealClassName}
-        blockClassName={report.blockClassName}
-      >
-        <HeadRegion head={view.head} proof={proof} />
-        {view.figure.kind === "leaves" && (
-          <RegionBox region={{ kind: "section", id: view.figure.regionId }}>
-            <LeafRegionContent region={view.figure} />
-          </RegionBox>
-        )}
-        {/* `key` は根の子の ID。骨組みの欄が内容部品の届いた欄に替わっても、欄と見出しを作り直さない。 */}
-        {slots.map((slot) => (
-          <RegionBox
-            key={slot.componentId}
-            region={
-              slot.kind === "pending" ? { kind: "pending" } : { kind: "section", id: slot.regionId }
-            }
-          >
-            <SectionContent id={slot.componentId} />
-            {proof.kind === "band" &&
-              proof.sections
-                .filter((entry) => entry.sectionId === slot.componentId)
-                .map((entry) => <SectionProof key={entry.sectionId} section={entry} />)}
-          </RegionBox>
-        ))}
-        <CitationList table={citations} />
-        <NotDoneRegion notDone={view.head.notDone} />
-        {view.retrospective.kind === "leaves" && (
-          <RegionBox region={{ kind: "retrospective" }}>
-            <LeafRegionContent region={view.retrospective} />
-          </RegionBox>
-        )}
-        <FavorFollowUp
-          favor={view.favor}
-          components={view.components}
-          favorRef={report.favorRef}
-          pressable={report.favorPressable}
-        />
-        {firstNotes.notes.length > 0 && (
-          <div {...reportExportMark.drop} className={notationStyles["report-export-drop"]}>
-            <FirstNoteList {...firstNotes} />
-          </div>
-        )}
-      </ReportFrame>
+      <TermNoteScope table={termNotes}>
+        <ReportFrame
+          reveal={report.reveal}
+          turnId={report.turnId}
+          className={report.className}
+          revealClassName={report.revealClassName}
+          blockClassName={report.blockClassName}
+        >
+          <HeadRegion head={view.head} proof={proof} />
+          {view.figure.kind === "leaves" && (
+            <RegionBox region={{ kind: "section", id: view.figure.regionId }}>
+              <LeafRegionContent region={view.figure} />
+            </RegionBox>
+          )}
+          {/* `key` は根の子の ID。骨組みの欄が内容部品の届いた欄に替わっても、欄と見出しを作り直さない。 */}
+          {slots.map((slot) => (
+            <RegionBox
+              key={slot.componentId}
+              region={
+                slot.kind === "pending"
+                  ? { kind: "pending" }
+                  : { kind: "section", id: slot.regionId }
+              }
+            >
+              <SectionContent id={slot.componentId} />
+              {proof.kind === "band" &&
+                proof.sections
+                  .filter((entry) => entry.sectionId === slot.componentId)
+                  .map((entry) => <SectionProof key={entry.sectionId} section={entry} />)}
+            </RegionBox>
+          ))}
+          <CitationList table={citations} />
+          <NotDoneRegion notDone={view.head.notDone} />
+          {view.retrospective.kind === "leaves" && (
+            <RegionBox region={{ kind: "retrospective" }}>
+              <LeafRegionContent region={view.retrospective} />
+            </RegionBox>
+          )}
+          <FavorFollowUp
+            favor={view.favor}
+            components={view.components}
+            favorRef={report.favorRef}
+            pressable={report.favorPressable}
+          />
+          {firstNotes.notes.length > 0 && (
+            <div {...reportExportMark.drop} className={notationStyles["report-export-drop"]}>
+              <FirstNoteList {...firstNotes} />
+            </div>
+          )}
+        </ReportFrame>
+      </TermNoteScope>
     </CitationScope>
   )
 }
@@ -344,24 +350,30 @@ function LayoutPart(props: { readonly id: string }): ReactElement {
     default: {
       if (part !== undefined && isInteractiveTable(part)) {
         return (
-          <InteractiveTable
-            dataModel={report.dataModel}
-            part={part}
-            value={report.view.leafValues[part.id]}
-            badges={hasBoundChoicePicker(report.parts.values(), part.id) ? [] : filterBadges(part)}
-          />
+          <TermNoteLeafScope leafId={part.id}>
+            <InteractiveTable
+              dataModel={report.dataModel}
+              part={part}
+              value={report.view.leafValues[part.id]}
+              badges={
+                hasBoundChoicePicker(report.parts.values(), part.id) ? [] : filterBadges(part)
+              }
+            />
+          </TermNoteLeafScope>
         )
       }
       const view = part === undefined ? undefined : directLeafViewOf(part)
       return part === undefined || view === undefined ? (
         <></>
       ) : (
-        <DirectLeaf
-          part={report.leaves[part.id]?.component ?? part}
-          value={report.view.leafValues[part.id]}
-          imageSource={report.view.imageSource}
-          view={view}
-        />
+        <TermNoteLeafScope leafId={part.id}>
+          <DirectLeaf
+            part={report.leaves[part.id]?.component ?? part}
+            value={report.view.leafValues[part.id]}
+            imageSource={report.view.imageSource}
+            view={view}
+          />
+        </TermNoteLeafScope>
       )
     }
   }

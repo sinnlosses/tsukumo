@@ -33,6 +33,21 @@ describe("rehypeChartTerm（InlineMarkdown を通した描画）", () => {
     expect(container.querySelectorAll("[data-chart-term]")).toHaveLength(0)
   })
 
+  it("用語の注の語には図の項目名の印を付けず、2か所目には付ける", () => {
+    const { container } = render(
+      <InlineMarkdown
+        text="架空1月と架空1月。"
+        chartTerms={TERMS}
+        termNotes={new Map([["架空1月", { note: "架空の注。", cardId: "report-term-1-1" }]])}
+      />,
+    )
+    const marks = [...container.querySelectorAll("[data-chart-term]")]
+
+    expect(container.querySelector("button")?.textContent).toBe("架空1月")
+    expect(marks).toHaveLength(1)
+    expect(marks[0]?.closest("button")).toBeNull()
+  })
+
   it("chartTerms が無い描画は、語を含んでいても印を足さない", () => {
     const text = "架空1月は多い。"
     const withoutTerms = renderToStaticMarkup(<InlineMarkdown text={text} />)

@@ -54,6 +54,12 @@ import {
   type TemplateViolation,
   templateViolationMessage,
 } from "./template.ts"
+import {
+  detectTermNoteViolations,
+  isTermNoteViolation,
+  type TermNoteViolation,
+  termNoteViolationMessage,
+} from "./term-note.ts"
 
 /**
  * 規約違反1つ。`count` は違反の数（文の数・塊の数）で、モデルが書いた文面は持たない
@@ -68,6 +74,7 @@ export type ReportViolation =
   | NotDoneViolation
   | TemplateViolation
   | CitationViolation
+  | TermNoteViolation
 
 /** 違反にしない上限（これを超えたら違反）。 */
 const VIOLATION_THRESHOLDS = {
@@ -125,6 +132,8 @@ const VIOLATION_THRESHOLDS = {
   "duplicate-source-id": 0,
   "duplicate-source-url": 0,
   "misplaced-cite": 0,
+  "absent-term": 0,
+  "duplicate-term": 0,
 } as const satisfies Record<ReportViolation["kind"], number>
 
 export const REPORT_VIOLATION_KINDS = keys(VIOLATION_THRESHOLDS)
@@ -214,5 +223,10 @@ const FAMILIES: readonly RuleFamily[] = [
     detect: detectCitationViolations,
     owns: isCitationViolation,
     message: citationViolationMessage,
+  }),
+  family({
+    detect: detectTermNoteViolations,
+    owns: isTermNoteViolation,
+    message: termNoteViolationMessage,
   }),
 ]

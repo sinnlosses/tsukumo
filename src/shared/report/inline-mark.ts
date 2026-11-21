@@ -17,7 +17,7 @@ type InlineSegment =
   | { readonly kind: "mark"; readonly source: string; readonly mark: InlineMark }
   | { readonly kind: "broken"; readonly text: string }
 
-const CODE_SPAN = /(?<!`)(`+)(?!`)[\s\S]*?(?<!`)\1(?!`)/g
+export const CODE_SPAN = /(?<!`)(`+)(?!`)[\s\S]*?(?<!`)\1(?!`)/g
 
 /** 閉じた `{{…}}`（中に `{` `}` と改行を含まない）か、閉じていない `{{` だけ。 */
 const BRACES = /\{\{[^{}\n]*\}\}|\{\{/g

@@ -12,6 +12,7 @@ import {
   reportViolations,
 } from "../../../../../src/server/report/core/rules/report-violation.ts"
 import { isTemplateViolation } from "../../../../../src/server/report/core/rules/template.ts"
+import { isTermNoteViolation } from "../../../../../src/server/report/core/rules/term-note.ts"
 import {
   draft,
   kinds,
@@ -30,6 +31,7 @@ describe("違反の種類の持ち主", () => {
       isNotDoneViolation,
       isTemplateViolation,
       isCitationViolation,
+      isTermNoteViolation,
     ]
 
     expect(

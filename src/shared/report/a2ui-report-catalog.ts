@@ -51,10 +51,12 @@ import {
   MAX_FIRST_SENTENCE,
   MAX_HEADING,
   MAX_SOURCES,
+  MAX_TERMS,
 } from "./report-limit.ts"
 import { reportRetrospectiveSchema } from "./report-retrospective.ts"
 import { reportSourceSchema } from "./report-source.ts"
 import { reportTaskSchema } from "./report-task.ts"
+import { reportTermSchema } from "./report-term.ts"
 import { timelineBlockSchema } from "./timeline-block.ts"
 import { traceBlockSchema } from "./trace-block.ts"
 
@@ -250,6 +252,7 @@ const reportComponentSchema = z.object({
   favorOptions: z.array(favorOptionSchema).max(3).optional(),
   checks: z.array(reportCheckSchema).optional(),
   sources: z.array(reportSourceSchema).min(1).max(MAX_SOURCES).optional(),
+  terms: z.array(reportTermSchema).min(1).max(MAX_TERMS).optional(),
   title: z.string().optional(),
   sessionSummary: z.string().optional(),
   sessionRemaining: z.string().optional(),

@@ -40,6 +40,7 @@ import type { CodeMark } from "../../../../shared/report/code-mark.ts"
 import { markdownInline } from "../../../../shared/report/report-inline-markdown.ts"
 import type { ChartTermLinks } from "../domain/chart-term-link.ts"
 import type { CitationTable } from "../domain/citation-number.ts"
+import type { TermNotes } from "../domain/term-note.ts"
 import {
   breakPathText,
   repositoryFileTarget,
@@ -68,6 +69,7 @@ import { NotationAside, NotationBlock, NotationInline, NotationListItem } from "
 import { remarkPreviewImage } from "./preview-image.ts"
 import { rehypeChartTerm } from "./rehype-chart-term.ts"
 import { rehypeInlineMark } from "./rehype-inline-mark.ts"
+import { rehypeTermNote } from "./rehype-term-note.ts"
 import { Anchor } from "./report-anchor.tsx"
 import { Code } from "./report-code.tsx"
 import { ReportImage } from "./report-image.tsx"
@@ -141,6 +143,8 @@ export type MarkdownProps = {
   readonly chartTerms?: ChartTermLinks
   /** レポートの出典の番号の表。`InlineMarkdown` だけが読む。 */
   readonly citations?: CitationTable
+  /** この欄の初出の用語の注。`InlineMarkdown` だけが読む。 */
+  readonly termNotes?: TermNotes
 }
 
 /** レポート1件分（または `splitReportBlocks` で割った1塊）の Markdown を描く。 */
@@ -207,6 +211,10 @@ export function InlineMarkdown(props: MarkdownProps): ReactElement {
         ...(props.citations === undefined
           ? []
           : ([[rehypeInlineMark, { citations: props.citations }]] satisfies RehypePlugins)),
+        // 図の項目名の印より前に置き、注の語を `button` で包んで図の項目名の印に飛ばさせる。
+        ...(props.termNotes === undefined
+          ? []
+          : ([[rehypeTermNote, { notes: props.termNotes }]] satisfies RehypePlugins)),
         ...(props.chartTerms === undefined
           ? []
           : ([[rehypeChartTerm, { terms: props.chartTerms }]] satisfies RehypePlugins)),

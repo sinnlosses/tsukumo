@@ -13,6 +13,7 @@ import type {
 import type { TIMELINE_MARK_NAMES } from "../../../shared/report/timeline-markdown.ts"
 import { deferredModule } from "../../stores/deferred-module.ts"
 import { useCitationScope } from "./leaf/citation-list.tsx"
+import { useTermNotesFor } from "./leaf/term-note-scope.tsx"
 import styles from "./markdown.module.css"
 import type { ChartTooltipControl } from "./renderer/chart-tooltip.ts"
 import type { FenceFigureLanguage } from "./renderer/fence-figure.tsx"
@@ -372,6 +373,7 @@ export function CodeFence(props: CodeFenceProps): ReactElement {
 export function InlineMarkdown(props: MarkdownProps): ReactElement {
   const state = markdownRenderer.useLoadState()
   const citations = useCitationScope()
+  const termNotes = useTermNotesFor(props.text)
   switch (state.kind) {
     case "loading":
       return <PendingInline />
@@ -383,6 +385,7 @@ export function InlineMarkdown(props: MarkdownProps): ReactElement {
           text={props.text}
           chartTerms={props.chartTerms}
           {...(citations.kind === "report" && { citations: citations.table })}
+          {...(termNotes.size > 0 && { termNotes })}
         />
       )
   }

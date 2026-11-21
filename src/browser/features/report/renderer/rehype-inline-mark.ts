@@ -35,6 +35,14 @@ const MARK_CLASS_NAMES = {
 
 const SKIPPED_TAG_NAMES: ReadonlySet<string> = new Set(["code", "pre"])
 
+const MARK_CLASS_NAME_SET: ReadonlySet<string> = new Set(Object.values(MARK_CLASS_NAMES))
+
+/** この段が作った印の要素か。 */
+export function isInlineMarkElement(node: Element): boolean {
+  const { className } = node.properties
+  return Array.isArray(className) && className.some((name) => MARK_CLASS_NAME_SET.has(String(name)))
+}
+
 export function rehypeInlineMark(options: InlineMarkOptions = {}): (tree: Root) => Root {
   const rewriteContent = (node: ElementContent): ElementContent[] => {
     if (node.type === "text") {

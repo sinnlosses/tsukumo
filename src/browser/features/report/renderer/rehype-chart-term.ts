@@ -1,11 +1,11 @@
 // 地の文の中で、同じ節の図の項目名と同じ字の語を、印の `span` で包む rehype のプラグイン（サニタイズのあと）。
-// `code`・`pre`・`a` の中は元の字のまま残す。
+// `code`・`pre`・`a` と、用語の注の語（`button`）の中は元の字のまま残す。
 
 import type { Element, ElementContent, Root, RootContent } from "hast"
 
 import { chartTermSpans, type ChartTermLinks } from "../domain/chart-term-link.ts"
 
-const SKIPPED_TAG_NAMES: ReadonlySet<string> = new Set(["code", "pre", "a"])
+const SKIPPED_TAG_NAMES: ReadonlySet<string> = new Set(["code", "pre", "a", "button"])
 
 export type RehypeChartTermOptions = {
   readonly terms: ChartTermLinks

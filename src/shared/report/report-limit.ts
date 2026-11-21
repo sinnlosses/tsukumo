@@ -36,5 +36,14 @@ export const MAX_SOURCES = 10
 /** 出典の `title` の長さの上限（字数）。 */
 export const MAX_SOURCE_TITLE = 60
 
+/** `terms` の件数の上限。 */
+export const MAX_TERMS = 8
+
+/** 用語の `term` の長さの上限（字数）。 */
+export const MAX_TERM = 20
+
+/** 用語の `note` の長さの上限（字数）。 */
+export const MAX_TERM_NOTE = 80
+
 /** `marks` の無い `code` の行数の上限。 */
 export const MAX_PLAIN_CODE_LINES = 45

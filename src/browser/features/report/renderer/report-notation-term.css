@@ -1,0 +1,77 @@
+.detail-block {
+  /* 用語の注。初出の語にだけ点線を付け、札は出典の番号札と同じく紙（この器）を基準に語の下へ出す。 */
+  &:has(.report-term-note) {
+    position: relative;
+  }
+  & .report-term-note {
+    anchor-scope: --report-term;
+    display: inline;
+  }
+  & .report-term-note > button {
+    all: unset;
+    anchor-name: --report-term;
+    cursor: help;
+    border-block-end: 1px dotted color-mix(in srgb, var(--ink) 60%, transparent);
+  }
+  & .report-term-note > button:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+  & .report-term-note-card {
+    position: absolute;
+    position-anchor: --report-term;
+    position-area: block-end span-inline-end;
+    position-try-fallbacks: flip-inline;
+    z-index: 5;
+    display: block;
+    inline-size: max-content;
+    max-inline-size: min(300px, 100%);
+    translate: 0 var(--stack-tight);
+    padding: var(--inset-control);
+    border: 1px solid color-mix(in srgb, var(--ink) 20%, transparent);
+    border-radius: var(--radius-md);
+    /* 札は本文の次の行に重なるので、浮く段の地を不透明な surface に敷いて下の字を透かさない。 */
+    background: linear-gradient(var(--surface-raised), var(--surface-raised)) var(--surface);
+    box-shadow: var(--shadow-raised);
+    font-size: var(--font-label);
+    font-weight: 400;
+    line-height: 1.6;
+    white-space: normal;
+    color: var(--ink);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--motion-fast) ease var(--motion-base);
+  }
+  & .report-term-note:is(:hover, :focus-within) .report-term-note-card {
+    opacity: 1;
+    pointer-events: auto;
+    transition: opacity var(--motion-fast) ease;
+  }
+  & .report-term-note-kind {
+    display: block;
+    color: var(--ink-quiet);
+  }
+  /* 狭い器では浮かせず、語の行の下に本文を押し下げて出す（本文と出典の一覧に重ねない）。 */
+  @container report-body (max-width: 691px) {
+    & .report-term-note-card {
+      position: static;
+      display: none;
+      inline-size: auto;
+      max-inline-size: none;
+      translate: none;
+      box-shadow: none;
+      opacity: 1;
+      transition: none;
+    }
+    & .report-term-note:is(:hover, :focus-within) .report-term-note-card {
+      display: block;
+      transition: none;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    & .report-term-note-card {
+      transition: none;
+    }
+  }
+}

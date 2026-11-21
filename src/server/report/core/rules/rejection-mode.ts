@@ -78,4 +78,6 @@ export const REPORT_REJECTION_MODES = {
   "duplicate-source-id": "reject",
   "duplicate-source-url": "reject",
   "misplaced-cite": "reject",
+  "absent-term": "reject",
+  "duplicate-term": "reject",
 } as const satisfies Record<ReportRejectionReason, ReportRejectionMode>
