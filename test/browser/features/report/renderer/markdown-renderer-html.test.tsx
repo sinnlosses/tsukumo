@@ -2,6 +2,7 @@ import { cleanup, render } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
 import { Markdown } from "../../../../../src/browser/features/report/renderer/markdown-renderer.tsx"
+import { firstFold } from "../../../../fixture/report-fold.ts"
 
 afterEach(() => {
   cleanup()
@@ -125,8 +126,9 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
 
     // 表が <details> の外に出ると、畳まれずに常に見えてしまう
     // （「展開を押しても意味なく、最初から展開済みの文章が出てしまっている」という報告）。
-    expect(container.querySelector("details table")).not.toBeNull()
-    expect(container.querySelector("details > summary")?.textContent).toBe("長い根拠")
+    const { trigger, content } = firstFold(container)
+    expect(content?.querySelector("table")).not.toBeNull()
+    expect(trigger?.textContent).toBe("長い根拠")
   })
 
   it("dl / dt / dd はタグが落ちて中身の文字だけ残る", () => {

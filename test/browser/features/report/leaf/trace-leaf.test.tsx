@@ -7,6 +7,7 @@ import {
 } from "../../../../../src/browser/features/report/leaf/direct-leaf-view.tsx"
 import { loadMarkdown } from "../../../../../src/browser/features/report/markdown.tsx"
 import type { LeafValue } from "../../../../../src/shared/report/report-leaf-value.ts"
+import { firstFold } from "../../../../fixture/report-fold.ts"
 
 beforeAll(async () => {
   await loadMarkdown()
@@ -104,11 +105,12 @@ describe("Trace の部品", () => {
     expect(pre?.querySelector("strong")).toBeNull()
   })
 
-  it("fold があれば並びごと details で畳む", () => {
+  it("fold があれば並びごと畳みに入れる", () => {
     const container = drawn({ fold: "架空の経過" })
 
-    expect(container.querySelector("details > summary")?.textContent).toBe("架空の経過")
-    expect(container.querySelector("details ul > li")).not.toBeNull()
+    const { trigger, content } = firstFold(container)
+    expect(trigger?.textContent).toBe("架空の経過")
+    expect(content?.querySelector("ul > li")).not.toBeNull()
   })
 
   it("欄外注があれば欄外注の列に欄外注が付く", () => {

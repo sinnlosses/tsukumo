@@ -13,6 +13,7 @@ import {
   InlineCodeText,
   InlineMarkdown,
   leafFrameClassNames,
+  ReportFold,
   type SwapSettings,
 } from "../markdown.tsx"
 import styles from "./leaf.module.css"
@@ -104,8 +105,8 @@ export function FoldedLeafFrame(
 }
 
 /**
- * `fold` が空でなければ本体を `details` で畳む。本体が空なら畳まない。
- * `summary` の字は `{{…}}` の印を素の字に畳んだもの。
+ * `fold` が空でなければ本体を畳み（{@link ReportFold}）に入れる。本体が空なら畳まない。
+ * 見出しの字は `{{…}}` の印を素の字に畳んだもの。
  */
 export function LeafFold(props: {
   readonly fold: string
@@ -116,10 +117,12 @@ export function LeafFold(props: {
     return <>{props.children}</>
   }
   return (
-    <details>
-      <summary>{foldInlineMarks(props.fold).replace(/\s+/g, " ").trim()}</summary>
+    <ReportFold
+      trigger={foldInlineMarks(props.fold).replace(/\s+/g, " ").trim()}
+      defaultOpen={false}
+    >
       {props.children}
-    </details>
+    </ReportFold>
   )
 }
 

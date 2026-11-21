@@ -117,10 +117,10 @@ describe("ItemList の部品", () => {
     expect(fresh).toBe(old)
   })
 
-  it("fold つきは details で包む", () => {
+  it("fold つきは畳み（Collapsible）で包む", () => {
     const { fresh } = both("bullet", [{ text: "架空の項目" }], "架空の根拠")
 
-    expect(fresh).toContain("<details>")
+    expect(fresh).toContain('<div class="report-details"><div class="astryx-collapsible')
   })
 
   it.each(["bullet", "ordered", "check"] as const)("%s は 10 件ちょうどなら畳まない", (style) => {

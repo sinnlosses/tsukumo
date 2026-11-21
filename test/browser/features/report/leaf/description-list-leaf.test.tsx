@@ -7,6 +7,7 @@ import {
 } from "../../../../../src/browser/features/report/leaf/direct-leaf-view.tsx"
 import { loadMarkdown } from "../../../../../src/browser/features/report/markdown.tsx"
 import type { LeafValue } from "../../../../../src/shared/report/report-leaf-value.ts"
+import { firstFold } from "../../../../fixture/report-fold.ts"
 
 beforeAll(async () => {
   await loadMarkdown()
@@ -85,11 +86,12 @@ describe("DescriptionList の部品", () => {
     expect(container.querySelector("dd a")?.getAttribute("href")).toBe("https://example.com/a")
   })
 
-  it("fold があれば details で畳む", () => {
+  it("fold があれば畳みに入れる", () => {
     const container = drawn({ fold: "架空の根拠" })
 
-    expect(container.querySelector("details > summary")?.textContent).toBe("架空の根拠")
-    expect(container.querySelector("details dl dt")?.textContent).toBe("架空の上限")
+    const { trigger, content } = firstFold(container)
+    expect(trigger?.textContent).toBe("架空の根拠")
+    expect(content?.querySelector("dl dt")?.textContent).toBe("架空の上限")
   })
 
   it("欄外注があれば欄外注の列に欄外注が付く", () => {

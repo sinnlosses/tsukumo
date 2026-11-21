@@ -10,6 +10,7 @@ import {
   loadMarkdown,
 } from "../../../../../src/browser/features/report/markdown.tsx"
 import type { LeafValue } from "../../../../../src/shared/report/report-leaf-value.ts"
+import { firstFold } from "../../../../fixture/report-fold.ts"
 
 const CAPTION_SELECTOR = `.${leafFrameClassNames.caption}`
 
@@ -140,7 +141,7 @@ describe("FoldedLeafFrame", () => {
     expect(container.querySelector(`${CAPTION_SELECTOR} code`)?.textContent).toBe("a.ts")
   })
 
-  it("fold があれば題つきの外枠を details で畳み、欄外注の列は details の外に置く", () => {
+  it("fold があれば題つきの外枠を畳みに入れ、欄外注の列は畳みの外に置く", () => {
     const { container } = frame(
       {
         captionNumber: { kind: "table", ordinal: 1 },
@@ -151,10 +152,9 @@ describe("FoldedLeafFrame", () => {
     )
 
     const outer = container.querySelector("[data-report-region] > div")
-    const details = outer?.firstElementChild
-    expect(details?.tagName).toBe("DETAILS")
-    expect(details?.querySelector("summary")?.textContent).toBe("架空の畳み")
-    expect(details?.querySelector(CAPTION_SELECTOR)).not.toBeNull()
+    const { trigger, content } = firstFold(outer?.firstElementChild ?? document)
+    expect(trigger?.textContent).toBe("架空の畳み")
+    expect(content?.querySelector(CAPTION_SELECTOR)).not.toBeNull()
     expect(outer?.lastElementChild?.classList.contains(leafFrameClassNames.gutter)).toBe(true)
   })
 
@@ -198,13 +198,14 @@ describe("LeafFold", () => {
   it("本体が空なら畳まない", () => {
     const { container } = fold({ fold: "架空の題", empty: true })
 
-    expect(container.querySelector("details")).toBeNull()
+    expect(firstFold(container).trigger).toBeUndefined()
   })
 
-  it("fold があれば details で包み、summary の字は行内の印を素の字に畳む", () => {
+  it("fold があれば畳みで包み、見出しの字は行内の印を素の字に畳む", () => {
     const { container } = fold({ fold: "架空の根拠 {{1 → 2}}", empty: false })
 
-    expect(container.querySelector("details > summary")?.textContent).toBe("架空の根拠 1 → 2")
-    expect(container.querySelector("details > p")).not.toBeNull()
+    const { trigger, content } = firstFold(container)
+    expect(trigger?.textContent).toBe("架空の根拠 1 → 2")
+    expect(content?.querySelector("p")).not.toBeNull()
   })
 })

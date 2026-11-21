@@ -6,8 +6,8 @@
       { "tag": "ul", "children": [
         { "tag": "li", "children": ["項目1", { "tag": "ul", "children": [{ "tag": "li", "children": ["子項目1"] }] }] }
       ] },
-      { "tag": "li", "children": ["✓", "済みの項目（架空）"] },
-      { "tag": "li", "children": ["未了の項目（架空）"] },
+      { "tag": "li", "children": [{ "tag": "svg" }, "済み", "済みの項目（架空）"] },
+      { "tag": "li", "children": [{ "tag": "svg" }, "未了", "未了の項目（架空）"] },
       { "tag": "hr" },
       { "tag": "table", "children": [
         { "tag": "th", "children": ["項目"] },

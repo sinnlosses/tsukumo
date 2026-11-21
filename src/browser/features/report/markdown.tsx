@@ -33,6 +33,7 @@ import type {
 import { MermaidBlock } from "./renderer/mermaid-block.tsx"
 import { NoteLabel as NoteLabelView } from "./renderer/note-label.tsx"
 import { CodeSpan } from "./renderer/report-code.tsx"
+import { ReportFold } from "./renderer/report-fold.tsx"
 import {
   CompareSwap,
   ReportImage,
@@ -270,6 +271,8 @@ export { ZoomableSvgFigure }
 export { CompareSwap, ReportImage, type SwapSettings, SwapSideContext }
 
 export { CodeSpan }
+
+export { ReportFold }
 
 export { diffLines, sideLines, type SideLineDiff }
 

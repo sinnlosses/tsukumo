@@ -5,7 +5,7 @@
 //   無いと `「呼んだか」` のように中身を約物で始める・終える強調が記法のまま出てしまい、レポートは `「…」` を多用する
 // - `rehypeCodeFileName` で、フェンスの info 文字列に書いたファイル名を `code` の属性に移す（`rehype-raw` より前）
 // - `rehype-raw` で、Markdown の中に直接書いた HTML ブロック・インライン HTML を解釈する
-// - `rehypeTaskCheck` で、チェックリストの `<input type="checkbox">` を静的な印に畳む（サニタイズより前）
+// - `rehypeTaskCheck` で、チェックリストの `<input type="checkbox">` を済み・未了の目印に畳む（サニタイズより前）
 // - `rehype-sanitize`（`REPORT_SANITIZE_SCHEMA`）で許可リストに無い要素・属性を落とす。サニタイズはここ1箇所に集約
 // - `rehypeInlineMark` で、文中の行内の印（`{{12 → 8}}` など）を `span` に替える（サニタイズのあと。`code`・`pre` の中は触らない）
 // - `rehype-highlight` でコードの色付け（`pre > code` に `hljs` の class と `<span>` を足す。テーマ CSS は `/vendor/highlight-theme.min.css` としてサーバが配る）。
@@ -20,6 +20,7 @@
 // `img` は `ReportImage` で、棚の画像を起動トークンを付けて読む（読めなければ「出せない」の札）。
 // 質問の preview（`QuestionPreviewMarkdown`）は、Markdown の画像を質問の棚の経路に替える段（`remarkPreviewImage`）を足して描く。
 //
+// 地の文の箇条書きは `UnorderedList` / `OrderedList` / `NotationListItem` が `ui/` の List で描き、`details` は `ReportDetails` が `ui/` の Collapsible で描く。
 // 長い表と一覧は `TableBody` / `UnorderedList` / `OrderedList` の上書きが切る。
 //
 // 表は横スクロールの器で包む（`Table`）。
@@ -57,6 +58,7 @@ import { rehypeInlineMark } from "./rehype-inline-mark.ts"
 import { rehypeTermNote } from "./rehype-term-note.ts"
 import { Anchor } from "./report-anchor.tsx"
 import { Code } from "./report-code.tsx"
+import { ReportDetails } from "./report-fold.tsx"
 import { ReportImage } from "./report-image.tsx"
 import styles from "./report-notation.module.css"
 import { REPORT_SANITIZE_SCHEMA } from "./sanitize-schema.ts"
@@ -78,6 +80,7 @@ const REPORT_COMPONENTS = {
   ul: UnorderedList,
   ol: OrderedList,
   li: NotationListItem,
+  details: ReportDetails,
   img: ReportImage,
 } satisfies Components
 

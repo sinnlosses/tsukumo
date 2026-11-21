@@ -2,6 +2,7 @@ import { cleanup, render } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
 import { Markdown } from "../../../../../src/browser/features/report/renderer/markdown-renderer.tsx"
+import { firstFold } from "../../../../fixture/report-fold.ts"
 import { reportSectionsMarkdown } from "../../../../fixture/report-sections-markdown.ts"
 import { typedElement } from "../../../../typed-element.ts"
 
@@ -88,7 +89,11 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
     expect(container.querySelector("div.report-note.report-note-warn")).not.toBeNull()
     expect(container.querySelector("span.report-badge.report-badge-ok")).not.toBeNull()
     expect(container.querySelectorAll("div.report-cols > div.report-card")).toHaveLength(2)
-    expect(container.querySelector("details > summary")).not.toBeNull()
+    // `details` は `ReportDetails` が Collapsible の畳みに替える（見出しは `summary` の中身）。
+    expect(container.querySelector("details")).toBeNull()
+    const { trigger, content } = firstFold(container)
+    expect(trigger?.textContent).toBe("見出し")
+    expect(content?.textContent).toBe("中身")
   })
 
   it("見比べ（compare）は2つの側が見出しと箇条のまま残る", () => {
@@ -158,27 +163,61 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
     const items = container.querySelectorAll("div.report-labeled-list > ul > li")
     expect(items).toHaveLength(2)
     expect([...(items[0]?.children ?? [])].map((child) => child.className.split(" ")[0])).toEqual([
-      "report-task-check",
+      "report-task-done",
       "report-list-label",
       "report-list-text",
     ])
     expect(items[0]?.querySelector("span.report-list-text > strong")?.textContent).toBe("説明")
   })
 
-  it("チェックリストの `- [ ]` と `- [x]` が、済みと未了の分かる印になる", () => {
+  it("チェックリストの `- [ ]` と `- [x]` が、List の行頭の Icon の印になり、読み上げでも済みと未了が分かる", () => {
     const { container } = render(<Markdown text={"- [ ] まだ\n- [x] 済み"} />)
 
-    // 操作できる要素は許可リストに無い（`rehypeTaskCheck` が静的な印の span に畳む）。
+    // 操作できる要素は許可リストに無い（`rehypeTaskCheck` が li の目印に畳む）。
     expect(container.querySelector("input")).toBeNull()
-    const marks = container.querySelectorAll("span.report-task-check")
-    expect(marks).toHaveLength(2)
-    // 未了は空の枠、済みは枠の中の印（色ではなく文字で見分ける）。
-    expect(marks[0]?.textContent).toBe("")
-    expect(marks[0]?.className).not.toContain("report-task-check-done")
-    expect(marks[1]?.textContent).toBe("✓")
-    expect(marks[1]?.className).toContain("report-task-check-done")
-    // 行頭の点と印が二重に並ばないようにする class（CSS が list-style を消す）。
-    expect(container.querySelectorAll("li.report-task-item")).toHaveLength(2)
+    const items = [...container.querySelectorAll('ul[role="list"] > li')]
+    expect(items.map((item) => item.textContent)).toEqual(["未了 まだ", "済み 済み"])
+    // 印は形の違う線の丸（未了は Circle、済みは CircleCheck）で、色だけに頼らない。
+    expect(items.map((item) => item.querySelector("svg")?.getAttribute("class"))).toEqual([
+      expect.stringContaining("lucide-circle"),
+      expect.stringContaining("lucide-circle-check"),
+    ])
+    expect(container.textContent).not.toContain("✓")
+    // 行頭の点は置かない（点と印が二重に並ばないように）。
+    expect(container.textContent).not.toContain("•")
+  })
+
+  it("地の文の入れ子の箇条は List の項目の中に List を置き、脚注の ol は飛び先の id を持つ素の ol のまま", () => {
+    const { container } = render(
+      <Markdown text={"- 親\n  - 子の一\n  - 子の二\n- 次\n\n本文[^1]。\n\n[^1]: 架空の脚注"} />,
+    )
+
+    const outer = container.querySelector(':scope > ul[role="list"]')
+    expect(
+      [...(outer?.querySelectorAll(":scope > li") ?? [])].map(
+        (item) => item.querySelector('ul[role="list"]')?.querySelectorAll("li").length ?? 0,
+      ),
+    ).toEqual([2, 0])
+    const footnote = container.querySelector("section ol")
+    expect(footnote?.getAttribute("role")).toBeNull()
+    expect(footnote?.querySelector("li")?.id).toMatch(/fn-1$/)
+  })
+
+  it("済み・未了の目印は done と open のほかは落ちる", () => {
+    const { container } = render(<Markdown text={'<ul><li data-task="evil">架空</li></ul>'} />)
+
+    expect(container.querySelector("[data-task]")).toBeNull()
+    expect(container.querySelector("svg")).toBeNull()
+  })
+
+  it("記法の容れ物の中のチェックリストは素の li のまま、行頭に印を置く", () => {
+    const { container } = render(
+      <Markdown text={'<div class="note">\n\n- [x] 済み\n- [ ] まだ\n\n</div>'} />,
+    )
+
+    expect(container.querySelector('[role="list"]')).toBeNull()
+    const items = [...container.querySelectorAll("ul > li")]
+    expect(items.map((item) => item.firstElementChild?.textContent)).toEqual(["済み", "未了"])
   })
 
   it("レポートが直接書いたチェックボックスも印になり、それ以外の input は落ちる", () => {
@@ -192,7 +231,7 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
     )
 
     expect(container.querySelector("input")).toBeNull()
-    expect(container.querySelector("span.report-task-check-done")?.textContent).toBe("✓")
+    expect(container.querySelector("p > span")?.textContent).toBe("済み")
     expect(container.textContent).toContain("入力欄のつもり")
   })
 })

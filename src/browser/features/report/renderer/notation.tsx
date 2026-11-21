@@ -17,6 +17,13 @@ import {
 } from "../../../../shared/report/report-notation.ts"
 import { ZoomableSvgFigure } from "./figure-zoom.tsx"
 import { NoteLabel } from "./note-label.tsx"
+import {
+  NotationListScope,
+  ProseListItem,
+  TaskMark,
+  taskState,
+  useParentList,
+} from "./prose-list.tsx"
 import styles from "./report-notation.module.css"
 
 /**
@@ -69,7 +76,11 @@ export function NotationBlock(props: NotationBlockProps): ReactElement {
   return (
     <div {...rest} className={resolveNotationClassName(className)}>
       {kind !== undefined && <NoteLabel kindName={kind[0]} label={kind[1]} />}
-      {children}
+      {className === undefined || classNameTokens(className).includes("with-gutter") ? (
+        children
+      ) : (
+        <NotationListScope>{children}</NotationListScope>
+      )}
     </div>
   )
 }
@@ -89,9 +100,13 @@ export function NotationAside(props: NotationAsideProps): ReactElement {
 
 type NotationInlineProps = JSX.IntrinsicElements["span"] & ExtraProps
 
-/** レポートの `span`。5系統のうち文中に置く側（`badge`）を受け持つ。 */
+/** レポートの `span`。5系統のうち文中に置く側（`badge`）と、`li` の外に書かれたチェックボックスの印を受け持つ。 */
 export function NotationInline(props: NotationInlineProps): ReactElement {
-  const { node: _node, className, children, ...rest } = props
+  const { node, className, children, ...rest } = props
+  const state = node === undefined ? "none" : taskState(node)
+  if (state !== "none") {
+    return <TaskMark state={state} />
+  }
 
   return (
     <span {...rest} className={resolveNotationClassName(className)}>
@@ -115,12 +130,26 @@ export function NotationOrderedList(props: NotationOrderedListProps): ReactEleme
 
 type NotationListItemProps = JSX.IntrinsicElements["li"] & ExtraProps
 
-/** レポートの `li`（`flow` の段・連鎖のカード・画像の説明）。 */
+/**
+ * レポートの `li`。地の文の並びの中なら ListItem（{@link ProseListItem}）で描き、
+ * それ以外（`flow` の段・連鎖のカード・画像の説明・脚注・記法の容れ物の中の並び）は素の `li` に記法の class を解決して描き、
+ * チェックリストの項目なら行頭に済み・未了の印（{@link TaskMark}）を置く。
+ */
 export function NotationListItem(props: NotationListItemProps): ReactElement {
-  const { node: _node, className, children, ...rest } = props
+  const { node, className, children, ...rest } = props
+  const parent = useParentList()
+  if (parent !== "native") {
+    return (
+      <ProseListItem node={node} parent={parent}>
+        {children}
+      </ProseListItem>
+    )
+  }
 
+  const state = node === undefined ? "none" : taskState(node)
   return (
     <li {...rest} className={resolveNotationClassName(className)}>
+      {state !== "none" && <TaskMark state={state} />}
       {children}
     </li>
   )

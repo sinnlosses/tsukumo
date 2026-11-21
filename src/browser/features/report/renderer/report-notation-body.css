@@ -81,9 +81,10 @@
   }
 }
 /* 段落と箇条書きは器を持たないので、ブラウザ既定の 1em をここで塊のあきに揃える。
-   まだ届いていない部品の骨組み（`PendingPart`）も、段落と同じあきを取る。 */
-:is(.detail-block, [data-report-region]) > :is(p, ul, ol, [data-report-pending="part"]),
-:is(.detail-block, [data-report-region]) > .report-with-gutter > :is(p, ul, ol) {
+   まだ届いていない部品の骨組み（`PendingPart`）と畳み（`ReportFold`）も、段落と同じあきを取る。 */
+:is(.detail-block, [data-report-region])
+  > :is(p, ul, ol, [data-report-pending="part"], .report-details),
+:is(.detail-block, [data-report-region]) > .report-with-gutter > :is(p, ul, ol, .report-details) {
   margin: var(--report-block-gap) 0;
 }
 /* 地付きの強調は地の文の段落の直下だけ（欄外注の列の外枠の中の段落を含む）。
@@ -104,7 +105,8 @@
   --report-figure-gap: var(--report-heading-gap);
 }
 .detail-block {
-  & li + li {
+  /* List の項目（`astryx-list-item`）は List が行の間を持つので、ここのあきを重ねない。 */
+  & li + li:where(:not(:global(.astryx-list-item))) {
     margin-top: var(--space-xs);
   }
   /* 領域の内幅に入りきらない表は、その表だけ横に転がす（ページ全体は横スクロールさせない）。

@@ -23,6 +23,9 @@ import {
   CODE_FILE_PATH_PROPERTY,
   CODE_MARKS_PROPERTY,
 } from "./code-file-name.ts"
+import { TASK_PROPERTY } from "./task-check.ts"
+
+const TASK_STATE_PATTERN = /^(?:done|open)$/
 
 /**
  * 通してよい要素（46個）。ここに無い要素は、中身のテキストだけを残してタグが落ちる。
@@ -31,7 +34,7 @@ import {
  *
  * 操作できる要素は1つも無い（`input` / `button` / `meter` / `progress`）。
  * レポートは読む面で、押せるように見えて何も起きないものを混ぜない。
- * チェックリスト（`- [ ]`）の `<input type="checkbox">` は、ここへ来る前に `rehypeTaskCheck` が静的な印の `<span>` に畳む。
+ * チェックリスト（`- [ ]`）の `<input type="checkbox">` は、ここへ来る前に `rehypeTaskCheck` が `li`（`li` の外では `span`）の済み・未了の目印に畳む。
  *
  * `aside` は tsukumo が欄外注の列の欄外注（`gutter-note`）に使い、見た目はその class にだけ当てる。
  * `section` / `sup` は Markdown の脚注が作る。
@@ -212,6 +215,9 @@ export const REPORT_SANITIZE_SCHEMA: Schema = {
     ],
     // `rect` の `sub`（題の下の説明）の `text` が持つ目印。
     text: [["dataSub", /^$/]],
+    // チェックリストの済み・未了の目印（`rehypeTaskCheck` が付ける）。
+    li: [[TASK_PROPERTY, TASK_STATE_PATTERN]],
+    span: [[TASK_PROPERTY, TASK_STATE_PATTERN]],
     img: [
       ["src", REPORT_IMAGE_SRC_PATTERN],
       "alt",

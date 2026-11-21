@@ -7,6 +7,7 @@ import {
 } from "../../../../../src/browser/features/report/leaf/direct-leaf-view.tsx"
 import { loadMarkdown } from "../../../../../src/browser/features/report/markdown.tsx"
 import type { LeafValue } from "../../../../../src/shared/report/report-leaf-value.ts"
+import { firstFold } from "../../../../fixture/report-fold.ts"
 
 beforeAll(async () => {
   await loadMarkdown()
@@ -76,13 +77,12 @@ describe("Quote の部品", () => {
     expect(drawn({ text: "  ", source: "架空の出典" }).querySelector("blockquote")).toBeNull()
   })
 
-  it("fold があれば details で畳む", () => {
+  it("fold があれば畳みに入れる", () => {
     const container = drawn({ fold: "架空の根拠" })
 
-    expect(container.querySelector("details > summary")?.textContent).toBe("架空の根拠")
-    expect(container.querySelector("details blockquote")?.firstChild?.textContent).toBe(
-      "架空の引用",
-    )
+    const { trigger, content } = firstFold(container)
+    expect(trigger?.textContent).toBe("架空の根拠")
+    expect(content?.querySelector("blockquote")?.firstChild?.textContent).toBe("架空の引用")
   })
 
   it("欄外注があれば欄外注の列に欄外注が付く", () => {

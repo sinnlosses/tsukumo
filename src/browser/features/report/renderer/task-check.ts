@@ -1,23 +1,22 @@
-// チェックリスト（`- [ ]` / `- [x]`）を、サニタイザを通る静的な印へ書き替える rehype のプラグイン。
+// チェックリスト（`- [ ]` / `- [x]`）を、サニタイザを通る済み・未了の目印（`data-task`）へ書き替える rehype のプラグイン。
 // サニタイズより前に差す（`rehypePlugins` の並び）。
 //
 // `remark-gfm` はチェックリストを `<input type="checkbox" disabled>` に変換するが、許可リスト（`REPORT_SANITIZE_SCHEMA`）には操作できる要素が1つも無い。
-// `input` をそこへ足すと、読むだけの面に焦点の当たる操作部品が並び（押せるように見えて何も起きない）、値の検査も `type` / `checked` / `disabled` の3つに増える。
-// 印の `<span>` に畳めば許可リストは読む側の要素だけで済み、済みと未了の区別だけが残る。
+// `input` を落とし、それを直接持つ `<li>` に目印を移す（`li` の割り当てが印を描く）。
+// `li` の外の `input` は、同じ目印の `<span>` に替える（`span` の割り当てが印を描く）。
+// 目印の値は許可リストが `done` と `open` だけに絞る。
 //
 // 書き替えた木はこのあと必ずサニタイザを通る（この層はサニタイズを迂回しない）。
-// レポートが直接書いた `<input>` もここで印に変わり、チェックボックス以外の `input` は許可リストが落とす。
+// レポートが直接書いた `<input>` もここで目印に変わり、チェックボックス以外の `input` は許可リストが落とす。
 
 import type { Element, ElementContent, Properties, Root } from "hast"
 
-import styles from "./report-notation.module.css"
+/** 済み・未了の目印を持たせる hast のプロパティ名（DOM では `data-task`）。 */
+export const TASK_PROPERTY = "dataTask"
 
-/** 済みの印として文字で置くもの（色に頼らず、選択・コピー・読み上げでも「済み」と分かる）。 */
-const CHECKED_MARK = "✓"
+/** remark-gfm がチェックリストの `ul` / `ol` と `li` に付ける class。見た目を持たないので落とし、記法の class を持たない並びとして描かせる。 */
+const GFM_TASK_CLASS_NAMES: readonly string[] = ["contains-task-list", "task-list-item"]
 
-/**
- * `input[type=checkbox]` を印の `<span>` に替え、それを直接持つ `<li>` には行頭の点を消す class を足す（点と印が二重に並ばないように）。
- */
 export function rehypeTaskCheck(): (tree: Root) => Root {
   return (tree) => ({
     ...tree,
@@ -33,18 +32,35 @@ function rewriteContent(node: ElementContent): ElementContent {
   }
 
   if (isTaskCheckbox(node)) {
-    return taskCheckMark(node.properties)
+    return {
+      type: "element",
+      tagName: "span",
+      properties: { [TASK_PROPERTY]: taskState(node.properties) },
+      children: [],
+    }
   }
 
-  const itemClass = styles["report-task-item"]
+  const checkbox = node.tagName === "li" ? node.children.find(isTaskCheckboxContent) : undefined
+  if (checkbox !== undefined) {
+    return {
+      ...node,
+      properties: {
+        ...withoutGfmTaskClass(node.properties),
+        [TASK_PROPERTY]: taskState(checkbox.properties),
+      },
+      children: node.children.filter((child) => child !== checkbox).map(rewriteContent),
+    }
+  }
+
   return {
     ...node,
-    properties:
-      isTaskItem(node) && itemClass !== undefined
-        ? withClassName(node.properties, itemClass)
-        : node.properties,
+    properties: withoutGfmTaskClass(node.properties),
     children: node.children.map(rewriteContent),
   }
+}
+
+function isTaskCheckboxContent(node: ElementContent): node is Element {
+  return node.type === "element" && isTaskCheckbox(node)
 }
 
 function isTaskCheckbox(node: Element): boolean {
@@ -52,39 +68,26 @@ function isTaskCheckbox(node: Element): boolean {
   return node.tagName === "input" && typeof type === "string" && type.toLowerCase() === "checkbox"
 }
 
-function isTaskItem(node: Element): boolean {
-  return (
-    node.tagName === "li" &&
-    node.children.some((child) => child.type === "element" && isTaskCheckbox(child))
-  )
-}
-
-function taskCheckMark(properties: Properties): Element {
-  const checked = isChecked(properties)
-  return {
-    type: "element",
-    tagName: "span",
-    properties: {
-      className: [
-        styles["report-task-check"],
-        ...(checked ? [styles["report-task-check-done"]] : []),
-      ].flatMap((name) => name ?? []),
-    },
-    children: checked ? [{ type: "text", value: CHECKED_MARK }] : [],
-  }
-}
-
 /**
  * `remark-gfm` は `checked` に真偽値を入れる。
  * レポートが直接書いた HTML では属性の値が空文字（`<input type="checkbox" checked>`）になることもあるので、両方を「済み」と見る。
  */
-function isChecked(properties: Properties): boolean {
+function taskState(properties: Properties): "done" | "open" {
   const checked = properties["checked"]
-  return checked === true || checked === ""
+  return checked === true || checked === "" ? "done" : "open"
 }
 
-function withClassName(properties: Properties, name: string): Properties {
+function withoutGfmTaskClass(properties: Properties): Properties {
   const current = properties["className"]
-  const names = Array.isArray(current) ? current : typeof current === "string" ? [current] : []
-  return { ...properties, className: [...names, name] }
+  if (!Array.isArray(current)) {
+    return properties
+  }
+  const names = current.filter(
+    (name) => typeof name !== "string" || !GFM_TASK_CLASS_NAMES.includes(name),
+  )
+  if (names.length === current.length) {
+    return properties
+  }
+  const { className: _className, ...rest } = properties
+  return names.length === 0 ? rest : { ...rest, className: names }
 }

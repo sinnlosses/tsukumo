@@ -1,4 +1,5 @@
 // 長い表（本体の行）と一覧を 10 件で切る、hast の `tbody` / `ul` / `ol` の上書き。
+// 地の文の `ul` / `ol` は `ui/` の List で描く。
 // 脚注の節の `ol` と、class を持つ記法の `ul` / `ol` は切らない。本文の文字列は変えない。
 
 import type { Element } from "hast"
@@ -8,6 +9,7 @@ import type { ExtraProps } from "react-markdown"
 import { optionalString } from "../../../../shared/utils/optional-string.ts"
 import { FoldedList, FoldedTableBody } from "./long-block-fold.tsx"
 import { NotationOrderedList } from "./notation.tsx"
+import { NativeListScope, ProseList, useProseListPlacement } from "./prose-list.tsx"
 
 type TableBodyProps = JSX.IntrinsicElements["tbody"] & ExtraProps
 
@@ -23,25 +25,70 @@ export function TableBody(props: TableBodyProps): ReactElement {
 
 type UnorderedListProps = JSX.IntrinsicElements["ul"] & ExtraProps
 
-/** 記法の class を持たない `ul` は、10 項目を超えたら 10 項目で切る。class を持つもの（チェックリストなど）はそのまま描く。 */
+/**
+ * 記法の class を持たない `ul` は、10 項目を超えたら 10 項目で切る。class を持つもの（記法の並び）はそのまま描く。
+ * 切る `ul` は、地の文なら List（{@link ProseList}）、記法の容れ物の中なら素の `ul` で描く。
+ */
 export function UnorderedList(props: UnorderedListProps): ReactElement {
   const { node: _node, children, ...rest } = props
+  const prose = useProseListPlacement()
   if (rest.className !== undefined) {
-    return <ul {...rest}>{children}</ul>
+    return (
+      <NativeListScope>
+        <ul {...rest}>{children}</ul>
+      </NativeListScope>
+    )
   }
-  return <FoldedList renderList={(items) => <ul {...rest}>{items}</ul>}>{children}</FoldedList>
+  return (
+    <FoldedList
+      renderList={(items) =>
+        prose ? (
+          <ProseList numbered={false}>{items}</ProseList>
+        ) : (
+          <NativeListScope>
+            <ul {...rest}>{items}</ul>
+          </NativeListScope>
+        )
+      }
+    >
+      {children}
+    </FoldedList>
+  )
 }
 
 type OrderedListProps = JSX.IntrinsicElements["ol"] & ExtraProps
 
-/** 記法の class を持たない `ol` は 10 項目で切る。脚注の節の `ol` と class を持つ `ol`（段の並びなど）は切らない。 */
+/**
+ * 記法の class を持たない `ol` は 10 項目で切る。脚注の節の `ol` と class を持つ `ol`（段の並びなど）は切らない。
+ * 切る `ol` は、地の文なら List（{@link ProseList}）、記法の容れ物の中なら素の `ol` で描く。
+ * 脚注の `ol` を List にしないのは、項目の `id` が参照元からの飛び先で、ListItem が `id` を描かないため。
+ */
 export function OrderedList(props: OrderedListProps): ReactElement {
   const { node } = props
+  const prose = useProseListPlacement()
   if (props.className !== undefined || (node !== undefined && isFootnoteList(node))) {
-    return <NotationOrderedList {...props} />
+    return (
+      <NativeListScope>
+        <NotationOrderedList {...props} />
+      </NativeListScope>
+    )
   }
   const { node: _node, children, ...rest } = props
-  return <FoldedList renderList={(items) => <ol {...rest}>{items}</ol>}>{children}</FoldedList>
+  return (
+    <FoldedList
+      renderList={(items) =>
+        prose ? (
+          <ProseList numbered={true}>{items}</ProseList>
+        ) : (
+          <NativeListScope>
+            <ol {...rest}>{items}</ol>
+          </NativeListScope>
+        )
+      }
+    >
+      {children}
+    </FoldedList>
+  )
 }
 
 /** 本体の行のうち最も広い行のセル数。「ほか n 件」の行をその幅に渡す。 */

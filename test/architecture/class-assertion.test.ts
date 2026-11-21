@@ -53,7 +53,7 @@ const ALLOWED_COUNTS: Readonly<Record<string, number>> = {
   "test/browser/features/report/renderer/markdown-renderer-html.test.tsx": 1,
   "test/browser/features/report/renderer/markdown-renderer-image.test.tsx": 5,
   "test/browser/features/report/renderer/markdown-renderer-link.test.tsx": 2,
-  "test/browser/features/report/renderer/markdown-renderer.test.tsx": 17,
+  "test/browser/features/report/renderer/markdown-renderer.test.tsx": 13,
   "test/browser/features/report/renderer/mermaid-block.test.tsx": 9,
   "test/browser/features/report/renderer/notation.test.tsx": 3,
   "test/browser/features/run-setting/run-setting-group.test.tsx": 1,
