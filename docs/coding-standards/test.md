@@ -25,7 +25,7 @@
   手で並べた列は、本番では起きない列でも通るため
 - **単体の `node` project はファイルごとの隔離を外して走る（`isolate: false`）**。
   worker がモジュールの記録・環境変数・グローバル・作業ディレクトリを次のファイルへ持ち越すので、
-  `vi.mock`・`vi.doMock`・`vi.resetModules`・`vi.stubEnv`・`vi.stubGlobal`・`process.chdir` を書いたファイルは、
+  `vi.mock`・`vi.doMock`・`vi.resetModules`・`vi.stubEnv`・`vi.stubGlobal`・`process.chdir`・`process.env` への代入と `delete` を書いたファイルは、
   設定が自動で `node-isolated` project へ移し、隔離したまま走らせる。`vi.mock` はそのファイルの頭に書いてよい。
   `dom` project は、ストアや document の持ち越しで順によって落ちるファイルがあるので隔離したまま走らせる。
   **`vi.spyOn` の差し替えは設定の `restoreMocks: true` が it のたびに戻す**ので、`afterEach` で `vi.restoreAllMocks()` を書かなくてよい

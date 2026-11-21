@@ -26,7 +26,7 @@ const DOM_SETUP_FILES = ["./test/dom-setup.ts", "./test/popover-setup.ts"]
 // 分離を外した worker では、モジュールの記録・環境変数・グローバル・作業ディレクトリが前のファイルから持ち越される。
 // 持ち越すと効かなくなる差し替えを書いたファイルだけを、分離したまま走らせる。
 const WORKER_STATE_REWRITE =
-  /\bvi\.(?:mock|doMock|resetModules|stubEnv|stubGlobal)\(|process\.chdir\(/
+  /\bvi\.(?:mock|doMock|resetModules|stubEnv|stubGlobal)\(|process\.chdir\(|process\.env(?:\.\w+|\[[^\]]+\])\s*=(?!=)|delete process\.env/
 
 const NODE_REWRITING_TEST_FILES = globSync("test/**/*.test.{ts,tsx}", {
   exclude: ["test/e2e/**", ...DOM_TEST_FILES],
