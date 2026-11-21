@@ -165,8 +165,7 @@
   animation-iteration-count: 1;
 }
 /* フォーカスの輪は内側に引く（`outline-offset: -2px`）。
-   立ち絵は舞台の幅いっぱいで、床へ沈めるぶん（`--stage-portrait-drop`）は下に出て `.chat-stage-layout` の `overflow: hidden` に切られるので、外側に引くと左右と下の輪が切れる。
-   内側なら左・上・右が丸ごと残り、切れるのは下端の1本だけになる。 */
+   立ち絵は舞台の幅いっぱいで下端が `.chat-stage-layout` の下端に接し、外は `overflow: hidden` に切られるので、外側に引くと左右と下の輪が切れる。 */
 .chat-poke:focus-visible {
   outline-offset: -2px;
 }

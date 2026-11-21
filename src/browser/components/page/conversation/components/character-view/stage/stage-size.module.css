@@ -1,6 +1,6 @@
 /* 左の列の立ち絵の寸法。席（`item-seat.css`）の位置がこの値に依る。
-   高さは 1400x900 で 342px、足元は 12px だけ床へ沈める。 */
+   高さは 1400x900 で 342px。足元は床へ沈めない（画の下端近くまで靴が描いてあるので、沈めると靴底が列の下端で切れる）。 */
 .stage-size {
   --stage-portrait-height: clamp(260px, 38dvb, 420px);
-  --stage-portrait-drop: 12px;
+  --stage-portrait-drop: 0px;
 }
