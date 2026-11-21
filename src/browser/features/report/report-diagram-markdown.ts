@@ -2,100 +2,17 @@
 
 import { sumBy } from "remeda"
 
-import type { ReportChartTone } from "../../../shared/report/report-block-diagram.ts"
 import type { LeafComponent } from "../../../shared/report/report-block.ts"
-import { integerScaleOf, type IntegerValueScale } from "./chart-integer-scale.ts"
-
-type ChartConfig = ChartBody | (ChartBody & { readonly tsukumo: { readonly height: number } })
-
-type ChartBody = {
-  readonly type: string
-  readonly data: {
-    readonly labels: readonly string[]
-    readonly datasets: readonly (
-      | { readonly label: string; readonly data: readonly number[] }
-      | {
-          readonly label: string
-          readonly data: readonly (readonly [number, number])[]
-          readonly barThickness: number
-        }
-      | {
-          readonly label: string
-          readonly data: readonly number[]
-          readonly barThickness: number
-        }
-    )[]
-  }
-  readonly options:
-    | {
-        readonly indexAxis: "y"
-        readonly scales: { readonly y: { readonly ticks: { readonly autoSkip: false } } }
-      }
-    | {
-        readonly indexAxis: "y"
-        readonly scales: { readonly y: { readonly ticks: { readonly autoSkip: false } } }
-        readonly plugins: SeriesPlugins
-      }
-    | Record<string, never>
-    | {
-        readonly scales: IntegerValueScale
-        readonly plugins?: Partial<SeriesPlugins & MarksPlugins>
-      }
-    | { readonly plugins: SeriesPlugins }
-    | { readonly plugins: MarksPlugins }
-    | { readonly plugins: DirectLabelPlugins }
-    | { readonly plugins: DirectLabelPlugins & MarksPlugins }
-    | {
-        readonly indexAxis: "y"
-        readonly scales: { readonly y: { readonly display: false } }
-        readonly plugins: DirectLabelPlugins
-      }
-    | {
-        readonly scales: { readonly y: { readonly display: false } }
-        readonly plugins: DirectLabelPlugins
-      }
-    | {
-        readonly indexAxis: "y"
-        readonly scales: {
-          readonly x: {
-            readonly stacked: true
-            readonly display: false
-            readonly min: 0
-            readonly max: 100
-          }
-          readonly y: { readonly stacked: true; readonly display: false }
-        }
-        readonly plugins: DirectLabelPlugins
-      }
-}
-
-type SeriesPlugins = {
-  readonly "tsukumo-series":
-    | { readonly emphasis: readonly number[] }
-    | { readonly tones: readonly ReportChartTone[] }
-}
-
-type DirectLabelPlugins = {
-  readonly "tsukumo-direct-label": {
-    readonly mode: "arrow" | "slope" | "span" | "share" | "values"
-    readonly names: readonly string[]
-  }
-}
-
-/**
- * `series` は `datasets` の位置。ただし share は部分ごとの dataset の位置（`index` は 0）、
- * arrow は1本の浮き棒の前（0）か後（1）の端を指す。
- */
-export type ChartMarks = {
-  readonly references: readonly { readonly value: number; readonly label: string }[]
-  readonly annotations: readonly {
-    readonly series: number
-    readonly index: number
-    readonly text: string
-  }[]
-}
-
-type MarksPlugins = { readonly "tsukumo-chart-marks": ChartMarks }
+import {
+  hasOnlyIntegers,
+  INTEGER_AXIS,
+  type ChartBody,
+  type ChartConfig,
+  type VerticalIntegerScale,
+  type DirectLabelPlugins,
+  type MarksPlugins,
+  type SeriesPlugins,
+} from "./chart-config.ts"
 
 const ARROW_BAR_THICKNESS = 4
 const SPAN_BAR_THICKNESS = 12
@@ -186,13 +103,17 @@ export function chartConfigOf(
     labels: [...block.labels],
     datasets: series.map(({ name, values }) => ({ label: name, data: [...values] })),
   }
+  const integers = hasOnlyIntegers(block)
+  const integerY: VerticalIntegerScale | Record<string, never> = integers
+    ? { scales: { y: INTEGER_AXIS } }
+    : {}
   if (block.chartKind === "bar" && block.horizontal) {
     return {
       type: block.chartKind,
       data,
       options: {
         indexAxis: "y",
-        scales: { y: { ticks: { autoSkip: false } } },
+        scales: { y: { ticks: { autoSkip: false } }, ...(integers ? { x: INTEGER_AXIS } : {}) },
         ...seriesAndMarksOf(block),
       },
       tsukumo: {
@@ -206,7 +127,7 @@ export function chartConfigOf(
   if (block.chartKind === "line") {
     const marks = marksPluginsOf(block)
     if (!annotation.values) {
-      return { type: block.chartKind, data, options: { ...marks, ...integerScaleOf(block) } }
+      return { type: block.chartKind, data, options: { ...marks, ...integerY } }
     }
     const direct = {
       "tsukumo-direct-label": { mode: "values", names: [] },
@@ -214,7 +135,10 @@ export function chartConfigOf(
     return {
       type: block.chartKind,
       data,
-      options: { plugins: "plugins" in marks ? { ...direct, ...marks.plugins } : direct },
+      options: {
+        plugins: "plugins" in marks ? { ...direct, ...marks.plugins } : direct,
+        ...integerY,
+      },
     }
   }
   if (annotation.values && block.chartKind === "pie") {
@@ -234,7 +158,7 @@ export function chartConfigOf(
     data,
     options: {
       ...seriesAndMarksOf(block),
-      ...(block.chartKind === "bar" ? integerScaleOf(block) : {}),
+      ...(block.chartKind === "bar" ? integerY : {}),
     },
   }
 }

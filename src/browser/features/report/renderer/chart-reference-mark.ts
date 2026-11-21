@@ -3,7 +3,7 @@
 
 import { z } from "zod"
 
-import type { ChartMarks } from "../report-diagram-markdown.ts"
+import type { ChartMarks } from "../chart-config.ts"
 import { directLabelOptionOf } from "./chart-direct-label-option.ts"
 import { LABEL_OFFSET } from "./chart-label-layout.ts"
 import { resolveColor } from "./theme-color.ts"

@@ -98,7 +98,10 @@ describe("chartConfigOf", () => {
       {
         type: "bar",
         data: { labels, datasets: [{ label: "架空系列", data: [1, 2] }] },
-        options: { indexAxis: "y", scales: { y: { ticks: { autoSkip: false } } } },
+        options: {
+          indexAxis: "y",
+          scales: { y: { ticks: { autoSkip: false } }, x: { ticks: { precision: 0 } } },
+        },
         tsukumo: { height: 320 },
       },
     ],
@@ -266,7 +269,10 @@ describe("chartConfigOf", () => {
       JSON.stringify({
         type: "bar",
         data: { labels: names, datasets: [{ label: "架空系列", data: names.map(() => 1) }] },
-        options: { indexAxis: "y", scales: { y: { ticks: { autoSkip: false } } } },
+        options: {
+          indexAxis: "y",
+          scales: { y: { ticks: { autoSkip: false } }, x: { ticks: { precision: 0 } } },
+        },
         tsukumo: { height },
       }),
     )
@@ -346,6 +352,7 @@ describe("chartConfigOf", () => {
     it("plot 由来の値の印と並べて渡す", () => {
       expect(chartConfigOf(marked, { values: true }).options).toEqual({
         plugins: { "tsukumo-direct-label": { mode: "values", names: [] }, ...marks },
+        ...integerScale,
       })
     })
 

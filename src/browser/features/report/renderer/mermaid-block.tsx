@@ -302,17 +302,15 @@ function alignClusterLabelsStart(node: HTMLElement): void {
   for (const cluster of node.querySelectorAll("g.cluster")) {
     const frame = cluster.querySelector(":scope > rect")
     const label = cluster.querySelector(":scope > g.cluster-label")
-    const left = Number(frame?.getAttribute("x"))
-    const placed = /^translate\(\s*(-?[\d.]+)[\s,]+(-?[\d.]+)\s*\)$/.exec(
-      label?.getAttribute("transform") ?? "",
-    )
-    if (label === null || placed === null || !Number.isFinite(left)) {
+    if (!(frame instanceof SVGRectElement) || !(label instanceof SVGGElement)) {
       continue
     }
-    label.setAttribute(
-      "transform",
-      `translate(${String(left + CLUSTER_LABEL_INSET)}, ${placed[2] ?? "0"})`,
-    )
+    const placed = label.transform.baseVal.consolidate()
+    if (placed === null) {
+      continue
+    }
+    const top = placed.matrix.f
+    placed.setTranslate(frame.x.baseVal.value + CLUSTER_LABEL_INSET, top)
   }
 }
 
