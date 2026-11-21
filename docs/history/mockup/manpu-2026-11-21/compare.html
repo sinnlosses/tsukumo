@@ -140,6 +140,75 @@
     animation: spark calc(1.1s * var(--k)) ease-out 1 forwards; opacity: 0; }
   @keyframes spark { 0% { opacity: 0; transform: translate(calc(var(--dx) * 0.55), calc(var(--dy) * 0.55)) scale(0.4); } 25%, 60% { opacity: 1; } 100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(1); } }
 
+  .variants { display: inline-flex; gap: 6px; }
+  nav.list .adopted { font-size: 10px; padding: 0 6px; border-radius: 999px; background: color-mix(in srgb, #7be08a 22%, transparent); color: #9ff0a8; margin-left: 6px; }
+
+  /* 擬音の文字（ドヤッ・キリッ・ハッ・ふんすっ） */
+  .sfx { font-size: var(--size, 40px); line-height: 1; white-space: nowrap; rotate: var(--r, -8deg);
+    animation: sfx calc(1.1s * var(--k)) cubic-bezier(.2,1.4,.4,1) 1 forwards; opacity: 0; }
+  @keyframes sfx {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(2.2); }
+    18% { opacity: 1; transform: translate(-50%, -50%) scale(0.92); }
+    28% { transform: translate(-50%, -50%) scale(1.05); }
+    75% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, calc(-50% - 10px)) scale(1); }
+  }
+  .sfx.accent { color: var(--accent); }
+  .sfx.gold { color: #ffd45c; }
+
+  /* 集中線: 立ち絵の後ろに放射の線 */
+  .speed { width: 1100px; height: 1100px; translate: -50% -50%;
+    background: repeating-conic-gradient(rgb(255 255 255 / 0.5) 0deg 1.2deg, transparent 1.2deg 7deg);
+    mask: radial-gradient(circle, transparent 0 14%, #000 30%, #000 60%, transparent 70%);
+    animation: speed calc(0.9s * var(--k)) ease-out 1 forwards; opacity: 0; }
+  @keyframes speed { 0% { opacity: 0; scale: 1.15; } 20%, 60% { opacity: 1; scale: 1; } 100% { opacity: 0; } }
+
+  /* 考え雲: 小さな丸が3つ続いて、雲の中に「…」 */
+  .think { translate: -50% -50%; }
+  .think i { position: absolute; border-radius: 50%; background: var(--manpu); border: 2.5px solid var(--manpu-line); opacity: 0;
+    animation: bub calc(1.8s * var(--k)) ease-out 1 forwards; }
+  .think i:nth-child(1) { width: 10px; height: 10px; left: -40px; top: 46px; }
+  .think i:nth-child(2) { width: 16px; height: 16px; left: -28px; top: 24px; animation-delay: calc(0.12s * var(--k)); }
+  .think .cloud { position: absolute; left: -10px; top: -30px; width: 96px; height: 56px; border-radius: 50% / 55%;
+    background: var(--manpu); border: 2.5px solid var(--manpu-line); display: flex; align-items: center; justify-content: center;
+    font: 900 26px/1 system-ui; color: var(--manpu-line); letter-spacing: 2px; opacity: 0;
+    animation: bub calc(1.8s * var(--k)) ease-out 1 forwards; animation-delay: calc(0.24s * var(--k)); }
+  @keyframes bub { 0% { opacity: 0; scale: 0.3; } 15%, 80% { opacity: 1; scale: 1; } 100% { opacity: 0; scale: 1; } }
+
+  /* 歯車がくるっと回る */
+  .gear { font-size: 44px; color: #c9c3dc; -webkit-text-stroke: 2px var(--manpu-line); translate: -50% -50%;
+    animation: gear calc(1.6s * var(--k)) ease-in-out 1 forwards; opacity: 0; }
+  .gear.small { font-size: 28px; animation-direction: reverse; }
+  @keyframes gear { 0% { opacity: 0; rotate: 0deg; } 15%, 80% { opacity: 1; } 100% { opacity: 0; rotate: 240deg; } }
+
+  /* 大きな汗: しずく形で頭から噴き出す */
+  .bigsweat { width: 26px; height: 36px; background: linear-gradient(160deg, #e6f8ff, #8fd8ff 60%); border: 2.5px solid var(--manpu-line);
+    border-radius: 50% 50% 50% 50% / 62% 62% 38% 38%; clip-path: polygon(50% 0, 100% 55%, 100% 100%, 0 100%, 0 55%);
+    rotate: var(--r); animation: bigsweat calc(1s * var(--k)) cubic-bezier(.2,.9,.3,1.2) 1 forwards; opacity: 0; }
+  @keyframes bigsweat { 0% { opacity: 0; transform: translate(0, 0) scale(0.3); } 25% { opacity: 1; transform: translate(var(--dx), var(--dy)) scale(1.1); }
+    70% { opacity: 1; transform: translate(var(--dx), calc(var(--dy) + 8px)) scale(1); } 100% { opacity: 0; transform: translate(var(--dx), calc(var(--dy) + 30px)); } }
+
+  /* 青ざめ: 顔の上半分に青い縦線が下りる */
+  .pale { width: 150px; height: 70px; translate: -50% -50%;
+    background: repeating-linear-gradient(90deg, rgb(110 120 230 / 0.85) 0 3px, transparent 3px 11px);
+    mask: linear-gradient(#000, #000 40%, transparent);
+    animation: pale calc(1.4s * var(--k)) ease-out 1 forwards; opacity: 0; }
+  @keyframes pale { 0% { opacity: 0; clip-path: inset(0 0 100% 0); } 30% { opacity: 1; clip-path: inset(0 0 0 0); } 75% { opacity: 1; } 100% { opacity: 0; } }
+
+  /* ぐるぐる: 頭の上で渦が回る */
+  .guru { font-size: 40px; color: var(--manpu); -webkit-text-stroke: 2.5px var(--manpu-line); translate: -50% -50%;
+    animation: guru calc(1.2s * var(--k)) linear 1 forwards; opacity: 0; }
+  @keyframes guru { 0% { opacity: 0; rotate: 0deg; } 15%, 80% { opacity: 1; } 100% { opacity: 0; rotate: 900deg; } }
+
+  /* 驚き線: 太い線が頭のまわりから外へ */
+  .surprise { width: 7px; height: 30px; border-radius: 4px; background: var(--manpu); border: 2.5px solid var(--manpu-line);
+    transform-origin: 50% 100%; rotate: var(--r); animation: surprise calc(0.7s * var(--k)) cubic-bezier(.2,1.5,.4,1) 1 forwards; opacity: 0; }
+  @keyframes surprise { 0% { opacity: 0; transform: translateY(0) scaleY(0.1); } 30% { opacity: 1; transform: translateY(-24px) scaleY(1.1); } 75% { opacity: 1; transform: translateY(-28px) scaleY(1); } 100% { opacity: 0; transform: translateY(-34px) scaleY(0.6); } }
+
+  /* ハート・花がぽん */
+  .heart { color: #ff8fb0; }
+  .flower { color: #ffb3c8; }
+
   @media (prefers-reduced-motion: reduce) { .fx * { animation: none !important; opacity: 0 !important; } }
   .reduced .fx * { animation: none !important; opacity: 0 !important; }
 </style>
@@ -147,7 +216,7 @@
 <body>
 <header class="page">
   <h1>漫符の演出 — 表情ごとの見比べ</h1>
-  <p>左で表情か終わり方を選ぶと、その場で1回再生する。<kbd>R</kbd> で再生し直し、<kbd>↑</kbd><kbd>↓</kbd> で選び直し、<kbd>T</kbd> で漫符なしと切り替える。立ち絵は同梱パック <code>characters/tsukumo/</code> の実物。</p>
+  <p>左で表情か終わり方を選ぶと、その場で1回再生する。<kbd>R</kbd> で再生し直し、<kbd>↑</kbd><kbd>↓</kbd> で選び直し、<kbd>T</kbd> で漫符なしと切り替え、練り直しの表情では <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> で案を切り替える。立ち絵は同梱パック <code>characters/tsukumo/</code> の実物。</p>
 </header>
 
 <div class="layout">
@@ -157,12 +226,14 @@
     <div class="toolbar">
       <button id="replay" type="button">もう一度（R）</button>
       <button id="toggle" type="button" aria-pressed="true">漫符あり（T）</button>
+      <span id="variants" class="variants"></span>
       <span class="sep"></span>
       <label><input type="checkbox" id="anchor" /> 頭の位置を出す</label>
       <label><input type="checkbox" id="reduced" /> 動きを減らす</label>
     </div>
     <div class="stage" id="stage">
       <div class="portrait-box" id="box">
+        <div class="fx" id="fxb"></div>
         <img id="img" alt="" />
         <div class="fx" id="fx"></div>
         <span class="anchor-dot" id="dot"></span>
@@ -175,10 +246,10 @@
     <div class="card">
       <h3>見本の決まり</h3>
       <ul>
-        <li>画にもう描いてある漫符（!?・汗・縦線・？・集中線）は重ねない。画に無い「動き」で補う</li>
-        <li>出どころは表情ごとの「頭の位置」。ふむ・たいくつは画の下半分に頭があるので、固定の位置では外れる（赤い丸で確かめられる）</li>
+        <li><b>採用</b>の印は、1回目の見本で採ると決まったもの（しょんぼり・わくわく・たいくつ・タスクの完了・失敗・答え待ち）</li>
+        <li>練り直しの6つは、案を3つずつ並べた。上の札か <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> で切り替える。採った6つに合わせ、記号がはっきり見える大きさにしてある</li>
+        <li>出どころは表情ごとの「頭の位置」。ふむ・たいくつは画の下半分に頭がある（赤い丸で確かめられる）</li>
         <li>どれも1回で消える。「動きを減らす」では出さない</li>
-        <li>にっと・きりっは毎ターン何度も届く表情なので、うるさくならないよう控えめな案にしてある</li>
       </ul>
     </div>
   </aside>
@@ -189,29 +260,59 @@ const IMG = (name) => `../../../../characters/tsukumo/${name}.png`
 
 // ax, ay: 立ち絵の箱の中の頭の位置（0〜1）。パックの定義に持たせる想定の値
 const ITEMS = [
-  { group: "表情", id: "default", name: "にっと", img: "default", ax: 0.5, ay: 0.22, baked: "", fx: "glintSmall",
-    what: "目元にキラッと小さな閃きが1回。", why: "最も多く届く表情なので、ほぼ気づかない程度にとどめる。" },
-  { group: "表情", id: "thinking", name: "ふむ", img: "thinking", ax: 0.52, ay: 0.5, baked: "", fx: "dots",
-    what: "頭の上に「…」が1つずつ灯って消える。", why: "考えている間合いを見せる。画は机に向かう姿で頭が低いので、出どころも下げてある。" },
-  { group: "表情", id: "proud", name: "えへん", img: "proud", ax: 0.42, ay: 0.2, baked: "集中線・キラ", fx: "proud",
-    what: "鼻息「ふんすっ」の雲が左右に2つ噴いて、星が1つ瞬く。", why: "画の集中線は止まっているので、噴き出す動きで得意げさを足す。" },
-  { group: "表情", id: "flustered", name: "あわわ", img: "flustered", ax: 0.45, ay: 0.27, baked: "!?・汗・揺れ線", fx: "sweat",
-    what: "汗が4粒、顔のまわりから飛び散る。", why: "画の汗は止まっているので、飛ぶ汗で慌てた瞬間を足す。!? は画にあるので重ねない。" },
-  { group: "表情", id: "serious", name: "きりっ", img: "serious", ax: 0.48, ay: 0.22, baked: "", fx: "glint",
-    what: "目の高さを鋭い閃きが横切る。", why: "危ない操作の確認で出る表情。にぎやかにせず、締まった1本だけ。" },
-  { group: "表情", id: "curious", name: "きょとん", img: "curious", ax: 0.5, ay: 0.24, baked: "？・揺れ線", fx: "rays",
-    what: "頭のてっぺんから短い線が3本「ピコッ」と跳ねる。", why: "？は画にあるので、気づいた瞬間の跳ねだけを足す。" },
-  { group: "表情", id: "sad", name: "しょんぼり", img: "sad", ax: 0.5, ay: 0.24, baked: "もやもや吹き出し・縦線", fx: "gloom",
+  { group: "表情", id: "default", name: "にっと", img: "default", ax: 0.5, ay: 0.22, baked: "",
+    why: "最も多く届く表情。1つだけ出して、すぐ消える。",
+    variants: [
+      { name: "音符", fx: "noteOne", what: "頭の横に大きな ♪ が1つ、弾んで揺れる。" },
+      { name: "花", fx: "flowerPop", what: "頭のまわりに花が2つ、ぽんと咲く。" },
+      { name: "ハート", fx: "heartPop", what: "頬の横にハートが1つ、ぽんと出て昇る。" },
+    ] },
+  { group: "表情", id: "thinking", name: "ふむ", img: "thinking", ax: 0.52, ay: 0.5, baked: "",
+    why: "考えている間合いを見せる。画は机に向かう姿で頭が低いので、出どころも下げてある。",
+    variants: [
+      { name: "考え雲", fx: "thinkCloud", what: "小さな丸が続いて、雲の中に「…」が浮かぶ。" },
+      { name: "歯車", fx: "gears", what: "頭の横で大小の歯車がくるっと噛み合って回る。" },
+      { name: "擬音「ふむ」", fx: "fumuText", what: "頭の上に「ふむ…」の文字がぽんと出る。" },
+    ] },
+  { group: "表情", id: "proud", name: "えへん", img: "proud", ax: 0.42, ay: 0.2, baked: "集中線・キラ",
+    why: "画の集中線は止まっているので、動く記号で得意げさを足す。",
+    variants: [
+      { name: "ドヤッ", fx: "doya", what: "頭の横に「ドヤッ」の擬音が大きく叩きつけられる。" },
+      { name: "ふんすっ", fx: "funsu", what: "大きな鼻息の雲が左右に噴いて、「ふんすっ」の文字が添う。" },
+      { name: "キラキラ", fx: "bigTwinkle", what: "頭のまわりで大きな ✦ が3つ、順に瞬く。" },
+    ] },
+  { group: "表情", id: "flustered", name: "あわわ", img: "flustered", ax: 0.45, ay: 0.27, baked: "!?・汗・揺れ線",
+    why: "!? は画にあるので重ねない。慌てた瞬間の勢いを足す。",
+    variants: [
+      { name: "大粒の汗", fx: "bigSweat", what: "頭から大粒の汗が3つ噴き出して、垂れて消える。" },
+      { name: "青ざめ", fx: "pale", what: "顔の上半分に青い縦線がさっと下りる。" },
+      { name: "ぐるぐる", fx: "guru", what: "頭の上で渦がぐるぐる回る（目が回る）。" },
+    ] },
+  { group: "表情", id: "serious", name: "きりっ", img: "serious", ax: 0.48, ay: 0.22, baked: "",
+    why: "危ない操作の確認で出る表情。はしゃがず、締まった見せ方にする。",
+    variants: [
+      { name: "集中線", fx: "speedLines", what: "立ち絵の後ろに集中線が一瞬走る。" },
+      { name: "擬音「キリッ」", fx: "kiri", what: "頭の横に「キリッ」の文字が鋭く出る。" },
+      { name: "目の光", fx: "eyeStar", what: "目の横で大きな ✦ が1つ、鋭く光る。" },
+    ] },
+  { group: "表情", id: "curious", name: "きょとん", img: "curious", ax: 0.5, ay: 0.24, baked: "？・揺れ線",
+    why: "？は画にあるので、気づいた瞬間の驚きを足す。",
+    variants: [
+      { name: "！", fx: "exclaim", what: "頭の上に大きな「！」が跳び出す。" },
+      { name: "驚き線", fx: "surprise", what: "頭のまわりから太い線が5本、ピッと跳ねる。" },
+      { name: "擬音「ハッ」", fx: "hah", what: "頭の横に「ハッ」の文字と驚き線が出る。" },
+    ] },
+  { group: "表情", id: "sad", name: "しょんぼり", img: "sad", ax: 0.5, ay: 0.24, baked: "もやもや吹き出し・縦線", fx: "gloom", adopted: true,
     what: "上から影が下りて（どよ〜ん）、縦線が垂れて消える。", why: "画の縦線は短いので、場ごと沈む影で凹みを足す。" },
-  { group: "表情", id: "excited", name: "わくわく", img: "excited", ax: 0.48, ay: 0.22, baked: "強調線", fx: "notes",
+  { group: "表情", id: "excited", name: "わくわく", img: "excited", ax: 0.48, ay: 0.22, baked: "強調線", fx: "notes", adopted: true,
     what: "音符と星が弾みながら昇る。", why: "始める合図に出る表情。弾む動きで前のめり感を出す。" },
-  { group: "表情", id: "bored", name: "たいくつ", img: "bored", ax: 0.55, ay: 0.7, baked: "", fx: "swirl",
+  { group: "表情", id: "bored", name: "たいくつ", img: "bored", ax: 0.55, ay: 0.7, baked: "", fx: "swirl", adopted: true,
     what: "もやもやの渦が1つ、ゆっくり昇って消える。", why: "眠らない子なので Zzz は使わない。頭は画の下のほうにある。" },
-  { group: "終わり方", id: "finish", name: "タスクの完了", img: "proud", ax: 0.42, ay: 0.2, baked: "", fx: "finish", bounce: true,
+  { group: "終わり方", id: "finish", name: "タスクの完了", img: "proud", ax: 0.42, ay: 0.2, baked: "", fx: "finish", bounce: true, adopted: true,
     what: "今の光 8 粒に、顔の左右から星を 3 つ跳ねさせる。", why: "今の祝う動きを土台に、星で漫画らしさを足す。星は顔を横切らないよう、頭の左右から外へ飛ばす。" },
-  { group: "終わり方", id: "fail", name: "失敗", img: "flustered", ax: 0.45, ay: 0.27, baked: "", fx: "fail",
+  { group: "終わり方", id: "fail", name: "失敗", img: "flustered", ax: 0.45, ay: 0.27, baked: "", fx: "fail", adopted: true,
     what: "ガーンの稲妻と、どよ〜んの影。", why: "今の「びくっ」に重ねる。どよ〜んは短めにしてある。" },
-  { group: "終わり方", id: "ask", name: "答え待ち", img: "default", ax: 0.5, ay: 0.22, baked: "", fx: "ask",
+  { group: "終わり方", id: "ask", name: "答え待ち", img: "default", ax: 0.5, ay: 0.22, baked: "", fx: "ask", adopted: true,
     what: "頭の横に「？」がぽんと出る。", why: "今の「呼ぶ」動きに添える。" },
   { group: "比べる元", id: "now", name: "今の光（祝う）", img: "proud", ax: 0.5, ay: 0.6, baked: "", fx: "spark", bounce: true,
     what: "今のアプリの祝う光。箱の中央・下から40%の固定の位置から出る。", why: "比べる元。" },
@@ -221,6 +322,7 @@ const $ = (id) => document.getElementById(id)
 let current = 0
 let on = true
 let k = 1
+let variant = 0
 
 function el(cls, ax, ay, vars = {}, text = "") {
   const e = document.createElement("span")
@@ -256,6 +358,34 @@ const FX = {
     ...[[-0.3, -40, -90], [0.3, 40, -100], [0.36, 20, -40]].map(([x, dx, dy]) => el("pop star", a.ax + x, a.ay + 0.12, { "--dx": dx + "px", "--dy": dy + "px", "--size": "30px" }, "★"))],
   fail: (a) => [el("shock", a.ax + 0.2, a.ay - 0.08, {}, "ϟ"), el("shock", a.ax - 0.2, a.ay - 0.04, {}, "ϟ"), ...FX.gloom(a)],
   ask: (a) => [el("pop ink", a.ax + 0.2, a.ay - 0.05, { "--dx": "0px", "--dy": "-14px", "--size": "38px" }, "？")],
+  // ---- 練り直し ----
+  noteOne: (a) => [el("pop note ink", a.ax + 0.24, a.ay - 0.04, { "--dx": "6px", "--dy": "-26px", "--size": "64px" }, "♪")],
+  flowerPop: (a) => [
+    el("pop flower ink", a.ax - 0.22, a.ay - 0.06, { "--dx": "-8px", "--dy": "-18px", "--size": "44px" }, "✿"),
+    el("pop flower ink", a.ax + 0.24, a.ay - 0.1, { "--dx": "8px", "--dy": "-24px", "--size": "36px" }, "✿"),
+  ],
+  heartPop: (a) => [el("pop heart ink", a.ax + 0.2, a.ay + 0.04, { "--dx": "10px", "--dy": "-40px", "--size": "46px" }, "♥")],
+  thinkCloud: (a) => { const t = el("think", a.ax + 0.22, a.ay - 0.24); t.innerHTML = '<i></i><i></i><span class="cloud">…</span>'; return [t] },
+  gears: (a) => [el("gear", a.ax + 0.22, a.ay - 0.2, {}, "⚙"), el("gear small", a.ax + 0.3, a.ay - 0.12, {}, "⚙")],
+  fumuText: (a) => [el("sfx ink", a.ax + 0.22, a.ay - 0.22, { "--size": "40px", "--r": "-6deg" }, "ふむ…")],
+  doya: (a) => [el("sfx ink gold", a.ax + 0.3, a.ay - 0.04, { "--size": "56px", "--r": "-10deg" }, "ドヤッ")],
+  funsu: (a) => [
+    el("puff", a.ax - 0.13, a.ay + 0.06, { "--dx": "-48px", "--dy": "10px" }), el("puff", a.ax + 0.13, a.ay + 0.06, { "--dx": "48px", "--dy": "10px" }),
+    el("sfx ink", a.ax + 0.3, a.ay - 0.08, { "--size": "36px", "--r": "-8deg" }, "ふんすっ"),
+  ],
+  bigTwinkle: (a) => [[-0.25, -0.06, 0], [0.28, -0.1, 0.15], [0.2, 0.06, 0.3]].map(([x, y, d]) => {
+    const e = el("twinkle", a.ax + x, a.ay + y, {}, "✦"); e.style.fontSize = "46px"; e.style.animationDelay = d + "s"; e.style.color = "#ffe27a"; return e }),
+  bigSweat: (a) => [[-0.14, -50, -40, -25], [0.14, 50, -50, 20], [0.2, 70, -10, 35]].map(([x, dx, dy, r]) =>
+    el("bigsweat", a.ax + x, a.ay - 0.12, { "--dx": dx + "px", "--dy": dy + "px", "--r": r + "deg" })),
+  pale: (a) => [el("pale", a.ax, a.ay - 0.03)],
+  guru: (a) => [el("guru", a.ax - 0.02, a.ay - 0.2, {}, "@")],
+  speedLines: (a) => [Object.assign(el("speed", a.ax, a.ay), { back: true })],
+  kiri: (a) => [el("sfx ink accent", a.ax + 0.36, a.ay + 0.02, { "--size": "48px", "--r": "-4deg" }, "キリッ")],
+  eyeStar: (a) => { const e = el("twinkle", a.ax + 0.13, a.ay + 0.06, {}, "✦"); e.style.fontSize = "60px"; e.style.color = "var(--accent)"; e.style.webkitTextStroke = "2px #2a2733"; return [e, el("glint", a.ax + 0.13, a.ay + 0.06)] },
+  exclaim: (a) => [el("pop ink", a.ax + 0.02, a.ay - 0.2, { "--dx": "0px", "--dy": "-20px", "--size": "64px" }, "！")],
+  surprise: (a) => [-60, -30, 0, 30, 60].map((r) => el("surprise", a.ax, a.ay - 0.15, { "--r": r + "deg" })),
+  hah: (a) => [el("sfx ink", a.ax - 0.28, a.ay - 0.06, { "--size": "48px", "--r": "-10deg" }, "ハッ"),
+    ...[-40, -10, 20].map((r) => el("surprise", a.ax - 0.1, a.ay - 0.08, { "--r": r + "deg" }))],
   spark: () => [[-101, -30], [-84, -92], [-46, -132], [-6, -150], [34, -136], [74, -98], [94, -36], [54, -124]].map(([dx, dy]) =>
     el("spark", 0.5, 0.6, { "--dx": dx + "px", "--dy": dy + "px" })),
 }
@@ -269,8 +399,9 @@ function renderList() {
     const b = document.createElement("button")
     b.type = "button"
     b.setAttribute("aria-current", String(i === current))
-    b.innerHTML = `<span>${it.name}</span><span class="baked">${it.baked ? "画に " + it.baked : ""}</span>`
-    b.addEventListener("click", () => { current = i; show() })
+    const mark = it.adopted ? '<span class="adopted">採用</span>' : it.variants ? '<span class="adopted" style="background:var(--accent-soft);color:var(--accent)">3案</span>' : ""
+    b.innerHTML = `<span>${it.name}${mark}</span><span class="baked">${it.baked ? "画に " + it.baked : ""}</span>`
+    b.addEventListener("click", () => { current = i; variant = 0; show() })
     nav.append(b)
   })
 }
@@ -283,12 +414,31 @@ function play() {
   box.classList.remove("bounce")
   void box.offsetWidth
   if (it.bounce && !document.body.classList.contains("reduced")) box.classList.add("bounce")
+  $("fxb").innerHTML = ""
   if (!on) return
-  for (const e of FX[it.fx](it)) fx.append(e)
+  const name = it.variants ? it.variants[variant].fx : it.fx
+  for (const e of FX[name](it)) (e.back ? $("fxb") : fx).append(e)
+}
+
+function renderVariants() {
+  const it = ITEMS[current]
+  const box = $("variants")
+  box.innerHTML = ""
+  if (!it.variants) return
+  it.variants.forEach((v, i) => {
+    const b = document.createElement("button")
+    b.type = "button"
+    b.setAttribute("aria-pressed", String(i === variant))
+    b.textContent = `${i + 1}. ${v.name}`
+    b.addEventListener("click", () => { variant = i; show() })
+    box.append(b)
+  })
 }
 
 function show() {
-  const it = ITEMS[current]
+  const base = ITEMS[current]
+  const it = base.variants ? { ...base, what: base.variants[variant].what, name: `${base.name}（案${variant + 1} ${base.variants[variant].name}）` } : base
+  renderVariants()
   $("img").src = IMG(it.img)
   $("img").alt = `立ち絵（${it.name}）`
   const dot = $("dot")
@@ -309,8 +459,9 @@ document.addEventListener("keydown", (e) => {
   if (e.target instanceof HTMLInputElement) return
   if (e.key === "r" || e.key === "R") play()
   else if (e.key === "t" || e.key === "T") $("toggle").click()
-  else if (e.key === "ArrowDown") { current = (current + 1) % ITEMS.length; show(); e.preventDefault() }
-  else if (e.key === "ArrowUp") { current = (current - 1 + ITEMS.length) % ITEMS.length; show(); e.preventDefault() }
+  else if (["1", "2", "3"].includes(e.key) && ITEMS[current].variants) { variant = Number(e.key) - 1; show() }
+  else if (e.key === "ArrowDown") { current = (current + 1) % ITEMS.length; variant = 0; show(); e.preventDefault() }
+  else if (e.key === "ArrowUp") { current = (current - 1 + ITEMS.length) % ITEMS.length; variant = 0; show(); e.preventDefault() }
 })
 show()
 </script>
