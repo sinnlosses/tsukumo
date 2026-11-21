@@ -7,6 +7,7 @@ import type { Element, ElementContent, Properties, Root, RootContent } from "has
 
 import { foldInlineMarks, parseInlineMarks } from "../../../../shared/report/inline-mark.ts"
 import type { CitationTable } from "../domain/citation-number.ts"
+import { reportExportMark } from "../report-export-copy.ts"
 import styles from "./report-notation.module.css"
 
 type MarkSegment = Extract<ReturnType<typeof parseInlineMarks>[number], { readonly kind: "mark" }>
@@ -118,7 +119,7 @@ function citeElement(id: string, citations: CitationTable): Element {
         span("report-mark-cite-title", [{ type: "text", value: entry.title }]),
         span("report-mark-cite-host", [{ type: "text", value: entry.host }]),
       ],
-      { role: "tooltip" },
+      { role: "tooltip", ...reportExportMark.drop },
     ),
   ])
 }

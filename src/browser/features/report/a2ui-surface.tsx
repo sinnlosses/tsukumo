@@ -57,7 +57,12 @@ import { liveLeafElement, useReevaluatedLeaves } from "./leaf/parameter-knob.tsx
 import { PendingHeading, PendingPart } from "./leaf/pending-part.tsx"
 import { SectionProof } from "./leaf/proof-band.tsx"
 import { HeadRegion, NotDoneRegion } from "./leaf/report-head-region.tsx"
-import { reportTermNoteTable, TermNoteLeafScope, TermNoteScope } from "./leaf/term-note-scope.tsx"
+import {
+  reportTermNoteTable,
+  TermNoteLeafScope,
+  TermNoteList,
+  TermNoteScope,
+} from "./leaf/term-note-scope.tsx"
 import { arrangedBlockClassNames } from "./markdown.tsx"
 import notationStyles from "./renderer/report-notation.module.css"
 import { reportExportMark } from "./report-export-copy.ts"
@@ -185,6 +190,7 @@ function ReportRoot(): ReactElement {
             </RegionBox>
           ))}
           <CitationList table={citations} />
+          <TermNoteList table={termNotes} />
           <NotDoneRegion notDone={view.head.notDone} />
           {view.retrospective.kind === "leaves" && (
             <RegionBox region={{ kind: "retrospective" }}>

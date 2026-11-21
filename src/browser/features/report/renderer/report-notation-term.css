@@ -52,6 +52,30 @@
     display: block;
     color: var(--ink-quiet);
   }
+  /* 書き出しの写しだけに出る「注n」と末尾の用語の一覧。 */
+  & .report-term-note > sup {
+    padding-inline-start: var(--inline-tight);
+    font-size: var(--font-label);
+    color: var(--ink-quiet);
+  }
+  & .report-term-list {
+    padding-block-start: var(--stack-block);
+    border-block-start: 1px solid color-mix(in srgb, var(--ink) 13%, transparent);
+    font-size: var(--font-label);
+
+    & dl {
+      display: grid;
+      gap: var(--stack-tight);
+      margin: 0;
+    }
+    & dt {
+      font-weight: 600;
+    }
+    & dd {
+      margin: 0;
+      color: var(--ink-quiet);
+    }
+  }
   /* 狭い器では浮かせず、語の行の下に本文を押し下げて出す（本文と出典の一覧に重ねない）。 */
   @container report-body (max-width: 691px) {
     & .report-term-note-card {

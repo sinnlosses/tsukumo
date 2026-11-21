@@ -1,6 +1,6 @@
 // 最終レポートの根の要素から、HTML の書き出しに使う写しを作る。
 // 根を複製してから書き換えるので、画面の DOM には触れない。
-// 落とす・止める・字にする要素は、部品が描くときに付けた `reportExportMark` の印だけで見分け、ここは部品の形を知らない。
+// 落とす・止める・字にする・開く要素は、部品が描くときに付けた `reportExportMark` の印だけで見分け、ここは部品の形を知らない。
 
 import { reportExportCss } from "./report-export-css.ts"
 
@@ -15,6 +15,10 @@ export const reportExportMark = {
   plain: { [MARK]: "plain" },
   /** 操作で形が変わる部品。写しでは保存したときの値の1行（`text`）に替える。 */
   value: (text: string) => ({ [MARK]: "value", [MARK_VALUE]: text }),
+  /** 用語の語の入れ物。写しでは語のあとに「注n」を足し、注（`note`）を末尾の用語の一覧へ開く。 */
+  term: (note: string) => ({ [MARK]: "term", [MARK_VALUE]: note }),
+  /** 末尾の用語の一覧の雛形。写しでは開いた語があれば表にして出し、無ければ外す。 */
+  termList: { [MARK]: "term-list" },
 } as const
 
 /** 根の要素の写し（画面の操作を落とし動く部品を止めた形の HTML）と、写しに当たる CSS。 */
@@ -33,7 +37,58 @@ function reportExportCopy(root: Element): Element {
   for (const marked of copy.querySelectorAll(`[${MARK}]`)) {
     applyMark(marked)
   }
+  dropDanglingDescribedBy(copy)
+  openTermNotes(copy)
   return copy
+}
+
+/** 落とした札を指していた `aria-describedby` を外す。 */
+function dropDanglingDescribedBy(copy: Element): void {
+  const present = new Set([...copy.querySelectorAll("[id]")].map((element) => element.id))
+  for (const element of copy.querySelectorAll("[aria-describedby]")) {
+    const ids = (element.getAttribute("aria-describedby") ?? "")
+      .split(/\s+/)
+      .filter((id) => id !== "")
+    if (ids.some((id) => !present.has(id))) {
+      element.removeAttribute("aria-describedby")
+    }
+  }
+}
+
+/** 用語の注を、本文の出る順に「注n」と振り、末尾の用語の一覧に開く。 */
+function openTermNotes(copy: Element): void {
+  const document = copy.ownerDocument
+  const notes: { readonly label: string; readonly term: string; readonly note: string }[] = []
+  for (const element of copy.querySelectorAll(`[${MARK}="term"]`)) {
+    const label = `注${String(notes.length + 1)}`
+    notes.push({
+      label,
+      term: element.textContent,
+      note: element.getAttribute(MARK_VALUE) ?? "",
+    })
+    const sup = document.createElement("sup")
+    sup.textContent = label
+    element.append(sup)
+    element.removeAttribute(MARK)
+    element.removeAttribute(MARK_VALUE)
+  }
+  for (const list of copy.querySelectorAll(`[${MARK}="term-list"]`)) {
+    if (notes.length === 0) {
+      list.remove()
+      continue
+    }
+    list.removeAttribute("hidden")
+    list.removeAttribute(MARK)
+    const dl = document.createElement("dl")
+    for (const { label, term, note } of notes) {
+      const dt = document.createElement("dt")
+      dt.textContent = `${label} ${term}`
+      const dd = document.createElement("dd")
+      dd.textContent = note
+      dl.append(dt, dd)
+    }
+    list.append(dl)
+  }
 }
 
 /** 複製は canvas の描いた画素を持たないので、元の canvas の画を `img` にして差し替える。 */
@@ -81,6 +136,9 @@ function applyMark(element: Element): void {
       element.replaceWith(line)
       return
     }
+    case "term":
+    case "term-list":
+      return
     default:
       element.removeAttribute(MARK)
   }

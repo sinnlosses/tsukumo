@@ -5,6 +5,8 @@ import { createContext, use, type ReactElement, type ReactNode } from "react"
 
 import type { A2uiReportComponent } from "../../../../shared/report/a2ui-report-catalog.ts"
 import { type TermNotes, type TermNoteTable, termNoteTableOf } from "../domain/term-note.ts"
+import styles from "../renderer/report-notation.module.css"
+import { reportExportMark } from "../report-export-copy.ts"
 
 const EMPTY_TABLE: TermNoteTable = new Map()
 
@@ -41,6 +43,22 @@ export function useTermNotesFor(text: string): TermNotes {
         ? [[term, { note: entry.note, cardId: entry.cardId }]]
         : [],
     ),
+  )
+}
+
+/** 末尾の「用語」の一覧の雛形。画面では出さず、書き出しの写しが開いた注の行を足す。 */
+export function TermNoteList(props: { readonly table: TermNoteTable }): ReactNode {
+  return (
+    props.table.size > 0 && (
+      <section
+        hidden
+        {...reportExportMark.termList}
+        className={styles["report-term-list"]}
+        aria-label="用語"
+      >
+        <h4 className={styles["report-cite-list-heading"]}>用語</h4>
+      </section>
+    )
   )
 }
 

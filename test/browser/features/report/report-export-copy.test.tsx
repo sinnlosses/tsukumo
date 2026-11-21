@@ -217,6 +217,92 @@ describe("最終レポートの写し", () => {
     expect(image?.getAttribute("src")).toBe("data:image/png;base64,AAAA")
     expect(image?.getAttribute("alt")).toBe("架空の図")
   })
+
+  describe("出典と用語の注", () => {
+    const withNotes = (terms: readonly { term: string; note: string }[]) => [
+      {
+        id: "root",
+        component: "Report",
+        conclusion: ["架空の結論。"],
+        children: ["s1"],
+        sources: [
+          { id: "a", title: "架空の出典A", url: "https://a.example.com/x" },
+          { id: "b", title: "架空の出典B", url: "https://b.example.org/y" },
+        ],
+        ...(terms.length > 0 ? { terms } : {}),
+      },
+      { id: "s1", component: "Section", heading: "架空の節", children: ["p1"] },
+      {
+        id: "p1",
+        component: "Paragraph",
+        text: "架空語乙は先、架空語甲は後。{{cite: b}}と{{cite: a}}。",
+        fold: "",
+        aside: "",
+      },
+    ]
+    const TERMS = [
+      { term: "架空語甲", note: "甲の注。" },
+      { term: "架空語乙", note: "乙の注。" },
+    ]
+    const renderNotes = (terms: readonly { term: string; note: string }[]) =>
+      render(
+        <Report
+          reveal={false}
+          turnId={3}
+          className=""
+          revealClassName=""
+          blockClassName=""
+          body={regionsOf(withNotes(terms))}
+        />,
+      )
+
+    it("札を落とし、バッジの行き先と出典の一覧を残し、用語を本文の順の注n と末尾の一覧に開く", () => {
+      const { container } = renderNotes(TERMS)
+      const root = firstChild(container)
+      const screenBefore = root.outerHTML
+      const list = root.querySelector('section[aria-label="用語"]')
+
+      expect(list?.hasAttribute("hidden")).toBe(true)
+      const copy = parsed(reportExport(root).html)
+
+      expect(root.outerHTML).toBe(screenBefore)
+      expect(copy.querySelector('[role="tooltip"]')).toBeNull()
+      const rowIds = [...copy.querySelectorAll('section[aria-label="出典"] li')].map(
+        (row) => row.id,
+      )
+      const hrefs = [...copy.querySelectorAll("a[href^='#']")].map((a) => a.getAttribute("href"))
+      expect(hrefs).toEqual(rowIds.map((id) => `#${id}`))
+      expect(copy.querySelector('section[aria-label="出典"] li a')?.getAttribute("href")).toMatch(
+        /^https:/,
+      )
+      expect([...copy.querySelectorAll("sup")].map((sup) => sup.textContent)).toEqual([
+        "注1",
+        "注2",
+      ])
+      const termList = copy.querySelector('section[aria-label="用語"]')
+      expect(termList?.hasAttribute("hidden")).toBe(false)
+      expect([...(termList?.querySelectorAll("dt") ?? [])].map((dt) => dt.textContent)).toEqual([
+        "注1 架空語乙",
+        "注2 架空語甲",
+      ])
+      expect([...(termList?.querySelectorAll("dd") ?? [])].map((dd) => dd.textContent)).toEqual([
+        "乙の注。",
+        "甲の注。",
+      ])
+      expect(copy.querySelector("[data-report-export]")).toBeNull()
+      expect(copy.querySelector("[data-report-export-value]")).toBeNull()
+      expect(copy.querySelector("[aria-describedby^='report-term']")).toBeNull()
+    })
+
+    it("用語の無いレポートでは用語の一覧を写さない", () => {
+      const { container } = renderNotes([])
+
+      const copy = parsed(reportExport(firstChild(container)).html)
+
+      expect(copy.querySelector('section[aria-label="用語"]')).toBeNull()
+      expect(copy.querySelector("sup")).toBeNull()
+    })
+  })
 })
 
 describe("書き出しの CSS", () => {

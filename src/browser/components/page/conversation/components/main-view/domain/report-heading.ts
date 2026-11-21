@@ -19,13 +19,14 @@ export type OutlineItem = {
   readonly text: string
 }
 
-/** 畳んだ `<details>` の中と、演出がまだ出していない節の中と、草稿の面の中を除いた見出し。 */
+/** 畳んだ `<details>` の中と、演出がまだ出していない節の中と、草稿の面の中と、`hidden` の中を除いた見出し。 */
 export function readableHeadings(content: HTMLElement): readonly HTMLElement[] {
   return [...content.querySelectorAll<HTMLElement>(HEADING_SELECTOR)].filter(
     (heading) =>
       heading.closest("details:not([open])") === null &&
       heading.closest(`[${REVEAL_PENDING_ATTRIBUTE}="pending"]`) === null &&
-      heading.closest(`[${REPORT_DRAFT_ATTRIBUTE}]`) === null,
+      heading.closest(`[${REPORT_DRAFT_ATTRIBUTE}]`) === null &&
+      heading.closest("[hidden]") === null,
   )
 }
 

@@ -63,4 +63,16 @@ describe("readableHeadings", () => {
       "架空の確定した見出し",
     ])
   })
+
+  it("hidden の中の見出しは拾わない", () => {
+    const content = document.createElement("div")
+    content.append(
+      sectionWith("架空の確定した見出し", undefined),
+      sectionWith("架空の隠した見出し", "hidden"),
+    )
+
+    expect(readableHeadings(content).map((heading) => heading.textContent)).toEqual([
+      "架空の確定した見出し",
+    ])
+  })
 })

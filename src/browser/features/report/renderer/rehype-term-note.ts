@@ -5,6 +5,7 @@
 import type { Element, ElementContent, Root, RootContent } from "hast"
 
 import type { TermNotes } from "../domain/term-note.ts"
+import { reportExportMark } from "../report-export-copy.ts"
 import { isInlineMarkElement } from "./rehype-inline-mark.ts"
 import styles from "./report-notation.module.css"
 
@@ -75,7 +76,7 @@ function termElement(
   return {
     type: "element",
     tagName: "span",
-    properties: { className: [styles["report-term-note"]] },
+    properties: { className: [styles["report-term-note"]], ...reportExportMark.term(entry.note) },
     children: [
       {
         type: "element",
@@ -90,6 +91,7 @@ function termElement(
           className: [styles["report-term-note-card"]],
           role: "tooltip",
           id: entry.cardId,
+          ...reportExportMark.drop,
         },
         children: [
           {
