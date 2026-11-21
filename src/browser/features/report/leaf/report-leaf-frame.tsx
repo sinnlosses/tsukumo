@@ -26,7 +26,7 @@ type ReportLeafFrameProps = {
   readonly title: string
   /** 本体の幅に題の包みを縮めるか（本体が親の幅を取らない塊）。 */
   readonly fit: boolean
-  /** 題の行の右端に置く子（表の絞り込みと、見せ方の切り替えを持つ前後の対）。題の行が無い部品では描かない。 */
+  /** 題の行の右端に置く子。題の行が無い部品では描かない。 */
   readonly captionAside?: ReactNode
   /** 本体。 */
   readonly children: ReactNode
