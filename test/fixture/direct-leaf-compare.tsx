@@ -75,10 +75,11 @@ function foldIntendedDifferences(html: string): string {
   return template.innerHTML
 }
 
-/** 空白だけの違いと、属性の並びの違いは畳む。表の系統の意図した意匠の違いも畳む。 */
+/** 空白だけの違いと、属性の並びの違いと、`useId` が描くたびに振り直す id は畳む。表の系統の意図した意匠の違いも畳む。 */
 export function normalized(html: string): string {
   return foldIntendedDifferences(html)
     .replace(/>\s+</g, "><")
+    .replace(/_r_[0-9a-z]+_/g, "_r_")
     .replace(/<(\w+)((?:\s+[^\s=>]+(?:="[^"]*")?)+)>/g, (_, tag: string, attributes: string) => {
       const sorted = (attributes.match(/[^\s=>]+(?:="[^"]*")?/g) ?? []).toSorted()
       return `<${tag} ${sorted.join(" ")}>`

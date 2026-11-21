@@ -66,41 +66,43 @@ describe("Code の行番号", () => {
     })
   })
 
-  it("応答が unknown なら行番号は出ず、今の pre のまま", async () => {
+  it("応答が unknown なら行番号は 1 から数え、中身は原文のまま", async () => {
     const { container } = drawn({ path: "src/fictional.ts" }, { kind: "unknown" })
 
     await waitFor(() => {
       expect(stub?.codeBlockStartRequests).toHaveLength(1)
     })
-    expect(container.querySelectorAll("[data-line]")).toHaveLength(0)
-    expect(container.querySelector("pre")?.textContent).toBe(SOURCE)
+    expect(lineNumbers(container)).toEqual(["1", "2", "3", "4", "5"])
+    expect([...container.querySelectorAll("[data-line]")].map((row) => row.textContent)).toEqual(
+      SOURCE.replace(/\n$/, "").split("\n"),
+    )
   })
 
-  it("管理下でないパス・パスの無い塊は聞かず、行番号も出ない", async () => {
+  it("管理下でないパス・パスの無い塊は聞かず、行番号は 1 から数える", async () => {
     const other = drawn({ path: "src/other.ts" }, { kind: "line", startLine: 40 })
     await new Promise((resolve) => setTimeout(resolve, 30))
     expect(stub?.codeBlockStartRequests).toEqual([])
-    expect(other.container.querySelectorAll("[data-line]")).toHaveLength(0)
+    expect(lineNumbers(other.container)[0]).toBe("1")
     cleanup()
     stub?.restore()
 
     const none = drawn({ path: "" }, { kind: "line", startLine: 40 })
     await new Promise((resolve) => setTimeout(resolve, 30))
     expect(stub?.codeBlockStartRequests).toEqual([])
-    expect(none.container.querySelectorAll("[data-line]")).toHaveLength(0)
+    expect(lineNumbers(none.container)[0]).toBe("1")
   })
 
-  it("diff の塊には、応答が line でも行番号を出さない", async () => {
+  it("diff の塊は、応答が line でも行番号を 1 から数える", async () => {
     const { container } = drawn(
       { path: "src/fictional.ts", language: "diff" },
       { kind: "line", startLine: 40 },
     )
 
     await new Promise((resolve) => setTimeout(resolve, 30))
-    expect(container.querySelectorAll("[data-line]")).toHaveLength(0)
+    expect(lineNumbers(container)[0]).toBe("1")
   })
 
-  it("コマンドの行のある shell の塊には、応答が line でも行番号を出さない", async () => {
+  it("コマンドの行のある shell の塊は、応答が line でも行番号を 1 から数える", async () => {
     stub = stubRepositoryFileLink(["src/fictional.ts"], UNREADABLE_FILE_EXCERPT, {
       kind: "line",
       startLine: 40,
@@ -120,7 +122,7 @@ describe("Code の行番号", () => {
     await waitFor(() => {
       expect(stub?.codeBlockStartRequests).toHaveLength(1)
     })
-    expect(container.querySelectorAll("[data-line]")).toHaveLength(0)
+    expect(lineNumbers(container)).toEqual(["1", "2"])
   })
 
   it("diff の塊は、追加・削除の行も文脈の行も、記号の列を持ち、字は原文のまま", () => {
@@ -137,9 +139,13 @@ describe("Code の行番号", () => {
       ),
     )
 
-    const signs = Array.from(container.querySelectorAll('[class*="code-line-sign"]'))
+    const signs = Array.from(container.querySelectorAll("[data-diff-marker]"))
     expect(signs.map((sign) => sign.textContent)).toEqual(["-", "+", " "])
-    expect(container.querySelector("pre")?.textContent).toBe("-const a = 1+const a = 2 const b = 3")
+    expect([...container.querySelectorAll("[data-line]")].map((row) => row.textContent)).toEqual([
+      "-const a = 1",
+      "+const a = 2",
+      " const b = 3",
+    ])
   })
 
   it("コピーのボタンは行番号を含めず、原文をそのまま写す", async () => {
@@ -157,7 +163,7 @@ describe("Code の行番号", () => {
       expect(lineNumbers(container)).toHaveLength(5)
     })
 
-    const button = container.querySelector("button")
+    const button = container.querySelector("pre button")
     if (button === null) {
       throw new Error("写しボタンが無い")
     }

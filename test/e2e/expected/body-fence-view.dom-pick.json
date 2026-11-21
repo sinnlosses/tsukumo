@@ -15,11 +15,15 @@
       "架空の注意の一文。",
       { "tag": "ol", "attributes": { "aria-label": "連鎖" } },
       "図 2",
-      { "tag": "pre", "children": [
-        { "tag": "code", "children": ["print", "(", "'素のコード'", ")"] }
+      { "tag": "pre", "attributes": { "data-language": "python" }, "children": [
+        { "tag": "code", "children": [
+          { "tag": "div", "attributes": { "data-line": "1" }, "children": ["print('素のコード')"] }
+        ] }
       ] },
-      { "tag": "pre", "children": [
-        { "tag": "code", "children": ["これは壊れた表"] }
+      { "tag": "pre", "attributes": { "data-language": "plaintext" }, "children": [
+        { "tag": "code", "children": [
+          { "tag": "div", "attributes": { "data-line": "1" }, "children": ["これは壊れた表"] }
+        ] }
       ] }
     ] }
   ]

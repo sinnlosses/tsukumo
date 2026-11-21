@@ -1,16 +1,10 @@
-// `code` の塊の `marks`（強調する行）の読みと、運び方と、畳む範囲。
+// `code` の塊の `marks`（強調する行）の読みと、運び方。
 
 /** 強調する行。`lines` は `"4-8"` か `"12"`（1 始まり）。 */
 export type CodeMark = { readonly lines: string; readonly label: string }
 
 /** 行の範囲（両端を含む、1 始まり）。 */
 export type LineRange = { readonly start: number; readonly end: number }
-
-/** 印の行から、畳まずに残す行数。 */
-const CODE_MARK_CONTEXT_LINES = 3
-
-/** 離れた行の連続がこの数を超えたら畳む。 */
-const CODE_FOLD_MIN_LINES = 20
 
 const LINES = /^\s*(\d+)(?:\s*-\s*(\d+))?\s*$/
 
@@ -84,37 +78,4 @@ export function decodeMarks(token: string): readonly CodeMark[] {
     // JSON として読めない印の指定は印なしとして扱う
     return []
   }
-}
-
-/**
- * 畳む範囲。印の行から {@link CODE_MARK_CONTEXT_LINES} 行より離れた行の連続が
- * {@link CODE_FOLD_MIN_LINES} 行を超えるものだけ。印が読めるものが無ければ空。
- */
-export function foldedRanges(lineCount: number, marks: readonly CodeMark[]): readonly LineRange[] {
-  const ranges = marks.flatMap((mark) => readMarkLines(mark.lines) ?? [])
-  if (ranges.length === 0) {
-    return []
-  }
-  const far = Array.from({ length: lineCount }, (_, index) => index + 1).map(
-    (line) =>
-      !ranges.some(
-        (range) =>
-          line >= range.start - CODE_MARK_CONTEXT_LINES &&
-          line <= range.end + CODE_MARK_CONTEXT_LINES,
-      ),
-  )
-  const runs: LineRange[] = []
-  far.forEach((isFar, index) => {
-    const line = index + 1
-    const last = runs.at(-1)
-    if (!isFar) {
-      return
-    }
-    if (last !== undefined && last.end === line - 1) {
-      runs[runs.length - 1] = { start: last.start, end: line }
-    } else {
-      runs.push({ start: line, end: line })
-    }
-  })
-  return runs.filter((run) => run.end - run.start + 1 > CODE_FOLD_MIN_LINES)
 }

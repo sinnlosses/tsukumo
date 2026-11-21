@@ -49,8 +49,6 @@
   /* コードの差分の地。足した側は強調の1色（chart-series-1）、消した側は灰で、状態の色は使わない。固定の値で、color-mix で作らない。 */
   --code-diff-line-added: #2f3648;
   --code-diff-line-removed: #2c2b33;
-  --code-diff-word-added: #3d4c67;
-  --code-diff-word-removed: #44434d;
 
   /* レポートの chart の系列色。`accent` の色相は使わない。 */
   --chart-series-1: #87bafd;

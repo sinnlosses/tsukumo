@@ -8,7 +8,8 @@
 // - `rehypeTaskCheck` で、チェックリストの `<input type="checkbox">` を静的な印に畳む（サニタイズより前）
 // - `rehype-sanitize`（`REPORT_SANITIZE_SCHEMA`）で許可リストに無い要素・属性を落とす。サニタイズはここ1箇所に集約
 // - `rehypeInlineMark` で、文中の行内の印（`{{12 → 8}}` など）を `span` に替える（サニタイズのあと。`code`・`pre` の中は触らない）
-// - `rehype-highlight` でコードの色付け（`pre > code` に `hljs` の class と `<span>` を足す。テーマ CSS は `/vendor/highlight-theme.min.css` としてサーバが配る）
+// - `rehype-highlight` でコードの色付け（`pre > code` に `hljs` の class と `<span>` を足す。テーマ CSS は `/vendor/highlight-theme.min.css` としてサーバが配る）。
+//   この色を使うのは前後の見比べの片側（`ComparedCode`）だけで、ほかのフェンスは `CodeBlock` が自分で色を付ける
 //
 // ```mermaid / ```chart のフェンスは「コード」ではなく図・グラフの入れ物にする（`FenceFigure`）。
 // `pre` を上書きし、中の `code` 要素の `className`（`language-mermaid` / `language-chart`）を見て振り分ける。
@@ -26,9 +27,8 @@
 //
 // git 管理下のパスを押すと Orca のエディタで開ける（inline code・フェンスのファイル名・相対リンクの3か所。判定は `repositoryFileTarget`）。
 
-import clsx from "clsx"
-import type { Element, Root } from "hast"
-import { use, type JSX, type ReactElement } from "react"
+import type { Root } from "hast"
+import type { JSX, ReactElement } from "react"
 import ReactMarkdown, { type Components, type ExtraProps, type Options } from "react-markdown"
 import rehypeHighlight from "rehype-highlight"
 import rehypeRaw from "rehype-raw"
@@ -41,27 +41,12 @@ import { markdownInline } from "../../../../shared/report/report-inline-markdown
 import type { ChartTermLinks } from "../domain/chart-term-link.ts"
 import type { CitationTable } from "../domain/citation-number.ts"
 import type { TermNotes } from "../domain/term-note.ts"
-import {
-  breakPathText,
-  repositoryFileTarget,
-  RepositoryFileLinkTarget,
-  useRepositoryFileLink,
-} from "../repository-link.tsx"
 import { codeFenceTree } from "./code-fence-tree.ts"
 import { rehypeCodeFileName } from "./code-file-name.ts"
-import { CodeLineDiffContext, CodeLines } from "./code-line-list.tsx"
-import { splitCodeLines } from "./code-line.ts"
-import {
-  codeFileName,
-  codeLanguage,
-  codeMarks,
-  codeSourceText,
-  findCodeChild,
-  hastText,
-} from "./code-node.ts"
-import { CopyButton } from "./copy-button.tsx"
-import { diffWordRanges, type DiffWordRanges } from "./diff-pair.ts"
+import { CodeLineDiffContext } from "./code-line-list.tsx"
+import { codeLanguage, findCodeChild, hastText } from "./code-node.ts"
 import { FenceFigure, isFenceFigureLanguage } from "./fence-figure.tsx"
+import { FencedCode } from "./fenced-code.tsx"
 import { OrderedList, TableBody, UnorderedList } from "./folded-block.tsx"
 import { REPORT_HAST_CACHE, type HastCache } from "./hast-cache.ts"
 import type { SideLineDiff } from "./line-diff.ts"
@@ -75,10 +60,8 @@ import { Code } from "./report-code.tsx"
 import { ReportImage } from "./report-image.tsx"
 import styles from "./report-notation.module.css"
 import { REPORT_SANITIZE_SCHEMA } from "./sanitize-schema.ts"
-import { shellCommandText, shellLineKinds } from "./shell-line.ts"
 import { rehypeStyleAllowlist } from "./style-allowlist.ts"
 import { rehypeTaskCheck } from "./task-check.ts"
-import { useCodeStartLine } from "./use-code-start-line.ts"
 
 /** hast の要素をどの部品で描くか。レンダーごとに作り直さない（同じ参照でないと react-markdown が木を作り直す）ので、モジュールの定数に置く。 */
 const REPORT_COMPONENTS = {
@@ -278,16 +261,9 @@ function ReportMarkdown(props: {
 
 type PreProps = JSX.IntrinsicElements["pre"] & ExtraProps
 
-const NO_WORD_RANGES: DiffWordRanges = new Map()
-
 /**
  * フェンス付きコードブロックの入れ物。
- * `node`（hast の `pre` 要素。react-markdown が渡す）の中の `code` 要素の `className` を見て、`language-mermaid` / `language-chart` など図・グラフの言語なら {@link FenceFigure} に振り、それ以外は素の `<pre>` のまま描く（色付けは `rehype-highlight` がすでにこの木に当ててある）。
- *
- * それ以外のフェンスは頭に帯を1本添え、{@link CopyButton} を常に置く。
- * フェンスにファイル名が書いてあれば（```diff src/foo.ts）、帯の左にラベルとして出す。
- * git 管理下の一覧にあるファイル名は押せるボタンにする。
- * `marks` のある塊と、コマンドの行のある shell の塊は、行ごとに {@link CodeLines} で描く。
+ * `node`（hast の `pre` 要素。react-markdown が渡す）の中の `code` 要素の `className` を見て、`language-mermaid` / `language-chart` など図・グラフの言語なら {@link FenceFigure} に振り、それ以外は {@link FencedCode} で描く。
  */
 function Pre(props: PreProps): ReactElement {
   const codeNode = props.node === undefined ? undefined : findCodeChild(props.node)
@@ -306,72 +282,6 @@ function Pre(props: PreProps): ReactElement {
     <pre {...rest} />
   ) : (
     <FencedCode codeNode={codeNode} preProps={rest} />
-  )
-}
-
-/** 頭の帯とコード本体。始まりの行が分かる塊は、行ごとに描いて行番号を付ける。 */
-function FencedCode(props: {
-  readonly codeNode: Element
-  readonly preProps: JSX.IntrinsicElements["pre"]
-}): ReactElement {
-  const { codeNode, preProps: rest } = props
-  const fileName = codeFileName(codeNode)
-  const marks = codeMarks(codeNode)
-  const source = codeSourceText(codeNode)
-  const language = codeLanguage(codeNode)
-  const kinds = language === undefined ? undefined : shellLineKinds(language, source)
-  const isDiff = language === "diff"
-  const wordRanges = isDiff ? diffWordRanges(source) : NO_WORD_RANGES
-  const found = useCodeStartLine({ path: fileName, language: language ?? "", source })
-  const startLine = isDiff || kinds !== undefined ? undefined : found
-  const lineDiff = use(CodeLineDiffContext)
-  return (
-    <div className={styles["code-file"]}>
-      <div className={styles["code-file-name"]}>
-        {fileName !== undefined && <FileNameLabel fileName={fileName} />}
-        <CopyButton text={kinds === undefined ? source : shellCommandText(source, kinds)} />
-      </div>
-      {marks.length === 0 &&
-      kinds === undefined &&
-      !isDiff &&
-      startLine === undefined &&
-      lineDiff === undefined ? (
-        <pre {...rest} />
-      ) : (
-        <pre {...rest}>
-          <code className={clsx(codeNode.properties.className)}>
-            <CodeLines
-              lines={splitCodeLines(codeNode.children)}
-              marks={marks}
-              kinds={kinds}
-              wordRanges={wordRanges}
-              diff={isDiff}
-              startLine={startLine}
-              lineDiff={lineDiff}
-            />
-          </code>
-        </pre>
-      )}
-    </div>
-  )
-}
-
-/** フェンスのファイル名のラベル。一覧にあれば押せるボタン、無ければ素のテキスト。 */
-function FileNameLabel(props: { readonly fileName: string }): ReactElement {
-  const link = useRepositoryFileLink()
-  const target = repositoryFileTarget(props.fileName, link.files)
-
-  if (target === undefined) {
-    return <>{props.fileName}</>
-  }
-  return (
-    <RepositoryFileLinkTarget
-      target={target}
-      title={undefined}
-      className={styles["report-file-link"]}
-    >
-      {breakPathText(props.fileName, styles["report-path-glue"])}
-    </RepositoryFileLinkTarget>
   )
 }
 

@@ -96,9 +96,8 @@ describe("Code の部品", () => {
   )
 
   it("原文の全行が textContent に残る", () => {
-    const { fresh } = both({ source: LONG_SOURCE })
+    const text = renderLeaf({ source: LONG_SOURCE }).textContent
 
-    const text = fresh.replace(/<[^>]*>/g, "")
     const missing = LONG_SOURCE.split("\n").filter((line) => !text.includes(line))
     expect(missing).toEqual([])
   })
@@ -124,6 +123,19 @@ async function clickCopy(overrides: Partial<Fields>): Promise<string[]> {
       },
     },
   })
+  const container = renderLeaf(overrides)
+  const button = container.querySelector("button")
+  if (button === null) {
+    throw new Error("写しボタンが無い")
+  }
+  await act(async () => {
+    fireEvent.click(button)
+    await Promise.resolve()
+  })
+  return written
+}
+
+function renderLeaf(overrides: Partial<Fields>): HTMLElement {
   const { part } = pair(overrides)
   const view = directLeafViewOf(part)
   if (view === undefined) {
@@ -144,15 +156,7 @@ async function clickCopy(overrides: Partial<Fields>): Promise<string[]> {
       />
     </div>,
   )
-  const button = container.querySelector("button")
-  if (button === null) {
-    throw new Error("写しボタンが無い")
-  }
-  await act(async () => {
-    fireEvent.click(button)
-    await Promise.resolve()
-  })
-  return written
+  return container
 }
 
 describe("Code の写しボタン", () => {

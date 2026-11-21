@@ -11,6 +11,8 @@ const MARK_VALUE = "data-report-export-value"
 export const reportExportMark = {
   /** 画面の操作だけの要素。写しから落とす。 */
   drop: { [MARK]: "drop" },
+  /** 外の部品（Astryx）が中に操作の口を描く入れ物。写しでは中の `button` と札（`role="tooltip"`）を落とす。 */
+  controls: { [MARK]: "controls" },
   /** 押せるパス。写しでは押せない等幅の字にする。 */
   plain: { [MARK]: "plain" },
   /** 操作で形が変わる部品。写しでは保存したときの値の1行（`text`）に替える。 */
@@ -131,6 +133,12 @@ function applyMark(element: Element): void {
   switch (element.getAttribute(MARK)) {
     case "drop":
       element.remove()
+      return
+    case "controls":
+      for (const control of element.querySelectorAll('button, [role="tooltip"]')) {
+        control.remove()
+      }
+      element.removeAttribute(MARK)
       return
     case "plain":
       element.replaceWith(plainCode(element))

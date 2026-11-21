@@ -189,17 +189,19 @@ describe("最終レポートの写し", () => {
     stub.restore()
     const root = container
     expect(root.querySelector('[role="button"]')).not.toBeNull()
-    expect(root.textContent).toContain("コピー")
+    expect(root.querySelector("button")).not.toBeNull()
+    const tooltip = root.querySelector('[role="tooltip"]')?.textContent ?? ""
+    expect(tooltip).not.toBe("")
 
     const copy = parsed(reportExport(root).html)
 
     expect(copy.querySelector('[role="button"]')).toBeNull()
     expect(copy.querySelector("button")).toBeNull()
-    expect(copy.textContent).not.toContain("コピー")
+    expect(copy.querySelector('[role="tooltip"]')).toBeNull()
     const codes = [...copy.querySelectorAll("code")].map((code) => code.textContent)
     expect(codes).toEqual(expect.arrayContaining(["src/fictional.ts:12"]))
     expect(copy.querySelector("pre")?.textContent).toContain("const 架空 = 1")
-    expect(copy.textContent).toBe(root.textContent?.replace(/コピー/g, ""))
+    expect(copy.textContent).toBe(root.textContent?.replace(tooltip, ""))
   })
 
   it("canvas は描いた画を img に替える", () => {

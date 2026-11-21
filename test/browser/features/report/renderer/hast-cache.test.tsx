@@ -40,7 +40,9 @@ describe("Markdown（描いた木の再利用）", () => {
 
     expect(afterFirst - before).toBe(1)
     expect(parsed.count).toBe(afterFirst)
-    expect(second.container.innerHTML).toBe(firstHtml)
+    // CodeBlock の札の id は `useId` が描くたびに振り直す。
+    const withoutIds = (html: string): string => html.replace(/_r_[0-9a-z]+_/g, "_r_")
+    expect(withoutIds(second.container.innerHTML)).toBe(withoutIds(firstHtml))
   })
 })
 

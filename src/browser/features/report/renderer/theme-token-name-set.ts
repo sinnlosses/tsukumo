@@ -13,8 +13,6 @@ export const THEME_TOKEN_NAMES: ReadonlySet<string> = new Set([
   "chart-series-other",
   "code-diff-line-added",
   "code-diff-line-removed",
-  "code-diff-word-added",
-  "code-diff-word-removed",
   "context-buffer",
   "context-buffer-stripe",
   "context-free",

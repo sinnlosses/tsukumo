@@ -35,7 +35,7 @@
   & .report-conclusion-lead p {
     color: var(--ink);
   }
-  & :is(.report-conclusion, .report-conclusion-lead) :not(pre) > code {
+  & :is(.report-conclusion, .report-conclusion-lead) :not(pre) > code:where(:not(pre code)) {
     font-size: 0.86em;
     color: var(--ink);
     background: var(--report-code-surface);
@@ -283,8 +283,9 @@
 
   /* コードは機械の側の文字なので等幅。
    ブラウザ既定でも等幅にはなるが、それは汎用の monospace で、インラインのコード（下の `:not(pre) > code`）だけが --font-mono になる不揃いが出る。
-   書体そのものの定義は theme.css のトークン。 */
-  & pre {
+   書体そのものの定義は theme.css のトークン。
+   CodeBlock の中の pre は Astryx の見た目のまま横にスクロールさせるので、この規則も下の `pre > code` も当てない。 */
+  & pre:where(:not(.report-code-block pre)) {
     margin: var(--report-block-gap) 0;
     font-family: var(--font-code);
     font-size-adjust: none;
@@ -301,13 +302,12 @@
     background: none;
   }
   /* テーマ（github-dark）の `.hljs` が敷く地・余白・block を打ち消し、箱は `pre` の1段だけにする。字の色の規則は触らない。 */
-  & pre > code {
+  & pre:where(:not(.report-code-block pre)) > code {
     display: inline;
     padding: 0;
     background: none;
   }
-  /* フェンスの頭に添える帯。ファイル名（```diff src/foo.ts）があれば左のラベルに出し
-   （差分だけを見てどのファイルか分からない、を防ぐ）、右には常にコピーのボタンを置く。
+  /* 前後の見比べの片側のフェンスの頭に添える帯。ファイル名があれば左のラベルに出し、右には常にコピーのボタンを置く。
    別の枠を足さず、コードの地（--ground）を上へ伸ばして1つの塊に見せる（箱が2つ並ぶと、差分そのものより境目のほうが目立つ）。
    ラベルの文字はパスなので等幅で、寸法は「ID・ツール名・キー」の段。
    器は Markdown のレンダラ側（`Pre`）が作るので、レポートの記法・許可リストは増えていない。 */
@@ -335,18 +335,13 @@
     border-radius: 0;
     background: none;
   }
-  /* 行番号の列。行の器の `data-line`（ファイルの何行目か）を生成物で出すので、DOM の文字ではなく、選択・写し・読み上げに混ざらない。 */
-  & .code-line[data-line]::before {
-    content: attr(data-line) / "";
-    flex: none;
-    min-inline-size: 3ch;
-    text-align: end;
-    color: var(--ink-quiet);
-    font-variant-numeric: tabular-nums;
-    user-select: none;
+  /* CodeBlock の塊と、その下に添える印のラベルの一覧。 */
+  & .report-code-block {
+    display: grid;
+    gap: var(--space-xs);
+    margin: var(--report-block-gap) 0;
   }
-  /* 行ごとに描くコード（`marks` のある塊と、コマンドの行のある shell の塊）。1行を1つの塊にし、<pre> の左右の余白まで地と罫を伸ばす。
-   印の行は地を --surface-raised、左端に 2px の --chart-series-1 の罫、ラベルは行の右端に 12px・--ink-quiet。 */
+  /* 前後の見比べの片側の行。1行を1つの塊にし、<pre> の左右の余白まで地を伸ばす。 */
   & .code-line {
     display: flex;
     align-items: baseline;
@@ -358,58 +353,6 @@
   & .code-line-text {
     flex: 1 1 auto;
     min-width: 0;
-  }
-  & .code-line-mark {
-    background: var(--surface-raised);
-    box-shadow: inset 2px 0 0 var(--chart-series-1);
-  }
-  & .code-line-output {
-    color: var(--ink-soft);
-  }
-  /* diff の行の地は行の器に塗る（テーマが字の幅だけに付ける hljs-addition / hljs-deletion の地は打ち消す）。値は theme.css の固定の4値。 */
-  & .code-line-added {
-    background: var(--code-diff-line-added);
-  }
-  & .code-line-removed {
-    background: var(--code-diff-line-removed);
-  }
-  & .code-line-added .code-line-text > *,
-  & .code-line-removed .code-line-text > * {
-    background: none;
-  }
-  /* 記号の列。字は原文の1字のままで、あとの空きは幅で作る（選択・写しに空白を混ぜない）。 */
-  & .code-line-sign {
-    display: inline-block;
-    inline-size: 2ch;
-  }
-  & .code-line-added .code-line-sign {
-    color: var(--report-change-added);
-  }
-  & .code-line-removed .code-line-sign {
-    color: var(--ink-quiet);
-  }
-  /* diff の対の行の、違う語。 */
-  & .code-diff-added {
-    background: var(--code-diff-word-added);
-  }
-  & .code-diff-removed {
-    background: var(--code-diff-word-removed);
-  }
-  & .code-mark-label {
-    flex: none;
-    font-family: var(--font-sans);
-    font-size: var(--font-label);
-    color: var(--ink-quiet);
-  }
-  /* 畳んだ範囲の 1 行。押すと中身が出る。 */
-  & .code-fold {
-    display: block;
-    width: calc(100% + 1rem);
-    margin: 0 calc(var(--space-sm) * -1);
-    padding: var(--space-2xs) var(--space-sm);
-    border-radius: 0;
-    text-align: left;
-    font-family: var(--font-sans);
   }
   /* コピーのボタン。ラベルの有無に関わらず帯の右端に置く。 */
   & .code-copy {

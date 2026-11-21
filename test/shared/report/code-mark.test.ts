@@ -3,7 +3,6 @@ import { describe, expect, it } from "vitest"
 import {
   decodeMarks,
   encodeMarks,
-  foldedRanges,
   markFitsLines,
   readMarkLines,
   sourceLineCount,
@@ -31,32 +30,6 @@ describe("markFitsLines・sourceLineCount", () => {
     expect(markFitsLines(mark("2"), 2)).toBe(true)
     expect(markFitsLines(mark("3"), 2)).toBe(false)
     expect(markFitsLines(mark("x"), 2)).toBe(false)
-  })
-})
-
-describe("foldedRanges", () => {
-  it("印の無い塊は畳まない", () => {
-    expect(foldedRanges(100, [])).toEqual([])
-    expect(foldedRanges(100, [mark("x")])).toEqual([])
-  })
-
-  it("印の 3 行外が 20 行ちょうどなら畳まず、21 行なら畳む", () => {
-    // 印は 1 行目。残すのは 1〜4 行目で、5 行目以降が離れた行
-    expect(foldedRanges(24, [mark("1")])).toEqual([])
-    expect(foldedRanges(25, [mark("1")])).toEqual([{ start: 5, end: 25 }])
-  })
-
-  it("印が 2 か所なら間と両端をそれぞれ数える", () => {
-    // 離れた行は 1〜6（6 行）・14〜36（23 行）・44〜60（17 行）で、畳むのは 20 行を超える真ん中だけ
-    expect(foldedRanges(60, [mark("10"), mark("40")])).toEqual([{ start: 14, end: 36 }])
-  })
-
-  it("範囲の印は両端から 3 行を残す", () => {
-    expect(foldedRanges(40, [mark("20-22")])).toEqual([])
-    expect(foldedRanges(60, [mark("30-32")])).toEqual([
-      { start: 1, end: 26 },
-      { start: 36, end: 60 },
-    ])
   })
 })
 

@@ -1,6 +1,6 @@
 // 前後の2つのソースを行に切り、LCS で揃えた行の並びを返す。
 
-import { commonIndexPairs } from "./word-diff.ts"
+import { commonIndexPairs } from "./common-index-pair.ts"
 
 export type LineChange = "same" | "changed" | "removed" | "added"
 

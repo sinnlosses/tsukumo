@@ -178,28 +178,27 @@ describe("Markdown（レポートのパスを押して Orca のエディタで�
     expect(container.querySelector("code")?.textContent).toBe("src/bar.ts:3")
   })
 
-  it("一覧にあるフェンスのファイル名が押せるボタンになる", () => {
+  it("一覧にあるフェンスのファイル名は、帯に開くボタンが出て、押すとそのファイルを開く", () => {
     const { wrap, opened } = withFiles([".tw/tasks.json"])
     const { container } = render(
       wrap(<Markdown text={"```diff .tw/tasks.json\n-  1\n+  2\n```"} />),
     )
 
-    const label = container.querySelector(".code-file-name")
-    const button = label?.querySelector('[role="button"]')
-    expect(button?.textContent).toBe(".tw/tasks.json")
+    const block = container.querySelector("pre")
+    expect(block?.textContent).toContain(".tw/tasks.json")
+    const button = block?.querySelector('[role="button"]')
+    expect(button?.textContent).toBe("開く")
     fireEvent.click(typedElement(button, HTMLElement, "押せるパス"))
     expect(opened).toEqual([".tw/tasks.json"])
   })
 
-  it("一覧に無いフェンスのファイル名は素のテキストのまま（別に出るボタンはコピーのボタンだけ）", () => {
+  it("一覧に無いフェンスのファイル名は帯に字だけ出て、開くボタンは出ない", () => {
     const { wrap } = withFiles([".tw/tasks.json"])
     const { container } = render(wrap(<Markdown text={"```diff src/nope.ts\n-a\n+b\n```"} />))
 
-    const label = container.querySelector(".code-file-name")
-    expect(
-      [...(label?.querySelectorAll("button") ?? [])].map((button) => button.textContent),
-    ).toEqual(["コピー"])
-    expect(label?.textContent).toContain("src/nope.ts")
+    const block = container.querySelector("pre")
+    expect(block?.querySelector('[role="button"]')).toBeNull()
+    expect(block?.textContent).toContain("src/nope.ts")
   })
 
   it("一覧にある相対リンクが押せるボタンになり、ページは遷移しない", () => {
@@ -261,12 +260,12 @@ describe("Markdown（レポートのパスを押して Orca のエディタで�
     expect(window.location.hash).toBe(hashBefore)
   })
 
-  it("Provider が無い場（既存のレポートの多く）では、一致するパスが無いのでファイルを開くボタンは出ない（コピーのボタンは別に出る）", () => {
+  it("Provider が無い場（既存のレポートの多く）では、一致するパスが無いのでファイルを開くボタンは出ない", () => {
     const { container } = render(
-      <Markdown text={"`src/foo.ts:1` と [x](src/foo.ts) と ```diff src/foo.ts\n-a\n+b\n```"} />,
+      <Markdown text={"`src/foo.ts:1` と [x](src/foo.ts) と\n\n```diff src/foo.ts\n-a\n+b\n```"} />,
     )
 
-    const buttons = [...container.querySelectorAll("button")]
-    expect(buttons.map((button) => button.textContent)).toEqual(["コピー"])
+    expect(container.querySelector("pre")?.textContent).toContain("src/foo.ts")
+    expect(container.querySelector('[role="button"]')).toBeNull()
   })
 })

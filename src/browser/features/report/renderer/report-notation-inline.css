@@ -31,10 +31,11 @@
     }
   }
   /* 文中のコードと、同じく「機械の側の文字」である kbd（キーの名前）・samp（機械の出力）。
-   3つとも等幅にそろえるのは、既定の monospace のままだと隣のコードだけが --font-mono になって不揃いに見えるため（上の .detail-block pre と同じ理由）。 */
+   3つとも等幅にそろえるのは、既定の monospace のままだと隣のコードだけが --font-mono になって不揃いに見えるため（上の .detail-block pre と同じ理由）。
+   CodeBlock の code は pre の孫なので、`pre` の中の code を外さないと文中のコードの地が行に掛かる。 */
   & kbd,
   & samp,
-  & :not(pre) > code {
+  & :not(pre) > code:where(:not(pre code)) {
     font-family: var(--font-code);
     font-size-adjust: none;
     padding: 0 var(--space-xs);
@@ -44,7 +45,7 @@
   }
   /* 機械の名前は本文の上に浮かせる。
    ground に落とすと本文との比が 1.096:1 しかなく、地を敷いている仕組みそのものが見えていなかった（実測）。 */
-  & :not(pre) > code {
+  & :not(pre) > code:where(:not(pre code)) {
     padding: var(--space-2xs) var(--space-xs);
     background: var(--surface-raised);
     --inline-code-size: max(0.86em, var(--font-label));

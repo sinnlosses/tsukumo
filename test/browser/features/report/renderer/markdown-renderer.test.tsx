@@ -240,7 +240,7 @@ describe("Markdown（色を指す inline code をその色の地で見せる）"
   it("文中に色が混ざった inline code と、フェンスの中のカラーコードは地にしない", () => {
     const { container } = render(<Markdown text={"`color: #fff`\n\n```\n#bca0ec\n```"} />)
 
-    const styles = [...container.querySelectorAll("code")].map((code) => code.getAttribute("style"))
-    expect(styles).toEqual([null, null])
+    const backgrounds = [...container.querySelectorAll("code")].map((code) => code.style.background)
+    expect(backgrounds).toEqual(["", ""])
   })
 })

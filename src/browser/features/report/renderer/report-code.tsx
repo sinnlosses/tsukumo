@@ -17,9 +17,8 @@ import styles from "./report-notation.module.css"
 type CodeProps = JSX.IntrinsicElements["code"] & ExtraProps
 
 /**
- * コード（inline code・フェンスの中の `<code>` の両方がここを通る）。
+ * inline code。フェンスの中の `<code>` は `Pre` が自分で描くので、ここは通らない。
  * 中身の文字が git 管理下の一覧にあるパスなら、押せるボタンで包む（人格の指示が `file_path:line_number` の形で書く inline code）。
- * フェンスの中の複数行のコードは1つのパスと一致しないので、そのまま `<code>` になる（色付け・言語の `className` は変えない）。
  *
  * 中身の文字が1つの色（カラーコードか色のトークン名）なら、その色を地にする（{@link colorSwatch}）。
  */
