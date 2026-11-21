@@ -56,15 +56,15 @@
   <h2 id="now">今の形: 描き方が3通りある</h2>
   <table>
     <tr><th>描き方</th><th>中身</th><th>Astryx との関係</th></tr>
-    <tr><td><code>components/ui/</code></td><td>29の部品（Button・Note・Table・Icon など）</td><td>Astryx を読める唯一の場所（dependency-cruiser が検査）。ADR 0053 で見た目は Astryx のまま。ただし disclosure・expand-button・round-button・typing-dot-list の4つは Astryx を読まない自前</td></tr>
-    <tr><td><code>features/report/leaf/</code></td><td>レポートの内容部品41個</td><td>ui/ を使うのは13個だけ。残りは自前の React と CSS</td></tr>
+    <tr><td><code>components/ui/</code></td><td>31の部品（Button・Note・Table・Icon など）</td><td>Astryx を読める唯一の場所（dependency-cruiser が検査）。ADR 0053 で見た目は Astryx のまま。ただし disclosure・expand-button・first-note-list・round-button・typing-dot-list の5つは Astryx を読まない自前</td></tr>
+    <tr><td><code>features/report/leaf/</code></td><td>レポートの内容部品の .tsx 40ファイル</td><td>ui/ を使うのは13個だけ。残りは自前の React と CSS</td></tr>
     <tr><td>Markdown の経路</td><td>react-markdown と <code>REPORT_COMPONENTS</code>（pre・ul・li・table など14要素の割り当て）、<code>renderer/</code> の CSS 23ファイル</td><td>Astryx を通らない。チェックの印も <code>rehypeTaskCheck</code> が作る span に CSS で描いている</td></tr>
   </table>
   <p>同じ「並び」でも、ui/ の画面・内容部品・Markdown の箇条書きで余白と印と字の段が別々に決まっていて、これが統一感の欠けの元になっている。</p>
 
   <h2 id="proposal">提案する構成: ui/ を通る1本の道にする</h2>
   <div class="layers">
-    <div class="layer"><b>層1 ui/（Astryx への唯一の入口のまま広げる）</b><br />List・MetadataList・Stepper・Collapsible・CodeBlock・Kbd・TabList・Slider・Switch・Citation の包みを足す。包みが決めるのは tsukumo 共通の約束だけ（ラベルは折り返す、本文の行の高さは <code>--line-height-reading</code>、状態の色は <code>state-*</code>）。見た目そのものは ADR 0053 のとおり Astryx のまま。自前の4つは Collapsible・IconButton へ置き換える。</div>
+    <div class="layer"><b>層1 ui/（Astryx への唯一の入口のまま広げる）</b><br />List・MetadataList・Stepper・Collapsible・CodeBlock・Kbd・TabList・Slider・Switch・Citation の包みを足す。包みが決めるのは tsukumo 共通の約束だけ（ラベルは折り返す、本文の行の高さは <code>--line-height-reading</code>、状態の色は <code>state-*</code>）。見た目そのものは ADR 0053 のとおり Astryx のまま。自前の5つは Collapsible・IconButton などへ置き換える。</div>
     <div class="layer"><span class="arrow">↓</span> <b>層2 内容部品（leaf/）は ui/ だけで組む</b><br />ItemList の check・labeled・flow、DescriptionList、Code、Trace の折り畳みなどを ui/ の部品で描く。leaf/ の CSS に残すのは並べ方（grid・gap）だけにし、色・枠・角丸・字の段を宣言しないことを規約テストで検査する。</div>
     <div class="layer"><span class="arrow">↓</span> <b>層3 Markdown の経路も同じ部品へ写す</b><br />すでにある <code>REPORT_COMPONENTS</code> の割り当てを継ぎ目にして、ul・ol・li → List、pre → CodeBlock、kbd → Kbd、details → Collapsible を当てる。<code>- [x]</code> は <code>rehypeTaskCheck</code> が span ではなく印の情報を残し、li の割り当てが List の印として描く。表・脚注・地の文の中の字飾りは Astryx に対応が無いので CSS のまま残す。</div>
   </div>
@@ -112,7 +112,7 @@
   <table>
     <tr><th>段</th><th>すること</th><th>見た目が変わる場所</th></tr>
     <tr><td>0. 設計</td><td>この構成を ADR として書き、下の「決めてほしいこと」の答えを焼く</td><td>なし</td></tr>
-    <tr><td>1. ui/ の包み</td><td>List・MetadataList・Stepper・Collapsible・CodeBlock・Kbd の包みを足し、見本帳に並べる。自前の4つを置き換える</td><td>見本帳、disclosure を使う画面</td></tr>
+    <tr><td>1. ui/ の包み</td><td>List・MetadataList・Stepper・Collapsible・CodeBlock・Kbd の包みを足し、見本帳に並べる。自前の5つを置き換える</td><td>見本帳、disclosure を使う画面</td></tr>
     <tr><td>2. 内容部品</td><td>ItemList（check・labeled・flow）、DescriptionList、Code、Trace を ui/ で描き直す。leaf/ の CSS から見た目の宣言を消す</td><td>レポートの本文</td></tr>
     <tr><td>3. Markdown の経路</td><td><code>REPORT_COMPONENTS</code> に List・CodeBlock・Kbd・Collapsible を割り当て、<code>rehypeTaskCheck</code> を印の情報だけに縮める</td><td>レポートの地の文の箇条書きとコード</td></tr>
     <tr><td>4. 画面の残り</td><td>kbd・やり取りの列の role=tab・引数の調整（parameter-knob）を Kbd・TabList・Slider・Switch へ</td><td>入力欄、左の列、ParameterSlider</td></tr>
