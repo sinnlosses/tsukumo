@@ -233,7 +233,7 @@
                             "data-size": "md",
                             "data-elevation": "none",
                             "data-astryx-pressable": "",
-                            "aria-label": "自分で書く/",
+                            "aria-label": "自分で書く",
                             "type": "button"
                           },
                           "children": [

@@ -9,6 +9,7 @@ import { CharacterFace } from "../../../../frame/character-face.tsx"
 import { Button } from "../../../../ui/button/button.tsx"
 import { Heading } from "../../../../ui/heading/heading.tsx"
 import { ArrowRightIcon, HistoryIcon, ListIcon, PencilIcon } from "../../../../ui/icon/icon.tsx"
+import { Kbd } from "../../../../ui/kbd/kbd.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
 import type { WelcomeCard } from "../../domain/welcome-entry-list.ts"
 import { useWelcome, type WelcomeModel } from "./hooks/use-welcome.ts"
@@ -78,7 +79,9 @@ function Card(props: {
         </span>
       )}
       <span className={styles["card-foot"]}>
-        <kbd className={styles["card-key"]}>{index + 1}</kbd>
+        <span className={styles["card-key"]}>
+          <Kbd keys={String(index + 1)} />
+        </span>
         <Button
           variant={top ? "solid-accent" : "outline"}
           size="secondary"
@@ -119,7 +122,9 @@ function Others(props: { readonly model: WelcomeModel; readonly primary: boolean
         <OtherButton primary={primary} onClick={model.onWrite}>
           <PencilIcon />
           自分で書く
-          <kbd className={styles["card-key"]}>/</kbd>
+          <span className={styles["card-key"]}>
+            <Kbd keys="/" />
+          </span>
         </OtherButton>
         <OtherButton primary={false} onClick={model.onPickTask}>
           <ListIcon />
@@ -135,7 +140,9 @@ function Others(props: { readonly model: WelcomeModel; readonly primary: boolean
               <span className={styles["other-phrase"]}>前のやり取り</span>
               <span className={styles["other-phrase"]}>を見る</span>
             </span>
-            <kbd className={styles["card-key"]}>←</kbd>
+            <span className={styles["card-key"]}>
+              <Kbd keys="←" />
+            </span>
           </OtherButton>
         )}
       </div>

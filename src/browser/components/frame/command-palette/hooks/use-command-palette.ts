@@ -15,7 +15,7 @@ import { useRestartRefused, useSession } from "../../../../stores/session.ts"
 import { useSettingsRequest } from "../../../../stores/settings-request.ts"
 import { useTaskBoardRequest } from "../../../../stores/task-board-request.ts"
 import { nowEpochMilliseconds } from "../../../../utils/clock.ts"
-import { SHORTCUT_KEY_LABEL, shortcutOf, type Shortcut } from "../domain/shortcut-key.ts"
+import { SHORTCUT_KEYS, shortcutOf, type Shortcut } from "../domain/shortcut-key.ts"
 
 export type CommandGroup = "action" | "screen" | "setting"
 
@@ -26,7 +26,8 @@ export type PaletteCommand = {
   /** 名前の横に添える行き先（設定の項目の「設定 › ページ名」）。 */
   readonly hint?: string
   readonly group: CommandGroup
-  readonly keyLabel?: string
+  /** `Kbd` の `keys`（`mod+k` のように `+` で区切る）。 */
+  readonly keys?: string
   readonly disabled: boolean
   readonly title?: string
   readonly run: () => void
@@ -202,7 +203,7 @@ function actionCommand(
     id: shortcut,
     label,
     group: "action",
-    keyLabel: SHORTCUT_KEY_LABEL[shortcut],
+    keys: SHORTCUT_KEYS[shortcut],
     disabled: false,
     run,
   }

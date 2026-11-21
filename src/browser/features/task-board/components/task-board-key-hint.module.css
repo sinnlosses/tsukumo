@@ -3,12 +3,6 @@
   font-size: var(--font-label);
   white-space: nowrap;
 }
-.task-board-key-hint kbd {
-  padding: 0 var(--inline-tight);
-  border: 1px solid var(--rule);
-  border-radius: var(--radius-sm);
-  font-family: var(--font-mono);
-}
 /* キーの案内は指で触る画面では読まないので畳む。 */
 @media (max-width: 760px) {
   .task-board-key-hint {

@@ -2,12 +2,13 @@
 
 import type { ReactElement } from "react"
 
+import { Kbd } from "../../../components/ui/kbd/kbd.tsx"
 import styles from "./task-board-key-hint.module.css"
 
 export function TaskBoardKeyHint(): ReactElement {
   return (
     <span className={styles["task-board-key-hint"]}>
-      <kbd>↑↓</kbd> 選ぶ <kbd>⏎</kbd> 頼む <kbd>Esc</kbd> 閉じる
+      <Kbd keys="↑↓" /> 選ぶ <Kbd keys="⏎" /> 頼む <Kbd keys="Esc" /> 閉じる
     </span>
   )
 }

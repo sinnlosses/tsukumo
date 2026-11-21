@@ -17,12 +17,12 @@ export type ShortcutKeyEvent = {
   readonly target?: EventTarget
 }
 
-export const SHORTCUT_KEY_LABEL = {
-  "command-palette": "⌘K",
+export const SHORTCUT_KEYS = {
+  "command-palette": "mod+k",
   composer: "/",
-  "session-switcher": "⌘J",
-  "task-board": "⌘E",
-  settings: "⌘,",
+  "session-switcher": "mod+j",
+  "task-board": "mod+e",
+  settings: "mod+,",
 } satisfies Record<Shortcut, string>
 
 const COMMAND_KEY: ReadonlyMap<string, Shortcut> = new Map([

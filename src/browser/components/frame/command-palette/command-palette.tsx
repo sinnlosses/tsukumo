@@ -5,6 +5,7 @@ import { Search } from "lucide-react"
 import { useId, useState, type KeyboardEvent, type ReactElement } from "react"
 
 import { Dialog } from "../../ui/dialog/dialog.tsx"
+import { Kbd } from "../../ui/kbd/kbd.tsx"
 import { Surface } from "../../ui/surface/surface.tsx"
 import styles from "./command-palette.module.css"
 import {
@@ -149,8 +150,10 @@ function CommandPaletteBody(props: { readonly model: CommandPaletteModel }): Rea
                     {command.hint !== undefined && (
                       <span className={styles["command-palette-hint"]}>{command.hint}</span>
                     )}
-                    {command.keyLabel !== undefined && (
-                      <kbd className={styles["command-palette-key"]}>{command.keyLabel}</kbd>
+                    {command.keys !== undefined && (
+                      <span className={styles["command-palette-key"]}>
+                        <Kbd keys={command.keys} />
+                      </span>
                     )}
                   </div>
                 ))}

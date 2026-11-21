@@ -4,6 +4,7 @@ import type { ReactElement } from "react"
 
 import { Button } from "../../../../ui/button/button.tsx"
 import { HStack } from "../../../../ui/h-stack/h-stack.tsx"
+import { Kbd } from "../../../../ui/kbd/kbd.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
 import styles from "./dispatch.module.css"
 import type { ComposerBand } from "./domain/composer-band.ts"
@@ -138,8 +139,8 @@ const RESTART_LABEL = "新しく始める"
 /** 口に添えるキーの印。見える字だけで、口の名前には入れない。 */
 function JumpKeyMark(): ReactElement {
   return (
-    <kbd className={styles["dispatch-band-key"]} aria-hidden="true">
-      {JUMP_KEY}
-    </kbd>
+    <span className={styles["dispatch-band-key"]} aria-hidden="true">
+      <Kbd keys={JUMP_KEY} />
+    </span>
   )
 }

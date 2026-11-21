@@ -99,9 +99,6 @@
 .command-palette-key {
   flex: none;
   color: color-mix(in srgb, var(--ink-quiet) 70%, transparent);
-  font-family: var(--font-sans);
-  font-size: var(--font-label);
-  letter-spacing: 0.08em;
 }
 .command-palette-row[aria-selected="true"] .command-palette-key {
   color: var(--ink-quiet);

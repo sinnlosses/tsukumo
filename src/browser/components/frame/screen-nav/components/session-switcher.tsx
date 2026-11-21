@@ -13,6 +13,7 @@ import type { CharacterFaceInfo } from "../../../../domain/character-face.ts"
 import { Button } from "../../../ui/button/button.tsx"
 import { Dialog } from "../../../ui/dialog/dialog.tsx"
 import { Heading } from "../../../ui/heading/heading.tsx"
+import { Kbd } from "../../../ui/kbd/kbd.tsx"
 import { Surface } from "../../../ui/surface/surface.tsx"
 import { Text } from "../../../ui/text/text.tsx"
 import { CharacterFace } from "../../character-face.tsx"
@@ -269,13 +270,13 @@ function SessionSwitcherBody(props: SessionSwitcherProps): ReactElement {
       </div>
       <div className={styles["session-switcher-hints"]}>
         <Text element="span" size="inherit" tone="inherit" weight="inherit" className="">
-          <kbd>↑</kbd> <kbd>↓</kbd> 選ぶ
+          <Kbd keys="↑" /> <Kbd keys="↓" /> 選ぶ
         </Text>
         <Text element="span" size="inherit" tone="inherit" weight="inherit" className="">
-          <kbd>Enter</kbd> 切り替える
+          <Kbd keys="Enter" /> 切り替える
         </Text>
         <Text element="span" size="inherit" tone="inherit" weight="inherit" className="">
-          <kbd>Esc</kbd> 閉じる
+          <Kbd keys="Esc" /> 閉じる
         </Text>
       </div>
     </Surface>

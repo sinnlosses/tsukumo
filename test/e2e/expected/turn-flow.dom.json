@@ -1540,12 +1540,29 @@
                               "children": [
                                 "お願いへ",
                                 {
-                                  "tag": "kbd",
+                                  "tag": "span",
                                   "attributes": {
                                     "aria-hidden": "true"
                                   },
                                   "children": [
-                                    "↑"
+                                    {
+                                      "tag": "span",
+                                      "attributes": {
+                                        "role": "img",
+                                        "aria-label": "↑"
+                                      },
+                                      "children": [
+                                        {
+                                          "tag": "kbd",
+                                          "attributes": {
+                                            "aria-hidden": "true"
+                                          },
+                                          "children": [
+                                            "↑"
+                                          ]
+                                        }
+                                      ]
+                                    }
                                   ]
                                 },
                                 {
