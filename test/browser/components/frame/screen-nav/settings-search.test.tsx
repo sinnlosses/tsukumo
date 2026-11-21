@@ -44,10 +44,11 @@ describe("設定の探す欄", () => {
     expect(within(dialog()).queryByRole("region", { name: "探した結果" })).toBeNull()
     expect(within(dialog()).getByRole("region", { name: "演出" })).toBeInstanceOf(HTMLElement)
     expect(useSettingsRequest.getState().faceKey).toBe("reveal")
-    const label = [...dialog().querySelectorAll("label")].find(
-      (node) => node.textContent === "動き",
+    const row = [...dialog().querySelectorAll<HTMLElement>(".screen-nav-settings-row")].find(
+      (node) =>
+        node.querySelector(".screen-nav-settings-name > :first-child")?.textContent === "動き",
     )
-    expect(label?.parentElement?.parentElement?.dataset["found"]).toBe("true")
+    expect(row?.dataset["found"]).toBe("true")
     expect(scrolled).toHaveBeenCalledWith({ block: "center" })
   })
 

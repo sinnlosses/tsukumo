@@ -46,9 +46,11 @@ export function ScreenNavSettingsLookFace(props: ScreenNavSettingsProps): ReactE
         ))}
       </div>
       <div role="group" aria-labelledby={`${fieldId}-custom`}>
-        <p id={`${fieldId}-custom`} className={styles["custom-heading"]}>
+        <p id={`${fieldId}-custom`} className={rowStyles["screen-nav-settings-group-heading"]}>
           カスタムの色
-          <span className={styles["custom-note"]}>地・領域・字の3色を 16 進で決める</span>
+          <span className={rowStyles["screen-nav-settings-group-note"]}>
+            地・領域・字の3色を 16 進で決める
+          </span>
         </p>
         {settings.colors.map((color) => (
           <ScreenNavSettingsRow

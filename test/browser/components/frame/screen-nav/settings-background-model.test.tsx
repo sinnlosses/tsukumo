@@ -62,27 +62,13 @@ function select(dialog: HTMLElement, label: string): HTMLSelectElement {
   )
 }
 
-function backgroundFold(dialog: HTMLElement): HTMLDetailsElement {
-  return typedElement(
-    within(dialog)
-      .getByText(/^裏方のモデル\s*画面の小さな文を作るモデル/)
-      .closest("details"),
-    HTMLDetailsElement,
-    "裏方のモデルの区画",
-  )
-}
-
 describe("設定の歯車（裏方のモデル）", () => {
-  it("既定のままなら畳まれ、既定と違う値があれば開いて出る", () => {
-    const folded = openedDialog([], INITIAL_SESSION_STATE.backgroundModels)
-    expect(backgroundFold(folded).open).toBe(false)
-    cleanup()
+  it("既定のままでも畳まずに、4つの選択を群の中に出す", () => {
+    const dialog = openedDialog([], INITIAL_SESSION_STATE.backgroundModels)
 
-    const opened = openedDialog([], {
-      ...INITIAL_SESSION_STATE.backgroundModels,
-      welcomeGreeting: "haiku",
-    })
-    expect(backgroundFold(opened).open).toBe(true)
+    expect(dialog.querySelector("details")).toBeNull()
+    const group = within(dialog).getByRole("group", { name: /^裏方のモデル/u })
+    expect(within(group).getAllByRole("combobox")).toHaveLength(4)
   })
 
   it("届いた値を役ごとに出す", () => {

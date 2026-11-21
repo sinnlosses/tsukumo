@@ -39,19 +39,6 @@
   border-radius: var(--radius-sm);
   font-style: normal;
 }
-.custom-heading {
-  display: flex;
-  align-items: baseline;
-  gap: var(--inline-group);
-  margin: 0;
-  padding-block: var(--stack-block);
-  font-weight: 600;
-}
-.custom-note {
-  color: var(--ink-quiet);
-  font-size: var(--font-label);
-  font-weight: 400;
-}
 /* 操作子の列。幅を決めて、色見本・つまみ・読み出しの左端を行どうしでそろえる。
    ↺ の無い行（操作子が行の最後の子）は、↺ の幅（28px）と行の間の分だけ列を右へ伸ばし、↺ のある行と左端をそろえる。 */
 .control {

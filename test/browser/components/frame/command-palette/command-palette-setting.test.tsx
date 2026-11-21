@@ -5,6 +5,7 @@ import { CommandPalette } from "../../../../../src/browser/components/frame/comm
 import { ScreenNav } from "../../../../../src/browser/components/frame/screen-nav/screen-nav.tsx"
 import { useSettingsRequest } from "../../../../../src/browser/stores/settings-request.ts"
 import { INITIAL_SESSION_STATE } from "../../../../../src/shared/session/session-state.ts"
+import { typedElement } from "../../../../typed-element.ts"
 import { EMPTY_NAV_DRAWER_SLOTS } from "../../../nav-drawer-slot.tsx"
 import { stubPhoneWidth } from "../../../phone-width.ts"
 import { queryClientWrapper } from "../../../query-client.tsx"
@@ -68,8 +69,7 @@ describe("コマンドパレットの設定の項目", () => {
     expect(within(dialog).getByRole("button", { name: "演出" }).getAttribute("aria-current")).toBe(
       "page",
     )
-    const label = [...dialog.querySelectorAll("label")].find((node) => node.textContent === "動き")
-    expect(label?.parentElement?.parentElement?.dataset["found"]).toBe("true")
+    expect(settingRow(dialog, "動き").dataset["found"]).toBe("true")
     expect(scrolled).toHaveBeenCalledWith({ block: "center" })
   })
 
@@ -82,8 +82,19 @@ describe("コマンドパレットの設定の項目", () => {
     })
 
     const dialog = screen.getByRole("dialog", { name: "設定" })
-    const label = [...dialog.querySelectorAll("label")].find((node) => node.textContent === "動き")
-    expect(label?.parentElement?.parentElement?.dataset["found"]).toBeUndefined()
+    expect(settingRow(dialog, "動き").dataset["found"]).toBeUndefined()
     expect(scrolled).toHaveBeenCalledWith({ block: "center" })
   })
 })
+
+/** 設定の面の、名前が name の行。 */
+function settingRow(dialog: HTMLElement, name: string): HTMLElement {
+  return typedElement(
+    [...dialog.querySelectorAll(".screen-nav-settings-row")].find(
+      (node) =>
+        node.querySelector(".screen-nav-settings-name > :first-child")?.textContent === name,
+    ),
+    HTMLElement,
+    `設定の行「${name}」`,
+  )
+}

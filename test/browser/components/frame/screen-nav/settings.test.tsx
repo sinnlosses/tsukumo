@@ -101,26 +101,30 @@ function openFace(name: string): void {
   }
 }
 
+const ROW_NAME = "section .screen-nav-settings-name > :first-child"
+
 function faceLabels(): (string | null)[] {
-  return [...openedSettingsDialog().querySelectorAll("section label")].map(
-    (node) => node.textContent,
-  )
+  return [...openedSettingsDialog().querySelectorAll(ROW_NAME)].map((node) => node.textContent)
 }
 
-/** 面の中の操作子（ラベルは `<label for>` で結んである）。 */
+/** 面の中の操作子。入力欄は名前の `<label for>` が結び、選択の口は同じ行に置く。 */
 function controlOf<T extends HTMLElement>(
   label: string,
   ctor: new () => T,
   description: string,
 ): T {
-  const labelNode = typedElement(
-    [...openedSettingsDialog().querySelectorAll("label")].find(
+  const nameNode = typedElement(
+    [...openedSettingsDialog().querySelectorAll(ROW_NAME)].find(
       (node) => node.textContent === label,
     ),
-    HTMLLabelElement,
-    `ラベル「${label}」`,
+    HTMLElement,
+    `行の名前「${label}」`,
   )
-  return typedElement(document.getElementById(labelNode.htmlFor), ctor, description)
+  const control =
+    nameNode instanceof HTMLLabelElement
+      ? document.getElementById(nameNode.htmlFor)
+      : nameNode.closest(".screen-nav-settings-row")?.querySelector("select")
+  return typedElement(control, ctor, description)
 }
 
 function colorInput(label: string): HTMLInputElement {
@@ -526,9 +530,9 @@ describe("設定の歯車（新しいセッションの既定の effort）", () 
   })
 })
 
-/** 開いている面の `<select>`（ラベルは `<label for>` で結んである）。 */
+/** 開いている面の、名前が label の行の `<select>`。 */
 function defaultSelect(label: string): HTMLSelectElement {
-  return controlOf(label, HTMLSelectElement, `ラベル「${label}」が結ぶ <select>`)
+  return controlOf(label, HTMLSelectElement, `行「${label}」の <select>`)
 }
 
 // 書き上げる演出の速さ（docs/architecture/screen-design.md「設定の置き場所」）。覚えるのはサーバで、表示は届いた値に従う。

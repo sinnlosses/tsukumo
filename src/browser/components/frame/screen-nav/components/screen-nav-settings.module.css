@@ -32,9 +32,19 @@
 .screen-nav-settings-heading ~ .screen-nav-settings-heading {
   margin-top: var(--space-md);
 }
-/* 畳んだ裏方のモデルの1行。上の群との間を空ける。 */
-.screen-nav-settings-background {
-  padding-top: var(--stack-block);
+/* 面の中の群（カスタムの色・裏方のモデル）の見出しと、横に添える注。 */
+.screen-nav-settings-group-heading {
+  display: flex;
+  align-items: baseline;
+  gap: var(--inline-group);
+  margin: 0;
+  padding-block: var(--stack-block);
+  font-weight: 600;
+}
+.screen-nav-settings-group-note {
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+  font-weight: 400;
 }
 /* ラベルと操作子の2列。並べ・間隔・揃えは `HStack` が持つ。 */
 .screen-nav-settings-row {
@@ -108,7 +118,7 @@
   min-width: 132px;
 }
 /* 名前は説明より一段大きく中太にして、色だけに頼らず見出しと説明を分ける。 */
-.screen-nav-settings-table .screen-nav-settings-name > label {
+.screen-nav-settings-table .screen-nav-settings-name > :first-child {
   font-size: var(--font-subheading);
   font-weight: 500;
 }
