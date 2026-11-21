@@ -33,10 +33,6 @@ export function listMarkdown(block: ListBlock): string {
 const FLOW_ROW_MAX_STEPS = 5
 const FLOW_ROW_MAX_CHARS = 50
 
-export function hasFlowDetail(item: ListBlock["items"][number]): boolean {
-  return item.source.trim() !== "" || item.branch.trim() !== ""
-}
-
 /** 段が少なく短く、出どころも分岐も無い `flow` は横の箱の列（`flow-row`）に並べる。 */
 export function flowFitsRow(items: ListBlock["items"]): boolean {
   return (
@@ -46,6 +42,10 @@ export function flowFitsRow(items: ListBlock["items"]): boolean {
         !hasFlowDetail(item) && item.label.trim().length + item.text.length <= FLOW_ROW_MAX_CHARS,
     )
   )
+}
+
+function hasFlowDetail(item: ListBlock["items"][number]): boolean {
+  return item.source.trim() !== "" || item.branch.trim() !== ""
 }
 
 /**

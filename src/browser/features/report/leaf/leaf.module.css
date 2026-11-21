@@ -12,6 +12,23 @@
 @import "./selection-port.css";
 @import "./pending-part.css";
 
+/* チェックの並びの行頭の印。済みは成功の色、未了は控えめな色（線の色は Icon が currentColor で読む）。 */
+.check-mark-done {
+  display: inline-flex;
+  color: var(--state-ok);
+}
+.check-mark-open {
+  display: inline-flex;
+  color: var(--ink-quiet);
+}
+
+/* 流れの段の本文の下に添える出どころ。 */
+.flow-source {
+  display: block;
+  font-size: var(--font-label);
+  color: var(--ink-quiet);
+}
+
 /* 引用の上下のあき。 */
 .quote-block {
   padding-block: var(--report-block-gap);

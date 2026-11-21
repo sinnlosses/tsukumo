@@ -1,22 +1,20 @@
 // `ItemList`（箇条・番号・チェック・流れ・カード・名前つきの並び）を Markdown に戻さず直接描く。
 
-import clsx from "clsx"
 import type { ReactElement, ReactNode } from "react"
 
 import type { A2uiReportComponent } from "../../../../shared/report/a2ui-report-catalog.ts"
 import type { LeafValue } from "../../../../shared/report/report-leaf-value.ts"
-import { flowFitsRow, hasFlowDetail } from "../domain/report-list-markdown.ts"
+import { Badge } from "../../../components/ui/badge/badge.tsx"
+import { CircleCheckIcon, CircleIcon } from "../../../components/ui/icon/icon.tsx"
+import { List, ListItem } from "../../../components/ui/list/list.tsx"
+import { Step, Stepper } from "../../../components/ui/stepper/stepper.tsx"
+import { flowFitsRow } from "../domain/report-list-markdown.ts"
 import { FoldedList, InlineCodeText, InlineMarkdown, textLeafClassNames } from "../markdown.tsx"
+import styles from "./leaf.module.css"
 import { LeafFold, ReportLeafFrame } from "./report-leaf-frame.tsx"
 
 type ItemListPart = Extract<A2uiReportComponent, { readonly component: "ItemList" }>
 type Item = ItemListPart["items"][number]
-
-const BRANCH_TONE_CLASS_NAMES = {
-  ok: textLeafClassNames.flowBranchOk,
-  warn: textLeafClassNames.flowBranchWarn,
-  ng: textLeafClassNames.flowBranchNg,
-} as const
 
 export function ItemListLeaf(props: {
   readonly part: A2uiReportComponent
@@ -44,14 +42,8 @@ function ItemListBody(props: { readonly part: ItemListPart }): ReactElement {
       return <CardList items={items} />
     case "bullet":
     case "ordered":
-    case "check": {
-      const list = <PlainList style={style} items={items} />
-      return items.some((item) => item.label.trim() !== "") ? (
-        <div className={textLeafClassNames.labeledList}>{list}</div>
-      ) : (
-        list
-      )
-    }
+    case "check":
+      return <PlainList style={style} items={items} />
   }
 }
 
@@ -59,106 +51,83 @@ function PlainList(props: {
   readonly style: "bullet" | "ordered" | "check"
   readonly items: readonly Item[]
 }): ReactElement {
-  const labeled = props.items.some((item) => item.label.trim() !== "")
   const entries = props.items.map((item, index) => (
-    <li
+    <ListItem
       key={`${String(index)}:${item.text}`}
-      className={
-        props.style === "check" ? clsx("task-list-item", textLeafClassNames.taskItem) : undefined
+      mark={
+        props.style === "check" ? (
+          <CheckMark done={item.done} />
+        ) : props.style === "bullet" ? (
+          <span aria-hidden="true">•</span>
+        ) : undefined
       }
-    >
-      {props.style === "check" && (
-        <>
-          <span
-            className={clsx(
-              textLeafClassNames.taskCheck,
-              item.done && textLeafClassNames.taskCheckDone,
-            )}
-          >
-            {item.done && "✓"}
-          </span>{" "}
-        </>
-      )}
-      {labeled ? (
-        <>
-          <span className={textLeafClassNames.listLabel}>
-            <InlineMarkdown text={item.label} />
-          </span>
-          <span className={textLeafClassNames.listText}>
-            <InlineMarkdown text={item.text} />
-          </span>
-        </>
-      ) : (
-        <InlineMarkdown text={item.text} />
-      )}
-    </li>
+      label={<InlineMarkdown text={item.label.trim() !== "" ? item.label : item.text} />}
+      description={item.label.trim() !== "" ? <InlineMarkdown text={item.text} /> : undefined}
+    />
   ))
+  const numbered = props.style === "ordered"
   if (props.style === "check") {
-    return <ul className="contains-task-list">{entries}</ul>
+    return (
+      <List hasDividers={false} numbered={false}>
+        {entries}
+      </List>
+    )
   }
   return (
     <FoldedList
-      renderList={(shown: ReactNode) =>
-        props.style === "ordered" ? <ol>{shown}</ol> : <ul>{shown}</ul>
-      }
+      renderList={(shown: ReactNode) => (
+        <List hasDividers={false} numbered={numbered}>
+          {shown}
+        </List>
+      )}
     >
       {entries}
     </FoldedList>
   )
 }
 
+function CheckMark(props: { readonly done: boolean }): ReactElement {
+  return props.done ? (
+    <span className={styles["check-mark-done"]}>
+      <CircleCheckIcon />
+    </span>
+  ) : (
+    <span className={styles["check-mark-open"]}>
+      <CircleIcon />
+    </span>
+  )
+}
+
 function FlowList(props: { readonly items: readonly Item[] }): ReactElement {
-  const lastIndex = props.items.length - 1
-  const row = flowFitsRow(props.items)
-  const detailed = props.items.some(hasFlowDetail)
   return (
-    <ol
-      className={clsx(
-        textLeafClassNames.flow,
-        row && textLeafClassNames.flowRow,
-        !row && detailed && textLeafClassNames.flowDetailed,
-      )}
-      aria-label="流れ"
+    <Stepper
+      activeStep={-1}
+      label="流れ"
+      orientation={flowFitsRow(props.items) ? "horizontal" : "vertical"}
     >
       {props.items.map((item, index) => (
-        <li key={`${String(index)}:${item.text}`} className={textLeafClassNames.flowStep}>
-          <span className={textLeafClassNames.flowNumber} aria-hidden="true">
-            {String(index + 1)}
-          </span>
-          {index !== lastIndex && (
-            <span className={textLeafClassNames.flowRail} aria-hidden="true" />
-          )}
-          <span>
-            {item.label.trim() !== "" && (
-              <b>
-                <InlineCodeText text={item.label} />
-              </b>
-            )}
-            <InlineCodeText text={item.text} />
-            {item.source.trim() !== "" && (
-              <span className={textLeafClassNames.flowSource}>
-                <InlineCodeText text={item.source} />
-              </span>
-            )}
-            {item.branch.trim() !== "" && (
-              <span
-                className={clsx(
-                  textLeafClassNames.flowBranch,
-                  BRANCH_TONE_CLASS_NAMES[item.branchTone],
-                )}
-              >
+        <Step
+          key={`${String(index)}:${item.text}`}
+          step={index}
+          label={item.label}
+          alwaysNumbered
+          end={
+            item.branch.trim() !== "" && (
+              <Badge tone={item.branchTone} shape="square" className={styles["verdict-badge"]}>
                 <InlineCodeText text={item.branch} />
-              </span>
-            )}
-          </span>
-          {row && index !== lastIndex && (
-            <span className={textLeafClassNames.flowArrow} aria-hidden="true">
-              →
+              </Badge>
+            )
+          }
+        >
+          <InlineCodeText text={item.text} />
+          {item.source.trim() !== "" && (
+            <span className={styles["flow-source"]}>
+              <InlineCodeText text={item.source} />
             </span>
           )}
-        </li>
+        </Step>
       ))}
-    </ol>
+    </Stepper>
   )
 }
 
