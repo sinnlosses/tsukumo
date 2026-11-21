@@ -26,10 +26,20 @@ type UnitPiece = Offset & { readonly vars?: Readonly<Record<string, number | str
 /** 普段のエフェクトより大きく出す、ターンの終わり方。 */
 const LOUD: ReadonlySet<SpeechManpu | EndingManpu> = new Set(["stars", "shock"])
 
-const FINISH_STARS: readonly Piece[] = [
-  { x: -90, y: 36, vars: { "--x": "calc(var(--pic-w) * -0.3)", "--dx": "-40px", "--dy": "-90px" } },
-  { x: 90, y: 36, vars: { "--x": "calc(var(--pic-w) * 0.3)", "--dx": "40px", "--dy": "-100px" } },
-  { x: 108, y: 36, vars: { "--x": "calc(var(--pic-w) * 0.36)", "--dx": "20px", "--dy": "-40px" } },
+const FINISH_HALOS: readonly UnitPiece[] = [
+  { x: 0, y: -10, vars: { "--d": "0s" } },
+  { x: 0, y: -10, vars: { "--d": "0.2s" } },
+]
+const FINISH_BEAMS: readonly { readonly degree: number; readonly length: number }[] = Array.from(
+  { length: 12 },
+  (_, i) => ({ degree: i * 30 + 15, length: i % 2 === 1 ? 44 : 72 }),
+)
+const FINISH_SPARKLES: readonly UnitPiece[] = [
+  { x: -86, y: -56, vars: { "--s": 38, "--d": "0.2s" } },
+  { x: 92, y: -70, vars: { "--s": 30, "--d": "0.32s" } },
+  { x: 76, y: 40, vars: { "--s": 22, "--d": "0.44s" } },
+  { x: -72, y: 46, vars: { "--s": 20, "--d": "0.55s" } },
+  { x: 8, y: -110, vars: { "--s": 26, "--d": "0.38s" } },
 ]
 const SHOCKS: readonly Piece[] = [
   { x: 60, y: -24 },
@@ -95,24 +105,12 @@ const DRIPS: readonly UnitPiece[] = [
   { x: 44, y: 96, vars: { "--d": "0.8s" } },
 ]
 const PETAL_COLORS = ["petal", "note", "accent", "star"] as const
-const PETALS: readonly (UnitPiece & { readonly color: (typeof PETAL_COLORS)[number] })[] = [
-  0, 1, 2, 3, 4, 5, 6, 7,
-].map((i) => {
-  const angle = -Math.PI / 2 + (i / 7 - 0.5) * Math.PI * 1.2
-  const distance = (55 + (i % 4) * 14) * 0.75
-  return {
-    x: 0,
-    y: -40,
-    color: PETAL_COLORS[i % PETAL_COLORS.length] ?? "petal",
-    vars: {
-      "--dx": Math.round(Math.cos(angle) * distance * 1.3),
-      "--dy": Math.round(Math.sin(angle) * distance),
-      "--rot": `${(i % 2 === 1 ? 1 : -1) * (240 + i * 20)}deg`,
-      "--d": `${(i % 5) * 0.04}s`,
-    },
-  }
-})
+type PetalPiece = UnitPiece & { readonly color: (typeof PETAL_COLORS)[number] }
+
+const PETALS = petalPieces(8, 1.2, 0.75)
+const FINISH_PETALS = petalPieces(20, 1.9, 1.5)
 const BLOOM: Offset = { x: 0, y: -40 }
+const FINISH_BLOOM: UnitPiece = { x: 0, y: -40, vars: { "--bloom": "1.8" } }
 const BUBBLES: readonly UnitPiece[] = [
   { x: 40, y: -30, vars: { "--s": 26, "--dx": -10, "--dy": -90, "--d": "0s" } },
   { x: 66, y: -10, vars: { "--s": 17, "--dx": 16, "--dy": -110, "--d": "0.3s" } },
@@ -181,6 +179,25 @@ export function Manpu({
   )
 }
 
+/** 花びらを頭の上から弧に散らす。`spread` は弧の広さ（π の倍数）、`reach` は飛ぶ距離の倍率。 */
+function petalPieces(count: number, spread: number, reach: number): readonly PetalPiece[] {
+  return Array.from({ length: count }, (_, i) => {
+    const angle = -Math.PI / 2 + (i / (count - 1) - 0.5) * Math.PI * spread
+    const distance = (55 + (i % 4) * 14) * reach
+    return {
+      x: 0,
+      y: -40,
+      color: PETAL_COLORS[i % PETAL_COLORS.length] ?? "petal",
+      vars: {
+        "--dx": Math.round(Math.cos(angle) * distance * 1.3),
+        "--dy": Math.round(Math.sin(angle) * distance),
+        "--rot": `${(i % 2 === 1 ? 1 : -1) * (240 + i * 20)}deg`,
+        "--d": `${(i % 5) * 0.04}s`,
+      },
+    }
+  })
+}
+
 function pieceStyle({ x, y, vars }: Piece): CSSProperties {
   return { "--x": `${x}px`, "--y": `${y}px`, ...vars }
 }
@@ -229,11 +246,43 @@ function pieces(manpu: SpeechManpu | EndingManpu): ReactElement {
     case "stars":
       return (
         <>
-          {FINISH_STARS.map((piece) => (
-            <span key={piece.x} className={styles["manpu-finish-star"]} style={pieceStyle(piece)}>
-              ★
+          <span className={styles["manpu-gloom"]}>
+            <span className={styles["manpu-finish-glow"]} />
+            <span className={styles["manpu-origin"]}>
+              {FINISH_HALOS.map((piece) => (
+                <span
+                  key={piece.vars?.["--d"]}
+                  className={styles["manpu-halo"]}
+                  style={unitStyle(piece)}
+                />
+              ))}
+              {FINISH_BEAMS.map(({ degree, length }) => (
+                <span
+                  key={degree}
+                  className={styles["manpu-beam-arm"]}
+                  style={{ "--r": `${degree}deg`, "--x": "0px", "--y": "calc(var(--u) * -10)" }}
+                >
+                  <span className={styles["manpu-beam"]} style={{ "--len": String(length) }} />
+                </span>
+              ))}
+              {FINISH_SPARKLES.map((piece) => (
+                <Star
+                  key={piece.x}
+                  className={styles["manpu-sparkle"] ?? ""}
+                  style={unitStyle(piece)}
+                />
+              ))}
+              <span className={styles["manpu-bloom"]} style={unitStyle(FINISH_BLOOM)} />
+              {FINISH_PETALS.map((piece) => (
+                <span
+                  key={piece.vars?.["--rot"]}
+                  className={styles["manpu-petal"]}
+                  data-color={piece.color}
+                  style={unitStyle(piece)}
+                />
+              ))}
             </span>
-          ))}
+          </span>
         </>
       )
     case "shock":

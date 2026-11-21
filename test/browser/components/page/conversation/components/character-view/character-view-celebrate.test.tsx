@@ -45,26 +45,26 @@ function closed(report: ReturnType<typeof reportRecord>, closedAgoMs = 0): Parti
   }
 }
 
-const sparks = (): NodeListOf<Element> => document.querySelectorAll("[data-celebrate-spark]")
+const sparks = (): NodeListOf<Element> => document.querySelectorAll('[data-manpu="stars"]')
 const stageMotion = (): string | null | undefined =>
   document.querySelector("[data-character-stage] [data-motion]")?.getAttribute("data-motion")
 
-describe("CharacterView（祝う光）", () => {
-  it("完了で閉じ、最後の report が finished のタスクなら、舞台の中に光が1つ出る", () => {
+describe("CharacterView（祝光）", () => {
+  it("完了で閉じ、最後の report が finished のタスクなら、祝う動きとともに祝光が1つ出る", () => {
     renderCharacterView(closed(reportRecord("架空", { task: FINISHED_TASK })))
 
     expect(sparks()).toHaveLength(1)
-    expect(sparks()[0]?.closest("[data-character-stage]")).not.toBeNull()
     expect(sparks()[0]?.getAttribute("aria-hidden")).toBe("true")
     expect(stageMotion()).toBe("celebrate")
   })
 
-  it("完了の星が光と並んで、普段のエフェクトのように控えめにせず1回だけ出る。動きを減らす設定では出ない", () => {
+  it("祝光は光の星5つと花びら20枚で、普段のエフェクトのように控えめにせず1回だけ出る。動きを減らす設定では出ない", () => {
     renderCharacterView(closed(reportRecord("架空", { task: FINISHED_TASK })))
 
-    expect(document.querySelectorAll('[data-manpu="stars"]')).toHaveLength(1)
-    expect(document.querySelector('[data-manpu="stars"]')?.getAttribute("data-calm")).toBe("false")
     expect(sparks()).toHaveLength(1)
+    expect(sparks()[0]?.getAttribute("data-calm")).toBe("false")
+    expect(sparks()[0]?.querySelectorAll("svg")).toHaveLength(5)
+    expect(sparks()[0]?.querySelectorAll("[data-color]")).toHaveLength(20)
     cleanup()
 
     stubPhoneWidth(true)

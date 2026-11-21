@@ -3,7 +3,6 @@
 // セリフのログ（<SpeechLog>）の床にも同じ立ち絵を立たせるので、立ち絵と話し手の名前はここから渡す。
 //
 // 立ち絵の素材（URL）が無いときは `<Portrait>` を出さない。
-// 立ち絵の動きが `celebrate` のあいだだけ、舞台の中に光（<CelebrateSpark>）を足す。
 //
 // 狭い画面（760px 以下）では立ち絵の代わりに `<PhoneBalloon>`（顔と最新の1件）を出し、そこからセリフのログを開く（どちらを出すかは CSS の `@media`）。
 
@@ -12,7 +11,6 @@ import type { ReactElement } from "react"
 import { Portrait } from "../../../../frame/portrait.tsx"
 import { HStack } from "../../../../ui/h-stack/h-stack.tsx"
 import { VStack } from "../../../../ui/v-stack/v-stack.tsx"
-import { CelebrateSpark } from "./celebrate-spark.tsx"
 import styles from "./character-view.module.css"
 import type { CharacterViewModel } from "./hooks/use-character-view.ts"
 import { ItemSeats } from "./item-seat-list.tsx"
@@ -89,7 +87,6 @@ export function PresentationalCharacterView({
         >
           {stagePortrait}
         </HStack>
-        {portraitUrl !== undefined && motion === "celebrate" && <CelebrateSpark />}
         {portraitUrl !== undefined && manpu.kind === "shown" && (
           <Manpu key={manpu.at} manpu={manpu.manpu} faceAt={manpu.faceAt} />
         )}

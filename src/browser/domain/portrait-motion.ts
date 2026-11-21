@@ -168,7 +168,7 @@ export type EndingManpuShown =
   | { readonly kind: "none" }
   | { readonly kind: "shown"; readonly manpu: EndingManpu; readonly at: number }
 
-/** 終わり方のエフェクトを出す窓（ミリ秒）。いちばん長い答え待ちの札（1.8 秒）より長く取り、開き直した画面で古い終わり方を再生しない。 */
+/** 終わり方のエフェクトを出す窓（ミリ秒）。いちばん長い祝光の花吹雪（約2秒）より長く取り、開き直した画面で古い終わり方を再生しない。 */
 const ENDING_MANPU_WINDOW_MS = 3000
 
 /**

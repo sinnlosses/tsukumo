@@ -24,30 +24,12 @@
   visibility: visible;
 }
 /* 部品の中心を点に合わせるときは、外の余白ではなく半分の幅と高さ（--hw・--hh）を渡す */
-.manpu > * {
+.manpu > *,
+.manpu-origin > * {
   position: absolute;
   left: calc(var(--x) - var(--hw, 0px));
   top: calc(var(--y) - var(--hh, 0px));
   opacity: 0;
-}
-
-@keyframes manpu-pop {
-  0% {
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(0.2) rotate(-20deg);
-  }
-  25% {
-    opacity: 1;
-    transform: translate(calc(-50% + var(--dx) * 0.6), calc(-50% + var(--dy) * 0.6)) scale(1.15)
-      rotate(8deg);
-  }
-  70% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-    transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1) rotate(0);
-  }
 }
 
 /* ふむ: 思索の輪。光の粒が2つ昇り、細い輪が描かれ、輪の上を3つの粒が巡る */
@@ -381,6 +363,14 @@
   overflow: hidden;
   opacity: 1;
 }
+/* 祝光の部品は、領域で切る箱の中の顔の位置（点）から距離で置く */
+.manpu-origin {
+  position: absolute;
+  left: calc(var(--face-x) - var(--gloom-left));
+  top: calc(var(--face-y) - var(--gloom-top));
+  width: 0;
+  height: 0;
+}
 .manpu-gloom-shade {
   position: absolute;
   inset: 0;
@@ -474,10 +464,11 @@
 
 /* わくわく: 花吹雪。頭の上でやわらかい光がふくらみ、花びらが弧を描いて舞い落ちる */
 .manpu-bloom {
-  width: calc(var(--u) * 120);
-  height: calc(var(--u) * 120);
-  --hw: calc(var(--u) * 60);
-  --hh: calc(var(--u) * 60);
+  --bloom: 1;
+  width: calc(var(--u) * 120 * var(--bloom));
+  height: calc(var(--u) * 120 * var(--bloom));
+  --hw: calc(var(--u) * 60 * var(--bloom));
+  --hh: calc(var(--u) * 60 * var(--bloom));
   border-radius: 50%;
   background: radial-gradient(
     closest-side,
@@ -583,16 +574,93 @@
   }
 }
 
-/* タスクの完了: 頭の左右から星を3つ、外へ跳ねさせる。光（celebrate-spark）と並べて出す */
-.manpu-finish-star {
-  font:
-    900 30px/1 "Hiragino Maru Gothic ProN",
-    system-ui,
-    sans-serif;
-  color: var(--manpu-star);
-  -webkit-text-stroke: 2px var(--manpu-star-line);
-  paint-order: stroke fill;
-  animation: manpu-pop 1.2s cubic-bezier(0.2, 0.9, 0.3, 1.3) 1 forwards;
+/* タスクの完了（祝光）: すべて領域で切る箱の中で、背景が明るみ、光の輪が2重に広がり、光の筋が12本伸び、
+   光の星（manpu-sparkle）と花吹雪（manpu-bloom・manpu-petal）が一斉に弾ける */
+.manpu-finish-glow {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    60% 50% at 50% 30%,
+    color-mix(in srgb, var(--manpu-glow-gold) 28%, transparent),
+    color-mix(in srgb, var(--manpu-petal) 10%, transparent) 55%,
+    transparent 80%
+  );
+  opacity: 0;
+  animation: manpu-finish-glow 1.4s ease-out 1 forwards;
+}
+@keyframes manpu-finish-glow {
+  0% {
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+.manpu-halo {
+  width: calc(var(--u) * 40);
+  height: calc(var(--u) * 40);
+  --hw: calc(var(--u) * 20);
+  --hh: calc(var(--u) * 20);
+  border-radius: 50%;
+  border: 2px solid color-mix(in srgb, var(--manpu-glow-gold) 90%, white);
+  box-shadow:
+    0 0 18px color-mix(in srgb, var(--manpu-glow-gold) 70%, transparent),
+    inset 0 0 12px color-mix(in srgb, var(--manpu-glow-gold) 50%, transparent);
+  animation: manpu-halo 1.2s cubic-bezier(0.1, 0.7, 0.3, 1) var(--d) 1 forwards;
+}
+@keyframes manpu-halo {
+  0% {
+    opacity: 0;
+    scale: 0.2;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    scale: 5;
+    border-width: 0.4px;
+  }
+}
+/* 筋の腕は点（頭）で角度だけ回り、筋はその先へ伸びる。腕は見える状態で、筋の animation が出し入れする */
+.manpu-origin > .manpu-beam-arm {
+  width: 0;
+  height: 0;
+  opacity: 1;
+  rotate: var(--r);
+}
+.manpu-beam {
+  position: absolute;
+  left: -1.5px;
+  top: calc(var(--u) * var(--len) * -0.5);
+  width: 3px;
+  height: calc(var(--u) * var(--len));
+  border-radius: 999px;
+  background: linear-gradient(
+    transparent,
+    color-mix(in srgb, var(--manpu-glow-gold) 60%, white) 50%,
+    transparent
+  );
+  filter: drop-shadow(0 0 6px var(--manpu-glow-gold));
+  opacity: 0;
+  animation: manpu-beam 0.9s ease-out 0.1s 1 forwards;
+}
+@keyframes manpu-beam {
+  0% {
+    opacity: 0;
+    transform: translateY(0) scale(1, 0.2);
+  }
+  40% {
+    opacity: 1;
+    transform: translateY(calc(var(--u) * -40)) scale(1, 1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(calc(var(--u) * -80)) scale(1, 0.3);
+  }
 }
 
 /* 失敗: ガーンの稲妻が2つ瞬き、影がしょんぼりより短く下りる */
