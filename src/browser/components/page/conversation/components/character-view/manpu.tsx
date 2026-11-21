@@ -24,11 +24,7 @@ const TWINKLES: readonly Piece[] = [
   { x: 84, y: -40, vars: { "--delay": "0.15s" } },
   { x: 60, y: 24, vars: { "--delay": "0.3s" } },
 ]
-const SWEATS: readonly Piece[] = [
-  { x: -42, y: -48, vars: { "--dx": "-50px", "--dy": "-40px", "--r": "-25deg" } },
-  { x: 42, y: -48, vars: { "--dx": "50px", "--dy": "-50px", "--r": "20deg" } },
-  { x: 60, y: -48, vars: { "--dx": "70px", "--dy": "-10px", "--r": "35deg" } },
-]
+const SWEATS: readonly Piece[] = [{ x: 40, y: -26 }]
 const THINK: Offset = { x: 66, y: -96 }
 const GLINT: Offset = { x: 40, y: 24 }
 
