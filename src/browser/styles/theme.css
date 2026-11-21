@@ -73,6 +73,15 @@
   --graph-tone-fill-e: color-mix(in srgb, var(--chart-series-5) 12%, var(--surface));
   --graph-return: #f0a35e;
 
+  /* 立ち絵の顔のまわりに出す漫符の記号の色。パックの差し色では変えない（差し色が桃色だと汗が汗に見えなくなる） */
+  --manpu-note: #ffad5c;
+  --manpu-note-line: #5a2d0c;
+  --manpu-star: #ffd84a;
+  --manpu-star-line: #5c4300;
+  --manpu-sweat: #6cc8ff;
+  --manpu-sweat-light: #e8f7ff;
+  --manpu-sweat-line: #1e4466;
+
   /* 最終レポートのフェーズごとの時間の帯。一番長い区間だけ `--accent` をわずかに沈めた色、ほかは `--surface` に混ぜて沈めた色で、欠片と色の印も同じ値を読む。
      区間の長さと一覧の割合・時間が必ず添うので、色だけで意味を伝えることにはならない。 */
   --phase-band: color-mix(in srgb, var(--accent) 38%, var(--surface));

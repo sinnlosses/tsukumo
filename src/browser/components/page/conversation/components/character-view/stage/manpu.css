@@ -4,14 +4,6 @@
 .manpu {
   --manpu-fill: color-mix(in srgb, var(--accent) 10%, white);
   --manpu-line: color-mix(in srgb, var(--accent) 20%, black);
-  /* 記号の色はパックの差し色で変えない。差し色が桃色だと汗が汗に見えなくなる */
-  --manpu-note: #ffad5c;
-  --manpu-note-line: #5a2d0c;
-  --manpu-star: #ffd84a;
-  --manpu-star-line: #5c4300;
-  --manpu-sweat: #6cc8ff;
-  --manpu-sweat-light: #e8f7ff;
-  --manpu-sweat-line: #1e4466;
   position: fixed;
   left: var(--face-x);
   top: var(--face-y);
