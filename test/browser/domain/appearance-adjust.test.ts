@@ -4,11 +4,11 @@ import { appearanceAdjustTokenWrites } from "../../../src/browser/domain/appeara
 import { foldGearPreferences } from "../../../src/shared/session/gear-preference.ts"
 
 describe("appearance-adjust の覚えた値の読み戻し", () => {
-  const UNTOUCHED = { veil: undefined, blur: 8, fill: 45 }
+  const UNTOUCHED = { veil: undefined, blur: 12, fill: 45 }
 
   it.each([
     ["覚えた値が無い", undefined, UNTOUCHED],
-    ["範囲の中の値", { veil: 0.85, blur: 12, fill: 60 }, { veil: 0.85, blur: 12, fill: 60 }],
+    ["範囲の中の値", { veil: 0.85, blur: 10, fill: 60 }, { veil: 0.85, blur: 10, fill: 60 }],
     [
       "範囲の外の値は端に収める",
       { veil: 0.5, blur: 40, fill: 95 },
@@ -30,10 +30,10 @@ describe("appearance-adjust の覚えた値の読み戻し", () => {
 
 describe("appearanceAdjustTokenWrites", () => {
   it("動かしていない背景の暗さはトークンを外す", () => {
-    const writes = appearanceAdjustTokenWrites({ veil: undefined, blur: 8, fill: 45 })
+    const writes = appearanceAdjustTokenWrites({ veil: undefined, blur: 12, fill: 45 })
     expect(writes).toEqual([
       { name: "--character-background-veil-user", value: undefined },
-      { name: "--panel-blur-user", value: "8px" },
+      { name: "--panel-blur-user", value: "12px" },
       { name: "--panel-fill-user", value: "45%" },
     ])
   })

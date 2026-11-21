@@ -127,7 +127,7 @@ const PARTS: ScreenNavParts = {
       veilPercent: 75,
       veilFollowsPack: true,
       onChangeVeilPercent: noop,
-      blur: 8,
+      blur: 12,
       onChangeBlur: noop,
       fill: 45,
       onChangeFill: noop,

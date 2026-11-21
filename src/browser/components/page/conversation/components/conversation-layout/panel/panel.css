@@ -5,7 +5,7 @@
    760px 以下は透ける面を使わないので、面の規則は `@media (min-width: 761px)` の中だけに書く。 */
 :global(body:has([data-screen="conversation"])) {
   --panel-fill: var(--panel-fill-user, 45%);
-  --panel-blur: var(--panel-blur-user, 8px);
+  --panel-blur: var(--panel-blur-user, 12px);
   --panel-edge: color-mix(in srgb, var(--ink) 10%, transparent);
   --panel-edge-quiet: color-mix(in srgb, var(--ink) 6%, transparent);
   --panel-glass: color-mix(

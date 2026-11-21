@@ -35,7 +35,7 @@ const RAW_SCALE_REFERENCE_LIMITS: Readonly<Record<string, number>> = {
   "browser/components/frame/screen-nav/components/screen-nav-session-tag.module.css": 7,
   "browser/components/frame/screen-nav/components/screen-nav-settings-dialog.module.css": 6,
   "browser/components/frame/screen-nav/components/screen-nav-settings-face-frame.module.css": 4,
-  "browser/components/frame/screen-nav/components/screen-nav-settings-look.module.css": 3,
+  "browser/components/frame/screen-nav/components/screen-nav-settings-look.module.css": 2,
   "browser/components/frame/screen-nav/components/screen-nav-settings-workflow.module.css": 2,
   "browser/components/frame/screen-nav/components/screen-nav-settings.module.css": 5,
   "browser/components/frame/screen-nav/components/session-switcher.module.css": 26,

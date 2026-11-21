@@ -65,7 +65,7 @@ Astryx のトークンは `<html>` に置かれる（`Theme` が `data-astryx-th
 | `--shadow-overlay` | `--shadow-high` | 2 層の影と、暗い面で 1px の明るい縁（Astryx の値） | ダイアログ・引き出し・板 |
 | `--shadow-ring`    | （直書き）      | `0 0 0 2px var(--accent)`                          | 選んでいる・目印の輪     |
 
-- 背景の透ける面（上部の帯・やり取りの列・サイドバー・進行の帯・段の札・入力欄）の値は、`conversation-layout/panel/panel.css`（`conversation-layout.module.css` から読む）の `body` のカスタムプロパティ（`--panel-fill` 45%・`--panel-blur` 8px・`--panel-edge`・`--panel-edge-quiet`・`--panel-glass`・`--panel-glass-dense`・`--panel-glass-strip`・`--panel-lift`。濃さの3値はどれも `--panel-fill` から導く）に置く。Astryx のテーマにも `theme.css` にも足さない（ADR 0058 論点 5）。角丸は `--radius-xl`（サイドバー）を引き、影は `--shadow-*` に近い向きのある段が無いので同じファイルの `--panel-lift`・`--panel-paper-lift`（向きのある影）に置く。
+- 背景の透ける面（上部の帯・やり取りの列・サイドバー・進行の帯・段の札・入力欄）の値は、`conversation-layout/panel/panel.css`（`conversation-layout.module.css` から読む）の `body` のカスタムプロパティ（`--panel-fill` 45%・`--panel-blur` 12px・`--panel-edge`・`--panel-edge-quiet`・`--panel-glass`・`--panel-glass-dense`・`--panel-glass-strip`・`--panel-lift`。濃さの3値はどれも `--panel-fill` から導く）に置く。Astryx のテーマにも `theme.css` にも足さない（ADR 0058 論点 5）。角丸は `--radius-xl`（サイドバー）を引き、影は `--shadow-*` に近い向きのある段が無いので同じファイルの `--panel-lift`・`--panel-paper-lift`（向きのある影）に置く。
 - ぼかしのある影（ぼかし 1px 以上で `inset` でないもの）はトークンを使う。向きのある影と、色・幅が部品ごとに違う輪・内側の線（`inset`）は直書きのまま許す。
 
 #### 動き

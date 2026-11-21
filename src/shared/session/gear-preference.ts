@@ -52,7 +52,7 @@ export const FILL_RANGE = { min: 20, max: 90 } as const
 /** ぼかしと濃さの既定は `panel.css` の既定と同じ値。 */
 export const DEFAULT_APPEARANCE_ADJUST: AppearanceAdjust = {
   veil: undefined,
-  blur: 8,
+  blur: 12,
   fill: 45,
 }
 

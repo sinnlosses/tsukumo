@@ -1,5 +1,5 @@
-// 設定のダイアログの「見た目」の面。テーマの見本の札と、畳んだ「カスタムの色」（色ごとの行：色見本の四角＋16進の読み出し）、背景の暗さ・パネルのぼかし・パネルの濃さの範囲入力を置く。
-// 色の読み書きは `ScreenNavSettings.colors` と `themeId`・`onChooseTheme`（`useAppearanceColor`）のままで、どの組とも違う色のときだけカスタムを開く。
+// 設定のダイアログの「見た目」の面。テーマの見本の札と、いつも開いた「カスタムの色」（色ごとの行：色見本の四角＋16進の読み出し）、背景の暗さ・パネルのぼかし・パネルの濃さの範囲入力を置く。
+// 色の読み書きは `ScreenNavSettings.colors` と `themeId`・`onChooseTheme`（`useAppearanceColor`）のまま。
 
 import { useId, type ReactElement } from "react"
 
@@ -45,11 +45,11 @@ export function ScreenNavSettingsLookFace(props: ScreenNavSettingsProps): ReactE
           </button>
         ))}
       </div>
-      <details open={settings.themeId === "custom"}>
-        <summary className={styles["custom-summary"]}>
+      <div role="group" aria-labelledby={`${fieldId}-custom`}>
+        <p id={`${fieldId}-custom`} className={styles["custom-heading"]}>
           カスタムの色
           <span className={styles["custom-note"]}>地・領域・字の3色を 16 進で決める</span>
-        </summary>
+        </p>
         {settings.colors.map((color) => (
           <ScreenNavSettingsRow
             key={color.key}
@@ -80,7 +80,7 @@ export function ScreenNavSettingsLookFace(props: ScreenNavSettingsProps): ReactE
             </div>
           </ScreenNavSettingsRow>
         ))}
-      </details>
+      </div>
       <RangeRow
         itemKey="veil"
         item={settings.items.veil}

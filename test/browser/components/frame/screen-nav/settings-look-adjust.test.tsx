@@ -101,7 +101,7 @@ describe("設定の歯車（見た目の調整）", () => {
     const fill = slider(dialog, "パネルの濃さ")
 
     expect([veil.min, veil.max]).toEqual(["70", "100"])
-    expect([blur.min, blur.max, blur.value]).toEqual(["0", "24", "8"])
+    expect([blur.min, blur.max, blur.value]).toEqual(["0", "24", "12"])
     expect([fill.min, fill.max, fill.value]).toEqual(["20", "90", "45"])
     expect(within(dialog).getByText("75%（パックの値）")).toBeTruthy()
   })
@@ -152,8 +152,8 @@ describe("設定の歯車（見た目の調整）", () => {
     fireEvent.click(within(dialog).getByRole("button", { name: /^このページを既定に戻す/u }))
 
     expect(rootToken("--character-background-veil-user")).toBe("")
-    expect(rootToken("--panel-blur-user")).toBe("8px")
-    expect(slider(dialog, "パネルのぼかし").value).toBe("8")
+    expect(rootToken("--panel-blur-user")).toBe("12px")
+    expect(slider(dialog, "パネルのぼかし").value).toBe("12")
     expect(within(dialog).getByText("75%（パックの値）")).toBeTruthy()
   })
 

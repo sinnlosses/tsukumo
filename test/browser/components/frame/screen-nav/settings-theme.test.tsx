@@ -10,7 +10,7 @@ import { stubPhoneWidth } from "../../../phone-width.ts"
 import { queryClientWrapper } from "../../../query-client.tsx"
 import { putSession } from "../../../session-store.ts"
 
-// 設定の「見た目」の面のテーマの札と、畳んだ「カスタムの色」。
+// 設定の「見た目」の面のテーマの札と、いつも開いた「カスタムの色」。
 
 const COLOR_TOKENS = ["--ground", "--surface", "--ink"] as const
 
@@ -51,10 +51,6 @@ function openLookFace(): HTMLElement {
   return dialog
 }
 
-function customColors(dialog: HTMLElement): HTMLDetailsElement {
-  return typedElement(dialog.querySelector("details"), HTMLDetailsElement, "カスタムの色")
-}
-
 function readToken(name: string): string {
   return document.documentElement.style.getPropertyValue(name)
 }
@@ -73,16 +69,21 @@ describe("設定の見た目のテーマ", () => {
     expect(readToken("--ink")).toBe("#e2e8f2")
     expect(dusk.getAttribute("aria-pressed")).toBe("true")
     expect(night.getAttribute("aria-pressed")).toBe("false")
-    expect(customColors(dialog).open).toBe(false)
   })
 
-  it("どの組とも違う色にするとカスタムの色が開き、札はどれも選ばれない", () => {
+  it("カスタムの色は畳まずに、地・領域・字の3色の入力を出す", () => {
     const dialog = openLookFace()
-    expect(customColors(dialog).open).toBe(false)
+
+    expect(dialog.querySelector("details")).toBeNull()
+    const custom = within(dialog).getByRole("group", { name: /^カスタムの色/u })
+    expect(within(custom).getByLabelText("地の色")).toBeDefined()
+  })
+
+  it("どの組とも違う色にすると、札はどれも選ばれない", () => {
+    const dialog = openLookFace()
 
     fireEvent.change(within(dialog).getByLabelText("地の色"), { target: { value: "#101010" } })
 
-    expect(customColors(dialog).open).toBe(true)
     for (const preset of within(dialog).getAllByRole("button", { name: /^領域/u })) {
       expect(preset.getAttribute("aria-pressed")).toBe("false")
     }
