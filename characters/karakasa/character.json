@@ -1,0 +1,36 @@
+{
+  "name": "唐傘",
+  "tagline": "雨上がりの縁側で、あなたが手に取ってくれるのを待っている、赤い唐傘よ",
+  "userCall": "あなた",
+  "miniCall": "唐傘",
+  "description": "長く使われた唐傘に宿った付喪神。設定画と9つの立ち絵から切り出した。",
+  "license": "利用者が用意した設定画と立ち絵。同梱の characters/karakasa/ に置いている。",
+  "accent": "#ff9e9e",
+  "chatAccent": "#6f86b8",
+  "face": "face.png",
+  "expressions": {
+    "default": "通常",
+    "excited": "にっこり",
+    "flustered": "照れ",
+    "serious": "怒り",
+    "curious": "驚き",
+    "thinking": "困り",
+    "sad": "悲しみ",
+    "proud": "くすっ",
+    "bored": "すやすや"
+  },
+  "portraits": {
+    "default": "default.png",
+    "excited": "excited.png",
+    "flustered": "flustered.png",
+    "serious": "serious.png",
+    "curious": "curious.png",
+    "thinking": "thinking.png",
+    "sad": "sad.png",
+    "proud": "proud.png",
+    "bored": "bored.png"
+  },
+  "background": {
+    "image": "background.png"
+  }
+}

@@ -37,11 +37,11 @@ characters/<name>/
 
 **探索先は3箇所で、同名は後ろが勝つ**（`listCharacterPacks`）:
 
-| 順  | 置き場                            | 中身                                                        |
-| --- | --------------------------------- | ----------------------------------------------------------- |
-| 1   | 同梱の `characters/*`             | `tsukumo` / `tsukumo-spirit` / `chou` / `shirasuzu`（自作） |
-| 2   | `~/.tsukumo/characters/*`         | **画面から作ったパック**（全プロジェクト共通）              |
-| 3   | 起動先の `<cwd>/characters/local` | そのプロジェクトで用意した素材（1つ固定のまま）             |
+| 順  | 置き場                            | 中身                                                                                          |
+| --- | --------------------------------- | --------------------------------------------------------------------------------------------- |
+| 1   | 同梱の `characters/*`             | `tsukumo` / `tsukumo-spirit` / `chou` / `shirasuzu` / `andon` / `karakasa` / `kureha`（自作） |
+| 2   | `~/.tsukumo/characters/*`         | **画面から作ったパック**（全プロジェクト共通）                                                |
+| 3   | 起動先の `<cwd>/characters/local` | そのプロジェクトで用意した素材（1つ固定のまま）                                               |
 
 名前が `parseCharacterPackName` を通らないディレクトリ（日本語・空白入りなど）は一覧に載せず、警告を1行出す。`session.switchCharacter` も同じ規則で見る。
 
