@@ -58,6 +58,16 @@ export function marginDeclarationCount(css: string): number {
   ).length
 }
 
+/** 色・背景・枠（角丸を含む）・字の大きさを宣言する数。値は問わず、宣言があれば1つと数える。 */
+export function visualDeclarationCount(css: string): number {
+  const withoutComments = css.replace(/\/\*[\s\S]*?\*\//g, "")
+  return [
+    ...withoutComments.matchAll(
+      /(?<![\w-])(?:color|background(?:-color)?|border(?:-[a-z]+)*|font-size)\s*:\s*[^;{}]+/g,
+    ),
+  ].length
+}
+
 export function isAllowedSpace(value: string): boolean {
   return splitTopLevel(value, /\s/).every(isAllowedSpaceToken)
 }
