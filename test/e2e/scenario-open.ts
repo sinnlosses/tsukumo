@@ -112,6 +112,11 @@ export type ScenarioRoom = {
    */
   readonly home: string
   /**
+   * 起こした tsukumo の `HOME`（`realpath` を通した絶対パス。テストが終わると消える）。
+   * 最終レポートの書き出しの保存先は `<userHome>/Downloads`。
+   */
+  readonly userHome: string
+  /**
    * WebSocket で `kind` のイベントが `occurrence` 回目（既定1回目）届くまで待つ（場面が流れ
    * 終わるのを時間で待たない）。同じ `kind` が場面の中で複数回流れる場合（`turn-finished` が
    * 続きのターンのたびに来るなど）に、狙った回目まで進める口。
@@ -285,6 +290,7 @@ export async function openRoom(
     },
     cwd: cwd.real,
     home: home.real,
+    userHome: userHome.real,
     waitForEvent: async (kind, occurrence = 1) => {
       await messages.waitForEvent(kind, occurrence)
       await nextAnimationFrame(page)

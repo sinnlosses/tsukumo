@@ -56,6 +56,7 @@ export const E2E_WATCHED_REGIONS = {
   "test/e2e/report-main-view.test.ts": ["main", "dispatch"],
   "test/e2e/report-draft-position.test.ts": ["main"],
   "test/e2e/report-draft-width.test.ts": ["main"],
+  "test/e2e/report-export.test.ts": ["main"],
   "test/e2e/report-spacing.test.ts": ["main"],
   "test/e2e/spacing-media.test.ts": ["main"],
   "test/e2e/spacing-verdict.test.ts": ["main"],
