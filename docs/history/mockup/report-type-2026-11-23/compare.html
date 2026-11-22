@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>レポートの字の段 — 今と3案の比較（2026-11-23）</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #15131b;
+    --surface: #1f1c27;
+    --ink: #ece7ef;
+    --ink-soft: color-mix(in srgb, var(--ink) 72%, transparent);
+    --ink-quiet: color-mix(in srgb, var(--ink) 52%, transparent);
+    --line: color-mix(in srgb, var(--ink) 12%, transparent);
+    --accent: #6fe3cd;
+    --warn: #e8b85c;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.7 system-ui, sans-serif; }
+  main { max-width: 1280px; margin: 0 auto; padding: 28px 24px 80px; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  h2 { font-size: 17px; margin: 40px 0 10px; padding-top: 12px; border-top: 1px solid var(--line); }
+  h3 { font-size: 15px; margin: 24px 0 6px; }
+  p, li { color: var(--ink-soft); }
+  code { font: 12.5px/1.5 ui-monospace, monospace; background: color-mix(in srgb, var(--ink) 8%, transparent); padding: 1px 5px; border-radius: 4px; }
+  table { width: 100%; border-collapse: collapse; margin: 8px 0 16px; font-size: 13px; }
+  th, td { text-align: left; vertical-align: top; padding: 7px 10px; border-bottom: 1px solid var(--line); }
+  th { color: var(--ink-quiet); font-weight: 600; }
+  td { color: var(--ink-soft); }
+  td.changed { color: var(--accent); }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+  figure { margin: 12px 0 8px; }
+  figure img { width: 100%; border-radius: 10px; border: 1px solid var(--line); display: block; }
+  figcaption { color: var(--ink-quiet); font-size: 12.5px; margin-top: 6px; text-align: center; }
+  .note { background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--warn); border-radius: 8px; padding: 10px 14px; }
+  .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  @media (max-width: 900px) { .cards { grid-template-columns: 1fr; } }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px; }
+  .card h3 { margin-top: 0; }
+  .rec { border-color: var(--accent); }
+  .tag { font-size: 12px; color: var(--accent); margin-left: 6px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>レポートの字の段 — 今と3案の比較</h1>
+  <p>疑似セッションの4場面を撮った比較（幅 1400）。案の画は、実物の画面に字の大きさと太さだけを差し替える CSS を後から入れて撮った。コードは変えていない。余白や色は今のままにしてある。</p>
+
+  <h2>今の字の段（実物で測った computed の値）</h2>
+  <table>
+    <thead><tr><th>役</th><th>大きさ・太さ</th><th>使っているトークン</th></tr></thead>
+    <tbody>
+      <tr><td>数の札の数（Stats）</td><td>24px・700</td><td><code>2em</code>（ほかの段から外れた値）</td></tr>
+      <tr><td>結論の1文目（task のあるレポート）</td><td>21px・700</td><td><code>--report-heading-2</code></td></tr>
+      <tr><td>結論（task の無いレポート）</td><td>17px・500</td><td><code>--report-heading-3</code></td></tr>
+      <tr><td>節の見出し（h4）</td><td>17px・700</td><td><code>--report-heading-3</code></td></tr>
+      <tr><td>選択肢の名前（お願いの選択肢）</td><td>17px・600</td><td>お願いの <code>--font-size-lg</code> を継ぐ</td></tr>
+      <tr><td>本文・表のセル・コードの塊</td><td>14px・400</td><td><code>--font-body</code></td></tr>
+      <tr><td>題（タスクの名前）</td><td>14px・600</td><td><code>--font-body</code></td></tr>
+      <tr><td>「したこと」「確かめたこと」の中身</td><td>12px・400</td><td><code>--font-secondary</code></td></tr>
+      <tr><td>ラベル・表の頭・札の名前・欄外注</td><td>12px・400〜650</td><td><code>--font-label</code>・<code>--font-secondary</code></td></tr>
+    </tbody>
+  </table>
+
+  <h2>目に付いたこと</h2>
+  <ol>
+    <li><b>結論が大きすぎる。</b>1文目の 21px・700 は、画面全体でいちばん大きい字になっている。右の「依頼」の見出しの 20px よりも大きい。2行に折れると、紙の上端が見出しの塊で埋まる。</li>
+    <li><b>同じ役が場面によって違う字で出る。</b>結論は task の有無で 21px・700 と 17px・500 に分かれる。「したこと」の中身は 12px で、本文の 14px より小さい。いちばん読ませたい要約が、注の大きさで出ている。</li>
+    <li><b>上下の順が逆になっている。</b>題（タスクの名前）は 14px で、すぐ下の結論は 21px。紙の題がいちばん弱く見える。数の札の 24px も結論より大きい。</li>
+    <li><b>段の間が開きすぎている。</b>17px の上は 21px と 24px に飛ぶ。14px と 17px の間には段が無いので、節の見出しを本文から少しだけ立てる、という使い方ができない。</li>
+    <li><b>太さが5種類ある。</b>400・500・600・650・700 が混ざっていて、500 と 650 は隣の太さとほとんど見分けられない。</li>
+    <li><b>お願いの選択肢の名前（17px）が節の見出しと同じ大きさ。</b>紙の終わりで、見出しがもう1つ始まったように見える。</li>
+  </ol>
+
+  <h2>案</h2>
+  <div class="cards">
+    <div class="card">
+      <h3>A 結論だけ縮める</h3>
+      <p>結論の1文目を 21px → 17px にする。ほかは今のまま。</p>
+      <p>変更は1か所で済む。ただし、結論と節の見出しが同じ 17px・700 になり、2〜6の課題は残る。</p>
+    </div>
+    <div class="card rec">
+      <h3>B 5段にそろえる<span class="tag">おすすめ</span></h3>
+      <p>字の段を 12・14・15・17・20 の5段、太さを 400・600・700 の3つに絞る。結論は task の有無にかかわらず 17px・700。節の見出しは 15px・700、数の札は 20px。お願いの選択肢の名前は 14px・600、「したこと」と「確かめたこと」の中身は 14px。</p>
+      <p>大きい字は結論の1か所だけになる。そのあとの段は、節の見出し → 本文 → 注 の順に1段ずつ下がる。</p>
+    </div>
+    <div class="card">
+      <h3>C 題を立てる</h3>
+      <p>B の段の上で、題（タスクの名前）を 17px・700 にする。結論は 15px・600 に下げて本文寄りにする。</p>
+      <p>紙の題が一番上に立つので、書類らしい形になる。その代わり結論が節の見出しと同じ 15px になり、「結論で大きく言う」という今の方針（ADR 0064 ほか）から外れる。</p>
+    </div>
+  </div>
+
+  <table>
+    <thead><tr><th>役</th><th>今</th><th>A</th><th>B</th><th>C</th></tr></thead>
+    <tbody>
+      <tr><td>題（タスクの名前）</td><td>14・600</td><td>14・600</td><td>14・600</td><td class="changed">17・700</td></tr>
+      <tr><td>結論（task あり）</td><td>21・700</td><td class="changed">17・700</td><td class="changed">17・700</td><td class="changed">15・600</td></tr>
+      <tr><td>結論（task なし）</td><td>17・500</td><td>17・500</td><td class="changed">17・700</td><td class="changed">15・600</td></tr>
+      <tr><td>節の見出し</td><td>17・700</td><td>17・700</td><td class="changed">15・700</td><td class="changed">15・700</td></tr>
+      <tr><td>数の札の数</td><td>24・700</td><td>24・700</td><td class="changed">20・700</td><td class="changed">20・700</td></tr>
+      <tr><td>選択肢の名前</td><td>17・600</td><td>17・600</td><td class="changed">14・600</td><td class="changed">14・600</td></tr>
+      <tr><td>したこと・確かめたことの中身</td><td>12・400</td><td>12・400</td><td class="changed">14・400</td><td class="changed">14・400</td></tr>
+      <tr><td>本文・ラベル</td><td>14・12</td><td colspan="3">そのまま</td></tr>
+      <tr><td>太さの種類</td><td>5</td><td>5</td><td class="changed">3</td><td class="changed">3</td></tr>
+    </tbody>
+  </table>
+  <p class="note">コードの塊は本文と同じ 14px。等幅の字は同じ大きさでも大きく見えるので、13px に下げる手もある。今回の画では変えていない（B を採るなら、一緒に決めておくとよい）。節と節の間のあき（約 80px）も大きいが、これは字ではなく余白の話なので、この比較の外に置いた。</p>
+
+  <h2>task のあるレポート（場面 report-proof-work-record）</h2>
+  <div class="grid">
+    <figure><img src="proof-work-record-now.png" alt="今。結論が21pxで2行に折れている" /><figcaption>今</figcaption></figure>
+    <figure><img src="proof-work-record-a.png" alt="案A。結論が17px" /><figcaption>A 結論だけ縮める</figcaption></figure>
+    <figure><img src="proof-work-record-b.png" alt="案B。結論17px、節の見出し15px、したこと14px" /><figcaption>B 5段にそろえる</figcaption></figure>
+    <figure><img src="proof-work-record-c.png" alt="案C。題17px、結論15px" /><figcaption>C 題を立てる</figcaption></figure>
+  </div>
+
+  <h2>task の無いレポートと数の札（場面 report-board）</h2>
+  <div class="grid">
+    <figure><img src="board-now.png" alt="今。結論17px・500、数24px" /><figcaption>今</figcaption></figure>
+    <figure><img src="board-a.png" alt="案A。今と同じ" /><figcaption>A 結論だけ縮める（この場面は変わらない）</figcaption></figure>
+    <figure><img src="board-b.png" alt="案B。結論17px・700、数20px" /><figcaption>B 5段にそろえる</figcaption></figure>
+    <figure><img src="board-c.png" alt="案C。結論15px・600、数20px" /><figcaption>C 題を立てる</figcaption></figure>
+  </div>
+
+  <h2>お願いと選択肢（場面 report-favor-options-two）</h2>
+  <div class="grid">
+    <figure><img src="favor-options-two-now.png" alt="今。選択肢の名前17px" /><figcaption>今</figcaption></figure>
+    <figure><img src="favor-options-two-a.png" alt="案A" /><figcaption>A 結論だけ縮める</figcaption></figure>
+    <figure><img src="favor-options-two-b.png" alt="案B。選択肢の名前14px" /><figcaption>B 5段にそろえる</figcaption></figure>
+    <figure><img src="favor-options-two-c.png" alt="案C" /><figcaption>C 題を立てる</figcaption></figure>
+  </div>
+
+  <h2>部品が多いレポート（場面 report-blocks）</h2>
+  <div class="grid">
+    <figure><img src="blocks-now.png" alt="今" /><figcaption>今</figcaption></figure>
+    <figure><img src="blocks-a.png" alt="案A" /><figcaption>A 結論だけ縮める</figcaption></figure>
+    <figure><img src="blocks-b.png" alt="案B。節の見出し15px" /><figcaption>B 5段にそろえる</figcaption></figure>
+    <figure><img src="blocks-c.png" alt="案C" /><figcaption>C 題を立てる</figcaption></figure>
+  </div>
+</main>
+</body>
+</html>
