@@ -34,6 +34,8 @@ const NODE_REWRITING_TEST_FILES = globSync("test/**/*.test.{ts,tsx}", {
 
 const NODE_TEST_EXCLUDE = [
   "**/node_modules/**",
+  // submodule の plugin は自前の `node --test` で走らせる。
+  "vendor/**",
   "test/e2e/**",
   ...DOM_TEST_FILES,
   ...CONVENTION_TEST_GLOBS,
