@@ -119,7 +119,7 @@ describe("nowStepStatementOf", () => {
     description: "架空の流れ",
   } satisfies BackgroundTask
 
-  it("背景のワークフロースクリプトの agent が手順の合間に走っていれば段の題を対象にする", () => {
+  it("背景のワークフロースクリプトの agent が手順の合間に走っていれば段の題を対象にする（agentId の無い門で待つ体は見ない）", () => {
     const statement = doing(
       nowStepStatementOf(
         sourceOf({
@@ -139,7 +139,10 @@ describe("nowStepStatementOf", () => {
             {
               taskId: WORKFLOW.taskId,
               phases: [],
-              agents: [{ index: 0, agentId: "agent-1", state: "progress", phaseTitle: "架空の段" }],
+              agents: [
+                { index: 0, agentId: "agent-1", state: "progress", phaseTitle: "架空の段" },
+                { index: 1, state: "start", phaseTitle: "架空の門で待つ段" },
+              ],
             },
           ],
         }),

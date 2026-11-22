@@ -37,6 +37,7 @@ import {
   settleDelegatedRange,
   type WorkPlanCall,
 } from "../../../shared/session/work-plan.ts"
+import { hookedAgents } from "../../../shared/session/workflow-step.ts"
 import {
   bandPositionText,
   delegatedRangeFromAnswer,
@@ -296,7 +297,7 @@ export function createWorkPlanReview(): WorkPlanReview {
               ]
         }
         case "workflow-progress":
-          event.progress.agents.forEach((agent) => {
+          hookedAgents(event.progress).forEach((agent) => {
             workflowAgentPhases.set(agent.agentId, agent.phaseTitle)
           })
           accepted = nextWorkPlan(accepted, event)

@@ -63,11 +63,13 @@ export type DelegateEvent =
   /**
    * サブエージェントの中のツールが終わった（`PostToolUse`・`PostToolUseFailure` のフックのうち `agent_id` のあるもの）。
    * `toolUseId` が同じ `workflow-step-started` の手順だけを終わりにする（`finishWorkflowStep`）。
+   * `failed` は `PostToolUseFailure` から来たか。
    */
   | {
       readonly kind: "workflow-step-finished"
       readonly agentId: string
       readonly toolUseId: ToolUseId
+      readonly failed: boolean
     }
   /**
    * ワークフロースクリプトの段と agent の写しが届いた（SDK の `system` / `task_progress` の `workflow_progress`）。

@@ -17,9 +17,10 @@ import type {
   TurnProgress,
 } from "../../../../../../../shared/session/turn-progress.ts"
 import type { TurnStep, TurnStepList } from "../../../../../../../shared/session/turn-step.ts"
-import type {
-  WorkflowProgress,
-  WorkflowStep,
+import {
+  hookedAgents,
+  type WorkflowProgress,
+  type WorkflowStep,
 } from "../../../../../../../shared/session/workflow-step.ts"
 import { formatElapsed } from "../../../../../../../shared/utils/elapsed-time.ts"
 import { summarizeToolInput } from "../../../../../../domain/tool-summary.ts"
@@ -177,10 +178,10 @@ export function workflowThinking(
   workflowProgress: readonly WorkflowProgress[],
   taskId: TaskId,
 ): boolean {
+  const progress = workflowProgress.find((candidate) => candidate.taskId === taskId)
   return (
-    workflowProgress
-      .find((progress) => progress.taskId === taskId)
-      ?.agents.some((agent) => agent.state === "start" || agent.state === "progress") === true
+    progress !== undefined &&
+    hookedAgents(progress).some((agent) => agent.state === "start" || agent.state === "progress")
   )
 }
 

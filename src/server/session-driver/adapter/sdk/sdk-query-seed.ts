@@ -318,6 +318,7 @@ export function postToolUseHooks(
         kind: "workflow-step-finished",
         agentId: input.agent_id,
         toolUseId,
+        failed: hook === "PostToolUseFailure",
       })
     }
     if (toolMs === undefined) {

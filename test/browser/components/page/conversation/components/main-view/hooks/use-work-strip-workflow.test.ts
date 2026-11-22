@@ -62,6 +62,7 @@ const stepFinished = (name: string, agentId = "agent-1"): SessionEvent => ({
   kind: "workflow-step-finished",
   agentId,
   toolUseId: checkedToolUseId(`tu-${name}`),
+  failed: false,
 })
 const completed: SessionEvent = { kind: "turn-finished", outcome: { kind: "completed" } }
 

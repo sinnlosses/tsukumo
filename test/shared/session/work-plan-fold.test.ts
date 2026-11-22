@@ -329,6 +329,19 @@ describe("nextWorkPlan（ワークフロースクリプトの写しで進める�
     expect(progressed(planAt(3), ["accept", "progress"])).toEqual(planAt(3))
   })
 
+  it("agentId の無い門で待つ体は段を進めない", () => {
+    expect(
+      nextWorkPlan(planAt(0), {
+        kind: "workflow-progress",
+        progress: {
+          taskId: checkedTaskId("wf-1"),
+          phases: [],
+          agents: [{ index: 0, state: "start", phaseTitle: "impl-1" }],
+        },
+      }),
+    ).toEqual(planAt(0))
+  })
+
   it("phase N に伏せた題・段の id の無いワークプラン・ワークプランの無いときは動かさない", () => {
     expect(progressed(planAt(0), ["phase 2", "start"])).toEqual(planAt(0))
     expect(progressed(planAt(0, []), ["impl-1", "start"])).toEqual(planAt(0, []))

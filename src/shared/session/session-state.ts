@@ -35,7 +35,7 @@ import {
   type TurnProgress,
 } from "./turn-progress.ts"
 import type { Speech } from "./turn-speech.ts"
-import type { WorkflowProgress, WorkflowStep } from "./workflow-step.ts"
+import type { SessionWorkflowFields } from "./workflow-state.ts"
 
 /**
  * セッションの今の姿。イベントを1件ずつ畳んで作るので、ここに無い情報は画面にも出ない。
@@ -219,19 +219,6 @@ export type SessionState = {
    */
   readonly backgroundTasks: readonly BackgroundTask[]
   /**
-   * {@link backgroundTasks} のうちワークフロースクリプトごとの、いちばん新しく始まった手順（1本につき高々1件）。
-   * 源は `workflow-step-started` のうち `agentId` が {@link workflowProgress} の agent にあるものだけで、差し替え方は `withWorkflowStep`。
-   * 終わりは `workflow-step-finished`（`finishWorkflowStep`）と、`workflow-progress` で agent が done・error になったとき（`finishStepsOfEndedAgents`）に付き、終わった手順も残る。
-   * `background-tasks-changed` で顔ぶれから外れた分を落とし、`session-ended` で空にする。
-   */
-  readonly workflowSteps: readonly WorkflowStep[]
-  /**
-   * {@link backgroundTasks} のうちワークフロースクリプトごとの、段と agent の写し（1本につき高々1件）。
-   * 源は `workflow-progress` で、差し替え方は `withWorkflowProgress`。
-   * `background-tasks-changed` で顔ぶれから外れた分を落とし、`session-ended` で空にする。
-   */
-  readonly workflowProgress: readonly WorkflowProgress[]
-  /**
    * 見直しの状態。源は見直しのイベント（`UsageReviewEvent`）だけ。
    * 見直しは会話とは別の使い捨ての問い合わせで走るので、会話の `turn-finished` / `session-ended` では動かさず、起こし直しでも残す。
    * 前回の結果を出すのはこの状態ではない。
@@ -266,7 +253,7 @@ export type SessionState = {
    * だけで、ターンの境目では戻さない（セッションを通した状態で、次の知らせが来るまで持つ）。
    */
   readonly rateLimit: RateLimit
-}
+} & SessionWorkflowFields
 
 export const INITIAL_SESSION_STATE: SessionState = {
   speeches: [],
@@ -314,6 +301,7 @@ export const INITIAL_SESSION_STATE: SessionState = {
   backgroundTasks: [],
   workflowSteps: [],
   workflowProgress: [],
+  workflowRuns: [],
   usageReview: { kind: "idle" },
   previousUsageReview: { kind: "none" },
   usageProposalRun: { kind: "idle" },

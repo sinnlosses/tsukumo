@@ -31,19 +31,53 @@ export const WORKFLOW_AGENT_STATES = [
 ] as const satisfies readonly WorkflowAgentState[]
 
 /**
+ * 止まった agent の止まり方（`workflow_agent` の `skipped`・`blocked`・`error` の文から決まった語に畳んだもの）。
+ * `stalled` は CLI の「応答が止まった」の決まった文（`agent stalled` で始まる）で、どれにも当たらなければ `failed`。
+ */
+export type WorkflowAgentStopReason = "skipped" | "blocked" | "stalled" | "failed"
+
+/**
+ * ワークフロースクリプトの agent 1体の写し（SDK の `workflow_agent`）。体の鍵は `index`。
+ * `agentId` は agent の hook の `agent_id` と突き合わせる id で、並びの門で待つ体には無い。
+ * `phaseTitle` はその agent が走る段の題で、欄が無いか文字列でなければ空の文字列。
+ * `model` は `fallbackModel` があればその値。時刻はエポックミリ秒。
+ * `stopReason` は `state` が `error` の体だけに付く。
+ */
+export type WorkflowAgent = {
+  readonly index: number
+  readonly agentId?: string
+  readonly label?: string
+  readonly agentType?: string
+  readonly model?: string
+  readonly phaseIndex?: number
+  readonly phaseTitle: string
+  readonly state: WorkflowAgentState
+  readonly queuedAt?: number
+  readonly startedAt?: number
+  readonly durationMs?: number
+  readonly tokens?: number
+  readonly toolCalls?: number
+  readonly attempt?: number
+  readonly stopReason?: WorkflowAgentStopReason
+}
+
+/**
  * ワークフロースクリプト1本の段と agent の写し（SDK の `task_progress` の `workflow_progress`）。
- * `agents` は agent の hook の `agent_id` と突き合わせる id を持つものだけで、入力の順のまま。
- * agent の `phaseTitle` はその agent が走る段の題で、欄が無いか文字列でなければ空の文字列。
+ * `agents` は入力の順のまま。
  */
 export type WorkflowProgress = {
   readonly taskId: TaskId
   readonly phases: readonly { readonly index: number; readonly title: string }[]
-  readonly agents: readonly {
-    readonly index: number
-    readonly agentId: string
-    readonly state: WorkflowAgentState
-    readonly phaseTitle: string
-  }[]
+  readonly agents: readonly WorkflowAgent[]
+}
+
+/** hook の `agent_id` と突き合わせる id を持つ agent だけ（並びの門で待つ体を除く）。 */
+export function hookedAgents(
+  progress: WorkflowProgress,
+): readonly (WorkflowAgent & { readonly agentId: string })[] {
+  return progress.agents.flatMap((agent) =>
+    agent.agentId === undefined ? [] : [{ ...agent, agentId: agent.agentId }],
+  )
 }
 
 /** 顔ぶれに残っているワークフロースクリプトの手順・写しだけを残す。 */

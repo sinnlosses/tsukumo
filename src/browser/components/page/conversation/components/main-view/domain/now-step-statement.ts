@@ -4,6 +4,7 @@
 import { isPlainObject } from "remeda"
 
 import { recordTimeAt } from "../../../../../../../shared/session/session-record.ts"
+import { hookedAgents } from "../../../../../../../shared/session/workflow-step.ts"
 import { formatElapsed } from "../../../../../../../shared/utils/elapsed-time.ts"
 import { summarizeToolInput } from "../../../../../../domain/tool-summary.ts"
 import { backgroundSummaryLabel } from "../../../../../../features/current-work/current-work-step.ts"
@@ -124,11 +125,15 @@ export function nowStepStatementOf(source: WorkActivitySource): NowStepStatement
         now,
       })
     }
-    const agent = source.workflowProgress
-      .find((progress) => progress.taskId === stepped.taskId)
-      ?.agents.findLast(
-        (candidate) => candidate.state === "start" || candidate.state === "progress",
-      )
+    const progress = source.workflowProgress.find(
+      (candidate) => candidate.taskId === stepped.taskId,
+    )
+    const agent =
+      progress === undefined
+        ? undefined
+        : hookedAgents(progress).findLast(
+            (candidate) => candidate.state === "start" || candidate.state === "progress",
+          )
     if (agent !== undefined && workflowThinking(source.workflowProgress, stepped.taskId)) {
       return {
         kind: "doing",

@@ -4,37 +4,49 @@ import type { BackgroundTask } from "../session-driver/background-task.ts"
 import type { SessionEvent } from "./session-event.ts"
 import type { SessionState } from "./session-state.ts"
 import type { ToolUseId } from "./tool-use-id.ts"
+import {
+  withWorkflowRunProgress,
+  withWorkflowRunStepFinished,
+  withWorkflowRunStepStarted,
+} from "./workflow-run.ts"
 import type { WorkflowProgress, WorkflowStep } from "./workflow-step.ts"
 
 /** ワークフロースクリプトの手順・写しに関する出来事1件を畳み、変わる欄だけを返す。 */
 export function foldWorkflowEvent(
-  state: Pick<SessionState, "workflowSteps" | "workflowProgress" | "backgroundTasks">,
+  state: Pick<
+    SessionState,
+    "workflowSteps" | "workflowProgress" | "workflowRuns" | "backgroundTasks"
+  >,
   event: Extract<
     SessionEvent,
     { kind: "workflow-step-started" | "workflow-step-finished" | "workflow-progress" }
   >,
   at: number,
-): Pick<SessionState, "workflowSteps" | "workflowProgress"> {
+): Pick<SessionState, "workflowSteps" | "workflowProgress" | "workflowRuns"> {
   switch (event.kind) {
-    case "workflow-step-started":
+    case "workflow-step-started": {
+      const started = {
+        agentId: event.agentId,
+        toolUseId: event.toolUseId,
+        name: event.name,
+        input: event.input,
+      }
       return {
         workflowProgress: state.workflowProgress,
-        workflowSteps: withWorkflowStep(
-          state.workflowSteps,
-          state.workflowProgress,
-          {
-            agentId: event.agentId,
-            toolUseId: event.toolUseId,
-            name: event.name,
-            input: event.input,
-          },
-          at,
-        ),
+        workflowSteps: withWorkflowStep(state.workflowSteps, state.workflowProgress, started, at),
+        workflowRuns: withWorkflowRunStepStarted(state.workflowRuns, started, at),
       }
+    }
     case "workflow-step-finished":
       return {
         workflowProgress: state.workflowProgress,
         workflowSteps: finishWorkflowStep(state.workflowSteps, event.toolUseId),
+        workflowRuns: withWorkflowRunStepFinished(
+          state.workflowRuns,
+          event.toolUseId,
+          event.failed,
+          at,
+        ),
       }
     case "workflow-progress":
       return {
@@ -43,6 +55,12 @@ export function foldWorkflowEvent(
           state.workflowProgress,
           state.backgroundTasks,
           event.progress,
+        ),
+        workflowRuns: withWorkflowRunProgress(
+          state.workflowRuns,
+          state.backgroundTasks,
+          event.progress,
+          at,
         ),
       }
   }

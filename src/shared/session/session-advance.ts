@@ -53,6 +53,7 @@ import {
   INITIAL_SPEECH_EXPRESSION,
   turnEnding,
 } from "./turn-progress.ts"
+import { markEndedWorkflowRuns, withoutEndedWorkflowRuns } from "./workflow-run.ts"
 import { workflowItemsOfTasks } from "./workflow-step.ts"
 
 /** 種類ごとの畳み方の表の形。種類が欠けると {@link SESSION_EVENT_FOLDS} が型検査で落ちる。 */
@@ -168,6 +169,7 @@ const SESSION_EVENT_FOLDS = {
     ),
   request: (state, event, at) => ({
     ...beginTurn(state, at),
+    workflowRuns: withoutEndedWorkflowRuns(state.workflowRuns),
     records: trimToRecentTurns(
       [
         ...state.records,
@@ -286,6 +288,7 @@ const SESSION_EVENT_FOLDS = {
     backgroundTasks: [],
     workflowSteps: [],
     workflowProgress: [],
+    workflowRuns: [],
     apiTrouble: { kind: "none" },
   }),
   "api-retry": (state, event, at) => ({
@@ -379,6 +382,7 @@ const SESSION_EVENT_FOLDS = {
     backgroundTasks: event.tasks,
     workflowSteps: workflowItemsOfTasks(state.workflowSteps, event.tasks),
     workflowProgress: workflowItemsOfTasks(state.workflowProgress, event.tasks),
+    workflowRuns: markEndedWorkflowRuns(state.workflowRuns, event.tasks),
   }),
   "usage-review-started": advanceByUsageReview,
   "usage-review-stage": advanceByUsageReview,

@@ -14,7 +14,7 @@ import {
   plannedPhasesOf,
   type WorkPlan,
 } from "./work-plan.ts"
-import type { WorkflowProgress } from "./workflow-step.ts"
+import { hookedAgents, type WorkflowProgress } from "./workflow-step.ts"
 
 /** 今のワークプランを動かすイベント。ほかのイベント（`turn-started` も）はワークプランを動かさない。 */
 export type WorkPlanEvent = Extract<
@@ -191,7 +191,7 @@ function returnedByReturn(
 
 /**
  * ワークフロースクリプトの写しで進めたワークプラン。
- * 写しの agent のうち `phaseTitle` が `phaseIds` のどれかに一致するもの（`state` を問わない）で、平らにした並びのいちばん後ろの段をワークフロースクリプトが入った段とする。
+ * 写しの agent（`hookedAgents`）のうち `phaseTitle` が `phaseIds` のどれかに一致するもの（`state` を問わない）で、平らにした並びのいちばん後ろの段をワークフロースクリプトが入った段とする。
  * その段の要素が今の要素より後ろのときだけ、その要素を今の要素にして前の段をすべて済ませる。
  * 飛び越えた段に飛ばした印は付けず、段のまとめは空にして直前に済んだ段をまとめ待ちにする。
  * `workflow_phase` の並びは段の題が起動時に先に振られるので見ない。
@@ -202,7 +202,7 @@ function advancedByWorkflowProgress(
 ): PlannedWorkPlan {
   const entered = Math.max(
     -1,
-    ...progress.agents.map((agent) => plan.phaseIds.indexOf(agent.phaseTitle)),
+    ...hookedAgents(progress).map((agent) => plan.phaseIds.indexOf(agent.phaseTitle)),
   )
   const phases = plannedPhasesOf(plan)
   const target = phases[entered]

@@ -57,6 +57,7 @@ const stepFinished = (agentId: string, toolUseId: string): SessionEvent => ({
   kind: "workflow-step-finished",
   agentId,
   toolUseId: checkedToolUseId(toolUseId),
+  failed: false,
 })
 const agentStateOf = (
   taskId: string,

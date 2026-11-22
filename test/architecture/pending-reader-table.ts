@@ -41,6 +41,15 @@ export const PENDING_READERS: readonly PendingReader[] = [
       "読むのは `astryx theme build`（`theme:build` と lint の `--check`）で、`src/`・`scripts/` の import には現れない",
     removeWhen: "外部の道具が読む export を、この検査が読み手として数える",
   },
+  ...(["workflowDiagramOf", "WorkflowDiagram", "WorkflowDiagramEnd"] as const).map(
+    (exportName): PendingReader => ({
+      file: "src/browser/components/page/conversation/components/main-view/domain/workflow-diagram.ts",
+      missingReader: "production",
+      exportName,
+      reason: "図の形を組む関数と型を先に置き、描く部品がまだ無い",
+      removeWhen: "ピルの「手順」の図の描画の部品が読む",
+    }),
+  ),
 ]
 
 /** `"production"` の行から、`<パス>#<名前>` と理由の対応を作る。 */

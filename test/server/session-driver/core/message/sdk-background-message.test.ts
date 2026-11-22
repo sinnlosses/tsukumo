@@ -179,17 +179,132 @@ describe("バックグラウンドタスク（実測で届いた順: background_
               { index: 1, title: "架空の段B" },
             ],
             agents: [
-              { index: 0, agentId: "agent-1", state: "start", phaseTitle: "架空の段A" },
-              { index: 1, agentId: "agent-2", state: "done", phaseTitle: "架空の段B" },
-              { index: 2, agentId: "agent-0", state: "error", phaseTitle: "架空の段A" },
-              { index: 3, agentId: "agent-3", state: "progress", phaseTitle: "架空の段A" },
+              {
+                index: 0,
+                agentId: "agent-1",
+                label: "架空の名札",
+                phaseIndex: 0,
+                state: "start",
+                phaseTitle: "架空の段A",
+              },
+              {
+                index: 1,
+                agentId: "agent-2",
+                label: "架空の名札",
+                phaseIndex: 0,
+                state: "done",
+                phaseTitle: "架空の段B",
+              },
+              {
+                index: 2,
+                agentId: "agent-0",
+                label: "架空の名札",
+                phaseIndex: 0,
+                state: "error",
+                phaseTitle: "架空の段A",
+                stopReason: "failed",
+              },
+              {
+                index: 3,
+                agentId: "agent-3",
+                label: "架空の名札",
+                phaseIndex: 0,
+                state: "progress",
+                phaseTitle: "架空の段A",
+              },
             ],
           },
         },
       ])
     })
 
-    it("形の外れた要素だけを捨てる（agentId の無い待ち行列の写し・知らない state・index の欠け・知らない type・オブジェクトでない要素）", () => {
+    it("ADR の欄を写し、model は fallbackModel を優先する（会話の断片になりうる欄は error の文も含めて写さない）", () => {
+      const elements = [
+        agent({
+          index: 0,
+          agentType: "架空の種類:実装役",
+          model: "架空のモデル",
+          fallbackModel: "架空の代わりのモデル",
+          queuedAt: 10,
+          startedAt: 20,
+          durationMs: 30,
+          tokens: 40,
+          toolCalls: 5,
+          attempt: 2,
+          state: "error",
+          error: "架空の失敗の文",
+          resultPreview: "架空の結果",
+          promptPreview: "架空の依頼",
+          promptFramed: "架空の枠の依頼",
+          lastToolName: "Read",
+          lastAttemptReason: "架空の理由",
+        }),
+        agent({ index: 1, model: "架空のモデル", fallbackModel: " ", durationMs: Infinity }),
+      ]
+
+      const [event] = toSessionEvents(workflowProgress(elements), EXPRESSIONS)
+
+      expect(event).toEqual({
+        kind: "workflow-progress",
+        progress: {
+          taskId: "wf-1",
+          phases: [],
+          agents: [
+            {
+              index: 0,
+              agentId: "agent-1",
+              label: "架空の名札",
+              agentType: "架空の種類:実装役",
+              model: "架空の代わりのモデル",
+              phaseIndex: 0,
+              phaseTitle: "架空の段A",
+              state: "error",
+              queuedAt: 10,
+              startedAt: 20,
+              durationMs: 30,
+              tokens: 40,
+              toolCalls: 5,
+              attempt: 2,
+              stopReason: "failed",
+            },
+            {
+              index: 1,
+              agentId: "agent-1",
+              label: "架空の名札",
+              model: "架空のモデル",
+              phaseIndex: 0,
+              phaseTitle: "架空の段A",
+              state: "start",
+            },
+          ],
+        },
+      })
+      expect(JSON.stringify(event)).not.toMatch(
+        /架空の(要約|失敗の文|結果|依頼|枠の依頼|理由)|Read/,
+      )
+    })
+
+    it("error の体の止まり方を決まった語に畳む（skipped・blocked・agent stalled で始まる文・ほか）", () => {
+      const elements = [
+        agent({ index: 0, state: "error", skipped: true, error: "架空" }),
+        agent({ index: 1, state: "error", blocked: true, error: "架空" }),
+        agent({ index: 2, state: "error", error: "Agent stalled: no progress for 600s" }),
+        agent({ index: 3, state: "error", error: "agent stalled on all 3 attempts" }),
+        agent({ index: 4, state: "error", error: "架空の失敗" }),
+        agent({ index: 5, state: "error" }),
+        agent({ index: 6, state: "done", skipped: true }),
+      ]
+
+      const [event] = toSessionEvents(workflowProgress(elements), EXPRESSIONS)
+
+      expect(
+        event?.kind === "workflow-progress"
+          ? event.progress.agents.map((element) => element.stopReason)
+          : [],
+      ).toEqual(["skipped", "blocked", "stalled", "stalled", "failed", "failed", undefined])
+    })
+
+    it("形の外れた要素だけを捨て、agentId・label・agentType の無い待ちの体は残す（知らない state・index の欠け・知らない type・オブジェクトでない要素を捨てる）", () => {
       const elements = [
         { type: "workflow_phase", index: "0", title: "架空の段" },
         { type: "workflow_phase", index: 1.5, title: "架空の段" },
@@ -198,7 +313,7 @@ describe("バックグラウンドタスク（実測で届いた順: background_
         { type: "workflow_agent", index: 0, state: "start", queuedAt: 1 },
         agent({ index: 1, state: "paused" }),
         agent({ index: undefined }),
-        agent({ index: 3, agentId: 7 }),
+        agent({ index: 3, agentId: 7, label: " " }),
         agent({ index: 4, agentId: "agent-4", state: "progress", phaseTitle: 4 }),
         { type: "workflow_log", index: 5, title: "架空のログ", agentId: "agent-5", state: "start" },
         { index: 6, title: "type の無い要素" },
@@ -212,7 +327,18 @@ describe("バックグラウンドタスク（実測で届いた順: background_
           progress: {
             taskId: "wf-1",
             phases: [{ index: 3, title: "残る段" }],
-            agents: [{ index: 4, agentId: "agent-4", state: "progress", phaseTitle: "" }],
+            agents: [
+              { index: 0, state: "start", phaseTitle: "", queuedAt: 1 },
+              { index: 3, phaseIndex: 0, state: "start", phaseTitle: "架空の段A" },
+              {
+                index: 4,
+                agentId: "agent-4",
+                label: "架空の名札",
+                phaseIndex: 0,
+                state: "progress",
+                phaseTitle: "",
+              },
+            ],
           },
         },
       ])
@@ -234,7 +360,16 @@ describe("バックグラウンドタスク（実測で届いた順: background_
           progress: {
             taskId: "wf-1",
             phases: [],
-            agents: [{ index: 0, agentId: "agent-1", state: "start", phaseTitle: "架空の段A" }],
+            agents: [
+              {
+                index: 0,
+                agentId: "agent-1",
+                label: "架空の名札",
+                phaseIndex: 0,
+                state: "start",
+                phaseTitle: "架空の段A",
+              },
+            ],
           },
         },
       ])

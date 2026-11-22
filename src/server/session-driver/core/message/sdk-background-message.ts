@@ -12,6 +12,7 @@ import type { SessionEvent } from "../../../../shared/session/session-event.ts"
 import { parseToolUseId } from "../../../../shared/session/tool-use-id.ts"
 import {
   WORKFLOW_AGENT_STATES,
+  type WorkflowAgentStopReason,
   type WorkflowProgress,
 } from "../../../../shared/session/workflow-step.ts"
 import { nonBlankString } from "../../../../shared/utils/non-blank-string.ts"
@@ -65,7 +66,7 @@ export function taskStartedEvents(
 
 /**
  * `workflow_progress` は SDK の公開の型に無い欄なので、要素ごとに形を確かめ、外れた要素は捨てる。
- * `lastToolSummary` など会話の断片になりうる欄は写さない。
+ * `error` の文・`lastToolSummary` など会話の断片になりうる欄は写さない。
  */
 export function taskProgressEvents(
   message: Readonly<Record<string, unknown>>,
@@ -121,7 +122,7 @@ function workflowPhase(element: unknown): WorkflowProgress["phases"] {
     return []
   }
 
-  const index = integerOrUndefined(element.index)
+  const index = numberOrUndefined(element.index, Number.isInteger)
   const title = optionalString(element.title)
   return index === undefined || title === undefined ? [] : [{ index, title }]
 }
@@ -131,17 +132,51 @@ function workflowAgent(element: unknown): WorkflowProgress["agents"] {
     return []
   }
 
-  const index = integerOrUndefined(element.index)
-  const agentId = optionalString(element.agentId)
+  const index = numberOrUndefined(element.index, Number.isInteger)
   const state = WORKFLOW_AGENT_STATES.find((candidate) => candidate === element.state)
-  const phaseTitle = optionalString(element.phaseTitle) ?? ""
-  return index === undefined || agentId === undefined || state === undefined
-    ? []
-    : [{ index, agentId, state, phaseTitle }]
+  if (index === undefined || state === undefined) {
+    return []
+  }
+
+  return [
+    {
+      index,
+      agentId: nonBlankString(element.agentId),
+      label: nonBlankString(element.label),
+      agentType: nonBlankString(element.agentType),
+      model: nonBlankString(element.fallbackModel) ?? nonBlankString(element.model),
+      phaseIndex: numberOrUndefined(element.phaseIndex, Number.isInteger),
+      phaseTitle: optionalString(element.phaseTitle) ?? "",
+      state,
+      queuedAt: numberOrUndefined(element.queuedAt, Number.isFinite),
+      startedAt: numberOrUndefined(element.startedAt, Number.isFinite),
+      durationMs: numberOrUndefined(element.durationMs, Number.isFinite),
+      tokens: numberOrUndefined(element.tokens, Number.isFinite),
+      toolCalls: numberOrUndefined(element.toolCalls, Number.isFinite),
+      attempt: numberOrUndefined(element.attempt, Number.isFinite),
+      stopReason: state === "error" ? stopReasonOf(element) : undefined,
+    },
+  ]
 }
 
-function integerOrUndefined(value: unknown): number | undefined {
-  return typeof value === "number" && Number.isInteger(value) ? value : undefined
+/** `error` の文は会話の断片になりうるので、決まった語に畳んで文そのものは捨てる。 */
+function stopReasonOf(element: Readonly<Record<string, unknown>>): WorkflowAgentStopReason {
+  if (element.skipped === true) {
+    return "skipped"
+  }
+  if (element.blocked === true) {
+    return "blocked"
+  }
+  return typeof element.error === "string" && /^agent stalled/i.test(element.error)
+    ? "stalled"
+    : "failed"
+}
+
+function numberOrUndefined(
+  value: unknown,
+  accepts: (number: number) => boolean,
+): number | undefined {
+  return typeof value === "number" && accepts(value) ? value : undefined
 }
 
 /**
