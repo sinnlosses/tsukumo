@@ -45,6 +45,7 @@
 
 | ファイル                                       | 説明                                                                                                                                                                                                                                                |
 | ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `docs/architecture/architecture-map.md`        | tsukumo が地図のファイル（`.architecture-map.json`）に対して定める契約 — 置き場・欄と必須か・箱の ID とパス・版・作り手の義務・読まないものと読めないとき・箱を指す語 — を1か所に持つ。                                                             |
 | `docs/architecture/browser-box.md`             | `src/browser/` の箱ごとに置くものと import してよい先、上げる・下ろす引き金、領域の機能（枠・画面）と置かれる機能のエッジを持つ（ディレクトリの節の後半と、領域の機能の節）。                                                                       |
 | `docs/architecture/browser.md`                 | ブラウザ側（`src/browser/`）の中の規則。                                                                                                                                                                                                            |
 | `docs/architecture/build.md`                   | 事前の組み立て、作り直しを押す仕組み（HMR）、足す依存の一覧、リポジトリの外に置いたものを持つ。                                                                                                                                                     |
@@ -159,3 +160,4 @@
 | `docs/architecture/adr/0079-workflow-part-contract.md`                          | ワークフローの部品の契約を、印・タスクの ID・結果の語の3つにする                                      | 採用                   |
 | `docs/architecture/adr/0080-report-parts-through-astryx.md`                     | レポートの部品と Markdown の経路も `ui/` を通して Astryx で描く                                       | 採用                   |
 | `docs/architecture/adr/0081-workflow-agents-diagram-in-steps.md`                | ピルの「手順」の頭に、ワークフローのエージェントの図を出す                                            | 採用                   |
+| `docs/architecture/adr/0082-architecture-map-contract.md`                       | アーキテクチャの地図を、作り手が書く JSON の地図のファイル1つで tsukumo とつなぐ                      | 採用                   |
