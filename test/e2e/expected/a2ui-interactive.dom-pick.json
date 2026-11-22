@@ -3,7 +3,7 @@
     { "tag": "a2ui-react-report", "children": [
       { "tag": "div", "attributes": { "data-report-region": "section", "data-report-section": "0" }, "children": [
         { "tag": "h4", "children": ["架空の一覧"] },
-        "表 1",
+        "表1",
         { "tag": "div", "attributes": { "role": "group", "aria-label": "絞り込み" }, "children": [
           { "tag": "button", "attributes": { "aria-pressed": "false", "aria-label": "甲2件" } },
           { "tag": "button", "attributes": { "aria-pressed": "true", "aria-label": "乙2件" } },
@@ -26,7 +26,7 @@
       ] },
       { "tag": "div", "attributes": { "data-report-region": "section", "data-report-section": "1" }, "children": [
         { "tag": "h4", "children": ["架空の対照"] },
-        "表 2",
+        "表2",
         { "tag": "table" }
       ] }
     ] }

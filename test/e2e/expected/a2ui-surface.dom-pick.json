@@ -6,22 +6,22 @@
         { "tag": "div", "attributes": { "role": "group", "aria-label": "検証結果" } }
       ] },
       { "tag": "div", "attributes": { "data-report-region": "section", "data-report-section": "0" }, "children": [
-        "図 1"
+        "図1"
       ] },
       { "tag": "div", "attributes": { "data-report-region": "section", "data-report-section": "1" }, "children": [
         { "tag": "h4", "children": ["架空の表"] },
-        "表 1",
+        "表1",
         { "tag": "table" },
         "出どころ: 架空の集計",
-        "表 2",
+        "表2",
         { "tag": "span", "attributes": { "role": "img", "aria-label": "NG" } },
         { "tag": "p", "children": ["架空の表の読み方の一文。"] }
       ] },
       { "tag": "div", "attributes": { "data-report-region": "section", "data-report-section": "2" }, "children": [
         { "tag": "h4", "children": ["架空の図"] },
-        "図 2", "架空の呼び出しの図",
+        "図2", "架空の呼び出しの図",
         { "tag": "canvas" },
-        "図 3", "架空の件数の推移"
+        "図3", "架空の件数の推移"
       ] },
       { "tag": "div", "attributes": { "data-report-region": "section", "data-report-section": "3" }, "children": [
         { "tag": "h4", "children": ["架空の並び"] },

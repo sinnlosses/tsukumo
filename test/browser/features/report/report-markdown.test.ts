@@ -91,7 +91,7 @@ describe("reportSectionsMarkdown", () => {
         section([image(""), table("")]),
         section([image("架空の畳み"), mermaid, table("架空の表")]),
       ]),
-    ).toEqual(["図 1", "表 1", "図 2", "図 3", "表 2"])
+    ).toEqual(["図1", "表1", "図2", "図3", "表2"])
   })
 
   it("fold のある塊は details に畳む", () => {

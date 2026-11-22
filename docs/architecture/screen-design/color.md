@@ -225,7 +225,7 @@
 `cards`・`Compare` の枠は 1px の `--report-chunk-rule`（無ければ `rule-soft`）・角 `radius-md`（8px）で、前後のラベルは `--font-label`・600・`ink-quiet`。`Picture` の注の番号の丸は枠も字も `ink-soft`。
 
 **レポートの見出しの線は `rule-quiet` で、キャラクターの色を持たない。** 文字は `ink-bright`・地は `surface` / `surface-raised`・
-図表の番号（「図 n」「表 n」）の字は `ink-quiet` で、読む面は中立のまま（13.1 原則1）:
+図表の番号（「図n」「表n」）の字は `ink-quiet` で、読む面は中立のまま（13.1 原則1）:
 
 - `##`（`h4`）の**下の1本**は `rule-quiet`。幅は広（`min(内幅, 63em)`。本文の字で 63 字）
 - `###`（`h5`）は**罫を持たない**。段の深さは大きさ（`##` 17px・`###` 14px）と上のあき

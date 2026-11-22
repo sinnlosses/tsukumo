@@ -93,7 +93,7 @@ describe("Svg の部品", () => {
     expect(container.querySelector("line")?.getAttribute("marker-end")).toBe(
       "url(#report-svg-arrow)",
     )
-    expect(container.textContent).toContain("図 1")
+    expect(container.textContent).toContain("図1")
   })
 
   it("状態の tone は rect・line・凡例の見本に値のまま付く", () => {

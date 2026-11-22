@@ -58,7 +58,7 @@ describe("Markdown（image の塊の画像）", () => {
         "/report-image/fictional-report/%E6%9E%B6%E7%A9%BA%2Fafter.png?t=fictional-token",
       )
       expect(image.alt).toBe("架空の画面")
-      expect(container.querySelector("div.report-caption")?.textContent).toBe("図 1架空の画面")
+      expect(container.querySelector("div.report-caption")?.textContent).toBe("図1架空の画面")
     })
   })
 
@@ -310,7 +310,7 @@ describe("Markdown（image の塊の画像）", () => {
         const dialog = compareDialog()
         expect(pairPressed(dialog, "後")).toBe("true")
         expect(pairPressed(dialog, "前")).toBe("false")
-        expect(dialog.textContent).toContain("図 1")
+        expect(dialog.textContent).toContain("図1")
         expect(dialog.textContent).toContain("架空の前後")
         expect(document.querySelector("dialog[aria-label='画像の拡大']")).toBeNull()
       })

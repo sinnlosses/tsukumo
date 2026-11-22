@@ -330,16 +330,9 @@
   & .report-captioned.report-captioned-table > .report-caption {
     inline-size: 100%;
     max-inline-size: 100%;
-  }
-  & .report-captioned-table > .report-caption .report-caption-number {
-    font-family: inherit;
-    font-size: var(--font-secondary);
-    font-weight: 600;
-    letter-spacing: normal;
-    color: var(--ink-quiet);
+    font-size: var(--font-subheading);
   }
   & .report-captioned-table > .report-caption .report-caption-text {
-    font-size: var(--font-subheading);
     color: var(--ink-soft);
   }
   /* 題と凡例は、本文の列の幅（折り返す幅）で包みの中心に揃える。 */
@@ -488,11 +481,10 @@
   & .report-caption:last-child {
     margin-top: var(--space-xs);
   }
+  /* 番号は題と同じ大きさ・本文書体で、太さだけで題と分ける。 */
   & .report-caption-number {
-    margin-inline-end: var(--space-md);
-    font-family: var(--font-mono);
-    font-size: var(--font-label);
-    letter-spacing: 0.08em;
+    margin-inline-end: 0.5em;
+    font-weight: 600;
     color: var(--ink-quiet);
   }
   & .report-caption-text {

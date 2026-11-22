@@ -54,7 +54,7 @@ describe("FoldedLeafFrame", () => {
     const caption = wrapper?.querySelector(CAPTION_SELECTOR)
     expect(wrapper?.lastElementChild).toBe(caption)
     expect(caption?.firstElementChild?.firstChild?.nodeType).toBe(Node.TEXT_NODE)
-    expect(caption?.textContent).toBe("図 3架空の題")
+    expect(caption?.textContent).toBe("図3架空の題")
   })
 
   it("表の題は本体の上に出し、題の字が空なら番号だけを出す", () => {
@@ -67,7 +67,7 @@ describe("FoldedLeafFrame", () => {
     const caption = wrapper?.querySelector(CAPTION_SELECTOR)
     expect(wrapper?.firstElementChild).toBe(caption)
     expect(caption?.children).toHaveLength(1)
-    expect(caption?.textContent).toBe("表 1")
+    expect(caption?.textContent).toBe("表1")
   })
 
   it("題の行の右端の子は表の題の中に置き、欄が無い題は子を足さず1つの div のまま", () => {
@@ -92,7 +92,7 @@ describe("FoldedLeafFrame", () => {
 
     const caption = container.querySelector(CAPTION_SELECTOR)
     expect(caption?.lastElementChild?.tagName).toBe("BUTTON")
-    expect(caption?.textContent).toBe("表 1架空の題架空のバッジ")
+    expect(caption?.textContent).toBe("表1架空の題架空のバッジ")
     cleanup()
 
     const plain = frame(value, "架空の題")

@@ -140,7 +140,7 @@ describe("Plot の部品", () => {
   it("図の題は番号つきで本体の下に出る", () => {
     const { block, part } = build(BAR)
 
-    expect(newLeafHtml(block, part)).toMatch(/図 1/)
+    expect(newLeafHtml(block, part)).toMatch(/図1/)
   })
 
   it("描く形は申告から決まる（表に落ちる形と図になる形）", () => {

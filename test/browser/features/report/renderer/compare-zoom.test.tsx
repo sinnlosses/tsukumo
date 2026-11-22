@@ -15,7 +15,7 @@ const BOTH = [
   { side: "after", src: "/架空/after.png", alt: "後の画面", region: undefined },
 ] as const satisfies readonly CompareZoomImage[]
 
-const CAPTION = { number: "図 1", text: "架空の配置の前後" }
+const CAPTION = { number: "図1", text: "架空の配置の前後" }
 
 const BEFORE_AFTER_LABELS = { before: "前", after: "後" } as const
 
@@ -55,7 +55,7 @@ describe("CompareZoom", () => {
     expect(pressed("後")).toBe("true")
     expect(screen.getByText("← → で前と後 · Esc で閉じる")).not.toBeNull()
     expect(screen.getByRole("button", { name: "閉じる" })).not.toBeNull()
-    expect(screen.getByText("図 1")).not.toBeNull()
+    expect(screen.getByText("図1")).not.toBeNull()
     expect(screen.getByText("架空の配置の前後")).not.toBeNull()
     expect(shownSrc()).toBe("/架空/after.png")
   })
@@ -134,10 +134,10 @@ describe("CompareZoom", () => {
   it("題が空なら番号だけを出し、読めた側が1つなら2つ組はその側だけで矢印キーは動かない", () => {
     renderZoom({
       images: [BOTH[1]],
-      caption: { number: "図 2", text: "" },
+      caption: { number: "図2", text: "" },
     })
 
-    expect(screen.getByText("図 2")).not.toBeNull()
+    expect(screen.getByText("図2")).not.toBeNull()
     expect(screen.queryByRole("button", { name: "前" })).toBeNull()
     expect(pressed("後")).toBe("true")
 

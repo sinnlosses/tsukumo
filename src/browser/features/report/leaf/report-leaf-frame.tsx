@@ -58,7 +58,7 @@ export function FoldedLeafFrame(
   const caption =
     captionNumber.kind === "none" ? undefined : (
       <LeafCaption
-        label={`${CAPTION_LABELS[captionNumber.kind]} ${String(captionNumber.ordinal)}`}
+        label={`${CAPTION_LABELS[captionNumber.kind]}${String(captionNumber.ordinal)}`}
         title={props.title}
         aside={props.captionAside}
       />

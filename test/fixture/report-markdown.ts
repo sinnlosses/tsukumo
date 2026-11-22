@@ -20,7 +20,7 @@ export const reportMarkdownText = (value: string): LeafComponent => ({
   aside: "",
 })
 const captionRow = (label: "図" | "表", ordinal: number, title = ""): string =>
-  `<div class="caption"><span class="caption-number">${label} ${String(ordinal)}</span>` +
+  `<div class="caption"><span class="caption-number">${label}${String(ordinal)}</span>` +
   `${title === "" ? "" : `<span class="caption-text">${title}</span>`}</div>`
 /** 図の包み。本体が HTML だけなら空行を挟まず、題の行は本体のあと。 */
 export const figureCaptioned = (body: string, title = "", ordinal = 1, fit = true): string =>

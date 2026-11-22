@@ -3,8 +3,8 @@
     { "tag": "div", "attributes": { "data-report-body": "" }, "children": [
       { "tag": "h4", "children": ["架空の節"] },
       { "tag": "pre", "attributes": { "aria-label": "この図を拡大" } },
-      "図 1",
-      "表 1", "架空の表",
+      "図1",
+      "表1", "架空の表",
       { "tag": "table", "children": [
         { "tag": "th", "children": ["列A"] },
         { "tag": "th", "children": ["列B"] },
@@ -14,7 +14,7 @@
       "注意",
       "架空の注意の一文。",
       { "tag": "ol", "attributes": { "aria-label": "連鎖" } },
-      "図 2",
+      "図2",
       { "tag": "pre", "attributes": { "data-language": "python" }, "children": [
         { "tag": "code", "children": [
           { "tag": "div", "attributes": { "data-line": "1" }, "children": ["print('素のコード')"] }

@@ -71,9 +71,7 @@
   overflow-wrap: anywhere;
 }
 .compare-zoom-number {
-  margin-inline-end: var(--space-md);
-  font-family: var(--font-mono);
-  font-size: var(--font-label);
-  letter-spacing: 0.08em;
+  margin-inline-end: 0.5em;
+  font-weight: 600;
   color: var(--report-sequence-ink);
 }

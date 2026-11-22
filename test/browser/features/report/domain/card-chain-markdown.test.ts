@@ -17,7 +17,7 @@ const chain = (names: readonly string[]): string =>
     .map((name, index) => `${names[index] ?? ""} -> ${name}`)
     .join("\n")
 
-const CAPTION = '<div class="caption"><span class="caption-number">図 1</span></div>'
+const CAPTION = '<div class="caption"><span class="caption-number">図1</span></div>'
 
 const cardChainOf = (names: readonly string[]): string =>
   `<ol class="card-chain" aria-label="連鎖">${names

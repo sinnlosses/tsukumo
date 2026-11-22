@@ -1,4 +1,4 @@
-// 塊の本体に、節をまたいで数えた「図 n」「表 n」の題の行を添えて包む。
+// 塊の本体に、節をまたいで数えた「図n」「表n」の題の行を添えて包む。
 
 import { htmlInlineWithCode } from "./report-inline-markdown.ts"
 
@@ -32,7 +32,7 @@ export function captionedMarkdown({
 }: Captioned): string {
   const text = htmlInlineWithCode(title)
   const caption =
-    `<div class="caption"><span class="caption-number">${CAPTION_LABELS[kind]} ${String(ordinal)}</span>` +
+    `<div class="caption"><span class="caption-number">${CAPTION_LABELS[kind]}${String(ordinal)}</span>` +
     `${text === "" ? "" : `<span class="caption-text">${text}</span>`}</div>`
   const parts = kind === "table" ? [caption, body] : [body, caption]
   const className = fit ? "captioned captioned-fit" : "captioned"

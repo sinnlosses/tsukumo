@@ -458,7 +458,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
         captionNumber.kind === "none" ? [] : [captionNumber.ordinal],
       )
 
-    it("figure の図は面の先頭の欄に「図 1」で持ち、sections の図の番号はそのあとに続く", () => {
+    it("figure の図は面の先頭の欄に「図1」で持ち、sections の図の番号はそのあとに続く", () => {
       const a2ui = surfaceWith({
         kind: "graph",
         title: "架空の欄の図",
@@ -479,7 +479,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
       expect(a2ui.favor.text).toBe("")
     })
 
-    it("none は何も持たず、sections の図が「図 1」になる", () => {
+    it("none は何も持たず、sections の図が「図1」になる", () => {
       const withNone = surfaceWith({ kind: "none", reason: "no-shape" })
 
       expect(withNone.figure).toEqual({ kind: "none" })
