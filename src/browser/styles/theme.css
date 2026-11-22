@@ -149,7 +149,7 @@
   --report-code-surface: #26252f; /* 見出しと一文の中のコードの地 */
   --report-sequence-ink: var(
     --chart-series-1
-  ); /* 流れ（flow）の丸・線、画像の部品の「図 n」の番号 */
+  ); /* 流れ（flow）の丸・線、画像の部品の「図n」の番号 */
   --report-chart-reference: var(--graph-return); /* グラフの基準線（目標・上限）の点線と名前 */
 
   /* タイプスケール。字の段は Astryx のトークンを引く（字の下限は 12px で、10px の `--font-size-xs` より下は引かない）。 */

@@ -70,23 +70,23 @@
 
 字の段は Astryx のトークンを引く（ADR 0053。向きは `design-token.md`「向き（tsukumo と Astryx）」）。下の寸法は広い画面の値で、括弧の中は触る画面（`pointer: coarse` かつ幅が `lg` 未満）で Astryx が組み直した値。
 
-| 役割                                     | 寸法（引く先）                                                                     | 書体     |
-| ---------------------------------------- | ---------------------------------------------------------------------------------- | -------- |
-| 印・小さなラベル                         | 12px（`--font-label` ← `--font-size-sm`。14px）                                    | 本文書体 |
-| 枠なしの入口（リンク風の操作）           | 12px（`--font-action` ← `--font-label`。14px）                                     | 本文書体 |
-| 出典のバッジ（字がホスト名と同じリンク） | 12px                                                                               | 等幅     |
-| 補助・サイドバーの本文                   | 12px（`--font-secondary` ← `--text-supporting-size`。14px）                        | 本文書体 |
-| 区画の見出し・強調した要約               | 14px（`--font-subheading` ← `--font-size-base`。16px）                             | 本文書体 |
-| 本文（レポート・セリフ）                 | 14px（`--font-body` ← `--text-body-size`。16px）・行の高さ `--line-height-reading` | 本文書体 |
-| 作業の名前（結論部の頭の行）             | `--font-body`（14px）・600・`ink-bright`                                           | 本文書体 |
-| 結論の1文目                              | `--report-heading-2`（21px）・行間 32px・700・`ink-bright`                         | 本文書体 |
-| 図表の題                                 | 14px（`--font-subheading`）・`ink-soft`                                            | 本文書体 |
-| 図表の番号（「図n」「表n」）             | 題と同じ大きさ・600・`ink-quiet`（字と数の間は空けず、題との間は 0.5em）           | 本文書体 |
-| 大きな見出し（画面・ダイアログの題）     | 17px（`--font-heading` ← `--text-heading-3-size`。19px）                           | 本文書体 |
-| 入力欄の見出し3段目（`###`）             | 17px（`--font-heading-3` ← `--text-heading-3-size`。19px）                         | 本文書体 |
-| 入力欄の見出し2段目（`##`）              | 20px（`--font-heading-2` ← `--text-heading-2-size`。22px）                         | 本文書体 |
-| 入力欄の見出し1段目（`#`）               | 24px（`--font-heading-1` ← `--text-heading-1-size`。26px）                         | 本文書体 |
-| ID・ツール名・キー                       | 12px（`--font-secondary`）。サイドバーのタスクのIDは印の段（12px）                 | 等幅     |
+| 役割                                     | 寸法（引く先）                                                                         | 書体     |
+| ---------------------------------------- | -------------------------------------------------------------------------------------- | -------- |
+| 印・小さなラベル                         | 12px（`--font-label` ← `--font-size-sm`。14px）                                        | 本文書体 |
+| 枠なしの入口（リンク風の操作）           | 12px（`--font-action` ← `--font-label`。14px）                                         | 本文書体 |
+| 出典のバッジ（字がホスト名と同じリンク） | 12px                                                                                   | 等幅     |
+| 補助・サイドバーの本文                   | 12px（`--font-secondary` ← `--text-supporting-size`。14px）                            | 本文書体 |
+| 区画の見出し・強調した要約               | 14px（`--font-subheading` ← `--font-size-base`。16px）                                 | 本文書体 |
+| 本文（レポート・セリフ）                 | 14px（`--font-body` ← `--text-body-size`。16px）・行の高さ `--line-height-reading`     | 本文書体 |
+| 作業の名前（結論部の頭の行）             | `--font-body`（14px）・600・`ink-bright`                                               | 本文書体 |
+| 結論の1文目                              | `--report-heading-2`（21px）・行間 32px・700・`ink-bright`                             | 本文書体 |
+| 図表の題                                 | 表は 14px（`--font-subheading`）・`ink-soft`、図は 12px（`--font-label`）・`ink-quiet` | 本文書体 |
+| 図表の番号（「図n」「表n」）             | 題と同じ大きさ・600・`ink-quiet`（字と数の間は空けず、題との間は 0.5em）               | 本文書体 |
+| 大きな見出し（画面・ダイアログの題）     | 17px（`--font-heading` ← `--text-heading-3-size`。19px）                               | 本文書体 |
+| 入力欄の見出し3段目（`###`）             | 17px（`--font-heading-3` ← `--text-heading-3-size`。19px）                             | 本文書体 |
+| 入力欄の見出し2段目（`##`）              | 20px（`--font-heading-2` ← `--text-heading-2-size`。22px）                             | 本文書体 |
+| 入力欄の見出し1段目（`#`）               | 24px（`--font-heading-1` ← `--text-heading-1-size`。26px）                             | 本文書体 |
+| ID・ツール名・キー                       | 12px（`--font-secondary`）。サイドバーのタスクのIDは印の段（12px）                     | 等幅     |
 
 - **字の下限は 12px**（旧い決定は
   `docs/history/decision.md`「screen-design.md 13.3 Type」）。これを割る字を足さない。Astryx の `--font-size-xs`（10px）より下の段は引かない。印と入口は
@@ -126,7 +126,7 @@
 - **幅は2段**（13.1 原則4）。広 `min(内幅, 63em)` は地の文・`note`・お願い・`checks`・`###` と `##` の見出し（罫も）・図・表・コード・数のカード・`cards`・候補・ファイル、全は見比べ・前後の見比べと、
   列が 7 以上の表・`matrix`（CSS では入りきるかを測れないので、列の数で代える）。
   欄外注の列を持つ部品は、表と図でも 63em に収まる（13.4「欄外注の列」）
-- **題つきの図は外枠を紙の中央に置き、題は図の下・図の幅の中で中央**（図の幅なり。図を囲む沈んだ暗い枠は持たない）。番号（「図n」）は題と同じ大きさの 600・`ink-quiet` で、題は 14px・`ink-soft`
+- **題つきの図は外枠を紙の中央に置き、題は図の下・図の幅の中で中央**（図の幅なり。図を囲む沈んだ暗い枠は持たない）。題は 12px（`--font-label`）・`ink-quiet` で、番号（「図n」）も同じ 12px の 600・`ink-quiet`
 - **題つきの表は外枠を紙の中央に置き、題・本体・凡例は外枠の幅の中で中央にそろえる**。表は中身なりの幅で組む（`max-width: 100%` で、幅いっぱいには広げない）。
   題（「表n」）は表の上・中央で、番号は題と同じ 14px・600・`ink-quiet`、題の字は 14px・`ink-soft`。凡例は題の下・中央。
   字は14px（`--font-subheading`）・行間20px、見出し行は12px（`--font-secondary`）・500・`ink-soft`。
