@@ -1,0 +1,139 @@
+/* 「手順」の全体の詳細の頭に置くワークフローの図の並べ方。
+   列の横並び・箱の幅・矢印の SVG の重ね方だけを書き、箱と字の見た目は `ui/` の部品の既定のまま。 */
+.workflow-diagram {
+  display: flex;
+  flex-direction: column;
+  gap: var(--stack-block);
+  padding: 0 var(--inline-control);
+}
+.workflow-diagram-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--inline-control);
+  margin: 0;
+}
+.workflow-diagram-counts {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--inline-tight);
+}
+.workflow-diagram-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.workflow-diagram-head > .workflow-diagram-name {
+  flex: 0 1 auto;
+}
+.workflow-diagram-time {
+  flex: none;
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+/* 列と箱を置く器。矢印の SVG と差し戻しの字はこの器の左上を原点に重ねる。 */
+.workflow-diagram-stage {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--inline-group);
+}
+.workflow-diagram-stage[data-has-start="true"] {
+  padding-inline-start: calc(2 * var(--inline-group));
+}
+/* 箱より先に置き、箱の地が線の上に来るようにする。 */
+.workflow-diagram-arrows {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+.workflow-diagram-arrow {
+  fill: none;
+  stroke: color-mix(in srgb, var(--ink) 40%, transparent);
+  stroke-width: 1.5;
+}
+.workflow-diagram-arrow[data-arrow="toRunning"] {
+  stroke: var(--accent);
+}
+.workflow-diagram-arrow[data-arrow="sentBack"] {
+  stroke: var(--state-warn);
+}
+.workflow-diagram-arrow[data-arrow="toWaiting"],
+.workflow-diagram-arrow[data-arrow="toUpcoming"] {
+  stroke-dasharray: 4 3;
+}
+.workflow-diagram-arrow[data-arrow="settled"] {
+  stroke: color-mix(in srgb, var(--ink) 25%, transparent);
+}
+.workflow-diagram-marker {
+  fill: color-mix(in srgb, var(--ink) 40%, transparent);
+}
+.workflow-diagram-marker[data-marker="live"] {
+  fill: var(--accent);
+}
+.workflow-diagram-marker[data-marker="back"] {
+  fill: var(--state-warn);
+}
+.workflow-diagram-start {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-start: 0;
+  width: 10px;
+  height: 10px;
+  fill: var(--ink-quiet);
+}
+.workflow-diagram-column {
+  position: relative;
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  gap: var(--stack-group);
+  min-width: 0;
+}
+.workflow-diagram-folded-column {
+  position: relative;
+  flex: none;
+  width: 6rem;
+  padding-block-start: var(--stack-group);
+}
+.workflow-diagram-column-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--inline-tight);
+  margin: 0;
+  padding-block-end: var(--stack-tight);
+  border-bottom: 2px solid var(--rule-quiet);
+}
+.workflow-diagram-column-head[data-current="true"] {
+  border-bottom-color: var(--accent);
+}
+.workflow-diagram-row {
+  display: flex;
+  align-items: center;
+  gap: var(--inline-tight);
+  min-width: 0;
+}
+.workflow-diagram-note {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.workflow-diagram-upcoming {
+  border-style: dashed;
+}
+.workflow-diagram-arrow-label {
+  position: absolute;
+  inset-block-start: var(--arrow-label-y);
+  inset-inline-start: var(--arrow-label-x);
+  transform: translate(var(--inline-tight), -50%);
+  pointer-events: none;
+}
+.workflow-diagram-folded {
+  padding: 0 var(--inline-control);
+}

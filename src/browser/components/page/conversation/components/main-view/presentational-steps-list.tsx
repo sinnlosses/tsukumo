@@ -1,5 +1,5 @@
 // 進み具合のプログレスバーの「手順」で開く、依頼全体の詳細の中身。
-// 見出し・バックグラウンドタスクの区画・フェーズの行・どの行にも付かない手順・所要時間の帯・下端の経過を並べる。
+// 見出し・ワークフローの図・バックグラウンドタスクの区画・フェーズの行・どの行にも付かない手順・所要時間の帯・下端の経過を並べる。
 
 import clsx from "clsx"
 import type { ReactElement } from "react"
@@ -17,6 +17,7 @@ import type { StepsPlanItem } from "./domain/steps-plan-card.ts"
 import { useStepsLanding } from "./hooks/use-steps-landing.ts"
 import type { WorkStripSteps } from "./hooks/use-work-strip-step-list.ts"
 import styles from "./main-view.module.css"
+import { PresentationalWorkflowDiagrams } from "./presentational-workflow-diagram.tsx"
 
 /**
  * 押すと開く依頼の全体の詳細。ワークプランのフェーズを並べ、行の下にそのフェーズの手順を置く。
@@ -41,6 +42,7 @@ export function PresentationalStepsList(props: {
         <span>依頼の手順</span>
         {steps.phaseCountLabel !== "" && <span>{steps.phaseCountLabel}</span>}
       </p>
+      <PresentationalWorkflowDiagrams steps={steps} />
       <CurrentWorkBackground list={steps.backgroundList} runningMark="still" />
       {steps.card.length > 0 && (
         <ol className={styles["work-strip-plan"]}>

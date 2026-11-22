@@ -1,0 +1,124 @@
+{
+  "name": "workflow-diagram-seq",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "架空のタスクを実装から振り返りまで進めたい（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 100,
+      "event": {
+        "kind": "speech",
+        "text": "実装から振り返りまで、流れに任せるね。",
+        "expression": "default"
+      }
+    },
+    {
+      "afterMs": 200,
+      "event": {
+        "kind": "work-plan",
+        "phaseIds": ["計画を確かめる", "実装", "受け入れ", "振り返り"],
+        "delegatedRange": {
+          "kind": "none"
+        },
+        "skippedPhases": [],
+        "awaitingSummary": {
+          "kind": "none"
+        },
+        "phases": ["計画を確かめる", "実装", "受け入れ", "振り返り"],
+        "current": 2,
+        "finishedInGroup": [],
+        "phaseSummary": "架空の実装を終え、受け入れに入った。"
+      }
+    },
+    {
+      "afterMs": 300,
+      "event": {
+        "kind": "background-tasks-changed",
+        "tasks": [
+          {
+            "taskId": "fake-workflow-seq",
+            "kind": "workflow",
+            "description": "架空の task-flow"
+          }
+        ]
+      }
+    },
+    {
+      "afterMs": 400,
+      "event": {
+        "kind": "workflow-progress",
+        "progress": {
+          "taskId": "fake-workflow-seq",
+          "phases": [
+            { "index": 0, "title": "実装" },
+            { "index": 1, "title": "受け入れ" },
+            { "index": 2, "title": "振り返り" }
+          ],
+          "agents": [
+            {
+              "index": 0,
+              "agentId": "fake-seq-agent-0",
+              "label": "実装",
+              "agentType": "fake-plugin:implementer",
+              "model": "sonnet",
+              "phaseIndex": 0,
+              "phaseTitle": "実装",
+              "state": "done",
+              "queuedAt": 1768437930000,
+              "startedAt": 1768437930000,
+              "durationMs": 588000
+            },
+            {
+              "index": 1,
+              "agentId": "fake-seq-agent-1",
+              "label": "受け入れ 1",
+              "agentType": "fake-plugin:acceptor",
+              "model": "opus",
+              "phaseIndex": 1,
+              "phaseTitle": "受け入れ",
+              "state": "done",
+              "queuedAt": 1768438520000,
+              "startedAt": 1768438520000,
+              "durationMs": 130000
+            },
+            {
+              "index": 2,
+              "agentId": "fake-seq-agent-2",
+              "label": "直し 1",
+              "agentType": "fake-plugin:implementer",
+              "model": "sonnet",
+              "phaseIndex": 1,
+              "phaseTitle": "受け入れ",
+              "state": "progress",
+              "queuedAt": 1768438651000,
+              "startedAt": 1768438651000
+            },
+            {
+              "index": 3,
+              "label": "受け入れ 2",
+              "agentType": "fake-plugin:acceptor",
+              "model": "opus",
+              "phaseIndex": 1,
+              "phaseTitle": "受け入れ",
+              "state": "start",
+              "queuedAt": 1768438652000
+            }
+          ]
+        }
+      }
+    },
+    {
+      "afterMs": 500,
+      "event": {
+        "kind": "speech",
+        "text": "受け入れで指摘が付いたので、直しの番に入ったよ。",
+        "expression": "default"
+      }
+    }
+  ]
+}

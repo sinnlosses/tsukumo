@@ -48,7 +48,7 @@ test.describe("進み具合のプログレスバー", () => {
     await expectReadable(room.page)
   })
 
-  test("「手順」を押すと全体の詳細が帯の右端にそろって重なり、流れの頭の位置と帯の高さは動かず、外を押すと閉じる", async ({
+  test("「手順」を押すと全体の詳細が帯の左右の端にそろって重なり、流れの頭の位置と帯の高さは動かず、外を押すと閉じる", async ({
     run,
   }) => {
     const room = await run.open({
@@ -70,8 +70,8 @@ test.describe("進み具合のプログレスバー", () => {
     const listBox = await boxOf(list)
     const stripBox = await boxOf(strip)
     expect(listBox.top).toBeGreaterThanOrEqual(stripBox.bottom)
-    expect(listBox.right).toBeLessThanOrEqual(stripBox.right)
-    expect(stripBox.right - listBox.right).toBeLessThan(24)
+    expect(Math.abs(listBox.left - stripBox.left)).toBeLessThanOrEqual(1)
+    expect(Math.abs(listBox.right - stripBox.right)).toBeLessThanOrEqual(1)
     expect(stripBox.height).toBe(stripBefore.height)
     expect((await boxOf(flowHead)).top).toBe(flowTopBefore)
 

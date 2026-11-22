@@ -22,6 +22,7 @@
 @import "./turn-card/work-strip.css";
 @import "./turn-card/work-strip-phase-pop.css";
 @import "./turn-card/work-strip-steps-pop.css";
+@import "./turn-card/workflow-diagram.css";
 
 /* 依頼の塊の見出しの字は目に見えなくてよい。`h2` は読み上げの見出しとして残す。
    `composes` の参照先の相対パスは `@import` した先のファイルでは解けないので、入口のここに置く。 */

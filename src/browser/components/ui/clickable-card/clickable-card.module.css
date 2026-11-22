@@ -1,0 +1,9 @@
+.clickable-card[data-tone="accent"] {
+  border-color: var(--accent);
+}
+.clickable-card[data-tone="danger"] {
+  border-color: var(--state-ng);
+}
+.clickable-card[data-tone="dashed"] {
+  border-style: dashed;
+}

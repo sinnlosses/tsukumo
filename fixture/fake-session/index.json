@@ -175,6 +175,8 @@
     "a2ui-staged-rejected",
     "a2ui-same-update",
     "workflow-steps",
+    "workflow-diagram-seq",
+    "workflow-diagram-par",
     "report-compare-versus",
     "speech-arrival"
   ],

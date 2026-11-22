@@ -4,6 +4,7 @@ import type { ReactElement } from "react"
 
 import { Badge } from "../../ui/badge/badge.tsx"
 import { Button } from "../../ui/button/button.tsx"
+import { ClickableCard } from "../../ui/clickable-card/clickable-card.tsx"
 import { CodeBlock } from "../../ui/code-block/code-block.tsx"
 import { Collapsible } from "../../ui/collapsible/collapsible.tsx"
 import { Disclosure } from "../../ui/disclosure/disclosure.tsx"
@@ -19,6 +20,7 @@ import { MetadataList, MetadataListItem } from "../../ui/metadata-list/metadata-
 import { Note } from "../../ui/note/note.tsx"
 import { Quote } from "../../ui/quote/quote.tsx"
 import { SmallIconButton } from "../../ui/small-icon-button/small-icon-button.tsx"
+import { StatusDot } from "../../ui/status-dot/status-dot.tsx"
 import { Step, Stepper } from "../../ui/stepper/stepper.tsx"
 import { Surface } from "../../ui/surface/surface.tsx"
 import {
@@ -40,6 +42,8 @@ import { OverlayGroups } from "./ui-gallery-overlay.tsx"
 
 const BADGE_TONES = ["neutral", "ok", "warn", "ng", "accent"] as const
 const BADGE_SHAPES = ["pill", "square"] as const
+const CLICKABLE_CARD_TONES = ["plain", "accent", "danger", "dashed"] as const
+const STATUS_DOT_TONES = ["accent", "ok", "ng", "neutral"] as const
 const DIVIDER_TONES = ["strong", "soft", "quiet"] as const
 const SURFACE_TONES = ["surface", "raised", "accent", "ground"] as const
 const SURFACE_RADII = ["sm", "md", "lg", "xl"] as const
@@ -100,6 +104,25 @@ export function UiGallery(): ReactElement {
             </Badge>
           )),
         )}
+      </Group>
+      <Group title="ClickableCard（縁）" parts={["clickable-card"]}>
+        {CLICKABLE_CARD_TONES.map((tone) => (
+          <ClickableCard key={tone} label={tone} tone={tone} onClick={() => {}} className="">
+            <Text element="span" size="secondary" tone="ink" weight="normal" className="">
+              {tone}
+            </Text>
+          </ClickableCard>
+        ))}
+      </Group>
+      <Group title="StatusDot（色）" parts={["status-dot"]}>
+        {STATUS_DOT_TONES.map((tone) => (
+          <span key={tone} className={styles["design-row"]}>
+            <StatusDot tone={tone} label={tone} />
+            <Text element="span" size="secondary" tone="ink-quiet" weight="normal" className="">
+              {tone}
+            </Text>
+          </span>
+        ))}
       </Group>
       <Group title="Divider（濃さ × 向き）" parts={["divider"]}>
         {DIVIDER_TONES.map((tone) => (

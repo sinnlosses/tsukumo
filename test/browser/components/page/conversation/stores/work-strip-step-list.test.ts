@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest"
 
 import { useWorkStripSteps } from "../../../../../../src/browser/components/page/conversation/stores/work-strip-step-list.ts"
+import { checkedTaskId } from "../../../../../fixture/task-id.ts"
 
 afterEach(() => {
   useWorkStripSteps.setState(useWorkStripSteps.getInitialState(), true)
@@ -57,6 +58,37 @@ describe("useWorkStripSteps のフェーズの詳細", () => {
     expect(expanded).toMatchObject({ kind: "steps", doneExpanded: true, stepsExpanded: true })
     expect(reopened).toMatchObject({ doneExpanded: false, stepsExpanded: false })
     expect(failure).toMatchObject({ doneExpanded: false, stepsExpanded: false })
+  })
+
+  it("ワークフローの図の畳みを開く操作は、閉じて開き直すと畳んだ姿に戻り、別のやり取りには書かない", () => {
+    const state = useWorkStripSteps.getState()
+    const taskId = checkedTaskId("wf-1")
+
+    state.toggle(2)
+    state.unfoldWorkflowPhases(2)
+    state.unfoldWorkflowColumn(2, "column-a")
+    state.openWorkflowRun(2, taskId)
+    state.selectWorkflowAgent(2, taskId, 3)
+    state.unfoldWorkflowPhases(5)
+    const unfolded = useWorkStripSteps.getState().opened
+    state.closeSteps()
+    state.toggle(2)
+    const reopened = useWorkStripSteps.getState().opened
+
+    expect(unfolded).toMatchObject({
+      kind: "steps",
+      exchange: 2,
+      workflowPhasesUnfolded: true,
+      unfoldedWorkflowColumns: ["column-a"],
+      openedWorkflowRuns: [taskId],
+      selectedWorkflowAgent: { kind: "agent", taskId, index: 3 },
+    })
+    expect(reopened).toMatchObject({
+      workflowPhasesUnfolded: false,
+      unfoldedWorkflowColumns: [],
+      openedWorkflowRuns: [],
+      selectedWorkflowAgent: { kind: "none" },
+    })
   })
 
   it("closeSteps は全体の詳細だけを閉じ、フェーズの詳細は触らない", () => {

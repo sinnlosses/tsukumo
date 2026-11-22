@@ -91,6 +91,11 @@ export function useWorkStrip(): WorkStripModel {
   const toggle = useWorkStripSteps((state) => state.toggle)
   const expandDone = useWorkStripSteps((state) => state.expandDone)
   const expandSteps = useWorkStripSteps((state) => state.expandSteps)
+  const unfoldWorkflowPhases = useWorkStripSteps((state) => state.unfoldWorkflowPhases)
+  const unfoldWorkflowColumn = useWorkStripSteps((state) => state.unfoldWorkflowColumn)
+  const openWorkflowRun = useWorkStripSteps((state) => state.openWorkflowRun)
+  const selectWorkflowAgent = useWorkStripSteps((state) => state.selectWorkflowAgent)
+  const workflowRuns = useSession((session) => session.state.workflowRuns)
   const turns = useMainViewTurns()
   const moment = useSession((session) => conversationMoment(session.state))
   const plan = turnStepList.kind === "turn" ? turnStepList.plan : NO_PLAN
@@ -130,6 +135,9 @@ export function useWorkStrip(): WorkStripModel {
           landing: opened.landing,
           doneExpanded: opened.doneExpanded,
           stepsExpanded: opened.stepsExpanded,
+          workflowPhasesUnfolded: opened.workflowPhasesUnfolded,
+          unfoldedWorkflowColumns: opened.unfoldedWorkflowColumns,
+          openedWorkflowRuns: opened.openedWorkflowRuns,
         }
       : { kind: "closed" }
   const elapsedWord =
@@ -169,6 +177,9 @@ export function useWorkStrip(): WorkStripModel {
     phaseTimes:
       newestTurn === undefined || working ? NO_PHASE_TIMES : finalPhaseTimesOf(newestTurn),
     backgroundTasks,
+    workflowRuns,
+    phaseIds: plan.kind === "planned" ? plan.phaseIds : [],
+    now,
     elapsedLabel: elapsedLabel,
     onToggle: () => {
       toggle(exchange)
@@ -178,6 +189,18 @@ export function useWorkStrip(): WorkStripModel {
     },
     onExpandSteps: () => {
       expandSteps(exchange)
+    },
+    onUnfoldPhases: () => {
+      unfoldWorkflowPhases(exchange)
+    },
+    onUnfoldColumn: (column) => {
+      unfoldWorkflowColumn(exchange, column)
+    },
+    onOpenRun: (taskId) => {
+      openWorkflowRun(exchange, taskId)
+    },
+    onAgentPress: (taskId, index) => {
+      selectWorkflowAgent(exchange, taskId, index)
     },
   })
 

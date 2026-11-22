@@ -8,11 +8,13 @@ import { MAIN_VIEW_EXAMPLES } from "./screen-part-example-main.tsx"
 import { NAV_EXAMPLES } from "./screen-part-example-nav.tsx"
 import { STAGE_EXAMPLES } from "./screen-part-example-stage.tsx"
 import type { ScreenPartExample } from "./screen-part-example-type.ts"
+import { WORKFLOW_EXAMPLES } from "./screen-part-example-workflow.tsx"
 
 export const SCREEN_PART_EXAMPLES: readonly ScreenPartExample[] = [
   ...NAV_EXAMPLES,
   ...STAGE_EXAMPLES,
   ...MAIN_VIEW_EXAMPLES,
+  ...WORKFLOW_EXAMPLES,
   ...INQUIRY_EXAMPLES,
   ...DISPATCH_EXAMPLES,
   ...CHARACTER_EXAMPLES,

@@ -10,7 +10,11 @@ import { questionBriefSchema } from "../../../../../src/shared/session-driver/qu
 import { applySessionEvent } from "../../../../../src/shared/session/session-fold.ts"
 import { INITIAL_SESSION_STATE } from "../../../../../src/shared/session/session-state.ts"
 import { currentWorkPlan } from "../../../../../src/shared/session/work-plan-fold.ts"
-import { type DelegatedRange, parseWorkPlan } from "../../../../../src/shared/session/work-plan.ts"
+import {
+  type DelegatedRange,
+  parseWorkPlan,
+  type WorkPlanEntry,
+} from "../../../../../src/shared/session/work-plan.ts"
 import { bundledFakeSession } from "../../../../fixture/bundled-fake-session.ts"
 
 describe("readFakeSession", () => {
@@ -152,7 +156,7 @@ describe("同梱の疑似セッションのワークプラン", () => {
     for (const plan of plans) {
       const { phases, current, finishedInGroup, phaseSummary, delegatedRange, skippedPhases } = plan
       const parsed = parseWorkPlan({
-        phases,
+        phases: phaseElementsOf(phases, plan.phaseIds),
         current,
         finishedInGroup,
         phaseSummary,
@@ -173,6 +177,24 @@ describe("同梱の疑似セッションのワークプラン", () => {
     }
   })
 })
+
+/** 件の段の名前と平らにした段の id から、`work_plan` に渡す段の並びを組み直す。id が無ければ名前のまま。 */
+function phaseElementsOf(
+  phases: readonly WorkPlanEntry[],
+  phaseIds: readonly string[],
+): readonly unknown[] {
+  if (phaseIds.length === 0) {
+    return phases
+  }
+  const flatNames = phases.flatMap((entry) => (typeof entry === "string" ? [entry] : entry))
+  const elementOf = (name: string): { readonly id: string; readonly name: string } => ({
+    id: phaseIds[flatNames.indexOf(name)] ?? "",
+    name,
+  })
+  return phases.map((entry) =>
+    typeof entry === "string" ? elementOf(entry) : entry.map((name) => elementOf(name)),
+  )
+}
 
 describe("同梱の疑似セッションの質問の添え書き", () => {
   it("全ての添え書きが、questionBriefSchema で読んだ結果と同じ全欄を持つ", () => {

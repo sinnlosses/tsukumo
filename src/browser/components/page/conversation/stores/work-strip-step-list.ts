@@ -3,6 +3,8 @@
 
 import { create } from "zustand"
 
+import type { TaskId } from "../../../../../shared/session-driver/task-id.ts"
+
 /**
  * 開いた一覧をどこへ連れていくか。`top` は「手順 n」の口で開いたときで、どこへも転がさない。
  * `failure` は最初の失敗の行。`signal` は連れていく合図で、同じ行を続けて指しても変わる。
@@ -10,6 +12,11 @@ import { create } from "zustand"
 export type StepsLanding =
   | { readonly kind: "top" }
   | { readonly kind: "failure"; readonly signal: number }
+
+/** ワークフローの図で押した箱。`index` はエージェントの鍵。 */
+export type SelectedWorkflowAgent =
+  | { readonly kind: "none" }
+  | { readonly kind: "agent"; readonly taskId: TaskId; readonly index: number }
 
 /**
  * 開いている詳細。手順の一覧とフェーズの詳細は同時に1つだけ開くので、判別合併型の1つの値で持つ。
@@ -26,6 +33,13 @@ type WorkStripStepsOpened =
       readonly doneExpanded: boolean
       /** 今のフェーズの手順を全部開いたか。 */
       readonly stepsExpanded: boolean
+      /** ワークフローの図の「済んだ n フェーズ」を開いたか。 */
+      readonly workflowPhasesUnfolded: boolean
+      /** ワークフローの図で「ほか n 件」を開いた列の鍵。 */
+      readonly unfoldedWorkflowColumns: readonly string[]
+      /** 畳んだ見出しから開いたワークフロースクリプト。いちばん新しいものは載せなくても開いている。 */
+      readonly openedWorkflowRuns: readonly TaskId[]
+      readonly selectedWorkflowAgent: SelectedWorkflowAgent
     }
   | { readonly kind: "phase"; readonly exchange: number; readonly segmentKey: string }
 
@@ -49,12 +63,30 @@ type WorkStripStepsState = {
   readonly expandDone: (exchange: number) => void
   /** 今のフェーズの手順を全部開く。 */
   readonly expandSteps: (exchange: number) => void
+  /** ワークフローの図の「済んだ n フェーズ」を開く。 */
+  readonly unfoldWorkflowPhases: (exchange: number) => void
+  /** ワークフローの図の列の「ほか n 件」を開く。 */
+  readonly unfoldWorkflowColumn: (exchange: number, column: string) => void
+  /** 畳んだワークフロースクリプトを開く。 */
+  readonly openWorkflowRun: (exchange: number, taskId: TaskId) => void
+  /** ワークフローの図の箱を選ぶ。 */
+  readonly selectWorkflowAgent: (exchange: number, taskId: TaskId, index: number) => void
 }
 
 const TOP = { kind: "top" } as const satisfies StepsLanding
 
 function stepsOpenedOf(exchange: number, landing: StepsLanding): WorkStripStepsOpened {
-  return { kind: "steps", exchange, landing, doneExpanded: false, stepsExpanded: false }
+  return {
+    kind: "steps",
+    exchange,
+    landing,
+    doneExpanded: false,
+    stepsExpanded: false,
+    workflowPhasesUnfolded: false,
+    unfoldedWorkflowColumns: [],
+    openedWorkflowRuns: [],
+    selectedWorkflowAgent: { kind: "none" },
+  }
 }
 
 export const useWorkStripSteps = create<WorkStripStepsState>()((set) => ({
@@ -88,20 +120,49 @@ export const useWorkStripSteps = create<WorkStripStepsState>()((set) => ({
     set((state) => (state.opened.kind === "steps" ? { opened: { kind: "closed" } } : state))
   },
   expandDone: (exchange) => {
-    set((state) =>
-      isOpenFor(state.opened, exchange) && state.opened.kind === "steps"
-        ? { opened: { ...state.opened, doneExpanded: true } }
-        : state,
-    )
+    set((state) => withSteps(state, exchange, () => ({ doneExpanded: true })))
   },
   expandSteps: (exchange) => {
+    set((state) => withSteps(state, exchange, () => ({ stepsExpanded: true })))
+  },
+  unfoldWorkflowPhases: (exchange) => {
+    set((state) => withSteps(state, exchange, () => ({ workflowPhasesUnfolded: true })))
+  },
+  unfoldWorkflowColumn: (exchange, column) => {
     set((state) =>
-      isOpenFor(state.opened, exchange) && state.opened.kind === "steps"
-        ? { opened: { ...state.opened, stepsExpanded: true } }
-        : state,
+      withSteps(state, exchange, (steps) => ({
+        unfoldedWorkflowColumns: [...steps.unfoldedWorkflowColumns, column],
+      })),
+    )
+  },
+  openWorkflowRun: (exchange, taskId) => {
+    set((state) =>
+      withSteps(state, exchange, (steps) => ({
+        openedWorkflowRuns: [...steps.openedWorkflowRuns, taskId],
+      })),
+    )
+  },
+  selectWorkflowAgent: (exchange, taskId, index) => {
+    set((state) =>
+      withSteps(state, exchange, () => ({
+        selectedWorkflowAgent: { kind: "agent", taskId, index },
+      })),
     )
   },
 }))
+
+type OpenedSteps = Extract<WorkStripStepsOpened, { readonly kind: "steps" }>
+
+/** そのやり取りで手順の一覧が開いているときだけ書き、ほかはそのまま返す。 */
+function withSteps(
+  state: WorkStripStepsState,
+  exchange: number,
+  update: (steps: OpenedSteps) => Partial<Omit<OpenedSteps, "kind" | "exchange">>,
+): WorkStripStepsState | Pick<WorkStripStepsState, "opened"> {
+  return state.opened.kind === "steps" && state.opened.exchange === exchange
+    ? { opened: { ...state.opened, ...update(state.opened) } }
+    : state
+}
 
 function landedState(
   state: WorkStripStepsState,

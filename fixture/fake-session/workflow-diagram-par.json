@@ -1,0 +1,148 @@
+{
+  "name": "workflow-diagram-par",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "架空の差分を観点ごとに並べて見てほしい（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 100,
+      "event": {
+        "kind": "speech",
+        "text": "観点ごとに分けて、並べて見てもらうね。",
+        "expression": "default"
+      }
+    },
+    {
+      "afterMs": 200,
+      "event": {
+        "kind": "work-plan",
+        "phaseIds": ["レビュー", "確かめ"],
+        "delegatedRange": {
+          "kind": "none"
+        },
+        "skippedPhases": [],
+        "awaitingSummary": {
+          "kind": "none"
+        },
+        "phases": ["レビュー", "確かめ"],
+        "current": 0,
+        "finishedInGroup": [],
+        "phaseSummary": ""
+      }
+    },
+    {
+      "afterMs": 300,
+      "event": {
+        "kind": "background-tasks-changed",
+        "tasks": [
+          {
+            "taskId": "fake-workflow-par",
+            "kind": "workflow",
+            "description": "架空の review-changes"
+          }
+        ]
+      }
+    },
+    {
+      "afterMs": 400,
+      "event": {
+        "kind": "workflow-progress",
+        "progress": {
+          "taskId": "fake-workflow-par",
+          "phases": [
+            { "index": 0, "title": "レビュー" },
+            { "index": 1, "title": "確かめ" }
+          ],
+          "agents": [
+            {
+              "index": 0,
+              "agentId": "fake-par-agent-0",
+              "label": "不具合",
+              "phaseIndex": 0,
+              "phaseTitle": "レビュー",
+              "state": "progress",
+              "queuedAt": 1768438579000,
+              "startedAt": 1768438579000
+            },
+            {
+              "index": 1,
+              "agentId": "fake-par-agent-1",
+              "label": "性能",
+              "phaseIndex": 0,
+              "phaseTitle": "レビュー",
+              "state": "progress",
+              "queuedAt": 1768438579000,
+              "startedAt": 1768438579000
+            },
+            {
+              "index": 2,
+              "agentId": "fake-par-agent-2",
+              "label": "アクセシビリティ",
+              "phaseIndex": 0,
+              "phaseTitle": "レビュー",
+              "state": "done",
+              "queuedAt": 1768438579000,
+              "startedAt": 1768438579000,
+              "durationMs": 125000
+            },
+            {
+              "index": 3,
+              "agentId": "fake-par-agent-3",
+              "label": "CSS",
+              "phaseIndex": 0,
+              "phaseTitle": "レビュー",
+              "state": "error",
+              "stopReason": "stalled",
+              "queuedAt": 1768438579000,
+              "startedAt": 1768438579000,
+              "durationMs": 47000
+            },
+            {
+              "index": 4,
+              "agentId": "fake-par-agent-4",
+              "label": "型",
+              "phaseIndex": 0,
+              "phaseTitle": "レビュー",
+              "state": "done",
+              "queuedAt": 1768438579000,
+              "startedAt": 1768438579000,
+              "durationMs": 98000
+            },
+            {
+              "index": 5,
+              "agentId": "fake-par-agent-5",
+              "label": "文書",
+              "phaseIndex": 0,
+              "phaseTitle": "レビュー",
+              "state": "done",
+              "queuedAt": 1768438579000,
+              "startedAt": 1768438579000,
+              "durationMs": 61000
+            },
+            {
+              "index": 6,
+              "label": "テスト",
+              "phaseIndex": 0,
+              "phaseTitle": "レビュー",
+              "state": "start",
+              "queuedAt": 1768438579000
+            }
+          ]
+        }
+      }
+    },
+    {
+      "afterMs": 500,
+      "event": {
+        "kind": "speech",
+        "text": "観点ごとのレビューが並んで動いているよ。",
+        "expression": "default"
+      }
+    }
+  ]
+}

@@ -97,7 +97,9 @@ export function workflowDiagramOf(
   unfold: { readonly phases: boolean; readonly columns: readonly string[] },
 ): WorkflowDiagram {
   const groups = columnGroupsOf(run.agents, phaseIds)
-  const states = new Map(run.agents.map((agent) => [agent.index, boxStateOf(agent, run.ended)]))
+  const states = new Map(
+    run.agents.map((agent) => [agent.index, workflowBoxStateOf(agent, run.ended)]),
+  )
   const stateOf = (agent: WorkflowRunAgent): WorkflowDiagramBoxState =>
     states.get(agent.index) ?? "done"
   const edges = agentEdgesOf(run.agents, groups, stateOf)
@@ -186,6 +188,23 @@ export function workflowDiagramOf(
   }
 }
 
+/** エージェント1つの箱の状態。`ended` はワークフロースクリプトが顔ぶれから外れた印。 */
+export function workflowBoxStateOf(
+  agent: WorkflowRunAgent,
+  ended: boolean,
+): WorkflowDiagramBoxState {
+  switch (agent.state) {
+    case "done":
+      return "done"
+    case "error":
+      return "failed"
+    case "progress":
+      return ended ? "stopped" : "running"
+    case "start":
+      return ended ? "stopped" : agent.startedAt === undefined ? "waiting" : "running"
+  }
+}
+
 /** エージェントが載った列1つ。`phaseIdIndex` は `phaseIds` に引けたときの位置。 */
 type ColumnGroup = {
   readonly key: string
@@ -248,19 +267,6 @@ function columnNameOf(agent: WorkflowRunAgent): string {
     return agent.phaseTitle
   }
   return agent.phaseIndex === undefined ? "フェーズ" : `フェーズ ${String(agent.phaseIndex + 1)}`
-}
-
-function boxStateOf(agent: WorkflowRunAgent, ended: boolean): WorkflowDiagramBoxState {
-  switch (agent.state) {
-    case "done":
-      return "done"
-    case "error":
-      return "failed"
-    case "progress":
-      return ended ? "stopped" : "running"
-    case "start":
-      return ended ? "stopped" : agent.startedAt === undefined ? "waiting" : "running"
-  }
 }
 
 /** 今の列は、走っているエージェントの載った列（無ければ待ちのエージェント、それも無ければエージェントの載ったいちばん後ろの列）。 */
