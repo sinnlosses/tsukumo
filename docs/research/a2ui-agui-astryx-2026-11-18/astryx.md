@@ -5,7 +5,7 @@
 ## 4. Astryx（`@astryxdesign/core` 0.7.10）
 
 - MIT、Meta Open Source、リポジトリ `github.com/meta/astryx`（`packages/core`）、StyleX（`nm/@astryxdesign/core/package.json`）。
-- 文書の所在: `docs.mjs` は CLI の案内のみで、部品ごとの文書は `nm/@astryxdesign/core/src/<Name>/<Name>.doc.mjs`（`docs` が英語、`docsZh`・`docsDense` が派生）。以下の出典は `src/` 以下の相対パスと行。
+- 文書の所在: `docs.mjs` は CLI の案内のみで、部品ごとの文書は `nm/@astryxdesign/core/src/<Name>/<Name>.doc.mjs`（`docs` が英語、`docsZh`・`docsDense` が派生）。以下の出典は `src/` 以下の相対パスと行。同じ文書は `pnpm exec astryx component <Name> --props --detail brief`（props）・`--showcase`（例）・`--source`（実装）で引ける（`.claude/skills/astryx-component/`）。
 - 余白の段は共通で `0 | 0.5 | 1 | 1.5 | 2 | 3 | 4 | 5 | 6 | 8 | 10`（`gap`・`padding` など）。
 
 ### 4.1 進行・読み込みの部品
