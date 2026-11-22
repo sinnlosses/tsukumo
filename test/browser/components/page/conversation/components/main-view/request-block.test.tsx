@@ -49,7 +49,7 @@ function renderBlock(
   )
 }
 
-/** 地の文が2行に収まらず切れていることにする。 */
+/** 地の文が10行に収まらず切れていることにする。 */
 function pretendClamped(): void {
   vi.spyOn(HTMLElement.prototype, "scrollHeight", "get").mockReturnValue(100)
 }
@@ -77,14 +77,14 @@ describe("RequestBlock", () => {
     expect(screen.getByText("TK-2100 を見て")).toBeDefined()
   })
 
-  it("2行に収まる依頼は「全文」を出さない", () => {
+  it("10行に収まる依頼は「全文」を出さない", () => {
     renderBlock("架空の短い依頼")
 
     expect(screen.getByText("架空の短い依頼")).toBeDefined()
     expect(screen.queryByRole("button")).toBeNull()
   })
 
-  it("3行以上で切れている依頼は、「全文」で元の文面を開き、「畳む」で戻る", () => {
+  it("11行以上で切れている依頼は、「全文」で元の文面を開き、「畳む」で戻る", () => {
     pretendClamped()
     renderBlock("/demo:cmd 架空の1行目\n架空の2行目\n架空の3行目")
 

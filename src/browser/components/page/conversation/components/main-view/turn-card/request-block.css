@@ -1,5 +1,5 @@
 /* 依頼の塊。値は見本 `docs/history/mockup/request-chips-2026-11-04/request-chips.html` の案C。
-   札の列と、2行までの地の文と「全文」。字の段は `Text`・`Heading` が持つ。 */
+   札の列と、広い画面は10行・狭い画面は2行までの地の文と「全文」。字の段は `Text`・`Heading` が持つ。 */
 .request-block {
   position: relative;
   color: var(--ink-quiet);
@@ -53,7 +53,7 @@
   -webkit-line-clamp: 2;
   line-clamp: 2;
 }
-/* 広い画面は地の文をセリフの吹き出し（.stream-entry）と同じ字・同じ濃さにそろえる */
+/* 広い画面は地の文をセリフの吹き出し（.stream-entry）と同じ字・同じ濃さにそろえ、10行まで畳まずに出す */
 @media (min-width: 761px) {
   .request-block {
     color: var(--ink);
@@ -61,6 +61,8 @@
   .request-lines {
     font-size: var(--font-body);
     line-height: var(--line-height-body);
+    -webkit-line-clamp: 10;
+    line-clamp: 10;
   }
 }
 /* 開いたあとは全行を折り返して出し、長いときはビューポートの 40% で内側に転がす。 */
