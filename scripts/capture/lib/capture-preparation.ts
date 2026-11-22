@@ -2,6 +2,7 @@
 
 import type { Page } from "playwright-core"
 
+import { fictionalPng } from "../../shared/fictional-png.ts"
 import { nonNegativeIntegerArgument } from "../../shared/non-negative-integer-argument.ts"
 import { positiveIntegerArgument } from "../../shared/positive-integer-argument.ts"
 
@@ -14,6 +15,7 @@ import { positiveIntegerArgument } from "../../shared/positive-integer-argument.
  * - `click-if-shown`: 要素があれば押し、無ければ何もせず当たった扱いにする（ビューポートの幅で出たり出なかったりする口）
  * - `hover`: 触れる（押すと状態が進んでしまう場所）
  * - `type`: 入力欄に打つ（`/` と `@` の補完）
+ * - `attach`: file 入力へ架空の単色の画像を枚数だけ添える（入力欄の添付の札）
  * - `hash`: `location.hash` を書いて画面を移す（キャラクター画面・作る画面）
  * - `press`: キーを押す（モーダルの Esc での閉じ）
  * - `advance`: 偽の時計をミリ秒だけ進める（時間が経つと出る画）
@@ -27,6 +29,7 @@ export type Preparation =
   | { readonly kind: "click-if-shown"; readonly selector: string }
   | { readonly kind: "hover"; readonly selector: string }
   | { readonly kind: "type"; readonly selector: string; readonly text: string }
+  | { readonly kind: "attach"; readonly selector: string; readonly count: number }
   | { readonly kind: "hash"; readonly hash: string }
   | { readonly kind: "press"; readonly key: string }
   | { readonly kind: "advance"; readonly ms: number }
@@ -94,6 +97,12 @@ export async function applyPreparation(
           .first()
           .pressSequentially(step.text, { timeout: timeoutMs })
         break
+      case "attach":
+        await page
+          .locator(step.selector)
+          .first()
+          .setInputFiles(attachments(step.count), { timeout: timeoutMs })
+        break
       case "press":
         await page.keyboard.press(step.key)
         break
@@ -139,6 +148,8 @@ export function describePreparation(step: Preparation): string {
       return `${step.selector} に触れる`
     case "type":
       return `${step.selector} に ${step.text} と打つ`
+    case "attach":
+      return `${step.selector} に画像を ${String(step.count)} 枚添える`
     case "hash":
       return `location.hash に ${step.hash} を書く`
     case "press":
@@ -169,6 +180,7 @@ export const PREPARATION_OPTIONS = {
   press: { type: "string" },
   advance: { type: "string" },
   type: { type: "string" },
+  attach: { type: "string" },
   "scroll-element": { type: "string" },
 } as const
 
@@ -179,7 +191,7 @@ export type ArgumentToken =
   | { readonly kind: "option-terminator" }
 
 /**
- * 準備の旗を、現れた順に操作へ読む。`--type <selector> <text>`・`--scroll-element <selector> <px>` は、
+ * 準備の旗を、現れた順に操作へ読む。`--type <selector> <text>`・`--scroll-element <selector> <px>`・`--attach <selector> <枚数>` は、
  * 旗の直後の位置引数を2つ目の値として使い、その token の位置を `textTokenIndexes` に返す。
  * 2つ目の値が無い・`--advance` が正の整数でない・`--scroll-element` の px が 0 以上の整数でないときは undefined。
  */
@@ -231,6 +243,17 @@ export function readPreparations(tokens: readonly ArgumentToken[]):
         preparations.push({ kind: "scroll-element", selector: value, top: top.data })
         break
       }
+      case "attach": {
+        const next = tokens[index + 1]
+        const count =
+          next?.kind === "positional" ? positiveIntegerArgument.safeParse(next.value) : undefined
+        if (count?.success !== true) {
+          return undefined
+        }
+        textTokenIndexes.add(index + 1)
+        preparations.push({ kind: "attach", selector: value, count: count.data })
+        break
+      }
       case "type": {
         const text = tokens[index + 1]
         if (text?.kind !== "positional") {
@@ -243,4 +266,19 @@ export function readPreparations(tokens: readonly ArgumentToken[]):
     }
   }
   return { preparations, textTokenIndexes }
+}
+
+const ATTACHMENT_SIZE = 64
+
+/** 枚数ごとに色を変えた架空の単色の PNG。ディスクには置かない。 */
+function attachments(count: number): { name: string; mimeType: string; buffer: Buffer }[] {
+  return Array.from({ length: count }, (_, index) => ({
+    name: `fictional-${String(index + 1)}.png`,
+    mimeType: "image/png",
+    buffer: fictionalPng(ATTACHMENT_SIZE, ATTACHMENT_SIZE, [
+      (60 + index * 70) % 256,
+      (140 + index * 40) % 256,
+      (200 - index * 50 + 256) % 256,
+    ]),
+  }))
 }

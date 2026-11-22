@@ -117,6 +117,23 @@ describe("readPreparations", () => {
     expect(readArguments(["--type", "textarea", "--click", "b"])).toBeUndefined()
   })
 
+  test("--attach は直後の位置引数を枚数にし、その token を使ったと返す", () => {
+    const result = readArguments(["--click", "a", "--attach", 'input[type="file"]', "2"])
+    expect(result?.preparations).toEqual([
+      { kind: "click", selector: "a" },
+      { kind: "attach", selector: 'input[type="file"]', count: 2 },
+    ])
+    expect([...(result?.textTokenIndexes ?? [])]).toEqual([2])
+  })
+
+  test("--attach の枚数が無い・0・数でないときは崩れた引数", () => {
+    expect(readArguments(["--attach", "input"])).toBeUndefined()
+    expect(readArguments(["--attach", "input", "--click", "b"])).toBeUndefined()
+    for (const bad of ["0", "abc", "1.5", ""]) {
+      expect(readArguments(["--attach", "input", bad])).toBeUndefined()
+    }
+  })
+
   test("--scroll-element は直後の位置引数を px にし、その token を使ったと返す", () => {
     const result = readArguments(["--click", "a", "--scroll-element", "ul", "40", "--hover", "b"])
     expect(result?.preparations).toEqual([

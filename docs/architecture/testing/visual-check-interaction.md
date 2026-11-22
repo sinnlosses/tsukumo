@@ -2,16 +2,17 @@
 
 ステータス: **正典**。入口は `docs/architecture/testing.md`（テストの全体）。
 
-責務: 手で確かめることの中ほど。手を動かさないと出ない状態の撮り方（`--type`・`--click`・`--press`・`--hash`・`--cwd`・偽の `tw`・切り替え画面）、時計を進める・決める撮り方、`--scene` で1件だけ撮る・場面の途中を撮る、場面の一覧。
+責務: 手で確かめることの中ほど。手を動かさないと出ない状態の撮り方（`--type`・`--attach`・`--click`・`--press`・`--hash`・`--cwd`・偽の `tw`・切り替え画面）、時計を進める・決める撮り方、`--scene` で1件だけ撮る・場面の途中を撮る、場面の一覧。
 読む時: 操作を当てて画を撮る・場面を選ぶとき。
 直す時: `capture-view.ts` の操作のオプション・場面の撮り方を変えたとき。
 
 ## 手で確かめること
 
 **入力欄に打つ・押すなど、手を動かさないと出ない状態を撮るときは、`capture-view.ts` に
-`--type <selector> <文字>`・`--scroll-element <selector> <px>`・`--click <selector>`・`--hover <selector>`・`--hash <hash>`・`--press <キー名>`・`--wait-after <selector>` を並べる。**
+`--type <selector> <文字>`・`--attach <selector> <枚数>`・`--scroll-element <selector> <px>`・`--click <selector>`・`--hover <selector>`・`--hash <hash>`・`--press <キー名>`・`--wait-after <selector>` を並べる。**
 書いた順に、`--wait-for` の待ちのあと・`--scroll-to` の前に当てる（`--scroll-to` は書く位置を問わず最後）。1つでも当たらなければ
 撮らずに失敗で終わる（撮影のカタログの `prepare` は当たらない手を飛ばして撮る）。
+`--attach` は file 入力（`input[type="file"]`）へ、道具の中で作った架空の単色の PNG を枚数だけ添える（ディスクには置かない）。入力欄の添付の札を撮るときに使う。
 `--scroll-element` は指した要素自身を上端から px だけスクロールする（0 で先頭へ戻す）。区画の内側の一覧が溢れたときの見出しの影（`data-scrolled`）を撮るときに使う。
 **`--press` のキーはフォーカスの置き場所へ届く。** 開いた直後のフォーカスは依頼の入力欄にあり、PageDown などメインビューで効くキーは届かない
 （黙って空振りして、撮った画は変わらない）。置き場所がメインビューの中でもモーダルの中でもないときは、
