@@ -7,6 +7,7 @@ import type { ReactElement, RefObject } from "react"
 
 import { Button } from "../../../../ui/button/button.tsx"
 import { CheckIcon, ChevronRightIcon, CloseIcon } from "../../../../ui/icon/icon.tsx"
+import { StatusDot } from "../../../../ui/status-dot/status-dot.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
 import type { WorkStripResult } from "../../domain/turn-result-mark.ts"
 import { nowStepKeyOf, targetPartsOf, type Doing } from "./domain/now-step-statement.ts"
@@ -23,6 +24,9 @@ import { PresentationalStepsList } from "./presentational-steps-list.tsx"
 
 /** 「手順」の口が開く全体の詳細の id。 */
 const STEPS_ID = "work-strip-steps"
+
+/** 「手順」の口の赤い点の読み上げの名前。 */
+const FAILED_AGENT_LABEL = "失敗したエージェントがある"
 
 export function PresentationalWorkStrip(props: {
   readonly strip: WorkStripModel
@@ -321,6 +325,9 @@ function StepsToggle(props: {
       size="secondary"
       pressed="none"
       disabled={false}
+      {...(props.steps.hasFailedAgent
+        ? { ariaLabel: `${props.steps.toggleLabel}、${FAILED_AGENT_LABEL}` }
+        : {})}
       disclosure={{
         kind: "popover",
         popup: "none",
@@ -331,6 +338,7 @@ function StepsToggle(props: {
       className={styles["work-strip-toggle"]}
       onClick={props.steps.onToggle}
     >
+      {props.steps.hasFailedAgent && <StatusDot tone="ng" label={FAILED_AGENT_LABEL} />}
       {props.steps.toggleLabel}
       <span
         aria-hidden="true"

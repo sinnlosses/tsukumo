@@ -138,6 +138,7 @@ export function useWorkStrip(): WorkStripModel {
           workflowPhasesUnfolded: opened.workflowPhasesUnfolded,
           unfoldedWorkflowColumns: opened.unfoldedWorkflowColumns,
           openedWorkflowRuns: opened.openedWorkflowRuns,
+          selectedWorkflowAgent: opened.selectedWorkflowAgent,
         }
       : { kind: "closed" }
   const elapsedWord =

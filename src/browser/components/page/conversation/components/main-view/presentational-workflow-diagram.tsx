@@ -33,6 +33,7 @@ import type {
 } from "./domain/workflow-diagram.ts"
 import type { WorkStripSteps, WorkStripWorkflow } from "./hooks/use-work-strip-step-list.ts"
 import styles from "./main-view.module.css"
+import { PresentationalWorkflowAgentHand } from "./presentational-workflow-agent-hand.tsx"
 
 type BoxTone = "plain" | "accent" | "danger" | "dashed"
 
@@ -149,8 +150,12 @@ function WorkflowItem(props: {
         taskId={workflow.taskId}
         diagram={view.diagram}
         columnDurations={view.columnDurations}
+        selectedIndex={view.hand?.index}
         steps={steps}
       />
+      {view.hand !== undefined && (
+        <PresentationalWorkflowAgentHand key={view.hand.index} hand={view.hand} />
+      )}
     </section>
   )
 }
@@ -171,6 +176,7 @@ function DiagramStage(props: {
   readonly taskId: TaskId
   readonly diagram: WorkflowDiagram
   readonly columnDurations: ReadonlyMap<string, string>
+  readonly selectedIndex?: number
   readonly steps: WorkStripSteps
 }): ReactElement {
   const { diagram, steps, taskId } = props
@@ -240,6 +246,7 @@ function DiagramStage(props: {
           taskId={taskId}
           column={column}
           duration={props.columnDurations.get(column.key) ?? ""}
+          selectedIndex={props.selectedIndex}
           steps={steps}
         />
       ))}
@@ -269,6 +276,7 @@ function Column(props: {
   readonly taskId: TaskId
   readonly column: WorkflowDiagramColumn
   readonly duration: string
+  readonly selectedIndex?: number
   readonly steps: WorkStripSteps
 }): ReactElement {
   const { column, steps, taskId } = props
@@ -318,6 +326,7 @@ function Column(props: {
             <AgentBox
               key={box.index}
               box={box}
+              pressed={box.index === props.selectedIndex}
               onPress={() => {
                 steps.onAgentPress(taskId, box.index)
               }}
@@ -347,6 +356,7 @@ function Column(props: {
 
 function AgentBox(props: {
   readonly box: WorkflowDiagramBox
+  readonly pressed: boolean
   readonly onPress: () => void
 }): ReactElement {
   const { box } = props
@@ -355,7 +365,13 @@ function AgentBox(props: {
   const label = workflowBoxLabelOf(box)
   return (
     <div data-diagram-end={workflowDiagramEndKeyOf({ kind: "agent", index: box.index })}>
-      <ClickableCard label={label} tone={BOX_TONE[box.state]} onClick={props.onPress} className="">
+      <ClickableCard
+        label={label}
+        tone={BOX_TONE[box.state]}
+        pressed={props.pressed}
+        onClick={props.onPress}
+        className=""
+      >
         <span className={styles["workflow-diagram-row"]}>
           <StatusDot tone={DOT_TONE[box.state]} label={label} />
           <span title={box.name} className={styles["workflow-diagram-name"]}>

@@ -124,6 +124,41 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* 選んだエージェントの手元。走っている手順の行は差し色の地。 */
+.workflow-hand {
+  display: flex;
+  flex-direction: column;
+  gap: var(--stack-block);
+}
+.workflow-hand-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--inline-control);
+  margin: 0;
+}
+.workflow-hand-total {
+  flex: 1;
+  text-align: end;
+}
+.workflow-hand-step {
+  display: flex;
+  gap: var(--inline-control);
+  min-width: 0;
+}
+.workflow-hand-clock {
+  flex: none;
+  font-family: var(--font-mono);
+}
+.workflow-hand-what {
+  min-width: 0;
+  font-family: var(--font-mono);
+  overflow-wrap: anywhere;
+}
+.workflow-hand li:has(.workflow-hand-step[data-running="true"]) {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  border-radius: var(--radius-sm);
+}
 .workflow-diagram-upcoming {
   border-style: dashed;
 }

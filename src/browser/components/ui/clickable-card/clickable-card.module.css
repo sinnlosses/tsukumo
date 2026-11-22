@@ -7,3 +7,6 @@
 .clickable-card[data-tone="dashed"] {
   border-style: dashed;
 }
+.clickable-card[data-pressed="true"] {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ink) 35%, transparent);
+}

@@ -16,6 +16,7 @@ import {
   workflowThinking,
   type WorkActivitySource,
 } from "./work-activity.ts"
+import { workflowBoxStateOf } from "./workflow-diagram.ts"
 
 const DELEGATING = { particle: "に", verb: "任せています" }
 const FALLBACK_DELEGATE = "委譲先"
@@ -66,7 +67,7 @@ const PLAIN = {
 } satisfies Omit<Doing, "kind" | "verb">
 
 /**
- * 強い順に1つ: 答え待ち → API の再試行中 → report を書いている途中 → 走っている手順 →
+ * 強い順に1つ: 答え待ち → API の再試行中 → report を書いている途中 → ワークフローのエージェントが2つ以上並んで走っている → 走っている手順 →
  * 手順を持つバックグラウンドタスク（いちばん新しく手順が始まったもの）→ 手順を持たないバックグラウンドタスク →
  * 考えている（依頼が会話の片付けのときは「会話を片付けている」）。
  */
@@ -88,6 +89,18 @@ export function nowStepStatementOf(source: WorkActivitySource): NowStepStatement
   }
   if (source.reportDrafting.kind === "drafting") {
     return { kind: "doing", ...PLAIN, verb: "レポートを書いています" }
+  }
+  const parallel = source.workflowProgress
+    .flatMap((progress) => progress.agents)
+    .filter((agent) => workflowBoxStateOf(agent, false) === "running").length
+  if (parallel >= 2) {
+    return {
+      kind: "doing",
+      ...PLAIN,
+      target: `エージェント ${String(parallel)} 件`,
+      particle: "が",
+      verb: "並んで動いています",
+    }
   }
   const running = turnStepList.steps.findLast((step) => step.status.kind === "running")
   if (running !== undefined) {

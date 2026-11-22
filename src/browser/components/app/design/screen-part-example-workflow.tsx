@@ -1,7 +1,9 @@
 // 見本帳の「画面の部品」のうち、「手順」の全体の詳細の頭に置くワークフローの図の例。
 
 import { parseTaskId, type TaskId } from "../../../../shared/session-driver/task-id.ts"
+import type { WorkflowAgentHand } from "../../page/conversation/components/main-view/domain/workflow-agent-hand.ts"
 import type { WorkStripSteps } from "../../page/conversation/components/main-view/hooks/use-work-strip-step-list.ts"
+import { PresentationalWorkflowAgentHand } from "../../page/conversation/components/main-view/presentational-workflow-agent-hand.tsx"
 import { PresentationalWorkflowDiagrams } from "../../page/conversation/components/main-view/presentational-workflow-diagram.tsx"
 import type { ScreenPartExample } from "./screen-part-example-type.ts"
 
@@ -19,6 +21,7 @@ function exampleSteps(): WorkStripSteps {
   return {
     list: { kind: "closed" },
     toggleLabel: "手順 12件",
+    hasFailedAgent: false,
     onToggle: noop,
     onExpandDone: noop,
     onExpandSteps: noop,
@@ -44,6 +47,7 @@ function exampleSteps(): WorkStripSteps {
         ],
         view: {
           kind: "open",
+          hand: EXAMPLE_HAND,
           columnDurations: new Map([
             ["実装", "9分48秒"],
             ["受け入れ", "4分08秒〜"],
@@ -134,7 +138,54 @@ function exampleSteps(): WorkStripSteps {
   }
 }
 
+const EXAMPLE_HAND: WorkflowAgentHand = {
+  index: 2,
+  state: "running",
+  name: "直し 1",
+  kind: "tsukumo-workflow:implementer",
+  model: "sonnet",
+  total: 42,
+  steps: [
+    {
+      key: "t1",
+      clock: "14:02:11",
+      state: "done",
+      tool: "Read",
+      target: "src/shared/session/workflow-run.ts",
+      elapsed: "1秒",
+    },
+    {
+      key: "t2",
+      clock: "14:02:19",
+      state: "failed",
+      tool: "Bash",
+      target: "pnpm run check",
+      elapsed: "31秒",
+    },
+    {
+      key: "t3",
+      clock: "14:02:55",
+      state: "running",
+      tool: "Edit",
+      target: "src/browser/components/ui/list/list.tsx",
+      elapsed: "4秒",
+    },
+  ],
+}
+
 export const WORKFLOW_EXAMPLES: readonly ScreenPartExample[] = [
+  {
+    frame: "flow",
+    path: "page/conversation/components/main-view/presentational-workflow-agent-hand.tsx",
+    render: () => (
+      <>
+        <PresentationalWorkflowAgentHand hand={EXAMPLE_HAND} />
+        <PresentationalWorkflowAgentHand
+          hand={{ ...EXAMPLE_HAND, index: 3, kind: "既定のエージェント", model: "", total: 3 }}
+        />
+      </>
+    ),
+  },
   {
     frame: "flow",
     path: "page/conversation/components/main-view/presentational-workflow-diagram.tsx",

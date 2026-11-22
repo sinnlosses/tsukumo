@@ -16,16 +16,21 @@ import {
 } from "../../../../../../features/current-work/current-work-step.ts"
 import type { PhaseRecap } from "../../../domain/phase-recap.ts"
 import type { WorkStripSegment } from "../../../domain/work-segment.ts"
-import type { StepsLanding } from "../../../stores/work-strip-step-list.ts"
+import type { SelectedWorkflowAgent, StepsLanding } from "../../../stores/work-strip-step-list.ts"
 import type { RemainingEstimate } from "../domain/remaining-estimate.ts"
 import { phaseRowSlotOf, type StepsPhaseRow, stepsPhaseRowsOf } from "../domain/steps-phase-row.ts"
 import { type StepsPlanItem, stepsPlanCardOf } from "../domain/steps-plan-card.ts"
+import { type WorkflowAgentHand, workflowHandOf } from "../domain/workflow-agent-hand.ts"
 import {
   type WorkflowAgentCount,
   workflowAgentCountsOf,
   workflowRunElapsedOf,
 } from "../domain/workflow-diagram-view.ts"
-import { type WorkflowDiagram, workflowDiagramOf } from "../domain/workflow-diagram.ts"
+import {
+  type WorkflowDiagram,
+  workflowBoxStateOf,
+  workflowDiagramOf,
+} from "../domain/workflow-diagram.ts"
 
 /** 全体の詳細が開いているか。`landing` は開いた面をどこへ連れていくか。 */
 export type WorkStripStepsList =
@@ -38,10 +43,12 @@ export type WorkStripStepsList =
       readonly workflowPhasesUnfolded: boolean
       readonly unfoldedWorkflowColumns: readonly string[]
       readonly openedWorkflowRuns: readonly TaskId[]
+      readonly selectedWorkflowAgent: SelectedWorkflowAgent
     }
 
 /**
- * ワークフロースクリプト1本の図。`open` は図の形と、列の鍵ごとの見出しの所要（フェーズの行から外した所要）。
+ * ワークフロースクリプト1本の図。`open` は図の形と、列の鍵ごとの見出しの所要（フェーズの行から外した所要）と、
+ * 手元に出すエージェント（エージェントがいなければ無い）。
  * `folded` は畳んだ見出し1行のエージェントの数と所要。
  */
 export type WorkStripWorkflow = {
@@ -53,6 +60,7 @@ export type WorkStripWorkflow = {
         readonly kind: "open"
         readonly diagram: WorkflowDiagram
         readonly columnDurations: ReadonlyMap<string, string>
+        readonly hand?: WorkflowAgentHand
       }
     | { readonly kind: "folded"; readonly agentCount: number; readonly duration: string }
 }
@@ -81,6 +89,8 @@ export type WorkStripSteps = {
   readonly backgroundList: CurrentWorkBackgroundList
   /** 「手順」の口の字（「手順 12件」）。 */
   readonly toggleLabel: string
+  /** 失敗したエージェントがいるか（閉じていても言う）。 */
+  readonly hasFailedAgent: boolean
   /** 1行目の右端に出す依頼全体の経過（作業中は「経過 …」、閉じたあとは「所要 …」）。 */
   readonly elapsedLabel: string
   /** 下端に添える目安の残り。出さないときは `none`。 */
@@ -132,6 +142,9 @@ export function workStripStepsOf(input: {
   return {
     list,
     toggleLabel: `手順 ${String(input.steps.length)}件`,
+    hasFailedAgent: input.workflowRuns.some((run) =>
+      run.agents.some((agent) => workflowBoxStateOf(agent, run.ended) === "failed"),
+    ),
     onToggle: input.onToggle,
     onExpandDone: input.onExpandDone,
     onExpandSteps: input.onExpandSteps,
@@ -168,7 +181,11 @@ export function workStripStepsOf(input: {
 type DrawnWorkflow = Omit<WorkStripWorkflow, "view"> & {
   readonly phaseKeys: readonly string[]
   readonly view:
-    | { readonly kind: "open"; readonly diagram: WorkflowDiagram }
+    | {
+        readonly kind: "open"
+        readonly diagram: WorkflowDiagram
+        readonly hand?: WorkflowAgentHand
+      }
     | { readonly kind: "folded"; readonly agentCount: number; readonly duration: string }
 }
 
@@ -212,7 +229,11 @@ function drawnWorkflowsOf(
     return {
       ...base,
       phaseKeys: [...diagram.columns.map((column) => column.key), ...mapped],
-      view: { kind: "open", diagram },
+      view: {
+        kind: "open",
+        diagram,
+        ...workflowHandOf(run, list.selectedWorkflowAgent, input.now),
+      },
     }
   })
 }

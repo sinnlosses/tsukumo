@@ -354,3 +354,47 @@ describe("nowStepKeyOf", () => {
     expect(nowStepKeyOf(otherTool)).not.toBe(nowStepKeyOf(read))
   })
 })
+
+describe("nowStepStatementOf のエージェントの並走", () => {
+  const progressOf = (states: readonly ("progress" | "done")[]) => [
+    {
+      taskId: checkedTaskId("wf-par"),
+      phases: [],
+      agents: states.map((state, index) => ({
+        index,
+        agentId: `agent-${String(index)}`,
+        state,
+        startedAt: START,
+        phaseTitle: "架空の段",
+      })),
+    },
+  ]
+
+  it("走っているエージェントが2つ以上なら、件数を言う", () => {
+    const statement = doing(
+      nowStepStatementOf(
+        sourceOf({ workflowProgress: progressOf(["progress", "progress", "done"]) }, [
+          runningStep("Read", { file_path: "/a.ts" }),
+        ]),
+      ),
+    )
+
+    expect(statement).toMatchObject({
+      target: "エージェント 2 件",
+      particle: "が",
+      verb: "並んで動いています",
+    })
+  })
+
+  it("走っているエージェントが1つなら、今の文のまま", () => {
+    const statement = doing(
+      nowStepStatementOf(
+        sourceOf({ workflowProgress: progressOf(["progress", "done"]) }, [
+          runningStep("Read", { file_path: "/a.ts" }),
+        ]),
+      ),
+    )
+
+    expect(statement).toMatchObject({ tool: "Read", target: "/a.ts" })
+  })
+})

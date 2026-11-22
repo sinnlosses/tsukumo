@@ -6,7 +6,10 @@ import type {
   WorkflowRun,
   WorkflowRunAgent,
 } from "../../../../../../../shared/session/workflow-run.ts"
-import type { WorkflowAgentStopReason } from "../../../../../../../shared/session/workflow-step.ts"
+import type {
+  WorkflowAgent,
+  WorkflowAgentStopReason,
+} from "../../../../../../../shared/session/workflow-step.ts"
 
 /** 箱の状態。`stopped` は終わったワークフロースクリプトに走っている・待ちのまま残ったエージェント。 */
 export type WorkflowDiagramBoxState = "running" | "waiting" | "done" | "failed" | "stopped"
@@ -188,9 +191,16 @@ export function workflowDiagramOf(
   }
 }
 
+/** 名札。`label`、無ければ種類の短い名、それも無ければ「エージェント n」。 */
+export function workflowAgentNameOf(
+  agent: Pick<WorkflowAgent, "index" | "label" | "agentType">,
+): string {
+  return agent.label ?? agent.agentType?.split(":").at(-1) ?? `エージェント ${String(agent.index)}`
+}
+
 /** エージェント1つの箱の状態。`ended` はワークフロースクリプトが顔ぶれから外れた印。 */
 export function workflowBoxStateOf(
-  agent: WorkflowRunAgent,
+  agent: Pick<WorkflowAgent, "state" | "startedAt">,
   ended: boolean,
 ): WorkflowDiagramBoxState {
   switch (agent.state) {
@@ -303,7 +313,7 @@ function boxOf(
   now: number,
 ): WorkflowDiagramBox {
   const typeName = agent.agentType?.split(":").at(-1)
-  const name = agent.label ?? typeName ?? `エージェント ${String(agent.index)}`
+  const name = workflowAgentNameOf(agent)
   const elapsedMs =
     state === "done" || state === "failed"
       ? agent.durationMs

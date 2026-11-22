@@ -104,6 +104,7 @@ const STRIP_BASE = {
   steps: {
     list: { kind: "closed" },
     toggleLabel: "手順 12件",
+    hasFailedAgent: false,
     onToggle: noop,
     onExpandDone: noop,
     onExpandSteps: noop,
