@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ピルの「手順」の面を Astryx に寄せる — 前後の比較（2026-11-22）</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #15131b;
+    --surface: #1f1c27;
+    --ink: #ece7ef;
+    --ink-soft: color-mix(in srgb, var(--ink) 72%, transparent);
+    --ink-quiet: color-mix(in srgb, var(--ink) 52%, transparent);
+    --line: color-mix(in srgb, var(--ink) 12%, transparent);
+    --accent: #6fe3cd;
+    --warn: #e8b85c;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.7 system-ui, sans-serif; }
+  main { max-width: 1240px; margin: 0 auto; padding: 28px 24px 80px; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  h2 { font-size: 17px; margin: 40px 0 10px; padding-top: 12px; border-top: 1px solid var(--line); }
+  p, li { color: var(--ink-soft); }
+  code { font: 12.5px/1.5 ui-monospace, monospace; background: color-mix(in srgb, var(--ink) 8%, transparent); padding: 1px 5px; border-radius: 4px; }
+  table { width: 100%; border-collapse: collapse; margin: 8px 0 16px; font-size: 13px; }
+  th, td { text-align: left; vertical-align: top; padding: 7px 10px; border-bottom: 1px solid var(--line); }
+  th { color: var(--ink-quiet); font-weight: 600; }
+  td { color: var(--ink-soft); }
+  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 900px) { .pair { grid-template-columns: 1fr; } }
+  figure { margin: 12px 0 8px; }
+  figure img { width: 100%; border-radius: 10px; border: 1px solid var(--line); display: block; }
+  figcaption { color: var(--ink-quiet); font-size: 12.5px; margin-top: 6px; text-align: center; }
+  .note { background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--warn); border-radius: 8px; padding: 10px 14px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>ピルの「手順」の面を Astryx に寄せる — 前後の比較</h1>
+  <p>疑似セッションの同じ場面を、今の描き方と、ui/ の Astryx の包みで描き替えた形で撮った（1400×900）。後の画は本物の部品で描いた一時の差し替えで、コードは送っていない。</p>
+
+  <h2>差し替えた部品</h2>
+  <table>
+    <thead><tr><th>要素</th><th>今</th><th>寄せた形</th></tr></thead>
+    <tbody>
+      <tr><td>面の器</td><td>自前の div と絶対配置の CSS</td><td><code>Popover</code>（「手順」ボタンを anchor にした層）</td></tr>
+      <tr><td>見出しのフェーズ数</td><td>右端の地の文</td><td><code>Badge</code></td></tr>
+      <tr><td>フェーズの行</td><td>ol・li と丸数字の文字</td><td><code>Stepper</code>（縦）と <code>Step</code>。済みはチェックの丸、今は塗りの丸、これからは番号</td></tr>
+      <tr><td>「手順 n」の開閉</td><td>ui/disclosure（素の details）</td><td><code>Collapsible</code>（山形の印は右端）</td></tr>
+      <tr><td>手順の行</td><td>li と ✓ の文字</td><td><code>List</code>・<code>ListItem</code> とアイコン</td></tr>
+      <tr><td>失敗した手順</td><td>赤字の「失敗」と details・pre</td><td><code>Badge</code>（ng）と <code>Collapsible</code>、中は <code>CodeBlock</code> の出力と引数</td></tr>
+      <tr><td>「すべて見る」「済んだ n フェーズ」</td><td>素の button</td><td><code>Button</code>（link・ghost）</td></tr>
+      <tr><td>目安の残り</td><td>下端の地の文</td><td><code>Badge</code>（accent）</td></tr>
+      <tr><td>ワークフローの図・所要時間の帯</td><td colspan="2">そのまま（図の箱はもう Astryx。矢印の SVG と滝の図は Astryx に同じ役の部品が無い）</td></tr>
+    </tbody>
+  </table>
+
+  <h2>フェーズの行と手順（場面 work-strip-running）</h2>
+  <div class="pair">
+    <figure><img src="before-phases.png" alt="今の手順の面。丸数字の文字と details の開閉" /><figcaption>今</figcaption></figure>
+    <figure><img src="after-phases.png" alt="Astryx に寄せた手順の面。Stepper の縦の線と Collapsible" /><figcaption>寄せた形</figcaption></figure>
+  </div>
+
+  <h2>ワークフローの図（場面 workflow-diagram-seq）</h2>
+  <div class="pair">
+    <figure><img src="before-diagram.png" alt="今のワークフローの図の面" /><figcaption>今</figcaption></figure>
+    <figure><img src="after-diagram.png" alt="Popover に入れたワークフローの図の面" /><figcaption>寄せた形</figcaption></figure>
+  </div>
+
+  <h2>寄せた形で目に付いたこと</h2>
+  <ul>
+    <li>Stepper の縦の線は今のフェーズまで差し色で伸びるので、どこまで済んだかが行の印を読まなくても分かる。</li>
+    <li>Collapsible は山形の印が右端に付くため、「手順 1」の文字と印が離れる。今は左に印がある。</li>
+    <li>Popover は帯の下端に少し重なり、区間の下線が隠れる。置く位置の間隔を詰め直す必要がある。</li>
+    <li>Popover の中では、図の「受け入れ → 振り返り」の矢印が描かれなかった。矢印の座標を測る時機が層の表示とずれている見込み。</li>
+    <li>面の高さは今より増える（同じ場面で 299px → 391px）。Stepper の行の間隔と ListItem の行の高さによる。</li>
+  </ul>
+  <p class="note">「直し 1」の所要が「448099分21秒」のように大きく出ているのは、今と寄せた形のどちらにも出ていて、今回の差し替えとは関係が無い（原因はまだ調べていない）。</p>
+</main>
+</body>
+</html>
