@@ -83,7 +83,7 @@
     「古い閉じた課題」なのか区別できないため）。
     依頼の文面や結論の文字列から ID・終わり方を推し量らない。入口で揃っていない値と
     `task` の無かったころの記録は「無い」に畳む
-  - **`task` は省略できる `genre`（報告の種類。`work` 作業の完了／`decision` 判断／`research` 調べもの／`diagnosis` 原因の診断／`timeline` 時間の内訳／`structure` 構成の説明／`screen` 画面の変更／`status` 一覧と状態。型ごとの数の帯の要否と図 1 の第一候補は `src/server/report/core/rules/template.ts` の表が持ち、外れは `template-miss` と数えるだけ）を持つ**（
+  - **`task` は省略できる `genre`（報告の種類。`work` 作業の完了／`decision` 判断／`research` 調べもの／`diagnosis` 原因の診断／`timeline` 時間の内訳／`structure` 構成の説明／`screen` 画面の変更／`status` 一覧と状態。型ごとの数の帯の要否と図1 の第一候補は `src/server/report/core/rules/template.ts` の表が持ち、外れは `template-miss` と数えるだけ）を持つ**（
     終わった仕事の報告は種類で型が違うため。`docs/research/report-excellence-strategy.md` 3.2）。種類ごとの既定のセクションの並びは
     `task` の引数の説明だけが持ち、規約の文面（`REPORT_NOTATION_PROMPT`）には並びを書かない（「規則と置き場の対応」）。`stopped` は種類によらず中断の並び。
     描き方は種類で変えない。`genre` の無い・読めない値は `task` を捨てずに `unspecified` に畳む。
@@ -125,7 +125,7 @@
 - **結論の直下に、結論に効く数 3〜4 個をカードで並べる欄 `keyFigures` を置く**（
   構成の 14 / 20 / 9 / 3 のような素材の数が結論の文に埋まるか落ちるため。9 つの依頼の型で Claude の HTML と比べ、
   先頭に数のカードを置くのが 9 本中 6 本に対して tsukumo は 1 本だった）
-  - 頭の欄の並びは「結論 → `keyFigures` → 検証結果（合図の行）」。`figure` とは別で、図 1 は図のままセクションの先頭に回る。
+  - 頭の欄の並びは「結論 → `keyFigures` → 検証結果（合図の行）」。`figure` とは別で、図1 は図のままセクションの先頭に回る。
     `keyFigures` は省ける（無ければ外枠ごと出さない）。引き継ぎは他の欄と同じ
   - 形は `stats` の `items` と同じ（3〜4 個。`before`・`total`・`better`・`series`・`target`・`targetGap`・`change` も使える）。カードの描き方は `stats` と同じで、
     外枠の class `key-figures` が違う。列数は `stats` の項目数の決まりに従うが、4個は器 46rem 以下で 2×2 に折る

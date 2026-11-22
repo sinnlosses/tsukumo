@@ -1,5 +1,5 @@
 // 依頼の型（`task.genre`）の雛形の検査の家族。違反の型・検出・差し戻し文を持つ。
-// 型ごとの最初の 1 画面の雛形として、数の帯（`keyFigures`）を求めるかと、図 1 の第一候補を 1 つの表に置く。
+// 型ごとの最初の 1 画面の雛形として、数の帯（`keyFigures`）を求めるかと、図1 の第一候補を 1 つの表に置く。
 
 import type { RecordedReportFigure } from "../../../../shared/report/a2ui-report-catalog.ts"
 import { reportFigureOf } from "../../../../shared/report/report-outline.ts"
@@ -11,7 +11,7 @@ type FigureKind = Exclude<RecordedReportFigure["kind"], "none">
 type RequestTemplate = {
   /** 結論に効く数が 3 つ以上あるとき、数の帯を求めるか。 */
   readonly wantsKeyFigures: boolean
-  /** 図 1 の第一候補の種類。図を置いたのにここに無い種類なら外れ。 */
+  /** 図1 の第一候補の種類。図を置いたのにここに無い種類なら外れ。 */
   readonly figures: readonly FigureKind[]
 }
 
@@ -20,7 +20,7 @@ type TemplateMiss = "key-figures" | "figure"
 export type TemplateViolation =
   /**
    * 申告した依頼の型（`task.genre`）の雛形から外れた。`misses` は外れた点
-   * （結論の数が 3 つ以上あるのに数の帯が無い `key-figures`、図 1 が第一候補の種類でない `figure`）。
+   * （結論の数が 3 つ以上あるのに数の帯が無い `key-figures`、図1 が第一候補の種類でない `figure`）。
    */
   {
     readonly kind: "template-miss"
@@ -44,7 +44,7 @@ export function isTemplateViolation(violation: {
 
 /** 雛形の違反を、差し戻すときの1行の文面にする。 */
 export function templateViolationMessage(violation: TemplateViolation): string {
-  return `申告した依頼の型の雛形から外れた点がある（${violation.misses.join("・")}）。主要な数値 \`keyFigures\` を足すか、図 1 を型の第一候補の種類にする`
+  return `申告した依頼の型の雛形から外れた点がある（${violation.misses.join("・")}）。主要な数値 \`keyFigures\` を足すか、図1 を型の第一候補の種類にする`
 }
 
 const REQUEST_TEMPLATES = {
