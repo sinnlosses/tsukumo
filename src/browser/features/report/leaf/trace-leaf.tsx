@@ -71,7 +71,7 @@ function TraceRow(props: { readonly item: TraceItem }): ReactElement {
           </Collapsible>
         )
       }
-      end={supplement.trim() !== "" ? supplement : undefined}
+      description={supplement.trim() !== "" ? supplement : undefined}
     />
   )
 }
