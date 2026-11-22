@@ -106,6 +106,14 @@ describe("planStages", () => {
     expect(plan.notice).toBe("単体は変えたファイルに関連するものだけ")
   })
 
+  test("test/e2e/ の .test.ts を変えたときだけ、見張りの表の一致のテストを単体に足す", () => {
+    const watchTest = "test/scripts/shared/e2e-selection.test.ts"
+    const withE2e = planStages(["test/e2e/new-file.test.ts"], choose, false)
+    expect(unitStage(withE2e)?.args).toEqual(["--related", "test/e2e/new-file.test.ts", watchTest])
+    const withoutE2e = planStages(["src/cli.ts", "test/cli.test.ts"], choose, false)
+    expect(unitStage(withoutE2e)?.args).not.toContain(watchTest)
+  })
+
   test("設定だけの変更は単体を全件に戻す", () => {
     const plan = planStages(["package.json", "vitest.config.ts"], choose, false)
     expect(unitStage(plan)?.args).toEqual([])

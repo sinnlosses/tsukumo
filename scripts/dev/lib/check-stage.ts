@@ -51,6 +51,14 @@ export const WITHOUT_UNUSED_EXPORT_ENV = "TSUKUMO_WITHOUT_UNUSED_EXPORT"
 const CODE_DIRECTORIES = ["src/", "test/", "scripts/"]
 
 /**
+ * 変えたパスが前置の下の `.test.ts` にあるとき、`--related` の絞りに足す単体のテスト。
+ * 足したファイルが import で届かない規約のテスト（E2E の見張りの表との一致）を、絞った段でも走らせる。
+ */
+const ALWAYS_RELATED_TESTS = [
+  { changedPrefix: "test/e2e/", test: "test/scripts/shared/e2e-selection.test.ts" },
+] as const satisfies readonly { readonly changedPrefix: string; readonly test: string }[]
+
+/**
  * `changedPaths` が空なら変えたファイルを集められなかったものとして扱う。
  * `chooseE2eStages` は E2E の段を選ぶ呼び出しで、文書だけの変更では呼ばない。
  */
@@ -77,7 +85,11 @@ export function planStages(
       { name: "lint", args: [], heavy: false },
       { name: "format:check", args: [], heavy: false },
       TOKEN_LIMIT_STAGE,
-      { name: "test", args: narrowed ? [RELATED_FLAG, ...codePaths] : [], heavy: true },
+      {
+        name: "test",
+        args: narrowed ? [RELATED_FLAG, ...codePaths, ...alwaysRelatedTests(codePaths)] : [],
+        heavy: true,
+      },
       ...chooseE2eStages(),
     ],
     notice: narrowed ? "単体は変えたファイルに関連するものだけ" : "",
@@ -86,4 +98,12 @@ export function planStages(
 
 export function isCodePath(path: string): boolean {
   return CODE_DIRECTORIES.some((directory) => path.startsWith(directory))
+}
+
+function alwaysRelatedTests(codePaths: readonly string[]): readonly string[] {
+  return ALWAYS_RELATED_TESTS.filter((entry) =>
+    codePaths.some((path) => path.startsWith(entry.changedPrefix) && path.endsWith(".test.ts")),
+  )
+    .map((entry) => entry.test)
+    .filter((test) => !codePaths.includes(test))
 }
