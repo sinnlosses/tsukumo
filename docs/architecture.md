@@ -161,3 +161,4 @@
 | `docs/architecture/adr/0080-report-parts-through-astryx.md`                     | レポートの部品と Markdown の経路も `ui/` を通して Astryx で描く                                       | 採用                   |
 | `docs/architecture/adr/0081-workflow-agents-diagram-in-steps.md`                | ピルの「手順」の頭に、ワークフローのエージェントの図を出す                                            | 採用                   |
 | `docs/architecture/adr/0082-architecture-map-contract.md`                       | アーキテクチャの地図を、作り手が書く JSON の地図のファイル1つで tsukumo とつなぐ                      | 採用                   |
+| `docs/architecture/adr/0083-report-type-scale-plan-b.md`                        | レポートの字の段を案B に直す                                                                          | 採用                   |

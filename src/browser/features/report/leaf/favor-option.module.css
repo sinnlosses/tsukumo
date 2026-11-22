@@ -67,6 +67,7 @@ button.choice {
   gap: var(--inline-tight);
   align-items: center;
   color: var(--ink-bright);
+  font-size: var(--font-body);
   font-weight: 600;
 }
 

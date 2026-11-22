@@ -5,7 +5,7 @@
   gap: var(--stack-tight) var(--inline-group);
   align-items: baseline;
   min-width: 0;
-  font-size: var(--font-secondary);
+  font-size: var(--font-body);
   color: var(--ink-soft);
 }
 

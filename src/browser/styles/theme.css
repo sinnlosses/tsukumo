@@ -152,7 +152,7 @@
   ); /* 流れ（flow）の丸・線、画像の部品の「図n」の番号 */
   --report-chart-reference: var(--graph-return); /* グラフの基準線（目標・上限）の点線と名前 */
 
-  /* タイプスケール。字の段は Astryx のトークンを引く（字の下限は 12px で、10px の `--font-size-xs` より下は引かない）。 */
+  /* タイプスケール。字の段は Astryx のトークンを引く（下限は 12px。10px の `--font-size-xs` は引かない）。 */
   --font-label: var(--font-size-sm);
   --font-action: var(--font-label);
   --font-secondary: var(--text-supporting-size);
@@ -164,10 +164,10 @@
   --font-heading-3: var(--text-heading-3-size);
   --font-heading-2: var(--text-heading-2-size);
   --font-heading-1: var(--text-heading-1-size);
-  /* レポートの見出し。入力欄の見出し（上の --font-heading-1〜-3）とは別のつまみ。 */
-  --report-heading-2: 1.3125rem;
-  --report-heading-3: 1.0625rem;
-  /* 長い日本語の段落が詰まらない本文の行の高さ。テーマの定義が `--text-body-leading` へ写し、`--line-height-body` がそれを引く。 */
+  /* レポートの結論（-2）と節の見出し（-3。本文より 1px 大きい）。入力欄の見出しとは別のつまみ。 */
+  --report-heading-2: var(--font-size-lg);
+  --report-heading-3: calc(var(--font-size-base) + 1px);
+  /* 長い日本語の段落が詰まらない本文の行の高さ。テーマが `--text-body-leading` へ写し、`--line-height-body` が引く。 */
   --line-height-reading: 1.7;
   --line-height-body: var(--text-body-leading);
 

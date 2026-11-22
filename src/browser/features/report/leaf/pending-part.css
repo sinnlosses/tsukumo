@@ -18,7 +18,7 @@
 }
 /* 書き始めの紙の結論の骨組み。結論の字の大きさで2行を取る。 */
 .pending-lead {
-  font-size: var(--report-heading-3);
+  font-size: var(--report-heading-2);
 }
 .pending-line,
 .pending-heading-bar {

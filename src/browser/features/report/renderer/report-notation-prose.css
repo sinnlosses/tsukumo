@@ -9,7 +9,7 @@
   & .report-conclusion-first {
     display: block;
     font-size: var(--report-heading-2);
-    line-height: 1.5;
+    line-height: 1.6;
     font-weight: 700;
     color: var(--ink-bright);
     text-wrap: balance;
@@ -20,10 +20,10 @@
   }
   /* `task` の無いレポートの結論。見出しの代わりに頭に置く。 */
   & .report-conclusion-lead {
-    font-size: var(--report-heading-3);
-    font-weight: 500;
+    font-size: var(--report-heading-2);
+    font-weight: 700;
     line-height: 1.6;
-    color: var(--ink);
+    color: var(--ink-bright);
   }
   & :is(.report-conclusion, .report-conclusion-lead) p {
     margin: 0;

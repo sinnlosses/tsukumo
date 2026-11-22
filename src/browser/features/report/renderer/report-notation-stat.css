@@ -50,7 +50,7 @@
   & .report-stat b,
   & .report-stat strong {
     display: inline;
-    font-size: 2em;
+    font-size: var(--font-size-xl);
     font-weight: 700;
     letter-spacing: normal;
     line-height: 1.3;

@@ -79,7 +79,7 @@
 | 区画の見出し・強調した要約               | 14px（`--font-subheading` ← `--font-size-base`。16px）                                 | 本文書体 |
 | 本文（レポート・セリフ）                 | 14px（`--font-body` ← `--text-body-size`。16px）・行の高さ `--line-height-reading`     | 本文書体 |
 | 作業の名前（結論部の頭の行）             | `--font-body`（14px）・600・`ink-bright`                                               | 本文書体 |
-| 結論の1文目                              | `--report-heading-2`（21px）・行間 32px・700・`ink-bright`                             | 本文書体 |
+| 結論の1文目                              | `--report-heading-2`（17px）・行間 1.6・700・`ink-bright`（task の有無によらない）     | 本文書体 |
 | 図表の題                                 | 表は 14px（`--font-subheading`）・`ink-soft`、図は 12px（`--font-label`）・`ink-quiet` | 本文書体 |
 | 図表の番号（「図n」「表n」）             | 題と同じ大きさ・600・`ink-quiet`（字と数の間は空けず、題との間は 0.5em）               | 本文書体 |
 | 大きな見出し（画面・ダイアログの題）     | 17px（`--font-heading` ← `--text-heading-3-size`。19px）                               | 本文書体 |
@@ -92,7 +92,7 @@
   `docs/history/decision.md`「screen-design.md 13.3 Type」）。これを割る字を足さない。Astryx の `--font-size-xs`（10px）より下の段は引かない。印と入口は
   役が違うので `--font-label` と `--font-action` に分けたまま、値は同じ段にしてある
 - **本文の行の高さだけは Astryx の値（広い画面 1.4286・触る画面 1.5）を使わず、`--line-height-reading`（1.7）で上書きする。** 長い日本語の段落が詰まるため。見出し・名札・ボタンの行の高さは Astryx のまま。狭い画面での字の引き上げは、触る画面の Astryx の組み直しに従い、`theme.css` に `@media (max-width: 760px)` で字の大きさを上げる規則は無い
-- 大きさは**この段だけ**（広い画面で 12・14・17・20・24px。触る画面で 14・16・19・22・26px。`--report-heading-2`（21px）と `--report-heading-3`（17px）は別のつまみで、入力欄の字 `--font-input`（1rem。iOS Safari がフォーカスで画面を拡大しない下限）は Astryx を引かない）。役の行は上の表のとおり複数の役が同じ大きさを使う。これ以外の寸法を足さない。段を増やすのは
+- 大きさは**この段だけ**（広い画面で 12・14・15・17・20・24px。触る画面で 14・16・17・19・22・26px。`--report-heading-2`（17px。`--font-size-lg`）と `--report-heading-3`（15px。本文の段 `--font-size-base` より 1px 大きい）は別のつまみで、入力欄の字 `--font-input`（1rem。iOS Safari がフォーカスで画面を拡大しない下限）は Astryx を引かない）。役の行は上の表のとおり複数の役が同じ大きさを使う。これ以外の寸法を足さない。段を増やすのは
   「差をはっきり見せたい」という要求があるときだけで、寄せられるところは寄せる。
   **`test/architecture/font-size.test.ts` が、`theme.css` 以外の `*.css` の `font-size` を `var(--font-*)`・`var(--report-heading-*)`・
   `em`・`%`・`inherit` と、部品の中で `--font-*` から導いた局所のつまみ（日記の `--diary-text`・`--diary-title` は `--font-heading`・`--font-heading-1` に縮める倍率 `--diary-scale` を掛けた値、
@@ -103,10 +103,11 @@
   `#` は「大きな見出し」（18px）を超えるが、画面の他の見出しと混ぜないよう `--font-heading` とは
   別の変数（`--font-heading-1`〜`-3`）にしてある
 - **レポートの結論部の見出しと `##` は、入力欄と同じ大きさを別のつまみで持つ**。
-  `--report-heading-2`（21px）・`--report-heading-3`（17px）は `--font-heading-2`/`-3` を参照せず
-  値を直に持つので、入力欄のマークダウンエディタの見出しとは別に動く（`theme.css`）。`##` は `--report-heading-3`（17px）・700・行間 1.4・字間 0.01em・`palt`・`ink-bright`・下に罫、
-  `###` は `--font-subheading`（14px）・700・罫なし。21px の `##` は本文（14px）に対して大きすぎると利用者に言われ、結論の1文目より一段小さくした。
-  **結論の1文目も `--report-heading-2`（21px）で、行間 32px・700・`ink-bright`**（結論部の大胆さはここ1か所。作業の名前は `--font-body`（14px）・600 に下げてタスクの ID・状態のバッジと同じ行に置き、2文目は `--font-body`・`ink-soft`。13.2）
+  `--report-heading-2`（17px）・`--report-heading-3`（15px）は `--font-heading-2`/`-3` を参照せず
+  Astryx の段（`--font-size-lg`・`--font-size-base` + 1px）から別に組むので、入力欄のマークダウンエディタの見出しとは別に動く（`theme.css`）。`##` は `--report-heading-3`（15px）・700・行間 1.4・字間 0.01em・`palt`・`ink-bright`・下に罫、
+  `###` は `--font-subheading`（14px）・700・罫なし。
+  **結論の1文目も `--report-heading-2`（17px）で、行間 1.6・700・`ink-bright`**（大きい字は結論の1か所に絞る。
+  行の頭（「したこと」の見出しのように右の中身を名指すもの）は中身と同じ大きさにして色だけ控えめにし、列の頭は 12px。字の段の決定は ADR 0083。作業の名前は `--font-body`（14px）・600 に下げてタスクの ID・状態のバッジと同じ行に置き、2文目は `--font-body`・`ink-soft`。13.2）
 - **依頼の全文（`RequestBlock`）は、見出し「依頼」を `--font-secondary`・`ink-quiet`、依頼の行を
   `--font-secondary`・`--ink-soft` で、baseline をそろえた1行に置く**（カードの頭に題の行は置かず本文の頭へ置き、畳みは1行。見本は
   `docs/history/mockup/report-reading-tool-2026-10-18/after-first-w1400.png`）。

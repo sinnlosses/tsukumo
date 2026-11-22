@@ -206,12 +206,12 @@
     border-top: 1px dashed var(--rule-quiet);
   }
   & .report-work-record-key {
-    font-size: var(--font-secondary);
+    font-size: var(--font-body);
     color: var(--ink-quiet);
   }
   & .report-work-record-value {
     min-width: 0;
-    font-size: var(--font-secondary);
+    font-size: var(--font-body);
   }
   & .report-work-record-prose {
     margin: 0;
