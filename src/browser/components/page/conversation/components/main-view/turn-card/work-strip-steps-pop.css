@@ -6,7 +6,10 @@
   flex-direction: column;
   gap: var(--stack-tight);
   max-block-size: min(70dvh, 35rem);
+  /* 上下の余白は貼り付く頭と足が持つ。転がす器に上下の余白があると、貼り付きはその内側で止まり、
+     器の端と頭・足の間を中身が通って見える。 */
   padding: var(--inset-control);
+  padding-block: 0;
   overflow-y: auto;
   color: var(--ink-soft);
   font-size: var(--font-secondary);
@@ -41,6 +44,9 @@
   gap: var(--stack-tight);
   color: var(--ink-quiet);
 }
+.work-strip-steps:not(:has(> .work-strip-steps-foot)) {
+  padding-block-end: var(--stack-block);
+}
 /* 頭と下端の目安の残りは、面の中で転がしても上下に貼り付く。地を塗って、下を通る中身を隠す。 */
 .work-strip-steps-head {
   position: sticky;
@@ -49,7 +55,7 @@
   display: flex;
   justify-content: space-between;
   margin: 0;
-  padding: 0 var(--inline-control);
+  padding: var(--stack-block) var(--inline-control) 0;
   background: var(--surface);
   color: var(--ink-quiet);
   font-size: var(--font-label);
@@ -79,7 +85,7 @@
   justify-content: space-between;
   gap: var(--inline-tight);
   margin: 0;
-  padding: var(--stack-tight) var(--inline-control) 0;
+  padding: var(--stack-tight) var(--inline-control) var(--stack-block);
   border-top: 1px solid var(--rule-quiet);
   background: var(--surface);
   color: var(--ink-quiet);
