@@ -24,6 +24,7 @@ import {
   PHASE_RESULT_OUTCOME_DESCRIPTION,
   PHASE_RESULT_PHASE_DESCRIPTION,
   PHASE_RESULT_REASON_DESCRIPTION,
+  PHASE_RESULT_STEP_DESCRIPTION,
   PHASE_RESULT_SUMMARY_DESCRIPTION,
   PHASE_RESULT_TOOL_DESCRIPTION,
 } from "../../../work-plan/core/phase-result-tool.ts"
@@ -78,6 +79,7 @@ export function phaseResultTool(review: CallReview, onEvent: (event: SessionEven
     PHASE_RESULT_TOOL_NAME,
     PHASE_RESULT_TOOL_DESCRIPTION,
     {
+      step: phaseResultShape.step.describe(PHASE_RESULT_STEP_DESCRIPTION),
       phase: phaseResultShape.phase.describe(PHASE_RESULT_PHASE_DESCRIPTION),
       count: phaseResultShape.count.describe(PHASE_RESULT_COUNT_DESCRIPTION),
       outcome: phaseResultShape.outcome.describe(PHASE_RESULT_OUTCOME_DESCRIPTION),

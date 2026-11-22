@@ -35,8 +35,7 @@
         "kind": "delegate-returned",
         "handback": {
           "kind": "phase-done",
-          "phase": 1,
-          "count": 2,
+          "position": { "kind": "numbered", "phase": 1, "count": 2 },
           "summary": "架空の1つ目の段を済ませた。"
         }
       }
@@ -47,8 +46,7 @@
         "kind": "delegate-returned",
         "handback": {
           "kind": "phase-done",
-          "phase": 2,
-          "count": 2,
+          "position": { "kind": "numbered", "phase": 2, "count": 2 },
           "summary": "架空の2つ目の段を済ませた。"
         }
       }

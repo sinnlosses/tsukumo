@@ -170,6 +170,7 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
               toolHookClock,
               options.onEvent,
               callReview.latestPlan,
+              callReview.workflowAgentPhase,
             ),
             ...postToolUseHooks(options.onEvent, externalToolMark, toolHookClock, diagnose),
             ...implementerStopHooks(callReview),

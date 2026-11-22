@@ -15,8 +15,6 @@
 // `WorkPlanReview.pass` が `work-plan-called` を同じ呼び出しの `tool-finished` まで預かり、`isError`（差し戻したら true）に従って描くか捨てるかを決める。
 // transcript から組み直すときも結果は残っているので、`pass` だけを通せば同じ並びになる。
 
-import { isDeepEqual } from "remeda"
-
 import type { TaskId } from "../../../shared/session-driver/task-id.ts"
 import type { DelegateReturn } from "../../../shared/session/delegate-return.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
@@ -48,6 +46,7 @@ import {
   WORKFLOW_FINISHED_HANDBACK_LINE,
 } from "./band-position.ts"
 import { delegateReturnOf, parsePhaseResult } from "./phase-result.ts"
+import { skipsPhase, writesReturnedSummary } from "./work-plan-advance-rule.ts"
 
 export type WorkPlanVerdict =
   | { readonly kind: "accepted"; readonly plan: WorkPlan }
@@ -61,6 +60,7 @@ export type WorkPlanVerdict =
 /**
  * `phase_result` の判定。`accepted` の `moved` は帯を動かしたか、`handback` は結果を返却の形にしたもの、`plan` は判定のあとのワークプラン。
  * 帯を動かさない呼び出しも差し戻さないが、段の id を持つワークプランで順を外れた申告は `out-of-order` で差し戻す。
+ * `step` が受け付け済みのワークプランの `phaseIds` に無ければ `unknown-step` で差し戻す。
  */
 export type PhaseResultVerdict =
   | {
@@ -71,6 +71,7 @@ export type PhaseResultVerdict =
     }
   | { readonly kind: "malformed" }
   | { readonly kind: "out-of-order" }
+  | { readonly kind: "unknown-step" }
 
 export type WorkPlanReview = {
   /** `work_plan` の handler から、届いた引数のままで呼ぶ。 */
@@ -222,11 +223,21 @@ export function createWorkPlanReview(): WorkPlanReview {
       if (result === undefined) {
         return { kind: "malformed" }
       }
+      const { position } = result
+      if (
+        position.kind === "step" &&
+        accepted.kind === "planned" &&
+        !accepted.phaseIds.includes(position.step)
+      ) {
+        return { kind: "unknown-step" }
+      }
       const handback = delegateReturnOf(result)
       if (accepted.kind === "planned" && isOutOfOrderReturn(accepted, handback)) {
         return { kind: "out-of-order" }
       }
-      returnedCount = result.count
+      if (position.kind === "numbered") {
+        returnedCount = position.count
+      }
       const returned =
         accepted.kind === "planned" ? phaseFinishedByReturn(accepted, handback) : undefined
       if (returned?.kind !== "finished") {
@@ -354,32 +365,4 @@ export function createWorkPlanReview(): WorkPlanReview {
       }
     },
   }
-}
-
-/**
- * 返却の `summary` がまとめを運んだ段に、メインが同じ位置で写す `work_plan` か。
- * 当たれば、メインが `phaseSummary` を渡さなくても途中の呼び出しを差し戻さない（渡してあっても、中間レポートに出るのは返却のまとめ）。
- */
-function writesReturnedSummary(
-  previous: LatestWorkPlan,
-  next: WorkPlan,
-  summaryReturned: boolean,
-): boolean {
-  return (
-    summaryReturned &&
-    previous.kind === "planned" &&
-    isDeepEqual(previous.phases, next.phases) &&
-    finishedPhaseCount(previous) === finishedPhaseCount(next)
-  )
-}
-
-function skipsPhase(previous: WorkPlan, next: WorkPlan): boolean {
-  return gainedPhases(previous, next) > 1
-}
-
-/** 同じ段の並びのまま、済んだ段が増えた数。並びが変わっていれば 0。 */
-function gainedPhases(previous: WorkPlan, next: WorkPlan): number {
-  return isDeepEqual(previous.phases, next.phases)
-    ? finishedPhaseCount(next) - finishedPhaseCount(previous)
-    : 0
 }

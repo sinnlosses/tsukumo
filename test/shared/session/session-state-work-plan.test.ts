@@ -82,8 +82,7 @@ describe("applySessionEvent（委譲の返却で進むワークプラン）", ()
   })
   const done = (phase: number, summary = "架空の要約。"): DelegateReturn => ({
     kind: "phase-done",
-    phase,
-    count: 2,
+    position: { kind: "numbered", phase, count: 2 },
     summary,
   })
 
@@ -117,7 +116,14 @@ describe("applySessionEvent（委譲の返却で進むワークプラン）", ()
 
   it.each([
     ["一足飛び", done(2)],
-    ["止めた", { kind: "stopped", phase: 1, count: 2, summary: "架空" } as const],
+    [
+      "止めた",
+      {
+        kind: "stopped",
+        position: { kind: "numbered", phase: 1, count: 2 },
+        summary: "架空",
+      } satisfies DelegateReturn,
+    ],
   ])("%s は帯を動かさない", (_, handback) => {
     const planned = [request, plan(1, RANGE)].reduce(
       (view, event) => applySessionEvent(view, event, 0),

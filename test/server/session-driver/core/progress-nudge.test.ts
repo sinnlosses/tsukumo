@@ -62,11 +62,10 @@ const returned = (handback: DelegateReturn): SessionEvent => ({
   handback,
 })
 const done = (phase: number, summary = "架空のまとめ"): SessionEvent =>
-  returned({ kind: "phase-done", phase, count: 3, summary })
+  returned({ kind: "phase-done", position: { kind: "numbered", phase, count: 3 }, summary })
 const advanced = (phase: number, summary = "架空のまとめ", skipped = false): ProgressNudgeTake => ({
   kind: "phase-advanced",
-  phase,
-  count: 3,
+  phase: `${phase}/3`,
   summary,
   skipped,
 })
@@ -102,14 +101,27 @@ describe("フェーズの切れ目の差し込み", () => {
       "stopped では差し込まない",
       [
         ...DELEGATING,
-        [returned({ kind: "stopped", phase: 1, count: 3, summary: "架空の理由" }), PHASE_AT],
+        [
+          returned({
+            kind: "stopped",
+            position: { kind: "numbered", phase: 1, count: 3 },
+            summary: "架空の理由",
+          }),
+          PHASE_AT,
+        ],
       ],
       [PHASE_AT],
       [NONE],
     ],
     [
       "phase-skipped は skipped の印つきで取り出す",
-      [...DELEGATING, [returned({ kind: "phase-skipped", phase: 2, count: 3 }), PHASE_AT]],
+      [
+        ...DELEGATING,
+        [
+          returned({ kind: "phase-skipped", position: { kind: "numbered", phase: 2, count: 3 } }),
+          PHASE_AT,
+        ],
+      ],
       [PHASE_AT],
       [advanced(2, "", true)],
     ],
@@ -144,11 +156,11 @@ describe("フェーズの切れ目の差し込み", () => {
 
   it("文面は包みで読め、帯の位置と summary を言う", () => {
     const text = progressNudgeSendText(
-      { kind: "phase-advanced", phase: 1, count: 3, summary: "架空のまとめ", skipped: false },
+      { kind: "phase-advanced", phase: "1/3", summary: "架空のまとめ", skipped: false },
       "架空の帯の位置",
     )
     const bare = progressNudgeSendText(
-      { kind: "phase-advanced", phase: 1, count: 3, summary: "", skipped: false },
+      { kind: "phase-advanced", phase: "1/3", summary: "", skipped: false },
       "",
     )
     const others = [

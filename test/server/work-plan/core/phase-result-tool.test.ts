@@ -47,7 +47,11 @@ describe("answerPhaseResultCall", () => {
     expect(events).toEqual([
       {
         kind: "delegate-returned",
-        handback: { kind: "phase-done", phase: 1, count: 2, summary: "" },
+        handback: {
+          kind: "phase-done",
+          position: { kind: "numbered", phase: 1, count: 2 },
+          summary: "",
+        },
       },
     ])
   })
@@ -60,7 +64,7 @@ describe("answerPhaseResultCall", () => {
         events.push(event),
       ),
     ).toEqual({
-      text: expect.stringContaining("phase は 1 から count までの整数にし"),
+      text: expect.stringContaining("phase と count は両方渡すか両方省き"),
       isError: true,
     })
     expect(events).toEqual([])
@@ -96,14 +100,46 @@ describe("answerPhaseResultCall", () => {
 })
 
 describe("judgePhaseResultCaller", () => {
-  it("メインの phase_result だけを拒み、委譲先の呼び出しとほかのツールは通す", () => {
-    expect(judgePhaseResultCaller("mcp__tsukumo__phase_result", false)).toEqual({
+  const PHASE_RESULT = "mcp__tsukumo__phase_result"
+  const phaseOf = (agentId: string) => (agentId === "agent-accept" ? "accept" : undefined)
+  const judge = (
+    toolName: string,
+    agentId: string | undefined,
+    toolInput: unknown,
+    phaseIds: readonly string[] = ["impl-1", "accept"],
+  ) =>
+    judgePhaseResultCaller({
+      toolName,
+      ...(agentId === undefined ? {} : { agentId }),
+      toolInput,
+      workflowAgentPhase: phaseOf,
+      phaseIds,
+    })
+  const ALLOW = { kind: "allow" }
+
+  it("メインの phase_result だけを拒み、ほかのツールは通す", () => {
+    expect(judge(PHASE_RESULT, undefined, { outcome: "finished" })).toEqual({
       kind: "deny",
       reason: expect.stringContaining(
         "phase_result は委譲先がフェーズの結果を返すツールで、メインは呼ばない",
       ),
     })
-    expect(judgePhaseResultCaller("mcp__tsukumo__phase_result", true)).toEqual({ kind: "allow" })
-    expect(judgePhaseResultCaller("mcp__tsukumo__work_plan", false)).toEqual({ kind: "allow" })
+    expect(judge("mcp__tsukumo__work_plan", undefined, {})).toEqual(ALLOW)
+  })
+
+  it("agent の段が phaseIds にあり step も phase も無い呼び出しは、その段を step に足して差し替える", () => {
+    expect(judge(PHASE_RESULT, "agent-accept", { outcome: "finished", summary: "架空" })).toEqual({
+      kind: "rewrite",
+      input: { outcome: "finished", summary: "架空", step: "accept" },
+    })
+  })
+
+  it.each([
+    ["phase がある", "agent-accept", { phase: 1, count: 2, outcome: "finished" }, undefined],
+    ["step がある", "agent-accept", { step: "impl-1", outcome: "finished" }, undefined],
+    ["agent の段が phaseIds に無い", "agent-accept", { outcome: "finished" }, ["impl-1"]],
+    ["agent が写しに無い", "agent-other", { outcome: "finished" }, undefined],
+  ])("%s 呼び出しは差し替えずに通す", (_, agentId, toolInput, phaseIds) => {
+    expect(judge(PHASE_RESULT, agentId, toolInput, phaseIds)).toEqual(ALLOW)
   })
 })

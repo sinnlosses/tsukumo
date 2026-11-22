@@ -137,7 +137,11 @@ function called(plan: WorkPlan): SessionEvent {
 function returned(phase: number, count = 2): SessionEvent {
   return {
     kind: "delegate-returned",
-    handback: { kind: "phase-done", phase, count, summary: "架空の要約。" },
+    handback: {
+      kind: "phase-done",
+      position: { kind: "numbered", phase, count },
+      summary: "架空の要約。",
+    },
   }
 }
 

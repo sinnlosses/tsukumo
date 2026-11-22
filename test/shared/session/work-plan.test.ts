@@ -206,7 +206,7 @@ describe("plannedPhasesOf の飛ばした段", () => {
     }
     const viaReturn = nextWorkPlan(before, {
       kind: "delegate-returned",
-      handback: { kind: "phase-skipped", phase: 1, count: 2 },
+      handback: { kind: "phase-skipped", position: { kind: "numbered", phase: 1, count: 2 } },
     })
 
     expect(viaReturn.kind === "none" ? [] : plannedPhasesOf(viaReturn)).toEqual(

@@ -311,8 +311,9 @@ describe("WorkPlanReview の今のワークプラン", () => {
         ).toBe("accepted")
       } else if (event.kind === "delegate-returned") {
         const { handback } = event
-        if (handback.kind === "phase-done") {
-          review.judgeResult({ phase: handback.phase, count: handback.count, outcome: "finished" })
+        if (handback.kind === "phase-done" && handback.position.kind === "numbered") {
+          const { phase, count } = handback.position
+          review.judgeResult({ phase, count, outcome: "finished" })
         }
       } else {
         review.pass(event)

@@ -49,6 +49,7 @@ export type PreToolUseSetup = {
   readonly hookClock: ToolHookClock
   readonly onEvent: (event: SessionEvent) => void
   readonly latestPlan: () => LatestWorkPlan
+  readonly workflowAgentPhase: (agentId: string) => string | undefined
 }
 
 /** 渡さなかった口を既定（印は下り、差し替えず、時計は 0、出来事は捨てる）で埋めた `preToolUseHooks` の表。 */
@@ -64,6 +65,7 @@ export function preTable(
     setup.hookClock ?? createToolHookClock(() => 0),
     setup.onEvent ?? (() => {}),
     setup.latestPlan ?? (() => ({ kind: "none" })),
+    setup.workflowAgentPhase ?? (() => undefined),
   )
 }
 

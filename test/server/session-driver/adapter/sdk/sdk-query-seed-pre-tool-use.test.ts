@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest"
 import { createCallReview } from "../../../../../src/server/session-driver/core/call-review.ts"
 import { createExternalToolMark } from "../../../../../src/server/session-driver/core/external-tool-mark.ts"
 import { createToolHookClock } from "../../../../../src/server/session-driver/core/tool-hook-clock.ts"
+import { createWorkPlanReview } from "../../../../../src/server/work-plan/core/work-plan-review.ts"
 import type { SessionEvent } from "../../../../../src/shared/session/session-event.ts"
 import { requestEvent } from "../../../../fixture/session-event.ts"
 import { matcherHits, preTable, runPreToolUse } from "../../../../fixture/tool-use-hook-table.ts"
@@ -250,6 +251,30 @@ describe("preToolUseHooks（メインの phase_result を拒む）", () => {
         gateRaised: () => true,
       }),
     ).toEqual({})
+  })
+
+  it("写しにいる agent の phase・step の無い phase_result は、updatedInput でその agent の段を step に補う", async () => {
+    const review = createWorkPlanReview()
+    review.pass(requestEvent())
+    review.judge({
+      phases: [
+        { id: "plan", name: "架空の計画" },
+        { id: "accept", name: "架空の受け入れ" },
+      ],
+      current: 0,
+    })
+
+    expect(
+      await runPreToolUse("mcp__tsukumo__phase_result", { outcome: "finished" }, "agent-1", {
+        latestPlan: review.latestPlan,
+        workflowAgentPhase: (agentId) => (agentId === "agent-1" ? "accept" : undefined),
+      }),
+    ).toEqual({
+      hookSpecificOutput: {
+        hookEventName: "PreToolUse",
+        updatedInput: { outcome: "finished", step: "accept" },
+      },
+    })
   })
 })
 

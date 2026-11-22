@@ -99,17 +99,33 @@ export function isOutOfOrderReturn(plan: WorkPlan, handback: DelegateReturn): bo
   return phase !== undefined && phase.state !== "current"
 }
 
-/** 範囲があり `count` が範囲の段の数と同じ `phase-done`・`phase-skipped` の `phase` に当たる段。当たらなければ undefined。 */
+/**
+ * `phase-done`・`phase-skipped` が申告した段。当たらなければ undefined。
+ * 位置が `step` なら `phaseIds` のその id の段で、範囲を問わない。
+ * `numbered` なら、範囲があり `count` が範囲の段の数と同じときの `phase` に当たる段。
+ */
 function reportedPhaseOf(plan: WorkPlan, handback: DelegateReturn): PlannedPhase | undefined {
-  if (
-    (handback.kind !== "phase-done" && handback.kind !== "phase-skipped") ||
-    plan.delegatedRange.kind !== "range" ||
-    plan.delegatedRange.count !== handback.count
-  ) {
+  if (handback.kind !== "phase-done" && handback.kind !== "phase-skipped") {
     return undefined
   }
-  const target = plan.delegatedRange.first + handback.phase - 1
-  return plannedPhasesOf(plan).find((candidate) => candidate.index === target)
+  const { position } = handback
+  switch (position.kind) {
+    case "step": {
+      const target = plan.phaseIds.indexOf(position.step)
+      return target === -1
+        ? undefined
+        : plannedPhasesOf(plan).find((candidate) => candidate.index === target)
+    }
+    case "numbered": {
+      if (plan.delegatedRange.kind !== "range" || plan.delegatedRange.count !== position.count) {
+        return undefined
+      }
+      const target = plan.delegatedRange.first + position.phase - 1
+      return plannedPhasesOf(plan).find((candidate) => candidate.index === target)
+    }
+    case "unplaced":
+      return undefined
+  }
 }
 
 /**

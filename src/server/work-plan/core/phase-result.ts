@@ -3,7 +3,7 @@
 
 import { z } from "zod"
 
-import type { DelegateReturn } from "../../../shared/session/delegate-return.ts"
+import type { DelegateReturn, PhasePosition } from "../../../shared/session/delegate-return.ts"
 import { isBlankText } from "../../../shared/utils/blank-text.ts"
 
 /** 段の結果。`finished` は済ませた、`skipped` は飛ばした、`stopped` は途中で止めた。 */
@@ -12,19 +12,16 @@ const PHASE_OUTCOMES = ["finished", "skipped", "stopped"] as const
 /** 引数を読んだ形。段のまとめは `finished` だけが、止めた理由は `stopped` だけが持つ（まとめを渡さなければ空の文字列）。 */
 export type PhaseResult =
   | {
-      readonly phase: number
-      readonly count: number
+      readonly position: PhasePosition
       readonly outcome: "skipped"
     }
   | {
-      readonly phase: number
-      readonly count: number
+      readonly position: PhasePosition
       readonly outcome: "finished"
       readonly summary: string
     }
   | {
-      readonly phase: number
-      readonly count: number
+      readonly position: PhasePosition
       readonly outcome: "stopped"
       readonly reason: string
     }
@@ -34,8 +31,9 @@ export type PhaseResult =
  * 欄をまたぐ検査は {@link phaseResultSchema} が持つ。
  */
 export const phaseResultShape = {
-  phase: z.number().int().min(1),
-  count: z.number().int().min(1),
+  step: z.string().min(1).optional(),
+  phase: z.number().int().min(1).optional(),
+  count: z.number().int().min(1).optional(),
   outcome: z.enum(PHASE_OUTCOMES),
   reason: z.string().optional(),
   summary: z.string().optional(),
@@ -43,13 +41,15 @@ export const phaseResultShape = {
 
 /**
  * `phase_result` の引数の形の正典。
- * `phase` が `count` を超える・`stopped` に空でない `reason` が無い・`stopped` でないのに `reason` がある・`finished` でないのに `summary` がある、のどれかなら通らない。
+ * `phase` と `count` の片方だけがある・`phase` が `count` を超える・`stopped` に空でない `reason` が無い・`stopped` でないのに `reason` がある・`finished` でないのに `summary` がある、のどれかなら通らない。
  */
 const phaseResultSchema = z.object(phaseResultShape).superRefine((value, context) => {
   const reject = (path: string): void => {
     context.addIssue({ code: "custom", message: "invalid phase result", path: [path] })
   }
-  if (value.phase > value.count) {
+  if ((value.phase === undefined) !== (value.count === undefined)) {
+    reject(value.phase === undefined ? "phase" : "count")
+  } else if (value.phase !== undefined && value.count !== undefined && value.phase > value.count) {
     reject("phase")
   }
   if (
@@ -67,20 +67,27 @@ const phaseResultSchema = z.object(phaseResultShape).superRefine((value, context
 /**
  * 外来の値（ツールの引数）を段の結果として読む。{@link phaseResultSchema} を通らなければ undefined。
  * handler が差し戻すかどうかと、変換がイベントにするかどうかは、この1つで決まる。
+ * 段の位置は `step` があれば `step`（`phase` もあっても `step`）、無ければ `phase`・`count`、どちらも無ければ `unplaced`。
  */
 export function parsePhaseResult(value: unknown): PhaseResult | undefined {
   const parsed = phaseResultSchema.safeParse(value)
   if (!parsed.success) {
     return undefined
   }
-  const { phase, count, outcome, reason = "", summary = "" } = parsed.data
+  const { step, phase, count, outcome, reason = "", summary = "" } = parsed.data
+  const position: PhasePosition =
+    step !== undefined
+      ? { kind: "step", step }
+      : phase !== undefined && count !== undefined
+        ? { kind: "numbered", phase, count }
+        : { kind: "unplaced" }
   switch (outcome) {
     case "stopped":
-      return { phase, count, outcome, reason }
+      return { position, outcome, reason }
     case "finished":
-      return { phase, count, outcome, summary: isBlankText(summary) ? "" : summary }
+      return { position, outcome, summary: isBlankText(summary) ? "" : summary }
     case "skipped":
-      return { phase, count, outcome }
+      return { position, outcome }
   }
 }
 
@@ -88,15 +95,10 @@ export function parsePhaseResult(value: unknown): PhaseResult | undefined {
 export function delegateReturnOf(result: PhaseResult): DelegateReturn {
   switch (result.outcome) {
     case "finished":
-      return {
-        kind: "phase-done",
-        phase: result.phase,
-        count: result.count,
-        summary: result.summary,
-      }
+      return { kind: "phase-done", position: result.position, summary: result.summary }
     case "skipped":
-      return { kind: "phase-skipped", phase: result.phase, count: result.count }
+      return { kind: "phase-skipped", position: result.position }
     case "stopped":
-      return { kind: "stopped", phase: result.phase, count: result.count, summary: result.reason }
+      return { kind: "stopped", position: result.position, summary: result.reason }
   }
 }

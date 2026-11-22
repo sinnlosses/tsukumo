@@ -13,6 +13,7 @@
 // 要約は委譲先の会話から作られた字なので、ここから先は差し込む文面にだけ入れる。
 
 import type { TaskId } from "../../../shared/session-driver/task-id.ts"
+import type { PhasePosition } from "../../../shared/session/delegate-return.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import {
   progressNudgeSilenceMs,
@@ -29,8 +30,8 @@ export type ProgressNudgeTake =
   | { readonly kind: "shell-wait"; readonly count: number }
   | {
       readonly kind: "phase-advanced"
-      readonly phase: number
-      readonly count: number
+      /** 返却が申告した段の言い方。番号なら `n/m`、段の id ならその id。 */
+      readonly phase: string
       readonly summary: string
       readonly skipped: boolean
     }
@@ -114,14 +115,13 @@ export function createProgressNudge(silence: ProgressNudgeSilence): ProgressNudg
           return
         case "delegate-returned": {
           const handback = event.handback
-          if (handback.kind === "stopped") {
+          if (handback.kind === "stopped" || handback.position.kind === "unplaced") {
             return
           }
           const done = handback.kind === "phase-done"
           phaseAdvanced = {
             kind: "phase-advanced",
-            phase: handback.phase,
-            count: handback.count,
+            phase: phasePositionText(handback.position),
             summary: done ? handback.summary : "",
             skipped: !done,
             observedAt: at,
@@ -208,9 +208,7 @@ export function progressNudgeSendText(taken: ProgressNudgeSend, bandPosition: st
       return backgroundWaitPromptText(taken.count)
     case "phase-advanced": {
       const lines = [
-        taken.skipped
-          ? `フェーズ ${taken.phase}/${taken.count} は飛ばした`
-          : `フェーズ ${taken.phase}/${taken.count} が済んだ`,
+        taken.skipped ? `フェーズ ${taken.phase} は飛ばした` : `フェーズ ${taken.phase} が済んだ`,
         ...(taken.summary === "" ? [] : [`まとめ: ${taken.summary}`]),
         ...(bandPosition === "" ? [] : [bandPosition]),
       ]
@@ -237,6 +235,12 @@ function progressNudgePromptText(summary: string): string {
 /** 要約の無い背景 Bash の待ちを、件数だけの事実でメインへ送る文面に包む。 */
 function backgroundWaitPromptText(count: number): string {
   return wrapProgress(BACKGROUND_WAIT_NOTE, `背景の Bash を ${count} 件待っている`)
+}
+
+function phasePositionText(
+  position: Exclude<PhasePosition, { readonly kind: "unplaced" }>,
+): string {
+  return position.kind === "step" ? position.step : `${position.phase}/${position.count}`
 }
 
 function wrapProgress(note: string, body: string): string {

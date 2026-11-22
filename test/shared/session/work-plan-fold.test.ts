@@ -79,8 +79,7 @@ describe("nextWorkPlan（委譲の返却で進める）", () => {
   })
   const phaseDone = (phase: number, count = 2, summary = "架空の要約。"): DelegateReturn => ({
     kind: "phase-done",
-    phase,
-    count,
+    position: { kind: "numbered", phase, count },
     summary,
   })
   const returned = (plan: LatestWorkPlan, handback: DelegateReturn): LatestWorkPlan =>
@@ -130,9 +129,13 @@ describe("nextWorkPlan（委譲の返却で進める）", () => {
     const noRange = planAt(1, SERIAL, [], { kind: "none" })
 
     expect(returned(noRange, phaseDone(1))).toEqual(noRange)
-    expect(returned(planAt(1), { kind: "stopped", phase: 1, count: 2, summary: "架空" })).toEqual(
-      planAt(1),
-    )
+    expect(
+      returned(planAt(1), {
+        kind: "stopped",
+        position: { kind: "numbered", phase: 1, count: 2 },
+        summary: "架空",
+      }),
+    ).toEqual(planAt(1))
   })
 
   it("並びの最後の段は返却では済ませない（閉じるのは report）", () => {
@@ -146,7 +149,10 @@ describe("nextWorkPlan（委譲の返却で進める）", () => {
   })
 
   it("phase-skipped は段を済ませて飛ばした段に名前を足し、まとめ待ちにする", () => {
-    const skipped = { kind: "phase-skipped", phase: 1, count: 2 } as const
+    const skipped = {
+      kind: "phase-skipped",
+      position: { kind: "numbered", phase: 1, count: 2 },
+    } as const
 
     expect(returned(planAt(1), skipped)).toEqual({
       ...planAt(2),
@@ -166,7 +172,8 @@ describe("nextWorkPlan（委譲の返却で進める）", () => {
   })
 
   it("phase-skipped も一足飛び・済んだ段・N の食い違い・範囲の無いワークプランでは動かさず、印も付けない", () => {
-    const skipped = (phase: number, count = 2) => ({ kind: "phase-skipped", phase, count }) as const
+    const skipped = (phase: number, count = 2) =>
+      ({ kind: "phase-skipped", position: { kind: "numbered", phase, count } }) as const
     const noRange = planAt(1, SERIAL, [], { kind: "none" })
     const pending = planAt(1, SERIAL, [], { kind: "pending", first: 1 })
 
@@ -205,7 +212,11 @@ describe("nextWorkPlan（委譲の返却で進める）", () => {
       ),
     ).toEqual(UNMOVED)
     expect(
-      phaseFinishedByReturn(ranged, { kind: "stopped", phase: 1, count: 2, summary: "架空" }),
+      phaseFinishedByReturn(ranged, {
+        kind: "stopped",
+        position: { kind: "numbered", phase: 1, count: 2 },
+        summary: "架空",
+      }),
     ).toEqual(UNMOVED)
   })
 })
@@ -240,7 +251,11 @@ describe("nextWorkPlan（範囲を初めて宣言した work-plan）", () => {
     expect(
       nextWorkPlan(plan, {
         kind: "delegate-returned",
-        handback: { kind: "phase-done", phase: 1, count: 2, summary: "架空" },
+        handback: {
+          kind: "phase-done",
+          position: { kind: "numbered", phase: 1, count: 2 },
+          summary: "架空",
+        },
       }),
     ).toEqual(plan)
     expect(nextWorkPlan(plan, event(declared(0)))).toMatchObject({ current: 1 })
@@ -252,7 +267,11 @@ describe("nextWorkPlan（範囲を初めて宣言した work-plan）", () => {
     expect(
       nextWorkPlan(plan, {
         kind: "delegate-returned",
-        handback: { kind: "phase-done", phase: 1, count: 2, summary: "架空" },
+        handback: {
+          kind: "phase-done",
+          position: { kind: "numbered", phase: 1, count: 2 },
+          summary: "架空",
+        },
       }),
     ).toMatchObject({ current: 2 })
   })

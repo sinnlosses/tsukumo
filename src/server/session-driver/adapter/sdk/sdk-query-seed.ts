@@ -7,7 +7,6 @@ import type {
   HookEvent,
   HookInput,
   SdkPluginConfig,
-  SyncHookJSONOutput,
 } from "@anthropic-ai/claude-agent-sdk"
 
 import { toolSummaryInput } from "../../../../shared/session-driver/tool-summary-field.ts"
@@ -22,7 +21,6 @@ import { parseToolUseId } from "../../../../shared/session/tool-use-id.ts"
 import type { LatestWorkPlan } from "../../../../shared/session/work-plan.ts"
 import { bundledFilePath } from "../../../adapter/bundled-path.ts"
 import { tsukumoHomePath } from "../../../adapter/tsukumo-home.ts"
-import type { ToolVerdict } from "../../../core/tool-verdict.ts"
 import { PHASE_RESULT_TOOL_NAME, tsukumoToolFullName } from "../../../core/tsukumo-tool-name.ts"
 import type { ReportGate } from "../../../report/core/prompt/report-tool.ts"
 import { judgePhaseResultCaller } from "../../../work-plan/core/phase-result-tool.ts"
@@ -36,6 +34,7 @@ import {
 } from "../../../work-plan/core/work-plan-gate.ts"
 import { pinToBackground } from "../../core/background-delegation.ts"
 import { rewriteBashCommand } from "../../core/bash-command-rewrite.ts"
+import type { CallReview } from "../../core/call-review.ts"
 import type { ExternalToolMark } from "../../core/external-tool-mark.ts"
 import type { SessionDriverOptions, SessionMode } from "../../core/session-driver.ts"
 import {
@@ -47,6 +46,7 @@ import { childProcessEnv } from "../../core/visible-output-nudge.ts"
 import { figurePluginDir, workflowPluginDir } from "../workflow-plugin.ts"
 import { matcherExcluding } from "./hook-matcher.ts"
 import { waitForQueuedMessages } from "./queued-message-wait.ts"
+import { isInSubagent, toPreToolUseOutput } from "./sdk-hook-output.ts"
 
 const GATE_MATCHER = matcherExcluding(GATE_EXEMPT_TOOL_NAMES, GATE_EXEMPT_TOOL_PREFIX)
 
@@ -133,7 +133,7 @@ export function buildQuerySeedOptions(options: SessionDriverOptions): QuerySeedO
  *   ワークフロースクリプトの agent かは畳み込みが `agent_id` で決める
  * - 委譲ゲート（読み取りと tsukumo のツール以外）: 外部由来の印を立て、委譲ゲート（`judgeToolAgainstGate`）で拒む。
  *   印は結果のフック（{@link postToolUseHooks}）でも立てる
- * - `mcp__tsukumo__phase_result`: メインの呼び出しを拒む（`judgePhaseResultCaller`）
+ * - `mcp__tsukumo__phase_result`: メインの呼び出しを拒み、ワークフロースクリプトの agent の段を `step` に補う（`judgePhaseResultCaller`）
  * - `Edit|Write`: `planMissing` が真のあいだ、メインの呼び出しを拒む（`judgeEditAgainstMissingPlan`。渡さなければ登録しない）
  * - `Agent`: メインの呼び出しを背景に固定する（入力の差し替えだけを返し、許可の判定には触らない）
  * - `Bash`: `command` を `rewriteBash` が返した短い出力の版へ差し替える（同じく入力の差し替えだけ。サブエージェントの中の呼び出しも対象）
@@ -152,6 +152,7 @@ export function preToolUseHooks(
   hookClock: Pick<ToolHookClock, "started">,
   onEvent: (event: SessionEvent) => void,
   latestPlan: () => LatestWorkPlan,
+  workflowAgentPhase: CallReview["workflowAgentPhase"],
 ): Partial<Record<HookEvent, HookCallbackMatcher[]>> {
   return {
     PreToolUse: [
@@ -205,7 +206,16 @@ export function preToolUseHooks(
               return {}
             }
             hookClock.started(input.tool_use_id)
-            return toPreToolUseOutput(judgePhaseResultCaller(input.tool_name, isInSubagent(input)))
+            const plan = latestPlan()
+            return toPreToolUseOutput(
+              judgePhaseResultCaller({
+                toolName: input.tool_name,
+                ...(input.agent_id === undefined ? {} : { agentId: input.agent_id }),
+                toolInput: input.tool_input,
+                workflowAgentPhase,
+                phaseIds: plan.kind === "planned" ? plan.phaseIds : [],
+              }),
+            )
           },
         ],
       },
@@ -410,27 +420,6 @@ function confirmedSettingEvents(input: BaseHookInput): readonly SessionEvent[] {
       ? [{ kind: "setting-confirmed", setting: "permissionMode", value: mode } as const]
       : []),
   ]
-}
-
-function isInSubagent(input: BaseHookInput): boolean {
-  return input.agent_id !== undefined
-}
-
-function toPreToolUseOutput(verdict: ToolVerdict): SyncHookJSONOutput {
-  switch (verdict.kind) {
-    case "allow":
-      return {}
-    case "deny":
-      return {
-        hookSpecificOutput: {
-          hookEventName: "PreToolUse",
-          permissionDecision: "deny",
-          permissionDecisionReason: verdict.reason,
-        },
-      }
-    case "rewrite":
-      return { hookSpecificOutput: { hookEventName: "PreToolUse", updatedInput: verdict.input } }
-  }
 }
 
 function filePathOf(toolInput: unknown): string | undefined {

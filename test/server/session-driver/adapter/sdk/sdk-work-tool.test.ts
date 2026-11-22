@@ -110,7 +110,7 @@ describe("phase_result（委譲先のフェーズの結果）", () => {
     expect(events).toEqual([
       {
         kind: "delegate-returned",
-        handback: { kind: "phase-skipped", phase: 1, count: 2 },
+        handback: { kind: "phase-skipped", position: { kind: "numbered", phase: 1, count: 2 } },
       },
     ])
   })
