@@ -18,7 +18,6 @@ import { TaskDifficultyScale, TaskLoopMark } from "./task-attribute.tsx"
 import styles from "./task-item.module.css"
 import { TaskState } from "./task-state.tsx"
 import { TaskSummaryHighlight } from "./task-summary-highlight.tsx"
-import { TaskWorkRepo } from "./task-work-repo.tsx"
 
 export function TaskItem(props: {
   readonly task: TaskSummaryItem
@@ -64,7 +63,6 @@ export function TaskItem(props: {
           </span>
           <span className={styles["task-item-meta"]}>
             <span className={taskBoardStyles["task-id"]}>{props.task.id}</span>
-            {props.task.workRepo !== undefined && <TaskWorkRepo name={props.task.workRepo} />}
             <span className={styles["task-item-difficulty"]}>
               {props.task.difficulty !== undefined && (
                 <TaskDifficultyScale difficulty={props.task.difficulty} />

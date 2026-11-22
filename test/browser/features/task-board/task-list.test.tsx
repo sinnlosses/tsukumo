@@ -240,18 +240,10 @@ describe("taskList", () => {
     expect(button.querySelector(".task-id")?.textContent).toBe("X-001")
   })
 
-  it("作業先の札は作業先のある行にだけ出る", () => {
-    render(
-      <TaskList
-        tasks={known([
-          { ...taskOf("X-001", "todo"), workRepo: "架空の作業先" },
-          taskOf("X-002", "todo"),
-        ])}
-      />,
-    )
+  it("作業先のあるタスクでも、行に作業先の札を出さない", () => {
+    render(<TaskList tasks={known([{ ...taskOf("X-001", "todo"), workRepo: "架空の作業先" }])} />)
 
-    expect(row("X-001").querySelector("[title='架空の作業先']")?.textContent).toBe("架空の作業先")
-    expect(row("X-002").textContent).not.toContain("架空の作業先")
+    expect(row("X-001").textContent).not.toContain("架空の作業先")
   })
 
   it("行を押すとサイドシートが開き、行が開いている印と aria-controls を持ち、もう一度押すと閉じる", () => {
