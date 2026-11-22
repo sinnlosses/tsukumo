@@ -13,7 +13,7 @@
 - **英語識別子**: `DelegateReturn`（**`phase_result` ツール**の結果を読んだ形。`skipped` は `phase-skipped`）、`delegate-returned`（`phase_result` がプログレスバーを動かしたときの内部のイベント）、`delegate-handed-back`（`SubagentHandback` が届いた事実を運ぶ、サーバの中だけのイベント）
 - **定義**: 背景で委譲したサブエージェントがメインへ返す報告。委譲先が `phase_result` でフェーズの結果を返し、`SubagentHandback` の本文は読まない。
   `phase` に当たるプログレスバーのフェーズが今のフェーズの集合に入っているときだけ、そのフェーズを済ませる（一足飛び・もう済んだフェーズ・範囲の無い依頼・`count` が宣言した**委譲先のフェーズの範囲**のフェーズの数と違う呼び出しではプログレスバーは動かない）
-- **注記**: 規則の正典は `docs/architecture/workflow-contract.md`「委譲の返却」で、段の依頼文は参照するだけ
+- **注記**: 規則の正典は `docs/architecture/workflow-contract/port-and-return.md`「委譲の返却」（メインを縛る注記の文面は `docs/architecture/display/work-plan-host-rule.md`「委譲の返却の注記」）で、段の依頼文は参照するだけ
   （`docs/architecture/adr/0024-no-skill-dependency.md`）。
   ワークプランを渡した仕事の依頼では、返却が届いたらメインが `work_plan` を呼ぶまで作業のツールを拒む委譲ゲートが立つ。
   委譲先が途中で `SendMessage({ to: "main" })` で送る1行は吹き出しの材料で、プログレスバーを動かさない
@@ -26,7 +26,7 @@
 - **定義**: `speak` と同じプロセス内の MCP サーバで提供するツール。委譲先がフェーズごとに1回呼び、フェーズの結果を返す構造化した返却。
   引数は `phase`（委譲先のフェーズの番号）・`count`（委譲先のフェーズの数）・`outcome`（`finished`・`skipped`・`stopped`）・`reason`（`stopped` のときだけ）・`summary`（`finished` のときだけ。任意）。
   受け付けた呼び出しは、委譲先のフェーズの範囲の中の `phase` に当たるプログレスバーのフェーズが今のフェーズの集合に入っているときだけプログレスバーを動かす
-- **注記**: `summary` を持たない返却は要約が空（**まとめ待ちのフェーズ**）。引数とプログレスバーの動かし方の正典は `docs/architecture/workflow-contract.md`「スキルの契約」
+- **注記**: `summary` を持たない返却は要約が空（**まとめ待ちのフェーズ**）。引数とプログレスバーの動かし方の正典は `docs/architecture/workflow-contract/skill-sequence.md`「スキルの契約」、まとめ待ちの扱いは `docs/architecture/display/work-plan-host-rule.md`「まとめ待ちのフェーズ」
 - **避ける言い方**: 返却ツール（`SubagentHandback` と紛れる）、結果報告（`report` と紛れる）
 
 ### 飛ばしたフェーズ
@@ -34,7 +34,7 @@
 - **英語識別子**: `skippedPhases`（`work_plan` の引数と `work-plan` の記録の欄。飛ばしたフェーズの名前の配列）、`phase-skipped`（`skipped` の **`phase_result` ツール**の結果を読んだ `DelegateReturn`）
 - **定義**: 近道・`loopable` などで要らなかったフェーズ。プログレスバーでは済んだフェーズに数え、飛ばした印を持ち、済んだフェーズと見分けて描く。
   メインで走るフェーズは `work_plan` の `skippedPhases`、委譲先で走るフェーズは `phase_result` の `skipped` で印が付く
-- **注記**: 印の付け方と差し戻しの正典は `docs/architecture/workflow-contract.md`「スキルの契約」の「飛ばしたフェーズの印の決まり」。
+- **注記**: 印の付け方の正典は `docs/architecture/workflow-contract/skill-sequence.md`「スキルの契約」の「飛ばしたフェーズの印の決まり」、差し戻しの判定は `docs/architecture/display/work-plan-host-rule.md`「飛ばしたフェーズの印の差し戻し」。
   描き方は `docs/architecture/display.md`「ワークプラン」
 - **避ける言い方**: スキップしたフェーズ（言い方を揃える）、省いたフェーズ（並びから消したフェーズと紛れる）
 
@@ -47,7 +47,7 @@
   範囲は下線の区間1つのまま番号を持たず、委譲先の返却では動かない。返却を受けたあとの `work_plan` では、tsukumo が `phase_result` の `count` で `pending` を範囲に確定する
 - **フェーズの番号**: 範囲の前後と範囲で**フェーズのグループ**（前・本・後）に分かれ、グループごとに1から数える
 - **注記**: 範囲の前後にはメインのフェーズ（計画・受け入れなど）を置いてよい。範囲の端をまたぐ**並列のフェーズ**は差し戻す。
-  同じ依頼で最後に受けた**委譲の返却**の `N` は、書いた `count` が違っても差し戻さず `count` として確定する（`docs/architecture/workflow-contract.md`「委譲の返却」）
+  同じ依頼で最後に受けた**委譲の返却**の `N` は、書いた `count` が違っても差し戻さず `count` として確定する（`docs/architecture/workflow-contract/port-and-return.md`「委譲の返却」）
 - **避ける言い方**: 委譲区間、サブタスクのフェーズ（タスクと紛れる）
 
 ### 委譲ゲート
@@ -55,14 +55,14 @@
 - **英語識別子**: `judgeToolAgainstGate`（ツールを通すか拒むかの判定）、`CallReview.gateRaised`（印）
 - **定義**: 委譲の返却が届いてからメインが `work_plan` を呼ぶまでのあいだ、メインの作業のツールを拒む仕掛け。
   `report` の関所（`ReportGate`）とは別物
-- **注記**: 立つ・下りる条件と通すツールの正典は `docs/architecture/workflow-contract.md`「委譲の返却」
+- **注記**: 立つ・下りる条件と通すツールの正典は `docs/architecture/display/work-plan-host-rule.md`「委譲ゲート」
 - **避ける言い方**: 関門（旧称。`report` の関所と紛れる）、ロック、ブロック（`report` の関所と紛れる）
 
 ### ワークプラン前の編集の門
 
 - **英語識別子**: `judgeEditAgainstMissingPlan`（拒むか通すかの判定）、`CallReview.planMissing`（受け付け済みのワークプランが無いあいだ真）
 - **定義**: その依頼で最初の `work_plan` を受け付けるまでのあいだ、仕事のメインの `Edit`・`Write` を拒む仕掛け。委譲ゲートの印とは別
-- **注記**: 条件と通すものの正典は `docs/architecture/workflow-contract.md`「委譲の返却」
+- **注記**: 条件と通すものの正典は `docs/architecture/display/work-plan-host-rule.md`「ワークプラン前の編集の門」
 - **避ける言い方**: 関門、ロック、ブロック（委譲ゲートと同じ理由）
 
 ### 進みの差し込み

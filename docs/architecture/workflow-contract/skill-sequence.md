@@ -2,9 +2,9 @@
 
 ステータス: **正典**。入口は `docs/architecture/workflow-contract.md`（ワークフローの契約の全体）。
 
-責務: 並びに置くスキルの印・受け取るもの・返すもの、返却のツール `phase_result`、ワークフローがしてよいことと tsukumo が読まないもの、利用者独自のワークフローが合わせる相手を持つ。
-読む時: 並びに置くスキルを書く、独自のワークフローを tsukumo に当てる、`phase_result` や飛ばしたフェーズの印を直すとき。
-直す時: スキルの契約・読まないもの・合わせ方を変えたとき。
+責務: 部品（並びに置くスキル、作り手の契約は `docs/architecture/workflow-contract/step-part.md`）を並びに載せて走らせる側の決まり（並びの候補・置ける位置・段を走らせる agent）、返却のツール `phase_result` の引数と段の解き方、ワークフローがしてよいことと tsukumo が読まないもの、利用者独自のワークフローが合わせる相手を持つ。
+読む時: 独自のワークフローを tsukumo に当てる、`phase_result` や飛ばしたフェーズの印を直すとき。
+直す時: 並びの候補・`phase_result` の引数と解き方・読まないもの・合わせ方を変えたとき。
 
 ## スキルの契約
 
@@ -14,19 +14,14 @@
 tsukumo が並びに課す縛りは「1つ以上」だけで、送り出しのスキルも並びの1つとして外せる。
 この節は schema 2 の契約で、`phase_result` と `work_plan` の `skippedPhases` は入っており、飛ばしたフェーズのプログレスバーでの描き方は `docs/architecture/display.md`「ワークプラン」に入っている。経緯と採らなかった案は `docs/architecture/adr/0030-workflow-as-skill-sequence.md`。
 
-**印（候補になる宣言）**: 並びに置けるスキルは、SKILL.md の frontmatter の `metadata` に `workflow-step: "true"` を持つものだけ。
-`metadata` は Agent Skills の書式で、書式に無い属性を文字から文字への対応で置く欄。印を拾うのは `tw config --schema`で、tsukumo は frontmatter を読まない。
+**部品（並びに差し込むスキル）の印・受け取るもの・返すものは `docs/architecture/workflow-contract/step-part.md` が持つ。** ここはその部品を並びに載せて走らせるオーケストレーターの側の決まりを書く。
 
-- `tw` が拾う範囲: 作業ツリーの `.claude/skills/`・利用者の `~/.claude/skills/`（リンクで入れたものを含む）・`tw` と同じチェックアウトの plugin の `skills/`。ほかの plugin のスキルは拾わない
-- 拾ったスキルは `steps` の `values` の1つになる。`value` は Skill ツールで呼ぶ全名（plugin のスキルは `<プラグイン>:<名前>`）、`label` は frontmatter の `name`、`title` は `metadata` の `workflow-step-title`（無ければ `label` と同じ）、`description` は frontmatter の `description`
+- **並びの候補**: `tw config --schema` の `steps` の `values` は、組み込みの3段（`implement`・`accept`・`retrospect`）の後ろに、印（`workflow-step`）のあるスキルが入る。`value` は Skill ツールで呼ぶ全名（plugin のスキルは `<プラグイン>:<名前>`）、`label` は frontmatter の `name`、`title` は `workflow-step-title`（無ければ `label`）、`description` は frontmatter の `description`。印を拾うのは `tw` で、tsukumo は frontmatter を読まない
+- **置ける位置**: `implement` より前には置けない（`tw config set` が終了コード2で断る）。候補にも組み込みにも無い値（スキルを消した・別の作業ツリーにしか無い）は `tw plan-phases` が段にしない
+- **走らせる agent**: 独自の段は段ごとに新しい agent（`step-runner`）を1体起こし、スキルを Skill ツールでタスクの ID を引数に呼ばせる。agent はスキルが最後に返した結果の語を `phase_result` と返却の schema へ写す。部品は `phase_result` を呼ばない
+- **前段の結果と再開の位置**: Beads の欄から読む。どの欄・節に書くかはワークフローが決め、tsukumo は `docs/architecture/workflow-contract/config-and-beads.md`「Beads の欄」のほかは読まない。止まったフェーズから再開するための位置も、ワークフローが Beads に残す
 
-**受け取るもの**:
-
-- 呼び出しの引数のタスクの ID 1つ。それ以外を会話の文脈から受け取らない
-- 前段の結果は Beads の欄から読む。どの欄・節に書くかはワークフローが決め、tsukumo は `docs/architecture/workflow-contract/config-and-beads.md`「Beads の欄」のほかは読まない。
-  止まったフェーズから再開するための位置も、ワークフローが Beads に残す
-
-**返すもの**: フェーズの結果を3つの語の1つで返す。結果の中身（何をしたか・何が分かったか）は Beads に書き、返す値には入れない。
+結果の語は3つ（`finished`・`skipped`・`stopped`）で、結果の中身（何をしたか・何が分かったか）は Beads に書き、返す値には入れない。並びとプログレスバーの扱いは次の表。
 
 | 結果       | 意味                                                                | 並びとプログレスバー                                                                                                                                                                            |
 | ---------- | ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -42,22 +37,14 @@ tsukumo が並びに課す縛りは「1つ以上」だけで、送り出しの�
   （結果の中身は Beads に書く決まりは変わらず、`summary` はプログレスバーの中間レポートに出す1〜2文だけ）
 
 **並びの値は、スキルの全名でも、ワークフロースクリプト（plugin の `workflows/` の `Workflow`）のフェーズの名前でもよい。**
-ワークフロースクリプトは段ごとにスキルを呼ぶ代わりに、ワークフロースクリプトの中の委譲先にフェーズごとの `phase_result` を呼ばせてプログレスバーを進め、完了の知らせでも委譲ゲートが立つ（`docs/architecture/workflow-contract/port-and-return.md`「委譲の返却」）。
+ワークフロースクリプトは段ごとにスキルを呼ぶ代わりに、ワークフロースクリプトの中の委譲先にフェーズごとの `phase_result` を呼ばせてプログレスバーを進める（`docs/architecture/workflow-contract/port-and-return.md`「委譲の返却」。完了の知らせを受けたメインの扱いは `docs/architecture/display/work-plan-host-rule.md`）。
 tsukumo はワークフロースクリプトのフェーズの名前や委譲先の数を読まない。
 
 飛ばしたフェーズの印の決まり（どちらの経路でも、印の付いたフェーズはプログレスバーで同じに描く）:
 
-- **メインで走るフェーズの `skipped`**: `work_plan` の `skippedPhases` に入れたフェーズに印が付く。`skippedPhases` の名前は `phases` に含まれ、その呼び出しで済んでいるフェーズ
-  （`current` より前の要素のフェーズか `finishedInGroup` のフェーズ）でなければ差し戻す。毎回の呼び出しで、メインが飛ばしたフェーズをすべて渡す。
-  前に受け付けた呼び出しで印なしに済んでいたフェーズを新しく入れる呼び出しは差し戻す（済ませたフェーズをあとから飛ばしたフェーズに変えない）。
-  前に受け付けた呼び出しで `skippedPhases` に入れたフェーズを、その呼び出しでもまだ済んでいるのに外した呼び出しも差し戻す（飛ばしたフェーズをあとから済ませたフェーズに変えない。
-  黙って印を消すことも残すこともしない）。そのフェーズが済んでいなくなった（位置を戻した・並びから消えた）呼び出しでは、印も消える。
-  どちらの判定も受け付けた呼び出しを覚えている `WorkPlanReview` が行う。印はフェーズの名前で持つので、同じ名前のフェーズは見分けない
-- **委譲先で走るフェーズの `skipped`**: 受け付けた `phase_result` がフェーズを済ませるときに印が付く。メインはそのフェーズを `skippedPhases` に入れなくてよく（入れてもよい）、
-  入れなくても印は消えない。`phase_result` で付いた印は `WorkPlanReview` が覚え、同じ依頼のワークプランのあいだ、そのフェーズが済んでいるかぎり残す
-  （受け付けた `work_plan` の記録に足す）。組み直しでは戻らない（`phase_result` の呼び出しは委譲先の transcript にあり、組み直しはメインの transcript だけを読む）
-- **範囲の外のフェーズ・済んだフェーズの `skipped`**: `phase_result` がプログレスバーを動かさない条件（範囲が無い・`pending`・一足飛び・済んだフェーズ・`count` の違い）に当たれば、印も付けない。
-  `work_plan` では、済んでいないフェーズの名前と、印なしに済んでいたフェーズの名前は差し戻す（上の項）
+- **メインで走るフェーズの `skipped`**: `work_plan` の `skippedPhases` に入れたフェーズに印が付く。`skippedPhases` には、その呼び出しで済んでいるフェーズの名前だけを入れ、毎回の呼び出しで、メインが飛ばしたフェーズをすべて渡す
+- **委譲先で走るフェーズの `skipped`**: 受け付けた `phase_result` がフェーズを済ませるときに印が付く。メインはそのフェーズを `skippedPhases` に入れなくてよく（入れてもよい）、入れなくても印は消えない
+- 差し戻す判定（済ませたフェーズをあとから飛ばしたにしない・外したら差し戻す・範囲の外のフェーズに印を付けない・組み直しで戻らない）は `docs/architecture/display/work-plan-host-rule.md`「飛ばしたフェーズの印の差し戻し」
 - `skippedPhases` もフェーズを1つずつ進める決まりに従う。飛ばしたフェーズも済んだフェーズに数え、`phaseSummary` に飛ばしたわけを書く
 
 **プログレスバーのフェーズの名前・位置・範囲の正しさは、ワークフロー側が機械的に決めて検査する。** メインが自分で書くのは `phaseSummary` だけにし、それを保証するのはワークフローの責務。
@@ -71,32 +58,31 @@ tsukumo の `work_plan` が見るのは、呼び出しの中と呼び出しど�
 | 引数      | 意味                                                                                                                                          |
 | --------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
 | `step`    | 結果を返すフェーズの id。`work_plan` の `phases` の id に無ければ差し戻す。省くとワークフロースクリプトの agent はその agent のフェーズで補う |
-| `phase`   | 結果を返す委譲先のフェーズの番号（1始まり）。`delegatedRange` の範囲の中の番号。互換。`step` があれば `step` を使う                           |
-| `count`   | 委譲先のフェーズの数。互換。`step` があれば `step` を使う                                                                                     |
 | `outcome` | `finished`・`skipped`・`stopped`（上の表）                                                                                                    |
 | `reason`  | 止めた理由を1〜2文で。`outcome` が `stopped` のときだけ渡す                                                                                   |
+| `summary` | フェーズのまとめを1〜2文で。`outcome` が `finished` のときだけ渡す                                                                            |
+| `phase`   | 結果を返す委譲先のフェーズの番号（1始まり）。`delegatedRange` の範囲の中の番号。互換。`step` があれば `step` を使う                           |
+| `count`   | 委譲先のフェーズの数。互換。`step` があれば `step` を使う                                                                                     |
 
-- 引数は zod で検証し、形が合わなければ差し戻す（`phase` と `count` の片方だけ、`phase` が `count` を超える、`reason` の有無が `outcome` と合わない・空白だけの `reason`）。
-  メインの呼び出しは `PreToolUse` のフックが `agent_id` の無い呼び出しとして拒む（メインは `work_plan` で進める。SDK の handler は呼び手を知らないので、handler では見分けない）
-- 受け付けた呼び出しは、`docs/architecture/workflow-contract/port-and-return.md`「プログレスバーの進め方」の条件でプログレスバーを動かす。`finished`・`skipped` はフェーズ `phase` に当たるプログレスバーのフェーズを済ませ（`skipped` は飛ばしたフェーズの印を付ける。上の「飛ばしたフェーズの印の決まり」）、`stopped` は動かさない。
-  条件に合わない呼び出し（範囲が無い・`pending`・一足飛び・済んだフェーズ・`count` が範囲のフェーズの数と違う）も差し戻さず、プログレスバーを動かさない。
-  例外は `work_plan` の `phases` に段の id を渡した依頼で、範囲があり `count` が合う `finished`・`skipped` の一足飛びと済んだフェーズは順を外れる申告として差し戻す。
-  `step` で返した呼び出しは範囲によらず `phases` のその id のフェーズに当たり、今のフェーズの集合にあれば済ませ、済んだフェーズ・先のフェーズは同じく差し戻す。
-  受け付けた呼び出しの `count` は「返却で知らされたフェーズの数」として、後の `work_plan` の範囲のフェーズの数の確定に使う
-- プログレスバーを動かす判定は handler が行い、プログレスバーを動かしたときだけ、結果を読んだ形の返却のイベントを1件流す（画面のプログレスバーはそれで動く）
-- 戻り値は `work_plan` と同じく `ok` の次の行にプログレスバーの今のフェーズ（「プログレスバーの今のフェーズは 本 2/2 フェーズの名前。…」）。プログレスバーを動かさなかったときは、その行の頭に「プログレスバーは動いていない。」を付ける
-- `phase_result` の `finished` が `summary` を持てば、その文がフェーズのまとめになり、メインの `work_plan` は `phaseSummary` を要らない。
-  `summary` を持たない `phase_result` で済んだフェーズのまとめは、返却のあとメインが同じ位置で呼ぶ `work_plan` の `phaseSummary` に書く（省けない）。
-  まとめの空のまま返却で済んだフェーズは**まとめ待ちのフェーズ**になり、次に受け付けた `work_plan` が `phaseSummary` を持ち、そのフェーズがまだ済んでいれば、そのまとめをそのフェーズの中間レポートにする。
-  まとめ待ちのフェーズは1つだけ覚えるので、メインの `work_plan` の前に `phase_result` が2件続けてフェーズを済ませると（並列のフェーズ）、先のフェーズはまとめ待ちから外れ、中間レポートが出ない
-- 計画だけの回は `phase_result` を呼ばない（計画だけの回の返却で範囲の差し戻しは掛からない）。フェーズの数はメインが Beads から読んで `delegatedRange` の `count` に渡す
-- 委譲ゲートは `SubagentHandback` の返却と、ワークフロースクリプト（`Workflow`）の完了の知らせで立つ。`phase_result` は許可モードによらず呼べるので、`<task-notification>` で返る委譲でもプログレスバーは進む（ワークフロースクリプトでない委譲の完了の知らせでは委譲ゲートは立たない）
+結果を返す段は、次の順で1つに決まる。決まった段が今の段の集合にあれば済ませ、無ければ動かさない。
+
+1. `step` があれば、その id の段（`phases` の id に無ければ差し戻す）
+2. `step` が無く、呼んだ agent がワークフロースクリプトの写しにいれば、その agent の段（`PreToolUse` のフックが `agent_id` から引いて `step` に書き足す）
+3. どちらも無ければ、互換の `phase`・`count` と `delegatedRange` の範囲で解く（古い依頼文・`Agent` で委譲するワークフロー）。`step` と `phase` の両方があれば `step` を使う
+
+1体で複数の段を返す委譲先（実装役）は `step`（`impl-<n>`）を渡す。受け入れ・振り返り・独自の段の agent は1体が1段なので渡さない。
+
+- 受け付けた呼び出しは、`docs/architecture/workflow-contract/port-and-return.md`「プログレスバーの進め方」の条件でプログレスバーを動かす。`finished`・`skipped` は上の順で決まった段のプログレスバーのフェーズを済ませ（`skipped` は飛ばしたフェーズの印を付ける。上の「飛ばしたフェーズの印の決まり」）、`stopped` は動かさない。
+  受け付けた呼び出しの `count` は「返却で知らされたフェーズの数」として、後の `work_plan` の範囲のフェーズの数の確定に使う。
+  引数の検査・差し戻しの文面・動かさない条件は `docs/architecture/display/work-plan-host-rule.md`「phase_result の差し戻しと動かさない条件」
+- `phase_result` の `finished` が `summary` を持てば、その文がフェーズのまとめになり、メインの `work_plan` は `phaseSummary` を要らない。持たないときの扱いはメインを縛る決まりに従う
+- 計画だけの回は `phase_result` を呼ばない。フェーズの数はメインが Beads から読んで `delegatedRange` の `count` に渡す
 
 ## してよいこと
 
 - ツールを呼ぶ: メインが `work_plan` でフェーズを進め、`report` で結果とフェーズの閉じ方を渡す
 - 委譲先に `phase_result` を呼ばせる（上の「スキルの契約」）。委譲中のフェーズはその呼び出しで tsukumo が進め、メインの `work_plan` は並びと `delegatedRange` を渡す。
-  `phase_result` を呼ばない委譲先（古い plugin・計画だけの回）では、ワークプランを渡した依頼なら返却のたびに委譲ゲートが立つので、メインが `work_plan` でフェーズを進める
+  `phase_result` を呼ばない委譲先（古い plugin・計画だけの回）では、メインが `work_plan` でフェーズを進める（返却を受けたメインを縛る決まりは `docs/architecture/display/work-plan-host-rule.md`）
 - Beads の組み込みの欄に書く（題・本文・依存・状態など）
 
 tsukumo が読まないもの: 委譲の返却の本文、委譲先の `SendMessage` の通知、スキルの道具（着手の印・検証の見張り）、

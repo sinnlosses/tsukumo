@@ -1,5 +1,5 @@
 // `phase_result` ツール（委譲先が段の結果を返す構造化した返却）の引数の形と、`DelegateReturn` への写し方。
-// 引数の正典は `docs/architecture/workflow-contract.md`「スキルの契約」。
+// 引数の正典は `docs/architecture/workflow-contract/skill-sequence.md`「スキルの契約」。
 
 import { z } from "zod"
 

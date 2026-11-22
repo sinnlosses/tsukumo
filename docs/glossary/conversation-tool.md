@@ -55,7 +55,7 @@
   最後のフェーズは `report` のフェーズの閉じ方 `finished` で tsukumo が閉じる）と
   `finishedInGroup`（今の並列のフェーズの中で済んだフェーズの名前。省けば空）と
   `phaseSummary`（**フェーズのまとめ**。済んだフェーズが1つ以上あり全部済みでない呼び出しでは必須。`phase_result` で進んだ位置でも省けない）。
-  委譲中は**委譲先のフェーズの範囲**（`delegatedRange`。`docs/architecture/workflow-contract.md`「委譲の返却」）も渡す。
+  委譲中は**委譲先のフェーズの範囲**（`delegatedRange`。`docs/architecture/workflow-contract/port-and-return.md`「委譲の返却」）も渡す。
   **毎回、フェーズの並びごと渡す**（委譲で進めるときも同じで、ワークプランを渡した依頼で委譲の返却（`SubagentHandback`）を受けたあとは委譲ゲートが下りるまで呼ぶ）。
   戻り値は `"ok"` か、`current` が要素の数を超えた・フェーズのまとめが足りない・長すぎる・1回で2フェーズ以上済ませた・
   委譲先のフェーズの範囲のフェーズの数が委譲の返却の `N` と違う・範囲の端が並列のフェーズをまたぐときの直し方だけで、ターンは閉じない

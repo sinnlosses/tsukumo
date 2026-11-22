@@ -53,7 +53,7 @@ sequenceDiagram
 
 ## 2. 委譲と返却の関門
 
-メインがタスクを `work_plan` に立てて委譲し、返ってきたら関門が立つまで。正典は `docs/architecture/workflow-contract/port-and-return.md`。
+メインがタスクを `work_plan` に立てて委譲し、返ってきたら関門が立つまで。正典は `docs/architecture/workflow-contract/port-and-return.md` と `docs/architecture/display/work-plan-host-rule.md`。
 
 `phase_result` は会話画面の MCP の中だけで見える。素の CLI からは見えないので、そこでは委譲先の報告が返却の材料になる（`docs/research/phase-result-unavailable-2026-11-05.md`）。
 
@@ -85,8 +85,8 @@ sequenceDiagram
 | ----------------------- | ------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------- |
 | ワークプランの受け口    | `src/server/work-plan/core/work-plan-tool.ts`                                                          | `docs/architecture/workflow-contract/port-and-return.md`「委譲の返却」 |
 | `phase_result` の受け口 | `src/server/work-plan/core/phase-result-tool.ts`                                                       | `docs/architecture/workflow-contract/port-and-return.md`「委譲の返却」 |
-| 返却の見張り            | `src/server/work-plan/core/work-plan-review.ts`（`delegate-handed-back` で `gateRaised` を立てる）     | `docs/architecture/workflow-contract/port-and-return.md`「委譲の返却」 |
-| 関門                    | `src/server/work-plan/core/work-plan-gate.ts`（`judgeToolAgainstGate`・`judgeEditAgainstMissingPlan`） | `docs/architecture/workflow-contract/port-and-return.md`「委譲の返却」 |
+| 返却の見張り            | `src/server/work-plan/core/work-plan-review.ts`（`delegate-handed-back` で `gateRaised` を立てる）     | `docs/architecture/display/work-plan-host-rule.md`「委譲ゲート」       |
+| 関門                    | `src/server/work-plan/core/work-plan-gate.ts`（`judgeToolAgainstGate`・`judgeEditAgainstMissingPlan`） | `docs/architecture/display/work-plan-host-rule.md`「委譲ゲート」       |
 | 画面                    | `src/browser/`                                                                                         | `docs/architecture/workflow-contract/port-and-return.md`               |
 
 最初の `work_plan` までは `Edit`・`Write` も拒まれる（`judgeEditAgainstMissingPlan`）。

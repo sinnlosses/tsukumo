@@ -80,7 +80,7 @@
 
 - **英語識別子**: `steps`（**ワークフローの設定**の `schema: 2` の欄のキー）
 - **定義**: ワークフローを組む、契約を満たすと宣言したスキルの線形の並び。並びの順がそのまま実行の順で、1つ以上
-- **注記**: 欄の形と決まりは `docs/architecture/workflow-contract.md`「設定コマンド」、並びに置くスキルの契約は同じ文書の「スキルの契約」。
+- **注記**: 欄の形と決まりは `docs/architecture/workflow-contract.md`「設定コマンド」、並びに置くスキルの契約は `docs/architecture/workflow-contract/step-part.md`（オーケストレーター側は `docs/architecture/workflow-contract/skill-sequence.md`「スキルの契約」）。
   tsukumo は並びを読まず、プログレスバーはメインの `work_plan` で受ける
 - **避ける言い方**: 流れ（廃止した `flow` と紛れる）、パイプライン、ステップ（依頼の手順と紛れる）
 

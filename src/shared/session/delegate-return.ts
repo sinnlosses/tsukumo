@@ -1,4 +1,4 @@
-// `phase_result` の結果を委譲の返却の形にしたもの。書式の正典は `docs/architecture/workflow-contract.md`「スキルの契約」。
+// `phase_result` の結果を委譲の返却の形にしたもの。書式の正典は `docs/architecture/workflow-contract/skill-sequence.md`「スキルの契約」。
 // 会話の内容が通るのでログに出さない。
 
 /**

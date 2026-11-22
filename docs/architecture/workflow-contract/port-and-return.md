@@ -2,9 +2,9 @@
 
 ステータス: **正典**。入口は `docs/architecture/workflow-contract.md`（ワークフローの契約の全体）。
 
-責務: tsukumo がワークフローから受ける2つのツール（`work_plan`・`report`）の名前と引数の意味、委譲先の返却（`phase_result`）でのプログレスバーの進め方、委譲ゲートを持つ。
-読む時: ツールの引数を変える・使う、プログレスバーの進め方や委譲ゲートを直すとき。
-直す時: ツールの引数・委譲の返却の書式とプログレスバーの進め方・委譲ゲートを変えたとき。
+責務: tsukumo がワークフローから受ける2つのツール（`work_plan`・`report`）の名前と引数の意味、委譲先の返却（`phase_result`）でのプログレスバーの進め方を持つ。
+読む時: ツールの引数を変える・使う、プログレスバーの進め方を直すとき。
+直す時: ツールの引数・委譲の返却の書式とプログレスバーの進め方を変えたとき。メインを縛る振る舞いは `docs/architecture/display/work-plan-host-rule.md`。
 
 ## ツール
 
@@ -45,14 +45,12 @@ tsukumo はプログレスバーのフェーズの名前を見ず、欄がある
 
 ## 委譲の返却
 
-**委譲先は `phase_result`（MCP ツール。`docs/architecture/workflow-contract/skill-sequence.md`「スキルの契約」）でフェーズの結果を返し、tsukumo は `SubagentHandback` の本文を読まない。** `SubagentHandback` は委譲ゲートを立て、注記を運ぶだけ。
-書式の正典はこの節と `docs/architecture/workflow-contract/skill-sequence.md`「スキルの契約」で、ワークフローの依頼文はこれを参照し、書式を言い直さない。経緯と採らなかった案は `docs/architecture/adr/0024-no-skill-dependency.md`「2026-10-10 の改訂」と `docs/architecture/adr/0030-workflow-as-skill-sequence.md`。
+**委譲先は `phase_result`（MCP ツール。`docs/architecture/workflow-contract/skill-sequence.md`「スキルの契約」）でフェーズの結果を返し、tsukumo は `SubagentHandback` の本文を読まない。** 書式の正典はこの節と `docs/architecture/workflow-contract/skill-sequence.md`「スキルの契約」で、ワークフローの依頼文はこれを参照し、書式を言い直さない。経緯と採らなかった案は `docs/architecture/adr/0024-no-skill-dependency.md`「2026-10-10 の改訂」と `docs/architecture/adr/0030-workflow-as-skill-sequence.md`。
 `phase_result`（と `work_plan`・`report`・`speak`）は tsukumo の会話画面が `query()` に渡すプロセス内の MCP サーバ `tsukumo` にあり、会話画面の中でだけ、メインにも委譲先にも見える。素の `claude` の CLI では存在せず、委譲先は呼べないので自由文の返却で進む（その返却ではプログレスバーは動かない）。根拠は `docs/research/phase-result-unavailable-2026-11-05.md`。`/loop /next-task` は tsukumo の会話画面で回す前提とする。
 
 返却でプログレスバーを動かすのは `phase_result` の `finished`・`skipped` だけで、受け付けた呼び出しの時刻と引数で動く（ワークフロースクリプトの写しで進む道は下の「プログレスバーの進め方」）。
 `phase_result` を呼ばなかった委譲先（古い plugin、計画だけの回）の返却ではプログレスバーは動かない。
-その返却も委譲ゲートは立ち、注記は返却ごとに「委譲先は `phase_result` で結果を返した。」か「委譲先は `phase_result` を呼ばなかったので、返却ではプログレスバーは動いていない（計画だけの回なら正しい）。」と言う。
-「呼んだか」は委譲先ごとに見る。委譲先のメッセージの `parent_tool_use_id` で `phase_result` の呼び出しと返却を対にし、形の合う呼び出しのあとの最初の返却1件だけが「呼んだ」になる。
+返却を受けたメインを縛る振る舞いは `docs/architecture/display/work-plan-host-rule.md` が持つ。
 
 プログレスバーの進め方:
 
@@ -68,51 +66,18 @@ tsukumo はプログレスバーのフェーズの名前を見ず、欄がある
   範囲の `first` は、渡された範囲が決めていればそれ、省かれていれば受け付け済みの範囲の `first`、まだ範囲が無ければ渡した時点の `current` の次。
   確定した範囲が並びをはみ出すか並列のフェーズの端をまたぐときだけ差し戻す。
   `phase_result` の `count` が来ない環境（計画だけの回の返却・古い plugin）は `pending` のまま通り、範囲の要素に番号は付かない。範囲を宣言しない依頼（`phase_result` を受けない委譲）は今までどおり通る。
-  トランスクリプトからの組み直しは、メインの transcript だけを読み、委譲先の `phase_result` の呼び出しを持たない。
-  そのため確定した範囲は、受け付けた `work_plan` の答えの行「委譲先のフェーズの範囲: first=N count=M」から読む（行が無い古い記録は、呼び出しに書かれた範囲のまま。`pending` は復元後も `pending`）
-- セリフが委譲先のフェーズを番号で言うときは、その番号を `speak` の任意の引数 `phase` で申告する。範囲があるあいだ、`phase` が 1〜`N` の外なら差し戻す。
-  セリフ・レポート・`phaseSummary` の本文のフェーズの番号は読まず、`phase` を省いた `speak` は検査しない。
+  組み直しで戻るもの・戻らないものは `docs/architecture/display/work-plan-host-rule.md`「組み直しで戻るもの・戻らないもの」
+- セリフが委譲先のフェーズを番号で言うときは、その番号を `speak` の任意の引数 `phase` で申告する（検査は `docs/architecture/display/work-plan-host-rule.md`「speak の phase の検査」）。
   セリフで番号を言うのは本のフェーズだけで、前・後のフェーズは名前で言う（カードや頭の番号が「後 1/3」と出ても、セリフの「フェーズ1」は本のフェーズ1を指す）
-- **`phase_result` の `finished`・`skipped`（`phase` が `n`、`count` が `N`）が届き、フェーズ `n` に当たるプログレスバーのフェーズが今のフェーズの集合に入っていれば、tsukumo がそのフェーズを受け付けた呼び出しの時刻で済ませる**
+- **`phase_result` の `finished`・`skipped` が届き、結果を返す段（`step` の id か呼んだ agent の段。解き方は `docs/architecture/workflow-contract/skill-sequence.md`「スキルの契約」）が今のフェーズの集合に入っていれば、tsukumo がそのフェーズを受け付けた呼び出しの時刻で済ませる**
   （1本道なら `current` を1つ進め、並列のフェーズの中なら `finishedInGroup` に足す。並列のフェーズの最後に残ったフェーズなら `current` を進めて空にする）
-- 一足飛び（フェーズ `n` が今のフェーズの集合より先）・もう済んだフェーズ・`stopped`・範囲を宣言していない（`pending` を含む）依頼・`count` が範囲のフェーズの数と違う呼び出しはプログレスバーを動かさない。
+- `step` で返した呼び出しは範囲に依らず済ませ、一足飛び・もう済んだフェーズは差し戻す。
+  互換の道（`phase`・`count` と範囲で解く）では、一足飛び（フェーズ `n` が今のフェーズの集合より先）・もう済んだフェーズ・`stopped`・範囲を宣言していない（`pending` を含む）依頼・`count` が範囲のフェーズの数と違う呼び出しはプログレスバーを動かさない。
   ただし `phases` に段の id を渡したワークプランでは、範囲があり `count` が範囲のフェーズの数と同じ `finished`・`skipped` の一足飛び（飛ばし）ともう済んだフェーズ（戻り）を差し戻す（`count` は確定に使わない）
 - **ワークフロースクリプトの写し（`task_progress` の `workflow_progress`）の `workflow_agent` の `phaseTitle` が `phases` の段の id に一致すると、その agent の段（一致が複数ならいちばん後ろの段）の要素が今の要素より後ろのときだけ、写しの届いた時刻でその要素を今の要素にし、前のフェーズを済ませる。**
-  `phase_result` を待たず、後の群（受け入れ・振り返り）も完了の知らせを待たずに今のフェーズになる。写しで飛び越えたフェーズに飛ばした印は付けず、直前に済んだフェーズをまとめ待ちにする。
+  `phase_result` を待たず、後の群（受け入れ・振り返り）も完了の知らせを待たずに今のフェーズになる。写しで飛び越えたフェーズに飛ばした印は付けず、直前に済んだフェーズの扱いはメインを縛る決まりに従う。
   写しでは戻さない。段の id の無いワークプランと、題が `phase N` に伏せられた写しでは動かない（契約の全体は `docs/architecture/screen-design/work-strip.md` の「ワークフロースクリプトの流れでは」の項）
 - `phase_result` ではプログレスバーを全部済みにしない。最後のフェーズを閉じるのは今までどおり `report` の `workPlanClosing`
 - **`phase_result` の `finished` は、任意の欄 `summary`（フェーズのまとめを1〜2文）を持てる。** `summary` のある `finished` で済んだフェーズは、その文がプログレスバーの中間レポートに出て、メインが同じ位置を渡す `work_plan` は `phaseSummary` を要らない。
   メインが `phaseSummary` を添えても、そのフェーズの中間レポートに出るのは `summary`（フェーズは既に済んでいて、メインの文では出し直さない）。`summary` を持たない `finished` で済んだフェーズは、メインの `work_plan` に `phaseSummary` が要る。
   `summary` は `skipped`・`stopped` には付けられない（`stopped` の理由は `reason`）。ワークフロースクリプトのあいだメインは返却を受けないので、フェーズごとの中間レポートはワークフロースクリプトの中の委譲先が `summary` で書く
-
-委譲ゲート:
-
-- **効く範囲**: 仕事のセッション（`work_plan` が載る）で、同じ依頼にメインの受け付けたワークプランがあるときだけ。雑談のセッションの委譲と、
-  ワークプランを渡していない依頼（`work_plan` を呼ばない依頼）の返却では立てない。`delegatedRange` の宣言は条件にしない
-- **返却かワークフロースクリプト（`Workflow`）の完了の知らせが届いたら印を立て、メインの `work_plan` が受け付けられたら下ろす。** 中身は見ず、届いた事実だけで立てる
-  （`phase_result` を呼ばなかった返却・やり直し・`stopped` でも立つ）。ワークフロースクリプトの完了の知らせは、`task_started` の `task_type` が `local_workflow` だった `task_id` と同じ `task_id` の `task_notification`
-  （完了・失敗・停止を区別しない）で、`task_notification` 自体に `task_type` は無いので走り出しの `task_id` を覚えて突き合わせる。走り出しを見ていない知らせとワークフロースクリプトでないタスクの知らせでは立てない。ワークフロースクリプトの中の委譲先が `phase_result` で進めたプログレスバーは、完了の前に既に進んでいる。返却の数は数えず、続けて届いても `work_plan` 1回で下りる。差し戻された `work_plan` では下りない
-- **印が立っているあいだ、メインの作業のツールを拒む。** 通すのは読み取りのツール（`Read`・`Grep`・`Glob`・`ToolSearch`）と
-  tsukumo の MCP ツール（`speak`・`work_plan`・`report` など）。委譲先のツールは対象にしない。
-  拒否文の末尾に、返却で進んだあとのプログレスバーの位置（`work_plan` の戻り値と同じ文）を足す
-- **返却を運ぶメインの入力に、返却の本文とは別の tsukumo の注記を1回だけ添える。** 注記は返却ごとに「`phase_result` で結果を返した」か「`phase_result` を呼ばなかったのでプログレスバーは動いていない」かを言い、末尾に次のプログレスバーのフェーズと
-  群ごとの数え方と、本の番号が委譲先のフェーズと同じであることと、セリフで番号を言うのは本のフェーズだけなこと（`work_plan` の戻り値と同じ文）を付ける。返却が続けて届けば、まだ添えていない返却の文を重ねる。
-  受け付けた `work_plan`・次の依頼で溜めた注記を捨て、組み直しでは足さない。
-  ワークフロースクリプトの完了の知らせの注記は「ワークフロースクリプトが完了した。ワークフロースクリプトの中の委譲先が `phase_result` で返した結果で、プログレスバーは進んでいる。」と言い、同じプログレスバーの位置の文を末尾に付ける。
-  掛かるのは `UserPromptSubmit` のフックで、返却の入力（`<agent-message` で始まる）とワークフロースクリプトの完了の入力（`<task-notification` で始まる）はメインが手すきでもターンの途中でもここを1回通る
-- 印と注記の元は、委譲先の `SubagentHandback` の呼び出し（`delegate-handed-back`）と `phase_result` の呼び出し（`phase-result-called`）、ワークフロースクリプトの走り出し（`workflow-started`）と完了の知らせ（`task-notified`）。
-  委譲先のメッセージのうち前の2つだけを `WorkPlanReview` に通し、あとの2つはメインの `system` メッセージから作る。
-  委譲先が `SubagentHandback` で返すのは、許可モードが `auto` で auto に対応するモデルのときだけで、それ以外の返却（`<task-notification>`）では印も注記も立たない
-- 差し戻しの返却を受けて同じフェーズをやり直させるときは、同じ位置のまま `work_plan` を呼べば下りる
-- 印は組み直しでは戻さない
-- 許可の判定は `PreToolUse` のフック（許可モードによらず毎回呼ばれ、`agent_id` でサブエージェントの中を見分けられる）。疑似セッションは `work_plan` の判定もしないので、委譲ゲートも効かない
-
-ワークプラン前の編集の門:
-
-- **効く範囲**: 仕事のセッションのメインだけ。雑談のセッションと、サブエージェントの中の呼び出しは対象にしない
-- **条件**: その依頼で受け付け済みの `work_plan` が無いあいだ（`WorkPlanReview.planMissing`）。判定は記録の事実だけで、文面は読まない。
-  差し戻された `work_plan` のあいだも受け付け済みは無いので拒み続け、`request` で掛かり直す。最後のフェーズを `report` で閉じたあとは掛からない
-- **拒むもの**: `Edit` と `Write` だけ。`Bash`・`Agent`・`SendMessage`・`NotebookEdit`・読み取りのツール・tsukumo のツールは通す。
-  拒否文は `work_plan` を `current: 0`（フェーズ1）で先に渡すよう言い、プログレスバーの位置は足さない。利用者には見えない差し戻し
-- **通すもの**: 自動メモリの置き場（`…/.claude/projects/<1語>/memory/…`。`..` を含むパスは除く）への書き込み
-- 委譲ゲートの印（`gateRaised`）とは別の判定で、意味を混ぜない。掛かるのは同じ `PreToolUse` のフック（`judgeEditAgainstMissingPlan`）
