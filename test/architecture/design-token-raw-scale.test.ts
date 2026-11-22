@@ -111,7 +111,7 @@ const RAW_SCALE_REFERENCE_LIMITS: Readonly<Record<string, number>> = {
   "browser/components/ui/visually-hidden/visually-hidden.module.css": 1,
   "browser/features/current-work/current-work-background.module.css": 3,
   "browser/features/current-work/current-work-list.module.css": 17,
-  "browser/features/current-work/current-work-step-group.module.css": 4,
+  "browser/features/current-work/current-work-step-group.module.css": 2,
   "browser/features/report/leaf/chart-grid-leaf.css": 2,
   "browser/features/report/leaf/interactive-view.css": 6,
   "browser/features/report/leaf/table-badge.css": 1,

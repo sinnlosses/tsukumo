@@ -371,20 +371,20 @@ describe("WorkStrip（下線の区間）", () => {
     openSteps()
 
     const rows = [
-      ...screen
-        .getByRole("region", { name: "依頼の手順" })
-        .querySelectorAll("li[data-phase-state]"),
+      ...screen.getByRole("region", { name: "依頼の手順" }).querySelectorAll("[data-phase-state]"),
     ]
-    expect(rows.map((row) => row.getAttribute("data-phase-state"))).toEqual([
-      "done",
-      "current",
-      "upcoming",
+    const stateOf = (row: Element) => row.getAttribute("data-phase-state")
+    const openOf = (row: Element) =>
+      row.querySelector("[aria-expanded]")?.getAttribute("aria-expanded")
+    expect(rows.map((row) => [stateOf(row), openOf(row)])).toEqual([
+      ["done", "false"],
+      ["current", "true"],
+      ["upcoming", undefined],
     ])
-    const details = rows.map((row) => row.querySelector("details")?.open)
-    expect(details).toEqual([false, true, undefined])
-    expect(rows[2]?.textContent).toContain("架空の段C")
-    expect(rows[0]?.textContent).toContain("架空の段Aのまとめ。")
-    expect(rows[1]?.textContent).not.toContain("まとめ")
+    const [a, b, c] = rows.map((row) => row.closest("li")?.textContent)
+    expect(c).toContain("架空の段C")
+    expect(a).toContain("架空の段Aのまとめ。")
+    expect(b).not.toContain("まとめ")
   })
 
   it("飛ばした段の区間は済みで、一覧の行に飛ばした印が付く", () => {
@@ -405,8 +405,8 @@ describe("WorkStrip（下線の区間）", () => {
 
     const row = screen
       .getByRole("region", { name: "依頼の手順" })
-      .querySelector("li[data-phase-skipped]")
-    expect(row?.textContent).toContain("架空の段A（飛ばした）")
+      .querySelector("[data-phase-skipped]")
+    expect(row?.closest("li")?.textContent).toContain("架空の段A（飛ばした）")
   })
 
   it("答え待ちの今の区間も押せて、詳細は「答え待ち」と言い、一覧の行は開いた手順を持つ", () => {
@@ -433,8 +433,8 @@ describe("WorkStrip（下線の区間）", () => {
 
     const row = screen
       .getByRole("region", { name: "依頼の手順" })
-      .querySelector("li[data-phase-state='asking']")
-    expect(row?.querySelector("details")?.open).toBe(true)
+      .querySelector("[data-phase-state='asking']")
+    expect(row?.querySelector("button[aria-expanded]")?.getAttribute("aria-expanded")).toBe("true")
   })
 
   it("並列のフェーズは区間1つで、名前を「・」でつなぎ、押すと詳細が開く", () => {

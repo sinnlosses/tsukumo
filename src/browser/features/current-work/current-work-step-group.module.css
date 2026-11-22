@@ -13,13 +13,8 @@
   font-size: var(--font-label);
   font-weight: 400;
 }
-.current-work-steps {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2xs);
-  margin: 0;
-  padding: 0;
-  list-style: none;
+/* 手順の名前。`ListItem` に字と色の口が無いので、名前の包みに当てる。 */
+.current-work-step-name {
   font-family: var(--font-mono);
 }
 /* サブエージェントの中は1段下げる。 */
@@ -39,25 +34,4 @@
 /* 実行中の印だけ回す（`prefers-reduced-motion: reduce` では `reduced-motion.css` の全体の規則が止める）。 */
 .current-work-step-mark-running {
   animation: var(--spinner-animation);
-}
-/* 失敗した手順の中身。印は文字（「失敗」）で、色はその補助。 */
-.current-work-failure > summary {
-  cursor: pointer;
-}
-.current-work-failure pre {
-  margin: 0;
-  padding: var(--space-sm);
-  max-height: 12rem;
-  overflow: auto;
-  border-radius: var(--radius-md);
-  background: var(--ground);
-  font-family: var(--font-mono);
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
-.current-work-failure-output {
-  border: 1px solid var(--state-ng);
-}
-.current-work-failure-input {
-  border: none;
 }

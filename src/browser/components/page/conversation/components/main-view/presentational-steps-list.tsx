@@ -11,13 +11,24 @@ import {
   phaseTimesClassName,
 } from "../../../../../features/report/markdown.tsx"
 import { PhaseTimeSummary } from "../../../../../features/report/report.tsx"
-import { Disclosure } from "../../../../ui/disclosure/disclosure.tsx"
+import { Badge } from "../../../../ui/badge/badge.tsx"
+import { Button } from "../../../../ui/button/button.tsx"
+import { Collapsible } from "../../../../ui/collapsible/collapsible.tsx"
+import { Step, Stepper } from "../../../../ui/stepper/stepper.tsx"
 import type { StepsLanding } from "../../stores/work-strip-step-list.ts"
 import type { StepsPlanItem } from "./domain/steps-plan-card.ts"
 import { useStepsLanding } from "./hooks/use-steps-landing.ts"
 import type { WorkStripSteps } from "./hooks/use-work-strip-step-list.ts"
 import styles from "./main-view.module.css"
 import { PresentationalWorkflowDiagrams } from "./presentational-workflow-diagram.tsx"
+
+type PhaseItem = Extract<StepsPlanItem, { readonly kind: "phase" }>
+type FoldItem = Exclude<StepsPlanItem, PhaseItem>
+
+/** フェーズの行が続く1まとまり（縦の `Stepper` 1本）か、そのあいだに挟まる畳みの行1つ。 */
+type PlanRun =
+  | { readonly kind: "phases"; readonly key: string; readonly items: readonly PhaseItem[] }
+  | { readonly kind: "fold"; readonly key: string; readonly item: FoldItem }
 
 /**
  * 押すと開く依頼の全体の詳細。ワークプランのフェーズを並べ、行の下にそのフェーズの手順を置く。
@@ -40,17 +51,17 @@ export function PresentationalStepsList(props: {
     >
       <p className={styles["work-strip-steps-head"]}>
         <span>依頼の手順</span>
-        {steps.phaseCountLabel !== "" && <span>{steps.phaseCountLabel}</span>}
+        {steps.phaseCountLabel !== "" && (
+          <Badge tone="neutral" shape="pill" className="">
+            {steps.phaseCountLabel}
+          </Badge>
+        )}
       </p>
       <PresentationalWorkflowDiagrams steps={steps} />
       <CurrentWorkBackground list={steps.backgroundList} runningMark="still" />
-      {steps.card.length > 0 && (
-        <ol className={styles["work-strip-plan"]}>
-          {steps.card.map((item) => (
-            <PlanItem key={itemKeyOf(item)} item={item} steps={steps} />
-          ))}
-        </ol>
-      )}
+      {runsOf(steps.card).map((run) => (
+        <PlanRun key={run.key} run={run} steps={steps} />
+      ))}
       {steps.rest.map((group) => (
         <CurrentWorkStepGroup key={group.key} group={group} runningMark="still" />
       ))}
@@ -67,10 +78,9 @@ export function PresentationalStepsList(props: {
             className={styles["work-strip-steps-foot-eta"]}
             title="済んだフェーズの所要から出した目安"
           >
-            目安の残り{" "}
-            <b>
-              {steps.estimate.low}〜{steps.estimate.high}分
-            </b>
+            <Badge tone="accent" shape="pill" className="">
+              目安の残り {steps.estimate.low}〜{steps.estimate.high}分
+            </Badge>
           </span>
         </p>
       )}
@@ -78,100 +88,151 @@ export function PresentationalStepsList(props: {
   )
 }
 
-function itemKeyOf(item: StepsPlanItem): string {
-  if (item.kind === "phase") {
-    return item.row.key
+function runsOf(card: readonly StepsPlanItem[]): readonly PlanRun[] {
+  const runs: PlanRun[] = []
+  for (const item of card) {
+    if (item.kind !== "phase") {
+      runs.push({ kind: "fold", key: item.kind, item })
+      continue
+    }
+    const last = runs.at(-1)
+    if (last?.kind === "phases") {
+      runs[runs.length - 1] = { ...last, items: [...last.items, item] }
+    } else {
+      runs.push({ kind: "phases", key: item.row.key, items: [item] })
+    }
   }
-  return item.kind
+  return runs
 }
 
-function PlanItem(props: {
-  readonly item: StepsPlanItem
-  readonly steps: WorkStripSteps
+/** 今のフェーズがあればその位置、無い並びでは最初の済みでない行の位置（全部済みなら行数）。 */
+function activeStepOf(items: readonly PhaseItem[]): number {
+  const current = items.findIndex(({ row }) => row.state === "current" || row.state === "asking")
+  if (current >= 0) return current
+  const firstOpen = items.findIndex(({ row }) => row.state !== "done")
+  return firstOpen >= 0 ? firstOpen : items.length
+}
+
+function PlanRun(props: { readonly run: PlanRun; readonly steps: WorkStripSteps }): ReactElement {
+  const { run, steps } = props
+  if (run.kind === "fold") {
+    return <FoldRow item={run.item} onExpandDone={steps.onExpandDone} />
+  }
+  const activeStep = activeStepOf(run.items)
+  return (
+    <div className={styles["work-strip-plan"]}>
+      <Stepper
+        label="フェーズ"
+        activeStep={activeStep}
+        density="compact"
+        textSize="secondary"
+        emphasizeActive
+      >
+        {run.items.map((item, position) => (
+          <PhaseRow
+            key={item.row.key}
+            item={item}
+            position={position}
+            onExpandSteps={steps.onExpandSteps}
+          />
+        ))}
+      </Stepper>
+    </div>
+  )
+}
+
+function FoldRow(props: {
+  readonly item: FoldItem
+  readonly onExpandDone: () => void
 }): ReactElement {
-  const { item, steps } = props
+  const { item } = props
   if (item.kind === "done-fold") {
     return (
-      <li className={styles["work-strip-plan-fold"]}>
-        <button
-          type="button"
+      <div className={styles["work-strip-plan-fold"]}>
+        <Button
+          variant="link"
+          size="label"
+          pressed="none"
+          disabled={false}
+          disclosure={{ kind: "none" }}
           className={styles["work-strip-plan-more"]}
-          onClick={steps.onExpandDone}
+          onClick={props.onExpandDone}
         >
-          <span>済んだ {String(item.count)} フェーズ</span>
-          {item.total !== "" && (
-            <span className={styles["work-strip-plan-time"]}>{item.total}</span>
-          )}
-        </button>
-      </li>
+          済んだ {String(item.count)} フェーズ{item.total === "" ? "" : ` ${item.total}`}
+        </Button>
+      </div>
     )
   }
-  if (item.kind === "upcoming-rest") {
-    return (
-      <li className={clsx(styles["work-strip-plan-fold"], styles["work-strip-plan-note"])}>
-        ほか {String(item.count)} フェーズ
-      </li>
-    )
-  }
-  return <PhaseRow item={item} onExpandSteps={steps.onExpandSteps} />
+  return (
+    <p className={clsx(styles["work-strip-plan-fold"], styles["work-strip-plan-note"])}>
+      ほか {String(item.count)} フェーズ
+    </p>
+  )
 }
 
-/** フェーズの行。印・名前・所要と、済んだフェーズのまとめ、その下の手順（済んだフェーズは畳み、今のフェーズは開く）。これからのフェーズは名前だけ。 */
+/** フェーズの行。名前・所要・答え待ちの札と、済んだフェーズのまとめ、その下の手順（済んだフェーズは畳み、今のフェーズは開く）。これからのフェーズは名前だけ。 */
 function PhaseRow(props: {
-  readonly item: Extract<StepsPlanItem, { readonly kind: "phase" }>
+  readonly item: PhaseItem
+  readonly position: number
   readonly onExpandSteps: () => void
 }): ReactElement {
-  const { item, onExpandSteps } = props
+  const { item, position, onExpandSteps } = props
   const { row, groups } = item
   return (
-    <li
-      className={styles["work-strip-plan-row"]}
-      data-phase-indexes={String(row.phaseIndex)}
-      data-phase-state={row.state}
-      data-phase-skipped={row.skipped ? "true" : undefined}
-    >
-      <p className={styles["work-strip-plan-head"]}>
-        <span aria-hidden="true" className={styles["work-strip-plan-mark"]}>
-          {row.mark}
-        </span>
-        {row.spanName !== "" && <span className={styles["work-strip-span"]}>{row.spanName}</span>}
-        {row.parallelLabel !== "" && (
-          <span className={styles["work-strip-span"]}>{row.parallelLabel}</span>
-        )}
-        <span className={styles["work-strip-plan-name"]}>
-          {row.name}
-          {row.skipped && "（飛ばした）"}
-        </span>
-        {row.duration !== "" && (
-          <span className={styles["work-strip-plan-time"]}>{row.duration}</span>
-        )}
-      </p>
-      {row.summary !== "" && <p className={styles["work-strip-plan-summary"]}>{row.summary}</p>}
-      {row.stepCount > 0 && (
-        <Disclosure
-          open={row.open}
-          gap="none"
-          hiddenOnNarrow={false}
-          summaryTone="inherit"
-          summarySize="inherit"
-          className={styles["work-strip-plan-steps"]}
-          summaryClassName=""
-          summary={`手順 ${String(row.stepCount)}`}
-        >
-          {groups.map((group) => (
-            <CurrentWorkStepGroup key={group.key} group={group} runningMark="still" />
-          ))}
-          {item.hiddenStepCount > 0 && (
-            <button
-              type="button"
-              className={styles["work-strip-plan-more"]}
-              onClick={onExpandSteps}
-            >
-              手順 {String(row.stepCount)}件をすべて見る
-            </button>
+    <Step
+      step={position}
+      label={`${row.name}${row.skipped ? "（飛ばした）" : ""}`}
+      end={
+        <>
+          {row.spanName !== "" && <span className={styles["work-strip-span"]}>{row.spanName}</span>}
+          {row.parallelLabel !== "" && (
+            <span className={styles["work-strip-span"]}>{row.parallelLabel}</span>
           )}
-        </Disclosure>
-      )}
-    </li>
+          {row.state === "asking" && (
+            <Badge tone="warn" shape="pill" className="">
+              答え待ち
+            </Badge>
+          )}
+          {row.duration !== "" && (
+            <span className={styles["work-strip-plan-time"]}>{row.duration}</span>
+          )}
+        </>
+      }
+    >
+      <div
+        className={styles["work-strip-plan-body"]}
+        data-phase-indexes={String(row.phaseIndex)}
+        data-phase-state={row.state}
+        data-phase-skipped={row.skipped ? "true" : undefined}
+      >
+        {row.summary !== "" && <p className={styles["work-strip-plan-summary"]}>{row.summary}</p>}
+        {row.stepCount > 0 && (
+          <Collapsible
+            key={String(row.open)}
+            chevronPosition="start"
+            defaultOpen={row.open}
+            textSize="label"
+            trigger={`手順 ${String(row.stepCount)}`}
+          >
+            {groups.map((group) => (
+              <CurrentWorkStepGroup key={group.key} group={group} runningMark="still" />
+            ))}
+            {item.hiddenStepCount > 0 && (
+              <Button
+                variant="link"
+                size="label"
+                pressed="none"
+                disabled={false}
+                disclosure={{ kind: "none" }}
+                className={styles["work-strip-plan-more"]}
+                onClick={onExpandSteps}
+              >
+                手順 {String(row.stepCount)}件をすべて見る
+              </Button>
+            )}
+          </Collapsible>
+        )}
+      </div>
+    </Step>
   )
 }

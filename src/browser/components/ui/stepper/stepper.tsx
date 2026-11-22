@@ -16,6 +16,8 @@ export type StepperProps = {
   readonly density: "compact" | "balanced" | "spacious"
   /** 今の段の題を太字・地の色に、済んだ段とこれからの段の題を控えめの色にするか。 */
   readonly emphasizeActive: boolean
+  /** 題の字の段。standard は Astryx の既定、secondary は `--font-secondary`。 */
+  readonly textSize: "standard" | "secondary"
   readonly children: ReactNode
 }
 
@@ -24,6 +26,7 @@ export function Stepper(props: StepperProps): ReactElement {
     <AstryxStepper
       className={styles["stepper"]}
       data-emphasis={props.emphasizeActive ? "active" : "none"}
+      data-text-size={props.textSize}
       density={props.density}
       activeStep={props.activeStep}
       label={props.label}

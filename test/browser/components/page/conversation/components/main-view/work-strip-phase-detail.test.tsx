@@ -123,6 +123,35 @@ describe("WorkStrip（フェーズの詳細の開閉）", () => {
     expect(screen.queryByRole("region", { name: "依頼の手順" })).toBeNull()
   })
 
+  it("一覧の題は、今のフェーズだけが強調の対象（in-progress）で、強調の印が列に付く", () => {
+    renderProgressed()
+    click(screen.getByRole("button", { name: /^手順/ }))
+
+    const list = screen.getByRole("region", { name: "依頼の手順" })
+    const progress = [...list.querySelectorAll("span[data-progress]")].map((label) => [
+      label.textContent,
+      label.getAttribute("data-progress"),
+    ])
+    expect(progress).toEqual([
+      ["架空の段A", "completed"],
+      ["架空の段B", "in-progress"],
+      ["架空の段C", "not-started"],
+    ])
+    expect(list.querySelector("ol[data-emphasis]")?.getAttribute("data-emphasis")).toBe("active")
+  })
+
+  it("今のフェーズが無い並び（全部済み）でも、済んだフェーズは済みの印で描かれる", () => {
+    putSession(stateAfter([REQUEST, plan(2, "", ["架空の段A", "架空の段B"])]))
+    render(<WorkStrip />)
+    click(screen.getByRole("button", { name: /^手順/ }))
+
+    const list = screen.getByRole("region", { name: "依頼の手順" })
+    const progress = [...list.querySelectorAll("span[data-progress]")].map((label) =>
+      label.getAttribute("data-progress"),
+    )
+    expect(progress).toEqual(["completed", "completed"])
+  })
+
   it("詳細を開いても帯の見出しは替わらない", () => {
     renderProgressed()
     const head = (): string | null | undefined =>

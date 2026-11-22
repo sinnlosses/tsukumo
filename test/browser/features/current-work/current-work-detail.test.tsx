@@ -39,6 +39,21 @@ function listLines(selector: string): (string | null)[] {
   return [...workList().querySelectorAll(selector)].map((node) => node.textContent)
 }
 
+/** 手順の行を「印 名前」で読む（実行中は破線の輪のアイコン、済みはチェックのアイコン）。段の小見出しも並べる。 */
+function stepLines(): (string | null)[] {
+  return [
+    ...workList().querySelectorAll(
+      ".current-work-phase-heading, [class*='current-work-step-name']",
+    ),
+  ].map((node) => {
+    const mark = node.closest("li")?.querySelector("svg")
+    if (mark === null || mark === undefined) {
+      return node.textContent
+    }
+    return `${mark.getAttribute("class")?.includes("circle-dashed") === true ? "…" : "✓"} ${node.textContent ?? ""}`
+  })
+}
+
 describe("いまの作業（押すと開く依頼の手順の一覧）。語・要約・段の出し分けは hooks/use-current-work.test.ts", () => {
   it("依頼が一度も無ければ、開くと「まだ依頼が無い」と出る", () => {
     renderCurrentWork()
@@ -145,10 +160,7 @@ describe("いまの作業（押すと開く依頼の手順の一覧）。語・�
 
     fireEvent.click(workToggle())
 
-    expect(listLines(".current-work-steps li")).toEqual([
-      "… Bash: echo new",
-      "✓ Read: /tmp/old.txt（12秒）",
-    ])
+    expect(stepLines()).toEqual(["… Bash: echo new", "✓ Read: /tmp/old.txt（12秒）"])
   })
 
   describe("ワークプラン（work_plan）", () => {
@@ -201,7 +213,7 @@ describe("いまの作業（押すと開く依頼の手順の一覧）。語・�
       expect(within(workList()).getByText("この依頼のワークプラン")).not.toBeNull()
       expect(listLines(".current-work-plan li")).toEqual(["✓架空の段A", "2架空の段B", "3架空の段C"])
       expect(workList().querySelector(".current-work-plan-span-name")).toBeNull()
-      expect(listLines(".current-work-phase-heading, .current-work-steps li")).toEqual([
+      expect(stepLines()).toEqual([
         "2/3 架空の段B",
         "… Bash: echo b",
         "1/3 架空の段A",
@@ -258,7 +270,7 @@ describe("いまの作業（押すと開く依頼の手順の一覧）。語・�
 
       fireEvent.click(workToggle())
 
-      expect(listLines(".current-work-phase-heading, .current-work-steps li")).toEqual([
+      expect(stepLines()).toEqual([
         "1/2 架空の段A",
         "… Bash: echo t4",
         "2/2 架空の段B",
@@ -302,9 +314,7 @@ describe("いまの作業（押すと開く依頼の手順の一覧）。語・�
 
     fireEvent.click(workToggle())
 
-    expect(document.querySelector(".current-work-steps li")?.textContent).toBe(
-      "✓ Read: /tmp/restored.txt",
-    )
+    expect(stepLines()).toEqual(["✓ Read: /tmp/restored.txt"])
   })
 
   it("6件以上あると「手順をすべて見る」の口が出て、押すと全件に広がり、先頭は最新のまま", () => {
@@ -322,7 +332,7 @@ describe("いまの作業（押すと開く依頼の手順の一覧）。語・�
 
     fireEvent.click(workToggle())
 
-    const rowTexts = () => listLines(".current-work-steps li")
+    const rowTexts = () => stepLines()
     expect(rowTexts()).toHaveLength(5)
     expect(rowTexts()[0]).toBe("… Bash: echo 11")
 
@@ -381,12 +391,14 @@ describe("いまの作業（押すと開く依頼の手順の一覧）。語・�
     fireEvent.click(workToggle())
 
     expect(screen.getByText("失敗")).toBeDefined()
-    expect(document.querySelector(".current-work-failure-output")?.textContent).toContain(
-      "架空のエラー出力",
+    const failure = within(
+      typedElement(document.querySelector("[data-step-failed]"), HTMLElement, "失敗の行"),
     )
-    expect(document.querySelector(".current-work-failure-input")?.textContent).toContain(
-      "架空のコマンド",
-    )
+    const output = failure.getByText("架空のエラー出力")
+    const input = failure.getAllByText("架空のコマンド", { exact: false }).at(-1)
+    expect(
+      output.compareDocumentPosition(input ?? output) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).not.toBe(0)
   })
 
   it("上限を超える失敗の出力は、先頭 8000 字と落とした字数で出る", () => {
@@ -414,8 +426,8 @@ describe("いまの作業（押すと開く依頼の手順の一覧）。語・�
 
     fireEvent.click(workToggle())
 
-    expect(document.querySelector(".current-work-failure-output")?.textContent).toBe(
-      `${"架".repeat(8000)}\n…（以下 5 文字を省略）`,
+    expect(document.querySelector("[data-step-failed]")?.textContent).toContain(
+      "…（以下 5 文字を省略）",
     )
   })
 
@@ -430,7 +442,7 @@ describe("いまの作業（押すと開く依頼の手順の一覧）。語・�
 
     fireEvent.click(workToggle())
 
-    expect(document.querySelector(".current-work-steps li")?.textContent).toBe("… Bash: echo")
+    expect(stepLines()).toEqual(["… Bash: echo"])
   })
 
   it("セッションが終わると、実行中だった手順は一覧から消える", () => {

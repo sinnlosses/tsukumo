@@ -46,76 +46,20 @@
 .work-strip-phase-times {
   padding-top: var(--stack-group);
 }
-/* フェーズの行の並び。行の下に、そのフェーズの手順を畳みか開きで置く。 */
+/* フェーズの行の並び（縦の `Stepper`）。行の下に、そのフェーズの手順を畳みか開きで置く。 */
 .work-strip-plan {
-  display: flex;
-  flex-direction: column;
-  gap: var(--stack-block);
-  margin: 0;
   padding: 0 var(--inline-control);
-  list-style: none;
-}
-.work-strip-plan-row {
-  display: flex;
-  flex-direction: column;
-  gap: var(--stack-tight);
-}
-.work-strip-plan-head {
-  display: flex;
-  align-items: center;
-  gap: var(--inline-tight);
-  margin: 0;
-  color: var(--ink-quiet);
-}
-.work-strip-plan-mark {
-  display: inline-flex;
-  flex: none;
-  align-items: center;
-  justify-content: center;
-  box-sizing: border-box;
-  width: 1.25rem;
-  height: 1.25rem;
-  border: 1.5px solid var(--rule);
-  border-radius: 50%;
-  font-family: var(--font-mono);
-  font-size: var(--font-label);
-  line-height: 1;
-}
-.work-strip-plan-name {
-  min-width: 0;
-  flex: 1;
 }
 .work-strip-plan-time {
   flex: none;
   font-family: var(--font-mono);
   font-size: var(--font-label);
 }
-.work-strip-plan-row[data-phase-state="done"] .work-strip-plan-mark {
-  border-color: transparent;
-  background: color-mix(in srgb, var(--surface), var(--accent) 30%);
-  color: var(--accent);
-}
-.work-strip-plan-row[data-phase-skipped="true"] .work-strip-plan-mark {
-  border-color: var(--rule);
-  border-style: dashed;
-  background: none;
-  color: var(--ink-quiet);
-}
-.work-strip-plan-row[data-phase-state="current"] .work-strip-plan-head,
-.work-strip-plan-row[data-phase-state="asking"] .work-strip-plan-head {
-  color: var(--ink);
-  font-weight: 700;
-}
-.work-strip-plan-row[data-phase-state="current"] .work-strip-plan-mark {
-  border: 2px solid var(--accent);
-  color: var(--accent);
-}
-.work-strip-plan-row[data-phase-state="asking"] .work-strip-plan-mark {
-  border: 2px solid var(--state-warn);
-  color: var(--state-warn);
-}
-.work-strip-plan-steps {
-  padding-left: var(--inline-group);
+/* 題の下に置く、まとめと「手順 n」。 */
+.work-strip-plan-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--stack-tight);
   color: var(--ink-quiet);
 }
 /* 頭と下端の目安の残りは、面の中で転がしても上下に貼り付く。地を塗って、下を通る中身を隠す。 */
@@ -133,31 +77,20 @@
 }
 .work-strip-plan-summary {
   margin: 0;
-  padding-left: var(--inline-group);
   color: var(--ink-quiet);
   line-height: 1.5;
 }
 .work-strip-plan-fold {
   display: flex;
+  margin: 0;
+  padding: 0 var(--inline-control);
   color: var(--ink-quiet);
 }
 .work-strip-plan-note {
   font-size: var(--font-label);
 }
 .work-strip-plan-more {
-  display: flex;
-  justify-content: space-between;
-  gap: var(--inline-tight);
-  padding: 0;
-  border: 0;
-  background: none;
-  color: inherit;
-  font: inherit;
-  text-align: start;
-  cursor: pointer;
-}
-.work-strip-plan-fold > .work-strip-plan-more {
-  flex: 1;
+  align-self: flex-start;
 }
 .work-strip-steps-foot {
   position: sticky;

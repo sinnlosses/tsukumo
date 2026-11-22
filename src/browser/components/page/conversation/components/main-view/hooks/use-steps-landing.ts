@@ -5,8 +5,8 @@ import { useRef, type RefObject } from "react"
 import { useExternalSync } from "../../../../../../hooks/use-external-sync.ts"
 import type { StepsLanding } from "../../../stores/work-strip-step-list.ts"
 
-/** 失敗の行の印（`CurrentWorkStepGroup` の行に付く `data-step-failed`）。 */
-const FAILED_STEP_SUMMARY = "[data-step-failed] summary"
+/** 失敗の行の開閉の見出し（`CurrentWorkStepGroup` の行の包みに付く `data-step-failed` の中のボタン）。 */
+const FAILED_STEP_TRIGGER = "[data-step-failed] button[aria-expanded]"
 
 /** 一覧の根に付ける ref。`landing` が `top` のときは何もしない。 */
 export function useStepsLanding(landing: StepsLanding): RefObject<HTMLDivElement | null> {
@@ -17,9 +17,9 @@ export function useStepsLanding(landing: StepsLanding): RefObject<HTMLDivElement
     if (list === null || landing.kind === "top") {
       return
     }
-    const summary = list.querySelector<HTMLElement>(FAILED_STEP_SUMMARY)
-    summary?.scrollIntoView({ block: "nearest" })
-    summary?.focus({ preventScroll: true })
+    const trigger = list.querySelector<HTMLElement>(FAILED_STEP_TRIGGER)
+    trigger?.scrollIntoView({ block: "nearest" })
+    trigger?.focus({ preventScroll: true })
   }, [landing])
 
   return listRef

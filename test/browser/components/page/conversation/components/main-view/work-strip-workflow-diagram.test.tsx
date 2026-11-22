@@ -81,7 +81,7 @@ describe("WorkStrip のワークフローの図", () => {
     const list = openSteps([tasksChanged, progressOf([IMPLEMENTER, reviewer(1)])])
 
     const rowNames = [...list.querySelectorAll("[data-phase-indexes]")].map(
-      (row) => row.querySelector("[class*='work-strip-plan-name']")?.textContent,
+      (row) => row.closest("li")?.querySelector("span[data-progress]")?.textContent,
     )
     expect(rowNames).toEqual(["架空の計画"])
     expect(list.textContent).toContain("バックグラウンドタスク（1 件）")

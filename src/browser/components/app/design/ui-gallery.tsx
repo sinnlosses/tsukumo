@@ -269,7 +269,13 @@ export function UiGallery(): ReactElement {
         </MetadataList>
       </Group>
       <Group title="Stepper（手順）" parts={["stepper"]}>
-        <Stepper activeStep={1} label="架空の手順" density="balanced" emphasizeActive={false}>
+        <Stepper
+          activeStep={1}
+          label="架空の手順"
+          density="balanced"
+          emphasizeActive={false}
+          textSize="standard"
+        >
           <Step step={0} label="架空の1つ目">
             架空の1つ目の本文
           </Step>
@@ -278,7 +284,13 @@ export function UiGallery(): ReactElement {
           </Step>
           <Step step={2} label="架空の3つ目" />
         </Stepper>
-        <Stepper activeStep={1} label="強調つきの手順" density="compact" emphasizeActive>
+        <Stepper
+          activeStep={1}
+          label="強調つきの手順"
+          density="compact"
+          emphasizeActive
+          textSize="standard"
+        >
           <Step step={0} label="済んだ段" />
           <Step step={1} label="今の段" />
           <Step step={2} label="これからの段" />

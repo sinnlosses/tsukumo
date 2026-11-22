@@ -6,3 +6,9 @@
   font-size: var(--font-body);
   font-weight: 400;
 }
+
+/* 手順の行の段（`textSize="label"`）。 */
+.body[data-text-size="label"],
+.trigger[data-text-size="label"] {
+  font-size: var(--font-label);
+}

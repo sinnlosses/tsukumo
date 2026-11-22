@@ -5,6 +5,11 @@
 import clsx from "clsx"
 import type { ReactElement } from "react"
 
+import { Badge } from "../../components/ui/badge/badge.tsx"
+import { CodeBlock } from "../../components/ui/code-block/code-block.tsx"
+import { Collapsible } from "../../components/ui/collapsible/collapsible.tsx"
+import { CheckIcon, CircleDashedIcon } from "../../components/ui/icon/icon.tsx"
+import { List, ListItem } from "../../components/ui/list/list.tsx"
 import { Text } from "../../components/ui/text/text.tsx"
 import styles from "./current-work-step-group.module.css"
 import type {
@@ -41,76 +46,94 @@ export function CurrentWorkStepGroup(props: {
           </Text>
         </div>
       )}
-      <ul className={styles["current-work-steps"]}>
+      <List hasDividers={false} numbered={false} textSize="compact">
         {group.steps.map((step) => (
           <CurrentWorkStepRow key={step.key} step={step} runningMark={runningMark} />
         ))}
-      </ul>
+      </List>
     </>
   )
 }
 
-/** 手順1件。サブエージェントの中（nested）は1段下げる。失敗は `<details>` で開いて読める。 */
+/** 手順1件。サブエージェントの中（nested）は1段下げる。失敗は札から開いて出力と引数を読める。 */
 function CurrentWorkStepRow(props: {
   readonly step: CurrentWorkStep
   readonly runningMark: RunningMark
 }): ReactElement {
   const { step, runningMark } = props
   const classes = clsx(
-    step.nested && styles["current-work-step-nested"],
+    styles["current-work-step-name"],
     step.status.kind === "done" && styles["current-work-step-done"],
     step.status.kind === "failed" && styles["current-work-step-failed"],
   )
 
-  return (
-    <li className={classes} data-step-failed={step.failure.kind === "failed" ? "" : undefined}>
-      {step.failure.kind === "failed" ? (
-        <FailureDetail
-          label={step.label}
-          inputText={step.failure.inputText}
-          outputText={step.failure.outputText}
-        />
-      ) : (
-        <>
-          <span
-            className={clsx(
-              styles["current-work-step-mark"],
-              step.status.kind === "running" &&
-                runningMark === "spin" &&
-                styles["current-work-step-mark-running"],
-            )}
-            aria-hidden="true"
+  if (step.failure.kind === "failed") {
+    return (
+      <ListItem
+        label={
+          <div
+            className={step.nested ? styles["current-work-step-nested"] : ""}
+            data-step-failed=""
           >
-            {step.status.kind === "running" ? "…" : "✓"}
-          </span>{" "}
+            <FailureDetail
+              nameClassName={classes}
+              label={step.label}
+              inputText={step.failure.inputText}
+              outputText={step.failure.outputText}
+            />
+          </div>
+        }
+      />
+    )
+  }
+  return (
+    <ListItem
+      mark={
+        <span
+          className={clsx(
+            styles["current-work-step-mark"],
+            step.status.kind === "running" &&
+              runningMark === "spin" &&
+              styles["current-work-step-mark-running"],
+          )}
+          aria-hidden="true"
+        >
+          {step.status.kind === "running" ? <CircleDashedIcon /> : <CheckIcon />}
+        </span>
+      }
+      label={
+        <span className={clsx(classes, step.nested && styles["current-work-step-nested"])}>
           {step.label}
-        </>
-      )}
-    </li>
+        </span>
+      }
+    />
   )
 }
 
-/** 失敗した手順の中身（引数と出力）。「失敗」の文字を印にする（色だけで意味を伝えない）。 */
+/** 失敗した手順の中身（引数と出力）。「失敗」の札を印にする（色だけで意味を伝えない）。 */
 function FailureDetail(props: {
+  readonly nameClassName: string
   readonly label: string
   readonly inputText: string
   readonly outputText: string
 }): ReactElement {
   return (
-    <details className={styles["current-work-failure"]}>
-      <summary>
-        <Text element="span" size="inherit" tone="state-ng" weight="semibold" className="">
-          失敗
-        </Text>{" "}
-        {props.label}
-      </summary>
+    <Collapsible
+      chevronPosition="start"
+      defaultOpen={false}
+      textSize="label"
+      trigger={
+        <>
+          <Badge tone="ng" shape="pill" className="">
+            失敗
+          </Badge>{" "}
+          <span className={props.nameClassName}>{props.label}</span>
+        </>
+      }
+    >
       {/* 出力が先。開いてまず読みたいのは「何が起きたか」で、引数はその裏取りに使う。 */}
-      <pre className={styles["current-work-failure-output"]}>
-        <code>{props.outputText}</code>
-      </pre>
-      <pre className={styles["current-work-failure-input"]}>
-        <code>{props.inputText}</code>
-      </pre>
-    </details>
+      <CodeBlock code={props.outputText} />
+      <CodeBlock code={props.inputText} />
+    </Collapsible>
   )
 }

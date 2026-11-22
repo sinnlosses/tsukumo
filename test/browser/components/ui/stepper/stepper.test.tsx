@@ -7,7 +7,13 @@ afterEach(cleanup)
 
 function renderSteps(emphasizeActive: boolean): HTMLElement {
   return render(
-    <Stepper activeStep={1} label="手順" density="compact" emphasizeActive={emphasizeActive}>
+    <Stepper
+      activeStep={1}
+      label="手順"
+      density="compact"
+      emphasizeActive={emphasizeActive}
+      textSize="standard"
+    >
       <Step step={0} label="済み" />
       <Step step={1} label="今" />
       <Step step={2} label="これから" />
@@ -31,5 +37,21 @@ describe("Stepper", () => {
     cleanup()
 
     expect(renderSteps(false).querySelector("ol")?.getAttribute("data-emphasis")).toBe("none")
+  })
+
+  it("題の字の段の口は、列に data-text-size として出る", () => {
+    const { container } = render(
+      <Stepper
+        activeStep={0}
+        label="手順"
+        density="compact"
+        emphasizeActive={false}
+        textSize="secondary"
+      >
+        <Step step={0} label="題" />
+      </Stepper>,
+    )
+
+    expect(container.querySelector("ol")?.getAttribute("data-text-size")).toBe("secondary")
   })
 })

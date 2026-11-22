@@ -115,6 +115,7 @@ function FlowList(props: { readonly items: readonly Item[] }): ReactElement {
       label="流れ"
       density="balanced"
       emphasizeActive={false}
+      textSize="standard"
       orientation={flowFitsRow(props.items) ? "horizontal" : "vertical"}
     >
       {props.items.map((item, index) => (
