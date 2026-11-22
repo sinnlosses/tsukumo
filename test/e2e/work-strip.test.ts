@@ -65,13 +65,20 @@ test.describe("進み具合のプログレスバー", () => {
 
     await strip.getByRole("button", { name: /^手順 \d+件$/ }).click()
 
-    const list = strip.getByRole("region", { name: "依頼の手順" })
+    // 面を描く場所は Astryx の層が決めるので、帯の中ではなくページから引く。置き場所は開いて測ってから決まるので、そろうまで待つ。
+    const list = room.page.getByRole("region", { name: "依頼の手順" })
     await expect(list).toBeVisible()
-    const listBox = await boxOf(list)
     const stripBox = await boxOf(strip)
-    expect(listBox.top).toBeGreaterThanOrEqual(stripBox.bottom)
-    expect(Math.abs(listBox.left - stripBox.left)).toBeLessThanOrEqual(1)
-    expect(Math.abs(listBox.right - stripBox.right)).toBeLessThanOrEqual(1)
+    await expect
+      .poll(async () => {
+        const listBox = await boxOf(list)
+        return {
+          below: listBox.top > stripBox.bottom,
+          left: Math.abs(listBox.left - stripBox.left) <= 1,
+          right: Math.abs(listBox.right - stripBox.right) <= 1,
+        }
+      })
+      .toEqual({ below: true, left: true, right: true })
     expect(stripBox.height).toBe(stripBefore.height)
     expect((await boxOf(flowHead)).top).toBe(flowTopBefore)
 

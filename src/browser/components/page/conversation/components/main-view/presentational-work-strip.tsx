@@ -7,6 +7,7 @@ import type { ReactElement, RefObject } from "react"
 
 import { Button } from "../../../../ui/button/button.tsx"
 import { CheckIcon, ChevronRightIcon, CloseIcon } from "../../../../ui/icon/icon.tsx"
+import { Popover } from "../../../../ui/popover/popover.tsx"
 import { StatusDot } from "../../../../ui/status-dot/status-dot.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
 import type { WorkStripResult } from "../../domain/turn-result-mark.ts"
@@ -25,6 +26,12 @@ import { PresentationalStepsList } from "./presentational-steps-list.tsx"
 /** 「手順」の口が開く全体の詳細の id。 */
 const STEPS_ID = "work-strip-steps"
 
+/** 「手順」の口が開く面の読み上げの名前。 */
+const STEPS_LABEL = "依頼の手順"
+
+/** 区間が開く面の、まだ区間を選んでいないときの読み上げの名前。 */
+const PHASE_DETAIL_LABEL = "フェーズの詳細"
+
 /** 「手順」の口の赤い点の読み上げの名前。 */
 const FAILED_AGENT_LABEL = "失敗したエージェントがある"
 
@@ -35,8 +42,7 @@ export function PresentationalWorkStrip(props: {
   readonly phaseDetail: WorkStripPhaseDetail
   readonly stepsPop: WorkStripStepsPop
 }): ReactElement | undefined {
-  const { strip, now, track, phaseDetail } = props
-  const { rootRef, toggleRef } = props.stepsPop
+  const { strip, now, track, phaseDetail, stepsPop } = props
 
   if (strip.kind === "none") {
     return undefined
@@ -110,8 +116,16 @@ export function PresentationalWorkStrip(props: {
         >
           {strip.steps.elapsedLabel}
         </Text>
-        <div ref={rootRef} className={styles["work-strip-steps-root"]}>
-          <StepsToggle steps={strip.steps} toggleRef={toggleRef} />
+        <StepsToggle steps={strip.steps} toggleRef={stepsPop.toggleRef} />
+        <Popover
+          open={strip.steps.list.kind === "open"}
+          anchorRef={stepsPop.toggleRef}
+          ariaLabel={STEPS_LABEL}
+          width={stepsPop.place.width}
+          placement={{ kind: "at", left: stepsPop.place.left, top: stepsPop.place.top }}
+          onClose={stepsPop.onClose}
+          className=""
+        >
           {strip.steps.list.kind === "open" && (
             <PresentationalStepsList
               id={STEPS_ID}
@@ -119,8 +133,8 @@ export function PresentationalWorkStrip(props: {
               landing={strip.steps.list.landing}
             />
           )}
-          {track.kind === "shown" && <SegmentTrack track={track} phaseDetail={phaseDetail} />}
-        </div>
+        </Popover>
+        {track.kind === "shown" && <SegmentTrack track={track} phaseDetail={phaseDetail} />}
       </div>
     </section>
   )
@@ -271,16 +285,16 @@ function StateMark(props: {
 
 /**
  * 帯の下端に沿う、フェーズを等分した区間の並び。区間はそれぞれボタンで、名前は読み上げと `title` で持つ。
- * 押すとその区間の下にフェーズの詳細が重なって出る。区間の並びと詳細は1つの要素で包み、外の押下はその外で数える。
+ * 押すとその区間の下にフェーズの詳細が重なって出る。面は最後に押した区間を口にする。
  */
 function SegmentTrack(props: {
   readonly track: Extract<WorkStripSegmentsModel, { readonly kind: "shown" }>
   readonly phaseDetail: WorkStripPhaseDetail
 }): ReactElement {
   const { track, phaseDetail } = props
-  const { popup, place, rootRef, onSegmentPress } = phaseDetail
+  const { popup, place, anchorRef, onSegmentPress } = phaseDetail
   return (
-    <div ref={rootRef} className={styles["work-strip-segment-root"]}>
+    <>
       <ol className={styles["work-strip-segment-list"]}>
         {track.segments.map((segment) => (
           <li key={segment.key}>
@@ -306,10 +320,18 @@ function SegmentTrack(props: {
           </li>
         ))}
       </ol>
-      {popup.kind === "open" && (
-        <PresentationalPhaseDetail detail={popup.detail} left={place.left} top={place.top} />
-      )}
-    </div>
+      <Popover
+        open={popup.kind === "open"}
+        anchorRef={anchorRef}
+        ariaLabel={popup.kind === "open" ? `${popup.detail.name} の詳細` : PHASE_DETAIL_LABEL}
+        width={place.width}
+        placement={{ kind: "at", left: place.left, top: place.top }}
+        onClose={phaseDetail.onClose}
+        className=""
+      >
+        {popup.kind === "open" && <PresentationalPhaseDetail detail={popup.detail} />}
+      </Popover>
+    </>
   )
 }
 

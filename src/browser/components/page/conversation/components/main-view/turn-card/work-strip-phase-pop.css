@@ -1,24 +1,14 @@
-/* 下線の区間を押すと出るフェーズの詳細。区間の並びと面を包む要素は箱を持たず、面は1行目（位置の基準）に絶対配置で重ねる。
-   左と上は押した区間を測って `style` で渡し、幅は帯の幅を超えない。流れは押し下げず、頭と一緒に動く。
+/* 下線の区間を押すと出るフェーズの詳細の中身。器は `ui/` の `Popover` で、置き場所と幅は押した区間と帯を測って決める（`useWorkStripPhaseDetail`）。
    見出しの印の箱の幅（`--work-strip-pop-mark`）は、まとめと手順の字頭をそろえるために共有する。 */
-.work-strip-segment-root {
-  display: contents;
-}
 .work-strip-phase-pop {
   --work-strip-pop-mark: 1.25rem;
-  position: absolute;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
   gap: var(--stack-block);
-  inline-size: min(21.25rem, 100cqw);
   max-block-size: min(70vh, 35rem);
   padding: var(--inset-control);
   overflow-y: auto;
-  border: 1px solid var(--panel-edge);
-  border-radius: var(--radius-xl);
-  background: var(--surface);
-  box-shadow: var(--shadow-overlay);
   color: var(--ink-soft);
   font-size: var(--font-secondary);
   font-weight: 400;

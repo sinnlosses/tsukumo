@@ -1,38 +1,17 @@
-/* 「手順」を押すと出る依頼全体の詳細。口と面を包む要素は箱を持たず、面は1行目（位置の基準）を基準に帯の下へ重ねる。
-   広い画面では左右の端をカプセルの左右の端に重ね、狭い画面では1行目の右端にそろえる。
-   流れは押し下げず、高さはビューポートに収めて超えたら面の中で転がす。 */
-.work-strip-steps-root {
-  display: contents;
-}
+/* 「手順」を押すと出る依頼全体の詳細の中身。器は `ui/` の `Popover` で、置き場所と幅は帯を測って決める（`useWorkStripStepsPop`）。
+   高さはビューポートに収めて超えたら中身の中で転がし、頭と目安の残りはその中で貼り付く。 */
 .work-strip-steps {
-  position: absolute;
-  inset-block-start: calc(100% + 0.5rem);
-  inset-inline-end: 0;
-  z-index: 2;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
   gap: var(--stack-tight);
-  inline-size: min(30rem, 100cqw);
   max-block-size: min(70dvh, 35rem);
   padding: var(--inset-control);
   overflow-y: auto;
-  border: 1px solid var(--panel-edge);
-  border-radius: var(--radius-xl);
-  background: var(--surface);
-  box-shadow: var(--shadow-overlay);
   color: var(--ink-soft);
   font-size: var(--font-secondary);
   font-weight: 400;
   line-height: 1.5;
-}
-/* 1行目からカプセルの端までの差は、`.work-strip` の広い画面の内側の余白と枠の 1px で決まる。 */
-@media (min-width: 761px) {
-  .work-strip-steps {
-    inset-inline-start: calc(-1 * (var(--inline-group) + 1px));
-    inset-inline-end: calc(-1 * (var(--inline-control) + 1px));
-    inline-size: auto;
-  }
 }
 .work-strip-toggle-mark {
   display: inline-grid;

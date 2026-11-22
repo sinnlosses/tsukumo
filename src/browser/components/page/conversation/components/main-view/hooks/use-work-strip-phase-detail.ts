@@ -1,5 +1,5 @@
 // 進み具合のプログレスバーの下線の区間を押すと重なって出る、フェーズの詳細のロジック。
-// どの区間の詳細が開いているかは store が持つので、ここは今のやり取りで開いている区間の中身を組み、押した区間の下へ置く位置を測り、外・Esc での閉じを受ける。
+// どの区間の詳細が開いているかは store が持つので、ここは今のやり取りで開いている区間の中身を組み、押した区間を面の口に覚えて、その下へ置く位置を測る。
 
 import { type RefObject, useRef, useState } from "react"
 
@@ -12,7 +12,6 @@ import {
 } from "../../../../../../../shared/session/work-plan.ts"
 import { isTurnCounting, turnCountedUntil } from "../../../../../../domain/turn-elapsed.ts"
 import { currentWorkStepGroups } from "../../../../../../features/current-work/current-work-step.ts"
-import { useDismissSignal } from "../../../../../../hooks/use-dismiss-signal.ts"
 import { useNowWhile } from "../../../../../../stores/clock.ts"
 import { useCurrentTurnSteps } from "../../../../../../stores/current-turn-step-list.ts"
 import { useSession } from "../../../../../../stores/session.ts"
@@ -32,8 +31,8 @@ const POP_EDGE_GAP = 8
 /** 面を帯の下端から離す幅。 */
 const POP_BELOW_GAP = 8
 
-/** 面の置き場所。`left`・`top` は面の配置の基準（区間の並びの offsetParent）の左上からの px。 */
-type PopPlace = { readonly left: number; readonly top: number }
+/** 面の左上（ビューポートの座標）と幅。 */
+type PopPlace = { readonly left: number; readonly top: number; readonly width: number }
 
 type OpenPopup = {
   readonly kind: "open"
@@ -44,17 +43,18 @@ type OpenPopup = {
 export type WorkStripPhasePopup = { readonly kind: "closed" } | OpenPopup
 
 export type WorkStripPhaseDetail = {
-  /** 区間の並びと詳細の面を包む要素に付ける。外の `pointerdown` はこの要素の外で数える。 */
-  readonly rootRef: RefObject<HTMLDivElement | null>
-  /** 区間を押したとき。押した区間の下へ置く位置を測って、詳細を開閉する。 */
+  /** 最後に押した区間。面はこの口に結ぶ。 */
+  readonly anchorRef: RefObject<HTMLElement | null>
+  /** 区間を押したとき。押した区間を口に覚え、その下へ置く位置を測って、詳細を開閉する。 */
   readonly onSegmentPress: (segmentKey: string, button: HTMLElement) => void
   readonly popup: WorkStripPhasePopup
   readonly place: PopPlace
+  readonly onClose: () => void
 }
 
 const CLOSED = { kind: "closed" } as const satisfies WorkStripPhasePopup
 
-const START_PLACE = { left: 0, top: 0 } as const satisfies PopPlace
+const START_PLACE = { left: 0, top: 0, width: POP_WIDTH } as const satisfies PopPlace
 
 export function useWorkStripPhaseDetail(): WorkStripPhaseDetail {
   const turnStepList = useCurrentTurnSteps()
@@ -66,7 +66,7 @@ export function useWorkStripPhaseDetail(): WorkStripPhaseDetail {
   const toggle = useWorkStripSteps((state) => state.toggle)
   const togglePhase = useWorkStripSteps((state) => state.togglePhase)
   const closePhase = useWorkStripSteps((state) => state.closePhase)
-  const rootRef = useRef<HTMLDivElement>(null)
+  const anchorRef = useRef<HTMLElement>(null)
   const [place, setPlace] = useState<PopPlace>(START_PLACE)
   const shown =
     content.kind !== "welcome" &&
@@ -84,19 +84,6 @@ export function useWorkStripPhaseDetail(): WorkStripPhaseDetail {
       })
     : CLOSED
 
-  useDismissSignal({
-    open: popup.kind === "open",
-    rootRef,
-    onDismiss: (cause) => {
-      closePhase()
-      if (cause === "escape" && popup.kind === "open") {
-        rootRef.current
-          ?.querySelector<HTMLElement>(`[data-segment-key="${popup.segmentKey}"]`)
-          ?.focus()
-      }
-    },
-  })
-
   const onSegmentPress = (segmentKey: string, button: HTMLElement): void => {
     if (content.kind === "welcome") {
       return
@@ -106,29 +93,28 @@ export function useWorkStripPhaseDetail(): WorkStripPhaseDetail {
       return
     }
     const strip = button.closest("section")
-    // 包む要素は `display: contents` で箱を持たないので、面と同じ配置の基準（区間の並びの offsetParent）で測る。
-    const base = button.closest("ol")?.offsetParent
-    if (strip !== null && base !== null && base !== undefined) {
-      setPlace(placeOf(strip.getBoundingClientRect(), base.getBoundingClientRect(), button))
+    if (strip !== null) {
+      setPlace(placeOf(strip.getBoundingClientRect(), button))
     }
+    anchorRef.current = button
     togglePhase(content.exchange, segmentKey)
   }
 
-  return { rootRef, onSegmentPress, popup, place }
+  return { anchorRef, onSegmentPress, popup, place, onClose: closePhase }
 }
 
 /**
  * 押した区間の中央に面の中央を合わせ、帯の左右の端とビューポートの端から `POP_EDGE_GAP` の内に収める。上は帯の下端から `POP_BELOW_GAP`。
  * 面の幅は `min(POP_WIDTH, 帯の幅)`。
  */
-function placeOf(strip: DOMRect, base: DOMRect, button: HTMLElement): PopPlace {
+function placeOf(strip: DOMRect, button: HTMLElement): PopPlace {
   const at = button.getBoundingClientRect()
   const width = Math.min(POP_WIDTH, strip.width)
   const wanted = at.left + at.width / 2 - width / 2
   const low = Math.max(strip.left, POP_EDGE_GAP)
   const high = Math.min(strip.right, window.innerWidth - POP_EDGE_GAP) - width
   const left = Math.min(Math.max(wanted, low), Math.max(high, low))
-  return { left: left - base.left, top: strip.bottom + POP_BELOW_GAP - base.top }
+  return { left, top: strip.bottom + POP_BELOW_GAP, width }
 }
 
 function popupOf(input: {

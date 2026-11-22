@@ -25,20 +25,33 @@ test.describe("進み具合のフェーズの詳細", () => {
     const segment = strip.locator('[data-segment-state="done"]').first()
     await segment.click()
 
-    const detail = strip.getByRole("region", { name: /の詳細$/ })
+    // 面を描く場所は Astryx の層が決めるので、帯の中ではなくページから引く。置き場所は開いて測ってから決まるので、そろうまで待つ。
+    const detail = room.page.getByRole("region", { name: /の詳細$/ })
     await expect(detail).toBeVisible()
     await expect(detail).toContainText("1/4 · 済み")
     const stripBox = await boxOf(strip)
-    const detailBox = await boxOf(detail)
     const segmentBox = await boxOf(segment)
-    expect(detailBox.top).toBeGreaterThanOrEqual(stripBox.bottom)
-    expect(detailBox.top).toBeGreaterThanOrEqual(segmentBox.bottom)
-    expect(detailBox.left).toBeGreaterThanOrEqual(stripBox.left)
-    expect(detailBox.right).toBeLessThanOrEqual(stripBox.right)
-    expect(detailBox.top - stripBox.bottom).toBeLessThanOrEqual(16)
     const segmentCenter = segmentBox.left + segmentBox.width / 2
-    expect(detailBox.left).toBeLessThanOrEqual(segmentCenter)
-    expect(detailBox.right).toBeGreaterThanOrEqual(segmentCenter)
+    await expect
+      .poll(async () => {
+        const detailBox = await boxOf(detail)
+        return {
+          belowStrip: detailBox.top >= stripBox.bottom,
+          belowSegment: detailBox.top >= segmentBox.bottom,
+          insideLeft: detailBox.left >= stripBox.left,
+          insideRight: detailBox.right <= stripBox.right,
+          near: detailBox.top - stripBox.bottom <= 16,
+          coversSegment: detailBox.left <= segmentCenter && detailBox.right >= segmentCenter,
+        }
+      })
+      .toEqual({
+        belowStrip: true,
+        belowSegment: true,
+        insideLeft: true,
+        insideRight: true,
+        near: true,
+        coversSegment: true,
+      })
     expect(await topOf(flowHead)).toBe(flowTopBefore)
 
     await room.page.mouse.click(stripBox.left + stripBox.width / 2, stripBox.bottom + 400)
@@ -49,7 +62,7 @@ test.describe("進み具合のフェーズの詳細", () => {
     await strip.getByRole("button", { name: /^手順/ }).click()
 
     await expect(detail).toHaveCount(0)
-    await expect(strip.getByRole("region", { name: "依頼の手順" })).toBeVisible()
+    await expect(room.page.getByRole("region", { name: "依頼の手順" })).toBeVisible()
   })
 })
 

@@ -473,15 +473,23 @@ function arrowPathsIn(
   root: HTMLDivElement,
   arrows: readonly WorkflowDiagramArrow[],
 ): readonly WorkflowArrowPath[] {
+  const origin = root.getBoundingClientRect()
+  // 重なる面は開くときに縮めた形から広げるので、その途中で測った矩形を縮める前の寸法に戻す。
+  // 寸法は動きの前後で変わらず、観測し直す合図が来ないため。
+  const scale = root.offsetWidth === 0 ? 1 : origin.width / root.offsetWidth
   const rects = new Map(
     [...root.querySelectorAll<HTMLElement>("[data-diagram-end]")].map((element) => {
       const rect = element.getBoundingClientRect()
       return [
         element.dataset["diagramEnd"] ?? "",
-        { left: rect.left, top: rect.top, width: rect.width, height: rect.height },
+        {
+          left: (rect.left - origin.left) / scale,
+          top: (rect.top - origin.top) / scale,
+          width: rect.width / scale,
+          height: rect.height / scale,
+        },
       ] as const satisfies readonly [string, WorkflowDiagramRect]
     }),
   )
-  const origin = root.getBoundingClientRect()
-  return workflowArrowPathsOf(arrows, rects, { left: origin.left, top: origin.top })
+  return workflowArrowPathsOf(arrows, rects, { left: 0, top: 0 })
 }

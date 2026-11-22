@@ -1,6 +1,6 @@
-// 見本帳の `ui/` の節のうち、重なる面の部品（Dialog・BottomSheet・CommandPalette・Menu・ImageZoom）。開くボタンを置き、押すと出る。
+// 見本帳の `ui/` の節のうち、重なる面の部品（Dialog・BottomSheet・CommandPalette・Menu・Popover・ImageZoom）。開くボタンを置き、押すと出る。
 
-import { useState, type ReactElement } from "react"
+import { useRef, useState, type ReactElement } from "react"
 
 import { BottomSheet } from "../../ui/bottom-sheet/bottom-sheet.tsx"
 import { Button } from "../../ui/button/button.tsx"
@@ -11,6 +11,7 @@ import {
 import { Dialog } from "../../ui/dialog/dialog.tsx"
 import { ImageZoom } from "../../ui/image-zoom/image-zoom.tsx"
 import { Menu, type MenuItem } from "../../ui/menu/menu.tsx"
+import { Popover } from "../../ui/popover/popover.tsx"
 import { Text } from "../../ui/text/text.tsx"
 import styles from "./design.module.css"
 import { Group } from "./ui-gallery-group.tsx"
@@ -114,6 +115,9 @@ export function OverlayGroups(): ReactElement {
         <Menu triggerLabel="見本のメニュー" disabled={false} items={MENU_ITEMS} className="" />
         <Menu triggerLabel="押せないメニュー" disabled={true} items={MENU_ITEMS} className="" />
       </Group>
+      <Group title="Popover（口の下に重なって出る）" parts={["popover"]}>
+        <PopoverSample />
+      </Group>
       <Group title="ImageZoom（開くと出る）" parts={["image-zoom"]}>
         <Opener label="ImageZoom を開く" onOpen={() => setZoomOpen(true)} />
         {zoomOpen && (
@@ -126,6 +130,45 @@ export function OverlayGroups(): ReactElement {
           />
         )}
       </Group>
+    </>
+  )
+}
+
+function PopoverSample(): ReactElement {
+  const [open, setOpen] = useState(false)
+  const anchorRef = useRef<HTMLButtonElement>(null)
+  return (
+    <>
+      <Button
+        variant="outline"
+        size="action"
+        pressed="none"
+        disabled={false}
+        disclosure={{
+          kind: "popover",
+          popup: "none",
+          ref: anchorRef,
+          expanded: open,
+          controls: "design-popover",
+        }}
+        className=""
+        onClick={() => setOpen((wasOpen) => !wasOpen)}
+      >
+        Popover を開く
+      </Button>
+      <Popover
+        open={open}
+        anchorRef={anchorRef}
+        ariaLabel="見本の面"
+        width={280}
+        placement={{ kind: "below", alignment: "start" }}
+        onClose={() => setOpen(false)}
+        className={styles["design-popover"]}
+      >
+        <Text element="p" size="body" tone="ink" weight="normal" className="">
+          面の中身（外を押す・Esc・口をもう一度押すと閉じる）
+        </Text>
+      </Popover>
     </>
   )
 }

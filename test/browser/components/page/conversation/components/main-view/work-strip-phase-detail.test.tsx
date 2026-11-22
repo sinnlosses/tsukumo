@@ -63,7 +63,7 @@ describe("WorkStrip（フェーズの詳細の開閉）", () => {
     expect(detailOf("架空の段C")).toBeNull()
   })
 
-  it("外を押すと詳細が閉じ、区間と詳細の中を押しても閉じない", () => {
+  it("外を押すと詳細が閉じ、押した区間と詳細の中を押しても閉じない", () => {
     renderProgressed()
     click(dot(/架空の段A/))
 
@@ -72,7 +72,7 @@ describe("WorkStrip（フェーズの詳細の開閉）", () => {
     })
     const insideDetail = detailOf("架空の段A")
     act(() => {
-      fireEvent.pointerDown(dot(/架空の段B/))
+      fireEvent.pointerDown(dot(/架空の段A/))
     })
     const onSegment = detailOf("架空の段A")
     act(() => {

@@ -67,15 +67,17 @@ function segmentOf(
 }
 
 const CLOSED_PHASE_DETAIL: WorkStripPhaseDetail = {
-  rootRef: createRef<HTMLDivElement>(),
+  anchorRef: createRef<HTMLElement>(),
   onSegmentPress: noop,
   popup: { kind: "closed" },
-  place: { left: 0, top: 0 },
+  place: { left: 0, top: 0, width: 0 },
+  onClose: noop,
 }
 
 const STEPS_POP: WorkStripStepsPop = {
-  rootRef: createRef<HTMLDivElement>(),
   toggleRef: createRef<HTMLButtonElement>(),
+  place: { left: 0, top: 0, width: 0 },
+  onClose: noop,
 }
 
 const WORKING_TRACK: WorkStripSegmentsModel = {
@@ -297,8 +299,6 @@ export const MAIN_VIEW_EXAMPLES: readonly ScreenPartExample[] = [
           groups: [],
           note: "",
         }}
-        left={0}
-        top={0}
       />
     ),
   },

@@ -88,6 +88,10 @@
   color: var(--ink);
 }
 
+.design-popover {
+  padding: var(--inset-control);
+}
+
 .design-skeleton {
   display: inline-block;
   width: 8rem;

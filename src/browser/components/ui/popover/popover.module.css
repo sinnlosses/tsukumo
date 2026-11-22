@@ -1,0 +1,8 @@
+/* 置き方 `at` では中の面だけをずらすので、層の箱は面からはみ出して下の口（帯の区間など）に重なる。
+   層の箱は押下を拾わず、面だけが拾う。 */
+:global([popover]):has(> .popover) {
+  pointer-events: none;
+}
+.popover {
+  pointer-events: auto;
+}
