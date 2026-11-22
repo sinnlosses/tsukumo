@@ -34,7 +34,6 @@ export function PostRow(props: PostRowProps): ReactElement {
   return (
     <StreamPostRow
       time={clockOf(row.at)}
-      timeShown={props.presentation.timeShown}
       speakerName={USER_SPEAKER_NAME}
       className={styles["stream-post"] ?? ""}
     >
@@ -67,7 +66,6 @@ export function SayRow(props: {
     <StreamSpeechRow
       text={props.row.record.text}
       time={clockOf(props.row.at)}
-      timeShown={props.presentation.timeShown}
       liveness={props.presentation.liveness}
       aim={props.presentation.followed ? <StreamAim /> : undefined}
       speakerName={props.speakerName}
@@ -110,7 +108,6 @@ export function VoiceSlotRow(props: {
     <StreamSpeechRow
       text={voice.text}
       time={recordClockStamp(voice.time, localTimeZoneId())}
-      timeShown
       liveness={pinned ? "plain" : "live"}
       aim={pinned ? undefined : <StreamAim />}
       speakerName={props.speakerName}

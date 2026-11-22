@@ -214,10 +214,3 @@
   font-size: var(--font-secondary);
   line-height: var(--line-height-body);
 }
-/* 分が変わらない行の時刻。読み上げには渡したまま、行に触れるかフォーカスが入ったときだけ見せる。 */
-.stream-time-quiet {
-  clip-path: inset(50%);
-}
-.stream-row:is(:hover, :focus-within) .stream-time-quiet {
-  clip-path: none;
-}

@@ -29,8 +29,6 @@ type StreamSpeechRowProps = {
   readonly aim: ReactNode
   /** 読み上げ用の話し手の名前。空なら付けない（雑談）。 */
   readonly speakerName: string
-  /** 時刻を見える字で出すか。出さなければ、触れるかフォーカスが入ったときだけ見える。 */
-  readonly timeShown: boolean
   /** 渡すと押せる行になる（雑談・仕事のメインビューのセリフ）。渡さなければ押せない行。 */
   readonly onToggle?: () => void
   /** `selected` の行にフォーカスがあるときの Esc で呼ぶ（留めを解く）。渡さなければ Esc は何もしない。 */
@@ -54,14 +52,13 @@ export function StreamSpeechRow(props: StreamSpeechRowProps): ReactElement {
         {...(props.onToggle === undefined ? {} : { onToggle: props.onToggle })}
         {...(props.onRelease === undefined ? {} : { onRelease: props.onRelease })}
       />
-      <StreamTime time={props.time} shown={props.timeShown} />
+      <StreamTime time={props.time} />
     </div>
   )
 }
 
 type StreamPostRowProps = {
   readonly time: ClockStamp
-  readonly timeShown: boolean
   /** 読み上げ用の話し手の名前。空なら付けない（雑談）。 */
   readonly speakerName: string
   /** 吹き出しに重ねる class。 */
@@ -80,7 +77,7 @@ export function StreamPostRow(props: StreamPostRowProps): ReactElement {
         <SpeakerName name={props.speakerName} />
         {props.children}
       </div>
-      <StreamTime time={props.time} shown={props.timeShown} />
+      <StreamTime time={props.time} />
     </div>
   )
 }
@@ -173,14 +170,10 @@ function StreamSpeech(props: StreamSpeechProps): ReactElement {
   )
 }
 
-function StreamTime(props: { readonly time: ClockStamp; readonly shown: boolean }): ReactNode {
+function StreamTime(props: { readonly time: ClockStamp }): ReactNode {
   return (
     props.time.kind === "known" && (
-      <time
-        className={clsx(styles["stream-time"], !props.shown && styles["stream-time-quiet"])}
-        dateTime={props.time.dateTime}
-        {...(props.shown ? {} : { "data-quiet": "" })}
-      >
+      <time className={styles["stream-time"]} dateTime={props.time.dateTime}>
         {props.time.text}
       </time>
     )

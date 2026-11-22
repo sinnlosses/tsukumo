@@ -11,9 +11,9 @@ afterEach(cleanup)
 
 const KNOWN = { kind: "known", dateTime: "2026-11-17T10:00", text: "10:00" } as const
 
-function renderPost(timeShown: boolean): HTMLTimeElement {
+function renderPost(): HTMLTimeElement {
   const { container } = render(
-    <StreamPostRow time={KNOWN} timeShown={timeShown} speakerName="" className="">
+    <StreamPostRow time={KNOWN} speakerName="" className="">
       本文
     </StreamPostRow>,
   )
@@ -29,7 +29,6 @@ function renderSpeech(selected: boolean, onRelease: () => void): HTMLElement {
     <StreamSpeechRow
       text="架空のセリフ"
       time={KNOWN}
-      timeShown
       liveness="plain"
       aim={<span data-aim="" />}
       speakerName="架空の名前"
@@ -53,7 +52,6 @@ describe("StreamSpeechRow の出方", () => {
       <StreamSpeechRow
         text="架空のセリフ"
         time={KNOWN}
-        timeShown
         liveness="plain"
         aim={undefined}
         speakerName=""
@@ -117,14 +115,9 @@ describe("StreamSpeechRow の押せる行", () => {
 })
 
 describe("StreamPostRow の時刻", () => {
-  it("見せない行にも、見えない字の time を残す", () => {
-    const time = renderPost(false)
+  it("時刻の分かる行には time を出す", () => {
+    const time = renderPost()
     expect(time.dateTime).toBe("2026-11-17T10:00")
     expect(time.textContent).toBe("10:00")
-    expect(time.hasAttribute("data-quiet")).toBe(true)
-  })
-
-  it("見せる行の time には見えない印を付けない", () => {
-    expect(renderPost(true).hasAttribute("data-quiet")).toBe(false)
   })
 })

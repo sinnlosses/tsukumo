@@ -18,12 +18,7 @@ type PresentationalAnswerPostProps = AnswerPostModel
 export function PresentationalAnswerPost(props: PresentationalAnswerPostProps): ReactElement {
   return (
     <div className={styles["answer-post"]}>
-      <StreamPostRow
-        time={{ kind: "unknown" }}
-        timeShown={false}
-        speakerName={USER_SPEAKER_NAME}
-        className=""
-      >
+      <StreamPostRow time={{ kind: "unknown" }} speakerName={USER_SPEAKER_NAME} className="">
         <div className={styles["answer-post-body"]}>
           <Text element="span" size="label" tone="ink-quiet" weight="semibold" className="">
             {props.post.stamp}

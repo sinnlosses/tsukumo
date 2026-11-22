@@ -21,7 +21,6 @@ import { useExternalSync } from "../../../../../hooks/use-external-sync.ts"
 import { usePhoneWidth } from "../../../../../hooks/use-phone-width.ts"
 import { useConversationStreamRows } from "../../../../../stores/main-view-turn.ts"
 import { useSession } from "../../../../../stores/session.ts"
-import { localTimeZoneId } from "../../../../../utils/clock.ts"
 import { Text } from "../../../../ui/text/text.tsx"
 import { useAwaySeam } from "../../stores/away-seam.ts"
 import { useDraftedReports } from "../../stores/drafted-report.ts"
@@ -115,7 +114,6 @@ export function Turn(props: TurnProps): ReactElement {
     ...(props.newest && arrivingBubble.kind === "arriving" && arrivingBubble.turnId === turn.id
       ? { arriving: { index: arrivingBubble.index, bubble: arrivingBubble.bubble } }
       : {}),
-    timeZone: localTimeZoneId(),
   })
   // 尾・明るさ・出方は帯へ移すセリフも流れの中の位置で決めてから、流れの並びから外す。
   const bandIndex = props.band === true ? items.findLastIndex((item) => item.kind === "say") : -1
@@ -137,10 +135,7 @@ export function Turn(props: TurnProps): ReactElement {
           <SayRow
             row={bandItem}
             turnId={turn.id}
-            presentation={{
-              ...(presentations[bandIndex] ?? PLAIN_PRESENTATION),
-              timeShown: true,
-            }}
+            presentation={presentations[bandIndex] ?? PLAIN_PRESENTATION}
             speakerName={speakerName}
           />
         </VoiceBandPortal>

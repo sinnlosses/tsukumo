@@ -1,13 +1,11 @@
-// 仕事の流れの各行に掛ける、いまの一言（明るさと尾）と時刻の出し方。
+// 仕事の流れの各行に掛ける、いまの一言（明るさと尾）の出し方。
 
-import { recordClockStamp, visibleClockFlags } from "../../../domain/clock-stamp.ts"
 import type { ViewedSpeech } from "../../../domain/pinned-speech.ts"
 import type { SpeechArrivalBubble } from "../../../domain/speech-arrival.ts"
 
-/** 流れの1行。セリフ・投稿だけが時刻（`at`）を持ち、セリフだけがやり取りの中の位置（`speechIndex`）を持つ。 */
+/** 流れの1行。セリフだけがやり取りの中の位置（`speechIndex`）を持つ。 */
 type PresentedItem = {
   readonly kind: string
-  readonly at?: number
   readonly speechIndex?: number
 }
 
@@ -38,8 +36,6 @@ export function pinnedPlaceOf(
 export type SayLiveness = "plain" | "live"
 
 export type RowPresentation = {
-  /** 時刻を見える字で出すか。 */
-  readonly timeShown: boolean
   /** セリフの明るさ（いまの一言）。セリフでない行は `plain`。 */
   readonly liveness: SayLiveness
   /** 立ち絵が従っているセリフか（尾を付ける1件）。 */
@@ -52,7 +48,6 @@ export type RowPresentation = {
 
 /** 提示が決まっていない行（並びの外・並びが短い）の既定。 */
 export const PLAIN_PRESENTATION = {
-  timeShown: true,
   liveness: "plain",
   followed: false,
   pinned: false,
@@ -73,27 +68,17 @@ export type PresentationContext = {
   readonly pinned: PinnedPlace
   /** 届いたばかりの声の、並びの中の位置と出方。従っている行がその位置のときだけ、出方を付ける。 */
   readonly arriving?: { readonly index: number; readonly bubble: SpeechArrivalBubble }
-  readonly timeZone: string
 }
 
 export function streamPresentationOf(
   items: readonly PresentedItem[],
   context: PresentationContext,
 ): readonly RowPresentation[] {
-  const flags = visibleClockFlags(
-    items.map((item) =>
-      item.at === undefined
-        ? ({ kind: "unknown" } as const)
-        : recordClockStamp({ kind: "stamped", at: item.at }, context.timeZone),
-    ),
-  )
   const lastSayAt = items.findLastIndex((item) => item.kind === "say")
   return items.map((_item, index): RowPresentation => {
-    const timeShown = flags[index] === true
     if (context.pinned.kind !== "none") {
       const pinned = context.pinned.kind === "at" && context.pinned.index === index
       return {
-        timeShown,
         liveness: pinned ? "live" : "plain",
         followed: pinned,
         pinned,
@@ -101,7 +86,6 @@ export function streamPresentationOf(
     }
     const followed = context.follow && index === lastSayAt
     return {
-      timeShown,
       liveness: context.live && index === lastSayAt ? "live" : "plain",
       followed,
       pinned: false,

@@ -4,7 +4,6 @@ import { Fragment, type ReactElement } from "react"
 
 import type { TaskSummaryResult } from "../../../../../../shared/repository/task-summary.ts"
 import type { MainViewTurn } from "../../../../../../shared/session/main-view-shape.ts"
-import { localTimeZoneId } from "../../../../../utils/clock.ts"
 import { Disclosure } from "../../../../ui/disclosure/disclosure.tsx"
 import { VStack } from "../../../../ui/v-stack/v-stack.tsx"
 import { useViewedSpeech } from "../../stores/viewed-speech.ts"
@@ -34,12 +33,11 @@ type ProgressFoldProps = {
 export function ProgressFold(props: ProgressFoldProps): ReactElement {
   const { turn } = props
   const viewed = useViewedSpeech((state) => state.viewed)
-  // 畳みの中は終わった経過なので、いまの一言は無い（留めた行だけが明るくなる）。時刻は畳みの中の並びで比べる。
+  // 畳みの中は終わった経過なので、いまの一言は無い（留めた行だけが明るくなる）。
   const presentations = streamPresentationOf(props.items, {
     live: false,
     follow: false,
     pinned: pinnedPlaceOf(props.items, turn.id, viewed),
-    timeZone: localTimeZoneId(),
   })
   return (
     <Disclosure
