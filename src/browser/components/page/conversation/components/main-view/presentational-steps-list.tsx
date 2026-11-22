@@ -58,13 +58,6 @@ export function PresentationalStepsList(props: {
         )}
       </p>
       <PresentationalWorkflowDiagrams steps={steps} />
-      <CurrentWorkBackground list={steps.backgroundList} runningMark="still" />
-      {runsOf(steps.card).map((run) => (
-        <PlanRun key={run.key} run={run} steps={steps} />
-      ))}
-      {steps.rest.map((group) => (
-        <CurrentWorkStepGroup key={group.key} group={group} runningMark="still" />
-      ))}
       {steps.phaseTimes.kind === "times" && (
         <div className={clsx(detailBlockClassName, styles["work-strip-phase-times"])}>
           <div className={phaseTimesClassName("phase-times")}>
@@ -72,6 +65,13 @@ export function PresentationalStepsList(props: {
           </div>
         </div>
       )}
+      <CurrentWorkBackground list={steps.backgroundList} runningMark="still" />
+      {runsOf(steps.card).map((run) => (
+        <PlanRun key={run.key} run={run} steps={steps} />
+      ))}
+      {steps.rest.map((group) => (
+        <CurrentWorkStepGroup key={group.key} group={group} runningMark="still" />
+      ))}
       {steps.estimate.kind === "shown" && (
         <p className={styles["work-strip-steps-foot"]}>
           <span
@@ -208,9 +208,9 @@ function PhaseRow(props: {
         {row.summary !== "" && <p className={styles["work-strip-plan-summary"]}>{row.summary}</p>}
         {row.stepCount > 0 && (
           <Collapsible
-            key={String(row.open)}
+            key={String(item.open)}
             chevronPosition="start"
-            defaultOpen={row.open}
+            defaultOpen={item.open}
             textSize="label"
             trigger={`手順 ${String(row.stepCount)}`}
           >

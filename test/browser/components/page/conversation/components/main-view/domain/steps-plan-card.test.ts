@@ -43,7 +43,6 @@ function row(
     summary: state === "done" ? "架空のまとめ" : "",
     groups: [group],
     stepCount: steps.length,
-    open: state === "current",
   }
 }
 
@@ -166,6 +165,23 @@ describe("stepsPlanCardOf", () => {
     expect(top?.kind === "phase" && top.groups[0]?.steps).toHaveLength(2)
     expect(failure?.kind === "phase" && failure.groups[0]?.steps).toHaveLength(5)
     expect(failure?.kind === "phase" && failure.hiddenStepCount).toBe(0)
+  })
+
+  it("「手順 n」は既定ではどのフェーズも畳み、失敗の着地では失敗した手順を持つフェーズだけ開く", () => {
+    const rows = [
+      row(0, "done", [step("a", true)]),
+      row(1, "done", [step("b")]),
+      row(2, "current", [step("c", true)]),
+    ]
+    const openOf = (items: ReturnType<typeof card>) =>
+      items.map((item) => item.kind === "phase" && item.open)
+
+    expect(openOf(card(rows, { landing: { kind: "top" } }))).toEqual([false, false, false])
+    expect(openOf(card(rows, { landing: { kind: "failure", signal: 1 } }))).toEqual([
+      true,
+      false,
+      true,
+    ])
   })
 
   it("済んだフェーズの行はまとめを持つ", () => {

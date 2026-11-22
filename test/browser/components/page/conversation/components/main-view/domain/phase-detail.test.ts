@@ -69,7 +69,6 @@ function row(
     summary: "",
     groups,
     stepCount: 0,
-    open: false,
   }
 }
 

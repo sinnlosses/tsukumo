@@ -30,7 +30,7 @@ export type StepsPhaseSlotSource = {
 
 /**
  * フェーズの行1つ。`groups` はそのフェーズで始まった手順の群（小見出しは行が持つので外してある）、
- * `stepCount` は群の手順の数、`open` は手順を開いて出すか（失敗した手順を含むフェーズだけ）。
+ * `stepCount` は群の手順の数。
  * `spanName`・`parallelLabel` は群の先頭・並列の先頭の行だけが持ち、ほかは空。
  */
 export type StepsPhaseRow = {
@@ -50,7 +50,6 @@ export type StepsPhaseRow = {
   readonly summary: string
   readonly groups: readonly CurrentWorkStepGroup[]
   readonly stepCount: number
-  readonly open: boolean
 }
 
 export type StepsPhaseRows = {
@@ -90,7 +89,6 @@ export function stepsPhaseRowsOf(
         summary: phase.state === "done" ? phase.summary : "",
         groups: bare,
         stepCount: bare.reduce((sum, group) => sum + group.steps.length, 0),
-        open: bare.some((group) => group.steps.some((step) => step.failure.kind === "failed")),
       }
     }),
   )

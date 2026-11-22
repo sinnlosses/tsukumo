@@ -19,7 +19,7 @@ const RECENT_STEP_COUNT = 2
 /**
  * 全体の詳細に並べる項目。
  * `done-fold` は畳んだ済みのフェーズの1行（`total` は全部測れたときの計の所要、無ければ空）、
- * `phase` はフェーズの行（`groups` は出す手順、`hiddenStepCount` は隠した手順の数）、
+ * `phase` はフェーズの行（`groups` は出す手順、`hiddenStepCount` は隠した手順の数、`open` は「手順 n」を開いて出すか。開くのは失敗した手順へ着地するときの、失敗した手順を持つフェーズだけ）、
  * `upcoming-rest` は見せなかったまだのフェーズの数。
  */
 export type StepsPlanItem =
@@ -29,6 +29,7 @@ export type StepsPlanItem =
       readonly row: StepsPhaseRow
       readonly groups: readonly CurrentWorkStepGroup[]
       readonly hiddenStepCount: number
+      readonly open: boolean
     }
   | { readonly kind: "upcoming-rest"; readonly count: number }
 
@@ -48,23 +49,25 @@ export function stepsPlanCardOf(source: StepsPlanSource): readonly StepsPlanItem
   const done = rows.filter((row) => row.state === "done")
   const folded = !finished && done.length >= FOLD_DONE_FROM && !isDoneOpened(source, done)
   const items: StepsPlanItem[] = []
+  const landsOn = (row: StepsPhaseRow): boolean =>
+    source.landing.kind === "failure" && hasFailedStep(row)
   let upcomingSeen = 0
   for (const row of rows) {
     if (row.state === "done") {
       if (!folded) {
-        items.push(phaseItemOf(row, row.groups, 0))
+        items.push(phaseItemOf(row, row.groups, 0, landsOn(row)))
       } else if (!items.some((item) => item.kind === "done-fold")) {
         items.push({ kind: "done-fold", count: done.length, total: totalOf(done) })
       }
     } else if (row.state === "upcoming") {
       upcomingSeen += 1
       if (finished || upcomingSeen <= UPCOMING_SHOWN) {
-        items.push(phaseItemOf(row, row.groups, 0))
+        items.push(phaseItemOf(row, row.groups, 0, false))
       }
     } else {
-      const showAll = stepsExpanded || (source.landing.kind === "failure" && hasFailedStep(row))
+      const showAll = stepsExpanded || landsOn(row)
       const shown = showAll ? row.groups : lastStepsOf(row.groups, RECENT_STEP_COUNT)
-      items.push(phaseItemOf(row, shown, row.stepCount - stepCountOf(shown)))
+      items.push(phaseItemOf(row, shown, row.stepCount - stepCountOf(shown), landsOn(row)))
     }
   }
   if (!finished && upcomingSeen > UPCOMING_SHOWN) {
@@ -85,8 +88,9 @@ function phaseItemOf(
   row: StepsPhaseRow,
   groups: readonly CurrentWorkStepGroup[],
   hiddenStepCount: number,
+  open: boolean,
 ): StepsPlanItem {
-  return { kind: "phase", row, groups, hiddenStepCount }
+  return { kind: "phase", row, groups, hiddenStepCount, open }
 }
 
 function stepCountOf(groups: readonly CurrentWorkStepGroup[]): number {

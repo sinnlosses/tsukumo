@@ -83,24 +83,6 @@ describe("stepsPhaseRowsOf", () => {
     ])
   })
 
-  it("済んだフェーズも今のフェーズ・答え待ちのフェーズも手順は畳む", () => {
-    const groups = [
-      group("g0", [0], [step("a")]),
-      group("g1", [1], [step("b")]),
-      group("g2", [2], [step("c")]),
-    ]
-    const { rows } = stepsPhaseRowsOf(
-      [
-        slot([phase(0, { state: "done" })]),
-        slot([phase(1, { state: "current" })]),
-        slot([phase(2, { state: "asking" })]),
-      ],
-      groups,
-    )
-
-    expect(rows.map((row) => row.open)).toEqual([false, false, false])
-  })
-
   it("まとめは済んだ行にだけ写る", () => {
     const { rows } = stepsPhaseRowsOf(
       [
@@ -111,15 +93,6 @@ describe("stepsPhaseRowsOf", () => {
     )
 
     expect(rows.map((row) => row.summary)).toEqual(["架空のまとめ", ""])
-  })
-
-  it("失敗した手順を持つ済んだフェーズは、行き先の行が見えるよう開く", () => {
-    const { rows } = stepsPhaseRowsOf(
-      [slot([phase(0, { state: "done" })])],
-      [group("g0", [0], [step("a", true)])],
-    )
-
-    expect(rows[0]?.open).toBe(true)
   })
 
   it("飛ばしたフェーズは所要を出さず印を持ち越し、並列のフェーズと群の名は先頭の行だけが持つ", () => {

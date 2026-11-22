@@ -133,7 +133,6 @@ const STEPS_ROW_BASE = {
   summary: "",
   groups: [],
   stepCount: 0,
-  open: false,
 } as const satisfies Partial<StepsPhaseRow>
 
 const WORKING_STRIP: WorkStripModel = {
@@ -252,6 +251,7 @@ export const MAIN_VIEW_EXAMPLES: readonly ScreenPartExample[] = [
             {
               kind: "phase",
               hiddenStepCount: 0,
+              open: false,
               groups: [],
               row: {
                 ...STEPS_ROW_BASE,
@@ -267,6 +267,7 @@ export const MAIN_VIEW_EXAMPLES: readonly ScreenPartExample[] = [
             {
               kind: "phase",
               hiddenStepCount: 0,
+              open: false,
               groups: [],
               row: {
                 ...STEPS_ROW_BASE,
