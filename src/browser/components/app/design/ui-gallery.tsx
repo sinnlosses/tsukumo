@@ -12,11 +12,13 @@ import { ExpandButton } from "../../ui/expand-button/expand-button.tsx"
 import { SaveButton } from "../../ui/expand-button/save-button.tsx"
 import { FirstNoteList } from "../../ui/first-note-list/first-note-list.tsx"
 import { Heading } from "../../ui/heading/heading.tsx"
+import { CheckIcon, CopyIcon } from "../../ui/icon/icon.tsx"
 import { Kbd } from "../../ui/kbd/kbd.tsx"
 import { List, ListItem } from "../../ui/list/list.tsx"
 import { MetadataList, MetadataListItem } from "../../ui/metadata-list/metadata-list.tsx"
 import { Note } from "../../ui/note/note.tsx"
 import { Quote } from "../../ui/quote/quote.tsx"
+import { SmallIconButton } from "../../ui/small-icon-button/small-icon-button.tsx"
 import { Step, Stepper } from "../../ui/stepper/stepper.tsx"
 import { Surface } from "../../ui/surface/surface.tsx"
 import {
@@ -155,6 +157,14 @@ export function UiGallery(): ReactElement {
       <Group title="ExpandButton（広げる）" parts={["expand-button"]}>
         <ExpandButton className="" onClick={() => {}} />
         <SaveButton placement="head" state="idle" className="" onClick={() => {}} />
+      </Group>
+      <Group title="SmallIconButton（絵だけの小さなボタン）" parts={["small-icon-button"]}>
+        <SmallIconButton label="コピー" tooltip="コピー" onClick={() => {}}>
+          <CopyIcon />
+        </SmallIconButton>
+        <SmallIconButton label="コピーした" tooltip="コピー" onClick={() => {}}>
+          <CheckIcon />
+        </SmallIconButton>
       </Group>
       <Group title="Heading・Text（字の段）" parts={["heading", "text"]}>
         <Heading level={3} size="heading" tone="ink" weight="bold" className="">

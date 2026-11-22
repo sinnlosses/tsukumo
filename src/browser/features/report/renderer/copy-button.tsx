@@ -1,28 +1,24 @@
 // フェンス付きコードブロックの `text`（全文。shell の塊はコマンドだけ）をクリップボードへ写すボタン。
-// 写ったことは、短い間だけ文字を「コピーした」に変えて示す。
+// 写ったことは、短い間だけ絵を check に変えて示す。
 
-import { Check, Copy } from "lucide-react"
 import { useState, type ReactElement } from "react"
 
-import { Button } from "../../../components/ui/button/button.tsx"
+import { CheckIcon, CopyIcon } from "../../../components/ui/icon/icon.tsx"
+import { SmallIconButton } from "../../../components/ui/small-icon-button/small-icon-button.tsx"
 import { reportExportMark } from "../report-export-copy.ts"
 import styles from "./report-notation.module.css"
 
-/** 「コピーした」の文字を保つ長さ（ミリ秒）。 */
-const COPIED_LABEL_DURATION_MS = 1500
+/** 写した印（check の絵）を保つ長さ（ミリ秒）。 */
+const COPIED_MARK_DURATION_MS = 1500
 
 export function CopyButton(props: { readonly text: string }): ReactElement {
   const [copied, setCopied] = useState(false)
 
   return (
     <span {...reportExportMark.drop} className={styles["report-export-drop"]}>
-      <Button
-        variant="ghost-hover-accent"
-        size="label"
-        pressed="none"
-        disabled={false}
-        disclosure={{ kind: "none" }}
-        className={styles["code-copy"]}
+      <SmallIconButton
+        label={copied ? "コピーした" : "コピー"}
+        tooltip="コピー"
         onClick={() => {
           void navigator.clipboard
             .writeText(props.text)
@@ -30,25 +26,15 @@ export function CopyButton(props: { readonly text: string }): ReactElement {
               setCopied(true)
               setTimeout(() => {
                 setCopied(false)
-              }, COPIED_LABEL_DURATION_MS)
+              }, COPIED_MARK_DURATION_MS)
             })
             .catch(() => {
-              // クリップボードへ書けなかったときは「コピーした」表示を出さないだけにする
+              // クリップボードへ書けなかったときは写した印を出さないだけにする
             })
         }}
       >
-        {copied ? (
-          <>
-            <Check size={12} strokeWidth={2} aria-hidden="true" />
-            コピーした
-          </>
-        ) : (
-          <>
-            <Copy size={12} strokeWidth={2} aria-hidden="true" />
-            コピー
-          </>
-        )}
-      </Button>
+        {copied ? <CheckIcon /> : <CopyIcon />}
+      </SmallIconButton>
     </span>
   )
 }

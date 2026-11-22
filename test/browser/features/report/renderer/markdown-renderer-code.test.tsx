@@ -252,25 +252,25 @@ describe("Markdown（shell の塊）", () => {
     expect(await copiedText("```bash\nls -la\ncd /tmp\n```")).toEqual(["ls -la\ncd /tmp"])
   })
 
-  it("写すとボタンの文字が短いあいだ「コピーした」に変わり、やがて戻る", async () => {
+  it("写すとボタンの名前が短いあいだ「コピーした」に変わり、やがて戻る", async () => {
     vi.useFakeTimers()
     try {
       stubClipboardWriteText()
       const { container } = render(<Markdown text={"```bash\n$ pwd\n/tmp\n```"} />)
       const button = typedElement(
-        container.querySelector(".code-copy"),
+        container.querySelector("pre button"),
         HTMLButtonElement,
         "コピーのボタン",
       )
 
-      expect(button.textContent).toBe("コピー")
+      expect(button.getAttribute("aria-label")).toBe("コピー")
       await clickButton(button, "コピーのボタン")
-      expect(button.textContent).toBe("コピーした")
+      expect(button.getAttribute("aria-label")).toBe("コピーした")
 
       act(() => {
         vi.advanceTimersByTime(1500)
       })
-      expect(button.textContent).toBe("コピー")
+      expect(button.getAttribute("aria-label")).toBe("コピー")
     } finally {
       vi.useRealTimers()
     }
