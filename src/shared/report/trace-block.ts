@@ -11,7 +11,7 @@ const TRACE_STATUSES = ["ok", "ng", "notStarted"] as const
 const traceItemSchema = z.object({
   title: partCardNote(inlineText, "した手を1行で"),
   status: z.enum(TRACE_STATUSES),
-  supplement: partCardNote(omittable(z.string(), ""), "右に添える所要・差分の行数・場所"),
+  supplement: partCardNote(omittable(z.string(), ""), "題の下に添える所要・差分の行数・場所"),
   output: partCardNote(
     omittable(z.string(), ""),
     "開いて見るコマンドの出力やコードの字（記法なし）",
