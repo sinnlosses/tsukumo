@@ -29,7 +29,7 @@
   height: 20px;
   background-color: color-mix(in srgb, var(--accent) 22%, var(--surface));
   color: var(--accent);
-  font-size: 12px;
+  font-size: var(--font-secondary);
   font-weight: 700;
 }
 .stepper[data-emphasis="sequence"] :global(.astryx-step-connector),
