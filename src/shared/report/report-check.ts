@@ -9,8 +9,13 @@ export const reportCheckSchema = z.object({
   status: z.enum(REPORT_CHECK_STATUSES),
   label: partCardNote(z.string(), "何で確かめたか（コマンド・テスト・手で見た場面）"),
   figure: partCardNote(
-    z.string().describe("結果を1つの数で（例: 単体 2855・E2E 57）。無ければ空文字"),
+    z
+      .string()
+      .describe(
+        "結果を単位つきの1つの数で（例: 2855 件）。label と並べて何の数か読めなければ空文字",
+      ),
     "56 件中 1 件・ずれ 2px のように数だけを書き、「が通過」のような述語は付けない。" +
+      "label の横に出るので、label と並べて何の数か読めるものだけ書く（「5体」「2コミット」のような数は空文字）。" +
       "「2849 / 56」のような割り算や分数に見える書き方はしない。行の右に描く",
   ),
   command: partCardNote(

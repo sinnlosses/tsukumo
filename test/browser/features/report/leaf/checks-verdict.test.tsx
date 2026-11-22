@@ -98,7 +98,9 @@ describe("ChecksVerdict（面の合図の行）", () => {
     const rendered = verdictOf(regionsOf(MIXED, ""))
 
     expect(rendered.textNodes).toContain("確かめたこと 5件")
-    expect(rendered.textNodes).toContain("通った 2・確かめていない 1・止まっている 1・落ちた 1")
+    expect(rendered.textNodes).toContain(
+      "通った 2/5・確かめていない 1/5・止まっている 1/5・落ちた 1/5",
+    )
     expect(rendered.textNodes).toContain("単体 12")
     expect(rendered.textNodes.filter((text) => text.startsWith("✓ "))).toEqual(["✓ 通った 2件"])
   })

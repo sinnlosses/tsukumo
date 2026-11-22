@@ -19,7 +19,7 @@ export function ExpandButton(props: ExpandButtonProps): ReactElement {
   return (
     <span className={props.className}>
       <Button
-        variant="ghost-hover-rule-soft"
+        variant="outline-surface"
         size="label"
         pressed="none"
         disabled={false}

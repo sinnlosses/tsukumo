@@ -35,7 +35,8 @@ export function RecordedMark(props: {
 }
 
 /**
- * 検証のまとめの1行。「確かめたこと n件」「通った a・確かめていない b」「単体 …・E2E …」を字で言う。
+ * 検証のまとめの1行。「確かめたこと n件」「通った a/n・確かめていない b/n」を字で言う。
+ * 項目ごとの figure は label と並ぶ一覧の側にだけ出す（label から離すと何の数か読めない）。
  * 欄の題「確かめたこと」の中に置くときは leadWord を false にして件数だけにする。
  */
 export function ChecksTotalLine(props: {
@@ -43,22 +44,21 @@ export function ChecksTotalLine(props: {
   readonly leadWord?: boolean
 }): ReactElement {
   const { leadWord = true } = props
-  const { passedCount, figures, problems } = props.summary
+  const { passedCount, problems } = props.summary
   const total = problems.reduce((sum, { count }) => sum + count, passedCount)
+  const ofTotal = (count: number): string => `${String(count)}/${String(total)}`
   const verdicts = [
-    ...(passedCount > 0 ? [`通った ${String(passedCount)}`] : []),
+    ...(passedCount > 0 ? [`通った ${ofTotal(passedCount)}`] : []),
     ...problems.map(
-      ({ status, count }) => `${REPORT_CHECK_PROBLEM_WORDS[status]} ${String(count)}`,
+      ({ status, count }) => `${REPORT_CHECK_PROBLEM_WORDS[status]} ${ofTotal(count)}`,
     ),
   ]
-  const figureText = figures.map(plainInline).join("・")
   return (
     <div className={styles.total}>
       <span className={styles["total-lead"]}>
         {`${leadWord ? "確かめたこと " : ""}${String(total)}件`}
       </span>
       {verdicts.length > 0 && <span>{verdicts.join("・")}</span>}
-      {figureText !== "" && <span className={styles["total-figures"]}>{figureText}</span>}
     </div>
   )
 }

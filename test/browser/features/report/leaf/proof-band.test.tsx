@@ -57,7 +57,6 @@ function checksOf(
     kind: "checks",
     summary: {
       passedCount: passedRows.length,
-      figures: ["単体 12", "E2E 3"],
       problems: problems.length === 0 ? [] : [{ status: "ng", count: problems.length }],
       favor: { kind: "none" },
     },
@@ -95,14 +94,12 @@ describe("検証のまとめ", () => {
     expect(container.querySelector("[data-proof]")).toBeNull()
     expect(screen.getByText("2件")).toBeTruthy()
     expect(container.textContent?.split("確かめたこと").length).toBe(2)
-    expect(screen.getByText("通った 1・落ちた 1")).toBeTruthy()
-    expect(screen.getByText("単体 12・E2E 3")).toBeTruthy()
+    expect(screen.getByText("通った 1/2・落ちた 1/2")).toBeTruthy()
   })
 
   it("欄の題の中に置く形は、語を外して件数だけから始める", () => {
     const summary = {
       passedCount: 1,
-      figures: [],
       problems: [{ status: "ng", count: 1 }],
       favor: { kind: "none" },
     } as const
@@ -161,6 +158,6 @@ describe("検証のまとめ", () => {
     )
 
     expect(screen.getByText("確かめたこと 1件")).toBeTruthy()
-    expect(screen.getByText("通った 1")).toBeTruthy()
+    expect(screen.getByText("通った 1/1")).toBeTruthy()
   })
 })

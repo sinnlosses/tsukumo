@@ -59,7 +59,6 @@ describe("reportChecksView", () => {
     expect(view.passed.map((row) => row.label)).toEqual(["架空の一（補足）", "架空の二"])
     expect(view.summary).toEqual({
       passedCount: 2,
-      figures: ["12 件"],
       problems: [
         { status: "unobserved", count: 1 },
         { status: "blocked", count: 1 },

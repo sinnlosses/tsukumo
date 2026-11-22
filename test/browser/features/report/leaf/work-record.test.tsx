@@ -50,7 +50,6 @@ const CHECKS: ReportChecksView = {
   kind: "checks",
   summary: {
     passedCount: 1,
-    figures: [],
     problems: [{ status: "unobserved", count: 1 }],
     favor: { kind: "none" },
   },
@@ -194,7 +193,6 @@ describe("作業の記録", () => {
       kind: "checks",
       summary: {
         passedCount: 0,
-        figures: [],
         problems: [{ status: "ng", count: 1 }],
         favor: { kind: "none" },
       },

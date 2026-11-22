@@ -3,6 +3,9 @@
   align-items: center;
   gap: var(--inline-tight);
 }
+.target {
+  font-size: var(--font-label);
+}
 @media (max-width: 760px) {
   .label {
     display: none;

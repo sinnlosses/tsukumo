@@ -64,7 +64,7 @@ export type ReportCheckPassedRow = {
 
 /**
  * 検証結果の値。項目が無ければ `none`。
- * 総括行の `figures` は通った項目の空でない figure（前後の空白を落とす）、`problems` は総括行に並べる順の状態ごとの件数で、件数 0 の状態は持たない。
+ * 総括行の `problems` は総括行に並べる順の状態ごとの件数で、件数 0 の状態は持たない。
  * `problems` の行は ng → blocked → unobserved の順、`passed` の行は入力の順。
  */
 export type ReportChecksView =
@@ -73,7 +73,6 @@ export type ReportChecksView =
       readonly kind: "checks"
       readonly summary: {
         readonly passedCount: number
-        readonly figures: readonly string[]
         readonly problems: readonly {
           readonly status: ReportCheckProblemStatus
           readonly count: number
@@ -137,7 +136,6 @@ export function reportChecksView(
     kind: "checks",
     summary: {
       passedCount: passed.length,
-      figures: passed.map((check) => check.figure.trim()).filter((figure) => figure !== ""),
       problems: REPORT_CHECK_SUMMARY_ORDER.flatMap((status) => {
         const count = problemChecks.filter((check) => check.status === status).length
         return count === 0 ? [] : [{ status, count }]

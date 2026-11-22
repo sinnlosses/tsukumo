@@ -3,6 +3,9 @@
   align-items: center;
   gap: var(--inline-tight);
 }
+.target {
+  font-size: var(--font-label);
+}
 .bar {
   padding: var(--inline-tight) var(--inline-control);
   border-radius: var(--radius-md);

@@ -1,5 +1,5 @@
 // 最終レポートを HTML で保存する口。印と字の1つの形で、「広げる」（`ExpandButton`）と同じ置き場に並ぶ。
-// `head` は紙の頭の右端（控えめな字のボタン）、`bar` は広げた板の下端の帯（「閉じる」と同じ outline-surface）。
+// `head` は紙の頭の右端（枠つきの小さな字のボタン）、`bar` は広げた板の下端の帯（「閉じる」と同じ outline-surface）。
 // 保存している間は押せず、字が「保存しています」に替わる。済んだら「保存した」。
 
 import type { ReactElement } from "react"
@@ -51,7 +51,7 @@ export function SaveButton(props: SaveButtonProps): ReactElement {
   return (
     <span className={props.className}>
       <Button
-        variant="ghost-hover-rule-soft"
+        variant="outline-surface"
         size="label"
         pressed="none"
         disabled={disabled}

@@ -658,12 +658,11 @@
                                     {
                                       "tag": "button",
                                       "attributes": {
-                                        "data-variant": "ghost",
+                                        "data-variant": "secondary",
                                         "data-size": "sm",
                                         "data-elevation": "none",
                                         "data-astryx-pressable": "",
                                         "aria-label": "HTML で保存",
-                                        "data-astryx-edge-comp": "",
                                         "type": "button"
                                       },
                                       "children": [
@@ -693,13 +692,12 @@
                                     {
                                       "tag": "button",
                                       "attributes": {
-                                        "data-variant": "ghost",
+                                        "data-variant": "secondary",
                                         "data-size": "sm",
                                         "data-elevation": "none",
                                         "data-astryx-pressable": "",
                                         "aria-haspopup": "dialog",
                                         "aria-label": "広げる",
-                                        "data-astryx-edge-comp": "",
                                         "type": "button"
                                       },
                                       "children": [
@@ -756,8 +754,7 @@
                                                   },
                                                   "children": [
                                                     "確かめたこと 3件",
-                                                    "通った 1・確かめていない 1・落ちた 1",
-                                                    "1234 件",
+                                                    "通った 1/3・確かめていない 1/3・落ちた 1/3",
                                                     {
                                                       "tag": "div",
                                                       "attributes": {
