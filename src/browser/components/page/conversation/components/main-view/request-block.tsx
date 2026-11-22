@@ -1,6 +1,6 @@
-// 依頼を出す部品。見ているやり取りの依頼を、本文の頭に札の列と2行までの地の文で出す。
-// 札は slash コマンド・タスク（ID と題）・添えた画像の縮小版。地の文が3行以上のときだけ「全文」が出て、
-// 開くと元の文面の全文と画像が出て「畳む」で畳み直す。
+// 依頼を出す部品。見ているやり取りの依頼を、本文の頭に札の列・添えた画像の控え・2行までの地の文の順で出す。
+// 札は slash コマンドとタスク（ID と題）。地の文が3行以上のときだけ「全文」が出て、
+// 開くと元の文面の全文が出て「畳む」で畳み直す。
 // ページの中の本物の `h2` はこの塊の見出し1つ（レポートの `##` は `h4` に落とす）。
 
 import clsx from "clsx"
@@ -21,9 +21,6 @@ const REQUEST_LABEL = "依頼"
 const OPEN_LABEL = "全文"
 const COLLAPSE_LABEL = "畳む"
 
-/** 札の列に縮小版で並べる画像の上限。残りは「+n」の札にする。 */
-const MAX_THUMBNAILS = 3
-
 type RequestBlockProps = {
   readonly request: MainViewRequest
   readonly tasks: TaskSummaryResult
@@ -34,8 +31,7 @@ export function RequestBlock(props: RequestBlockProps): ReactElement {
   const { ref, clamped } = useClamped<HTMLParagraphElement>()
   const chips = requestChips(props.request.text, props.tasks)
   const images = props.request.images
-  const hasChips = chips.command !== undefined || chips.tasks.length > 0 || images.length > 0
-  const hiddenImageCount = Math.max(0, images.length - MAX_THUMBNAILS)
+  const hasChips = chips.command !== undefined || chips.tasks.length > 0
   const full = turnRequestLines(props.request).join("\n")
   const hasProse = chips.prose !== ""
 
@@ -61,24 +57,9 @@ export function RequestBlock(props: RequestBlockProps): ReactElement {
               <Chip className="">{task.summary}</Chip>
             </span>
           ))}
-          <PromptImageThumbnails images={images.slice(0, MAX_THUMBNAILS)} size="chip" />
-          {hiddenImageCount > 0 && (
-            <Button
-              variant="outline-ground"
-              size="label"
-              pressed="none"
-              disabled={false}
-              disclosure={{ kind: "none" }}
-              className={styles["request-more-images"]}
-              onClick={() => {
-                setExpanded(true)
-              }}
-            >
-              {`+${String(hiddenImageCount)}`}
-            </Button>
-          )}
         </div>
       )}
+      <PromptImageThumbnails images={images} />
       {(hasProse || expanded) && (
         <div className={styles["request-row"]}>
           <p className={clsx(styles["request-lines"], expanded && styles["is-expanded"])} ref={ref}>
@@ -107,7 +88,6 @@ export function RequestBlock(props: RequestBlockProps): ReactElement {
           )}
         </div>
       )}
-      {expanded && <PromptImageThumbnails images={images} size="full" />}
     </section>
   )
 }

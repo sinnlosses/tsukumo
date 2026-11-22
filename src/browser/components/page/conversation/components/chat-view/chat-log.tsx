@@ -74,7 +74,7 @@ export function ChatLog({
                 return (
                   <StreamPostRow key={row.key} time={row.time} speakerName="" className="">
                     {row.text}
-                    <PromptImageThumbnails images={row.images} size="compact" />
+                    <PromptImageThumbnails images={row.images} />
                   </StreamPostRow>
                 )
             }

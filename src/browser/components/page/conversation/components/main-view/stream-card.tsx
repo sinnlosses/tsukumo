@@ -40,7 +40,7 @@ export function PostRow(props: PostRowProps): ReactElement {
       {row.record.kind === "aside" ? (
         <>
           {row.record.text}
-          <PromptImageThumbnails images={row.record.images} size="compact" />
+          <PromptImageThumbnails images={row.record.images} />
         </>
       ) : (
         turn.request !== undefined && <RequestBlock request={turn.request} tasks={props.tasks} />

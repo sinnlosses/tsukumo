@@ -59,18 +59,10 @@
   width: auto;
   object-fit: contain;
 }
-/* 札の列に並ぶ控え。下の余白は札の列が持つ。 */
-.prompt-images-chip {
-  margin: 0;
-}
-.prompt-image.prompt-image-small {
-  height: 30px;
-  border-radius: var(--radius-sm);
-}
-/* メインビューの控え。
+/* 送ったあとの控え。
    高さで揃えず、控えの元の大きさ（長辺 320px）を上限に比率のまま描く。
    上限を超えて広げると、控えの画素を引き伸ばしてぼやける。 */
-.prompt-image-full {
+.prompt-image-posted {
   height: auto;
   max-width: min(100%, 20rem);
   max-height: 20rem;

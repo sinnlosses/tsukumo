@@ -96,20 +96,20 @@ describe("RequestBlock", () => {
     expect(screen.getByRole("button", { name: "全文" })).toBeDefined()
   })
 
-  it("画像は畳んだままで縮小版が見え、「全文」の理由にならない", () => {
+  it("画像は畳んだままで控えが見え、「全文」の理由にならない", () => {
     renderBlock("架空の依頼", { images: [image("a")] })
 
     expect(document.querySelectorAll("img")).toHaveLength(1)
     expect(screen.queryByRole("button", { name: "全文" })).toBeNull()
   })
 
-  it("4枚以上は3枚と「+n」になり、「+n」で開く", () => {
-    renderBlock("架空の依頼", { images: [image("a"), image("b"), image("c"), image("d")] })
+  it("「全文」で開いても、添えた画像は1枚ずつのまま", () => {
+    pretendClamped()
+    renderBlock("1行目\n2行目\n3行目", { images: [image("a"), image("b")] })
 
-    expect(document.querySelectorAll("img")).toHaveLength(3)
-    fireEvent.click(screen.getByRole("button", { name: "+1" }))
-    expect(document.querySelectorAll("img")).toHaveLength(7)
-    expect(screen.getByRole("button", { name: "畳む" })).toBeDefined()
+    expect(document.querySelectorAll("img")).toHaveLength(2)
+    fireEvent.click(screen.getByRole("button", { name: "全文" }))
+    expect(document.querySelectorAll("img")).toHaveLength(2)
   })
 
   it("ページの h2 はこの塊の1つ", () => {

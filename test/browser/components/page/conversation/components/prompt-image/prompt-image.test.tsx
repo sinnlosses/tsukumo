@@ -125,14 +125,14 @@ describe("PromptImageThumbnails", () => {
   })
 
   it("1枚も無ければ何も描かない", () => {
-    render(<PromptImageThumbnails images={[]} size="compact" />)
+    render(<PromptImageThumbnails images={[]} />)
 
     expect(document.querySelector(".prompt-images")).toBeNull()
   })
 
   it("控えを押すと、置き場の原寸を起動トークン付きの経路で拡大の面に開く", () => {
     setPageUrl("http://127.0.0.1:7517/?t=fictional-token")
-    render(<PromptImageThumbnails images={[RECORDED_A, RECORDED_B]} size="compact" />)
+    render(<PromptImageThumbnails images={[RECORDED_A, RECORDED_B]} />)
 
     expect(zoomDialog()).toBeNull()
     fireEvent.click(
@@ -151,7 +151,7 @@ describe("PromptImageThumbnails", () => {
 
   it("原寸を読めなかった（置き場から消えていた）ときは、控えを出して手放したことを1行添える", async () => {
     vi.stubGlobal("Image", UnreadableProbe)
-    render(<PromptImageThumbnails images={[RECORDED_A]} size="compact" />)
+    render(<PromptImageThumbnails images={[RECORDED_A]} />)
 
     fireEvent.click(screen.getByRole("button", { name: "この画像を拡大" }))
     await failZoomedImage()
@@ -163,7 +163,7 @@ describe("PromptImageThumbnails", () => {
 
   it("閉じてから開き直すと、また原寸を取りに行く", async () => {
     vi.stubGlobal("Image", UnreadableProbe)
-    render(<PromptImageThumbnails images={[RECORDED_A]} size="compact" />)
+    render(<PromptImageThumbnails images={[RECORDED_A]} />)
 
     fireEvent.click(screen.getByRole("button", { name: "この画像を拡大" }))
     await failZoomedImage()
@@ -200,7 +200,7 @@ describe("PromptImageThumbnails（続きから復元した依頼）", () => {
   it("棚に原寸が無ければ控えを描かない", async () => {
     vi.stubGlobal("Image", UnreadableImage)
     const client = createTestQueryClient()
-    render(<PromptImageThumbnails images={[RESTORED]} size="full" />, {
+    render(<PromptImageThumbnails images={[RESTORED]} />, {
       wrapper: queryClientWrapper(client),
     })
 

@@ -122,13 +122,6 @@ export function PromptImageChips(props: PromptImageChipsProps): ReactElement | u
 type PromptImageThumbnailsProps = {
   /** 控えと、置き場の原寸を指す id の組の並び（記録に残っているのはこれだけ）。 */
   readonly images: readonly RecordedPromptImage[]
-  /**
-   * 控えの大きさ。
-   * compact は札と同じ高さで揃える（雑談の吹き出しの中）。
-   * full は控えの元の大きさを上限に、比率のまま描く（メインビューの開いた依頼）。
-   * chip は札の列に並ぶ高さ約 30px の縮小版（メインビューの畳んだ依頼）。
-   */
-  readonly size: "compact" | "full" | "chip"
 }
 
 /**
@@ -148,18 +141,13 @@ export function PromptImageThumbnails(props: PromptImageThumbnailsProps): ReactE
 
   return (
     <>
-      <ul
-        className={clsx(
-          styles["prompt-images"],
-          props.size === "chip" && styles["prompt-images-chip"],
-        )}
-      >
+      <ul className={styles["prompt-images"]}>
         {props.images.map((image, index) => {
           const onZoom = (): void => setZoomedIndex(index)
           return image.kind === "sent" ? (
-            <ThumbnailItem key={image.id} src={image.thumbnail} size={props.size} onZoom={onZoom} />
+            <ThumbnailItem key={image.id} src={image.thumbnail} onZoom={onZoom} />
           ) : (
-            <RestoredThumbnailItem key={image.id} id={image.id} size={props.size} onZoom={onZoom} />
+            <RestoredThumbnailItem key={image.id} id={image.id} onZoom={onZoom} />
           )
         })}
       </ul>
@@ -183,7 +171,6 @@ export function PromptImageThumbnails(props: PromptImageThumbnailsProps): ReactE
 
 type ThumbnailItemProps = {
   readonly src: string
-  readonly size: PromptImageThumbnailsProps["size"]
   readonly onZoom: () => void
 }
 
@@ -201,11 +188,7 @@ function ThumbnailItem(props: ThumbnailItemProps): ReactElement {
         onClick={props.onZoom}
       >
         <img
-          className={clsx(
-            styles["prompt-image"],
-            props.size === "full" && styles["prompt-image-full"],
-            props.size === "chip" && styles["prompt-image-small"],
-          )}
+          className={clsx(styles["prompt-image"], styles["prompt-image-posted"])}
           src={props.src}
           alt={IMAGE_ALT}
         />
@@ -226,7 +209,7 @@ function RestoredThumbnailItem(
   if (thumbnail.kind !== "made") {
     return undefined
   }
-  return <ThumbnailItem src={thumbnail.src} size={props.size} onZoom={props.onZoom} />
+  return <ThumbnailItem src={thumbnail.src} onZoom={props.onZoom} />
 }
 
 /** 置き場の原寸を取りに行く URL。起動トークンはこのページの URL から引き継ぐ。 */
