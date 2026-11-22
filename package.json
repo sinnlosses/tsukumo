@@ -32,6 +32,7 @@
     "step-check": "node scripts/dev/step-check.ts",
     "ship": "node scripts/dev/ship.ts",
     "harness-replay": "node scripts/dev/harness-replay.ts",
+    "harness-replay-compare": "node scripts/dev/harness-replay-compare.ts",
     "test-against-base": "node scripts/dev/test-against-base.ts",
     "repo-map": "node scripts/dev/repo-map.ts",
     "find-missing-command": "node scripts/document/find-missing-command.ts",
