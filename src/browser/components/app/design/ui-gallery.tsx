@@ -270,10 +270,9 @@ export function UiGallery(): ReactElement {
       </Group>
       <Group title="Stepper（手順）" parts={["stepper"]}>
         <Stepper
-          activeStep={1}
+          progress={{ kind: "progress", activeStep: 1, emphasizeActive: false }}
           label="架空の手順"
           density="balanced"
-          emphasizeActive={false}
           textSize="standard"
         >
           <Step step={0} label="架空の1つ目">
@@ -285,15 +284,28 @@ export function UiGallery(): ReactElement {
           <Step step={2} label="架空の3つ目" />
         </Stepper>
         <Stepper
-          activeStep={1}
+          progress={{ kind: "progress", activeStep: 1, emphasizeActive: true }}
           label="強調つきの手順"
           density="compact"
-          emphasizeActive
           textSize="standard"
         >
           <Step step={0} label="済んだ段" />
           <Step step={1} label="今の段" />
           <Step step={2} label="これからの段" />
+        </Stepper>
+        <Stepper
+          progress={{ kind: "sequence" }}
+          label="進み具合の無い並び"
+          density="balanced"
+          textSize="standard"
+        >
+          <Step step={0} label="架空の受け取り" alwaysNumbered>
+            架空の受け取りの本文
+          </Step>
+          <Step step={1} label="架空の検査" alwaysNumbered>
+            架空の検査の本文
+          </Step>
+          <Step step={2} label="架空の記録" alwaysNumbered />
         </Stepper>
       </Group>
       <Group title="Collapsible（開いた形・閉じた形）" parts={["collapsible"]}>

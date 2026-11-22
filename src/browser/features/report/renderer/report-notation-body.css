@@ -105,8 +105,9 @@
   --report-figure-gap: var(--report-heading-gap);
 }
 .detail-block {
-  /* List の項目（`astryx-list-item`）は List が行の間を持つので、ここのあきを重ねない。 */
-  & li + li:where(:not(:global(.astryx-list-item))) {
+  /* List の項目（`astryx-list-item`）と Stepper の段（`astryx-step`）は部品が行の間を持つので、ここのあきを重ねない。
+     段に重ねると、横の並びで2段目から下へずれ、縦の並びで線が途切れる。 */
+  & li + li:where(:not(:global(.astryx-list-item)):not(:global(.astryx-step))) {
     margin-top: var(--space-xs);
   }
   /* 領域の内幅に入りきらない表は、その表だけ横に転がす（ページ全体は横スクロールさせない）。

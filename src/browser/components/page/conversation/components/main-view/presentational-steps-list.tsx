@@ -123,10 +123,9 @@ function PlanRun(props: { readonly run: PlanRun; readonly steps: WorkStripSteps 
     <div className={styles["work-strip-plan"]}>
       <Stepper
         label="フェーズ"
-        activeStep={activeStep}
+        progress={{ kind: "progress", activeStep, emphasizeActive: true }}
         density="compact"
         textSize="secondary"
-        emphasizeActive
       >
         {run.items.map((item, position) => (
           <PhaseRow

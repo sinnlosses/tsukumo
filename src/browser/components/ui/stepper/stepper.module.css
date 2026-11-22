@@ -12,3 +12,27 @@
   color: var(--ink-quiet);
   font-weight: 400;
 }
+
+/*
+ * 進み具合の無い順番の並び。Astryx は今より後の段を「これから」として題と番号を沈めるので、
+ * 題は地の色に、番号は差し色を薄く敷いた丸に、線は地の色を薄めた細い線にする。
+ * 横の並びでは Astryx が列を枠で包み、class は枠に、data-emphasis は列に付くので、両方の形で当てる。
+ */
+.stepper[data-emphasis="sequence"] :global(.astryx-step-label),
+.stepper [data-emphasis="sequence"] :global(.astryx-step-label) {
+  color: var(--ink);
+  font-weight: 600;
+}
+.stepper[data-emphasis="sequence"] :global(.astryx-step-indicator),
+.stepper [data-emphasis="sequence"] :global(.astryx-step-indicator) {
+  width: 20px;
+  height: 20px;
+  background-color: color-mix(in srgb, var(--accent) 22%, var(--surface));
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 700;
+}
+.stepper[data-emphasis="sequence"] :global(.astryx-step-connector),
+.stepper [data-emphasis="sequence"] :global(.astryx-step-connector) {
+  background-color: color-mix(in srgb, var(--ink) 18%, transparent);
+}

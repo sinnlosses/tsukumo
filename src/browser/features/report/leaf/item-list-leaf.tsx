@@ -111,10 +111,9 @@ function CheckMark(props: { readonly done: boolean }): ReactElement {
 function FlowList(props: { readonly items: readonly Item[] }): ReactElement {
   return (
     <Stepper
-      activeStep={-1}
+      progress={{ kind: "sequence" }}
       label="流れ"
       density="balanced"
-      emphasizeActive={false}
       textSize="standard"
       orientation={flowFitsRow(props.items) ? "horizontal" : "vertical"}
     >
