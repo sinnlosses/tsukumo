@@ -211,10 +211,11 @@
   }
   & .report-work-record-value {
     min-width: 0;
-    font-size: var(--font-subheading);
+    font-size: var(--font-secondary);
   }
   & .report-work-record-prose {
     margin: 0;
+    font-size: inherit;
     max-width: 38em;
     color: var(--ink);
   }
