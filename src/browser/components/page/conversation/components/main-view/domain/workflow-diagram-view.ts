@@ -9,6 +9,7 @@ import {
   type WorkflowDiagramArrowKind,
   type WorkflowDiagramBox,
   type WorkflowDiagramBoxState,
+  type WorkflowDiagramColumn,
   type WorkflowDiagramEnd,
 } from "./workflow-diagram.ts"
 
@@ -71,6 +72,33 @@ export function workflowAgentCountsOf(run: WorkflowRun): readonly WorkflowAgentC
     const count = states.filter((candidate) => candidate === state).length
     return count === 0 ? [] : [{ state, count, label: `${STATE_WORD[state]} ${String(count)}` }]
   })
+}
+
+/**
+ * 見出しに色を付ける列か。依頼が済んでいれば最後の列、ワークプランの今のフェーズ（`planCurrentKey`）が図の列ならその列、
+ * どちらでもなければ図が決めた今の列（エージェントの載らない後ろの列は、エージェントの状態からは今の列にならない）。
+ */
+export function workflowIsCurrentColumn(
+  column: WorkflowDiagramColumn,
+  columns: readonly WorkflowDiagramColumn[],
+  finished: boolean,
+  planCurrentKey?: string,
+): boolean {
+  if (finished) {
+    return columns.at(-1) === column
+  }
+  if (planCurrentKey !== undefined && columns.some((other) => other.key === planCurrentKey)) {
+    return column.key === planCurrentKey
+  }
+  return column.kind === "agents" && column.current
+}
+
+/** エージェントの載らない列の箱の一言。依頼が済めば「済み」、今の列なら「いま」、ほかは「これから」。 */
+export function workflowUpcomingNoteOf(finished: boolean, current: boolean): string {
+  if (finished) {
+    return "済み"
+  }
+  return current ? "いま" : "これから"
 }
 
 /** 矢印の端の鍵。端に当たる要素の `data-diagram-end` と同じ値。 */

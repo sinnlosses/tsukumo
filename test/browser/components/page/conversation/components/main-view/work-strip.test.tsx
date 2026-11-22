@@ -365,7 +365,7 @@ describe("WorkStrip（下線の区間）", () => {
     expect(afterToggle.map((element) => element === null)).toEqual([false, true])
   })
 
-  it("一覧は全フェーズを順に並べ、済んだ段の手順は畳み、今の段の手順は開き、まだの段は名前だけ", () => {
+  it("一覧は全フェーズを順に並べ、済んだ段も今の段も手順は畳み、まだの段は名前だけ", () => {
     renderProgressed()
 
     openSteps()
@@ -378,7 +378,7 @@ describe("WorkStrip（下線の区間）", () => {
       row.querySelector("[aria-expanded]")?.getAttribute("aria-expanded")
     expect(rows.map((row) => [stateOf(row), openOf(row)])).toEqual([
       ["done", "false"],
-      ["current", "true"],
+      ["current", "false"],
       ["upcoming", undefined],
     ])
     const [a, b, c] = rows.map((row) => row.closest("li")?.textContent)
@@ -409,7 +409,7 @@ describe("WorkStrip（下線の区間）", () => {
     expect(row?.closest("li")?.textContent).toContain("架空の段A（飛ばした）")
   })
 
-  it("答え待ちの今の区間も押せて、詳細は「答え待ち」と言い、一覧の行は開いた手順を持つ", () => {
+  it("答え待ちの今の区間も押せて、詳細は「答え待ち」と言い、一覧の行は畳んだ手順を持つ", () => {
     renderProgressed([
       {
         kind: "pending-changed",
@@ -434,7 +434,7 @@ describe("WorkStrip（下線の区間）", () => {
     const row = screen
       .getByRole("region", { name: "依頼の手順" })
       .querySelector("[data-phase-state='asking']")
-    expect(row?.querySelector("button[aria-expanded]")?.getAttribute("aria-expanded")).toBe("true")
+    expect(row?.querySelector("button[aria-expanded]")?.getAttribute("aria-expanded")).toBe("false")
   })
 
   it("並列のフェーズは区間1つで、名前を「・」でつなぎ、押すと詳細が開く", () => {

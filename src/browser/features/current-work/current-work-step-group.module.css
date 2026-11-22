@@ -28,8 +28,14 @@
 .current-work-step-failed {
   color: var(--ink);
 }
+/* 印は手順の字（`--font-label`）と同じ高さにする。`Icon` の sm のままだと字より一回り大きい。 */
 .current-work-step-mark {
-  display: inline-block;
+  display: inline-flex;
+  font-size: var(--font-label);
+}
+.current-work-step-mark svg {
+  width: 1em;
+  height: 1em;
 }
 /* 実行中の印だけ回す（`prefers-reduced-motion: reduce` では `reduced-motion.css` の全体の規則が止める）。 */
 .current-work-step-mark-running {

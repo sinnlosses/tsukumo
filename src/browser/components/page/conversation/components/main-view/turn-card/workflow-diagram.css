@@ -38,10 +38,10 @@
   position: relative;
   display: flex;
   align-items: flex-start;
-  gap: var(--inline-group);
+  gap: calc(2 * var(--inline-group));
 }
 .workflow-diagram-stage[data-has-start="true"] {
-  padding-inline-start: calc(2 * var(--inline-group));
+  padding-inline-start: calc(3 * var(--inline-group));
 }
 /* 箱より先に置き、箱の地が線の上に来るようにする。 */
 .workflow-diagram-arrows {

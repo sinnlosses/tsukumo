@@ -52,6 +52,8 @@ function exampleSteps(): WorkStripSteps {
             ["実装", "9分48秒"],
             ["受け入れ", "4分08秒〜"],
           ]),
+          finished: false,
+          planCurrentKey: "受け入れ",
           diagram: {
             columns: [
               {

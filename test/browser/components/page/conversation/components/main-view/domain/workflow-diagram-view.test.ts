@@ -6,10 +6,13 @@ import {
   workflowBoxLabelOf,
   workflowBoxNoteOf,
   workflowDiagramEndKeyOf,
+  workflowIsCurrentColumn,
+  workflowUpcomingNoteOf,
 } from "../../../../../../../../src/browser/components/page/conversation/components/main-view/domain/workflow-diagram-view.ts"
 import type {
   WorkflowDiagramArrow,
   WorkflowDiagramBox,
+  WorkflowDiagramColumn,
 } from "../../../../../../../../src/browser/components/page/conversation/components/main-view/domain/workflow-diagram.ts"
 import type {
   WorkflowRun,
@@ -164,5 +167,38 @@ describe("workflowBoxNoteOf", () => {
     [box({ state: "running" }), ""],
   ])("%o は「%s」", (given, expected) => {
     expect(workflowBoxNoteOf(given)).toBe(expected)
+  })
+})
+
+describe("workflowIsCurrentColumn", () => {
+  const columns: readonly WorkflowDiagramColumn[] = [
+    { kind: "agents", key: "accept", name: "accept", current: false, boxes: [] },
+    { kind: "agents", key: "retrospect", name: "retrospect", current: true, boxes: [] },
+    { kind: "upcoming", key: "ship", name: "ship" },
+  ]
+  const currentKeysOf = (finished: boolean, planCurrentKey?: string): readonly string[] =>
+    columns
+      .filter((column) => workflowIsCurrentColumn(column, columns, finished, planCurrentKey))
+      .map((column) => column.key)
+
+  it("依頼が済んだら最後の列だけ", () => {
+    expect(currentKeysOf(true, "retrospect")).toEqual(["ship"])
+  })
+  it("ワークプランの今のフェーズが図の列なら、エージェントの載らない列でもその列だけ", () => {
+    expect(currentKeysOf(false, "ship")).toEqual(["ship"])
+  })
+  it("今のフェーズが図の列でないか無ければ、図の今の列", () => {
+    expect(currentKeysOf(false, "plan")).toEqual(["retrospect"])
+    expect(currentKeysOf(false)).toEqual(["retrospect"])
+  })
+})
+
+describe("workflowUpcomingNoteOf", () => {
+  it.each<[boolean, boolean, string]>([
+    [true, false, "済み"],
+    [false, true, "いま"],
+    [false, false, "これから"],
+  ])("済んだ %s・今の列 %s なら「%s」", (finished, current, expected) => {
+    expect(workflowUpcomingNoteOf(finished, current)).toBe(expected)
   })
 })

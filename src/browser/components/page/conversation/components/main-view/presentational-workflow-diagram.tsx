@@ -22,6 +22,8 @@ import {
   workflowBoxLabelOf,
   workflowBoxNoteOf,
   workflowDiagramEndKeyOf,
+  workflowIsCurrentColumn,
+  workflowUpcomingNoteOf,
 } from "./domain/workflow-diagram-view.ts"
 import type {
   WorkflowDiagram,
@@ -150,6 +152,8 @@ function WorkflowItem(props: {
         taskId={workflow.taskId}
         diagram={view.diagram}
         columnDurations={view.columnDurations}
+        finished={view.finished}
+        {...(view.planCurrentKey === undefined ? {} : { planCurrentKey: view.planCurrentKey })}
         selectedIndex={view.hand?.index}
         steps={steps}
       />
@@ -176,6 +180,8 @@ function DiagramStage(props: {
   readonly taskId: TaskId
   readonly diagram: WorkflowDiagram
   readonly columnDurations: ReadonlyMap<string, string>
+  readonly finished: boolean
+  readonly planCurrentKey?: string
   readonly selectedIndex?: number
   readonly steps: WorkStripSteps
 }): ReactElement {
@@ -240,16 +246,26 @@ function DiagramStage(props: {
           </div>
         </div>
       )}
-      {diagram.columns.map((column) => (
-        <Column
-          key={column.key}
-          taskId={taskId}
-          column={column}
-          duration={props.columnDurations.get(column.key) ?? ""}
-          selectedIndex={props.selectedIndex}
-          steps={steps}
-        />
-      ))}
+      {diagram.columns.map((column) => {
+        const current = workflowIsCurrentColumn(
+          column,
+          diagram.columns,
+          props.finished,
+          props.planCurrentKey,
+        )
+        return (
+          <Column
+            key={column.key}
+            taskId={taskId}
+            column={column}
+            duration={props.columnDurations.get(column.key) ?? ""}
+            current={current}
+            upcomingNote={workflowUpcomingNoteOf(props.finished, current)}
+            selectedIndex={props.selectedIndex}
+            steps={steps}
+          />
+        )
+      })}
       {paths.flatMap((path) =>
         path.labelAt === undefined
           ? []
@@ -276,11 +292,12 @@ function Column(props: {
   readonly taskId: TaskId
   readonly column: WorkflowDiagramColumn
   readonly duration: string
+  readonly current: boolean
+  readonly upcomingNote: string
   readonly selectedIndex?: number
   readonly steps: WorkStripSteps
 }): ReactElement {
-  const { column, steps, taskId } = props
-  const current = column.kind === "agents" && column.current
+  const { column, current, steps, taskId } = props
   return (
     <div className={styles["workflow-diagram-column"]}>
       <p className={styles["workflow-diagram-column-head"]} data-current={current}>
@@ -316,7 +333,7 @@ function Column(props: {
             className={styles["workflow-diagram-upcoming"]}
           >
             <Text element="span" size="label" tone="ink-quiet" weight="normal" className="">
-              {column.name} · これから
+              {column.name} · {props.upcomingNote}
             </Text>
           </Surface>
         </div>
@@ -375,7 +392,7 @@ function AgentBox(props: {
         <span className={styles["workflow-diagram-row"]}>
           <StatusDot tone={DOT_TONE[box.state]} label={label} />
           <span title={box.name} className={styles["workflow-diagram-name"]}>
-            <Text element="span" size="secondary" tone="ink" weight="semibold" className="">
+            <Text element="span" size="label" tone="ink" weight="semibold" className="">
               {box.name}
             </Text>
           </span>

@@ -83,7 +83,7 @@ describe("stepsPhaseRowsOf", () => {
     ])
   })
 
-  it("済んだフェーズの手順は畳み、今のフェーズ・答え待ちのフェーズは開く", () => {
+  it("済んだフェーズも今のフェーズ・答え待ちのフェーズも手順は畳む", () => {
     const groups = [
       group("g0", [0], [step("a")]),
       group("g1", [1], [step("b")]),
@@ -98,7 +98,7 @@ describe("stepsPhaseRowsOf", () => {
       groups,
     )
 
-    expect(rows.map((row) => row.open)).toEqual([false, true, true])
+    expect(rows.map((row) => row.open)).toEqual([false, false, false])
   })
 
   it("まとめは済んだ行にだけ写る", () => {

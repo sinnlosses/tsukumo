@@ -60,6 +60,10 @@ export type WorkStripWorkflow = {
         readonly kind: "open"
         readonly diagram: WorkflowDiagram
         readonly columnDurations: ReadonlyMap<string, string>
+        /** 依頼が済んだか。済んだら最後の列に色を付ける。 */
+        readonly finished: boolean
+        /** ワークプランの今のフェーズの id。 */
+        readonly planCurrentKey?: string
         readonly hand?: WorkflowAgentHand
       }
     | { readonly kind: "folded"; readonly agentCount: number; readonly duration: string }
@@ -138,6 +142,11 @@ export function workStripStepsOf(input: {
   const columnDurations = new Map(
     planRows.rows.flatMap((row) => columnKeyOf(row).map((key) => [key, row.duration] as const)),
   )
+  const planCurrentKeys = planRows.rows.flatMap((row) => {
+    const key = input.phaseIds[row.phaseIndex]
+    return (row.state === "current" || row.state === "asking") && key !== undefined ? [key] : []
+  })
+  const planCurrentKey = planCurrentKeys[0]
   const drawnTaskIds = new Set(drawn.map((workflow) => workflow.taskId))
   return {
     list,
@@ -150,7 +159,15 @@ export function workStripStepsOf(input: {
     onExpandSteps: input.onExpandSteps,
     workflows: drawn.map((workflow): WorkStripWorkflow => ({
       ...omit(workflow, ["phaseKeys"]),
-      view: workflow.view.kind === "open" ? { ...workflow.view, columnDurations } : workflow.view,
+      view:
+        workflow.view.kind === "open"
+          ? {
+              ...workflow.view,
+              columnDurations,
+              finished: input.finished,
+              ...(planCurrentKey === undefined ? {} : { planCurrentKey }),
+            }
+          : workflow.view,
     })),
     onUnfoldPhases: input.onUnfoldPhases,
     onUnfoldColumn: input.onUnfoldColumn,
