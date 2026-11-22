@@ -302,7 +302,7 @@ describe("preToolUseHooks（ワークフロースクリプトの中の手順を�
         "Bash",
         { command: "架空のコマンド", description: "架空の説明" },
         "wf-agent-1",
-        "tsukumo-workflow:no-delegate",
+        "tsukumo-workflow:implementer",
       ),
     ).toEqual([
       {

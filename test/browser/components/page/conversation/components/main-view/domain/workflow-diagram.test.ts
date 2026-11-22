@@ -80,7 +80,7 @@ const TASK_FLOW = runOf([
   finished(0, 0, 100, {
     phaseTitle: "implement",
     label: "実装",
-    agentType: "tsukumo-workflow:no-delegate",
+    agentType: "tsukumo-workflow:implementer",
     stepCount: 12,
   }),
   finished(1, 100, 50, {
@@ -91,7 +91,7 @@ const TASK_FLOW = runOf([
   finished(2, 150, 80, {
     phaseTitle: "accept",
     label: "直し",
-    agentType: "tsukumo-workflow:no-delegate",
+    agentType: "tsukumo-workflow:implementer",
   }),
   finished(3, 230, 40, {
     phaseTitle: "accept",

@@ -9,7 +9,7 @@ import type { WorkflowTwFailurePlace } from "../../core/session-driver.ts"
 import { runWorkflowTw, WORKFLOW_TW_TIMEOUT_MS, type WorkflowTwResult } from "./sdk-workflow-tw.ts"
 
 // plugin の `hooks/hooks.json` の `lap-hook` の matcher と同じ値。
-const START_MATCHER = "(^|:)(general-purpose|no-delegate|retrospector)$"
+const START_MATCHER = "(^|:)(general-purpose|implementer|no-delegate|retrospector)$"
 const STOP_MATCHER = "(^|:)(acceptor|retrospector)$"
 
 /** hook の入力 JSON を標準入力に渡して `lap-hook` を走らせる。 */

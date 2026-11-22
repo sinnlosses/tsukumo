@@ -36,7 +36,7 @@ async function runHook(
   const input = JSON.stringify({
     tool_name: "Bash",
     tool_input: { command, run_in_background: options.runInBackground },
-    ...(options.fromSubagent ? { agent_id: SUBAGENT_ID, agent_type: "no-delegate" } : {}),
+    ...(options.fromSubagent ? { agent_id: SUBAGENT_ID, agent_type: "implementer" } : {}),
   })
   const result = await runSubprocess(process.execPath, [HOOK_PATH], { input })
   return result.exitCode

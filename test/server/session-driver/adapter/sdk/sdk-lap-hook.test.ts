@@ -106,7 +106,7 @@ describe("withLapHook", () => {
   it("載せないときは SubagentStart・SubagentStop に matcher つきの1件を足し、PreToolUse など他のキーと元の表は変えない", () => {
     const merged = withLapHook(base, false, run, () => {})
     expect(merged.SubagentStart?.map((entry) => entry.matcher)).toEqual([
-      "(^|:)(general-purpose|no-delegate|retrospector)$",
+      "(^|:)(general-purpose|implementer|no-delegate|retrospector)$",
     ])
     expect(merged.SubagentStop?.map((entry) => entry.matcher)).toEqual([
       "(^|:)(acceptor|retrospector)$",
@@ -118,6 +118,19 @@ describe("withLapHook", () => {
 })
 
 describe("withLapHook と plugin の hooks.json", () => {
+  it("新しい名前の実装役（plugin 名つき）で SubagentStart の段が書かれ、受け入れ役では書かれない", () => {
+    const merged = withLapHook(
+      {},
+      false,
+      async () => ok(""),
+      () => {},
+    )
+    const start = new RegExp(merged.SubagentStart?.[0]?.matcher ?? "")
+    expect(start.test("tsukumo-workflow:implementer")).toBe(true)
+    expect(start.test("implementer")).toBe(true)
+    expect(start.test("tsukumo-workflow:acceptor")).toBe(false)
+  })
+
   it("載せないときの登録の組が、hooks.json の lap-hook の組と等しい", () => {
     const table = withLapHook(
       {},
