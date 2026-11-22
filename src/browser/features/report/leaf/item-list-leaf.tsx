@@ -78,7 +78,7 @@ function PlainList(props: {
   const numbered = props.style === "ordered"
   if (props.style === "check") {
     return (
-      <List hasDividers={false} numbered={false}>
+      <List hasDividers={false} numbered={false} textSize="standard">
         {entries}
       </List>
     )
@@ -86,7 +86,7 @@ function PlainList(props: {
   return (
     <FoldedList
       renderList={(shown: ReactNode) => (
-        <List hasDividers={false} numbered={numbered}>
+        <List hasDividers={false} numbered={numbered} textSize="standard">
           {shown}
         </List>
       )}
@@ -113,6 +113,8 @@ function FlowList(props: { readonly items: readonly Item[] }): ReactElement {
     <Stepper
       activeStep={-1}
       label="流れ"
+      density="balanced"
+      emphasizeActive={false}
       orientation={flowFitsRow(props.items) ? "horizontal" : "vertical"}
     >
       {props.items.map((item, index) => (

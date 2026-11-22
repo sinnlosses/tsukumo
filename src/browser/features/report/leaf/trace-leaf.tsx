@@ -41,7 +41,7 @@ export function TraceLeaf(props: {
   return (
     <ReportLeafFrame value={value} title="" fit={false}>
       <LeafFold fold={part.fold} empty={false}>
-        <List hasDividers numbered={false}>
+        <List hasDividers numbered={false} textSize="standard">
           {part.items.map((item, index) => (
             <TraceRow key={`${String(index)}:${item.title}`} item={item} />
           ))}
@@ -66,7 +66,7 @@ function TraceRow(props: { readonly item: TraceItem }): ReactElement {
         output.trim() === "" ? (
           heading
         ) : (
-          <Collapsible trigger={heading} defaultOpen={false}>
+          <Collapsible trigger={heading} defaultOpen={false} chevronPosition="end">
             <pre>{output}</pre>
           </Collapsible>
         )

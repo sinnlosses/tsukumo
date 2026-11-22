@@ -16,7 +16,7 @@ function leafWith(container: HTMLElement, text: string): Element | undefined {
 describe("List", () => {
   it("文字列のラベルは要素に包んで渡り、Astryx の1行で切る経路に乗らない", () => {
     const { container } = render(
-      <List hasDividers={false} numbered={false}>
+      <List hasDividers={false} numbered={false} textSize="standard">
         <ListItem label={LONG} />
       </List>,
     )
@@ -28,7 +28,7 @@ describe("List", () => {
 
   it("説明も要素に包んで渡り、印と右端を出す", () => {
     const { container } = render(
-      <List hasDividers numbered={false}>
+      <List hasDividers numbered={false} textSize="standard">
         <ListItem mark="●" label="題" description="説明" end="済" />
       </List>,
     )

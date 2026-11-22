@@ -1,0 +1,10 @@
+/* 題の強調。Astryx の題の span は進み具合を data-progress に持つので、それで今・済み・これからを分ける。 */
+.stepper[data-emphasis="active"] span[data-progress="in-progress"] {
+  color: var(--ink);
+  font-weight: 700;
+}
+.stepper[data-emphasis="active"] span[data-progress="completed"],
+.stepper[data-emphasis="active"] span[data-progress="not-started"] {
+  color: var(--ink-quiet);
+  font-weight: 400;
+}

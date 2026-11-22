@@ -34,7 +34,7 @@ export function ReportFold(props: {
 }): ReactElement {
   return (
     <div className={styles["report-details"]}>
-      <Collapsible trigger={props.trigger} defaultOpen={props.defaultOpen}>
+      <Collapsible trigger={props.trigger} defaultOpen={props.defaultOpen} chevronPosition="end">
         {props.children}
       </Collapsible>
     </div>

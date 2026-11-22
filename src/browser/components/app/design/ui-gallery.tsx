@@ -248,7 +248,7 @@ export function UiGallery(): ReactElement {
         ))}
       </Group>
       <Group title="List（長いラベルは折り返す）" parts={["list"]}>
-        <List hasDividers numbered={false}>
+        <List hasDividers numbered={false} textSize="standard">
           <ListItem
             mark="●"
             label="架空の長いラベルの項目で、器の幅を越えても1行で切れずに折り返して全文が読めることを確かめるために、わざと同じような言い回しを重ねて長くしてある。折り返した2行目も、1行目の頭にそろって読める"
@@ -256,6 +256,10 @@ export function UiGallery(): ReactElement {
             end="済"
           />
           <ListItem label="短いラベル" />
+        </List>
+        <List hasDividers={false} numbered={false} textSize="compact">
+          <ListItem mark="✓" label="詰めた段。字は手順の行と同じ大きさ" end="済" />
+          <ListItem mark="●" label="詰めた段の2行目" description="説明の行も同じ字の大きさ" />
         </List>
       </Group>
       <Group title="MetadataList（名前と値）" parts={["metadata-list"]}>
@@ -265,7 +269,7 @@ export function UiGallery(): ReactElement {
         </MetadataList>
       </Group>
       <Group title="Stepper（手順）" parts={["stepper"]}>
-        <Stepper activeStep={1} label="架空の手順">
+        <Stepper activeStep={1} label="架空の手順" density="balanced" emphasizeActive={false}>
           <Step step={0} label="架空の1つ目">
             架空の1つ目の本文
           </Step>
@@ -274,13 +278,21 @@ export function UiGallery(): ReactElement {
           </Step>
           <Step step={2} label="架空の3つ目" />
         </Stepper>
+        <Stepper activeStep={1} label="強調つきの手順" density="compact" emphasizeActive>
+          <Step step={0} label="済んだ段" />
+          <Step step={1} label="今の段" />
+          <Step step={2} label="これからの段" />
+        </Stepper>
       </Group>
       <Group title="Collapsible（開いた形・閉じた形）" parts={["collapsible"]}>
-        <Collapsible trigger="開いた形" defaultOpen>
+        <Collapsible trigger="開いた形" defaultOpen chevronPosition="end">
           架空の本文。字の大きさは本文の段にそろう
         </Collapsible>
-        <Collapsible trigger="閉じた形" defaultOpen={false}>
+        <Collapsible trigger="閉じた形" defaultOpen={false} chevronPosition="end">
           架空の本文
+        </Collapsible>
+        <Collapsible trigger="印が前の形" defaultOpen chevronPosition="start">
+          架空の本文。山形の印が見出しの字の前に来る
         </Collapsible>
       </Group>
       <Group title="CodeBlock（長い行は横にスクロール）" parts={["code-block"]}>

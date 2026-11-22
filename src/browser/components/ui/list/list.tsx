@@ -11,12 +11,16 @@ export type ListProps = {
   readonly hasDividers: boolean
   /** 番号を振るか（`ol`）、振らないか（`ul`）。 */
   readonly numbered: boolean
+  /** 字の段。standard は Astryx の既定、compact は手順の行の字（`--font-label`）に詰める。 */
+  readonly textSize: "standard" | "compact"
   readonly children: ReactNode
 }
 
 export function List(props: ListProps): ReactElement {
   return (
     <AstryxList
+      className={styles["list"]}
+      data-text-size={props.textSize}
       density="compact"
       hasDividers={props.hasDividers}
       edge="flush"

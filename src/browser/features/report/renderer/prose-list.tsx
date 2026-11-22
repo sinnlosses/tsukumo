@@ -39,7 +39,7 @@ export function ProseList(props: {
 }): ReactElement {
   return (
     <ParentListContext value={props.numbered ? "numbered" : "bullet"}>
-      <List hasDividers={false} numbered={props.numbered}>
+      <List hasDividers={false} numbered={props.numbered} textSize="standard">
         {props.children}
       </List>
     </ParentListContext>

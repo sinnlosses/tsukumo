@@ -8,3 +8,13 @@
   line-height: var(--line-height-reading);
   overflow-wrap: anywhere;
 }
+
+/* 手順の行の字（`--font-label`）に詰めた段。Astryx の既定の字の大きさ・行の高さ・行の間隔を上書きする。 */
+.list[data-text-size="compact"] > li {
+  padding-block: 0.2em;
+}
+.list[data-text-size="compact"] .label,
+.list[data-text-size="compact"] .description {
+  font-size: var(--font-label);
+  line-height: 1.4;
+}

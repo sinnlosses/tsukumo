@@ -70,7 +70,7 @@ function ReportCodeBlock(props: { readonly codeNode: Element }): ReactElement {
         }
       />
       {labels.length > 0 && (
-        <List hasDividers={false} numbered={false}>
+        <List hasDividers={false} numbered={false} textSize="standard">
           {labels.map((label) => (
             <ListItem key={`${label.lines}-${label.text}`} mark={label.lines} label={label.text} />
           ))}

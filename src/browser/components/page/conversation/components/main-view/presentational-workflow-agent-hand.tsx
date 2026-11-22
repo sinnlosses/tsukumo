@@ -81,7 +81,7 @@ export function PresentationalWorkflowAgentHand(props: {
           </Text>
         </p>
         {shown.length > 0 && (
-          <List hasDividers={false} numbered={false}>
+          <List hasDividers={false} numbered={false} textSize="standard">
             {shown.map((step) => (
               <ListItem
                 key={step.key}

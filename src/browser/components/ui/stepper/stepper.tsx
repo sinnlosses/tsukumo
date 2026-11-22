@@ -3,6 +3,8 @@
 import { Step as AstryxStep, Stepper as AstryxStepper } from "@astryxdesign/core/Stepper"
 import type { ReactElement, ReactNode } from "react"
 
+import styles from "./stepper.module.css"
+
 export type StepperProps = {
   /** 今の手順の番号（0 始まり）。どれも今でないときは -1。 */
   readonly activeStep: number
@@ -10,12 +12,19 @@ export type StepperProps = {
   readonly label: string
   /** 並べる向き。省くと縦。 */
   readonly orientation?: "horizontal" | "vertical"
+  /** 行の詰め方（Astryx の既定は balanced）。 */
+  readonly density: "compact" | "balanced" | "spacious"
+  /** 今の段の題を太字・地の色に、済んだ段とこれからの段の題を控えめの色にするか。 */
+  readonly emphasizeActive: boolean
   readonly children: ReactNode
 }
 
 export function Stepper(props: StepperProps): ReactElement {
   return (
     <AstryxStepper
+      className={styles["stepper"]}
+      data-emphasis={props.emphasizeActive ? "active" : "none"}
+      density={props.density}
       activeStep={props.activeStep}
       label={props.label}
       orientation={props.orientation ?? "vertical"}
