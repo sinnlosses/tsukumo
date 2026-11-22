@@ -1,0 +1,665 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>リポジトリの地図 — 見本（2026-11-22）</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --ground: #191720;
+    --surface: #221f2b;
+    --ink: #e8e3ea;
+    --ink-bright: #f7f6f8;
+    --ink-soft: color-mix(in srgb, var(--ink) 72%, transparent);
+    --ink-quiet: color-mix(in srgb, var(--ink) 60%, transparent);
+    --accent: #f2b0a0;
+    --accent-soft: color-mix(in srgb, var(--accent) 16%, transparent);
+    --line: color-mix(in srgb, var(--ink) 12%, transparent);
+    --raised: color-mix(in srgb, var(--ink) 10%, transparent);
+    --panel: color-mix(in srgb, var(--surface) 45%, transparent);
+    --ok: #5fd38a;
+    --warn: #f2b544;
+    --ng: #ef6b6b;
+    --fox: #5fd3c4;
+    --mono: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body { margin: 0; background: #0f0e13; color: var(--ink); font: 14px/1.6 system-ui, -apple-system, "Hiragino Sans", sans-serif; }
+  button { font: inherit; color: inherit; }
+
+  .page-head { width: 1400px; margin: 0 auto; padding: 20px 0 12px; display: flex; flex-wrap: wrap; gap: 10px 20px; align-items: end; }
+  .page-head h1 { font-size: 20px; margin: 0; }
+  .page-head p { margin: 2px 0 0; color: var(--ink-soft); font-size: 13px; max-width: 640px; }
+  .scenes { margin-left: auto; display: flex; gap: 6px; flex-wrap: wrap; }
+  .scenes button { all: unset; cursor: pointer; padding: 4px 14px; border-radius: 999px; border: 1px solid var(--line); font-size: 13px; color: var(--ink-soft); }
+  .scenes button[aria-pressed="true"] { background: var(--accent-soft); color: var(--ink); border-color: transparent; }
+  .scenes button:focus-visible { outline: 2px solid var(--accent); }
+
+  /* ===== アプリの枠（1400×900） ===== */
+  .app {
+    position: relative; width: 1400px; height: 900px; margin: 0 auto; overflow: clip; border-radius: 10px; border: 1px solid var(--line);
+    background:
+      linear-gradient(color-mix(in srgb, var(--ground) 75%, transparent), color-mix(in srgb, var(--ground) 75%, transparent)),
+      url("../../../../characters/tsukumo/background.png") center / cover;
+  }
+  .topbar { position: absolute; inset: 0 0 auto 0; height: 40px; display: flex; align-items: center; gap: 14px; padding: 0 16px; border-bottom: 1px solid var(--line); background: color-mix(in srgb, var(--ground) 60%, transparent); }
+  .topbar .face { width: 24px; height: 24px; border-radius: 50%; background: url("../../../../characters/tsukumo/face.png") center / cover; }
+  .topbar .room { font-size: 16px; font-weight: 600; }
+  .topbar .mode { display: flex; gap: 4px; margin-left: 8px; }
+  .topbar .mode span { font-size: 13px; padding: 2px 10px; border-radius: 6px; color: var(--ink-soft); }
+  .topbar .mode span.on { background: var(--raised); color: var(--ink); }
+
+  .col { position: absolute; top: 56px; bottom: 17px; }
+  .left { left: 16px; width: 258px; display: flex; flex-direction: column; gap: 10px; }
+  .center { left: 284px; width: 795px; display: flex; flex-direction: column; gap: 10px; }
+  .right { left: 1088px; width: 296px; }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; backdrop-filter: blur(12px); }
+
+  /* 左の列 */
+  .nav { padding: 10px 8px; }
+  .nav h4 { margin: 0 6px 4px; font-size: 12px; color: var(--ink-quiet); font-weight: 500; }
+  .outline-row { display: flex; gap: 8px; align-items: center; padding: 6px 8px; border-radius: 8px; font-size: 13px; }
+  .outline-row.on { background: var(--raised); }
+  .outline-row .mk { width: 8px; height: 8px; border-radius: 50%; background: var(--ink-quiet); flex: none; }
+  .outline-row.on .mk { background: var(--accent); }
+  .portrait-area { position: relative; flex: 1; min-height: 0; overflow: clip; }
+  .portrait-area img { position: absolute; left: 50%; bottom: -8px; height: 108%; translate: -50% 0; object-fit: contain; filter: drop-shadow(0 8px 24px #0008); }
+
+  /* 中央の列 */
+  .pill { height: 38px; display: flex; align-items: center; gap: 10px; padding: 0 14px; border-radius: 999px; font-size: 13px; flex: none; }
+  .pill .bar { flex: 1; height: 3px; border-radius: 2px; background: var(--line); position: relative; overflow: hidden; }
+  .pill .bar i { position: absolute; inset: 0 auto 0 0; width: 100%; background: var(--ok); border-radius: 2px; }
+  .pill .meta { color: var(--ink-quiet); font-size: 12px; }
+  .main-area { flex: 1; min-height: 0; position: relative; }
+  .stream { position: absolute; inset: 0; overflow: auto; padding: 8px 8px 8px 6px; display: flex; flex-direction: column; gap: 14px; scrollbar-width: thin; }
+  .bubble-me { align-self: flex-end; max-width: 70%; padding: 10px 16px; border-radius: 14px; background: color-mix(in srgb, var(--ink) 14%, transparent); }
+  .paper { padding: 16px 20px; }
+  .paper .kicker { font-size: 12px; color: var(--ink-quiet); margin-bottom: 4px; }
+  .paper h2 { font-size: 17px; margin: 0 0 10px; line-height: 1.5; }
+  .paper h3 { font-size: 12px; margin: 14px 0 6px; color: var(--ink-quiet); font-weight: 600; }
+  .paper p { margin: 0 0 8px; font-size: 14px; }
+  .fig-cap { font-size: 12px; color: var(--ink-soft); margin: 0 0 6px; font-weight: 600; }
+  .files { display: grid; gap: 1px; }
+  .files .f { display: grid; grid-template-columns: 16px 1fr auto; gap: 8px; font: 12px/1.8 var(--mono); padding: 0 6px; border-radius: 6px; color: var(--ink-soft); transition: background .15s, opacity .15s; }
+  .files .f .k { font-weight: 700; text-align: center; }
+  .files .f .k.m { color: var(--warn); } .files .f .k.a { color: var(--ok); }
+  .files .f .b { color: var(--ink-quiet); font-family: inherit; }
+  .files.filtered .f { opacity: .35; }
+  .files.filtered .f.hit { opacity: 1; background: var(--accent-soft); color: var(--ink); }
+  .filter-note { font-size: 12px; color: var(--ink-quiet); margin: 0 0 4px; }
+  .filter-note b { color: var(--accent); font-weight: 600; }
+
+  /* 箱への参照（本文・セリフ・入力欄で同じ形） */
+  .ref {
+    all: unset; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; vertical-align: 1px;
+    font: 12px/1.5 var(--mono); padding: 0 7px 0 5px; border-radius: 6px;
+    background: color-mix(in srgb, var(--fox) 14%, transparent); color: color-mix(in srgb, var(--fox) 80%, white);
+    border: 1px solid color-mix(in srgb, var(--fox) 30%, transparent);
+  }
+  .ref::before { content: ""; width: 7px; height: 7px; border-radius: 2px; border: 1.5px solid currentColor; }
+  .ref:hover, .ref.hot, .ref:focus-visible { background: color-mix(in srgb, var(--fox) 26%, transparent); outline: none; }
+
+  .voice { flex: none; display: flex; gap: 10px; align-items: flex-start; padding: 0 4px; }
+  .voice .face { width: 28px; height: 28px; border-radius: 50%; background: url("../../../../characters/tsukumo/face.png") center / cover; flex: none; margin-top: 2px; }
+  .voice .say { padding: 6px 14px; border-radius: 14px; border: 1px solid var(--accent); background: color-mix(in srgb, var(--ground) 78%, transparent); font-size: 14px; }
+  .composer { flex: none; min-height: 104px; border-radius: 14px; border: 1.5px solid color-mix(in srgb, var(--accent) 70%, transparent); background: color-mix(in srgb, var(--surface) 70%, transparent); padding: 12px 18px; color: var(--ink-quiet); display: flex; flex-direction: column; gap: 6px; }
+  .composer .attach { display: flex; gap: 6px; flex-wrap: wrap; }
+  .composer .attach .ref { font-size: 12px; }
+  .composer .attach .x { margin-left: 2px; color: var(--ink-quiet); }
+  .composer .draft { color: var(--ink); }
+  .composer .caret { display: inline-block; width: 1.5px; height: 1.1em; background: var(--accent); vertical-align: -2px; margin-left: 1px; }
+  .next-cards { flex: none; display: flex; gap: 8px; }
+  .next-card { padding: 6px 12px; border-radius: 10px; background: var(--raised); font-size: 13px; border: 1px solid var(--line); }
+  .next-card small { display: block; font-size: 12px; color: var(--ink-quiet); }
+
+  /* ===== 地図（中央で広げた形） ===== */
+  .map-sheet { position: absolute; inset: 0; padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 10px; }
+  .map-head { display: flex; align-items: center; gap: 10px; }
+  .crumbs { display: flex; gap: 4px; align-items: center; font-size: 13px; }
+  .crumbs button { all: unset; cursor: pointer; padding: 2px 8px; border-radius: 6px; color: var(--ink-soft); }
+  .crumbs button:hover { background: var(--raised); }
+  .crumbs button[aria-current="true"] { color: var(--ink-bright); font-weight: 600; }
+  .crumbs .sl { color: var(--ink-quiet); }
+  .map-head .tools { margin-left: auto; display: flex; gap: 6px; }
+  .tbtn { all: unset; cursor: pointer; font-size: 12px; padding: 3px 10px; border-radius: 6px; border: 1px solid var(--line); color: var(--ink-soft); }
+  .tbtn:hover { background: var(--raised); }
+  .tbtn.on { background: var(--accent-soft); color: var(--ink); border-color: transparent; }
+  .map-stage { position: relative; flex: 1; border-radius: 10px; border: 1px solid var(--line); background:
+      radial-gradient(circle at 1px 1px, color-mix(in srgb, var(--ink) 10%, transparent) 1px, transparent 0) 0 0 / 20px 20px,
+      color-mix(in srgb, var(--ground) 70%, transparent); overflow: hidden; }
+  .map-foot { display: flex; gap: 14px; font-size: 12px; color: var(--ink-quiet); align-items: center; }
+  .map-foot .src { margin-left: auto; font-family: var(--mono); }
+
+  /* 地図の描画（共通） */
+  .map { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+  .map svg { position: absolute; inset: 0; overflow: visible; pointer-events: none; }
+  .map .edge { stroke: color-mix(in srgb, var(--ink) 34%, transparent); stroke-width: 1.5; fill: none; }
+  .map .edge.dash { stroke-dasharray: 5 4; }
+  .map .edge.lit { stroke: var(--fox); stroke-width: 2; }
+  .map .edge.drift { stroke: var(--ng); stroke-width: 2; stroke-dasharray: 6 4; }
+  .map .elabel { font: 11px system-ui, sans-serif; fill: var(--ink-quiet); paint-order: stroke; stroke: #1a1820; stroke-width: 4px; }
+  .map .elabel.drift { fill: var(--ng); }
+  .map .grp { position: absolute; border: 1px dashed color-mix(in srgb, var(--ink) 22%, transparent); border-radius: 12px; }
+  .map .grp span { position: absolute; top: 6px; left: 10px; font: 12px var(--mono); color: var(--ink-quiet); }
+  .box {
+    all: unset; cursor: pointer; position: absolute; border-radius: 10px; padding: 8px 12px; display: flex; flex-direction: column; justify-content: center;
+    background: color-mix(in srgb, var(--surface) 92%, transparent); border: 1.5px solid color-mix(in srgb, var(--ink) 22%, transparent);
+    transition: box-shadow .2s, border-color .2s, opacity .2s;
+  }
+  .box b { font: 600 13px var(--mono); color: var(--ink-bright); }
+  .box small { font-size: 12px; color: var(--ink-soft); line-height: 1.4; }
+  .box.ext { background: color-mix(in srgb, var(--ground) 80%, transparent); border-style: dashed; }
+  .box .drill { position: absolute; right: 8px; top: 6px; font-size: 12px; color: var(--ink-quiet); }
+  .box:hover { border-color: color-mix(in srgb, var(--ink) 45%, transparent); }
+  .box:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .box.sel { border-color: var(--fox); box-shadow: 0 0 0 4px color-mix(in srgb, var(--fox) 22%, transparent); }
+  .box.point { border-color: var(--fox); animation: glow 1.6s ease-in-out infinite; }
+  @keyframes glow { 50% { box-shadow: 0 0 0 7px color-mix(in srgb, var(--fox) 24%, transparent), 0 0 24px color-mix(in srgb, var(--fox) 45%, transparent); } }
+  @media (prefers-reduced-motion: reduce) { .box.point { animation: none; box-shadow: 0 0 0 5px color-mix(in srgb, var(--fox) 26%, transparent); } }
+  .box .mark { position: absolute; top: -9px; right: -9px; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 10px; font: 700 12px/20px system-ui; text-align: center; color: #131217; }
+  .box.add { border-color: var(--ok); } .box.add .mark { background: var(--ok); }
+  .box.mod { border-color: var(--warn); } .box.mod .mark { background: var(--warn); }
+  .box.drift { border-color: var(--ng); } .box.drift .mark { background: var(--ng); }
+  .map.dim .box:not(.add):not(.mod):not(.drift):not(.sel):not(.point) { opacity: .42; }
+
+  /* 箱の吹き出し（選んだ箱のそばに出る） */
+  .pop { position: absolute; width: 268px; padding: 12px 14px; border-radius: 12px; background: var(--surface); border: 1px solid color-mix(in srgb, var(--fox) 40%, transparent); box-shadow: 0 12px 32px #000a; z-index: 5; }
+  .pop h5 { margin: 0; font: 600 13px var(--mono); color: var(--ink-bright); }
+  .pop p { margin: 4px 0 10px; font-size: 13px; color: var(--ink-soft); }
+  .pop .acts { display: grid; gap: 6px; }
+  .pop .act { all: unset; cursor: pointer; padding: 6px 10px; border-radius: 8px; background: var(--raised); font-size: 13px; display: flex; gap: 8px; align-items: center; }
+  .pop .act:hover, .pop .act.hot { background: color-mix(in srgb, var(--fox) 18%, transparent); }
+  .pop .act kbd { margin-left: auto; font: 12px var(--mono); color: var(--ink-quiet); }
+
+  /* 右の列 */
+  .right .panel { height: 100%; display: flex; flex-direction: column; overflow: hidden; }
+  .tabs { display: flex; gap: 2px; padding: 6px 6px 0; border-bottom: 1px solid var(--line); }
+  .tab { all: unset; cursor: pointer; position: relative; flex: 1 1 auto; display: flex; justify-content: center; align-items: center; gap: 4px; padding: 5px 4px 7px; font-size: 12px; color: var(--ink-quiet); white-space: nowrap; }
+  .tab svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .tab[aria-selected="true"] { color: var(--ink-bright); }
+  .tab[aria-selected="true"]::after { content: ""; position: absolute; left: 6px; right: 6px; bottom: -1px; height: 2px; border-radius: 2px; background: var(--accent); }
+  .tab .dot { position: absolute; right: 4px; top: 3px; width: 7px; height: 7px; border-radius: 50%; background: var(--ng); box-shadow: 0 0 0 2px var(--surface); }
+  .tab-body { flex: 1; overflow: auto; padding: 10px 12px; scrollbar-width: thin; }
+  .sec-h { font-size: 12px; color: var(--ink-quiet); margin: 2px 0 6px; display: flex; gap: 6px; align-items: baseline; }
+  .sec-h .r { margin-left: auto; }
+  .mini { position: relative; height: 176px; border-radius: 8px; border: 1px solid var(--line); background: color-mix(in srgb, var(--ground) 60%, transparent); overflow: hidden; margin-bottom: 8px; }
+  .mini .box { padding: 2px 4px; border-radius: 6px; }
+  .mini .box b { font-size: 12px; }
+  .mini .box small, .mini .elabel, .mini .grp span, .mini .box .drill { display: none; }
+  .mini .expand { position: absolute; right: 6px; bottom: 6px; }
+  .detail { display: grid; gap: 10px; min-width: 0; }
+  .detail > * { min-width: 0; overflow-wrap: anywhere; }
+  .dl dd { min-width: 0; overflow-wrap: anywhere; }
+  .detail .name { font: 600 14px var(--mono); color: var(--ink-bright); }
+  .detail .role { font-size: 13px; color: var(--ink-soft); margin-top: -6px; }
+  .dl { display: grid; grid-template-columns: 64px 1fr; gap: 4px 10px; font-size: 12px; }
+  .dl dt { color: var(--ink-quiet); }
+  .dl dd { margin: 0; color: var(--ink-soft); }
+  .dl dd code { font-family: var(--mono); color: var(--ink); }
+  .dl dd a { color: var(--accent); text-decoration: none; }
+  .recent { display: grid; gap: 2px; }
+  .recent .r { display: grid; grid-template-columns: 62px 1fr; gap: 8px; font-size: 12px; padding: 3px 4px; border-radius: 6px; color: var(--ink-soft); }
+  .recent .r code { font-family: var(--mono); color: var(--ink-quiet); }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 12px; font-size: 12px; color: var(--ink-quiet); }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; border: 1.5px solid; margin-right: 4px; vertical-align: -1px; }
+  .alert { padding: 8px 10px; border-radius: 8px; background: color-mix(in srgb, var(--ng) 12%, transparent); border: 1px solid color-mix(in srgb, var(--ng) 35%, transparent); font-size: 12px; color: var(--ink); }
+  .alert b { color: var(--ng); }
+  .vrow { display: grid; grid-template-columns: 16px 1fr auto; gap: 8px; align-items: center; padding: 5px 6px; font-size: 12px; border-radius: 6px; }
+  .vrow .ic { font-size: 12px; text-align: center; }
+  .vrow .ic.ok { color: var(--ok); } .vrow .ic.ng { color: var(--ng); }
+  .vrow .tm { color: var(--ink-quiet); font-family: var(--mono); }
+
+  /* ===== 下の説明 ===== */
+  .notes { width: 1400px; margin: 18px auto 48px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .note { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
+  .note h2 { font-size: 15px; margin: 0 0 6px; }
+  .note p, .note li { font-size: 13px; color: var(--ink-soft); margin: 0 0 4px; }
+  .note ul { margin: 0; padding-left: 18px; }
+  .note.hl { border-color: var(--accent); }
+  .note code { font-family: var(--mono); font-size: 12px; }
+</style>
+</head>
+<body>
+
+<header class="page-head">
+  <div>
+    <h1>リポジトリの地図 — 見本</h1>
+    <p>図の定義を1つ持ち、利用者は箱を指して話し始め、エージェントは箱の ID で指し返し、レポートは触った箱を光らせる。箱の名前は今の src/ の層と機能、会話とタスクは架空。1400×900 の実寸。</p>
+  </div>
+  <div class="scenes" role="group" aria-label="場面">
+    <button type="button" data-scene="overview" aria-pressed="true">1 地図を広げる</button>
+    <button type="button" data-scene="point">2 箱を指して話す</button>
+    <button type="button" data-scene="answer">3 エージェントが指し返す</button>
+    <button type="button" data-scene="report">4 レポートで変わった所</button>
+    <button type="button" data-scene="drift">5 地図と実装のずれ</button>
+  </div>
+</header>
+
+<div class="app" id="app">
+  <div class="topbar">
+    <span class="face" aria-hidden="true"></span>
+    <span class="room">tsukumo-task</span>
+    <span class="mode"><span class="on">仕事</span><span>雑談</span></span>
+  </div>
+
+  <div class="col left">
+    <section class="panel nav" aria-label="やり取り">
+      <h4>やり取り</h4>
+      <div class="outline-row"><span class="mk"></span><span>投稿した画像を大きく</span></div>
+      <div class="outline-row"><span class="mk"></span><span>依頼を10行まで全文に</span></div>
+      <div class="outline-row on"><span class="mk"></span><span id="outline-now">リポジトリの地図</span></div>
+    </section>
+    <div class="portrait-area" aria-label="立ち絵"><img id="portrait" src="../../../../characters/tsukumo/default.png" alt="" /></div>
+  </div>
+
+  <div class="col center">
+    <div class="panel pill" id="pill"><span id="pill-l">手順 3/3</span><span class="bar"><i></i></span><span class="meta" id="pill-m">済み</span></div>
+    <div class="main-area">
+      <!-- 地図（中央で広げた形） -->
+      <section class="panel map-sheet" id="sheet" aria-label="地図">
+        <div class="map-head">
+          <nav class="crumbs" aria-label="縮尺" id="crumbs"></nav>
+          <div class="tools">
+            <button class="tbtn" type="button" id="t-recent">最近7日に触った箱</button>
+            <button class="tbtn" type="button">動きの図</button>
+            <button class="tbtn" type="button" id="t-close">流れに戻る ⎋</button>
+          </div>
+        </div>
+        <div class="map-stage" id="stage"></div>
+        <div class="map-foot">
+          <span>箱を押すと選ぶ・⤢ で中へ</span><span>⌫ で一つ上へ</span>
+          <span class="src">docs/map/tsukumo.c4 · main 0d1a2b3</span>
+        </div>
+      </section>
+      <!-- 会話の流れ -->
+      <div class="stream" id="stream" hidden></div>
+    </div>
+    <div class="next-cards" id="next" hidden></div>
+    <div class="voice" id="voice"><span class="face"></span><span class="say" id="say"></span></div>
+    <div class="composer" id="composer"></div>
+  </div>
+
+  <div class="col right">
+    <section class="panel" aria-label="手元">
+      <div class="tabs" role="tablist">
+        <button class="tab" role="tab"><svg viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1.3"/><circle cx="4.5" cy="12" r="1.3"/><circle cx="4.5" cy="18" r="1.3"/></svg>タスク</button>
+        <button class="tab" role="tab"><svg viewBox="0 0 24 24"><circle cx="6" cy="6" r="2.2"/><circle cx="6" cy="18" r="2.2"/><circle cx="18" cy="9" r="2.2"/><path d="M6 8.2v7.6M18 11.2c0 4-6 3-11 5.2"/></svg>変更</button>
+        <button class="tab" role="tab"><svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg>検証</button>
+        <button class="tab" role="tab" aria-selected="true"><svg viewBox="0 0 24 24"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v14M15 6v14"/></svg>地図<span class="dot" id="map-dot" hidden></span></button>
+      </div>
+      <div class="tab-body" id="side"></div>
+    </section>
+  </div>
+</div>
+
+<section class="notes">
+  <div class="note hl">
+    <h2>置き場: 小さく右・広げて中央</h2>
+    <ul>
+      <li>右の列の「地図」タブは縮図と選んだ箱の説明だけ。296px では箱の名前が読めないので、描き込む場は中央の列に広げる（場面1）。</li>
+      <li>広げた地図は会話の流れの上に重なり、⎋ で流れに戻る。入力欄と声の帯は隠さないので、地図を見たまま頼める。</li>
+      <li>レポートの中の地図は同じ描き方の縮小版で、別の図を作らない（場面4）。</li>
+    </ul>
+  </div>
+  <div class="note">
+    <h2>指す語は「箱の ID」1種類</h2>
+    <ul>
+      <li>利用者が箱から始めると、入力欄の頭に箱の札が付く（場面2）。エージェントにはその ID と縮尺が届き、MCP で同じ箱の定義（置き場・ADR・つながり）を引ける。</li>
+      <li>エージェントも本文とセリフに同じ札を書き、札に触れると地図の箱が光る（場面3）。指す道具が入力欄・本文・セリフで同じ形になる。</li>
+      <li>札の ID は図の定義の ID。改名したら古い ID を別名として残す。</li>
+    </ul>
+  </div>
+  <div class="note">
+    <h2>情報の置き場は重ねない</h2>
+    <ul>
+      <li>地図は「どこか」だけを持つ。ファイルと差分は今までどおり「変更」タブとレポートの「変えたファイル」にあり、箱を押すとその一覧を絞る（場面4）。</li>
+      <li>箱の説明はファイルの中身を写さず、ADR・要件・用語への導線にする。</li>
+      <li>ずれの検査の結果は「検証」の行に出し、地図の上では箱と矢印の赤だけで示す（場面5）。</li>
+    </ul>
+  </div>
+  <div class="note">
+    <h2>まだ決めていないこと</h2>
+    <ul>
+      <li>図の定義の形式（LikeC4 の DSL を正典にするか、tsukumo の JSON にするか）。見本は前者の想定で <code>docs/map/tsukumo.c4</code> と書いた。</li>
+      <li>配置を手で置くか自動にするか。見本は手で置いた座標。</li>
+      <li>動きの図（依頼1件が通る順）を同じ地図の上の経路で出すか、別の図にするか。</li>
+    </ul>
+  </div>
+  <div class="note">
+    <h2>キャラクターの側</h2>
+    <ul>
+      <li>エージェントが箱を指すとき、セリフの札と地図の箱が同時に光る。つくもが「ここ」と指さしている形を、立ち絵ではなく狐火の色（青緑）で出す。</li>
+      <li>箱を指す色は狐火の青緑に固定し、変更の黄・追加の緑・ずれの赤と混ぜない。</li>
+    </ul>
+  </div>
+  <div class="note">
+    <h2>メンテナンスの経路</h2>
+    <ul>
+      <li>箱の置き場（パス）が消えた・地図に無い依存が生えた、を <code>pnpm run check</code> が落とす。直すのは図の定義の数行で、画は描き直さない。</li>
+      <li>落ちたときは次の一手のカードに「地図を直す」が出る（場面5）。</li>
+    </ul>
+  </div>
+</section>
+
+<script>
+/* ===== 地図の定義（見本のための写し。本物は図の定義ファイルから読む） ===== */
+const LEVELS = {
+  root: {
+    title: "全体", w: 740, h: 430,
+    groups: [{ x: 226, y: 8, w: 250, h: 414, label: "server" }],
+    nodes: [
+      { id: "plugins", x: 10, y: 20, w: 170, h: 70, label: "tsukumo-plugins", sub: "ワークフローとスキル", ext: true },
+      { id: "claude", x: 10, y: 140, w: 170, h: 70, label: "Claude Code", sub: "SDK が起こす子プロセス", ext: true },
+      { id: "pack", x: 10, y: 300, w: 170, h: 70, label: "キャラクターパック", sub: "characters/ と ~/.tsukumo", ext: true },
+      { id: "adapter", x: 246, y: 40, w: 210, h: 170, label: "server/*/adapter", sub: "外の世界に触る境界（SDK・ファイル・Beads）", drill: "server" },
+      { id: "core", x: 246, y: 250, w: 210, h: 76, label: "server/*/core", sub: "純粋な判断", drill: "server" },
+      { id: "wiring", x: 246, y: 352, w: 210, h: 56, label: "wiring", sub: "core と adapter を結ぶ配線" },
+      { id: "browser", x: 556, y: 40, w: 176, h: 100, label: "browser", sub: "React の画面", drill: "browser" },
+      { id: "shared", x: 556, y: 250, w: 176, h: 76, label: "shared", sub: "語彙・イベント・reducer" },
+    ],
+    edges: [
+      ["claude", "adapter", "SDKMessage"], ["plugins", "claude", "段とスキル", "dash"], ["pack", "adapter", "読む"],
+      ["adapter", "core", "呼ぶ"], ["core", "shared", "import"], ["browser", "shared", "import"],
+      ["adapter", "browser", "WebSocket"], ["wiring", "core", "結ぶ", "dash"],
+    ],
+  },
+  server: {
+    title: "server", w: 740, h: 470,
+    groups: [],
+    nodes: [
+      { id: "session-driver", x: 16, y: 20, w: 168, h: 76, label: "session-driver", sub: "SDK を駆動する" },
+      { id: "session", x: 290, y: 20, w: 168, h: 76, label: "session", sub: "セッションの行" },
+      { id: "view-server", x: 556, y: 20, w: 168, h: 76, label: "view-server", sub: "HTML と WebSocket" },
+      { id: "system-prompt", x: 16, y: 190, w: 168, h: 76, label: "system-prompt", sub: "人格と記法を足す" },
+      { id: "report", x: 200, y: 190, w: 160, h: 76, label: "report", sub: "受け取りと記法の検査" },
+      { id: "work-plan", x: 376, y: 190, w: 160, h: 76, label: "work-plan", sub: "フェーズとピル" },
+      { id: "question", x: 556, y: 190, w: 168, h: 76, label: "question", sub: "お伺い" },
+      { id: "character-pack", x: 16, y: 362, w: 168, h: 76, label: "character-pack", sub: "パックの探索" },
+      { id: "chat", x: 290, y: 362, w: 168, h: 76, label: "chat", sub: "雑談モード" },
+      { id: "usage", x: 556, y: 362, w: 168, h: 76, label: "usage", sub: "使用量の記録" },
+    ],
+    edges: [
+      ["session-driver", "session", "イベント"], ["session", "view-server", "配る"], ["system-prompt", "session-driver", "足す"],
+      ["session", "report", ""], ["session", "work-plan", ""], ["session", "question", ""],
+      ["character-pack", "system-prompt", "人格"], ["chat", "session", "", "dash"], ["usage", "session", "", "dash"],
+    ],
+  },
+  browser: {
+    title: "browser", w: 740, h: 400,
+    groups: [{ x: 8, y: 8, w: 724, h: 150, label: "features" }],
+    nodes: [
+      { id: "b-report", x: 24, y: 44, w: 160, h: 76, label: "features/report", sub: "レポートの紙" },
+      { id: "b-current", x: 200, y: 44, w: 160, h: 76, label: "current-work", sub: "ピルと手順" },
+      { id: "b-board", x: 376, y: 44, w: 160, h: 76, label: "task-board", sub: "タスク一覧" },
+      { id: "b-run", x: 552, y: 44, w: 164, h: 76, label: "run-setting", sub: "走らせ方" },
+      { id: "b-ui", x: 40, y: 280, w: 190, h: 76, label: "components/ui", sub: "Astryx の包み" },
+      { id: "b-stores", x: 290, y: 280, w: 190, h: 76, label: "stores", sub: "SessionState を持つ" },
+    ],
+    edges: [["b-report", "b-ui", "描く"], ["b-current", "b-ui", ""], ["b-board", "b-ui", ""], ["b-report", "b-stores", "読む"], ["b-current", "b-stores", ""]],
+  },
+};
+const PATHS = { root: ["root"], server: ["root", "server"], browser: ["root", "browser"] };
+
+function center(n) { return [n.x + n.w / 2, n.y + n.h / 2]; }
+function anchor(a, b) { // a の箱の縁で b へ向かう点
+  const [ax, ay] = center(a), [bx, by] = center(b);
+  const dx = bx - ax, dy = by - ay;
+  const sx = (a.w / 2) / Math.abs(dx || 1e-6), sy = (a.h / 2) / Math.abs(dy || 1e-6);
+  const s = Math.min(sx, sy);
+  return [ax + dx * s, ay + dy * s];
+}
+
+function renderMap(host, level, opt = {}) {
+  const L = LEVELS[level];
+  const scale = opt.scale ?? Math.min((host.clientWidth - 56) / L.w, (host.clientHeight - 40) / L.h);
+  const m = document.createElement("div");
+  m.className = "map" + (opt.dim ? " dim" : "");
+  m.style.width = L.w + "px"; m.style.height = L.h + "px";
+  const ox = (host.clientWidth - L.w * scale) / 2, oy = (host.clientHeight - L.h * scale) / 2;
+  m.style.transform = `translate(${ox}px, ${oy}px) scale(${scale})`;
+  for (const g of L.groups) {
+    const d = document.createElement("div"); d.className = "grp";
+    Object.assign(d.style, { left: g.x + "px", top: g.y + "px", width: g.w + "px", height: g.h + "px" });
+    d.innerHTML = `<span>${g.label}</span>`; m.append(d);
+  }
+  const nodes = [...L.nodes, ...(opt.extraNodes ?? [])];
+  const byId = Object.fromEntries(nodes.map(n => [n.id, n]));
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("width", L.w); svg.setAttribute("height", L.h);
+  svg.innerHTML = `<defs>
+    <marker id="ah-${level}-${opt.key}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#8f8a99"/></marker>
+    <marker id="ahl-${level}-${opt.key}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#5fd3c4"/></marker>
+    <marker id="ahd-${level}-${opt.key}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#ef6b6b"/></marker></defs>`;
+  const labels = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  labels.setAttribute("width", L.w); labels.setAttribute("height", L.h); labels.style.zIndex = 2;
+  const edges = [...L.edges, ...(opt.extraEdges ?? [])];
+  for (const [f, t, label, kind] of edges) {
+    const a = byId[f], b = byId[t]; if (!a || !b) continue;
+    const [x1, y1] = anchor(a, b), [x2, y2] = anchor(b, a);
+    const lit = opt.litEdges?.some(([p, q]) => p === f && q === t);
+    const cls = kind === "drift" ? "edge drift" : `edge${kind === "dash" ? " dash" : ""}${lit ? " lit" : ""}`;
+    const mk = kind === "drift" ? "ahd" : lit ? "ahl" : "ah";
+    svg.insertAdjacentHTML("beforeend", `<line class="${cls}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" marker-end="url(#${mk}-${level}-${opt.key})"/>`);
+    if (label) labels.insertAdjacentHTML("beforeend", `<text class="elabel${kind === "drift" ? " drift" : ""}" x="${(x1 + x2) / 2}" y="${(y1 + y2) / 2 - 5}" text-anchor="middle">${label}</text>`);
+  }
+  m.append(svg);
+  for (const n of nodes) {
+    const b = document.createElement("button"); b.type = "button";
+    const st = opt.marks?.[n.id];
+    b.className = "box" + (n.ext ? " ext" : "") + (st ? " " + st.kind : "") + (opt.selected === n.id ? " sel" : "") + (opt.point === n.id ? " point" : "");
+    Object.assign(b.style, { left: n.x + "px", top: n.y + "px", width: n.w + "px", height: n.h + "px" });
+    b.dataset.id = n.id;
+    b.innerHTML = `<b>${n.label}</b><small>${n.sub}</small>${n.drill ? '<span class="drill">⤢</span>' : ""}${st ? `<span class="mark">${st.text}</span>` : ""}`;
+    if (opt.onBox) b.addEventListener("click", () => opt.onBox(n));
+    m.append(b);
+  }
+  m.append(labels);
+  host.append(m);
+  return { scale, ox, oy, byId };
+}
+
+/* ===== 場面 ===== */
+const $ = id => document.getElementById(id);
+const ref = (id, label) => `<button class="ref" type="button" data-ref="${id}">${label ?? id}</button>`;
+
+function crumbs(level) {
+  $("crumbs").innerHTML = PATHS[level].map((l, i, a) =>
+    `<button type="button" data-level="${l}" ${i === a.length - 1 ? 'aria-current="true"' : ""}>${LEVELS[l].title}</button>${i < a.length - 1 ? '<span class="sl">›</span>' : ""}`
+  ).join("");
+  $("crumbs").querySelectorAll("button").forEach(b => b.onclick = () => show(state.scene, b.dataset.level));
+}
+
+function sideDetail(level, id, extra = "") {
+  const info = DETAIL[id];
+  return `
+    <div class="sec-h">縮図<span>${LEVELS[level].title}</span><span class="r">押すと中央に広げる</span></div>
+    <div class="mini" id="mini"></div>
+    ${extra}
+    ${info ? `<div class="detail">
+      <div class="name">${info.name}</div>
+      <div class="role">${info.role}</div>
+      <dl class="dl">
+        <dt>置き場</dt><dd><code>${info.path}</code></dd>
+        <dt>決めた訳</dt><dd>${info.adr}</dd>
+        <dt>用語</dt><dd>${info.term}</dd>
+        <dt>つながり</dt><dd>${info.links}</dd>
+      </dl>
+      <div><div class="sec-h">最近この箱を触ったタスク<span>${info.recent.length}</span></div>
+      <div class="recent">${info.recent.map(([i, t]) => `<div class="r"><code>${i}</code><span>${t}</span></div>`).join("")}</div></div>
+    </div>` : `<div class="legend"><span><i style="border-color:var(--fox)"></i>指している箱</span><span><i style="border-color:var(--warn)"></i>変えた</span><span><i style="border-color:var(--ok)"></i>足した</span><span><i style="border-color:var(--ng)"></i>ずれ</span><span><i style="border-style:dashed;border-color:#888"></i>外の世界</span></div>
+      <p style="font-size:12px;color:var(--ink-quiet);margin:10px 0 0">箱を押すと、ここに役割・置き場・決めた訳が出る。</p>`}`;
+}
+
+const DETAIL = {
+  report: {
+    name: "server/report", role: "report ツールの受け取りと、レポートの記法の検査（差し戻し）。",
+    path: "src/server/report/{core,adapter}", adr: '<a href="#">0060</a> · <a href="#">0064</a> · <a href="#">0080</a>',
+    term: "レポート・差し戻し・内容部品", links: "← session　→ shared/report",
+    recent: [["GH-2562", "名前と値を MetadataList で描く"], ["GH-2531", "確かめたことの件数を n/m に"], ["GH-2504", "レポートの HTML 書き出し"]],
+  },
+  "work-plan": {
+    name: "server/work-plan", role: "work_plan の受け取りと、フェーズの位置・委譲の範囲の検査。",
+    path: "src/server/work-plan/{core,adapter}", adr: '<a href="#">0070</a> · <a href="#">0079</a>',
+    term: "ワークプラン・フェーズ・委譲の範囲", links: "← session　→ shared/session",
+    recent: [["GH-2557", "ワークフローの契約を2層に分ける"], ["GH-2496", "区間の下線と残りの目安"]],
+  },
+};
+
+const state = { scene: "overview" };
+
+function show(scene, levelOverride) {
+  state.scene = scene;
+  document.querySelectorAll(".scenes button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.scene === scene)));
+  const S = SCENES[scene];
+  const level = levelOverride ?? S.level;
+  $("sheet").hidden = !S.sheet; $("stream").hidden = !!S.sheet;
+  $("stage").innerHTML = ""; $("side").innerHTML = ""; $("stream").innerHTML = "";
+  $("map-dot").hidden = !S.dot;
+  $("portrait").src = `../../../../characters/tsukumo/${S.face ?? "default"}.png`;
+  $("say").innerHTML = S.say; $("composer").innerHTML = S.composer;
+  $("next").hidden = !S.next; $("next").innerHTML = S.next ?? "";
+  $("pill-l").textContent = S.pill?.[0] ?? "手順 3/3"; $("pill-m").textContent = S.pill?.[1] ?? "済み";
+  $("t-recent").classList.toggle("on", !!S.recent);
+  if (S.sheet) {
+    crumbs(level);
+    const r = renderMap($("stage"), level, { key: "main", ...S.mapOpt?.(level), onBox: n => n.drill && show(scene, n.drill) });
+    if (S.pop && level === S.level) placePop(r, S.pop);
+  } else {
+    $("stream").innerHTML = S.stream;
+    S.afterStream?.();
+  }
+  $("side").innerHTML = sideDetail(level, S.selected, S.sideExtra ?? "");
+  renderMap($("mini"), level, { key: "mini", ...S.mapOpt?.(level) });
+  wireRefs();
+}
+
+function placePop(r, pop) {
+  const n = r.byId[pop.id];
+  const el = document.createElement("div"); el.className = "pop";
+  el.innerHTML = pop.html;
+  el.style.left = (r.ox + (n.x + n.w) * r.scale + 14) + "px";
+  el.style.top = (r.oy + n.y * r.scale - 6) + "px";
+  $("stage").append(el);
+}
+
+function wireRefs() {
+  document.querySelectorAll(".ref[data-ref]").forEach(el => {
+    const id = el.dataset.ref;
+    const on = v => document.querySelectorAll(`.box[data-id="${id}"]`).forEach(b => b.classList.toggle("point", v));
+    el.onmouseenter = () => on(true); el.onmouseleave = () => { if (!el.classList.contains("hot")) on(false); };
+  });
+}
+
+const reportFiles = [
+  ["a", "src/shared/map/map-model.ts", "+64", "shared"],
+  ["a", "src/server/map/core/read-map.ts", "+88", "core"],
+  ["a", "src/server/map/adapter/likec4-export.ts", "+41", "adapter"],
+  ["m", "src/server/report/core/report-notation.ts", "+12 −3", "core"],
+  ["a", "src/browser/features/map/map-view.tsx", "+132", "browser"],
+  ["m", "src/browser/features/report/figure.tsx", "+18 −6", "browser"],
+];
+
+const SCENES = {
+  overview: {
+    sheet: true, level: "root", selected: null, recent: true,
+    mapOpt: lv => lv === "root" ? { marks: { core: { kind: "mod", text: "7" }, browser: { kind: "mod", text: "12" }, shared: { kind: "mod", text: "3" } } } : lv === "server" ? { marks: { report: { kind: "mod", text: "4" }, "work-plan": { kind: "mod", text: "3" } } } : {},
+    say: "全体の地図だぞ！数字は最近7日に触ったタスクの件数で、⤢ の箱は中へ潜れるのだ。",
+    composer: `<span>つくも への依頼を書く</span>`,
+  },
+  point: {
+    sheet: true, level: "server", selected: "report",
+    mapOpt: () => ({ selected: "report", litEdges: [["session", "report"]] }),
+    pop: { id: "report", html: `<h5>server/report</h5><p>report の受け取りと、記法の検査（差し戻し）。</p>
+      <div class="acts">
+        <button class="act hot" type="button">この箱について聞く<kbd>⏎</kbd></button>
+        <button class="act" type="button">この箱を直す依頼を書く</button>
+        <button class="act" type="button">中のファイルを開く</button>
+      </div>` },
+    say: `${ref("report", "server/report")} について聞くんだな！入力欄に箱を付けたぞ。`,
+    composer: `<div class="attach"><span class="ref" data-ref="report">server/report · server の縮尺<span class="x">×</span></span></div>
+      <div class="draft">差し戻しが「体裁」で返る割合はいまどれくらい？どの検査が一番多い？<span class="caret"></span></div>`,
+  },
+  answer: {
+    sheet: false, level: "server", selected: "report",
+    mapOpt: () => ({ point: "report", litEdges: [["session", "report"]] }),
+    stream: `
+      <div class="bubble-me"><span class="ref" data-ref="report">server/report</span><br>差し戻しが「体裁」で返る割合はいまどれくらい？どの検査が一番多い？</div>
+      <section class="panel paper">
+        <div class="kicker">レポート</div>
+        <h2>直近30日の差し戻し 412件のうち、体裁は 41%（169件）で、一番多いのは「terms の語が本文に無い」</h2>
+        <p>差し戻しを出しているのは ${ref("report", "server/report")} の記法の検査で、文面は ${ref("system-prompt", "server/system-prompt")} が足す「レポートの記法」の節と対になっている。件数は ${ref("usage", "server/usage")} の記録から数えた。</p>
+        <h3>検査ごとの件数</h3>
+        <p style="font-size:13px;color:var(--ink-soft)">terms の語が本文に無い 58 · cite の置き場 44 · Options の並び 37 · ItemList の形 30（架空）</p>
+      </section>`,
+    say: `ここなのだ → ${ref("report", "server/report")}。右の縮図でも光らせてるぞ！`,
+    composer: `<span>つくも への依頼を書く</span>`,
+    afterStream: () => setTimeout(() => document.querySelectorAll('.ref[data-ref="report"]').forEach(e => e.classList.add("hot")), 0),
+    sideExtra: "",
+  },
+  report: {
+    sheet: false, level: "root", selected: null,
+    mapOpt: () => ({ dim: true, marks: { shared: { kind: "add", text: "+1" }, core: { kind: "mod", text: "2" }, adapter: { kind: "add", text: "+1" }, browser: { kind: "mod", text: "2" } } }),
+    stream: `
+      <div class="bubble-me">レポートの図に、触った箱を光らせる地図を出せるようにして（架空の依頼）</div>
+      <section class="panel paper" id="paper">
+        <div class="kicker">レポート · 架空のタスク GH-9101</div>
+        <h2>レポートの図に地図を置けるようになり、触った箱が色と件数で光る</h2>
+        <p class="fig-cap">図1　6ファイルの変更は、地図の4つの箱に収まった</p>
+        <div class="map-stage" id="fig" style="height:330px;flex:none"></div>
+        <h3>変えたファイル</h3>
+        <p class="filter-note" id="fnote">図の箱を押すと、その箱のファイルだけを示す。</p>
+        <div class="files" id="files">${reportFiles.map(([k, p, d, box]) => `<div class="f" data-box="${box}"><span class="k ${k}">${k.toUpperCase()}</span><span>${p}</span><span class="b">${d}</span></div>`).join("")}</div>
+      </section>`,
+    afterStream: () => {
+      const pick = id => {
+        $("files").classList.add("filtered");
+        $("files").querySelectorAll(".f").forEach(f => f.classList.toggle("hit", f.dataset.box === id));
+        $("fnote").innerHTML = `<b>${LEVELS.root.nodes.find(n => n.id === id).label}</b> の ${$("files").querySelectorAll(".f.hit").length} 件を示している。`;
+        $("fig").querySelectorAll(".box").forEach(b => b.classList.toggle("sel", b.dataset.id === id));
+      };
+      renderMap($("fig"), "root", { key: "fig", ...SCENES.report.mapOpt(), onBox: n => pick(n.id) });
+      pick("core");
+      $("stream").scrollTop = $("stream").scrollHeight;
+    },
+    say: "図1 から読んでね。箱を押すと、下のファイルがその箱の分だけに絞れるのだ！",
+    composer: `<span>つくも への依頼を書く</span>`,
+  },
+  drift: {
+    sheet: false, level: "browser", selected: null, dot: true,
+    mapOpt: lv => lv === "browser" ? {
+      marks: { "b-report": { kind: "drift", text: "!" } },
+      extraNodes: [{ id: "x-core", x: 540, y: 280, w: 190, h: 76, label: "server/report/core", sub: "別の層（地図の外）", ext: true }],
+      extraEdges: [["b-report", "x-core", "地図に無い import", "drift"]],
+    } : {},
+    stream: `
+      <div class="bubble-me">レポートの図に出典の番号札を足して（架空の依頼）</div>
+      <section class="panel paper">
+        <div class="kicker">レポート · 架空のタスク GH-9102</div>
+        <h2>出典の番号札は出るようになったが、地図に無い依存が1本増えたので送り出しを止めた</h2>
+        <p class="fig-cap">図1　features/report が server の core を直に読んでいる</p>
+        <div class="map-stage" id="fig" style="height:300px;flex:none"></div>
+        <h3>確かめたこと</h3>
+        <div class="vrow"><span class="ic ok">✓</span><span>型検査・単体テスト</span><span class="tm">2/2</span></div>
+        <div class="vrow"><span class="ic ng">✕</span><span>地図との照合 — <code style="font-family:var(--mono)">browser/features/report → server/report/core</code> は地図に無い</span><span class="tm">1件</span></div>
+      </section>`,
+    afterStream: () => {
+      renderMap($("fig"), "browser", { key: "fig", ...SCENES.drift.mapOpt("browser") });
+      $("stream").scrollTop = $("stream").scrollHeight;
+    },
+    sideExtra: `<div class="alert" style="margin-bottom:10px"><b>ずれ 1件</b>　browser/features/report が server/report/core を import している。shared を通すか、地図に矢印を足すかを決める。</div>`,
+    next: `<div class="next-card"><small>直す</small>shared/report に型を移して import を外して</div><div class="next-card"><small>地図を直す</small>この依存を地図に足して、決めた訳を ADR に書いて</div>`,
+    say: "あわわ、地図に無い道が1本生えてたのだ。直す向きを下のカードから選んでね。",
+    face: "flustered",
+    composer: `<span>つくも への依頼を書く</span>`,
+  },
+};
+
+document.querySelectorAll(".scenes button").forEach(b => b.onclick = () => show(b.dataset.scene));
+$("t-close").onclick = () => show("answer");
+const q = new URLSearchParams(location.search).get("scene");
+show(q && SCENES[q] ? q : "overview");
+</script>
+</body>
+</html>
