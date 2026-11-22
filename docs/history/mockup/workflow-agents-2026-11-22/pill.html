@@ -146,6 +146,9 @@
   .node .tm { font: 12px var(--mono); color: var(--ink-quiet); }
   .node .d { grid-column: 2 / 4; font-size: 12px; color: var(--ink-quiet); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
   .node .d.mono { font-family: var(--mono); color: var(--ink-soft); }
+  /* エージェントの種類の札（ADR 0081 論点 8。プラグインの接頭辞を外した短い名） */
+  .node .kind { font: 11px/1.5 var(--mono); padding: 0 6px; margin-right: 6px; border-radius: 4px; background: var(--raised); color: var(--ink-soft); }
+  .focus .h .type { font-family: var(--mono); }
   .node.run { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
   .node.think { border-color: color-mix(in srgb, var(--accent) 55%, transparent); }
   .node.done { }
@@ -246,7 +249,8 @@
   <div class="note hl"><h2>押したときだけ出る図</h2>
     <p>面の幅はピルの幅にそろえる（左右の端をピルにそろえて重ねる）。部品はできる限り Astryx（ui/）で組む。</p>
     <p>ピルの右端の「手順」（ADR 0070 論点 8 の全体の詳細）の頭に、ワークフローの図を置く。列はフェーズで、ピルの下線の区間と同じ並び・同じ色。箱1つがエージェント1体で、矢印が順番、橙の矢印が差し戻し。</p>
-    <p>走っている体は差し色の縁と流れる矢印、済んだ体は結果の一言、待ちの体は点線、失敗は赤い縁と理由。</p></div>
+    <p>走っている体は差し色の縁と流れる矢印、済んだ体は結果の一言、待ちの体は点線、失敗は赤い縁と理由。</p>
+    <p>箱の2行目の頭の札がエージェントの種類（プラグインの接頭辞を外した短い名）。手元の頭に種類の全名とモデルを出す。種類を渡さない体は札を出さず、手元の頭で「既定のエージェント」と言う（ADR 0081 論点 8）。</p></div>
   <div class="note"><h2>箱を押すと手元が見える</h2>
     <p>図の下に、選んだ体の申し送り（SendMessage）と直近の手順を出す。最初は走っている体（並んで回るときは最後に手順が動いた体）を選んでおく。全部は「手順 n件をすべて見る」で同じ面の中に開く。</p>
     <p>今の面にあるフェーズの一覧は、図の列見出し（所要つき）と下端の経過に吸収する。</p></div>
@@ -268,11 +272,11 @@ const SCENES = {
     phaseAt: 1, elapsed: "14:32", remain: "あと 3〜5分",
     height: 238,
     nodes: [
-      { id: "impl", name: "実装", col: 0, y: 8, state: "done", time: "9:48", d: "済み · 申し送り 1件" },
-      { id: "acc1", name: "受け入れ 1", col: 1, y: 8, state: "done", time: "2:10", d: "差し戻し · 指摘 2件" },
-      { id: "fix1", name: "直し 1", col: 1, y: 92, state: "run", time: "1:58", d: "Edit settings-reset.ts · 12秒", mono: true },
-      { id: "acc2", name: "受け入れ 2", col: 1, y: 176, state: "queued", time: "—", d: "直しを待つ" },
-      { id: "retro", name: "振り返り", col: 2, y: 176, state: "queued", time: "—", d: "受け入れを待つ" },
+      { id: "impl", name: "実装", col: 0, y: 8, state: "done", time: "9:48", d: "済み · 申し送り 1件", kind: "tsukumo-workflow:no-delegate", model: "sonnet" },
+      { id: "acc1", name: "受け入れ 1", col: 1, y: 8, state: "done", time: "2:10", d: "差し戻し · 指摘 2件", kind: "tsukumo-workflow:acceptor", model: "opus" },
+      { id: "fix1", name: "直し 1", col: 1, y: 92, state: "run", time: "1:58", d: "Edit settings-reset.ts · 12秒", mono: true, kind: "tsukumo-workflow:no-delegate", model: "sonnet" },
+      { id: "acc2", name: "受け入れ 2", col: 1, y: 176, state: "queued", time: "—", d: "直しを待つ", kind: "tsukumo-workflow:acceptor", model: "opus" },
+      { id: "retro", name: "振り返り", col: 2, y: 176, state: "queued", time: "—", d: "受け入れを待つ", kind: "tsukumo-workflow:retrospector", model: "haiku" },
     ],
     edges: [["impl", "acc1", "done"], ["acc1", "fix1", "back", "差し戻し"], ["fix1", "acc2", "live"], ["acc2", "retro", "todo"]],
     focus: "fix1",
@@ -346,16 +350,19 @@ function render() {
   const ncol = s.phases.length;
   const cols = `grid-template-columns: repeat(${ncol}, 1fr)`;
   const heads = s.phases.map((p, i) => `<div class="colh ${i < s.phaseAt ? "done" : i === s.phaseAt ? "cur" : ""}">${p.name}<span class="tm">${p.time}</span></div>`).join("");
+  const shortKind = (k) => (k ? k.slice(k.lastIndexOf(":") + 1) : "");
+  const kindTag = (n) => (n.kind ? `<span class="kind" title="${n.kind}">${shortKind(n.kind)}</span>` : "");
+  const typeHead = (n) => `<span class="type">${n.kind ? `${n.kind} · ${n.model}` : "既定のエージェント"}</span>`;
   const nodes = s.nodes.map((n) => `<button class="node ${n.state}" data-node="${n.id}" style="--col:${n.col};top:${n.y}px" aria-pressed="${n.id === focus}">
-      ${si(n.state)}<span class="n">${n.name}</span><span class="tm">${n.time}</span><span class="d ${n.mono ? "mono" : ""}">${n.d}</span></button>`).join("");
+      ${si(n.state)}<span class="n">${n.name}</span><span class="tm">${n.time}</span><span class="d ${n.mono ? "mono" : ""}">${kindTag(n)}${n.d}</span></button>`).join("");
   const st = STEPS[focus];
   const fnode = s.nodes.find((n) => n.id === focus);
   const focusHtml = st
-    ? `<div class="focus"><div class="h">${si(fnode.state)}<b>${fnode.name}</b><span>手元</span><span>手順 ${st.total}</span></div>
+    ? `<div class="focus"><div class="h">${si(fnode.state)}<b>${fnode.name}</b>${typeHead(fnode)}<span>手元</span><span>手順 ${st.total}</span></div>
         <div class="msg">「${st.msg}」<small>${st.at} · 申し送り</small></div>
         ${st.steps.map(([at, ss, w, d]) => `<div class="step ${ss === "run" ? "cur" : ""}"><span class="at">${at}</span>${si(ss)}<span class="w">${w}</span><span class="dd">${d}</span></div>`).join("")}
         <div class="more">手順 ${st.total}件をすべて見る ›</div></div>`
-    : `<div class="focus"><div class="h">${si(fnode.state)}<b>${fnode.name}</b><span>${fnode.d}</span></div></div>`;
+    : `<div class="focus"><div class="h">${si(fnode.state)}<b>${fnode.name}</b>${typeHead(fnode)}<span>${fnode.d}</span></div></div>`;
 
   det.innerHTML = `<header><h3>手順</h3><span class="wf">${s.workflow}</span>
       <span class="sum"><b class="c-run">動いている ${running}</b><b class="c-ok">済み ${done}</b>${failed ? `<b class="c-ng">失敗 ${failed}</b>` : ""}<b>待ち ${waiting}</b></span></header>

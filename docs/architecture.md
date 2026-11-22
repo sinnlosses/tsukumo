@@ -158,3 +158,4 @@
 | `docs/architecture/adr/0078-report-citation-and-term-note.md`                   | レポートの出典を番号札と末尾の一覧で、用語を初出の注で示す                                            | 採用                   |
 | `docs/architecture/adr/0079-workflow-part-contract.md`                          | ワークフローの部品の契約を、印・タスクの ID・結果の語の3つにする                                      | 採用                   |
 | `docs/architecture/adr/0080-report-parts-through-astryx.md`                     | レポートの部品と Markdown の経路も `ui/` を通して Astryx で描く                                       | 採用                   |
+| `docs/architecture/adr/0081-workflow-agents-diagram-in-steps.md`                | ピルの「手順」の頭に、ワークフローのエージェントの図を出す                                            | 採用                   |
