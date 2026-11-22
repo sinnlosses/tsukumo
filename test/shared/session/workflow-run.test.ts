@@ -86,7 +86,7 @@ describe("applySessionEvent（ワークフロースクリプトの図の材料�
     ])
   })
 
-  it("queuedAt は前の値と小さいほうを残し、写しから消えた体も残す", () => {
+  it("queuedAt は前の値と小さいほうを残し、写しから消えたエージェントも残す", () => {
     const state = applyTimed(
       tasksChanged(WORKFLOW),
       progressOf(agent({ queuedAt: 100 }), agent({ index: 1, agentId: "agent-2" })),
@@ -99,7 +99,7 @@ describe("applySessionEvent（ワークフロースクリプトの図の材料�
     ])
   })
 
-  it("agentId の無い待ちの体も体として持つ", () => {
+  it("agentId の無い待ちのエージェントもインスタンスとして持つ", () => {
     const state = applyTimed(
       tasksChanged(WORKFLOW),
       progressOf({ index: 0, state: "start", phaseTitle: "", queuedAt: 1 }),
@@ -121,7 +121,7 @@ describe("applySessionEvent（ワークフロースクリプトの図の材料�
     )
   })
 
-  it("手順の終わりに時刻と失敗したかを付け、done になった体の走っている手順も終わりにする", () => {
+  it("手順の終わりに時刻と失敗したかを付け、done になったエージェントの走っている手順も終わりにする", () => {
     const state = applyTimed(
       tasksChanged(WORKFLOW),
       progressOf(agent()),

@@ -119,7 +119,7 @@ describe("nowStepStatementOf", () => {
     description: "架空の流れ",
   } satisfies BackgroundTask
 
-  it("背景のワークフロースクリプトの agent が手順の合間に走っていれば段の題を対象にする（agentId の無い門で待つ体は見ない）", () => {
+  it("背景のワークフロースクリプトの agent が手順の合間に走っていれば段の題を対象にする（agentId の無い門で待つエージェントは見ない）", () => {
     const statement = doing(
       nowStepStatementOf(
         sourceOf({

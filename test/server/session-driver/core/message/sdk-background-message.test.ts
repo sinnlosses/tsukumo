@@ -284,7 +284,7 @@ describe("バックグラウンドタスク（実測で届いた順: background_
       )
     })
 
-    it("error の体の止まり方を決まった語に畳む（skipped・blocked・agent stalled で始まる文・ほか）", () => {
+    it("error のエージェントの止まり方を決まった語に畳む（skipped・blocked・agent stalled で始まる文・ほか）", () => {
       const elements = [
         agent({ index: 0, state: "error", skipped: true, error: "架空" }),
         agent({ index: 1, state: "error", blocked: true, error: "架空" }),
@@ -304,7 +304,7 @@ describe("バックグラウンドタスク（実測で届いた順: background_
       ).toEqual(["skipped", "blocked", "stalled", "stalled", "failed", "failed", undefined])
     })
 
-    it("形の外れた要素だけを捨て、agentId・label・agentType の無い待ちの体は残す（知らない state・index の欠け・知らない type・オブジェクトでない要素を捨てる）", () => {
+    it("形の外れた要素だけを捨て、agentId・label・agentType の無い待ちのエージェントは残す（知らない state・index の欠け・知らない type・オブジェクトでない要素を捨てる）", () => {
       const elements = [
         { type: "workflow_phase", index: "0", title: "架空の段" },
         { type: "workflow_phase", index: 1.5, title: "架空の段" },

@@ -1,15 +1,15 @@
-// ワークフロースクリプト1本ごとの図の材料（体ごとの写しと直近の手順）と、それを畳む関数。
+// ワークフロースクリプト1本ごとの図の材料（エージェントのインスタンスごとの写しと直近の手順）と、それを畳む関数。
 
 import type { BackgroundTask } from "../session-driver/background-task.ts"
 import type { TaskId } from "../session-driver/task-id.ts"
 import type { ToolUseId } from "./tool-use-id.ts"
 import type { WorkflowAgent, WorkflowProgress, WorkflowStep } from "./workflow-step.ts"
 
-/** 体ごとに残す手順の数。 */
+/** インスタンスごとに残す手順の数。 */
 const WORKFLOW_AGENT_STEP_LIMIT = 20
 
 /**
- * 体の手順1つ。`input` は要約に使う欄1つだけに絞った入力で、画面に出すだけでログにもファイルにも書かない。
+ * エージェントの手順1つ。`input` は要約に使う欄1つだけに絞った入力で、画面に出すだけでログにもファイルにも書かない。
  * 時刻は畳み込みの `at`（エポックミリ秒）。`finishedAt` が無ければ走っている。
  */
 export type WorkflowAgentStep = {
@@ -22,7 +22,7 @@ export type WorkflowAgentStep = {
 }
 
 /**
- * 体1つの図の材料。`label`・`agentType` は `index` ごとに最後に届いた空でない値、`queuedAt` は最初に見た値（いちばん小さい値）を残し、ほかの欄は最新の写しのまま。
+ * エージェントのインスタンス1つの図の材料。`label`・`agentType` は `index` ごとに最後に届いた空でない値、`queuedAt` は最初に見た値（いちばん小さい値）を残し、ほかの欄は最新の写しのまま。
  * `steps` は直近 {@link WORKFLOW_AGENT_STEP_LIMIT} 件で古い順、`stepCount` は始まった手順の総数。
  */
 export type WorkflowRunAgent = WorkflowAgent & {
@@ -32,7 +32,7 @@ export type WorkflowRunAgent = WorkflowAgent & {
 
 /**
  * ワークフロースクリプト1本の図の材料。`ended` は顔ぶれから外れた印。
- * `agents` は `index` の順で、写しから消えた体も残す。
+ * `agents` は `index` の順で、写しから消えたエージェントも残す。
  */
 export type WorkflowRun = {
   readonly taskId: TaskId
@@ -41,7 +41,7 @@ export type WorkflowRun = {
   readonly agents: readonly WorkflowRunAgent[]
 }
 
-/** 顔ぶれにあるワークフロースクリプトの写しだけを受け、体を `index` で合わせる。done・error になった体の走っている手順を終わりにする。 */
+/** 顔ぶれにあるワークフロースクリプトの写しだけを受け、エージェントを `index` で合わせる。done・error になったエージェントの走っている手順を終わりにする。 */
 export function withWorkflowRunProgress(
   runs: readonly WorkflowRun[],
   tasks: readonly BackgroundTask[],
@@ -63,7 +63,7 @@ export function withWorkflowRunProgress(
     : runs.map((existing) => (existing === previous ? run : existing))
 }
 
-/** `agentId` の体を持つワークフロースクリプトのその体に手順を足す。どこにも無ければ元のまま。 */
+/** `agentId` のエージェントを持つワークフロースクリプトのそのエージェントに手順を足す。どこにも無ければ元のまま。 */
 export function withWorkflowRunStepStarted(
   runs: readonly WorkflowRun[],
   started: Pick<WorkflowStep, "agentId" | "toolUseId" | "name" | "input">,
@@ -153,7 +153,7 @@ function mergedAgents(
   return [...merged, ...kept].toSorted((left, right) => left.index - right.index)
 }
 
-// 使用量の上限で待ちに戻った体は queuedAt が待ち始めに替わるので、最初に見た値を残す。
+// 使用量の上限で待ちに戻ったエージェントは queuedAt が待ち始めに替わるので、最初に見た値を残す。
 function mergedAgent(
   agent: WorkflowAgent,
   at: number,

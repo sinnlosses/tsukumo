@@ -8,12 +8,12 @@ import type {
 } from "../../../../../../../shared/session/workflow-run.ts"
 import type { WorkflowAgentStopReason } from "../../../../../../../shared/session/workflow-step.ts"
 
-/** 箱の状態。`stopped` は終わったワークフロースクリプトに走っている・待ちのまま残った体。 */
+/** 箱の状態。`stopped` は終わったワークフロースクリプトに走っている・待ちのまま残ったエージェント。 */
 export type WorkflowDiagramBoxState = "running" | "waiting" | "done" | "failed" | "stopped"
 
 /**
- * 体1つの箱。`typeName` は種類の短い名（`agentType` の最後の `:` より後ろ）で、`hidesType` は名前と同じ語なので札を出さない印。
- * 一言の材料は、`done` の `stepCount`、`failed` の `stopReason`、差し戻しの矢印の元になった体の `sendsBack`。
+ * エージェントのインスタンス1つの箱。`typeName` は種類の短い名（`agentType` の最後の `:` より後ろ）で、`hidesType` は名前と同じ語なので札を出さない印。
+ * 一言の材料は、`done` の `stepCount`、`failed` の `stopReason`、差し戻しの矢印の元になったエージェントの `sendsBack`。
  * `elapsedMs` は `done`・`failed` の所要と `running` の経過で、ほかは無い。
  */
 export type WorkflowDiagramBox = {
@@ -28,13 +28,13 @@ export type WorkflowDiagramBox = {
   readonly elapsedMs?: number
 }
 
-/** 畳んだ体の数と、畳まれた体の `index`。 */
+/** 畳んだエージェントの数と、畳まれたエージェントの `index`。 */
 export type WorkflowDiagramFold = {
   readonly count: number
   readonly indexes: readonly number[]
 }
 
-/** 列。`agents` は体が載った列で、`others` は「ほか n 体」。`upcoming` は体がまだ載らない後ろのフェーズの「これから」の列。 */
+/** 列。`agents` はエージェントが載った列で、`others` は「ほか n 件」。`upcoming` はエージェントがまだ載らない後ろのフェーズの「これから」の列。 */
 export type WorkflowDiagramColumn =
   | {
       readonly kind: "agents"
@@ -46,7 +46,7 @@ export type WorkflowDiagramColumn =
     }
   | { readonly kind: "upcoming"; readonly key: string; readonly name: string }
 
-/** 矢印の端。`others` は列の「ほか n 体」、`folded` は「済んだ n フェーズ」、`upcoming` は「これから」の列。 */
+/** 矢印の端。`others` は列の「ほか n 件」、`folded` は「済んだ n フェーズ」、`upcoming` は「これから」の列。 */
 export type WorkflowDiagramEnd =
   | { readonly kind: "start" }
   | { readonly kind: "agent"; readonly index: number }
@@ -67,7 +67,7 @@ export type WorkflowDiagramArrow = {
   readonly kind: WorkflowDiagramArrowKind
 }
 
-/** 図の形。`foldedPhases` は「済んだ n フェーズ」に畳んだ列の数（`count`）と、その中の体。 */
+/** 図の形。`foldedPhases` は「済んだ n フェーズ」に畳んだ列の数（`count`）と、その中のエージェント。 */
 export type WorkflowDiagram = {
   readonly columns: readonly WorkflowDiagramColumn[]
   readonly arrows: readonly WorkflowDiagramArrow[]
@@ -88,7 +88,7 @@ const BOX_PRIORITY = [
 
 /**
  * 図の形を組む。`phaseIds` はワークプランのフェーズの id で、`phaseTitle` を列に当てる。
- * `unfold.phases` なら前の列を畳まず、`unfold.columns` にある列の鍵は「ほか n 体」に畳まない。
+ * `unfold.phases` なら前の列を畳まず、`unfold.columns` にある列の鍵は「ほか n 件」に畳まない。
  */
 export function workflowDiagramOf(
   run: WorkflowRun,
@@ -186,7 +186,7 @@ export function workflowDiagramOf(
   }
 }
 
-/** 体が載った列1つ。`phaseIdIndex` は `phaseIds` に引けたときの位置。 */
+/** エージェントが載った列1つ。`phaseIdIndex` は `phaseIds` に引けたときの位置。 */
 type ColumnGroup = {
   readonly key: string
   readonly name: string
@@ -200,8 +200,8 @@ type PlannedColumn =
   | { readonly kind: "upcoming"; readonly key: string }
 
 /**
- * 体を列に分けて並べる。`phaseIds` に1つでも引ければ、引けた列を `phaseIds` の順に、引けない列をそのあとに置く。
- * 引けない列どうしと、1つも引けないときの全部の列は、`phaseIndex` の小さい順、同じなら最初に現れた体の `index` の順。
+ * エージェントを列に分けて並べる。`phaseIds` に1つでも引ければ、引けた列を `phaseIds` の順に、引けない列をそのあとに置く。
+ * 引けない列どうしと、1つも引けないときの全部の列は、`phaseIndex` の小さい順、同じなら最初に現れたエージェントの `index` の順。
  */
 function columnGroupsOf(
   agents: readonly WorkflowRunAgent[],
@@ -263,7 +263,7 @@ function boxStateOf(agent: WorkflowRunAgent, ended: boolean): WorkflowDiagramBox
   }
 }
 
-/** 今の列は、走っている体の載った列（無ければ待ちの体、それも無ければ体の載ったいちばん後ろの列）。 */
+/** 今の列は、走っているエージェントの載った列（無ければ待ちのエージェント、それも無ければエージェントの載ったいちばん後ろの列）。 */
 function currentPositionOf(
   groups: readonly ColumnGroup[],
   stateOf: (agent: WorkflowRunAgent) => WorkflowDiagramBoxState,
@@ -338,9 +338,9 @@ type AgentEdge = {
 }
 
 /**
- * 体どうしの矢印。B が A の「後」なのは、A が終わっていて A の終わり（`startedAt` + `durationMs`）が B の `queuedAt` 以前のとき。
- * 終わりの時刻が分からない体（`durationMs` か `startedAt` が無い）は前の側にならない。
- * 「後」は推移的なので、間に体を挟める組を除けば推移で言える組が消える。
+ * エージェントどうしの矢印。B が A の「後」なのは、A が終わっていて A の終わり（`startedAt` + `durationMs`）が B の `queuedAt` 以前のとき。
+ * 終わりの時刻が分からないエージェント（`durationMs` か `startedAt` が無い）は前の側にならない。
+ * 「後」は推移的なので、間にエージェントを挟める組を除けば推移で言える組が消える。
  */
 function agentEdgesOf(
   agents: readonly WorkflowRunAgent[],

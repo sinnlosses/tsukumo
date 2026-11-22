@@ -23,7 +23,7 @@ const agent = (index: number, overrides: Partial<WorkflowRunAgent> = {}): Workfl
   stepCount: 0,
   ...overrides,
 })
-/** `queuedAt` = `startedAt` = start、終わりは start + duration の済んだ体。 */
+/** `queuedAt` = `startedAt` = start、終わりは start + duration の済んだエージェント。 */
 const finished = (
   index: number,
   start: number,
@@ -62,7 +62,7 @@ function boxIndexes(diagram: WorkflowDiagram): readonly (readonly number[])[] {
   )
 }
 
-/** 箱・「ほか n 体」・「済んだ n フェーズ」のどれかに載った体の index。 */
+/** 箱・「ほか n 件」・「済んだ n フェーズ」のどれかに載ったエージェントの index。 */
 function accountedIndexes(diagram: WorkflowDiagram): readonly number[] {
   return [
     ...diagram.columns.flatMap((column) =>
@@ -171,7 +171,7 @@ describe("workflowDiagramOf（順に回る形）", () => {
     ])
   })
 
-  it("general-purpose と種類の無い体は差し戻しにせず、同じ列の同じ種類も差し戻しにしない", () => {
+  it("general-purpose と種類の無いエージェントは差し戻しにせず、同じ列の同じ種類も差し戻しにしない", () => {
     const diagram = workflowDiagramOf(
       runOf([
         finished(0, 0, 10, { phaseTitle: "a", agentType: "general-purpose" }),
@@ -191,7 +191,7 @@ describe("workflowDiagramOf（順に回る形）", () => {
 })
 
 describe("workflowDiagramOf（並んで回る形）", () => {
-  it("並んで始まる3体へ始まりの点から3本引き、3体から合流の1体へ1本ずつ引く", () => {
+  it("並んで始まる3つのエージェントへ始まりの点から3本引き、3つから合流の1つへ1本ずつ引く", () => {
     const diagram = workflowDiagramOf(
       runOf([
         finished(0, 0, 100),
@@ -214,7 +214,7 @@ describe("workflowDiagramOf（並んで回る形）", () => {
     ])
   })
 
-  it("最初に始まる体が1体なら始まりの点を置かない", () => {
+  it("最初に始まるエージェントが1つなら始まりの点を置かない", () => {
     const diagram = workflowDiagramOf(
       runOf([finished(0, 0, 10), finished(1, 10, 10)]),
       [],
@@ -225,7 +225,7 @@ describe("workflowDiagramOf（並んで回る形）", () => {
     expect(diagram.arrows.some((arrow) => arrow.from.kind === "start")).toBe(false)
   })
 
-  it("durationMs の無い終わりは前の側にならず、終わりと同じ時刻に並んだ体は「後」とする", () => {
+  it("durationMs の無い終わりは前の側にならず、終わりと同じ時刻に並んだエージェントは「後」とする", () => {
     const diagram = workflowDiagramOf(
       runOf([
         agent(0, { queuedAt: 0, startedAt: 0 }),
@@ -300,7 +300,7 @@ describe("workflowDiagramOf（列の並びと名前）", () => {
 })
 
 describe("workflowDiagramOf（畳み）", () => {
-  // 6体: 済み2・待ち1・失敗1・走っている1・済み1。残すのは走っている・失敗・待ち・新しい済みの4つ
+  // エージェント6つ: 済み2・待ち1・失敗1・走っている1・済み1。残すのは走っている・失敗・待ち・新しい済みの4つ
   const crowded = runOf([
     agent(0),
     agent(1),
@@ -310,7 +310,7 @@ describe("workflowDiagramOf（畳み）", () => {
     agent(5),
   ])
 
-  it("列の箱が6つ以上なら、走っている・失敗・待ち・済み（新しい順）の4つと「ほか 2 体」にする", () => {
+  it("列の箱が6つ以上なら、走っている・失敗・待ち・済み（新しい順）の4つと「ほか 2 件」にする", () => {
     const diagram = workflowDiagramOf(crowded, [], NOW, FOLDED)
     const [column] = diagram.columns
 
@@ -330,7 +330,7 @@ describe("workflowDiagramOf（畳み）", () => {
     expect(boxIndexes(diagram)).toEqual([[0, 1, 2, 3, 4, 5]])
   })
 
-  it("「ほか n 体」の中の体の矢印は畳みの箱を端にし、同じ端の組は1本にまとめる", () => {
+  it("「ほか n 件」の中のエージェントの矢印は畳みの箱を端にし、同じ端の組は1本にまとめる", () => {
     const diagram = workflowDiagramOf(
       runOf([
         finished(0, 0, 10),
@@ -363,7 +363,7 @@ describe("workflowDiagramOf（畳み）", () => {
     ])
   })
 
-  // 6列（各1体、順に回る）。今は5列目
+  // 6列（各1つ、順に回る）。今は5列目
   const sixPhases = runOf([
     finished(0, 0, 10, { phaseTitle: "p1" }),
     finished(1, 10, 10, { phaseTitle: "p2" }),
@@ -389,7 +389,7 @@ describe("workflowDiagramOf（畳み）", () => {
     expect(diagram).not.toHaveProperty("foldedPhases")
   })
 
-  it("終わったワークフロースクリプトの走っている・待ちの体は止まった体にする", () => {
+  it("終わったワークフロースクリプトの走っている・待ちのエージェントは止まったエージェントにする", () => {
     const diagram = workflowDiagramOf(runOf(sixPhases.agents, true), SIX_IDS, NOW, FOLDED)
     const boxes = diagram.columns.flatMap((column) =>
       column.kind === "agents" ? column.boxes : [],
@@ -404,11 +404,11 @@ describe("workflowDiagramOf（畳み）", () => {
   })
 
   it.each([
-    ["ほか n 体", crowded, []],
+    ["ほか n 件", crowded, []],
     ["済んだ n フェーズ", sixPhases, SIX_IDS],
     ["順に回る task-flow", TASK_FLOW, TASK_FLOW_IDS],
   ] as const)(
-    "入力の体は全部、箱・ほか n 体・済んだ n フェーズのどれかに残る（%s）",
+    "入力のエージェントは全部、箱・ほか n 件・済んだ n フェーズのどれかに残る（%s）",
     (_, run, ids) => {
       const diagram = workflowDiagramOf(run, ids, NOW, FOLDED)
 

@@ -19,7 +19,7 @@ export type SessionWorkflowFields = {
    */
   readonly workflowProgress: readonly WorkflowProgress[]
   /**
-   * ワークフロースクリプトごとの図の材料（体ごとの写しと直近の手順）。{@link workflowSteps}・{@link workflowProgress} とは別の置き場で、ピルの一文は読まない。
+   * ワークフロースクリプトごとの図の材料（エージェントのインスタンスごとの写しと直近の手順）。{@link workflowSteps}・{@link workflowProgress} とは別の置き場で、ピルの一文は読まない。
    * 源は `workflow-progress`（顔ぶれにあるものだけ。`withWorkflowRunProgress`）と `workflow-step-started`・`workflow-step-finished`。
    * `background-tasks-changed` で顔ぶれから外れても捨てずに終わった印（`ended`）を付け、`request` で終わった印のものだけを捨て、`session-ended` で空にする。
    */

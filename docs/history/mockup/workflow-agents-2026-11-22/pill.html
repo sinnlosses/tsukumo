@@ -170,7 +170,7 @@
   @keyframes spin { to { rotate: 360deg; } }
   @media (prefers-reduced-motion: reduce) { .si.run { animation: none; } }
 
-  /* 選んだ体の手元 */
+  /* 選んだエージェントの手元 */
   .focus { margin: 10px 12px 0; padding: 10px 12px; border-radius: 10px; background: color-mix(in srgb, var(--ink) 5%, transparent); border: 1px solid var(--line); display: grid; gap: 4px; }
   .focus .h { display: flex; gap: 10px; align-items: baseline; font-size: 12px; color: var(--ink-quiet); }
   .focus .h b { font-size: 13px; color: var(--ink); }
@@ -248,16 +248,16 @@
 <section class="notes">
   <div class="note hl"><h2>押したときだけ出る図</h2>
     <p>面の幅はピルの幅にそろえる（左右の端をピルにそろえて重ねる）。部品はできる限り Astryx（ui/）で組む。</p>
-    <p>ピルの右端の「手順」（ADR 0070 論点 8 の全体の詳細）の頭に、ワークフローの図を置く。列はフェーズで、ピルの下線の区間と同じ並び・同じ色。箱1つがエージェント1体で、矢印が順番、橙の矢印が差し戻し。</p>
-    <p>走っている体は差し色の縁と流れる矢印、済んだ体は結果の一言、待ちの体は点線、失敗は赤い縁と理由。</p>
-    <p>箱の2行目の頭の札がエージェントの種類（プラグインの接頭辞を外した短い名）。手元の頭に種類の全名とモデルを出す。種類を渡さない体は札を出さず、手元の頭で「既定のエージェント」と言う（ADR 0081 論点 8）。</p></div>
+    <p>ピルの右端の「手順」（ADR 0070 論点 8 の全体の詳細）の頭に、ワークフローの図を置く。列はフェーズで、ピルの下線の区間と同じ並び・同じ色。箱1つがエージェント1つで、矢印が順番、橙の矢印が差し戻し。</p>
+    <p>走っているエージェントは差し色の縁と流れる矢印、済んだエージェントは結果の一言、待ちのエージェントは点線、失敗は赤い縁と理由。</p>
+    <p>箱の2行目の頭の札がエージェントの種類（プラグインの接頭辞を外した短い名）。手元の頭に種類の全名とモデルを出す。種類を渡さないエージェントは札を出さず、手元の頭で「既定のエージェント」と言う（ADR 0081 論点 8）。</p></div>
   <div class="note"><h2>箱を押すと手元が見える</h2>
-    <p>図の下に、選んだ体の申し送り（SendMessage）と直近の手順を出す。最初は走っている体（並んで回るときは最後に手順が動いた体）を選んでおく。全部は「手順 n件をすべて見る」で同じ面の中に開く。</p>
+    <p>図の下に、選んだエージェントの申し送り（SendMessage）と直近の手順を出す。最初は走っているエージェント（並んで回るときは最後に手順が動いたエージェント）を選んでおく。全部は「手順 n件をすべて見る」で同じ面の中に開く。</p>
     <p>今の面にあるフェーズの一覧は、図の列見出し（所要つき）と下端の経過に吸収する。</p></div>
   <div class="note"><h2>閉じているあいだ</h2>
     <ul>
-      <li>ピルの1行は今のまま。並んで回るときだけ「n 体が並んで動いています」にする</li>
-      <li>失敗した体があるときだけ「手順」の口に赤い点を付ける（見張らなくても気づける）</li>
+      <li>ピルの1行は今のまま。並んで回るときだけ「エージェント n 件が並んで動いています」にする</li>
+      <li>失敗したエージェントがあるときだけ「手順」の口に赤い点を付ける（見張らなくても気づける）</li>
       <li>サイドバーには何も足さない。同じ情報は「手順」の面の1か所だけ</li>
     </ul></div>
 </section>
@@ -293,7 +293,7 @@ const SCENES = {
       { id: "perf", name: "性能", col: 0, y: 68, state: "think", time: "3:41", d: "考えている · 18秒" },
       { id: "a11y", name: "アクセシビリティ", col: 0, y: 132, state: "done", time: "2:05", d: "済み · 指摘 3件" },
       { id: "css", name: "CSS", col: 0, y: 196, state: "err", time: "0:47", d: "失敗 · ターンの上限に達した" },
-      { id: "verify", name: "指摘を確かめる", col: 1, y: 100, state: "queued", time: "—", d: "4体のレビューを待つ" },
+      { id: "verify", name: "指摘を確かめる", col: 1, y: 100, state: "queued", time: "—", d: "エージェント4つのレビューを待つ" },
     ],
     edges: [["@start", "bugs"], ["@start", "perf"], ["@start", "a11y"], ["@start", "css"],
             ["bugs", "verify", "live"], ["perf", "verify", "todo"], ["a11y", "verify", "done"], ["css", "verify", "todo"]],
@@ -328,10 +328,10 @@ function render() {
   $("lane-title").textContent = s.request;
 
   const segs = s.phases.map((_, i) => `<i class="${i < s.phaseAt ? "done" : i === s.phaseAt ? "cur" : ""}"></i>`).join("");
-  const now = running > 1 ? `${running} 体が並んで動いています` : `${cur.name} · ${cur.d}`;
+  const now = running > 1 ? `エージェント ${running} 件が並んで動いています` : `${cur.name} · ${cur.d}`;
   $("pill").innerHTML = `<span class="st"></span><span class="ph">${s.phases[s.phaseAt].name}</span><span class="sep"></span>
     <span class="now">${now}</span><span class="meta">${s.phaseAt + 1}/${s.phases.length} · 経過 ${s.elapsed}</span>
-    <button class="btn" data-toggle aria-expanded="${state.open === "1"}">${failed ? `<span class="bad" title="失敗した体がある"></span>` : ""}手順 ⌄</button>
+    <button class="btn" data-toggle aria-expanded="${state.open === "1"}">${failed ? `<span class="bad" title="失敗したエージェントがある"></span>` : ""}手順 ⌄</button>
     <div class="segs">${segs}</div>`;
 
   $("stream").innerHTML = `<div class="me">${s.request}</div>

@@ -37,11 +37,11 @@ export const WORKFLOW_AGENT_STATES = [
 export type WorkflowAgentStopReason = "skipped" | "blocked" | "stalled" | "failed"
 
 /**
- * ワークフロースクリプトの agent 1体の写し（SDK の `workflow_agent`）。体の鍵は `index`。
- * `agentId` は agent の hook の `agent_id` と突き合わせる id で、並びの門で待つ体には無い。
+ * ワークフロースクリプトの agent のインスタンス1つの写し（SDK の `workflow_agent`）。インスタンスの鍵は `index`。
+ * `agentId` は agent の hook の `agent_id` と突き合わせる id で、並びの門で待つエージェントには無い。
  * `phaseTitle` はその agent が走る段の題で、欄が無いか文字列でなければ空の文字列。
  * `model` は `fallbackModel` があればその値。時刻はエポックミリ秒。
- * `stopReason` は `state` が `error` の体だけに付く。
+ * `stopReason` は `state` が `error` のエージェントだけに付く。
  */
 export type WorkflowAgent = {
   readonly index: number
@@ -71,7 +71,7 @@ export type WorkflowProgress = {
   readonly agents: readonly WorkflowAgent[]
 }
 
-/** hook の `agent_id` と突き合わせる id を持つ agent だけ（並びの門で待つ体を除く）。 */
+/** hook の `agent_id` と突き合わせる id を持つ agent だけ（並びの門で待つエージェントを除く）。 */
 export function hookedAgents(
   progress: WorkflowProgress,
 ): readonly (WorkflowAgent & { readonly agentId: string })[] {

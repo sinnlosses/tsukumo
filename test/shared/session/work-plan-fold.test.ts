@@ -329,7 +329,7 @@ describe("nextWorkPlan（ワークフロースクリプトの写しで進める�
     expect(progressed(planAt(3), ["accept", "progress"])).toEqual(planAt(3))
   })
 
-  it("agentId の無い門で待つ体は段を進めない", () => {
+  it("agentId の無い門で待つエージェントは段を進めない", () => {
     expect(
       nextWorkPlan(planAt(0), {
         kind: "workflow-progress",
