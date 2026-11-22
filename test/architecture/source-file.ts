@@ -145,6 +145,18 @@ function listTableFiles(root: string, extensions: readonly string[]): readonly s
     .map((relPath) => relPath.slice(prefix.length))
 }
 
+/** 列挙したあとに消えたファイルは `undefined` を返す（並んで走る処理が書いて消すファイルが走査に入りうる）。 */
+export function readFileIfPresent(path: string): string | undefined {
+  try {
+    return readFileSync(path, "utf8")
+  } catch (error) {
+    if (error instanceof Error && "code" in error && error.code === "ENOENT") {
+      return undefined
+    }
+    throw error
+  }
+}
+
 function walkSourceFiles(
   root: string,
   dir: string,
@@ -155,7 +167,11 @@ function walkSourceFiles(
     if (GENERATED_DIRECTORIES.includes(fullPath)) {
       return []
     }
-    if (statSync(fullPath).isDirectory()) {
+    const stat = statSync(fullPath, { throwIfNoEntry: false })
+    if (stat === undefined) {
+      return []
+    }
+    if (stat.isDirectory()) {
       return walkSourceFiles(root, fullPath, extensions)
     }
     return extensions.some((extension) => name.endsWith(extension))

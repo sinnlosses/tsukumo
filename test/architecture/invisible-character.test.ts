@@ -6,6 +6,7 @@ import { describe, expect, it } from "vitest"
 
 import { REPOSITORY_ROOT } from "../../scripts/shared/repository-root.ts"
 import { runSubprocessOrThrow } from "../fixture/subprocess.ts"
+import { readFileIfPresent } from "./source-file.ts"
 const SCANNED_DIRECTORIES = ["src", "test", "scripts", "docs", ".claude"]
 const INVISIBLE_CODE_POINTS: ReadonlySet<number> = new Set([0x200b, 0x200c, 0x200d, 0xfeff])
 
@@ -74,8 +75,8 @@ describe("見えない文字", () => {
 function describeOccurrences(path: string): readonly string[] {
   const absolute = `${REPOSITORY_ROOT}/${path}`
   if (!statSync(absolute, { throwIfNoEntry: false })?.isFile()) return []
-  const text = readFileSync(absolute, "utf8")
-  if (text.includes("\u0000")) return []
+  const text = readFileIfPresent(absolute)
+  if (text === undefined || text.includes("\u0000")) return []
   return findInvisibleCharacters(text).map(
     ({ line, codePoint }) =>
       `${path}:${line} U+${codePoint.toString(16).toUpperCase().padStart(4, "0")}`,
