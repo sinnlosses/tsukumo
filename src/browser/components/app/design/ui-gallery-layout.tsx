@@ -1,7 +1,8 @@
-// 見本帳の `ui/` の節のうち、配置（Stack・HStack）・アイコン・読み込み中（Skeleton・Spinner・TypingDots）の部品。
+// 見本帳の `ui/` の節のうち、配置（Stack・HStack）・アイコン・読み込み中（Skeleton・Spinner・TypingDots）・パンくずの部品。
 
 import type { ReactElement, ReactNode } from "react"
 
+import { BreadcrumbTrail } from "../../ui/breadcrumb-trail/breadcrumb-trail.tsx"
 import { HStack } from "../../ui/h-stack/h-stack.tsx"
 import {
   AchievementIcon,
@@ -47,6 +48,12 @@ const ICONS = [
   CharacterIcon,
   TokenIcon,
   AchievementIcon,
+] as const
+
+const SAMPLE_CRUMBS = [
+  { key: "whole", title: "全体", onSelect: () => undefined },
+  { key: "server", title: "サーバ", onSelect: () => undefined },
+  { key: "report", title: "レポート", onSelect: () => undefined },
 ] as const
 
 export function LayoutGroups(): ReactElement {
@@ -118,6 +125,10 @@ export function LayoutGroups(): ReactElement {
         <Text element="span" size="secondary" tone="ink-quiet" weight="normal" className="">
           （この行のほかには何も見えない）
         </Text>
+      </Group>
+      <Group title="BreadcrumbTrail（default・supporting）" parts={["breadcrumb-trail"]}>
+        <BreadcrumbTrail variant="default" label="見本のパンくず" crumbs={SAMPLE_CRUMBS} />
+        <BreadcrumbTrail variant="supporting" label="見本の小さいパンくず" crumbs={SAMPLE_CRUMBS} />
       </Group>
     </>
   )
