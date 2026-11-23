@@ -63,14 +63,14 @@ describe("CharacterEdit", () => {
     renderCharacterEdit(FIXTURE_CHARACTER)
 
     expect(screen.queryByRole("button", { name: "通常を消す" })).toBeNull()
-    expect(screen.getByRole("button", { name: "どや顔を消す" })).toBeDefined()
+    expect(screen.getByRole("button", { name: "得意気（どや顔）を消す" })).toBeDefined()
   })
 
   // 必須から外れたので、thinking は立ち絵があれば消せる（`isRemovableExpression`）。
   it("thinking は立ち絵があれば消す口を出す", () => {
     renderCharacterEdit(FIXTURE_CHARACTER)
 
-    expect(screen.getByRole("button", { name: "作業中を消す" })).toBeDefined()
+    expect(screen.getByRole("button", { name: "考え中（作業中）を消す" })).toBeDefined()
   })
 
   // 立ち絵が無い表情は、その表情の名前を書いた点線の空欄
@@ -78,10 +78,10 @@ describe("CharacterEdit", () => {
   it("立ち絵が無い表情は名前つきの空欄で出し、消す口は出さない", () => {
     renderCharacterEdit(FIXTURE_CHARACTER)
 
-    expect(screen.queryByRole("button", { name: "flusteredを消す" })).toBeNull()
-    // 空欄の枠そのものが選ぶ口で、どの表情かは枠の字に出る。
-    const pick = screen.getByLabelText("flusteredを選ぶ")
-    expect(pick.closest("label")?.textContent).toContain("flustered")
+    expect(screen.queryByRole("button", { name: "慌てを消す" })).toBeNull()
+    // 空欄の枠そのものが選ぶ口で、どの表情かは枠の字（役割の名）に出る。
+    const pick = screen.getByLabelText("慌てを選ぶ")
+    expect(pick.closest("label")?.textContent).toContain("慌て")
     // 立ち絵がある3つ以外の残り全部（EXPRESSIONS が伸びてもここは自動で追随する）。
     const blanks = [...document.querySelectorAll(".character-card-blank")]
     expect(blanks).toHaveLength(EXPRESSIONS.length - EXPRESSIONS_WITH_PORTRAIT.length)
@@ -122,7 +122,7 @@ describe("CharacterEdit", () => {
   it("カードに画像を落とすと、その表情の characterPack.setPortrait を dispatch する", async () => {
     const calls: unknown[] = []
     renderCharacterEdit(FIXTURE_CHARACTER, (command) => calls.push(command))
-    const blank = screen.getByLabelText("sadを選ぶ").closest("label")
+    const blank = screen.getByLabelText("悲しみを選ぶ").closest("label")
     if (blank === null) {
       throw new Error("空欄のカードが無い")
     }
@@ -148,13 +148,12 @@ describe("CharacterEdit", () => {
     const calls: unknown[] = []
     renderCharacterEdit(FIXTURE_CHARACTER, (command) => calls.push(command))
 
-    fireEvent.click(screen.getByRole("button", { name: "どや顔を消す" }))
+    fireEvent.click(screen.getByRole("button", { name: "得意気（どや顔）を消す" }))
 
     expect(calls).toEqual([])
     expect(clearConfirmDialog()?.hasAttribute("open")).toBe(true)
-    expect(screen.getByText("「どや顔」を消しますか？")).toBeDefined()
-    // 本文の「代わりに出る表情」の名前もパックのラベル
-    // （`resolveExpressionLabel`。AGENTS.md「キャラクターの中身をコードに書かない」）。
+    expect(screen.getByText("「得意気（どや顔）」を消しますか？")).toBeDefined()
+    // 本文の「代わりに出る表情」の名前も役割の名（ラベルは添える）。
     expect(screen.getByText("この表情を使う場面では「通常」が出ます。")).toBeDefined()
   })
 
@@ -162,7 +161,7 @@ describe("CharacterEdit", () => {
     const calls: unknown[] = []
     renderCharacterEdit(FIXTURE_CHARACTER, (command) => calls.push(command))
 
-    fireEvent.click(screen.getByRole("button", { name: "どや顔を消す" }))
+    fireEvent.click(screen.getByRole("button", { name: "得意気（どや顔）を消す" }))
     fireEvent.click(screen.getByRole("button", { name: "消す" }))
 
     expect(calls).toEqual([
@@ -175,7 +174,7 @@ describe("CharacterEdit", () => {
     const calls: unknown[] = []
     renderCharacterEdit(FIXTURE_CHARACTER, (command) => calls.push(command))
 
-    fireEvent.click(screen.getByRole("button", { name: "どや顔を消す" }))
+    fireEvent.click(screen.getByRole("button", { name: "得意気（どや顔）を消す" }))
     fireEvent.click(screen.getByRole("button", { name: "やめる" }))
 
     expect(calls).toEqual([])
@@ -186,7 +185,7 @@ describe("CharacterEdit", () => {
     const calls: unknown[] = []
     renderCharacterEdit(FIXTURE_CHARACTER, (command) => calls.push(command))
 
-    fireEvent.click(screen.getByRole("button", { name: "どや顔を消す" }))
+    fireEvent.click(screen.getByRole("button", { name: "得意気（どや顔）を消す" }))
     if (clearConfirmDialog() === null) {
       throw new Error("確かめが開いていない")
     }
@@ -200,9 +199,9 @@ describe("CharacterEdit", () => {
     const calls: unknown[] = []
     renderCharacterEdit(FIXTURE_CHARACTER, (command) => calls.push(command))
     const input = typedElement(
-      screen.getByLabelText("どや顔を差し替える"),
+      screen.getByLabelText("得意気（どや顔）を差し替える"),
       HTMLInputElement,
-      "どや顔を差し替えるの入力欄",
+      "得意気（どや顔）を差し替えるの入力欄",
     )
 
     fireEvent.change(input, {
@@ -377,12 +376,12 @@ describe("CharacterEdit", () => {
   it("立ち絵の書き込みが断られたら、その表情のカードの下に上限を言う一言を出す", async () => {
     renderCharacterEdit(FIXTURE_CHARACTER, () => Promise.reject(new Error("断り")))
 
-    fireEvent.change(screen.getByLabelText("作業中を差し替える"), {
+    fireEvent.change(screen.getByLabelText("考え中（作業中）を差し替える"), {
       target: { files: [new File(["png"], "thinking.png", { type: "image/png" })] },
     })
 
     expect(
-      await screen.findByText(/作業中を差し替えられなかった。.*2 MiB までの画像/u),
+      await screen.findByText(/考え中（作業中）を差し替えられなかった。.*2 MiB までの画像/u),
     ).toBeDefined()
   })
 

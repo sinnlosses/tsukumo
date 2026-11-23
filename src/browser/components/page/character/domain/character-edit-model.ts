@@ -65,7 +65,12 @@ export type CharacterProfileEditModel =
  */
 export type PortraitCardModel = {
   readonly expression: Expression
-  readonly label: string
+  /** 札の題（役割の名。どのパックでも同じ）。 */
+  readonly role: string
+  /** 題に小さく添えるパックのラベル（無いパックでは undefined）。 */
+  readonly labelNote?: string
+  /** 読み上げ・拡大の alt・差し戻しの文に使う名（`考え中（ふむ）`）。 */
+  readonly fullName: string
   /** `default` にだけ添える札（「いつもの顔」）。 */
   readonly badge: { readonly kind: "none" } | { readonly kind: "shown"; readonly text: string }
   readonly image: { readonly kind: "blank" } | { readonly kind: "shown"; readonly url: string }
@@ -80,7 +85,7 @@ export type PortraitCardModel = {
     | {
         readonly kind: "shown"
         readonly ariaLabel: string
-        /** 消したあとに代わりに出る表情（`default`）のラベル。消す前の確かめの本文に使う。 */
+        /** 消したあとに代わりに出る表情（`default`）の名（役割の名にラベルを添えた形）。消す前の確かめの本文に使う。 */
         readonly fallbackLabel: string
         readonly onClear: () => void
       }

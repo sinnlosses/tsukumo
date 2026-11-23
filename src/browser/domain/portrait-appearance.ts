@@ -1,6 +1,6 @@
 // キャラクター・表情から、立ち絵の見た目（URL・代替テキスト）を導く。
 import type { CharacterInfo } from "../../shared/character-pack/character.ts"
-import { resolveExpressionLabel } from "../../shared/character-pack/expression-choice.ts"
+import { expressionRoleName } from "../../shared/character-pack/expression-choice.ts"
 import type { Expression } from "../../shared/character-pack/expression.ts"
 
 /** character.json に `name` が無い・定義自体が無いときの、キャラクターの既定の呼び名。 */
@@ -13,8 +13,7 @@ export type PortraitAppearance = {
 }
 
 /**
- * 表情から立ち絵の見た目を組み立てる。表情のラベルはキャラクターパックの定義から来る。
- * 定義が届く前・ラベルが無い表情では、表情名そのものがラベルになる。
+ * 表情から立ち絵の見た目を組み立てる。代替テキストは名前と表情の役割の名（パックのラベルは入れない）。
  */
 export function portraitAppearance(
   character: CharacterInfo | undefined,
@@ -22,9 +21,6 @@ export function portraitAppearance(
 ): PortraitAppearance {
   return {
     portraitUrl: character?.portraits?.[expression],
-    altText: `${character?.name ?? DEFAULT_CHARACTER_NAME}（${resolveExpressionLabel(
-      character?.expressions ?? [],
-      expression,
-    )}）`,
+    altText: `${character?.name ?? DEFAULT_CHARACTER_NAME}（${expressionRoleName(expression)}）`,
   }
 }

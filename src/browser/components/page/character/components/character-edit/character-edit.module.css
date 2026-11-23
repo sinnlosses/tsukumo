@@ -416,6 +416,11 @@
   font-size: var(--font-secondary);
   text-align: center;
 }
+.character-card-note {
+  display: block;
+  font-size: var(--font-label);
+  opacity: 0.7;
+}
 .character-card-badge {
   position: absolute;
   top: 0.5rem;

@@ -278,7 +278,7 @@
                           "tag": "div",
                           "attributes": {
                             "role": "img",
-                            "aria-label": "つくもの精霊（どや顔）",
+                            "aria-label": "つくもの精霊（得意気）",
                             "data-expression": "proud",
                             "data-motion": "reading"
                           },
@@ -286,7 +286,7 @@
                             {
                               "tag": "img",
                               "attributes": {
-                                "alt": "つくもの精霊（どや顔）",
+                                "alt": "つくもの精霊（得意気）",
                                 "src": "/character/tsukumo-spirit/proud.svg"
                               }
                             }

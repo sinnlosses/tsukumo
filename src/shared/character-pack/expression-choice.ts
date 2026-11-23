@@ -36,12 +36,20 @@ export function expressionNames(choices: readonly ExpressionChoice[]): readonly 
   return choices.map((choice) => choice.name)
 }
 
-/** パックのラベル。一覧に無い・ラベルが無い表情は表情名をそのまま返す（画面側が役割の名へ移るまでの呼び口）。 */
-export function resolveExpressionLabel(
+/** 表情の役割の名（`考え中`）。パックによらず同じ。 */
+export function expressionRoleName(expression: Expression): string {
+  return EXPRESSION_ROLES[expression].name
+}
+
+/** 役割の名に添えるパックのラベル（`{ labelNote }`）。無い・役割の名と同じ字・一覧に無い表情は空のオブジェクト。 */
+export function expressionLabelNote(
   choices: readonly ExpressionChoice[],
   expression: Expression,
-): string {
-  return choices.find((choice) => choice.name === expression)?.label ?? expression
+): { readonly labelNote?: string } {
+  const label = choices.find((choice) => choice.name === expression)?.label
+  return label === undefined || label === EXPRESSION_ROLES[expression].name
+    ? {}
+    : { labelNote: label }
 }
 
 /** 表情1つの説明。`thinking: 考え中（ふむ）。調べている・迷っているとき` の形。 */
@@ -80,20 +88,20 @@ export function expressionGuideForSpeak(choices: readonly ExpressionChoice[]): s
   return `表情。${guide}`
 }
 
-function choiceOf(name: Expression, label?: string): ExpressionChoice {
-  const role = EXPRESSION_ROLES[name].name
-  return label === undefined ? { name, role } : { name, role, label }
-}
-
 /**
  * 役割の名にパックのラベルを括弧で添えた文字列（`考え中（ふむ）`）。
  * ラベルが無い・役割の名と同じ字・一覧に無い表情（定義から消えたあとに残った状態など）は役割の名だけ。
  */
-function expressionRoleWithLabel(
+export function expressionRoleWithLabel(
   choices: readonly ExpressionChoice[],
   expression: Expression,
 ): string {
   const role = EXPRESSION_ROLES[expression].name
-  const label = choices.find((choice) => choice.name === expression)?.label
-  return label === undefined || label === role ? role : `${role}（${label}）`
+  const { labelNote } = expressionLabelNote(choices, expression)
+  return labelNote === undefined ? role : `${role}（${labelNote}）`
+}
+
+function choiceOf(name: Expression, label?: string): ExpressionChoice {
+  const role = EXPRESSION_ROLES[name].name
+  return label === undefined ? { name, role } : { name, role, label }
 }

@@ -17,7 +17,7 @@ import { useState } from "react"
 
 import type { AccentTarget } from "../../../../../../shared/character-pack/character-definition.ts"
 import type { CharacterPackName } from "../../../../../../shared/character-pack/character-pack-name.ts"
-import { resolveExpressionLabel } from "../../../../../../shared/character-pack/expression-choice.ts"
+import { expressionRoleWithLabel } from "../../../../../../shared/character-pack/expression-choice.ts"
 import type { Expression } from "../../../../../../shared/character-pack/expression.ts"
 import type { CommandClient } from "../../../../../../shared/rpc.ts"
 import { readAccentColor } from "../../../../../stores/appearance-color-root.ts"
@@ -262,7 +262,7 @@ export function useCharacterEdit(): CharacterEditModel {
         ? {
             kind: "shown",
             text: IMAGE_REJECTED_NOTE.portrait(
-              resolveExpressionLabel(character.expressions, rejectedTarget.expression),
+              expressionRoleWithLabel(character.expressions, rejectedTarget.expression),
             ),
           }
         : { kind: "none" },

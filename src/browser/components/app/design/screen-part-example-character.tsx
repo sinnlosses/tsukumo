@@ -39,7 +39,8 @@ function card(
 ): PortraitCardModel {
   return {
     expression,
-    label,
+    role: label,
+    fullName: label,
     badge,
     image: { kind: "blank" },
     pickAriaLabel: `${label}の絵を選ぶ`,

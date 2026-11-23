@@ -179,9 +179,9 @@ describe("Character", () => {
     expect(screen.getByRole("link", { name: /別の精霊/ }).getAttribute("aria-current")).toBe("page")
     // 表情のラベルも選んだパックの言葉になる。
     const input = typedElement(
-      screen.getByLabelText("得意を差し替える"),
+      screen.getByLabelText("得意気（得意）を差し替える"),
       HTMLInputElement,
-      "得意を差し替えるの入力欄",
+      "得意気（得意）を差し替えるの入力欄",
     )
     fireEvent.change(input, {
       target: { files: [new File(["png"], "picked.png", { type: "image/png" })] },

@@ -1,7 +1,11 @@
 // 表情のカードの並び。
 
 import type { CharacterInfo } from "../../../../../shared/character-pack/character.ts"
-import { resolveExpressionLabel } from "../../../../../shared/character-pack/expression-choice.ts"
+import {
+  expressionLabelNote,
+  expressionRoleName,
+  expressionRoleWithLabel,
+} from "../../../../../shared/character-pack/expression-choice.ts"
 import {
   type Expression,
   EXPRESSIONS,
@@ -24,9 +28,9 @@ export function portraitCards(
   send: PortraitSenders,
 ): readonly PortraitCardModel[] {
   // `default` は消せないので1回だけ解けばよい（消す前の確かめの本文がどのカードでも同じ値を読む）。
-  const fallbackLabel = resolveExpressionLabel(character.expressions, "default")
+  const fallbackLabel = expressionRoleWithLabel(character.expressions, "default")
   return EXPRESSIONS.map((expression): PortraitCardModel => {
-    const label = resolveExpressionLabel(character.expressions, expression)
+    const label = expressionRoleWithLabel(character.expressions, expression)
     // 畳んだ表では `default` の絵が入っているので、自分の絵を持つ表情だけを引く。
     const url = character.expressionsWithPortrait.includes(expression)
       ? character.portraits?.[expression]
@@ -36,7 +40,9 @@ export function portraitCards(
     }
     return {
       expression,
-      label,
+      role: expressionRoleName(expression),
+      ...expressionLabelNote(character.expressions, expression),
+      fullName: label,
       badge:
         expression === "default"
           ? { kind: "shown", text: DEFAULT_EXPRESSION_BADGE }

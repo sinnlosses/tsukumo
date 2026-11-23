@@ -5,8 +5,8 @@ import {
   expressionChoices,
   expressionEnumForSpeak,
   expressionGuideForSpeak,
+  expressionLabelNote,
   expressionNames,
-  resolveExpressionLabel,
 } from "../../../src/shared/character-pack/expression-choice.ts"
 import { characterDefinition, FULL_DEFINITION_JSON, portraits } from "../../fixture/character.ts"
 
@@ -54,15 +54,12 @@ describe("expressionChoices", () => {
   })
 })
 
-describe("resolveExpressionLabel", () => {
-  it("一覧にある表情はそのラベルを返す", () => {
+describe("expressionLabelNote", () => {
+  it("ラベルがあれば返し、無い・一覧に無い表情は空", () => {
     const choices = expressionChoices(parseCharacterDefinition(FULL_DEFINITION_JSON))
 
-    expect(resolveExpressionLabel(choices, "proud")).toBe("どや顔")
-  })
-
-  it("一覧に無い表情は表情名をそのまま返す", () => {
-    expect(resolveExpressionLabel([], "thinking")).toBe("thinking")
+    expect(expressionLabelNote(choices, "proud")).toEqual({ labelNote: "どや顔" })
+    expect(expressionLabelNote([], "thinking")).toEqual({})
   })
 })
 

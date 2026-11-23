@@ -188,7 +188,7 @@ describe("useCharacterEdit", () => {
 
     await vi.waitFor(() => {
       const note = ready(result.current).portraitRejection
-      expect(note.kind === "shown" && note.text.startsWith("どや顔を")).toBe(true)
+      expect(note.kind === "shown" && note.text.startsWith("得意気（どや顔）を")).toBe(true)
     })
   })
 

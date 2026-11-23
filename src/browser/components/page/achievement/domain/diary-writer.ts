@@ -10,7 +10,7 @@ import type {
   CharacterInfo,
   CharacterPackEntry,
 } from "../../../../../shared/character-pack/character.ts"
-import { resolveExpressionLabel } from "../../../../../shared/character-pack/expression-choice.ts"
+import { expressionRoleName } from "../../../../../shared/character-pack/expression-choice.ts"
 import { isExpression } from "../../../../../shared/character-pack/expression.ts"
 import type { DailyDiaryStatus, DiaryParagraph } from "../../../../../shared/diary/diary.ts"
 import {
@@ -64,7 +64,7 @@ function diaryWriterPortraitOf(
         ? { portraitUrl: undefined, altText: paragraph.writer.name }
         : {
             ...portraitAppearance(pack.character, expression),
-            altText: `${paragraph.writer.name}（${resolveExpressionLabel(pack.character.expressions, expression)}）`,
+            altText: `${paragraph.writer.name}（${expressionRoleName(expression)}）`,
           },
   }
 }

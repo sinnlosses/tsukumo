@@ -79,8 +79,13 @@ export function PortraitCard(props: {
           <PlusIcon />
         </span>
         <Text element="span" size="secondary" tone="ink" weight="inherit" className="">
-          {card.label}
+          {card.role}
         </Text>
+        {card.labelNote !== undefined && (
+          <Text element="span" size="label" tone="inherit" weight="inherit" className="">
+            {card.labelNote}
+          </Text>
+        )}
         <Text element="span" size="label" tone="inherit" weight="inherit" className="">
           {BLANK_HINT}
         </Text>
@@ -106,18 +111,23 @@ export function PortraitCard(props: {
             characterStyles["character-zoom-trigger"],
             styles["character-card-stage"],
           )}
-          aria-label={`${card.label}を拡大`}
+          aria-label={`${card.fullName}を拡大`}
           onClick={() => setZoomed(true)}
         >
           <Portrait
             url={card.image.url}
-            altText={card.label}
+            altText={card.fullName}
             expression={card.expression}
             motion={undefined}
             className={styles["character-card-portrait"]}
           />
         </button>
-        <figcaption className={styles["character-card-label"]}>{card.label}</figcaption>
+        <figcaption className={styles["character-card-label"]}>
+          {card.role}
+          {card.labelNote !== undefined && (
+            <span className={styles["character-card-note"]}>{card.labelNote}</span>
+          )}
+        </figcaption>
         {card.badge.kind === "shown" && (
           <span className={styles["character-card-badge"]}>{card.badge.text}</span>
         )}
@@ -161,7 +171,7 @@ export function PortraitCard(props: {
       {zoomed && (
         <ImageZoom
           src={card.image.url}
-          alt={card.label}
+          alt={card.fullName}
           size="modest"
           fallback={{ kind: "none" }}
           onClose={() => setZoomed(false)}
@@ -170,7 +180,7 @@ export function PortraitCard(props: {
       {confirmClear !== undefined && clear.kind === "shown" && (
         <PortraitClearConfirm
           anchor={confirmClear.anchor}
-          label={card.label}
+          label={card.fullName}
           fallbackLabel={clear.fallbackLabel}
           portraitUrl={card.image.url}
           onConfirm={() => {
