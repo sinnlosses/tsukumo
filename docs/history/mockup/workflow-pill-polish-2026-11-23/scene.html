@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<title>ピルの手順の図の磨き — 場面（?form=now|after&amp;at=folded|unfolded）</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #1f1d24;
+    --surface: #26232c;
+    --ink: #ece7ef;
+    --ink-soft: color-mix(in srgb, var(--ink) 72%, transparent);
+    --ink-quiet: color-mix(in srgb, var(--ink) 55%, transparent);
+    --rule: color-mix(in srgb, var(--ink) 12%, transparent);
+    --accent: #f4b6c6;
+    --ok: #6fcf8f;
+    --warn: #f0b443;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #141218; font: 14px/1.5 system-ui, "Hiragino Sans", sans-serif; color: var(--ink); }
+  .panel { width: 840px; margin: 12px; background: var(--bg); border: 1px solid var(--rule); border-radius: 14px; padding: 14px 18px 22px; }
+  .top { display: flex; justify-content: space-between; align-items: center; color: var(--ink-quiet); font-size: 13px; }
+  .pill { border-radius: 999px; padding: 1px 10px; font-size: 12px; }
+  .pill.n { background: color-mix(in srgb, var(--ink) 14%, transparent); color: var(--ink-soft); }
+  .title { display: flex; gap: 8px; align-items: center; margin: 6px 0 12px; font-weight: 600; font-size: 13px; }
+  .title .name { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pill.run { background: color-mix(in srgb, var(--accent) 18%, transparent); color: var(--accent); font-weight: 400; }
+  .pill.ok { background: var(--ok); color: #10301b; font-weight: 400; }
+
+  .stage { position: relative; display: grid; align-items: start; column-gap: 16px; row-gap: 26px; }
+  .head { grid-row: 1; display: flex; align-items: baseline; gap: 4px; border-bottom: 2px solid var(--rule); padding-bottom: 4px; font-size: 13px; color: var(--ink-quiet); min-width: 0; }
+  .head .nm { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  .head .tm { margin-left: auto; font-family: ui-monospace, monospace; font-size: 12px; white-space: nowrap; }
+  .head.now { color: var(--ink); font-weight: 600; border-color: var(--accent); }
+  .head.now .tm { font-weight: 400; color: var(--ink-quiet); }
+  .col { grid-row: 2; display: flex; flex-direction: column; gap: 26px; min-width: 0; }
+  .card { border: 1px solid var(--rule); background: var(--surface); border-radius: 10px; padding: 7px 10px; min-width: 0; }
+  .card .row { display: flex; align-items: center; gap: 6px; min-width: 0; }
+  .card .row + .row { margin-top: 4px; }
+  .card b { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  .card .tm { margin-left: auto; font-family: ui-monospace, monospace; font-size: 12px; color: var(--ink-quiet); white-space: nowrap; }
+  .card .note { font-size: 12px; color: var(--ink-quiet); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  .tag { background: color-mix(in srgb, var(--ink) 16%, transparent); border-radius: 6px; padding: 0 7px; font-size: 12px; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  .dot { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+  .dot.ok { background: var(--ok); }
+  .card.running { border-color: var(--accent); }
+  .card.upcoming { border-style: dashed; background: transparent; color: var(--ink-quiet); font-size: 13px; }
+  .folded { font-size: 12px; color: var(--ink-quiet); }
+  .scale { display: grid; gap: 16px; margin-top: 6px; }
+  .scale span i { display: block; height: 4px; border-radius: 2px; background: var(--ok); }
+  .scale span { font-size: 12px; color: var(--ink-quiet); }
+
+  svg.arrows { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+  .arrow { fill: none; stroke-width: 1.5; stroke: color-mix(in srgb, var(--ink) 40%, transparent); }
+  .arrow.dash { stroke-dasharray: 4 3; }
+  .arrow.back { stroke: var(--warn); }
+  .mk { fill: color-mix(in srgb, var(--ink) 40%, transparent); }
+  .mk.back { fill: var(--warn); }
+  .alabel { position: absolute; transform: translate(6px, -50%); font-size: 13px; color: var(--warn); white-space: nowrap; }
+
+  /* ---------- 今の形 ---------- */
+  .now .card.pressed { box-shadow: 0 0 0 2px color-mix(in srgb, var(--ink) 35%, transparent); }
+  .now .card.running.pressed { border-width: 2px; }
+
+  /* ---------- 直した形 ---------- */
+  /* 2: 枠は 1px。選んだ印は輪ではなく地の薄い差し色。 */
+  .after .card.pressed { background: color-mix(in srgb, var(--accent) 9%, var(--surface)); }
+  /* 1: 差し戻しの字は 11px の小札にして線から離す。 */
+  .after .alabel { font-size: 11px; transform: translate(calc(-100% - 8px), -50%); padding: 0 6px; border-radius: 999px; background: color-mix(in srgb, var(--warn) 14%, var(--bg)); }
+  .after .stage { row-gap: 34px; column-gap: 24px; }
+  .after .scale { gap: 24px; }
+  /* 狭い列では所要と札を次の行へ折り返し、字を「a…」に削らない。 */
+  .after .card .row { flex-wrap: wrap; row-gap: 2px; }
+  .after .card.upcoming .sub { display: block; font-size: 11px; }
+  .after .card.upcoming .sep { display: none; }
+  .after .col { gap: 34px; }
+  /* 3: 段の見出しは名前と所要の2行。 */
+  .after .head { flex-direction: column; align-items: stretch; gap: 0; }
+  .after .head .tm { margin-left: 0; font-size: 11px; }
+  .after .head .tm:empty::before { content: "\00a0"; }
+  /* 4: 開いたときは「済んだ n フェーズ」の場所に畳む札。 */
+  .refold { grid-row: 1 / span 2; align-self: stretch; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding-top: 2px; }
+  .refold button { all: unset; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--ink-soft); border: 1px solid var(--rule); border-radius: 999px; padding: 2px 9px 2px 6px; background: var(--surface); }
+  .refold button:hover { color: var(--ink); border-color: color-mix(in srgb, var(--ink) 30%, transparent); }
+</style>
+</head>
+<body>
+<div class="panel" id="panel"></div>
+<script>
+const q = new URLSearchParams(location.search)
+const form = q.get("form") ?? "now"
+const at = q.get("at") ?? "folded"
+const after = form === "after"
+const panel = document.getElementById("panel")
+panel.classList.add(after ? "after" : "now")
+
+const box = (id, { name, time, tag, note, state, pressed }) => `
+  <div class="card ${state ?? ""} ${pressed ? "pressed" : ""}" data-end="${id}">
+    <div class="row"><span class="dot ${state === "running" ? "" : "ok"}"></span><b>${name}</b>${time ? `<span class="tm">${time}</span>` : ""}</div>
+    ${tag ? `<div class="row"><span class="tag">${tag}</span>${note ? `<span class="note">${note}</span>` : ""}</div>` : ""}
+  </div>`
+const upcoming = (id, name) => `<div class="card upcoming" data-end="${id}">${name}<span class="sep"> · </span><span class="sub">これから</span></div>`
+const head = (col, name, time, now) => `<div class="head ${now ? "now" : ""}" style="grid-column:${col}"><span class="nm">${name}</span><span class="tm">${time}</span></div>`
+
+let html = ""
+let cols = ""
+let arrows = []
+if (at === "folded") {
+  cols = after ? "7.5rem repeat(3, minmax(0, 1fr))" : "6rem repeat(3, minmax(0, 1fr))"
+  html += `<div class="col" style="grid-row:1/span 2;grid-column:1"><div class="card folded" data-end="folded">済んだ 5 フェーズ</div></div>`
+  html += head(2, "accept", "20分30秒〜", true) + head(3, "retrospect", "") + head(4, "ship", "")
+  html += `<div class="col" style="grid-column:2">
+    ${box("acc", { name: "受け入れ 1", time: "7分58秒", tag: "acceptor", note: "差し戻し" })}
+    ${box("fix", { name: "直し 1", time: "12分15秒", tag: "implementer", state: "running", pressed: true })}
+  </div>`
+  html += `<div class="col" style="grid-column:3">${upcoming("retro", "retrospect")}</div>`
+  html += `<div class="col" style="grid-column:4">${upcoming("ship", "ship")}</div>`
+  arrows = [["folded", "acc", "solid"], ["acc", "fix", "back"], ["fix", "retro", "dash"], ["retro", "ship", "dash"]]
+} else {
+  const impl = ["7分29秒", "3分43秒", "6分19秒", "5分10秒", "7分58秒"]
+  const first = after ? 2 : 1
+  // 済んだ範囲の段は名前が短いので細く、残りの段に幅を回す。
+  cols = after ? "4.5rem repeat(5, minmax(0, 0.6fr)) repeat(3, minmax(0, 1.6fr))" : "repeat(8, minmax(0, 1fr))"
+  if (after) {
+    html += `<div class="refold" style="grid-column:1"><button type="button" aria-label="済んだ 5 フェーズを畳む"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M7.5 2.5 4 6l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>畳む</button></div>`
+  }
+  impl.forEach((t, i) => { html += head(first + i, after ? `impl-${i + 1}` : "im…", t) })
+  html += head(first + 5, after ? "accept" : "a", "20分58秒〜", true) + head(first + 6, "retrospect", "") + head(first + 7, "ship", "")
+  html += `<div class="col" style="grid-column:${first}/span 5">
+    <div class="card" data-end="impl">
+      <div class="row"><span class="dot ok"></span><b>実装</b><span class="tm">30分42秒</span></div>
+      <div class="row"><span class="tag">implementer</span><span class="note">済み · 手順 205</span></div>
+      <div class="scale" style="grid-template-columns:repeat(5,1fr)">${impl.map((_, i) => (after ? `<span><i></i>✓</span>` : `<span><i></i>impl-${i + 1} ✓</span>`)).join("")}</div>
+    </div></div>`
+  html += `<div class="col" style="grid-column:${first + 5}">
+    ${box("acc", { name: "受け入れ 1", time: "7分58秒", tag: "acceptor", note: "差し戻し" })}
+    ${box("fix", { name: "直し 1", time: "12分43秒", tag: "implementer", state: "running", pressed: true })}
+  </div>`
+  html += `<div class="col" style="grid-column:${first + 6}">${upcoming("retro", "retrospect")}</div>`
+  html += `<div class="col" style="grid-column:${first + 7}">${upcoming("ship", "ship")}</div>`
+  arrows = [["impl", "acc", "solid"], ["acc", "fix", "back"], ["fix", "retro", "dash"], ["retro", "ship", "dash"]]
+}
+
+panel.innerHTML = `
+  <div class="top"><span>依頼の手順</span><span class="pill n">9 フェーズ</span></div>
+  <div class="title"><span class="name">着手の印が立ったタスク1件を、実装 → 受け入れ → 振り返りの段で進める（送り出しは呼んだ側が tw finish で行う）</span><span class="pill run">動いている 1</span><span class="pill ok">済み 2</span></div>
+  <div class="stage" id="stage" style="grid-template-columns:${cols}">
+    <svg class="arrows" id="svg"></svg>${html}
+  </div>`
+
+const stage = document.getElementById("stage")
+const svg = document.getElementById("svg")
+const o = stage.getBoundingClientRect()
+const r = (k) => { const b = stage.querySelector(`[data-end="${k}"]`).getBoundingClientRect(); return { l: b.left - o.left, t: b.top - o.top, w: b.width, h: b.height } }
+const n = (v) => Math.round(v * 10) / 10
+// 今の形: 線は箱の縁まで。矢じりは線幅で拡大され、先が縁に重なる。
+// 直した形: 矢じりは 6px の固定寸法。線は矢じりの根元で止め、先と箱のあいだに 2px あける。
+const HEAD = 6, GAP = 2
+let defs = after
+  ? `<marker id="m-q" markerUnits="userSpaceOnUse" viewBox="0 0 6 6" refX="0" refY="3" markerWidth="${HEAD}" markerHeight="${HEAD}" orient="auto"><path class="mk" d="M0 0 L6 3 L0 6 z"/></marker>
+     <marker id="m-b" markerUnits="userSpaceOnUse" viewBox="0 0 6 6" refX="0" refY="3" markerWidth="${HEAD}" markerHeight="${HEAD}" orient="auto"><path class="mk back" d="M0 0 L6 3 L0 6 z"/></marker>`
+  : `<marker id="m-q" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path class="mk" d="M0 0 L8 4 L0 8 z"/></marker>
+     <marker id="m-b" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path class="mk back" d="M0 0 L8 4 L0 8 z"/></marker>`
+let paths = ""
+const labels = []
+for (const [a, b, kind] of arrows) {
+  const f = r(a), t = r(b)
+  const same = Math.abs(f.l - t.l) < 4
+  let d, mid
+  if (same) {
+    const x = f.l + f.w / 2
+    const y1 = f.t + f.h + (after ? GAP : 0)
+    const y2 = t.t - (after ? HEAD + GAP : 0)
+    d = `M${n(x)} ${n(y1)} L${n(x)} ${n(y2)}`
+    mid = { x, y: (f.t + f.h + t.t) / 2 }
+  } else {
+    const x1 = f.l + f.w + (after ? GAP : 0), y1 = f.t + f.h / 2
+    const x2 = t.l - (after ? HEAD + GAP : 0), y2 = t.t + t.h / 2
+    if (after) {
+      // 両端に水平の足を付け、矢じりが箱へまっすぐ入る形にする。
+      const stub = Math.min(8, (x2 - x1) / 4)
+      const a1 = x1 + stub, a2 = x2 - stub, m = (a1 + a2) / 2
+      d = `M${n(x1)} ${n(y1)} H${n(a1)} C${n(m)} ${n(y1)}, ${n(m)} ${n(y2)}, ${n(a2)} ${n(y2)} H${n(x2)}`
+    } else {
+      const m = (x1 + x2) / 2
+      d = `M${n(x1)} ${n(y1)} C${n(m)} ${n(y1)}, ${n(m)} ${n(y2)}, ${n(x2)} ${n(y2)}`
+    }
+    mid = { x: (x1 + x2) / 2, y: (y1 + y2) / 2 }
+  }
+  paths += `<path class="arrow ${kind === "dash" ? "dash" : ""} ${kind === "back" ? "back" : ""}" d="${d}" marker-end="url(#${kind === "back" ? "m-b" : "m-q"})"/>`
+  if (kind === "back") labels.push(mid)
+}
+svg.innerHTML = `<defs>${defs}</defs>${paths}`
+for (const p of labels) {
+  const s = document.createElement("span")
+  s.className = "alabel"
+  s.textContent = "差し戻し"
+  s.style.left = `${p.x}px`
+  s.style.top = `${p.y}px`
+  stage.append(s)
+}
+</script>
+</body>
+</html>
