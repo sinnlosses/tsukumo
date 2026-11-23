@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<title>サイドバーの地図の見本（scene.html?form=now|a|b&amp;at=top|select|deep）</title>
+<style>
+  :root { color-scheme: dark; --ground: #15131b; --surface: #1f1c27; --raised: #26222f; --ink: #ece7ef;
+    --ink-soft: color-mix(in srgb, var(--ink) 74%, transparent); --ink-quiet: color-mix(in srgb, var(--ink) 52%, transparent);
+    --rule: color-mix(in srgb, var(--ink) 22%, transparent); --rule-soft: color-mix(in srgb, var(--ink) 11%, transparent);
+    --focus: #5fbfb0; --lane-client: #7aa7e8; --lane-server: #c79be8; --lane-external: #9a96a3; --lane-shared: #e0b56b; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #0f0d14; color: var(--ink); font: 13px/1.6 system-ui, "Hiragino Sans", sans-serif; padding: 16px; }
+  .sidebar { width: 296px; border: 1px solid var(--rule-soft); border-radius: 14px; background: color-mix(in srgb, var(--surface) 92%, transparent); padding: 14px 14px 18px; display: flex; flex-direction: column; gap: 12px; }
+  .tabs { display: grid; grid-template-columns: 1fr 1fr; text-align: center; font-size: 14px; color: var(--ink-quiet); }
+  .tabs span { padding: 4px 0 8px; border-bottom: 2px solid transparent; }
+  .tabs .on { color: var(--ink); font-weight: 600; border-color: var(--focus); }
+  /* Astryx の Breadcrumbs（variant=supporting）に寄せた近似 */
+  .crumbs { display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--ink-quiet); min-height: 20px; }
+  .crumbs a { color: var(--ink-soft); text-decoration: none; padding: 1px 5px; border-radius: 6px; }
+  .crumbs a:hover { background: var(--rule-soft); }
+  .crumbs .sep { color: var(--ink-quiet); }
+  .crumbs .cur { color: var(--ink); font-weight: 600; padding: 1px 5px; }
+  .map { position: relative; padding: 8px; border-radius: 10px; background: var(--surface); }
+  .map svg.edges { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+  .box { position: relative; z-index: 1; display: flex; align-items: center; min-height: 26px; padding: 3px 7px; border: 1px solid var(--rule); border-radius: 6px; background: var(--raised); font-size: 12px; font-weight: 600; line-height: 1.3; color: var(--ink); overflow-wrap: anywhere; }
+  .box.ext { border-style: dashed; background: transparent; color: var(--ink-soft); }
+  .box.sel { border: 2px solid var(--focus); padding: 2px 6px; }
+  .box.dim { opacity: .45; }
+  .expand { align-self: flex-end; font-size: 13px; color: var(--ink-soft); margin-top: -4px; }
+  .desc h3 { margin: 0 0 4px; font-size: 14px; display: flex; gap: 8px; align-items: baseline; }
+  .desc h3 small { font-size: 12px; color: var(--ink-quiet); font-weight: 400; }
+  .desc p { margin: 0 0 6px; color: var(--ink-soft); font-size: 13px; }
+  /* 今: 格子 */
+  .grid-now { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px 14px; }
+  /* 区画 */
+  .lane { position: relative; border-radius: 8px; padding: 18px 6px 6px; border: 1px solid color-mix(in srgb, var(--lane) 45%, transparent); background: color-mix(in srgb, var(--lane) 7%, transparent); }
+  .lane > .lane-name { position: absolute; top: 2px; left: 7px; font-size: 11px; font-weight: 600; color: color-mix(in srgb, var(--lane) 85%, var(--ink)); letter-spacing: .02em; }
+  .lane.client { --lane: var(--lane-client); }
+  .lane.server { --lane: var(--lane-server); }
+  .lane.external { --lane: var(--lane-external); border-style: dashed; }
+  .lane.shared { --lane: var(--lane-shared); }
+  .lane .stack { display: flex; flex-direction: column; gap: 6px; }
+  .lane .row { display: flex; gap: 6px; flex-wrap: wrap; }
+  .lane .row .box { flex: 1 1 0; }
+  .lane-box { z-index: 1; display: flex; flex-direction: column; justify-content: center; gap: 2px; padding: 8px 9px; cursor: pointer; }
+  .lane-box .lane-title { font-size: 13px; font-weight: 700; color: color-mix(in srgb, var(--lane) 80%, var(--ink)); }
+  .lane-box .lane-count { font-size: 11px; color: var(--ink-quiet); }
+  .lane-box.sel { border: 2px solid var(--focus); padding: 7px 8px; }
+  .lane.external .box { font-size: 11.5px; overflow-wrap: break-word; }
+  /* 案A: 3列（ブラウザ・サーバ・外部）＋下に横断の帯（ブラウザとサーバの下） */
+  .a { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.3fr); grid-template-rows: 92px auto; gap: 6px; }
+  .a .client { grid-area: 1 / 1; }
+  .a .server { grid-area: 1 / 2; }
+  .a .external { grid-area: 1 / 3 / 3 / 4; }
+  .a .shared { grid-area: 2 / 1 / 3 / 3; }
+  /* 案B: 縦に積む（ブラウザ・サーバ・外部）＋左に横断の帯（ブラウザとサーバの横） */
+  .b { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 6px; }
+  .b .shared { grid-area: 1 / 1 / 3 / 2; align-items: center; text-align: center; }
+  .b .shared .lane-title { writing-mode: vertical-rl; }
+  .b .shared .lane-count { writing-mode: vertical-rl; }
+  .b .client { grid-area: 1 / 2; }
+  .b .server { grid-area: 2 / 2; }
+  .b .external { grid-area: 3 / 1 / 4 / 3; }
+  .bound { font-size: 10.5px; color: var(--ink-quiet); text-align: center; margin: -2px 0; }
+  .deep { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px; }
+  .deep .box { font-size: 11.5px; min-height: 24px; padding: 2px 5px; }
+</style>
+</head>
+<body>
+<div class="sidebar" id="root"></div>
+<script>
+const q = new URLSearchParams(location.search)
+const form = q.get("form") ?? "a"
+const at = q.get("at") ?? "top"
+const T = {
+  "claude-code": "Claude Code", "tsukumo-plugins": "tsukumo-plugins", "character-pack": "キャラクターパック",
+  server: "サーバ", browser: "ブラウザ", shared: "共有層",
+}
+const EDGES = [["browser", "shared"], ["server", "shared"], ["server", "claude-code"], ["server", "tsukumo-plugins"], ["server", "character-pack"]]
+const SERVER_KIDS = ["配線","共有の判断","共有の境界","セッション","セッションドライバ","レポート","ワークプラン","質問","システムプロンプト","雑談","キャラクターパック","日記","成果","使用量","診断ログ","ホスト","ビューサーバ","リポジトリ","おすすめ","迎えの挨拶","チェックアウト","ワークフローの設定","アイテム","地図"]
+const sel = at === "select" ? "server" : at === "deep" ? "server/report" : undefined
+const box = (id) => `<div class="box ${["claude-code","tsukumo-plugins","character-pack"].includes(id) ? "ext" : ""} ${sel === id ? "sel" : ""}" data-id="${id}">${T[id]}</div>`
+
+function crumbs() {
+  if (form === "now") return ""
+  if (at === "top") return `<nav class="crumbs" aria-label="地図の段"><span class="cur">全体</span></nav>`
+  if (at === "select") return `<nav class="crumbs" aria-label="地図の段"><a href="#">全体</a><span class="sep">›</span><span class="cur">サーバ</span></nav>`
+  return `<nav class="crumbs" aria-label="地図の段"><a href="#">全体</a><span class="sep">›</span><a href="#">サーバ</a><span class="sep">›</span><span class="cur">レポート</span></nav>`
+}
+function topMap() {
+  if (form === "now") {
+    return `<div class="grid-now">
+      <div style="display:flex;flex-direction:column;gap:8px">${box("claude-code")}${box("tsukumo-plugins")}${box("character-pack")}</div>
+      <div>${box("server")}</div>
+      <div style="display:flex;flex-direction:column;gap:8px">${box("browser")}${box("shared")}</div></div>`
+  }
+  // 区画そのものが大の箱（押すと選ぶ）。外部だけは区画の中に箱が並ぶ。
+  const laneBox = (id, cls, count) =>
+    `<section class="lane ${cls} lane-box ${sel === id ? "sel" : ""}" data-id="${id}"><span class="lane-title">${T[id]}</span>${count === undefined ? "" : `<span class="lane-count">中の箱 ${count}</span>`}</section>`
+  const external = (dir) =>
+    `<section class="lane external"><span class="lane-name">外部</span><div class="${dir}">${box("claude-code")}${box("tsukumo-plugins")}${box("character-pack")}</div></section>`
+  if (form === "a") {
+    return `<div class="a">${laneBox("browser", "client", 17)}${laneBox("server", "server", 24)}${external("stack")}${laneBox("shared", "shared", 18)}</div>`
+  }
+  return `<div class="b">${laneBox("shared", "shared", 18)}${laneBox("browser", "client", 17)}${laneBox("server", "server", 24)}${external("row")}</div>`
+}
+function deepMap() {
+  const kids = SERVER_KIDS.map((t) => `<div class="box ${t === "レポート" ? "sel" : ""}">${t}</div>`).join("")
+  return form === "now"
+    ? `<div class="deep">${kids}</div>`
+    : `<section class="lane server"><span class="lane-name">サーバの中</span><div class="deep">${kids}</div></section>`
+}
+const desc = at === "top"
+  ? `<h3>リポジトリ</h3><p>tsukumo は、Claude Code を子プロセスとして動かし、キャラクターと一緒に仕事をするための画面を1つのプロセスから出すアプリである。サーバが会話の流れを畳み、ブラウザの画面へ WebSocket 1本で配り、両者が読む語彙と契約を共有層が持つ。</p>`
+  : at === "select"
+    ? `<h3>サーバ<small>大</small></h3><p>Claude Code を起こして会話の流れを畳み、画面へ配る</p>`
+    : `<h3>レポート<small>中</small></h3><p>サーバ（Claude Code を起こして会話の流れを畳み、画面へ配る）の中</p><p>report の呼び出しを読み、検査して記録に畳む</p>`
+document.getElementById("root").innerHTML = `
+  <div class="tabs"><span>タスク</span><span class="on">地図</span></div>
+  ${crumbs()}
+  <div class="map" id="map"><svg class="edges" id="edges"></svg>${at === "deep" ? deepMap() : topMap()}</div>
+  <div class="expand">広げる</div>
+  <section class="desc">${desc}</section>`
+
+// 矢印は自前の SVG を箱の上に重ねる（箱は HTML）。箱の位置は描いたあとの DOM から測る。
+if (at !== "deep") {
+  const map = document.getElementById("map"), svg = document.getElementById("edges")
+  const base = map.getBoundingClientRect()
+  const rectOf = (id) => { const el = map.querySelector(`[data-id="${id}"]`); const r = el.getBoundingClientRect(); return { x: r.left - base.left, y: r.top - base.top, w: r.width, h: r.height } }
+  const border = (r, tx, ty) => { const cx = r.x + r.w / 2, cy = r.y + r.h / 2, dx = tx - cx, dy = ty - cy; const s = Math.min(Math.abs((r.w / 2) / (dx || 1e-6)), Math.abs((r.h / 2) / (dy || 1e-6))); return [cx + dx * s, cy + dy * s] }
+  let out = `<defs><marker id="ah" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L8 4L0 8z" fill="#a9a3b3"/></marker></defs>`
+  for (const [f, t] of EDGES) {
+    const a = rectOf(f), b = rectOf(t)
+    const [x1, y1] = border(a, b.x + b.w / 2, b.y + b.h / 2), [x2, y2] = border(b, a.x + a.w / 2, a.y + a.h / 2)
+    out += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#a9a3b3" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#ah)"/>`
+  }
+  svg.innerHTML = out
+}
+</script>
+</body>
+</html>
