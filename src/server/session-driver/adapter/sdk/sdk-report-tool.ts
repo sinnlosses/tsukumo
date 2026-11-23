@@ -85,6 +85,9 @@ export function reportTool(
       fileContents,
       task: report.task,
       workPlanClosing: report.workPlanClosing,
+      speechTexts: [report.closing, report.waitingLine].flatMap((speech) =>
+        speech.kind === "speech" ? [speech.text] : [],
+      ),
     })
     if (verdict.kind === "rejected") {
       return { content: [{ type: "text" as const, text: verdict.text }], isError: true }

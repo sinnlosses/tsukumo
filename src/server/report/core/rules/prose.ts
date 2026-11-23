@@ -1,11 +1,12 @@
 // 文章の検査の家族。違反の型・検出・差し戻し文を持つ。
 
-import { sumBy } from "remeda"
+import { sumBy, unique } from "remeda"
 
 import { MAX_FIRST_SENTENCE, MAX_HEADING } from "../../../../shared/report/report-limit.ts"
 import { type ReportOutline, sectionLeaves } from "../../../../shared/report/report-outline.ts"
 import type { ReportDraft } from "./draft.ts"
 import { PLAIN_WORDS } from "./plain-word.ts"
+import { reportFieldNamesInSpeech } from "./prose/field-name-find.ts"
 import { brokenInlineMarks } from "./prose/inline-mark.ts"
 import {
   MARKDOWN_NOTATION_NAMES,
@@ -59,6 +60,12 @@ export type ProseViolation =
    * `count` はその `{{` の数で、本文の字は持たない。
    */
   | { readonly kind: "broken-inline-mark"; readonly count: number }
+  /** 締めのセリフか待ちの一言に、`report` の欄の名前がある。`names` は見つけた欄の名前で、書いた文面は持たない。 */
+  | {
+      readonly kind: "field-name-in-speech"
+      readonly count: number
+      readonly names: readonly string[]
+    }
 
 /** 文章の違反を、当てはまらないもの（`count` が 0）も含めて並べる。 */
 export function detectProseViolations(
@@ -69,6 +76,7 @@ export function detectProseViolations(
   const notations = notationsInSections(outline)
   const firstSentenceLength = report.conclusionSentenceChars[0] ?? 0
   const plainWords = plainWordSpellingsIn(report, outline)
+  const fieldNames = unique((report.speechTexts ?? []).flatMap(reportFieldNamesInSpeech))
 
   return [
     { kind: "long-conclusion", count: report.conclusionSentenceChars.length },
@@ -112,6 +120,7 @@ export function detectProseViolations(
     },
     { kind: "plain-word", count: plainWords.length, spellings: plainWords },
     { kind: "broken-inline-mark", count: brokenInlineMarks(report, outline) },
+    { kind: "field-name-in-speech", count: fieldNames.length, names: fieldNames },
   ]
 }
 
@@ -127,6 +136,7 @@ const PROSE_KINDS: ReadonlySet<string> = new Set<ProseViolation["kind"]>([
   "non-japanese",
   "plain-word",
   "broken-inline-mark",
+  "field-name-in-speech",
 ])
 
 export function isProseViolation(violation: {
@@ -164,7 +174,14 @@ export function proseViolationMessage(violation: ProseViolation): string {
       return `地の文にわかりにくい語がある。${plainWordReplacements(violation.spellings)}。言い換えて書き直す（コード・引用の中は対象外）`
     case "broken-inline-mark":
       return `行内の印の書式（\`{{A → B}}\`・\`{{spark: 数 数 …}}\`・\`{{a / b}}\`）に当たらない \`{{\` が${violation.count}個ある。書式に合わせて直すか、\`{{\` を使わない書き方にする`
+    case "field-name-in-speech":
+      return `\`closing\`・\`waitingLine\` のセリフに${fieldNameAdvice(violation.names)}`
   }
+}
+
+/** `speak` のセリフに欄の名前があるときの戻り値。見つけた欄の名前だけで、セリフの文面は写さない。 */
+export function speechFieldNameRejectionText(names: readonly string[]): string {
+  return `セリフに${fieldNameAdvice(names)}。このセリフは画面に出していないので、書き直して呼び直す`
 }
 
 /** `speak` のセリフの地の文に表の語があるときの戻り値。表から取った語だけで、セリフの文面は写さない。 */
@@ -180,4 +197,8 @@ function plainWordReplacements(spellings: readonly string[]): string {
       return word === undefined ? spelling : `「${spelling}」は「${word.replacement}」`
     })
     .join("・")
+}
+
+function fieldNameAdvice(names: readonly string[]): string {
+  return `欄の名前（${names.map((name) => `\`${name}\``).join("・")}）がある。欄の名前は画面に出ないので、画面に見える語（結論の下の数のカード・したこと・お願い・節の見出しなど）で指して書き直す`
 }

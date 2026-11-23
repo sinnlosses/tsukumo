@@ -71,6 +71,7 @@ export const REPORT_REJECTION_MODES = {
   "plot-forbidden-form": "count",
   "plot-form-override": "count",
   "broken-inline-mark": "count",
+  "field-name-in-speech": "reject",
   "plot-title-without-number": "count",
   "template-miss": "count",
   "unknown-cite": "reject",

@@ -28,6 +28,8 @@ export type ReportDraft = {
   readonly task: ReportTask
   /** フェーズの閉じ方。記法の検査には使わず、フェーズの閉じ方の差し戻し（`ReportReview`）が読む。 */
   readonly workPlanClosing: WorkPlanClosing
+  /** 締めのセリフと待ちの一言の文。無ければセリフの検査をしない。 */
+  readonly speechTexts?: readonly string[]
 }
 
 // モデルが書いた Markdown を構文木（mdast）にする読み。

@@ -15,7 +15,11 @@ import { createReportInheritance } from "../../report/core/review/report-inherit
 import type { ReportVerdict } from "../../report/core/review/report-review-type.ts"
 import { createReportReview } from "../../report/core/review/report-review.ts"
 import type { ReportDraft } from "../../report/core/rules/draft.ts"
-import { speechPlainWordRejectionText } from "../../report/core/rules/prose.ts"
+import {
+  speechFieldNameRejectionText,
+  speechPlainWordRejectionText,
+} from "../../report/core/rules/prose.ts"
+import { reportFieldNamesInSpeech } from "../../report/core/rules/prose/field-name-find.ts"
 import { plainWordSpellingsInSpeech } from "../../report/core/rules/prose/plain-word-find.ts"
 import { REPORT_REJECTION_MODES } from "../../report/core/rules/rejection-mode.ts"
 import type { A2uiStructureFault, A2uiStructureVerdict } from "../../report/core/rules/structure.ts"
@@ -115,9 +119,13 @@ export function createCallReview(): CallReview {
     judgeSpeak: speechReview.judge,
     judgeSpeechWording: (text) => {
       const spellings = plainWordSpellingsInSpeech(text)
-      return spellings.length === 0
+      if (spellings.length > 0) {
+        return { kind: "rejected", text: speechPlainWordRejectionText(spellings) }
+      }
+      const fieldNames = reportFieldNamesInSpeech(text)
+      return fieldNames.length === 0
         ? { kind: "accepted" }
-        : { kind: "rejected", text: speechPlainWordRejectionText(spellings) }
+        : { kind: "rejected", text: speechFieldNameRejectionText(fieldNames) }
     },
     judgeReport: reportReview.judge,
     judgeReportStructure: reportReview.judgeStructure,
