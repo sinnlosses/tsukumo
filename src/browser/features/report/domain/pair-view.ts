@@ -37,11 +37,22 @@ export function pairSwitchLabels(parts: PartsById): { after: string; before: str
   }
 }
 
-/** 全部の対で同じ非空の見出しなら「（見出し）だけ」。そうでなければ空。 */
+/**
+ * 全部の対で同じ非空の見出しなら「（見出し）だけ」。そうでなければ空。
+ * 見出しの括弧書きは切り替えの字に入れず、括弧の前が長すぎれば空にする（切り替えの組が1行に収まるように）。
+ */
 function uniformHeadingLabel(pairs: readonly BeforeAfterPart[], index: number): string {
-  const headings = new Set(pairs.map((pair) => pair.sides[index]?.heading.trim() ?? ""))
+  const headings = new Set(pairs.map((pair) => switchWordOf(pair.sides[index]?.heading ?? "")))
   const [only = ""] = headings
   return headings.size === 1 && only !== "" ? `${only}だけ` : ""
+}
+
+const SWITCH_WORD_MAX_LENGTH = 8
+
+function switchWordOf(heading: string): string {
+  const [head = ""] = heading.split(/[（(]/u)
+  const word = head.trim()
+  return word.length > SWITCH_WORD_MAX_LENGTH ? "" : word
 }
 
 function isBeforeAfter(part: A2uiReportComponent): part is BeforeAfterPart {

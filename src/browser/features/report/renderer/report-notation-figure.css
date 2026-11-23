@@ -139,8 +139,10 @@
     display: inline-flex;
     align-items: center;
     margin-bottom: var(--space-xs);
-    height: 22px;
-    padding: 0 var(--space-sm);
+    min-height: 22px;
+    max-width: 100%;
+    padding: var(--space-2xs) var(--space-sm);
+    line-height: 1.4;
     border: 1px solid var(--rule);
     border-radius: var(--radius-lg);
     background: color-mix(in srgb, var(--ground) 88%, transparent);

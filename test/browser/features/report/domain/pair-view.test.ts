@@ -76,6 +76,13 @@ describe("pairSwitchLabels", () => {
     expect(pairSwitchLabels(parts)).toEqual({ after: "後だけ", before: "前だけ" })
   })
 
+  it("見出しの括弧書きは落とし、括弧の前が長すぎれば「後だけ」「前だけ」", () => {
+    const parts = partsOf([
+      compare("a", "before-after", "前（架空の画）", "画面を直したあとの架空の場面（選んだ状態）"),
+    ])
+    expect(pairSwitchLabels(parts)).toEqual({ after: "後だけ", before: "前だけ" })
+  })
+
   it("見出しが空なら「後だけ」「前だけ」", () => {
     expect(pairSwitchLabels(partsOf([compare("a", "before-after")]))).toEqual({
       after: "後だけ",
