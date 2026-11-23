@@ -17,9 +17,11 @@ import { createReportReview } from "../../report/core/review/report-review.ts"
 import type { ReportDraft } from "../../report/core/rules/draft.ts"
 import {
   speechFieldNameRejectionText,
+  speechForeignKanjiRejectionText,
   speechPlainWordRejectionText,
 } from "../../report/core/rules/prose.ts"
 import { reportFieldNamesInSpeech } from "../../report/core/rules/prose/field-name-find.ts"
+import { foreignKanjiInSpeech } from "../../report/core/rules/prose/foreign-kanji-find.ts"
 import { plainWordSpellingsInSpeech } from "../../report/core/rules/prose/plain-word-find.ts"
 import { REPORT_REJECTION_MODES } from "../../report/core/rules/rejection-mode.ts"
 import type { A2uiStructureFault, A2uiStructureVerdict } from "../../report/core/rules/structure.ts"
@@ -123,9 +125,13 @@ export function createCallReview(): CallReview {
         return { kind: "rejected", text: speechPlainWordRejectionText(spellings) }
       }
       const fieldNames = reportFieldNamesInSpeech(text)
-      return fieldNames.length === 0
+      if (fieldNames.length > 0) {
+        return { kind: "rejected", text: speechFieldNameRejectionText(fieldNames) }
+      }
+      const foreignKanji = foreignKanjiInSpeech(text)
+      return foreignKanji.length === 0
         ? { kind: "accepted" }
-        : { kind: "rejected", text: speechFieldNameRejectionText(fieldNames) }
+        : { kind: "rejected", text: speechForeignKanjiRejectionText(foreignKanji) }
     },
     judgeReport: reportReview.judge,
     judgeReportStructure: reportReview.judgeStructure,

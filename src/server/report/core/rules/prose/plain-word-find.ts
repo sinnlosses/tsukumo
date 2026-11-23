@@ -18,18 +18,29 @@ export function plainWordSpellingsIn(
   report: Pick<ReportDraft, "conclusion" | "favor">,
   outline: ReportOutline,
 ): readonly string[] {
+  return plainWordSpellingsOfProse(reportProseSegmentsOf(report, outline))
+}
+
+/** 結論・お願い・見出し・各部品の地の文を、字だけの断片にして返す。引用・コード・HTML は飛ばす。 */
+export function reportProseSegmentsOf(
+  report: Pick<ReportDraft, "conclusion" | "favor">,
+  outline: ReportOutline,
+): readonly string[] {
   const proseOfBlocks = outline.sections.flatMap((section) => [
     ...(section.kind === "section" ? [section.heading] : []),
     ...section.leaves.flatMap((leaf) => [...proseTexts(leaf), ...ownProseTexts(leaf)]),
   ])
-  return plainWordSpellingsOfProse(
-    [report.conclusion, report.favor, ...proseOfBlocks].flatMap(proseSegmentsOf),
-  )
+  return [report.conclusion, report.favor, ...proseOfBlocks].flatMap(proseSegmentsOf)
 }
 
 /** `speak` のセリフの地の文に出てくる表の綴りを、表の順に返す。 */
 export function plainWordSpellingsInSpeech(text: string): readonly string[] {
   return plainWordSpellingsOfProse(proseSegmentsOf(text))
+}
+
+/** 地の文の字だけの断片。引用・コード・HTML は飛ばす。 */
+export function proseSegmentsOf(markdown: string): readonly string[] {
+  return segmentsIn(markdownTreeOf(markdown))
 }
 
 function plainWordSpellingsOfProse(prose: readonly string[]): readonly string[] {
@@ -65,11 +76,6 @@ function ownProseTexts(leaf: ReportOutlineLeaf): readonly string[] {
     default:
       return []
   }
-}
-
-/** 地の文の字だけの断片。引用・コード・HTML は飛ばす。 */
-function proseSegmentsOf(markdown: string): readonly string[] {
-  return segmentsIn(markdownTreeOf(markdown))
 }
 
 function segmentsIn(node: Nodes): readonly string[] {

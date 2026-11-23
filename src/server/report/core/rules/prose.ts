@@ -7,6 +7,7 @@ import { type ReportOutline, sectionLeaves } from "../../../../shared/report/rep
 import type { ReportDraft } from "./draft.ts"
 import { PLAIN_WORDS } from "./plain-word.ts"
 import { reportFieldNamesInSpeech } from "./prose/field-name-find.ts"
+import { foreignKanjiIn, foreignKanjiInSpeech } from "./prose/foreign-kanji-find.ts"
 import { brokenInlineMarks } from "./prose/inline-mark.ts"
 import {
   MARKDOWN_NOTATION_NAMES,
@@ -66,6 +67,12 @@ export type ProseViolation =
       readonly count: number
       readonly names: readonly string[]
     }
+  /** 地の文かセリフに Shift_JIS に無い漢字がある。`chars` は当たった字で、書いた文面は持たない。 */
+  | {
+      readonly kind: "foreign-kanji"
+      readonly count: number
+      readonly chars: readonly string[]
+    }
 
 /** 文章の違反を、当てはまらないもの（`count` が 0）も含めて並べる。 */
 export function detectProseViolations(
@@ -77,6 +84,10 @@ export function detectProseViolations(
   const firstSentenceLength = report.conclusionSentenceChars[0] ?? 0
   const plainWords = plainWordSpellingsIn(report, outline)
   const fieldNames = unique((report.speechTexts ?? []).flatMap(reportFieldNamesInSpeech))
+  const foreignKanji = unique([
+    ...foreignKanjiIn(report, outline),
+    ...(report.speechTexts ?? []).flatMap(foreignKanjiInSpeech),
+  ])
 
   return [
     { kind: "long-conclusion", count: report.conclusionSentenceChars.length },
@@ -121,6 +132,7 @@ export function detectProseViolations(
     { kind: "plain-word", count: plainWords.length, spellings: plainWords },
     { kind: "broken-inline-mark", count: brokenInlineMarks(report, outline) },
     { kind: "field-name-in-speech", count: fieldNames.length, names: fieldNames },
+    { kind: "foreign-kanji", count: foreignKanji.length, chars: foreignKanji },
   ]
 }
 
@@ -137,6 +149,7 @@ const PROSE_KINDS: ReadonlySet<string> = new Set<ProseViolation["kind"]>([
   "plain-word",
   "broken-inline-mark",
   "field-name-in-speech",
+  "foreign-kanji",
 ])
 
 export function isProseViolation(violation: {
@@ -176,7 +189,14 @@ export function proseViolationMessage(violation: ProseViolation): string {
       return `行内の印の書式（\`{{A → B}}\`・\`{{spark: 数 数 …}}\`・\`{{a / b}}\`）に当たらない \`{{\` が${violation.count}個ある。書式に合わせて直すか、\`{{\` を使わない書き方にする`
     case "field-name-in-speech":
       return `\`closing\`・\`waitingLine\` のセリフに${fieldNameAdvice(violation.names)}`
+    case "foreign-kanji":
+      return `地の文かセリフに${foreignKanjiAdvice(violation.chars)}`
   }
+}
+
+/** `speak` のセリフに日本語でない漢字があるときの戻り値。当たった字だけで、セリフの文面は写さない。 */
+export function speechForeignKanjiRejectionText(chars: readonly string[]): string {
+  return `セリフに${foreignKanjiAdvice(chars)}。このセリフは画面に出していないので、書き直して呼び直す`
 }
 
 /** `speak` のセリフに欄の名前があるときの戻り値。見つけた欄の名前だけで、セリフの文面は写さない。 */
@@ -197,6 +217,10 @@ function plainWordReplacements(spellings: readonly string[]): string {
       return word === undefined ? spelling : `「${spelling}」は「${word.replacement}」`
     })
     .join("・")
+}
+
+function foreignKanjiAdvice(chars: readonly string[]): string {
+  return `日本語でない漢字（${chars.map((char) => `「${char}」`).join("・")}）がある。日本語の漢字で書き直す（コード・引用の中は対象外）`
 }
 
 function fieldNameAdvice(names: readonly string[]): string {

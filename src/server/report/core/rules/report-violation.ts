@@ -126,6 +126,7 @@ const VIOLATION_THRESHOLDS = {
   "plot-form-override": 0,
   "broken-inline-mark": 0,
   "field-name-in-speech": 0,
+  "foreign-kanji": 0,
   "plot-title-without-number": 0,
   "template-miss": 0,
   "unknown-cite": 0,
