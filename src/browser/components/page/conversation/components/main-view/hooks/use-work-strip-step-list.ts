@@ -22,6 +22,7 @@ import { phaseRowSlotOf, type StepsPhaseRow, stepsPhaseRowsOf } from "../domain/
 import { type StepsPlanItem, stepsPlanCardOf } from "../domain/steps-plan-card.ts"
 import { type WorkflowAgentHand, workflowHandOf } from "../domain/workflow-agent-hand.ts"
 import {
+  columnKeysOf,
   type WorkflowAgentCount,
   workflowAgentCountsOf,
   workflowRunElapsedOf,
@@ -132,7 +133,12 @@ export function workStripStepsOf(input: {
           currentWorkStepGroups(input.steps),
         )
       : { rows: [], rest: [] }
-  const drawn = list.kind === "open" ? drawnWorkflowsOf(input, list) : []
+  const planCurrentKeys = planRows.rows.flatMap((row) => {
+    const key = input.phaseIds[row.phaseIndex]
+    return (row.state === "current" || row.state === "asking") && key !== undefined ? [key] : []
+  })
+  const planCurrentKey = planCurrentKeys[0]
+  const drawn = list.kind === "open" ? drawnWorkflowsOf(input, list, planCurrentKey) : []
   const diagramKeys = new Set(drawn.flatMap((workflow) => workflow.phaseKeys))
   const columnKeyOf = (row: StepsPhaseRow): readonly string[] => {
     const key = input.phaseIds[row.phaseIndex]
@@ -142,11 +148,6 @@ export function workStripStepsOf(input: {
   const columnDurations = new Map(
     planRows.rows.flatMap((row) => columnKeyOf(row).map((key) => [key, row.duration] as const)),
   )
-  const planCurrentKeys = planRows.rows.flatMap((row) => {
-    const key = input.phaseIds[row.phaseIndex]
-    return (row.state === "current" || row.state === "asking") && key !== undefined ? [key] : []
-  })
-  const planCurrentKey = planCurrentKeys[0]
   const drawnTaskIds = new Set(drawn.map((workflow) => workflow.taskId))
   return {
     list,
@@ -215,6 +216,7 @@ function drawnWorkflowsOf(
     readonly now: number
   },
   list: Extract<WorkStripStepsList, { readonly kind: "open" }>,
+  planCurrentKey?: string,
 ): readonly DrawnWorkflow[] {
   return input.workflowRuns.toReversed().map((run, position): DrawnWorkflow => {
     const base = {
@@ -236,16 +238,22 @@ function drawnWorkflowsOf(
         },
       }
     }
-    const diagram = workflowDiagramOf(run, input.phaseIds, input.now, {
-      phases: input.finished || list.workflowPhasesUnfolded,
-      columns: list.unfoldedWorkflowColumns,
-    })
+    const diagram = workflowDiagramOf(
+      run,
+      input.phaseIds,
+      input.now,
+      {
+        phases: input.finished || list.workflowPhasesUnfolded,
+        columns: list.unfoldedWorkflowColumns,
+      },
+      planCurrentKey,
+    )
     const mapped = run.agents
       .map((agent) => agent.phaseTitle)
       .filter((title) => input.phaseIds.includes(title))
     return {
       ...base,
-      phaseKeys: [...diagram.columns.map((column) => column.key), ...mapped],
+      phaseKeys: [...diagram.columns.flatMap(columnKeysOf), ...mapped],
       view: {
         kind: "open",
         diagram,

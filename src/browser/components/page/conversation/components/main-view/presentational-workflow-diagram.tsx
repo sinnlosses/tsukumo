@@ -23,7 +23,10 @@ import {
   workflowBoxNoteOf,
   workflowDiagramEndKeyOf,
   workflowIsCurrentColumn,
+  type WorkflowSpanTick,
+  workflowSpanScaleOf,
   workflowUpcomingNoteOf,
+  columnKeysOf,
 } from "./domain/workflow-diagram-view.ts"
 import type {
   WorkflowDiagram,
@@ -190,7 +193,13 @@ function DiagramStage(props: {
   const markerId = useId()
   const hasStart = diagram.arrows.some((arrow) => arrow.from.kind === "start")
   return (
-    <div ref={ref} className={styles["workflow-diagram-stage"]} data-has-start={hasStart}>
+    <div
+      ref={ref}
+      className={styles["workflow-diagram-stage"]}
+      data-has-start={hasStart}
+      data-has-folded={diagram.foldedPhases !== undefined}
+      style={{ "--diagram-steps": String(stepsTotalOf(diagram)) }}
+    >
       <svg aria-hidden="true" className={styles["workflow-diagram-arrows"]}>
         <defs>
           {(["back", "live", "quiet"] as const).map((marker) => (
@@ -246,7 +255,7 @@ function DiagramStage(props: {
           </div>
         </div>
       )}
-      {diagram.columns.map((column) => {
+      {diagram.columns.map((column, position) => {
         const current = workflowIsCurrentColumn(
           column,
           diagram.columns,
@@ -258,11 +267,16 @@ function DiagramStage(props: {
             key={column.key}
             taskId={taskId}
             column={column}
-            duration={props.columnDurations.get(column.key) ?? ""}
+            start={stepStartOf(diagram, position)}
+            columnDurations={props.columnDurations}
             current={current}
+            finished={props.finished}
             upcomingNote={workflowUpcomingNoteOf(props.finished, current)}
             selectedIndex={props.selectedIndex}
             steps={steps}
+            {...(props.planCurrentKey === undefined
+              ? {}
+              : { planCurrentKey: props.planCurrentKey })}
           />
         )
       })}
@@ -288,91 +302,134 @@ function DiagramStage(props: {
   )
 }
 
+/** 図の段の数。範囲の列は受け持った段の数で数える。 */
+function stepsTotalOf(diagram: WorkflowDiagram): number {
+  return diagram.columns.reduce((sum, column) => sum + columnKeysOf(column).length, 0)
+}
+
+/** 列の最初の段の格子の位置（1始まり。「済んだ n フェーズ」の列があれば先頭の1つを譲る）。 */
+function stepStartOf(diagram: WorkflowDiagram, position: number): number {
+  return (
+    (diagram.foldedPhases === undefined ? 1 : 2) +
+    diagram.columns.slice(0, position).reduce((sum, column) => sum + columnKeysOf(column).length, 0)
+  )
+}
+
 function Column(props: {
   readonly taskId: TaskId
   readonly column: WorkflowDiagramColumn
-  readonly duration: string
+  readonly start: number
+  readonly columnDurations: ReadonlyMap<string, string>
   readonly current: boolean
+  readonly finished: boolean
+  readonly planCurrentKey?: string
   readonly upcomingNote: string
   readonly selectedIndex?: number
   readonly steps: WorkStripSteps
 }): ReactElement {
   const { column, current, steps, taskId } = props
+  const keys = columnKeysOf(column)
+  const planHere = props.planCurrentKey !== undefined && keys.includes(props.planCurrentKey)
   return (
-    <div className={styles["workflow-diagram-column"]}>
-      <p className={styles["workflow-diagram-column-head"]} data-current={current}>
-        <Text
-          element="span"
-          size="label"
-          tone={current ? "ink" : "ink-quiet"}
-          weight={current ? "semibold" : "normal"}
-          className={styles["workflow-diagram-name"]}
-        >
-          {column.name}
-        </Text>
-        {props.duration !== "" && (
-          <Text
-            element="span"
-            size="label"
-            tone="ink-quiet"
-            weight="normal"
-            className={styles["workflow-diagram-time"]}
+    <>
+      {keys.map((key, offset) => {
+        const headCurrent = planHere ? key === props.planCurrentKey : offset === 0 && current
+        const duration = props.columnDurations.get(key) ?? ""
+        return (
+          <p
+            key={key}
+            className={styles["workflow-diagram-column-head"]}
+            data-current={headCurrent}
+            style={{ "--step-start": String(props.start + offset) }}
           >
-            {props.duration}
-          </Text>
-        )}
-      </p>
-      {column.kind === "upcoming" ? (
-        <div data-diagram-end={workflowDiagramEndKeyOf({ kind: "upcoming", column: column.key })}>
-          <Surface
-            element="div"
-            tone="surface"
-            space="sm"
-            radius="lg"
-            shadow="none"
-            className={styles["workflow-diagram-upcoming"]}
-          >
-            <Text element="span" size="label" tone="ink-quiet" weight="normal" className="">
-              {column.name} · {props.upcomingNote}
+            <Text
+              element="span"
+              size="label"
+              tone={headCurrent ? "ink" : "ink-quiet"}
+              weight={headCurrent ? "semibold" : "normal"}
+              className={styles["workflow-diagram-name"]}
+            >
+              {offset === 0 ? column.name : key}
             </Text>
-          </Surface>
-        </div>
-      ) : (
-        <>
-          {column.boxes.map((box) => (
-            <AgentBox
-              key={box.index}
-              box={box}
-              pressed={box.index === props.selectedIndex}
-              onPress={() => {
-                steps.onAgentPress(taskId, box.index)
-              }}
-            />
-          ))}
-          {column.others !== undefined && (
-            <div data-diagram-end={workflowDiagramEndKeyOf({ kind: "others", column: column.key })}>
-              <ClickableCard
-                label={`ほか ${String(column.others.count)} 件`}
-                tone="plain"
-                onClick={() => {
-                  steps.onUnfoldColumn(column.key)
-                }}
-                className=""
+            {duration !== "" && (
+              <Text
+                element="span"
+                size="label"
+                tone="ink-quiet"
+                weight="normal"
+                className={styles["workflow-diagram-time"]}
               >
-                <Text element="span" size="label" tone="ink-quiet" weight="normal" className="">
-                  ほか {String(column.others.count)} 件
-                </Text>
-              </ClickableCard>
-            </div>
-          )}
-        </>
-      )}
-    </div>
+                {duration}
+              </Text>
+            )}
+          </p>
+        )
+      })}
+      <div
+        className={styles["workflow-diagram-column"]}
+        style={{
+          "--step-start": String(props.start),
+          "--step-span": String(keys.length),
+        }}
+      >
+        {column.kind === "upcoming" ? (
+          <div data-diagram-end={workflowDiagramEndKeyOf({ kind: "upcoming", column: column.key })}>
+            <Surface
+              element="div"
+              tone="surface"
+              space="sm"
+              radius="lg"
+              shadow="none"
+              className={styles["workflow-diagram-upcoming"]}
+            >
+              <Text element="span" size="label" tone="ink-quiet" weight="normal" className="">
+                {column.name} · {props.upcomingNote}
+              </Text>
+            </Surface>
+          </div>
+        ) : (
+          <>
+            {column.boxes.map((box) => (
+              <AgentBox
+                key={box.index}
+                box={box}
+                scale={workflowSpanScaleOf(box.state, keys, props.finished, props.planCurrentKey)}
+                pressed={box.index === props.selectedIndex}
+                onPress={() => {
+                  steps.onAgentPress(taskId, box.index)
+                }}
+              />
+            ))}
+            {column.others !== undefined && (
+              <div
+                data-diagram-end={workflowDiagramEndKeyOf({ kind: "others", column: column.key })}
+              >
+                <ClickableCard
+                  label={`ほか ${String(column.others.count)} 件`}
+                  tone="plain"
+                  onClick={() => {
+                    steps.onUnfoldColumn(column.key)
+                  }}
+                  className=""
+                >
+                  <Text element="span" size="label" tone="ink-quiet" weight="normal" className="">
+                    ほか {String(column.others.count)} 件
+                  </Text>
+                </ClickableCard>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </>
   )
 }
 
+const SCALE_MARK = { done: " ✓", now: " · いま", next: "" } as const
+
 function AgentBox(props: {
   readonly box: WorkflowDiagramBox
+  readonly scale: readonly WorkflowSpanTick[]
   readonly pressed: boolean
   readonly onPress: () => void
 }): ReactElement {
@@ -426,6 +483,32 @@ function AgentBox(props: {
                 {note}
               </Text>
             )}
+          </span>
+        )}
+        {props.scale.length > 0 && (
+          <span
+            className={styles["workflow-diagram-scale"]}
+            style={{ "--scale-steps": String(props.scale.length) }}
+          >
+            {props.scale.map((tick) => (
+              <span
+                key={tick.key}
+                className={styles["workflow-diagram-tick"]}
+                data-tick={tick.state}
+              >
+                <span className={styles["workflow-diagram-tick-bar"]} />
+                <Text
+                  element="span"
+                  size="label"
+                  tone={tick.state === "now" ? "accent" : "ink-quiet"}
+                  weight="normal"
+                  className={styles["workflow-diagram-name"]}
+                >
+                  {tick.key}
+                  {SCALE_MARK[tick.state]}
+                </Text>
+              </span>
+            ))}
           </span>
         )}
       </ClickableCard>

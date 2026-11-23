@@ -87,10 +87,49 @@ export function workflowIsCurrentColumn(
   if (finished) {
     return columns.at(-1) === column
   }
-  if (planCurrentKey !== undefined && columns.some((other) => other.key === planCurrentKey)) {
-    return column.key === planCurrentKey
+  if (
+    planCurrentKey !== undefined &&
+    columns.some((other) => columnKeysOf(other).includes(planCurrentKey))
+  ) {
+    return columnKeysOf(column).includes(planCurrentKey)
   }
   return column.kind === "agents" && column.current
+}
+
+/** 列が受け持つ段の鍵。範囲の無い列は自分の鍵だけ。 */
+export function columnKeysOf(column: WorkflowDiagramColumn): readonly string[] {
+  return column.kind === "agents" ? column.spanKeys : [column.key]
+}
+
+/** 範囲の箱の目盛り1つ。`next` はこれから。 */
+export type WorkflowSpanTick = {
+  readonly key: string
+  readonly state: "done" | "now" | "next"
+}
+
+/**
+ * 範囲の箱（2段以上を受け持つ列の箱）の段ごとの目盛り。範囲が1段なら空。
+ * 済んだ箱か依頼が済んでいれば全部済み、走っている箱は `planCurrentKey` の前が済みでその段が「いま」、それ以外は全部これから。
+ */
+export function workflowSpanScaleOf(
+  state: WorkflowDiagramBoxState,
+  spanKeys: readonly string[],
+  finished: boolean,
+  planCurrentKey?: string,
+): readonly WorkflowSpanTick[] {
+  if (spanKeys.length < 2) {
+    return []
+  }
+  const nowAt = planCurrentKey === undefined ? -1 : spanKeys.indexOf(planCurrentKey)
+  return spanKeys.map((key, position): WorkflowSpanTick => {
+    if (state === "done" || finished) {
+      return { key, state: "done" }
+    }
+    if (state !== "running" || nowAt < 0 || position > nowAt) {
+      return { key, state: "next" }
+    }
+    return { key, state: position === nowAt ? "now" : "done" }
+  })
 }
 
 /** エージェントの載らない列の箱の一言。依頼が済めば「済み」、今の列なら「いま」、ほかは「これから」。 */

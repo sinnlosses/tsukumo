@@ -37,13 +37,14 @@ export type WorkflowDiagramFold = {
   readonly indexes: readonly number[]
 }
 
-/** 列。`agents` はエージェントが載った列で、`others` は「ほか n 件」。`upcoming` はエージェントがまだ載らない後ろのフェーズの「これから」の列。 */
+/** 列。`agents` はエージェントが載った列（`spanKeys` は受け持つ段の鍵の並びで、先頭は自分の `key`）で、`others` は「ほか n 件」。`upcoming` はエージェントがまだ載らない後ろのフェーズの「これから」の列。 */
 export type WorkflowDiagramColumn =
   | {
       readonly kind: "agents"
       readonly key: string
       readonly name: string
       readonly current: boolean
+      readonly spanKeys: readonly string[]
       readonly boxes: readonly WorkflowDiagramBox[]
       readonly others?: WorkflowDiagramFold
     }
@@ -91,6 +92,7 @@ const BOX_PRIORITY = [
 
 /**
  * 図の形を組む。`phaseIds` はワークプランのフェーズの id で、`phaseTitle` を列に当てる。
+ * エージェントの載った列は、次にエージェントの載った列の手前までの段を受け持つ（走っている列は `planCurrentKey` の段まで）。
  * `unfold.phases` なら前の列を畳まず、`unfold.columns` にある列の鍵は「ほか n 件」に畳まない。
  */
 export function workflowDiagramOf(
@@ -98,13 +100,19 @@ export function workflowDiagramOf(
   phaseIds: readonly string[],
   now: number,
   unfold: { readonly phases: boolean; readonly columns: readonly string[] },
+  planCurrentKey?: string,
 ): WorkflowDiagram {
-  const groups = columnGroupsOf(run.agents, phaseIds)
   const states = new Map(
     run.agents.map((agent) => [agent.index, workflowBoxStateOf(agent, run.ended)]),
   )
   const stateOf = (agent: WorkflowRunAgent): WorkflowDiagramBoxState =>
     states.get(agent.index) ?? "done"
+  const groups = spannedGroupsOf(
+    columnGroupsOf(run.agents, phaseIds),
+    phaseIds,
+    stateOf,
+    planCurrentKey,
+  )
   const edges = agentEdgesOf(run.agents, groups, stateOf)
   const sendsBack = new Set(
     edges.flatMap((edge) =>
@@ -112,7 +120,12 @@ export function workflowDiagramOf(
     ),
   )
 
-  const lastMapped = Math.max(-1, ...groups.map((group) => group.phaseIdIndex ?? -1))
+  const lastMapped = Math.max(
+    -1,
+    ...groups.map((group) =>
+      group.phaseIdIndex === undefined ? -1 : group.phaseIdIndex + group.spanKeys.length - 1,
+    ),
+  )
   const upcoming = lastMapped < 0 ? [] : phaseIds.slice(lastMapped + 1)
   const allColumns: readonly PlannedColumn[] = [
     ...groups.map((group): PlannedColumn => ({ kind: "agents", group })),
@@ -140,6 +153,7 @@ export function workflowDiagramOf(
       key: group.key,
       name: group.name,
       current: groups.indexOf(group) === currentPosition,
+      spanKeys: group.spanKeys,
       boxes: kept,
       ...(others.length === 0 ? {} : { others: { count: others.length, indexes: others } }),
     }
@@ -187,7 +201,12 @@ export function workflowDiagramOf(
     arrows,
     ...(foldedGroups.length === 0
       ? {}
-      : { foldedPhases: { count: foldedGroups.length, indexes: foldedIndexes } }),
+      : {
+          foldedPhases: {
+            count: foldedGroups.reduce((sum, group) => sum + group.spanKeys.length, 0),
+            indexes: foldedIndexes,
+          },
+        }),
   }
 }
 
@@ -221,6 +240,7 @@ type ColumnGroup = {
   readonly name: string
   readonly phaseIdIndex?: number
   readonly phaseIndex?: number
+  readonly spanKeys: readonly string[]
   readonly agents: readonly WorkflowRunAgent[]
 }
 
@@ -249,6 +269,7 @@ function columnGroupsOf(
           {
             key,
             name: columnNameOf(agent),
+            spanKeys: [key],
             ...(phaseIdIndex >= 0 ? { phaseIdIndex } : {}),
             ...(agent.phaseIndex === undefined ? {} : { phaseIndex: agent.phaseIndex }),
             agents: [agent],
@@ -266,6 +287,41 @@ function columnGroupsOf(
       (left.phaseIdIndex ?? Infinity) - (right.phaseIdIndex ?? Infinity) ||
       byPhaseIndex(left, right),
   )
+}
+
+/**
+ * 各列の受け持つ段を決める。`phaseIds` に引けた列は、次に引けた列の手前までを受け持つ。
+ * 走っている列は `planCurrentKey` の段までに限り、それが範囲の外・無いときは広げない。後ろに引けた列が無い列は、走っているときだけ `planCurrentKey` の段まで広げる。
+ */
+function spannedGroupsOf(
+  groups: readonly ColumnGroup[],
+  phaseIds: readonly string[],
+  stateOf: (agent: WorkflowRunAgent) => WorkflowDiagramBoxState,
+  planCurrentKey?: string,
+): readonly ColumnGroup[] {
+  const mapped = groups.flatMap((group) =>
+    group.phaseIdIndex === undefined ? [] : [group.phaseIdIndex],
+  )
+  const currentIndex = planCurrentKey === undefined ? -1 : phaseIds.indexOf(planCurrentKey)
+  return groups.map((group) => {
+    const start = group.phaseIdIndex
+    if (start === undefined) {
+      return group
+    }
+    const next = mapped.find((index) => index > start)
+    const running = group.agents.some((agent) => stateOf(agent) === "running")
+    const limit = next ?? phaseIds.length
+    const end = running
+      ? currentIndex >= start && currentIndex < limit
+        ? currentIndex + 1
+        : start + 1
+      : (next ?? start + 1)
+    return end <= start + 1 ? group : { ...group, spanKeys: phaseIds.slice(start, end) }
+  })
+}
+
+function weightOf(column: PlannedColumn): number {
+  return column.kind === "agents" ? column.group.spanKeys.length : 1
 }
 
 function firstIndexOf(group: ColumnGroup): number {
@@ -294,16 +350,38 @@ function currentPositionOf(
   return waiting >= 0 ? waiting : Math.max(0, groups.length - 1)
 }
 
-/** 今の列から後ろを4つまで残し、空いた枠に今の列の直前の列を後ろから入れる。 */
+/** 今の列から後ろを4段分まで残し、空いた段に今の列の直前の列を後ろから入れる。範囲の列は受け持った段の数で数える。 */
 function shownColumns(
   columns: readonly PlannedColumn[],
   currentPosition: number,
 ): readonly PlannedColumn[] {
-  const after = columns.slice(currentPosition, currentPosition + COLUMN_LIMIT)
-  const room = COLUMN_LIMIT - after.length
-  const before =
-    room === 0 ? [] : columns.slice(Math.max(0, currentPosition - room), currentPosition)
+  const after = columns
+    .slice(currentPosition)
+    .reduce<readonly PlannedColumn[]>(
+      (taken, column, position) =>
+        taken.length === position &&
+        (position === 0 || widthOf(taken) + weightOf(column) <= COLUMN_LIMIT)
+          ? [...taken, column]
+          : taken,
+      [],
+    )
+  const before = columns
+    .slice(0, currentPosition)
+    .toReversed()
+    .reduce<readonly PlannedColumn[]>(
+      (taken, column, position) =>
+        taken.length === position &&
+        widthOf(after) + widthOf(taken) + weightOf(column) <= COLUMN_LIMIT
+          ? [...taken, column]
+          : taken,
+      [],
+    )
+    .toReversed()
   return [...before, ...after]
+}
+
+function widthOf(columns: readonly PlannedColumn[]): number {
+  return columns.reduce((sum, column) => sum + weightOf(column), 0)
 }
 
 function boxOf(

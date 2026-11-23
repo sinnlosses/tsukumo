@@ -112,6 +112,49 @@ describe("WorkStrip のワークフローの図", () => {
   })
 })
 
+describe("WorkStrip のワークフローの図の範囲の箱", () => {
+  const SPAN_PHASES = ["計画", "impl-1", "impl-2", "impl-3", "受け入れ"]
+  const spanPlan: SessionEvent = { ...plan(3, "", SPAN_PHASES), phaseIds: SPAN_PHASES }
+  const implementer: WorkflowAgent = {
+    index: 0,
+    agentId: "agent-0",
+    label: "架空の実装役",
+    agentType: "fake:implementer",
+    phaseTitle: "impl-1",
+    state: "progress",
+    queuedAt: 0,
+    startedAt: 0,
+  }
+
+  it("実装役の箱は受け持った段ごとの目盛りを持ち、今の段の目盛りだけが「いま」になる", () => {
+    putSession(stateAfter([requestEvent(), spanPlan, tasksChanged, progressOf([implementer])]))
+    render(<WorkStrip />)
+    act(() => {
+      fireEvent.click(screen.getByRole("button", { name: /^手順 \d+件$/ }))
+    })
+
+    const box = screen.getByRole("button", { name: "架空の実装役、implementer、動いている" })
+    const ticks = [...(box.closest("[data-diagram-end]") ?? box).querySelectorAll("[data-tick]")]
+    expect(ticks.map((tick) => tick.getAttribute("data-tick"))).toEqual(["done", "done", "now"])
+    expect(ticks.map((tick) => tick.textContent)).toEqual(["impl-1 ✓", "impl-2 ✓", "impl-3 · いま"])
+  })
+
+  it("範囲の箱が受け持った段も図の列として数え、手順の一覧の行には出さない", () => {
+    putSession(stateAfter([requestEvent(), spanPlan, tasksChanged, progressOf([implementer])]))
+    render(<WorkStrip />)
+    act(() => {
+      fireEvent.click(screen.getByRole("button", { name: /^手順 \d+件$/ }))
+    })
+
+    const list = screen.getByRole("region", { name: "依頼の手順" })
+    const rowNames = [...list.querySelectorAll("[data-phase-indexes]")].map(
+      (row) => row.closest("li")?.querySelector("span[data-progress]")?.textContent,
+    )
+    expect(rowNames).not.toContain("impl-2")
+    expect(rowNames).not.toContain("impl-3")
+  })
+})
+
 const stepStarted = (agentId: string, toolUseId: string, path: string): SessionEvent => ({
   kind: "workflow-step-started",
   agentId,

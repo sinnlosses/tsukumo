@@ -172,8 +172,22 @@ describe("workflowBoxNoteOf", () => {
 
 describe("workflowIsCurrentColumn", () => {
   const columns: readonly WorkflowDiagramColumn[] = [
-    { kind: "agents", key: "accept", name: "accept", current: false, boxes: [] },
-    { kind: "agents", key: "retrospect", name: "retrospect", current: true, boxes: [] },
+    {
+      kind: "agents",
+      key: "accept",
+      name: "accept",
+      current: false,
+      spanKeys: ["accept"],
+      boxes: [],
+    },
+    {
+      kind: "agents",
+      key: "retrospect",
+      name: "retrospect",
+      current: true,
+      spanKeys: ["retrospect"],
+      boxes: [],
+    },
     { kind: "upcoming", key: "ship", name: "ship" },
   ]
   const currentKeysOf = (finished: boolean, planCurrentKey?: string): readonly string[] =>

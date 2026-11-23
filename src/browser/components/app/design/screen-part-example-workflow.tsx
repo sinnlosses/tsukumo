@@ -9,8 +9,8 @@ import type { ScreenPartExample } from "./screen-part-example-type.ts"
 
 const noop = (): void => {}
 
-function exampleTaskId(): TaskId {
-  const taskId = parseTaskId("example-workflow")
+function exampleTaskId(name = "example-workflow"): TaskId {
+  const taskId = parseTaskId(name)
   if (taskId === undefined) {
     throw new Error("見本の taskId が空になった")
   }
@@ -61,6 +61,7 @@ function exampleSteps(): WorkStripSteps {
                 key: "実装",
                 name: "実装",
                 current: false,
+                spanKeys: ["実装"],
                 boxes: [
                   {
                     index: 0,
@@ -79,6 +80,7 @@ function exampleSteps(): WorkStripSteps {
                 key: "受け入れ",
                 name: "受け入れ",
                 current: true,
+                spanKeys: ["受け入れ"],
                 boxes: [
                   {
                     index: 1,
@@ -140,6 +142,70 @@ function exampleSteps(): WorkStripSteps {
   }
 }
 
+const SPAN_KEYS = ["impl-1", "impl-2", "impl-3"] as const
+
+function spanWorkflow(phase: "implementing" | "accepting"): WorkStripSteps["workflows"][number] {
+  const implementing = phase === "implementing"
+  const implementer = {
+    index: 0,
+    state: implementing ? ("running" as const) : ("done" as const),
+    name: "実装",
+    typeName: "implementer",
+    hidesType: false,
+    sendsBack: false,
+    ...(implementing ? { elapsedMs: 293_000 } : { stepCount: 120, elapsedMs: 588_000 }),
+  }
+  return {
+    taskId: exampleTaskId(`example-span-${phase}`),
+    name: implementing ? "架空の流れ（実装中）" : "架空の流れ（受け入れ中）",
+    counts: [{ state: "running", count: 1, label: "動いている 1" }],
+    view: {
+      kind: "open",
+      columnDurations: new Map([
+        ["impl-1", "1分21秒"],
+        ["impl-2", "37秒"],
+        ["impl-3", implementing ? "2分54秒〜" : "1分10秒"],
+        ["accept", implementing ? "" : "1分05秒〜"],
+      ]),
+      finished: false,
+      planCurrentKey: implementing ? "impl-3" : "accept",
+      diagram: {
+        columns: [
+          {
+            kind: "agents",
+            key: "impl-1",
+            name: "impl-1",
+            current: implementing,
+            spanKeys: SPAN_KEYS,
+            boxes: [implementer],
+          },
+          implementing
+            ? { kind: "upcoming", key: "accept", name: "accept" }
+            : {
+                kind: "agents",
+                key: "accept",
+                name: "accept",
+                current: true,
+                spanKeys: ["accept"],
+                boxes: [
+                  {
+                    index: 1,
+                    state: "running",
+                    name: "受け入れ",
+                    typeName: "acceptor",
+                    hidesType: false,
+                    sendsBack: false,
+                    elapsedMs: 65_000,
+                  },
+                ],
+              },
+        ],
+        arrows: [],
+      },
+    },
+  }
+}
+
 const EXAMPLE_HAND: WorkflowAgentHand = {
   index: 2,
   state: "running",
@@ -191,6 +257,20 @@ export const WORKFLOW_EXAMPLES: readonly ScreenPartExample[] = [
   {
     frame: "flow",
     path: "page/conversation/components/main-view/presentational-workflow-diagram.tsx",
-    render: () => <PresentationalWorkflowDiagrams steps={exampleSteps()} />,
+    render: () => {
+      const steps = exampleSteps()
+      return (
+        <PresentationalWorkflowDiagrams
+          steps={{
+            ...steps,
+            workflows: [
+              ...steps.workflows,
+              spanWorkflow("implementing"),
+              spanWorkflow("accepting"),
+            ],
+          }}
+        />
+      )
+    },
   },
 ]

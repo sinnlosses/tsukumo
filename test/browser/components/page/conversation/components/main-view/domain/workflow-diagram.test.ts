@@ -417,6 +417,54 @@ describe("workflowDiagramOf（畳み）", () => {
   )
 })
 
+describe("workflowDiagramOf（範囲を受け持つ列）", () => {
+  const IDS = ["plan", "impl-1", "impl-2", "impl-3", "accept"]
+
+  it("実装役が impl-1 で走り今の段が impl-3 なら、impl-1〜impl-3 を受け持つ今の列になり、accept は「これから」に残る", () => {
+    const run = runOf([
+      finished(0, 0, 100, { phaseTitle: "plan" }),
+      agent(1, { phaseTitle: "impl-1", state: "progress", queuedAt: 100, startedAt: 100 }),
+    ])
+
+    const diagram = workflowDiagramOf(run, IDS, NOW, FOLDED, "impl-3")
+
+    expect(diagram.columns.map((column) => column.key)).toEqual(["impl-1", "accept"])
+    expect(diagram.foldedPhases?.count).toBe(1)
+    const implColumn = diagram.columns[0]
+    expect(implColumn?.kind === "agents" && implColumn.spanKeys).toEqual([
+      "impl-1",
+      "impl-2",
+      "impl-3",
+    ])
+    expect(implColumn?.kind === "agents" && implColumn.current).toBe(true)
+  })
+
+  it("受け入れ役が走っているとき、実装役の列は impl-1〜impl-3 を受け持ち、impl-2・impl-3 の列は消えない", () => {
+    const run = runOf([
+      finished(0, 0, 100, { phaseTitle: "impl-1" }),
+      agent(1, { phaseTitle: "accept", state: "progress", queuedAt: 200, startedAt: 200 }),
+    ])
+
+    const diagram = workflowDiagramOf(run, IDS, NOW, FOLDED, "accept")
+
+    const first = diagram.columns[0]
+    expect(first?.kind === "agents" && first.spanKeys).toEqual(["impl-1", "impl-2", "impl-3"])
+    expect(diagram.columns.map((column) => column.key)).toEqual(["impl-1", "accept"])
+  })
+
+  it("今の段が無い・範囲の外なら、走っている列は広げない", () => {
+    const run = runOf([agent(0, { phaseTitle: "impl-1", state: "progress", startedAt: 0 })])
+
+    const none = workflowDiagramOf(run, IDS, NOW, FOLDED)
+    const outside = workflowDiagramOf(run, IDS, NOW, FOLDED, "plan")
+
+    for (const diagram of [none, outside]) {
+      const column = diagram.columns[0]
+      expect(column?.kind === "agents" && column.spanKeys).toEqual(["impl-1"])
+    }
+  })
+})
+
 function diagramKeyOf(run: WorkflowRun): string {
   return workflowDiagramOf(run, [], NOW, FOLDED).columns[0]?.key ?? ""
 }

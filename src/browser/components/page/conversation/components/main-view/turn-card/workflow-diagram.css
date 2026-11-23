@@ -36,9 +36,14 @@
 /* 列と箱を置く器。矢印の SVG と差し戻しの字はこの器の左上を原点に重ねる。 */
 .workflow-diagram-stage {
   position: relative;
-  display: flex;
-  align-items: flex-start;
-  gap: calc(2 * var(--inline-group));
+  display: grid;
+  grid-template-columns: repeat(var(--diagram-steps), minmax(0, 1fr));
+  align-items: start;
+  column-gap: calc(2 * var(--inline-group));
+  row-gap: calc(2 * var(--stack-group));
+}
+.workflow-diagram-stage[data-has-folded="true"] {
+  grid-template-columns: 6rem repeat(var(--diagram-steps), minmax(0, 1fr));
 }
 .workflow-diagram-stage[data-has-start="true"] {
   padding-inline-start: calc(3 * var(--inline-group));
@@ -87,21 +92,50 @@
   height: 10px;
   fill: var(--ink-quiet);
 }
+/* 段の見出しは1行目、箱の列は2行目に置き、箱の列は受け持った段の幅にまたがる。 */
 .workflow-diagram-column {
   position: relative;
   display: flex;
-  flex: 1 1 0;
   flex-direction: column;
+  grid-row: 2;
+  grid-column: var(--step-start) / span var(--step-span);
   gap: calc(2 * var(--stack-group));
   min-width: 0;
 }
 .workflow-diagram-folded-column {
   position: relative;
-  flex: none;
-  width: 6rem;
+  grid-row: 1 / span 2;
+  grid-column: 1;
   padding-block-start: var(--stack-group);
 }
+.workflow-diagram-scale {
+  display: grid;
+  grid-template-columns: repeat(var(--scale-steps), minmax(0, 1fr));
+  gap: calc(2 * var(--inline-group));
+  width: 100%;
+  min-width: 0;
+}
+.workflow-diagram-tick {
+  display: flex;
+  flex-direction: column;
+  gap: var(--stack-tight);
+  min-width: 0;
+}
+.workflow-diagram-tick-bar {
+  display: block;
+  height: var(--stack-tight);
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--ink) 25%, transparent);
+}
+.workflow-diagram-tick[data-tick="done"] .workflow-diagram-tick-bar {
+  background: var(--state-ok);
+}
+.workflow-diagram-tick[data-tick="now"] .workflow-diagram-tick-bar {
+  background: var(--accent);
+}
 .workflow-diagram-column-head {
+  grid-row: 1;
+  grid-column: var(--step-start);
   display: flex;
   align-items: baseline;
   gap: var(--inline-tight);
