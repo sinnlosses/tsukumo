@@ -27,8 +27,8 @@ const OTHER_CHARACTER: NonNullable<SessionState["character"]> = characterInfo({
   pack: characterPackName("other"),
   name: "別の精霊",
   expressions: [
-    { name: "default", label: "ふつう" },
-    { name: "proud", label: "得意" },
+    { name: "default", role: "通常", label: "ふつう" },
+    { name: "proud", role: "得意気", label: "得意" },
   ],
   ...shownPortraits({
     default: "/character/other/default.png?v=1",

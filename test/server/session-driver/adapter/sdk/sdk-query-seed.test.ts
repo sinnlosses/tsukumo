@@ -12,7 +12,7 @@ import { checkedSessionId } from "../../../../fixture/session-id.ts"
 // うち、クロージャを含まない部分（`buildQuerySeedOptions`）だけを検査する。
 const BASE_OPTIONS: SessionDriverOptions = {
   cwd: "/tmp/tsukumo-test",
-  expressions: [{ name: "default", label: "通常" }],
+  expressions: [{ name: "default", role: "通常", label: "通常" }],
   permissionMode: BUILTIN_SESSION_DEFAULT.permissionMode,
   model: BUILTIN_SESSION_DEFAULT.model,
   effort: BUILTIN_SESSION_DEFAULT.effort,

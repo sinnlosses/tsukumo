@@ -16,21 +16,21 @@ describe("expressionChoices", () => {
 
     expect(definition).toBeDefined()
     expect(expressionChoices(definition)).toEqual([
-      { name: "default", label: "通常" },
-      { name: "thinking", label: "作業中" },
-      { name: "proud", label: "どや顔" },
-      { name: "flustered", label: "あわあわ" },
+      { name: "default", role: "通常", label: "通常" },
+      { name: "thinking", role: "考え中", label: "作業中" },
+      { name: "proud", role: "得意気", label: "どや顔" },
+      { name: "flustered", role: "慌て", label: "あわあわ" },
     ])
   })
 
-  it("ラベルが無い表情は、表情名がそのままラベルになる", () => {
+  it("ラベルが無い表情は、役割の名だけを持つ", () => {
     const definition = parseCharacterDefinition(
       JSON.stringify({ portraits: { default: "default.svg", thinking: "thinking.svg" } }),
     )
 
     expect(expressionChoices(definition)).toEqual([
-      { name: "default", label: "default" },
-      { name: "thinking", label: "thinking" },
+      { name: "default", role: "通常" },
+      { name: "thinking", role: "考え中" },
     ])
   })
 
@@ -50,7 +50,7 @@ describe("expressionChoices", () => {
   })
 
   it("定義が無いときは default だけを返す（受け付ける表情名が空にならない）", () => {
-    expect(expressionChoices(undefined)).toEqual([{ name: "default", label: "default" }])
+    expect(expressionChoices(undefined)).toEqual([{ name: "default", role: "通常" }])
   })
 })
 
@@ -89,17 +89,22 @@ describe("expressionGuideForSpeak", () => {
 
     const result = expressionGuideForSpeak(choices)
     expect(result).toBe(
-      "表情。default（通常） / thinking（作業中） / proud（どや顔） / flustered（あわあわ）",
+      [
+        "表情。default: 通常。特に感情を乗せない、ふだんの話し方のとき",
+        "thinking: 考え中（作業中）。調べている・迷っている・考えをまとめているとき",
+        "proud: 得意気（どや顔）。うまくいった・やり遂げた・自信があるとき",
+        "flustered: 慌て（あわあわ）。失敗した・想定外で焦った・照れて取り乱したとき",
+      ].join(" / "),
     )
   })
 
-  it("ラベルが無い場合は表情名をそのまま使う", () => {
+  it("ラベルが無い場合も役割の名が出る", () => {
     const definition = parseCharacterDefinition(
       JSON.stringify({ portraits: { default: "default.svg", thinking: "thinking.svg" } }),
     )
 
     expect(expressionGuideForSpeak(expressionChoices(definition))).toBe(
-      "表情。default（default） / thinking（thinking）",
+      "表情。default: 通常。特に感情を乗せない、ふだんの話し方のとき / thinking: 考え中。調べている・迷っている・考えをまとめているとき",
     )
   })
 })

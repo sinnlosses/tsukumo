@@ -28,8 +28,8 @@ describe("CharacterView（セリフのログの行を押すと遡る。docs/arch
   const CHARACTER_WITH_PROUD: NonNullable<SessionState["character"]> = {
     ...FIXTURE_CHARACTER,
     expressions: [
-      { name: "default", label: "通常" },
-      { name: "proud", label: "得意げ" },
+      { name: "default", role: "通常", label: "通常" },
+      { name: "proud", role: "得意気", label: "得意げ" },
     ],
     ...shownPortraits({
       default: "/character/default.png",

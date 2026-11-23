@@ -16,9 +16,9 @@ import { type CommandSpy, putSession } from "../../../../../session-store.ts"
 
 export const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = characterInfo({
   expressions: [
-    { name: "default", label: "通常" },
-    { name: "thinking", label: "作業中" },
-    { name: "proud", label: "どや顔" },
+    { name: "default", role: "通常", label: "通常" },
+    { name: "thinking", role: "考え中", label: "作業中" },
+    { name: "proud", role: "得意気", label: "どや顔" },
   ],
   ...shownPortraits({
     default: "/character/default.png?v=fictional@1",

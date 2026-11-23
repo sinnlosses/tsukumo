@@ -212,8 +212,8 @@ describe("applySessionEvent", () => {
     const character = characterInfo({
       accent: "#f2b0a0",
       expressions: [
-        { name: "default", label: "通常" },
-        { name: "thinking", label: "作業中" },
+        { name: "default", role: "通常", label: "通常" },
+        { name: "thinking", role: "考え中", label: "作業中" },
       ],
       ...shownPortraits({
         default: "/character/default.svg",

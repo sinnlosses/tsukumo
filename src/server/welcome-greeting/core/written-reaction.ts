@@ -4,7 +4,10 @@
 
 import { z } from "zod"
 
-import type { ExpressionChoice } from "../../../shared/character-pack/expression-choice.ts"
+import {
+  type ExpressionChoice,
+  expressionDescription,
+} from "../../../shared/character-pack/expression-choice.ts"
 import type { WelcomeRejection } from "../../../shared/diagnostic/welcome-writing.ts"
 import {
   type MarkedReactionKind,
@@ -64,7 +67,9 @@ export function writtenReactionsQuery(
       .join("\n\n"),
     prompt: [
       "## 表情の選択肢",
-      ...material.expressions.map((choice) => `- ${choice.name}: ${choice.label}`),
+      ...material.expressions.map(
+        (choice) => `- ${expressionDescription(material.expressions, choice.name)}`,
+      ),
     ].join("\n"),
     schema: structuredOutputSchema(writtenReactionsSchema(material.expressions)),
   }

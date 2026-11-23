@@ -14,7 +14,7 @@ import { callTool, listedToolNames } from "../../../../fixture/mcp-server.ts"
 
 const REQUEST = {
   persona: "架空の人格",
-  expressions: [{ name: "default", label: "通常" }],
+  expressions: [{ name: "default", role: "通常", label: "通常" }],
   model: "sonnet",
   cwd: "/tmp/tsukumo-架空のcwd",
   env: { PATH: "/usr/bin" },

@@ -11,7 +11,7 @@ import type { QuestionBrief } from "../../src/shared/session-driver/question-bri
 import type { SessionEvent } from "../../src/shared/session/session-event.ts"
 import { fixedChatSummary } from "./chat.ts"
 
-export const TOOL_EXPRESSIONS = [{ name: "default", label: "通常" }] as const
+export const TOOL_EXPRESSIONS = [{ name: "default", role: "通常", label: "通常" }] as const
 export const FAKE_CWD = "/tmp/tsukumo-架空のcwd"
 
 /** いまの様子の、何も読めない架空の口（時は 0・依頼の時刻は空・数は unknown・札は none）。 */

@@ -63,14 +63,13 @@ describe("characterChangedEvent", () => {
 
     const pack = readPackAt(dir())
     const event = characterChangedEvent(pack, [pack], dir())
-    // パックの名前は経路に入り、取り直しの印は素材の版（更新時刻）だけ。
     const base = `/character/${encodeURIComponent(basename(dir()))}`
     const version = `?v=${String(pack.revision)}`
     const character = characterInfo({
       pack: characterPackName(basename(dir())),
       expressions: [
-        { name: "default", label: "通常" },
-        { name: "thinking", label: "作業中" },
+        { name: "default", role: "通常", label: "通常" },
+        { name: "thinking", role: "考え中", label: "作業中" },
       ],
       ...shownPortraits({
         default: `${base}/default.svg${version}`,
@@ -94,7 +93,7 @@ describe("characterChangedEvent", () => {
     expect(event).toMatchObject({
       kind: "character-changed",
       name: basename(dir()),
-      expressions: [{ name: "default", label: "default" }],
+      expressions: [{ name: "default", role: "通常" }],
     })
   })
 

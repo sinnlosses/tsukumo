@@ -48,7 +48,7 @@ export function characterInfo(overrides: Partial<CharacterInfo> = {}): Character
     definedName: "架空の精霊",
     accent: undefined,
     chatAccent: undefined,
-    expressions: [{ name: "default", label: "通常" }],
+    expressions: [{ name: "default", role: "通常", label: "通常" }],
     portraits: undefined,
     expressionsWithPortrait: [],
     mini: undefined,

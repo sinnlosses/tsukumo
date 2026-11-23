@@ -10,8 +10,8 @@ import type { WelcomeRejection } from "../../../../src/shared/diagnostic/welcome
 // すべて手で書いた架空の材料と出力。
 
 const EXPRESSIONS = [
-  { name: "default", label: "架空のふつう" },
-  { name: "excited", label: "架空のわくわく" },
+  { name: "default", role: "通常", label: "架空のふつう" },
+  { name: "excited", role: "高揚", label: "架空のわくわく" },
 ] as const satisfies readonly ExpressionChoice[]
 
 const MATERIAL = { persona: "# 架空の人格\n\n架空の口調で話す。", expressions: EXPRESSIONS }
@@ -33,7 +33,11 @@ describe("writtenReactionsQuery", () => {
 
     expect(query.systemPrompt.startsWith("# 架空の人格")).toBe(true)
     expect(query.prompt).toBe(
-      ["## 表情の選択肢", "- default: 架空のふつう", "- excited: 架空のわくわく"].join("\n"),
+      [
+        "## 表情の選択肢",
+        "- default: 通常（架空のふつう）。特に感情を乗せない、ふだんの話し方のとき",
+        "- excited: 高揚（架空のわくわく）。わくわくする・うれしい・勢いづいているとき",
+      ].join("\n"),
     )
   })
 

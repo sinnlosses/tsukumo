@@ -149,8 +149,8 @@ describe("CharacterView", () => {
         character: {
           ...FIXTURE_CHARACTER,
           expressions: [
-            { name: "default", label: "通常" },
-            { name: "flustered", label: "あわてた" },
+            { name: "default", role: "通常", label: "通常" },
+            { name: "flustered", role: "慌て", label: "あわてた" },
           ],
           ...shownPortraits({
             default: "/character/default.png",
@@ -258,8 +258,8 @@ describe("CharacterView（記録に積んだ反応と時刻）", () => {
   const CHARACTER_WITH_SAD: NonNullable<SessionState["character"]> = {
     ...FIXTURE_CHARACTER,
     expressions: [
-      { name: "default", label: "通常" },
-      { name: "sad", label: "しょんぼり" },
+      { name: "default", role: "通常", label: "通常" },
+      { name: "sad", role: "悲しみ", label: "しょんぼり" },
     ],
     ...shownPortraits({ default: "/character/default.png", sad: "/character/sad.png" }),
   }

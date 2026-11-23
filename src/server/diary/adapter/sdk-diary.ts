@@ -16,7 +16,7 @@ import { z } from "zod"
 import {
   type ExpressionChoice,
   expressionNames,
-  resolveExpressionLabel,
+  expressionDescription,
 } from "../../../shared/character-pack/expression-choice.ts"
 import type { Expression } from "../../../shared/character-pack/expression.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
@@ -138,7 +138,7 @@ function diaryExpressionEnum(
 /** 表情名とラベルの対応。モデルが名前だけで意味を取れるように説明へ入れる。 */
 function diaryExpressionGuide(expressions: readonly ExpressionChoice[]): string {
   const guide = diaryExpressionEnum(expressions)
-    .map((name) => `${name}（${resolveExpressionLabel(expressions, name)}）`)
+    .map((name) => expressionDescription(expressions, name))
     .join(" / ")
   return `表情。${guide}`
 }

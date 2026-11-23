@@ -202,7 +202,7 @@ describe("toCharacterInfo", () => {
     expect(info.pack).toBe("fictional")
     expect(info.name).toBe("fictional")
     expect(info.accent).toBeUndefined()
-    expect(info.expressions).toEqual([{ name: "default", label: "default" }])
+    expect(info.expressions).toEqual([{ name: "default", role: "通常" }])
     expect(info.portraits).toBeUndefined()
     expect(info.expressionsWithPortrait).toEqual([])
     expect(info.mini).toBeUndefined()

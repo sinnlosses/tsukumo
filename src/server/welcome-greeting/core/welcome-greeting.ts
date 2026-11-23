@@ -5,7 +5,10 @@
 
 import { z } from "zod"
 
-import type { ExpressionChoice } from "../../../shared/character-pack/expression-choice.ts"
+import {
+  type ExpressionChoice,
+  expressionDescription,
+} from "../../../shared/character-pack/expression-choice.ts"
 import type { WelcomeRejection } from "../../../shared/diagnostic/welcome-writing.ts"
 import {
   WELCOME_GREETING_CARD_MARK,
@@ -120,7 +123,9 @@ export function welcomeGreetingQuery(
       ...visitLines(material.visit),
       "",
       "## 表情の選択肢",
-      ...material.expressions.map((choice) => `- ${choice.name}: ${choice.label}`),
+      ...material.expressions.map(
+        (choice) => `- ${expressionDescription(material.expressions, choice.name)}`,
+      ),
       "",
       "## 直近の挨拶（同じ言い回しを避ける）",
       ...(material.recent.length === 0

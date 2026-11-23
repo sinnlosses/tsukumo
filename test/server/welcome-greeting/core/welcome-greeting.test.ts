@@ -16,8 +16,8 @@ const LINE_LIMIT_CHARS = 60
 const MATERIAL: WelcomeGreetingMaterial = {
   persona: "# 架空の人格\n\n架空の口調で話す。",
   expressions: [
-    { name: "default", label: "架空のふつう" },
-    { name: "excited", label: "架空のわくわく" },
+    { name: "default", role: "通常", label: "架空のふつう" },
+    { name: "excited", role: "高揚", label: "架空のわくわく" },
   ],
   calendar: { month: 10, dayOfWeek: 6, hour: 8 },
   visit: { kind: "start" },
@@ -48,8 +48,8 @@ describe("welcomeGreetingQuery", () => {
         "- 迎え方: 新しく始める",
         "",
         "## 表情の選択肢",
-        "- default: 架空のふつう",
-        "- excited: 架空のわくわく",
+        "- default: 通常（架空のふつう）。特に感情を乗せない、ふだんの話し方のとき",
+        "- excited: 高揚（架空のわくわく）。わくわくする・うれしい・勢いづいているとき",
         "",
         "## 直近の挨拶（同じ言い回しを避ける）",
         "- 架空の前の挨拶、{札} だ",

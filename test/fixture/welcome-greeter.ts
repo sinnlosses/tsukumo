@@ -13,7 +13,7 @@ import type { WelcomeGreetingState } from "../../src/shared/recommendation/welco
 
 export const WELCOME_MATERIAL = {
   persona: "架空の人格",
-  expressions: [{ name: "default", label: "架空のふつう" }],
+  expressions: [{ name: "default", role: "通常", label: "架空のふつう" }],
   calendar: { month: 1, dayOfWeek: 1, hour: 12 },
   visit: { kind: "start" },
 } as const
