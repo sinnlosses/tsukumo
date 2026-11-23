@@ -6,9 +6,14 @@ import type { ReactElement } from "react"
 
 import type { MapUnreadableReason } from "../../../shared/architecture-map/architecture-map.ts"
 import type { MapReady, MapView, MapViewBox } from "../../../shared/architecture-map/map-view.ts"
+import {
+  BreadcrumbTrail,
+  type Crumb,
+} from "../../components/ui/breadcrumb-trail/breadcrumb-trail.tsx"
+import { Button } from "../../components/ui/button/button.tsx"
 import { ArchitectureMapDiagram } from "./architecture-map-diagram.tsx"
 import styles from "./architecture-map-panel.module.css"
-import { useArchitectureMapSelection } from "./architecture-map-selection.ts"
+import { type SelectedBox, useArchitectureMapSelection } from "./architecture-map-selection.ts"
 import { MAP_LEVEL_TEXT } from "./map-box-mention.ts"
 import { useArchitectureMapOverview } from "./use-architecture-map.ts"
 
@@ -34,6 +39,7 @@ export function ArchitectureMapPanel(): ReactElement {
 function ReadyPanel(props: { readonly ready: MapReady }): ReactElement {
   const selected = useArchitectureMapSelection((state) => state.selected)
   const selectBox = useArchitectureMapSelection((state) => state.selectBox)
+  const clearSelection = useArchitectureMapSelection((state) => state.clearSelection)
   const expand = useArchitectureMapSelection((state) => state.expand)
   const lit = useArchitectureMapSelection((state) => state.lit)
   const litView = useArchitectureMapSelection((state) => state.litView)
@@ -47,6 +53,18 @@ function ReadyPanel(props: { readonly ready: MapReady }): ReactElement {
       : baseView
   return (
     <div className={styles["panel"]}>
+      <BreadcrumbTrail
+        variant="supporting"
+        label="地図の段"
+        crumbs={crumbsOf({
+          overview: view,
+          selected,
+          select: (box) => {
+            selectBox({ box, view, by: "screen" })
+          },
+          clear: clearSelection,
+        })}
+      />
       <div className={styles["panel-head"]}>
         <div className={styles["panel-minimap"]}>
           <ArchitectureMapDiagram
@@ -59,14 +77,17 @@ function ReadyPanel(props: { readonly ready: MapReady }): ReactElement {
             }}
           />
         </div>
-        <button
-          type="button"
+        <Button
+          variant="ghost"
+          size="label"
+          pressed="none"
+          disabled={false}
+          disclosure={{ kind: "none" }}
           className={styles["panel-expand"]}
-          data-testid="architecture-map-expand"
           onClick={expand}
         >
           広げる
-        </button>
+        </Button>
       </div>
       {selected === undefined ? (
         <RepositoryDescription overview={props.ready.overview} />
@@ -75,6 +96,46 @@ function ReadyPanel(props: { readonly ready: MapReady }): ReactElement {
       )}
     </div>
   )
+}
+
+/**
+ * 「全体」＋選んだ箱の親（その箱がある図の焦点）＋選んだ箱。
+ * 「全体」は選びを外し、親の段は全体の図にある箱ならその箱を選び、無ければ選びを外す。
+ */
+function crumbsOf(args: {
+  readonly overview: MapView
+  readonly selected?: SelectedBox
+  readonly select: (box: MapViewBox) => void
+  readonly clear: () => void
+}): readonly Crumb[] {
+  const whole: Crumb = { key: "whole", title: "全体", onSelect: args.clear }
+  const { selected } = args
+  if (selected === undefined) {
+    return [whole]
+  }
+  const { focus } = selected.view
+  const parent: readonly Crumb[] =
+    focus === undefined || focus.id === selected.box.id
+      ? []
+      : [
+          {
+            key: `parent:${focus.id}`,
+            title: focus.title,
+            onSelect: () => {
+              const box = args.overview.boxes.find((candidate) => candidate.id === focus.id)
+              if (box === undefined) {
+                args.clear()
+              } else {
+                args.select(box)
+              }
+            },
+          },
+        ]
+  return [
+    whole,
+    ...parent,
+    { key: `box:${selected.box.id}`, title: selected.box.title, onSelect: args.clear },
+  ]
 }
 
 function RepositoryDescription(props: { readonly overview?: string }): ReactElement {

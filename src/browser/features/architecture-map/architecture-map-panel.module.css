@@ -17,12 +17,6 @@
 }
 .panel-expand {
   align-self: flex-end;
-  border: none;
-  background: transparent;
-  color: var(--ink);
-  font: inherit;
-  font-size: var(--font-label);
-  cursor: pointer;
 }
 .panel-body {
   display: flex;

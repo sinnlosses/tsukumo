@@ -39,6 +39,8 @@ type ArchitectureMapSelectionState = {
   readonly detachBadge: () => void
   /** 箱を選ぶ口。会話で箱を指す側もここから選ぶ。 */
   readonly selectBox: (selected: SelectedBox) => void
+  /** 選びを外す。サイドバーの地図は全体の図とリポジトリの説明に戻る。 */
+  readonly clearSelection: () => void
   readonly expand: () => void
   readonly collapse: () => void
 }
@@ -81,6 +83,9 @@ export const useArchitectureMapSelection = create<ArchitectureMapSelectionState>
   },
   selectBox: (selected) => {
     set({ selected })
+  },
+  clearSelection: () => {
+    set({ selected: undefined })
   },
   expand: () => {
     set({ expanded: true })

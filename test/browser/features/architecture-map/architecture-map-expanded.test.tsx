@@ -97,7 +97,9 @@ describe("ArchitectureMapExpanded", () => {
 
     fireEvent.click(await screen.findByRole("button", { name: "ベータ" }))
     expect(useArchitectureMapSelection.getState().selected?.box.id).toBe("beta")
-    expect(screen.queryByRole("navigation", { name: "地図の段" })?.textContent).not.toContain("›")
+    expect(
+      within(screen.getByRole("navigation", { name: "地図の段" })).getAllByRole("listitem"),
+    ).toHaveLength(1)
 
     fireEvent.click(screen.getByRole("button", { name: "アルファ" }))
     expect(await screen.findByRole("button", { name: "内側の箱" })).toBeTruthy()

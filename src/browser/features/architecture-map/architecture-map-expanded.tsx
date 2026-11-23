@@ -2,9 +2,19 @@
 // 箱を押すと、子を持つ箱は潜り（その箱も選ぶ）、子を持たない箱は選ぶだけ。
 // 拡大・縮小は「+」「−」とキー（面にフォーカスがあるとき）、移動は地のドラッグ。ホイールでは動かさない。
 
-import { type KeyboardEvent, type PointerEvent, type ReactElement, useRef, useState } from "react"
+import {
+  type KeyboardEvent,
+  type PointerEvent,
+  type ReactElement,
+  type ReactNode,
+  useRef,
+  useState,
+} from "react"
 
 import type { MapReady, MapView, MapViewBox } from "../../../shared/architecture-map/map-view.ts"
+import { BreadcrumbTrail } from "../../components/ui/breadcrumb-trail/breadcrumb-trail.tsx"
+import { Button } from "../../components/ui/button/button.tsx"
+import { useMountEffect } from "../../hooks/use-mount-effect.ts"
 import { useResizeObservedRef } from "../../hooks/use-observed-ref.ts"
 import { rpc } from "../../stores/rpc.ts"
 import { ArchitectureMapDiagram } from "./architecture-map-diagram.tsx"
@@ -46,11 +56,6 @@ type Step = { readonly title: string; readonly view: MapView }
 /** 利用者が動かした倍率と位置。無ければ図全体を収める倍率。 */
 type Adjustment = { readonly viewport?: Viewport }
 
-/** 開いたときだけ面にフォーカスを置く（キー `+`・`-`・⎋ は面の中でだけ効かせる）。identity を変えないので描き直しで奪い返さない。 */
-function focusOnMount(element: HTMLDivElement | null): void {
-  element?.focus()
-}
-
 function Expanded(props: { readonly overview: MapReady }): ReactElement {
   const collapse = useArchitectureMapSelection((state) => state.collapse)
   const selected = useArchitectureMapSelection((state) => state.selected)
@@ -65,6 +70,11 @@ function Expanded(props: { readonly overview: MapReady }): ReactElement {
   const [frame, setFrame] = useState<Size>(NO_FRAME)
   const [adjustment, setAdjustment] = useState<Adjustment>({})
   const drag = useRef({ active: false, x: 0, y: 0 })
+  // 開いたときだけ面にフォーカスを置く（キー `+`・`-`・⎋ は面の中でだけ効かせる）
+  const dialogRef = useRef<HTMLDivElement>(null)
+  useMountEffect(() => {
+    dialogRef.current?.focus()
+  })
 
   // 会話で選ばれた箱が今の図に無いときは、段を「全体 → 親の図」に替える（描画の途中で state を直すのは、選びが替わった回だけ）
   if (selected !== seenSelected) {
@@ -153,61 +163,49 @@ function Expanded(props: { readonly overview: MapReady }): ReactElement {
       aria-modal="false"
       aria-label="アーキテクチャの地図"
       tabIndex={-1}
-      ref={focusOnMount}
+      ref={dialogRef}
       onKeyDown={onKeyDown}
     >
       <div className={styles["expanded-head"]}>
-        <nav className={styles["expanded-crumbs"]} aria-label="地図の段">
-          {trail.map((step, index) => (
-            <span key={`${String(index)}:${step.title}`} className={styles["expanded-crumb"]}>
-              {index > 0 && <span aria-hidden="true">›</span>}
-              <button
-                type="button"
-                className={styles["expanded-button"]}
-                aria-current={index === trail.length - 1 ? "location" : undefined}
-                onClick={() => {
-                  goTo(trail.slice(0, index + 1))
-                }}
-              >
-                {step.title}
-              </button>
-            </span>
-          ))}
-        </nav>
+        <BreadcrumbTrail
+          variant="default"
+          label="地図の段"
+          crumbs={trail.map((step, index) => ({
+            key: `${String(index)}:${step.title}`,
+            title: step.title,
+            onSelect: () => {
+              goTo(trail.slice(0, index + 1))
+              // 押した段が「今いる段」の表示に替わって押した要素が消えるので、キー（⎋・+・-）の届き先を面へ戻す
+              dialogRef.current?.focus()
+            },
+          }))}
+        />
         <div className={styles["expanded-controls"]}>
-          <button
-            type="button"
-            className={styles["expanded-button"]}
-            aria-label="縮小"
+          <ControlButton
+            ariaLabel="縮小"
             onClick={() => {
               zoom("out")
             }}
           >
             −
-          </button>
-          <button
-            type="button"
-            className={styles["expanded-button"]}
-            aria-label="拡大"
+          </ControlButton>
+          <ControlButton
+            ariaLabel="拡大"
             onClick={() => {
               zoom("in")
             }}
           >
             +
-          </button>
-          <button
-            type="button"
-            className={styles["expanded-button"]}
-            aria-label="全体を収める"
+          </ControlButton>
+          <ControlButton
+            ariaLabel="全体を収める"
             onClick={() => {
               setAdjustment({})
             }}
           >
             全体
-          </button>
-          <button type="button" className={styles["expanded-button"]} onClick={collapse}>
-            流れに戻る
-          </button>
+          </ControlButton>
+          <ControlButton onClick={collapse}>流れに戻る</ControlButton>
         </div>
       </div>
       <div
@@ -246,15 +244,13 @@ function Expanded(props: { readonly overview: MapReady }): ReactElement {
             {selected.box.summary !== undefined && (
               <span className={styles["expanded-ask-role"]}>{selected.box.summary}</span>
             )}
-            <button
-              type="button"
-              className={styles["expanded-button"]}
+            <ControlButton
               onClick={() => {
                 attachBadge(selected.box)
               }}
             >
               この箱について聞く
-            </button>
+            </ControlButton>
           </div>
         )}
       </div>
@@ -263,6 +259,27 @@ function Expanded(props: { readonly overview: MapReady }): ReactElement {
         <span>矢印の数は import の本数</span>
       </p>
     </div>
+  )
+}
+
+function ControlButton(props: {
+  readonly ariaLabel?: string
+  readonly onClick: () => void
+  readonly children: ReactNode
+}): ReactElement {
+  return (
+    <Button
+      variant="outline"
+      size="label"
+      pressed="none"
+      disabled={false}
+      disclosure={{ kind: "none" }}
+      {...(props.ariaLabel === undefined ? {} : { ariaLabel: props.ariaLabel })}
+      className=""
+      onClick={props.onClick}
+    >
+      {props.children}
+    </Button>
   )
 }
 

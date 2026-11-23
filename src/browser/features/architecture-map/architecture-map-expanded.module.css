@@ -23,31 +23,11 @@
   justify-content: space-between;
   gap: var(--inline-control);
 }
-.expanded-crumbs,
 .expanded-controls {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--inline-tight);
-}
-.expanded-crumb {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--inline-tight);
-  color: var(--ink-quiet);
-}
-.expanded-button {
-  padding: var(--inline-tight) var(--inline-control);
-  border: none;
-  border-radius: var(--radius-md);
-  background: var(--surface-raised);
-  color: var(--ink);
-  font: inherit;
-  font-size: var(--font-label);
-  cursor: pointer;
-}
-.expanded-button[aria-current="location"] {
-  font-weight: 600;
 }
 /* 移動は地のドラッグ。図は枠の外へ出ても切る（面の中に横スクロールを作らない）。 */
 .expanded-stage {

@@ -25,6 +25,7 @@ edges = [
   { from = "browser/app", to = "browser/token-usage-page" },
   { from = "browser/app", to = "browser/ui" },
   { from = "browser/architecture-map", to = "browser/support" },
+  { from = "browser/architecture-map", to = "browser/ui" },
   { from = "browser/character-page", to = "browser/frame" },
   { from = "browser/character-page", to = "browser/support" },
   { from = "browser/character-page", to = "browser/ui" },
