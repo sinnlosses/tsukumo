@@ -209,6 +209,7 @@ function spanWorkflow(phase: "implementing" | "accepting"): WorkStripSteps["work
 
 const EXAMPLE_HAND: WorkflowAgentHand = {
   index: 2,
+  chosen: true,
   state: "running",
   name: "直し 1",
   kind: "tsukumo-workflow:implementer",

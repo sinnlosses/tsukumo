@@ -153,7 +153,7 @@ function WorkflowItem(props: {
         columnDurations={view.columnDurations}
         finished={view.finished}
         {...(view.planCurrentKey === undefined ? {} : { planCurrentKey: view.planCurrentKey })}
-        selectedIndex={view.hand?.index}
+        selectedIndex={view.hand?.chosen === true ? view.hand.index : undefined}
         steps={steps}
       />
       {view.hand !== undefined && (
@@ -390,7 +390,10 @@ function Column(props: {
         }}
       >
         {column.kind === "upcoming" ? (
-          <div data-diagram-end={workflowDiagramEndKeyOf({ kind: "upcoming", column: column.key })}>
+          <div
+            data-diagram-end={workflowDiagramEndKeyOf({ kind: "upcoming", column: column.key })}
+            data-current={current && props.finished}
+          >
             <Surface
               element="div"
               tone="surface"

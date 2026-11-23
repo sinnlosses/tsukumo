@@ -65,6 +65,15 @@ describe("workflowHandOf", () => {
     expect(hand).toMatchObject({ index: 0, kind: "既定のエージェント", model: "" })
   })
 
+  it("選んでいないときの手元は自動の選択（chosen が偽）で、選んだときだけ真になる", () => {
+    const run = runOf([agent(0, { state: "done", startedAt: 1000, durationMs: 500 })])
+
+    expect(workflowHandOf(run, NONE, 6000).hand?.chosen).toBe(false)
+    expect(
+      workflowHandOf(run, { kind: "agent", taskId: TASK_ID, index: 0 }, 6000).hand?.chosen,
+    ).toBe(true)
+  })
+
   it("エージェントがいなければ手元を持たない", () => {
     expect(workflowHandOf(runOf([]), NONE, 0)).toEqual({})
   })

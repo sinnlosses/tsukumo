@@ -38,11 +38,12 @@ export type WorkflowHandStep = {
 }
 
 /**
- * 選んだエージェントの手元。`steps` は古い順で持っている分（最大 20 件）、`total` は始まった手順の総数。
+ * 選んだエージェントの手元。`chosen` は利用者が箱を押して選んだか（自動で選んだときは偽で、箱は塗らない）。`steps` は古い順で持っている分（最大 20 件）、`total` は始まった手順の総数。
  * `model` は渡されていなければ空。
  */
 export type WorkflowAgentHand = {
   readonly index: number
+  readonly chosen: boolean
   readonly state: WorkflowDiagramBoxState
   readonly name: string
   readonly kind: string
@@ -64,10 +65,12 @@ export function workflowHandOf(
   const running = run.agents
     .filter((agent) => workflowBoxStateOf(agent, run.ended) === "running")
     .toSorted((left, right) => lastStartedAtOf(left) - lastStartedAtOf(right))
-  const agent =
-    (selected.kind === "agent" && selected.taskId === run.taskId
+  const chosenAgent =
+    selected.kind === "agent" && selected.taskId === run.taskId
       ? run.agents.find((candidate) => candidate.index === selected.index)
-      : undefined) ??
+      : undefined
+  const agent =
+    chosenAgent ??
     running.at(-1) ??
     run.agents.toSorted((left, right) => finishedAtOf(left) - finishedAtOf(right)).at(-1)
   if (agent === undefined) {
@@ -76,6 +79,7 @@ export function workflowHandOf(
   return {
     hand: {
       index: agent.index,
+      chosen: chosenAgent !== undefined,
       state: workflowBoxStateOf(agent, run.ended),
       name: workflowAgentNameOf(agent),
       kind: agent.agentType ?? DEFAULT_KIND,

@@ -206,6 +206,10 @@
 .workflow-diagram-upcoming {
   border-style: dashed;
 }
+[data-current="true"] > .workflow-diagram-upcoming {
+  border-style: solid;
+  border-color: var(--accent);
+}
 .workflow-diagram-arrow-label {
   position: absolute;
   inset-block-start: var(--arrow-label-y);

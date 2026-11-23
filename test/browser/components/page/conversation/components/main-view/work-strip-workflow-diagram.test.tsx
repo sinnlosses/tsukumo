@@ -184,7 +184,7 @@ describe("WorkStrip のワークフローの図の手元", () => {
       screen
         .getByRole("button", { name: "架空の受け入れ 1、implementer、動いている" })
         .getAttribute("aria-pressed"),
-    ).toBe("true")
+    ).toBe("false")
   })
 
   it("種類の無いエージェントの手元は「既定のエージェント」と言い、申し送りの行は出さない", () => {
