@@ -1,9 +1,90 @@
 // 地図の図の箱を格子に置く。純粋で、同じ入力なら同じ結果になる。
 // 図の箱が全部 `place` を持てばそのとおり、1つでも欠ければエッジの向きで列・定義の順で行を決める。
+// 区画のある全体の図は `place` を使わず、区画の組み方（列・帯・外部の列の縦の通し）で置く。
 
-import type { MapView } from "../../../shared/architecture-map/map-view.ts"
+import type { MapView, MapViewLane } from "../../../shared/architecture-map/map-view.ts"
 
 export type MapGridPlace = { readonly column: number; readonly row: number }
+
+/** 区画の組み方の格子の1区画。行0は列の行、行1からは帯の行。 */
+export type MapLaneCell = {
+  readonly lane: MapViewLane
+  readonly column: number
+  readonly columnSpan: number
+  readonly row: number
+  readonly rowSpan: number
+  /** 区画に属する大の箱の ID（定義の順）。 */
+  readonly boxIds: readonly string[]
+  /** 区画そのものがその1つの箱になる。 */
+  readonly solo: boolean
+}
+
+/** `grid` は区画を組まない図（呼ぶ側は `mapPlacementOf` の格子で描く）。 */
+export type MapLaneLayout =
+  | { readonly kind: "grid" }
+  | {
+      readonly kind: "lanes"
+      /** 左からの列の種類。 */
+      readonly columns: readonly ("runtime" | "external")[]
+      readonly rowCount: number
+      readonly cells: readonly MapLaneCell[]
+    }
+
+/**
+ * 区画のある全体の図の組み方。フォーカスした図・区画の無い図・区画に属さない箱のある図・
+ * 列になる区画が1つも無い図は `grid`。
+ */
+export function mapLaneLayoutOf(view: MapView): MapLaneLayout {
+  const lanes = view.lanes ?? []
+  const known = new Set(lanes.map((lane) => lane.id))
+  const columnLanes = lanes.filter((lane) => lane.kind !== "crosscut")
+  if (
+    view.focus !== undefined ||
+    columnLanes.length === 0 ||
+    !view.boxes.every((box) => box.lane !== undefined && known.has(box.lane))
+  ) {
+    return { kind: "grid" }
+  }
+  const bands = lanes.filter((lane) => lane.kind === "crosscut")
+  const runtimeColumns = columnLanes.flatMap((lane, column) =>
+    lane.kind === "runtime" ? [column] : [],
+  )
+  const spanStart = runtimeColumns.length === 0 ? 0 : Math.min(...runtimeColumns)
+  const spanEnd = runtimeColumns.length === 0 ? columnLanes.length - 1 : Math.max(...runtimeColumns)
+  const rowCount = 1 + bands.length
+  const boxIdsOf = (lane: MapViewLane) =>
+    view.boxes.filter((box) => box.lane === lane.id).map((box) => box.id)
+  const cellOf = (
+    lane: MapViewLane,
+    place: Omit<MapLaneCell, "lane" | "boxIds" | "solo">,
+  ): MapLaneCell => {
+    const boxIds = boxIdsOf(lane)
+    return { lane, ...place, boxIds, solo: lane.kind !== "external" && boxIds.length === 1 }
+  }
+  const columnCells = columnLanes.map((lane, column) => {
+    const outsideBands = column < spanStart || column > spanEnd
+    return cellOf(lane, {
+      column,
+      columnSpan: 1,
+      row: 0,
+      rowSpan: lane.kind === "external" && outsideBands ? rowCount : 1,
+    })
+  })
+  const bandCells = bands.map((lane, index) =>
+    cellOf(lane, {
+      column: spanStart,
+      columnSpan: Math.max(1, spanEnd - spanStart + 1),
+      row: 1 + index,
+      rowSpan: 1,
+    }),
+  )
+  return {
+    kind: "lanes",
+    columns: columnLanes.map((lane) => (lane.kind === "runtime" ? "runtime" : "external")),
+    rowCount,
+    cells: [...columnCells, ...bandCells],
+  }
+}
 
 export function mapPlacementOf(view: MapView): ReadonlyMap<string, MapGridPlace> {
   const placed = view.boxes.flatMap((box) =>

@@ -59,7 +59,26 @@ const INSIDE: MapView = {
   findings: [],
 }
 
-function renderExpanded(): void {
+const LANED: MapView = {
+  ...WHOLE,
+  lanes: [
+    { id: "front", title: "前", kind: "runtime" },
+    { id: "back", title: "後ろ", kind: "runtime" },
+    { id: "outer", title: "外部", kind: "external" },
+  ],
+  boxes: [
+    box("alpha", {
+      title: "アルファ",
+      summary: "架空の受け持ち",
+      hasChildren: true,
+      lane: "front",
+    }),
+    box("beta", { title: "ベータ", summary: "別の受け持ち", lane: "back" }),
+    box("gamma", { title: "ガンマ", external: true, lane: "outer" }),
+  ],
+}
+
+function renderExpanded(whole: MapView = WHOLE): void {
   fetchStub = stubRpcFetch((call) => {
     const input: unknown = call.input
     const focus = typeof input === "object" && input !== null && "box" in input
@@ -67,7 +86,7 @@ function renderExpanded(): void {
       kind: "ready",
       source: { producer: "架空 0.0.1", commit: "abc" },
       ...(focus ? {} : { overview: "架空の概要" }),
-      view: focus ? INSIDE : WHOLE,
+      view: focus ? INSIDE : whole,
     })
   })
   useArchitectureMapSelection.setState({ expanded: true })
@@ -159,6 +178,23 @@ describe("ArchitectureMapExpanded", () => {
       title: "ベータ",
       level: 1,
       summary: "別の受け持ち",
+    })
+  })
+
+  it("区画のある図でも、区画の箱を選ぶと「この箱について聞く」が出て、子を持つ区画の箱へ潜れる", async () => {
+    renderExpanded(LANED)
+
+    const diagram = await screen.findByTestId("architecture-map-diagram")
+    expect(diagram.querySelector("[data-lane='outer']")).toBeTruthy()
+    fireEvent.click(screen.getByRole("button", { name: "ベータ" }))
+    fireEvent.click(screen.getByRole("button", { name: "この箱について聞く" }))
+    expect(useArchitectureMapSelection.getState().badge?.id).toBe("beta")
+
+    fireEvent.click(screen.getByRole("button", { name: "アルファ" }))
+    expect(await screen.findByRole("button", { name: "内側の箱" })).toBeTruthy()
+    fireEvent.click(screen.getByRole("button", { name: "全体" }))
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "ガンマ" })).toBeTruthy()
     })
   })
 

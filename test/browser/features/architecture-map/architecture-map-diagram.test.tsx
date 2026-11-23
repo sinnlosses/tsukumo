@@ -87,4 +87,58 @@ describe("ArchitectureMapDiagram", () => {
       "true",
     )
   })
+
+  it("区画のある図は、箱1つの区画を区画の色の箱で、外部の区画を枠で描き、名前を2行に折る", () => {
+    const laned: MapView = {
+      ...VIEW,
+      lanes: [
+        { id: "front", title: "前", kind: "runtime" },
+        { id: "back", title: "後ろ", kind: "runtime" },
+        { id: "outer", title: "外部", kind: "external" },
+        { id: "common", title: "共有", kind: "crosscut" },
+      ],
+      boxes: [
+        { ...box("f", "画面"), lane: "front" },
+        { ...box("b", "手続き"), lane: "back" },
+        { ...box("o", "キャラクターパック"), external: true, lane: "outer" },
+        { ...box("c", "共有"), lane: "common" },
+      ],
+      edges: [],
+      intendedEdges: [],
+    }
+    const { container } = render(
+      <ArchitectureMapDiagram view={laned} form="mini" onSelect={() => undefined} />,
+    )
+
+    expect(
+      [...container.querySelectorAll("[data-lane]")].map((lane) => lane.getAttribute("data-lane")),
+    ).toEqual(["outer"])
+    expect(screen.getByText("外部")).toBeTruthy()
+    const front = container.querySelector<SVGGElement>("[data-box='f']")
+    expect(front?.getAttribute("data-lane-box")).toBe("true")
+    expect(front?.style.getPropertyValue("--lane")).toBe("var(--chart-series-1)")
+    expect(
+      container.querySelector<SVGGElement>("[data-box='b']")?.style.getPropertyValue("--lane"),
+    ).toBe("var(--chart-series-3)")
+    expect(
+      container.querySelector<SVGGElement>("[data-box='c']")?.style.getPropertyValue("--lane"),
+    ).toBe("var(--chart-series-6)")
+    expect(
+      [...(container.querySelector("[data-box='o']")?.querySelectorAll("tspan") ?? [])].map(
+        (line) => line.textContent,
+      ),
+    ).toEqual(["キャラクタ", "ーパック"])
+  })
 })
+
+function box(id: string, title: string): MapViewBox {
+  return {
+    id,
+    title,
+    level: 1,
+    external: false,
+    hasChildren: false,
+    paths: [],
+    problems: [],
+  }
+}

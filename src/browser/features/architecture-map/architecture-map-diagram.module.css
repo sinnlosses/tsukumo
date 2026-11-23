@@ -10,13 +10,15 @@
 }
 /* ミニマップは図ごと拡大するので、線の太さは拡大に乗せず画面の px で決める。 */
 .diagram-mini .box-body,
+.diagram-mini .lane-frame,
 .diagram-mini .edge {
   vector-effect: non-scaling-stroke;
 }
 .box {
   cursor: pointer;
 }
-.box:focus-visible {
+/* フォーカスは縁の色で示すので、押して付いたフォーカスにもブラウザの輪を描かない。 */
+.box:focus {
   outline: none;
 }
 .box-body {
@@ -26,6 +28,27 @@
 }
 .box[data-external="true"] .box-body {
   stroke-dasharray: 4 3;
+}
+/* 区画の色（`--lane`）は図の部品が区画ごとに渡す。区画の箱は縁と地と名前をその色で染める。 */
+.lane-frame {
+  fill: color-mix(in oklch, var(--lane) 7%, transparent);
+  stroke: color-mix(in oklch, var(--lane) 45%, transparent);
+  stroke-width: 1;
+}
+.lane[data-lane-kind="external"] .lane-frame {
+  stroke-dasharray: 4 3;
+}
+.lane-heading {
+  fill: color-mix(in oklch, var(--lane) 85%, var(--ink));
+  font-weight: 600;
+}
+.box[data-lane-box="true"] .box-body {
+  fill: color-mix(in oklch, var(--lane) 7%, var(--surface));
+  stroke: color-mix(in oklch, var(--lane) 55%, transparent);
+}
+.box[data-lane-box="true"] .box-title {
+  fill: color-mix(in oklch, var(--lane) 80%, var(--ink));
+  font-weight: 700;
 }
 .box[data-problem="true"] .box-body {
   stroke: var(--state-ng);
@@ -78,12 +101,15 @@
   fill: var(--ink);
   font-weight: 600;
 }
-/* ミニマップの字は図の座標の単位（SVG の fontSize 属性）で決め、図ごと縮める。 */
-.diagram:not(.diagram-mini) .box-title {
+/* ミニマップと区画の組み方の字は図の座標の単位（SVG の fontSize 属性）で決め、図ごと縮める。
+   折り返しの字数を同じ大きさで数えているので、属性のある字を CSS で上書きしない。 */
+.diagram:not(.diagram-mini) .box-title:not([font-size]) {
   font-size: var(--font-label);
 }
 .box-summary {
   fill: var(--ink-quiet);
+}
+.box-summary:not([font-size]) {
   font-size: var(--font-secondary);
 }
 .box-dive {

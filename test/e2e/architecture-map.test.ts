@@ -1,10 +1,10 @@
-import { sampleMap } from "../server/architecture-map/sample-map.ts"
+import { sampleLanedMap, sampleMap } from "../server/architecture-map/sample-map.ts"
 import { expect, test } from "./room-fixture.ts"
 import { advanceClockUntilVisible } from "./scenario-wait.ts"
 
 // ADR 0082 のアーキテクチャの地図。
 // サイドバーの「地図」のタブ → 広げる → 大の箱へ潜る → 拡大 → 地のドラッグで動かす → パンくずで戻る → ⎋ で閉じる、を実ブラウザで1本通す。
-// 地図は架空の `.architecture-map.json`（作業ディレクトリに置く）。判定は倍率と位置の数値なので、期待値のファイルには撮らず `expect` に書く。
+// 地図は架空の `.architecture-map.json`（作業ディレクトリに置く）。1本目は区画のある地図、2本目は区画の無い地図。判定は倍率と位置の数値なので、期待値のファイルには撮らず `expect` に書く。
 
 test.describe("アーキテクチャの地図", () => {
   test("地図のタブから広げ、潜り、拡大し、動かし、パンくずで戻り、⎋ で閉じる", async ({ run }) => {
@@ -13,7 +13,7 @@ test.describe("アーキテクチャの地図", () => {
       scene: "none",
       viewport: "wide",
       domRoots: ["sidebar"],
-      cwdFiles: [{ path: ".architecture-map.json", content: JSON.stringify(sampleMap()) }],
+      cwdFiles: [{ path: ".architecture-map.json", content: JSON.stringify(sampleLanedMap()) }],
     })
     const page = room.page
 
