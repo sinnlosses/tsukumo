@@ -116,8 +116,8 @@ describe("workflowArrowPathsOf", () => {
       origin,
     )
 
-    expect(down?.d).toBe("M60 50 L60 70")
-    expect(across?.d).toBe("M110 30 C160 30, 160 30, 210 30")
+    expect(down?.d).toBe("M60 52 L60 62")
+    expect(across?.d).toBe("M112 30 H120 C157 30, 157 30, 194 30 H202")
   })
 
   it("同じ列で間に別の箱があれば、右の辺どうしを列の右へ膨らませて結ぶ", () => {
@@ -128,7 +128,18 @@ describe("workflowArrowPathsOf", () => {
 
     const [around] = workflowArrowPathsOf([arrow(0, 3, "toWaiting")], stacked, origin)
 
-    expect(around?.d).toBe("M110 30 C124 30, 124 150, 110 150")
+    expect(around?.d).toBe("M112 30 C124 30, 124 150, 118 150")
+  })
+
+  it("線の終わりは箱の縁から矢じりの長さと隙間のぶん手前で止まり、点線の破線が矢じりに入らない", () => {
+    const [down, across] = workflowArrowPathsOf(
+      [arrow(0, 1, "toWaiting"), arrow(0, 2, "toUpcoming")],
+      rects,
+      origin,
+    )
+
+    expect(down?.d.endsWith("L60 62")).toBe(true)
+    expect(across?.d.endsWith("H202")).toBe(true)
   })
 
   it("差し戻しの矢印だけが字を置く中点を持つ", () => {

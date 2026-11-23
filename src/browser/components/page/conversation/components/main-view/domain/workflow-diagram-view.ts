@@ -65,6 +65,15 @@ const SAME_COLUMN_TOLERANCE = 4
 /** 同じ列の間の箱を避ける線を、列の右の辺から膨らませる幅（px）。列の間の gap に収まる。 */
 const DETOUR_WIDTH = 14
 
+/** 矢じりの長さ（px）。図の `<marker>` の寸法と同じにする。線は矢じりの根元で止める。 */
+const ARROW_HEAD_LENGTH = 6
+
+/** 線の両端と箱の縁のあいだの隙間（px）。 */
+const ARROW_GAP = 2
+
+/** 列をまたぐ曲線の両端に付ける水平の足の最大の長さ（px）。 */
+const ARROW_STUB = 8
+
 /** 状態ごとのエージェントの数。0 の状態は出さない。 */
 export function workflowAgentCountsOf(run: WorkflowRun): readonly WorkflowAgentCount[] {
   const states = run.agents.map((agent) => workflowBoxStateOf(agent, run.ended))
@@ -256,8 +265,10 @@ function lineOf(
     const bulge = x + DETOUR_WIDTH
     const y1 = from.top + from.height / 2
     const y2 = to.top + to.height / 2
+    const start = x + ARROW_GAP
+    const end = x + ARROW_GAP + ARROW_HEAD_LENGTH
     return {
-      d: `M${num(x)} ${num(y1)} C${num(bulge)} ${num(y1)}, ${num(bulge)} ${num(y2)}, ${num(x)} ${num(y2)}`,
+      d: `M${num(start)} ${num(y1)} C${num(bulge)} ${num(y1)}, ${num(bulge)} ${num(y2)}, ${num(end)} ${num(y2)}`,
       middle: { x: bulge, y: (y1 + y2) / 2 },
     }
   }
@@ -265,16 +276,26 @@ function lineOf(
     const x = from.left + from.width / 2
     const y1 = from.top + from.height
     const y2 = to.top
-    return { d: `M${num(x)} ${num(y1)} L${num(x)} ${num(y2)}`, middle: { x, y: (y1 + y2) / 2 } }
+    const start = y1 + ARROW_GAP
+    const end = y2 - ARROW_GAP - ARROW_HEAD_LENGTH
+    return {
+      d: `M${num(x)} ${num(start)} L${num(x)} ${num(end)}`,
+      middle: { x, y: (y1 + y2) / 2 },
+    }
   }
-  const x1 = from.left + from.width
+  const edge1 = from.left + from.width
   const y1 = from.top + from.height / 2
-  const x2 = to.left
+  const edge2 = to.left
   const y2 = to.top + to.height / 2
-  const mx = (x1 + x2) / 2
+  const x1 = edge1 + ARROW_GAP
+  const x2 = edge2 - ARROW_GAP - ARROW_HEAD_LENGTH
+  const stub = Math.min(ARROW_STUB, (x2 - x1) / 4)
+  const a1 = x1 + stub
+  const a2 = x2 - stub
+  const mx = (a1 + a2) / 2
   return {
-    d: `M${num(x1)} ${num(y1)} C${num(mx)} ${num(y1)}, ${num(mx)} ${num(y2)}, ${num(x2)} ${num(y2)}`,
-    middle: { x: mx, y: (y1 + y2) / 2 },
+    d: `M${num(x1)} ${num(y1)} H${num(a1)} C${num(mx)} ${num(y1)}, ${num(mx)} ${num(y2)}, ${num(a2)} ${num(y2)} H${num(x2)}`,
+    middle: { x: (edge1 + edge2) / 2, y: (y1 + y2) / 2 },
   }
 }
 

@@ -39,8 +39,8 @@
   display: grid;
   grid-template-columns: repeat(var(--diagram-steps), minmax(0, 1fr));
   align-items: start;
-  column-gap: calc(2 * var(--inline-group));
-  row-gap: calc(2 * var(--stack-group));
+  column-gap: calc(2 * var(--inline-group) + var(--inline-control));
+  row-gap: calc(2 * var(--stack-group) + var(--stack-block));
 }
 .workflow-diagram-stage[data-has-folded="true"] {
   grid-template-columns: 6rem repeat(var(--diagram-steps), minmax(0, 1fr));
@@ -99,7 +99,7 @@
   flex-direction: column;
   grid-row: 2;
   grid-column: var(--step-start) / span var(--step-span);
-  gap: calc(2 * var(--stack-group));
+  gap: calc(2 * var(--stack-group) + var(--stack-block));
   min-width: 0;
 }
 .workflow-diagram-folded-column {
@@ -200,7 +200,10 @@
   position: absolute;
   inset-block-start: var(--arrow-label-y);
   inset-inline-start: var(--arrow-label-x);
-  transform: translate(var(--inline-tight), -50%);
+  transform: translate(calc(-100% - var(--inline-tight)), -50%);
+  padding: 0 var(--inline-control);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--state-warn) 16%, var(--surface));
   pointer-events: none;
 }
 .workflow-diagram-folded {
