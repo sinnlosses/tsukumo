@@ -84,6 +84,7 @@ export const THEME_TOKEN_NAMES: ReadonlySet<string> = new Set([
   "manpu-sweat-light",
   "manpu-sweat-line",
   "manpu-vline",
+  "map-focus",
   "motion-base",
   "motion-fast",
   "page-padding",
