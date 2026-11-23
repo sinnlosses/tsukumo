@@ -162,3 +162,4 @@
 | `docs/architecture/adr/0081-workflow-agents-diagram-in-steps.md`                | ピルの「手順」の頭に、ワークフローのエージェントの図を出す                                            | 採用                   |
 | `docs/architecture/adr/0082-architecture-map-contract.md`                       | アーキテクチャの地図を、作り手が書く JSON の地図のファイル1つで tsukumo とつなぐ                      | 採用                   |
 | `docs/architecture/adr/0083-report-type-scale-plan-b.md`                        | レポートの字の段を案B に直す                                                                          | 採用                   |
+| `docs/architecture/adr/0084-expression-role-names-in-system.md`                 | 表情の役割の名をシステムが持ち、パックの語を添える                                                    | 採用                   |
