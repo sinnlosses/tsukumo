@@ -1,0 +1,596 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>地図のタブの中身 — 候補を3案に組んだ見本（2026-11-23）</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --ground: #191720;
+    --surface: #221f2b;
+    --ink: #e8e3ea;
+    --ink-bright: #f7f6f8;
+    --ink-soft: color-mix(in srgb, var(--ink) 74%, transparent);
+    --ink-quiet: color-mix(in srgb, var(--ink) 60%, transparent);
+    --accent: #f2b0a0;
+    --accent-soft: color-mix(in srgb, var(--accent) 16%, transparent);
+    --line: color-mix(in srgb, var(--ink) 12%, transparent);
+    --raised: color-mix(in srgb, var(--ink) 9%, transparent);
+    --panel: color-mix(in srgb, var(--surface) 62%, transparent);
+    --ok: #5fd38a;
+    --warn: #f2b544;
+    --ng: #ef6b6b;
+    --fox: #5fd3c4;
+    --mono: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body { margin: 0; background: #0f0e13; color: var(--ink); font: 14px/1.6 system-ui, -apple-system, "Hiragino Sans", sans-serif; }
+  button { font: inherit; color: inherit; }
+
+  .page-head { width: 1400px; margin: 0 auto; padding: 20px 0 12px; display: grid; grid-template-columns: 1fr auto; gap: 10px 20px; align-items: end; }
+  .page-head h1 { font-size: 20px; margin: 0; }
+  .page-head p { margin: 2px 0 0; color: var(--ink-soft); font-size: 13px; max-width: 640px; }
+  .switches { display: grid; gap: 6px; justify-items: end; }
+  .group { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  .group .gl { font-size: 12px; color: var(--ink-quiet); margin-right: 4px; }
+  .group button { all: unset; cursor: pointer; padding: 4px 14px; border-radius: 999px; border: 1px solid var(--line); font-size: 13px; color: var(--ink-soft); }
+  .group button[aria-pressed="true"] { background: var(--accent-soft); color: var(--ink); border-color: transparent; }
+  .group button:focus-visible { outline: 2px solid var(--accent); }
+
+  /* ===== アプリの枠（1400×900。今のアプリの列の位置に合わせた） ===== */
+  .app {
+    position: relative; width: 1400px; height: 900px; margin: 0 auto; overflow: clip; border-radius: 10px; border: 1px solid var(--line);
+    background:
+      linear-gradient(color-mix(in srgb, var(--ground) 62%, transparent), color-mix(in srgb, var(--ground) 62%, transparent)),
+      url("../../../../characters/tsukumo/background.png") center / cover;
+  }
+  .topbar { position: absolute; inset: 0 0 auto 0; height: 40px; display: flex; align-items: center; gap: 14px; padding: 0 20px; border-bottom: 1px solid var(--line); background: color-mix(in srgb, var(--ground) 70%, transparent); }
+  .topbar .face { width: 24px; height: 24px; border-radius: 50%; background: url("../../../../characters/tsukumo/face.png") center / cover; }
+  .topbar .room { font-size: 17px; font-weight: 600; letter-spacing: .02em; }
+  .topbar .mode { display: flex; gap: 4px; margin-left: 12px; }
+  .topbar .mode span { font-size: 13px; padding: 2px 10px; border-radius: 6px; color: var(--ink-soft); border: 1px solid transparent; }
+  .topbar .mode span.on { background: var(--raised); color: var(--ink); border-color: var(--line); }
+
+  .col { position: absolute; top: 56px; bottom: 17px; }
+  .left { left: 28px; width: 234px; }
+  .center { left: 292px; width: 780px; display: flex; flex-direction: column; gap: 10px; }
+  .right { left: 1088px; width: 296px; display: flex; flex-direction: column; }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; backdrop-filter: blur(14px); }
+
+  .nav { padding: 12px 8px; margin-top: 12px; }
+  .nav h4 { margin: 0 8px 6px; font-size: 13px; color: var(--ink-quiet); font-weight: 500; }
+  .outline-row { display: flex; gap: 8px; align-items: center; padding: 6px 10px; border-radius: 8px; font-size: 13px; }
+  .outline-row.on { background: var(--raised); font-weight: 600; }
+  .outline-row .mk { width: 8px; height: 8px; border-radius: 50%; background: var(--ink-quiet); flex: none; }
+  .outline-row.on .mk { background: var(--accent); }
+  .portrait { position: absolute; left: -10px; bottom: 0; width: 240px; height: 260px; background: url("../../../../characters/tsukumo/default.png") bottom center / contain no-repeat; filter: drop-shadow(0 8px 24px #0008); }
+
+  /* 中央の列 */
+  .main-area { flex: 1; min-height: 0; position: relative; }
+  .stream { position: absolute; inset: 0; overflow: auto; padding: 4px 4px 8px; display: flex; flex-direction: column; gap: 14px; scrollbar-width: thin; }
+  .bubble-me { align-self: flex-end; max-width: 74%; padding: 10px 16px; border-radius: 14px; background: color-mix(in srgb, var(--ink) 14%, transparent); }
+  .bubble-me .ref { margin-right: 4px; }
+  .paper { padding: 16px 20px; }
+  .paper .kicker { font-size: 12px; color: var(--ink-quiet); margin-bottom: 4px; }
+  .paper h2 { font-size: 17px; margin: 0 0 10px; line-height: 1.5; }
+  .paper h3 { font-size: 13px; margin: 14px 0 6px; color: var(--ink-quiet); font-weight: 600; }
+  .paper p { margin: 0 0 8px; font-size: 14px; }
+  .paper ul { margin: 0 0 6px; padding-left: 18px; font-size: 14px; }
+  .paper code { font: 13px var(--mono); }
+
+  /* 箱のバッジ（{{map: <ID>}} を本文・セリフ・入力欄・タブで同じ形に描く） */
+  .ref {
+    all: unset; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; vertical-align: 1px; white-space: nowrap;
+    font: 12px/1.5 var(--mono); padding: 0 7px 0 5px; border-radius: 6px;
+    background: color-mix(in srgb, var(--fox) 14%, transparent); color: color-mix(in srgb, var(--fox) 80%, white);
+    border: 1px solid color-mix(in srgb, var(--fox) 30%, transparent);
+  }
+  .ref::before { content: ""; width: 7px; height: 7px; border-radius: 2px; border: 1.5px solid currentColor; flex: none; }
+  .ref:hover, .ref.hot, .ref:focus-visible { background: color-mix(in srgb, var(--fox) 28%, transparent); outline: none; }
+  .ref .lv { font-family: system-ui, sans-serif; color: var(--ink-quiet); }
+
+  .voice { flex: none; display: flex; gap: 10px; align-items: flex-start; padding: 0 4px; min-height: 34px; }
+  .voice .face { width: 28px; height: 28px; border-radius: 50%; background: url("../../../../characters/tsukumo/face.png") center / cover; flex: none; margin-top: 2px; }
+  .voice .say { padding: 6px 14px; border-radius: 14px; border: 1px solid var(--accent); background: color-mix(in srgb, var(--ground) 80%, transparent); font-size: 14px; }
+  .composer { flex: none; min-height: 104px; border-radius: 16px; border: 1.5px solid color-mix(in srgb, var(--accent) 75%, transparent); background: color-mix(in srgb, var(--surface) 78%, transparent); padding: 12px 20px; color: var(--ink-quiet); display: flex; flex-direction: column; gap: 6px; }
+  .composer .attach { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  .composer .attach .x { margin-left: 2px; color: var(--ink-quiet); }
+  .composer .ctx { font-size: 12px; color: var(--ink-quiet); }
+  .composer .draft { color: var(--ink); }
+  .composer .caret { display: inline-block; width: 1.5px; height: 1.1em; background: var(--accent); vertical-align: -2px; margin-left: 1px; }
+  .composer .tools { margin-top: auto; display: flex; gap: 14px; font-size: 13px; color: var(--ink-soft); align-items: center; }
+  .composer .send { margin-left: auto; width: 30px; height: 30px; border-radius: 50%; background: var(--accent); color: #2a1a1a; display: grid; place-items: center; font-weight: 700; }
+
+  /* 地図の描画（ミニマップ） */
+  .map { position: absolute; inset: 0; }
+  .map svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+  .map .edge { stroke: color-mix(in srgb, var(--ink) 36%, transparent); fill: none; }
+  .map .edge.lit { stroke: var(--fox); }
+  .map .head { fill: color-mix(in srgb, var(--ink) 50%, transparent); }
+  .map .head.lit { fill: var(--fox); }
+  .box {
+    all: unset; box-sizing: border-box; cursor: pointer; position: absolute; border-radius: 6px; padding: 2px 1px; display: flex; flex-direction: column; justify-content: center; text-align: center;
+    background: color-mix(in srgb, var(--surface) 94%, transparent); border: 1px solid color-mix(in srgb, var(--ink) 24%, transparent);
+  }
+  .box b { font: 600 12px/1.35 system-ui, sans-serif; color: var(--ink-bright); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .box.ext { background: color-mix(in srgb, var(--ground) 82%, transparent); border-style: dashed; }
+  .box.out { background: color-mix(in srgb, var(--ground) 70%, transparent); border-style: dotted; }
+  .box.out b { color: var(--ink-soft); }
+  .box.sel { border-color: var(--fox); box-shadow: 0 0 0 3px color-mix(in srgb, var(--fox) 22%, transparent); }
+  .box.point { border-color: var(--fox); animation: glow 1.6s steps(12) infinite; }
+  .box.changed::after { content: ""; position: absolute; top: -4px; right: -4px; width: 8px; height: 8px; border-radius: 50%; background: var(--fox); box-shadow: 0 0 0 2px var(--surface); }
+  @keyframes glow { 50% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--fox) 24%, transparent), 0 0 18px color-mix(in srgb, var(--fox) 45%, transparent); } }
+  @media (prefers-reduced-motion: reduce) { .box.point { animation: none; box-shadow: 0 0 0 4px color-mix(in srgb, var(--fox) 26%, transparent); } }
+  .mini { position: relative; flex: none; height: 150px; border-radius: 8px; border: 1px solid var(--line); background: color-mix(in srgb, var(--ground) 62%, transparent); overflow: hidden; cursor: zoom-in; }
+
+  /* ===== 右の列（サイドバー）。頭に「タスク｜地図」のタブ、下端の使用量の帯はタブの外 ===== */
+  .side-body { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+  .tabs { flex: none; display: flex; gap: 2px; padding: 6px 6px 0; border-bottom: 1px solid var(--line); }
+  .tab { all: unset; cursor: pointer; position: relative; flex: 1 1 0; display: flex; justify-content: center; align-items: center; gap: 6px; padding: 5px 4px 7px; font-size: 13px; color: var(--ink-quiet); white-space: nowrap; }
+  .tab svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .tab[aria-selected="true"] { color: var(--ink-bright); }
+  .tab[aria-selected="true"]::after { content: ""; position: absolute; left: 6px; right: 6px; bottom: -1px; height: 2px; border-radius: 2px; background: var(--accent); }
+  .tab:focus-visible { outline: 2px solid var(--accent); }
+  .tab .tmark { display: inline-flex; align-items: center; gap: 3px; font: 600 12px/1 var(--mono); color: var(--fox); }
+  .tab .tmark::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--fox); }
+  .tab-body { flex: 1; min-height: 0; overflow: auto; padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 8px; scrollbar-width: thin; }
+  .tab-body > * { min-width: 0; }
+
+  .sec-h { font-size: 13px; color: var(--ink-quiet); margin: 0; display: flex; gap: 6px; align-items: center; font-weight: 500; }
+  .sec-h .r { margin-left: auto; }
+  .sec-h .badge { font: 12px var(--mono); color: var(--ink-quiet); }
+  .expand { all: unset; cursor: pointer; margin-left: auto; font-size: 12px; padding: 1px 8px; border-radius: 6px; border: 1px solid var(--line); color: var(--ink-soft); }
+  .expand:hover { background: var(--raised); }
+
+  .trow { display: grid; grid-template-columns: 62px 1fr auto; gap: 8px; align-items: baseline; padding: 5px 6px; border-radius: 6px; font-size: 13px; }
+  .trow code { font: 12px var(--mono); color: var(--ink-quiet); }
+  .trow span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .trow .st { font-size: 12px; color: var(--ink-quiet); }
+  .trow.on { background: var(--raised); }
+  .trow.on .st { color: var(--accent); }
+  .search { font-size: 13px; color: var(--ink-quiet); padding: 5px 10px; border-radius: 8px; border: 1px solid var(--line); }
+
+  /* 地図のタブの行 */
+  .grp-h { font-size: 12px; color: var(--ink-quiet); margin: 4px 0 -2px; display: flex; align-items: baseline; gap: 6px; }
+  .grp-h .r { margin-left: auto; }
+  .brow { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 8px; align-items: center; padding: 6px 8px; border-radius: 8px; border: 1px solid transparent; }
+  .brow .top { display: flex; gap: 6px; align-items: center; min-width: 0; }
+  .brow .role { grid-column: 1; font-size: 12px; color: var(--ink-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .brow .when { font-size: 12px; color: var(--ink-quiet); white-space: nowrap; }
+  .brow .tag { font-size: 12px; color: var(--ink-quiet); white-space: nowrap; }
+  .brow.on { background: var(--raised); border-color: color-mix(in srgb, var(--fox) 34%, transparent); }
+  .brow.fresh .ref { background: color-mix(in srgb, var(--fox) 28%, transparent); }
+  .brow .ask.one { grid-column: 1 / -1; justify-self: end; margin-top: 4px; }
+  .ask { all: unset; cursor: pointer; font-size: 12px; padding: 3px 9px; border-radius: 6px; border: 1px solid color-mix(in srgb, var(--fox) 40%, transparent); color: color-mix(in srgb, var(--fox) 80%, white); white-space: nowrap; }
+  .ask:hover, .ask:focus-visible { background: color-mix(in srgb, var(--fox) 16%, transparent); outline: none; }
+  .ask.pressed { background: color-mix(in srgb, var(--fox) 22%, transparent); }
+  .asks { grid-column: 1 / -1; display: flex; gap: 6px; margin-top: 4px; }
+  .asks .ask { grid-row: auto; grid-column: auto; }
+  .empty { font-size: 12px; color: var(--ink-quiet); padding: 4px 2px; }
+
+  .detail { display: grid; gap: 6px; }
+  .detail > * { min-width: 0; overflow-wrap: anywhere; }
+  .detail .name { display: flex; align-items: baseline; gap: 8px; }
+  .detail .name b { font: 600 14px var(--mono); color: var(--ink-bright); }
+  .detail .name span { font-size: 12px; color: var(--ink-quiet); }
+  .detail .role { font-size: 13px; color: var(--ink-soft); margin-top: -4px; }
+  .dl { display: grid; grid-template-columns: 58px 1fr; gap: 3px 10px; font-size: 12px; margin: 0; }
+  .dl dt { color: var(--ink-quiet); }
+  .dl dd { margin: 0; color: var(--ink-soft); min-width: 0; overflow-wrap: anywhere; }
+  .dl dd code { font-family: var(--mono); color: var(--ink); }
+  .dl dd a { color: var(--accent); text-decoration: none; }
+  .drift { padding: 6px 10px; border-radius: 8px; background: color-mix(in srgb, var(--warn) 10%, transparent); border: 1px solid color-mix(in srgb, var(--warn) 32%, transparent); font-size: 12px; }
+  .drift b { color: var(--warn); font-weight: 600; }
+  .switched { font-size: 12px; color: var(--ink-quiet); padding: 4px 8px; border-radius: 6px; background: var(--raised); }
+  .notice { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; padding: 6px 8px; border-radius: 8px; font-size: 12px; color: var(--ink-soft); background: color-mix(in srgb, var(--fox) 10%, transparent); border: 1px solid color-mix(in srgb, var(--fox) 30%, transparent); }
+  .notice .go { all: unset; cursor: pointer; margin-left: auto; color: color-mix(in srgb, var(--fox) 80%, white); }
+
+  .usage { flex: none; margin-top: 10px; padding: 12px 16px; display: grid; gap: 10px; }
+  .urow { display: grid; grid-template-columns: 1fr auto; font-size: 12px; color: var(--ink-soft); gap: 4px; }
+  .urow i { grid-column: 1 / -1; height: 3px; border-radius: 2px; background: var(--line); position: relative; overflow: hidden; }
+  .urow i::after { content: ""; position: absolute; inset: 0 auto 0 0; width: var(--w); background: var(--accent); }
+
+  /* ===== 下の説明（案ごとの答え） ===== */
+  .notes { width: 1400px; margin: 18px auto 48px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .note { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
+  .note h2 { font-size: 15px; margin: 0 0 6px; }
+  .note h3 { font-size: 13px; margin: 10px 0 4px; color: var(--ink-quiet); font-weight: 600; }
+  .note li { font-size: 13px; color: var(--ink-soft); margin: 0 0 4px; }
+  .note ul { margin: 0; padding-left: 18px; }
+  .note.hl { border-color: var(--accent); }
+  .note code { font-family: var(--mono); font-size: 12px; }
+</style>
+</head>
+<body>
+
+<header class="page-head">
+  <div>
+    <h1>地図のタブの中身 — 候補を3案に組んで見比べる</h1>
+    <p>ADR 0082 論点 7 の「タスク｜地図」のタブで、ミニマップの下に何を出すかの3案。物差しは「会話しながら横目で見て、そこから話し始める・タスクを起こす役に立つか」。箱の名前は今の src/ の機能、会話と数は架空。1400×900 の実寸。</p>
+  </div>
+  <div class="switches">
+    <div class="group" role="group" aria-label="案"><span class="gl">案</span>
+      <button type="button" data-plan="a">A 箱の行だけ（推す）</button>
+      <button type="button" data-plan="b">B 箱の詳細をタブに</button>
+      <button type="button" data-plan="c">C 1つの列と口2つ</button>
+    </div>
+    <div class="group" role="group" aria-label="場面"><span class="gl">場面</span>
+      <button type="button" data-scene="mid">1 会話の途中</button>
+      <button type="button" data-scene="pointed">2 箱が指された直後</button>
+      <button type="button" data-scene="pointed-tasks">3 指された直後（タスクのタブ）</button>
+      <button type="button" data-scene="changed">4 変更が入ったあと</button>
+      <button type="button" data-scene="ask">5 口を押したあと</button>
+    </div>
+  </div>
+</header>
+
+<div class="app" id="app">
+  <div class="topbar">
+    <span class="face" aria-hidden="true"></span>
+    <span class="room">tsukumo-task</span>
+    <span class="mode"><span class="on">仕事</span><span>雑談</span></span>
+  </div>
+
+  <div class="col left">
+    <section class="panel nav" aria-label="やり取り">
+      <h4>やり取り</h4>
+      <div class="outline-row"><span class="mk"></span><span>地図の契約の ADR</span></div>
+      <div class="outline-row on"><span class="mk"></span><span>report の検査を見たい</span></div>
+    </section>
+    <div class="portrait" aria-label="立ち絵"></div>
+  </div>
+
+  <div class="col center">
+    <div class="main-area"><div class="stream" id="stream"></div></div>
+    <div class="voice"><span class="face"></span><span class="say" id="say"></span></div>
+    <div class="composer" id="composer"></div>
+  </div>
+
+  <div class="col right">
+    <section class="panel side-body" aria-label="サイドバー">
+      <div class="tabs" role="tablist">
+        <button class="tab" role="tab" type="button" data-tab="tasks"><svg viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1.3"/><circle cx="4.5" cy="12" r="1.3"/><circle cx="4.5" cy="18" r="1.3"/></svg>タスク</button>
+        <button class="tab" role="tab" type="button" data-tab="map"><svg viewBox="0 0 24 24"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v14M15 6v14"/></svg>地図<span class="tmark" id="tmark" hidden></span></button>
+      </div>
+      <div class="tab-body" id="tab-body" role="tabpanel"></div>
+    </section>
+    <section class="panel usage" aria-label="使用量">
+      <div class="urow">コンテキスト<span>61%</span><i style="--w:61%"></i></div>
+      <div class="urow">5時間<span>34%</span><i style="--w:34%"></i></div>
+      <div class="urow">7日<span>61%</span><i style="--w:61%"></i></div>
+    </section>
+  </div>
+</div>
+
+<section class="notes" id="notes">
+  <div class="note" data-note="a">
+    <h2>案 A 箱の行だけ（推す）</h2>
+    <h3>論点 1〜4 の答え</h3>
+    <ul>
+      <li>1: ミニマップの下は「会話で指された箱」→「このセッションで変えた箱」の順に箱のバッジの行。どちらも無いときは空の1行。ずれの件数は出さない（着手時の見立てから外した）</li>
+      <li>2: 箱の詳細（役割・置き場・決定の記録・用語・つながり）は広げた地図の側。タブは行ごとに名前と役割の1行だけ</li>
+      <li>3: タスクのタブを開いていたら切り替えず、「地図」のタブ名に青緑の点と件数を付ける</li>
+      <li>4: 選んだ行の右端に1つのボタン「この箱について話す」。押すと入力欄に箱のバッジと「server/report（中）について、」を入れ、送らない</li>
+    </ul>
+    <h3>同じ情報が2か所に出ないか</h3>
+    <ul>
+      <li>ずれは <code>pnpm run check</code> の段がレポートの「確かめたこと」の1行に出すので、タブには出さない</li>
+      <li>「変えた箱」は箱の粒度で、このセッションを通して積む。レポートの「変えたファイル」はそのターンのファイルの粒度なので重ならない</li>
+    </ul>
+  </div>
+  <div class="note" data-note="b">
+    <h2>案 B 箱の詳細をタブに</h2>
+    <h3>論点 1〜4 の答え</h3>
+    <ul>
+      <li>1: ミニマップの下は選んだ箱の詳細と、ずれの件数（1以上のとき）。指された箱が選びになる。変えた箱は1行のバッジの並び</li>
+      <li>2: 箱の詳細の5項目をタブに積む</li>
+      <li>3: タスクのタブを開いていても、箱が指されたら地図のタブへ切り替える</li>
+      <li>4: 詳細の下に1つのボタン「この箱について話す」。下書きは A と同じ</li>
+    </ul>
+    <h3>同じ情報が2か所に出ないか</h3>
+    <ul>
+      <li>ずれの件数がレポートの「確かめたこと」の行と重なる</li>
+      <li>勝手に切り替わると、見ていたタスクの区画を見失う。296px に5項目を積むと、指されるたびに選びが替わって読み切れない</li>
+    </ul>
+  </div>
+  <div class="note" data-note="c">
+    <h2>案 C 1つの列と口2つ</h2>
+    <h3>論点 1〜4 の答え</h3>
+    <ul>
+      <li>1: 指された箱と変えた箱を1つの列に新しい順で混ぜ、行に「指された」「変えた」の札を付ける</li>
+      <li>2: 箱の詳細は広げた地図の側（A と同じ）</li>
+      <li>3: タスクのタブを開いていたら切り替えず、タスクのタブの頭に「箱が指された · 地図で見る」の1行を出す</li>
+      <li>4: 選んだ行の下に2つのボタン「話す」「タスクにする」。「タスクにする」は「server/report（中）の直しをタスクにして: 」を入れる</li>
+    </ul>
+    <h3>同じ情報が2か所に出ないか</h3>
+    <ul>
+      <li>知らせの1行がタスクのタブの中に入り、タスクの一覧の区画に地図の情報が混ざる</li>
+      <li>「タスクにする」の下書きは、利用者が文を続けて頼む形と同じ所へ行き着く。口が2つでも入力欄に入れるまでは同じ</li>
+    </ul>
+  </div>
+</section>
+
+<script>
+/* ===== 地図のファイルの写し（見本のための架空の数。本物は .architecture-map.json を読む） ===== */
+const LEVELS = {
+  root: {
+    cols: 3, rows: 3,
+    nodes: [
+      { id: "claude-code", col: 0, row: 0, label: "Claude Code", short: "Claude", ext: true },
+      { id: "tsukumo-plugins", col: 0, row: 1, label: "tsukumo-plugins", short: "plugins", ext: true },
+      { id: "character-pack", col: 0, row: 2, label: "キャラクターパック", short: "キャラ素材", ext: true },
+      { id: "server", col: 1, row: 0, rowSpan: 2, label: "server" },
+      { id: "browser", col: 2, row: 0, label: "browser" },
+      { id: "shared", col: 2, row: 1, label: "shared" },
+    ],
+    edges: [["claude-code", "server"], ["tsukumo-plugins", "claude-code"], ["character-pack", "server"], ["server", "shared"], ["browser", "shared"], ["server", "browser"]],
+  },
+  server: {
+    cols: 5, rows: 3,
+    nodes: [
+      { id: "server/character-pack", col: 0, row: 0, label: "character-pack", short: "pack" },
+      { id: "server/usage", col: 1, row: 0, label: "usage" },
+      { id: "server/work-plan", col: 2, row: 0, label: "work-plan", short: "plan" },
+      { id: "server/view-server", col: 3, row: 0, label: "view-server", short: "view" },
+      { id: "server/system-prompt", col: 0, row: 1, label: "system-prompt", short: "prmpt" },
+      { id: "server/session-driver", col: 1, row: 1, label: "session-driver", short: "driver" },
+      { id: "server/session", col: 2, row: 1, label: "session", short: "sess" },
+      { id: "server/report", col: 3, row: 1, label: "report" },
+      { id: "server/question", col: 2, row: 2, label: "question", short: "ques" },
+      { id: "browser", col: 4, row: 0, label: "browser", short: "brw", out: true },
+      { id: "shared", col: 4, row: 1, label: "shared", out: true },
+      { id: "claude-code", col: 1, row: 2, label: "Claude Code", short: "CC", out: true },
+    ],
+    edges: [
+      ["server/character-pack", "server/system-prompt"], ["server/system-prompt", "server/session-driver"], ["server/session-driver", "server/session"],
+      ["server/session", "server/report"], ["server/session", "server/work-plan"], ["server/session", "server/question"],
+      ["server/session", "server/view-server"], ["server/usage", "server/session"],
+      ["server/view-server", "browser"], ["server/report", "shared"], ["server/session-driver", "claude-code"],
+    ],
+  },
+};
+
+const BOX = {
+  "server/report": {
+    level: "中", name: "report", role: "report ツールを受け取り、記法と数の整合を検査して差し戻す",
+    paths: "<code>src/server/report/**</code>",
+    adr: ['<a href="#">0060 最終レポートの3段</a>', '<a href="#">0064 レポートの全面見直し</a>'],
+    terms: "レポート・差し戻し・内容部品", links: "session → 11 · → shared 46 · 中で 210",
+  },
+  "server/session": { level: "中", name: "session", role: "セッションの行と出来事を持ち、各機能へ配る" },
+  shared: { level: "大", name: "shared", role: "語彙・イベント・reducer を server と browser で共有する" },
+};
+
+/* 場面ごとの会話の状態。pointed は新しい順、changed は変えた箱 */
+const SCENES = {
+  mid: {
+    say: "地図の契約は ADR 0082 に書いてあるのだ。",
+    stream: `
+      <div class="bubble-me">地図のファイルの書式って、結局 YAML にしたんだっけ？</div>
+      <section class="panel paper"><div class="kicker">答え</div>
+        <h2>人が直す定義は TOML、tsukumo が読む地図のファイルは JSON にした</h2>
+        <p>tsukumo にも作り手の Python の標準にも YAML の読み手が無いため。</p></section>`,
+    pointed: [], changed: [], tab: "map", level: "root",
+  },
+  pointed: {
+    say: "ここ、<button class=\"ref hot\" type=\"button\">server/report</button> の話だな！検査の本体を見てくるのだ。",
+    stream: "REPORT", pointed: ["server/report", "server/session"], fresh: "server/report", changed: [], tab: "map", level: "server",
+  },
+  "pointed-tasks": {
+    say: "ここ、<button class=\"ref hot\" type=\"button\">server/report</button> の話だな！検査の本体を見てくるのだ。",
+    stream: "REPORT", pointed: ["server/report", "server/session"], fresh: "server/report", changed: [], tab: "tasks", level: "server",
+  },
+  changed: {
+    say: "差し戻しの文を短くしたのだ。確かめも通ったぞ！",
+    stream: "DONE", pointed: ["server/report", "server/session"], changed: ["server/report", "shared"], tab: "map", level: "server",
+  },
+  ask: {
+    say: "続きを書いてくれたら、そこから見ていくのだ。",
+    stream: "DONE", pointed: ["server/report", "server/session"], changed: ["server/report", "shared"], tab: "map", level: "server", asked: true,
+  },
+};
+
+const STREAMS = {
+  REPORT: `
+    <div class="bubble-me">サーバの report の検査って、どこで数の整合を見てるの？</div>
+    <section class="panel paper"><div class="kicker">答え</div>
+      <h2>数の整合は <button class="ref" type="button">server/report</button> の中の記法の検査が見ている</h2>
+      <p>受け取りは <button class="ref" type="button">server/session</button> から渡され、検査の本体は <button class="ref" type="button">src/server/report/core/notation</button> にある。</p>
+      <ul><li>「n件中k件」の数と checks の件数を突き合わせる</li><li>食い違えば差し戻しの文を返す</li></ul></section>`,
+  DONE: `
+    <div class="bubble-me">差し戻しの文をもっと短くして</div>
+    <section class="panel paper"><div class="kicker">完了</div>
+      <h2>差し戻しの文を1文に縮め、数の食い違いだけを名指すようにした</h2>
+      <h3>変えたファイル</h3>
+      <ul><li><code>src/server/report/core/notation/count-check.ts</code></li><li><code>src/shared/report/rejection-text.ts</code></li></ul>
+      <h3>確かめたこと</h3>
+      <ul><li>pnpm run check の 14 段が通った（architecture-map の段を含む）</li></ul></section>`,
+};
+
+const TASKS = `
+  <div class="sec-h">タスク<span class="r">6件</span></div>
+  <div class="search">探す</div>
+  <div class="trow on"><code>GH-2595</code><span>地図を読むサーバの口</span><span class="st">着手</span></div>
+  <div class="trow"><code>GH-2593</code><span>作り手のプラグイン</span><span class="st">済み</span></div>
+  <div class="trow"><code>GH-2594</code><span>check の段 architecture-map</span><span class="st">待ち</span></div>
+  <div class="trow"><code>GH-2596</code><span>地図のタブを描く</span><span class="st">待ち</span></div>
+  <div class="trow"><code>GH-2597</code><span>箱のバッジ {{map}}</span><span class="st">待ち</span></div>
+  <div class="trow"><code>GH-2598</code><span>広げた地図と縮尺</span><span class="st">待ち</span></div>`;
+
+const $ = (id) => document.getElementById(id);
+const state = { plan: "a", scene: "mid", tab: null };
+
+function layout(host, L, pad = 8) {
+  const W = host.clientWidth, H = host.clientHeight;
+  const cw = (W - pad * 2) / L.cols, ch = (H - pad * 2) / L.rows;
+  const gx = Math.min(cw * .1, 5);
+  return L.nodes.map((n) => {
+    const span = n.rowSpan ?? 1;
+    const w = cw - gx, h = Math.min(ch * span - 8, 30 * span * (span > 1 ? .9 : 1));
+    return { ...n, x: pad + n.col * cw + gx / 2, y: pad + n.row * ch + (ch * span - h) / 2, w, h };
+  });
+}
+function center(n) { return [n.x + n.w / 2, n.y + n.h / 2]; }
+function anchor(a, b) {
+  const [ax, ay] = center(a), [bx, by] = center(b);
+  const dx = bx - ax, dy = by - ay;
+  const s = Math.min((a.w / 2) / Math.abs(dx || 1e-6), (a.h / 2) / Math.abs(dy || 1e-6));
+  return [ax + dx * s, ay + dy * s];
+}
+function renderMini(host, key, opt) {
+  host.replaceChildren();
+  const L = LEVELS[key];
+  const nodes = layout(host, L);
+  const byId = Object.fromEntries(nodes.map((n) => [n.id, n]));
+  const m = document.createElement("div");
+  m.className = "map";
+  const NS = "http://www.w3.org/2000/svg";
+  const svg = document.createElementNS(NS, "svg");
+  for (const [f, t] of L.edges) {
+    const a = byId[f], b = byId[t];
+    const lit = opt.sel && (opt.sel === f || opt.sel === t);
+    const [x1, y1] = anchor(a, b), [x2, y2] = anchor(b, a);
+    const line = document.createElementNS(NS, "line");
+    Object.entries({ x1, y1, x2, y2 }).forEach(([k, v]) => line.setAttribute(k, v));
+    line.setAttribute("class", "edge" + (lit ? " lit" : ""));
+    line.setAttribute("stroke-width", 1);
+    svg.append(line);
+    const ang = Math.atan2(y2 - y1, x2 - x1), s = 5;
+    const head = document.createElementNS(NS, "path");
+    head.setAttribute("d", `M${x2},${y2} L${x2 - s * Math.cos(ang - .45)},${y2 - s * Math.sin(ang - .45)} L${x2 - s * Math.cos(ang + .45)},${y2 - s * Math.sin(ang + .45)}Z`);
+    head.setAttribute("class", "head" + (lit ? " lit" : ""));
+    svg.append(head);
+  }
+  m.append(svg);
+  for (const n of nodes) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "box" + (n.ext ? " ext" : "") + (n.out ? " out" : "") + (opt.sel === n.id ? " sel" : "") + (opt.point === n.id ? " point" : "") + (opt.changed?.includes(n.id) ? " changed" : "");
+    Object.assign(b.style, { left: n.x + "px", top: n.y + "px", width: n.w + "px", height: n.h + "px" });
+    b.innerHTML = `<b title="${n.id}">${n.short ?? n.label}</b>`;
+    m.append(b);
+  }
+  host.append(m);
+}
+
+const ref = (id) => `<button class="ref" type="button">${id} <span class="lv">${BOX[id].level}</span></button>`;
+const head = (S) => `<div class="sec-h">地図<span class="badge">${S.level === "root" ? "全体" : "server"}</span><button class="expand" type="button">広げる ⤢</button></div><div class="mini" id="mini" title="押すと中央に広げる"></div>`;
+
+/* 案 A: 指された箱 → 変えた箱 の行。選んだ行の右端に口1つ */
+function planA(S) {
+  const sel = S.pointed[0] ?? S.changed[0];
+  const row = (id, when, isSel) => `<div class="brow${isSel ? " on" : ""}${S.fresh === id ? " fresh" : ""}">
+      <div class="top">${ref(id)}</div><span class="when">${when}</span>
+      <div class="role" style="grid-column:1 / -1">${BOX[id].role}</div>
+      ${isSel ? `<button class="ask one${S.asked ? " pressed" : ""}" type="button">この箱について話す</button>` : ""}</div>`;
+  let body = head(S);
+  if (S.pointed.length === 0 && S.changed.length === 0) {
+    body += `<div class="empty">会話で箱が指されると、ここに並ぶ。</div>`;
+  }
+  if (S.pointed.length) {
+    body += `<div class="grp-h">会話で指された<span class="r">${S.pointed.length}</span></div>`;
+    body += S.pointed.map((id, i) => row(id, i === 0 ? (S.fresh ? "いま" : "2ターン前") : "前のやり取り", id === sel && !S.changed.length)).join("");
+  }
+  if (S.changed.length) {
+    body += `<div class="grp-h">このセッションで変えた<span class="r">${S.changed.length}</span></div>`;
+    body += S.changed.map((id) => row(id, "このターン", id === S.changed[0])).join("");
+  }
+  return body;
+}
+
+/* 案 B: 選んだ箱の詳細とずれの件数。指された箱が選びになる */
+function planB(S) {
+  let body = head(S);
+  if (S.changed.length) {
+    body += `<div class="grp-h">変えた箱</div><div class="top" style="display:flex;gap:6px;flex-wrap:wrap">${S.changed.map(ref).join("")}</div>`;
+  }
+  const sel = S.pointed[0];
+  if (!sel) {
+    return body + `<div class="empty">箱を選ぶか、会話で箱が指されると詳細が出る。</div>`;
+  }
+  const d = BOX[sel];
+  body += `<div class="detail">
+      <div class="name"><b>${sel}</b><span>${d.level}の段</span></div>
+      <div class="role">${d.role}</div>
+      <dl class="dl"><dt>置き場</dt><dd>${d.paths}</dd><dt>決定</dt><dd>${d.adr.join("<br>")}</dd><dt>用語</dt><dd>${d.terms}</dd><dt>つながり</dt><dd>${d.links}</dd></dl>
+      ${S.changed.length ? `<div class="drift"><b>ずれ 1件</b> server/report → browser の import が地図に無い</div>` : ""}
+      <div><button class="ask${S.asked ? " pressed" : ""}" type="button">この箱について話す</button></div>
+    </div>`;
+  return body;
+}
+
+/* 案 C: 1つの列に新しい順で混ぜ、選んだ行の下に口2つ */
+function planC(S) {
+  let body = head(S);
+  const items = [...S.changed.map((id) => [id, "変えた"]), ...S.pointed.map((id) => [id, "指された"])];
+  if (items.length === 0) {
+    return body + `<div class="empty">会話で指された箱と変えた箱が、新しい順にここに並ぶ。</div>`;
+  }
+  body += `<div class="grp-h">この会話の箱<span class="r">${items.length}</span></div>`;
+  body += items.map(([id, tag], i) => `<div class="brow${i === 0 ? " on" : ""}${S.fresh === id && tag === "指された" ? " fresh" : ""}">
+      <div class="top">${ref(id)}</div><span class="tag">${tag}</span>
+      <div class="role" style="grid-column:1 / -1">${BOX[id].role}</div>
+      ${i === 0 ? `<div class="asks"><button class="ask" type="button">話す</button><button class="ask${S.asked ? " pressed" : ""}" type="button">タスクにする</button></div>` : ""}
+    </div>`).join("");
+  return body;
+}
+
+function composer(S) {
+  const c = $("composer");
+  const tools = `<div class="tools"><span>画像</span><span>/</span><span>@</span><span>Opus</span><span>Medium</span><span class="send">↑</span></div>`;
+  if (!S.asked) { c.innerHTML = `<div>tsukumo への依頼を書く</div>${tools}`; return; }
+  const id = state.plan === "b" ? S.pointed[0] : state.plan === "a" ? S.changed[0] : S.changed[0];
+  const d = BOX[id];
+  const draft = state.plan === "c" ? `${id}（${d.level}）の直しをタスクにして: ` : `${id}（${d.level}）について、`;
+  c.innerHTML = `<div class="attach">${ref(id)}<span class="x">×</span><span class="ctx">送ると依頼の頭に「{{map: ${id}}} ${d.level}・${d.role}」の1行が入る</span></div>
+    <div class="draft">${draft}<span class="caret"></span></div>${tools}`;
+}
+
+function render() {
+  const S = SCENES[state.scene];
+  document.querySelectorAll("[data-plan]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.plan === state.plan)));
+  document.querySelectorAll("[data-scene]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.scene === state.scene)));
+  document.querySelectorAll("[data-note]").forEach((n) => n.classList.toggle("hl", n.dataset.note === state.plan));
+  $("say").innerHTML = S.say;
+  $("stream").innerHTML = STREAMS[S.stream] ?? S.stream;
+  composer(S);
+
+  /* 案 B は指されたらタスクのタブから地図のタブへ切り替える */
+  const autoSwitched = state.plan === "b" && S.tab === "tasks" && S.fresh;
+  const tab = state.tab ?? (autoSwitched ? "map" : S.tab);
+  document.querySelectorAll(".tab").forEach((t) => t.setAttribute("aria-selected", String(t.dataset.tab === tab)));
+  const mark = $("tmark");
+  const showMark = state.plan === "a" && tab === "tasks" && S.fresh;
+  mark.hidden = !showMark;
+  mark.textContent = showMark ? "1" : "";
+
+  const body = $("tab-body");
+  if (tab === "tasks") {
+    const notice = state.plan === "c" && S.fresh
+      ? `<div class="notice">${ref(S.fresh)}が会話で指された<button class="go" type="button" data-go="map">地図で見る</button></div>`
+      : "";
+    body.innerHTML = notice + TASKS;
+    body.querySelector("[data-go]")?.addEventListener("click", () => { state.tab = "map"; render(); });
+    return;
+  }
+  body.innerHTML = (autoSwitched ? `<div class="switched">箱が指されたので、タスクのタブから切り替えた</div>` : "") + { a: planA, b: planB, c: planC }[state.plan](S);
+  const sel = state.plan === "b" ? S.pointed[0] : (state.plan === "c" ? (S.changed[0] ?? S.pointed[0]) : (S.changed.length ? S.changed[0] : S.pointed[0]));
+  renderMini($("mini"), S.level, { sel, point: S.fresh, changed: S.changed });
+}
+
+function go(next) {
+  Object.assign(state, next);
+  history.replaceState(null, "", `?plan=${state.plan}&scene=${state.scene}`);
+  render();
+}
+
+document.querySelectorAll("[data-plan]").forEach((b) => b.onclick = () => go({ plan: b.dataset.plan, tab: null }));
+document.querySelectorAll("[data-scene]").forEach((b) => b.onclick = () => go({ scene: b.dataset.scene, tab: null }));
+document.querySelectorAll(".tab").forEach((t) => t.onclick = () => { state.tab = t.dataset.tab; render(); });
+const q = new URLSearchParams(location.search);
+go({ plan: SCENES && ["a", "b", "c"].includes(q.get("plan")) ? q.get("plan") : "a", scene: SCENES[q.get("scene")] ? q.get("scene") : "mid" });
+</script>
+</body>
+</html>
