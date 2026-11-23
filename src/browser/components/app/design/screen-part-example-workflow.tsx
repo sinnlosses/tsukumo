@@ -26,6 +26,7 @@ function exampleSteps(): WorkStripSteps {
     onExpandDone: noop,
     onExpandSteps: noop,
     onUnfoldPhases: noop,
+    onFoldPhases: noop,
     onUnfoldColumn: noop,
     onOpenRun: noop,
     onAgentPress: noop,

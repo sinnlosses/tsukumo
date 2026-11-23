@@ -112,6 +112,7 @@ const STRIP_BASE = {
     onExpandSteps: noop,
     workflows: [],
     onUnfoldPhases: noop,
+    onFoldPhases: noop,
     onUnfoldColumn: noop,
     onOpenRun: noop,
     onAgentPress: noop,

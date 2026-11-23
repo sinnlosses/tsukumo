@@ -79,6 +79,7 @@ export type WorkStripSteps = {
   /** 新しい順。開いていないときと、ワークフロースクリプトが無いときは空。 */
   readonly workflows: readonly WorkStripWorkflow[]
   readonly onUnfoldPhases: () => void
+  readonly onFoldPhases: () => void
   readonly onUnfoldColumn: (column: string) => void
   readonly onOpenRun: (taskId: TaskId) => void
   readonly onAgentPress: (taskId: TaskId, index: number) => void
@@ -121,6 +122,7 @@ export function workStripStepsOf(input: {
   readonly onExpandDone: () => void
   readonly onExpandSteps: () => void
   readonly onUnfoldPhases: () => void
+  readonly onFoldPhases: () => void
   readonly onUnfoldColumn: (column: string) => void
   readonly onOpenRun: (taskId: TaskId) => void
   readonly onAgentPress: (taskId: TaskId, index: number) => void
@@ -171,6 +173,7 @@ export function workStripStepsOf(input: {
           : workflow.view,
     })),
     onUnfoldPhases: input.onUnfoldPhases,
+    onFoldPhases: input.onFoldPhases,
     onUnfoldColumn: input.onUnfoldColumn,
     onOpenRun: input.onOpenRun,
     onAgentPress: input.onAgentPress,
@@ -244,6 +247,7 @@ function drawnWorkflowsOf(
       input.now,
       {
         phases: input.finished || list.workflowPhasesUnfolded,
+        refoldable: !input.finished && list.workflowPhasesUnfolded,
         columns: list.unfoldedWorkflowColumns,
       },
       planCurrentKey,

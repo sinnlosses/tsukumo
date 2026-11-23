@@ -91,6 +91,24 @@ describe("useWorkStripSteps のフェーズの詳細", () => {
     })
   })
 
+  it("foldWorkflowPhases は開いた図を畳んだ形へ戻し、ほかの開きは残す", () => {
+    const state = useWorkStripSteps.getState()
+
+    state.toggle(2)
+    state.unfoldWorkflowPhases(2)
+    state.unfoldWorkflowColumn(2, "column-a")
+    state.foldWorkflowPhases(5)
+    const otherExchange = useWorkStripSteps.getState().opened
+    state.foldWorkflowPhases(2)
+    const folded = useWorkStripSteps.getState().opened
+
+    expect(otherExchange).toMatchObject({ workflowPhasesUnfolded: true })
+    expect(folded).toMatchObject({
+      workflowPhasesUnfolded: false,
+      unfoldedWorkflowColumns: ["column-a"],
+    })
+  })
+
   it("closeSteps は全体の詳細だけを閉じ、フェーズの詳細は触らない", () => {
     const state = useWorkStripSteps.getState()
 

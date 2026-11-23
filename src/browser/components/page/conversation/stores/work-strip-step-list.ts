@@ -65,6 +65,8 @@ type WorkStripStepsState = {
   readonly expandSteps: (exchange: number) => void
   /** ワークフローの図の「済んだ n フェーズ」を開く。 */
   readonly unfoldWorkflowPhases: (exchange: number) => void
+  /** 開いたワークフローの図を、「済んだ n フェーズ」を畳んだ形へ戻す。 */
+  readonly foldWorkflowPhases: (exchange: number) => void
   /** ワークフローの図の列の「ほか n 件」を開く。 */
   readonly unfoldWorkflowColumn: (exchange: number, column: string) => void
   /** 畳んだワークフロースクリプトを開く。 */
@@ -127,6 +129,9 @@ export const useWorkStripSteps = create<WorkStripStepsState>()((set) => ({
   },
   unfoldWorkflowPhases: (exchange) => {
     set((state) => withSteps(state, exchange, () => ({ workflowPhasesUnfolded: true })))
+  },
+  foldWorkflowPhases: (exchange) => {
+    set((state) => withSteps(state, exchange, () => ({ workflowPhasesUnfolded: false })))
   },
   unfoldWorkflowColumn: (exchange, column) => {
     set((state) =>

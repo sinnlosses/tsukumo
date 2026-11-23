@@ -92,6 +92,7 @@ export function useWorkStrip(): WorkStripModel {
   const expandDone = useWorkStripSteps((state) => state.expandDone)
   const expandSteps = useWorkStripSteps((state) => state.expandSteps)
   const unfoldWorkflowPhases = useWorkStripSteps((state) => state.unfoldWorkflowPhases)
+  const foldWorkflowPhases = useWorkStripSteps((state) => state.foldWorkflowPhases)
   const unfoldWorkflowColumn = useWorkStripSteps((state) => state.unfoldWorkflowColumn)
   const openWorkflowRun = useWorkStripSteps((state) => state.openWorkflowRun)
   const selectWorkflowAgent = useWorkStripSteps((state) => state.selectWorkflowAgent)
@@ -193,6 +194,9 @@ export function useWorkStrip(): WorkStripModel {
     },
     onUnfoldPhases: () => {
       unfoldWorkflowPhases(exchange)
+    },
+    onFoldPhases: () => {
+      foldWorkflowPhases(exchange)
     },
     onUnfoldColumn: (column) => {
       unfoldWorkflowColumn(exchange, column)

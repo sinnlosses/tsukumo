@@ -7,7 +7,9 @@ import { type ReactElement, useId } from "react"
 import type { TaskId } from "../../../../../../shared/session-driver/task-id.ts"
 import { formatElapsed } from "../../../../../../shared/utils/elapsed-time.ts"
 import { Badge } from "../../../../ui/badge/badge.tsx"
+import { Button } from "../../../../ui/button/button.tsx"
 import { ClickableCard } from "../../../../ui/clickable-card/clickable-card.tsx"
+import { ChevronLeftIcon } from "../../../../ui/icon/icon.tsx"
 import { StatusDot } from "../../../../ui/status-dot/status-dot.tsx"
 import { Surface } from "../../../../ui/surface/surface.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
@@ -191,7 +193,7 @@ function DiagramStage(props: {
       ref={ref}
       className={styles["workflow-diagram-stage"]}
       data-has-start={hasStart}
-      data-has-folded={diagram.foldedPhases !== undefined}
+      data-has-folded={diagram.foldedPhases !== undefined || diagram.refoldable !== undefined}
       style={{ "--diagram-tracks": stepTracksOf(diagram) }}
     >
       <svg aria-hidden="true" className={styles["workflow-diagram-arrows"]}>
@@ -248,6 +250,23 @@ function DiagramStage(props: {
               </Text>
             </ClickableCard>
           </div>
+        </div>
+      )}
+      {diagram.refoldable !== undefined && (
+        <div className={styles["workflow-diagram-folded-column"]}>
+          <Button
+            variant="outline"
+            size="label"
+            pressed="none"
+            disabled={false}
+            ariaLabel={`済んだ ${String(diagram.refoldable.count)} フェーズを畳む`}
+            disclosure={{ kind: "none" }}
+            className=""
+            onClick={steps.onFoldPhases}
+          >
+            <ChevronLeftIcon />
+            畳む
+          </Button>
         </div>
       )}
       {diagram.columns.map((column, position) => {
@@ -307,10 +326,10 @@ function stepTracksOf(diagram: WorkflowDiagram): string {
     .join(" ")
 }
 
-/** 列の最初の段の格子の位置（1始まり。「済んだ n フェーズ」の列があれば先頭の1つを譲る）。 */
+/** 列の最初の段の格子の位置（1始まり。「済んだ n フェーズ」か「畳む」の列があれば先頭の1つを譲る）。 */
 function stepStartOf(diagram: WorkflowDiagram, position: number): number {
   return (
-    (diagram.foldedPhases === undefined ? 1 : 2) +
+    (diagram.foldedPhases === undefined && diagram.refoldable === undefined ? 1 : 2) +
     diagram.columns.slice(0, position).reduce((sum, column) => sum + columnKeysOf(column).length, 0)
   )
 }

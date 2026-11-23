@@ -389,6 +389,20 @@ describe("workflowDiagramOf（畳み）", () => {
     expect(diagram).not.toHaveProperty("foldedPhases")
   })
 
+  it("利用者が開いた図（refoldable）だけが、畳み直せば畳まれる段の数を持つ", () => {
+    const opened = workflowDiagramOf(sixPhases, SIX_IDS, NOW, {
+      phases: true,
+      refoldable: true,
+      columns: [],
+    })
+    const finishedOpen = workflowDiagramOf(sixPhases, SIX_IDS, NOW, { phases: true, columns: [] })
+    const folded = workflowDiagramOf(sixPhases, SIX_IDS, NOW, FOLDED)
+
+    expect(opened.refoldable).toEqual({ count: 2 })
+    expect(finishedOpen).not.toHaveProperty("refoldable")
+    expect(folded).not.toHaveProperty("refoldable")
+  })
+
   it("終わったワークフロースクリプトの走っている・待ちのエージェントは止まったエージェントにする", () => {
     const diagram = workflowDiagramOf(runOf(sixPhases.agents, true), SIX_IDS, NOW, FOLDED)
     const boxes = diagram.columns.flatMap((column) =>

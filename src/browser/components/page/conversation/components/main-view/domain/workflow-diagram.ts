@@ -1,7 +1,5 @@
 // ワークフロースクリプト1本の図の材料（`WorkflowRun`）から、図の形（列・箱・矢印）を組む。
 
-import { isDeepEqual } from "remeda"
-
 import type {
   WorkflowRun,
   WorkflowRunAgent,
@@ -10,6 +8,12 @@ import type {
   WorkflowAgent,
   WorkflowAgentStopReason,
 } from "../../../../../../../shared/session/workflow-step.ts"
+import {
+  mergedArrows,
+  type WorkflowDiagramArrow,
+  type WorkflowDiagramArrowKind,
+  type WorkflowDiagramEnd,
+} from "./workflow-diagram-arrow.ts"
 
 /** 箱の状態。`stopped` は終わったワークフロースクリプトに走っている・待ちのまま残ったエージェント。 */
 export type WorkflowDiagramBoxState = "running" | "waiting" | "done" | "failed" | "stopped"
@@ -50,32 +54,15 @@ export type WorkflowDiagramColumn =
     }
   | { readonly kind: "upcoming"; readonly key: string; readonly name: string }
 
-/** 矢印の端。`others` は列の「ほか n 件」、`folded` は「済んだ n フェーズ」、`upcoming` は「これから」の列。 */
-export type WorkflowDiagramEnd =
-  | { readonly kind: "start" }
-  | { readonly kind: "agent"; readonly index: number }
-  | { readonly kind: "others"; readonly column: string }
-  | { readonly kind: "folded" }
-  | { readonly kind: "upcoming"; readonly column: string }
-
-export type WorkflowDiagramArrowKind =
-  | "sentBack"
-  | "toRunning"
-  | "toWaiting"
-  | "settled"
-  | "toUpcoming"
-
-export type WorkflowDiagramArrow = {
-  readonly from: WorkflowDiagramEnd
-  readonly to: WorkflowDiagramEnd
-  readonly kind: WorkflowDiagramArrowKind
-}
+export type { WorkflowDiagramArrow, WorkflowDiagramArrowKind, WorkflowDiagramEnd }
 
 /** 図の形。`foldedPhases` は「済んだ n フェーズ」に畳んだ列の数（`count`）と、その中のエージェント。 */
 export type WorkflowDiagram = {
   readonly columns: readonly WorkflowDiagramColumn[]
   readonly arrows: readonly WorkflowDiagramArrow[]
   readonly foldedPhases?: WorkflowDiagramFold
+  /** 利用者が開いた図だけが持つ。畳み直したとき「済んだ n フェーズ」になる段の数（`count`）。 */
+  readonly refoldable?: { readonly count: number }
 }
 
 /** 列の上限（今の列を含む）と、列1つの箱の上限。 */
@@ -94,12 +81,17 @@ const BOX_PRIORITY = [
  * 図の形を組む。`phaseIds` はワークプランのフェーズの id で、`phaseTitle` を列に当てる。
  * エージェントの載った列は、次にエージェントの載った列の手前までの段を受け持つ（走っている列は `planCurrentKey` の段まで）。
  * `unfold.phases` なら前の列を畳まず、`unfold.columns` にある列の鍵は「ほか n 件」に畳まない。
+ * `unfold.refoldable` は利用者が開いた図で、畳み直せる段の数を `refoldable` に持たせる（終わって全部開いた図では立てない）。
  */
 export function workflowDiagramOf(
   run: WorkflowRun,
   phaseIds: readonly string[],
   now: number,
-  unfold: { readonly phases: boolean; readonly columns: readonly string[] },
+  unfold: {
+    readonly phases: boolean
+    readonly refoldable?: boolean
+    readonly columns: readonly string[]
+  },
   planCurrentKey?: string,
 ): WorkflowDiagram {
   const states = new Map(
@@ -133,9 +125,17 @@ export function workflowDiagramOf(
   ]
   const currentPosition = currentPositionOf(groups, stateOf)
   const shown = unfold.phases ? allColumns : shownColumns(allColumns, currentPosition)
-  const foldedGroups = groups.filter(
-    (group) => !shown.some((column) => column.kind === "agents" && column.group === group),
-  )
+  const foldedGroupsOf = (kept: readonly PlannedColumn[]) =>
+    groups.filter(
+      (group) => !kept.some((column) => column.kind === "agents" && column.group === group),
+    )
+  const foldedGroups = foldedGroupsOf(shown)
+  const spanCountOf = (folded: readonly (typeof groups)[number][]) =>
+    folded.reduce((sum, group) => sum + group.spanKeys.length, 0)
+  const refoldableCount =
+    unfold.refoldable === true && unfold.phases
+      ? spanCountOf(foldedGroupsOf(shownColumns(allColumns, currentPosition)))
+      : 0
 
   const columns = shown.map((column): WorkflowDiagramColumn => {
     if (column.kind === "upcoming") {
@@ -203,10 +203,11 @@ export function workflowDiagramOf(
       ? {}
       : {
           foldedPhases: {
-            count: foldedGroups.reduce((sum, group) => sum + group.spanKeys.length, 0),
+            count: spanCountOf(foldedGroups),
             indexes: foldedIndexes,
           },
         }),
+    ...(refoldableCount === 0 ? {} : { refoldable: { count: refoldableCount } }),
   }
 }
 
@@ -497,30 +498,4 @@ function isAfter(before: WorkflowRunAgent, later: WorkflowRunAgent): boolean {
     later.queuedAt !== undefined &&
     startedAt + durationMs <= later.queuedAt
   )
-}
-
-const ARROW_PRIORITY = [
-  "sentBack",
-  "toRunning",
-  "toWaiting",
-  "settled",
-  "toUpcoming",
-] as const satisfies readonly WorkflowDiagramArrowKind[]
-
-/** 同じ端の組を1本にまとめ（種類は強いほう）、畳みの中で閉じた矢印を捨てる。 */
-function mergedArrows(arrows: readonly WorkflowDiagramArrow[]): readonly WorkflowDiagramArrow[] {
-  return arrows.reduce<readonly WorkflowDiagramArrow[]>((merged, arrow) => {
-    if (isDeepEqual(arrow.from, arrow.to)) {
-      return merged
-    }
-    const same = merged.find(
-      (existing) => isDeepEqual(existing.from, arrow.from) && isDeepEqual(existing.to, arrow.to),
-    )
-    if (same === undefined) {
-      return [...merged, arrow]
-    }
-    return ARROW_PRIORITY.indexOf(arrow.kind) < ARROW_PRIORITY.indexOf(same.kind)
-      ? merged.map((existing) => (existing === same ? arrow : existing))
-      : merged
-  }, [])
 }
