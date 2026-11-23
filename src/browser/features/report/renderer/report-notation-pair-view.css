@@ -53,4 +53,35 @@
   & .report-compare-figure:has(> .report-compare-figure-side:only-child) {
     grid-template-columns: minmax(0, 1fr);
   }
+  /* 「並べる」は札の行と画像の行を左右でそろえる。片方の札だけ折り返しても、左右の画像の上端は同じ高さに並ぶ。
+   側は2行にまたがって親の行に乗り（subgrid）、札が無い側は札の行を空けたままにする。矢印は画像の行の中央。
+   積む形（狭い器）では、側ごとに2行を取って縦に並ぶだけで、見た目は変わらない。 */
+  & .report-captioned.report-compare-swap[data-view="side"] .report-compare-figure-side {
+    display: grid;
+    grid-row: span 2;
+    grid-template-rows: subgrid;
+    row-gap: 0;
+  }
+  & .report-captioned.report-compare-swap[data-view="side"] .report-compare-figure-side > * {
+    min-width: 0;
+  }
+  /* 札が無い側は画像だけが子になる。行を指定しないと札の行へ自動で置かれ、上端がずれる。 */
+  &
+    .report-captioned.report-compare-swap[data-view="side"]
+    .report-compare-figure-side
+    > :last-child {
+    grid-row: 2;
+  }
+  & .report-captioned.report-compare-swap[data-view="side"] .report-compare-label {
+    align-self: start;
+    justify-self: start;
+  }
+  & .report-captioned.report-compare-swap[data-view="side"] .report-compare-arrow {
+    grid-area: 2 / 2;
+  }
+  @container report-body (max-width: calc(40em + 0.75rem)) {
+    & .report-captioned.report-compare-swap[data-view="side"] .report-compare-arrow {
+      grid-area: auto;
+    }
+  }
 }
