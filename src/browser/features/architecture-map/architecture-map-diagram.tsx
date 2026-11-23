@@ -15,9 +15,15 @@ import {
   mapGeometryOf,
 } from "./architecture-map-geometry.ts"
 
-/** ミニマップの字の大きさ（図の座標の単位）。 */
-const MINI_FONT_SIZE = 10
-/** ミニマップは器の幅まで広げるが、この倍率で頭打ちにする（字が 14px を超えて矢印ごと大きくならないように）。 */
+type MiniTitle = { readonly fontSize: number; readonly limit: number }
+
+/** 縮めた図の箱の名前の字の大きさ（図の座標の単位）と、切る字数。字数は `CELLS` のその形の箱の幅に収まる数。 */
+const MINI_TITLES = {
+  mini: { fontSize: 10, limit: 11 },
+  report: { fontSize: 9, limit: 15 },
+} as const satisfies Record<Exclude<MapDiagramForm, "full">, MiniTitle>
+
+/** 縮めた図は器の幅まで広げるが、この倍率で頭打ちにする（字が 14px を超えて矢印ごと大きくならないように）。 */
 const MINI_MAX_SCALE = 1.4
 
 export function ArchitectureMapDiagram(props: {
@@ -34,7 +40,8 @@ export function ArchitectureMapDiagram(props: {
   const markerId = useId()
   const arrows = { normal: `${markerId}-arrow`, ng: `${markerId}-arrow-ng` }
   const geometry = mapGeometryOf(props.view, props.form)
-  const mini = props.form === "mini"
+  const miniTitle = props.form === "full" ? undefined : MINI_TITLES[props.form]
+  const mini = miniTitle !== undefined
   const sizeProps = mini
     ? {
         width: "100%",
@@ -54,8 +61,8 @@ export function ArchitectureMapDiagram(props: {
       {...sizeProps}
     >
       <defs>
-        <ArrowHead id={arrows.normal} className={styles["arrow-head"]} />
-        <ArrowHead id={arrows.ng} className={styles["arrow-head-ng"]} />
+        <ArrowHead id={arrows.normal} size={mini ? 5 : 7} className={styles["arrow-head"]} />
+        <ArrowHead id={arrows.ng} size={mini ? 5 : 7} className={styles["arrow-head-ng"]} />
       </defs>
       {edgeShapesOf(props.view, geometry.rects, mini).map((shape) => (
         <EdgeLine key={shape.key} shape={shape} arrows={arrows} />
@@ -68,7 +75,7 @@ export function ArchitectureMapDiagram(props: {
               key={box.id}
               box={box}
               rect={rect}
-              mini={mini}
+              {...(miniTitle === undefined ? {} : { miniTitle })}
               selected={box.id === props.selectedId}
               lit={box.id === props.litId}
               {...(props.changes === undefined
@@ -83,15 +90,19 @@ export function ArchitectureMapDiagram(props: {
   )
 }
 
-function ArrowHead(props: { readonly id: string; readonly className?: string }): ReactElement {
+function ArrowHead(props: {
+  readonly id: string
+  readonly size: number
+  readonly className?: string
+}): ReactElement {
   return (
     <marker
       id={props.id}
       viewBox="0 0 8 8"
       refX="7"
       refY="4"
-      markerWidth="7"
-      markerHeight="7"
+      markerWidth={props.size}
+      markerHeight={props.size}
       orient="auto"
     >
       <path d="M0 0 L8 4 L0 8 z" className={props.className} />
@@ -174,13 +185,15 @@ function EdgeLine(props: {
 function BoxNode(props: {
   readonly box: MapViewBox
   readonly rect: MapBoxRect
-  readonly mini: boolean
+  /** 縮めた図の箱の名前。渡さなければ広げた図の箱で描く。 */
+  readonly miniTitle?: MiniTitle
   readonly selected: boolean
   readonly lit: boolean
   readonly change?: BoxChangeCount
   readonly onSelect: (box: MapViewBox) => void
 }): ReactElement {
-  const { box, rect, mini, change } = props
+  const { box, rect, miniTitle, change } = props
+  const mini = miniTitle !== undefined
   const changeKind =
     change === undefined || change.added + change.other === 0
       ? undefined
@@ -232,9 +245,9 @@ function BoxNode(props: {
         x={rect.x + (mini ? 4 : 12)}
         y={rect.y + (mini ? rect.height / 2 + 3 : 25)}
         className={styles["box-title"]}
-        {...(mini ? { fontSize: MINI_FONT_SIZE, clipPath: `url(#${clipId})` } : {})}
+        {...(mini ? { fontSize: miniTitle.fontSize, clipPath: `url(#${clipId})` } : {})}
       >
-        {truncated(box.title, mini ? 11 : 20)}
+        {truncated(box.title, mini ? miniTitle.limit : 20)}
       </text>
       {change !== undefined && changeKind !== undefined && (
         <text
@@ -242,7 +255,7 @@ function BoxNode(props: {
           y={rect.y + (mini ? rect.height / 2 + 3 : 25)}
           textAnchor="end"
           className={styles["box-change"]}
-          {...(mini ? { fontSize: MINI_FONT_SIZE } : {})}
+          {...(mini ? { fontSize: miniTitle.fontSize } : {})}
         >
           {changeKind === "added"
             ? `+${String(change.added)}`

@@ -3,7 +3,8 @@
 import type { MapView } from "../../../shared/architecture-map/map-view.ts"
 import { type MapGridPlace, mapPlacementOf } from "./architecture-map-placement.ts"
 
-export type MapDiagramForm = "full" | "mini"
+/** full は広げた地図、mini はサイドバーの地図、report はレポートのミニマップ。 */
+export type MapDiagramForm = "full" | "mini" | "report"
 
 type Cell = {
   readonly width: number
@@ -15,6 +16,7 @@ type Cell = {
 const CELLS = {
   full: { width: 220, height: 64, gapX: 72, gapY: 28 },
   mini: { width: 84, height: 22, gapX: 16, gapY: 8 },
+  report: { width: 104, height: 22, gapX: 16, gapY: 8 },
 } as const satisfies Record<MapDiagramForm, Cell>
 
 export type MapBoxRect = {

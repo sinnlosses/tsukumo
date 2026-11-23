@@ -8,6 +8,11 @@
 .diagram-mini {
   max-width: 100%;
 }
+/* ミニマップは図ごと拡大するので、線の太さは拡大に乗せず画面の px で決める。 */
+.diagram-mini .box-body,
+.diagram-mini .edge {
+  vector-effect: non-scaling-stroke;
+}
 .box {
   cursor: pointer;
 }
@@ -41,6 +46,9 @@
   stroke-width: 2;
   fill: color-mix(in oklch, var(--state-ok) 16%, var(--surface));
 }
+.diagram-mini .box[data-change] .box-body {
+  stroke-width: 1.25;
+}
 .box[data-problem="true"][data-change] .box-body {
   stroke: var(--state-ng);
 }
@@ -57,6 +65,14 @@
   stroke: var(--map-focus);
   stroke-width: 3;
   filter: drop-shadow(0 0 6px var(--map-focus));
+}
+.diagram-mini .box[data-selected="true"] .box-body,
+.diagram-mini .box:focus-visible .box-body {
+  stroke-width: 1.5;
+}
+.diagram-mini .box[data-lit="true"] .box-body {
+  stroke-width: 1.5;
+  filter: drop-shadow(0 0 3px var(--map-focus));
 }
 .box-title {
   fill: var(--ink);
@@ -77,6 +93,9 @@
 .edge {
   stroke: var(--ink-quiet);
   stroke-width: 1.4;
+}
+.diagram-mini .edge {
+  stroke-width: 1;
 }
 .edge-intended {
   stroke-dasharray: 5 4;

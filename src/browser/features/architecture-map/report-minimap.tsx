@@ -18,7 +18,7 @@ export function ReportMinimap(props: {
   return (
     <ArchitectureMapDiagram
       view={props.map.view}
-      form="mini"
+      form="report"
       changes={changedBoxCountsOf(props.map, props.changed)}
       {...(props.selectedId === undefined ? {} : { selectedId: props.selectedId })}
       {...(lit === undefined ? {} : { litId: lit })}
