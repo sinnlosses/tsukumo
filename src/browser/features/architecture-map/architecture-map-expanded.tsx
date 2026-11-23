@@ -9,7 +9,7 @@ import { useResizeObservedRef } from "../../hooks/use-observed-ref.ts"
 import { rpc } from "../../stores/rpc.ts"
 import { ArchitectureMapDiagram } from "./architecture-map-diagram.tsx"
 import styles from "./architecture-map-expanded.module.css"
-import { mapGeometryOf } from "./architecture-map-geometry.ts"
+import { type MapBoxRect, mapGeometryOf } from "./architecture-map-geometry.ts"
 import { useArchitectureMapSelection } from "./architecture-map-selection.ts"
 import {
   fitViewport,
@@ -27,6 +27,13 @@ const QUESTION = {
 } as const satisfies Record<MapView["level"], string>
 
 const NO_FRAME: Size = { width: 0, height: 0 }
+
+/** 「この箱について聞く」の欄を置く、面の座標。選んだ箱が今の図に無いときは欄を出さない。 */
+type AskPosition =
+  | { readonly kind: "at"; readonly x: number; readonly y: number }
+  | { readonly kind: "none" }
+
+const ASK_GAP = 8
 
 export function ArchitectureMapExpanded(): ReactElement | false {
   const expanded = useArchitectureMapSelection((state) => state.expanded)
@@ -48,6 +55,7 @@ function Expanded(props: { readonly overview: MapReady }): ReactElement {
   const collapse = useArchitectureMapSelection((state) => state.collapse)
   const selected = useArchitectureMapSelection((state) => state.selected)
   const selectBox = useArchitectureMapSelection((state) => state.selectBox)
+  const attachBadge = useArchitectureMapSelection((state) => state.attachBadge)
   const [trail, setTrail] = useState<readonly Step[]>([
     { title: "全体", view: props.overview.view },
   ])
@@ -58,6 +66,7 @@ function Expanded(props: { readonly overview: MapReady }): ReactElement {
   const current = trail.at(-1) ?? { title: "全体", view: props.overview.view }
   const content = mapGeometryOf(current.view, "full")
   const viewport = adjustment.viewport ?? fitViewport(content, frame)
+  const askAt = askPositionOf(current.view, content.rects, viewport, selected?.box.id)
   const frameRef = useResizeObservedRef<HTMLDivElement>(
     (element) => {
       const next = { width: element.clientWidth, height: element.clientHeight }
@@ -205,6 +214,29 @@ function Expanded(props: { readonly overview: MapReady }): ReactElement {
             onSelect={onSelect}
           />
         </div>
+        {selected !== undefined && askAt.kind === "at" && (
+          <div
+            className={styles["expanded-ask"]}
+            style={{ left: `${String(askAt.x)}px`, top: `${String(askAt.y)}px` }}
+            onPointerDown={(event) => {
+              event.stopPropagation()
+            }}
+          >
+            <strong className={styles["expanded-ask-title"]}>{selected.box.title}</strong>
+            {selected.box.summary !== undefined && (
+              <span className={styles["expanded-ask-role"]}>{selected.box.summary}</span>
+            )}
+            <button
+              type="button"
+              className={styles["expanded-button"]}
+              onClick={() => {
+                attachBadge(selected.box)
+              }}
+            >
+              この箱について聞く
+            </button>
+          </div>
+        )}
       </div>
       <p className={styles["expanded-legend"]}>
         <span>{QUESTION[current.view.level]}</span>
@@ -212,4 +244,27 @@ function Expanded(props: { readonly overview: MapReady }): ReactElement {
       </p>
     </div>
   )
+}
+
+/**
+ * 選んだ箱が今の図の箱なら、その矩形の右の縁の横。今の図の焦点（潜った箱）なら面の左上。
+ * どちらでもなければ欄を出さない。
+ */
+function askPositionOf(
+  view: MapView,
+  rects: ReadonlyMap<string, MapBoxRect>,
+  viewport: Viewport,
+  selectedId?: string,
+): AskPosition {
+  const rect = selectedId === undefined ? undefined : rects.get(selectedId)
+  if (rect !== undefined && view.boxes.some((box) => box.id === selectedId)) {
+    return {
+      kind: "at",
+      x: viewport.x + (rect.x + rect.width) * viewport.scale + ASK_GAP,
+      y: viewport.y + rect.y * viewport.scale,
+    }
+  }
+  return view.focus !== undefined && view.focus.id === selectedId
+    ? { kind: "at", x: ASK_GAP, y: ASK_GAP }
+    : { kind: "none" }
 }

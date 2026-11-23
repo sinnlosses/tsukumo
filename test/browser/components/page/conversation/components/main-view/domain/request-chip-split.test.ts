@@ -74,6 +74,22 @@ describe("requestChips", () => {
     expect(requestChips("ここで /next-task を使う", KNOWN).command).toBeUndefined()
   })
 
+  it("頭の1行が指す箱を札にして地の文から抜く。slash コマンドつきはコマンドの次の行を読む", () => {
+    const line = "{{map: 架空の箱}} 架空の表示名（大の箱）: 架空の役割"
+    const box = { id: "架空の箱", title: "架空の表示名", level: 1, summary: "架空の役割" }
+
+    expect(requestChips(`${line}\n架空の依頼`, KNOWN)).toMatchObject({
+      mapBox: box,
+      prose: "架空の依頼",
+    })
+    expect(requestChips(`/next-task 架空の依頼\n${line}`, KNOWN)).toMatchObject({
+      command: "/next-task",
+      mapBox: box,
+      prose: "架空の依頼",
+    })
+    expect(requestChips("架空の依頼", KNOWN).mapBox).toBeUndefined()
+  })
+
   it("引用の記号は落とし、複数行の地の文は行を保つ", () => {
     expect(requestChips("> 1行目\n> 2行目", KNOWN).prose).toBe("1行目\n2行目")
   })

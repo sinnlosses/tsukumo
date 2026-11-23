@@ -157,6 +157,7 @@ flowchart LR
   session_driver --> report
   session_driver --> work_plan
   session_driver --> question
+  session_driver --> architecture_map
   diary --> repository
   achievement --> repository
 ```

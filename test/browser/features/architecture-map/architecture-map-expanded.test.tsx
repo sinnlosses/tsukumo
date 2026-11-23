@@ -14,7 +14,7 @@ afterEach(() => {
   cleanup()
   fetchStub?.restore()
   fetchStub = undefined
-  useArchitectureMapSelection.setState({ selected: undefined, expanded: false })
+  useArchitectureMapSelection.setState({ selected: undefined, expanded: false, badge: undefined })
 })
 
 function box(id: string, overrides: Partial<MapViewBox> = {}): MapViewBox {
@@ -102,6 +102,21 @@ describe("ArchitectureMapExpanded", () => {
     fireEvent.click(screen.getByRole("button", { name: "全体" }))
     await waitFor(() => {
       expect(screen.getByRole("button", { name: "ベータ" })).toBeTruthy()
+    })
+  })
+
+  it("箱を選ぶと横に「この箱について聞く」が出て、押すとバッジが付く", async () => {
+    renderExpanded()
+    expect(screen.queryByRole("button", { name: "この箱について聞く" })).toBeNull()
+
+    fireEvent.click(await screen.findByRole("button", { name: "ベータ" }))
+    fireEvent.click(screen.getByRole("button", { name: "この箱について聞く" }))
+
+    expect(useArchitectureMapSelection.getState().badge).toEqual({
+      id: "beta",
+      title: "ベータ",
+      level: 1,
+      summary: "別の受け持ち",
     })
   })
 

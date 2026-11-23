@@ -49,6 +49,15 @@ describe("turnTitle（やり取りの題）", () => {
     )
   })
 
+  it("箱を指す頭の1行は題にせず、次の行から作る。次の行が無ければ箱の表示名にする", () => {
+    const line = "{{map: 架空の箱}} 架空の表示名（中の箱）: 架空の役割"
+
+    expect(turnTitle(turn({ request: { text: `${line}\n架空の依頼`, images: [] } }))).toBe(
+      "架空の依頼",
+    )
+    expect(turnTitle(turn({ request: { text: line, images: [] } }))).toBe("架空の表示名")
+  })
+
   it("先頭の空行と行の中の空白の並びを詰める", () => {
     expect(turnTitle(turn({ request: { text: "\n\n  架空の   依頼 ", images: [] } }))).toBe(
       "架空の 依頼",

@@ -20,6 +20,11 @@ import { useRef, useState, type RefObject } from "react"
 import type { PromptRouting } from "../../../../../../../shared/contract/session.ts"
 import { FRAME_ERROR_REASON } from "../../../../../../../shared/frame-error-reason.ts"
 import type { SessionId } from "../../../../../../../shared/session/session-id.ts"
+import { useArchitectureMapSelection } from "../../../../../../features/architecture-map/architecture-map-selection.ts"
+import {
+  withMapBoxMention,
+  type MapBoxBadgeValue,
+} from "../../../../../../features/architecture-map/map-box-mention.ts"
 import { useDebouncedCallback } from "../../../../../../hooks/use-debounced-callback.ts"
 import { usePhoneWidth } from "../../../../../../hooks/use-phone-width.ts"
 import { useInquiryJump } from "../../../../../../stores/inquiry-jump.ts"
@@ -90,6 +95,8 @@ export type ComposerModel = {
     readonly selectedIndex: number
     readonly onSelect: (index: number) => void
   }
+  /** 入力欄の頭の箱のバッジ。 */
+  readonly mapBox: { readonly badge?: MapBoxBadgeValue; readonly onRemove: () => void }
   /** 画像まわりは `PromptImageModel` のまま（`reset` は container の中だけで使うので外へは出さない）。 */
   readonly promptImage: Omit<PromptImageModel, "reset">
   /** `<textarea>` の上の帯（質問に答えている間だけ出る）。 */
@@ -139,6 +146,8 @@ export function useComposer(): ComposerModel {
   const trayShown = useNextStepTray(nextStepTrayShown)
   const trayFolded = useNextStepTray(nextStepTrayFolded)
   const dismissAwaySeam = useAwaySeam((state) => state.dismiss)
+  const mapBadge = useArchitectureMapSelection((state) => state.badge)
+  const detachMapBadge = useArchitectureMapSelection((state) => state.detachBadge)
   const surfaceRef = useRef<ComposerSurface | null>(null)
   const [mode, setMode] = useState<ComposerMode>(loadComposerMode)
   useComposerFocusTiming(surfaceRef)
@@ -184,7 +193,9 @@ export function useComposer(): ComposerModel {
       dismissFavor()
       dismissTray()
       dismissAwaySeam()
-      void dispatch.session.prompt({ text: trimmed, images: promptImage.images, routing })
+      const text = mapBadge === undefined ? trimmed : withMapBoxMention(trimmed, mapBadge)
+      void dispatch.session.prompt({ text, images: promptImage.images, routing })
+      detachMapBadge()
     }
     clearAfterSend()
   }
@@ -290,6 +301,7 @@ export function useComposer(): ComposerModel {
       selectedIndex: suggestion.selectedIndex,
       onSelect: suggestion.onSelect,
     },
+    mapBox: { badge: mapBadge, onRemove: detachMapBadge },
     promptImage,
     band: composerBand(bandState, {
       onRestart: () => {

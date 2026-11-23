@@ -31,7 +31,7 @@ test.describe("アーキテクチャの地図", () => {
     await expect(surface.getByRole("button", { name: "app/view" })).toBeVisible()
     await expect(surface.getByText("この機能は何を受け持ち")).toBeVisible()
 
-    const content = surface.getByTestId("architecture-map-stage").locator("> div")
+    const content = surface.getByTestId("architecture-map-stage").locator("> div").first()
     const scaleOf = async () => Number(await content.getAttribute("data-scale"))
     const before = await scaleOf()
     await surface.getByRole("button", { name: "拡大" }).click()
@@ -42,9 +42,11 @@ test.describe("アーキテクチャの地図", () => {
     if (stage === null) {
       throw new Error("地図の枠の位置が取れない")
     }
-    await page.mouse.move(stage.x + 20, stage.y + 20)
+    // 左上は選んだ箱の欄が占めるので、右上の空きから動かす
+    const startX = stage.x + stage.width - 120
+    await page.mouse.move(startX, stage.y + 20)
     await page.mouse.down()
-    await page.mouse.move(stage.x + 90, stage.y + 60, { steps: 4 })
+    await page.mouse.move(startX - 70, stage.y + 60, { steps: 4 })
     await page.mouse.up()
     await expect
       .poll(() => content.evaluate((element) => element.style.transform))
@@ -59,5 +61,41 @@ test.describe("アーキテクチャの地図", () => {
 
     await page.keyboard.press("Escape")
     await expect(surface).toBeHidden()
+  })
+
+  test("広げた地図で選んだ箱から「この箱について聞く」でバッジを付けて送ると、利用者の吹き出しに同じバッジが出る", async ({
+    run,
+  }) => {
+    const room = await run.open({
+      scenario: "architecture-map",
+      scene: "none",
+      viewport: "wide",
+      domRoots: [],
+      cwdFiles: [{ path: ".architecture-map.json", content: JSON.stringify(sampleMap()) }],
+    })
+    const page = room.page
+
+    const mapTab = page.getByRole("tab", { name: "地図" })
+    await advanceClockUntilVisible(page, mapTab)
+    await mapTab.click()
+    await expect(page.getByRole("button", { name: "この箱について聞く" })).toHaveCount(0)
+    await page.getByRole("button", { name: "広げる" }).click()
+
+    const surface = page.getByRole("dialog", { name: "アーキテクチャの地図" })
+    await surface.waitFor()
+    await surface.getByRole("button", { name: "server", exact: true }).click()
+    await surface.getByRole("button", { name: "この箱について聞く" }).click()
+
+    const composerBadge = page.getByTestId("map-box-badge")
+    await expect(composerBadge).toHaveCount(1)
+
+    await page.keyboard.press("Escape")
+    const textArea = page.locator("textarea")
+    await textArea.fill("この箱の役割を教えて（架空の依頼）")
+    await textArea.press("Meta+Enter")
+
+    await room.waitForEvent("request")
+    await expect(page.getByTestId("map-box-badge")).toHaveCount(1)
+    await expect(page.getByTestId("map-box-badge").first()).toContainText("server")
   })
 })

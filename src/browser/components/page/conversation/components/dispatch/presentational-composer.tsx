@@ -17,6 +17,7 @@ import {
   MAX_PROMPT_IMAGES,
   PROMPT_IMAGE_MEDIA_TYPES,
 } from "../../../../../../shared/session-driver/prompt-image.ts"
+import { MapBoxBadge } from "../../../../../features/architecture-map/map-box-badge.tsx"
 import { RunSettingGroup } from "../../../../../features/run-setting/run-setting-group.tsx"
 import { useExternalSync } from "../../../../../hooks/use-external-sync.ts"
 import { usePhoneWidth } from "../../../../../hooks/use-phone-width.ts"
@@ -48,6 +49,7 @@ export function PresentationalComposer({
   input: { surfaceRef, placeholder, label, draft, onChange, onKeyDown },
   modeSwitch: { mode, onToggle: onToggleMode },
   suggestion: { suggestions, selectedIndex, onSelect: onSelectSuggestion },
+  mapBox,
   promptImage: {
     imageInputRef,
     images,
@@ -79,6 +81,9 @@ export function PresentationalComposer({
       wrap="nowrap"
       className={styles["dispatch-text-wrap"]}
     >
+      {mapBox.badge !== undefined && (
+        <MapBoxBadge badge={mapBox.badge} onRemove={mapBox.onRemove} />
+      )}
       {chips}
       {(mode === "plain" || phone) && (
         <TextAreaSurface

@@ -16,6 +16,8 @@ export const PHASE_RESULT_TOOL_NAME = "phase_result"
 export const QUESTION_BRIEF_TOOL_NAME = "question_brief"
 /** `report` の部品の文法カードを引くツールの名前。載るのは仕事のときだけ。 */
 export const PART_CARD_TOOL_NAME = "report_part_card"
+/** 地図の箱の定義を引くツールの名前。載るのは仕事のときだけ。 */
+export const MAP_BOX_TOOL_NAME = "map_box"
 export const REMEMBER_TOOL_NAME = "remember"
 export const FORGET_TOOL_NAME = "forget"
 

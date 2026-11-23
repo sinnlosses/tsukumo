@@ -12,13 +12,14 @@ import type {
   MainViewTurn,
 } from "../../../../../../../shared/session/main-view-shape.ts"
 import { clipWithEllipsis } from "../../../../../../../shared/utils/clip-text.ts"
+import { splitMapBoxMention } from "../../../../../../features/architecture-map/map-box-mention.ts"
 
 /** 依頼もレポートも題にならないターン（依頼より前の記録で、本文もまだ無い）の題。 */
 const TURN_TITLE_FALLBACK = "（依頼なし）"
 
 export function turnTitle(turn: MainViewTurn): string {
   return (
-    firstLineOf(withoutQuoteMarkers(turn.request?.text ?? "")) ??
+    firstLineOf(titleSource(withoutQuoteMarkers(turn.request?.text ?? ""))) ??
     firstReportLine(turn) ??
     TURN_TITLE_FALLBACK
   )
@@ -46,6 +47,18 @@ function withoutQuoteMarkers(text: string): string {
     .split("\n")
     .map((line) => line.replace(/^\s*(?:>(?:[ \t]|$))+/, ""))
     .join("\n")
+}
+
+/** 依頼の1行目。箱を指す頭の1行なら、題は次の行から作り、次の行が無ければ箱の表示名にする。 */
+function titleSource(text: string): string {
+  const lines = text.split("\n")
+  const index = lines.findIndex((line) => line.trim() !== "")
+  const badge = splitMapBoxMention(lines[index]?.replace(/\s+/g, " ").trim() ?? "").badge
+  if (badge === undefined) {
+    return text
+  }
+  const rest = lines.slice(index + 1).join("\n")
+  return rest.trim() === "" ? badge.title : rest
 }
 
 function firstReportLine(turn: MainViewTurn): string | undefined {

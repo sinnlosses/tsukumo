@@ -8,6 +8,7 @@ import { useState, type ReactElement } from "react"
 
 import type { TaskSummaryResult } from "../../../../../../shared/repository/task-summary.ts"
 import type { MainViewRequest } from "../../../../../../shared/session/main-view-shape.ts"
+import { MapBoxBadge } from "../../../../../features/architecture-map/map-box-badge.tsx"
 import { Button } from "../../../../ui/button/button.tsx"
 import { Heading } from "../../../../ui/heading/heading.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
@@ -31,7 +32,8 @@ export function RequestBlock(props: RequestBlockProps): ReactElement {
   const { ref, clamped } = useClamped<HTMLParagraphElement>()
   const chips = requestChips(props.request.text, props.tasks)
   const images = props.request.images
-  const hasChips = chips.command !== undefined || chips.tasks.length > 0
+  const hasChips =
+    chips.command !== undefined || chips.mapBox !== undefined || chips.tasks.length > 0
   const full = turnRequestLines(props.request).join("\n")
   const hasProse = chips.prose !== ""
 
@@ -48,6 +50,7 @@ export function RequestBlock(props: RequestBlockProps): ReactElement {
       </Heading>
       {hasChips && (
         <div className={styles["request-chips"]}>
+          {chips.mapBox !== undefined && <MapBoxBadge badge={chips.mapBox} />}
           {chips.command !== undefined && (
             <Chip className={styles["is-command"] ?? ""}>{chips.command}</Chip>
           )}

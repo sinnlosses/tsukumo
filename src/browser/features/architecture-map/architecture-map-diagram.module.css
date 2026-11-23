@@ -1,7 +1,4 @@
 .diagram {
-  /* 選んだ箱の縁。狐火の青緑に固定し、変更の黄・追加の緑・ずれの赤と混ぜない。 */
-  --map-focus: oklch(0.8 0.11 185);
-
   display: block;
   overflow: visible;
   color: var(--ink);

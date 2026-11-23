@@ -64,6 +64,25 @@
   left: 0;
   transform-origin: 0 0;
 }
+/* 選んだ箱の横の欄。倍率の外（面の座標）に置き、地のドラッグを始めない。 */
+.expanded-ask {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  gap: var(--stack-block);
+  max-width: 16rem;
+  padding: var(--inset-control);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+  cursor: default;
+}
+.expanded-ask-title {
+  font-size: var(--font-label);
+}
+.expanded-ask-role {
+  color: var(--ink-quiet);
+  font-size: var(--font-secondary);
+}
 .expanded-legend {
   display: flex;
   flex-wrap: wrap;

@@ -9,6 +9,7 @@ import type { MapReady, MapView, MapViewBox } from "../../../shared/architecture
 import { ArchitectureMapDiagram } from "./architecture-map-diagram.tsx"
 import styles from "./architecture-map-panel.module.css"
 import { useArchitectureMapSelection } from "./architecture-map-selection.ts"
+import { MAP_LEVEL_TEXT } from "./map-box-mention.ts"
 import { useArchitectureMapOverview } from "./use-architecture-map.ts"
 
 const UNREADABLE_TEXT = {
@@ -18,8 +19,6 @@ const UNREADABLE_TEXT = {
   "read-failed": "地図のファイルを開けませんでした",
   "newer-version": "地図のファイルが新しい版で、この画面は読めません",
 } as const satisfies Record<MapUnreadableReason, string>
-
-const LEVEL_TEXT = { 1: "大", 2: "中", 3: "小" } as const
 
 export function ArchitectureMapPanel(): ReactElement {
   const response = useArchitectureMapOverview()
@@ -86,7 +85,7 @@ function BoxDescription(props: { readonly box: MapViewBox; readonly view: MapVie
     <section className={styles["panel-body"]} aria-label={`${box.title}の説明`}>
       <h3 className={styles["panel-title"]}>
         {box.title}
-        <span className={styles["panel-level"]}>{LEVEL_TEXT[box.level]}</span>
+        <span className={styles["panel-level"]}>{MAP_LEVEL_TEXT[box.level]}</span>
       </h3>
       {parent !== undefined && (
         <p className={styles["panel-parent"]}>

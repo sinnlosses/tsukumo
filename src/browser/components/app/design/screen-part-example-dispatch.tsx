@@ -23,6 +23,7 @@ const COMPOSER: ComposerModel = {
   },
   modeSwitch: { mode: "plain", onToggle: noop },
   suggestion: { suggestions: { kind: "none" }, selectedIndex: 0, onSelect: noop },
+  mapBox: { onRemove: noop },
   promptImage: {
     imageInputRef: createRef(),
     images: [],

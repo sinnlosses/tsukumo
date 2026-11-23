@@ -112,6 +112,17 @@ describe("RequestBlock", () => {
     expect(document.querySelectorAll("img")).toHaveLength(2)
   })
 
+  it("頭の1行が指す箱はバッジで出し、1行の字は地の文に出さない（slash コマンドつきも）", () => {
+    const line = "{{map: 架空の箱}} 架空の表示名（中の箱）: 架空の役割"
+    renderBlock(`/x 架空の依頼\n${line}`)
+
+    const badge = screen.getByTestId("map-box-badge")
+    expect(badge.textContent).toBe("架空の表示名中")
+    expect(screen.getByText("/x")).toBeTruthy()
+    expect(screen.queryByText(/\{\{map:/)).toBeNull()
+    expect(screen.getByText("架空の依頼")).toBeTruthy()
+  })
+
   it("ページの h2 はこの塊の1つ", () => {
     renderBlock("/x 架空の依頼", { tasks: KNOWN })
 

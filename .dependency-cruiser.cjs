@@ -16,7 +16,7 @@ const SERVER_FEATURE_IMPORTS = {
   "view-server": ["session"],
   chat: ["character-pack"],
   usage: ["session-driver"],
-  "session-driver": ["report", "work-plan", "question"],
+  "session-driver": ["report", "work-plan", "question", "architecture-map"],
   diary: ["repository"],
   achievement: ["repository"],
   diagnostic: [],

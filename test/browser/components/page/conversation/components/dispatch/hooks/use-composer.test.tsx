@@ -12,6 +12,7 @@ import {
   useComposerDraft,
 } from "../../../../../../../../src/browser/components/page/conversation/stores/composer-draft.ts"
 import { useInquiryDraft } from "../../../../../../../../src/browser/components/page/conversation/stores/inquiry-draft.ts"
+import { useArchitectureMapSelection } from "../../../../../../../../src/browser/features/architecture-map/architecture-map-selection.ts"
 import { useSession } from "../../../../../../../../src/browser/stores/session.ts"
 import {
   INITIAL_SESSION_STATE,
@@ -462,5 +463,75 @@ describe("useComposer の打ちかけの保存", () => {
       putState(identified("a"))
     })
     expect(result.current.input.draft.text).toBe("いま打った字")
+  })
+})
+
+describe("useComposer の箱のバッジ", () => {
+  const BOX = {
+    id: "架空の箱",
+    title: "架空の表示名",
+    summary: "架空の役割",
+    level: 2,
+    external: false,
+    hasChildren: false,
+    paths: [],
+    problems: [],
+  } as const
+
+  afterEach(() => {
+    useArchitectureMapSelection.setState({ badge: undefined })
+  })
+
+  function attach(result: { readonly current: ReturnType<typeof useComposer> }): void {
+    act(() => {
+      useArchitectureMapSelection.getState().attachBadge(BOX)
+    })
+    expect(result.current.mapBox.badge?.id).toBe("架空の箱")
+  }
+
+  it("バッジを付けて送ると依頼の頭に1行が入り、送ったあとバッジが外れる", () => {
+    const calls: unknown[] = []
+    const { result } = renderUseComposer({}, (command) => calls.push(command))
+    attach(result)
+    type(result, "架空の依頼")
+
+    press(result, key("Enter", { meta: true }))
+
+    expect(calls).toEqual([
+      {
+        procedure: "session.prompt",
+        text: "{{map: 架空の箱}} 架空の表示名（中の箱）: 架空の役割\n架空の依頼",
+        images: [],
+        routing: "aside-when-background",
+      },
+    ])
+    expect(result.current.mapBox.badge).toBeUndefined()
+  })
+
+  it("slash コマンドの文面ではコマンドを先頭に保つ", () => {
+    const calls: unknown[] = []
+    const { result } = renderUseComposer({}, (command) => calls.push(command))
+    attach(result)
+    type(result, "/next-task 架空の依頼")
+
+    press(result, key("Enter", { meta: true }))
+
+    expect(calls).toMatchObject([
+      { text: "/next-task 架空の依頼\n{{map: 架空の箱}} 架空の表示名（中の箱）: 架空の役割" },
+    ])
+  })
+
+  it("× で外すと1行は入らない", () => {
+    const calls: unknown[] = []
+    const { result } = renderUseComposer({}, (command) => calls.push(command))
+    attach(result)
+    act(() => {
+      result.current.mapBox.onRemove()
+    })
+    type(result, "架空の依頼")
+
+    press(result, key("Enter", { meta: true }))
+
+    expect(calls).toMatchObject([{ text: "架空の依頼" }])
   })
 })

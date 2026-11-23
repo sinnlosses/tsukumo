@@ -21,7 +21,7 @@ export type MapViewOutcome =
 
 /** 選び方どおりの図を作る。フォーカスした箱が無い・子を持たないときは図にせず理由で返す。 */
 export function mapViewOf(map: ArchitectureMap, selection: MapSelection): MapViewOutcome {
-  const index = indexOf(map.boxes)
+  const index = boxIndexOf(map.boxes)
   if (selection.kind === "level") {
     const view = levelView(map, index, selection.level)
     return ready(map, view, selection.level === 1)
@@ -34,6 +34,42 @@ export function mapViewOf(map: ArchitectureMap, selection: MapSelection): MapVie
     return { kind: "unfocusable", reason: "no-children" }
   }
   return ready(map, focusView(map, index, focus), false)
+}
+
+export function boxIndexOf(boxes: readonly BoxFields[]): BoxIndex {
+  const nodes = new Map<string, BoxNode>()
+  const order: BoxNode[] = []
+  const aliases = new Map<string, string>()
+  const visit = (box: BoxFields, level: MapLevel, parentId?: string) => {
+    const children = box.children ?? []
+    const node: BoxNode = {
+      id: box.id,
+      level,
+      ...(parentId === undefined ? {} : { parentId }),
+      childIds: children.map((child) => child.id),
+      title: box.title ?? box.id,
+      ...(box.summary === undefined ? {} : { summary: box.summary }),
+      ...(box.purpose === undefined ? {} : { purpose: box.purpose }),
+      ...(box.overview === undefined ? {} : { overview: box.overview }),
+      paths: box.paths ?? [],
+      ...(box.place === undefined ? {} : { place: box.place }),
+      ...(box.links === undefined ? {} : { links: box.links }),
+      external: box.external === true,
+    }
+    nodes.set(node.id, node)
+    order.push(node)
+    for (const alias of box.aliases ?? []) {
+      aliases.set(alias, box.id)
+    }
+    // 小の箱は子を持たないので、3 の下の段は作られない
+    for (const child of children) {
+      visit(child, level === 1 ? 2 : 3, box.id)
+    }
+  }
+  for (const box of boxes) {
+    visit(box, 1)
+  }
+  return { nodes, order, aliases }
 }
 
 function ready(map: ArchitectureMap, view: MapView, withOverview: boolean): MapReady {
@@ -275,7 +311,7 @@ type BoxFields = {
   readonly children?: readonly BoxFields[]
 }
 
-type BoxNode = {
+export type BoxNode = {
   readonly id: string
   readonly level: MapLevel
   readonly parentId?: string
@@ -290,48 +326,12 @@ type BoxNode = {
   readonly external: boolean
 }
 
-type BoxIndex = {
+export type BoxIndex = {
   readonly nodes: ReadonlyMap<string, BoxNode>
   /** 定義の順（親の次に子）。 */
   readonly order: readonly BoxNode[]
   /** 別名から今の ID。 */
   readonly aliases: ReadonlyMap<string, string>
-}
-
-function indexOf(boxes: readonly BoxFields[]): BoxIndex {
-  const nodes = new Map<string, BoxNode>()
-  const order: BoxNode[] = []
-  const aliases = new Map<string, string>()
-  const visit = (box: BoxFields, level: MapLevel, parentId?: string) => {
-    const children = box.children ?? []
-    const node: BoxNode = {
-      id: box.id,
-      level,
-      ...(parentId === undefined ? {} : { parentId }),
-      childIds: children.map((child) => child.id),
-      title: box.title ?? box.id,
-      ...(box.summary === undefined ? {} : { summary: box.summary }),
-      ...(box.purpose === undefined ? {} : { purpose: box.purpose }),
-      ...(box.overview === undefined ? {} : { overview: box.overview }),
-      paths: box.paths ?? [],
-      ...(box.place === undefined ? {} : { place: box.place }),
-      ...(box.links === undefined ? {} : { links: box.links }),
-      external: box.external === true,
-    }
-    nodes.set(node.id, node)
-    order.push(node)
-    for (const alias of box.aliases ?? []) {
-      aliases.set(alias, box.id)
-    }
-    // 小の箱は子を持たないので、3 の下の段は作られない
-    for (const child of children) {
-      visit(child, level === 1 ? 2 : 3, box.id)
-    }
-  }
-  for (const box of boxes) {
-    visit(box, 1)
-  }
-  return { nodes, order, aliases }
 }
 
 type Lookup = { readonly kind: "found"; readonly node: BoxNode } | { readonly kind: "none" }

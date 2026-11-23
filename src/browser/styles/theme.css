@@ -87,6 +87,8 @@
   --manpu-sweat-line: #1e4466;
   --manpu-vline: #b9b2d9;
 
+  --map-focus: oklch(0.8 0.11 185);
+
   /* 最終レポートのフェーズごとの時間の帯。一番長い区間だけ `--accent` をわずかに沈めた色、ほかは `--surface` に混ぜて沈めた色で、欠片と色の印も同じ値を読む。
      区間の長さと一覧の割合・時間が必ず添うので、色だけで意味を伝えることにはならない。 */
   --phase-band: color-mix(in srgb, var(--accent) 38%, var(--surface));

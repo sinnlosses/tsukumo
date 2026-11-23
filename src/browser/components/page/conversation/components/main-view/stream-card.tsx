@@ -7,6 +7,8 @@ import type { ReactElement, ReactNode } from "react"
 import type { TaskSummaryResult } from "../../../../../../shared/repository/task-summary.ts"
 import type { MainViewTurn } from "../../../../../../shared/session/main-view-shape.ts"
 import { currentPhaseOf } from "../../../../../../shared/session/work-plan.ts"
+import { MapBoxBadge } from "../../../../../features/architecture-map/map-box-badge.tsx"
+import { splitMapBoxMention } from "../../../../../features/architecture-map/map-box-mention.ts"
 import { localTimeZoneId } from "../../../../../utils/clock.ts"
 import { Text } from "../../../../ui/text/text.tsx"
 import { recordClockStamp, type ClockStamp } from "../../domain/clock-stamp.ts"
@@ -31,6 +33,9 @@ type PostRowProps = {
 /** 右寄せの投稿。 */
 export function PostRow(props: PostRowProps): ReactElement {
   const { row, turn } = props
+  const aside = row.record.kind === "aside" ? splitMapBoxMention(row.record.text) : undefined
+  const asideBadge = aside?.badge
+  const asideText = aside?.rest
   return (
     <StreamPostRow
       time={clockOf(row.at)}
@@ -39,7 +44,8 @@ export function PostRow(props: PostRowProps): ReactElement {
     >
       {row.record.kind === "aside" ? (
         <>
-          {row.record.text}
+          {asideBadge !== undefined && <MapBoxBadge badge={asideBadge} />}
+          {asideText}
           <PromptImageThumbnails images={row.record.images} />
         </>
       ) : (

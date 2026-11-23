@@ -8,6 +8,10 @@ import type {
   TaskSummaryItem,
   TaskSummaryResult,
 } from "../../../../../../../shared/repository/task-summary.ts"
+import {
+  splitMapBoxMention,
+  type MapBoxBadgeValue,
+} from "../../../../../../features/architecture-map/map-box-mention.ts"
 import { turnRequestLines } from "./turn-title.ts"
 
 export type RequestChipTask = {
@@ -18,6 +22,8 @@ export type RequestChipTask = {
 export type RequestChips = {
   /** 先頭の slash コマンド（`/next-task`）。名前空間（`plugin:`）は落とす。無ければ undefined。 */
   readonly command?: string
+  /** 頭の1行が指す箱。 */
+  readonly mapBox?: MapBoxBadgeValue
   readonly tasks: readonly RequestChipTask[]
   /** 札に起こした字を抜いた残り。空のときは空文字列。 */
   readonly prose: string
@@ -36,6 +42,12 @@ export function requestChips(text: string, tasks?: TaskSummaryResult): RequestCh
     const name = (commandMatch[1] ?? "").replace(/^[^:]*:/, "")
     command = `/${name}`
     lines = [first.slice(commandMatch[0].length), ...lines.slice(1)]
+  }
+
+  const mentionIndex = command === undefined ? 0 : 1
+  const mapBox = splitMapBoxMention(lines[mentionIndex] ?? "").badge
+  if (mapBox !== undefined) {
+    lines = lines.filter((_, index) => index !== mentionIndex)
   }
 
   const known = new Map<string, TaskSummaryItem>()
@@ -60,7 +72,12 @@ export function requestChips(text: string, tasks?: TaskSummaryResult): RequestCh
     return rewritten === line ? line : rewritten.replace(/[ \t]{2,}/g, " ").trim()
   })
 
-  return { command, tasks: found, prose: proseOf(lines) }
+  return {
+    command,
+    ...(mapBox === undefined ? {} : { mapBox }),
+    tasks: found,
+    prose: proseOf(lines),
+  }
 }
 
 /** 前後の空行を落とし、字下げは残す。 */

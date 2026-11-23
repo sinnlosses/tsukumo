@@ -19,6 +19,7 @@ describe("tsukumoServer", () => {
       "phase_result",
       "question_brief",
       "report_part_card",
+      "map_box",
     ])
   })
 
@@ -37,5 +38,6 @@ describe("tsukumoServer", () => {
     )
 
     expect(names).toEqual(["speak", "remember", "forget"])
+    expect(names).not.toContain("map_box")
   })
 })
