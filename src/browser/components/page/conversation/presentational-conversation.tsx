@@ -6,6 +6,7 @@
 
 import type { ReactElement } from "react"
 
+import { ArchitectureMapExpanded } from "../../../features/architecture-map/architecture-map-expanded.tsx"
 import { TaskDoingCount } from "../../frame/sidebar/components/task-doing-count.tsx"
 import { Sidebar } from "../../frame/sidebar/sidebar.tsx"
 import { CharacterView } from "./components/character-view/character-view.tsx"
@@ -35,6 +36,7 @@ export function PresentationalConversation(props: PresentationalConversationProp
       inquiry={!props.chatMode && <PendingAskCard />}
       voice={!props.chatMode && <VoiceBand />}
       sheet={<RequestedTaskSheet listModeAvailable={!props.chatMode} />}
+      map={!props.chatMode && <ArchitectureMapExpanded />}
       rail={{ badge: !props.chatMode && <TaskDoingCount /> }}
       narrowGround={props.chatMode}
       collapseCharacter={props.chatMode}

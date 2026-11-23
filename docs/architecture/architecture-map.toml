@@ -24,6 +24,7 @@ edges = [
   { from = "browser/app", to = "browser/support" },
   { from = "browser/app", to = "browser/token-usage-page" },
   { from = "browser/app", to = "browser/ui" },
+  { from = "browser/architecture-map", to = "browser/support" },
   { from = "browser/character-page", to = "browser/frame" },
   { from = "browser/character-page", to = "browser/support" },
   { from = "browser/character-page", to = "browser/ui" },
@@ -32,6 +33,7 @@ edges = [
   { from = "browser/character-view", to = "browser/frame" },
   { from = "browser/character-view", to = "browser/support" },
   { from = "browser/character-view", to = "browser/ui" },
+  { from = "browser/conversation", to = "browser/architecture-map" },
   { from = "browser/conversation", to = "browser/character-view" },
   { from = "browser/conversation", to = "browser/dispatch" },
   { from = "browser/conversation", to = "browser/frame" },
@@ -53,6 +55,7 @@ edges = [
   { from = "browser/entry", to = "browser/support" },
   { from = "browser/entry", to = "browser/task-board" },
   { from = "browser/entry", to = "browser/ui" },
+  { from = "browser/frame", to = "browser/architecture-map" },
   { from = "browser/frame", to = "browser/current-work" },
   { from = "browser/frame", to = "browser/run-setting" },
   { from = "browser/frame", to = "browser/support" },
@@ -570,6 +573,15 @@ summary = "タスクの一覧と詳細を、サイドバーや画面に置ける
 purpose = "タスクの一覧は複数の領域から置くので、画面に属さない機能にして共有する"
 overview = "タスクの一覧・並べ替え・詳細のシートと、依頼の文面の組み立てを持つ。始め方の一覧からもサイドバーからも同じ部品で出す。"
 paths = ["src/browser/features/task-board/**"]
+
+[[boxes.children]]
+id = "browser/architecture-map"
+title = "アーキテクチャの地図"
+summary = "リポジトリの地図を、サイドバーのタブと広げた図に描く"
+purpose = "地図はサイドバーと会話の画面の両方から置くので、画面に属さない機能にして共有する"
+overview = "地図のファイルから引いた図を格子に置いて描き、箱を選んで潜る・拡大・縮小・移動を受ける。選んだ箱の役割と目的と概要はサイドバーの地図のタブに出す。"
+paths = ["src/browser/features/architecture-map/**"]
+links = { adr = ["docs/architecture/adr/0082-architecture-map-contract.md"] }
 
 [[boxes.children]]
 id = "browser/current-work"

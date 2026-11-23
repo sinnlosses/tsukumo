@@ -92,11 +92,24 @@
 .layout-sheet:empty {
   display: none;
 }
+/* 広げた地図の置き場。メインビューの升いっぱいに重ね（サイドシートの上）、入力欄と声の帯の行は覆わない。
+   何も広げていないときは空で、場所を取らない。 */
+.layout-map {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+}
+.layout-map:empty {
+  display: none;
+}
 /* 置き場をメインビューの区画に重ねるため、両方の位置を書く（書かないと自動の配置がメインビューを次の行へ押し出す）。
    狭い画面では中央の列の箱を外して1列に積み直すので、広い幅だけで書く。 */
 @media (min-width: 761px) {
   .layout-main,
-  .layout-sheet {
+  .layout-sheet,
+  .layout-map {
     grid-row: 1;
     grid-column: 1;
   }
@@ -309,7 +322,8 @@
   .layout-outline,
   .layout-divider,
   .layout-side,
-  .layout-sheet {
+  .layout-sheet,
+  .layout-map {
     display: none;
   }
   .layout-region.layout-main {

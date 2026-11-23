@@ -49,6 +49,7 @@ const BROWSER_PLACED_FEATURES = [
   "features/current-work",
   "features/run-setting",
   "features/report",
+  "features/architecture-map",
 ] as const
 
 type BrowserFeature = {

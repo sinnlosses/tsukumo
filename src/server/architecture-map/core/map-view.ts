@@ -104,7 +104,14 @@ function viewOf(map: ArchitectureMap, index: BoxIndex, plan: ViewPlan): MapView 
     level: plan.level,
     ...(plan.focus === undefined
       ? {}
-      : { focus: { id: plan.focus.id, title: plan.focus.title, level: plan.focus.level } }),
+      : {
+          focus: {
+            id: plan.focus.id,
+            title: plan.focus.title,
+            ...(plan.focus.summary === undefined ? {} : { summary: plan.focus.summary }),
+            level: plan.focus.level,
+          },
+        }),
     boxes: index.order
       .filter((node) => drawn.has(node.id))
       .map((node) => viewBoxOf(node, problems.get(node.id) ?? [])),
@@ -243,6 +250,7 @@ function viewBoxOf(node: BoxNode, problems: readonly BoxProblem[]): MapViewBox {
     level: node.level,
     external: node.external,
     hasChildren: node.childIds.length > 0,
+    paths: node.paths,
     ...(node.place === undefined ? {} : { place: node.place }),
     ...(node.links === undefined ? {} : { links: node.links }),
     problems,
@@ -259,6 +267,7 @@ type BoxFields = {
   readonly summary?: string
   readonly purpose?: string
   readonly overview?: string
+  readonly paths?: readonly string[]
   readonly place?: MapPlace
   readonly links?: MapLinks
   readonly aliases?: readonly string[]
@@ -275,6 +284,7 @@ type BoxNode = {
   readonly summary?: string
   readonly purpose?: string
   readonly overview?: string
+  readonly paths: readonly string[]
   readonly place?: MapPlace
   readonly links?: MapLinks
   readonly external: boolean
@@ -303,6 +313,7 @@ function indexOf(boxes: readonly BoxFields[]): BoxIndex {
       ...(box.summary === undefined ? {} : { summary: box.summary }),
       ...(box.purpose === undefined ? {} : { purpose: box.purpose }),
       ...(box.overview === undefined ? {} : { overview: box.overview }),
+      paths: box.paths ?? [],
       ...(box.place === undefined ? {} : { place: box.place }),
       ...(box.links === undefined ? {} : { links: box.links }),
       external: box.external === true,

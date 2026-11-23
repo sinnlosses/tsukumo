@@ -1,0 +1,74 @@
+.diagram {
+  /* 選んだ箱の縁。狐火の青緑に固定し、変更の黄・追加の緑・ずれの赤と混ぜない。 */
+  --map-focus: oklch(0.8 0.11 185);
+
+  display: block;
+  overflow: visible;
+  color: var(--ink);
+  font-family: var(--font-sans);
+  user-select: none;
+}
+.diagram-mini {
+  max-width: 100%;
+}
+.box {
+  cursor: pointer;
+}
+.box:focus-visible {
+  outline: none;
+}
+.box-body {
+  fill: var(--surface);
+  stroke: var(--ink-quiet);
+  stroke-width: 1;
+}
+.box[data-external="true"] .box-body {
+  stroke-dasharray: 4 3;
+}
+.box[data-problem="true"] .box-body {
+  stroke: var(--state-ng);
+}
+.box[data-selected="true"] .box-body,
+.box:focus-visible .box-body {
+  stroke: var(--map-focus);
+  stroke-width: 2.5;
+}
+.box-title {
+  fill: var(--ink);
+  font-weight: 600;
+}
+/* ミニマップの字は図の座標の単位（SVG の fontSize 属性）で決め、図ごと縮める。 */
+.diagram:not(.diagram-mini) .box-title {
+  font-size: var(--font-label);
+}
+.box-summary {
+  fill: var(--ink-quiet);
+  font-size: var(--font-secondary);
+}
+.box-dive {
+  fill: var(--ink-quiet);
+  font-size: var(--font-subheading);
+}
+.edge {
+  stroke: var(--ink-quiet);
+  stroke-width: 1.4;
+}
+.edge-intended {
+  stroke-dasharray: 5 4;
+}
+.edge-ng {
+  stroke: var(--state-ng);
+}
+.edge-label {
+  fill: var(--ink-quiet);
+  font-size: var(--font-secondary);
+}
+.edge-label-ng {
+  fill: var(--state-ng);
+}
+.arrow-head {
+  fill: var(--ink-quiet);
+}
+.arrow-head-ng {
+  fill: var(--state-ng);
+}

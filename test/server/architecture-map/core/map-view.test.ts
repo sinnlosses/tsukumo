@@ -108,11 +108,29 @@ describe("mapViewOf の縮尺", () => {
   })
 })
 
+describe("mapViewOf の置き場", () => {
+  it("箱に paths が載り、外の世界の箱は空になる", () => {
+    const { view } = viewOfLevel(1)
+
+    expect(view.boxes.find((box) => box.id === "app")?.paths).toEqual(["src/ui/**", "src/view/**"])
+    expect(view.boxes.find((box) => box.id === "vault")?.paths).toEqual([])
+  })
+
+  it("中へのフォーカスで focus.summary が載る", () => {
+    expect(viewOfFocus("app/view").focus?.summary).toBe("表示の判断")
+  })
+})
+
 describe("mapViewOf のフォーカス", () => {
   it("フォーカスした箱の子と、子とつながる外の箱（同じ段の祖先）だけを返し、外の箱どうしのエッジは返さない", () => {
     const view = viewOfFocus("server")
 
-    expect(view.focus).toEqual({ id: "server", title: "server", level: 1 })
+    expect(view.focus).toEqual({
+      id: "server",
+      title: "server",
+      summary: "手続きの側",
+      level: 1,
+    })
     expect(view.boxes.map((box) => box.id)).toEqual(["app", "server/store", "vault"])
     expect(view.edges).toEqual([{ from: "app", to: "server/store", count: 4, undeclared: true }])
     expect(view.intendedEdges).toEqual([{ from: "server/store", to: "vault" }])

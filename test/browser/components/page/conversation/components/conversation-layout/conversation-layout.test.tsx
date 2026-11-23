@@ -26,6 +26,7 @@ function renderLayout(
       inquiry="inquiry"
       voice="voice"
       sheet="sheet"
+      map="map"
       rail={{ badge: "railBadge" }}
       narrowGround={flags.narrowGround ?? false}
       collapseCharacter={collapseCharacter}

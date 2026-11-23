@@ -28,3 +28,26 @@
   flex: none;
   margin: 0;
 }
+
+/* ── 仕事中のタブ ──────────────────────
+   タブの列は固定、パネルは区画をそのまま子に並べる（枠を足さない）。
+   タスクの区画は隠すだけで外さない。 */
+.sidebar-tabs {
+  flex: none;
+}
+.sidebar-tab-panel {
+  display: contents;
+}
+.sidebar-tab-tasks {
+  display: contents;
+}
+.sidebar-tab-tasks[hidden] {
+  display: none;
+}
+.sidebar-tab-map {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  min-height: 0;
+  padding: var(--stack-block) 0;
+}

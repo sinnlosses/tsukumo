@@ -34,6 +34,8 @@ const mapViewBoxSchema = z.object({
   external: z.boolean(),
   /** 子を持つ（押すとフォーカスした図へ潜れる）。 */
   hasChildren: z.boolean(),
+  /** 置き場（ファイルの glob）。外の世界の箱は空。 */
+  paths: z.array(z.string()).readonly(),
   place: mapPlaceSchema.optional(),
   links: mapLinksSchema.optional(),
   problems: z.array(mapBoxProblemSchema).readonly(),
@@ -43,7 +45,14 @@ const mapViewSchema = z.object({
   /** 図に描く箱の縮尺。 */
   level: mapLevelSchema,
   /** フォーカスした箱。無ければ、その縮尺の全体の図。 */
-  focus: z.object({ id: z.string(), title: z.string(), level: mapLevelSchema }).optional(),
+  focus: z
+    .object({
+      id: z.string(),
+      title: z.string(),
+      summary: z.string().optional(),
+      level: mapLevelSchema,
+    })
+    .optional(),
   boxes: z.array(mapViewBoxSchema).readonly(),
   /** 実際のエッジを図の段に束ねたもの。`count` は import の本数の合計。 */
   edges: z

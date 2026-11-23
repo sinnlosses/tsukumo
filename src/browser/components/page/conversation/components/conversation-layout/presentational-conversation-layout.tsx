@@ -36,6 +36,8 @@ type PresentationalConversationLayoutProps = UseConversationLayoutResult & {
   readonly voice: ReactNode
   /** 中央の列のメインビューの区画の右に重ねる、サイドシート。狭い画面では出さない。 */
   readonly sheet: ReactNode
+  /** 広い画面で中央の列のメインビューの升に重ねる、広げた地図。狭い画面では出さない。 */
+  readonly map: ReactNode
   readonly rail: {
     /** 中くらいのビューポート幅の柱の、開くボタンの中に置くもの。 */
     readonly badge: ReactNode
@@ -67,6 +69,7 @@ export function PresentationalConversationLayout({
   inquiry,
   voice,
   sheet,
+  map,
   rail: { badge: railBadge },
   narrowGround,
   collapseCharacter,
@@ -113,6 +116,7 @@ export function PresentationalConversationLayout({
           {main}
         </main>
         <div className={styles["layout-sheet"]}>{sheet}</div>
+        <div className={styles["layout-map"]}>{map}</div>
         <div className={styles["layout-inquiry"]}>{inquiry}</div>
         <div className={styles["layout-voice"]}>{voice}</div>
         <section

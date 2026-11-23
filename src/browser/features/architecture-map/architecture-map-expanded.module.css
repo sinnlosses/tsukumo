@@ -1,0 +1,74 @@
+/* 中央の列のメインビューの升いっぱいに重ねる。入力欄と声の帯はこの下の行なので隠さない。 */
+.expanded {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--stack-block);
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  padding: var(--inset-control);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  color: var(--ink);
+}
+.expanded:focus-visible {
+  outline: none;
+}
+.expanded-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--inline-control);
+}
+.expanded-crumbs,
+.expanded-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--inline-tight);
+}
+.expanded-crumb {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--inline-tight);
+  color: var(--ink-quiet);
+}
+.expanded-button {
+  padding: var(--inline-tight) var(--inline-control);
+  border: none;
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--font-label);
+  cursor: pointer;
+}
+.expanded-button[aria-current="location"] {
+  font-weight: 600;
+}
+/* 移動は地のドラッグ。図は枠の外へ出ても切る（面の中に横スクロールを作らない）。 */
+.expanded-stage {
+  position: relative;
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
+  cursor: grab;
+  touch-action: none;
+}
+.expanded-content {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+}
+.expanded-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--inline-control);
+  color: var(--ink-quiet);
+  font-size: var(--font-secondary);
+}

@@ -100,6 +100,7 @@ const BROWSER_PLACED_FEATURES = [
   "features/current-work",
   "features/run-setting",
   "features/report",
+  "features/architecture-map",
 ]
 
 const BROWSER_BOX_PATHS = {
