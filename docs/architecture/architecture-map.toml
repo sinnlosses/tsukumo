@@ -117,6 +117,7 @@ edges = [
   { from = "server/wiring", to = "server/diary" },
   { from = "server/wiring", to = "server/host" },
   { from = "server/wiring", to = "server/item" },
+  { from = "server/wiring", to = "server/architecture-map" },
   { from = "server/wiring", to = "server/recommendation" },
   { from = "server/wiring", to = "server/report" },
   { from = "server/wiring", to = "server/repository" },
@@ -138,6 +139,7 @@ edges = [
   { from = "shared/contract", to = "shared/diagnostic" },
   { from = "shared/contract", to = "shared/diary" },
   { from = "shared/contract", to = "shared/item" },
+  { from = "shared/contract", to = "shared/architecture-map" },
   { from = "shared/contract", to = "shared/protocol" },
   { from = "shared/contract", to = "shared/recommendation" },
   { from = "shared/contract", to = "shared/repository" },
@@ -416,6 +418,15 @@ summary = "キャラビューの席に置くアイテムの一覧と置き場を
 purpose = "アイテムの置き場と素材を独立させ、キャラクターの素材から切り離す"
 overview = "アイテムの一覧と席の置き場の読み書き、素材を配る判断を持つ。素材はキャラクターパックに混ぜない。"
 paths = ["src/server/item/**"]
+
+[[boxes.children]]
+id = "server/architecture-map"
+title = "地図"
+summary = "地図のファイルを読み、縮尺ごとに束ねた箱と矢印を画面へ渡す"
+purpose = "検証が書く地図のファイルを画面の形へ変える判断を、ほかの機能から切り離す"
+overview = "地図のファイルを契約の型で読み、無い・壊れている・知らない版を区別する。縮尺と注目する箱ごとに、出す箱と矢印を束ねて手続きで返す。"
+paths = ["src/server/architecture-map/**"]
+links = { adr = ["docs/architecture/adr/0082-architecture-map-contract.md"] }
 
 # ---------------------------------------------------------------------------
 # ブラウザ
@@ -728,6 +739,15 @@ summary = "おすすめのカードと迎えの挨拶と反応の型を定義す
 purpose = "始め方の一覧の内容を、サーバが作り画面が出すために共有層へ置く"
 overview = "おすすめのカードの形・並び・反応・迎えの挨拶の型を持つ。"
 paths = ["src/shared/recommendation/**"]
+
+[[boxes.children]]
+id = "shared/architecture-map"
+title = "地図の語彙"
+summary = "地図のファイルの形と、画面に出す箱と矢印の型を定義する"
+purpose = "地図の契約をサーバと画面が同じ形で読めるよう共有層へ置く"
+overview = "地図のファイルの契約の型と、縮尺ごとに束ねた見え方の型を持つ。"
+paths = ["src/shared/architecture-map/**"]
+links = { adr = ["docs/architecture/adr/0082-architecture-map-contract.md"] }
 
 [[boxes.children]]
 id = "shared/item"
