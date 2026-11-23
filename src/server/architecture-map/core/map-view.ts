@@ -13,6 +13,7 @@ import type {
   MapSelection,
   MapView,
   MapViewBox,
+  MapViewLane,
 } from "../../../shared/architecture-map/map-view.ts"
 
 export type MapViewOutcome =
@@ -40,11 +41,13 @@ export function boxIndexOf(boxes: readonly BoxFields[]): BoxIndex {
   const nodes = new Map<string, BoxNode>()
   const order: BoxNode[] = []
   const aliases = new Map<string, string>()
-  const visit = (box: BoxFields, level: MapLevel, parentId?: string) => {
+  const visit = (box: BoxFields, level: MapLevel, parentId?: string, parentLane?: string) => {
     const children = box.children ?? []
+    const lane = box.lane ?? parentLane
     const node: BoxNode = {
       id: box.id,
       level,
+      ...(lane === undefined ? {} : { lane }),
       ...(parentId === undefined ? {} : { parentId }),
       childIds: children.map((child) => child.id),
       title: box.title ?? box.id,
@@ -63,7 +66,7 @@ export function boxIndexOf(boxes: readonly BoxFields[]): BoxIndex {
     }
     // 小の箱は子を持たないので、3 の下の段は作られない
     for (const child of children) {
-      visit(child, level === 1 ? 2 : 3, box.id)
+      visit(child, level === 1 ? 2 : 3, box.id, lane)
     }
   }
   for (const box of boxes) {
@@ -138,6 +141,7 @@ function viewOf(map: ArchitectureMap, index: BoxIndex, plan: ViewPlan): MapView 
   const problems = boxProblemsOf(map, undeclared, drawn)
   return {
     level: plan.level,
+    ...(map.lanes === undefined ? {} : { lanes: map.lanes.map(viewLaneOf) }),
     ...(plan.focus === undefined
       ? {}
       : {
@@ -146,6 +150,7 @@ function viewOf(map: ArchitectureMap, index: BoxIndex, plan: ViewPlan): MapView 
             title: plan.focus.title,
             ...(plan.focus.summary === undefined ? {} : { summary: plan.focus.summary }),
             level: plan.focus.level,
+            ...(plan.focus.lane === undefined ? {} : { lane: plan.focus.lane }),
           },
         }),
     boxes: index.order
@@ -276,6 +281,10 @@ function boxProblemsOf(
   return problems
 }
 
+function viewLaneOf(lane: NonNullable<ArchitectureMap["lanes"]>[number]): MapViewLane {
+  return { id: lane.id, title: lane.title ?? lane.id, kind: lane.kind }
+}
+
 function viewBoxOf(node: BoxNode, problems: readonly BoxProblem[]): MapViewBox {
   return {
     id: node.id,
@@ -288,6 +297,7 @@ function viewBoxOf(node: BoxNode, problems: readonly BoxProblem[]): MapViewBox {
     hasChildren: node.childIds.length > 0,
     paths: node.paths,
     ...(node.place === undefined ? {} : { place: node.place }),
+    ...(node.lane === undefined ? {} : { lane: node.lane }),
     ...(node.links === undefined ? {} : { links: node.links }),
     problems,
   }
@@ -308,6 +318,7 @@ type BoxFields = {
   readonly links?: MapLinks
   readonly aliases?: readonly string[]
   readonly external?: boolean
+  readonly lane?: string
   readonly children?: readonly BoxFields[]
 }
 
@@ -315,6 +326,8 @@ export type BoxNode = {
   readonly id: string
   readonly level: MapLevel
   readonly parentId?: string
+  /** 大の祖先（自身を含む）が属する区画の `id`。 */
+  readonly lane?: string
   readonly childIds: readonly string[]
   readonly title: string
   readonly summary?: string

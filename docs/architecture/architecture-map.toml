@@ -177,6 +177,26 @@ edges = [
   { from = "shared/session-driver", to = "shared/utils" },
 ]
 
+[[lanes]]
+id = "browser"
+title = "ブラウザ"
+kind = "runtime"
+
+[[lanes]]
+id = "server"
+title = "サーバ"
+kind = "runtime"
+
+[[lanes]]
+id = "external"
+title = "外部"
+kind = "external"
+
+[[lanes]]
+id = "shared"
+title = "共有層"
+kind = "crosscut"
+
 # ---------------------------------------------------------------------------
 # 外の世界
 
@@ -187,6 +207,7 @@ summary = "会話の相手として動き、ツールの呼び出しとメッセ
 purpose = "tsukumo の外で動く別のプロセスなので、境界を越える所だけをサーバの外向きの層に閉じ込める"
 overview = "tsukumo は Claude Code を子プロセスとして起こし、依頼を渡してメッセージとツールの呼び出しを受け取る。画面の描画は tsukumo が受け持ち、Claude Code の画面は開かない。"
 external = true
+lane = "external"
 place = { column = 0, row = 0 }
 links = { adr = ["docs/architecture/adr/0008-sdk-instead-of-tui.md"], terms = ["セッションドライバ"] }
 
@@ -197,6 +218,7 @@ summary = "会話とタスクの進め方を載せるスキルとエージェン
 purpose = "tsukumo の本体から切り離した別の配布物にして、本体がスキルの中身に依存しないようにする"
 overview = "取り込んだプラグイン群を、会話のセッションへ読み込ませる。本体は契約の口と欄だけを見て、スキルの中身は読まない。"
 external = true
+lane = "external"
 place = { column = 0, row = 1 }
 links = { adr = ["docs/architecture/adr/0024-no-skill-dependency.md"] }
 
@@ -207,6 +229,7 @@ summary = "立ち絵・表情・人格の定義と素材を渡す"
 purpose = "キャラクターの中身をコードに書かず、差し替えられる素材と定義として本体の外に置く"
 overview = "利用者のホームと同梱の置き場にあるパックを、サーバが読み込む。素材と表情の対応は定義ファイル側が持つ。"
 external = true
+lane = "external"
 place = { column = 0, row = 2 }
 links = { adr = [
   "docs/architecture/adr/0014-no-bundled-character-asset.md",
@@ -223,6 +246,7 @@ title = "サーバ"
 summary = "Claude Code を起こして会話の流れを畳み、画面へ配る"
 purpose = "外の世界に触れる境界と純粋な判断を機能ごとにまとめ、ブラウザとは実行環境の違いで分ける"
 overview = "セッションを持つ機能が各機能の判断を束ね、外の世界の実装を選んで渡すのは配線が受け持つ。機能どうしの import は許した向きだけで、共有の語彙は共有層から読む。"
+lane = "server"
 place = { column = 1, row = 0 }
 links = { adr = [
   "docs/architecture/adr/0019-layer-as-directory.md",
@@ -445,6 +469,7 @@ title = "ブラウザ"
 summary = "共有の状態を受け取り、会話の画面を描いてコマンドを送る"
 purpose = "サーバとは実行環境が違うので、画面の部品だけを別の塊にして、共有層以外を読まない形にする"
 overview = "画面ごとの部品と、全画面で共有する枠・置かれる機能・語彙のない部品に分かれる。向きは入口から画面、枠、機能、基本部品の一方通行で、サーバの機能は直接読まない。"
+lane = "browser"
 place = { column = 2, row = 0 }
 links = { adr = [
   "docs/architecture/adr/0001-render-in-browser.md",
@@ -629,6 +654,7 @@ title = "共有層"
 summary = "サーバとブラウザの両方が読む語彙・出来事・状態・契約を持つ"
 purpose = "両側の実行環境で同じに動く形だけを集め、サーバとブラウザの契約の食い違いを防ぐ"
 overview = "機能ごとの語彙と、会話の状態を畳む規則、手続きの契約、通信の封筒が並ぶ。ノードの API やブラウザの API には触らず、共有層の中だけを読む。"
+lane = "shared"
 place = { column = 2, row = 1 }
 links = { adr = [
   "docs/architecture/adr/0019-layer-as-directory.md",

@@ -2,6 +2,25 @@
 
 export type SampleMap = ReturnType<typeof sampleMap>
 
+/** 区画を書いた `sampleMap()`。`app`→`front`・`server`→`back`（`title` 無し）・`vault`→`outside`。 */
+export function sampleLanedMap() {
+  const map = sampleMap()
+  const laneOf: Readonly<Record<string, string>> = {
+    app: "front",
+    server: "back",
+    vault: "outside",
+  }
+  return {
+    ...map,
+    lanes: [
+      { id: "front", title: "表側", kind: "runtime" },
+      { id: "back", kind: "runtime" },
+      { id: "outside", title: "外", kind: "external" },
+    ],
+    boxes: map.boxes.map((box) => ({ ...box, lane: laneOf[box.id] })),
+  }
+}
+
 export function sampleMap() {
   return {
     version: 1,

@@ -4,7 +4,7 @@ import { parseArchitectureMap } from "../../../../src/server/architecture-map/co
 import { mapViewOf } from "../../../../src/server/architecture-map/core/map-view.ts"
 import type { ArchitectureMap } from "../../../../src/shared/architecture-map/architecture-map.ts"
 import type { MapReady, MapView } from "../../../../src/shared/architecture-map/map-view.ts"
-import { sampleMap } from "../sample-map.ts"
+import { sampleLanedMap, sampleMap } from "../sample-map.ts"
 
 function loadedMap(): ArchitectureMap {
   const parsed = parseArchitectureMap(JSON.stringify(sampleMap()))
@@ -174,5 +174,62 @@ describe("mapViewOf のフォーカス", () => {
       kind: "unfocusable",
       reason: "no-children",
     })
+  })
+})
+
+describe("mapViewOf の区画", () => {
+  function lanedView(selection: Parameters<typeof mapViewOf>[1]): MapView {
+    const parsed = parseArchitectureMap(JSON.stringify(sampleLanedMap()))
+    if (parsed.kind !== "map") {
+      throw new Error("区画つきのサンプルの地図が読めない")
+    }
+    const outcome = mapViewOf(parsed.map, selection)
+    if (outcome.kind !== "ready") {
+      throw new Error("図が引けない")
+    }
+    return outcome.view
+  }
+
+  it("全体の図は区画の並び（title は無ければ id）と大の箱の区画を持つ", () => {
+    const view = lanedView({ kind: "level", level: 1 })
+
+    expect(view.lanes).toEqual([
+      { id: "front", title: "表側", kind: "runtime" },
+      { id: "back", title: "back", kind: "runtime" },
+      { id: "outside", title: "外", kind: "external" },
+    ])
+    expect(view.boxes.map((box) => [box.id, box.lane])).toEqual([
+      ["app", "front"],
+      ["server", "back"],
+      ["vault", "outside"],
+    ])
+  })
+
+  it("フォーカスした図は、フォーカスした箱の区画と外の箱の区画を持つ", () => {
+    const server = lanedView({ kind: "focus", box: "server" })
+    const view = lanedView({ kind: "focus", box: "app/view" })
+
+    expect(server.focus?.lane).toBe("back")
+    expect(server.boxes.map((box) => [box.id, box.lane])).toEqual([
+      ["app", "front"],
+      ["server/store", "back"],
+      ["vault", "outside"],
+    ])
+    expect(view.focus?.lane).toBe("front")
+    expect(view.boxes.map((box) => [box.id, box.lane])).toEqual([
+      ["app/ui", "front"],
+      ["src/view/core", "front"],
+      ["server/store", "back"],
+    ])
+  })
+
+  it("区画の無い地図の図には lanes・lane の欄が無い", () => {
+    const whole = viewOfLevel(1).view
+    const focused = viewOfFocus("server")
+
+    expect(whole).not.toHaveProperty("lanes")
+    expect(focused.focus).not.toHaveProperty("lane")
+    expect(whole.boxes.every((box) => !("lane" in box))).toBe(true)
+    expect(focused.boxes.every((box) => !("lane" in box))).toBe(true)
   })
 })

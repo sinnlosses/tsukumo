@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import { parseArchitectureMap } from "../../../../src/server/architecture-map/core/map-parse.ts"
-import { sampleMap } from "../sample-map.ts"
+import { sampleLanedMap, sampleMap } from "../sample-map.ts"
 
 const parse = (value: unknown) => parseArchitectureMap(JSON.stringify(value))
 
@@ -124,5 +124,66 @@ describe("parseArchitectureMap", () => {
       kind: "unreadable",
       reason: "off-contract",
     })
+  })
+})
+
+describe("parseArchitectureMap の区画", () => {
+  const offContract = { kind: "unreadable", reason: "off-contract" }
+
+  it("区画のある地図は読め、区画の欄は残る", () => {
+    const parsed = parse(sampleLanedMap())
+
+    expect(parsed.kind).toBe("map")
+    if (parsed.kind === "map") {
+      expect(parsed.map.lanes?.map((lane) => lane.id)).toEqual(["front", "back", "outside"])
+      expect(parsed.map.boxes[0]?.lane).toBe("front")
+    }
+  })
+
+  it("lane の書き漏れは off-contract", () => {
+    const map = sampleLanedMap()
+    const boxes = map.boxes.map((box) => (box.id === "server" ? { ...box, lane: undefined } : box))
+
+    expect(parse({ ...map, boxes })).toEqual(offContract)
+  })
+
+  it("lanes の無い地図に lane があれば off-contract", () => {
+    expect(parse({ ...sampleLanedMap(), lanes: undefined })).toEqual(offContract)
+  })
+
+  it("存在しない区画を指せば off-contract", () => {
+    const map = sampleLanedMap()
+    const boxes = map.boxes.map((box) => (box.id === "server" ? { ...box, lane: "nowhere" } : box))
+
+    expect(parse({ ...map, boxes })).toEqual(offContract)
+  })
+
+  it("external の食い違いは off-contract（外の箱を runtime へ、外でない箱を external へ）", () => {
+    const map = sampleLanedMap()
+    const vaultToRuntime = map.boxes.map((box) =>
+      box.id === "vault" ? { ...box, lane: "back" } : box,
+    )
+    const serverToExternal = map.boxes.map((box) =>
+      box.id === "server" ? { ...box, lane: "outside" } : box,
+    )
+
+    expect(parse({ ...map, boxes: vaultToRuntime })).toEqual(offContract)
+    expect(parse({ ...map, boxes: serverToExternal })).toEqual(offContract)
+  })
+
+  it("大の箱が1つも属さない区画があれば off-contract", () => {
+    const map = sampleLanedMap()
+
+    expect(parse({ ...map, lanes: [...map.lanes, { id: "empty", kind: "runtime" }] })).toEqual(
+      offContract,
+    )
+  })
+
+  it("区画の id が重なれば off-contract", () => {
+    const map = sampleLanedMap()
+
+    expect(parse({ ...map, lanes: [...map.lanes, { id: "front", kind: "runtime" }] })).toEqual(
+      offContract,
+    )
   })
 })

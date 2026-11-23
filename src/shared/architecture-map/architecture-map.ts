@@ -66,6 +66,16 @@ export const mapLinksSchema = z.object({
 })
 export type MapLinks = z.infer<typeof mapLinksSchema>
 
+/** 区画の種類。`runtime` は動く場所、`crosscut` は横断の帯、`external` は外の世界。 */
+export const mapLaneKindSchema = z.enum(["runtime", "crosscut", "external"])
+
+const mapLaneSchema = z.object({
+  id: z.string().refine((id) => BOX_ID_SEGMENT.test(id)),
+  title: z.string().optional(),
+  kind: mapLaneKindSchema,
+})
+type MapLane = z.infer<typeof mapLaneSchema>
+
 const smallBoxSchema = z.object({
   id: boxIdSchema,
   title: z.string().optional(),
@@ -99,6 +109,7 @@ const largeBoxSchema = z
     links: mapLinksSchema.optional(),
     aliases: z.array(boxIdSchema).readonly().optional(),
     external: z.boolean().optional(),
+    lane: z.string().optional(),
     place: mapPlaceSchema.optional(),
     children: z.array(mediumBoxSchema).min(1).readonly().optional(),
   })
@@ -194,6 +205,7 @@ export const architectureMapSchema = z
     version: z.literal(ARCHITECTURE_MAP_VERSION),
     source: mapSourceSchema,
     overview: z.string().optional(),
+    lanes: z.array(mapLaneSchema).min(1).readonly().optional(),
     boxes: z.array(largeBoxSchema).min(1).readonly(),
     edges: z.object({
       intended: z.array(intendedEdgeSchema).readonly(),
@@ -206,6 +218,9 @@ export const architectureMapSchema = z
     const reject = (message: string) => context.addIssue({ code: "custom", message })
     if (levels.duplicated) {
       reject("箱の ID と別名が重なっている")
+    }
+    if (!lanesAreConsistent(map.boxes, map.lanes)) {
+      reject("区画の欄が決まりに沿っていない")
     }
     for (const edge of map.edges.intended) {
       if (!levels.byId.has(edge.from) || !levels.byId.has(edge.to)) {
@@ -220,6 +235,26 @@ export const architectureMapSchema = z
   })
 
 export type ArchitectureMap = z.output<typeof architectureMapSchema>
+
+/** `lanes` が無ければどの大の箱も `lane` を持たず、あれば全部が持つ。指す区画・外の箱と `external` の区画・空の区画・`id` の重なりも確かめる。 */
+function lanesAreConsistent(boxes: readonly LargeBox[], lanes?: readonly MapLane[]): boolean {
+  if (lanes === undefined) {
+    return boxes.every((box) => box.lane === undefined)
+  }
+  const byId = new Map(lanes.map((lane) => [lane.id, lane]))
+  if (byId.size !== lanes.length) {
+    return false
+  }
+  const used = new Set<string>()
+  for (const box of boxes) {
+    const lane = box.lane === undefined ? undefined : byId.get(box.lane)
+    if (lane === undefined || (box.external === true) !== (lane.kind === "external")) {
+      return false
+    }
+    used.add(lane.id)
+  }
+  return used.size === lanes.length
+}
 
 type BoxLevels = {
   /** 今の ID から縮尺。別名は含まない。 */

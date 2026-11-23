@@ -6,6 +6,7 @@ import { z } from "zod"
 import {
   knownFindingSchemas,
   MAP_UNREADABLE_REASONS,
+  mapLaneKindSchema,
   mapLevelSchema,
   mapLinksSchema,
   mapPlaceSchema,
@@ -37,13 +38,24 @@ const mapViewBoxSchema = z.object({
   /** 置き場（ファイルの glob）。外の世界の箱は空。 */
   paths: z.array(z.string()).readonly(),
   place: mapPlaceSchema.optional(),
+  /** 箱の大の祖先が属する区画の `id`。区画の無い地図では無い。 */
+  lane: z.string().optional(),
   links: mapLinksSchema.optional(),
   problems: z.array(mapBoxProblemSchema).readonly(),
+})
+
+const mapViewLaneSchema = z.object({
+  id: z.string(),
+  /** 表示名。地図のファイルに無ければ `id`。 */
+  title: z.string(),
+  kind: mapLaneKindSchema,
 })
 
 const mapViewSchema = z.object({
   /** 図に描く箱の縮尺。 */
   level: mapLevelSchema,
+  /** 区画の並び。区画の無い地図（と前のレポートの図）では無い。 */
+  lanes: z.array(mapViewLaneSchema).readonly().optional(),
   /** フォーカスした箱。無ければ、その縮尺の全体の図。 */
   focus: z
     .object({
@@ -51,6 +63,7 @@ const mapViewSchema = z.object({
       title: z.string(),
       summary: z.string().optional(),
       level: mapLevelSchema,
+      lane: z.string().optional(),
     })
     .optional(),
   boxes: z.array(mapViewBoxSchema).readonly(),
@@ -129,6 +142,7 @@ export type MapBoxIndexResponse = z.infer<typeof mapBoxIndexResponseSchema>
 export type MapBoxIndexEntry = z.infer<typeof mapBoxIndexEntrySchema>
 export type MapViewResponse = z.infer<typeof mapViewResponseSchema>
 export type MapView = z.infer<typeof mapViewSchema>
+export type MapViewLane = z.infer<typeof mapViewLaneSchema>
 export type MapViewBox = z.infer<typeof mapViewBoxSchema>
 export type MapSelection = z.infer<typeof mapSelectionSchema>
 export type MapReady = z.infer<typeof mapReadySchema>
