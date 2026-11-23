@@ -1,20 +1,88 @@
 // 面の頭の「n ファイル +a −b」を題にした変更したファイルの畳んだ節（樹形図と種別の合計の札）を、値から直接描く。
 
 import clsx from "clsx"
-import { Fragment, type ReactElement } from "react"
+import { Fragment, type ReactElement, useState } from "react"
 
 import type { ChangedFilesView } from "../../../../shared/report/changed-file-section.ts"
 import type { ChangedFile } from "../../../../shared/report/changed-file.ts"
 import { FILE_CHANGE_BADGES } from "../../../../shared/report/report-file-markdown.ts"
-import type { FileTreeRow } from "../../../../shared/report/report-file-tree.ts"
+import { type FileTreeRow, fileTreeRows } from "../../../../shared/report/report-file-tree.ts"
 import { plainInline } from "../../../../shared/report/report-inline-markdown.ts"
+import { filesInBox, type ReportMap } from "../../../../shared/report/report-map.ts"
 import { CodeSpan, filesClassName, workRecordClassName } from "../markdown.tsx"
+import { useRenderMinimap } from "../minimap-slot.tsx"
+import styles from "./leaf.module.css"
 
 type Files = Extract<ChangedFilesView, { readonly kind: "files" }>
-export function ChangedFilesFold(props: { readonly view: Files }): ReactElement {
-  const { count, added, removed, mixed, rows, totals } = props.view
+export function ChangedFilesFold(props: {
+  readonly view: Files
+  readonly map?: ReportMap
+}): ReactElement {
+  const { map } = props
+  const { count, added, removed, mixed, totals } = props.view
+  // 絞っている箱の ID。空の文字は絞っていない
+  const [pickedId, setPickedId] = useState("")
+  const selectedId = pickedId === "" ? undefined : pickedId
+  const [open, setOpen] = useState(false)
+  const renderMinimap = useRenderMinimap()
+  const changed = props.view.rows.flatMap((row) => (row.kind === "file" ? [row.item] : []))
+  const inBox =
+    map === undefined || selectedId === undefined ? undefined : filesInBox(map, selectedId)
+  const rows =
+    inBox === undefined
+      ? props.view.rows
+      : fileTreeRows(
+          changed.filter((file) => inBox.has(file.path)),
+          (file) => file.path,
+        )
+  const selectedTitle = map?.view.boxes.find((box) => box.id === selectedId)?.title
+  const select = (boxId: string) => {
+    setPickedId((current) => (current === boxId ? "" : boxId))
+    setOpen(true)
+  }
   return (
-    <details>
+    <div className={styles["fold"]}>
+      {map !== undefined && changed.length > 0 && (
+        <div className={styles["minimap"]}>
+          {renderMinimap({
+            map,
+            changed,
+            ...(selectedId === undefined ? {} : { selectedId }),
+            onSelect: select,
+          })}
+          {inBox !== undefined && (
+            <div className={workRecordClassName("work-record-check-how")}>
+              {`${selectedTitle ?? selectedId ?? ""} の ${String(inBox.size)} 件`}
+            </div>
+          )}
+        </div>
+      )}
+      <details
+        open={open}
+        onToggle={(event) => {
+          setOpen(event.currentTarget.open)
+        }}
+      >
+        <FoldBody title={{ count, added, removed, mixed }} rows={rows} totals={totals} />
+      </details>
+    </div>
+  )
+}
+
+function FoldBody(props: {
+  readonly title: {
+    readonly count: number
+    readonly added: number
+    readonly removed: number
+    readonly mixed: boolean
+  }
+  readonly rows: Files["rows"]
+  readonly totals: Files["totals"]
+}): ReactElement {
+  const { count, added, removed, mixed } = props.title
+  const { rows, totals } = props
+  return (
+    <>
       <summary>
         <span className={workRecordClassName("work-record-fold-title")}>
           <span>{`${String(count)} ファイル`}</span>
@@ -37,7 +105,7 @@ export function ChangedFilesFold(props: { readonly view: Files }): ReactElement 
           ))}
         </div>
       </div>
-    </details>
+    </>
   )
 }
 

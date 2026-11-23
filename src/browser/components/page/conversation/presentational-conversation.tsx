@@ -8,7 +8,9 @@ import type { ReactElement } from "react"
 
 import { ArchitectureMapExpanded } from "../../../features/architecture-map/architecture-map-expanded.tsx"
 import { MapBoxMark } from "../../../features/architecture-map/map-box-mark.tsx"
+import { ReportMinimap } from "../../../features/architecture-map/report-minimap.tsx"
 import { MapMarkProvider } from "../../../features/report/map-mark-slot.tsx"
+import { MinimapProvider, type RenderMinimap } from "../../../features/report/minimap-slot.tsx"
 import { TaskDoingCount } from "../../frame/sidebar/components/task-doing-count.tsx"
 import { Sidebar } from "../../frame/sidebar/sidebar.tsx"
 import "./stores/map-pointing.ts"
@@ -47,11 +49,17 @@ export function PresentationalConversation(props: PresentationalConversationProp
   )
   return (
     <MapMarkProvider value={renderMapMark}>
-      <ChatViewProvider active={props.chatMode}>{layout}</ChatViewProvider>
-      <LiveAnnouncer />
-      {!props.chatMode && <RequestedTaskBoard />}
+      <MinimapProvider value={renderMinimap}>
+        <ChatViewProvider active={props.chatMode}>{layout}</ChatViewProvider>
+        <LiveAnnouncer />
+        {!props.chatMode && <RequestedTaskBoard />}
+      </MinimapProvider>
     </MapMarkProvider>
   )
+}
+
+function renderMinimap(props: Parameters<RenderMinimap>[0]): ReactElement {
+  return <ReportMinimap {...props} />
 }
 
 function renderMapMark(id: string, source: string): ReactElement {

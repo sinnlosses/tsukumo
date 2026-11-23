@@ -84,6 +84,7 @@ tsukumo を空きポートで自分で起こし、配信 URL を待って撮り�
 **計画の返却を待つ間のプログレスバー（`delegatedRange` が `pending`。範囲が下線の区間1つ）は、場面 `work-strip-plan-pending`**（`--wait-for 'text=計画を書き直す'`）。
 **セリフが届いた瞬間の出方（9つの表情を2秒おきに言わせ、立ち絵の `data-motion` と吹き出しの `data-arrival` が替わる）は、場面 `speech-arrival`。** 1回の動きの最中は終わりのある動きを待つ `capture-view.ts` では撮れず、動きを減らす設定で撮る口も無いので、属性の移り変わりは実ブラウザのページに `MutationObserver` を差して時刻つきで測り、動きの形は CSS の値と見本の値を並べて照らす。止まった画（`data-arrival` が無い）は `--advance 25000` で撮る。祝う動きと祝光（場面 `report-task-finished`・`report-task-verdict`）も同じ手で、`data-motion` と `[data-manpu="stars"]` の出入りを測り、出ているあいだに画を撮って確かめる。
 **本文とセリフの `{{map: <ID>}}` の箱のバッジと、触れたときの地図の箱の光り方は、場面 `map-mark`。** 作業ディレクトリの `.architecture-map.json` の箱 ID を書いてあるので、この作業ツリーの地図（生成物）が要る。バッジに触れた画は `--hover '[data-testid="map-box-badge"] >> nth=4'`（先頭は狭い画面用で描かれない）、タスクのタブを開いたまま届いて「地図」のタブに点と件数が付いた画は、`.tsukumo/fake-beads-issues.json` と地図のファイルを置いた `--cwd` を渡して `--advance 3000`。
+**レポートの変えたファイルの節のミニマップ（変えた箱の件数つきの色と、箱を押す絞り込み）は場面 `report-map-changed`、地図とのずれ（確かめたことの行と、ミニマップの赤）は場面 `report-map-drift`。** どちらも `--wait-for '[data-testid="architecture-map-diagram"]'` で撮り、絞った画は `--click '[data-box="vault"]'` を足す。地図の箱は場面の JSON が運ぶので、作業ツリーの地図のファイルは要らない。
 **幅で画面が切り替わる境目は 1100px と 760px。** 1100px 以下でサイドバーが柱に畳まれ、760px 以下で
 頭・本文・顔と吹き出し・入力欄の縦の1列と引き出しになる。境目は `--size 1100x900` と `--size 1101x900`、`--size 760x900` と `--size 761x900` の両側を撮る
 （`docs/architecture/screen-design.md`「13.4 Layout」「狭い画面（760px 以下）」）。

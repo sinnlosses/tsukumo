@@ -26,6 +26,7 @@ import type {
 } from "../../usage/core/experience/experience-metric.ts"
 import type { TokenUsageLog } from "../../usage/core/token-usage.ts"
 import type { CommandSession, SessionLaunchRequest } from "./command-session-port.ts"
+import type { ReportMapReader } from "./event/report-map.ts"
 
 export type SessionManagerOptions = {
   /** 現在時刻（エポックミリ秒）を返す関数（呼び出し側が時計を渡す。テストは偽の時計を渡す）。 */
@@ -102,6 +103,8 @@ export type SessionManagerOptions = {
   readonly changeCountGit: ChangeCountGit
   /** 最終レポートの検証の段と件数を運ぶ、作業ディレクトリの控えと git の口。 */
   readonly checkRecordSource: CheckRecordSource
+  /** 最終レポートの変えたファイルを、作業ディレクトリの地図の箱に当てる口。 */
+  readonly readReportMap: ReportMapReader
 }
 
 /** 閉じるまで生きている見張り。 */

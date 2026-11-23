@@ -60,6 +60,22 @@ describe("ArchitectureMapDiagram", () => {
     expect(screen.queryByText("7")).toBeNull()
   })
 
+  it("changes を渡すと、箱に data-change と件数の字が付き、入っていない箱は none になる", () => {
+    const changes = new Map([["a", { added: 2, other: 0 }]])
+    const { container } = render(
+      <ArchitectureMapDiagram
+        view={VIEW}
+        form="mini"
+        changes={changes}
+        onSelect={() => undefined}
+      />,
+    )
+
+    expect(container.querySelector("[data-box='a']")?.getAttribute("data-change")).toBe("added")
+    expect(container.querySelector("[data-box='b']")?.getAttribute("data-change")).toBe("none")
+    expect(screen.getByText("+2")).toBeTruthy()
+  })
+
   it("箱を押すとその箱を返し、選んだ箱としるしが付く", () => {
     const onSelect = vi.fn<(box: MapViewBox) => void>()
     render(<ArchitectureMapDiagram view={VIEW} form="full" selectedId="b" onSelect={onSelect} />)

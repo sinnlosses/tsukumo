@@ -6,6 +6,7 @@ import clsx from "clsx"
 import { type KeyboardEvent, type ReactElement, useId } from "react"
 
 import type { MapView, MapViewBox } from "../../../shared/architecture-map/map-view.ts"
+import type { BoxChangeCount } from "../../../shared/report/report-map.ts"
 import styles from "./architecture-map-diagram.module.css"
 import {
   edgeEndsOf,
@@ -20,6 +21,8 @@ export function ArchitectureMapDiagram(props: {
   readonly selectedId?: string
   /** 会話のバッジに触れている箱。光らせる。 */
   readonly litId?: string
+  /** 箱ごとの変えたファイルの件数（レポートのミニマップ）。渡すと、入っていない箱を薄くする。 */
+  readonly changes?: ReadonlyMap<string, BoxChangeCount>
   /** 箱を押したとき。 */
   readonly onSelect: (box: MapViewBox) => void
 }): ReactElement {
@@ -57,6 +60,9 @@ export function ArchitectureMapDiagram(props: {
               mini={mini}
               selected={box.id === props.selectedId}
               lit={box.id === props.litId}
+              {...(props.changes === undefined
+                ? {}
+                : { change: props.changes.get(box.id) ?? { added: 0, other: 0 } })}
               onSelect={props.onSelect}
             />
           )
@@ -160,9 +166,16 @@ function BoxNode(props: {
   readonly mini: boolean
   readonly selected: boolean
   readonly lit: boolean
+  readonly change?: BoxChangeCount
   readonly onSelect: (box: MapViewBox) => void
 }): ReactElement {
-  const { box, rect, mini } = props
+  const { box, rect, mini, change } = props
+  const changeKind =
+    change === undefined || change.added + change.other === 0
+      ? undefined
+      : change.other === 0
+        ? "added"
+        : "modified"
   const clipId = `${useId()}-clip`
   const select = () => {
     props.onSelect(box)
@@ -184,6 +197,7 @@ function BoxNode(props: {
       data-lit={props.lit}
       data-problem={box.problems.length > 0}
       data-external={box.external}
+      {...(change === undefined ? {} : { "data-change": changeKind ?? "none" })}
       className={styles["box"]}
       onClick={select}
       onKeyDown={onKeyDown}
@@ -211,6 +225,19 @@ function BoxNode(props: {
       >
         {truncated(box.title, mini ? 11 : 20)}
       </text>
+      {change !== undefined && changeKind !== undefined && (
+        <text
+          x={rect.x + rect.width - 4}
+          y={rect.y + (mini ? rect.height / 2 + 3 : 25)}
+          textAnchor="end"
+          className={styles["box-change"]}
+          {...(mini ? { fontSize: 10 } : {})}
+        >
+          {changeKind === "added"
+            ? `+${String(change.added)}`
+            : String(change.added + change.other)}
+        </text>
+      )}
       {!mini && box.summary !== undefined && (
         <text
           x={rect.x + 12}

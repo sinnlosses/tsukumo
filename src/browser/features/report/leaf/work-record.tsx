@@ -11,6 +11,7 @@ import {
   type ReportChecksView,
 } from "../../../../shared/report/report-check-view.ts"
 import { plainInline } from "../../../../shared/report/report-inline-markdown.ts"
+import type { ReportMapDrift } from "../../../../shared/report/report-map.ts"
 import type {
   VerificationStage,
   ReportVerification,
@@ -54,7 +55,12 @@ export function WorkRecord(props: {
           {
             key: "changed-files",
             title: "変えたファイル",
-            body: <ChangedFilesFold view={changedFiles} />,
+            body: (
+              <ChangedFilesFold
+                view={changedFiles}
+                {...(status.map === undefined ? {} : { map: status.map })}
+              />
+            ),
           },
         ]
       : []),
@@ -63,7 +69,14 @@ export function WorkRecord(props: {
           {
             key: "checks",
             title: "確かめたこと",
-            body: <CheckLines view={checks} verification={verification} proof={props.proof} />,
+            body: (
+              <CheckLines
+                view={checks}
+                verification={verification}
+                drift={status.map?.drift ?? []}
+                proof={props.proof}
+              />
+            ),
           },
         ]
       : []),
@@ -94,6 +107,7 @@ const STAGE_DISPLAY_NAMES: ReadonlyMap<string, string> = new Map([
   ["token-limit", "字数の上限"],
   ["test", "単体"],
   ["test:e2e", "E2E"],
+  ["architecture-map", "地図との照合"],
 ])
 
 function stageDisplayName(name: string): string {
@@ -107,9 +121,13 @@ function stageDisplayName(name: string): string {
 function CheckLines(props: {
   readonly view: ReportChecksView
   readonly verification: ReportVerification
+  readonly drift: readonly ReportMapDrift[]
   readonly proof?: ReportProofView
 }): ReactElement {
-  const { view, verification, proof } = props
+  const { view, verification, proof, drift } = props
+  const hasMapStage =
+    verification.kind === "checked" &&
+    verification.stages.some((stage) => stage.name === "architecture-map")
   const hasStages = verification.kind === "checked"
   const keep = (row: { readonly viaCommand: boolean }): boolean => !(hasStages && row.viaCommand)
   const rows = view.kind === "checks" ? view : undefined
@@ -123,6 +141,22 @@ function CheckLines(props: {
   return (
     <>
       {verification.kind === "checked" && <StageTags stages={verification.stages} />}
+      {hasMapStage &&
+        drift.map((edge) => (
+          <div key={`${edge.from}>${edge.to}`} className={workRecordClassName("work-record-check")}>
+            <span
+              className={clsx(
+                workRecordClassName("work-record-check-mark"),
+                workRecordClassName("work-record-check-mark-ng"),
+              )}
+            >
+              ✕
+            </span>
+            <span>
+              {`地図に無い依存 — ${edge.from} → ${edge.to}（${edge.sample.from} → ${edge.sample.to}）`}
+            </span>
+          </div>
+        ))}
       {rows !== undefined && band !== undefined && (
         <ChecksTotalLine summary={rows.summary} leadWord={false} />
       )}

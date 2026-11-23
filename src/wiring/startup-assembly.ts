@@ -50,6 +50,7 @@ export type StartupAssembly = {
   readonly host: Host
   readonly achievement: ReturnType<typeof wireAchievement>
   readonly repository: ReturnType<typeof wireRepository>
+  readonly architectureMap: ReturnType<typeof wireArchitectureMap>
   readonly workflowSetting: ReturnType<typeof wireWorkflowSetting>
   /** 各機能の組み立てが返した `/rpc` の読み口を束ねたもの。 */
   readonly rpc: ViewDeliveryOptions["rpc"]
@@ -114,6 +115,7 @@ export function assembleStartup(
     host,
     achievement,
     repository,
+    architectureMap,
     workflowSetting,
     rpc: {
       ...repository.rpc,
@@ -170,6 +172,7 @@ export async function startViewAndSession(
     context: assembly.context,
     achievement: assembly.achievement,
     repository: assembly.repository,
+    architectureMap: assembly.architectureMap,
     usageLogs: assembly.usageLogs,
     promptImageShelf: assembly.promptImageShelf,
     reportImageShelf: assembly.reportImageShelf,

@@ -47,3 +47,17 @@
 .check-rest:not(:empty) {
   margin-top: var(--space-md);
 }
+
+/* 変えたファイルの節の上のミニマップと、絞っている箱の1行。 */
+.fold {
+  display: flex;
+  flex-direction: column;
+  gap: var(--stack-block);
+}
+
+.minimap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--stack-tight);
+  max-width: 100%;
+}

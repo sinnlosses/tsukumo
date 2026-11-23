@@ -1,0 +1,169 @@
+{
+  "name": "report-map-changed",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "/next-task t-003（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 1000,
+      "event": {
+        "kind": "report",
+        "task": {
+          "kind": "task",
+          "id": "T-003",
+          "name": "架空の画面と手続きに、新しい札を足す",
+          "outcome": "finished",
+          "genre": "work"
+        },
+        "closing": {
+          "kind": "speech",
+          "text": "終わったよ！",
+          "expression": "proud"
+        },
+        "toolUseId": "fake-report-map-changed",
+        "conclusion": "架空の画面と手続きに札を足しました。",
+        "sections": [
+          {
+            "heading": "変えたところ（架空）",
+            "blocks": [
+              {
+                "kind": "text",
+                "text": "架空の札の組み立てを1箇所にまとめた。",
+                "fold": "",
+                "aside": ""
+              }
+            ]
+          }
+        ],
+        "favor": "",
+        "checks": []
+      }
+    },
+    {
+      "afterMs": 1050,
+      "event": {
+        "kind": "tool-finished",
+        "toolUseId": "fake-report-map-changed",
+        "content": "ok",
+        "isError": false
+      }
+    },
+    {
+      "afterMs": 1100,
+      "event": {
+        "kind": "report-change-summary",
+        "toolUseId": "fake-report-map-changed",
+        "changed": [
+          { "path": "src/ui/card.ts", "change": "modified" },
+          { "path": "src/ui/badge.ts", "change": "added" },
+          { "path": "src/server/store/db.ts", "change": "modified" },
+          { "path": "src/vault/seed.ts", "change": "added" },
+          { "path": "src/vault/index.ts", "change": "added" }
+        ],
+        "files": 5,
+        "added": 120,
+        "removed": 18,
+        "mixed": false
+      }
+    },
+    {
+      "afterMs": 1150,
+      "event": {
+        "kind": "report-map",
+        "toolUseId": "fake-report-map-changed",
+        "map": {
+          "view": {
+            "level": 1,
+            "boxes": [
+              {
+                "id": "app",
+                "title": "アプリ",
+                "summary": "画面の側",
+                "level": 1,
+                "external": false,
+                "hasChildren": true,
+                "paths": ["src/ui/**"],
+                "place": { "column": 0, "row": 0 },
+                "problems": []
+              },
+              {
+                "id": "server",
+                "title": "手続き",
+                "summary": "手続きの側",
+                "level": 1,
+                "external": false,
+                "hasChildren": true,
+                "paths": ["src/server/**"],
+                "place": { "column": 1, "row": 0 },
+                "problems": []
+              },
+              {
+                "id": "vault",
+                "title": "保管庫",
+                "summary": "保管の側",
+                "level": 1,
+                "external": false,
+                "hasChildren": true,
+                "paths": ["src/vault/**"],
+                "place": { "column": 2, "row": 0 },
+                "problems": []
+              },
+              {
+                "id": "docs",
+                "title": "文書",
+                "summary": "説明の側",
+                "level": 1,
+                "external": false,
+                "hasChildren": true,
+                "paths": ["docs/**"],
+                "place": { "column": 0, "row": 1 },
+                "problems": []
+              }
+            ],
+            "edges": [
+              { "from": "app", "to": "server", "count": 4, "undeclared": false },
+              { "from": "server", "to": "vault", "count": 2, "undeclared": false }
+            ],
+            "intendedEdges": [],
+            "closedCount": 5,
+            "findings": []
+          },
+          "files": [
+            { "path": "src/ui/card.ts", "boxes": ["app", "app/ui"] },
+            { "path": "src/ui/badge.ts", "boxes": ["app", "app/ui"] },
+            { "path": "src/server/store/db.ts", "boxes": ["server", "server/store"] },
+            { "path": "src/vault/seed.ts", "boxes": ["vault"] },
+            { "path": "src/vault/index.ts", "boxes": ["vault"] }
+          ],
+          "drift": []
+        }
+      }
+    },
+    {
+      "afterMs": 1200,
+      "event": {
+        "kind": "report-verification",
+        "toolUseId": "fake-report-map-changed",
+        "stages": [
+          { "name": "typecheck", "result": "passed", "count": { "kind": "none" } },
+          { "name": "test", "result": "passed", "count": { "kind": "counted", "tests": 3152 } },
+          { "name": "architecture-map", "result": "passed", "count": { "kind": "none" } }
+        ]
+      }
+    },
+    {
+      "afterMs": 2300,
+      "event": {
+        "kind": "turn-finished",
+        "outcome": {
+          "kind": "completed"
+        }
+      }
+    }
+  ]
+}

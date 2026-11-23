@@ -111,6 +111,22 @@ export function withReportVerification(
   }
 }
 
+/** 同じ `toolUseId` の `report` の記録に、届いたレポートの時点の地図を入れる。記録の集計期間に無ければ姿を変えない。 */
+export function withReportMap(
+  state: SessionState,
+  event: Extract<SessionEvent, { readonly kind: "report-map" }>,
+): SessionState {
+  if (!state.records.some((record) => isReportOf(record, event.toolUseId))) {
+    return state
+  }
+  return {
+    ...state,
+    records: state.records.map((record) =>
+      isReportOf(record, event.toolUseId) ? { ...record, map: event.map } : record,
+    ),
+  }
+}
+
 /**
  * 直近何ターンぶんだけを残す。ターンの境目は `request`（{@link splitIntoTurns}）なので、古いターンから数えて集計期間の外に出たものをまとめて落とす。
  * 集計期間の広さは `chatMode` で選ぶ（{@link MAX_SESSION_STATE_TURNS}）。

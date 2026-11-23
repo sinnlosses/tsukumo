@@ -9,6 +9,7 @@ import type { ReportChecksView } from "../report/report-check-view.ts"
 import type { ReportImageSource } from "../report/report-image-markdown.ts"
 import type { ReportImageSize } from "../report/report-image.ts"
 import type { LeafValue } from "../report/report-leaf-value.ts"
+import type { ReportMap } from "../report/report-map.ts"
 import type { ReportNotDoneView } from "../report/report-not-done.ts"
 import type { PhaseTimesView } from "../report/report-phase-time.ts"
 import type { WrittenReportView } from "../report/report-static-component-list.ts"
@@ -169,6 +170,7 @@ export type MainViewSurfaceStatus = {
   readonly phaseTimes: PhaseTimesView
   readonly changedFiles: ChangedFilesView
   readonly verification: ReportVerification
+  readonly map?: ReportMap
 }
 
 export type MainViewKeyFigure = Extract<LeafComponent, { readonly kind: "stats" }>["items"][number]

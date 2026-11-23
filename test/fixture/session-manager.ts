@@ -119,6 +119,7 @@ function defaultSessionManagerOptions() {
     readPreviousUsageReview: (): PreviousUsageReview => ({ kind: "none" }),
     changeCountGit: IDLE_CHANGE_COUNT_GIT,
     checkRecordSource: IDLE_CHECK_RECORD_SOURCE,
+    readReportMap: () => Promise.resolve({ kind: "none" }),
     dismissUsageProposal: (dismiss) => ({
       kind: "usage-proposal-dismissed",
       key: usageProposalKey(dismiss),

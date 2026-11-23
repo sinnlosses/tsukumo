@@ -74,7 +74,7 @@
 
 - **英語識別子（予定）**: `MapFinding`（型）、`findings`（欄）
 - **定義**: 地図と実装の食い違い。種類（`kind`）と重さ（`error`・`warn`）を持つ
-- **注記**: 種類の一覧は `docs/architecture/architecture-map.md`「ずれ」。`error` が1件でもあると検証の段 `architecture-map` が落ちる
+- **注記**: 種類の一覧は `docs/architecture/architecture-map.md`「ずれ」。`error` が1件でもあると検証の段 `architecture-map` が落ちる。レポートは `ReportMap` の `drift` で、木が合ったときだけ運ぶ
 - **避ける言い方**: 違反（依存の規則の違反と紛れる）、ドリフト（言い方を揃える）
 
 ## 箱を指す
@@ -101,7 +101,7 @@
 
 ### ミニマップ
 
-- **英語識別子**: `ArchitectureMapPanel`（サイドバーの「地図」のタブの中身。ミニマップと、その下の中身）
+- **英語識別子**: `ArchitectureMapPanel`（サイドバーの「地図」のタブの中身。ミニマップと、その下の中身）、`ReportMinimap`（レポートの変えたファイルの節に置く縮小版）
 - **定義**: サイドバーの「地図」のタブに出す、今の図の縮小。押すと中央の列に地図を広げ、会話の流れの上に重ねる
 - **注記**: ミニマップの下には、選んだ箱の役割・目的・概要を出す（`docs/architecture/adr/0082-architecture-map-contract.md` の論点 7）
 - **避ける言い方**: 縮図（言い方を揃える）

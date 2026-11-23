@@ -1,10 +1,15 @@
-import { cleanup, render } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
 import { ChangedFilesFold } from "../../../../../src/browser/features/report/leaf/changed-files-fold.tsx"
 import { PhaseTimes } from "../../../../../src/browser/features/report/leaf/phase-time-section.tsx"
+import {
+  MinimapProvider,
+  type RenderMinimap,
+} from "../../../../../src/browser/features/report/minimap-slot.tsx"
 import { changedFilesView } from "../../../../../src/shared/report/changed-file-section.ts"
 import type { ChangedFile } from "../../../../../src/shared/report/changed-file.ts"
+import type { ReportMap } from "../../../../../src/shared/report/report-map.ts"
 import {
   type PhaseTimeRow,
   phaseTimesView,
@@ -116,5 +121,68 @@ describe("ChangedFilesFold（面の変更したファイル）", () => {
     for (const text of texts) {
       expect(container.textContent).toContain(text)
     }
+  })
+})
+
+describe("ChangedFilesFold のミニマップ", () => {
+  const CHANGED: readonly ChangedFile[] = [
+    { path: "src/ui/a.ts", change: "modified" },
+    { path: "src/server/b.ts", change: "added" },
+  ]
+  const MAP: ReportMap = {
+    view: { level: 1, boxes: [], edges: [], intendedEdges: [], closedCount: 0, findings: [] },
+    files: [
+      { path: "src/ui/a.ts", boxes: ["app"] },
+      { path: "src/server/b.ts", boxes: ["server"] },
+    ],
+    drift: [],
+  }
+  // 代わりの描き手。箱の ID のボタンを並べる
+  const renderMinimap: RenderMinimap = (props) => (
+    <div>
+      {["app", "server"].map((id) => (
+        <button
+          key={id}
+          type="button"
+          onClick={() => {
+            props.onSelect(id)
+          }}
+        >
+          {`箱 ${id}`}
+        </button>
+      ))}
+    </div>
+  )
+
+  function view() {
+    const files = changedFilesView(counted(CHANGED))
+    if (files.kind !== "files") throw new Error("変更したファイルが無い")
+    return files
+  }
+
+  it("箱を押すとその箱の行だけになり、もう一度押すと全部に戻る", () => {
+    const { container } = render(
+      <MinimapProvider value={renderMinimap}>
+        <ChangedFilesFold view={view()} map={MAP} />
+      </MinimapProvider>,
+    )
+
+    fireEvent.click(screen.getByText("箱 app"))
+    expect(container.textContent).toContain("a.ts")
+    expect(container.textContent).not.toContain("b.ts")
+
+    fireEvent.click(screen.getByText("箱 app"))
+    expect(container.textContent).toContain("a.ts")
+    expect(container.textContent).toContain("b.ts")
+  })
+
+  it("map が無いときはミニマップが出ない", () => {
+    render(
+      <MinimapProvider value={renderMinimap}>
+        <ChangedFilesFold view={view()} />
+      </MinimapProvider>,
+    )
+
+    expect(screen.queryByText("箱 app")).toBeNull()
   })
 })

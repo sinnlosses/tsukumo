@@ -7,6 +7,7 @@ import type { SessionDriver } from "../../../session-driver/core/session-driver.
 import type { TokenUsageRecorder } from "../../../usage/core/token-usage.ts"
 import type { EventBatch } from "./event-batch.ts"
 import type { ReportChangeCounter } from "./report-change-count.ts"
+import type { ReportMapper } from "./report-map.ts"
 import type { ReportVerifier } from "./report-verification.ts"
 import type { WaitingLineAlarm } from "./waiting-line-alarm.ts"
 
@@ -41,6 +42,8 @@ export type GenerationTally = {
   readonly reportChangeCounter: ReportChangeCounter
   /** `task` のある `report` の時点の木と検証の控えを照らし、段と件数を運ぶ係。 */
   readonly reportVerifier: ReportVerifier
+  /** `report-change-summary` のあとに、変えたファイルを地図の箱に当てた地図を運ぶ係。 */
+  readonly reportMapper: ReportMapper
 }
 
 type ConfirmedSettings = {

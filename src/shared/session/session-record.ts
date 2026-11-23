@@ -7,6 +7,7 @@ import type { KeyFigures } from "../report/report-block-comparison.ts"
 import type { ReportChangeSummary } from "../report/report-change-summary.ts"
 import type { ReportCheck } from "../report/report-check.ts"
 import type { ReportImageSize } from "../report/report-image.ts"
+import type { ReportMap } from "../report/report-map.ts"
 import type { ReportTask } from "../report/report-task.ts"
 import type { ReportVerification } from "../report/report-verification.ts"
 import type { RecordedPromptImage } from "../session-driver/prompt-image.ts"
@@ -134,6 +135,8 @@ export type SessionRecord =
       readonly changeSummary: ReportChangeSummary
       /** 検証の段と件数。積んだときは `none` で、同じ `toolUseId` の `report-verification` が届いたら段に差し替わる。 */
       readonly verification: ReportVerification
+      /** レポートの時点の地図。積んだときは無く、同じ `toolUseId` の `report-map` が届いたら入る。 */
+      readonly map?: ReportMap
       /** サーバが置き場に置いたときに測れた画像の寸法。続きから復元した記録では、置き場に置き直したときに埋まる。 */
       readonly imageSizes: readonly ReportImageSize[]
       /** サーバが置き場に置けなかった・寸法を測れなかった画像のパス。描く側は最初から「出せない」の札にする。復元では置き直したときに埋まる。 */

@@ -24,6 +24,7 @@ const SESSION_EVENT_KINDS = {
   "report-counted": true,
   "report-change-summary": true,
   "report-verification": true,
+  "report-map": true,
   "work-plan": true,
   "work-plan-called": true,
   "delegate-returned": true,

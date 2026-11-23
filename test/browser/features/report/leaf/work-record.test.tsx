@@ -188,6 +188,55 @@ describe("作業の記録", () => {
     expect(screen.queryByText("架空のコマンドの検証")).toBeNull()
   })
 
+  describe("地図とのずれ", () => {
+    const DRIFT = [
+      {
+        from: "app/view",
+        to: "server/store",
+        sample: { from: "src/view/a.ts", to: "src/server/b.ts" },
+      },
+    ]
+    const MAP_STAGE = {
+      kind: "checked",
+      stages: [{ name: "architecture-map", result: "failed", count: { kind: "none" } }],
+    } as const
+    const mapOf = (drift: typeof DRIFT) =>
+      ({
+        view: { level: 1, boxes: [], edges: [], intendedEdges: [], closedCount: 0, findings: [] },
+        files: [],
+        drift,
+      }) as const
+
+    it("drift があり段 architecture-map があるときだけ、ずれのエッジの行が出る", () => {
+      render(
+        <HeadRegion
+          head={head({
+            status: { ...EMPTY_STATUS, verification: MAP_STAGE, map: mapOf(DRIFT) },
+          })}
+        />,
+      )
+
+      expect(screen.getByText("地図との照合")).toBeTruthy()
+      expect(
+        screen.getByText(
+          "地図に無い依存 — app/view → server/store（src/view/a.ts → src/server/b.ts）",
+        ),
+      ).toBeTruthy()
+    })
+
+    it("drift が空なら行は出ない", () => {
+      render(
+        <HeadRegion
+          head={head({
+            status: { ...EMPTY_STATUS, verification: MAP_STAGE, map: mapOf([]) },
+          })}
+        />,
+      )
+
+      expect(screen.queryByText(/地図に無い依存/)).toBeNull()
+    })
+  })
+
   it("段が届いても、落ちた・確かめていないコマンドの検証の行は隠さない", () => {
     const checks: ReportChecksView = {
       kind: "checks",

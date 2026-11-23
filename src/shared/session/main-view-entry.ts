@@ -206,6 +206,7 @@ function reportRegionsOf(
           phaseTimes: phaseTimesView(phaseRows),
           changedFiles: changedFilesView(report.changeSummary),
           verification: report.verification,
+          ...(report.map === undefined ? {} : { map: report.map }),
         },
       },
       { id: favorId, text: report.favor },

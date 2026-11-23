@@ -6,6 +6,7 @@ import type { KeyFigures } from "../report/report-block-comparison.ts"
 import type { ReportChangeCount } from "../report/report-change-summary.ts"
 import type { ReportCheck } from "../report/report-check.ts"
 import type { ReportImageSize } from "../report/report-image.ts"
+import type { ReportMap } from "../report/report-map.ts"
 import type { ReportTask } from "../report/report-task.ts"
 import type { VerificationStage } from "../report/report-verification.ts"
 import type { ToolErrorField } from "../report/tool-error-field.ts"
@@ -133,4 +134,13 @@ export type ReportEvent =
       readonly kind: "report-verification"
       readonly toolUseId: string
       readonly stages: readonly VerificationStage[]
+    }
+  /**
+   * `task` のある受理された `report` のあとに、変えたファイルを地図の箱に当てたレポートの時点の地図を届ける。
+   * `toolUseId` はその `report` の呼び出しの id。地図のファイルが無い・読めない・変更の量が数えられなかったときは流れず、transcript からの復元でも流れない。
+   */
+  | {
+      readonly kind: "report-map"
+      readonly toolUseId: string
+      readonly map: ReportMap
     }

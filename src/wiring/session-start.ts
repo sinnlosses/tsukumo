@@ -16,6 +16,7 @@ import { createSessionManager } from "../server/session/core/session-manager.ts"
 import type { SocketRouter } from "../server/view-server/adapter/rpc/session-socket.ts"
 import type { WorkflowSettingProcedurePorts } from "../server/workflow-setting/adapter/workflow-setting-procedure.ts"
 import type { wireAchievement } from "./achievement.ts"
+import type { wireArchitectureMap } from "./architecture-map.ts"
 import { wireCharacterPack } from "./character-pack.ts"
 import { wireChat } from "./chat.ts"
 import type { CurrentCharacter } from "./current-character.ts"
@@ -40,6 +41,7 @@ export type SessionStartOptions = {
   readonly context: WiringContext
   readonly achievement: ReturnType<typeof wireAchievement>
   readonly repository: ReturnType<typeof wireRepository>
+  readonly architectureMap: ReturnType<typeof wireArchitectureMap>
   /** 日付ごとの記録の口。ビューの配信が引く token-usage・diagnostic と同じものを渡す（`wireUsageLogs`）。 */
   readonly usageLogs: WiredUsageLogs
   /** 依頼に添えた画像の原寸の置き場。ビューの配信が引く置き場と同じ1つを渡す。 */
@@ -132,6 +134,7 @@ export async function startSession(options: SessionStartOptions): Promise<Starte
     ...chat.manager,
     ...usageReview.manager,
     ...repository.manager,
+    ...options.architectureMap.manager,
   })
   const socketRouter = createSocketRouter({
     session: {

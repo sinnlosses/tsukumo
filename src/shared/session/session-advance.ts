@@ -24,6 +24,7 @@ import {
   settleUtterance,
   trimToRecentTurns,
   withReportChangeSummary,
+  withReportMap,
   withReportVerification,
   workPlanRecordOf,
   workPlanRecords,
@@ -241,6 +242,7 @@ const SESSION_EVENT_FOLDS = {
   report: advanceByReport,
   "report-change-summary": withReportChangeSummary,
   "report-verification": withReportVerification,
+  "report-map": withReportMap,
   "work-plan": (state, event, at) => ({
     ...state,
     records: [...state.records, workPlanRecordOf(state.records, event, at)],

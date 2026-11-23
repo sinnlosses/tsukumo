@@ -17,6 +17,7 @@ import { createEventBatch } from "./event/event-batch.ts"
 import { shelveEventImages } from "./event/event-image-shelf.ts"
 import { consolidationPackToStart, isBatched } from "./event/event-judgement.ts"
 import { createReportChangeCounter } from "./event/report-change-count.ts"
+import { createReportMapper } from "./event/report-map.ts"
 import { createReportVerifier } from "./event/report-verification.ts"
 import { applyRestoredEvents } from "./event/restored-event.ts"
 import {
@@ -87,6 +88,7 @@ export function createGenerationStart(deps: GenerationStartDeps): StartGeneratio
     experienceMetric.observe(event, stateBox.current(), at)
     tally.reportChangeCounter.observe(event)
     tally.reportVerifier.observe(event)
+    tally.reportMapper.observe(event)
     recordSessionEvent(
       { ...options, contextUsage, diagnostic, archiveOrder },
       tally,
@@ -139,6 +141,13 @@ export function createGenerationStart(deps: GenerationStartDeps): StartGeneratio
       reportVerifier: createReportVerifier(options.checkRecordSource, (event) => {
         receiveIfCurrent(event)
       }),
+      reportMapper: createReportMapper(
+        options.checkRecordSource,
+        options.readReportMap,
+        (event) => {
+          receiveIfCurrent(event)
+        },
+      ),
     }
     const receiveIfCurrent = (event: SessionEvent): boolean => {
       if (born !== bornCount) {

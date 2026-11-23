@@ -30,6 +30,27 @@
   stroke: var(--map-focus);
   stroke-width: 2.5;
 }
+/* レポートで変えた箱。変更は黄、追加は緑。選んだ箱の青緑・ずれの赤には混ぜない。変えていない箱は薄くする。 */
+.box[data-change="modified"] .box-body {
+  stroke: var(--state-warn);
+  stroke-width: 2;
+  fill: color-mix(in oklch, var(--state-warn) 16%, var(--surface));
+}
+.box[data-change="added"] .box-body {
+  stroke: var(--state-ok);
+  stroke-width: 2;
+  fill: color-mix(in oklch, var(--state-ok) 16%, var(--surface));
+}
+.box[data-problem="true"][data-change] .box-body {
+  stroke: var(--state-ng);
+}
+.box[data-change="none"] {
+  opacity: 0.45;
+}
+.box-change {
+  fill: var(--ink);
+  font-weight: 700;
+}
 /* 会話のバッジに触れている箱。選んだ箱と見分けがつくよう、地に青緑を差し、縁を太くして光を外へ滲ませる。 */
 .box[data-lit="true"] .box-body {
   fill: color-mix(in oklch, var(--map-focus) 28%, var(--surface));

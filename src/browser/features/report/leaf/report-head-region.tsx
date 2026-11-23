@@ -69,7 +69,12 @@ export function HeadRegion(props: {
         <div className={checksClassName("status")}>
           {checks.kind === "checks" && <ChecksVerdict view={checks} proof={proof} />}
           {phaseTimes.kind === "times" && <PhaseTimes view={phaseTimes} />}
-          {changedFiles.kind === "files" && <ChangedFilesFold view={changedFiles} />}
+          {changedFiles.kind === "files" && (
+            <ChangedFilesFold
+              view={changedFiles}
+              {...(status.map === undefined ? {} : { map: status.map })}
+            />
+          )}
         </div>
       )}
     </RegionBox>

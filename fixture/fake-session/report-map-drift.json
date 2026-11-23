@@ -1,0 +1,159 @@
+{
+  "name": "report-map-drift",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "/next-task t-004（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 1000,
+      "event": {
+        "kind": "report",
+        "task": {
+          "kind": "task",
+          "id": "T-004",
+          "name": "架空の画面から保管庫を直に読む",
+          "outcome": "finished",
+          "genre": "work"
+        },
+        "closing": {
+          "kind": "speech",
+          "text": "終わったよ！",
+          "expression": "proud"
+        },
+        "toolUseId": "fake-report-map-drift",
+        "conclusion": "架空の画面が保管庫を直に読むようにしました。",
+        "sections": [
+          {
+            "heading": "変えたところ（架空）",
+            "blocks": [
+              {
+                "kind": "text",
+                "text": "架空の画面から保管庫の読み出しを呼んだ。",
+                "fold": "",
+                "aside": ""
+              }
+            ]
+          }
+        ],
+        "favor": "",
+        "checks": []
+      }
+    },
+    {
+      "afterMs": 1050,
+      "event": {
+        "kind": "tool-finished",
+        "toolUseId": "fake-report-map-drift",
+        "content": "ok",
+        "isError": false
+      }
+    },
+    {
+      "afterMs": 1100,
+      "event": {
+        "kind": "report-change-summary",
+        "toolUseId": "fake-report-map-drift",
+        "changed": [
+          { "path": "src/ui/card.ts", "change": "modified" },
+          { "path": "src/vault/index.ts", "change": "modified" }
+        ],
+        "files": 2,
+        "added": 8,
+        "removed": 2,
+        "mixed": false
+      }
+    },
+    {
+      "afterMs": 1150,
+      "event": {
+        "kind": "report-map",
+        "toolUseId": "fake-report-map-drift",
+        "map": {
+          "view": {
+            "level": 1,
+            "boxes": [
+              {
+                "id": "app",
+                "title": "アプリ",
+                "summary": "画面の側",
+                "level": 1,
+                "external": false,
+                "hasChildren": true,
+                "paths": ["src/ui/**"],
+                "place": { "column": 0, "row": 0 },
+                "problems": ["undeclared-edge"]
+              },
+              {
+                "id": "server",
+                "title": "手続き",
+                "summary": "手続きの側",
+                "level": 1,
+                "external": false,
+                "hasChildren": true,
+                "paths": ["src/server/**"],
+                "place": { "column": 1, "row": 0 },
+                "problems": []
+              },
+              {
+                "id": "vault",
+                "title": "保管庫",
+                "summary": "保管の側",
+                "level": 1,
+                "external": false,
+                "hasChildren": true,
+                "paths": ["src/vault/**"],
+                "place": { "column": 2, "row": 0 },
+                "problems": ["undeclared-edge"]
+              }
+            ],
+            "edges": [
+              { "from": "app", "to": "server", "count": 4, "undeclared": false },
+              { "from": "server", "to": "vault", "count": 2, "undeclared": false },
+              { "from": "app", "to": "vault", "count": 1, "undeclared": true }
+            ],
+            "intendedEdges": [],
+            "closedCount": 3,
+            "findings": []
+          },
+          "files": [
+            { "path": "src/ui/card.ts", "boxes": ["app", "app/ui"] },
+            { "path": "src/vault/index.ts", "boxes": ["vault"] }
+          ],
+          "drift": [
+            {
+              "from": "app",
+              "to": "vault",
+              "sample": { "from": "src/ui/card.ts", "to": "src/vault/index.ts" }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "afterMs": 1200,
+      "event": {
+        "kind": "report-verification",
+        "toolUseId": "fake-report-map-drift",
+        "stages": [
+          { "name": "typecheck", "result": "passed", "count": { "kind": "none" } },
+          { "name": "test", "result": "passed", "count": { "kind": "counted", "tests": 3152 } },
+          { "name": "architecture-map", "result": "failed", "count": { "kind": "none" } }
+        ]
+      }
+    },
+    {
+      "afterMs": 2300,
+      "event": {
+        "kind": "turn-finished",
+        "outcome": {
+          "kind": "completed"
+        }
+      }
+    }
+  ]
+}
