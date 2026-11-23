@@ -45,7 +45,7 @@ const shownManpu = (): string | null | undefined =>
 
 describe("CharacterView（セリフが届いた瞬間のエフェクト）", () => {
   const cases: readonly (readonly [Expression, SpeechManpu])[] = [
-    ["thinking", "ring"],
+    ["thinking", "thought"],
     ["proud", "sparkle"],
     ["flustered", "sweat"],
     ["serious", "flash"],

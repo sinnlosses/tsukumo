@@ -46,11 +46,14 @@ const FAIL_SHARDS: readonly UnitPiece[] = [
   { x: 60, y: -50, vars: { "--r": "-10deg", "--d": "0.32s" } },
 ]
 
-const RING_BEADS: readonly UnitPiece[] = [
-  { x: 18, y: -20, vars: { "--s": 8, "--dx": 22, "--dy": -30, "--d": "0s" } },
-  { x: 34, y: -44, vars: { "--s": 12, "--dx": 18, "--dy": -26, "--d": "0.15s" } },
+const THOUGHT_BUBBLES: readonly UnitPiece[] = [
+  { x: 34, y: -78, vars: { "--s": 7, "--d": "0s" } },
+  { x: 50, y: -98, vars: { "--s": 10, "--d": "0.1s" } },
+  { x: 64, y: -120, vars: { "--s": 14, "--d": "0.2s" } },
 ]
-const RING: Offset = { x: 84, y: -86 }
+const THOUGHT_CLOUD: Offset = { x: 96, y: -150 }
+const THOUGHT_CLOUD_PATH =
+  "M20 64 C8 64 2 56 4 47 C5 40 11 36 17 36 C15 26 22 18 32 19 C36 10 48 6 57 12 C64 7 76 10 79 20 C88 21 93 30 90 39 C95 45 93 58 82 62 C78 64 74 64 70 64 Z"
 const SPARKLES: readonly UnitPiece[] = [
   { x: -60, y: -40, vars: { "--s": 30, "--d": "0s" } },
   { x: 64, y: -58, vars: { "--s": 22, "--d": "0.2s" } },
@@ -241,6 +244,31 @@ function Star({ className, style }: { readonly className: string; readonly style
   )
 }
 
+/** ガラスの雲。輪郭は線1本で、中の点3つが左から順に灯る。塗りのグラデーションは部品ごとに id を分ける。 */
+function ThoughtCloud({ style }: { readonly style: CSSProperties }) {
+  const id = useId()
+  return (
+    <span className={styles["manpu-thought-cloud"]} style={style}>
+      <svg
+        className={styles["manpu-thought-outline"]}
+        viewBox="0 0 94 68"
+        preserveAspectRatio="none"
+      >
+        <defs>
+          <linearGradient id={id} x1="0" y1="0" x2="0.4" y2="1">
+            <stop offset="0" stopColor="white" stopOpacity="0.24" />
+            <stop offset="1" stopColor="var(--manpu-glow-cool)" stopOpacity="0.07" />
+          </linearGradient>
+        </defs>
+        <path d={THOUGHT_CLOUD_PATH} fill={`url(#${id})`} />
+      </svg>
+      {[0, 1, 2].map((i) => (
+        <span key={i} className={styles["manpu-thought-dot"]} style={{ "--i": i }} />
+      ))}
+    </span>
+  )
+}
+
 function pieces(manpu: SpeechManpu | EndingManpu): ReactElement {
   switch (manpu) {
     case "stars":
@@ -302,20 +330,17 @@ function pieces(manpu: SpeechManpu | EndingManpu): ReactElement {
           </span>
         </>
       )
-    case "ring":
+    case "thought":
       return (
         <>
-          {RING_BEADS.map((piece) => (
-            <span key={piece.x} className={styles["manpu-ring-bead"]} style={unitStyle(piece)} />
+          {THOUGHT_BUBBLES.map((piece) => (
+            <span
+              key={piece.x}
+              className={styles["manpu-thought-bubble"]}
+              style={unitStyle(piece)}
+            />
           ))}
-          <svg className={styles["manpu-ring"]} style={unitStyle(RING)} viewBox="0 0 84 84">
-            <circle className={styles["manpu-ring-track"]} cx="42" cy="42" r="36" />
-            <g className={styles["manpu-ring-orbit"]}>
-              <circle cx="42" cy="6" r="3" />
-              <circle cx="78" cy="42" r="2.2" opacity="0.8" />
-              <circle cx="42" cy="78" r="1.6" opacity="0.6" />
-            </g>
-          </svg>
+          <ThoughtCloud style={unitStyle(THOUGHT_CLOUD)} />
         </>
       )
     case "sparkle":

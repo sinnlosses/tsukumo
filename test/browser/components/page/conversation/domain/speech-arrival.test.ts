@@ -157,7 +157,7 @@ describe("SPEECH_ARRIVALS", () => {
     expect(Object.keys(SPEECH_ARRIVALS).toSorted()).toEqual([...EXPRESSIONS].toSorted())
     expect(SPEECH_ARRIVALS).toEqual({
       default: { motion: "nod", bubble: "pop", manpu: "none" },
-      thinking: { motion: "lean", bubble: "ease", manpu: "ring" },
+      thinking: { motion: "lean", bubble: "ease", manpu: "thought" },
       proud: { motion: "success", bubble: "swell", manpu: "sparkle" },
       excited: { motion: "success", bubble: "swell", manpu: "petals" },
       flustered: { motion: "failure", bubble: "shake", manpu: "sweat" },

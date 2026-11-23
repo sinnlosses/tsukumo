@@ -17,7 +17,7 @@ const ARRIVING_BUBBLE_WINDOW_MS = 800
 
 /** 立ち絵の顔のまわりに1回だけ出るエフェクトの種類。形と動きは CSS（`stage/manpu.css`）が持つ。 */
 export type SpeechManpu =
-  | "ring"
+  | "thought"
   | "sparkle"
   | "sweat"
   | "flash"
@@ -32,7 +32,7 @@ export type SpeechManpu =
  */
 export const SPEECH_ARRIVALS = {
   default: { motion: "nod", bubble: "pop", manpu: "none" },
-  thinking: { motion: "lean", bubble: "ease", manpu: "ring" },
+  thinking: { motion: "lean", bubble: "ease", manpu: "thought" },
   proud: { motion: "success", bubble: "swell", manpu: "sparkle" },
   flustered: { motion: "failure", bubble: "shake", manpu: "sweat" },
   serious: { motion: "still", bubble: "snap", manpu: "flash" },
