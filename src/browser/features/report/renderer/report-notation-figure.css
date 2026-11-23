@@ -96,9 +96,11 @@
    画像は側の箱を持たず、札（前・後）は画像の左上に重ねる。
    切り替えは前と後を同じ枠に重ね、`data-shown` の側だけを見せる。見せない側は `opacity: 0` で場所を取ったまま、見えず、押せず、フォーカスも受けない。
    `transition` は付けない（入れかわりは即時）。 */
+  /* 押しボタンの組の列は中身の幅まで広がるが、器より広くはならない（札が長いと組の中で折り返す）。
+   `auto` の列は札の最小幅を下限に持ち、図ごと器の外へ押し出す。 */
   & .report-captioned.report-compare-swap {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr) minmax(0, max-content);
     align-items: start;
     row-gap: var(--space-md);
   }
@@ -118,6 +120,7 @@
   }
   & .report-captioned.report-compare-swap .report-compare-swap-views {
     display: inline-flex;
+    flex-wrap: wrap;
     gap: var(--space-2xs);
   }
   & .report-captioned.report-compare-swap .report-compare-swap-view {

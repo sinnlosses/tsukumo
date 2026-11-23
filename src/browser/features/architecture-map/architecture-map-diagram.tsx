@@ -15,6 +15,11 @@ import {
   mapGeometryOf,
 } from "./architecture-map-geometry.ts"
 
+/** ミニマップの字の大きさ（図の座標の単位）。 */
+const MINI_FONT_SIZE = 10
+/** ミニマップは器の幅まで広げるが、この倍率で頭打ちにする（字が 14px を超えて矢印ごと大きくならないように）。 */
+const MINI_MAX_SCALE = 1.4
+
 export function ArchitectureMapDiagram(props: {
   readonly view: MapView
   readonly form: MapDiagramForm
@@ -31,7 +36,13 @@ export function ArchitectureMapDiagram(props: {
   const geometry = mapGeometryOf(props.view, props.form)
   const mini = props.form === "mini"
   const sizeProps = mini
-    ? { width: "100%", style: { aspectRatio: `${geometry.width} / ${geometry.height}` } }
+    ? {
+        width: "100%",
+        style: {
+          aspectRatio: `${geometry.width} / ${geometry.height}`,
+          maxWidth: `${String(geometry.width * MINI_MAX_SCALE)}px`,
+        },
+      }
     : { width: geometry.width, height: geometry.height }
   return (
     <svg
@@ -221,7 +232,7 @@ function BoxNode(props: {
         x={rect.x + (mini ? 4 : 12)}
         y={rect.y + (mini ? rect.height / 2 + 3 : 25)}
         className={styles["box-title"]}
-        {...(mini ? { fontSize: 10 } : {})}
+        {...(mini ? { fontSize: MINI_FONT_SIZE, clipPath: `url(#${clipId})` } : {})}
       >
         {truncated(box.title, mini ? 11 : 20)}
       </text>
@@ -231,7 +242,7 @@ function BoxNode(props: {
           y={rect.y + (mini ? rect.height / 2 + 3 : 25)}
           textAnchor="end"
           className={styles["box-change"]}
-          {...(mini ? { fontSize: 10 } : {})}
+          {...(mini ? { fontSize: MINI_FONT_SIZE } : {})}
         >
           {changeKind === "added"
             ? `+${String(change.added)}`
