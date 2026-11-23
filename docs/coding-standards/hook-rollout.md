@@ -25,10 +25,6 @@ block で入れた hook は、誤って拒む形が後から見つかる（`deny
 
 ## ツールの結果を切る hook
 
-Claude Code の PostToolUse は組み込みのツール（Bash など）の結果を差し替えられない（差し替えられるのは MCP のツールの結果だけ）。
-結果を切る hook は、log-only の間は PostToolUse の入口 `scripts/hook/truncate-bash-output.ts` で結果の行数を数えて記録し、
-block に上げるときは PreToolUse でコマンドを包み直して切る。
-
-- 記録は拒む hook と同じ `hook-denials/` に、`mode: "log-only"` と切ったであろう行数 `cutLines` つきで残す。規則のキーは、そのコマンドを包み直せる形か（`wrappable`・`heredoc`・`background`）
-- `hook-denial-replay.ts` は規則のキーごとに、切るはずだった行数の合計を添える
-- block に上げる前に、`wrappable` 以外の形が切る対象に入らないことを再生で確かめる
+Bash の結果を数える log-only の hook は外した。
+22日分の記録で、切って減る量がやめる条件に届かない見込みと、全 Bash を PreToolUse で包み直す代償（auto mode の拒否・rtk の書き換えとの衝突）が大きいことから、block に上げない判断をしたため。
+過去の記録の `cutLines` は `hook-denial-replay.ts` が読み、規則のキーごとに切るはずだった行数の合計を添える。

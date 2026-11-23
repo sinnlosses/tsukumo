@@ -23,9 +23,6 @@ export type HookDenial = {
   readonly mode?: "log-only"
 }
 
-/** ツールの結果を切る hook の行。切ったであろう行数を持つ。 */
-export type HookOverflow = HookDenial & { readonly cutLines: number }
-
 /** 呼び手の欄が無い旧い行の呼び手。 */
 export const UNKNOWN_ACTOR = "不明"
 
@@ -36,7 +33,7 @@ export type RecordedHookDenial = Omit<HookDenial, "actor" | "mode"> & {
   readonly cutLines: number
 }
 
-export function recordHookDenial(denial: Omit<HookDenial, "at"> | Omit<HookOverflow, "at">): void {
+export function recordHookDenial(denial: Omit<HookDenial, "at">): void {
   if (process.env["TSUKUMO_HOOK_DENIAL_RECORD"] === "off") {
     return
   }

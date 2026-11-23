@@ -22,17 +22,6 @@
           }
         ]
       }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/hook/truncate-bash-output.ts\""
-          }
-        ]
-      }
     ]
   }
 }
