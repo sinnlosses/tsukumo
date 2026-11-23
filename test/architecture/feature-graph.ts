@@ -20,6 +20,7 @@ export const SERVER_FEATURES = [
   "achievement",
   "character-pack",
   "item",
+  "architecture-map",
   "diary",
   "chat",
   "work-plan",

@@ -29,6 +29,7 @@ const SERVER_FEATURE_IMPORTS = {
   "workflow-setting": [],
   report: [],
   item: [],
+  "architecture-map": [],
   "work-plan": [],
   question: [],
 }

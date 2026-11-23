@@ -38,6 +38,7 @@
 | `checkout/`         | 打った場所のチェックアウトと自分の根を比べ、違えば打った側の `bin/tsukumo` へ委ねる                                                                                                |
 | `workflow-setting/` | ワークフローの設定。`tw` の設定コマンドを起こす関数と読み書きの手続き                                                                                                              |
 | `item/`             | キャラビューの席に置くアイテム。一覧と席の置き場の読み書き・素材を配る判断                                                                                                         |
+| `architecture-map/` | アーキテクチャの地図。地図のファイルの読み込みと契約の検証・縮尺ごとの箱とエッジの束ね・地図を引く手続き                                                                           |
 
 **機能の下限**: 機能は `core/` と `adapter/` の両方を持つか、`src/shared/<機能>/` を持つ。どちらも
 満たさないまとまりは機能にせず、読み手の機能へ入れる。例外は名指しの3つ（`question`・`system-prompt`・
@@ -94,17 +95,17 @@
 
 <!-- feature-edge-table:start -->
 
-| 機能（import する側） | 読んでよい機能                                                                                                                                                      |
-| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `session`             | `session-driver` `chat` `diary` `usage` `diagnostic` `character-pack` `report` `repository`                                                                         |
-| `system-prompt`       | `session-driver` `chat` `report` `work-plan` `question`                                                                                                             |
-| `view-server`         | `session`                                                                                                                                                           |
-| `chat`                | `character-pack`                                                                                                                                                    |
-| `usage`               | `session-driver`                                                                                                                                                    |
-| `session-driver`      | `report` `work-plan` `question`                                                                                                                                     |
-| `diary`               | `repository`                                                                                                                                                        |
-| `achievement`         | `repository`                                                                                                                                                        |
-| そのほか              | —（葉。`diagnostic` `character-pack` `host` `repository` `recommendation` `checkout` `welcome-greeting` `workflow-setting` `report` `item` `work-plan` `question`） |
+| 機能（import する側） | 読んでよい機能                                                                                                                                                                         |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `session`             | `session-driver` `chat` `diary` `usage` `diagnostic` `character-pack` `report` `repository`                                                                                            |
+| `system-prompt`       | `session-driver` `chat` `report` `work-plan` `question`                                                                                                                                |
+| `view-server`         | `session`                                                                                                                                                                              |
+| `chat`                | `character-pack`                                                                                                                                                                       |
+| `usage`               | `session-driver`                                                                                                                                                                       |
+| `session-driver`      | `report` `work-plan` `question`                                                                                                                                                        |
+| `diary`               | `repository`                                                                                                                                                                           |
+| `achievement`         | `repository`                                                                                                                                                                           |
+| そのほか              | —（葉。`diagnostic` `character-pack` `host` `repository` `recommendation` `checkout` `welcome-greeting` `workflow-setting` `report` `item` `architecture-map` `work-plan` `question`） |
 
 <!-- feature-edge-table:end -->
 

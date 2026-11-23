@@ -1,0 +1,160 @@
+import { describe, expect, it } from "vitest"
+
+import { parseArchitectureMap } from "../../../../src/server/architecture-map/core/map-parse.ts"
+import { mapViewOf } from "../../../../src/server/architecture-map/core/map-view.ts"
+import type { ArchitectureMap } from "../../../../src/shared/architecture-map/architecture-map.ts"
+import type { MapReady, MapView } from "../../../../src/shared/architecture-map/map-view.ts"
+import { sampleMap } from "../sample-map.ts"
+
+function loadedMap(): ArchitectureMap {
+  const parsed = parseArchitectureMap(JSON.stringify(sampleMap()))
+  if (parsed.kind !== "map") {
+    throw new Error("サンプルの地図が読めない")
+  }
+  return parsed.map
+}
+
+function viewOfLevel(level: 1 | 2 | 3): MapReady {
+  const outcome = mapViewOf(loadedMap(), { kind: "level", level })
+  if (outcome.kind !== "ready") {
+    throw new Error("図が引けない")
+  }
+  return outcome
+}
+
+function viewOfFocus(box: string): MapView {
+  const outcome = mapViewOf(loadedMap(), { kind: "focus", box })
+  if (outcome.kind !== "ready") {
+    throw new Error("図が引けない")
+  }
+  return outcome.view
+}
+
+const sum = (counts: readonly number[]) => counts.reduce((total, count) => total + count, 0)
+
+/** 束ねた本数と閉じた本数の和が、小の段の実際のエッジの本数の和と等しいか。 */
+function balanced(view: Pick<MapView, "edges" | "closedCount">, map: ArchitectureMap): boolean {
+  return (
+    sum(view.edges.map((edge) => edge.count)) + view.closedCount ===
+    sum(map.edges.actual.map((edge) => edge.count))
+  )
+}
+
+describe("mapViewOf の縮尺", () => {
+  it("どの縮尺でも、束ねた本数と閉じた本数の和が小の段の実際のエッジの本数の和に等しい", () => {
+    const map = loadedMap()
+
+    for (const level of [1, 2, 3] as const) {
+      expect(balanced(viewOfLevel(level).view, map), `縮尺 ${String(level)}`).toBe(true)
+    }
+  })
+
+  it("束ねたエッジを1本落とした図では、等しさの検査が落ちる", () => {
+    const map = loadedMap()
+    const view = viewOfLevel(3).view
+
+    expect(balanced({ ...view, edges: view.edges.slice(1) }, map)).toBe(false)
+    expect(balanced({ ...view, closedCount: view.closedCount - 1 }, map)).toBe(false)
+  })
+
+  it("大の段は、大の箱とその間に束ねたエッジだけを返す", () => {
+    const { view } = viewOfLevel(1)
+
+    expect(view.boxes.map((box) => box.id)).toEqual(["app", "server", "vault"])
+    expect(view.edges).toEqual([{ from: "app", to: "server", count: 4, undeclared: true }])
+    expect(view.closedCount).toBe(5)
+  })
+
+  it("中の段は、中の箱どうしに束ね、同じ箱に閉じた本数を数える", () => {
+    const { view } = viewOfLevel(2)
+
+    expect(view.boxes.map((box) => box.id)).toEqual(["app/ui", "app/view", "server/store"])
+    expect(view.edges).toEqual([
+      { from: "app/ui", to: "app/view", count: 2, undeclared: false },
+      { from: "app/view", to: "server/store", count: 4, undeclared: true },
+    ])
+    expect(view.closedCount).toBe(3)
+  })
+
+  it("概要は大の段の全体の図にだけ付く", () => {
+    expect(viewOfLevel(1).overview).toBe(sampleMap().overview)
+    expect(viewOfLevel(2)).not.toHaveProperty("overview")
+  })
+
+  it("意図したエッジは図の段に置き換え、図の段より粗い端のものは描かない", () => {
+    expect(viewOfLevel(1).view.intendedEdges).toEqual([
+      { from: "app", to: "server", label: "RPC", origin: "rule:app-to-server" },
+      { from: "server", to: "vault" },
+    ])
+    expect(viewOfLevel(2).view.intendedEdges).toEqual([])
+  })
+
+  it("ずれを図の段の箱へ写し、描かない段の箱には付けない", () => {
+    const large = viewOfLevel(1).view
+    const medium = viewOfLevel(2).view
+
+    expect(large.boxes.find((box) => box.id === "app")?.problems).toEqual(["undeclared-edge"])
+    expect(large.boxes.find((box) => box.id === "server")?.problems).toEqual(["undeclared-edge"])
+    expect(medium.boxes.find((box) => box.id === "app/ui")?.problems).toEqual(["empty-box"])
+    expect(medium.boxes.find((box) => box.id === "app/view")?.problems).toEqual(["undeclared-edge"])
+  })
+
+  it("知らない種類のずれは名前だけで画面へ渡る", () => {
+    expect(viewOfLevel(1).view.findings.at(-1)).toEqual({
+      kind: "unknown",
+      name: "future-kind",
+      severity: "warn",
+    })
+  })
+})
+
+describe("mapViewOf のフォーカス", () => {
+  it("フォーカスした箱の子と、子とつながる外の箱（同じ段の祖先）だけを返し、外の箱どうしのエッジは返さない", () => {
+    const view = viewOfFocus("server")
+
+    expect(view.focus).toEqual({ id: "server", title: "server", level: 1 })
+    expect(view.boxes.map((box) => box.id)).toEqual(["app", "server/store", "vault"])
+    expect(view.edges).toEqual([{ from: "app", to: "server/store", count: 4, undeclared: true }])
+    expect(view.intendedEdges).toEqual([{ from: "server/store", to: "vault" }])
+  })
+
+  it("別名でも引け、フォーカスした箱の中で閉じた本数を数える", () => {
+    const view = viewOfFocus("frontend")
+
+    expect(view.focus?.id).toBe("app")
+    expect(view.boxes.map((box) => box.id)).toEqual(["app/ui", "app/view", "server"])
+    expect(view.edges).toEqual([
+      { from: "app/ui", to: "app/view", count: 2, undeclared: false },
+      { from: "app/view", to: "server", count: 4, undeclared: true },
+    ])
+    expect(view.closedCount).toBe(3)
+    expect(view.intendedEdges).toEqual([])
+  })
+
+  it("中の箱へのフォーカスは小の箱を出し、同じ段の外の箱へ置き換える", () => {
+    const view = viewOfFocus("app/view")
+
+    expect(view.boxes.map((box) => box.id)).toEqual(["app/ui", "src/view/core", "server/store"])
+    expect(view.edges).toEqual([
+      { from: "app/ui", to: "src/view/core", count: 2, undeclared: false },
+      { from: "src/view/core", to: "server/store", count: 4, undeclared: false },
+    ])
+  })
+
+  it("無い箱と、子を持たない箱は図にしない", () => {
+    const map = loadedMap()
+
+    expect(mapViewOf(map, { kind: "focus", box: "nowhere" })).toEqual({
+      kind: "unfocusable",
+      reason: "unknown-box",
+    })
+    expect(mapViewOf(map, { kind: "focus", box: "src/ui/part" })).toEqual({
+      kind: "unfocusable",
+      reason: "no-children",
+    })
+    expect(mapViewOf(map, { kind: "focus", box: "vault" })).toEqual({
+      kind: "unfocusable",
+      reason: "no-children",
+    })
+  })
+})

@@ -11,6 +11,7 @@
 import type { ContractRouterClient } from "@orpc/contract"
 
 import { achievementContract } from "./contract/achievement.ts"
+import { architectureMapContract } from "./contract/architecture-map.ts"
 import { characterPackContract } from "./contract/character-pack.ts"
 import { chatContract } from "./contract/chat.ts"
 import { contextUsageContract } from "./contract/context-usage.ts"
@@ -41,6 +42,7 @@ export const rpcContract = {
   contextUsage: contextUsageContract,
   planUsage: planUsageContract,
   achievement: achievementContract,
+  architectureMap: architectureMapContract,
   sessionDigest: sessionDigestContract,
   sessionClaim: sessionClaimContract,
   workflowSetting: workflowSettingContract,

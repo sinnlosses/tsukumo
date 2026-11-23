@@ -25,6 +25,7 @@ import {
 import { createOpenTaskReader, twClaimsRunner } from "../server/usage/adapter/tw-claim-list.ts"
 import type { SwallowedFailurePlace } from "../shared/diagnostic/swallowed-failure.ts"
 import { wireAchievement } from "./achievement.ts"
+import { wireArchitectureMap } from "./architecture-map.ts"
 import { switchedChatArchive } from "./chat-archive.ts"
 import { createCurrentCharacter, type CurrentCharacter } from "./current-character.ts"
 import { failureDiagnostic } from "./failure-diagnostic.ts"
@@ -98,6 +99,7 @@ export function assembleStartup(
   }
   const achievement = wireAchievement(context, achievementCache, usageLogs.diagnostic)
   const repository = wireRepository(context, usageLogs.diagnostic, readBeadsStamp)
+  const architectureMap = wireArchitectureMap(context, usageLogs.diagnostic)
   const tokenUsage = wireTokenUsage(context, usageLogs.tokenUsage)
   const sessionClaim = wireSessionClaim()
 
@@ -118,6 +120,7 @@ export function assembleStartup(
       ...tokenUsage.rpc,
       ...sessionClaim.rpc,
       ...achievement.rpc,
+      ...architectureMap.rpc,
       ...workflowSetting.rpc,
     },
     headSha: readHeadSha(cwd),

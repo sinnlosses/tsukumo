@@ -15,6 +15,7 @@ import {
 // （置く物の無い機能 `system-prompt` `host` は shared には無い）。
 const SHARED_FEATURES = [
   "achievement",
+  "architecture-map",
   "character-pack",
   "chat",
   "diagnostic",

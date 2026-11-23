@@ -134,6 +134,7 @@ flowchart LR
     workflow_setting["workflow-setting"]
     report["report"]
     item["item"]
+    architecture_map["architecture-map"]
     work_plan["work-plan"]
     question["question"]
   end

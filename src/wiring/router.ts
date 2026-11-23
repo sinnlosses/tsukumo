@@ -10,6 +10,10 @@ import {
   type AchievementProcedurePorts,
   achievementProcedure,
 } from "../server/achievement/adapter/achievement-procedure.ts"
+import {
+  type ArchitectureMapProcedurePorts,
+  architectureMapProcedure,
+} from "../server/architecture-map/adapter/architecture-map-procedure.ts"
 import { characterPackProcedure } from "../server/character-pack/adapter/character-pack-procedure.ts"
 import type { CharacterPackCommandPorts } from "../server/character-pack/core/character-pack-command.ts"
 import { chatProcedure } from "../server/chat/adapter/chat-procedure.ts"
@@ -77,6 +81,7 @@ export type RpcRouterPorts = RepositoryProcedurePorts &
   ContextUsageProcedurePorts &
   PlanUsageProcedurePorts &
   AchievementProcedurePorts &
+  ArchitectureMapProcedurePorts &
   SessionDigestProcedurePorts &
   SessionClaimProcedurePorts &
   Pick<WorkflowSettingProcedurePorts, "readWorkflowSetting" | "readWorkflowEntries">
@@ -92,6 +97,7 @@ export function createRpcRouter(ports: RpcRouterPorts) {
       contextUsage: contextUsageProcedure(ports),
       planUsage: planUsageProcedure(ports),
       achievement: achievementProcedure(ports),
+      architectureMap: architectureMapProcedure(ports),
       sessionDigest: sessionDigestProcedure(ports),
       sessionClaim: sessionClaimProcedure(ports),
       workflowSetting: workflowSettingProcedure(ports),
