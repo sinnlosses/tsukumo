@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>「ふむ」のエフェクト — 3案（2026-11-23）</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #15131b;
+    --surface: #1f1c27;
+    --ink: #ece7ef;
+    --ink-soft: color-mix(in srgb, var(--ink) 70%, transparent);
+    --ink-quiet: color-mix(in srgb, var(--ink) 50%, transparent);
+    --line: color-mix(in srgb, var(--ink) 12%, transparent);
+    --accent: #6fe3cd;
+    --accent-soft: color-mix(in srgb, var(--accent) 16%, transparent);
+    --cool: #bfe9ff;
+    --k: 1;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.6 system-ui, sans-serif; }
+  header.page { max-width: 1280px; margin: 0 auto; padding: 22px 24px 6px; display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: end; }
+  header.page h1 { font-size: 20px; margin: 0; }
+  header.page p { margin: 2px 0 0; color: var(--ink-soft); font-size: 13px; }
+  .toolbar { margin-left: auto; display: flex; gap: 8px; }
+  .toolbar button { all: unset; cursor: pointer; padding: 4px 14px; border-radius: 999px; border: 1px solid var(--line); font-size: 13px; color: var(--ink-soft); }
+  .toolbar button[aria-pressed="true"] { background: var(--accent-soft); color: var(--ink); border-color: transparent; }
+  .toolbar button:focus-visible { outline: 2px solid var(--accent); }
+  main { max-width: 1280px; margin: 0 auto; padding: 14px 24px 48px; }
+  .grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+  @media (width < 1100px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: clip; display: flex; flex-direction: column; }
+  .card.pick { border-color: color-mix(in srgb, var(--accent) 55%, transparent); }
+  .stage { all: unset; cursor: pointer; display: block; position: relative; height: 380px; overflow: clip;
+    background: radial-gradient(110% 70% at 30% 0%, #2a2537 0%, transparent 60%), linear-gradient(#1b1923, #14121a); }
+  .stage:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .portrait { position: absolute; left: 50%; bottom: -6px; height: 350px; aspect-ratio: 1145 / 1374; translate: -50% 0; }
+  .portrait img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+  .fx { position: absolute; inset: 0; pointer-events: none; }
+  /* 顔の位置を原点にする。実物の data-calm と同じく、普段の表情は一段小さく薄く出す */
+  .a { position: absolute; left: calc(var(--ax) * 100%); top: calc(var(--ay) * 100%); width: 0; height: 0; scale: .85; opacity: .8; }
+  .p { position: absolute; left: var(--x, 0px); top: var(--y, 0px); opacity: 0; }
+  .meta { padding: 10px 14px 14px; display: flex; flex-direction: column; gap: 4px; }
+  .meta .row { display: flex; align-items: baseline; gap: 8px; }
+  .meta h3 { margin: 0; font-size: 15px; }
+  .meta .tag { margin-left: auto; font-size: 12px; padding: 1px 9px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); }
+  .meta .tag.now { background: transparent; color: var(--ink-quiet); border: 1px dashed var(--line); }
+  .meta p { margin: 0; font-size: 13px; color: var(--ink-soft); }
+  .meta .why { font-size: 12px; color: var(--ink-quiet); }
+  .glow { filter: drop-shadow(0 0 6px var(--c, #fff)) drop-shadow(0 0 14px color-mix(in srgb, var(--c, #fff) 50%, transparent)); }
+
+  /* ---------- 今: 思索の輪（stage/manpu.css の ring と同じ） ---------- */
+  .think-ring { --c: var(--cool); width: 84px; height: 84px; margin: -42px; animation: fadeHold calc(1.9s * var(--k)) ease-out 1 forwards; }
+  .think-ring circle.track { fill: none; stroke: url(#gThink); stroke-width: 1.6; stroke-linecap: round; stroke-dasharray: 230; stroke-dashoffset: 230;
+    animation: draw calc(0.9s * var(--k)) cubic-bezier(.6,0,.2,1) calc(0.25s * var(--k)) 1 forwards; transform-origin: center; rotate: -90deg; }
+  .think-ring .orbit { transform-origin: 42px 42px; animation: orbit calc(1.9s * var(--k)) cubic-bezier(.4,0,.2,1) 1 forwards; }
+  .think-ring .orbit circle { fill: #fff; }
+  .think-bead { width: var(--s); height: var(--s); margin: calc(var(--s) / -2); border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #fff, var(--cool) 45%, rgb(191 233 255 / 0) 72%);
+    animation: bead calc(1.4s * var(--k)) ease-out var(--d) 1 forwards; }
+  @keyframes draw { to { stroke-dashoffset: 0; } }
+  @keyframes orbit { from { rotate: -40deg; } to { rotate: 200deg; } }
+  @keyframes fadeHold { 0% { opacity: 0; scale: .85; } 18% { opacity: 1; scale: 1; } 72% { opacity: 1; } 100% { opacity: 0; scale: 1.06; } }
+  @keyframes bead { 0% { opacity: 0; transform: translate(0, 10px) scale(.4); } 30% { opacity: 1; } 100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(1); } }
+
+  /* ---------- 案A: ガラスの考え泡 ----------
+     頭の右上へ小さな泡が3つ順に浮かび、ガラスの雲が膨らんで、中の「…」が左から順に灯る */
+  .glass { background: linear-gradient(160deg, rgb(255 255 255 / .22), rgb(191 233 255 / .06));
+    border: 1px solid rgb(255 255 255 / .55);
+    box-shadow: 0 0 10px rgb(150 215 255 / .55), inset 0 1px 0 rgb(255 255 255 / .5);
+    backdrop-filter: blur(3px); }
+  .a-bub { width: var(--s); height: var(--s); margin: calc(var(--s) / -2); border-radius: 50%;
+    animation: bubIn calc(2.4s * var(--k)) cubic-bezier(.3,1.4,.5,1) var(--d) 1 forwards; }
+  @keyframes bubIn { 0% { opacity: 0; scale: 0; } 12% { opacity: 1; scale: 1; } 80% { opacity: 1; scale: 1; } 100% { opacity: 0; scale: .9; } }
+  .a-cloud { width: 82px; height: 46px; margin: -23px -41px; border-radius: 23px;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    animation: cloudIn calc(2.3s * var(--k)) cubic-bezier(.3,1.3,.5,1) calc(0.36s * var(--k)) 1 forwards; }
+  /* 雲の輪郭は1本の SVG の線で描き、重なりの線を中に残さない */
+  .a-cloud { background: none; border: 0; box-shadow: none; backdrop-filter: none; padding-top: 6px; }
+  .a-cloud > svg { position: absolute; inset: -14px -6px -4px; width: calc(100% + 12px); height: calc(100% + 18px); overflow: visible; z-index: -1;
+    filter: drop-shadow(0 0 6px rgb(150 215 255 / .55)); }
+  .a-cloud > svg path { fill: url(#gGlass); stroke: rgb(255 255 255 / .6); stroke-width: 1; }
+  @keyframes cloudIn { 0% { opacity: 0; scale: .4; translate: -8px 8px; } 14% { opacity: 1; scale: 1; translate: 0 0; }
+    55% { translate: 0 -2px; } 82% { opacity: 1; } 100% { opacity: 0; scale: 1.04; translate: 0 -6px; } }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: #fff; opacity: .25;
+    box-shadow: 0 0 6px var(--cool);
+    animation: dotWave calc(0.9s * var(--k)) ease-in-out calc((0.6s + var(--i) * 0.15s) * var(--k)) 2 both; }
+  @keyframes dotWave { 0%, 100% { opacity: .25; translate: 0 0; } 40% { opacity: 1; translate: 0 -3px; } }
+
+  /* ---------- 案B: 灯る三点 ----------
+     頭の上に光の点が3つ並び、左から順に灯って沈む波を2回くり返して消える（入力中の印と同じ読み方） */
+  .b-dot { --c: var(--cool); width: 10px; height: 10px; margin: -5px; border-radius: 50%; background: #fff;
+    animation: bLife calc(2.3s * var(--k)) ease-out 1 forwards; }
+  .b-dot > i { position: absolute; inset: 0; border-radius: 50%; background: #fff; box-shadow: 0 0 8px var(--cool), 0 0 18px var(--cool);
+    animation: dotWave calc(0.9s * var(--k)) ease-in-out calc((0.2s + var(--i) * 0.15s) * var(--k)) 2 both; }
+  .b-dot { background: rgb(255 255 255 / .2); }
+  @keyframes bLife { 0% { opacity: 0; scale: .3; } 12% { opacity: 1; scale: 1; } 85% { opacity: 1; } 100% { opacity: 0; } }
+
+  /* ---------- 案C: 狐火の三点 ----------
+     頭の上の弧に小さな狐火が3つ順に灯り、揺らいで「…」を作る。最後に真ん中から細い煙が1筋昇って消える */
+  .c-fire { --c: var(--accent); width: 18px; height: 24px; margin: -16px -9px -8px;
+    animation: cFire calc(2.4s * var(--k)) cubic-bezier(.3,1.3,.5,1) var(--d) 1 forwards; transform-origin: 50% 90%; }
+  .c-fire svg { animation: flicker calc(0.5s * var(--k)) ease-in-out infinite alternate; transform-origin: 50% 90%; }
+  @keyframes cFire { 0% { opacity: 0; scale: 0; translate: 0 6px; } 14% { opacity: 1; scale: 1; translate: 0 0; } 80% { opacity: 1; } 100% { opacity: 0; translate: 0 -8px; scale: .7; } }
+  @keyframes flicker { from { scale: 1 1; skew: -3deg; } to { scale: .92 1.08; skew: 3deg; } }
+  .c-wisp { width: 2px; height: 26px; margin: -26px -1px 0; border-radius: 1px;
+    background: linear-gradient(to top, color-mix(in srgb, var(--accent) 80%, white), transparent);
+    animation: wisp calc(1s * var(--k)) ease-out calc(1.5s * var(--k)) 1 forwards; transform-origin: bottom; }
+  @keyframes wisp { 0% { opacity: 0; scale: 1 .2; } 40% { opacity: .9; scale: 1 1; } 100% { opacity: 0; translate: 3px -14px; } }
+
+  @media (prefers-reduced-motion: reduce) { .c-fire svg { animation: none; } }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="gThink" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffffff" />
+      <stop offset="1" stop-color="#7fd4ff" stop-opacity=".4" />
+    </linearGradient>
+    <linearGradient id="gGlass" x1="0" y1="0" x2=".4" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity=".24" />
+      <stop offset="1" stop-color="#bfe9ff" stop-opacity=".07" />
+    </linearGradient>
+    <radialGradient id="gFire" cx=".5" cy=".7" r=".6">
+      <stop offset="0" stop-color="#ffffff" />
+      <stop offset=".45" stop-color="#b8f5e8" />
+      <stop offset="1" stop-color="#6fe3cd" stop-opacity=".7" />
+    </radialGradient>
+  </defs>
+</svg>
+
+<header class="page">
+  <div>
+    <h1>「ふむ」（thinking）のエフェクト — 3案</h1>
+    <p>セリフが「ふむ」で届いたときに1回だけ出る。左端が今の形。カードを押すともう一度再生する。大きさと薄さは実物の「普段の表情」（data-calm）と同じ一段控えめにしてある。</p>
+  </div>
+  <div class="toolbar">
+    <button type="button" id="replay">全部を再生</button>
+    <button type="button" id="slow" aria-pressed="false">ゆっくり（×3）</button>
+    <button type="button" id="loop" aria-pressed="true">繰り返す</button>
+  </div>
+</header>
+<main><div class="grid" id="grid"></div></main>
+
+<script>
+const IMG = `../../../../characters/tsukumo/thinking.png`
+const FIRE = '<svg viewBox="0 0 18 24" width="100%" height="100%" style="overflow:visible"><path fill="url(#gFire)" d="M9 0 C11 5 17 9 17 15 A8 8 0 0 1 1 15 C1 11 4 9 5 5 C6 8 7 9 8 9 C8 6 8 3 9 0Z"/></svg>'
+// 94×68 の箱に収まる雲（下は平ら寄り、上に山が3つ）
+const CLOUD = '<svg viewBox="0 0 94 68" preserveAspectRatio="none"><path d="M20 64 C8 64 2 56 4 47 C5 40 11 36 17 36 C15 26 22 18 32 19 C36 10 48 6 57 12 C64 7 76 10 79 20 C88 21 93 30 90 39 C95 45 93 58 82 62 C78 64 74 64 70 64 Z"/></svg>'
+// 顔の位置は characters/tsukumo/character.json の faceAtByExpression.thinking と同じ値
+const AX = 0.52, AY = 0.5
+
+const CARDS = [
+  { id: "now", tag: "今", label: "思索の輪", now: true,
+    what: "顔の右上で光の粒が2つ昇り、細い輪が描かれ、輪の上を3つの粒が巡って消える。",
+    why: "光の飾りとしては綺麗だが、輪にも粒にも「考える」という決まった読み方が無い。" },
+  { id: "a", tag: "案A（推奨）", label: "ガラスの考え泡", pick: true,
+    what: "頭の右上へ小さな泡が3つ順に浮かび、ガラスの雲が膨らんで、中の「…」が左から順に2回灯る。",
+    why: "漫画の考え泡は「考えている」の読み方がいちばん定まった記号。白黒の線ではなく、ガラスと光で描いて今の画風に寄せる。" },
+  { id: "b", tag: "案B", label: "灯る三点",
+    what: "頭の上に光の点が3つ並び、左から順に灯って沈む波を2回くり返して消える。",
+    why: "チャットの入力中の印と同じ読み方で、最も小さく静か。ただし「待っている」とも読めて、考えている顔との結び付きは A より弱い。" },
+  { id: "c", tag: "案C", label: "狐火の三点",
+    what: "頭の上の弧に小さな狐火が3つ順に灯り、揺らいで「…」を作る。最後に真ん中から細い煙が1筋昇る。",
+    why: "「…」の読み方を、つくもの体の一部の狐火で作る。キャラクターらしさは最も強いが、色が画の狐火と同じなので背景の狐火に紛れやすい。" },
+]
+
+function piece(parent, cls, vars = {}, html = "") {
+  const e = document.createElement("span")
+  e.className = "p " + cls
+  for (const [k, v] of Object.entries(vars)) e.style.setProperty(k, v)
+  e.innerHTML = html
+  parent.append(e)
+  return e
+}
+const FX = {
+  now(a) {
+    piece(a, "think-bead", { "--x": "18px", "--y": "-20px", "--s": "8px", "--dx": "22px", "--dy": "-30px", "--d": "0s" })
+    piece(a, "think-bead", { "--x": "34px", "--y": "-44px", "--s": "12px", "--dx": "18px", "--dy": "-26px", "--d": "calc(0.15s * var(--k))" })
+    piece(a, "think-ring glow", { "--x": "84px", "--y": "-86px" },
+      `<svg viewBox="0 0 84 84" width="100%" height="100%" style="overflow:visible"><circle class="track" cx="42" cy="42" r="36" />
+        <g class="orbit"><circle cx="42" cy="6" r="3" /><circle cx="78" cy="42" r="2.2" opacity=".8" /><circle cx="42" cy="78" r="1.6" opacity=".6" /></g></svg>`)
+  },
+  a(a) {
+    const bubs = [[34, -78, 7, 0], [50, -98, 10, .1], [64, -120, 14, .2]]
+    for (const [x, y, s, d] of bubs)
+      piece(a, "a-bub glass", { "--x": `${x}px`, "--y": `${y}px`, "--s": `${s}px`, "--d": `calc(${d}s * var(--k))` })
+    const cloud = piece(a, "a-cloud", { "--x": "96px", "--y": "-150px" }, CLOUD)
+    for (let i = 0; i < 3; i++) { const d = document.createElement("span"); d.className = "dot"; d.style.setProperty("--i", i); cloud.append(d) }
+  },
+  b(a) {
+    for (let i = 0; i < 3; i++) {
+      const e = piece(a, "b-dot", { "--x": `${8 + (i - 1) * 20}px`, "--y": "-132px", "--i": i })
+      const g = document.createElement("i"); g.style.setProperty("--i", i); e.append(g)
+    }
+  },
+  c(a) {
+    const fires = [[-22, -122], [8, -134], [38, -122]]
+    fires.forEach(([x, y], i) => piece(a, "c-fire glow", { "--x": `${x}px`, "--y": `${y}px`, "--d": `calc(${i * 0.22}s * var(--k))` }, FIRE))
+    piece(a, "c-wisp", { "--x": "8px", "--y": "-146px" })
+  },
+}
+
+const plays = []
+const playById = {}
+for (const item of CARDS) {
+  const card = document.createElement("article")
+  card.className = "card" + (item.pick ? " pick" : "")
+  card.innerHTML = `
+    <button type="button" class="stage" aria-label="${item.label}を再生">
+      <span class="portrait"><img alt="立ち絵（ふむ）" src="${IMG}"><span class="fx"></span></span>
+    </button>
+    <div class="meta">
+      <div class="row"><h3>${item.label}</h3><span class="tag ${item.now ? "now" : ""}">${item.tag}</span></div>
+      <p>${item.what}</p>
+      <span class="why">${item.why}</span>
+    </div>`
+  document.getElementById("grid").append(card)
+  const fx = card.querySelector(".fx")
+  const play = () => {
+    fx.replaceChildren()
+    const a = document.createElement("span")
+    a.className = "a"
+    a.style.setProperty("--ax", AX)
+    a.style.setProperty("--ay", AY)
+    fx.append(a)
+    FX[item.id](a)
+  }
+  card.querySelector(".stage").addEventListener("click", play)
+  plays.push(play)
+  playById[item.id] = { play, card }
+}
+
+const playAll = () => plays.forEach((p) => p())
+document.getElementById("replay").addEventListener("click", playAll)
+const slow = document.getElementById("slow")
+slow.addEventListener("click", () => {
+  const on = slow.getAttribute("aria-pressed") !== "true"
+  slow.setAttribute("aria-pressed", String(on))
+  document.documentElement.style.setProperty("--k", on ? "3" : "1")
+  playAll()
+})
+const loopBtn = document.getElementById("loop")
+let timer = null
+const startLoop = () => { timer = setInterval(playAll, 3200 * Number(getComputedStyle(document.documentElement).getPropertyValue("--k") || 1)) }
+loopBtn.addEventListener("click", () => {
+  const on = loopBtn.getAttribute("aria-pressed") !== "true"
+  loopBtn.setAttribute("aria-pressed", String(on))
+  clearInterval(timer)
+  if (on) startLoop()
+})
+const params = new URLSearchParams(location.search)
+if (params.has("still")) loopBtn.setAttribute("aria-pressed", "false")
+else startLoop()
+if (!matchMedia("(prefers-reduced-motion: reduce)").matches) playAll()
+// 撮影用: ?still のあと freezeAll(t) で全部を t 秒の位置で止める
+window.freezeAll = (t) => {
+  playAll()
+  for (const anim of document.getAnimations()) { anim.pause(); anim.currentTime = t * 1000 }
+}
+</script>
+</body>
+</html>
