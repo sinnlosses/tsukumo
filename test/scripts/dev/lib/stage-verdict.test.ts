@@ -72,16 +72,17 @@ describe("withDroppedStages", () => {
   test("E2E を選ばなかった変更では test:e2e が unobserved で並ぶ", () => {
     const plan = planStages(["src/server/a.ts"], () => [], false)
     expect(verdictsOf(plan)).toEqual([
-      ...passAll(["typecheck", "lint", "format:check", "token-limit", "test"]),
+      ...passAll(["typecheck", "lint", "architecture-map", "format:check", "token-limit", "test"]),
       { name: "test:e2e", verdict: "unobserved" },
     ])
   })
 
-  test("文書だけの変更では落とした4段が全段の順で unobserved、文書の検査は後ろに足される", () => {
+  test("文書だけの変更では落とした5段が全段の順で unobserved、文書の検査は後ろに足される", () => {
     const plan = planStages(["README.md"], () => [], false)
     expect(verdictsOf(plan)).toEqual([
       { name: "typecheck", verdict: "unobserved" },
       { name: "lint", verdict: "unobserved" },
+      { name: "architecture-map", verdict: "unobserved" },
       { name: "format:check", verdict: "pass" },
       { name: "token-limit", verdict: "pass" },
       { name: "test", verdict: "unobserved" },
@@ -90,7 +91,7 @@ describe("withDroppedStages", () => {
     ])
   })
 
-  test("6段すべてを計画したときは落とした段が無い", () => {
+  test("7段すべてを計画したときは落とした段が無い", () => {
     const plan = planStages([], () => [e2eStage([])], true)
     expect(verdictsOf(plan)).toEqual(passAll(FULL_STAGE_NAMES))
   })

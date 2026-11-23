@@ -28,5 +28,8 @@ characters/local/
 /.check-record.json*
 /.check-last-run.json
 
+# pnpm run check の段 architecture-map が毎回書き直す、アーキテクチャの地図のファイル
+/.architecture-map.json
+
 # 前回落ちて今回通ったテストを pnpm run check が足していく台帳
 /flaky-ledger.jsonl

@@ -12,6 +12,7 @@ const EXEMPT_PATH_PATTERNS = [
   "test/e2e/expected/",
   "docs/history/",
   "docs/research/",
+  "docs/architecture/architecture-map.toml",
   "vendor/",
   "src/browser/components/ui/theme-root/built/",
 ] as const satisfies readonly string[]

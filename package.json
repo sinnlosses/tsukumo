@@ -21,6 +21,7 @@
     "lint:fix": "oxlint --type-aware src test scripts vite.config.ts --ignore-pattern src/browser/components/ui/theme-root/built/ --fix --deny-warnings",
     "format": "node scripts/document/write-figure-decision-table.ts && node scripts/document/write-feature-edge-table.ts &&node scripts/document/write-plain-word-table.ts &&node scripts/document/write-document-index.ts && oxfmt .",
     "format:check": "oxfmt . --check",
+    "architecture-map": "node scripts/dev/architecture-map.ts",
     "token-limit": "node scripts/dev/token-limit.ts",
     "token-count": "node scripts/dev/token-count.ts",
     "test": "node scripts/dev/test.ts",

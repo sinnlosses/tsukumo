@@ -1,0 +1,754 @@
+overview = "tsukumo は、Claude Code を子プロセスとして動かし、キャラクターと一緒に仕事をするための画面を1つのプロセスから出すアプリである。サーバが会話の流れを畳み、ブラウザの画面へ WebSocket 1本で配り、両者が読む語彙と契約を共有層が持つ。外の世界とは、Claude Code・同梱のプラグイン・キャラクターパックだけをやり取りする。"
+forbidden_prefixes = ["server-feature-edge:"]
+
+# 意図したエッジ。server の機能どうしは規則（server-feature-edge:）から読むので書かない。
+# 中の箱どうしの組は、依存の規則（.dependency-cruiser.cjs）が許す向きだけを書く。
+edges = [
+  { from = "server", to = "claude-code", label = "SDK" },
+  { from = "server", to = "tsukumo-plugins", label = "読み込み" },
+  { from = "server", to = "character-pack", label = "読み込み" },
+  { from = "server", to = "shared" },
+  { from = "browser", to = "shared" },
+  { from = "browser/achievement-page", to = "browser/frame" },
+  { from = "browser/achievement-page", to = "browser/support" },
+  { from = "browser/achievement-page", to = "browser/ui" },
+  { from = "browser/app", to = "browser/achievement-page" },
+  { from = "browser/app", to = "browser/character-page" },
+  { from = "browser/app", to = "browser/character-view" },
+  { from = "browser/app", to = "browser/conversation" },
+  { from = "browser/app", to = "browser/dispatch" },
+  { from = "browser/app", to = "browser/frame" },
+  { from = "browser/app", to = "browser/main-view" },
+  { from = "browser/app", to = "browser/report" },
+  { from = "browser/app", to = "browser/run-setting" },
+  { from = "browser/app", to = "browser/support" },
+  { from = "browser/app", to = "browser/token-usage-page" },
+  { from = "browser/app", to = "browser/ui" },
+  { from = "browser/character-page", to = "browser/frame" },
+  { from = "browser/character-page", to = "browser/support" },
+  { from = "browser/character-page", to = "browser/ui" },
+  { from = "browser/character-view", to = "browser/conversation" },
+  { from = "browser/character-view", to = "browser/dispatch" },
+  { from = "browser/character-view", to = "browser/frame" },
+  { from = "browser/character-view", to = "browser/support" },
+  { from = "browser/character-view", to = "browser/ui" },
+  { from = "browser/conversation", to = "browser/character-view" },
+  { from = "browser/conversation", to = "browser/dispatch" },
+  { from = "browser/conversation", to = "browser/frame" },
+  { from = "browser/conversation", to = "browser/main-view" },
+  { from = "browser/conversation", to = "browser/report" },
+  { from = "browser/conversation", to = "browser/support" },
+  { from = "browser/conversation", to = "browser/task-board" },
+  { from = "browser/conversation", to = "browser/ui" },
+  { from = "browser/current-work", to = "browser/support" },
+  { from = "browser/current-work", to = "browser/ui" },
+  { from = "browser/dispatch", to = "browser/conversation" },
+  { from = "browser/dispatch", to = "browser/current-work" },
+  { from = "browser/dispatch", to = "browser/report" },
+  { from = "browser/dispatch", to = "browser/run-setting" },
+  { from = "browser/dispatch", to = "browser/support" },
+  { from = "browser/dispatch", to = "browser/ui" },
+  { from = "browser/entry", to = "browser/app" },
+  { from = "browser/entry", to = "browser/report" },
+  { from = "browser/entry", to = "browser/support" },
+  { from = "browser/entry", to = "browser/task-board" },
+  { from = "browser/entry", to = "browser/ui" },
+  { from = "browser/frame", to = "browser/current-work" },
+  { from = "browser/frame", to = "browser/run-setting" },
+  { from = "browser/frame", to = "browser/support" },
+  { from = "browser/frame", to = "browser/task-board" },
+  { from = "browser/frame", to = "browser/ui" },
+  { from = "browser/main-view", to = "browser/conversation" },
+  { from = "browser/main-view", to = "browser/current-work" },
+  { from = "browser/main-view", to = "browser/dispatch" },
+  { from = "browser/main-view", to = "browser/frame" },
+  { from = "browser/main-view", to = "browser/report" },
+  { from = "browser/main-view", to = "browser/support" },
+  { from = "browser/main-view", to = "browser/task-board" },
+  { from = "browser/main-view", to = "browser/ui" },
+  { from = "browser/report", to = "browser/support" },
+  { from = "browser/report", to = "browser/ui" },
+  { from = "browser/run-setting", to = "browser/support" },
+  { from = "browser/run-setting", to = "browser/ui" },
+  { from = "browser/task-board", to = "browser/support" },
+  { from = "browser/task-board", to = "browser/ui" },
+  { from = "browser/token-usage-page", to = "browser/frame" },
+  { from = "browser/token-usage-page", to = "browser/support" },
+  { from = "browser/token-usage-page", to = "browser/ui" },
+  { from = "browser/ui", to = "browser/support" },
+  { from = "server/achievement", to = "server/adapter" },
+  { from = "server/adapter", to = "server/core" },
+  { from = "server/character-pack", to = "server/adapter" },
+  { from = "server/character-pack", to = "server/core" },
+  { from = "server/chat", to = "server/adapter" },
+  { from = "server/chat", to = "server/core" },
+  { from = "server/checkout", to = "server/adapter" },
+  { from = "server/diagnostic", to = "server/adapter" },
+  { from = "server/diary", to = "server/adapter" },
+  { from = "server/diary", to = "server/core" },
+  { from = "server/host", to = "server/adapter" },
+  { from = "server/host", to = "server/core" },
+  { from = "server/item", to = "server/adapter" },
+  { from = "server/item", to = "server/core" },
+  { from = "server/recommendation", to = "server/adapter" },
+  { from = "server/recommendation", to = "server/core" },
+  { from = "server/report", to = "server/adapter" },
+  { from = "server/report", to = "server/core" },
+  { from = "server/repository", to = "server/adapter" },
+  { from = "server/repository", to = "server/core" },
+  { from = "server/session", to = "server/adapter" },
+  { from = "server/session", to = "server/core" },
+  { from = "server/session-driver", to = "server/adapter" },
+  { from = "server/session-driver", to = "server/core" },
+  { from = "server/system-prompt", to = "server/core" },
+  { from = "server/usage", to = "server/adapter" },
+  { from = "server/usage", to = "server/core" },
+  { from = "server/view-server", to = "server/adapter" },
+  { from = "server/view-server", to = "server/core" },
+  { from = "server/welcome-greeting", to = "server/adapter" },
+  { from = "server/welcome-greeting", to = "server/core" },
+  { from = "server/wiring", to = "server/achievement" },
+  { from = "server/wiring", to = "server/adapter" },
+  { from = "server/wiring", to = "server/character-pack" },
+  { from = "server/wiring", to = "server/chat" },
+  { from = "server/wiring", to = "server/checkout" },
+  { from = "server/wiring", to = "server/core" },
+  { from = "server/wiring", to = "server/diagnostic" },
+  { from = "server/wiring", to = "server/diary" },
+  { from = "server/wiring", to = "server/host" },
+  { from = "server/wiring", to = "server/item" },
+  { from = "server/wiring", to = "server/recommendation" },
+  { from = "server/wiring", to = "server/report" },
+  { from = "server/wiring", to = "server/repository" },
+  { from = "server/wiring", to = "server/session" },
+  { from = "server/wiring", to = "server/session-driver" },
+  { from = "server/wiring", to = "server/system-prompt" },
+  { from = "server/wiring", to = "server/usage" },
+  { from = "server/wiring", to = "server/view-server" },
+  { from = "server/wiring", to = "server/welcome-greeting" },
+  { from = "server/wiring", to = "server/workflow-setting" },
+  { from = "server/work-plan", to = "server/core" },
+  { from = "server/workflow-setting", to = "server/adapter" },
+  { from = "shared/achievement", to = "shared/diary" },
+  { from = "shared/achievement", to = "shared/utils" },
+  { from = "shared/character-pack", to = "shared/utils" },
+  { from = "shared/contract", to = "shared/achievement" },
+  { from = "shared/contract", to = "shared/character-pack" },
+  { from = "shared/contract", to = "shared/chat" },
+  { from = "shared/contract", to = "shared/diagnostic" },
+  { from = "shared/contract", to = "shared/diary" },
+  { from = "shared/contract", to = "shared/item" },
+  { from = "shared/contract", to = "shared/protocol" },
+  { from = "shared/contract", to = "shared/recommendation" },
+  { from = "shared/contract", to = "shared/repository" },
+  { from = "shared/contract", to = "shared/session" },
+  { from = "shared/contract", to = "shared/session-driver" },
+  { from = "shared/contract", to = "shared/usage" },
+  { from = "shared/contract", to = "shared/workflow-setting" },
+  { from = "shared/diagnostic", to = "shared/recommendation" },
+  { from = "shared/diagnostic", to = "shared/session" },
+  { from = "shared/diary", to = "shared/character-pack" },
+  { from = "shared/item", to = "shared/character-pack" },
+  { from = "shared/protocol", to = "shared/contract" },
+  { from = "shared/protocol", to = "shared/session" },
+  { from = "shared/recommendation", to = "shared/character-pack" },
+  { from = "shared/recommendation", to = "shared/repository" },
+  { from = "shared/report", to = "shared/utils" },
+  { from = "shared/session", to = "shared/character-pack" },
+  { from = "shared/session", to = "shared/diary" },
+  { from = "shared/session", to = "shared/item" },
+  { from = "shared/session", to = "shared/recommendation" },
+  { from = "shared/session", to = "shared/report" },
+  { from = "shared/session", to = "shared/repository" },
+  { from = "shared/session", to = "shared/session-driver" },
+  { from = "shared/session", to = "shared/usage" },
+  { from = "shared/session", to = "shared/utils" },
+  { from = "shared/session-driver", to = "shared/report" },
+  { from = "shared/session-driver", to = "shared/utils" },
+]
+
+# ---------------------------------------------------------------------------
+# 外の世界
+
+[[boxes]]
+id = "claude-code"
+title = "Claude Code"
+summary = "会話の相手として動き、ツールの呼び出しとメッセージを返す"
+purpose = "tsukumo の外で動く別のプロセスなので、境界を越える所だけをサーバの外向きの層に閉じ込める"
+overview = "tsukumo は Claude Code を子プロセスとして起こし、依頼を渡してメッセージとツールの呼び出しを受け取る。画面の描画は tsukumo が受け持ち、Claude Code の画面は開かない。"
+external = true
+place = { column = 0, row = 0 }
+links = { adr = ["docs/architecture/adr/0008-sdk-instead-of-tui.md"], terms = ["セッションドライバ"] }
+
+[[boxes]]
+id = "tsukumo-plugins"
+title = "tsukumo-plugins"
+summary = "会話とタスクの進め方を載せるスキルとエージェントの束を渡す"
+purpose = "tsukumo の本体から切り離した別の配布物にして、本体がスキルの中身に依存しないようにする"
+overview = "取り込んだプラグイン群を、会話のセッションへ読み込ませる。本体は契約の口と欄だけを見て、スキルの中身は読まない。"
+external = true
+place = { column = 0, row = 1 }
+links = { adr = ["docs/architecture/adr/0024-no-skill-dependency.md"] }
+
+[[boxes]]
+id = "character-pack"
+title = "キャラクターパック"
+summary = "立ち絵・表情・人格の定義と素材を渡す"
+purpose = "キャラクターの中身をコードに書かず、差し替えられる素材と定義として本体の外に置く"
+overview = "利用者のホームと同梱の置き場にあるパックを、サーバが読み込む。素材と表情の対応は定義ファイル側が持つ。"
+external = true
+place = { column = 0, row = 2 }
+links = { adr = [
+  "docs/architecture/adr/0014-no-bundled-character-asset.md",
+], terms = [
+  "キャラクターパック",
+] }
+
+# ---------------------------------------------------------------------------
+# サーバ
+
+[[boxes]]
+id = "server"
+title = "サーバ"
+summary = "Claude Code を起こして会話の流れを畳み、画面へ配る"
+purpose = "外の世界に触れる境界と純粋な判断を機能ごとにまとめ、ブラウザとは実行環境の違いで分ける"
+overview = "セッションを持つ機能が各機能の判断を束ね、外の世界の実装を選んで渡すのは配線が受け持つ。機能どうしの import は許した向きだけで、共有の語彙は共有層から読む。"
+place = { column = 1, row = 0 }
+links = { adr = [
+  "docs/architecture/adr/0019-layer-as-directory.md",
+  "docs/architecture/adr/0037-dependency-cruiser-edge-check.md",
+], terms = [
+  "アダプタ",
+] }
+
+[[boxes.children]]
+id = "server/wiring"
+title = "配線"
+summary = "起動の段取りと機能ごとの組み立てを結び、機能の判断と外の世界の実装を引き合わせる"
+purpose = "判断と境界を結べる場所を1か所に絞り、機能どうしが直接結び付くのを防ぐ"
+overview = "入口が起動の段取りを並べ、機能ごとの組み立てがセッションと手続きの受け口へ渡す関数の組を返す。外の世界の実装を選ぶのはここだけで、ほかの機能は渡されたものを使う。"
+paths = ["src/wiring/**", "src/cli.ts", "src/main.ts", "src/types/**"]
+links = { adr = ["docs/architecture/adr/0021-feature-state-fold-in-feature.md"] }
+
+[[boxes.children]]
+id = "server/core"
+title = "共有の判断"
+summary = "機能の語彙を名乗らない純粋な判断を、複数の機能へ提供する"
+purpose = "読み手が2つ以上ある判断だけを置き、機能へ寄せると生まれる機能どうしの依存を避ける"
+overview = "使い捨ての問い合わせの組み立てなど、どの機能の語彙にも属さない判断を持つ。外の世界には触れず、共有層だけを読む。"
+paths = ["src/server/core/**"]
+
+[[boxes.children]]
+id = "server/adapter"
+title = "共有の境界"
+summary = "機能の語彙を名乗らない外の世界との境界を、複数の機能へ提供する"
+purpose = "ファイルや子プロセスなど外の世界に触る所を1ファイル1境界で集め、判断から隔てる"
+overview = "ファイルの書き込みや使い捨ての問い合わせなど、複数の機能が使う境界を持つ。判断の層は読めるが、判断の層からは読まれない。"
+paths = ["src/server/adapter/**"]
+
+[[boxes.children]]
+id = "server/session"
+title = "セッション"
+summary = "セッションを持ち、起こし、依頼を受けて各機能の判断を1つの流れに束ねる"
+purpose = "各機能の判断を束ねる役を1つの機能に集め、順序と状態の持ち主を1か所にする"
+overview = "ドライバやチャット・日記・使用量などの判断を受け取り、会話の1セッションとしての順序と状態を保つ。外の世界の実装は配線から渡される。"
+paths = ["src/server/session/**"]
+
+[[boxes.children]]
+id = "server/session-driver"
+title = "セッションドライバ"
+summary = "Claude Code を起こして動かし、返るメッセージを会話の出来事に変換する"
+purpose = "Claude Code との接点を1つの機能に閉じ込め、本物と疑似の実装を同じ契約で差し替えられるようにする"
+overview = "契約と、SDK を使う実装と、疑似セッションの実装を持つ。答え待ちや続きからの再開もここで扱い、受け取ったメッセージを共有層の出来事に畳んで上へ渡す。"
+paths = ["src/server/session-driver/**"]
+links = { terms = ["セッションドライバ", "疑似セッション"] }
+
+[[boxes.children]]
+id = "server/report"
+title = "レポート"
+summary = "レポートの記法を受け付けて検査し、書き手へ差し戻しの理由を返す"
+purpose = "レポートの文法と検査を1か所で持ち、書き手の外の見張りとして働かせる"
+overview = "レポートのツールの受け付けと、本文の記法・部品の検査を持つ。部品の使われ方の記録や文法の説明もここで扱い、基準を外れた書き方は理由を添えて差し戻す。"
+paths = ["src/server/report/**"]
+links = { adr = ["docs/architecture/adr/0010-report-via-tool.md"], terms = ["最終レポート"] }
+
+[[boxes.children]]
+id = "server/work-plan"
+title = "ワークプラン"
+summary = "作業の計画と段の進みを受け付けて検査し、進み具合を判断する"
+purpose = "計画と進みの規則を独立させ、会話の進行を外から見張れるようにする"
+overview = "計画を立てるツールと段の返却のツールの説明・判断・差し戻しを持つ。委譲の関門と進み具合の表示の位置もここが決める。"
+paths = ["src/server/work-plan/**"]
+links = { terms = ["ワークプラン"] }
+
+[[boxes.children]]
+id = "server/question"
+title = "質問"
+summary = "選択肢つきの質問の添え書きを検査し、利用者への質問と突き合わせる"
+purpose = "質問の書き方の規約を機能として独立させ、書き手が質問を投げる形をそろえる"
+overview = "質問に添える説明の検査と、利用者に出す質問との突き合わせを持つ。質問の書き方の規約もここにまとめる。"
+paths = ["src/server/question/**"]
+
+[[boxes.children]]
+id = "server/system-prompt"
+title = "システムプロンプト"
+summary = "Claude Code へ追加する指示文を組み立てる"
+purpose = "指示文の組み立てを1つの機能に置き、会話の規約が変わる場所を絞る"
+overview = "雑談の作法・レポート・計画・質問の規約を集めて、追加の指示文に組み上げる。セリフの間合いの規約もここで持つ。"
+paths = ["src/server/system-prompt/**"]
+
+[[boxes.children]]
+id = "server/chat"
+title = "雑談"
+summary = "雑談の作法と記憶を持ち、会話の記録を残して要約する"
+purpose = "仕事の会話と雑談を分け、雑談で積み上がる記憶と定着の仕組みを独立させる"
+overview = "雑談の話しかけと作法、会話の保存と要約、覚えたことの管理を持つ。キャラクターの定義は読むが、中身は書かない。"
+paths = ["src/server/chat/**"]
+
+[[boxes.children]]
+id = "server/character-pack"
+title = "キャラクターパック"
+summary = "キャラクターパックを選び、読み込み、画面からの編集と立ち絵からの生成を受ける"
+purpose = "キャラクターの素材と定義の出入りを1つの機能に集め、コードにキャラクターの中身を持たせない"
+overview = "ホームと同梱の置き場にあるパックを探して読み込み、画面からの編集をファイルへ戻す。立ち絵からの生成は使い捨ての問い合わせで行う。"
+paths = ["src/server/character-pack/**"]
+links = { terms = ["キャラクターパック"] }
+
+[[boxes.children]]
+id = "server/diary"
+title = "日記"
+summary = "キャラクターの日記を書く道具と保存を受け持つ"
+purpose = "日記の保存を独立させ、成果の数え方と書き込みの経路を切り離す"
+overview = "日記を書くツールと、日ごとの保存を持つ。日記が結ぶ作業の記録はリポジトリの機能から読む。"
+paths = ["src/server/diary/**"]
+links = { terms = ["日記"] }
+
+[[boxes.children]]
+id = "server/achievement"
+title = "成果"
+summary = "終えたタスクを日ごとに数えて、成果として届ける"
+purpose = "成果の数え方を独立させ、タスクの記録の読み方の変更を1か所で受け止める"
+overview = "タスクの記録で閉じた課題を読み、日ごとの数に畳む。読めないときは数えられないことをそのまま伝える。"
+paths = ["src/server/achievement/**"]
+links = { terms = ["成果"] }
+
+[[boxes.children]]
+id = "server/usage"
+title = "使用量"
+summary = "トークンの消費と使える量を記録して集計し、見直しの提案を作る"
+purpose = "消費の計測と見直しを独立させ、会話の流れから数字を読むだけの形にする"
+overview = "消費の記録・コンテキストの内訳・契約の使用量・進行の計測値を集計する。見直しは使い捨ての問い合わせで提案を作り、前回の結果と見送りを覚える。"
+paths = ["src/server/usage/**"]
+links = { adr = ["docs/architecture/adr/0029-usage-review-own-query.md"], terms = ["見直し"] }
+
+[[boxes.children]]
+id = "server/diagnostic"
+title = "診断ログ"
+summary = "不具合の経緯を追うための足跡を残し、古いものを掃除する"
+purpose = "診断の書き込みを1つの出口にまとめ、会話の中身を書かない決まりを守りやすくする"
+overview = "足跡を書く関数・束ね・置き場の掃除を持つ。ほかの機能は、この機能が受け取る形でだけ足跡を残す。"
+paths = ["src/server/diagnostic/**"]
+links = { adr = ["docs/architecture/adr/0023-local-diagnostic-log.md"] }
+
+[[boxes.children]]
+id = "server/host"
+title = "ホスト"
+summary = "ホストの口を定義し、Orca と何もしない実装を切り替える"
+purpose = "起動先のホストの違いを1つの契約の裏へ隠し、判断がホストを知らなくて済むようにする"
+overview = "契約と、Orca の実装と、何もしない実装を持つ。ホストへ渡す前に内容を検査する門番もここに置く。"
+paths = ["src/server/host/**"]
+
+[[boxes.children]]
+id = "server/view-server"
+title = "ビューサーバ"
+summary = "画面を配る HTTP と WebSocket を立て、ブラウザの組み立てと開発サーバを受け持つ"
+purpose = "外へ開く口を1つの機能に集め、127.0.0.1 にだけ開く決まりの検査を1か所にする"
+overview = "ポートの決定と HTTP・WebSocket の受け付けを持つ。ブラウザのファイルの組み立てと、同梱ライブラリの配りもここで行い、画面の描画は読まない。"
+paths = ["src/server/view-server/**"]
+links = { adr = ["docs/architecture/adr/0015-single-host-port.md"], terms = ["ビューサーバ"] }
+
+[[boxes.children]]
+id = "server/repository"
+title = "リポジトリ"
+summary = "作業ディレクトリの git リポジトリとタスクの一覧を読む"
+purpose = "リポジトリの読み取りを外の世界の境界として1か所に閉じる"
+overview = "git を起こす関数、管理下のファイルと行の抜き書き、タスクの一覧の読み出しを持つ。タスクの解釈は1つのアダプタに閉じる。"
+paths = ["src/server/repository/**"]
+links = { adr = ["docs/architecture/adr/0024-no-skill-dependency.md"] }
+
+[[boxes.children]]
+id = "server/recommendation"
+title = "おすすめ"
+summary = "始め方の一覧に出すおすすめのカードの候補を作って検査する"
+purpose = "おすすめの候補の作り方を独立させ、迎える画面の変更と切り離す"
+overview = "候補の生成と出力の検査、結果のキャッシュを持つ。検査に通ったものだけを画面へ渡す。"
+paths = ["src/server/recommendation/**"]
+
+[[boxes.children]]
+id = "server/welcome-greeting"
+title = "迎えの挨拶"
+summary = "起動のたびの迎えの挨拶と反応を、使い捨ての問い合わせで書かせて検査する"
+purpose = "迎えの挨拶の書かせ方と検査を独立させ、会話の本流から切り離す"
+overview = "書き手への指示文・覚え・出力の検査を持つ。結果が基準に届かなければ使わない。"
+paths = ["src/server/welcome-greeting/**"]
+
+[[boxes.children]]
+id = "server/checkout"
+title = "チェックアウト"
+summary = "打った場所と自分の根を比べ、違えば打った側へ委ねる"
+purpose = "別の作業ツリーの起動を取り違えない仕組みを、起動の入口だけに閉じ込める"
+overview = "起動の入口が呼ぶ判断で、チェックアウトの違いを見つけたときだけ働く。判断と、外へ委ねる境界を分けて持つ。"
+paths = ["src/server/checkout/**"]
+
+[[boxes.children]]
+id = "server/workflow-setting"
+title = "ワークフローの設定"
+summary = "ワークフローの設定の読み書きを、設定コマンド越しに受け持つ"
+purpose = "ワークフローの設定を tsukumo が持たず、元の置き場のまま読み書きする窓口を独立させる"
+overview = "設定コマンドを起こす関数と、読み書きの手続きを持つ。設定の解釈は元の道具に任せる。"
+paths = ["src/server/workflow-setting/**"]
+links = { adr = ["docs/architecture/adr/0022-three-setting-homes.md"] }
+
+[[boxes.children]]
+id = "server/item"
+title = "アイテム"
+summary = "キャラビューの席に置くアイテムの一覧と置き場を読み書きする"
+purpose = "アイテムの置き場と素材を独立させ、キャラクターの素材から切り離す"
+overview = "アイテムの一覧と席の置き場の読み書き、素材を配る判断を持つ。素材はキャラクターパックに混ぜない。"
+paths = ["src/server/item/**"]
+
+# ---------------------------------------------------------------------------
+# ブラウザ
+
+[[boxes]]
+id = "browser"
+title = "ブラウザ"
+summary = "共有の状態を受け取り、会話の画面を描いてコマンドを送る"
+purpose = "サーバとは実行環境が違うので、画面の部品だけを別の塊にして、共有層以外を読まない形にする"
+overview = "画面ごとの部品と、全画面で共有する枠・置かれる機能・語彙のない部品に分かれる。向きは入口から画面、枠、機能、基本部品の一方通行で、サーバの機能は直接読まない。"
+place = { column = 2, row = 0 }
+links = { adr = [
+  "docs/architecture/adr/0001-render-in-browser.md",
+  "docs/architecture/adr/0052-astryx-design-system.md",
+], terms = [
+  "会話の画面",
+] }
+
+[[boxes.children]]
+id = "browser/entry"
+title = "入口"
+summary = "画面全体を組み、ブラウザへ取り付ける"
+purpose = "取り付けの入口を画面の部品から切り離し、すべてを知る場所を1つに保つ"
+overview = "取り付けるだけの入口と、状態の入れ物を重ねて画面の根を描く部品からなる。画面の中身は持たない。"
+paths = ["src/browser/app.tsx", "src/browser/main.tsx"]
+
+[[boxes.children]]
+id = "browser/app"
+title = "画面の切り替え"
+summary = "出す画面を選び、すべての画面を組み合わせる"
+purpose = "すべての画面を知る役を1つに集め、枠が画面を読む逆向きの依存を作らない"
+overview = "根の部品と、どの画面を出すかを選ぶ部品を持つ。見た目の見本のページもここから出る。"
+paths = ["src/browser/components/app/**"]
+
+[[boxes.children]]
+id = "browser/frame"
+title = "枠"
+summary = "全画面で共有する枠と、tsukumo の語彙を持つ部品を提供する"
+purpose = "画面の外にある共通の枠を、語彙のない基本部品と画面のあいだに分けて置く"
+overview = "サイドバー・コマンドパレット・画面の移動など全画面で共有する枠と、立ち絵のような語彙を持つ部品からなる。画面は読まず、基本部品と機能と共有の状態を使う。"
+paths = ["src/browser/components/frame/**"]
+
+[[boxes.children]]
+id = "browser/ui"
+title = "基本の部品"
+summary = "語彙を持たない見た目の基本部品を提供する"
+purpose = "見た目の部品から tsukumo の語彙を外し、画面や枠から使い回せるようにする"
+overview = "ボタン・入力・ダイアログ・リストなど、値と呼び先を全部受け取る部品が1部品1フォルダで並ぶ。デザインシステムの部品を包み、tsukumo の語彙は知らない。"
+paths = ["src/browser/components/ui/**"]
+links = { adr = ["docs/architecture/adr/0052-astryx-design-system.md"] }
+
+[[boxes.children]]
+id = "browser/conversation"
+title = "会話の画面の土台"
+summary = "会話の画面の入口と、領域の配置・やり取りの列・スクロールの土台を持つ"
+purpose = "会話の画面は大きいので、全体を組む部分と領域ごとの部分を分けて、変更の影響を絞る"
+overview = "入口が会話の画面を組み、配置の部品が領域の並びを決める。やり取りの列の行・読み上げ・依頼のタスク一覧・スクロールの制御が加わる。"
+paths = [
+  "src/browser/components/page/conversation/*",
+  "src/browser/components/page/conversation/domain/**",
+  "src/browser/components/page/conversation/stores/**",
+  "src/browser/components/page/conversation/components/hooks/**",
+  "src/browser/components/page/conversation/components/conversation-layout/**",
+  "src/browser/components/page/conversation/components/live-announcer/**",
+  "src/browser/components/page/conversation/components/stream-row/**",
+  "src/browser/components/page/conversation/components/requested-task-board/**",
+]
+links = { terms = ["会話の画面"] }
+
+[[boxes.children]]
+id = "browser/main-view"
+title = "メインビュー"
+summary = "メインビューに、利用者の依頼・手順・レポートの草稿と本文を流れとして描く"
+purpose = "会話の中身が集まる領域を独立させ、ほかの領域の変更に巻き込まれないようにする"
+overview = "依頼のブロック・いまの作業・手順の一覧・ターンごとのカード・始め方の一覧を縦の流れで描く。レポートの描画は置かれる機能から借りる。"
+paths = ["src/browser/components/page/conversation/components/main-view/**"]
+links = { terms = ["メインビュー"] }
+
+[[boxes.children]]
+id = "browser/character-view"
+title = "キャラビュー"
+summary = "立ち絵・吹き出し・席のアイテム・セリフの履歴と、雑談の画面を描く"
+purpose = "キャラクターの見え方を別の領域に分けて、メインビューの読みやすさと切り離す"
+overview = "立ち絵と吹き出し、席に置くアイテム、セリフのログを描く。雑談の画面もここから描かれる。"
+paths = [
+  "src/browser/components/page/conversation/components/character-view/**",
+  "src/browser/components/page/conversation/components/chat-view/**",
+]
+links = { terms = ["キャラビュー"] }
+
+[[boxes.children]]
+id = "browser/dispatch"
+title = "入力欄"
+summary = "依頼を書く入力欄と、お伺い・画像の添付など利用者が動く用件を受け持つ"
+purpose = "利用者が動く用件を入力欄のそばに集め、会話の流れの読みと分けて保つ"
+overview = "依頼を書く入力欄、候補の一覧、次の一手の札、ターンの状態を描く。答え待ちのカードと添付する画像の部品もここに置く。"
+paths = [
+  "src/browser/components/page/conversation/components/dispatch/**",
+  "src/browser/components/page/conversation/components/inquiry/**",
+  "src/browser/components/page/conversation/components/pending-ask-card/**",
+  "src/browser/components/page/conversation/components/prompt-image/**",
+]
+
+[[boxes.children]]
+id = "browser/achievement-page"
+title = "成果の画面"
+summary = "終えたタスクを日ごとに数えた成果と日記を描く"
+purpose = "成果の見せ方を会話の画面から切り離し、画面ごとに部品を閉じる"
+overview = "成果の暦と日記の部品からなる1つの画面。状態は画面の中で持ち、サーバの成果の機能が渡す語彙だけを読む。"
+paths = ["src/browser/components/page/achievement/**"]
+
+[[boxes.children]]
+id = "browser/character-page"
+title = "キャラクターの画面"
+summary = "キャラクターパックの一覧と編集を描く"
+purpose = "パックの確認と編集を会話の画面から離し、画面ごとに閉じる"
+overview = "パックを選ぶ・見る・直す部品からなる1つの画面。素材と定義の編集の手続きは共有の契約を通して呼ぶ。"
+paths = ["src/browser/components/page/character/**"]
+
+[[boxes.children]]
+id = "browser/token-usage-page"
+title = "使用量の画面"
+summary = "トークンの消費と見直しの提案を描く"
+purpose = "使用量の見直しを会話の画面から離し、数字を読む画面として閉じる"
+overview = "消費の集計・内訳・見直しの提案を描く1つの画面。集計はサーバが作り、画面は渡された形を読むだけにする。"
+paths = ["src/browser/components/page/token-usage/**"]
+
+[[boxes.children]]
+id = "browser/report"
+title = "レポートの描画"
+summary = "レポートの本文と図と部品を、複数の画面から使える形で描く"
+purpose = "レポートの描画は複数の領域が置くので、画面に属さない機能にして共有する"
+overview = "レポートの記法を解いて部品に当て、本文・図・出典などを描く。書き出しのための整形もここで持つ。"
+paths = ["src/browser/features/report/**"]
+links = { adr = ["docs/architecture/adr/0010-report-via-tool.md"], terms = ["最終レポート"] }
+
+[[boxes.children]]
+id = "browser/task-board"
+title = "タスクの一覧"
+summary = "タスクの一覧と詳細を、サイドバーや画面に置ける形で描く"
+purpose = "タスクの一覧は複数の領域から置くので、画面に属さない機能にして共有する"
+overview = "タスクの一覧・並べ替え・詳細のシートと、依頼の文面の組み立てを持つ。始め方の一覧からもサイドバーからも同じ部品で出す。"
+paths = ["src/browser/features/task-board/**"]
+
+[[boxes.children]]
+id = "browser/current-work"
+title = "いまの作業"
+summary = "いま進んでいる作業の段と背景のタスクを描く"
+purpose = "進行の表示は複数の領域が置くので、画面に属さない機能にして共有する"
+overview = "進行中の段の一覧、段のグループ、背景で動く作業を描く。値の算出はこの機能の中の状態が受け持つ。"
+paths = ["src/browser/features/current-work/**"]
+
+[[boxes.children]]
+id = "browser/run-setting"
+title = "実行の設定"
+summary = "モデル・権限・思考の段など実行の設定の選び方を描く"
+purpose = "実行の設定の部品は入力欄と設定の画面から置かれるので、画面に属さない機能にして共有する"
+overview = "モデルの選択・権限のモード・思考の段を選ぶ部品と、その表記の対応を持つ。"
+paths = ["src/browser/features/run-setting/**"]
+
+[[boxes.children]]
+id = "browser/support"
+title = "共有の語彙と状態"
+summary = "画面全体の語彙・状態・フック・道具を、複数の領域へ提供する"
+purpose = "領域をまたいで要るものを部品から引き離し、2つ目の読み手が出たときの置き場にする"
+overview = "全画面で共有する状態の入れ物、語彙を持たないフック、tsukumo の語彙を名乗る純粋な関数、特定のライブラリを包む道具、汎用の道具、全体の CSS が並ぶ。1つの領域だけが読むものは領域の中へ戻す。"
+paths = [
+  "src/browser/domain/**",
+  "src/browser/hooks/**",
+  "src/browser/lib/**",
+  "src/browser/stores/**",
+  "src/browser/styles/**",
+  "src/browser/types/**",
+  "src/browser/utils/**",
+]
+
+# ---------------------------------------------------------------------------
+# 共有層
+
+[[boxes]]
+id = "shared"
+title = "共有層"
+summary = "サーバとブラウザの両方が読む語彙・出来事・状態・契約を持つ"
+purpose = "両側の実行環境で同じに動く形だけを集め、サーバとブラウザの契約の食い違いを防ぐ"
+overview = "機能ごとの語彙と、会話の状態を畳む規則、手続きの契約、通信の封筒が並ぶ。ノードの API やブラウザの API には触らず、共有層の中だけを読む。"
+place = { column = 2, row = 1 }
+links = { adr = [
+  "docs/architecture/adr/0019-layer-as-directory.md",
+  "docs/architecture/adr/0049-sdk-tool-boundary-and-shared-drawing-vocabulary.md",
+], terms = [
+  "共有層",
+  "契約",
+] }
+
+[[boxes.children]]
+id = "shared/protocol"
+title = "通信の封筒"
+summary = "サーバとブラウザのあいだの封筒・コマンドの共通の形・手続きの束を持つ"
+purpose = "どの機能にも属さないプロトコルだけを直下へ置き、機能の語彙と混ぜない"
+overview = "フレームの封筒、断る理由の定型文、コマンドの共通の形、手続きを束ねる定義からなる。機能の語彙は読めるが、機能の側からは契約と束を読まない。"
+paths = [
+  "src/shared/command.ts",
+  "src/shared/frame.ts",
+  "src/shared/frame-error-reason.ts",
+  "src/shared/rpc.ts",
+]
+links = { terms = ["フレーム", "手続き"] }
+
+[[boxes.children]]
+id = "shared/contract"
+title = "手続きの契約"
+summary = "サーバが受ける手続きの形と、断る条件を定義する"
+purpose = "手続きの名前と機能の名前は1対1でないので、機能の語彙とは別の置き場で持つ"
+overview = "手続きごとに入力と出力の形・断る条件を定義する。機能の語彙を読み、サーバとブラウザの両方がここを読む。"
+paths = ["src/shared/contract/**"]
+links = { terms = ["契約", "手続き"] }
+
+[[boxes.children]]
+id = "shared/utils"
+title = "共有の道具"
+summary = "tsukumo の語彙を名乗らない汎用の関数を提供する"
+purpose = "語彙を持たない道具を機能の語彙から切り離し、どの機能からも使えるようにする"
+overview = "空白の判定・文字数の切り詰め・日付の整形・JSON の解釈など、小さな純粋関数が並ぶ。ほかの機能は読まない。"
+paths = ["src/shared/utils/**"]
+
+[[boxes.children]]
+id = "shared/session"
+title = "セッションの語彙"
+summary = "会話の出来事と状態を定義し、出来事を状態へ畳む規則を持つ"
+purpose = "サーバとブラウザが同じ状態を持つため、畳む規則を両側で1つにする"
+overview = "会話の出来事・状態・畳む関数と、状態から導ける表示の判断を持つ。各機能の語彙を束ねるので、ほかの機能を読む向きの依存が集まる。"
+paths = ["src/shared/session/**"]
+
+[[boxes.children]]
+id = "shared/session-driver"
+title = "ドライバの語彙"
+summary = "Claude Code との通信で現れる質問・背景の作業・制限の語彙を定義する"
+purpose = "ドライバが外から受ける値の形を共有層に置き、サーバとブラウザが同じに読めるようにする"
+overview = "答え待ちの質問・背景の作業・利用制限・画像つきの依頼など、ドライバが作る値の型と検証を持つ。"
+paths = ["src/shared/session-driver/**"]
+
+[[boxes.children]]
+id = "shared/report"
+title = "レポートの語彙"
+summary = "レポートの本文・部品・図の型と、純粋な導出を定義する"
+purpose = "サーバの検査とブラウザの描画が同じ形を読むため、レポートの語彙を共有層に置く"
+overview = "レポートの部品の一覧・入力の形・変更ファイルの整理・図の記述を持つ。検査はサーバ、描画はブラウザが担うが、型はここで1つにそろえる。"
+paths = ["src/shared/report/**"]
+
+[[boxes.children]]
+id = "shared/chat"
+title = "雑談の語彙"
+summary = "雑談で覚える内容の型を定義する"
+purpose = "雑談の記憶をサーバとブラウザが同じ形で読めるようにする"
+overview = "キャラクターが覚えた内容の型と検証を持つ。"
+paths = ["src/shared/chat/**"]
+
+[[boxes.children]]
+id = "shared/character-pack"
+title = "キャラクターの語彙"
+summary = "キャラクターパックの定義・表情・素材の型を持つ"
+purpose = "パックの中身を読む側が同じ形を使うため、定義の型を共有層に置く"
+overview = "キャラクターの定義・顔・素材・背景・日記の書体などの型と検証を持つ。中身のキャラクターは定義ファイル側が持つ。"
+paths = ["src/shared/character-pack/**"]
+
+[[boxes.children]]
+id = "shared/diary"
+title = "日記の語彙"
+summary = "日記の型と日付の鍵を定義する"
+purpose = "日記の保存と描画が同じ日付の決まりを使えるようにする"
+overview = "日記の型と日付の鍵の作り方を持つ。"
+paths = ["src/shared/diary/**"]
+
+[[boxes.children]]
+id = "shared/achievement"
+title = "成果の語彙"
+summary = "成果と成果の暦の型を定義する"
+purpose = "成果の数え方の結果をサーバとブラウザが同じ形で読めるようにする"
+overview = "日ごとの成果の数と暦の型を持つ。"
+paths = ["src/shared/achievement/**"]
+
+[[boxes.children]]
+id = "shared/usage"
+title = "使用量の語彙"
+summary = "トークンの消費・使える量・見直しの型を定義する"
+purpose = "消費の集計をサーバが作り画面が読むため、形を共有層に置く"
+overview = "消費の記録と集計・コンテキストの内訳・契約の使用量・見直しの提案の型を持つ。"
+paths = ["src/shared/usage/**"]
+
+[[boxes.children]]
+id = "shared/diagnostic"
+title = "診断の語彙"
+summary = "診断の記録と、診断に使う場面の型を定義する"
+purpose = "診断の書き込みが、どの機能からも同じ形で呼べるようにする"
+overview = "診断の記録・飲み込んだ失敗・ツールの所要時間・おすすめの押下などの型を持つ。会話の出来事を扱うものは、セッションの語彙を読んでよい。"
+paths = ["src/shared/diagnostic/**"]
+
+[[boxes.children]]
+id = "shared/repository"
+title = "リポジトリの語彙"
+summary = "タスクの一覧・ファイルの抜き書き・コードの印の型を定義する"
+purpose = "リポジトリの読み取りの結果を、サーバと画面が同じ形で扱えるようにする"
+overview = "タスクの一般の形とその変化、ファイルの一覧と抜き書き、コードブロックの開始の型を持つ。"
+paths = ["src/shared/repository/**"]
+
+[[boxes.children]]
+id = "shared/recommendation"
+title = "おすすめの語彙"
+summary = "おすすめのカードと迎えの挨拶と反応の型を定義する"
+purpose = "始め方の一覧の内容を、サーバが作り画面が出すために共有層へ置く"
+overview = "おすすめのカードの形・並び・反応・迎えの挨拶の型を持つ。"
+paths = ["src/shared/recommendation/**"]
+
+[[boxes.children]]
+id = "shared/item"
+title = "アイテムの語彙"
+summary = "キャラビューの席に置くアイテムと素材の型を定義する"
+purpose = "アイテムの一覧と素材を両側が同じ形で扱えるようにする"
+overview = "アイテムとその素材の型を持つ。"
+paths = ["src/shared/item/**"]
+
+[[boxes.children]]
+id = "shared/workflow-setting"
+title = "ワークフロー設定の語彙"
+summary = "ワークフローの設定の型を定義する"
+purpose = "設定の読み書きの結果を、サーバと設定の画面が同じ形で扱えるようにする"
+overview = "ワークフローの設定の型を持つ。"
+paths = ["src/shared/workflow-setting/**"]
+
+[[boxes.children]]
+id = "shared/view-server"
+title = "ビューサーバの語彙"
+summary = "ソケットのやり取りと同梱の素材とポートの型を定義する"
+purpose = "ビューサーバとブラウザが、接続の最初のやり取りで同じ形を使えるようにする"
+overview = "ソケットの接続の型、同梱の外部素材の型、ポートの型を持つ。"
+paths = ["src/shared/view-server/**"]

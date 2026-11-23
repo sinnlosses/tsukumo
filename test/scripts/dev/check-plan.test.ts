@@ -79,10 +79,11 @@ describe("planStages", () => {
     expect(DOCUMENT_CHECK_TEST_PATHS).toEqual(["test/document/", "test/scripts/document/"])
   })
 
-  test("変えたファイルが空なら token-limit を含む6段すべて", () => {
+  test("変えたファイルが空なら architecture-map・token-limit を含む7段すべて", () => {
     expect(planStages([], choose, false).stages.map((stage) => stage.name)).toEqual([
       "typecheck",
       "lint",
+      "architecture-map",
       "format:check",
       "token-limit",
       "test",

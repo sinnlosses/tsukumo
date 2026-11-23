@@ -23,7 +23,7 @@
   振る舞いではないので、`src/` の写しの構成には従わない）
 - **`pnpm run check` の中の別の段にする**（`pnpm run test` は既定の設定が `test/e2e/` を外し、E2E は
   `pnpm run test:e2e` が `playwright.config.ts` で走らせる）。時間切れの既定を E2E の段だけ延ばし、単体テストを
-  1ファイル走らせるときに Chrome を要らないままにするため。`pnpm run check` は軽い段（typecheck・lint・format:check・token-limit）と
+  1ファイル走らせるときに Chrome を要らないままにするため。`pnpm run check` は軽い段（typecheck・lint・architecture-map・format:check・token-limit）と
   重い段（単体と E2E）を全部同時に起こし、1つが落ちると残りを止める。**`--full` でない `check` の単体の段は、変えた `src/`・`test/`・`scripts/` のファイルに関連するテスト
   （`vitest related`）と規約のテストだけ**（`vitest related` は引数を変えたファイルとして読みディレクトリを展開しないので、
   規約のテストのうち `test/architecture/` は中のテストファイルを1本ずつ名指しして渡す。設定だけの変更と `--full` は全件。`vitest.config.ts` の `globalSetup`・`setupFiles` に挙がるファイルはどのテストからも import されず辿れないので、同じ一覧を `test.forceRerunTriggers` にも載せ、変えたときは `vitest related` が全件を返す）。**`--full` の E2E の段だけ、作業ツリーをまたぐ排他制御を占有してから走らせる**

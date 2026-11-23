@@ -8,7 +8,7 @@
 配置・分割の規約は `docs/architecture.md` が正典。
 
 実装スタックは **Node + TypeScript**。チェックコマンドは `pnpm run check`
-（`tsc --noEmit`・`oxlint`・`oxfmt --check`・token-limit・単体テスト・E2E を全部同時に起こす。段の選び方は `scripts/dev/check.ts` の冒頭。E2E の段は `docs/architecture/testing.md`
+（`tsc --noEmit`・`oxlint`・地図と依存のずれの検査（architecture-map）・`oxfmt --check`・token-limit・単体テスト・E2E を全部同時に起こす。段の選び方は `scripts/dev/check.ts` の冒頭。E2E の段は `docs/architecture/testing.md`
 「E2E の走らせ方」）。
 
 責務: 規約の理由と例外を持つ（規約そのものは `.claude/rules/` が正典で二重に書かない）。

@@ -18,8 +18,8 @@
 //
 // 使い方:
 //   node scripts/dev/check.ts         # 変えたファイルを見て、E2E を選び、文書だけなら文書の検査だけにする
-//   node scripts/dev/check.ts --full  # 文書だけの変更でなければ、6段すべてを、E2E は全件で走らせる
-//                                 # （変えたファイルを集められないときも6段すべて）
+//   node scripts/dev/check.ts --full  # 文書だけの変更でなければ、7段すべてを、E2E は全件で走らせる
+//                                 # （変えたファイルを集められないときも7段すべて）
 
 import { type ChildProcess, spawn } from "node:child_process"
 import { readFileSync, rmSync } from "node:fs"
@@ -79,7 +79,7 @@ import { workerBudget, workersPerStage } from "./lib/worker-budget.ts"
 
 const CHECK_USAGE = `使い方:
   node scripts/dev/check.ts         # 変えたファイルから選んだ E2E だけ
-  node scripts/dev/check.ts --full  # 6段すべて、E2E は全件
+  node scripts/dev/check.ts --full  # 7段すべて、E2E は全件
 `
 
 const NO_FAILED_FILES = { files: [], failedTestCount: 0 } as const satisfies FailedFiles
@@ -288,7 +288,7 @@ function readForceFull(args: readonly string[]): boolean {
   }
 }
 
-/** 変えたファイル。`--full` で集められないときは空（6段すべてを打つ）。 */
+/** 変えたファイル。`--full` で集められないときは空（7段すべてを打つ）。 */
 async function collectPathsForPlan(): Promise<readonly string[]> {
   try {
     return collectChangedPaths(ROOT, PRIMARY_BRANCH)

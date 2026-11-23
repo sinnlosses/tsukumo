@@ -16,6 +16,7 @@ export const E2E_BAIL_COUNT = 3
 export const FULL_STAGE_NAMES = [
   "typecheck",
   "lint",
+  "architecture-map",
   "format:check",
   "token-limit",
   "test",
@@ -83,6 +84,7 @@ export function planStages(
     stages: [
       { name: "typecheck", args: [], heavy: false },
       { name: "lint", args: [], heavy: false },
+      { name: "architecture-map", args: [], heavy: false },
       { name: "format:check", args: [], heavy: false },
       TOKEN_LIMIT_STAGE,
       {
