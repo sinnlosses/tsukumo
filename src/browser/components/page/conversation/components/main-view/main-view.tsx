@@ -224,6 +224,17 @@ export function MainView(): ReactElement {
                   <WorkStrip />
                 </TurnCardHead>
               )}
+              {/* 過去を見ているあいだは、プログレスバーの席に最新のやり取りの知らせを出す。 */}
+              {!phoneWidth && viewingPast && notice.kind === "notice" && (
+                <TurnCardHead>
+                  <HeadNotice
+                    text={notice.text}
+                    onPress={() => {
+                      onNotice(notice.action)
+                    }}
+                  />
+                </TurnCardHead>
+              )}
               {/* 狭い画面は依頼を一覧の上に出す（広い画面は流れの先頭の投稿が持つ）。 */}
               {phoneWidth && cardTurn.turn.request !== undefined && (
                 <div className={styles["turn-card-request"]}>
@@ -277,7 +288,7 @@ export function MainView(): ReactElement {
             </article>
           )}
         </ContentFrame>
-        <StreamFloat notice={notice} viewingPast={viewingPast} onNotice={onNotice} tail={tail} />
+        <StreamFloat viewingPast={viewingPast} tail={tail} />
       </div>
     </RepositoryFileLinkProvider>
   )

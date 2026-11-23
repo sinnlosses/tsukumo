@@ -1,4 +1,4 @@
-// 知らせの行（`HeadNotice`）に出す語。いま見ている中身の外で起きたことを1つだけ選ぶ。
+// 知らせの行（`HeadNotice`）に出す語と、会話の流れの下端に浮く口。いま見ている中身の外で起きたことを1つだけ選ぶ。
 
 import type { ConversationMoment } from "../../../../../../../shared/session/conversation-moment.ts"
 import {
@@ -39,15 +39,13 @@ export function headNoticeOf(input: HeadNoticeInput): HeadNotice {
   return NO_NOTICE
 }
 
-/** 会話の流れの下端に浮く口。知らせの行・「お伺い ↓」・「末尾へ」を、同時に出さず1つにまとめる。 */
+/** 会話の流れの下端に浮く口。「お伺い ↓」と「末尾へ」を、同時に出さず1つにまとめる。 */
 export type StreamFloat =
   | { readonly kind: "none" }
   | { readonly kind: "inquiry" }
   | { readonly kind: "tail"; readonly unseen: number }
-  | { readonly kind: "notice"; readonly text: string; readonly action: HeadNoticeAction }
 
 export type StreamFloatInput = {
-  readonly notice: HeadNotice
   /** 過去のやり取りを見ているか。 */
   readonly viewingPast: boolean
   /** 答え待ちのお伺いがあり、そのカードが見える範囲の外にあるか。 */
@@ -57,12 +55,12 @@ export type StreamFloatInput = {
 }
 
 /**
- * 過去を見ているあいだは知らせの行だけを出す（最新のやり取りのお伺いは、知らせが同じ行き先で伝える）。
+ * 過去を見ているあいだは出さない（最新のやり取りの様子は、札の頭の知らせの行が伝える）。
  * 最新を見ているあいだは、お伺いのカードが見える範囲の外にあるときの「お伺い ↓」を先に出し（答えを待たせている用件が先）、無ければ上へ送って読んでいるときの「末尾へ」を出す。
  */
 export function streamFloatOf(input: StreamFloatInput): StreamFloat {
   if (input.viewingPast) {
-    return input.notice
+    return NONE_FLOAT
   }
   if (input.inquiryOutOfSight) {
     return { kind: "inquiry" }

@@ -38,6 +38,7 @@ export function tailReturnOf(anchor: TailAnchor, count: number, active: boolean)
   return { kind: "away", unseen: Math.max(0, count - anchor.countWhenLeft) }
 }
 
-function isAwayFromTail(scroll: TailScroll): boolean {
+/** 下端から `TAIL_AWAY_THRESHOLD_PX` より離れているか。 */
+export function isAwayFromTail(scroll: TailScroll): boolean {
   return scroll.scrollHeight - scroll.scrollTop - scroll.clientHeight > TAIL_AWAY_THRESHOLD_PX
 }

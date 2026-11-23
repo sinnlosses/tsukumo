@@ -10,9 +10,7 @@ afterEach(cleanup)
 
 function renderFloat(tail: TailReturnModel): void {
   putSession(INITIAL_SESSION_STATE)
-  render(
-    <StreamFloat notice={{ kind: "none" }} viewingPast={false} onNotice={() => {}} tail={tail} />,
-  )
+  render(<StreamFloat viewingPast={false} tail={tail} />)
 }
 
 describe("StreamFloat の「末尾へ」", () => {

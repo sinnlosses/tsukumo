@@ -9,6 +9,7 @@ import { scrollerOf } from "../../../../../../utils/scroller.ts"
 import { smoothScrollBehavior } from "../../hooks/smooth-scroll.ts"
 import {
   anchorAfterScroll,
+  isAwayFromTail,
   tailReturnOf,
   type TailAnchor,
   type TailReturn,
@@ -65,6 +66,17 @@ export function useTailReturn(
         return
       }
       const scroller = scrollerOf(root)
+      // 滑らかな転がりは、慣性で続く利用者の転がりに打ち消されると途中で止まる。
+      // 止まった時点で末尾から離れていれば、滑らせずに末尾へ送り切る。
+      scroller.addEventListener(
+        "scrollend",
+        () => {
+          if (isAwayFromTail(scroller)) {
+            scroller.scrollTo({ top: scroller.scrollHeight, behavior: "instant" })
+          }
+        },
+        { once: true },
+      )
       scroller.scrollTo({ top: scroller.scrollHeight, behavior: smoothScrollBehavior() })
     },
   }

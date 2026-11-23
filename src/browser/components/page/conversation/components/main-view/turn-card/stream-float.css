@@ -1,4 +1,4 @@
-/* 会話の流れの下端に浮く口（知らせの行と「お伺い ↓」）。高さ 0 の入れ物が領域の下端に貼り付き、口はその上に持ち上げて置く（本文の末尾の余白を食わない）。 */
+/* 会話の流れの下端に浮く口（「お伺い ↓」と「末尾へ」）。高さ 0 の入れ物が領域の下端に貼り付き、口はその上に持ち上げて置く（本文の末尾の余白を食わない）。 */
 .stream-float {
   position: sticky;
   bottom: 0;
@@ -27,10 +27,4 @@
   min-height: 1.5rem;
   padding: var(--stack-tight) var(--inline-control);
   border-radius: var(--radius-md);
-}
-.stream-float-text {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
