@@ -7,6 +7,7 @@
 import type { ReactElement } from "react"
 
 import type { CharacterFaceInfo } from "../../../../../domain/character-face.ts"
+import { MapMarkText } from "../../../../../features/architecture-map/map-box-mark.tsx"
 import { CharacterFace } from "../../../../frame/character-face.tsx"
 import styles from "./character-view.module.css"
 import type { PhoneBalloonLine } from "./hooks/use-character-view.ts"
@@ -39,7 +40,7 @@ export function PhoneBalloon(props: PhoneBalloonProps): ReactElement {
           onClick={props.onOpenLog}
         >
           <span className={styles["phone-balloon-text"]}>
-            {line.kind === "text" ? line.text : WRITING_TEXT}
+            {line.kind === "text" ? <MapMarkText text={line.text} /> : WRITING_TEXT}
           </span>
         </button>
       )}

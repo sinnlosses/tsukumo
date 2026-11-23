@@ -58,6 +58,7 @@ export function ChatLog({
                   <StreamSpeechRow
                     key={row.key}
                     text={row.text}
+                    mapBadges={false}
                     time={row.time}
                     selected={row.selected}
                     pop={row.pop}

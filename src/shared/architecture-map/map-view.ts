@@ -107,6 +107,26 @@ export const mapViewResponseSchema = z.discriminatedUnion("kind", [
   mapReadySchema,
 ])
 
+const mapBoxIndexEntrySchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  level: mapLevelSchema,
+  summary: z.string().optional(),
+  /** 親の箱の ID。大の箱は持たない。 */
+  parent: z.string().optional(),
+  /** 古い ID。大・中の箱だけが持つ。 */
+  aliases: z.array(z.string()).readonly(),
+})
+
+/** 地図の全部の箱（大・中・小）の索引。本文とセリフの印の ID を箱に解く。 */
+export const mapBoxIndexResponseSchema = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal("absent") }),
+  z.object({ kind: z.literal("unreadable"), reason: z.enum(MAP_UNREADABLE_REASONS) }),
+  z.object({ kind: z.literal("ready"), boxes: z.array(mapBoxIndexEntrySchema).readonly() }),
+])
+
+export type MapBoxIndexResponse = z.infer<typeof mapBoxIndexResponseSchema>
+export type MapBoxIndexEntry = z.infer<typeof mapBoxIndexEntrySchema>
 export type MapViewResponse = z.infer<typeof mapViewResponseSchema>
 export type MapView = z.infer<typeof mapViewSchema>
 export type MapViewBox = z.infer<typeof mapViewBoxSchema>

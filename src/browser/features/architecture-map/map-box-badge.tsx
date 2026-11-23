@@ -1,4 +1,4 @@
-// 箱を指すバッジ。入力欄の頭・利用者の吹き出しで同じ形を使う。外す口（`onRemove`）があるのは入力欄だけ。
+// 箱を指すバッジ。入力欄の頭・利用者の吹き出し・本文・セリフで同じ形を使う。外す口（`onRemove`）があるのは入力欄だけ。
 
 import { X } from "lucide-react"
 import type { ReactElement } from "react"

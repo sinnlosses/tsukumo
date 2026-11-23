@@ -1,4 +1,4 @@
-// 文中の行内の印（`{{12 → 8}}`・`{{spark: 3 5 4 8}}`・`{{3 / 5}}`・`{{cite: s1}}`）を、サニタイズのあとの木で `span` に替える rehype のプラグイン。
+// 文中の行内の印（`{{12 → 8}}`・`{{spark: 3 5 4 8}}`・`{{3 / 5}}`・`{{cite: s1}}`・`{{map: <ID>}}`）を、サニタイズのあとの木で `span` に替える rehype のプラグイン。
 // 前後の差・折れ線・帯の `span` の文字は `foldInlineMarks` が畳んだ素の文字と同じにする（装飾の要素は文字を持たない）。
 // 出典の印だけは畳むと空で、描くときは番号と札の題・ホスト名を字に持つ。番号の表を渡さない（レポートの外の）ときは何も描かない。
 // 壊れた印と inline code（`code`・`pre`）の中は元の文字のまま残す。
@@ -25,6 +25,7 @@ const MARK_CLASS_NAMES = {
   "report-mark-ratio-bar": styles["report-mark-ratio-bar"],
   "report-mark-ratio-fill": styles["report-mark-ratio-fill"],
   "report-mark-ratio-value": styles["report-mark-ratio-value"],
+  "report-mark-map": styles["report-mark-map"],
   "report-mark-cite-group": styles["report-mark-cite-group"],
   "report-mark-cite": styles["report-mark-cite"],
   "report-mark-cite-badge": styles["report-mark-cite-badge"],
@@ -88,6 +89,10 @@ function markElement(segment: MarkSegment, options: InlineMarkOptions): ElementC
         ]),
         span("report-mark-ratio-value", [{ type: "text", value: `${mark.part}/${mark.whole}` }]),
       ])
+    case "map":
+      return span("report-mark-map", [{ type: "text", value: segment.source }], {
+        dataMapBox: mark.id,
+      })
     case "cite": {
       const { citations } = options
       return citations === undefined

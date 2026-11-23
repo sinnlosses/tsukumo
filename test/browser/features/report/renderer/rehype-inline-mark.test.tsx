@@ -50,6 +50,16 @@ describe("rehypeInlineMark（Markdown を通した描画）", () => {
   })
 })
 
+describe("rehypeInlineMark の地図の箱の印", () => {
+  it("data-map-box を持つ span になり、元の字が残る", () => {
+    const { container } = render(<Markdown text="見て {{map: server/report}} を" />)
+
+    const mark = container.querySelector("[data-map-box]")
+    expect(mark?.getAttribute("data-map-box")).toBe("server/report")
+    expect(mark?.textContent).toBe("{{map: server/report}}")
+  })
+})
+
 describe("rehypeInlineMark の出典の番号札", () => {
   const entry = (number: number, id: string) => ({
     number,

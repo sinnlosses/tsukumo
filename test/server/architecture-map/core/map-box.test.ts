@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { mapBoxOf } from "../../../../src/server/architecture-map/core/map-box.ts"
+import { mapBoxIndexOf, mapBoxOf } from "../../../../src/server/architecture-map/core/map-box.ts"
 import { parseArchitectureMap } from "../../../../src/server/architecture-map/core/map-parse.ts"
 import type { ArchitectureMap } from "../../../../src/shared/architecture-map/architecture-map.ts"
 import { sampleMap } from "../sample-map.ts"
@@ -12,6 +12,53 @@ function loadedMap(): ArchitectureMap {
   }
   return parsed.map
 }
+
+type Counted = { readonly id: string; readonly children?: readonly Counted[] }
+
+const countBoxes = (boxes: readonly Counted[]): number =>
+  boxes.reduce((sum, box) => sum + 1 + countBoxes(box.children ?? []), 0)
+
+describe("mapBoxIndexOf", () => {
+  it("大・中・小の全部が入り、親と別名が付く", () => {
+    const index = mapBoxIndexOf(loadedMap())
+
+    expect(index.map((box) => box.id)).toEqual([
+      "app",
+      "app/ui",
+      "src/ui/part",
+      "src/ui/page",
+      "app/view",
+      "src/view/core",
+      "server",
+      "server/store",
+      "src/server/store",
+      "vault",
+    ])
+    expect(index.find((box) => box.id === "app")).toMatchObject({
+      level: 1,
+      aliases: ["frontend"],
+    })
+    expect(index.find((box) => box.id === "src/ui/part")).toMatchObject({
+      level: 3,
+      parent: "app/ui",
+      aliases: [],
+    })
+    expect(index.find((box) => box.id === "app")?.parent).toBeUndefined()
+  })
+
+  it("木の箱を再帰で数えた数と索引の数が一致し、子を1つ落とすと一致しない", () => {
+    const sample = sampleMap()
+    expect(mapBoxIndexOf(loadedMap())).toHaveLength(countBoxes(sample.boxes))
+
+    const dropped = sampleMap()
+    const ui = dropped.boxes[0]?.children?.[0]
+    if (ui === undefined) {
+      throw new Error("サンプルの地図に app/ui が無い")
+    }
+    ui.children = ui.children.slice(1)
+    expect(mapBoxIndexOf(loadedMap())).not.toHaveLength(countBoxes(dropped.boxes))
+  })
+})
 
 describe("mapBoxOf", () => {
   it("ID を省くと大・中の箱の一覧を返し、小の箱は含めない", () => {

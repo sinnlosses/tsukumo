@@ -54,6 +54,7 @@ export const EMPTY_RPC_PORTS = {
   readAchievementDay: () => Promise.resolve({ kind: "ok", achievement: { kind: "unknown" } }),
   readAchievementCalendar: () => Promise.resolve({ kind: "ok", calendar: { kind: "unknown" } }),
   readArchitectureMapView: () => Promise.resolve({ kind: "absent" }),
+  readArchitectureMapBoxes: () => Promise.resolve({ kind: "absent" }),
   readWorkflowEntries: () => Promise.resolve([]),
   readWorkflowSetting: () =>
     Promise.resolve({

@@ -1,4 +1,5 @@
-import { cleanup, fireEvent, render } from "@testing-library/react"
+import { QueryClientProvider } from "@tanstack/react-query"
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
 import {
@@ -6,8 +7,16 @@ import {
   StreamSpeechRow,
 } from "../../../../../../../src/browser/components/page/conversation/components/stream-row/stream-row.tsx"
 import { acquireOverlay } from "../../../../../../../src/browser/hooks/open-overlay.ts"
+import { createTestQueryClient } from "../../../../../query-client.tsx"
+import { rpcOutput, stubRpcFetch, type RpcFetchStub } from "../../../../../rpc-fetch-stub.ts"
 
-afterEach(cleanup)
+let fetchStub: RpcFetchStub | undefined = undefined
+
+afterEach(() => {
+  cleanup()
+  fetchStub?.restore()
+  fetchStub = undefined
+})
 
 const KNOWN = { kind: "known", dateTime: "2026-11-17T10:00", text: "10:00" } as const
 
@@ -28,6 +37,7 @@ function renderSpeech(selected: boolean, onRelease: () => void): HTMLElement {
   const { container } = render(
     <StreamSpeechRow
       text="架空のセリフ"
+      mapBadges={false}
       time={KNOWN}
       liveness="plain"
       aim={<span data-aim="" />}
@@ -51,6 +61,7 @@ describe("StreamSpeechRow の出方", () => {
     const { container } = render(
       <StreamSpeechRow
         text="架空のセリフ"
+        mapBadges={false}
         time={KNOWN}
         liveness="plain"
         aim={undefined}
@@ -111,6 +122,49 @@ describe("StreamSpeechRow の押せる行", () => {
     fireEvent.keyDown(selected, { key: "Escape" })
     release()
     expect(released).toBe(0)
+  })
+})
+
+describe("StreamSpeechRow の地図の箱の印", () => {
+  function renderMapSpeech(mapBadges: boolean): HTMLElement {
+    fetchStub = stubRpcFetch(() =>
+      rpcOutput({
+        kind: "ready",
+        boxes: [{ id: "app", title: "アプリ", level: 1, aliases: [] }],
+      }),
+    )
+    const { container } = render(
+      <QueryClientProvider client={createTestQueryClient()}>
+        <StreamSpeechRow
+          text="{{map: app}} と {{3 / 5}}"
+          mapBadges={mapBadges}
+          time={KNOWN}
+          liveness="plain"
+          aim={undefined}
+          speakerName=""
+          selected={false}
+          pop={false}
+          className=""
+        />
+      </QueryClientProvider>,
+    )
+    return container
+  }
+
+  it("mapBadges のときは map の印だけがバッジになる", async () => {
+    const container = renderMapSpeech(true)
+
+    await waitFor(() => {
+      expect(screen.getAllByTestId("map-box-badge")).toHaveLength(1)
+    })
+    expect(container.textContent).toContain("アプリ大 と {{3 / 5}}")
+  })
+
+  it("雑談（mapBadges なし）は字のまま", () => {
+    const container = renderMapSpeech(false)
+
+    expect(container.textContent).toContain("{{map: app}} と {{3 / 5}}")
+    expect(screen.queryByTestId("map-box-badge")).toBeNull()
   })
 })
 

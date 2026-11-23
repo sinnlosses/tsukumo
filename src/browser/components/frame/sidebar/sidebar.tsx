@@ -12,9 +12,10 @@
 // 仕事中で、地図が読める（読めない理由がある）ときだけ、頭に「タスク｜地図」のタブを置く。
 // タスクの区画はタブが地図のあいだも付けたまま隠し、探す欄と開いた段を保つ。
 
-import { type ReactElement, useState } from "react"
+import type { ReactElement } from "react"
 
 import { ArchitectureMapPanel } from "../../../features/architecture-map/architecture-map-panel.tsx"
+import { useArchitectureMapSelection } from "../../../features/architecture-map/architecture-map-selection.ts"
 import { useArchitectureMapOverview } from "../../../features/architecture-map/use-architecture-map.ts"
 import { useSession } from "../../../stores/session.ts"
 import { TabList } from "../../ui/tab-list/tab-list.tsx"
@@ -52,19 +53,34 @@ export function Sidebar(): ReactElement {
   )
 }
 
-type SidebarTab = "tasks" | "map"
-
 const TAB_PANEL_ID = "sidebar-tab-panel"
 
-const TABS = [
-  { value: "tasks", label: "タスク", id: "sidebar-tab-tasks" },
-  { value: "map", label: "地図", id: "sidebar-tab-map" },
-] as const satisfies readonly { value: SidebarTab; label: string; id: string }[]
+function MapTabEndContent(props: { readonly count: number }): ReactElement {
+  return (
+    <span className={styles["sidebar-tab-point"]} data-testid="sidebar-map-tab-point">
+      <span className={styles["sidebar-tab-point-dot"]} aria-hidden="true" />
+      <span>{props.count}</span>
+    </span>
+  )
+}
 
 function WorkBody(props: { readonly noBeads: boolean; readonly hasMapTab: boolean }): ReactElement {
-  const [chosen, setChosen] = useState<SidebarTab>("tasks")
+  const chosen = useArchitectureMapSelection((state) => state.sidebarTab)
+  const chooseTab = useArchitectureMapSelection((state) => state.chooseSidebarTab)
+  const unseenPointCount = useArchitectureMapSelection((state) => state.unseenPointCount)
   // `.beads` が無いときはタスクのタブに中身が無いので、地図のタブで始める
-  const tab: SidebarTab = props.noBeads ? "map" : chosen
+  const tab = props.noBeads ? "map" : chosen
+  const tabs = [
+    { value: "tasks", label: "タスク", id: "sidebar-tab-tasks" },
+    {
+      value: "map",
+      label: "地図",
+      id: "sidebar-tab-map",
+      ...(unseenPointCount > 0 && tab === "tasks"
+        ? { endContent: <MapTabEndContent count={unseenPointCount} /> }
+        : {}),
+    },
+  ] as const
   return (
     <>
       {props.hasMapTab && (
@@ -72,9 +88,9 @@ function WorkBody(props: { readonly noBeads: boolean; readonly hasMapTab: boolea
           <TabList
             label="サイドバー"
             value={tab}
-            tabs={TABS}
+            tabs={tabs}
             panelId={TAB_PANEL_ID}
-            onChange={setChosen}
+            onChange={chooseTab}
           />
         </div>
       )}

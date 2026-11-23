@@ -30,7 +30,7 @@ const BOX_ID_SEGMENT = /^\.?[A-Za-z0-9_][A-Za-z0-9._-]*$/
 const FORBIDDEN_GLOB_CHARACTER = /[?[\]{}!]/
 
 /** 箱の ID の形か。 */
-function isBoxId(value: string): boolean {
+export function isBoxId(value: string): boolean {
   return (
     value.length <= MAX_BOX_ID_LENGTH &&
     value.split("/").every((segment) => BOX_ID_SEGMENT.test(segment))

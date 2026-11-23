@@ -1,5 +1,5 @@
 import { QueryClientProvider } from "@tanstack/react-query"
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
 import { ArchitectureMapExpanded } from "../../../../src/browser/features/architecture-map/architecture-map-expanded.tsx"
@@ -14,7 +14,14 @@ afterEach(() => {
   cleanup()
   fetchStub?.restore()
   fetchStub = undefined
-  useArchitectureMapSelection.setState({ selected: undefined, expanded: false, badge: undefined })
+  useArchitectureMapSelection.setState({
+    selected: undefined,
+    lit: undefined,
+    expanded: false,
+    badge: undefined,
+    sidebarTab: "tasks",
+    unseenPointCount: 0,
+  })
 })
 
 function box(id: string, overrides: Partial<MapViewBox> = {}): MapViewBox {
@@ -103,6 +110,39 @@ describe("ArchitectureMapExpanded", () => {
     await waitFor(() => {
       expect(screen.getByRole("button", { name: "ベータ" })).toBeTruthy()
     })
+  })
+
+  it("会話で全体の図に無い箱を指されると、段が「全体 › 親の図」に替わり、触れている箱が光る", async () => {
+    renderExpanded()
+    await screen.findByRole("button", { name: "ベータ" })
+    const inner = INSIDE.boxes[0]
+    if (inner === undefined) {
+      throw new Error("内側の箱が無い")
+    }
+
+    act(() => {
+      useArchitectureMapSelection.getState().pointBox(inner, INSIDE)
+      useArchitectureMapSelection.getState().setLit(inner.id)
+    })
+
+    const node = await screen.findByRole("button", { name: "内側の箱" })
+    expect(node.getAttribute("data-lit")).toBe("true")
+    expect(screen.getByRole("navigation", { name: "地図の段" }).textContent).toContain("アルファ")
+  })
+
+  it("潜った先で焦点の箱のバッジに触れると、親の図に一時的に替わってその箱が光る", async () => {
+    renderExpanded()
+    fireEvent.click(await screen.findByRole("button", { name: "アルファ" }))
+    await screen.findByRole("button", { name: "内側の箱" })
+
+    act(() => {
+      useArchitectureMapSelection.getState().setLit("alpha")
+      useArchitectureMapSelection.getState().setLitView("alpha", WHOLE)
+    })
+
+    const diagram = await screen.findByTestId("architecture-map-diagram")
+    const node = await within(diagram).findByRole("button", { name: "アルファ" })
+    expect(node.getAttribute("data-lit")).toBe("true")
   })
 
   it("箱を選ぶと横に「この箱について聞く」が出て、押すとバッジが付く", async () => {

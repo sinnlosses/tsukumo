@@ -30,6 +30,13 @@
   stroke: var(--map-focus);
   stroke-width: 2.5;
 }
+/* 会話のバッジに触れている箱。選んだ箱と見分けがつくよう、地に青緑を差し、縁を太くして光を外へ滲ませる。 */
+.box[data-lit="true"] .box-body {
+  fill: color-mix(in oklch, var(--map-focus) 28%, var(--surface));
+  stroke: var(--map-focus);
+  stroke-width: 3;
+  filter: drop-shadow(0 0 6px var(--map-focus));
+}
 .box-title {
   fill: var(--ink);
   font-weight: 600;

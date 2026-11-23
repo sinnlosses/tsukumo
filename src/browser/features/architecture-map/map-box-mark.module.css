@@ -1,0 +1,15 @@
+/* 本文・セリフの中のバッジ。触れる・フォーカスで地図の箱を光らせる入口なので、ボタンの見た目は消して中のバッジを見せる。 */
+.mark {
+  display: inline;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.mark:focus-visible {
+  outline: 2px solid var(--map-focus);
+  outline-offset: 1px;
+  border-radius: var(--radius-md);
+}

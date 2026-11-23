@@ -10,7 +10,7 @@ import { rpc } from "../../stores/rpc.ts"
 import { ArchitectureMapDiagram } from "./architecture-map-diagram.tsx"
 import styles from "./architecture-map-expanded.module.css"
 import { type MapBoxRect, mapGeometryOf } from "./architecture-map-geometry.ts"
-import { useArchitectureMapSelection } from "./architecture-map-selection.ts"
+import { type SelectedBox, useArchitectureMapSelection } from "./architecture-map-selection.ts"
 import {
   fitViewport,
   movedViewport,
@@ -56,16 +56,35 @@ function Expanded(props: { readonly overview: MapReady }): ReactElement {
   const selected = useArchitectureMapSelection((state) => state.selected)
   const selectBox = useArchitectureMapSelection((state) => state.selectBox)
   const attachBadge = useArchitectureMapSelection((state) => state.attachBadge)
-  const [trail, setTrail] = useState<readonly Step[]>([
-    { title: "全体", view: props.overview.view },
-  ])
+  const lit = useArchitectureMapSelection((state) => state.lit)
+  const litView = useArchitectureMapSelection((state) => state.litView)
+  const [trail, setTrail] = useState<readonly Step[]>(() =>
+    trailForPointed(props.overview.view, selected),
+  )
+  const [seenSelected, setSeenSelected] = useState(selected)
   const [frame, setFrame] = useState<Size>(NO_FRAME)
   const [adjustment, setAdjustment] = useState<Adjustment>({})
   const drag = useRef({ active: false, x: 0, y: 0 })
 
-  const current = trail.at(-1) ?? { title: "全体", view: props.overview.view }
+  // 会話で選ばれた箱が今の図に無いときは、段を「全体 → 親の図」に替える（描画の途中で state を直すのは、選びが替わった回だけ）
+  if (selected !== seenSelected) {
+    setSeenSelected(selected)
+    if (selected?.by === "conversation" && !showsBox(selected.box.id, trail.at(-1)?.view)) {
+      setTrail(trailForPointed(props.overview.view, selected))
+      setAdjustment({})
+    }
+  }
+
+  const trailTop = trail.at(-1) ?? { title: "全体", view: props.overview.view }
+  // 触れているバッジの箱が今の図の箱に無いときは、その箱がある図に一時的に替える（段は動かさない）
+  // 焦点（潜った箱）は図に描かれないので、焦点の箱も替える側に数える
+  const litSwitch =
+    lit !== undefined && litView !== undefined && !trailTop.view.boxes.some((box) => box.id === lit)
+  const current = litSwitch ? { title: trailTop.title, view: litView } : trailTop
   const content = mapGeometryOf(current.view, "full")
-  const viewport = adjustment.viewport ?? fitViewport(content, frame)
+  const viewport = litSwitch
+    ? fitViewport(content, frame)
+    : (adjustment.viewport ?? fitViewport(content, frame))
   const askAt = askPositionOf(current.view, content.rects, viewport, selected?.box.id)
   const frameRef = useResizeObservedRef<HTMLDivElement>(
     (element) => {
@@ -211,6 +230,7 @@ function Expanded(props: { readonly overview: MapReady }): ReactElement {
             view={current.view}
             form="full"
             {...(selected === undefined ? {} : { selectedId: selected.box.id })}
+            {...(lit === undefined ? {} : { litId: lit })}
             onSelect={onSelect}
           />
         </div>
@@ -244,6 +264,24 @@ function Expanded(props: { readonly overview: MapReady }): ReactElement {
       </p>
     </div>
   )
+}
+
+/** 箱が図の箱か、図の焦点（潜った箱）か。 */
+function showsBox(id: string, view?: MapView): boolean {
+  return view !== undefined && (view.boxes.some((box) => box.id === id) || view.focus?.id === id)
+}
+
+/**
+ * 会話で選ばれた箱が全体の図に無いとき、その箱がある図（親の図）へ潜った段にする。
+ * それ以外は「全体」だけ。
+ */
+function trailForPointed(overview: MapView, selected?: SelectedBox): readonly Step[] {
+  const whole: Step = { title: "全体", view: overview }
+  if (selected?.by !== "conversation" || showsBox(selected.box.id, overview)) {
+    return [whole]
+  }
+  const { focus } = selected.view
+  return focus === undefined ? [whole] : [whole, { title: focus.title, view: selected.view }]
 }
 
 /**

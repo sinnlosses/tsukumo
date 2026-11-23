@@ -18,6 +18,8 @@ export function ArchitectureMapDiagram(props: {
   readonly view: MapView
   readonly form: MapDiagramForm
   readonly selectedId?: string
+  /** 会話のバッジに触れている箱。光らせる。 */
+  readonly litId?: string
   /** 箱を押したとき。 */
   readonly onSelect: (box: MapViewBox) => void
 }): ReactElement {
@@ -54,6 +56,7 @@ export function ArchitectureMapDiagram(props: {
               rect={rect}
               mini={mini}
               selected={box.id === props.selectedId}
+              lit={box.id === props.litId}
               onSelect={props.onSelect}
             />
           )
@@ -156,6 +159,7 @@ function BoxNode(props: {
   readonly rect: MapBoxRect
   readonly mini: boolean
   readonly selected: boolean
+  readonly lit: boolean
   readonly onSelect: (box: MapViewBox) => void
 }): ReactElement {
   const { box, rect, mini } = props
@@ -177,6 +181,7 @@ function BoxNode(props: {
       aria-pressed={props.selected}
       data-box={box.id}
       data-selected={props.selected}
+      data-lit={props.lit}
       data-problem={box.problems.length > 0}
       data-external={box.external}
       className={styles["box"]}

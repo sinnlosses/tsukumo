@@ -8,6 +8,8 @@
     white-space: nowrap;
     vertical-align: baseline;
   }
+  & .report-mark-map {
+  }
   /* 前の値と矢印を静かな色にし、後の値は地の ink のまま。 */
   & .report-mark-diff-from {
     color: var(--ink-quiet);

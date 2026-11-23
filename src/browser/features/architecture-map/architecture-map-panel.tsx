@@ -35,17 +35,27 @@ function ReadyPanel(props: { readonly ready: MapReady }): ReactElement {
   const selected = useArchitectureMapSelection((state) => state.selected)
   const selectBox = useArchitectureMapSelection((state) => state.selectBox)
   const expand = useArchitectureMapSelection((state) => state.expand)
+  const lit = useArchitectureMapSelection((state) => state.lit)
+  const litView = useArchitectureMapSelection((state) => state.litView)
   const { view } = props.ready
+  // 会話で指された箱は、その箱がある図（中・小の箱は親の図）で描く。画面で選んだときは全体の図のまま
+  const baseView = selected?.by === "conversation" ? selected.view : view
+  // 触れているバッジの箱が今の図に無いときは、その箱がある図に一時的に替える
+  const shownView =
+    lit !== undefined && litView !== undefined && !baseView.boxes.some((box) => box.id === lit)
+      ? litView
+      : baseView
   return (
     <div className={styles["panel"]}>
       <div className={styles["panel-head"]}>
         <div className={styles["panel-minimap"]}>
           <ArchitectureMapDiagram
-            view={view}
+            view={shownView}
             form="mini"
             {...(selected === undefined ? {} : { selectedId: selected.box.id })}
+            {...(lit === undefined ? {} : { litId: lit })}
             onSelect={(box) => {
-              selectBox({ box, view, by: "screen" })
+              selectBox({ box, view: shownView, by: "screen" })
             }}
           />
         </div>

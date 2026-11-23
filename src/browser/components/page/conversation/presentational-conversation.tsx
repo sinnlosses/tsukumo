@@ -7,8 +7,11 @@
 import type { ReactElement } from "react"
 
 import { ArchitectureMapExpanded } from "../../../features/architecture-map/architecture-map-expanded.tsx"
+import { MapBoxMark } from "../../../features/architecture-map/map-box-mark.tsx"
+import { MapMarkProvider } from "../../../features/report/map-mark-slot.tsx"
 import { TaskDoingCount } from "../../frame/sidebar/components/task-doing-count.tsx"
 import { Sidebar } from "../../frame/sidebar/sidebar.tsx"
+import "./stores/map-pointing.ts"
 import { CharacterView } from "./components/character-view/character-view.tsx"
 import { ChatView, ChatViewProvider } from "./components/chat-view/chat-view.tsx"
 import { ConversationLayout } from "./components/conversation-layout/conversation-layout.tsx"
@@ -43,10 +46,14 @@ export function PresentationalConversation(props: PresentationalConversationProp
     />
   )
   return (
-    <>
+    <MapMarkProvider value={renderMapMark}>
       <ChatViewProvider active={props.chatMode}>{layout}</ChatViewProvider>
       <LiveAnnouncer />
       {!props.chatMode && <RequestedTaskBoard />}
-    </>
+    </MapMarkProvider>
   )
+}
+
+function renderMapMark(id: string, source: string): ReactElement {
+  return <MapBoxMark id={id} source={source} />
 }

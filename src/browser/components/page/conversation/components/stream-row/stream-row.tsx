@@ -8,6 +8,7 @@
 import clsx from "clsx"
 import type { KeyboardEvent, ReactElement, ReactNode } from "react"
 
+import { MapMarkText } from "../../../../../features/architecture-map/map-box-mark.tsx"
 import { isOverlayOpen } from "../../../../../hooks/open-overlay.ts"
 import { TypingDots } from "../../../../ui/typing-dot-list/typing-dot-list.tsx"
 import { VisuallyHidden } from "../../../../ui/visually-hidden/visually-hidden.tsx"
@@ -18,6 +19,8 @@ import styles from "./stream-row.module.css"
 
 type StreamSpeechRowProps = {
   readonly text: string
+  /** `map` の印を箱のバッジで描くか（仕事のメインビュー）。雑談は字のまま。 */
+  readonly mapBadges: boolean
   readonly time: ClockStamp
   readonly selected: boolean
   readonly pop: boolean
@@ -43,6 +46,7 @@ export function StreamSpeechRow(props: StreamSpeechRowProps): ReactElement {
     <div className={clsx(styles["stream-row"], styles["stream-row-character"], props.className)}>
       <StreamSpeech
         text={props.text}
+        mapBadges={props.mapBadges}
         selected={props.selected}
         pop={props.pop}
         {...(props.arrival === undefined ? {} : { arrival: props.arrival })}
@@ -101,6 +105,7 @@ export function StreamTyping(): ReactElement {
 
 type StreamSpeechProps = {
   readonly text: string
+  readonly mapBadges: boolean
   readonly selected: boolean
   readonly pop: boolean
   readonly arrival?: SpeechArrivalBubble
@@ -139,7 +144,7 @@ function StreamSpeech(props: StreamSpeechProps): ReactElement {
     return (
       <div className={className} data-speaker="character" {...arrivalAttribute}>
         <SpeakerName name={props.speakerName} />
-        {props.text}
+        <SpeechText text={props.text} mapBadges={props.mapBadges} />
         {props.aim}
       </div>
     )
@@ -164,10 +169,15 @@ function StreamSpeech(props: StreamSpeechProps): ReactElement {
       }}
     >
       <SpeakerName name={props.speakerName} />
-      {props.text}
+      <SpeechText text={props.text} mapBadges={props.mapBadges} />
       {props.aim}
     </div>
   )
+}
+
+/** 雑談には地図のタブが無いので、`map` の印も字のまま出す。 */
+function SpeechText(props: { readonly text: string; readonly mapBadges: boolean }): ReactNode {
+  return props.mapBadges ? <MapMarkText text={props.text} /> : props.text
 }
 
 function StreamTime(props: { readonly time: ClockStamp }): ReactNode {

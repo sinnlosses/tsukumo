@@ -1,0 +1,54 @@
+{
+  "name": "map-mark",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "手続きの側と画面の側のつながりを教えて（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 300,
+      "event": {
+        "kind": "speech",
+        "text": "まず {{map: server}} を見るね。受け持ちは {{map: server/core}} と {{map: browser/main-view}} に分かれてるよ。",
+        "expression": "default"
+      }
+    },
+    {
+      "afterMs": 1000,
+      "event": {
+        "kind": "report",
+        "task": {
+          "kind": "none"
+        },
+        "closing": {
+          "kind": "speech",
+          "text": "見つけたよ。{{map: src/server/core/query}} が入口だった。",
+          "expression": "proud"
+        },
+        "toolUseId": "fake-report-map-mark-1",
+        "conclusion": "架空の結論: 手続きの側の入口は {{map: src/server/core/query}} で、画面の側は {{map: browser/main-view}} が受ける。",
+        "sections": [
+          {
+            "heading": "架空の指し示し",
+            "blocks": [
+              {
+                "kind": "markdown",
+                "markdown": "手続きは {{map: server}} の中で完結し、知らない箱 {{map: nowhere/box}} と、ほかの印 {{3 / 5}} は字のまま残る（架空）。",
+                "fold": "",
+                "aside": ""
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "afterMs": 1500,
+      "event": { "kind": "turn-finished", "outcome": { "kind": "completed" } }
+    }
+  ]
+}

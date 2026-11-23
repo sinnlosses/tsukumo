@@ -1,5 +1,5 @@
 import { QueryClientProvider } from "@tanstack/react-query"
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
 import { Sidebar } from "../../../../../src/browser/components/frame/sidebar/sidebar.tsx"
@@ -26,7 +26,13 @@ afterEach(() => {
   cleanup()
   fetchStub?.restore()
   fetchStub = undefined
-  useArchitectureMapSelection.setState({ selected: undefined, expanded: false })
+  useArchitectureMapSelection.setState({
+    selected: undefined,
+    lit: undefined,
+    expanded: false,
+    sidebarTab: "tasks",
+    unseenPointCount: 0,
+  })
 })
 
 function box(id: string, overrides: Partial<MapViewBox> = {}): MapViewBox {
@@ -165,6 +171,82 @@ describe("Sidebar の地図のタブ", () => {
     expect(text).toContain("架空の用語")
     expect(text).toContain("ベータへ 4本")
     expect(text).not.toContain("0001-架空")
+  })
+
+  it("会話で小の箱を指すと、ミニマップが親の図に替わり、触れている箱に data-lit が付く", async () => {
+    renderSidebar(rpcOutput(ready()))
+    fireEvent.click(await screen.findByRole("tab", { name: "地図" }))
+    const leaf = SMALL.boxes[0]
+    if (leaf === undefined) {
+      throw new Error("小の箱が無い")
+    }
+
+    act(() => {
+      useArchitectureMapSelection.getState().pointBox(leaf, SMALL)
+      useArchitectureMapSelection.getState().setLit(leaf.id)
+    })
+
+    const node = await screen.findByRole("button", { name: "葉の箱" })
+    expect(node.getAttribute("data-lit")).toBe("true")
+    expect(screen.queryByRole("button", { name: "アルファ" })).toBeNull()
+  })
+
+  it("何も選んでいないとき、図に無い小の箱のバッジに触れると親の図に替わって data-lit が付き、離れると戻る", async () => {
+    renderSidebar(rpcOutput(ready()))
+    fireEvent.click(await screen.findByRole("tab", { name: "地図" }))
+    const leaf = SMALL.boxes[0]
+    if (leaf === undefined) {
+      throw new Error("小の箱が無い")
+    }
+
+    act(() => {
+      useArchitectureMapSelection.getState().setLit(leaf.id)
+      useArchitectureMapSelection.getState().setLitView(leaf.id, SMALL)
+    })
+
+    const node = await screen.findByRole("button", { name: "葉の箱" })
+    expect(node.getAttribute("data-lit")).toBe("true")
+    expect(useArchitectureMapSelection.getState().selected).toBeUndefined()
+    expect(useArchitectureMapSelection.getState().unseenPointCount).toBe(0)
+
+    act(() => {
+      useArchitectureMapSelection.getState().clearLit()
+    })
+    expect(await screen.findByRole("button", { name: "アルファ" })).toBeTruthy()
+  })
+
+  it("タスクのタブで箱を指されると、タブは替わらず地図のタブに点と件数が付き、開くと消える", async () => {
+    renderSidebar(rpcOutput(ready()))
+    const mapTab = await screen.findByRole("tab", { name: "地図" })
+    const alpha = WHOLE.boxes[0]
+    if (alpha === undefined) {
+      throw new Error("箱が無い")
+    }
+
+    act(() => {
+      useArchitectureMapSelection.getState().pointBox(alpha, WHOLE)
+    })
+
+    expect(screen.getByRole("tab", { name: /タスク/ }).getAttribute("aria-selected")).toBe("true")
+    expect(screen.getByTestId("sidebar-map-tab-point").textContent).toBe("1")
+    fireEvent.click(mapTab)
+    expect(screen.queryByTestId("sidebar-map-tab-point")).toBeNull()
+    expect(useArchitectureMapSelection.getState().unseenPointCount).toBe(0)
+  })
+
+  it("地図のタブを開いているあいだに指されても件数は増えない", async () => {
+    renderSidebar(rpcOutput(ready()))
+    fireEvent.click(await screen.findByRole("tab", { name: "地図" }))
+    const alpha = WHOLE.boxes[0]
+    if (alpha === undefined) {
+      throw new Error("箱が無い")
+    }
+
+    act(() => {
+      useArchitectureMapSelection.getState().pointBox(alpha, WHOLE)
+    })
+
+    expect(useArchitectureMapSelection.getState().unseenPointCount).toBe(0)
   })
 
   it("小の箱を選ぶと、親の箱の名前と summary が添えられる", async () => {

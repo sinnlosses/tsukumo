@@ -5,7 +5,7 @@ import type {
   MapLevel,
   MapLinks,
 } from "../../../shared/architecture-map/architecture-map.ts"
-import type { MapViewBox } from "../../../shared/architecture-map/map-view.ts"
+import type { MapBoxIndexEntry, MapViewBox } from "../../../shared/architecture-map/map-view.ts"
 import { type BoxNode, boxIndexOf, mapViewOf } from "./map-view.ts"
 
 type BoxSummary = {
@@ -84,6 +84,18 @@ export function mapBoxOf(map: ArchitectureMap, id?: string): MapBoxOutcome {
     edges,
     problems: view.view.boxes.find((box) => box.id === node.id)?.problems ?? [],
   }
+}
+
+export function mapBoxIndexOf(map: ArchitectureMap): readonly MapBoxIndexEntry[] {
+  const index = boxIndexOf(map.boxes)
+  return index.order.map((node) => ({
+    id: node.id,
+    title: node.title,
+    level: node.level,
+    ...(node.summary === undefined ? {} : { summary: node.summary }),
+    ...(node.parentId === undefined ? {} : { parent: node.parentId }),
+    aliases: [...index.aliases].filter(([, id]) => id === node.id).map(([alias]) => alias),
+  }))
 }
 
 function summaryOf(node: BoxNode): BoxSummary {

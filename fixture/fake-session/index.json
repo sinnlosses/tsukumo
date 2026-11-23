@@ -179,7 +179,8 @@
     "workflow-diagram-seq",
     "workflow-diagram-par",
     "report-compare-versus",
-    "speech-arrival"
+    "speech-arrival",
+    "map-mark"
   ],
   "pastSessions": [
     {

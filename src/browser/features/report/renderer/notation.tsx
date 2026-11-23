@@ -15,6 +15,7 @@ import {
   REPORT_NOTATION_NAMES,
   REPORT_NOTE_KINDS,
 } from "../../../../shared/report/report-notation.ts"
+import { useRenderMapMark } from "../map-mark-slot.tsx"
 import { ZoomableSvgFigure } from "./figure-zoom.tsx"
 import { NoteLabel } from "./note-label.tsx"
 import {
@@ -103,9 +104,19 @@ type NotationInlineProps = JSX.IntrinsicElements["span"] & ExtraProps
 /** レポートの `span`。5系統のうち文中に置く側（`badge`）と、`li` の外に書かれたチェックボックスの印を受け持つ。 */
 export function NotationInline(props: NotationInlineProps): ReactElement {
   const { node, className, children, ...rest } = props
+  const renderMapMark = useRenderMapMark()
   const state = node === undefined ? "none" : taskState(node)
   if (state !== "none") {
     return <TaskMark state={state} />
+  }
+  const mapBox = node?.properties["dataMapBox"]
+  if (node !== undefined && typeof mapBox === "string") {
+    const source = node.children.map((child) => (child.type === "text" ? child.value : "")).join("")
+    return (
+      <span {...rest} className={resolveNotationClassName(className)}>
+        {renderMapMark(mapBox, source)}
+      </span>
+    )
   }
 
   return (

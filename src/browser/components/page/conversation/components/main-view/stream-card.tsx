@@ -71,6 +71,7 @@ export function SayRow(props: {
   return (
     <StreamSpeechRow
       text={props.row.record.text}
+      mapBadges
       time={clockOf(props.row.at)}
       liveness={props.presentation.liveness}
       aim={props.presentation.followed ? <StreamAim /> : undefined}
@@ -113,6 +114,7 @@ export function VoiceSlotRow(props: {
   return (
     <StreamSpeechRow
       text={voice.text}
+      mapBadges
       time={recordClockStamp(voice.time, localTimeZoneId())}
       liveness={pinned ? "plain" : "live"}
       aim={pinned ? undefined : <StreamAim />}

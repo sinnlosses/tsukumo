@@ -12,6 +12,7 @@
 import type { ReactElement } from "react"
 
 import type { ReactionKind } from "../../../../../../shared/recommendation/reaction.ts"
+import { MapMarkText } from "../../../../../features/architecture-map/map-box-mark.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
 import { TypingDots } from "../../../../ui/typing-dot-list/typing-dot-list.tsx"
 import type { ClockStamp } from "../../domain/clock-stamp.ts"
@@ -82,7 +83,7 @@ export function Balloon(props: BalloonProps): ReactElement {
         weight="inherit"
         className={styles["balloon-text"]}
       >
-        {props.text}
+        <MapMarkText text={props.text} />
       </Text>
     </>
   )

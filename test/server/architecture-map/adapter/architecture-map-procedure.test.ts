@@ -6,7 +6,10 @@ import { createORPCClient } from "@orpc/client"
 import { RPCLink } from "@orpc/client/fetch"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
-import { readMapView } from "../../../../src/server/architecture-map/adapter/architecture-map-view.ts"
+import {
+  readMapBoxes,
+  readMapView,
+} from "../../../../src/server/architecture-map/adapter/architecture-map-view.ts"
 import { RPC_PATH, type RpcClient } from "../../../../src/shared/rpc.ts"
 import {
   closeRunningView,
@@ -35,6 +38,7 @@ afterEach(async () => {
 async function clientOverRealPort(): Promise<RpcClient> {
   const server = await startView(noCharacterAsset, noPromptImage, {
     readArchitectureMapView: (selection) => readMapView(cwd, selection),
+    readArchitectureMapBoxes: () => readMapBoxes(cwd),
   })
   const url = new URL(`${viewOrigin(server)}${RPC_PATH}`)
   url.searchParams.set("t", TOKEN)
@@ -93,6 +97,18 @@ describe("architectureMap.view", () => {
       kind: "unfocusable",
       reason: "no-children",
     })
+  })
+
+  it("boxes は索引を ready で、地図が無いときは absent で返す", async () => {
+    const client = await clientOverRealPort()
+    expect(await client.architectureMap.boxes()).toEqual({ kind: "absent" })
+
+    await writeFile(join(cwd, MAP_FILE_NAME), JSON.stringify(sampleMap()))
+    const response = await client.architectureMap.boxes()
+
+    expect(response.kind === "ready" ? response.boxes.map((box) => box.id) : []).toContain(
+      "src/ui/part",
+    )
   })
 
   it("縮尺が 1・2・3 の外なら、口へ渡す前に契約が断る", async () => {

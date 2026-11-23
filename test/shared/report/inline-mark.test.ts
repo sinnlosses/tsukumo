@@ -69,6 +69,27 @@ describe("foldInlineMarks", () => {
     expect(foldInlineMarks("`{{cite: s1}}`")).toBe("`{{cite: s1}}`")
   })
 
+  it("地図の箱の印は ID 1つを読み、畳むと字のまま", () => {
+    const ids = (text: string) =>
+      parseInlineMarks(text).flatMap((segment) =>
+        segment.kind === "mark" && segment.mark.kind === "map" ? [segment.mark.id] : [],
+      )
+    expect(ids("{{map: server/report}}")).toEqual(["server/report"])
+    expect(ids("{{map: browser/features/report}}")).toEqual(["browser/features/report"])
+    expect(ids("{{map: plugins/.claude-plugin}}")).toEqual(["plugins/.claude-plugin"])
+    expect(foldInlineMarks("見て {{map: server/report}} を")).toBe("見て {{map: server/report}} を")
+    expect(textOutsideInlineMarks("a{{map: server/report}}b")).toBe("ab")
+    expect(ids("`{{map: server/report}}`")).toEqual([])
+  })
+
+  it.each(["{{map: }}", "{{map: a b}}", "{{map: /a}}", "{{map: a//b}}", "{{map: a → b}}"])(
+    "地図の箱の壊れた印 %s は字のまま残す",
+    (broken) => {
+      expect(brokenInlineMarkCount(broken)).toBe(1)
+      expect(foldInlineMarks(broken)).toBe(broken)
+    },
+  )
+
   it("入れ子は外側の {{ が壊れ、内側は印になる", () => {
     expect(foldInlineMarks("{{ {{3 / 5}} }}")).toBe("{{ 3/5 }}")
   })

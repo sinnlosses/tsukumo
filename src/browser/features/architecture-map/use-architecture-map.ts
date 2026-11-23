@@ -2,8 +2,17 @@
 
 import { useQuery } from "@tanstack/react-query"
 
-import type { MapViewResponse } from "../../../shared/architecture-map/map-view.ts"
+import type {
+  MapBoxIndexResponse,
+  MapViewResponse,
+} from "../../../shared/architecture-map/map-view.ts"
 import { rpc } from "../../stores/rpc.ts"
+
+/** 大・中・小の全部の箱の索引。届く前・取れなかったときは `pending`。 */
+export function useArchitectureMapBoxes(): MapBoxIndexResponse | { readonly kind: "pending" } {
+  const { data } = useQuery(rpc.architectureMap.boxes.queryOptions({ retry: false }))
+  return data ?? { kind: "pending" }
+}
 
 /** 届く前・取れなかったときは `pending`。 */
 export function useArchitectureMapOverview(): MapViewResponse | { readonly kind: "pending" } {

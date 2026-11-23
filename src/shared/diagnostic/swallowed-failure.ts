@@ -69,7 +69,7 @@ const SWALLOWED_FAILURE_PLACES = {
     "refresh-tasks",
   ],
   achievement: ["read-day", "read-calendar", "read-done-today"],
-  "architecture-map": ["read-view"],
+  "architecture-map": ["read-view", "read-boxes"],
   "character-pack": ["generation-failed"],
   process: ["unhandled-rejection", "uncaught-exception"],
 } as const satisfies Record<string, readonly string[]>

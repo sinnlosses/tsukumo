@@ -2,13 +2,14 @@
 // 選んだ値は `tabs` から引いて `T` で返す。
 
 import { Tab, TabList as AstryxTabList } from "@astryxdesign/core/TabList"
-import type { ReactElement } from "react"
+import type { ReactElement, ReactNode } from "react"
 
 type TabItem<T extends string> = {
   readonly value: T
   readonly label: string
   /** タブ自身の `id`（パネルの `aria-labelledby` が指す）。 */
   readonly id: string
+  readonly endContent?: ReactNode
 }
 
 type TabListProps<T extends string> = {
@@ -39,6 +40,7 @@ export function TabList<T extends string>(props: TabListProps<T>): ReactElement 
           label={tab.label}
           id={tab.id}
           panelId={props.panelId}
+          {...(tab.endContent === undefined ? {} : { endContent: tab.endContent })}
         />
       ))}
     </AstryxTabList>

@@ -6,6 +6,7 @@
 // 時刻は既定で `STAMPED`（時刻に依らないテストの既定値）。時刻そのものを確かめる
 // テストは `time` を上書きする。
 
+import type { A2uiWrittenComponent } from "../../src/shared/report/a2ui-report-catalog.ts"
 import type { ReportCheck } from "../../src/shared/report/report-check.ts"
 import type { ReportTask } from "../../src/shared/report/report-task.ts"
 import type {
@@ -80,7 +81,11 @@ export function detailRecord(markdown = "架空のレポート"): SessionRecord 
  */
 export function reportRecord(
   conclusion = "架空の結論",
-  overrides: { readonly task?: ReportTask; readonly checks?: readonly ReportCheck[] } = {},
+  overrides: {
+    readonly task?: ReportTask
+    readonly checks?: readonly ReportCheck[]
+    readonly components?: readonly A2uiWrittenComponent[]
+  } = {},
 ): SessionRecord {
   return {
     kind: "report",
@@ -97,7 +102,7 @@ export function reportRecord(
     verification: { kind: "none" },
     imageSizes: [],
     unshelvedImages: [],
-    components: [],
+    components: overrides.components ?? [],
     time: STAMPED,
   }
 }

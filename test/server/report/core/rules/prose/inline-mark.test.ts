@@ -50,6 +50,15 @@ describe("broken-inline-mark", () => {
     ).toEqual([{ kind: "broken-inline-mark", count: 5 }])
   })
 
+  it("地図の箱の印は壊れた印として差し戻さない", () => {
+    expect(
+      brokenOf({
+        conclusion: "架空の結論 {{map: server/report}}。",
+        sections: [sectionOf(textBlock("架空の {{map: server/report}} の話"))],
+      }),
+    ).toEqual([])
+  })
+
   it("list の label の壊れた印も数える", () => {
     expect(
       brokenOf({

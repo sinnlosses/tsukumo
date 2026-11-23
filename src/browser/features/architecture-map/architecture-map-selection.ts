@@ -6,7 +6,7 @@ import { create } from "zustand"
 import type { MapView, MapViewBox } from "../../../shared/architecture-map/map-view.ts"
 import type { MapBoxBadgeValue } from "./map-box-mention.ts"
 
-type SelectedBox = {
+export type SelectedBox = {
   readonly box: MapViewBox
   /** 箱を選んだ図。 */
   readonly view: MapView
@@ -14,9 +14,25 @@ type SelectedBox = {
   readonly by: "screen" | "conversation"
 }
 
+type SidebarTab = "tasks" | "map"
+
 type ArchitectureMapSelectionState = {
   readonly selected?: SelectedBox
+  /** 本文・セリフのバッジに触れている箱の ID。地図の図が光らせる。 */
+  readonly lit?: string
+  /** 光らせる箱がある図（中・小の箱は親の図）。引けるまでは無い。 */
+  readonly litView?: MapView
   readonly expanded: boolean
+  readonly sidebarTab: SidebarTab
+  /** 地図のタブを開いていないあいだに、会話から指された回数。 */
+  readonly unseenPointCount: number
+  readonly setLit: (id: string) => void
+  /** 触れている箱の図を置く。もう離れていたら置かない。 */
+  readonly setLitView: (id: string, view: MapView) => void
+  readonly clearLit: () => void
+  readonly chooseSidebarTab: (tab: SidebarTab) => void
+  /** 会話で箱を指す。選ぶだけで、タブは切り替えない（地図のタブを開いていなければ見ていない回数を足す）。 */
+  readonly pointBox: (box: MapViewBox, view: MapView) => void
   /** 入力欄の頭に付けた箱のバッジ。送ると外れる。 */
   readonly badge?: MapBoxBadgeValue
   readonly attachBadge: (box: MapViewBox) => void
@@ -29,6 +45,27 @@ type ArchitectureMapSelectionState = {
 
 export const useArchitectureMapSelection = create<ArchitectureMapSelectionState>()((set) => ({
   expanded: false,
+  sidebarTab: "tasks",
+  unseenPointCount: 0,
+  setLit: (lit) => {
+    set({ lit, litView: undefined })
+  },
+  setLitView: (id, litView) => {
+    set((state) => (state.lit === id ? { litView } : {}))
+  },
+  clearLit: () => {
+    set({ lit: undefined, litView: undefined })
+  },
+  chooseSidebarTab: (sidebarTab) => {
+    set(sidebarTab === "map" ? { sidebarTab, unseenPointCount: 0 } : { sidebarTab })
+  },
+  pointBox: (box, view) => {
+    set((state) => ({
+      selected: { box, view, by: "conversation" },
+      unseenPointCount:
+        state.sidebarTab === "map" ? state.unseenPointCount : state.unseenPointCount + 1,
+    }))
+  },
   attachBadge: (box) => {
     set({
       badge: {

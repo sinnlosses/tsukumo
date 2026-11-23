@@ -7,7 +7,7 @@ import { readMapBox } from "../../../architecture-map/adapter/architecture-map-b
 import { MAP_BOX_TOOL_NAME } from "../../../core/tsukumo-tool-name.ts"
 
 const DESCRIPTION =
-  "リポジトリの地図の箱の定義（置き場・ADR・つながり）を、箱の ID で引く。ID を省くと大・中の箱の一覧を返す。"
+  "リポジトリの地図の箱の定義（置き場・ADR・つながり）を、箱の ID で引く。ID を省くと大・中の箱の一覧を返す。本文とセリフで箱を指すときは {{map: <ID>}} と書く（ID は1つ）。"
 
 /** 作業ディレクトリの地図のファイルだけを読む。断るときは理由の固定の文面を `isError` 付きで返す。 */
 export function mapBoxTool(cwd: string) {

@@ -1,7 +1,9 @@
-// 文中に置く行内の印 `{{12 → 8}}`（前後の差）・`{{spark: 3 5 4 8}}`（折れ線）・`{{3 / 5}}`（帯）・`{{cite: s1}}`（出典の番号札）の読み方と、素の文字への畳み。
+// 文中に置く行内の印 `{{12 → 8}}`（前後の差）・`{{spark: 3 5 4 8}}`（折れ線）・`{{3 / 5}}`（帯）・`{{cite: s1}}`（出典の番号札）・`{{map: <ID>}}`（地図の箱の指し示し）の読み方と、素の文字への畳み。
 // 書式に当たらない `{{` は壊れた印で、畳みも描画もせず字のまま残す。inline code の中は読まない。
 
 import { sumBy } from "remeda"
+
+import { isBoxId } from "../architecture-map/architecture-map.ts"
 
 /** 出典の id の形。印の中の id と `sources` の id が同じ定数を読む。 */
 export const SOURCE_ID_PATTERN = /^[a-z0-9][a-z0-9-]{0,15}$/
@@ -11,6 +13,7 @@ type InlineMark =
   | { readonly kind: "spark"; readonly values: readonly number[] }
   | { readonly kind: "ratio"; readonly part: string; readonly whole: string }
   | { readonly kind: "cite"; readonly ids: readonly string[] }
+  | { readonly kind: "map"; readonly id: string }
 
 type InlineSegment =
   | { readonly kind: "text"; readonly text: string }
@@ -25,6 +28,8 @@ const BRACES = /\{\{[^{}\n]*\}\}|\{\{/g
 const NUMBER = "-?\\d+(?:\\.\\d+)?"
 const SPARK_BODY = /^spark:\s*(.*)$/
 const CITE_BODY = /^cite:\s*(.*)$/
+const MAP_BODY = /^map:\s*(.*)$/
+const MAP_ID = /^\S+$/
 const RATIO_BODY = /^(\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)$/
 const SPARK_NUMBER = new RegExp(`^${NUMBER}$`)
 const DIFF_FORBIDDEN = /[`*_~[\]<>|\\]/
@@ -43,7 +48,9 @@ const SPARK_LEVELS = "▁▂▃▄▅▆▇█"
 /** 印を素の文字へ畳む（`12 → 8`・block 文字の列・`3/5`・出典は空）。壊れた印と inline code の中はそのまま。 */
 export function foldInlineMarks(text: string): string {
   return parseInlineMarks(text)
-    .map((segment) => (segment.kind === "mark" ? foldedMark(segment.mark) : segment.text))
+    .map((segment) =>
+      segment.kind === "mark" ? foldedMark(segment.mark, segment.source) : segment.text,
+    )
     .join("")
 }
 
@@ -79,7 +86,7 @@ export function parseInlineMarks(text: string): readonly InlineSegment[] {
   return [...bounds.parts, ...proseSegments(text.slice(bounds.last))]
 }
 
-function foldedMark(mark: InlineMark): string {
+function foldedMark(mark: InlineMark, source: string): string {
   switch (mark.kind) {
     case "diff":
       return `${mark.from} → ${mark.to}`
@@ -89,6 +96,8 @@ function foldedMark(mark: InlineMark): string {
       return `${mark.part}/${mark.whole}`
     case "cite":
       return ""
+    case "map":
+      return source
   }
 }
 
@@ -142,6 +151,11 @@ function markOf(body: string): InlineMark | undefined {
     return ids.length > 0 && ids.every((id) => SOURCE_ID_PATTERN.test(id))
       ? { kind: "cite", ids }
       : undefined
+  }
+  const map = MAP_BODY.exec(body)
+  if (map !== null) {
+    const id = map[1] ?? ""
+    return MAP_ID.test(id) && isBoxId(id) ? { kind: "map", id } : undefined
   }
   const ratio = RATIO_BODY.exec(body)
   if (ratio !== null) {

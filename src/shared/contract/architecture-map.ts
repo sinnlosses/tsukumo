@@ -3,7 +3,11 @@
 
 import { oc } from "@orpc/contract"
 
-import { mapSelectionSchema, mapViewResponseSchema } from "../architecture-map/map-view.ts"
+import {
+  mapBoxIndexResponseSchema,
+  mapSelectionSchema,
+  mapViewResponseSchema,
+} from "../architecture-map/map-view.ts"
 
 export const architectureMapContract = {
   /**
@@ -11,4 +15,6 @@ export const architectureMapContract = {
    * 地図のファイルが無い・読めない・指した箱が使えないときは、失敗のエラーにせず理由つきの応答で返す。
    */
   view: oc.input(mapSelectionSchema).output(mapViewResponseSchema),
+  /** 大・中・小の全部の箱の索引を引く。地図が無い・読めないときは理由つきの応答で返す。 */
+  boxes: oc.output(mapBoxIndexResponseSchema),
 }

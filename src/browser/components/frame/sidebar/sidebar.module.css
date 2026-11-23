@@ -35,6 +35,20 @@
 .sidebar-tabs {
   flex: none;
 }
+/* 地図のタブの後ろに添える、会話から指された箱の点と件数。色は狐火の青緑。 */
+.sidebar-tab-point {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--stack-block);
+  color: var(--map-focus);
+  font-size: var(--font-label);
+}
+.sidebar-tab-point-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--map-focus);
+}
 .sidebar-tab-panel {
   display: contents;
 }
