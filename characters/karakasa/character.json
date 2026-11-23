@@ -11,10 +11,10 @@
   "expressions": {
     "default": "通常",
     "excited": "にっこり",
-    "flustered": "照れ",
-    "serious": "怒り",
+    "flustered": "困り",
+    "serious": "むすっ",
     "curious": "驚き",
-    "thinking": "困り",
+    "thinking": "うつむき",
     "sad": "悲しみ",
     "proud": "くすっ",
     "bored": "すやすや"
