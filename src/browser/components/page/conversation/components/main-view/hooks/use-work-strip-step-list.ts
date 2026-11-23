@@ -6,6 +6,7 @@ import type { PhaseTimesView } from "../../../../../../../shared/report/report-p
 import type { BackgroundTask } from "../../../../../../../shared/session-driver/background-task.ts"
 import type { TaskId } from "../../../../../../../shared/session-driver/task-id.ts"
 import type { TurnStep } from "../../../../../../../shared/session/turn-step.ts"
+import type { DelegatedRange } from "../../../../../../../shared/session/work-plan.ts"
 import type { WorkflowRun } from "../../../../../../../shared/session/workflow-run.ts"
 import { formatMeasured } from "../../../../../../../shared/utils/elapsed-time.ts"
 import {
@@ -32,6 +33,21 @@ import {
   workflowBoxStateOf,
   workflowDiagramOf,
 } from "../domain/workflow-diagram.ts"
+import { type WorkflowMainStepSpan, workflowMainStepEndsOf } from "../domain/workflow-main-step.ts"
+
+/** 図の両端に置くメインの箱の材料。`duration` は表示の字で、測れなければ空。 */
+export type WorkStripMainBox = {
+  readonly count: number
+  readonly duration: string
+}
+
+/** 着手（範囲の前）と送り出し（範囲の後ろ）のメインの箱。手順が1件も無い側は持たない。 */
+export type WorkStripMainBoxes = {
+  readonly prelude?: WorkStripMainBox
+  readonly landing?: WorkStripMainBox
+  /** 送り出しの箱を置く列の鍵（範囲の次の段）。 */
+  readonly landingKey?: string
+}
 
 /** 全体の詳細が開いているか。`landing` は開いた面をどこへ連れていくか。 */
 export type WorkStripStepsList =
@@ -60,6 +76,7 @@ export type WorkStripWorkflow = {
     | {
         readonly kind: "open"
         readonly diagram: WorkflowDiagram
+        readonly mainBoxes: WorkStripMainBoxes
         readonly columnDurations: ReadonlyMap<string, string>
         /** 依頼が済んだか。済んだら最後の列に色を付ける。 */
         readonly finished: boolean
@@ -116,6 +133,7 @@ export function workStripStepsOf(input: {
   readonly backgroundTasks: readonly BackgroundTask[]
   readonly workflowRuns: readonly WorkflowRun[]
   readonly phaseIds: readonly string[]
+  readonly delegatedRange: DelegatedRange
   readonly now: number
   readonly elapsedLabel: string
   readonly onToggle: () => void
@@ -205,23 +223,46 @@ type DrawnWorkflow = Omit<WorkStripWorkflow, "view"> & {
     | {
         readonly kind: "open"
         readonly diagram: WorkflowDiagram
+        readonly mainBoxes: WorkStripMainBoxes
         readonly hand?: WorkflowAgentHand
       }
     | { readonly kind: "folded"; readonly agentCount: number; readonly duration: string }
 }
 
+function mainBoxOf(span: WorkflowMainStepSpan): readonly WorkStripMainBox[] {
+  return span.count === 0
+    ? []
+    : [
+        {
+          count: span.count,
+          duration: span.duration.kind === "known" ? formatMeasured(span.duration) : "",
+        },
+      ]
+}
+
 function drawnWorkflowsOf(
   input: {
+    readonly steps: readonly TurnStep[]
     readonly workflowRuns: readonly WorkflowRun[]
     readonly backgroundTasks: readonly BackgroundTask[]
     readonly phaseIds: readonly string[]
+    readonly delegatedRange: DelegatedRange
     readonly finished: boolean
     readonly now: number
   },
   list: Extract<WorkStripStepsList, { readonly kind: "open" }>,
   planCurrentKey?: string,
 ): readonly DrawnWorkflow[] {
+  const landingFrom =
+    input.delegatedRange.kind === "range"
+      ? input.delegatedRange.first + input.delegatedRange.count
+      : undefined
+  const landingKey = landingFrom === undefined ? undefined : input.phaseIds[landingFrom]
+  const mainSteps = workflowMainStepEndsOf(input.steps, input.workflowRuns.length, landingFrom)
   return input.workflowRuns.toReversed().map((run, position): DrawnWorkflow => {
+    const runMain = mainSteps[input.workflowRuns.length - 1 - position]
+    const [prelude] = runMain === undefined ? [] : mainBoxOf(runMain.prelude)
+    const [landing] = runMain === undefined ? [] : mainBoxOf(runMain.landing)
     const base = {
       taskId: run.taskId,
       name:
@@ -251,6 +292,7 @@ function drawnWorkflowsOf(
         columns: list.unfoldedWorkflowColumns,
       },
       planCurrentKey,
+      prelude !== undefined,
     )
     const mapped = run.agents
       .map((agent) => agent.phaseTitle)
@@ -261,6 +303,10 @@ function drawnWorkflowsOf(
       view: {
         kind: "open",
         diagram,
+        mainBoxes: {
+          ...(prelude === undefined ? {} : { prelude }),
+          ...(landing === undefined || landingKey === undefined ? {} : { landing, landingKey }),
+        },
         ...workflowHandOf(run, list.selectedWorkflowAgent, input.now),
       },
     }

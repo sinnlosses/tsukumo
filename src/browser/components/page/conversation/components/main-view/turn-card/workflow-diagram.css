@@ -35,13 +35,10 @@
 .workflow-diagram-stage {
   position: relative;
   display: grid;
-  grid-template-columns: var(--diagram-tracks);
+  grid-template-columns: var(--diagram-lead,) var(--diagram-tracks);
   align-items: start;
   column-gap: calc(2 * var(--inline-group) + var(--inline-control));
   row-gap: calc(2 * var(--stack-group) + var(--stack-block));
-}
-.workflow-diagram-stage[data-has-folded="true"] {
-  grid-template-columns: 6rem var(--diagram-tracks);
 }
 .workflow-diagram-stage[data-has-start="true"] {
   padding-inline-start: calc(3 * var(--inline-group));
@@ -103,7 +100,7 @@
 .workflow-diagram-folded-column {
   position: relative;
   grid-row: 1 / span 2;
-  grid-column: 1;
+  grid-column: var(--lead-folded-col);
   padding-block-start: var(--stack-group);
 }
 .workflow-diagram-scale {
@@ -203,10 +200,16 @@
   background: color-mix(in srgb, var(--accent) 18%, transparent);
   border-radius: var(--radius-sm);
 }
-.workflow-diagram-upcoming {
+/* メインの箱は破線の枠で、実線のエージェントの箱と区別する。 */
+.workflow-diagram-upcoming,
+.workflow-diagram-main {
   border-style: dashed;
 }
-[data-current="true"] > .workflow-diagram-upcoming {
+.workflow-diagram-column-head[data-kind="prelude"] {
+  border-bottom: 2px dotted var(--rule-quiet);
+}
+[data-current="true"] > .workflow-diagram-upcoming,
+[data-current="true"] > .workflow-diagram-main {
   border-style: solid;
   border-color: var(--accent);
 }

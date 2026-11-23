@@ -7,6 +7,7 @@ import {
   currentPhaseOf,
   finishedPhaseCount,
   type LatestWorkPlan,
+  NO_DELEGATED_RANGE,
   phaseCount,
   plannedPhasesOf,
 } from "../../../../../../../shared/session/work-plan.ts"
@@ -181,6 +182,7 @@ export function useWorkStrip(): WorkStripModel {
     backgroundTasks,
     workflowRuns,
     phaseIds: plan.kind === "planned" ? plan.phaseIds : [],
+    delegatedRange: plan.kind === "planned" ? plan.delegatedRange : NO_DELEGATED_RANGE,
     now,
     elapsedLabel: elapsedLabel,
     onToggle: () => {

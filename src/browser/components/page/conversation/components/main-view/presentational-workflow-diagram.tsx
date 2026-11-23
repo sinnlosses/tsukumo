@@ -13,6 +13,7 @@ import { ChevronLeftIcon } from "../../../../ui/icon/icon.tsx"
 import { StatusDot } from "../../../../ui/status-dot/status-dot.tsx"
 import { Surface } from "../../../../ui/surface/surface.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
+import { leadOf, stepStartOf, stepTracksOf } from "./domain/workflow-diagram-grid.ts"
 import {
   type WorkflowAgentCount,
   workflowBoxLabelOf,
@@ -31,10 +32,19 @@ import type {
   WorkflowDiagramBoxState,
   WorkflowDiagramColumn,
 } from "./domain/workflow-diagram.ts"
-import type { WorkStripSteps, WorkStripWorkflow } from "./hooks/use-work-strip-step-list.ts"
+import type {
+  WorkStripMainBox,
+  WorkStripMainBoxes,
+  WorkStripSteps,
+  WorkStripWorkflow,
+} from "./hooks/use-work-strip-step-list.ts"
 import { useWorkflowArrowPaths } from "./hooks/use-workflow-arrow-path.ts"
 import styles from "./main-view.module.css"
 import { PresentationalWorkflowAgentHand } from "./presentational-workflow-agent-hand.tsx"
+import {
+  PresentationalWorkflowMainBox,
+  PresentationalWorkflowPrelude,
+} from "./presentational-workflow-main-box.tsx"
 
 type BoxTone = "plain" | "accent" | "danger" | "dashed"
 
@@ -150,6 +160,7 @@ function WorkflowItem(props: {
       <DiagramStage
         taskId={workflow.taskId}
         diagram={view.diagram}
+        mainBoxes={view.mainBoxes}
         columnDurations={view.columnDurations}
         finished={view.finished}
         {...(view.planCurrentKey === undefined ? {} : { planCurrentKey: view.planCurrentKey })}
@@ -178,6 +189,7 @@ function CountBadges(props: { readonly counts: readonly WorkflowAgentCount[] }):
 function DiagramStage(props: {
   readonly taskId: TaskId
   readonly diagram: WorkflowDiagram
+  readonly mainBoxes: WorkStripMainBoxes
   readonly columnDurations: ReadonlyMap<string, string>
   readonly finished: boolean
   readonly planCurrentKey?: string
@@ -188,13 +200,22 @@ function DiagramStage(props: {
   const { ref, paths } = useWorkflowArrowPaths(diagram)
   const markerId = useId()
   const hasStart = diagram.arrows.some((arrow) => arrow.from.kind === "start")
+  const prelude = diagram.foldedPhases === undefined ? props.mainBoxes.prelude : undefined
+  const lead = leadOf(diagram, prelude !== undefined)
+  const landing =
+    props.mainBoxes.landingKey === undefined
+      ? undefined
+      : { key: props.mainBoxes.landingKey, box: props.mainBoxes.landing }
   return (
     <div
       ref={ref}
       className={styles["workflow-diagram-stage"]}
       data-has-start={hasStart}
-      data-has-folded={diagram.foldedPhases !== undefined || diagram.refoldable !== undefined}
-      style={{ "--diagram-tracks": stepTracksOf(diagram) }}
+      style={{
+        "--diagram-tracks": stepTracksOf(diagram),
+        "--diagram-lead": lead.tracks,
+        "--lead-folded-col": String(lead.foldedColumn),
+      }}
     >
       <svg aria-hidden="true" className={styles["workflow-diagram-arrows"]}>
         <defs>
@@ -236,6 +257,7 @@ function DiagramStage(props: {
           <circle cx="5" cy="5" r="5" />
         </svg>
       )}
+      {prelude !== undefined && <PresentationalWorkflowPrelude box={prelude} />}
       {diagram.foldedPhases !== undefined && (
         <div className={styles["workflow-diagram-folded-column"]}>
           <div data-diagram-end="folded">
@@ -281,7 +303,8 @@ function DiagramStage(props: {
             key={column.key}
             taskId={taskId}
             column={column}
-            start={stepStartOf(diagram, position)}
+            start={stepStartOf(diagram, position, lead.count)}
+            landing={landing?.key === column.key ? landing.box : undefined}
             columnDurations={props.columnDurations}
             current={current}
             finished={props.finished}
@@ -316,28 +339,11 @@ function DiagramStage(props: {
   )
 }
 
-/** 段ごとの列の幅。範囲の箱が受け持つ段（2つ以上）は細く、ほかの段は広く幅を回す。 */
-function stepTracksOf(diagram: WorkflowDiagram): string {
-  return diagram.columns
-    .flatMap((column) => {
-      const keys = columnKeysOf(column)
-      return keys.map(() => (keys.length > 1 ? "minmax(0, 0.6fr)" : "minmax(0, 1.6fr)"))
-    })
-    .join(" ")
-}
-
-/** 列の最初の段の格子の位置（1始まり。「済んだ n フェーズ」か「畳む」の列があれば先頭の1つを譲る）。 */
-function stepStartOf(diagram: WorkflowDiagram, position: number): number {
-  return (
-    (diagram.foldedPhases === undefined && diagram.refoldable === undefined ? 1 : 2) +
-    diagram.columns.slice(0, position).reduce((sum, column) => sum + columnKeysOf(column).length, 0)
-  )
-}
-
 function Column(props: {
   readonly taskId: TaskId
   readonly column: WorkflowDiagramColumn
   readonly start: number
+  readonly landing?: WorkStripMainBox
   readonly columnDurations: ReadonlyMap<string, string>
   readonly current: boolean
   readonly finished: boolean
@@ -389,7 +395,14 @@ function Column(props: {
           "--step-span": String(keys.length),
         }}
       >
-        {column.kind === "upcoming" ? (
+        {column.kind === "upcoming" && props.landing !== undefined ? (
+          <PresentationalWorkflowMainBox
+            name="送り出し"
+            box={props.landing}
+            endKey={workflowDiagramEndKeyOf({ kind: "upcoming", column: column.key })}
+            current={current && props.finished}
+          />
+        ) : column.kind === "upcoming" ? (
           <div
             data-diagram-end={workflowDiagramEndKeyOf({ kind: "upcoming", column: column.key })}
             data-current={current && props.finished}

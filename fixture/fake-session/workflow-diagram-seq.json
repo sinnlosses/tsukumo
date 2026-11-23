@@ -36,6 +36,60 @@
       }
     },
     {
+      "afterMs": 210,
+      "event": {
+        "kind": "tool-started",
+        "toolUseId": "fake-main-1",
+        "name": "Bash",
+        "input": { "command": "tw claim", "description": "架空の着手の印" }
+      }
+    },
+    {
+      "afterMs": 220,
+      "event": {
+        "kind": "tool-finished",
+        "toolUseId": "fake-main-1",
+        "content": "ok",
+        "isError": false
+      }
+    },
+    {
+      "afterMs": 230,
+      "event": {
+        "kind": "tool-started",
+        "toolUseId": "fake-main-2",
+        "name": "Bash",
+        "input": { "command": "tw plan-phases", "description": "架空の計画の確認" }
+      }
+    },
+    {
+      "afterMs": 240,
+      "event": {
+        "kind": "tool-finished",
+        "toolUseId": "fake-main-2",
+        "content": "ok",
+        "isError": false
+      }
+    },
+    {
+      "afterMs": 250,
+      "event": {
+        "kind": "tool-started",
+        "toolUseId": "fake-main-3",
+        "name": "Workflow",
+        "input": { "name": "架空の task-flow" }
+      }
+    },
+    {
+      "afterMs": 260,
+      "event": {
+        "kind": "tool-finished",
+        "toolUseId": "fake-main-3",
+        "content": "ok",
+        "isError": false
+      }
+    },
+    {
       "afterMs": 300,
       "event": {
         "kind": "background-tasks-changed",

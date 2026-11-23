@@ -2,9 +2,10 @@
 
 import { isDeepEqual } from "remeda"
 
-/** 矢印の端。`others` は列の「ほか n 件」、`folded` は「済んだ n フェーズ」、`upcoming` は「これから」の列。 */
+/** 矢印の端。`others` は列の「ほか n 件」、`folded` は「済んだ n フェーズ」、`upcoming` は「これから」の列、`prelude` は範囲の前のメインの「着手」の箱。 */
 export type WorkflowDiagramEnd =
   | { readonly kind: "start" }
+  | { readonly kind: "prelude" }
   | { readonly kind: "agent"; readonly index: number }
   | { readonly kind: "others"; readonly column: string }
   | { readonly kind: "folded" }

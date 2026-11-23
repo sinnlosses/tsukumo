@@ -43,6 +43,8 @@ function arrowPairs(diagram: WorkflowDiagram): readonly (readonly [string, strin
     switch (point.kind) {
       case "start":
         return "start"
+      case "prelude":
+        return "prelude"
       case "agent":
         return String(point.index)
       case "others":
@@ -107,6 +109,28 @@ const TASK_FLOW = runOf([
     startedAt: 300,
   }),
 ])
+
+describe("workflowDiagramOf（着手の箱）", () => {
+  it("着手があれば最初のエージェントへ矢印を引く", () => {
+    const diagram = workflowDiagramOf(
+      TASK_FLOW,
+      TASK_FLOW_IDS,
+      NOW,
+      { phases: true, columns: [] },
+      undefined,
+      true,
+    )
+    expect(arrowPairs(diagram)[0]).toEqual(["prelude", "0", "settled"])
+  })
+
+  it("着手が無ければ矢印を引かない", () => {
+    const diagram = workflowDiagramOf(TASK_FLOW, TASK_FLOW_IDS, NOW, {
+      phases: true,
+      columns: [],
+    })
+    expect(diagram.arrows.some((arrow) => arrow.from.kind === "prelude")).toBe(false)
+  })
+})
 
 describe("workflowDiagramOf（順に回る形）", () => {
   it("task-flow の並びで、直しへの矢印だけが差し戻しになり、推移で言える矢印は引かない", () => {

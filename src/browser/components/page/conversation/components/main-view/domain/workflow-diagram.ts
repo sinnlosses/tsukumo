@@ -81,6 +81,7 @@ const BOX_PRIORITY = [
  * 図の形を組む。`phaseIds` はワークプランのフェーズの id で、`phaseTitle` を列に当てる。
  * エージェントの載った列は、次にエージェントの載った列の手前までの段を受け持つ（走っている列は `planCurrentKey` の段まで）。
  * `unfold.phases` なら前の列を畳まず、`unfold.columns` にある列の鍵は「ほか n 件」に畳まない。
+ * `hasPrelude` で前の列を畳んでいなければ、範囲の前のメインの「着手」の箱から最初のエージェントの箱へ矢印を引く（畳んだ図は着手の列も畳む）。
  * `unfold.refoldable` は利用者が開いた図で、畳み直せる段の数を `refoldable` に持たせる（終わって全部開いた図では立てない）。
  */
 export function workflowDiagramOf(
@@ -93,6 +94,7 @@ export function workflowDiagramOf(
     readonly columns: readonly string[]
   },
   planCurrentKey?: string,
+  hasPrelude = false,
 ): WorkflowDiagram {
   const states = new Map(
     run.agents.map((agent) => [agent.index, workflowBoxStateOf(agent, run.ended)]),
@@ -186,7 +188,18 @@ export function workflowDiagramOf(
       }))
     },
   )
+  const preludeArrows: readonly WorkflowDiagramArrow[] =
+    hasPrelude && foldedGroups.length === 0
+      ? run.agents
+          .filter((agent) => !run.agents.some((before) => isAfter(before, agent)))
+          .map((agent): WorkflowDiagramArrow => ({
+            from: { kind: "prelude" },
+            to: endOf(agent.index),
+            kind: "settled",
+          }))
+      : []
   const arrows = mergedArrows([
+    ...preludeArrows,
     ...edges.map((edge) => ({
       ...edge,
       from: edge.from.kind === "agent" ? endOf(edge.from.index) : edge.from,

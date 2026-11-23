@@ -5,6 +5,7 @@ import type { WorkflowAgentHand } from "../../page/conversation/components/main-
 import type { WorkStripSteps } from "../../page/conversation/components/main-view/hooks/use-work-strip-step-list.ts"
 import { PresentationalWorkflowAgentHand } from "../../page/conversation/components/main-view/presentational-workflow-agent-hand.tsx"
 import { PresentationalWorkflowDiagrams } from "../../page/conversation/components/main-view/presentational-workflow-diagram.tsx"
+import { PresentationalWorkflowMainBox } from "../../page/conversation/components/main-view/presentational-workflow-main-box.tsx"
 import type { ScreenPartExample } from "./screen-part-example-type.ts"
 
 const noop = (): void => {}
@@ -49,6 +50,7 @@ function exampleSteps(): WorkStripSteps {
         view: {
           kind: "open",
           hand: EXAMPLE_HAND,
+          mainBoxes: {},
           columnDurations: new Map([
             ["実装", "9分48秒"],
             ["受け入れ", "4分08秒〜"],
@@ -162,6 +164,7 @@ function spanWorkflow(phase: "implementing" | "accepting"): WorkStripSteps["work
     counts: [{ state: "running", count: 1, label: "動いている 1" }],
     view: {
       kind: "open",
+      mainBoxes: {},
       columnDurations: new Map([
         ["impl-1", "1分21秒"],
         ["impl-2", "37秒"],
@@ -244,6 +247,19 @@ const EXAMPLE_HAND: WorkflowAgentHand = {
 }
 
 export const WORKFLOW_EXAMPLES: readonly ScreenPartExample[] = [
+  {
+    frame: "flow",
+    path: "page/conversation/components/main-view/presentational-workflow-main-box.tsx",
+    render: () => (
+      <>
+        <PresentationalWorkflowMainBox
+          name="送り出し"
+          box={{ count: 3, duration: "2分39秒" }}
+          endKey="example-landing"
+        />
+      </>
+    ),
+  },
   {
     frame: "flow",
     path: "page/conversation/components/main-view/presentational-workflow-agent-hand.tsx",

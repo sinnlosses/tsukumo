@@ -154,6 +154,8 @@ export function workflowDiagramEndKeyOf(end: WorkflowDiagramEnd): string {
   switch (end.kind) {
     case "start":
       return "start"
+    case "prelude":
+      return "prelude"
     case "agent":
       return `agent:${String(end.index)}`
     case "others":
