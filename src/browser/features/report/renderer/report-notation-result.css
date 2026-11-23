@@ -83,7 +83,7 @@
     max-width: 100%;
     overflow-wrap: break-word;
     color: var(--ink);
-    font-weight: 500;
+    font-weight: 600;
   }
 }
 /* ハイフンの後ろに見えない結合子（U+2060）を生成して、ハイフンの後で折れないようにする（字は変えない）。 */

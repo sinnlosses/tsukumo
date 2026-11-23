@@ -394,7 +394,7 @@
   }
   & .report-option-reject .report-option-name {
     color: var(--ink-soft);
-    font-weight: 500;
+    font-weight: 400;
   }
   & .report-option-reject .report-option-reason {
     color: var(--ink-quiet);

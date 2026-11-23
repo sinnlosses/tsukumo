@@ -77,7 +77,7 @@ button.choice {
   border-radius: var(--radius-pill);
   color: var(--ink-soft);
   font-size: var(--font-secondary);
-  font-weight: 500;
+  font-weight: 400;
 }
 
 .result {

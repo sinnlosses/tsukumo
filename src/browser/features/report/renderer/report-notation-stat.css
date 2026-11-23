@@ -70,7 +70,7 @@
   & .report-stat-better,
   & .report-stat-worse {
     font-size: var(--font-subheading);
-    font-weight: 500;
+    font-weight: 400;
     margin-inline-end: 0.5em;
     color: var(--ink-quiet);
   }
@@ -109,7 +109,7 @@
   /* `stats` の全体の数。数の後ろに小さく並べ、割合は下の帯で添える。 */
   & .report-stat-total {
     font-size: var(--font-subheading);
-    font-weight: 500;
+    font-weight: 400;
     letter-spacing: normal;
     color: var(--ink-quiet);
   }
@@ -139,7 +139,7 @@
     margin-block-start: var(--space-xs);
     padding: var(--space-2xs) var(--space-sm);
     border-radius: var(--radius-sm);
-    font-weight: 500;
+    font-weight: 600;
     white-space: nowrap;
   }
   & .report-stat-verdict-met {
@@ -157,7 +157,7 @@
     margin-block-start: var(--space-xs);
     padding: var(--space-2xs) var(--space-sm);
     border-radius: var(--radius-sm);
-    font-weight: 500;
+    font-weight: 400;
     white-space: nowrap;
     color: var(--ink-quiet);
   }
