@@ -18,7 +18,7 @@ const ZOOM_LABEL = "この図を拡大"
 
 const NO_FALLBACK = { kind: "none" } as const satisfies ImageZoomFallback
 
-const COPIED_PROPERTIES = [
+const SVG_COPIED_PROPERTIES = [
   "fill",
   "stroke",
   "stroke-width",
@@ -27,6 +27,30 @@ const COPIED_PROPERTIES = [
   "font-size",
   "font-weight",
 ] as const
+
+// foreignObject の中の HTML の字（mermaid の箱と矢印のラベル）。
+// 箱の幅はページの書体で測ってあるので、書体が違うと末尾の字が箱の外に出て切れる。
+const HTML_COPIED_PROPERTIES = [
+  "color",
+  "font-family",
+  "font-size",
+  "font-weight",
+  "font-style",
+  "font-feature-settings",
+  "font-kerning",
+  "-webkit-font-smoothing",
+  "line-height",
+  "letter-spacing",
+  "word-spacing",
+  "text-autospace",
+  "text-align",
+  "white-space",
+  "word-break",
+  "overflow-wrap",
+  "line-break",
+] as const
+
+const SVG_NAMESPACE = "http://www.w3.org/2000/svg"
 
 type FigureZoomTriggerProps = {
   readonly role: "button"
@@ -128,23 +152,25 @@ function naturalSize(svg: SVGSVGElement): { readonly width: number; readonly hei
   return { width: rect.width, height: rect.height }
 }
 
-/** 同じ形の2つの木を並べて歩き、`foreignObject` の中（HTML）を除く svg の要素へ計算済みの値を書く。 */
+/**
+ * 同じ形の2つの木を並べて歩き、計算済みの値を書く。`foreignObject` の中の HTML には字の値を書く。
+ * `<img>` の中ではページの web フォントが読めず幅が測ったときより広がりうるので、`foreignObject` ははみ出しを切らない。
+ */
 function copyComputedStyle(source: Element, target: Element): void {
-  if (source.namespaceURI === "http://www.w3.org/2000/svg") {
-    const computed = getComputedStyle(source)
-    const declarations = COPIED_PROPERTIES.map(
-      (property) => [property, computed.getPropertyValue(property)] as const,
-    )
-      .filter(([, value]) => value !== "")
-      .map(([property, value]) => `${property}:${value}`)
-    target.setAttribute(
-      "style",
-      [target.getAttribute("style") ?? "", ...declarations].filter((part) => part !== "").join(";"),
-    )
-  }
-  if (source.localName === "foreignObject") {
-    return
-  }
+  const properties =
+    source.namespaceURI === SVG_NAMESPACE ? SVG_COPIED_PROPERTIES : HTML_COPIED_PROPERTIES
+  const computed = getComputedStyle(source)
+  const declarations = properties
+    .map((property) => [property, computed.getPropertyValue(property)] as const)
+    .filter(([, value]) => value !== "")
+    .map(([property, value]) => `${property}:${value}`)
+  const overflow = source.localName === "foreignObject" ? ["overflow:visible"] : []
+  target.setAttribute(
+    "style",
+    [target.getAttribute("style") ?? "", ...declarations, ...overflow]
+      .filter((part) => part !== "")
+      .join(";"),
+  )
   const sourceChildren = Array.from(source.children)
   const targetChildren = Array.from(target.children)
   sourceChildren.forEach((child, index) => {

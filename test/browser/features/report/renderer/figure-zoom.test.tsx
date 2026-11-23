@@ -42,6 +42,26 @@ describe("SvgZoom", () => {
     expect(text).not.toContain("max-width")
   })
 
+  it("foreignObject の中の HTML にも字の値を書き、foreignObject ははみ出しを切らない", () => {
+    const svg = svgOf(
+      `<svg viewBox="0 0 100 40"><foreignObject width="80" height="20"><div><span style="font-family: Fictional Sans">架空のラベル</span></div></foreignObject></svg>`,
+    )
+    document.body.append(svg)
+
+    const copy = new DOMParser().parseFromString(
+      decoded(zoomedSource(svg)),
+      "image/svg+xml",
+    ).documentElement
+    svg.remove()
+
+    const foreignObject = copy.querySelector("foreignObject")
+    expect(foreignObject?.getAttribute("style")).toContain("overflow:visible")
+    expect(foreignObject?.querySelector("div")?.getAttribute("style")).toContain("font-size:")
+    expect(foreignObject?.querySelector("span")?.getAttribute("style")).toContain(
+      'font-family:"Fictional Sans"',
+    )
+  })
+
   it("viewBox が無い svg は測った大きさを使う", () => {
     const text = decoded(zoomedSource(svgOf(`<svg width="50" height="40"></svg>`)))
 
