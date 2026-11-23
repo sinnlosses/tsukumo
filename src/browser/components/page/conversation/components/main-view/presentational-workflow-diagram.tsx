@@ -1,14 +1,11 @@
 // 「手順」の全体の詳細の頭に置く、ワークフロースクリプトの図。列はフェーズ、箱はエージェント1つ。
 // 箱・印・件数・札は `ui/` の部品で描き、自前で描くのは矢印と始まりの点の SVG と、箱を列に置く並びだけ。
-// 矢印の座標は箱を置いたあとに `[data-diagram-end]` の矩形を測って決める（DOM を読むのは `useArrowPaths` の1か所）。
+// 矢印の座標は箱を置いたあとに `[data-diagram-end]` の矩形を測って決める（DOM を読むのは `useWorkflowArrowPaths` の1か所）。
 
-import { type ReactElement, type RefCallback, useId, useRef, useState } from "react"
-import { isDeepEqual } from "remeda"
+import { type ReactElement, useId } from "react"
 
 import type { TaskId } from "../../../../../../shared/session-driver/task-id.ts"
 import { formatElapsed } from "../../../../../../shared/utils/elapsed-time.ts"
-import { useBeforePaintSync } from "../../../../../hooks/use-before-paint-sync.ts"
-import { useResizeObservedRef } from "../../../../../hooks/use-observed-ref.ts"
 import { Badge } from "../../../../ui/badge/badge.tsx"
 import { ClickableCard } from "../../../../ui/clickable-card/clickable-card.tsx"
 import { StatusDot } from "../../../../ui/status-dot/status-dot.tsx"
@@ -16,9 +13,6 @@ import { Surface } from "../../../../ui/surface/surface.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
 import {
   type WorkflowAgentCount,
-  type WorkflowArrowPath,
-  type WorkflowDiagramRect,
-  workflowArrowPathsOf,
   workflowBoxLabelOf,
   workflowBoxNoteOf,
   workflowDiagramEndKeyOf,
@@ -30,13 +24,13 @@ import {
 } from "./domain/workflow-diagram-view.ts"
 import type {
   WorkflowDiagram,
-  WorkflowDiagramArrow,
   WorkflowDiagramArrowKind,
   WorkflowDiagramBox,
   WorkflowDiagramBoxState,
   WorkflowDiagramColumn,
 } from "./domain/workflow-diagram.ts"
 import type { WorkStripSteps, WorkStripWorkflow } from "./hooks/use-work-strip-step-list.ts"
+import { useWorkflowArrowPaths } from "./hooks/use-workflow-arrow-path.ts"
 import styles from "./main-view.module.css"
 import { PresentationalWorkflowAgentHand } from "./presentational-workflow-agent-hand.tsx"
 
@@ -189,7 +183,7 @@ function DiagramStage(props: {
   readonly steps: WorkStripSteps
 }): ReactElement {
   const { diagram, steps, taskId } = props
-  const { ref, paths } = useArrowPaths(diagram)
+  const { ref, paths } = useWorkflowArrowPaths(diagram)
   const markerId = useId()
   const hasStart = diagram.arrows.some((arrow) => arrow.from.kind === "start")
   return (
@@ -198,7 +192,7 @@ function DiagramStage(props: {
       className={styles["workflow-diagram-stage"]}
       data-has-start={hasStart}
       data-has-folded={diagram.foldedPhases !== undefined}
-      style={{ "--diagram-steps": String(stepsTotalOf(diagram)) }}
+      style={{ "--diagram-tracks": stepTracksOf(diagram) }}
     >
       <svg aria-hidden="true" className={styles["workflow-diagram-arrows"]}>
         <defs>
@@ -303,9 +297,14 @@ function DiagramStage(props: {
   )
 }
 
-/** 図の段の数。範囲の列は受け持った段の数で数える。 */
-function stepsTotalOf(diagram: WorkflowDiagram): number {
-  return diagram.columns.reduce((sum, column) => sum + columnKeysOf(column).length, 0)
+/** 段ごとの列の幅。範囲の箱が受け持つ段（2つ以上）は細く、ほかの段は広く幅を回す。 */
+function stepTracksOf(diagram: WorkflowDiagram): string {
+  return diagram.columns
+    .flatMap((column) => {
+      const keys = columnKeysOf(column)
+      return keys.map(() => (keys.length > 1 ? "minmax(0, 0.6fr)" : "minmax(0, 1.6fr)"))
+    })
+    .join(" ")
 }
 
 /** 列の最初の段の格子の位置（1始まり。「済んだ n フェーズ」の列があれば先頭の1つを譲る）。 */
@@ -352,17 +351,15 @@ function Column(props: {
             >
               {offset === 0 ? column.name : key}
             </Text>
-            {duration !== "" && (
-              <Text
-                element="span"
-                size="label"
-                tone="ink-quiet"
-                weight="normal"
-                className={styles["workflow-diagram-time"]}
-              >
-                {duration}
-              </Text>
-            )}
+            <Text
+              element="span"
+              size="label"
+              tone="ink-quiet"
+              weight="normal"
+              className={styles["workflow-diagram-head-time"]}
+            >
+              {duration}
+            </Text>
           </p>
         )
       })}
@@ -383,9 +380,14 @@ function Column(props: {
               shadow="none"
               className={styles["workflow-diagram-upcoming"]}
             >
-              <Text element="span" size="label" tone="ink-quiet" weight="normal" className="">
-                {column.name} · {props.upcomingNote}
-              </Text>
+              <span className={styles["workflow-diagram-upcoming-text"]}>
+                <Text element="span" size="label" tone="ink-quiet" weight="normal" className="">
+                  {column.name}
+                </Text>
+                <Text element="span" size="label" tone="ink-quiet" weight="normal" className="">
+                  {props.upcomingNote}
+                </Text>
+              </span>
             </Surface>
           </div>
         ) : (
@@ -426,7 +428,7 @@ function Column(props: {
   )
 }
 
-const SCALE_MARK = { done: " ✓", now: " · いま", next: "" } as const
+const SCALE_MARK = { done: "✓", now: "いま", next: "" } as const
 
 function AgentBox(props: {
   readonly box: WorkflowDiagramBox
@@ -505,7 +507,6 @@ function AgentBox(props: {
                   weight="normal"
                   className={styles["workflow-diagram-name"]}
                 >
-                  {tick.key}
                   {SCALE_MARK[tick.state]}
                 </Text>
               </span>
@@ -515,65 +516,4 @@ function AgentBox(props: {
       </ClickableCard>
     </div>
   )
-}
-
-/**
- * 図の根に付ける ref と、測った矢印の線。根の寸法が変わったときと、図の形が変わったとき（畳みを開いたとき）の描画の前に測り直す。
- */
-function useArrowPaths(diagram: WorkflowDiagram): {
-  readonly ref: RefCallback<HTMLDivElement>
-  readonly paths: readonly WorkflowArrowPath[]
-} {
-  const rootRef = useRef<HTMLDivElement>(undefined)
-  const [paths, setPaths] = useState<readonly WorkflowArrowPath[]>([])
-  const { arrows } = diagram
-  const observedRef = useResizeObservedRef<HTMLDivElement>(
-    (element) => {
-      rootRef.current = element
-      setPaths(replacedIfChanged(arrowPathsIn(element, arrows)))
-    },
-    () => {
-      rootRef.current = undefined
-    },
-  )
-  useBeforePaintSync(() => {
-    const root = rootRef.current
-    if (root === undefined) {
-      return
-    }
-    setPaths(replacedIfChanged(arrowPathsIn(root, arrows)))
-  }, [arrows])
-  return { ref: observedRef, paths }
-}
-
-/** 測り直した線が前と同じなら前の値を残し、描き直しを起こさない。 */
-function replacedIfChanged(
-  next: readonly WorkflowArrowPath[],
-): (previous: readonly WorkflowArrowPath[]) => readonly WorkflowArrowPath[] {
-  return (previous) => (isDeepEqual(previous, next) ? previous : next)
-}
-
-function arrowPathsIn(
-  root: HTMLDivElement,
-  arrows: readonly WorkflowDiagramArrow[],
-): readonly WorkflowArrowPath[] {
-  const origin = root.getBoundingClientRect()
-  // 重なる面は開くときに縮めた形から広げるので、その途中で測った矩形を縮める前の寸法に戻す。
-  // 寸法は動きの前後で変わらず、観測し直す合図が来ないため。
-  const scale = root.offsetWidth === 0 ? 1 : origin.width / root.offsetWidth
-  const rects = new Map(
-    [...root.querySelectorAll<HTMLElement>("[data-diagram-end]")].map((element) => {
-      const rect = element.getBoundingClientRect()
-      return [
-        element.dataset["diagramEnd"] ?? "",
-        {
-          left: (rect.left - origin.left) / scale,
-          top: (rect.top - origin.top) / scale,
-          width: rect.width / scale,
-          height: rect.height / scale,
-        },
-      ] as const satisfies readonly [string, WorkflowDiagramRect]
-    }),
-  )
-  return workflowArrowPathsOf(arrows, rects, { left: 0, top: 0 })
 }

@@ -136,7 +136,7 @@ describe("WorkStrip のワークフローの図の範囲の箱", () => {
     const box = screen.getByRole("button", { name: "架空の実装役、implementer、動いている" })
     const ticks = [...(box.closest("[data-diagram-end]") ?? box).querySelectorAll("[data-tick]")]
     expect(ticks.map((tick) => tick.getAttribute("data-tick"))).toEqual(["done", "done", "now"])
-    expect(ticks.map((tick) => tick.textContent)).toEqual(["impl-1 ✓", "impl-2 ✓", "impl-3 · いま"])
+    expect(ticks.map((tick) => tick.textContent)).toEqual(["✓", "✓", "いま"])
   })
 
   it("範囲の箱が受け持った段も図の列として数え、手順の一覧の行には出さない", () => {

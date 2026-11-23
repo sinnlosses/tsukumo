@@ -19,11 +19,9 @@
   gap: var(--inline-tight);
 }
 .workflow-diagram-name {
-  flex: 1;
+  flex: 1 1 auto;
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 .workflow-diagram-head > .workflow-diagram-name {
   flex: 0 1 auto;
@@ -37,13 +35,13 @@
 .workflow-diagram-stage {
   position: relative;
   display: grid;
-  grid-template-columns: repeat(var(--diagram-steps), minmax(0, 1fr));
+  grid-template-columns: var(--diagram-tracks);
   align-items: start;
   column-gap: calc(2 * var(--inline-group) + var(--inline-control));
   row-gap: calc(2 * var(--stack-group) + var(--stack-block));
 }
 .workflow-diagram-stage[data-has-folded="true"] {
-  grid-template-columns: 6rem repeat(var(--diagram-steps), minmax(0, 1fr));
+  grid-template-columns: 6rem var(--diagram-tracks);
 }
 .workflow-diagram-stage[data-has-start="true"] {
   padding-inline-start: calc(3 * var(--inline-group));
@@ -137,26 +135,38 @@
   grid-row: 1;
   grid-column: var(--step-start);
   display: flex;
-  align-items: baseline;
-  gap: var(--inline-tight);
+  flex-direction: column;
+  gap: 0;
+  min-width: 0;
   margin: 0;
   padding-block-end: var(--stack-tight);
   border-bottom: 2px solid var(--rule-quiet);
+}
+/* 所要の無い見出しも2行目の高さを取る。 */
+.workflow-diagram-head-time {
+  min-height: 1lh;
+  font-family: var(--font-mono);
+  white-space: nowrap;
 }
 .workflow-diagram-column-head[data-current="true"] {
   border-bottom-color: var(--accent);
 }
 .workflow-diagram-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--inline-tight);
   min-width: 0;
 }
 .workflow-diagram-note {
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
+}
+.workflow-diagram-upcoming-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 /* 選んだエージェントの手元。走っている手順の行は差し色の地。 */
 .workflow-hand {
