@@ -17,6 +17,7 @@ import {
   definitionWithoutMini,
   definitionWithoutPortrait,
   definitionWithPortrait,
+  definitionWithTagline,
   parseCharacterDefinition,
 } from "../../../shared/character-pack/character-definition.ts"
 import {
@@ -43,7 +44,7 @@ import type { CharacterCreate } from "../../../shared/contract/character-pack.ts
 
 /**
  * 新しいパックの `character.json`。
- * 表示名（`name`）は空なら書かない。読む側が表示名の無いときにパック名へ落とすので、ここでパック名を代入し直さない。
+ * 表示名（`name`）と自己紹介文（`tagline`）は空なら書かない。読む側が表示名の無いときにパック名へ落とすので、ここでパック名を代入し直さない。
  * 画面の差し色（仕事・雑談）は境界で両方 required なので、必ず2つとも書く。
  */
 export function newDefinitionJson(
@@ -51,7 +52,8 @@ export function newDefinitionJson(
   fileNames: Readonly<Record<RequiredExpression, string>>,
 ): string {
   const withName = definitionWithName(undefined, create.name)
-  const withPortraits = definitionWithPortrait(withName, "default", fileNames.default)
+  const withTagline = definitionWithTagline(withName, create.tagline)
+  const withPortraits = definitionWithPortrait(withTagline, "default", fileNames.default)
   const withAccent = definitionWithAccent(withPortraits, "work", create.accent)
   return definitionWithAccent(withAccent, "chat", create.chatAccent)
 }

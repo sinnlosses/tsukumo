@@ -155,6 +155,7 @@ function CreateOpener(): ReactElement {
             value: "#c0577a",
             onChange: noop,
           },
+          tagline: { hint: "画面のプロフィールに出る一言", value: "", onChange: noop },
           persona: { hint: "話し方や性格を書く", value: "", onChange: noop },
           canSubmit: false,
           onSubmit: noop,

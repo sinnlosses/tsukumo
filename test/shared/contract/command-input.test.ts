@@ -54,6 +54,7 @@ function createCharacter(overrides: Record<string, unknown>): unknown {
     Object.entries({
       id: "fictional-2",
       name: "",
+      tagline: "",
       portraits: { default: TINY_PNG_DATA_URL },
       accent: "#b8c7ff",
       chatAccent: "#eaa77a",

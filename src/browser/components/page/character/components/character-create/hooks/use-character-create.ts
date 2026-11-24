@@ -41,6 +41,7 @@ const GENERATION_STAGES = [
   { stage: "write", label: "設定を書く" },
 ] as const
 const GENERATION_FAILED_NOTE = "生成できなかった。もう一度押すか、手で入れてください"
+const TAGLINE_HINT = "画面や雑談のサイドバーのプロフィールに出る一言"
 const PERSONA_HINT = "口調や性格を書く。空なら人格なしで作る"
 
 /** 必須の立ち絵（`default`）を選ぶ大きな枠。 */
@@ -84,7 +85,7 @@ type CharacterGenerationModel = {
   readonly note: { readonly kind: "hint" | "failed"; readonly text: string }
 }
 
-type CreatePersonaModel = {
+type CreateTextModel = {
   readonly hint: string
   readonly value: string
   readonly onChange: (persona: string) => void
@@ -103,7 +104,8 @@ export type CharacterCreateModel = {
     readonly generation: CharacterGenerationModel
     readonly workAccent: AccentSwatchModel
     readonly chatAccent: AccentSwatchModel
-    readonly persona: CreatePersonaModel
+    readonly tagline: CreateTextModel
+    readonly persona: CreateTextModel
     readonly canSubmit: boolean
     readonly onSubmit: () => void
   }
@@ -120,6 +122,7 @@ export function useCharacterCreate(open: boolean, onClose: () => void): Characte
   // 差し色の初期値は `--accent`（JS 側に既定の16進を持たない。`readAccentColor`）。
   const [accent, setAccent] = useState(readAccentColor)
   const [chatAccent, setChatAccent] = useState(readAccentColor)
+  const [tagline, setTagline] = useState("")
   const [persona, setPersona] = useState("")
   const [portraitTooLarge, setPortraitTooLarge] = useState(false)
   const [submit, setSubmit] = useState<SubmitState>({ kind: "idle" })
@@ -194,6 +197,7 @@ export function useCharacterCreate(open: boolean, onClose: () => void): Characte
       client.characterPack.create({
         id,
         name,
+        tagline,
         portraits: { default: portraitImage },
         accent,
         chatAccent,
@@ -272,6 +276,7 @@ export function useCharacterCreate(open: boolean, onClose: () => void): Characte
         value: chatAccent,
         onChange: setChatAccent,
       },
+      tagline: { hint: TAGLINE_HINT, value: tagline, onChange: setTagline },
       persona: { hint: PERSONA_HINT, value: persona, onChange: setPersona },
       canSubmit,
       onSubmit: () => {

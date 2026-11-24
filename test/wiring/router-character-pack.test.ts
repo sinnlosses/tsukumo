@@ -64,6 +64,7 @@ describe("createSocketRouter（characterPack）", () => {
       await commands.characterPack.create({
         id: "fictional-2",
         name: "",
+        tagline: "",
         portraits: {
           default: "data:image/png;base64,AAAA",
         },
@@ -88,6 +89,7 @@ describe("createSocketRouter（characterPack）", () => {
       await commands.characterPack.create({
         id: "fictional",
         name: "",
+        tagline: "",
         portraits: {
           default: "data:image/png;base64,AAAA",
         },

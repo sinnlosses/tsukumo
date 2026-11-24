@@ -82,15 +82,12 @@ function setPortrait(
   return { kind: "setPortrait", pack: characterPackName(pack), expression, image }
 }
 
-/**
- * 新しいパックを作るコマンド（必須の1枚・仕事と雑談の差し色は境界で required なので、ここでも
- * 必ず入る）。名前は既定で空（=「id をそのまま表示名に使う」を試すテストが多いため）で、
- * 表示名を試すテストだけ `overrides` で足す。
- */
+/** 新しいパックを作るコマンド。名前と自己紹介文は既定で空で、試すテストだけ `overrides` で足す。 */
 function createCharacter(id: string, overrides: Partial<CharacterCreate> = {}): CharacterCreate {
   return {
     id: characterPackName(id),
     name: "",
+    tagline: "",
     portraits: { default: SVG_DATA_URL },
     accent: "#b8c7ff",
     chatAccent: "#eaa77a",
@@ -575,15 +572,16 @@ describe("createCharacterPack", () => {
     expect(readFileSync(join(home(), "fictional-2", "default.svg"), "utf8")).toBe(PLAUSIBLE_SVG)
   })
 
-  it("id とは別の表示名を指定すると character.json に書かれる", () => {
+  it("id とは別の表示名と自己紹介文を指定すると character.json に書かれる", () => {
     const created = createCharacterPack(
-      createCharacter("fictional-2", { name: "架空の2号" }),
+      createCharacter("fictional-2", { name: "架空の2号", tagline: "架空の一言" }),
       [],
       home(),
     )
 
     expect(created?.dir).toBe(join(home(), "fictional-2"))
     expect(created?.definition?.name).toBe("架空の2号")
+    expect(created?.definition?.tagline).toBe("架空の一言")
   })
 
   it("ペルソナを渡すと persona.md に書き、読み直したパックの人格に載る", () => {

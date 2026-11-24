@@ -150,7 +150,7 @@ describe("CharacterCreate", () => {
     )
   })
 
-  it("そろった状態で押すと、名前・id・立ち絵・画面の差し色2つを載せた characterPack.create を dispatch する", async () => {
+  it("そろった状態で押すと、名前・自己紹介文・id・立ち絵・画面の差し色2つを載せた characterPack.create を dispatch する", async () => {
     const calls: unknown[] = []
     render(
       characterCreate(
@@ -160,6 +160,7 @@ describe("CharacterCreate", () => {
       ),
     )
     fireEvent.change(screen.getByLabelText("名前"), { target: { value: "架空の2号" } })
+    fireEvent.change(screen.getByLabelText("自己紹介文"), { target: { value: "架空の一言" } })
     fireEvent.change(screen.getByLabelText("id"), { target: { value: "fictional-2" } })
     fireEvent.change(screen.getByLabelText("仕事"), { target: { value: "#22ff88" } })
     fireEvent.change(screen.getByLabelText("雑談"), { target: { value: "#ff8822" } })
@@ -172,6 +173,7 @@ describe("CharacterCreate", () => {
         procedure: "characterPack.create",
         id: "fictional-2",
         name: "架空の2号",
+        tagline: "架空の一言",
         portraits: {
           default: `data:image/svg+xml;base64,${Buffer.from("<svg/>").toString("base64")}`,
         },
@@ -296,6 +298,7 @@ describe("CharacterCreate", () => {
         procedure: "characterPack.create",
         id: "fictional-3",
         name: "直した名前",
+        tagline: "",
         portraits: { default: PICKED_PNG_DATA_URL },
         accent: "#123456",
         chatAccent: "#abcdef",

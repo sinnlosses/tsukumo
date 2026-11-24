@@ -187,6 +187,8 @@ const characterCreateInput = z.object({
   id: newCharacterPackNameSchema,
   // 画面や吹き出しに出る名前。空なら id をそのまま使う。
   name: characterNameSchema,
+  // 自己紹介文。空なら書かない。
+  tagline: characterTaglineSchema,
   // 必須の1つ（`REQUIRED_EXPRESSIONS`）をここで required にするので、立ち絵が無いパックは書き込む側まで届かない。
   portraits: z.object({ default: portraitDataUrlSchema }),
   // 画面の差し色（仕事・雑談の2つ）。どちらも必須（作ったあとに片方だけ消したくなったら `clearChatAccent` で外せる）。

@@ -1,10 +1,11 @@
 // 新しいキャラクターパックを作るダイアログの器。
-// 見出し・立ち絵の口と「立ち絵から生成」・名前と id と画面の差し色2つ・人格・「やめる」「作る」を置く。
+// 見出し・立ち絵の口と「立ち絵から生成」・id と名前と画面の差し色2つ・自己紹介文・人格・「やめる」「作る」を置く。
 //
 // `<dialog>` は top layer に出るので、キャラクター画面の `overflow` には切り取られない。
 
 import type { ReactElement } from "react"
 
+import { MAX_CHARACTER_TAGLINE_LENGTH } from "../../../../../../shared/character-pack/character-definition.ts"
 import { MAX_PERSONA_BODY_LENGTH } from "../../../../../../shared/character-pack/persona-section.ts"
 import { Button } from "../../../../ui/button/button.tsx"
 import { Dialog } from "../../../../ui/dialog/dialog.tsx"
@@ -105,24 +106,6 @@ export function PresentationalCharacterCreate({
             <div className={styles["character-create-fields"]}>
               <Field
                 variant="form"
-                id="character-create-name"
-                label="名前"
-                hint={
-                  <Text element="span" size="label" tone="ink-quiet" weight="inherit" className="">
-                    {form.nameHint}
-                  </Text>
-                }
-              >
-                <TextField
-                  element="input"
-                  id="character-create-name"
-                  className={characterStyles["character-create-input"]}
-                  value={form.name}
-                  onChange={form.onNameChange}
-                />
-              </Field>
-              <Field
-                variant="form"
                 id="character-create-id"
                 label="id"
                 hint={
@@ -157,6 +140,24 @@ export function PresentationalCharacterCreate({
                   onChange={form.onIdChange}
                 />
               </Field>
+              <Field
+                variant="form"
+                id="character-create-name"
+                label="名前"
+                hint={
+                  <Text element="span" size="label" tone="ink-quiet" weight="inherit" className="">
+                    {form.nameHint}
+                  </Text>
+                }
+              >
+                <TextField
+                  element="input"
+                  id="character-create-name"
+                  className={characterStyles["character-create-input"]}
+                  value={form.name}
+                  onChange={form.onNameChange}
+                />
+              </Field>
               <div className={characterStyles["character-create-field"]}>
                 <span className={characterStyles["character-create-label"]}>画面の差し色</span>
                 <div className={characterStyles["character-swatches-screen"]}>
@@ -166,6 +167,25 @@ export function PresentationalCharacterCreate({
               </div>
             </div>
           </div>
+          <Field
+            variant="form"
+            id="character-create-tagline"
+            label="自己紹介文"
+            hint={
+              <Text element="span" size="label" tone="ink-quiet" weight="inherit" className="">
+                {form.tagline.hint}
+              </Text>
+            }
+          >
+            <TextField
+              element="input"
+              id="character-create-tagline"
+              className={characterStyles["character-create-input"]}
+              maxLength={MAX_CHARACTER_TAGLINE_LENGTH}
+              value={form.tagline.value}
+              onChange={form.tagline.onChange}
+            />
+          </Field>
           <Field
             variant="form"
             id="character-create-persona"
