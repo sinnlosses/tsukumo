@@ -26,6 +26,7 @@ import { currentGearPreferences, holdGearPreferenceSeed } from "./stores/gear-pr
 import { followOsMotionPreference } from "./stores/motion-preference-root.ts"
 // ページ全体の下地（トークン・body・要素への規則）。
 import "./styles/theme.css"
+import "./styles/page-base.css"
 import "./styles/reduced-motion.css"
 import {
   isTemporalSupported,

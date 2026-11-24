@@ -1,0 +1,236 @@
+.detail-block {
+  /* 番号つきの題を持つ図と表の包み（`report` の `image` / `mermaid` / `chart` / `compare` / `table` / `matrix` の塊から tsukumo が組む）。
+   図は題が本体の下、表は題が本体の上。
+   `captioned-fit` は入れ物を本体の幅に縮め、
+   題の行は `contain: inline-size` で入れ物の幅の計算から外れ、入れ物の幅で折り返す。 */
+  & .report-captioned {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-width: 100%;
+    margin: var(--report-figure-gap) auto;
+  }
+  /* 縮めた包みは本体の幅まで縮むが、縮尺の本文の段（42em）より狭くはならない。
+   図と表の包みは紙の中央に置く。画像の包みは画像の幅まで縮め、題はその幅の中で中央にする。 */
+  & .report-captioned-fit {
+    inline-size: max-content;
+    min-inline-size: min(100%, var(--report-measure));
+  }
+  & .report-captioned-fit:has(> :is(.report-image-zoom, .report-image-missing)) {
+    min-inline-size: 0;
+  }
+  & .report-captioned:has(> :is(.report-compare, .report-compare-figure)) {
+    align-items: stretch;
+  }
+  /* 表の題は、包みの幅（表の幅）で折り返す。番号は中立の色。 */
+  & .report-captioned.report-captioned-table > .report-caption {
+    inline-size: 100%;
+    max-inline-size: 100%;
+    font-size: var(--font-subheading);
+  }
+  & .report-captioned-table > .report-caption .report-caption-text {
+    color: var(--ink-soft);
+  }
+  /* 題と凡例は、本文の列の幅（折り返す幅）で包みの中心に揃える。 */
+  & .report-captioned > :is(.report-caption, .report-table-status-legend, .report-graph-legend) {
+    align-self: center;
+    inline-size: min(100%, var(--figure-measure, var(--report-measure)));
+  }
+  /* mermaid の図の幅の段は `<pre>` の `data-measure`（`MermaidBlock` が字の大きさを測って決める）。
+   無いとき（描き終わる前）と body は縮尺の本文の段（42em）。
+   題と凡例の幅は `--figure-measure` で包みの段にそろう。 */
+  & .report-captioned:has(pre:global(.mermaid)) {
+    inline-size: min(100%, var(--figure-measure, var(--report-measure)));
+    min-inline-size: 0;
+    align-items: stretch;
+  }
+  /* 段が決まって `<pre>` が描いた図の幅を持ったら（`data-figure-fit`）、包みを図の幅に縮め、題を図の幅の中で中央にする。測っている間は段の幅のまま。 */
+  & .report-captioned:has(> pre:global(.mermaid)[data-figure-fit]) {
+    inline-size: fit-content;
+    max-inline-size: 100%;
+  }
+  & .report-captioned:has(> .report-svg-figure) {
+    inline-size: fit-content;
+    max-inline-size: 100%;
+    min-inline-size: 0;
+  }
+  & .report-captioned:has(> :is(.report-svg-figure, pre:global(.mermaid))) > .report-graph-legend {
+    contain: inline-size;
+  }
+  & .report-captioned:has(> pre:global(.mermaid)[data-measure="wide"]) {
+    --figure-measure: var(--report-measure-wide);
+  }
+  &
+    .report-captioned:has(
+      > pre:global(.mermaid)[data-measure="full"],
+      > pre:global(.mermaid)[data-measure="scroll"]
+    ) {
+    --figure-measure: 100%;
+  }
+  & .report-captioned pre:global(.mermaid):is([data-measure="scroll"], [data-measure="natural"]) {
+    overflow-x: auto;
+  }
+  &
+    .report-captioned
+    pre:global(.mermaid):is([data-measure="scroll"], [data-measure="natural"])
+    svg {
+    width: var(--natural-width);
+    max-width: none;
+    max-height: none;
+  }
+  & .report-captioned pre:global(.mermaid) svg {
+    display: block;
+  }
+  & .report-captioned > pre:global(.mermaid) {
+    inline-size: var(--figure-width, auto);
+  }
+  /* 拡大の `<dialog>` は図の子として描かれるので除く（上下の margin を 0 にすると、中央寄せの `margin: auto` が効かず上端に貼り付く）。 */
+  & .report-captioned > :not(.report-caption, dialog) {
+    max-inline-size: 100%;
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+  & .report-captioned table {
+    margin: 0;
+  }
+  & .report-captioned img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    border: 1px solid var(--rule);
+    border-radius: var(--radius-md);
+  }
+  /* 画像を押すと拡大するボタン。箱は画像そのもの（画像の幅・枠を変えない）。
+   ボタンの部品は大きさの段ごとに高さを決め打つので、画像の高さに戻す。 */
+  & .report-image-zoom {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    padding: 0;
+  }
+  /* 質問の選択肢の preview に Markdown で書いた画像（`shelvedPreviewMarkdown`）。`image` の塊の画像は `figure` の中なので当たらない。
+   札の幅に収め、縦に長い画像で札が伸びきらないよう高さに上限を置く（幅と高さを auto のままにして縦横比を保つ）。 */
+  & :is(p, li, td, th) > img {
+    display: block;
+    max-width: 100%;
+    max-height: 20rem;
+    border: 1px solid var(--rule);
+    border-radius: var(--radius-md);
+  }
+  /* 説明の並びを添えた画像（`report` の `image` の塊の `notes` から tsukumo が組む）。
+   左に画像（か「出せない」の札）、右に番号つきの説明を並べ、器が狭いときは画像の下に積む。 */
+  & .report-image-notes {
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) minmax(12rem, 2fr);
+    gap: var(--space-lg) var(--space-xl);
+    align-items: start;
+  }
+  @container report-body (max-width: calc(40em + 0.75rem)) {
+    & .report-image-notes {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+  & .report-image-note-list {
+    display: grid;
+    row-gap: var(--space-sm);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  & .report-image-note-list > li {
+    display: grid;
+    grid-template-columns: 22px minmax(0, 1fr);
+    column-gap: var(--space-sm);
+    align-items: baseline;
+    margin: 0;
+  }
+  & .report-image-note-number {
+    box-sizing: border-box;
+    align-self: start;
+    width: 22px;
+    height: 22px;
+    border: 1px solid var(--ink-soft);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+    font-size: var(--font-label);
+    font-weight: 600;
+    color: var(--ink-soft);
+  }
+  & .report-image-note-text {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  & .report-caption {
+    contain: inline-size;
+    max-inline-size: var(--report-measure);
+    text-align: center;
+    text-wrap: balance;
+    font-size: var(--font-label);
+    color: var(--ink-quiet);
+  }
+  & .report-caption:first-child {
+    margin-bottom: var(--space-xs);
+  }
+  & .report-caption:last-child {
+    margin-top: var(--space-xs);
+  }
+  /* 番号は題と同じ大きさ・本文書体で、太さだけで題と分ける。 */
+  & .report-caption-number {
+    margin-inline-end: 0.5em;
+    font-weight: 600;
+    color: var(--ink-quiet);
+  }
+  & .report-caption-text {
+    overflow-wrap: anywhere;
+    color: var(--ink-quiet);
+  }
+  /* 読めなかった画像の代わりの札（`ReportImage`）。枠ごと斜めの縞にし、中央に印と理由の2行を置く。
+   丸・縞・印・2行の文字は飾りで、意味は外側の role="img" / aria-label が言う（`.report-image-missing-body`）。 */
+  & .report-image-missing {
+    box-sizing: border-box;
+    display: block;
+    width: 100%;
+    height: 168px;
+    border: 1px solid var(--rule);
+    border-radius: var(--radius-xl);
+    background: repeating-linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--ground), var(--ink) 4%) 0 10px,
+      color-mix(in srgb, var(--ground), var(--ink) 8%) 10px 20px
+    );
+  }
+  /* 書いている途中のレポートの画像の札。読めなかった札と見分けるため、縞をやめて平らな地にする。 */
+  & .report-image-pending {
+    background: color-mix(in srgb, var(--ground), var(--ink) 4%);
+  }
+  & .report-image-missing-body {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-md);
+  }
+  & .report-image-missing-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--ground);
+    border: 1px solid var(--rule);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ink-quiet);
+  }
+  & .report-image-missing-label {
+    font-size: var(--font-secondary);
+    color: var(--ink-quiet);
+  }
+  & .report-image-missing-reason {
+    font-size: var(--font-label);
+    color: var(--ink-quiet);
+  }
+}

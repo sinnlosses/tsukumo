@@ -49,7 +49,7 @@
 /* 区画の中身。親（.sidebar-block）に定まった高さが無い文脈（狭い画面での1列の畳み）では flex-grow は働かず、中身なりの高さに広がるだけになる。
    flex-basis は 0 ではなく auto にすること。
    親の高さが auto のときに flex-basis: 0 だと、内容サイズの見積もりの基準そのものが 0 になり、overflow-y: auto と min-height: 0 の効果で中身が高さ 0 に潰れる。 */
-/* 上下の padding は `theme.css` の `:focus-visible`（outline 2px + outline-offset 2px = 要素の外側 4px）とちょうど合わせている。
+/* 上下の padding は `page-base.css` の `:focus-visible`（outline 2px + outline-offset 2px = 要素の外側 4px）とちょうど合わせている。
    overflow の scrollport は padding box の内側までを含むので、この 4px の中に収まる outline は上端・下端とも切られない。
    左右は付けない。横位置は親（.sidebar-block）の `--block-inline-padding` が揃えるので、ここに付けると見出しより中身が内側へ二重に寄る。 */
 .sidebar-block-scroll {

@@ -59,7 +59,7 @@
 @media (max-width: 760px) {
   /* 帯は頭（`<PhoneHead>`）の入れ物になる。画面の端から端まで出し、下に罫線を引く。
      会話以外の画面は body の余白の中に居るので、帯と同じく負の margin で端まで出す。
-     会話の画面は body の余白が 0 で縦の flex の先頭の行になる（theme.css の @media）。 */
+     会話の画面は body の余白が 0 で縦の flex の先頭の行になる（page-base.css の @media）。 */
   .screen-nav {
     display: block;
     z-index: 20;

@@ -36,7 +36,7 @@
 }
 /* タスクのIDは機械が付けた名前なので等幅。`--font-label` にして、印・チップ・札と同じ段に揃える。
    `flex: none` と `white-space: nowrap` が要る。
-   body の `overflow-wrap: anywhere`（`theme.css`）でIDの min-content が1文字になり、幅の狭いサイドバーだとIDが2行に割れるため。 */
+   body の `overflow-wrap: anywhere`（`page-base.css`）でIDの min-content が1文字になり、幅の狭いサイドバーだとIDが2行に割れるため。 */
 .task-item .task-id {
   flex: none;
   overflow: hidden;

@@ -225,7 +225,7 @@
   --page-padding: var(--gutter-page);
 
   /* 画面のナビの帯が最上部で奪う高さ。帯の外寸は帯の地 + 下の罫線の2つの和。
-     帯（screen-nav.module.css）と、そのぶん縮む会話の画面の grid（layout.module.css）の両方が読むので、値はここに1つだけ置く（狭い画面では帯を出さず、下の @media の縦の flex が grid の高さを決める）。
+     帯（screen-nav.module.css）と、そのぶん縮む会話の画面の grid（layout.module.css）の両方が読むので、値はここに1つだけ置く（狭い画面では帯を出さず、page-base.css の @media の縦の flex が grid の高さを決める）。
      `--screen-nav-height` は罫線を含まない帯の地の高さ。
      帯の下の隙間は画面の縁と同じだけ空ける。 */
   --screen-nav-height: 40px;
@@ -245,62 +245,6 @@
   }
 }
 
-body {
-  margin: 0;
-  padding: var(--page-padding);
-  background: var(--ground);
-  color: var(--ink);
-  font-family: var(--font-sans);
-  font-size: var(--font-body);
-  line-height: var(--line-height-body);
-  overflow-wrap: anywhere;
-}
-
-/* 狭い画面（760px 以下）の会話の画面は、縁の余白を持たず画面の高さに固定した縦の1列にする。
-   頭（画面のナビ）が上の行を中身なりに取り、会話の画面の grid（conversation-layout.module.css）が残りを取る。
-   どの画面を出しているかは画面のナビの `data-screen` で見る（ほかの画面は縦に流れる1枚のページのまま）。 */
-@media (max-width: 760px) {
-  body:has([data-screen="conversation"]) {
-    padding: 0;
-  }
-  body:has([data-screen="conversation"]) #app {
-    display: flex;
-    flex-direction: column;
-    height: 100dvh;
-  }
-}
-
-/* 要素そのものへの規則。層に入れるので、層なしの CSS（トークン・`*.module.css`）が当てる値に負け、
-   Astryx の部品の class（`astryx-base` の層）も上書きしない。 */
-@layer tsukumo-base {
-  /* フォーム部品（button/input/select/textarea）はブラウザの既定では親の書体を継がないので、ここで1回だけ継がせる。
-     大きさ・行の高さ・太さも一緒に継ぐ（`font-family` だけにすると、大きさを上書きしていない部品で行の高さが本文の 1.75 から UA 既定に戻る）。
-     機能の CSS には書かず、ここから変える値（`font-size` など）だけを書く。 */
-  button,
-  input,
-  select,
-  textarea {
-    font: inherit;
-  }
-
-  /* フォーカスの輪は、キャラクターの色（accent）を出してよい場所の1つ。 */
-  :focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
-  }
-
-  /* リンクは本文と同じ色のまま（読む面はキャラクターの色を受け取らない）。
-     色を取り上げるかわりに下線で区別するので、どのパックの accent が来てもリンクだと分かる。 */
-  a {
-    color: var(--ink);
-    text-decoration: underline;
-    text-underline-offset: 0.2em;
-  }
-  a:hover {
-    text-decoration-color: var(--accent);
-  }
-}
-
 /* 不透明度だけで現れる動き。`animation-name: var(--fade-in-name)` で指す
    （CSS Modules は `animation` の名前を付け替えるので、別ファイルの `@keyframes` は名前ごと `var()` に包んで渡す）。
    周期・イージング・ほかの動きとの並びは呼び手が持つ。 */
@@ -314,20 +258,4 @@ body {
   to {
     opacity: 1;
   }
-}
-
-/* レポートのコードの書体。実ファイルは tsukumo が 127.0.0.1 の `/vendor/` から配る（読めなければ `--font-code` の次の等幅に落ちる）。 */
-@font-face {
-  font-family: "IBM Plex Mono";
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url("/vendor/ibm-plex-mono-latin-400.woff2") format("woff2");
-}
-@font-face {
-  font-family: "IBM Plex Mono";
-  font-style: normal;
-  font-weight: 600;
-  font-display: swap;
-  src: url("/vendor/ibm-plex-mono-latin-600.woff2") format("woff2");
 }

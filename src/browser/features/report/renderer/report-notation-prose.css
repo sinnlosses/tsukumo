@@ -359,7 +359,7 @@
     margin-left: auto;
   }
   /* git 管理下のパスを押せる部品にしたときの見た目（inline code・フェンスのファイル名・相対リンクの3か所）。
-   `role="button"` の `<span>` を地の文のリンク（theme.css の `a`）と同じ下線の文字に見せる（色を取り上げるかわりに下線で区別する）。
+   `role="button"` の `<span>` を地の文のリンク（page-base.css の `a`）と同じ下線の文字に見せる（色を取り上げるかわりに下線で区別する）。
    文字は周り（`.code-file-name` の等幅・inline code の地）をそのまま親から継ぐ。 */
   & .report-file-link {
     cursor: pointer;

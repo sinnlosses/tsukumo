@@ -8,6 +8,7 @@
 @import "./report-notation-summary.css";
 @import "./report-notation-stat.css";
 @import "./report-notation-figure.css";
+@import "./report-notation-figure-captioned.css";
 @import "./report-notation-compare-code.css";
 @import "./report-notation-overlay.css";
 @import "./report-notation-pair-view.css";
@@ -15,6 +16,7 @@
 @import "./report-notation-card-chain.css";
 @import "./report-notation-timeline.css";
 @import "./report-notation-result.css";
+@import "./report-notation-result-phase.css";
 @import "./report-notation-prose.css";
 @import "./report-notation-body.css";
 @import "./report-notation-list.css";
