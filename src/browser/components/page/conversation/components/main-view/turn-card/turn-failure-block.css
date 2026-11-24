@@ -6,14 +6,12 @@
 .reason {
   margin: 0;
 }
-/* 広い画面だけ、詳細と残ったものを出し、見出しの頭に印（色は字と同じ）を付ける。狭い画面は理由と次の手だけを今のまま出す。 */
-.detail,
+/* 広い画面だけ、残ったものを出し、見出しの頭に印（色は字と同じ）を付ける。狭い画面は理由と次の手だけを今のまま出す。 */
 .kept {
   display: none;
   margin: 0;
 }
 @media (min-width: 761px) {
-  .detail,
   .kept {
     display: block;
     padding-block-start: var(--stack-tight);

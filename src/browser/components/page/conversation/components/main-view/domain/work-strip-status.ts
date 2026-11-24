@@ -20,8 +20,6 @@ export type WorkStripStatusSource = {
   /** ワークプランが届いているか。 */
   readonly planned: boolean
   readonly pending: readonly StampedPendingAsk[]
-  /** 失敗の理由の語。失敗でなければ空。 */
-  readonly failureReason: string
 }
 
 const WORKING_HEADING = "作業中"
@@ -54,8 +52,6 @@ function statementOf(source: WorkStripStatusSource): string {
       return pendingCountText(source.pending)
     case "stopped":
       return source.phaseName === "" ? "" : `${source.phaseName}の途中`
-    case "failed":
-      return source.failureReason
     default:
       return ""
   }

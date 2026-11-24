@@ -229,11 +229,11 @@ describe("useWorkStrip（状態の印と見出し）", () => {
     })
   })
 
-  it("失敗は ✕ と「失敗しました」、失敗の表示と同じ理由の語を添える", () => {
+  it("失敗は ✕ と「失敗しました」だけで、理由の語は失敗の表示に任せて添えない", () => {
     expect(headOf([workRequest, plan, failed])).toEqual({
       mark: "cross",
       headLabel: "失敗しました",
-      statement: "往復の上限に当たった",
+      statement: "",
     })
   })
 

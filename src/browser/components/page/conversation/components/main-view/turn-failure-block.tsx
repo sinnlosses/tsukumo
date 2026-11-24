@@ -1,5 +1,5 @@
 // 失敗で終わったやり取りのレポートの頭に出す失敗の表示。
-// 見出しの字が失敗を言い、理由は型の決まった語だけ（SDK の自由文は出さない）。内部の綴りは `title` にだけ出す。
+// 失敗は枠の色と見出しのアクセシブルネームで示し、理由は型の決まった語だけ（SDK の自由文は出さない）。内部の綴りは `title` にだけ出す。
 
 import clsx from "clsx"
 import type { ReactElement } from "react"
@@ -29,30 +29,23 @@ export function TurnFailureBlock(props: {
       aria-label={block.heading}
     >
       <StepFace>
-        <Text
-          element="p"
-          size="label"
-          tone={props.ending.kind === "failed" ? "state-ng" : "ink"}
-          weight="inherit"
-          className={styles["heading"]}
-        >
-          {block.heading}
-        </Text>
-        {block.reason !== "" && (
-          <Text
-            element="p"
-            size="inherit"
-            tone="inherit"
-            weight="inherit"
-            className={styles["reason"]}
-          >
-            {block.reason}
+        {props.ending.kind === "interrupted" && (
+          <Text element="p" size="label" tone="ink" weight="inherit" className={styles["heading"]}>
+            {block.heading}
           </Text>
         )}
-        {block.detail !== "" && (
-          <Text element="p" size="label" tone="ink" weight="normal" className={styles["detail"]}>
-            {block.detail}
-          </Text>
+        {block.reason !== "" && (
+          <div title={block.detail === "" ? undefined : block.detail}>
+            <Text
+              element="p"
+              size="inherit"
+              tone="inherit"
+              weight="inherit"
+              className={styles["reason"]}
+            >
+              {block.reason}
+            </Text>
+          </div>
         )}
         {block.remains !== "" && (
           <Text element="p" size="label" tone="ink" weight="normal" className={styles["kept"]}>
@@ -63,7 +56,7 @@ export function TurnFailureBlock(props: {
           <div className={styles["doors"]}>
             {retry.kind !== "none" && (
               <Button
-                variant="outline-surface"
+                variant={props.ending.kind === "failed" ? "solid-accent" : "outline-surface"}
                 size="secondary"
                 pressed="none"
                 disabled={false}

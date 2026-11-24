@@ -22,8 +22,8 @@ test.describe("失敗の表示", () => {
     const block = failureBlock(room.page)
     await block.waitFor()
 
-    expect(await block.textContent()).toContain("（server_error）")
-    expect(await block.locator("[title]").count()).toBe(0)
+    expect(await block.textContent()).not.toContain("server_error")
+    expect(await block.locator("[title*='server_error']").count()).toBe(1)
     expect(await isAfterRequest(block)).toBe(true)
     await block.getByRole("button", { name: "同じ依頼を入力欄に戻す" }).waitFor()
     await expectReadable(room.page)

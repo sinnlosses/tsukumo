@@ -85,7 +85,7 @@ describe("turnFailureBlockOf", () => {
     ).toBe("request")
   })
 
-  it("失敗の詳細は、見える字（detail）として全文を持つ", () => {
+  it("失敗の詳細は、title に置く全文（detail）として持つ", () => {
     expect(turnFailureBlockOf(source({})).detail).toBe(
       "失敗で終わった: API のサーバが応えなかった（server_error）",
     )

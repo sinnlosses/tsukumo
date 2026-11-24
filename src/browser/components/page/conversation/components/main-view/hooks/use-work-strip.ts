@@ -29,7 +29,6 @@ import {
   useReadingSection,
 } from "../../../../../../stores/reading-section.ts"
 import { useSession } from "../../../../../../stores/session.ts"
-import { turnFailureLabel } from "../../../domain/api-error-label.ts"
 import { type PhaseRecap, phaseRecapsOf } from "../../../domain/phase-recap.ts"
 import type { WorkStripResult } from "../../../domain/turn-result-mark.ts"
 import { turnResultsOf, type TurnResult } from "../../../domain/turn-result.ts"
@@ -126,8 +125,6 @@ export function useWorkStrip(): WorkStripModel {
     phaseName: nowPhase.kind === "phase" ? nowPhase.name : "",
     planned: planned.length > 0,
     pending,
-    failureReason:
-      newestTurn?.failure.kind === "failed" ? turnFailureLabel(newestTurn.failure.failure) : "",
   })
   const { exchange } = content
   const firstPending = pending[0]

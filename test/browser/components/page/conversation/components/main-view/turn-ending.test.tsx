@@ -40,7 +40,9 @@ describe("Turn（失敗で終わったやり取り）", () => {
 
     const note = screen.getByRole("note", { name: "失敗で終わった" })
     expect(note.textContent).toContain("往復の上限に当たった")
-    expect(note.textContent).toContain("（max-turns）")
+    expect(note.textContent).not.toContain("max-turns")
+    expect(note.textContent).not.toContain("失敗で終わった")
+    expect(screen.getByTitle("失敗で終わった: 往復の上限に当たった（max-turns）")).toBeTruthy()
   })
 
   it("利用者が止めたやり取りには「止めた」と、続きを頼む文を入れる口が出て、押しても送らない", () => {
