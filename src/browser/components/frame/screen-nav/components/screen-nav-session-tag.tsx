@@ -8,8 +8,8 @@
 import clsx from "clsx"
 import { useState, type ReactElement } from "react"
 
+import { useSessionDigest } from "../../../../features/session-switcher/use-session-digest.ts"
 import { Text } from "../../../ui/text/text.tsx"
-import { useSessionDigest } from "../hooks/use-session-digest.ts"
 import type {
   ScreenNavSessionIdentity,
   ScreenNavSessionTag,

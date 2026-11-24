@@ -5,6 +5,7 @@ import { createRef } from "react"
 import { parseSessionId } from "../../../../shared/session/session-id.ts"
 import type { PhaseRow } from "../../page/conversation/components/main-view/domain/phase-row.ts"
 import type { StepsPhaseRow } from "../../page/conversation/components/main-view/domain/steps-phase-row.ts"
+import type { SessionDetailPop } from "../../page/conversation/components/main-view/hooks/use-session-detail-pop.ts"
 import type { WorkStripPhaseDetail } from "../../page/conversation/components/main-view/hooks/use-work-strip-phase-detail.ts"
 import type {
   WorkStripSegmentsModel,
@@ -16,6 +17,7 @@ import { PresentationalCurrentStep } from "../../page/conversation/components/ma
 import { PresentationalPhaseDetail } from "../../page/conversation/components/main-view/presentational-phase-detail.tsx"
 import { PresentationalPhaseList } from "../../page/conversation/components/main-view/presentational-phase-list.tsx"
 import { PresentationalReportOutline } from "../../page/conversation/components/main-view/presentational-report-outline.tsx"
+import { PresentationalSessionDetailPanel } from "../../page/conversation/components/main-view/presentational-session-detail-panel.tsx"
 import { PresentationalSessionOutline } from "../../page/conversation/components/main-view/presentational-session-outline.tsx"
 import { PresentationalStepsList } from "../../page/conversation/components/main-view/presentational-steps-list.tsx"
 import { PresentationalWorkStrip } from "../../page/conversation/components/main-view/presentational-work-strip.tsx"
@@ -80,6 +82,14 @@ const STEPS_POP: WorkStripStepsPop = {
   toggleRef: createRef<HTMLButtonElement>(),
   place: { left: 0, top: 0, width: 0 },
   onClose: noop,
+}
+
+const SESSION_DETAIL_POP: SessionDetailPop = {
+  anchorRef: createRef<HTMLButtonElement>(),
+  listRef: createRef<HTMLDivElement>(),
+  place: { left: 0, top: 0, width: 0, maxHeight: 0 },
+  shouldClose: () => true,
+  focusDetail: noop,
 }
 
 const WORKING_TRACK: WorkStripSegmentsModel = {
@@ -357,6 +367,8 @@ export const MAIN_VIEW_EXAMPLES: readonly ScreenPartExample[] = [
         count={3}
         selectedKey="b"
         onSelectRow={noop}
+        onMove={noop}
+        pop={SESSION_DETAIL_POP}
         onOpenSwitcher={noop}
         sections={[
           {
@@ -394,6 +406,38 @@ export const MAIN_VIEW_EXAMPLES: readonly ScreenPartExample[] = [
             ],
           },
         ]}
+      />
+    ),
+  },
+  {
+    frame: "flow",
+    path: "page/conversation/components/main-view/presentational-session-detail-panel.tsx",
+    render: () => (
+      <PresentationalSessionDetailPanel
+        pop={SESSION_DETAIL_POP}
+        detail={
+          SAMPLE_SESSION_ID === undefined
+            ? undefined
+            : {
+                row: {
+                  sessionId: SAMPLE_SESSION_ID,
+                  shortId: "B2",
+                  heading: "READMEの見直し",
+                  group: "today",
+                  timeLabel: "21:10",
+                  rangeLabel: "11/24 20:31 – 21:10",
+                  current: false,
+                  worktree: "sample-tree",
+                  inCurrentWorktree: true,
+                  occupiedElsewhere: false,
+                },
+                digest: { kind: "unavailable" },
+                characterName: "サンプル",
+                blocked: false,
+                onSwitch: noop,
+                onClose: noop,
+              }
+        }
       />
     ),
   },

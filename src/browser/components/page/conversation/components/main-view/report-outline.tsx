@@ -33,7 +33,7 @@ export function ReportOutline(): ReactElement {
 }
 
 function BandedReportOutline(props: { readonly turnCount: number }): ReactElement {
-  const session = useSessionOutline()
+  const session = useSessionOutline(false)
   return (
     <OutlineBand
       turnCount={props.turnCount}
@@ -48,12 +48,12 @@ function BandedReportOutline(props: { readonly turnCount: number }): ReactElemen
 
 function ShownReportOutline(props: { readonly activeTurnId: number }): ReactElement {
   const { selectTurn } = useTurnSelection()
-  const session = useSessionOutline()
   const outline = useReportOutline({
     turns: useReportOutlineTurns(),
     activeTurnId: props.activeTurnId,
     onSelectTurn: selectTurn,
   })
+  const session = useSessionOutline(outline.collapsed)
   return (
     <PresentationalReportOutline
       {...outline}

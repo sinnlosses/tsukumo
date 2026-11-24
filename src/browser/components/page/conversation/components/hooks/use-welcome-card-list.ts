@@ -1,9 +1,9 @@
 // 始め方の一覧に並べる札を、状態・前回のセッションの残り・タスク一覧から用意する。
 
 import { conversationMoment } from "../../../../../../shared/session/conversation-moment.ts"
+import { useSessionDigest } from "../../../../../features/session-switcher/use-session-digest.ts"
 import { useGearPreferences } from "../../../../../stores/gear-preference-seed.ts"
 import { useSession } from "../../../../../stores/session.ts"
-import { useSessionDigest } from "../../../../frame/screen-nav/hooks/use-session-digest.ts"
 import {
   hasOtherSession,
   previousSessionOf,

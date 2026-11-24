@@ -15,7 +15,7 @@ import { checkedSessionId } from "../../../../../../fixture/session-id.ts"
 import { detailRecord, requestRecord } from "../../../../../../fixture/session-record.ts"
 import { createTestQueryClient } from "../../../../../query-client.tsx"
 import { rpcOutput, stubRpcFetch, type RpcFetchStub } from "../../../../../rpc-fetch-stub.ts"
-import { putSession } from "../../../../../session-store.ts"
+import { putSession, type CommandSpy, type SentCommand } from "../../../../../session-store.ts"
 
 let fetchStub: RpcFetchStub | undefined = undefined
 
@@ -47,22 +47,25 @@ function listed(sessionId: string, heading: string, ageMs: number, worktree = tr
 
 const OCCUPIED_ID = "c3000000-0000"
 
-function renderOutline(): void {
+function renderOutline(spy: CommandSpy = () => {}): void {
   setPageUrl("http://127.0.0.1:7327/")
   fetchStub = stubRpcFetch((call) =>
     call.procedure === "sessionClaim/occupied" ? rpcOutput([OCCUPIED_ID]) : rpcOutput(undefined),
   )
-  putSession({
-    ...INITIAL_SESSION_STATE,
-    session: { kind: "identified", sessionId: checkedSessionId("fa000000-0000") },
-    sessions: [
-      listed("7b000000-0000", "架空の昨日の作業", DAY_MS),
-      listed(OCCUPIED_ID, "架空の使用中の作業", 2 * HOUR_MS),
-      listed("d4000000-0000", "架空の古い作業", 5 * DAY_MS),
-      listed("e5000000-0000", "架空の別の作業ツリー", HOUR_MS, false),
-    ],
-    records: [requestRecord({ text: "架空のいまの依頼", turnId: 0 }), detailRecord("本文")],
-  })
+  putSession(
+    {
+      ...INITIAL_SESSION_STATE,
+      session: { kind: "identified", sessionId: checkedSessionId("fa000000-0000") },
+      sessions: [
+        listed("7b000000-0000", "架空の昨日の作業", DAY_MS),
+        listed(OCCUPIED_ID, "架空の使用中の作業", 2 * HOUR_MS),
+        listed("d4000000-0000", "架空の古い作業", 5 * DAY_MS),
+        listed("e5000000-0000", "架空の別の作業ツリー", HOUR_MS, false),
+      ],
+      records: [requestRecord({ text: "架空のいまの依頼", turnId: 0 }), detailRecord("本文")],
+    },
+    spy,
+  )
   render(
     <QueryClientProvider client={createTestQueryClient()}>
       <ReportOutline />
@@ -100,6 +103,71 @@ describe("左の札のセッション側", () => {
     expect(occupied.getAttribute("data-selected")).toBe("false")
     fireEvent.click(free)
     expect(free.getAttribute("data-selected")).toBe("true")
+  })
+
+  it("行を押すと詳細が開き、同じ行をもう一度押すと閉じる", async () => {
+    renderOutline()
+    const free = await screen.findByRole("button", { name: /架空の昨日の作業/ })
+
+    fireEvent.click(free)
+    expect(await screen.findByRole("region", { name: /セッション 7B/u })).toBeTruthy()
+    fireEvent.click(free)
+
+    expect(screen.queryByRole("region", { name: /セッション 7B/u })).toBeNull()
+  })
+
+  it("別の行を押すと詳細がその行へ移る", async () => {
+    renderOutline()
+    const yesterday = await screen.findByRole("button", { name: /架空の昨日の作業/ })
+    const now = screen.getByRole("button", { name: /架空のいまの依頼/ })
+
+    fireEvent.click(yesterday)
+    await screen.findByRole("region", { name: /セッション 7B/u })
+    fireEvent.click(now)
+
+    expect(await screen.findByRole("region", { name: /セッション FA/u })).toBeTruthy()
+    expect(screen.queryByRole("region", { name: /セッション 7B/u })).toBeNull()
+    expect(now.getAttribute("data-selected")).toBe("true")
+    expect(yesterday.getAttribute("data-selected")).toBe("false")
+  })
+
+  it("使用中の行を押しても詳細は開かない", async () => {
+    renderOutline()
+    const occupied = await screen.findByRole("button", { name: /架空の使用中の作業/ })
+    await waitFor(() => {
+      expect(occupied.getAttribute("aria-disabled")).toBe("true")
+    })
+
+    fireEvent.click(occupied)
+
+    expect(screen.queryByRole("region")).toBeNull()
+  })
+
+  it("行を押す・Enter を押すだけでは切り替えず、詳細のボタンで切り替えて閉じる", async () => {
+    const sent: SentCommand[] = []
+    renderOutline((command) => {
+      sent.push(command)
+    })
+    const free = await screen.findByRole("button", { name: /架空の昨日の作業/ })
+
+    fireEvent.click(free)
+    fireEvent.keyDown(free, { key: "Enter" })
+    const button = await screen.findByRole("button", { name: "7B に切り替える" })
+    expect(sent.filter((command) => command.procedure === "session.switchSession")).toEqual([])
+    fireEvent.click(button)
+
+    expect(sent.filter((command) => command.procedure === "session.switchSession")).toHaveLength(1)
+    expect(screen.queryByRole("region", { name: /セッション 7B/u })).toBeNull()
+  })
+
+  it("「やり取り」の側へ替えると詳細は閉じる", async () => {
+    renderOutline()
+    fireEvent.click(await screen.findByRole("button", { name: /架空の昨日の作業/ }))
+    await screen.findByRole("region", { name: /セッション 7B/u })
+
+    fireEvent.click(screen.getByRole("tab", { name: /やり取り/ }))
+
+    expect(screen.queryByRole("region", { name: /セッション 7B/u })).toBeNull()
   })
 
   it("末尾の口を押すと切り替え画面を開く", () => {

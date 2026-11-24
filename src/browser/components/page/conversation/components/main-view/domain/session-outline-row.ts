@@ -30,6 +30,8 @@ type SessionOutline = {
   readonly sections: readonly SessionOutlineSection[]
   /** 出す行の数（いまの行を含む）。 */
   readonly count: number
+  /** 詳細へ渡す行。札の並びと同じ順で、ID がまだ無いいまの行は含まない。 */
+  readonly detailRows: readonly SessionSwitcherRow[]
 }
 
 type SessionOutlineInput = {
@@ -38,6 +40,8 @@ type SessionOutlineInput = {
   readonly currentSessionId?: SessionId
   /** 一覧にいまのセッションが無いときの見出しの元（最初のやり取りの題）。 */
   readonly firstTurnTitle?: string
+  /** 一覧にいまのセッションが無いときの詳細の短縮ID。 */
+  readonly currentShortId?: string
 }
 
 const NOW_LABEL = "いま"
@@ -64,7 +68,40 @@ export function sessionOutline(input: SessionOutlineInput): SessionOutline {
     { group: "yesterday", rows: others.filter((row) => row.group === "yesterday").map(rowOf) },
   ]
   const shown = sections.filter((section) => section.rows.length > 0)
-  return { sections: shown, count: shown.reduce((sum, section) => sum + section.rows.length, 0) }
+  const currentDetail =
+    input.currentSessionId === undefined
+      ? []
+      : [
+          {
+            ...(listed ?? startedNowRow(input.currentSessionId, input.currentShortId ?? "")),
+            heading: current.heading,
+          },
+        ]
+  return {
+    sections: shown,
+    count: shown.reduce((sum, section) => sum + section.rows.length, 0),
+    detailRows: [
+      ...currentDetail,
+      ...others.filter((row) => row.group === "today"),
+      ...others.filter((row) => row.group === "yesterday"),
+    ],
+  }
+}
+
+/** 一覧にまだ載らない（始めたばかりの）いまのセッションの、詳細に出す行。 */
+function startedNowRow(sessionId: SessionId, shortId: string): SessionSwitcherRow {
+  return {
+    sessionId,
+    shortId,
+    heading: NO_HEADING_LABEL,
+    group: "today",
+    timeLabel: NOW_LABEL,
+    rangeLabel: NOW_LABEL,
+    current: true,
+    worktree: "",
+    inCurrentWorktree: true,
+    occupiedElsewhere: false,
+  }
 }
 
 function rowOf(row: SessionSwitcherRow): SessionOutlineRow {

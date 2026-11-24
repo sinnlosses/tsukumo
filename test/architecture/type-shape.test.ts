@@ -92,7 +92,7 @@ describe("プロパティと引数の `| undefined`", () => {
 })
 
 const UNDEFINED_UNION_CEILING = {
-  "src/browser/components": 117,
+  "src/browser/components": 116,
   "src/server/session-driver": 49,
   "scripts/hook": 36,
   "src/shared/report": 34,

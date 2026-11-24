@@ -3,15 +3,15 @@
 //
 // 一覧（`SessionState.sessions`）は軽いもの（ID・見出し・時刻）だけで、依頼の数・要約・最後のセリフは選んだ1件ぶんだけ取りに行く（`useSessionDigest`）。
 
-import { FRAME_ERROR_REASON } from "../../../../../shared/frame-error-reason.ts"
 import type { SessionId } from "../../../../../shared/session/session-id.ts"
 import {
   monthDayTime,
   type SessionSwitcherRow,
 } from "../../../../features/session-switcher/session-switcher-row.ts"
 import { useSessionRows } from "../../../../features/session-switcher/use-session-row-list.ts"
+import { useSessionSwitch } from "../../../../features/session-switcher/use-session-switch.ts"
 import { useSessionSwitcherRequest } from "../../../../stores/session-switcher-request.ts"
-import { useRestartRefused, useSession } from "../../../../stores/session.ts"
+import { useSession } from "../../../../stores/session.ts"
 import { nowEpochMilliseconds, zonedDateTime } from "../../../../utils/clock.ts"
 
 /** 帯の札に出す、いまのセッションの識別情報。ID が分かる前（新規に起こして最初の依頼を送る前）は短縮IDを出せない。 */
@@ -56,17 +56,9 @@ type SessionSwitcherView = {
 
 export function useSessionSwitcher(room: string, project: string): SessionSwitcherView {
   const dispatch = useSession((session) => session.dispatch)
-  const dispatchAwaited = useSession((session) => session.dispatchAwaited)
-  const restartRefused = useRestartRefused()
   const open = useSessionSwitcherRequest((state) => state.open)
   const openSwitcher = useSessionSwitcherRequest((state) => state.openSwitcher)
   const openedAt = useSessionSwitcherRequest((state) => state.openedAt)
-  const onSwitchAnswered = async (sessionId: string): Promise<void> => {
-    const result = await dispatchAwaited((client) => client.session.switchSession({ sessionId }))
-    if (result.kind === "invalid" && result.reason === FRAME_ERROR_REASON.sessionOccupied) {
-      openSwitcher(nowEpochMilliseconds())
-    }
-  }
   const onOpen = (): void => {
     openSwitcher(nowEpochMilliseconds())
   }
@@ -75,6 +67,7 @@ export function useSessionSwitcher(room: string, project: string): SessionSwitch
     open,
     openedAt,
   )
+  const switching = useSessionSwitch(rows)
 
   return {
     tag: {
@@ -98,26 +91,13 @@ export function useSessionSwitcher(room: string, project: string): SessionSwitch
       open,
       onClose,
       rows,
-      blocked: restartRefused,
-      blockedTitle: restartRefused ? FRAME_ERROR_REASON.sessionSwitchDuringTurn : undefined,
+      blocked: switching.blocked,
+      blockedTitle: switching.blockedTitle,
       onSwitch: (sessionId) => {
-        if (
-          restartRefused ||
-          rows.some((row) => row.sessionId === sessionId && row.occupiedElsewhere)
-        ) {
-          return
-        }
-        onClose()
-        // いま出しているものを選び直しても起こし直さない（会話が消えるだけで何も変わらない）。
-        if (sessionId === currentSessionId) {
-          return
-        }
-        // 開いたあとで別のウィンドウが開いたセッションは、サーバが起こす直前に断る。
-        // 開き直すと使用中を聞き直すので、その行が使用中で出る。ほかの失敗は画面に出さない。
-        void onSwitchAnswered(sessionId)
+        switching.switchSession(sessionId, onClose)
       },
       onStartNew: () => {
-        if (restartRefused) {
+        if (switching.blocked) {
           return
         }
         onClose()

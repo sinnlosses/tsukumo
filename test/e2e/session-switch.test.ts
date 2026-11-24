@@ -82,7 +82,7 @@ test.describe("セッションの切り替え", () => {
     await room.settleAndMatchPicked(ELAPSED_MS)
   })
 
-  test("左の札の「セッション」を押すとセッション側が出て、使用中の行は押せず、末尾の口で切り替え画面が開く", async ({
+  test("左の札の「セッション」を押すとセッション側が出て、使用中の行は押せず、行で詳細が開閉して移り、ボタンで切り替わる", async ({
     run,
   }) => {
     const room = await run.open({
@@ -110,6 +110,64 @@ test.describe("セッションの切り替え", () => {
     })
     await expect(outline.getByRole("group", { name: "今日" })).toBeVisible()
     expect(await occupied.getAttribute("aria-disabled")).toBe("true")
+
+    const detail = room.page.locator("[data-session-detail]")
+    const rows = outline.locator('button[data-session-row]:not([aria-disabled="true"])')
+    const first = rows.nth(0)
+    const second = rows.nth(1)
+    await first.click()
+    await expect(detail).toBeVisible()
+    await expect(first).toHaveAttribute("aria-expanded", "true")
+    // 同じ行をもう一度押すと閉じる。
+    await first.click()
+    await expect(detail).toBeHidden()
+    // Esc で閉じ、フォーカスは行へ戻る。
+    await first.click()
+    await expect(detail).toBeVisible()
+    await room.page.keyboard.press("Escape")
+    await expect(detail).toBeHidden()
+    await expect(first).toBeFocused()
+    // 面の外を押すと閉じる。
+    await first.click()
+    await expect(detail).toBeVisible()
+    await room.page.mouse.click(700, 600)
+    await expect(detail).toBeHidden()
+    // 別の行を押すと、閉じずに詳細がその行へ移る。
+    await first.click()
+    const firstLabel = await detail.getByRole("region").getAttribute("aria-label")
+    await second.click()
+    await expect(detail.getByRole("region")).not.toHaveAttribute("aria-label", firstLabel ?? "")
+    await expect(second).toHaveAttribute("aria-expanded", "true")
+    // ↑ で選び直すと、フォーカスと中身が前の行へ戻る。
+    await room.page.keyboard.press("ArrowUp")
+    await expect(detail.getByRole("region")).toHaveAttribute("aria-label", firstLabel ?? "")
+    await expect(first).toBeFocused()
+    // ↓ で戻り、行で Enter を押しただけでは切り替わらない（押したのと同じで閉じる）。ボタンを押すと切り替わり、札は「やり取り」へ戻る。
+    await room.page.keyboard.press("ArrowDown")
+    await expect(second).toBeFocused()
+    await room.page.keyboard.press("Enter")
+    await expect(detail).toBeHidden()
+    await room.page.keyboard.press("Enter")
+    await expect(detail).toBeVisible()
+    await detail.getByRole("button", { name: /に切り替える/u }).click()
+    await room.waitForEvent("sessions-changed", 2)
+    await expect(detail).toBeHidden()
+    await expect(outline.getByRole("tab", { name: /セッション/u })).toHaveAttribute(
+      "aria-selected",
+      "false",
+    )
+  })
+
+  test("左の札のセッション側の末尾の口で切り替え画面が開く", async ({ run }) => {
+    const room = await run.open({
+      scenario: "session-switch-outline-more",
+      scene: "session-list",
+      viewport: "wide",
+      domRoots: ["session-switcher"],
+    })
+    await room.waitForEvent("sessions-changed")
+    const outline = room.page.getByRole("navigation", { name: "やり取り" })
+    await outline.getByRole("tab", { name: /セッション/u }).click()
 
     await outline.getByRole("button", { name: /ほかの作業ツリー・探す/u }).click()
     await room.page.getByRole("dialog", { name: "セッションを切り替える" }).waitFor()

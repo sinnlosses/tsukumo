@@ -334,3 +334,26 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+/* セッション側の行が開く詳細。器は `ui/` の `Popover`、置き場所と幅は札を測って決める（`useSessionDetailPop`）。
+   高さはビューポートに収め、超えた分は詳細の本文だけが転がる。 */
+.session-detail-panel {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  min-block-size: 0;
+  overflow: hidden;
+}
+.session-detail-body.session-detail-body {
+  padding: var(--stack-group) var(--gutter-page);
+}
+.session-detail-face {
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 50%;
+  background: var(--surface-accent);
+  object-fit: cover;
+}
+/* 札の中の押下を拾う範囲の包み。並びを変えない。 */
+.outline-session-list {
+  display: contents;
+}

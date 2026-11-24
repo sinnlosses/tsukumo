@@ -172,96 +172,13 @@
   font-family: var(--font-mono);
   white-space: nowrap;
 }
-/* 右の欄: 見出し（大きな短縮ID・時刻と依頼の数・キャラクター）→ 要約 → 最後のひとこと → ボタン。 */
-.session-switcher-detail {
-  display: flex;
-  flex: 1 1 auto;
-  flex-direction: column;
-  gap: var(--space-lg);
-  min-width: 0;
-  min-height: 0;
-  padding: var(--space-2xl);
-}
-.session-switcher-detail-head {
-  display: flex;
-  flex: none;
-  align-items: baseline;
-  gap: var(--space-md);
-}
-.session-switcher-detail-id {
-  flex: none;
-  font-family: var(--font-mono);
-  font-size: var(--font-heading-1);
-  font-weight: 500;
-  letter-spacing: 0.06em;
-}
-.session-switcher-detail-meta {
-  flex: 1 1 auto;
-  min-width: 0;
-  font-family: var(--font-mono);
-}
-.session-switcher-detail-character {
-  display: inline-flex;
-  flex: none;
-  align-items: center;
-  gap: var(--space-sm);
-}
+/* 右の欄の詳細は SessionSwitcherDetail が持つ。頭の顔だけここで決める。 */
 .session-switcher-detail-face {
   width: 1.25rem;
   height: 1.25rem;
   border-radius: 50%;
   background: var(--surface-accent);
   object-fit: cover;
-}
-/* 要約と最後のひとことは長くなりうるので、ここだけ内側で転がす（ボタンを押し出さない）。 */
-.session-switcher-detail-body {
-  display: flex;
-  flex: 1 1 auto;
-  flex-direction: column;
-  gap: var(--space-sm);
-  min-height: 0;
-  overflow-y: auto;
-}
-.session-switcher-summary-heading {
-  margin: 0 0 var(--space-2xs);
-  letter-spacing: 0.08em;
-}
-.session-switcher-paragraph {
-  margin: 0;
-  color: var(--ink);
-  font-size: var(--font-subheading);
-  line-height: 1.9;
-}
-/* 要約のあとの残りの段落は一段控えめに（見本の最後の段落）。 */
-.session-switcher-paragraph[data-remaining="true"] {
-  color: var(--ink-quiet);
-}
-.session-switcher-last-line {
-  margin-top: var(--space-sm);
-  padding: var(--space-md) var(--space-lg);
-  border: 1px solid var(--rule-quiet);
-  border-radius: var(--radius-lg);
-  background: var(--ground);
-}
-.session-switcher-last-line-label {
-  margin-bottom: var(--space-xs);
-  color: var(--ink-quiet);
-  font-size: var(--font-label);
-}
-.session-switcher-last-line-text {
-  color: color-mix(in srgb, var(--accent) 25%, var(--ink));
-  font-size: var(--font-secondary);
-  line-height: 1.7;
-}
-.session-switcher-detail-foot {
-  display: flex;
-  flex: none;
-  justify-content: flex-end;
-}
-.session-switcher-switch {
-  height: 2.5rem;
-  padding: 0 var(--space-xl);
-  border-radius: var(--radius-lg);
 }
 /* 下の段: キーの案内。 */
 .session-switcher-hints {
@@ -289,14 +206,6 @@
     max-height: 40%;
     border-right: none;
     border-bottom: 1px solid var(--rule-quiet);
-  }
-  .session-switcher-detail {
-    padding: var(--space-lg);
-  }
-  /* 見出しの行は折り返す（大きな短縮IDの横に時刻と依頼の数が入りきらない）。 */
-  .session-switcher-detail-head {
-    flex-wrap: wrap;
-    row-gap: var(--space-xs);
   }
   .session-switcher-hints {
     display: none;

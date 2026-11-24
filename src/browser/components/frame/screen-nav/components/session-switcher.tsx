@@ -7,22 +7,18 @@
 import { Search } from "lucide-react"
 import { useId, type ReactElement } from "react"
 
-import { summaryParagraphs } from "../../../../../shared/session/session-digest.ts"
-import type { SessionId } from "../../../../../shared/session/session-id.ts"
 import type { CharacterFaceInfo } from "../../../../domain/character-face.ts"
+import { SessionSwitcherDetail } from "../../../../features/session-switcher/session-switcher-detail.tsx"
 import {
   SESSION_SWITCHER_GROUP_LABELS,
   type SessionSwitcherGroup,
-  type SessionSwitcherRow,
 } from "../../../../features/session-switcher/session-switcher-row.ts"
 import { Button } from "../../../ui/button/button.tsx"
 import { Dialog } from "../../../ui/dialog/dialog.tsx"
-import { Heading } from "../../../ui/heading/heading.tsx"
 import { Kbd } from "../../../ui/kbd/kbd.tsx"
 import { Surface } from "../../../ui/surface/surface.tsx"
 import { Text } from "../../../ui/text/text.tsx"
 import { CharacterFace } from "../../character-face.tsx"
-import type { SessionDigestView } from "../hooks/use-session-digest.ts"
 import { useSessionSwitcherSelection } from "../hooks/use-session-switcher-selection.ts"
 import type { ScreenNavSessionSwitcher } from "../hooks/use-session-switcher.ts"
 import styles from "./session-switcher.module.css"
@@ -36,19 +32,12 @@ type SessionSwitcherProps = {
 const DIALOG_LABEL = "セッションを切り替える"
 const SEARCH_PLACEHOLDER = "ID・依頼・タスク番号で探す"
 const NEW_SESSION_LABEL = "＋ 新しいセッション"
-const SUMMARY_HEADING = "このセッションの要約"
-const LAST_LINE_HEADING = "最後のひとこと"
-const NO_SUMMARY = "要約はまだ無い（このセッションの report に要約が書かれていない）"
-const REMAINING_LABEL = "残り："
 const NO_MATCH = "当たるセッションが無い"
 const NO_SESSIONS = "切り替えられるセッションはまだ無い"
-const LOADING = "読み込み中…"
-const UNAVAILABLE = "このセッションの記録は読めなかった"
 const CURRENT_MARK = "いま"
 const OCCUPIED_MARK = "別のウィンドウで使用中"
 const THIS_WORKTREE = "この作業ツリー"
 const OTHER_WORKTREES = "ほかの作業ツリー"
-const CURRENT_BUTTON = "いま出しているセッション"
 
 /** 一覧に出す日の区切りの順。 */
 const GROUP_ORDER = [
@@ -263,7 +252,15 @@ function SessionSwitcherBody(props: SessionSwitcherProps): ReactElement {
           <SessionSwitcherDetail
             row={selection.selected}
             digest={selection.digest}
-            character={character}
+            characterName={character.alt}
+            face={
+              <CharacterFace
+                url={character.url}
+                alt=""
+                className={styles["session-switcher-detail-face"]}
+              />
+            }
+            showTitle={false}
             blocked={switcher.blocked}
             blockedTitle={switcher.blockedTitle}
             onSwitch={switcher.onSwitch}
@@ -282,132 +279,5 @@ function SessionSwitcherBody(props: SessionSwitcherProps): ReactElement {
         </Text>
       </div>
     </Surface>
-  )
-}
-
-type SessionSwitcherDetailProps = {
-  readonly row: SessionSwitcherRow
-  readonly digest: SessionDigestView
-  readonly character: CharacterFaceInfo
-  readonly blocked: boolean
-  readonly blockedTitle?: string
-  readonly onSwitch: (sessionId: SessionId) => void
-}
-
-function SessionSwitcherDetail(props: SessionSwitcherDetailProps): ReactElement {
-  const { row, digest, character } = props
-  const meta =
-    digest.kind === "known"
-      ? `${row.rangeLabel} · 依頼 ${String(digest.requestCount)}`
-      : row.rangeLabel
-  return (
-    <section className={styles["session-switcher-detail"]} aria-label={`セッション ${row.shortId}`}>
-      <div className={styles["session-switcher-detail-head"]}>
-        <span className={styles["session-switcher-detail-id"]}>{row.shortId}</span>
-        <Text
-          element="span"
-          size="action"
-          tone="ink-quiet"
-          weight="inherit"
-          className={styles["session-switcher-detail-meta"]}
-        >
-          {meta}
-        </Text>
-        <Text
-          element="span"
-          size="action"
-          tone="ink-quiet"
-          weight="inherit"
-          className={styles["session-switcher-detail-character"]}
-        >
-          <CharacterFace
-            url={character.url}
-            alt=""
-            className={styles["session-switcher-detail-face"]}
-          />
-          {character.alt}
-        </Text>
-      </div>
-      <div className={styles["session-switcher-detail-body"]}>
-        <DigestBody digest={digest} characterName={character.alt} />
-      </div>
-      <div className={styles["session-switcher-detail-foot"]}>
-        <Button
-          variant="solid-accent-static"
-          size="subheading"
-          pressed="none"
-          disabled={props.blocked || row.current}
-          disclosure={{ kind: "none" }}
-          title={row.current ? undefined : props.blockedTitle}
-          className={styles["session-switcher-switch"]}
-          onClick={() => props.onSwitch(row.sessionId)}
-        >
-          <Text element="span" size="inherit" tone="inherit" weight="bold" className="">
-            {row.current ? CURRENT_BUTTON : `${row.shortId} に切り替える`}
-          </Text>
-        </Button>
-      </div>
-    </section>
-  )
-}
-
-type DigestBodyProps = {
-  readonly digest: SessionDigestView
-  readonly characterName: string
-}
-
-function DigestBody(props: DigestBodyProps): ReactElement {
-  const { digest } = props
-  if (digest.kind === "loading") {
-    return (
-      <Text element="p" size="secondary" tone="ink-quiet" weight="inherit" className="">
-        {LOADING}
-      </Text>
-    )
-  }
-  if (digest.kind === "unavailable") {
-    return (
-      <Text element="p" size="secondary" tone="ink-quiet" weight="inherit" className="">
-        {UNAVAILABLE}
-      </Text>
-    )
-  }
-  return (
-    <>
-      <Heading
-        level={3}
-        size="action"
-        tone="accent"
-        weight="bold"
-        className={styles["session-switcher-summary-heading"]}
-      >
-        {SUMMARY_HEADING}
-      </Heading>
-      {digest.summary === undefined ? (
-        <Text element="p" size="secondary" tone="ink-quiet" weight="inherit" className="">
-          {NO_SUMMARY}
-        </Text>
-      ) : (
-        summaryParagraphs(digest.summary).map((paragraph, index) => (
-          <p key={`${String(index)}-${paragraph}`} className={styles["session-switcher-paragraph"]}>
-            {paragraph}
-          </p>
-        ))
-      )}
-      {digest.remaining !== undefined && (
-        <p className={styles["session-switcher-paragraph"]} data-remaining="true">
-          {REMAINING_LABEL}
-          {digest.remaining}
-        </p>
-      )}
-      {digest.lastLine !== undefined && (
-        <div className={styles["session-switcher-last-line"]}>
-          <div className={styles["session-switcher-last-line-label"]}>{LAST_LINE_HEADING}</div>
-          <div className={styles["session-switcher-last-line-text"]}>
-            {props.characterName}「{digest.lastLine}」
-          </div>
-        </div>
-      )}
-    </>
   )
 }

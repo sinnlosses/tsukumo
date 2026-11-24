@@ -1,4 +1,5 @@
-// 切り替え画面の中の状態（探す欄の文字・選んでいる行）と、選んだ1件の中身の取得。
+// 切り替え画面の中の状態（探す欄の文字）と、探す欄のキー操作。
+// 選んでいる行と選んだ1件の中身は `useSessionSelection` が持つ。
 // 開くたびに作り直す部品の中で呼ぶので、閉じて開き直すと探す欄も選びも初めに戻る。
 //
 // 探す欄が引くのは短縮IDと見出し（題が無ければ最初の依頼）だけで、タスク番号は見出しに書かれていれば当たる。
@@ -8,7 +9,8 @@ import { useState, type KeyboardEvent } from "react"
 
 import type { SessionId } from "../../../../../shared/session/session-id.ts"
 import type { SessionSwitcherRow } from "../../../../features/session-switcher/session-switcher-row.ts"
-import { useSessionDigest, type SessionDigestView } from "./use-session-digest.ts"
+import type { SessionDigestView } from "../../../../features/session-switcher/use-session-digest.ts"
+import { useSessionSelection } from "../../../../features/session-switcher/use-session-selection.ts"
 
 type SessionSwitcherSelection = {
   readonly query: string
@@ -28,41 +30,21 @@ export function useSessionSwitcherSelection(
   onSwitch: (sessionId: SessionId) => void,
 ): SessionSwitcherSelection {
   const [query, setQuery] = useState("")
-  // 開いた直後は、いま出しているもの以外でいちばん新しい行を選ぶ（切り替えたい先はふつうそちら）。
-  const [selectedId, setSelectedId] = useState<SessionId | undefined>(
-    () => (allRows.find((row) => !row.current && !row.occupiedElsewhere) ?? allRows[0])?.sessionId,
-  )
-
   const rows = allRows.filter((row) => matches(row, query))
-  const selectable = rows.filter((row) => !row.occupiedElsewhere)
-  // 選んでいた行が後から使用中になっても、いまの行へは落とさない。
-  const selected =
-    selectable.find((row) => row.sessionId === selectedId) ??
-    selectable.find((row) => !row.current) ??
-    selectable[0]
-  const digest = useSessionDigest(
-    selected === undefined ? { kind: "none" } : { kind: "session", sessionId: selected.sessionId },
+  // 開いた直後は、いま出しているもの以外でいちばん新しい行を選ぶ（切り替えたい先はふつうそちら）。
+  const selection = useSessionSelection(
+    rows,
+    (allRows.find((row) => !row.current && !row.occupiedElsewhere) ?? allRows[0])?.sessionId,
   )
-
-  const move = (step: number): void => {
-    const index = selectable.findIndex((row) => row.sessionId === selected?.sessionId)
-    const next = selectable[Math.min(Math.max(index + step, 0), selectable.length - 1)]
-    if (next !== undefined) {
-      setSelectedId(next.sessionId)
-    }
-  }
+  const { selected, move } = selection
 
   return {
     query,
     onQueryChange: setQuery,
     rows,
     selected,
-    digest,
-    onSelect: (sessionId) => {
-      if (selectable.some((row) => row.sessionId === sessionId)) {
-        setSelectedId(sessionId)
-      }
-    },
+    digest: selection.digest,
+    onSelect: selection.select,
     onKeyDown: (event) => {
       if (event.nativeEvent.isComposing) {
         return
