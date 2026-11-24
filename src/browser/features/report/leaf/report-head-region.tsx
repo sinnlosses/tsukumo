@@ -6,7 +6,7 @@ import { type ReactElement, type RefCallback, use, useState } from "react"
 
 import type { ReportNotDoneView } from "../../../../shared/report/report-not-done.ts"
 import { REPORT_NOTE_KINDS } from "../../../../shared/report/report-notation.ts"
-import type { MainViewSurfaceHead } from "../../../../shared/session/main-view-shape.ts"
+import type { MainViewSurfaceHead } from "../../../../shared/session/main-view-surface-shape.ts"
 import { isBlankText } from "../../../../shared/utils/blank-text.ts"
 import { type FavorOption, hasIrreversibleOption } from "../domain/favor-option-list.ts"
 import type { ReportProofView } from "../domain/report-proof.ts"

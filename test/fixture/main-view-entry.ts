@@ -4,9 +4,11 @@ import type {
   MainViewEntry,
   MainViewReportBody,
   MainViewStep,
+} from "../../src/shared/session/main-view-shape.ts"
+import type {
   MainViewSurfaceHead,
   MainViewSurfaceStatus,
-} from "../../src/shared/session/main-view-shape.ts"
+} from "../../src/shared/session/main-view-surface-shape.ts"
 import type { TurnBodies } from "../../src/shared/session/turn-progress.ts"
 import { isBlankText } from "../../src/shared/utils/blank-text.ts"
 

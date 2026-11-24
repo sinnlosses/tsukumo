@@ -16,7 +16,7 @@ import type {
   VerificationStage,
   ReportVerification,
 } from "../../../../shared/report/report-verification.ts"
-import type { MainViewSurfaceHead } from "../../../../shared/session/main-view-shape.ts"
+import type { MainViewSurfaceHead } from "../../../../shared/session/main-view-surface-shape.ts"
 import { isBlankText } from "../../../../shared/utils/blank-text.ts"
 import type { ReportProofView } from "../domain/report-proof.ts"
 import { InlineMarkdown, workRecordClassName } from "../markdown.tsx"

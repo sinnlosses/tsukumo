@@ -1,8 +1,22 @@
 // 触れるレポートの式の評価器。構文木を、つまみの値と `defs` で評価する。
 // 誤りは例外で返さず、判別合併型（`Evaluated`）で返す。
 
-import { sum, zip } from "remeda"
-
+import { FUNCTIONS, type FunctionSpec } from "./expression-function.ts"
+import {
+  booleanOf,
+  elementAt,
+  finite,
+  isList,
+  mapEach,
+  mapPairs,
+  numberAt,
+  scalarOf,
+  textOf,
+  tooMany,
+  type ExprValue,
+  type Run,
+  type Scalar,
+} from "./expression-value.ts"
 import { andThen, collect, fail, invalid, ok, type Evaluated } from "./report-evaluated.ts"
 import {
   MAX_EXPRESSION_LIST_LENGTH,
@@ -13,9 +27,7 @@ import {
   type ExprOrigin,
 } from "./report-expression-parse.ts"
 
-type Scalar = number | string | boolean
-
-export type ExprValue = Scalar | readonly Scalar[]
+export type { ExprValue }
 
 /** つまみの値。数のつまみは数、真偽のつまみは真偽。 */
 export type ExprParams = Readonly<Record<string, number | boolean>>
@@ -171,138 +183,6 @@ export function createExpressionEvaluator(context: {
   return { evaluate: evaluateSource, format: formatTemplate }
 }
 
-type FunctionSpec = {
-  readonly min: number
-  readonly max: number
-  readonly run: (args: readonly ExprValue[], site: Site) => Evaluated<ExprValue>
-}
-
-type Site = { readonly at: number; readonly run: Run }
-
-type Run = { readonly origin: ExprOrigin; readonly stack: readonly string[] }
-
-const FUNCTIONS: Readonly<Record<string, FunctionSpec>> = {
-  range: {
-    min: 2,
-    max: 2,
-    run: (args, site) =>
-      andThen(argAs(args, 0, site, integerOf), (start) =>
-        andThen(argAs(args, 1, site, integerOf), (end) => {
-          if (end < start) {
-            return fail("out-of-range", site.at, "range は from が to 以下です", site.run.origin)
-          }
-          if (end - start + 1 > MAX_EXPRESSION_LIST_LENGTH) return tooMany(site.at, site.run)
-          return ok(Array.from({ length: end - start + 1 }, (_, j) => start + j))
-        }),
-      ),
-  },
-  min: {
-    min: 2,
-    max: 2,
-    run: (args, site) =>
-      mapArgPairs(args, site, (x, y) => withNumbers(x, y, site, (a, b) => Math.min(a, b))),
-  },
-  max: {
-    min: 2,
-    max: 2,
-    run: (args, site) =>
-      mapArgPairs(args, site, (x, y) => withNumbers(x, y, site, (a, b) => Math.max(a, b))),
-  },
-  round: {
-    min: 1,
-    max: 2,
-    run: (args, site) =>
-      andThen(arg(args, 0, site), (first) =>
-        mapPairs(first, args[1] ?? 0, site.at, site.run, (value, d) =>
-          andThen(digitsOf(d, site), (digits) =>
-            andThen(numberOf(value, site), (number) => {
-              const scale = 10 ** digits
-              return ok(Math.round(number * scale) / scale)
-            }),
-          ),
-        ),
-      ),
-  },
-  fixed: {
-    min: 2,
-    max: 2,
-    run: (args, site) =>
-      mapArgPairs(args, site, (value, d) =>
-        andThen(numberOf(value, site), (number) =>
-          andThen(digitsOf(d, site), (digits) => ok(number.toFixed(digits))),
-        ),
-      ),
-  },
-  sum: {
-    min: 1,
-    max: 1,
-    run: (args, site) => andThen(argAs(args, 0, site, numbersOf), (numbers) => ok(sum(numbers))),
-  },
-  len: {
-    min: 1,
-    max: 1,
-    run: (args, site) =>
-      andThen(arg(args, 0, site), (value) =>
-        andThen(listOf(value, site), (list) => ok(list.length)),
-      ),
-  },
-  minOf: {
-    min: 1,
-    max: 1,
-    run: (args, site) =>
-      andThen(argAs(args, 0, site, nonEmptyNumbers), (numbers) => ok(Math.min(...numbers))),
-  },
-  maxOf: {
-    min: 1,
-    max: 1,
-    run: (args, site) =>
-      andThen(argAs(args, 0, site, nonEmptyNumbers), (numbers) => ok(Math.max(...numbers))),
-  },
-  argmin: {
-    min: 1,
-    max: 1,
-    run: (args, site) =>
-      andThen(argAs(args, 0, site, nonEmptyNumbers), (values) =>
-        ok(values.indexOf(Math.min(...values))),
-      ),
-  },
-  argmax: {
-    min: 1,
-    max: 1,
-    run: (args, site) =>
-      andThen(argAs(args, 0, site, nonEmptyNumbers), (values) =>
-        ok(values.indexOf(Math.max(...values))),
-      ),
-  },
-  at: {
-    min: 2,
-    max: 2,
-    run: (args, site) =>
-      andThen(arg(args, 0, site), (value) =>
-        andThen(listOf(value, site), (items) =>
-          andThen(argAs(args, 1, site, integerOf), (position) => {
-            const item = items[position]
-            if (position < 0 || item === undefined) {
-              return fail("out-of-range", site.at, "at の位置が並びの外です", site.run.origin)
-            }
-            return ok(item)
-          }),
-        ),
-      ),
-  },
-  text: {
-    min: 1,
-    max: 2,
-    run: (args, site) => {
-      const suffix = args[1]
-      const tail = suffix === undefined ? "" : textOf(suffix)
-      return andThen(argAs(args, 0, site, numbersOf), (numbers) =>
-        ok(numbers.map((value) => `${numberText(value)}${tail}`)),
-      )
-    },
-  },
-}
-
 /** 式の名前として使えない語（関数の名前と真偽のリテラル）。 */
 export const RESERVED_EXPRESSION_NAMES: ReadonlySet<string> = new Set([
   ...Object.keys(FUNCTIONS),
@@ -363,99 +243,6 @@ function arityError(name: string, spec: FunctionSpec, at: number, origin: ExprOr
   const count =
     spec.min === spec.max ? `${String(spec.min)} 個` : `${String(spec.min)}〜${String(spec.max)} 個`
   return { kind: "arity", at, reason: `${name} の引数は ${count}です`, origin }
-}
-
-function arg(args: readonly ExprValue[], index: number, site: Site): Evaluated<ExprValue> {
-  const value = args[index]
-  return value === undefined
-    ? fail("arity", site.at, "引数が足りません", site.run.origin)
-    : ok(value)
-}
-
-/** 引数 `index` を `read`（`integerOf` など）で読む。 */
-function argAs<T>(
-  args: readonly ExprValue[],
-  index: number,
-  site: Site,
-  read: (value: ExprValue, site: Site) => Evaluated<T>,
-): Evaluated<T> {
-  return andThen(arg(args, index, site), (value) => read(value, site))
-}
-
-/** 引数 0 と 1 を並びの要素ごとに（片方が並びなら全要素に）組み合わせる。 */
-function mapArgPairs(
-  args: readonly ExprValue[],
-  site: Site,
-  op: (x: Scalar, y: Scalar) => Evaluated<Scalar>,
-): Evaluated<ExprValue> {
-  return andThen(arg(args, 0, site), (a) =>
-    andThen(arg(args, 1, site), (b) => mapPairs(a, b, site.at, site.run, op)),
-  )
-}
-
-function withNumbers(
-  x: Scalar,
-  y: Scalar,
-  site: Site,
-  op: (a: number, b: number) => number,
-): Evaluated<Scalar> {
-  return andThen(numberOf(x, site), (a) => andThen(numberOf(y, site), (b) => ok(op(a, b))))
-}
-
-function tooMany(at: number, run: Run): Evaluated<never> {
-  return fail(
-    "too-many-items",
-    at,
-    `並びは ${String(MAX_EXPRESSION_LIST_LENGTH)} 個までです`,
-    run.origin,
-  )
-}
-
-function isList(value: ExprValue): value is readonly Scalar[] {
-  return Array.isArray(value)
-}
-
-function elementAt(value: ExprValue, index: number, at: number, run: Run): Evaluated<Scalar> {
-  if (!isList(value)) return ok(value)
-  const item = value[index]
-  return item === undefined
-    ? fail("length-mismatch", at, "並びの長さが違います", run.origin)
-    : ok(item)
-}
-
-function mapEach(value: ExprValue, op: (item: Scalar) => Evaluated<Scalar>): Evaluated<ExprValue> {
-  return isList(value) ? collect(value, op) : op(value)
-}
-
-function mapPairs(
-  a: ExprValue,
-  b: ExprValue,
-  at: number,
-  run: Run,
-  op: (x: Scalar, y: Scalar) => Evaluated<Scalar>,
-): Evaluated<ExprValue> {
-  if (isList(a)) {
-    if (isList(b)) {
-      if (a.length !== b.length) {
-        return fail("length-mismatch", at, "並びの長さが違います", run.origin)
-      }
-      return collect(zip(a, b), ([x, y]) => op(x, y))
-    }
-    return collect(a, (x) => op(x, b))
-  }
-  if (isList(b)) return collect(b, (y) => op(a, y))
-  return op(a, b)
-}
-
-function scalarOf(value: ExprValue, at: number, run: Run): Evaluated<Scalar> {
-  if (isList(value)) return fail("type", at, "並びの中に並びは置けません", run.origin)
-  return ok(value)
-}
-
-function booleanOf(value: Scalar, at: number, run: Run): Evaluated<boolean> {
-  return typeof value === "boolean"
-    ? ok(value)
-    : fail("type", at, "真偽が要るところに真偽でない値があります", run.origin)
 }
 
 function applyUnary(op: "-" | "!", value: Scalar, at: number, run: Run): Evaluated<Scalar> {
@@ -540,66 +327,4 @@ function compareValues<T extends number | string>(
     case ">=":
       return x >= y
   }
-}
-
-function numberAt(value: Scalar, at: number, run: Run): Evaluated<number> {
-  return typeof value === "number"
-    ? ok(value)
-    : fail("type", at, "数が要るところに数でない値があります", run.origin)
-}
-
-function finite(value: number, at: number, run: Run): Evaluated<number> {
-  return Number.isFinite(value)
-    ? ok(value)
-    : fail("not-finite", at, "有限でない数になります（0 での割り算など）", run.origin)
-}
-
-function numberOf(value: Scalar, site: Site): Evaluated<number> {
-  return numberAt(value, site.at, site.run)
-}
-
-function integerOf(value: ExprValue, site: Site): Evaluated<number> {
-  return andThen(scalarOf(value, site.at, site.run), (scalar) =>
-    andThen(numberOf(scalar, site), (number) =>
-      Number.isInteger(number)
-        ? ok(number)
-        : fail("type", site.at, "整数が要るところに整数でない値があります", site.run.origin),
-    ),
-  )
-}
-
-function digitsOf(value: Scalar, site: Site): Evaluated<number> {
-  return andThen(integerOf(value, site), (digits) =>
-    digits >= 0 && digits <= 20
-      ? ok(digits)
-      : fail("out-of-range", site.at, "桁数は 0〜20 です", site.run.origin),
-  )
-}
-
-function listOf(value: ExprValue, site: Site): Evaluated<readonly Scalar[]> {
-  return isList(value)
-    ? ok(value)
-    : fail("type", site.at, "並びが要るところに並びでない値があります", site.run.origin)
-}
-
-function numbersOf(value: ExprValue, site: Site): Evaluated<readonly number[]> {
-  return andThen(listOf(value, site), (list) => collect(list, (item) => numberOf(item, site)))
-}
-
-function nonEmptyNumbers(value: ExprValue, site: Site): Evaluated<readonly number[]> {
-  return andThen(numbersOf(value, site), (numbers) =>
-    numbers.length > 0
-      ? ok(numbers)
-      : fail("out-of-range", site.at, "空の並びです", site.run.origin),
-  )
-}
-
-/** 数を文字にする決まり。整数はそのまま、それ以外は小数 1 桁に四捨五入して末尾の 0 を落とす。 */
-function numberText(value: number): string {
-  return Number.isInteger(value) ? String(value) : String(Math.round(value * 10) / 10)
-}
-
-function textOf(value: ExprValue): string {
-  if (isList(value)) return value.map(textOf).join(", ")
-  return typeof value === "number" ? numberText(value) : String(value)
 }

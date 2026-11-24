@@ -13,7 +13,7 @@ import type {
   ReportCheckProblemRow,
   ReportChecksView,
 } from "../../../../../src/shared/report/report-check-view.ts"
-import type { MainViewSurfaceHead } from "../../../../../src/shared/session/main-view-shape.ts"
+import type { MainViewSurfaceHead } from "../../../../../src/shared/session/main-view-surface-shape.ts"
 
 afterEach(() => {
   cleanup()

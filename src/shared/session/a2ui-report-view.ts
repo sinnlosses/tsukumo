@@ -15,12 +15,12 @@ import type { ReportImageSource } from "../report/report-image-markdown.ts"
 import type { LeafValue, ReportLeafLayout } from "../report/report-leaf-value.ts"
 import { reportNotDoneView } from "../report/report-not-done.ts"
 import type { WrittenReportView } from "../report/report-static-component-list.ts"
+import type { MainViewA2uiReport } from "./main-view-shape.ts"
 import type {
-  MainViewA2uiReport,
   MainViewSurfaceEntry,
   MainViewSurfaceHead,
   MainViewSurfaceLeafRegion,
-} from "./main-view-shape.ts"
+} from "./main-view-surface-shape.ts"
 
 /**
  * 部品の一覧を、節の欄の ID と `Markdown` の内容部品ごとの Markdown に当てる。

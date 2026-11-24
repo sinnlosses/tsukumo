@@ -19,7 +19,7 @@ import {
   type A2uiReportPart,
   a2uiPartsById,
 } from "../../../shared/report/a2ui-report-outline.ts"
-import type { MainViewSurfaceLeafRegion } from "../../../shared/session/main-view-shape.ts"
+import type { MainViewSurfaceLeafRegion } from "../../../shared/session/main-view-surface-shape.ts"
 import { Button } from "../../components/ui/button/button.tsx"
 import { Divider } from "../../components/ui/divider/divider.tsx"
 import { FirstNoteList } from "../../components/ui/first-note-list/first-note-list.tsx"

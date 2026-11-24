@@ -23,8 +23,8 @@ import { a2uiReportView } from "../../../shared/session/a2ui-report-view.ts"
 import type {
   MainViewDraft,
   MainViewReportRegions,
-  MainViewSurfaceStatus,
 } from "../../../shared/session/main-view-shape.ts"
+import type { MainViewSurfaceStatus } from "../../../shared/session/main-view-surface-shape.ts"
 import { isBlankText } from "../../../shared/utils/blank-text.ts"
 import { draftPendingOf, NO_DRAFT_PENDING } from "./a2ui-draft-pending.ts"
 

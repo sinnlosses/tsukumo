@@ -7,7 +7,7 @@ import type { ReactElement } from "react"
 import type { A2uiReportComponent } from "../../../../shared/report/a2ui-report-catalog.ts"
 import { htmlInlineSegments } from "../../../../shared/report/report-inline-markdown.ts"
 import type { LeafValue } from "../../../../shared/report/report-leaf-value.ts"
-import type { MainViewKeyFigure } from "../../../../shared/session/main-view-shape.ts"
+import type { MainViewKeyFigure } from "../../../../shared/session/main-view-surface-shape.ts"
 import {
   STAT_SPARK_HEIGHT,
   STAT_SPARK_RADIUS,

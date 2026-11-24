@@ -8,7 +8,7 @@ import {
   type PhaseTimeRow,
   phaseTimesView,
 } from "../../../../../src/shared/report/report-phase-time.ts"
-import type { MainViewSurfaceHead } from "../../../../../src/shared/session/main-view-shape.ts"
+import type { MainViewSurfaceHead } from "../../../../../src/shared/session/main-view-surface-shape.ts"
 
 afterEach(() => {
   cleanup()
