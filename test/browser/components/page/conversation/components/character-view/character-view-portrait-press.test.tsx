@@ -1,7 +1,10 @@
 import { act, cleanup, fireEvent, screen, within } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
-import { NO_SPEECH_ARRIVAL } from "../../../../../../../src/browser/components/page/conversation/domain/speech-arrival.ts"
+import {
+  NO_SHOWN_MANPU,
+  NO_SPEECH_ARRIVAL,
+} from "../../../../../../../src/browser/components/page/conversation/domain/speech-arrival.ts"
 import {
   EMPTY_DRAFT,
   useComposerDraft,
@@ -50,7 +53,7 @@ beforeEach(() => {
     callback(0)
     return 0
   })
-  useSpeechArrival.setState({ arrival: NO_SPEECH_ARRIVAL })
+  useSpeechArrival.setState({ arrival: NO_SPEECH_ARRIVAL, shown: NO_SHOWN_MANPU })
 })
 
 afterEach(() => {
@@ -98,17 +101,39 @@ describe("CharacterView（立ち絵を押すと、いまの一言へ戻る）", 
     expect(arrival).toMatchObject({ kind: "arrived", index: 1, expression: "proud" })
   })
 
+  it("いまの一言のあいだに出したエフェクトがあれば、表情のエフェクトでなくそれを出し直す", () => {
+    renderCharacterView(twoSpeechState())
+    act(() => {
+      useSpeechArrival.getState().recordShown("stars")
+    })
+
+    fireEvent.click(stagePortrait())
+
+    expect(document.body.querySelector("[data-manpu]")?.getAttribute("data-manpu")).toBe("stars")
+  })
+
+  it("控えが前の声のものなら使わず、表情のエフェクトを出す", () => {
+    renderCharacterView(twoSpeechState())
+    useSpeechArrival.setState({
+      shown: { kind: "shown", turnId: 0, index: 0, manpu: "stars" },
+    })
+
+    fireEvent.click(stagePortrait())
+
+    expect(document.body.querySelector("[data-manpu]")?.getAttribute("data-manpu")).toBe("sparkle")
+  })
+
   it("Enter と Space でも押せる", () => {
     renderCharacterView(twoSpeechState())
 
     fireEvent.keyDown(stagePortrait(), { key: "Enter" })
     expect(useSpeechArrival.getState().arrival.kind).toBe("arrived")
 
-    useSpeechArrival.setState({ arrival: NO_SPEECH_ARRIVAL })
+    useSpeechArrival.setState({ arrival: NO_SPEECH_ARRIVAL, shown: NO_SHOWN_MANPU })
     fireEvent.keyDown(stagePortrait(), { key: " " })
     expect(useSpeechArrival.getState().arrival.kind).toBe("arrived")
 
-    useSpeechArrival.setState({ arrival: NO_SPEECH_ARRIVAL })
+    useSpeechArrival.setState({ arrival: NO_SPEECH_ARRIVAL, shown: NO_SHOWN_MANPU })
     fireEvent.keyDown(stagePortrait(), { key: "a" })
     expect(useSpeechArrival.getState().arrival.kind).toBe("none")
   })

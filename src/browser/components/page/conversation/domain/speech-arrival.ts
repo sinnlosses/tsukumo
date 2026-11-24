@@ -7,7 +7,7 @@ import type { SessionState } from "../../../../../shared/session/session-state.t
 import { greetingOnShow } from "../../../../../shared/session/shown-reaction.ts"
 import { turnSpeeches } from "../../../../../shared/session/turn-speech.ts"
 import { PRE_REQUEST_TURN_ID } from "../../../../../shared/session/turn.ts"
-import type { ArrivalMotion } from "../../../../domain/portrait-motion.ts"
+import type { ArrivalMotion, EndingManpu } from "../../../../domain/portrait-motion.ts"
 
 /** 吹き出しの出方。形は CSS の `[data-arrival]` が持つ。 */
 export type SpeechArrivalBubble = "pop" | "ease" | "swell" | "shake" | "sink" | "snap"
@@ -57,7 +57,10 @@ export type NewestVoices = {
   readonly chatMode: boolean
 }
 
-/** 声が届いた瞬間。`index` は流れの中の位置（件数 - 1）。 */
+/**
+ * 声が届いた瞬間。`index` は流れの中の位置（件数 - 1）。
+ * `manpu` は立ち絵を押して掛け直すときの、その声で実際に出したエフェクト。無ければ表情から決める。
+ */
 export type SpeechArrival =
   | { readonly kind: "none" }
   | {
@@ -66,7 +69,40 @@ export type SpeechArrival =
       readonly index: number
       readonly expression: Expression
       readonly at: number
+      readonly manpu?: SpeechManpu | EndingManpu
     }
+
+/** 声（いちばん新しいやり取りの `index` 番目）と、その声のあいだに実際に出したエフェクトの控え。 */
+export type ShownManpu =
+  | { readonly kind: "none" }
+  | {
+      readonly kind: "shown"
+      readonly turnId: number
+      readonly index: number
+      readonly manpu: SpeechManpu | EndingManpu
+    }
+
+export const NO_SHOWN_MANPU = { kind: "none" } as const satisfies ShownManpu
+
+/** いまの声で出したエフェクトの控え。声が無ければ控えない。 */
+export function shownManpuOf(voices: NewestVoices, manpu: SpeechManpu | EndingManpu): ShownManpu {
+  return voices.count === 0
+    ? NO_SHOWN_MANPU
+    : { kind: "shown", turnId: voices.turnId, index: voices.count - 1, manpu }
+}
+
+/** 掛け直す届きに、同じ声で実際に出したエフェクトを添える。控えが別の声のものなら添えない。 */
+export function withShownManpu(arrival: SpeechArrival, shown: ShownManpu): SpeechArrival {
+  if (
+    arrival.kind === "none" ||
+    shown.kind === "none" ||
+    shown.turnId !== arrival.turnId ||
+    shown.index !== arrival.index
+  ) {
+    return arrival
+  }
+  return { ...arrival, manpu: shown.manpu }
+}
 
 export const NO_SPEECH_ARRIVAL = { kind: "none" } as const satisfies SpeechArrival
 

@@ -33,6 +33,7 @@ export function PresentationalCharacterView({
   onOpenSpeechLog,
   onCloseSpeechLog,
   manpu,
+  onManpuShown,
   face,
   phoneLine,
   seats,
@@ -93,7 +94,7 @@ export function PresentationalCharacterView({
           {stagePortrait}
         </HStack>
         {portraitUrl !== undefined && manpu.kind === "shown" && (
-          <Manpu key={manpu.at} manpu={manpu.manpu} faceAt={manpu.faceAt} />
+          <Manpu key={manpu.at} manpu={manpu.manpu} faceAt={manpu.faceAt} onShown={onManpuShown} />
         )}
       </div>
       <ItemSeats seats={seats} portraitShown={portraitUrl !== undefined} />

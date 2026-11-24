@@ -8,6 +8,7 @@ import { createPortal } from "react-dom"
 import type { FaceAt } from "../../../../../../shared/character-pack/character-definition.ts"
 import type { EndingManpu } from "../../../../../domain/portrait-motion.ts"
 import { useExternalSync } from "../../../../../hooks/use-external-sync.ts"
+import { useMountEffect } from "../../../../../hooks/use-mount-effect.ts"
 import { faceOnScreen, gloomOnScreen, pictureOnScreen } from "../../domain/face-on-screen.ts"
 import type { SpeechManpu } from "../../domain/speech-arrival.ts"
 import styles from "./character-view.module.css"
@@ -124,12 +125,19 @@ const ASK: Offset = { x: 70, y: -50 }
 export function Manpu({
   manpu,
   faceAt,
+  onShown,
 }: {
   readonly manpu: SpeechManpu | EndingManpu
   readonly faceAt: FaceAt
+  /** 作ったときに1回だけ呼ぶ。 */
+  readonly onShown: (manpu: SpeechManpu | EndingManpu) => void
 }): ReactElement {
   const anchorRef = useRef<HTMLSpanElement>(null)
   const { x, y } = faceAt
+
+  useMountEffect(() => {
+    onShown(manpu)
+  })
 
   useExternalSync(() => {
     const anchor = anchorRef.current

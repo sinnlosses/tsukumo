@@ -91,6 +91,8 @@ export type CharacterViewModel = {
   readonly onCloseSpeechLog: () => void
   /** セリフが届いた瞬間の漫符。出さないときは `none`。`at` が替わるたびに作り直して1回だけ再生させる。 */
   readonly manpu: ArrivalManpu
+  /** エフェクトを出したとき。立ち絵を押して掛け直すときに同じものを出すため、いまの声と組で控える。 */
+  readonly onManpuShown: (manpu: SpeechManpu | EndingManpu) => void
   /** 狭い画面の顔（パックの `face` の1枚）。 */
   readonly face: CharacterFaceInfo
   /** 狭い画面の吹き出しに出す最新の1件。 */
@@ -163,6 +165,7 @@ export function useCharacterView(): CharacterViewModel {
   const draftHasText = useComposerDraft((state) => state.draft.text !== "")
   const releaseSpeech = useViewedSpeech((state) => state.release)
   const replayArrival = useSpeechArrival((state) => state.replay)
+  const recordShownManpu = useSpeechArrival((state) => state.recordShown)
   const [speechLogOpen, setSpeechLogOpen] = useState(false)
 
   const now = useCharacterClock(
@@ -252,6 +255,7 @@ export function useCharacterView(): CharacterViewModel {
       ),
       faceAtOf(expression, character),
     ),
+    onManpuShown: recordShownManpu,
     face: characterFaceInfo(character),
     phoneLine: phoneLineOf(reaction, activeSpeeches, now),
     seats: (character === undefined ? undefined : itemSeats[character.pack]) ?? EMPTY_SEATS,
@@ -276,7 +280,7 @@ function arrivalManpuOf(
   if (arrived.kind === "none" || reducedMotion || now - arrived.at >= MANPU_WINDOW_MS) {
     return { kind: "none" }
   }
-  const manpu = SPEECH_ARRIVALS[arrived.expression].manpu
+  const manpu = arrived.manpu ?? SPEECH_ARRIVALS[arrived.expression].manpu
   if (manpu === "none") {
     return { kind: "none" }
   }
