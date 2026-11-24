@@ -149,7 +149,8 @@ CSS に無い名前は `undefined` のままなので、**綴りを間違える�
   `Select`（`Selector`。開く口は `combobox`、選択肢は `option`）と `TextField`（`TextInput`・`TextArea`）は
   variant を持たず、寸法・余白は呼び出し側が `className` で渡す。`Field`（名札・入力欄・ヒントを縦に積む欄）は
   `id` を名札の `htmlFor`（Astryx の `inputID`）に渡して入力欄（`TextField` を `children` で受ける）と結ぶ。
-  `variant` の `form`・`confirm` の字の違いは見た目だけの区別なので Astryx の見た目に任せる。ヒントの無い欄は
+  `variant` の `form`・`confirm` の字の違いは見た目だけの区別なので Astryx の見た目に任せる。名札だけは字の段を
+  Astryx のまま 600・`ink` に上げ、`ink-quiet` のヒントと太さ・色の両方で分ける。ヒントの無い欄は
   `hint` に `undefined` を渡す。**差し込み部分を持つ部品**
   （`BottomSheet`。狭い画面の板）は面の形と閉じ方を部品が持ち、頭・中・下端は props の `ReactNode` で受ける。
   `Menu`（「…」のボタンから開く操作の一覧）は開閉・キーボード・位置・顔を部品が持ち、行（名前・`danger` の顔・

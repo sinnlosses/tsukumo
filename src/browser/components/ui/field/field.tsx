@@ -5,6 +5,8 @@
 import { Field as AstryxField } from "@astryxdesign/core/Field"
 import type { ReactElement, ReactNode } from "react"
 
+import styles from "./field.module.css"
+
 type FieldVariant = "form" | "confirm"
 
 export type FieldProps = {
@@ -18,7 +20,7 @@ export type FieldProps = {
 
 export function Field(props: FieldProps): ReactElement {
   return (
-    <AstryxField label={props.label} inputID={props.id}>
+    <AstryxField label={props.label} inputID={props.id} className={styles["field"]}>
       {props.children}
       {props.hint}
     </AstryxField>

@@ -184,7 +184,11 @@
   color: var(--ink);
   overflow: visible;
 }
+/* 見出し・欄・footer の間は、ここの gap だけが持つ。 */
 .character-create-dialog-face {
+  display: flex;
+  flex-direction: column;
+  gap: var(--stack-group);
   box-sizing: border-box;
   max-height: calc(100vh - 4rem);
   padding: var(--space-2xl) var(--space-3xl);

@@ -1,0 +1,5 @@
+/* 名札は本文の段のまま太く白くし、`ink-quiet` のヒントと太さ・色の両方で分ける。 */
+.field > label {
+  font-weight: 600;
+  color: var(--ink);
+}
