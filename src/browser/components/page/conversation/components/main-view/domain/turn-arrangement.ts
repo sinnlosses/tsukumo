@@ -14,10 +14,7 @@ import {
   type MainViewTurn,
   turnAsides,
 } from "../../../../../../../shared/session/main-view-shape.ts"
-import {
-  formatMeasured,
-  type MeasuredTime,
-} from "../../../../../../../shared/utils/elapsed-time.ts"
+import { formatMeasured, totalOf } from "../../../../../../../shared/utils/elapsed-time.ts"
 
 /** 経過の畳みの中の1件。中間レポートのステップか、セリフ1件か、質問の記録か、補足の投稿1件か、やり取り全体の補足メッセージ（末尾に1項だけ）。 */
 export type ProgressEntry =
@@ -107,15 +104,6 @@ function phaseOf(step: MainViewStep): readonly Extract<MainViewPhaseLabel, { kin
   return step.body.kind === "text" && step.body.finishedPhase.kind === "phase"
     ? [step.body.finishedPhase]
     : []
-}
-
-function totalOf(durations: readonly MeasuredTime[]): MeasuredTime {
-  const known = durations.flatMap((duration) =>
-    duration.kind === "known" ? [duration.milliseconds] : [],
-  )
-  return known.length === durations.length
-    ? { kind: "known", milliseconds: sum(known) }
-    : { kind: "unknown" }
 }
 
 function isQuestion(action: MainViewAction): action is MainViewQuestion {

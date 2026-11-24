@@ -3,7 +3,7 @@
 import { groupBy } from "remeda"
 
 import type { PhaseAbsence, PhaseDuration, PhaseTimeRow } from "../report/report-phase-time.ts"
-import type { MeasuredTime } from "../utils/elapsed-time.ts"
+import { type MeasuredTime, sumOf, totalOf } from "../utils/elapsed-time.ts"
 import { type RecordTime, recordTimeAt, type SessionRecord } from "./session-record.ts"
 import {
   phaseLabel,
@@ -262,20 +262,6 @@ function spanOf(start: RecordTime, end: RecordTime): MeasuredTime {
   return startAt === undefined || endAt === undefined
     ? UNKNOWN
     : { kind: "known", milliseconds: endAt - startAt }
-}
-
-/** 区間の足し算。区間が無いか、1つでも `unknown` なら `unknown`。 */
-function totalOf(durations: readonly MeasuredTime[]): MeasuredTime {
-  if (durations.length === 0) {
-    return UNKNOWN
-  }
-  return durations.reduce<MeasuredTime>(sumOf, ZERO)
-}
-
-function sumOf(left: MeasuredTime, right: MeasuredTime): MeasuredTime {
-  return left.kind === "known" && right.kind === "known"
-    ? { kind: "known", milliseconds: left.milliseconds + right.milliseconds }
-    : UNKNOWN
 }
 
 function parallelLabel(number: PhaseNumber): string {
