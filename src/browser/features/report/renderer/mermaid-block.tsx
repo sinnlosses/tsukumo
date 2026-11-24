@@ -10,7 +10,7 @@
 
 import clsx from "clsx"
 import { useRef, useState, type ReactElement } from "react"
-import { isObjectType, sum } from "remeda"
+import { isObjectType } from "remeda"
 
 import { vendorAssetPath } from "../../../../shared/view-server/vendor-asset.ts"
 import { Text } from "../../../components/ui/text/text.tsx"
@@ -19,12 +19,18 @@ import { useMountEffect } from "../../../hooks/use-mount-effect.ts"
 import { errorMessage } from "../../../utils/error-message.ts"
 import { mergeRefs } from "../../../utils/merge-ref.ts"
 import { useSeenOnce } from "../hooks/use-seen-once.ts"
-import { reportExportMark } from "../report-export-copy.ts"
 import { figureZoomTriggerProps, SvgZoom } from "./figure-zoom.tsx"
 import styles from "./mermaid-block.module.css"
-import { isReadableTextPx, pickMeasure, topDownSource } from "./mermaid-figure-measure.ts"
+import { topDownSource } from "./mermaid-figure-measure.ts"
+import { placeInMeasure, scrollAtNaturalWidth } from "./mermaid-fit.ts"
 import { mermaidFrameHeight } from "./mermaid-frame-height.ts"
-import { resolveHex, resolveHexOver } from "./theme-color.ts"
+import {
+  figureThemeCss,
+  forgetTokens,
+  markThemed,
+  resolveThemeVariables,
+  resolveTokens,
+} from "./mermaid-theme.ts"
 import { loadVendorScript, preloadVendorScript } from "./vendor-script.ts"
 
 const MERMAID_SRC = vendorAssetPath("mermaid.min.js")
@@ -154,71 +160,9 @@ export function MermaidBlock(props: MermaidBlockProps): ReactElement {
 }
 
 const FRAME_HEIGHT_PROPERTY = "--frame-height"
-const NATURAL_WIDTH_PROPERTY = "--natural-width"
-const FIGURE_WIDTH_PROPERTY = "--figure-width"
-
-/** mermaid の SVG の文字は、自然な大きさで 16px。 */
-const SVG_TEXT_PX = 16
 
 function newDiagramId(): string {
   return `mermaid-block-${nextId++}`
-}
-
-/**
- * mermaid の `themeVariables` をページの色のトークンから作る。`base` だけが差せて、値は hex しか受け取らない。
- */
-function resolveThemeVariables(node: HTMLElement): Readonly<Record<string, string | boolean>> {
-  const hex = (property: string): string => recordToken(property, resolveHex(node, property))
-  const hexOnSurface = (property: string): string => hexOverSurface(node, property)
-  return {
-    darkMode: true,
-    background: hex("--surface"),
-    primaryColor: hexOnSurface("--surface-raised"),
-    primaryTextColor: hex("--ink"),
-    textColor: hex("--ink"),
-    primaryBorderColor: hexOnSurface("--rule-soft"),
-    lineColor: hexOnSurface("--ink-quiet"),
-    arrowheadColor: hexOnSurface("--ink-quiet"),
-    dropShadow: "none",
-    useGradient: false,
-    clusterBkg: hex("--surface"),
-    clusterBorder: hexOnSurface("--rule-quiet"),
-    noteBkgColor: hex("--surface-accent"),
-    noteTextColor: hex("--ink"),
-    fontFamily: getComputedStyle(node).fontFamily,
-  }
-}
-
-/**
- * ソースの中の `var(--…)` を hex にする。mermaid の `classDef` / `linkStyle` は色の値を hex でしか受け取れない。
- */
-function resolveTokens(code: string, node: HTMLElement): string {
-  return code.replace(/var\((--[\w-]+)\)/g, (_, property: string) => hexOverSurface(node, property))
-}
-
-/**
- * 解いた hex と元のトークンの対応。書き出しの写しが、SVG に焼いた色をトークンに戻すのに使う。
- * 同じ hex に複数のトークンが当たれば先に解いたほうを採る。テーマが変わったら `syncTheme` が空にする。
- */
-const tokenOfHex = new Map<string, string>()
-
-function recordToken(property: string, hex: string): string {
-  const key = hex.toLowerCase()
-  if (!tokenOfHex.has(key)) {
-    tokenOfHex.set(key, property)
-  }
-  return hex
-}
-
-function hexOverSurface(node: HTMLElement, property: string): string {
-  return recordToken(property, resolveHexOver(node, property, "--surface"))
-}
-
-function markThemed(node: HTMLPreElement): void {
-  const marks = reportExportMark.themedSvg(JSON.stringify(Object.fromEntries(tokenOfHex)))
-  for (const [name, value] of Object.entries(marks)) {
-    node.setAttribute(name, value)
-  }
 }
 
 /**
@@ -230,7 +174,7 @@ function resolveAndSyncTheme(node: HTMLElement): Readonly<Record<string, string 
   const key = JSON.stringify(themeVariables)
   if (key !== drawnTheme) {
     drawn.clear()
-    tokenOfHex.clear()
+    forgetTokens()
     drawnTheme = key
     themeVariables = resolveThemeVariables(node)
   }
@@ -257,26 +201,6 @@ function initializeFor(
     suppressErrorRendering: true,
   })
   initializedTheme = key
-}
-
-/**
- * テーマ変数で決まらない箱とエッジラベルの見た目を決める `themeCSS`。
- * 拡大の面は図を画像にして開き、ページのカスタムプロパティを読めないので、色と角は値に解いて書く。
- * シーケンス図の参加者の箱は `filter` を属性で付けるので、`dropShadow` を外しても影が残る。
- * エッジラベルは地の矩形を持たず、字の縁取りで線と分ける（群の地の上でも矩形が浮かない）。
- * 字は 16px のまま（`figure-caption.md` の文字 12px の下限）。
- */
-function figureThemeCss(node: HTMLElement): string {
-  const radius = getComputedStyle(node).getPropertyValue("--radius-md").trim()
-  const soft = hexOverSurface(node, "--ink-soft")
-  return [
-    "rect, polygon, circle, ellipse, path { filter: none; }",
-    `.node rect, .node .label-container, rect.actor { rx: ${radius}; ry: ${radius}; }`,
-    ".edgeLabel, .edgeLabel p, .edgeLabel span, .labelBkg { background-color: transparent; }",
-    // 状態遷移の span.edgeLabel は mermaid の `.label div .edgeLabel`（詳細度が上）が色を決めるので、同じ詳細度で後に並べる
-    `.edgeLabel span, .label div .edgeLabel { color: ${soft}; -webkit-text-stroke: 5px ${recordToken("--surface", resolveHex(node, "--surface"))}; paint-order: stroke fill; }`,
-    `.messageText { fill: ${soft}; }`,
-  ].join("\n")
 }
 
 /**
@@ -361,106 +285,6 @@ async function fitTopDown(fit: TopDownFit): Promise<void> {
   if (!isCancelled()) {
     scrollAtNaturalWidth(node)
   }
-}
-
-/**
- * 差した SVG を、字が下限以上になる最も狭い幅の段に置く。どの段でも下回れば置かずに false を返す。
- * 段は `data-measure` に当てて、描画後の幅と `viewBox` の幅から縮尺を測る（高さの上限による縮みも含む）。
- * 寸法を持たない描画（まだ配置されていない・`viewBox` が無い）は測れないので、足りるものとして扱う。
- * 前後の部品の側の図は側の幅に収めるので、段を当てない。
- */
-function placeInMeasure(node: HTMLPreElement): boolean {
-  if (node.closest(".report-compare-figure-side") !== null) {
-    return true
-  }
-  releaseFigureWidth(node)
-  const measure = pickMeasure((candidate) => {
-    node.dataset["measure"] = candidate
-    return diagramTextPx(node)
-  })
-  if (measure === undefined) {
-    return false
-  }
-  node.dataset["measure"] = measure
-  node.style.removeProperty(NATURAL_WIDTH_PROPERTY)
-  holdFigureWidth(node)
-  return true
-}
-
-/** 題と凡例が図の幅の中で中央に並ぶよう、`<pre>` を描いた図の幅に縮める（`svg` の幅は百分率で、包みが図の幅を知れない）。 */
-function holdFigureWidth(node: HTMLPreElement): void {
-  const width = node.querySelector("svg")?.getBoundingClientRect().width ?? 0
-  if (width > 0) {
-    setFigureWidth(node, width)
-  }
-}
-
-function setFigureWidth(node: HTMLPreElement, width: number): void {
-  node.style.setProperty(FIGURE_WIDTH_PROPERTY, `${width}px`)
-  node.dataset["figureFit"] = ""
-}
-
-/** 段を測り直す間は、図の幅を持たせず段の幅に戻す。 */
-function releaseFigureWidth(node: HTMLPreElement): void {
-  node.style.removeProperty(FIGURE_WIDTH_PROPERTY)
-  delete node.dataset["figureFit"]
-}
-
-/**
- * 箱の縦横比が `viewBox` と違うとき、絵は箱に収まる大きい側で縮む（高さの上限で幅が縦横比に従わないときがある）ので、縮尺は幅と高さの小さいほうで測る。
- */
-function diagramTextPx(node: HTMLPreElement): number {
-  const box = node.querySelector("svg")?.getBoundingClientRect()
-  const [naturalWidth, naturalHeight] = naturalSizeOf(node)
-  return box !== undefined && naturalWidth > 0 && box.width > 0 && box.height > 0
-    ? SVG_TEXT_PX * Math.min(box.width / naturalWidth, box.height / naturalHeight)
-    : Infinity
-}
-
-/** `viewBox="x y 幅 高さ"` の幅と高さ。読めなければ 0。 */
-function naturalSizeOf(node: HTMLPreElement): readonly [number, number] {
-  const [width, height] = (node.querySelector("svg")?.getAttribute("viewBox") ?? "")
-    .split(/\s+/)
-    .slice(2)
-    .map(Number)
-  return [
-    width !== undefined && width > 0 ? width : 0,
-    height !== undefined && height > 0 ? height : 0,
-  ]
-}
-
-/**
- * 高さの上限を外して描く。自然幅が本文の列（body）の内幅に収まれば body の幅のまま自然幅で描く（natural）。
- * 超えれば読む面の幅にして（scroll）、自然幅が読む面の内幅を超えるとき、内幅まで縮めても字が下限以上なら内幅に縮め、下回るなら自然幅のまま `<pre>` の中で横に転がす。
- */
-function scrollAtNaturalWidth(node: HTMLPreElement): void {
-  const [naturalWidth] = naturalSizeOf(node)
-  node.dataset["measure"] = "body"
-  if (naturalWidth <= innerWidthOf(node)) {
-    node.dataset["measure"] = "natural"
-    if (naturalWidth > 0) {
-      node.style.setProperty(NATURAL_WIDTH_PROPERTY, `${naturalWidth}px`)
-      setFigureWidth(node, naturalWidth)
-    }
-    return
-  }
-  node.dataset["measure"] = "scroll"
-  const surfaceInnerWidth = innerWidthOf(node)
-  const fitsSurface =
-    surfaceInnerWidth < naturalWidth &&
-    isReadableTextPx((SVG_TEXT_PX * surfaceInnerWidth) / naturalWidth)
-  node.style.setProperty(
-    NATURAL_WIDTH_PROPERTY,
-    `${fitsSurface ? surfaceInnerWidth : naturalWidth}px`,
-  )
-}
-
-function innerWidthOf(node: HTMLPreElement): number {
-  const style = getComputedStyle(node)
-  const padding = sum(
-    [style.paddingLeft, style.paddingRight].map((value) => Number.parseFloat(value) || 0),
-  )
-  return node.clientWidth - padding
 }
 
 /**
