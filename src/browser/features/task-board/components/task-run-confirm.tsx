@@ -87,7 +87,7 @@ export function TaskRunConfirm(props: TaskRunConfirmProps): ReactElement {
             weight="inherit"
             className={styles["task-run-note"]}
           >
-            入力欄に <code className={styles["task-run-prompt"]}>{prompt}</code> と打つのと同じ。
+            <code className={styles["task-run-prompt"]}>{prompt}</code> が実行されます。
           </Text>
         )}
         <div className={styles["task-run-actions"]}>
