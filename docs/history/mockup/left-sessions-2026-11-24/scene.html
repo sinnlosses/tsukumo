@@ -59,6 +59,36 @@
   .seg span b { font-weight: 400; margin-left: 4px; font-variant-numeric: tabular-nums; opacity: .8; }
   .seg span[aria-selected="true"] { background: color-mix(in srgb, var(--ink) 11%, transparent); color: var(--ink); }
 
+  /* 案B の詳細（切り替えダイアログの右側と同じ5つ） */
+  .row.sel { background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--ink); box-shadow: inset 2px 0 0 var(--accent); }
+  .detail { position: absolute; display: flex; flex-direction: column; gap: 14px; padding: 18px 20px 16px;
+    background: rgb(30 27 37 / .94); border: 1px solid var(--line); border-radius: 12px; backdrop-filter: blur(10px);
+    box-shadow: 0 18px 48px rgb(0 0 0 / .45); z-index: 5; }
+  .detail.flyout { left: 270px; top: 68px; width: 468px; height: 396px; }
+  .detail.flyout::before { content: ""; position: absolute; left: -6px; top: var(--nib, 140px); width: 10px; height: 10px; rotate: 45deg;
+    background: rgb(30 27 37 / .94); border-left: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  .detail.inmain { left: 296px; top: 60px; width: 772px; height: 700px; padding: 22px 28px 20px; background: rgb(26 23 32 / .97); }
+  .d-bar { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--ink-quiet); margin: -4px 0 -2px; }
+  .d-bar .back { padding: 3px 10px; border-radius: 999px; border: 1px solid var(--line); color: var(--ink-soft); }
+  .d-head { display: flex; align-items: baseline; gap: 12px; }
+  .d-id { font: 500 22px/1 ui-monospace, "SF Mono", monospace; }
+  .d-meta { flex: 1; min-width: 0; font: 12px ui-monospace, "SF Mono", monospace; color: var(--ink-quiet); }
+  .d-chara { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--ink-quiet); align-self: center; }
+  .d-face { width: 20px; height: 20px; border-radius: 50%; background: url(base.png) -20px -5.8px / 1166.7px 750px no-repeat; }
+  .d-title { font-size: 15px; font-weight: 600; margin: -4px 0 0; }
+  .d-body { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; gap: 8px; }
+  .d-h { font-size: 12.5px; font-weight: 700; color: var(--accent); margin: 0; }
+  .d-body p { margin: 0; font-size: 13px; line-height: 1.75; color: var(--ink-soft); }
+  .d-last { margin-top: 6px; padding: 10px 12px; border-radius: 8px; background: rgb(0 0 0 / .2); }
+  .d-last .l { font-size: 11px; color: var(--ink-quiet); margin-bottom: 2px; }
+  .d-last .t { font-size: 13px; color: var(--ink); }
+  .d-foot { display: flex; align-items: center; gap: 10px; }
+  .d-foot .hint { font-size: 11.5px; color: var(--ink-quiet); }
+  .d-foot .hint kbd { font: 11px/1 system-ui; padding: 2px 5px; border-radius: 4px; border: 1px solid var(--line); }
+  .d-foot .go { margin-left: auto; padding: 8px 16px; border-radius: 9px; background: var(--accent); color: #23180a; font-weight: 700; font-size: 13px; }
+  .inmain .d-body p { font-size: 14px; }
+  .inmain .d-id { font-size: 26px; }
+
   /* 案C の入れ子 */
   .row.parent { font-weight: 600; color: var(--ink); }
   .row.parent .mk::before { content: ""; display: block; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); margin: auto; }
@@ -73,6 +103,8 @@
 <div class="col" id="col"></div>
 <script>
 const form = new URLSearchParams(location.search).get("form") ?? "a"
+// 案B で選んでいるセッション（詳細の場面だけ）
+const selected = form.startsWith("b-detail") ? "手順の図の着手の置き場" : undefined
 document.body.dataset.form = form
 const chevUp = `<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 7.5 6 4.5 9 7.5"/></svg>`
 const chevDown = `<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 4.5 6 7.5 9 4.5"/></svg>`
@@ -95,7 +127,7 @@ const sessions = [
     { t: "サイドバーの段と行", time: "11/22" },
   ]},
 ]
-const sessRow = s => `<div class="row sess${s.cur ? " cur" : ""}${s.busy ? " busy" : ""}" ${s.busy ? 'title="ほかのタブで開いている"' : ""}><span class="mk"></span><span class="t">${s.t}</span><span class="time">${s.time}</span></div>`
+const sessRow = s => `<div class="row sess${s.cur ? " cur" : ""}${s.busy ? " busy" : ""}${s.t === selected ? " sel" : ""}" ${s.busy ? 'title="ほかのタブで開いている"' : ""}><span class="mk"></span><span class="t">${s.t}</span><span class="time">${s.time}</span></div>`
 const sessRows = (skipCur, limitGroups = 2) => sessions.slice(0, limitGroups).map(g =>
   `<div class="grp">${g.g}</div>` + g.items.filter(s => !(skipCur && s.cur)).map(sessRow).join("")).join("")
 const more = label => `<div class="more">${label}<kbd>⌘J</kbd></div>`
@@ -120,6 +152,33 @@ if (form === "a" || form === "a-fold") {
       <div class="list" style="flex:1">${sessRows(false)}</div>
       ${more("ほかの作業ツリー・探す")}
     </section>`
+} else if (form === "b-detail" || form === "b-detail-main") {
+  const inMain = form === "b-detail-main"
+  col.innerHTML = `
+    <section class="card" style="height:396px">
+      <div class="seg" role="tablist"><span role="tab">やり取り<b>12</b></span><span role="tab" aria-selected="true">セッション<b>6</b></span></div>
+      <div class="list" style="flex:1">${sessRows(false)}</div>
+      ${more("ほかの作業ツリー・探す")}
+    </section>`
+  // 中身は架空。並びと見出しはダイアログの SessionSwitcherDetail と同じ
+  const detail = document.createElement("section")
+  detail.className = `detail ${inMain ? "inmain" : "flyout"}`
+  detail.innerHTML = `
+    ${inMain ? `<div class="d-bar"><span class="back">← いまのセッションへ戻る</span><span>ほかのセッションを見ている（切り替えてはいない）</span></div>` : ""}
+    <div class="d-head"><span class="d-id">48217</span><span class="d-meta">11/24 20:31 – 21:10 · 依頼 6</span><span class="d-chara"><span class="d-face"></span>行灯</span></div>
+    <h2 class="d-title">手順の図の着手の置き場</h2>
+    <div class="d-body">
+      <h3 class="d-h">このセッションの要約</h3>
+      <p>手順の図で、全部済んだら送り出しの箱を光らせるように直した。あわせて、着手の手順の置き場を3案（着手の列・前置きの1行・計画のフェーズ）の見本にした。</p>
+      <p>見本は docs/history/mockup/steps-prelude-2026-11-24/ にある（架空の要約）。</p>
+      <p style="color:var(--ink)">残り：着手の置き場の採否が未決。</p>
+      <div class="d-last"><div class="l">最後のひとこと</div><div class="t">行灯「まず上の画から見てもらうと早いですよ」</div></div>
+    </div>
+    <div class="d-foot"><span class="hint"><kbd>↑</kbd> <kbd>↓</kbd> 選ぶ　<kbd>Esc</kbd> 閉じる</span><span class="go">48217 に切り替える</span></div>`
+  document.body.append(detail)
+  // 吹き出しの角を選んだ行の高さへ
+  const sel = col.querySelector(".row.sel")
+  if (sel && !inMain) detail.style.setProperty("--nib", `${sel.getBoundingClientRect().top + 12 - 68}px`)
 } else if (form === "b-turns") {
   col.innerHTML = `
     <section class="card" style="height:396px">

@@ -20,7 +20,7 @@
 </head>
 <body>
 <h1>左の列にやり取りと過去のセッションを出す — 3案</h1>
-<p>土台は今の画面（疑似セッション turn-outline-many・1400×900）。左の列の札だけを描き直した。セッションの行は架空で、今の切り替えダイアログ（⌘J）と同じ材料（題・時刻・今日／昨日／それより前・ほかのタブで開いている印）だけを使う。ほかの作業ツリーと探す欄はダイアログに残す。場面は <a href="scene.html?form=a">scene.html?form=now|a|a-fold|b|b-turns|c</a>。</p>
+<p>土台は今の画面（疑似セッション turn-outline-many・1400×900）。左の列の札だけを描き直した。セッションの行は架空で、今の切り替えダイアログ（⌘J）と同じ材料（題・時刻・今日／昨日／それより前・ほかのタブで開いている印）だけを使う。ほかの作業ツリーと探す欄はダイアログに残す。場面は <a href="scene.html?form=a">scene.html?form=now|a|a-fold|b|b-turns|b-detail|b-detail-main|c</a>。</p>
 <section><h2>今<small>過去のセッションはヘッダーの短縮ID（またはダイアログ）からしか見えない</small></h2>
   <div class="pair"><figure><img src="base.png" alt="今の画面" /></figure></div></section>
 <section><h2>案A 二段の札（推奨）<small>やり取りの札の下に「セッション」の札。どちらも見出しの帯に畳める</small></h2>
@@ -32,6 +32,11 @@
   <div class="pair">
     <figure><img src="b-turns.png" alt="案B やり取り側" /><figcaption>やり取り側。見出しの代わりに切り替えが入るだけ</figcaption></figure>
     <figure><img src="b.png" alt="案B セッション側" /><figcaption>セッション側。いまのセッションは先頭で印つき</figcaption></figure>
+  </div></section>
+<section><h2>案B ＋ 選んだセッションの詳細<small>行を押すと、切り替えダイアログの右側と同じ5つ（ID・期間と依頼数・要約・残り・最後のひとこと）と「切り替える」を出す。押しただけでは切り替わらない</small></h2>
+  <div class="pair">
+    <figure><img src="b-detail.png" alt="案B 札の右隣に開くパネル" /><figcaption>B1 札の右隣に開くパネル（推奨）。札と同じ高さで流れの左半分に重なり、Esc・外を押すと閉じる。↑↓ で選び直すと中身が追う</figcaption></figure>
+    <figure><img src="b-detail-main.png" alt="案B 流れの面を差し替える" /><figcaption>B2 流れの面を差し替える。「いまのセッションへ戻る」で戻す。広いが、今の材料だけでは下半分が空く</figcaption></figure>
   </div></section>
 <section><h2>案C セッションの木<small>いまのセッションの下にやり取りを入れ子で開く。やり取りの開いた形は変わる</small></h2>
   <div class="pair"><figure><img src="c.png" alt="案C" /><figcaption>列の幅 232px では題が 9〜10字で切れる</figcaption></figure></div></section>
