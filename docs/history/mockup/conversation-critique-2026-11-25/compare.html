@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<title>会話画面の批評と改善の見本（Impeccable critique・2026-11-25）</title>
+<!--
+  土台は疑似セッション（架空の会話）の実物の画面。改善後は、撮る前に CSS と JS を差し込んで描き直したもの。
+  差し込んだ中身は下の「変えたこと」の表のとおりで、ソースは変えていない。
+-->
+<style>
+  :root { color-scheme: dark; }
+  body { margin: 0; padding: 24px; background: #141318; color: #ece9ef; font: 14px/1.7 system-ui, "Hiragino Sans", sans-serif; }
+  h1 { font-size: 18px; margin: 0 0 6px; }
+  h2 { font-size: 15px; margin: 0 0 6px; }
+  h2 small { font-weight: 400; color: #9a95a0; margin-left: 8px; }
+  p { margin: 0 0 18px; color: #b9b4bf; max-width: 980px; }
+  section { margin-bottom: 32px; }
+  .pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; max-width: 1600px; }
+  figure { margin: 0; }
+  figcaption { font-size: 12px; color: #9a95a0; margin-top: 4px; }
+  img { display: block; width: 100%; border-radius: 10px; }
+  table { border-collapse: collapse; font-size: 13px; margin-bottom: 18px; }
+  th, td { border-bottom: 1px solid #2c2a33; padding: 6px 12px; text-align: left; vertical-align: top; }
+  th { color: #9a95a0; font-weight: 500; }
+  td.n { font-variant-numeric: tabular-nums; text-align: right; }
+  .up { color: #8fc79a; }
+</style>
+</head>
+<body>
+<h1>会話画面の批評と改善の見本</h1>
+<p>Impeccable の critique で、Nielsen の10原則を 0〜4 で採点した。今の画面は 26/40、見本の形は 29/40。右の列に地図が出ているのは、疑似セッションに .beads が無いため地図のタブが強制されているからで、実際の既定は「タスク」のタブ。この点は今の画面の減点から外した。</p>
+
+<section>
+<h2>点数</h2>
+<table>
+<tr><th>原則</th><th>今</th><th>見本</th><th>見本で変えたこと・残る課題</th></tr>
+<tr><td>1. 状態が見える</td><td class="n">3</td><td class="n">3</td><td>部屋の状態の札（依頼待ち・答え待ち・失敗）を名前の隣に出した。進行中の札は撮れていない</td></tr>
+<tr><td>2. 実世界との一致</td><td class="n">2</td><td class="n up">3</td><td>ポート番号を帯から外した。許可の札に「許可:」を添えた</td></tr>
+<tr><td>3. 自由と取り消し</td><td class="n">3</td><td class="n">3</td><td>お伺いを保留する道は無いまま</td></tr>
+<tr><td>4. 一貫性</td><td class="n">2</td><td class="n up">3</td><td>失敗の文はピル・見出し・本文・一覧の4か所に出ていた。見本では流れの1か所だけにした</td></tr>
+<tr><td>5. 誤りの予防</td><td class="n">3</td><td class="n">3</td><td>変更なし</td></tr>
+<tr><td>6. 見て選べる</td><td class="n">2</td><td class="n">2</td><td>印だけのボタンは残る。キー操作も画面に書かれていない</td></tr>
+<tr><td>7. 柔軟性と効率</td><td class="n">3</td><td class="n">3</td><td>変更なし</td></tr>
+<tr><td>8. 美しさと最小限</td><td class="n">3</td><td class="n">3</td><td>0件の「作業の経過」の行と、入力欄の印2つを外した。紙の下の空いた帯は残る</td></tr>
+<tr><td>9. 誤りからの回復</td><td class="n">2</td><td class="n up">3</td><td>生の server_error を隠し、「同じ依頼を入力欄に戻す」を主のボタンにした</td></tr>
+<tr><td>10. 助けと説明</td><td class="n">3</td><td class="n">3</td><td>変更なし</td></tr>
+<tr><th>合計</th><th class="n">26</th><th class="n up">29</th><th></th></tr>
+</table>
+</section>
+
+<section><h2>失敗<small>疑似セッション api-failure</small></h2>
+  <div class="pair">
+    <figure><img src="before-failure.png" alt="今の失敗の場面" /><figcaption>今: 同じ失敗の文がピル・カードの見出し・カードの本文・左の一覧に出る。立て直しのボタンは灰色</figcaption></figure>
+    <figure><img src="after-failure.png" alt="見本の失敗の場面" /><figcaption>見本: ピルは「失敗しました」だけ。カードは理由1行と主のボタン。帯の名前の隣に赤い「失敗」の札</figcaption></figure>
+  </div></section>
+
+<section><h2>答える<small>疑似セッション question-brief</small></h2>
+  <div class="pair">
+    <figure><img src="before-question.png" alt="今の質問の場面" /><figcaption>今: カードの下端で注記の字が半分で切れ、スクロールできると分からない</figcaption></figure>
+    <figure><img src="after-question.png" alt="見本の質問の場面" /><figcaption>見本: 下端をぼかしてスクロールを示す。入力欄の上の案内を短くした。帯に「答え待ち」の札</figcaption></figure>
+  </div></section>
+
+<section><h2>読む<small>疑似セッション report</small></h2>
+  <div class="pair">
+    <figure><img src="before-report.png" alt="今のレポートの場面" /><figcaption>今: 紙の上に「作業の経過 0 件・セリフ 2 件」の行。入力欄の下に印が4つ</figcaption></figure>
+    <figure><img src="after-report.png" alt="見本のレポートの場面" /><figcaption>見本: 0件の行を外した。＠ と H を「…」にまとめ、許可の札に語を添えた</figcaption></figure>
+  </div></section>
+</body>
+</html>
