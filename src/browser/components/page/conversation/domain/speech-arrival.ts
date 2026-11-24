@@ -21,7 +21,7 @@ export type SpeechManpu =
   | "sparkle"
   | "sweat"
   | "flash"
-  | "ripple"
+  | "exclaim"
   | "rain"
   | "petals"
   | "bubbles"
@@ -36,7 +36,7 @@ export const SPEECH_ARRIVALS = {
   proud: { motion: "success", bubble: "swell", manpu: "sparkle" },
   flustered: { motion: "failure", bubble: "shake", manpu: "sweat" },
   serious: { motion: "still", bubble: "snap", manpu: "flash" },
-  curious: { motion: "tilt", bubble: "ease", manpu: "ripple" },
+  curious: { motion: "tilt", bubble: "ease", manpu: "exclaim" },
   sad: { motion: "sink", bubble: "sink", manpu: "rain" },
   excited: { motion: "success", bubble: "swell", manpu: "petals" },
   bored: { motion: "sink", bubble: "sink", manpu: "bubbles" },

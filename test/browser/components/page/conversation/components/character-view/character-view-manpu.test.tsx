@@ -49,7 +49,7 @@ describe("CharacterView（セリフが届いた瞬間のエフェクト）", () 
     ["proud", "sparkle"],
     ["flustered", "sweat"],
     ["serious", "flash"],
-    ["curious", "ripple"],
+    ["curious", "exclaim"],
     ["sad", "rain"],
     ["excited", "petals"],
     ["bored", "bubbles"],

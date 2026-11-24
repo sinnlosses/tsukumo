@@ -71,35 +71,15 @@ const DUSTS: readonly UnitPiece[] = [0, 1, 2, 3, 4, 5].map((i) => {
     },
   }
 })
-const DROPS: readonly UnitPiece[] = [
-  { x: -64, y: -50, vars: { "--s": 22, "--dx": -40, "--dy": -30, "--rot": "-28deg", "--d": "0s" } },
-  {
-    x: -72,
-    y: -24,
-    vars: { "--s": 16, "--dx": -50, "--dy": -4, "--rot": "-44deg", "--d": "0.1s" },
-  },
-  {
-    x: -48,
-    y: -70,
-    vars: { "--s": 13, "--dx": -22, "--dy": -40, "--rot": "-10deg", "--d": "0.2s" },
-  },
-]
-const SPLASHES: readonly UnitPiece[] = [
-  { x: -108, y: -82, vars: { "--d": "0.35s" } },
-  { x: -124, y: -30, vars: { "--d": "0.42s" } },
-  { x: -72, y: -112, vars: { "--d": "0.48s" } },
-]
+const SWEAT_DROP: UnitPiece = { x: -40, y: -14, vars: { "--s": 32 } }
 const SLASH: UnitPiece = { x: 112, y: -18, vars: { "--w": 110 } }
 const FLARE: Offset = { x: 84, y: -6 }
-const RIPPLE: Offset = { x: 0, y: -30 }
-const RAYS: readonly UnitPiece[] = [-50, -18, 18, 50].map((degree) => {
-  const angle = ((degree - 90) * Math.PI) / 180
-  return {
-    x: Math.round(Math.cos(angle) * 50),
-    y: Math.round(Math.sin(angle) * 50 - 30),
-    vars: { "--r": `${degree}deg` },
-  }
-})
+const EXCLAIM: Offset = { x: 58, y: -92 }
+const EXCLAIM_TICKS: readonly UnitPiece[] = [
+  { x: 34, y: -96, vars: { "--r": "-40deg", "--dx": -8, "--dy": -8 } },
+  { x: 58, y: -128, vars: { "--r": "0deg", "--dx": 0, "--dy": -10 } },
+  { x: 82, y: -96, vars: { "--r": "40deg", "--dx": 8, "--dy": -8 } },
+]
 /** 雨の筋の、影の箱の中の左端（%）と遅れ（秒）。箱は絵の左右へ広いので、絵の幅に当たる 30〜70% に降らせる。 */
 const RAINS: readonly { readonly left: number; readonly delay: number }[] = [
   0, 1, 2, 3, 4, 5, 6, 7, 8,
@@ -373,12 +353,8 @@ function pieces(manpu: SpeechManpu | EndingManpu): ReactElement {
     case "sweat":
       return (
         <>
-          {DROPS.map((piece) => (
-            <span key={piece.x} className={styles["manpu-drop"]} style={unitStyle(piece)} />
-          ))}
-          {SPLASHES.map((piece) => (
-            <span key={piece.x} className={styles["manpu-splash"]} style={unitStyle(piece)} />
-          ))}
+          <span className={styles["manpu-sweat-trail"]} style={unitStyle(SWEAT_DROP)} />
+          <span className={styles["manpu-drop"]} style={unitStyle(SWEAT_DROP)} />
         </>
       )
     case "flash":
@@ -388,14 +364,16 @@ function pieces(manpu: SpeechManpu | EndingManpu): ReactElement {
           <Star className={styles["manpu-flare"] ?? ""} style={unitStyle(FLARE)} />
         </>
       )
-    case "ripple":
+    case "exclaim":
       return (
         <>
-          <span className={styles["manpu-ripple"]} style={unitStyle(RIPPLE)} />
-          {RAYS.map((piece) => (
+          <span className={styles["manpu-exclaim"]} style={unitStyle(EXCLAIM)}>
+            ！
+          </span>
+          {EXCLAIM_TICKS.map((piece) => (
             <span
               key={piece.vars?.["--r"]}
-              className={styles["manpu-ray"]}
+              className={styles["manpu-exclaim-tick"]}
               style={unitStyle(piece)}
             />
           ))}

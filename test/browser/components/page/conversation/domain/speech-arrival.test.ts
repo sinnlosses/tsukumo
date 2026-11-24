@@ -161,7 +161,7 @@ describe("SPEECH_ARRIVALS", () => {
       proud: { motion: "success", bubble: "swell", manpu: "sparkle" },
       excited: { motion: "success", bubble: "swell", manpu: "petals" },
       flustered: { motion: "failure", bubble: "shake", manpu: "sweat" },
-      curious: { motion: "tilt", bubble: "ease", manpu: "ripple" },
+      curious: { motion: "tilt", bubble: "ease", manpu: "exclaim" },
       sad: { motion: "sink", bubble: "sink", manpu: "rain" },
       bored: { motion: "sink", bubble: "sink", manpu: "bubbles" },
       serious: { motion: "still", bubble: "snap", manpu: "flash" },

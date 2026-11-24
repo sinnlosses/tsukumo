@@ -189,7 +189,8 @@
   }
 }
 
-/* あわわ: 光る雫。角を1つだけ尖らせた正方形を傾けて雫の形にし（尖りが上）、頭の横から外へ飛ばして先で散らす */
+/* あわわ: 光る雫ひと粒。角を1つだけ尖らせた正方形を傾けて雫の形にし（尖りが上）、こめかみに出して少し溜め、頰へ伝わせる。
+   通った跡には細い光の筋（.manpu-sweat-trail）が雫と同じ拍子で伸びる */
 .manpu-drop {
   width: var(--s);
   height: var(--s);
@@ -202,54 +203,68 @@
     linear-gradient(225deg, var(--manpu-sweat-light), var(--manpu-sweat));
   box-shadow: inset -2px -2px 3px color-mix(in srgb, var(--manpu-sweat-line) 35%, transparent);
   filter: drop-shadow(0 0 5px var(--manpu-sweat));
-  rotate: calc(var(--rot) - 45deg);
-  animation: manpu-drop 0.85s cubic-bezier(0.2, 0.9, 0.4, 1) var(--d) 1 forwards;
+  rotate: -45deg;
+  animation: manpu-drop 1.6s 1 forwards;
 }
 @keyframes manpu-drop {
-  /* 回転（rotate）より前に効く translate で動かす。transform で動かすと回った向きへ斜めに飛ぶ */
+  /* 回転（rotate）より前に効く translate で動かす。transform で動かすと回った向きへ斜めに流れる */
   0% {
     opacity: 0;
     translate: 0 0;
-    scale: 0.3;
+    scale: 0.2;
+    animation-timing-function: cubic-bezier(0.3, 1.6, 0.5, 1);
   }
-  18% {
+  16% {
     opacity: 1;
-    translate: calc(var(--dx) * 0.5) calc(var(--dy) * 0.6);
-    scale: 1.1;
-  }
-  65% {
-    opacity: 1;
-    translate: var(--dx) var(--dy);
+    translate: 0 0;
     scale: 1;
   }
-  100% {
-    opacity: 0;
-    translate: calc(var(--dx) * 1.1) calc(var(--dy) + var(--u) * 18);
-    scale: 0.85;
-  }
-}
-.manpu-splash {
-  width: 5px;
-  height: 5px;
-  --hw: 2.5px;
-  --hh: 2.5px;
-  border-radius: 50%;
-  background: var(--manpu-sweat-light);
-  filter: drop-shadow(0 0 3px var(--manpu-sweat));
-  animation: manpu-splash 0.5s ease-out var(--d) 1 forwards;
-}
-@keyframes manpu-splash {
-  0% {
-    opacity: 0;
-    scale: 0.2;
-  }
-  30% {
+  38% {
     opacity: 1;
-    scale: 1.2;
+    translate: 0 calc(var(--u) * 4);
+    scale: 1;
+    animation-timing-function: cubic-bezier(0.5, 0, 0.9, 0.6);
+  }
+  85% {
+    opacity: 1;
+    translate: 0 calc(var(--u) * 52);
+    scale: 0.85 1.15;
   }
   100% {
     opacity: 0;
-    scale: 0.4;
+    translate: 0 calc(var(--u) * 62);
+    scale: 0.6 1.1;
+  }
+}
+.manpu-sweat-trail {
+  width: 4px;
+  height: 0;
+  --hw: 2px;
+  border-radius: 999px;
+  background: linear-gradient(
+    transparent,
+    color-mix(in srgb, var(--manpu-sweat-light) 70%, transparent)
+  );
+  filter: drop-shadow(0 0 3px var(--manpu-sweat));
+  animation: manpu-sweat-trail 1.6s 1 forwards;
+}
+@keyframes manpu-sweat-trail {
+  0%,
+  38% {
+    height: 0;
+    opacity: 0;
+    animation-timing-function: cubic-bezier(0.5, 0, 0.9, 0.6);
+  }
+  40% {
+    opacity: 1;
+  }
+  85% {
+    height: calc(var(--u) * 48);
+    opacity: 0.9;
+  }
+  100% {
+    height: calc(var(--u) * 54);
+    opacity: 0;
   }
 }
 
@@ -309,60 +324,79 @@
   }
 }
 
-/* きょとん: 波紋。頭の上で細い光の輪が広がり、短い光の線が4本伸びる */
-.manpu-ripple {
-  width: calc(var(--u) * 40);
-  height: calc(var(--u) * 40);
-  --hw: calc(var(--u) * 20);
-  --hh: calc(var(--u) * 20);
-  border: 2px solid color-mix(in srgb, var(--accent) 50%, white);
-  border-radius: 50%;
-  box-shadow: inset 0 0 8px color-mix(in srgb, var(--accent) 35%, transparent);
-  filter: drop-shadow(0 0 5px color-mix(in srgb, var(--accent) 50%, transparent));
-  animation: manpu-ripple 1.1s cubic-bezier(0.1, 0.6, 0.3, 1) 1 forwards;
+/* きょとん: 光の「！」。頭の上で伸び縮みしながら跳ね上がり、ぷるんと揺れて消える。まわりに短い光の線が3本弾ける。
+   立ち絵に「？」が描いてあることが多く、答え待ちの終わり方も「？」を使うので、ここでは「？」を使わない */
+.manpu-exclaim {
+  width: calc(var(--u) * 20);
+  height: calc(var(--u) * 44);
+  --hw: calc(var(--u) * 10);
+  --hh: calc(var(--u) * 22);
+  font:
+    800 calc(var(--u) * 44) / 1 system-ui,
+    sans-serif;
+  text-align: center;
+  color: color-mix(in srgb, var(--accent) 25%, white);
+  -webkit-text-stroke: 1px color-mix(in srgb, var(--accent) 70%, black);
+  filter: drop-shadow(0 0 6px var(--accent));
+  transform-origin: 50% 100%;
+  animation: manpu-exclaim 1.4s 1 forwards;
 }
-@keyframes manpu-ripple {
+@keyframes manpu-exclaim {
   0% {
     opacity: 0;
-    scale: 0.3;
+    translate: 0 calc(var(--u) * 16);
+    scale: 0.4 0.2;
   }
-  15%,
-  45% {
+  14% {
     opacity: 1;
+    translate: 0 calc(var(--u) * -8);
+    scale: 0.9 1.25;
+  }
+  26% {
+    translate: 0 0;
+    scale: 1.15 0.85;
+  }
+  38% {
+    scale: 0.95 1.05;
+    rotate: -6deg;
+  }
+  50% {
+    scale: 1;
+    rotate: 4deg;
+  }
+  60%,
+  78% {
+    opacity: 1;
+    rotate: 0deg;
   }
   100% {
     opacity: 0;
-    scale: 3;
+    translate: 0 calc(var(--u) * -6);
   }
 }
-.manpu-ray {
-  width: 3px;
-  height: calc(var(--u) * 26);
-  --hw: 1.5px;
-  --hh: calc(var(--u) * 13);
+.manpu-exclaim-tick {
+  width: 4px;
+  height: calc(var(--u) * 18);
+  --hw: 2px;
+  --hh: calc(var(--u) * 9);
   border-radius: 999px;
-  background: linear-gradient(
-    transparent,
-    color-mix(in srgb, var(--accent) 25%, white) 50%,
-    transparent
-  );
+  background: color-mix(in srgb, var(--accent) 30%, white);
   filter: drop-shadow(0 0 4px var(--accent));
   rotate: var(--r);
-  animation: manpu-ray 0.75s cubic-bezier(0.2, 0.8, 0.3, 1) 1 forwards;
+  animation: manpu-exclaim-tick 0.6s 0.08s 1 both;
 }
-@keyframes manpu-ray {
+@keyframes manpu-exclaim-tick {
   0% {
     opacity: 0;
     scale: 1 0.2;
   }
-  35% {
+  40% {
     opacity: 1;
     scale: 1 1;
   }
   100% {
     opacity: 0;
-    transform: translateY(calc(var(--u) * -46));
-    scale: 1 0.4;
+    translate: var(--dx) var(--dy);
   }
 }
 
