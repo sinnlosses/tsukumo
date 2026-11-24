@@ -12,6 +12,7 @@ import {
 const GENERATED = {
   id: "fictional-2",
   name: "架空の2号",
+  tagline: "架空の2号の一言",
   accent: "#b8c7ff",
   chatAccent: "#EAA77A",
   persona: "# 架空の2号\n\n架空の人格。",

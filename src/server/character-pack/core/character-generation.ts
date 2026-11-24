@@ -4,6 +4,7 @@
 
 import { isPlainObject } from "remeda"
 
+import { MAX_CHARACTER_TAGLINE_LENGTH } from "../../../shared/character-pack/character-definition.ts"
 import { parseCharacterPackName } from "../../../shared/character-pack/character.ts"
 import {
   type GeneratedCharacter,
@@ -61,7 +62,7 @@ function characterGenerationQuery(image: PromptImageSource, model: ModelAlias): 
     kind: "character-generation",
     model,
     systemPrompt: CHARACTER_GENERATION_INSTRUCTION,
-    prompt: "この立ち絵のキャラクターの id・名前・差し色2つ・人格を書いてください。",
+    prompt: "この立ち絵のキャラクターの id・名前・自己紹介文・差し色2つ・人格を書いてください。",
     images: [image],
     schema: structuredOutputSchema(generatedCharacterSchema),
   }
@@ -87,6 +88,7 @@ const CHARACTER_GENERATION_INSTRUCTION = `あなたは、利用者が置いた�
 
 - \`name\`: 画面や吹き出しに出る名前。立ち絵から受ける印象に合う短い名前（日本語でよい）
 - \`id\`: 保存するフォルダの名前。名前をローマ字か英語にした、半角の小文字英数字とハイフンだけの40字までの語（例: \`kitsune-bi\`）
+- \`tagline\`: 自己紹介文。プロフィールで名前の下に添える、キャラクターの口調で書いた1行の一言（${String(MAX_CHARACTER_TAGLINE_LENGTH / 4)} 字までを目安にする）
 - \`accent\`: 仕事中の画面の差し色。立ち絵の主な色から採った \`#rrggbb\`。暗い地の上で文字や線の色として読める明るさにする
 - \`chatAccent\`: 雑談中の画面の差し色。\`accent\` と並べて見分けられる、立ち絵の中の別の色の \`#rrggbb\`。明るさは \`accent\` と同じ考え方で選ぶ
 - \`persona\`: ペルソナ（Markdown）。下の骨組みで書く

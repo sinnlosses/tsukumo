@@ -30,6 +30,7 @@ import { CHARACTER_EVENT, ITEMS_EVENT, requestEvent } from "./session-event.ts"
 export const GENERATED_CHARACTER = {
   id: "fictional-3",
   name: "架空の3号",
+  tagline: "架空の3号の一言",
   accent: "#b8c7ff",
   chatAccent: "#eaa77a",
   persona: "# 架空の3号\n\n架空の人格。",

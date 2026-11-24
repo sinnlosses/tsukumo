@@ -107,7 +107,7 @@ export function PresentationalCharacterCreate({
               <Field
                 variant="form"
                 id="character-create-id"
-                label="id"
+                label="ID"
                 hint={
                   form.idNote.kind === "hint" ? (
                     <Text

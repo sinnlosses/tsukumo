@@ -2,7 +2,7 @@
 // 名前・id・立ち絵1枚・画面の差し色2つ（仕事・雑談）・ペルソナの作りかけの値を持ち、押せるか・欄の下に出す一言・作る先を畳んで返す。
 // 表情を足す・背景を敷くのは、作ったあと `<CharacterEdit>` の側で行う。
 //
-// 「立ち絵から生成」を押すと、置いた立ち絵からサーバが生成した id・名前・差し色2つ・人格で5つの欄を上書きする。
+// 「立ち絵から生成」を押すと、置いた立ち絵からサーバが生成した id・名前・自己紹介文・差し色2つ・人格で6つの欄を上書きする。
 // 置いただけでは生成しない。生成中は「作る」も押せず、生成できなかったときは欄と立ち絵に触らずボタンの下に知らせる。
 //
 // 作れたら一覧で作ったパックを選んだ状態にして、呼び出し元へ閉じたことを知らせる。
@@ -30,12 +30,12 @@ import { CREATE_PORTRAIT_TOO_LARGE_NOTE } from "../../../domain/character-edit-c
 const NAME_HINT = "画面や吹き出しに出る名前"
 const ID_HINT =
   "半角の英数字と . _ - が使えます（. では始められません）。保存するフォルダの名前になります"
-const INVALID_ID_NOTE = "id に使えるのは半角の英数字と . _ - だけ（. では始められない）"
-const TAKEN_ID_NOTE = "その id はもう使われている"
-const FAILED_NOTE = "作れなかった。もう一度押すか、id を変えてみてください"
+const INVALID_ID_NOTE = "ID に使えるのは半角の英数字と . _ - だけ（. では始められない）"
+const TAKEN_ID_NOTE = "その ID はもう使われている"
+const FAILED_NOTE = "作れなかった。もう一度押すか、ID を変えてみてください"
 const GENERATE_LABEL = "立ち絵から生成"
 const GENERATING_LABEL = "生成中…"
-const GENERATION_HINT = "置いた立ち絵から名前・id・差し色・人格を書きます。書いたあとで直せます"
+const GENERATION_HINT = "置いた立ち絵から、ほかの欄をまとめて書きます。書いたあとで直せます"
 const GENERATION_STAGES = [
   { stage: "prepare", label: "立ち絵を整える" },
   { stage: "write", label: "設定を書く" },
@@ -168,6 +168,7 @@ export function useCharacterCreate(open: boolean, onClose: () => void): Characte
     }
     setId(generated.id)
     setName(generated.name)
+    setTagline(generated.tagline)
     setAccent(generated.accent)
     setChatAccent(generated.chatAccent)
     setPersona(generated.persona)

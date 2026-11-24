@@ -61,6 +61,7 @@ const PICKED_PNG_DATA_URL = `data:image/png;base64,${Buffer.from("png").toString
 const GENERATED = {
   id: "fictional-3",
   name: "架空の3号",
+  tagline: "架空の3号の一言",
   accent: "#123456",
   chatAccent: "#abcdef",
   persona: "# 架空の3号\n\n架空の人格。",
@@ -89,7 +90,7 @@ describe("CharacterCreate", () => {
     expect(screen.getByRole("heading", { name: "新しいキャラクター" })).toBeDefined()
     expect(screen.getByLabelText("いつもの顔の立ち絵を選ぶ")).toBeDefined()
     expect(screen.getByLabelText("名前")).toBeDefined()
-    expect(screen.getByLabelText("id")).toBeDefined()
+    expect(screen.getByLabelText("ID")).toBeDefined()
     expect(screen.getByLabelText("仕事")).toBeDefined()
     expect(screen.getByLabelText("雑談")).toBeDefined()
     expect(screen.getByLabelText("人格")).toBeDefined()
@@ -100,7 +101,7 @@ describe("CharacterCreate", () => {
     render(characterCreate(true, () => {}))
     expect(submitButton().getAttribute("aria-disabled")).toBe("true")
 
-    fireEvent.change(screen.getByLabelText("id"), { target: { value: "fictional-2" } })
+    fireEvent.change(screen.getByLabelText("ID"), { target: { value: "fictional-2" } })
     expect(submitButton().getAttribute("aria-disabled")).toBe("true")
     expect(document.querySelector(".character-screen-note")).toBeNull()
     expect(screen.getByText(/保存するフォルダの名前になります/u)).toBeDefined()
@@ -111,7 +112,7 @@ describe("CharacterCreate", () => {
 
   it("2 MiB を超える立ち絵は置かず、上限を言う一言を枠の下に出す。選び直すと消える", async () => {
     render(characterCreate(true, () => {}))
-    fireEvent.change(screen.getByLabelText("id"), { target: { value: "fictional-2" } })
+    fireEvent.change(screen.getByLabelText("ID"), { target: { value: "fictional-2" } })
 
     fireEvent.change(screen.getByLabelText("いつもの顔の立ち絵を選ぶ"), {
       target: {
@@ -132,7 +133,7 @@ describe("CharacterCreate", () => {
   // id はディレクトリ名になるので、送る前に画面で止める（docs/architecture/character-pack.md「画面から作るときの置き場と受け取り方」）。
   it("形の合わない id では押せず、理由を id の欄の下に出す", async () => {
     render(characterCreate(true, () => {}))
-    fireEvent.change(screen.getByLabelText("id"), { target: { value: "../escape" } })
+    fireEvent.change(screen.getByLabelText("ID"), { target: { value: "../escape" } })
     await pickPortrait()
 
     expect(submitButton().getAttribute("aria-disabled")).toBe("true")
@@ -141,7 +142,7 @@ describe("CharacterCreate", () => {
 
   it("既にある id では押せず、使われていることを出す", async () => {
     render(characterCreate(true, () => {}))
-    fireEvent.change(screen.getByLabelText("id"), { target: { value: "fictional" } })
+    fireEvent.change(screen.getByLabelText("ID"), { target: { value: "fictional" } })
     await pickPortrait()
 
     expect(submitButton().getAttribute("aria-disabled")).toBe("true")
@@ -161,7 +162,7 @@ describe("CharacterCreate", () => {
     )
     fireEvent.change(screen.getByLabelText("名前"), { target: { value: "架空の2号" } })
     fireEvent.change(screen.getByLabelText("自己紹介文"), { target: { value: "架空の一言" } })
-    fireEvent.change(screen.getByLabelText("id"), { target: { value: "fictional-2" } })
+    fireEvent.change(screen.getByLabelText("ID"), { target: { value: "fictional-2" } })
     fireEvent.change(screen.getByLabelText("仕事"), { target: { value: "#22ff88" } })
     fireEvent.change(screen.getByLabelText("雑談"), { target: { value: "#ff8822" } })
     await pickPortrait()
@@ -191,7 +192,7 @@ describe("CharacterCreate", () => {
         closed.push("closed")
       }),
     )
-    fireEvent.change(screen.getByLabelText("id"), { target: { value: "fictional-2" } })
+    fireEvent.change(screen.getByLabelText("ID"), { target: { value: "fictional-2" } })
     await pickPortrait()
 
     fireEvent.click(submitButton())
@@ -213,7 +214,7 @@ describe("CharacterCreate", () => {
         () => Promise.reject(new Error("断り")),
       ),
     )
-    fireEvent.change(screen.getByLabelText("id"), { target: { value: "fictional-2" } })
+    fireEvent.change(screen.getByLabelText("ID"), { target: { value: "fictional-2" } })
     await pickPortrait()
 
     fireEvent.click(submitButton())
@@ -223,7 +224,7 @@ describe("CharacterCreate", () => {
     expect(window.location.hash).toBe("")
     expect(submitButton().getAttribute("aria-disabled")).toBeNull()
 
-    fireEvent.change(screen.getByLabelText("id"), { target: { value: "fictional-3" } })
+    fireEvent.change(screen.getByLabelText("ID"), { target: { value: "fictional-3" } })
     expect(screen.queryByText(/作れなかった/u)).toBeNull()
   })
 
@@ -239,7 +240,7 @@ describe("CharacterCreate", () => {
         },
       ),
     )
-    fireEvent.change(screen.getByLabelText("id"), { target: { value: "fictional-2" } })
+    fireEvent.change(screen.getByLabelText("ID"), { target: { value: "fictional-2" } })
     await pickPortrait()
 
     fireEvent.click(submitButton())
@@ -282,9 +283,10 @@ describe("CharacterCreate", () => {
     fireEvent.click(generateButton())
 
     await waitFor(() => {
-      expect(inputValue("id")).toBe("fictional-3")
+      expect(inputValue("ID")).toBe("fictional-3")
     })
     expect(inputValue("名前")).toBe("架空の3号")
+    expect(inputValue("自己紹介文")).toBe("架空の3号の一言")
     expect(inputValue("仕事")).toBe("#123456")
     expect(inputValue("雑談")).toBe("#abcdef")
     expect(inputValue("人格")).toBe("# 架空の3号\n\n架空の人格。")
@@ -298,7 +300,7 @@ describe("CharacterCreate", () => {
         procedure: "characterPack.create",
         id: "fictional-3",
         name: "直した名前",
-        tagline: "",
+        tagline: "架空の3号の一言",
         portraits: { default: PICKED_PNG_DATA_URL },
         accent: "#123456",
         chatAccent: "#abcdef",
@@ -319,7 +321,7 @@ describe("CharacterCreate", () => {
         },
       ),
     )
-    fireEvent.change(screen.getByLabelText("id"), { target: { value: "fictional-2" } })
+    fireEvent.change(screen.getByLabelText("ID"), { target: { value: "fictional-2" } })
     await pickPngPortrait()
 
     fireEvent.click(generateButton())
@@ -340,14 +342,14 @@ describe("CharacterCreate", () => {
       ),
     )
     fireEvent.change(screen.getByLabelText("名前"), { target: { value: "架空の2号" } })
-    fireEvent.change(screen.getByLabelText("id"), { target: { value: "fictional-2" } })
+    fireEvent.change(screen.getByLabelText("ID"), { target: { value: "fictional-2" } })
     await pickPngPortrait()
 
     fireEvent.click(generateButton())
 
     await screen.findByText(/生成できなかった/u)
     expect(inputValue("名前")).toBe("架空の2号")
-    expect(inputValue("id")).toBe("fictional-2")
+    expect(inputValue("ID")).toBe("fictional-2")
     expect(screen.getByLabelText("いつもの顔の立ち絵を差し替える")).toBeDefined()
     expect(generateButton().getAttribute("aria-disabled")).toBeNull()
     expect(submitButton().getAttribute("aria-disabled")).toBeNull()

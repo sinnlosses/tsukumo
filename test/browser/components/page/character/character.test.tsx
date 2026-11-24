@@ -133,7 +133,7 @@ describe("Character", () => {
     fireEvent.click(screen.getByRole("button", { name: "新しく作る" }))
     expect(screen.getByRole("heading", { name: "新しいキャラクター" })).toBeDefined()
 
-    fireEvent.change(screen.getByLabelText("id"), { target: { value: "fictional-3" } })
+    fireEvent.change(screen.getByLabelText("ID"), { target: { value: "fictional-3" } })
     fireEvent.change(screen.getByLabelText("いつもの顔の立ち絵を選ぶ"), {
       target: { files: [new File(["<svg/>"], "picked.svg", { type: "image/svg+xml" })] },
     })

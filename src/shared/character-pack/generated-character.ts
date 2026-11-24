@@ -1,9 +1,13 @@
-// 立ち絵1枚から生成した、新しく作るパックの欄の値（id・名前・差し色2つ・ペルソナ）。
+// 立ち絵1枚から生成した、新しく作るパックの欄の値（id・名前・自己紹介文・差し色2つ・ペルソナ）。
 // 作るダイアログの欄を埋めるだけで、書き込みは利用者が直してから押す「作る」が行う。
 
 import { z } from "zod"
 
-import { isAccentColor, MAX_CHARACTER_NAME_LENGTH } from "./character-definition.ts"
+import {
+  isAccentColor,
+  MAX_CHARACTER_NAME_LENGTH,
+  MAX_CHARACTER_TAGLINE_LENGTH,
+} from "./character-definition.ts"
 import { parseCharacterPackName } from "./character.ts"
 import { MAX_PERSONA_BODY_LENGTH, rememberedSectionStart } from "./persona-section.ts"
 
@@ -18,6 +22,7 @@ export const generatedCharacterSchema = z.object({
     .string()
     .max(MAX_CHARACTER_NAME_LENGTH)
     .refine((value) => value.trim() !== ""),
+  tagline: z.string().max(MAX_CHARACTER_TAGLINE_LENGTH),
   accent: z.string().refine(isAccentColor),
   chatAccent: z.string().refine(isAccentColor),
   persona: z
