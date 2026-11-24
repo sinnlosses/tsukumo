@@ -89,8 +89,9 @@ export function DraftSortBand(props: { readonly band: DraftSortPanelView["band"]
         variant="solid-accent"
         size="subheading"
         pressed="none"
-        disabled={band.kind === "none"}
+        disabled={band.kind === "none" || band.blockedReason !== undefined}
         disclosure={{ kind: "dialog" }}
+        title={band.kind === "some" ? band.blockedReason : undefined}
         className={styles["draft-sort-request"]}
         onClick={band.kind === "some" ? band.onRequest : ignoreClick}
       >

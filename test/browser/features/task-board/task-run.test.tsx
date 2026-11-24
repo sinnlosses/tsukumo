@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it } from "vitest"
 
 import { TaskBoard } from "../../../../src/browser/features/task-board/task-board.tsx"
 import { useTaskSheet } from "../../../../src/browser/stores/task-sheet.ts"
+import { FRAME_ERROR_REASON } from "../../../../src/shared/frame-error-reason.ts"
 import type {
   TaskSummaryItem,
   TaskSummaryResult,
@@ -115,15 +116,31 @@ function confirmDialog(): Element | null {
 }
 
 describe("タスクの実行を頼む", () => {
-  it("ターンが動いている間は確認の「頼む」を出さず、理由を出す", () => {
+  it("ターンが動いている間は頼む口を押せず、理由を title と横の字に出す", () => {
     const sent: unknown[] = []
     renderList(collectInto(sent), RUNNING_TURN)
 
-    startFromSheet("X-002")
+    fireEvent.click(rowOf("X-002"))
+    const ask = screen.getByRole("button", { name: "架空の精霊 に頼む" })
+    fireEvent.click(ask)
 
-    expect(screen.queryByRole("button", { name: "頼む" })).toBeNull()
-    expect(confirmDialog()?.textContent).toContain("いまターンが動いているので送れない")
+    expect(ask.getAttribute("aria-disabled")).toBe("true")
+    expect(ask.getAttribute("title")).toBe(FRAME_ERROR_REASON.taskRequestDuringTurn)
+    expect(screen.getByText(FRAME_ERROR_REASON.taskRequestDuringTurn)).toBeDefined()
+    expect(confirmDialog()).toBeNull()
     expect(sent).toEqual([])
+  })
+
+  it("ターンが動いている間はドラフトの「計画する」「却下する」を押せず、理由を title に出す", () => {
+    renderBoard(() => {}, [], [draftTask("X-004")], RUNNING_TURN)
+
+    fireEvent.click(screen.getByRole("option", { name: /X-004/ }))
+
+    for (const name of ["計画する", "却下する"]) {
+      const button = screen.getByRole("button", { name })
+      expect(button.getAttribute("aria-disabled")).toBe("true")
+      expect(button.getAttribute("title")).toBe(FRAME_ERROR_REASON.taskRequestDuringTurn)
+    }
   })
 
   it.each([

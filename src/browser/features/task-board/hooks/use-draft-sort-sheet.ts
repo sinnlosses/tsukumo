@@ -6,6 +6,7 @@ import { useState, type KeyboardEvent } from "react"
 
 import type { TaskSummaryResult } from "../../../../shared/repository/task-summary.ts"
 import { useExternalSync } from "../../../hooks/use-external-sync.ts"
+import { useTurnRunning } from "../../../stores/session.ts"
 import { useTaskSheet } from "../../../stores/task-sheet.ts"
 import { draftTasksOf } from "../domain/draft-sort-sheet-content.ts"
 import type { DraftSortPanelView } from "../domain/task-board-view.ts"
@@ -38,9 +39,13 @@ export function useDraftSortSheet(tasks: TaskSummaryResult): DraftSortSheetView 
     }
   }, [empty, close])
 
-  const { panel } = useDraftSort(drafts, (target) => {
-    setConfirm({ kind: "open", target })
-  })
+  const { panel } = useDraftSort(
+    drafts,
+    (target) => {
+      setConfirm({ kind: "open", target })
+    },
+    useTurnRunning(),
+  )
   const closeToOpener = (): void => {
     globalThis.document.getElementById(SORT_OPEN_DOM_ID)?.focus()
     setConfirm({ kind: "closed" })

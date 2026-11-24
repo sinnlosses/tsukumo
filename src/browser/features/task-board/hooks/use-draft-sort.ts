@@ -3,6 +3,7 @@
 
 import { useState } from "react"
 
+import { FRAME_ERROR_REASON } from "../../../../shared/frame-error-reason.ts"
 import type { TaskSummaryItem } from "../../../../shared/repository/task-summary.ts"
 import { draftSortCardsOf } from "../domain/draft-sort-sheet-content.ts"
 import {
@@ -18,6 +19,7 @@ import type { TaskRunTarget } from "../domain/task-run-prompt.ts"
 export function useDraftSort(
   drafts: readonly TaskSummaryItem[],
   onRequest: (target: TaskRunTarget) => void,
+  turnRunning: boolean,
 ): { readonly panel: DraftSortPanelView; readonly reset: () => void } {
   const [sort, setSort] = useState<DraftSortState>(EMPTY_DRAFT_SORT)
   const reset = (): void => {
@@ -38,6 +40,7 @@ export function useDraftSort(
               planCount: tally.planCount,
               dropCount: tally.dropCount,
               laterCount: tally.laterCount,
+              ...(turnRunning ? { blockedReason: FRAME_ERROR_REASON.taskRequestDuringTurn } : {}),
               onReset: reset,
               onRequest: () => {
                 onRequest({ kind: "sort", request: tally.request })

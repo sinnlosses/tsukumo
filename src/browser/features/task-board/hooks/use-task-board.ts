@@ -8,6 +8,7 @@ import { useReducer, useState } from "react"
 
 import type { TaskSummaryResult } from "../../../../shared/repository/task-summary.ts"
 import { useExternalSync } from "../../../hooks/use-external-sync.ts"
+import { useTurnRunning } from "../../../stores/session.ts"
 import type { TaskBoardRequest } from "../../../stores/task-board-request.ts"
 import { draftTasksOf } from "../domain/draft-sort-sheet-content.ts"
 import {
@@ -60,7 +61,8 @@ export function useTaskBoard(
     }
   }, [draftsGone])
   const sortOpen = sorting && drafts.length > 0
-  const draftSort = useDraftSort(drafts, setConfirming)
+  const turnRunning = useTurnRunning()
+  const draftSort = useDraftSort(drafts, setConfirming, turnRunning)
   const entries = boardEntries(items)
   const byId = new Map(entries.map((entry) => [entry.task.id, entry]))
   const isVisible = (entry: BoardEntry): boolean =>
@@ -128,6 +130,7 @@ export function useTaskBoard(
     query,
     filter,
     workRepo,
+    turnRunning,
     run: (taskId, taskRequest) => {
       setConfirming({ kind: "task", taskId, request: taskRequest })
     },

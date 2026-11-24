@@ -4,6 +4,7 @@ import {
   boardContent,
   boardEntries,
   defaultBoardRow,
+  selectionOf,
   type BoardEntry,
   type BoardSelected,
 } from "../../../../../src/browser/features/task-board/domain/task-board-content.ts"
@@ -12,6 +13,7 @@ import type {
   TaskBoardContent,
   TaskStateView,
 } from "../../../../../src/browser/features/task-board/domain/task-board-view.ts"
+import { FRAME_ERROR_REASON } from "../../../../../src/shared/frame-error-reason.ts"
 import type {
   TaskSummaryItem,
   TaskSummaryResult,
@@ -144,6 +146,7 @@ describe("boardContent", () => {
     onJump: () => {},
     onCopy: () => {},
     breadcrumb: { kind: "none" },
+    turnRunning: false,
   }
 
   function selectedOf(entries: readonly BoardEntry[], selectedId: string): BoardSelected {
@@ -255,6 +258,27 @@ describe("boardContent", () => {
     expect(detail.dependents.map((card) => card.id)).toEqual(["X-003"])
     expect(opener).toEqual({ kind: "issue", url: "https://example.invalid/issues/2" })
     expect(run).toEqual({ kind: "unavailable", reason: "待ちが終わると頼めます" })
+  })
+
+  it("ターン進行中は着手可の頼む口を押せなくし、ドラフトの口には理由を添える", () => {
+    const running: BoardContentInput = { ...NO_BREADCRUMB, turnRunning: true }
+    const runOfFirst = (items: readonly TaskSummaryItem[]): unknown => {
+      const entries = boardEntries(items)
+      const [first] = entries
+      if (first === undefined) {
+        throw new Error("1件あるはず")
+      }
+      return selectionOf(first, entries, new Map(entries.map((e) => [e.task.id, e])), running).run
+    }
+
+    expect(runOfFirst([taskOf("X-001", {})])).toEqual({
+      kind: "unavailable",
+      reason: FRAME_ERROR_REASON.taskRequestDuringTurn,
+    })
+    expect(runOfFirst([taskOf("X-002", { status: taskStatusOfWord("draft") })])).toMatchObject({
+      kind: "draft",
+      blockedReason: FRAME_ERROR_REASON.taskRequestDuringTurn,
+    })
   })
 
   it("ドラフトの詳細では「計画する」「却下する」の口を返す", () => {

@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it } from "vitest"
 
 import { TaskBoard } from "../../../../src/browser/features/task-board/task-board.tsx"
 import { useTaskSheet } from "../../../../src/browser/stores/task-sheet.ts"
+import { FRAME_ERROR_REASON } from "../../../../src/shared/frame-error-reason.ts"
 import type { TaskSummaryItem } from "../../../../src/shared/repository/task-summary.ts"
 import {
   INITIAL_SESSION_STATE,
@@ -166,13 +167,15 @@ describe("ドラフトの分類（サイドシート）", () => {
     expect(isLater("X-004")).toBe(true)
   })
 
-  it("ターンが動いている間は確認が断りを出し、送らない", () => {
+  it("ターンが動いている間は頼む口を押せず、理由を title に出す", () => {
     renderSort(() => {}, RUNNING_TURN)
     chooseSort("X-004", "計画")
-    fireEvent.click(screen.getByRole("button", { name: "計画 1 を頼む" }))
+    const request = screen.getByRole("button", { name: "計画 1 を頼む" })
+    fireEvent.click(request)
 
-    expect(confirmDialog()?.textContent).toContain("いまターンが動いているので送れない")
-    expect(within(confirmDialogElement()).queryByRole("button", { name: "仕分ける" })).toBeNull()
+    expect(request.getAttribute("aria-disabled")).toBe("true")
+    expect(request.getAttribute("title")).toBe(FRAME_ERROR_REASON.taskRequestDuringTurn)
+    expect(confirmDialog()).toBeNull()
   })
 })
 

@@ -106,7 +106,13 @@ export type TaskBoardOpener =
  */
 export type TaskBoardRun =
   | { readonly kind: "available"; readonly onRun: () => void }
-  | { readonly kind: "draft"; readonly onPlan: () => void; readonly onDrop: () => void }
+  | {
+      readonly kind: "draft"
+      readonly onPlan: () => void
+      readonly onDrop: () => void
+      /** ターン進行中など、押せないときの理由。押せるなら無い。 */
+      readonly blockedReason?: string
+    }
   | { readonly kind: "unavailable"; readonly reason: string }
 
 export type TaskBoardSelection =
@@ -175,6 +181,8 @@ export type DraftSortPanelView = {
         readonly laterCount: number
         readonly onReset: () => void
         readonly onRequest: () => void
+        /** ターン進行中など、頼む口を押せないときの理由。押せるなら無い。 */
+        readonly blockedReason?: string
       }
   readonly onChoose: (id: string, choice: DraftSortChoice) => void
   readonly onReason: (id: string, reason: string) => void

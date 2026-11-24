@@ -25,6 +25,7 @@ export const FRAME_ERROR_REASON = {
   chatModeSwitchDuringTurn:
     "ターン進行中か委譲中は仕事と雑談を切り替えられない（中断するか委譲を止めると切り替えられる）",
   nudgeDuringTurn: "ターン進行中は話しかけてもらえない（返事を待つ）",
+  taskRequestDuringTurn: "ターン進行中は頼めない（終わってから押す）",
   nudgeOutsideChat: "話しかけてもらえるのは雑談モードのときだけ",
   forgetRememberedLineFailed: "覚えたことを消せなかった",
   forgetRememberedLineOutsideChat: "覚えたことを消せるのは雑談モードのときだけ",

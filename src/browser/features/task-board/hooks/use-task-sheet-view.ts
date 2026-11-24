@@ -9,6 +9,7 @@ import { useState, type KeyboardEvent } from "react"
 import type { TaskSummaryResult } from "../../../../shared/repository/task-summary.ts"
 import { useEventListener } from "../../../hooks/use-event-listener.ts"
 import { useExternalSync } from "../../../hooks/use-external-sync.ts"
+import { useTurnRunning } from "../../../stores/session.ts"
 import { useTaskBoardRequest } from "../../../stores/task-board-request.ts"
 import { useTaskSheet, type TaskSheetSubject } from "../../../stores/task-sheet.ts"
 import { boardEntries, selectionOf } from "../domain/task-board-content.ts"
@@ -64,6 +65,7 @@ export function useTaskSheetView(
   const back = useTaskSheet((state) => state.back)
   const close = useTaskSheet((state) => state.close)
   const [confirm, setConfirm] = useState<TaskSheetConfirm>({ kind: "closed" })
+  const turnRunning = useTurnRunning()
 
   const items = tasks.kind === "known" ? tasks.items : []
   const entries = boardEntries(items)
@@ -103,6 +105,7 @@ export function useTaskSheetView(
   return {
     kind: "open",
     selection: selectionOf(entry, entries, byId, {
+      turnRunning,
       run: (taskId, request) => {
         setConfirm({ kind: "open", target: { kind: "task", taskId, request } })
       },

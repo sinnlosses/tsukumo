@@ -37,8 +37,9 @@ export function TaskBoardAction(props: {
             variant="outline"
             size="secondary"
             pressed="none"
-            disabled={false}
+            disabled={run.blockedReason !== undefined}
             disclosure={{ kind: "dialog" }}
+            title={run.blockedReason}
             className={styles["task-board-drop"]}
             onClick={run.onDrop}
           >
@@ -48,8 +49,9 @@ export function TaskBoardAction(props: {
             variant="solid-accent"
             size="subheading"
             pressed="none"
-            disabled={false}
+            disabled={run.blockedReason !== undefined}
             disclosure={{ kind: "dialog" }}
+            title={run.blockedReason}
             className={styles["task-board-run-plan"]}
             onClick={run.onPlan}
           >

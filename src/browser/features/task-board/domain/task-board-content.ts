@@ -1,5 +1,6 @@
 // 一覧のタスクを、行・絞り込みのバッジ・選んだタスクの詳細・操作の帯へ畳む。
 
+import { FRAME_ERROR_REASON } from "../../../../shared/frame-error-reason.ts"
 import {
   taskReadiness,
   type TaskLocation,
@@ -49,6 +50,8 @@ type SelectionInput = {
   readonly onJump: (id: string) => void
   readonly onCopy: (id: string) => void
   readonly breadcrumb: TaskBoardBreadcrumb
+  /** ターン進行中か。真のあいだは頼む口を押せなくする。 */
+  readonly turnRunning: boolean
 }
 
 type BoardContentInput = SelectionInput & {
@@ -240,9 +243,11 @@ function hasWaiting(entry: BoardEntry): boolean {
 function runOf(entry: BoardEntry, input: SelectionInput): TaskBoardRun {
   const kind = entry.state.kind
   const taskId = entry.task.id
+  const turnBlock = input.turnRunning ? FRAME_ERROR_REASON.taskRequestDuringTurn : undefined
   if (kind === "draft") {
     return {
       kind: "draft",
+      ...(turnBlock === undefined ? {} : { blockedReason: turnBlock }),
       onPlan: () => {
         input.run(taskId, { kind: "plan" })
       },
@@ -252,6 +257,9 @@ function runOf(entry: BoardEntry, input: SelectionInput): TaskBoardRun {
     }
   }
   if (kind === "ready" || isTaskRequestable(entry.task)) {
+    if (turnBlock !== undefined) {
+      return { kind: "unavailable", reason: turnBlock }
+    }
     return {
       kind: "available",
       onRun: () => {
