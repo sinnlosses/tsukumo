@@ -101,7 +101,7 @@ describe("mainViewDraftOf", () => {
         conclusion: ["架空の結論。"],
         children: ["s1"],
       },
-      { id: "s1", component: "Section", heading: "架空の節", children: ["t1", "m1"] },
+      { id: "s1", component: "Section", heading: "架空のセクション", children: ["t1", "m1"] },
       {
         id: "t1",
         component: "Table",
@@ -135,7 +135,7 @@ describe("mainViewDraftOf", () => {
         children: ["s1"],
         figure: "f1",
       },
-      { id: "s1", component: "Section", heading: "架空の節", children: ["p1"] },
+      { id: "s1", component: "Section", heading: "架空のセクション", children: ["p1"] },
       { id: "p1", component: "Paragraph", text: "架空の段落" },
     )
 
@@ -151,7 +151,7 @@ describe("mainViewDraftOf", () => {
   it("Markdown の内容部品の Markdown が、面で描く値に載る", () => {
     const parts = a2uiParts(
       { id: "root", component: "Report", conclusion: ["架空の結論。"], children: ["s1"] },
-      { id: "s1", component: "Section", heading: "架空の節", children: ["m1", "p1"] },
+      { id: "s1", component: "Section", heading: "架空のセクション", children: ["m1", "p1"] },
       { id: "m1", component: "Markdown", markdown: "> 架空の引用" },
       { id: "p1", component: "Paragraph", text: "架空の段落" },
     )
@@ -162,7 +162,12 @@ describe("mainViewDraftOf", () => {
   it("同じ components から、記録の面と草稿の面で markdownLeaves・leafValues・sections が変わらない", () => {
     const parts = a2uiParts(
       { id: "root", component: "Report", conclusion: ["架空の結論。"], children: ["s1", "s2"] },
-      { id: "s1", component: "Section", heading: "架空の節一", children: ["m1", "t1", "n1", "m2"] },
+      {
+        id: "s1",
+        component: "Section",
+        heading: "架空のセクション一",
+        children: ["m1", "t1", "n1", "m2"],
+      },
       { id: "m1", component: "Markdown", markdown: "> 架空の引用" },
       {
         id: "t1",
@@ -201,8 +206,8 @@ describe("mainViewDraftOf", () => {
     const draft = partsDraftOf("toolu_draft", STAGED_PARTS, WRITING_DRAFT)
 
     expect(draft.regions.sections.map((section) => section.heading)).toEqual([
-      "架空の節一",
-      "架空の節二",
+      "架空のセクション一",
+      "架空のセクション二",
     ])
   })
 

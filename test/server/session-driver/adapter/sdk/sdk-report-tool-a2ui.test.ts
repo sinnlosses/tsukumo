@@ -44,7 +44,7 @@ const paragraph = (id: string, text: string) => ({ id, component: "Paragraph", t
 /** 正しい一覧。節 1 つに地の文 1 つ。 */
 const VALID = [
   ROOT,
-  { id: "sec", component: "Section", heading: "架空の節", children: ["p"] },
+  { id: "sec", component: "Section", heading: "架空のセクション", children: ["p"] },
   paragraph("p", "架空の本文。"),
 ]
 
@@ -52,7 +52,7 @@ const VALID = [
 const NESTED = [
   ROOT,
   paragraph("p", "架空の本文。"),
-  { id: "sec", component: "Section", heading: "架空の節", children: ["inner"] },
+  { id: "sec", component: "Section", heading: "架空のセクション", children: ["inner"] },
   { id: "inner", component: "Section", heading: "架空の内側", children: ["p"] },
 ]
 
@@ -105,7 +105,7 @@ describe("a2ui の report の受理と差し戻し", () => {
 
     expect(reply).toEqual({ text: "架空の結論。", isError: false, endsTurn: true })
     expect(reportOutline(staticOf(drawn?.components ?? [])).sections).toMatchObject([
-      { heading: "架空の節", leaves: [{ component: "Paragraph", text: "架空の本文。" }] },
+      { heading: "架空のセクション", leaves: [{ component: "Paragraph", text: "架空の本文。" }] },
     ])
     expect(drawn?.components).toHaveLength(VALID.length)
   })
@@ -116,7 +116,7 @@ describe("a2ui の report の受理と差し戻し", () => {
 
     const { reply, drawn } = await live.call([
       ROOT,
-      { id: "sec", component: "Section", heading: "架空の節", children: ["p", "sl"] },
+      { id: "sec", component: "Section", heading: "架空のセクション", children: ["p", "sl"] },
       { id: "p", component: "Paragraph", text: written },
       {
         id: "sl",
@@ -199,7 +199,7 @@ describe("a2ui の report の受理と差し戻し", () => {
 
     const { reply, drawn } = await live.call([
       ROOT,
-      { id: "sec", component: "Section", heading: "架空の節", children: ["ba"] },
+      { id: "sec", component: "Section", heading: "架空のセクション", children: ["ba"] },
       beforeAfter,
     ])
 

@@ -7,7 +7,7 @@ import type {
   ReportOutlineLeaf,
 } from "../../../../../shared/report/report-outline.ts"
 import { markdownTreeOf, type ReportDraft } from "../draft.ts"
-import { PLAIN_WORDS } from "../plain-word.ts"
+import { PLAIN_WORDS, type PlainWord } from "../plain-word.ts"
 import { proseTexts } from "./sentence.ts"
 
 /**
@@ -48,16 +48,25 @@ function plainWordSpellingsOfProse(prose: readonly string[]): readonly string[] 
     segments: prose,
     spellings: [],
   }
-  const remaining = PLAIN_WORDS.reduce(
-    (state, word) => ({
-      segments: state.segments.flatMap((segment) => segment.split(word.spelling)),
-      spellings: state.segments.some((segment) => segment.includes(word.spelling))
+  const remaining = PLAIN_WORDS.reduce((state, word: PlainWord) => {
+    const matcher = matcherOf(word)
+    return {
+      segments: state.segments.flatMap((segment) => segment.split(matcher)),
+      spellings: state.segments.some((segment) => segment.split(matcher).length > 1)
         ? [...state.spellings, word.spelling]
         : state.spellings,
-    }),
-    initial,
-  )
+    }
+  }, initial)
   return remaining.spellings
+}
+
+/** 綴りの当たり方。`standalone` の綴りは、前後の字が漢字の箇所を見逃す。 */
+function matcherOf(word: PlainWord): string | RegExp {
+  if (word.standalone !== true) {
+    return word.spelling
+  }
+  const escaped = word.spelling.replaceAll(/[.*+?^${}()|[\]\\]/g, "\\$&")
+  return new RegExp(`(?<!\\p{Script=Han})${escaped}(?!\\p{Script=Han})`, "u")
 }
 
 /** `proseTexts` が数えない、利用者が読む地の文（`note`・`markdown`・`list` の項目の本文と題・`descriptionList` の名前と値・`trace` の行の題と補足）。 */

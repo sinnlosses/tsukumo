@@ -38,7 +38,7 @@ describe("本番の表で数えるだけの条", () => {
     const contradicting = reportDraft({
       conclusion: "架空の結論。",
       figure: { kind: "none", reason: "short-answer" },
-      sections: [section("架空の節1"), section("架空の節2")],
+      sections: [section("架空のセクション1"), section("架空のセクション2")],
     })
 
     expect(review.judge(contradicting)).toEqual({ kind: "accepted" })

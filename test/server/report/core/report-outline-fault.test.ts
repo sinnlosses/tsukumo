@@ -45,7 +45,7 @@ describe("components を入力にした字・印・番号の検査", () => {
       {
         id: "s1",
         component: "Section",
-        heading: "架空の節",
+        heading: "架空のセクション",
         children: ["row"],
       },
       { id: "row", component: "Row", children: ["p1"] },
@@ -63,7 +63,7 @@ describe("components を入力にした字・印・番号の検査", () => {
       {
         id: "s1",
         component: "Section",
-        heading: "架空の節",
+        heading: "架空のセクション",
         children: ["card"],
       },
       { id: "card", component: "Card", child: "col" },
@@ -89,7 +89,7 @@ describe("components を入力にした字・印・番号の検査", () => {
       {
         id: "s1",
         component: "Section",
-        heading: "架空の節",
+        heading: "架空のセクション",
         children: ["col"],
       },
       { id: "col", component: "Column", children: ["p1"] },
@@ -113,7 +113,7 @@ describe("components を入力にした字・印・番号の検査", () => {
       {
         id: "s1",
         component: "Section",
-        heading: "架空の節",
+        heading: "架空のセクション",
         children: ["card"],
       },
       { id: "card", component: "Card", child: "p" },
@@ -184,7 +184,7 @@ describe("components を入力にした字・印・番号の検査", () => {
       {
         id: "s1",
         component: "Section",
-        heading: "架空の節",
+        heading: "架空のセクション",
         children: ["row"],
       },
       { id: "row", component: "Row", children: ["m1"] },

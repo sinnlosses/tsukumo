@@ -329,7 +329,7 @@ describe("reportViolations", () => {
   describe("セクションが2つ以上なら全部に見出し", () => {
     it("見出しの無いセクションがあれば違反", () => {
       const sections: readonly ReportSection[] = [
-        { heading: "架空の節", blocks: [reportDraftText("架空の一。")] },
+        { heading: "架空のセクション", blocks: [reportDraftText("架空の一。")] },
         { heading: " ", blocks: [reportDraftText("架空の二。")] },
       ]
       expect(reportViolations(draft([], "架空の結論。", sections))).toEqual([

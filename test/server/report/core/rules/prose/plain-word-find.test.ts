@@ -62,6 +62,23 @@ describe("plainWordSpellingsIn", () => {
     ).toEqual(["詳細の面", "葉の部品"])
   })
 
+  it("画・節は、前後が漢字でない一字のときだけ当たる", () => {
+    expect(
+      plainWordSpellingsIn(draft([reportDraftText("架空の前後の画で、二つ目の節を読む。")])),
+    ).toEqual(["画", "節"])
+    expect(
+      plainWordSpellingsIn(
+        draft([reportDraftText("架空の計画と画面と画像と描画と季節と調節と節約と区画。")]),
+      ),
+    ).toEqual([])
+  })
+
+  it("押せない顔は当たり、立ち絵の顔・顔の位置は当たらない", () => {
+    expect(
+      plainWordSpellingsIn(draft([reportDraftText("架空の押せない顔と、立ち絵の顔と顔の位置。")])),
+    ).toEqual(["押せない顔"])
+  })
+
   it("棚卸しは棚の複合語に当たらず、再現の台本は台本に当たる", () => {
     expect(plainWordSpellingsIn(draft([reportDraftText("架空の棚卸しをする。")]))).toEqual([])
     expect(plainWordSpellingsIn(draft([reportDraftText("架空の再現の台本を読む。")]))).toEqual([
@@ -343,7 +360,7 @@ describe("plainWordSpellingsIn", () => {
     expect(text).toContain("「答え待ちの札」は「答え待ちのカード」")
   })
 
-  it("レポートの区切りを指す節の複合語は見つかり、文書の節・節点・節目・季節・小節は通る", () => {
+  it("節の複合語と一字の節は見つかり、節目・季節・小節は通る", () => {
     expect(
       plainWordSpellingsIn(
         draft([
@@ -354,9 +371,10 @@ describe("plainWordSpellingsIn", () => {
       ),
     ).toEqual(["レポートの節", "見出しの無い節", "節の塊", "節が2つ以上"])
     expect(
-      plainWordSpellingsIn(
-        draft([reportDraftText("規約の節に従う。この節は節目の季節に書いた小節を指す。")]),
-      ),
+      plainWordSpellingsIn(draft([reportDraftText("規約の節に従う。この節を読む。")])),
+    ).toEqual(["節"])
+    expect(
+      plainWordSpellingsIn(draft([reportDraftText("架空の節目の季節に書いた小節。")])),
     ).toEqual([])
   })
 

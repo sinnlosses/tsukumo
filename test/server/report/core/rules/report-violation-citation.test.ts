@@ -111,7 +111,10 @@ describe("出典の照らし合わせ", () => {
   it("結論と見出しの印は misplaced-cite で、置ける欄の印は数えない", () => {
     const report = withSources(
       draft([reportDraftText("架空{{cite: s1}}。")], "架空の結論{{cite: s1}}。", [
-        { heading: "架空の節{{cite: s1}}", blocks: [reportDraftText("架空{{cite: s1}}。")] },
+        {
+          heading: "架空のセクション{{cite: s1}}",
+          blocks: [reportDraftText("架空{{cite: s1}}。")],
+        },
       ]),
       [S1],
     )

@@ -340,11 +340,11 @@ describe("reportRejectionText", () => {
     it("short-answer なのにセクションが2つ以上あれば違反になる", () => {
       const twoSections = withReason("short-answer", [
         {
-          heading: "架空の節1",
+          heading: "架空のセクション1",
           blocks: [reportDraftText("架空の根拠。")],
         },
         {
-          heading: "架空の節2",
+          heading: "架空のセクション2",
           blocks: [reportDraftText("架空の根拠。")],
         },
       ])
@@ -371,8 +371,8 @@ describe("reportRejectionText", () => {
 
     it("ほかの理由・記録の無い理由・図を置いた回は見ない", () => {
       const sections: readonly ReportSection[] = [
-        { heading: "架空の節1", blocks: [flow] },
-        { heading: "架空の節2", blocks: [flow] },
+        { heading: "架空のセクション1", blocks: [flow] },
+        { heading: "架空のセクション2", blocks: [flow] },
       ]
       for (const figure of [
         { kind: "none", reason: "single-value" },

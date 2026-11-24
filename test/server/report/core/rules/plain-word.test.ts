@@ -1,9 +1,21 @@
 import { expect, test } from "vitest"
 
-import { PLAIN_WORDS } from "../../../../../src/server/report/core/rules/plain-word.ts"
+import {
+  PLAIN_WORDS,
+  type PlainWord,
+} from "../../../../../src/server/report/core/rules/plain-word.ts"
+import { plainWordSpellingsInSpeech } from "../../../../../src/server/report/core/rules/prose/plain-word-find.ts"
 
 test("言い換え先は、元の綴りを含まない（含むと言い換えた本文がまた差し戻される）", () => {
   expect(PLAIN_WORDS.filter((word) => word.replacement.includes(word.spelling))).toEqual([])
+})
+
+test("言い換え先は、表のどの綴りにも当たらない（当たると言い換えた本文がまた差し戻される）", () => {
+  expect(
+    PLAIN_WORDS.filter((word) => plainWordSpellingsInSpeech(word.replacement).length > 0).map(
+      (word) => word.replacement,
+    ),
+  ).toEqual([])
 })
 
 test("面・葉は複合語の綴りで登録し、単独の綴りは登録しない", () => {
@@ -12,9 +24,12 @@ test("面・葉は複合語の綴りで登録し、単独の綴りは登録し�
   expect(spellings).not.toContain("葉")
 })
 
-test("節は複合語の綴りで登録し、単独の綴りは登録しない", () => {
+test("節・画は前後が漢字のときを除く一字の綴りで登録し、節の複合語も残す", () => {
   const spellings = PLAIN_WORDS.map((word) => word.spelling)
-  expect(spellings).not.toContain("節")
+  const standalones = PLAIN_WORDS.filter((word: PlainWord) => word.standalone === true).map(
+    (word) => word.spelling,
+  )
+  expect(standalones).toEqual(["画", "節"])
   expect(spellings).toEqual(
     expect.arrayContaining(["レポートの節", "見出しの無い節", "節の塊", "節が2つ以上"]),
   )

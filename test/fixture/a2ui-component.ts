@@ -18,9 +18,9 @@ export const STAGED_PARTS = a2uiParts(
     conclusion: ["架空の結論。"],
     children: ["s1", "s2"],
   },
-  { id: "s1", component: "Section", heading: "架空の節一", children: ["p1", "p2"] },
+  { id: "s1", component: "Section", heading: "架空のセクション一", children: ["p1", "p2"] },
   { id: "p1", component: "Paragraph", text: "架空の段落一" },
   { id: "p2", component: "Paragraph", text: "架空の段落二" },
-  { id: "s2", component: "Section", heading: "架空の節二", children: ["p3"] },
+  { id: "s2", component: "Section", heading: "架空のセクション二", children: ["p3"] },
   { id: "p3", component: "Paragraph", text: "架空の段落三" },
 )

@@ -10,7 +10,11 @@ const COLUMNS = ["わかりにくい語", "言い換え先", "意味"] as const
 
 /** 表の行（見出しの行と区切りの行を含まない）のセル。 */
 export function plainWordRows(words: readonly PlainWord[]): readonly (readonly string[])[] {
-  return words.map(({ spelling, replacement, meaning }) => [spelling, replacement, meaning])
+  return words.map(({ spelling, replacement, meaning, standalone }) => [
+    standalone === true ? `${spelling}（前後が漢字のときは除く）` : spelling,
+    replacement,
+    meaning,
+  ])
 }
 
 /** 文書の印に挟まれた範囲を、`words` から組んだ表に書き直す。印が無ければ変えない。 */

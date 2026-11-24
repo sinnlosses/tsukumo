@@ -109,7 +109,7 @@ describe("Report（書いている途中の草稿）", () => {
     const { container } = render(draftElement(STAGED_PARTS.slice(0, 5)))
 
     const region = container.querySelector(PENDING_REGION)
-    expect(region?.querySelector("h4")?.textContent).toBe("架空の節二")
+    expect(region?.querySelector("h4")?.textContent).toBe("架空のセクション二")
     expect(region?.querySelector(HEADING_SKELETON)).toBeNull()
     expect(region?.querySelectorAll(PART_SKELETON)).toHaveLength(1)
   })
@@ -125,8 +125,8 @@ describe("Report（書いている途中の草稿）", () => {
 
     const regions = [...container.querySelectorAll(PENDING_REGION)]
     expect(regions.map((region) => region.querySelector("h4")?.textContent)).toEqual([
-      "架空の節一",
-      "架空の節二",
+      "架空のセクション一",
+      "架空のセクション二",
     ])
     expect(regions[0]?.querySelectorAll(PART_SKELETON)).toHaveLength(1)
     expect(regions[1]?.querySelector(SKELETON)).toBeNull()
@@ -149,7 +149,7 @@ describe("Report（書いている途中の草稿）", () => {
   it("部品が届くと、骨組みは作り直さずに次の場所へ移る", () => {
     const { container, rerender } = render(draftElement(STAGED_PARTS.slice(0, 2)))
     const skeleton = container.querySelector(PART_SKELETON)
-    expect(skeleton?.previousElementSibling?.textContent).toBe("架空の節一")
+    expect(skeleton?.previousElementSibling?.textContent).toBe("架空のセクション一")
 
     rerender(draftElement(STAGED_PARTS.slice(0, 3)))
 
@@ -192,6 +192,6 @@ describe("Report（書いている途中の草稿）", () => {
     )
 
     expect(container.querySelector(SKELETON)).toBeNull()
-    expect(container.textContent).not.toContain("架空の節二")
+    expect(container.textContent).not.toContain("架空のセクション二")
   })
 })

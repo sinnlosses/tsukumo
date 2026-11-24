@@ -15,7 +15,7 @@ const report = {
   closing: { text: "架空の締め。", expression: "default" },
   children: ["s1"],
 }
-const section = { id: "s1", component: "Section", heading: "架空の節", children: ["p1"] }
+const section = { id: "s1", component: "Section", heading: "架空のセクション", children: ["p1"] }
 const paragraph = { id: "p1", component: "Paragraph", text: "架空の地の文" }
 
 describe("judgeReport", () => {

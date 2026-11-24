@@ -317,7 +317,7 @@ describe("report の本文（components）", () => {
       ...COMPLETE,
       sections: [
         {
-          heading: "架空の節",
+          heading: "架空のセクション",
           blocks: [
             { kind: "text", text: "架空の根拠。" },
             { kind: "list", style: "bullet", items: [{ text: "架空の項目" }] },
