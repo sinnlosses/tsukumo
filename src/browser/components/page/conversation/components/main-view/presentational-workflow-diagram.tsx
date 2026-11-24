@@ -14,24 +14,27 @@ import { StatusDot } from "../../../../ui/status-dot/status-dot.tsx"
 import { Surface } from "../../../../ui/surface/surface.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
 import type { WorkflowHandOwner } from "./domain/workflow-agent-hand.ts"
-import { leadOf, stepStartOf, stepTracksOf } from "./domain/workflow-diagram-grid.ts"
+import { leadOf, stepTracksOf } from "./domain/workflow-diagram-grid.ts"
+import {
+  columnHeadsOf,
+  hasStartPoint,
+  showsPrelude,
+  type StageColumn,
+  stageColumnsOf,
+} from "./domain/workflow-diagram-placement.ts"
 import {
   type WorkflowAgentCount,
   workflowBoxLabelOf,
   workflowBoxNoteOf,
   workflowDiagramEndKeyOf,
-  workflowIsCurrentColumn,
   type WorkflowSpanTick,
   workflowSpanScaleOf,
-  workflowUpcomingNoteOf,
-  columnKeysOf,
 } from "./domain/workflow-diagram-view.ts"
 import type {
   WorkflowDiagram,
   WorkflowDiagramArrowKind,
   WorkflowDiagramBox,
   WorkflowDiagramBoxState,
-  WorkflowDiagramColumn,
 } from "./domain/workflow-diagram.ts"
 import type {
   WorkStripMainBox,
@@ -205,13 +208,17 @@ function DiagramStage(props: {
   const { diagram, steps, taskId } = props
   const { ref, paths } = useWorkflowArrowPaths(diagram)
   const markerId = useId()
-  const hasStart = diagram.arrows.some((arrow) => arrow.from.kind === "start")
-  const prelude = diagram.foldedPhases === undefined ? props.mainBoxes.prelude : undefined
+  const hasStart = hasStartPoint(diagram)
+  const prelude = showsPrelude(diagram) ? props.mainBoxes.prelude : undefined
   const lead = leadOf(diagram, prelude !== undefined)
-  const landing =
-    props.mainBoxes.landingKey === undefined
-      ? undefined
-      : { key: props.mainBoxes.landingKey, box: props.mainBoxes.landing }
+  const stageColumns = stageColumnsOf(diagram, {
+    leadCount: lead.count,
+    finished: props.finished,
+    ...(props.planCurrentKey === undefined ? {} : { planCurrentKey: props.planCurrentKey }),
+    ...(props.mainBoxes.landingKey === undefined ? {} : { landingKey: props.mainBoxes.landingKey }),
+    ...(props.mainBoxes.landing === undefined ? {} : { landing: props.mainBoxes.landing }),
+    ...(props.selected === undefined ? {} : { selected: props.selected }),
+  })
   return (
     <div
       ref={ref}
@@ -305,32 +312,17 @@ function DiagramStage(props: {
           </Button>
         </div>
       )}
-      {diagram.columns.map((column, position) => {
-        const current = workflowIsCurrentColumn(
-          column,
-          diagram.columns,
-          props.finished,
-          props.planCurrentKey,
-        )
-        return (
-          <Column
-            key={column.key}
-            taskId={taskId}
-            column={column}
-            start={stepStartOf(diagram, position, lead.count)}
-            landing={landing?.key === column.key ? landing.box : undefined}
-            columnDurations={props.columnDurations}
-            current={current}
-            finished={props.finished}
-            upcomingNote={workflowUpcomingNoteOf(props.finished, current)}
-            selectedIndex={props.selected?.kind === "agent" ? props.selected.index : undefined}
-            steps={steps}
-            {...(props.planCurrentKey === undefined
-              ? {}
-              : { planCurrentKey: props.planCurrentKey })}
-          />
-        )
-      })}
+      {stageColumns.map((stageColumn) => (
+        <Column
+          key={stageColumn.column.key}
+          taskId={taskId}
+          stageColumn={stageColumn}
+          columnDurations={props.columnDurations}
+          finished={props.finished}
+          steps={steps}
+          {...(props.planCurrentKey === undefined ? {} : { planCurrentKey: props.planCurrentKey })}
+        />
+      ))}
       {paths.flatMap((path) =>
         path.labelAt === undefined
           ? []
@@ -355,72 +347,60 @@ function DiagramStage(props: {
 
 function Column(props: {
   readonly taskId: TaskId
-  readonly column: WorkflowDiagramColumn
-  readonly start: number
-  readonly landing?: WorkStripMainBox
+  readonly stageColumn: StageColumn<WorkStripMainBox>
   readonly columnDurations: ReadonlyMap<string, string>
-  readonly current: boolean
   readonly finished: boolean
   readonly planCurrentKey?: string
-  readonly upcomingNote: string
-  readonly selectedIndex?: number
   readonly steps: WorkStripSteps
 }): ReactElement {
-  const { column, current, steps, taskId } = props
-  const keys = columnKeysOf(column)
-  const planHere = props.planCurrentKey !== undefined && keys.includes(props.planCurrentKey)
+  const { stageColumn, steps, taskId } = props
+  const { column, keys } = stageColumn
+  const upcomingEnd = workflowDiagramEndKeyOf({ kind: "upcoming", column: column.key })
   return (
     <>
-      {keys.map((key, offset) => {
-        const headCurrent = planHere ? key === props.planCurrentKey : offset === 0 && current
-        const duration = props.columnDurations.get(key) ?? ""
-        return (
-          <p
-            key={key}
-            className={styles["workflow-diagram-column-head"]}
-            data-current={headCurrent}
-            style={{ "--step-start": String(props.start + offset) }}
+      {columnHeadsOf(stageColumn, props.columnDurations, props.planCurrentKey).map((head) => (
+        <p
+          key={head.key}
+          className={styles["workflow-diagram-column-head"]}
+          data-current={head.current}
+          style={{ "--step-start": String(head.start) }}
+        >
+          <Text
+            element="span"
+            size="label"
+            tone={head.current ? "ink" : "ink-quiet"}
+            weight={head.current ? "semibold" : "normal"}
+            className={styles["workflow-diagram-name"]}
           >
-            <Text
-              element="span"
-              size="label"
-              tone={headCurrent ? "ink" : "ink-quiet"}
-              weight={headCurrent ? "semibold" : "normal"}
-              className={styles["workflow-diagram-name"]}
-            >
-              {offset === 0 ? column.name : key}
-            </Text>
-            <Text
-              element="span"
-              size="label"
-              tone="ink-quiet"
-              weight="normal"
-              className={styles["workflow-diagram-head-time"]}
-            >
-              {duration}
-            </Text>
-          </p>
-        )
-      })}
+            {head.name}
+          </Text>
+          <Text
+            element="span"
+            size="label"
+            tone="ink-quiet"
+            weight="normal"
+            className={styles["workflow-diagram-head-time"]}
+          >
+            {head.duration}
+          </Text>
+        </p>
+      ))}
       <div
         className={styles["workflow-diagram-column"]}
         style={{
-          "--step-start": String(props.start),
+          "--step-start": String(stageColumn.start),
           "--step-span": String(keys.length),
         }}
       >
-        {column.kind === "upcoming" && props.landing !== undefined ? (
+        {stageColumn.body === "landing" && stageColumn.landing !== undefined ? (
           <PresentationalWorkflowMainBox
             name="送り出し"
-            box={props.landing}
-            endKey={workflowDiagramEndKeyOf({ kind: "upcoming", column: column.key })}
-            current={current && props.finished}
+            box={stageColumn.landing}
+            endKey={upcomingEnd}
+            current={stageColumn.reachedEnd}
           />
         ) : column.kind === "upcoming" ? (
-          <div
-            data-diagram-end={workflowDiagramEndKeyOf({ kind: "upcoming", column: column.key })}
-            data-current={current && props.finished}
-          >
+          <div data-diagram-end={upcomingEnd} data-current={stageColumn.reachedEnd}>
             <Surface
               element="div"
               tone="surface"
@@ -434,7 +414,7 @@ function Column(props: {
                   {column.name}
                 </Text>
                 <Text element="span" size="label" tone="ink-quiet" weight="normal" className="">
-                  {props.upcomingNote}
+                  {stageColumn.upcomingNote}
                 </Text>
               </span>
             </Surface>
@@ -446,7 +426,7 @@ function Column(props: {
                 key={box.index}
                 box={box}
                 scale={workflowSpanScaleOf(box.state, keys, props.finished, props.planCurrentKey)}
-                pressed={box.index === props.selectedIndex}
+                pressed={box.index === stageColumn.selectedIndex}
                 onPress={() => {
                   steps.onAgentPress(taskId, box.index)
                 }}

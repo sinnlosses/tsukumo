@@ -14,6 +14,13 @@ import {
   type WorkflowDiagramArrowKind,
   type WorkflowDiagramEnd,
 } from "./workflow-diagram-arrow.ts"
+import { type AgentEdge, agentEdgesOf, rootsOf } from "./workflow-diagram-edge.ts"
+import {
+  type ColumnGroup,
+  currentPositionOf,
+  type PlannedColumn,
+  shownColumns,
+} from "./workflow-diagram-window.ts"
 
 /** 箱の状態。`stopped` は終わったワークフロースクリプトに走っている・待ちのまま残ったエージェント。 */
 export type WorkflowDiagramBoxState = "running" | "waiting" | "done" | "failed" | "stopped"
@@ -65,8 +72,7 @@ export type WorkflowDiagram = {
   readonly refoldable?: { readonly count: number }
 }
 
-/** 列の上限（今の列を含む）と、列1つの箱の上限。 */
-const COLUMN_LIMIT = 4
+/** 列1つの箱の上限。 */
 const BOX_LIMIT = 5
 
 const BOX_PRIORITY = [
@@ -96,11 +102,7 @@ export function workflowDiagramOf(
   planCurrentKey?: string,
   hasPrelude = false,
 ): WorkflowDiagram {
-  const states = new Map(
-    run.agents.map((agent) => [agent.index, workflowBoxStateOf(agent, run.ended)]),
-  )
-  const stateOf = (agent: WorkflowRunAgent): WorkflowDiagramBoxState =>
-    states.get(agent.index) ?? "done"
+  const stateOf = boxStateLookupOf(run)
   const groups = spannedGroupsOf(
     columnGroupsOf(run.agents, phaseIds),
     phaseIds,
@@ -108,107 +110,38 @@ export function workflowDiagramOf(
     planCurrentKey,
   )
   const edges = agentEdgesOf(run.agents, groups, stateOf)
-  const sendsBack = new Set(
-    edges.flatMap((edge) =>
-      edge.kind === "sentBack" && edge.from.kind === "agent" ? [edge.from.index] : [],
-    ),
-  )
-
-  const lastMapped = Math.max(
-    -1,
-    ...groups.map((group) =>
-      group.phaseIdIndex === undefined ? -1 : group.phaseIdIndex + group.spanKeys.length - 1,
-    ),
-  )
-  const upcoming = lastMapped < 0 ? [] : phaseIds.slice(lastMapped + 1)
-  const allColumns: readonly PlannedColumn[] = [
-    ...groups.map((group): PlannedColumn => ({ kind: "agents", group })),
-    ...upcoming.map((phaseId): PlannedColumn => ({ kind: "upcoming", key: phaseId })),
-  ]
+  const allColumns = plannedColumnsOf(groups, phaseIds)
   const currentPosition = currentPositionOf(groups, stateOf)
-  const shown = unfold.phases ? allColumns : shownColumns(allColumns, currentPosition)
-  const foldedGroupsOf = (kept: readonly PlannedColumn[]) =>
-    groups.filter(
-      (group) => !kept.some((column) => column.kind === "agents" && column.group === group),
-    )
-  const foldedGroups = foldedGroupsOf(shown)
-  const spanCountOf = (folded: readonly (typeof groups)[number][]) =>
-    folded.reduce((sum, group) => sum + group.spanKeys.length, 0)
+  const defaultShown = shownColumns(allColumns, currentPosition)
+  const shown = unfold.phases ? allColumns : defaultShown
+  const foldedGroups = foldedGroupsOf(groups, shown)
   const refoldableCount =
     unfold.refoldable === true && unfold.phases
-      ? spanCountOf(foldedGroupsOf(shownColumns(allColumns, currentPosition)))
+      ? spanCountOf(foldedGroupsOf(groups, defaultShown))
       : 0
 
-  const columns = shown.map((column): WorkflowDiagramColumn => {
-    if (column.kind === "upcoming") {
-      return { kind: "upcoming", key: column.key, name: column.key }
-    }
-    const { group } = column
-    const boxes = group.agents.map((agent) =>
-      boxOf(agent, stateOf(agent), sendsBack.has(agent.index), now),
-    )
-    const kept =
-      boxes.length <= BOX_LIMIT || unfold.columns.includes(group.key) ? boxes : keptBoxes(boxes)
-    const others = boxes.filter((box) => !kept.includes(box)).map((box) => box.index)
-    return {
-      kind: "agents",
-      key: group.key,
-      name: group.name,
-      current: groups.indexOf(group) === currentPosition,
-      spanKeys: group.spanKeys,
-      boxes: kept,
-      ...(others.length === 0 ? {} : { others: { count: others.length, indexes: others } }),
-    }
-  })
-
-  const endOf = (index: number): WorkflowDiagramEnd => {
-    if (foldedGroups.some((group) => group.agents.some((agent) => agent.index === index))) {
-      return { kind: "folded" }
-    }
-    const column = columns.find(
-      (candidate) => candidate.kind === "agents" && candidate.others?.indexes.includes(index),
-    )
-    return column === undefined ? { kind: "agent", index } : { kind: "others", column: column.key }
-  }
-  const upcomingColumns = columns.filter((column) => column.kind === "upcoming")
-  const lastAgent = run.agents.at(-1)
-  const upcomingArrows: readonly WorkflowDiagramArrow[] = upcomingColumns.flatMap(
-    (column, position) => {
-      const previous = upcomingColumns[position - 1]
-      const sources: readonly WorkflowDiagramEnd[] =
-        previous !== undefined
-          ? [{ kind: "upcoming", column: previous.key }]
-          : lastAgent === undefined
-            ? []
-            : [endOf(lastAgent.index)]
-      return sources.map((from): WorkflowDiagramArrow => ({
-        from,
-        to: { kind: "upcoming", column: column.key },
-        kind: "toUpcoming",
-      }))
-    },
+  const sendsBack = sendsBackOf(edges)
+  const columns = shown.map((column) =>
+    columnOf(column, {
+      groups,
+      currentPosition,
+      stateOf,
+      sendsBack,
+      now,
+      unfoldedKeys: unfold.columns,
+    }),
   )
-  const preludeArrows: readonly WorkflowDiagramArrow[] =
-    hasPrelude && foldedGroups.length === 0
-      ? run.agents
-          .filter((agent) => !run.agents.some((before) => isAfter(before, agent)))
-          .map((agent): WorkflowDiagramArrow => ({
-            from: { kind: "prelude" },
-            to: endOf(agent.index),
-            kind: "settled",
-          }))
-      : []
+  const endOf = endResolverOf(foldedGroups, columns)
   const arrows = mergedArrows([
-    ...preludeArrows,
+    ...(hasPrelude && foldedGroups.length === 0 ? preludeArrowsOf(run.agents, endOf) : []),
     ...edges.map((edge) => ({
       ...edge,
       from: edge.from.kind === "agent" ? endOf(edge.from.index) : edge.from,
       to: edge.to.kind === "agent" ? endOf(edge.to.index) : edge.to,
     })),
-    ...upcomingArrows,
+    ...upcomingArrowsOf(columns, run.agents, endOf),
   ])
 
-  const foldedIndexes = foldedGroups.flatMap((group) => group.agents.map((agent) => agent.index))
   return {
     columns,
     arrows,
@@ -217,7 +150,7 @@ export function workflowDiagramOf(
       : {
           foldedPhases: {
             count: spanCountOf(foldedGroups),
-            indexes: foldedIndexes,
+            indexes: foldedGroups.flatMap((group) => group.agents.map((agent) => agent.index)),
           },
         }),
     ...(refoldableCount === 0 ? {} : { refoldable: { count: refoldableCount } }),
@@ -247,20 +180,6 @@ export function workflowBoxStateOf(
       return ended ? "stopped" : agent.startedAt === undefined ? "waiting" : "running"
   }
 }
-
-/** エージェントが載った列1つ。`phaseIdIndex` は `phaseIds` に引けたときの位置。 */
-type ColumnGroup = {
-  readonly key: string
-  readonly name: string
-  readonly phaseIdIndex?: number
-  readonly phaseIndex?: number
-  readonly spanKeys: readonly string[]
-  readonly agents: readonly WorkflowRunAgent[]
-}
-
-type PlannedColumn =
-  | { readonly kind: "agents"; readonly group: ColumnGroup }
-  | { readonly kind: "upcoming"; readonly key: string }
 
 /**
  * エージェントを列に分けて並べる。`phaseIds` に1つでも引ければ、引けた列を `phaseIds` の順に、引けない列をそのあとに置く。
@@ -293,9 +212,6 @@ function columnGroupsOf(
           group === existing ? { ...group, agents: [...group.agents, agent] } : group,
         )
   }, [])
-  const byPhaseIndex = (left: ColumnGroup, right: ColumnGroup): number =>
-    (left.phaseIndex ?? Infinity) - (right.phaseIndex ?? Infinity) ||
-    firstIndexOf(left) - firstIndexOf(right)
   return groups.toSorted(
     (left, right) =>
       (left.phaseIdIndex ?? Infinity) - (right.phaseIdIndex ?? Infinity) ||
@@ -334,8 +250,11 @@ function spannedGroupsOf(
   })
 }
 
-function weightOf(column: PlannedColumn): number {
-  return column.kind === "agents" ? column.group.spanKeys.length : 1
+function byPhaseIndex(left: ColumnGroup, right: ColumnGroup): number {
+  return (
+    (left.phaseIndex ?? Infinity) - (right.phaseIndex ?? Infinity) ||
+    firstIndexOf(left) - firstIndexOf(right)
+  )
 }
 
 function firstIndexOf(group: ColumnGroup): number {
@@ -347,55 +266,6 @@ function columnNameOf(agent: WorkflowRunAgent): string {
     return agent.phaseTitle
   }
   return agent.phaseIndex === undefined ? "フェーズ" : `フェーズ ${String(agent.phaseIndex + 1)}`
-}
-
-/** 今の列は、走っているエージェントの載った列（無ければ待ちのエージェント、それも無ければエージェントの載ったいちばん後ろの列）。 */
-function currentPositionOf(
-  groups: readonly ColumnGroup[],
-  stateOf: (agent: WorkflowRunAgent) => WorkflowDiagramBoxState,
-): number {
-  const lastWith = (state: WorkflowDiagramBoxState): number =>
-    groups.findLastIndex((group) => group.agents.some((agent) => stateOf(agent) === state))
-  const running = lastWith("running")
-  if (running >= 0) {
-    return running
-  }
-  const waiting = lastWith("waiting")
-  return waiting >= 0 ? waiting : Math.max(0, groups.length - 1)
-}
-
-/** 今の列から後ろを4段分まで残し、空いた段に今の列の直前の列を後ろから入れる。範囲の列は受け持った段の数で数える。 */
-function shownColumns(
-  columns: readonly PlannedColumn[],
-  currentPosition: number,
-): readonly PlannedColumn[] {
-  const after = columns
-    .slice(currentPosition)
-    .reduce<readonly PlannedColumn[]>(
-      (taken, column, position) =>
-        taken.length === position &&
-        (position === 0 || widthOf(taken) + weightOf(column) <= COLUMN_LIMIT)
-          ? [...taken, column]
-          : taken,
-      [],
-    )
-  const before = columns
-    .slice(0, currentPosition)
-    .toReversed()
-    .reduce<readonly PlannedColumn[]>(
-      (taken, column, position) =>
-        taken.length === position &&
-        widthOf(after) + widthOf(taken) + weightOf(column) <= COLUMN_LIMIT
-          ? [...taken, column]
-          : taken,
-      [],
-    )
-    .toReversed()
-  return [...before, ...after]
-}
-
-function widthOf(columns: readonly PlannedColumn[]): number {
-  return columns.reduce((sum, column) => sum + weightOf(column), 0)
 }
 
 function boxOf(
@@ -439,76 +309,128 @@ function keptBoxes(boxes: readonly WorkflowDiagramBox[]): readonly WorkflowDiagr
   return boxes.filter((box) => chosen.includes(box))
 }
 
-type AgentEdge = {
-  readonly from: { readonly kind: "start" } | { readonly kind: "agent"; readonly index: number }
-  readonly to: { readonly kind: "agent"; readonly index: number }
-  readonly kind: Exclude<WorkflowDiagramArrowKind, "toUpcoming">
+function boxStateLookupOf(run: WorkflowRun): (agent: WorkflowRunAgent) => WorkflowDiagramBoxState {
+  const states = new Map(
+    run.agents.map((agent) => [agent.index, workflowBoxStateOf(agent, run.ended)]),
+  )
+  return (agent) => states.get(agent.index) ?? "done"
 }
 
-/**
- * エージェントどうしの矢印。B が A の「後」なのは、A が終わっていて A の終わり（`startedAt` + `durationMs`）が B の `queuedAt` 以前のとき。
- * 終わりの時刻が分からないエージェント（`durationMs` か `startedAt` が無い）は前の側にならない。
- * 「後」は推移的なので、間にエージェントを挟める組を除けば推移で言える組が消える。
- */
-function agentEdgesOf(
-  agents: readonly WorkflowRunAgent[],
+function plannedColumnsOf(
   groups: readonly ColumnGroup[],
-  stateOf: (agent: WorkflowRunAgent) => WorkflowDiagramBoxState,
-): readonly AgentEdge[] {
-  const positionOf = (agent: WorkflowRunAgent): number =>
-    groups.findIndex((group) => group.agents.includes(agent))
-  const sentBack = (agent: WorkflowRunAgent): boolean =>
-    agent.agentType !== undefined &&
-    agent.agentType !== "general-purpose" &&
-    agents.some(
-      (earlier) =>
-        earlier.agentType === agent.agentType &&
-        positionOf(earlier) < positionOf(agent) &&
-        stateOf(earlier) !== "waiting",
-    )
-  const kindOf = (agent: WorkflowRunAgent): AgentEdge["kind"] => {
-    if (sentBack(agent)) {
-      return "sentBack"
-    }
-    const state = stateOf(agent)
-    return state === "running" ? "toRunning" : state === "waiting" ? "toWaiting" : "settled"
-  }
-
-  const direct = agents.flatMap((later) =>
-    agents
-      .filter(
-        (before) =>
-          isAfter(before, later) &&
-          !agents.some((between) => isAfter(before, between) && isAfter(between, later)),
-      )
-      .map((before) => ({ before, later })),
+  phaseIds: readonly string[],
+): readonly PlannedColumn[] {
+  const lastMapped = Math.max(
+    -1,
+    ...groups.map((group) =>
+      group.phaseIdIndex === undefined ? -1 : group.phaseIdIndex + group.spanKeys.length - 1,
+    ),
   )
-  const roots = agents.filter((agent) => !agents.some((before) => isAfter(before, agent)))
+  const upcoming = lastMapped < 0 ? [] : phaseIds.slice(lastMapped + 1)
   return [
-    ...(roots.length < 2
-      ? []
-      : roots.map((root): AgentEdge => ({
-          from: { kind: "start" },
-          to: { kind: "agent", index: root.index },
-          kind: kindOf(root),
-        }))),
-    ...direct.map(({ before, later }): AgentEdge => ({
-      from: { kind: "agent", index: before.index },
-      to: { kind: "agent", index: later.index },
-      kind: kindOf(later),
-    })),
+    ...groups.map((group): PlannedColumn => ({ kind: "agents", group })),
+    ...upcoming.map((phaseId): PlannedColumn => ({ kind: "upcoming", key: phaseId })),
   ]
 }
 
-function isAfter(before: WorkflowRunAgent, later: WorkflowRunAgent): boolean {
-  if (before === later || (before.state !== "done" && before.state !== "error")) {
-    return false
-  }
-  const { startedAt, durationMs } = before
-  return (
-    startedAt !== undefined &&
-    durationMs !== undefined &&
-    later.queuedAt !== undefined &&
-    startedAt + durationMs <= later.queuedAt
+function foldedGroupsOf(
+  groups: readonly ColumnGroup[],
+  kept: readonly PlannedColumn[],
+): readonly ColumnGroup[] {
+  return groups.filter(
+    (group) => !kept.some((column) => column.kind === "agents" && column.group === group),
   )
+}
+
+function spanCountOf(folded: readonly ColumnGroup[]): number {
+  return folded.reduce((sum, group) => sum + group.spanKeys.length, 0)
+}
+
+function sendsBackOf(edges: readonly AgentEdge[]): ReadonlySet<number> {
+  return new Set(
+    edges.flatMap((edge) =>
+      edge.kind === "sentBack" && edge.from.kind === "agent" ? [edge.from.index] : [],
+    ),
+  )
+}
+
+type ColumnContext = {
+  readonly groups: readonly ColumnGroup[]
+  readonly currentPosition: number
+  readonly stateOf: (agent: WorkflowRunAgent) => WorkflowDiagramBoxState
+  readonly sendsBack: ReadonlySet<number>
+  readonly now: number
+  readonly unfoldedKeys: readonly string[]
+}
+
+function columnOf(column: PlannedColumn, context: ColumnContext): WorkflowDiagramColumn {
+  if (column.kind === "upcoming") {
+    return { kind: "upcoming", key: column.key, name: column.key }
+  }
+  const { group } = column
+  const boxes = group.agents.map((agent) =>
+    boxOf(agent, context.stateOf(agent), context.sendsBack.has(agent.index), context.now),
+  )
+  const kept =
+    boxes.length <= BOX_LIMIT || context.unfoldedKeys.includes(group.key) ? boxes : keptBoxes(boxes)
+  const others = boxes.filter((box) => !kept.includes(box)).map((box) => box.index)
+  return {
+    kind: "agents",
+    key: group.key,
+    name: group.name,
+    current: context.groups.indexOf(group) === context.currentPosition,
+    spanKeys: group.spanKeys,
+    boxes: kept,
+    ...(others.length === 0 ? {} : { others: { count: others.length, indexes: others } }),
+  }
+}
+
+/** エージェントの箱が畳まれた先（「済んだ n フェーズ」・「ほか n 件」）を含む、矢印の端を引く関数。 */
+function endResolverOf(
+  foldedGroups: readonly ColumnGroup[],
+  columns: readonly WorkflowDiagramColumn[],
+): (index: number) => WorkflowDiagramEnd {
+  return (index) => {
+    if (foldedGroups.some((group) => group.agents.some((agent) => agent.index === index))) {
+      return { kind: "folded" }
+    }
+    const column = columns.find(
+      (candidate) => candidate.kind === "agents" && candidate.others?.indexes.includes(index),
+    )
+    return column === undefined ? { kind: "agent", index } : { kind: "others", column: column.key }
+  }
+}
+
+function upcomingArrowsOf(
+  columns: readonly WorkflowDiagramColumn[],
+  agents: readonly WorkflowRunAgent[],
+  endOf: (index: number) => WorkflowDiagramEnd,
+): readonly WorkflowDiagramArrow[] {
+  const lastAgent = agents.at(-1)
+  const upcomingColumns = columns.filter((column) => column.kind === "upcoming")
+  return upcomingColumns.flatMap((column, position) => {
+    const previous = upcomingColumns[position - 1]
+    const sources: readonly WorkflowDiagramEnd[] =
+      previous !== undefined
+        ? [{ kind: "upcoming", column: previous.key }]
+        : lastAgent === undefined
+          ? []
+          : [endOf(lastAgent.index)]
+    return sources.map((from): WorkflowDiagramArrow => ({
+      from,
+      to: { kind: "upcoming", column: column.key },
+      kind: "toUpcoming",
+    }))
+  })
+}
+
+function preludeArrowsOf(
+  agents: readonly WorkflowRunAgent[],
+  endOf: (index: number) => WorkflowDiagramEnd,
+): readonly WorkflowDiagramArrow[] {
+  return rootsOf(agents).map((agent): WorkflowDiagramArrow => ({
+    from: { kind: "prelude" },
+    to: endOf(agent.index),
+    kind: "settled",
+  }))
 }
