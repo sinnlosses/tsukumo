@@ -273,7 +273,7 @@ describe("ChatView のセリフを遡る", () => {
     fireEvent.click(firstSpeech)
 
     expect(portraitExpression()).toBe("default")
-    expect(firstSpeech.getAttribute("aria-pressed")).toBe("true")
+    expect(firstSpeech.closest("[aria-pressed]")?.getAttribute("aria-pressed")).toBe("true")
     expect(document.querySelector(".portrait-image")?.getAttribute("alt")).toBe(
       "架空の精霊（通常）",
     )
@@ -307,7 +307,7 @@ describe("ChatView のセリフを遡る", () => {
     // `role="button"` の `<div>` にはブラウザが click を送らないので、キーは自前で受ける。
     fireEvent.keyDown(firstSpeech, { key: "Enter" })
     expect(portraitExpression()).toBe("default")
-    expect(firstSpeech.getAttribute("aria-pressed")).toBe("true")
+    expect(firstSpeech.closest("[aria-pressed]")?.getAttribute("aria-pressed")).toBe("true")
   })
 
   it("表示範囲から古い記録が落ちて並びが前へ詰まっても、選択は失効して最新へ戻る", () => {
@@ -350,7 +350,9 @@ describe("ChatView のセリフを遡る", () => {
 
     expect(useSession.getState().state.turn.kind).toBe("running")
     expect(portraitExpression()).toBe("proud")
-    expect(screen.getByText("2つめのセリフ").getAttribute("aria-pressed")).toBe("true")
+    expect(
+      screen.getByText("2つめのセリフ").closest("[aria-pressed]")?.getAttribute("aria-pressed"),
+    ).toBe("true")
   })
 })
 

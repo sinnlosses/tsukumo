@@ -26,6 +26,7 @@ import { useFavorVisibility } from "./hooks/use-favor-visibility.ts"
 import { useNextStepTraySource } from "./hooks/use-next-step-tray-source.ts"
 import styles from "./main-view.module.css"
 import { ReportHead, type ReportLabel } from "./report-head.tsx"
+import { InterimStepFace } from "./step-face.tsx"
 
 /** `Report` が本文の根に重ねる class（ポンの演出と、ステップ末尾の余白の打ち消しが指す綴り）。 */
 const REPORT_CLASS_NAMES = {
@@ -46,30 +47,32 @@ type FoldedStepProps = {
 export function FoldedStep(props: FoldedStepProps): ReactElement {
   const [open, setOpen] = useState(true)
   return (
-    <Disclosure
-      open={open}
-      onToggle={(event) => {
-        setOpen(event.currentTarget.open)
-      }}
-      gap="block"
-      hiddenOnNarrow={props.phoneHidden}
-      summaryTone="ink-quiet"
-      summarySize="label"
-      className={`${styles["main-step"]} ${styles["is-interim"]}`}
-      summaryClassName={styles["step-heading"]}
-      attributes={{ [REPORT_STEP_ATTRIBUTE]: "" }}
-      summary={<InterimSummary body={props.step.body} />}
-    >
-      <StepReport
-        step={props.step}
-        turnId={props.turnId}
-        reveal={false}
-        latest={false}
-        hasInterimReport={props.hasInterimReport}
-        folded
-        phoneHidden={props.phoneHidden}
-      />
-    </Disclosure>
+    <InterimStepFace phoneHidden={props.phoneHidden}>
+      <Disclosure
+        open={open}
+        onToggle={(event) => {
+          setOpen(event.currentTarget.open)
+        }}
+        gap="block"
+        hiddenOnNarrow={props.phoneHidden}
+        summaryTone="ink-quiet"
+        summarySize="label"
+        className={`${styles["main-step"]} ${styles["is-interim"]}`}
+        summaryClassName={styles["step-heading"]}
+        attributes={{ [REPORT_STEP_ATTRIBUTE]: "" }}
+        summary={<InterimSummary body={props.step.body} />}
+      >
+        <StepReport
+          step={props.step}
+          turnId={props.turnId}
+          reveal={false}
+          latest={false}
+          hasInterimReport={props.hasInterimReport}
+          folded
+          phoneHidden={props.phoneHidden}
+        />
+      </Disclosure>
+    </InterimStepFace>
   )
 }
 

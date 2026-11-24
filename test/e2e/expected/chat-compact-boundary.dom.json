@@ -312,7 +312,16 @@
                         "aria-pressed": "false"
                       },
                       "children": [
-                        "疑似セッションの駆動で立ち上がったよ。ここはぜんぶ作り物の会話。"
+                        {
+                          "tag": "div",
+                          "attributes": {
+                            "data-variant": "default",
+                            "data-elevation": "none"
+                          },
+                          "children": [
+                            "疑似セッションの駆動で立ち上がったよ。ここはぜんぶ作り物の会話。"
+                          ]
+                        }
                       ]
                     },
                     {
@@ -330,7 +339,16 @@
                         "data-speaker": "user"
                       },
                       "children": [
-                        "架空の雑談その1（区切りより前）"
+                        {
+                          "tag": "div",
+                          "attributes": {
+                            "data-variant": "default",
+                            "data-elevation": "none"
+                          },
+                          "children": [
+                            "架空の雑談その1（区切りより前）"
+                          ]
+                        }
                       ]
                     },
                     {
@@ -350,7 +368,16 @@
                         "aria-pressed": "false"
                       },
                       "children": [
-                        "区切りより前のセリフだよ。"
+                        {
+                          "tag": "div",
+                          "attributes": {
+                            "data-variant": "default",
+                            "data-elevation": "none"
+                          },
+                          "children": [
+                            "区切りより前のセリフだよ。"
+                          ]
+                        }
                       ]
                     },
                     {
@@ -374,7 +401,16 @@
                         "data-speaker": "user"
                       },
                       "children": [
-                        "架空の雑談その2（区切りより後）"
+                        {
+                          "tag": "div",
+                          "attributes": {
+                            "data-variant": "default",
+                            "data-elevation": "none"
+                          },
+                          "children": [
+                            "架空の雑談その2（区切りより後）"
+                          ]
+                        }
                       ]
                     },
                     {
@@ -394,7 +430,16 @@
                         "aria-pressed": "true"
                       },
                       "children": [
-                        "区切りより後のセリフだよ。"
+                        {
+                          "tag": "div",
+                          "attributes": {
+                            "data-variant": "default",
+                            "data-elevation": "none"
+                          },
+                          "children": [
+                            "区切りより後のセリフだよ。"
+                          ]
+                        }
                       ]
                     },
                     {

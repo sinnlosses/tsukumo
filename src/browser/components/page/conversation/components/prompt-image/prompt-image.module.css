@@ -52,7 +52,9 @@
    高さで揃え、横は絵の比率のまま（並べたときに底が揃う）。
    器より広い絵は幅で頭打ちにして、領域を横へ押し広げない（`<li>` 側の `max-width` が前提）。 */
 .prompt-image {
-  composes: surface-edge-rule surface-radius-md surface-tone-surface from "../../../../ui/surface/surface-face.module.css";
+  border: 1px solid var(--rule-quiet);
+  border-radius: var(--radius-md);
+  background: var(--surface);
   display: block;
   max-width: 100%;
   height: 4rem;

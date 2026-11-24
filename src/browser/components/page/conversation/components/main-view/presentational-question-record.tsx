@@ -3,7 +3,7 @@
 // 自由入力の答えは選択肢の並びの下に別の行として出す。
 
 import clsx from "clsx"
-import type { ReactElement } from "react"
+import type { ReactElement, ReactNode } from "react"
 
 import {
   detailBlockClassName,
@@ -11,6 +11,7 @@ import {
 } from "../../../../../features/report/markdown.tsx"
 import { Disclosure } from "../../../../ui/disclosure/disclosure.tsx"
 import { Heading } from "../../../../ui/heading/heading.tsx"
+import { Surface } from "../../../../ui/surface/surface.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
 import { hasDetail, InquiryBrief, InquiryDetail, InquiryOptionList } from "../inquiry/inquiry.tsx"
 import type {
@@ -45,9 +46,18 @@ export function PresentationalQuestionRecord(
   }
   return (
     <section className={styles["tool-block"]}>
-      {props.questions.map((question) => (
-        <QuestionBlock toolUseId={props.toolUseId} question={question} key={question.key} />
-      ))}
+      <Surface
+        element="div"
+        tone="surface"
+        space="none"
+        radius="md"
+        shadow="none"
+        className={styles["tool-block-face"]}
+      >
+        {props.questions.map((question) => (
+          <QuestionBlock toolUseId={props.toolUseId} question={question} key={question.key} />
+        ))}
+      </Surface>
     </section>
   )
 }
@@ -131,26 +141,28 @@ function PreviewDetails(props: {
 
   return (
     // 開くまで中身を描かない。一度開いたあとは閉じても外さない（`useQuestionRecord`）。
-    <Disclosure
-      onToggle={question.onTogglePreviews}
-      gap="block"
-      hiddenOnNarrow={false}
-      summaryTone="ink-quiet"
-      summarySize="secondary"
-      className={styles["question-previews"]}
-      summaryClassName=""
-      summary={PREVIEWS_SUMMARY}
-    >
-      {question.previewsOpened &&
-        question.previews.map((preview) => (
-          <PreviewBlock
-            toolUseId={props.toolUseId}
-            preview={preview}
-            multiSelect={question.multiSelect}
-            key={preview.label}
-          />
-        ))}
-    </Disclosure>
+    <PreviewsFace>
+      <Disclosure
+        onToggle={question.onTogglePreviews}
+        gap="block"
+        hiddenOnNarrow={false}
+        summaryTone="ink-quiet"
+        summarySize="secondary"
+        className=""
+        summaryClassName=""
+        summary={PREVIEWS_SUMMARY}
+      >
+        {question.previewsOpened &&
+          question.previews.map((preview) => (
+            <PreviewBlock
+              toolUseId={props.toolUseId}
+              preview={preview}
+              multiSelect={question.multiSelect}
+              key={preview.label}
+            />
+          ))}
+      </Disclosure>
+    </PreviewsFace>
   )
 }
 
@@ -162,31 +174,49 @@ function BriefDetails(props: {
   const { brief } = props
 
   return (
-    <Disclosure
-      onToggle={brief.onToggle}
-      gap="block"
-      hiddenOnNarrow={false}
-      summaryTone="ink-quiet"
-      summarySize="secondary"
+    <PreviewsFace>
+      <Disclosure
+        onToggle={brief.onToggle}
+        gap="block"
+        hiddenOnNarrow={false}
+        summaryTone="ink-quiet"
+        summarySize="secondary"
+        className=""
+        summaryClassName=""
+        summary={props.summary}
+      >
+        {brief.opened && (
+          <>
+            <InquiryBrief brief={brief.brief} />
+            <InquiryOptionList options={brief.options} />
+            {brief.options.filter(hasDetail).map((option) => (
+              <InquiryDetail
+                askId={props.toolUseId}
+                imageSource={brief.imageSource}
+                option={option}
+                key={option.label}
+              />
+            ))}
+          </>
+        )}
+      </Disclosure>
+    </PreviewsFace>
+  )
+}
+
+/** 開閉の `Disclosure` を包む、地の沈んだ（`ground`）箱。外側の置き方（margin）もこの要素が持つ。 */
+function PreviewsFace(props: { readonly children: ReactNode }): ReactElement {
+  return (
+    <Surface
+      element="div"
+      tone="ground"
+      space="none"
+      radius="md"
+      shadow="none"
       className={styles["question-previews"]}
-      summaryClassName=""
-      summary={props.summary}
     >
-      {brief.opened && (
-        <>
-          <InquiryBrief brief={brief.brief} />
-          <InquiryOptionList options={brief.options} />
-          {brief.options.filter(hasDetail).map((option) => (
-            <InquiryDetail
-              askId={props.toolUseId}
-              imageSource={brief.imageSource}
-              option={option}
-              key={option.label}
-            />
-          ))}
-        </>
-      )}
-    </Disclosure>
+      {props.children}
+    </Surface>
   )
 }
 

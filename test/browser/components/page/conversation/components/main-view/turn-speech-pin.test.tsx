@@ -80,8 +80,13 @@ const expression = (): string | null | undefined =>
     .querySelector("[data-character-stage] [data-expression]")
     ?.getAttribute("data-expression")
 
-const row = (text: string): HTMLElement =>
-  screen.getByText(text, { selector: '[data-speaker="character"]' })
+const row = (text: string): HTMLElement => {
+  const found = screen.getByText(text).closest<HTMLElement>('[data-speaker="character"]')
+  if (found === null) {
+    throw new Error(`セリフの行が無い: ${text}`)
+  }
+  return found
+}
 
 const TWO_SPEECHES = [
   requestRecord({ text: "架空の依頼", turnId: 0 }),

@@ -9,6 +9,7 @@ import { REPORT_DRAFT_ATTRIBUTE } from "./domain/report-heading.ts"
 import { useDraftPop } from "./hooks/use-draft-pop.ts"
 import styles from "./main-view.module.css"
 import { ReportHead } from "./report-head.tsx"
+import { StepFace } from "./step-face.tsx"
 
 type DraftReportProps = {
   readonly draft: MainViewDraft
@@ -42,27 +43,29 @@ export function DraftReport(props: DraftReportProps): ReactElement {
       aria-busy={draft.kind === "blank" || draft.writing}
       {...{ [REPORT_DRAFT_ATTRIBUTE]: "" }}
     >
-      {draft.kind === "blank" ? (
-        <PendingPaper blink={motion} blockClassName={styles["detail-block"]} />
-      ) : (
-        <>
-          <ReportHead
-            label={draft.task.kind === "task" || props.hasInterimReport ? "draft" : "none"}
-            task={draft.task}
-            phase={{ kind: "none" }}
-            className=""
-          />
-          <Report
-            body={draft.regions}
-            reveal={false}
-            turnId={props.turnId}
-            className=""
-            revealClassName={styles["draft-pop"]}
-            blockClassName={styles["detail-block"]}
-            pending={{ ...draft.pending, blink: motion }}
-          />
-        </>
-      )}
+      <StepFace>
+        {draft.kind === "blank" ? (
+          <PendingPaper blink={motion} blockClassName={styles["detail-block"]} />
+        ) : (
+          <>
+            <ReportHead
+              label={draft.task.kind === "task" || props.hasInterimReport ? "draft" : "none"}
+              task={draft.task}
+              phase={{ kind: "none" }}
+              className=""
+            />
+            <Report
+              body={draft.regions}
+              reveal={false}
+              turnId={props.turnId}
+              className=""
+              revealClassName={styles["draft-pop"]}
+              blockClassName={styles["detail-block"]}
+              pending={{ ...draft.pending, blink: motion }}
+            />
+          </>
+        )}
+      </StepFace>
     </section>
   )
 }

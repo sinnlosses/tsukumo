@@ -8,6 +8,7 @@ import type { ReactElement, ReactNode } from "react"
 
 import { HStack } from "../../../../ui/h-stack/h-stack.tsx"
 import { RoundButton } from "../../../../ui/round-button/round-button.tsx"
+import { Surface } from "../../../../ui/surface/surface.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
 import styles from "./dispatch.module.css"
 import type { PhoneTurnActionModel } from "./hooks/use-phone-turn-action.ts"
@@ -62,21 +63,30 @@ export function PresentationalPhoneTurnAction(props: PhoneTurnActionModel): Reac
               }
             }}
           >
-            <button
-              type="button"
-              className={styles["phone-turn-confirm-stop"]}
-              onClick={props.onStop}
+            <Surface
+              element="div"
+              tone="surface"
+              space="none"
+              radius="xl"
+              shadow="none"
+              className={styles["phone-turn-confirm-face"]}
             >
-              {PHONE_STOP_LABEL}
-            </button>
-            <button
-              type="button"
-              autoFocus
-              className={styles["phone-turn-confirm-keep"]}
-              onClick={props.onKeep}
-            >
-              {PHONE_KEEP_LABEL}
-            </button>
+              <button
+                type="button"
+                className={styles["phone-turn-confirm-stop"]}
+                onClick={props.onStop}
+              >
+                {PHONE_STOP_LABEL}
+              </button>
+              <button
+                type="button"
+                autoFocus
+                className={styles["phone-turn-confirm-keep"]}
+                onClick={props.onKeep}
+              >
+                {PHONE_KEEP_LABEL}
+              </button>
+            </Surface>
           </div>
         </>
       )}

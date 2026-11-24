@@ -24,6 +24,7 @@ import { Dialog } from "../../../../ui/dialog/dialog.tsx"
 import { ExpandButton } from "../../../../ui/expand-button/expand-button.tsx"
 import { FirstNoteList } from "../../../../ui/first-note-list/first-note-list.tsx"
 import { HStack } from "../../../../ui/h-stack/h-stack.tsx"
+import { Surface } from "../../../../ui/surface/surface.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
 import {
   useInquiryAnswer,
@@ -40,6 +41,7 @@ import {
   InquiryOptionContent,
   InquiryOptionDescription,
   InquiryOptionList,
+  OptionFace,
   type ShelvedSource,
 } from "./inquiry-detail.tsx"
 import styles from "./inquiry.module.css"
@@ -336,7 +338,20 @@ function InquiryFace(props: {
           </Text>
         )}
         {inquiry.kind === "permission" && inquiry.targetText !== "" && (
-          <pre className={styles["inquiry-target"]}>{truncateForDisplay(inquiry.targetText)}</pre>
+          <div className={styles["inquiry-target"]}>
+            <Surface
+              element="div"
+              tone="surface"
+              space="none"
+              radius="md"
+              shadow="none"
+              className={styles["inquiry-target-face"]}
+            >
+              <pre className={styles["inquiry-target-text"]}>
+                {truncateForDisplay(inquiry.targetText)}
+              </pre>
+            </Surface>
+          </div>
         )}
         {inquiry.kind === "question" && inquiry.brief !== undefined && (
           <InquiryBrief brief={inquiry.brief} />
@@ -494,30 +509,32 @@ function InquiryOption(props: {
         props.dimmed && styles["is-dimmed"],
       )}
     >
-      <HStack
-        element="label"
-        name={{ kind: "none" }}
-        gap="sm"
-        align="baseline"
-        justify="start"
-        wrap="nowrap"
-        className={styles["inquiry-option-choose"]}
-      >
-        <InquiryOptionContent
-          option={option}
-          mark={
-            <input
-              type={props.multiSelect ? "checkbox" : "radio"}
-              name={props.multiSelect ? undefined : OPTION_GROUP_NAME}
-              className={styles["inquiry-option-mark"]}
-              checked={option.selected}
-              onChange={() => props.onToggle(option.label)}
-              onFocus={() => props.onFocus(option.label)}
-            />
-          }
-        />
-      </HStack>
-      <InquiryOptionDescription option={option} />
+      <OptionFace>
+        <HStack
+          element="label"
+          name={{ kind: "none" }}
+          gap="sm"
+          align="baseline"
+          justify="start"
+          wrap="nowrap"
+          className={styles["inquiry-option-choose"]}
+        >
+          <InquiryOptionContent
+            option={option}
+            mark={
+              <input
+                type={props.multiSelect ? "checkbox" : "radio"}
+                name={props.multiSelect ? undefined : OPTION_GROUP_NAME}
+                className={styles["inquiry-option-mark"]}
+                checked={option.selected}
+                onChange={() => props.onToggle(option.label)}
+                onFocus={() => props.onFocus(option.label)}
+              />
+            }
+          />
+        </HStack>
+        <InquiryOptionDescription option={option} />
+      </OptionFace>
     </li>
   )
 }

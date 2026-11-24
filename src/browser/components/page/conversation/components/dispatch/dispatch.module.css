@@ -43,15 +43,25 @@
    textarea の上に出すと領域（.layout-region の overflow-y: auto）の外に出て切られる。
    max-height の % は包み（＝textarea の高さ）基準なので、打っている文字がある上半分は隠れない。 */
 .dispatch-suggestions {
-  composes: surface-edge-rule surface-radius-md surface-tone-ground from "../../../../ui/surface/surface-face.module.css";
   position: absolute;
   left: 0;
   right: 0;
   bottom: 0;
   z-index: 5;
+  display: flex;
+  flex-direction: column;
+  max-height: 50%;
+}
+.dispatch-suggestions-face {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border: 1px solid var(--rule-quiet);
+}
+.dispatch-suggestions-list {
+  min-height: 0;
   margin: 0;
   padding: var(--space-xs);
-  max-height: 50%;
   overflow-y: auto;
   list-style: none;
 }
@@ -141,11 +151,10 @@
   }
 }
 
-/* 枠・角丸・地の `composes` の参照先の相対パスは `@import` した先のファイルでは解けないので、入口のここに置く。
-   狭い画面の外では `display: none` か描かれないので、見た目は変わらない。 */
-.phone-attach-sheet {
-  composes: surface-edge-rule surface-radius-xl surface-tone-surface from "../../../../ui/surface/surface-face.module.css";
+/* 狭い画面の添付の面と中断の確かめの顔。余白・並べ方は `form/composer.css`・`form/turn-status.css`。 */
+.phone-attach-sheet-face {
+  border: 1px solid var(--rule-quiet);
 }
-.phone-turn-confirm {
-  composes: surface-edge-rule surface-radius-xl surface-tone-surface from "../../../../ui/surface/surface-face.module.css";
+.phone-turn-confirm-face {
+  border: 1px solid var(--rule-quiet);
 }

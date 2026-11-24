@@ -32,7 +32,7 @@
   grid-template-columns: minmax(0, 1fr) auto var(--layout-sidebar-width, 21.6%);
 }
 /* 2列のメインビューは枠・角丸・地を持たず、器の背景の上に直接置く。
-   `.layout-region` が compose する面の3項目を打ち消すので、詳細度は `.layout-region.layout-main` を上回らせる。 */
+   `.layout-region` が直に書いた枠・角丸・地の3項目を打ち消すので、詳細度は `.layout-region.layout-main` を上回らせる。 */
 .layout-grid[data-collapse-character="true"] .layout-region.layout-main {
   border: none;
   border-radius: 0;
@@ -118,7 +118,9 @@
    `overflow-y: auto` だけを書くと、CSS では片方の軸が visible でなくなったときにもう片方の visible も auto に計算されるので、書いていない overflow-x が auto になって領域すべてが横に転がっていた。
    横に長いものは、中身の側が自前のスクロール容器を持つ（レポートの表は .table-scroll、コードは pre-wrap、svg は max-width: 100%、長い語は overflow-wrap: anywhere で折り返す）。 */
 .layout-region {
-  composes: surface-edge-rule surface-radius-lg surface-tone-surface from "../../../../ui/surface/surface-face.module.css";
+  border: 1px solid var(--rule-quiet);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
   /* 中身の側が「領域の内側の余白」を知るための変数。
      メインビューのカードの頭（`position: sticky`）はこれだけ上へずらして、転がっても余白の帯から本文が覗かないようにする（`main-view.module.css`）。 */
   --region-padding: var(--gutter-region);
@@ -274,7 +276,9 @@
     box-shadow: var(--shadow-overlay);
   }
   .layout-rail {
-    composes: surface-edge-rule surface-radius-lg surface-tone-surface from "../../../../ui/surface/surface-face.module.css";
+    border: 1px solid var(--rule-quiet);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
     display: flex;
     flex-direction: column;
     align-items: center;

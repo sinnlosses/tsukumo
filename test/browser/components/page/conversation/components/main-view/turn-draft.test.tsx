@@ -168,16 +168,16 @@ describe("Turn（report の草稿）", () => {
     )
 
     const plain = renderDraft(draft)
-    expect(plain.container.querySelector(`${DRAFT_SELECTOR} > header`)).toBeNull()
+    expect(plain.container.querySelector(`${DRAFT_SELECTOR} header`)).toBeNull()
     plain.unmount()
 
     const afterInterim = renderDraft(draft, true)
-    expect(afterInterim.container.querySelector(`${DRAFT_SELECTOR} > header`)?.textContent).toBe(
+    expect(afterInterim.container.querySelector(`${DRAFT_SELECTOR} header`)?.textContent).toBe(
       "書きかけのレポート",
     )
     afterInterim.unmount()
 
-    const head = renderDraft(tasked).container.querySelector(`${DRAFT_SELECTOR} > header`)
+    const head = renderDraft(tasked).container.querySelector(`${DRAFT_SELECTOR} header`)
     expect(head?.textContent).toContain("fictional-task")
     expect(head?.textContent).toContain("架空の作業")
     expect(head?.textContent).toContain("書きかけのレポート")

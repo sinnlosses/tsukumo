@@ -5,9 +5,7 @@
    左右に寄せるのは外側の行（`.stream-row`）。
    どちらの話者も `<div>`（押せるキャラクターの側も `role="button"` の `<div>`。理由は `StreamSpeech`）なので、地の見た目は話者で変わらない。 */
 .stream-entry {
-  composes: surface-edge-rule surface-radius-xl surface-tone-surface from "../../../../ui/surface/surface-face.module.css";
   max-width: 80%;
-  padding: var(--space-sm) var(--space-lg);
   /* セリフの文字は `ink`（長い往復でも濃さを変えない）。 */
   color: var(--ink);
   font-size: var(--font-body);
@@ -22,6 +20,14 @@
 .stream-entry.stream-entry-character {
   --entry-fill-top: var(--surface-accent);
   --entry-fill-bottom: var(--surface-accent);
+}
+/* 吹き出しの顔（`Surface`）。余白と、話者ごとの枠・地・角を持つ。尾（`.stream-aim`）は顔の外、外側の行に重ねる。 */
+.stream-entry-face {
+  padding: var(--space-sm) var(--space-lg);
+  color: inherit;
+  font: inherit;
+}
+.stream-entry-character .stream-entry-face {
   border-color: var(--accent);
   background: linear-gradient(to bottom, var(--entry-fill-top), var(--entry-fill-bottom));
   border-bottom-left-radius: var(--radius-sm);
@@ -37,6 +43,8 @@
 .stream-entry-character.is-selected {
   --entry-fill-top: color-mix(in srgb, var(--surface), var(--accent) 26%);
   --entry-fill-bottom: color-mix(in srgb, var(--surface), var(--accent) 26%);
+}
+.stream-entry-character.is-selected .stream-entry-face {
   box-shadow: inset 0 0 0 1px var(--accent);
 }
 /* 仕事の流れのいまの一言。差し色を一段濃くして影を付ける。 */
@@ -44,6 +52,8 @@
   --entry-fill-top: color-mix(in srgb, var(--accent) 22%, var(--surface));
   --entry-fill-bottom: color-mix(in srgb, var(--accent) 13%, var(--surface));
   position: relative;
+}
+.stream-entry-character.stream-entry-live .stream-entry-face {
   box-shadow: var(--shadow-raised);
 }
 /* 届いたばかりのセリフの出方（`data-arrival`。値は `SpeechArrivalBubble`）。動きを減らす設定のときは付けない。
@@ -137,16 +147,18 @@
 }
 /* 返事を待っている間・まだ出していない吹き出しが控えている間、末尾に出す「...」。押せない。 */
 .stream-entry.stream-entry-typing {
+  align-self: flex-start;
+}
+.stream-entry-typing .stream-entry-face {
   display: flex;
   align-items: center;
   gap: var(--space-xs);
-  align-self: flex-start;
   border-color: var(--accent);
   background: var(--surface-accent);
   border-bottom-left-radius: var(--radius-sm);
 }
 /* 利用者の発言（右へ寄せるのは `.stream-row-user`）。差し色は使わず、地の濃さだけで区別する。 */
-.stream-entry.stream-entry-user {
+.stream-entry-user .stream-entry-face {
   background: color-mix(in srgb, var(--surface), var(--ink) 8%);
   border-bottom-right-radius: var(--radius-sm);
 }
@@ -162,8 +174,10 @@
     --entry-fill-bottom: color-mix(in srgb, var(--accent) 9%, var(--surface));
   }
   .stream-entry.stream-entry-user {
-    background: color-mix(in srgb, var(--surface), var(--ink) 12%);
     --ink-quiet: var(--ink-soft);
+  }
+  .stream-entry-user .stream-entry-face {
+    background: color-mix(in srgb, var(--surface), var(--ink) 12%);
   }
   .stream-entry.stream-entry-user h2 {
     color: var(--ink-soft);

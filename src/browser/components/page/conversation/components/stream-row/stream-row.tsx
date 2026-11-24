@@ -10,6 +10,7 @@ import type { KeyboardEvent, ReactElement, ReactNode } from "react"
 
 import { MapMarkText } from "../../../../../features/architecture-map/map-box-mark.tsx"
 import { isOverlayOpen } from "../../../../../hooks/open-overlay.ts"
+import { Surface } from "../../../../ui/surface/surface.tsx"
 import { TypingDots } from "../../../../ui/typing-dot-list/typing-dot-list.tsx"
 import { VisuallyHidden } from "../../../../ui/visually-hidden/visually-hidden.tsx"
 import type { ClockStamp } from "../../domain/clock-stamp.ts"
@@ -78,8 +79,10 @@ export function StreamPostRow(props: StreamPostRowProps): ReactElement {
         className={clsx(styles["stream-entry"], styles["stream-entry-user"], props.className)}
         data-speaker="user"
       >
-        <SpeakerName name={props.speakerName} />
-        {props.children}
+        <EntryFace>
+          <SpeakerName name={props.speakerName} />
+          {props.children}
+        </EntryFace>
       </div>
       <StreamTime time={props.time} />
     </div>
@@ -98,7 +101,9 @@ export function StreamTyping(): ReactElement {
       data-speaker="typing"
       aria-hidden="true"
     >
-      <TypingDots />
+      <EntryFace>
+        <TypingDots />
+      </EntryFace>
     </div>
   )
 }
@@ -143,8 +148,10 @@ function StreamSpeech(props: StreamSpeechProps): ReactElement {
   if (props.onToggle === undefined) {
     return (
       <div className={className} data-speaker="character" {...arrivalAttribute}>
-        <SpeakerName name={props.speakerName} />
-        <SpeechText text={props.text} mapBadges={props.mapBadges} />
+        <EntryFace>
+          <SpeakerName name={props.speakerName} />
+          <SpeechText text={props.text} mapBadges={props.mapBadges} />
+        </EntryFace>
         {props.aim}
       </div>
     )
@@ -168,10 +175,28 @@ function StreamSpeech(props: StreamSpeechProps): ReactElement {
         speech.onKeyDown(event)
       }}
     >
-      <SpeakerName name={props.speakerName} />
-      <SpeechText text={props.text} mapBadges={props.mapBadges} />
+      <EntryFace>
+        <SpeakerName name={props.speakerName} />
+        <SpeechText text={props.text} mapBadges={props.mapBadges} />
+      </EntryFace>
       {props.aim}
     </div>
+  )
+}
+
+/** 吹き出しの顔。尾は顔の外（`Card` の `overflow: clip` に切られない外側の行）に置く。 */
+function EntryFace(props: { readonly children: ReactNode }): ReactElement {
+  return (
+    <Surface
+      element="div"
+      tone="surface"
+      space="none"
+      radius="xl"
+      shadow="none"
+      className={styles["stream-entry-face"]}
+    >
+      {props.children}
+    </Surface>
   )
 }
 

@@ -8,6 +8,7 @@ import type { ReactElement } from "react"
 
 import { Text } from "../../../../ui/text/text.tsx"
 import styles from "./dispatch.module.css"
+import { SuggestionFrame } from "./suggestion-frame.tsx"
 
 /**
  * いま打っている `@<パス>`。`start` から `end` までを確定後の文字列で置き換える
@@ -64,7 +65,7 @@ export function FileSuggestions(props: FileSuggestionsProps): ReactElement | und
   }
 
   return (
-    <ul className={styles["dispatch-suggestions"]}>
+    <SuggestionFrame>
       {props.matches.map((path, index) => (
         <li
           key={path}
@@ -102,6 +103,6 @@ export function FileSuggestions(props: FileSuggestionsProps): ReactElement | und
           </Text>
         </li>
       )}
-    </ul>
+    </SuggestionFrame>
   )
 }

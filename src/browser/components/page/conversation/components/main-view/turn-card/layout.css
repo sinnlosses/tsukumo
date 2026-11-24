@@ -114,35 +114,62 @@
 /* ステップは縦に1本で積む（Z字に読ませない）。カードの枠は「ひとかたまり」の区切りを見せるためだけに使い、番号は振らない。 */
 .main-step {
   margin: 0;
-  padding: var(--inset-card);
   min-width: 0;
 }
 .main-step {
   position: relative;
+}
+/* ステップの顔（`Surface`）。枠と余白を持ち、地・角丸は `Surface` が持つ。
+   中間レポートは `Disclosure` の外に顔を置くので、顔の側にも専用の class（`.main-step-face-interim`）を付ける。 */
+.main-step-face {
+  padding: var(--inset-card);
+  border: 1px solid var(--rule-quiet);
 }
 /* `a2ui-react-report` は、部品の一覧で描く本文（`A2uiReport`）の根を包む `display: contents` の入れ物で、本文の根が `.main-step` の孫になる。
    `.main-step` の子を指す規則は、この入れ物の子も同じに指す。
 
    `.detail-block`（レポート本文の入れ物）本体は report-notation.module.css にあり、CSS Modules は class 名をファイルごとにハッシュ化するので、この選択子だけではそちらの `.detail-block` を指せない。
    `Report` が両方のファイルの `.detail-block` を同じ要素に重ねて付ける（このファイルの側はこの選択子のためだけに出てくる綴りで、見た目は持たない）。 */
-:is(.main-step, .main-step > a2ui-react-report) > .detail-block:last-child {
+:is(
+    .main-step,
+    .main-step-face,
+    .main-step > a2ui-react-report,
+    .main-step-face > a2ui-react-report
+  )
+  > .detail-block:last-child {
   margin-bottom: 0;
 }
 /* 欄外注の列を出すかを本文の幅で決める器（`report-notation.module.css` の `@container report-gutter`）。
    お伺いのカードの preview にも `.detail-block` があるので、名前を付けてメインビューの本文だけに効かせる。
    `container` は名前を上書きするので、`.detail-block` 自身の `report-body` もここに並べる。 */
-:is(.main-step, .main-step > a2ui-react-report) > .detail-block {
+:is(
+    .main-step,
+    .main-step-face,
+    .main-step > a2ui-react-report,
+    .main-step-face > a2ui-react-report
+  )
+  > .detail-block {
   container: report-gutter report-body / inline-size;
 }
 /* 本文の最初と最後の塊の margin は器の padding に足されるので落とす（padding がそのまま器の内側のあきになる）。
    塊の margin は欄の入れ物を通り抜けるので、最初と最後の欄の中の塊を指す。 */
-:is(.main-step, .main-step > a2ui-react-report)
+:is(
+    .main-step,
+    .main-step-face,
+    .main-step > a2ui-react-report,
+    .main-step-face > a2ui-react-report
+  )
   > .detail-block
   > [data-report-region]:first-child
   > :first-child {
   margin-top: 0;
 }
-:is(.main-step, .main-step > a2ui-react-report)
+:is(
+    .main-step,
+    .main-step-face,
+    .main-step > a2ui-react-report,
+    .main-step-face > a2ui-react-report
+  )
   > .detail-block
   > [data-report-region]:last-child
   > :last-child {
@@ -150,8 +177,19 @@
 }
 /* 中間レポート（`report` ツールの最後でない呼び出し）。
    地は最終レポートと同じ surface のまま（`.main-step` の既定）で、枠を破線にする・小さなラベルを載せるの2つで本体のレポートと見分ける（色だけに頼らない）。 */
-.main-step.is-interim {
+.main-step-face-interim {
+  composes: main-step-face;
   border-style: dashed;
+}
+.main-step-face-interim-phone-hidden {
+  composes: main-step-face-interim;
+}
+@media (max-width: 760px) {
+  .main-step-face-interim-phone-hidden {
+    display: none !important;
+  }
+}
+.main-step.is-interim {
   --report-chunk-rule: transparent;
   --report-chunk-ground: var(--surface-raised);
 }
@@ -159,7 +197,7 @@
    書いている途中のレポートは最終レポートと同じ紙の面と幅に置き、書き終えたときに字の折り返しが変わらないようにする。
    狭い画面の既定では箱を持たず、領域の surface を紙にする。中間レポートの破線の箱とは形で見分ける（広い画面は下の media が面を足す）。
    前に何かあるときの上のあきは、直前の中間レポートのタスク見出し行（小さな字だけの1行）と続けて読めないようにするもの。 */
-.main-step:is(.is-final, .is-draft) {
+.main-step:is(.is-final, .is-draft) .main-step-face {
   padding: 0;
   border: 0;
   border-radius: 0;
@@ -168,7 +206,7 @@
 /* 広い画面では領域が面を持たず背景の絵が透けるので、最終レポートが自分で紙の面（地・縁・角丸・影）を持つ。
    地はぼかさない濃い面（`--panel-glass-dense`）で、字と背景の絵が重ならないようにする。 */
 @media (min-width: 761px) {
-  .main-step:is(.is-final, .is-draft) {
+  .main-step:is(.is-final, .is-draft) .main-step-face {
     padding: var(--inset-card);
     border: 1px solid var(--panel-edge);
     border-radius: var(--radius-md);
@@ -192,6 +230,6 @@
    枠だけを --state-ng にし、見出し「失敗で終わった」の字も同じ色にする。
    字の色は呼び出し側が `Text` の `tone="state-ng"` を渡す（見出しの class へ色の規則を書くと `<Text>` の property と重なり、構造の検査「渡す className は styles["…"] の組み合わせだけで、その class は部品の property と重ならない」が落ちる）。
    地は本文と同じ。 */
-.main-step.is-failed {
+.main-step.is-failed .main-step-face {
   border-color: var(--state-ng);
 }

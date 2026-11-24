@@ -101,9 +101,14 @@
 }
 /* 許可要求の対象の全文。等幅で折り返す。 */
 .inquiry-target {
-  composes: surface-edge-rule surface-radius-md surface-tone-surface from "../../../../ui/surface/surface-face.module.css";
   margin: 0 0 var(--space-md);
+}
+.inquiry-target-face {
   padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--rule-quiet);
+}
+.inquiry-target-text {
+  margin: 0;
   font-family: var(--font-mono);
   font-size: var(--font-secondary);
   white-space: pre-wrap;
@@ -185,9 +190,11 @@
 }
 /* フォーカスした選択肢の詳細。高さは切らない（札の本文が転がる）。 */
 .inquiry-detail {
-  composes: surface-edge-rule surface-radius-md surface-tone-surface from "../../../../ui/surface/surface-face.module.css";
   min-width: 0;
+}
+.inquiry-detail-face {
   padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--rule-quiet);
 }
 .inquiry-detail-title {
   margin: 0;
@@ -212,17 +219,19 @@
   flex: 0 0 auto;
 }
 .inquiry-option {
-  composes: surface-edge-rule surface-radius-md surface-tone-surface from "../../../../ui/surface/surface-face.module.css";
   min-width: 0;
+}
+.inquiry-option-face {
   padding: var(--inset-control);
+  border: 1px solid var(--rule-quiet);
 }
 /* 選んだカード。枠の色と太さで示す（色だけに頼らない）。 */
-.inquiry-option.is-selected {
+.inquiry-option.is-selected .inquiry-option-face {
   border-color: var(--state-warn);
   box-shadow: 0 0 0 1px var(--state-warn) inset;
 }
 /* キーボードで触れていて詳細に出ている行。選んだ行の枠は変えない。 */
-.inquiry-option:focus-within:not(.is-selected) {
+.inquiry-option:focus-within:not(.is-selected) .inquiry-option-face {
   border-color: var(--ink-quiet);
 }
 /* 入力欄に字を書いているあいだ（単一選択）。押せる・数字キーは生かしたまま薄くする。 */

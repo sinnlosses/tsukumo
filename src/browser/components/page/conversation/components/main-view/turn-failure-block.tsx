@@ -9,6 +9,7 @@ import { Text } from "../../../../ui/text/text.tsx"
 import type { FailureEnding, FailureRemains } from "./domain/stream-item-list.ts"
 import { useTurnFailureBlock } from "./hooks/use-turn-failure-block.ts"
 import styles from "./main-view.module.css"
+import { StepFace } from "./step-face.tsx"
 
 export function TurnFailureBlock(props: {
   readonly ending: FailureEnding
@@ -27,68 +28,70 @@ export function TurnFailureBlock(props: {
       role="note"
       aria-label={block.heading}
     >
-      <Text
-        element="p"
-        size="label"
-        tone={props.ending.kind === "failed" ? "state-ng" : "ink"}
-        weight="inherit"
-        className={styles["heading"]}
-      >
-        {block.heading}
-      </Text>
-      {block.reason !== "" && (
+      <StepFace>
         <Text
           element="p"
-          size="inherit"
-          tone="inherit"
+          size="label"
+          tone={props.ending.kind === "failed" ? "state-ng" : "ink"}
           weight="inherit"
-          className={styles["reason"]}
+          className={styles["heading"]}
         >
-          {block.reason}
+          {block.heading}
         </Text>
-      )}
-      {block.detail !== "" && (
-        <Text element="p" size="label" tone="ink" weight="normal" className={styles["detail"]}>
-          {block.detail}
-        </Text>
-      )}
-      {block.remains !== "" && (
-        <Text element="p" size="label" tone="ink" weight="normal" className={styles["kept"]}>
-          {block.remains}
-        </Text>
-      )}
-      {(retry.kind !== "none" || failedSteps.kind === "shown") && (
-        <div className={styles["doors"]}>
-          {retry.kind !== "none" && (
-            <Button
-              variant="outline-surface"
-              size="secondary"
-              pressed="none"
-              disabled={false}
-              disclosure={{ kind: "none" }}
-              className={styles["door"]}
-              onClick={() => {
-                block.onRetry(retry.request)
-              }}
-            >
-              {retry.label}
-            </Button>
-          )}
-          {failedSteps.kind === "shown" && (
-            <Button
-              variant="outline-surface"
-              size="secondary"
-              pressed="none"
-              disabled={false}
-              disclosure={{ kind: "none" }}
-              className={styles["door"]}
-              onClick={block.onShowFailedSteps}
-            >
-              {failedSteps.label}
-            </Button>
-          )}
-        </div>
-      )}
+        {block.reason !== "" && (
+          <Text
+            element="p"
+            size="inherit"
+            tone="inherit"
+            weight="inherit"
+            className={styles["reason"]}
+          >
+            {block.reason}
+          </Text>
+        )}
+        {block.detail !== "" && (
+          <Text element="p" size="label" tone="ink" weight="normal" className={styles["detail"]}>
+            {block.detail}
+          </Text>
+        )}
+        {block.remains !== "" && (
+          <Text element="p" size="label" tone="ink" weight="normal" className={styles["kept"]}>
+            {block.remains}
+          </Text>
+        )}
+        {(retry.kind !== "none" || failedSteps.kind === "shown") && (
+          <div className={styles["doors"]}>
+            {retry.kind !== "none" && (
+              <Button
+                variant="outline-surface"
+                size="secondary"
+                pressed="none"
+                disabled={false}
+                disclosure={{ kind: "none" }}
+                className={styles["door"]}
+                onClick={() => {
+                  block.onRetry(retry.request)
+                }}
+              >
+                {retry.label}
+              </Button>
+            )}
+            {failedSteps.kind === "shown" && (
+              <Button
+                variant="outline-surface"
+                size="secondary"
+                pressed="none"
+                disabled={false}
+                disclosure={{ kind: "none" }}
+                className={styles["door"]}
+                onClick={block.onShowFailedSteps}
+              >
+                {failedSteps.label}
+              </Button>
+            )}
+          </div>
+        )}
+      </StepFace>
     </section>
   )
 }

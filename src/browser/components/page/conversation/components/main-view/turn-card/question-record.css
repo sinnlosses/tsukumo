@@ -52,6 +52,7 @@
 .question-previews {
   margin: var(--space-sm) 0 0;
   padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--rule-quiet);
 }
 /* preview の持ち主の札。答え待ちの面のカードの見出しと同じ役割。 */
 /* 太さは `Text` が持つ。margin だけここに置く。 */
@@ -61,5 +62,8 @@
 
 .tool-block {
   margin: 0 0 var(--space-lg);
+}
+.tool-block-face {
   padding: var(--space-md);
+  border: 1px solid var(--rule-quiet);
 }

@@ -106,9 +106,9 @@
    塗りは根元より少し深く吹き出しの内側まで入れて縁の線を覆い、線は塗りの上に2辺だけ引く。 */
 .stream-aim {
   position: absolute;
-  inset: -1px;
-  inline-size: calc(100% + 2px);
-  block-size: calc(100% + 2px);
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
   overflow: visible;
   pointer-events: none;
 }

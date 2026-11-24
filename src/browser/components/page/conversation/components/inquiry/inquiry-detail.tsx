@@ -1,7 +1,7 @@
 // お伺いの、フォーカスした選択肢の詳細。札と広げた板が同じ部品で描く。
 
 import clsx from "clsx"
-import type { ReactElement } from "react"
+import type { ReactElement, ReactNode } from "react"
 
 import type { ReportImageSource } from "../../../../../../shared/report/report-image-markdown.ts"
 import type {
@@ -17,6 +17,7 @@ import {
 import { reportSectionsMarkdown } from "../../../../../features/report/report-markdown.ts"
 import { Badge } from "../../../../ui/badge/badge.tsx"
 import { HStack } from "../../../../ui/h-stack/h-stack.tsx"
+import { Surface } from "../../../../ui/surface/surface.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
 import { VStack } from "../../../../ui/v-stack/v-stack.tsx"
 import type {
@@ -177,21 +178,39 @@ export function InquiryOptionList(props: {
     <ul className={styles["inquiry-options"]}>
       {props.options.map((option) => (
         <li className={styles["inquiry-option"]} key={option.label}>
-          <HStack
-            element="div"
-            name={{ kind: "none" }}
-            gap="sm"
-            align="baseline"
-            justify="start"
-            wrap="nowrap"
-            className={styles["inquiry-option-choose-static"]}
-          >
-            <InquiryOptionContent option={option} />
-          </HStack>
-          <InquiryOptionDescription option={option} />
+          <OptionFace>
+            <HStack
+              element="div"
+              name={{ kind: "none" }}
+              gap="sm"
+              align="baseline"
+              justify="start"
+              wrap="nowrap"
+              className={styles["inquiry-option-choose-static"]}
+            >
+              <InquiryOptionContent option={option} />
+            </HStack>
+            <InquiryOptionDescription option={option} />
+          </OptionFace>
         </li>
       ))}
     </ul>
+  )
+}
+
+/** 選択肢1つぶんの顔。置き方・状態の class は外側の `li` が持つ。 */
+export function OptionFace(props: { readonly children: ReactNode }): ReactElement {
+  return (
+    <Surface
+      element="div"
+      tone="surface"
+      space="none"
+      radius="md"
+      shadow="none"
+      className={styles["inquiry-option-face"]}
+    >
+      {props.children}
+    </Surface>
   )
 }
 
@@ -213,26 +232,35 @@ export function InquiryDetail(props: {
       role="group"
       aria-label={`${option.text}${DETAIL_SUFFIX}`}
     >
-      <Text
-        element="p"
-        size="inherit"
-        tone="inherit"
-        weight="bold"
-        className={styles["inquiry-detail-title"]}
+      <Surface
+        element="div"
+        tone="surface"
+        space="none"
+        radius="md"
+        shadow="none"
+        className={styles["inquiry-detail-face"]}
       >
-        {option.text}
-        {DETAIL_SUFFIX}
-      </Text>
-      {option.preview !== undefined && (
-        <div className={clsx(detailBlockClassName, styles["detail-block"])}>
-          <QuestionPreviewMarkdown text={option.preview} toolUseId={props.askId} />
-        </div>
-      )}
-      {figures !== "" && (
-        <div className={clsx(detailBlockClassName, styles["detail-block"])}>
-          <Markdown text={figures} />
-        </div>
-      )}
+        <Text
+          element="p"
+          size="inherit"
+          tone="inherit"
+          weight="bold"
+          className={styles["inquiry-detail-title"]}
+        >
+          {option.text}
+          {DETAIL_SUFFIX}
+        </Text>
+        {option.preview !== undefined && (
+          <div className={clsx(detailBlockClassName, styles["detail-block"])}>
+            <QuestionPreviewMarkdown text={option.preview} toolUseId={props.askId} />
+          </div>
+        )}
+        {figures !== "" && (
+          <div className={clsx(detailBlockClassName, styles["detail-block"])}>
+            <Markdown text={figures} />
+          </div>
+        )}
+      </Surface>
     </div>
   )
 }

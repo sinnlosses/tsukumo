@@ -61,8 +61,13 @@ const arrivals = (): string[] =>
     (el) => el.getAttribute("data-arrival") ?? "",
   )
 
-const row = (text: string): HTMLElement =>
-  screen.getByText(text, { selector: '[data-speaker="character"]' })
+const row = (text: string): HTMLElement => {
+  const found = screen.getByText(text).closest<HTMLElement>('[data-speaker="character"]')
+  if (found === null) {
+    throw new Error(`セリフの行が無い: ${text}`)
+  }
+  return found
+}
 
 describe("セリフが届いた瞬間の吹き出しの出方", () => {
   it("最新のセリフの吹き出しだけに、表情の出方が付く", () => {

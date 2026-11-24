@@ -12,6 +12,7 @@ import { prop, sortBy } from "remeda"
 import type { CommandDescription } from "../../../../../../shared/session/command-description.ts"
 import { Text } from "../../../../ui/text/text.tsx"
 import styles from "./dispatch.module.css"
+import { SuggestionFrame } from "./suggestion-frame.tsx"
 
 const MAX_COMMAND_SUGGESTIONS = 10
 
@@ -60,7 +61,7 @@ export function CommandSuggestions(props: CommandSuggestionsProps): ReactElement
   }
 
   return (
-    <ul className={styles["dispatch-suggestions"]}>
+    <SuggestionFrame>
       {props.matches.map((command, index) => (
         <li
           key={command.name}
@@ -96,6 +97,6 @@ export function CommandSuggestions(props: CommandSuggestionsProps): ReactElement
           )}
         </li>
       ))}
-    </ul>
+    </SuggestionFrame>
   )
 }

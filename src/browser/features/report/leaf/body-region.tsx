@@ -43,7 +43,7 @@ export function ReportFrame(props: ReportFrameProps): ReactElement {
 
   return (
     // `.detail-block` を2つ重ねる。
-    // 見た目の本体は report-notation.module.css にあり、ステップの末尾の余白の打ち消し（`.main-step > .detail-block:last-child`）は置く側の CSS にあり、その class 名を `blockClassName` で受ける。
+    // 見た目の本体は report-notation.module.css にあり、ステップの末尾の余白の打ち消し（`.main-step-face > .detail-block:last-child`）は置く側の CSS にあり、その class 名を `blockClassName` で受ける。
     // CSS Modules は class 名をファイルごとにハッシュ化するので、片方だけでは打ち消しが当たらない。
     <div
       className={clsx(detailBlockClassName, props.blockClassName, props.className)}

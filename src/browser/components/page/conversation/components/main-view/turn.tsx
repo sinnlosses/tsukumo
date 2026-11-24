@@ -49,6 +49,7 @@ import { useReplyPort } from "./hooks/use-reply-port.ts"
 import styles from "./main-view.module.css"
 import { ProgressFold } from "./progress-fold.tsx"
 import { QuestionRecord } from "./question-record.tsx"
+import { StepFace } from "./step-face.tsx"
 import { AwaySeamLine, PostRow, SayRow } from "./stream-card.tsx"
 import { TurnFailureBlock } from "./turn-failure-block.tsx"
 import { VoiceBandPortal } from "./voice-band.tsx"
@@ -359,15 +360,17 @@ function Step(props: StepProps): ReactElement | undefined {
       className={stepClassName(step)}
       {...{ [REPORT_STEP_ATTRIBUTE]: step.mark === "final" ? REPORT_STEP_FINAL_VALUE : "" }}
     >
-      <StepReport
-        step={step}
-        turnId={props.turnId}
-        reveal={props.reveal}
-        latest={props.latest}
-        hasInterimReport={props.hasInterimReport}
-        folded={false}
-        phoneHidden={false}
-      />
+      <StepFace>
+        <StepReport
+          step={step}
+          turnId={props.turnId}
+          reveal={props.reveal}
+          latest={props.latest}
+          hasInterimReport={props.hasInterimReport}
+          folded={false}
+          phoneHidden={false}
+        />
+      </StepFace>
     </section>
   )
 }

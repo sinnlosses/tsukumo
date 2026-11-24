@@ -24,6 +24,7 @@ import { usePhoneWidth } from "../../../../../hooks/use-phone-width.ts"
 import { deferredModule } from "../../../../../stores/deferred-module.ts"
 import { Button } from "../../../../ui/button/button.tsx"
 import { ComposerShell } from "../../../../ui/composer-shell/composer-shell.tsx"
+import { Surface } from "../../../../ui/surface/surface.tsx"
 import { VStack } from "../../../../ui/v-stack/v-stack.tsx"
 import { PromptImageChips } from "../prompt-image/prompt-image.tsx"
 import { CommandSuggestions } from "./command-suggestion-list.tsx"
@@ -364,15 +365,24 @@ function PhoneAttach({
               }
             }}
           >
-            <button type="button" autoFocus onClick={choose(onPickImages)}>
-              画像を添える
-            </button>
-            <button type="button" onClick={choose(() => onInsertTrigger("/"))}>
-              / コマンド
-            </button>
-            <button type="button" onClick={choose(() => onInsertTrigger("@"))}>
-              @ ファイル
-            </button>
+            <Surface
+              element="div"
+              tone="surface"
+              space="none"
+              radius="xl"
+              shadow="none"
+              className={styles["phone-attach-sheet-face"]}
+            >
+              <button type="button" autoFocus onClick={choose(onPickImages)}>
+                画像を添える
+              </button>
+              <button type="button" onClick={choose(() => onInsertTrigger("/"))}>
+                / コマンド
+              </button>
+              <button type="button" onClick={choose(() => onInsertTrigger("@"))}>
+                @ ファイル
+              </button>
+            </Surface>
           </div>
         </>
       )}

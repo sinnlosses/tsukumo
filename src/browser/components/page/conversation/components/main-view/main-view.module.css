@@ -29,23 +29,15 @@
 .request-label {
   composes: visually-hidden from "../../../../ui/visually-hidden/visually-hidden.module.css";
 }
-/* 枠・角丸・地も同じく、`composes` の参照先を解ける入口に置く。 */
+/* ステップの顔（`.main-step-face`）の広い画面の縁と影。`turn-card/layout.css` の同じ詳細度の規則より後ろに置いて勝たせる。 */
 @media (min-width: 761px) {
-  .main-step.main-step {
+  .main-step.main-step .main-step-face,
+  .main-step-face-interim.main-step-face-interim {
     border-color: var(--panel-edge-quiet);
     box-shadow: var(--panel-paper-lift);
   }
   /* 上の規則と詳細度が同じで後ろに置くので、失敗の枠の色が広い画面でも勝つ。 */
-  .main-step.is-failed {
+  .main-step.is-failed .main-step-face {
     border-color: var(--state-ng);
   }
-}
-.main-step {
-  composes: surface-edge-rule surface-radius-md surface-tone-surface from "../../../../ui/surface/surface-face.module.css";
-}
-.question-previews {
-  composes: surface-edge-rule surface-radius-md surface-tone-ground from "../../../../ui/surface/surface-face.module.css";
-}
-.tool-block {
-  composes: surface-edge-rule surface-radius-md surface-tone-surface from "../../../../ui/surface/surface-face.module.css";
 }
