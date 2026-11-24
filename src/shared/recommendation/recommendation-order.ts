@@ -19,6 +19,8 @@ export type RecommendationOrderEntry = {
   readonly waitedBy: readonly string[]
 }
 
+const LAUNCH_SKILL_PATTERN = /^[A-Za-z0-9_:-]+$/
+
 /** 緊急度と重要度の順（小さいほど先）。 */
 const LEVEL_ORDER = { high: 0, normal: 1, low: 2 } as const satisfies Record<TaskImportance, number>
 
@@ -41,6 +43,12 @@ export function readyTasksInOrder(tasks: TaskSummaryResult): readonly TaskSummar
 export function taskStartRequest(taskId: string, launchSkill = ""): string {
   const skill = launchSkillOf(launchSkill)
   return skill === "" ? `タスク ${taskId} を進めて。` : `/${skill} ${taskId}`
+}
+
+/** 畳んだ起動スキル名。未設定・使えない文字を含む値は空文字。 */
+export function launchSkillOf(raw: string): string {
+  const skill = raw.trim().replace(/^\//, "").trim()
+  return LAUNCH_SKILL_PATTERN.test(skill) ? skill : ""
 }
 
 /**
@@ -79,12 +87,4 @@ function activeWaiterIds(items: readonly TaskSummaryItem[], id: string): readonl
         (hasTaskStatus(other, "todo") || hasTaskStatus(other, "doing")),
     )
     .map((other) => other.id)
-}
-
-const LAUNCH_SKILL_PATTERN = /^[A-Za-z0-9_:-]+$/
-
-/** 畳んだスキル名。未設定・使えない文字を含む値は空文字。 */
-function launchSkillOf(raw: string): string {
-  const skill = raw.trim().replace(/^\//, "").trim()
-  return LAUNCH_SKILL_PATTERN.test(skill) ? skill : ""
 }

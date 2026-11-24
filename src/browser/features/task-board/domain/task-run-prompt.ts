@@ -1,6 +1,9 @@
 // 頼む口で頼めるタスクと、送る文面。
 
-import { taskStartRequest } from "../../../../shared/recommendation/recommendation-order.ts"
+import {
+  launchSkillOf,
+  taskStartRequest,
+} from "../../../../shared/recommendation/recommendation-order.ts"
 import {
   hasTaskStatus,
   taskReadiness,
@@ -56,7 +59,7 @@ export function requestPromptOf(target: TaskRunTarget, launchSkill = ""): string
       if (!request.held) {
         return prompt
       }
-      return prompt.startsWith("/") ? `${prompt} ${HELD_NOTE}` : `${prompt}${HELD_NOTE}`
+      return launchSkillOf(launchSkill) === "" ? `${prompt}${HELD_NOTE}` : `${prompt} ${HELD_NOTE}`
     }
     case "plan":
       return `ドラフト ${taskId} を計画して。## 完了条件 と ## やること を書いて、着手できる todo にする。`
