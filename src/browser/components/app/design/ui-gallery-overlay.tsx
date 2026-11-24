@@ -1,4 +1,4 @@
-// 見本帳の `ui/` の節のうち、重なる面の部品（Dialog・BottomSheet・CommandPalette・Menu・Popover・ImageZoom）。開くボタンを置き、押すと出る。
+// 見本帳の `ui/` の節のうち、重なる面の部品（Dialog・ConfirmDialog・BottomSheet・CommandPalette・Menu・Popover・ImageZoom）。開くボタンを置き、押すと出る。
 
 import { useRef, useState, type ReactElement } from "react"
 
@@ -8,6 +8,7 @@ import {
   CommandPalette,
   type CommandPaletteRow,
 } from "../../ui/command-palette/command-palette.tsx"
+import { ConfirmDialog, ConfirmDialogCode } from "../../ui/confirm-dialog/confirm-dialog.tsx"
 import { Dialog } from "../../ui/dialog/dialog.tsx"
 import { ImageZoom } from "../../ui/image-zoom/image-zoom.tsx"
 import { Menu, type MenuItem } from "../../ui/menu/menu.tsx"
@@ -57,6 +58,7 @@ const PALETTE_ROWS = [
 
 export function OverlayGroups(): ReactElement {
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [confirmOpen, setConfirmOpen] = useState(false)
   const [sheetOpen, setSheetOpen] = useState(false)
   const [zoomOpen, setZoomOpen] = useState(false)
   const [paletteOpen, setPaletteOpen] = useState(false)
@@ -78,6 +80,23 @@ export function OverlayGroups(): ReactElement {
           </Text>
           <CloseButton onClose={() => setDialogOpen(false)} />
         </Dialog>
+      </Group>
+      <Group title="ConfirmDialog（開くと出る）" parts={["confirm-dialog"]}>
+        <Opener label="ConfirmDialog を開く" onOpen={() => setConfirmOpen(true)} />
+        {confirmOpen && (
+          <ConfirmDialog
+            ariaLabel="見本の確認"
+            heading="架空の操作を実行しますか"
+            note={
+              <>
+                <ConfirmDialogCode>架空の文面</ConfirmDialogCode> が実行されます。
+              </>
+            }
+            cancelLabel="キャンセル"
+            confirm={{ label: "実行する", onPress: () => setConfirmOpen(false) }}
+            onClose={() => setConfirmOpen(false)}
+          />
+        )}
       </Group>
       <Group title="BottomSheet（狭い画面で開くと出る）" parts={["bottom-sheet"]}>
         <Opener label="BottomSheet を開く" onOpen={() => setSheetOpen(true)} />
