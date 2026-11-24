@@ -19,6 +19,9 @@ import { PhoneBalloon } from "./phone-balloon.tsx"
 import { SpeechLog } from "./speech-log.tsx"
 type PresentationalCharacterViewProps = CharacterViewModel
 
+const PRESS_TO_NEWEST = "（押すと、いまの一言へ戻る）"
+const PRESS_TO_PINNED = "（押すと、選んだ一言の出方をもう一度）"
+
 export function PresentationalCharacterView({
   portraitUrl,
   altText,
@@ -57,7 +60,7 @@ export function PresentationalCharacterView({
         ) : undefined
       }
       press={{
-        label: `${speakerName ?? altText}（押すと、いまの一言へ戻る）`,
+        label: `${speakerName ?? altText}${pinnedSpeech === undefined ? PRESS_TO_NEWEST : PRESS_TO_PINNED}`,
         onPress: onPortraitPress,
       }}
     />
@@ -94,7 +97,14 @@ export function PresentationalCharacterView({
           {stagePortrait}
         </HStack>
         {portraitUrl !== undefined && manpu.kind === "shown" && (
-          <Manpu key={manpu.at} manpu={manpu.manpu} faceAt={manpu.faceAt} onShown={onManpuShown} />
+          <Manpu
+            key={manpu.at}
+            manpu={manpu.manpu}
+            faceAt={manpu.faceAt}
+            onShown={(shown) => {
+              onManpuShown(shown, manpu.voice)
+            }}
+          />
         )}
       </div>
       <ItemSeats seats={seats} portraitShown={portraitUrl !== undefined} />

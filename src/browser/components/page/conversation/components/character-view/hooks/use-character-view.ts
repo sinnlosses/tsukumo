@@ -54,6 +54,7 @@ import {
   SPEECH_ARRIVALS,
   type SpeechArrival,
   type SpeechManpu,
+  type VoiceAt,
 } from "../../../domain/speech-arrival.ts"
 import { welcomeHeadOf } from "../../../domain/welcome-entry-list.ts"
 import { useComposerDraft } from "../../../stores/composer-draft.ts"
@@ -81,7 +82,10 @@ export type CharacterViewModel = {
   readonly speakerName?: string
   /** セリフのログへ渡す、いま留めている行（`<SpeechLog>` と印・表情の状態を共有する）。 */
   readonly pinnedSpeech?: PinnedSpeech
-  /** 立ち絵を押したとき。留めを解き、いまの一言まで流れを送り、その動きと出方をもう一度掛ける。 */
+  /**
+   * 立ち絵を押したとき。留めた行があれば、留めたままその行の動きと出方をもう一度掛ける。
+   * 無ければ、いまの一言まで流れを送り、その動きと出方をもう一度掛ける。
+   */
   readonly onPortraitPress: () => void
   /** セリフのログの行を押したとき（`<SpeechLog>` から呼ぶ。立ち絵の表情が遡る）。 */
   readonly onToggleSpeech: (turnId: number, index: number) => void
@@ -91,8 +95,8 @@ export type CharacterViewModel = {
   readonly onCloseSpeechLog: () => void
   /** セリフが届いた瞬間の漫符。出さないときは `none`。`at` が替わるたびに作り直して1回だけ再生させる。 */
   readonly manpu: ArrivalManpu
-  /** エフェクトを出したとき。立ち絵を押して掛け直すときに同じものを出すため、いまの声と組で控える。 */
-  readonly onManpuShown: (manpu: SpeechManpu | EndingManpu) => void
+  /** エフェクトを出したとき。立ち絵を押して掛け直すときに同じものを出すため、出した声と組で控える。 */
+  readonly onManpuShown: (manpu: SpeechManpu | EndingManpu, voice?: VoiceAt) => void
   /** 狭い画面の顔（パックの `face` の1枚）。 */
   readonly face: CharacterFaceInfo
   /** 狭い画面の吹き出しに出す最新の1件。 */
@@ -111,6 +115,8 @@ export type ArrivalManpu =
       readonly manpu: SpeechManpu | EndingManpu
       readonly at: number
       readonly faceAt: FaceAt
+      /** 届いた声のエフェクトなら、その声。終わり方のエフェクトには無い。 */
+      readonly voice?: VoiceAt
     }
 
 /**
@@ -228,8 +234,16 @@ export function useCharacterView(): CharacterViewModel {
     speakerName: character?.name,
     pinnedSpeech: pinned,
     onPortraitPress: () => {
+      if (pinned !== undefined && pinnedSpeech !== undefined) {
+        replayArrival(nowEpochMilliseconds(), {
+          kind: "pinned",
+          ...pinned,
+          expression: pinnedSpeech.expression,
+        })
+        return
+      }
       releaseSpeech()
-      replayArrival(nowEpochMilliseconds())
+      replayArrival(nowEpochMilliseconds(), { kind: "newest" })
       requestAnimationFrame(() => {
         scrollToFollowedRow()
       })
@@ -289,6 +303,7 @@ function arrivalManpuOf(
     manpu,
     at: arrived.at,
     faceAt: faceAtOf(arrived.expression, character),
+    voice: { turnId: arrived.turnId, index: arrived.index },
   }
 }
 

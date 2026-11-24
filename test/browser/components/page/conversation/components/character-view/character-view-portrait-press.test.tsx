@@ -2,7 +2,7 @@ import { act, cleanup, fireEvent, screen, within } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import {
-  NO_SHOWN_MANPU,
+  NO_SHOWN_MANPUS,
   NO_SPEECH_ARRIVAL,
 } from "../../../../../../../src/browser/components/page/conversation/domain/speech-arrival.ts"
 import {
@@ -42,8 +42,6 @@ function twoSpeechState(): Partial<SessionState> {
   }
 }
 
-const PRESS_NAME = /（押すと、いまの一言へ戻る）$/
-
 const scrollIntoView = vi.fn<(options: ScrollIntoViewOptions) => void>()
 
 beforeEach(() => {
@@ -53,7 +51,7 @@ beforeEach(() => {
     callback(0)
     return 0
   })
-  useSpeechArrival.setState({ arrival: NO_SPEECH_ARRIVAL, shown: NO_SHOWN_MANPU })
+  useSpeechArrival.setState({ arrival: NO_SPEECH_ARRIVAL, shown: NO_SHOWN_MANPUS })
 })
 
 afterEach(() => {
@@ -64,7 +62,12 @@ afterEach(() => {
 })
 
 describe("CharacterView（立ち絵を押すと、いまの一言へ戻る）", () => {
-  const stagePortrait = (): HTMLElement => screen.getByRole("button", { name: PRESS_NAME })
+  const stagePortrait = (): HTMLElement => screen.getByRole("button", { name: /（押すと、.+）$/ })
+  const pinFirstSpeech = (): void => {
+    fireEvent.click(screen.getByTitle("セリフのログを開く"))
+    const log = screen.getByRole("dialog", { name: "セリフのログ", hidden: true })
+    fireEvent.click(within(log).getByRole("button", { name: "1つ目のセリフ", hidden: true }))
+  }
   const portraitExpression = (): string | null | undefined =>
     document
       .querySelector("[data-character-stage] [data-expression]")
@@ -79,16 +82,41 @@ describe("CharacterView（立ち絵を押すと、いまの一言へ戻る）", 
     )
   })
 
-  it("留めたセリフがあれば解き、立ち絵が最新の表情へ戻る", () => {
+  it("留めたセリフがあれば留めたまま、そのセリフの表情で動きと出方をもう一度掛ける", () => {
     renderCharacterView(twoSpeechState())
-    fireEvent.click(screen.getByTitle("セリフのログを開く"))
-    const log = screen.getByRole("dialog", { name: "セリフのログ", hidden: true })
-    fireEvent.click(within(log).getByRole("button", { name: "1つ目のセリフ", hidden: true }))
+    pinFirstSpeech()
     expect(portraitExpression()).toBe("default")
 
     fireEvent.click(stagePortrait())
 
-    expect(portraitExpression()).toBe("proud")
+    expect(portraitExpression()).toBe("default")
+    expect(useSpeechArrival.getState().arrival).toMatchObject({
+      kind: "arrived",
+      index: 0,
+      expression: "default",
+    })
+  })
+
+  it("留めたセリフのあいだに出したエフェクトがあれば、押すとそれを出し直す", () => {
+    renderCharacterView(twoSpeechState())
+    act(() => {
+      useSpeechArrival.getState().recordShown("stars", { turnId: 0, index: 0 })
+      useSpeechArrival.getState().recordShown("shock")
+    })
+    pinFirstSpeech()
+
+    fireEvent.click(stagePortrait())
+
+    expect(document.body.querySelector("[data-manpu]")?.getAttribute("data-manpu")).toBe("stars")
+  })
+
+  it("留めているあいだは、読み上げの名前が押した先を言い換える", () => {
+    renderCharacterView(twoSpeechState())
+    pinFirstSpeech()
+
+    expect(
+      screen.getByRole("button", { name: /（押すと、選んだ一言の出方をもう一度）$/ }),
+    ).toBeDefined()
   })
 
   it("いまの一言が届いたものとして、動きと出方をもう一度掛ける", () => {
@@ -114,8 +142,8 @@ describe("CharacterView（立ち絵を押すと、いまの一言へ戻る）", 
 
   it("控えが前の声のものなら使わず、表情のエフェクトを出す", () => {
     renderCharacterView(twoSpeechState())
-    useSpeechArrival.setState({
-      shown: { kind: "shown", turnId: 0, index: 0, manpu: "stars" },
+    act(() => {
+      useSpeechArrival.getState().recordShown("stars", { turnId: 0, index: 0 })
     })
 
     fireEvent.click(stagePortrait())
@@ -129,11 +157,11 @@ describe("CharacterView（立ち絵を押すと、いまの一言へ戻る）", 
     fireEvent.keyDown(stagePortrait(), { key: "Enter" })
     expect(useSpeechArrival.getState().arrival.kind).toBe("arrived")
 
-    useSpeechArrival.setState({ arrival: NO_SPEECH_ARRIVAL, shown: NO_SHOWN_MANPU })
+    useSpeechArrival.setState({ arrival: NO_SPEECH_ARRIVAL, shown: NO_SHOWN_MANPUS })
     fireEvent.keyDown(stagePortrait(), { key: " " })
     expect(useSpeechArrival.getState().arrival.kind).toBe("arrived")
 
-    useSpeechArrival.setState({ arrival: NO_SPEECH_ARRIVAL, shown: NO_SHOWN_MANPU })
+    useSpeechArrival.setState({ arrival: NO_SPEECH_ARRIVAL, shown: NO_SHOWN_MANPUS })
     fireEvent.keyDown(stagePortrait(), { key: "a" })
     expect(useSpeechArrival.getState().arrival.kind).toBe("none")
   })

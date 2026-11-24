@@ -72,36 +72,50 @@ export type SpeechArrival =
       readonly manpu?: SpeechManpu | EndingManpu
     }
 
-/** 声（いちばん新しいやり取りの `index` 番目）と、その声のあいだに実際に出したエフェクトの控え。 */
-export type ShownManpu =
-  | { readonly kind: "none" }
-  | {
-      readonly kind: "shown"
-      readonly turnId: number
-      readonly index: number
-      readonly manpu: SpeechManpu | EndingManpu
-    }
+/** 声（やり取りの番号と、そのやり取りの並びの中の位置）。 */
+export type VoiceAt = { readonly turnId: number; readonly index: number }
 
-export const NO_SHOWN_MANPU = { kind: "none" } as const satisfies ShownManpu
+/** 声ごとの、その声のあいだに実際に出した最後のエフェクトの控え。キーは `voiceKeyOf`。 */
+export type ShownManpus = ReadonlyMap<string, SpeechManpu | EndingManpu>
 
-/** いまの声で出したエフェクトの控え。声が無ければ控えない。 */
-export function shownManpuOf(voices: NewestVoices, manpu: SpeechManpu | EndingManpu): ShownManpu {
+export const NO_SHOWN_MANPUS: ShownManpus = new Map()
+
+/**
+ * 声で出したエフェクトを控えに足す（同じ声の前の控えは置き換える）。
+ * 声が `newest` なら、いちばん新しいやり取りの最後の声と組にする。その声が無ければ控えない。
+ */
+export function withRecordedManpu(
+  shown: ShownManpus,
+  voice:
+    | { readonly kind: "at"; readonly at: VoiceAt }
+    | { readonly kind: "newest"; readonly voices: NewestVoices },
+  manpu: SpeechManpu | EndingManpu,
+): ShownManpus {
+  if (voice.kind === "at") {
+    return new Map(shown).set(voiceKeyOf(voice.at), manpu)
+  }
+  const { voices } = voice
   return voices.count === 0
-    ? NO_SHOWN_MANPU
-    : { kind: "shown", turnId: voices.turnId, index: voices.count - 1, manpu }
+    ? shown
+    : new Map(shown).set(voiceKeyOf({ turnId: voices.turnId, index: voices.count - 1 }), manpu)
 }
 
-/** 掛け直す届きに、同じ声で実際に出したエフェクトを添える。控えが別の声のものなら添えない。 */
-export function withShownManpu(arrival: SpeechArrival, shown: ShownManpu): SpeechArrival {
-  if (
-    arrival.kind === "none" ||
-    shown.kind === "none" ||
-    shown.turnId !== arrival.turnId ||
-    shown.index !== arrival.index
-  ) {
+/** 声が、いま届いたものとして掛け直す届き。 */
+export function replayedArrivalOf(
+  voice: VoiceAt,
+  expression: Expression,
+  at: number,
+): SpeechArrival {
+  return { kind: "arrived", turnId: voice.turnId, index: voice.index, expression, at }
+}
+
+/** 掛け直す届きに、同じ声で実際に出したエフェクトを添える。その声の控えが無ければ添えない。 */
+export function withShownManpu(arrival: SpeechArrival, shown: ShownManpus): SpeechArrival {
+  if (arrival.kind === "none") {
     return arrival
   }
-  return { ...arrival, manpu: shown.manpu }
+  const manpu = shown.get(voiceKeyOf(arrival))
+  return manpu === undefined ? arrival : { ...arrival, manpu }
 }
 
 export const NO_SPEECH_ARRIVAL = { kind: "none" } as const satisfies SpeechArrival
@@ -182,4 +196,8 @@ export function arrivingBubbleOf(arrival: SpeechArrival, now: number): ArrivingB
 /** 出方が付いている残り時間（ミリ秒）。付いていなければ 0。 */
 export function arrivingBubbleRemainingMs(arrival: SpeechArrival, now: number): number {
   return arrival.kind === "none" ? 0 : Math.max(0, arrival.at + ARRIVING_BUBBLE_WINDOW_MS - now)
+}
+
+function voiceKeyOf(voice: VoiceAt): string {
+  return `${voice.turnId}:${voice.index}`
 }
