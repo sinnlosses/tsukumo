@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<title>左の列にやり取りと過去のセッションを出す — 3案（2026-11-24）</title>
+<style>
+  :root { color-scheme: dark; }
+  body { margin: 0; padding: 24px; background: #141318; color: #ece9ef; font: 14px/1.7 system-ui, "Hiragino Sans", sans-serif; }
+  h1 { font-size: 18px; margin: 0 0 6px; }
+  p { margin: 0 0 18px; color: #b9b4bf; max-width: 980px; }
+  section { margin-bottom: 30px; }
+  h2 { font-size: 15px; margin: 0 0 6px; }
+  h2 small { font-weight: 400; color: #9a95a0; margin-left: 8px; }
+  .pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; max-width: 1400px; }
+  figure { margin: 0; }
+  figcaption { font-size: 12px; color: #9a95a0; margin-top: 4px; }
+  img { display: block; width: 100%; border-radius: 10px; }
+  a { color: oklch(0.8 0.11 185); }
+</style>
+</head>
+<body>
+<h1>左の列にやり取りと過去のセッションを出す — 3案</h1>
+<p>土台は今の画面（疑似セッション turn-outline-many・1400×900）。左の列の札だけを描き直した。セッションの行は架空で、今の切り替えダイアログ（⌘J）と同じ材料（題・時刻・今日／昨日／それより前・ほかのタブで開いている印）だけを使う。ほかの作業ツリーと探す欄はダイアログに残す。場面は <a href="scene.html?form=a">scene.html?form=now|a|a-fold|b|b-turns|c</a>。</p>
+<section><h2>今<small>過去のセッションはヘッダーの短縮ID（またはダイアログ）からしか見えない</small></h2>
+  <div class="pair"><figure><img src="base.png" alt="今の画面" /></figure></div></section>
+<section><h2>案A 二段の札（推奨）<small>やり取りの札の下に「セッション」の札。どちらも見出しの帯に畳める</small></h2>
+  <div class="pair">
+    <figure><img src="a.png" alt="案A 両方開いた形" /><figcaption>両方開いた形。やり取りは高さを分け合い、末尾（いま）に寄せる</figcaption></figure>
+    <figure><img src="a-fold.png" alt="案A やり取りを畳んだ形" /><figcaption>やり取りを見出しの帯に畳むと、セッションが昨日・それより前まで伸びる</figcaption></figure>
+  </div></section>
+<section><h2>案B 札の頭で切り替え<small>1枚の札の頭に「やり取り｜セッション」。開いた形のやり取りは今と同じ高さ</small></h2>
+  <div class="pair">
+    <figure><img src="b-turns.png" alt="案B やり取り側" /><figcaption>やり取り側。見出しの代わりに切り替えが入るだけ</figcaption></figure>
+    <figure><img src="b.png" alt="案B セッション側" /><figcaption>セッション側。いまのセッションは先頭で印つき</figcaption></figure>
+  </div></section>
+<section><h2>案C セッションの木<small>いまのセッションの下にやり取りを入れ子で開く。やり取りの開いた形は変わる</small></h2>
+  <div class="pair"><figure><img src="c.png" alt="案C" /><figcaption>列の幅 232px では題が 9〜10字で切れる</figcaption></figure></div></section>
+</body>
+</html>

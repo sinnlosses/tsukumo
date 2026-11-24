@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<title>左の列にやり取りと過去のセッション — 場面</title>
+<!--
+  土台は capture-view --scene turn-outline-many の画（架空の会話・1400×900）。
+  左の列の札だけを上から描き直す。?form=now|a|a-fold|b|c
+-->
+<style>
+  :root {
+    color-scheme: dark;
+    --ink: #e9e4ec;
+    --ink-soft: color-mix(in srgb, var(--ink) 72%, transparent);
+    --ink-quiet: color-mix(in srgb, var(--ink) 48%, transparent);
+    --line: color-mix(in srgb, var(--ink) 9%, transparent);
+    --panel: rgb(34 31 42 / .86);
+    --accent: #e7b469;
+    --accent-soft: color-mix(in srgb, var(--accent) 14%, transparent);
+    --ok: #8fc79a;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; width: 1400px; height: 900px; overflow: hidden; background: #000 url(base.png) 0 0 / 1400px 900px no-repeat;
+    font: 13px/1.5 "Hiragino Sans", system-ui, sans-serif; color: var(--ink); position: relative; }
+  /* 今の札を覆う（背景の部屋は残す） */
+  .erase { position: absolute; left: 22px; top: 60px; width: 250px; height: 414px; overflow: hidden; }
+  /* 札の跡を消す: 枠より大きい子をぼかし、縁の透けを枠の外へ追い出す */
+  .erase::before { content: ""; position: absolute; inset: -60px; background: url(base.png) 38px 0 / 1400px 900px no-repeat;
+    filter: blur(34px) brightness(.95); }
+  body[data-form="now"] .erase, body[data-form="now"] .col { display: none; }
+
+  .col { position: absolute; left: 30px; top: 68px; width: 232px; display: flex; flex-direction: column; gap: 10px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; backdrop-filter: blur(8px);
+    box-shadow: 0 8px 24px rgb(0 0 0 / .28); overflow: hidden; display: flex; flex-direction: column; }
+  .head { display: flex; align-items: center; gap: 6px; padding: 10px 12px 6px 20px; color: var(--ink-soft); font-size: 12.5px; }
+  .head .n { color: var(--ink-quiet); font-variant-numeric: tabular-nums; }
+  .head .chev { margin-left: auto; width: 16px; height: 16px; display: grid; place-items: center; color: var(--ink-soft); }
+  .head .chev svg { width: 12px; height: 12px; }
+  .list { overflow: hidden; padding: 0 6px 8px; }
+  .row { display: flex; align-items: center; gap: 8px; height: 38px; padding: 0 10px 0 14px; border-radius: 8px; color: var(--ink-soft); white-space: nowrap; }
+  .row .t { overflow: hidden; text-overflow: ellipsis; flex: 1; min-width: 0; }
+  .row .mk { width: 10px; flex: none; color: var(--ok); font-size: 11px; text-align: center; opacity: .75; }
+  .row.cur { background: color-mix(in srgb, var(--ink) 9%, transparent); color: var(--ink); font-weight: 600; }
+  .row.cur .mk::before { content: ""; display: block; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); margin: auto; }
+  .row .time { color: var(--ink-quiet); font-size: 11.5px; flex: none; font-variant-numeric: tabular-nums; }
+  .row.sess { height: 34px; }
+  .row.sess .mk::before { content: ""; display: block; width: 5px; height: 5px; border-radius: 50%; background: var(--ink-quiet); margin: auto; }
+  .row.sess.cur .mk::before { width: 8px; height: 8px; background: var(--accent); }
+  .row.sess.busy .mk::before { background: transparent; border: 1.5px solid var(--ink-quiet); width: 7px; height: 7px; }
+  .grp { padding: 8px 14px 2px; font-size: 11px; color: var(--ink-quiet); letter-spacing: .04em; }
+  .more { display: flex; align-items: center; gap: 6px; margin: 2px 6px 8px; padding: 6px 14px; border-radius: 8px; color: var(--ink-quiet); font-size: 12px; }
+  .more kbd { margin-left: auto; font: 11px/1 system-ui; padding: 3px 5px; border-radius: 4px; border: 1px solid var(--line); color: var(--ink-quiet); }
+  .fade { position: relative; }
+  .fade::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 22px; background: linear-gradient(transparent, rgb(34 31 42 / .9)); pointer-events: none; }
+
+  /* 案B の切り替え */
+  .seg { display: flex; gap: 2px; margin: 8px 8px 6px; padding: 3px; border-radius: 9px; background: rgb(0 0 0 / .22); }
+  .seg span { flex: 1; text-align: center; padding: 4px 0; border-radius: 7px; font-size: 12.5px; color: var(--ink-quiet); }
+  .seg span b { font-weight: 400; margin-left: 4px; font-variant-numeric: tabular-nums; opacity: .8; }
+  .seg span[aria-selected="true"] { background: color-mix(in srgb, var(--ink) 11%, transparent); color: var(--ink); }
+
+  /* 案C の入れ子 */
+  .row.parent { font-weight: 600; color: var(--ink); }
+  .row.parent .mk::before { content: ""; display: block; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); margin: auto; }
+  .nest { margin-left: 18px; border-left: 1px solid var(--line); padding-left: 2px; }
+  .nest .row { height: 32px; font-size: 12.5px; }
+  .nest .row.cur { font-weight: 600; }
+  .nest .row.cur .mk::before { width: 6px; height: 6px; }
+</style>
+</head>
+<body>
+<div class="erase"></div>
+<div class="col" id="col"></div>
+<script>
+const form = new URLSearchParams(location.search).get("form") ?? "a"
+document.body.dataset.form = form
+const chevUp = `<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 7.5 6 4.5 9 7.5"/></svg>`
+const chevDown = `<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 4.5 6 7.5 9 4.5"/></svg>`
+const turns = n => Array.from({ length: n }, (_, i) => 12 - n + 1 + i)
+const turnRow = (k, cur) => `<div class="row${cur ? " cur" : ""}"><span class="mk">${cur ? "" : "✓"}</span><span class="t">${k}件目の依頼（架空の依頼）</span></div>`
+const turnRows = n => turns(n).map(k => turnRow(k, k === 12)).join("")
+// 架空のセッション。いまのセッションは「12件目の依頼」の会話
+const sessions = [
+  { g: "今日", items: [
+    { t: "12件目の依頼（架空の依頼）", time: "いま", cur: true },
+    { t: "手順の図の着手の置き場", time: "21:10" },
+    { t: "立ち絵の縁を整える", time: "19:42", busy: true },
+    { t: "入力欄の画像の控え", time: "15:03" },
+  ]},
+  { g: "昨日", items: [
+    { t: "ステータスピルの完了の緑", time: "23:18" },
+    { t: "地図の YAML を読む口", time: "17:55" },
+  ]},
+  { g: "それより前", items: [
+    { t: "サイドバーの段と行", time: "11/22" },
+  ]},
+]
+const sessRow = s => `<div class="row sess${s.cur ? " cur" : ""}${s.busy ? " busy" : ""}" ${s.busy ? 'title="ほかのタブで開いている"' : ""}><span class="mk"></span><span class="t">${s.t}</span><span class="time">${s.time}</span></div>`
+const sessRows = (skipCur, limitGroups = 2) => sessions.slice(0, limitGroups).map(g =>
+  `<div class="grp">${g.g}</div>` + g.items.filter(s => !(skipCur && s.cur)).map(sessRow).join("")).join("")
+const more = label => `<div class="more">${label}<kbd>⌘J</kbd></div>`
+
+const col = document.getElementById("col")
+if (form === "a" || form === "a-fold") {
+  const folded = form === "a-fold"
+  col.innerHTML = `
+    <section class="card">
+      <div class="head">やり取り <span class="n">12</span><span class="chev">${folded ? chevDown : chevUp}</span></div>
+      ${folded ? "" : `<div class="list fade" style="height:200px;display:flex;flex-direction:column;justify-content:flex-end">${turnRows(5)}</div>`}
+    </section>
+    <section class="card">
+      <div class="head">セッション <span class="n">${folded ? "今日 4" : ""}</span><span class="chev">${chevUp}</span></div>
+      <div class="list" style="padding-bottom:0">${sessRows(true, folded ? 3 : 1)}</div>
+      ${more("ほかの作業ツリー・探す")}
+    </section>`
+} else if (form === "b") {
+  col.innerHTML = `
+    <section class="card" style="height:396px">
+      <div class="seg" role="tablist"><span role="tab">やり取り<b>12</b></span><span role="tab" aria-selected="true">セッション<b>6</b></span></div>
+      <div class="list" style="flex:1">${sessRows(false)}</div>
+      ${more("ほかの作業ツリー・探す")}
+    </section>`
+} else if (form === "b-turns") {
+  col.innerHTML = `
+    <section class="card" style="height:396px">
+      <div class="seg" role="tablist"><span role="tab" aria-selected="true">やり取り<b>12</b></span><span role="tab">セッション<b>6</b></span></div>
+      <div class="list" style="flex:1;display:flex;flex-direction:column;justify-content:flex-end">${turnRows(9)}</div>
+    </section>`
+} else if (form === "c") {
+  const today = sessions[0].items
+  col.innerHTML = `
+    <section class="card">
+      <div class="head">セッション <span class="n">6</span><span class="chev">${chevUp}</span></div>
+      <div class="list" style="flex:1">
+        <div class="grp">今日</div>
+        <div class="row sess parent"><span class="mk"></span><span class="t">${today[0].t}</span><span class="time">12</span></div>
+        <div class="nest fade" style="height:166px;display:flex;flex-direction:column;justify-content:flex-end">${turns(5).map(k => turnRow(k, k === 12)).join("")}</div>
+        ${today.slice(1).map(sessRow).join("")}
+      </div>
+      ${more("ほかの作業ツリー・探す")}
+    </section>`
+}
+</script>
+</body>
+</html>
