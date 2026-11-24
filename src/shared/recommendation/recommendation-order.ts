@@ -35,8 +35,7 @@ export function readyTasksInOrder(tasks: TaskSummaryResult): readonly TaskSummar
 }
 
 /**
- * タスクの着手を頼む文。サイドバー・迎えのカード・次の一手の札で同じ文面にする。
- * `launchSkill` は利用者が書いた起動スキル名。
+ * タスクの着手を頼む文。`launchSkill` は利用者が書いた起動スキル名。
  * 先頭の `/` と前後の空白を畳み、空・使えない文字を含む値は未設定として固定の文面にする。
  */
 export function taskStartRequest(taskId: string, launchSkill = ""): string {
