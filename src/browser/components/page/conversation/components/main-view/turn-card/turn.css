@@ -14,6 +14,11 @@
 .progress-fold {
   margin: 0;
 }
+/* 中のセリフの吹き出しの尾は、立ち絵へ向けて吹き出しの左へはみ出す。
+   畳みの中身は開閉の動きのために切り取られるので、横だけ切り取りを外す（縦は動きのために残す）。 */
+.progress-fold[open]::details-content {
+  overflow-x: visible;
+}
 /* 狭い画面では押す的を上下へ広げる。 */
 @media (max-width: 760px) {
   .progress-fold > summary {
