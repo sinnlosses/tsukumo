@@ -15,10 +15,6 @@ import type {
 } from "../../../../../shared/session/background-model.ts"
 import { BUILTIN_BACKGROUND_MODELS } from "../../../../../shared/session/background-model.ts"
 import {
-  DEFAULT_APPEARANCE_ADJUST,
-  BUILTIN_GEAR_PREFERENCES,
-} from "../../../../../shared/session/gear-preference.ts"
-import {
   isEffortLevel,
   isModelAlias,
   type ModelAlias,
@@ -39,25 +35,18 @@ import {
   type SpeakingPace,
 } from "../../../../../shared/session/speaking-pace.ts"
 import type { AppearanceTheme } from "../../../../domain/appearance-color.ts"
-import {
-  effortLabel,
-  resolveEffortSelect,
-  type EffortSelect,
-} from "../../../../domain/effort-label.ts"
-import { REVEAL_SPEED_LABELS } from "../../../../domain/reveal-speed.ts"
-import type { SettingEntryKey, SettingFaceKey } from "../../../../domain/setting-entry.ts"
-import { MODEL_LABELS } from "../../../../features/run-setting/model-label.ts"
-import { PERMISSION_MODE_LABELS } from "../../../../features/run-setting/permission-mode-label.ts"
+import { resolveEffortSelect, type EffortSelect } from "../../../../domain/effort-label.ts"
 import { useFirstNoteSeen } from "../../../../stores/first-note-seen.ts"
 import { useSession } from "../../../../stores/session.ts"
 import { useSettingsRequest } from "../../../../stores/settings-request.ts"
-import { MOTION_PREFERENCE_LABELS } from "../domain/motion-preference.ts"
 import {
-  FIGURE_PREFERENCE_LABELS,
-  PROGRESS_NUDGE_LABELS,
-  WAITING_LINE_LABELS,
-  labelOfValue,
-} from "../domain/setting-label.ts"
+  settingItems,
+  settingPageResets,
+  type ResetFaceKey,
+  type ScreenNavSettingsItem,
+  type ScreenNavSettingsReset,
+  type SettingItemKey,
+} from "../domain/settings-item.ts"
 import { useAppearanceAdjust, type ScreenNavSettingsAdjust } from "./use-appearance-adjust.ts"
 import {
   useAppearanceColor,
@@ -76,6 +65,13 @@ import {
   useRevealSpeedSetting,
   type ScreenNavSettingsRevealSpeed,
 } from "./use-reveal-speed-setting.ts"
+
+export type {
+  ResetFaceKey,
+  ScreenNavSettingsItem,
+  ScreenNavSettingsReset,
+  SettingItemKey,
+} from "../domain/settings-item.ts"
 
 /** 新しいセッションの既定の操作子。表示はサーバから届いた値だけに従い、押した側へ先に倒さない。 */
 type ScreenNavSettingsSessionDefault = {
@@ -107,25 +103,6 @@ type ScreenNavSettingsSpeakingPace = {
   readonly onChangeWaitingLine: (value: string) => void
   readonly onChangeProgressNudge: (value: string) => void
 }
-
-/** 「既定に戻す」を持つページの key（`FACES` の `foot: "reset"` の面）。 */
-export type ResetFaceKey = SettingFaceKey
-
-/** 既定と違う項目の数と、それを既定へ戻す動き。数が 0 なら戻す先が無い。 */
-export type ScreenNavSettingsReset = {
-  readonly count: number
-  readonly onReset: () => void
-}
-
-/** 項目1つ。既定と違うか、既定へ戻す押し口の title、その項目だけ戻す動き。 */
-export type ScreenNavSettingsItem = {
-  readonly changed: boolean
-  readonly resetTitle: string
-  readonly onReset: () => void
-}
-
-/** 項目の名前（行ごとに1つ）。宣言は `SETTING_ENTRIES`。 */
-export type SettingItemKey = SettingEntryKey
 
 export type ScreenNavSettings = {
   readonly open: boolean
@@ -216,7 +193,7 @@ export function useSettings(): ScreenNavSettings {
     }
   }
 
-  const pageReset = {
+  const pageReset = settingPageResets({
     look: {
       count: color.changedCount + adjust.changedCount,
       onReset: () => {
@@ -224,134 +201,35 @@ export function useSettings(): ScreenNavSettings {
         adjust.onReset()
       },
     },
-    "session-default": {
-      count:
-        countDifferent(sessionDefault, BUILTIN_SESSION_DEFAULT) +
-        countDifferent(backgroundModels, BUILTIN_BACKGROUND_MODELS),
-      onReset: () => {
-        void dispatch.session.setSessionDefault(BUILTIN_SESSION_DEFAULT)
-        void dispatch.session.setBackgroundModels(BUILTIN_BACKGROUND_MODELS)
-      },
+    sessionDefault,
+    backgroundModels,
+    speakingPace,
+    revealSpeed: { count: revealSpeed.changedCount, onReset: revealSpeed.onReset },
+    motion: { count: motion.changedCount, onReset: motion.onReset },
+    launchSkill: { count: launchSkill.changedCount, onReset: launchSkill.onReset },
+    resetSessionDefault: () => {
+      void dispatch.session.setSessionDefault(BUILTIN_SESSION_DEFAULT)
+      void dispatch.session.setBackgroundModels(BUILTIN_BACKGROUND_MODELS)
     },
-    reveal: {
-      count:
-        revealSpeed.changedCount +
-        motion.changedCount +
-        countDifferent(speakingPace, BUILTIN_SPEAKING_PACE),
-      onReset: () => {
-        revealSpeed.onReset()
-        motion.onReset()
-        void dispatch.session.setSpeakingPace(BUILTIN_SPEAKING_PACE)
-      },
-    },
-    "launch-skill": { count: launchSkill.changedCount, onReset: launchSkill.onReset },
-  } satisfies Record<ResetFaceKey, ScreenNavSettingsReset>
-
-  const colorItem = (key: "ground" | "surface" | "ink"): ScreenNavSettingsItem => {
-    const found = color.colors.find((candidate) => candidate.key === key)
-    return {
-      changed: found?.changed ?? false,
-      resetTitle: "既定の色に戻す",
-      onReset: found?.onReset ?? (() => {}),
-    }
-  }
-  const backgroundItem = (role: BackgroundModelRole): ScreenNavSettingsItem => ({
-    changed: backgroundModels[role] !== BUILTIN_BACKGROUND_MODELS[role],
-    resetTitle: resetTitleOf(labelOfValue(MODEL_LABELS, BUILTIN_BACKGROUND_MODELS[role])),
-    onReset: () => {
-      onChangeBackgroundModel(role, BUILTIN_BACKGROUND_MODELS[role])
+    resetSpeakingPace: () => {
+      void dispatch.session.setSpeakingPace(BUILTIN_SPEAKING_PACE)
     },
   })
-  const items = {
-    "color-ground": colorItem("ground"),
-    "color-surface": colorItem("surface"),
-    "color-ink": colorItem("ink"),
-    veil: {
-      ...adjust.items.veil,
-      resetTitle: resetTitleOf("パックの値"),
-    },
-    blur: {
-      ...adjust.items.blur,
-      resetTitle: resetTitleOf(`${String(DEFAULT_APPEARANCE_ADJUST.blur)}px`),
-    },
-    fill: {
-      ...adjust.items.fill,
-      resetTitle: resetTitleOf(`${String(DEFAULT_APPEARANCE_ADJUST.fill)}%`),
-    },
-    model: {
-      changed: sessionDefault.model !== BUILTIN_SESSION_DEFAULT.model,
-      resetTitle: resetTitleOf(labelOfValue(MODEL_LABELS, BUILTIN_SESSION_DEFAULT.model)),
-      onReset: () => {
-        sendSessionDefault({ model: BUILTIN_SESSION_DEFAULT.model })
-      },
-    },
-    effort: {
-      changed: sessionDefault.effort !== BUILTIN_SESSION_DEFAULT.effort,
-      resetTitle: resetTitleOf(effortLabel(BUILTIN_SESSION_DEFAULT.effort)),
-      onReset: () => {
-        sendSessionDefault({ effort: BUILTIN_SESSION_DEFAULT.effort })
-      },
-    },
-    permissionMode: {
-      changed: sessionDefault.permissionMode !== BUILTIN_SESSION_DEFAULT.permissionMode,
-      resetTitle: resetTitleOf(
-        labelOfValue(PERMISSION_MODE_LABELS, BUILTIN_SESSION_DEFAULT.permissionMode),
-      ),
-      onReset: () => {
-        sendSessionDefault({ permissionMode: BUILTIN_SESSION_DEFAULT.permissionMode })
-      },
-    },
-    figurePreference: {
-      changed: sessionDefault.figurePreference !== BUILTIN_SESSION_DEFAULT.figurePreference,
-      resetTitle: resetTitleOf(
-        labelOfValue(FIGURE_PREFERENCE_LABELS, BUILTIN_SESSION_DEFAULT.figurePreference),
-      ),
-      onReset: () => {
-        sendSessionDefault({ figurePreference: BUILTIN_SESSION_DEFAULT.figurePreference })
-      },
-    },
-    "background-recommendation": backgroundItem("recommendation"),
-    "background-welcomeGreeting": backgroundItem("welcomeGreeting"),
-    "background-chatConsolidation": backgroundItem("chatConsolidation"),
-    "background-characterGeneration": backgroundItem("characterGeneration"),
-    revealSpeed: {
-      changed: revealSpeed.changedCount > 0,
-      resetTitle: resetTitleOf(
-        labelOfValue(REVEAL_SPEED_LABELS, BUILTIN_GEAR_PREFERENCES.revealSpeed),
-      ),
-      onReset: revealSpeed.onReset,
-    },
-    motion: {
-      changed: motion.changedCount > 0,
-      resetTitle: resetTitleOf(
-        labelOfValue(MOTION_PREFERENCE_LABELS, BUILTIN_GEAR_PREFERENCES.motionPreference),
-      ),
-      onReset: motion.onReset,
-    },
-    waitingLine: {
-      changed: speakingPace.waitingLine !== BUILTIN_SPEAKING_PACE.waitingLine,
-      resetTitle: resetTitleOf(
-        labelOfValue(WAITING_LINE_LABELS, BUILTIN_SPEAKING_PACE.waitingLine),
-      ),
-      onReset: () => {
-        onChangeWaitingLine(BUILTIN_SPEAKING_PACE.waitingLine)
-      },
-    },
-    progressNudge: {
-      changed: speakingPace.progressNudge !== BUILTIN_SPEAKING_PACE.progressNudge,
-      resetTitle: resetTitleOf(
-        labelOfValue(PROGRESS_NUDGE_LABELS, BUILTIN_SPEAKING_PACE.progressNudge),
-      ),
-      onReset: () => {
-        onChangeProgressNudge(BUILTIN_SPEAKING_PACE.progressNudge)
-      },
-    },
-    launchSkill: {
-      changed: launchSkill.changedCount > 0,
-      resetTitle: resetTitleOf("未設定"),
-      onReset: launchSkill.onReset,
-    },
-  } satisfies Record<SettingItemKey, ScreenNavSettingsItem>
+
+  const items = settingItems({
+    colors: color.colors,
+    adjustItems: adjust.items,
+    sessionDefault,
+    backgroundModels,
+    speakingPace,
+    revealSpeed: { changed: revealSpeed.changedCount > 0, onReset: revealSpeed.onReset },
+    motion: { changed: motion.changedCount > 0, onReset: motion.onReset },
+    launchSkill: { changed: launchSkill.changedCount > 0, onReset: launchSkill.onReset },
+    sendSessionDefault,
+    changeBackgroundModel: onChangeBackgroundModel,
+    changeWaitingLine: onChangeWaitingLine,
+    changeProgressNudge: onChangeProgressNudge,
+  })
 
   return {
     open,
@@ -409,16 +287,4 @@ export function useSettings(): ScreenNavSettings {
     onReplayFirstNotes: resetFirstNotes,
     toggleRef,
   }
-}
-
-function resetTitleOf(defaultLabel: string): string {
-  return `既定（${defaultLabel}）に戻す`
-}
-
-/** 同じ項目名の値のうち、既定と違うものの数。 */
-function countDifferent(
-  current: Readonly<Record<string, string>>,
-  builtin: Readonly<Record<string, string>>,
-): number {
-  return Object.entries(builtin).filter(([key, value]) => current[key] !== value).length
 }
