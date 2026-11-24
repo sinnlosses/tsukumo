@@ -164,3 +164,4 @@
 | `docs/architecture/adr/0083-report-type-scale-plan-b.md`                        | レポートの字の段を案B に直す                                                                          | 採用                   |
 | `docs/architecture/adr/0084-expression-role-names-in-system.md`                 | 表情の役割の名をシステムが持ち、パックの語を添える                                                    | 採用                   |
 | `docs/architecture/adr/0085-architecture-map-lanes.md`                          | 地図に実行の境界の区画と横断の帯を、任意の欄 `lanes`・`lane` で足す                                   | 採用                   |
+| `docs/architecture/adr/0086-left-card-session-side-and-detail.md`               | 左の列の札を「やり取り｜セッション」の切り替えにし、選んだセッションの詳細を札の右隣に開く            | 採用                   |
