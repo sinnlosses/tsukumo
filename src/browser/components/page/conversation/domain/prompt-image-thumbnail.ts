@@ -5,10 +5,10 @@
 import { parsePromptImageThumbnail } from "../../../../../shared/session-driver/prompt-image.ts"
 
 /**
- * 控えの長いほうの辺（px）。送ったあとの控えを描く枠（20rem）の2倍で、2倍の画面でも引き伸ばさない。
+ * 控えの長いほうの辺（px）。送ったあとの控えは吹き出しの幅いっぱいに描くので、広い画面の吹き出し（約 600px）を2倍の画面で引き伸ばさない大きさにする。
  * 札にも控えにも、この1枚をそのまま出す。
  */
-const THUMBNAIL_MAX_EDGE_PX = 640
+const THUMBNAIL_MAX_EDGE_PX = 1280
 
 /** 控えの形式。受け付ける4つのうち、同じ絵をいちばん小さく持てるもの。 */
 const THUMBNAIL_MEDIA_TYPE = "image/webp"
