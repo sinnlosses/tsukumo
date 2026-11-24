@@ -6,8 +6,9 @@ import type { MeasuredTime } from "../../../../../../../shared/utils/elapsed-tim
 
 const WORKFLOW_TOOL_NAME = "Workflow"
 
-/** メインの手順のまとまり。`count` は手順の数、`duration` は測れた手順の所要の合計（1件も測れなければ不明）。 */
+/** メインの手順のまとまり。`steps` は古い順の手順、`count` はその数、`duration` は測れた手順の所要の合計（1件も測れなければ不明）。 */
 export type WorkflowMainStepSpan = {
+  readonly steps: readonly TurnStep[]
   readonly count: number
   readonly duration: MeasuredTime
 }
@@ -19,6 +20,7 @@ export type WorkflowMainStepEnds = {
 }
 
 const EMPTY_SPAN = {
+  steps: [],
   count: 0,
   duration: { kind: "unknown" },
 } as const satisfies WorkflowMainStepSpan
@@ -66,6 +68,7 @@ function spanOf(steps: readonly TurnStep[]): WorkflowMainStepSpan {
     return duration.kind === "known" ? [duration.milliseconds] : []
   })
   return {
+    steps,
     count: steps.length,
     duration:
       known.length === 0

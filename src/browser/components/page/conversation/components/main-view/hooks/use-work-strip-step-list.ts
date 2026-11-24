@@ -100,6 +100,7 @@ export type WorkStripSteps = {
   readonly onUnfoldColumn: (column: string) => void
   readonly onOpenRun: (taskId: TaskId) => void
   readonly onAgentPress: (taskId: TaskId, index: number) => void
+  readonly onPreludePress: (taskId: TaskId) => void
   /** 「4 フェーズ」。ワークプランが無ければ空。 */
   readonly phaseCountLabel: string
   /** 並べる項目（済んだ n フェーズの畳み・フェーズの行・ほか n フェーズ）。 */
@@ -144,13 +145,15 @@ export function workStripStepsOf(input: {
   readonly onUnfoldColumn: (column: string) => void
   readonly onOpenRun: (taskId: TaskId) => void
   readonly onAgentPress: (taskId: TaskId, index: number) => void
+  readonly onPreludePress: (taskId: TaskId) => void
 }): WorkStripSteps {
   const { list } = input
+  const preludeIds = list.kind === "open" ? openPreludeStepIdsOf(input, list) : new Set<string>()
   const planRows =
     list.kind === "open"
       ? stepsPhaseRowsOf(
           input.segments.map((segment) => phaseRowSlotOf(segment, input.recaps)),
-          currentWorkStepGroups(input.steps),
+          currentWorkStepGroups(input.steps.filter((step) => !preludeIds.has(step.toolUseId))),
         )
       : { rows: [], rest: [] }
   const planCurrentKeys = planRows.rows.flatMap((row) => {
@@ -195,6 +198,7 @@ export function workStripStepsOf(input: {
     onUnfoldColumn: input.onUnfoldColumn,
     onOpenRun: input.onOpenRun,
     onAgentPress: input.onAgentPress,
+    onPreludePress: input.onPreludePress,
     phaseCountLabel: planRows.rows.length === 0 ? "" : `${String(planRows.rows.length)} フェーズ`,
     card:
       list.kind === "open"
@@ -227,6 +231,25 @@ type DrawnWorkflow = Omit<WorkStripWorkflow, "view"> & {
         readonly hand?: WorkflowAgentHand
       }
     | { readonly kind: "folded"; readonly agentCount: number; readonly duration: string }
+}
+
+/**
+ * 図を開いて描くワークフロースクリプト（いちばん新しいものと、利用者が開いたもの）の、着手の箱が持つ手順の `toolUseId`。
+ * これらの手順は着手の箱の手元に出すので、フェーズの行とどの行にも付かない群からは外す。
+ */
+function openPreludeStepIdsOf(
+  input: { readonly steps: readonly TurnStep[]; readonly workflowRuns: readonly WorkflowRun[] },
+  list: Extract<WorkStripStepsList, { readonly kind: "open" }>,
+): ReadonlySet<string> {
+  const ends = workflowMainStepEndsOf(input.steps, input.workflowRuns.length)
+  const last = input.workflowRuns.length - 1
+  return new Set(
+    input.workflowRuns.flatMap((run, index) =>
+      index === last || list.openedWorkflowRuns.includes(run.taskId)
+        ? (ends[index]?.prelude.steps ?? []).map((step) => step.toolUseId)
+        : [],
+    ),
+  )
 }
 
 function mainBoxOf(span: WorkflowMainStepSpan): readonly WorkStripMainBox[] {
@@ -307,7 +330,12 @@ function drawnWorkflowsOf(
           ...(prelude === undefined ? {} : { prelude }),
           ...(landing === undefined || landingKey === undefined ? {} : { landing, landingKey }),
         },
-        ...workflowHandOf(run, list.selectedWorkflowAgent, input.now),
+        ...workflowHandOf(
+          run,
+          list.selectedWorkflowAgent,
+          input.now,
+          prelude === undefined ? [] : (runMain?.prelude.steps ?? []),
+        ),
       },
     }
   })

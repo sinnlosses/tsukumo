@@ -13,10 +13,11 @@ export type StepsLanding =
   | { readonly kind: "top" }
   | { readonly kind: "failure"; readonly signal: number }
 
-/** ワークフローの図で押した箱。`index` はエージェントの鍵。 */
+/** ワークフローの図で押した箱。`index` はエージェントの鍵、`prelude` はメインの着手の箱。 */
 export type SelectedWorkflowAgent =
   | { readonly kind: "none" }
   | { readonly kind: "agent"; readonly taskId: TaskId; readonly index: number }
+  | { readonly kind: "prelude"; readonly taskId: TaskId }
 
 /**
  * 開いている詳細。手順の一覧とフェーズの詳細は同時に1つだけ開くので、判別合併型の1つの値で持つ。
@@ -73,6 +74,8 @@ type WorkStripStepsState = {
   readonly openWorkflowRun: (exchange: number, taskId: TaskId) => void
   /** ワークフローの図の箱を選ぶ。 */
   readonly selectWorkflowAgent: (exchange: number, taskId: TaskId, index: number) => void
+  /** ワークフローの図の着手の箱を選ぶ。 */
+  readonly selectWorkflowPrelude: (exchange: number, taskId: TaskId) => void
 }
 
 const TOP = { kind: "top" } as const satisfies StepsLanding
@@ -151,6 +154,13 @@ export const useWorkStripSteps = create<WorkStripStepsState>()((set) => ({
     set((state) =>
       withSteps(state, exchange, () => ({
         selectedWorkflowAgent: { kind: "agent", taskId, index },
+      })),
+    )
+  },
+  selectWorkflowPrelude: (exchange, taskId) => {
+    set((state) =>
+      withSteps(state, exchange, () => ({
+        selectedWorkflowAgent: { kind: "prelude", taskId },
       })),
     )
   },

@@ -1,6 +1,9 @@
 import { cleanup } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
+import type { WorkStripSteps } from "../../../../../../../../src/browser/components/page/conversation/components/main-view/hooks/use-work-strip-step-list.ts"
+import { useMainViewContent } from "../../../../../../../../src/browser/components/page/conversation/stores/main-view-content.ts"
+import { useWorkStripSteps } from "../../../../../../../../src/browser/components/page/conversation/stores/work-strip-step-list.ts"
 import type { BackgroundTask } from "../../../../../../../../src/shared/session-driver/background-task.ts"
 import type { SessionEvent } from "../../../../../../../../src/shared/session/session-event.ts"
 import { checkedTaskId } from "../../../../../../../fixture/task-id.ts"
@@ -10,8 +13,10 @@ import {
   foldTimed,
   plan,
   START,
+  stripAt,
   workRequest,
 } from "../../../../../../../fixture/work-strip.ts"
+import { putSession } from "../../../../../../session-store.ts"
 
 afterEach(() => {
   cleanup()
@@ -262,5 +267,63 @@ describe("useWorkStrip（ワークフロースクリプトの中の手順）", (
         completed,
       ),
     ).toBe("バックグラウンドで 架空の流れ")
+  })
+})
+
+describe("useWorkStrip（ワークフローの図の着手の箱）", () => {
+  const mainTool = (id: string, name: string): readonly SessionEvent[] => [
+    {
+      kind: "tool-started",
+      toolUseId: checkedToolUseId(id),
+      name,
+      input: {},
+      parentToolUseId: undefined,
+    },
+    { kind: "tool-finished", toolUseId: checkedToolUseId(id), content: "", isError: false },
+  ]
+  const state = foldTimed(
+    [
+      workRequest,
+      ...mainTool("pre-1", "Bash"),
+      plan,
+      ...mainTool("pre-2", "Workflow"),
+      tasksChanged(WORKFLOW),
+      WORKFLOW_PROGRESS,
+    ].map((event, index) => [event, START + index * 1_000] as const),
+  )
+  const exchangeNow = (): number => {
+    putSession(state)
+    const { content } = useMainViewContent.getState()
+    return content.kind === "welcome" ? -1 : content.exchange
+  }
+  const listedKeys = (steps: WorkStripSteps): readonly string[] =>
+    [...steps.card.flatMap((item) => (item.kind === "phase" ? item.groups : [])), ...steps.rest]
+      .flatMap((group) => group.steps)
+      .map((step) => step.key)
+  const openedSteps = (): WorkStripSteps => {
+    const strip = stripAt(state, START + 60_000)
+    if (strip.kind === "none") throw new Error("帯が出ていない")
+    return strip.steps
+  }
+
+  afterEach(() => {
+    useWorkStripSteps.setState(useWorkStripSteps.getInitialState(), true)
+  })
+
+  it("着手の手順はフェーズの行とどの行にも付かない群から外し、着手の箱を押すと手元に出す", () => {
+    useWorkStripSteps.getState().toggle(exchangeNow())
+
+    const before = openedSteps()
+    useWorkStripSteps.getState().selectWorkflowPrelude(exchangeNow(), WORKFLOW.taskId)
+    const after = openedSteps()
+
+    expect(listedKeys(before)).toEqual([])
+    expect(before.workflows[0]?.view).toMatchObject({ mainBoxes: { prelude: { count: 2 } } })
+    expect(after.workflows[0]?.view).toMatchObject({
+      hand: {
+        owner: { kind: "prelude" },
+        steps: [{ key: "pre-1" }, { key: "pre-2" }],
+      },
+    })
   })
 })

@@ -45,10 +45,19 @@ describe("workflowMainStepEndsOf", () => {
       step("f", "Bash", 6000, 9000, false, 4),
     ]
     const [first, second] = workflowMainStepEndsOf(steps, 2, 4)
-    expect(first?.prelude).toEqual({ count: 2, duration: { kind: "known", milliseconds: 1500 } })
+    expect(first?.prelude).toMatchObject({
+      count: 2,
+      duration: { kind: "known", milliseconds: 1500 },
+    })
     expect(first?.landing.count).toBe(0)
-    expect(second?.prelude).toEqual({ count: 3, duration: { kind: "known", milliseconds: 3100 } })
-    expect(second?.landing).toEqual({ count: 1, duration: { kind: "known", milliseconds: 3000 } })
+    expect(second?.prelude).toMatchObject({
+      count: 3,
+      duration: { kind: "known", milliseconds: 3100 },
+    })
+    expect(second?.landing).toMatchObject({
+      count: 1,
+      duration: { kind: "known", milliseconds: 3000 },
+    })
   })
 
   it("範囲の後ろの段が無ければ、呼び出しのあとの手順があっても送り出しは無い", () => {

@@ -31,6 +31,7 @@ function exampleSteps(): WorkStripSteps {
     onUnfoldColumn: noop,
     onOpenRun: noop,
     onAgentPress: noop,
+    onPreludePress: noop,
     phaseCountLabel: "",
     card: [],
     rest: [],
@@ -211,7 +212,7 @@ function spanWorkflow(phase: "implementing" | "accepting"): WorkStripSteps["work
 }
 
 const EXAMPLE_HAND: WorkflowAgentHand = {
-  index: 2,
+  owner: { kind: "agent", index: 2 },
   chosen: true,
   state: "running",
   name: "直し 1",
@@ -267,7 +268,13 @@ export const WORKFLOW_EXAMPLES: readonly ScreenPartExample[] = [
       <>
         <PresentationalWorkflowAgentHand hand={EXAMPLE_HAND} />
         <PresentationalWorkflowAgentHand
-          hand={{ ...EXAMPLE_HAND, index: 3, kind: "既定のエージェント", model: "", total: 3 }}
+          hand={{
+            ...EXAMPLE_HAND,
+            owner: { kind: "agent", index: 3 },
+            kind: "既定のエージェント",
+            model: "",
+            total: 3,
+          }}
         />
       </>
     ),

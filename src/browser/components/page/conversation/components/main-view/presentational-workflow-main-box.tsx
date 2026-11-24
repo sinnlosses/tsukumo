@@ -3,14 +3,17 @@
 import type { ReactElement } from "react"
 
 import { Badge } from "../../../../ui/badge/badge.tsx"
+import { ClickableCard } from "../../../../ui/clickable-card/clickable-card.tsx"
 import { Surface } from "../../../../ui/surface/surface.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
 import type { WorkStripMainBox } from "./hooks/use-work-strip-step-list.ts"
 import styles from "./main-view.module.css"
 
-/** 段の列の前の「着手」の列。見出しの下線は点線で、箱はメインの箱。 */
+/** 段の列の前の「着手」の列。見出しの下線は点線で、箱は押すと手元に着手の手順を出すメインの箱。 */
 export function PresentationalWorkflowPrelude(props: {
   readonly box: WorkStripMainBox
+  readonly pressed: boolean
+  readonly onPress: () => void
 }): ReactElement {
   return (
     <>
@@ -42,7 +45,17 @@ export function PresentationalWorkflowPrelude(props: {
         className={styles["workflow-diagram-column"]}
         style={{ "--step-start": "1", "--step-span": "1" }}
       >
-        <PresentationalWorkflowMainBox name="着手" box={props.box} endKey="prelude" />
+        <div data-diagram-end="prelude">
+          <ClickableCard
+            label={`着手 メイン 手順 ${String(props.box.count)}`}
+            tone="dashed"
+            pressed={props.pressed}
+            onClick={props.onPress}
+            className=""
+          >
+            <MainBoxRows name="着手" box={props.box} />
+          </ClickableCard>
+        </div>
       </div>
     </>
   )
@@ -55,7 +68,6 @@ export function PresentationalWorkflowMainBox(props: {
   readonly endKey: string
   readonly current?: boolean
 }): ReactElement {
-  const { box } = props
   return (
     <div data-diagram-end={props.endKey} data-current={props.current === true}>
       <Surface
@@ -66,37 +78,49 @@ export function PresentationalWorkflowMainBox(props: {
         shadow="none"
         className={styles["workflow-diagram-main"]}
       >
-        <span className={styles["workflow-diagram-row"]}>
+        <MainBoxRows name={props.name} box={props.box} />
+      </Surface>
+    </div>
+  )
+}
+
+function MainBoxRows(props: {
+  readonly name: string
+  readonly box: WorkStripMainBox
+}): ReactElement {
+  const { box } = props
+  return (
+    <>
+      <span className={styles["workflow-diagram-row"]}>
+        <Text
+          element="span"
+          size="label"
+          tone="ink"
+          weight="semibold"
+          className={styles["workflow-diagram-name"]}
+        >
+          {props.name}
+        </Text>
+        {box.duration !== "" && (
           <Text
             element="span"
             size="label"
-            tone="ink"
-            weight="semibold"
-            className={styles["workflow-diagram-name"]}
+            tone="ink-quiet"
+            weight="normal"
+            className={styles["workflow-diagram-time"]}
           >
-            {props.name}
+            {box.duration}
           </Text>
-          {box.duration !== "" && (
-            <Text
-              element="span"
-              size="label"
-              tone="ink-quiet"
-              weight="normal"
-              className={styles["workflow-diagram-time"]}
-            >
-              {box.duration}
-            </Text>
-          )}
-        </span>
-        <span className={styles["workflow-diagram-row"]}>
-          <Badge tone="accent" shape="square" className="">
-            メイン
-          </Badge>
-          <Text element="span" size="label" tone="ink-quiet" weight="normal" className="">
-            手順 {String(box.count)}
-          </Text>
-        </span>
-      </Surface>
-    </div>
+        )}
+      </span>
+      <span className={styles["workflow-diagram-row"]}>
+        <Badge tone="accent" shape="square" className="">
+          メイン
+        </Badge>
+        <Text element="span" size="label" tone="ink-quiet" weight="normal" className="">
+          手順 {String(box.count)}
+        </Text>
+      </span>
+    </>
   )
 }

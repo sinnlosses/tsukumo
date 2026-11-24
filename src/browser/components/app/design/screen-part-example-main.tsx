@@ -116,6 +116,7 @@ const STRIP_BASE = {
     onUnfoldColumn: noop,
     onOpenRun: noop,
     onAgentPress: noop,
+    onPreludePress: noop,
     phaseCountLabel: "",
     card: [],
     rest: [],

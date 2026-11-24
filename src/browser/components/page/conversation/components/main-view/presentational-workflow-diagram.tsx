@@ -13,6 +13,7 @@ import { ChevronLeftIcon } from "../../../../ui/icon/icon.tsx"
 import { StatusDot } from "../../../../ui/status-dot/status-dot.tsx"
 import { Surface } from "../../../../ui/surface/surface.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
+import type { WorkflowHandOwner } from "./domain/workflow-agent-hand.ts"
 import { leadOf, stepStartOf, stepTracksOf } from "./domain/workflow-diagram-grid.ts"
 import {
   type WorkflowAgentCount,
@@ -164,14 +165,19 @@ function WorkflowItem(props: {
         columnDurations={view.columnDurations}
         finished={view.finished}
         {...(view.planCurrentKey === undefined ? {} : { planCurrentKey: view.planCurrentKey })}
-        selectedIndex={view.hand?.chosen === true ? view.hand.index : undefined}
+        selected={view.hand?.chosen === true ? view.hand.owner : undefined}
         steps={steps}
       />
       {view.hand !== undefined && (
-        <PresentationalWorkflowAgentHand key={view.hand.index} hand={view.hand} />
+        <PresentationalWorkflowAgentHand key={handKeyOf(view.hand.owner)} hand={view.hand} />
       )}
     </section>
   )
+}
+
+/** 手元の鍵。選んだ箱が替わると手元の開いた状態を畳み直す。 */
+function handKeyOf(owner: WorkflowHandOwner): string {
+  return owner.kind === "agent" ? `agent-${String(owner.index)}` : "prelude"
 }
 
 function CountBadges(props: { readonly counts: readonly WorkflowAgentCount[] }): ReactElement {
@@ -193,7 +199,7 @@ function DiagramStage(props: {
   readonly columnDurations: ReadonlyMap<string, string>
   readonly finished: boolean
   readonly planCurrentKey?: string
-  readonly selectedIndex?: number
+  readonly selected?: WorkflowHandOwner
   readonly steps: WorkStripSteps
 }): ReactElement {
   const { diagram, steps, taskId } = props
@@ -257,7 +263,15 @@ function DiagramStage(props: {
           <circle cx="5" cy="5" r="5" />
         </svg>
       )}
-      {prelude !== undefined && <PresentationalWorkflowPrelude box={prelude} />}
+      {prelude !== undefined && (
+        <PresentationalWorkflowPrelude
+          box={prelude}
+          pressed={props.selected?.kind === "prelude"}
+          onPress={() => {
+            steps.onPreludePress(taskId)
+          }}
+        />
+      )}
       {diagram.foldedPhases !== undefined && (
         <div className={styles["workflow-diagram-folded-column"]}>
           <div data-diagram-end="folded">
@@ -309,7 +323,7 @@ function DiagramStage(props: {
             current={current}
             finished={props.finished}
             upcomingNote={workflowUpcomingNoteOf(props.finished, current)}
-            selectedIndex={props.selectedIndex}
+            selectedIndex={props.selected?.kind === "agent" ? props.selected.index : undefined}
             steps={steps}
             {...(props.planCurrentKey === undefined
               ? {}

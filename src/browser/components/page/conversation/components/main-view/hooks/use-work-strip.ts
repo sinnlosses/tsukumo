@@ -97,6 +97,7 @@ export function useWorkStrip(): WorkStripModel {
   const unfoldWorkflowColumn = useWorkStripSteps((state) => state.unfoldWorkflowColumn)
   const openWorkflowRun = useWorkStripSteps((state) => state.openWorkflowRun)
   const selectWorkflowAgent = useWorkStripSteps((state) => state.selectWorkflowAgent)
+  const selectWorkflowPrelude = useWorkStripSteps((state) => state.selectWorkflowPrelude)
   const workflowRuns = useSession((session) => session.state.workflowRuns)
   const turns = useMainViewTurns()
   const moment = useSession((session) => conversationMoment(session.state))
@@ -208,6 +209,9 @@ export function useWorkStrip(): WorkStripModel {
     },
     onAgentPress: (taskId, index) => {
       selectWorkflowAgent(exchange, taskId, index)
+    },
+    onPreludePress: (taskId) => {
+      selectWorkflowPrelude(exchange, taskId)
     },
   })
 
