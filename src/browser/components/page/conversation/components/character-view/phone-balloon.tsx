@@ -10,7 +10,7 @@ import type { CharacterFaceInfo } from "../../../../../domain/character-face.ts"
 import { MapMarkText } from "../../../../../features/architecture-map/map-box-mark.tsx"
 import { CharacterFace } from "../../../../frame/character-face.tsx"
 import styles from "./character-view.module.css"
-import type { PhoneBalloonLine } from "./hooks/use-character-view.ts"
+import type { PhoneBalloonLine } from "./domain/phone-line.ts"
 
 type PhoneBalloonProps = {
   readonly face: CharacterFaceInfo

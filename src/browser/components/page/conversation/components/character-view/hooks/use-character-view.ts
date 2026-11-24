@@ -12,17 +12,12 @@
 
 import { useState } from "react"
 
-import type { FaceAt } from "../../../../../../../shared/character-pack/character-definition.ts"
-import {
-  faceAtOf,
-  type CharacterInfo,
-} from "../../../../../../../shared/character-pack/character.ts"
+import { faceAtOf } from "../../../../../../../shared/character-pack/character.ts"
 import type { Expression } from "../../../../../../../shared/character-pack/expression.ts"
 import type { ItemSeatMap } from "../../../../../../../shared/item/item.ts"
-import type { ShownReaction } from "../../../../../../../shared/session/shown-reaction.ts"
 import { reportDraftingOf } from "../../../../../../../shared/session/turn-progress.ts"
 import type { Speech } from "../../../../../../../shared/session/turn-speech.ts"
-import { turnSpeeches, type TurnSpeech } from "../../../../../../../shared/session/turn-speech.ts"
+import { turnSpeeches } from "../../../../../../../shared/session/turn-speech.ts"
 import {
   characterFaceInfo,
   type CharacterFaceInfo,
@@ -32,42 +27,30 @@ import {
   endingManpuOf,
   isListeningPose,
   newestTurnFinishedTask,
-  nextPortraitMotionTransitionDelayMs,
   resolvePortraitMotion,
   type EndingManpu,
-  type EndingManpuShown,
   type PortraitMotion,
   type PortraitMotionInput,
 } from "../../../../../../domain/portrait-motion.ts"
-import { useExternalSync } from "../../../../../../hooks/use-external-sync.ts"
 import { prefersReducedMotionNow } from "../../../../../../stores/gear-preference-seed.ts"
 import { useSession } from "../../../../../../stores/session.ts"
 import { useTurnSelection } from "../../../../../../stores/turn-selection.ts"
 import { nowEpochMilliseconds } from "../../../../../../utils/clock.ts"
-import { recordClockStampWithDay, type ClockStamp } from "../../../domain/clock-stamp.ts"
-import {
-  pinnedSpeechOf,
-  resolvePinnedSpeech,
-  type PinnedSpeech,
-} from "../../../domain/pinned-speech.ts"
-import {
-  SPEECH_ARRIVALS,
-  type SpeechArrival,
-  type SpeechManpu,
-  type VoiceAt,
-} from "../../../domain/speech-arrival.ts"
+import type { PinnedSpeech } from "../../../domain/pinned-speech.ts"
+import { SPEECH_ARRIVALS, type SpeechManpu, type VoiceAt } from "../../../domain/speech-arrival.ts"
 import { welcomeHeadOf } from "../../../domain/welcome-entry-list.ts"
 import { useComposerDraft } from "../../../stores/composer-draft.ts"
 import { useShownReaction, useWaitingLineDueAt } from "../../../stores/shown-reaction.ts"
 import { useSpeechArrival } from "../../../stores/speech-arrival.ts"
 import { useViewedSpeech } from "../../../stores/viewed-speech.ts"
 import { useWelcomeCards } from "../../hooks/use-welcome-card-list.ts"
+import { arrivalManpuOf, newerManpu, type ArrivalManpu } from "../domain/arrival-manpu.ts"
+import { viewedSpeechOf } from "../domain/past-turn-view.ts"
+import { phoneLineOf, type PhoneBalloonLine } from "../domain/phone-line.ts"
 import { scrollToFollowedRow } from "./scroll-to-followed-row.ts"
+import { useCharacterClock } from "./use-character-clock.ts"
 import { useTabVisibility } from "./use-tab-visibility.ts"
 import { useWelcomeGreetingRecord } from "./use-welcome-greeting-record.ts"
-
-/** そのターンにセリフが1件も無かったときに当てる表情（`INITIAL_SESSION_STATE` と同じ既定）。 */
-const DEFAULT_PAST_TURN_EXPRESSION = "default"
 
 /** `<CharacterView>` が画面に出す形。presenter はこれをそのまま部品へ渡すだけ。 */
 export type CharacterViewModel = {
@@ -104,29 +87,6 @@ export type CharacterViewModel = {
   /** 使用中のパックの3つの席に置いたアイテム。行が無ければ全席が空。 */
   readonly seats: ItemSeatMap
 }
-
-/** エフェクトを出す窓（ミリ秒）。いちばん長いエフェクト（泡沫の 2.6 秒）より長く取り、開き直した画面で古い届きを再生しない。 */
-const MANPU_WINDOW_MS = 3000
-
-export type ArrivalManpu =
-  | { readonly kind: "none" }
-  | {
-      readonly kind: "shown"
-      readonly manpu: SpeechManpu | EndingManpu
-      readonly at: number
-      readonly faceAt: FaceAt
-      /** 届いた声のエフェクトなら、その声。終わり方のエフェクトには無い。 */
-      readonly voice?: VoiceAt
-    }
-
-/**
- * 狭い画面の吹き出しに出す最新の1件。
- * 反応を出していればその字（迎えの挨拶を書いている途中なら `writing`）、無ければ表示中のセリフの最後の1件。
- */
-export type PhoneBalloonLine =
-  | { readonly kind: "none" }
-  | { readonly kind: "writing" }
-  | { readonly kind: "text"; readonly text: string; readonly time: ClockStamp }
 
 export function useCharacterView(): CharacterViewModel {
   const { activeTurnId, newestTurnId } = useTurnSelection()
@@ -174,54 +134,29 @@ export function useCharacterView(): CharacterViewModel {
   const recordShownManpu = useSpeechArrival((state) => state.recordShown)
   const [speechLogOpen, setSpeechLogOpen] = useState(false)
 
-  const now = useCharacterClock(
-    {
-      turn,
-      lastToolFailureAt,
-      backgroundRunning,
-      interrupted,
-      askedAt,
-      tab,
-      sentAt,
-      arrival,
-      reducedMotion,
-      taskFinished,
-    },
-    waitingDueAt,
-  )
+  const motionBase = {
+    turn,
+    lastToolFailureAt,
+    backgroundRunning,
+    interrupted,
+    askedAt,
+    tab,
+    reducedMotion,
+    taskFinished,
+  }
+  const now = useCharacterClock({ ...motionBase, sentAt, arrival }, waitingDueAt)
   const latestReaction = useShownReaction(welcomeHead, now)
-  const pastTurn =
-    activeTurnId === undefined || newestTurnId === undefined
-      ? undefined
-      : pastTurnSpeech(turns, activeTurnId, newestTurnId)
-  const activeSpeeches = pastTurn === undefined ? speeches : pastTurn.speeches
-  const reaction: ShownReaction = pastTurn === undefined ? latestReaction : { kind: "none" }
-  // 過去のターンでは、記録に残った表情（そのターンの最後のセリフのもの）をそのまま当てる。
-  const currentExpression = reaction.kind === "shown" ? reaction.line.expression : speechExpression
-  const fallbackExpression =
-    pastTurn === undefined
-      ? currentExpression
-      : (pastTurn.expression ?? DEFAULT_PAST_TURN_EXPRESSION)
-  const pinnedSpeech = resolvePinnedSpeech(viewed, speechesOfTurn)
-  // 失効した印を古い行に残すと、表情（最新に戻る）と印の位置が食い違う。
-  const pinned = pinnedSpeech === undefined ? undefined : pinnedSpeechOf(viewed)
-  const expression = pinnedSpeech?.expression ?? fallbackExpression
-  const motion = resolvePortraitMotion(
-    {
-      turn,
-      lastToolFailureAt,
-      draftingReport,
-      backgroundRunning,
-      interrupted,
-      askedAt,
-      tab,
-      sentAt,
-      arrival,
-      reducedMotion,
-      taskFinished,
-    },
-    now,
-  )
+  const { activeSpeeches, reaction, expression, pinnedSpeech, pinned } = viewedSpeechOf({
+    turns,
+    activeTurnId,
+    newestTurnId,
+    speeches,
+    speechExpression,
+    latestReaction,
+    viewed,
+    speechesOfTurn,
+  })
+  const motion = resolvePortraitMotion({ ...motionBase, draftingReport, sentAt, arrival }, now)
 
   const { portraitUrl, altText } = portraitAppearance(character, expression)
 
@@ -254,19 +189,7 @@ export function useCharacterView(): CharacterViewModel {
     onCloseSpeechLog: () => setSpeechLogOpen(false),
     manpu: newerManpu(
       arrivalManpuOf(arrived, reducedMotion, now, character),
-      endingManpuOf(
-        {
-          turn,
-          lastToolFailureAt,
-          backgroundRunning,
-          interrupted,
-          askedAt,
-          tab,
-          reducedMotion,
-          taskFinished,
-        },
-        now,
-      ),
+      endingManpuOf(motionBase, now),
       faceAtOf(expression, character),
     ),
     onManpuShown: recordShownManpu,
@@ -276,176 +199,8 @@ export function useCharacterView(): CharacterViewModel {
   }
 }
 
-/** 声が届いた漫符と終わり方の漫符のうち新しいほう。終わり方の漫符は今の表情の顔の位置に出す。 */
-function newerManpu(arrival: ArrivalManpu, ending: EndingManpuShown, faceAt: FaceAt): ArrivalManpu {
-  if (ending.kind === "none" || (arrival.kind === "shown" && arrival.at > ending.at)) {
-    return arrival
-  }
-  return { kind: "shown", manpu: ending.manpu, at: ending.at, faceAt }
-}
-
-/** 動きを減らす設定では出さない。動きが `still` の表情でも、届いた表情から出す。 */
-function arrivalManpuOf(
-  arrived: SpeechArrival,
-  reducedMotion: boolean,
-  now: number,
-  character?: CharacterInfo,
-): ArrivalManpu {
-  if (arrived.kind === "none" || reducedMotion || now - arrived.at >= MANPU_WINDOW_MS) {
-    return { kind: "none" }
-  }
-  const manpu = arrived.manpu ?? SPEECH_ARRIVALS[arrived.expression].manpu
-  if (manpu === "none") {
-    return { kind: "none" }
-  }
-  return {
-    kind: "shown",
-    manpu,
-    at: arrived.at,
-    faceAt: faceAtOf(arrived.expression, character),
-    voice: { turnId: arrived.turnId, index: arrived.index },
-  }
-}
-
 const EMPTY_SEATS: ItemSeatMap = {
   topLeft: undefined,
   belowLeft: undefined,
   belowRight: undefined,
-}
-
-function phoneLineOf(
-  reaction: ShownReaction,
-  speeches: readonly Speech[],
-  now: number,
-): PhoneBalloonLine {
-  if (reaction.kind === "shown") {
-    return {
-      kind: "text",
-      text: reaction.line.text,
-      time: recordClockStampWithDay(reaction.time, now),
-    }
-  }
-  if (reaction.kind === "writing") {
-    return { kind: "writing" }
-  }
-  const latest = speeches.at(-1)
-  return latest === undefined
-    ? { kind: "none" }
-    : { kind: "text", text: latest.text, time: recordClockStampWithDay(latest.time, now) }
-}
-
-/**
- * 過去のターンを見ているときだけ、そのターンのセリフ（出し始めた反応を含む）と表情を返す（今回を見ていれば undefined）。
- * 今のターンを記録から導き直さないのは、`request` で空に戻るなどの規則が `SessionState.speeches` 側にしか無いため。
- */
-function pastTurnSpeech(
-  turns: readonly TurnSpeech[],
-  activeTurnId: number,
-  newestTurnId: number,
-): TurnSpeech | undefined {
-  if (activeTurnId === newestTurnId) {
-    return undefined
-  }
-  return turns.find((turn) => turn.id === activeTurnId)
-}
-
-/**
- * 立ち絵の動きと待ちの一言が時間だけで変わる瞬間に読み直すための時計。いまの時刻を返す。
- * 祝う・跳ねる・失敗でびくっ・呼ぶ・届いた瞬間の動き・うなずくの期間が過ぎた瞬間と、待ちの一言を出し始める時刻（`waitingDueAt`）にだけ描き直す。
- *
- * 期間と期日は同時に効いていることがある（ツールが失敗した直後にターンが終わる、など）。
- * 次の描き直しまでの遅延はいちばん早いものだけなので、1回だけのタイマーだと、発火して `now` を進めたあとに残りがあっても次のタイマーが立たないまま止まる。
- * `lastToolFailureAt` / `turn` / `waitingDueAt` 自体はその後変わらないので、依存配列では再計算のきっかけにならない。
- * そこで、タイマーが発火するたびに次までの遅延を計算し直して、無くなるまで立て直す。
- *
- * 遅延を計算する前に必ず `now` を進める。
- * 効果が走るまでに時刻をすでに過ぎていると、遅延が負でタイマーが立たず、古い `now` のまま戻らなくなる。
- */
-function useCharacterClock(
-  motionInput: Pick<
-    PortraitMotionInput,
-    | "turn"
-    | "lastToolFailureAt"
-    | "backgroundRunning"
-    | "interrupted"
-    | "askedAt"
-    | "tab"
-    | "sentAt"
-    | "arrival"
-    | "reducedMotion"
-    | "taskFinished"
-  >,
-  waitingDueAt?: number,
-): number {
-  const {
-    turn,
-    lastToolFailureAt,
-    backgroundRunning,
-    interrupted,
-    askedAt,
-    tab,
-    sentAt,
-    arrival,
-    reducedMotion,
-    taskFinished,
-  } = motionInput
-  const arrivalAt = arrival?.at
-  const arrivalMotion = arrival?.motion
-  const [now, setNow] = useState(() => nowEpochMilliseconds())
-
-  useExternalSync(() => {
-    let timer: ReturnType<typeof setTimeout> | undefined
-
-    const scheduleNext = (): void => {
-      const at = nowEpochMilliseconds()
-      setNow(at)
-      const delays = [
-        nextPortraitMotionTransitionDelayMs(
-          {
-            turn,
-            lastToolFailureAt,
-            backgroundRunning,
-            interrupted,
-            askedAt,
-            tab,
-            sentAt,
-            arrival:
-              arrivalAt === undefined || arrivalMotion === undefined
-                ? undefined
-                : { at: arrivalAt, motion: arrivalMotion },
-            reducedMotion,
-            taskFinished,
-          },
-          at,
-        ),
-        waitingDueAt === undefined ? undefined : waitingDueAt - at,
-      ].filter((ms): ms is number => ms !== undefined && ms > 0)
-      if (delays.length === 0) {
-        return
-      }
-      timer = setTimeout(scheduleNext, Math.min(...delays))
-    }
-
-    scheduleNext()
-    return () => {
-      if (timer !== undefined) {
-        clearTimeout(timer)
-      }
-    }
-  }, [
-    turn,
-    lastToolFailureAt,
-    backgroundRunning,
-    interrupted,
-    askedAt,
-    tab,
-    sentAt,
-    arrivalAt,
-    arrivalMotion,
-    reducedMotion,
-    taskFinished,
-    waitingDueAt,
-  ])
-
-  return now
 }
