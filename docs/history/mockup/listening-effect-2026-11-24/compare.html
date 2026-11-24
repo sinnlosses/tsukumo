@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>入力中の「聞いている」エフェクト — 3案（2026-11-24）</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #15131b;
+    --surface: #1f1c27;
+    --ink: #ece7ef;
+    --ink-soft: color-mix(in srgb, var(--ink) 70%, transparent);
+    --ink-quiet: color-mix(in srgb, var(--ink) 50%, transparent);
+    --line: color-mix(in srgb, var(--ink) 12%, transparent);
+    --accent: #6fe3cd;
+    --accent-soft: color-mix(in srgb, var(--accent) 16%, transparent);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.6 system-ui, sans-serif; }
+  header.page { max-width: 1280px; margin: 0 auto; padding: 22px 24px 6px; display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: end; }
+  header.page h1 { font-size: 20px; margin: 0; }
+  header.page p { margin: 2px 0 0; color: var(--ink-soft); font-size: 13px; max-width: 62ch; }
+  .toolbar { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+  .toolbar button { all: unset; cursor: pointer; padding: 4px 14px; border-radius: 999px; border: 1px solid var(--line); font-size: 13px; color: var(--ink-soft); }
+  .toolbar button[aria-pressed="true"] { background: var(--accent-soft); color: var(--ink); border-color: transparent; }
+  .toolbar button:focus-visible, .toolbar input:focus-visible { outline: 2px solid var(--accent); }
+  .toolbar input { background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 5px 10px; font: inherit; width: 18em; }
+  main { max-width: 1280px; margin: 0 auto; padding: 14px 24px 48px; }
+  .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+  @media (width < 900px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: clip; display: flex; flex-direction: column; }
+  .card.pick { border-color: color-mix(in srgb, var(--accent) 55%, transparent); }
+  .meta { padding: 10px 14px 14px; display: flex; flex-direction: column; gap: 4px; }
+  .meta .row { display: flex; align-items: baseline; gap: 8px; }
+  .meta h3 { margin: 0; font-size: 15px; }
+  .meta .tag { margin-left: auto; font-size: 12px; padding: 1px 9px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); }
+  .meta .tag.now { background: transparent; color: var(--ink-quiet); border: 1px dashed var(--line); }
+  .meta p { margin: 0; font-size: 13px; color: var(--ink-soft); }
+  .meta .why { font-size: 12px; color: var(--ink-quiet); }
+
+  /* ---------- 舞台: 実物と同じく立ち絵は左下、入力欄はそのすぐ右 ---------- */
+  .stage { position: relative; height: 400px; overflow: clip; background: #0f0d14 center / cover no-repeat; }
+  .stage::after { content: ""; position: absolute; inset: 0; background: rgb(10 8 14 / .55); pointer-events: none; }
+  .portrait { position: absolute; left: 22px; bottom: 6px; height: 330px; aspect-ratio: var(--ratio, 1145 / 1374); z-index: 2;
+    transform-origin: 50% 100%; transition: rotate .35s ease, transform .35s ease, filter .5s ease; }
+  .portrait img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+  /* 続く動き（呼吸）。聞く姿勢のあいだは今の実物と同じく止める */
+  .portrait { animation: breathe 3.6s ease-in-out infinite; }
+  @keyframes breathe { 50% { scale: 1 1.012; } }
+  .stage[data-listening] .portrait { animation: none; }
+  .composer { position: absolute; z-index: 3; left: 250px; right: 16px; bottom: 16px; height: 62px; border-radius: 14px;
+    background: rgb(31 28 39 / .92); border: 1px solid var(--line); padding: 10px 14px; font-size: 14px; color: var(--ink);
+    white-space: nowrap; overflow: hidden; transition: border-color .3s; }
+  .stage[data-listening] .composer { border-color: color-mix(in srgb, var(--accent) 70%, transparent); }
+  .composer .ph { color: var(--ink-quiet); }
+  .composer .caret { display: inline-block; width: 1.5px; height: 1.1em; vertical-align: -2px; background: var(--ink); margin-left: 1px; }
+  .fx { position: absolute; inset: 0; pointer-events: none; z-index: 4; }
+  .fx-back { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
+
+  /* ---------- 今: 入力欄の側へ傾く（portrait.module.css の data-listening と同じ値） ---------- */
+  .stage[data-fx="now"][data-listening] .portrait { rotate: 3deg; transform: translateX(0.3rem); }
+
+  /* ---------- 案A: 背の灯 ----------
+     字があるあいだ、立ち絵の後ろに淡い光だまりが灯り、輪郭がうっすら光る。1文字打つごとに光が少し強まって戻る。
+     打つ手を止めても灯は残るので、「聞いている」が途切れない。止まっているあいだは何も動かない */
+  .a-pool { position: absolute; left: var(--px); top: var(--py); width: 300px; height: 360px; margin: -180px -150px;
+    background: radial-gradient(closest-side, color-mix(in srgb, var(--accent) 34%, transparent), color-mix(in srgb, var(--accent) 10%, transparent) 55%, transparent);
+    opacity: 0; transition: opacity .6s ease; }
+  .stage[data-listening] .a-pool { opacity: 1; }
+  .a-pulse { position: absolute; left: var(--px); top: var(--py); width: 260px; height: 320px; margin: -160px -130px;
+    background: radial-gradient(closest-side, color-mix(in srgb, var(--accent) 30%, transparent), transparent); opacity: 0; }
+  .stage[data-fx="a"][data-listening] .portrait { filter: drop-shadow(0 0 1.5px color-mix(in srgb, var(--accent) 80%, white)) drop-shadow(0 0 10px color-mix(in srgb, var(--accent) 45%, transparent)); }
+
+  /* ---------- 案B: 届く光の粒 ----------
+     打つたびに、入力欄の左端から小さな光の粒が弧を描いて立ち絵の胸もとへ飛び、着いたところで小さく瞬いて消える */
+  .b-mote { position: absolute; width: var(--s, 12px); height: var(--s, 12px); margin: calc(var(--s, 12px) / -2); border-radius: 50%;
+    background: radial-gradient(circle at 40% 35%, #fff, var(--accent) 55%, transparent 75%);
+    filter: drop-shadow(0 0 5px var(--accent)) drop-shadow(0 0 12px color-mix(in srgb, var(--accent) 70%, transparent)); }
+  .b-flash { position: absolute; width: 40px; height: 40px; margin: -20px; border-radius: 50%;
+    background: radial-gradient(closest-side, color-mix(in srgb, var(--accent) 60%, white), transparent); }
+
+  /* ---------- 案C: 耳もとの声の波 ----------
+     打つたびに、頭の入力欄の側へ「(」の形の細い光の弧が届き、頭へ寄りながら消える */
+  .c-arc { position: absolute; width: 40px; height: 58px; margin: -29px -20px; border-radius: 50%;
+    border: 2.2px solid transparent; border-left-color: color-mix(in srgb, var(--accent) 80%, white);
+    filter: drop-shadow(0 0 4px var(--accent)) drop-shadow(0 0 10px var(--accent)); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .portrait { animation: none; transition: none; }
+    .a-pool { transition: none; }
+  }
+</style>
+</head>
+<body>
+<header class="page">
+  <div>
+    <h1>入力中の「聞いている」エフェクト — 3案</h1>
+    <p>入力欄に字があるあいだの立ち絵の見え方。左上が今の形（傾く）。どのカードも同じ文を同じ間合いで打ち、途中で手を止める間を挟む。右の欄に打つと全部のカードがそれに反応する。</p>
+  </div>
+  <div class="toolbar">
+    <input id="mine" type="text" placeholder="ここに打つと全カードが反応" aria-label="自分で打つ" />
+    <button type="button" id="auto" aria-pressed="true">自動で打つ</button>
+  </div>
+</header>
+<main><div class="grid" id="grid"></div></main>
+
+<script>
+// 素材は同梱の tsukumo。?img=&bg=&accent=&ratio=&fx=&fy= で差し替えられる（撮影用。パスはこのファイルに書かない）
+const q = new URLSearchParams(location.search)
+const IMG = q.get("img") ?? "../../../../characters/tsukumo/default.png"
+const BG = q.get("bg") ?? "../../../../characters/tsukumo/background.png"
+if (q.has("accent")) document.documentElement.style.setProperty("--accent", q.get("accent"))
+const RATIO = q.get("ratio") ?? "1145 / 1374"
+// 顔の位置（立ち絵の箱に対する割合）。character.json の faceAtByExpression.default と同じ値
+const FACE = { x: Number(q.get("fx") ?? 0.5), y: Number(q.get("fy") ?? 0.22) }
+const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches
+
+const CARDS = [
+  { id: "now", tag: "今", label: "入力欄の側へ傾く", now: true,
+    what: "字があるあいだ、呼吸を止めて入力欄の側へ 3° 傾き、0.3rem 寄る。",
+    why: "体の向きで「聞く」を言う形。傾きは小さく、打ち始めの一瞬しか気付かれにくい。止まった形なので、打っている手応えは返らない。" },
+  { id: "a", tag: "案A（推奨）", label: "背の灯", pick: true,
+    what: "字があるあいだ、立ち絵の後ろに淡い光だまりが灯り、輪郭がうっすら光る。1文字ごとに光が少し強まって戻る。",
+    why: "手を止めても灯が残るので「聞いている」が途切れない。止まっているあいだは何も動かず、CPU を使わない。動きを減らす設定でも灯だけは出せる。" },
+  { id: "b", tag: "案B", label: "届く光の粒",
+    what: "打つたびに、入力欄の左端から光の粒が弧を描いて胸もとへ飛び、着いたところで小さく瞬く。",
+    why: "「言葉が届いている」がいちばん直に読める。ただ速く打つと粒が続き、本文を読むときの目の端で動きが多い。手を止めると何も残らない。" },
+  { id: "c", tag: "案C", label: "耳もとの声の波",
+    what: "打つたびに、頭の入力欄の側へ「(」の形の細い光の弧が届き、頭へ寄りながら消える。",
+    why: "「耳を澄ます」の読み方。動きは頭の横の小さな範囲に収まる。手を止めると何も残らず、立ち絵によっては耳の位置と弧が合わない。" },
+]
+
+const stages = []
+for (const item of CARDS) {
+  const card = document.createElement("article")
+  card.className = "card" + (item.pick ? " pick" : "")
+  card.innerHTML = `
+    <div class="stage" data-fx="${item.id}" style="background-image:url('${BG}');--ratio:${RATIO}">
+      <div class="fx-back"></div>
+      <span class="portrait"><img alt="立ち絵" src="${IMG}"></span>
+      <div class="composer"><span class="text"></span><span class="caret"></span></div>
+      <div class="fx"></div>
+    </div>
+    <div class="meta">
+      <div class="row"><h3>${item.label}</h3><span class="tag ${item.now ? "now" : ""}">${item.tag}</span></div>
+      <p>${item.what}</p>
+      <span class="why">${item.why}</span>
+    </div>`
+  document.getElementById("grid").append(card)
+  const stage = card.querySelector(".stage")
+  stages.push({ id: item.id, stage, text: card.querySelector(".text"), fx: card.querySelector(".fx"), back: card.querySelector(".fx-back"), last: 0 })
+}
+
+// 舞台の中の座標（立ち絵の箱から測る）
+function geom(s) {
+  const st = s.stage.getBoundingClientRect()
+  const p = s.stage.querySelector(".portrait").getBoundingClientRect()
+  const c = s.stage.querySelector(".composer").getBoundingClientRect()
+  return {
+    face: { x: p.left - st.left + p.width * FACE.x, y: p.top - st.top + p.height * FACE.y },
+    chest: { x: p.left - st.left + p.width * 0.5, y: p.top - st.top + p.height * 0.5 },
+    composer: { x: c.left - st.left, y: c.top - st.top, h: c.height },
+  }
+}
+
+// 案A の光だまりは置いたままにする（字の有無で opacity が変わるだけ）
+for (const s of stages) if (s.id === "a") {
+  const g = geom(s)
+  s.back.innerHTML = `<span class="a-pool"></span><span class="a-pulse"></span>`
+  for (const e of s.back.children) { e.style.setProperty("--px", `${g.chest.x}px`); e.style.setProperty("--py", `${g.chest.y}px`) }
+}
+
+const KEY = {
+  now() {},
+  a(s) {
+    if (reduced) return
+    s.back.querySelector(".a-pulse").animate([{ opacity: .9 }, { opacity: 0 }], { duration: 650, easing: "ease-out" })
+  },
+  b(s, now) {
+    if (reduced || now - s.last < 90) return
+    s.last = now
+    const g = geom(s)
+    const from = { x: g.composer.x + 6, y: g.composer.y + 12 + Math.random() * (g.composer.h - 24) }
+    const to = { x: g.chest.x + (Math.random() - .5) * 24, y: g.chest.y + (Math.random() - .5) * 30 }
+    const mid = { x: (from.x + to.x) / 2, y: Math.min(from.y, to.y) - 40 - Math.random() * 30 }
+    // 頭の粒に小さな2粒が少し遅れて続き、尾を引いて見せる
+    let a
+    for (const [i, size, op] of [[0, 12, 1], [1, 8, .6], [2, 5, .35]]) {
+      const m = document.createElement("span"); m.className = "b-mote"; m.style.setProperty("--s", `${size}px`); s.fx.append(m)
+      const an = m.animate([
+        { left: `${from.x}px`, top: `${from.y}px`, opacity: 0, scale: .6 },
+        { left: `${mid.x}px`, top: `${mid.y}px`, opacity: op, scale: 1, offset: .5 },
+        { left: `${to.x}px`, top: `${to.y}px`, opacity: op * .9, scale: .7 },
+      ], { duration: 620, delay: i * 45, easing: "cubic-bezier(.4,0,.6,1)", fill: "backwards" })
+      an.onfinish = () => m.remove()
+      if (i === 0) a = an
+    }
+    a.onfinish = () => {
+      a.effect.target.remove()
+      const f = document.createElement("span"); f.className = "b-flash"; f.style.left = `${to.x}px`; f.style.top = `${to.y}px`; s.fx.append(f)
+      f.animate([{ opacity: .9, scale: .3 }, { opacity: 0, scale: 1 }], { duration: 380, easing: "ease-out" }).onfinish = () => f.remove()
+    }
+  },
+  c(s, now) {
+    if (reduced || now - s.last < 260) return
+    s.last = now
+    const g = geom(s)
+    const y = g.face.y + 4
+    // 2本の弧を少しずらして送り、声の波に見せる
+    for (const [i, gap] of [[0, 0], [1, 18]]) {
+      const arc = document.createElement("span"); arc.className = "c-arc"; s.fx.append(arc)
+      arc.animate([
+        { left: `${g.face.x + 100 + gap}px`, top: `${y}px`, opacity: 0, scale: 1.25 },
+        { opacity: i ? .6 : 1, offset: .35 },
+        { left: `${g.face.x + 54 + gap}px`, top: `${y}px`, opacity: 0, scale: .7 },
+      ], { duration: 900, delay: i * 90, easing: "ease-out", fill: "backwards" }).onfinish = () => arc.remove()
+    }
+  },
+}
+
+function render(text, typed) {
+  const now = performance.now()
+  for (const s of stages) {
+    s.text.innerHTML = text ? text.replace(/[&<>]/g, (c) => `&${{ "&": "amp", "<": "lt", ">": "gt" }[c]};`) : `<span class="ph">依頼を書く…</span>`
+    s.stage.toggleAttribute("data-listening", text.length > 0)
+    if (typed && text) KEY[s.id](s, now)
+  }
+}
+
+// 自動で打つ: 打つ → 手を止める（字は残る）→ 続きを打つ → 送って空になる → 間
+const LINES = ["ねえ、さっきの画面のことなんだけど", "入力欄の上の札、もう少し小さくできる？"]
+let auto = true, timer = null
+function sleep(ms) { return new Promise((r) => { timer = setTimeout(r, ms) }) }
+async function runAuto() {
+  while (auto) {
+    let t = ""
+    for (const [i, line] of LINES.entries()) {
+      for (const ch of (i ? " " : "") + line) { if (!auto) return; t += ch; render(t, true); await sleep(70 + Math.random() * 90) }
+      await sleep(1800)
+    }
+    if (!auto) return
+    render("", false); await sleep(1600)
+  }
+}
+const autoBtn = document.getElementById("auto")
+autoBtn.addEventListener("click", () => {
+  auto = autoBtn.getAttribute("aria-pressed") !== "true"
+  autoBtn.setAttribute("aria-pressed", String(auto))
+  clearTimeout(timer)
+  if (auto) runAuto()
+})
+const mine = document.getElementById("mine")
+mine.addEventListener("focus", () => { auto = false; autoBtn.setAttribute("aria-pressed", "false"); clearTimeout(timer); render(mine.value, false) })
+mine.addEventListener("input", () => render(mine.value, true))
+
+// 撮影用: ?still=<字数> で、その字数まで打った状態で止める。?burst=1 で直前に打った手応えも出す
+if (q.has("still")) {
+  auto = false; autoBtn.setAttribute("aria-pressed", "false")
+  const text = LINES.join(" ").slice(0, Number(q.get("still")))
+  render(text, false)
+  window.burst = () => { render(text, true); setTimeout(() => render(text, true), 120); setTimeout(() => render(text, true), 300) }
+} else {
+  render("", false)
+  requestAnimationFrame(() => runAuto())
+}
+</script>
+</body>
+</html>
