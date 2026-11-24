@@ -5,11 +5,11 @@
         { "tag": "li", "children": [
           "架空の成果の画面に振り返りの口を置きたい",
           "いちばんのおすすめ",
-          { "tag": "button", "attributes": { "aria-label": "架空の成果の画面に振り返りの口を置きたい を始める（すぐ送る）" } }
+          { "tag": "button", "attributes": { "aria-label": "架空の成果の画面に振り返りの口を置きたい を始める" } }
         ] },
         { "tag": "li", "children": [
           "架空のタスク（着手できる）",
-          { "tag": "button", "attributes": { "aria-label": "T-001 を始める（すぐ送る）" } }
+          { "tag": "button", "attributes": { "aria-label": "T-001 を始める" } }
         ] }
       ] },
       "ほかの始め方",

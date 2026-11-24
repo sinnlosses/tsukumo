@@ -1,5 +1,5 @@
-/* タスクを実行する確認。`showModal()` は top layer に積むので、下のモーダルより必ず上に出る。 */
-.task-run-confirm {
+/* 確認のダイアログ。`showModal()` は top layer に積むので、下のモーダルより必ず上に出る。 */
+.confirm-dialog {
   box-sizing: border-box;
   width: min(28rem, calc(100vw - 2rem));
   margin: auto;
@@ -10,31 +10,36 @@
   color: var(--ink);
   font-size: var(--font-secondary);
 }
-.task-run-confirm-surface {
+.surface {
   box-sizing: border-box;
-  padding: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--stack-group);
+  padding: var(--stack-group);
   min-width: 0;
 }
-/* 送る文面（または送れない理由）。問いより弱い濃さで、問いの下に1行だけ置く。色は `Text` が持つ。 */
-.task-run-note {
-  margin: var(--space-sm) 0 0;
+/* 問いと説明の1行。説明は問いより弱い濃さで、色は `Text` が持つ。 */
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--stack-block);
 }
-.task-run-prompt {
+.code {
   font-family: var(--font-mono);
+  white-space: pre-wrap;
 }
 /* ボタンは右寄せで、実行するほうを端に置く（キャンセルが先に来る）。 */
-.task-run-actions {
+.actions {
   display: flex;
   justify-content: flex-end;
-  gap: var(--space-sm);
-  margin-top: var(--space-lg);
+  gap: var(--inline-control);
 }
 /* 箱だけ（高さ・余白・角丸）。顔は `<Button>` が持つ。 */
-.task-run-cancel,
-.task-run-ok {
+.action {
   display: inline-flex;
   align-items: center;
   gap: var(--inline-control);
-  padding: var(--space-xs) var(--space-md);
+  padding-block: var(--stack-tight);
+  padding-inline: var(--gutter-region);
   border-radius: var(--radius-md);
 }

@@ -141,7 +141,6 @@ const RAW_SCALE_REFERENCE_LIMITS: Readonly<Record<string, number>> = {
   "browser/features/task-board/components/task-body.module.css": 17,
   "browser/features/task-board/components/task-detail.module.css": 12,
   "browser/features/task-board/components/task-item.module.css": 4,
-  "browser/features/task-board/components/task-run-confirm.module.css": 5,
   "browser/features/task-board/components/task-sheet.module.css": 1,
   "browser/features/task-board/task-board.module.css": 7,
   "browser/features/task-board/task-list.module.css": 3,

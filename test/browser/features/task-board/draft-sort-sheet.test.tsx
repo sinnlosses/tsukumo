@@ -60,7 +60,7 @@ function collectInto(sent: unknown[]): CommandSpy {
 }
 
 function confirmDialog(): Element | null {
-  return document.querySelector("dialog.task-run-confirm")
+  return document.querySelector('dialog[aria-label="タスクの実行"]')
 }
 
 function confirmDialogElement(): HTMLElement {

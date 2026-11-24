@@ -1,5 +1,7 @@
 // 始め方の一覧の札と「ほかの始め方」を、状態・前回のセッションの要約・タスク一覧から用意する。
-// ボタンとキーは、どちらも依頼をすぐ送るか、ほかの口（入力欄・タスクのモーダル・切り替え画面）を開く。
+// 札のボタンとキーは、送る依頼の文面を見せる確認を開き、確認の「頼む」で送る。ほかの始め方はほかの口（入力欄・タスクのモーダル・切り替え画面）を開く。
+
+import { useState } from "react"
 
 import {
   characterFaceInfo,
@@ -21,8 +23,13 @@ export type WelcomeModel = {
   readonly face: CharacterFaceInfo
   /** 切り替え画面で選べる、いまのセッション以外の行があるか（「前のやり取りを見る」を出すか）。 */
   readonly hasOtherSessions: boolean
-  /** 札の「始める」。入力欄を経由せず依頼を送る。 */
+  /** 確認を開いている札。開いていなければ無い。 */
+  readonly confirming?: WelcomeCard
+  /** 札の「始める」。送る前の確認を開く。 */
   readonly onStart: (card: WelcomeCard) => void
+  /** 確認の「頼む」。入力欄を経由せず依頼を送って確認を閉じる。 */
+  readonly onConfirm: (card: WelcomeCard) => void
+  readonly onCancel: () => void
   readonly onWrite: () => void
   readonly onPickTask: () => void
   readonly onSeePrevious: () => void
@@ -36,14 +43,20 @@ export function useWelcome(): WelcomeModel {
   const requestFocus = useComposerFocus((state) => state.requestFocus)
   const openList = useTaskBoardRequest((state) => state.openList)
   const openSwitcher = useSessionSwitcherRequest((state) => state.openSwitcher)
+  const [confirming, setConfirming] = useState<WelcomeCard>()
 
   function onSeePrevious(): void {
     openSwitcher(nowEpochMilliseconds())
   }
 
   function onStart(card: WelcomeCard): void {
+    setConfirming(card)
+  }
+
+  function onConfirm(card: WelcomeCard): void {
     void dispatch.diagnostic.reportRecommendationPressed({ kind: card.kind })
     void dispatch.session.prompt({ text: card.request, images: [] })
+    setConfirming(undefined)
   }
 
   useEventListener(document, "keydown", (event) => {
@@ -77,7 +90,12 @@ export function useWelcome(): WelcomeModel {
     cards,
     face: characterFaceInfo(character),
     hasOtherSessions,
+    ...(confirming !== undefined && { confirming }),
     onStart,
+    onConfirm,
+    onCancel: () => {
+      setConfirming(undefined)
+    },
     onWrite: requestFocus,
     onPickTask: () => {
       openList("")

@@ -169,7 +169,7 @@
                             "data-color": "disabled"
                           },
                           "children": [
-                            "tsukumo のおすすめ。「始める」を押すと、すぐ作業が始まる。"
+                            "tsukumo のおすすめ。「始める」を押すと、確認のあとに作業が始まる。"
                           ]
                         },
                         {
@@ -191,7 +191,7 @@
                                     "data-size": "sm",
                                     "data-elevation": "none",
                                     "data-astryx-pressable": "",
-                                    "aria-label": "T-001 を始める（すぐ送る）",
+                                    "aria-label": "T-001 を始める",
                                     "type": "button"
                                   },
                                   "children": [

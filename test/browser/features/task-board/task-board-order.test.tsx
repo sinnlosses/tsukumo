@@ -86,7 +86,7 @@ describe("タスクのモーダルの検索欄の Enter", () => {
   ]
 
   function confirmDialog(): Element | null {
-    return document.querySelector("dialog.task-run-confirm")
+    return document.querySelector('dialog[aria-label="タスクの実行"]')
   }
 
   it("着手可のタスクを選んでいれば、頼む口の確認が開く", () => {

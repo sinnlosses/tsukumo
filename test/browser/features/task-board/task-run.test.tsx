@@ -111,7 +111,7 @@ function collectInto(sent: unknown[]): CommandSpy {
 
 /** 確認のモーダル（開いているときだけ木に居る）。 */
 function confirmDialog(): Element | null {
-  return document.querySelector("dialog.task-run-confirm")
+  return document.querySelector('dialog[aria-label="タスクの実行"]')
 }
 
 describe("タスクの実行を頼む", () => {

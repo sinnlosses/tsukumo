@@ -8,16 +8,15 @@
 
 import type { ReactElement } from "react"
 
-import { Button } from "../../../components/ui/button/button.tsx"
-import { Dialog } from "../../../components/ui/dialog/dialog.tsx"
+import {
+  ConfirmDialog,
+  ConfirmDialogCode,
+} from "../../../components/ui/confirm-dialog/confirm-dialog.tsx"
 import { SendIcon } from "../../../components/ui/icon/icon.tsx"
-import { Surface } from "../../../components/ui/surface/surface.tsx"
-import { Text } from "../../../components/ui/text/text.tsx"
 import { currentGearPreferences } from "../../../stores/gear-preference-seed.ts"
 import { useSession, useTurnRunning } from "../../../stores/session.ts"
 import type { TaskRunConfirmOutcome } from "../domain/task-run-confirm-outcome.ts"
 import { requestPromptOf, type TaskRequest, type TaskRunTarget } from "../domain/task-run-prompt.ts"
-import styles from "./task-run-confirm.module.css"
 
 type TaskRunConfirmProps = {
   /** 頼みの対象と種類。送る文面を決める（保留の着手には、着手の前に判断を聞く旨が添わる）。 */
@@ -32,7 +31,7 @@ type TaskRunConfirmProps = {
 
 /**
  * 開いた状態で組み立てられる `<dialog>`。タスクのモーダルの上に重ねて開く。
- * `showModal()` は top layer に積むので下のモーダルより必ず上に出て、Esc はいちばん上（この確認）だけを閉じる。
+ * Esc はいちばん上（この確認）だけを閉じる。
  * モーダルを閉じてから出す形にすると、断ったあとに一覧へ戻れない。
  */
 export function TaskRunConfirm(props: TaskRunConfirmProps): ReactElement {
@@ -50,75 +49,28 @@ export function TaskRunConfirm(props: TaskRunConfirmProps): ReactElement {
   }
 
   return (
-    <Dialog
-      open={true}
+    <ConfirmDialog
       ariaLabel="タスクの実行"
-      backdrop="dim"
-      placement={{ kind: "auto" }}
-      onClose={dismiss}
-      className={styles["task-run-confirm"]}
-    >
-      <Surface
-        element="div"
-        tone="surface"
-        space="none"
-        radius="lg"
-        shadow="none"
-        className={styles["task-run-confirm-surface"]}
-      >
-        <Text element="p" size="heading" tone="inherit" weight="semibold" className="">
-          {headingOf(target)}
-        </Text>
-        {turnInProgress ? (
-          <Text
-            element="p"
-            size="inherit"
-            tone="ink-quiet"
-            weight="inherit"
-            className={styles["task-run-note"]}
-          >
-            いまターンが動いているので送れない。終わってからもう一度押す。
-          </Text>
+      heading={headingOf(target)}
+      note={
+        turnInProgress ? (
+          "いまターンが動いているので送れない。終わってからもう一度押す。"
         ) : (
-          <Text
-            element="p"
-            size="inherit"
-            tone="ink-quiet"
-            weight="inherit"
-            className={styles["task-run-note"]}
-          >
-            <code className={styles["task-run-prompt"]}>{prompt}</code> が実行されます。
-          </Text>
-        )}
-        <div className={styles["task-run-actions"]}>
-          <Button
-            variant="outline"
-            size="secondary"
-            pressed="none"
-            disabled={false}
-            disclosure={{ kind: "none" }}
-            className={styles["task-run-cancel"]}
-            onClick={dismiss}
-          >
-            キャンセル
-          </Button>
-          {!turnInProgress && (
-            <Button
-              variant="solid-accent"
-              size="secondary"
-              pressed="none"
-              disabled={false}
-              disclosure={{ kind: "none" }}
-              className={styles["task-run-ok"]}
-              onClick={run}
-            >
-              {target.request.kind !== "sort" && <SendIcon />}
-              {OK_LABEL_OF[target.request.kind]}
-            </Button>
-          )}
-        </div>
-      </Surface>
-    </Dialog>
+          <>
+            <ConfirmDialogCode>{prompt}</ConfirmDialogCode> が実行されます。
+          </>
+        )
+      }
+      cancelLabel="キャンセル"
+      {...(!turnInProgress && {
+        confirm: {
+          label: OK_LABEL_OF[target.request.kind],
+          ...(target.request.kind !== "sort" && { icon: <SendIcon /> }),
+          onPress: run,
+        },
+      })}
+      onClose={dismiss}
+    />
   )
 }
 

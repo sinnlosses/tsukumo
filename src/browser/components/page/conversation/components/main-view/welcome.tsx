@@ -1,4 +1,4 @@
-// 迎える局面のメインビューの中身。見出しと、おすすめのカード（押すとすぐ依頼が送られる）と、ほかの始め方を出す。
+// 迎える局面のメインビューの中身。見出しと、おすすめのカード（押すと送る依頼の確認が開く）と、ほかの始め方を出す。
 
 import clsx from "clsx"
 import type { ReactElement, ReactNode } from "react"
@@ -7,8 +7,15 @@ import { codeSpanParts } from "../../../../../domain/code-span.ts"
 import { TaskSummaryText } from "../../../../../features/task-board/task-summary-text.tsx"
 import { CharacterFace } from "../../../../frame/character-face.tsx"
 import { Button } from "../../../../ui/button/button.tsx"
+import { ConfirmDialog, ConfirmDialogCode } from "../../../../ui/confirm-dialog/confirm-dialog.tsx"
 import { Heading } from "../../../../ui/heading/heading.tsx"
-import { ArrowRightIcon, HistoryIcon, ListIcon, PencilIcon } from "../../../../ui/icon/icon.tsx"
+import {
+  ArrowRightIcon,
+  HistoryIcon,
+  ListIcon,
+  PencilIcon,
+  SendIcon,
+} from "../../../../ui/icon/icon.tsx"
 import { Kbd } from "../../../../ui/kbd/kbd.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
 import type { WelcomeCard } from "../../domain/welcome-entry-list.ts"
@@ -16,7 +23,7 @@ import { useWelcome, type WelcomeModel } from "./hooks/use-welcome.ts"
 import styles from "./main-view.module.css"
 
 const TITLE = "何から始める？"
-const LEAD_WITH_CARDS = "tsukumo のおすすめ。「始める」を押すと、すぐ作業が始まる。"
+const LEAD_WITH_CARDS = "tsukumo のおすすめ。「始める」を押すと、確認のあとに作業が始まる。"
 const LEAD_WITHOUT_CARDS = "下の入力欄から頼める。"
 const TOP_BADGE = "いちばんのおすすめ"
 const OTHERS_LABEL = "ほかの始め方"
@@ -51,7 +58,35 @@ export function Welcome(): ReactElement {
         </ul>
       )}
       <Others model={model} primary={!hasCards} />
+      {model.confirming !== undefined && <StartConfirm card={model.confirming} model={model} />}
     </div>
+  )
+}
+
+function StartConfirm(props: {
+  readonly card: WelcomeCard
+  readonly model: WelcomeModel
+}): ReactElement {
+  const { card, model } = props
+  return (
+    <ConfirmDialog
+      ariaLabel="始め方の実行"
+      heading={card.kind === "resume" ? "前回の続きを実行しますか" : `${card.id} を実行しますか`}
+      note={
+        <>
+          <ConfirmDialogCode>{card.request}</ConfirmDialogCode> が実行されます。
+        </>
+      }
+      cancelLabel="キャンセル"
+      confirm={{
+        label: "頼む",
+        icon: <SendIcon />,
+        onPress: () => {
+          model.onConfirm(card)
+        },
+      }}
+      onClose={model.onCancel}
+    />
   )
 }
 
@@ -87,7 +122,7 @@ function Card(props: {
           size="secondary"
           pressed="none"
           disabled={false}
-          ariaLabel={`${card.id} を始める（すぐ送る）`}
+          ariaLabel={`${card.id} を始める`}
           disclosure={{ kind: "none" }}
           className={styles["card-start"]}
           onClick={() => {

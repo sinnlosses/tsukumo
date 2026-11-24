@@ -1,5 +1,5 @@
 import { QueryClientProvider } from "@tanstack/react-query"
-import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
 import { Welcome } from "../../../../../../../src/browser/components/page/conversation/components/main-view/welcome.tsx"
@@ -62,11 +62,16 @@ function renderWelcome(overrides: Partial<SessionState>, spy: CommandSpy = () =>
 }
 
 describe("Welcome（キーで始める）", () => {
-  it("フォーカスが入力欄の外にあるとき、キー 1 で先頭の札の依頼をすぐ送る", () => {
+  it("フォーカスが入力欄の外にあるとき、キー 1 で先頭の札の確認が開き、文面を見せて「頼む」で送る", () => {
     const calls: unknown[] = []
     renderWelcome(FILLED, (command) => calls.push(command))
 
     fireEvent.keyDown(document.body, { key: "1" })
+
+    expect(calls).toEqual([])
+    const dialog = screen.getByRole("dialog", { name: "始め方の実行" })
+    expect(dialog.textContent).toContain("タスク X-1 を進めて が実行されます。")
+    fireEvent.click(within(dialog).getByRole("button", { name: "頼む" }))
 
     expect(calls).toEqual([
       { procedure: "diagnostic.reportRecommendationPressed", kind: "task" },

@@ -96,10 +96,16 @@ test.describe("始め方の一覧", () => {
     expect(overflow).toBe(0)
   })
 
-  test("「始める」を押すと、入力欄を経由せず依頼が送られ、下書きは残る", async ({ run }) => {
+  test("「始める」で開く確認の「頼む」を押すと、入力欄を経由せず依頼が送られ、下書きは残る", async ({
+    run,
+  }) => {
     const room = await openWelcomeRoom(run, "welcome-start-button", "wide")
     await room.page.locator("textarea").fill("打ちかけの架空の依頼")
     await mainView(room.page).getByRole("button", { name: READY_CARD }).click()
+    await room.page
+      .getByRole("dialog", { name: "始め方の実行" })
+      .getByRole("button", { name: "頼む" })
+      .click()
     await room.waitForEvent("request")
     expect(await draft(room.page)).toBe("打ちかけの架空の依頼")
   })
