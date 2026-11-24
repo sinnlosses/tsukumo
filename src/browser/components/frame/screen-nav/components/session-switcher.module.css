@@ -127,6 +127,10 @@
 .session-switcher-row[data-occupied="true"] .session-switcher-row-id {
   color: var(--ink-quiet);
 }
+/* 実行中は切り替えられない。選ぶ（1回押し）はできるので薄くはせず、カーソルだけで示す。 */
+.session-switcher-row[data-blocked="true"] {
+  cursor: not-allowed;
+}
 .session-switcher-row-heading {
   flex: 1 1 auto;
   min-width: 0;

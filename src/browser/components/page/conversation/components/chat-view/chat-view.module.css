@@ -171,9 +171,9 @@
 }
 /* ターン進行中（返事を待っている間）は押せない。
    立ち絵は薄めない（要素の `opacity` は地ごと透かす）ので、見せ方は応えないことのほうで作る。
-   指の形にならず、揺れず、案内も出ない（`NudgePortrait` が `.chat-poke-hint` ごと描かない）。 */
+   禁止の形のカーソルになり、揺れず、案内の代わりに理由の `title` が出る（`NudgePortrait` が `.chat-poke-hint` は描かない）。 */
 .chat-poke[aria-disabled="true"] {
-  cursor: default;
+  cursor: not-allowed;
 }
 @keyframes chat-poke-sway {
   0%,

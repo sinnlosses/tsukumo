@@ -76,6 +76,7 @@
 }
 .screen-nav-character-picker-option:disabled {
   color: var(--ink-quiet);
+  opacity: 0.5;
   cursor: not-allowed;
 }
 .screen-nav-character-picker-face {

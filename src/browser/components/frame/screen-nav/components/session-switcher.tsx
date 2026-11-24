@@ -185,6 +185,8 @@ function SessionSwitcherBody(props: SessionSwitcherProps): ReactElement {
                         aria-disabled={row.occupiedElsewhere}
                         data-current={row.current}
                         data-occupied={row.occupiedElsewhere}
+                        data-blocked={switcher.blocked && !row.current}
+                        title={switcher.blocked && !row.current ? switcher.blockedTitle : undefined}
                         className={styles["session-switcher-row"]}
                         onClick={() => selection.onSelect(row.sessionId)}
                         onDoubleClick={() => switcher.onSwitch(row.sessionId)}

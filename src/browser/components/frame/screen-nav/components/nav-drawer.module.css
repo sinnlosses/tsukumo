@@ -158,6 +158,7 @@
   }
   .nav-drawer-new-session[aria-disabled="true"] {
     color: var(--ink-quiet);
+    opacity: 0.5;
     cursor: not-allowed;
   }
   .nav-drawer-settings {

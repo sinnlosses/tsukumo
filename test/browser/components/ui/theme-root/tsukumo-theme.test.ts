@@ -62,7 +62,7 @@ function foreignAmong(values: readonly unknown[]): readonly string[] {
     const names = [...value.matchAll(REFERENCE)].map((match) => match[1] ?? "")
     const rest = value
       .replaceAll(REFERENCE, "")
-      .replaceAll(/\b(?:color-mix|in|srgb|transparent|inset)\b/g, "")
+      .replaceAll(/\b(?:color-mix|in|srgb|transparent|inset|not-allowed)\b/g, "")
     return !names.every((name) => DECLARED_TOKENS.has(name)) || !/^[\s,()\d.%]*$/.test(rest)
   })
 }

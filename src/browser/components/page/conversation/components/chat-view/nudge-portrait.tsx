@@ -18,6 +18,7 @@
 import { useId, type ReactElement } from "react"
 
 import type { Expression } from "../../../../../../shared/character-pack/expression.ts"
+import { FRAME_ERROR_REASON } from "../../../../../../shared/frame-error-reason.ts"
 import { Portrait } from "../../../../frame/portrait.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
 import styles from "./chat-view.module.css"
@@ -25,7 +26,7 @@ import styles from "./chat-view.module.css"
 /**
  * 立ち絵に載せたときに出る案内。
  * ホバーの間だけ見えるので常設の枠は増えないが、支援技術には常に届く（立ち絵を包むボタンの `aria-describedby` が指す）。
- * ターン進行中はこの案内ごと出さない（押せない理由の定型文には差し替えない）。
+ * ターン進行中はこの案内を出さず、立ち絵を包むボタンの `title` が押せない理由を出す。
  */
 const NUDGE_HINT = "話しかけてもらう"
 
@@ -46,6 +47,7 @@ export function NudgePortrait(props: {
       // 何が起きるかは説明のほうに置くので、`aria-label` で alt を覆わない。
       aria-describedby={props.turnInProgress ? undefined : hintId}
       aria-disabled={props.turnInProgress}
+      title={props.turnInProgress ? FRAME_ERROR_REASON.nudgeDuringTurn : undefined}
       onClick={props.onNudge}
     >
       <Portrait

@@ -472,8 +472,8 @@
   }
 
   .astryx-button:is([aria-disabled="true"]) {
-    background-color: var(--surface-raised);
-    color: var(--ink-quiet);
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 
   .astryx-button[data-variant="warning"] {

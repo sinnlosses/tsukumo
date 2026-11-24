@@ -374,8 +374,8 @@ export const tsukumoTheme = {
       },
       "base": {
         ":is([aria-disabled=\"true\"])": {
-          "backgroundColor": "var(--surface-raised)",
-          "color": "var(--ink-quiet)"
+          "opacity": "0.5",
+          "cursor": "not-allowed"
         }
       },
       "variant:warning": {
