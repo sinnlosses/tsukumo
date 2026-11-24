@@ -1,6 +1,7 @@
 // 始め方の一覧に並べる札を、状態・前回のセッションの残り・タスク一覧から用意する。
 
 import { conversationMoment } from "../../../../../../shared/session/conversation-moment.ts"
+import { useGearPreferences } from "../../../../../stores/gear-preference-seed.ts"
 import { useSession } from "../../../../../stores/session.ts"
 import { useSessionDigest } from "../../../../frame/screen-nav/hooks/use-session-digest.ts"
 import {
@@ -24,6 +25,7 @@ export function useWelcomeCards(): WelcomeCards {
   )
   const tasks = useSession((session) => session.state.tasks)
   const recommendation = useSession((session) => session.state.recommendation)
+  const { launchSkill } = useGearPreferences()
 
   const greeting = useSession((session) => conversationMoment(session.state) === "greet")
 
@@ -40,7 +42,7 @@ export function useWelcomeCards(): WelcomeCards {
       ? { kind: "available", session: previous, remaining: digest.remaining }
       : { kind: "none" }
   return {
-    cards: welcomeCardsOf(recommendation, resume, tasks),
+    cards: welcomeCardsOf(recommendation, resume, tasks, launchSkill),
     hasOtherSessions: hasOtherSession(otherSessions),
   }
 }

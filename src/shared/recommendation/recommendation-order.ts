@@ -34,9 +34,14 @@ export function readyTasksInOrder(tasks: TaskSummaryResult): readonly TaskSummar
   return tasks.kind === "known" ? recommendationOrder(tasks.items).map(({ task }) => task) : []
 }
 
-/** おすすめのタスクの札が送る・入れる依頼の文。 */
-export function taskStartRequest(taskId: string): string {
-  return `タスク ${taskId} を進めて`
+/**
+ * タスクの着手を頼む文。サイドバー・迎えのカード・次の一手の札で同じ文面にする。
+ * `launchSkill` は利用者が書いた起動スキル名。
+ * 先頭の `/` と前後の空白を畳み、空・使えない文字を含む値は未設定として固定の文面にする。
+ */
+export function taskStartRequest(taskId: string, launchSkill = ""): string {
+  const skill = launchSkillOf(launchSkill)
+  return skill === "" ? `タスク ${taskId} を進めて。` : `/${skill} ${taskId}`
 }
 
 /**
@@ -75,4 +80,12 @@ function activeWaiterIds(items: readonly TaskSummaryItem[], id: string): readonl
         (hasTaskStatus(other, "todo") || hasTaskStatus(other, "doing")),
     )
     .map((other) => other.id)
+}
+
+const LAUNCH_SKILL_PATTERN = /^[A-Za-z0-9_:-]+$/
+
+/** 畳んだスキル名。未設定・使えない文字を含む値は空文字。 */
+function launchSkillOf(raw: string): string {
+  const skill = raw.trim().replace(/^\//, "").trim()
+  return LAUNCH_SKILL_PATTERN.test(skill) ? skill : ""
 }

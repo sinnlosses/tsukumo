@@ -70,12 +70,12 @@ describe("Welcome（キーで始める）", () => {
 
     expect(calls).toEqual([])
     const dialog = screen.getByRole("dialog", { name: "始め方の実行" })
-    expect(dialog.textContent).toContain("タスク X-1 を進めて が実行されます。")
+    expect(dialog.textContent).toContain("タスク X-1 を進めて。 が実行されます。")
     fireEvent.click(within(dialog).getByRole("button", { name: "頼む" }))
 
     expect(calls).toEqual([
       { procedure: "diagnostic.reportRecommendationPressed", kind: "task" },
-      { procedure: "session.prompt", text: "タスク X-1 を進めて", images: [] },
+      { procedure: "session.prompt", text: "タスク X-1 を進めて。", images: [] },
     ])
   })
 

@@ -59,13 +59,15 @@ export function hasOtherSession(otherSessions: readonly SessionChoice[]): boolea
 /**
  * 前回の続き、着手できる未着手のタスクをおすすめの順、と並べた先頭から {@link MAX_RECOMMENDATION_CARDS} 枚。
  * `recommendation` からは理由だけを当てる（理由が届いていない札の理由は空）。
+ * `launchSkill` は設定の起動スキル名。
  */
 export function welcomeCardsOf(
   recommendation: readonly RecommendationCard[],
   resume: ResumeSource,
   tasks: TaskSummaryResult,
+  launchSkill = "",
 ): readonly WelcomeCard[] {
-  return [...resumeCards(resume), ...readyTaskCards(tasks)]
+  return [...resumeCards(resume), ...readyTaskCards(tasks, launchSkill)]
     .slice(0, MAX_RECOMMENDATION_CARDS)
     .map((card) => ({
       ...card,
@@ -110,13 +112,13 @@ function resumeRequestOf(remaining: string): string {
   return `前回の続きを進めて。\n前回の残り: ${remaining}`
 }
 
-function readyTaskCards(tasks: TaskSummaryResult): readonly WelcomeCard[] {
+function readyTaskCards(tasks: TaskSummaryResult, launchSkill: string): readonly WelcomeCard[] {
   return readyTasksInOrder(tasks).map((task) => ({
     kind: "task" as const,
     key: task.id,
     id: task.id,
     title: task.summary,
     reason: "",
-    request: taskStartRequest(task.id),
+    request: taskStartRequest(task.id, launchSkill),
   }))
 }

@@ -104,10 +104,15 @@ describe("おすすめのカード", () => {
       READY_TASKS,
     )
     expect(cards.map((card) => [card.id, card.reason, card.request])).toEqual([
-      ["X-4", "", "タスク X-4 を進めて"],
-      ["X-3", "理由3", "タスク X-3 を進めて"],
-      ["X-2", "", "タスク X-2 を進めて"],
+      ["X-4", "", "タスク X-4 を進めて。"],
+      ["X-3", "理由3", "タスク X-3 を進めて。"],
+      ["X-2", "", "タスク X-2 を進めて。"],
     ])
+  })
+
+  it("起動スキルが設定されていれば、タスクの札の依頼はそのスキルの呼び出し", () => {
+    const cards = welcomeCardsOf([], NO_RESUME, READY_TASKS, "tsukumo-workflow:next-task")
+    expect(cards[0]?.request).toBe("/tsukumo-workflow:next-task X-4")
   })
 
   it("前回の続きの札は ID の席が見出しで、題は前回の残り、依頼の文は命令形の1行に前回の残りを添える", () => {
@@ -184,8 +189,8 @@ describe("おすすめのカード", () => {
       ]),
     )
     expect(cards.map((card) => card.request)).toEqual([
-      "タスク X-3 を進めて",
-      "タスク X-4 を進めて",
+      "タスク X-3 を進めて。",
+      "タスク X-4 を進めて。",
     ])
   })
 

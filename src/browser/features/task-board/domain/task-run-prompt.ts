@@ -1,5 +1,6 @@
 // 頼む口で頼めるタスクと、送る文面。
 
+import { taskStartRequest } from "../../../../shared/recommendation/recommendation-order.ts"
 import {
   hasTaskStatus,
   taskReadiness,
@@ -51,12 +52,11 @@ export function requestPromptOf(target: TaskRunTarget, launchSkill = ""): string
   const { taskId, request } = target
   switch (request.kind) {
     case "start": {
-      const skill = launchSkillOf(launchSkill)
-      const prompt = skill === "" ? `タスク ${taskId} を進めて。` : `/${skill} ${taskId}`
+      const prompt = taskStartRequest(taskId, launchSkill)
       if (!request.held) {
         return prompt
       }
-      return skill === "" ? `${prompt}${HELD_NOTE}` : `${prompt} ${HELD_NOTE}`
+      return prompt.startsWith("/") ? `${prompt} ${HELD_NOTE}` : `${prompt}${HELD_NOTE}`
     }
     case "plan":
       return `ドラフト ${taskId} を計画して。## 完了条件 と ## やること を書いて、着手できる todo にする。`
@@ -79,12 +79,4 @@ function sortPromptOf(plans: readonly string[], drops: readonly DraftDrop[]): st
 function dropEntryOf(drop: DraftDrop): string {
   const reason = drop.reason.trim()
   return reason === "" ? drop.id : `${drop.id}（${reason}）`
-}
-
-const LAUNCH_SKILL_PATTERN = /^[A-Za-z0-9_:-]+$/
-
-/** 畳んだスキル名。未設定・使えない文字を含む値は空文字。 */
-function launchSkillOf(raw: string): string {
-  const skill = raw.trim().replace(/^\//, "").trim()
-  return LAUNCH_SKILL_PATTERN.test(skill) ? skill : ""
 }
