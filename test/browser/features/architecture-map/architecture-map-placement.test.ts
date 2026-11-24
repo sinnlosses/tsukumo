@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import {
+  mapFocusFrameOf,
   mapLaneLayoutOf,
   mapPlacementOf,
 } from "../../../../src/browser/features/architecture-map/architecture-map-placement.ts"
@@ -167,6 +168,67 @@ describe("mapLaneLayoutOf", () => {
     expect(mapLaneLayoutOf(laneView([{ id: "c", kind: "crosscut" }], [laneBox("a", "c")]))).toEqual(
       grid,
     )
+  })
+})
+
+const FOCUS_LANES = [
+  { id: "browser", title: "ブラウザ", kind: "runtime" },
+  { id: "server", title: "サーバ", kind: "runtime" },
+  { id: "external", title: "外部", kind: "external" },
+] as const
+
+function focusView(level: 1 | 2, focusLane?: string): MapView {
+  const focusLevel = level === 1 ? 1 : 2
+  const childLevel = level === 1 ? 2 : 3
+  return {
+    ...viewOf(
+      [
+        { ...box("ext-b"), level: focusLevel, lane: "external" },
+        { ...box("child-1"), level: childLevel, lane: "server" },
+        { ...box("peer"), level: focusLevel, lane: "browser" },
+        { ...box("child-2"), level: childLevel, lane: "server" },
+        { ...box("ext-a"), level: focusLevel, lane: "external" },
+      ],
+      [],
+    ),
+    level: childLevel,
+    lanes: FOCUS_LANES,
+    focus: {
+      id: "server",
+      title: "サーバ",
+      level: focusLevel,
+      ...(focusLane ? { lane: focusLane } : {}),
+    },
+  }
+}
+
+describe("mapFocusFrameOf", () => {
+  it("子と外の箱を分け、外の箱を区画の定義の順（同じ区画は定義の順）に並べる", () => {
+    expect(mapFocusFrameOf(focusView(1, "server"))).toEqual({
+      kind: "frame",
+      lane: FOCUS_LANES[1],
+      title: "サーバ",
+      childIds: ["child-1", "child-2"],
+      outerIds: ["peer", "ext-b", "ext-a"],
+    })
+  })
+
+  it("中の箱へのフォーカスでも外の箱を level で見分ける", () => {
+    expect(mapFocusFrameOf(focusView(2, "server"))).toMatchObject({
+      childIds: ["child-1", "child-2"],
+      outerIds: ["peer", "ext-b", "ext-a"],
+    })
+  })
+
+  it("全体の図・区画の無い図・フォーカスした箱の区画が並びに無い図は枠を組まない", () => {
+    const { focus: _focus, ...overall } = focusView(1, "server")
+    const { lanes: _lanes, ...unlaned } = focusView(1, "server")
+    const none = { kind: "none" }
+
+    expect(mapFocusFrameOf(overall)).toEqual(none)
+    expect(mapFocusFrameOf(unlaned)).toEqual(none)
+    expect(mapFocusFrameOf(focusView(1, "nowhere"))).toEqual(none)
+    expect(mapFocusFrameOf(focusView(1))).toEqual(none)
   })
 })
 

@@ -57,6 +57,7 @@ export function ArchitectureMapDiagram(props: {
   const arrows = { normal: `${markerId}-arrow`, ng: `${markerId}-arrow-ng` }
   const geometry = mapGeometryOf(props.view, props.form)
   const lanes = geometry.lanes
+  const focusFrame = geometry.focusFrame
   const tones = laneTonesOf(props.view.lanes ?? [])
   const miniTitle = props.form === "full" ? undefined : MINI_TITLES[props.form]
   const mini = miniTitle !== undefined
@@ -88,12 +89,25 @@ export function ArchitectureMapDiagram(props: {
           .map((lane) => (
             <LaneFrame
               key={lane.lane.id}
-              lane={lane}
+              lane={lane.lane}
+              rect={lane}
+              text={lane.lane.title}
               tone={tones.get(lane.lane.id) ?? EXTERNAL_TONE}
               heading={lanes.heading}
               mini={mini}
             />
           ))}
+      {focusFrame !== undefined && (
+        <LaneFrame
+          focusFrame
+          lane={focusFrame.lane}
+          rect={focusFrame.rect}
+          text={focusFrame.heading.text}
+          tone={tones.get(focusFrame.lane.id) ?? EXTERNAL_TONE}
+          heading={focusFrame.heading}
+          mini={mini}
+        />
+      )}
       {edgeShapesOf(props.view, geometry.rects, mini).map((shape) => (
         <EdgeLine key={shape.key} shape={shape} arrows={arrows} />
       ))}
@@ -101,6 +115,7 @@ export function ArchitectureMapDiagram(props: {
         const rect = geometry.rects.get(box.id)
         const laneTitle = lanes?.titles.get(box.id)
         const tone = box.lane === undefined ? undefined : tones.get(box.lane)
+        const outer = geometry.outerIds?.has(box.id) === true
         return (
           rect !== undefined && (
             <BoxNode
@@ -109,7 +124,8 @@ export function ArchitectureMapDiagram(props: {
               rect={rect}
               {...(miniTitle === undefined ? {} : { miniTitle })}
               {...(laneTitle === undefined ? {} : { laneTitle })}
-              {...(laneTitle?.solo === true && tone !== undefined ? { tone } : {})}
+              {...((laneTitle?.solo === true || outer) && tone !== undefined ? { tone } : {})}
+              outer={outer}
               selected={box.id === props.selectedId}
               lit={box.id === props.litId}
               {...(props.changes === undefined
@@ -152,36 +168,40 @@ function toneStyle(tone: string): CSSProperties {
   return { "--lane": `var(${tone})` }
 }
 
-/** 箱が2つ以上ある区画と外部の区画の枠と見出し。 */
+/** 区画の枠と見出し。箱が2つ以上ある区画と外部の区画、フォーカスした図の子を囲む枠に使う。 */
 function LaneFrame(props: {
-  readonly lane: MapLaneRect
+  readonly lane: MapViewLane
+  readonly rect: Pick<MapLaneRect, "x" | "y" | "width" | "height">
+  readonly text: string
   readonly tone: string
   readonly heading: { readonly height: number; readonly fontSize: number }
   readonly mini: boolean
+  readonly focusFrame?: boolean
 }): ReactElement {
-  const { lane, heading } = props
+  const { lane, rect, heading } = props
   return (
     <g
-      data-lane={lane.lane.id}
-      data-lane-kind={lane.lane.kind}
+      data-lane={lane.id}
+      data-lane-kind={lane.kind}
+      {...(props.focusFrame === true ? { "data-focus-frame": true } : {})}
       className={styles["lane"]}
       style={toneStyle(props.tone)}
     >
       <rect
-        x={lane.x}
-        y={lane.y}
-        width={lane.width}
-        height={lane.height}
+        x={rect.x}
+        y={rect.y}
+        width={rect.width}
+        height={rect.height}
         rx={props.mini ? 6 : 10}
         className={styles["lane-frame"]}
       />
       <text
-        x={lane.x + heading.fontSize * 0.7}
-        y={lane.y + heading.height * 0.72}
+        x={rect.x + heading.fontSize * 0.7}
+        y={rect.y + heading.height * 0.72}
         fontSize={heading.fontSize}
         className={styles["lane-heading"]}
       >
-        {lane.lane.title}
+        {props.text}
       </text>
     </g>
   )
@@ -286,8 +306,10 @@ function BoxNode(props: {
   readonly miniTitle?: MiniTitle
   /** 区画の組み方で描く箱の名前。渡すと、2行に折った名前をその座標に描く。 */
   readonly laneTitle?: MapBoxTitle
-  /** 区画そのものが箱になった箱の区画の色のトークン。 */
+  /** 区画そのものが箱になった箱か、フォーカスした図の外の箱の、区画の色のトークン。 */
   readonly tone?: string
+  /** フォーカスした図の枠の外の右に並ぶ箱。 */
+  readonly outer: boolean
   readonly selected: boolean
   readonly lit: boolean
   readonly change?: BoxChangeCount
@@ -324,6 +346,7 @@ function BoxNode(props: {
       data-problem={box.problems.length > 0}
       data-external={box.external}
       data-lane-box={laneTitle?.solo === true}
+      {...(props.outer ? { "data-lane-outer": true } : {})}
       {...(change === undefined ? {} : { "data-change": changeKind ?? "none" })}
       {...(props.tone === undefined ? {} : { style: toneStyle(props.tone) })}
       className={styles["box"]}

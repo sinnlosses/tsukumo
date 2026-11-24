@@ -30,6 +30,7 @@ test.describe("アーキテクチャの地図", () => {
     await surface.getByRole("button", { name: "アプリ", exact: true }).click()
     await expect(surface.getByRole("button", { name: "app/view" })).toBeVisible()
     await expect(surface.getByText("この機能は何を受け持ち")).toBeVisible()
+    await expect(surface.getByText("アプリの中", { exact: true })).toBeVisible()
 
     const content = surface.getByTestId("architecture-map-stage").locator("> div").first()
     const scaleOf = async () => Number(await content.getAttribute("data-scale"))

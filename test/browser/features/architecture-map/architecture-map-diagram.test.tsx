@@ -129,6 +129,51 @@ describe("ArchitectureMapDiagram", () => {
       ),
     ).toEqual(["キャラク", "ターパック"])
   })
+
+  describe("フォーカスした図", () => {
+    const focused = (lanes: MapView["lanes"]): MapView => ({
+      ...VIEW,
+      level: 2,
+      ...(lanes === undefined ? {} : { lanes }),
+      focus: { id: "back", title: "手続き", level: 1, lane: "back" },
+      boxes: [
+        { ...box("c1", "子"), level: 2, lane: "back", place: { column: 0, row: 0 } },
+        { ...box("o", "外の箱"), lane: "outer", place: { column: 0, row: 1 } },
+      ],
+      edges: [],
+      intendedEdges: [],
+    })
+    const LANES = [
+      { id: "back", title: "後ろ", kind: "runtime" },
+      { id: "outer", title: "外部", kind: "external" },
+    ] as const
+
+    it("区画の色の枠「〈名〉の中」で子を囲み、外の箱だけを区画の色で縁取る", () => {
+      const { container } = render(
+        <ArchitectureMapDiagram view={focused(LANES)} form="mini" onSelect={() => undefined} />,
+      )
+
+      const frames = container.querySelectorAll<SVGGElement>("[data-focus-frame]")
+      expect(frames).toHaveLength(1)
+      expect(frames[0]?.textContent).toBe("手続きの中")
+      expect(frames[0]?.style.getPropertyValue("--lane")).toBe("var(--chart-series-1)")
+      const outer = container.querySelector<SVGGElement>("[data-box='o']")
+      expect(outer?.getAttribute("data-lane-outer")).toBe("true")
+      expect(outer?.style.getPropertyValue("--lane")).toBe("var(--ink-quiet)")
+      expect(container.querySelector("[data-box='c1']")?.hasAttribute("data-lane-outer")).toBe(
+        false,
+      )
+    })
+
+    it("区画の無い地図では枠も外の箱の縁取りも出ない", () => {
+      const { container } = render(
+        <ArchitectureMapDiagram view={focused(undefined)} form="mini" onSelect={() => undefined} />,
+      )
+
+      expect(container.querySelector("[data-focus-frame]")).toBeNull()
+      expect(container.querySelector("[data-lane-outer]")).toBeNull()
+    })
+  })
 })
 
 function box(id: string, title: string): MapViewBox {

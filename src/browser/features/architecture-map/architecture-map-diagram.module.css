@@ -46,6 +46,10 @@
   fill: color-mix(in oklch, var(--lane) 7%, var(--surface));
   stroke: color-mix(in oklch, var(--lane) 55%, transparent);
 }
+.box[data-lane-outer="true"] .box-body {
+  stroke: color-mix(in oklch, var(--lane) 55%, transparent);
+  stroke-width: 1.5;
+}
 .box[data-lane-box="true"] .box-title {
   fill: color-mix(in oklch, var(--lane) 80%, var(--ink));
   font-weight: 700;

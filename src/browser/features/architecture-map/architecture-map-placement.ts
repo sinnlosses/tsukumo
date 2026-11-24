@@ -86,6 +86,46 @@ export function mapLaneLayoutOf(view: MapView): MapLaneLayout {
   }
 }
 
+/** 区画のある地図のフォーカスした図の組み方。 */
+export type MapFocusFrame =
+  | { readonly kind: "none" }
+  | {
+      readonly kind: "frame"
+      /** 枠の色になる、フォーカスした箱の区画。 */
+      readonly lane: MapViewLane
+      readonly title: string
+      /** 枠の中に並べる子の ID（定義の順）。 */
+      readonly childIds: readonly string[]
+      /** 枠の外の右に並べる、子とつながる外の箱の ID（区画の定義の順、同じ区画は定義の順）。 */
+      readonly outerIds: readonly string[]
+    }
+
+/**
+ * 区画のある地図のフォーカスした図の、枠と外の箱の分け方。
+ * フォーカスしていない図・区画の無い図・フォーカスした箱の区画が区画の並びに無い図は `none`
+ * （呼ぶ側は `mapPlacementOf` の格子で描く）。
+ */
+export function mapFocusFrameOf(view: MapView): MapFocusFrame {
+  const lanes = view.lanes ?? []
+  const lane = lanes.find((candidate) => candidate.id === view.focus?.lane)
+  if (view.focus === undefined || lane === undefined) {
+    return { kind: "none" }
+  }
+  const { level, title } = view.focus
+  const laneOrder = (box: MapView["boxes"][number]) => {
+    const index = lanes.findIndex((candidate) => candidate.id === box.lane)
+    return index === -1 ? lanes.length : index
+  }
+  const outer = view.boxes.filter((box) => box.level === level)
+  return {
+    kind: "frame",
+    lane,
+    title,
+    childIds: view.boxes.filter((box) => box.level !== level).map((box) => box.id),
+    outerIds: outer.toSorted((a, b) => laneOrder(a) - laneOrder(b)).map((box) => box.id),
+  }
+}
+
 export function mapPlacementOf(view: MapView): ReadonlyMap<string, MapGridPlace> {
   const placed = view.boxes.flatMap((box) =>
     box.place === undefined ? [] : [[box.id, box.place] as const],

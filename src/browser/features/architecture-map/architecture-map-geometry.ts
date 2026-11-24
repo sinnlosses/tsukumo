@@ -3,10 +3,13 @@
 import type { MapView, MapViewLane } from "../../../shared/architecture-map/map-view.ts"
 import {
   type MapGridPlace,
+  type MapFocusFrame,
   type MapLaneLayout,
+  mapFocusFrameOf,
   mapLaneLayoutOf,
   mapPlacementOf,
 } from "./architecture-map-placement.ts"
+import { fittedLine, wrappedTitle } from "./architecture-map-title-wrap.ts"
 
 /** full は広げた地図、mini はサイドバーの地図、report はレポートのミニマップ。 */
 export type MapDiagramForm = "full" | "mini" | "report"
@@ -70,6 +73,19 @@ export type MapGeometry = {
     /** 枠のある区画の見出しの帯の高さと字の大きさ。 */
     readonly heading: { readonly height: number; readonly fontSize: number }
   }
+  /** 区画のある地図のフォーカスした図だけある。子を囲む区画の色の枠。 */
+  readonly focusFrame?: {
+    readonly rect: {
+      readonly x: number
+      readonly y: number
+      readonly width: number
+      readonly height: number
+    }
+    readonly lane: MapViewLane
+    readonly heading: { readonly text: string; readonly height: number; readonly fontSize: number }
+  }
+  /** 枠の外の右に置いた外の箱の ID。 */
+  readonly outerIds?: ReadonlySet<string>
 }
 
 /** 名前の行の高さ（字の大きさに掛ける）。 */
@@ -163,14 +179,17 @@ const LANE_METRICS = {
   },
 } as const satisfies Record<MapDiagramForm, LaneMetrics>
 
-/** 半角の字の幅（全角を1とした割合）。 */
-const HALF_WIDTH = 0.55
-
 const MARGIN = 12
 
 export function mapGeometryOf(view: MapView, form: MapDiagramForm): MapGeometry {
   const layout = mapLaneLayoutOf(view)
-  return layout.kind === "grid" ? gridGeometryOf(view, form) : laneGeometryOf(view, layout, form)
+  if (layout.kind === "lanes") {
+    return laneGeometryOf(view, layout, form)
+  }
+  const frame = mapFocusFrameOf(view)
+  return frame.kind === "none"
+    ? gridGeometryOf(view, form)
+    : focusFrameGeometryOf(view, frame, form)
 }
 
 /** 2つの箱の中心を結ぶ線が、それぞれの縁と交わる点。 */
@@ -183,67 +202,58 @@ export function edgeEndsOf(
   return { x1: start.x, y1: start.y, x2: end.x, y2: end.y }
 }
 
-/**
- * 名前を、1行に `units` 字（全角を1、半角を 0.55 と数える）までで2行に折り返す。
- * 収まらないときだけ2行目の末尾を「…」で切る。半角の語は、行に入る範囲の空白か「-」の後ろで折る。
- */
-function wrappedTitle(text: string, units: number): readonly string[] {
-  const chars = [...text]
-  const first = lineStartSafe(chars, wordBreakOf(chars, fittingLength(chars, units)))
-  const head = chars.slice(0, first).join("").trimEnd()
-  const tail = chars.slice(first).join("")
-  return tail === "" ? [head] : [head, fittedLine(tail, units)]
-}
-
-function charWidth(char: string): number {
-  const code = char.codePointAt(0) ?? 0
-  return code <= 0xff || (code >= 0xff61 && code <= 0xff9f) ? HALF_WIDTH : 1
-}
-
-/** 先頭から `units` に収まる字の数。1字も収まらなくても1字は返す。 */
-function fittingLength(chars: readonly string[], units: number): number {
-  let used = 0
-  for (const [index, char] of chars.entries()) {
-    used += charWidth(char)
-    if (used > units) {
-      return Math.max(1, index)
-    }
+/** 子を区画の色の枠で囲み、子とつながる外の箱を枠の外の右に1列で置く。 */
+function focusFrameGeometryOf(
+  view: MapView,
+  frame: Extract<MapFocusFrame, { kind: "frame" }>,
+  form: MapDiagramForm,
+): MapGeometry {
+  const cell = CELLS[form]
+  const { margin, heading, headingFont, pad, gap } = LANE_METRICS[form]
+  const childIds = new Set(frame.childIds)
+  const placement = mapPlacementOf({
+    ...view,
+    boxes: view.boxes.filter((box) => childIds.has(box.id)),
+  })
+  const rects = new Map<string, MapBoxRect>()
+  for (const [id, place] of placement) {
+    rects.set(id, {
+      id,
+      x: margin + pad + place.column * (cell.width + cell.gapX),
+      y: margin + heading + pad + place.row * (cell.height + cell.gapY),
+      width: cell.width,
+      height: cell.height,
+    })
   }
-  return chars.length
-}
-
-/** 行頭に置けない字（長音・小書きの仮名・句読点・閉じ括弧）。 */
-const NO_LINE_START =
-  /[ーぁぃぅぇぉっゃゅょゎァィゥェォッャュョヮヵヶ、。，．・：；！？）」』】〉》]/u
-
-/** 2行目の頭が行頭に置けない字なら、その前で折る（1行目が空になるところまでは戻さない）。 */
-function lineStartSafe(chars: readonly string[], fit: number): number {
-  let index = fit
-  while (index > 1 && index < chars.length && NO_LINE_START.test(chars[index] ?? "")) {
-    index -= 1
+  const children = [...rects.values()]
+  const rect = {
+    x: margin,
+    y: margin,
+    width: Math.max(0, ...children.map((child) => child.x + child.width)) + pad - margin,
+    height: Math.max(0, ...children.map((child) => child.y + child.height)) + pad - margin,
   }
-  return index
-}
-
-/** 半角の語の途中で切れるなら、収まる範囲の最後の空白か「-」の後ろまで戻す。 */
-function wordBreakOf(chars: readonly string[], fit: number): number {
-  if (fit >= chars.length || !isWordChar(chars[fit - 1]) || !isWordChar(chars[fit])) {
-    return fit
+  const outerX = rect.x + rect.width + gap
+  for (const [index, id] of frame.outerIds.entries()) {
+    rects.set(id, {
+      id,
+      x: outerX,
+      y: rect.y + index * (cell.height + cell.gapY),
+      width: cell.width,
+      height: cell.height,
+    })
   }
-  for (let index = fit - 1; index > 0; index -= 1) {
-    const char = chars[index - 1]
-    if (char === " " || char === "-") {
-      return index
-    }
-    if (!isWordChar(char)) {
-      return fit
-    }
+  const all = [...rects.values()]
+  return {
+    width: (frame.outerIds.length === 0 ? rect.x + rect.width : outerX + cell.width) + margin,
+    height: Math.max(rect.y + rect.height, ...all.map((box) => box.y + box.height)) + margin,
+    rects,
+    focusFrame: {
+      rect,
+      lane: frame.lane,
+      heading: { text: `${frame.title}の中`, height: heading, fontSize: headingFont },
+    },
+    outerIds: new Set(frame.outerIds),
   }
-  return fit
-}
-
-function isWordChar(char?: string): boolean {
-  return char !== undefined && /[A-Za-z0-9_]/.test(char)
 }
 
 function laneGeometryOf(
@@ -407,13 +417,6 @@ function placedTitle(title: TitleLayout, rect: MapBoxRect, metrics: LaneMetrics)
           },
         }),
   }
-}
-
-/** 1行に `units` 字までで切り、収まらないときは末尾を「…」にする。 */
-function fittedLine(text: string, units: number): string {
-  const chars = [...text]
-  const fit = fittingLength(chars, units)
-  return fit >= chars.length ? text : `${chars.slice(0, fittingLength(chars, units - 1)).join("")}…`
 }
 
 function gridGeometryOf(view: MapView, form: MapDiagramForm): MapGeometry {
