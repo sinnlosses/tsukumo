@@ -9,12 +9,8 @@ import { keys } from "remeda"
 
 import { MAX_CONCLUSION_SENTENCES } from "../../../../shared/report/report-limit.ts"
 import { type ReportOutline, reportOutline } from "../../../../shared/report/report-outline.ts"
-import {
-  type BlockViolation,
-  blockViolationMessage,
-  detectBlockViolations,
-  isBlockViolation,
-} from "./block.ts"
+import { type BlockViolation, detectBlockViolations, isBlockViolation } from "./block.ts"
+import { blockViolationMessage } from "./block/message.ts"
 import {
   type CheckViolation,
   checkViolationMessage,
