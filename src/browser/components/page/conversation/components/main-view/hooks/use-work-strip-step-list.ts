@@ -33,7 +33,11 @@ import {
   workflowBoxStateOf,
   workflowDiagramOf,
 } from "../domain/workflow-diagram.ts"
-import { type WorkflowMainStepSpan, workflowMainStepEndsOf } from "../domain/workflow-main-step.ts"
+import {
+  type WorkflowMainStepEnds,
+  type WorkflowMainStepSpan,
+  workflowMainStepEndsOf,
+} from "../domain/workflow-main-step.ts"
 
 /** 図の両端に置くメインの箱の材料。`duration` は表示の字で、測れなければ空。 */
 export type WorkStripMainBox = {
@@ -148,7 +152,12 @@ export function workStripStepsOf(input: {
   readonly onPreludePress: (taskId: TaskId) => void
 }): WorkStripSteps {
   const { list } = input
-  const preludeIds = list.kind === "open" ? openPreludeStepIdsOf(input, list) : new Set<string>()
+  const runs = list.kind === "open" ? listedRunsOf(input, list) : []
+  const preludeIds = new Set(
+    runs.flatMap(({ open, ends }) =>
+      open ? (ends?.prelude.steps ?? []).map((step) => step.toolUseId) : [],
+    ),
+  )
   const planRows =
     list.kind === "open"
       ? stepsPhaseRowsOf(
@@ -161,7 +170,7 @@ export function workStripStepsOf(input: {
     return (row.state === "current" || row.state === "asking") && key !== undefined ? [key] : []
   })
   const planCurrentKey = planCurrentKeys[0]
-  const drawn = list.kind === "open" ? drawnWorkflowsOf(input, list, planCurrentKey) : []
+  const drawn = list.kind === "open" ? drawnWorkflowsOf(input, list, runs, planCurrentKey) : []
   const diagramKeys = new Set(drawn.flatMap((workflow) => workflow.phaseKeys))
   const columnKeyOf = (row: StepsPhaseRow): readonly string[] => {
     const key = input.phaseIds[row.phaseIndex]
@@ -234,22 +243,42 @@ type DrawnWorkflow = Omit<WorkStripWorkflow, "view"> & {
 }
 
 /**
- * 図を開いて描くワークフロースクリプト（いちばん新しいものと、利用者が開いたもの）の、着手の箱が持つ手順の `toolUseId`。
- * これらの手順は着手の箱の手元に出すので、フェーズの行とどの行にも付かない群からは外す。
+ * 図に並べるワークフロースクリプト1本。`ends` はその両端のメインの手順、
+ * `open` は図を開いて描くか（いちばん新しいものと、利用者が開いたもの）。
+ * 開いて描くものの着手の手順は着手の箱の手元に出すので、フェーズの行とどの行にも付かない群からは外す。
  */
-function openPreludeStepIdsOf(
-  input: { readonly steps: readonly TurnStep[]; readonly workflowRuns: readonly WorkflowRun[] },
+type ListedRun = {
+  readonly run: WorkflowRun
+  readonly ends?: WorkflowMainStepEnds
+  readonly open: boolean
+}
+
+/** 新しい順のワークフロースクリプトと、その両端と開いて描くか。 */
+function listedRunsOf(
+  input: {
+    readonly steps: readonly TurnStep[]
+    readonly workflowRuns: readonly WorkflowRun[]
+    readonly delegatedRange: DelegatedRange
+  },
   list: Extract<WorkStripStepsList, { readonly kind: "open" }>,
-): ReadonlySet<string> {
-  const ends = workflowMainStepEndsOf(input.steps, input.workflowRuns.length)
-  const last = input.workflowRuns.length - 1
-  return new Set(
-    input.workflowRuns.flatMap((run, index) =>
-      index === last || list.openedWorkflowRuns.includes(run.taskId)
-        ? (ends[index]?.prelude.steps ?? []).map((step) => step.toolUseId)
-        : [],
-    ),
+): readonly ListedRun[] {
+  const range = input.delegatedRange
+  const ends = workflowMainStepEndsOf(
+    input.steps,
+    input.workflowRuns.length,
+    range.kind === "range" ? range.first + range.count : undefined,
   )
+  return input.workflowRuns
+    .map((run, index): ListedRun => {
+      const runEnds = ends[index]
+      return {
+        run,
+        ...(runEnds === undefined ? {} : { ends: runEnds }),
+        open:
+          index === input.workflowRuns.length - 1 || list.openedWorkflowRuns.includes(run.taskId),
+      }
+    })
+    .toReversed()
 }
 
 function mainBoxOf(span: WorkflowMainStepSpan): readonly WorkStripMainBox[] {
@@ -265,8 +294,6 @@ function mainBoxOf(span: WorkflowMainStepSpan): readonly WorkStripMainBox[] {
 
 function drawnWorkflowsOf(
   input: {
-    readonly steps: readonly TurnStep[]
-    readonly workflowRuns: readonly WorkflowRun[]
     readonly backgroundTasks: readonly BackgroundTask[]
     readonly phaseIds: readonly string[]
     readonly delegatedRange: DelegatedRange
@@ -274,16 +301,12 @@ function drawnWorkflowsOf(
     readonly now: number
   },
   list: Extract<WorkStripStepsList, { readonly kind: "open" }>,
+  runs: readonly ListedRun[],
   planCurrentKey?: string,
 ): readonly DrawnWorkflow[] {
-  const landingFrom =
-    input.delegatedRange.kind === "range"
-      ? input.delegatedRange.first + input.delegatedRange.count
-      : undefined
-  const landingKey = landingFrom === undefined ? undefined : input.phaseIds[landingFrom]
-  const mainSteps = workflowMainStepEndsOf(input.steps, input.workflowRuns.length, landingFrom)
-  return input.workflowRuns.toReversed().map((run, position): DrawnWorkflow => {
-    const runMain = mainSteps[input.workflowRuns.length - 1 - position]
+  const range = input.delegatedRange
+  const landingKey = range.kind === "range" ? input.phaseIds[range.first + range.count] : undefined
+  return runs.map(({ run, ends: runMain, open }): DrawnWorkflow => {
     const [prelude] = runMain === undefined ? [] : mainBoxOf(runMain.prelude)
     const [landing] = runMain === undefined ? [] : mainBoxOf(runMain.landing)
     const base = {
@@ -293,7 +316,7 @@ function drawnWorkflowsOf(
         WORKFLOW_FALLBACK_NAME,
       counts: workflowAgentCountsOf(run),
     }
-    if (position !== 0 && !list.openedWorkflowRuns.includes(run.taskId)) {
+    if (!open) {
       const elapsed = workflowRunElapsedOf(run, input.now)
       return {
         ...base,
