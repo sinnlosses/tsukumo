@@ -38,7 +38,7 @@ export const MAX_PROMPT_IMAGE_DATA_URL_LENGTH = maxImageDataUrlLength(MAX_PROMPT
  * 記録に残り続けるのは控えだけなので、原寸とは別に、桁の違う小さな値で切る（雑談の 100 ターンぶん積んでも記録の大きさが暴れない）。
  * 縮めるのはブラウザ側で、サーバは加工しない。
  */
-const MAX_PROMPT_IMAGE_THUMBNAIL_BYTES = 128 * 1024
+const MAX_PROMPT_IMAGE_THUMBNAIL_BYTES = 256 * 1024
 
 /** 控えの data URL の文字列の上限。 */
 export const MAX_PROMPT_IMAGE_THUMBNAIL_DATA_URL_LENGTH = maxImageDataUrlLength(

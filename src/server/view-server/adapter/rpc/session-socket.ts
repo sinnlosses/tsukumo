@@ -25,7 +25,7 @@ import { rpcContextOf, type SocketRpcContext } from "./rpc-guard.ts"
 
 /**
  * 受け取るメッセージ1件の上限（バイト）。1件の依頼に添えられる画像（原寸 5 MiB × 2 枚）を data URL で運べる大きさにしてある。
- * 内訳: 原寸2枚の base64 ≒ 13.33 MiB ＋ 控え2枚 ≒ 0.34 MiB ＋ 文面 20,000 文字で約 13.7 MiB。
+ * 内訳: 原寸2枚の base64 ≒ 13.33 MiB ＋ 控え2枚 ≒ 0.67 MiB ＋ 文面 20,000 文字で約 14.1 MiB。
  * 画像の上限を変えるときはここも直す。
  *
  * 依頼の文面の上限はこれとは別に効いている（zod の `MAX_PROMPT_TEXT_LENGTH`）ので、ここを上げても送れる文面は長くならない。

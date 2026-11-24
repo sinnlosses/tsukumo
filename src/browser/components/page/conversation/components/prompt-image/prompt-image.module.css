@@ -62,8 +62,8 @@
   object-fit: contain;
 }
 /* 送ったあとの控え。
-   高さで揃えず、控えの元の大きさ（長辺 320px）を上限に比率のまま描く。
-   上限を超えて広げると、控えの画素を引き伸ばしてぼやける。 */
+   高さで揃えず、20rem を上限に比率のまま描く。
+   控えの長いほうの辺は 640px（`THUMBNAIL_MAX_EDGE_PX`）で、2倍の画面でもこの上限までは画素を引き伸ばさない。 */
 .prompt-image-posted {
   height: auto;
   max-width: min(100%, 20rem);
