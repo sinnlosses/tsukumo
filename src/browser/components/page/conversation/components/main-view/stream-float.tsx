@@ -1,5 +1,5 @@
 // 会話の流れの下端に浮く口。
-// 最新を見ているあいだ、お伺いのカードが見える範囲の外にあるときの「お伺い ↓」と、上へ送って読んでいるときの「末尾へ」（新しい行の件数つき）を1つだけ出す。
+// 最新を見ているあいだ、お伺いのカードが見える範囲の外にあるときの「お伺い ↓」と、上へ送って読んでいるときの「末尾へ」（下矢印の丸い口。新しい行の件数は右上の小さな数で添える）を1つだけ出す。
 // 押すとお伺いのカードまで送る口は、フォーカスを移さない。
 
 import clsx from "clsx"
@@ -8,6 +8,8 @@ import type { ReactElement } from "react"
 import { usePhoneWidth } from "../../../../../hooks/use-phone-width.ts"
 import { useInquiryJump } from "../../../../../stores/inquiry-jump.ts"
 import { Button } from "../../../../ui/button/button.tsx"
+import { ArrowDownIcon } from "../../../../ui/icon/icon.tsx"
+import { RoundButton } from "../../../../ui/round-button/round-button.tsx"
 import { useInquiryAnswer } from "../../stores/inquiry-answer.ts"
 import { useInquiryCardVisibility } from "../../stores/inquiry-card-visibility.ts"
 import { streamFloatOf } from "./domain/head-notice.ts"
@@ -40,23 +42,25 @@ export function StreamFloat(props: StreamFloatProps): ReactElement | undefined {
   }
 
   if (float.kind === "tail") {
+    const label = float.unseen > 0 ? `${TAIL_LABEL}（新しい行 ${float.unseen}件）` : TAIL_LABEL
     return (
       <div className={styles["stream-float"]}>
-        <div className={styles["stream-float-body"]}>
-          <Button
-            variant="outline"
-            size="label"
-            pressed="none"
+        <div className={styles["stream-float-tail"]}>
+          <RoundButton
+            action={{ kind: "press", onClick: props.tail.onReturn }}
+            ariaLabel={label}
+            title={label}
             disabled={false}
-            disclosure={{ kind: "none" }}
-            className={styles["stream-float-button"]}
-            onClick={props.tail.onReturn}
+            emphasis="quiet"
+            className={styles["stream-float-tail-button"]}
           >
-            <span>{TAIL_LABEL}</span>
-            {float.unseen > 0 && (
-              <span className={styles["stream-float-count"]}>新しい行 {float.unseen}件</span>
-            )}
-          </Button>
+            <ArrowDownIcon />
+          </RoundButton>
+          {float.unseen > 0 && (
+            <span aria-hidden="true" className={styles["stream-float-count"]}>
+              {float.unseen}
+            </span>
+          )}
         </div>
       </div>
     )

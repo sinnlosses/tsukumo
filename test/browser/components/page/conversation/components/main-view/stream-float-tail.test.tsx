@@ -23,8 +23,7 @@ describe("StreamFloat の「末尾へ」", () => {
       },
     })
 
-    const button = screen.getByRole("button", { name: /末尾へ/ })
-    expect(button.textContent).toContain("新しい行 3件")
+    const button = screen.getByRole("button", { name: "末尾へ（新しい行 3件）" })
     fireEvent.click(button)
 
     expect(returned).toBe(1)
@@ -32,7 +31,7 @@ describe("StreamFloat の「末尾へ」", () => {
 
   it("新しい行がまだ無ければ件数を出さず、末尾にいるあいだは口を出さない", () => {
     renderFloat({ tail: { kind: "away", unseen: 0 }, onReturn: () => {} })
-    expect(screen.getByRole("button", { name: "末尾へ" }).textContent).toBe("末尾へ")
+    expect(screen.getByRole("button", { name: "末尾へ" })).toBeTruthy()
     cleanup()
 
     renderFloat({ tail: { kind: "none" }, onReturn: () => {} })
