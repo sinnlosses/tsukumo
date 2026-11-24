@@ -255,6 +255,11 @@
     flex-shrink: 1;
   }
 }
+@media (max-width: 760px) {
+  .work-strip-head {
+    flex-shrink: 1;
+  }
+}
 .work-strip-rule {
   flex: none;
   width: 1px;

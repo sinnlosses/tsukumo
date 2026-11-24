@@ -86,9 +86,7 @@ test.describe("進み具合のプログレスバー", () => {
     await expect(list).toHaveCount(0)
   })
 
-  test("1000x800 でも、いまの手順の一文は対象の頭だけが縮み、最後の語と秒が右端で切れない", async ({
-    run,
-  }) => {
+  test("1000x800 でも、いまの手順の一文はつなぎ・動詞・秒が右端で切れない", async ({ run }) => {
     const room = await run.open({
       scenario: "work-strip-running",
       scene: "work-strip-running",
@@ -102,6 +100,28 @@ test.describe("進み具合のプログレスバー", () => {
     await room.resize({ width: 1000, height: 800 })
 
     await expect.poll(() => clippedTextOf(nowStatementOf(room.page))).toEqual([])
+  })
+
+  test("作業内容の最後の語が長いコミットの件名でも、フェーズ名は縮まず、経過と手順のボタンが帯の中に残る", async ({
+    run,
+  }) => {
+    const room = await run.open({
+      scenario: "work-strip-long-target",
+      scene: "work-strip-long-target",
+      viewport: "large",
+      domRoots: ["work-strip"],
+    })
+    await room.waitForEvent("tool-started")
+    const strip = stripOf(room.page)
+    await expect.poll(() => nowStatementText(room.page)).toMatch(/立ち絵を押したとき/u)
+
+    const head = strip.getByText("検証して main へ送る", { exact: true })
+    await expect
+      .poll(() => head.evaluate((element) => element.scrollWidth <= element.clientWidth))
+      .toBe(true)
+    const stripRight = (await boxOf(strip)).right
+    const toggle = strip.getByRole("button", { name: /手順/u })
+    await expect.poll(async () => (await boxOf(toggle)).right <= stripRight).toBe(true)
   })
 
   test("状態が作業中からバックグラウンドで作業中に替わっても、下線の区間の並びの左端は動かず、今の区間の線は伸び続ける", async ({
@@ -193,7 +213,7 @@ async function nowStatementText(page: Page): Promise<string> {
 
 /**
  * 一文の中で、右端が一文の器からはみ出している字の塊。
- * 頭の字と添え書き（「…」で縮める塊）は除き、残り（最後の語・つなぎ・動詞・秒）を測る。
+ * 「…」で縮める塊（対象の頭・最後の語・添え書き）は除き、残り（つなぎ・動詞・秒）を測る。
  */
 async function clippedTextOf(now: Locator): Promise<readonly string[]> {
   return now.evaluate((container) => {
