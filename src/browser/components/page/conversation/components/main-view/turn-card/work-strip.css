@@ -26,13 +26,30 @@
     --ink-quiet: var(--ink-soft);
   }
 }
-/* 1行目。今の段の名前だけが縮んで末尾を「…」にする（7段でも狭いビューポートでも1行）。 */
+/* 1行目。「フェーズ名 | 作業内容 その他」の並びで、フェーズ名と作業内容は上限の幅で止め、超えた分は末尾を「…」にする
+   （7段でも狭いビューポートでも1行。右の位置・経過・手順のボタンを帯の外へ押し出さない）。 */
 .work-strip-line {
+  --work-strip-head-max: 12em;
+  --work-strip-now-max: 32em;
   position: relative;
   display: flex;
   align-items: center;
   gap: var(--space-md);
   min-width: 0;
+}
+/* 作業内容と右の群（読み・位置・目安・経過・手順のボタン）のあいだの詰め物。
+   左の群が上限で止まったあとの余りを埋め、右の群を右端に寄せる。 */
+.work-strip-line::before {
+  flex: 1 0 0;
+  order: 1;
+  content: "";
+}
+.work-strip-reading,
+.work-strip-position,
+.work-strip-eta,
+.work-strip-elapsed,
+.work-strip-toggle {
+  order: 2;
 }
 /* 状態の印の箱。点・四角・✕・チェックのどれも 16px の箱に収め、見出しの左端を状態で動かさない。印は動かさない。 */
 .work-strip-mark-box {
@@ -224,13 +241,19 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-/* 見出しは幅が足りないとき一文と一緒に縮み、末尾を「…」にする。右の位置・経過・手順のボタンを帯の外へ押し出さない。 */
+/* フェーズ名。上限の幅までは縮めず、超えた分は末尾を「…」にする。帯が狭いときだけ一文と一緒に縮む。 */
 .work-strip-head {
-  flex: 0 1 auto;
+  flex: 0 0 auto;
   min-width: 4em;
+  max-inline-size: var(--work-strip-head-max);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+@container work-strip (inline-size < 560px) {
+  .work-strip-head {
+    flex-shrink: 1;
+  }
 }
 .work-strip-rule {
   flex: none;
@@ -239,27 +262,30 @@
   background: var(--rule);
 }
 .work-strip-statement {
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   min-width: 0;
+  max-inline-size: var(--work-strip-now-max);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 /* いまの手順の一文。替わり目は抜ける文と入る文を同じ1マスに重ね、上へ抜けて下から入れる（transform と opacity だけ）。
-   対象は、最後の語を残して頭から「…」で縮め、幅が足りないときは添え書きから先に譲る。
-   器の最小幅は文の min-content（頭の 3ch・最後の語・つなぎ・動詞・秒）で、器ごと縮めて右を切らない。
-   器は残りの幅を埋め、右の位置・経過・手順のボタンを文の長さで動かさない。 */
+   器は上限の幅で止まり、残りの幅は1行目の詰め物が埋めるので、右の位置・経過・手順のボタンを文の長さで動かさない。
+   幅が足りないときは、添え書き → 対象の頭（3ch まで）→ 対象の最後の語の順に「…」で縮める。
+   最後の語が長い（引用符つきのコミットの件名など）ときも、器の外へはみ出さない。 */
 .work-strip-now {
   display: grid;
-  flex: 1 2 auto;
-  grid-template-columns: minmax(min-content, 1fr);
-  min-width: min-content;
+  flex: 0 1 auto;
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
+  max-inline-size: var(--work-strip-now-max);
   overflow: clip;
 }
 .work-strip-now-sentence {
   display: flex;
   grid-area: 1 / 1;
   align-items: baseline;
+  min-width: 0;
   gap: var(--inline-control);
   animation-duration: 0.32s;
   animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
@@ -271,11 +297,21 @@
 .work-strip-now-sentence[data-motion="leaving"] {
   animation-name: work-strip-now-leave;
 }
-/* 頭の列の下限を 3ch にして、組全体の最小幅を「3ch と最後の語」にする（flex だと頭の字の幅が最小幅に入り、最後の語が潰れる）。 */
+/* 頭は 3ch まで先に縮み（shrink 100）、そのあと最後の語が縮む。 */
 .work-strip-now-target {
-  display: grid;
-  grid-auto-flow: column;
-  grid-template-columns: minmax(3ch, auto);
+  display: flex;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+.work-strip-now-target > .work-strip-now-head {
+  flex: 0 100 auto;
+  min-width: 3ch;
+}
+.work-strip-now-target > .work-strip-now-fixed {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .work-strip-now-target.is-mono {
   font-family: var(--font-mono);
