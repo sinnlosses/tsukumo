@@ -13,6 +13,7 @@ import {
   type MapBoxRect,
   type MapBoxTitle,
   type MapDiagramForm,
+  type MapGeometry,
   mapGeometryOf,
   type MapLaneRect,
 } from "./architecture-map-geometry.ts"
@@ -25,8 +26,11 @@ const MINI_TITLES = {
   report: { fontSize: 9, limit: 15 },
 } as const satisfies Record<Exclude<MapDiagramForm, "full">, MiniTitle>
 
-/** 縮めた図は器の幅まで広げるが、この倍率で頭打ちにする（字が 14px を超えて矢印ごと大きくならないように）。 */
+/** 縮めた格子の図は器の幅まで広げるが、この倍率で頭打ちにする（字が 14px を超えて矢印ごと大きくならないように）。 */
 const MINI_MAX_SCALE = 1.4
+
+/** 区画の組み方で縮めた図の、いちばん大きい名前の字の上限（px）。倍率の頭打ちをここから決める。 */
+const LANE_MAX_FONT_PX = 14
 
 /** 区画の色のトークン。`runtime` と `crosscut` は区画の定義の順にそれぞれの並びを巡る。 */
 const RUNTIME_TONES = [
@@ -61,7 +65,7 @@ export function ArchitectureMapDiagram(props: {
         width: "100%",
         style: {
           aspectRatio: `${geometry.width} / ${geometry.height}`,
-          maxWidth: `${String(geometry.width * MINI_MAX_SCALE)}px`,
+          maxWidth: `${String(geometry.width * maxScaleOf(geometry))}px`,
         },
       }
     : { width: geometry.width, height: geometry.height }
@@ -118,6 +122,14 @@ export function ArchitectureMapDiagram(props: {
       })}
     </svg>
   )
+}
+
+function maxScaleOf(geometry: MapGeometry): number {
+  if (geometry.lanes === undefined) {
+    return MINI_MAX_SCALE
+  }
+  const largest = Math.max(...[...geometry.lanes.titles.values()].map((title) => title.fontSize))
+  return LANE_MAX_FONT_PX / largest
 }
 
 function laneTonesOf(lanes: readonly MapViewLane[]): ReadonlyMap<string, string> {

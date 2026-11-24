@@ -96,9 +96,17 @@ describe("mapGeometryOf", () => {
     const titles = mapGeometryOf(TSUKUMO_LIKE, "mini").lanes?.titles
 
     expect(titles?.get("tsukumo-plugins")?.lines).toEqual(["tsukumo-", "plugins"])
-    expect(titles?.get("character-pack")?.lines).toEqual(["キャラクタ", "ーパック"])
+    expect(titles?.get("character-pack")?.lines).toEqual(["キャラク", "ターパック"])
     expect(titles?.get("claude-code")?.lines).toEqual(["Claude", "Code"])
     expect(titles?.get("browser")).toMatchObject({ lines: ["ブラウザ"], solo: true })
+  })
+
+  it("レポートの幅の外部の箱の名前は1行に収まり、区画の箱の名前は 14 で描く", () => {
+    const titles = mapGeometryOf(TSUKUMO_LIKE, "report").lanes?.titles
+
+    expect(titles?.get("tsukumo-plugins")?.lines).toEqual(["tsukumo-plugins"])
+    expect(titles?.get("character-pack")?.lines).toEqual(["キャラクターパック"])
+    expect(titles?.get("browser")).toMatchObject({ fontSize: 14, solo: true })
   })
 
   it("2行に収まらないときだけ末尾を「…」で切る", () => {

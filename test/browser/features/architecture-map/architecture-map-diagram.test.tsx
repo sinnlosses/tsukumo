@@ -127,7 +127,7 @@ describe("ArchitectureMapDiagram", () => {
       [...(container.querySelector("[data-box='o']")?.querySelectorAll("tspan") ?? [])].map(
         (line) => line.textContent,
       ),
-    ).toEqual(["キャラクタ", "ーパック"])
+    ).toEqual(["キャラク", "ターパック"])
   })
 })
 

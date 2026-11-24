@@ -142,21 +142,22 @@ const LANE_METRICS = {
     summaryLine: 0,
     summaryFont: 0,
   },
+  // 等倍で描く大きさ（図の座標の単位がそのまま px になる）。広げた地図の組み方を summary なしで縮めた形
   report: {
-    margin: 6,
-    column: 96,
-    externalColumn: 125,
-    gap: 6,
-    heading: 16,
-    headingFont: 10.5,
-    pad: 5,
-    boxGap: 5,
-    soloFont: 13,
-    boxFont: 11,
-    boxPadX: 6,
-    boxPadY: 4,
-    soloMinHeight: 40,
-    trailing: 18,
+    margin: 8,
+    column: 150,
+    externalColumn: 190,
+    gap: 28,
+    heading: 22,
+    headingFont: 11,
+    pad: 8,
+    boxGap: 8,
+    soloFont: 14,
+    boxFont: 13,
+    boxPadX: 10,
+    boxPadY: 8,
+    soloMinHeight: 48,
+    trailing: 22,
     summaryLine: 0,
     summaryFont: 0,
   },
@@ -188,7 +189,7 @@ export function edgeEndsOf(
  */
 function wrappedTitle(text: string, units: number): readonly string[] {
   const chars = [...text]
-  const first = wordBreakOf(chars, fittingLength(chars, units))
+  const first = lineStartSafe(chars, wordBreakOf(chars, fittingLength(chars, units)))
   const head = chars.slice(0, first).join("").trimEnd()
   const tail = chars.slice(first).join("")
   return tail === "" ? [head] : [head, fittedLine(tail, units)]
@@ -209,6 +210,19 @@ function fittingLength(chars: readonly string[], units: number): number {
     }
   }
   return chars.length
+}
+
+/** 行頭に置けない字（長音・小書きの仮名・句読点・閉じ括弧）。 */
+const NO_LINE_START =
+  /[ーぁぃぅぇぉっゃゅょゎァィゥェォッャュョヮヵヶ、。，．・：；！？）」』】〉》]/u
+
+/** 2行目の頭が行頭に置けない字なら、その前で折る（1行目が空になるところまでは戻さない）。 */
+function lineStartSafe(chars: readonly string[], fit: number): number {
+  let index = fit
+  while (index > 1 && index < chars.length && NO_LINE_START.test(chars[index] ?? "")) {
+    index -= 1
+  }
+  return index
 }
 
 /** 半角の語の途中で切れるなら、収まる範囲の最後の空白か「-」の後ろまで戻す。 */
