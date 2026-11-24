@@ -88,8 +88,8 @@
   時点で中間と決まるのでターンが動いているあいだも出る
 - **注記**: `report` もフェーズのまとめも無いターンには中間レポートは無い（最後の本文だけを出す）。規則は
   `docs/architecture/display.md` 4.2 が正典
-- **注記**: あとに別のレポートが出た中間レポートは、利用者が畳める `<details>` にする（既定は開いた形。`MainViewStep.mark` の `interim-folded` /
-  `firstLine`）。まだ追い越されていない最後の1件は畳めない開いた形。規則は `docs/architecture/display.md`
+- **注記**: 中間レポートは全部、利用者が畳める `<details>` にする（既定は開いた形。`MainViewStep.mark` の `interim-kept` /
+  `interim-folded` / `firstLine`）。最新の1件も同じ。規則は `docs/architecture/display.md`
   4.2 が正典
 - **避ける言い方**: 途中経過、進捗レポート、速報
 

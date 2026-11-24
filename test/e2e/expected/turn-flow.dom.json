@@ -641,7 +641,7 @@
                                 {
                                   "tag": "section",
                                   "attributes": {
-                                    "data-report-step": ""
+                                    "data-report-step": "final"
                                   },
                                   "children": [
                                     {

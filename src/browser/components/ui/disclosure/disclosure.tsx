@@ -23,6 +23,8 @@ export type DisclosureProps = {
   /** 要約の行の文字の組み（字間など、子へ継ぐもの）。 */
   readonly summaryClassName: string
   readonly summary: ReactNode
+  /** `<details>` へそのまま載せる data 属性。 */
+  readonly attributes?: Readonly<Record<`data-${string}`, string>>
   readonly children: ReactNode
 }
 
@@ -31,6 +33,7 @@ export function Disclosure(props: DisclosureProps): ReactElement {
     <details
       open={props.open}
       onToggle={props.onToggle}
+      {...props.attributes}
       className={clsx(
         styles["disclosure"],
         props.hiddenOnNarrow && styles["hidden-on-narrow"],

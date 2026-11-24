@@ -270,7 +270,7 @@ describe("mainViewTurns（追い越された中間レポートを畳む印）", 
     expect(steps.map((step) => step.mark)).toEqual(["interim-folded", "final"])
   })
 
-  it("いちばん後ろの中間レポート（まだ追い越されていない）には superseded が立たない", () => {
+  it("後ろに本文を持たない中間レポートは interim-kept のまま", () => {
     // 最後の report は動いているあいだ出ないので、手前の中間レポートを追い越すものがまだ無い。
     const turns = mainViewTurns(
       [

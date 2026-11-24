@@ -28,7 +28,7 @@ import { useViewedSpeech } from "../../stores/viewed-speech.ts"
 import { AnswerPost } from "./answer-post.tsx"
 import { awaySeamOf, type AwaySeam } from "./domain/away-seam.ts"
 import { revealStepIdOf } from "./domain/draft-reveal.ts"
-import { REPORT_STEP_ATTRIBUTE } from "./domain/outline-report-head.ts"
+import { REPORT_STEP_ATTRIBUTE, REPORT_STEP_FINAL_VALUE } from "./domain/outline-report-head.ts"
 import {
   streamGroupsOf,
   streamItemsOf,
@@ -336,15 +336,15 @@ type StepProps = {
  * 最終レポート（`step.mark` が `final`）は箱を外し（`.main-step.is-final`）、タスク見出し行にラベルを載せる。
  * ラベルを出すのは `finalLabel` が立っているとき（中間レポートのあるやり取りか、本文に `task` があるときだけ。どちらも無ければ「最終」が何も区別しない）。
  *
- * 後ろに別のレポートが現れた中間レポート（`interim-folded`）は `<details>` にして、利用者が1行に畳めるようにする。既定は開いている。
- * まだ追い越されていない最後の中間レポートは `<section>` のまま。
+ * 中間レポートは全部 `<details>`（`FoldedStep`）にして、利用者が1行に畳めるようにする。既定は開いている。
+ * `<section>` で描くのは最終レポートと、どちらでもないステップだけ。
  */
 function Step(props: StepProps): ReactElement | undefined {
   const { step } = props
   if (step.body.kind !== "text") {
     return undefined
   }
-  if (step.mark === "interim-folded") {
+  if (isInterimStep(step)) {
     return (
       <FoldedStep
         step={step}
@@ -356,8 +356,8 @@ function Step(props: StepProps): ReactElement | undefined {
   }
   return (
     <section
-      className={clsx(stepClassName(step), isInterimStep(step) && styles["phone-hidden"])}
-      {...{ [REPORT_STEP_ATTRIBUTE]: "" }}
+      className={stepClassName(step)}
+      {...{ [REPORT_STEP_ATTRIBUTE]: step.mark === "final" ? REPORT_STEP_FINAL_VALUE : "" }}
     >
       <StepReport
         step={step}
@@ -366,19 +366,15 @@ function Step(props: StepProps): ReactElement | undefined {
         latest={props.latest}
         hasInterimReport={props.hasInterimReport}
         folded={false}
-        phoneHidden={isInterimStep(step)}
+        phoneHidden={false}
       />
     </section>
   )
 }
 
-/** ステップの器に付ける class。器の形（`is-interim` の破線の箱 / `is-final` の箱なし）は互いに立たない。 */
+/** ステップの器に付ける class。最終レポートは箱を外す（`is-final`）。中間レポートの箱は `FoldedStep` が持つ。 */
 function stepClassName(step: MainViewStep): string {
-  return clsx(
-    styles["main-step"],
-    isInterimStep(step) && styles["is-interim"],
-    step.mark === "final" && styles["is-final"],
-  )
+  return clsx(styles["main-step"], step.mark === "final" && styles["is-final"])
 }
 
 /**

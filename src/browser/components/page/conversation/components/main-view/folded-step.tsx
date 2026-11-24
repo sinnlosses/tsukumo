@@ -20,6 +20,7 @@ import { usePhoneWidth } from "../../../../../hooks/use-phone-width.ts"
 import { useSession } from "../../../../../stores/session.ts"
 import { Disclosure } from "../../../../ui/disclosure/disclosure.tsx"
 import { nextStepReportKey } from "../../stores/next-step-tray.ts"
+import { REPORT_STEP_ATTRIBUTE } from "./domain/outline-report-head.ts"
 import { ExpandableHead } from "./expandable-head.tsx"
 import { useFavorVisibility } from "./hooks/use-favor-visibility.ts"
 import { useNextStepTraySource } from "./hooks/use-next-step-tray-source.ts"
@@ -56,6 +57,7 @@ export function FoldedStep(props: FoldedStepProps): ReactElement {
       summarySize="label"
       className={`${styles["main-step"]} ${styles["is-interim"]}`}
       summaryClassName={styles["step-heading"]}
+      attributes={{ [REPORT_STEP_ATTRIBUTE]: "" }}
       summary={<InterimSummary body={props.step.body} />}
     >
       <StepReport
@@ -117,7 +119,7 @@ export function StepReport(props: StepReportProps): ReactElement | undefined {
     <ReportHead
       label={label}
       task={step.body.task}
-      phase={step.body.finishedPhase}
+      phase={props.folded ? { kind: "none" } : step.body.finishedPhase}
       className={phoneHidden}
     />
   )

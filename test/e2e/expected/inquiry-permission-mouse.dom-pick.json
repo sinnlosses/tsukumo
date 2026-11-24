@@ -1,7 +1,7 @@
 {
   "main": [
     { "tag": "main", "attributes": { "data-region": "main", "aria-label": "メインビュー" }, "children": [
-      { "tag": "section", "attributes": { "data-report-step": "" }, "children": [
+      { "tag": "section", "attributes": { "data-report-step": "final" }, "children": [
         { "tag": "p", "children": ["答え待ちの箱を出す場面（架空）。答えると箱が消える。"] }
       ] }
     ] }

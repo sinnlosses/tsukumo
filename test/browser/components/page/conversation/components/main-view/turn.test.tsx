@@ -197,6 +197,16 @@ describe("Turn（畳んだ中間レポートの見出し）", () => {
       ),
     ).toEqual(["✓ 1/2 架空の段 所要 0秒", "－ 2/2 架空の段 飛ばした 所要 0秒"])
   })
+
+  it("最新の中間レポートも開いた <details> で描き、段の字は <summary> の1回だけ出す", () => {
+    putSession(INITIAL_SESSION_STATE)
+    const latest = { ...phaseStep(0, false), mark: "interim-kept" as const }
+    const { container } = render(<Turn turn={turn([latest])} newest freshReport={false} />)
+
+    const details = container.querySelector("details.is-interim")
+    expect(details?.hasAttribute("open")).toBe(true)
+    expect(details?.textContent?.split("1/2 架空の段")).toHaveLength(2)
+  })
 })
 
 describe("Turn（組の入れ物）", () => {

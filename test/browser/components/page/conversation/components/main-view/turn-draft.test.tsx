@@ -78,11 +78,13 @@ describe("Turn（report の草稿）", () => {
     )
 
     const sections = [...container.querySelectorAll("section")]
-    expect(sections).toHaveLength(2)
-    expect(sections[0]?.hasAttribute(REPORT_STEP_ATTRIBUTE)).toBe(true)
-    expect(sections[1]?.hasAttribute(REPORT_DRAFT_ATTRIBUTE)).toBe(true)
-    expect(sections[1]?.hasAttribute(REPORT_STEP_ATTRIBUTE)).toBe(false)
-    expect(sections[1]?.textContent).toContain("架空の結論。")
+    const interims = [...container.querySelectorAll("details")]
+    expect(interims).toHaveLength(1)
+    expect(interims[0]?.hasAttribute(REPORT_STEP_ATTRIBUTE)).toBe(true)
+    expect(sections).toHaveLength(1)
+    expect(sections[0]?.hasAttribute(REPORT_DRAFT_ATTRIBUTE)).toBe(true)
+    expect(sections[0]?.hasAttribute(REPORT_STEP_ATTRIBUTE)).toBe(false)
+    expect(sections[0]?.textContent).toContain("架空の結論。")
   })
 
   it("締めのセリフがあとから届いても、紙は作り直さない", () => {

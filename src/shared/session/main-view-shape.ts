@@ -231,7 +231,8 @@ export type MainViewTurnFailure =
  * `mark` は、その本文の扱い（{@link MainViewStepMark}）。
  *
  * `interim-kept` / `interim-folded` は中間レポート（`report` ツールの最後でない呼び出し〔`selectToolReports`〕か、段のまとめ〔`groupIntoSteps`〕）。
- * 自分より後ろに本文を持つステップがあれば（`markSupersededSteps`）`interim-folded` で、描く側が畳む。
+ * 自分より後ろに本文を持つステップがあれば（`markSupersededSteps`）`interim-folded`、無ければ `interim-kept`。
+ * 描く側はどちらも畳める `<details>` にする。
  * `body` が `none` のステップは常に `plain`。
  *
  * `final` は、その本文が最終レポート（そのやり取りで最後の、中間でない本文）（`markFinalReport`）。
@@ -242,7 +243,7 @@ export type MainViewTurnFailure =
  * `id` は、そのやり取りの中で作られた順に先頭から数えた通し番号。
  * `limitTurnEntries` が上限を超えた分を古いほうから落としても、残ったステップの `id` は変わらない（`groupIntoSteps` で、落とす前に振る）。
  * 描く側はこれをステップの `key` に使う。
- * 配列の添字を `key` にすると、古いステップが落ちて添字が前へずれた瞬間に、React が別のステップの DOM を使い回す（`<details>` の `open` のような制御されていない DOM の状態が別のステップへ乗り移って見える）。
+ * 添字を `key` にすると、古いステップが落ちて添字がずれた瞬間に、別のステップへ `<details>` の `open` が乗り移って見える。
  */
 export type MainViewStep = {
   readonly id: number
