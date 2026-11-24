@@ -22,7 +22,8 @@ import { listSourceFiles, parseSourceProgram } from "./source-file.ts"
 // 既存はファイルごとの現在の件数を上限に固定し、増やさない。減らしたら上限も下げる。
 const ALLOWED_COUNTS: Readonly<Record<string, number>> = {
   "test/browser/components/frame/screen-nav/components/phone-head.test.tsx": 18,
-  "test/browser/components/frame/screen-nav/screen-nav.test.tsx": 16,
+  "test/browser/components/frame/screen-nav/screen-nav-mode.test.tsx": 3,
+  "test/browser/components/frame/screen-nav/screen-nav.test.tsx": 13,
   "test/browser/components/page/achievement/components/day-switch/day-switch.test.tsx": 3,
   "test/browser/components/page/achievement/components/diary-book/diary-book.test.tsx": 2,
   "test/browser/components/page/achievement/components/diary-section/diary-section.test.tsx": 4,
