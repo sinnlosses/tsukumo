@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<title>名前と自己紹介文の設定 — 字の段の2案（2026-11-25）</title>
+<!--
+  土台は疑似セッションで開いたキャラクターの画面の「名前と自己紹介文を設定する」（1400×900）。
+  案は撮る前に CSS（と案B は名札とヒントを1行に並べ替える JS）を差し込んで描き直したもので、ソースは変えていない。
+-->
+<style>
+  :root { color-scheme: dark; }
+  body { margin: 0; padding: 24px; background: #141318; color: #ece9ef; font: 14px/1.7 system-ui, "Hiragino Sans", sans-serif; }
+  h1 { font-size: 18px; margin: 0 0 6px; }
+  p { margin: 0 0 18px; color: #b9b4bf; max-width: 980px; }
+  .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 520px)); gap: 16px; }
+  figure { margin: 0; }
+  figcaption { font-size: 12px; color: #9a95a0; margin-top: 6px; }
+  img { display: block; width: 100%; border-radius: 10px; }
+  table { border-collapse: collapse; font-size: 13px; margin: 0 0 18px; }
+  th, td { border-bottom: 1px solid #2c2a33; padding: 5px 12px; text-align: left; }
+  th { color: #9a95a0; font-weight: 500; }
+</style>
+</head>
+<body>
+<h1>名前と自己紹介文の設定 — 字の段の2案</h1>
+<p>今は名札（14px・500・字の 72%）とヒント（12px・400・60%）の差が小さく、見出しの直下に名札が詰まり、ヒントのすぐ下に次の名札が来る。2案とも見出しは今の 20px・700 のまま。</p>
+<table>
+<tr><th>役</th><th>今</th><th>案A</th><th>案B</th></tr>
+<tr><td>見出し</td><td>20px・700、下のあき約 4px</td><td>20px・700、下のあき 20px</td><td>同じ</td></tr>
+<tr><td>名札</td><td>14px・500・72%</td><td>13px・600・100%</td><td>14px・600・100%</td></tr>
+<tr><td>ヒント</td><td>12px・60%・入力欄の下</td><td>12px・<code>ink-quiet</code>・入力欄の下</td><td>12px・<code>ink-quiet</code>・名札の右</td></tr>
+<tr><td>欄の間</td><td>約 6px</td><td>18px</td><td>18px</td></tr>
+</table>
+<div class="grid">
+  <figure><img src="now.png" alt="今" /><figcaption>今</figcaption></figure>
+  <figure><img src="a.png" alt="案A 名札を締める" /><figcaption>案A 名札を締める（推奨）: 名札を白の 600 にし、欄と欄の間を空ける。並びは今と同じ</figcaption></figure>
+  <figure><img src="b.png" alt="案B 説明を名札の横へ" /><figcaption>案B 説明を名札の横へ: 名札の右にヒントを並べ、入力欄の下を空ける。縦が短くなるが、長いヒントは折り返す</figcaption></figure>
+</div>
+</body>
+</html>
