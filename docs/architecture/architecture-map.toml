@@ -61,6 +61,7 @@ edges = [
   { from = "browser/frame", to = "browser/architecture-map" },
   { from = "browser/frame", to = "browser/current-work" },
   { from = "browser/frame", to = "browser/run-setting" },
+  { from = "browser/frame", to = "browser/session-switcher" },
   { from = "browser/frame", to = "browser/support" },
   { from = "browser/frame", to = "browser/task-board" },
   { from = "browser/frame", to = "browser/ui" },
@@ -70,6 +71,7 @@ edges = [
   { from = "browser/main-view", to = "browser/dispatch" },
   { from = "browser/main-view", to = "browser/frame" },
   { from = "browser/main-view", to = "browser/report" },
+  { from = "browser/main-view", to = "browser/session-switcher" },
   { from = "browser/main-view", to = "browser/support" },
   { from = "browser/main-view", to = "browser/task-board" },
   { from = "browser/main-view", to = "browser/ui" },
@@ -77,6 +79,7 @@ edges = [
   { from = "browser/report", to = "browser/ui" },
   { from = "browser/run-setting", to = "browser/support" },
   { from = "browser/run-setting", to = "browser/ui" },
+  { from = "browser/session-switcher", to = "browser/support" },
   { from = "browser/task-board", to = "browser/support" },
   { from = "browser/task-board", to = "browser/ui" },
   { from = "browser/token-usage-page", to = "browser/frame" },
@@ -628,6 +631,14 @@ summary = "モデル・権限・思考の段など実行の設定の選び方を
 purpose = "実行の設定の部品は入力欄と設定の画面から置かれるので、画面に属さない機能にして共有する"
 overview = "モデルの選択・権限のモード・思考の段を選ぶ部品と、その表記の対応を持つ。"
 paths = ["src/browser/features/run-setting/**"]
+
+[[boxes.children]]
+id = "browser/session-switcher"
+title = "セッションの切り替え"
+summary = "セッションの一覧の行・短縮ID・使用中の取得を組み立てる"
+purpose = "一覧の行・使用中・詳細は帯の札と会話の画面の札の両方から置かれるので、画面に属さない機能にして共有する"
+overview = "セッションの一覧を日の区切りつきの行にし、別のウィンドウが開いているセッションの印と短縮IDを付ける。切り替え画面と左の札のセッション側が同じ行を読む。"
+paths = ["src/browser/features/session-switcher/**"]
 
 [[boxes.children]]
 id = "browser/support"

@@ -2,7 +2,9 @@ import { act, cleanup, fireEvent, screen, waitFor, within } from "@testing-libra
 import { afterEach, beforeAll, describe, expect, it } from "vitest"
 
 import { useInquiryDraft } from "../../../../../../../src/browser/components/page/conversation/stores/inquiry-draft.ts"
+import { useOutlineSide } from "../../../../../../../src/browser/components/page/conversation/stores/outline-side.ts"
 import { loadMarkdown } from "../../../../../../../src/browser/features/report/markdown.tsx"
+import { useSession } from "../../../../../../../src/browser/stores/session.ts"
 import type { SessionRecord } from "../../../../../../../src/shared/session/session-record.ts"
 import type { SessionState } from "../../../../../../../src/shared/session/session-state.ts"
 import {
@@ -23,6 +25,7 @@ beforeAll(async () => {
 
 afterEach(() => {
   cleanup()
+  useOutlineSide.setState({ side: "turns", shownAt: undefined })
   // 組み立て中の答えはモジュール単位で残るので、次のテストへ持ち越さない。
   useInquiryDraft.setState(useInquiryDraft.getInitialState(), true)
   // 過去のターンを選ぶと hash に乗る（`useTurnSelection`）ので、次のテストへ持ち越さない。
@@ -38,7 +41,10 @@ function outlineTurnRows(): readonly HTMLButtonElement[] {
 function outlineRowTexts(): readonly string[] {
   const nav = screen.getByRole("navigation", { name: "やり取り" })
   return [...nav.querySelectorAll("button")]
-    .filter((row) => row.getAttribute("aria-label") !== "やり取りを畳む")
+    .filter(
+      (row) =>
+        row.getAttribute("aria-label") !== "やり取りを畳む" && row.getAttribute("role") !== "tab",
+    )
     .map((row) => row.textContent)
 }
 
@@ -151,18 +157,40 @@ describe("MainView（やり取りの列: やり取りと見出しの2段）", ()
 
     expect(outlineTurnRows()).toHaveLength(0)
     const outline = screen.getByRole("navigation", { name: "やり取り" })
-    expect(outline.textContent).toContain("やり取り")
+    expect(within(outline).getAllByRole("tab")).toHaveLength(2)
     expect(within(outline).getByLabelText("3件")).toBeTruthy()
     fireEvent.click(screen.getByRole("button", { name: "やり取りを開く" }))
-    expect(within(outline).queryByLabelText("3件")).toBeNull()
     expect(outlineTurnRows()).toHaveLength(3)
   })
 
-  it("hello のあと、やり取りが無いあいだは、題と件数 0 だけの帯が出る（口も行も無い）", () => {
+  it("畳んだ列の「セッション」を押すと、セッション側で開く", () => {
+    localStorage.setItem(OUTLINE_PANEL_STORAGE_KEY, JSON.stringify({ collapse: "collapsed" }))
+    renderMainView(threeTurns())
+
+    pressSessionTab()
+
+    expect(outlineTurnRows()).toHaveLength(0)
+    expect(screen.getByRole("button", { name: /ほかの作業ツリー・探す/ })).toBeTruthy()
+  })
+
+  it("セッション側で開いていても、セッションの世代が替わるとやり取り側へ戻る", () => {
+    chooseOutlineOpen()
+    renderMainView(threeTurns())
+    pressSessionTab()
+    expect(outlineTurnRows()).toHaveLength(0)
+
+    act(() => {
+      useSession.setState({ generation: useSession.getState().generation + 1 })
+    })
+
+    expect(outlineTurnRows()).toHaveLength(3)
+  })
+
+  it("hello のあと、やり取りが無いあいだは、切り替えだけの帯が出る（やり取り 0・口も行も無い）", () => {
     renderMainView([])
 
     expect(emptyOutlineBand()).toEqual({
-      text: "やり取り0",
+      tabs: 2,
       hasCountLabel: true,
       buttons: 0,
     })
@@ -179,21 +207,26 @@ describe("MainView（やり取りの列: やり取りと見出しの2段）", ()
     renderMainView([])
 
     expect(emptyOutlineBand()).toEqual({
-      text: "やり取り0",
+      tabs: 2,
       hasCountLabel: true,
       buttons: 0,
     })
   })
 })
 
+function pressSessionTab(): void {
+  const outline = screen.getByRole("navigation", { name: "やり取り" })
+  fireEvent.click(within(outline).getByRole("tab", { name: /セッション/ }))
+}
+
 function emptyOutlineBand(): {
-  readonly text: string | null
+  readonly tabs: number
   readonly hasCountLabel: boolean
   readonly buttons: number
 } {
   const nav = screen.getByRole("navigation", { name: "やり取り" })
   return {
-    text: nav.textContent,
+    tabs: within(nav).queryAllByRole("tab").length,
     hasCountLabel: within(nav).queryByLabelText("0件") !== null,
     buttons: within(nav).queryAllByRole("button").length,
   }

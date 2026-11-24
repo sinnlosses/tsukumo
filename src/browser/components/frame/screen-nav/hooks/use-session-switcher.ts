@@ -4,44 +4,15 @@
 // 一覧（`SessionState.sessions`）は軽いもの（ID・見出し・時刻）だけで、依頼の数・要約・最後のセリフは選んだ1件ぶんだけ取りに行く（`useSessionDigest`）。
 
 import { FRAME_ERROR_REASON } from "../../../../../shared/frame-error-reason.ts"
-import type { SessionChoice } from "../../../../../shared/session/session-choice.ts"
 import type { SessionId } from "../../../../../shared/session/session-id.ts"
+import {
+  monthDayTime,
+  type SessionSwitcherRow,
+} from "../../../../features/session-switcher/session-switcher-row.ts"
+import { useSessionRows } from "../../../../features/session-switcher/use-session-row-list.ts"
 import { useSessionSwitcherRequest } from "../../../../stores/session-switcher-request.ts"
 import { useRestartRefused, useSession } from "../../../../stores/session.ts"
-import {
-  clockTime,
-  localTimeZoneId,
-  nowEpochMilliseconds,
-  zonedDateTime,
-} from "../../../../utils/clock.ts"
-import { shortSessionIds } from "../domain/session-short-id.ts"
-import { useOccupiedSessions } from "./use-occupied-session-list.ts"
-
-/** 一覧の日の区切り（見本の「今日」「昨日」「それより前」）。 */
-export type SessionSwitcherGroup = "today" | "yesterday" | "earlier"
-
-export const SESSION_SWITCHER_GROUP_LABELS = {
-  today: "今日",
-  yesterday: "昨日",
-  earlier: "それより前",
-} as const satisfies Record<SessionSwitcherGroup, string>
-
-export type SessionSwitcherRow = {
-  readonly sessionId: SessionId
-  readonly shortId: string
-  /** SDK の見出し。無ければ {@link NO_HEADING_LABEL}。 */
-  readonly heading: string
-  readonly group: SessionSwitcherGroup
-  /** 行の右端の時刻。いま出している行は始まった時刻に「〜」を添え、ほかは最終更新時刻。 */
-  readonly timeLabel: string
-  /** 右の欄の見出しの横に出す、始まり〜最終更新の範囲（`9/26 20:10 – 23:05`）。 */
-  readonly rangeLabel: string
-  readonly current: boolean
-  readonly worktree: string
-  readonly inCurrentWorktree: boolean
-  /** 別のウィンドウの tsukumo がいま開いているか。いまの行は使用中にしない。 */
-  readonly occupiedElsewhere: boolean
-}
+import { nowEpochMilliseconds, zonedDateTime } from "../../../../utils/clock.ts"
 
 /** 帯の札に出す、いまのセッションの識別情報。ID が分かる前（新規に起こして最初の依頼を送る前）は短縮IDを出せない。 */
 export type ScreenNavSessionIdentity =
@@ -83,16 +54,9 @@ type SessionSwitcherView = {
   readonly switcher: ScreenNavSessionSwitcher
 }
 
-/** 見出しが無い（SDK の `summary` が空・読めない）行に代わりに出す字。 */
-const NO_HEADING_LABEL = "（題なし）"
-
 export function useSessionSwitcher(room: string, project: string): SessionSwitcherView {
   const dispatch = useSession((session) => session.dispatch)
   const dispatchAwaited = useSession((session) => session.dispatchAwaited)
-  const sessions = useSession((session) => session.state.sessions)
-  const currentSessionId = useSession((session) =>
-    session.state.session.kind === "starting" ? undefined : session.state.session.sessionId,
-  )
   const restartRefused = useRestartRefused()
   const open = useSessionSwitcherRequest((state) => state.open)
   const openSwitcher = useSessionSwitcherRequest((state) => state.openSwitcher)
@@ -107,22 +71,10 @@ export function useSessionSwitcher(room: string, project: string): SessionSwitch
     openSwitcher(nowEpochMilliseconds())
   }
   const onClose = useSessionSwitcherRequest((state) => state.closeSwitcher)
-  const occupied = useOccupiedSessions(open)
-
-  const shortIds = shortSessionIds([
-    ...(currentSessionId === undefined ? [] : [currentSessionId]),
-    ...sessions.map((session) => session.sessionId),
-  ])
-  const timeZone = localTimeZoneId()
-  const today = zonedDateTime(openedAt, timeZone).toPlainDate()
-  const rows = sessions.map((session) => {
-    const current = session.sessionId === currentSessionId
-    return switcherRow(session, shortIds, today, timeZone, {
-      current,
-      occupiedElsewhere: !current && occupied.has(session.sessionId),
-    })
-  })
-  const currentChoice = sessions.find((session) => session.sessionId === currentSessionId)
+  const { rows, shortIds, currentSessionId, currentChoice, timeZone } = useSessionRows(
+    open,
+    openedAt,
+  )
 
   return {
     tag: {
@@ -173,45 +125,4 @@ export function useSessionSwitcher(room: string, project: string): SessionSwitch
       },
     },
   }
-}
-
-function switcherRow(
-  session: SessionChoice,
-  shortIds: ReadonlyMap<string, string>,
-  today: Temporal.PlainDate,
-  timeZone: string,
-  { current, occupiedElsewhere }: Pick<SessionSwitcherRow, "current" | "occupiedElsewhere">,
-): SessionSwitcherRow {
-  const started = zonedDateTime(session.startedAt, timeZone)
-  const modified = zonedDateTime(session.lastModified, timeZone)
-  const group = groupOf(modified.toPlainDate(), today)
-  const sameDay = started.toPlainDate().equals(modified.toPlainDate())
-  return {
-    sessionId: session.sessionId,
-    shortId: shortIds.get(session.sessionId) ?? "",
-    heading: session.heading ?? NO_HEADING_LABEL,
-    group,
-    timeLabel: current
-      ? `${clockTime(started)}〜`
-      : group === "earlier"
-        ? monthDayTime(modified)
-        : clockTime(modified),
-    rangeLabel: `${monthDayTime(started)} – ${sameDay ? clockTime(modified) : monthDayTime(modified)}`,
-    current,
-    worktree: session.worktree,
-    inCurrentWorktree: session.inCurrentWorktree,
-    occupiedElsewhere,
-  }
-}
-
-function groupOf(date: Temporal.PlainDate, today: Temporal.PlainDate): SessionSwitcherGroup {
-  if (date.equals(today)) {
-    return "today"
-  }
-  return date.equals(today.subtract({ days: 1 })) ? "yesterday" : "earlier"
-}
-
-/** `M/D HH:MM`（年は出さない。一覧に並ぶのは直近の作業だけ）。 */
-function monthDayTime(at: Temporal.ZonedDateTime): string {
-  return `${String(at.month)}/${String(at.day)} ${clockTime(at)}`
 }

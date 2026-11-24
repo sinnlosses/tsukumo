@@ -2,15 +2,17 @@
 // 左の列の上に、集計期間の中のやり取りと、見ているやり取りの見出しの一覧を置く。
 // 高さは立ち絵と左上の席に被らないところで止まり（置き場の `<ConversationLayout>` が決める）、超えた分は一覧だけが転がる。
 // 狭い画面（760px 以下）では左の列ごと出さない。
-// やり取りが1件も無いあいだは、題と件数 0 だけの帯を出す。
+// 頭は「やり取り｜セッション」の切り替えで、畳んだ形・やり取りが無い場面・始め方の一覧の場面は、その1行だけの帯になる。
 
 import clsx from "clsx"
 import { ChevronDown, ChevronUp } from "lucide-react"
-import type { ReactElement } from "react"
+import type { ReactElement, ReactNode } from "react"
 
 import { withOccurrenceKeys } from "../../../../../domain/occurrence-key.ts"
 import { Button } from "../../../../ui/button/button.tsx"
+import { TabList } from "../../../../ui/tab-list/tab-list.tsx"
 import { TURN_RESULT_MARKS } from "../../domain/turn-result-mark.ts"
+import type { OutlineSide } from "../../stores/outline-side.ts"
 import {
   TURN_ROW_ATTRIBUTE,
   type ReportOutlineModel,
@@ -21,6 +23,9 @@ import {
 import styles from "./main-view.module.css"
 
 const OUTLINE_LABEL = "やり取り"
+const SESSIONS_LABEL = "セッション"
+const OUTLINE_LIST_ID = "outline-list"
+const EMPTY_BAND_TITLE = "依頼を送ると、ここに並ぶ"
 const COLLAPSE_LABEL = "やり取りを畳む"
 const EXPAND_LABEL = "やり取りを開く"
 
@@ -33,6 +38,15 @@ const REPORT_LABEL_TEXT = {
   final: "最終",
   interim: "レポート",
 } as const satisfies Record<"final" | "interim", string>
+
+/** 札の頭の切り替え（やり取り・セッション）に要るもの。側と件数は呼ぶ側が持つ。 */
+export type OutlineSideModel = {
+  readonly side: OutlineSide
+  readonly onSelectSide: (side: OutlineSide) => void
+  readonly sessionCount: number
+  /** セッション側のとき一覧の器の中へ出す中身。 */
+  readonly sessionBody: ReactNode
+}
 
 /**
  * props はここだけ分解して受ける。
@@ -51,7 +65,11 @@ export function PresentationalReportOutline({
   onSelect,
   collapsed,
   onToggleCollapse,
-}: ReportOutlineModel): ReactElement {
+  side,
+  onSelectSide,
+  sessionCount,
+  sessionBody,
+}: ReportOutlineModel & OutlineSideModel): ReactElement {
   return (
     <nav
       className={styles["outline-nav"]}
@@ -60,79 +78,151 @@ export function PresentationalReportOutline({
       ref={navRef}
       onKeyDown={onNavKeyDown}
     >
-      <div className={styles["outline-list-head"]}>
-        <span className={styles["outline-list-title"]} title={TURN_STEP_KEY_HINT}>
-          {OUTLINE_LABEL}
-          {collapsed && (
-            <span
-              className={styles["outline-count"]}
-              role="img"
-              aria-label={`${String(turnRows.length)}件`}
-            >
-              {turnRows.length}
-            </span>
-          )}
-        </span>
-        <Button
-          variant="ghost"
-          size="action"
-          pressed="none"
-          disabled={false}
-          ariaLabel={collapsed ? EXPAND_LABEL : COLLAPSE_LABEL}
-          disclosure={{ kind: "expander", expanded: !collapsed }}
-          className={styles["outline-toggle"]}
-          onClick={onToggleCollapse}
-        >
-          {collapsed ? (
-            <ChevronDown size={14} strokeWidth={2} aria-hidden="true" />
-          ) : (
-            <ChevronUp size={14} strokeWidth={2} aria-hidden="true" />
-          )}
-        </Button>
-      </div>
+      <OutlineHead
+        side={side}
+        turnCount={turnRows.length}
+        sessionCount={sessionCount}
+        onSelectSide={onSelectSide}
+        toggle={{ collapsed, onToggle: onToggleCollapse }}
+      />
       {!collapsed && (
-        <>
-          <div className={styles["outline-list"]} ref={listRef}>
-            {turnRows.map((turn) => (
-              <div
-                key={turn.id}
-                className={clsx(styles["outline-turn-group"], turn.isActive && styles["is-active"])}
-              >
-                <TurnRow turn={turn} onSelectTurn={onSelectTurn} />
-                {turn.isActive && (
-                  <HeadingRows
-                    reportRow={reportRow}
-                    onSelectReport={onSelectReport}
-                    rows={rows}
-                    onSelect={onSelect}
-                  />
-                )}
-              </div>
-            ))}
-          </div>
-        </>
+        <div className={styles["outline-list"]} id={OUTLINE_LIST_ID} ref={listRef}>
+          {side === "sessions"
+            ? sessionBody
+            : turnRows.map((turn) => (
+                <div
+                  key={turn.id}
+                  className={clsx(
+                    styles["outline-turn-group"],
+                    turn.isActive && styles["is-active"],
+                  )}
+                >
+                  <TurnRow turn={turn} onSelectTurn={onSelectTurn} />
+                  {turn.isActive && (
+                    <HeadingRows
+                      reportRow={reportRow}
+                      onSelectReport={onSelectReport}
+                      rows={rows}
+                      onSelect={onSelect}
+                    />
+                  )}
+                </div>
+              ))}
+        </div>
       )}
     </nav>
   )
 }
 
-export function EmptyReportOutline(): ReactElement {
+/** やり取りが1件も無い帯（始め方の一覧）と、始め方の一覧を出したまま過去を見ていない帯。切り替えの1行だけを出す。 */
+export function OutlineBand(props: {
+  readonly turnCount: number
+  readonly sessionCount: number
+  readonly onSelectSide: (side: OutlineSide) => void
+  /** 「セッション」を押して開いたときの一覧。無いあいだは帯のまま。 */
+  readonly sessionBody?: ReactNode
+}): ReactElement {
+  const open = props.sessionBody !== undefined
   return (
     <nav
       className={styles["outline-nav"]}
       aria-label={OUTLINE_LABEL}
-      data-outline-collapsed={true}
-      title="依頼を送ると、ここに並ぶ"
+      data-outline-collapsed={!open}
+      title={props.turnCount === 0 ? EMPTY_BAND_TITLE : undefined}
     >
-      <div className={styles["outline-list-head"]}>
-        <span className={styles["outline-list-title"]}>
-          {OUTLINE_LABEL}
-          <span className={styles["outline-count"]} role="img" aria-label="0件">
-            0
-          </span>
-        </span>
-      </div>
+      <OutlineHead
+        side={open ? "sessions" : "turns"}
+        turnCount={props.turnCount}
+        sessionCount={props.sessionCount}
+        onSelectSide={props.onSelectSide}
+        turnsLocked={true}
+        toggle={
+          open
+            ? {
+                collapsed: false,
+                onToggle: () => {
+                  props.onSelectSide("turns")
+                },
+              }
+            : undefined
+        }
+      />
+      {open && (
+        <div className={styles["outline-list"]} id={OUTLINE_LIST_ID}>
+          {props.sessionBody}
+        </div>
+      )}
     </nav>
+  )
+}
+
+function OutlineHead(props: {
+  readonly side: OutlineSide
+  readonly turnCount: number
+  readonly sessionCount: number
+  readonly onSelectSide: (side: OutlineSide) => void
+  /** 畳む口。帯には無い。 */
+  readonly toggle?: { readonly collapsed: boolean; readonly onToggle: () => void }
+  /** 「やり取り」を押せないか（始め方の一覧を出している帯）。 */
+  readonly turnsLocked?: boolean
+}): ReactElement {
+  const { toggle } = props
+  return (
+    <div className={styles["outline-list-head"]}>
+      <div className={styles["outline-side-tabs"]} title={TURN_STEP_KEY_HINT}>
+        <TabList
+          label="左の札の側"
+          value={props.side}
+          panelId={OUTLINE_LIST_ID}
+          tabs={[
+            {
+              value: "turns",
+              label: OUTLINE_LABEL,
+              id: "outline-tab-turns",
+              endContent: <OutlineCount count={props.turnCount} />,
+            },
+            {
+              value: "sessions",
+              label: SESSIONS_LABEL,
+              id: "outline-tab-sessions",
+              endContent: <OutlineCount count={props.sessionCount} />,
+            },
+          ]}
+          onChange={(next) => {
+            if (next === "turns" && props.turnsLocked === true) {
+              return
+            }
+            props.onSelectSide(next)
+          }}
+        />
+      </div>
+      {toggle !== undefined && (
+        <Button
+          variant="ghost"
+          size="action"
+          pressed="none"
+          disabled={false}
+          ariaLabel={toggle.collapsed ? EXPAND_LABEL : COLLAPSE_LABEL}
+          disclosure={{ kind: "expander", expanded: !toggle.collapsed }}
+          className={styles["outline-toggle"]}
+          onClick={toggle.onToggle}
+        >
+          {toggle.collapsed ? (
+            <ChevronDown size={14} strokeWidth={2} aria-hidden="true" />
+          ) : (
+            <ChevronUp size={14} strokeWidth={2} aria-hidden="true" />
+          )}
+        </Button>
+      )}
+    </div>
+  )
+}
+
+function OutlineCount(props: { readonly count: number }): ReactElement {
+  return (
+    <span className={styles["outline-count"]} role="img" aria-label={`${String(props.count)}件`}>
+      {props.count}
+    </span>
   )
 }
 

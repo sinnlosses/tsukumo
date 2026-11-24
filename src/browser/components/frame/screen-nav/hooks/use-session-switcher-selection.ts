@@ -7,8 +7,8 @@
 import { useState, type KeyboardEvent } from "react"
 
 import type { SessionId } from "../../../../../shared/session/session-id.ts"
+import type { SessionSwitcherRow } from "../../../../features/session-switcher/session-switcher-row.ts"
 import { useSessionDigest, type SessionDigestView } from "./use-session-digest.ts"
-import type { SessionSwitcherRow } from "./use-session-switcher.ts"
 
 type SessionSwitcherSelection = {
   readonly query: string

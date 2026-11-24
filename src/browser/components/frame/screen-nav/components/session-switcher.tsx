@@ -10,6 +10,11 @@ import { useId, type ReactElement } from "react"
 import { summaryParagraphs } from "../../../../../shared/session/session-digest.ts"
 import type { SessionId } from "../../../../../shared/session/session-id.ts"
 import type { CharacterFaceInfo } from "../../../../domain/character-face.ts"
+import {
+  SESSION_SWITCHER_GROUP_LABELS,
+  type SessionSwitcherGroup,
+  type SessionSwitcherRow,
+} from "../../../../features/session-switcher/session-switcher-row.ts"
 import { Button } from "../../../ui/button/button.tsx"
 import { Dialog } from "../../../ui/dialog/dialog.tsx"
 import { Heading } from "../../../ui/heading/heading.tsx"
@@ -19,12 +24,7 @@ import { Text } from "../../../ui/text/text.tsx"
 import { CharacterFace } from "../../character-face.tsx"
 import type { SessionDigestView } from "../hooks/use-session-digest.ts"
 import { useSessionSwitcherSelection } from "../hooks/use-session-switcher-selection.ts"
-import {
-  SESSION_SWITCHER_GROUP_LABELS,
-  type ScreenNavSessionSwitcher,
-  type SessionSwitcherGroup,
-  type SessionSwitcherRow,
-} from "../hooks/use-session-switcher.ts"
+import type { ScreenNavSessionSwitcher } from "../hooks/use-session-switcher.ts"
 import styles from "./session-switcher.module.css"
 
 type SessionSwitcherProps = {

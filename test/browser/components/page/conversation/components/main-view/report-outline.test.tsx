@@ -26,7 +26,14 @@ function Outline(props: {
   })
   return (
     <>
-      <PresentationalReportOutline {...model} contentRef={contentRef} />
+      <PresentationalReportOutline
+        {...model}
+        contentRef={contentRef}
+        side="turns"
+        onSelectSide={() => undefined}
+        sessionCount={0}
+        sessionBody={undefined}
+      />
       <div ref={contentRef}>{props.children}</div>
     </>
   )

@@ -265,7 +265,109 @@
                     "data-outline-collapsed": "false"
                   },
                   "children": [
-                    "やり取り",
+                    {
+                      "tag": "div",
+                      "attributes": {
+                        "data-astryx-edge-comp": "",
+                        "data-size": "md"
+                      },
+                      "children": [
+                        {
+                          "tag": "div",
+                          "attributes": {
+                            "role": "tablist",
+                            "aria-label": "左の札の側"
+                          },
+                          "children": [
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "data-astryx-pressable": "",
+                                "data-astryx-edge-comp": "",
+                                "data-tab-value": "turns",
+                                "role": "tab",
+                                "aria-selected": "true",
+                                "data-selected": "selected",
+                                "type": "button"
+                              },
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  }
+                                },
+                                "やり取り",
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  },
+                                  "children": [
+                                    "やり取り"
+                                  ]
+                                },
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "role": "img",
+                                    "aria-label": "1件"
+                                  },
+                                  "children": [
+                                    "1"
+                                  ]
+                                },
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "data-selected": "selected"
+                                  }
+                                }
+                              ]
+                            },
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "data-astryx-pressable": "",
+                                "data-astryx-edge-comp": "",
+                                "data-tab-value": "sessions",
+                                "role": "tab",
+                                "aria-selected": "false",
+                                "type": "button"
+                              },
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  }
+                                },
+                                "セッション",
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  },
+                                  "children": [
+                                    "セッション"
+                                  ]
+                                },
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "role": "img",
+                                    "aria-label": "1件"
+                                  },
+                                  "children": [
+                                    "1"
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
                     {
                       "tag": "button",
                       "attributes": {

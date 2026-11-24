@@ -82,6 +82,39 @@ test.describe("セッションの切り替え", () => {
     await room.settleAndMatchPicked(ELAPSED_MS)
   })
 
+  test("左の札の「セッション」を押すとセッション側が出て、使用中の行は押せず、末尾の口で切り替え画面が開く", async ({
+    run,
+  }) => {
+    const room = await run.open({
+      scenario: "session-switch-outline-side",
+      scene: "session-list",
+      viewport: "wide",
+      domRoots: ["session-switcher"],
+    })
+    await room.waitForEvent("sessions-changed")
+    const claimDir = path.join(room.home, TSUKUMO_HOME_PLACES.sessionClaim)
+    mkdirSync(claimDir, { recursive: true })
+    writeFileSync(
+      path.join(claimDir, `${String(process.pid)}.json`),
+      JSON.stringify({ pid: process.pid, sessionIds: [OCCUPIED_SESSION_ID] }),
+    )
+    const outline = room.page.getByRole("navigation", { name: "やり取り" })
+
+    const occupied = outline.locator('button:has([data-occupied="true"])')
+    await room.revealAfterResponse(occupied, {
+      response: "sessionClaim/occupied",
+      baseline: {
+        kind: "after-act",
+        act: () => outline.getByRole("tab", { name: /セッション/u }).click(),
+      },
+    })
+    await expect(outline.getByRole("group", { name: "今日" })).toBeVisible()
+    expect(await occupied.getAttribute("aria-disabled")).toBe("true")
+
+    await outline.getByRole("button", { name: /ほかの作業ツリー・探す/u }).click()
+    await room.page.getByRole("dialog", { name: "セッションを切り替える" }).waitFor()
+  })
+
   test("⌘K のパレットは上端に留まって絞ると下から縮み、Enter で切り替え画面を開き、外側のクリックで閉じ、⌘J でも開き、Ctrl+K は入力欄に譲る", async ({
     run,
   }) => {

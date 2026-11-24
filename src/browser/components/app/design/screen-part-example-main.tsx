@@ -2,6 +2,7 @@
 
 import { createRef } from "react"
 
+import { parseSessionId } from "../../../../shared/session/session-id.ts"
 import type { PhaseRow } from "../../page/conversation/components/main-view/domain/phase-row.ts"
 import type { StepsPhaseRow } from "../../page/conversation/components/main-view/domain/steps-phase-row.ts"
 import type { WorkStripPhaseDetail } from "../../page/conversation/components/main-view/hooks/use-work-strip-phase-detail.ts"
@@ -15,6 +16,7 @@ import { PresentationalCurrentStep } from "../../page/conversation/components/ma
 import { PresentationalPhaseDetail } from "../../page/conversation/components/main-view/presentational-phase-detail.tsx"
 import { PresentationalPhaseList } from "../../page/conversation/components/main-view/presentational-phase-list.tsx"
 import { PresentationalReportOutline } from "../../page/conversation/components/main-view/presentational-report-outline.tsx"
+import { PresentationalSessionOutline } from "../../page/conversation/components/main-view/presentational-session-outline.tsx"
 import { PresentationalStepsList } from "../../page/conversation/components/main-view/presentational-steps-list.tsx"
 import { PresentationalWorkStrip } from "../../page/conversation/components/main-view/presentational-work-strip.tsx"
 import type { ScreenPartExample } from "./screen-part-example-type.ts"
@@ -158,6 +160,8 @@ const FINISHED_STRIP: WorkStripModel = {
   statement: "",
 }
 
+const SAMPLE_SESSION_ID = parseSessionId("00000000-0000")
+
 const OUTLINE_BASE = {
   visible: true,
   onSelectTurn: noop,
@@ -169,6 +173,10 @@ const OUTLINE_BASE = {
   onSelect: noop,
   collapsed: false,
   onToggleCollapse: noop,
+  side: "turns",
+  onSelectSide: noop,
+  sessionCount: 3,
+  sessionBody: undefined,
   widthStyle: {},
   onWidthChange: noop,
   onWidthCommit: noop,
@@ -335,6 +343,56 @@ export const MAIN_VIEW_EXAMPLES: readonly ScreenPartExample[] = [
           { level: "section", text: "背景", isActive: true, inActiveSection: true },
           { level: "sub", text: "これまでの経緯", isActive: false, inActiveSection: true },
           { level: "section", text: "次にすること", isActive: false, inActiveSection: false },
+        ]}
+      />
+    ),
+  },
+  {
+    frame: "flow",
+    path: "page/conversation/components/main-view/presentational-session-outline.tsx",
+    render: () => (
+      <PresentationalSessionOutline
+        side="sessions"
+        onSelectSide={noop}
+        count={3}
+        selectedKey="b"
+        onSelectRow={noop}
+        onOpenSwitcher={noop}
+        sections={[
+          {
+            group: "today",
+            rows: [
+              {
+                key: "a",
+                sessionId: SAMPLE_SESSION_ID,
+                heading: "READMEの見直し",
+                timeLabel: "いま",
+                current: true,
+                occupiedElsewhere: false,
+              },
+              {
+                key: "b",
+                sessionId: SAMPLE_SESSION_ID,
+                heading: "表の追加",
+                timeLabel: "21:10",
+                current: false,
+                occupiedElsewhere: false,
+              },
+            ],
+          },
+          {
+            group: "yesterday",
+            rows: [
+              {
+                key: "c",
+                sessionId: SAMPLE_SESSION_ID,
+                heading: "立ち絵の縁を整える",
+                timeLabel: "19:42",
+                current: false,
+                occupiedElsewhere: true,
+              },
+            ],
+          },
         ]}
       />
     ),

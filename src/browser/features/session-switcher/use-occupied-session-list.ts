@@ -5,7 +5,7 @@
 
 import { useQuery } from "@tanstack/react-query"
 
-import { rpc } from "../../../../stores/rpc.ts"
+import { rpc } from "../../stores/rpc.ts"
 
 export function useOccupiedSessions(open: boolean): ReadonlySet<string> {
   const { data } = useQuery(

@@ -48,6 +48,7 @@ const BROWSER_PLACED_FEATURES = [
   "features/task-board",
   "features/current-work",
   "features/run-setting",
+  "features/session-switcher",
   "features/report",
   "features/architecture-map",
 ] as const

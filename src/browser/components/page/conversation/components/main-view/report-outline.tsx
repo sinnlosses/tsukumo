@@ -1,7 +1,8 @@
 // やり取りの列の入口。
 // 左の列の上へ差し込む。hello 待ちのあいだは出さない。
-// やり取りが1件も無いあいだ（始め方の一覧）は、題と件数 0 だけの帯を出す。
-// 本文の札が出ているあいだは、やり取りの列を出す。
+// 本文の札が出ているあいだは開いた札（やり取り側・セッション側）を出し、
+// やり取りが1件も無いあいだと、始め方の一覧を出していて過去を見ていないあいだは、切り替えの1行だけの帯を出す。
+// 帯で「セッション」を押すと、その場でセッション側の札が開く。
 
 import type { ReactElement } from "react"
 
@@ -11,10 +12,9 @@ import { useTurnSelection } from "../../../../../stores/turn-selection.ts"
 import { useMainViewContent } from "../../stores/main-view-content.ts"
 import { useReportOutlineTurns } from "./hooks/use-report-outline-turn-list.ts"
 import { useReportOutline } from "./hooks/use-report-outline.ts"
-import {
-  EmptyReportOutline,
-  PresentationalReportOutline,
-} from "./presentational-report-outline.tsx"
+import { useSessionOutline } from "./hooks/use-session-outline.ts"
+import { OutlineBand, PresentationalReportOutline } from "./presentational-report-outline.tsx"
+import { PresentationalSessionOutline } from "./presentational-session-outline.tsx"
 
 export function ReportOutline(): ReactElement {
   const { activeTurnId, newestTurnId } = useTurnSelection()
@@ -23,24 +23,49 @@ export function ReportOutline(): ReactElement {
   const awaitingHello = useSession((session) => session.generation === 0)
   const viewingPast = activeTurnId !== undefined && activeTurnId !== newestTurnId
   const shown = !awaitingHello && (!welcome || viewingPast) && turns.length >= 1
-  const empty = !awaitingHello && turns.length === 0
+  const banded = !awaitingHello && !shown
   return (
     <>
-      {empty && <EmptyReportOutline />}
+      {banded && <BandedReportOutline turnCount={turns.length} />}
       {shown && activeTurnId !== undefined && <ShownReportOutline activeTurnId={activeTurnId} />}
     </>
   )
 }
 
+function BandedReportOutline(props: { readonly turnCount: number }): ReactElement {
+  const session = useSessionOutline()
+  return (
+    <OutlineBand
+      turnCount={props.turnCount}
+      sessionCount={session.count}
+      onSelectSide={session.onSelectSide}
+      sessionBody={
+        session.side === "sessions" ? <PresentationalSessionOutline {...session} /> : undefined
+      }
+    />
+  )
+}
+
 function ShownReportOutline(props: { readonly activeTurnId: number }): ReactElement {
   const { selectTurn } = useTurnSelection()
+  const session = useSessionOutline()
+  const outline = useReportOutline({
+    turns: useReportOutlineTurns(),
+    activeTurnId: props.activeTurnId,
+    onSelectTurn: selectTurn,
+  })
   return (
     <PresentationalReportOutline
-      {...useReportOutline({
-        turns: useReportOutlineTurns(),
-        activeTurnId: props.activeTurnId,
-        onSelectTurn: selectTurn,
-      })}
+      {...outline}
+      side={session.side}
+      sessionCount={session.count}
+      sessionBody={<PresentationalSessionOutline {...session} />}
+      onSelectSide={(side) => {
+        session.onSelectSide(side)
+        if (outline.collapsed) {
+          outline.onToggleCollapse()
+        }
+      }}
     />
   )
 }

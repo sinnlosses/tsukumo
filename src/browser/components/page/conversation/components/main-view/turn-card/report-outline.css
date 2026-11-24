@@ -24,9 +24,9 @@
 .outline-nav[data-outline-collapsed="true"] .outline-list-head {
   padding-bottom: 0;
 }
-/* 畳んだときだけ題に添える件数。 */
+/* 切り替えの各側に添える件数。 */
 .outline-count {
-  padding-left: var(--inline-control);
+  padding-left: var(--inline-tight);
   font-family: var(--font-mono);
   letter-spacing: 0;
 }
@@ -94,25 +94,125 @@
     0 1.5rem,
     calc(100% - 1.5rem) 100%;
 }
+.outline-side-tabs {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+/* セッション側。行の頭の丸は印の幅だけ取り、いまの行は大きな差し色の丸、使用中は白抜きの丸にする。 */
+.outline-session-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--stack-tight);
+}
+.outline-session-group-head {
+  padding: var(--stack-tight) var(--gutter-region) 0;
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+  letter-spacing: 0.1em;
+}
+.outline-session {
+  display: flex;
+  align-items: center;
+  gap: var(--inline-control);
+  width: 100%;
+  padding: var(--inset-control);
+  border: none;
+  border-left: 2px solid transparent;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--ink-quiet);
+  font-size: var(--font-secondary);
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.outline-session:hover {
+  background: var(--surface-accent);
+}
+.outline-session[data-current="true"] {
+  color: var(--ink);
+  font-weight: 600;
+}
+.outline-session[data-selected="true"] {
+  border-left-color: var(--accent);
+  background: var(--surface-accent);
+  color: var(--ink);
+}
+.outline-session[aria-disabled="true"] {
+  cursor: default;
+}
+.outline-session[aria-disabled="true"]:hover {
+  background: transparent;
+}
+.outline-session-mark {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 1em;
+}
+.outline-session-mark::before {
+  content: "";
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--ink-quiet);
+}
+.outline-session[data-current="true"] .outline-session-mark::before {
+  width: 8px;
+  height: 8px;
+  background: var(--accent);
+}
+.outline-session-mark[data-occupied="true"]::before {
+  width: 7px;
+  height: 7px;
+  border: 1.5px solid var(--ink-quiet);
+  background: transparent;
+}
+.outline-session .outline-row-text {
+  flex: 1;
+}
+.outline-session-time {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: var(--font-action);
+  font-weight: normal;
+}
+.outline-session-more {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--inline-control);
+  width: 100%;
+  padding: var(--inset-control);
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--ink-quiet);
+  font-size: var(--font-action);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.outline-session-more:hover {
+  background: var(--surface-accent);
+}
 .outline-list-head {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: var(--space-sm);
   /* 口のボタンがあるときの頭の行の高さ（実測 30.39px）に揃える。口の無い帯でも縮まない。 */
   min-height: 30.4px;
-  padding: var(--space-2xs) var(--space-md) var(--space-sm);
+  padding: var(--space-2xs) var(--space-xs) var(--space-sm);
+}
+/* 列の幅（既定 234px）に「やり取り n｜セッション n」と口が収まるよう、タブの横の余白を詰める。収まらないとタブが横に転がる。 */
+.outline-side-tabs [role="tab"] {
+  padding-inline: var(--inline-tight);
 }
 .outline-toggle {
   flex: none;
   min-width: 24px;
   padding: var(--space-xs);
-}
-.outline-list-title {
-  color: var(--ink-quiet);
-  font-size: var(--font-label);
-  letter-spacing: 0.1em;
-  white-space: nowrap;
 }
 /* やり取り1件ぶん（やり取りの行と、見ているやり取りなら子の見出しの行）。
    見ているやり取りは子の行ごと面に載せる。 */
