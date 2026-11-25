@@ -1,0 +1,5 @@
+/* 画面に収めた大きさより小さく見せる。`--image-zoom-fit` は収めた大きさに対する割合（1 で収めた大きさ）。 */
+.image-zoom [data-lightbox-page-media] img {
+  max-width: calc(var(--image-zoom-fit, 1) * 100%);
+  max-height: calc(var(--image-zoom-fit, 1) * 100%);
+}
