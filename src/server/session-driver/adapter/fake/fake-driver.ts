@@ -76,7 +76,7 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
   // handler が無いので判定はしない。疑似セッションが書いた `tool-finished` の `isError` に従って、描くか捨てるかだけが決まる。
   const callReview = createCallReview()
   // 最後に流した `session-info` のスキルとエージェントの名前。
-  // `setModel` / `setPermissionMode` が流す `session-info` にも載せる（本物の `init` は毎回全部を送るので、空で上書きすると疑似だけ候補が消える）。
+  // `setModel` が流す `session-info` にも載せる（本物の `init` は毎回全部を送るので、空で上書きすると疑似だけ候補が消える）。
   let names: SessionInfoNames = { skillNames: [], agentNames: [] }
 
   const emit = (event: SessionEvent): void => {

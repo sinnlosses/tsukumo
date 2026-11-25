@@ -156,7 +156,6 @@ describe("startFakeSession", () => {
     )
     await tick()
     await driver.setModel("sonnet")
-    await driver.setPermissionMode("plan")
     driver.close()
 
     const infos = sink.events.filter((event) => event.kind === "session-info")
