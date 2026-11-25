@@ -60,6 +60,24 @@ export type CharacterProfileEditModel =
     }
 
 /**
+ * 表情の名前（カードの2行目）を設定するダイアログの下書きの種。行は `EXPRESSIONS` の順。
+ * 空文字も渡す。空ならその表情の名前を消す（書き込む側の `characterPack.setExpressionLabels` が畳む）。
+ */
+export type ExpressionLabelsEditModel =
+  | { readonly kind: "hidden" }
+  | {
+      readonly kind: "shown"
+      readonly rows: readonly {
+        readonly expression: Expression
+        /** 欄の題（役割の名）。 */
+        readonly role: string
+        /** 開いた時点の名前（無ければ空文字）。 */
+        readonly label: string
+      }[]
+      readonly onSubmit: (labels: Readonly<Record<Expression, string>>) => void
+    }
+
+/**
  * 表情のカード1枚。
  * 自分の絵を持たない表情は `blank`（その表情の名前を書いた点線の枠。9つそろえば出ない）。
  */
@@ -157,6 +175,8 @@ export type CharacterEditModel =
       /** 画面から変えられないパック。口をすべて塞ぐ（理由は `profile.note`）。 */
       readonly disabled: boolean
       readonly cards: readonly PortraitCardModel[]
+      /** 表情の見出しの右の「表情の名前を設定する」。変えられないパックでは出さない。 */
+      readonly editExpressionLabels: ExpressionLabelsEditModel
       /** 表情の格子の上に出す。カードの中は狭いので、どの表情かは文面で言う。 */
       readonly portraitRejection: ImageRejectionNoteModel
       /** 画面の差し色（仕事）。`accent` を差す。 */

@@ -17,8 +17,11 @@ import { useState } from "react"
 
 import type { AccentTarget } from "../../../../../../shared/character-pack/character-definition.ts"
 import type { CharacterPackName } from "../../../../../../shared/character-pack/character-pack-name.ts"
-import { expressionRoleWithLabel } from "../../../../../../shared/character-pack/expression-choice.ts"
-import type { Expression } from "../../../../../../shared/character-pack/expression.ts"
+import {
+  expressionRoleName,
+  expressionRoleWithLabel,
+} from "../../../../../../shared/character-pack/expression-choice.ts"
+import { EXPRESSIONS, type Expression } from "../../../../../../shared/character-pack/expression.ts"
 import type { CommandClient } from "../../../../../../shared/rpc.ts"
 import { readAccentColor } from "../../../../../stores/appearance-color-root.ts"
 import { useRestartRefused, useSession } from "../../../../../stores/session.ts"
@@ -39,6 +42,7 @@ import type {
   CharacterEditModel,
   CharacterProfileModel,
   ChatAccentResetModel,
+  ExpressionLabelsEditModel,
   ImageFieldModel,
 } from "../../domain/character-edit-model.ts"
 import { readPicked } from "../../domain/picked-image.ts"
@@ -99,6 +103,20 @@ export function useCharacterEdit(): CharacterEditModel {
       void dispatch.characterPack.clearPortrait({ pack, expression })
     },
   })
+
+  const editExpressionLabels: ExpressionLabelsEditModel = disabled
+    ? { kind: "hidden" }
+    : {
+        kind: "shown",
+        rows: EXPRESSIONS.map((expression) => ({
+          expression,
+          role: expressionRoleName(expression),
+          label: character.expressions.find((choice) => choice.name === expression)?.label ?? "",
+        })),
+        onSubmit: (labels) => {
+          void dispatch.characterPack.setExpressionLabels({ pack, labels })
+        },
+      }
 
   // 仕事の差し色（`accent`）。無ければ `--accent`（既定値）に落ちる。
   const workAccentValue = heldScreen.work ?? character.accent ?? accentFallback
@@ -257,6 +275,7 @@ export function useCharacterEdit(): CharacterEditModel {
     profile,
     disabled,
     cards,
+    editExpressionLabels,
     portraitRejection:
       rejectedTarget.kind === "portrait"
         ? {

@@ -73,6 +73,11 @@ const EDIT: CharacterEditModel = {
     card("thinking", "考え中", { kind: "none" }),
     card("proud", "得意げ", { kind: "none" }),
   ],
+  editExpressionLabels: {
+    kind: "shown",
+    rows: [{ expression: "default", role: "通常", label: "にっと" }],
+    onSubmit: noop,
+  },
   portraitRejection: { kind: "none" },
   workAccent: {
     inputId: "design-work-accent",

@@ -1,6 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 
+import { fromKeys } from "remeda"
 import { describe, expect, it } from "vitest"
 
 import { editCharacterPack } from "../../../../src/server/character-pack/adapter/character-edit.ts"
@@ -210,6 +211,24 @@ describe("editCharacterPack（名前と自己紹介文）", () => {
 
     expect(edited?.definition?.name).toBe("残る名前")
     expect(edited?.definition?.tagline).toBeUndefined()
+  })
+})
+
+describe("editCharacterPack（表情の名前）", () => {
+  it("表情の名前を差し替え、空（空白だけも）にした表情は名前が消える。ほかのキーは残る", () => {
+    const bundled = writeBundledPack("tsukumo")
+    const labels = fromKeys(EXPRESSIONS, () => "そのまま")
+
+    const edited = editInHome(readPackAt(bundled), {
+      kind: "setExpressionLabels",
+      pack: TSUKUMO,
+      labels: { ...labels, default: " にこっ ", thinking: "  " },
+    })
+
+    expect(edited?.definition?.expressions.default).toBe("にこっ")
+    expect(edited?.definition?.expressions.thinking).toBeUndefined()
+    expect(edited?.definition?.expressions.proud).toBe("そのまま")
+    expect(edited?.definition?.portraits.default).toBe("default.svg")
   })
 })
 

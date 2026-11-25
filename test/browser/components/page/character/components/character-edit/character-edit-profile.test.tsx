@@ -74,6 +74,48 @@ describe("CharacterEdit の名前と人格", () => {
     })
   })
 
+  describe("表情の名前を設定する", () => {
+    it("いまの名前を入れて開き、書き換えて保存すると全部の表情の名前を1回で送る", () => {
+      const calls: unknown[] = []
+      renderCharacterEdit(FIXTURE_CHARACTER, (command) => calls.push(command))
+
+      fireEvent.click(screen.getByRole("button", { name: "表情の名前を設定する" }))
+      const thinking = typedElement(
+        screen.getByLabelText("考え中"),
+        HTMLInputElement,
+        "考え中の入力欄",
+      )
+      expect(thinking.value).toBe("作業中")
+      fireEvent.change(thinking, { target: { value: "ふむふむ" } })
+      fireEvent.click(screen.getByRole("button", { name: "保存する" }))
+
+      expect(calls).toEqual([
+        {
+          procedure: "characterPack.setExpressionLabels",
+          pack: "fictional",
+          labels: {
+            default: "通常",
+            thinking: "ふむふむ",
+            proud: "どや顔",
+            flustered: "",
+            serious: "",
+            curious: "",
+            sad: "",
+            excited: "",
+            bored: "",
+          },
+        },
+      ])
+      expect(document.querySelector('dialog[aria-label="表情の名前を設定する"]')).toBeNull()
+    })
+
+    it("画面から変えられないパックでは口を出さない", () => {
+      renderCharacterEdit({ ...FIXTURE_CHARACTER, editable: false })
+
+      expect(screen.queryByRole("button", { name: "表情の名前を設定する" })).toBeNull()
+    })
+  })
+
   describe("プロフィールを設定する", () => {
     const PACKS = [
       characterPackEntry("fictional", "架空の精霊", { inUse: true, personaBody: "# 人格\n\n本文" }),

@@ -48,7 +48,7 @@ export type PortraitGeneration =
 export function characterPackCommands(
   ports: CharacterPackCommandPorts,
 ): FeatureCommandTable<Omit<typeof characterPackContract, "generateFromPortrait">> {
-  // 見た目の編集12種は同じ口へ渡す（どれを変えるかは書き込む側が `kind` で分ける）。
+  // 見た目の編集13種は同じ口へ渡す（どれを変えるかは書き込む側が `kind` で分ける）。
   const edit = <C>(kindOf: (input: C) => CharacterEdit): WriteReceiver<C> => ({
     kind: "write",
     receive: (input) => ports.editCharacter(kindOf(input)),
@@ -60,6 +60,7 @@ export function characterPackCommands(
     setAccent: edit((input) => ({ kind: "setAccent", ...input })),
     clearChatAccent: edit((input) => ({ kind: "clearChatAccent", ...input })),
     setProfile: edit((input) => ({ kind: "setProfile", ...input })),
+    setExpressionLabels: edit((input) => ({ kind: "setExpressionLabels", ...input })),
     setPersona: edit((input) => ({ kind: "setPersona", ...input })),
     setBackground: edit((input) => ({ kind: "setBackground", ...input })),
     clearBackground: edit((input) => ({ kind: "clearBackground", ...input })),

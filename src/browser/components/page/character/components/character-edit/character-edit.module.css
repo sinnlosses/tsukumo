@@ -29,6 +29,13 @@
   margin-left: auto;
 }
 
+/* 表情の名前のダイアログの欄。9つを3列に並べ、狭いときは入るだけの列で折り返す。 */
+.expression-labels-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+  gap: var(--stack-group);
+}
+
 /* 表情の格子。広いときは5列（見本）、詳しい設定が狭いときは入るだけの列で折り返す。 */
 .character-gallery {
   display: grid;

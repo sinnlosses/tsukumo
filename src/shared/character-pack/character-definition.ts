@@ -186,6 +186,29 @@ export function definitionWithTagline(content: string | undefined, tagline: stri
   )
 }
 
+/** 表情の名前（`expressions` の値）として受け付ける長さの上限。表情のカードの2行目に収まる長さで止める。 */
+export const MAX_EXPRESSION_LABEL_LENGTH = 20
+
+/**
+ * 表情の名前（`expressions`）を、渡した表情の分だけ差し替えた JSON を返す。
+ * 渡していない表情と、表情でないキーはそのまま残す。
+ * 空文字（前後の空白だけも含む）はその表情の名前を消すのと同じ（読む側は役割の名だけを出す）。
+ */
+export function definitionWithExpressionLabels(
+  content: string | undefined,
+  labels: Readonly<Partial<Record<Expression, string>>>,
+): string {
+  const source = parsedDefinitionRecord(content)
+  const edited = {
+    ...asRecord(source["expressions"]),
+    ...fromKeys(
+      EXPRESSIONS.filter((expression) => labels[expression] !== undefined),
+      (expression) => nonBlankString(labels[expression]?.trim()),
+    ),
+  }
+  return `${JSON.stringify({ ...source, expressions: edited }, undefined, 2)}\n`
+}
+
 /** 帯の左端・一覧の丸・名乗りの大きな丸に出す顔（`character.json` の `face`）を差し替えた JSON を返す。 */
 export function definitionWithFace(content: string | undefined, fileName: string): string {
   return editedTopLevelDefinitionJson(content, "face", fileName)

@@ -14,6 +14,7 @@ import { AccentSwatch } from "../accent-swatch/accent-swatch.tsx"
 import { CharacterDelete } from "./character-delete.tsx"
 import styles from "./character-edit.module.css"
 import { CharacterProfile } from "./character-profile.tsx"
+import { ExpressionLabelsEdit } from "./expression-labels-edit.tsx"
 import { ImageField } from "./image-field.tsx"
 import { ItemSection } from "./item-section.tsx"
 import { PortraitCard } from "./portrait-card.tsx"
@@ -67,9 +68,20 @@ export function PresentationalCharacterEdit(
         wrap="nowrap"
         className={styles["character-section"]}
       >
-        <Heading level={2} size="body" tone="inherit" weight="bold" className="">
-          <span id="character-expressions">表情</span>
-        </Heading>
+        <HStack
+          element="div"
+          name={{ kind: "none" }}
+          gap="sm"
+          align="center"
+          justify="start"
+          wrap="nowrap"
+          className={styles["character-section-bar"]}
+        >
+          <Heading level={2} size="body" tone="inherit" weight="bold" className="">
+            <span id="character-expressions">表情</span>
+          </Heading>
+          <ExpressionLabelsEdit edit={props.editExpressionLabels} />
+        </HStack>
         {props.portraitRejection.kind === "shown" && (
           <Text element="p" size="secondary" tone="state-ng" weight="inherit" className="">
             {props.portraitRejection.text}

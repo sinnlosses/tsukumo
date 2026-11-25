@@ -1,4 +1,4 @@
-// キャラクターパックのコマンドの契約。見た目と人格の編集12種と、作る・消すの2種と、作る前に欄を埋める生成の1種。
+// キャラクターパックのコマンドの契約。見た目と人格の編集13種と、作る・消すの2種と、作る前に欄を埋める生成の1種。
 // どれも駆動には渡らない（書き込みと `character-changed` の流し直しで済むので、使用中のパックを変えたときもセッションは起こし直さない）。
 
 import { z } from "zod"
@@ -13,11 +13,13 @@ import {
   isAccentTarget,
   MAX_CHARACTER_NAME_LENGTH,
   MAX_CHARACTER_TAGLINE_LENGTH,
+  MAX_EXPRESSION_LABEL_LENGTH,
 } from "../character-pack/character-definition.ts"
 import { MAX_FACE_DATA_URL_LENGTH, parseFaceImage } from "../character-pack/character-face.ts"
 import { MAX_MINI_DATA_URL_LENGTH, parseMiniImage } from "../character-pack/character-mini.ts"
 import { characterPackNameSchema } from "../character-pack/character.ts"
 import {
+  EXPRESSIONS,
   type Expression,
   isExpression,
   isRemovableExpression,
@@ -108,6 +110,9 @@ const expressionSchema = z.custom<Expression>(
   (value) => typeof value === "string" && isExpression(value),
 )
 
+/** 表情の名前（`にっと` など）。空文字も通す（その表情の名前を消す）。 */
+const expressionLabelSchema = z.string().max(MAX_EXPRESSION_LABEL_LENGTH)
+
 /** 立ち絵を消せる表情。必須の `default` はここで弾かれる。 */
 const removableExpressionSchema = z.custom<RemovableExpression>(
   (value) => typeof value === "string" && isRemovableExpression(value),
@@ -148,6 +153,14 @@ const characterEditInput = {
     pack: editedCharacterPackNameSchema,
     name: characterNameSchema,
     tagline: characterTaglineSchema,
+  }),
+  /**
+   * 表情の名前（表情のカードの2行目）をまとめて設定する。1つのダイアログから全部の表情を送るので、表情ごとには分けない。
+   * 空文字はその表情の名前を消す（役割の名だけが出る）。
+   */
+  setExpressionLabels: z.object({
+    pack: editedCharacterPackNameSchema,
+    labels: z.record(z.enum(EXPRESSIONS), expressionLabelSchema),
   }),
   /**
    * ペルソナを差し替える。`## 覚えたこと` の節は受け取らず、書く瞬間のファイルのものをそのまま残す。
@@ -216,6 +229,7 @@ export const characterPackContract = {
   setAccent: commandBase.input(characterEditInput.setAccent),
   clearChatAccent: commandBase.input(characterEditInput.clearChatAccent),
   setProfile: commandBase.input(characterEditInput.setProfile),
+  setExpressionLabels: commandBase.input(characterEditInput.setExpressionLabels),
   setPersona: commandBase.input(characterEditInput.setPersona),
   setBackground: commandBase.input(characterEditInput.setBackground),
   clearBackground: commandBase.input(characterEditInput.clearBackground),

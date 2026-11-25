@@ -1,4 +1,4 @@
-// 画面から届いたキャラクターの変更（新しいパックを作る・立ち絵と差し色と背景とペルソナを差し替える・パックを消す）をキャラクターパックに書き込む。
+// 画面から届いたキャラクターの変更（新しいパックを作る・立ち絵と差し色と背景と表情の名前とペルソナを差し替える・パックを消す）をキャラクターパックに書き込む。
 // 書き込んでよい・消してよいのは `~/.tsukumo/characters/<name>/` の下だけ。
 //
 // 新しいパックの `<name>` だけは外から受け取る。形は境界で見てあり、ここは既にある名前とぶつかったら書かない。
@@ -19,6 +19,7 @@ import { portraitImageMimeType } from "../../../shared/character-pack/character-
 import {
   type CharacterDefinition,
   definitionWithAccent,
+  definitionWithExpressionLabels,
   definitionWithName,
   definitionWithoutChatAccent,
   definitionWithTagline,
@@ -219,6 +220,9 @@ function applyEdit(dir: string, edit: CharacterEdit): boolean {
         definitionPath,
         definitionWithTagline(definitionWithName(content, edit.name), edit.tagline),
       )
+      return true
+    case "setExpressionLabels":
+      writeFileAtomic(definitionPath, definitionWithExpressionLabels(content, edit.labels))
       return true
     case "setPersona": {
       const personaPath = join(dir, PERSONA_FILE_NAME)
