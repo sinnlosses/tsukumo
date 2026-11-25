@@ -100,6 +100,50 @@ export const PLAIN_WORDS = [
     meaning: "React の hook を呼ぶ前後に処理を足すために、その hook を包んだ hook",
   },
   {
+    spelling: "Astryx の包み",
+    replacement: "Astryx のラッパー部品",
+    meaning:
+      "Astryx の部品を中で使い、tsukumo の props で呼べるようにした src/browser/components/ui/ の部品",
+  },
+  {
+    spelling: "ui/ の包み",
+    replacement: "ui/ のラッパー部品",
+    meaning:
+      "Astryx の部品を中で使い、tsukumo の props で呼べるようにした src/browser/components/ui/ の部品",
+  },
+  {
+    spelling: "包みの部品",
+    replacement: "ラッパー部品",
+    meaning: "外部の部品（Astryx など）を中で使い、tsukumo の props で呼べるようにした部品",
+  },
+  {
+    spelling: "包み部品",
+    replacement: "ラッパー部品",
+    meaning: "外部の部品（Astryx など）を中で使い、tsukumo の props で呼べるようにした部品",
+  },
+  {
+    spelling: "新しい包み",
+    replacement: "新しいラッパー部品",
+    meaning: "まだ src/browser/components/ui/ に無く、新しく足すラッパー部品",
+  },
+  {
+    spelling: "包みが無い",
+    replacement: "ラッパー部品が無い",
+    meaning:
+      "Astryx に部品はあるが、src/browser/components/ui/ にそれを使うラッパー部品がまだ無いこと",
+  },
+  {
+    spelling: "包みがある",
+    replacement: "ラッパー部品がある",
+    meaning: "src/browser/components/ui/ に、その Astryx の部品を使うラッパー部品がすでにあること",
+  },
+  {
+    spelling: "包みに寄せ",
+    replacement: "ラッパー部品に寄せ",
+    meaning:
+      "素の HTML 要素で組んだ箇所を、src/browser/components/ui/ のラッパー部品で書き直すこと",
+  },
+  {
     spelling: "傍注",
     replacement: "欄外注",
     meaning: "本文の横の余白の欄に添える、出典やどこを見るかを書いた短い注",

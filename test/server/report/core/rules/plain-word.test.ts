@@ -121,7 +121,14 @@ test("柱・包みは複合語の綴りで登録し、単独の綴りと別の�
       "並列のフェーズの包み",
       "包み関数",
       "包み hook",
+      "Astryx の包み",
+      "包みの部品",
+      "新しい包み",
+      "包みが無い",
     ]),
+  )
+  expect(PLAIN_WORDS.find((word) => word.spelling === "包みが無い")?.replacement).toBe(
+    "ラッパー部品が無い",
   )
   expect(PLAIN_WORDS.find((word) => word.spelling === "余白の柱")?.replacement).toBe("欄外注の列")
   expect(PLAIN_WORDS.find((word) => word.spelling === "包み hook")?.replacement).toBe(
