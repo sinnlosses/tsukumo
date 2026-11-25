@@ -196,6 +196,22 @@ describe("MainView（やり取りの列: やり取りと見出しの2段）", ()
     })
   })
 
+  it("帯でセッション側を開いたあと「やり取り」を押すと、切り替えだけの帯へ戻る", () => {
+    renderMainView([])
+    pressSessionTab()
+    const outline = screen.getByRole("navigation", { name: "やり取り" })
+    expect(outline.getAttribute("data-outline-collapsed")).toBe("false")
+
+    fireEvent.click(within(outline).getByRole("tab", { name: /やり取り/ }))
+
+    expect(outline.getAttribute("data-outline-collapsed")).toBe("true")
+    expect(
+      within(outline)
+        .getByRole("tab", { name: /やり取り/ })
+        .getAttribute("aria-selected"),
+    ).toBe("true")
+  })
+
   it("hello 待ちのあいだは、帯が出ない", () => {
     renderMainViewBeforeHello()
 

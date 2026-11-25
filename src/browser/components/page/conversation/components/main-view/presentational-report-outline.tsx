@@ -135,7 +135,7 @@ export function OutlineBand(props: {
         turnCount={props.turnCount}
         sessionCount={props.sessionCount}
         onSelectSide={props.onSelectSide}
-        turnsLocked={true}
+        turnsLocked={!open}
         toggle={
           open
             ? {
@@ -163,7 +163,7 @@ function OutlineHead(props: {
   readonly onSelectSide: (side: OutlineSide) => void
   /** 畳む口。帯には無い。 */
   readonly toggle?: { readonly collapsed: boolean; readonly onToggle: () => void }
-  /** 「やり取り」を押せないか（始め方の一覧を出している帯）。 */
+  /** 「やり取り」を押せないか（セッション側を開いていない帯）。 */
   readonly turnsLocked?: boolean
 }): ReactElement {
   const { toggle } = props
