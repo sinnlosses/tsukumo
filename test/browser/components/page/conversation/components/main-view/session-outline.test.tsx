@@ -29,7 +29,8 @@ afterEach(() => {
   localStorage.clear()
 })
 
-const HOUR_MS = 3_600_000
+const MINUTE_MS = 60_000
+const HOUR_MS = 60 * MINUTE_MS
 const DAY_MS = 24 * HOUR_MS
 
 function listed(sessionId: string, heading: string, ageMs: number, worktree = true): SessionChoice {
@@ -58,7 +59,7 @@ function renderOutline(spy: CommandSpy = () => {}): void {
       session: { kind: "identified", sessionId: checkedSessionId("fa000000-0000") },
       sessions: [
         listed("7b000000-0000", "架空の昨日の作業", DAY_MS),
-        listed(OCCUPIED_ID, "架空の使用中の作業", 2 * HOUR_MS),
+        listed(OCCUPIED_ID, "架空の使用中の作業", MINUTE_MS),
         listed("d4000000-0000", "架空の古い作業", 5 * DAY_MS),
         listed("e5000000-0000", "架空の別の作業ツリー", HOUR_MS, false),
       ],
