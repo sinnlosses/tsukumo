@@ -124,7 +124,7 @@ const accentTargetSchema = z.custom<AccentTarget>(
 )
 
 /**
- * 見た目と人格の編集12種の入力。書き込む先は `pack` で指す（使用中のパックに限らない）。
+ * 見た目と人格の編集13種の入力。書き込む先は `pack` で指す（使用中のパックに限らない）。
  * 手続きの名前がそのまま {@link CharacterEdit} の `kind` になる。
  */
 const characterEditInput = {

@@ -1,4 +1,4 @@
-// `character-pack` が受けるコマンドの表と口。見た目の編集12種と、作る・消すの2種と、作る前に欄を埋める生成。
+// `character-pack` が受けるコマンドの表と口。見た目の編集13種と、作る・消すの2種と、作る前に欄を埋める生成。
 // どれも駆動には渡らず、セッションも起こし直さない（書いて、`character-changed` を流し直すだけ）。
 
 import type { GeneratedCharacter } from "../../../shared/character-pack/generated-character.ts"

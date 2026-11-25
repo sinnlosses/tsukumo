@@ -95,8 +95,8 @@ characters/<name>/
   （素材を配るのと同じ `findCharacterPack` の規則。使用中のパックで置き換えた一覧）。名前から
   ディレクトリを組み立てない。無いパック・起動先の `characters/local` と同じ名前のパック
   （`isEditableCharacterPack` が false）は書かず、理由を分けない定型文の `REFUSED` を返す
-- **画面から書けるもの**は、見た目と人格の編集12種（表情ごとの立ち絵・画面の差し色・名前と
-  自己紹介文・背景・顔・ミニ立ち絵・ペルソナ〔`setPersona`〕）と、作る・消す。**人格は `persona.md` の
+- **画面から書けるもの**は、見た目と人格の編集13種（表情ごとの立ち絵・画面の差し色・名前と
+  自己紹介文・表情の名前〔`setExpressionLabels`。`expressions` の値〕・背景・顔・ミニ立ち絵・ペルソナ〔`setPersona`〕）と、作る・消す。**人格は `persona.md` の
   `## 覚えたこと` の節より前だけ**で、節は受け取らず、書く瞬間のファイルの節をそのまま末尾へ付け直す
   （編集中に雑談が覚えた行を消さない。節の見出しと分け方は `src/shared/character-pack/persona-section.ts` の1か所）。
   `persona.md` が無いパックでも、書けば作る。上限は 8000 文字。効くのは次に起こすセッションから。
