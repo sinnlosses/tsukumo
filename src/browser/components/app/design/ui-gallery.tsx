@@ -7,6 +7,7 @@ import { Button } from "../../ui/button/button.tsx"
 import { ClickableCard } from "../../ui/clickable-card/clickable-card.tsx"
 import { CodeBlock } from "../../ui/code-block/code-block.tsx"
 import { Collapsible } from "../../ui/collapsible/collapsible.tsx"
+import { CopyIconButton } from "../../ui/copy-icon-button/copy-icon-button.tsx"
 import { Disclosure } from "../../ui/disclosure/disclosure.tsx"
 import { Divider } from "../../ui/divider/divider.tsx"
 import { ExpandButton } from "../../ui/expand-button/expand-button.tsx"
@@ -188,6 +189,9 @@ export function UiGallery(): ReactElement {
         <SmallIconButton label="コピーした" tooltip="コピー" onClick={() => {}}>
           <CheckIcon />
         </SmallIconButton>
+      </Group>
+      <Group title="CopyIconButton（文を写す）" parts={["copy-icon-button"]}>
+        <CopyIconButton text="写す文" />
       </Group>
       <Group title="Heading・Text（字の段）" parts={["heading", "text"]}>
         <Heading level={3} size="heading" tone="ink" weight="bold" className="">
