@@ -17,10 +17,16 @@
     "bored": "たいくつ"
   },
   "face": "face.svg",
+  "mini": "mini.svg",
   "portraits": {
     "default": "default.svg",
     "thinking": "thinking.svg",
     "proud": "proud.svg",
-    "flustered": "flustered.svg"
+    "flustered": "flustered.svg",
+    "serious": "serious.svg",
+    "curious": "curious.svg",
+    "sad": "sad.svg",
+    "excited": "excited.svg",
+    "bored": "bored.svg"
   }
 }

@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 260" width="200" height="260" role="img" aria-label="つくもの精霊（そわそわ）">
+  <defs>
+    <radialGradient id="body" cx="50%" cy="35%" r="70%">
+      <stop offset="0%" stop-color="#fdfdff"/>
+      <stop offset="100%" stop-color="#b8c7ff"/>
+    </radialGradient>
+  </defs>
+  <ellipse cx="100" cy="238" rx="46" ry="9" fill="#000" opacity="0.10"/>
+  <g>
+    <animateTransform attributeName="transform" type="translate" values="0,0; 0,-6; 0,0" dur="0.8s" repeatCount="indefinite"/>
+    <path d="M100 34c40 0 66 30 66 74v52c0 10-8 14-15 9l-13-9c-5-4-11-4-16 0l-9 7c-5 4-11 4-16 0l-9-7c-5-4-11-4-16 0l-13 9c-7 5-15 1-15-9v-52c0-44 26-74 66-74z" fill="url(#body)" stroke="#4a5578" stroke-width="3"/>
+    <circle cx="78" cy="104" r="10" fill="#2b3352"/>
+    <circle cx="122" cy="104" r="10" fill="#2b3352"/>
+    <path d="M81 96l1.6 3.6 3.6 1.6-3.6 1.6-1.6 3.6-1.6-3.6-3.6-1.6 3.6-1.6z" fill="#fff"/>
+    <path d="M125 96l1.6 3.6 3.6 1.6-3.6 1.6-1.6 3.6-1.6-3.6-3.6-1.6 3.6-1.6z" fill="#fff"/>
+    <circle cx="74" cy="109" r="1.6" fill="#fff"/>
+    <circle cx="118" cy="109" r="1.6" fill="#fff"/>
+    <path d="M89 123h22q0 15-11 15t-11-15z" fill="#2b3352"/>
+    <path d="M94 133q6-4 12 0q-2 5-6 5t-6-5z" fill="#ff8fa8"/>
+    <ellipse cx="60" cy="121" rx="9" ry="6" fill="#ff9db5" opacity="0.75"/>
+    <ellipse cx="140" cy="121" rx="9" ry="6" fill="#ff9db5" opacity="0.75"/>
+    <rect x="94" y="52" width="12" height="20" rx="2" fill="#7c8ff0"/>
+  </g>
+  <g stroke="#ffc94d" stroke-width="3" stroke-linecap="round">
+    <path d="M24 86l10 5M20 104h11M24 122l10-5"/>
+    <path d="M176 86l-10 5M180 104h-11M176 122l-10-5"/>
+  </g>
+</svg>
