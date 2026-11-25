@@ -44,7 +44,7 @@
   --state-ng: #ef6b6b;
   --state-info: #9cc1ee;
   --state-ask: #c7aef0;
-  --state-memo: var(--ink);
+  --state-memo: #e2cc98;
 
   /* コードの差分の地。足した側は強調の1色（chart-series-1）、消した側は灰で、状態の色は使わない。固定の値で、color-mix で作らない。 */
   --code-diff-line-added: #2f3648;
