@@ -134,6 +134,30 @@ describe("RunSettingGroup（知らない許可モード）", () => {
   })
 })
 
+describe("RunSettingGroup（見届ける前の許可モード）", () => {
+  it("受け付けた印があれば、init の値を待たずに印の値を口の名前にする", () => {
+    putSession({
+      ...INITIAL_SESSION_STATE,
+      session: {
+        kind: "running",
+        sessionId: checkedSessionId("s-fixture"),
+        permissionMode: "auto",
+      },
+      settingMarks: marksWith({
+        permissionMode: {
+          kind: "accepted",
+          value: "plan",
+          at: nowEpochMilliseconds(),
+          from: { kind: "known", value: "auto" },
+        },
+      }),
+    })
+    render(<RunSettingGroup placement="nav-drawer" />)
+
+    expect(screen.getByRole("combobox", { name: /^許可モード プラン/u })).toBeTruthy()
+  })
+})
+
 describe("RunSettingGroup（口の右肩の点）", () => {
   it("印が無ければ点を出さない", () => {
     putSession(stateWithMarks(marksWith({})))

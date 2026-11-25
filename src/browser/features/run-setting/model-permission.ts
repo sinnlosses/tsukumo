@@ -9,6 +9,7 @@ import {
   isEffortLevel,
   isModelAlias,
   isPermissionMode,
+  type PermissionMode,
 } from "../../../shared/session/run-setting-value.ts"
 import type { ModelEffortSupport } from "../../../shared/session/session-event-setting.ts"
 import type { ReportedPermissionMode } from "../../../shared/session/session-info.ts"
@@ -54,12 +55,16 @@ export function useModelPermission(): ModelPermissionControl {
   // 同梱の既定に倒すと、歯車で Sonnet にして起こし直した直後の帯だけが Opus を名乗る。
   const sessionDefault = useSession((session) => session.state.sessionDefault)
 
-  const shownPermissionMode = permissionMode ?? sessionDefault.permissionMode
+  const settingMarks = useSession((session) => session.state.settingMarks)
+  // 許可モードは `init` が次のターンまで届かないので、受け付けて見届ける前の値を先に出す（点が空洞のまま残る）。
+  const shownPermissionMode =
+    acceptedPermissionMode(settingMarks.permissionMode) ??
+    permissionMode ??
+    sessionDefault.permissionMode
   // effort の選べる段は「いま出しているモデル」で決まるので、model の畳み込みと同じ値を使う。
   const shownModel =
     model === undefined ? sessionDefault.model : resolveShownModel(model, modelEffortSupport)
 
-  const settingMarks = useSession((session) => session.state.settingMarks)
   const modelDot = useSettingDot(settingMarks.model)
   const effortDot = useSettingDot(settingMarks.effort)
   const permissionModeDot = useSettingDot(settingMarks.permissionMode)
@@ -89,6 +94,10 @@ export function useModelPermission(): ModelPermissionControl {
       }
     },
   }
+}
+
+function acceptedPermissionMode(mark: SettingMark): PermissionMode | undefined {
+  return mark.kind === "accepted" && isPermissionMode(mark.value) ? mark.value : undefined
 }
 
 /**

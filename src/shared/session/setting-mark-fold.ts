@@ -17,9 +17,22 @@ export function withAcceptedMark(
   origin: SettingOrigin,
   at: number,
 ): SessionState {
-  if (state.session.kind !== "running") {
-    return state
-  }
+  return state.session.kind === "running"
+    ? withUserAcceptedMark(state, setting, value, origin, at)
+    : state
+}
+
+/**
+ * 利用者の切り替えでしか流れない合図の印。`running` の前でも付ける。
+ * 続きから起こしたセッションは最初の送信まで `init` が届かないので、その間の切り替えも点で示す。
+ */
+export function withUserAcceptedMark(
+  state: SessionState,
+  setting: SettingName,
+  value: string,
+  origin: SettingOrigin,
+  at: number,
+): SessionState {
   const current = state.settingMarks[setting]
   const from = current.kind === "accepted" ? current.from : origin
   const reverted = from.kind === "known" && sameSettingValue(state, setting, from.value, value)

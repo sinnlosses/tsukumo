@@ -31,7 +31,7 @@ import {
 } from "./session-record-edit.ts"
 import { MAX_TOOL_TEXT_LENGTH } from "./session-record.ts"
 import type { SessionState } from "./session-state.ts"
-import { withAcceptedMark, withConfirmedMark } from "./setting-mark-fold.ts"
+import { withAcceptedMark, withConfirmedMark, withUserAcceptedMark } from "./setting-mark-fold.ts"
 import { originOf } from "./setting-mark.ts"
 import { finishTool, notifyBackgroundEnd } from "./tool-record.ts"
 import {
@@ -149,20 +149,20 @@ const SESSION_EVENT_FOLDS = {
       originOf(state.effort),
       at,
     ),
-  // 受け付けた値へ先回りで倒す（`init` は次のターンまで届かない）。効いたかは空洞の点が見届けるまで示す。
-  "permission-mode-changed": (state, event, at) => {
-    if (state.session.kind !== "running") {
-      return state
-    }
-    const marked = withAcceptedMark(
+  // 許可モードは次の `init` まで `session` の値が変わらないので、切り替える前に効いていた値が残っている。
+  // 画面は見届ける前の印の値を出す。
+  "permission-mode-changed": (state, event, at) =>
+    withUserAcceptedMark(
       state,
       "permissionMode",
       event.mode,
-      originOf(permissionModeValue(state.session.permissionMode)),
+      originOf(
+        state.session.kind === "running"
+          ? permissionModeValue(state.session.permissionMode)
+          : undefined,
+      ),
       at,
-    )
-    return { ...marked, session: { ...state.session, permissionMode: event.mode } }
-  },
+    ),
   "setting-confirmed": (state, event, at) =>
     withConfirmedMark(
       event.setting === "effort" ? { ...state, effort: event.value } : state,

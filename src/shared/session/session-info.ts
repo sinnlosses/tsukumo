@@ -26,8 +26,7 @@ export function permissionModeValue(mode: ReportedPermissionMode): string {
  * - `starting`: セッションがまだ起こったばかりで、`init` も `sessions-changed`（続きから始めたときの居場所）もまだ届いていない
  * - `identified`: `sessionId` だけ分かっている。続きから始めたときに `sessions-changed` が `init` より先に届く経路があるので実在する状態
  * - `running`: `sessionId` / `permissionMode` の両方が分かっている。
- *   `permissionMode` を最初に決める口は `init` だけで、その `init` は必ず `sessionId` も連れてくるので、`permissionMode` だけ分かっている状態は実在しない。
- *   `running` の中では切り替えの受け付け（`permission-mode-changed`）でも先回りで書き換わるが、効いたのを確かめる合図は次の `init` だけ
+ *   `permissionMode` を決める口は `init` だけ（`session.setPermissionMode` の受け付けは `SessionState.settingMarks` の印に残す）で、その `init` は必ず `sessionId` も連れてくるので、`permissionMode` だけ分かっている状態は実在しない
  *
  * `model` はここに入れない（`SessionState.model` に外へ出してある）。
  * `model` は `init` に加えて `model-changed` でも決まり、`sessionId` より先に分かることがある（`init` が来る前の `identified`/`starting` の間にモデルを切り替える経路が実機にある）。
