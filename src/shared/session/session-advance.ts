@@ -149,19 +149,20 @@ const SESSION_EVENT_FOLDS = {
       originOf(state.effort),
       at,
     ),
-  // 許可モードは次の `init` まで `session` の値が変わらないので、切り替える前に効いていた値が残っている。
-  "permission-mode-changed": (state, event, at) =>
-    withAcceptedMark(
+  // 受け付けた値へ先回りで倒す（`init` は次のターンまで届かない）。効いたかは空洞の点が見届けるまで示す。
+  "permission-mode-changed": (state, event, at) => {
+    if (state.session.kind !== "running") {
+      return state
+    }
+    const marked = withAcceptedMark(
       state,
       "permissionMode",
       event.mode,
-      originOf(
-        state.session.kind === "running"
-          ? permissionModeValue(state.session.permissionMode)
-          : undefined,
-      ),
+      originOf(permissionModeValue(state.session.permissionMode)),
       at,
-    ),
+    )
+    return { ...marked, session: { ...state.session, permissionMode: event.mode } }
+  },
   "setting-confirmed": (state, event, at) =>
     withConfirmedMark(
       event.setting === "effort" ? { ...state, effort: event.value } : state,

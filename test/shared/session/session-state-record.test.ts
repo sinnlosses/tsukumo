@@ -371,6 +371,13 @@ describe("設定の点の元（settingMarks）", () => {
     })
   })
 
+  it("許可モードの受け付けは、次の init を待たずに表示の値を受け付けた値へ倒し、印は見届けるまで accepted のまま", () => {
+    const state = apply(RUNNING, { kind: "permission-mode-changed", mode: "plan" })
+
+    expect(state.session).toMatchObject({ kind: "running", permissionMode: "plan" })
+    expect(state.settingMarks.permissionMode.kind).toBe("accepted")
+  })
+
   it("見届ける前に切り替える前の値へ戻すと、印が消える（別の値への付け直しでは最初の値を覚えている）", () => {
     const reverted = apply(
       RUNNING,

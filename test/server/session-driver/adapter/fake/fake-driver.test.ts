@@ -160,7 +160,7 @@ describe("startFakeSession", () => {
     driver.close()
 
     const infos = sink.events.filter((event) => event.kind === "session-info")
-    expect(infos).toHaveLength(3)
+    expect(infos).toHaveLength(2)
     for (const info of infos) {
       expect(info).toMatchObject({
         skillNames: ["架空のスキル"],

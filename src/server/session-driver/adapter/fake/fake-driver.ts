@@ -256,9 +256,9 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
       options.onEvent({ kind: "effort-changed", effort })
       return Promise.resolve()
     },
+    // 本物と同じく受け付けの合図だけを流す（`init` に当たる `session-info` は次のターンの頭で流れる）。
     setPermissionMode: (mode) => {
       permissionMode = mode
-      emit({ kind: "session-info", ...sessionInfo(), ...names })
       options.onEvent({ kind: "permission-mode-changed", mode })
       return Promise.resolve()
     },
