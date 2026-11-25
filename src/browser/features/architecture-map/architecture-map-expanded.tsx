@@ -1,6 +1,6 @@
 // 中央の列に広げた地図。会話の流れの上に重なり、入力欄と声の帯は隠さない。
 // 箱を押すと、子を持つ箱は潜り（その箱も選ぶ）、子を持たない箱は選ぶだけ。
-// 拡大・縮小は「+」「−」とキー（面にフォーカスがあるとき）、移動は地のドラッグ。ホイールでは動かさない。
+// 拡大・縮小は「+」「−」とキー（面にフォーカスがあるとき）とピンチ、移動は地のドラッグと2本指のスクロール。
 
 import {
   type KeyboardEvent,
@@ -26,9 +26,12 @@ import {
   movedViewport,
   type Size,
   type Viewport,
+  zoomedAround,
   zoomedViewport,
 } from "./architecture-map-viewport.ts"
 import { useArchitectureMapOverview } from "./use-architecture-map.ts"
+import { useBlockingWheel } from "./use-blocking-wheel.ts"
+import { useStageGesture } from "./use-stage-gesture.ts"
 
 const QUESTION = {
   1: "このリポジトリは何で、どんな部分からできていて、外と何をやり取りするか",
@@ -37,6 +40,9 @@ const QUESTION = {
 } as const satisfies Record<MapView["level"], string>
 
 const NO_FRAME: Size = { width: 0, height: 0 }
+
+/** ピンチの wheel の deltaY を倍率の係数へ直す割り。小さいほど指に敏感に追従する。 */
+const PINCH_DIVISOR = 100
 
 /** 「この箱について聞く」の欄を置く、面の座標。選んだ箱が今の図に無いときは欄を出さない。 */
 type AskPosition =
@@ -69,7 +75,7 @@ function Expanded(props: { readonly overview: MapReady }): ReactElement {
   const [seenSelected, setSeenSelected] = useState(selected)
   const [frame, setFrame] = useState<Size>(NO_FRAME)
   const [adjustment, setAdjustment] = useState<Adjustment>({})
-  const drag = useRef({ active: false, x: 0, y: 0 })
+  const pointers = useRef(new Map<number, Point>())
   // 開いたときだけ面にフォーカスを置く（キー `+`・`-`・⎋ は面の中でだけ効かせる）
   const dialogRef = useRef<HTMLDivElement>(null)
   useMountEffect(() => {
@@ -106,6 +112,31 @@ function Expanded(props: { readonly overview: MapReady }): ReactElement {
     () => undefined,
   )
 
+  const stageRef = useRef<HTMLDivElement | null>(null)
+  const observeStage = (element: HTMLDivElement | null) => {
+    stageRef.current = element
+    return frameRef(element)
+  }
+  // イベントの合間に描画が挟まらなくても古い値を掴まないよう、更新は直前の値から重ねる
+  const adjust = (change: (from: Viewport) => Viewport) => {
+    setAdjustment((previous) => ({
+      viewport: change(litSwitch ? viewport : (previous.viewport ?? viewport)),
+    }))
+  }
+  const pinchAt = (factor: number, clientX: number, clientY: number) => {
+    const anchor = anchorOf(stageRef.current, clientX, clientY)
+    adjust((from) => zoomedAround(from, factor, anchor, content, frame))
+  }
+  useBlockingWheel(stageRef, (event) => {
+    event.preventDefault()
+    if (event.ctrlKey) {
+      pinchAt(Math.exp(-event.deltaY / PINCH_DIVISOR), event.clientX, event.clientY)
+    } else {
+      adjust((from) => movedViewport(from, -event.deltaX, -event.deltaY))
+    }
+  })
+  useStageGesture(stageRef, pinchAt)
+
   const goTo = (next: readonly Step[]) => {
     setTrail(next)
     setAdjustment({})
@@ -139,21 +170,42 @@ function Expanded(props: { readonly overview: MapReady }): ReactElement {
     }
   }
   const onPointerDown = (event: PointerEvent<HTMLDivElement>) => {
-    drag.current = { active: true, x: event.clientX, y: event.clientY }
+    pointers.current.set(event.pointerId, { x: event.clientX, y: event.clientY })
     event.currentTarget.setPointerCapture(event.pointerId)
   }
+  // 1つなら今までどおりのドラッグ。2つあるあいだは、距離の比で拡大・縮小し、中点の動きで移動する
   const onPointerMove = (event: PointerEvent<HTMLDivElement>) => {
-    const from = drag.current
-    if (!from.active) {
+    const before = pointers.current.get(event.pointerId)
+    if (before === undefined) {
       return
     }
-    drag.current = { active: true, x: event.clientX, y: event.clientY }
-    setAdjustment({
-      viewport: movedViewport(viewport, event.clientX - from.x, event.clientY - from.y),
-    })
+    const after = { x: event.clientX, y: event.clientY }
+    pointers.current.set(event.pointerId, after)
+    const other = [...pointers.current].find(([id]) => id !== event.pointerId)?.[1]
+    if (other === undefined) {
+      adjust((from) => movedViewport(from, after.x - before.x, after.y - before.y))
+      return
+    }
+    const beforeGap = distanceOf(before, other)
+    const factor = beforeGap > 0 ? distanceOf(after, other) / beforeGap : 1
+    const beforeMid = midpointOf(before, other)
+    const afterMid = midpointOf(after, other)
+    adjust((from) =>
+      movedViewport(
+        zoomedAround(
+          from,
+          factor,
+          anchorOf(stageRef.current, beforeMid.x, beforeMid.y),
+          content,
+          frame,
+        ),
+        afterMid.x - beforeMid.x,
+        afterMid.y - beforeMid.y,
+      ),
+    )
   }
-  const onPointerEnd = () => {
-    drag.current = { active: false, x: 0, y: 0 }
+  const onPointerEnd = (event: PointerEvent<HTMLDivElement>) => {
+    pointers.current.delete(event.pointerId)
   }
 
   return (
@@ -209,7 +261,7 @@ function Expanded(props: { readonly overview: MapReady }): ReactElement {
         </div>
       </div>
       <div
-        ref={frameRef}
+        ref={observeStage}
         className={styles["expanded-stage"]}
         data-testid="architecture-map-stage"
         onPointerDown={onPointerDown}
@@ -281,6 +333,22 @@ function ControlButton(props: {
       {props.children}
     </Button>
   )
+}
+
+type Point = { readonly x: number; readonly y: number }
+
+function distanceOf(a: Point, b: Point): number {
+  return Math.hypot(a.x - b.x, a.y - b.y)
+}
+
+function midpointOf(a: Point, b: Point): Point {
+  return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }
+}
+
+/** 画面上の点を、ステージの左上からの点にする。 */
+function anchorOf(stage: HTMLElement | null, clientX: number, clientY: number): Point {
+  const rect = stage?.getBoundingClientRect()
+  return { x: clientX - (rect?.left ?? 0), y: clientY - (rect?.top ?? 0) }
 }
 
 /** 箱が図の箱か、図の焦点（潜った箱）か。 */

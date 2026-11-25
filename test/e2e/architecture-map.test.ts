@@ -38,6 +38,24 @@ test.describe("アーキテクチャの地図", () => {
     await surface.getByRole("button", { name: "拡大" }).click()
     await expect.poll(scaleOf).toBeGreaterThan(before)
 
+    // トラックパッドのピンチ（ctrlKey 付きの wheel）は地図だけを拡大し、ブラウザのページ拡大へは渡さない
+    const beforePinch = await scaleOf()
+    const pinchHandled = await surface.getByTestId("architecture-map-stage").evaluate((element) => {
+      const rect = element.getBoundingClientRect()
+      return !element.dispatchEvent(
+        new WheelEvent("wheel", {
+          deltaY: -20,
+          ctrlKey: true,
+          clientX: rect.left + rect.width / 2,
+          clientY: rect.top + rect.height / 2,
+          bubbles: true,
+          cancelable: true,
+        }),
+      )
+    })
+    expect(pinchHandled).toBe(true)
+    await expect.poll(scaleOf).toBeGreaterThan(beforePinch)
+
     const transformBefore = await content.evaluate((element) => element.style.transform)
     const stage = await surface.getByTestId("architecture-map-stage").boundingBox()
     if (stage === null) {

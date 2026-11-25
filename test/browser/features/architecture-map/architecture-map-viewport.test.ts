@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest"
 import {
   fitViewport,
   movedViewport,
+  zoomedAround,
   zoomedViewport,
 } from "../../../../src/browser/features/architecture-map/architecture-map-viewport.ts"
 
@@ -53,6 +54,28 @@ describe("architecture-map-viewport", () => {
 
     expect(pointAtCenter(zoomed)[0]).toBeCloseTo(pointAtCenter(start)[0] ?? 0)
     expect(pointAtCenter(zoomed)[1]).toBeCloseTo(pointAtCenter(start)[1] ?? 0)
+  })
+
+  it("点を中心に拡大・縮小すると、その点の下の図の位置は動かない", () => {
+    const start = movedViewport(fitViewport(CONTENT, FRAME), 30, -10)
+    const anchor = { x: 120, y: 90 }
+    const under = (v: typeof start) => [(anchor.x - v.x) / v.scale, (anchor.y - v.y) / v.scale]
+
+    for (const factor of [1.7, 0.6]) {
+      const zoomed = zoomedAround(start, factor, anchor, CONTENT, FRAME)
+
+      expect(zoomed.scale).toBeCloseTo(start.scale * factor)
+      expect(under(zoomed)[0]).toBeCloseTo(under(start)[0] ?? 0)
+      expect(under(zoomed)[1]).toBeCloseTo(under(start)[1] ?? 0)
+    }
+  })
+
+  it("点を中心にしても、倍率は上限の 2 と下限で止まる", () => {
+    const start = fitViewport(CONTENT, FRAME)
+    const anchor = { x: 120, y: 90 }
+
+    expect(zoomedAround(start, 100, anchor, CONTENT, FRAME).scale).toBe(2)
+    expect(zoomedAround(start, 0.001, anchor, CONTENT, FRAME).scale).toBe(0.25)
   })
 
   it("全体の倍率へ戻すには fitViewport を引き直す（動かした位置は捨てる）", () => {

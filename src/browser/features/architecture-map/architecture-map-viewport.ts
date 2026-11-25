@@ -25,16 +25,25 @@ export function zoomedViewport(
   content: Size,
   frame: Size,
 ): Viewport {
+  const factor = direction === "in" ? ZOOM_STEP : 1 / ZOOM_STEP
+  return zoomedAround(viewport, factor, { x: frame.width / 2, y: frame.height / 2 }, content, frame)
+}
+
+/** 枠の左上からの点 `anchor` の下の図の位置を動かさず、倍率を `factor` 倍にする。上限と下限で止まる。 */
+export function zoomedAround(
+  viewport: Viewport,
+  factor: number,
+  anchor: { readonly x: number; readonly y: number },
+  content: Size,
+  frame: Size,
+): Viewport {
   const fit = fitScale(content, frame)
-  const target = direction === "in" ? viewport.scale * ZOOM_STEP : viewport.scale / ZOOM_STEP
-  const scale = Math.min(MAX_SCALE, Math.max(Math.min(fit, MIN_SCALE_CAP), target))
+  const scale = Math.min(MAX_SCALE, Math.max(Math.min(fit, MIN_SCALE_CAP), viewport.scale * factor))
   const ratio = scale / viewport.scale
-  const centerX = frame.width / 2
-  const centerY = frame.height / 2
   return {
     scale,
-    x: centerX - (centerX - viewport.x) * ratio,
-    y: centerY - (centerY - viewport.y) * ratio,
+    x: anchor.x - (anchor.x - viewport.x) * ratio,
+    y: anchor.y - (anchor.y - viewport.y) * ratio,
   }
 }
 
