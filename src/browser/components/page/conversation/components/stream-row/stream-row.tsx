@@ -10,6 +10,7 @@ import type { KeyboardEvent, ReactElement, ReactNode } from "react"
 
 import { MapMarkText } from "../../../../../features/architecture-map/map-box-mark.tsx"
 import { isOverlayOpen } from "../../../../../hooks/open-overlay.ts"
+import { CopyIconButton } from "../../../../ui/copy-icon-button/copy-icon-button.tsx"
 import { Surface } from "../../../../ui/surface/surface.tsx"
 import { TypingDots } from "../../../../ui/typing-dot-list/typing-dot-list.tsx"
 import { VisuallyHidden } from "../../../../ui/visually-hidden/visually-hidden.tsx"
@@ -68,10 +69,15 @@ type StreamPostRowProps = {
   readonly speakerName: string
   /** 吹き出しに重ねる class。 */
   readonly className: string
+  /** 時刻の脇のコピーで写す文。渡さなければコピーを出さない。 */
+  readonly copyText?: string
   readonly children: ReactNode
 }
 
-/** 右寄せの利用者の投稿1件と、その脇の時刻。押せない（遡る先の表情を持たない）。 */
+/**
+ * 右寄せの利用者の投稿1件と、その脇の時刻とコピー。押せない（遡る先の表情を持たない）。
+ * コピーは行に触れているか行の中にフォーカスがあるあいだだけ見せ、触れられない端末では常に見せる。
+ */
 export function StreamPostRow(props: StreamPostRowProps): ReactElement {
   return (
     <div className={clsx(styles["stream-row"], styles["stream-row-user"])}>
@@ -85,6 +91,11 @@ export function StreamPostRow(props: StreamPostRowProps): ReactElement {
         </EntryFace>
       </div>
       <StreamTime time={props.time} />
+      {props.copyText !== undefined && (
+        <span className={styles["stream-post-copy"]}>
+          <CopyIconButton text={props.copyText} />
+        </span>
+      )}
     </div>
   )
 }

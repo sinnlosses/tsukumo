@@ -697,6 +697,34 @@
                                   "children": [
                                     "10:00"
                                   ]
+                                },
+                                {
+                                  "tag": "button",
+                                  "attributes": {
+                                    "data-variant": "ghost",
+                                    "data-size": "sm",
+                                    "data-elevation": "none",
+                                    "data-astryx-pressable": "",
+                                    "aria-label": "コピー",
+                                    "data-astryx-edge-comp": "",
+                                    "type": "button"
+                                  },
+                                  "children": [
+                                    {
+                                      "tag": "svg",
+                                      "attributes": {
+                                        "data-size": "sm",
+                                        "data-color": "inherit"
+                                      }
+                                    },
+                                    {
+                                      "tag": "span",
+                                      "attributes": {
+                                        "role": "status",
+                                        "aria-live": "polite"
+                                      }
+                                    }
+                                  ]
                                 }
                               ]
                             },

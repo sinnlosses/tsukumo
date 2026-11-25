@@ -73,7 +73,13 @@ export function ChatLog({
                 // 利用者の発言は押せない（遡る先の表情を持たないので、押しても何も起きない）。
                 // 添えた画像の控えは吹き出しの中に並ぶ（控えだけは押すと拡大する）。
                 return (
-                  <StreamPostRow key={row.key} time={row.time} speakerName="" className="">
+                  <StreamPostRow
+                    key={row.key}
+                    time={row.time}
+                    speakerName=""
+                    className=""
+                    copyText={row.text}
+                  >
                     {row.text}
                     <PromptImageThumbnails images={row.images} />
                   </StreamPostRow>

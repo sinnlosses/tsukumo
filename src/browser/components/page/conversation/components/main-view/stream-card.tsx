@@ -36,11 +36,13 @@ export function PostRow(props: PostRowProps): ReactElement {
   const aside = row.record.kind === "aside" ? splitMapBoxMention(row.record.text) : undefined
   const asideBadge = aside?.badge
   const asideText = aside?.rest
+  const copyText = row.record.kind === "aside" ? row.record.text : turn.request?.text
   return (
     <StreamPostRow
       time={clockOf(row.at)}
       speakerName={USER_SPEAKER_NAME}
       className={styles["stream-post"] ?? ""}
+      {...(copyText === undefined ? {} : { copyText })}
     >
       {row.record.kind === "aside" ? (
         <>

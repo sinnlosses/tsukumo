@@ -228,3 +228,22 @@
   font-size: var(--font-secondary);
   line-height: var(--line-height-body);
 }
+/* 投稿の時刻の脇のコピー。隠すあいだも場所は取ったままにして、触れたときに吹き出しを動かさない。
+   地は時刻と同じ `ground` 一色（背景の絵の上に絵が直に乗らないように）。 */
+.stream-post-copy {
+  display: inline-flex;
+  flex-shrink: 0;
+  border-radius: var(--radius-md);
+  background: var(--ground);
+  opacity: 0;
+  transition: opacity var(--motion-fast) ease-out;
+}
+.stream-row-user:hover .stream-post-copy,
+.stream-row-user:focus-within .stream-post-copy {
+  opacity: 1;
+}
+@media (hover: none) {
+  .stream-post-copy {
+    opacity: 1;
+  }
+}
