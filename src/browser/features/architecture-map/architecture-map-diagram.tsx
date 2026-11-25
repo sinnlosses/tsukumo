@@ -80,8 +80,8 @@ export function ArchitectureMapDiagram(props: {
       {...sizeProps}
     >
       <defs>
-        <ArrowHead id={arrows.normal} size={mini ? 5 : 7} className={styles["arrow-head"]} />
-        <ArrowHead id={arrows.ng} size={mini ? 5 : 7} className={styles["arrow-head-ng"]} />
+        <ArrowHead id={arrows.normal} size={mini ? 6 : 7} className={styles["arrow-head"]} />
+        <ArrowHead id={arrows.ng} size={mini ? 6 : 7} className={styles["arrow-head-ng"]} />
       </defs>
       {lanes !== undefined &&
         lanes.rects

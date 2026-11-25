@@ -127,7 +127,7 @@ describe("ArchitectureMapDiagram", () => {
       [...(container.querySelector("[data-box='o']")?.querySelectorAll("tspan") ?? [])].map(
         (line) => line.textContent,
       ),
-    ).toEqual(["キャラク", "ターパック"])
+    ).toEqual(["キャラクター", "パック"])
   })
 
   describe("フォーカスした図", () => {

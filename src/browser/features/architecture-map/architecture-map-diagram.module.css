@@ -125,7 +125,7 @@
   stroke-width: 1.4;
 }
 .diagram-mini .edge {
-  stroke-width: 1;
+  stroke-width: 1.25;
 }
 .edge-intended {
   stroke-dasharray: 5 4;

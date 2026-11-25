@@ -65,11 +65,11 @@ describe("mapGeometryOf", () => {
     const server = geometry.rects.get("server")
     const shared = geometry.rects.get("shared")
 
-    expect(browser).toMatchObject({ x: 4, y: 4, width: 66 })
-    expect(server).toMatchObject({ x: 76, y: 4, width: 66 })
-    expect(shared).toMatchObject({ x: 4, width: 138 })
-    expect(shared?.y).toBeCloseTo((browser?.y ?? 0) + (browser?.height ?? 0) + 6)
-    expect(geometry.width).toBe(238)
+    expect(browser).toMatchObject({ x: 4, y: 4, width: 62 })
+    expect(server).toMatchObject({ x: 82, y: 4, width: 62 })
+    expect(shared).toMatchObject({ x: 4, width: 140 })
+    expect(shared?.y).toBeCloseTo((browser?.y ?? 0) + (browser?.height ?? 0) + 16)
+    expect(geometry.width).toBe(244)
   })
 
   it("外部の列は列の行と帯の行を縦に通し、中の箱は定義の順に上から並ぶ", () => {
@@ -80,11 +80,11 @@ describe("mapGeometryOf", () => {
     const middle = geometry.rects.get("tsukumo-plugins")
     const bottom = geometry.rects.get("character-pack")
 
-    expect(external).toMatchObject({ x: 148, y: 4, width: 86, solo: false })
+    expect(external).toMatchObject({ x: 160, y: 4, width: 80, solo: false })
     expect((external?.y ?? 0) + (external?.height ?? 0)).toBeCloseTo(
       (shared?.y ?? 0) + (shared?.height ?? 0),
     )
-    expect(top).toMatchObject({ x: 153, y: 20, width: 76 })
+    expect(top).toMatchObject({ x: 165, y: 19, width: 70 })
     expect(middle?.y).toBeGreaterThan((top?.y ?? 0) + (top?.height ?? 0))
     expect(bottom?.y).toBeGreaterThan((middle?.y ?? 0) + (middle?.height ?? 0))
     expect((bottom?.y ?? 0) + (bottom?.height ?? 0)).toBeLessThanOrEqual(
@@ -96,8 +96,8 @@ describe("mapGeometryOf", () => {
     const titles = mapGeometryOf(TSUKUMO_LIKE, "mini").lanes?.titles
 
     expect(titles?.get("tsukumo-plugins")?.lines).toEqual(["tsukumo-", "plugins"])
-    expect(titles?.get("character-pack")?.lines).toEqual(["キャラク", "ターパック"])
-    expect(titles?.get("claude-code")?.lines).toEqual(["Claude", "Code"])
+    expect(titles?.get("character-pack")?.lines).toEqual(["キャラクター", "パック"])
+    expect(titles?.get("claude-code")?.lines).toEqual(["Claude Code"])
     expect(titles?.get("browser")).toMatchObject({ lines: ["ブラウザ"], solo: true })
   })
 
@@ -112,8 +112,8 @@ describe("mapGeometryOf", () => {
   it("2行に収まらないときだけ末尾を「…」で切る", () => {
     const view = viewOf(
       [
-        box("fits", "あいうえおかきくけこ", { external: true, lane: "external" }),
-        box("over", "あいうえおかきくけこさ", { external: true, lane: "external" }),
+        box("fits", "あいうえおかきくけこさし", { external: true, lane: "external" }),
+        box("over", "あいうえおかきくけこさしす", { external: true, lane: "external" }),
         box("server", "サーバ", { lane: "server" }),
       ],
       [
@@ -124,8 +124,8 @@ describe("mapGeometryOf", () => {
 
     const titles = mapGeometryOf(view, "mini").lanes?.titles
 
-    expect(titles?.get("fits")?.lines).toEqual(["あいうえお", "かきくけこ"])
-    expect(titles?.get("over")?.lines).toEqual(["あいうえお", "かきくけ…"])
+    expect(titles?.get("fits")?.lines).toEqual(["あいうえおか", "きくけこさし"])
+    expect(titles?.get("over")?.lines).toEqual(["あいうえおか", "きくけこさ…"])
   })
 
   describe("区画のある地図のフォーカスした図", () => {
