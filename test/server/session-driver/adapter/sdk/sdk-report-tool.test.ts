@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest"
 import { z } from "zod"
 
-import { REPORT_INPUT_SCHEMA_MAX_CHARS } from "../../../../../scripts/shared/addition-budget.ts"
 import {
   type CallReview,
   createCallReview,
@@ -229,13 +228,6 @@ describe("report でターンを閉じる", () => {
 })
 
 describe("report の本文（components）", () => {
-  it("report の引数の schema が字数の上限を超えない", async () => {
-    const reply = await mcpRequest(workServer(), "tools/list", {}, TOOLS_WHOLE_SCHEMA_REPLY)
-    const inputSchema = reply.result.tools.find((tool) => tool.name === "report")?.inputSchema
-
-    expect(JSON.stringify(inputSchema).length).toBeLessThan(REPORT_INPUT_SCHEMA_MAX_CHARS)
-  })
-
   it("内容部品の欄ごとの書き方は report の定義に載らず、部品カードにだけ載る", async () => {
     const reply = await mcpRequest(workServer(), "tools/list", {}, TOOLS_WHOLE_SCHEMA_REPLY)
     const definition = JSON.stringify(

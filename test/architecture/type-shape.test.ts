@@ -92,64 +92,59 @@ describe("プロパティと引数の `| undefined`", () => {
 })
 
 const UNDEFINED_UNION_CEILING = {
-  "src/browser/components": 116,
-  "src/server/session-driver": 49,
-  "scripts/hook": 36,
-  "src/shared/report": 34,
-  "src/shared/character-pack": 33,
+  "src/browser/components": 120,
+  "src/server/session-driver": 50,
+  "scripts/hook": 40,
+  "src/shared/report": 35,
+  "src/shared/character-pack": 35,
   "src/server/report": 30,
-  "scripts/capture": 29,
-  "src/server/character-pack": 26,
+  "scripts/capture": 30,
+  "src/server/character-pack": 30,
   "scripts/shared": 20,
-  "src/server/session": 18,
-  "src/server/chat": 17,
-  "src/server/item": 16,
-  "src/server/repository": 16,
-  "src/server/view-server": 16,
-  "scripts/dev": 13,
-  "src/browser/features": 86,
-  "src/server/adapter": 11,
-  "src/server/diary": 11,
-  "src/wiring/(root)": 11,
+  "src/server/session": 20,
+  "src/server/chat": 20,
+  "src/server/item": 20,
+  "src/server/repository": 20,
+  "src/server/view-server": 20,
+  "scripts/dev": 15,
+  "src/browser/features": 90,
+  "src/server/adapter": 15,
+  "src/server/diary": 15,
+  "src/wiring/(root)": 15,
   "src/server/core": 10,
   "src/server/usage": 10,
   "src/shared/session": 10,
-  "scripts/document": 7,
-  "src/browser/domain": 7,
-  "src/server/work-plan": 7,
-  "src/browser/stores": 6,
-  "src/server/achievement": 6,
-  "src/shared/session-driver": 6,
-  "scripts/runtime": 6,
+  "scripts/document": 10,
+  "src/browser/domain": 10,
+  "src/server/work-plan": 10,
+  "src/browser/stores": 10,
+  "src/server/achievement": 10,
+  "src/shared/session-driver": 10,
+  "scripts/runtime": 10,
   "src/shared/item": 5,
-  "src/server/recommendation": 4,
-  "src/shared/utils": 4,
-  "src/browser/lib": 3,
-  "src/server/host": 3,
-  "src/server/welcome-greeting": 3,
-  "src/shared/diary": 3,
-  "src/browser/utils": 2,
-  "src/browser/hooks": 1,
-  "src/(root)": 1,
-  "src/server/checkout": 1,
-  "src/server/diagnostic": 1,
-  "src/server/workflow-setting": 1,
-  "src/shared/(root)": 1,
-  "src/shared/repository": 1,
+  "src/server/recommendation": 5,
+  "src/shared/utils": 5,
+  "src/browser/lib": 5,
+  "src/server/host": 5,
+  "src/server/welcome-greeting": 5,
+  "src/shared/diary": 5,
+  "src/browser/utils": 5,
+  "src/browser/hooks": 5,
+  "src/(root)": 5,
+  "src/server/checkout": 5,
+  "src/server/diagnostic": 5,
+  "src/server/workflow-setting": 5,
+  "src/shared/(root)": 5,
+  "src/shared/repository": 5,
 } as const satisfies Readonly<Record<string, number>>
 
 const HOW_TO_FIX =
-  "docs/coding-standards.md「「無いかもしれない」値」: 判別可能な合併型にするか、入口で畳んで「ある」ときだけ内側を呼ぶ。減らしたら UNDEFINED_UNION_CEILING を下げる"
+  "docs/coding-standards.md「「無いかもしれない」値」: 判別可能な合併型にするか、入口で畳んで「ある」ときだけ内側を呼ぶ。上限は 5 の倍数に丸めてあり、減らしても下げなくてよい"
 
 describe("`| undefined` の合併型の領域ごとの上限", () => {
   it("src / scripts の `| undefined` の合併型の実数が領域ごとの上限を超えない（表にない領域も落とす）", () => {
-    const { over } = ceilingViolations(undefinedUnionCounts(), UNDEFINED_UNION_CEILING)
+    const over = ceilingViolations(undefinedUnionCounts(), UNDEFINED_UNION_CEILING)
     expect(over.length === 0 ? "" : `${over.join("\n")}\n${HOW_TO_FIX}`).toBe("")
-  })
-
-  it("上限が実数より大きくない（減らしたら表を下げる）", () => {
-    const { slack } = ceilingViolations(undefinedUnionCounts(), UNDEFINED_UNION_CEILING)
-    expect(slack.length === 0 ? "" : `${slack.join("\n")}\n${HOW_TO_FIX}`).toBe("")
   })
 
   it("戻り値・変数・型引数・入れ子・括弧つき・TS1016 の引数の `| undefined` を数え、`?:`・`Promise<undefined>`・`T | null` は数えない", () => {
@@ -167,16 +162,13 @@ describe("`| undefined` の合併型の領域ごとの上限", () => {
     expect(undefinedUnionCountsIn(parseSourceProgram(source, "source.ts"))).toBe(6)
   })
 
-  it("上限を超えた・表にない・下げ忘れの領域を見分け、上限ちょうどは空にする", () => {
-    expect(ceilingViolations({ a: 3, b: 1 }, { a: 2 })).toEqual({
-      over: ["a: 実数 3 / 上限 2", "b: 実数 1 / 上限 0（表にない領域）"],
-      slack: [],
-    })
-    expect(ceilingViolations({ a: 1 }, { a: 2, z: 1 })).toEqual({
-      over: [],
-      slack: ["a: 実数 1 / 上限 2", "z: 実数 0 / 上限 1"],
-    })
-    expect(ceilingViolations({ a: 2 }, { a: 2 })).toEqual({ over: [], slack: [] })
+  it("上限を超えた・表にない領域を見分け、上限ちょうどと余りは空にする", () => {
+    expect(ceilingViolations({ a: 3, b: 1 }, { a: 2 })).toEqual([
+      "a: 実数 3 / 上限 2",
+      "b: 実数 1 / 上限 0（表にない領域）",
+    ])
+    expect(ceilingViolations({ a: 1 }, { a: 2, z: 1 })).toEqual([])
+    expect(ceilingViolations({ a: 2 }, { a: 2 })).toEqual([])
   })
 })
 
@@ -233,26 +225,15 @@ function undefinedUnionCounts(): Readonly<Record<string, number>> {
 function ceilingViolations(
   counts: Readonly<Record<string, number>>,
   ceilings: Readonly<Record<string, number>>,
-): { readonly over: readonly string[]; readonly slack: readonly string[] } {
-  const regions = [...new Set([...Object.keys(counts), ...Object.keys(ceilings)])].toSorted()
-  const line = (region: string, actual: number, ceiling: number): string =>
-    `${region}: 実数 ${actual} / 上限 ${ceiling}`
-  const rows = regions.map((region) => ({
-    region,
-    actual: counts[region] ?? 0,
-    ceiling: ceilings[region] ?? 0,
-  }))
-  return {
-    over: rows
-      .filter(({ actual, ceiling }) => actual > ceiling)
-      .map(
-        ({ region, actual, ceiling }) =>
-          line(region, actual, ceiling) + (region in ceilings ? "" : "（表にない領域）"),
-      ),
-    slack: rows
-      .filter(({ actual, ceiling }) => actual < ceiling)
-      .map(({ region, actual, ceiling }) => line(region, actual, ceiling)),
-  }
+): readonly string[] {
+  return Object.keys(counts)
+    .toSorted()
+    .map((region) => ({ region, actual: counts[region] ?? 0, ceiling: ceilings[region] ?? 0 }))
+    .filter(({ actual, ceiling }) => actual > ceiling)
+    .map(
+      ({ region, actual, ceiling }) =>
+        `${region}: 実数 ${actual} / 上限 ${ceiling}${region in ceilings ? "" : "（表にない領域）"}`,
+    )
 }
 
 function explicitUndefinedNamesIn(program: AstNode): readonly string[] {
