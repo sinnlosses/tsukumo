@@ -1,0 +1,4 @@
+/* タブの見出しは Astryx の既定（本文と同じ段）より一段小さい札の段にする。 */
+.tab-list [role="tab"] {
+  font-size: var(--font-label);
+}

@@ -4,6 +4,8 @@
 import { Tab, TabList as AstryxTabList } from "@astryxdesign/core/TabList"
 import type { ReactElement, ReactNode } from "react"
 
+import styles from "./tab-list.module.css"
+
 type TabItem<T extends string> = {
   readonly value: T
   readonly label: string
@@ -26,6 +28,7 @@ export function TabList<T extends string>(props: TabListProps<T>): ReactElement 
     <AstryxTabList
       role="tablist"
       layout="fill"
+      className={styles["tab-list"]}
       aria-label={props.label}
       value={props.value}
       onChange={(next) => {
