@@ -19,7 +19,7 @@ describe("token-budget", () => {
     const result = await runSubprocess(process.execPath, [ENTRY, path])
 
     expect(result.exitCode).toBe(0)
-    expect(result.stdout).toBe(`${path}\t${5000 - tokens}\t5000\n`)
+    expect(result.stdout).toBe(`${path}\t${6000 - tokens}\t6000\n`)
   })
 
   test("除外のパスと実在しないパスは出さず、終了コードは 0", async () => {
