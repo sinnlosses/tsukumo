@@ -7,6 +7,7 @@ import { ComposerShell } from "../../ui/composer-shell/composer-shell.tsx"
 import { Field } from "../../ui/field/field.tsx"
 import { RoundButton } from "../../ui/round-button/round-button.tsx"
 import { SearchField } from "../../ui/search-field/search-field.tsx"
+import { SegmentedControl } from "../../ui/segmented-control/segmented-control.tsx"
 import { Select } from "../../ui/select/select.tsx"
 import { Slider } from "../../ui/slider/slider.tsx"
 import { Switch } from "../../ui/switch/switch.tsx"
@@ -26,6 +27,7 @@ export function InputGroups(): ReactElement {
   const [area, setArea] = useState("複数行の\n入力欄")
   const [choice, setChoice] = useState("a")
   const [tab, setTab] = useState<"one" | "two" | "three">("one")
+  const [segment, setSegment] = useState<"day" | "week" | "month">("day")
   const [amount, setAmount] = useState(3)
   const [enabled, setEnabled] = useState(false)
 
@@ -170,6 +172,14 @@ export function InputGroups(): ReactElement {
           選んだタブ: {tab}
         </div>
       </Group>
+      <Group title="SegmentedControl（1つだけを選ぶ）" parts={["segmented-control"]}>
+        <SegmentedControl
+          label="見本の切り替え"
+          value={segment}
+          items={SAMPLE_SEGMENTS}
+          onChange={setSegment}
+        />
+      </Group>
       <Group title="Slider（動かせる・押せない）" parts={["slider"]}>
         <Slider
           label="動かせる"
@@ -206,6 +216,12 @@ const SAMPLE_TABS = [
   { value: "one", label: "ひとつめ", id: "design-tab-one" },
   { value: "two", label: "ふたつめ", id: "design-tab-two" },
   { value: "three", label: "みっつめ", id: "design-tab-three" },
+] as const
+
+const SAMPLE_SEGMENTS = [
+  { value: "day", label: "日 3" },
+  { value: "week", label: "週 12" },
+  { value: "month", label: "月 40" },
 ] as const
 
 function noop(): void {}

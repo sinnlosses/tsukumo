@@ -86,7 +86,7 @@ export function PresentationalTokenUsage(props: PresentationalTokenUsageProps): 
           name={{ kind: "none" }}
           gap="sm"
           align="baseline"
-          justify="start"
+          justify="between"
           wrap="wrap"
           className=""
         >

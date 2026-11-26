@@ -155,7 +155,7 @@ describe("タスクのモーダルの選択", () => {
   it("選んでいた行が絞り込みで消えると先頭へ落ち、そこから飛んで「戻る」と出ていた先頭の行へ戻る", () => {
     renderSelectionBoard(SELECTION_TASKS, OPEN_FIRST)
     fireEvent.click(screen.getByRole("option", { name: /X-002/ }))
-    fireEvent.click(screen.getByRole("button", { name: /^着手可/ }))
+    fireEvent.click(screen.getByRole("radio", { name: /^着手可/ }))
     expect(isShown("X-001")).toBe(true)
 
     fireEvent.click(screen.getByRole("link", { name: "X-002" }))
@@ -168,8 +168,8 @@ describe("タスクのモーダルの選択", () => {
   it("先頭へ落ちたあと絞り込みを外しても先頭のまま。検索で0件にしてから消すと、その前に選んでいた行へ戻る", () => {
     renderSelectionBoard(SELECTION_TASKS, OPEN_FIRST)
     fireEvent.click(screen.getByRole("option", { name: /X-002/ }))
-    fireEvent.click(screen.getByRole("button", { name: /^着手可/ }))
-    fireEvent.click(screen.getByRole("button", { name: /^すべて/ }))
+    fireEvent.click(screen.getByRole("radio", { name: /^着手可/ }))
+    fireEvent.click(screen.getByRole("radio", { name: /^すべて/ }))
     expect(isShown("X-001")).toBe(true)
 
     fireEvent.click(screen.getByRole("option", { name: /X-003/ }))
@@ -184,31 +184,27 @@ describe("タスクのモーダルの選択", () => {
     const board = renderSelectionBoard(SELECTION_TASKS, OPEN_FIRST)
     fireEvent.click(screen.getByRole("link", { name: "X-002" }))
     fireEvent.change(searchBox(), { target: { value: "架空" } })
-    fireEvent.click(screen.getByRole("button", { name: /^着手可/ }))
+    fireEvent.click(screen.getByRole("radio", { name: /^着手可/ }))
     fireEvent.click(screen.getByRole("button", { name: "閉じる" }))
     board.rerenderWith(SELECTION_TASKS, { kind: "closed" })
     board.rerenderWith(SELECTION_TASKS, OPEN_FIRST)
 
     expect(isShown("X-001")).toBe(true)
     expect(searchBox().value).toBe("")
-    expect(screen.getByRole("button", { name: /^すべて/ }).getAttribute("aria-pressed")).toBe(
-      "true",
-    )
+    expect(screen.getByRole("radio", { name: /^すべて/ }).getAttribute("aria-checked")).toBe("true")
     expect(screen.queryByRole("navigation", { name: "タスクのつながり" })).toBeNull()
   })
 
   it("開き直すと、開く前に選んでいた絞り込みは「すべて」に戻る", () => {
     const board = renderSelectionBoard(SELECTION_TASKS, OPEN_FIRST)
-    fireEvent.click(screen.getByRole("button", { name: /^着手可/ }))
+    fireEvent.click(screen.getByRole("radio", { name: /^着手可/ }))
     board.rerenderWith(SELECTION_TASKS, {
       kind: "open",
       focus: { kind: "task", id: "X-002" },
       query: "",
     })
 
-    expect(screen.getByRole("button", { name: /^すべて/ }).getAttribute("aria-pressed")).toBe(
-      "true",
-    )
+    expect(screen.getByRole("radio", { name: /^すべて/ }).getAttribute("aria-checked")).toBe("true")
     expect(isShown("X-002")).toBe(true)
   })
 })
@@ -368,14 +364,14 @@ describe("タスクのモーダル（つながりをたどる）", () => {
   it("検索と絞り込みは組み合わさり、当たらなければその旨を出して詳細を空にする", () => {
     renderSelectionBoard(JUMP_TASKS, OPEN_FIRST)
 
-    fireEvent.click(screen.getByRole("button", { name: /^待ち/ }))
+    fireEvent.click(screen.getByRole("radio", { name: /^待ち/ }))
     fireEvent.change(searchBox(), { target: { value: "地の文" } })
 
     expect(screen.queryByRole("option")).toBeNull()
     expect(screen.getByText("当てはまるタスクが無い")).toBeDefined()
     expect(screen.queryByRole("region", { name: / の詳細$/ })).toBeNull()
 
-    fireEvent.click(screen.getByRole("button", { name: /^すべて/ }))
+    fireEvent.click(screen.getByRole("radio", { name: /^すべて/ }))
 
     expect(screen.getByRole("option", { name: /X-001/ })).toBeDefined()
   })

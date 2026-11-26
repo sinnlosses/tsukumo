@@ -209,19 +209,19 @@ describe("PresentationalTokenUsage", () => {
   })
 
   it("渡された期間の札を並べ、pressed の札だけが押された状態になる", () => {
-    const { getByText } = renderScreen({ days: 7 })
+    const { getByRole } = renderScreen({ days: 7 })
 
-    expect(getByText("今日").getAttribute("aria-pressed")).toBe("false")
-    expect(getByText("7日").getAttribute("aria-pressed")).toBe("true")
-    expect(getByText("30日").getAttribute("aria-pressed")).toBe("false")
+    expect(getByRole("radio", { name: "今日" }).getAttribute("aria-checked")).toBe("false")
+    expect(getByRole("radio", { name: "7日" }).getAttribute("aria-checked")).toBe("true")
+    expect(getByRole("radio", { name: "30日" }).getAttribute("aria-checked")).toBe("false")
   })
 
   it("期間を押すと、その日数で取り直すよう伝える", () => {
     const asked: number[] = []
-    const { getByText } = renderScreen({ onDaysChange: (days) => asked.push(days) })
+    const { getByRole } = renderScreen({ onDaysChange: (days) => asked.push(days) })
 
-    fireEvent.click(getByText("今日"))
-    fireEvent.click(getByText("30日"))
+    fireEvent.click(getByRole("radio", { name: "今日" }))
+    fireEvent.click(getByRole("radio", { name: "30日" }))
 
     expect(asked).toEqual([1, 30])
   })

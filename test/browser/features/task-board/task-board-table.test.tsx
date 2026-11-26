@@ -114,8 +114,8 @@ describe("タスクのモーダルの件数の帯", () => {
     renderSelectionBoard(TABLE_TASKS, OPEN_FIRST)
 
     expect(
-      within(screen.getByRole("group", { name: "状態で絞る" }))
-        .getAllByRole("button")
+      within(screen.getByRole("radiogroup", { name: "状態で絞る" }))
+        .getAllByRole("radio")
         .map((button) => button.textContent),
     ).toEqual(["すべて 4", "進行中 1", "着手可 1", "待ち 1", "保留 0", "ドラフト 0", "完了 1"])
     expect(screen.getByRole("heading", { name: "タスク 4" })).toBeDefined()

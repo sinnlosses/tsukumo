@@ -6,6 +6,7 @@ import clsx from "clsx"
 import type { ReactElement } from "react"
 
 import { ListChecksIcon } from "../../../components/ui/icon/icon.tsx"
+import { SegmentedControl } from "../../../components/ui/segmented-control/segmented-control.tsx"
 import type {
   TaskBoardDraftSort,
   TaskBoardFilter,
@@ -26,22 +27,23 @@ export function TaskBoardFilterBar(props: {
   const { draftSort } = props
   return (
     <div className={styles["task-board-filter-row"]}>
-      <div role="group" aria-label="状態で絞る" className={styles["task-board-filter"]}>
-        {props.chips.map((chip) => (
-          <button
-            key={chip.filter}
-            type="button"
-            className={styles["task-board-chip"]}
-            aria-pressed={chip.pressed}
-            onClick={() => props.onFilter(chip.filter)}
-          >
-            {chip.filter !== "all" && (
-              <TaskState state={{ kind: chip.filter, text: chip.label }} display="mark" />
-            )}
-            {chip.label}{" "}
-            <span className={styles["task-board-chip-count"]}>{String(chip.count)}</span>
-          </button>
-        ))}
+      <div className={styles["task-board-filter"]}>
+        <SegmentedControl
+          label="状態で絞る"
+          value={props.chips.find((chip) => chip.pressed)?.filter ?? "all"}
+          items={props.chips.map((chip) => ({
+            value: chip.filter,
+            label: `${chip.label} ${String(chip.count)}`,
+            ...(chip.filter === "all"
+              ? {}
+              : {
+                  icon: (
+                    <TaskState state={{ kind: chip.filter, text: chip.label }} display="mark" />
+                  ),
+                }),
+          }))}
+          onChange={props.onFilter}
+        />
       </div>
       {draftSort.kind !== "none" && (
         <button
