@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><title>地図の説明の枠の見本</title>
+<style>
+:root{--bg:#1e1b22;--surface:#2a2630;--ink:#e9e4ee;--quiet:#a39cab;--line:#3d3744;--accent:#e8b86a;--link:#9fc6e8}
+body{margin:0;background:#141217;color:var(--ink);font:13px/1.6 "Hiragino Sans",system-ui,sans-serif;padding:24px;display:flex;gap:28px;align-items:flex-start}
+.col{width:270px}
+.cap{font-size:12px;color:var(--accent);font-weight:600;margin-bottom:8px}
+.panel{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px}
+h3{margin:0;font-size:15px;display:flex;gap:6px;align-items:baseline}
+h3 span{font-size:12px;color:var(--quiet);font-weight:400}
+p{margin:0;font-size:12px}
+.small{font-size:12px;color:var(--quiet);overflow-wrap:anywhere}
+.label{font-weight:600;color:var(--quiet);font-size:12px;display:block;margin-bottom:2px}
+.facts{display:flex;gap:6px;flex-wrap:wrap}
+.chip{background:var(--surface);border-radius:999px;padding:1px 9px;font-size:12px;color:var(--ink)}
+.chip b{color:var(--accent);font-weight:600}
+code{font:12px ui-monospace,Menlo,monospace;color:var(--ink);background:var(--surface);padding:1px 6px;border-radius:5px}
+ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:3px}
+li{font-size:12px;display:flex;justify-content:space-between;gap:8px}
+li .n{color:var(--quiet);font-variant-numeric:tabular-nums}
+a{color:var(--link);text-decoration:none}
+.adr li{display:block}
+.adr .no{color:var(--quiet);font-variant-numeric:tabular-nums;margin-right:4px}
+.more{color:var(--quiet);font-size:12px}
+.sec{border-top:1px solid var(--line);padding-top:8px}
+.fade{max-height:330px;overflow:hidden;-webkit-mask-image:linear-gradient(#000 80%,transparent)}
+.new{border-left:2px solid var(--accent);padding-left:8px}
+</style></head><body>
+
+<div class="col"><div class="cap">今（ブラウザ・大）</div>
+<div class="panel fade">
+<h3>ブラウザ<span>大</span></h3>
+<p>共有の状態を受け取り、会話の画面を描いてコマンドを送る</p>
+<p>サーバとは実行環境が違うので、画面の部品だけを別の塊にして、共有層以外を読まない形にする</p>
+<p>画面ごとの部品と、全画面で共有する枠・置かれる機能・語彙のない部品に分かれる。向きは入口から画面、枠、機能、基本部品の一方通行で、サーバの機能は直接読まない。</p>
+<div class="small"><span class="label">置き場</span>src/browser/app.tsx・src/browser/main.tsx・src/browser/components/app/**・src/browser/components/frame/**・src/browser/components/ui/**・src/browser/components/page/conversation/*・src/browser/components/page/conversation/domain/**・src/browser/components/page/conversation/stores/**・…（36件）</div>
+</div></div>
+
+<div class="col"><div class="cap">言い直し（ブラウザ・大）</div>
+<div class="panel">
+<h3>ブラウザ<span>大</span></h3>
+<p>共有の状態を受け取り、会話の画面を描いてコマンドを送る</p>
+<p>サーバとは実行環境が違うので、画面の部品だけを別の塊にして、共有層以外を読まない形にする</p>
+<p>画面ごとの部品と、全画面で共有する枠・置かれる機能・語彙のない部品に分かれる。向きは入口から画面、枠、機能、基本部品の一方通行で、サーバの機能は直接読まない。</p>
+<div class="facts new"><span class="chip"><code style="padding:0;background:none">src/browser/**</code></span><span class="chip"><b>1,032</b> files</span><span class="chip">子モジュール <b>18</b></span></div>
+<div class="sec new"><span class="label">ADR</span><ul class="adr">
+<li><a href="#"><span class="no">0001</span>描く層をブラウザ側へ移す</a></li>
+<li><a href="#"><span class="no">0052</span>デザインシステムを Astryx へ移す</a></li></ul></div>
+<div class="sec new"><span class="label">依存先（import 数）</span><ul><li>共有層<span class="n">714</span></li></ul>
+<span class="label" style="margin-top:6px">依存元（import 数）</span><span class="more">なし</span></div>
+<div class="sec new"><span class="label">変更頻度（30日）</span><ul><li>commits<span class="n">627件</span></li></ul></div>
+<div class="small"><span class="label">用語</span>会話の画面</div>
+</div></div>
+
+<div class="col"><div class="cap">言い直し（メインビュー・中）</div>
+<div class="panel">
+<h3>メインビュー<span>中</span></h3>
+<p>メインビューに、利用者の依頼・手順・レポートの草稿と本文を流れとして描く</p>
+<p>会話の中身が集まる領域を独立させ、ほかの領域の変更に巻き込まれないようにする</p>
+<div class="facts new"><span class="chip"><code style="padding:0;background:none">…/conversation/components/main-view/**</code></span><span class="chip"><b>129</b> files</span></div>
+<div class="sec new"><span class="label">エントリポイント</span><code>main-view/main-view.tsx</code><div class="more">（地図の契約に入口の欄を足したとき）</div></div>
+<div class="sec new"><span class="label">依存先（import 数）</span><ul>
+<li>共有の語彙と状態<span class="n">126</span></li><li>会話の画面の土台<span class="n">87</span></li><li>基本の部品<span class="n">69</span></li></ul>
+<span class="more">ほか 13 モジュール</span>
+<span class="label" style="margin-top:6px">依存元（import 数）</span><ul>
+<li>画面の切り替え<span class="n">23</span></li><li>会話の画面の土台<span class="n">1</span></li></ul></div>
+<div class="sec new"><span class="label">変更頻度（30日）</span><ul><li>commits<span class="n">255件</span></li><li>最終更新<span class="n">2026-11-25</span></li></ul></div>
+<div class="small"><span class="label">用語</span>メインビュー</div>
+</div></div>
+</body></html>
