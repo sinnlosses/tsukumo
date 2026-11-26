@@ -104,7 +104,8 @@ export async function scanReadability(page: Page): Promise<ReadabilityReport> {
         continue
       }
       const labels = element instanceof HTMLInputElement ? [...(element.labels ?? [])] : []
-      const box = labels[0] ?? element
+      // 名前のためだけに隠した `<label>` は 1px 角で、押す的ではない。
+      const box = labels.find((label) => label.getBoundingClientRect().width > 1) ?? element
       const rect = box.getBoundingClientRect()
       if (rect.width < MIN_TARGET || rect.height < MIN_TARGET) {
         smallTargets.push(`${size(rect)} ${describe(element)}`)

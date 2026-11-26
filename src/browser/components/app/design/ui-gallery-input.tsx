@@ -6,6 +6,7 @@ import { useState, type ReactElement } from "react"
 import { ComposerShell } from "../../ui/composer-shell/composer-shell.tsx"
 import { Field } from "../../ui/field/field.tsx"
 import { RoundButton } from "../../ui/round-button/round-button.tsx"
+import { SearchField } from "../../ui/search-field/search-field.tsx"
 import { Select } from "../../ui/select/select.tsx"
 import { Slider } from "../../ui/slider/slider.tsx"
 import { Switch } from "../../ui/switch/switch.tsx"
@@ -54,6 +55,17 @@ export function InputGroups(): ReactElement {
           value="押せない"
           disabled={true}
           onChange={setLine}
+        />
+      </Group>
+      <Group title="SearchField（一覧を絞る検索欄）" parts={["search-field"]}>
+        <SearchField
+          label="見本を探す"
+          value={line}
+          listId="design-search-field-list"
+          placeholder="探す"
+          className={styles["design-input"]}
+          onChange={setLine}
+          onKeyDown={() => undefined}
         />
       </Group>
       <Group title="Field（form・confirm）" parts={["field"]}>

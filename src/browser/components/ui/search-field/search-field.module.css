@@ -1,0 +1,28 @@
+/* 枠は呼び出し側の箱が持つので、Astryx の入力欄の枠・背景・影・余白を外し、箱の残りを埋める。 */
+.search-field-container {
+  flex: 1 1 auto;
+  align-self: stretch;
+  min-width: 0;
+}
+/* Field は入力欄の箱を1段包むので、その段も箱の高さまで伸ばす。 */
+.search-field-container > div {
+  flex: 1 1 auto;
+}
+.search-field-control {
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  font-family: inherit;
+}
+.search-field-control input {
+  align-self: stretch;
+  font-family: inherit;
+}
+/* ブラウザが足す × は出さない。 */
+.search-field-control input::-webkit-search-cancel-button {
+  display: none;
+}

@@ -18,24 +18,8 @@
   flex: none;
 }
 .task-search-input {
-  flex: 1 1 auto;
-  align-self: stretch;
-  min-width: 0;
-  border: none;
-  background: transparent;
   color: var(--ink);
-  font: inherit;
   font-size: var(--font-secondary);
-}
-.task-search-input:focus-visible {
-  outline: none;
-}
-.task-search-input::placeholder {
-  color: var(--ink-quiet);
-}
-/* ブラウザが足す × は出さない（自前の口を1つにする）。 */
-.task-search-input::-webkit-search-cancel-button {
-  display: none;
 }
 .task-search-tail {
   display: flex;

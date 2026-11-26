@@ -5,6 +5,7 @@
 import type { KeyboardEvent, ReactElement } from "react"
 
 import { CloseIcon, SearchIcon } from "../../components/ui/icon/icon.tsx"
+import { SearchField } from "../../components/ui/search-field/search-field.tsx"
 import { Surface } from "../../components/ui/surface/surface.tsx"
 import styles from "./task-search-field.module.css"
 
@@ -30,19 +31,14 @@ export function TaskSearchField(props: {
       <span className={styles["task-search-icon"]}>
         <SearchIcon />
       </span>
-      <input
-        type="search"
-        role="combobox"
-        className={styles["task-search-input"]}
-        aria-label="タスクを探す"
-        aria-expanded={true}
-        aria-controls={props.listId}
-        aria-activedescendant={props.activeRowDomId}
+      <SearchField
+        label="タスクを探す"
+        listId={props.listId}
+        activeOptionId={props.activeRowDomId}
         placeholder="ID・言葉で探す"
         value={props.query}
-        onChange={(event) => {
-          props.onQueryChange(event.target.value)
-        }}
+        className={styles["task-search-input"]}
+        onChange={props.onQueryChange}
         onKeyDown={props.onKeyDown}
       />
       <span className={styles["task-search-tail"]} data-visible={props.searching}>

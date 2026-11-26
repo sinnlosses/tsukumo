@@ -34,21 +34,9 @@
   color: var(--ink-quiet);
 }
 .session-switcher-input {
-  flex: 1 1 auto;
-  min-width: 0;
   height: 2.25rem;
-  border: none;
-  background: transparent;
   color: var(--ink);
-  font: inherit;
   font-size: var(--font-body);
-}
-/* 探す欄は開いている間ずっとフォーカスを持つ（↑↓ と Enter を受ける口）ので、輪は出さない。 */
-.session-switcher-input:focus-visible {
-  outline: none;
-}
-.session-switcher-input::placeholder {
-  color: var(--ink-quiet);
 }
 .session-switcher-new {
   flex: none;

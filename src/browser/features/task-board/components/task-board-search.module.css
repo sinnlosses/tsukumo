@@ -17,22 +17,6 @@
   box-shadow: inset 0 0 0 1.5px var(--accent);
 }
 .task-board-search-input {
-  flex: 1 1 auto;
-  align-self: stretch;
-  min-width: 0;
-  border: none;
-  background: transparent;
   color: var(--ink);
-  font: inherit;
   font-size: var(--font-secondary);
-}
-.task-board-search-input:focus-visible {
-  outline: none;
-}
-.task-board-search-input::placeholder {
-  color: var(--ink-quiet);
-}
-/* ブラウザが足す × は出さない。 */
-.task-board-search-input::-webkit-search-cancel-button {
-  display: none;
 }

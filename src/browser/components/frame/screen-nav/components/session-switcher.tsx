@@ -16,6 +16,7 @@ import {
 import { Button } from "../../../ui/button/button.tsx"
 import { Dialog } from "../../../ui/dialog/dialog.tsx"
 import { Kbd } from "../../../ui/kbd/kbd.tsx"
+import { SearchField } from "../../../ui/search-field/search-field.tsx"
 import { Surface } from "../../../ui/surface/surface.tsx"
 import { Text } from "../../../ui/text/text.tsx"
 import { CharacterFace } from "../../character-face.tsx"
@@ -86,20 +87,17 @@ function SessionSwitcherBody(props: SessionSwitcherProps): ReactElement {
     >
       <div className={styles["session-switcher-search"]}>
         <Search size={18} strokeWidth={2} aria-hidden="true" />
-        <input
-          type="search"
-          className={styles["session-switcher-input"]}
-          aria-label="セッションを探す"
+        <SearchField
+          label="セッションを探す"
           placeholder={SEARCH_PLACEHOLDER}
           value={selection.query}
-          role="combobox"
-          aria-expanded={true}
-          aria-controls={`${idPrefix}-list`}
-          aria-activedescendant={
+          listId={`${idPrefix}-list`}
+          activeOptionId={
             selection.selected === undefined ? undefined : optionId(selection.selected.sessionId)
           }
-          autoFocus
-          onChange={(event) => selection.onQueryChange(event.target.value)}
+          hasAutoFocus
+          className={styles["session-switcher-input"]}
+          onChange={selection.onQueryChange}
           onKeyDown={selection.onKeyDown}
         />
         <Button
