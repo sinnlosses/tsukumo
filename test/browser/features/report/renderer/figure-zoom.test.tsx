@@ -62,6 +62,22 @@ describe("SvgZoom", () => {
     )
   })
 
+  it("字の縁取りを字の下に描く順を写し、根に面の色の地を敷く", () => {
+    const svg = svgOf(
+      `<svg viewBox="0 0 100 40" style="--surface: #123456"><text style="paint-order: stroke; stroke: #123456">架空の字</text></svg>`,
+    )
+    document.body.append(svg)
+
+    const copy = new DOMParser().parseFromString(
+      decoded(zoomedSource(svg)),
+      "image/svg+xml",
+    ).documentElement
+    svg.remove()
+
+    expect(copy.querySelector("text")?.getAttribute("style")).toContain("paint-order:stroke")
+    expect(copy.getAttribute("style")).toContain("background-color:#123456")
+  })
+
   it("viewBox が無い svg は測った大きさを使う", () => {
     const text = decoded(zoomedSource(svgOf(`<svg width="50" height="40"></svg>`)))
 

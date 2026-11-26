@@ -23,6 +23,8 @@ const SVG_COPIED_PROPERTIES = [
   "stroke",
   "stroke-width",
   "stroke-dasharray",
+  "stroke-linejoin",
+  "paint-order",
   "font-family",
   "font-size",
   "font-weight",
@@ -138,8 +140,21 @@ function svgDataUrl(svg: SVGSVGElement): string {
   copy.setAttribute("height", String(size.height))
   copy.removeAttribute("style")
   copyComputedStyle(svg, copy)
+  paintSurface(svg, copy)
   const text = new XMLSerializer().serializeToString(copy)
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(text)}`
+}
+
+/**
+ * 複製の根に面の色の地を敷く。図の地は透明で、拡大の面では後ろのページが透けるうえ、
+ * 字の縁取りは面の色で描いてあるので、地が面の色でないと縁取りが浮く。
+ */
+function paintSurface(source: Element, target: Element): void {
+  const surface = getComputedStyle(source).getPropertyValue("--surface").trim()
+  if (surface === "") {
+    return
+  }
+  target.setAttribute("style", `${target.getAttribute("style") ?? ""};background-color:${surface}`)
 }
 
 function naturalSize(svg: SVGSVGElement): { readonly width: number; readonly height: number } {
