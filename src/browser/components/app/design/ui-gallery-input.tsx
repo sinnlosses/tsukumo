@@ -5,6 +5,7 @@ import { useState, type ReactElement } from "react"
 
 import { ComposerShell } from "../../ui/composer-shell/composer-shell.tsx"
 import { Field } from "../../ui/field/field.tsx"
+import { RadioList } from "../../ui/radio-list/radio-list.tsx"
 import { RoundButton } from "../../ui/round-button/round-button.tsx"
 import { SearchField } from "../../ui/search-field/search-field.tsx"
 import { SegmentedControl } from "../../ui/segmented-control/segmented-control.tsx"
@@ -28,6 +29,7 @@ export function InputGroups(): ReactElement {
   const [choice, setChoice] = useState("a")
   const [tab, setTab] = useState<"one" | "two" | "three">("one")
   const [segment, setSegment] = useState<"day" | "week" | "month">("day")
+  const [radio, setRadio] = useState<"first" | "second">("first")
   const [amount, setAmount] = useState(3)
   const [enabled, setEnabled] = useState(false)
 
@@ -180,6 +182,15 @@ export function InputGroups(): ReactElement {
           onChange={setSegment}
         />
       </Group>
+      <Group title="RadioList（1つだけを選ぶ・説明つき）" parts={["radio-list"]}>
+        <RadioList
+          label="見本の選択肢"
+          value={radio}
+          items={SAMPLE_RADIOS}
+          disabled={false}
+          onChange={setRadio}
+        />
+      </Group>
       <Group title="Slider（動かせる・押せない）" parts={["slider"]}>
         <Slider
           label="動かせる"
@@ -216,6 +227,11 @@ const SAMPLE_TABS = [
   { value: "one", label: "ひとつめ", id: "design-tab-one" },
   { value: "two", label: "ふたつめ", id: "design-tab-two" },
   { value: "three", label: "みっつめ", id: "design-tab-three" },
+] as const
+
+const SAMPLE_RADIOS = [
+  { value: "first", label: "ひとつめの選択肢", description: "ひとつめの説明" },
+  { value: "second", label: "ふたつめの選択肢", description: "ふたつめの説明" },
 ] as const
 
 const SAMPLE_SEGMENTS = [

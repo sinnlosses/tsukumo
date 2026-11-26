@@ -39,7 +39,6 @@ const RAW_SCALE_REFERENCE_LIMITS: Readonly<Record<string, number>> = {
   "browser/components/frame/screen-nav/components/screen-nav-settings-workflow.module.css": 2,
   "browser/components/frame/screen-nav/components/screen-nav-settings.module.css": 5,
   "browser/components/frame/screen-nav/components/session-switcher.module.css": 13,
-  "browser/components/frame/screen-nav/components/workflow-field/workflow-choice-field.module.css": 5,
   "browser/components/frame/screen-nav/components/workflow-field/workflow-command-field.module.css": 1,
   "browser/components/frame/screen-nav/components/workflow-field/workflow-field.module.css": 1,
   "browser/components/frame/screen-nav/components/workflow-message/workflow-message.module.css": 1,
