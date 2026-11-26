@@ -317,7 +317,7 @@ function BoxNode(props: {
 }): ReactElement {
   const { box, rect, miniTitle, laneTitle, change } = props
   const mini = miniTitle !== undefined
-  const titleY = laneTitle?.baselines[0] ?? rect.y + (mini ? rect.height / 2 + 3 : 25)
+  const titleY = laneTitle?.baselines[0] ?? rect.y + rect.height / 2 + 3
   const changeKind =
     change === undefined || change.added + change.other === 0
       ? undefined
@@ -373,16 +373,18 @@ function BoxNode(props: {
         rx={laneTitle?.solo === true ? (mini ? 6 : 10) : mini ? 3 : 8}
         className={styles["box-body"]}
       />
-      {laneTitle === undefined ? (
+      {laneTitle === undefined && miniTitle !== undefined && (
         <text
-          x={rect.x + (mini ? 4 : 12)}
+          x={rect.x + 4}
           y={titleY}
           className={styles["box-title"]}
-          {...(mini ? { fontSize: miniTitle.fontSize, clipPath: `url(#${clipId})` } : {})}
+          fontSize={miniTitle.fontSize}
+          clipPath={`url(#${clipId})`}
         >
-          {truncated(box.title, mini ? miniTitle.limit : 20)}
+          {truncated(box.title, miniTitle.limit)}
         </text>
-      ) : (
+      )}
+      {laneTitle !== undefined && (
         <text
           className={styles["box-title"]}
           fontSize={laneTitle.fontSize}
@@ -406,16 +408,6 @@ function BoxNode(props: {
           {changeKind === "added"
             ? `+${String(change.added)}`
             : String(change.added + change.other)}
-        </text>
-      )}
-      {laneTitle === undefined && !mini && box.summary !== undefined && (
-        <text
-          x={rect.x + 12}
-          y={rect.y + 46}
-          clipPath={`url(#${clipId})`}
-          className={styles["box-summary"]}
-        >
-          {truncated(box.summary, 14)}
         </text>
       )}
       {laneTitle?.summary !== undefined && (
