@@ -31,7 +31,10 @@ const FILE_DESCRIPTOR_AMPERSAND = /\d*[<>]&|&>>?/g
 /** 読んで判定にかけるスクリプトのファイルの大きさの上限（バイト）。 */
 const SCRIPT_SIZE_LIMIT = 1024 * 1024
 
-/** 読んだスクリプトのファイル。`foreign` は、別の git 作業ツリーの中にあり、作業ツリーの外のディレクトリで走らせるもの。 */
+/** Claude Code がプラグインを置くキャッシュのパスの区切り。 */
+const PLUGIN_CACHE_SEGMENT = "/.claude/plugins/cache/"
+
+/** 読んだスクリプトのファイル。`foreign` は、別の git 作業ツリーかプラグインのキャッシュの中にあり、作業ツリーの外のディレクトリで走らせるもの。 */
 export type PythonScript = { readonly text: string; readonly foreign: boolean }
 
 /** コマンドが走らせる `python3 <path>.py` のうち、読めるファイルの中身。読めないものは含めない。 */
@@ -66,7 +69,7 @@ export function readPythonScripts(
       directories.every(
         (directory) => directory.kind === "known" && isOutside(directory.path, workRoot),
       ) &&
-      isInForeignGitTree(absolute, workRoot)
+      (isInForeignGitTree(absolute, workRoot) || isInPluginCache(absolute, workRoot))
     return [{ text, foreign }]
   })
 }
@@ -127,6 +130,11 @@ function isInForeignGitTree(script: string, workRoot: string): boolean {
       return false
     }
   }
+}
+
+/** スクリプトが作業ツリーの外の、Claude Code のプラグインのキャッシュ（`.claude/plugins/cache/` の下）にあるか。 */
+function isInPluginCache(script: string, workRoot: string): boolean {
+  return script.includes(PLUGIN_CACHE_SEGMENT) && isOutside(script, workRoot)
 }
 
 /** 引用符・heredoc の外に現れた `python3 <path>.py` のパス（重複なし）。 */

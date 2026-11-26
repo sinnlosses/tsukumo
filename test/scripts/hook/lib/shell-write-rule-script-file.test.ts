@@ -129,6 +129,34 @@ describe("python3 で走らせるスクリプトのファイル", () => {
     })
   })
 
+  describe("プラグインのキャッシュにあるスクリプト", () => {
+    const WRITES_ARGUMENT =
+      "import sys, pathlib\npathlib.Path(sys.argv[1], 'meta.json').write_text('{}')\n"
+
+    function pluginScript(source: string): string {
+      const scripts = join(dir(), ".claude", "plugins", "cache", "market", "plugin", "scripts")
+      mkdirSync(scripts, { recursive: true })
+      const path = join(scripts, "write_meta.py")
+      writeFileSync(path, source)
+      return path
+    }
+
+    test("作業ツリーの外へ cd してから走らせるなら通す", () => {
+      const path = pluginScript(WRITES_ARGUMENT)
+      expect(isDenied(`cd /tmp && python3 "${path}" /tmp/run /work/tree`)).toBe(false)
+    })
+
+    test("作業ツリーを cwd にして走らせるなら止める", () => {
+      const path = pluginScript(WRITES_ARGUMENT)
+      expect(isDenied(`python3 "${path}" /tmp/run`, { cwd: WORK_ROOT })).toBe(true)
+    })
+
+    test("作業ツリーの絶対パスを書くスクリプトは cd していても止める", () => {
+      const path = pluginScript(WRITES_INSIDE)
+      expect(isDenied(`cd /tmp && python3 "${path}"`)).toBe(true)
+    })
+  })
+
   test("-m はスクリプトのファイルを取らないので通す", () => {
     scriptPath(WRITES_INSIDE, "pytest.py")
     expect(isDenied(`python3 -m ${join(dir(), "pytest.py")}`)).toBe(false)
