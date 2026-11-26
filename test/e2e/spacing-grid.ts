@@ -7,7 +7,7 @@ import type { ScenarioOptions } from "./scenario-open.ts"
 // （docs/architecture/screen-design.md「レポートの部品のあき」）。寸法は実ブラウザでしか確かめられない。
 // 期待値は撮らず、外れた隣り合う2つの塊の名前とあきを差分に出す。
 
-/** 縦の格子の単位（px）。`--report-block-gap` と同じ値。 */
+/** 縦の格子の単位（px）。部品の間 24px・表と図 48px・`###` の上 36px・見出しの下 12px の公約数。 */
 const GRID_PX = 12
 
 /** 副画素の丸めで1px 未満はずれうる。 */
