@@ -4,6 +4,9 @@ node_modules/
 # macOS
 .DS_Store
 
+# Python のバイトコード（同梱のスキルのスクリプトを走らせると作られる）
+__pycache__/
+
 .idea/
 
 # ブラウザ側の成果物（pnpm run build で作る。2.6MB の生成物を履歴に入れない）
