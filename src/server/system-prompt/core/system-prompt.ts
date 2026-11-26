@@ -20,6 +20,7 @@ import { QUESTION_NOTATION_PROMPT } from "../../question/core/question-notation.
 import { REPORT_NOTATION_PROMPT } from "../../report/core/prompt/report-notation.ts"
 import type { SessionMode, SessionStart } from "../../session-driver/core/session-driver.ts"
 import { WORK_PLAN_PROMPT } from "../../work-plan/core/work-plan-tool.ts"
+import { DENIAL_MANNER_PROMPT } from "./denial-manner.ts"
 import { SPEECH_CADENCE_PROMPT } from "./speech-cadence.ts"
 
 /** {@link takeSystemPromptAppend} に渡すもの。 */
@@ -91,7 +92,7 @@ export function toSystemPromptMode(
  *
  * | 場面                     | 節の並び                                                                              |
  * | ------------------------ | -------------------------------------------------------------------------------------- |
- * | 仕事                     | 人格 → セリフの間合い → ワークプラン → レポートの記法 → 質問の書き方 → あらすじ → 直近の会話 |
+ * | 仕事                     | 人格 → セリフの間合い → ワークプラン → レポートの記法 → 質問の書き方 → 拒否のあとの振る舞い → あらすじ → 直近の会話 |
  * | 雑談（記憶が載るとき）   | 人格 → 雑談の作法 → あらすじ → 直近の会話                                             |
  * | 雑談（続きから・渡し済） | 人格 → 雑談の作法                                                                     |
  *
@@ -116,6 +117,7 @@ function modeParts(mode: SystemPromptMode): readonly string[] {
       WORK_PLAN_PROMPT,
       REPORT_NOTATION_PROMPT,
       QUESTION_NOTATION_PROMPT,
+      DENIAL_MANNER_PROMPT,
       ...workMemoryPromptParts(mode.memory),
     ]
   }

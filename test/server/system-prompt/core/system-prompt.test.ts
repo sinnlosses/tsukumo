@@ -12,6 +12,7 @@ import type { ChatSummary } from "../../../../src/server/core/chat-memory.ts"
 import { QUESTION_NOTATION_PROMPT } from "../../../../src/server/question/core/question-notation.ts"
 import { REPORT_NOTATION_PROMPT } from "../../../../src/server/report/core/prompt/report-notation.ts"
 import type { SessionMode } from "../../../../src/server/session-driver/core/session-driver.ts"
+import { DENIAL_MANNER_PROMPT } from "../../../../src/server/system-prompt/core/denial-manner.ts"
 import { SPEECH_CADENCE_PROMPT } from "../../../../src/server/system-prompt/core/speech-cadence.ts"
 import {
   type SystemPromptMode,
@@ -50,7 +51,7 @@ describe("takeSystemPromptAppend", () => {
     const append = takeSystemPromptAppend({ persona: PERSONA, appearance: "", mode: workMode() })
 
     expect(append).toBe(
-      `${PERSONA}\n\n${SPEECH_CADENCE_PROMPT}\n\n${WORK_PLAN_PROMPT}\n\n${REPORT_NOTATION_PROMPT}\n\n${QUESTION_NOTATION_PROMPT}`,
+      `${PERSONA}\n\n${SPEECH_CADENCE_PROMPT}\n\n${WORK_PLAN_PROMPT}\n\n${REPORT_NOTATION_PROMPT}\n\n${QUESTION_NOTATION_PROMPT}\n\n${DENIAL_MANNER_PROMPT}`,
     )
   })
 
@@ -76,6 +77,7 @@ describe("takeSystemPromptAppend", () => {
         WORK_PLAN_PROMPT,
         REPORT_NOTATION_PROMPT,
         QUESTION_NOTATION_PROMPT,
+        DENIAL_MANNER_PROMPT,
         ...expectedMemory,
       ].join("\n\n"),
     )
@@ -103,6 +105,7 @@ describe("takeSystemPromptAppend", () => {
     expect(append).not.toContain(SPEECH_CADENCE_PROMPT)
     expect(append).not.toContain(WORK_PLAN_PROMPT)
     expect(append).not.toContain(QUESTION_NOTATION_PROMPT)
+    expect(append).not.toContain(DENIAL_MANNER_PROMPT)
   })
 
   it("続きから始めて写しが渡し済みなら、雑談の記憶は載らない（人格 → 雑談の作法 だけ）", () => {
@@ -136,7 +139,7 @@ describe("takeSystemPromptAppend", () => {
     const append = takeSystemPromptAppend({ persona: "", appearance: "", mode: workMode() })
 
     expect(append).toBe(
-      `${SPEECH_CADENCE_PROMPT}\n\n${WORK_PLAN_PROMPT}\n\n${REPORT_NOTATION_PROMPT}\n\n${QUESTION_NOTATION_PROMPT}`,
+      `${SPEECH_CADENCE_PROMPT}\n\n${WORK_PLAN_PROMPT}\n\n${REPORT_NOTATION_PROMPT}\n\n${QUESTION_NOTATION_PROMPT}\n\n${DENIAL_MANNER_PROMPT}`,
     )
   })
 })
