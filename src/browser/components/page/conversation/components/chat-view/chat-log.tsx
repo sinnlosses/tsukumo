@@ -2,6 +2,7 @@
 
 import type { ReactElement, RefCallback } from "react"
 
+import { Divider } from "../../../../ui/divider/divider.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
 import { PromptImageThumbnails } from "../prompt-image/prompt-image.tsx"
 import { StreamPostRow, StreamSpeechRow, StreamTyping } from "../stream-row/stream-row.tsx"
@@ -51,7 +52,12 @@ export function ChatLog({
               case "boundary":
                 // 圧縮の区切り。文言を添えない細い線1本で、押せない・畳めない。
                 return (
-                  <hr key={row.key} className={styles["chat-boundary"]} data-speaker="boundary" />
+                  <Divider
+                    key={row.key}
+                    tone="quiet"
+                    orientation="horizontal"
+                    className={styles["chat-boundary"]}
+                  />
                 )
               case "speech":
                 return (

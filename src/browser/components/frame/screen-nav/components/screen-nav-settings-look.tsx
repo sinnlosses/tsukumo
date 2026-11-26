@@ -6,6 +6,7 @@ import { useId, type ReactElement } from "react"
 import { BLUR_RANGE, FILL_RANGE } from "../../../../../shared/session/gear-preference.ts"
 import { VEIL_PERCENT_RANGE } from "../../../../domain/appearance-adjust.ts"
 import { APPEARANCE_THEMES } from "../../../../domain/appearance-color.ts"
+import { Slider } from "../../../ui/slider/slider.tsx"
 import { Surface } from "../../../ui/surface/surface.tsx"
 import { Text } from "../../../ui/text/text.tsx"
 import type { ScreenNavSettingsItem, SettingItemKey } from "../hooks/use-settings.ts"
@@ -86,7 +87,6 @@ export function ScreenNavSettingsLookFace(props: ScreenNavSettingsProps): ReactE
       <RangeRow
         itemKey="veil"
         item={settings.items.veil}
-        id={`${fieldId}-veil`}
         label="背景の暗さ"
         range={VEIL_PERCENT_RANGE}
         value={adjust.veilPercent}
@@ -98,7 +98,6 @@ export function ScreenNavSettingsLookFace(props: ScreenNavSettingsProps): ReactE
       <RangeRow
         itemKey="blur"
         item={settings.items.blur}
-        id={`${fieldId}-blur`}
         label="パネルのぼかし"
         range={BLUR_RANGE}
         value={adjust.blur}
@@ -108,7 +107,6 @@ export function ScreenNavSettingsLookFace(props: ScreenNavSettingsProps): ReactE
       <RangeRow
         itemKey="fill"
         item={settings.items.fill}
-        id={`${fieldId}-fill`}
         label="パネルの濃さ"
         range={FILL_RANGE}
         value={adjust.fill}
@@ -133,7 +131,6 @@ export function ScreenNavSettingsLookFace(props: ScreenNavSettingsProps): ReactE
 function RangeRow(props: {
   readonly itemKey: SettingItemKey
   readonly item: ScreenNavSettingsItem
-  readonly id: string
   readonly label: string
   readonly range: { readonly min: number; readonly max: number }
   readonly value: number
@@ -144,24 +141,21 @@ function RangeRow(props: {
     <ScreenNavSettingsRow
       itemKey={props.itemKey}
       item={props.item}
-      name={<label htmlFor={props.id}>{props.label}</label>}
+      name={<span>{props.label}</span>}
     >
       <div className={styles["control"]}>
-        <input
-          id={props.id}
-          className={styles["range"]}
-          type="range"
+        <Slider
+          label={props.label}
+          labelVisibility="hidden"
+          valueText="shown"
+          formatValue={() => props.readout}
           min={props.range.min}
           max={props.range.max}
           step={1}
           value={props.value}
-          onChange={(event) => {
-            props.onChange(event.target.valueAsNumber)
-          }}
+          disabled={false}
+          onChange={props.onChange}
         />
-        <output htmlFor={props.id} className={styles["readout"]}>
-          {props.readout}
-        </output>
       </div>
     </ScreenNavSettingsRow>
   )

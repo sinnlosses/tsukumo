@@ -71,8 +71,20 @@ function openLookFace(
   return dialog
 }
 
-function slider(dialog: HTMLElement, name: string): HTMLInputElement {
-  return typedElement(within(dialog).getByRole("slider", { name }), HTMLInputElement, name)
+function slider(dialog: HTMLElement, name: string): HTMLElement {
+  return within(dialog).getByRole("slider", { name })
+}
+
+function sliderValue(dialog: HTMLElement, name: string): number {
+  return Number(slider(dialog, name).getAttribute("aria-valuenow"))
+}
+
+/** 矢印キーを刻みの数だけ押して、`target` まで動かす（刻みは 1）。 */
+function moveTo(dialog: HTMLElement, name: string, target: number): void {
+  const key = target > sliderValue(dialog, name) ? "ArrowRight" : "ArrowLeft"
+  while (sliderValue(dialog, name) !== target) {
+    fireEvent.keyDown(slider(dialog, name), { key })
+  }
 }
 
 function rootToken(name: string): string {
@@ -96,13 +108,14 @@ describe("設定の歯車（見た目の調整）", () => {
   it("3つの範囲入力が名前つきで、範囲と既定の位置を持つ", () => {
     const dialog = openLookFace()
 
-    const veil = slider(dialog, "背景の暗さ")
-    const blur = slider(dialog, "パネルのぼかし")
-    const fill = slider(dialog, "パネルの濃さ")
+    const attrs = (name: string) =>
+      ["aria-valuemin", "aria-valuemax", "aria-valuenow"].map((attr) =>
+        slider(dialog, name).getAttribute(attr),
+      )
 
-    expect([veil.min, veil.max]).toEqual(["70", "100"])
-    expect([blur.min, blur.max, blur.value]).toEqual(["0", "24", "12"])
-    expect([fill.min, fill.max, fill.value]).toEqual(["20", "90", "45"])
+    expect(attrs("背景の暗さ").slice(0, 2)).toEqual(["70", "100"])
+    expect(attrs("パネルのぼかし")).toEqual(["0", "24", "12"])
+    expect(attrs("パネルの濃さ")).toEqual(["20", "90", "45"])
     expect(within(dialog).getByText("75%（パックの値）")).toBeTruthy()
   })
 
@@ -110,9 +123,9 @@ describe("設定の歯車（見た目の調整）", () => {
     const sent: SentCommand[] = []
     const dialog = openLookFace(sent)
 
-    fireEvent.change(slider(dialog, "背景の暗さ"), { target: { value: "90" } })
-    fireEvent.change(slider(dialog, "パネルのぼかし"), { target: { value: "0" } })
-    fireEvent.change(slider(dialog, "パネルの濃さ"), { target: { value: "70" } })
+    moveTo(dialog, "背景の暗さ", 90)
+    moveTo(dialog, "パネルのぼかし", 0)
+    moveTo(dialog, "パネルの濃さ", 70)
 
     expect([
       rootToken("--character-background-veil-user"),
@@ -133,9 +146,9 @@ describe("設定の歯車（見た目の調整）", () => {
       sent.push(command)
     })
 
-    fireEvent.change(slider(dialog, "背景の暗さ"), { target: { value: "90" } })
-    fireEvent.change(slider(dialog, "パネルのぼかし"), { target: { value: "18" } })
-    fireEvent.change(slider(dialog, "パネルの濃さ"), { target: { value: "70" } })
+    moveTo(dialog, "背景の暗さ", 90)
+    moveTo(dialog, "パネルのぼかし", 18)
+    moveTo(dialog, "パネルの濃さ", 70)
 
     expect(sent.at(-1)).toEqual({
       procedure: "session.setGearPreference",
@@ -146,14 +159,14 @@ describe("設定の歯車（見た目の調整）", () => {
 
   it("既定に戻すと、背景の暗さのトークンが外れてパックの値へ戻る", () => {
     const dialog = openLookFace()
-    fireEvent.change(slider(dialog, "背景の暗さ"), { target: { value: "90" } })
-    fireEvent.change(slider(dialog, "パネルのぼかし"), { target: { value: "20" } })
+    moveTo(dialog, "背景の暗さ", 90)
+    moveTo(dialog, "パネルのぼかし", 20)
 
     fireEvent.click(within(dialog).getByRole("button", { name: /^このページを既定に戻す/u }))
 
     expect(rootToken("--character-background-veil-user")).toBe("")
     expect(rootToken("--panel-blur-user")).toBe("12px")
-    expect(slider(dialog, "パネルのぼかし").value).toBe("12")
+    expect(sliderValue(dialog, "パネルのぼかし")).toBe(12)
     expect(within(dialog).getByText("75%（パックの値）")).toBeTruthy()
   })
 
@@ -172,16 +185,16 @@ describe("設定の歯車（見た目の調整）", () => {
     })
 
     expect(within(dialog).getByText("90%（パックの値）")).toBeTruthy()
-    expect(slider(dialog, "背景の暗さ").value).toBe("90")
+    expect(sliderValue(dialog, "背景の暗さ")).toBe(90)
   })
 
   it("覚えた値で開くと、操作子がその値を出す", () => {
     const dialog = openLookFace([], { veil: 0.85, blur: 16, fill: 30 })
 
     expect([
-      slider(dialog, "背景の暗さ").value,
-      slider(dialog, "パネルのぼかし").value,
-      slider(dialog, "パネルの濃さ").value,
-    ]).toEqual(["85", "16", "30"])
+      sliderValue(dialog, "背景の暗さ"),
+      sliderValue(dialog, "パネルのぼかし"),
+      sliderValue(dialog, "パネルの濃さ"),
+    ]).toEqual([85, 16, 30])
   })
 })

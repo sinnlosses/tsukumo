@@ -148,6 +148,8 @@ function ParameterKnob(props: {
     >
       <Slider
         label={knob.label}
+        labelVisibility="shown"
+        valueText="shown"
         min={knob.min}
         max={knob.max}
         step={knob.step}

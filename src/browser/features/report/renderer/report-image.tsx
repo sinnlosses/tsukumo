@@ -23,6 +23,7 @@ import {
 } from "../../../../shared/report/report-image.ts"
 import { Button } from "../../../components/ui/button/button.tsx"
 import { ImageZoom, type ImageZoomFallback } from "../../../components/ui/image-zoom/image-zoom.tsx"
+import { Slider } from "../../../components/ui/slider/slider.tsx"
 import { sessionTokenUrl } from "../../../domain/session-token-url.ts"
 import type { ChangedRegion } from "../domain/changed-region.ts"
 import { reportExportMark } from "../report-export-copy.ts"
@@ -145,7 +146,7 @@ type CompareSwapProps = {
 /**
  * 両側が画像の見比べの包み。題の行の右の組で「並べる」「切り替え」「重ねる」を選び、選び方を覚える。
  * 切り替えでは大きな1枚（左か右）と両側の見本が並び、見本か、大きな1枚にフォーカスがあるときの Space で入れかわる。
- * 重ねるでは左の上に右を重ね、つまみ（range）の位置から右だけ右の側を見せる。`overlay` が真で、両側の縦横比が揃う（差が 1% 以内）ときだけ選べる。
+ * 重ねるでは左の上に右を重ね、つまみ（スライダー）の位置から右だけ右の側を見せる。`overlay` が真で、両側の縦横比が揃う（差が 1% 以内）ときだけ選べる。
  * 画像が一枚でも札になったら押しボタンも見本も出さず、並べる形に落とす。
  */
 export function CompareSwap(props: CompareSwapProps): ReactElement {
@@ -258,17 +259,19 @@ export function CompareSwap(props: CompareSwapProps): ReactElement {
           )}
         </div>
         {view === "overlay" && (
-          <input
-            type="range"
-            min={0}
-            max={100}
-            step={1}
-            value={position}
-            aria-label="前後の境"
-            className={styles["report-compare-swap-slider"]}
-            {...reportExportMark.drop}
-            onChange={(event) => setPosition(event.currentTarget.valueAsNumber)}
-          />
+          <div className={styles["report-compare-swap-slider"]} {...reportExportMark.drop}>
+            <Slider
+              label="前後の境"
+              labelVisibility="hidden"
+              valueText="hidden"
+              min={0}
+              max={100}
+              step={1}
+              value={position}
+              disabled={false}
+              onChange={setPosition}
+            />
+          </div>
         )}
         {switches && (
           <div className={styles["report-compare-swap-thumbs"]} {...reportExportMark.drop}>

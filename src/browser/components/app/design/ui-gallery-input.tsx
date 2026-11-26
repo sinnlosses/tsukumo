@@ -173,6 +173,8 @@ export function InputGroups(): ReactElement {
       <Group title="Slider（動かせる・押せない）" parts={["slider"]}>
         <Slider
           label="動かせる"
+          labelVisibility="shown"
+          valueText="shown"
           value={amount}
           min={0}
           max={10}
@@ -182,6 +184,8 @@ export function InputGroups(): ReactElement {
         />
         <Slider
           label="押せない"
+          labelVisibility="shown"
+          valueText="shown"
           value={amount}
           min={0}
           max={10}

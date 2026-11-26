@@ -23,9 +23,17 @@ test.describe("見た目の調整", () => {
     }
 
     const dialog = await openLookFace()
-    await dialog.getByRole("slider", { name: "背景の暗さ" }).fill("90")
-    await dialog.getByRole("slider", { name: "パネルのぼかし" }).fill("16")
-    await dialog.getByRole("slider", { name: "パネルの濃さ" }).fill("60")
+    // 左端（Home）から矢印キーで刻み（1）の数だけ動かす。
+    const moveFromMin = async (name: string, steps: number): Promise<void> => {
+      await dialog.getByRole("slider", { name }).focus()
+      await page.keyboard.press("Home")
+      for (let step = 0; step < steps; step += 1) {
+        await page.keyboard.press("ArrowRight")
+      }
+    }
+    await moveFromMin("背景の暗さ", 20)
+    await moveFromMin("パネルのぼかし", 16)
+    await moveFromMin("パネルの濃さ", 40)
     await page.reload()
 
     const rootToken = (name: string): Promise<string> =>
@@ -38,9 +46,9 @@ test.describe("見た目の調整", () => {
 
     const reopened = await openLookFace()
     expect([
-      await reopened.getByRole("slider", { name: "背景の暗さ" }).inputValue(),
-      await reopened.getByRole("slider", { name: "パネルのぼかし" }).inputValue(),
-      await reopened.getByRole("slider", { name: "パネルの濃さ" }).inputValue(),
+      await reopened.getByRole("slider", { name: "背景の暗さ" }).getAttribute("aria-valuenow"),
+      await reopened.getByRole("slider", { name: "パネルのぼかし" }).getAttribute("aria-valuenow"),
+      await reopened.getByRole("slider", { name: "パネルの濃さ" }).getAttribute("aria-valuenow"),
     ]).toEqual(["90", "16", "60"])
   })
 })

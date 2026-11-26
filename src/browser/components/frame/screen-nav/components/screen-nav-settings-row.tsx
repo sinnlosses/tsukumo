@@ -17,7 +17,7 @@ const FOUND_MILLISECONDS = 1200
 export function ScreenNavSettingsRow(props: {
   readonly itemKey: SettingItemKey
   readonly item: ScreenNavSettingsItem
-  /** 名前の `<label>`。下に宣言の説明が付く。 */
+  /** 名前の字。下に宣言の説明が付く。 */
   readonly name: ReactNode
   /** 操作子。 */
   readonly children: ReactNode

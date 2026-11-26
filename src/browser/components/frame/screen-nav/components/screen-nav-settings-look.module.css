@@ -42,9 +42,7 @@
 /* 操作子の列。幅を決めて、色見本・つまみ・読み出しの左端を行どうしでそろえる。
    ↺ の無い行（操作子が行の最後の子）は、↺ の幅（28px）と行の間の分だけ列を右へ伸ばし、↺ のある行と左端をそろえる。 */
 .control {
-  --range-width: 140px;
-  --readout-width: 8rem;
-  --control-width: calc(var(--range-width) + var(--inline-control) + var(--readout-width));
+  --control-width: calc(140px + var(--inline-control) + 8rem);
 
   display: flex;
   flex: none;
@@ -72,22 +70,6 @@
 .swatch::-webkit-color-swatch {
   border: none;
   border-radius: var(--radius-sm);
-}
-/* 標準の範囲入力。つまみと軌道の色は差し色に任せ、キーボードのフォーカスは既定の輪を残す。 */
-.range {
-  flex: none;
-  width: var(--range-width);
-  margin: 0;
-  accent-color: var(--accent);
-  cursor: pointer;
-}
-.readout {
-  flex: none;
-  width: var(--readout-width);
-  color: var(--ink-quiet);
-  font-family: var(--font-mono);
-  font-size: var(--font-label);
-  font-variant-numeric: tabular-nums;
 }
 .hex-face {
   display: inline-block;

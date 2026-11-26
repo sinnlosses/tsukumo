@@ -418,9 +418,13 @@
                       ]
                     },
                     {
-                      "tag": "hr",
+                      "tag": "div",
                       "attributes": {
-                        "data-speaker": "boundary"
+                        "data-tone": "quiet",
+                        "role": "separator",
+                        "aria-orientation": "horizontal",
+                        "data-variant": "subtle",
+                        "data-orientation": "horizontal"
                       }
                     },
                     {
