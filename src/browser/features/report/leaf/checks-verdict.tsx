@@ -13,6 +13,7 @@ import {
 } from "../../../../shared/report/report-check-view.ts"
 import { plainInline } from "../../../../shared/report/report-inline-markdown.ts"
 import { Badge } from "../../../components/ui/badge/badge.tsx"
+import { Collapsible } from "../../../components/ui/collapsible/collapsible.tsx"
 import type { ReportProofView } from "../domain/report-proof.ts"
 import { checksClassName } from "../markdown.tsx"
 import styles from "./leaf.module.css"
@@ -143,7 +144,7 @@ function ProblemRow(props: { readonly row: ReportCheckProblemRow }): ReactElemen
   )
 }
 
-/** 通った項目を畳んだ `<details>`。`<summary>` は件数と label の頭、開くと figure・所要時間つきの一覧。 */
+/** 通った項目を畳んだ `Collapsible`。見出しは件数と label の頭、開くと figure・所要時間つきの一覧。 */
 function PassedFold(props: { readonly passed: readonly ReportCheckPassedRow[] }): ReactElement {
   const { passed } = props
   const recordedRuns = passed
@@ -151,26 +152,32 @@ function PassedFold(props: { readonly passed: readonly ReportCheckPassedRow[] })
     .reduce((sum, row) => sum + row.runCount, 0)
   return (
     <div className={checksClassName("checks-passed")}>
-      <details>
-        <summary>
-          <span className={checksClassName("checks-passed-mark")}>
-            <Badge tone="ok" shape="square" className={styles["verdict-badge"]}>
-              {`✓ 通った ${String(passed.length)}件`}
-            </Badge>
+      <Collapsible
+        defaultOpen={false}
+        chevronPosition="end"
+        textSize="label"
+        trigger={
+          <span className={styles["passed-head"]}>
+            <span className={checksClassName("checks-passed-mark")}>
+              <Badge tone="ok" shape="square" className={styles["verdict-badge"]}>
+                {`✓ 通った ${String(passed.length)}件`}
+              </Badge>
+            </span>
+            <span className={checksClassName("checks-passed-labels")}>
+              {passed.map((row) => plainInline(row.labelHead)).join(" · ")}
+              {recordedRuns > 0 && (
+                <>
+                  {"　"}
+                  <RecordedMark
+                    runCount={recordedRuns}
+                    className={checksClassName("checks-passed-recorded")}
+                  />
+                </>
+              )}
+            </span>
           </span>
-          <span className={checksClassName("checks-passed-labels")}>
-            {passed.map((row) => plainInline(row.labelHead)).join(" · ")}
-            {recordedRuns > 0 && (
-              <>
-                {"　"}
-                <RecordedMark
-                  runCount={recordedRuns}
-                  className={checksClassName("checks-passed-recorded")}
-                />
-              </>
-            )}
-          </span>
-        </summary>
+        }
+      >
         <div role="table" aria-label="検証結果">
           {passed.map((row, index) => (
             <div
@@ -188,7 +195,7 @@ function PassedFold(props: { readonly passed: readonly ReportCheckPassedRow[] })
             </div>
           ))}
         </div>
-      </details>
+      </Collapsible>
     </div>
   )
 }

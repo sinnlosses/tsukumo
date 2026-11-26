@@ -84,7 +84,7 @@ const VISUAL_DECLARATION_LIMITS: Readonly<Record<string, number>> = {
   "browser/features/report/renderer/report-notation-overlay.css": 1,
   "browser/features/report/renderer/report-notation-pair-view.css": 10,
   "browser/features/report/renderer/report-notation-prose.css": 53,
-  "browser/features/report/renderer/report-notation-result.css": 80,
+  "browser/features/report/renderer/report-notation-result.css": 72,
   "browser/features/report/renderer/report-notation-result-phase.css": 30,
   "browser/features/report/renderer/report-notation-stat.css": 28,
   "browser/features/report/renderer/report-notation-summary.css": 64,

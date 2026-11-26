@@ -219,18 +219,6 @@
     max-width: 38em;
     color: var(--ink);
   }
-  & .report-work-record details {
-    margin: 0;
-    padding: 0;
-    border: 0;
-    border-radius: 0;
-    background: none;
-  }
-  & .report-work-record details > summary {
-    cursor: pointer;
-    font-variant-numeric: tabular-nums;
-    color: var(--ink);
-  }
   & .report-work-record-fold-title {
     display: inline-flex;
     flex-wrap: wrap;
@@ -426,30 +414,9 @@
   & .report-checks-problem-how-label {
     color: var(--ink-quiet);
   }
-  /* 通った項目の畳み。レポートの中の <details> の地と枠は当てず、問題の行と同じ2列の1行にする。 */
+  /* 通った項目の畳み。見出しは問題の行と同じ2列の1行にする。 */
   & .report-checks-passed {
     border-top: var(--report-checks-rule);
-  }
-  & .report-checks-passed > details {
-    margin: 0;
-    padding: 0;
-    border: 0;
-    border-radius: 0;
-    background: none;
-  }
-  & .report-checks-passed > details > summary {
-    display: grid;
-    grid-template-columns: var(--report-checks-side) minmax(0, 1fr);
-    column-gap: var(--space-md);
-    align-items: baseline;
-    min-height: 24px;
-    margin: 0;
-    padding: var(--space-md) 0;
-    font-size: var(--font-secondary);
-    list-style: none;
-  }
-  & .report-checks-passed > details > summary::-webkit-details-marker {
-    display: none;
   }
   & .report-checks-passed-mark {
     white-space: nowrap;
@@ -459,7 +426,7 @@
     overflow-wrap: anywhere;
     color: var(--ink-quiet);
   }
-  & .report-checks-passed > details > [role="table"] {
+  & .report-checks-passed [role="table"] {
     padding: 0 0 var(--space-md) calc(var(--report-checks-side) + var(--space-md));
   }
 }

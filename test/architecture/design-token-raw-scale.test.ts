@@ -130,7 +130,7 @@ const RAW_SCALE_REFERENCE_LIMITS: Readonly<Record<string, number>> = {
   "browser/features/report/renderer/report-notation-figure-captioned.css": 6,
   "browser/features/report/renderer/report-notation-inline.css": 10,
   "browser/features/report/renderer/report-notation-prose.css": 17,
-  "browser/features/report/renderer/report-notation-result.css": 30,
+  "browser/features/report/renderer/report-notation-result.css": 28,
   "browser/features/report/renderer/report-notation-result-phase.css": 13,
   "browser/features/report/renderer/report-notation-stat.css": 9,
   "browser/features/report/renderer/report-notation-summary.css": 24,

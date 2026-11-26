@@ -6,10 +6,24 @@ import type { ReactElement, ReactNode } from "react"
 
 import styles from "./collapsible.module.css"
 
-export type CollapsibleProps = {
+/** 開閉を部品に任せる形（defaultOpen）か、呼ぶ側が持つ形（isOpen と onOpenChange）か。 */
+type CollapsibleOpenProps =
+  | {
+      /** 最初から開いているか。 */
+      readonly defaultOpen: boolean
+      readonly isOpen?: never
+      readonly onOpenChange?: never
+    }
+  | {
+      readonly defaultOpen?: never
+      /** 開いているか。呼ぶ側が持つ。 */
+      readonly isOpen: boolean
+      /** 見出しを押して開閉が変わるときに呼ばれる。 */
+      readonly onOpenChange: (open: boolean) => void
+    }
+
+export type CollapsibleProps = CollapsibleOpenProps & {
   readonly trigger: ReactNode
-  /** 最初から開いているか。 */
-  readonly defaultOpen: boolean
   /** 山形の印を見出しの字の前（start）に置くか、右端（end）に置くか。 */
   readonly chevronPosition: "start" | "end"
   /** 見出しと中の字の段。省くと本文の段（`--font-body`）、label は手順の行の段（`--font-label`）。 */
@@ -18,6 +32,10 @@ export type CollapsibleProps = {
 }
 
 export function Collapsible(props: CollapsibleProps): ReactElement {
+  const openProps =
+    props.isOpen === undefined
+      ? { defaultIsOpen: props.defaultOpen }
+      : { isOpen: props.isOpen, onOpenChange: props.onOpenChange }
   return (
     <AstryxCollapsible
       trigger={
@@ -25,7 +43,7 @@ export function Collapsible(props: CollapsibleProps): ReactElement {
           {props.trigger}
         </span>
       }
-      defaultIsOpen={props.defaultOpen}
+      {...openProps}
       chevronPosition={props.chevronPosition}
     >
       <div className={styles["body"]} data-text-size={props.textSize}>

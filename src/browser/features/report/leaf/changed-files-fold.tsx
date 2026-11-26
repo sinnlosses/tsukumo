@@ -9,6 +9,7 @@ import { FILE_CHANGE_BADGES } from "../../../../shared/report/report-file-markdo
 import { type FileTreeRow, fileTreeRows } from "../../../../shared/report/report-file-tree.ts"
 import { plainInline } from "../../../../shared/report/report-inline-markdown.ts"
 import { filesInBox, type ReportMap } from "../../../../shared/report/report-map.ts"
+import { Collapsible } from "../../../components/ui/collapsible/collapsible.tsx"
 import { CodeSpan, filesClassName, workRecordClassName } from "../markdown.tsx"
 import { useRenderMinimap } from "../minimap-slot.tsx"
 import styles from "./leaf.module.css"
@@ -57,55 +58,35 @@ export function ChangedFilesFold(props: {
           )}
         </div>
       )}
-      <details
-        open={open}
-        onToggle={(event) => {
-          setOpen(event.currentTarget.open)
-        }}
+      <Collapsible
+        isOpen={open}
+        onOpenChange={setOpen}
+        chevronPosition="end"
+        trigger={
+          <span className={workRecordClassName("work-record-fold-title")}>
+            <span>{`${String(count)} ファイル`}</span>
+            <span className={workRecordClassName("work-record-added")}>{`+${String(added)}`}</span>
+            <span
+              className={workRecordClassName("work-record-removed")}
+            >{`−${String(removed)}`}</span>
+            {mixed && (
+              <span className={workRecordClassName("work-record-mixed")}>※他の変更を含みうる</span>
+            )}
+          </span>
+        }
       >
-        <FoldBody title={{ count, added, removed, mixed }} rows={rows} totals={totals} />
-      </details>
-    </div>
-  )
-}
-
-function FoldBody(props: {
-  readonly title: {
-    readonly count: number
-    readonly added: number
-    readonly removed: number
-    readonly mixed: boolean
-  }
-  readonly rows: Files["rows"]
-  readonly totals: Files["totals"]
-}): ReactElement {
-  const { count, added, removed, mixed } = props.title
-  const { rows, totals } = props
-  return (
-    <>
-      <summary>
-        <span className={workRecordClassName("work-record-fold-title")}>
-          <span>{`${String(count)} ファイル`}</span>
-          <span className={workRecordClassName("work-record-added")}>{`+${String(added)}`}</span>
-          <span
-            className={workRecordClassName("work-record-removed")}
-          >{`−${String(removed)}`}</span>
-          {mixed && (
-            <span className={workRecordClassName("work-record-mixed")}>※他の変更を含みうる</span>
-          )}
-        </span>
-      </summary>
-      <div className={filesClassName("files")}>
-        {rows.map((row, index) => (
-          <TreeRow key={`${String(index)}:${row.guide}${row.name}`} row={row} />
-        ))}
-        <div className={filesClassName("files-summary")}>
-          {totals.map(({ change, count: changeCount }) => (
-            <ChangeBadge key={change} change={change} suffix={` ${String(changeCount)}`} />
+        <div className={filesClassName("files")}>
+          {rows.map((row, index) => (
+            <TreeRow key={`${String(index)}:${row.guide}${row.name}`} row={row} />
           ))}
+          <div className={filesClassName("files-summary")}>
+            {totals.map(({ change, count: changeCount }) => (
+              <ChangeBadge key={change} change={change} suffix={` ${String(changeCount)}`} />
+            ))}
+          </div>
         </div>
-      </div>
-    </>
+      </Collapsible>
+    </div>
   )
 }
 

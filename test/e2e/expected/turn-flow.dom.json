@@ -956,10 +956,19 @@
                                                           ]
                                                         },
                                                         {
-                                                          "tag": "details",
+                                                          "tag": "button",
+                                                          "attributes": {
+                                                            "aria-expanded": "false",
+                                                            "data-astryx-pressable": "",
+                                                            "data-chevron-position": "end",
+                                                            "type": "button"
+                                                          },
                                                           "children": [
                                                             {
-                                                              "tag": "summary",
+                                                              "tag": "span",
+                                                              "attributes": {
+                                                                "data-text-size": "label"
+                                                              },
                                                               "children": [
                                                                 {
                                                                   "tag": "span",
@@ -981,6 +990,19 @@
                                                                   "children": [
                                                                     "記録あり・1回"
                                                                   ]
+                                                                }
+                                                              ]
+                                                            },
+                                                            {
+                                                              "tag": "span",
+                                                              "attributes": {
+                                                                "aria-hidden": "true",
+                                                                "data-size": "sm",
+                                                                "data-color": "secondary"
+                                                              },
+                                                              "children": [
+                                                                {
+                                                                  "tag": "svg"
                                                                 }
                                                               ]
                                                             }

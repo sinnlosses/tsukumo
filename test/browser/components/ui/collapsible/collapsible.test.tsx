@@ -1,4 +1,4 @@
-import { cleanup, render } from "@testing-library/react"
+import { cleanup, fireEvent, render } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
 import { Collapsible } from "../../../../../src/browser/components/ui/collapsible/collapsible.tsx"
@@ -22,6 +22,35 @@ describe("Collapsible", () => {
       </Collapsible>,
     ).container
     expect(closed.querySelector("[aria-expanded='false']")).not.toBeNull()
+  })
+
+  it("呼ぶ側が開閉を持つ形では isOpen のとおりに開き、見出しを押すと onOpenChange が呼ばれる", () => {
+    const calls: boolean[] = []
+    const { container, rerender } = render(
+      <Collapsible
+        trigger="見出し"
+        isOpen={false}
+        onOpenChange={(open) => calls.push(open)}
+        chevronPosition="end"
+      >
+        本文
+      </Collapsible>,
+    )
+    const button = container.querySelector("[aria-expanded]")
+    expect(button?.getAttribute("aria-expanded")).toBe("false")
+    if (button === null) {
+      throw new Error("見出しのボタンが描かれていない")
+    }
+    fireEvent.click(button)
+    expect(calls).toEqual([true])
+    expect(button?.getAttribute("aria-expanded")).toBe("false")
+
+    rerender(
+      <Collapsible trigger="見出し" isOpen onOpenChange={() => {}} chevronPosition="end">
+        本文
+      </Collapsible>,
+    )
+    expect(container.querySelector("[aria-expanded]")?.getAttribute("aria-expanded")).toBe("true")
   })
 
   it("印の位置が start なら山形の印が見出しの字より前に、end なら後ろに描かれる", () => {

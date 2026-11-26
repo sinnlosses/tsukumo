@@ -4,3 +4,13 @@
   gap: 0.3em;
   vertical-align: top;
 }
+
+/* 通った項目の畳みの見出し。問題の行と同じ2列（`--report-checks-side` は検証結果の枠が持つ）。 */
+.passed-head {
+  display: grid;
+  grid-template-columns: var(--report-checks-side) minmax(0, 1fr);
+  column-gap: var(--gutter-region);
+  align-items: baseline;
+  min-height: 24px;
+  padding: var(--gutter-region) 0;
+}
