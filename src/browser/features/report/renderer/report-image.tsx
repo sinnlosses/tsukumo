@@ -358,6 +358,7 @@ export function ReportImage(props: ReportImageProps): ReactElement {
   const region = ownRegion ?? detectedRegion
   const image = (
     <img
+      {...reportExportMark.zoom}
       src={src}
       alt={alt}
       width={props.width}

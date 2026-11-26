@@ -120,7 +120,7 @@ describe("ItemList の部品", () => {
   it("fold つきは畳み（Collapsible）で包む", () => {
     const { fresh } = both("bullet", [{ text: "架空の項目" }], "架空の根拠")
 
-    expect(fresh).toContain('<div class="report-details"><div class="astryx-collapsible')
+    expect(fresh).toMatch(/<div class="report-details"[^>]*><div class="astryx-collapsible/)
   })
 
   it.each(["bullet", "ordered", "check"] as const)("%s は 10 件ちょうどなら畳まない", (style) => {

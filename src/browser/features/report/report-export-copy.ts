@@ -6,6 +6,7 @@ import { reportExportCss } from "./report-export-css.ts"
 
 const MARK = "data-report-export"
 const MARK_VALUE = "data-report-export-value"
+const ZOOM_MARK = "data-report-export-zoom"
 
 /** 部品が写しでの扱いを宣言する印。要素の props に広げて付ける。 */
 export const reportExportMark = {
@@ -23,7 +24,19 @@ export const reportExportMark = {
   termList: { [MARK]: "term-list" },
   /** 描くときに色のトークンから hex へ解いた SVG の入れ物。`map` は小文字の hex からトークン名への JSON。写しでは焼いた hex を `var(--トークン, #hex)` に戻す。 */
   themedSvg: (map: string) => ({ [MARK]: "themed-svg", [MARK_VALUE]: map }),
+  /** 中に Astryx の Collapsible（`aria-controls` を持つ見出しのボタンと開く側）を1つ持つ入れ物。写しでは JS なしで開閉できる `<details>` にする。 */
+  fold: { [MARK]: "fold" },
+  /**
+   * 押すと拡大する図・画像。写しでは JS なしで開閉できる拡大（隠したチェックボックスと `<label>`）にする。
+   * mermaid の図は同じ要素に `themedSvg` の印も付くので、ほかの印と別の属性で持つ。
+   */
+  zoom: { [ZOOM_MARK]: "" },
 } as const
+
+/** 写しの拡大の口の class。開いたときの見た目は書き出した文書の基礎の CSS（`REPORT_EXPORT_STYLE`）が持つ。 */
+const ZOOM_TOGGLE_CLASS = "report-export-zoom-toggle"
+const ZOOM_CLASS = "report-export-zoom"
+const ZOOM_LABEL = "拡大して見る（もう一度押すと閉じる）"
 
 const COLOR = /#[0-9a-f]{6}\b|rgb\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*\)/gi
 const COLOR_ATTRIBUTES = ["fill", "stroke", "style"] as const
@@ -46,7 +59,76 @@ function reportExportCopy(root: Element): Element {
   }
   dropDanglingDescribedBy(copy)
   openTermNotes(copy)
+  for (const marked of copy.querySelectorAll(`[${MARK}="fold"]`)) {
+    toDetails(marked)
+  }
+  copy.querySelectorAll(`[${ZOOM_MARK}]`).forEach(toZoom)
   return copy
+}
+
+/** 入れ物の中の Collapsible を、保存したときの開き方の `<details>` に替える。見出しと開く側の中身はそのまま移す。 */
+function toDetails(marked: Element): void {
+  marked.removeAttribute(MARK)
+  const trigger = marked.querySelector("button[aria-controls]")
+  const contentId = trigger?.getAttribute("aria-controls") ?? ""
+  const content = [...marked.querySelectorAll("[id]")].find((element) => element.id === contentId)
+  const root = trigger?.parentElement
+  if (trigger === null || content === undefined || root === null || root === undefined) {
+    return
+  }
+  const document = marked.ownerDocument
+  const details = document.createElement("details")
+  details.className = root.className
+  if (trigger.getAttribute("aria-expanded") === "true") {
+    details.setAttribute("open", "")
+  }
+  const summary = document.createElement("summary")
+  summary.className = trigger.className
+  summary.append(...trigger.childNodes)
+  const body = document.createElement("div")
+  body.append(...content.childNodes)
+  details.append(summary, body)
+  root.replaceWith(details)
+}
+
+/**
+ * 図・画像を、押すと画面いっぱいに開き、もう一度押すと閉じる形にする。
+ * 開閉の状態は直前に置く隠したチェックボックスが持ち、押す面は中に敷く `<label>`。
+ * 押す口の要素は形（タグ・class）を保ったまま残し、集めた CSS の選択子が当たり続けるようにする。
+ * ただし `button` は中の `<label>` の押下を奪うので、同じ class の字の入れ物に替える。
+ */
+function toZoom(marked: Element, index: number): void {
+  const document = marked.ownerDocument
+  const id = `report-export-zoom-${String(index + 1)}`
+  marked.removeAttribute(ZOOM_MARK)
+  const host = marked.closest("button")
+  const trigger = host === null ? marked : spanOf(host)
+  for (const attribute of ["role", "tabindex", "aria-label"]) {
+    trigger.removeAttribute(attribute)
+  }
+  for (const button of trigger.querySelectorAll("button")) {
+    spanOf(button)
+  }
+  const toggle = document.createElement("input")
+  toggle.type = "checkbox"
+  toggle.id = id
+  toggle.className = ZOOM_TOGGLE_CLASS
+  toggle.setAttribute("aria-label", ZOOM_LABEL)
+  const label = document.createElement("label")
+  label.htmlFor = id
+  label.className = ZOOM_CLASS
+  label.title = ZOOM_LABEL
+  trigger.before(toggle)
+  trigger.append(label)
+}
+
+/** `button` を、同じ class と中身の `span` に替えて返す。 */
+function spanOf(button: Element): Element {
+  const span = button.ownerDocument.createElement("span")
+  span.className = button.className
+  span.append(...button.childNodes)
+  button.replaceWith(span)
+  return span
 }
 
 /** 落とした札を指していた `aria-describedby` を外す。 */
@@ -151,6 +233,7 @@ function applyMark(element: Element): void {
     }
     case "term":
     case "term-list":
+    case "fold":
       return
     case "themed-svg":
       restoreTokens(element)

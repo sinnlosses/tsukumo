@@ -5,6 +5,7 @@ import { Children, isValidElement, type JSX, type ReactElement, type ReactNode }
 import type { ExtraProps } from "react-markdown"
 
 import { Collapsible } from "../../../components/ui/collapsible/collapsible.tsx"
+import { reportExportMark } from "../report-export-copy.ts"
 import styles from "./report-notation.module.css"
 
 type ReportDetailsProps = JSX.IntrinsicElements["details"] & ExtraProps
@@ -33,7 +34,7 @@ export function ReportFold(props: {
   readonly children: ReactNode
 }): ReactElement {
   return (
-    <div className={styles["report-details"]}>
+    <div className={styles["report-details"]} {...reportExportMark.fold}>
       <Collapsible trigger={props.trigger} defaultOpen={props.defaultOpen} chevronPosition="end">
         {props.children}
       </Collapsible>

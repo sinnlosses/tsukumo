@@ -50,7 +50,7 @@ describe("Mermaid の部品", () => {
     )
 
     expect(fresh).toMatch(
-      /<div class="report-with-gutter"><div class="report-details">.*<span class="trigger">架空の畳み<\/span>.*<div class="body"><div class="report-captioned">/,
+      /<div class="report-with-gutter"><div class="report-details"[^>]*>.*<span class="trigger">架空の畳み<\/span>.*<div class="body"><div class="report-captioned">/,
     )
   })
 })

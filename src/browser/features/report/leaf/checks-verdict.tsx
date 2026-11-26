@@ -16,6 +16,7 @@ import { Badge } from "../../../components/ui/badge/badge.tsx"
 import { Collapsible } from "../../../components/ui/collapsible/collapsible.tsx"
 import type { ReportProofView } from "../domain/report-proof.ts"
 import { checksClassName } from "../markdown.tsx"
+import { reportExportMark } from "../report-export-copy.ts"
 import styles from "./leaf.module.css"
 import { ChecksTotalLine, RecordedMark } from "./proof-band.tsx"
 
@@ -151,7 +152,7 @@ function PassedFold(props: { readonly passed: readonly ReportCheckPassedRow[] })
     .filter((row) => row.recorded)
     .reduce((sum, row) => sum + row.runCount, 0)
   return (
-    <div className={checksClassName("checks-passed")}>
+    <div className={checksClassName("checks-passed")} {...reportExportMark.fold}>
       <Collapsible
         defaultOpen={false}
         chevronPosition="end"

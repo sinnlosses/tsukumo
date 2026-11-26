@@ -13,6 +13,7 @@ import {
 } from "react"
 
 import { ImageZoom, type ImageZoomFallback } from "../../../components/ui/image-zoom/image-zoom.tsx"
+import { reportExportMark } from "../report-export-copy.ts"
 
 const ZOOM_LABEL = "この図を拡大"
 
@@ -54,7 +55,7 @@ const HTML_COPIED_PROPERTIES = [
 
 const SVG_NAMESPACE = "http://www.w3.org/2000/svg"
 
-type FigureZoomTriggerProps = {
+type FigureZoomTriggerProps = typeof reportExportMark.zoom & {
   readonly role: "button"
   readonly tabIndex: 0
   readonly "aria-label": string
@@ -76,6 +77,7 @@ export function figureZoomTriggerProps(
     }
   }
   return {
+    ...reportExportMark.zoom,
     role: "button",
     tabIndex: 0,
     "aria-label": ZOOM_LABEL,

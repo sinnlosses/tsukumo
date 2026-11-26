@@ -50,11 +50,50 @@ pre { overflow-x: auto; }
 .meta dt::after { content: " "; }
 .meta dd { display: inline; margin: 0; color: var(--ink-soft); }
 .export-missing-image { color: var(--ink-quiet); font-size: 12.5px; }
+details > summary { cursor: pointer; list-style: none; }
+details > summary::-webkit-details-marker { display: none; }
+.report-export-zoom-toggle { position: absolute; width: 1px; height: 1px; margin: 0; opacity: 0; pointer-events: none; }
+.report-export-zoom-toggle + * { position: relative; }
+.report-export-zoom { position: absolute; inset: 0; z-index: 1; cursor: zoom-in; }
+.report-export-zoom-toggle:focus-visible + * { outline: 2px solid var(--accent); outline-offset: 2px; }
+.report-export-zoom-toggle:checked + * {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 1000;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  width: auto !important;
+  max-width: none !important;
+  height: auto !important;
+  max-height: none !important;
+  margin: 0 !important;
+  padding: 24px !important;
+  border: none !important;
+  border-radius: 0 !important;
+  background: var(--paper) !important;
+  overflow: auto;
+}
+.report-export-zoom-toggle:checked + * .report-export-zoom { position: fixed; cursor: zoom-out; }
+.report-export-zoom-toggle:checked + * > svg,
+.report-export-zoom-toggle:checked + * > :not(label) > svg {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  max-height: none !important;
+}
+.report-export-zoom-toggle:checked + * img {
+  width: auto !important;
+  height: auto !important;
+  max-width: calc(100vw - 48px) !important;
+  max-height: calc(100vh - 48px) !important;
+}
 @media print {
   html { background: none; }
   main { margin: 0; padding: 0; box-shadow: none; max-width: none; }
   details { border: none; padding: 0; }
   details > summary { display: none; }
+  .report-export-zoom { display: none; }
   h2 { break-after: avoid; }
   figure, table, pre { break-inside: avoid; }
 }

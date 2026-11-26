@@ -956,53 +956,61 @@
                                                           ]
                                                         },
                                                         {
-                                                          "tag": "button",
+                                                          "tag": "div",
                                                           "attributes": {
-                                                            "aria-expanded": "false",
-                                                            "data-astryx-pressable": "",
-                                                            "data-chevron-position": "end",
-                                                            "type": "button"
+                                                            "data-report-export": "fold"
                                                           },
                                                           "children": [
                                                             {
-                                                              "tag": "span",
+                                                              "tag": "button",
                                                               "attributes": {
-                                                                "data-text-size": "label"
+                                                                "aria-expanded": "false",
+                                                                "data-astryx-pressable": "",
+                                                                "data-chevron-position": "end",
+                                                                "type": "button"
                                                               },
                                                               "children": [
                                                                 {
                                                                   "tag": "span",
                                                                   "attributes": {
-                                                                    "data-variant": "success",
-                                                                    "data-tone": "ok",
-                                                                    "data-shape": "square"
+                                                                    "data-text-size": "label"
                                                                   },
                                                                   "children": [
-                                                                    "✓ 通った 1件"
+                                                                    {
+                                                                      "tag": "span",
+                                                                      "attributes": {
+                                                                        "data-variant": "success",
+                                                                        "data-tone": "ok",
+                                                                        "data-shape": "square"
+                                                                      },
+                                                                      "children": [
+                                                                        "✓ 通った 1件"
+                                                                      ]
+                                                                    },
+                                                                    "pnpm run check",
+                                                                    {
+                                                                      "tag": "span",
+                                                                      "attributes": {
+                                                                        "aria-description": "「記録あり」は実行の記録と照合できた確認。照合できない行には印を付けない"
+                                                                      },
+                                                                      "children": [
+                                                                        "記録あり・1回"
+                                                                      ]
+                                                                    }
                                                                   ]
                                                                 },
-                                                                "pnpm run check",
                                                                 {
                                                                   "tag": "span",
                                                                   "attributes": {
-                                                                    "aria-description": "「記録あり」は実行の記録と照合できた確認。照合できない行には印を付けない"
+                                                                    "aria-hidden": "true",
+                                                                    "data-size": "sm",
+                                                                    "data-color": "secondary"
                                                                   },
                                                                   "children": [
-                                                                    "記録あり・1回"
+                                                                    {
+                                                                      "tag": "svg"
+                                                                    }
                                                                   ]
-                                                                }
-                                                              ]
-                                                            },
-                                                            {
-                                                              "tag": "span",
-                                                              "attributes": {
-                                                                "aria-hidden": "true",
-                                                                "data-size": "sm",
-                                                                "data-color": "secondary"
-                                                              },
-                                                              "children": [
-                                                                {
-                                                                  "tag": "svg"
                                                                 }
                                                               ]
                                                             }

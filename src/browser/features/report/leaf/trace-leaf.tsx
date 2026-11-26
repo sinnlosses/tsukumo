@@ -12,6 +12,7 @@ import {
 } from "../../../components/ui/icon/icon.tsx"
 import { List, ListItem } from "../../../components/ui/list/list.tsx"
 import { InlineMarkdown } from "../markdown.tsx"
+import { reportExportMark } from "../report-export-copy.ts"
 import styles from "./leaf.module.css"
 import { LeafFold, ReportLeafFrame } from "./report-leaf-frame.tsx"
 
@@ -66,9 +67,11 @@ function TraceRow(props: { readonly item: TraceItem }): ReactElement {
         output.trim() === "" ? (
           heading
         ) : (
-          <Collapsible trigger={heading} defaultOpen={false} chevronPosition="end">
-            <pre>{output}</pre>
-          </Collapsible>
+          <div {...reportExportMark.fold}>
+            <Collapsible trigger={heading} defaultOpen={false} chevronPosition="end">
+              <pre>{output}</pre>
+            </Collapsible>
+          </div>
         )
       }
       description={supplement.trim() !== "" ? supplement : undefined}

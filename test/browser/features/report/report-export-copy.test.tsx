@@ -3,6 +3,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from "vitest"
 
 import { loadMarkdown } from "../../../../src/browser/features/report/markdown.tsx"
 import { Markdown } from "../../../../src/browser/features/report/renderer/markdown-renderer.tsx"
+import { ReportFold } from "../../../../src/browser/features/report/renderer/report-fold.tsx"
 import { reportExport } from "../../../../src/browser/features/report/report-export-copy.ts"
 import { Report } from "../../../../src/browser/features/report/report.tsx"
 import { UNREADABLE_FILE_EXCERPT } from "../../../../src/shared/repository/file-excerpt.ts"
@@ -172,8 +173,12 @@ describe("最終レポートの写し", () => {
 
       expect(copy.querySelector("[data-view]")?.getAttribute("data-view")).toBe(view)
       expect(copy.querySelector('[role="group"]')).toBeNull()
-      expect(copy.querySelector("input")).toBeNull()
+      expect(copy.querySelector('input:not([type="checkbox"])')).toBeNull()
       expect(notZoom(copy)).toEqual([])
+      const zoomed = [...copy.querySelectorAll('input[type="checkbox"]')].map(
+        (toggle) => toggle.nextElementSibling?.querySelector("img") ?? undefined,
+      )
+      expect(zoomed.filter((image) => image !== undefined)).toHaveLength(2)
       expect(copy.querySelector("[data-report-export]")).toBeNull()
       expect(copy.querySelectorAll("img")).toHaveLength(2)
     },
@@ -202,6 +207,86 @@ describe("最終レポートの写し", () => {
     expect(codes).toEqual(expect.arrayContaining(["src/fictional.ts:12"]))
     expect(copy.querySelector("pre")?.textContent).toContain("const 架空 = 1")
     expect(copy.textContent).toBe(root.textContent?.replace(tooltip, ""))
+  })
+
+  it("畳みは保存したときの開き方の details にし、見出しと中身をそのまま移す", () => {
+    const { container } = render(
+      <>
+        <Markdown text={"<details><summary>架空の見出し</summary>\n\n架空の中身\n\n</details>"} />
+        <ReportFold trigger="架空の開いた見出し" defaultOpen={true}>
+          架空の開いた中身
+        </ReportFold>
+      </>,
+    )
+
+    const copy = parsed(reportExport(container).html)
+
+    const details = [...copy.querySelectorAll("details")]
+    expect(details.map((element) => element.open)).toEqual([false, true])
+    expect(details.map((element) => element.querySelector("summary")?.textContent)).toEqual([
+      "架空の見出し",
+      "架空の開いた見出し",
+    ])
+    expect(details[0]?.textContent).toContain("架空の中身")
+    expect(copy.querySelector("button")).toBeNull()
+  })
+
+  it("検証結果の「通った n件」の畳みも details にし、押さずに開ける見出しにする", () => {
+    const check = (status: string, label: string) => ({
+      status,
+      label,
+      figure: "",
+      command: "",
+      detail: status === "ok" ? "" : "架空の理由",
+      howToVerify: "",
+    })
+    const body = regionsOfParts([
+      {
+        id: "root",
+        component: "Report",
+        conclusion: ["架空の結論。"],
+        children: ["p1"],
+        checks: [check("ok", "架空の単体"), check("ng", "架空の E2E")],
+        favor: "",
+      },
+      { id: "p1", component: "Markdown", markdown: "架空の段落。" },
+    ])
+    const { container } = render(
+      <Report
+        reveal={false}
+        turnId={1}
+        className=""
+        revealClassName=""
+        blockClassName=""
+        body={body}
+      />,
+    )
+    expect(container.textContent).toContain("✓ 通った 1件")
+
+    const copy = parsed(reportExport(firstChild(container)).html)
+
+    const summaries = [...copy.querySelectorAll("details > summary")].map(
+      (summary) => summary.textContent,
+    )
+    expect(summaries.some((text) => text.includes("✓ 通った 1件"))).toBe(true)
+    expect(copy.querySelector("details")?.textContent).toContain("架空の単体")
+  })
+
+  it("押すと拡大する図は、直前のチェックボックスと中に敷いた label で開閉する形にする", () => {
+    const root = document.createElement("div")
+    root.innerHTML =
+      '<div class="figure" role="button" tabindex="0" aria-label="この図を拡大" data-report-export-zoom=""><svg viewBox="0 0 10 10"></svg></div>'
+    document.body.append(root)
+
+    const copy = parsed(reportExport(root).html)
+
+    const toggle = copy.querySelector('input[type="checkbox"]')
+    const figure = toggle?.nextElementSibling
+    expect(figure?.localName).toBe("div")
+    expect(figure?.getAttribute("role")).toBeNull()
+    expect(figure?.querySelector("svg")).not.toBeNull()
+    expect(figure?.querySelector("label")?.htmlFor).toBe(toggle?.id)
+    expect(copy.querySelector("[data-report-export-zoom]")).toBeNull()
   })
 
   it("canvas は描いた画を img に替える", () => {
