@@ -17,8 +17,17 @@ import type { ContextUsageItem } from "../../../../../../shared/usage/context-us
 import type { ContextUsageRow, UseContextUsageResult } from "../../../../../domain/context-usage.ts"
 import { clockTime, localTimeZoneId, zonedDateTime } from "../../../../../utils/clock.ts"
 import { formatCount } from "../../../../../utils/format-count.ts"
+import { Collapsible } from "../../../../ui/collapsible/collapsible.tsx"
 import { HStack } from "../../../../ui/h-stack/h-stack.tsx"
 import { Skeleton } from "../../../../ui/skeleton/skeleton.tsx"
+import {
+  Table,
+  TableCell,
+  TableHead,
+  TableHeaderCell,
+  TableRow,
+  TableRows,
+} from "../../../../ui/table/table.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
 import tokenUsageStyles from "../../token-usage.module.css"
 import styles from "./context-usage-card.module.css"
@@ -37,7 +46,7 @@ const SKELETON_TEXT = " "
 /** 内訳を取れなかったときの一言（札そのものを出さない）。 */
 const UNAVAILABLE_NOTE = "いまのコンテキストはまだ取れていない"
 
-/** 畳んだ内訳の見出し（`details` の `summary`）。 */
+/** 畳んだ内訳の見出し。 */
 const DETAIL_SUMMARY = "MCP ツール・メモリファイル・スキルの内訳を見る"
 
 type ContextUsageCardProps = {
@@ -127,13 +136,17 @@ export function ContextUsageCard(props: ContextUsageCardProps): ReactElement {
         ))}
       </dl>
 
-      <details className={styles["context-detail"]}>
-        <summary className={styles["context-detail-summary"]}>{DETAIL_SUMMARY}</summary>
+      <Collapsible
+        trigger={DETAIL_SUMMARY}
+        defaultOpen={false}
+        chevronPosition="start"
+        textSize="label"
+      >
         <ItemTable label="MCP ツール" head="ツール" items={card.mcpTools} />
         <ItemTable label="メモリファイル" head="ファイル" items={card.memoryFiles} />
         <ItemTable label="スキル" head="スキル" items={card.skills} />
         <DeferredTable rows={card.deferredRows} />
-      </details>
+      </Collapsible>
     </section>
   )
 }
@@ -212,9 +225,14 @@ function ContextUsageCardSkeleton(): ReactElement {
         })}
       </dl>
 
-      <details className={styles["context-detail"]}>
-        <summary className={styles["context-detail-summary"]}>{DETAIL_SUMMARY}</summary>
-      </details>
+      <Collapsible
+        trigger={DETAIL_SUMMARY}
+        defaultOpen={false}
+        chevronPosition="start"
+        textSize="label"
+      >
+        {undefined}
+      </Collapsible>
     </section>
   )
 }
@@ -237,26 +255,41 @@ function ItemTable(props: ItemTableProps): ReactElement | undefined {
   return (
     <>
       <h3 className={tokenUsageStyles["token-usage-section-label"]}>{props.label}</h3>
-      <table className={tokenUsageStyles["token-usage-table"]}>
-        <thead>
-          <tr>
-            <th scope="col">{props.head}</th>
-            <th scope="col">出どころ</th>
-            <th scope="col">トークン</th>
-          </tr>
-        </thead>
-        <tbody>
+      <Table>
+        <TableHead>
+          <TableRow className="" header>
+            <TableHeaderCell align="left" sort="unspecified" hidden={false} scope="col">
+              {props.head}
+            </TableHeaderCell>
+            <TableHeaderCell align="left" sort="unspecified" hidden={false} scope="col">
+              出どころ
+            </TableHeaderCell>
+            <TableHeaderCell align="right" sort="unspecified" hidden={false} scope="col">
+              トークン
+            </TableHeaderCell>
+          </TableRow>
+        </TableHead>
+        <TableRows>
           {props.items.map((item) => (
-            <tr key={item.name}>
-              <th scope="row" className={tokenUsageStyles["token-usage-name"]}>
+            <TableRow key={item.name} className="" header={false}>
+              <TableHeaderCell align="left" sort="unspecified" hidden={false} scope="row">
                 {item.name}
-              </th>
-              <td className={tokenUsageStyles["token-usage-name"]}>{item.source}</td>
-              <td>{formatCount(item.tokens)}</td>
-            </tr>
+              </TableHeaderCell>
+              <TableCell align="left" className="" hidden={false} span={1}>
+                {item.source}
+              </TableCell>
+              <TableCell
+                align="right"
+                className={tokenUsageStyles["token-usage-number"]}
+                hidden={false}
+                span={1}
+              >
+                {formatCount(item.tokens)}
+              </TableCell>
+            </TableRow>
           ))}
-        </tbody>
-      </table>
+        </TableRows>
+      </Table>
     </>
   )
 }
@@ -276,18 +309,25 @@ function DeferredTable(props: DeferredTableProps): ReactElement | undefined {
       <h3 className={tokenUsageStyles["token-usage-section-label"]}>
         コンテキストウィンドウの外（要求されたら読むもの）
       </h3>
-      <table className={tokenUsageStyles["token-usage-table"]}>
-        <tbody>
+      <Table>
+        <TableRows>
           {props.rows.map((row) => (
-            <tr key={row.name}>
-              <th scope="row" className={tokenUsageStyles["token-usage-name"]}>
+            <TableRow key={row.name} className="" header={false}>
+              <TableHeaderCell align="left" sort="unspecified" hidden={false} scope="row">
                 {categoryLook(row.name).label}
-              </th>
-              <td>{formatCount(row.tokens)}</td>
-            </tr>
+              </TableHeaderCell>
+              <TableCell
+                align="right"
+                className={tokenUsageStyles["token-usage-number"]}
+                hidden={false}
+                span={1}
+              >
+                {formatCount(row.tokens)}
+              </TableCell>
+            </TableRow>
           ))}
-        </tbody>
-      </table>
+        </TableRows>
+      </Table>
     </>
   )
 }

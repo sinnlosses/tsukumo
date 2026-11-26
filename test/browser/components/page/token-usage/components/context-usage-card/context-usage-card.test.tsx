@@ -144,7 +144,10 @@ describe("ContextUsageCard", () => {
   it("骨組みの値の塊は読み上げに出さない（aria-hidden）", () => {
     const { container } = render(<ContextUsageCard card={{ kind: "pending" }} />)
 
-    const blocks = container.querySelectorAll('[aria-hidden="true"]')
+    // 内訳の見出しの山形の印（Astryx の Collapsible が付ける）は塊ではないので数えない。
+    const blocks = [...container.querySelectorAll('[aria-hidden="true"]')].filter(
+      (node) => node.closest("button") === null,
+    )
     // 自動圧縮まで(1)・更新時刻(1)・使っている量/コンテキストウィンドウの大きさ/割合(3)・横棒(1)・凡例8行の値(8)で14個。
     expect(blocks).toHaveLength(14)
     // Astryx の `Skeleton` は中身を持たないので、どの塊も字を持たない（字の行の高さは `1lh` で揃える）。

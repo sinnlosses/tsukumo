@@ -19,10 +19,10 @@ function renderTable(sort: TableSort): void {
     <Table>
       <TableHead>
         <TableRow className="" header>
-          <TableHeaderCell align="right" sort={sort} hidden={false}>
+          <TableHeaderCell align="right" sort={sort} hidden={false} scope="col">
             件数
           </TableHeaderCell>
-          <TableHeaderCell align="left" sort="unspecified" hidden>
+          <TableHeaderCell align="left" sort="unspecified" hidden scope="col">
             {""}
           </TableHeaderCell>
         </TableRow>

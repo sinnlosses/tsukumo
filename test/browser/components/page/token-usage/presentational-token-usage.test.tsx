@@ -231,7 +231,7 @@ describe("PresentationalTokenUsage", () => {
 
     expect(getByText("この期間の記録はまだ無い")).not.toBeNull()
     expect(container.querySelectorAll(".usage-card")).toHaveLength(0)
-    expect(container.querySelectorAll(".token-usage-table")).toHaveLength(0)
+    expect(container.querySelectorAll("table")).toHaveLength(0)
     // 期間の切り替えだけは残る（切り替えられないと記録のある期間へ戻れない）。
     expect(getByText("30日")).not.toBeNull()
   })
@@ -241,14 +241,14 @@ describe("PresentationalTokenUsage", () => {
 
     expect(getByText("集計を取れなかった")).not.toBeNull()
     expect(container.querySelectorAll(".usage-card")).toHaveLength(0)
-    expect(container.querySelectorAll(".token-usage-table")).toHaveLength(0)
+    expect(container.querySelectorAll("table")).toHaveLength(0)
   })
 
   it("モデル別の表に費用の列を出さない。列名は略さない", () => {
     const { container } = renderScreen()
 
     // 表は「モデル別」が先、「ツール別」が後（`PresentationalTokenUsage` の並び）。
-    const modelTable = container.querySelectorAll(".token-usage-table")[0]
+    const modelTable = container.querySelectorAll("table")[0]
     const headers = [...(modelTable?.querySelectorAll("thead th") ?? [])].map(
       (cell) => cell.textContent,
     )
@@ -268,7 +268,7 @@ describe("PresentationalTokenUsage", () => {
   it("モデル別は出力の列だけに横棒を添える", () => {
     const { container } = renderScreen()
 
-    const modelTable = container.querySelectorAll(".token-usage-table")[0]
+    const modelTable = container.querySelectorAll("table")[0]
     const row = modelTable?.querySelector("tbody tr")
     const cells = [...(row?.querySelectorAll("td") ?? [])]
     // 入力・出力・キャッシュ読み・キャッシュ作成の4つの数の列のうち、棒があるのは出力だけ。
@@ -298,7 +298,7 @@ describe("PresentationalTokenUsage", () => {
       },
     })
 
-    const toolTable = container.querySelectorAll(".token-usage-table")[1]
+    const toolTable = container.querySelectorAll("table")[1]
     expect(toolTable?.querySelectorAll("tbody tr")).toHaveLength(6)
 
     fireEvent.click(getByText("ほか 3 件を見る"))
@@ -319,7 +319,7 @@ describe("PresentationalTokenUsage", () => {
       report: { ...FIXTURE_REPORT, tools: { rows: toolRowsOf(1), more: { kind: "none" } } },
     })
 
-    const toolTable = container.querySelectorAll(".token-usage-table")[1]
+    const toolTable = container.querySelectorAll("table")[1]
     const row = toolTable?.querySelector("tbody tr")
     const cells = [...(row?.querySelectorAll("td") ?? [])]
     // 回数・結果の大きさの2つの数の列のうち、棒があるのは結果の大きさだけ。

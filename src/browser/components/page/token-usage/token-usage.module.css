@@ -69,47 +69,20 @@
   min-width: 0;
 }
 
-/* 表は必ず幅いっぱいに収める（`table-layout: fixed`。列の中身で幅が決まる auto だと、モデル名が長い回に横へ溢れる）。
-   長い名前は折り返す（body の `overflow-wrap: anywhere`）。 */
-.token-usage-table {
-  width: 100%;
-  border-collapse: collapse;
-  table-layout: fixed;
-  font-size: var(--font-secondary);
-}
-.token-usage-table th,
-.token-usage-table td {
-  padding: var(--space-sm);
-  text-align: right;
-}
-/* 見出しの行は下の罫線だけで区切る（地を上げない。行の罫線より1段はっきりさせて、ここが表の頭だと分かるようにする）。 */
-.token-usage-table thead th {
-  border-bottom: 1px solid var(--usage-rule);
-  color: var(--usage-ink-note);
-  font-size: var(--font-label);
-  font-weight: normal;
-}
-.token-usage-table thead th:first-child {
-  text-align: left;
-}
-/* 行の区切りは行の頭（`th scope="row"` の名前）にも引く（数の列だけだと罫が名前の手前で途切れる）。 */
-.token-usage-table tbody th,
-.token-usage-table tbody td {
-  border-bottom: 1px solid var(--usage-rule-quiet);
-  color: var(--usage-ink-cell);
-}
-/* 数は等幅・桁揃え（大小を縦に読むため）。 */
-.token-usage-table td {
+/* 数は等幅・桁揃え（大小を縦に読むため）。
+   折り返さない（body の `overflow-wrap: anywhere` が、列を内容の幅にする表の中で数の途中を割る）。
+   折り返すのは行の頭の名前だけにして、狭い札でも名前の列が縮んで収まる。 */
+.token-usage-number {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
-/* 機械の名前（モデル・ツール）は等幅。
-   左に寄せる。右寄せだと長い名前が折り返したときに行の頭が揃わず、縦に読めない。
-   `.token-usage-table th, td` の右寄せに詳細度で負けるので、表の中であることまで綴る。 */
-.token-usage-table .token-usage-name {
-  font-family: var(--font-mono);
-  font-weight: normal;
-  text-align: left;
+.usage-card thead th {
+  white-space: nowrap;
+}
+.usage-card tbody th {
+  overflow-wrap: anywhere;
+  white-space: normal;
 }
 
 /* モデル別・ツール別の札を横に並べる行。

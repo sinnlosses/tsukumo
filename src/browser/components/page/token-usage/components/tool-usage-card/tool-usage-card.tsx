@@ -1,7 +1,14 @@
-import clsx from "clsx"
 import type { ReactElement } from "react"
 
 import { Button } from "../../../../ui/button/button.tsx"
+import {
+  Table,
+  TableCell,
+  TableHead,
+  TableHeaderCell,
+  TableRow,
+  TableRows,
+} from "../../../../ui/table/table.tsx"
 import type { ToolTableView } from "../../hooks/use-token-usage.ts"
 import tokenUsageStyles from "../../token-usage.module.css"
 import { BarredValue } from "../barred-value/barred-value.tsx"
@@ -22,28 +29,46 @@ export function ToolUsageCard(props: ToolUsageCardProps): ReactElement {
   return (
     <section className={tokenUsageStyles["usage-card"]}>
       <TableCardHead title="ツール別" order="結果の大きい順" />
-      <table className={clsx(tokenUsageStyles["token-usage-table"], styles["tool-usage-table"])}>
-        <thead>
-          <tr>
-            <th scope="col">ツール</th>
-            <th scope="col">回数</th>
-            <th scope="col">結果の大きさ</th>
-          </tr>
-        </thead>
-        <tbody>
+      <Table>
+        <TableHead>
+          <TableRow className="" header>
+            <TableHeaderCell align="left" sort="unspecified" hidden={false} scope="col">
+              ツール
+            </TableHeaderCell>
+            <TableHeaderCell align="right" sort="unspecified" hidden={false} scope="col">
+              回数
+            </TableHeaderCell>
+            <TableHeaderCell align="right" sort="unspecified" hidden={false} scope="col">
+              結果の大きさ
+            </TableHeaderCell>
+          </TableRow>
+        </TableHead>
+        <TableRows>
           {props.tools.rows.map((tool) => (
-            <tr key={tool.name}>
-              <th scope="row" className={tokenUsageStyles["token-usage-name"]}>
+            <TableRow key={tool.name} className="" header={false}>
+              <TableHeaderCell align="left" sort="unspecified" hidden={false} scope="row">
                 {tool.name}
-              </th>
-              <td>{tool.calls}</td>
-              <td>
+              </TableHeaderCell>
+              <TableCell
+                align="right"
+                className={tokenUsageStyles["token-usage-number"]}
+                hidden={false}
+                span={1}
+              >
+                {tool.calls}
+              </TableCell>
+              <TableCell
+                align="right"
+                className={tokenUsageStyles["token-usage-number"]}
+                hidden={false}
+                span={1}
+              >
                 <BarredValue formatted={tool.size} share={tool.share} />
-              </td>
-            </tr>
+              </TableCell>
+            </TableRow>
           ))}
-        </tbody>
-      </table>
+        </TableRows>
+      </Table>
       {more.kind === "some" && (
         <Button
           variant="link"

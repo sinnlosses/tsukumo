@@ -79,12 +79,15 @@ export type TableHeaderCellProps = {
   readonly sort: TableSort
   /** 支援技術に見せない空の列か。 */
   readonly hidden: boolean
+  /** 列の見出しなら col、行の頭（tbody の先頭の名前）なら row。 */
+  readonly scope: "col" | "row"
   readonly children: ReactNode
 }
 
 export function TableHeaderCell(props: TableHeaderCellProps): ReactElement {
   return (
     <AstryxTableHeaderCell
+      scope={props.scope}
       style={ALIGN_STYLE[props.align]}
       aria-sort={props.sort === "unspecified" ? undefined : props.sort}
       aria-hidden={props.hidden ? true : undefined}

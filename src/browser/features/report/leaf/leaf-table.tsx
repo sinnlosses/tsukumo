@@ -54,6 +54,7 @@ export function LeafTable(props: LeafTableProps): ReactElement {
                 align={alignOf(index)}
                 sort={props.headSorts?.[index] ?? "unspecified"}
                 hidden={false}
+                scope="col"
               >
                 {cell}
               </TableHeaderCell>

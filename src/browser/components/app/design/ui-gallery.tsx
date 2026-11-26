@@ -211,10 +211,10 @@ export function UiGallery(): ReactElement {
         <Table>
           <TableHead>
             <TableRow className="" header>
-              <TableHeaderCell align="left" sort="unspecified" hidden={false}>
+              <TableHeaderCell align="left" sort="unspecified" hidden={false} scope="col">
                 名前
               </TableHeaderCell>
-              <TableHeaderCell align="right" sort="ascending" hidden={false}>
+              <TableHeaderCell align="right" sort="ascending" hidden={false} scope="col">
                 件数
               </TableHeaderCell>
             </TableRow>
