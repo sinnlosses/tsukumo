@@ -23,7 +23,7 @@
 }
 /* 吹き出しの顔（`Surface`）。余白と、話者ごとの枠・地・角を持つ。尾（`.stream-aim`）は顔の外、外側の行に重ねる。 */
 .stream-entry-face {
-  padding: var(--space-sm) var(--space-lg);
+  padding: var(--space-md) var(--space-xl);
   color: inherit;
   font: inherit;
 }

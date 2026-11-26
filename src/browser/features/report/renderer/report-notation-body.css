@@ -11,8 +11,8 @@
   initial-value: 0px;
 }
 .detail-block {
-  --report-block-gap: 12px;
-  --report-figure-gap: 36px;
+  --report-block-gap: 24px;
+  --report-figure-gap: 48px;
   --report-heading-gap: 12px;
   --report-measure: 42em;
   --report-measure-wide: 63em;
