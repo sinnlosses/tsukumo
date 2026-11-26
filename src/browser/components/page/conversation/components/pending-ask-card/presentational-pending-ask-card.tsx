@@ -35,9 +35,8 @@ export function PresentationalPendingAskCard(props: {
   readonly onCloseSheet: () => void
 }): ReactElement {
   const { inquiry, chips, sheet } = props
-  const subject = inquiry.kind === "permission" ? inquiry.toolName : inquiry.header
-  const question =
-    inquiry.kind === "permission" ? `${inquiry.toolName} を実行してよい？` : inquiry.text
+  const subject = inquiry.kind === "question" ? inquiry.header : inquiry.toolName
+  const question = questionText(inquiry)
   const hasBrief = inquiry.kind === "question" && inquiry.brief !== undefined
   const recommendedReason =
     inquiry.kind === "question" ? inquiry.brief?.recommended?.reason : undefined
@@ -149,6 +148,17 @@ export function PresentationalPendingAskCard(props: {
   )
 }
 
+function questionText(inquiry: ActiveInquiry): string {
+  switch (inquiry.kind) {
+    case "permission":
+      return `${inquiry.toolName} を実行してよい？`
+    case "denial":
+      return `自動判定が止めた ${inquiry.toolName} を、一度だけ許可する？`
+    case "question":
+      return inquiry.text
+  }
+}
+
 /** 「？ 答え待ち · 題」。札の頭と板の頭で同じに書く。 */
 function HeadLead(props: { readonly subject: string }): ReactElement {
   return (
@@ -181,8 +191,8 @@ function Progress(props: {
 
 function Answers(props: { readonly inquiry: ActiveInquiry }): ReactElement {
   const { inquiry } = props
-  if (inquiry.kind === "permission") {
-    // 選択肢は「許可」（番号 1）「拒否」の順で届く。表示は拒否が左で、塗るのは許可。
+  if (inquiry.kind === "permission" || inquiry.kind === "denial") {
+    // 選択肢は許可する側（番号 1）・拒む側の順で届く。表示は拒む側が左で、塗るのは許可する側。
     return (
       <div className={clsx(styles["pending-ask-card-grid"], styles["is-two-columns"])}>
         {inquiry.options.toReversed().map((option) => (

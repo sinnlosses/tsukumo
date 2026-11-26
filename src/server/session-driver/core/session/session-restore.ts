@@ -14,6 +14,7 @@ import type { RestoredEvent, SessionEvent } from "../../../../shared/session/ses
 import { nonBlankString } from "../../../../shared/utils/non-blank-string.ts"
 import { asideReadingOf } from "../aside-prompt.ts"
 import { createCallReview } from "../call-review.ts"
+import { isDenialNoticePrompt } from "../denial-grant.ts"
 import { toSessionEvents } from "../message/sdk-message.ts"
 import { isProgressNudgePrompt } from "../progress-nudge.ts"
 import type { InputLedger, LedgeredInputKind, LedgeredTurn } from "./input-ledger.ts"
@@ -85,6 +86,7 @@ export function restoredMessageEvents(
   const ledgered = uuid === undefined ? undefined : ledger.inputOf(uuid)
   switch (ledgered?.kind ?? kindByWrapping(text)) {
     case "progress-nudge":
+    case "denial-notice":
       return [{ kind: "turn-resumed" }]
     case "aside": {
       const reading = asideReadingOf(text)
@@ -170,6 +172,9 @@ function boundedTurns(steps: readonly RestoringStep[]): readonly RestoredEvent[]
 function kindByWrapping(text: string): LedgeredInputKind {
   if (isProgressNudgePrompt(text)) {
     return "progress-nudge"
+  }
+  if (isDenialNoticePrompt(text)) {
+    return "denial-notice"
   }
   return asideReadingOf(text) === undefined ? "request" : "aside"
 }

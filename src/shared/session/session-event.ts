@@ -8,6 +8,7 @@ import { z } from "zod"
 import type { DiaryEvent } from "../diary/diary.ts"
 import type { ReportImageSize } from "../report/report-image.ts"
 import type { PendingAsk } from "../session-driver/pending-ask.ts"
+import type { PermissionDenial } from "../session-driver/permission-denial.ts"
 import type { RecordedPromptImage } from "../session-driver/prompt-image.ts"
 import type { QuestionBrief } from "../session-driver/question-brief.ts"
 import type { Question, QuestionAnswer } from "../session-driver/question.ts"
@@ -114,6 +115,13 @@ export type SessionEvent =
   | DelegateEvent
   /** 答え待ちの列が変わった（積まれた・解決した）。 */
   | { readonly kind: "pending-changed"; readonly pending: readonly PendingAsk[] }
+  /**
+   * 自動判定に呼び出しが拒否された（SDK の `PermissionDenied` フック。サブエージェントの中の呼び出しも含む）。
+   * 拒否の文と呼び出しの入力は載せない（{@link PermissionDenial}）。同じ `toolUseId` が来たら置き換える。
+   */
+  | { readonly kind: "permission-denied"; readonly denial: PermissionDenial }
+  /** 拒否を下げた（利用者が答えた・同じ呼び出しが打ち直された）。 */
+  | { readonly kind: "permission-denial-settled"; readonly toolUseId: string }
   /**
    * 質問（`AskUserQuestion`）に利用者が答えた。答えが確定した時点で1回だけ流す。
    * `pending-changed` は列が空になったことしか伝えないので、「何を聞いて、どう答えたか」を残せるのはこの経路だけ。

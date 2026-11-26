@@ -1,5 +1,6 @@
 // 答え待ちの列。
 // SDK の `canUseTool` に届いた許可要求とキャラクターからの質問を積み、画面から答えが来るまで Promise を保留する。
+// 自動判定の拒否に一度だけ許可した呼び出しは積まずに許可する（印は `DenialGrants` が持つ）。
 //
 // 許可要求の入力と質問文は会話の内容そのものなので、ログにもファイルにも書かない。
 
@@ -44,8 +45,10 @@ export type AskRequest = {
  * 列の外へ知らせるもの。
  * `onChange` は積まれたとき・解決したときの合図（画面の更新）。
  * `onAnswered` は質問に答えが付いたとき1回だけ（メインビューに残す質問の記録）。
+ * `granted` は一度だけの許可の控えを引く口（`DenialGrants.takeArmed`）。`true` を返した呼び出しは積まずに許可する。
  */
 export type PendingAnswerHandlers = {
+  readonly granted: (toolUseId: string) => boolean
   readonly onChange: (pending: readonly PendingAsk[]) => void
   readonly onAnswered: (
     toolUseId: string,
@@ -108,6 +111,10 @@ export function createPendingAnswerQueue(handlers: PendingAnswerHandlers): Pendi
         const held = request.toolName === ASK_USER_QUESTION_TOOL_NAME ? takeBrief() : []
         if (request.signal?.aborted === true) {
           resolve({ behavior: "deny", message: DENY_MESSAGE })
+          return
+        }
+        if (handlers.granted(request.id)) {
+          resolve({ behavior: "allow", updatedInput: { ...request.input } })
           return
         }
         const questions =

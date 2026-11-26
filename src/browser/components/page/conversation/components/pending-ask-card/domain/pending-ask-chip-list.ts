@@ -11,7 +11,7 @@ export type PendingAskChips = {
 }
 
 /**
- * 質問は添え書きの図の部品のうち最初の `list` の項目、許可は対象の1行。
+ * 質問は添え書きの図の部品のうち最初の `list` の項目、許可は対象の1行、自動判定の拒否は理由。
  * どちらも無ければ空。
  */
 export function pendingAskChips(inquiry: InquiryModel): PendingAskChips {
@@ -27,6 +27,9 @@ function chipTexts(inquiry: InquiryModel): readonly string[] {
   if (inquiry.kind === "permission") {
     const line = inquiry.targetText.split(/\r?\n/).find((candidate) => candidate.trim() !== "")
     return line === undefined ? [] : [line.trim()]
+  }
+  if (inquiry.kind === "denial") {
+    return inquiry.reason === "" ? [] : [inquiry.reason]
   }
   if (inquiry.kind === "question") {
     for (const option of inquiry.options) {

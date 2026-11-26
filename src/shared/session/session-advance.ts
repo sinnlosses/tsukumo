@@ -268,6 +268,19 @@ const SESSION_EVENT_FOLDS = {
     ...state,
     pending: stampPending(state.pending, event.pending, at),
   }),
+  "permission-denied": (state, event, at) => ({
+    ...state,
+    permissionDenials: [
+      ...state.permissionDenials.filter((denial) => denial.toolUseId !== event.denial.toolUseId),
+      { ...event.denial, deniedAt: at },
+    ],
+  }),
+  "permission-denial-settled": (state, event) => ({
+    ...state,
+    permissionDenials: state.permissionDenials.filter(
+      (denial) => denial.toolUseId !== event.toolUseId,
+    ),
+  }),
   "question-answered": advanceByQuestionAnswered,
   // 書きかけのまま終わったターン（中断など）の本文を捨てず、確定した記録に移す。
   "turn-finished": (state, event, at) => {
@@ -282,8 +295,10 @@ const SESSION_EVENT_FOLDS = {
     }
   },
   // `diaryWriting` と見直しの欄はここでは動かさない（`turn-finished` と同じ理由）。
+  // 拒否は下げる（一度だけの許可の印を持つ駆動ごと終わったので、答えても通らない）。
   "session-ended": (state, event, at) => ({
     ...settleUtterance(state),
+    permissionDenials: [],
     sdkTurn: CLOSED_SDK_TURN,
     endedReason: event.reason,
     turn: finishTurn(state.turn, at, { kind: "ended" }),

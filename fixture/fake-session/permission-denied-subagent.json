@@ -1,0 +1,41 @@
+{
+  "name": "permission-denied-subagent",
+  "steps": [
+    {
+      "afterMs": 100,
+      "event": {
+        "kind": "permission-denied",
+        "denial": {
+          "toolUseId": "fake-denied-2",
+          "toolName": "Write",
+          "reason": "架空の理由: 作業ディレクトリの外へ書き込もうとしている",
+          "agentId": "fake-agent-1"
+        }
+      }
+    },
+    {
+      "afterMs": 200,
+      "event": {
+        "kind": "speech",
+        "text": "手伝ってくれている子の操作が止められたみたい。",
+        "expression": "flustered"
+      }
+    },
+    {
+      "afterMs": 1200,
+      "event": {
+        "kind": "utterance",
+        "text": "サブエージェントの中で自動判定が止めた操作のお願いを出す場面（架空）。\n"
+      }
+    },
+    {
+      "afterMs": 1300,
+      "event": {
+        "kind": "turn-finished",
+        "outcome": {
+          "kind": "completed"
+        }
+      }
+    }
+  ]
+}

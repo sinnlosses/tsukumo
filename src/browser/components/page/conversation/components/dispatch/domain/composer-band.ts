@@ -26,7 +26,7 @@ export type ComposerBandState = {
   /** `/clear` の続きがあって送らなかった文が、いまの下書きのままか。 */
   readonly clearDropped: boolean
   readonly phone: boolean
-  readonly inquiry: "none" | "permission" | "question"
+  readonly inquiry: "none" | "permission" | "denial" | "question"
   /** お伺いの帯の文言で、誰が聞いているかを言う主語（名前が無いパックでは空）。 */
   readonly askerSubject: string
   readonly favorShown: boolean
@@ -111,8 +111,13 @@ const CLEAR_DROPPED_BAND_TEXT =
 export const FAVOR_BAND_TEXT = "お願いが1件あります"
 
 /** `<textarea>` の上の帯の文言。誰が聞いているかを名前で言い、名前が無いパックでは名前を使わずに書く。 */
-function inquiryBandText(kind: "permission" | "question", subject: string): string {
-  return kind === "question"
-    ? `${subject}質問しています。選択肢から選ぶか、ここに書いて答えられます`
-    : `↓ ${subject}実行の許可を待っています`
+function inquiryBandText(kind: "permission" | "denial" | "question", subject: string): string {
+  switch (kind) {
+    case "question":
+      return `${subject}質問しています。選択肢から選ぶか、ここに書いて答えられます`
+    case "permission":
+      return `↓ ${subject}実行の許可を待っています`
+    case "denial":
+      return "↓ 自動判定が止めた操作があります"
+  }
 }

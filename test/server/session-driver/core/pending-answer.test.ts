@@ -10,7 +10,7 @@ import type { QuestionBrief } from "../../../../src/shared/session-driver/questi
 
 /** 合図を見ないときの受け口。 */
 function noHandlers(): PendingAnswerHandlers {
-  return { onChange: () => {}, onAnswered: () => {} }
+  return { granted: () => false, onChange: () => {}, onAnswered: () => {} }
 }
 
 function permissionRequest(overrides: Partial<AskRequest> = {}): AskRequest {
@@ -68,6 +68,7 @@ describe("createPendingAnswerQueue", () => {
   it("許可要求を積み、答えるまで解決しない", async () => {
     const changes: (readonly PendingAsk[])[] = []
     const queue = createPendingAnswerQueue({
+      ...noHandlers(),
       onChange: (pending) => changes.push(pending),
       onAnswered: () => {},
     })
@@ -214,6 +215,7 @@ describe("createPendingAnswerQueue", () => {
   it("任せた問と選んだ問は、問ごとに文を分けて組み、記録の合図には任せたを写す", async () => {
     const answered: unknown[] = []
     const queue = createPendingAnswerQueue({
+      ...noHandlers(),
       onChange: () => {},
       onAnswered: (_, __, answers) => answered.push(answers),
     })
@@ -265,6 +267,7 @@ describe("createPendingAnswerQueue", () => {
   it("質問に答えると、記録のための合図を質問ごとの並びのまま1回だけ流す", () => {
     const answered: unknown[] = []
     const queue = briefedQueue({
+      ...noHandlers(),
       onChange: () => {},
       onAnswered: (toolUseId, questions, answers, briefs) =>
         answered.push({ toolUseId, questions, answers, briefs }),
@@ -301,6 +304,7 @@ describe("createPendingAnswerQueue", () => {
   it("許可要求に答えても、記録のための合図は流れない", () => {
     const answered: unknown[] = []
     const queue = createPendingAnswerQueue({
+      ...noHandlers(),
       onChange: () => {},
       onAnswered: (toolUseId, questions, answers) =>
         answered.push({ toolUseId, questions, answers }),
@@ -352,6 +356,7 @@ describe("createPendingAnswerQueue", () => {
   it("中断済みの signal で積むと、列に積まず拒否を返す", async () => {
     const changes: (readonly PendingAsk[])[] = []
     const queue = createPendingAnswerQueue({
+      ...noHandlers(),
       onChange: (pending) => changes.push(pending),
       onAnswered: () => {},
     })
@@ -366,6 +371,7 @@ describe("createPendingAnswerQueue", () => {
   it("settleAll は積まれた全件を拒否で解決し、空の状態を1回だけ知らせる", async () => {
     const changes: (readonly PendingAsk[])[] = []
     const queue = createPendingAnswerQueue({
+      ...noHandlers(),
       onChange: (pending) => changes.push(pending),
       onAnswered: () => {},
     })
@@ -384,6 +390,7 @@ describe("createPendingAnswerQueue", () => {
   it("settleAll は何も積まれていなければ何も知らせない", () => {
     const changes: (readonly PendingAsk[])[] = []
     const queue = createPendingAnswerQueue({
+      ...noHandlers(),
       onChange: (pending) => changes.push(pending),
       onAnswered: () => {},
     })
@@ -396,6 +403,7 @@ describe("createPendingAnswerQueue", () => {
   it("答えたあとに abort が来ても二重に畳まない", async () => {
     const changes: (readonly PendingAsk[])[] = []
     const queue = createPendingAnswerQueue({
+      ...noHandlers(),
       onChange: (pending) => changes.push(pending),
       onAnswered: () => {},
     })
@@ -420,6 +428,7 @@ describe("添え書きを次の質問に載せる", () => {
   it("預けた添え書きは、次の AskUserQuestion の答え待ちに載って onChange に届く", () => {
     const changes: (readonly PendingAsk[])[] = []
     const queue = createPendingAnswerQueue({
+      ...noHandlers(),
       onChange: (pending) => changes.push(pending),
       onAnswered: () => {},
     })
@@ -489,6 +498,7 @@ describe("選択肢が2つ以上の質問は添え書きが無いと断る", () 
   it("添え書きが無ければ積まず、聞き直しを促す理由つきで断る", async () => {
     const changes: (readonly PendingAsk[])[] = []
     const queue = createPendingAnswerQueue({
+      ...noHandlers(),
       onChange: (p) => changes.push(p),
       onAnswered: () => {},
     })
@@ -573,6 +583,7 @@ describe("選択肢が2つ以上の質問は添え書きが無いと断る", () 
   it("添え書きの無い質問に答えると、合図の添え書きは空で流れる", () => {
     const briefs: unknown[] = []
     const queue = createPendingAnswerQueue({
+      ...noHandlers(),
       onChange: () => {},
       onAnswered: (_id, _questions, _answers, given) => briefs.push(given),
     })

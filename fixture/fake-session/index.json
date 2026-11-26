@@ -183,7 +183,9 @@
     "workflow-diagram-par",
     "report-compare-versus",
     "speech-arrival",
-    "map-mark"
+    "map-mark",
+    "permission-denied",
+    "permission-denied-subagent"
   ],
   "pastSessions": [
     {

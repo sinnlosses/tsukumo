@@ -14,6 +14,7 @@ import type { TaskSummaryResult } from "../repository/task-summary.ts"
 import type { ApiTrouble } from "../session-driver/api-trouble.ts"
 import type { BackgroundTask } from "../session-driver/background-task.ts"
 import type { StampedPendingAsk } from "../session-driver/pending-ask.ts"
+import type { StampedPermissionDenial } from "../session-driver/permission-denial.ts"
 import type { RateLimit } from "../session-driver/rate-limit.ts"
 import type { PreviousUsageReview, UsageProposalRun, UsageReview } from "../usage/usage-review.ts"
 import { BUILTIN_BACKGROUND_MODELS, type BackgroundModels } from "./background-model.ts"
@@ -72,6 +73,8 @@ export type SessionState = {
   readonly partialUtterance: string
   /** 答え待ちの列（許可プロンプトと質問）。届いた時刻つき。 */
   readonly pending: readonly StampedPendingAsk[]
+  /** 自動判定に拒否され、利用者の答えを待っている呼び出し。届いた順・届いた時刻つき。 */
+  readonly permissionDenials: readonly StampedPermissionDenial[]
   /** `init` がまだ届いていないか、届いてセッションID・許可モードが分かっているか。 */
   readonly session: SessionInfo
   /**
@@ -263,6 +266,7 @@ export const INITIAL_SESSION_STATE: SessionState = {
   records: [],
   partialUtterance: "",
   pending: [],
+  permissionDenials: [],
   session: { kind: "starting" },
   model: undefined,
   modelEffortSupport: [],

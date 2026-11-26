@@ -41,6 +41,8 @@ const SESSION_EVENT_KINDS = {
   "delegate-progress": true,
   "progress-nudged": true,
   "pending-changed": true,
+  "permission-denied": true,
+  "permission-denial-settled": true,
   "question-answered": true,
   "turn-finished": true,
   "api-retry": true,

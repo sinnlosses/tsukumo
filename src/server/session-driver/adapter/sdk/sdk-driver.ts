@@ -23,6 +23,7 @@ import { createReportGate, type ReportGate } from "../../../report/core/prompt/r
 import { bandPositionText } from "../../../work-plan/core/band-position.ts"
 import { asidePromptText } from "../../core/aside-prompt.ts"
 import { type CallReview, createCallReview, passRelayedEvents } from "../../core/call-review.ts"
+import { createDenialGrants, type DenialGrants } from "../../core/denial-grant.ts"
 import { createExternalToolMark } from "../../core/external-tool-mark.ts"
 import { createInterruptMark, type InterruptMark } from "../../core/interrupt-mark.ts"
 import { isSubagentMessage, toSessionEvents } from "../../core/message/sdk-message.ts"
@@ -39,7 +40,11 @@ import type {
   SessionFailurePlace,
 } from "../../core/session-driver.ts"
 import { effectsOfEvent } from "../../core/session/event-effect.ts"
-import { createInputLedgerIntake, type InputLedgerIntake } from "../../core/session/input-ledger.ts"
+import {
+  consumedInputUuids,
+  createInputLedgerIntake,
+  type InputLedgerIntake,
+} from "../../core/session/input-ledger.ts"
 import { createSessionEnding } from "../../core/session/session-ending.ts"
 import {
   createSessionTitleIntake,
@@ -60,6 +65,7 @@ import { readPlanUsage } from "./sdk-plan-usage.ts"
 import { createPromptStream, type PromptContentBlock, toImageBlocks } from "./sdk-prompt-stream.ts"
 import {
   buildQuerySeedOptions,
+  permissionDeniedHooks,
   postToolUseHooks,
   preToolUseHooks,
   stopHooks,
@@ -126,7 +132,18 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
   const options: SessionDriverOptions = { ...given, onEvent: withSelfStartedTurns(deliver) }
   const delayWatch = createPromptDelayWatch(diagnose)
   const input = createPromptStream(delayWatch, given.now)
+  // 拒否への答えの知らせは依頼を流さない（利用者の発言ではない）。ターンが止まっていれば、続く `init` から `turn-resumed` が補われる。
+  const denials = createDenialGrants({
+    onEvent: options.onEvent,
+    sendNotice: (text) => {
+      delayWatch.pushed(options.now(), undefined)
+      const uuid = push(text, [])
+      ledgerIntake.noteSent(uuid, "denial-notice")
+      return uuid
+    },
+  })
   const queue = createPendingAnswerQueue({
+    granted: denials.takeArmed,
     onChange: (pending) => {
       options.onEvent({ kind: "pending-changed", pending })
     },
@@ -171,8 +188,10 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
               options.onEvent,
               callReview.latestPlan,
               callReview.workflowAgentPhase,
+              denials.review,
             ),
             ...postToolUseHooks(options.onEvent, externalToolMark, toolHookClock, diagnose),
+            ...permissionDeniedHooks(denials.deny),
             ...implementerStopHooks(callReview),
             ...handbackNoteHooks(
               callReview,
@@ -250,6 +269,7 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
     interruptMark,
     ledgerIntake,
     draftIntake,
+    denials,
   )
   void relayCommandDescriptions(session, options)
   void relayPlan(session, options)
@@ -285,7 +305,8 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
       interruptMark.send()
       await session.interrupt()
     },
-    answer: (id, answer) => queue.answer(id, answer),
+    // 答え待ちの列に無い id は、自動判定の拒否への答え。
+    answer: (id, answer) => queue.answer(id, answer) || denials.answer(id, answer),
     pending: () => queue.list(),
     readContextUsage: () => readContextUsage(session, failedWithError),
     readPlanUsage: async () => {
@@ -315,6 +336,7 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
       progressNudge.close()
       delayWatch.discard()
       queue.settleAll()
+      denials.clear()
       input.end()
       session.close()
     },
@@ -334,6 +356,7 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
  * `titleIntake` が覚えている題（`report` の `title` 引数）もターンの終わりに取り出し、`titleWriter` で書く。
  * 入力の控え（`ledgerIntake`）もメインのメッセージを見て、ターンの終わりに書く。
  * 書いている途中の `report` の部品（`draftIntake`）もメインの断片から切り出し、変換したイベントの後ろに並べる。
+ * メインのターンが終わったら、そのターンが受け取った入力を `denials` に見せ、使われなかった一度だけの許可を捨てさせる。
  */
 async function relayMessages(
   session: AsyncIterable<unknown>,
@@ -346,6 +369,7 @@ async function relayMessages(
   interruptMark: InterruptMark,
   ledgerIntake: InputLedgerIntake,
   draftIntake: ReportDraftIntake,
+  denials: Pick<DenialGrants, "finishTurn">,
 ): Promise<void> {
   // セッションIDは `session-info`（ターンのたびに届く）から取り、ターンが終わるたびに印を付け直す（`markSession`）。
   let sessionId: SessionId | undefined = undefined
@@ -373,6 +397,9 @@ async function relayMessages(
         }
         if (event.kind === "session-info") {
           sessionId = event.sessionId
+        }
+        if (fromMain && event.kind === "turn-finished") {
+          denials.finishTurn(consumedInputUuids(message))
         }
         interruptMark.observe(event)
         for (const effect of effectsOfEvent(event, fromMain, options.mode, sessionId)) {

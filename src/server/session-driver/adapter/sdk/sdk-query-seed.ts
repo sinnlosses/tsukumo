@@ -1,5 +1,5 @@
 // `query()` に渡す `options` のうち `mcpServers` / `canUseTool`（クロージャが要る）を除いた部分と、
-// `Stop`・`PreToolUse`・`PostToolUse` などのフックの登録を組み立てる。
+// `Stop`・`PreToolUse`・`PostToolUse`・`PermissionDenied` などのフックの登録を組み立てる。
 
 import type {
   BaseHookInput,
@@ -35,6 +35,7 @@ import {
 import { pinToBackground } from "../../core/background-delegation.ts"
 import { rewriteBashCommand } from "../../core/bash-command-rewrite.ts"
 import type { CallReview } from "../../core/call-review.ts"
+import type { DenialGrants } from "../../core/denial-grant.ts"
 import type { ExternalToolMark } from "../../core/external-tool-mark.ts"
 import type { SessionDriverOptions, SessionMode } from "../../core/session-driver.ts"
 import {
@@ -46,9 +47,17 @@ import { childProcessEnv } from "../../core/visible-output-nudge.ts"
 import { figurePluginDir, workflowPluginDir } from "../workflow-plugin.ts"
 import { matcherExcluding } from "./hook-matcher.ts"
 import { waitForQueuedMessages } from "./queued-message-wait.ts"
-import { isInSubagent, toPreToolUseOutput } from "./sdk-hook-output.ts"
+import { isInSubagent, toAskOutput, toPreToolUseOutput } from "./sdk-hook-output.ts"
 
 const GATE_MATCHER = matcherExcluding(GATE_EXEMPT_TOOL_NAMES, GATE_EXEMPT_TOOL_PREFIX)
+
+/**
+ * 一度だけの許可を照らすフックの matcher。委譲ゲートと同じく読み取りと tsukumo のツールを外し、`Bash` も外す（`Bash` は差し替えのフックが照らす）。
+ */
+const GRANT_REVIEW_MATCHER = matcherExcluding(
+  [...GATE_EXEMPT_TOOL_NAMES, "Bash"],
+  GATE_EXEMPT_TOOL_PREFIX,
+)
 
 /** `query()` の `options` のうち、`mcpServers` / `canUseTool`（クロージャが要る）を除いた部分。 */
 export type QuerySeedOptions = {
@@ -137,6 +146,9 @@ export function buildQuerySeedOptions(options: SessionDriverOptions): QuerySeedO
  * - `Edit|Write`: `planMissing` が真のあいだ、メインの呼び出しを拒む（`judgeEditAgainstMissingPlan`。渡さなければ登録しない）
  * - `Agent`: メインの呼び出しを背景に固定する（入力の差し替えだけを返し、許可の判定には触らない）
  * - `Bash`: `command` を `rewriteBash` が返した短い出力の版へ差し替える（同じく入力の差し替えだけ。サブエージェントの中の呼び出しも対象）
+ * - 一度だけの許可（`Bash` はその差し替えのあと、ほかは委譲ゲートと同じ範囲から `Bash` を除いた matcher）: 呼び出しを `reviewByGrant` で印と照らし、当たれば `ask` を返して `canUseTool` へ回す。
+ *   `Bash` は差し替えの前と後の両方の入力で照らす（拒否が見た入力と打ち直しの入力が、どちらの版でもずれないように）。
+ *   差し替えと照合を同じフックで順に行うのは、別のフックに分けると並んで走り、差し替え後の入力が見えないため
  *
  * 委譲ゲートと `phase_result` のフックは、所要を測るために呼ばれた時刻を `hookClock` に控える。
  * サブエージェント内の呼び出しかは、{@link isInSubagent} で真偽に畳んでから渡す。
@@ -153,6 +165,7 @@ export function preToolUseHooks(
   onEvent: (event: SessionEvent) => void,
   latestPlan: () => LatestWorkPlan,
   workflowAgentPhase: CallReview["workflowAgentPhase"],
+  reviewByGrant: DenialGrants["review"],
 ): Partial<Record<HookEvent, HookCallbackMatcher[]>> {
   return {
     PreToolUse: [
@@ -272,15 +285,32 @@ export function preToolUseHooks(
         ],
       },
       {
+        matcher: GRANT_REVIEW_MATCHER,
+        hooks: [
+          async (input) => {
+            if (input.hook_event_name !== "PreToolUse") {
+              return {}
+            }
+            return reviewByGrant(input.tool_name, [input.tool_input], input.tool_use_id) === "ask"
+              ? toAskOutput()
+              : {}
+          },
+        ],
+      },
+      {
         matcher: "Bash",
         hooks: [
           async (input) => {
             if (input.hook_event_name !== "PreToolUse") {
               return {}
             }
-            return toPreToolUseOutput(
-              await rewriteBashCommand(input.tool_name, input.tool_input, rewriteBash),
-            )
+            const verdict = await rewriteBashCommand(input.tool_name, input.tool_input, rewriteBash)
+            const rewritten = verdict.kind === "rewrite" ? verdict.input : undefined
+            const inputs =
+              rewritten === undefined ? [input.tool_input] : [input.tool_input, rewritten]
+            return reviewByGrant(input.tool_name, inputs, input.tool_use_id) === "ask"
+              ? toAskOutput(rewritten)
+              : toPreToolUseOutput(verdict)
           },
         ],
       },
@@ -356,6 +386,37 @@ export function postToolUseHooks(
             if (input.hook_event_name === "PostToolUseFailure") {
               observe(input, "PostToolUseFailure", input.duration_ms)
             }
+            return {}
+          },
+        ],
+      },
+    ],
+  }
+}
+
+/**
+ * 自動判定の拒否を受ける `PermissionDenied` フックを1つ登録する（サブエージェントの中の拒否も同じフックに来る）。
+ * 入力（`tool_input`）は一度だけの許可の照合のために `deny` へ渡すだけで、イベントには載らない。
+ * `retry` は返さない（モデルは拒否の文の指示で自分から打ち直す）。
+ */
+export function permissionDeniedHooks(
+  deny: DenialGrants["deny"],
+): Partial<Record<HookEvent, HookCallbackMatcher[]>> {
+  return {
+    PermissionDenied: [
+      {
+        hooks: [
+          async (input) => {
+            if (input.hook_event_name !== "PermissionDenied") {
+              return {}
+            }
+            deny({
+              toolUseId: input.tool_use_id,
+              toolName: input.tool_name,
+              input: input.tool_input,
+              reason: input.reason,
+              ...(input.agent_id === undefined ? {} : { agentId: input.agent_id }),
+            })
             return {}
           },
         ],

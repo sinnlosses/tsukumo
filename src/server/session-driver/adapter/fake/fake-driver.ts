@@ -67,6 +67,8 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
   let closed = false
   let ended = false
   let pending: readonly PendingAsk[] = []
+  // 疑似セッションが積んだ自動判定の拒否の id。答えると下げるだけで、モデルへの知らせも一度だけの許可の印も無い。
+  let denials: readonly string[] = []
   // いま動いているモデルと許可モード。起こした既定から始まり、`setModel` / `setPermissionMode` で変わる（本物は SDK が持つ値で、ここはその代わり）。
   let model: string = options.sessionDefault.model
   let permissionMode: PermissionMode = options.sessionDefault.permissionMode
@@ -82,6 +84,12 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
   const emit = (event: SessionEvent): void => {
     if (event.kind === "pending-changed") {
       pending = event.pending
+    }
+    if (event.kind === "permission-denied") {
+      denials = [...denials, event.denial.toolUseId]
+    }
+    if (event.kind === "permission-denial-settled") {
+      denials = denials.filter((id) => id !== event.toolUseId)
     }
     if (event.kind === "session-info") {
       names = { skillNames: event.skillNames, agentNames: event.agentNames }
@@ -158,7 +166,11 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
   const settle = (id: string, answer: Answer): boolean => {
     const ask = pending.find((candidate) => candidate.id === id)
     if (ask === undefined) {
-      return false
+      if (!denials.includes(id) || answer.kind === "answers") {
+        return false
+      }
+      emit({ kind: "permission-denial-settled", toolUseId: id })
+      return true
     }
     // 本物の駆動（`PendingAnswerQueue`）と同じで、質問に答えが付いたら記録を流す。
     // これが無いと、疑似セッションで目視するときだけ質問の記録が残らない。

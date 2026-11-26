@@ -1,5 +1,5 @@
 // 入力の控え。tsukumo が送った入力の種類と、ターンの終わり方を、送った `SDKUserMessage` の `uuid` を鍵に持つ。
-// transcript には種類（依頼・脇の話・進みの差し込み）も、ターンの終わり方（`result`）も残らないので、組み直しはここを引く。
+// transcript には種類（依頼・脇の話・進みの差し込み・拒否への答えの知らせ）も、ターンの終わり方（`result`）も残らないので、組み直しはここを引く。
 // 持つのは uuid・種類・終わり方だけで、本文は持たない。
 
 import { isPlainObject } from "remeda"
@@ -13,12 +13,13 @@ import {
 import type { SessionId } from "../../../../shared/session/session-id.ts"
 
 /** 控えに残す入力の種類。 */
-export type LedgeredInputKind = "request" | "aside" | "progress-nudge"
+export type LedgeredInputKind = "request" | "aside" | "progress-nudge" | "denial-notice"
 
 const LEDGERED_INPUT_KINDS = [
   "request",
   "aside",
   "progress-nudge",
+  "denial-notice",
 ] as const satisfies readonly LedgeredInputKind[]
 
 const turnOutcomeSchema = z.discriminatedUnion("kind", [
@@ -170,7 +171,7 @@ export function createInputLedgerIntake(): InputLedgerIntake {
 }
 
 /** `result` の `user_message_uuids`（無ければ `user_message_uuid`）。ターンが受け取った入力の uuid。 */
-function consumedInputUuids(result: unknown): readonly string[] {
+export function consumedInputUuids(result: unknown): readonly string[] {
   if (!isPlainObject(result)) {
     return []
   }

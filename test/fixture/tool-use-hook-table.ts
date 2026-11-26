@@ -11,6 +11,7 @@ import {
   postToolUseHooks,
   preToolUseHooks,
 } from "../../src/server/session-driver/adapter/sdk/sdk-query-seed.ts"
+import type { DenialGrants } from "../../src/server/session-driver/core/denial-grant.ts"
 import {
   createExternalToolMark,
   type ExternalToolMark,
@@ -50,9 +51,10 @@ export type PreToolUseSetup = {
   readonly onEvent: (event: SessionEvent) => void
   readonly latestPlan: () => LatestWorkPlan
   readonly workflowAgentPhase: (agentId: string) => string | undefined
+  readonly reviewByGrant: DenialGrants["review"]
 }
 
-/** 渡さなかった口を既定（印は下り、差し替えず、時計は 0、出来事は捨てる）で埋めた `preToolUseHooks` の表。 */
+/** 渡さなかった口を既定（印は下り、差し替えず、時計は 0、出来事は捨てる、一度だけの許可は無い）で埋めた `preToolUseHooks` の表。 */
 export function preTable(
   setup: Partial<PreToolUseSetup>,
 ): Partial<Record<HookEvent, HookCallbackMatcher[]>> {
@@ -66,6 +68,7 @@ export function preTable(
     setup.onEvent ?? (() => {}),
     setup.latestPlan ?? (() => ({ kind: "none" })),
     setup.workflowAgentPhase ?? (() => undefined),
+    setup.reviewByGrant ?? (() => "pass"),
   )
 }
 

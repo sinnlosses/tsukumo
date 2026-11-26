@@ -1,4 +1,4 @@
-// お伺いのカード（答え待ちの許可要求と質問。メインビューの、いまのやり取りの本文の末尾）。
+// お伺いのカード（答え待ちの許可要求と質問、答え待ちが無いときは自動判定の拒否。メインビューの、いまのやり取りの本文の末尾）。
 // 頭に種類・`header` かツール名・待っている時間（2問以上のときは「n / N」を前に）・「広げる」、本文に問いの文か対象の全文・添え書きの塊（聞く理由・事実・おすすめの理由）・左に選択肢の縦の並びと右にフォーカスした選択肢の詳細、下端に操作の行を置く。
 // 操作の行は札の下端に残り、本文と選択肢の側が札の内側で転がる。
 //
@@ -50,8 +50,10 @@ import styles from "./inquiry.module.css"
 const REGION_LABEL = "お伺い"
 const KIND_LABEL = {
   permission: "許可",
+  denial: "自動判定",
   question: "質問",
 } satisfies Record<Exclude<InquiryModel["kind"], "none">, string>
+const DENIAL_REASON_PREFIX = "理由: "
 const BACK_LABEL = "戻る"
 const CONFIRM_LABEL = "これで確定する"
 const CONFIRM_NOTE = "戻せない操作。⏎ だけでは確定しない"
@@ -265,7 +267,7 @@ function InquiryFace(props: {
           >
             {KIND_LABEL[inquiry.kind]}
           </Text>
-          {inquiry.kind === "permission" && (
+          {(inquiry.kind === "permission" || inquiry.kind === "denial") && (
             <Text
               element="span"
               size="secondary"
@@ -336,6 +338,29 @@ function InquiryFace(props: {
           >
             {inquiry.text}
           </Text>
+        )}
+        {inquiry.kind === "denial" && (
+          <>
+            <Text
+              element="p"
+              size="inherit"
+              tone="inherit"
+              weight="bold"
+              className={styles["inquiry-text"]}
+            >
+              {denialText(inquiry.inSubagent)}
+            </Text>
+            <Text
+              element="p"
+              size="secondary"
+              tone="ink-quiet"
+              weight="inherit"
+              className={styles["inquiry-text"]}
+            >
+              {DENIAL_REASON_PREFIX}
+              {inquiry.reason}
+            </Text>
+          </>
         )}
         {inquiry.kind === "permission" && inquiry.targetText !== "" && (
           <div className={styles["inquiry-target"]}>
@@ -474,6 +499,11 @@ function InquiryFace(props: {
       )}
     </>
   )
+}
+
+function denialText(inSubagent: boolean): string {
+  const place = inSubagent ? "サブエージェントの中の" : ""
+  return `自動判定が${place}この操作を止めました。一度だけ許可すると、同じ呼び出しを1回だけ通します`
 }
 
 /** 待っている時間を「0:42」の形にする（分は 60 を超えても繰り上げない）。 */

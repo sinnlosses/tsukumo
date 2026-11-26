@@ -34,14 +34,14 @@ describe("preToolUseHooks（matcher で当てるツールを分ける）", () =>
     expect(hitCount("mcp__tsukumo__phase_result")).toBe(1)
   })
 
-  it("Bash・Agent・Edit・Write には委譲ゲートとそれぞれのフックが当たり、ほかの外部のツールには委譲ゲートだけが当たる", () => {
+  it("外部のツールには委譲ゲートと一度だけの許可の照合が当たり、Agent・Edit・Write にはそれぞれのフックも当たる。Bash の照合は差し替えのフックが兼ねる", () => {
     expect(hitCount("Bash")).toBe(2)
-    expect(hitCount("Agent")).toBe(2)
-    expect(hitCount("Edit")).toBe(2)
-    expect(hitCount("Write")).toBe(2)
-    expect(hitCount("WebFetch")).toBe(1)
-    expect(hitCount("mcp__other__tool")).toBe(1)
-    expect(hitCount("ReadMcpResource")).toBe(1)
+    expect(hitCount("Agent")).toBe(3)
+    expect(hitCount("Edit")).toBe(3)
+    expect(hitCount("Write")).toBe(3)
+    expect(hitCount("WebFetch")).toBe(2)
+    expect(hitCount("mcp__other__tool")).toBe(2)
+    expect(hitCount("ReadMcpResource")).toBe(2)
   })
 
   it("委譲ゲートの matcher は、正規表現として組めて judgeToolAgainstGate と同じ名前に当たる", async () => {

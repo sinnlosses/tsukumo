@@ -2,7 +2,7 @@
 // お伺いのカードはメインビューに出て、質問の自由入力は入力欄が担うので、1つの状態を2つの領域が読み書きする。
 //
 // store が持つのは組み立て中の答えだけ（何問目を見ているか・問ごとに選んだラベル・入力欄に書いて記録した答え）。
-// 許可要求は選択肢「許可」「拒否」の1問として同じ形で持つ。
+// 許可要求は選択肢「許可」「拒否」の、自動判定の拒否は「一度だけ許可」「断る」の1問として同じ形で持つ。
 // 答え待ちそのものは `SessionState` から来るので、それを読んで画面に出す形へ畳むのは `useInquiryAnswer`。
 //
 // `answer.answers[i]` は `questions[i]` に対する答え（`PendingAsk` の契約。選んだか任せたか）。
@@ -12,6 +12,7 @@
 import type { FigureBlock } from "../../../../../shared/report/report-block.ts"
 import type { ReportImageSize } from "../../../../../shared/report/report-image.ts"
 import type { StampedPendingAsk } from "../../../../../shared/session-driver/pending-ask.ts"
+import type { StampedPermissionDenial } from "../../../../../shared/session-driver/permission-denial.ts"
 import type {
   QuestionBrief,
   QuestionBriefFact,
@@ -105,6 +106,14 @@ export type InquiryModel =
       readonly toolName: string
       readonly targetText: string
     })
+  /** 自動判定の拒否。入力は持たず、理由の要約だけを出す。 */
+  | (InquiryCommon & {
+      readonly kind: "denial"
+      readonly toolName: string
+      readonly reason: string
+      /** サブエージェントの中の呼び出しが止められたか。 */
+      readonly inSubagent: boolean
+    })
   | (InquiryCommon & {
       readonly kind: "question"
       readonly header: string
@@ -128,15 +137,32 @@ export type InquiryEntrust =
   | { readonly kind: "hidden" }
   | { readonly kind: "offered"; readonly label: string }
 
+/**
+ * 答え待ちを先に、無ければ自動判定の拒否の先頭を畳む（答え待ちは SDK が応答を待って止まっているので先に答えてもらう）。
+ */
 export function useInquiryAnswer(): InquiryModel {
   const pending = useSession((session) => session.state.pending[0])
+  const denial = useSession((session) => session.state.permissionDenials[0])
   const dispatch = useSession((session) => session.dispatch)
   const draft = useInquiryDraft((state) => state.draft)
   const touched = useInquiryFocus((state) => state.focus)
   const composerWriting = useComposerDraft((state) => state.draft.text !== "")
 
   if (pending === undefined) {
-    return { kind: "none" }
+    if (denial === undefined) {
+      return { kind: "none" }
+    }
+    const answer = draft?.pendingId === denial.toolUseId ? draft.answer : EMPTY_DRAFT_ANSWER
+    return denialModel(
+      denial,
+      {
+        answer,
+        setAnswer: (next) => {
+          useInquiryDraft.setState({ draft: { pendingId: denial.toolUseId, answer: next } })
+        },
+      },
+      dispatch,
+    )
   }
   // 別の答え待ちに対して組み立てていた答えは読まない（別の答え待ちが来た・答え終わった）。
   const answer = draft?.pendingId === pending.id ? draft.answer : EMPTY_DRAFT_ANSWER
@@ -184,9 +210,11 @@ export function inquiryBriefOf(brief: QuestionBrief): InquiryBrief {
   return { whyAsk: brief.whyAsk, facts: brief.facts, recommended: brief.recommended }
 }
 
-/** 許可要求の選択肢のラベル。並びがそのまま番号になる。 */
-const ALLOW_LABEL = "許可"
-const DENY_LABEL = "拒否"
+/** 許可する側と拒む側の選択肢のラベル。並びがそのまま番号になる。 */
+type AllowOrDenyLabels = readonly [allow: string, deny: string]
+
+const PERMISSION_LABELS = ["許可", "拒否"] as const satisfies AllowOrDenyLabels
+const DENIAL_LABELS = ["一度だけ許可", "断る"] as const satisfies AllowOrDenyLabels
 
 const EMPTY_DRAFT_ANSWER: DraftAnswer = {
   index: 0,
@@ -206,20 +234,54 @@ function permissionModel(
   draft: InquiryDraft,
   dispatch: SessionDispatch,
 ): InquiryModel {
-  const chosen = draft.answer.selections[0]?.[0]
-  const labels = [ALLOW_LABEL, DENY_LABEL]
   return {
+    ...allowOrDeny(pending.id, pending.askedAt, PERMISSION_LABELS, draft, dispatch),
     kind: "permission",
-    id: pending.id,
-    askedAt: pending.askedAt,
     toolName: pending.toolName,
     targetText: toolInputText(pending.toolName, pending.input),
+  }
+}
+
+/** 自動判定の拒否1件を、選択肢「一度だけ許可」「断る」の1問として畳む。 */
+function denialModel(
+  denial: StampedPermissionDenial,
+  draft: InquiryDraft,
+  dispatch: SessionDispatch,
+): InquiryModel {
+  return {
+    ...allowOrDeny(denial.toolUseId, denial.deniedAt, DENIAL_LABELS, draft, dispatch),
+    kind: "denial",
+    toolName: denial.toolName,
+    reason: denial.reason,
+    inSubagent: denial.agentId !== undefined,
+  }
+}
+
+/** 選択肢2つ（先が許可・後が拒否）の1問。選んだ答えは `allow` / `deny` として送る。 */
+function allowOrDeny(
+  id: string,
+  askedAt: number,
+  labels: AllowOrDenyLabels,
+  draft: InquiryDraft,
+  dispatch: SessionDispatch,
+): InquiryCommon {
+  const chosen = draft.answer.selections[0]?.[0]
+  const [allowLabel] = labels
+  const send = (label: string): void => {
+    void dispatch.session.answer({
+      id,
+      answer: { kind: label === allowLabel ? "allow" : "deny" },
+    })
+  }
+  return {
+    id,
+    askedAt,
     multiSelect: false,
     progressLabel: "1 / 1",
     questionCount: 1,
     showBack: false,
     last: true,
-    focusedLabel: { kind: "option", label: chosen ?? ALLOW_LABEL },
+    focusedLabel: { kind: "option", label: chosen ?? allowLabel },
     onFocus: () => {},
     options: labels.map((label, index) => ({
       number: index + 1,
@@ -237,20 +299,12 @@ function permissionModel(
     onToggle: (label) => {
       draft.setAnswer({ ...draft.answer, selections: [[label]] })
     },
-    onChoose: (label) => {
-      void dispatch.session.answer({
-        id: pending.id,
-        answer: { kind: label === ALLOW_LABEL ? "allow" : "deny" },
-      })
-    },
+    onChoose: send,
     onAnswer: () => {
       if (chosen === undefined) {
         return
       }
-      void dispatch.session.answer({
-        id: pending.id,
-        answer: { kind: chosen === ALLOW_LABEL ? "allow" : "deny" },
-      })
+      send(chosen)
     },
     onBack: () => {},
   }

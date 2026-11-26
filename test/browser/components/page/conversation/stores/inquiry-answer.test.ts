@@ -11,6 +11,7 @@ import {
   useInquiryFocus,
 } from "../../../../../../src/browser/components/page/conversation/stores/inquiry-draft.ts"
 import type { StampedPendingAsk } from "../../../../../../src/shared/session-driver/pending-ask.ts"
+import type { StampedPermissionDenial } from "../../../../../../src/shared/session-driver/permission-denial.ts"
 import type { QuestionBrief } from "../../../../../../src/shared/session-driver/question-brief.ts"
 import type {
   Question,
@@ -110,6 +111,55 @@ function permission(model: InquiryModel): Extract<InquiryModel, { kind: "permiss
   }
   return model
 }
+
+describe("useInquiryAnswer の自動判定の拒否", () => {
+  const DENIAL = {
+    toolUseId: "toolu_denied",
+    toolName: "Write",
+    reason: "架空の理由",
+    agentId: "agent-1",
+    deniedAt: 7,
+  } satisfies StampedPermissionDenial
+
+  function renderDenial(pending: readonly StampedPendingAsk[]) {
+    const calls: unknown[] = []
+    putSession({ ...INITIAL_SESSION_STATE, pending, permissionDenials: [DENIAL] }, (command) =>
+      calls.push(command),
+    )
+    const { result } = renderHook(() => useInquiryAnswer())
+    return { result, calls }
+  }
+
+  it("答え待ちが無ければ、拒否を「一度だけ許可」「断る」の1問として出し、押すと allow / deny で答える", () => {
+    const { result, calls } = renderDenial([])
+    const model = result.current
+    if (model.kind !== "denial") {
+      throw new Error("自動判定の拒否が出ている前提の検査")
+    }
+
+    expect(model.options.map((row) => `${String(row.number)} ${row.text}`)).toEqual([
+      "1 一度だけ許可",
+      "2 断る",
+    ])
+    expect([model.id, model.toolName, model.reason, model.inSubagent, model.askedAt]).toEqual([
+      "toolu_denied",
+      "Write",
+      "架空の理由",
+      true,
+      7,
+    ])
+    act(() => model.onChoose("一度だけ許可"))
+    act(() => model.onChoose("断る"))
+    expect(calls).toEqual([
+      { procedure: "session.answer", id: "toolu_denied", answer: { kind: "allow" } },
+      { procedure: "session.answer", id: "toolu_denied", answer: { kind: "deny" } },
+    ])
+  })
+
+  it("答え待ちがあれば、拒否より答え待ちを先に出す", () => {
+    expect(renderDenial([PERMISSION_PENDING]).result.current.kind).toBe("permission")
+  })
+})
 
 describe("useInquiryAnswer の許可要求", () => {
   it("答え待ちが無いときは none", () => {
