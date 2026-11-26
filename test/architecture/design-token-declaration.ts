@@ -18,6 +18,11 @@ export function countByBrowserCss(
   )
 }
 
+/** 部品の CSS 全体で count の値を足した合計。部品を別のディレクトリへ移しても変わらない。 */
+export function totalByBrowserCss(count: (css: string) => number): number {
+  return Object.values(countByBrowserCss(count)).reduce((sum, value) => sum + value, 0)
+}
+
 /** 数えた結果と上限の表を比べ、増えたファイルと減ったファイルを「パス: 実数（上限 n）」の行で返す。 */
 export function compareWithLimits(
   actual: Readonly<Record<string, number>>,

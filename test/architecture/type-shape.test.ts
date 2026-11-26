@@ -91,60 +91,20 @@ describe("プロパティと引数の `| undefined`", () => {
   })
 })
 
-const UNDEFINED_UNION_CEILING = {
-  "src/browser/components": 120,
-  "src/server/session-driver": 50,
-  "scripts/hook": 40,
-  "src/shared/report": 35,
-  "src/shared/character-pack": 35,
-  "src/server/report": 30,
-  "scripts/capture": 30,
-  "src/server/character-pack": 30,
-  "scripts/shared": 20,
-  "src/server/session": 20,
-  "src/server/chat": 20,
-  "src/server/item": 20,
-  "src/server/repository": 20,
-  "src/server/view-server": 20,
-  "scripts/dev": 15,
-  "src/browser/features": 90,
-  "src/server/adapter": 15,
-  "src/server/diary": 15,
-  "src/wiring/(root)": 15,
-  "src/server/core": 10,
-  "src/server/usage": 10,
-  "src/shared/session": 10,
-  "scripts/document": 10,
-  "src/browser/domain": 10,
-  "src/server/work-plan": 10,
-  "src/browser/stores": 10,
-  "src/server/achievement": 10,
-  "src/shared/session-driver": 10,
-  "scripts/runtime": 10,
-  "src/shared/item": 5,
-  "src/server/recommendation": 5,
-  "src/shared/utils": 5,
-  "src/browser/lib": 5,
-  "src/server/host": 5,
-  "src/server/welcome-greeting": 5,
-  "src/shared/diary": 5,
-  "src/browser/utils": 5,
-  "src/browser/hooks": 5,
-  "src/(root)": 5,
-  "src/server/checkout": 5,
-  "src/server/diagnostic": 5,
-  "src/server/workflow-setting": 5,
-  "src/shared/(root)": 5,
-  "src/shared/repository": 5,
-} as const satisfies Readonly<Record<string, number>>
+/** src / scripts 全体の `| undefined` の合併型の上限。5 の倍数に丸めてあり、減らしても下げなくてよい。 */
+const UNDEFINED_UNION_CEILING = 705
 
 const HOW_TO_FIX =
   "docs/coding-standards.md「「無いかもしれない」値」: 判別可能な合併型にするか、入口で畳んで「ある」ときだけ内側を呼ぶ。上限は 5 の倍数に丸めてあり、減らしても下げなくてよい"
 
-describe("`| undefined` の合併型の領域ごとの上限", () => {
-  it("src / scripts の `| undefined` の合併型の実数が領域ごとの上限を超えない（表にない領域も落とす）", () => {
-    const over = ceilingViolations(undefinedUnionCounts(), UNDEFINED_UNION_CEILING)
-    expect(over.length === 0 ? "" : `${over.join("\n")}\n${HOW_TO_FIX}`).toBe("")
+describe("`| undefined` の合併型の合計の上限", () => {
+  it("src / scripts の `| undefined` の合併型の実数の合計が上限を超えない", () => {
+    const actual = undefinedUnionTotal()
+    expect(
+      actual <= UNDEFINED_UNION_CEILING
+        ? ""
+        : `実数 ${actual} / 上限 ${UNDEFINED_UNION_CEILING}\n${HOW_TO_FIX}`,
+    ).toBe("")
   })
 
   it("戻り値・変数・型引数・入れ子・括弧つき・TS1016 の引数の `| undefined` を数え、`?:`・`Promise<undefined>`・`T | null` は数えない", () => {
@@ -160,15 +120,6 @@ describe("`| undefined` の合併型の領域ごとの上限", () => {
     ].join("\n")
 
     expect(undefinedUnionCountsIn(parseSourceProgram(source, "source.ts"))).toBe(6)
-  })
-
-  it("上限を超えた・表にない領域を見分け、上限ちょうどと余りは空にする", () => {
-    expect(ceilingViolations({ a: 3, b: 1 }, { a: 2 })).toEqual([
-      "a: 実数 3 / 上限 2",
-      "b: 実数 1 / 上限 0（表にない領域）",
-    ])
-    expect(ceilingViolations({ a: 1 }, { a: 2, z: 1 })).toEqual([])
-    expect(ceilingViolations({ a: 2 }, { a: 2 })).toEqual([])
   })
 })
 
@@ -205,35 +156,10 @@ function undefinedUnionCountsIn(program: AstNode): number {
   ).length
 }
 
-function regionOf(path: string): string {
-  const parts = path.split("/")
-  if (parts[0] === "scripts") return parts.length > 2 ? `scripts/${parts[1]}` : "scripts/(root)"
-  if (parts.length > 3) return `src/${parts[1]}/${parts[2]}`
-  return parts.length > 2 ? `src/${parts[1]}/(root)` : "src/(root)"
-}
-
-function undefinedUnionCounts(): Readonly<Record<string, number>> {
+function undefinedUnionTotal(): number {
   return parsedSourceFiles()
     .filter(({ path }) => path.startsWith("src/") || path.startsWith("scripts/"))
-    .reduce<Readonly<Record<string, number>>>((counts, { path, program }) => {
-      const count = undefinedUnionCountsIn(program)
-      const region = regionOf(path)
-      return count === 0 ? counts : { ...counts, [region]: (counts[region] ?? 0) + count }
-    }, {})
-}
-
-function ceilingViolations(
-  counts: Readonly<Record<string, number>>,
-  ceilings: Readonly<Record<string, number>>,
-): readonly string[] {
-  return Object.keys(counts)
-    .toSorted()
-    .map((region) => ({ region, actual: counts[region] ?? 0, ceiling: ceilings[region] ?? 0 }))
-    .filter(({ actual, ceiling }) => actual > ceiling)
-    .map(
-      ({ region, actual, ceiling }) =>
-        `${region}: 実数 ${actual} / 上限 ${ceiling}${region in ceilings ? "" : "（表にない領域）"}`,
-    )
+    .reduce((total, { program }) => total + undefinedUnionCountsIn(program), 0)
 }
 
 function explicitUndefinedNamesIn(program: AstNode): readonly string[] {
