@@ -144,6 +144,21 @@ export const PLAIN_WORDS = [
       "素の HTML 要素で組んだ箇所を、src/browser/components/ui/ のラッパー部品で書き直すこと",
   },
   {
+    spelling: "地図の箱",
+    replacement: "地図のモジュール",
+    meaning: "アーキテクチャの地図の木の1要素。ファイルの glob で束ねたディレクトリの束",
+  },
+  {
+    spelling: "箱のバッジ",
+    replacement: "モジュールのバッジ",
+    meaning: "本文・セリフ・入力欄で地図のモジュールを指す、表示名と縮尺の小さなバッジ",
+  },
+  {
+    spelling: "箱の印",
+    replacement: "モジュールの印",
+    meaning: "本文・セリフで地図のモジュールを指す {{map: <ID>}} の字の並び",
+  },
+  {
     spelling: "傍注",
     replacement: "欄外注",
     meaning: "本文の横の余白の欄に添える、出典やどこを見るかを書いた短い注",

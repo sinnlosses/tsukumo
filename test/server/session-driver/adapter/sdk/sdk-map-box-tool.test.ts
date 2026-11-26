@@ -59,6 +59,6 @@ describe("map_box", () => {
     expect(found.isError).toBe(false)
     expect(JSON.parse(found.text)).toMatchObject({ kind: "box", id: "server" })
     expect(unknown.isError).toBe(true)
-    expect(unknown.text).toContain("その ID の箱は地図にありません")
+    expect(unknown.text).toContain("その ID のモジュールは地図にありません")
   })
 })

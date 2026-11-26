@@ -198,6 +198,18 @@ describe("plainWordSpellingsIn", () => {
     ).toEqual([])
   })
 
+  it("地図の箱の複合語だけを見つけ、図の箱・CSS の箱・余白の箱には当たらない", () => {
+    expect(
+      plainWordSpellingsIn(
+        draft([
+          reportDraftText(
+            "架空の地図の箱と箱のバッジと箱の印。図の箱の説明と CSS の箱と余白の箱と範囲の箱。",
+          ),
+        ]),
+      ),
+    ).toEqual(["地図の箱", "箱のバッジ", "箱の印"])
+  })
+
   it("帯・傍注・面・葉の複合語もコードと引用の中は見ない", () => {
     expect(
       plainWordSpellingsIn(
