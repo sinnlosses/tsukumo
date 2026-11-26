@@ -44,6 +44,16 @@ const writtenStatItemSchema = statItemsSchema.element.extend({
   target: described(omittable(orExpression(z.string()), ""), statItemsSchema.element.shape.target),
 })
 
+/** `Chart` と `ChartGrid` の系列で、`values` に式を結べる形。 */
+const writtenChartSeriesSchema = z
+  .array(
+    chartBlockSchema.shape.series.element.extend({
+      values: orExpression(z.array(z.number()).min(1)),
+    }),
+  )
+  .min(1)
+  .meta({ id: "WrittenChartSeries" })
+
 /** `Paragraph` の塊で、`text` に式を結べる形。 */
 export const writtenTextBlockSchema = textBlockSchema.extend({
   text: described(orExpression(inlineText), textBlockSchema.shape.text),
@@ -60,13 +70,7 @@ export const writtenChartBlockSchema = described(
   chartBlockSchema.extend({
     title: described(omittable(orExpression(inlineText), ""), chartBlockSchema.shape.title),
     labels: orExpression(inlineText.array().min(1)),
-    series: z
-      .array(
-        chartBlockSchema.shape.series.element.extend({
-          values: orExpression(z.array(z.number()).min(1)),
-        }),
-      )
-      .min(1),
+    series: writtenChartSeriesSchema,
     emphasis: described(
       omittable(orExpression(inlineText.array()), []),
       chartBlockSchema.shape.emphasis,
@@ -83,15 +87,7 @@ export const writtenChartGridBlockSchema = described(
     panels: described(
       z
         .array(
-          chartGridBlockSchema.shape.panels.element.extend({
-            series: z
-              .array(
-                chartGridBlockSchema.shape.panels.element.shape.series.element.extend({
-                  values: orExpression(z.array(z.number()).min(1)),
-                }),
-              )
-              .min(1),
-          }),
+          chartGridBlockSchema.shape.panels.element.extend({ series: writtenChartSeriesSchema }),
         )
         .min(1),
       chartGridBlockSchema.shape.panels,

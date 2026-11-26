@@ -22,10 +22,12 @@ const cellSchema = z.union([
   z.object({ tag: inlineText }),
 ])
 
+const tableCellsSchema = z.array(cellSchema).meta({ id: "TableCells" })
+
 const tableRowSchema = z.union([
-  z.array(cellSchema),
+  tableCellsSchema,
   z.object({
-    cells: z.array(cellSchema),
+    cells: tableCellsSchema,
     emphasis: z.literal(true).optional(),
     detail: partCardNote(inlineText.optional(), "セルに入らない行ごとの詳しい中身。開いて読む"),
     depth: partCardNote(

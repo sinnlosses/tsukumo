@@ -271,10 +271,10 @@ describe("a2ui の report の定義", () => {
       (part) => part.properties.component.const === "Report",
     )
 
-    expect(JSON.stringify(reportPart?.properties.closing)).toContain(
-      JSON.stringify(TOOL_EXPRESSIONS.map((choice) => choice.name)),
-    )
-    expect(JSON.stringify(reportPart?.properties.waitingLine)).toContain(
+    const speechRef = JSON.stringify({ $ref: "#/definitions/Speech" })
+    expect(JSON.stringify(reportPart?.properties.closing)).toContain(speechRef)
+    expect(JSON.stringify(reportPart?.properties.waitingLine)).toContain(speechRef)
+    expect(JSON.stringify(report.inputSchema.definitions.Speech)).toContain(
       JSON.stringify(TOOL_EXPRESSIONS.map((choice) => choice.name)),
     )
   })
@@ -290,8 +290,9 @@ const TOOLS_REPLY = z.object({
   }),
 })
 
-/** report の引数の schema のうち、ここで読む形（`components` の要素の部品ごとの props）。 */
+/** report の引数の schema のうち、ここで読む形（`components` の要素の部品ごとの props と、締めのセリフの定義）。 */
 const REPORT_INPUT_SCHEMA = z.object({
+  definitions: z.object({ Speech: z.unknown() }),
   properties: z.object({
     components: z.object({
       items: z.object({

@@ -170,7 +170,11 @@ function a2uiInputShape(
   const { Report, Section, ...others } = REPORT_COMPONENT_SCHEMAS
   const { shape } = Report
   const described = REPORT_FIELD_DESCRIPTIONS
-  const speech = z.object({ ...speechShape(expressions), text: z.string() }).optional()
+  // closing と waitingLine が同じ定義を参照し、表情の列挙と説明を schema に1回だけ載せる。
+  const speech = z
+    .object({ ...speechShape(expressions), text: z.string() })
+    .meta({ id: "Speech" })
+    .optional()
   const report = Report.extend({
     figure: shape.figure.describe(reportFigureDescription(figurePreference)),
     task: shape.task.describe(described.task),
