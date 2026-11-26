@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest"
 
-import { resolveMapBox } from "../../../../src/browser/features/architecture-map/map-box-lookup.ts"
+import {
+  ancestorIdsOf,
+  resolveMapBox,
+} from "../../../../src/browser/features/architecture-map/map-box-lookup.ts"
 import type { MapBoxIndexEntry } from "../../../../src/shared/architecture-map/map-view.ts"
 
 const BOXES: readonly MapBoxIndexEntry[] = [
@@ -26,5 +29,13 @@ describe("resolveMapBox", () => {
 
   it("知らない ID は unknown", () => {
     expect(resolveMapBox(BOXES, "nowhere")).toEqual({ kind: "unknown" })
+  })
+})
+
+describe("ancestorIdsOf", () => {
+  it("いちばん上の親から、すぐ上の親までを並べる（箱自身は入れない）", () => {
+    expect(ancestorIdsOf(BOXES, "src/ui/part")).toEqual(["app", "app/ui"])
+    expect(ancestorIdsOf(BOXES, "app")).toEqual([])
+    expect(ancestorIdsOf(BOXES, "nowhere")).toEqual([])
   })
 })

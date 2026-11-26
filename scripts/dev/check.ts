@@ -29,6 +29,7 @@ import process from "node:process"
 import { parseArgs } from "node:util"
 
 import { isProcessAlive } from "../../src/server/session-driver/adapter/process-alive.ts"
+import { sweepAbandonedWorktrees } from "../shared/abandoned-worktree.ts"
 import { collectChangedPaths, PRIMARY_BRANCH } from "../shared/changed-path-repository.ts"
 import { planE2eRun } from "../shared/e2e-selection-repository.ts"
 import { REPOSITORY_ROOT as ROOT } from "../shared/repository-root.ts"
@@ -113,6 +114,19 @@ for (const line of formatStageLines(stageVerdicts(stageResults), bailedStages)) 
 const expectedDiffLines = readExpectedDiffLines(ROOT, PRIMARY_BRANCH)
 if (expectedDiffLines !== undefined) {
   process.stdout.write(`${formatExpectedDiffLine(expectedDiffLines)}\n`)
+}
+sweepAbandonedWorktreesQuietly()
+
+/** 検査の結果を変えないよう、掃除の失敗は1行出すだけにする。 */
+function sweepAbandonedWorktreesQuietly(): void {
+  try {
+    const removed = sweepAbandonedWorktrees(ROOT)
+    if (removed > 0) {
+      process.stdout.write(`放っておかれた一時の作業ツリーを ${removed} 本消した\n`)
+    }
+  } catch (error) {
+    process.stdout.write(`一時の作業ツリーの掃除に失敗した: ${String(error)}\n`)
+  }
 }
 
 /** 全段の順に4値を決める。飛ばした段・計画で落とした段は走っていないので `unobserved`。 */

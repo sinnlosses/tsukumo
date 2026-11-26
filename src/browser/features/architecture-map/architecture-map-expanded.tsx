@@ -11,7 +11,12 @@ import {
   useState,
 } from "react"
 
-import type { MapReady, MapView, MapViewBox } from "../../../shared/architecture-map/map-view.ts"
+import type {
+  MapBoxIndexEntry,
+  MapReady,
+  MapView,
+  MapViewBox,
+} from "../../../shared/architecture-map/map-view.ts"
 import { BreadcrumbTrail } from "../../components/ui/breadcrumb-trail/breadcrumb-trail.tsx"
 import { Button } from "../../components/ui/button/button.tsx"
 import { useMountEffect } from "../../hooks/use-mount-effect.ts"
@@ -19,7 +24,7 @@ import { useResizeObservedRef } from "../../hooks/use-observed-ref.ts"
 import { rpc } from "../../stores/rpc.ts"
 import { ArchitectureMapDiagram } from "./architecture-map-diagram.tsx"
 import styles from "./architecture-map-expanded.module.css"
-import { type MapBoxRect, mapGeometryOf } from "./architecture-map-geometry.ts"
+import { mapGeometryOf } from "./architecture-map-geometry.ts"
 import { type SelectedBox, useArchitectureMapSelection } from "./architecture-map-selection.ts"
 import {
   fitViewport,
@@ -29,6 +34,7 @@ import {
   zoomedAround,
   zoomedViewport,
 } from "./architecture-map-viewport.ts"
+import { ancestorIdsOf } from "./map-box-lookup.ts"
 import { useArchitectureMapOverview } from "./use-architecture-map.ts"
 import { useBlockingWheel } from "./use-blocking-wheel.ts"
 import { useStageGesture } from "./use-stage-gesture.ts"
@@ -43,13 +49,6 @@ const NO_FRAME: Size = { width: 0, height: 0 }
 
 /** ピンチの wheel の deltaY を倍率の係数へ直す割り。小さいほど指に敏感に追従する。 */
 const PINCH_DIVISOR = 100
-
-/** 「この箱について聞く」の欄を置く、面の座標。選んだ箱が今の図に無いときは欄を出さない。 */
-type AskPosition =
-  | { readonly kind: "at"; readonly x: number; readonly y: number }
-  | { readonly kind: "none" }
-
-const ASK_GAP = 8
 
 export function ArchitectureMapExpanded(): ReactElement | false {
   const expanded = useArchitectureMapSelection((state) => state.expanded)
@@ -101,7 +100,7 @@ function Expanded(props: { readonly overview: MapReady }): ReactElement {
   const viewport = litSwitch
     ? fitViewport(content, frame)
     : (adjustment.viewport ?? fitViewport(content, frame))
-  const askAt = askPositionOf(current.view, content.rects, viewport, selected?.box.id)
+  const asking = selected !== undefined && showsBox(selected.box.id, current.view)
   const frameRef = useResizeObservedRef<HTMLDivElement>(
     (element) => {
       const next = { width: element.clientWidth, height: element.clientHeight }
@@ -141,12 +140,25 @@ function Expanded(props: { readonly overview: MapReady }): ReactElement {
     setTrail(next)
     setAdjustment({})
   }
+  // 段は押した順の履歴ではなく、全体から箱までの親子の筋にする（外の箱を押すと筋ごと替わる）
   const dive = async (box: MapViewBox) => {
     try {
-      const response = await rpc.architectureMap.view.call({ kind: "focus", box: box.id })
-      if (response.kind === "ready") {
-        goTo([...trail, { title: box.title, view: response.view }])
+      const [response, index] = await Promise.all([
+        rpc.architectureMap.view.call({ kind: "focus", box: box.id }),
+        rpc.architectureMap.boxes.call(),
+      ])
+      if (response.kind !== "ready") {
+        return
       }
+      const step: Step = { title: box.title, view: response.view }
+      if (index.kind !== "ready") {
+        goTo([...trail, step])
+        return
+      }
+      const ancestors = await Promise.all(
+        ancestorIdsOf(index.boxes, box.id).map((id) => stepOf(id, index.boxes, trail)),
+      )
+      goTo([trail[0] ?? { title: "全体", view: props.overview.view }, ...ancestors.flat(), step])
     } catch {
       // 引けなかったときは今の図に留まる（箱は選んだまま）
     }
@@ -284,18 +296,16 @@ function Expanded(props: { readonly overview: MapReady }): ReactElement {
             onSelect={onSelect}
           />
         </div>
-        {selected !== undefined && askAt.kind === "at" && (
-          <div
-            className={styles["expanded-ask"]}
-            style={{ left: `${String(askAt.x)}px`, top: `${String(askAt.y)}px` }}
-            onPointerDown={(event) => {
-              event.stopPropagation()
-            }}
-          >
-            <strong className={styles["expanded-ask-title"]}>{selected.box.title}</strong>
-            {selected.box.summary !== undefined && (
-              <span className={styles["expanded-ask-role"]}>{selected.box.summary}</span>
-            )}
+      </div>
+      <div className={styles["expanded-ask"]}>
+        {asking ? (
+          <>
+            <div className={styles["expanded-ask-text"]}>
+              <strong className={styles["expanded-ask-title"]}>{selected.box.title}</strong>
+              {selected.box.summary !== undefined && (
+                <span className={styles["expanded-ask-role"]}>{selected.box.summary}</span>
+              )}
+            </div>
             <ControlButton
               onClick={() => {
                 attachBadge(selected.box)
@@ -303,7 +313,9 @@ function Expanded(props: { readonly overview: MapReady }): ReactElement {
             >
               この箱について聞く
             </ControlButton>
-          </div>
+          </>
+        ) : (
+          <span className={styles["expanded-ask-role"]}>箱を選ぶと、その箱について聞ける</span>
         )}
       </div>
       <p className={styles["expanded-legend"]}>
@@ -369,25 +381,17 @@ function trailForPointed(overview: MapView, selected?: SelectedBox): readonly St
   return focus === undefined ? [whole] : [whole, { title: focus.title, view: selected.view }]
 }
 
-/**
- * 選んだ箱が今の図の箱なら、その矩形の右の縁の横。今の図の焦点（潜った箱）なら面の左上。
- * どちらでもなければ欄を出さない。
- */
-function askPositionOf(
-  view: MapView,
-  rects: ReadonlyMap<string, MapBoxRect>,
-  viewport: Viewport,
-  selectedId?: string,
-): AskPosition {
-  const rect = selectedId === undefined ? undefined : rects.get(selectedId)
-  if (rect !== undefined && view.boxes.some((box) => box.id === selectedId)) {
-    return {
-      kind: "at",
-      x: viewport.x + (rect.x + rect.width) * viewport.scale + ASK_GAP,
-      y: viewport.y + rect.y * viewport.scale,
-    }
+/** 親の箱の段。今の段にあればそれを使い、無ければ引く。引けなければ空。 */
+async function stepOf(
+  id: string,
+  boxes: readonly MapBoxIndexEntry[],
+  trail: readonly Step[],
+): Promise<readonly Step[]> {
+  const known = trail.find((step) => step.view.focus?.id === id)
+  if (known !== undefined) {
+    return [known]
   }
-  return view.focus !== undefined && view.focus.id === selectedId
-    ? { kind: "at", x: ASK_GAP, y: ASK_GAP }
-    : { kind: "none" }
+  const response = await rpc.architectureMap.view.call({ kind: "focus", box: id })
+  const title = boxes.find((box) => box.id === id)?.title ?? id
+  return response.kind === "ready" ? [{ title, view: response.view }] : []
 }

@@ -80,6 +80,9 @@ const LANED: MapView = {
 
 function renderExpanded(whole: MapView = WHOLE): void {
   fetchStub = stubRpcFetch((call) => {
+    if (call.procedure === "architectureMap/boxes") {
+      return rpcOutput({ kind: "ready", boxes: [] })
+    }
     const input: unknown = call.input
     const focus = typeof input === "object" && input !== null && "box" in input
     return rpcOutput({

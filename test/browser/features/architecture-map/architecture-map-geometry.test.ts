@@ -128,6 +128,38 @@ describe("mapGeometryOf", () => {
     expect(titles?.get("over")?.lines).toEqual(["あいうえおか", "きくけこさ…"])
   })
 
+  it("広げた図は名前も summary も字を省かずに折り返し、箱をその分だけ高くする", () => {
+    const longSummary = "共有の状態を受け取り、会話の画面を描いてコマンドを送る"
+    const laned = viewOf(
+      [
+        box("browser", "ブラウザ", { lane: "browser", summary: longSummary }),
+        box("server", "サーバ", { lane: "server" }),
+      ],
+      [
+        { id: "browser", title: "ブラウザ", kind: "runtime" },
+        { id: "server", title: "サーバ", kind: "runtime" },
+      ],
+    )
+    const grid = viewOf([
+      box("a", "とても長い名前を持つ架空の箱のなまえ", {
+        summary: longSummary,
+        place: { column: 0, row: 0 },
+      }),
+      box("b", "b", { place: { column: 1, row: 0 } }),
+    ])
+
+    const laneSummary = mapGeometryOf(laned, "full").lanes?.titles.get("browser")?.summary
+    const gridGeometry = mapGeometryOf(grid, "full")
+    const gridTitle = gridGeometry.boxTitles?.get("a")
+
+    expect(laneSummary?.lines.join("")).toBe(longSummary)
+    expect(laneSummary?.lines.length).toBeGreaterThan(1)
+    expect(gridTitle?.lines.join("")).toBe("とても長い名前を持つ架空の箱のなまえ")
+    expect(gridTitle?.summary?.lines.join("")).toBe(longSummary)
+    expect(gridGeometry.rects.get("a")?.height).toBeGreaterThan(64)
+    expect(gridGeometry.rects.get("b")?.height).toBe(gridGeometry.rects.get("a")?.height)
+  })
+
   describe("区画のある地図のフォーカスした図", () => {
     const focusView = (laned: boolean): MapView => ({
       ...viewOf(

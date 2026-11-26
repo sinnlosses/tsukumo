@@ -44,17 +44,23 @@
   left: 0;
   transform-origin: 0 0;
 }
-/* 選んだ箱の横の欄。倍率の外（面の座標）に置き、地のドラッグを始めない。 */
+/* 選んだ箱について聞く帯。図に重ねず面の下に常に置き、選び直しても図の大きさを変えない。 */
 .expanded-ask {
-  position: absolute;
   display: flex;
-  flex-direction: column;
-  gap: var(--stack-block);
-  max-width: 16rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--inline-control);
+  min-height: 2.5rem;
   padding: var(--inset-control);
   border-radius: var(--radius-md);
   background: var(--surface-raised);
-  cursor: default;
+}
+.expanded-ask-text {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--stack-tight);
+  min-width: 0;
 }
 .expanded-ask-title {
   font-size: var(--font-label);

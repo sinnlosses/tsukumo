@@ -9,7 +9,7 @@ import {
   mapLaneLayoutOf,
   mapPlacementOf,
 } from "./architecture-map-placement.ts"
-import { fittedLine, wrappedTitle } from "./architecture-map-title-wrap.ts"
+import { wrappedLines, wrappedTitle } from "./architecture-map-title-wrap.ts"
 
 /** full は広げた地図、mini はサイドバーの地図、report はレポートのミニマップ。 */
 export type MapDiagramForm = "full" | "mini" | "report"
@@ -54,12 +54,16 @@ export type MapBoxTitle = {
   readonly x: number
   /** 行ごとの字の基線の y。 */
   readonly baselines: readonly number[]
-  /** 名前の下に1行描く summary（箱の幅で切り済み）。広げた図の区画の箱で summary を持つときだけある。 */
-  readonly summary?: { readonly text: string; readonly baseline: number; readonly fontSize: number }
+  /** 名前の下に描く summary（箱の幅で折り返し済み・字は省かない）。広げた図の箱で summary を持つときだけある。 */
+  readonly summary?: {
+    readonly lines: readonly string[]
+    readonly baselines: readonly number[]
+    readonly fontSize: number
+  }
 }
 
 type TitleLayout = Pick<MapBoxTitle, "lines" | "fontSize" | "solo"> & {
-  readonly summary?: string
+  readonly summary?: readonly string[]
 }
 
 export type MapGeometry = {
@@ -86,10 +90,15 @@ export type MapGeometry = {
   }
   /** 枠の外の右に置いた外の箱の ID。 */
   readonly outerIds?: ReadonlySet<string>
+  /** 区画を組まない広げた図の、折り返し済みの箱の名前と summary。 */
+  readonly boxTitles?: ReadonlyMap<string, MapBoxTitle>
 }
 
 /** 名前の行の高さ（字の大きさに掛ける）。 */
 const MAP_TITLE_LINE_HEIGHT = 1.3
+
+/** 名前の最後の行と summary の最初の行のあいだ。 */
+const SUMMARY_GAP = 4
 
 type LaneMetrics = {
   /** 図の外周の余白。 */
@@ -115,7 +124,7 @@ type LaneMetrics = {
   readonly soloMinHeight: number
   /** 箱の右端に取っておく幅（潜れる印・変えた件数）。 */
   readonly trailing: number
-  /** 区画の箱の名前の下の summary の行の高さ。0 なら summary を描かない。 */
+  /** 箱の名前の下の summary の1行の高さ。0 なら summary を描かない。 */
   readonly summaryLine: number
   readonly summaryFont: number
 }
@@ -137,7 +146,7 @@ const LANE_METRICS = {
     boxPadY: 10,
     soloMinHeight: 72,
     trailing: 18,
-    summaryLine: 22,
+    summaryLine: 17,
     summaryFont: 12,
   },
   // 区画のあいだは矢印の線と矢じりが見分けられる幅
@@ -216,14 +225,16 @@ function focusFrameGeometryOf(
     ...view,
     boxes: view.boxes.filter((box) => childIds.has(box.id)),
   })
+  const layouts = boxLayoutsOf(view.boxes, form)
+  const rows = gridRowsOf(placement, layouts, cell, form, margin + heading + pad)
   const rects = new Map<string, MapBoxRect>()
   for (const [id, place] of placement) {
     rects.set(id, {
       id,
       x: margin + pad + place.column * (cell.width + cell.gapX),
-      y: margin + heading + pad + place.row * (cell.height + cell.gapY),
+      y: rows.ys[place.row] ?? margin + heading + pad,
       width: cell.width,
-      height: cell.height,
+      height: rows.heights[place.row] ?? cell.height,
     })
   }
   const children = [...rects.values()]
@@ -234,17 +245,25 @@ function focusFrameGeometryOf(
     height: Math.max(0, ...children.map((child) => child.y + child.height)) + pad - margin,
   }
   const outerX = rect.x + rect.width + gap
+  const outerHeights = frame.outerIds.map((id) => {
+    const layout = layouts.get(id)
+    return Math.max(
+      cell.height,
+      layout === undefined ? 0 : titleBlockHeight(layout, LANE_METRICS[form]),
+    )
+  })
   for (const [index, id] of frame.outerIds.entries()) {
     rects.set(id, {
       id,
       x: outerX,
-      y: rect.y + index * (cell.height + cell.gapY),
+      y: rect.y + outerHeights.slice(0, index).reduce((sum, height) => sum + height + cell.gapY, 0),
       width: cell.width,
-      height: cell.height,
+      height: outerHeights[index] ?? cell.height,
     })
   }
   const all = [...rects.values()]
   return {
+    ...boxTitlesOf(layouts, rects, form),
     width: (frame.outerIds.length === 0 ? rect.x + rect.width : outerX + cell.width) + margin,
     height: Math.max(rect.y + rect.height, ...all.map((box) => box.y + box.height)) + margin,
     rects,
@@ -277,39 +296,22 @@ function laneGeometryOf(
     if (cell.solo) {
       const id = cell.boxIds[0] ?? ""
       const box = boxesById.get(id)
-      const lines = wrappedTitle(
-        box?.title ?? id,
-        (width - metrics.boxPadX * 2 - metrics.trailing) / metrics.soloFont,
-      )
-      const summary =
-        metrics.summaryLine > 0 && box?.summary !== undefined
-          ? fittedLine(box.summary, (width - metrics.boxPadX * 2) / metrics.summaryFont)
-          : undefined
-      const need =
-        metrics.boxPadY * 2 +
-        lines.length * metrics.soloFont * MAP_TITLE_LINE_HEIGHT +
-        (summary === undefined ? 0 : metrics.summaryLine)
-      const title: TitleLayout = {
-        lines,
-        fontSize: metrics.soloFont,
-        solo: true,
-        ...(summary === undefined ? {} : { summary }),
-      }
+      const title = titleLayoutOf(form, width, true, box?.title ?? id, box?.summary)
       return {
         cell,
         width,
-        need: Math.max(metrics.soloMinHeight, need),
+        need: Math.max(metrics.soloMinHeight, titleBlockHeight(title, metrics)),
         titles: [[id, title] as const],
         boxHeight: 0,
       }
     }
     const innerWidth = width - metrics.pad * 2
     const titles = cell.boxIds.map((id) => {
-      const lines = wrappedTitle(
-        boxesById.get(id)?.title ?? id,
-        (innerWidth - metrics.boxPadX * 2 - metrics.trailing) / metrics.boxFont,
-      )
-      const title: TitleLayout = { lines, fontSize: metrics.boxFont, solo: false }
+      const title: TitleLayout = {
+        lines: titleLinesOf(boxesById.get(id)?.title ?? id, innerWidth, metrics.boxFont, form),
+        fontSize: metrics.boxFont,
+        solo: false,
+      }
       return [id, title] as const
     })
     const lineCount = Math.max(1, ...titles.map(([, title]) => title.lines.length))
@@ -392,10 +394,55 @@ function spanLength(sizes: readonly number[], start: number, count: number, gap:
   return sizes.slice(start, start + count).reduce((sum, size) => sum + size, 0) + gap * (count - 1)
 }
 
+/** 名前の行。広げた図は字を省かずに折り返し、ほかの形は2行で切る。 */
+function titleLinesOf(
+  title: string,
+  width: number,
+  fontSize: number,
+  form: MapDiagramForm,
+): readonly string[] {
+  const metrics = LANE_METRICS[form]
+  const units = (width - metrics.boxPadX * 2 - metrics.trailing) / fontSize
+  return form === "full" ? wrappedLines(title, units) : wrappedTitle(title, units)
+}
+
+function titleLayoutOf(
+  form: MapDiagramForm,
+  width: number,
+  solo: boolean,
+  title: string,
+  summary?: string,
+): TitleLayout {
+  const metrics = LANE_METRICS[form]
+  const fontSize = solo ? metrics.soloFont : metrics.boxFont
+  const summaryLines =
+    metrics.summaryLine > 0 && summary !== undefined
+      ? wrappedLines(summary, (width - metrics.boxPadX * 2) / metrics.summaryFont)
+      : undefined
+  return {
+    lines: titleLinesOf(title, width, fontSize, form),
+    fontSize,
+    solo,
+    ...(summaryLines === undefined ? {} : { summary: summaryLines }),
+  }
+}
+
+/** 名前と summary の塊の高さ（箱の上下の余白は含まない）。 */
+function titleContentHeight(title: TitleLayout, metrics: LaneMetrics): number {
+  const names = title.lines.length * title.fontSize * MAP_TITLE_LINE_HEIGHT
+  return title.summary === undefined
+    ? names
+    : names + SUMMARY_GAP + title.summary.length * metrics.summaryLine
+}
+
+/** 名前と summary を収める箱の高さ。 */
+function titleBlockHeight(title: TitleLayout, metrics: LaneMetrics): number {
+  return metrics.boxPadY * 2 + titleContentHeight(title, metrics)
+}
+
 function placedTitle(title: TitleLayout, rect: MapBoxRect, metrics: LaneMetrics): MapBoxTitle {
   const lineHeight = title.fontSize * MAP_TITLE_LINE_HEIGHT
-  const block =
-    title.lines.length * lineHeight + (title.summary === undefined ? 0 : metrics.summaryLine)
+  const block = titleContentHeight(title, metrics)
   const top = rect.y + (rect.height - block) / 2
   // 行の高さの中央から字の大きさの 0.35 下が、和文と欧文の字面がおおよそ中央にそろう基線
   const baselines = title.lines.map(
@@ -412,8 +459,14 @@ function placedTitle(title: TitleLayout, rect: MapBoxRect, metrics: LaneMetrics)
       ? {}
       : {
           summary: {
-            text: title.summary,
-            baseline: lastLine + metrics.summaryLine * 0.7,
+            lines: title.summary,
+            baselines: title.summary.map(
+              (_, index) =>
+                lastLine +
+                SUMMARY_GAP +
+                (index + 0.5) * metrics.summaryLine +
+                metrics.summaryFont * 0.35,
+            ),
             fontSize: metrics.summaryFont,
           },
         }),
@@ -423,16 +476,85 @@ function placedTitle(title: TitleLayout, rect: MapBoxRect, metrics: LaneMetrics)
 function gridGeometryOf(view: MapView, form: MapDiagramForm): MapGeometry {
   const cell = CELLS[form]
   const placement = mapPlacementOf(view)
+  const layouts = boxLayoutsOf(view.boxes, form)
+  const rows = gridRowsOf(placement, layouts, cell, form, MARGIN)
   const rects = new Map<string, MapBoxRect>()
   for (const [id, place] of placement) {
-    rects.set(id, rectOf(id, place, cell))
+    rects.set(id, {
+      id,
+      x: MARGIN + place.column * (cell.width + cell.gapX),
+      y: rows.ys[place.row] ?? MARGIN,
+      width: cell.width,
+      height: rows.heights[place.row] ?? cell.height,
+    })
   }
   const all = [...rects.values()]
   return {
     width: Math.max(0, ...all.map((rect) => rect.x + rect.width)) + MARGIN,
     height: Math.max(0, ...all.map((rect) => rect.y + rect.height)) + MARGIN,
     rects,
+    ...boxTitlesOf(layouts, rects, form),
   }
+}
+
+/** 広げた図の箱ごとの名前と summary の組み方。ほかの形では空（図の部品が名前を短く切って描く）。 */
+function boxLayoutsOf(
+  boxes: readonly MapView["boxes"][number][],
+  form: MapDiagramForm,
+): ReadonlyMap<string, TitleLayout> {
+  if (form !== "full") {
+    return new Map()
+  }
+  const { width } = CELLS[form]
+  return new Map(
+    boxes.map((box) => [box.id, titleLayoutOf(form, width, false, box.title, box.summary)]),
+  )
+}
+
+/** 格子の行ごとの高さ（行の中でいちばん背の高い箱に合わせる）と上端の y。 */
+function gridRowsOf(
+  placement: ReadonlyMap<string, MapGridPlace>,
+  layouts: ReadonlyMap<string, TitleLayout>,
+  cell: Cell,
+  form: MapDiagramForm,
+  top: number,
+): { readonly heights: readonly number[]; readonly ys: readonly number[] } {
+  const metrics = LANE_METRICS[form]
+  const rowCount = Math.max(0, ...[...placement.values()].map((place) => place.row + 1))
+  const heights = Array.from({ length: rowCount }, (_, row) =>
+    Math.max(
+      cell.height,
+      ...[...placement]
+        .filter(([, place]) => place.row === row)
+        .map(([id]) => {
+          const layout = layouts.get(id)
+          return layout === undefined ? 0 : titleBlockHeight(layout, metrics)
+        }),
+    ),
+  )
+  const ys = heights.map(
+    (_, index) =>
+      top + heights.slice(0, index).reduce((sum, height) => sum + height + cell.gapY, 0),
+  )
+  return { heights, ys }
+}
+
+function boxTitlesOf(
+  layouts: ReadonlyMap<string, TitleLayout>,
+  rects: ReadonlyMap<string, MapBoxRect>,
+  form: MapDiagramForm,
+): Pick<MapGeometry, "boxTitles"> {
+  if (layouts.size === 0) {
+    return {}
+  }
+  const titles = new Map<string, MapBoxTitle>()
+  for (const [id, layout] of layouts) {
+    const rect = rects.get(id)
+    if (rect !== undefined) {
+      titles.set(id, placedTitle(layout, rect, LANE_METRICS[form]))
+    }
+  }
+  return { boxTitles: titles }
 }
 
 function centerOf(rect: MapBoxRect): { readonly x: number; readonly y: number } {
@@ -454,14 +576,4 @@ function borderPoint(
     dy === 0 ? Infinity : rect.height / 2 / Math.abs(dy),
   )
   return { x: center.x + dx * scale, y: center.y + dy * scale }
-}
-
-function rectOf(id: string, place: MapGridPlace, cell: Cell): MapBoxRect {
-  return {
-    id,
-    x: MARGIN + place.column * (cell.width + cell.gapX),
-    y: MARGIN + place.row * (cell.height + cell.gapY),
-    width: cell.width,
-    height: cell.height,
-  }
 }

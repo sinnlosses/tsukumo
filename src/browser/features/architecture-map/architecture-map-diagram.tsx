@@ -1,4 +1,4 @@
-// 地図の1枚の図を SVG で描く。箱は名前・下に summary を1行・子を持つ箱は潜れる印、
+// 地図の1枚の図を SVG で描く。箱は名前・下に summary・子を持つ箱は潜れる印、
 // エッジは実際のものを実線＋本数、意図したものを破線＋ラベルで描く。
 // 選んだ箱の縁は狐火の青緑、ずれのある箱とずれたエッジは赤。
 
@@ -113,7 +113,7 @@ export function ArchitectureMapDiagram(props: {
       ))}
       {props.view.boxes.map((box) => {
         const rect = geometry.rects.get(box.id)
-        const laneTitle = lanes?.titles.get(box.id)
+        const laneTitle = lanes?.titles.get(box.id) ?? geometry.boxTitles?.get(box.id)
         const tone = box.lane === undefined ? undefined : tones.get(box.lane)
         const outer = geometry.outerIds?.has(box.id) === true
         return (
@@ -420,13 +420,19 @@ function BoxNode(props: {
       )}
       {laneTitle?.summary !== undefined && (
         <text
-          x={laneTitle.x}
-          y={laneTitle.summary.baseline}
           fontSize={laneTitle.summary.fontSize}
           clipPath={`url(#${clipId})`}
           className={styles["box-summary"]}
         >
-          {laneTitle.summary.text}
+          {laneTitle.summary.lines.map((line, index) => (
+            <tspan
+              key={`${String(index)}:${line}`}
+              x={laneTitle.x}
+              y={laneTitle.summary?.baselines[index]}
+            >
+              {line}
+            </tspan>
+          ))}
         </text>
       )}
       {!mini && box.hasChildren && (

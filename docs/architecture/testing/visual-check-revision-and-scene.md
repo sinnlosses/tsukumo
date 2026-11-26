@@ -38,6 +38,9 @@ tsukumo を1つ起こし、URL を出す（`--scene` で疑似セッションの
 の履歴を表示する（`.git` を書き換える呼び出しはここを通らない——読むだけの `git` しか打たない。
 `scripts/runtime/serve-revision.ts` の `lendGitDirectory`）。
 手順の前後で `git status --short` が変わっていないことを確かめてから `evidence` を書く。
+それでも `git worktree add --detach` で一時のディレクトリに木を作ったときは、使い終えたらその場で
+`git worktree remove --force` で消す。消し忘れた木は、`pnpm run check` の終わりに3時間触られていなければ
+消える（`scripts/shared/abandoned-worktree.ts` の `sweepAbandonedWorktrees`）。
 
 **配信側が疑わしいときは、ブラウザを開く前に `curl` で切り分ける。** 起動時にビューの URL が
 表示されるので、`curl <URL>` で HTML が返るかを見る。WebSocket 側はブラウザの開発者ツールの

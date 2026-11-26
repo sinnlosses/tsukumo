@@ -16,8 +16,19 @@ export function wrappedTitle(text: string, units: number): readonly string[] {
   return tail === "" ? [head] : [head, fittedLine(tail, units)]
 }
 
+/** 文を、1行に `units` 字までで行数の上限なく折り返す。字は省かない。 */
+export function wrappedLines(text: string, units: number): readonly string[] {
+  const chars = [...text]
+  if (chars.length === 0) {
+    return []
+  }
+  const cut = lineStartSafe(chars, wordBreakOf(chars, fittingLength(chars, units)))
+  const head = chars.slice(0, cut).join("").trimEnd()
+  return [head, ...wrappedLines(chars.slice(cut).join("").trimStart(), units)]
+}
+
 /** 1行に `units` 字までで切り、収まらないときは末尾を「…」にする。 */
-export function fittedLine(text: string, units: number): string {
+function fittedLine(text: string, units: number): string {
   const chars = [...text]
   const fit = fittingLength(chars, units)
   return fit >= chars.length ? text : `${chars.slice(0, fittingLength(chars, units - 1)).join("")}…`
