@@ -11,7 +11,7 @@ import {
   type ReactComponentImplementation,
 } from "@a2ui/react/v0_9"
 import { Catalog, MessageProcessor } from "@a2ui/web_core/v0_9"
-import { type ReactElement, useRef, useState } from "react"
+import { type ReactElement, useId, useRef, useState } from "react"
 
 import type { A2uiReportComponent } from "../../../shared/report/a2ui-report-catalog.ts"
 import {
@@ -20,9 +20,9 @@ import {
   a2uiPartsById,
 } from "../../../shared/report/a2ui-report-outline.ts"
 import type { MainViewSurfaceLeafRegion } from "../../../shared/session/main-view-surface-shape.ts"
-import { Button } from "../../components/ui/button/button.tsx"
 import { Divider } from "../../components/ui/divider/divider.tsx"
 import { FirstNoteList } from "../../components/ui/first-note-list/first-note-list.tsx"
+import { TabList } from "../../components/ui/tab-list/tab-list.tsx"
 import { useExternalSync } from "../../hooks/use-external-sync.ts"
 import { useFirstNoteList } from "../../stores/first-note-seen.ts"
 import {
@@ -419,32 +419,37 @@ function TabsPart(props: {
   const [selected, setSelected] = useState(0)
   const current = props.tabs[selected] ?? props.tabs[0]
   const currentTitle = typeof current?.title === "string" ? current.title : ""
+  const baseId = useId()
+  const panelId = `${baseId}-panel`
   return (
     <div>
-      <div role="tablist" {...reportExportMark.value(currentTitle)}>
-        {props.tabs.map((tab, index) => (
-          <Button
-            key={tab.child}
-            variant="ghost"
-            size="action"
-            pressed={index === selected ? "on" : "off"}
-            disabled={false}
-            disclosure={{ kind: "none" }}
-            className=""
-            onClick={() => {
-              setSelected(index)
-            }}
-          >
-            {typeof tab.title === "string" ? tab.title : ""}
-            {index !== selected && report.pending?.nextTab === tab.child && (
-              <span aria-hidden="true" data-report-pending="tab">
-                {" …"}
-              </span>
-            )}
-          </Button>
-        ))}
+      <div {...reportExportMark.value(currentTitle)}>
+        <TabList
+          label="タブ"
+          value={String(selected)}
+          panelId={panelId}
+          tabs={props.tabs.map((tab, index) => ({
+            value: String(index),
+            label: typeof tab.title === "string" ? tab.title : "",
+            id: `${baseId}-tab-${index}`,
+            ...(index !== selected && report.pending?.nextTab === tab.child
+              ? {
+                  endContent: (
+                    <span aria-hidden="true" data-report-pending="tab">
+                      …
+                    </span>
+                  ),
+                }
+              : {}),
+          }))}
+          onChange={(next) => {
+            setSelected(Number(next))
+          }}
+        />
       </div>
-      {current !== undefined && <PartRun lead="" ids={[current.child]} />}
+      <div id={panelId} role="tabpanel" aria-labelledby={`${baseId}-tab-${selected}`}>
+        {current !== undefined && <PartRun lead="" ids={[current.child]} />}
+      </div>
     </div>
   )
 }

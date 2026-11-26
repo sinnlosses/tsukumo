@@ -104,7 +104,7 @@ describe("最終レポートの写し", () => {
         body={regionsOfParts(PARTS)}
       />,
     )
-    fireEvent.click(screen.getByRole("button", { name: "架空の二" }))
+    fireEvent.click(screen.getByRole("tab", { name: "架空の二" }))
     fireEvent.click(screen.getByRole("button", { name: "採ったあとだけ" }))
     fireEvent.click(screen.getByRole("button", { name: /^甲/ }))
     const root = firstChild(container)
