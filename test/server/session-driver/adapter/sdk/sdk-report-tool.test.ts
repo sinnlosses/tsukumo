@@ -67,6 +67,7 @@ describe("report でターンを閉じる", () => {
   it("構文が割れた mermaid の図はサーバでは差し戻さず（描けなければブラウザがコードで出す）、種類の外の図は差し戻す", async () => {
     const withDiagram = (source: string) => ({
       ...COMPLETE,
+      figure: { kind: "mermaid", source: "sequenceDiagram\n  A->>B: hi" },
       sections: [{ blocks: [{ kind: "mermaid", source }] }],
     })
 
@@ -79,6 +80,16 @@ describe("report でターンを閉じる", () => {
     expect(brokenSyntax).toEqual({ text: "架空の結論", isError: false, endsTurn: true })
     expect(otherKind.isError).toBe(true)
     expect(otherKind.text.split("\n")[1]).toBe(UNKNOWN_MERMAID_LINE)
+  })
+
+  it("図派で起こしたセッションでは、図を置かずに流れの部品をセクションに置いた report を差し戻す", async () => {
+    const reply = await callReport(workServer(), {
+      ...COMPLETE,
+      sections: [{ blocks: [{ kind: "mermaid", source: "sequenceDiagram\n  A->>B: hi" }] }],
+    })
+
+    expect(reply.isError).toBe(true)
+    expect(reply.text).toContain("図を主に読む設定なのに `figure` が無く")
   })
 
   it("figure に置いた mermaid の種類の外も差し戻す", async () => {

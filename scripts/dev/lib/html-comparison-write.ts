@@ -183,6 +183,7 @@ function violationOf(
     fileContents: new Map(),
     task: report.task,
     workPlanClosing: report.workPlanClosing,
+    figurePreference: "chart",
   }).filter((violation) => REPORT_REJECTION_MODES[violation.kind] === "reject")
   return rejecting.length === 0
     ? undefined

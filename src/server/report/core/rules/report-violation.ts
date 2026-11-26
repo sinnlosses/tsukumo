@@ -118,6 +118,7 @@ const VIOLATION_THRESHOLDS = {
   "plain-word": 0,
   "figure-contradiction": 0,
   "figure-number-mismatch": 0,
+  "figure-escape": 0,
   "plot-forbidden-form": 0,
   "plot-form-override": 0,
   "broken-inline-mark": 0,

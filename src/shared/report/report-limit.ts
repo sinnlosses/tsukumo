@@ -47,3 +47,12 @@ export const MAX_TERM_NOTE = 80
 
 /** `marks` の無い `code` の行数の上限。 */
 export const MAX_PLAIN_CODE_LINES = 45
+
+/** 図派で図の材料とみなす表の行の数。目安で、実証された閾値ではない。 */
+export const MIN_FIGURE_TABLE_ROWS = 3
+
+/** 図派で図の材料とみなす番号つきの手順の項目の数。目安。 */
+export const MIN_FIGURE_STEPS = 3
+
+/** 図派で図の材料とみなす、1つのセクションの文（`Paragraph`・`Markdown`）の字数の合計。目安。 */
+export const MIN_FIGURE_PROSE_CHARS = 400

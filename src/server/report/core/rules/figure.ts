@@ -20,6 +20,7 @@ import {
   type ToneFault,
   unknownMermaidCount,
 } from "./figure/diagram.ts"
+import { type FigureEscapeFault, figureEscapeFaults, figureEscapeMessage } from "./figure/escape.ts"
 import {
   type FigureNumberFault,
   figureNumberFaultPositions,
@@ -88,6 +89,12 @@ export type FigureViolation =
   | { readonly kind: "plot-form-override"; readonly count: number }
   /** 棒・折れ線・円で描く `plot` の題に数が無い。 */
   | { readonly kind: "plot-title-without-number"; readonly count: number }
+  /** 図派の既定で `figure` が無いのに、セクションに図にできる材料（表・手順・長い文・流れの部品）がある。`faults` は位置と材料の種類だけ。 */
+  | {
+      readonly kind: "figure-escape"
+      readonly count: number
+      readonly faults: readonly FigureEscapeFault[]
+    }
 
 /** 図の違反を、当てはまらないもの（`count` が 0）も含めて並べる。 */
 export function detectFigureViolations(
@@ -102,6 +109,7 @@ export function detectFigureViolations(
   const timelineFaultList = timelineFaults(timelinesOfLeaves(drawn))
   const figureNumberFaultList = figureNumberFaults(report, outline)
   const plotForms = plotFormFaults(outline)
+  const escapeFaults = figureEscapeFaults(report, outline)
 
   return [
     { kind: "unknown-mermaid", count: unknownMermaidCount(drawn) },
@@ -118,6 +126,7 @@ export function detectFigureViolations(
     { kind: "plot-forbidden-form", count: plotForms.refused.length, rules: plotForms.refused },
     { kind: "plot-form-override", count: plotForms.overrides },
     { kind: "plot-title-without-number", count: plotNoteFaults(outline) },
+    { kind: "figure-escape", count: escapeFaults.length, faults: escapeFaults },
   ]
 }
 
@@ -132,6 +141,7 @@ const FIGURE_KINDS: ReadonlySet<string> = new Set<FigureViolation["kind"]>([
   "plot-forbidden-form",
   "plot-form-override",
   "plot-title-without-number",
+  "figure-escape",
 ])
 
 export function isFigureViolation(violation: {
@@ -163,5 +173,7 @@ export function figureViolationMessage(violation: FigureViolation): string {
       return `\`Plot\` の \`form\` が決定表の形と違う部品が${violation.count}個ある。決定表の形で足りるなら \`form\` を省く`
     case "plot-title-without-number":
       return `棒・折れ線・円で描く \`Plot\` の \`question\` に数が無い部品が${violation.count}個ある。題に数と向きで言いたい傾向を1文で書く`
+    case "figure-escape":
+      return figureEscapeMessage(violation.faults)
   }
 }

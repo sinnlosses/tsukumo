@@ -68,6 +68,7 @@ export const REPORT_REJECTION_MODES = {
   "plain-word": "reject",
   "figure-contradiction": "count",
   "figure-number-mismatch": "count",
+  "figure-escape": "reject",
   "plot-forbidden-form": "count",
   "plot-form-override": "count",
   "broken-inline-mark": "count",

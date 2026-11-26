@@ -121,6 +121,7 @@ export function reportDraft(input: ReportDraftInput = {}): ReportDraft {
     fileContents: new Map(),
     task: { kind: "none" },
     workPlanClosing: "none",
+    figurePreference: "text",
     ...overrides,
     components,
   }

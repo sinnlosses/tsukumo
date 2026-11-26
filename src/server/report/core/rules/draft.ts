@@ -9,6 +9,7 @@ import type { A2uiReportComponent } from "../../../../shared/report/a2ui-report-
 import type { KeyFigures } from "../../../../shared/report/report-block-comparison.ts"
 import type { ReportCheck } from "../../../../shared/report/report-check.ts"
 import type { ReportTask } from "../../../../shared/report/report-task.ts"
+import type { FigurePreference } from "../../../../shared/session/session-default.ts"
 import type { WorkPlanClosing } from "../../../../shared/session/work-plan.ts"
 
 /** 検査にかけるレポート。`checks` の「無い」は空の配列、`favor` の「無い」は空の文字列。 */
@@ -28,6 +29,8 @@ export type ReportDraft = {
   readonly task: ReportTask
   /** フェーズの閉じ方。記法の検査には使わず、フェーズの閉じ方の差し戻し（`ReportReview`）が読む。 */
   readonly workPlanClosing: WorkPlanClosing
+  /** 利用者の図の既定。図派のときだけ、図を置かずに材料を表や文へ逃がした回を差し戻す。 */
+  readonly figurePreference: FigurePreference
   /** 締めのセリフと待ちの一言の文。無ければセリフの検査をしない。 */
   readonly speechTexts?: readonly string[]
 }

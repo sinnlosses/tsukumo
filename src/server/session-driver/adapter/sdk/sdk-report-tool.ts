@@ -85,6 +85,7 @@ export function reportTool(
       fileContents,
       task: report.task,
       workPlanClosing: report.workPlanClosing,
+      figurePreference,
       speechTexts: [report.closing, report.waitingLine].flatMap((speech) =>
         speech.kind === "speech" ? [speech.text] : [],
       ),

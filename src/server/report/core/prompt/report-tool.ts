@@ -5,6 +5,11 @@
 // 関所が止めるのは、背景の仕事が走っていないのに `report` を呼ばずに本文を書いて止まろうとしたターンだけで、`report` で渡し直させる。
 // `report` の呼び出しそのものの検査と差し戻しは `ReportReview` が持つ。
 
+import {
+  MIN_FIGURE_PROSE_CHARS,
+  MIN_FIGURE_STEPS,
+  MIN_FIGURE_TABLE_ROWS,
+} from "../../../../shared/report/report-limit.ts"
 import { MAX_SESSION_HEADING_LENGTH } from "../../../../shared/session/session-choice.ts"
 import type { FigurePreference } from "../../../../shared/session/session-default.ts"
 import { MAX_SESSION_SUMMARY_LENGTH } from "../../../../shared/session/session-digest.ts"
@@ -67,7 +72,11 @@ export function reportFigureDescription(preference: FigurePreference): string {
       `あるセクションには${parts}を置いてよい。${notFigure}`
     )
   }
-  return `${head}次のどれかがあれば${parts}を置く: ${conditions}。無ければ省く。${notFigure}`
+  return (
+    `${head}利用者は図を主に読む設定。次のどれかがあれば${parts}を置く: ${conditions}。無ければ省く。${notFigure}` +
+    `図にできる材料（${String(MIN_FIGURE_TABLE_ROWS)}行以上の表・${String(MIN_FIGURE_STEPS)}項目以上の番号つきの手順・流れや前後の部品・${String(MIN_FIGURE_PROSE_CHARS)}字以上の文）を図にせずセクションに置くと差し戻す。` +
+    "図を先に決め、表と文は図に載らない細部だけにする。"
+  )
 }
 
 /**
