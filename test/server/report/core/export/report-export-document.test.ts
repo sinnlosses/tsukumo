@@ -42,6 +42,12 @@ describe("buildReportExportDocument", () => {
     expect(html).toContain("@media print")
   })
 
+  it("印刷では閉じた畳みの中身も出し、見出しは消さない", () => {
+    const print = /@media print \{([\s\S]*?)\n\}/.exec(build({}))?.[1] ?? ""
+    expect(print).toMatch(/details::details-content \{[^}]*content-visibility: visible/)
+    expect(print).not.toMatch(/summary \{ display: none/)
+  })
+
   it("表紙の帯は無い項目を出さず、字を逃がす", () => {
     const html = build({
       masthead: { title: "<b>題</b>", taskId: "PROJ-1", at: "2026-01-02 03:04" },

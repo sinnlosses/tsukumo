@@ -92,7 +92,7 @@ details > summary::-webkit-details-marker { display: none; }
   html { background: none; }
   main { margin: 0; padding: 0; box-shadow: none; max-width: none; }
   details { border: none; padding: 0; }
-  details > summary { display: none; }
+  details::details-content { content-visibility: visible; display: block; height: auto; }
   .report-export-zoom { display: none; }
   h2 { break-after: avoid; }
   figure, table, pre { break-inside: avoid; }
