@@ -37,6 +37,8 @@ const mapViewBoxSchema = z.object({
   hasChildren: z.boolean(),
   /** 置き場（ファイルの glob）。外の世界の箱は空。 */
   paths: z.array(z.string()).readonly(),
+  /** paths を、ほかのモジュールと重ならないディレクトリの再帰の glob に畳んだもの。前のレポートの図には無い。 */
+  foldedPaths: z.array(z.string()).readonly().optional(),
   place: mapPlaceSchema.optional(),
   /** 箱の大の祖先が属する区画の `id`。区画の無い地図では無い。 */
   lane: z.string().optional(),

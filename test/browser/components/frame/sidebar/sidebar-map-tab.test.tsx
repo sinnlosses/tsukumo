@@ -173,6 +173,46 @@ describe("Sidebar の地図のタブ", () => {
     expect(text).not.toContain("0001-架空")
   })
 
+  it("パスは畳んだ1件を出し、3件を超える箱は「ほか n 件」を押すと全部が出る", async () => {
+    const many = ["a/**", "b/**", "c/**", "d/**", "e/**"]
+    fetchStub = stubRpcFetch((call) =>
+      call.procedure.includes("architectureMap")
+        ? rpcOutput({
+            ...ready(),
+            view: {
+              ...WHOLE,
+              boxes: [
+                box("alpha", {
+                  title: "アルファ",
+                  paths: ["src/alpha/a/*"],
+                  foldedPaths: ["src/alpha/**"],
+                }),
+                box("beta", { title: "ベータ", paths: many, foldedPaths: many }),
+              ],
+            },
+          })
+        : rpcError(500),
+    )
+    putSession({ ...INITIAL_SESSION_STATE })
+    render(
+      <QueryClientProvider client={createTestQueryClient()}>
+        <Sidebar />
+      </QueryClientProvider>,
+    )
+    fireEvent.click(await screen.findByRole("tab", { name: "地図" }))
+
+    fireEvent.click(await screen.findByRole("button", { name: "アルファ" }))
+    const alpha = screen.getByRole("region", { name: "アルファの説明" }).textContent
+    expect(alpha).toContain("パス")
+    expect(alpha).toContain("src/alpha/**")
+    expect(alpha).not.toContain("src/alpha/a/*")
+
+    fireEvent.click(screen.getByRole("button", { name: "ベータ" }))
+    expect(screen.getByRole("region", { name: "ベータの説明" }).textContent).not.toContain("d/**")
+    fireEvent.click(screen.getByRole("button", { name: "ほか 2 件" }))
+    expect(screen.getByRole("region", { name: "ベータの説明" }).textContent).toContain("e/**")
+  })
+
   it("会話で小の箱を指すと、ミニマップが親の図に替わり、触れている箱に data-lit が付く", async () => {
     renderSidebar(rpcOutput(ready()))
     fireEvent.click(await screen.findByRole("tab", { name: "地図" }))

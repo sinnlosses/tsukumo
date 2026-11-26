@@ -155,7 +155,7 @@ function viewOf(map: ArchitectureMap, index: BoxIndex, plan: ViewPlan): MapView 
         }),
     boxes: index.order
       .filter((node) => drawn.has(node.id))
-      .map((node) => viewBoxOf(node, problems.get(node.id) ?? [])),
+      .map((node) => viewBoxOf(index, node, problems.get(node.id) ?? [])),
     edges: bundled.edges.map((edge) => ({
       ...edge,
       undeclared: undeclared.keys.has(edgeKey(edge.from, edge.to)),
@@ -285,7 +285,7 @@ function viewLaneOf(lane: NonNullable<ArchitectureMap["lanes"]>[number]): MapVie
   return { id: lane.id, title: lane.title ?? lane.id, kind: lane.kind }
 }
 
-function viewBoxOf(node: BoxNode, problems: readonly BoxProblem[]): MapViewBox {
+function viewBoxOf(index: BoxIndex, node: BoxNode, problems: readonly BoxProblem[]): MapViewBox {
   return {
     id: node.id,
     title: node.title,
@@ -296,11 +296,58 @@ function viewBoxOf(node: BoxNode, problems: readonly BoxProblem[]): MapViewBox {
     external: node.external,
     hasChildren: node.childIds.length > 0,
     paths: node.paths,
+    foldedPaths: foldedPathsOf(index, node),
     ...(node.place === undefined ? {} : { place: node.place }),
     ...(node.lane === undefined ? {} : { lane: node.lane }),
     ...(node.links === undefined ? {} : { links: node.links }),
     problems,
   }
+}
+
+/**
+ * 箱の paths を、親のディレクトリへ遡って畳んだ glob の並び。
+ * 自分・子孫・祖先以外の箱のパスがそのディレクトリの下（再帰の glob で終わるパスは上も）に1つも無い間だけ遡り、
+ * 届いたディレクトリの再帰の glob にする。
+ * 根直下のファイルと、ほかの箱が同居するディレクトリのパスは畳まない。
+ */
+function foldedPathsOf(index: BoxIndex, node: BoxNode): readonly string[] {
+  const otherDirs = index.order
+    .filter(
+      (other) =>
+        other.id !== node.id &&
+        !isWithin(index, other.id, node.id) &&
+        !isWithin(index, node.id, other.id),
+    )
+    .flatMap((other) => other.paths)
+    .map((path) => ({ dir: literalDirOf(path), recursive: path.endsWith("**") }))
+    .filter((other) => other.dir.length > 0)
+  const isFree = (dir: readonly string[]) =>
+    !otherDirs.some(
+      (other) => startsWith(other.dir, dir) || (other.recursive && startsWith(dir, other.dir)),
+    )
+  const folded = node.paths.map((path) => {
+    let dir = literalDirOf(path)
+    if (dir.length === 0 || !isFree(dir)) {
+      return path
+    }
+    while (dir.length > 1 && isFree(dir.slice(0, -1))) {
+      dir = dir.slice(0, -1)
+    }
+    return `${dir.join("/")}/**`
+  })
+  return [...new Set(folded)]
+}
+
+/** glob の最後の区切りを除いた、ワイルドカードを含まない頭の区切りの並び。 */
+function literalDirOf(path: string): readonly string[] {
+  const directories = path.split("/").slice(0, -1)
+  const wildcard = directories.findIndex((segment) => segment.includes("*"))
+  return wildcard === -1 ? directories : directories.slice(0, wildcard)
+}
+
+/** `path` が `prefix` の下（同じ場所を含む）か。 */
+function startsWith(path: readonly string[], prefix: readonly string[]): boolean {
+  return prefix.length <= path.length && prefix.every((segment, i) => path[i] === segment)
 }
 
 function edgeKey(from: string, to: string): string {

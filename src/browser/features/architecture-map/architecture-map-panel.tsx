@@ -2,7 +2,7 @@
 // 役割（summary）・目的（purpose）・概要（overview）の順で、置き場・用語・つながりを小さく添える。
 // 何も選んでいないときはリポジトリの概要を出す。地図が読めないときは理由の1行だけを出す。
 
-import type { ReactElement } from "react"
+import { type ReactElement, useState } from "react"
 
 import type { MapUnreadableReason } from "../../../shared/architecture-map/architecture-map.ts"
 import type { MapReady, MapView, MapViewBox } from "../../../shared/architecture-map/map-view.ts"
@@ -150,6 +150,7 @@ function RepositoryDescription(props: { readonly overview?: string }): ReactElem
 function BoxDescription(props: { readonly box: MapViewBox; readonly view: MapView }): ReactElement {
   const { box, view } = props
   const parent = box.level === 3 ? view.focus : undefined
+  const paths = box.foldedPaths ?? box.paths
   const terms = box.links?.terms ?? []
   const connections = connectionsOf(box.id, view)
   return (
@@ -167,10 +168,42 @@ function BoxDescription(props: { readonly box: MapViewBox; readonly view: MapVie
       {box.summary !== undefined && <p className={styles["panel-text"]}>{box.summary}</p>}
       {box.purpose !== undefined && <p className={styles["panel-text"]}>{box.purpose}</p>}
       {box.overview !== undefined && <p className={styles["panel-text"]}>{box.overview}</p>}
-      {box.paths.length > 0 && <SmallList label="置き場" items={box.paths} />}
+      {paths.length > 0 && <PathList key={box.id} paths={paths} />}
       {terms.length > 0 && <SmallList label="用語" items={terms} />}
       {connections.length > 0 && <SmallList label="つながり" items={connections} />}
     </section>
+  )
+}
+
+const PATHS_SHOWN_COUNT = 3
+
+/** 畳んだパス。3件を超えるときは先頭 3件と「ほか n 件」の行にし、押すと全部を出す。 */
+function PathList(props: { readonly paths: readonly string[] }): ReactElement {
+  const [opened, setOpened] = useState(false)
+  const hiddenCount = props.paths.length - PATHS_SHOWN_COUNT
+  const folded = hiddenCount > 0 && !opened
+  return (
+    <>
+      <SmallList
+        label="パス"
+        items={folded ? props.paths.slice(0, PATHS_SHOWN_COUNT) : props.paths}
+      />
+      {folded && (
+        <Button
+          variant="ghost"
+          size="label"
+          pressed="none"
+          disabled={false}
+          disclosure={{ kind: "none" }}
+          className={styles["panel-expand"]}
+          onClick={() => {
+            setOpened(true)
+          }}
+        >
+          {`ほか ${String(hiddenCount)} 件`}
+        </Button>
+      )}
+    </>
   )
 }
 

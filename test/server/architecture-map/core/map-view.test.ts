@@ -233,3 +233,69 @@ describe("mapViewOf の区画", () => {
     expect(focused.boxes.every((box) => !("lane" in box))).toBe(true)
   })
 })
+
+describe("mapViewOf のパスの畳み", () => {
+  function foldedOf(boxId: string): readonly string[] | undefined {
+    const parsed = parseArchitectureMap(
+      JSON.stringify({
+        version: 1,
+        source: { producer: "sample-producer 0.0.1", commit: "0123abc" },
+        boxes: [
+          {
+            id: "web",
+            summary: "架空の画面",
+            paths: ["lib/web/a/*", "lib/web/b/*", "lib/web/c/*"],
+            children: [
+              {
+                id: "web/all",
+                summary: "架空",
+                paths: ["lib/web/a/*", "lib/web/b/*", "lib/web/c/*"],
+                children: [
+                  { id: "lib/web/a", paths: ["lib/web/a/*"] },
+                  { id: "lib/web/b", paths: ["lib/web/b/*"] },
+                  { id: "lib/web/c", paths: ["lib/web/c/*"] },
+                ],
+              },
+            ],
+          },
+          {
+            id: "core",
+            summary: "架空の中核",
+            paths: ["lib/core/*", "lib/main.ts", "tools/*", "tools/gen/*"],
+            children: [
+              {
+                id: "core/all",
+                summary: "架空",
+                paths: ["lib/core/*", "lib/main.ts", "tools/*", "tools/gen/*"],
+                children: [
+                  { id: "lib/core", paths: ["lib/core/*"] },
+                  { id: "tools", paths: ["tools/*"] },
+                  { id: "tools/gen", paths: ["tools/gen/*"] },
+                  { id: "lib/main.ts", paths: ["lib/main.ts"] },
+                ],
+              },
+            ],
+          },
+        ],
+        edges: { intended: [], actual: [] },
+        findings: [],
+      }),
+    )
+    if (parsed.kind !== "map") {
+      throw new Error("架空の地図が読めない")
+    }
+    const outcome = mapViewOf(parsed.map, { kind: "level", level: 1 })
+    if (outcome.kind !== "ready") {
+      throw new Error("図が引けない")
+    }
+    return outcome.view.boxes.find((box) => box.id === boxId)?.foldedPaths
+  }
+
+  it("子孫だけを持つディレクトリへ遡り、1件の `<dir>/**` に畳む", () => {
+    expect(foldedOf("web")).toEqual(["lib/web/**"])
+  })
+
+  it("別の箱が同居するディレクトリへは遡らず、そのディレクトリにあるファイル1つの glob はそのまま残す", () => {
+    expect(foldedOf("core")).toEqual(["lib/core/**", "lib/main.ts", "tools/**"])
+  })
+})
