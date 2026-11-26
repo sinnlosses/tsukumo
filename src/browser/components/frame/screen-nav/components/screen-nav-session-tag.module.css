@@ -2,10 +2,8 @@
    値は見本 `docs/history/mockup/session-switch-2026-09-27/HD-4-IdTag.dc.html` の inline style を `theme.css` のトークンに写したもの。
    引き出しの中の見た目は末尾の `.is-drawer` が持つ。 */
 
-/* 部屋の名前・「-」・短縮IDのボタンを字の並びで揃える。
-   ホバーの一行（.screen-nav-session-tag-tooltip）を札の真下に重ねる基準も兼ねる。 */
+/* 部屋の名前・「-」・短縮IDのボタンを字の並びで揃える。 */
 .screen-nav-session-tag {
-  position: relative;
   display: flex;
   flex: 0 1 auto;
   align-items: baseline;
@@ -71,27 +69,14 @@
   letter-spacing: 0.08em;
   line-height: 1.4;
 }
-/* 短縮IDへのホバーの一行。明るい地に暗い字で、帯の下の領域に重ねる（押し下げない）。 */
+/* 短縮IDへのホバーの一行。地と影は Astryx の Tooltip が持ち、ここは中の並びだけ。 */
 .screen-nav-session-tag-tooltip {
-  position: absolute;
-  top: calc(100% + 0.5rem);
-  left: 0;
-  z-index: 22;
   display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  padding: var(--space-sm) var(--space-md);
-  border-radius: var(--radius-md);
-  background: var(--ink);
-  box-shadow: var(--shadow-raised);
-  color: var(--ground);
-  font-size: var(--font-action);
-  line-height: 1.4;
-  white-space: nowrap;
-  pointer-events: none;
+  flex-direction: column;
+  align-items: flex-start;
 }
 .screen-nav-session-tag-hint {
-  color: color-mix(in srgb, var(--ground) 55%, var(--ink));
+  opacity: 0.65;
 }
 
 /* 引き出しの名乗りの行（狭い画面）。部屋の名前は明朝 16px の太字、短縮IDは等幅 12px の差し色。 */

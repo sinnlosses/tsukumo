@@ -14,6 +14,7 @@ import { ImageZoom } from "../../ui/image-zoom/image-zoom.tsx"
 import { Menu, type MenuItem } from "../../ui/menu/menu.tsx"
 import { Popover } from "../../ui/popover/popover.tsx"
 import { Text } from "../../ui/text/text.tsx"
+import { Tooltip } from "../../ui/tooltip/tooltip.tsx"
 import styles from "./design.module.css"
 import { Group } from "./ui-gallery-group.tsx"
 
@@ -136,6 +137,21 @@ export function OverlayGroups(): ReactElement {
       </Group>
       <Group title="Popover（口の下に重なって出る）" parts={["popover"]}>
         <PopoverSample />
+      </Group>
+      <Group title="Tooltip（ホバー・フォーカスで出る）" parts={["tooltip"]}>
+        <Tooltip content="口に出す一行" placement="below">
+          <Button
+            variant="outline"
+            size="action"
+            pressed="none"
+            disabled={false}
+            disclosure={{ kind: "none" }}
+            className=""
+            onClick={() => {}}
+          >
+            Tooltip の口
+          </Button>
+        </Tooltip>
       </Group>
       <Group title="ImageZoom（開くと出る）" parts={["image-zoom"]}>
         <Opener label="ImageZoom を開く" onOpen={() => setZoomOpen(true)} />

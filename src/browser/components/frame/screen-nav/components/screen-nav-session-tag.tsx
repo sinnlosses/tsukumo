@@ -10,6 +10,7 @@ import { useState, type ReactElement } from "react"
 
 import { useSessionDigest } from "../../../../features/session-switcher/use-session-digest.ts"
 import { Text } from "../../../ui/text/text.tsx"
+import { Tooltip } from "../../../ui/tooltip/tooltip.tsx"
 import type {
   ScreenNavSessionIdentity,
   ScreenNavSessionTag,
@@ -40,8 +41,6 @@ export function ScreenNavSessionTag(props: ScreenNavSessionTagProps): ReactEleme
         styles["screen-nav-session-tag"],
         props.placement === "nav-drawer" && styles["is-drawer"],
       )}
-      onFocus={() => setPeeking(true)}
-      onBlur={() => setPeeking(false)}
     >
       {props.placement === "screen-nav" ? (
         <>
@@ -53,21 +52,25 @@ export function ScreenNavSessionTag(props: ScreenNavSessionTagProps): ReactEleme
       ) : (
         <span className={styles["screen-nav-session-tag-drawer-room"]}>{tag.title.room}</span>
       )}
-      <button
-        type="button"
-        className={styles["screen-nav-session-tag-button"]}
-        aria-haspopup="dialog"
-        aria-expanded={tag.open}
-        aria-label={accessibleName(tag.identity)}
-        onPointerEnter={() => setPeeking(true)}
-        onPointerLeave={() => setPeeking(false)}
-        onClick={tag.onOpen}
+      <Tooltip
+        content={<SessionTagTooltip identity={tag.identity} active={peeking} />}
+        placement="below"
+        isEnabled={!tag.open}
+        onOpenChange={setPeeking}
       >
-        <span className={styles["screen-nav-session-tag-id"]}>
-          {tag.identity.kind === "known" ? tag.identity.shortId : NEW_SESSION_LABEL}
-        </span>
-      </button>
-      {peeking && !tag.open && <SessionTagTooltip identity={tag.identity} />}
+        <button
+          type="button"
+          className={styles["screen-nav-session-tag-button"]}
+          aria-haspopup="dialog"
+          aria-expanded={tag.open}
+          aria-label={accessibleName(tag.identity)}
+          onClick={tag.onOpen}
+        >
+          <span className={styles["screen-nav-session-tag-id"]}>
+            {tag.identity.kind === "known" ? tag.identity.shortId : NEW_SESSION_LABEL}
+          </span>
+        </button>
+      </Tooltip>
     </span>
   )
 }
@@ -117,25 +120,45 @@ function SessionTagTitle(props: SessionTagTitleProps): ReactElement {
 
 type SessionTagTooltipProps = {
   readonly identity: ScreenNavSessionIdentity
+  /** 出ているあいだだけ依頼の数を取りに行く。 */
+  readonly active: boolean
 }
 
 function SessionTagTooltip(props: SessionTagTooltipProps): ReactElement {
-  const { identity } = props
-  const digest = useSessionDigest(
-    identity.kind === "known"
-      ? { kind: "session", sessionId: identity.sessionId }
-      : { kind: "none" },
+  if (props.active && props.identity.kind === "known") {
+    return <SessionTagTooltipWithDigest identity={props.identity} />
+  }
+  return <SessionTagLine identity={props.identity} />
+}
+
+function SessionTagTooltipWithDigest(props: {
+  readonly identity: ScreenNavSessionIdentity & { readonly kind: "known" }
+}): ReactElement {
+  const digest = useSessionDigest({ kind: "session", sessionId: props.identity.sessionId })
+  return digest.kind === "known" ? (
+    <SessionTagLine identity={props.identity} requestCount={digest.requestCount} />
+  ) : (
+    <SessionTagLine identity={props.identity} />
   )
+}
+
+type SessionTagLineProps = {
+  readonly identity: ScreenNavSessionIdentity
+  readonly requestCount?: number
+}
+
+function SessionTagLine(props: SessionTagLineProps): ReactElement {
+  const { identity } = props
   const parts =
     identity.kind === "known"
       ? [
           `セッション ${identity.shortId}`,
           identity.startedLabel,
-          digest.kind === "known" ? `依頼 ${String(digest.requestCount)}` : "",
+          props.requestCount === undefined ? "" : `依頼 ${String(props.requestCount)}`,
         ]
       : [UNKNOWN_SESSION]
   return (
-    <span role="tooltip" className={styles["screen-nav-session-tag-tooltip"]}>
+    <span className={styles["screen-nav-session-tag-tooltip"]}>
       {parts.filter((part) => part !== "").join(" · ")}
       <span className={styles["screen-nav-session-tag-hint"]}>{SWITCH_HINT}</span>
     </span>
