@@ -10,7 +10,7 @@
 
 ### 置き場所とモック
 
-- 新しいテストは変更前の実装で落ちること（`/tdd` スキル参照）。`pnpm run test-against-base` が変えた単体テストを `main` の `src/` に対して走らせ、
+- 新しいテストは変更前の実装で落ちること（`/test-audit` スキルの「テストファーストで書く」参照）。`pnpm run test-against-base` が変えた単体テストを `main` の `src/` に対して走らせ、
   1 件も落ちないファイルを `TESTS_PASS_ON_BASE\t<ファイル>` で知らせる（止めない）
 - テストは `test/` 以下に、テスト対象と同じディレクトリ構成で置く
   （`src/<相対パス>.ts` → `test/<相対パス>.test.ts`）。**E2E だけは `test/e2e/<シナリオ>.test.ts`**
@@ -20,7 +20,7 @@
 - 単体テストのランナーは Vitest。`describe` / `it` / `expect` は `vitest` から import する。E2E のランナーは `@playwright/test`（`test` / `expect` は `test/e2e/room-fixture.ts` から import する）
 - **モックするのはシステム境界だけ**: ファイルシステム、時刻、端末の能力判定（画像プロトコルが
   使えるか）。Vitest の `vi.fn` / `vi.spyOn` を使う。自分たちのモジュール同士はモックしない
-  （`/tdd` の `mocking.md` が正典）
+  （`/test-audit` の `MOCKING.md` が正典）
 - **事象の列を数える・畳むテストの入力は、手で並べず本番の変換（`createSpeechReview(...).pass` など）の出力を通して組む**。
   手で並べた列は、本番では起きない列でも通るため
 - **単体の `node` project はファイルごとの隔離を外して走る（`isolate: false`）**。

@@ -26,7 +26,7 @@ pnpm run test:e2e:update  # DOM・手続き応答の型・セッションイベ�
 
 ## テスト方針
 
-配置・モックは `docs/coding-standards/test.md`「テスト」節。TDD 推奨（`/tdd`）。E2E は利用者に見える流れを1本ずつと、実ブラウザでしか確かめられないものだけ。見た目（色・崩れ）は目視で確かめる（`docs/architecture/testing.md`）。
+配置・モックは `docs/coding-standards/test.md`「テスト」節。TDD 推奨（`/test-audit`）。E2E は利用者に見える流れを1本ずつと、実ブラウザでしか確かめられないものだけ。見た目（色・崩れ）は目視で確かめる（`docs/architecture/testing.md`）。
 `pnpm run check` を通し、テスト件数などの根拠を示してから完了を報告する。描画に関わる変更は、何をどう確かめたか（何が見えたか）を添える。
 
 ## コーディング規約
