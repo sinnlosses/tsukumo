@@ -6,7 +6,10 @@ import {
   readMapBoxes,
   readMapView,
 } from "../server/architecture-map/adapter/architecture-map-view.ts"
+import { rememberBySourceCommit } from "../server/architecture-map/adapter/map-change-log.ts"
+import { changeWindowStartOf } from "../server/architecture-map/core/map-change-frequency.ts"
 import type { DiagnosticLog } from "../server/diagnostic/core/diagnostic.ts"
+import { listRecentCommits } from "../server/repository/adapter/recent-commit.ts"
 import { listRepositoryFiles } from "../server/repository/adapter/repository-file.ts"
 import type { SessionManagerOptions } from "../server/session/core/session-manager-port.ts"
 import { failureDiagnostic } from "./failure-diagnostic.ts"
@@ -26,6 +29,9 @@ export function wireArchitectureMap(
     const list = await listRepositoryFiles(context.cwd)
     return list.omittedCount > 0 ? [] : list.paths
   }
+  const readChangeLog = rememberBySourceCommit(() =>
+    listRecentCommits(context.cwd, changeWindowStartOf(context.now())),
+  )
   return {
     // 疑似セッションは場面の JSON が `report-map` を流すので、ここでは何も読まない
     manager: {
@@ -40,7 +46,7 @@ export function wireArchitectureMap(
         reportFailure,
         { feature: "architecture-map", place: "read-view" },
         { kind: "unreadable", reason: "read-failed" },
-        (selection) => readMapView(context.cwd, selection, listFiles),
+        (selection) => readMapView(context.cwd, selection, listFiles, readChangeLog),
       ),
       readArchitectureMapBoxes: foldPortFailure(
         reportFailure,

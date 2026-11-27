@@ -1,5 +1,5 @@
 // サイドバーの「地図」のタブの中身。頭はミニマップと「広げる」、その下は選んだ箱の名前と縮尺、
-// 役割（summary）・目的（purpose）・概要（overview）の順で、置き場・数（ファイル・子モジュール）・用語・依存先と依存元（import 数）を小さく添える。
+// 役割（summary）・目的（purpose）・概要（overview）の順で、置き場・数（ファイル・子モジュール）・用語・依存先と依存元（import 数）・変更頻度（30日）を小さく添える。
 // 何も選んでいないときはリポジトリの概要を出す。地図が読めないときは理由の1行だけを出す。
 
 import { type ReactElement, useState } from "react"
@@ -20,6 +20,7 @@ import { useSession } from "../../stores/session.ts"
 import { ArchitectureMapDiagram } from "./architecture-map-diagram.tsx"
 import styles from "./architecture-map-panel.module.css"
 import { type SelectedBox, useArchitectureMapSelection } from "./architecture-map-selection.ts"
+import { MapBoxChangeFrequency } from "./map-box-change-frequency.tsx"
 import { MapBoxConnections } from "./map-box-connection-list.tsx"
 import { MapBoxCounts } from "./map-box-count.tsx"
 import { MAP_LEVEL_TEXT } from "./map-box-mention.ts"
@@ -180,6 +181,9 @@ function BoxDescription(props: { readonly box: MapViewBox; readonly view: MapVie
       {!box.external && <MapBoxCounts fileCount={box.fileCount} childCount={box.childCount} />}
       {terms.length > 0 && <SmallList label="用語" items={terms} />}
       <MapBoxConnections boxId={box.id} view={view} />
+      {!box.external && box.changeFrequency !== undefined && (
+        <MapBoxChangeFrequency changeFrequency={box.changeFrequency} />
+      )}
       {adrs.length > 0 && <AdrList adrs={adrs} />}
     </section>
   )

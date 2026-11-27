@@ -35,10 +35,19 @@ afterEach(async () => {
 })
 
 /** 本物の読み口（作業ディレクトリは `cwd`）を載せて起こし、ブラウザと同じ型付きの client を返す。 */
-async function clientOverRealPort(files: readonly string[] = []): Promise<RpcClient> {
+async function clientOverRealPort(
+  files: readonly string[] = [],
+  commits: readonly { date: string; paths: readonly string[] }[] = [],
+  counted = false,
+): Promise<RpcClient> {
   const server = await startView(noCharacterAsset, noPromptImage, {
     readArchitectureMapView: (selection) =>
-      readMapView(cwd, selection, () => Promise.resolve(files)),
+      readMapView(
+        cwd,
+        selection,
+        () => Promise.resolve(files),
+        () => Promise.resolve(counted ? { kind: "read", commits } : { kind: "uncounted" }),
+      ),
     readArchitectureMapBoxes: () => readMapBoxes(cwd),
   })
   const url = new URL(`${viewOrigin(server)}${RPC_PATH}`)
@@ -107,6 +116,28 @@ describe("architectureMap.view", () => {
     expect(countOf(counted, "app")).toBe(3)
     expect(countOf(counted, "vault")).toBeUndefined()
     expect(countOf(uncounted, "app")).toBeUndefined()
+  })
+
+  it("履歴を渡すと外でない箱に changeFrequency が載り、読めないときは載らない", async () => {
+    await writeFile(join(cwd, MAP_FILE_NAME), JSON.stringify(sampleMap()))
+    const commits = [
+      { date: "2026-11-20", paths: ["src/ui/a.ts"] },
+      { date: "2026-11-25", paths: ["src/ui/b.ts", "README.md"] },
+    ]
+    const counted = await (
+      await clientOverRealPort([], commits, true)
+    ).architectureMap.view({ kind: "level", level: 1 })
+    const uncounted = await (
+      await clientOverRealPort()
+    ).architectureMap.view({ kind: "level", level: 1 })
+
+    const frequencyOf = (response: typeof counted, id: string) =>
+      response.kind === "ready"
+        ? response.view.boxes.find((box) => box.id === id)?.changeFrequency
+        : undefined
+    expect(frequencyOf(counted, "app")).toEqual({ commitCount: 2, lastChangedOn: "2026-11-25" })
+    expect(frequencyOf(counted, "vault")).toBeUndefined()
+    expect(frequencyOf(uncounted, "app")).toBeUndefined()
   })
 
   it("指した箱が無い・子を持たないときは unfocusable を返す", async () => {

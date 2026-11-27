@@ -13,6 +13,7 @@ import type {
 } from "../../../shared/architecture-map/map-view.ts"
 import { adrEntryOf } from "../core/map-adr.ts"
 import { mapBoxIndexOf } from "../core/map-box.ts"
+import { type ChangeCommit, changeFrequencyOf } from "../core/map-change-frequency.ts"
 import { fileCountOf } from "../core/map-file-count.ts"
 import { mapViewOf } from "../core/map-view.ts"
 import { readArchitectureMapFile } from "./architecture-map-file.ts"
@@ -20,10 +21,19 @@ import { readArchitectureMapFile } from "./architecture-map-file.ts"
 /** git の管理下のファイルの一覧。空は「数えられない」とみなす。 */
 export type ListFiles = () => Promise<readonly string[]>
 
+/** 直近の commit の並び。`uncounted` は「数えられない」。 */
+export type ChangeLog =
+  | { readonly kind: "read"; readonly commits: readonly ChangeCommit[] }
+  | { readonly kind: "uncounted" }
+
+/** 地図の `source.commit` を渡して読む。 */
+export type ReadChangeLog = (sourceCommit: string) => Promise<ChangeLog>
+
 export async function readMapView(
   cwd: string,
   selection: MapSelection,
   listFiles: ListFiles,
+  readChangeLog: ReadChangeLog,
 ): Promise<MapViewResponse> {
   const read = await readArchitectureMapFile(cwd)
   if (read.kind !== "map") {
@@ -34,8 +44,11 @@ export async function readMapView(
     return response
   }
   const files = await listFiles()
+  const changeLog = await readChangeLog(read.map.source.commit)
   const boxes = await Promise.all(
-    response.view.boxes.map(async (box) => withFileCount(await withAdrs(cwd, box), files)),
+    response.view.boxes.map(async (box) =>
+      withChangeFrequency(withFileCount(await withAdrs(cwd, box), files), changeLog),
+    ),
   )
   return { ...response, view: { ...response.view, boxes } }
 }
@@ -50,6 +63,13 @@ function withFileCount(box: MapViewBox, files: readonly string[]): MapViewBox {
     return box
   }
   return { ...box, fileCount: fileCountOf(box.paths, files, matchesGlob) }
+}
+
+function withChangeFrequency(box: MapViewBox, log: ChangeLog): MapViewBox {
+  if (box.external || log.kind === "uncounted") {
+    return box
+  }
+  return { ...box, changeFrequency: changeFrequencyOf(box.paths, log.commits, matchesGlob) }
 }
 
 async function withAdrs(cwd: string, box: MapViewBox): Promise<MapViewBox> {

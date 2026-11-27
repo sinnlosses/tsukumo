@@ -252,6 +252,49 @@ describe("Sidebar の地図のタブ", () => {
     })
   })
 
+  describe("変更頻度（30日）の節", () => {
+    async function descriptionOf(overrides: Partial<MapViewBox>): Promise<string> {
+      renderSidebar(
+        rpcOutput({
+          ...ready(),
+          view: { ...WHOLE, boxes: [box("alpha", { title: "アルファ", ...overrides })] },
+        }),
+      )
+      fireEvent.click(await screen.findByRole("tab", { name: "地図" }))
+      fireEvent.click(await screen.findByRole("button", { name: "アルファ" }))
+      return screen.getByRole("region", { name: "アルファの説明" }).textContent
+    }
+
+    it("commits の数と最終更新の日が出る", async () => {
+      const text = await descriptionOf({
+        changeFrequency: { commitCount: 255, lastChangedOn: "2026-11-25" },
+      })
+
+      expect(text).toContain("変更頻度（30日）")
+      expect(text).toContain("commits")
+      expect(text).toContain("255件")
+      expect(text).toContain("最終更新")
+      expect(text).toContain("2026-11-25")
+    })
+
+    it("0 件では「0件」だけが出て最終更新は出ない", async () => {
+      const text = await descriptionOf({ changeFrequency: { commitCount: 0 } })
+
+      expect(text).toContain("0件")
+      expect(text).not.toContain("最終更新")
+    })
+
+    it("数えられなかった箱には節を出さない", async () => {
+      expect(await descriptionOf({})).not.toContain("変更頻度")
+    })
+
+    it("外の世界の箱には節を出さない", async () => {
+      expect(
+        await descriptionOf({ external: true, changeFrequency: { commitCount: 3 } }),
+      ).not.toContain("変更頻度")
+    })
+  })
+
   it("ADR の節に番号と題が並び、行を押すとそのパスで host.openFile を1回送る", async () => {
     const sent: unknown[] = []
     fetchStub = stubRpcFetch((call) =>

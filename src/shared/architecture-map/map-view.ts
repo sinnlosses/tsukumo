@@ -56,6 +56,10 @@ const mapViewBoxSchema = z.object({
   adrs: z.array(mapViewAdrSchema).readonly().optional(),
   /** git の管理下のファイルのうち paths の glob に当たる数。数えられなかった回と外の世界の箱、前のレポートの図には無い。 */
   fileCount: z.number().int().min(0).optional(),
+  /** 直近 30 日に paths に当たる commit の数と最終の日。数えられなかった回と外の世界の箱、前のレポートの図には無い。 */
+  changeFrequency: z
+    .object({ commitCount: z.number().int().min(0), lastChangedOn: z.string().optional() })
+    .optional(),
   problems: z.array(mapBoxProblemSchema).readonly(),
 })
 
