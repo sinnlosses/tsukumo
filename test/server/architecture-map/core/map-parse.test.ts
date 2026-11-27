@@ -187,3 +187,64 @@ describe("parseArchitectureMap の区画", () => {
     )
   })
 })
+
+describe("parseArchitectureMap のエントリポイント", () => {
+  const offContract = { kind: "unreadable", reason: "off-contract" }
+
+  /** 大の箱 `extra` か中の箱 `extra/inner` か小の箱 `src/extra` の1つに entrypoints を書いた地図。 */
+  function withEntrypoints(level: 1 | 2 | 3, entrypoints: unknown) {
+    const small = { id: "src/extra", paths: ["src/extra/*"] }
+    const medium = { id: "extra/inner", summary: "足した中の箱", paths: ["src/extra/**"] }
+    return withExtraBox({
+      ...(level === 1 ? { entrypoints } : {}),
+      children: [
+        {
+          ...medium,
+          ...(level === 2 ? { entrypoints } : {}),
+          children: [{ ...small, ...(level === 3 ? { entrypoints } : {}) }],
+        },
+      ],
+    })
+  }
+
+  it("大・中・小のどの段に書いても読め、欄が残る", () => {
+    const entrypoints = ["src/extra/index.ts", "src/extra/main.ts"]
+
+    for (const level of [1, 2, 3] as const) {
+      const parsed = parse(withEntrypoints(level, entrypoints))
+      expect(parsed.kind).toBe("map")
+      if (parsed.kind === "map") {
+        const large = parsed.map.boxes.find((box) => box.id === "extra")
+        const medium = large?.children?.[0]
+        const written = [large, medium, medium?.children[0]][level - 1]
+        expect(written?.entrypoints).toEqual(entrypoints)
+      }
+    }
+  })
+
+  it("欄の無い地図は今のまま読め、欄が無い", () => {
+    const parsed = parse(sampleMap())
+
+    expect(parsed.kind).toBe("map")
+    if (parsed.kind === "map") {
+      expect(parsed.map.boxes.every((box) => box.entrypoints === undefined)).toBe(true)
+    }
+  })
+
+  it.each([
+    ["空の配列", []],
+    ["* を含む", ["src/extra/*.ts"]],
+    ["./ で始まる", ["./src/extra/index.ts"]],
+  ])("%s は off-contract", (_name, entrypoints) => {
+    expect(parse(withEntrypoints(3, entrypoints))).toEqual(offContract)
+  })
+
+  it("外の世界の箱に書けば off-contract", () => {
+    const map = sampleMap()
+    const boxes = map.boxes.map((box) =>
+      box.id === "vault" ? { ...box, entrypoints: ["vault/index.ts"] } : box,
+    )
+
+    expect(parse({ ...map, boxes })).toEqual(offContract)
+  })
+})

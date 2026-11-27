@@ -48,12 +48,18 @@ function isBoxPathGlob(value: string): boolean {
   )
 }
 
+/** 箱の `entrypoints` の1要素の書き方か（`paths` の1要素の書き方で、ワイルドカードを含まない）。 */
+function isEntrypointPath(value: string): boolean {
+  return isBoxPathGlob(value) && !value.includes("*")
+}
+
 /** 縮尺。`1` が大・`2` が中・`3` が小。 */
 export const mapLevelSchema = z.union([z.literal(1), z.literal(2), z.literal(3)])
 export type MapLevel = z.infer<typeof mapLevelSchema>
 
 const boxIdSchema = z.string().refine(isBoxId)
 const boxPathsSchema = z.array(z.string().refine(isBoxPathGlob)).readonly()
+const entrypointsSchema = z.array(z.string().refine(isEntrypointPath)).min(1).readonly()
 const gridIndexSchema = z.number().int().min(0)
 
 /** 親の図の中の格子の位置（0 始まり）。 */
@@ -82,6 +88,7 @@ const smallBoxSchema = z.object({
   summary: z.string().optional(),
   paths: boxPathsSchema,
   links: mapLinksSchema.optional(),
+  entrypoints: entrypointsSchema.optional(),
   children: z.never().optional(),
 })
 
@@ -93,6 +100,7 @@ const mediumBoxSchema = z.object({
   overview: z.string().optional(),
   paths: boxPathsSchema,
   links: mapLinksSchema.optional(),
+  entrypoints: entrypointsSchema.optional(),
   aliases: z.array(boxIdSchema).readonly().optional(),
   place: mapPlaceSchema.optional(),
   children: z.array(smallBoxSchema).min(1).readonly(),
@@ -107,6 +115,7 @@ const largeBoxSchema = z
     overview: z.string().optional(),
     paths: boxPathsSchema,
     links: mapLinksSchema.optional(),
+    entrypoints: entrypointsSchema.optional(),
     aliases: z.array(boxIdSchema).readonly().optional(),
     external: z.boolean().optional(),
     lane: z.string().optional(),
@@ -115,7 +124,7 @@ const largeBoxSchema = z
   })
   .refine((box) =>
     box.external === true
-      ? box.paths.length === 0 && box.children === undefined
+      ? box.paths.length === 0 && box.children === undefined && box.entrypoints === undefined
       : box.children !== undefined,
   )
 

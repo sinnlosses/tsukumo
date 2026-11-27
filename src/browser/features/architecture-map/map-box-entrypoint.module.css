@@ -1,0 +1,19 @@
+.section {
+  display: flex;
+  flex-direction: column;
+  color: var(--ink-quiet);
+  font-size: var(--font-secondary);
+  overflow-wrap: anywhere;
+}
+.label {
+  font-weight: 600;
+}
+.entry {
+  align-self: flex-start;
+  height: auto;
+  padding-inline: 0;
+  font-family: var(--font-mono);
+  text-align: left;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}

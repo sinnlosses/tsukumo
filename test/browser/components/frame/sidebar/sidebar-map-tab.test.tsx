@@ -295,6 +295,61 @@ describe("Sidebar の地図のタブ", () => {
     })
   })
 
+  describe("エントリポイントの節", () => {
+    it("入口のある箱は末尾の2区切りの字が並び、行を押すと全パスで host.openFile を1回送る", async () => {
+      const sent: unknown[] = []
+      fetchStub = stubRpcFetch((call) =>
+        call.procedure.includes("architectureMap")
+          ? rpcOutput({
+              ...ready(),
+              view: {
+                ...WHOLE,
+                boxes: [
+                  box("alpha", {
+                    title: "アルファ",
+                    entrypoints: ["src/alpha/view/view.tsx", "src/alpha/index.ts"],
+                  }),
+                ],
+              },
+            })
+          : rpcError(500),
+      )
+      putSession({ ...INITIAL_SESSION_STATE }, (command) => {
+        if (command.procedure === "host.openFile") {
+          sent.push(command.path)
+        }
+      })
+      render(
+        <QueryClientProvider client={createTestQueryClient()}>
+          <Sidebar />
+        </QueryClientProvider>,
+      )
+      fireEvent.click(await screen.findByRole("tab", { name: "地図" }))
+      fireEvent.click(await screen.findByRole("button", { name: "アルファ" }))
+
+      const region = screen.getByRole("region", { name: "アルファの説明" })
+      expect(region.textContent).toContain("エントリポイント")
+      expect(screen.getByRole("button", { name: "alpha/index.ts" })).toBeTruthy()
+      fireEvent.click(screen.getByRole("button", { name: "view/view.tsx" }))
+
+      await waitFor(() => {
+        expect(sent).toEqual(["src/alpha/view/view.tsx"])
+      })
+    })
+
+    it("入口の無い箱には節を出さない", async () => {
+      renderSidebar(
+        rpcOutput({ ...ready(), view: { ...WHOLE, boxes: [box("alpha", { title: "アルファ" })] } }),
+      )
+      fireEvent.click(await screen.findByRole("tab", { name: "地図" }))
+      fireEvent.click(await screen.findByRole("button", { name: "アルファ" }))
+
+      expect(screen.getByRole("region", { name: "アルファの説明" }).textContent).not.toContain(
+        "エントリポイント",
+      )
+    })
+  })
+
   it("ADR の節に番号と題が並び、行を押すとそのパスで host.openFile を1回送る", async () => {
     const sent: unknown[] = []
     fetchStub = stubRpcFetch((call) =>

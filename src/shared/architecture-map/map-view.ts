@@ -54,6 +54,8 @@ const mapViewBoxSchema = z.object({
   links: mapLinksSchema.optional(),
   /** `links.adr` の各ファイルから読んだ番号と題。前のレポートの図には無い。 */
   adrs: z.array(mapViewAdrSchema).readonly().optional(),
+  /** 読み始めるファイル。paths に当たるものだけ。欄の無い箱と前のレポートの図には無い。 */
+  entrypoints: z.array(z.string()).readonly().optional(),
   /** git の管理下のファイルのうち paths の glob に当たる数。数えられなかった回と外の世界の箱、前のレポートの図には無い。 */
   fileCount: z.number().int().min(0).optional(),
   /** 直近 30 日に paths に当たる commit の数と最終の日。数えられなかった回と外の世界の箱、前のレポートの図には無い。 */

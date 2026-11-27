@@ -167,3 +167,4 @@
 | `docs/architecture/adr/0086-left-card-session-side-and-detail.md`               | 左の列の札を「やり取り｜セッション」の切り替えにし、選んだセッションの詳細を札の右隣に開く            | 採用                   |
 | `docs/architecture/adr/0087-figure-escape-rejected-for-chart-preference.md`     | 図派の既定では、図を置かずに材料を表・手順・長い文へ逃がした report を差し戻す                        | 採用                   |
 | `docs/architecture/adr/0088-auto-mode-denial-as-once-grant.md`                  | 自動判定の拒否を最下部のお願いに出し、一度だけの許可で同じ呼び出しを通す                              | 採用                   |
+| `docs/architecture/adr/0089-architecture-map-entrypoints.md`                    | 地図のモジュールに、読み始めるファイルの任意の欄 `entrypoints` を足す                                 | 採用                   |

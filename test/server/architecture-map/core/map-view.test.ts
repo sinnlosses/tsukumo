@@ -123,6 +123,22 @@ describe("mapViewOf の置き場", () => {
     expect(view.boxes.find((box) => box.id === "vault")?.childCount).toBeUndefined()
   })
 
+  it("entrypoints が箱に載り、欄の無い箱には無い", () => {
+    const map = sampleMap()
+    const boxes = map.boxes.map((box) =>
+      box.id === "server" ? { ...box, entrypoints: ["src/server/store/index.ts"] } : box,
+    )
+    const parsed = parseArchitectureMap(JSON.stringify({ ...map, boxes }))
+    const outcome =
+      parsed.kind === "map" ? mapViewOf(parsed.map, { kind: "level", level: 1 }) : undefined
+    const viewBoxes = outcome?.kind === "ready" ? outcome.view.boxes : []
+
+    expect(viewBoxes.find((box) => box.id === "server")?.entrypoints).toEqual([
+      "src/server/store/index.ts",
+    ])
+    expect(viewBoxes.find((box) => box.id === "app")).not.toHaveProperty("entrypoints")
+  })
+
   it("中へのフォーカスで focus.summary が載る", () => {
     expect(viewOfFocus("app/view").focus?.summary).toBe("表示の判断")
   })

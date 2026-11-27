@@ -57,6 +57,7 @@ export function boxIndexOf(boxes: readonly BoxFields[]): BoxIndex {
       paths: box.paths ?? [],
       ...(box.place === undefined ? {} : { place: box.place }),
       ...(box.links === undefined ? {} : { links: box.links }),
+      ...(box.entrypoints === undefined ? {} : { entrypoints: box.entrypoints }),
       external: box.external === true,
     }
     nodes.set(node.id, node)
@@ -301,6 +302,7 @@ function viewBoxOf(index: BoxIndex, node: BoxNode, problems: readonly BoxProblem
     ...(node.place === undefined ? {} : { place: node.place }),
     ...(node.lane === undefined ? {} : { lane: node.lane }),
     ...(node.links === undefined ? {} : { links: node.links }),
+    ...(node.entrypoints === undefined ? {} : { entrypoints: node.entrypoints }),
     problems,
   }
 }
@@ -364,6 +366,7 @@ type BoxFields = {
   readonly paths?: readonly string[]
   readonly place?: MapPlace
   readonly links?: MapLinks
+  readonly entrypoints?: readonly string[]
   readonly aliases?: readonly string[]
   readonly external?: boolean
   readonly lane?: string
@@ -384,6 +387,7 @@ export type BoxNode = {
   readonly paths: readonly string[]
   readonly place?: MapPlace
   readonly links?: MapLinks
+  readonly entrypoints?: readonly string[]
   readonly external: boolean
 }
 

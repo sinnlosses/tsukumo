@@ -97,6 +97,19 @@ describe("mapBoxOf", () => {
     })
   })
 
+  it("ID で引いた箱の定義に entrypoints が載る", () => {
+    const map = sampleMap()
+    const boxes = map.boxes.map((box) =>
+      box.id === "server" ? { ...box, entrypoints: ["src/server/store/index.ts"] } : box,
+    )
+    const parsed = parseArchitectureMap(JSON.stringify({ ...map, boxes }))
+
+    expect(parsed.kind === "map" ? mapBoxOf(parsed.map, "server") : undefined).toMatchObject({
+      kind: "box",
+      entrypoints: ["src/server/store/index.ts"],
+    })
+  })
+
   it("別名でも同じ箱を引ける", () => {
     expect(mapBoxOf(loadedMap(), "frontend")).toMatchObject({ kind: "box", id: "app" })
   })

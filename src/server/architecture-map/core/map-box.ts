@@ -36,6 +36,7 @@ export type MapBoxOutcome =
       readonly overview?: string
       readonly paths: readonly string[]
       readonly links?: MapLinks
+      readonly entrypoints?: readonly string[]
       readonly parent?: string
       readonly children: readonly string[]
       readonly edges: readonly BoxEdge[]
@@ -79,6 +80,7 @@ export function mapBoxOf(map: ArchitectureMap, id?: string): MapBoxOutcome {
     ...(node.overview === undefined ? {} : { overview: node.overview }),
     paths: node.paths,
     ...(node.links === undefined ? {} : { links: node.links }),
+    ...(node.entrypoints === undefined ? {} : { entrypoints: node.entrypoints }),
     ...(node.parentId === undefined ? {} : { parent: node.parentId }),
     children: node.childIds,
     edges,

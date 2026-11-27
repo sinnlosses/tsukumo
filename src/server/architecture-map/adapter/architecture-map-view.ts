@@ -14,6 +14,7 @@ import type {
 import { adrEntryOf } from "../core/map-adr.ts"
 import { mapBoxIndexOf } from "../core/map-box.ts"
 import { type ChangeCommit, changeFrequencyOf } from "../core/map-change-frequency.ts"
+import { entrypointsWithin } from "../core/map-entrypoint.ts"
 import { fileCountOf } from "../core/map-file-count.ts"
 import { mapViewOf } from "../core/map-view.ts"
 import { readArchitectureMapFile } from "./architecture-map-file.ts"
@@ -47,7 +48,10 @@ export async function readMapView(
   const changeLog = await readChangeLog(read.map.source.commit)
   const boxes = await Promise.all(
     response.view.boxes.map(async (box) =>
-      withChangeFrequency(withFileCount(await withAdrs(cwd, box), files), changeLog),
+      withChangeFrequency(
+        withFileCount(withEntrypoints(await withAdrs(cwd, box)), files),
+        changeLog,
+      ),
     ),
   )
   return { ...response, view: { ...response.view, boxes } }
@@ -63,6 +67,15 @@ function withFileCount(box: MapViewBox, files: readonly string[]): MapViewBox {
     return box
   }
   return { ...box, fileCount: fileCountOf(box.paths, files, matchesGlob) }
+}
+
+function withEntrypoints(box: MapViewBox): MapViewBox {
+  if (box.entrypoints === undefined) {
+    return box
+  }
+  const { entrypoints, ...rest } = box
+  const within = entrypointsWithin(box.paths, entrypoints, matchesGlob)
+  return within.length === 0 ? rest : { ...rest, entrypoints: within }
 }
 
 function withChangeFrequency(box: MapViewBox, log: ChangeLog): MapViewBox {

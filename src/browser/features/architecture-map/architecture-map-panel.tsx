@@ -1,5 +1,5 @@
 // サイドバーの「地図」のタブの中身。頭はミニマップと「広げる」、その下は選んだ箱の名前と縮尺、
-// 役割（summary）・目的（purpose）・概要（overview）の順で、置き場・数（ファイル・子モジュール）・用語・依存先と依存元（import 数）・変更頻度（30日）を小さく添える。
+// 役割（summary）・目的（purpose）・概要（overview）の順で、置き場・数（ファイル・子モジュール）・エントリポイント・用語・依存先と依存元（import 数）・変更頻度（30日）を小さく添える。
 // 何も選んでいないときはリポジトリの概要を出す。地図が読めないときは理由の1行だけを出す。
 
 import { type ReactElement, useState } from "react"
@@ -23,6 +23,7 @@ import { type SelectedBox, useArchitectureMapSelection } from "./architecture-ma
 import { MapBoxChangeFrequency } from "./map-box-change-frequency.tsx"
 import { MapBoxConnections } from "./map-box-connection-list.tsx"
 import { MapBoxCounts } from "./map-box-count.tsx"
+import { MapBoxEntrypoints } from "./map-box-entrypoint.tsx"
 import { MAP_LEVEL_TEXT } from "./map-box-mention.ts"
 import { useArchitectureMapOverview } from "./use-architecture-map.ts"
 
@@ -162,6 +163,7 @@ function BoxDescription(props: { readonly box: MapViewBox; readonly view: MapVie
   const paths = box.foldedPaths ?? box.paths
   const terms = box.links?.terms ?? []
   const adrs = box.adrs ?? []
+  const entrypoints = box.entrypoints ?? []
   return (
     <section className={styles["panel-body"]} aria-label={`${box.title}の説明`}>
       <h3 className={styles["panel-title"]}>
@@ -179,6 +181,7 @@ function BoxDescription(props: { readonly box: MapViewBox; readonly view: MapVie
       {box.overview !== undefined && <p className={styles["panel-text"]}>{box.overview}</p>}
       {paths.length > 0 && <PathList key={box.id} paths={paths} />}
       {!box.external && <MapBoxCounts fileCount={box.fileCount} childCount={box.childCount} />}
+      {entrypoints.length > 0 && <MapBoxEntrypoints entrypoints={entrypoints} />}
       {terms.length > 0 && <SmallList label="用語" items={terms} />}
       <MapBoxConnections boxId={box.id} view={view} />
       {!box.external && box.changeFrequency !== undefined && (

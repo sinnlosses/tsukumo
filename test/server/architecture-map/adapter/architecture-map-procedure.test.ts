@@ -140,6 +140,25 @@ describe("architectureMap.view", () => {
     expect(frequencyOf(uncounted, "app")).toBeUndefined()
   })
 
+  it("paths の外を指す入口は外れ、全部外れた箱には entrypoints が無い", async () => {
+    const map = sampleMap()
+    const entrypointsOf: Readonly<Record<string, readonly string[]>> = {
+      app: ["src/server/index.ts", "src/ui/index.ts"],
+      server: ["src/ui/index.ts"],
+    }
+    const boxes = map.boxes.map((box) => ({ ...box, entrypoints: entrypointsOf[box.id] }))
+    await writeFile(join(cwd, MAP_FILE_NAME), JSON.stringify({ ...map, boxes }))
+
+    const response = await (
+      await clientOverRealPort()
+    ).architectureMap.view({ kind: "level", level: 1 })
+
+    const boxOf = (id: string) =>
+      response.kind === "ready" ? response.view.boxes.find((box) => box.id === id) : undefined
+    expect(boxOf("app")?.entrypoints).toEqual(["src/ui/index.ts"])
+    expect(boxOf("server")).not.toHaveProperty("entrypoints")
+  })
+
   it("指した箱が無い・子を持たないときは unfocusable を返す", async () => {
     await writeFile(join(cwd, MAP_FILE_NAME), JSON.stringify(sampleMap()))
     const client = await clientOverRealPort()
