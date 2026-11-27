@@ -20,6 +20,7 @@ describe("permissionDeniedHooks", () => {
         tool_use_id: "toolu_denied",
         reason: "Classifier unavailable",
         agent_id: "agent-1",
+        agent_type: "workflow-subagent",
       },
       "toolu_denied",
       { signal: new AbortController().signal },
@@ -33,6 +34,7 @@ describe("permissionDeniedHooks", () => {
         input: { file_path: "/tmp/tsukumo-test/outside.txt" },
         reason: "Classifier unavailable",
         agentId: "agent-1",
+        agentType: "workflow-subagent",
       },
     ])
   })

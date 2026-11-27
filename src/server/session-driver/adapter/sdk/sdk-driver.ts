@@ -58,6 +58,7 @@ import { watchProgressNudge } from "./progress-nudge-watch.ts"
 import { createRtkRewrite } from "./rtk-rewrite.ts"
 import { runAskGuard, withAskGuard } from "./sdk-ask-guard.ts"
 import { readContextUsage } from "./sdk-context-usage.ts"
+import { denialAgentStopHooks, mergeHookMatchers } from "./sdk-denial-agent-stop-hook.ts"
 import { handbackNoteHooks, presentSceneKeeperOf } from "./sdk-handback-note-hook.ts"
 import { implementerStopHooks } from "./sdk-implementer-stop-hook.ts"
 import { runLapHook, withLapHook } from "./sdk-lap-hook.ts"
@@ -192,7 +193,10 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
             ),
             ...postToolUseHooks(options.onEvent, externalToolMark, toolHookClock, diagnose),
             ...permissionDeniedHooks(denials.deny),
-            ...implementerStopHooks(callReview),
+            ...mergeHookMatchers(
+              implementerStopHooks(callReview),
+              denialAgentStopHooks(denials.finishAgent),
+            ),
             ...handbackNoteHooks(
               callReview,
               () => {

@@ -20,7 +20,12 @@ export type DeniedCall = {
   readonly input: unknown
   readonly reason: string
   readonly agentId?: string
+  /** 拒否したエージェントの種類。Workflow の中のエージェントは `workflow-subagent`。 */
+  readonly agentType?: string
 }
+
+/** Workflow の中のエージェントの `agent_type`。メインから声が届かないので、拒否のお願いを出さない。 */
+const WORKFLOW_SUBAGENT_TYPE = "workflow-subagent"
 
 /** PreToolUse で呼び出しを見た結果。`ask` は印と一致したので `canUseTool` へ回す。 */
 export type CallReviewByGrant = "ask" | "pass"
@@ -51,6 +56,8 @@ export type DenialGrants = {
   ) => CallReviewByGrant
   /** `canUseTool` に来た呼び出しに通す控えがあれば消して `true`。 */
   readonly takeArmed: (toolUseId: string) => boolean
+  /** エージェントが終わった。そのエージェントの答えていない拒否を下げ、宛ての使われていない印を捨てる。 */
+  readonly finishAgent: (agentId: string) => void
   /** ターンが終わった。そのターンが受け取った入力に許可の知らせがあれば、まだ使われていない印を捨てる。 */
   readonly finishTurn: (consumedInputUuids: readonly string[]) => void
   /** 印と控えを全て捨てる（セッションを閉じたとき）。 */
@@ -60,7 +67,7 @@ export type DenialGrants = {
 /** 拒否1件と印の照合に使う鍵。 */
 type CallKey = string
 
-type Grant = { readonly noticeUuid: string }
+type Grant = { readonly noticeUuid: string; readonly agentId?: string }
 
 /** {@link DenialGrants} を1つ作る。状態（答えていない拒否・印・通す控え）を持つのはここだけ。 */
 export function createDenialGrants(handlers: DenialGrantHandlers): DenialGrants {
@@ -79,6 +86,9 @@ export function createDenialGrants(handlers: DenialGrantHandlers): DenialGrants 
 
   return {
     deny: (call) => {
+      if (call.agentType === WORKFLOW_SUBAGENT_TYPE) {
+        return
+      }
       const key = callKey(call.toolName, call.input)
       settleSameKey([key])
       denials.set(call.toolUseId, { key, call })
@@ -96,7 +106,10 @@ export function createDenialGrants(handlers: DenialGrantHandlers): DenialGrants 
         handlers.sendNotice(refusedNotice(denial.call))
         return true
       }
-      grants.set(denial.key, { noticeUuid: handlers.sendNotice(allowedNotice(denial.call)) })
+      grants.set(denial.key, {
+        noticeUuid: handlers.sendNotice(allowedNotice(denial.call)),
+        ...(denial.call.agentId === undefined ? {} : { agentId: denial.call.agentId }),
+      })
       return true
     },
 
@@ -114,6 +127,20 @@ export function createDenialGrants(handlers: DenialGrantHandlers): DenialGrants 
     },
 
     takeArmed: (toolUseId) => armed.delete(toolUseId),
+
+    finishAgent: (agentId) => {
+      for (const [id, denial] of denials) {
+        if (denial.call.agentId === agentId) {
+          denials.delete(id)
+          handlers.onEvent({ kind: "permission-denial-settled", toolUseId: id })
+        }
+      }
+      for (const [key, grant] of grants) {
+        if (grant.agentId === agentId) {
+          grants.delete(key)
+        }
+      }
+    },
 
     finishTurn: (consumedInputUuids) => {
       for (const [key, grant] of grants) {

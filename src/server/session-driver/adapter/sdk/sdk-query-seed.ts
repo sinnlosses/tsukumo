@@ -426,6 +426,7 @@ export function permissionDeniedHooks(
               input: input.tool_input,
               reason: input.reason,
               ...(input.agent_id === undefined ? {} : { agentId: input.agent_id }),
+              ...(input.agent_type === undefined ? {} : { agentType: input.agent_type }),
             })
             return {}
           },

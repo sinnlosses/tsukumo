@@ -66,6 +66,41 @@ describe("createDenialGrants", () => {
     expect(JSON.stringify(events)).not.toContain("架空の中身")
   })
 
+  it("エージェントが終わると、そのエージェントの答えていないお願いだけが下がり、ほかと主のお願いは残る", () => {
+    const { events, grants } = setup()
+    grants.deny(deniedCall({ toolUseId: "toolu_a", input: { n: 1 }, agentId: "agent-1" }))
+    grants.deny(deniedCall({ toolUseId: "toolu_b", input: { n: 2 }, agentId: "agent-2" }))
+    grants.deny(deniedCall({ toolUseId: "toolu_main", input: { n: 3 } }))
+    events.length = 0
+
+    grants.finishAgent("agent-1")
+
+    expect(events).toEqual([{ kind: "permission-denial-settled", toolUseId: "toolu_a" }])
+  })
+
+  it("エージェントが終わると、そのエージェント宛ての使われていない許可の印も捨てる", () => {
+    const { grants, call } = setup()
+    grants.deny(deniedCall({ agentId: "agent-1" }))
+    grants.answer("toolu_denied", { kind: "allow" })
+
+    grants.finishAgent("agent-1")
+
+    expect(call("toolu_retry", { ...DENIED_INPUT }).review).toBe("pass")
+  })
+
+  it("Workflow の中のエージェントの拒否はお願いに積まない。普通のサブエージェントと主は積む", () => {
+    const { events, grants } = setup()
+
+    grants.deny(deniedCall({ toolUseId: "toolu_w", agentId: "a", agentType: "workflow-subagent" }))
+    expect(events).toEqual([])
+
+    grants.deny(
+      deniedCall({ toolUseId: "toolu_s", input: { n: 1 }, agentId: "a", agentType: "Explore" }),
+    )
+    grants.deny(deniedCall({ toolUseId: "toolu_m", input: { n: 2 } }))
+    expect(events.map((event) => event.kind)).toEqual(["permission-denied", "permission-denied"])
+  })
+
   it("一度だけ許可すると、同じ入力の次の1回だけを利用者に聞かずに許可し、2回目は列に積む", async () => {
     const { grants, notices, asked, call } = setup()
     grants.deny(deniedCall())
