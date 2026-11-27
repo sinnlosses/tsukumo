@@ -173,6 +173,50 @@ describe("Sidebar の地図のタブ", () => {
     expect(text).not.toContain("0001-架空")
   })
 
+  it("ADR の節に番号と題が並び、行を押すとそのパスで host.openFile を1回送る", async () => {
+    const sent: unknown[] = []
+    fetchStub = stubRpcFetch((call) =>
+      call.procedure.includes("architectureMap")
+        ? rpcOutput({
+            ...ready(),
+            view: {
+              ...WHOLE,
+              boxes: [
+                box("alpha", {
+                  title: "アルファ",
+                  adrs: [
+                    { path: "notes/0001-a.txt", number: "0001", title: "架空の第1の決定" },
+                    { path: "notes/9-b.txt", title: "notes/9-b.txt" },
+                  ],
+                }),
+              ],
+            },
+          })
+        : rpcError(500),
+    )
+    putSession({ ...INITIAL_SESSION_STATE }, (command) => {
+      if (command.procedure === "host.openFile") {
+        sent.push(command.path)
+      }
+    })
+    render(
+      <QueryClientProvider client={createTestQueryClient()}>
+        <Sidebar />
+      </QueryClientProvider>,
+    )
+    fireEvent.click(await screen.findByRole("tab", { name: "地図" }))
+    fireEvent.click(await screen.findByRole("button", { name: "アルファ" }))
+
+    const region = screen.getByRole("region", { name: "アルファの説明" })
+    expect(region.textContent).toContain("ADR")
+    expect(screen.getByRole("button", { name: "notes/9-b.txt" })).toBeTruthy()
+    fireEvent.click(screen.getByRole("button", { name: "0001 架空の第1の決定" }))
+
+    await waitFor(() => {
+      expect(sent).toEqual(["notes/0001-a.txt"])
+    })
+  })
+
   it("パスは畳んだ1件を出し、3件を超える箱は「ほか n 件」を押すと全部が出る", async () => {
     const many = ["a/**", "b/**", "c/**", "d/**", "e/**"]
     fetchStub = stubRpcFetch((call) =>

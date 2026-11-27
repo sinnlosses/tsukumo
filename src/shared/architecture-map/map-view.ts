@@ -23,6 +23,13 @@ const mapFindingSchema = z.discriminatedUnion("kind", [
 /** 箱を赤で描くずれの種類。 */
 const mapBoxProblemSchema = z.enum(["empty-box", "missing-link", "undeclared-edge"])
 
+/** 説明の枠に出す ADR の1行。`number` は4桁の番号、`title` は見出しから作った題（読めなければ `path`）。 */
+const mapViewAdrSchema = z.object({
+  path: z.string(),
+  number: z.string().optional(),
+  title: z.string(),
+})
+
 const mapViewBoxSchema = z.object({
   id: z.string(),
   /** 表示名。地図のファイルに無ければ `id`。 */
@@ -43,6 +50,8 @@ const mapViewBoxSchema = z.object({
   /** 箱の大の祖先が属する区画の `id`。区画の無い地図では無い。 */
   lane: z.string().optional(),
   links: mapLinksSchema.optional(),
+  /** `links.adr` の各ファイルから読んだ番号と題。前のレポートの図には無い。 */
+  adrs: z.array(mapViewAdrSchema).readonly().optional(),
   problems: z.array(mapBoxProblemSchema).readonly(),
 })
 
@@ -145,6 +154,7 @@ export type MapBoxIndexEntry = z.infer<typeof mapBoxIndexEntrySchema>
 export type MapViewResponse = z.infer<typeof mapViewResponseSchema>
 export type MapView = z.infer<typeof mapViewSchema>
 export type MapViewLane = z.infer<typeof mapViewLaneSchema>
+export type MapViewAdr = z.infer<typeof mapViewAdrSchema>
 export type MapViewBox = z.infer<typeof mapViewBoxSchema>
 export type MapSelection = z.infer<typeof mapSelectionSchema>
 export type MapReady = z.infer<typeof mapReadySchema>

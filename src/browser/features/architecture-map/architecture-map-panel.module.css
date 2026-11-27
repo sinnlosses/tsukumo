@@ -49,6 +49,14 @@
   font-size: var(--font-secondary);
   overflow-wrap: anywhere;
 }
+.panel-adr {
+  align-self: flex-start;
+  height: auto;
+  padding-inline: 0;
+  text-align: left;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
 .panel-small-label {
   font-weight: 600;
 }

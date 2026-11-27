@@ -5,12 +5,18 @@
 import { type ReactElement, useState } from "react"
 
 import type { MapUnreadableReason } from "../../../shared/architecture-map/architecture-map.ts"
-import type { MapReady, MapView, MapViewBox } from "../../../shared/architecture-map/map-view.ts"
+import type {
+  MapReady,
+  MapView,
+  MapViewAdr,
+  MapViewBox,
+} from "../../../shared/architecture-map/map-view.ts"
 import {
   BreadcrumbTrail,
   type Crumb,
 } from "../../components/ui/breadcrumb-trail/breadcrumb-trail.tsx"
 import { Button } from "../../components/ui/button/button.tsx"
+import { useSession } from "../../stores/session.ts"
 import { ArchitectureMapDiagram } from "./architecture-map-diagram.tsx"
 import styles from "./architecture-map-panel.module.css"
 import { type SelectedBox, useArchitectureMapSelection } from "./architecture-map-selection.ts"
@@ -153,6 +159,7 @@ function BoxDescription(props: { readonly box: MapViewBox; readonly view: MapVie
   const paths = box.foldedPaths ?? box.paths
   const terms = box.links?.terms ?? []
   const connections = connectionsOf(box.id, view)
+  const adrs = box.adrs ?? []
   return (
     <section className={styles["panel-body"]} aria-label={`${box.title}の説明`}>
       <h3 className={styles["panel-title"]}>
@@ -171,6 +178,7 @@ function BoxDescription(props: { readonly box: MapViewBox; readonly view: MapVie
       {paths.length > 0 && <PathList key={box.id} paths={paths} />}
       {terms.length > 0 && <SmallList label="用語" items={terms} />}
       {connections.length > 0 && <SmallList label="つながり" items={connections} />}
+      {adrs.length > 0 && <AdrList adrs={adrs} />}
     </section>
   )
 }
@@ -204,6 +212,32 @@ function PathList(props: { readonly paths: readonly string[] }): ReactElement {
         </Button>
       )}
     </>
+  )
+}
+
+/** 決定の記録。行（番号と題）を押すと、そのファイルをエディタで開く。 */
+function AdrList(props: { readonly adrs: readonly MapViewAdr[] }): ReactElement {
+  const dispatch = useSession((session) => session.dispatch)
+  return (
+    <div className={styles["panel-small"]}>
+      <span className={styles["panel-small-label"]}>ADR</span>
+      {props.adrs.map((adr) => (
+        <Button
+          key={adr.path}
+          variant="ghost"
+          size="label"
+          pressed="none"
+          disabled={false}
+          disclosure={{ kind: "none" }}
+          className={styles["panel-adr"]}
+          onClick={() => {
+            void dispatch.host.openFile({ path: adr.path })
+          }}
+        >
+          {adr.number === undefined ? adr.title : `${adr.number} ${adr.title}`}
+        </Button>
+      ))}
+    </div>
   )
 }
 
