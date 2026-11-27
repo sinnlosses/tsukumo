@@ -99,6 +99,13 @@ describe("buildQuerySeedOptions", () => {
     expect(buildQuerySeedOptions({ ...BASE_OPTIONS, mode: CHAT_MODE }).disallowedTools).toEqual([])
   })
 
+  it("tsukumo の MCP サーバだけを分類器の前で許可し、仕事でも雑談でも載せる", () => {
+    expect(buildQuerySeedOptions(BASE_OPTIONS).allowedTools).toEqual(["mcp__tsukumo"])
+    expect(buildQuerySeedOptions({ ...BASE_OPTIONS, mode: CHAT_MODE }).allowedTools).toEqual([
+      "mcp__tsukumo",
+    ])
+  })
+
   it("取り込んだ tsukumo-plugins は mountWorkflowPlugin のときだけ plugins に載せる", () => {
     const mounted = buildQuerySeedOptions(BASE_OPTIONS).plugins.map((plugin) => plugin.path)
     const unmounted = buildQuerySeedOptions({

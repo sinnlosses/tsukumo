@@ -26,6 +26,11 @@ export function tsukumoToolFullName(toolName: string): string {
   return `mcp__${TSUKUMO_MCP_SERVER_NAME}__${toolName}`
 }
 
+/** tsukumo の MCP サーバ全体を指す許可の名前（`mcp__<サーバ名>`）。`allowedTools` に載せるとサーバのツール全部が分類器の前で許可される。 */
+export function tsukumoServerAllowName(): string {
+  return `mcp__${TSUKUMO_MCP_SERVER_NAME}`
+}
+
 /** モデルから見えるツール名が、tsukumo の MCP サーバのツールか。 */
 export function isTsukumoTool(fullName: string): boolean {
   return fullName.startsWith(TOOL_NAME_PREFIX)

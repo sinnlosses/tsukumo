@@ -21,7 +21,11 @@ import { parseToolUseId } from "../../../../shared/session/tool-use-id.ts"
 import type { LatestWorkPlan } from "../../../../shared/session/work-plan.ts"
 import { bundledFilePath } from "../../../adapter/bundled-path.ts"
 import { tsukumoHomePath } from "../../../adapter/tsukumo-home.ts"
-import { PHASE_RESULT_TOOL_NAME, tsukumoToolFullName } from "../../../core/tsukumo-tool-name.ts"
+import {
+  PHASE_RESULT_TOOL_NAME,
+  tsukumoServerAllowName,
+  tsukumoToolFullName,
+} from "../../../core/tsukumo-tool-name.ts"
 import type { ReportGate } from "../../../report/core/prompt/report-tool.ts"
 import { judgePhaseResultCaller } from "../../../work-plan/core/phase-result-tool.ts"
 import {
@@ -95,6 +99,11 @@ export type QuerySeedOptions = {
    * 渡すと tsukumo 自身の環境と混ざらず丸ごと置き換わるので、引き継いだ環境に Claude Code の催促を止める変数を足したもの（`childProcessEnv`）を渡す。
    */
   readonly env: Readonly<Record<string, string | undefined>>
+  /**
+   * 自動判定（分類器）の前で許可するツール。tsukumo のプロセス内の MCP サーバ全体だけ。
+   * 取り込んだプラグインや外の MCP サーバは載せない。
+   */
+  readonly allowedTools: string[]
   /** 文脈から消す組み込みツール。 */
   readonly disallowedTools: string[]
   /** セッションに載せるプラグイン。同梱の `plugin/`（`tsukumo:token-usage-diet`）と、取り込んだ tsukumo-plugins（`mountWorkflowPlugin` のときだけ）と、その図のプラグイン（`mountFigurePlugin` のときだけ）。 */
@@ -122,6 +131,7 @@ export function buildQuerySeedOptions(options: SessionDriverOptions): QuerySeedO
     resume: options.start.kind === "resume" ? options.start.sessionId : undefined,
     settings: { language: "japanese" },
     env: childProcessEnv(options.inheritedEnv),
+    allowedTools: [tsukumoServerAllowName()],
     disallowedTools: options.mode.kind === "work" ? [...options.disallowedTools] : [],
     plugins: [
       { type: "local", path: bundledFilePath("plugin") },
