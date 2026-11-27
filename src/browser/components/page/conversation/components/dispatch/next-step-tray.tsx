@@ -1,5 +1,6 @@
 // 入力欄の頭の次の一手の並び。押すと札の文を入力欄に足すだけで、送らない。
 // 下見は最初に先頭の札の文を出し、触れた・フォーカスした・押した札の文に替わる。狭い画面（760px 以下）は下見を出さない。
+// 並びの上の仕切りで札の並びの高さを変えられる（狭い画面では仕切りを出さない）。
 // 下書きにその札の文が入っているあいだだけ札に印を付け、印の付いた札を押しても足さない（状態は持たず、下書きから求める）。
 // 札の並びはタブ止まり1つ分で、← → で札を移り、↓ と修飾キーなしの Esc で入力欄へ戻る。
 
@@ -12,11 +13,13 @@ import {
   returnFocusToComposerOnEscape,
   useComposerFocus,
 } from "../../../../../stores/composer-focus.ts"
+import { LayoutResizer } from "../../../../ui/layout-resizer/layout-resizer.tsx"
 import { useComposerDraft } from "../../stores/composer-draft.ts"
 import { useNextStepTray } from "../../stores/next-step-tray.ts"
 import styles from "./dispatch.module.css"
 import { FAVOR_BAND_TEXT } from "./domain/composer-band.ts"
 import { draftHolds, nextStepChipsOf, type NextStepChip } from "./domain/next-step-chip.ts"
+import { useNextStepTrayHeight } from "./hooks/use-next-step-tray-height.ts"
 import {
   NEXT_STEP_CHIP_SELECTOR,
   NEXT_STEP_TRAY_ID,
@@ -37,6 +40,8 @@ export function NextStepTray(props: NextStepTrayProps): ReactElement {
   const appendDraft = useComposerDraft((state) => state.appendParagraphToDraft)
   const fold = useNextStepTray((state) => state.fold)
   const unfold = useNextStepTray((state) => state.unfold)
+  const height = useNextStepTrayHeight()
+  const { gripRef, chipsRef } = height
   const [choosing, setChoosing] = useState(false)
   // 空文字は、まだどの札にも触れていない（下見とタブ止まりは先頭の札）。
   const [previewKey, setPreviewKey] = useState("")
@@ -93,12 +98,30 @@ export function NextStepTray(props: NextStepTrayProps): ReactElement {
       className={styles["next-step-tray"]}
       onKeyDown={returnOnKey}
     >
+      <div ref={gripRef} className={styles["next-step-tray-grip"]} onKeyDown={keepArrowsInGrip}>
+        <LayoutResizer
+          orientation="horizontal"
+          containerRef={chipsRef}
+          ariaLabel={GRIP_LABEL}
+          toValue={height.toValue}
+          onChange={height.onChange}
+          onCommit={height.onCommit}
+          onReset={height.onReset}
+          keyboardStepPx={GRIP_KEYBOARD_STEP_PX}
+          className=""
+        />
+      </div>
       <div className={styles["next-step-tray-head"]}>
         <TrayToggle expanded onClick={fold} />
         <span>{trayNote(draftText === "", phone)}</span>
         <span className={styles["next-step-tray-end"]}>{favorNote}</span>
       </div>
-      <div className={styles["next-step-tray-chips"]} onKeyDown={moveAmongChips}>
+      <div
+        ref={chipsRef}
+        className={styles["next-step-tray-chips"]}
+        style={height.style}
+        onKeyDown={moveAmongChips}
+      >
         {chips.map((chip) => {
           const held = chip.kind === "draft" && draftHolds(draftText, chip.draft)
           return (
@@ -149,6 +172,9 @@ export function NextStepTray(props: NextStepTrayProps): ReactElement {
 
 const TRAY_LABEL = "次の一手"
 const FAVOR_JUMP_LABEL = "お願いへ"
+const GRIP_LABEL = "次の一手の高さ"
+/** 仕切りにフォーカスがあるときの ↑↓ 1回ぶんの高さ。 */
+const GRIP_KEYBOARD_STEP_PX = 24
 
 /** 見出しの右端の口（お願いへ）。 */
 function TrayAction(props: {
@@ -207,6 +233,13 @@ function returnOnKey(event: KeyboardEvent<HTMLElement>): void {
   }
   if (returnFocusToComposerOnEscape(event.nativeEvent)) {
     event.preventDefault()
+    event.stopPropagation()
+  }
+}
+
+/** 仕切りの ↑↓ は高さを変えるキーなので、並びの「↓ で入力欄へ戻る」まで届けない。 */
+function keepArrowsInGrip(event: KeyboardEvent<HTMLElement>): void {
+  if (event.key === "ArrowUp" || event.key === "ArrowDown") {
     event.stopPropagation()
   }
 }

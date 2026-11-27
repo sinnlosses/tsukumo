@@ -1,5 +1,6 @@
-/* 入力欄の頭の次の一手の並び。見出しの1行・1行の札・下見の3段。
-   札の並びは2段までの高さで、超えた分は並びの中で縦に送る（下見は送る範囲の外に置くので、札の段数で動かない）。 */
+/* 入力欄の頭の次の一手の並び。高さの仕切り・見出しの1行・札・下見の4段。
+   札の並びは既定で3段までの高さで、超えた分は並びの中で縦に送る（下見は送る範囲の外に置くので、札の段数で動かない）。
+   上の仕切りを動かすと、`--next-step-chips-max-height` が札の並びの高さの上限を替える。 */
 .next-step-tray {
   --_chip-height: 1.875rem;
   display: flex;
@@ -80,8 +81,16 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--inline-control);
-  max-height: calc(2 * var(--_chip-height) + var(--inline-control));
+  max-height: var(
+    --next-step-chips-max-height,
+    calc(3 * var(--_chip-height) + 2 * var(--inline-control))
+  );
   overflow-y: auto;
+}
+/* 仕切りは見出しの上に横いっぱいに置き、並びの下端（入力欄の側）は動かさずに上へ伸ばす。 */
+.next-step-tray-grip {
+  display: flex;
+  flex-direction: column;
 }
 /* 種類の語・主の字・点の数のあいだは gap で空ける（字のあいだの空白は読み上げの名前のために残してある）。 */
 .next-step-chip {
@@ -155,6 +164,9 @@
 @media (max-width: 760px) {
   .next-step-tray {
     padding-block-end: 0;
+  }
+  .next-step-tray-grip {
+    display: none;
   }
   .next-step-tray-chips {
     flex-wrap: nowrap;
