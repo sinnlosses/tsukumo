@@ -169,8 +169,52 @@ describe("Sidebar の地図のタブ", () => {
     expect(text).toContain("架空の概要の文")
     expect(text).toContain("src/alpha/**")
     expect(text).toContain("架空の用語")
-    expect(text).toContain("ベータへ 4本")
+    expect(text).toContain("依存先（import 数）")
+    expect(text).toContain("ベータ4")
+    expect(text).toContain("依存元（import 数）")
+    expect(text).toContain("なし")
     expect(text).not.toContain("0001-架空")
+  })
+
+  it("つながりは向きで分かれて多い順に並び、4件目からは「ほか n モジュール」を押すと出る", async () => {
+    const others = ["p", "q", "r", "s", "t"].map((id) => box(id, { title: `相手${id}` }))
+    const counts = [2, 9, 5, 7, 1]
+    fetchStub = stubRpcFetch((call) =>
+      call.procedure.includes("architectureMap")
+        ? rpcOutput({
+            ...ready(),
+            view: {
+              ...WHOLE,
+              boxes: [box("alpha", { title: "アルファ" }), ...others],
+              edges: [
+                ...others.map((other, index) => ({
+                  from: "alpha",
+                  to: other.id,
+                  count: counts[index] ?? 0,
+                  undeclared: false,
+                })),
+                { from: "p", to: "alpha", count: 3, undeclared: false },
+              ],
+            },
+          })
+        : rpcError(500),
+    )
+    putSession({ ...INITIAL_SESSION_STATE })
+    render(
+      <QueryClientProvider client={createTestQueryClient()}>
+        <Sidebar />
+      </QueryClientProvider>,
+    )
+    fireEvent.click(await screen.findByRole("tab", { name: "地図" }))
+    fireEvent.click(await screen.findByRole("button", { name: "アルファ" }))
+
+    const region = screen.getByRole("region", { name: "アルファの説明" })
+    const items = () => Array.from(region.querySelectorAll("li")).map((li) => li.textContent)
+    expect(items()).toEqual(["相手q9", "相手s7", "相手r5", "相手p3"])
+    expect(region.textContent).not.toContain("相手t1")
+
+    fireEvent.click(screen.getByRole("button", { name: "ほか 2 モジュール" }))
+    expect(items()).toEqual(["相手q9", "相手s7", "相手r5", "相手p2", "相手t1", "相手p3"])
   })
 
   describe("ファイル数と子モジュール数の札", () => {

@@ -1,5 +1,5 @@
 // サイドバーの「地図」のタブの中身。頭はミニマップと「広げる」、その下は選んだ箱の名前と縮尺、
-// 役割（summary）・目的（purpose）・概要（overview）の順で、置き場・数（ファイル・子モジュール）・用語・つながりを小さく添える。
+// 役割（summary）・目的（purpose）・概要（overview）の順で、置き場・数（ファイル・子モジュール）・用語・依存先と依存元（import 数）を小さく添える。
 // 何も選んでいないときはリポジトリの概要を出す。地図が読めないときは理由の1行だけを出す。
 
 import { type ReactElement, useState } from "react"
@@ -20,6 +20,7 @@ import { useSession } from "../../stores/session.ts"
 import { ArchitectureMapDiagram } from "./architecture-map-diagram.tsx"
 import styles from "./architecture-map-panel.module.css"
 import { type SelectedBox, useArchitectureMapSelection } from "./architecture-map-selection.ts"
+import { MapBoxConnections } from "./map-box-connection-list.tsx"
 import { MapBoxCounts } from "./map-box-count.tsx"
 import { MAP_LEVEL_TEXT } from "./map-box-mention.ts"
 import { useArchitectureMapOverview } from "./use-architecture-map.ts"
@@ -159,7 +160,6 @@ function BoxDescription(props: { readonly box: MapViewBox; readonly view: MapVie
   const parent = box.level === 3 ? view.focus : undefined
   const paths = box.foldedPaths ?? box.paths
   const terms = box.links?.terms ?? []
-  const connections = connectionsOf(box.id, view)
   const adrs = box.adrs ?? []
   return (
     <section className={styles["panel-body"]} aria-label={`${box.title}の説明`}>
@@ -179,7 +179,7 @@ function BoxDescription(props: { readonly box: MapViewBox; readonly view: MapVie
       {paths.length > 0 && <PathList key={box.id} paths={paths} />}
       {!box.external && <MapBoxCounts fileCount={box.fileCount} childCount={box.childCount} />}
       {terms.length > 0 && <SmallList label="用語" items={terms} />}
-      {connections.length > 0 && <SmallList label="つながり" items={connections} />}
+      <MapBoxConnections boxId={box.id} view={view} />
       {adrs.length > 0 && <AdrList adrs={adrs} />}
     </section>
   )
@@ -253,16 +253,4 @@ function SmallList(props: {
       <span>{props.items.join("・")}</span>
     </div>
   )
-}
-
-/** 箱が端のエッジを相手ごとに束ねた本数。 */
-function connectionsOf(id: string, view: MapView): readonly string[] {
-  const titleOf = (otherId: string) =>
-    view.boxes.find((box) => box.id === otherId)?.title ?? otherId
-  return view.edges.flatMap((edge) => {
-    if (edge.from === id) {
-      return [`${titleOf(edge.to)}へ ${String(edge.count)}本`]
-    }
-    return edge.to === id ? [`${titleOf(edge.from)}から ${String(edge.count)}本`] : []
-  })
 }
