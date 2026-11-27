@@ -309,6 +309,7 @@ const SESSION_EVENT_FOLDS = {
     workflowRuns: [],
     apiTrouble: { kind: "none" },
   }),
+  "project-settings-skipped": (state) => ({ ...state, projectSettingsSkipped: true }),
   "api-retry": (state, event, at) => ({
     ...state,
     apiTrouble: { kind: "retrying", at, ...event.retry },

@@ -35,6 +35,7 @@ describe("readCwdCheckout", () => {
       root,
       entry: join(root, "bin", "tsukumo"),
       entryExists: true,
+      ownedByUser: true,
     })
   })
 
@@ -69,17 +70,15 @@ describe("delegateToCheckout", () => {
 })
 
 describe("cli.ts", () => {
-  it("別のチェックアウトの中で打つと、そこの bin/tsukumo が同じ引数で起きて終了コードが伝わる", async () => {
+  it("自分のリポジトリに登録されていないチェックアウトの中で打つと、そこの bin/tsukumo を起こさず 1 で止まる", async () => {
     const root = realpathSync(dir())
-    writeCheckout(
-      root,
-      "tsukumo",
-      "console.log(`child ${process.argv.slice(2).join(' ')}`)\nprocess.exit(5)\n",
-    )
+    writeCheckout(root, "tsukumo", "console.log('child')\nprocess.exit(5)\n")
 
-    const result = await runSubprocess("node", [CLI, "--dev"], { cwd: root, env: process.env })
+    const result = await runSubprocess("node", [CLI], { cwd: root, env: process.env })
 
-    expect(result).toMatchObject({ exitCode: 5, stdout: "child --dev\n" })
+    expect(result.exitCode).toBe(1)
+    expect(result.stdout).not.toContain("child")
+    expect(result.stderr).toContain(root)
   })
 
   it("bin/tsukumo が無いチェックアウトの中で打つと、食い違いを出して 1 で止まる", async () => {

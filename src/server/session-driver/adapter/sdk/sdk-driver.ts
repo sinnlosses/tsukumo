@@ -280,6 +280,10 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
   void relaySupportedModels(session, options)
   // 起こした effort は `query()` に渡した値なので、最初のターンが終わるのを待たずに出す。
   options.onEvent({ kind: "effort-changed", effort: options.effort })
+  // 起こし直すと状態は初期値へ戻るので、プロジェクトの設定を読まなかったことは代ごとに流し直す。
+  if (!options.folderTrusted) {
+    options.onEvent({ kind: "project-settings-skipped" })
+  }
 
   return {
     prompt: (text, images, opening, target) => {

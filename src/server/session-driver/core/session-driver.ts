@@ -54,6 +54,11 @@ export type SessionStart =
 export type SessionDriverOptions = {
   /** セッションの作業ディレクトリ。 */
   readonly cwd: string
+  /**
+   * 作業ディレクトリを Claude Code が信頼しているか（利用者がそのフォルダの信頼の確認に答えたか。読むのは `isFolderTrusted`）。
+   * 偽なら、プロジェクトの設定を読まずに起こし、そのことを `project-settings-skipped` で画面へ知らせる。
+   */
+  readonly folderTrusted: boolean
   /** `speak` の `expression` で受け付ける表情と、そのラベル（キャラクターパックから作る）。 */
   readonly expressions: readonly ExpressionChoice[]
   /**

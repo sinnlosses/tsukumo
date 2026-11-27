@@ -127,6 +127,7 @@ export function useComposer(): ComposerModel {
   const connected = useSession((session) => session.connection === "open")
   const linkLost = useSession((session) => session.linkLost)
   const endedReason = useSession((session) => session.state.endedReason)
+  const projectSettingsSkipped = useSession((session) => session.state.projectSettingsSkipped)
   // 答え待ちの質問があるあいだ、入力欄は「依頼を書く場所」ではなく選択肢以外の答えを書く場所になる。
   const inquiry = useInquiryAnswer()
   const requestInquiryJump = useInquiryJump((state) => state.requestJump)
@@ -230,6 +231,7 @@ export function useComposer(): ComposerModel {
     favorWaiting: favorIsWaiting,
     trayShown,
     trayFolded,
+    projectSettingsSkipped,
   }
   const tray = useNextStepTrayModel(bandState, jumpToFavor)
 

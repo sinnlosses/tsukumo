@@ -12,7 +12,9 @@ import type { ComposerBand } from "./domain/composer-band.ts"
 export function ComposerBandRow({ band }: { readonly band: ComposerBand }): ReactElement {
   return (
     <>
-      {(band.kind === "disconnected" || band.kind === "clear-dropped") && (
+      {(band.kind === "disconnected" ||
+        band.kind === "clear-dropped" ||
+        band.kind === "project-settings-skipped") && (
         <Text
           element="p"
           size="secondary"

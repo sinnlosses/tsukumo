@@ -52,6 +52,7 @@ const SESSION_EVENT_KINDS = {
   "step-usage": true,
   "conversation-cleared": true,
   "session-ended": true,
+  "project-settings-skipped": true,
   "model-changed": true,
   "model-effort-support": true,
   "effort-changed": true,

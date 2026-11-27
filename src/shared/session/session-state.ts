@@ -111,6 +111,11 @@ export type SessionState = {
   readonly commandDescriptions: readonly CommandDescription[]
   /** セッションが終わった理由。動いている間は undefined。 */
   readonly endedReason?: string
+  /**
+   * いまの代が、作業ディレクトリを Claude Code が信頼していないためにプロジェクトの設定を読まずに起きたか。入力欄の上の帯が知らせる。
+   * 源は `project-settings-skipped` だけ。起こし直すと初期値の false へ戻り、新しい代が信頼を確かめ直して流し直す。
+   */
+  readonly projectSettingsSkipped: boolean
   /** ターンの進み具合（{@link TurnProgress}）。始まった時刻・終わった時刻もここが持つ。 */
   readonly turn: TurnProgress
   /**
@@ -281,6 +286,7 @@ export const INITIAL_SESSION_STATE: SessionState = {
   agentNames: [],
   commandDescriptions: [],
   endedReason: undefined,
+  projectSettingsSkipped: false,
   turn: { kind: "idle" },
   finishedTurnCount: 0,
   nextTurnId: 0,

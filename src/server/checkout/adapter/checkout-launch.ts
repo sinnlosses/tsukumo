@@ -1,7 +1,7 @@
 // cwd のチェックアウトを探す・そのチェックアウトの bin/tsukumo を子として起こす、の2つで、ファイルと子プロセスに触る境界。
 
 import { spawn } from "node:child_process"
-import { existsSync, readFileSync, realpathSync } from "node:fs"
+import { existsSync, readFileSync, realpathSync, statSync } from "node:fs"
 import { dirname, join } from "node:path"
 import process from "node:process"
 
@@ -25,7 +25,13 @@ export function readCwdCheckout(cwd: string): CwdCheckout {
   }
   const entry = join(root, ...ENTRY_RELATIVE_SEGMENTS)
 
-  return { kind: "inside", root, entry, entryExists: existsSync(entry) }
+  return {
+    kind: "inside",
+    root,
+    entry,
+    entryExists: existsSync(entry),
+    ownedByUser: statSync(root).uid === process.getuid?.(),
+  }
 }
 
 /**

@@ -12,6 +12,7 @@ import { checkedSessionId } from "../../../../fixture/session-id.ts"
 // うち、クロージャを含まない部分（`buildQuerySeedOptions`）だけを検査する。
 const BASE_OPTIONS: SessionDriverOptions = {
   cwd: "/tmp/tsukumo-test",
+  folderTrusted: true,
   expressions: [{ name: "default", role: "通常", label: "通常" }],
   permissionMode: BUILTIN_SESSION_DEFAULT.permissionMode,
   model: BUILTIN_SESSION_DEFAULT.model,
@@ -78,6 +79,14 @@ describe("buildQuerySeedOptions", () => {
 
   it("settings.language を japanese 固定で渡す", () => {
     expect(buildQuerySeedOptions(BASE_OPTIONS).settings).toEqual({ language: "japanese" })
+  })
+
+  // 信頼していないフォルダの `.claude/settings.json` などは、フック・許可の規則・環境変数を子プロセスへ効かせるので読ませない。
+  it("作業ディレクトリを Claude Code が信頼していないときだけ、設定ファイルを利用者の設定に絞る", () => {
+    expect(buildQuerySeedOptions(BASE_OPTIONS).settingSources).toBeUndefined()
+    expect(buildQuerySeedOptions({ ...BASE_OPTIONS, folderTrusted: false }).settingSources).toEqual(
+      ["user"],
+    )
   })
 
   it("引き継いだ環境変数に Claude Code の催促を止める2つの変数を足して子プロセスへ渡す", () => {

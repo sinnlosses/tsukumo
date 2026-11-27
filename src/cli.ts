@@ -9,8 +9,13 @@ import {
   readCwdCheckout,
   readOwnCheckoutRoot,
 } from "./server/checkout/adapter/checkout-launch.ts"
-import { decideCheckoutDelegation } from "./server/checkout/core/checkout-delegation.ts"
+import {
+  decideCheckoutDelegation,
+  worktreeRootsOf,
+  type CwdCheckout,
+} from "./server/checkout/core/checkout-delegation.ts"
 import { readConfig } from "./server/core/config.ts"
+import { runGit } from "./server/repository/adapter/git.ts"
 import { VIEW_PORT_FALLBACK_ATTEMPTS } from "./server/view-server/core/port-resolution.ts"
 import { DEFAULT_VIEW_PORT } from "./shared/view-server/view-port.ts"
 
@@ -86,7 +91,13 @@ async function delegatedExitCode(
   args: readonly string[],
   cwd: string,
 ): Promise<number | undefined> {
-  const delegation = decideCheckoutDelegation(readOwnCheckoutRoot(), readCwdCheckout(cwd))
+  const ownRoot = readOwnCheckoutRoot()
+  const cwdCheckout = readCwdCheckout(cwd)
+  const delegation = decideCheckoutDelegation(
+    ownRoot,
+    cwdCheckout,
+    await readOwnWorktreeRoots(ownRoot, cwdCheckout),
+  )
   if (delegation.kind === "delegate") {
     return delegateToCheckout(delegation.entry, args)
   }
@@ -96,6 +107,22 @@ async function delegatedExitCode(
   }
 
   return undefined
+}
+
+/**
+ * 自分のリポジトリに git が登録している作業ツリーの根。git は自分の根で起こし、打った場所では起こさない
+ * （打った場所の .git の設定を読ませない）。別のチェックアウトの中で打ったときだけ聞き、聞けなければ空。
+ */
+async function readOwnWorktreeRoots(
+  ownRoot: string,
+  cwdCheckout: CwdCheckout,
+): Promise<readonly string[]> {
+  if (cwdCheckout.kind === "outside" || cwdCheckout.root === ownRoot) {
+    return []
+  }
+  const outcome = await runGit(ownRoot, ["worktree", "list", "--porcelain", "-z"])
+
+  return outcome.kind === "output" ? worktreeRootsOf(outcome.stdout) : []
 }
 
 const args = process.argv.slice(2)

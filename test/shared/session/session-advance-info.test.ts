@@ -235,4 +235,9 @@ describe("applySessionEvent", () => {
 
     expect(after.gearPreferences).toEqual(gearPreferences)
   })
+
+  it("project-settings-skipped が届くまでは立てず、届いたらプロジェクトの設定を読まなかった印を立てる", () => {
+    expect(INITIAL_SESSION_STATE.projectSettingsSkipped).toBe(false)
+    expect(apply({ kind: "project-settings-skipped" }).projectSettingsSkipped).toBe(true)
+  })
 })

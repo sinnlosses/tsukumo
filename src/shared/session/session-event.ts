@@ -153,6 +153,11 @@ export type SessionEvent =
   | { readonly kind: "conversation-cleared" }
   /** `query()` の反復が終わった（正常終了・例外のどちらも）。プロセスは落とさない。 */
   | { readonly kind: "session-ended"; readonly reason: string }
+  /**
+   * 作業ディレクトリを Claude Code が信頼していないので、プロジェクトの設定を読まずに起こした（出し手は駆動で、そう起こすたびに1回）。
+   * 読まないのは `.claude/settings.json`・`settings.local.json`（フック・許可の規則・環境変数）と、プロジェクトの CLAUDE.md・スキル・サブエージェント・コマンド。
+   */
+  | { readonly kind: "project-settings-skipped" }
   | SettingEvent
   | SurroundingEvent
   /** 見直しの欄を動かすイベント。 */

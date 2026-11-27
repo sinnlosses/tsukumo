@@ -15,6 +15,7 @@ import {
   createFakeSessionCatalog,
   readFakeRestoredEvents,
 } from "../server/session-driver/adapter/fake/fake-session-resume.ts"
+import { isFolderTrusted } from "../server/session-driver/adapter/sdk/claude-folder-trust.ts"
 import { startSdkDriver } from "../server/session-driver/adapter/sdk/sdk-driver.ts"
 import {
   listRepositorySessions,
@@ -278,6 +279,8 @@ function startRealDriver(
 
   return startSdkDriver({
     cwd,
+    // 起こすたびに読み直す（起こし直すまでに利用者が Claude Code で信頼すると答えていれば、次の代から読む）。
+    folderTrusted: isFolderTrusted({ cwd, claudeConfigDir: options.claudeConfigDir, inheritedEnv }),
     expressions: expressionChoices(seed.pack.definition),
     // 覚えた既定で起こす。起こしたあと帯から変えた値はそのセッション限りで、ここには戻らない。
     permissionMode: seed.sessionDefault.permissionMode,

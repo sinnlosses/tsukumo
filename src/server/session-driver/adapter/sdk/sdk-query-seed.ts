@@ -7,6 +7,7 @@ import type {
   HookEvent,
   HookInput,
   SdkPluginConfig,
+  SettingSource,
 } from "@anthropic-ai/claude-agent-sdk"
 
 import { toolSummaryInput } from "../../../../shared/session-driver/tool-summary-field.ts"
@@ -67,6 +68,13 @@ const GRANT_REVIEW_MATCHER = matcherExcluding(
 export type QuerySeedOptions = {
   readonly cwd: string
   /**
+   * 読む設定ファイルの出どころ。作業ディレクトリを Claude Code が信頼していないときは、利用者の設定（`user`）だけに絞る。
+   * 絞らないと、見知らぬリポジトリの `.claude/settings.json`・`settings.local.json` のフック・許可の規則・環境変数が、信頼の確認を経ずに子プロセスで効く（SDK で起こした Claude Code は信頼の確認を出さない）。
+   * 信頼しているときは undefined で、SDK の既定どおり全部を読む。
+   * `docs/coding-standards.md`「「無いかもしれない」値」の例外1。
+   */
+  readonly settingSources?: SettingSource[]
+  /**
    * cwd の外で、許可を聞かずに読める場所。キャラクターパックの置き場（`~/.tsukumo/characters/`）だけ。
    * 雑談の画面には許可の問い合わせが出ないので、無いと cwd の外の読み取りは答えが来ないまま止まる。
    * 会話のアーカイブなどホームのほかの置き場は含めない。
@@ -121,6 +129,7 @@ export type QuerySeedOptions = {
 export function buildQuerySeedOptions(options: SessionDriverOptions): QuerySeedOptions {
   return {
     cwd: options.cwd,
+    settingSources: options.folderTrusted ? undefined : ["user"],
     additionalDirectories: [tsukumoHomePath("characters")],
     includePartialMessages: true,
     agentProgressSummaries: true,
