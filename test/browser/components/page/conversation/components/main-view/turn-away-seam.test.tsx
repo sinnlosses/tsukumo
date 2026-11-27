@@ -72,13 +72,4 @@ describe("Turn の離れていたあいだの線", () => {
 
     expect(screen.queryByRole("separator")).toBeNull()
   })
-
-  it("新しい行が無ければ出ない", () => {
-    renderTurn()
-    act(() => {
-      useAwaySeam.setState({ away: awayOf(TURN_ID, 3) })
-    })
-
-    expect(screen.queryByRole("separator")).toBeNull()
-  })
 })

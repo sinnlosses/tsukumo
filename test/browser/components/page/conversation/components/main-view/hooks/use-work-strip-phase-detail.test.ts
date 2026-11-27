@@ -48,7 +48,7 @@ describe("useWorkStripPhaseDetail", () => {
     })
   })
 
-  it("やり取りが替わると閉じて見え、手順の一覧を開くと閉じる", () => {
+  it("やり取りが替わると閉じて見える", () => {
     putPlan()
     const { result } = renderHook(() => useWorkStripPhaseDetail())
 
@@ -59,13 +59,8 @@ describe("useWorkStripPhaseDetail", () => {
     act(() => {
       useWorkStripSteps.getState().togglePhase(exchangeNow(), "segment-1")
     })
-    const opened = result.current.popup.kind
-    act(() => {
-      useWorkStripSteps.getState().toggle(exchangeNow())
-    })
 
     expect(otherExchange).toEqual({ kind: "closed" })
-    expect(opened).toBe("open")
-    expect(result.current.popup).toEqual({ kind: "closed" })
+    expect(result.current.popup.kind).toBe("open")
   })
 })

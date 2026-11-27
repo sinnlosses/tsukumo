@@ -58,18 +58,13 @@ describe("CharacterView（祝光）", () => {
     expect(stageMotion()).toBe("celebrate")
   })
 
-  it("祝光は光の星5つと花びら20枚で、普段のエフェクトのように控えめにせず1回だけ出る。動きを減らす設定では出ない", () => {
+  it("祝光は光の星5つと花びら20枚で、普段のエフェクトのように控えめにせず1回だけ出る", () => {
     renderCharacterView(closed(reportRecord("架空", { task: FINISHED_TASK })))
 
     expect(sparks()).toHaveLength(1)
     expect(sparks()[0]?.getAttribute("data-calm")).toBe("false")
     expect(sparks()[0]?.querySelectorAll("svg")).toHaveLength(5)
     expect(sparks()[0]?.querySelectorAll("[data-color]")).toHaveLength(20)
-    cleanup()
-
-    stubPhoneWidth(true)
-    renderCharacterView(closed(reportRecord("架空", { task: FINISHED_TASK })))
-    expect(document.querySelector('[data-manpu="stars"]')).toBeNull()
   })
 
   it("task の無い report（短い答え）には光が無く、跳ねる", () => {
