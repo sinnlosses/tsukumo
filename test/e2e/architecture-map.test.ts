@@ -82,7 +82,7 @@ test.describe("アーキテクチャの地図", () => {
     await expect(surface).toBeHidden()
   })
 
-  test("広げた地図で選んだ箱から「この箱について聞く」でバッジを付けて送ると、利用者の吹き出しに同じバッジが出る", async ({
+  test("広げた地図で選んだ箱から「このモジュールについて聞く」でバッジを付けて送ると、利用者の吹き出しに同じバッジが出る", async ({
     run,
   }) => {
     const room = await run.open({
@@ -97,20 +97,20 @@ test.describe("アーキテクチャの地図", () => {
     const mapTab = page.getByRole("tab", { name: "地図" })
     await advanceClockUntilVisible(page, mapTab)
     await mapTab.click()
-    await expect(page.getByRole("button", { name: "この箱について聞く" })).toHaveCount(0)
+    await expect(page.getByRole("button", { name: "このモジュールについて聞く" })).toHaveCount(0)
     await page.getByRole("button", { name: "広げる" }).click()
 
     const surface = page.getByRole("dialog", { name: "アーキテクチャの地図" })
     await surface.waitFor()
     await surface.getByRole("button", { name: "server", exact: true }).click()
-    await surface.getByRole("button", { name: "この箱について聞く" }).click()
+    await surface.getByRole("button", { name: "このモジュールについて聞く" }).click()
 
     const composerBadge = page.getByTestId("map-box-badge")
     await expect(composerBadge).toHaveCount(1)
 
     await page.keyboard.press("Escape")
     const textArea = page.locator("textarea")
-    await textArea.fill("この箱の役割を教えて（架空の依頼）")
+    await textArea.fill("このモジュールの役割を教えて（架空の依頼）")
     await textArea.press("Meta+Enter")
 
     await room.waitForEvent("request")

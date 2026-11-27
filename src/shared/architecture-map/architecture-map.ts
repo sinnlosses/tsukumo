@@ -226,19 +226,19 @@ export const architectureMapSchema = z
     const levels = boxLevelsOf(map.boxes)
     const reject = (message: string) => context.addIssue({ code: "custom", message })
     if (levels.duplicated) {
-      reject("箱の ID と別名が重なっている")
+      reject("モジュールの ID と別名が重なっている")
     }
     if (!lanesAreConsistent(map.boxes, map.lanes)) {
       reject("区画の欄が決まりに沿っていない")
     }
     for (const edge of map.edges.intended) {
       if (!levels.byId.has(edge.from) || !levels.byId.has(edge.to)) {
-        reject("意図したエッジの端が今の ID の箱を指していない")
+        reject("意図したエッジの端が今の ID のモジュールを指していない")
       }
     }
     for (const edge of map.edges.actual) {
       if (levels.byId.get(edge.from) !== 3 || levels.byId.get(edge.to) !== 3) {
-        reject("実際のエッジの端が小の箱を指していない")
+        reject("実際のエッジの端が小のモジュールを指していない")
       }
     }
   })

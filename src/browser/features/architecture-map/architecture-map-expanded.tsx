@@ -311,11 +311,13 @@ function Expanded(props: { readonly overview: MapReady }): ReactElement {
                 attachBadge(selected.box)
               }}
             >
-              この箱について聞く
+              このモジュールについて聞く
             </ControlButton>
           </>
         ) : (
-          <span className={styles["expanded-ask-role"]}>箱を選ぶと、その箱について聞ける</span>
+          <span className={styles["expanded-ask-role"]}>
+            モジュールを選ぶと、そのモジュールについて聞ける
+          </span>
         )}
       </div>
       <p className={styles["expanded-legend"]}>

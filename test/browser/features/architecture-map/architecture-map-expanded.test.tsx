@@ -169,12 +169,12 @@ describe("ArchitectureMapExpanded", () => {
     expect(node.getAttribute("data-lit")).toBe("true")
   })
 
-  it("箱を選ぶと横に「この箱について聞く」が出て、押すとバッジが付く", async () => {
+  it("箱を選ぶと横に「このモジュールについて聞く」が出て、押すとバッジが付く", async () => {
     renderExpanded()
-    expect(screen.queryByRole("button", { name: "この箱について聞く" })).toBeNull()
+    expect(screen.queryByRole("button", { name: "このモジュールについて聞く" })).toBeNull()
 
     fireEvent.click(await screen.findByRole("button", { name: "ベータ" }))
-    fireEvent.click(screen.getByRole("button", { name: "この箱について聞く" }))
+    fireEvent.click(screen.getByRole("button", { name: "このモジュールについて聞く" }))
 
     expect(useArchitectureMapSelection.getState().badge).toEqual({
       id: "beta",
@@ -184,13 +184,13 @@ describe("ArchitectureMapExpanded", () => {
     })
   })
 
-  it("区画のある図でも、区画の箱を選ぶと「この箱について聞く」が出て、子を持つ区画の箱へ潜れる", async () => {
+  it("区画のある図でも、区画の箱を選ぶと「このモジュールについて聞く」が出て、子を持つ区画の箱へ潜れる", async () => {
     renderExpanded(LANED)
 
     const diagram = await screen.findByTestId("architecture-map-diagram")
     expect(diagram.querySelector("[data-lane='outer']")).toBeTruthy()
     fireEvent.click(screen.getByRole("button", { name: "ベータ" }))
-    fireEvent.click(screen.getByRole("button", { name: "この箱について聞く" }))
+    fireEvent.click(screen.getByRole("button", { name: "このモジュールについて聞く" }))
     expect(useArchitectureMapSelection.getState().badge?.id).toBe("beta")
 
     fireEvent.click(screen.getByRole("button", { name: "アルファ" }))

@@ -20,7 +20,7 @@ export function MapBoxBadge({ badge, onRemove }: MapBoxBadgeProps): ReactElement
         <button
           type="button"
           className={styles["badge-remove"]}
-          aria-label="この箱のバッジを外す"
+          aria-label="このモジュールのバッジを外す"
           onClick={onRemove}
         >
           <X size={12} strokeWidth={2.5} aria-hidden="true" />
