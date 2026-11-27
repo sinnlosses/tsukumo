@@ -173,6 +173,41 @@ describe("Sidebar の地図のタブ", () => {
     expect(text).not.toContain("0001-架空")
   })
 
+  describe("ファイル数と子モジュール数の札", () => {
+    async function descriptionOf(overrides: Partial<MapViewBox>): Promise<string> {
+      renderSidebar(
+        rpcOutput({
+          ...ready(),
+          view: { ...WHOLE, boxes: [box("alpha", { title: "アルファ", ...overrides })] },
+        }),
+      )
+      fireEvent.click(await screen.findByRole("tab", { name: "地図" }))
+      fireEvent.click(await screen.findByRole("button", { name: "アルファ" }))
+      return screen.getByRole("region", { name: "アルファの説明" }).textContent
+    }
+
+    it("数があると「1,032 files」と「子モジュール 18」が出る", async () => {
+      const text = await descriptionOf({ fileCount: 1032, childCount: 18 })
+
+      expect(text).toContain("1,032 files")
+      expect(text).toContain("子モジュール 18")
+    })
+
+    it("子が 0 の箱は子モジュールの札を出さない", async () => {
+      const text = await descriptionOf({ fileCount: 5, childCount: 0, hasChildren: false })
+
+      expect(text).toContain("5 files")
+      expect(text).not.toContain("子モジュール")
+    })
+
+    it("外の世界の箱は札を出さない", async () => {
+      const text = await descriptionOf({ external: true, fileCount: 5, childCount: 3 })
+
+      expect(text).not.toContain("files")
+      expect(text).not.toContain("子モジュール")
+    })
+  })
+
   it("ADR の節に番号と題が並び、行を押すとそのパスで host.openFile を1回送る", async () => {
     const sent: unknown[] = []
     fetchStub = stubRpcFetch((call) =>

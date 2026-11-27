@@ -35,9 +35,10 @@ afterEach(async () => {
 })
 
 /** 本物の読み口（作業ディレクトリは `cwd`）を載せて起こし、ブラウザと同じ型付きの client を返す。 */
-async function clientOverRealPort(): Promise<RpcClient> {
+async function clientOverRealPort(files: readonly string[] = []): Promise<RpcClient> {
   const server = await startView(noCharacterAsset, noPromptImage, {
-    readArchitectureMapView: (selection) => readMapView(cwd, selection),
+    readArchitectureMapView: (selection) =>
+      readMapView(cwd, selection, () => Promise.resolve(files)),
     readArchitectureMapBoxes: () => readMapBoxes(cwd),
   })
   const url = new URL(`${viewOrigin(server)}${RPC_PATH}`)
@@ -83,6 +84,29 @@ describe("architectureMap.view", () => {
       "vault",
     ])
     expect(focused.kind === "ready" ? focused.view.focus?.id : "").toBe("app")
+  })
+
+  it("一覧を渡すと外でない箱に fileCount が載り、空の一覧なら載らない", async () => {
+    await writeFile(join(cwd, MAP_FILE_NAME), JSON.stringify(sampleMap()))
+    const files = ["src/ui/a.ts", "src/ui/b.ts", "src/view/c.ts", "src/server/d.ts", "README.md"]
+    const counted = await (
+      await clientOverRealPort(files)
+    ).architectureMap.view({
+      kind: "level",
+      level: 1,
+    })
+    const uncounted = await (
+      await clientOverRealPort()
+    ).architectureMap.view({
+      kind: "level",
+      level: 1,
+    })
+
+    const countOf = (response: typeof counted, id: string) =>
+      response.kind === "ready" ? response.view.boxes.find((box) => box.id === id)?.fileCount : -1
+    expect(countOf(counted, "app")).toBe(3)
+    expect(countOf(counted, "vault")).toBeUndefined()
+    expect(countOf(uncounted, "app")).toBeUndefined()
   })
 
   it("指した箱が無い・子を持たないときは unfocusable を返す", async () => {

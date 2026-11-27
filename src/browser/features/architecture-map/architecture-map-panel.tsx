@@ -1,5 +1,5 @@
 // サイドバーの「地図」のタブの中身。頭はミニマップと「広げる」、その下は選んだ箱の名前と縮尺、
-// 役割（summary）・目的（purpose）・概要（overview）の順で、置き場・用語・つながりを小さく添える。
+// 役割（summary）・目的（purpose）・概要（overview）の順で、置き場・数（ファイル・子モジュール）・用語・つながりを小さく添える。
 // 何も選んでいないときはリポジトリの概要を出す。地図が読めないときは理由の1行だけを出す。
 
 import { type ReactElement, useState } from "react"
@@ -20,6 +20,7 @@ import { useSession } from "../../stores/session.ts"
 import { ArchitectureMapDiagram } from "./architecture-map-diagram.tsx"
 import styles from "./architecture-map-panel.module.css"
 import { type SelectedBox, useArchitectureMapSelection } from "./architecture-map-selection.ts"
+import { MapBoxCounts } from "./map-box-count.tsx"
 import { MAP_LEVEL_TEXT } from "./map-box-mention.ts"
 import { useArchitectureMapOverview } from "./use-architecture-map.ts"
 
@@ -176,6 +177,7 @@ function BoxDescription(props: { readonly box: MapViewBox; readonly view: MapVie
       {box.purpose !== undefined && <p className={styles["panel-text"]}>{box.purpose}</p>}
       {box.overview !== undefined && <p className={styles["panel-text"]}>{box.overview}</p>}
       {paths.length > 0 && <PathList key={box.id} paths={paths} />}
+      {!box.external && <MapBoxCounts fileCount={box.fileCount} childCount={box.childCount} />}
       {terms.length > 0 && <SmallList label="用語" items={terms} />}
       {connections.length > 0 && <SmallList label="つながり" items={connections} />}
       {adrs.length > 0 && <AdrList adrs={adrs} />}

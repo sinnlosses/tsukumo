@@ -116,6 +116,13 @@ describe("mapViewOf の置き場", () => {
     expect(view.boxes.find((box) => box.id === "vault")?.paths).toEqual([])
   })
 
+  it("子の数が childCount に載り、外の世界の箱には無い", () => {
+    const { view } = viewOfLevel(1)
+
+    expect(view.boxes.find((box) => box.id === "app")?.childCount).toBe(2)
+    expect(view.boxes.find((box) => box.id === "vault")?.childCount).toBeUndefined()
+  })
+
   it("中へのフォーカスで focus.summary が載る", () => {
     expect(viewOfFocus("app/view").focus?.summary).toBe("表示の判断")
   })

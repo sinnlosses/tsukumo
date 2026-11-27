@@ -42,6 +42,8 @@ const mapViewBoxSchema = z.object({
   external: z.boolean(),
   /** 子を持つ（押すとフォーカスした図へ潜れる）。 */
   hasChildren: z.boolean(),
+  /** 子の箱の数。外の世界の箱と、前のレポートの図には無い。 */
+  childCount: z.number().int().min(0).optional(),
   /** 置き場（ファイルの glob）。外の世界の箱は空。 */
   paths: z.array(z.string()).readonly(),
   /** paths を、ほかのモジュールと重ならないディレクトリの再帰の glob に畳んだもの。前のレポートの図には無い。 */
@@ -52,6 +54,8 @@ const mapViewBoxSchema = z.object({
   links: mapLinksSchema.optional(),
   /** `links.adr` の各ファイルから読んだ番号と題。前のレポートの図には無い。 */
   adrs: z.array(mapViewAdrSchema).readonly().optional(),
+  /** git の管理下のファイルのうち paths の glob に当たる数。数えられなかった回と外の世界の箱、前のレポートの図には無い。 */
+  fileCount: z.number().int().min(0).optional(),
   problems: z.array(mapBoxProblemSchema).readonly(),
 })
 

@@ -7,6 +7,7 @@ import {
   readMapView,
 } from "../server/architecture-map/adapter/architecture-map-view.ts"
 import type { DiagnosticLog } from "../server/diagnostic/core/diagnostic.ts"
+import { listRepositoryFiles } from "../server/repository/adapter/repository-file.ts"
 import type { SessionManagerOptions } from "../server/session/core/session-manager-port.ts"
 import { failureDiagnostic } from "./failure-diagnostic.ts"
 import { foldPortFailure } from "./fold-port-failure.ts"
@@ -20,6 +21,11 @@ export function wireArchitectureMap(
   readonly manager: Pick<SessionManagerOptions, "readReportMap">
 } {
   const reportFailure = failureDiagnostic(diagnosticLog, context.now)
+  // 一覧が2万件を超えて欠けた回は、数が合わないので「数えられない」(空) にする
+  const listFiles = async (): Promise<readonly string[]> => {
+    const list = await listRepositoryFiles(context.cwd)
+    return list.omittedCount > 0 ? [] : list.paths
+  }
   return {
     // 疑似セッションは場面の JSON が `report-map` を流すので、ここでは何も読まない
     manager: {
@@ -34,7 +40,7 @@ export function wireArchitectureMap(
         reportFailure,
         { feature: "architecture-map", place: "read-view" },
         { kind: "unreadable", reason: "read-failed" },
-        (selection) => readMapView(context.cwd, selection),
+        (selection) => readMapView(context.cwd, selection, listFiles),
       ),
       readArchitectureMapBoxes: foldPortFailure(
         reportFailure,

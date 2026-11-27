@@ -2,7 +2,7 @@
 // 図に出る箱の `links.adr` のファイルは、ここで読んで番号と題にする。
 
 import { readFile } from "node:fs/promises"
-import { isAbsolute, relative, resolve } from "node:path"
+import { isAbsolute, matchesGlob, relative, resolve } from "node:path"
 
 import type {
   MapBoxIndexResponse,
@@ -13,10 +13,18 @@ import type {
 } from "../../../shared/architecture-map/map-view.ts"
 import { adrEntryOf } from "../core/map-adr.ts"
 import { mapBoxIndexOf } from "../core/map-box.ts"
+import { fileCountOf } from "../core/map-file-count.ts"
 import { mapViewOf } from "../core/map-view.ts"
 import { readArchitectureMapFile } from "./architecture-map-file.ts"
 
-export async function readMapView(cwd: string, selection: MapSelection): Promise<MapViewResponse> {
+/** git の管理下のファイルの一覧。空は「数えられない」とみなす。 */
+export type ListFiles = () => Promise<readonly string[]>
+
+export async function readMapView(
+  cwd: string,
+  selection: MapSelection,
+  listFiles: ListFiles,
+): Promise<MapViewResponse> {
   const read = await readArchitectureMapFile(cwd)
   if (read.kind !== "map") {
     return read
@@ -25,13 +33,23 @@ export async function readMapView(cwd: string, selection: MapSelection): Promise
   if (response.kind !== "ready") {
     return response
   }
-  const boxes = await Promise.all(response.view.boxes.map((box) => withAdrs(cwd, box)))
+  const files = await listFiles()
+  const boxes = await Promise.all(
+    response.view.boxes.map(async (box) => withFileCount(await withAdrs(cwd, box), files)),
+  )
   return { ...response, view: { ...response.view, boxes } }
 }
 
 export async function readMapBoxes(cwd: string): Promise<MapBoxIndexResponse> {
   const read = await readArchitectureMapFile(cwd)
   return read.kind === "map" ? { kind: "ready", boxes: mapBoxIndexOf(read.map) } : read
+}
+
+function withFileCount(box: MapViewBox, files: readonly string[]): MapViewBox {
+  if (box.external || files.length === 0) {
+    return box
+  }
+  return { ...box, fileCount: fileCountOf(box.paths, files, matchesGlob) }
 }
 
 async function withAdrs(cwd: string, box: MapViewBox): Promise<MapViewBox> {

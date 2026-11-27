@@ -1,0 +1,16 @@
+.counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--stack-block);
+}
+.chip {
+  padding: var(--stack-block) var(--inline-control);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: var(--font-secondary);
+}
+.number {
+  color: var(--accent);
+  font-weight: 600;
+}

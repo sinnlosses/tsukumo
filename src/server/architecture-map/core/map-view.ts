@@ -295,6 +295,7 @@ function viewBoxOf(index: BoxIndex, node: BoxNode, problems: readonly BoxProblem
     level: node.level,
     external: node.external,
     hasChildren: node.childIds.length > 0,
+    ...(node.external ? {} : { childCount: node.childIds.length }),
     paths: node.paths,
     foldedPaths: foldedPathsOf(index, node),
     ...(node.place === undefined ? {} : { place: node.place }),
