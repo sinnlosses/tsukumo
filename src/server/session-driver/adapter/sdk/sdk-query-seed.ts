@@ -414,7 +414,7 @@ export function postToolUseHooks(
 }
 
 /**
- * 自動判定の拒否を受ける `PermissionDenied` フックを1つ登録する（サブエージェントの中の拒否も同じフックに来る）。
+ * 自動判定の拒否を受ける `PermissionDenied` フックを1つ登録する（サブエージェントの中の拒否も同じフックに来る。積むかは `deny` が決める）。
  * 入力（`tool_input`）は一度だけの許可の照合のために `deny` へ渡すだけで、イベントには載らない。
  * `retry` は返さない（モデルは拒否の文の指示で自分から打ち直す）。
  */
@@ -435,7 +435,6 @@ export function permissionDeniedHooks(
               input: input.tool_input,
               reason: input.reason,
               ...(input.agent_id === undefined ? {} : { agentId: input.agent_id }),
-              ...(input.agent_type === undefined ? {} : { agentType: input.agent_type }),
             })
             return {}
           },

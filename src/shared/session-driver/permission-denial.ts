@@ -8,8 +8,6 @@ export type PermissionDenial = {
   readonly toolName: string
   /** 判定した側が付けた理由を {@link MAX_DENIAL_REASON_LENGTH} 字で切ったもの。 */
   readonly reason: string
-  /** サブエージェントの中の呼び出しのときだけ、そのサブエージェントの id。 */
-  readonly agentId?: string
 }
 
 /** 状態に積んだ拒否1件。`deniedAt` は届いた時刻（エポックミリ秒。サーバがイベントに打った時刻）。 */

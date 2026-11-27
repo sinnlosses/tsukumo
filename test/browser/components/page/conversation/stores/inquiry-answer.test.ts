@@ -117,7 +117,6 @@ describe("useInquiryAnswer の自動判定の拒否", () => {
     toolUseId: "toolu_denied",
     toolName: "Write",
     reason: "架空の理由",
-    agentId: "agent-1",
     deniedAt: 7,
   } satisfies StampedPermissionDenial
 
@@ -141,11 +140,10 @@ describe("useInquiryAnswer の自動判定の拒否", () => {
       "1 一度だけ許可",
       "2 断る",
     ])
-    expect([model.id, model.toolName, model.reason, model.inSubagent, model.askedAt]).toEqual([
+    expect([model.id, model.toolName, model.reason, model.askedAt]).toEqual([
       "toolu_denied",
       "Write",
       "架空の理由",
-      true,
       7,
     ])
     act(() => model.onChoose("一度だけ許可"))

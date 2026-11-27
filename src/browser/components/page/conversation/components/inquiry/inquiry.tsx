@@ -53,6 +53,8 @@ const KIND_LABEL = {
   denial: "自動判定",
   question: "質問",
 } satisfies Record<Exclude<InquiryModel["kind"], "none">, string>
+const DENIAL_TEXT =
+  "自動判定がこの操作を止めました。一度だけ許可すると、同じ呼び出しを1回だけ通します"
 const DENIAL_REASON_PREFIX = "理由: "
 const BACK_LABEL = "戻る"
 const CONFIRM_LABEL = "これで確定する"
@@ -348,7 +350,7 @@ function InquiryFace(props: {
               weight="bold"
               className={styles["inquiry-text"]}
             >
-              {denialText(inquiry.inSubagent)}
+              {DENIAL_TEXT}
             </Text>
             <Text
               element="p"
@@ -499,11 +501,6 @@ function InquiryFace(props: {
       )}
     </>
   )
-}
-
-function denialText(inSubagent: boolean): string {
-  const place = inSubagent ? "サブエージェントの中の" : ""
-  return `自動判定が${place}この操作を止めました。一度だけ許可すると、同じ呼び出しを1回だけ通します`
 }
 
 /** 待っている時間を「0:42」の形にする（分は 60 を超えても繰り上げない）。 */

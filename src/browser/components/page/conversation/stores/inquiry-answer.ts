@@ -111,8 +111,6 @@ export type InquiryModel =
       readonly kind: "denial"
       readonly toolName: string
       readonly reason: string
-      /** サブエージェントの中の呼び出しが止められたか。 */
-      readonly inSubagent: boolean
     })
   | (InquiryCommon & {
       readonly kind: "question"
@@ -253,7 +251,6 @@ function denialModel(
     kind: "denial",
     toolName: denial.toolName,
     reason: denial.reason,
-    inSubagent: denial.agentId !== undefined,
   }
 }
 

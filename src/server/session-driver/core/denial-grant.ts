@@ -19,13 +19,9 @@ export type DeniedCall = {
   readonly toolName: string
   readonly input: unknown
   readonly reason: string
+  /** サブエージェントの中の呼び出しのときだけ、そのサブエージェントの id。 */
   readonly agentId?: string
-  /** 拒否したエージェントの種類。Workflow の中のエージェントは `workflow-subagent`。 */
-  readonly agentType?: string
 }
-
-/** Workflow の中のエージェントの `agent_type`。メインから声が届かないので、拒否のお願いを出さない。 */
-const WORKFLOW_SUBAGENT_TYPE = "workflow-subagent"
 
 /** PreToolUse で呼び出しを見た結果。`ask` は印と一致したので `canUseTool` へ回す。 */
 export type CallReviewByGrant = "ask" | "pass"
@@ -37,7 +33,10 @@ export type DenialGrantHandlers = {
 }
 
 export type DenialGrants = {
-  /** 拒否を積んで画面へ知らせる。同じ鍵の答えていない拒否は下げる。 */
+  /**
+   * 拒否を積んで画面へ知らせる。同じ鍵の答えていない拒否は下げる。
+   * サブエージェントの中の拒否は積まない（そのエージェントは答えを待てず、打ち直すか終わるので、出したお願いはすぐ下がる）。
+   */
   readonly deny: (call: DeniedCall) => void
   /**
    * 拒否に答える。`allow` は印を立てて許可を、`deny` は断ったことをモデルへ知らせる。
@@ -56,8 +55,6 @@ export type DenialGrants = {
   ) => CallReviewByGrant
   /** `canUseTool` に来た呼び出しに通す控えがあれば消して `true`。 */
   readonly takeArmed: (toolUseId: string) => boolean
-  /** エージェントが終わった。そのエージェントの答えていない拒否を下げ、宛ての使われていない印を捨てる。 */
-  readonly finishAgent: (agentId: string) => void
   /** ターンが終わった。そのターンが受け取った入力に許可の知らせがあれば、まだ使われていない印を捨てる。 */
   readonly finishTurn: (consumedInputUuids: readonly string[]) => void
   /** 印と控えを全て捨てる（セッションを閉じたとき）。 */
@@ -67,7 +64,7 @@ export type DenialGrants = {
 /** 拒否1件と印の照合に使う鍵。 */
 type CallKey = string
 
-type Grant = { readonly noticeUuid: string; readonly agentId?: string }
+type Grant = { readonly noticeUuid: string }
 
 /** {@link DenialGrants} を1つ作る。状態（答えていない拒否・印・通す控え）を持つのはここだけ。 */
 export function createDenialGrants(handlers: DenialGrantHandlers): DenialGrants {
@@ -86,7 +83,7 @@ export function createDenialGrants(handlers: DenialGrantHandlers): DenialGrants 
 
   return {
     deny: (call) => {
-      if (call.agentType === WORKFLOW_SUBAGENT_TYPE) {
+      if (call.agentId !== undefined) {
         return
       }
       const key = callKey(call.toolName, call.input)
@@ -106,10 +103,7 @@ export function createDenialGrants(handlers: DenialGrantHandlers): DenialGrants 
         handlers.sendNotice(refusedNotice(denial.call))
         return true
       }
-      grants.set(denial.key, {
-        noticeUuid: handlers.sendNotice(allowedNotice(denial.call)),
-        ...(denial.call.agentId === undefined ? {} : { agentId: denial.call.agentId }),
-      })
+      grants.set(denial.key, { noticeUuid: handlers.sendNotice(allowedNotice(denial.call)) })
       return true
     },
 
@@ -127,20 +121,6 @@ export function createDenialGrants(handlers: DenialGrantHandlers): DenialGrants 
     },
 
     takeArmed: (toolUseId) => armed.delete(toolUseId),
-
-    finishAgent: (agentId) => {
-      for (const [id, denial] of denials) {
-        if (denial.call.agentId === agentId) {
-          denials.delete(id)
-          handlers.onEvent({ kind: "permission-denial-settled", toolUseId: id })
-        }
-      }
-      for (const [key, grant] of grants) {
-        if (grant.agentId === agentId) {
-          grants.delete(key)
-        }
-      }
-    },
 
     finishTurn: (consumedInputUuids) => {
       for (const [key, grant] of grants) {
@@ -189,7 +169,6 @@ function denialOf(call: DeniedCall): PermissionDenial {
     toolUseId: call.toolUseId,
     toolName: call.toolName,
     reason: clipWithEllipsis(call.reason, MAX_DENIAL_REASON_LENGTH),
-    ...(call.agentId === undefined ? {} : { agentId: call.agentId }),
   }
 }
 
@@ -202,11 +181,6 @@ function allowedNotice(call: DeniedCall): string {
   return wrapNotice([
     `利用者が、自動判定に止められた ${call.toolName} の呼び出しを一度だけ許可した。`,
     "止められたときと同じ入力でもう一度呼べば、確認なしで1回だけ通る。",
-    ...(call.agentId === undefined
-      ? []
-      : [
-          "止められたのはサブエージェントの中の呼び出しなので、そのサブエージェントに同じ呼び出しを打ち直させてほしい。",
-        ]),
   ])
 }
 

@@ -34,7 +34,6 @@ describe("permissionDeniedHooks", () => {
         input: { file_path: "/tmp/tsukumo-test/outside.txt" },
         reason: "Classifier unavailable",
         agentId: "agent-1",
-        agentType: "workflow-subagent",
       },
     ])
   })
