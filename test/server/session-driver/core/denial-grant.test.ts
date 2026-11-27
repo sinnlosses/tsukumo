@@ -26,11 +26,17 @@ function setup() {
   const events: SessionEvent[] = []
   const notices: string[] = []
   const asked: (readonly PendingAsk[])[] = []
+  const scheduled = new Set<{ readonly run: () => void }>()
   const grants = createDenialGrants({
     onEvent: (event) => events.push(event),
     sendNotice: (text) => {
       notices.push(text)
       return `notice-${String(notices.length)}`
+    },
+    schedule: (run) => {
+      const entry = { run }
+      scheduled.add(entry)
+      return () => scheduled.delete(entry)
     },
   })
   const queue = createPendingAnswerQueue({
@@ -43,14 +49,26 @@ function setup() {
     review: grants.review("Write", [input], id),
     result: queue.ask({ id, toolName: "Write", input }),
   })
-  return { events, notices, asked, grants, queue, call }
+  /** 予約された知らせを、待つ時間が過ぎたものとして全部走らせる。 */
+  const elapse = () => {
+    for (const entry of scheduled) {
+      scheduled.delete(entry)
+      entry.run()
+    }
+  }
+  /** 拒否して、知らせるまでの待ちを過ぎさせる。 */
+  const denyShown = (deniedCallValue: DeniedCall) => {
+    grants.deny(deniedCallValue)
+    elapse()
+  }
+  return { events, notices, asked, grants, queue, call, elapse, denyShown, scheduled }
 }
 
 describe("createDenialGrants", () => {
   it("拒否はツール名・理由・id だけをイベントに載せ、入力を載せない", () => {
-    const { events, grants } = setup()
+    const { events, denyShown } = setup()
 
-    grants.deny(deniedCall())
+    denyShown(deniedCall())
 
     expect(events).toEqual([
       {
@@ -66,10 +84,10 @@ describe("createDenialGrants", () => {
   })
 
   it("サブエージェントの中の拒否はお願いに積まず、主の拒否だけを積む", () => {
-    const { events, grants } = setup()
+    const { events, grants, denyShown } = setup()
 
     grants.deny(deniedCall({ toolUseId: "toolu_sub", input: { n: 1 }, agentId: "agent-1" }))
-    grants.deny(deniedCall({ toolUseId: "toolu_main", input: { n: 2 } }))
+    denyShown(deniedCall({ toolUseId: "toolu_main", input: { n: 2 } }))
 
     expect(
       events.map((event) => event.kind === "permission-denied" && event.denial.toolUseId),
@@ -77,8 +95,8 @@ describe("createDenialGrants", () => {
   })
 
   it("一度だけ許可すると、同じ入力の次の1回だけを利用者に聞かずに許可し、2回目は列に積む", async () => {
-    const { grants, notices, asked, call } = setup()
-    grants.deny(deniedCall())
+    const { grants, notices, asked, call, denyShown } = setup()
+    denyShown(deniedCall())
 
     expect(grants.answer("toolu_denied", { kind: "allow" })).toBe(true)
     expect(notices).toHaveLength(1)
@@ -100,8 +118,8 @@ describe("createDenialGrants", () => {
   })
 
   it("一度だけの許可は入力が違う呼び出しには効かない", () => {
-    const { grants, asked, call } = setup()
-    grants.deny(deniedCall())
+    const { grants, asked, call, denyShown } = setup()
+    denyShown(deniedCall())
     grants.answer("toolu_denied", { kind: "allow" })
 
     const other = call("toolu_other", { ...DENIED_INPUT, content: "別の架空の中身" })
@@ -111,8 +129,8 @@ describe("createDenialGrants", () => {
   })
 
   it("入力のキーの並びが違っても同じ入力として照らす", () => {
-    const { grants } = setup()
-    grants.deny(deniedCall())
+    const { grants, denyShown } = setup()
+    denyShown(deniedCall())
     grants.answer("toolu_denied", { kind: "allow" })
 
     expect(
@@ -121,9 +139,9 @@ describe("createDenialGrants", () => {
   })
 
   it("候補の入力のどれかが印と一致すれば当たる（Bash の書き換えの前と後）", () => {
-    const { grants } = setup()
+    const { grants, denyShown } = setup()
     const rewritten = { command: "rtk git status" }
-    grants.deny(deniedCall({ toolName: "Bash", input: rewritten }))
+    denyShown(deniedCall({ toolName: "Bash", input: rewritten }))
     grants.answer("toolu_denied", { kind: "allow" })
 
     expect(grants.review("Bash", [{ command: "git status" }, rewritten], "t-2")).toBe("ask")
@@ -131,8 +149,8 @@ describe("createDenialGrants", () => {
   })
 
   it("断ると印を立てず、断ったことだけを知らせる", () => {
-    const { grants, notices, events } = setup()
-    grants.deny(deniedCall())
+    const { grants, notices, events, denyShown } = setup()
+    denyShown(deniedCall())
 
     expect(grants.answer("toolu_denied", { kind: "deny" })).toBe(true)
 
@@ -142,30 +160,30 @@ describe("createDenialGrants", () => {
   })
 
   it("知らない id と、質問の答えの形には答えない", () => {
-    const { grants } = setup()
-    grants.deny(deniedCall())
+    const { grants, denyShown } = setup()
+    denyShown(deniedCall())
 
     expect(grants.answer("toolu_unknown", { kind: "allow" })).toBe(false)
     expect(grants.answer("toolu_denied", { kind: "answers", answers: [] })).toBe(false)
   })
 
   it("許可の知らせを受け取ったターンが終わったら、使われなかった印を捨てる", () => {
-    const { grants } = setup()
-    grants.deny(deniedCall())
+    const { grants, denyShown } = setup()
+    denyShown(deniedCall())
     grants.answer("toolu_denied", { kind: "allow" })
 
     grants.finishTurn(["notice-0"])
     expect(grants.review("Write", [DENIED_INPUT], "t-2")).toBe("ask")
 
-    grants.deny(deniedCall({ toolUseId: "toolu_denied_again" }))
+    denyShown(deniedCall({ toolUseId: "toolu_denied_again" }))
     grants.answer("toolu_denied_again", { kind: "allow" })
     grants.finishTurn(["notice-2"])
     expect(grants.review("Write", [DENIED_INPUT], "t-3")).toBe("pass")
   })
 
   it("許可より先に同じ呼び出しが打ち直されたら、答えていない拒否を下げる", () => {
-    const { grants, events } = setup()
-    grants.deny(deniedCall())
+    const { grants, events, denyShown } = setup()
+    denyShown(deniedCall())
 
     expect(grants.review("Write", [DENIED_INPUT], "toolu_retry")).toBe("pass")
 
@@ -174,14 +192,36 @@ describe("createDenialGrants", () => {
   })
 
   it("同じ呼び出しがまた拒否されたら、前の拒否を下げて新しい拒否だけを残す", () => {
-    const { grants, events } = setup()
-    grants.deny(deniedCall())
-    grants.deny(deniedCall({ toolUseId: "toolu_denied_again" }))
+    const { events, denyShown } = setup()
+    denyShown(deniedCall())
+    denyShown(deniedCall({ toolUseId: "toolu_denied_again" }))
 
     expect(events.map((event) => event.kind)).toEqual([
       "permission-denied",
       "permission-denial-settled",
       "permission-denied",
     ])
+  })
+
+  it("知らせるまで待つあいだに同じ呼び出しが打ち直されたら、画面へ知らせずに捨てる", () => {
+    const { grants, events, elapse, scheduled } = setup()
+    grants.deny(deniedCall())
+    expect(scheduled.size).toBe(1)
+
+    grants.review("Write", [DENIED_INPUT], "toolu_retry")
+    elapse()
+
+    expect(events).toEqual([])
+    expect(grants.answer("toolu_denied", { kind: "allow" })).toBe(false)
+  })
+
+  it("待つあいだにターンが終わったら、待たずに知らせる", () => {
+    const { grants, events, scheduled } = setup()
+    grants.deny(deniedCall())
+
+    grants.finishTurn([])
+
+    expect(events.map((event) => event.kind)).toEqual(["permission-denied"])
+    expect(scheduled.size).toBe(0)
   })
 })

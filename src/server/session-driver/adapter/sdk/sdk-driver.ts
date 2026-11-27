@@ -141,6 +141,12 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
       ledgerIntake.noteSent(uuid, "denial-notice")
       return uuid
     },
+    schedule: (run, delayMs) => {
+      const timer = setTimeout(run, delayMs)
+      return () => {
+        clearTimeout(timer)
+      }
+    },
   })
   const queue = createPendingAnswerQueue({
     granted: denials.takeArmed,

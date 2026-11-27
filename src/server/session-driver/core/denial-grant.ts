@@ -30,10 +30,15 @@ export type DenialGrantHandlers = {
   readonly onEvent: (event: SessionEvent) => void
   /** モデルへ差し込みの発言を送り、送った発言の uuid を返す。 */
   readonly sendNotice: (text: string) => string
+  /** `delayMs` 後に `run` を1回呼ぶ予約をし、取り消す関数を返す。 */
+  readonly schedule: (run: () => void, delayMs: number) => () => void
 }
 
 export type DenialGrants = {
-  /** 拒否を積んで画面へ知らせる。同じ鍵の答えていない拒否は下げる。サブエージェントの中の拒否は積まない。 */
+  /**
+   * 拒否を積み、{@link DENIAL_SHOW_DELAY_MS} 待ってから画面へ知らせる。待つあいだに同じ鍵の打ち直しが来たら、知らせずに捨てる。
+   * 同じ鍵の答えていない拒否は下げる。サブエージェントの中の拒否は積まない。
+   */
   readonly deny: (call: DeniedCall) => void
   /**
    * 拒否に答える。`allow` は印を立てて許可を、`deny` は断ったことをモデルへ知らせる。
@@ -52,30 +57,61 @@ export type DenialGrants = {
   ) => CallReviewByGrant
   /** `canUseTool` に来た呼び出しに通す控えがあれば消して `true`。 */
   readonly takeArmed: (toolUseId: string) => boolean
-  /** ターンが終わった。そのターンが受け取った入力に許可の知らせがあれば、まだ使われていない印を捨てる。 */
+  /**
+   * ターンが終わった。待っている拒否はすぐ画面へ知らせる。
+   * そのターンが受け取った入力に許可の知らせがあれば、まだ使われていない印を捨てる。
+   */
   readonly finishTurn: (consumedInputUuids: readonly string[]) => void
-  /** 印と控えを全て捨てる（セッションを閉じたとき）。 */
+  /** 拒否・印・控えを全て捨て、待っている知らせを取り消す（セッションを閉じたとき）。 */
   readonly clear: () => void
 }
 
+/** 拒否を画面へ知らせるまで待つ時間。同じ入力の打ち直しは、ふつうこの間に来る。 */
+const DENIAL_SHOW_DELAY_MS = 15_000
+
 /** 拒否1件と印の照合に使う鍵。 */
 type CallKey = string
+
+/** 積んだ拒否1件。`cancelShow` があるあいだは、まだ画面へ知らせていない。 */
+type HeldDenial = {
+  readonly key: CallKey
+  readonly call: DeniedCall
+  readonly cancelShow?: () => void
+}
 
 type Grant = { readonly noticeUuid: string }
 
 /** {@link DenialGrants} を1つ作る。状態（答えていない拒否・印・通す控え）を持つのはここだけ。 */
 export function createDenialGrants(handlers: DenialGrantHandlers): DenialGrants {
-  const denials = new Map<string, { readonly key: CallKey; readonly call: DeniedCall }>()
+  const denials = new Map<string, HeldDenial>()
   const grants = new Map<CallKey, Grant>()
   const armed = new Set<string>()
+
+  const drop = (id: string, denial: HeldDenial): void => {
+    denials.delete(id)
+    if (denial.cancelShow === undefined) {
+      handlers.onEvent({ kind: "permission-denial-settled", toolUseId: id })
+    } else {
+      denial.cancelShow()
+    }
+  }
 
   const settleSameKey = (keys: readonly CallKey[]): void => {
     for (const [id, denial] of denials) {
       if (keys.includes(denial.key)) {
-        denials.delete(id)
-        handlers.onEvent({ kind: "permission-denial-settled", toolUseId: id })
+        drop(id, denial)
       }
     }
+  }
+
+  const show = (id: string): void => {
+    const denial = denials.get(id)
+    if (denial?.cancelShow === undefined) {
+      return
+    }
+    denial.cancelShow()
+    denials.set(id, { key: denial.key, call: denial.call })
+    handlers.onEvent({ kind: "permission-denied", denial: denialOf(denial.call) })
   }
 
   return {
@@ -85,17 +121,18 @@ export function createDenialGrants(handlers: DenialGrantHandlers): DenialGrants 
       }
       const key = callKey(call.toolName, call.input)
       settleSameKey([key])
-      denials.set(call.toolUseId, { key, call })
-      handlers.onEvent({ kind: "permission-denied", denial: denialOf(call) })
+      const cancelShow = handlers.schedule(() => {
+        show(call.toolUseId)
+      }, DENIAL_SHOW_DELAY_MS)
+      denials.set(call.toolUseId, { key, call, cancelShow })
     },
 
     answer: (id, answer) => {
       const denial = denials.get(id)
-      if (denial === undefined || answer.kind === "answers") {
+      if (denial === undefined || denial.cancelShow !== undefined || answer.kind === "answers") {
         return false
       }
-      denials.delete(id)
-      handlers.onEvent({ kind: "permission-denial-settled", toolUseId: id })
+      drop(id, denial)
       if (answer.kind === "deny") {
         handlers.sendNotice(refusedNotice(denial.call))
         return true
@@ -120,6 +157,9 @@ export function createDenialGrants(handlers: DenialGrantHandlers): DenialGrants 
     takeArmed: (toolUseId) => armed.delete(toolUseId),
 
     finishTurn: (consumedInputUuids) => {
+      for (const id of denials.keys()) {
+        show(id)
+      }
       for (const [key, grant] of grants) {
         if (consumedInputUuids.includes(grant.noticeUuid)) {
           grants.delete(key)
@@ -128,6 +168,9 @@ export function createDenialGrants(handlers: DenialGrantHandlers): DenialGrants 
     },
 
     clear: () => {
+      for (const denial of denials.values()) {
+        denial.cancelShow?.()
+      }
       denials.clear()
       grants.clear()
       armed.clear()
